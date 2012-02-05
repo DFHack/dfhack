@@ -79,11 +79,11 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
         return CR_FAILURE;
     }
 
-	if (parameters.size() < filenameParameter)
+    if (parameters.size() < filenameParameter)
     {
-            c->con.printerr("Please supply a filename.\n");
-			c->Resume();
-            return CR_FAILURE;
+        c->con.printerr("Please supply a filename.\n");
+        c->Resume();
+        return CR_FAILURE;
     }
 
     std::string filename = parameters[filenameParameter-1];
@@ -93,9 +93,9 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
     std::ofstream output_file(filename, std::ios::out | std::ios::trunc | std::ios::binary);
     if (!output_file.is_open())
     {
-            c->con.printerr("Couldn't open the output file.\n");
-            c->Resume();
-            return CR_FAILURE;
+        c->con.printerr("Couldn't open the output file.\n");
+        c->Resume();
+        return CR_FAILURE;
     }
     ZeroCopyOutputStream *raw_output = new OstreamOutputStream(&output_file);
     GzipOutputStream *zip_output = new GzipOutputStream(raw_output);
@@ -203,44 +203,44 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                         if (des.bits.flow_size)
                         {
                             prototile->set_liquid_type((dfproto::Tile::LiquidType)des.bits.liquid_type);
-							prototile->set_flow_size(des.bits.flow_size);
+                            prototile->set_flow_size(des.bits.flow_size);
                         }
 
                         uint16_t type = b->TileTypeAt(coord);
                         const DFHack::TileRow *info = DFHack::getTileRow(type);
                         prototile->set_type((dfproto::Tile::TileType)info->shape);
 
-						prototile->set_material_type((dfproto::Tile::MaterialType)info->material);
+                        prototile->set_material_type((dfproto::Tile::MaterialType)info->material);
 
                         df::coord map_pos = df::coord(b_x*16+x,b_y*16+y,z);
                         
-						switch (info->material)
-						{
-						case DFHack::SOIL:
-						case DFHack::STONE:
+                        switch (info->material)
+                        {
+                        case DFHack::SOIL:
+                        case DFHack::STONE:
                             prototile->set_material_index(0);
-							prototile->set_material(b->baseMaterialAt(coord));
-							break;
-						case DFHack::VEIN:
+                            prototile->set_material(b->baseMaterialAt(coord));
+                            break;
+                        case DFHack::VEIN:
                             prototile->set_material_index(0);
-							prototile->set_material(b->veinMaterialAt(coord));
-							break;
-						case DFHack::FEATSTONE:
-							if (blockFeatureLocal.type != -1 && des.bits.feature_local)
+                            prototile->set_material(b->veinMaterialAt(coord));
+                            break;
+                        case DFHack::FEATSTONE:
+                            if (blockFeatureLocal.type != -1 && des.bits.feature_local)
                             {
                                 if (blockFeatureLocal.type == df::feature_type::deep_special_tube
                                         && blockFeatureLocal.main_material == 0) // stone
                                 {
                                     prototile->set_material_index(0);
-									prototile->set_material(blockFeatureLocal.sub_material);
+                                    prototile->set_material(blockFeatureLocal.sub_material);
                                 }
-								if (blockFeatureGlobal.type != -1 && des.bits.feature_global
-										&& blockFeatureGlobal.type == df::feature_type::feature_underworld_from_layer
-										&& blockFeatureGlobal.main_material == 0) // stone
-								{
+                                if (blockFeatureGlobal.type != -1 && des.bits.feature_global
+                                        && blockFeatureGlobal.type == df::feature_type::feature_underworld_from_layer
+                                        && blockFeatureGlobal.main_material == 0) // stone
+                                {
                                     prototile->set_material_index(0);
-									prototile->set_material(blockFeatureGlobal.sub_material);
-								}
+                                    prototile->set_material(blockFeatureGlobal.sub_material);
+                                }
                             }
                             break;
                         case DFHack::CONSTRUCTED:
@@ -250,7 +250,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                                 prototile->set_material(constructionMaterials[map_pos].second);
                             }
                             break;
-						}
+                        }
                     }
                 }
 
@@ -265,14 +265,16 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                         loc = loc % 16;
                         if (showHidden || !b->DesignationAt(loc).bits.hidden)
                         {
+                            protoplant->set_x(loc.x);
+                            protoplant->set_y(loc.y);
                             protoplant->set_is_shrub(plant.flags.bits.is_shrub);
                             protoplant->set_material(plant.material);
                         }
                     }
                 }
                 
-				coded_output->WriteVarint32(protoblock.ByteSize());
-				protoblock.SerializeToCodedStream(coded_output);
+                coded_output->WriteVarint32(protoblock.ByteSize());
+                protoblock.SerializeToCodedStream(coded_output);
             } // block x
             // Clean uneeded memory
             map.trash();
@@ -280,7 +282,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
     } // z
 
     delete coded_output;
-	delete zip_output;
+    delete zip_output;
     delete raw_output;
 
     mats->Finish();

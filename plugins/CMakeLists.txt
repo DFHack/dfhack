@@ -40,6 +40,10 @@ if (BUILD_MAPEXPORT)
     add_subdirectory (mapexport)
 endif()
 
+OPTION(BUILD_DWARFEXPORT "Build dwarf exporter." ON)
+if (BUILD_DWARFEXPORT)
+    add_subdirectory (export)
+endif()
 
 DFHACK_PLUGIN(reveal reveal.cpp)
 DFHACK_PLUGIN(probe probe.cpp)
@@ -73,8 +77,6 @@ DFHACK_PLUGIN(showmood showmood.cpp)
 DFHACK_PLUGIN(fixveins fixveins.cpp)
 DFHACK_PLUGIN(fixpositions fixpositions.cpp)
 #DFHACK_PLUGIN(versionosd versionosd.cpp)
-
-add_subdirectory(export)
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it
 OPTION(BUILD_SKELETON "Build the skeleton plugin." OFF)

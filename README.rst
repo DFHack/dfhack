@@ -61,8 +61,11 @@ Many commands have their own help or detailed description. You can use 'command 
 
 The command line has some nice line editing capabilities, including history that's preserved between different runs of DF (use up/down keys to go through the history).
 
-The second way to interact with DFHack is to bind the available commands to in-game hotkeys. This is done in the hotkey/zoom menu (normally opened with the 'h' key). Binding the commands is done by assigning a command as a hotkey name (with 'n').
-Some commands can't be used from hotkeys - this includes interactive commands like 'liquids' and commands that have names longer than 9 characters.
+The second way to interact with DFHack is to bind the available commands to in-game hotkeys. The old way to do this is via the hotkey/zoom menu (normally opened with the 'h' key). Binding the commands is done by assigning a command as a hotkey name (with 'n').
+
+A new and more flexible way is the keybinding command in the dfhack console. However, bindings created this way are not automatically remembered between runs of the game, so it becomes necessary to use the dfhack.init file to ensure that they are re-created every time it is loaded.
+
+Interactive commands like 'liquids' cannot be used as hotkeys.
 
 Most of the commands come from plugins. Those reside in 'hack/plugins/'.
 
@@ -76,7 +79,7 @@ If you found a bug, you can either report it in the bay12 DFHack thread, the iss
 Commands
 ========
 
-Almost all the commands have a 'help'/'?' option that will give you further help without having to look at this document.
+Almost all the commands support using the 'help <command-name>' built-in command to retrieve further help without having to look at this document. Alternatively, some accept a 'help'/'?' option on their command line.
 
 forcepause
 ==========
@@ -308,6 +311,20 @@ job-duplicate
 =============
 Duplicate the selected job in a workshop:
  * In 'q' mode, when a job is highlighted within a workshop or furnace building, instantly duplicates the job.
+
+keybinding
+==========
+
+Manages DFHack keybindings. Currently it supports any combination of Ctrl/Alt/Shift with F1-F9, or A-Z.
+
+Options
+-------
+:keybinding list <key>: List bindings active for the key combination.
+:keybinding clear <key> <key>...: Remove bindings for the specified keys.
+:keybinding add <key> "cmdline" "cmdline"...: Add bindings for the specified key.
+:keybinding set <key> "cmdline" "cmdline"...: Clear, and then add bindings for the specified key.
+
+When multiple commands are bound to the same key combination, DFHack selects the first applicable one. Later 'add' commands, and earlier entries within one 'add' command have priority. Commands that are not specifically intended for use as a hotkey are always considered applicable.
 
 liquids
 =======

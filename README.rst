@@ -27,7 +27,7 @@ Compatibility
 DFHack works on Windows XP, Vista, 7 or any modern Linux distribution.
 OSX is not supported due to lack of developers with a Mac.
 
-Currently, only the 31.25 version is supported. If you need DFHack
+Currently, only version 0.31.25 is supported. If you need DFHack
 for older versions, look for older releases.
 
 On Windows, you have to use the SDL version of DF.
@@ -55,7 +55,7 @@ If any of the plugins or dfhack itself refuses to load, check the stderr.log fil
 ============
 Using DFHack
 ============
-DFHack basically extends what DF can do with something similar to a quake console. On Windows, this is a separate command line window. On linux, the terminal used to launch the dfhack script is taken over (so, make sure you start from a terminal).
+DFHack basically extends what DF can do with something similar to the drop-down console found in Quake engine games. On Windows, this is a separate command line window. On linux, the terminal used to launch the dfhack script is taken over (so, make sure you start from a terminal).
 Basic interaction with dfhack involves entering commands into the console. For some basic instroduction, use the 'help' command. To list all possible commands, use the 'ls' command.
 Many commands have their own help or detailed description. You can use 'command help' or 'command ?' to show that.
 
@@ -64,7 +64,7 @@ The command line has some nice line editing capabilities, including history that
 The second way to interact with DFHack is to bind the available commands to in-game hotkeys. This is done in the hotkey/zoom menu (normally opened with the 'h' key). Binding the commands is done by assigning a command as a hotkey name (with 'n').
 Some commands can't be used from hotkeys - this includes interactive commands like 'liquids' and commands that have names longer than 9 characters.
 
-Most of the commands come from plugins. Those reside in 'DF/plugins/'.
+Most of the commands come from plugins. Those reside in 'hack/plugins/'.
 
 =============================
 Something doesn't work, help!
@@ -77,6 +77,22 @@ Commands
 ========
 
 Almost all the commands have a 'help'/'?' option that will give you further help without having to look at this document.
+
+forcepause
+==========
+Forces DF to pause. This is useful when your FPS drops below 1 and you lose control of the game.
+
+ * Activate with 'forcepause 1'
+ * Deactivate with 'forcepause 0'
+
+nopause
+=======
+Disables pausing (both manual and automatic) with the exception of pause forced by 'reveal hell'.
+This is nice for digging under rivers.
+
+die
+===
+Instantly kills DF without saving.
 
 autodump
 ========
@@ -149,7 +165,6 @@ Options
 -------
 :bees: turn colonies into honey bee colonies
 
-
 deramp (by zilpin)
 ==================
 Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.
@@ -185,7 +200,7 @@ Confirmed working DFusion plugins:
 
 drybuckets
 ==========
-This utility removes all objects of type LIQUID_MISC:NONE and material WATER:NONE - that is, water stored in buckets.
+This utility removes water from all buckets in your fortress, allowing them to be safely used for making lye.
 
 fastdwarf
 =========
@@ -230,13 +245,21 @@ Example:
 --------
 'alltraffic N' - Set traffic to 'normal' for all tiles.
 
+fixdiplomats
+============
+Up to version 0.31.12, Elves only sent Diplomats to your fortress to propose tree cutting quotas due to a bug; once that bug was fixed, Elves stopped caring about excess tree cutting. This command adds a Diplomat position to all Elven civilizations, allowing them to negotiate tree cutting quotas (and allowing you to violate them and potentially start wars) in case you haven't already modified your raws accordingly.
+
+fixmerchants
+============
+This command adds the Guild Representative position to all Human civilizations, allowing them to make trade agreements (just as they did back in 0.28.181.40d and earlier) in case you haven't already modified your raws accordingly.
+
 fixveins
 ========
-Removes invalid references to mineral inclusions and restores missing ones. Use this if you broke your embark with tools like tiletypes.
+Removes invalid references to mineral inclusions and restores missing ones. Use this if you broke your embark with tools like tiletypes, or if you accidentally placed a construction on top of a valuable mineral floor.
 
 fixwagons
 =========
-Since DF v0.31.1 merchants no longer bring wagons due to a bug. This command re-enables them for all appropriate civilizations.
+Due to a bug in all releases of version 0.31, merchants no longer bring wagons with their caravans. This command re-enables them for all appropriate civilizations.
 
 flows
 =====
@@ -254,10 +277,6 @@ Options
 :-x:        Apply selected action to all plants except those specified (invert selection)
 
 Specifying both -t and -s will have no effect. If no plant IDs are specified, all valid plant IDs will be listed.
-
-grow
-====
-Makes all saplings present on the map grow into trees (almost) instantly.
 
 tidlers
 =======
@@ -290,22 +309,6 @@ job-duplicate
 Duplicate the selected job in a workshop:
  * In 'q' mode, when a job is highlighted within a workshop or furnace building, instantly duplicates the job.
 
-extirpate
-=========
-A tool for getting rid of trees and shrubs. By default, it only kills a tree/shrub under the cursor.
-The plants are turned into ashes instantly.
-
-Options
--------
-:shrubs:            affect all shrubs on the map
-:trees:             affect all trees on the map
-:all:               affect every plant!
-
-immolate
-========
-Very similar to extirpate, but additionally sets the plants on fire. The fires can and *will* spread ;)
-
-
 liquids
 =======
 Allows adding magma, water and obsidian to the game. It replaces the normal dfhack command line and can't be used from a hotkey.
@@ -329,21 +332,24 @@ There are a few good ones though.
 
 I take no responsibility of anything that happens as a result of using this tool :P
 
-forcepause
-==========
-Forces DF to pause. This is useful when your FPS drops below 1 and you lose control of the game.
+extirpate
+=========
+A tool for getting rid of trees and shrubs. By default, it only kills a tree/shrub under the cursor.
+The plants are turned into ashes instantly.
 
- * Activate with 'forcepause 1'
- * Deactivate with 'forcepause 0'
+Options
+-------
+:shrubs:            affect all shrubs on the map
+:trees:             affect all trees on the map
+:all:               affect every plant!
 
-nopause
-=======
-Disables pausing (both manual and automatic) with the exception of pause forced by 'reveal hell'.
-This is nice for digging under rivers.
+grow
+====
+Makes all saplings present on the map grow into trees (almost) instantly.
 
-die
-===
-Instantly kills DF without saving.
+immolate
+========
+Very similar to extirpate, but additionally sets the plants on fire. The fires can and *will* spread ;)
 
 probe
 =====
@@ -408,11 +414,11 @@ See 'seedwatch help' for detailed description.
 
 showmood
 ========
-Shows items needed for current strange mood.
+Shows all items needed for the currently active strange mood.
 
 stockpiles
 ==========
-Copies the parameters of the currently highlighted stockpile to the custom stockpile settings. Basically a way to copy stockpiles easily.
+Copies the parameters of the currently highlighted stockpile to the custom stockpile settings and switches to custom stockpile placement mode, effectively allowing you to copy/paste stockpiles easily.
 
 ssense / stonesense
 ===================
@@ -437,7 +443,7 @@ You can also paint only over tiles that match a set of properties (filter)
 For more details, see the 'help' command while using this.
 
 tubefill
-==========
+========
 Fills all the adamantine veins again. Veins that were empty will be filled in too, but might still trigger a demon invasion (this is a known bug).
 
 vdig

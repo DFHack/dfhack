@@ -625,3 +625,11 @@ Make sure there are always 80-100 units of dimple dye.
 
   In order for this to work, you have to set the material of the PLANT input on
   the Mill Plants job to MUSHROOM_CUP_DIMPLE using the 'job item-material' command.
+
+mapexport
+=========
+Export the current loaded map as a file. This will be eventually usable with visualizers.
+
+dwarfexport
+===========
+Export dwarves to RuneSmith-compatible XML.

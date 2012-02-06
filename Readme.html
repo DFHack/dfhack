@@ -449,6 +449,8 @@ access DF memory and allow for easier development of new tools.</p>
 <li><a class="reference internal" href="#constraint-examples" id="id105">Constraint examples</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#mapexport" id="id106">mapexport</a></li>
+<li><a class="reference internal" href="#dwarfexport" id="id107">dwarfexport</a></li>
 </ul>
 </li>
 </ul>
@@ -862,16 +864,16 @@ Generated worlds are placed into your DF folder, named &quot;World #&quot;.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field"><th class="field-name" colspan="2">keybinding list &lt;key&gt;:</th></tr>
-<tr><td>&nbsp;</td><td class="field-body">List bindings active for the key combination.</td>
+<tr class="field"><td>&nbsp;</td><td class="field-body">List bindings active for the key combination.</td>
 </tr>
 <tr class="field"><th class="field-name" colspan="2">keybinding clear &lt;key&gt; &lt;key&gt;...:</th></tr>
-<tr><td>&nbsp;</td><td class="field-body">Remove bindings for the specified keys.</td>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Remove bindings for the specified keys.</td>
 </tr>
 <tr class="field"><th class="field-name" colspan="2">keybinding add &lt;key&gt; &quot;cmdline&quot; &quot;cmdline&quot;...:</th></tr>
-<tr><td>&nbsp;</td><td class="field-body">Add bindings for the specified key.</td>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Add bindings for the specified key.</td>
 </tr>
 <tr class="field"><th class="field-name" colspan="2">keybinding set &lt;key&gt; &quot;cmdline&quot; &quot;cmdline&quot;...:</th></tr>
-<tr><td>&nbsp;</td><td class="field-body">Clear, and then add bindings for the specified key.</td>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Clear, and then add bindings for the specified key.</td>
 </tr>
 </tbody>
 </table>
@@ -982,16 +984,16 @@ for 1 embark tile of the blinking biome, or for all tiles of the embark rectangl
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field"><th class="field-name" colspan="2">rename squad &lt;index&gt; &quot;name&quot;:</th></tr>
-<tr><td>&nbsp;</td><td class="field-body">Rename squad by index to 'name'.</td>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Rename squad by index to 'name'.</td>
 </tr>
 <tr class="field"><th class="field-name" colspan="2">rename hotkey &lt;index&gt; &quot;name&quot;:</th></tr>
-<tr><td>&nbsp;</td><td class="field-body">Rename hotkey by index. This allows assigning longer commands to the DF hotkeys.</td>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Rename hotkey by index. This allows assigning longer commands to the DF hotkeys.</td>
 </tr>
 <tr class="field"><th class="field-name" colspan="2">rename unit &quot;nickname&quot;:</th></tr>
-<tr><td>&nbsp;</td><td class="field-body">Rename a unit/creature highlighted in the DF user interface.</td>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Rename a unit/creature highlighted in the DF user interface.</td>
 </tr>
 <tr class="field"><th class="field-name" colspan="2">rename unit-profession &quot;custom profession&quot;:</th></tr>
-<tr><td>&nbsp;</td><td class="field-body">Change proffession name of the highlighted unit/creature.</td>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Change proffession name of the highlighted unit/creature.</td>
 </tr>
 </tbody>
 </table>
@@ -1274,6 +1276,14 @@ In order for this to work, you have to set the material of the PLANT input on
 the Mill Plants job to MUSHROOM_CUP_DIMPLE using the 'job item-material' command.
 </pre>
 </div>
+</div>
+<div class="section" id="mapexport">
+<h2><a class="toc-backref" href="#id106">mapexport</a></h2>
+<p>Export the current loaded map as a file. This will be eventually usable with visualizers.</p>
+</div>
+<div class="section" id="dwarfexport">
+<h2><a class="toc-backref" href="#id107">dwarfexport</a></h2>
+<p>Export dwarves to RuneSmith-compatible XML.</p>
 </div>
 </div>
 </div>

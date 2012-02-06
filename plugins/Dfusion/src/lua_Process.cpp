@@ -175,9 +175,9 @@ static int lua_Process_getMemRanges(lua_State *S)
 	{
 		st.push(i);
 		st.newtable();
-		st.push(ranges[i].start); // WARNING!! lua has only 32bit numbers, possible loss of data!!
+		st.push((uint32_t)ranges[i].start); // WARNING!! lua has only 32bit numbers, possible loss of data!!
 		st.setfield("start");
-		st.push(ranges[i].end);
+        st.push((uint32_t)ranges[i].end);
 		st.setfield("end");
 		st.push(std::string(ranges[i].name));
 		st.setfield("name");

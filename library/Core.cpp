@@ -354,6 +354,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                 "  cls                   - Clear the console.\n"
                 "  fpause                - Force DF to pause.\n"
                 "  die                   - Force DF to close immediately\n"
+                "  keybinding            - Modify bindings of commands to keys\n"
                 "  belongs COMMAND       - Tell which plugin a command belongs to.\n"
                 "  plug [PLUGIN|v]       - List plugin state and detailed description.\n"
                 "  load PLUGIN|all       - Load a plugin by name or load all possible plugins.\n"

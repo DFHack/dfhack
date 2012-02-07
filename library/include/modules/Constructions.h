@@ -46,7 +46,7 @@ namespace Constructions
 struct t_construction {
     df::coord pos;
     df::item_type item_type;
-    int16_t unk;
+    int16_t item_subtype;
     int16_t mat_type;
     int32_t mat_index;
     df::construction_flags flags;

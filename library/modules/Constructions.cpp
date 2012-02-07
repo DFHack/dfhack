@@ -67,7 +67,7 @@ bool Constructions::copyConstruction(const int32_t index, t_construction &out)
 
     out.pos = out.origin->pos;
     out.item_type = out.origin->item_type;
-    out.unk = out.origin->anon_1;
+    out.item_subtype = out.origin->item_subtype;
     out.mat_type = out.origin->mat_type;
     out.mat_index = out.origin->mat_index;
     out.flags = out.origin->flags;

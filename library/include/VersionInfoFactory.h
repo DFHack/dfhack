@@ -25,9 +25,6 @@ distribution.
 
 #pragma once
 
-#ifndef MEMINFO_MANAGER_H_INCLUDED
-#define MEMINFO_MANAGER_H_INCLUDED
-
 #include "Pragma.h"
 #include "Export.h"
 
@@ -37,29 +34,18 @@ namespace DFHack
     class VersionInfo;
     class DFHACK_EXPORT VersionInfoFactory
     {
-        friend class ProcessEnumerator;
         public:
             VersionInfoFactory();
             ~VersionInfoFactory();
-            // memory info entries loaded from a file
             bool loadFile( std::string path_to_xml);
             bool isInErrorState() const {return error;};
             VersionInfo * getVersionInfoByMD5(std::string md5string);
             VersionInfo * getVersionInfoByPETimestamp(uint32_t timestamp);
             std::vector<VersionInfo*> versions;
-            void clear( void );
+            // trash existing list
+            void clear();
         private:
-            void ParseVTable(TiXmlElement* vtable, VersionInfo* mem);
-            void ParseBase (TiXmlElement* base, VersionInfo* mem);
             void ParseVersion (TiXmlElement* version, VersionInfo* mem);
-            // copy version 'base' to 'target' or throw
-            void EvalVersion(std::string base, VersionInfo* target);
-            void ParseOffsets(TiXmlElement* elem, VersionInfo* target, bool initial = false);
-
             bool error;
-            typedef std::pair < TiXmlElement *, VersionInfo *> v_descr;
-            std::map <std::string , v_descr  > knownVersions;
     };
 }
-
-#endif

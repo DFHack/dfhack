@@ -25,9 +25,6 @@ distribution.
 
 #pragma once
 
-#ifndef MEMINFO_H_INCLUDED
-#define MEMINFO_H_INCLUDED
-
 #include "Pragma.h"
 #include "Export.h"
 #include "Types.h"
@@ -38,82 +35,6 @@ distribution.
 namespace DFHack
 {
     /*
-    * Stubs
-    */
-    class Process;
-    class XMLPP;
-    struct t_class;
-    class VersionInfoPrivate;
-    class OffsetGroupPrivate;
-
-    enum INVAL_TYPE
-    {
-        NOT_SET,
-        IS_INVALID,
-        IS_VALID
-    };
-	enum KEY_TYPE
-	{
-		IS_OFFSET,
-		IS_ADDRESS,
-		IS_HEX_VAL,
-		IS_STRING,
-		IS_GROUP
-	};
-	struct OffsetKey
-	{
-		std::string key;
-		INVAL_TYPE inval;
-		KEY_TYPE keytype;
-	};
-    /*
-     * Offset Group
-     */
-    class DFHACK_EXPORT OffsetGroup
-    {
-    protected:
-        OffsetGroupPrivate * OGd;
-    public:
-        OffsetGroup();
-        OffsetGroup(const std::string & _name, OffsetGroup * parent = 0);
-        ~OffsetGroup();
-
-        void copy(const OffsetGroup * old); // recursive
-        void RebaseAddresses( int32_t offset ); // recursive
-
-        void createOffset (const std::string & key);
-        void createAddress (const std::string & key);
-        void createHexValue (const std::string & key);
-        void createString (const std::string & key);
-        OffsetGroup * createGroup ( const std::string & name );
-
-        int32_t getOffset (const std::string & key);
-        char * getAddress (const std::string & key);
-        uint32_t getHexValue (const std::string & key);
-        std::string getString (const std::string & key);
-        OffsetGroup * getGroup ( const std::string & name );
-
-        bool getSafeOffset (const std::string & key, int32_t & out);
-        bool getSafeAddress (const std::string & key, void * & out);
-
-        void setOffset (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
-        void setOffsetValidity(const std::string& key, const DFHack::INVAL_TYPE inval = IS_VALID);
-        void setAddress (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
-        void setAddressValidity(const std::string& key, const DFHack::INVAL_TYPE inval = IS_VALID);
-        void setHexValue (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
-        void setHexValueValidity(const std::string& key, const DFHack::INVAL_TYPE inval = IS_VALID);
-        void setString (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
-        void setStringValidity(const std::string& key, const DFHack::INVAL_TYPE inval = IS_VALID);
-        std::string PrintOffsets(int indentation);
-        std::string getName();
-        std::string getFullName();
-        OffsetGroup * getParent();
-        void setInvalid(INVAL_TYPE arg1);
-		
-		std::vector<OffsetKey> getKeys() const;
-    };
-
-    /*
      * Version Info
      */
     enum OSType
@@ -123,99 +44,92 @@ namespace DFHack
         OS_APPLE,
         OS_BAD
     };
-    class DFHACK_EXPORT VersionInfo : public OffsetGroup
+    struct DFHACK_EXPORT VersionInfo
     {
     private:
-        VersionInfoPrivate * d;
+        std::vector <std::string> md5_list;
+        std::vector <uint32_t> PE_list;
+        map <std::string, uint32_t> Addresses;
+        uint32_t base;
+        std::string version;
+        OSType OS;
     public:
-        VersionInfo();
-        VersionInfo(const VersionInfo&);
-        void copy(const DFHack::VersionInfo* old);
-        ~VersionInfo();
+        VersionInfo()
+        {
+            base = 0;
+            version = "invalid";
+            OS = OS_BAD;
+        };
+        VersionInfo(const VersionInfo& rhs)
+        {
+            md5_list = rhs.md5_list;
+            PE_list = rhs.PE_list;
+            Addresses = rhs.Addresses;
+            base = rhs.base;
+            version = rhs.version;
+            OS = rhs.OS;
+        };
 
-        void RebaseAddresses(const int32_t new_base);
-        void RebaseAll(const int32_t new_base);
-        uint32_t getBase () const;
-        void setBase (const std::string&);
-        void setBase (const uint32_t);
+        uint32_t getBase () const { return base; };
+        void setBase (const uint32_t _base) { base = _base; };
+        void rebaseTo(const uint32_t new_base)
+        {
+            int64_t old = base;
+            int64_t new = new_base;
+            int64_t rebase = new - old;
+            base = new_base;
+            auto iter = Addresses.start();
+            while (iter != Addresses.end())
+            {
+                uint32_t & ref = *iter.second;
+                ref += rebase;
+                iter ++;
+            }
+        };
 
-        void setMD5 (const std::string & _md5);
-        bool getMD5(std::string & output);
+        void addMD5 (const std::string & _md5)
+        {
+            md5_list.push_back(_md5);
+        };
+        bool hasMD5 (const std::string & _md5) const
+        {
+            return find(md5_list.begin(), md5_list.end(), PE_) != md5_list.end();
+        };
 
-        void setPE (uint32_t PE_);
-        bool getPE(uint32_t & output);
+        void addPE (uint32_t PE_)
+        {
+            PE_list.push_back(PE_);
+        };
+        bool hasPE (uint32_t PE_) const
+        {
+            return find(PE_list.begin(), PE_list.end(), PE_) != PE_list.end();
+        };
 
-        std::string getMood(const uint32_t moodID);
-        std::string getString (const std::string&);
-        std::string getProfession(const uint32_t) const;
-        std::string getJob(const uint32_t) const;
-        std::string getSkill (const uint32_t) const;
-        std::string getTrait (const uint32_t, const uint32_t) const;
-        std::string getTraitName(const uint32_t) const;
-        std::string getLabor (const uint32_t);
-        std::vector< std::vector<std::string> > const& getAllTraits();
-        std::map<uint32_t, std::string> const& getAllLabours();
+        void setVersion(const std::string& v)
+        {
+            version = v;
+        };
+        std::string getVersion() const { return version; };
 
-        DFHack::t_level getLevelInfo(const uint32_t level) const;
+        void setAddress (const std::string& key, const uint32_t value)
+        {
+            Addresses[key] = value;
+        };
+        uint32_t getAddress (const std::string& key) const;
+        {
+            iter i = Addresses.find(key);
+            if(i == Addresses.end())
+                return 0;
+            return *i.second;
+        }
 
-        void setVersion(const char *);
-        void setVersion(const std::string&);
-        std::string getVersion();
-
-        void setOS(const char *);
-        void setOS(const std::string&);
-        void setOS(const OSType);
-        OSType getOS() const;
-
-        void setProfession(const std::string & id, const std::string & name);
-        void setJob(const std::string &, const std::string &);
-        void setSkill(const std::string &, const std::string &);
-        void setTrait(const std::string &, const std::string &, const std::string &,
-            const std::string &, const std::string &,
-            const std::string &, const std::string &, const std::string &);
-        void setLabor(const std::string &, const std::string &);
-        void setLevel(const std::string &nLevel, const std::string &nName,
-            const std::string &nXp);
-        void setMood(const std::string &id, const std::string &mood);
-
-        void RebaseVTable(const int32_t offset);
-        void setParentProcess(Process * _p);
-
-        t_class * setClass (const char * classname, uint32_t vptr = 0, uint32_t typeoffset = 0);
-        void setClassChild (t_class * parent, const char * classname, const char * type);
-
-        /**
-         * Get a classID from an address. The address has to point to the start of a virtual object (one with a virtual base class)
-         *   uses memory reading directly, needs suspend. input = address of the object
-         *   fails if it's unable to read from memory
-         */
-        bool resolveObjectToClassID (const char * address, int32_t & classID);
-
-        /**
-        * Get a ClassID when you know the classname. can fail if the class is not in the cache
-        */
-        bool resolveClassnameToClassID (const std::string classname, int32_t & classID);
-
-        /**
-        * Get a vptr from a classname. Can fail if the type is not in the cache
-        * limited to normal classes, variable-dependent types will resolve to the base class
-        */
-        bool resolveClassnameToVPtr ( const std::string classname, void * & vptr );
-
-        /**
-        * Get a classname from a previous classID. Can fail if the type is not in the cache (you use bogus classID)
-        */
-        bool resolveClassIDToClassname (const int32_t classID, std::string & classname);
-
-        /**
-        * Get the internal classID->classname mapping (for speed). DO NOT MANIPULATE THE VECTOR!
-        */
-        const std::vector<std::string> * getClassIDMapping();
-
-        /**
-        * Get a string with all addresses and offsets
-        */
-        std::string PrintOffsets();
+        void setOS(const OSType os)
+        {
+            OS = os;
+        };
+        OSType getOS() const
+        {
+            return OS;
+        };
     };
 }
-#endif // MEMINFO_H_INCLUDED

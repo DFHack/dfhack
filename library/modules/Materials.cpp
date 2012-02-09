@@ -539,29 +539,13 @@ Module* DFHack::createMaterials()
     return new Materials();
 }
 
-class Materials::Private
-{
-    public:
-    Process * owner;
-    OffsetGroup * OG_Materials;
-    void * vector_races;
-    void * vector_other;
-};
 
 Materials::Materials()
 {
-    Core & c = Core::getInstance();
-    d = new Private;
-    d->owner = c.p;
-    OffsetGroup *OG_Materials = d->OG_Materials = c.vinfo->getGroup("Materials");
-    {
-        d->vector_races = OG_Materials->getAddress("creature_type_vector");
-    }
 }
 
 Materials::~Materials()
 {
-    delete d;
 }
 
 bool Materials::Finish()
@@ -596,7 +580,6 @@ bool t_matglossInorganic::isGem()
 
 bool Materials::CopyInorganicMaterials (std::vector<t_matglossInorganic> & inorganic)
 {
-    Process * p = d->owner;
     size_t size = world->raws.inorganics.size();
     inorganic.clear();
     inorganic.reserve (size);

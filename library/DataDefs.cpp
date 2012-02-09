@@ -152,7 +152,8 @@ void virtual_identity::Init(Core *core)
             p->parent->has_children = true;
         }
     }
-
+    //FIXME: ... nuked. the group was empty...
+/*
     // Read pre-filled vtable ptrs
     OffsetGroup *ptr_table = core->vinfo->getGroup("vtable");
     for (virtual_identity *p = list; p; p = p->next) {
@@ -160,6 +161,7 @@ void virtual_identity::Init(Core *core)
         if (ptr_table->getSafeAddress(p->getName(),tmp))
             p->vtable_ptr = tmp;
     }
+    */
 }
 
 std::string DFHack::bitfieldToString(const void *p, int size, const bitfield_item_info *items)
@@ -215,11 +217,11 @@ DF_KNOWN_GLOBALS
 #undef SIMPLE_GLOBAL
 
 void DFHack::InitDataDefGlobals(Core *core) {
-    OffsetGroup *global_table = core->vinfo->getGroup("global");
+    VersionInfo *vinfo = core->vinfo;
     void * tmp;
 
 #define SIMPLE_GLOBAL(name,tname) \
-    if (global_table->getSafeAddress(#name,tmp)) df::global::name = (tname*)tmp;
+    if (vinfo->getAddress(#name,tmp)) df::global::name = (tname*)tmp;
 #define GLOBAL(name,tname) SIMPLE_GLOBAL(name,df::tname)
 DF_KNOWN_GLOBALS
 #undef GLOBAL

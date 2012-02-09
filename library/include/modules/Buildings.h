@@ -45,7 +45,8 @@ struct t_building
     uint32_t y2;
     uint32_t z;
     t_matglossPair material;
-    uint32_t type;
+    int32_t type;
+    int16_t subtype;
     int32_t custom_type;
     df::building * origin;
 };

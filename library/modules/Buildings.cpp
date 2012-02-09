@@ -59,9 +59,6 @@ bool Buildings::Read (const uint32_t index, t_building & building)
     Core & c = Core::getInstance();
     df::building *bld_40d = world->buildings.all[index];
 
-    // transform
-    int32_t type = -1;
-    c.vinfo->resolveObjectToClassID ( (char *)bld_40d, type);
     building.x1 = bld_40d->x1;
     building.x2 = bld_40d->x2;
     building.y1 = bld_40d->y1;
@@ -69,7 +66,8 @@ bool Buildings::Read (const uint32_t index, t_building & building)
     building.z = bld_40d->z;
     building.material.index = bld_40d->mat_index;
     building.material.type = bld_40d->mat_type;
-    building.type = type;
+    building.type = bld_40d->getType();
+    building.subtype = bld_40d->getSubtype();
     building.custom_type = bld_40d->getCustomType();
     building.origin = bld_40d;
     return true;

@@ -82,29 +82,19 @@ World::World()
     d->owner = c.p;
     wmap = 0;
 
-    OffsetGroup * OG_Gui = c.vinfo->getGroup("GUI");
-    try
-    {
-        d->pause_state_offset = OG_Gui->getAddress ("pause_state");
+    d->pause_state_offset = (void *) c.vinfo->getAddress ("pause_state");
+    if(d->pause_state_offset)
         d->PauseInited = true;
-    }
-    catch(exception &){};
 
-    OffsetGroup * OG_World = c.vinfo->getGroup("World");
-    try
+    d->weather_offset = (char *) c.vinfo->getAddress( "current_weather" );
+    if(d->weather_offset)
     {
-        d->weather_offset = OG_World->getAddress( "current_weather" );
         wmap = (weather_map *) d->weather_offset;
         d->StartedWeather = true;
     }
-    catch(Error::All &){};
-    try
-    {
-        d->gamemode_offset = OG_World->getAddress( "game_mode" );
-        d->controlmode_offset = OG_World->getAddress( "control_mode" );
-        d->StartedMode = true;
-    }
-    catch(Error::All &){};
+    d->gamemode_offset = (void *) c.vinfo->getAddress( "game_mode" );
+    d->controlmode_offset = (void *) c.vinfo->getAddress( "control_mode" );
+    d->StartedMode = true;
 
     d->Inited = true;
 }

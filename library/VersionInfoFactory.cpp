@@ -120,7 +120,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         type = cstr_type;
         if(type == "Address")
         {
-            const char *cstr_key = currentElem->Attribute("name");
+            const char *cstr_key = pMemEntry->Attribute("key");
             if(!cstr_key)
                 throw Error::MemoryXmlUnderspecifiedEntry(cstr_key);
             const char *cstr_value = pMemEntry->Attribute("value");
@@ -188,7 +188,7 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
     {
         clear();
         // For each version
-        pMemInfo=hRoot.FirstChild( "Version" ).Element();
+        TiXmlElement * pMemInfo=hRoot.FirstChild( "Version" ).Element();
         for( ; pMemInfo; pMemInfo=pMemInfo->NextSiblingElement("Version"))
         {
             const char *name = pMemInfo->Attribute("name");

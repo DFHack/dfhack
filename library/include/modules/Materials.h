@@ -360,9 +360,6 @@ namespace DFHack
 
         std::string getType(const t_material & mat);
         std::string getDescription(const t_material & mat);
-    private:
-        class Private;
-        Private* d;
     };
 }
 #endif

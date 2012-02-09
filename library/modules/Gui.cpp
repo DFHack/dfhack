@@ -481,34 +481,18 @@ Gui::Gui()
     d = new Private;
     d->owner = c.p;
     VersionInfo * mem = c.vinfo;
-    OffsetGroup * OG_Gui = mem->getGroup("GUI");
-
     // Setting up menu state
-    try
-    {
-        df_menu_state = (uint32_t *) OG_Gui->getAddress("current_menu_state");
-    }
-    catch(Error::All &)
-    {
-        df_menu_state = 0;
-    };
+    df_menu_state = (uint32_t *) & df::global::ui->main.mode;
 
-    OffsetGroup * OG_Position;
-    try
-    {
-        OG_Position = mem->getGroup("Position");
-        d->window_x_offset = (int32_t *) OG_Position->getAddress ("window_x");
-        d->window_y_offset = (int32_t *) OG_Position->getAddress ("window_y");
-        d->window_z_offset = (int32_t *) OG_Position->getAddress ("window_z");
+    d->window_x_offset = (int32_t *) mem->getAddress ("window_x");
+    d->window_y_offset = (int32_t *) mem->getAddress ("window_y");
+    d->window_z_offset = (int32_t *) mem->getAddress ("window_z");
+    if(d->window_z_offset && d->window_y_offset && d->window_x_offset)
         d->Started = true;
-    }
-    catch(Error::All &){};
-    try
-    {
-        d->screen_tiles_ptr_offset = (void *) OG_Position->getAddress ("screen_tiles_pointer");
+
+    d->screen_tiles_ptr_offset = (void *) mem->getAddress ("screen_tiles_pointer");
+    if(d->screen_tiles_ptr_offset)
         d->StartedScreen = true;
-    }
-    catch(Error::All &){};
 }
 
 Gui::~Gui()

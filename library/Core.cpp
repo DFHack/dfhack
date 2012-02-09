@@ -640,15 +640,15 @@ bool Core::Init()
         cerr << "Console is running.\n";
     else
         fatal ("Console has failed to initialize!\n", false);
-
+/*
     // dump offsets to a file
     std::ofstream dump("offsets.log");
     if(!dump.fail())
     {
-        dump << vinfo->PrintOffsets();
+        //dump << vinfo->PrintOffsets();
         dump.close();
     }
-    
+    */
     // initialize data defs
     virtual_identity::Init(this);
     InitDataDefGlobals(this);

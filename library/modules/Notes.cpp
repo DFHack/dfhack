@@ -36,6 +36,8 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 #include "modules/Notes.h"
+#include <DataDefs.h>
+#include "df/ui.h"
 using namespace DFHack;
 
 Module* DFHack::createNotes()
@@ -43,21 +45,8 @@ Module* DFHack::createNotes()
     return new Notes();
 }
 
+// FIXME: not even a wrapper now
 Notes::Notes()
 {
-    Core & c = Core::getInstance();
-
-    notes = NULL;
-    VersionInfo * mem = c.vinfo;
-    try
-    {
-        OffsetGroup * OG_Notes = mem->getGroup("Notes");
-
-        notes = (std::vector<t_note*>*) OG_Notes->getAddress("vector");
-    }
-    catch(DFHack::Error::AllMemdef &e)
-    {
-        notes = NULL;
-        cerr << "Notes not available... " << e.what() << endl;
-    }
+    notes = (std::vector<t_note*>*) &df::global::ui->waypoints.points;
 }

@@ -75,8 +75,11 @@
         <!-- .data -->
         <Address key='cursor' value='0x8c3de60'/>
         <Address key='selection_rect' value='0x8c3de70'/>
+        <Address key="control_mode" value="0x8c3de90" />
+        <Address key="game_mode" value="0x8c3dea0" />
         <!-- .bss -->
         <Address key='world' value='0x93f77a0'/>
+        <Address key="pause_state" value="0x93f06f0" />
         <Address key='ui' value='0x93f0780'/>
         <Address key='gview' value='0x8c3e900'/>
         <Address key='init' value='0x959c2a0'/>
@@ -94,6 +97,7 @@
         <Address key='ui_building_item_cursor' value='0x93f0648'/>
         <Address key='ui_selected_unit' value='0x93f06d0'/>
         <Address key='ui_unit_view_mode' value='0x93f06d8'/>
+        <Address key="current_weather" value="0x0x93f05e4" />
         <Address key='cur_year' value='0x93f0600'/>
         <Address key='cur_year_tick' value='0x93f0620'/>
 

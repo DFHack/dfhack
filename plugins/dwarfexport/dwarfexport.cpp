@@ -28,6 +28,7 @@ using df::global::world;
 
 // our own, empty header.
 #include "dwarfexport.h"
+#include <df/personality_facet_type.h>
 
 
 // Here go all the command declarations...
@@ -106,18 +107,26 @@ static void printAttributes(Core* c, df::unit* cre, ostream& out) {
     out << "    </Attributes>" << endl;
 }
 
-static void printTraits(Core* c, df::unit* cre, ostream& out) {
+static void printTraits(Core* c, df::unit* cre, ostream& out)
+{
+    
     out << "    <Traits>" << endl;
     df::unit_soul * s = cre->status.current_soul;
-    if (s) {
-        for (int i = 0; i < NUM_CREATURE_TRAITS; i++) {
-            out << "      <Trait name='" << c->vinfo->getTraitName(i) <<
-                "' value='" << s->traits[i] << "'>";
+    if (s)
+    {
+        FOR_ENUM_ITEMS(personality_facet_type,index)
+        {
+            out << "      <Trait name='" << df::enums::personality_facet_type::get_key(index) <<
+                "' value='" << s->traits[index] << "'>";
+            //FIXME: needs reimplementing trait string generation
+            /*
             string trait = c->vinfo->getTrait(i, s->traits[i]);
             if (!trait.empty()) {
                 out << trait.c_str();
             }
+            */
             out << "</Trait>" << endl;
+            
         }
     }
     out << "    </Traits>" << endl;

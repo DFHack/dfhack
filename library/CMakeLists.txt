@@ -72,7 +72,6 @@ DataStaticsCtor.cpp
 MiscUtils.cpp
 PluginManager.cpp
 TileTypes.cpp
-VersionInfo.cpp
 VersionInfoFactory.cpp
 Virtual.cpp
 

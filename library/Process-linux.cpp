@@ -65,7 +65,6 @@ Process::Process(VersionInfoFactory * known_versions)
     if(vinfo)
     {
         my_descriptor = new VersionInfo(*vinfo);
-        my_descriptor->setParentProcess(this);
         identified = true;
     }
     else

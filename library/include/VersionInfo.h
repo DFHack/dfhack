@@ -31,6 +31,7 @@ distribution.
 #include <map>
 #include <sys/types.h>
 #include <vector>
+#include <algorithm>
 
 namespace DFHack
 {
@@ -49,7 +50,7 @@ namespace DFHack
     private:
         std::vector <std::string> md5_list;
         std::vector <uint32_t> PE_list;
-        map <std::string, uint32_t> Addresses;
+        std::map <std::string, uint32_t> Addresses;
         uint32_t base;
         std::string version;
         OSType OS;
@@ -75,13 +76,13 @@ namespace DFHack
         void rebaseTo(const uint32_t new_base)
         {
             int64_t old = base;
-            int64_t new = new_base;
-            int64_t rebase = new - old;
+            int64_t newx = new_base;
+            int64_t rebase = newx - old;
             base = new_base;
-            auto iter = Addresses.start();
+            auto iter = Addresses.begin();
             while (iter != Addresses.end())
             {
-                uint32_t & ref = *iter.second;
+                uint32_t & ref = (*iter).second;
                 ref += rebase;
                 iter ++;
             }
@@ -93,7 +94,7 @@ namespace DFHack
         };
         bool hasMD5 (const std::string & _md5) const
         {
-            return find(md5_list.begin(), md5_list.end(), PE_) != md5_list.end();
+            return std::find(md5_list.begin(), md5_list.end(), _md5) != md5_list.end();
         };
 
         void addPE (uint32_t PE_)
@@ -102,7 +103,7 @@ namespace DFHack
         };
         bool hasPE (uint32_t PE_) const
         {
-            return find(PE_list.begin(), PE_list.end(), PE_) != PE_list.end();
+            return std::find(PE_list.begin(), PE_list.end(), PE_) != PE_list.end();
         };
 
         void setVersion(const std::string& v)
@@ -115,12 +116,21 @@ namespace DFHack
         {
             Addresses[key] = value;
         };
-        uint32_t getAddress (const std::string& key) const;
+        template <typename T>
+        bool getAddress (const std::string& key, T & value)
         {
-            iter i = Addresses.find(key);
+            auto i = Addresses.find(key);
+            if(i == Addresses.end())
+                return false;
+            value = (T) (*i).second;
+            return true;
+        };
+        uint32_t getAddress (const std::string& key) const
+        {
+            auto i = Addresses.find(key);
             if(i == Addresses.end())
                 return 0;
-            return *i.second;
+            return (*i).second;
         }
 
         void setOS(const OSType os)

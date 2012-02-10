@@ -21,10 +21,16 @@
     <Version name="v0.31.25 SDL" os="windows">
         <PETimeStamp value="0x4D90764F" />
         <!-- .data -->
+        <Address key="control_mode" value="0x8A4814" />
+        <Address key="game_mode" value="0x8A4818" />
         <Address key='cursor' value='0xb347f0'/>
         <Address key='selection_rect' value='0xb347fc'/>
+        <Address name="window_x" value="0xC20984" />
+        <Address name="window_y" value="0xC4EBA0" />
+        <Address name="window_z" value="0xC4EB7C" />
         <!-- .bss -->
         <Address key='world' value='0x16b0a58'/>
+        <Address key="pause_state" value="0x125C7C9" />
         <Address key='ui' value='0x14ee7e0'/>
         <Address key='gview' value='0x14f6070'/>
         <Address key='init' value='0x184ae58'/>
@@ -37,11 +43,14 @@
         <Address key='ui_workshop_job_cursor' value='0x14ec79c'/>
         <Address key='ui_workshop_in_add' value='0xeb0992'/>
 
+   <!--<Address key="screen_tiles_pointer" />-->
+
         <Address key='job_next_id' value='0xe18290'/>
 
         <Address key='ui_building_item_cursor' value='0xef7264'/>
         <Address key='ui_selected_unit' value='0xef2430'/>
         <Address key='ui_unit_view_mode' value='0xec4a5c'/>
+        <Address key="current_weather" value="0x125C7A0" />
         <Address key='cur_year' value='0xef7268'/>
         <Address key='cur_year_tick' value='0xec5170'/>
 
@@ -77,6 +86,9 @@
         <Address key='selection_rect' value='0x8c3de70'/>
         <Address key="control_mode" value="0x8c3de90" />
         <Address key="game_mode" value="0x8c3dea0" />
+        <Address key="window_x" value="0x8dfaa98" />
+        <Address key="window_y" value="0x8dfaa9c" />
+        <Address key="window_z" value="0x8dfaaa0" />
         <!-- .bss -->
         <Address key='world' value='0x93f77a0'/>
         <Address key="pause_state" value="0x93f06f0" />
@@ -91,6 +103,9 @@
         <Address key='ui_look_cursor' value='0x93f06dc'/>
         <Address key='ui_workshop_job_cursor' value='0x93f0644'/>
         <Address key='ui_workshop_in_add' value='0x93f0651'/>
+
+        <!-- maybe, untested for a looong time, possibly not even needed -->
+        <Address key="screen_tiles_pointer" value="0x958c17c" />
 
         <Address key='job_next_id' value='0x961d940'/>
 

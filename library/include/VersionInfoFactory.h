@@ -31,7 +31,7 @@ distribution.
 class TiXmlElement;
 namespace DFHack
 {
-    class VersionInfo;
+    struct VersionInfo;
     class DFHACK_EXPORT VersionInfoFactory
     {
         public:

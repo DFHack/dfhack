@@ -36,7 +36,7 @@ distribution.
 
 namespace DFHack
 {
-    class VersionInfo;
+    struct VersionInfo;
     class Process;
     //class Window;
     class DFVector;

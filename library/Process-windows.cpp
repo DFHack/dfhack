@@ -161,9 +161,7 @@ Process::Process(VersionInfoFactory * factory)
         identified = true;
         // give the process a data model and memory layout fixed for the base of first module
         my_descriptor  = new VersionInfo(*vinfo);
-        my_descriptor->RebaseAll((uint32_t)d->base);
-        // keep track of created memory_info object so we can destroy it later
-        my_descriptor->setParentProcess(this);
+        my_descriptor->rebaseTo((uint32_t)d->base);
         for(size_t i = 0; i < threads_ids.size();i++)
         {
             HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads_ids[i]);

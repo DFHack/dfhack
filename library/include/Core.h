@@ -56,7 +56,7 @@ namespace DFHack
     class World;
     class Materials;
     class Notes;
-    class VersionInfo;
+    struct VersionInfo;
     class VersionInfoFactory;
     class PluginManager;
     class Core;

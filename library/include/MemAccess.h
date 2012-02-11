@@ -260,7 +260,7 @@ namespace DFHack
             {
                 return true;
             };
-            /// @return true if the process is identified -- has a Memory.xml entry
+            /// @return true if the process is identified -- has a symbol table extension
             bool isIdentified()
             {
                 return identified;
@@ -270,7 +270,7 @@ namespace DFHack
             /// get virtual memory ranges of the process (what is mapped where)
             void getMemRanges(std::vector<t_memrange> & ranges );
 
-            /// get the flattened Memory.xml entry of this process
+            /// get the symbol table extension of this process
             VersionInfo *getDescriptor()
             {
                 return my_descriptor;
@@ -281,8 +281,8 @@ namespace DFHack
             /// get the DF Process FilePath
             std::string getPath();
 
-			/// modify permisions of memory range
-			bool setPermisions(const t_memrange & range,const t_memrange &trgrange);
+            /// modify permisions of memory range
+            bool setPermisions(const t_memrange & range,const t_memrange &trgrange);
     private:
         VersionInfo * my_descriptor;
         PlatformSpecific *d;

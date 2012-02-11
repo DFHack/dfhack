@@ -198,7 +198,7 @@ install(TARGETS dfhack
         LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
         RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 #install the offset file
-install(FILES ${dfhack_SOURCE_DIR}/Memory.xml
+install(FILES xml/symbols.xml
         DESTINATION ${DFHACK_DATA_DESTINATION}) #linux: share/dfhack
 
 if(BUILD_DEVEL)

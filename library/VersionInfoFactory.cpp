@@ -86,9 +86,9 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
     if (!cstr_name)
         throw Error::MemoryXmlBadAttribute("name");
 
-    const char *cstr_os = entry->Attribute("os");
+    const char *cstr_os = entry->Attribute("os-type");
     if (!cstr_os)
-        throw Error::MemoryXmlBadAttribute("os");
+        throw Error::MemoryXmlBadAttribute("os-type");
 
     string os = cstr_os;
     mem->setVersion(cstr_name);
@@ -107,7 +107,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
     }
     else
     {
-        throw Error::MemoryXmlBadAttribute("os");
+        throw Error::MemoryXmlBadAttribute("os-type");
     }
 
     // process additional entries
@@ -118,9 +118,9 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         string type, name, value;
         const char *cstr_type = pMemEntry->Value();
         type = cstr_type;
-        if(type == "Address")
+        if(type == "global-address")
         {
-            const char *cstr_key = pMemEntry->Attribute("key");
+            const char *cstr_key = pMemEntry->Attribute("name");
             if(!cstr_key)
                 throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);
             const char *cstr_value = pMemEntry->Attribute("value");
@@ -128,14 +128,14 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
                 throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);
             mem->setAddress(cstr_key, strtol(cstr_value, 0, 0));
         }
-        else if (type == "MD5")
+        else if (type == "md5-hash")
         {
             const char *cstr_value = pMemEntry->Attribute("value");
             if(!cstr_value)
                 throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);
             mem->addMD5(cstr_value);
         }
-        else if (type == "PETimeStamp")
+        else if (type == "binary-timestamp")
         {
             const char *cstr_value = pMemEntry->Attribute("value");
             if(!cstr_value)
@@ -176,7 +176,7 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
             throw Error::MemoryXmlNoRoot();
         }
         string m_name=pElem->Value();
-        if(m_name != "DFHack")
+        if(m_name != "data-definition")
         {
             error = true;
             throw Error::MemoryXmlNoRoot();
@@ -188,8 +188,8 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
     {
         clear();
         // For each version
-        TiXmlElement * pMemInfo=hRoot.FirstChild( "Version" ).Element();
-        for( ; pMemInfo; pMemInfo=pMemInfo->NextSiblingElement("Version"))
+        TiXmlElement * pMemInfo=hRoot.FirstChild( "symbol-table" ).Element();
+        for( ; pMemInfo; pMemInfo=pMemInfo->NextSiblingElement("symbol-table"))
         {
             const char *name = pMemInfo->Attribute("name");
             if(name)
@@ -201,6 +201,6 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
         }
     }
     error = false;
-    std::cerr << "Loaded " << versions.size() << " DF versions." << std::endl;
+    std::cerr << "Loaded " << versions.size() << " DF symbol tables." << std::endl;
     return true;
 }

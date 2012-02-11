@@ -594,9 +594,9 @@ bool Core::Init()
 
     // find out what we are...
     #ifdef LINUX_BUILD
-        const char * path = "hack/Memory.xml";
+        const char * path = "hack/symbols.xml";
     #else
-        const char * path = "hack\\Memory.xml";
+        const char * path = "hack\\symbols.xml";
     #endif
     vif = new DFHack::VersionInfoFactory();
     cerr << "Identifying DF version.\n";
@@ -607,7 +607,7 @@ bool Core::Init()
     catch(Error::All & err)
     {
         std::stringstream out;
-        out << "Error while reading Memory.xml:\n";
+        out << "Error while reading symbols.xml:\n";
         out << err.what() << std::endl;
         delete vif;
         vif = NULL;
@@ -849,7 +849,7 @@ bool Core::ncurses_wgetch(int in, int & out)
         if(df::global::ui && df::global::gview && g->df_menu_state)
         {
             df::viewscreen * ws = g->GetCurrentScreen();
-            // FIXME: put hardcoded values into memory.xml
+            // FIXME: USE ENUMS
             if(((t_virtual *)ws)->getClassName() == "viewscreen_dwarfmodest" && *g->df_menu_state == 0x23)
             {
                 out = in;
@@ -875,7 +875,7 @@ int Core::SDL_Event(SDL::Event* ev, int orig_return)
     if(ev && ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP)
     {
         SDL::KeyboardEvent * ke = (SDL::KeyboardEvent *)ev;
-        
+
         if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
         {
             hotkey_states[ke->ksym.sym] = true;

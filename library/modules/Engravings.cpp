@@ -72,8 +72,8 @@ bool Engravings::copyEngraving(const int32_t index, t_engraving &out)
     out.pos = out.origin->pos;
     out.flags = out.origin->flags;
     out.tile = out.origin->tile;
-    out.type = out.origin->type;
-    out.subtype = out.origin->subtype;
+    out.art_id = out.origin->art_id;
+    out.art_subid = out.origin->art_subid;
     out.quality = out.origin->quality;
     return true;
 }

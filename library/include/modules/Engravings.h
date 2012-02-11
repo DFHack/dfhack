@@ -49,8 +49,8 @@ struct t_engraving {
     df::coord pos;
     df::engraving_flags flags;
     int8_t tile;
-    int32_t type;
-    int16_t subtype;
+    int32_t art_id;
+    int16_t art_subid;
     df::item_quality quality;
     // Pointer to original object, in case you want to modify it
     df::engraving *origin;

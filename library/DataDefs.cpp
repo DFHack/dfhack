@@ -208,22 +208,3 @@ int DFHack::findBitfieldField(const std::string &name, int size, const bitfield_
 
     return -1;
 }
-
-#define SIMPLE_GLOBAL(name,tname) \
-    tname *df::global::name = NULL;
-#define GLOBAL(name,tname) SIMPLE_GLOBAL(name,df::tname)
-DF_KNOWN_GLOBALS
-#undef GLOBAL
-#undef SIMPLE_GLOBAL
-
-void DFHack::InitDataDefGlobals(Core *core) {
-    VersionInfo *vinfo = core->vinfo;
-    void * tmp;
-
-#define SIMPLE_GLOBAL(name,tname) \
-    if (vinfo->getAddress(#name,tmp)) df::global::name = (tname*)tmp;
-#define GLOBAL(name,tname) SIMPLE_GLOBAL(name,df::tname)
-DF_KNOWN_GLOBALS
-#undef GLOBAL
-#undef SIMPLE_GLOBAL
-}

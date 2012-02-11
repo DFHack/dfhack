@@ -237,38 +237,8 @@ namespace df
 #define FOR_ENUM_ITEMS(enum,iter) \
     for(df::enum iter = ENUM_FIRST_ITEM(enum); iter <= ENUM_LAST_ITEM(enum); iter = df::enum(1+int(iter)))
 
-namespace df {
-#define DF_KNOWN_GLOBALS \
-    GLOBAL(cursor,cursor) \
-    GLOBAL(selection_rect,selection_rect) \
-    GLOBAL(world,world) \
-    GLOBAL(ui,ui) \
-    GLOBAL(gview,interface) \
-    GLOBAL(init,init) \
-    GLOBAL(d_init,d_init) \
-    SIMPLE_GLOBAL(job_next_id,int) \
-    SIMPLE_GLOBAL(ui_look_cursor,int) \
-    SIMPLE_GLOBAL(ui_workshop_job_cursor,int) \
-    SIMPLE_GLOBAL(ui_building_item_cursor,int) \
-    SIMPLE_GLOBAL(ui_workshop_in_add,bool) \
-    SIMPLE_GLOBAL(ui_selected_unit,int) \
-    SIMPLE_GLOBAL(cur_year,int) \
-    SIMPLE_GLOBAL(cur_year_tick,int) \
-    GLOBAL(ui_sidebar_menus,ui_sidebar_menus) \
-    GLOBAL(ui_build_selector,ui_build_selector) \
-    GLOBAL(ui_look_list,ui_look_list) \
-    GLOBAL(ui_unit_view_mode, ui_unit_view_mode) \
-    GLOBAL(gps, graphic) \
-
-
-#define SIMPLE_GLOBAL(name,tname) \
-    namespace global { extern DFHACK_EXPORT tname *name; }
-#define GLOBAL(name,tname) \
-    struct tname; SIMPLE_GLOBAL(name,tname)
-DF_KNOWN_GLOBALS
-#undef GLOBAL
-#undef SIMPLE_GLOBAL
-}
+// Global object pointers
+#include "df/global_objects.h"
 
 // A couple of headers that have to be included at once
 #include "df/coord2d.h"

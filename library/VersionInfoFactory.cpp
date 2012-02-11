@@ -122,7 +122,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         {
             const char *cstr_key = pMemEntry->Attribute("key");
             if(!cstr_key)
-                throw Error::MemoryXmlUnderspecifiedEntry(cstr_key);
+                throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);
             const char *cstr_value = pMemEntry->Attribute("value");
             if(!cstr_value)
                 throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);

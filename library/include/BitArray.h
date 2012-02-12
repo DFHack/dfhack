@@ -46,6 +46,13 @@ namespace DFHack
             free(bits);
         }
 
+        explicit BitArray(T last) : bits(NULL), size(0) {
+            extend(last);
+        }
+        explicit BitArray(unsigned last) : bits(NULL), size(0) {
+            extend(T(last));
+        }
+
         void clear_all ( void )
         {
             if(bits)

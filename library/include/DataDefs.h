@@ -181,6 +181,7 @@ namespace df
     using DFHack::bitfield_item_info;
     using DFHack::enum_list_attr;
     using DFHack::BitArray;
+    using DFHack::DfArray;
 
     template<class T>
     class class_virtual_identity : public virtual_identity {

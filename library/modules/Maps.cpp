@@ -145,7 +145,7 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
         buffer->local_feature = block->local_feature;
         buffer->mystery = block->unk2;
         buffer->origin = block;
-        buffer->blockflags.whole = block->flags;
+        buffer->blockflags.whole = block->flags.as_int();
         return true;
     }
     return false;
@@ -211,7 +211,7 @@ bool Maps::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &bloc
     df::map_block *block = getBlock(x,y,z);
     if (block)
     {
-        blockflags.whole = block->flags;
+        blockflags.whole = block->flags.as_int();
         return true;
     }
     return false;

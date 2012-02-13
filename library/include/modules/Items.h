@@ -88,9 +88,6 @@ namespace DFHack
         return a.type != b.type || a.subtype != b.subtype;
     }
 
-class Context;
-class DFContextShared;
-
 /**
  * Type for holding an item read from DF
  * \ingroup grp_items

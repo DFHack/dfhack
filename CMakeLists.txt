@@ -1,9 +1,13 @@
 # main project file. use it from a build sub-folder, see COMPILE for details
 
-## setting the build type.
-IF(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
-  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Release RelWithDebInfo.")
-ENDIF()
+# Set up build types
+if(CMAKE_CONFIGURATION_TYPES)
+  SET(CMAKE_CONFIGURATION_TYPES "Release;RelWithDebInfo" CACHE STRING "Semicolon-separate list of supported configuration types" FORCE)
+else(CMAKE_CONFIGURATION_TYPES)
+  if (NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Release RelWithDebInfo.")
+  endif (NOT CMAKE_BUILD_TYPE)
+endif(CMAKE_CONFIGURATION_TYPES)
 
 ## some generic CMake magic
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)

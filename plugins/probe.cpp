@@ -143,7 +143,7 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
         con.print("\n\n");
     }
 */
-    int16_t tiletype = mc.tiletypeAt(cursor);
+    df::tiletype tiletype = mc.tiletypeAt(cursor);
     df::tile_designation &des = block.designation[tileX][tileY];
 /*
     if(showDesig)
@@ -169,15 +169,15 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
         con.print(" = %s",tileName(tiletype));
     con.print("\n");
 
-    DFHack::TileShape shape = tileShape(tiletype);
-    DFHack::TileMaterial material = tileMaterial(tiletype);
-    DFHack::TileSpecial special = tileSpecial(tiletype);
+    df::tiletype_shape shape = tileShape(tiletype);
+    df::tiletype_material material = tileMaterial(tiletype);
+    df::tiletype_special special = tileSpecial(tiletype);
     con.print("%-10s: %4d %s\n","Class"    ,shape,
-            TileShapeString[ shape ]);
+            tiletype_shape::get_key(shape));
     con.print("%-10s: %4d %s\n","Material" ,
-            material,TileMaterialString[ material ]);
+            material, tiletype_material::get_key(material));
     con.print("%-10s: %4d %s\n","Special"  ,
-            special, TileSpecialString[ special ]);
+            special, tiletype_special::get_key(special));
     con.print("%-10s: %4d\n"   ,"Variant"  ,
             tileVariant(tiletype));
     con.print("%-10s: %s\n"    ,"Direction",

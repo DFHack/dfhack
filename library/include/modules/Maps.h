@@ -134,7 +134,7 @@ union t_blockflags
  * 16x16 array of tile types
  * \ingroup grp_maps
  */
-typedef int16_t tiletypes40d [16][16];
+typedef df::tiletype tiletypes40d [16][16];
 /**
  * 16x16 array used for squashed block materials
  * \ingroup grp_maps

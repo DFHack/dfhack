@@ -61,10 +61,10 @@ int toint(const std::string &str, int failValue = 0)
 
 struct TileType
 {
-    DFHack::TileShape shape;
-    DFHack::TileMaterial material;
-    DFHack::TileSpecial special;
-    DFHack::TileVariant variant;
+    df::tiletype_shape shape;
+    df::tiletype_material material;
+    df::tiletype_special special;
+    df::tiletype_variant variant;
     int dig;
     int hidden;
     int light;
@@ -73,10 +73,10 @@ struct TileType
 
     TileType()
     {
-        shape = DFHack::tileshape_invalid;
-        material = DFHack::tilematerial_invalid;
-        special = DFHack::tilespecial_invalid;
-        variant = DFHack::tilevariant_invalid;
+        shape = tiletype_shape::NONE;
+        material = tiletype_material::NONE;
+        special = tiletype_special::NONE;
+        variant = tiletype_variant::NONE;
         dig = -1;
         hidden = -1;
         light = -1;
@@ -258,18 +258,18 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
     }
     else if (option == "material" || option == "mat" || option == "m")
     {
-        if (valInt >= -1 && valInt < DFHack::tilematerial_count)
+        if (tiletype_material::is_valid((df::tiletype_material)valInt))
         {
-            paint.material = (DFHack::TileMaterial) valInt;
+            paint.material = (df::tiletype_material)valInt;
             found = true;
         }
         else
         {
-            for (int i = 0; i < DFHack::tilematerial_count; i++)
+            FOR_ENUM_ITEMS(tiletype_material, i)
             {
-                if (val == DFHack::TileMaterialString[i])
+                if (val == tiletype_material::get_key(i))
                 {
-                    paint.material = (DFHack::TileMaterial) i;
+                    paint.material = i;
                     found = true;
                     break;
                 }
@@ -777,37 +777,37 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
 
             for (coord_vec::iterator iter = all_tiles.begin(); iter != all_tiles.end(); ++iter)
             {
-                const DFHack::TileRow *source = DFHack::getTileRow(map.tiletypeAt(*iter));
+                const df::tiletype source = map.tiletypeAt(*iter);
                 df::tile_designation des = map.designationAt(*iter);
 
-                if ((filter.shape > -1 && filter.shape != source->shape)
-                 || (filter.material > -1 && filter.material != source->material)
-                 || (filter.special > -1 && filter.special != source->special)
-                 || (filter.variant > -1 && filter.variant != source->variant)
+                if ((filter.shape > -1 && filter.shape != tileShape(source))
+                 || (filter.material > -1 && filter.material != tileMaterial(source))
+                 || (filter.special > -1 && filter.special != tileSpecial(source))
+                 || (filter.variant > -1 && filter.variant != tileVariant(source))
 		 || (filter.dig > -1 && (filter.dig != 0) != (des.bits.dig != tile_dig_designation::No))
                 )
                 {
                     continue;
                 }
 
-                DFHack::TileShape shape = paint.shape;
-                if (shape < 0)
+                df::tiletype_shape shape = paint.shape;
+                if (shape == tiletype_shape::NONE)
                 {
-                    shape = source->shape;
+                    shape = tileShape(source);
                 }
 
-                DFHack::TileMaterial material = paint.material;
-                if (material < 0)
+                df::tiletype_material material = paint.material;
+                if (material == tiletype_material::NONE)
                 {
-                    material = source->material;
+                    material = tileMaterial(source);
                 }
 
-                DFHack::TileSpecial special = paint.special;
-                if (special < 0)
+                df::tiletype_special special = paint.special;
+                if (special == tiletype_special::NONE)
                 {
-                    special = source->special;
+                    special = tileSpecial(source);
                 }
-                DFHack::TileVariant variant = paint.variant;
+                df::tiletype_variant variant = paint.variant;
                 /*
                  * FIXME: variant should be:
                  * 1. If user variant:
@@ -826,24 +826,24 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
                  * the usefullness of the tool.
                  */
                 /*
-                if (variant < 0)
+                if (variant == tiletype_variant::NONE)
                 {
-                    variant = source->variant;
+                    variant = tileVariant(source);
                 }
                 */
                 // Remove direction from directionless tiles
-                DFHack::TileDirection direction = source->direction;
-                if (!(shape == DFHack::RIVER_BED || shape == DFHack::BROOK_BED || shape == DFHack::WALL && (material == DFHack::CONSTRUCTED || special == DFHack::TILE_SMOOTH))) {
+                DFHack::TileDirection direction = tileDirection(source);
+                if (!(shape == tiletype_shape::RIVER_BED || shape == tiletype_shape::BROOK_BED || shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH))) {
                     direction.whole = 0;
                 }
 
-                int32_t type = DFHack::findTileType(shape, material, variant, special, direction);
+                df::tiletype type = DFHack::findTileType(shape, material, variant, special, direction);
                 // hack for empty space
-                if (shape == DFHack::EMPTY && material == DFHack::AIR && variant == DFHack::VAR_1 && special == DFHack::TILE_NORMAL && direction.whole == 0) {
-                    type = 32;
+                if (shape == tiletype_shape::EMPTY && material == tiletype_material::AIR && variant == tiletype_variant::VAR_1 && special == tiletype_special::NORMAL && direction.whole == 0) {
+                    type = tiletype::OpenSpace;
                 }
                 // make sure it's not invalid
-                if(type != -1)
+                if(type != tiletype::Void)
                     map.setTiletypeAt(*iter, type);
 
                 if (paint.hidden > -1)

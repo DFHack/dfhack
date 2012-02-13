@@ -144,7 +144,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
                 c->con.printerr("Cursor is in an invalid/uninitialized area. Place it over a floor.\n");
                 return CR_FAILURE;
             }
-            uint16_t ttype = MC.tiletypeAt(pos_cursor);
+            df::tiletype ttype = MC.tiletypeAt(pos_cursor);
             if(!DFHack::isFloorTerrain(ttype))
             {
                 c->con.printerr("Cursor should be placed over a floor.\n");

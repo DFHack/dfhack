@@ -141,7 +141,7 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
     MapExtras::MapCache MCache;
 
     df::tile_designation des = MCache.designationAt(xy);
-    int16_t tt = MCache.tiletypeAt(xy);
+    df::tiletype tt = MCache.tiletypeAt(xy);
     df::tile_occupancy oc;
 
     if (checkbuilding)

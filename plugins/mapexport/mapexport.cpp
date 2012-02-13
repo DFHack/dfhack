@@ -206,15 +206,14 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                             prototile->set_flow_size(des.bits.flow_size);
                         }
 
-                        uint16_t type = b->TileTypeAt(coord);
-                        const DFHack::TileRow *info = DFHack::getTileRow(type);
-                        prototile->set_type((dfproto::Tile::TileType)info->shape);
+                        df::tiletype type = b->TileTypeAt(coord);
+                        prototile->set_type((dfproto::Tile::TileType)tileShape(type));
 
-                        prototile->set_material_type((dfproto::Tile::MaterialType)info->material);
+                        prototile->set_material_type((dfproto::Tile::MaterialType)tileMaterial(type));
 
                         df::coord map_pos = df::coord(b_x*16+x,b_y*16+y,z);
                         
-                        switch (info->material)
+                        switch (tileMaterial(type))
                         {
                         case DFHack::SOIL:
                         case DFHack::STONE:

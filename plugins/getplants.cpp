@@ -105,10 +105,11 @@ DFhackCExport command_result df_getplants (Core * c, vector <string> & parameter
                 if (!exclude)
                     continue;
             }
-            TileShape shape = tileShape(cur->tiletype[x][y]);
-            if (plant->flags.bits.is_shrub && (treesonly || shape != SHRUB_OK))
+            df::tiletype_shape shape = tileShape(cur->tiletype[x][y]);
+            df::tiletype_special special = tileSpecial(cur->tiletype[x][y]);
+            if (plant->flags.bits.is_shrub && (treesonly || (shape != tiletype_shape::SHRUB && special != tiletype_special::DEAD)))
                 continue;
-            if (!plant->flags.bits.is_shrub && (shrubsonly || (shape != TREE_OK && shape != TREE_DEAD)))
+            if (!plant->flags.bits.is_shrub && (shrubsonly || shape != tiletype_shape::TREE))
                 continue;
             if (cur->designation[x][y].bits.hidden)
                 continue;

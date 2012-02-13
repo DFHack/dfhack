@@ -58,7 +58,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                          "Usage: mapexport [options] <filename>\n"
                          "Example: mapexport all embark.dfmap\n"
                          "Options:\n"
-                         "   all   - Export the entire map, not just what's revealed."
+                         "   all   - Export the entire map, not just what's revealed.\n"
             );
             return CR_OK;
         }

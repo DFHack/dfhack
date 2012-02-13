@@ -76,6 +76,11 @@ void SquashRocks ( std::vector< std::vector <uint16_t> > * layerassign, DFHack::
                 materials[xx][yy] = -1;
                 continue;
             }
+            if (mb.biome_indices[test] >= layerassign->size())
+            {
+                materials[xx][yy] = -1;
+                continue;
+            }
             materials[xx][yy] =
             layerassign->at(mb.biome_indices[test])[mb.designation[xx][yy].bits.geolayer_index];
         }

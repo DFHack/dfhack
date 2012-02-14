@@ -58,11 +58,11 @@ enum revealstate
 
 revealstate revealed = NOT_REVEALED;
 
-DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params);
-DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string> & params);
-DFhackCExport command_result revtoggle(DFHack::Core * c, std::vector<std::string> & params);
-DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string> & params);
-DFhackCExport command_result nopause(DFHack::Core * c, std::vector<std::string> & params);
+command_result reveal(DFHack::Core * c, std::vector<std::string> & params);
+command_result unreveal(DFHack::Core * c, std::vector<std::string> & params);
+command_result revtoggle(DFHack::Core * c, std::vector<std::string> & params);
+command_result revflood(DFHack::Core * c, std::vector<std::string> & params);
+command_result nopause(DFHack::Core * c, std::vector<std::string> & params);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -124,7 +124,7 @@ command_result nopause (Core * c, std::vector <std::string> & parameters)
 }
 
 
-DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
+command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
 {
     bool no_hell = true;
     bool pause = true;
@@ -215,7 +215,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     return CR_OK;
 }
 
-DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string> & params)
+command_result unreveal(DFHack::Core * c, std::vector<std::string> & params)
 {
     Console & con = c->con;
     for(size_t i = 0; i < params.size();i++)
@@ -272,7 +272,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     return CR_OK;
 }
 
-DFhackCExport command_result revtoggle (DFHack::Core * c, std::vector<std::string> & params)
+command_result revtoggle (DFHack::Core * c, std::vector<std::string> & params)
 {
     for(size_t i = 0; i < params.size();i++)
     {
@@ -292,7 +292,7 @@ DFhackCExport command_result revtoggle (DFHack::Core * c, std::vector<std::strin
     }
 }
 
-DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string> & params)
+command_result revflood(DFHack::Core * c, std::vector<std::string> & params)
 {
     for(size_t i = 0; i < params.size();i++)
     {

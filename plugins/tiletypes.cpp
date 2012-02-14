@@ -633,7 +633,7 @@ public:
 
 CommandHistory tiletypes_hist;
 
-DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameters);
+command_result df_tiletypes (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -654,7 +654,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameters)
+command_result df_tiletypes (Core * c, vector <string> & parameters)
 {
     uint32_t x_max = 0, y_max = 0, z_max = 0;
     int32_t x = 0, y = 0, z = 0;

@@ -18,7 +18,7 @@ using namespace DFHack::Simple;
 using namespace df::enums;
 using df::global::world;
 
-DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string> & params);
+command_result tubefill(DFHack::Core * c, std::vector<std::string> & params);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -37,7 +37,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string> & params)
+command_result tubefill(DFHack::Core * c, std::vector<std::string> & params)
 {
     uint64_t count = 0;
 

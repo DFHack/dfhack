@@ -17,7 +17,7 @@ using namespace DFHack;
 
 using df::global::world;
 
-DFhackCExport command_result df_regrass (Core * c, vector <string> & parameters)
+command_result df_regrass (Core * c, vector <string> & parameters)
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;

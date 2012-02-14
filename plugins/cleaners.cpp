@@ -113,7 +113,7 @@ command_result cleanunits (Core * c)
     return CR_OK;
 }
 
-DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
+command_result spotclean (Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     if (cursor->x == -30000)
@@ -145,7 +145,7 @@ DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result clean (Core * c, vector <string> & parameters)
+command_result clean (Core * c, vector <string> & parameters)
 {
     bool map = false;
     bool snow = false;

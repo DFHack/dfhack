@@ -35,7 +35,7 @@ bool setTileMaterial(df::tiletype &tile, const df::tiletype_material mat)
     return false;
 }
 
-DFhackCExport command_result df_fixveins (Core * c, vector <string> & parameters)
+command_result df_fixveins (Core * c, vector <string> & parameters)
 {
     if (parameters.size())
         return CR_WRONG_USAGE;

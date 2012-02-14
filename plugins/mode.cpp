@@ -12,7 +12,7 @@ using namespace std;
 using namespace DFHack;
 
 
-DFhackCExport command_result mode (Core * c, vector <string> & parameters);
+command_result mode (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -91,7 +91,7 @@ void printCurrentModes(t_gamemodes gm, Console & con)
     }
 }
 
-DFhackCExport command_result mode (Core * c, vector <string> & parameters)
+command_result mode (Core * c, vector <string> & parameters)
 {
     string command = "";
     bool set = false;

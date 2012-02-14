@@ -20,9 +20,9 @@ using std::string;
 using namespace DFHack;
 using df::global::world;
 
-DFhackCExport command_result df_grow (Core * c, vector <string> & parameters);
-DFhackCExport command_result df_immolate (Core * c, vector <string> & parameters);
-DFhackCExport command_result df_extirpate (Core * c, vector <string> & parameters);
+command_result df_grow (Core * c, vector <string> & parameters);
+command_result df_immolate (Core * c, vector <string> & parameters);
+command_result df_extirpate (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -162,7 +162,7 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
     return CR_OK;
 }
 
-DFhackCExport command_result df_immolate (Core * c, vector <string> & parameters)
+command_result df_immolate (Core * c, vector <string> & parameters)
 {
     bool shrubs = false, trees = false, help = false;
     if(getoptions(parameters,shrubs,trees,help))
@@ -176,7 +176,7 @@ DFhackCExport command_result df_immolate (Core * c, vector <string> & parameters
     }
 }
 
-DFhackCExport command_result df_extirpate (Core * c, vector <string> & parameters)
+command_result df_extirpate (Core * c, vector <string> & parameters)
 {
     bool shrubs = false, trees = false, help = false;
     if(getoptions(parameters,shrubs,trees, help))
@@ -190,7 +190,7 @@ DFhackCExport command_result df_extirpate (Core * c, vector <string> & parameter
     }
 }
 
-DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
+command_result df_grow (Core * c, vector <string> & parameters)
 {
     for(size_t i = 0; i < parameters.size();i++)
     {

@@ -177,7 +177,7 @@ void printVeins(DFHack::Console & con, MatMap &mat_map,
     printMats(con, rest, world->raws.inorganics, show_value);
 }
 
-DFhackCExport command_result prospector (Core * c, vector <string> & parameters);
+command_result prospector (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -345,7 +345,7 @@ static command_result embark_prospector(DFHack::Core *c, df::viewscreen_choose_s
     return CR_OK;
 }
 
-DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & parameters)
+command_result prospector (DFHack::Core * c, vector <string> & parameters)
 {
     bool showHidden = false;
     bool showPlants = true;

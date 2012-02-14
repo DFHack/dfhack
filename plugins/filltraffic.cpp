@@ -18,21 +18,21 @@ using namespace DFHack;
 using namespace df::enums;
 
 //Function pointer type for whole-map tile checks.
-typedef void (*checkTile)(DFHack::DFCoord, MapExtras::MapCache &);
+typedef void (*checkTile)(DFCoord, MapExtras::MapCache &);
 
 //Forward Declarations for Commands
-DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::string> & params);
-DFhackCExport command_result alltraffic(DFHack::Core * c, std::vector<std::string> & params);
+command_result filltraffic(Core * c, std::vector<std::string> & params);
+command_result alltraffic(Core * c, std::vector<std::string> & params);
 
 //Forward Declarations for Utility Functions
-DFhackCExport command_result setAllMatching(DFHack::Core * c, checkTile checkProc,
-    DFHack::DFCoord minCoord = DFHack::DFCoord(0, 0, 0),
-    DFHack::DFCoord maxCoord = DFHack::DFCoord(0xFFFF, 0xFFFF, 0xFFFF));
+command_result setAllMatching(Core * c, checkTile checkProc,
+DFCoord minCoord = DFCoord(0, 0, 0),
+DFCoord maxCoord = DFCoord(0xFFFF, 0xFFFF, 0xFFFF));
 
-void allHigh(DFHack::DFCoord coord, MapExtras::MapCache & map);
-void allNormal(DFHack::DFCoord coord, MapExtras::MapCache & map);
-void allLow(DFHack::DFCoord coord, MapExtras::MapCache & map);
-void allRestricted(DFHack::DFCoord coord, MapExtras::MapCache & map);
+void allHigh(DFCoord coord, MapExtras::MapCache & map);
+void allNormal(DFCoord coord, MapExtras::MapCache & map);
+void allLow(DFCoord coord, MapExtras::MapCache & map);
+void allRestricted(DFCoord coord, MapExtras::MapCache & map);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -78,7 +78,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::string> & params)
+command_result filltraffic(Core * c, std::vector<std::string> & params)
 {
     // HOTKEY COMMAND; CORE ALREADY SUSPENDED
 
@@ -119,7 +119,7 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
         }
     }
 
-    DFHack::Gui * Gui = c->getGui();
+    Gui * Gui = c->getGui();
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
@@ -137,7 +137,7 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
         return CR_FAILURE;
     }
 
-    DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
+    DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
     MapExtras::MapCache MCache;
 
     df::tile_designation des = MCache.designationAt(xy);
@@ -154,13 +154,13 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
         return CR_FAILURE;
     }
 
-    if(DFHack::isWallTerrain(tt))
+    if(isWallTerrain(tt))
     {
         c->con.printerr("This tile is a wall. Please select a passable tile.\n");
         return CR_FAILURE;
     }
 
-    if(checkpit && DFHack::isOpenTerrain(tt))
+    if(checkpit && isOpenTerrain(tt))
     {
         c->con.printerr("This tile is a hole. Please select a passable tile.\n");
         return CR_FAILURE;
@@ -175,7 +175,7 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
     c->con.print("%d/%d/%d  ... FILLING!\n", cx,cy,cz);
 
     //Naive four-way or six-way flood fill with possible tiles on a stack.
-    stack <DFHack::DFCoord> flood;
+    stack <DFCoord> flood;
     flood.push(xy);
 
     while(!flood.empty())
@@ -188,8 +188,8 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
 
         tt = MCache.tiletypeAt(xy);
 
-        if(DFHack::isWallTerrain(tt)) continue;
-        if(checkpit && DFHack::isOpenTerrain(tt)) continue;
+        if(isWallTerrain(tt)) continue;
+        if(checkpit && isOpenTerrain(tt)) continue;
 
         if (checkbuilding)
         {
@@ -205,30 +205,30 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
 
             if (xy.x > 0)
             {
-                flood.push(DFHack::DFCoord(xy.x - 1, xy.y, xy.z));
+                flood.push(DFCoord(xy.x - 1, xy.y, xy.z));
             }
             if (xy.x < tx_max - 1)
             {
-                flood.push(DFHack::DFCoord(xy.x + 1, xy.y, xy.z));
+                flood.push(DFCoord(xy.x + 1, xy.y, xy.z));
             }
             if (xy.y > 0)
             {
-                flood.push(DFHack::DFCoord(xy.x, xy.y - 1, xy.z));
+                flood.push(DFCoord(xy.x, xy.y - 1, xy.z));
             }
             if (xy.y < ty_max - 1)
             {
-                flood.push(DFHack::DFCoord(xy.x, xy.y + 1, xy.z));
+                flood.push(DFCoord(xy.x, xy.y + 1, xy.z));
             }
 
             if (updown)
             {
-                if (xy.z > 0 && DFHack::LowPassable(tt))
+                if (xy.z > 0 && LowPassable(tt))
                 {
-                    flood.push(DFHack::DFCoord(xy.x, xy.y, xy.z - 1));
+                    flood.push(DFCoord(xy.x, xy.y, xy.z - 1));
                 }
-                if (xy.z < z_max && DFHack::HighPassable(tt))
+                if (xy.z < z_max && HighPassable(tt))
                 {
-                    flood.push(DFHack::DFCoord(xy.x, xy.y, xy.z + 1));
+                    flood.push(DFCoord(xy.x, xy.y, xy.z + 1));
                 }
             }
 
@@ -241,9 +241,9 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
 
 enum e_checktype {no_check, check_equal, check_nequal};
 
-DFhackCExport command_result alltraffic(DFHack::Core * c, std::vector<std::string> & params)
+command_result alltraffic(Core * c, std::vector<std::string> & params)
 {
-    void (*proc)(DFHack::DFCoord, MapExtras::MapCache &) = allNormal;
+    void (*proc)(DFCoord, MapExtras::MapCache &) = allNormal;
 
     //Loop through parameters
     for(size_t i = 0; i < params.size();i++)
@@ -274,13 +274,13 @@ DFhackCExport command_result alltraffic(DFHack::Core * c, std::vector<std::strin
 //newTraffic is the traffic designation to set.
 //check takes a coordinate and the map cache as arguments, and returns true if the criteria is met.
 //minCoord and maxCoord can be used to specify a bounding cube.
-DFhackCExport command_result setAllMatching(DFHack::Core * c, checkTile checkProc,
-    DFHack::DFCoord minCoord, DFHack::DFCoord maxCoord)
+command_result setAllMatching(Core * c, checkTile checkProc,
+    DFCoord minCoord, DFCoord maxCoord)
 {
     //Initialization.
     CoreSuspender suspend(c);
 
-    DFHack::Gui * Gui = c->getGui();
+    Gui * Gui = c->getGui();
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
@@ -326,7 +326,7 @@ DFhackCExport command_result setAllMatching(DFHack::Core * c, checkTile checkPro
         {
             for(uint32_t z = minCoord.z; z <= maxCoord.z; z++)
             {
-                DFHack::DFCoord tile = DFHack::DFCoord(x, y, z);
+                DFCoord tile = DFCoord(x, y, z);
                 checkProc(tile, MCache);
             }
         }
@@ -338,25 +338,25 @@ DFhackCExport command_result setAllMatching(DFHack::Core * c, checkTile checkPro
 }
 
 //Unconditionally set map to target traffic type
-void allHigh(DFHack::DFCoord coord, MapExtras::MapCache &map)
+void allHigh(DFCoord coord, MapExtras::MapCache &map)
 {
     df::tile_designation des = map.designationAt(coord);
     des.bits.traffic = tile_traffic::High;
     map.setDesignationAt(coord, des);
 }
-void allNormal(DFHack::DFCoord coord, MapExtras::MapCache &map)
+void allNormal(DFCoord coord, MapExtras::MapCache &map)
 {
     df::tile_designation des = map.designationAt(coord);
     des.bits.traffic = tile_traffic::Normal;
     map.setDesignationAt(coord, des);
 }
-void allLow(DFHack::DFCoord coord, MapExtras::MapCache &map)
+void allLow(DFCoord coord, MapExtras::MapCache &map)
 {
     df::tile_designation des = map.designationAt(coord);
     des.bits.traffic = tile_traffic::Low;
     map.setDesignationAt(coord, des);
 }
-void allRestricted(DFHack::DFCoord coord, MapExtras::MapCache &map)
+void allRestricted(DFCoord coord, MapExtras::MapCache &map)
 {
     df::tile_designation des = map.designationAt(coord);
     des.bits.traffic = tile_traffic::Restricted;

@@ -27,11 +27,11 @@ int32_t last_mouse[2] = {-1, -1};
 uint32_t last_menu = 0;
 uint64_t timeLast = 0;
 
-DFhackCExport command_result kittens (Core * c, vector <string> & parameters);
-DFhackCExport command_result ktimer (Core * c, vector <string> & parameters);
-DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters);
-DFhackCExport command_result trackpos (Core * c, vector <string> & parameters);
-DFhackCExport command_result colormods (Core * c, vector <string> & parameters);
+command_result kittens (Core * c, vector <string> & parameters);
+command_result ktimer (Core * c, vector <string> & parameters);
+command_result trackmenu (Core * c, vector <string> & parameters);
+command_result trackpos (Core * c, vector <string> & parameters);
+command_result colormods (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -104,7 +104,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters)
+command_result trackmenu (Core * c, vector <string> & parameters)
 {
     if(trackmenu_flg)
     {
@@ -128,13 +128,13 @@ DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters)
         }
     }
 }
-DFhackCExport command_result trackpos (Core * c, vector <string> & parameters)
+command_result trackpos (Core * c, vector <string> & parameters)
 {
     trackpos_flg = !trackpos_flg;
     return CR_OK;
 }
 
-DFhackCExport command_result colormods (Core * c, vector <string> & parameters)
+command_result colormods (Core * c, vector <string> & parameters)
 {
     c->Suspend();
     auto & vec = df::global::world->raws.creatures.alphabetic;
@@ -152,7 +152,7 @@ DFhackCExport command_result colormods (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result ktimer (Core * c, vector <string> & parameters)
+command_result ktimer (Core * c, vector <string> & parameters)
 {
     if(timering)
     {
@@ -170,7 +170,7 @@ DFhackCExport command_result ktimer (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result kittens (Core * c, vector <string> & parameters)
+command_result kittens (Core * c, vector <string> & parameters)
 {
     final_flag = false;
     Console & con = c->con;

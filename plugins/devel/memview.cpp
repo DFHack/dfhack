@@ -28,7 +28,7 @@ enum HEXVIEW_STATES
 {
 	STATE_OFF,STATE_ON
 };
-DFhackCExport command_result memview (Core * c, vector <string> & parameters);
+command_result memview (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -139,7 +139,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 	return CR_OK;
 
 }
-DFhackCExport command_result memview (Core * c, vector <string> & parameters)
+command_result memview (Core * c, vector <string> & parameters)
 {
 	mymutex->lock();
 	c->p->getMemRanges(memdata.ranges);

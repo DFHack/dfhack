@@ -26,7 +26,7 @@ using namespace df::enums;
 
 using df::global::world;
 
-DFhackCExport command_result df_cleanowned (Core * c, vector <string> & parameters);
+command_result df_cleanowned (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -61,7 +61,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result df_cleanowned (Core * c, vector <string> & parameters)
+command_result df_cleanowned (Core * c, vector <string> & parameters)
 {
     bool dump_scattered = false;
     bool confiscate_all = false;

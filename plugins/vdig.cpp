@@ -16,11 +16,11 @@ using std::stack;
 using namespace DFHack;
 using namespace df::enums;
 
-DFhackCExport command_result vdig (Core * c, vector <string> & parameters);
-DFhackCExport command_result vdigx (Core * c, vector <string> & parameters);
-DFhackCExport command_result autodig (Core * c, vector <string> & parameters);
-DFhackCExport command_result expdig (Core * c, vector <string> & parameters);
-DFhackCExport command_result digcircle (Core *c, vector <string> & parameters);
+command_result vdig (Core * c, vector <string> & parameters);
+command_result vdigx (Core * c, vector <string> & parameters);
+command_result autodig (Core * c, vector <string> & parameters);
+command_result expdig (Core * c, vector <string> & parameters);
+command_result digcircle (Core *c, vector <string> & parameters);
 
 
 DFhackCExport const char * plugin_name ( void )
@@ -180,7 +180,7 @@ bool lineY (MapExtras::MapCache & MCache,
     return true;
 };
 
-DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
+command_result digcircle (Core * c, vector <string> & parameters)
 {
     static bool filled = false;
     static circle_what what = circle_set;
@@ -777,7 +777,7 @@ bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
     return true;
 };
 
-DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
+command_result expdig (Core * c, vector <string> & parameters)
 {
     bool force_help = false;
     static explo_how how = EXPLO_NOTHING;
@@ -954,7 +954,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result vdigx (Core * c, vector <string> & parameters)
+command_result vdigx (Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     vector <string> lol;
@@ -962,7 +962,7 @@ DFhackCExport command_result vdigx (Core * c, vector <string> & parameters)
     return vdig(c,lol);
 }
 
-DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
+command_result vdig (Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     uint32_t x_max,y_max,z_max;
@@ -1120,7 +1120,7 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result autodig (Core * c, vector <string> & parameters)
+command_result autodig (Core * c, vector <string> & parameters)
 {
     return CR_NOT_IMPLEMENTED;
 }

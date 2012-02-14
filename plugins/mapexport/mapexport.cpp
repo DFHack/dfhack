@@ -23,7 +23,7 @@ using df::global::world;
 
 typedef std::vector<df::plant *> PlantList;
 
-DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & parameters);
+command_result mapexport (Core * c, std::vector <std::string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -44,7 +44,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & parameters)
+command_result mapexport (Core * c, std::vector <std::string> & parameters)
 {
     bool showHidden = false;
 

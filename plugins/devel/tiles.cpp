@@ -162,8 +162,8 @@ public:
     };
 };
 
-DFhackCExport command_result df_tiles (Core * c, vector <string> & parameters);
-DFhackCExport command_result df_paint (Core * c, vector <string> & parameters);
+command_result df_tiles (Core * c, vector <string> & parameters);
+command_result df_paint (Core * c, vector <string> & parameters);
 
 struct Settings
 {
@@ -217,7 +217,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result df_tiles (Core * c, vector <string> & parameters)
+command_result df_tiles (Core * c, vector <string> & parameters)
 {
     int32_t x,y,z;
     uint32_t x_max,y_max,z_max;

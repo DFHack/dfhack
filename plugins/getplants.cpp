@@ -23,7 +23,7 @@ using namespace df::enums;
 
 using df::global::world;
 
-DFhackCExport command_result df_getplants (Core * c, vector <string> & parameters)
+command_result df_getplants (Core * c, vector <string> & parameters)
 {
     string plantMatStr = "";
     set<int> plantIDs;

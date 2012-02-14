@@ -13,7 +13,7 @@ using namespace DFHack;
 bool locked = false;
 unsigned char locked_data[25];
 
-DFhackCExport command_result weather (Core * c, vector <string> & parameters);
+command_result weather (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -40,7 +40,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result weather (Core * c, vector <string> & parameters)
+command_result weather (Core * c, vector <string> & parameters)
 {
     Console & con = c->con;
     bool lock = false;

@@ -99,7 +99,7 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
 
     if (paint.special >= 0)
     {
-        stream << DFHack::TileSpecialString[paint.special];
+        stream << ENUM_KEY_STR(tiletype_special,paint.special);
         used = true;
         needSpace = true;
     }
@@ -112,7 +112,7 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
             needSpace = false;
         }
 
-        stream << DFHack::TileMaterialString[paint.material];
+        stream << ENUM_KEY_STR(tiletype_material,paint.material);
         used = true;
         needSpace = true;
     }
@@ -125,7 +125,7 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
             needSpace = false;
         }
 
-        stream << DFHack::TileShapeString[paint.shape];
+        stream << ENUM_KEY_STR(tiletype_shape,paint.shape);
         used = true;
         needSpace = true;
     }
@@ -138,7 +138,7 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
             needSpace = false;
         }
 
-        stream << "VAR_" << (paint.variant + 1);
+        stream << ENUM_KEY_STR(tiletype_variant,paint.variant);
         used = true;
         needSpace = true;
     }
@@ -233,18 +233,18 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
 
     if (option == "shape" || option == "sh" || option == "s")
     {
-        if (valInt >= -1 && valInt < DFHack::tileshape_count)
+        if (tiletype_shape::is_valid((df::tiletype_shape)valInt))
         {
-            paint.shape = (DFHack::TileShape) valInt;
+            paint.shape = (df::tiletype_shape)valInt;
             found = true;
         }
         else
         {
-            for (int i = 0; i < DFHack::tileshape_count; i++)
+            FOR_ENUM_ITEMS(tiletype_shape,i)
             {
-                if (val == DFHack::TileShapeString[i])
+                if (val == ENUM_KEY_STR(tiletype_shape,i))
                 {
-                    paint.shape = (DFHack::TileShape) i;
+                    paint.shape = i;
                     found = true;
                     break;
                 }
@@ -267,7 +267,7 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
         {
             FOR_ENUM_ITEMS(tiletype_material, i)
             {
-                if (val == tiletype_material::get_key(i))
+                if (val == ENUM_KEY_STR(tiletype_material,i))
                 {
                     paint.material = i;
                     found = true;
@@ -283,18 +283,18 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
     }
     else if (option == "special" || option == "sp")
     {
-        if (valInt >= -1 && valInt < DFHack::tilespecial_count)
+        if (tiletype_special::is_valid((df::tiletype_special)valInt))
         {
-            paint.special = (DFHack::TileSpecial) valInt;
+            paint.special = (df::tiletype_special)valInt;
             found = true;
         }
         else
         {
-            for (int i = 0; i < DFHack::tilespecial_count; i++)
+            FOR_ENUM_ITEMS(tiletype_special, i)
             {
-                if (val == DFHack::TileSpecialString[i])
+                if (val == ENUM_KEY_STR(tiletype_special,i))
                 {
-                    paint.special = (DFHack::TileSpecial) i;
+                    paint.special = i;
                     found = true;
                     break;
                 }
@@ -308,14 +308,27 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
     }
     else if (option == "variant" || option == "var" || option == "v")
     {
-        if (valInt >= -1 && valInt <= DFHack::VAR_4)
+        if (tiletype_variant::is_valid((df::tiletype_variant)valInt))
         {
-            paint.variant = (DFHack::TileVariant) valInt;
+            paint.variant = (df::tiletype_variant)valInt;
             found = true;
         }
         else
         {
-            std::cout << "Unknown tile variant: " << value << std::endl;
+            FOR_ENUM_ITEMS(tiletype_variant, i)
+            {
+                if (val == ENUM_KEY_STR(tiletype_variant,i))
+                {
+                    paint.variant = i;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                std::cout << "Unknown tile variant: " << value << std::endl;
+            }
         }
     }
     else if (option == "designated" || option == "d")
@@ -415,33 +428,37 @@ void help( std::ostream & out, const std::string &option)
     {
         out << "Available shapes:" << std::endl
             << " ANY" << std::endl;
-        for (int i = 0; i < DFHack::tileshape_count; i++)
+        FOR_ENUM_ITEMS(tiletype_shape,i)
         {
-            out << " " << DFHack::TileShapeString[i] << std::endl;
+            out << " " << ENUM_KEY_STR(tiletype_shape,i) << std::endl;
         }
     }
     else if (option == "material"|| option == "mat" ||option == "m")
     {
         out << "Available materials:" << std::endl
             << " ANY" << std::endl;
-        for (int i = 0; i < DFHack::tilematerial_count; i++)
+        FOR_ENUM_ITEMS(tiletype_material,i)
         {
-            out << " " << DFHack::TileMaterialString[i] << std::endl;
+            out << " " << ENUM_KEY_STR(tiletype_material,i) << std::endl;
         }
     }
     else if (option == "special" || option == "sp")
     {
         out << "Available specials:" << std::endl
             << " ANY" << std::endl;
-        for (int i = 0; i < DFHack::tilespecial_count; i++)
+        FOR_ENUM_ITEMS(tiletype_special,i)
         {
-            out << " " << DFHack::TileSpecialString[i] << std::endl;
+            out << " " << ENUM_KEY_STR(tiletype_special,i) << std::endl;
         }
     }
     else if (option == "variant" || option == "var" || option == "v")
     {
         out << "Available variants:" << std::endl
-            << " ANY, 0 - " << DFHack::VAR_4 << std::endl;
+            << " ANY" << std::endl;
+        FOR_ENUM_ITEMS(tiletype_variant,i)
+        {
+            out << " " << ENUM_KEY_STR(tiletype_variant,i) << std::endl;
+        }
     }
     else if (option == "designated" || option == "d")
     {
@@ -601,8 +618,8 @@ public:
         bool juststarted = true;
         while (mc.testCoord(start))
         {
-            uint16_t tt = mc.tiletypeAt(start);
-            if(DFHack::LowPassable(tt) || juststarted && DFHack::HighPassable(tt))
+            df::tiletype tt = mc.tiletypeAt(start);
+            if(LowPassable(tt) || juststarted && HighPassable(tt))
             {
                 v.push_back(start);
                 juststarted = false;

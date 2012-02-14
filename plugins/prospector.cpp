@@ -572,7 +572,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     con << "Base materials:" << std::endl;
     for (it = baseMats.begin(); it != baseMats.end(); ++it)
     {
-        con << std::setw(25) << tiletype_material::get_key((df::tiletype_material)it->first) << " : " << it->second.count << std::endl;
+        con << std::setw(25) << ENUM_KEY_STR(tiletype_material,(df::tiletype_material)it->first) << " : " << it->second.count << std::endl;
     }
 
     if (liquidWater.count || liquidMagma.count)

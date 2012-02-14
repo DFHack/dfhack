@@ -215,26 +215,26 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                         
                         switch (tileMaterial(type))
                         {
-                        case DFHack::SOIL:
-                        case DFHack::STONE:
+                        case tiletype_material::SOIL:
+                        case tiletype_material::STONE:
                             prototile->set_material_index(0);
                             prototile->set_material(b->baseMaterialAt(coord));
                             break;
-                        case DFHack::VEIN:
+                        case tiletype_material::MINERAL:
                             prototile->set_material_index(0);
                             prototile->set_material(b->veinMaterialAt(coord));
                             break;
-                        case DFHack::FEATSTONE:
+                        case tiletype_material::FEATURE:
                             if (blockFeatureLocal.type != -1 && des.bits.feature_local)
                             {
-                                if (blockFeatureLocal.type == df::feature_type::deep_special_tube
+                                if (blockFeatureLocal.type == feature_type::deep_special_tube
                                         && blockFeatureLocal.main_material == 0) // stone
                                 {
                                     prototile->set_material_index(0);
                                     prototile->set_material(blockFeatureLocal.sub_material);
                                 }
                                 if (blockFeatureGlobal.type != -1 && des.bits.feature_global
-                                        && blockFeatureGlobal.type == df::feature_type::feature_underworld_from_layer
+                                        && blockFeatureGlobal.type == feature_type::feature_underworld_from_layer
                                         && blockFeatureGlobal.main_material == 0) // stone
                                 {
                                     prototile->set_material_index(0);
@@ -242,7 +242,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                                 }
                             }
                             break;
-                        case DFHack::CONSTRUCTED:
+                        case tiletype_material::CONSTRUCTION:
                             if (constructionMaterials.find(map_pos) != constructionMaterials.end())
                             {
                                 prototile->set_material_index(constructionMaterials[map_pos].first);

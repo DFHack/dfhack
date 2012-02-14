@@ -144,90 +144,90 @@ namespace DFHack
 
     using namespace df::enums;
 
+    inline
+        const char * tileName(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype, caption, tiletype);
+    }
+
+    inline
+    df::tiletype_shape tileShape(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype, shape, tiletype);
+    }
+
+    inline
+    df::tiletype_special tileSpecial(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype, special, tiletype);
+    }
+
+    inline
+    df::tiletype_variant tileVariant(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype, variant, tiletype);
+    }
+
+    inline
+    df::tiletype_material tileMaterial(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype, material, tiletype);
+    }
+
+    inline
+    TileDirection tileDirection(df::tiletype tiletype)
+    {
+        return TileDirection(ENUM_ATTR(tiletype, direction, tiletype));
+    }
+
     // tile is missing a floor
     inline
     bool LowPassable(df::tiletype tiletype)
     {
-        return tiletype_shape::get_passable_low(tiletype::get_shape(tiletype));
+        return ENUM_ATTR(tiletype_shape, passable_low, tileShape(tiletype));
     }
 
     // tile is missing a roof
     inline
     bool HighPassable(df::tiletype tiletype)
     {
-        return tiletype_shape::get_passable_flow(tiletype::get_shape(tiletype));
+        return ENUM_ATTR(tiletype_shape, passable_high, tileShape(tiletype));
     }
 
     inline
     bool FlowPassable(df::tiletype tiletype)
     {
-        return tiletype_shape::get_passable_high(tiletype::get_shape(tiletype));
+        return ENUM_ATTR(tiletype_shape, passable_flow, tileShape(tiletype));
     }
 
     inline
     bool isWallTerrain(df::tiletype tiletype)
     {
-        return tiletype_shape::get_basic_shape(tiletype::get_shape(tiletype)) == tiletype_shape_basic::Wall;
+        return ENUM_ATTR(tiletype_shape, basic_shape, tileShape(tiletype)) == tiletype_shape_basic::Wall;
     }
 
     inline
     bool isFloorTerrain(df::tiletype tiletype)
     {
-        return tiletype_shape::get_basic_shape(tiletype::get_shape(tiletype)) == tiletype_shape_basic::Floor;
+        return ENUM_ATTR(tiletype_shape, basic_shape, tileShape(tiletype)) == tiletype_shape_basic::Floor;
     }
 
     inline
     bool isRampTerrain(df::tiletype tiletype)
     {
-        return tiletype_shape::get_basic_shape(tiletype::get_shape(tiletype)) == tiletype_shape_basic::Ramp;
+        return ENUM_ATTR(tiletype_shape, basic_shape, tileShape(tiletype)) == tiletype_shape_basic::Ramp;
     }
 
     inline
     bool isOpenTerrain(df::tiletype tiletype)
     {
-        return tiletype_shape::get_basic_shape(tiletype::get_shape(tiletype)) == tiletype_shape_basic::Open;
+        return ENUM_ATTR(tiletype_shape, basic_shape, tileShape(tiletype)) == tiletype_shape_basic::Open;
     }
 
     inline
     bool isStairTerrain(df::tiletype tiletype)
     {
-        return tiletype_shape::get_basic_shape(tiletype::get_shape(tiletype)) == tiletype_shape_basic::Stair;
-    }
-
-    inline
-        const char * tileName(df::tiletype tiletype)
-    {
-        return tiletype::get_caption(tiletype);
-    }
-
-    inline
-    df::tiletype_shape tileShape(df::tiletype tiletype)
-    {
-        return tiletype::get_shape(tiletype);
-    }
-
-    inline
-    df::tiletype_special tileSpecial(df::tiletype tiletype)
-    {
-        return tiletype::get_special(tiletype);
-    }
-
-    inline
-    df::tiletype_variant tileVariant(df::tiletype tiletype)
-    {
-        return tiletype::get_variant(tiletype);
-    }
-
-    inline
-    df::tiletype_material tileMaterial(df::tiletype tiletype)
-    {
-        return tiletype::get_material(tiletype);
-    }
-
-    inline
-    TileDirection tileDirection(df::tiletype tiletype)
-    {
-        return TileDirection(tiletype::get_direction(tiletype));
+        return ENUM_ATTR(tiletype_shape, basic_shape, tileShape(tiletype)) == tiletype_shape_basic::Stair;
     }
 
     /**

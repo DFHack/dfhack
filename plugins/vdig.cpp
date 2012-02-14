@@ -102,7 +102,7 @@ bool dig (MapExtras::MapCache & MCache,
     {
         do
         {
-            df::tiletype_shape_basic tsb = tiletype_shape::get_basic_shape(ts);
+            df::tiletype_shape_basic tsb = ENUM_ATTR(tiletype_shape, basic_shape, ts);
             if(tsb == tiletype_shape_basic::Wall)
             {
                 std::cerr << "allowing tt" << (int)tt << ", is wall\n";

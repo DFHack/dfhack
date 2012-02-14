@@ -172,14 +172,15 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
     df::tiletype_shape shape = tileShape(tiletype);
     df::tiletype_material material = tileMaterial(tiletype);
     df::tiletype_special special = tileSpecial(tiletype);
+    df::tiletype_variant variant = tileVariant(tiletype);
     con.print("%-10s: %4d %s\n","Class"    ,shape,
-            tiletype_shape::get_key(shape));
+            ENUM_KEY_STR(tiletype_shape, shape));
     con.print("%-10s: %4d %s\n","Material" ,
-            material, tiletype_material::get_key(material));
+            material, ENUM_KEY_STR(tiletype_material, material));
     con.print("%-10s: %4d %s\n","Special"  ,
-            special, tiletype_special::get_key(special));
-    con.print("%-10s: %4d\n"   ,"Variant"  ,
-            tileVariant(tiletype));
+            special, ENUM_KEY_STR(tiletype_special, special));
+    con.print("%-10s: %4d %s\n"   ,"Variant"  ,
+            variant, ENUM_KEY_STR(tiletype_variant, variant));
     con.print("%-10s: %s\n"    ,"Direction",
             tileDirection(tiletype).getStr());
     con.print("\n");

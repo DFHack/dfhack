@@ -74,7 +74,7 @@ namespace DFHack
         // Run through until perfect match found or hit end.
         FOR_ENUM_ITEMS(tiletype, tt)
         {
-            if (value < (8|4|1))
+            if (value == (8|4|1))
                 break;
             if (tileShape(tt) == tshape)
             {

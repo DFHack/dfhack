@@ -78,8 +78,8 @@ namespace DFHack
                 break;
             if (tileShape(tt) == tshape)
             {
-                // Special flag match is absolutely mandatory!
-                if (tileSpecial(tt) != cur_special)
+                // Special flag match is mandatory, but only if it might possibly make a difference
+                if (tileSpecial(tt) != tiletype_special::NONE && cur_special != tiletype_special::NONE && tileSpecial(tt) != cur_special)
                     continue;
 
                 // Special case for constructions.

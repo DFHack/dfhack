@@ -233,20 +233,27 @@ namespace DFHack
     /**
      * zilpin: Find the first tile entry which matches the given search criteria.
      * All parameters are optional.
-     * To omit, use the 'invalid' enum for that type (e.g. tileclass_invalid, tilematerial_invalid, etc)
+     * To omit, specify NONE for that type
      * For tile directions, pass NULL to omit.
      * @return matching index in tileTypeTable, or 0 if none found.
      */
     inline
-    df::tiletype findTileType( const df::tiletype_shape tshape, const df::tiletype_material tmat, const df::tiletype_variant tvar, const df::tiletype_special tspecial, const TileDirection tdir )
+    df::tiletype findTileType(const df::tiletype_shape tshape, const df::tiletype_material tmat, const df::tiletype_variant tvar, const df::tiletype_special tspecial, const TileDirection tdir)
     {
         FOR_ENUM_ITEMS(tiletype, tt)
         {
-            if (tshape   !=     tiletype_shape::NONE && tshape != tileShape(tt))     continue;
-            if (tmat     !=  tiletype_material::NONE && tmat != tileMaterial(tt))    continue;
-            if (tvar     !=   tiletype_variant::NONE && tvar != tileVariant(tt))     continue;
-            if (tspecial !=   tiletype_special::NONE && tspecial != tileSpecial(tt)) continue;
-            if (tdir                                 && tdir != tileDirection(tt)) continue;
+            if (tshape != tiletype_shape::NONE && tshape != tileShape(tt))
+                continue;
+            if (tmat != tiletype_material::NONE && tmat != tileMaterial(tt))
+                continue;
+            // Don't require variant to match if the destination tile doesn't even have one
+            if (tvar != tiletype_variant::NONE && tvar != tileVariant(tt) && tileVariant(tt) != tiletype_variant::NONE)
+                continue;
+            // Same for special
+            if (tspecial != tiletype_special::NONE && tspecial != tileSpecial(tt) && tileSpecial(tt) != tiletype_special::NONE)
+                continue;
+            if (tdir && tdir != tileDirection(tt))
+                continue;
             // Match!
             return tt;
         }

@@ -10,7 +10,7 @@ using namespace DFHack;
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
-DFhackCExport command_result server (Core * c, std::vector <std::string> & parameters);
+command_result server (Core * c, std::vector <std::string> & parameters);
 
 // A plugins must be able to return its name. This must correspond to the filename - skeleton.plug.so or skeleton.plug.dll
 DFhackCExport const char * plugin_name ( void )
@@ -39,7 +39,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 }
 
 // This is WRONG and STUPID. Never use this as an example!
-DFhackCExport command_result server (Core * c, std::vector <std::string> & parameters)
+command_result server (Core * c, std::vector <std::string> & parameters)
 {
     // It's nice to provide a 'help' option for your command.
     // It's also nice to print the same help if you get invalid options from the user instead of just acting strange

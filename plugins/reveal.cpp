@@ -58,11 +58,11 @@ enum revealstate
 
 revealstate revealed = NOT_REVEALED;
 
-DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params);
-DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string> & params);
-DFhackCExport command_result revtoggle(DFHack::Core * c, std::vector<std::string> & params);
-DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string> & params);
-DFhackCExport command_result nopause(DFHack::Core * c, std::vector<std::string> & params);
+command_result reveal(DFHack::Core * c, std::vector<std::string> & params);
+command_result unreveal(DFHack::Core * c, std::vector<std::string> & params);
+command_result revtoggle(DFHack::Core * c, std::vector<std::string> & params);
+command_result revflood(DFHack::Core * c, std::vector<std::string> & params);
+command_result nopause(DFHack::Core * c, std::vector<std::string> & params);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -124,7 +124,7 @@ command_result nopause (Core * c, std::vector <std::string> & parameters)
 }
 
 
-DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
+command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
 {
     bool no_hell = true;
     bool pause = true;
@@ -215,7 +215,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     return CR_OK;
 }
 
-DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string> & params)
+command_result unreveal(DFHack::Core * c, std::vector<std::string> & params)
 {
     Console & con = c->con;
     for(size_t i = 0; i < params.size();i++)
@@ -272,7 +272,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     return CR_OK;
 }
 
-DFhackCExport command_result revtoggle (DFHack::Core * c, std::vector<std::string> & params)
+command_result revtoggle (DFHack::Core * c, std::vector<std::string> & params)
 {
     for(size_t i = 0; i < params.size();i++)
     {
@@ -292,7 +292,7 @@ DFhackCExport command_result revtoggle (DFHack::Core * c, std::vector<std::strin
     }
 }
 
-DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string> & params)
+command_result revflood(DFHack::Core * c, std::vector<std::string> & params)
 {
     for(size_t i = 0; i < params.size();i++)
     {
@@ -338,7 +338,7 @@ DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string>
     }
     DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
     MapCache * MCache = new MapCache;
-    int16_t tt = MCache->tiletypeAt(xy);
+    df::tiletype tt = MCache->tiletypeAt(xy);
     if(isWallTerrain(tt))
     {
         c->con.printerr("Point the cursor at some empty space you want to be unhidden.\n");
@@ -372,62 +372,50 @@ DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string>
 
         if(!MCache->testCoord(current))
             continue;
-        int16_t tt = MCache->tiletypeAt(current);
+        df::tiletype tt = MCache->tiletypeAt(current);
         df::tile_designation des = MCache->designationAt(current);
         if(!des.bits.hidden)
         {
             continue;
         }
-        const TileRow * r = getTileRow(tt);
-        /*
-        if(!r)
-        {
-            cerr << "unknown tiletype! " << dec << tt << endl;
-            continue;
-        }
-        */
         bool below = 0;
         bool above = 0;
         bool sides = 0;
         bool unhide = 1;
         // by tile shape, determine behavior and action
-        switch (r->shape)
+        switch (tileShape(tt))
         {
-            // walls:
-            case WALL:
-            case PILLAR:
-                if(from_below)
-                    unhide = 0;
-                break;
-            // air/free space
-            case EMPTY:
-            case RAMP_TOP:
-            case STAIR_UPDOWN:
-            case STAIR_DOWN:
-            case BROOK_TOP:
-                above = below = sides = true;
-                break;
-            // has floor
-            case FORTIFICATION:
-            case STAIR_UP:
-            case RAMP:
-            case FLOOR:
-            case TREE_DEAD:
-            case TREE_OK:
-            case SAPLING_DEAD:
-            case SAPLING_OK:
-            case SHRUB_DEAD:
-            case SHRUB_OK:
-            case BOULDER:
-            case PEBBLES:
-            case BROOK_BED:
-            case RIVER_BED:
-            case ENDLESS_PIT:
-            case POOL:
-                if(from_below)
-                    unhide = 0;
-                above = sides = true;
-                break;
+        // walls:
+        case tiletype_shape::WALL:
+            if(from_below)
+                unhide = 0;
+            break;
+        // air/free space
+        case tiletype_shape::EMPTY:
+        case tiletype_shape::RAMP_TOP:
+        case tiletype_shape::STAIR_UPDOWN:
+        case tiletype_shape::STAIR_DOWN:
+        case tiletype_shape::BROOK_TOP:
+            above = below = sides = true;
+            break;
+        // has floor
+        case tiletype_shape::FORTIFICATION:
+        case tiletype_shape::STAIR_UP:
+        case tiletype_shape::RAMP:
+        case tiletype_shape::FLOOR:
+        case tiletype_shape::TREE:
+        case tiletype_shape::SAPLING:
+        case tiletype_shape::SHRUB:
+        case tiletype_shape::BOULDER:
+        case tiletype_shape::PEBBLES:
+        case tiletype_shape::BROOK_BED:
+        case tiletype_shape::RIVER_BED:
+        case tiletype_shape::ENDLESS_PIT:
+        case tiletype_shape::POOL:
+            if(from_below)
+                unhide = 0;
+            above = sides = true;
+            break;
         }
         if(unhide)
         {

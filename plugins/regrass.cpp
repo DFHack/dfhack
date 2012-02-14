@@ -17,7 +17,7 @@ using namespace DFHack;
 
 using df::global::world;
 
-DFhackCExport command_result df_regrass (Core * c, vector <string> & parameters)
+command_result df_regrass (Core * c, vector <string> & parameters)
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
@@ -32,28 +32,16 @@ DFhackCExport command_result df_regrass (Core * c, vector <string> & parameters)
         {
             for (int y = 0; y < 16; y++)
             {
-                if (DFHack::tileShape(cur->tiletype[x][y]) != DFHack::FLOOR)
+                if (tileShape(cur->tiletype[x][y]) != tiletype_shape::FLOOR)
                     continue;
-                if (DFHack::tileMaterial(cur->tiletype[x][y]) != DFHack::SOIL)
+                if (tileMaterial(cur->tiletype[x][y]) != tiletype_material::SOIL)
                     continue;
                 if (cur->designation[x][y].bits.subterranean)
                     continue;
                 if (cur->occupancy[x][y].bits.building)
                     continue;
 
-                switch (rand() % 8)
-                {
-                    // light grass
-                case 0:	cur->tiletype[x][y] = 0x015C;	break;
-                case 1:	cur->tiletype[x][y] = 0x015D;	break;
-                case 2:	cur->tiletype[x][y] = 0x015E;	break;
-                case 3:	cur->tiletype[x][y] = 0x015F;	break;
-                    // dark grass
-                case 4:	cur->tiletype[x][y] = 0x018E;	break;
-                case 5:	cur->tiletype[x][y] = 0x018F;	break;
-                case 6:	cur->tiletype[x][y] = 0x0190;	break;
-                case 7:	cur->tiletype[x][y] = 0x0191;	break;
-                }
+                cur->tiletype[x][y] = findRandomVariant((rand() & 1) ? tiletype::GrassLightFloor1 : tiletype::GrassDarkFloor1);
                 count++;
             }
         }

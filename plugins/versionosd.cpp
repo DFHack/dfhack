@@ -15,7 +15,7 @@ using namespace std;
 #include "modules/Gui.h"
 using namespace DFHack;
 
-DFhackCExport command_result df_versionosd (Core * c, vector <string> & parameters);
+command_result df_versionosd (Core * c, vector <string> & parameters);
 static DFSDL_Surface* (*_IMG_LoadPNG_RW)(void* src) = 0;
 static vPtr (*_SDL_RWFromFile)(const char* file, const char *mode) = 0;
 static int (*_SDL_SetAlpha)(vPtr surface, uint32_t flag, uint8_t alpha) = 0;
@@ -117,7 +117,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result df_versionosd (Core * c, vector <string> & parameters)
+command_result df_versionosd (Core * c, vector <string> & parameters)
 {
     On = !On;
     c->Suspend();

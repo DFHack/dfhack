@@ -16,8 +16,8 @@ bool final_flag = true;
 bool timering = false;
 uint64_t timeLast = 0;
 
-DFhackCExport command_result rawdump_i (Core * c, vector <string> & parameters);
-DFhackCExport command_result rawdump_p (Core * c, vector <string> & parameters);
+command_result rawdump_i (Core * c, vector <string> & parameters);
+command_result rawdump_p (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -37,7 +37,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result rawdump_i (Core * c, vector <string> & parameters)
+command_result rawdump_i (Core * c, vector <string> & parameters)
 {
     int index = -1;
     Console & con = c->con;
@@ -81,7 +81,7 @@ DFhackCExport command_result rawdump_i (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result rawdump_p (Core * c, vector <string> & parameters)
+command_result rawdump_p (Core * c, vector <string> & parameters)
 {
     int index = -1;
     Console & con = c->con;

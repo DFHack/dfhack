@@ -16,11 +16,11 @@ using std::stack;
 using namespace DFHack;
 using namespace df::enums;
 
-DFhackCExport command_result vdig (Core * c, vector <string> & parameters);
-DFhackCExport command_result vdigx (Core * c, vector <string> & parameters);
-DFhackCExport command_result autodig (Core * c, vector <string> & parameters);
-DFhackCExport command_result expdig (Core * c, vector <string> & parameters);
-DFhackCExport command_result digcircle (Core *c, vector <string> & parameters);
+command_result vdig (Core * c, vector <string> & parameters);
+command_result vdigx (Core * c, vector <string> & parameters);
+command_result autodig (Core * c, vector <string> & parameters);
+command_result expdig (Core * c, vector <string> & parameters);
+command_result digcircle (Core *c, vector <string> & parameters);
 
 
 DFhackCExport const char * plugin_name ( void )
@@ -90,33 +90,33 @@ bool dig (MapExtras::MapCache & MCache,
         //c->con.print("not digging map border\n");
         return false;
     }
-    uint16_t tt = MCache.tiletypeAt(at);
+    df::tiletype tt = MCache.tiletypeAt(at);
     df::tile_designation des = MCache.designationAt(at);
     // could be potentially used to locate hidden constructions?
-    if(tileMaterial(tt) == CONSTRUCTED && !des.bits.hidden)
+    if(tileMaterial(tt) == df::tiletype_material::CONSTRUCTION && !des.bits.hidden)
         return false;
-    TileShape ts = tileShape(tt);
-    if(ts == EMPTY)
+    df::tiletype_shape ts = tileShape(tt);
+    if (ts == tiletype_shape::EMPTY)
         return false;
     if(!des.bits.hidden)
     {
         do
         {
-            if(isWallTerrain(tt))
+            df::tiletype_shape_basic tsb = ENUM_ATTR(tiletype_shape, basic_shape, ts);
+            if(tsb == tiletype_shape_basic::Wall)
             {
-                std::cerr << "allowing tt" << tt << ", is wall\n";
+                std::cerr << "allowing tt" << (int)tt << ", is wall\n";
                 break;
             }
-            if(isFloorTerrain(tt)
+            if (tsb == tiletype_shape_basic::Floor
                 && (type == tile_dig_designation::DownStair || type == tile_dig_designation::Channel)
-                && ts != TREE_OK
-                && ts != TREE_DEAD
+                && ts != tiletype_shape::TREE
                 )
             {
-                std::cerr << "allowing tt" << tt << ", is floor\n";
+                std::cerr << "allowing tt" << (int)tt << ", is floor\n";
                 break;
             }
-            if(isStairTerrain(tt) && type == tile_dig_designation::Channel )
+            if (tsb == tiletype_shape_basic::Stair && type == tile_dig_designation::Channel )
                 break;
             return false;
         }
@@ -147,7 +147,7 @@ bool dig (MapExtras::MapCache & MCache,
         }
         break;
     }
-    std::cerr << "allowing tt" << tt << "\n";
+    std::cerr << "allowing tt" << (int)tt << "\n";
     MCache.setDesignationAt(at,des);
     return true;
 };
@@ -180,7 +180,7 @@ bool lineY (MapExtras::MapCache & MCache,
     return true;
 };
 
-DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
+command_result digcircle (Core * c, vector <string> & parameters)
 {
     static bool filled = false;
     static circle_what what = circle_set;
@@ -747,9 +747,9 @@ bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
         for(; y < my; y++)
         {
             df::tile_designation & des = bl->designation[x][y];
-            short unsigned int tt = bl->tiletype[x][y];
+            df::tiletype tt = bl->tiletype[x][y];
             // could be potentially used to locate hidden constructions?
-            if(tileMaterial(tt) == CONSTRUCTED && !des.bits.hidden)
+            if(tileMaterial(tt) == tiletype_material::CONSTRUCTION && !des.bits.hidden)
                 continue;
             if(!isWallTerrain(tt) && !des.bits.hidden)
                 continue;
@@ -777,7 +777,7 @@ bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
     return true;
 };
 
-DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
+command_result expdig (Core * c, vector <string> & parameters)
 {
     bool force_help = false;
     static explo_how how = EXPLO_NOTHING;
@@ -927,11 +927,11 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             for(int y = 0; y < 16; y++)
             {
                 DFCoord pos(xmid+x,ymid+y,z_level);
-                short unsigned int tt = mx.tiletypeAt(pos);
-                if(tt == 0)
+                df::tiletype tt = mx.tiletypeAt(pos);
+                if(tt == tiletype::Void)
                     continue;
                 df::tile_designation des = mx.designationAt(pos);
-                if(tileMaterial(tt) == CONSTRUCTED && !des.bits.hidden)
+                if(tileMaterial(tt) == tiletype_material::CONSTRUCTION && !des.bits.hidden)
                     continue;
                 if(!isWallTerrain(tt) && !des.bits.hidden)
                     continue;
@@ -954,7 +954,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result vdigx (Core * c, vector <string> & parameters)
+command_result vdigx (Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     vector <string> lol;
@@ -962,7 +962,7 @@ DFhackCExport command_result vdigx (Core * c, vector <string> & parameters)
     return vdig(c,lol);
 }
 
-DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
+command_result vdig (Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     uint32_t x_max,y_max,z_max;
@@ -1002,7 +1002,7 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     }
     MapExtras::MapCache * MCache = new MapExtras::MapCache;
     df::tile_designation des = MCache->designationAt(xy);
-    int16_t tt = MCache->tiletypeAt(xy);
+    df::tiletype tt = MCache->tiletypeAt(xy);
     int16_t veinmat = MCache->veinMaterialAt(xy);
     if( veinmat == -1 )
     {
@@ -1120,7 +1120,7 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result autodig (Core * c, vector <string> & parameters)
+command_result autodig (Core * c, vector <string> & parameters)
 {
     return CR_NOT_IMPLEMENTED;
 }

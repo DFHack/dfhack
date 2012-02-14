@@ -177,7 +177,7 @@ void printVeins(DFHack::Console & con, MatMap &mat_map,
     printMats(con, rest, world->raws.inorganics, show_value);
 }
 
-DFhackCExport command_result prospector (Core * c, vector <string> & parameters);
+command_result prospector (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -345,7 +345,7 @@ static command_result embark_prospector(DFHack::Core *c, df::viewscreen_choose_s
     return CR_OK;
 }
 
-DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & parameters)
+command_result prospector (DFHack::Core * c, vector <string> & parameters)
 {
     bool showHidden = false;
     bool showPlants = true;
@@ -471,27 +471,21 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                                 liquidWater.add(global_z);
                         }
 
-                        uint16_t type = b->TileTypeAt(coord);
-                        const DFHack::TileRow *info = DFHack::getTileRow(type);
-
-                        if (!info)
-                        {
-                            con << "Bad type: " << type << std::endl;
-                            continue;
-                        }
+                        df::tiletype type = b->TileTypeAt(coord);
+                        df::tiletype_shape tileshape = tileShape(type);
+                        df::tiletype_material tilemat = tileMaterial(type);
 
                         // We only care about these types
-                        switch (info->shape)
+                        switch (tileshape)
                         {
-                        case DFHack::WALL:
-                        case DFHack::PILLAR:
-                        case DFHack::FORTIFICATION:
+                        case tiletype_shape::WALL:
+                        case tiletype_shape::FORTIFICATION:
                             break;
-                        case DFHack::EMPTY:
+                        case tiletype_shape::EMPTY:
                             /* A heuristic: tubes inside adamantine have EMPTY:AIR tiles which
                                still have feature_local set. Also check the unrevealed status,
                                so as to exclude any holes mined by the player. */
-                            if (info->material == DFHack::AIR &&
+                            if (tilemat == tiletype_material::AIR &&
                                 des.bits.feature_local && des.bits.hidden &&
                                 blockFeatureLocal.type == feature_type::deep_special_tube)
                             {
@@ -502,19 +496,19 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                         }
 
                         // Count the material type
-                        baseMats[info->material].add(global_z);
+                        baseMats[tilemat].add(global_z);
 
                         // Find the type of the tile
-                        switch (info->material)
+                        switch (tilemat)
                         {
-                        case DFHack::SOIL:
-                        case DFHack::STONE:
+                        case tiletype_material::SOIL:
+                        case tiletype_material::STONE:
                             layerMats[b->baseMaterialAt(coord)].add(global_z);
                             break;
-                        case DFHack::VEIN:
+                        case tiletype_material::MINERAL:
                             veinMats[b->veinMaterialAt(coord)].add(global_z);
                             break;
-                        case DFHack::FEATSTONE:
+                        case tiletype_material::FEATURE:
                             if (blockFeatureLocal.type != -1 && des.bits.feature_local)
                             {
                                 if (blockFeatureLocal.type == feature_type::deep_special_tube
@@ -536,7 +530,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                                 layerMats[blockFeatureGlobal.sub_material].add(global_z);
                             }
                             break;
-                        case DFHack::OBSIDIAN:
+                        case tiletype_material::LAVA_STONE:
                             // TODO ?
                             break;
                         }
@@ -578,7 +572,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     con << "Base materials:" << std::endl;
     for (it = baseMats.begin(); it != baseMats.end(); ++it)
     {
-        con << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second.count << std::endl;
+        con << std::setw(25) << ENUM_KEY_STR(tiletype_material,(df::tiletype_material)it->first) << " : " << it->second.count << std::endl;
     }
 
     if (liquidWater.count || liquidMagma.count)

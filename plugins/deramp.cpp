@@ -17,7 +17,7 @@ using namespace df::enums;
 
 using df::global::world;
 
-DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
+command_result df_deramp (Core * c, vector <string> & parameters)
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
@@ -43,13 +43,13 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
         {
             for (int y = 0; y < 16; y++)
             {
-                int16_t oldT = block->tiletype[x][y];
-                if ((tileShape(oldT) == RAMP) &&
+                df::tiletype oldT = block->tiletype[x][y];
+                if ((tileShape(oldT) == tiletype_shape::RAMP) &&
                     (block->designation[x][y].bits.dig == tile_dig_designation::Default))
                 {
                     // Current tile is a ramp.
                     // Set current tile, as accurately as can be expected
-                    int16_t newT = findSimilarTileType(oldT, FLOOR);
+                    df::tiletype newT = findSimilarTileType(oldT, tiletype_shape::FLOOR);
 
                     // If no change, skip it (couldn't find a good tile type)
                     if (oldT == newT)
@@ -59,15 +59,15 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
                     block->designation[x][y].bits.dig = tile_dig_designation::No;
 
                     // Check the tile above this one, in case a downward slope needs to be removed.
-                    if ((above) && (tileShape(above->tiletype[x][y]) == RAMP_TOP))
-                        above->tiletype[x][y] = 32; // open space
+                    if ((above) && (tileShape(above->tiletype[x][y]) == tiletype_shape::RAMP_TOP))
+                        above->tiletype[x][y] = tiletype::OpenSpace; // open space
                     count++;
                 }
                 // ramp fixer
-                else if ((tileShape(oldT) != RAMP)
-                    && (above) && (tileShape(above->tiletype[x][y]) == RAMP_TOP))
+                else if ((tileShape(oldT) != tiletype_shape::RAMP)
+                    && (above) && (tileShape(above->tiletype[x][y]) == tiletype_shape::RAMP_TOP))
                 {
-                    above->tiletype[x][y] = 32; // open space
+                    above->tiletype[x][y] = tiletype::OpenSpace; // open space
                     countbad++;
                 }
             }

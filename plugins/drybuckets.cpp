@@ -17,7 +17,7 @@ using namespace df::enums;
 
 using df::global::world;
 
-DFhackCExport command_result df_drybuckets (Core * c, vector <string> & parameters)
+command_result df_drybuckets (Core * c, vector <string> & parameters)
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;

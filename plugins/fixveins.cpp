@@ -22,10 +22,10 @@ using namespace df::enums;
 
 using df::global::world;
 
-bool setTileMaterial(int16_t &tile, const TileMaterial mat)
+bool setTileMaterial(df::tiletype &tile, const df::tiletype_material mat)
 {
-    int16_t newTile = findTileType(tileShape(tile), mat, tileVariant(tile), tileSpecial(tile), tileDirection(tile));
-    if (newTile == -1)
+    df::tiletype newTile = findTileType(tileShape(tile), mat, tileVariant(tile), tileSpecial(tile), tileDirection(tile));
+    if (newTile == tiletype::Void)
         return false;
     if (newTile != tile)
     {
@@ -35,7 +35,7 @@ bool setTileMaterial(int16_t &tile, const TileMaterial mat)
     return false;
 }
 
-DFhackCExport command_result df_fixveins (Core * c, vector <string> & parameters)
+command_result df_fixveins (Core * c, vector <string> & parameters)
 {
     if (parameters.size())
         return CR_WRONG_USAGE;
@@ -77,16 +77,16 @@ DFhackCExport command_result df_fixveins (Core * c, vector <string> & parameters
                 bool has_vein = has_mineral[y] & (1 << x);
                 if (has_feature)
                     has_vein = false;
-                int16_t oldT = block->tiletype[x][y];
-                TileMaterial mat = tileMaterial(oldT);
-                if ((mat == VEIN) && !has_vein)
-                    mineral_removed += setTileMaterial(block->tiletype[x][y], STONE);
-                if ((mat == STONE) && has_vein)
-                    mineral_added += setTileMaterial(block->tiletype[x][y], VEIN);
-                if ((mat == FEATSTONE) && !has_feature)
-                    feature_removed += setTileMaterial(block->tiletype[x][y], STONE);
-                if ((mat == STONE) && has_feature)
-                    feature_added += setTileMaterial(block->tiletype[x][y], FEATSTONE);
+                df::tiletype oldT = block->tiletype[x][y];
+                df::tiletype_material mat = tileMaterial(oldT);
+                if ((mat == tiletype_material::MINERAL) && !has_vein)
+                    mineral_removed += setTileMaterial(block->tiletype[x][y], tiletype_material::STONE);
+                if ((mat == tiletype_material::STONE) && has_vein)
+                    mineral_added += setTileMaterial(block->tiletype[x][y], tiletype_material::MINERAL);
+                if ((mat == tiletype_material::FEATURE) && !has_feature)
+                    feature_removed += setTileMaterial(block->tiletype[x][y], tiletype_material::STONE);
+                if ((mat == tiletype_material::STONE) && has_feature)
+                    feature_added += setTileMaterial(block->tiletype[x][y], tiletype_material::FEATURE);
             }
         }
     }

@@ -42,38 +42,6 @@ namespace DFHack
         uint8_t data[SIZE];
     };
 
-    // DF effects, by darius from the bay12 forum
-    enum EFFECT_TYPE
-    {
-        EFF_MIASMA=0,
-        EFF_WATER,
-        EFF_WATER2,
-        EFF_BLOOD,
-        EFF_DUST,
-        EFF_MAGMA,
-        EFF_SMOKE,
-        EFF_DRAGONFIRE,
-        EFF_FIRE,
-        EFF_WEBING,
-        EFF_BOILING, // uses matgloss
-        EFF_OCEANWAVE
-    };
-
-    struct t_effect_df40d //size 40
-    {
-        uint16_t type;
-        t_matglossPair material;
-        int16_t lifetime;
-        uint16_t x;
-        uint16_t y;
-        uint16_t z; //14
-        int16_t x_direction;
-        int16_t y_direction;
-        junk_fill <12> unk4;
-        uint8_t canCreateNew;//??
-        uint8_t isHidden;
-    };
-
     struct t_name
     {
         char first_name[128];

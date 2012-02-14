@@ -31,8 +31,8 @@ using namespace DFHack::Simple;
 using namespace df::enums;
 using df::global::world;
 
-DFhackCExport command_result df_probe (Core * c, vector <string> & parameters);
-DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters);
+command_result df_probe (Core * c, vector <string> & parameters);
+command_result df_cprobe (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -56,7 +56,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
+command_result df_cprobe (Core * c, vector <string> & parameters)
 {
     Console & con = c->con;
     CoreSuspender suspend(c);
@@ -82,7 +82,7 @@ DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
+command_result df_probe (Core * c, vector <string> & parameters)
 {
     //bool showBlock, showDesig, showOccup, showTile, showMisc;
     Console & con = c->con;
@@ -143,7 +143,7 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
         con.print("\n\n");
     }
 */
-    int16_t tiletype = mc.tiletypeAt(cursor);
+    df::tiletype tiletype = mc.tiletypeAt(cursor);
     df::tile_designation &des = block.designation[tileX][tileY];
 /*
     if(showDesig)
@@ -169,17 +169,18 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
         con.print(" = %s",tileName(tiletype));
     con.print("\n");
 
-    DFHack::TileShape shape = tileShape(tiletype);
-    DFHack::TileMaterial material = tileMaterial(tiletype);
-    DFHack::TileSpecial special = tileSpecial(tiletype);
+    df::tiletype_shape shape = tileShape(tiletype);
+    df::tiletype_material material = tileMaterial(tiletype);
+    df::tiletype_special special = tileSpecial(tiletype);
+    df::tiletype_variant variant = tileVariant(tiletype);
     con.print("%-10s: %4d %s\n","Class"    ,shape,
-            TileShapeString[ shape ]);
+            ENUM_KEY_STR(tiletype_shape, shape));
     con.print("%-10s: %4d %s\n","Material" ,
-            material,TileMaterialString[ material ]);
+            material, ENUM_KEY_STR(tiletype_material, material));
     con.print("%-10s: %4d %s\n","Special"  ,
-            special, TileSpecialString[ special ]);
-    con.print("%-10s: %4d\n"   ,"Variant"  ,
-            tileVariant(tiletype));
+            special, ENUM_KEY_STR(tiletype_special, special));
+    con.print("%-10s: %4d %s\n"   ,"Variant"  ,
+            variant, ENUM_KEY_STR(tiletype_variant, variant));
     con.print("%-10s: %s\n"    ,"Direction",
             tileDirection(tiletype).getStr());
     con.print("\n");

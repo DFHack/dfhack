@@ -12,7 +12,7 @@ using std::string;
 using namespace DFHack;
 using namespace DFHack::Simple;
 
-DFhackCExport command_result colonies (Core * c, vector <string> & parameters);
+command_result colonies (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -42,7 +42,7 @@ void destroyColonies();
 void convertColonies(Materials *Materials);
 void showColonies(Core *c, Materials *Materials);
 
-DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
+command_result colonies (Core * c, vector <string> & parameters)
 {
     bool destroy = false;
     bool convert = false;

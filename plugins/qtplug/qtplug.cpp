@@ -23,7 +23,7 @@ static tthread::mutex * instance_mutex = 0;
 static bool running = false;
 static tthread::thread * QTThread;
 
-DFhackCExport command_result runqt (Core * c, vector <string> & parameters);
+command_result runqt (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -43,7 +43,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_FAILURE;
 }
 
-DFhackCExport command_result runqt (Core * c, vector <string> & parameters)
+command_result runqt (Core * c, vector <string> & parameters)
 {
     instance_mutex->lock();
     if(!running)

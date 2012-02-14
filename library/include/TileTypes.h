@@ -29,118 +29,11 @@ distribution.
 
 #include "Pragma.h"
 #include "Export.h"
+#include "DataDefs.h"
+#include "df/tiletype.h"
 
 namespace DFHack
 {
-
-    // tile class -- determines the general shape of the tile
-    // enum and lookup table for string names created using X macros
-    #define TILESHAPE_MACRO \
-        X(EMPTY,            "") \
-        X(WALL,             "") \
-        X(PILLAR,           "") \
-        X(BROOK_BED,        "mineable, water-passable rock on the bottom of brook") \
-        X(FORTIFICATION,    "") \
-        X(STAIR_UP,         "") \
-        X(STAIR_DOWN,       "") \
-        X(STAIR_UPDOWN,     "") \
-        X(RAMP,             "ramps have no direction" ) \
-        X(RAMP_TOP,         "used for pathing?" ) \
-        X(FLOOR,            "") \
-        X(BROOK_TOP,        "water-passable floor on top of BROOK_BED tiles") \
-        X(RIVER_BED,        "It's a riverbed. Basically a floor that doesn't get muddy.") \
-        X(POOL,             "A pool. Gathers water while it's raining.'") \
-        X(TREE_DEAD,        "") \
-        X(TREE_OK,          "") \
-        X(SAPLING_DEAD,     "") \
-        X(SAPLING_OK,       "") \
-        X(SHRUB_DEAD,       "") \
-        X(SHRUB_OK,         "") \
-        X(BOULDER,          "") \
-        X(PEBBLES,          "") \
-        X(ENDLESS_PIT,      "a fake endless pit")
-    //end TILESHAPE_MACRO
-
-    //define tile class enum
-    #define X(name,comment) name,
-    enum TileShape {
-        tileshape_invalid=-1,
-        TILESHAPE_MACRO
-        tileshape_count,
-    };
-    #undef X
-
-    DFHACK_EXPORT extern const char *TileShapeString[];
-
-    #define TILEMATERIAL_MACRO \
-        X(AIR,        "empty" ) \
-        X(SOIL,       "ordinary soil. material depends on geology" ) \
-        X(STONE,      "ordinary layer stone. material depends on geology" ) \
-        X(FEATSTONE,  "map special stone. used for things like hell, the hell temple or adamantine tubes. material depends on local/global special" ) \
-        X(OBSIDIAN,   "lava stone created by mixing magma and water" ) \
-        X(VEIN,       "vein stone. material depends on mineral veins present" ) \
-        X(ICE,        "frozen water... not much to say. you can determine what was on the tile before it froze by looking into the 'ice vein' objects" ) \
-        X(GRASS,      "light grass (has 4 variants)" ) \
-        X(GRASS2,     "dark grass (has 4 variants)" ) \
-        X(GRASS_DEAD, "dead grass (has 4 variants)" ) \
-        X(GRASS_DRY,  "dry grass (has 4 variants)" ) \
-        X(DRIFTWOOD,  "driftwood. normally shows up on beaches" ) \
-        X(HFS,        "the stuff demon pits are made of - this makes them different from ordinary pits." ) \
-        X(MAGMA,      "material for semi-molten rock and 'magma flow' tiles" ) \
-        X(CAMPFIRE,   "human armies make them when they siege. The original tile may be lost?" ) \
-        X(FIRE,       "burning grass" ) \
-        X(ASHES,      "what remains from a FIRE" ) \
-        X(CONSTRUCTED,"tile material depends on the construction present" ) \
-        X(CYAN_GLOW,  "the glowy stuff that disappears from the demon temple when you take the sword." ) 
-    //end TILEMATERIAL_MACRO
-
-    // material enum
-    #define X(name,comment) name,
-    enum TileMaterial {
-        tilematerial_invalid=-1,
-        TILEMATERIAL_MACRO
-        tilematerial_count,
-    };
-    #undef X
-
-
-    DFHACK_EXPORT extern const char *TileMaterialString[];
-
-    // Special specials of the tile.
-    // Not the best way to do this, but compatible with existing code.
-    // When the TileType class gets created, everything should be re-thought.
-    #define TILESPECIAL_MACRO \
-        X(NORMAL,            "Default for all type, nothing present" ) \
-        X(RIVER_SOURCE,      "River Source, when it exists on a map" ) \
-        X(WATERFALL,         "Waterfall from Nowhere, used by cave rivers back in 40d" ) \
-        X(CRACKED,           "Partially (75%) mined walls" ) \
-        X(DAMAGED,           "Partially (50%) mined walls" ) \
-        X(WORN,              "Partially (25%) mined walls" ) \
-        X(SMOOTH,            "Walls and floors." ) 
-    //end TILESPECIAL_MACRO
-
-    //special enum
-    #define X(name,comment) TILE_##name,
-    enum TileSpecial {
-        tilespecial_invalid=-1,
-        TILESPECIAL_MACRO
-        tilespecial_count,
-    };
-    #undef X
-
-    DFHACK_EXPORT extern const char *TileSpecialString[];
-
-    // variants are used for tiles, where there are multiple variants of the same - like grass floors
-    enum TileVariant
-    {
-        tilevariant_invalid=-1,
-        VAR_1, //Yes, the value of VAR_1 is 0.  It's legacy.  Deal with it.
-        VAR_2,
-        VAR_3,
-        VAR_4,
-    };
-
-
     //Mainly walls and rivers
     //Byte values are used because walls can have either 1 or 2 in any given direction.
     const int TileDirectionCount = 4;
@@ -161,6 +54,18 @@ namespace DFHack
         TileDirection( uint32_t whole_bits)
         {
             whole = whole_bits;
+        }
+        bool operator== (const TileDirection &other) const
+        {
+            return whole == other.whole;
+        }
+        bool operator!= (const TileDirection &other) const
+        {
+            return whole != other.whole;
+        }
+        operator bool() const
+        {
+            return whole != 0;
         }
         TileDirection( unsigned char North, unsigned char South, unsigned char West, unsigned char East )
         {
@@ -235,172 +140,124 @@ namespace DFHack
     #undef DIRECTION
             return str;
         }
-
-
     };
 
-    struct TileRow
+    using namespace df::enums;
+
+    inline
+        const char * tileName(df::tiletype tiletype)
     {
-        const char * name;
-        TileShape shape;
-        TileMaterial material;
-        TileVariant variant;
-        TileSpecial special;
-        TileDirection direction;
-    };
+        return ENUM_ATTR(tiletype, caption, tiletype);
+    }
 
-    #define TILE_TYPE_ARRAY_LENGTH 520
+    inline
+    df::tiletype_shape tileShape(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype, shape, tiletype);
+    }
 
-    extern DFHACK_EXPORT const TileRow tileTypeTable[];
+    inline
+    df::tiletype_special tileSpecial(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype, special, tiletype);
+    }
+
+    inline
+    df::tiletype_variant tileVariant(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype, variant, tiletype);
+    }
+
+    inline
+    df::tiletype_material tileMaterial(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype, material, tiletype);
+    }
+
+    inline
+    TileDirection tileDirection(df::tiletype tiletype)
+    {
+        return TileDirection(ENUM_ATTR(tiletype, direction, tiletype));
+    }
 
     // tile is missing a floor
     inline
-    bool LowPassable(int16_t tiletype)
+    bool LowPassable(df::tiletype tiletype)
     {
-        switch(DFHack::tileTypeTable[tiletype].shape)
-        {
-            case DFHack::EMPTY:
-            case DFHack::STAIR_DOWN:
-            case DFHack::STAIR_UPDOWN:
-            case DFHack::RAMP_TOP:
-                return true;
-            default:
-                return false;
-        }
-    };
+        return ENUM_ATTR(tiletype_shape, passable_low, tileShape(tiletype));
+    }
 
     // tile is missing a roof
     inline
-    bool HighPassable(int16_t tiletype)
+    bool HighPassable(df::tiletype tiletype)
     {
-        switch(DFHack::tileTypeTable[tiletype].shape)
-        {
-            case DFHack::EMPTY:
-            case DFHack::STAIR_DOWN:
-            case DFHack::STAIR_UPDOWN:
-            case DFHack::STAIR_UP:
-            case DFHack::RAMP:
-            case DFHack::RAMP_TOP:
-            case DFHack::FLOOR:
-            case DFHack::SAPLING_DEAD:
-            case DFHack::SAPLING_OK:
-            case DFHack::SHRUB_DEAD:
-            case DFHack::SHRUB_OK:
-            case DFHack::BOULDER:
-            case DFHack::PEBBLES:
-            case DFHack::RIVER_BED:
-            case DFHack::POOL:
-            case DFHack::ENDLESS_PIT:
-            case DFHack::BROOK_TOP:
-                return true;
-            default:
-                return false;
-        }
-    };
-
-    inline
-    bool FlowPassable(int16_t tiletype)
-    {
-        TileShape tc = tileTypeTable[tiletype].shape;
-        return tc != WALL && tc != PILLAR && tc != TREE_DEAD && tc != TREE_OK;
-    };
-
-    inline
-    bool isWallTerrain(int16_t tiletype)
-    {
-        return tileTypeTable[tiletype].shape >= WALL && tileTypeTable[tiletype].shape <= FORTIFICATION ;
+        return ENUM_ATTR(tiletype_shape, passable_high, tileShape(tiletype));
     }
 
     inline
-    bool isFloorTerrain(int16_t tiletype)
+    bool FlowPassable(df::tiletype tiletype)
     {
-        return tileTypeTable[tiletype].shape >= FLOOR && tileTypeTable[tiletype].shape <= PEBBLES;
+        return ENUM_ATTR(tiletype_shape, passable_flow, tileShape(tiletype));
     }
 
     inline
-    bool isRampTerrain(int16_t tiletype)
+    bool isWallTerrain(df::tiletype tiletype)
     {
-        return tileTypeTable[tiletype].shape == RAMP;
+        return ENUM_ATTR(tiletype_shape, basic_shape, tileShape(tiletype)) == tiletype_shape_basic::Wall;
     }
 
     inline
-    bool isStairTerrain(int16_t tiletype)
+    bool isFloorTerrain(df::tiletype tiletype)
     {
-        return tileTypeTable[tiletype].shape >= STAIR_UP && tileTypeTable[tiletype].shape <= STAIR_UPDOWN;
+        return ENUM_ATTR(tiletype_shape, basic_shape, tileShape(tiletype)) == tiletype_shape_basic::Floor;
     }
 
     inline
-    bool isOpenTerrain(int16_t tiletype)
+    bool isRampTerrain(df::tiletype tiletype)
     {
-        return tileTypeTable[tiletype].shape == EMPTY;
+        return ENUM_ATTR(tiletype_shape, basic_shape, tileShape(tiletype)) == tiletype_shape_basic::Ramp;
     }
 
     inline
-    const char * tileName(int16_t tiletype)
+    bool isOpenTerrain(df::tiletype tiletype)
     {
-        return tileTypeTable[tiletype].name;
+        return ENUM_ATTR(tiletype_shape, basic_shape, tileShape(tiletype)) == tiletype_shape_basic::Open;
     }
 
     inline
-    TileShape tileShape(int16_t tiletype)
+    bool isStairTerrain(df::tiletype tiletype)
     {
-        return tileTypeTable[tiletype].shape;
-    }
-
-    inline
-    TileSpecial tileSpecial(int16_t tiletype)
-    {
-        return tileTypeTable[tiletype].special;
-    }
-
-    inline
-    TileVariant tileVariant(int16_t tiletype)
-    {
-        return tileTypeTable[tiletype].variant;
-    }
-
-    inline
-    TileMaterial tileMaterial(int16_t tiletype)
-    {
-        return tileTypeTable[tiletype].material;
-    }
-
-    inline
-    TileDirection tileDirection(int16_t tiletype)
-    {
-        return tileTypeTable[tiletype].direction;
-    }
-
-    /// Safely access the tile type array.
-    inline const
-    TileRow * getTileRow(int16_t tiletype)
-    {
-        if( tiletype<0 || tiletype>=TILE_TYPE_ARRAY_LENGTH ) return 0;
-        return ( const TileRow * ) &tileTypeTable[tiletype];
+        return ENUM_ATTR(tiletype_shape, basic_shape, tileShape(tiletype)) == tiletype_shape_basic::Stair;
     }
 
     /**
      * zilpin: Find the first tile entry which matches the given search criteria.
      * All parameters are optional.
-     * To omit, use the 'invalid' enum for that type (e.g. tileclass_invalid, tilematerial_invalid, etc)
+     * To omit, specify NONE for that type
      * For tile directions, pass NULL to omit.
-     * @return matching index in tileTypeTable, or -1 if none found.
+     * @return matching index in tileTypeTable, or 0 if none found.
      */
     inline
-    int16_t findTileType( const TileShape tshape, const TileMaterial tmat, const TileVariant tvar, const TileSpecial tspecial, const TileDirection tdir )
+    df::tiletype findTileType(const df::tiletype_shape tshape, const df::tiletype_material tmat, const df::tiletype_variant tvar, const df::tiletype_special tspecial, const TileDirection tdir)
     {
-        int16_t tt;
-        for(tt=0;tt<TILE_TYPE_ARRAY_LENGTH; ++tt)
+        FOR_ENUM_ITEMS(tiletype, tt)
         {
-            if( tshape>-1   && tshape != tileTypeTable[tt].shape ) continue;
-            if( tmat>-1     && tmat != tileTypeTable[tt].material ) continue;
-            if( tvar>-1     && tvar != tileTypeTable[tt].variant ) continue;
-            if( tspecial>-1 && tspecial != tileTypeTable[tt].special ) continue;
-            if( tdir.whole  && tdir.whole != tileTypeTable[tt].direction.whole ) continue;
-            //Match!
+            if (tshape != tiletype_shape::NONE && tshape != tileShape(tt))
+                continue;
+            if (tmat != tiletype_material::NONE && tmat != tileMaterial(tt))
+                continue;
+            // Don't require variant to match if the destination tile doesn't even have one
+            if (tvar != tiletype_variant::NONE && tvar != tileVariant(tt) && tileVariant(tt) != tiletype_variant::NONE)
+                continue;
+            // Same for special
+            if (tspecial != tiletype_special::NONE && tspecial != tileSpecial(tt) && tileSpecial(tt) != tiletype_special::NONE)
+                continue;
+            if (tdir && tdir != tileDirection(tt))
+                continue;
+            // Match!
             return tt;
         }
-        return -1;
+        return tiletype::Void;
     }
 
     /**
@@ -410,9 +267,13 @@ namespace DFHack
      * 
      * @todo Definitely needs improvement for wall directions, etc.
      */
-    DFHACK_EXPORT int16_t findSimilarTileType( const int16_t sourceTileType, const TileShape tshape );
+    DFHACK_EXPORT df::tiletype findSimilarTileType( const df::tiletype sourceTileType, const df::tiletype_shape tshape );
+
+    /**
+     * Finds a random variant of the selected tile
+     * If there are no variants, returns the same tile
+     */
+    DFHACK_EXPORT df::tiletype findRandomVariant(const df::tiletype tile);
 }
-
-
 
 #endif // TILETYPES_H_INCLUDED

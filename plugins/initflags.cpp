@@ -14,8 +14,8 @@ using namespace df::enums;
 
 using df::global::d_init;
 
-DFhackCExport command_result twaterlvl(Core * c, vector <string> & parameters);
-DFhackCExport command_result tidlers(Core * c, vector <string> & parameters);
+command_result twaterlvl(Core * c, vector <string> & parameters);
+command_result tidlers(Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -40,7 +40,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result twaterlvl(Core * c, vector <string> & parameters)
+command_result twaterlvl(Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     d_init->flags1.toggle(d_init_flags1::SHOW_FLOW_AMOUNTS);
@@ -48,7 +48,7 @@ DFhackCExport command_result twaterlvl(Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result tidlers(Core * c, vector <string> & parameters)
+command_result tidlers(Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     d_init->idlers = ENUM_NEXT_ITEM(d_init_idlers, d_init->idlers);

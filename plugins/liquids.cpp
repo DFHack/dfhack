@@ -129,7 +129,7 @@ public:
         bool juststarted = true;
         while (mc.testCoord(start))
         {
-            uint16_t tt = mc.tiletypeAt(start);
+            df::tiletype tt = mc.tiletypeAt(start);
             if(DFHack::LowPassable(tt) || juststarted && DFHack::HighPassable(tt))
             {
                 v.push_back(start);
@@ -177,7 +177,7 @@ public:
 				maybeFlood(DFCoord(xy.x, xy.y - 1, xy.z), to_flood, mc);
 				maybeFlood(DFCoord(xy.x, xy.y + 1, xy.z), to_flood, mc);
 
-				uint16_t tt = mc.tiletypeAt(xy);
+				df::tiletype tt = mc.tiletypeAt(xy);
 				if (LowPassable(tt))
 				{
 					maybeFlood(DFCoord(xy.x, xy.y, xy.z - 1), to_flood, mc);
@@ -202,7 +202,7 @@ private:
 
 CommandHistory liquids_hist;
 
-DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters);
+command_result df_liquids (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -223,7 +223,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
+command_result df_liquids (Core * c, vector <string> & parameters)
 {
     int32_t x,y,z;
 
@@ -455,7 +455,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                     coord_vec::iterator iter = all_tiles.begin();
                     while (iter != all_tiles.end())
                     {
-                        mcache.setTiletypeAt(*iter, 331);
+                        mcache.setTiletypeAt(*iter, tiletype::LavaWall);
                         mcache.setTemp1At(*iter,10015);
                         mcache.setTemp2At(*iter,10015);
                         df::tile_designation des = mcache.designationAt(*iter);
@@ -469,7 +469,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                     coord_vec::iterator iter = all_tiles.begin();
                     while (iter != all_tiles.end())
                     {
-                        mcache.setTiletypeAt(*iter, 340);
+                        mcache.setTiletypeAt(*iter, findRandomVariant(tiletype::LavaFloor1));
                         iter ++;
                     }
                 }
@@ -478,7 +478,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                     coord_vec::iterator iter = all_tiles.begin();
                     while (iter != all_tiles.end())
                     {
-                        mcache.setTiletypeAt(*iter, 90);
+                        mcache.setTiletypeAt(*iter, tiletype::RiverSource);
 
                         df::tile_designation a = mcache.designationAt(*iter);
                         a.bits.liquid_type = tile_liquid::Water;
@@ -525,7 +525,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                             continue;
                         }
                         df::tile_designation des = mcache.designationAt(current);
-                        uint16_t tt = mcache.tiletypeAt(current);
+                        df::tiletype tt = mcache.tiletypeAt(current);
                         // don't put liquids into places where they don't belong...
                         if(!DFHack::FlowPassable(tt))
                         {

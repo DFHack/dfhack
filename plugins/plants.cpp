@@ -20,9 +20,9 @@ using std::string;
 using namespace DFHack;
 using df::global::world;
 
-DFhackCExport command_result df_grow (Core * c, vector <string> & parameters);
-DFhackCExport command_result df_immolate (Core * c, vector <string> & parameters);
-DFhackCExport command_result df_extirpate (Core * c, vector <string> & parameters);
+command_result df_grow (Core * c, vector <string> & parameters);
+command_result df_immolate (Core * c, vector <string> & parameters);
+command_result df_extirpate (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -105,7 +105,7 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
         c->con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    DFHack::Gui * Gui = c->getGui();
+    Gui * Gui = c->getGui();
     uint32_t x_max, y_max, z_max;
     Maps::getSize(x_max, y_max, z_max);
     MapExtras::MapCache map;
@@ -162,7 +162,7 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
     return CR_OK;
 }
 
-DFhackCExport command_result df_immolate (Core * c, vector <string> & parameters)
+command_result df_immolate (Core * c, vector <string> & parameters)
 {
     bool shrubs = false, trees = false, help = false;
     if(getoptions(parameters,shrubs,trees,help))
@@ -176,7 +176,7 @@ DFhackCExport command_result df_immolate (Core * c, vector <string> & parameters
     }
 }
 
-DFhackCExport command_result df_extirpate (Core * c, vector <string> & parameters)
+command_result df_extirpate (Core * c, vector <string> & parameters)
 {
     bool shrubs = false, trees = false, help = false;
     if(getoptions(parameters,shrubs,trees, help))
@@ -190,7 +190,7 @@ DFhackCExport command_result df_extirpate (Core * c, vector <string> & parameter
     }
 }
 
-DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
+command_result df_grow (Core * c, vector <string> & parameters)
 {
     for(size_t i = 0; i < parameters.size();i++)
     {
@@ -208,7 +208,7 @@ DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
         return CR_FAILURE;
     }
     MapExtras::MapCache map;
-    DFHack::Gui *Gui = c->getGui();
+    Gui *Gui = c->getGui();
     int32_t x,y,z;
     if(Gui->getCursorCoords(x,y,z))
     {
@@ -220,7 +220,8 @@ DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
                 df::plant * tree = alltrees->at(i);
                 if(tree->pos.x == x && tree->pos.y == y && tree->pos.z == z)
                 {
-                    if(DFHack::tileShape(map.tiletypeAt(DFHack::DFCoord(x,y,z))) == DFHack::SAPLING_OK)
+                    if(tileShape(map.tiletypeAt(DFCoord(x,y,z))) == tiletype_shape::SAPLING &&
+                        tileSpecial(map.tiletypeAt(DFCoord(x,y,z))) != tiletype_special::DEAD)
                     {
                         tree->grow_counter = Vegetation::sapling_to_tree_threshold;
                     }
@@ -235,8 +236,8 @@ DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
         for(size_t i = 0 ; i < world->plants.all.size(); i++)
         {
             df::plant *p = world->plants.all[i];
-            uint16_t ttype = map.tiletypeAt(df::coord(p->pos.x,p->pos.y,p->pos.z));
-            if(!p->flags.bits.is_shrub && DFHack::tileShape(ttype) == DFHack::SAPLING_OK)
+            df::tiletype ttype = map.tiletypeAt(df::coord(p->pos.x,p->pos.y,p->pos.z));
+            if(!p->flags.bits.is_shrub && tileShape(ttype) == tiletype_shape::SAPLING && tileSpecial(ttype) != tiletype_special::DEAD)
             {
                 p->grow_counter = Vegetation::sapling_to_tree_threshold;
             }

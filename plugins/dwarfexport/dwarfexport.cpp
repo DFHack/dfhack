@@ -33,7 +33,7 @@ using df::global::world;
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
-DFhackCExport command_result export_dwarves (Core * c, std::vector <std::string> & parameters);
+command_result export_dwarves (Core * c, std::vector <std::string> & parameters);
 
 // A plugins must be able to return its name. This must correspond to the filename - export.plug.so or export.plug.dll
 DFhackCExport const char * plugin_name ( void )
@@ -155,7 +155,7 @@ static void export_dwarf(Core* c, df::unit* cre, ostream& out) {
     out << "  </Creature>" << endl;
 }
 
-DFhackCExport command_result export_dwarves (Core * c, std::vector <std::string> & parameters)
+command_result export_dwarves (Core * c, std::vector <std::string> & parameters)
 {
     string filename;
     if (parameters.size() == 1) {

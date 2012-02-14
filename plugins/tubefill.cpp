@@ -18,7 +18,7 @@ using namespace DFHack::Simple;
 using namespace df::enums;
 using df::global::world;
 
-DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string> & params);
+command_result tubefill(DFHack::Core * c, std::vector<std::string> & params);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -37,7 +37,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string> & params)
+command_result tubefill(DFHack::Core * c, std::vector<std::string> & params)
 {
     uint64_t count = 0;
 
@@ -79,7 +79,7 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
                     continue;
 
                 // Is the tile already a wall?
-                if (tileShape(block->tiletype[x][y]) == WALL)
+                if (tileShape(block->tiletype[x][y]) == tiletype_shape::WALL)
                     continue;
 
                 // Does the tile contain liquid?
@@ -92,16 +92,16 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
                 // Check the tile above this one, in case we need to add a floor
                 if (above)
                 {
-                    if ((tileShape(above->tiletype[x][y]) == EMPTY) || (tileShape(above->tiletype[x][y]) == RAMP_TOP))
+                    if ((tileShape(above->tiletype[x][y]) == tiletype_shape::EMPTY) || (tileShape(above->tiletype[x][y]) == tiletype_shape::RAMP_TOP))
                     {
                         // if this tile isn't a local feature, it's likely the tile underneath was originally just a floor
                         // it's also possible there was just solid non-feature stone above, but we don't care enough to check
                         if (!above->designation[x][y].bits.feature_local)
                             continue;
-                        above->tiletype[x][y] = findTileType(FLOOR, FEATSTONE, tilevariant_invalid, TILE_NORMAL, TileDirection());
+                        above->tiletype[x][y] = findRandomVariant(tiletype::FeatureFloor1);
                     }
                 }
-                block->tiletype[x][y] = findTileType(WALL, FEATSTONE, tilevariant_invalid, TILE_NORMAL, TileDirection());
+                block->tiletype[x][y] = tiletype::FeatureWall;
                 ++count;
             }
         }

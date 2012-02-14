@@ -32,9 +32,9 @@ using MapExtras::Block;
 using MapExtras::MapCache;
 using df::global::world;
 
-DFhackCExport command_result df_autodump(Core * c, vector <string> & parameters);
-DFhackCExport command_result df_autodump_destroy_here(Core * c, vector <string> & parameters);
-DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> & parameters);
+command_result df_autodump(Core * c, vector <string> & parameters);
+command_result df_autodump_destroy_here(Core * c, vector <string> & parameters);
+command_result df_autodump_destroy_item(Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -144,7 +144,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
                 c->con.printerr("Cursor is in an invalid/uninitialized area. Place it over a floor.\n");
                 return CR_FAILURE;
             }
-            uint16_t ttype = MC.tiletypeAt(pos_cursor);
+            df::tiletype ttype = MC.tiletypeAt(pos_cursor);
             if(!DFHack::isFloorTerrain(ttype))
             {
                 c->con.printerr("Cursor should be placed over a floor.\n");
@@ -283,14 +283,14 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result df_autodump(Core * c, vector <string> & parameters)
+command_result df_autodump(Core * c, vector <string> & parameters)
 {
     CoreSuspender suspend(c);
 
     return autodump_main(c, parameters);
 }
 
-DFhackCExport command_result df_autodump_destroy_here(Core * c, vector <string> & parameters)
+command_result df_autodump_destroy_here(Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND; CORE ALREADY SUSPENDED
     if (!parameters.empty())
@@ -305,7 +305,7 @@ DFhackCExport command_result df_autodump_destroy_here(Core * c, vector <string> 
 static map<int, df::item_flags> pending_destroy;
 static int last_frame = 0;
 
-DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> & parameters)
+command_result df_autodump_destroy_item(Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND; CORE ALREADY SUSPENDED
     if (!parameters.empty())

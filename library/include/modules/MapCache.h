@@ -47,8 +47,8 @@ void SquashVeins (DFCoord bcoord, mapblock40d & mb, t_blockmaterials & materials
         //iterate through columns
         for (uint32_t k = 0; k< 16;k++)
         {
-            int16_t tt = mb.tiletypes[k][j];
-            if(DFHack::tileMaterial(tt) == DFHack::VEIN)
+            df::tiletype tt = mb.tiletypes[k][j];
+            if(DFHack::tileMaterial(tt) == tiletype_material::MINERAL)
             {
                 for(int i = (int) veins.size() - 1; i >= 0;i--)
                 {
@@ -72,6 +72,11 @@ void SquashRocks ( std::vector< std::vector <uint16_t> > * layerassign, DFHack::
         {
             uint8_t test = mb.designation[xx][yy].bits.biome;
             if( test >= sizeof(mb.biome_indices))
+            {
+                materials[xx][yy] = -1;
+                continue;
+            }
+            if (mb.biome_indices[test] >= layerassign->size())
             {
                 materials[xx][yy] = -1;
                 continue;
@@ -118,11 +123,11 @@ class Block
         veinmats[p.x][p.y] = -1;
     }
 
-    uint16_t TileTypeAt(df::coord2d p)
+    df::tiletype TileTypeAt(df::coord2d p)
     {
         return raw.tiletypes[p.x][p.y];
     }
-    bool setTiletypeAt(df::coord2d p, uint16_t tiletype)
+    bool setTiletypeAt(df::coord2d p, df::tiletype tiletype)
     {
         if(!valid) return false;
         dirty_tiletypes = true;
@@ -286,16 +291,16 @@ class MapCache
             return 0;
         }
     }
-    uint16_t tiletypeAt (DFHack::DFCoord tilecoord)
+    df::tiletype tiletypeAt (DFHack::DFCoord tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
         {
             return b->TileTypeAt(tilecoord % 16);
         }
-        return 0;
+        return tiletype::Void;
     }
-    bool setTiletypeAt(DFHack::DFCoord tilecoord, uint16_t tiletype)
+    bool setTiletypeAt(DFHack::DFCoord tilecoord, df::tiletype tiletype)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)

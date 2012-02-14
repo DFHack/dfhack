@@ -23,7 +23,7 @@ using df::global::world;
 
 typedef std::vector<df::plant *> PlantList;
 
-DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & parameters);
+command_result mapexport (Core * c, std::vector <std::string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -44,7 +44,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & parameters)
+command_result mapexport (Core * c, std::vector <std::string> & parameters)
 {
     bool showHidden = false;
 
@@ -206,36 +206,35 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                             prototile->set_flow_size(des.bits.flow_size);
                         }
 
-                        uint16_t type = b->TileTypeAt(coord);
-                        const DFHack::TileRow *info = DFHack::getTileRow(type);
-                        prototile->set_type((dfproto::Tile::TileType)info->shape);
+                        df::tiletype type = b->TileTypeAt(coord);
+                        prototile->set_type((dfproto::Tile::TileType)tileShape(type));
 
-                        prototile->set_tile_material((dfproto::Tile::TileMaterialType)info->material);
+                        prototile->set_material_type((dfproto::Tile::TileMaterialType)tileMaterial(type));
 
                         df::coord map_pos = df::coord(b_x*16+x,b_y*16+y,z);
                         
-                        switch (info->material)
+                        switch (tileMaterial(type))
                         {
-                        case DFHack::SOIL:
-                        case DFHack::STONE:
+                        case tiletype_material::SOIL:
+                        case tiletype_material::STONE:
                             prototile->set_material_type(0);
                             prototile->set_material_index(b->baseMaterialAt(coord));
                             break;
-                        case DFHack::VEIN:
+                        case tiletype_material::MINERAL:
                             prototile->set_material_type(0);
                             prototile->set_material_index(b->veinMaterialAt(coord));
                             break;
-                        case DFHack::FEATSTONE:
+                        case tiletype_material::FEATURE:
                             if (blockFeatureLocal.type != -1 && des.bits.feature_local)
                             {
-                                if (blockFeatureLocal.type == df::feature_type::deep_special_tube
+                                if (blockFeatureLocal.type == feature_type::deep_special_tube
                                         && blockFeatureLocal.main_material == 0) // stone
                                 {
                                     prototile->set_material_type(0);
                                     prototile->set_material_index(blockFeatureLocal.sub_material);
                                 }
                                 if (blockFeatureGlobal.type != -1 && des.bits.feature_global
-                                        && blockFeatureGlobal.type == df::feature_type::feature_underworld_from_layer
+                                        && blockFeatureGlobal.type == feature_type::feature_underworld_from_layer
                                         && blockFeatureGlobal.main_material == 0) // stone
                                 {
                                     prototile->set_material_type(0);
@@ -243,7 +242,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                                 }
                             }
                             break;
-                        case DFHack::CONSTRUCTED:
+                        case tiletype_material::CONSTRUCTION:
                             if (constructionMaterials.find(map_pos) != constructionMaterials.end())
                             {
                                 prototile->set_material_index(constructionMaterials[map_pos].first);

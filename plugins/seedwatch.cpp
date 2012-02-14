@@ -97,7 +97,7 @@ string searchAbbreviations(string in)
     }
 };
 
-DFhackCExport command_result df_seedwatch(Core* pCore, vector<string>& parameters)
+command_result df_seedwatch(Core* pCore, vector<string>& parameters)
 {
     Core& core = *pCore;
     if(!core.isValid())

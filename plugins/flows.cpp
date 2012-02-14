@@ -17,7 +17,7 @@ using namespace df::enums;
 
 using df::global::world;
 
-DFhackCExport command_result df_flows (Core * c, vector <string> & parameters)
+command_result df_flows (Core * c, vector <string> & parameters)
 {
     CoreSuspender suspend(c);
 

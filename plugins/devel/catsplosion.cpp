@@ -51,6 +51,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
    return CR_OK;
 }
 
+typedef df::unit::T_relations::T_pregnancy_ptr pregstruct;
 command_result catsplosion (Core * c, std::vector <std::string> & parameters)
 {
     list<string> s_creatures;
@@ -70,6 +71,7 @@ command_result catsplosion (Core * c, std::vector <std::string> & parameters)
 
     int totalcount=0;
     int totalchanged=0;
+    int totalcreated=0;
     string sextype;
 
     // shows all the creatures and returns.
@@ -105,27 +107,40 @@ command_result catsplosion (Core * c, std::vector <std::string> & parameters)
         }
     }
 
-    /*
+
     // process
     for (list<string>::iterator it = s_creatures.begin(); it != s_creatures.end(); ++it)
     {
         std::string clinput = *it;
         std::transform(clinput.begin(), clinput.end(), clinput.begin(), ::toupper);
-        vector <t_creature> &females = female_counts[clinput];
+        vector <df::unit *> &females = female_counts[clinput];
         uint32_t sz_fem = females.size();
         totalcount += sz_fem;
-        for(uint32_t i = 0; i < sz_fem && totalchanged != maxpreg; i++)
+        for(uint32_t i = 0; i < sz_fem; i++)// max 1 pregnancy
         {
-            t_creature & female = females[i];
-            uint32_t preg_timer = proc->readDWord(female.origin + creature_pregnancy_offset);
-            if(preg_timer != 0)
+            df::unit * female = females[i];
+            // accelerate
+            if(female->relations.pregnancy_timer != 0)
             {
-                proc->writeDWord(female.origin + creature_pregnancy_offset, rand() % 100 + 1);
+                female->relations.pregnancy_timer = rand() % 100 + 1;
                 totalchanged++;
+            }
+            else if(!female->relations.pregnancy_ptr)
+            {
+                pregstruct * preg = new pregstruct;
+                preg->anon_1 = female->appearance.unk_51c;
+                preg->anon_2 = female->appearance.unk_524;
+                female->relations.pregnancy_ptr = preg;
+                female->relations.pregnancy_timer = rand() % 100 + 1;
+                female->relations.pregnancy_mystery = 1; // WTF is this?
+                totalcreated ++;
             }
         }
     }
-    */
-    cout << totalchanged << " pregnancies accelerated. Total creatures checked: " << totalcount << "." << endl;
+    if(totalchanged)
+        c->con.print("%d pregnancies accelerated.\n", totalchanged);
+    if(totalcreated)
+        c->con.print("%d pregnancies created.\n", totalcreated);
+    c->con.print("Total creatures checked: %d\n", totalcount);
     return CR_OK;
 }

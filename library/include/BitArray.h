@@ -174,8 +174,10 @@ namespace DFHack
         DfArray() : m_data(NULL), m_size(0) {}
         ~DfArray() { free(m_data); }
 
-        DfArray(const DfArray<T> &other) : m_data(NULL), m_size(0) {
-            *this = other;
+        DfArray(const DfArray<T> &other) : m_data(NULL), m_size(0)
+        {
+            resize(other.m_size);
+            memcpy(m_data, other.m_data,m_size*sizeof(T));
         }
 
         T *data() { return m_data; }
@@ -189,7 +191,14 @@ namespace DFHack
         {
             if (new_size == m_size)
                 return;
-            m_data = (T*)realloc(m_data, sizeof(T)*new_size);
+            if(!m_data)
+            {
+                m_data = (T*) malloc(sizeof(T)*new_size);
+            }
+            else
+            {
+                m_data = (T*)realloc(m_data, sizeof(T)*new_size);
+            }
             if (new_size > m_size)
                 memset(m_data+sizeof(T)*m_size, 0, sizeof(T)*(new_size - m_size));
             m_size = new_size;

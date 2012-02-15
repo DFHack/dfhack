@@ -145,7 +145,7 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
         buffer->local_feature = block->local_feature;
         buffer->mystery = block->unk2;
         buffer->origin = block;
-        buffer->blockflags.whole = block->flags.as_int();
+        buffer->blockflags.whole = block->flags.whole;
         return true;
     }
     return false;
@@ -185,7 +185,7 @@ bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
     df::map_block *block = getBlock(x,y,z);
     if (block)
     {
-        dirtybit = block->flags.is_set(block_flags::Designated);
+        dirtybit = block->flags.bits.designated;
         return true;
     }
     return false;
@@ -196,7 +196,7 @@ bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
     df::map_block *block = getBlock(x,y,z);
     if (block)
     {
-        block->flags.set(block_flags::Designated, dirtybit);
+        block->flags.bits.designated = true;
         return true;
     }
     return false;
@@ -211,7 +211,7 @@ bool Maps::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &bloc
     df::map_block *block = getBlock(x,y,z);
     if (block)
     {
-        blockflags.whole = block->flags.as_int();
+        blockflags.whole = block->flags.whole;
         return true;
     }
     return false;
@@ -222,7 +222,8 @@ bool Maps::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags bloc
     df::map_block *block = getBlock(x,y,z);
     if (block)
     {
-        return (block->flags = blockflags.whole);
+        block->flags.whole = blockflags.whole;
+        return true;
     }
     return false;
 }

@@ -127,7 +127,7 @@ command_result df_getplants (Core * c, vector <string> & parameters)
             }
         }
         if (dirty)
-            cur->flags.set(block_flags::Designated);
+            cur->flags.bits.designated = true;
     }
     if (count)
         c->con.print("Updated %d plant designations.\n", count);

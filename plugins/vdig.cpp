@@ -773,7 +773,7 @@ bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
             }
         }
     }
-    bl->flags.set(block_flags::Designated);
+    bl->flags.bits.designated = true;
     return true;
 };
 

@@ -27,11 +27,11 @@ command_result df_flows (Core * c, vector <string> & parameters)
     for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block *cur = world->map.map_blocks[i];
-        if (cur->flags.is_set(block_flags::UpdateLiquid))
+        if (cur->flags.bits.update_liquid)
             flow1++;
-        if (cur->flags.is_set(block_flags::UpdateLiquidTwice))
+        if (cur->flags.bits.update_liquid_twice)
             flow2++;
-        if (cur->flags.is_set(block_flags::UpdateLiquid) && cur->flags.is_set(block_flags::UpdateLiquidTwice))
+        if (cur->flags.bits.update_liquid && cur->flags.bits.update_liquid_twice)
             flowboth++;
         for (int x = 0; x < 16; x++)
         {

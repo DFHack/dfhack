@@ -8,10 +8,14 @@
 #include <set>
 // DF data structure definition headers
 #include "DataDefs.h"
-//#include "df/world.h"
+#include "modules/Maps.h"
+#include "df/world.h"
+#include "TileTypes.h"
 
 using namespace DFHack;
+using namespace DFHack::Simple;
 using namespace df::enums;
+using df::global::world;
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
@@ -64,19 +68,19 @@ command_result tilesieve(DFHack::Core * c, std::vector<std::string> & params)
     {
         df::map_block *block = *iter;
         df::tiletype tt;
-        const char * name = tileName(tt);
         // for each tile in block
         for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
         {
-            tt = block.tiletypes[x][y];
-            if(tileShape(tt) != df::tiletype_shape::None )
+            tt = block->tiletype[x][y];
+            const char * name = tileName(tt);
+            if(tileShape(tt) != tiletype_shape::NONE )
                 continue;
             if(name && strlen(name) != 0)
                 continue;
             if(seen.count(tt))
                 continue;
             seen.insert(tt);
-            c->con.print("Found tile %d @ %d %d %d\n", tt, seen.map_pos.x + x, seen.map_pos.y + y, seen.map_pos.z);
+            c->con.print("Found tile %d @ %d %d %d\n", tt, block->map_pos.x + x, block->map_pos.y + y, block->map_pos.z);
         }
     }
     return CR_OK;

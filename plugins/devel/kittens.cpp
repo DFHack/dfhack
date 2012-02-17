@@ -32,6 +32,7 @@ command_result ktimer (Core * c, vector <string> & parameters);
 command_result trackmenu (Core * c, vector <string> & parameters);
 command_result trackpos (Core * c, vector <string> & parameters);
 command_result colormods (Core * c, vector <string> & parameters);
+command_result zoom (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -46,6 +47,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.push_back(PluginCommand("trackmenu","Track menu ID changes (toggle).",trackmenu));
     commands.push_back(PluginCommand("trackpos","Track mouse and designation coords (toggle).",trackpos));
     commands.push_back(PluginCommand("colormods","Dump colormod vectors.",colormods));
+    commands.push_back(PluginCommand("zoom","Zoom to x y z.",zoom));
     return CR_OK;
 }
 
@@ -150,6 +152,23 @@ command_result colormods (Core * c, vector <string> & parameters)
     }
     c->Resume();
     return CR_OK;
+}
+
+command_result zoom (Core * c, vector <string> & parameters)
+{
+    if(parameters.size() < 3)
+        return CR_FAILURE;
+    int x = atoi( parameters[0].c_str());
+    int y = atoi( parameters[1].c_str());
+    int z = atoi( parameters[2].c_str());
+    int xi, yi, zi;
+    CoreSuspender cs (c);
+    Gui * g = c->getGui();
+    if(g->getCursorCoords(xi, yi, zi))
+    {
+        g->setCursorCoords(x,y,z);
+    }
+    g->setViewCoords(x,y,z);
 }
 
 command_result ktimer (Core * c, vector <string> & parameters)

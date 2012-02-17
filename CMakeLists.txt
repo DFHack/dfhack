@@ -2,7 +2,8 @@
 
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
-  SET(CMAKE_CONFIGURATION_TYPES "Release;RelWithDebInfo" CACHE STRING "Semicolon-separate list of supported configuration types" FORCE)
+  SET(CMAKE_CONFIGURATION_TYPES Release RelWithDebInfo)
+  SET(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES}" CACHE STRING "List of supported configuration types" FORCE)
 else(CMAKE_CONFIGURATION_TYPES)
   if (NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Release RelWithDebInfo.")

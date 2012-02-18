@@ -409,9 +409,7 @@ command_result revflood(DFHack::Core * c, std::vector<std::string> & params)
         case tiletype_shape::BOULDER:
         case tiletype_shape::PEBBLES:
         case tiletype_shape::BROOK_BED:
-        case tiletype_shape::RIVER_BED:
         case tiletype_shape::ENDLESS_PIT:
-        case tiletype_shape::POOL:
             if(from_below)
                 unhide = 0;
             above = sides = true;

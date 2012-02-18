@@ -80,7 +80,7 @@ command_result tilesieve(DFHack::Core * c, std::vector<std::string> & params)
             if(seen.count(tt))
                 continue;
             seen.insert(tt);
-            c->con.print("Found tile %d @ %d %d %d\n", tt, block->map_pos.x + x, block->map_pos.y + y, block->map_pos.z);
+            c->con.print("Found tile %x @ %d %d %d\n", tt, block->map_pos.x + x, block->map_pos.y + y, block->map_pos.z);
         }
     }
     return CR_OK;

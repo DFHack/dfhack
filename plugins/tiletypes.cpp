@@ -850,7 +850,7 @@ command_result df_tiletypes (Core * c, vector <string> & parameters)
                 */
                 // Remove direction from directionless tiles
                 DFHack::TileDirection direction = tileDirection(source);
-                if (!(shape == tiletype_shape::RIVER_BED || shape == tiletype_shape::BROOK_BED || shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH))) {
+                if (!(material == tiletype_material::RIVER || shape == tiletype_shape::BROOK_BED || shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH))) {
                     direction.whole = 0;
                 }
 

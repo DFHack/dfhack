@@ -57,19 +57,19 @@ uint32_t Buildings::getNumBuildings()
 bool Buildings::Read (const uint32_t index, t_building & building)
 {
     Core & c = Core::getInstance();
-    df::building *bld_40d = world->buildings.all[index];
+    df::building *bld = world->buildings.all[index];
 
-    building.x1 = bld_40d->x1;
-    building.x2 = bld_40d->x2;
-    building.y1 = bld_40d->y1;
-    building.y2 = bld_40d->y2;
-    building.z = bld_40d->z;
-    building.material.index = bld_40d->mat_index;
-    building.material.type = bld_40d->mat_type;
-    building.type = bld_40d->getType();
-    building.subtype = bld_40d->getSubtype();
-    building.custom_type = bld_40d->getCustomType();
-    building.origin = bld_40d;
+    building.x1 = bld->x1;
+    building.x2 = bld->x2;
+    building.y1 = bld->y1;
+    building.y2 = bld->y2;
+    building.z = bld->z;
+    building.material.index = bld->mat_index;
+    building.material.type = bld->mat_type;
+    building.type = bld->getType();
+    building.subtype = bld->getSubtype();
+    building.custom_type = bld->getCustomType();
+    building.origin = bld;
     return true;
 }
 

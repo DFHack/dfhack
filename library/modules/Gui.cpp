@@ -45,7 +45,7 @@ using namespace DFHack;
 #include "df/world.h"
 #include "df/cursor.h"
 #include "df/viewscreen_dwarfmodest.h"
-#include "df/viewscreen_unitjobsst.h"
+#include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_itemst.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/ui_sidebar_menus.h"
@@ -84,10 +84,11 @@ bool DFHack::dwarfmode_hotkey(Core *, df::viewscreen *top)
     return !!strict_virtual_cast<df::viewscreen_dwarfmodest>(top);
 }
 
+//FIXME: this class has a second part (split off in 31.xx)!
 bool DFHack::unitjobs_hotkey(Core *, df::viewscreen *top)
 {
     // Require the main dwarf mode screen
-    return !!strict_virtual_cast<df::viewscreen_unitjobsst>(top);
+    return !!strict_virtual_cast<df::viewscreen_joblistst>(top);
 }
 
 bool DFHack::item_details_hotkey(Core *, df::viewscreen *top)
@@ -227,7 +228,7 @@ df::job *DFHack::getSelectedWorkshopJob(Core *c, bool quiet)
 
 bool DFHack::any_job_hotkey(Core *c, df::viewscreen *top)
 {
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitjobsst, top))
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
         return vector_get(screen->jobs, screen->cursor_pos) != NULL;
 
     return workshop_job_hotkey(c,top);
@@ -237,7 +238,7 @@ df::job *DFHack::getSelectedJob(Core *c, bool quiet)
 {
     df::viewscreen *top = c->getTopViewscreen();
 
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitjobsst, top))
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
     {
         df::job *job = vector_get(screen->jobs, screen->cursor_pos);
 
@@ -259,7 +260,7 @@ static df::unit *getAnyUnit(Core *c, df::viewscreen *top)
     using df::global::ui_look_list;
     using df::global::ui_selected_unit;
 
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitjobsst, top))
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
         return vector_get(screen->units, screen->cursor_pos);
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_itemst, top))

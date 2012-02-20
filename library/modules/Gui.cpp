@@ -43,7 +43,7 @@ using namespace DFHack;
 
 #include "DataDefs.h"
 #include "df/world.h"
-#include "df/cursor.h"
+#include "df/global_objects.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_itemst.h"
@@ -60,7 +60,6 @@ using namespace DFHack;
 #include "df/popup_message.h"
 #include "df/interface.h"
 #include "df/graphic.h"
-#include "df/selection_rect.h"
 
 using namespace df::enums;
 using df::global::gview;

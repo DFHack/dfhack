@@ -12,6 +12,8 @@
 #include "df/unit.h"
 #include "df/unit_soul.h"
 #include "df/historical_figure.h"
+#include "df/historical_figure_info.h"
+#include "df/assumed_identity.h"
 #include "df/language_name.h"
 
 #include <stdlib.h>
@@ -123,7 +125,18 @@ static command_result rename(Core * c, vector <string> &parameters)
 
         df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
         if (figure)
+        {
             set_nickname(&figure->name, parameters[1]);
+
+            // v0.34.01: added the vampire's assumed identity
+            if (figure->info && figure->info->reputation)
+            {
+                auto identity = df::assumed_identity::find(figure->info->reputation->cur_identity);
+
+                if (identity)
+                    set_nickname(&identity->name, parameters[1]);
+            }
+        }
     }
     else if (cmd == "unit-profession")
     {

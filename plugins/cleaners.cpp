@@ -9,7 +9,7 @@
 #include "df/unit.h"
 #include "df/unit_spatter.h"
 #include "df/matter_state.h"
-#include "df/cursor.h"
+#include "df/global_objects.h"
 #include "df/builtin_mats.h"
 #include "df/contaminant.h"
 

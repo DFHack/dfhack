@@ -125,7 +125,10 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
                 throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);
             const char *cstr_value = pMemEntry->Attribute("value");
             if(!cstr_value)
-                throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);
+            {
+                cerr << "Dummy symbol table entry: " << cstr_key << endl;
+                continue;
+            }
             mem->setAddress(cstr_key, strtol(cstr_value, 0, 0));
         }
         else if (type == "md5-hash")

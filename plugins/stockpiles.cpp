@@ -7,7 +7,7 @@
 #include "df/world.h"
 #include "df/ui.h"
 #include "df/building_stockpilest.h"
-#include "df/selection_rect.h"
+#include "df/global_objects.h"
 #include "df/viewscreen_dwarfmodest.h"
 
 using std::vector;

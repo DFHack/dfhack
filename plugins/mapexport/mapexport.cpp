@@ -208,8 +208,7 @@ command_result mapexport (Core * c, std::vector <std::string> & parameters)
 
                         df::tiletype type = b->TileTypeAt(coord);
                         prototile->set_type((dfproto::Tile::TileType)tileShape(type));
-
-                        prototile->set_material_type((dfproto::Tile::TileMaterialType)tileMaterial(type));
+                        prototile->set_tile_material((dfproto::Tile::TileMaterialType)tileMaterial(type));
 
                         df::coord map_pos = df::coord(b_x*16+x,b_y*16+y,z);
                         
@@ -248,6 +247,8 @@ command_result mapexport (Core * c, std::vector <std::string> & parameters)
                                 prototile->set_material_index(constructionMaterials[map_pos].first);
                                 prototile->set_material_type(constructionMaterials[map_pos].second);
                             }
+                            break;
+                        default:
                             break;
                         }
                     }

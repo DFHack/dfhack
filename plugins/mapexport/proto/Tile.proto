@@ -36,7 +36,7 @@ message Tile
         FEATURE = 3;
         LAVA_STONE = 4;
         MINERAL = 5;
-        FROZE_LIQUID = 6;
+        FROZEN_LIQUID = 6;
         CONSTRUCTION = 7;
         GRASS_LIGHT = 8;
         GRASS_DARK = 9;

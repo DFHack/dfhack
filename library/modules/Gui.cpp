@@ -46,6 +46,7 @@ using namespace DFHack;
 #include "df/global_objects.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_joblistst.h"
+#include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_itemst.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/ui_sidebar_menus.h"
@@ -83,11 +84,11 @@ bool DFHack::dwarfmode_hotkey(Core *, df::viewscreen *top)
     return !!strict_virtual_cast<df::viewscreen_dwarfmodest>(top);
 }
 
-//FIXME: this class has a second part (split off in 31.xx)!
 bool DFHack::unitjobs_hotkey(Core *, df::viewscreen *top)
 {
-    // Require the main dwarf mode screen
-    return !!strict_virtual_cast<df::viewscreen_joblistst>(top);
+    // Require the unit or jobs list
+    return !!strict_virtual_cast<df::viewscreen_joblistst>(top) ||
+           !!strict_virtual_cast<df::viewscreen_unitlistst>(top);
 }
 
 bool DFHack::item_details_hotkey(Core *, df::viewscreen *top)
@@ -230,6 +231,9 @@ bool DFHack::any_job_hotkey(Core *c, df::viewscreen *top)
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
         return vector_get(screen->jobs, screen->cursor_pos) != NULL;
 
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitlistst, top))
+        return vector_get(screen->jobs[screen->page], screen->cursor_pos[screen->page]) != NULL;
+
     return workshop_job_hotkey(c,top);
 }
 
@@ -240,6 +244,16 @@ df::job *DFHack::getSelectedJob(Core *c, bool quiet)
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
     {
         df::job *job = vector_get(screen->jobs, screen->cursor_pos);
+
+        if (!job && !quiet)
+            c->con.printerr("Selected unit has no job\n");
+
+        return job;
+    }
+    else if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitlistst, top))
+    {
+        int page = screen->page;
+        df::job *job = vector_get(screen->jobs[page], screen->cursor_pos[page]);
 
         if (!job && !quiet)
             c->con.printerr("Selected unit has no job\n");
@@ -261,6 +275,9 @@ static df::unit *getAnyUnit(Core *c, df::viewscreen *top)
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
         return vector_get(screen->units, screen->cursor_pos);
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitlistst, top))
+        return vector_get(screen->units[screen->page], screen->cursor_pos[screen->page]);
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_itemst, top))
     {

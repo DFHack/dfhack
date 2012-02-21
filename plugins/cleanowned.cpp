@@ -28,14 +28,10 @@ using df::global::world;
 
 command_result df_cleanowned (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "cleanowned";
-}
+DFHACK_PLUGIN("cleanowned");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "cleanowned", "Confiscates and dumps garbage owned by dwarfs.",
         df_cleanowned, false,

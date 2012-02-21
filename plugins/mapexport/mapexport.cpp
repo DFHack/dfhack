@@ -25,10 +25,7 @@ typedef std::vector<df::plant *> PlantList;
 
 command_result mapexport (Core * c, std::vector <std::string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "mapexport";
-}
+DFHACK_PLUGIN("mapexport");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {

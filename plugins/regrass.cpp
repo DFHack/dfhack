@@ -52,10 +52,7 @@ command_result df_regrass (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport const char *plugin_name ( void )
-{
-    return "regrass";
-}
+DFHACK_PLUGIN("regrass");
 
 DFhackCExport command_result plugin_init (Core *c, std::vector<PluginCommand> &commands)
 {

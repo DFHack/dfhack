@@ -19,14 +19,10 @@ uint64_t timeLast = 0;
 command_result rawdump_i (Core * c, vector <string> & parameters);
 command_result rawdump_p (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "rawdump";
-}
+DFHACK_PLUGIN("rawdump");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("dump_inorganic","Dump inorganic raws.",rawdump_i));
     commands.push_back(PluginCommand("dump_plants","Dump plant raws.",rawdump_p));
     return CR_OK;

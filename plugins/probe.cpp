@@ -34,10 +34,7 @@ using df::global::world;
 command_result df_probe (Core * c, vector <string> & parameters);
 command_result df_cprobe (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "probe";
-}
+DFHACK_PLUGIN("probe");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {

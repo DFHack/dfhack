@@ -14,10 +14,7 @@ using namespace DFHack;
 
 command_result mode (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "mode";
-}
+DFHACK_PLUGIN("mode");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {

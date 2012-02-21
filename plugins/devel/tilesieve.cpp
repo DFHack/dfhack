@@ -21,17 +21,13 @@ using df::global::world;
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 command_result tilesieve (Core * c, std::vector <std::string> & parameters);
 
-// A plugins must be able to return its name. This must correspond to the filename - skeleton.plug.so or skeleton.plug.dll
-DFhackCExport const char * plugin_name ( void )
-{
-    return "tilesieve";
-}
+// A plugin must be able to return its name. This must correspond to the filename - skeleton.plug.so or skeleton.plug.dll
+DFHACK_PLUGIN("tilesieve");
 
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     // Fill the command list with your commands.
-    commands.clear();
     commands.push_back(PluginCommand(
         "tilesieve", "Scan map for unknown tiles.",
         tilesieve, false, /* true means that the command can't be used from non-interactive user interface */

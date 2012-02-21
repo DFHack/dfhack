@@ -29,10 +29,7 @@ using df::global::world;
 
 static command_result rename(Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "rename";
-}
+DFHACK_PLUGIN("rename");
 
 DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &commands)
 {

@@ -155,7 +155,6 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c,
                                            std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("dumpitems",
                "Dump items\
 \n              Options:\

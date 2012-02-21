@@ -22,15 +22,10 @@ command_result follow (Core * c, std::vector <std::string> & parameters);
 df::unit *followedUnit;
 int32_t prevX, prevY, prevZ;
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "follow";
-}
-
+DFHACK_PLUGIN("follow");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "follow", "Follow the selected unit until camera control is released",
         follow, false, 

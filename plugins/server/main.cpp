@@ -13,10 +13,7 @@ using namespace DFHack;
 command_result server (Core * c, std::vector <std::string> & parameters);
 
 // A plugins must be able to return its name. This must correspond to the filename - skeleton.plug.so or skeleton.plug.dll
-DFhackCExport const char * plugin_name ( void )
-{
-    return "server";
-}
+DFHACK_PLUGIN("server");
 
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)

@@ -266,10 +266,7 @@ command_result df_showmood (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport const char *plugin_name ( void )
-{
-    return "showmood";
-}
+DFHACK_PLUGIN("showmood");
 
 DFhackCExport command_result plugin_init (Core *c, std::vector<PluginCommand> &commands)
 {

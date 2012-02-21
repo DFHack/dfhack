@@ -84,14 +84,10 @@ command_result df_fixwagons (Core *c, vector<string> &parameters)
     return CR_OK;
 }
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "fixwagons";
-}
+DFHACK_PLUGIN("fixwagons");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "fixwagons", "Fix all civilizations to be able to bring wagons.",
         df_fixwagons, false,

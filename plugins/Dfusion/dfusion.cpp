@@ -38,7 +38,6 @@ DFhackCExport const char * plugin_name ( void )
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
 	lua::state st=lua::glua::Get();
 	//maybe remake it to run automaticaly
 	lua::RegisterConsole(st,&c->con);

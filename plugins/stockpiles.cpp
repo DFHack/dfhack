@@ -25,10 +25,7 @@ using df::building_stockpilest;
 static command_result copystock(Core *c, vector <string> & parameters);
 static bool copystock_guard(Core *c, df::viewscreen *top);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "stockpiles";
-}
+DFHACK_PLUGIN("stockpiles");
 
 DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &commands)
 {

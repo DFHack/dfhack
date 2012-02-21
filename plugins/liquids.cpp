@@ -24,6 +24,26 @@ using namespace DFHack;
 using namespace df::enums;
 typedef vector <df::coord> coord_vec;
 
+CommandHistory liquids_hist;
+
+command_result df_liquids (Core * c, vector <string> & parameters);
+
+DFHACK_PLUGIN("liquids");
+
+DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+{
+    liquids_hist.load("liquids.history");
+    commands.clear();
+    commands.push_back(PluginCommand("liquids", "Place magma, water or obsidian.", df_liquids, true));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( Core * c )
+{
+    liquids_hist.save("liquids.history");
+    return CR_OK;
+}
+
 class Brush
 {
 public:
@@ -199,29 +219,6 @@ private:
 	}
 	Core *c_;
 };
-
-CommandHistory liquids_hist;
-
-command_result df_liquids (Core * c, vector <string> & parameters);
-
-DFhackCExport const char * plugin_name ( void )
-{
-    return "liquids";
-}
-
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
-{
-    liquids_hist.load("liquids.history");
-    commands.clear();
-    commands.push_back(PluginCommand("liquids", "Place magma, water or obsidian.", df_liquids, true));
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_shutdown ( Core * c )
-{
-    liquids_hist.save("liquids.history");
-    return CR_OK;
-}
 
 command_result df_liquids (Core * c, vector <string> & parameters)
 {

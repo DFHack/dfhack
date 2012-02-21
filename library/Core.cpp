@@ -369,6 +369,8 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     bool recolor;
                     string name;
                     string description;
+                    //FIXME: Nuke when MSVC stops failing at being C++11 compliant
+                    sortable(bool recolor_,const string& name_,const string & description_): recolor(recolor_), name(name_), description(description_){};
                     bool operator <(const sortable & rhs) const
                     {
                         if( name < rhs.name )
@@ -385,8 +387,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for (size_t j = 0; j < plug->size();j++)
                     {
                         const PluginCommand & pcmd = (plug->operator[](j));
-                        sortable so = {pcmd.isHotkeyCommand(),pcmd.name,pcmd.description};
-                        out.insert(so);
+                        out.insert(sortable(pcmd.isHotkeyCommand(),pcmd.name,pcmd.description));
                     }
                 }
                 for(auto iter = out.begin();iter != out.end();iter++)

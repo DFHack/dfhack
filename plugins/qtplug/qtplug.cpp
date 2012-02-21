@@ -4,7 +4,7 @@
 #include <PluginManager.h>
 #include <modules/Maps.h>
 #include <modules/Gui.h>
-#include <extra/MapExtras.h>
+//#include <extra/MapExtras.h>
 #include <vector>
 #include <cstdio>
 #include <stack>
@@ -25,10 +25,7 @@ static tthread::thread * QTThread;
 
 command_result runqt (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "Qt Test";
-}
+DFHACK_PLUGIN("qtplug");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {

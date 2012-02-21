@@ -635,10 +635,7 @@ CommandHistory tiletypes_hist;
 
 command_result df_tiletypes (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "tiletypes";
-}
+DFHACK_PLUGIN("tiletypes");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {

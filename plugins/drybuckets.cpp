@@ -17,6 +17,8 @@ using namespace df::enums;
 
 using df::global::world;
 
+DFHACK_PLUGIN("drybuckets");
+
 command_result df_drybuckets (Core * c, vector <string> & parameters)
 {
     if (!parameters.empty())
@@ -39,14 +41,8 @@ command_result df_drybuckets (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "drybuckets";
-}
-
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("drybuckets", "Removes water from buckets.", df_drybuckets));
     return CR_OK;
 }

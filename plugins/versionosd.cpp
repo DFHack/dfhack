@@ -29,10 +29,7 @@ DFTileSurface* tiles[10];
 char* file = "Cooz_curses_square_16x16.png";
 Gui* gui;
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "versionosd";
-}
+DFHACK_PLUGIN("versionosd");
 
 DFTileSurface* createTile(int x, int y)
 {

@@ -23,10 +23,7 @@ command_result expdig (Core * c, vector <string> & parameters);
 command_result digcircle (Core *c, vector <string> & parameters);
 
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "vdig";
-}
+DFHACK_PLUGIN("vdig");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {

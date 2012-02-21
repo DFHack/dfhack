@@ -34,14 +34,10 @@ void allNormal(DFCoord coord, MapExtras::MapCache & map);
 void allLow(DFCoord coord, MapExtras::MapCache & map);
 void allRestricted(DFCoord coord, MapExtras::MapCache & map);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "filltraffic";
-}
+DFHACK_PLUGIN("filltraffic");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "filltraffic","Flood-fill with selected traffic designation from cursor",
         filltraffic, cursor_hotkey,

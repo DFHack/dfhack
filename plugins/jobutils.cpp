@@ -45,14 +45,10 @@ static command_result job_material(Core *c, vector <string> & parameters);
 static command_result job_duplicate(Core *c, vector <string> & parameters);
 static command_result job_cmd(Core *c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "jobutils";
-}
+DFHACK_PLUGIN("jobutils");
 
 DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     if (!world || !ui)
         return CR_FAILURE;
 

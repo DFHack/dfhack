@@ -21,11 +21,9 @@ using namespace df::enums;
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 command_result skeleton (Core * c, std::vector <std::string> & parameters);
 
-// A plugins must be able to return its name. This must correspond to the filename - skeleton.plug.so or skeleton.plug.dll
-DFhackCExport const char * plugin_name ( void )
-{
-    return "skeleton";
-}
+// A plugin must be able to return its name and version.
+// The name string provided must correspond to the filename - skeleton.plug.so or skeleton.plug.dll in this case
+DFHACK_PLUGIN("skeleton");
 
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
@@ -48,7 +46,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
     // You *MUST* kill all threads you created before this returns.
-    // If everythin fails, just return CR_FAILURE. Your plugin will be
+    // If everything fails, just return CR_FAILURE. Your plugin will be
     // in a zombie state, but things won't crash.
     return CR_OK;
 }

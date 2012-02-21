@@ -20,10 +20,7 @@ using df::global::world;
 
 command_result tubefill(DFHack::Core * c, std::vector<std::string> & params);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "tubefill";
-}
+DFHACK_PLUGIN("tubefill");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {

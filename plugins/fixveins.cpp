@@ -97,14 +97,10 @@ command_result df_fixveins (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "fixveins";
-}
+DFHACK_PLUGIN("fixveins");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("fixveins",
         "Remove invalid references to mineral inclusions and restore missing ones.",
         df_fixveins));

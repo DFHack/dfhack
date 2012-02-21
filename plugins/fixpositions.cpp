@@ -224,14 +224,10 @@ command_result df_fixmerchants (Core *c, vector<string> &parameters)
     return CR_OK;
 }
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "fixpositions";
-}
+DFHACK_PLUGIN("fixpositions");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "fixdiplomats", "Add Diplomat position to Elven civilizations for tree cap diplomacy.",
         df_fixdiplomats, false));

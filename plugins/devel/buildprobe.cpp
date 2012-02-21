@@ -21,14 +21,10 @@ using namespace DFHack;
 command_result readFlag (Core * c, vector <string> & parameters);
 command_result writeFlag (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "buildprobe";
-}
+DFHACK_PLUGIN("buildprobe");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("bshow","Output building occupancy value",readFlag));
     commands.push_back(PluginCommand("bset","Set building occupancy value",writeFlag));
     return CR_OK;

@@ -120,6 +120,14 @@ struct Plugin::RefLock
     mutex * mut;
     int refcount;
 };
+
+struct Plugin::RefAutolock
+{
+    RefLock * lock;
+    RefAutolock(RefLock * lck):lock(lck){ lock->lock(); };
+    ~RefAutolock(){ lock->unlock(); };
+};
+
 Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _filename, PluginManager * pm)
 {
     filename = filepath;
@@ -154,15 +162,13 @@ Plugin::~Plugin()
 
 bool Plugin::load()
 {
-    access->lock();
+    RefAutolock lock(access);
     if(state == PS_BROKEN)
     {
-        access->unlock();
         return false;
     }
     else if(state == PS_LOADED)
     {
-        access->unlock();
         return true;
     }
     Core & c = Core::getInstance();
@@ -172,16 +178,23 @@ bool Plugin::load()
     {
         con.printerr("Can't load plugin %s\n", filename.c_str());
         state = PS_BROKEN;
-        access->unlock();
         return false;
     }
-    const char * (*_PlugName)() =(const char * (*)()) LookupPlugin(plug, "plugin_name");
-    if(!_PlugName)
+    const char ** plug_name =(const char ** ) LookupPlugin(plug, "name");
+    if(!plug_name)
     {
         con.printerr("Plugin %s has no name.\n", filename.c_str());
         ClosePlugin(plug);
         state = PS_BROKEN;
-        access->unlock();
+        return false;
+    }
+    const char ** plug_version =(const char ** ) LookupPlugin(plug, "version");
+    if(!plug_version || strcmp(DFHACK_VERSION, *plug_version) != 0)
+    {
+        con.printerr("Plugin sx was not built for this version of DFHack.\n"
+                     "Plugin: %s, DFHack: %s\n", *plug_name, *plug_version, DFHACK_VERSION);
+        ClosePlugin(plug);
+        state = PS_BROKEN;
         return false;
     }
     plugin_init = (command_result (*)(Core *, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
@@ -190,20 +203,18 @@ bool Plugin::load()
         con.printerr("Plugin %s has no init function.\n", filename.c_str());
         ClosePlugin(plug);
         state = PS_BROKEN;
-        access->unlock();
         return false;
     }
     plugin_status = (command_result (*)(Core *, std::string &)) LookupPlugin(plug, "plugin_status");
     plugin_onupdate = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_onupdate");
     plugin_shutdown = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_shutdown");
     plugin_onstatechange = (command_result (*)(Core *, state_change_event)) LookupPlugin(plug, "plugin_onstatechange");
-    //name = _PlugName();
+    this->name = *plug_name;
     plugin_lib = plug;
     if(plugin_init(&c,commands) == CR_OK)
     {
         state = PS_LOADED;
         parent->registerCommands(this);
-        access->unlock();
         return true;
     }
     else
@@ -211,10 +222,8 @@ bool Plugin::load()
         con.printerr("Plugin %s has failed to initialize properly.\n", filename.c_str());
         ClosePlugin(plugin_lib);
         state = PS_BROKEN;
-        access->unlock();
         return false;
     }
-    // not reachable
 }
 
 bool Plugin::unload()

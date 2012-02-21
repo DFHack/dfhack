@@ -29,15 +29,10 @@ command_result df_vectors  (Core * c,
 command_result df_clearvec (Core * c,
                                           vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "vectors";
-}
+DFHACK_PLUGIN("vectors");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
-
     commands.push_back(PluginCommand("vectors",
                "Scan memory for vectors.\
 \n                1st param: start of scan\

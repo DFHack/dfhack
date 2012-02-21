@@ -385,7 +385,8 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for (size_t j = 0; j < plug->size();j++)
                     {
                         const PluginCommand & pcmd = (plug->operator[](j));
-                        out.insert({pcmd.isHotkeyCommand(),pcmd.name,pcmd.description});
+                        sortable so = {pcmd.isHotkeyCommand(),pcmd.name,pcmd.description};
+                        out.insert(so);
                     }
                 }
                 for(auto iter = out.begin();iter != out.end();iter++)

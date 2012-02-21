@@ -28,16 +28,12 @@ using namespace DFHack::Simple;
 
 command_result catsplosion (Core * c, std::vector <std::string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "catsplosion";
-}
+DFHACK_PLUGIN("catsplosion");
 
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     // Fill the command list with your commands.
-    commands.clear();
     commands.push_back(PluginCommand(
         "catsplosion", "Do nothing, look pretty.",
         catsplosion, false,

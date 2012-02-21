@@ -24,10 +24,7 @@ command_result df_grow (Core * c, vector <string> & parameters);
 command_result df_immolate (Core * c, vector <string> & parameters);
 command_result df_extirpate (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "plants";
-}
+DFHACK_PLUGIN("plants");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {

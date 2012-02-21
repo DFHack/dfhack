@@ -62,6 +62,7 @@ using namespace DFHack;
 #include <stdlib.h>
 #include <fstream>
 #include "tinythread.h"
+#include <llex.h>
 
 using namespace tthread;
 using namespace df::enums;
@@ -363,6 +364,19 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                 "\n"
                 "plugins:\n"
                 );
+                struct sortable
+                {
+                    bool recolor;
+                    string name;
+                    string description;
+                    bool operator <(const sortable & rhs) const
+                    {
+                        if( name < rhs.name )
+                            return true;
+                        return false;
+                    };
+                };
+                set <sortable> out;
                 for(size_t i = 0; i < plug_mgr->size();i++)
                 {
                     const Plugin * plug = (plug_mgr->operator[](i));
@@ -371,11 +385,15 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for (size_t j = 0; j < plug->size();j++)
                     {
                         const PluginCommand & pcmd = (plug->operator[](j));
-                        if (pcmd.isHotkeyCommand())
-                            con.color(Console::COLOR_CYAN);
-                        con.print("  %-22s- %s\n",pcmd.name.c_str(), pcmd.description.c_str());
-                        con.reset_color();
+                        out.insert({pcmd.isHotkeyCommand(),pcmd.name,pcmd.description});
                     }
+                }
+                for(auto iter = out.begin();iter != out.end();iter++)
+                {
+                    if ((*iter).recolor)
+                        con.color(Console::COLOR_CYAN);
+                    con.print("  %-22s- %s\n",(*iter).name.c_str(), (*iter).description.c_str());
+                    con.reset_color();
                 }
             }
         }

@@ -49,6 +49,8 @@ distribution.
     #pragma warning( disable: 4800 )
     // disable more stupid
     #pragma warning( disable: 4068 )
+    // no signed value outside enum range bs
+    #pragma warning( disable: 4341)
 #endif
 
 #endif

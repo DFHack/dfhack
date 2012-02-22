@@ -478,6 +478,7 @@ struct Gui::Private
     Private()
     {
         Started = false;
+        StartedMenu = false;
         StartedScreen = false;
     }
 
@@ -485,6 +486,10 @@ struct Gui::Private
     int32_t * window_x_offset;
     int32_t * window_y_offset;
     int32_t * window_z_offset;
+
+    bool StartedMenu;
+    uint8_t * menu_width_offset;
+    uint8_t * area_map_width_offset;
 
     bool StartedScreen;
     void * screen_tiles_ptr_offset;
@@ -506,6 +511,11 @@ Gui::Gui()
     d->window_z_offset = (int32_t *) mem->getAddress ("window_z");
     if(d->window_z_offset && d->window_y_offset && d->window_x_offset)
         d->Started = true;
+
+    d->menu_width_offset = (uint8_t *) mem->getAddress("ui_menu_width");
+    d->area_map_width_offset = (uint8_t *) mem->getAddress("ui_area_map_width");
+    if (d->menu_width_offset && d->area_map_width_offset)
+        d->StartedMenu = true;
 
     d->screen_tiles_ptr_offset = (void *) mem->getAddress ("screen_tiles_pointer");
     if(d->screen_tiles_ptr_offset)
@@ -613,6 +623,28 @@ bool Gui::getWindowSize (int32_t &width, int32_t &height)
 {
     width = gps->dimx;
     height = gps->dimy;
+    return true;
+}
+
+bool Gui::getMenuWidth(uint8_t &menu_width, uint8_t &area_map_width)
+{
+    if (!d->StartedMenu) return false;
+    
+    Process * p = d->owner;
+
+    p->readByte (d->menu_width_offset, menu_width);
+    p->readByte (d->area_map_width_offset, area_map_width);
+    return true;
+}
+
+bool Gui::setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width)
+{
+    if (!d->StartedMenu) return false;
+    
+    Process * p = d->owner;
+
+    p->writeByte (d->menu_width_offset, menu_width);
+    p->writeByte (d->area_map_width_offset, area_map_width);
     return true;
 }
 

@@ -28,6 +28,8 @@ static tthread::mutex* mymutex=0;
 static tthread::thread* thread_dfusion=0;
 uint64_t timeLast=0;
 
+DFHACK_PLUGIN("dfusion")
+
 command_result dfusion (Core * c, vector <string> & parameters);
 command_result lua_run (Core * c, vector <string> & parameters);
 

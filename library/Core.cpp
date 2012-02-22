@@ -173,6 +173,21 @@ void fHKthread(void * iodata)
     }
 }
 
+struct sortable
+{
+    bool recolor;
+    string name;
+    string description;
+    //FIXME: Nuke when MSVC stops failing at being C++11 compliant
+    sortable(bool recolor_,const string& name_,const string & description_): recolor(recolor_), name(name_), description(description_){};
+    bool operator <(const sortable & rhs) const
+    {
+        if( name < rhs.name )
+            return true;
+        return false;
+    };
+};
+
 static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clueless_counter, const string &command)
 {
     Console & con = core->con;
@@ -364,21 +379,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                 "\n"
                 "plugins:\n"
                 );
-                struct sortable
-                {
-                    bool recolor;
-                    string name;
-                    string description;
-                    //FIXME: Nuke when MSVC stops failing at being C++11 compliant
-                    sortable(bool recolor_,const string& name_,const string & description_): recolor(recolor_), name(name_), description(description_){};
-                    bool operator <(const sortable & rhs) const
-                    {
-                        if( name < rhs.name )
-                            return true;
-                        return false;
-                    };
-                };
-                set <sortable> out;
+                std::set <sortable> out;
                 for(size_t i = 0; i < plug_mgr->size();i++)
                 {
                     const Plugin * plug = (plug_mgr->operator[](i));

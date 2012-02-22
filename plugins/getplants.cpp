@@ -28,7 +28,7 @@ command_result df_getplants (Core * c, vector <string> & parameters)
     string plantMatStr = "";
     set<int> plantIDs;
     set<string> plantNames;
-    bool deselect = false, exclude = false, treesonly = false, shrubsonly = false;
+    bool deselect = false, exclude = false, treesonly = false, shrubsonly = false, all = false;
 
     int count = 0;
     for (size_t i = 0; i < parameters.size(); i++)
@@ -43,6 +43,8 @@ command_result df_getplants (Core * c, vector <string> & parameters)
             deselect = true;
         else if(parameters[i] == "-x")
             exclude = true;
+        else if(parameters[i] == "-a")
+            all = true;
         else
             plantNames.insert(parameters[i]);
     }
@@ -51,13 +53,25 @@ command_result df_getplants (Core * c, vector <string> & parameters)
         c->con.printerr("Cannot specify both -t and -s at the same time!\n");
         return CR_WRONG_USAGE;
     }
+    if (all && exclude)
+    {
+        c->con.printerr("Cannot specify both -a and -x at the same time!\n");
+        return CR_WRONG_USAGE;
+    }
+    if (all && plantNames.size())
+    {
+        c->con.printerr("Cannot specify -a along with plant IDs!\n");
+        return CR_WRONG_USAGE;
+    }
 
     CoreSuspender suspend(c);
 
     for (size_t i = 0; i < world->raws.plants.all.size(); i++)
     {
         df::plant_raw *plant = world->raws.plants.all[i];
-        if (plantNames.find(plant->id) != plantNames.end())
+        if (all)
+            plantIDs.insert(i);
+        else if (plantNames.find(plant->id) != plantNames.end())
         {
             plantNames.erase(plant->id);
             plantIDs.insert(i);
@@ -148,6 +162,7 @@ DFhackCExport command_result plugin_init ( Core * c, vector <PluginCommand> &com
         "  -s - Select shrubs only (exclude trees)\n"
         "  -c - Clear designations instead of setting them\n"
         "  -x - Apply selected action to all plants except those specified\n"
+        "  -a - Select every type of plant (obeys -t/-s)\n"
         "Specifying both -t and -s will have no effect.\n"
         "If no plant IDs are specified, all valid plant IDs will be listed.\n"
     ));

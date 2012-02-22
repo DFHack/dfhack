@@ -47,5 +47,5 @@ distribution.
     #define DFhackDataExport __attribute__ ((visibility("default")))
 #else
     #define DFhackCExport extern "C" __declspec(dllexport)
-    #define DFhackDataExport __declspec(dllexport)
+    #define DFhackDataExport extern "C" __declspec(dllexport)
 #endif

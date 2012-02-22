@@ -195,7 +195,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
         cerr << "Invoking: " << command << endl;
         
         // let's see what we actually got
-        if(first=="help" || first == "?")
+        if(first=="help" || first == "?" || first == "man")
         {
             if(!parts.size())
             {
@@ -205,7 +205,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                           "On Windows, you may have to resize your console window. The appropriate menu is accessible\n"
                           "by clicking on the program icon in the top bar of the window.\n\n"
                           "Basic commands:\n"
-                          "  help|?                - This text.\n"
+                          "  help|?|man            - This text.\n"
                           "  help COMMAND          - Usage help for the given command.\n"
                           "  ls|dir [PLUGIN]       - List available commands. Optionally for single plugin.\n"
                           "  cls                   - Clear the console.\n"
@@ -350,7 +350,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
             {
                 con.print(
                 "builtin:\n"
-                "  help|?                - This text or help specific to a plugin.\n"
+                "  help|?|man            - This text or help specific to a plugin.\n"
                 "  ls [PLUGIN]           - List available commands. Optionally for single plugin.\n"
                 "  cls                   - Clear the console.\n"
                 "  fpause                - Force DF to pause.\n"

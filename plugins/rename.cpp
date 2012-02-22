@@ -11,6 +11,7 @@
 #include "df/squad.h"
 #include "df/unit.h"
 #include "df/unit_soul.h"
+#include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
 #include "df/assumed_identity.h"
@@ -66,6 +67,18 @@ static void set_nickname(df::language_name *name, std::string nick)
     name->nickname = nick;
 }
 
+static df::squad *getSquadByIndex(unsigned idx)
+{
+    auto entity = df::historical_entity::find(ui->group_id);
+    if (!entity)
+        return NULL;
+
+    if (idx >= entity->squads.size())
+        return NULL;
+
+    return df::squad::find(entity->squads[idx]);
+}
+
 static command_result rename(Core * c, vector <string> &parameters)
 {
     CoreSuspender suspend(c);
@@ -79,15 +92,15 @@ static command_result rename(Core * c, vector <string> &parameters)
         if (parameters.size() != 3)
             return CR_WRONG_USAGE;
 
-        std::vector<df::squad*> &squads = world->squads.all;
-
         int id = atoi(parameters[1].c_str());
-        if (id < 1 || id > squads.size()) {
-            c->con.printerr("Invalid squad index\n");
+        df::squad *squad = getSquadByIndex(id-1);
+
+        if (!squad) {
+            c->con.printerr("Couldn't find squad with index %d.\n", id);
             return CR_WRONG_USAGE;
         }
 
-        squads[id-1]->alias = parameters[2];
+        squad->alias = parameters[2];
     }
     else if (cmd == "hotkey")
     {

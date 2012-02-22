@@ -29,7 +29,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.push_back(PluginCommand(
         "follow", "Follow the selected unit until camera control is released",
-        follow, false, 
+        follow, view_unit_hotkey,
         "  Select a unit and run this plugin to make the camera follow it. Moving the camera yourself deactivates the plugin.\n"
     ));
     followedUnit = 0;
@@ -85,7 +85,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
     else if (menu_width == 2 && area_map_width == 3) w -= 33; //Just the menu is open
     else if (menu_width == 2 && area_map_width == 2) w -= 26; //Just the area map is open
     else w -= 2; //No menu or area map, just account for borders
-    
+
     if (prevMenuWidth == 0) prevMenuWidth = menu_width; //have we already had a menu width?
 
     if (prevX==-1) //have we already had previous values for the window location?
@@ -102,7 +102,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
         c->con.print("No longer following anything.\n");
         return CR_OK;
     }
-    
+
     uint32_t x_max, y_max, z_max;
     Simple::Maps::getSize(x_max, y_max, z_max); //Get map size in tiles so we can prevent the camera from going off the edge
     x_max *= 16;
@@ -115,7 +115,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
     gui->setViewCoords(x, y, z); //Set the new screen position!
 
     if (c_x != 3000 && !world->ReadPauseState()) gui->setCursorCoords(c_x - (prevX-x), c_y - (prevY-y), z); //If, for some reason, the cursor is active and the screen is still moving, move the cursor along with the screen
-    
+
     prevX = x; //Save this round's stuff for next time so we can monitor for changes made by the user
     prevY = y;
     prevZ = z;
@@ -125,11 +125,11 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 }
 
 command_result follow (Core * c, std::vector <std::string> & parameters)
-{ 
+{
+    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
+
     if (!parameters.empty())
         return CR_WRONG_USAGE;
-
-    CoreSuspender suspend(c);
 
     if (followedUnit)
     {
@@ -139,15 +139,11 @@ command_result follow (Core * c, std::vector <std::string> & parameters)
     followedUnit = getSelectedUnit(c);
     if (followedUnit)
     {
-        c->con.print("Unpause to begin following ");
-        c->con.print(df::global::world->raws.creatures.all[followedUnit->race]->name[0].c_str());
-        if (followedUnit->name.has_name)
-        {
-            c->con.print(" %s", followedUnit->name.first_name.c_str());
-        }
-        c->con.print(". Simply manually move the view to break the following.\n");
-        prevX=prevY=prevZ = -1;
-        prevMenuWidth = 0;
+        std::ostringstream ss;
+        ss << "Unpause to begin following " << df::global::world->raws.creatures.all[followedUnit->race]->name[0];
+        if (followedUnit->name.has_name) ss << " " << followedUnit->name.first_name;
+        ss << ". Simply manually move the view to break the following.\n";
+        c->con.print(ss.str().c_str());
     }
     else followedUnit = 0;
     return CR_OK;

@@ -17,14 +17,10 @@ using df::global::d_init;
 command_result twaterlvl(Core * c, vector <string> & parameters);
 command_result tidlers(Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "initflags";
-}
+DFHACK_PLUGIN("initflags");
 
 DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     if (d_init) {
         commands.push_back(PluginCommand("twaterlvl", "Toggle display of water/magma depth.",
                                          twaterlvl, dwarfmode_hotkey));

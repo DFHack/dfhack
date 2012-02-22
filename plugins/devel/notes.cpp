@@ -12,14 +12,10 @@ using namespace DFHack;
 
 command_result df_notes (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "notes";
-}
+DFHACK_PLUGIN("notes");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("dumpnotes",
                "Dumps in-game notes",
                df_notes));

@@ -80,14 +80,10 @@ command_result df_frozenwater (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "frozen";
-}
+DFHACK_PLUGIN("frozen");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("frozenlava", "Changes all ice into frozen magma.", df_frozenlava));
     commands.push_back(PluginCommand("frozenwater", "Changes all ice into frozen water.", df_frozenwater));
     return CR_OK;

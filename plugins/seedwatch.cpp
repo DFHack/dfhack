@@ -245,10 +245,7 @@ command_result df_seedwatch(Core* pCore, vector<string>& parameters)
     return CR_OK;
 }
 
-DFhackCExport const char* plugin_name(void)
-{
-    return "seedwatch";
-}
+DFHACK_PLUGIN("seedwatch");
 
 DFhackCExport command_result plugin_init(Core* pCore, vector<PluginCommand>& commands)
 {

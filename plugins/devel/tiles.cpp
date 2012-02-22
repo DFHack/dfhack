@@ -199,14 +199,10 @@ struct Settings
     Brush * brush;
 } settings;
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "tiles";
-}
+DFHACK_PLUGIN("tiles");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("tiles", "A tile painter. See 'tile help' for details.", df_tiles));
     commands.push_back(PluginCommand("paint", "Paint with the current tiles settings.", df_paint));
     return CR_OK;

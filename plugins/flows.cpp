@@ -56,14 +56,10 @@ command_result df_flows (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "flows";
-}
+DFHACK_PLUGIN("flows");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("flows",
         "Counts map blocks with flowing liquids.",
         df_flows));

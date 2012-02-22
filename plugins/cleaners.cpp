@@ -22,6 +22,8 @@ using namespace df::enums;
 using df::global::world;
 using df::global::cursor;
 
+DFHACK_PLUGIN("cleaners");
+
 command_result cleanmap (Core * c, bool snow, bool mud)
 {
     // Invoked from clean(), already suspended
@@ -186,14 +188,8 @@ command_result clean (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "cleaners";
-}
-
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "clean","Removes contaminants from map tiles, items and creatures.",
         clean, false,

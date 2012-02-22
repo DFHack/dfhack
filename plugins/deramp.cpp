@@ -17,6 +17,8 @@ using namespace df::enums;
 
 using df::global::world;
 
+DFHACK_PLUGIN("deramp");
+
 command_result df_deramp (Core * c, vector <string> & parameters)
 {
     if (!parameters.empty())
@@ -80,14 +82,8 @@ command_result df_deramp (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "deramp";
-}
-
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "deramp", "De-ramp. All ramps marked for removal are replaced with floors.",
         df_deramp, false,

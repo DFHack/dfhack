@@ -179,10 +179,7 @@ void printVeins(DFHack::Console & con, MatMap &mat_map,
 
 command_result prospector (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "prospector";
-}
+DFHACK_PLUGIN("prospector");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {

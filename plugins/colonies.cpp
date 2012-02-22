@@ -14,14 +14,10 @@ using namespace DFHack::Simple;
 
 command_result colonies (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "colonies";
-}
+DFHACK_PLUGIN("colonies");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "colonies", "List or change wild colonies (ants hills and such)",
         colonies, false,

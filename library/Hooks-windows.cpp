@@ -46,7 +46,7 @@ namespace DFHack
     }
     void * LookupPlugin (DFLibrary * plugin ,const char * function)
     {
-        return (DFLibrary *) GetProcAddress((HMODULE)plugin, function);
+        return (void *) GetProcAddress((HMODULE)plugin, function);
     }
     void ClosePlugin (DFLibrary * plugin)
     {

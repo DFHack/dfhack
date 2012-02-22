@@ -134,14 +134,10 @@ command_result df_getplants (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "getplants";
-}
+DFHACK_PLUGIN("getplants");
 
 DFhackCExport command_result plugin_init ( Core * c, vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "getplants", "Cut down all of the specified trees or gather specified shrubs",
         df_getplants, false,

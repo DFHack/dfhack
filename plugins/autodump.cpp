@@ -32,18 +32,14 @@ using MapExtras::Block;
 using MapExtras::MapCache;
 using df::global::world;
 
+DFHACK_PLUGIN("autodump");
+
 command_result df_autodump(Core * c, vector <string> & parameters);
 command_result df_autodump_destroy_here(Core * c, vector <string> & parameters);
 command_result df_autodump_destroy_item(Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "autodump";
-}
-
 DFhackCExport command_result plugin_init ( Core * c, vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "autodump", "Teleport items marked for dumping to the cursor.",
         df_autodump, false,

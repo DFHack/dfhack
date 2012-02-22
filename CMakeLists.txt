@@ -26,11 +26,14 @@ endif()
 
 # set up versioning.
 set(DF_VERSION_MAJOR "0")
-set(DF_VERSION_MINOR "31")
-set(DF_VERSION_PATCH "25")
+set(DF_VERSION_MINOR "34")
+set(DF_VERSION_PATCH "02")
 set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
 
-set(DFHACK_RELEASE "9b")
+set(DFHACK_RELEASE "1")
+
+set(DFHACK_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}-r${DFHACK_RELEASE}")
+add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")
 
 ## where to install things (after the build is done, classic 'make install' or package structure)
 # the dfhack libraries will be installed here:
@@ -99,5 +102,5 @@ ELSEIF(WIN32)
     SET(CPACK_GENERATOR "ZIP")
 ENDIF()
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)
-set(CPACK_PACKAGE_FILE_NAME "dfhack-${DF_VERSION}-r${DFHACK_RELEASE}-${CMAKE_SYSTEM_NAME}")
+set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${CMAKE_SYSTEM_NAME}")
 INCLUDE(CPack)

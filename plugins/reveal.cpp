@@ -64,10 +64,7 @@ command_result revtoggle(DFHack::Core * c, std::vector<std::string> & params);
 command_result revflood(DFHack::Core * c, std::vector<std::string> & params);
 command_result nopause(DFHack::Core * c, std::vector<std::string> & params);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "reveal";
-}
+DFHACK_PLUGIN("reveal");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {

@@ -35,17 +35,12 @@ using df::global::world;
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 command_result export_dwarves (Core * c, std::vector <std::string> & parameters);
 
-// A plugins must be able to return its name. This must correspond to the filename - export.plug.so or export.plug.dll
-DFhackCExport const char * plugin_name ( void )
-{
-    return "dwarfexport";
-}
+DFHACK_PLUGIN("dwarfexport");
 
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     // Fill the command list with your commands.
-    commands.clear();
     commands.push_back(PluginCommand("dwarfexport",
                                      "Export dwarves to RuneSmith-compatible XML.",
                                      export_dwarves /*,

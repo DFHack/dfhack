@@ -34,14 +34,10 @@ command_result trackpos (Core * c, vector <string> & parameters);
 command_result colormods (Core * c, vector <string> & parameters);
 command_result zoom (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "kittens";
-}
+DFHACK_PLUGIN("kittens");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("nyan","NYAN CAT INVASION!",kittens, true));
     commands.push_back(PluginCommand("ktimer","Measure time between game updates and console lag (toggle).",ktimer));
     commands.push_back(PluginCommand("trackmenu","Track menu ID changes (toggle).",trackmenu));

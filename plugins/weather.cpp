@@ -15,10 +15,7 @@ unsigned char locked_data[25];
 
 command_result weather (Core * c, vector <string> & parameters);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "weather";
-}
+DFHACK_PLUGIN("weather");
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {

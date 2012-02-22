@@ -16,10 +16,7 @@ using df::global::world;
 using df::global::ui;
 
 // dfhack interface
-DFhackCExport const char * plugin_name ( void )
-{
-    return "fastdwarf";
-}
+DFHACK_PLUGIN("fastdwarf");
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
@@ -68,8 +65,6 @@ static command_result fastdwarf (Core * c, vector <string> & parameters)
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
-
     commands.push_back(PluginCommand("fastdwarf",
         "enable/disable fastdwarf (parameter=0/1)",
         fastdwarf));

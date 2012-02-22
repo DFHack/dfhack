@@ -55,10 +55,7 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters);
 static void init_state(Core *c);
 static void cleanup_state(Core *c);
 
-DFhackCExport const char * plugin_name ( void )
-{
-    return "workflow";
-}
+DFHACK_PLUGIN("workflow");
 
 DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &commands)
 {

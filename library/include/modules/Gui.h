@@ -143,6 +143,18 @@ namespace DFHack
          * Window size in tiles
          */
         bool getWindowSize(int32_t & width, int32_t & height);
+
+        /*
+         *Menu width: 
+         *3:3 - menu and area map closed
+         *2:3 - menu open single width
+         *1:3 - menu open double width
+         *1:2 - menu and area map open
+         *2:2 - area map open
+         */
+
+        bool getMenuWidth(uint8_t & menu_width, uint8_t & area_map_width);
+        bool setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width);
         
         /*
          * Screen tiles

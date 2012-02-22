@@ -40,7 +40,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
         "  Also follows the vein between z-levels with stairs, like 'vdig x' would.\n"
         ));
     commands.push_back(PluginCommand("expdig","Select or designate an exploratory pattern. Use 'expdig ?' for help.",expdig));
-    commands.push_back(PluginCommand("digcircle","Dig desingate a circle (filled or hollow) with given radius.",digcircle));
+    commands.push_back(PluginCommand("digcircle","Dig designate a circle (filled or hollow) with given radius.",digcircle));
     //commands.push_back(PluginCommand("autodig","Mark a tile for continuous digging.",autodig));
     return CR_OK;
 }
@@ -826,7 +826,7 @@ command_result expdig (Core * c, vector <string> & parameters)
     {
         c->con.print(
             "This command can be used for exploratory mining.\n"
-            "http://df.magmawiki.com/index.php/DF2010:Exploratory_mining\n"
+            "http://dwarffortresswiki.org/Exploratory_mining\n"
             "\n"
             "There are two variables that can be set: pattern and filter.\n"
             "Patterns:\n"

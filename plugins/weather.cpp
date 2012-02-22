@@ -40,6 +40,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 command_result weather (Core * c, vector <string> & parameters)
 {
     Console & con = c->con;
+    int val_override = -1;
     bool lock = false;
     bool unlock = false;
     bool snow = false;
@@ -58,7 +59,11 @@ command_result weather (Core * c, vector <string> & parameters)
         else if(parameters[i] == "unlock")
             unlock = true;
         else
-            return CR_WRONG_USAGE;
+        {
+            val_override = atoi(parameters[i].c_str());
+            if(val_override == 0)
+                return CR_WRONG_USAGE;
+        }
     }
     if(lock && unlock)
     {
@@ -74,7 +79,7 @@ command_result weather (Core * c, vector <string> & parameters)
         con << "Rain, snow or clear sky? DECIDE!" << std::endl;
         return CR_FAILURE;
     }
-    bool something = lock || unlock || rain || snow || clear;
+    bool something = lock || unlock || rain || snow || clear || val_override != -1;
 
     CoreSuspender suspend(c);
     DFHack::World * w = c->getWorld();
@@ -127,6 +132,11 @@ command_result weather (Core * c, vector <string> & parameters)
         {
             con << "Suddenly, sunny weather!" << std::endl;
             w->SetCurrentWeather(CLEAR);
+        }
+        if(val_override != -1)
+        {
+            con << "I have no damn idea what this is... " << val_override << std::endl;
+            w->SetCurrentWeather(val_override);
         }
         // FIXME: weather lock needs map ID to work reliably... needs to be implemented.
     }

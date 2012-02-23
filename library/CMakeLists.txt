@@ -200,6 +200,9 @@ install(TARGETS dfhack
 #install the offset file
 install(FILES xml/symbols.xml
         DESTINATION ${DFHACK_DATA_DESTINATION}) #linux: share/dfhack
+#install the example autoexec file
+install(FILES ../dfhack.init-example
+        DESTINATION ${DFHACK_BINARY_DESTINATION})
 
 if(BUILD_DEVEL)
     if(WIN32)

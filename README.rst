@@ -75,6 +75,11 @@ Something doesn't work, help!
 First, don't panic :) Second, dfhack keeps a few log files in DF's folder - stderr.log and stdout.log. You can look at those and possibly find out what's happening.
 If you found a bug, you can either report it in the bay12 DFHack thread, the issues tracker on github, contact me (peterix@gmail.com) or visit the #dfhack IRC channel on freenode.
 
+=============
+The init file
+=============
+If your DF folder contains a file named dfhack.init, its contents will be run every time you start DF. This allows setting up keybindings. An example file is provided as dfhack.init-example - you can tweak it and rename to dfhack.init if you want to use this functionality.
+
 ========
 Commands
 ========

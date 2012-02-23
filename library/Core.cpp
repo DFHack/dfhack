@@ -62,7 +62,6 @@ using namespace DFHack;
 #include <stdlib.h>
 #include <fstream>
 #include "tinythread.h"
-#include <llex.h>
 
 using namespace tthread;
 using namespace df::enums;

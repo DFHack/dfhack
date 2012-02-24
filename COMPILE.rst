@@ -66,7 +66,7 @@ program.
 =======
 Windows
 =======
-On Linux, DFHack replaces the SDL library distributed with DF.
+On Windows, DFHack replaces the SDL library distributed with DF.
 
 How to get the code
 ===================

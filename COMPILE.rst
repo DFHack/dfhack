@@ -4,10 +4,28 @@ Building DFHACK
 
 .. contents::
 
-=================
-Building on Linux
-=================
+
+
+=====
+Linux
+=====
 On Linux, DFHack acts as a library that shadows parts of the SDL API using LD_PRELOAD.
+
+How to get the code
+===================
+DFHack doesn't have any kind of system of code snapshots in place, so you will have to get code from the github repository using git.
+Having a 'git' package installed is the minimal requirement, but some sort of git gui or git integration for your favorite text editor/IDE will certainly help.
+
+The code resides here: https://github.com/peterix/dfhack
+
+If you just want to compile DFHack or work on it by contributing patches, it's quite enough to clone from the read-only address::
+    
+    git clone git://github.com/peterix/dfhack.git
+    cd dfhack
+    git submodule init
+    git submodule update
+
+If you want to get really involved with the development, create an account on github, make a clone there and then use that as your remote repository instead. Detailed instructions are beyond the scope of this document. If you need help, join us on IRC (#dfhack channel on freenode).
 
 Dependencies
 ============
@@ -45,9 +63,34 @@ extra options.
 You can also use a cmake-friendly IDE like KDevelop 4 or the cmake-gui
 program.
 
+=======
+Windows
+=======
+On Linux, DFHack replaces the SDL library distributed with DF.
+
+How to get the code
 ===================
-Building on Windows
-===================
+DFHack doesn't have any kind of system of code snapshots in place, so you will have to get code from the github repository using git.
+You will need some sort of Windows port of git, or a GUI. Some examples:
+
+ * http://code.google.com/p/msysgit/ - this is a command line version of git for windows. Most tutorials on git usage will apply.
+ * http://code.google.com/p/tortoisegit/ - this puts a pretty, graphical face on top of msysgit :)
+
+The code resides here: https://github.com/peterix/dfhack
+
+If you just want to compile DFHack or work on it by contributing patches, it's quite enough to clone from the read-only address::
+    
+    git clone git://github.com/peterix/dfhack.git
+    cd dfhack
+    git submodule init
+    git submodule update
+
+The tortoisegit GUI should have the equivalent options included.
+
+If you want to get really involved with the development, create an account on github, make a clone there and then use that as your remote repository instead. Detailed instructions are beyond the scope of this document. If you need help, join us on IRC (#dfhack channel on freenode).
+
+Dependencies
+============
 First, you need ``cmake``. Get the win32 installer version from the official
 site: http://www.cmake.org/cmake/resources/software.html
 

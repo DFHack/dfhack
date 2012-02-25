@@ -13,6 +13,13 @@ keybinding add Ctrl-Shift-K autodump-destroy-here
 # any item:
 keybinding add Ctrl-K autodump-destroy-item
 
+##############################
+# Generic adv mode bindings  #
+##############################
+
+keybinding add Ctrl-B adv-bodyswap
+keybinding add Ctrl-Shift-B "adv-bodyswap force"
+
 #############################
 # Context-specific bindings #
 #############################

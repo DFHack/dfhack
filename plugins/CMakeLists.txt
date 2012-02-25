@@ -80,6 +80,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(fixpositions fixpositions.cpp)
     DFHACK_PLUGIN(follow follow.cpp)
     DFHACK_PLUGIN(changevein changevein.cpp)
+    DFHACK_PLUGIN(advtools advtools.cpp)
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
 endif()
 

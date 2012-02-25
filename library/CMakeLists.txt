@@ -168,7 +168,7 @@ IF(UNIX)
   SET(PROJECT_LIBS rt dl)
 ELSE(WIN32)
   #FIXME: do we really need this?
-  SET(PROJECT_LIBS psapi ${dfhack_SOURCE_DIR}/library/depends/ntdll/ntdll.lib)
+  SET(PROJECT_LIBS psapi)
 ENDIF()
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SRCS})

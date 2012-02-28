@@ -851,6 +851,7 @@ int Core::Shutdown ( void )
     return -1;
 }
 
+// FIXME: this is HORRIBLY broken
 // from ncurses
 #define KEY_F0      0410        /* Function keys.  Space for 64 */
 #define KEY_F(n)    (KEY_F0+(n))    /* Value of function key n */
@@ -887,12 +888,12 @@ bool Core::ncurses_wgetch(int in, int & out)
     return true;
 }
 
-int Core::SDL_Event(SDL::Event* ev, int orig_return)
+int Core::SDL_Event(SDL::Event* ev)
 {
     // do NOT process events before we are ready.
-    if(!started) return orig_return;
+    if(!started) return true;
     if(!ev)
-        return orig_return;
+        return true;
     if(ev && ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP)
     {
         SDL::KeyboardEvent * ke = (SDL::KeyboardEvent *)ev;
@@ -913,7 +914,7 @@ int Core::SDL_Event(SDL::Event* ev, int orig_return)
             hotkey_states[ke->ksym.sym] = false;
         }
     }
-    return orig_return;
+    return true;
     // do stuff with the events...
 }
 

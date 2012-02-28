@@ -35,24 +35,6 @@ distribution.
 #include "tinythread.h"
 #include "modules/Graphic.h"
 
-/*
- * Plugin loading functions
- */
-namespace DFHack
-{
-    DFLibrary * OpenPlugin (const char * filename)
-    {
-        return (DFLibrary *) LoadLibrary(filename);
-    }
-    void * LookupPlugin (DFLibrary * plugin ,const char * function)
-    {
-        return (void *) GetProcAddress((HMODULE)plugin, function);
-    }
-    void ClosePlugin (DFLibrary * plugin)
-    {
-        FreeLibrary((HMODULE) plugin);
-    }
-}
 /*************************************************************************/
 // extremely boring wrappers beyond this point. Only fix when broken
 

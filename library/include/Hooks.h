@@ -50,3 +50,21 @@ DFhackCExport int SDL_PollEvent(SDL::Event* event);
 DFhackCExport int SDL_Init(uint32_t flags);
 DFhackCExport int wgetch(WINDOW * win);
 
+// hook - called early from DF's main()
+DFhackCExport int egg_init(void);
+
+// hook - called before rendering
+DFhackCExport int egg_shutdown(void);
+
+// hook - called for each game tick (or more often)
+DFhackCExport int egg_tick(void);
+
+// hook - called before rendering
+DFhackCExport int egg_prerender(void);
+
+// hook - called for each SDL event, can filter both the event and the return value
+DFhackCExport int egg_sdl_event(SDL::Event* event);
+
+// hook - ncurses event. return -1 to consume
+DFhackCExport int egg_curses_event(int orig_return);
+

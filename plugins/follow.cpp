@@ -77,7 +77,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
     gui->getMenuWidth(menu_width, area_map_width);
     gui->getCursorCoords(c_x,c_y,c_z);
 
-    if (c_x == -30000 && menu_width == 3) menu_width = 2; //Presence of the cursor means that there's actually a width-2 menu open
+    if (c_x != -30000 && menu_width == 3) menu_width = 2; //Presence of the cursor means that there's actually a width-2 menu open
 
     h -= 2; //account for vertical borders
 

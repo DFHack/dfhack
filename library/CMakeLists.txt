@@ -103,9 +103,6 @@ modules/World.cpp
 modules/Graphic.cpp
 )
 
-SET(PROJECT_HDRS_LINUX
-)
-
 SET(PROJECT_HDRS_WINDOWS
 include/wdirent.h
 )
@@ -113,18 +110,31 @@ include/wdirent.h
 SET(PROJECT_SRCS_LINUX
 Console-linux.cpp
 Hooks-linux.cpp
+PlugLoad-linux.cpp
 Process-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
 Console-windows.cpp
 Hooks-windows.cpp
+PlugLoad-windows.cpp
 Process-windows.cpp
 )
 
+SET(PROJECT_SRCS_LINUX_EGG
+Console-linux.cpp
+Hooks-egg.cpp
+PlugLoad-linux.cpp
+Process-linux.cpp
+)
+
 IF(UNIX)
-    LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_LINUX})
-    LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_LINUX})
+    OPTION(BUILD_EGGY "Make DFHack strangely egg-shaped." OFF)
+    IF(BUILD_EGGY)
+        LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_LINUX_EGG})
+    ELSE()
+        LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_LINUX})
+    ENDIF()
 ELSE()
     LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_WINDOWS})
     LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_WINDOWS})
@@ -174,9 +184,13 @@ ENDIF()
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SRCS})
 ADD_DEPENDENCIES(dfhack generate_headers)
 
-IF(WIN32)
-    SET_TARGET_PROPERTIES(dfhack PROPERTIES OUTPUT_NAME "SDL" )
-ENDIF()
+IF(BUILD_EGGY)
+    SET_TARGET_PROPERTIES(dfhack PROPERTIES OUTPUT_NAME "egg" )
+else()
+    IF(WIN32)
+        SET_TARGET_PROPERTIES(dfhack PROPERTIES OUTPUT_NAME "SDL" )
+    ENDIF()
+endif()
 
 #effectively disables debug builds...
 SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
@@ -188,15 +202,23 @@ IF(UNIX)
     install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
             DESTINATION .)
 ELSE()
-    # On windows, copy the renamed SDL so DF can still run.
-    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/SDLreal.dll
-            DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+    if(NOT BUILD_EGGY)
+        # On windows, copy the renamed SDL so DF can still run.
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/SDLreal.dll
+                DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+    endif()
 ENDIF()
 
 #install the main lib
-install(TARGETS dfhack
-        LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
-        RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+if(NOT BUILD_EGGY)
+    install(TARGETS dfhack
+            LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
+            RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+else()
+    install(TARGETS dfhack
+            LIBRARY DESTINATION ${DFHACK_EGGY_DESTINATION}
+            RUNTIME DESTINATION ${DFHACK_EGGY_DESTINATION})
+endif()
 #install the offset file
 install(FILES xml/symbols.xml
         DESTINATION ${DFHACK_DATA_DESTINATION}) #linux: share/dfhack
@@ -204,6 +226,7 @@ install(FILES xml/symbols.xml
 install(FILES ../dfhack.init-example
         DESTINATION ${DFHACK_BINARY_DESTINATION})
 
+# Unused for so long that it's not even relevant now...
 if(BUILD_DEVEL)
     if(WIN32)
         install(TARGETS dfhack

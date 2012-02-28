@@ -77,6 +77,12 @@ namespace DFHack
         friend int  ::SDL_PollEvent(SDL::Event *);
         friend int  ::SDL_Init(uint32_t flags);
         friend int  ::wgetch(WINDOW * w);
+        friend int  ::egg_init(void);
+        friend int  ::egg_shutdown(void);
+        friend int  ::egg_tick(void);
+        friend int  ::egg_prerender(void);
+        friend int  ::egg_sdl_event(SDL::Event* event);
+        friend int  ::egg_curses_event(int orig_return);
     public:
         /// Get the single Core instance or make one.
         static Core& getInstance()
@@ -125,9 +131,10 @@ namespace DFHack
     private:
         Core();
         bool Init();
-        int Update   (void);
+        int Update (void);
+        int TileUpdate (void);
         int Shutdown (void);
-        int SDL_Event(SDL::Event* event, int orig_return);
+        int SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement

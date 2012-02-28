@@ -40,9 +40,11 @@ add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")
 IF(UNIX)
     # put the lib into DF/hack
     SET(DFHACK_LIBRARY_DESTINATION hack)
+    SET(DFHACK_EGGY_DESTINATION libs)
 ELSE()
     # windows is crap, therefore we can't do nice things with it. leave the libs on a nasty pile...
     SET(DFHACK_LIBRARY_DESTINATION .)
+    SET(DFHACK_EGGY_DESTINATION .)
 ENDIF()
 # external tools will be installed here:
 SET(DFHACK_BINARY_DESTINATION .)

@@ -56,6 +56,7 @@ using namespace DFHack;
 #include "df/world_data.h"
 #include "df/interface.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include <df/graphic.h>
 
 #include <stdio.h>
 #include <iomanip>
@@ -771,6 +772,12 @@ void Core::Resume()
     AccessMutex->unlock();
 }
 
+int Core::TileUpdate()
+{
+    //df::global::gps->;
+    return true;
+}
+
 // should always be from simulation thread!
 int Core::Update()
 {
@@ -888,6 +895,7 @@ bool Core::ncurses_wgetch(int in, int & out)
     return true;
 }
 
+//MEMO: return false if event is consumed
 int Core::SDL_Event(SDL::Event* ev)
 {
     // do NOT process events before we are ready.

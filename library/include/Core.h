@@ -131,7 +131,8 @@ namespace DFHack
     private:
         Core();
         bool Init();
-        int Update   (void);
+        int Update (void);
+        int TileUpdate (void);
         int Shutdown (void);
         int SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);

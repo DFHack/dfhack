@@ -60,7 +60,8 @@ DFhackCExport int egg_tick(void)
 // hook - called before rendering
 DFhackCExport int egg_prerender(void)
 {
-    return true;
+    DFHack::Core & c = DFHack::Core::getInstance();
+    return c.TileUpdate();
 }
 
 // hook - called for each SDL event, returns 0 when the event has been consumed. 1 otherwise

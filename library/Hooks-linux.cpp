@@ -69,12 +69,18 @@ DFhackCExport void SDL_Quit(void)
 static int (*_SDL_PollEvent)(SDL::Event* event) = 0;
 DFhackCExport int SDL_PollEvent(SDL::Event* event)
 {
+    pollevent_again:
+    // if SDL returns 0 here, it means there are no more events. return 0
     int orig_return = _SDL_PollEvent(event);
-    // if the event is valid, intercept
-    if( event != 0 )
+    if(!orig_return)
+        return 0;
+    // otherwise we have an event to filter
+    else if( event != 0 )
     {
         DFHack::Core & c = DFHack::Core::getInstance();
-        return c.SDL_Event(event, orig_return);
+        // if we consume the event, ask SDL for more.
+        if(!c.SDL_Event(event))
+            goto pollevent_again;
     }
     return orig_return;
 }

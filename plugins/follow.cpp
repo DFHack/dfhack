@@ -77,7 +77,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
     gui->getMenuWidth(menu_width, area_map_width);
     gui->getCursorCoords(c_x,c_y,c_z);
 
-    if (c_z == -3000 && menu_width == 3) menu_width = 2; //Presence of the cursor means that there's actually a width-2 menu open
+    if (c_x != -30000 && menu_width == 3) menu_width = 2; //Presence of the cursor means that there's actually a width-2 menu open
 
     h -= 2; //account for vertical borders
 
@@ -114,7 +114,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 
     gui->setViewCoords(x, y, z); //Set the new screen position!
 
-    if (c_x != 3000 && !world->ReadPauseState()) gui->setCursorCoords(c_x - (prevX-x), c_y - (prevY-y), z); //If, for some reason, the cursor is active and the screen is still moving, move the cursor along with the screen
+    if (c_x != -30000 && !world->ReadPauseState()) gui->setCursorCoords(c_x - (prevX-x), c_y - (prevY-y), z); //If, for some reason, the cursor is active and the screen is still moving, move the cursor along with the screen
 
     prevX = x; //Save this round's stuff for next time so we can monitor for changes made by the user
     prevY = y;

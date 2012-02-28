@@ -5,13 +5,20 @@
 #include "MiscUtils.h"
 #include "modules/World.h"
 #include "modules/Translation.h"
+#include "modules/Materials.h"
+#include "modules/Items.h"
 
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/ui_advmode.h"
 #include "df/unit.h"
+#include "df/unit_inventory_item.h"
 #include "df/nemesis_record.h"
+#include "df/historical_figure.h"
 #include "df/general_ref_is_nemesisst.h"
+#include "df/general_ref_contains_itemst.h"
+#include "df/material.h"
+#include "df/craft_material_class.h"
 #include "df/viewscreen_optionst.h"
 #include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dungeon_monsterstatusst.h"
@@ -23,11 +30,19 @@ using namespace df::enums;
 using df::global::world;
 using df::global::ui_advmode;
 
+using df::nemesis_record;
+using df::historical_figure;
+
 using namespace DFHack::Simple::Translation;
+
+/*********************
+ *  PLUGIN INTERFACE *
+ *********************/
 
 static bool bodyswap_hotkey(Core *c, df::viewscreen *top);
 
 command_result adv_bodyswap (Core * c, std::vector <std::string> & parameters);
+command_result adv_tools (Core * c, std::vector <std::string> & parameters);
 
 DFHACK_PLUGIN("advtools");
 
@@ -37,6 +52,14 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 
     if (!ui_advmode)
         return CR_OK;
+
+    commands.push_back(PluginCommand(
+        "advtools", "Adventure mode tools.",
+        adv_tools, false,
+        "  list-equipped [all]\n"
+        "    List armor and weapons equipped by your companions.\n"
+        "    If all is specified, also lists non-metal clothing.\n"
+    ));
 
     commands.push_back(PluginCommand(
         "adv-bodyswap", "Change the adventurer unit.",
@@ -51,8 +74,8 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
         "    Otherwise it will revert if adv-bodyswap is called\n"
         "    in the main screen, or if the main menu, Fast Travel\n"
         "    or Sleep/Wait screen is opened.\n"
-        "  no-make-leader\n"
-        "    In permanent mode, don't swap companions to the new unit.\n"
+        "  noinherit\n"
+        "    In permanent mode, don't reassign companions to the new unit.\n"
     ));
 
     return CR_OK;
@@ -117,6 +140,10 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 
     return CR_OK;
 }
+
+/*********************
+ * UTILITY FUNCTIONS *
+ *********************/
 
 static bool bodyswap_hotkey(Core *c, df::viewscreen *top)
 {
@@ -239,6 +266,249 @@ void copyAcquaintances(df::nemesis_record *new_nemesis, df::nemesis_record *old_
     insert_into_vector(tvec, old_nemesis->unit_id);
 }
 
+void sortCompanionNemesis(std::vector<nemesis_record*> *list, int player_id = -1)
+{
+    std::map<int, nemesis_record*> table;
+    std::vector<nemesis_record*> output;
+
+    output.reserve(list->size());
+
+    if (player_id < 0)
+        player_id = ui_advmode->player_id;
+
+    // Index records; find the player
+    for (size_t i = 0; i < list->size(); i++)
+    {
+        auto item = (*list)[i];
+        if (item->id == player_id)
+            output.push_back(item);
+        else
+            table[item->figure->id] = item;
+    }
+
+    // Pull out the items by the persistent sort order
+    auto &order_vec = ui_advmode->companions.all_histfigs;
+    for (size_t i = 0; i < order_vec.size(); i++)
+    {
+        auto it = table.find(order_vec[i]);
+        if (it == table.end())
+            continue;
+        output.push_back(it->second);
+        table.erase(it);
+    }
+
+    // The remaining ones in reverse id order
+    for (auto it = table.rbegin(); it != table.rend(); ++it)
+        output.push_back(it->second);
+
+    list->swap(output);
+}
+
+void listCompanions(Core *c, std::vector<nemesis_record*> *list, bool units = true)
+{
+    nemesis_record *player = getPlayerNemesis(c, false);
+    if (!player)
+        return;
+
+    list->push_back(player);
+
+    for (size_t i = 0; i < player->companions.size(); i++)
+    {
+        auto item = nemesis_record::find(player->companions[i]);
+        if (item && (item->unit || !units))
+            list->push_back(item);
+    }
+}
+
+std::string getUnitNameProfession(df::unit *unit)
+{
+    std::string name = TranslateName(&unit->name, false) + ", ";
+    if (unit->custom_profession.empty())
+        name += ENUM_ATTR_STR(profession, caption, unit->profession);
+    else
+        name += unit->custom_profession;
+    return name;
+}
+
+enum InventoryMode {
+    INV_CARRIED,
+    INV_WEAPON,
+    INV_WORN,
+    INV_IN_CONTAINER
+};
+
+typedef std::pair<df::item*,InventoryMode> inv_item;
+
+static void listContainerInventory(std::vector<inv_item> *list, df::item *container)
+{
+    auto &refs = container->itemrefs;
+    for (size_t i = 0; i < refs.size(); i++)
+    {
+        auto ref = refs[i];
+        if (!strict_virtual_cast<df::general_ref_contains_itemst>(ref))
+            continue;
+
+        df::item *child = ref->getItem();
+        if (!child) continue;
+
+        list->push_back(inv_item(child, INV_IN_CONTAINER));
+        listContainerInventory(list, child);
+    }
+}
+
+void listUnitInventory(std::vector<inv_item> *list, df::unit *unit)
+{
+    auto &items = unit->inventory;
+    for (size_t i = 0; i < items.size(); i++)
+    {
+        auto item = items[i];
+        InventoryMode mode;
+
+        switch (item->mode) {
+        case df::unit_inventory_item::Carried:
+            mode = INV_CARRIED;
+            break;
+        case df::unit_inventory_item::Weapon:
+            mode = INV_WEAPON;
+            break;
+        default:
+            mode = INV_WORN;
+        }
+
+        list->push_back(inv_item(item->item, mode));
+        listContainerInventory(list, item->item);
+    }
+}
+
+/*********************
+ *     FORMATTING    *
+ *********************/
+
+static void printCompanionHeader(Core *c, size_t i, df::unit *unit)
+{
+    c->con.color(Console::COLOR_GREY);
+
+    if (i < 28)
+        c->con << char('a'+i);
+    else
+        c->con << i;
+
+    c->con << ": " << getUnitNameProfession(unit);
+    if (unit->flags1.bits.dead)
+        c->con << " (DEAD)";
+    if (unit->flags3.bits.ghostly)
+        c->con << " (GHOST)";
+    c->con << endl;
+
+    c->con.reset_color();
+}
+
+static size_t formatSize(std::vector<std::string> *out, const std::map<std::string, int> in, size_t *cnt)
+{
+    size_t len = 0;
+
+    for (auto it = in.begin(); it != in.end(); ++it)
+    {
+        std::string line = it->first;
+        if (it->second != 1)
+            line += stl_sprintf(" [%d]", it->second);
+        len = std::max(len, line.size());
+        out->push_back(line);
+    }
+
+    if (out->empty())
+    {
+        out->push_back("(none)");
+        len = 6;
+    }
+
+    if (cnt)
+        *cnt = std::max(*cnt, out->size());
+
+    return len;
+}
+
+static void printEquipped(Core *c, df::unit *unit, bool all)
+{
+    std::vector<inv_item> items;
+    listUnitInventory(&items, unit);
+
+    std::map<std::string, int> head, body, legs, weapons;
+
+    for (auto it = items.begin(); it != items.end(); ++it)
+    {
+        df::item *item = it->first;
+
+        // Skip non-worn non-weapons
+        ItemTypeInfo iinfo(item);
+
+        bool is_weapon = (it->second == INV_WEAPON || iinfo.type == item_type::AMMO);
+        if (!(is_weapon || it->second == INV_WORN))
+            continue;
+
+        // Skip non-metal, unless all
+        MaterialInfo minfo(item);
+        df::craft_material_class mclass = minfo.getCraftClass();
+
+        bool is_metal = (mclass == craft_material_class::Metal);
+        if (!(is_weapon || all || is_metal))
+            continue;
+
+        // Format the name
+        std::string name;
+        if (is_metal)
+            name = minfo.toString() + " ";
+        else if (mclass != craft_material_class::None)
+            name = toLower(ENUM_KEY_STR(craft_material_class,mclass)) + " ";
+        name += iinfo.toString();
+
+        // Add to the right table
+        int count = item->getStackSize();
+
+        switch (iinfo.type) {
+        case item_type::HELM:
+            head[name] += count;
+            break;
+        case item_type::ARMOR:
+        case item_type::GLOVES:
+        case item_type::BACKPACK:
+        case item_type::QUIVER:
+            body[name] += count;
+            break;
+        case item_type::PANTS:
+        case item_type::SHOES:
+            legs[name] += count;
+            break;
+        default:
+            weapons[name] += count;
+        }
+    }
+
+    std::vector<std::string> cols[4];
+    size_t sizes[4];
+    size_t lines = 0;
+
+    sizes[0] = formatSize(&cols[0], head, &lines);
+    sizes[1] = formatSize(&cols[1], body, &lines);
+    sizes[2] = formatSize(&cols[2], legs, &lines);
+    sizes[3] = formatSize(&cols[3], weapons, &lines);
+
+    for (size_t i = 0; i < lines; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            size_t sz = std::max(sizes[j], size_t(18));
+            c->con << "| " << std::left << std::setw(sz) << vector_get(cols[j],i) << " ";
+        }
+
+        c->con << "|" << std::endl;
+    }
+}
+
+/*********************
+ *      COMMANDS     *
+ *********************/
+
 command_result adv_bodyswap (Core * c, std::vector <std::string> & parameters)
 {
     // HOTKEY COMMAND; CORE IS SUSPENDED
@@ -254,7 +524,7 @@ command_result adv_bodyswap (Core * c, std::vector <std::string> & parameters)
             force = true;
         else if (item == "permanent")
             permanent = true;
-        else if (item == "no-make-leader")
+        else if (item == "noinherit")
             no_make_leader = true;
         else
             return CR_WRONG_USAGE;
@@ -329,4 +599,43 @@ command_result adv_bodyswap (Core * c, std::vector <std::string> & parameters)
     }
 
     return CR_OK;
+}
+
+command_result adv_tools (Core * c, std::vector <std::string> & parameters)
+{
+    if (parameters.empty())
+        return CR_WRONG_USAGE;
+
+    CoreSuspender suspend(c);
+
+    const auto &command = parameters[0];
+    if (command == "list-equipped")
+    {
+        bool all = false;
+        for (size_t i = 1; i < parameters.size(); i++)
+        {
+            if (parameters[i] == "all")
+                all = true;
+            else
+                return CR_WRONG_USAGE;
+        }
+
+        std::vector<nemesis_record*> list;
+
+        listCompanions(c, &list);
+        sortCompanionNemesis(&list);
+
+        for (size_t i = 0; i < list.size(); i++)
+        {
+            auto item = list[i];
+            auto unit = item->unit;
+
+            printCompanionHeader(c, i, unit);
+            printEquipped(c, unit, all);
+        }
+
+        return CR_OK;
+    }
+    else
+        return CR_WRONG_USAGE;
 }

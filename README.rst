@@ -86,6 +86,31 @@ Commands
 
 Almost all the commands support using the 'help <command-name>' built-in command to retrieve further help without having to look at this document. Alternatively, some accept a 'help'/'?' option on their command line.
 
+adv-bodyswap
+============
+This allows taking control over your followers and other creatures in adventure mode. For example, you can make them pick up new arms and armor and equip them properly.
+
+Usage
+-----
+ * When viewing unit details, body-swaps into that unit.
+ * In the main adventure mode screen, reverts transient swap.
+
+advtools
+========
+A package of different adventure mode tools (currently just one)
+
+Usage
+-----
+:list-equipped [all]: List armor and weapons equipped by your companions. If all is specified, also lists non-metal clothing.
+
+changevein
+==========
+Changes material of the vein under cursor to the specified inorganic RAW material.
+
+follow
+======
+Makes the game view follow the currently highlighted unit after you exit from current menu/cursor mode. Handy for watching dwarves running around. Deactivated by moving the view manually.
+
 forcepause
 ==========
 Forces DF to pause. This is useful when your FPS drops below 1 and you lose control of the game.

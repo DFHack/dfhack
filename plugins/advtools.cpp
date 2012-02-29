@@ -201,7 +201,7 @@ bool bodySwap(Core *c, df::unit *player)
 
 df::nemesis_record *getPlayerNemesis(Core *c, bool restore_swap)
 {
-    auto real_nemesis = df::nemesis_record::find(ui_advmode->player_id);
+    auto real_nemesis = vector_get(world->nemesis.all, ui_advmode->player_id);
     if (!real_nemesis || !real_nemesis->unit)
     {
         c->con.printerr("Invalid player nemesis id: %d\n", ui_advmode->player_id);
@@ -274,7 +274,11 @@ void sortCompanionNemesis(std::vector<nemesis_record*> *list, int player_id = -1
     output.reserve(list->size());
 
     if (player_id < 0)
-        player_id = ui_advmode->player_id;
+    {
+        auto real_nemesis = vector_get(world->nemesis.all, ui_advmode->player_id);
+        if (real_nemesis)
+            player_id = real_nemesis->id;
+    }
 
     // Index records; find the player
     for (size_t i = 0; i < list->size(); i++)
@@ -570,7 +574,7 @@ command_result adv_bodyswap (Core * c, std::vector <std::string> & parameters)
     // Permanently re-link everything
     if (permanent)
     {
-        ui_advmode->player_id = new_nemesis->id;
+        ui_advmode->player_id = linear_index(world->nemesis.all, new_nemesis);
 
         // Flag 0 appears to be the 'active adventurer' flag, and
         // the player_id field above seems to be computed using it

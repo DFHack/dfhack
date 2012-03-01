@@ -29,6 +29,7 @@ distribution.
 #include <string.h>
 #include <stdlib.h>
 #include <sstream>
+#include <exception>
 //#include <ostream>
 namespace DFHack
 {
@@ -62,7 +63,10 @@ namespace DFHack
         {
             if (newsize == size)
                 return;
-            bits = (uint8_t*)realloc(bits, newsize);
+            uint8_t* mem = (uint8_t *) realloc(bits, newsize);
+            if(!mem)
+                throw std::bad_alloc();
+            bits = mem;
             if (newsize > size)
                 memset(bits+size, 0, newsize-size);
             size = newsize;
@@ -197,7 +201,10 @@ namespace DFHack
             }
             else
             {
-                m_data = (T*)realloc(m_data, sizeof(T)*new_size);
+                T* mem = (T*) realloc(m_data, sizeof(T)*new_size);
+                if(!mem)
+                    throw std::bad_alloc();
+                m_data = mem;
             }
             if (new_size > m_size)
                 memset(m_data+sizeof(T)*m_size, 0, sizeof(T)*(new_size - m_size));

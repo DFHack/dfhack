@@ -241,19 +241,19 @@ df::job *DFHack::getSelectedJob(Core *c, bool quiet)
 {
     df::viewscreen *top = c->getTopViewscreen();
 
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
+    if (VIRTUAL_CAST_VAR(joblist, df::viewscreen_joblistst, top))
     {
-        df::job *job = vector_get(screen->jobs, screen->cursor_pos);
+        df::job *job = vector_get(joblist->jobs, joblist->cursor_pos);
 
         if (!job && !quiet)
             c->con.printerr("Selected unit has no job\n");
 
         return job;
     }
-    else if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitlistst, top))
+    else if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, top))
     {
-        int page = screen->page;
-        df::job *job = vector_get(screen->jobs[page], screen->cursor_pos[page]);
+        int page = unitlist->page;
+        df::job *job = vector_get(unitlist->jobs[page], unitlist->cursor_pos[page]);
 
         if (!job && !quiet)
             c->con.printerr("Selected unit has no job\n");

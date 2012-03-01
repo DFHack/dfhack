@@ -104,7 +104,7 @@ void cheap_tokenise(string const& input, vector<string> &output)
     string *cur = NULL;
 
     for (size_t i = 0; i < input.size(); i++) {
-        char c = input[i];
+        unsigned char c = input[i];
         if (isspace(c)) {
             cur = NULL;
         } else {
@@ -470,28 +470,11 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
         }
         else
         {
-            vector <string> parts;
-            cheap_tokenise(command,parts);
-            if(parts.size() == 0)
+            command_result res = plug_mgr->InvokeCommand(first, parts);
+            if(res == CR_NOT_IMPLEMENTED)
             {
-                clueless_counter++;
-            }
-            else
-            {
-                string first = parts[0];
-                parts.erase(parts.begin());
-                command_result res = plug_mgr->InvokeCommand(first, parts);
-                if(res == CR_NOT_IMPLEMENTED)
-                {
-                    con.printerr("%s is not a recognized command.\n", first.c_str());
-                    clueless_counter ++;
-                }
-                /*
-                else if(res == CR_FAILURE)
-                {
-                    con.printerr("ERROR!\n");
-                }
-                */
+                con.printerr("%s is not a recognized command.\n", first.c_str());
+                clueless_counter ++;
             }
         }
     }

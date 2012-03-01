@@ -771,19 +771,19 @@ bool Materials::ReadCreatureTypesEx (void)
                 caste.recuperation[k] = ca->attributes.phys_att_range[physical_attribute_type::RECUPERATION][k];
                 caste.disease_resistance[k] = ca->attributes.phys_att_range[physical_attribute_type::DISEASE_RESISTANCE][k];
 
-                caste.analytical_ability[k] = ca->attributes.phys_att_range[mental_attribute_type::ANALYTICAL_ABILITY][k];
-                caste.focus[k] = ca->attributes.phys_att_range[mental_attribute_type::FOCUS][k];
-                caste.willpower[k] = ca->attributes.phys_att_range[mental_attribute_type::WILLPOWER][k];
-                caste.creativity[k] = ca->attributes.phys_att_range[mental_attribute_type::CREATIVITY][k];
-                caste.intuition[k] = ca->attributes.phys_att_range[mental_attribute_type::INTUITION][k];
-                caste.patience[k] = ca->attributes.phys_att_range[mental_attribute_type::PATIENCE][k];
-                caste.memory[k] = ca->attributes.phys_att_range[mental_attribute_type::MEMORY][k];
-                caste.linguistic_ability[k] = ca->attributes.phys_att_range[mental_attribute_type::LINGUISTIC_ABILITY][k];
-                caste.spatial_sense[k] = ca->attributes.phys_att_range[mental_attribute_type::SPATIAL_SENSE][k];
-                caste.musicality[k] = ca->attributes.phys_att_range[mental_attribute_type::MUSICALITY][k];
-                caste.kinesthetic_sense[k] = ca->attributes.phys_att_range[mental_attribute_type::KINESTHETIC_SENSE][k];
-                caste.empathy[k] = ca->attributes.phys_att_range[mental_attribute_type::EMPATHY][k];
-                caste.social_awareness[k] = ca->attributes.phys_att_range[mental_attribute_type::SOCIAL_AWARENESS][k];
+                caste.analytical_ability[k] = ca->attributes.ment_att_range[mental_attribute_type::ANALYTICAL_ABILITY][k];
+                caste.focus[k] = ca->attributes.ment_att_range[mental_attribute_type::FOCUS][k];
+                caste.willpower[k] = ca->attributes.ment_att_range[mental_attribute_type::WILLPOWER][k];
+                caste.creativity[k] = ca->attributes.ment_att_range[mental_attribute_type::CREATIVITY][k];
+                caste.intuition[k] = ca->attributes.ment_att_range[mental_attribute_type::INTUITION][k];
+                caste.patience[k] = ca->attributes.ment_att_range[mental_attribute_type::PATIENCE][k];
+                caste.memory[k] = ca->attributes.ment_att_range[mental_attribute_type::MEMORY][k];
+                caste.linguistic_ability[k] = ca->attributes.ment_att_range[mental_attribute_type::LINGUISTIC_ABILITY][k];
+                caste.spatial_sense[k] = ca->attributes.ment_att_range[mental_attribute_type::SPATIAL_SENSE][k];
+                caste.musicality[k] = ca->attributes.ment_att_range[mental_attribute_type::MUSICALITY][k];
+                caste.kinesthetic_sense[k] = ca->attributes.ment_att_range[mental_attribute_type::KINESTHETIC_SENSE][k];
+                caste.empathy[k] = ca->attributes.ment_att_range[mental_attribute_type::EMPATHY][k];
+                caste.social_awareness[k] = ca->attributes.ment_att_range[mental_attribute_type::SOCIAL_AWARENESS][k];
             }
             mat.castes.push_back(caste);
         }

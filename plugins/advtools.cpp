@@ -505,6 +505,12 @@ static void printEquipped(Core *c, df::unit *unit, bool all)
         // Add to the right table
         int count = item->getStackSize();
 
+        if (is_weapon)
+        {
+            weapons[name] += count;
+            continue;
+        }
+
         switch (iinfo.type) {
         case item_type::HELM:
             head[name] += count;

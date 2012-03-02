@@ -11,12 +11,15 @@
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/ui_advmode.h"
+#include "df/item.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/map_block.h"
 #include "df/nemesis_record.h"
 #include "df/historical_figure.h"
 #include "df/general_ref_is_nemesisst.h"
 #include "df/general_ref_contains_itemst.h"
+#include "df/general_ref_building_civzone_assignedst.h"
 #include "df/material.h"
 #include "df/craft_material_class.h"
 #include "df/viewscreen_optionst.h"
@@ -59,6 +62,9 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
         "  list-equipped [all]\n"
         "    List armor and weapons equipped by your companions.\n"
         "    If all is specified, also lists non-metal clothing.\n"
+        "  metal-detector [all-types] [non-trader]\n"
+        "    Reveal metal armor and weapons in shops. The options\n"
+        "    disable the checks on item type and being in shop.\n"
     ));
 
     commands.push_back(PluginCommand(
@@ -384,6 +390,36 @@ void listUnitInventory(std::vector<inv_item> *list, df::unit *unit)
     }
 }
 
+bool isShopItem(df::item *item)
+{
+    for (size_t k = 0; k < item->itemrefs.size(); k++)
+    {
+        auto ref = item->itemrefs[k];
+        if (virtual_cast<df::general_ref_building_civzone_assignedst>(ref))
+            return true;
+    }
+
+    return false;
+}
+
+bool isWeaponArmor(df::item *item)
+{
+    using namespace df::enums::item_type;
+
+    switch (item->getType()) {
+    case HELM:
+    case ARMOR:
+    case WEAPON:
+    case AMMO:
+    case GLOVES:
+    case PANTS:
+    case SHOES:
+        return true;
+    default:
+        return false;
+    }
+}
+
 /*********************
  *     FORMATTING    *
  *********************/
@@ -636,6 +672,67 @@ command_result adv_tools (Core * c, std::vector <std::string> & parameters)
 
             printCompanionHeader(c, i, unit);
             printEquipped(c, unit, all);
+        }
+
+        return CR_OK;
+    }
+    else if (command == "metal-detector")
+    {
+        bool all = false, non_trader = false;
+        for (size_t i = 1; i < parameters.size(); i++)
+        {
+            if (parameters[i] == "all-types")
+                all = true;
+            else if (parameters[i] == "non-trader")
+                non_trader = true;
+            else
+                return CR_WRONG_USAGE;
+        }
+
+        auto *player = getPlayerNemesis(c, false);
+        if (!player)
+            return CR_FAILURE;
+
+        df::coord player_pos = player->unit->pos;
+
+        int total = 0;
+        std::map<df::coord,int> counts;
+
+        for (size_t i = 0; i < world->map.map_blocks.size(); i++)
+        {
+            df::map_block *block = world->map.map_blocks[i];
+
+            for (size_t j = 0; j < block->items.size(); j++)
+            {
+                df::item *item = df::item::find(block->items[j]);
+                if (!item)
+                    continue;
+
+                if (!non_trader && !isShopItem(item))
+                    continue;
+                if (!all && !isWeaponArmor(item))
+                    continue;
+
+                MaterialInfo minfo(item);
+                if (minfo.getCraftClass() != craft_material_class::Metal)
+                    continue;
+
+                total++;
+                counts[(item->pos - player_pos)/10]++;
+
+                auto &designations = block->designation;
+                auto &dgn = designations[item->pos.x%16][item->pos.y%16];
+
+                dgn.bits.hidden = 0; // revealed
+                dgn.bits.pile = 1; // visible
+            }
+        }
+
+        c->con.print("%d items of metal merchandise found in the vicinity.\n", total);
+        for (auto it = counts.begin(); it != counts.end(); it++)
+        {
+            df::coord delta = it->first * 10;
+            c->con.print("  %+d,%+d,%+d: %d\n", delta.x, delta.y, delta.z, it->second);
         }
 
         return CR_OK;

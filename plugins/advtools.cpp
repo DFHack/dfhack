@@ -26,6 +26,7 @@
 #include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dungeon_monsterstatusst.h"
 
+#include <math.h>
 
 using namespace DFHack;
 using namespace df::enums;
@@ -420,6 +421,57 @@ bool isWeaponArmor(df::item *item)
     }
 }
 
+int containsMetalItems(df::item *item, bool all, bool non_trader)
+{
+    int cnt = 0;
+
+    auto &refs = item->itemrefs;
+    for (size_t i = 0; i < refs.size(); i++)
+    {
+        auto ref = refs[i];
+        if (!strict_virtual_cast<df::general_ref_contains_itemst>(ref))
+            continue;
+
+        df::item *child = ref->getItem();
+        if (!child) continue;
+
+        cnt += containsMetalItems(child, all, non_trader);
+    }
+
+    if (!non_trader && !isShopItem(item))
+        return cnt;
+    if (!all && !isWeaponArmor(item))
+        return cnt;
+
+    MaterialInfo minfo(item);
+    if (minfo.getCraftClass() != craft_material_class::Metal)
+        return cnt;
+
+    return ++cnt;
+}
+
+void joinCounts(std::map<df::coord, int> &counts)
+{
+    for (auto it = counts.begin(); it != counts.end(); it++)
+    {
+        df::coord pt = it->first;
+        while (pt.x > 0 && counts.count(pt - df::coord(1,0,0)))
+            pt.x--;
+        while (pt.y > 0 &&counts.count(pt - df::coord(0,1,0)))
+            pt.y--;
+        while (pt.x < 0 && counts.count(pt + df::coord(1,0,0)))
+            pt.x++;
+        while (pt.y < 0 &&counts.count(pt + df::coord(0,1,0)))
+            pt.y++;
+
+        if (pt == it->first)
+            continue;
+
+        counts[pt] += it->second;
+        it->second = 0;
+    }
+}
+
 /*********************
  *     FORMATTING    *
  *********************/
@@ -466,6 +518,37 @@ static size_t formatSize(std::vector<std::string> *out, const std::map<std::stri
         *cnt = std::max(*cnt, out->size());
 
     return len;
+}
+
+static std::string formatDirection(df::coord delta)
+{
+    std::string ns, ew, dir;
+
+    if (delta.x > 0)
+        ew = "E";
+    else if (delta.x < 0)
+        ew = "W";
+
+    if (delta.y > 0)
+        ns = "S";
+    else if (delta.y < 0)
+        ns = "N";
+
+    if (abs(delta.x) > abs(delta.y)*5)
+        dir = ew;
+    else if (abs(delta.y) > abs(delta.x)*5)
+        dir = ns;
+    else if (abs(delta.x) > abs(delta.y)*2)
+        dir = ew + ns + ew;
+    else if (abs(delta.y) > abs(delta.x)*2)
+        dir = ns + ns + ew;
+    else if (delta.x || delta.y)
+        dir = ns + ew;
+    else
+        dir = "***";
+
+    int dist = (int)sqrt(delta.x*delta.x + delta.y*delta.y);
+    return stl_sprintf("%d away %s %+d", dist, dir.c_str(), delta.z);
 }
 
 static void printEquipped(Core *c, df::unit *unit, bool all)
@@ -714,17 +797,12 @@ command_result adv_tools (Core * c, std::vector <std::string> & parameters)
                 if (!item)
                     continue;
 
-                if (!non_trader && !isShopItem(item))
-                    continue;
-                if (!all && !isWeaponArmor(item))
-                    continue;
-
-                MaterialInfo minfo(item);
-                if (minfo.getCraftClass() != craft_material_class::Metal)
+                int num = containsMetalItems(item, all, non_trader);
+                if (!num)
                     continue;
 
-                total++;
-                counts[(item->pos - player_pos)/10]++;
+                total += num;
+                counts[(item->pos - player_pos)/10] += num;
 
                 auto &designations = block->designation;
                 auto &dgn = designations[item->pos.x%16][item->pos.y%16];
@@ -734,11 +812,16 @@ command_result adv_tools (Core * c, std::vector <std::string> & parameters)
             }
         }
 
+        joinCounts(counts);
+
         c->con.print("%d items of metal merchandise found in the vicinity.\n", total);
         for (auto it = counts.begin(); it != counts.end(); it++)
         {
+            if (!it->second)
+                continue;
+
             df::coord delta = it->first * 10;
-            c->con.print("  %+d,%+d,%+d: %d\n", delta.x, delta.y, delta.z, it->second);
+            c->con.print("  %s: %d\n", formatDirection(delta).c_str(), it->second);
         }
 
         return CR_OK;

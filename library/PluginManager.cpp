@@ -181,17 +181,17 @@ bool Plugin::load()
         return false;
     }
     const char ** plug_name =(const char ** ) LookupPlugin(plug, "name");
-    if(!plug_name)
+    const char ** plug_version =(const char ** ) LookupPlugin(plug, "version");
+    if(!plug_name || !plug_version)
     {
-        con.printerr("Plugin %s has no name.\n", filename.c_str());
+        con.printerr("Plugin %s has no name or version.\n", filename.c_str());
         ClosePlugin(plug);
         state = PS_BROKEN;
         return false;
     }
-    const char ** plug_version =(const char ** ) LookupPlugin(plug, "version");
-    if(!plug_version || strcmp(DFHACK_VERSION, *plug_version) != 0)
+    if(strcmp(DFHACK_VERSION, *plug_version) != 0)
     {
-        con.printerr("Plugin sx was not built for this version of DFHack.\n"
+        con.printerr("Plugin %s was not built for this version of DFHack.\n"
                      "Plugin: %s, DFHack: %s\n", *plug_name, *plug_version, DFHACK_VERSION);
         ClosePlugin(plug);
         state = PS_BROKEN;

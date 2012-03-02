@@ -60,7 +60,6 @@ void VersionInfoFactory::clear()
 
 VersionInfo * VersionInfoFactory::getVersionInfoByMD5(string hash)
 {
-    VersionInfo * vinfo;
     for(size_t i = 0; i < versions.size();i++)
     {
         if(versions[i]->hasMD5(hash))
@@ -167,7 +166,6 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
     TiXmlHandle hDoc(&doc);
     TiXmlElement* pElem;
     TiXmlHandle hRoot(0);
-    VersionInfo *mem;
 
     // block: name
     {

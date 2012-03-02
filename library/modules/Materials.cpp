@@ -761,29 +761,32 @@ bool Materials::ReadCreatureTypesEx (void)
                 part.category = bp->part_name;
                 caste.bodypart.push_back(part);
             }
-
+            using namespace df::enums::mental_attribute_type;
+            using namespace df::enums::physical_attribute_type;
             for (int32_t k = 0; k < 7; k++)
             {
-                caste.strength[k] = ca->attributes.phys_att_range[physical_attribute_type::STRENGTH][k];
-                caste.agility[k] = ca->attributes.phys_att_range[physical_attribute_type::AGILITY][k];
-                caste.toughness[k] = ca->attributes.phys_att_range[physical_attribute_type::TOUGHNESS][k];
-                caste.endurance[k] = ca->attributes.phys_att_range[physical_attribute_type::ENDURANCE][k];
-                caste.recuperation[k] = ca->attributes.phys_att_range[physical_attribute_type::RECUPERATION][k];
-                caste.disease_resistance[k] = ca->attributes.phys_att_range[physical_attribute_type::DISEASE_RESISTANCE][k];
+                auto & physical = ca->attributes.phys_att_range;
+                caste.strength[k] = physical[STRENGTH][k];
+                caste.agility[k] = physical[AGILITY][k];
+                caste.toughness[k] = physical[TOUGHNESS][k];
+                caste.endurance[k] = physical[ENDURANCE][k];
+                caste.recuperation[k] = physical[RECUPERATION][k];
+                caste.disease_resistance[k] = physical[DISEASE_RESISTANCE][k];
 
-                caste.analytical_ability[k] = ca->attributes.phys_att_range[mental_attribute_type::ANALYTICAL_ABILITY][k];
-                caste.focus[k] = ca->attributes.phys_att_range[mental_attribute_type::FOCUS][k];
-                caste.willpower[k] = ca->attributes.phys_att_range[mental_attribute_type::WILLPOWER][k];
-                caste.creativity[k] = ca->attributes.phys_att_range[mental_attribute_type::CREATIVITY][k];
-                caste.intuition[k] = ca->attributes.phys_att_range[mental_attribute_type::INTUITION][k];
-                caste.patience[k] = ca->attributes.phys_att_range[mental_attribute_type::PATIENCE][k];
-                caste.memory[k] = ca->attributes.phys_att_range[mental_attribute_type::MEMORY][k];
-                caste.linguistic_ability[k] = ca->attributes.phys_att_range[mental_attribute_type::LINGUISTIC_ABILITY][k];
-                caste.spatial_sense[k] = ca->attributes.phys_att_range[mental_attribute_type::SPATIAL_SENSE][k];
-                caste.musicality[k] = ca->attributes.phys_att_range[mental_attribute_type::MUSICALITY][k];
-                caste.kinesthetic_sense[k] = ca->attributes.phys_att_range[mental_attribute_type::KINESTHETIC_SENSE][k];
-                caste.empathy[k] = ca->attributes.phys_att_range[mental_attribute_type::EMPATHY][k];
-                caste.social_awareness[k] = ca->attributes.phys_att_range[mental_attribute_type::SOCIAL_AWARENESS][k];
+                auto & mental = ca->attributes.ment_att_range;
+                caste.analytical_ability[k] = mental[ANALYTICAL_ABILITY][k];
+                caste.focus[k] = mental[FOCUS][k];
+                caste.willpower[k] = mental[WILLPOWER][k];
+                caste.creativity[k] = mental[CREATIVITY][k];
+                caste.intuition[k] = mental[INTUITION][k];
+                caste.patience[k] = mental[PATIENCE][k];
+                caste.memory[k] = mental[MEMORY][k];
+                caste.linguistic_ability[k] = mental[LINGUISTIC_ABILITY][k];
+                caste.spatial_sense[k] = mental[SPATIAL_SENSE][k];
+                caste.musicality[k] = mental[MUSICALITY][k];
+                caste.kinesthetic_sense[k] = mental[KINESTHETIC_SENSE][k];
+                caste.empathy[k] = mental[EMPATHY][k];
+                caste.social_awareness[k] = mental[SOCIAL_AWARENESS][k];
             }
             mat.castes.push_back(caste);
         }

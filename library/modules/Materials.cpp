@@ -467,7 +467,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
 
     TEST(fire_safe, material->heat.melting_point > 11000);
     TEST(magma_safe, material->heat.melting_point > 12000);
-    TEST(deep_material, FLAG(inorganic, inorganic_flags::DEEP_ANY));
+    TEST(deep_material, FLAG(inorganic, inorganic_flags::SPECIAL));
     TEST(non_economic, inorganic && !(ui && ui->economic_stone[index]));
 
     TEST(plant, plant);

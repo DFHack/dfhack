@@ -23,9 +23,6 @@ distribution.
 */
 
 #pragma once
-#ifndef CL_MOD_GUI
-#define CL_MOD_GUI
-
 #include "Export.h"
 #include "Module.h"
 #include "Virtual.h"
@@ -95,18 +92,6 @@ namespace DFHack
         DFHACK_EXPORT void showAnnouncement(std::string message, int color = 7, bool bright = true);
         DFHACK_EXPORT void showPopupAnnouncement(std::string message, int color = 7, bool bright = true);
 
-        /**
-         * One tile of the screen.
-         * \ingroup grp_gui
-         */
-        struct t_screen
-        {
-            uint8_t symbol;
-            uint8_t foreground;
-            uint8_t background;
-            uint8_t bright;
-        };
-
         /*
          * Cursor and window coords
          */
@@ -126,12 +111,10 @@ namespace DFHack
         /// Get the current top-level view-screen
         DFHACK_EXPORT df::viewscreen * GetCurrentScreen();
 
-        /*
-         * Window size in tiles
-         */
+        /// get the size of the window buffer
         DFHACK_EXPORT bool getWindowSize(int32_t & width, int32_t & height);
 
-        /*
+        /**
          *Menu width:
          *3:3 - menu and area map closed
          *2:3 - menu open single width
@@ -144,5 +127,3 @@ namespace DFHack
         DFHACK_EXPORT bool setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width);
     }
 }
-#endif
-

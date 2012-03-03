@@ -47,6 +47,7 @@ using namespace std;
 #include "modules/Gui.h"
 #include "modules/World.h"
 #include "modules/Graphic.h"
+//#include "modules/Windows.h"
 using namespace DFHack;
 
 #include "SDL_events.h"

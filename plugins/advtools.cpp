@@ -547,7 +547,7 @@ static std::string formatDirection(df::coord delta)
     else
         dir = "***";
 
-    int dist = (int)sqrt(delta.x*delta.x + delta.y*delta.y);
+    int dist = (int)sqrt((double)(delta.x*delta.x + delta.y*delta.y));
     return stl_sprintf("%d away %s %+d", dist, dir.c_str(), delta.z);
 }
 

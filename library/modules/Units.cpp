@@ -50,7 +50,6 @@ using namespace std;
 #include "df/unit_inventory_item.h"
 
 using namespace DFHack;
-using namespace DFHack::Simple;
 using df::global::world;
 using df::global::ui;
 

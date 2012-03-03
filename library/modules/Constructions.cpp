@@ -38,7 +38,6 @@ using namespace std;
 #include "modules/Constructions.h"
 #include "df/world.h"
 using namespace DFHack;
-using namespace DFHack::Simple;
 using df::global::world;
 
 bool Constructions::isValid()

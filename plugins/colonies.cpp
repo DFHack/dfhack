@@ -10,7 +10,6 @@
 using std::vector;
 using std::string;
 using namespace DFHack;
-using namespace DFHack::Simple;
 
 command_result colonies (Core * c, vector <string> & parameters);
 

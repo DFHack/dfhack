@@ -22,7 +22,6 @@
 using std::string;
 using std::vector;
 using namespace DFHack;
-using namespace DFHack::Simple;
 using namespace df::enums;
 
 using df::global::world;

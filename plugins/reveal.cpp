@@ -303,7 +303,6 @@ command_result revflood(DFHack::Core * c, std::vector<std::string> & params)
     }
     CoreSuspender suspend(c);
     uint32_t x_max,y_max,z_max;
-    Gui * Gui = c->getGui();
     World * World = c->getWorld();
     if (!Maps::IsValid())
     {
@@ -327,7 +326,7 @@ command_result revflood(DFHack::Core * c, std::vector<std::string> & params)
     uint32_t tx_max = x_max * 16;
     uint32_t ty_max = y_max * 16;
 
-    Gui->getCursorCoords(cx,cy,cz);
+    Gui::getCursorCoords(cx,cy,cz);
     if(cx == -30000)
     {
         c->con.printerr("Cursor is not active. Point the cursor at some empty space you want to be unhidden.\n");

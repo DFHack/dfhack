@@ -40,7 +40,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.push_back(PluginCommand(
         "filltraffic","Flood-fill with selected traffic designation from cursor",
-        filltraffic, cursor_hotkey,
+        filltraffic, Gui::cursor_hotkey,
         "  Flood-fill selected traffic type from the cursor.\n"
         "Traffic Type Codes:\n"
         "  H: High Traffic\n"
@@ -115,7 +115,6 @@ command_result filltraffic(Core * c, std::vector<std::string> & params)
         }
     }
 
-    Gui * Gui = c->getGui();
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
@@ -126,7 +125,7 @@ command_result filltraffic(Core * c, std::vector<std::string> & params)
     Maps::getSize(x_max,y_max,z_max);
     uint32_t tx_max = x_max * 16;
     uint32_t ty_max = y_max * 16;
-    Gui->getCursorCoords(cx,cy,cz);
+    Gui::getCursorCoords(cx,cy,cz);
     while(cx == -30000)
     {
         c->con.printerr("Cursor is not active.\n");
@@ -276,7 +275,6 @@ command_result setAllMatching(Core * c, checkTile checkProc,
     //Initialization.
     CoreSuspender suspend(c);
 
-    Gui * Gui = c->getGui();
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");

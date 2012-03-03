@@ -656,7 +656,6 @@ command_result df_tiletypes (Core * c, vector <string> & parameters)
     uint32_t x_max = 0, y_max = 0, z_max = 0;
     int32_t x = 0, y = 0, z = 0;
 
-    DFHack::Gui *gui;
     for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
@@ -769,7 +768,6 @@ command_result df_tiletypes (Core * c, vector <string> & parameters)
             }
 
             CoreSuspender suspend(c);
-            gui = c->getGui();
             if (!Maps::IsValid())
             {
                 c->con.printerr("Map is not available!\n");
@@ -777,7 +775,7 @@ command_result df_tiletypes (Core * c, vector <string> & parameters)
             }
             Maps::getSize(x_max, y_max, z_max);
 
-            if (!(gui->Start() && gui->getCursorCoords(x,y,z)))
+            if (!Gui::getCursorCoords(x,y,z))
             {
                 c->con.printerr("Can't get cursor coords! Make sure you have a cursor active in DF.\n");
                 return CR_FAILURE;
@@ -798,7 +796,7 @@ command_result df_tiletypes (Core * c, vector <string> & parameters)
                  || (filter.material > -1 && filter.material != tileMaterial(source))
                  || (filter.special > -1 && filter.special != tileSpecial(source))
                  || (filter.variant > -1 && filter.variant != tileVariant(source))
-		 || (filter.dig > -1 && (filter.dig != 0) != (des.bits.dig != tile_dig_designation::No))
+                 || (filter.dig > -1 && (filter.dig != 0) != (des.bits.dig != tile_dig_designation::No))
                 )
                 {
                     continue;

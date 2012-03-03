@@ -13,7 +13,6 @@
 #include "TileTypes.h"
 
 using namespace DFHack;
-using namespace DFHack::Simple;
 using namespace df::enums;
 using df::global::world;
 

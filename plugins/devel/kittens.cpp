@@ -15,7 +15,7 @@
 using std::vector;
 using std::string;
 using namespace DFHack;
-using namespace DFHack::Simple;
+
 //FIXME: possible race conditions with calling kittens from the IO thread and shutdown from Core.
 bool shutdown_flag = false;
 bool final_flag = true;
@@ -70,19 +70,16 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
     }
     if(trackmenu_flg)
     {
-        DFHack::Gui * g =c->getGui();
-        if (last_menu != *g->df_menu_state)
+        if (last_menu != df::global::ui->main.mode)
         {
-            last_menu = *g->df_menu_state;
+            last_menu = df::global::ui->main.mode;
             c->con.print("Menu: %d\n",last_menu);
         }
     }
     if(trackpos_flg)
     {
-        DFHack::Gui * g =c->getGui();
-        g->Start();
         int32_t desig_x, desig_y, desig_z;
-        g->getDesignationCoords(desig_x,desig_y,desig_z);
+        Gui::getDesignationCoords(desig_x,desig_y,desig_z);
         if(desig_x != last_designation[0] || desig_y != last_designation[1] || desig_z != last_designation[2])
         {
             last_designation[0] = desig_x;
@@ -91,7 +88,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
             c->con.print("Designation: %d %d %d\n",desig_x, desig_y, desig_z);
         }
         int mouse_x, mouse_y;
-        g->getMousePos(mouse_x,mouse_y);
+        Gui::getMousePos(mouse_x,mouse_y);
         if(mouse_x != last_mouse[0] || mouse_y != last_mouse[1])
         {
             last_mouse[0] = mouse_x;
@@ -111,11 +108,10 @@ command_result trackmenu (Core * c, vector <string> & parameters)
     }
     else
     {
-        DFHack::Gui * g =c->getGui();
-        if(g->df_menu_state)
+        if(df::global::ui)
         {
             trackmenu_flg = true;
-            last_menu =  *g->df_menu_state;
+            last_menu = df::global::ui->main.mode;
             c->con.print("Menu: %d\n",last_menu);
             return CR_OK;
         }
@@ -150,6 +146,7 @@ command_result colormods (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
+// FIXME: move cursor properly relative to view position
 command_result zoom (Core * c, vector <string> & parameters)
 {
     if(parameters.size() < 3)
@@ -159,12 +156,11 @@ command_result zoom (Core * c, vector <string> & parameters)
     int z = atoi( parameters[2].c_str());
     int xi, yi, zi;
     CoreSuspender cs (c);
-    Gui * g = c->getGui();
-    if(g->getCursorCoords(xi, yi, zi))
+    if(Gui::getCursorCoords(xi, yi, zi))
     {
-        g->setCursorCoords(x,y,z);
+        Gui::setCursorCoords(x,y,z);
     }
-    g->setViewCoords(x,y,z);
+    Gui::setViewCoords(x,y,z);
 }
 
 command_result ktimer (Core * c, vector <string> & parameters)

@@ -40,8 +40,6 @@ distribution.
 
 namespace DFHack
 {
-namespace Simple
-{
 namespace Kitchen
 {
 typedef uint8_t t_exclusionType;
@@ -81,6 +79,5 @@ DFHACK_EXPORT void setLimit(t_materialIndex materialIndex, unsigned int limit);
 DFHACK_EXPORT void clearLimits();
 
 DFHACK_EXPORT std::size_t size();
-}
 }
 }

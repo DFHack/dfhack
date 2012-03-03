@@ -224,7 +224,6 @@ command_result df_liquids (Core * c, vector <string> & parameters)
 {
     int32_t x,y,z;
 
-    DFHack::Gui * Position;
     for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
@@ -429,7 +428,6 @@ command_result df_liquids (Core * c, vector <string> & parameters)
         else if(command.empty())
         {
             CoreSuspender suspend(c);
-            Position = c->getGui();
             do
             {
                 if (!Maps::IsValid())
@@ -437,7 +435,7 @@ command_result df_liquids (Core * c, vector <string> & parameters)
                     c->con << "Can't see any DF map loaded." << endl;
                     break;;
                 }
-                if(!Position->getCursorCoords(x,y,z))
+                if(!Gui::getCursorCoords(x,y,z))
                 {
                     c->con << "Can't get cursor coords! Make sure you have a cursor active in DF." << endl;
                     break;

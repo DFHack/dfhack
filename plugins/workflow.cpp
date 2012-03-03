@@ -1232,15 +1232,15 @@ static void update_jobs_by_constraints(Core *c)
         if (is_running != ct->is_active)
         {
             if (is_running && ct->request_resume)
-                showAnnouncement("Resuming production: " + info, 2, false);
+                Gui::showAnnouncement("Resuming production: " + info, 2, false);
             else if (!is_running && !ct->request_resume)
-                showAnnouncement("Stopping production: " + info, 3, false);
+                Gui::showAnnouncement("Stopping production: " + info, 3, false);
         }
 
         if (ct->request_resume && !is_running)
         {
             if (!ct->cant_resume_reported)
-                showAnnouncement("Cannot produce: " + info, 6, true);
+                Gui::showAnnouncement("Cannot produce: " + info, 6, true);
             ct->cant_resume_reported = true;
         }
         else
@@ -1415,11 +1415,11 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
     df::building *workshop = NULL;
     df::job *job = NULL;
 
-    if (dwarfmode_hotkey(c, c->getTopViewscreen()) &&
+    if (Gui::dwarfmode_hotkey(c, c->getTopViewscreen()) &&
         ui->main.mode == ui_sidebar_mode::QueryBuilding)
     {
         workshop = world->selected_building;
-        job = getSelectedWorkshopJob(c, true);
+        job = Gui::getSelectedWorkshopJob(c, true);
     }
 
     std::string cmd = parameters.empty() ? "list" : parameters[0];

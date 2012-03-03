@@ -35,8 +35,6 @@ distribution.
 
 namespace DFHack
 {
-namespace Simple
-{
 namespace Buildings
 {
 /**
@@ -84,6 +82,5 @@ DFHACK_EXPORT bool Read (const uint32_t index, t_building & building);
  */
 DFHACK_EXPORT bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
 
-}
 }
 }

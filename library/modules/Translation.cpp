@@ -37,7 +37,6 @@ using namespace std;
 #include "Core.h"
 
 using namespace DFHack;
-using namespace DFHack::Simple;
 using namespace df::enums;
 
 #include "DataDefs.h"

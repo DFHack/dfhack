@@ -89,7 +89,7 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
         commands.push_back(
             PluginCommand(
                 "job-duplicate", "Duplicate the selected job in a workshop.",
-                job_duplicate, workshop_job_hotkey,
+                job_duplicate, Gui::workshop_job_hotkey,
                 "  - In 'q' mode, when a job is highlighted within a workshop\n"
                 "    or furnace building, instantly duplicates the job.\n"
             )
@@ -108,15 +108,15 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 static bool job_material_hotkey(Core *c, df::viewscreen *top)
 {
-    return workshop_job_hotkey(c, top) ||
-           build_selector_hotkey(c, top);
+    return Gui::workshop_job_hotkey(c, top) ||
+           Gui::build_selector_hotkey(c, top);
 }
 
 /* job-material implementation */
 
 static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
 {
-    df::job *job = getSelectedWorkshopJob(c);
+    df::job *job = Gui::getSelectedWorkshopJob(c);
     if (!job)
         return CR_FAILURE;
 
@@ -268,7 +268,7 @@ static command_result job_duplicate(Core * c, vector <string> & parameters)
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
-    df::job *job = getSelectedWorkshopJob(c);
+    df::job *job = Gui::getSelectedWorkshopJob(c);
     if (!job)
         return CR_FAILURE;
 
@@ -320,14 +320,14 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
     std::string cmd = (parameters.empty() ? "query" : parameters[0]);
     if (cmd == "query" || cmd == "list")
     {
-        df::job *job = getSelectedJob(c);
+        df::job *job = Gui::getSelectedJob(c);
         if (!job)
             return CR_WRONG_USAGE;
 
         if (cmd == "query") {
             printJobDetails(c, job);
         } else {
-            if (!workshop_job_hotkey(c, c->getTopViewscreen()))
+            if (!Gui::workshop_job_hotkey(c, c->getTopViewscreen()))
                 return CR_WRONG_USAGE;
 
             df::building *selected = world->selected_building;
@@ -340,7 +340,7 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
         if (parameters.size() != 3)
             return CR_WRONG_USAGE;
 
-        df::job *job = getSelectedJob(c);
+        df::job *job = Gui::getSelectedJob(c);
         df::job_item *item = getJobItem(c, job, parameters[1]);
         if (!item)
             return CR_WRONG_USAGE;
@@ -384,7 +384,7 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
         if (parameters.size() != 3)
             return CR_WRONG_USAGE;
 
-        df::job *job = getSelectedJob(c);
+        df::job *job = Gui::getSelectedJob(c);
         df::job_item *item = getJobItem(c, job, parameters[1]);
         if (!item)
             return CR_WRONG_USAGE;

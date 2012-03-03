@@ -37,7 +37,7 @@ using df::global::ui_advmode;
 using df::nemesis_record;
 using df::historical_figure;
 
-using namespace DFHack::Simple::Translation;
+using namespace DFHack::Translation;
 
 /*********************
  *  PLUGIN INTERFACE *

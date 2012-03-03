@@ -29,7 +29,6 @@ using namespace std;
 using std::vector;
 using std::string;
 using namespace DFHack;
-using namespace DFHack::Simple;
 using namespace df::enums;
 using df::global::world;
 using df::global::cursor;
@@ -64,9 +63,8 @@ command_result df_cprobe (Core * c, vector <string> & parameters)
 {
     Console & con = c->con;
     CoreSuspender suspend(c);
-    DFHack::Gui *Gui = c->getGui();
     int32_t cursorX, cursorY, cursorZ;
-    Gui->getCursorCoords(cursorX,cursorY,cursorZ);
+    Gui::getCursorCoords(cursorX,cursorY,cursorZ);
     if(cursorX == -30000)
     {
         con.printerr("No cursor; place cursor over creature to probe.\n");
@@ -101,7 +99,6 @@ command_result df_probe (Core * c, vector <string> & parameters)
 
     CoreSuspender suspend(c);
 
-    DFHack::Gui *Gui = c->getGui();
     DFHack::Materials *Materials = c->getMaterials();
     DFHack::VersionInfo* mem = c->vinfo;
     std::vector<t_matglossInorganic> inorganic;
@@ -118,7 +115,7 @@ command_result df_probe (Core * c, vector <string> & parameters)
     Maps::getPosition(regionX,regionY,regionZ);
 
     int32_t cursorX, cursorY, cursorZ;
-    Gui->getCursorCoords(cursorX,cursorY,cursorZ);
+    Gui::getCursorCoords(cursorX,cursorY,cursorZ);
     if(cursorX == -30000)
     {
         con.printerr("No cursor; place cursor over tile to probe.\n");

@@ -16,7 +16,6 @@
 using std::vector;
 using std::string;
 using namespace DFHack;
-using namespace DFHack::Simple;
 using namespace df::enums;
 
 using df::global::world;
@@ -208,7 +207,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     ));
     commands.push_back(PluginCommand(
         "spotclean","Cleans map tile under cursor.",
-        spotclean,cursor_hotkey
+        spotclean,Gui::cursor_hotkey
     ));
     return CR_OK;
 }

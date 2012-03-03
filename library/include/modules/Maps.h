@@ -192,8 +192,6 @@ typedef struct
  * \ingroup grp_modules
  * \ingroup grp_maps
  */
-namespace Simple
-{
 namespace Maps
 {
 
@@ -324,7 +322,6 @@ extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, d
 /// read all plants in this block
 extern DFHACK_EXPORT bool ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df::plant *>*& plants);
 
-}
 }
 }
 #endif

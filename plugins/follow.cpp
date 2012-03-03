@@ -29,7 +29,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.push_back(PluginCommand(
         "follow", "Follow the selected unit until camera control is released",
-        follow, view_unit_hotkey,
+        follow, Gui::view_unit_hotkey,
         "  Select a unit and run this plugin to make the camera follow it. Moving the camera yourself deactivates the plugin.\n"
     ));
     followedUnit = 0;
@@ -69,14 +69,15 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 
     df::coord &unitPos = followedUnit->pos;
 
-    Gui *gui = c->getGui();  //Get all of the relevant data for determining the size of the map on the window
+    //Get all of the relevant data for determining the size of the map on the window
     int32_t x,y,z,w,h,c_x,c_y,c_z;
     uint8_t menu_width, area_map_width;
-    gui->getViewCoords(x,y,z);
-    gui->getWindowSize(w,h);
-    gui->getMenuWidth(menu_width, area_map_width);
-    gui->getCursorCoords(c_x,c_y,c_z);
+    Gui::getViewCoords(x,y,z);
+    Gui::getWindowSize(w,h);
+    Gui::getMenuWidth(menu_width, area_map_width);
+    Gui::getCursorCoords(c_x,c_y,c_z);
 
+    // FIXME: is this really needed? does it ever evaluate to 'true'?
     if (c_x != -30000 && menu_width == 3) menu_width = 2; //Presence of the cursor means that there's actually a width-2 menu open
 
     h -= 2; //account for vertical borders
@@ -103,20 +104,26 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
         return CR_OK;
     }
 
+    //Get map size in tiles so we can prevent the camera from going off the edge
     uint32_t x_max, y_max, z_max;
-    Simple::Maps::getSize(x_max, y_max, z_max); //Get map size in tiles so we can prevent the camera from going off the edge
+    Maps::getSize(x_max, y_max, z_max);
     x_max *= 16;
     y_max *= 16;
 
-    x = unitPos.x + w/2 >= x_max ? x_max-w : (unitPos.x >= w/2 ? unitPos.x - w/2 : 0); //Calculate a new screen position centered on the selected unit
+    //Calculate a new screen position centered on the selected unit
+    x = unitPos.x + w/2 >= x_max ? x_max-w : (unitPos.x >= w/2 ? unitPos.x - w/2 : 0);
     y = unitPos.y + h/2 >= y_max ? y_max-h : (unitPos.y >= h/2 ? unitPos.y - h/2 : 0);
     z = unitPos.z;
 
-    gui->setViewCoords(x, y, z); //Set the new screen position!
+    //Set the new screen position!
+    Gui::setViewCoords(x, y, z);
 
-    if (c_x != -30000 && !world->ReadPauseState()) gui->setCursorCoords(c_x - (prevX-x), c_y - (prevY-y), z); //If, for some reason, the cursor is active and the screen is still moving, move the cursor along with the screen
+    //If, for some reason, the cursor is active and the screen is still moving, move the cursor along with the screen
+    if (c_x != -30000 && !world->ReadPauseState())
+        Gui::setCursorCoords(c_x - (prevX-x), c_y - (prevY-y), z);
 
-    prevX = x; //Save this round's stuff for next time so we can monitor for changes made by the user
+    //Save this round's stuff for next time so we can monitor for changes made by the user
+    prevX = x; 
     prevY = y;
     prevZ = z;
     prevMenuWidth = menu_width;
@@ -136,7 +143,7 @@ command_result follow (Core * c, std::vector <std::string> & parameters)
         c->con.print("No longer following previously selected unit.\n");
         followedUnit = 0;
     }
-    followedUnit = getSelectedUnit(c);
+    followedUnit = Gui::getSelectedUnit(c);
     if (followedUnit)
     {
         std::ostringstream ss;

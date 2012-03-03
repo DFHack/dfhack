@@ -33,7 +33,6 @@ distribution.
 #include "df/map_block.h"
 #include "df/block_square_event_mineralst.h"
 using namespace DFHack;
-using namespace DFHack::Simple;
 namespace MapExtras
 {
 void SquashVeins (DFCoord bcoord, mapblock40d & mb, t_blockmaterials & materials)

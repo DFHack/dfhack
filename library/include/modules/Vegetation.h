@@ -36,8 +36,6 @@ distribution.
 
 namespace DFHack
 {
-namespace Simple
-{
 namespace Vegetation
 {
 const uint32_t sapling_to_tree_threshold = 120 * 28 * 12 * 3; // 3 years
@@ -67,7 +65,6 @@ DFHACK_EXPORT bool isValid();
 DFHACK_EXPORT uint32_t getCount();
 DFHACK_EXPORT df::plant * getPlant(const int32_t index);
 DFHACK_EXPORT bool copyPlant (const int32_t index, t_plant &out);
-}
 }
 }
 #endif

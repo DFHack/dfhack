@@ -37,8 +37,6 @@ distribution.
  */
 namespace DFHack
 {
-namespace Simple
-{
 namespace Engravings
 {
 // "Simplified" copy of engraving
@@ -60,7 +58,6 @@ DFHACK_EXPORT bool isValid();
 DFHACK_EXPORT uint32_t getCount();
 DFHACK_EXPORT bool copyEngraving (const int32_t index, t_engraving &out);
 DFHACK_EXPORT df::engraving * getEngraving (const int32_t index);
-}
 }
 }
 #endif

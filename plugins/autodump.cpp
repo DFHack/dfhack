@@ -56,12 +56,12 @@ DFhackCExport command_result plugin_init ( Core * c, vector <PluginCommand> &com
     ));
     commands.push_back(PluginCommand(
         "autodump-destroy-here", "Destroy items marked for dumping under cursor.",
-        df_autodump_destroy_here, cursor_hotkey,
+        df_autodump_destroy_here, Gui::cursor_hotkey,
         "  Identical to autodump destroy-here, but intended for use as keybinding.\n"
     ));
     commands.push_back(PluginCommand(
         "autodump-destroy-item", "Destroy the selected item.",
-        df_autodump_destroy_item, any_item_hotkey,
+        df_autodump_destroy_item, Gui::any_item_hotkey,
         "  Destroy the selected item. The item may be selected\n"
         "  in the 'k' list, or inside a container. If called\n"
         "  again before the game is resumed, cancels destroy.\n"
@@ -108,7 +108,6 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
     }
 
     DFHack::VersionInfo *mem = c->vinfo;
-    DFHack::Gui * Gui = c->getGui();
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
@@ -124,7 +123,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
     DFCoord pos_cursor;
     if(!destroy || here)
     {
-        if (!Gui->getCursorCoords(cx,cy,cz))
+        if (!Gui::getCursorCoords(cx,cy,cz))
         {
             c->con.printerr("Cursor position not found. Please enabled the cursor.\n");
             return CR_FAILURE;
@@ -307,7 +306,7 @@ command_result df_autodump_destroy_item(Core * c, vector <string> & parameters)
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
-    df::item *item = getSelectedItem(c);
+    df::item *item = Gui::getSelectedItem(c);
     if (!item)
         return CR_FAILURE;
 

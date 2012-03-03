@@ -44,108 +44,95 @@ namespace df {
 };
 
 /**
- * \defgroup grp_gui query DF's GUI state
+ * \defgroup grp_gui utility code that helps dealing with DF's user interface
  * @ingroup grp_modules
  */
 
 namespace DFHack
 {
     class Core;
-
-    // Full-screen item details view
-    DFHACK_EXPORT bool item_details_hotkey(Core *, df::viewscreen *top);
-    // 'u'nits or 'j'obs full-screen view
-    DFHACK_EXPORT bool unitjobs_hotkey(Core *, df::viewscreen *top);
-
-    // A job is selected in a workshop
-    DFHACK_EXPORT bool workshop_job_hotkey(Core *c, df::viewscreen *top);
-    // Building material selection mode
-    DFHACK_EXPORT bool build_selector_hotkey(Core *c, df::viewscreen *top);
-    // A unit is selected in the 'v' mode
-    DFHACK_EXPORT bool view_unit_hotkey(Core *c, df::viewscreen *top);
-    // Above + the inventory page is selected.
-    DFHACK_EXPORT bool unit_inventory_hotkey(Core *c, df::viewscreen *top);
-
-    // In workshop_job_hotkey, returns the job
-    DFHACK_EXPORT df::job *getSelectedWorkshopJob(Core *c, bool quiet = false);
-
-    // A job is selected in a workshop, or unitjobs
-    DFHACK_EXPORT bool any_job_hotkey(Core *c, df::viewscreen *top);
-    DFHACK_EXPORT df::job *getSelectedJob(Core *c, bool quiet = false);
-
-    // A unit is selected via 'v', 'k', unitjobs, or
-    // a full-screen item view of a cage or suchlike
-    DFHACK_EXPORT bool any_unit_hotkey(Core *c, df::viewscreen *top);
-    DFHACK_EXPORT df::unit *getSelectedUnit(Core *c, bool quiet = false);
-
-    // An item is selected via 'v'->inventory, 'k', 't', or
-    // a full-screen item view of a container. Note that in the
-    // last case, the highlighted contained item is returned, not
-    // the container itself.
-    DFHACK_EXPORT bool any_item_hotkey(Core *c, df::viewscreen *top);
-    DFHACK_EXPORT df::item *getSelectedItem(Core *c, bool quiet = false);
-
-    // Show a plain announcement, or a titan-style popup message
-    DFHACK_EXPORT void showAnnouncement(std::string message, int color = 7, bool bright = true);
-    DFHACK_EXPORT void showPopupAnnouncement(std::string message, int color = 7, bool bright = true);
-
-    class DFContextShared;
-
-    /**
-     * One tile of the screen. Possibly outdated.
-     * \ingroup grp_gui
-     */
-    struct t_screen
-    {
-        uint8_t symbol;
-        uint8_t foreground;
-        uint8_t background;
-        uint8_t bright;
-        uint8_t gtile;
-        uint8_t grayscale;
-    };
-
     /**
      * The Gui module
      * \ingroup grp_modules
      * \ingroup grp_gui
      */
-    class DFHACK_EXPORT Gui: public Module
+    namespace Gui
     {
-        public:
+        // Full-screen item details view
+        DFHACK_EXPORT bool item_details_hotkey(Core *, df::viewscreen *top);
+        // 'u'nits or 'j'obs full-screen view
+        DFHACK_EXPORT bool unitjobs_hotkey(Core *, df::viewscreen *top);
 
-        Gui();
-        ~Gui();
-        bool Start();
-        bool Finish();
+        // A job is selected in a workshop
+        DFHACK_EXPORT bool workshop_job_hotkey(Core *c, df::viewscreen *top);
+        // Building material selection mode
+        DFHACK_EXPORT bool build_selector_hotkey(Core *c, df::viewscreen *top);
+        // A unit is selected in the 'v' mode
+        DFHACK_EXPORT bool view_unit_hotkey(Core *c, df::viewscreen *top);
+        // Above + the inventory page is selected.
+        DFHACK_EXPORT bool unit_inventory_hotkey(Core *c, df::viewscreen *top);
+
+        // In workshop_job_hotkey, returns the job
+        DFHACK_EXPORT df::job *getSelectedWorkshopJob(Core *c, bool quiet = false);
+
+        // A job is selected in a workshop, or unitjobs
+        DFHACK_EXPORT bool any_job_hotkey(Core *c, df::viewscreen *top);
+        DFHACK_EXPORT df::job *getSelectedJob(Core *c, bool quiet = false);
+
+        // A unit is selected via 'v', 'k', unitjobs, or
+        // a full-screen item view of a cage or suchlike
+        DFHACK_EXPORT bool any_unit_hotkey(Core *c, df::viewscreen *top);
+        DFHACK_EXPORT df::unit *getSelectedUnit(Core *c, bool quiet = false);
+
+        // An item is selected via 'v'->inventory, 'k', 't', or
+        // a full-screen item view of a container. Note that in the
+        // last case, the highlighted contained item is returned, not
+        // the container itself.
+        DFHACK_EXPORT bool any_item_hotkey(Core *c, df::viewscreen *top);
+        DFHACK_EXPORT df::item *getSelectedItem(Core *c, bool quiet = false);
+
+        // Show a plain announcement, or a titan-style popup message
+        DFHACK_EXPORT void showAnnouncement(std::string message, int color = 7, bool bright = true);
+        DFHACK_EXPORT void showPopupAnnouncement(std::string message, int color = 7, bool bright = true);
+
+        /**
+         * One tile of the screen.
+         * \ingroup grp_gui
+         */
+        struct t_screen
+        {
+            uint8_t symbol;
+            uint8_t foreground;
+            uint8_t background;
+            uint8_t bright;
+        };
+
         /*
          * Cursor and window coords
          */
-        bool getViewCoords (int32_t &x, int32_t &y, int32_t &z);
-        bool setViewCoords (const int32_t x, const int32_t y, const int32_t z);
-        
-        bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
-        bool setCursorCoords (const int32_t x, const int32_t y, const int32_t z);
+        DFHACK_EXPORT bool getViewCoords (int32_t &x, int32_t &y, int32_t &z);
+        DFHACK_EXPORT bool setViewCoords (const int32_t x, const int32_t y, const int32_t z);
 
-        bool getDesignationCoords (int32_t &x, int32_t &y, int32_t &z);
-        bool setDesignationCoords (const int32_t x, const int32_t y, const int32_t z);
+        DFHACK_EXPORT bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
+        DFHACK_EXPORT bool setCursorCoords (const int32_t x, const int32_t y, const int32_t z);
 
-        bool getMousePos (int32_t & x, int32_t & y);
+        DFHACK_EXPORT bool getDesignationCoords (int32_t &x, int32_t &y, int32_t &z);
+        DFHACK_EXPORT bool setDesignationCoords (const int32_t x, const int32_t y, const int32_t z);
+
+        DFHACK_EXPORT bool getMousePos (int32_t & x, int32_t & y);
         /*
          * Gui screens
          */
         /// Get the current top-level view-screen
-        df::viewscreen * GetCurrentScreen();
-        /// The DF menu state (designation menu ect)
-        uint32_t * df_menu_state;
+        DFHACK_EXPORT df::viewscreen * GetCurrentScreen();
 
         /*
          * Window size in tiles
          */
-        bool getWindowSize(int32_t & width, int32_t & height);
+        DFHACK_EXPORT bool getWindowSize(int32_t & width, int32_t & height);
 
         /*
-         *Menu width: 
+         *Menu width:
          *3:3 - menu and area map closed
          *2:3 - menu open single width
          *1:3 - menu open double width
@@ -153,18 +140,9 @@ namespace DFHack
          *2:2 - area map open
          */
 
-        bool getMenuWidth(uint8_t & menu_width, uint8_t & area_map_width);
-        bool setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width);
-        
-        /*
-         * Screen tiles
-         */
-        bool getScreenTiles(int32_t width, int32_t height, t_screen screen[]);
-
-        private:
-        struct Private;
-        Private *d;
-    };
+        DFHACK_EXPORT bool getMenuWidth(uint8_t & menu_width, uint8_t & area_map_width);
+        DFHACK_EXPORT bool setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width);
+    }
 }
 #endif
 

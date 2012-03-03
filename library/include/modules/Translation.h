@@ -41,8 +41,6 @@ distribution.
 
 namespace DFHack
 {
-namespace Simple
-{
 namespace Translation
 {
 // simple check to make sure if there's actual language data present
@@ -54,7 +52,6 @@ DFHACK_EXPORT bool copyName(df::language_name * address, df::language_name * tar
 
 // translate a name using the loaded dictionaries
 DFHACK_EXPORT std::string TranslateName (const df::language_name * name, bool inEnglish = true);
-}
 }
 }
 #endif

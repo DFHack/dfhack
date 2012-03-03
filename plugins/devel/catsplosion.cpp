@@ -24,7 +24,6 @@ using namespace std;
 #include <df/creature_raw.h>
 
 using namespace DFHack;
-using namespace DFHack::Simple;
 
 command_result catsplosion (Core * c, std::vector <std::string> & parameters);
 

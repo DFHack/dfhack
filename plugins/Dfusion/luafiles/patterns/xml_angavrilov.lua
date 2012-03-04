@@ -1,7 +1,7 @@
 
 function parseargs(s)
   local arg = {}
-  string.gsub(s, "(%w+)=([\"'])(.-)%2", function (w, _, a)
+  string.gsub(s, "([%w%-]+)=([\"'])(.-)%2", function (w, _, a)
     arg[w] = a
   end)
   return arg
@@ -51,5 +51,5 @@ end
 function parseXmlFile(path)
 	local f, e = io.open(path, "r")
 	local xml = f:read("*a")
-	return collect(xml)[1]
+	return collect(xml)
 end

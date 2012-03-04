@@ -56,7 +56,7 @@ static bool copystock_guard(Core *c, df::viewscreen *top)
 {
     using namespace ui_sidebar_mode;
 
-    if (!dwarfmode_hotkey(c,top))
+    if (!Gui::dwarfmode_hotkey(c,top))
         return false;
 
     switch (ui->main.mode) {

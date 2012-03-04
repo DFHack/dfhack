@@ -112,8 +112,6 @@ struct dfh_item
  * \ingroup grp_modules
  * \ingroup grp_items
  */
-namespace Simple
-{
 namespace Items
 {
 
@@ -140,6 +138,5 @@ DFHACK_EXPORT bool removeItemOwner(df::item * item);
 /// read item references, filtered by class
 DFHACK_EXPORT bool readItemRefs(const df::item * item, const df::general_ref_type type,
                   /*output*/ std::vector<int32_t> &values);
-}
 }
 }

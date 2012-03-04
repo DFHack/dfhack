@@ -20,9 +20,6 @@ using namespace std;
 #include <df/unit_soul.h>
 
 using namespace DFHack;
-using namespace DFHack::Simple;
-using namespace DFHack::Simple;
-
 using df::global::ui;
 using df::global::world;
 

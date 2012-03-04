@@ -102,7 +102,6 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
         c->con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    Gui * Gui = c->getGui();
     uint32_t x_max, y_max, z_max;
     Maps::getSize(x_max, y_max, z_max);
     MapExtras::MapCache map;
@@ -125,7 +124,7 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
     else
     {
         int32_t x,y,z;
-        if(Gui->getCursorCoords(x,y,z))
+        if(Gui::getCursorCoords(x,y,z))
         {
             vector<df::plant *> * alltrees;
             if(Maps::ReadVegetation(x/16,y/16,z,alltrees))
@@ -205,9 +204,8 @@ command_result df_grow (Core * c, vector <string> & parameters)
         return CR_FAILURE;
     }
     MapExtras::MapCache map;
-    Gui *Gui = c->getGui();
     int32_t x,y,z;
-    if(Gui->getCursorCoords(x,y,z))
+    if(Gui::getCursorCoords(x,y,z))
     {
         vector<df::plant *> * alltrees;
         if(Maps::ReadVegetation(x/16,y/16,z,alltrees))

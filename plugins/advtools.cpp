@@ -11,18 +11,22 @@
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/ui_advmode.h"
+#include "df/item.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/map_block.h"
 #include "df/nemesis_record.h"
 #include "df/historical_figure.h"
 #include "df/general_ref_is_nemesisst.h"
 #include "df/general_ref_contains_itemst.h"
+#include "df/general_ref_building_civzone_assignedst.h"
 #include "df/material.h"
 #include "df/craft_material_class.h"
 #include "df/viewscreen_optionst.h"
 #include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dungeon_monsterstatusst.h"
 
+#include <math.h>
 
 using namespace DFHack;
 using namespace df::enums;
@@ -33,7 +37,7 @@ using df::global::ui_advmode;
 using df::nemesis_record;
 using df::historical_figure;
 
-using namespace DFHack::Simple::Translation;
+using namespace DFHack::Translation;
 
 /*********************
  *  PLUGIN INTERFACE *
@@ -59,6 +63,9 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
         "  list-equipped [all]\n"
         "    List armor and weapons equipped by your companions.\n"
         "    If all is specified, also lists non-metal clothing.\n"
+        "  metal-detector [all-types] [non-trader]\n"
+        "    Reveal metal armor and weapons in shops. The options\n"
+        "    disable the checks on item type and being in shop.\n"
     ));
 
     commands.push_back(PluginCommand(
@@ -201,7 +208,7 @@ bool bodySwap(Core *c, df::unit *player)
 
 df::nemesis_record *getPlayerNemesis(Core *c, bool restore_swap)
 {
-    auto real_nemesis = df::nemesis_record::find(ui_advmode->player_id);
+    auto real_nemesis = vector_get(world->nemesis.all, ui_advmode->player_id);
     if (!real_nemesis || !real_nemesis->unit)
     {
         c->con.printerr("Invalid player nemesis id: %d\n", ui_advmode->player_id);
@@ -274,7 +281,11 @@ void sortCompanionNemesis(std::vector<nemesis_record*> *list, int player_id = -1
     output.reserve(list->size());
 
     if (player_id < 0)
-        player_id = ui_advmode->player_id;
+    {
+        auto real_nemesis = vector_get(world->nemesis.all, ui_advmode->player_id);
+        if (real_nemesis)
+            player_id = real_nemesis->id;
+    }
 
     // Index records; find the player
     for (size_t i = 0; i < list->size(); i++)
@@ -380,6 +391,87 @@ void listUnitInventory(std::vector<inv_item> *list, df::unit *unit)
     }
 }
 
+bool isShopItem(df::item *item)
+{
+    for (size_t k = 0; k < item->itemrefs.size(); k++)
+    {
+        auto ref = item->itemrefs[k];
+        if (virtual_cast<df::general_ref_building_civzone_assignedst>(ref))
+            return true;
+    }
+
+    return false;
+}
+
+bool isWeaponArmor(df::item *item)
+{
+    using namespace df::enums::item_type;
+
+    switch (item->getType()) {
+    case HELM:
+    case ARMOR:
+    case WEAPON:
+    case AMMO:
+    case GLOVES:
+    case PANTS:
+    case SHOES:
+        return true;
+    default:
+        return false;
+    }
+}
+
+int containsMetalItems(df::item *item, bool all, bool non_trader)
+{
+    int cnt = 0;
+
+    auto &refs = item->itemrefs;
+    for (size_t i = 0; i < refs.size(); i++)
+    {
+        auto ref = refs[i];
+        if (!strict_virtual_cast<df::general_ref_contains_itemst>(ref))
+            continue;
+
+        df::item *child = ref->getItem();
+        if (!child) continue;
+
+        cnt += containsMetalItems(child, all, non_trader);
+    }
+
+    if (!non_trader && !isShopItem(item))
+        return cnt;
+    if (!all && !isWeaponArmor(item))
+        return cnt;
+
+    MaterialInfo minfo(item);
+    if (minfo.getCraftClass() != craft_material_class::Metal)
+        return cnt;
+
+    return ++cnt;
+}
+
+void joinCounts(std::map<df::coord, int> &counts)
+{
+    for (auto it = counts.begin(); it != counts.end(); it++)
+    {
+        df::coord pt = it->first;
+        while (pt.x > 0 && counts.count(pt - df::coord(1,0,0)))
+            pt.x--;
+        while (pt.y > 0 &&counts.count(pt - df::coord(0,1,0)))
+            pt.y--;
+        while (pt.x < 0 && counts.count(pt + df::coord(1,0,0)))
+            pt.x++;
+        while (pt.y < 0 &&counts.count(pt + df::coord(0,1,0)))
+            pt.y++;
+
+        if (pt == it->first)
+            continue;
+
+        counts[pt] += it->second;
+        it->second = 0;
+    }
+}
+
 /*********************
  *     FORMATTING    *
  *********************/
@@ -428,6 +520,37 @@ static size_t formatSize(std::vector<std::string> *out, const std::map<std::stri
     return len;
 }
 
+static std::string formatDirection(df::coord delta)
+{
+    std::string ns, ew, dir;
+
+    if (delta.x > 0)
+        ew = "E";
+    else if (delta.x < 0)
+        ew = "W";
+
+    if (delta.y > 0)
+        ns = "S";
+    else if (delta.y < 0)
+        ns = "N";
+
+    if (abs(delta.x) > abs(delta.y)*5)
+        dir = ew;
+    else if (abs(delta.y) > abs(delta.x)*5)
+        dir = ns;
+    else if (abs(delta.x) > abs(delta.y)*2)
+        dir = ew + ns + ew;
+    else if (abs(delta.y) > abs(delta.x)*2)
+        dir = ns + ns + ew;
+    else if (delta.x || delta.y)
+        dir = ns + ew;
+    else
+        dir = "***";
+
+    int dist = (int)sqrt((double)(delta.x*delta.x + delta.y*delta.y));
+    return stl_sprintf("%d away %s %+d", dist, dir.c_str(), delta.z);
+}
+
 static void printEquipped(Core *c, df::unit *unit, bool all)
 {
     std::vector<inv_item> items;
@@ -464,6 +587,12 @@ static void printEquipped(Core *c, df::unit *unit, bool all)
 
         // Add to the right table
         int count = item->getStackSize();
+
+        if (is_weapon)
+        {
+            weapons[name] += count;
+            continue;
+        }
 
         switch (iinfo.type) {
         case item_type::HELM:
@@ -570,7 +699,7 @@ command_result adv_bodyswap (Core * c, std::vector <std::string> & parameters)
     // Permanently re-link everything
     if (permanent)
     {
-        ui_advmode->player_id = new_nemesis->id;
+        ui_advmode->player_id = linear_index(world->nemesis.all, new_nemesis);
 
         // Flag 0 appears to be the 'active adventurer' flag, and
         // the player_id field above seems to be computed using it
@@ -632,6 +761,67 @@ command_result adv_tools (Core * c, std::vector <std::string> & parameters)
 
             printCompanionHeader(c, i, unit);
             printEquipped(c, unit, all);
+        }
+
+        return CR_OK;
+    }
+    else if (command == "metal-detector")
+    {
+        bool all = false, non_trader = false;
+        for (size_t i = 1; i < parameters.size(); i++)
+        {
+            if (parameters[i] == "all-types")
+                all = true;
+            else if (parameters[i] == "non-trader")
+                non_trader = true;
+            else
+                return CR_WRONG_USAGE;
+        }
+
+        auto *player = getPlayerNemesis(c, false);
+        if (!player)
+            return CR_FAILURE;
+
+        df::coord player_pos = player->unit->pos;
+
+        int total = 0;
+        std::map<df::coord,int> counts;
+
+        for (size_t i = 0; i < world->map.map_blocks.size(); i++)
+        {
+            df::map_block *block = world->map.map_blocks[i];
+
+            for (size_t j = 0; j < block->items.size(); j++)
+            {
+                df::item *item = df::item::find(block->items[j]);
+                if (!item)
+                    continue;
+
+                int num = containsMetalItems(item, all, non_trader);
+                if (!num)
+                    continue;
+
+                total += num;
+                counts[(item->pos - player_pos)/10] += num;
+
+                auto &designations = block->designation;
+                auto &dgn = designations[item->pos.x%16][item->pos.y%16];
+
+                dgn.bits.hidden = 0; // revealed
+                dgn.bits.pile = 1; // visible
+            }
+        }
+
+        joinCounts(counts);
+
+        c->con.print("%d items of metal merchandise found in the vicinity.\n", total);
+        for (auto it = counts.begin(); it != counts.end(); it++)
+        {
+            if (!it->second)
+                continue;
+
+            df::coord delta = it->first * 10;
+            c->con.print("  %s: %d\n", formatDirection(delta).c_str(), it->second);
         }
 
         return CR_OK;

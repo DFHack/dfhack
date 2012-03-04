@@ -120,7 +120,7 @@ static command_result rename(Core * c, vector <string> &parameters)
         if (parameters.size() != 2)
             return CR_WRONG_USAGE;
 
-        df::unit *unit = getSelectedUnit(c);
+        df::unit *unit = Gui::getSelectedUnit(c);
         if (!unit)
             return CR_WRONG_USAGE;
 
@@ -153,7 +153,7 @@ static command_result rename(Core * c, vector <string> &parameters)
         if (parameters.size() != 2)
             return CR_WRONG_USAGE;
 
-        df::unit *unit = getSelectedUnit(c);
+        df::unit *unit = Gui::getSelectedUnit(c);
         if (!unit)
             return CR_WRONG_USAGE;
 

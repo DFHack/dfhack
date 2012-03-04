@@ -23,9 +23,9 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
 {
     if (d_init) {
         commands.push_back(PluginCommand("twaterlvl", "Toggle display of water/magma depth.",
-                                         twaterlvl, dwarfmode_hotkey));
+                                         twaterlvl, Gui::dwarfmode_hotkey));
         commands.push_back(PluginCommand("tidlers", "Toggle display of idlers.",
-                                         tidlers, dwarfmode_hotkey));
+                                         tidlers, Gui::dwarfmode_hotkey));
     }
     std::cerr << "d_init: " << sizeof(df::d_init) << endl;
     return CR_OK;

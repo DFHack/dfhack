@@ -71,50 +71,64 @@ static ParseCxxHandler(func, handler, fixFunc)
   y = x;
   z = x;
   EHCookieOffset=0; GSCookieOffset=0;
-  if (matchBytes(x,"8B5424088D420C"))
-    // 8B 54 24 08                       mov     edx, [esp+8]
-    // 8D 42 0C                          lea     eax, [edx+0Ch]
+  // 8B 54 24 08                       mov     edx, [esp+8]
+  if (matchBytes(x,"8B5424088D02"))
+    x = x+6;
+    // 8D 02                             lea     eax, [edx]
+  else if (matchBytes(x,"8B5424088D42"))
+    x = x+7;
+    // 8D 42 xx                          lea     eax, [edx+XXh]
+  else if (matchBytes(x,"8B5424088D82"))
+    x = x+10;
+    // 8D 82 xx xx xx xx                 lea     eax, [edx+XXh]
+  else {
+    Message("Function at %08X not recognized as exception handler!\n",x);
+    return;
+  }
+  //EH cookie check:
+  // 8B 4A xx                          mov     ecx, [edx-XXh]
+  //   OR
+  // 8B 8A xx xx xx xx                 mov     ecx, [edx-XXh]
+  // 33 C8                             xor     ecx, eax
+  // E8 xx xx xx xx                    call    __security_check_cookie
+  if (matchBytes(x,"8B4A??33C8E8"))
   {
-    //EH cookie check:
+    //byte argument
+    EHCookieOffset = (~Byte(x+2)+1)&0xFF;
+    EHCookieOffset = 12 + EHCookieOffset;
+    x = x+10;
+  }
+  else if (matchBytes(x,"8B8A????????33C8E8"))
+  {
+    //dword argument
+    EHCookieOffset = (~Dword(x+2)+1);
+    EHCookieOffset = 12 + EHCookieOffset;
+    x = x+13;
+  }
+  if (matchBytes(x,"83C0"))
+    x = x + 3;
+    // 8B 4A xx                          add     eax, XXh
+  if (matchBytes(x,"8B4A??33C8E8"))
+  {
     // 8B 4A xx                          mov     ecx, [edx-XXh]
-    //   OR
-    // 8B 8A xx xx xx xx                 mov     ecx, [edx-XXh]
     // 33 C8                             xor     ecx, eax
     // E8 xx xx xx xx                    call    __security_check_cookie
-    x = x+7;
-    if (matchBytes(x,"8B4A??33C8E8"))
-    {
-      //byte argument
-      EHCookieOffset = (~Byte(x+2)+1)&0xFF;
-      EHCookieOffset = 12 + EHCookieOffset;
-      x = x+10;
-    }
-    else if (matchBytes(x,"8B8A????????33C8E8"))
-    {
-      //dword argument
-      EHCookieOffset = (~Dword(x+2)+1);
-      EHCookieOffset = 12 + EHCookieOffset;
-      x = x+13;
-    }
-    if (matchBytes(x,"8B4A??33C8E8"))
-    {
-      // 8B 4A xx                          mov     ecx, [edx-XXh]
-      // 33 C8                             xor     ecx, eax
-      // E8 xx xx xx xx                    call    __security_check_cookie
-      GSCookieOffset = (~Byte(x+2)+1)&0xFF;
-      GSCookieOffset = 12 + GSCookieOffset;
-      x = x+10;
-    }
-    else if (matchBytes(x,"8B8A????????33C8E8"))
-    {
-      //dword argument
-      GSCookieOffset = (~Dword(x+9)+1);
-      GSCookieOffset = 12 + GSCookieOffset;
-      x = x+13;
-    }
-    //Message("EH3: EH Cookie=%02X, GSCookie=%02X\n",EHCookieOffset, GSCookieOffset);
+    GSCookieOffset = (~Byte(x+2)+1)&0xFF;
+    GSCookieOffset = 12 + GSCookieOffset;
+    x = x+10;
   }
+  else if (matchBytes(x,"8B8A????????33C8E8"))
+  {
+    //dword argument
+    GSCookieOffset = (~Dword(x+9)+1);
+    GSCookieOffset = 12 + GSCookieOffset;
+    x = x+13;
+  }
+
+  //Message("EH3: EH Cookie=%02X, GSCookie=%02X\n",EHCookieOffset, GSCookieOffset);
+
   if (Byte(x)==0xB8) {
+    // 8B 4A xx xx xx                    mov     eax, offset FuncInfo
     x = Dword(x+1);
   }
   else {

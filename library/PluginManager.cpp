@@ -341,7 +341,7 @@ bool Plugin::can_invoke_hotkey( std::string & command, df::viewscreen *top )
                 else if (cmd.guard)
                     cr = cmd.guard(&c, top);
                 else
-                    cr = default_hotkey(&c, top);
+                    cr = Gui::default_hotkey(&c, top);
                 break;
             }
         }

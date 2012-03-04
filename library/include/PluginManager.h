@@ -182,10 +182,13 @@ namespace DFHack
         std::string plugin_path;
     };
 
-    // Predefined hotkey guards
-    DFHACK_EXPORT bool default_hotkey(Core *, df::viewscreen *);
-    DFHACK_EXPORT bool dwarfmode_hotkey(Core *, df::viewscreen *);
-    DFHACK_EXPORT bool cursor_hotkey(Core *, df::viewscreen *);
+    namespace Gui
+    {
+        // Predefined hotkey guards
+        DFHACK_EXPORT bool default_hotkey(Core *, df::viewscreen *);
+        DFHACK_EXPORT bool dwarfmode_hotkey(Core *, df::viewscreen *);
+        DFHACK_EXPORT bool cursor_hotkey(Core *, df::viewscreen *);
+    }
 };
 
 /// You have to have this in every plugin you write - just once. Ideally on top of the main file.

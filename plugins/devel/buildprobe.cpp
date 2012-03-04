@@ -39,7 +39,6 @@ command_result readFlag (Core * c, vector <string> & parameters)
 {
     c->Suspend();
 
-    Gui * Gui = c->getGui();
     // init the map
     if(!Maps::IsValid())
     {
@@ -49,8 +48,7 @@ command_result readFlag (Core * c, vector <string> & parameters)
     }
 
     int32_t cx, cy, cz;
-    Gui->getCursorCoords(cx,cy,cz);
-    while(cx == -30000)
+    if(!Gui::getCursorCoords(cx,cy,cz))
     {
         c->con.printerr("Cursor is not active.\n");
         c->Resume();
@@ -106,7 +104,6 @@ command_result writeFlag (Core * c, vector <string> & parameters)
 
     c->Suspend();
 
-    Gui * Gui = c->getGui();
     // init the map
     if(!Maps::IsValid())
     {
@@ -116,8 +113,7 @@ command_result writeFlag (Core * c, vector <string> & parameters)
     }
 
     int32_t cx, cy, cz;
-    Gui->getCursorCoords(cx,cy,cz);
-    while(cx == -30000)
+    if(!Gui::getCursorCoords(cx,cy,cz))
     {
         c->con.printerr("Cursor is not active.\n");
         c->Resume();

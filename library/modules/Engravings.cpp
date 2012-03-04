@@ -39,7 +39,6 @@ using namespace std;
 #include "df/world.h"
 
 using namespace DFHack;
-using namespace DFHack::Simple;
 using df::global::world;
 
 bool Engravings::isValid()

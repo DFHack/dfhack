@@ -19,20 +19,23 @@ using namespace std;
 #include "modules/Gui.h"
 #include "modules/Materials.h"
 #include "modules/MapCache.h"
+#include "modules/Buildings.h"
 #include "MiscUtils.h"
 
 #include "df/world.h"
-
+#include "df/world_raws.h"
+#include "df/building_def.h"
 
 using std::vector;
 using std::string;
 using namespace DFHack;
-using namespace DFHack::Simple;
 using namespace df::enums;
 using df::global::world;
+using df::global::cursor;
 
 command_result df_probe (Core * c, vector <string> & parameters);
 command_result df_cprobe (Core * c, vector <string> & parameters);
+command_result df_bprobe (Core * c, vector <string> & parameters);
 
 DFHACK_PLUGIN("probe");
 
@@ -45,6 +48,9 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.push_back(PluginCommand("cprobe",
                                      "A creature probe",
                                      df_cprobe));
+    commands.push_back(PluginCommand("bprobe",
+                                     "A simple building probe",
+                                     df_bprobe));
     return CR_OK;
 }
 
@@ -57,9 +63,8 @@ command_result df_cprobe (Core * c, vector <string> & parameters)
 {
     Console & con = c->con;
     CoreSuspender suspend(c);
-    DFHack::Gui *Gui = c->getGui();
     int32_t cursorX, cursorY, cursorZ;
-    Gui->getCursorCoords(cursorX,cursorY,cursorZ);
+    Gui::getCursorCoords(cursorX,cursorY,cursorZ);
     if(cursorX == -30000)
     {
         con.printerr("No cursor; place cursor over creature to probe.\n");
@@ -94,7 +99,6 @@ command_result df_probe (Core * c, vector <string> & parameters)
 
     CoreSuspender suspend(c);
 
-    DFHack::Gui *Gui = c->getGui();
     DFHack::Materials *Materials = c->getMaterials();
     DFHack::VersionInfo* mem = c->vinfo;
     std::vector<t_matglossInorganic> inorganic;
@@ -111,7 +115,7 @@ command_result df_probe (Core * c, vector <string> & parameters)
     Maps::getPosition(regionX,regionY,regionZ);
 
     int32_t cursorX, cursorY, cursorZ;
-    Gui->getCursorCoords(cursorX,cursorY,cursorZ);
+    Gui::getCursorCoords(cursorX,cursorY,cursorZ);
     if(cursorX == -30000)
     {
         con.printerr("No cursor; place cursor over tile to probe.\n");
@@ -271,5 +275,63 @@ command_result df_probe (Core * c, vector <string> & parameters)
         << endl;
     con << "mystery: " << block.mystery << endl;
     con << std::endl;
+    return CR_OK;
+}
+
+command_result df_bprobe (Core * c, vector <string> & parameters)
+{
+    CoreSuspender suspend(c);
+
+    if(cursor->x == -30000)
+    {
+        c->con.printerr("No cursor; place cursor over tile to probe.\n");
+        return CR_FAILURE;
+    }
+
+    for (size_t i = 0; i < world->buildings.all.size(); i++)
+    {
+        Buildings::t_building building;
+        if (!Buildings::Read(i, building))
+            continue;
+        if (!(building.x1 <= cursor->x && cursor->x <= building.x2 &&
+            building.y1 <= cursor->y && cursor->y <= building.y2 &&
+            building.z == cursor->z))
+            continue;
+        string name;
+        building.origin->getName(&name);
+        c->con.print("Building %i - \"%s\" - type %s", building.origin->id, name.c_str(), ENUM_KEY_STR(building_type, building.type));
+
+        switch (building.type)
+        {
+        case building_type::Furnace:
+            c->con.print(", subtype %s", ENUM_KEY_STR(furnace_type, building.furnace_type));
+            if (building.furnace_type == furnace_type::Custom)
+                c->con.print(", custom type %i (%s)", building.custom_type, world->raws.buildings.all[building.custom_type]->code.c_str());
+            break;
+        case building_type::Workshop:
+            c->con.print(", subtype %s", ENUM_KEY_STR(workshop_type, building.workshop_type));
+            if (building.workshop_type == workshop_type::Custom)
+                c->con.print(", custom type %i (%s)", building.custom_type, world->raws.buildings.all[building.custom_type]->code.c_str());
+            break;
+        case building_type::Construction:
+            c->con.print(", subtype %s", ENUM_KEY_STR(construction_type, building.construction_type));
+            break;
+        case building_type::Shop:
+            c->con.print(", subtype %s", ENUM_KEY_STR(shop_type, building.shop_type));
+            break;
+        case building_type::SiegeEngine:
+            c->con.print(", subtype %s", ENUM_KEY_STR(siegeengine_type, building.siegeengine_type));
+            break;
+        case building_type::Trap:
+            c->con.print(", subtype %s", ENUM_KEY_STR(trap_type, building.trap_type));
+            break;
+        default:
+            if (building.subtype != -1)
+                c->con.print(", subtype %i", building.subtype);
+            break;
+        }
+        c->con.print("\n");
+
+    }
     return CR_OK;
 }

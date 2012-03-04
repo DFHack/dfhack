@@ -66,7 +66,6 @@ using namespace std;
 #include "df/general_ref.h"
 
 using namespace DFHack;
-using namespace DFHack::Simple;
 using namespace df::enums;
 using df::global::world;
 

@@ -52,7 +52,6 @@ namespace DFHack
 {
     class Process;
     class Module;
-    class Gui;
     class World;
     class Materials;
     class Notes;
@@ -98,8 +97,6 @@ namespace DFHack
         /// Is everything OK?
         bool isValid(void) { return !errorstate; }
 
-        /// get the gui module
-        Gui * getGui();
         /// get the world module
         World * getWorld();
         /// get the materials module
@@ -153,7 +150,6 @@ namespace DFHack
         // Module storage
         struct
         {
-            Gui * pGui;
             World * pWorld;
             Materials * pMaterials;
             Notes * pNotes;

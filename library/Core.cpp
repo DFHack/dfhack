@@ -47,6 +47,7 @@ using namespace std;
 #include "modules/Gui.h"
 #include "modules/World.h"
 #include "modules/Graphic.h"
+//#include "modules/Windows.h"
 using namespace DFHack;
 
 #include "SDL_events.h"
@@ -635,7 +636,6 @@ bool Core::Init()
 
     cerr << "Initializing Console.\n";
     // init the console.
-    Gui * g = getGui();
     bool is_text_mode = false;
     if(init && init->display.flag.is_set(init_display_flags::TEXT))
     {
@@ -877,20 +877,19 @@ bool Core::ncurses_wgetch(int in, int & out)
     {
         int idx = in - KEY_F(1);
         // FIXME: copypasta, push into a method!
-        Gui * g = getGui();
-        if(df::global::ui && df::global::gview && g->df_menu_state)
+        if(df::global::ui && df::global::gview)
         {
-            df::viewscreen * ws = g->GetCurrentScreen();
-            // FIXME: USE ENUMS
-            if(((t_virtual *)ws)->getClassName() == "viewscreen_dwarfmodest" && *g->df_menu_state == 0x23)
-            {
-                out = in;
-                return true;
-            }
-            else
+            df::viewscreen * ws = Gui::GetCurrentScreen();
+            if (strict_virtual_cast<df::viewscreen_dwarfmodest>(ws) &&
+                df::global::ui->main.mode != ui_sidebar_mode::Hotkeys)
             {
                 setHotkeyCmd(df::global::ui->main.hotkeys[idx].name);
                 return false;
+            }
+            else
+            {
+                out = in;
+                return true;
             }
         }
     }
@@ -1123,7 +1122,6 @@ TYPE * Core::get##TYPE() \
     return s_mods.p##TYPE;\
 }
 
-MODULE_GETTER(Gui);
 MODULE_GETTER(World);
 MODULE_GETTER(Materials);
 MODULE_GETTER(Notes);

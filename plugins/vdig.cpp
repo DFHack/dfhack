@@ -29,13 +29,13 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
     commands.push_back(PluginCommand(
-        "vdig","Dig a whole vein.",vdig,cursor_hotkey,
+        "vdig","Dig a whole vein.",vdig,Gui::cursor_hotkey,
         "  Designates a whole vein under the cursor for digging.\n"
         "Options:\n"
         "  x - follow veins through z-levels with stairs.\n"
         ));
     commands.push_back(PluginCommand(
-        "vdigx","Dig a whole vein, following through z-levels.",vdigx,cursor_hotkey,
+        "vdigx","Dig a whole vein, following through z-levels.",vdigx,Gui::cursor_hotkey,
         "  Designates a whole vein under the cursor for digging.\n"
         "  Also follows the vein between z-levels with stairs, like 'vdig x' would.\n"
         ));
@@ -273,7 +273,6 @@ command_result digcircle (Core * c, vector <string> & parameters)
     }
     int32_t cx, cy, cz;
     CoreSuspender suspend(c);
-    Gui * gui = c->getGui();
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
@@ -284,7 +283,7 @@ command_result digcircle (Core * c, vector <string> & parameters)
     Maps::getSize(x_max,y_max,z_max);
 
     MapExtras::MapCache MCache;
-    if(!gui->getCursorCoords(cx,cy,cz) || cx == -30000)
+    if(!Gui::getCursorCoords(cx,cy,cz) || cx == -30000)
     {
         c->con.printerr("Can't get the cursor coords...\n");
         return CR_FAILURE;
@@ -848,7 +847,6 @@ command_result expdig (Core * c, vector <string> & parameters)
         return CR_OK;
     }
     CoreSuspender suspend(c);
-    Gui * gui = c->getGui();
     uint32_t x_max, y_max, z_max;
     if (!Maps::IsValid())
     {
@@ -857,7 +855,7 @@ command_result expdig (Core * c, vector <string> & parameters)
     }
     Maps::getSize(x_max,y_max,z_max);
     int32_t xzzz,yzzz,z_level;
-    if(!gui->getViewCoords(xzzz,yzzz,z_level))
+    if(!Gui::getViewCoords(xzzz,yzzz,z_level))
     {
         c->con.printerr("Can't get view coords...\n");
         return CR_FAILURE;
@@ -974,7 +972,6 @@ command_result vdig (Core * c, vector <string> & parameters)
 
     Console & con = c->con;
 
-    DFHack::Gui * Gui = c->getGui();
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
@@ -985,7 +982,7 @@ command_result vdig (Core * c, vector <string> & parameters)
     Maps::getSize(x_max,y_max,z_max);
     uint32_t tx_max = x_max * 16;
     uint32_t ty_max = y_max * 16;
-    Gui->getCursorCoords(cx,cy,cz);
+    Gui::getCursorCoords(cx,cy,cz);
     while(cx == -30000)
     {
         con.printerr("Cursor is not active. Point the cursor at a vein.\n");

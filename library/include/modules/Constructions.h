@@ -38,8 +38,6 @@ distribution.
  */
 namespace DFHack
 {
-namespace Simple
-{
 namespace Constructions
 {
 // "Simplified" copy of construction
@@ -59,7 +57,6 @@ DFHACK_EXPORT bool isValid();
 DFHACK_EXPORT uint32_t getCount();
 DFHACK_EXPORT bool copyConstruction (const int32_t index, t_construction &out);
 DFHACK_EXPORT df::construction * getConstruction (const int32_t index);
-}
 }
 }
 #endif

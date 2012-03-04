@@ -170,11 +170,11 @@ end
 	
 ]]--
 ptr_Creature={}
-local posoff=VersionInfo.getGroup("Creatures"):getGroup("creature"):getOffset("position")
+local posoff=0 --VersionInfo.getGroup("Creatures"):getGroup("creature"):getOffset("position")
 ptr_Creature.x={off=posoff,rtype=WORD} --ok
 ptr_Creature.y={off=posoff+2,rtype=WORD} --ok
 ptr_Creature.z={off=posoff+4,rtype=WORD} --ok
-ptr_Creature.flags={off=VersionInfo.getGroup("Creatures"):getGroup("creature"):getOffset("flags1"),rtype=ptt_dfflag.new(10)}
+ptr_Creature.flags={off=0,rtype=ptt_dfflag.new(10)}
 ptr_Creature.name={off=0,rtype=ptt_dfstring}
 ptr_Creature.ID={off=252,rtype=DWORD} --ok i guess
 ptr_Creature.followID={off=592,rtype=DWORD} --ok

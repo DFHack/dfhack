@@ -60,12 +60,12 @@ table.insert(plugins,{"onfunction","run lua on some df function"})
 loadall(plugins)
 dofile_silent("dfusion/initcustom.lua")
 
-print("Locating saves...")
+--[=[print("Locating saves...")
 local str=engine.peekstr(0x1447A40+offsets.base())
 print("Current region:"..str)
 str="data/save/"..str.."/dfusion/init.lua"
 dofile_silent(str)
-
+--]=]
 if not INIT then
 mainmenu(plugins)
 end

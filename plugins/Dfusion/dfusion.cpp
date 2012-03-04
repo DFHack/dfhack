@@ -19,6 +19,7 @@
 #include "lua_VersionInfo.h"
 #include "functioncall.h"
 #include "lua_FunctionCall.h"
+#include "lua_Offsets.h"
 
 using std::vector;
 using std::string;
@@ -48,6 +49,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 	lua::RegisterMisc(st);
 	lua::RegisterVersionInfo(st);
 	lua::RegisterFunctionCall(st);
+	lua::RegisterEngine(st);
 
 	#ifdef LINUX_BUILD
 		st.push(1);

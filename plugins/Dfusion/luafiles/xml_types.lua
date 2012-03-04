@@ -1,15 +1,16 @@
 function type_read(valtype,address)
-	if type(valtype)~= "table" then
-		return engine.peek(valtype,address)
+	if valtype.issimple then
+		print("Simple read:"..tostring(valtype.ctype))
+		return engine.peek(address,valtype.ctype)
 	else
 		return valtype:makewrap(address)
 	end
 end
 function type_write(valtype,address,val)
-	if type(valtype)~= "table" then
-		engine.poke(valtype,address,val)
+	if altype.issimple then
+		engine.poke(address,valtype.ctype,val)
 	else
-		engine.poke(DWORD,address,rawget(val,"ptr"))
+		engine.poke(address,DWORD,rawget(val,"ptr"))
 	end
 end
 function first_of_type(node,labelname)
@@ -65,6 +66,9 @@ xtypes["static-array"]=sarr
 
 
 simpletypes={}
+
+simpletypes["s-float"]={FLOAT,4}
+simpletypes.int64_t={QWORD,8}
 simpletypes.uint32_t={DWORD,4}
 simpletypes.uint16_t={WORD,2}
 simpletypes.uint8_t={BYTE,1}
@@ -78,6 +82,7 @@ function getSimpleType(typename)
 	local o={}
 	o.ctype=simpletypes[typename][1]
 	o.size=simpletypes[typename][2]
+	o.issimple=true
 	return o
 end
 local type_enum={}
@@ -130,7 +135,7 @@ function type_class.new(node)
 			local t_name=""
 			local name=v.xarg.name or v.xarg["anon-name"] or ("unk_"..k)
 				
-			print("\t"..k.." "..name.."->"..v.xarg.meta.." ttype:"..v.label)
+			--print("\t"..k.." "..name.."->"..v.xarg.meta.." ttype:"..v.label)
 			local ttype=makeType(v)
 			
 			--for k,v in pairs(ttype) do
@@ -206,11 +211,49 @@ xtypes["pointer"]=type_class
 --stl-vector (beginptr,endptr,allocptr)
 --df-flagarray (ptr,size)
 xtypes.containers={}
+local dfarr={} 
+dfarr.__index=dfarr
+function dfarr.new(node)
+	local o={}
+	setmetatable(o,dfarr)
+	o.size=8
+	return o
+end
+function dfarr:makewrap(address)
+	local o={}
+	o.mtype=self
+	o.ptr=address
+	setmetatable(o,self.wrap)
+	return o
+end
+dfarr.wrap={}
+function dfarr.wrap:__index(key)
+	local num=tonumber(key)
+	local mtype=rawget(self,"mtype")
+	local size=type_read(rawget(self,"ptr")+4,DWORD)
+	error("TODO make __index for dfarray")
+	if num~=nil and num<sizethen then
+		return type_read(mtype.ctype,num*mtype.ctype.size+rawget(self,"ptr"))
+	else
+		error("invalid key to df-flagarray")
+	end
+end
+function dfarr.wrap:__newindex(key,val)
+	local num=tonumber(key)
+	error("TODO make __index for dfarray")
+	if num~=nil and num<rawget(self,"mtype").count then
+		return type_write(mtype.ctype,num*mtype.ctype.size+rawget(self,"ptr"),val)
+	else
+		error("invalid key to static-array")
+	end
+end
+
+xtypes.containers["df-array"]=dfarr
 local farr={} 
 farr.__index=farr
 function farr.new(node)
 	local o={}
-	setmetatable(o,sarr)
+	setmetatable(o,farr)
 	o.size=8
 	return o
 end
@@ -246,10 +289,10 @@ end
 xtypes.containers["df-flagarray"]=farr
 
 local stl_vec={} 
-stl_vec.__index=farr
+stl_vec.__index=stl_vec
 function stl_vec.new(node)
 	local o={}
-	setmetatable(o,sarr)
+	setmetatable(o,stl_vec)
 	o.size=12
 	local titem=first_of_type(node,"ld:item")
 	if titem~=nil then
@@ -290,8 +333,58 @@ function stl_vec.wrap:__newindex(key,val)
 		error("invalid key to static-array")
 	end
 end
-
 xtypes.containers["stl-vector"]=stl_vec
+
+local stl_vec_bit={} 
+stl_vec_bit.__index=stl_vec_bit
+function stl_vec_bit.new(node)
+	local o={}
+	setmetatable(o,stl_vec_bit)
+	o.size=20
+	return o
+end
+function stl_vec_bit:makewrap(address)
+	local o={}
+	o.mtype=self
+	o.ptr=address
+	setmetatable(o,self.wrap)
+	return o
+end
+stl_vec_bit.wrap={}
+function stl_vec_bit.wrap:__index(key)
+	local num=tonumber(key)
+	local mtype=rawget(self,"item_type")
+	local ptr=rawget(self,"ptr")
+	local p_begin=type_read(ptr,DWORD)
+	local p_end=type_read(ptr+4,DWORD)
+	--allocend=type_read(ptr+8,DWORD)
+	error("TODO make __index for stl_vec_bit")
+	if num~=nil and num<sizethen then
+		return type_read(mtype.ctype,num*mtype.ctype.size+rawget(self,"ptr"))
+	else
+		error("invalid key to df-flagarray")
+	end
+end
+function stl_vec_bit.wrap:__newindex(key,val)
+	local num=tonumber(key)
+	error("TODO make __index for stl_vec_bit")
+	if num~=nil and num<rawget(self,"mtype").count then
+		return type_write(mtype.ctype,num*mtype.ctype.size+rawget(self,"ptr"),val)
+	else
+		error("invalid key to static-array")
+	end
+end
+xtypes.containers["stl-bit-vector"]=stl_vec_bit
+--------------------------------------------
+local bytes_pad={} 
+bytes_pad.__index=bytes_pad
+function bytes_pad.new(node)
+	local o={}
+	setmetatable(o,bytes_pad)
+	o.size=tonumber(node.xarg.size)
+	return o
+end
+xtypes["bytes"]=bytes_pad
 --------------------------------------------
 parser={}
 parser["ld:global-type"]=function  (node)
@@ -332,7 +425,7 @@ parser["ld:field"]=function (node)
 	elseif meta=="pointer" then
 		return xtypes["pointer"].new(node)
 	elseif meta=="bytes" then
-		error("TODO make bytes")
+		return xtypes["bytes"].new(node)
 	else
 		error("Unknown meta:"..meta)
 	end
@@ -341,7 +434,7 @@ parser["ld:item"]=parser["ld:field"]
 function makeType(node,overwrite)
 	local label=overwrite or node.label
 	if parser[label] ~=nil then
-		print("Make Type with:"..label)
+		--print("Make Type with:"..label)
 		local ret=parser[label](node)
 		if ret==nil then
 			error("Error parsing:"..label.." nil returned!")

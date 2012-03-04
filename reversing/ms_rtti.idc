@@ -293,6 +293,7 @@ struct _s_RTTIBaseClassDescriptor
     DWORD numContainedBases; //number of nested classes following in the array
     struct PMD where;        //some displacement info
     DWORD attributes;        //usually 0, sometimes 10h
+    struct _s_RTTIClassHierarchyDescriptor *pClassHierarchyDescriptor; //of this base class
 };
 
 struct PMD
@@ -314,6 +315,15 @@ struct PMD
   DwordCmt(x+4, "numContainedBases");
   DwordArrayCmt(x+8, 3, "PMD where");
   DwordCmt(x+20, "attributes");
+  OffCmt(x+24, "pClassHierarchyDescriptor");
+
+  if(substr(Name(Dword(x+24)),0,5) != "??_R3")
+  {
+    // assign dummy name to prevent infinite recursion
+    MakeName(Dword(x+24),"??_R3"+form("%06x",x)+"@@8");
+    // a proper name will be assigned shortly
+    Parse_CHD(Dword(x+24),indent-1);
+  }
 
   s = Parse_TD(Dword(x), indent+1);
   //??_R1A@?0A@A@B@@8 = B::`RTTI Base Class Descriptor at (0,-1,0,0)'
@@ -414,9 +424,11 @@ static Parse_CHD(x, indent)
   i=0;
   DumpNestedClass(a, indent, n);
   indent=indent+1;
-  while(i<n)
+  while(i<=n)
   {
     p = Dword(a);
+    if (i==n && p!=0)
+      break;
     //Message(indent_str+"    BaseClass[%02d]:  %08.8Xh\n", i, p);
     OffCmt(a, form("BaseClass[%02d]", i));
     if (i==0)

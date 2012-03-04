@@ -120,6 +120,26 @@ command_result nopause (Core * c, std::vector <std::string> & parameters)
     return CR_OK;
 }
 
+void revealAdventure(DFHack::Core * c)
+{
+    for (size_t i = 0; i < world->map.map_blocks.size(); i++)
+    {
+        df::map_block *block = world->map.map_blocks[i];
+        // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
+        if (!isSafe(block->map_pos))
+            continue;
+        DFHack::designations40d & designations = block->designation;
+        // for each tile in block
+        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
+        {
+            // set to revealed
+            designations[x][y].bits.hidden = 0;
+            // and visible
+            designations[x][y].bits.pile = 1;
+        }
+    }
+    c->con.print("Local map revealed.\n");
+}
 
 command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
 {
@@ -157,16 +177,21 @@ command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
 
     CoreSuspender suspend(c);
     DFHack::World *World =c->getWorld();
-    t_gamemodes gm;
-    World->ReadGameMode(gm);
-    if(gm.g_mode != GAMEMODE_DWARF)
-    {
-        con.printerr("Only in fortress mode.\n");
-        return CR_FAILURE;
-    }
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+    t_gamemodes gm;
+    World->ReadGameMode(gm);
+    if(gm.g_mode == GAMEMODE_ADVENTURE)
+    {
+        revealAdventure(c);
+        return CR_OK;
+    }
+    if(gm.g_mode != GAMEMODE_DWARF)
+    {
+        con.printerr("Only in fortress mode.\n");
         return CR_FAILURE;
     }
 
@@ -231,16 +256,16 @@ command_result unreveal(DFHack::Core * c, std::vector<std::string> & params)
     CoreSuspender suspend(c);
 
     DFHack::World *World =c->getWorld();
+    if (!Maps::IsValid())
+    {
+        c->con.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
     t_gamemodes gm;
     World->ReadGameMode(gm);
     if(gm.g_mode != GAMEMODE_DWARF)
     {
         con.printerr("Only in fortress mode.\n");
-        return CR_FAILURE;
-    }
-    if (!Maps::IsValid())
-    {
-        c->con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 

@@ -108,7 +108,11 @@ void Windows::top_level_window::paint ()
     }
 };
 
-Windows::df_screentile * Windows::top_level_window::getBuffer()
+Windows::df_tilebuf Windows::top_level_window::getBuffer()
 {
-    return getScreenBuffer();
+    df_tilebuf buf;
+    buf.data = getScreenBuffer();
+    buf.height = df::global::gps->dimy;
+    buf.width = df::global::gps->dimx;
+    return buf;
 }

@@ -679,7 +679,7 @@ bool Core::Init()
     HotkeyCond = new condition_variable();
     thread * HK = new thread(fHKthread, (void *) temp);
     screen_window = new Windows::top_level_window();
-    screen_window->addChild(new Windows::dfhack_dummy(0,0));
+    screen_window->addChild(new Windows::dfhack_dummy(5,10));
     started = true;
     cerr << "DFHack is running.\n";
     return true;

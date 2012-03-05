@@ -23,6 +23,7 @@ distribution.
 */
 
 #pragma once
+#include "Export.h"
 #include <cstddef>
 
 namespace DFHack
@@ -67,14 +68,6 @@ namespace Windows
     class df_window;
     struct df_tilebuf
     {
-        df_tilebuf(unsigned int width, unsigned int height):width(width),height(height)
-        {
-            data = new df_screentile[width*height];
-        }
-        ~df_tilebuf()
-        {
-            delete data;
-        }
         df_screentile * data;
         unsigned int width;
         unsigned int height;
@@ -193,7 +186,7 @@ namespace Windows
         virtual painter * lock();
         bool unlock (painter * painter);
         virtual bool addChild(df_window *);
-        virtual df_screentile * getBuffer() = 0;
+        virtual df_tilebuf getBuffer() = 0;
     public:
         df_screentile* buffer;
         unsigned int width;
@@ -215,7 +208,7 @@ namespace Windows
         virtual bool move (int left_, int top_, unsigned int width_, unsigned int height_);
         virtual void paint ();
         virtual painter * lock();
-        virtual df_screentile * getBuffer();
+        virtual df_tilebuf getBuffer();
     };
     class DFHACK_EXPORT buffered_window : public df_window
     {
@@ -230,24 +223,26 @@ namespace Windows
         }
         virtual void blit_to_parent ()
         {
-            df_screentile * parbuf = parent->getBuffer();
-            int parent_width = parent->width;
-            int parent_height = parent->height;
+            df_tilebuf par = parent->getBuffer();
             for(int xi = 0; xi < width; xi++)
             {
                 for(int yi = 0; yi < height; yi++)
                 {
                     int parx = left + xi;
                     int pary = top + yi;
-                    if(pary >= parent_height) continue;
-                    if(parx >= parent_width) continue;
-                    parbuf[parx * parent_height + pary] = buffer[xi * height + yi];
+                    if(pary >= par.height) continue;
+                    if(parx >= par.width) continue;
+                    par.data[parx * par.height + pary] = buffer[xi * height + yi];
                 }
             }
         }
-        virtual df_screentile* getBuffer()
+        virtual df_tilebuf getBuffer()
         {
-            return buffer;
+            df_tilebuf buf;
+            buf.data = buffer;
+            buf.width = width;
+            buf.height = height;
+            return buf;
         };
     };
     class DFHACK_EXPORT dfhack_dummy : public buffered_window

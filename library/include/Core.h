@@ -59,6 +59,10 @@ namespace DFHack
     class VersionInfoFactory;
     class PluginManager;
     class Core;
+    namespace Windows
+    {
+        class df_window;
+    }
     // anon type, pretty much
     struct DFLibrary;
 
@@ -125,6 +129,7 @@ namespace DFHack
         DFHack::Process * p;
         DFHack::VersionInfo * vinfo;
         DFHack::Console con;
+        DFHack::Windows::df_window * screen_window;
     private:
         Core();
         bool Init();
@@ -179,8 +184,8 @@ namespace DFHack
         // Very important!
         bool started;
 
-		tthread::mutex * misc_data_mutex;
-		std::map<std::string,void*> misc_data_map;
+        tthread::mutex * misc_data_mutex;
+        std::map<std::string,void*> misc_data_map;
     };
 
     class CoreSuspender {

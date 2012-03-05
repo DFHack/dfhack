@@ -101,6 +101,7 @@ modules/Vegetation.cpp
 modules/Vermin.cpp
 modules/World.cpp
 modules/Graphic.cpp
+modules/Windows.cpp
 )
 
 SET(PROJECT_HDRS_WINDOWS

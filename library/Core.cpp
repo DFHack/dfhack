@@ -47,7 +47,7 @@ using namespace std;
 #include "modules/Gui.h"
 #include "modules/World.h"
 #include "modules/Graphic.h"
-//#include "modules/Windows.h"
+#include "modules/Windows.h"
 using namespace DFHack;
 
 #include "SDL_events.h"
@@ -572,6 +572,7 @@ Core::Core()
     misc_data_mutex=0;
     last_world_data_ptr = NULL;
     top_viewscreen = NULL;
+    screen_window = NULL;
 };
 
 void Core::fatal (std::string output, bool deactivate)
@@ -677,6 +678,8 @@ bool Core::Init()
     HotkeyMutex = new mutex();
     HotkeyCond = new condition_variable();
     thread * HK = new thread(fHKthread, (void *) temp);
+    screen_window = new Windows::top_level_window();
+    screen_window->addChild(new Windows::dfhack_dummy(0,0));
     started = true;
     cerr << "DFHack is running.\n";
     return true;
@@ -755,29 +758,11 @@ void Core::Resume()
     AccessMutex->unlock();
 }
 
-struct screen_tile
-{
-    unsigned char symbol;
-    unsigned char front;
-    unsigned char back;
-    unsigned char bright;
-};
-
-void screen_paint (int x, int y, uint8_t symbol)
-{
-    int tile = x * df::global::gps->dimy + y;
-    screen_tile *s = (screen_tile *) (df::global::gps->screen + tile*4);
-    s->symbol = symbol;
-}
-
 int Core::TileUpdate()
 {
-    screen_paint(0,0,'D');
-    screen_paint(1,0,'F');
-    screen_paint(2,0,'H');
-    screen_paint(3,0,'a');
-    screen_paint(4,0,'c');
-    screen_paint(5,0,'k');
+    if(!started)
+        return false;
+    screen_window->paint();
     return true;
 }
 
@@ -1005,7 +990,7 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod)
         *psym = SDL::K_F1 + (keyspec[1]-'1');
         return true;
     } else
-        return false;    
+        return false;
 }
 
 bool Core::ClearKeyBindings(std::string keyspec)

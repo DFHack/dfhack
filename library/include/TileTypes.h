@@ -24,9 +24,6 @@ distribution.
 
 #pragma once
 
-#ifndef TILETYPES_H_INCLUDED
-#define TILETYPES_H_INCLUDED
-
 #include "Pragma.h"
 #include "Export.h"
 #include "DataDefs.h"
@@ -276,4 +273,3 @@ namespace DFHack
     DFHACK_EXPORT df::tiletype findRandomVariant(const df::tiletype tile);
 }
 
-#endif // TILETYPES_H_INCLUDED

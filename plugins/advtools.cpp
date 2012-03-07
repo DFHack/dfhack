@@ -6,6 +6,7 @@
 #include "modules/World.h"
 #include "modules/Translation.h"
 #include "modules/Materials.h"
+#include "modules/Maps.h"
 #include "modules/Items.h"
 
 #include "DataDefs.h"
@@ -19,6 +20,8 @@
 #include "df/historical_figure.h"
 #include "df/general_ref_is_nemesisst.h"
 #include "df/general_ref_contains_itemst.h"
+#include "df/general_ref_contained_in_itemst.h"
+#include "df/general_ref_unit_holderst.h"
 #include "df/general_ref_building_civzone_assignedst.h"
 #include "df/material.h"
 #include "df/craft_material_class.h"
@@ -421,7 +424,7 @@ bool isWeaponArmor(df::item *item)
     }
 }
 
-int containsMetalItems(df::item *item, bool all, bool non_trader)
+int containsMetalItems(df::item *item, bool all, bool non_trader, bool rec = false)
 {
     int cnt = 0;
 
@@ -429,13 +432,19 @@ int containsMetalItems(df::item *item, bool all, bool non_trader)
     for (size_t i = 0; i < refs.size(); i++)
     {
         auto ref = refs[i];
-        if (!strict_virtual_cast<df::general_ref_contains_itemst>(ref))
-            continue;
 
-        df::item *child = ref->getItem();
-        if (!child) continue;
+        if (strict_virtual_cast<df::general_ref_unit_holderst>(ref))
+            return 0;
+        if (!rec && strict_virtual_cast<df::general_ref_contained_in_itemst>(ref))
+            return 0;
 
-        cnt += containsMetalItems(child, all, non_trader);
+        if (strict_virtual_cast<df::general_ref_contains_itemst>(ref))
+        {
+            df::item *child = ref->getItem();
+            if (!child) continue;
+
+            cnt += containsMetalItems(child, all, non_trader, true);
+        }
     }
 
     if (!non_trader && !isShopItem(item))
@@ -787,29 +796,27 @@ command_result adv_tools (Core * c, std::vector <std::string> & parameters)
         int total = 0;
         std::map<df::coord,int> counts;
 
-        for (size_t i = 0; i < world->map.map_blocks.size(); i++)
+        auto &items = world->items.all;
+        for (size_t i = 0; i < items.size(); i++)
         {
-            df::map_block *block = world->map.map_blocks[i];
+            df::item *item = items[i];
 
-            for (size_t j = 0; j < block->items.size(); j++)
-            {
-                df::item *item = df::item::find(block->items[j]);
-                if (!item)
-                    continue;
+            int num = containsMetalItems(item, all, non_trader);
+            if (!num)
+                continue;
 
-                int num = containsMetalItems(item, all, non_trader);
-                if (!num)
-                    continue;
+            df::map_block *block = Maps::getBlockAbs(item->pos);
+            if (!block)
+                continue;
 
-                total += num;
-                counts[(item->pos - player_pos)/10] += num;
+            total += num;
+            counts[(item->pos - player_pos)/10] += num;
 
-                auto &designations = block->designation;
-                auto &dgn = designations[item->pos.x%16][item->pos.y%16];
+            auto &designations = block->designation;
+            auto &dgn = designations[item->pos.x%16][item->pos.y%16];
 
-                dgn.bits.hidden = 0; // revealed
-                dgn.bits.pile = 1; // visible
-            }
+            dgn.bits.hidden = 0; // revealed
+            dgn.bits.pile = 1; // visible
         }
 
         joinCounts(counts);

@@ -441,6 +441,8 @@ reveal
 ======
 This reveals the map. By default, HFS will remain hidden so that the demons don't spawn. You can use 'reveal hell' to reveal everything. With hell revealed, you won't be able to unpause until you hide the map again. If you really want to unpause with hell revealed, use 'reveal demons'.
 
+Reveal also works in adventure mode, but any of its effects are negated once you move. When you use it this way, you don't need to run 'unreveal'.
+
 unreveal
 ========
 Reverts the effects of 'reveal'.
@@ -488,6 +490,14 @@ You can paint tiles by their properties - shape, general material and a few othe
 You can also paint only over tiles that match a set of properties (filter)
 
 For more details, see the 'help' command while using this.
+
+tweak
+=====
+Contains various tweaks for minor bugs (currently just one).
+
+Options
+-------
+:tweak clear-missing: Remove the missing status from the selected unit. This allows engraving slabs for ghostly, but not yet found, creatures.
 
 tubefill
 ========

@@ -24,47 +24,96 @@ types.building=sometype
 ]=]
 
 function parseTree(t)
-
-
 	for k,v in ipairs(t) do
 		if v.xarg~=nil and v.xarg["type-name"]~=nil and v.label=="ld:global-type" then
 			local name=v.xarg["type-name"];
-			print("Parsing:"..name)
-			for kk,vv in pairs(v.xarg) do
-				print("\t"..kk.." "..tostring(vv))
+			if(types[name]==nil) then
+				--print("Parsing:"..name)
+				--for kk,vv in pairs(v.xarg) do
+				--	print("\t"..kk.." "..tostring(vv))
+				--end
+				types[name]=makeType(v)
+				--print("found "..name.." or type:"..v.xarg.meta or v.xarg.base)
 			end
-			types[name]=makeType(v)
-			
-			
-			print("found "..name.." or type:"..v.xarg.meta or v.xarg.base)
 		end
 	end
 end
+function parseTreeGlobals(t)
+	local glob={}
+	print("Parsing global-objects")
+	for k,v in ipairs(t) do
+		if v.xarg~=nil and v.label=="ld:global-object" then
+			local name=v.xarg["name"];
+			--print("Parsing:"..name)
+			local subitem=v[1]
+			if subitem==nil then 
+				error("Global-object subitem is nil:"..name)
+			end
+			local ret=makeType(subitem)
+			if ret==nil then
+				error("Make global returned nil!")
+			end
+			glob[name]=ret
+		end
+	end
+	--print("Printing globals:")
+	--for k,v in pairs(glob) do
+	--	print(k)
+	--end
+	return glob
+end
 function findAndParse(tname)
 	for k,v in ipairs(main_tree) do
-	local name=v.xarg["type-name"];
+		local name=v.xarg["type-name"];
 		if v.xarg~=nil and v.xarg["type-name"]~=nil and v.label=="ld:global-type" then
+			
 			if(name ==tname) then
-			print("Parsing:"..name)
-			for kk,vv in pairs(v.xarg) do
-				print("\t"..kk.." "..tostring(vv))
-			end
+			--print("Parsing:"..name)
+			--for kk,vv in pairs(v.xarg) do
+			--	print("\t"..kk.." "..tostring(vv))
+			--end
 			types[name]=makeType(v)
 			end
-			
 			--print("found "..name.." or type:"..v.xarg.meta or v.xarg.base)
 		end
 	end
 end
-
-
+df={}
+df.types=rawget(df,"types") or {} --temporary measure for debug
+local df_meta={}
+function df_meta:__index(key)
+	local addr=VersionInfo.getAddress(key)
+	local vartype=rawget(df,"types")[key];
+	if addr==nil then
+		error("No such global address exist")
+	elseif vartype==nil then
+		error("No such global type exist")
+	else
+		return type_read(vartype,addr)
+	end
+end
+function df_meta:__newindex(key,val)
+	local addr=VersionInfo.getAddress(key)
+	local vartype=rawget(df,"types")[key];
+	if addr==nil then
+		error("No such global address exist")
+	elseif vartype==nil then
+		error("No such global type exist")
+	else
+		return type_write(vartype,addr,val)
+	end
+end
+setmetatable(df,df_meta)
 --------------------------------
 types=types or {}
 dofile("dfusion/patterns/xml_angavrilov.lua")
+-- [=[
 main_tree=parseXmlFile("dfusion/patterns/supplementary.xml")[1]
 parseTree(main_tree)
 main_tree=parseXmlFile("dfusion/patterns/codegen.out.xml")[1]
 parseTree(main_tree)
+rawset(df,"types",parseTreeGlobals(main_tree))
+--]=]
 --[=[labels={}
 for k,v in ipairs(t) do
 	labels[v.label]=labels[v.label] or {meta={}}

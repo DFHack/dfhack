@@ -3,6 +3,9 @@ STD_STRING=0
 DWORD=1
 WORD=2
 BYTE=3
+QWORD=4
+DOUBLE=5
+FLOAT=6
 function printd(...)
 	if DEBUG then
 		print(...)
@@ -94,6 +97,7 @@ function SetExecute(pos)
 end
 -- engine bindings
 engine=engine or {}
+--[=[ use default peek/pokes for now
 engine.peekd=Process.readDWord
 engine.poked=Process.writeDWord
 engine.peekb=Process.readByte
@@ -106,7 +110,7 @@ engine.peekstr=Process.readCString
 --engine.pokestr=Process.readCString
 engine.peekarb=Process.read
 engine.pokearb=Process.write
-
+--]=]
 
 function engine.peek(offset,rtype)
 	if type(rtype)=="table" then
@@ -117,13 +121,19 @@ function engine.peek(offset,rtype)
 		end
 	end
 	if rtype==STD_STRING then
-		return engine.peekstr(offset)
+		return engine.peekstr2(offset)
 	elseif rtype==DWORD then
 		return engine.peekd(offset)
 	elseif rtype==WORD then
 		return engine.peekw(offset)
 	elseif rtype==BYTE then
 		return engine.peekb(offset)
+	elseif rtype==QWORD then
+		return engine.peekq(offset)
+	elseif rtype==FLOAT then
+		return engine.peekfloat(offset)
+	elseif rtype==DOUBLE then
+		return engine.peekdouble(offset)
 	else
 		error("Invalid peek type")
 		return 
@@ -138,13 +148,19 @@ function engine.poke(offset,rtype,val)
 		end
 	end
 	if rtype==STD_STRING then
-		return engine.pokestr(offset,val)
+		return engine.pokestr2(offset,val)
 	elseif rtype==DWORD then
 		return engine.poked(offset,val)
 	elseif rtype==WORD then
 		return engine.pokew(offset,val)
 	elseif rtype==BYTE then
 		return engine.pokeb(offset,val)
+	elseif rtype==QWORD then
+		return engine.pokeq(offset,val)
+	elseif rtype==FLOAT then
+		return engine.pokefloat(offset,val)
+	elseif rtype==DOUBLE then
+		return engine.pokedouble(offset,val)
 	else
 		error("Invalid poke type:"..tostring(rtype))
 		return 

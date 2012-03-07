@@ -1,19 +1,19 @@
 #include "lua_Offsets.h"
 #include <string.h>
+#include <stdint.h>
 //TODO make a seperate module with peeks/pokes and page permisions (linux/windows spec)
 //TODO maybe remove alltogether- use DFHack::Process instead?
-unsigned char peekb(size_t offset) 
+template <typename T>
+T engine_peek(size_t offset)
 {
-	return *((unsigned char*)(offset));
+	return *(reinterpret_cast<T*>(offset));
 }
-unsigned short peekw(size_t offset) 
+template <typename T>
+void engine_poke(size_t offset,T val)
 {
-	return *((unsigned short*)(offset));
+	*(reinterpret_cast<T*>(offset))=val;
 }
-unsigned peekd(size_t offset) 
-{
-	return *((unsigned*)(offset));
-}
+
 void peekarb(size_t offset, void *mem,size_t size)
 {
 	memcpy(mem,(void*)offset,size);
@@ -21,18 +21,6 @@ void peekarb(size_t offset, void *mem,size_t size)
 void peekstr(size_t offset, char* buf, size_t maxsize)
 {
 	strncpy(buf,(char*)offset,maxsize);
-}
-void pokeb(size_t offset,unsigned char val) 
-{
-	*((unsigned char*)(offset))=val;
-}
-void pokew(size_t offset,unsigned short val) 
-{
-	*((unsigned short*)(offset))=val;
-}
-void poked(size_t offset,unsigned val) 
-{
-	*((unsigned*)(offset))=val;
 }
 void pokearb(size_t offset, void *mem,size_t size)
 {
@@ -42,31 +30,42 @@ void pokestr(size_t offset, char* buf, size_t maxsize)
 {
 	strncpy((char*)offset,buf,maxsize);
 }
-template <typename T>
-T peek(size_t offset)		//prob lower performance
-{
-	T tmp;
-	peekarb(offset,&tmp,sizeof(T));
-	return tmp;
-}
 
 //// lua stuff here
 static int lua_peekb(lua_State *L)
 {
     lua::state st(L);
-    st.push(peekb(st.as<size_t>(1)));
-    return 1;
-}
-static int lua_peekd(lua_State *L)
-{
-    lua::state st(L);
-    st.push(peekd(st.as<size_t>(1)));
+    st.push(engine_peek<uint8_t>(st.as<size_t>(1)));
     return 1;
 }
 static int lua_peekw(lua_State *L)
 {
     lua::state st(L);
-    st.push(peekw(st.as<size_t>(1)));
+    st.push(engine_peek<uint16_t>(st.as<size_t>(1)));
+    return 1;
+}
+static int lua_peekd(lua_State *L)
+{
+    lua::state st(L);
+    st.push(engine_peek<uint32_t>(st.as<size_t>(1)));
+    return 1;
+}
+static int lua_peekq(lua_State *L)
+{
+    lua::state st(L);
+    st.push(engine_peek<uint64_t>(st.as<size_t>(1)));
+    return 1;
+}
+static int lua_peekfloat(lua_State *L)
+{
+    lua::state st(L);
+    st.push(engine_peek<float>(st.as<size_t>(1)));
+    return 1;
+}
+static int lua_peekdouble(lua_State *L)
+{
+    lua::state st(L);
+    st.push(engine_peek<double>(st.as<size_t>(1)));
     return 1;
 }
 static int lua_peekarb(lua_State *L)
@@ -88,38 +87,53 @@ static int lua_peekstr(lua_State *L)
     delete [] buf;
     return 1;
 }
-/*static int lua_peekarb(lua_State *L)
+static int lua_peekstr2(lua_State *L)
 {
     lua::state st(L);
-    st.push(peekarb(st.as<DWORD>(1)));
+    st.push(engine_peek<std::string>(st.as<size_t>(1)));
     return 1;
-}*/
+}
 static int lua_pokeb(lua_State *L)
 {
     lua::state st(L);
-    pokeb(st.as<size_t>(1),st.as<size_t>(2));
-    return 0;
-}
-static int lua_poked(lua_State *L)
-{
-    lua::state st(L);
-    poked(st.as<size_t>(1),st.as<size_t>(2));
+    engine_poke<uint8_t>(st.as<size_t>(1),st.as<uint8_t>(2));
     return 0;
 }
 static int lua_pokew(lua_State *L)
 {
     lua::state st(L);
-    pokew(st.as<size_t>(1),st.as<size_t>(2));
+    engine_poke<uint16_t>(st.as<size_t>(1),st.as<uint16_t>(2));
+    return 0;
+}
+static int lua_poked(lua_State *L)
+{
+    lua::state st(L);
+    engine_poke<uint32_t>(st.as<size_t>(1),st.as<uint32_t>(2));
+    return 0;
+}
+static int lua_pokeq(lua_State *L)
+{
+    lua::state st(L);
+    engine_poke<uint64_t>(st.as<size_t>(1),st.as<uint64_t>(2));
+    return 0;
+}
+static int lua_pokefloat(lua_State *L)
+{
+    lua::state st(L);
+    engine_poke<float>(st.as<size_t>(1),st.as<float>(2));
+    return 0;
+}
+static int lua_pokedouble(lua_State *L)
+{
+    lua::state st(L);
+    engine_poke<double>(st.as<size_t>(1),st.as<double>(2));
     return 0;
 }
 static int lua_pokearb(lua_State *L)
 {
     lua::state st(L);
-
-
     void *p=(void *)lua_touserdata(L, 2);//st.as<lua::userdata>(2);
     size_t size=st.as<size_t>(3);
-
     pokearb(st.as<size_t>(1),p,size);
     return 0;
 }
@@ -130,18 +144,36 @@ static int lua_pokestr(lua_State *L)
     pokestr(st.as<size_t>(1),(char*)trg.c_str(),trg.size());
     return 0;
 }
+static int lua_pokestr2(lua_State *L)
+{
+    lua::state st(L);
+    std::string trg=st.as<std::string>(2);
+    engine_poke<std::string>(st.as<size_t>(1),trg);
+    return 0;
+}
 const luaL_Reg lua_engine_func[]=
 {
 	{"peekb",lua_peekb},
 	{"peekw",lua_peekw},
 	{"peekd",lua_peekd},
+	{"peekq",lua_peekq},
+	{"peekfloat",lua_peekfloat},
+	{"peekdouble",lua_peekdouble},
+
 	{"peekarb",lua_peekarb},
 	{"peekstr",lua_peekstr},
+	{"peekstr2",lua_peekstr2},
+
 	{"pokeb",lua_pokeb},
 	{"pokew",lua_pokew},
 	{"poked",lua_poked},
+	{"pokeq",lua_pokeq},
+	{"pokefloat",lua_pokefloat},
+	{"pokedouble",lua_pokedouble},
+
 	{"pokearb",lua_pokearb},
 	{"pokestr",lua_pokestr},
+	{"pokestr2",lua_pokestr2},
 	{NULL,NULL}
 };
 

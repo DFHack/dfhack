@@ -50,8 +50,6 @@ using namespace std;
 #include "modules/Windows.h"
 using namespace DFHack;
 
-#include "SDL_events.h"
-
 #include "df/ui.h"
 #include "df/world.h"
 #include "df/world_data.h"
@@ -882,6 +880,45 @@ bool Core::ncurses_wgetch(int in, int & out)
     return true;
 }
 
+int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
+{
+	con.print("Unicode came in as %d\n", ke.ksym.unicode);
+	// Assume keyboard layouts don't change the order of numbers:
+	if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
+
+	int unicode = ke.ksym.unicode;
+
+    // convert Ctrl characters to their 0x40-0x5F counterparts:
+    if (unicode < ' ')
+	{		
+        unicode += 'A' - 1;
+		con.print("Unicode is a control character.  Adding 0x40: %d\n", unicode);
+    }
+
+	// convert A-Z to their a-z counterparts:
+	if('A' < unicode && unicode < 'Z')
+	{
+        unicode += 'a' - 'A';
+		con.print("Unicode is a upper case.  Subtracting 0x20: %d\n", unicode);
+    }	
+
+	// convert various other punctuation marks:
+	if('\"' == unicode) unicode = '\'';
+	if('+' == unicode) unicode = '=';
+	if(':' == unicode) unicode = ';';
+	if('<' == unicode) unicode = ',';
+	if('>' == unicode) unicode = '.';
+	if('?' == unicode) unicode = '/';
+	if('{' == unicode) unicode = '[';
+	if('|' == unicode) unicode = '\\';
+	if('}' == unicode) unicode = ']';
+	if('~' == unicode) unicode = '`';
+
+	con.print("Unicode punctuation filter.  Now: %d\n", unicode);
+
+	return unicode;
+}
+
 //MEMO: return false if event is consumed
 int Core::SDL_Event(SDL::Event* ev)
 {
@@ -895,14 +932,26 @@ int Core::SDL_Event(SDL::Event* ev)
 
         if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
         {
-            hotkey_states[ke->ksym.sym] = true;
+            hotkey_states[ke->ksym.sym] = true;			
 
             int mod = 0;
             if (ke->ksym.mod & SDL::KMOD_SHIFT) mod |= 1;
             if (ke->ksym.mod & SDL::KMOD_CTRL) mod |= 2;
             if (ke->ksym.mod & SDL::KMOD_ALT) mod |= 4;
 
-            SelectHotkey(ke->ksym.sym, mod);
+            // Use unicode so Windows gives the correct value for the
+            // user's Input Language
+            if((ke->ksym.unicode & 0xff80) == 0)
+            {       
+				
+				int key = UnicodeAwareSym(*ke);
+                SelectHotkey(key, mod);
+            }
+            else
+            {
+                // Pretend non-ascii characters don't happen:
+                SelectHotkey(ke->ksym.sym, mod);
+            }
         }
         else if(ke->state == SDL::BTN_RELEASED)
         {

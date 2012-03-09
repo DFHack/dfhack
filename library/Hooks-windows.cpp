@@ -800,6 +800,8 @@ bool FirstCall()
     _SDL_SemWait = (int (*)(void *))GetProcAddress(realSDLlib,"SDL_SemWait");
     _SDL_ThreadID = (uint32_t (*)(void))GetProcAddress(realSDLlib,"SDL_ThreadID");
     
+	_SDL_EnableUNICODE(1);
+
     fprintf(stderr,"Initized HOOKS!\n");
     inited = true;
     return 1;

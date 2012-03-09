@@ -404,6 +404,10 @@ DFhackCExport int SDL_EnableKeyRepeat(int delay, int interval)
 static int (*_SDL_EnableUNICODE)(int enable) = 0;
 DFhackCExport int SDL_EnableUNICODE(int enable)
 {
+    if(!enable)
+    {
+        fprintf(stderr, "SDL_EnableUNICODE turned off.  Keybindings may break.\n");
+    }
     return _SDL_EnableUNICODE(enable);
 }
 
@@ -800,7 +804,7 @@ bool FirstCall()
     _SDL_SemWait = (int (*)(void *))GetProcAddress(realSDLlib,"SDL_SemWait");
     _SDL_ThreadID = (uint32_t (*)(void))GetProcAddress(realSDLlib,"SDL_ThreadID");
     
-	_SDL_EnableUNICODE(1);
+    _SDL_EnableUNICODE(1);
 
     fprintf(stderr,"Initized HOOKS!\n");
     inited = true;

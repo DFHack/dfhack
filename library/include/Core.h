@@ -178,8 +178,7 @@ namespace DFHack
         tthread::mutex * HotkeyMutex;
         tthread::condition_variable * HotkeyCond;
 
-		int UnicodeAwareSym(const SDL::KeyboardEvent& ke);
-
+        int UnicodeAwareSym(const SDL::KeyboardEvent& ke);
         bool SelectHotkey(int key, int modifiers);
 
         void *last_world_data_ptr; // for state change tracking

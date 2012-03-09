@@ -882,41 +882,36 @@ bool Core::ncurses_wgetch(int in, int & out)
 
 int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
 {
-	con.print("Unicode came in as %d\n", ke.ksym.unicode);
-	// Assume keyboard layouts don't change the order of numbers:
-	if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
+    // Assume keyboard layouts don't change the order of numbers:
+    if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
 
-	int unicode = ke.ksym.unicode;
+    int unicode = ke.ksym.unicode;
 
     // convert Ctrl characters to their 0x40-0x5F counterparts:
     if (unicode < ' ')
-	{		
+    {        
         unicode += 'A' - 1;
-		con.print("Unicode is a control character.  Adding 0x40: %d\n", unicode);
     }
 
-	// convert A-Z to their a-z counterparts:
-	if('A' < unicode && unicode < 'Z')
-	{
+    // convert A-Z to their a-z counterparts:
+    if('A' < unicode && unicode < 'Z')
+    {
         unicode += 'a' - 'A';
-		con.print("Unicode is a upper case.  Subtracting 0x20: %d\n", unicode);
-    }	
+    }    
 
-	// convert various other punctuation marks:
-	if('\"' == unicode) unicode = '\'';
-	if('+' == unicode) unicode = '=';
-	if(':' == unicode) unicode = ';';
-	if('<' == unicode) unicode = ',';
-	if('>' == unicode) unicode = '.';
-	if('?' == unicode) unicode = '/';
-	if('{' == unicode) unicode = '[';
-	if('|' == unicode) unicode = '\\';
-	if('}' == unicode) unicode = ']';
-	if('~' == unicode) unicode = '`';
+    // convert various other punctuation marks:
+    if('\"' == unicode) unicode = '\'';
+    if('+' == unicode) unicode = '=';
+    if(':' == unicode) unicode = ';';
+    if('<' == unicode) unicode = ',';
+    if('>' == unicode) unicode = '.';
+    if('?' == unicode) unicode = '/';
+    if('{' == unicode) unicode = '[';
+    if('|' == unicode) unicode = '\\';
+    if('}' == unicode) unicode = ']';
+    if('~' == unicode) unicode = '`';
 
-	con.print("Unicode punctuation filter.  Now: %d\n", unicode);
-
-	return unicode;
+    return unicode;
 }
 
 //MEMO: return false if event is consumed
@@ -932,7 +927,7 @@ int Core::SDL_Event(SDL::Event* ev)
 
         if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
         {
-            hotkey_states[ke->ksym.sym] = true;			
+            hotkey_states[ke->ksym.sym] = true;
 
             int mod = 0;
             if (ke->ksym.mod & SDL::KMOD_SHIFT) mod |= 1;
@@ -942,9 +937,8 @@ int Core::SDL_Event(SDL::Event* ev)
             // Use unicode so Windows gives the correct value for the
             // user's Input Language
             if((ke->ksym.unicode & 0xff80) == 0)
-            {       
-				
-				int key = UnicodeAwareSym(*ke);
+            {
+                int key = UnicodeAwareSym(*ke);
                 SelectHotkey(key, mod);
             }
             else

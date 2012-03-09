@@ -18,6 +18,8 @@ using namespace std;
 #include <df/world.h>
 #include <df/unit.h>
 #include <df/unit_soul.h>
+#include <df/unit_labor.h>
+#include <df/unit_skill.h>
 
 using namespace DFHack;
 using df::global::ui;
@@ -124,6 +126,58 @@ static void printTraits(Core* c, df::unit* cre, ostream& out)
     out << "    </Traits>" << endl;
 }
 
+static int32_t getCreatureAge(df::unit* cre)
+{
+    int32_t yearDifference = *df::global::cur_year - cre->relations.birth_year;
+
+    // If the birthday this year has not yet passed, subtract one year.
+    // ASSUMPTION: birth_time is on the same scale as cur_year_tick
+    if (cre->relations.birth_time >= *df::global::cur_year_tick) {
+        yearDifference--;
+    }
+
+    return yearDifference;
+}
+
+static void printLabors(Core* c, df::unit* cre, ostream& out)
+{
+    // Using British spelling here, consistent with Runesmith
+    out << "  <Labours>" << endl;
+    for (int iCount = 0; iCount < sizeof(cre->status.labors); iCount++)
+    {
+        if (cre->status.labors[iCount]) {
+            // Get the caption for the labor index.
+            df::enums::unit_labor::unit_labor thisLabor = (df::enums::unit_labor::unit_labor)iCount;
+            element("Labour", get_caption(thisLabor), out);
+        }
+    }
+    out << "  </Labours>" << endl;
+}
+
+static void printSkill(Core* c, df::unit_skill* skill, ostream& out)
+{
+    out << "    <Skill>" << endl;
+
+    element("Name", get_caption(skill->id), out);
+    element("Level", skill->rating, out);
+
+    out << "    </Skill>" << endl;
+}
+
+static void printSkills(Core* c, df::unit* cre, ostream& out)
+{
+
+    std::vector<df::unit_skill* > vSkills = cre->status.current_soul->skills;
+
+    out << "  <Skills>" << endl;
+    for (int iCount = 0; iCount < vSkills.size(); iCount++)
+    {
+        printSkill(c, vSkills.at(iCount), out);
+    }
+
+    out << "  </Skills>" << endl;
+}
+
 // GDC needs:
 // Name
 // Nickname
@@ -136,13 +190,16 @@ static void export_dwarf(Core* c, df::unit* cre, ostream& out) {
     info += Translation::TranslateName(&cre->name, false);
     info[0] = toupper(info[0]);
     c->con.print("Exporting %s\n", info.c_str());
-
+    
     out << "  <Creature>" << endl;
     element("Name", info.c_str(), out);
     element("Nickname", cre->name.nickname.c_str(), out);
     element("Sex", cre->sex == 0 ? "Female" : "Male", out);
+    element("Age", getCreatureAge(cre), out);       // Added age, active labors, and skills March 9, 2012
     printAttributes(c, cre, out);
     printTraits(c, cre, out);
+    printLabors(c, cre, out);
+    printSkills(c, cre, out);
 
     out << "  </Creature>" << endl;
 }

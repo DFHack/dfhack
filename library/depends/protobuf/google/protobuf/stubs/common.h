@@ -96,6 +96,9 @@ namespace protobuf {
   #else
     #define LIBPROTOC_EXPORT   __declspec(dllimport)
   #endif
+#elif defined(PROTOBUF_USE_DLLS)
+  #define LIBPROTOBUF_EXPORT __attribute__ ((visibility("default")))
+  #define LIBPROTOC_EXPORT __attribute__ ((visibility("default")))
 #else
   #define LIBPROTOBUF_EXPORT
   #define LIBPROTOC_EXPORT

@@ -125,13 +125,20 @@ namespace DFHack
         std::vector<std::string> ListKeyBindings(std::string keyspec);
 
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
-        df::viewscreen *getTopViewscreen() { return top_viewscreen; }
+
+        static df::viewscreen *getTopViewscreen() { return getInstance().top_viewscreen; }
+
+        DFHack::Console &getConsole() { return con; }
 
         DFHack::Process * p;
         DFHack::VersionInfo * vinfo;
-        DFHack::Console con;
         DFHack::Windows::df_window * screen_window;
+
+        static void printerr(const char *format, ...);
+
     private:
+        DFHack::Console con;
+
         Core();
         bool Init();
         int Update (void);
@@ -193,6 +200,7 @@ namespace DFHack
     class CoreSuspender {
         Core *core;
     public:
+        CoreSuspender() : core(&Core::getInstance()) { core->Suspend(); }
         CoreSuspender(Core *core) : core(core) { core->Suspend(); }
         ~CoreSuspender() { core->Resume(); }
     };

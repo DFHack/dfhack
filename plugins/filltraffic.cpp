@@ -21,13 +21,13 @@ using namespace df::enums;
 typedef void (*checkTile)(DFCoord, MapExtras::MapCache &);
 
 //Forward Declarations for Commands
-command_result filltraffic(Core * c, std::vector<std::string> & params);
-command_result alltraffic(Core * c, std::vector<std::string> & params);
+command_result filltraffic(color_ostream &out, std::vector<std::string> & params);
+command_result alltraffic(color_ostream &out, std::vector<std::string> & params);
 
 //Forward Declarations for Utility Functions
-command_result setAllMatching(Core * c, checkTile checkProc,
-DFCoord minCoord = DFCoord(0, 0, 0),
-DFCoord maxCoord = DFCoord(0xFFFF, 0xFFFF, 0xFFFF));
+command_result setAllMatching(color_ostream &out, checkTile checkProc,
+                              DFCoord minCoord = DFCoord(0, 0, 0),
+                              DFCoord maxCoord = DFCoord(0xFFFF, 0xFFFF, 0xFFFF));
 
 void allHigh(DFCoord coord, MapExtras::MapCache & map);
 void allNormal(DFCoord coord, MapExtras::MapCache & map);
@@ -36,7 +36,7 @@ void allRestricted(DFCoord coord, MapExtras::MapCache & map);
 
 DFHACK_PLUGIN("filltraffic");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "filltraffic","Flood-fill with selected traffic designation from cursor",
@@ -69,12 +69,12 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
 
-command_result filltraffic(Core * c, std::vector<std::string> & params)
+command_result filltraffic(color_ostream &out, std::vector<std::string> & params)
 {
     // HOTKEY COMMAND; CORE ALREADY SUSPENDED
 
@@ -117,7 +117,7 @@ command_result filltraffic(Core * c, std::vector<std::string> & params)
 
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
@@ -128,7 +128,7 @@ command_result filltraffic(Core * c, std::vector<std::string> & params)
     Gui::getCursorCoords(cx,cy,cz);
     while(cx == -30000)
     {
-        c->con.printerr("Cursor is not active.\n");
+        out.printerr("Cursor is not active.\n");
         return CR_FAILURE;
     }
 
@@ -145,29 +145,29 @@ command_result filltraffic(Core * c, std::vector<std::string> & params)
     source = (df::tile_traffic)des.bits.traffic;
     if(source == target)
     {
-        c->con.printerr("This tile is already set to the target traffic type.\n");
+        out.printerr("This tile is already set to the target traffic type.\n");
         return CR_FAILURE;
     }
 
     if(isWallTerrain(tt))
     {
-        c->con.printerr("This tile is a wall. Please select a passable tile.\n");
+        out.printerr("This tile is a wall. Please select a passable tile.\n");
         return CR_FAILURE;
     }
 
     if(checkpit && isOpenTerrain(tt))
     {
-        c->con.printerr("This tile is a hole. Please select a passable tile.\n");
+        out.printerr("This tile is a hole. Please select a passable tile.\n");
         return CR_FAILURE;
     }
 
     if(checkbuilding && oc.bits.building)
     {
-        c->con.printerr("This tile contains a building. Please select an empty tile.\n");
+        out.printerr("This tile contains a building. Please select an empty tile.\n");
         return CR_FAILURE;
     }
 
-    c->con.print("%d/%d/%d  ... FILLING!\n", cx,cy,cz);
+    out.print("%d/%d/%d  ... FILLING!\n", cx,cy,cz);
 
     //Naive four-way or six-way flood fill with possible tiles on a stack.
     stack <DFCoord> flood;
@@ -236,7 +236,7 @@ command_result filltraffic(Core * c, std::vector<std::string> & params)
 
 enum e_checktype {no_check, check_equal, check_nequal};
 
-command_result alltraffic(Core * c, std::vector<std::string> & params)
+command_result alltraffic(color_ostream &out, std::vector<std::string> & params)
 {
     void (*proc)(DFCoord, MapExtras::MapCache &) = allNormal;
 
@@ -262,22 +262,22 @@ command_result alltraffic(Core * c, std::vector<std::string> & params)
         }
     }
 
-    return setAllMatching(c, proc);
+    return setAllMatching(out, proc);
 }
 
 //Helper function for writing new functions that check every tile on the map.
 //newTraffic is the traffic designation to set.
 //check takes a coordinate and the map cache as arguments, and returns true if the criteria is met.
 //minCoord and maxCoord can be used to specify a bounding cube.
-command_result setAllMatching(Core * c, checkTile checkProc,
-    DFCoord minCoord, DFCoord maxCoord)
+command_result setAllMatching(color_ostream &out, checkTile checkProc,
+                              DFCoord minCoord, DFCoord maxCoord)
 {
     //Initialization.
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
@@ -295,23 +295,23 @@ command_result setAllMatching(Core * c, checkTile checkProc,
     //Check minimum co-ordinates against maximum map size
     if (minCoord.x > maxCoord.x)
     {
-        c->con.printerr("Minimum x coordinate is greater than maximum x coordinate.\n");
+        out.printerr("Minimum x coordinate is greater than maximum x coordinate.\n");
         return CR_FAILURE;
     }
     if (minCoord.y > maxCoord.y)
     {
-        c->con.printerr("Minimum y coordinate is greater than maximum y coordinate.\n");
+        out.printerr("Minimum y coordinate is greater than maximum y coordinate.\n");
         return CR_FAILURE;
     }
     if (minCoord.z > maxCoord.y)
     {
-        c->con.printerr("Minimum z coordinate is greater than maximum z coordinate.\n");
+        out.printerr("Minimum z coordinate is greater than maximum z coordinate.\n");
         return CR_FAILURE;
     }
 
     MapExtras::MapCache MCache;
 
-    c->con.print("Setting traffic...\n");
+    out.print("Setting traffic...\n");
 
     //Loop through every single tile
     for(uint32_t x = minCoord.x; x <= maxCoord.x; x++)
@@ -327,7 +327,7 @@ command_result setAllMatching(Core * c, checkTile checkProc,
     }
 
     MCache.WriteAll();
-    c->con.print("Complete!\n");
+    out.print("Complete!\n");
     return CR_OK;
 }
 

@@ -140,7 +140,6 @@ Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _f
             break;
         name.append(1,ch);
     }
-    Console & con = core->con;
     plugin_lib = 0;
     plugin_init = 0;
     plugin_shutdown = 0;
@@ -172,7 +171,7 @@ bool Plugin::load()
         return true;
     }
     Core & c = Core::getInstance();
-    Console & con = c.con;
+    Console & con = c.getConsole();
     DFLibrary * plug = OpenPlugin(filename.c_str());
     if(!plug)
     {
@@ -197,7 +196,7 @@ bool Plugin::load()
         state = PS_BROKEN;
         return false;
     }
-    plugin_init = (command_result (*)(Core *, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
+    plugin_init = (command_result (*)(color_ostream &, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
     if(!plugin_init)
     {
         con.printerr("Plugin %s has no init function.\n", filename.c_str());
@@ -205,13 +204,13 @@ bool Plugin::load()
         state = PS_BROKEN;
         return false;
     }
-    plugin_status = (command_result (*)(Core *, std::string &)) LookupPlugin(plug, "plugin_status");
-    plugin_onupdate = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_onupdate");
-    plugin_shutdown = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_shutdown");
-    plugin_onstatechange = (command_result (*)(Core *, state_change_event)) LookupPlugin(plug, "plugin_onstatechange");
+    plugin_status = (command_result (*)(color_ostream &, std::string &)) LookupPlugin(plug, "plugin_status");
+    plugin_onupdate = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_onupdate");
+    plugin_shutdown = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_shutdown");
+    plugin_onstatechange = (command_result (*)(color_ostream &, state_change_event)) LookupPlugin(plug, "plugin_onstatechange");
     this->name = *plug_name;
     plugin_lib = plug;
-    if(plugin_init(&c,commands) == CR_OK)
+    if(plugin_init(con,commands) == CR_OK)
     {
         state = PS_LOADED;
         parent->registerCommands(this);
@@ -229,14 +228,14 @@ bool Plugin::load()
 bool Plugin::unload()
 {
     Core & c = Core::getInstance();
-    Console & con = c.con;
+    Console & con = c.getConsole();
     // get the mutex
     access->lock();
     // if we are actually loaded
     if(state == PS_LOADED)
     {
         // notify plugin about shutdown
-        command_result cr = plugin_shutdown(&Core::getInstance());
+        command_result cr = plugin_shutdown(con);
         // wait for all calls to finish
         access->wait();
         // cleanup...
@@ -276,7 +275,7 @@ bool Plugin::reload()
     return true;
 }
 
-command_result Plugin::invoke( std::string & command, std::vector <std::string> & parameters, bool interactive_)
+command_result Plugin::invoke(color_ostream &out, std::string & command, std::vector <std::string> & parameters, bool interactive_)
 {
     Core & c = Core::getInstance();
     command_result cr = CR_NOT_IMPLEMENTED;
@@ -289,7 +288,7 @@ command_result Plugin::invoke( std::string & command, std::vector <std::string> 
             if(cmd.name == command)
             {
                 // running interactive things from some other source than the console would break it
-                if(!interactive_ && cmd.interactive)
+                if(!(interactive_ && out.is_console()) && cmd.interactive)
                     cr = CR_WOULD_BREAK;
                 else if (cmd.guard)
                 {
@@ -300,22 +299,22 @@ command_result Plugin::invoke( std::string & command, std::vector <std::string> 
                     CoreSuspender suspend(&c);
                     df::viewscreen *top = c.getTopViewscreen();
 
-                    if (!cmd.guard(&c, top))
+                    if (!cmd.guard(top))
                     {
-                        c.con.printerr("Could not invoke %s: unsuitable UI state.\n", command.c_str());
+                        out.printerr("Could not invoke %s: unsuitable UI state.\n", command.c_str());
                         cr = CR_WRONG_USAGE;
                     }
                     else
                     {
-                        cr = cmd.function(&c, parameters);
+                        cr = cmd.function(out, parameters);
                     }
                 }
                 else
                 {
-                    cr = cmd.function(&c, parameters);
+                    cr = cmd.function(out, parameters);
                 }
                 if (cr == CR_WRONG_USAGE && !cmd.usage.empty())
-                    c.con << "Usage:\n" << cmd.usage << flush;
+                    out << "Usage:\n" << cmd.usage << flush;
                 break;
             }
         }
@@ -339,9 +338,9 @@ bool Plugin::can_invoke_hotkey( std::string & command, df::viewscreen *top )
                 if (cmd.interactive)
                     cr = false;
                 else if (cmd.guard)
-                    cr = cmd.guard(&c, top);
+                    cr = cmd.guard(top);
                 else
-                    cr = Gui::default_hotkey(&c, top);
+                    cr = Gui::default_hotkey(top);
                 break;
             }
         }
@@ -350,27 +349,25 @@ bool Plugin::can_invoke_hotkey( std::string & command, df::viewscreen *top )
     return cr;
 }
 
-command_result Plugin::on_update()
+command_result Plugin::on_update(color_ostream &out)
 {
-    Core & c = Core::getInstance();
     command_result cr = CR_NOT_IMPLEMENTED;
     access->lock_add();
     if(state == PS_LOADED && plugin_onupdate)
     {
-        cr = plugin_onupdate(&c);
+        cr = plugin_onupdate(out);
     }
     access->lock_sub();
     return cr;
 }
 
-command_result Plugin::on_state_change(state_change_event event)
+command_result Plugin::on_state_change(color_ostream &out, state_change_event event)
 {
-    Core & c = Core::getInstance();
     command_result cr = CR_NOT_IMPLEMENTED;
     access->lock_add();
     if(state == PS_LOADED && plugin_onstatechange)
     {
-        cr = plugin_onstatechange(&c, event);
+        cr = plugin_onstatechange(out, event);
     }
     access->lock_sub();
     return cr;
@@ -436,10 +433,10 @@ Plugin *PluginManager::getPluginByCommand(const std::string &command)
 }
 
 // FIXME: handle name collisions...
-command_result PluginManager::InvokeCommand( std::string & command, std::vector <std::string> & parameters, bool interactive)
+command_result PluginManager::InvokeCommand(color_ostream &out, std::string & command, std::vector <std::string> & parameters, bool interactive)
 {
     Plugin *plugin = getPluginByCommand(command);
-    return plugin ? plugin->invoke(command, parameters, interactive) : CR_NOT_IMPLEMENTED;
+    return plugin ? plugin->invoke(out, command, parameters, interactive) : CR_NOT_IMPLEMENTED;
 }
 
 bool PluginManager::CanInvokeHotkey(std::string &command, df::viewscreen *top)
@@ -448,19 +445,19 @@ bool PluginManager::CanInvokeHotkey(std::string &command, df::viewscreen *top)
     return plugin ? plugin->can_invoke_hotkey(command, top) : false;
 }
 
-void PluginManager::OnUpdate( void )
+void PluginManager::OnUpdate(color_ostream &out)
 {
     for(size_t i = 0; i < all_plugins.size(); i++)
     {
-        all_plugins[i]->on_update();
+        all_plugins[i]->on_update(out);
     }
 }
 
-void PluginManager::OnStateChange( state_change_event event )
+void PluginManager::OnStateChange(color_ostream &out, state_change_event event)
 {
     for(size_t i = 0; i < all_plugins.size(); i++)
     {
-        all_plugins[i]->on_state_change(event);
+        all_plugins[i]->on_state_change(out, event);
     }
 }
 

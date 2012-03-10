@@ -49,7 +49,7 @@ namespace DFHack
     DFHACK_EXPORT bool operator== (const df::job_item &a, const df::job_item &b);
     DFHACK_EXPORT bool operator== (const df::job &a, const df::job &b);
 
-    DFHACK_EXPORT void printJobDetails(Core *c, df::job *job);
+    DFHACK_EXPORT void printJobDetails(color_ostream &out, df::job *job);
 
     DFHACK_EXPORT df::building *getJobHolder(df::job *job);
 

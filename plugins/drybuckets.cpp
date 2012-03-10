@@ -19,12 +19,12 @@ using df::global::world;
 
 DFHACK_PLUGIN("drybuckets");
 
-command_result df_drybuckets (Core * c, vector <string> & parameters)
+command_result df_drybuckets (color_ostream &out, vector <string> & parameters)
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     int dried_total = 0;
     for (size_t i = 0; i < world->items.all.size(); i++)
@@ -37,17 +37,17 @@ command_result df_drybuckets (Core * c, vector <string> & parameters)
         }
     }
     if (dried_total)
-        c->con.print("Done. %d buckets of water marked for emptying.\n", dried_total);
+        out.print("Done. %d buckets of water marked for emptying.\n", dried_total);
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("drybuckets", "Removes water from buckets.", df_drybuckets));
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }

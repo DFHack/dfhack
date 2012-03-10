@@ -20,12 +20,13 @@ using namespace df::enums;
 
 using df::global::world;
 
-command_result df_fixdiplomats (Core *c, vector<string> &parameters)
+command_result df_fixdiplomats (color_ostream &out, vector<string> &parameters)
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
+
     int checked = 0, fixed = 0;
     for (int i = 0; i < world->entities.all.size(); i++)
     {
@@ -120,16 +121,17 @@ command_result df_fixdiplomats (Core *c, vector<string> &parameters)
         if (update || assign)
             fixed++;
     }
-    c->con.print("Fixed %d of %d civilizations to enable tree cap diplomacy.\n", fixed, checked);
+    out.print("Fixed %d of %d civilizations to enable tree cap diplomacy.\n", fixed, checked);
     return CR_OK;
 }
 
-command_result df_fixmerchants (Core *c, vector<string> &parameters)
+command_result df_fixmerchants (color_ostream &out, vector<string> &parameters)
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
+
     int checked = 0, fixed = 0;
     for (int i = 0; i < world->entities.all.size(); i++)
     {
@@ -220,13 +222,13 @@ command_result df_fixmerchants (Core *c, vector<string> &parameters)
         if (update || assign)
             fixed++;
     }
-    c->con.print("Fixed %d of %d civilizations to enable merchant nobility.\n", fixed, checked);
+    out.print("Fixed %d of %d civilizations to enable merchant nobility.\n", fixed, checked);
     return CR_OK;
 }
 
 DFHACK_PLUGIN("fixpositions");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "fixdiplomats", "Add Diplomat position to Elven civilizations for tree cap diplomacy.",
@@ -237,7 +239,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }

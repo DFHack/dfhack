@@ -34,11 +34,11 @@ using df::global::world;
 
 DFHACK_PLUGIN("autodump");
 
-command_result df_autodump(Core * c, vector <string> & parameters);
-command_result df_autodump_destroy_here(Core * c, vector <string> & parameters);
-command_result df_autodump_destroy_item(Core * c, vector <string> & parameters);
+command_result df_autodump(color_ostream &out, vector <string> & parameters);
+command_result df_autodump_destroy_here(color_ostream &out, vector <string> & parameters);
+command_result df_autodump_destroy_item(color_ostream &out, vector <string> & parameters);
 
-DFhackCExport command_result plugin_init ( Core * c, vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "autodump", "Teleport items marked for dumping to the cursor.",
@@ -69,14 +69,14 @@ DFhackCExport command_result plugin_init ( Core * c, vector <PluginCommand> &com
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
 
 typedef map <DFCoord, uint32_t> coordmap;
 
-static command_result autodump_main(Core * c, vector <string> & parameters)
+static command_result autodump_main(color_ostream &out, vector <string> & parameters)
 {
     // Command line options
     bool destroy = false;
@@ -103,14 +103,14 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
 
     if (need_visible && need_hidden)
     {
-        c->con.printerr("An item can't be both hidden and visible.\n");
+        out.printerr("An item can't be both hidden and visible.\n");
         return CR_WRONG_USAGE;
     }
 
-    DFHack::VersionInfo *mem = c->vinfo;
+    //DFHack::VersionInfo *mem = Core::getInstance().vinfo;
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
     size_t numItems = world->items.all.size();
@@ -125,7 +125,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
     {
         if (!Gui::getCursorCoords(cx,cy,cz))
         {
-            c->con.printerr("Cursor position not found. Please enabled the cursor.\n");
+            out.printerr("Cursor position not found. Please enabled the cursor.\n");
             return CR_FAILURE;
         }
         pos_cursor = DFCoord(cx,cy,cz);
@@ -136,13 +136,13 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
             Block * b = MC.BlockAt(pos_cursor / 16);
             if(!b)
             {
-                c->con.printerr("Cursor is in an invalid/uninitialized area. Place it over a floor.\n");
+                out.printerr("Cursor is in an invalid/uninitialized area. Place it over a floor.\n");
                 return CR_FAILURE;
             }
             df::tiletype ttype = MC.tiletypeAt(pos_cursor);
             if(!DFHack::isFloorTerrain(ttype))
             {
-                c->con.printerr("Cursor should be placed over a floor.\n");
+                out.printerr("Cursor should be placed over a floor.\n");
                 return CR_FAILURE;
             }
         }
@@ -274,18 +274,18 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
         // Is this necessary?  Is "forbid" a dirtyable attribute like "dig" is?
         Maps::WriteDirtyBit(cx/16, cy/16, cz, true);
     }
-    c->con.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for destruction" : "quickdumped");
+    out.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for destruction" : "quickdumped");
     return CR_OK;
 }
 
-command_result df_autodump(Core * c, vector <string> & parameters)
+command_result df_autodump(color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
-    return autodump_main(c, parameters);
+    return autodump_main(out, parameters);
 }
 
-command_result df_autodump_destroy_here(Core * c, vector <string> & parameters)
+command_result df_autodump_destroy_here(color_ostream &out, vector <string> & parameters)
 {
     // HOTKEY COMMAND; CORE ALREADY SUSPENDED
     if (!parameters.empty())
@@ -294,19 +294,19 @@ command_result df_autodump_destroy_here(Core * c, vector <string> & parameters)
     vector<string> args;
     args.push_back("destroy-here");
 
-    return autodump_main(c, args);
+    return autodump_main(out, args);
 }
 
 static map<int, df::item_flags> pending_destroy;
 static int last_frame = 0;
 
-command_result df_autodump_destroy_item(Core * c, vector <string> & parameters)
+command_result df_autodump_destroy_item(color_ostream &out, vector <string> & parameters)
 {
     // HOTKEY COMMAND; CORE ALREADY SUSPENDED
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
-    df::item *item = Gui::getSelectedItem(c);
+    df::item *item = Gui::getSelectedItem(out);
     if (!item)
         return CR_FAILURE;
 
@@ -332,7 +332,7 @@ command_result df_autodump_destroy_item(Core * c, vector <string> & parameters)
     // Check the item is good to destroy
     if (item->flags.bits.garbage_colect)
     {
-        c->con.printerr("Item is already marked for destroy.\n");
+        out.printerr("Item is already marked for destroy.\n");
         return CR_FAILURE;
     }
 
@@ -340,7 +340,7 @@ command_result df_autodump_destroy_item(Core * c, vector <string> & parameters)
         item->flags.bits.in_building ||
         item->flags.bits.artifact1)
     {
-        c->con.printerr("Choosing not to destroy buildings, constructions and artifacts.\n");
+        out.printerr("Choosing not to destroy buildings, constructions and artifacts.\n");
         return CR_FAILURE;
     }
 
@@ -349,7 +349,7 @@ command_result df_autodump_destroy_item(Core * c, vector <string> & parameters)
         df::general_ref *ref = item->itemrefs[i];
         if (ref->getType() == general_ref_type::UNIT_HOLDER)
         {
-            c->con.printerr("Choosing not to destroy items in unit inventory.\n");
+            out.printerr("Choosing not to destroy items in unit inventory.\n");
             return CR_FAILURE;
         }
     }

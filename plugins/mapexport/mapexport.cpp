@@ -23,11 +23,11 @@ using df::global::world;
 
 typedef std::vector<df::plant *> PlantList;
 
-command_result mapexport (Core * c, std::vector <std::string> & parameters);
+command_result mapexport (color_ostream &out, std::vector <std::string> & parameters);
 
 DFHACK_PLUGIN("mapexport");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
     commands.clear();
@@ -35,12 +35,12 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
 
-command_result mapexport (Core * c, std::vector <std::string> & parameters)
+command_result mapexport (color_ostream &out, std::vector <std::string> & parameters)
 {
     bool showHidden = false;
 
@@ -50,7 +50,7 @@ command_result mapexport (Core * c, std::vector <std::string> & parameters)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {
-            c->con.print("Exports the currently visible map to a file.\n"
+            out.print("Exports the currently visible map to a file.\n"
                          "Usage: mapexport [options] <filename>\n"
                          "Example: mapexport all embark.dfmap\n"
                          "Options:\n"
@@ -65,32 +65,30 @@ command_result mapexport (Core * c, std::vector <std::string> & parameters)
         }
     }
 
+    CoreSuspender suspend;
 
     uint32_t x_max=0, y_max=0, z_max=0;
-    c->Suspend();
+
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
-        c->Resume();
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
     if (parameters.size() < filenameParameter)
     {
-        c->con.printerr("Please supply a filename.\n");
-        c->Resume();
+        out.printerr("Please supply a filename.\n");
         return CR_FAILURE;
     }
 
     std::string filename = parameters[filenameParameter-1];
     if (filename.rfind(".dfmap") == std::string::npos) filename += ".dfmap";
-    c->con << "Writing to " << filename << "..." << std::endl;
+    out << "Writing to " << filename << "..." << std::endl;
 
     std::ofstream output_file(filename, std::ios::out | std::ios::trunc | std::ios::binary);
     if (!output_file.is_open())
     {
-        c->con.printerr("Couldn't open the output file.\n");
-        c->Resume();
+        out.printerr("Couldn't open the output file.\n");
         return CR_FAILURE;
     }
     ZeroCopyOutputStream *raw_output = new OstreamOutputStream(&output_file);
@@ -101,16 +99,16 @@ command_result mapexport (Core * c, std::vector <std::string> & parameters)
 
     Maps::getSize(x_max, y_max, z_max);
     MapExtras::MapCache map;
-    DFHack::Materials *mats = c->getMaterials();
+    DFHack::Materials *mats = Core::getInstance().getMaterials();
 
-    c->con << "Writing  map info..." << std::endl;
+    out << "Writing  map info..." << std::endl;
 
     dfproto::Map protomap;
     protomap.set_x_size(x_max);
     protomap.set_y_size(y_max);
     protomap.set_z_size(z_max);
 
-    c->con << "Writing material dictionary..." << std::endl;
+    out << "Writing material dictionary..." << std::endl;
     
     for (size_t i = 0; i < world->raws.inorganics.size(); i++)
     {
@@ -142,7 +140,7 @@ command_result mapexport (Core * c, std::vector <std::string> & parameters)
     DFHack::t_feature blockFeatureGlobal;
     DFHack::t_feature blockFeatureLocal;
 
-    c->con.print("Writing map block information");
+    out.print("Writing map block information");
 
     for(uint32_t z = 0; z < z_max; z++)
     {
@@ -150,7 +148,7 @@ command_result mapexport (Core * c, std::vector <std::string> & parameters)
         {
             for(uint32_t b_x = 0; b_x < x_max; b_x++)
             {
-                if (b_x == 0 && b_y == 0 && z % 10 == 0) c->con.print(".");
+                if (b_x == 0 && b_y == 0 && z % 10 == 0) out.print(".");
                 // Get the map block
                 df::coord2d blockCoord(b_x, b_y);
                 MapExtras::Block *b = map.BlockAt(DFHack::DFCoord(b_x, b_y, z));
@@ -282,7 +280,6 @@ command_result mapexport (Core * c, std::vector <std::string> & parameters)
     delete raw_output;
 
     mats->Finish();
-    c->con.print("\nMap succesfully exported!\n");
-    c->Resume();
+    out.print("\nMap succesfully exported!\n");
     return CR_OK;
 }

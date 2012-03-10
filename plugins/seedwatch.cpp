@@ -42,19 +42,19 @@ bool ignoreSeeds(df::item_flags& f) // seeds with the following flags should not
         f.bits.in_job;
 };
 
-void printHelp(Core& core) // prints help
+void printHelp(color_ostream &out) // prints help
 {
-    core.con.print(
+    out.print(
         "Watches the numbers of seeds available and enables/disables seed and plant cooking.\n"
         "Each plant type can be assigned a limit. If their number falls below,\n"
         "the plants and seeds of that type will be excluded from cookery.\n"
         "If the number rises above the limit + %i, then cooking will be allowed.\n", buffer
         );
-    core.con.printerr(
+    out.printerr(
         "The plugin needs a fortress to be loaded and will deactivate automatically otherwise.\n"
         "You have to reactivate with 'seedwatch start' after you load the game.\n"
         );
-    core.con.print(
+    out.print(
         "Options:\n"
         "seedwatch all   - Adds all plants from the abbreviation list to the watch list.\n"
         "seedwatch start - Start watching.\n"
@@ -64,13 +64,13 @@ void printHelp(Core& core) // prints help
         );
     if(!abbreviations.empty())
     {
-        core.con.print("You can use these abbreviations for the plant tokens:\n");
+        out.print("You can use these abbreviations for the plant tokens:\n");
         for(map<string, string>::const_iterator i = abbreviations.begin(); i != abbreviations.end(); ++i)
         {
-            core.con.print("%s -> %s\n", i->first.c_str(), i->second.c_str());
+            out.print("%s -> %s\n", i->first.c_str(), i->second.c_str());
         }
     }
-    core.con.print(
+    out.print(
         "Examples:\n"
         "seedwatch MUSHROOM_HELMET_PLUMP 30\n"
         "  add MUSHROOM_HELMET_PLUMP to the watch list, limit = 30\n"
@@ -96,14 +96,9 @@ string searchAbbreviations(string in)
     }
 };
 
-command_result df_seedwatch(Core* pCore, vector<string>& parameters)
+command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
 {
-    Core& core = *pCore;
-    if(!core.isValid())
-    {
-        return CR_FAILURE;
-    }
-    CoreSuspender suspend(pCore);
+    CoreSuspender suspend;
 
     map<string, t_materialIndex> materialsReverser;
     for(size_t i = 0; i < world->raws.plants.all.size(); ++i)
@@ -111,7 +106,7 @@ command_result df_seedwatch(Core* pCore, vector<string>& parameters)
         materialsReverser[world->raws.plants.all[i]->id] = i;
     }
 
-    World *w = core.getWorld();
+    World *w = Core::getInstance().getWorld();
     t_gamemodes gm;
     w->ReadGameMode(gm);// FIXME: check return value
 
@@ -119,7 +114,7 @@ command_result df_seedwatch(Core* pCore, vector<string>& parameters)
     if(gm.g_mode != GAMEMODE_DWARF || gm.g_type != GAMETYPE_DWARF_MAIN)
     {
         // just print the help
-        printHelp(core);
+        printHelp(out);
         return CR_OK;
     }
 
@@ -128,50 +123,50 @@ command_result df_seedwatch(Core* pCore, vector<string>& parameters)
     switch(parameters.size())
     {
     case 0:
-        printHelp(core);
+        printHelp(out);
         break;
     case 1:
         par = parameters[0];
-        if(par == "help") printHelp(core);
-        else if(par == "?") printHelp(core);
+        if(par == "help") printHelp(out);
+        else if(par == "?") printHelp(out);
         else if(par == "start")
         {
             running = true;
-            core.con.print("seedwatch supervision started.\n");
+            out.print("seedwatch supervision started.\n");
         }
         else if(par == "stop")
         {
             running = false;
-            core.con.print("seedwatch supervision stopped.\n");
+            out.print("seedwatch supervision stopped.\n");
         }
         else if(par == "clear")
         {
             Kitchen::clearLimits();
-            core.con.print("seedwatch watchlist cleared\n");
+            out.print("seedwatch watchlist cleared\n");
         }
         else if(par == "info")
         {
-            core.con.print("seedwatch Info:\n");
+            out.print("seedwatch Info:\n");
             if(running)
             {
-                core.con.print("seedwatch is supervising.  Use 'seedwatch stop' to stop supervision.\n");
+                out.print("seedwatch is supervising.  Use 'seedwatch stop' to stop supervision.\n");
             }
             else
             {
-                core.con.print("seedwatch is not supervising.  Use 'seedwatch start' to start supervision.\n");
+                out.print("seedwatch is not supervising.  Use 'seedwatch start' to start supervision.\n");
             }
             map<t_materialIndex, unsigned int> watchMap;
             Kitchen::fillWatchMap(watchMap);
             if(watchMap.empty())
             {
-                core.con.print("The watch list is empty.\n");
+                out.print("The watch list is empty.\n");
             }
             else
             {
-                core.con.print("The watch list is:\n");
+                out.print("The watch list is:\n");
                 for(map<t_materialIndex, unsigned int>::const_iterator i = watchMap.begin(); i != watchMap.end(); ++i)
                 {
-                    core.con.print("%s : %u\n", world->raws.plants.all[i->first]->id.c_str(), i->second);
+                    out.print("%s : %u\n", world->raws.plants.all[i->first]->id.c_str(), i->second);
                 }
             }
         }
@@ -179,22 +174,22 @@ command_result df_seedwatch(Core* pCore, vector<string>& parameters)
         {
             map<t_materialIndex, unsigned int> watchMap;
             Kitchen::fillWatchMap(watchMap);
-            Kitchen::debug_print(core);
+            Kitchen::debug_print(out);
         }
         /*
         else if(par == "dumpmaps")
         {
-            core.con.print("Plants:\n");
+            out.print("Plants:\n");
             for(auto i = plantMaterialTypes.begin(); i != plantMaterialTypes.end(); i++)
             {
                 auto t = materialsModule.df_organic->at(i->first);
-                core.con.print("%s : %u %u\n", organics[i->first].id.c_str(), i->second, t->material_basic_mat);
+                out.print("%s : %u %u\n", organics[i->first].id.c_str(), i->second, t->material_basic_mat);
             }
-            core.con.print("Seeds:\n");
+            out.print("Seeds:\n");
             for(auto i = seedMaterialTypes.begin(); i != seedMaterialTypes.end(); i++)
             {
                 auto t = materialsModule.df_organic->at(i->first);
-                core.con.print("%s : %u %u\n", organics[i->first].id.c_str(), i->second, t->material_seed);
+                out.print("%s : %u %u\n", organics[i->first].id.c_str(), i->second, t->material_seed);
             }
         }
         */
@@ -204,11 +199,11 @@ command_result df_seedwatch(Core* pCore, vector<string>& parameters)
             if(materialsReverser.count(token) > 0)
             {
                 Kitchen::removeLimit(materialsReverser[token]);
-                core.con.print("%s is not being watched\n", token.c_str());
+                out.print("%s is not being watched\n", token.c_str());
             }
             else
             {
-                core.con.print("%s has not been found as a material.\n", token.c_str());
+                out.print("%s has not been found as a material.\n", token.c_str());
             }
         }
         break;
@@ -228,16 +223,16 @@ command_result df_seedwatch(Core* pCore, vector<string>& parameters)
             if(materialsReverser.count(token) > 0)
             {
                 Kitchen::setLimit(materialsReverser[token], limit);
-                core.con.print("%s is being watched.\n", token.c_str());
+                out.print("%s is being watched.\n", token.c_str());
             }
             else
             {
-                core.con.print("%s has not been found as a material.\n", token.c_str());
+                out.print("%s has not been found as a material.\n", token.c_str());
             }
         }
         break;
     default:
-        printHelp(core);
+        printHelp(out);
         break;
     }
 
@@ -246,7 +241,7 @@ command_result df_seedwatch(Core* pCore, vector<string>& parameters)
 
 DFHACK_PLUGIN("seedwatch");
 
-DFhackCExport command_result plugin_init(Core* pCore, vector<PluginCommand>& commands)
+DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand>& commands)
 {
     commands.clear();
     commands.push_back(PluginCommand("seedwatch", "Switches cookery based on quantity of seeds, to keep reserves", df_seedwatch));
@@ -275,13 +270,13 @@ DFhackCExport command_result plugin_init(Core* pCore, vector<PluginCommand>& com
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onstatechange(Core* pCore, state_change_event event)
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
     case SC_GAME_LOADED:
     case SC_GAME_UNLOADED:
         if (running)
-            pCore->con.printerr("seedwatch deactivated due to game load/unload\n");
+            out.printerr("seedwatch deactivated due to game load/unload\n");
         running = false;
         break;
     default:
@@ -291,7 +286,7 @@ DFhackCExport command_result plugin_onstatechange(Core* pCore, state_change_even
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onupdate(Core* pCore)
+DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
     if (running)
     {
@@ -301,8 +296,7 @@ DFhackCExport command_result plugin_onupdate(Core* pCore)
             return CR_OK;
         counter = 0;
 
-        Core& core = *pCore;
-        World *w = core.getWorld();
+        World *w = Core::getInstance().getWorld();
         t_gamemodes gm;
         w->ReadGameMode(gm);// FIXME: check return value
         // if game mode isn't fortress mode
@@ -310,7 +304,7 @@ DFhackCExport command_result plugin_onupdate(Core* pCore)
         {
             // stop running.
             running = false;
-            core.con.printerr("seedwatch deactivated due to game mode switch\n");
+            out.printerr("seedwatch deactivated due to game mode switch\n");
             return CR_OK;
         }
         // this is dwarf mode, continue

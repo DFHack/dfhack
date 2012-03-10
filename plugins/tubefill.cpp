@@ -17,23 +17,23 @@ using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
 
-command_result tubefill(DFHack::Core * c, std::vector<std::string> & params);
+command_result tubefill(color_ostream &out, std::vector<std::string> & params);
 
 DFHACK_PLUGIN("tubefill");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.clear();
     commands.push_back(PluginCommand("tubefill","Fill in all the adamantine tubes again.",tubefill));
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
 
-command_result tubefill(DFHack::Core * c, std::vector<std::string> & params)
+command_result tubefill(color_ostream &out, std::vector<std::string> & params)
 {
     uint64_t count = 0;
 
@@ -41,16 +41,18 @@ command_result tubefill(DFHack::Core * c, std::vector<std::string> & params)
     {
         if(params[i] == "help" || params[i] == "?")
         {
-            c->con.print("Replenishes mined out adamantine and hollow adamantine tubes.\n"
+            out.print("Replenishes mined out adamantine and hollow adamantine tubes.\n"
                 "May cause !!FUN!!\n"
                 );
             return CR_OK;
         }
     }
-    CoreSuspender suspend(c);
+
+    CoreSuspender suspend;
+
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
@@ -102,6 +104,6 @@ command_result tubefill(DFHack::Core * c, std::vector<std::string> & params)
             }
         }
     }
-    c->con.print("Found and changed %d tiles.\n", count);
+    out.print("Found and changed %d tiles.\n", count);
     return CR_OK;
 }

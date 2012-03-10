@@ -26,11 +26,11 @@ typedef vector <df::coord> coord_vec;
 
 CommandHistory liquids_hist;
 
-command_result df_liquids (Core * c, vector <string> & parameters);
+command_result df_liquids (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("liquids");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     liquids_hist.load("liquids.history");
     commands.clear();
@@ -38,7 +38,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     liquids_hist.save("liquids.history");
     return CR_OK;
@@ -220,15 +220,18 @@ private:
 	Core *c_;
 };
 
-command_result df_liquids (Core * c, vector <string> & parameters)
+command_result df_liquids (color_ostream &out_, vector <string> & parameters)
 {
     int32_t x,y,z;
+
+    assert(out_.is_console());
+    Console &out = static_cast<Console&>(out_);
 
     for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {
-            c->con.print("This tool allows placing magma, water and other similar things.\n"
+            out.print("This tool allows placing magma, water and other similar things.\n"
             "It is interactive and further help is available when you run it.\n"
             );
             return CR_OK;
@@ -237,14 +240,14 @@ command_result df_liquids (Core * c, vector <string> & parameters)
 
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
     Brush * brush = new RectangleBrush(1,1);
     string brushname = "point";
     bool end = false;
-    c->con << "Welcome to the liquid spawner.\nType 'help' or '?' for a list of available commands, 'q' to quit.\nPress return after a command to confirm." << std::endl;
+    out << "Welcome to the liquid spawner.\nType 'help' or '?' for a list of available commands, 'q' to quit.\nPress return after a command to confirm." << std::endl;
     string mode="magma";
 
     string flowmode="f+";
@@ -256,11 +259,11 @@ command_result df_liquids (Core * c, vector <string> & parameters)
         string command = "";
         std::stringstream str;
         str <<"[" << mode << ":" << brushname << ":" << amount << ":" << flowmode << ":" << setmode << "]#";
-        if(c->con.lineedit(str.str(),command,liquids_hist) == -1)
+        if(out.lineedit(str.str(),command,liquids_hist) == -1)
             return CR_FAILURE;
         if(command=="help" || command == "?")
         {
-            c->con << "Modes:" << endl
+            out << "Modes:" << endl
                  << "m             - switch to magma" << endl
                  << "w             - switch to water" << endl
                  << "o             - make obsidian wall instead" << endl
@@ -333,21 +336,21 @@ command_result df_liquids (Core * c, vector <string> & parameters)
             std::stringstream str;
             CommandHistory range_hist;
             str << " :set range width<" << width << "># ";
-            c->con.lineedit(str.str(),command,range_hist);
+            out.lineedit(str.str(),command,range_hist);
             range_hist.add(command);
             width = command == "" ? width : atoi (command.c_str());
             if(width < 1) width = 1;
 
             str.str("");
             str << " :set range height<" << height << "># ";
-            c->con.lineedit(str.str(),command,range_hist);
+            out.lineedit(str.str(),command,range_hist);
             range_hist.add(command);
             height = command == "" ? height : atoi (command.c_str());
             if(height < 1) height = 1;
 
             str.str("");
             str << " :set range z-levels<" << z_levels << "># ";
-            c->con.lineedit(str.str(),command,range_hist);
+            out.lineedit(str.str(),command,range_hist);
             range_hist.add(command);
             z_levels = command == "" ? z_levels : atoi (command.c_str());
             if(z_levels < 1) z_levels = 1;
@@ -378,7 +381,7 @@ command_result df_liquids (Core * c, vector <string> & parameters)
 		{
 			delete brush;
 			brushname = "flood";
-			brush = new FloodBrush(c);
+			brush = new FloodBrush(&Core::getInstance());
 		}
         else if(command == "q")
         {
@@ -427,24 +430,25 @@ command_result df_liquids (Core * c, vector <string> & parameters)
             amount = 7;
         else if(command.empty())
         {
-            CoreSuspender suspend(c);
+            CoreSuspender suspend;
+
             do
             {
                 if (!Maps::IsValid())
                 {
-                    c->con << "Can't see any DF map loaded." << endl;
+                    out << "Can't see any DF map loaded." << endl;
                     break;;
                 }
                 if(!Gui::getCursorCoords(x,y,z))
                 {
-                    c->con << "Can't get cursor coords! Make sure you have a cursor active in DF." << endl;
+                    out << "Can't get cursor coords! Make sure you have a cursor active in DF." << endl;
                     break;
                 }
-                c->con << "cursor coords: " << x << "/" << y << "/" << z << endl;
+                out << "cursor coords: " << x << "/" << y << "/" << z << endl;
                 MapCache mcache;
                 DFHack::DFCoord cursor(x,y,z);
                 coord_vec all_tiles = brush->points(mcache,cursor);
-                c->con << "working..." << endl;
+                out << "working..." << endl;
                 if(mode == "obsidian")
                 {
                     coord_vec::iterator iter = all_tiles.begin();
@@ -584,21 +588,21 @@ command_result df_liquids (Core * c, vector <string> & parameters)
                         }
                         else
                         {
-                            c->con << "flow bit 1 = " << bflags.bits.liquid_1 << endl; 
-                            c->con << "flow bit 2 = " << bflags.bits.liquid_2 << endl;
+                            out << "flow bit 1 = " << bflags.bits.liquid_1 << endl; 
+                            out << "flow bit 2 = " << bflags.bits.liquid_2 << endl;
                         }
                         biter ++;
                     }
                 }
                 if(mcache.WriteAll())
-                    c->con << "OK" << endl;
+                    out << "OK" << endl;
                 else
-                    c->con << "Something failed horribly! RUN!" << endl;
+                    out << "Something failed horribly! RUN!" << endl;
             } while (0);
         }
         else
         {
-            c->con << command << " : unknown command." << endl;
+            out << command << " : unknown command." << endl;
         }
     }
     return CR_OK;

@@ -15,7 +15,7 @@ using namespace std;
 #include "modules/Gui.h"
 using namespace DFHack;
 
-command_result df_versionosd (Core * c, vector <string> & parameters);
+command_result df_versionosd (color_ostream &out, vector <string> & parameters);
 static DFSDL_Surface* (*_IMG_LoadPNG_RW)(void* src) = 0;
 static vPtr (*_SDL_RWFromFile)(const char* file, const char *mode) = 0;
 static int (*_SDL_SetAlpha)(vPtr surface, uint32_t flag, uint8_t alpha) = 0;
@@ -45,7 +45,7 @@ DFTileSurface* createTile(int x, int y)
     return tile;
 }
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.clear();
     commands.push_back(PluginCommand("versionosd",
@@ -66,7 +66,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 
     if ( !surface )
     {
-        c->con.print("Couldnt load image from file %s", file);
+        out.print("Couldnt load image from file %s", file);
         return CR_FAILURE;
     }
 
@@ -99,7 +99,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     Graphic* g = c->getGraphic();
     g->Unregister(gettile);
@@ -114,12 +114,11 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-command_result df_versionosd (Core * c, vector <string> & parameters)
+command_result df_versionosd (color_ostream &out, vector <string> & parameters)
 {
     On = !On;
-    c->Suspend();
-    c->con.print("Version OSD is %s\n", On ? "On" : "Off");
-    c->Resume();
+    CoreSuspender suspend;
+    out.print("Version OSD is %s\n", On ? "On" : "Off");
     return CR_OK;
 }
 

@@ -46,14 +46,14 @@ using namespace DFHack::Translation;
  *  PLUGIN INTERFACE *
  *********************/
 
-static bool bodyswap_hotkey(Core *c, df::viewscreen *top);
+static bool bodyswap_hotkey(df::viewscreen *top);
 
-command_result adv_bodyswap (Core * c, std::vector <std::string> & parameters);
-command_result adv_tools (Core * c, std::vector <std::string> & parameters);
+command_result adv_bodyswap (color_ostream &out, std::vector <std::string> & parameters);
+command_result adv_tools (color_ostream &out, std::vector <std::string> & parameters);
 
 DFHACK_PLUGIN("advtools");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.clear();
 
@@ -91,16 +91,16 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
 
-df::nemesis_record *getPlayerNemesis(Core *c, bool restore_swap);
+df::nemesis_record *getPlayerNemesis(color_ostream &out, bool restore_swap);
 
 static bool in_transient_swap = false;
 
-DFhackCExport command_result plugin_onstatechange(Core* c, state_change_event event)
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
     case SC_GAME_LOADED:
@@ -113,12 +113,12 @@ DFhackCExport command_result plugin_onstatechange(Core* c, state_change_event ev
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onupdate ( Core * c )
+DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     // Revert transient swaps before trouble happens
     if (in_transient_swap)
     {
-        auto screen = c->getTopViewscreen();
+        auto screen = Core::getTopViewscreen();
         bool revert = false;
 
         if (strict_virtual_cast<df::viewscreen_dungeonmodest>(screen))
@@ -143,7 +143,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 
         if (revert)
         {
-            getPlayerNemesis(c, true);
+            getPlayerNemesis(out, true);
             in_transient_swap = false;
         }
     }
@@ -155,15 +155,15 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
  * UTILITY FUNCTIONS *
  *********************/
 
-static bool bodyswap_hotkey(Core *c, df::viewscreen *top)
+static bool bodyswap_hotkey(df::viewscreen *top)
 {
     return !!virtual_cast<df::viewscreen_dungeonmodest>(top) ||
            !!virtual_cast<df::viewscreen_dungeon_monsterstatusst>(top);
 }
 
-df::unit *getCurUnit(Core *c)
+df::unit *getCurUnit()
 {
-    auto top = c->getTopViewscreen();
+    auto top = Core::getTopViewscreen();
 
     if (VIRTUAL_CAST_VAR(ms, df::viewscreen_dungeon_monsterstatusst, top))
         return ms->unit;
@@ -186,11 +186,11 @@ df::nemesis_record *getNemesis(df::unit *unit)
     return NULL;
 }
 
-bool bodySwap(Core *c, df::unit *player)
+bool bodySwap(color_ostream &out, df::unit *player)
 {
     if (!player)
     {
-        c->con.printerr("Unit to swap is NULL\n");
+        out.printerr("Unit to swap is NULL\n");
         return false;
     }
 
@@ -199,7 +199,7 @@ bool bodySwap(Core *c, df::unit *player)
     int idx = linear_index(vec, player);
     if (idx < 0)
     {
-        c->con.printerr("Unit to swap not found: %d\n", player->id);
+        out.printerr("Unit to swap not found: %d\n", player->id);
         return false;
     }
 
@@ -209,12 +209,12 @@ bool bodySwap(Core *c, df::unit *player)
     return true;
 }
 
-df::nemesis_record *getPlayerNemesis(Core *c, bool restore_swap)
+df::nemesis_record *getPlayerNemesis(color_ostream &out, bool restore_swap)
 {
     auto real_nemesis = vector_get(world->nemesis.all, ui_advmode->player_id);
     if (!real_nemesis || !real_nemesis->unit)
     {
-        c->con.printerr("Invalid player nemesis id: %d\n", ui_advmode->player_id);
+        out.printerr("Invalid player nemesis id: %d\n", ui_advmode->player_id);
         return NULL;
     }
 
@@ -225,11 +225,11 @@ df::nemesis_record *getPlayerNemesis(Core *c, bool restore_swap)
 
         if (ctl_nemesis != real_nemesis)
         {
-            if (!bodySwap(c, real_nemesis->unit))
+            if (!bodySwap(out, real_nemesis->unit))
                 return NULL;
 
             auto name = TranslateName(&real_nemesis->unit->name, false);
-            c->con.print("Returned into the body of %s.\n", name.c_str());
+            out.print("Returned into the body of %s.\n", name.c_str());
         }
 
         real_nemesis->unit->relations.group_leader_id = -1;
@@ -318,9 +318,9 @@ void sortCompanionNemesis(std::vector<nemesis_record*> *list, int player_id = -1
     list->swap(output);
 }
 
-void listCompanions(Core *c, std::vector<nemesis_record*> *list, bool units = true)
+void listCompanions(color_ostream &out, std::vector<nemesis_record*> *list, bool units = true)
 {
-    nemesis_record *player = getPlayerNemesis(c, false);
+    nemesis_record *player = getPlayerNemesis(out, false);
     if (!player)
         return;
 
@@ -485,23 +485,23 @@ void joinCounts(std::map<df::coord, int> &counts)
  *     FORMATTING    *
  *********************/
 
-static void printCompanionHeader(Core *c, size_t i, df::unit *unit)
+static void printCompanionHeader(color_ostream &out, size_t i, df::unit *unit)
 {
-    c->con.color(Console::COLOR_GREY);
+    out.color(Console::COLOR_GREY);
 
     if (i < 28)
-        c->con << char('a'+i);
+        out << char('a'+i);
     else
-        c->con << i;
+        out << i;
 
-    c->con << ": " << getUnitNameProfession(unit);
+    out << ": " << getUnitNameProfession(unit);
     if (unit->flags1.bits.dead)
-        c->con << " (DEAD)";
+        out << " (DEAD)";
     if (unit->flags3.bits.ghostly)
-        c->con << " (GHOST)";
-    c->con << endl;
+        out << " (GHOST)";
+    out << endl;
 
-    c->con.reset_color();
+    out.reset_color();
 }
 
 static size_t formatSize(std::vector<std::string> *out, const std::map<std::string, int> in, size_t *cnt)
@@ -560,7 +560,7 @@ static std::string formatDirection(df::coord delta)
     return stl_sprintf("%d away %s %+d", dist, dir.c_str(), delta.z);
 }
 
-static void printEquipped(Core *c, df::unit *unit, bool all)
+static void printEquipped(color_ostream &out, df::unit *unit, bool all)
 {
     std::vector<inv_item> items;
     listUnitInventory(&items, unit);
@@ -636,10 +636,10 @@ static void printEquipped(Core *c, df::unit *unit, bool all)
         for (int j = 0; j < 4; j++)
         {
             size_t sz = std::max(sizes[j], size_t(18));
-            c->con << "| " << std::left << std::setw(sz) << vector_get(cols[j],i) << " ";
+            out << "| " << std::left << std::setw(sz) << vector_get(cols[j],i) << " ";
         }
 
-        c->con << "|" << std::endl;
+        out << "|" << std::endl;
     }
 }
 
@@ -647,7 +647,7 @@ static void printEquipped(Core *c, df::unit *unit, bool all)
  *      COMMANDS     *
  *********************/
 
-command_result adv_bodyswap (Core * c, std::vector <std::string> & parameters)
+command_result adv_bodyswap (color_ostream &out, std::vector <std::string> & parameters)
 {
     // HOTKEY COMMAND; CORE IS SUSPENDED
     bool force = false;
@@ -669,19 +669,19 @@ command_result adv_bodyswap (Core * c, std::vector <std::string> & parameters)
     }
 
     // Get the real player; undo previous transient swap
-    auto real_nemesis = getPlayerNemesis(c, true);
+    auto real_nemesis = getPlayerNemesis(out, true);
     if (!real_nemesis)
         return CR_FAILURE;
 
     // Get the unit to swap to
-    auto new_unit = getCurUnit(c);
+    auto new_unit = getCurUnit();
     auto new_nemesis = getNemesis(new_unit);
 
     if (!new_nemesis)
     {
         if (new_unit)
         {
-            c->con.printerr("Cannot swap into a non-historical unit.\n");
+            out.printerr("Cannot swap into a non-historical unit.\n");
             return CR_FAILURE;
         }
 
@@ -694,16 +694,16 @@ command_result adv_bodyswap (Core * c, std::vector <std::string> & parameters)
     // Verify it's a companion
     if (!force && linear_index(real_nemesis->companions, new_nemesis->id) < 0)
     {
-        c->con.printerr("This is not your companion - use force to bodyswap.\n");
+        out.printerr("This is not your companion - use force to bodyswap.\n");
         return CR_FAILURE;
     }
 
     // Swap
-    if (!bodySwap(c, new_nemesis->unit))
+    if (!bodySwap(out, new_nemesis->unit))
         return CR_FAILURE;
 
     auto name = TranslateName(&new_nemesis->unit->name, false);
-    c->con.print("Swapped into the body of %s.\n", name.c_str());
+    out.print("Swapped into the body of %s.\n", name.c_str());
 
     // Permanently re-link everything
     if (permanent)
@@ -739,12 +739,12 @@ command_result adv_bodyswap (Core * c, std::vector <std::string> & parameters)
     return CR_OK;
 }
 
-command_result adv_tools (Core * c, std::vector <std::string> & parameters)
+command_result adv_tools (color_ostream &out, std::vector <std::string> & parameters)
 {
     if (parameters.empty())
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     const auto &command = parameters[0];
     if (command == "list-equipped")
@@ -760,7 +760,7 @@ command_result adv_tools (Core * c, std::vector <std::string> & parameters)
 
         std::vector<nemesis_record*> list;
 
-        listCompanions(c, &list);
+        listCompanions(out, &list);
         sortCompanionNemesis(&list);
 
         for (size_t i = 0; i < list.size(); i++)
@@ -768,8 +768,8 @@ command_result adv_tools (Core * c, std::vector <std::string> & parameters)
             auto item = list[i];
             auto unit = item->unit;
 
-            printCompanionHeader(c, i, unit);
-            printEquipped(c, unit, all);
+            printCompanionHeader(out, i, unit);
+            printEquipped(out, unit, all);
         }
 
         return CR_OK;
@@ -787,7 +787,7 @@ command_result adv_tools (Core * c, std::vector <std::string> & parameters)
                 return CR_WRONG_USAGE;
         }
 
-        auto *player = getPlayerNemesis(c, false);
+        auto *player = getPlayerNemesis(out, false);
         if (!player)
             return CR_FAILURE;
 
@@ -821,14 +821,14 @@ command_result adv_tools (Core * c, std::vector <std::string> & parameters)
 
         joinCounts(counts);
 
-        c->con.print("%d items of metal merchandise found in the vicinity.\n", total);
+        out.print("%d items of metal merchandise found in the vicinity.\n", total);
         for (auto it = counts.begin(); it != counts.end(); it++)
         {
             if (!it->second)
                 continue;
 
             df::coord delta = it->first * 10;
-            c->con.print("  %s: %d\n", formatDirection(delta).c_str(), it->second);
+            out.print("  %s: %d\n", formatDirection(delta).c_str(), it->second);
         }
 
         return CR_OK;

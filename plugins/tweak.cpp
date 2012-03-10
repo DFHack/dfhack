@@ -35,31 +35,33 @@ using df::global::world;
 
 using namespace DFHack::Gui;
 
-static command_result tweak(Core * c, vector <string> & parameters);
+static command_result tweak(color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("tweak");
 
-DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.clear();
     commands.push_back(PluginCommand(
         "tweak", "Various tweaks for minor bugs.", tweak, false,
         "  tweak clear-missing\n"
         "    Remove the missing status from the selected unit.\n"
-        "  lair\n"
-        "    Mark the map as monster lair\n"
+        "  tweak lair\n"
+        "    Mark the map as monster lair, preventing item scatter on reclaim.\n"
     ));
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
     return CR_OK;
 }
-command_result lair(DFHack::Core * c, std::vector<std::string> & params);
-static command_result tweak(Core * c, vector <string> &parameters)
+
+static command_result lair(color_ostream &out, std::vector<std::string> & params);
+
+static command_result tweak(color_ostream &out, vector <string> &parameters)
 {
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     if (parameters.empty())
         return CR_WRONG_USAGE;
@@ -68,7 +70,7 @@ static command_result tweak(Core * c, vector <string> &parameters)
 
     if (cmd == "clear-missing")
     {
-        df::unit *unit = getSelectedUnit(c);
+        df::unit *unit = getSelectedUnit(out);
         if (!unit)
             return CR_FAILURE;
 
@@ -85,7 +87,7 @@ static command_result tweak(Core * c, vector <string> &parameters)
     }
     else if(cmd == "lair")
     {
-        return lair(c,parameters);
+        return lair(out,parameters);
     }
     else return CR_WRONG_USAGE;
 
@@ -93,22 +95,12 @@ static command_result tweak(Core * c, vector <string> &parameters)
 }
 
 #include "modules/Maps.h"
-command_result lair(DFHack::Core * c, std::vector<std::string> & params)
-{
-    for(size_t i = 0; i < params.size();i++)
-    {
-        if(params[i] == "help" || params[i] == "?")
-        {
-            c->con.print("Makes the map a smonster lair, hopefully preventing item scatter.\n");
-            return CR_OK;
-        }
-    }
-    Console & con = c->con;
 
-    //CoreSuspender suspend(c);
+command_result lair(color_ostream &out, std::vector<std::string> & params)
+{
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
     uint32_t x_max,y_max,z_max;
@@ -124,6 +116,6 @@ command_result lair(DFHack::Core * c, std::vector<std::string> & params)
             occupancies[x][y].bits.monster_lair = true;
         }
     }
-    con.print("Map monsterized.\n");
+    out.print("Map monsterized.\n");
     return CR_OK;
 }

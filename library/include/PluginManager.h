@@ -26,6 +26,7 @@ distribution.
 
 #include "Export.h"
 #include "Hooks.h"
+#include "ColorText.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -61,8 +62,8 @@ namespace DFHack
     };
     struct DFHACK_EXPORT PluginCommand
     {
-        typedef command_result (*command_function)(Core *, std::vector <std::string> &);
-        typedef bool (*command_hotkey_guard)(Core *, df::viewscreen *);
+        typedef command_result (*command_function)(color_ostream &out, std::vector <std::string> &);
+        typedef bool (*command_hotkey_guard)(df::viewscreen *);
 
         /// create a command with a name, description, function pointer to its code
         /// and saying if it needs an interactive terminal
@@ -112,13 +113,13 @@ namespace DFHack
         friend class PluginManager;
         Plugin(DFHack::Core* core, const std::string& filepath, const std::string& filename, PluginManager * pm);
         ~Plugin();
-        command_result on_update();
-        command_result on_state_change(state_change_event event);
+        command_result on_update(color_ostream &out);
+        command_result on_state_change(color_ostream &out, state_change_event event);
     public:
         bool load();
         bool unload();
         bool reload();
-        command_result invoke( std::string & command, std::vector <std::string> & parameters, bool interactive );
+        command_result invoke(color_ostream &out, std::string & command, std::vector <std::string> & parameters, bool interactive );
         bool can_invoke_hotkey( std::string & command, df::viewscreen *top );
         plugin_state getState () const;
         const PluginCommand& operator[] (std::size_t index) const
@@ -141,11 +142,11 @@ namespace DFHack
         DFLibrary * plugin_lib;
         PluginManager * parent;
         plugin_state state;
-        command_result (*plugin_init)(Core *, std::vector <PluginCommand> &);
-        command_result (*plugin_status)(Core *, std::string &);
-        command_result (*plugin_shutdown)(Core *);
-        command_result (*plugin_onupdate)(Core *);
-        command_result (*plugin_onstatechange)(Core *, state_change_event);
+        command_result (*plugin_init)(color_ostream &, std::vector <PluginCommand> &);
+        command_result (*plugin_status)(color_ostream &, std::string &);
+        command_result (*plugin_shutdown)(color_ostream &);
+        command_result (*plugin_onupdate)(color_ostream &);
+        command_result (*plugin_onstatechange)(color_ostream &, state_change_event);
     };
     class DFHACK_EXPORT PluginManager
     {
@@ -154,15 +155,15 @@ namespace DFHack
         friend class Plugin;
         PluginManager(Core * core);
         ~PluginManager();
-        void OnUpdate( void );
-        void OnStateChange( state_change_event event );
+        void OnUpdate(color_ostream &out);
+        void OnStateChange(color_ostream &out, state_change_event event);
         void registerCommands( Plugin * p );
         void unregisterCommands( Plugin * p );
     // PUBLIC METHODS
     public:
         Plugin *getPluginByName (const std::string & name);
         Plugin *getPluginByCommand (const std::string &command);
-        command_result InvokeCommand( std::string & command, std::vector <std::string> & parameters, bool interactive = true );
+        command_result InvokeCommand(color_ostream &out, std::string & command, std::vector <std::string> & parameters, bool interactive = true );
         bool CanInvokeHotkey(std::string &command, df::viewscreen *top);
         Plugin* operator[] (std::size_t index)
         {
@@ -185,9 +186,9 @@ namespace DFHack
     namespace Gui
     {
         // Predefined hotkey guards
-        DFHACK_EXPORT bool default_hotkey(Core *, df::viewscreen *);
-        DFHACK_EXPORT bool dwarfmode_hotkey(Core *, df::viewscreen *);
-        DFHACK_EXPORT bool cursor_hotkey(Core *, df::viewscreen *);
+        DFHACK_EXPORT bool default_hotkey(df::viewscreen *);
+        DFHACK_EXPORT bool dwarfmode_hotkey(df::viewscreen *);
+        DFHACK_EXPORT bool cursor_hotkey(df::viewscreen *);
     }
 };
 

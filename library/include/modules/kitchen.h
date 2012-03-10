@@ -58,7 +58,7 @@ const t_exclusionType limitExclusion = 4; // used to store limit as an entry in 
  */
 
 // print the exclusion list, with the material index also translated into its token (for organics) - for debug really
-DFHACK_EXPORT void debug_print(Core &);
+DFHACK_EXPORT void debug_print(color_ostream &out);
 
 // remove this material from the exclusion list if it is in it
 DFHACK_EXPORT void allowPlantSeedCookery(t_materialIndex materialIndex);

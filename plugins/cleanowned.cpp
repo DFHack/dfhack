@@ -25,11 +25,11 @@ using namespace df::enums;
 
 using df::global::world;
 
-command_result df_cleanowned (Core * c, vector <string> & parameters);
+command_result df_cleanowned (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("cleanowned");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "cleanowned", "Confiscates and dumps garbage owned by dwarfs.",
@@ -51,12 +51,12 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
 
-command_result df_cleanowned (Core * c, vector <string> & parameters)
+command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
 {
     bool dump_scattered = false;
     bool confiscate_all = false;
@@ -80,15 +80,15 @@ command_result df_cleanowned (Core * c, vector <string> & parameters)
             return CR_WRONG_USAGE;
     }
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     if (!Translation::IsValid())
     {
-        c->con.printerr("Translation data unavailable!\n");
+        out.printerr("Translation data unavailable!\n");
         return CR_FAILURE;
     }
 
-    c->con.print("Found total %d items.\n", world->items.all.size());
+    out.print("Found total %d items.\n", world->items.all.size());
 
     for (std::size_t i=0; i < world->items.all.size(); i++)
     {
@@ -101,7 +101,7 @@ command_result df_cleanowned (Core * c, vector <string> & parameters)
             int32_t owner = Items::getItemOwnerID(item);
             if (owner >= 0)
             {
-                c->con.print("Fixing a misflagged item: \t");
+                out.print("Fixing a misflagged item: \t");
                 confiscate = true;
             }
             else
@@ -112,7 +112,7 @@ command_result df_cleanowned (Core * c, vector <string> & parameters)
 
         if (item->flags.bits.rotten)
         {
-            c->con.print("Confiscating a rotten item: \t");
+            out.print("Confiscating a rotten item: \t");
             confiscate = true;
         }
         else if (item->flags.bits.on_ground)
@@ -130,30 +130,30 @@ command_result df_cleanowned (Core * c, vector <string> & parameters)
                 confiscate = true;
                 if(dump_scattered)
                 {
-                    c->con.print("Dumping a dropped item: \t");
+                    out.print("Dumping a dropped item: \t");
                     dump = true;
                 }
                 else
                 {
-                    c->con.print("Confiscating a dropped item: \t");
+                    out.print("Confiscating a dropped item: \t");
                 }
             }
             else if(dump_scattered)
             {
-                c->con.print("Confiscating and dumping litter: \t");
+                out.print("Confiscating and dumping litter: \t");
                 confiscate = true;
                 dump = true;
             }
         }
         else if (item->getWear() >= wear_dump_level)
         {
-            c->con.print("Confiscating and dumping a worn item: \t");
+            out.print("Confiscating and dumping a worn item: \t");
             confiscate = true;
             dump = true;
         }
         else if (confiscate_all)
         {
-            c->con.print("Confiscating: \t");
+            out.print("Confiscating: \t");
             confiscate = true;
         }
 
@@ -161,7 +161,7 @@ command_result df_cleanowned (Core * c, vector <string> & parameters)
         {
             std::string description;
             item->getItemDescription(&description, 0);
-            c->con.print(
+            out.print(
                 "0x%x %s (wear %d)",
                 item,
                 description.c_str(),
@@ -171,16 +171,16 @@ command_result df_cleanowned (Core * c, vector <string> & parameters)
             df::unit *owner = Items::getItemOwner(item);
 
             if (owner)
-                c->con.print(", owner %s", Translation::TranslateName(&owner->name,false).c_str());
+                out.print(", owner %s", Translation::TranslateName(&owner->name,false).c_str());
 
             if (!dry_run)
             {
                 if (!Items::removeItemOwner(item))
-                    c->con.print("(unsuccessfully) ");
+                    out.print("(unsuccessfully) ");
                 if (dump)
                     item->flags.bits.dump = 1;
             }
-            c->con.print("\n");
+            out.print("\n");
         }
     }
     return CR_OK;

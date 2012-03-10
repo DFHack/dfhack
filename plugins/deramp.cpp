@@ -18,16 +18,16 @@ using df::global::world;
 
 DFHACK_PLUGIN("deramp");
 
-command_result df_deramp (Core * c, vector <string> & parameters)
+command_result df_deramp (color_ostream &out, vector <string> & parameters)
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
@@ -75,13 +75,13 @@ command_result df_deramp (Core * c, vector <string> & parameters)
         }
     }
     if (count)
-        c->con.print("Found and changed %d tiles.\n", count);
+        out.print("Found and changed %d tiles.\n", count);
     if (countbad)
-        c->con.print("Fixed %d bad down ramps.\n", countbad);
+        out.print("Fixed %d bad down ramps.\n", countbad);
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "deramp", "De-ramp. All ramps marked for removal are replaced with floors.",
@@ -93,7 +93,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }

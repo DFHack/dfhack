@@ -505,7 +505,7 @@ bool Console::shutdown(void)
 
 void Console::begin_batch()
 {
-    color_ostream::begin_batch();
+    //color_ostream::begin_batch();
 
     wlock->lock();
 

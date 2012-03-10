@@ -67,6 +67,7 @@ freely, subject to the following restrictions:
 
 // Platform specific includes
 #if defined(_TTHREAD_WIN32_)
+  #define NOMINMAX
   #include <windows.h>
 #else
   #include <pthread.h>

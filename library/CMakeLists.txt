@@ -29,6 +29,7 @@ include/Internal.h
 include/DFHack.h
 include/Console.h
 include/Core.h
+include/ColorText.h
 include/DataDefs.h
 include/Error.h
 include/Export.h
@@ -66,6 +67,7 @@ include/modules/Graphic.h
 
 SET(PROJECT_SRCS
 Core.cpp
+ColorText.cpp
 DataDefs.cpp
 DataStatics.cpp
 DataStaticsCtor.cpp

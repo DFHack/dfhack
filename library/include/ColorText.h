@@ -75,6 +75,7 @@ namespace  DFHack
         protected:
             virtual int sync() {
                 owner->flush_buffer(true);
+                return 0;
             }
         };
 

@@ -138,6 +138,9 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             case job_type::StrangeMoodFell:
                 out.print("enter a fell mood?");
                 break;
+            default:
+                out.print("do something else...");
+                break;
             }
             break;
 

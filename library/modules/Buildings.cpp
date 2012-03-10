@@ -72,18 +72,16 @@ bool Buildings::Read (const uint32_t index, t_building & building)
     return true;
 }
 
-bool Buildings::ReadCustomWorkshopTypes(color_ostream &out, map <uint32_t, string> & btypes)
+bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
     vector <building_def *> & bld_def = world->raws.buildings.all;
     uint32_t size = bld_def.size();
     btypes.clear();
 
-    out.print("Probing vector at 0x%x for custom workshops.\n", &bld_def);
     for (auto iter = bld_def.begin(); iter != bld_def.end();iter++)
     {
         building_def * temp = *iter;
         btypes[temp->id] = temp->code;
-        out.print("%d : %s\n",temp->id, temp->code.c_str());
     }
     return true;
 }

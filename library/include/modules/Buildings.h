@@ -80,7 +80,7 @@ DFHACK_EXPORT bool Read (const uint32_t index, t_building & building);
  * read mapping from custom_type value to building RAW name
  * custom_type of -1 implies ordinary building
  */
-DFHACK_EXPORT bool ReadCustomWorkshopTypes(color_ostream &out, std::map <uint32_t, std::string> & btypes);
+DFHACK_EXPORT bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
 
 }
 }

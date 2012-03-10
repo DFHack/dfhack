@@ -494,7 +494,6 @@ bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
 
 bool Gui::setViewCoords (const int32_t x, const int32_t y, const int32_t z)
 {
-    auto cursor = df::global::cursor;
     (*df::global::window_x) = x;
     (*df::global::window_y) = y;
     (*df::global::window_z) = z;

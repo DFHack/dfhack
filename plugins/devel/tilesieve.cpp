@@ -18,13 +18,13 @@ using df::global::world;
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
-command_result tilesieve (Core * c, std::vector <std::string> & parameters);
+command_result tilesieve (color_ostream &out, std::vector <std::string> & parameters);
 
 // A plugin must be able to return its name. This must correspond to the filename - skeleton.plug.so or skeleton.plug.dll
 DFHACK_PLUGIN("tilesieve");
 
 // Mandatory init function. If you have some global state, create it here.
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
@@ -37,7 +37,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 }
 
 // This is called right before the plugin library is removed from memory.
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
@@ -48,16 +48,16 @@ struct xyz
     int z;
 };
 
-command_result tilesieve(DFHack::Core * c, std::vector<std::string> & params)
+command_result tilesieve(color_ostream &out, std::vector<std::string> & params)
 {
-    Console & con = c->con;
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
+
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    c->con.print("Scanning.\n");
+    out.print("Scanning.\n");
     std::set <df::tiletype> seen;
     for (auto iter = world->map.map_blocks.begin(); iter != world->map.map_blocks.end(); iter++)
     {
@@ -75,7 +75,7 @@ command_result tilesieve(DFHack::Core * c, std::vector<std::string> & params)
             if(seen.count(tt))
                 continue;
             seen.insert(tt);
-            c->con.print("Found tile %x @ %d %d %d\n", tt, block->map_pos.x + x, block->map_pos.y + y, block->map_pos.z);
+            out.print("Found tile %x @ %d %d %d\n", tt, block->map_pos.x + x, block->map_pos.y + y, block->map_pos.z);
         }
     }
     return CR_OK;

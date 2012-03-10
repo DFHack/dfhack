@@ -140,6 +140,7 @@ google/protobuf/dynamic_message.cc
 google/protobuf/extension_set_heavy.cc
 google/protobuf/generated_message_reflection.cc
 google/protobuf/compiler/importer.cc
+google/protobuf/io/gzip_stream.cc
 google/protobuf/message.cc
 google/protobuf/compiler/parser.cc
 google/protobuf/io/printer.cc
@@ -152,6 +153,7 @@ google/protobuf/text_format.cc
 google/protobuf/io/tokenizer.cc
 google/protobuf/unknown_field_set.cc
 google/protobuf/wire_format.cc
+google/protobuf/io/zero_copy_stream_impl.cc
 )
 
 SET(LIBPROTOC_HDRS
@@ -199,7 +201,7 @@ google/protobuf/compiler/zip_writer.cc
 LIST(APPEND LIBPROTOBUF_FULL_SRCS ${LIBPROTOBUF_LITE_SRCS})
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-INCLUDE_DIRECTORIES(${dfhack_SOURCE_DIR}/library/depends/zlib)
+INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIRS})
 
 # Protobuf shared libraries
 
@@ -209,13 +211,8 @@ ADD_LIBRARY(protobuf-lite SHARED ${LIBPROTOBUF_LITE_SRCS} ${LIBPROTOBUF_LITE_HDR
 SET_TARGET_PROPERTIES(protobuf PROPERTIES COMPILE_DEFINITIONS LIBPROTOBUF_EXPORTS)
 SET_TARGET_PROPERTIES(protobuf-lite PROPERTIES COMPILE_DEFINITIONS LIBPROTOBUF_EXPORTS)
 
-IF(WIN32)
-    TARGET_LINK_LIBRARIES(protobuf ${CMAKE_THREAD_LIBS_INIT} zlib)
-    TARGET_LINK_LIBRARIES(protobuf-lite ${CMAKE_THREAD_LIBS_INIT} zlib)
-ELSE()
-    TARGET_LINK_LIBRARIES(protobuf ${CMAKE_THREAD_LIBS_INIT} z)
-    TARGET_LINK_LIBRARIES(protobuf-lite ${CMAKE_THREAD_LIBS_INIT} z)
-ENDIF()
+TARGET_LINK_LIBRARIES(protobuf ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES})
+TARGET_LINK_LIBRARIES(protobuf-lite ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES})
 
 install(TARGETS protobuf-lite
         LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}/deplibs

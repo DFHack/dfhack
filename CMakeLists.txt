@@ -78,6 +78,15 @@ IF(UNIX)
   SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic")
 ENDIF()
 
+# find and make available libz
+if(NOT UNIX)
+    SET(ZLIB_INCLUDE_DIRS ${dfhack_SOURCE_DIR}/library/depends/zlib/include/)
+    SET(ZLIB_LIBRARIES ${dfhack_SOURCE_DIR}/library/depends/zlib/lib/zlib.lib)
+else()
+    find_package(ZLIB REQUIRED)
+endif()
+include_directories(${ZLIB_INCLUDE_DIRS})
+
 #add depends to include path
 INCLUDE_DIRECTORIES ( library/depends )
 INCLUDE_DIRECTORIES ( library/depends/protobuf/ )

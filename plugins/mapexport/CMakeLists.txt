@@ -1,15 +1,5 @@
 PROJECT(mapexport)
 
-INCLUDE_DIRECTORIES (
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${dfhack_SOURCE_DIR}/library/depends/protobuf/
-    ${dfhack_SOURCE_DIR}/library/depends/zlib/
-)
-
-LINK_DIRECTORIES(
-    ${dfhack_SOURCE_DIR}/library/depends/zlib/
-)
-
 #The protobuf sources we generate will require these headers
 SET(PROJECT_HDRS
 ${dfhack_SOURCE_DIR}/library/depends/protobuf/google/protobuf/stubs/once.h
@@ -51,7 +41,7 @@ DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
 
 IF(WIN32)
-    DFHACK_PLUGIN(mapexport ${PROJECT_SRCS} ${PROJECT_HDRS} LINK_LIBRARIES protobuf zlib)
+    DFHACK_PLUGIN(mapexport ${PROJECT_SRCS} ${PROJECT_HDRS} LINK_LIBRARIES protobuf-lite)
 ELSE()
-    DFHACK_PLUGIN(mapexport ${PROJECT_SRCS} ${PROJECT_HDRS} LINK_LIBRARIES protobuf z)
+    DFHACK_PLUGIN(mapexport ${PROJECT_SRCS} ${PROJECT_HDRS} LINK_LIBRARIES protobuf-lite)
 ENDIF()

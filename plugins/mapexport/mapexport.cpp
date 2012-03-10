@@ -37,7 +37,6 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
-    google::protobuf::ShutdownProtobufLibrary();
     return CR_OK;
 }
 

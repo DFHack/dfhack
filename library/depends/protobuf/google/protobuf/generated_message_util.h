@@ -72,7 +72,7 @@ double Infinity();
 double NaN();
 
 // Constant used for empty default strings.
-extern const ::std::string kEmptyString;
+extern LIBPROTOBUF_EXPORT const ::std::string kEmptyString;
 
 
 }  // namespace internal

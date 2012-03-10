@@ -80,6 +80,10 @@ ENDIF()
 
 #add depends to include path
 INCLUDE_DIRECTORIES ( library/depends )
+INCLUDE_DIRECTORIES ( library/depends/protobuf/ )
+
+# use shared libraries for protobuf
+ADD_DEFINITIONS(-DPROTOBUF_USE_DLLS)
 
 # build the static lua for dfusion
 INCLUDE_DIRECTORIES ( lua/include )

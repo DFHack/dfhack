@@ -1,0 +1,59 @@
+package dfproto;
+
+option optimize_for = LITE_RUNTIME;
+
+message CoreTextFragment {
+    required string text = 1;
+
+    enum Color {
+        COLOR_BLACK = 0;
+        COLOR_BLUE = 1;
+        COLOR_GREEN = 2;
+        COLOR_CYAN = 3;
+        COLOR_RED = 4;
+        COLOR_MAGENTA = 5;
+        COLOR_BROWN = 6;
+        COLOR_GREY = 7;
+        COLOR_DARKGREY = 8;
+        COLOR_LIGHTBLUE = 9;
+        COLOR_LIGHTGREEN = 10;
+        COLOR_LIGHTCYAN = 11;
+        COLOR_LIGHTRED = 12;
+        COLOR_LIGHTMAGENTA = 13;
+        COLOR_YELLOW = 14;
+        COLOR_WHITE = 15;
+    };
+    optional Color color = 2;
+}
+
+message CoreTextNotification {
+    repeated CoreTextFragment fragments = 1;
+}
+
+message CoreErrorNotification {
+    enum ErrorCode {
+        CR_WOULD_BREAK = -2;
+        CR_NOT_IMPLEMENTED = -1;
+        CR_FAILURE = 0;
+        CR_OK = 1;
+        CR_WRONG_USAGE = 2;
+    };
+
+    required ErrorCode code = 1;
+}
+
+message CoreBindRequest {
+    required string method = 1;
+    optional string plugin = 2;
+    optional int32 min_version = 3;
+}
+
+message CoreBindReply {
+    required int32 assigned_id = 1;
+    required int32 version = 2;
+}
+
+message CoreRunStringRequest {
+    required string command = 1;
+    repeated string arguments = 2;
+}

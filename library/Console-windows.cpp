@@ -66,10 +66,10 @@ using namespace tthread;
 
 namespace DFHack
 {
-    class Private : public std::stringbuf
+    class Private
     {
     public:
-        Private() : basic_stringbuf<char>::basic_stringbuf()
+        Private()
         {
             dfout_C = 0;
             rawmode = 0;
@@ -78,69 +78,70 @@ namespace DFHack
             ConsoleWindow = 0;
             default_attributes = 0;
             state = con_unclaimed;
+            in_batch = false;
             raw_cursor = 0;
         };
         virtual ~Private()
         {
             //sync();
         }
-    protected:
-        int sync()
-        {
-            print (str().c_str());
-            // Clear the string buffer
-            str(std::string());
-            return 0;
-        }
     public:
-        /// Print a formatted string, like printf
-        int  print(const char * format, ...)
+        void print(const char *data)
         {
-            va_list args;
-            va_start( args, format );
-            int ret = vprint( format, args );
-            va_end( args );
-            return ret;
+            fputs(data, dfout_C);
         }
-        int  vprint(const char * format, va_list vl)
+
+        void print_text(color_ostream::color_value clr, const std::string &chunk)
         {
-            if(state == con_lineedit)
+            if(!in_batch && state == con_lineedit)
             {
                 clearline();
-                int ret = vfprintf( dfout_C, format, vl );
-                prompt_refresh();
-                return ret;
-            }
-            else return vfprintf( dfout_C, format, vl );
-        }
-        int  vprinterr(const char * format, va_list vl)
-        {
-            if(state == con_lineedit)
-            {
-                color(Console::COLOR_LIGHTRED);
-                clearline();
-                int ret = vfprintf( dfout_C, format, vl );
+
+                color(clr);
+                print(chunk.c_str());
+
                 reset_color();
                 prompt_refresh();
-                return ret;
             }
             else
             {
-                color(Console::COLOR_LIGHTRED);
-                int ret = vfprintf( dfout_C, format, vl );
-                reset_color();
-                return ret;
+                color(clr);
+                print(chunk.c_str());
             }
         }
-        /// Print a formatted string, like printf, in red
-        int  printerr(const char * format, ...)
+
+        void begin_batch()
         {
-            va_list args;
-            va_start( args, format );
-            int ret = vprinterr( format, args );
-            va_end( args );
-            return ret;
+            assert(!in_batch);
+
+            in_batch = true;
+
+            if (state == con_lineedit)
+            {
+                clearline();
+            }
         }
+
+        void end_batch()
+        {
+            assert(in_batch);
+
+            flush();
+
+            in_batch = false;
+
+            if (state == con_lineedit)
+            {
+                reset_color();
+                prompt_refresh();
+            }
+        }
+
+        void flush()
+        {
+            fflush(dfout_C);
+        }
+
         int get_columns(void)
         {
             CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
@@ -250,7 +251,7 @@ namespace DFHack
             SetConsoleCursorPosition(console_out, inf.dwCursorPosition);
         }
 
-        int prompt_loop(mutex * lock, CommandHistory & history)
+        int prompt_loop(recursive_mutex * lock, CommandHistory & history)
         {
             raw_buffer.clear(); // make sure the buffer is empty!
             size_t plen = prompt.size();
@@ -359,9 +360,10 @@ namespace DFHack
                 }
             }
         }
-        int lineedit(const std::string & prompt, std::string & output, mutex * lock, CommandHistory & ch)
+        int lineedit(const std::string & prompt, std::string & output, recursive_mutex * lock, CommandHistory & ch)
         {
             output.clear();
+            reset_color();
             int count;
             state = con_lineedit;
             this->prompt = prompt;
@@ -386,6 +388,7 @@ namespace DFHack
             con_unclaimed,
             con_lineedit
         } state;
+        bool in_batch;
         std::string prompt;     // current prompt string
         std::string raw_buffer; // current raw mode buffer
         int raw_cursor;         // cursor position in the buffer
@@ -393,7 +396,7 @@ namespace DFHack
 }
 
 
-Console::Console():std::ostream(0), std::ios(0)
+Console::Console()
 {
     d = 0;
     wlock = 0;
@@ -453,7 +456,7 @@ bool Console::init(bool)
     // Allocate a console!
     AllocConsole();
     d->ConsoleWindow = GetConsoleWindow();
-    wlock = new mutex();
+    wlock = new recursive_mutex();
     HMENU  hm = GetSystemMenu(d->ConsoleWindow,false);
     DeleteMenu(hm, SC_CLOSE, MF_BYCOMMAND);
 
@@ -484,7 +487,6 @@ bool Console::init(bool)
     std::ios::sync_with_stdio();
 
     // make our own weird streams so our IO isn't redirected
-    rdbuf(d);
     std::cin.tie(this);
     clear();
     inited = true;
@@ -495,51 +497,47 @@ bool Console::init(bool)
 // FIXME: looks awfully empty, doesn't it?
 bool Console::shutdown(void)
 {
-    lock_guard <mutex> g(*wlock);
+    lock_guard <recursive_mutex> g(*wlock);
     FreeConsole();
     inited = false;
     return true;
 }
-int Console::print( const char* format, ... )
+
+void Console::begin_batch()
 {
-    va_list args;
-    lock_guard <mutex> g(*wlock);
-    int ret;
-    if(!inited) ret = -1;
-    else
-    {
-        va_start( args, format );
-        ret = d->vprint(format, args);
-        va_end(args);
-    }
-    return ret;
+    //color_ostream::begin_batch();
+
+    wlock->lock();
+
+    if (inited)
+        d->begin_batch();
 }
 
-int Console::printerr( const char* format, ... )
+void Console::end_batch()
 {
-    va_list args;
-    lock_guard <mutex> g(*wlock);
-    int ret;
-    // also mirror in error log
-    if(!inited)
-    {
-        va_start( args, format );
-        ret = vfprintf(stderr, format, args);
-        va_end(args);
-    }
-    else
-    {
-        va_start( args, format );
-        ret = d->vprinterr(format, args);
-        vfprintf(stderr, format, args);
-        va_end(args);
-    }
-    return ret;
+    if (inited)
+        d->end_batch();
+
+    wlock->unlock();
+}
+
+void Console::flush_proxy()
+{
+    lock_guard <recursive_mutex> g(*wlock);
+    if (inited)
+        d->flush();
+}
+
+void Console::add_text(color_value color, const std::string &text)
+{
+    lock_guard <recursive_mutex> g(*wlock);
+    if (inited)
+        d->print_text(color, text);
 }
 
 int Console::get_columns(void)
 {
-    lock_guard <mutex> g(*wlock);
+    lock_guard <recursive_mutex> g(*wlock);
     int ret = -1;
     if(inited)
         ret = d->get_columns();
@@ -548,7 +546,7 @@ int Console::get_columns(void)
 
 int Console::get_rows(void)
 {
-    lock_guard <mutex> g(*wlock);
+    lock_guard <recursive_mutex> g(*wlock);
     int ret = -1;
     if(inited)
         ret = d->get_rows();
@@ -557,35 +555,21 @@ int Console::get_rows(void)
 
 void Console::clear()
 {
-    lock_guard <mutex> g(*wlock);
+    lock_guard <recursive_mutex> g(*wlock);
     if(inited)
         d->clear();
 }
 
 void Console::gotoxy(int x, int y)
 {
-    lock_guard <mutex> g(*wlock);
+    lock_guard <recursive_mutex> g(*wlock);
     if(inited)
         d->gotoxy(x,y);
 }
 
-void Console::color(color_value index)
-{
-    lock_guard <mutex> g(*wlock);
-    if(inited)
-        d->color(index);
-}
-
-void Console::reset_color( void )
-{
-    lock_guard <mutex> g(*wlock);
-    if(inited)
-        d->reset_color();
-}
-
 void Console::cursor(bool enable)
 {
-    lock_guard <mutex> g(*wlock);
+    lock_guard <recursive_mutex> g(*wlock);
     if(inited)
         d->cursor(enable);
 }

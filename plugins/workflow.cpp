@@ -50,14 +50,14 @@ using df::global::job_next_id;
 
 /* Plugin registration */
 
-static command_result workflow_cmd(Core *c, vector <string> & parameters);
+static command_result workflow_cmd(color_ostream &out, vector <string> & parameters);
 
-static void init_state(Core *c);
-static void cleanup_state(Core *c);
+static void init_state(color_ostream &out);
+static void cleanup_state(color_ostream &out);
 
 DFHACK_PLUGIN("workflow");
 
-DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.clear();
     if (!world || !ui)
@@ -118,27 +118,27 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
         );
     }
 
-    init_state(c);
+    init_state(out);
 
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
-    cleanup_state(c);
+    cleanup_state(out);
 
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onstatechange(Core* c, state_change_event event)
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
     case SC_GAME_LOADED:
-        cleanup_state(c);
-        init_state(c);
+        cleanup_state(out);
+        init_state(out);
         break;
     case SC_GAME_UNLOADED:
-        cleanup_state(c);
+        cleanup_state(out);
         break;
     default:
         break;
@@ -392,12 +392,12 @@ static void setOptionEnabled(ConfigFlags flag, bool on)
  *    STATE INITIALIZATION    *
  ******************************/
 
-static void stop_protect(Core *c)
+static void stop_protect(color_ostream &out)
 {
     pending_recover.clear();
 
     if (!known_jobs.empty())
-        c->con.print("Unprotecting %d jobs.\n", known_jobs.size());
+        out.print("Unprotecting %d jobs.\n", known_jobs.size());
 
     for (TKnownJobs::iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
         delete it->second;
@@ -405,31 +405,33 @@ static void stop_protect(Core *c)
     known_jobs.clear();
 }
 
-static void cleanup_state(Core *c)
+static void cleanup_state(color_ostream &out)
 {
     config = PersistentDataItem();
 
-    stop_protect(c);
+    stop_protect(out);
 
     for (size_t i = 0; i < constraints.size(); i++)
         delete constraints[i];
     constraints.clear();
 }
 
-static void check_lost_jobs(Core *c, int ticks);
-static ItemConstraint *get_constraint(Core *c, const std::string &str, PersistentDataItem *cfg = NULL);
+static void check_lost_jobs(color_ostream &out, int ticks);
+static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg = NULL);
 
-static void start_protect(Core *c)
+static void start_protect(color_ostream &out)
 {
-    check_lost_jobs(c, 0);
+    check_lost_jobs(out, 0);
 
     if (!known_jobs.empty())
-        c->con.print("Protecting %d jobs.\n", known_jobs.size());
+        out.print("Protecting %d jobs.\n", known_jobs.size());
 }
 
-static void init_state(Core *c)
+static void init_state(color_ostream &out)
 {
-    config = c->getWorld()->GetPersistentData("workflow/config");
+    auto pworld = Core::getInstance().getWorld();
+
+    config = pworld->GetPersistentData("workflow/config");
     if (config.isValid() && config.ival(0) == -1)
         config.ival(0) = 0;
 
@@ -437,14 +439,14 @@ static void init_state(Core *c)
 
     // Parse constraints
     std::vector<PersistentDataItem> items;
-    c->getWorld()->GetPersistentData(&items, "workflow/constraints");
+    pworld->GetPersistentData(&items, "workflow/constraints");
 
     for (int i = items.size()-1; i >= 0; i--) {
-        if (get_constraint(c, items[i].val(), &items[i]))
+        if (get_constraint(out, items[i].val(), &items[i]))
             continue;
 
-        c->con.printerr("Lost constraint %s\n", items[i].val().c_str());
-        c->getWorld()->DeletePersistentData(items[i]);
+        out.printerr("Lost constraint %s\n", items[i].val().c_str());
+        pworld->DeletePersistentData(items[i]);
     }
 
     last_tick_frame_count = world->frame_counter;
@@ -453,35 +455,37 @@ static void init_state(Core *c)
     if (!enabled)
         return;
 
-    start_protect(c);
+    start_protect(out);
 }
 
-static void enable_plugin(Core *c)
+static void enable_plugin(color_ostream &out)
 {
+    auto pworld = Core::getInstance().getWorld();
+
     if (!config.isValid())
     {
-        config = c->getWorld()->AddPersistentData("workflow/config");
+        config = pworld->AddPersistentData("workflow/config");
         config.ival(0) = 0;
     }
 
     setOptionEnabled(CF_ENABLED, true);
     enabled = true;
-    c->con << "Enabling the plugin." << endl;
+    out << "Enabling the plugin." << endl;
 
-    start_protect(c);
+    start_protect(out);
 }
 
 /******************************
  *     JOB AUTO-RECOVERY      *
  ******************************/
 
-static void forget_job(Core *c, ProtectedJob *pj)
+static void forget_job(color_ostream &out, ProtectedJob *pj)
 {
     known_jobs.erase(pj->id);
     delete pj;
 }
 
-static bool recover_job(Core *c, ProtectedJob *pj)
+static bool recover_job(color_ostream &out, ProtectedJob *pj)
 {
     if (pj->isLive())
         return true;
@@ -490,18 +494,18 @@ static bool recover_job(Core *c, ProtectedJob *pj)
     pj->holder = df::building::find(pj->building_id);
     if (!pj->holder)
     {
-        c->con.printerr("Forgetting job %d (%s): holder building lost.",
+        out.printerr("Forgetting job %d (%s): holder building lost.",
                         pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type));
-        forget_job(c, pj);
+        forget_job(out, pj);
         return true;
     }
 
     // Check its state and postpone or cancel if invalid
     if (pj->holder->jobs.size() >= 10)
     {
-        c->con.printerr("Forgetting job %d (%s): holder building has too many jobs.",
+        out.printerr("Forgetting job %d (%s): holder building has too many jobs.",
                         pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type));
-        forget_job(c, pj);
+        forget_job(out, pj);
         return true;
     }
 
@@ -522,7 +526,7 @@ static bool recover_job(Core *c, ProtectedJob *pj)
     {
         deleteJobStruct(recovered);
 
-        c->con.printerr("Inconsistency: job %d (%s) already in list.",
+        out.printerr("Inconsistency: job %d (%s) already in list.",
                         pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type));
         return true;
     }
@@ -534,7 +538,7 @@ static bool recover_job(Core *c, ProtectedJob *pj)
     return true;
 }
 
-static void check_lost_jobs(Core *c, int ticks)
+static void check_lost_jobs(color_ostream &out, int ticks)
 {
     ProtectedJob::cur_tick_idx++;
     if (ticks < 0) ticks = 0;
@@ -548,7 +552,7 @@ static void check_lost_jobs(Core *c, int ticks)
         if (pj)
         {
             if (!job->flags.bits.repeat)
-                forget_job(c, pj);
+                forget_job(out, pj);
             else
                 pj->tick_job(job, ticks);
         }
@@ -571,7 +575,7 @@ static void check_lost_jobs(Core *c, int ticks)
     }
 }
 
-static void update_job_data(Core *c)
+static void update_job_data(color_ostream &out)
 {
     df::job_list_link *p = world->job_list.next;
     for (; p; p = p->next)
@@ -583,16 +587,16 @@ static void update_job_data(Core *c)
     }
 }
 
-static void recover_jobs(Core *c)
+static void recover_jobs(color_ostream &out)
 {
     for (int i = pending_recover.size()-1; i >= 0; i--)
-        if (recover_job(c, pending_recover[i]))
+        if (recover_job(out, pending_recover[i]))
             vector_erase_at(pending_recover, i);
 }
 
-static void process_constraints(Core *c);
+static void process_constraints(color_ostream &out);
 
-DFhackCExport command_result plugin_onupdate(Core* c)
+DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
     if (!enabled)
         return CR_OK;
@@ -602,7 +606,7 @@ DFhackCExport command_result plugin_onupdate(Core* c)
     if ((++cnt % 5) != 0)
         return CR_OK;
 
-    check_lost_jobs(c, world->frame_counter - last_tick_frame_count);
+    check_lost_jobs(out, world->frame_counter - last_tick_frame_count);
     last_tick_frame_count = world->frame_counter;
 
     // Proceed every in-game half-day, or when jobs to recover changed
@@ -611,7 +615,7 @@ DFhackCExport command_result plugin_onupdate(Core* c)
 
     if (pending_recover.size() != last_rlen || check_time)
     {
-        recover_jobs(c);
+        recover_jobs(out);
         last_rlen = pending_recover.size();
 
         // If the half-day passed, proceed to update
@@ -619,8 +623,8 @@ DFhackCExport command_result plugin_onupdate(Core* c)
         {
             last_frame_count = world->frame_counter;
 
-            update_job_data(c);
-            process_constraints(c);
+            update_job_data(out);
+            process_constraints(out);
         }
     }
 
@@ -631,7 +635,7 @@ DFhackCExport command_result plugin_onupdate(Core* c)
  *   ITEM COUNT CONSTRAINT    *
  ******************************/
 
-static ItemConstraint *get_constraint(Core *c, const std::string &str, PersistentDataItem *cfg)
+static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg)
 {
     std::vector<std::string> tokens;
     split_string(&tokens, str, "/");
@@ -643,7 +647,7 @@ static ItemConstraint *get_constraint(Core *c, const std::string &str, Persisten
 
     ItemTypeInfo item;
     if (!item.find(tokens[0]) || !item.isValid()) {
-        c->con.printerr("Cannot find item type: %s\n", tokens[0].c_str());
+        out.printerr("Cannot find item type: %s\n", tokens[0].c_str());
         return NULL;
     }
 
@@ -653,7 +657,7 @@ static ItemConstraint *get_constraint(Core *c, const std::string &str, Persisten
     df::dfhack_material_category mat_mask;
     std::string maskstr = vector_get(tokens,1);
     if (!maskstr.empty() && !parseJobMaterialCategory(&mat_mask, maskstr)) {
-        c->con.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
+        out.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
         return NULL;
     }
 
@@ -663,7 +667,7 @@ static ItemConstraint *get_constraint(Core *c, const std::string &str, Persisten
     MaterialInfo material;
     std::string matstr = vector_get(tokens,2);
     if (!matstr.empty() && (!material.find(matstr) || !material.isValid())) {
-        c->con.printerr("Cannot find material: %s\n", matstr.c_str());
+        out.printerr("Cannot find material: %s\n", matstr.c_str());
         return NULL;
     }
 
@@ -671,7 +675,7 @@ static ItemConstraint *get_constraint(Core *c, const std::string &str, Persisten
         weight += (material.index >= 0 ? 5000 : 1000);
 
     if (mat_mask.whole && material.isValid() && !material.matches(mat_mask)) {
-        c->con.printerr("Material %s doesn't match mask %s\n", matstr.c_str(), maskstr.c_str());
+        out.printerr("Material %s doesn't match mask %s\n", matstr.c_str(), maskstr.c_str());
         return NULL;
     }
 
@@ -693,7 +697,7 @@ static ItemConstraint *get_constraint(Core *c, const std::string &str, Persisten
         nct->config = *cfg;
     else
     {
-        nct->config = c->getWorld()->AddPersistentData("workflow/constraints");
+        nct->config = Core::getInstance().getWorld()->AddPersistentData("workflow/constraints");
         nct->init(str);
     }
 
@@ -701,13 +705,13 @@ static ItemConstraint *get_constraint(Core *c, const std::string &str, Persisten
     return nct;
 }
 
-static void delete_constraint(Core *c, ItemConstraint *cv)
+static void delete_constraint(color_ostream &out, ItemConstraint *cv)
 {
     int idx = linear_index(constraints, cv);
     if (idx >= 0)
         vector_erase_at(constraints, idx);
 
-    c->getWorld()->DeletePersistentData(cv->config);
+    Core::getInstance().getWorld()->DeletePersistentData(cv->config);
     delete cv;
 }
 
@@ -858,7 +862,7 @@ static void guess_job_material(df::job *job, MaterialInfo &mat, df::dfhack_mater
     }
 }
 
-static void compute_job_outputs(Core *c, ProtectedJob *pj)
+static void compute_job_outputs(color_ostream &out, ProtectedJob *pj)
 {
     using namespace df::enums::job_type;
 
@@ -946,7 +950,7 @@ static void compute_job_outputs(Core *c, ProtectedJob *pj)
     link_job_constraint(pj, itype, isubtype, mat_mask, mat.type, mat.index);
 }
 
-static void map_job_constraints(Core *c)
+static void map_job_constraints(color_ostream &out)
 {
     melt_active = false;
 
@@ -968,7 +972,7 @@ static void map_job_constraints(Core *c)
         if (!melt_active && pj->actual_job->job_type == job_type::MeltMetalObject)
             melt_active = pj->isResumed();
 
-        compute_job_outputs(c, pj);
+        compute_job_outputs(out, pj);
     }
 }
 
@@ -1046,7 +1050,7 @@ static bool itemInRealJob(df::item *item)
                != job_type_class::Hauling;
 }
 
-static void map_job_items(Core *c)
+static void map_job_items(color_ostream &out)
 {
     for (size_t i = 0; i < constraints.size(); i++)
     {
@@ -1159,7 +1163,7 @@ static void map_job_items(Core *c)
 
 static std::string shortJobDescription(df::job *job);
 
-static void setJobResumed(Core *c, ProtectedJob *pj, bool goal)
+static void setJobResumed(color_ostream &out, ProtectedJob *pj, bool goal)
 {
     bool current = pj->isResumed();
 
@@ -1167,14 +1171,14 @@ static void setJobResumed(Core *c, ProtectedJob *pj, bool goal)
 
     if (goal != current)
     {
-        c->con.print("%s %s%s\n",
+        out.print("%s %s%s\n",
                      (goal ? "Resuming" : "Suspending"),
                      shortJobDescription(pj->actual_job).c_str(),
                      (!goal || pj->isActuallyResumed() ? "" : " (delayed)"));
     }
 }
 
-static void update_jobs_by_constraints(Core *c)
+static void update_jobs_by_constraints(color_ostream &out)
 {
     for (TKnownJobs::const_iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
     {
@@ -1185,7 +1189,7 @@ static void update_jobs_by_constraints(Core *c)
         if (pj->actual_job->job_type == job_type::MeltMetalObject &&
             isOptionEnabled(CF_AUTOMELT))
         {
-            setJobResumed(c, pj, meltable_count > 0);
+            setJobResumed(out, pj, meltable_count > 0);
             continue;
         }
 
@@ -1210,7 +1214,7 @@ static void update_jobs_by_constraints(Core *c)
         else if (suspend_weight >= 0 && suspend_weight >= resume_weight)
             goal = false;
 
-        setJobResumed(c, pj, goal);
+        setJobResumed(out, pj, goal);
     }
 
     for (size_t i = 0; i < constraints.size(); i++)
@@ -1250,15 +1254,15 @@ static void update_jobs_by_constraints(Core *c)
     }
 }
 
-static void process_constraints(Core *c)
+static void process_constraints(color_ostream &out)
 {
     if (constraints.empty() &&
         !isOptionEnabled(CF_DRYBUCKETS | CF_AUTOMELT))
         return;
 
-    map_job_constraints(c);
-    map_job_items(c);
-    update_jobs_by_constraints(c);
+    map_job_constraints(out);
+    map_job_items(out);
+    update_jobs_by_constraints(out);
 }
 
 /******************************
@@ -1286,7 +1290,7 @@ static std::string shortJobDescription(df::job *job)
     return rv;
 }
 
-static void print_constraint(Core *c, ItemConstraint *cv, bool no_job = false, std::string prefix = "")
+static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job = false, std::string prefix = "")
 {
     Console::color_value color;
     if (cv->request_resume)
@@ -1296,24 +1300,24 @@ static void print_constraint(Core *c, ItemConstraint *cv, bool no_job = false, s
     else
         color = Console::COLOR_DARKGREY;
 
-    c->con.color(color);
-    c->con << prefix << "Constraint " << flush;
-    c->con.color(Console::COLOR_GREY);
-    c->con << cv->config.val() << " " << flush;
-    c->con.color(color);
-    c->con << (cv->goalByCount() ? "count " : "amount ")
+    out.color(color);
+    out << prefix << "Constraint " << flush;
+    out.color(Console::COLOR_GREY);
+    out << cv->config.val() << " " << flush;
+    out.color(color);
+    out << (cv->goalByCount() ? "count " : "amount ")
            << cv->goalCount() << " (gap " << cv->goalGap() << ")" << endl;
-    c->con.reset_color();
+    out.reset_color();
 
     if (cv->item_count || cv->item_inuse)
-        c->con << prefix << "  items: amount " << cv->item_amount << "; "
+        out << prefix << "  items: amount " << cv->item_amount << "; "
                          << cv->item_count << " stacks available, "
                          << cv->item_inuse << " in use." << endl;
 
     if (no_job) return;
 
     if (cv->jobs.empty())
-        c->con.printerr("  (no jobs)\n");
+        out.printerr("  (no jobs)\n");
 
     std::vector<ProtectedJob*> unique_jobs;
     std::vector<int> unique_counts;
@@ -1347,79 +1351,79 @@ static void print_constraint(Core *c, ItemConstraint *cv, bool no_job = false, s
         {
             if (pj->want_resumed)
             {
-                c->con.color(Console::COLOR_YELLOW);
-                c->con << start << " (delayed)" << endl;
+                out.color(Console::COLOR_YELLOW);
+                out << start << " (delayed)" << endl;
             }
             else
             {
-                c->con.color(Console::COLOR_BLUE);
-                c->con << start << " (suspended)" << endl;
+                out.color(Console::COLOR_BLUE);
+                out << start << " (suspended)" << endl;
             }
         }
         else
         {
-            c->con.color(Console::COLOR_GREEN);
-            c->con << start << endl;
+            out.color(Console::COLOR_GREEN);
+            out << start << endl;
         }
 
-        c->con.reset_color();
+        out.reset_color();
 
         if (unique_counts[i] > 1)
-            c->con << prefix << "    (" << unique_counts[i] << " copies)" << endl;
+            out << prefix << "    (" << unique_counts[i] << " copies)" << endl;
     }
 }
 
-static void print_job(Core *c, ProtectedJob *pj)
+static void print_job(color_ostream &out, ProtectedJob *pj)
 {
     if (!pj)
         return;
 
     df::job *job = pj->isLive() ? pj->actual_job : pj->job_copy;
 
-    printJobDetails(c, job);
+    printJobDetails(out, job);
 
     if (job->job_type == job_type::MeltMetalObject &&
         isOptionEnabled(CF_AUTOMELT))
     {
         if (meltable_count <= 0)
-            c->con.color(Console::COLOR_CYAN);
+            out.color(Console::COLOR_CYAN);
         else if (pj->want_resumed && !pj->isActuallyResumed())
-            c->con.color(Console::COLOR_YELLOW);
+            out.color(Console::COLOR_YELLOW);
         else
-            c->con.color(Console::COLOR_GREEN);
-        c->con << "  Meltable: " << meltable_count << " objects." << endl;
-        c->con.reset_color();
+            out.color(Console::COLOR_GREEN);
+        out << "  Meltable: " << meltable_count << " objects." << endl;
+        out.reset_color();
     }
 
     for (size_t i = 0; i < pj->constraints.size(); i++)
-        print_constraint(c, pj->constraints[i], true, "  ");
+        print_constraint(out, pj->constraints[i], true, "  ");
 }
 
-static command_result workflow_cmd(Core *c, vector <string> & parameters)
+static command_result workflow_cmd(color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
-    if (!c->isWorldLoaded()) {
-        c->con.printerr("World is not loaded: please load a game first.\n");
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("World is not loaded: please load a game first.\n");
         return CR_FAILURE;
     }
 
     if (enabled) {
-        check_lost_jobs(c, 0);
-        recover_jobs(c);
-        update_job_data(c);
-        map_job_constraints(c);
-        map_job_items(c);
+        check_lost_jobs(out, 0);
+        recover_jobs(out);
+        update_job_data(out);
+        map_job_constraints(out);
+        map_job_items(out);
     }
 
     df::building *workshop = NULL;
     df::job *job = NULL;
 
-    if (Gui::dwarfmode_hotkey(c, c->getTopViewscreen()) &&
+    if (Gui::dwarfmode_hotkey(Core::getTopViewscreen()) &&
         ui->main.mode == ui_sidebar_mode::QueryBuilding)
     {
         workshop = world->selected_building;
-        job = Gui::getSelectedWorkshopJob(c, true);
+        job = Gui::getSelectedWorkshopJob(out, true);
     }
 
     std::string cmd = parameters.empty() ? "list" : parameters[0];
@@ -1429,7 +1433,7 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
         bool enable = (cmd == "enable");
         if (enable && !enabled)
         {
-            enable_plugin(c);
+            enable_plugin(out);
         }
         else if (!enable && parameters.size() == 1)
         {
@@ -1437,10 +1441,10 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
             {
                 enabled = false;
                 setOptionEnabled(CF_ENABLED, false);
-                stop_protect(c);
+                stop_protect(out);
             }
 
-            c->con << "The plugin is disabled." << endl;
+            out << "The plugin is disabled." << endl;
             return CR_OK;
         }
 
@@ -1455,38 +1459,38 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
         }
 
         if (enabled)
-            c->con << "The plugin is enabled." << endl;
+            out << "The plugin is enabled." << endl;
         else
-            c->con << "The plugin is disabled." << endl;
+            out << "The plugin is disabled." << endl;
 
         if (isOptionEnabled(CF_DRYBUCKETS))
-            c->con << "Option drybuckets is enabled." << endl;
+            out << "Option drybuckets is enabled." << endl;
         if (isOptionEnabled(CF_AUTOMELT))
-            c->con << "Option auto-melt is enabled." << endl;
+            out << "Option auto-melt is enabled." << endl;
 
         return CR_OK;
     }
     else if (cmd == "count" || cmd == "amount")
     {
         if (!enabled)
-            enable_plugin(c);
+            enable_plugin(out);
     }
 
     if (!enabled)
-        c->con << "Note: the plugin is not enabled." << endl;
+        out << "Note: the plugin is not enabled." << endl;
 
     if (cmd == "jobs")
     {
         if (workshop)
         {
             for (size_t i = 0; i < workshop->jobs.size(); i++)
-                print_job(c, get_known(workshop->jobs[i]->id));
+                print_job(out, get_known(workshop->jobs[i]->id));
         }
         else
         {
             for (TKnownJobs::iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
                 if (it->second->isLive())
-                    print_job(c, it->second);
+                    print_job(out, it->second);
         }
 
         bool pending = false;
@@ -1497,11 +1501,11 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
             {
                 if (!pending)
                 {
-                    c->con.print("\nPending recovery:\n");
+                    out.print("\nPending recovery:\n");
                     pending = true;
                 }
 
-                printJobDetails(c, pending_recover[i]->job_copy);
+                printJobDetails(out, pending_recover[i]->job_copy);
             }
         }
 
@@ -1510,7 +1514,7 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
     else if (cmd == "list")
     {
         for (size_t i = 0; i < constraints.size(); i++)
-            print_constraint(c, constraints[i]);
+            print_constraint(out, constraints[i]);
 
         return CR_OK;
     }
@@ -1521,11 +1525,11 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
 
         int limit = atoi(parameters[2].c_str());
         if (limit <= 0) {
-            c->con.printerr("Invalid limit value.\n");
+            out.printerr("Invalid limit value.\n");
             return CR_FAILURE;
         }
 
-        ItemConstraint *icv = get_constraint(c, parameters[1]);
+        ItemConstraint *icv = get_constraint(out, parameters[1]);
         if (!icv)
             return CR_FAILURE;
 
@@ -1536,8 +1540,8 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
         else
             icv->setGoalGap(-1);
 
-        process_constraints(c);
-        print_constraint(c, icv);
+        process_constraints(out);
+        print_constraint(out, icv);
         return CR_OK;
     }
     else if (cmd == "unlimit")
@@ -1550,11 +1554,11 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
             if (constraints[i]->config.val() != parameters[1])
                 continue;
 
-            delete_constraint(c, constraints[i]);
+            delete_constraint(out, constraints[i]);
             return CR_OK;
         }
 
-        c->con.printerr("Constraint not found: %s\n", parameters[1].c_str());
+        out.printerr("Constraint not found: %s\n", parameters[1].c_str());
         return CR_FAILURE;
     }
     else

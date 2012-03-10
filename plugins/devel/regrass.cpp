@@ -17,12 +17,12 @@ using namespace DFHack;
 
 using df::global::world;
 
-command_result df_regrass (Core * c, vector <string> & parameters)
+command_result df_regrass (color_ostream &out, vector <string> & parameters)
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     int count = 0;
     for (size_t i = 0; i < world->map.map_blocks.size(); i++)
@@ -48,20 +48,20 @@ command_result df_regrass (Core * c, vector <string> & parameters)
     }
 
     if (count)
-        c->con.print("Regrew %d tiles of grass.\n", count);
+        out.print("Regrew %d tiles of grass.\n", count);
     return CR_OK;
 }
 
 DFHACK_PLUGIN("regrass");
 
-DFhackCExport command_result plugin_init (Core *c, std::vector<PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {
     commands.clear();
     commands.push_back(PluginCommand("regrass", "Regrows all surface grass, restoring outdoor plant growth for pre-0.31.19 worlds.", df_regrass));
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }

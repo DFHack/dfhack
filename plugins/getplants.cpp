@@ -23,7 +23,7 @@ using namespace df::enums;
 
 using df::global::world;
 
-command_result df_getplants (Core * c, vector <string> & parameters)
+command_result df_getplants (color_ostream &out, vector <string> & parameters)
 {
     string plantMatStr = "";
     set<int> plantIDs;
@@ -50,21 +50,21 @@ command_result df_getplants (Core * c, vector <string> & parameters)
     }
     if (treesonly && shrubsonly)
     {
-        c->con.printerr("Cannot specify both -t and -s at the same time!\n");
+        out.printerr("Cannot specify both -t and -s at the same time!\n");
         return CR_WRONG_USAGE;
     }
     if (all && exclude)
     {
-        c->con.printerr("Cannot specify both -a and -x at the same time!\n");
+        out.printerr("Cannot specify both -a and -x at the same time!\n");
         return CR_WRONG_USAGE;
     }
     if (all && plantNames.size())
     {
-        c->con.printerr("Cannot specify -a along with plant IDs!\n");
+        out.printerr("Cannot specify -a along with plant IDs!\n");
         return CR_WRONG_USAGE;
     }
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     for (size_t i = 0; i < world->raws.plants.all.size(); i++)
     {
@@ -79,22 +79,22 @@ command_result df_getplants (Core * c, vector <string> & parameters)
     }
     if (plantNames.size() > 0)
     {
-        c->con.printerr("Invalid plant ID(s):");
+        out.printerr("Invalid plant ID(s):");
         for (set<string>::const_iterator it = plantNames.begin(); it != plantNames.end(); it++)
-            c->con.printerr(" %s", it->c_str());
-        c->con.printerr("\n");
+            out.printerr(" %s", it->c_str());
+        out.printerr("\n");
         return CR_FAILURE;
     }
 
     if (plantIDs.size() == 0)
     {
-        c->con.print("Valid plant IDs:\n");
+        out.print("Valid plant IDs:\n");
         for (size_t i = 0; i < world->raws.plants.all.size(); i++)
         {
             df::plant_raw *plant = world->raws.plants.all[i];
             if (plant->flags.is_set(plant_raw_flags::GRASS))
                 continue;
-            c->con.print("* (%s) %s - %s\n", plant->flags.is_set(plant_raw_flags::TREE) ? "tree" : "shrub", plant->id.c_str(), plant->name.c_str());
+            out.print("* (%s) %s - %s\n", plant->flags.is_set(plant_raw_flags::TREE) ? "tree" : "shrub", plant->id.c_str(), plant->name.c_str());
         }
         return CR_OK;
     }
@@ -144,13 +144,13 @@ command_result df_getplants (Core * c, vector <string> & parameters)
             cur->flags.bits.designated = true;
     }
     if (count)
-        c->con.print("Updated %d plant designations.\n", count);
+        out.print("Updated %d plant designations.\n", count);
     return CR_OK;
 }
 
 DFHACK_PLUGIN("getplants");
 
-DFhackCExport command_result plugin_init ( Core * c, vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "getplants", "Cut down all of the specified trees or gather specified shrubs",
@@ -169,7 +169,7 @@ DFhackCExport command_result plugin_init ( Core * c, vector <PluginCommand> &com
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }

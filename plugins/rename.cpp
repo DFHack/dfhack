@@ -28,11 +28,11 @@ using namespace df::enums;
 using df::global::ui;
 using df::global::world;
 
-static command_result rename(Core * c, vector <string> & parameters);
+static command_result rename(color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("rename");
 
-DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.clear();
     if (world && ui) {
@@ -49,7 +49,7 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
@@ -79,9 +79,9 @@ static df::squad *getSquadByIndex(unsigned idx)
     return df::squad::find(entity->squads[idx]);
 }
 
-static command_result rename(Core * c, vector <string> &parameters)
+static command_result rename(color_ostream &out, vector <string> &parameters)
 {
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     string cmd;
     if (!parameters.empty())
@@ -96,7 +96,7 @@ static command_result rename(Core * c, vector <string> &parameters)
         df::squad *squad = getSquadByIndex(id-1);
 
         if (!squad) {
-            c->con.printerr("Couldn't find squad with index %d.\n", id);
+            out.printerr("Couldn't find squad with index %d.\n", id);
             return CR_WRONG_USAGE;
         }
 
@@ -109,7 +109,7 @@ static command_result rename(Core * c, vector <string> &parameters)
 
         int id = atoi(parameters[1].c_str());
         if (id < 1 || id > 16) {
-            c->con.printerr("Invalid hotkey index\n");
+            out.printerr("Invalid hotkey index\n");
             return CR_WRONG_USAGE;
         }
 
@@ -120,7 +120,7 @@ static command_result rename(Core * c, vector <string> &parameters)
         if (parameters.size() != 2)
             return CR_WRONG_USAGE;
 
-        df::unit *unit = Gui::getSelectedUnit(c);
+        df::unit *unit = Gui::getSelectedUnit(out);
         if (!unit)
             return CR_WRONG_USAGE;
 
@@ -153,7 +153,7 @@ static command_result rename(Core * c, vector <string> &parameters)
         if (parameters.size() != 2)
             return CR_WRONG_USAGE;
 
-        df::unit *unit = Gui::getSelectedUnit(c);
+        df::unit *unit = Gui::getSelectedUnit(out);
         if (!unit)
             return CR_WRONG_USAGE;
 
@@ -162,7 +162,7 @@ static command_result rename(Core * c, vector <string> &parameters)
     else
     {
         if (!parameters.empty() && cmd != "?")
-            c->con.printerr("Invalid command: %s\n", cmd.c_str());
+            out.printerr("Invalid command: %s\n", cmd.c_str());
         return CR_WRONG_USAGE;
     }
 

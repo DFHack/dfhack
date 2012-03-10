@@ -139,48 +139,48 @@ bool DFHack::operator== (const df::job &a, const df::job &b)
     return true;
 }
 
-static void print_job_item_details(Core *c, df::job *job, unsigned idx, df::job_item *item)
+static void print_job_item_details(color_ostream &out, df::job *job, unsigned idx, df::job_item *item)
 {
     ItemTypeInfo info(item);
-    c->con << "  Input Item " << (idx+1) << ": " << info.toString();
+    out << "  Input Item " << (idx+1) << ": " << info.toString();
 
     if (item->quantity != 1)
-        c->con << "; quantity=" << item->quantity;
+        out << "; quantity=" << item->quantity;
     if (item->min_dimension >= 0)
-        c->con << "; min_dimension=" << item->min_dimension;
-    c->con << endl;
+        out << "; min_dimension=" << item->min_dimension;
+    out << endl;
 
     MaterialInfo mat(item);
     if (mat.isValid() || item->metal_ore >= 0) {
-        c->con << "    material: " << mat.toString();
+        out << "    material: " << mat.toString();
         if (item->metal_ore >= 0)
-            c->con << "; ore of " << MaterialInfo(0,item->metal_ore).toString();
-        c->con << endl;
+            out << "; ore of " << MaterialInfo(0,item->metal_ore).toString();
+        out << endl;
     }
 
     if (item->flags1.whole)
-        c->con << "    flags1: " << bitfieldToString(item->flags1) << endl;
+        out << "    flags1: " << bitfieldToString(item->flags1) << endl;
     if (item->flags2.whole)
-        c->con << "    flags2: " << bitfieldToString(item->flags2) << endl;
+        out << "    flags2: " << bitfieldToString(item->flags2) << endl;
     if (item->flags3.whole)
-        c->con << "    flags3: " << bitfieldToString(item->flags3) << endl;
+        out << "    flags3: " << bitfieldToString(item->flags3) << endl;
 
     if (!item->reaction_class.empty())
-        c->con << "    reaction class: " << item->reaction_class << endl;
+        out << "    reaction class: " << item->reaction_class << endl;
     if (!item->has_material_reaction_product.empty())
-        c->con << "    reaction product: " << item->has_material_reaction_product << endl;
+        out << "    reaction product: " << item->has_material_reaction_product << endl;
     if (item->has_tool_use >= 0)
-        c->con << "    tool use: " << ENUM_KEY_STR(tool_uses, item->has_tool_use) << endl;
+        out << "    tool use: " << ENUM_KEY_STR(tool_uses, item->has_tool_use) << endl;
 }
 
-void DFHack::printJobDetails(Core *c, df::job *job)
+void DFHack::printJobDetails(color_ostream &out, df::job *job)
 {
-    c->con.color(job->flags.bits.suspend ? Console::COLOR_DARKGREY : Console::COLOR_GREY);
-    c->con << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_type);
+    out.color(job->flags.bits.suspend ? Console::COLOR_DARKGREY : Console::COLOR_GREY);
+    out << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_type);
     if (job->flags.whole)
-           c->con << " (" << bitfieldToString(job->flags) << ")";
-    c->con << endl;
-    c->con.reset_color();
+           out << " (" << bitfieldToString(job->flags) << ")";
+    out << endl;
+    out.reset_color();
 
     df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
 
@@ -190,28 +190,28 @@ void DFHack::printJobDetails(Core *c, df::job *job)
 
     if (mat.isValid() || job->material_category.whole)
     {
-        c->con << "    material: " << mat.toString();
+        out << "    material: " << mat.toString();
         if (job->material_category.whole)
-            c->con << " (" << bitfieldToString(job->material_category) << ")";
-        c->con << endl;
+            out << " (" << bitfieldToString(job->material_category) << ")";
+        out << endl;
     }
 
     if (job->item_subtype >= 0 || job->item_category.whole)
     {
         ItemTypeInfo iinfo(itype, job->item_subtype);
 
-        c->con << "    item: " << iinfo.toString()
+        out << "    item: " << iinfo.toString()
                << " (" << bitfieldToString(job->item_category) << ")" << endl;
     }
 
     if (job->hist_figure_id >= 0)
-        c->con << "    figure: " << job->hist_figure_id << endl;
+        out << "    figure: " << job->hist_figure_id << endl;
 
     if (!job->reaction_name.empty())
-        c->con << "    reaction: " << job->reaction_name << endl;
+        out << "    reaction: " << job->reaction_name << endl;
 
     for (size_t i = 0; i < job->job_items.size(); i++)
-        print_job_item_details(c, job, i, job->job_items[i]);
+        print_job_item_details(out, job, i, job->job_items[i]);
 }
 
 df::building *DFHack::getJobHolder(df::job *job)

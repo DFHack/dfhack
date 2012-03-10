@@ -25,6 +25,7 @@ distribution.
 #pragma once
 #include "Pragma.h"
 #include "Export.h"
+#include "ColorText.h"
 #include <deque>
 #include <fstream>
 #include <assert.h>
@@ -33,6 +34,7 @@ distribution.
 namespace tthread
 {
     class mutex;
+    class recursive_mutex;
     class condition_variable;
     class thread;
 }
@@ -106,31 +108,18 @@ namespace  DFHack
         std::size_t capacity;
         std::deque <std::string> history;
     };
+
     class Private;
-    class DFHACK_EXPORT Console : public std::ostream
+    class DFHACK_EXPORT Console : public color_ostream
     {
+    protected:
+        virtual void begin_batch();
+        virtual void add_text(color_value color, const std::string &text);
+        virtual void end_batch();
+
+        virtual void flush_proxy();
+
     public:
-        enum color_value
-        {
-            COLOR_RESET = -1,
-            COLOR_BLACK = 0,
-            COLOR_BLUE,
-            COLOR_GREEN,
-            COLOR_CYAN,
-            COLOR_RED,
-            COLOR_MAGENTA,
-            COLOR_BROWN,
-            COLOR_GREY,
-            COLOR_DARKGREY,
-            COLOR_LIGHTBLUE,
-            COLOR_LIGHTGREEN,
-            COLOR_LIGHTCYAN,
-            COLOR_LIGHTRED,
-            COLOR_LIGHTMAGENTA,
-            COLOR_YELLOW,
-            COLOR_WHITE,
-            COLOR_MAX = COLOR_WHITE
-        };
         ///ctor, NOT thread-safe
         Console();
         ///dtor, NOT thread-safe
@@ -140,18 +129,10 @@ namespace  DFHack
         /// shutdown the console. NOT thread-safe
         bool shutdown( void );
 
-        /// Print a formatted string, like printf
-        int  print(const char * format, ...);
-        /// Print a formatted string, like printf, in red
-        int  printerr(const char * format, ...);
         /// Clear the console, along with its scrollback
         void clear();
         /// Position cursor at x,y. 1,1 = top left corner
         void gotoxy(int x, int y);
-        /// Set color (ANSI color number)
-        void color(color_value c);
-        /// Reset color to default
-        void reset_color(void);
         /// Enable or disable the caret/cursor
         void cursor(bool enable = true);
         /// Waits given number of milliseconds before continuing.
@@ -165,9 +146,11 @@ namespace  DFHack
         /// A simple line edit (raw mode)
         int lineedit(const std::string& prompt, std::string& output, CommandHistory & history );
         bool isInited (void) { return inited; };
+
+        bool is_console() { return true; }
     private:
         Private * d;
-        tthread::mutex * wlock;
+        tthread::recursive_mutex * wlock;
         bool inited;
     };
 }

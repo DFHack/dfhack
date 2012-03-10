@@ -28,12 +28,12 @@ using namespace df::enums;
 using df::global::world;
 using df::global::ui;
 
-void Kitchen::debug_print(Core &core)
+void Kitchen::debug_print(color_ostream &out)
 {
-    core.con.print("Kitchen Exclusions\n");
+    out.print("Kitchen Exclusions\n");
     for(std::size_t i = 0; i < size(); ++i)
     {
-        core.con.print("%2u: IT:%2i IS:%i MT:%3i MI:%2i ET:%i %s\n",
+        out.print("%2u: IT:%2i IS:%i MT:%3i MI:%2i ET:%i %s\n",
                        i,
                        ui->kitchen.item_types[i],
                        ui->kitchen.item_subtypes[i],
@@ -43,7 +43,7 @@ void Kitchen::debug_print(Core &core)
                        (ui->kitchen.mat_types[i] >= 419 && ui->kitchen.mat_types[i] <= 618) ? world->raws.plants.all[ui->kitchen.mat_indices[i]]->id.c_str() : "n/a"
         );
     }
-    core.con.print("\n");
+    out.print("\n");
 }
 
 void Kitchen::allowPlantSeedCookery(t_materialIndex materialIndex)

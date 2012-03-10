@@ -20,13 +20,13 @@ using std::string;
 using namespace DFHack;
 using df::global::world;
 
-command_result df_grow (Core * c, vector <string> & parameters);
-command_result df_immolate (Core * c, vector <string> & parameters);
-command_result df_extirpate (Core * c, vector <string> & parameters);
+command_result df_grow (color_ostream &out, vector <string> & parameters);
+command_result df_immolate (color_ostream &out, vector <string> & parameters);
+command_result df_extirpate (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("plants");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.clear();
     commands.push_back(PluginCommand("grow", "Grows saplings into trees (with active cursor, only the targetted one).", df_grow));
@@ -35,7 +35,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
@@ -81,13 +81,13 @@ static bool getoptions( vector <string> & parameters, bool & shrubs, bool & tree
  * And he cursed the plants and trees for their bloodless wood, turning them into ash and smoldering ruin.
  * Armok was pleased and great temples were built by the dwarves, for they shared his hatred for trees and plants.
  */
-static command_result immolations (Core * c, do_what what, bool shrubs, bool trees, bool help)
+static command_result immolations (color_ostream &out, do_what what, bool shrubs, bool trees, bool help)
 {
     static const char * what1 = "destroys";
     static const char * what2 = "burns";
     if(help)
     {
-        c->con.print("Without any options, this command %s a plant under the cursor.\n"
+        out.print("Without any options, this command %s a plant under the cursor.\n"
         "Options:\n"
         "shrubs   - affect all shrubs\n"
         "trees    - affect all trees\n"
@@ -96,10 +96,10 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
         );
         return CR_OK;
     }
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
     uint32_t x_max, y_max, z_max;
@@ -119,7 +119,7 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
                 destroyed ++;
             }
         }
-        c->con.print("Praise Armok!\n");
+        out.print("Praise Armok!\n");
     }
     else
     {
@@ -152,55 +152,55 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
         }
         else
         {
-            c->con.printerr("No mass destruction and no cursor...\n" );
+            out.printerr("No mass destruction and no cursor...\n" );
         }
     }
     return CR_OK;
 }
 
-command_result df_immolate (Core * c, vector <string> & parameters)
+command_result df_immolate (color_ostream &out, vector <string> & parameters)
 {
     bool shrubs = false, trees = false, help = false;
     if(getoptions(parameters,shrubs,trees,help))
     {
-        return immolations(c,do_immolate,shrubs,trees, help);
+        return immolations(out,do_immolate,shrubs,trees, help);
     }
     else
     {
-        c->con.printerr("Invalid parameter!\n");
+        out.printerr("Invalid parameter!\n");
         return CR_FAILURE;
     }
 }
 
-command_result df_extirpate (Core * c, vector <string> & parameters)
+command_result df_extirpate (color_ostream &out, vector <string> & parameters)
 {
     bool shrubs = false, trees = false, help = false;
     if(getoptions(parameters,shrubs,trees, help))
     {
-        return immolations(c,do_extirpate,shrubs,trees, help);
+        return immolations(out,do_extirpate,shrubs,trees, help);
     }
     else
     {
-        c->con.printerr("Invalid parameter!\n");
+        out.printerr("Invalid parameter!\n");
         return CR_FAILURE;
     }
 }
 
-command_result df_grow (Core * c, vector <string> & parameters)
+command_result df_grow (color_ostream &out, vector <string> & parameters)
 {
     for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {
-            c->con.print("This command turns all living saplings into full-grown trees.\n");
+            out.print("This command turns all living saplings into full-grown trees.\n");
             return CR_OK;
         }
     }
-    CoreSuspender suspend(c);
-    Console & con = c->con;
+    CoreSuspender suspend;
+
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
     MapExtras::MapCache map;

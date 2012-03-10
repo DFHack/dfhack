@@ -41,54 +41,54 @@ int changeLiquid (df::tile_liquid type)
     return tiles;
 }
 
-command_result df_frozenlava (Core * c, vector <string> & parameters)
+command_result df_frozenlava (color_ostream &out, vector <string> & parameters)
 {
     if (parameters.size())
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
     int tiles = changeLiquid(tile_liquid::Magma);
 
     if (tiles)
-        c->con.print("Changed %i tiles of ice into frozen lava.\n", tiles);
+        out.print("Changed %i tiles of ice into frozen lava.\n", tiles);
     return CR_OK;
 }
 
-command_result df_frozenwater (Core * c, vector <string> & parameters)
+command_result df_frozenwater (color_ostream &out, vector <string> & parameters)
 {
     if (parameters.size())
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
     int tiles = changeLiquid(tile_liquid::Water);
 
     if (tiles)
-        c->con.print("Changed %i tiles of ice into frozen water.\n", tiles);
+        out.print("Changed %i tiles of ice into frozen water.\n", tiles);
     return CR_OK;
 }
 
 DFHACK_PLUGIN("frozen");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("frozenlava", "Changes all ice into frozen magma.", df_frozenlava));
     commands.push_back(PluginCommand("frozenwater", "Changes all ice into frozen water.", df_frozenwater));
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }

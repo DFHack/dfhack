@@ -17,7 +17,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 
-command_result follow (Core * c, std::vector <std::string> & parameters);
+command_result follow (color_ostream &out, std::vector <std::string> & parameters);
 
 df::unit *followedUnit;
 int32_t prevX, prevY, prevZ;
@@ -25,12 +25,13 @@ uint8_t prevMenuWidth;
 
 DFHACK_PLUGIN("follow");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "follow", "Follow the selected unit until camera control is released",
         follow, Gui::view_unit_hotkey,
-        "  Select a unit and run this plugin to make the camera follow it. Moving the camera yourself deactivates the plugin.\n"
+        "  Select a unit and run this plugin to make the camera follow it.\n"
+        "  Moving the camera yourself deactivates the plugin.\n"
     ));
     followedUnit = 0;
     prevX=prevY=prevZ = -1;
@@ -39,12 +40,12 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 }
 
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onstatechange(Core* c, state_change_event event)
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
     case SC_GAME_LOADED:
@@ -60,11 +61,11 @@ DFhackCExport command_result plugin_onstatechange(Core* c, state_change_event ev
 }
 
 
-DFhackCExport command_result plugin_onupdate ( Core * c )
+DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     if (!followedUnit) return CR_OK; //Don't do anything if we're not following a unit
 
-    DFHack::World *world =c->getWorld();
+    DFHack::World *world = Core::getInstance().getWorld();
     if (world->ReadPauseState() && prevX==-1) return CR_OK; //Wait until the game is unpaused after first running "follow" to begin following
 
     df::coord &unitPos = followedUnit->pos;
@@ -100,7 +101,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
         followedUnit = 0;
         prevX=prevY=prevZ = -1;
         prevMenuWidth = 0;
-        c->con.print("No longer following anything.\n");
+        out.print("No longer following anything.\n");
         return CR_OK;
     }
 
@@ -131,7 +132,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
     return CR_OK;
 }
 
-command_result follow (Core * c, std::vector <std::string> & parameters)
+command_result follow (color_ostream &out, std::vector <std::string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
 
@@ -140,17 +141,17 @@ command_result follow (Core * c, std::vector <std::string> & parameters)
 
     if (followedUnit)
     {
-        c->con.print("No longer following previously selected unit.\n");
+        out.print("No longer following previously selected unit.\n");
         followedUnit = 0;
     }
-    followedUnit = Gui::getSelectedUnit(c);
+    followedUnit = Gui::getSelectedUnit(out);
     if (followedUnit)
     {
         std::ostringstream ss;
         ss << "Unpause to begin following " << df::global::world->raws.creatures.all[followedUnit->race]->name[0];
         if (followedUnit->name.has_name) ss << " " << followedUnit->name.first_name;
         ss << ". Simply manually move the view to break the following.\n";
-        c->con.print(ss.str().c_str());
+        out.print(ss.str().c_str());
     }
     else followedUnit = 0;
     return CR_OK;

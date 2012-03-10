@@ -12,11 +12,11 @@ using namespace std;
 using namespace DFHack;
 
 
-command_result mode (Core * c, vector <string> & parameters);
+command_result mode (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("mode");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.clear();
     commands.push_back(PluginCommand(
@@ -29,12 +29,12 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onupdate ( Core * c )
+DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     // add tracking here
     return CR_OK;
@@ -94,8 +94,11 @@ void printCurrentModes(t_gamemodes gm, Console & con)
     }
 }
 
-command_result mode (Core * c, vector <string> & parameters)
+command_result mode (color_ostream &out_, vector <string> & parameters)
 {
+    assert(out_.is_console());
+    Console &out = static_cast<Console&>(out_);
+
     string command = "";
     bool set = false;
     bool abuse = false;
@@ -113,22 +116,28 @@ command_result mode (Core * c, vector <string> & parameters)
         else
             return CR_WRONG_USAGE;
     }
-    c->Suspend();
-    World *world = c->getWorld();
-    world->Start();
-    world->ReadGameMode(gm);
-    c->Resume();
-    printCurrentModes(gm, c->con);
+
+    World *world;
+
+    {
+        CoreSuspender suspend;
+        world = Core::getInstance().getWorld();
+        world->Start();
+        world->ReadGameMode(gm);
+    }
+
+    printCurrentModes(gm, out);
+
     if(set)
     {
         if(!abuse)
         {
             if( gm.g_mode == GAMEMODE_NONE || gm.g_type == GAMETYPE_VIEW_LEGENDS)
             {
-                c->con.printerr("It is not safe to set modes in menus.\n");
+                out.printerr("It is not safe to set modes in menus.\n");
                 return CR_FAILURE;
             }
-            c->con << "\nPossible choices:" << endl
+            out << "\nPossible choices:" << endl
                    << "0 = Fortress Mode" << endl
                    << "1 = Adventurer Mode" << endl
                    << "2 = Arena Mode" << endl
@@ -140,7 +149,7 @@ command_result mode (Core * c, vector <string> & parameters)
             string selected;
             input_again:
             CommandHistory hist;
-            c->con.lineedit("Enter new mode: ",selected, hist);
+            out.lineedit("Enter new mode: ",selected, hist);
             if(selected == "c")
                 return CR_OK;
             const char * start = selected.c_str();
@@ -148,7 +157,7 @@ command_result mode (Core * c, vector <string> & parameters)
             select = strtol(start, &end, 10);
             if(!end || end==start || select > 4)
             {
-                c->con.printerr("This is not a valid selection.\n");
+                out.printerr("This is not a valid selection.\n");
                 goto input_again;
             }
             switch(select)
@@ -179,21 +188,24 @@ command_result mode (Core * c, vector <string> & parameters)
         {
             CommandHistory hist;
             string selected;
-            c->con.lineedit("Enter new game mode number (c for exit): ",selected, hist);
+            out.lineedit("Enter new game mode number (c for exit): ",selected, hist);
             if(selected == "c")
                 return CR_OK;
             const char * start = selected.c_str();
             gm.g_mode = (GameMode) strtol(start, 0, 10);
-            c->con.lineedit("Enter new game type number (c for exit): ",selected, hist);
+            out.lineedit("Enter new game type number (c for exit): ",selected, hist);
             if(selected == "c")
                 return CR_OK;
             start = selected.c_str();
             gm.g_type = (GameType) strtol(start, 0, 10);
         }
-        c->Suspend();
-        world->WriteGameMode(gm);
-        c->Resume();
-        c->con << endl;
+
+        {
+            CoreSuspender suspend;
+            world->WriteGameMode(gm);
+        }
+
+        out << endl;
     }
     return CR_OK;
 }

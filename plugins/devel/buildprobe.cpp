@@ -18,40 +18,38 @@ using std::string;
 using std::stack;
 using namespace DFHack;
 
-command_result readFlag (Core * c, vector <string> & parameters);
-command_result writeFlag (Core * c, vector <string> & parameters);
+command_result readFlag (color_ostream &out, vector <string> & parameters);
+command_result writeFlag (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("buildprobe");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("bshow","Output building occupancy value",readFlag));
     commands.push_back(PluginCommand("bset","Set building occupancy value",writeFlag));
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
 
-command_result readFlag (Core * c, vector <string> & parameters)
+command_result readFlag (color_ostream &out, vector <string> & parameters)
 {
-    c->Suspend();
+    CoreSuspender suspend;
 
     // init the map
     if(!Maps::IsValid())
     {
-        c->con.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
-        c->Resume();
+        out.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
         return CR_FAILURE;
     }
 
     int32_t cx, cy, cz;
     if(!Gui::getCursorCoords(cx,cy,cz))
     {
-        c->con.printerr("Cursor is not active.\n");
-        c->Resume();
+        out.printerr("Cursor is not active.\n");
         return CR_FAILURE;
     }
 
@@ -60,24 +58,22 @@ command_result readFlag (Core * c, vector <string> & parameters)
     MapExtras::MapCache * MCache = new MapExtras::MapCache();
     t_occupancy oc = MCache->occupancyAt(cursor);
 
-    c->con.print("Current Value: %d\n", oc.bits.building);
-
-    c->Resume();
+    out.print("Current Value: %d\n", oc.bits.building);
     return CR_OK;
 }
 
-command_result writeFlag (Core * c, vector <string> & parameters)
+command_result writeFlag (color_ostream &out, vector <string> & parameters)
 {
     if (parameters.size() == 0)
     {
-        c->con.print("No value specified\n");
+        out.print("No value specified\n");
         return CR_FAILURE;
     }
 
     if (parameters[0] == "help" || parameters[0] == "?")
     {
-        c->con.print("Set the building occupancy flag.\n"
-                    "Value must be between 0 and 7, inclusive.\n");
+        out.print("Set the building occupancy flag.\n"
+                  "Value must be between 0 and 7, inclusive.\n");
         return CR_OK;
     }
 
@@ -97,26 +93,24 @@ command_result writeFlag (Core * c, vector <string> & parameters)
             break;
             
         default:
-            c->con.print("Invalid value specified\n");
+            out.print("Invalid value specified\n");
             return CR_FAILURE;
             break; //Redundant.
     }
 
-    c->Suspend();
+    CoreSuspender suspend;
 
     // init the map
     if(!Maps::IsValid())
     {
-        c->con.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
-        c->Resume();
+        out.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
         return CR_FAILURE;
     }
 
     int32_t cx, cy, cz;
     if(!Gui::getCursorCoords(cx,cy,cz))
     {
-        c->con.printerr("Cursor is not active.\n");
-        c->Resume();
+        out.printerr("Cursor is not active.\n");
         return CR_FAILURE;
     }
 
@@ -129,6 +123,5 @@ command_result writeFlag (Core * c, vector <string> & parameters)
     MCache->setOccupancyAt(cursor, oc);
     MCache->WriteAll();
 
-    c->Resume();
     return CR_OK;
 }

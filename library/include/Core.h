@@ -33,6 +33,7 @@ distribution.
 #include <stdint.h>
 #include "Console.h"
 #include "modules/Graphic.h"
+#include "SDL_events.h"
 
 struct WINDOW;
 
@@ -177,6 +178,7 @@ namespace DFHack
         tthread::mutex * HotkeyMutex;
         tthread::condition_variable * HotkeyCond;
 
+        int UnicodeAwareSym(const SDL::KeyboardEvent& ke);
         bool SelectHotkey(int key, int modifiers);
 
         void *last_world_data_ptr; // for state change tracking

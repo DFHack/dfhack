@@ -80,6 +80,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(changevein changevein.cpp)
     DFHACK_PLUGIN(advtools advtools.cpp)
     DFHACK_PLUGIN(tweak tweak.cpp)
+    DFHACK_PLUGIN(feature feature.cpp)
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
 endif()
 

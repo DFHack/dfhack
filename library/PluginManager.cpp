@@ -234,8 +234,10 @@ bool Plugin::unload()
     // if we are actually loaded
     if(state == PS_LOADED)
     {
-        // notify plugin about shutdown
-        command_result cr = plugin_shutdown(con);
+        // notify plugin about shutdown, if it has a shutdown function
+        command_result cr = CR_OK;
+        if(plugin_shutdown)
+            cr = plugin_shutdown(con);
         // wait for all calls to finish
         access->wait();
         // cleanup...

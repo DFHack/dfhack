@@ -81,6 +81,8 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(advtools advtools.cpp)
     DFHACK_PLUGIN(tweak tweak.cpp)
     DFHACK_PLUGIN(feature feature.cpp)
+    DFHACK_PLUGIN(lair lair.cpp)
+    # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
 endif()
 

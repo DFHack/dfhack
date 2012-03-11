@@ -145,6 +145,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
 */
     df::tiletype tiletype = mc.tiletypeAt(cursor);
     df::tile_designation &des = block.designation[tileX][tileY];
+    df::tile_occupancy &occ = block.occupancy[tileX][tileY];
 /*
     if(showDesig)
     {
@@ -237,20 +238,21 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     if(des.bits.water_stagnant)
         out << "stagnant" << endl;
 
-    #define PRINT_FLAG( X )  out.print("%-16s= %c\n", #X , ( des.X ? 'Y' : ' ' ) )
-    PRINT_FLAG( bits.hidden );
-    PRINT_FLAG( bits.light );
-    PRINT_FLAG( bits.outside );
-    PRINT_FLAG( bits.subterranean );
-    PRINT_FLAG( bits.water_table );
-    PRINT_FLAG( bits.rained );
+    #define PRINT_FLAG( FIELD, BIT )  out.print("%-16s= %c\n", #BIT , ( FIELD.bits.BIT ? 'Y' : ' ' ) )
+    PRINT_FLAG( des, hidden );
+    PRINT_FLAG( des, light );
+    PRINT_FLAG( des, outside );
+    PRINT_FLAG( des, subterranean );
+    PRINT_FLAG( des, water_table );
+    PRINT_FLAG( des, rained );
+    PRINT_FLAG( occ, monster_lair);
 
     df::coord2d pc(blockX, blockY);
 
     t_feature local;
     t_feature global;
     Maps::ReadFeatures(&(b->raw),&local,&global);
-    PRINT_FLAG( bits.feature_local );
+    PRINT_FLAG( des, feature_local );
     if(local.type != -1)
     {
         out.print("%-16s", "");
@@ -259,7 +261,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         out.print(" addr 0x%X ", local.origin);
         out.print(" %s\n", sa_feature(local.type));
     }
-    PRINT_FLAG( bits.feature_global );
+    PRINT_FLAG( des, feature_global );
     if(global.type != -1)
     {
         out.print("%-16s", "");

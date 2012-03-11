@@ -1,6 +1,5 @@
 // This tool display dfhack version on df screen
 
-#include <Windows.h>
 #include <iostream>
 #include <vector>
 #include <map>

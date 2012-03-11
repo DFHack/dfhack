@@ -62,6 +62,7 @@ command_result reveal(color_ostream &out, std::vector<std::string> & params);
 command_result unreveal(color_ostream &out, std::vector<std::string> & params);
 command_result revtoggle(color_ostream &out, std::vector<std::string> & params);
 command_result revflood(color_ostream &out, std::vector<std::string> & params);
+command_result revforget(color_ostream &out, std::vector<std::string> & params);
 command_result nopause(color_ostream &out, std::vector<std::string> & params);
 
 DFHACK_PLUGIN("reveal");
@@ -73,6 +74,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(PluginCommand("unreveal","Revert the map to its previous state.",unreveal));
     commands.push_back(PluginCommand("revtoggle","Reveal/unreveal depending on state.",revtoggle));
     commands.push_back(PluginCommand("revflood","Hide all, reveal all tiles reachable from cursor position.",revflood));
+    commands.push_back(PluginCommand("revforget", "Forget the current reveal data, allowing to use reveal again.",revforget));
     commands.push_back(PluginCommand("nopause","Disable pausing (doesn't affect pause forced by reveal).",nopause));
     return CR_OK;
 }
@@ -464,5 +466,28 @@ command_result revflood(color_ostream &out, std::vector<std::string> & params)
     }
     MCache->WriteAll();
     delete MCache;
+    return CR_OK;
+}
+
+command_result revforget(color_ostream &out, std::vector<std::string> & params)
+{
+    auto & con = out;
+    for(size_t i = 0; i < params.size();i++)
+    {
+        if(params[i] == "help" || params[i] == "?")
+        {
+            out.print("Forget the current reveal data, allowing to use reveal again.\n");
+            return CR_OK;
+        }
+    }
+    if(!revealed)
+    {
+        con.printerr("There's nothing to forget!\n");
+        return CR_FAILURE;
+    }
+    // give back memory.
+    hidesaved.clear();
+    revealed = NOT_REVEALED;
+    con.print("Reveal data forgotten!\n");
     return CR_OK;
 }

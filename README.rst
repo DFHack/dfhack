@@ -242,6 +242,19 @@ Makes your minions move at ludicrous speeds.
  * Activate with 'fastdwarf 1'
  * Deactivate with 'fastdwarf 0'
 
+feature
+=======
+Enables management of map features.
+
+* Discovering a magma feature (magma pool, volcano, magma sea, or curious underground structure) permits magma workshops and furnaces to be built.
+* Discovering a cavern layer causes plants (trees, shrubs, and grass) from that cavern to grow within your fortress.
+
+Options
+-------
+:list:         Lists all map features in your current embark by index.
+:show X:       Marks the selected map feature as discovered.
+:hide X:       Marks the selected map feature as undiscovered.
+
 filltraffic
 ===========
 Set traffic designations using flood-fill starting at the cursor.

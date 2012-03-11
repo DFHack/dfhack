@@ -31,8 +31,10 @@ uint64_t timeLast=0;
 
 DFHACK_PLUGIN("dfusion")
 
-command_result dfusion (Core * c, vector <string> & parameters);
-command_result lua_run (Core * c, vector <string> & parameters);
+command_result dfusion (color_ostream &out, std::vector <std::string> &parameters);
+command_result dfuse (color_ostream &out, std::vector <std::string> &parameters);
+command_result lua_run (color_ostream &out, std::vector <std::string> &parameters);
+command_result lua_run_file (color_ostream &out, std::vector <std::string> &parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -43,7 +45,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
 	lua::state st=lua::glua::Get();
 	//maybe remake it to run automaticaly
-	lua::RegisterConsole(st,&c->con);
+	lua::RegisterConsole(st);
 	lua::RegisterProcess(st,c->p);
 	lua::RegisterHexsearch(st);
 	lua::RegisterMisc(st);
@@ -59,9 +61,10 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 		st.setglobal("WINDOWS");
 	#endif
 
-    commands.push_back(PluginCommand("dfusion","Init dfusion system. Use 'dfusion init' to run dfusion in init mode (not interactive).",dfusion));
-	commands.push_back(PluginCommand("lua", "Run interactive interpreter. Use 'lua <filename>' to run <filename> instead.",lua_run));
-
+    commands.push_back(PluginCommand("dfusion","Run dfusion system (interactive i.e. can input further commands).",dfusion,true));
+	commands.push_back(PluginCommand("dfuse","Init dfusion system (not interactive).",dfuse,false));
+	commands.push_back(PluginCommand("lua", "Run interactive interpreter. Use 'lua <filename>' to run <filename> instead.",lua_run,true));
+	commands.push_back(PluginCommand("runlua", "Run non-interactive interpreter. Use 'runlua <filename>' to run <filename>.",lua_run_file,false));
 	mymutex=new tthread::mutex;
     return CR_OK;
 }
@@ -93,9 +96,9 @@ DFhackCExport command_result plugin_onupdate_DISABLED ( Core * c )
 		}
 		catch(lua::exception &e)
 		{
-			c->con.printerr("Error OnTick:%s\n",e.what());
-            c->con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
-			c->con.msleep(1000);
+			c->getConsole().printerr("Error OnTick:%s\n",e.what());
+            c->getConsole().printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
+			c->getConsole().msleep(1000);
 		}
 	}
 	s.settop(0);
@@ -103,13 +106,15 @@ DFhackCExport command_result plugin_onupdate_DISABLED ( Core * c )
 	return CR_OK;
 }
 
-void InterpreterLoop(Core* c)
+void InterpreterLoop(color_ostream &out)
 {
-	Console &con=c->con;
+	
 	DFHack::CommandHistory hist;
 	lua::state s=lua::glua::Get();
 	string curline;
-	con.print("Type quit to exit interactive mode\n");
+	out.print("Type quit to exit interactive mode\n");
+	assert(out.is_console());
+	Console &con = static_cast<Console&>(out);
 	con.lineedit(">>",curline,hist);
 
 	while (curline!="quit") {
@@ -122,18 +127,27 @@ void InterpreterLoop(Core* c)
 		catch(lua::exception &e)
 		{
 			con.printerr("Error:%s\n",e.what());
-            c->con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
+            con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
 			s.settop(0);
 		}
 		con.lineedit(">>",curline,hist);
 	}
 	s.settop(0);
 }
-command_result lua_run (Core * c, vector <string> & parameters)
+command_result lua_run_file (color_ostream &out, std::vector <std::string> &parameters)
 {
-	Console &con=c->con;
+	if(parameters.size()==0)
+	{
+		out.printerr("runlua without file to run!");
+		return CR_FAILURE;
+	}
+	return lua_run(out,parameters);
+}
+command_result lua_run (color_ostream &out, std::vector <std::string> &parameters)
+{
 	mymutex->lock();
 	lua::state s=lua::glua::Get();
+	lua::SetConsole(s,out);
 	if(parameters.size()>0)
 	{
 		try{
@@ -142,23 +156,21 @@ command_result lua_run (Core * c, vector <string> & parameters)
 		}
 		catch(lua::exception &e)
 		{
-			con.printerr("Error:%s\n",e.what());
-            c->con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
+			out.printerr("Error:%s\n",e.what());
+            out.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
 		}
 	}
 	else
 	{
-		InterpreterLoop(c);
+		InterpreterLoop(out);
 	}
 	s.settop(0);// clean up
 	mymutex->unlock();
 	return CR_OK;
 }
-void RunDfusion(void *p)
+void RunDfusion(color_ostream &out)
 {
-	Console &con=static_cast<Core*>(p)->con;
 	mymutex->lock();
-	
 	lua::state s=lua::glua::Get();
 	try{
 		s.getglobal("err");
@@ -169,26 +181,27 @@ void RunDfusion(void *p)
 	}
 	catch(lua::exception &e)
 	{
-		con.printerr("Error:%s\n",e.what());
-        con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
+		out.printerr("Error:%s\n",e.what());
+        out.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
 	}
 	s.settop(0);// clean up
 	mymutex->unlock();
 }
-command_result dfusion (Core * c, vector <string> & parameters)
+command_result dfuse(color_ostream &out, std::vector <std::string> &parameters)
 {
-	if(parameters[0]=="init")
-	{
-		lua::state s=lua::glua::Get();
-		s.push(1);
-		s.setglobal("INIT");
-	}
-	else
-	{
-		lua::state s=lua::glua::Get();
-		s.push();
-		s.setglobal("INIT");
-	}
-	RunDfusion(c);
+	lua::state s=lua::glua::Get();
+	lua::SetConsole(s,out);
+	s.push(1);
+	s.setglobal("INIT");
+	RunDfusion(out);
+	return CR_OK;
+}
+command_result dfusion (color_ostream &out, std::vector <std::string> &parameters)
+{
+	lua::state s=lua::glua::Get();
+	lua::SetConsole(s,out);
+	s.push();
+	s.setglobal("INIT");
+	RunDfusion(out);
 	return CR_OK;
 }

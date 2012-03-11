@@ -8,6 +8,6 @@
 
 namespace lua
 {
-void RegisterProcess(lua::state &st,DFHack::Process *p);
+void RegisterProcess(lua::state &st);
 }
 #endif

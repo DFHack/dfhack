@@ -19,9 +19,9 @@ function GetTextRegion()
 	ranges__=Process.getMemRanges()
 	--print("Ranges:"..#ranges__)
 	for k,v in pairs(ranges__) do
-		--for k2,v2 in pairs(v) do
-		--	print(string.format("%d %s->%s",k,tostring(k2),tostring(v2)))
-		--end
+		for k2,v2 in pairs(v) do
+			--print(string.format("%d %s->%s",k,tostring(k2),tostring(v2)))
+		end
 		--local num
 		--flgs=""
 		--if(v["read"])then flgs=flgs..'r' end

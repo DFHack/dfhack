@@ -33,6 +33,7 @@ distribution.
 #include <stdint.h>
 #include "Console.h"
 #include "modules/Graphic.h"
+#include "SDL_events.h"
 
 struct WINDOW;
 
@@ -59,6 +60,10 @@ namespace DFHack
     class VersionInfoFactory;
     class PluginManager;
     class Core;
+    namespace Windows
+    {
+        class df_window;
+    }
     // anon type, pretty much
     struct DFLibrary;
 
@@ -120,12 +125,20 @@ namespace DFHack
         std::vector<std::string> ListKeyBindings(std::string keyspec);
 
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
-        df::viewscreen *getTopViewscreen() { return top_viewscreen; }
+
+        static df::viewscreen *getTopViewscreen() { return getInstance().top_viewscreen; }
+
+        DFHack::Console &getConsole() { return con; }
 
         DFHack::Process * p;
         DFHack::VersionInfo * vinfo;
-        DFHack::Console con;
+        DFHack::Windows::df_window * screen_window;
+
+        static void printerr(const char *format, ...);
+
     private:
+        DFHack::Console con;
+
         Core();
         bool Init();
         int Update (void);
@@ -172,6 +185,7 @@ namespace DFHack
         tthread::mutex * HotkeyMutex;
         tthread::condition_variable * HotkeyCond;
 
+        int UnicodeAwareSym(const SDL::KeyboardEvent& ke);
         bool SelectHotkey(int key, int modifiers);
 
         void *last_world_data_ptr; // for state change tracking
@@ -179,13 +193,14 @@ namespace DFHack
         // Very important!
         bool started;
 
-		tthread::mutex * misc_data_mutex;
-		std::map<std::string,void*> misc_data_map;
+        tthread::mutex * misc_data_mutex;
+        std::map<std::string,void*> misc_data_map;
     };
 
     class CoreSuspender {
         Core *core;
     public:
+        CoreSuspender() : core(&Core::getInstance()) { core->Suspend(); }
         CoreSuspender(Core *core) : core(core) { core->Suspend(); }
         ~CoreSuspender() { core->Resume(); }
     };

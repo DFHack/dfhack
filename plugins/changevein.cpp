@@ -18,42 +18,42 @@ using namespace df::enums;
 using df::global::world;
 using df::global::cursor;
 
-command_result df_changevein (Core * c, vector <string> & parameters)
+command_result df_changevein (color_ostream &out, vector <string> & parameters)
 {
     if (parameters.size() != 1)
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
     if (!cursor || cursor->x == -30000)
     {
-        c->con.printerr("No cursor detected - please place the cursor over a mineral vein.\n");
+        out.printerr("No cursor detected - please place the cursor over a mineral vein.\n");
         return CR_FAILURE;
     }
 
     MaterialInfo mi;
     if (!mi.findInorganic(parameters[0]))
     {
-        c->con.printerr("No such material!\n");
+        out.printerr("No such material!\n");
         return CR_FAILURE;
     }
     if (mi.inorganic->material.flags.is_set(material_flags::IS_METAL) ||
         mi.inorganic->material.flags.is_set(material_flags::NO_STONE_STOCKPILE) ||
         mi.inorganic->flags.is_set(inorganic_flags::SOIL_ANY))
     {
-        c->con.printerr("Invalid material - you must select a type of stone or gem\n");
+        out.printerr("Invalid material - you must select a type of stone or gem\n");
         return CR_FAILURE;
     }
 
     df::map_block *block = Maps::getBlockAbs(cursor->x, cursor->y, cursor->z);
     if (!block)
     {
-        c->con.printerr("Invalid tile selected.\n");
+        out.printerr("Invalid tile selected.\n");
         return CR_FAILURE;
     }
     df::block_square_event_mineralst *mineral = NULL;
@@ -70,7 +70,7 @@ command_result df_changevein (Core * c, vector <string> & parameters)
     }
     if (!mineral)
     {
-        c->con.printerr("Selected tile does not contain a mineral vein.\n");
+        out.printerr("Selected tile does not contain a mineral vein.\n");
         return CR_FAILURE;
     }
     mineral->inorganic_mat = mi.index;
@@ -80,7 +80,7 @@ command_result df_changevein (Core * c, vector <string> & parameters)
 
 DFHACK_PLUGIN("changevein");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("changevein",
         "Changes the material of a mineral inclusion.",
@@ -89,7 +89,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }

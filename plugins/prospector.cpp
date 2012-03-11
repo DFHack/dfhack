@@ -108,7 +108,7 @@ struct compare_pair_second
     }
 };
 
-static void printMatdata(DFHack::Console & con, const matdata &data)
+static void printMatdata(color_ostream &con, const matdata &data)
 {
     con << std::setw(9) << data.count;
 
@@ -129,7 +129,7 @@ static int getValue(const df::plant_raw &info)
 }
 
 template <typename T, template <typename> class P>
-void printMats(DFHack::Console & con, MatMap &mat, std::vector<T*> &materials, bool show_value)
+void printMats(color_ostream &con, MatMap &mat, std::vector<T*> &materials, bool show_value)
 {
     unsigned int total = 0;
     MatSorter sorting_vector;
@@ -160,7 +160,7 @@ void printMats(DFHack::Console & con, MatMap &mat, std::vector<T*> &materials, b
     con << ">>> TOTAL = " << total << std::endl << std::endl;
 }
 
-void printVeins(DFHack::Console & con, MatMap &mat_map,
+void printVeins(color_ostream &con, MatMap &mat_map,
                 DFHack::Materials* mats, bool show_value)
 {
     MatMap ores;
@@ -189,11 +189,11 @@ void printVeins(DFHack::Console & con, MatMap &mat_map,
     printMats<df::inorganic_raw, std::greater>(con, rest, world->raws.inorganics, show_value);
 }
 
-command_result prospector (Core * c, vector <string> & parameters);
+command_result prospector (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("prospector");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.clear();
     commands.push_back(PluginCommand(
@@ -215,7 +215,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
@@ -226,12 +226,12 @@ static coord2d biome_delta[] = {
     coord2d(-1,-1), coord2d(0,-1), coord2d(1,-1)
 };
 
-static command_result embark_prospector(DFHack::Core *c, df::viewscreen_choose_start_sitest *screen,
+static command_result embark_prospector(color_ostream &out, df::viewscreen_choose_start_sitest *screen,
                                         bool showHidden, bool showValue)
 {
     if (!world || !world->world_data)
     {
-        c->con.printerr("World data is not available.\n");
+        out.printerr("World data is not available.\n");
         return CR_FAILURE;
     }
 
@@ -242,7 +242,7 @@ static command_result embark_prospector(DFHack::Core *c, df::viewscreen_choose_s
 
     if (!cur_details)
     {
-        c->con.printerr("Current region details are not available.\n");
+        out.printerr("Current region details are not available.\n");
         return CR_FAILURE;
     }
 
@@ -251,7 +251,7 @@ static command_result embark_prospector(DFHack::Core *c, df::viewscreen_choose_s
 
     if (screen->biome_highlighted)
     {
-        c->con.print("Processing one embark tile of biome F%d.\n\n", screen->biome_idx+1);
+        out.print("Processing one embark tile of biome F%d.\n\n", screen->biome_idx+1);
         biomes[screen->biome_rgn[screen->biome_idx]]++;
     }
     else
@@ -279,7 +279,7 @@ static command_result embark_prospector(DFHack::Core *c, df::viewscreen_choose_s
 
         if (!geo_biome)
         {
-            c->con.printerr("Region geo-biome not found: (%d,%d)\n", bx, by);
+            out.printerr("Region geo-biome not found: (%d,%d)\n", bx, by);
             return CR_FAILURE;
         }
 
@@ -340,21 +340,21 @@ static command_result embark_prospector(DFHack::Core *c, df::viewscreen_choose_s
     }
 
     // Print the report
-    c->con << "Layer materials:" << std::endl;
-    printMats<df::inorganic_raw, shallower>(c->con, layerMats, world->raws.inorganics, showValue);
+    out << "Layer materials:" << std::endl;
+    printMats<df::inorganic_raw, shallower>(out, layerMats, world->raws.inorganics, showValue);
 
     if (showHidden) {
-        DFHack::Materials *mats = c->getMaterials();
-        printVeins(c->con, veinMats, mats, showValue);
+        DFHack::Materials *mats = Core::getInstance().getMaterials();
+        printVeins(out, veinMats, mats, showValue);
         mats->Finish();
     }
 
-    c->con << "Warning: the above data is only a very rough estimate." << std::endl;
+    out << "Warning: the above data is only a very rough estimate." << std::endl;
 
     return CR_OK;
 }
 
-command_result prospector (DFHack::Core * c, vector <string> & parameters)
+command_result prospector (color_ostream &con, vector <string> & parameters)
 {
     bool showHidden = false;
     bool showPlants = true;
@@ -362,7 +362,7 @@ command_result prospector (DFHack::Core * c, vector <string> & parameters)
     bool showTemple = true;
     bool showValue = false;
     bool showTube = false;
-    Console & con = c->con;
+
     for(size_t i = 0; i < parameters.size();i++)
     {
         if (parameters[i] == "all")
@@ -380,15 +380,16 @@ command_result prospector (DFHack::Core * c, vector <string> & parameters)
         else
             return CR_WRONG_USAGE;
     }
-    CoreSuspender suspend(c);
+
+    CoreSuspender suspend;
 
     // Embark screen active: estimate using world geology data
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, c->getTopViewscreen()))
-        return embark_prospector(c, screen, showHidden, showValue);
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, Core::getTopViewscreen()))
+        return embark_prospector(con, screen, showHidden, showValue);
 
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
@@ -396,7 +397,7 @@ command_result prospector (DFHack::Core * c, vector <string> & parameters)
     Maps::getSize(x_max, y_max, z_max);
     MapExtras::MapCache map;
 
-    DFHack::Materials *mats = c->getMaterials();
+    DFHack::Materials *mats = Core::getInstance().getMaterials();
 
     DFHack::t_feature blockFeatureGlobal;
     DFHack::t_feature blockFeatureLocal;

@@ -25,12 +25,12 @@ using namespace std;
 
 using namespace DFHack;
 
-command_result catsplosion (Core * c, std::vector <std::string> & parameters);
+command_result catsplosion (color_ostream &out, std::vector <std::string> & parameters);
 
 DFHACK_PLUGIN("catsplosion");
 
 // Mandatory init function. If you have some global state, create it here.
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
@@ -41,13 +41,13 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
    return CR_OK;
 }
 
 typedef df::unit::T_relations::T_pregnancy_ptr pregstruct;
-command_result catsplosion (Core * c, std::vector <std::string> & parameters)
+command_result catsplosion (color_ostream &out, std::vector <std::string> & parameters)
 {
     list<string> s_creatures;
     // only cats for now.
@@ -55,7 +55,7 @@ command_result catsplosion (Core * c, std::vector <std::string> & parameters)
     // make the creature list unique ... with cats. they are always unique
     s_creatures.unique();
     // SUSPEND THE CORE! ::Evil laugh::
-    CoreSuspender susp(c);
+    CoreSuspender susp;
 
     uint32_t numCreatures;
     if(!(numCreatures = Units::getNumCreatures()))
@@ -95,10 +95,10 @@ command_result catsplosion (Core * c, std::vector <std::string> & parameters)
     // print (optional)
     //if (showcreatures == 1)
     {
-        c->con.print("Type                 Male # Female #\n");
+        out.print("Type                 Male # Female #\n");
         for(auto it1 = male_counts.begin();it1!=male_counts.end();it1++)
         {
-            c->con.print("%20s %6d %8d\n", it1->first.c_str(), it1->second.size(), female_counts[it1->first].size());
+            out.print("%20s %6d %8d\n", it1->first.c_str(), it1->second.size(), female_counts[it1->first].size());
         }
     }
 
@@ -133,9 +133,9 @@ command_result catsplosion (Core * c, std::vector <std::string> & parameters)
         }
     }
     if(totalchanged)
-        c->con.print("%d pregnancies accelerated.\n", totalchanged);
+        out.print("%d pregnancies accelerated.\n", totalchanged);
     if(totalcreated)
-        c->con.print("%d pregnancies created.\n", totalcreated);
-    c->con.print("Total creatures checked: %d\n", totalcount);
+        out.print("%d pregnancies created.\n", totalcreated);
+    out.print("Total creatures checked: %d\n", totalcount);
     return CR_OK;
 }

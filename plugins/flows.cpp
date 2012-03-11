@@ -17,12 +17,12 @@ using namespace df::enums;
 
 using df::global::world;
 
-command_result df_flows (Core * c, vector <string> & parameters)
+command_result df_flows (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     int flow1 = 0, flow2 = 0, flowboth = 0, water = 0, magma = 0;
-    c->con.print("Counting flows and liquids ...\n");
+    out.print("Counting flows and liquids ...\n");
 
     for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
@@ -48,17 +48,17 @@ command_result df_flows (Core * c, vector <string> & parameters)
         }
     }
 
-    c->con.print("Blocks with liquid_1=true: %d\n", flow1);
-    c->con.print("Blocks with liquid_2=true: %d\n", flow2);
-    c->con.print("Blocks with both:          %d\n", flowboth);
-    c->con.print("Water tiles:               %d\n", water);
-    c->con.print("Magma tiles:               %d\n", magma);
+    out.print("Blocks with liquid_1=true: %d\n", flow1);
+    out.print("Blocks with liquid_2=true: %d\n", flow2);
+    out.print("Blocks with both:          %d\n", flowboth);
+    out.print("Water tiles:               %d\n", water);
+    out.print("Magma tiles:               %d\n", magma);
     return CR_OK;
 }
 
 DFHACK_PLUGIN("flows");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("flows",
         "Counts map blocks with flowing liquids.",
@@ -66,7 +66,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }

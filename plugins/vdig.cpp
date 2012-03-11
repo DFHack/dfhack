@@ -16,16 +16,16 @@ using std::stack;
 using namespace DFHack;
 using namespace df::enums;
 
-command_result vdig (Core * c, vector <string> & parameters);
-command_result vdigx (Core * c, vector <string> & parameters);
-command_result autodig (Core * c, vector <string> & parameters);
-command_result expdig (Core * c, vector <string> & parameters);
-command_result digcircle (Core *c, vector <string> & parameters);
+command_result vdig (color_ostream &out, vector <string> & parameters);
+command_result vdigx (color_ostream &out, vector <string> & parameters);
+command_result autodig (color_ostream &out, vector <string> & parameters);
+command_result expdig (color_ostream &out, vector <string> & parameters);
+command_result digcircle (color_ostream &out, vector <string> & parameters);
 
 
 DFHACK_PLUGIN("vdig");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.clear();
     commands.push_back(PluginCommand(
@@ -45,7 +45,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
@@ -79,12 +79,12 @@ bool dig (MapExtras::MapCache & MCache,
         return false;
     if(x == 0 || x == x_max * 16 - 1)
     {
-        //c->con.print("not digging map border\n");
+        //out.print("not digging map border\n");
         return false;
     }
     if(y == 0 || y == y_max * 16 - 1)
     {
-        //c->con.print("not digging map border\n");
+        //out.print("not digging map border\n");
         return false;
     }
     df::tiletype tt = MCache.tiletypeAt(at);
@@ -177,7 +177,7 @@ bool lineY (MapExtras::MapCache & MCache,
     return true;
 };
 
-command_result digcircle (Core * c, vector <string> & parameters)
+command_result digcircle (color_ostream &out, vector <string> & parameters)
 {
     static bool filled = false;
     static circle_what what = circle_set;
@@ -244,7 +244,7 @@ command_result digcircle (Core * c, vector <string> & parameters)
         diameter = -diameter;
     if(force_help || diameter == 0)
     {
-        c->con.print(
+        out.print(
             "A command for easy designation of filled and hollow circles.\n"
             "\n"
             "Options:\n"
@@ -272,10 +272,10 @@ command_result digcircle (Core * c, vector <string> & parameters)
         return CR_OK;
     }
     int32_t cx, cy, cz;
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
@@ -285,7 +285,7 @@ command_result digcircle (Core * c, vector <string> & parameters)
     MapExtras::MapCache MCache;
     if(!Gui::getCursorCoords(cx,cy,cz) || cx == -30000)
     {
-        c->con.printerr("Can't get the cursor coords...\n");
+        out.printerr("Can't get the cursor coords...\n");
         return CR_FAILURE;
     }
     int r = diameter / 2;
@@ -773,7 +773,7 @@ bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
     return true;
 };
 
-command_result expdig (Core * c, vector <string> & parameters)
+command_result expdig (color_ostream &out, vector <string> & parameters)
 {
     bool force_help = false;
     static explo_how how = EXPLO_NOTHING;
@@ -823,7 +823,7 @@ command_result expdig (Core * c, vector <string> & parameters)
     }
     if(force_help || how == EXPLO_NOTHING)
     {
-        c->con.print(
+        out.print(
             "This command can be used for exploratory mining.\n"
             "http://dwarffortresswiki.org/Exploratory_mining\n"
             "\n"
@@ -846,18 +846,18 @@ command_result expdig (Core * c, vector <string> & parameters)
             );
         return CR_OK;
     }
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
     uint32_t x_max, y_max, z_max;
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
     Maps::getSize(x_max,y_max,z_max);
     int32_t xzzz,yzzz,z_level;
     if(!Gui::getViewCoords(xzzz,yzzz,z_level))
     {
-        c->con.printerr("Can't get view coords...\n");
+        out.printerr("Can't get view coords...\n");
         return CR_FAILURE;
     }
     if(how == EXPLO_DIAG5)
@@ -949,15 +949,15 @@ command_result expdig (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-command_result vdigx (Core * c, vector <string> & parameters)
+command_result vdigx (color_ostream &out, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     vector <string> lol;
     lol.push_back("x");
-    return vdig(c,lol);
+    return vdig(out,lol);
 }
 
-command_result vdig (Core * c, vector <string> & parameters)
+command_result vdig (color_ostream &out, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     uint32_t x_max,y_max,z_max;
@@ -970,11 +970,11 @@ command_result vdig (Core * c, vector <string> & parameters)
             return CR_WRONG_USAGE;
     }
 
-    Console & con = c->con;
+    auto &con = out;
 
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
@@ -1114,7 +1114,7 @@ command_result vdig (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-command_result autodig (Core * c, vector <string> & parameters)
+command_result autodig (color_ostream &out, vector <string> & parameters)
 {
     return CR_NOT_IMPLEMENTED;
 }

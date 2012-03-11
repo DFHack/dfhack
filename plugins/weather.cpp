@@ -13,11 +13,11 @@ using namespace DFHack;
 bool locked = false;
 unsigned char locked_data[25];
 
-command_result weather (Core * c, vector <string> & parameters);
+command_result weather (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("weather");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.clear();
     commands.push_back(PluginCommand(
@@ -32,14 +32,13 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
 
-command_result weather (Core * c, vector <string> & parameters)
+command_result weather (color_ostream &con, vector <string> & parameters)
 {
-    Console & con = c->con;
     int val_override = -1;
     bool lock = false;
     bool unlock = false;
@@ -81,8 +80,9 @@ command_result weather (Core * c, vector <string> & parameters)
     }
     bool something = lock || unlock || rain || snow || clear || val_override != -1;
 
-    CoreSuspender suspend(c);
-    DFHack::World * w = c->getWorld();
+    CoreSuspender suspend;
+
+    DFHack::World * w = Core::getInstance().getWorld();
     if(!w->wmap)
     {
         con << "Weather support seems broken :(" << std::endl;

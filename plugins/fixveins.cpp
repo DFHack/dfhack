@@ -34,16 +34,16 @@ bool setTileMaterial(df::tiletype &tile, const df::tiletype_material mat)
     return false;
 }
 
-command_result df_fixveins (Core * c, vector <string> & parameters)
+command_result df_fixveins (color_ostream &out, vector <string> & parameters)
 {
     if (parameters.size())
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available!\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
@@ -90,15 +90,15 @@ command_result df_fixveins (Core * c, vector <string> & parameters)
         }
     }
     if (mineral_removed || feature_removed)
-        c->con.print("Removed invalid references from %i mineral inclusion and %i map feature tiles.\n", mineral_removed, feature_removed);
+        out.print("Removed invalid references from %i mineral inclusion and %i map feature tiles.\n", mineral_removed, feature_removed);
     if (mineral_added || feature_added)
-        c->con.print("Restored missing references to %i mineral inclusion and %i map feature tiles.\n", mineral_added, feature_added);
+        out.print("Restored missing references to %i mineral inclusion and %i map feature tiles.\n", mineral_added, feature_added);
     return CR_OK;
 }
 
 DFHACK_PLUGIN("fixveins");
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("fixveins",
         "Remove invalid references to mineral inclusions and restore missing ones.",
@@ -106,7 +106,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }

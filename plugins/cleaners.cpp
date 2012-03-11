@@ -23,7 +23,7 @@ using df::global::cursor;
 
 DFHACK_PLUGIN("cleaners");
 
-command_result cleanmap (Core * c, bool snow, bool mud)
+command_result cleanmap (color_ostream &out, bool snow, bool mud)
 {
     // Invoked from clean(), already suspended
     int num_blocks = 0, blocks_total = world->map.map_blocks.size();
@@ -67,11 +67,11 @@ command_result cleanmap (Core * c, bool snow, bool mud)
     }
 
     if(num_blocks)
-        c->con.print("Cleaned %d of %d map blocks.\n", num_blocks, blocks_total);
+        out.print("Cleaned %d of %d map blocks.\n", num_blocks, blocks_total);
     return CR_OK;
 }
 
-command_result cleanitems (Core * c)
+command_result cleanitems (color_ostream &out)
 {
     // Invoked from clean(), already suspended
     int cleaned_items = 0, cleaned_total = 0;
@@ -89,11 +89,11 @@ command_result cleanitems (Core * c)
         }
     }
     if (cleaned_total)
-        c->con.print("Removed %d contaminants from %d items.\n", cleaned_total, cleaned_items);
+        out.print("Removed %d contaminants from %d items.\n", cleaned_total, cleaned_items);
     return CR_OK;
 }
 
-command_result cleanunits (Core * c)
+command_result cleanunits (color_ostream &out)
 {
     // Invoked from clean(), already suspended
     int cleaned_units = 0, cleaned_total = 0;
@@ -110,27 +110,27 @@ command_result cleanunits (Core * c)
         }
     }
     if (cleaned_total)
-        c->con.print("Removed %d contaminants from %d creatures.\n", cleaned_total, cleaned_units);
+        out.print("Removed %d contaminants from %d creatures.\n", cleaned_total, cleaned_units);
     return CR_OK;
 }
 
-command_result spotclean (Core * c, vector <string> & parameters)
+command_result spotclean (color_ostream &out, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     if (cursor->x == -30000)
     {
-        c->con.printerr("The cursor is not active.\n");
+        out.printerr("The cursor is not active.\n");
         return CR_WRONG_USAGE;
     }
     if (!Maps::IsValid())
     {
-        c->con.printerr("Map is not available.\n");
+        out.printerr("Map is not available.\n");
         return CR_FAILURE;
     }
     df::map_block *block = Maps::getBlockAbs(cursor->x, cursor->y, cursor->z);
     if (block == NULL)
     {
-        c->con.printerr("Invalid map block selected!\n");
+        out.printerr("Invalid map block selected!\n");
         return CR_FAILURE;
     }
 
@@ -146,7 +146,7 @@ command_result spotclean (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-command_result clean (Core * c, vector <string> & parameters)
+command_result clean (color_ostream &out, vector <string> & parameters)
 {
     bool map = false;
     bool snow = false;
@@ -177,17 +177,18 @@ command_result clean (Core * c, vector <string> & parameters)
     if(!map && !units && !items)
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
+
     if(map)
-        cleanmap(c,snow,mud);
+        cleanmap(out,snow,mud);
     if(units)
-        cleanunits(c);
+        cleanunits(out);
     if(items)
-        cleanitems(c);
+        cleanitems(out);
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "clean","Removes contaminants from map tiles, items and creatures.",
@@ -212,7 +213,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }

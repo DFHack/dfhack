@@ -201,7 +201,6 @@ bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
     return false;
 }
 /*
-/*
  * Block flags
  */
 // FIXME: maybe truncates, still bullshit

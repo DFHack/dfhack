@@ -29,6 +29,7 @@ include/Internal.h
 include/DFHack.h
 include/Console.h
 include/Core.h
+include/ColorText.h
 include/DataDefs.h
 include/Error.h
 include/Export.h
@@ -66,6 +67,7 @@ include/modules/Graphic.h
 
 SET(PROJECT_SRCS
 Core.cpp
+ColorText.cpp
 DataDefs.cpp
 DataStatics.cpp
 DataStaticsCtor.cpp
@@ -101,6 +103,7 @@ modules/Vegetation.cpp
 modules/Vermin.cpp
 modules/World.cpp
 modules/Graphic.cpp
+modules/Windows.cpp
 )
 
 SET(PROJECT_HDRS_WINDOWS
@@ -139,6 +142,26 @@ ELSE()
     LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_WINDOWS})
     LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_WINDOWS})
 ENDIF()
+
+# Protobuf
+
+FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
+
+STRING(REPLACE ".proto" ".pb.cc" PROJECT_PROTO_SRCS ${PROJECT_PROTOS})
+STRING(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS ${PROJECT_PROTOS})
+
+LIST(APPEND PROJECT_HDRS ${PROJECT_PROTO_HDRS})
+LIST(APPEND PROJECT_SRCS ${PROJECT_PROTO_SRCS})
+
+ADD_CUSTOM_COMMAND(
+    OUTPUT ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
+    COMMAND protoc-bin -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
+            --cpp_out=dllexport_decl=DFHACK_EXPORT:${CMAKE_CURRENT_SOURCE_DIR}/proto/
+            ${PROJECT_PROTOS}
+    DEPENDS protoc-bin ${PROJECT_PROTOS}
+)
+
+#
 
 SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
 
@@ -192,10 +215,16 @@ else()
     ENDIF()
 endif()
 
+IF(WIN32)
+    SET_TARGET_PROPERTIES(dfhack PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
+ELSE()
+    SET_TARGET_PROPERTIES(dfhack PROPERTIES COMPILE_FLAGS "-include Export.h" )
+ENDIF()
+
 #effectively disables debug builds...
 SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
-TARGET_LINK_LIBRARIES(dfhack ${PROJECT_LIBS})
+TARGET_LINK_LIBRARIES(dfhack protobuf-lite ${PROJECT_LIBS})
 
 IF(UNIX)
     # On linux, copy our version of the df launch script which sets LD_PRELOAD

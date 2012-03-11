@@ -272,6 +272,9 @@ extern DFHACK_EXPORT void getPosition(int32_t& x, int32_t& y, int32_t& z);
 extern DFHACK_EXPORT df::map_block * getBlock (int32_t blockx, int32_t blocky, int32_t blockz);
 extern DFHACK_EXPORT df::map_block * getBlockAbs (int32_t x, int32_t y, int32_t z);
 
+inline df::map_block * getBlock (df::coord pos) { return getBlock(pos.x, pos.y, pos.z); }
+inline df::map_block * getBlockAbs (df::coord pos) { return getBlockAbs(pos.x, pos.y, pos.z); }
+
 /// copy the whole map block at block coords (see DFTypes.h for the block structure)
 extern DFHACK_EXPORT bool ReadBlock40d(uint32_t blockx, uint32_t blocky, uint32_t blockz, mapblock40d * buffer);
 

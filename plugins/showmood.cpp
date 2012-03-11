@@ -26,18 +26,18 @@ using namespace df::enums;
 
 using df::global::world;
 
-command_result df_showmood (Core * c, vector <string> & parameters)
+command_result df_showmood (color_ostream &out, vector <string> & parameters)
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
     if (!Translation::IsValid())
     {
-        c->con.printerr("Translation data unavailable!\n");
+        out.printerr("Translation data unavailable!\n");
         return CR_FAILURE;
     }
 
-    CoreSuspender suspend(c);
+    CoreSuspender suspend;
 
     bool found = false;
     for (df::job_list_link *cur = world->job_list.next; cur != NULL; cur = cur->next)
@@ -58,27 +58,27 @@ command_result df_showmood (Core * c, vector <string> & parameters)
         }
         if (!unit)
         {
-            c->con.printerr("Found strange mood not attached to any dwarf!\n");
+            out.printerr("Found strange mood not attached to any dwarf!\n");
             continue;
         }
         if (unit->mood == mood_type::None)
         {
-            c->con.printerr("Dwarf with strange mood does not have a mood type!\n");
+            out.printerr("Dwarf with strange mood does not have a mood type!\n");
             continue;
         }
-        c->con.print("%s is currently ", Translation::TranslateName(&unit->name, false).c_str());
+        out.print("%s is currently ", Translation::TranslateName(&unit->name, false).c_str());
         switch (unit->mood)
         {
         case mood_type::Macabre:
-            c->con.print("in a macabre mood");
+            out.print("in a macabre mood");
             if (job->job_type != job_type::StrangeMoodBrooding)
-                c->con.print(" (but isn't actually in a macabre mood?)");
+                out.print(" (but isn't actually in a macabre mood?)");
             break;
 
         case mood_type::Fell:
-            c->con.print("in a fell mood");
+            out.print("in a fell mood");
             if (job->job_type != job_type::StrangeMoodFell)
-                c->con.print(" (but isn't actually in a fell mood?)");
+                out.print(" (but isn't actually in a fell mood?)");
             break;
 
         case mood_type::Fey:
@@ -87,77 +87,80 @@ command_result df_showmood (Core * c, vector <string> & parameters)
             switch (unit->mood)
             {
             case mood_type::Fey:
-                c->con.print("in a fey mood");
+                out.print("in a fey mood");
                 break;
             case mood_type::Secretive:
-                c->con.print("in a secretive mood");
+                out.print("in a secretive mood");
                 break;
             case mood_type::Possessed:
-                c->con.print("possessed");
+                out.print("possessed");
                 break;
             }
-            c->con.print(" with intent to ");
+            out.print(" with intent to ");
             switch (job->job_type)
             {
             case job_type::StrangeMoodCrafter:
-                c->con.print("become a Craftsdwarf (or Engraver)");
+                out.print("become a Craftsdwarf (or Engraver)");
                 break;
             case job_type::StrangeMoodJeweller:
-                c->con.print("become a Jeweler");
+                out.print("become a Jeweler");
                 break;
             case job_type::StrangeMoodForge:
-                c->con.print("become a Metalworker");
+                out.print("become a Metalworker");
                 break;
             case job_type::StrangeMoodMagmaForge:
-                c->con.print("become a Metalworker using a Magma Forge");
+                out.print("become a Metalworker using a Magma Forge");
                 break;
             case job_type::StrangeMoodCarpenter:
-                c->con.print("become a Carpenter");
+                out.print("become a Carpenter");
                 break;
             case job_type::StrangeMoodMason:
-                c->con.print("become a Mason (or Miner)");
+                out.print("become a Mason (or Miner)");
                 break;
             case job_type::StrangeMoodBowyer:
-                c->con.print("become a Bowyer");
+                out.print("become a Bowyer");
                 break;
             case job_type::StrangeMoodTanner:
-                c->con.print("become a Leatherworker (or Tanner)");
+                out.print("become a Leatherworker (or Tanner)");
                 break;
             case job_type::StrangeMoodWeaver:
-                c->con.print("become a Clothier (or Weaver)");
+                out.print("become a Clothier (or Weaver)");
                 break;
             case job_type::StrangeMoodGlassmaker:
-                c->con.print("become a Glassmaker");
+                out.print("become a Glassmaker");
                 break;
             case job_type::StrangeMoodMechanics:
-                c->con.print("become a Mechanic");
+                out.print("become a Mechanic");
                 break;
             case job_type::StrangeMoodBrooding:
-                c->con.print("enter a macabre mood?");
+                out.print("enter a macabre mood?");
                 break;
             case job_type::StrangeMoodFell:
-                c->con.print("enter a fell mood?");
+                out.print("enter a fell mood?");
+                break;
+            default:
+                out.print("do something else...");
                 break;
             }
             break;
 
         default:
-            c->con.print("insane?");
+            out.print("insane?");
             break;
         }
         if (building)
         {
             string name;
             building->getName(&name);
-            c->con.print(" and has claimed a %s\n", name.c_str());
+            out.print(" and has claimed a %s\n", name.c_str());
         }
         else
-            c->con.print(" and has not yet claimed a workshop\n");
+            out.print(" and has not yet claimed a workshop\n");
 
         for (size_t i = 0; i < job->job_items.size(); i++)
         {
             df::job_item *item = job->job_items[i];
-            c->con.print("Item %i: ", i + 1);
+            out.print("Item %i: ", i + 1);
 
             MaterialInfo matinfo(item->mat_type, item->mat_index);
 
@@ -166,37 +169,37 @@ command_result df_showmood (Core * c, vector <string> & parameters)
             switch (item->item_type)
             {
             case item_type::BOULDER:
-                c->con.print("%s boulder", mat_name.c_str());
+                out.print("%s boulder", mat_name.c_str());
                 break;
             case item_type::BLOCKS:
-                c->con.print("%s blocks", mat_name.c_str());
+                out.print("%s blocks", mat_name.c_str());
                 break;
             case item_type::WOOD:
-                c->con.print("%s logs", mat_name.c_str());
+                out.print("%s logs", mat_name.c_str());
                 break;
             case item_type::BAR:
                 if (matinfo.isInorganicWildcard())
                     mat_name = "metal";
                 if (matinfo.inorganic && matinfo.inorganic->flags.is_set(inorganic_flags::WAFERS))
-                    c->con.print("%s wafers", mat_name.c_str());
+                    out.print("%s wafers", mat_name.c_str());
                 else
-                    c->con.print("%s bars", mat_name.c_str());
+                    out.print("%s bars", mat_name.c_str());
                 break;
             case item_type::SMALLGEM:
-                c->con.print("%s cut gems", mat_name.c_str());
+                out.print("%s cut gems", mat_name.c_str());
                 break;
             case item_type::ROUGH:
                 if (matinfo.isAnyInorganic())
                 {
                     if (matinfo.isInorganicWildcard())
                         mat_name = "any";
-                    c->con.print("%s rough gems", mat_name.c_str());
+                    out.print("%s rough gems", mat_name.c_str());
                 }
                 else
-                    c->con.print("raw %s", mat_name.c_str());
+                    out.print("raw %s", mat_name.c_str());
                 break;
             case item_type::SKIN_TANNED:
-                c->con.print("%s leather", mat_name.c_str());
+                out.print("%s leather", mat_name.c_str());
                 break;
             case item_type::CLOTH:
                 if (matinfo.isNone())
@@ -208,36 +211,36 @@ command_result df_showmood (Core * c, vector <string> & parameters)
                     else if (item->flags2.bits.yarn)
                         mat_name = "any yarn";
                 }
-                c->con.print("%s cloth", mat_name.c_str());
+                out.print("%s cloth", mat_name.c_str());
                 break;
             case item_type::REMAINS:
-                c->con.print("%s remains", mat_name.c_str());
+                out.print("%s remains", mat_name.c_str());
                 break;
             case item_type::CORPSE:
-                c->con.print("%s %scorpse", mat_name.c_str(), (item->flags1.bits.murdered ? "murdered " : ""));
+                out.print("%s %scorpse", mat_name.c_str(), (item->flags1.bits.murdered ? "murdered " : ""));
                 break;
             case item_type::NONE:
                 if (item->flags2.bits.body_part)
                 {
                     if (item->flags2.bits.bone)
-                        c->con.print("%s bones", mat_name.c_str());
+                        out.print("%s bones", mat_name.c_str());
                     else if (item->flags2.bits.shell)
-                        c->con.print("%s shells", mat_name.c_str());
+                        out.print("%s shells", mat_name.c_str());
                     else if (item->flags2.bits.horn)
-                        c->con.print("%s horns", mat_name.c_str());
+                        out.print("%s horns", mat_name.c_str());
                     else if (item->flags2.bits.pearl)
-                        c->con.print("%s pearls", mat_name.c_str());
+                        out.print("%s pearls", mat_name.c_str());
                     else if (item->flags2.bits.ivory_tooth)
-                        c->con.print("%s ivory/teeth", mat_name.c_str());
+                        out.print("%s ivory/teeth", mat_name.c_str());
                     else
-                        c->con.print("%s unknown body parts (%s:%s:%s)",
+                        out.print("%s unknown body parts (%s:%s:%s)",
                                      mat_name.c_str(),
                                      bitfieldToString(item->flags1).c_str(),
                                      bitfieldToString(item->flags2).c_str(),
                                      bitfieldToString(item->flags3).c_str());
                 }
                 else
-                    c->con.print("indeterminate %s item (%s:%s:%s)",
+                    out.print("indeterminate %s item (%s:%s:%s)",
                                  mat_name.c_str(),
                                  bitfieldToString(item->flags1).c_str(),
                                  bitfieldToString(item->flags2).c_str(),
@@ -247,7 +250,7 @@ command_result df_showmood (Core * c, vector <string> & parameters)
                 {
                     ItemTypeInfo itinfo(item->item_type, item->item_subtype);
 
-                    c->con.print("item %s material %s flags (%s:%s:%s)",
+                    out.print("item %s material %s flags (%s:%s:%s)",
                                  itinfo.toString().c_str(), mat_name.c_str(),
                                  bitfieldToString(item->flags1).c_str(),
                                  bitfieldToString(item->flags2).c_str(),
@@ -256,25 +259,25 @@ command_result df_showmood (Core * c, vector <string> & parameters)
                 }
             }
 
-            c->con.print(", quantity %i\n", item->quantity);
+            out.print(", quantity %i\n", item->quantity);
         }
     }
     if (!found)
-        c->con.print("No strange moods currently active.\n");
+        out.print("No strange moods currently active.\n");
 
     return CR_OK;
 }
 
 DFHACK_PLUGIN("showmood");
 
-DFhackCExport command_result plugin_init (Core *c, std::vector<PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {
     commands.clear();
     commands.push_back(PluginCommand("showmood", "Shows items needed for current strange mood.", df_showmood));
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }

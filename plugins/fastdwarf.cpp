@@ -18,14 +18,14 @@ using df::global::ui;
 // dfhack interface
 DFHACK_PLUGIN("fastdwarf");
 
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
 
 static int enable_fastdwarf;
 
-DFhackCExport command_result plugin_onupdate ( Core * c )
+DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     if (!enable_fastdwarf)
         return CR_OK;
@@ -43,7 +43,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
     return CR_OK;
 }
 
-static command_result fastdwarf (Core * c, vector <string> & parameters)
+static command_result fastdwarf (color_ostream &out, vector <string> & parameters)
 {
     if (parameters.size() == 1 && (parameters[0] == "0" || parameters[0] == "1"))
     {
@@ -51,11 +51,11 @@ static command_result fastdwarf (Core * c, vector <string> & parameters)
             enable_fastdwarf = 0;
         else
             enable_fastdwarf = 1;
-        c->con.print("fastdwarf %sactivated.\n", (enable_fastdwarf ? "" : "de"));
+        out.print("fastdwarf %sactivated.\n", (enable_fastdwarf ? "" : "de"));
     }
     else
     {
-        c->con.print("Makes your minions move at ludicrous speeds.\n"
+        out.print("Makes your minions move at ludicrous speeds.\n"
             "Activate with 'fastdwarf 1', deactivate with 'fastdwarf 0'.\n"
             "Current state: %d.\n", enable_fastdwarf);
     }
@@ -63,7 +63,7 @@ static command_result fastdwarf (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("fastdwarf",
         "enable/disable fastdwarf (parameter=0/1)",

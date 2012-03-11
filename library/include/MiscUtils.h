@@ -35,7 +35,7 @@ distribution.
 using namespace std;
 
 template <typename T>
-void print_bits ( T val, DFHack::Console& out )
+void print_bits ( T val, ostream& out )
 {
     stringstream strs;
     T n_bits = sizeof ( val ) * CHAR_BIT;
@@ -63,7 +63,7 @@ void print_bits ( T val, DFHack::Console& out )
         val >>= 1;
     }
     strs << endl;
-    out.print(strs.str().c_str());
+    out << strs.str();
 }
 
 /*

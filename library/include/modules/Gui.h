@@ -27,6 +27,7 @@ distribution.
 #include "Module.h"
 #include "Virtual.h"
 #include "BitArray.h"
+#include "ColorText.h"
 #include <string>
 
 #include "DataDefs.h"
@@ -56,37 +57,37 @@ namespace DFHack
     namespace Gui
     {
         // Full-screen item details view
-        DFHACK_EXPORT bool item_details_hotkey(Core *, df::viewscreen *top);
+        DFHACK_EXPORT bool item_details_hotkey(df::viewscreen *top);
         // 'u'nits or 'j'obs full-screen view
-        DFHACK_EXPORT bool unitjobs_hotkey(Core *, df::viewscreen *top);
+        DFHACK_EXPORT bool unitjobs_hotkey(df::viewscreen *top);
 
         // A job is selected in a workshop
-        DFHACK_EXPORT bool workshop_job_hotkey(Core *c, df::viewscreen *top);
+        DFHACK_EXPORT bool workshop_job_hotkey(df::viewscreen *top);
         // Building material selection mode
-        DFHACK_EXPORT bool build_selector_hotkey(Core *c, df::viewscreen *top);
+        DFHACK_EXPORT bool build_selector_hotkey(df::viewscreen *top);
         // A unit is selected in the 'v' mode
-        DFHACK_EXPORT bool view_unit_hotkey(Core *c, df::viewscreen *top);
+        DFHACK_EXPORT bool view_unit_hotkey(df::viewscreen *top);
         // Above + the inventory page is selected.
-        DFHACK_EXPORT bool unit_inventory_hotkey(Core *c, df::viewscreen *top);
+        DFHACK_EXPORT bool unit_inventory_hotkey(df::viewscreen *top);
 
         // In workshop_job_hotkey, returns the job
-        DFHACK_EXPORT df::job *getSelectedWorkshopJob(Core *c, bool quiet = false);
+        DFHACK_EXPORT df::job *getSelectedWorkshopJob(color_ostream &out, bool quiet = false);
 
         // A job is selected in a workshop, or unitjobs
-        DFHACK_EXPORT bool any_job_hotkey(Core *c, df::viewscreen *top);
-        DFHACK_EXPORT df::job *getSelectedJob(Core *c, bool quiet = false);
+        DFHACK_EXPORT bool any_job_hotkey(df::viewscreen *top);
+        DFHACK_EXPORT df::job *getSelectedJob(color_ostream &out, bool quiet = false);
 
         // A unit is selected via 'v', 'k', unitjobs, or
         // a full-screen item view of a cage or suchlike
-        DFHACK_EXPORT bool any_unit_hotkey(Core *c, df::viewscreen *top);
-        DFHACK_EXPORT df::unit *getSelectedUnit(Core *c, bool quiet = false);
+        DFHACK_EXPORT bool any_unit_hotkey(df::viewscreen *top);
+        DFHACK_EXPORT df::unit *getSelectedUnit(color_ostream &out, bool quiet = false);
 
         // An item is selected via 'v'->inventory, 'k', 't', or
         // a full-screen item view of a container. Note that in the
         // last case, the highlighted contained item is returned, not
         // the container itself.
-        DFHACK_EXPORT bool any_item_hotkey(Core *c, df::viewscreen *top);
-        DFHACK_EXPORT df::item *getSelectedItem(Core *c, bool quiet = false);
+        DFHACK_EXPORT bool any_item_hotkey(df::viewscreen *top);
+        DFHACK_EXPORT df::item *getSelectedItem(color_ostream &out, bool quiet = false);
 
         // Show a plain announcement, or a titan-style popup message
         DFHACK_EXPORT void showAnnouncement(std::string message, int color = 7, bool bright = true);

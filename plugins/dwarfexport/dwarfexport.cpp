@@ -18,6 +18,8 @@ using namespace std;
 #include <df/world.h>
 #include <df/unit.h>
 #include <df/unit_soul.h>
+#include <df/unit_labor.h>
+#include <df/unit_skill.h>
 
 using namespace DFHack;
 using df::global::ui;
@@ -30,12 +32,12 @@ using df::global::world;
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
-command_result export_dwarves (Core * c, std::vector <std::string> & parameters);
+command_result export_dwarves (color_ostream &con, std::vector <std::string> & parameters);
 
 DFHACK_PLUGIN("dwarfexport");
 
 // Mandatory init function. If you have some global state, create it here.
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &con, std::vector <PluginCommand> &commands)
 {
     // Fill the command list with your commands.
     commands.push_back(PluginCommand("dwarfexport",
@@ -46,7 +48,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 }
 
 // This is called right before the plugin library is removed from memory.
-DFhackCExport command_result plugin_shutdown ( Core * c )
+DFhackCExport command_result plugin_shutdown (color_ostream &con)
 {
     return CR_OK;
 }
@@ -84,7 +86,7 @@ static void element(const char* name, const uint32_t content, ostream& out, cons
     out << extra_indent << "    <" << name << ">" << content << "</" << name << ">" << endl;
 }
 
-static void printAttributes(Core* c, df::unit* cre, ostream& out) {
+static void printAttributes(color_ostream &con, df::unit* cre, ostream& out) {
     out << "    <Attributes>" << endl;
     for (int i = 0; i < NUM_CREATURE_PHYSICAL_ATTRIBUTES; i++) {
         element(physicals[i], cre->body.physical_attrs[i].unk1, out, "  ");
@@ -99,7 +101,7 @@ static void printAttributes(Core* c, df::unit* cre, ostream& out) {
     out << "    </Attributes>" << endl;
 }
 
-static void printTraits(Core* c, df::unit* cre, ostream& out)
+static void printTraits(color_ostream &con, df::unit* cre, ostream& out)
 {
     
     out << "    <Traits>" << endl;
@@ -112,7 +114,7 @@ static void printTraits(Core* c, df::unit* cre, ostream& out)
                 "' value='" << s->traits[index] << "'>";
             //FIXME: needs reimplementing trait string generation
             /*
-            string trait = c->vinfo->getTrait(i, s->traits[i]);
+            string trait = con->vinfo->getTrait(i, s->traits[i]);
             if (!trait.empty()) {
                 out << trait.c_str();
             }
@@ -124,46 +126,101 @@ static void printTraits(Core* c, df::unit* cre, ostream& out)
     out << "    </Traits>" << endl;
 }
 
+static int32_t getCreatureAge(df::unit* cre)
+{
+    int32_t yearDifference = *df::global::cur_year - cre->relations.birth_year;
+
+    // If the birthday this year has not yet passed, subtract one year.
+    // ASSUMPTION: birth_time is on the same scale as cur_year_tick
+    if (cre->relations.birth_time >= *df::global::cur_year_tick) {
+        yearDifference--;
+    }
+
+    return yearDifference;
+}
+
+static void printLabors(color_ostream &con, df::unit* cre, ostream& out)
+{
+    // Using British spelling here, consistent with Runesmith
+    out << "  <Labours>" << endl;
+    for (int iCount = 0; iCount < sizeof(cre->status.labors); iCount++)
+    {
+        if (cre->status.labors[iCount]) {
+            // Get the caption for the labor index.
+            df::enums::unit_labor::unit_labor thisLabor = (df::enums::unit_labor::unit_labor)iCount;
+            element("Labour", get_caption(thisLabor), out);
+        }
+    }
+    out << "  </Labours>" << endl;
+}
+
+static void printSkill(color_ostream &con, df::unit_skill* skill, ostream& out)
+{
+    out << "    <Skill>" << endl;
+
+    element("Name", get_caption(skill->id), out);
+    element("Level", skill->rating, out);
+
+    out << "    </Skill>" << endl;
+}
+
+static void printSkills(color_ostream &con, df::unit* cre, ostream& out)
+{
+
+    std::vector<df::unit_skill* > vSkills = cre->status.current_soul->skills;
+
+    out << "  <Skills>" << endl;
+    for (int iCount = 0; iCount < vSkills.size(); iCount++)
+    {
+        printSkill(con, vSkills.at(iCount), out);
+    }
+
+    out << "  </Skills>" << endl;
+}
+
 // GDC needs:
 // Name
 // Nickname
 // Sex
 // Attributes
 // Traits
-static void export_dwarf(Core* c, df::unit* cre, ostream& out) {
+static void export_dwarf(color_ostream &con, df::unit* cre, ostream& out) {
     string info = cre->name.first_name;
     info += " ";
     info += Translation::TranslateName(&cre->name, false);
     info[0] = toupper(info[0]);
-    c->con.print("Exporting %s\n", info.c_str());
-
+    con.print("Exporting %s\n", info.c_str());
+    
     out << "  <Creature>" << endl;
     element("Name", info.c_str(), out);
     element("Nickname", cre->name.nickname.c_str(), out);
     element("Sex", cre->sex == 0 ? "Female" : "Male", out);
-    printAttributes(c, cre, out);
-    printTraits(c, cre, out);
+    element("Age", getCreatureAge(cre), out);       // Added age, active labors, and skills March 9, 2012
+    printAttributes(con, cre, out);
+    printTraits(con, cre, out);
+    printLabors(con, cre, out);
+    printSkills(con, cre, out);
 
     out << "  </Creature>" << endl;
 }
 
-command_result export_dwarves (Core * c, std::vector <std::string> & parameters)
+command_result export_dwarves (color_ostream &con, std::vector <std::string> & parameters)
 {
     string filename;
     if (parameters.size() == 1) {
         filename = parameters[0];
     } else {
-        c->con.print("export <filename>\n");
+        con.print("export <filename>\n");
         return CR_OK;
     }
 
     ofstream outf(filename);
     if (!outf) {
-        c->con.printerr("Failed to open file %s\n", filename.c_str());
+        con.printerr("Failed to open file %s\n", filename.c_str());
         return CR_FAILURE;
     }
 
-    c->Suspend();
+    CoreSuspender suspend;
 
     uint32_t race = ui->race_id;
     uint32_t civ = ui->civ_id;
@@ -174,11 +231,10 @@ command_result export_dwarves (Core * c, std::vector <std::string> & parameters)
     {
         df::unit* cre = world->units.all[i];
         if (cre->race == race && cre->civ_id == civ) {
-            export_dwarf(c, cre, outf);
+            export_dwarf(con, cre, outf);
         }
     }
     outf << "</Creatures>" << endl;
 
-    c->Resume();
     return CR_OK;
 }

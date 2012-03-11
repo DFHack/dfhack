@@ -91,6 +91,8 @@ google/protobuf/wire_format_lite.h
 google/protobuf/wire_format_lite_inl.h
 google/protobuf/io/zero_copy_stream.h
 google/protobuf/io/zero_copy_stream_impl_lite.h
+google/protobuf/io/gzip_stream.h
+google/protobuf/io/zero_copy_stream_impl.h
 )
 
 SET(LIBPROTOBUF_FULL_HDRS
@@ -99,7 +101,6 @@ google/protobuf/descriptor.pb.h
 google/protobuf/descriptor_database.h
 google/protobuf/dynamic_message.h
 google/protobuf/generated_message_reflection.h
-google/protobuf/io/gzip_stream.h
 google/protobuf/compiler/importer.h
 google/protobuf/message.h
 google/protobuf/compiler/parser.h
@@ -112,7 +113,6 @@ google/protobuf/text_format.h
 google/protobuf/io/tokenizer.h
 google/protobuf/unknown_field_set.h
 google/protobuf/wire_format.h
-google/protobuf/io/zero_copy_stream_impl.h
 )
 
 LIST(APPEND LIBPROTOBUF_FULL_HDRS ${LIBPROTOBUF_LITE_HDRS})
@@ -128,6 +128,8 @@ google/protobuf/repeated_field.cc
 google/protobuf/wire_format_lite.cc
 google/protobuf/io/zero_copy_stream.cc
 google/protobuf/io/zero_copy_stream_impl_lite.cc
+google/protobuf/io/gzip_stream.cc
+google/protobuf/io/zero_copy_stream_impl.cc
 )
 
 SET(LIBPROTOBUF_FULL_SRCS
@@ -137,8 +139,8 @@ google/protobuf/descriptor_database.cc
 google/protobuf/dynamic_message.cc
 google/protobuf/extension_set_heavy.cc
 google/protobuf/generated_message_reflection.cc
-google/protobuf/io/gzip_stream.cc
 google/protobuf/compiler/importer.cc
+google/protobuf/io/gzip_stream.cc
 google/protobuf/message.cc
 google/protobuf/compiler/parser.cc
 google/protobuf/io/printer.cc
@@ -199,11 +201,33 @@ google/protobuf/compiler/zip_writer.cc
 LIST(APPEND LIBPROTOBUF_FULL_SRCS ${LIBPROTOBUF_LITE_SRCS})
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-INCLUDE_DIRECTORIES(${dfhack_SOURCE_DIR}/library/depends/zlib)
+INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIRS})
 
-ADD_LIBRARY(protobuf-lite ${LIBPROTOBUF_LITE_SRCS} ${LIBPROTOBUF_LITE_HDRS})
-ADD_LIBRARY(protobuf ${LIBPROTOBUF_FULL_SRCS} ${LIBPROTOBUF_FULL_HDRS})
-ADD_LIBRARY(protoc ${LIBPROTOC_SRCS} ${LIBPROTOC_HDRS})
+# Protobuf shared libraries
+
+ADD_LIBRARY(protobuf SHARED ${LIBPROTOBUF_FULL_SRCS} ${LIBPROTOBUF_FULL_HDRS})
+ADD_LIBRARY(protobuf-lite SHARED ${LIBPROTOBUF_LITE_SRCS} ${LIBPROTOBUF_LITE_HDRS})
+
+SET_TARGET_PROPERTIES(protobuf PROPERTIES COMPILE_DEFINITIONS LIBPROTOBUF_EXPORTS)
+SET_TARGET_PROPERTIES(protobuf-lite PROPERTIES COMPILE_DEFINITIONS LIBPROTOBUF_EXPORTS)
+
+TARGET_LINK_LIBRARIES(protobuf ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES})
+TARGET_LINK_LIBRARIES(protobuf-lite ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES})
+
+install(TARGETS protobuf-lite
+        LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}/deplibs
+        RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION}/deplibs)
+
+# Protobuf compiler shared library
+
+ADD_LIBRARY(protoc SHARED ${LIBPROTOC_SRCS} ${LIBPROTOC_HDRS})
+
+SET_TARGET_PROPERTIES(protoc PROPERTIES COMPILE_DEFINITIONS LIBPROTOC_EXPORTS)
+TARGET_LINK_LIBRARIES(protoc protobuf)
+
+# Protobuf compiler executable
+
 ADD_EXECUTABLE(protoc-bin google/protobuf/compiler/main.cc google/protobuf/compiler/command_line_interface.h google/protobuf/compiler/cpp/cpp_generator.h)
+
 SET_TARGET_PROPERTIES(protoc-bin PROPERTIES OUTPUT_NAME protoc)
-TARGET_LINK_LIBRARIES(protoc-bin protoc protobuf ${CMAKE_THREAD_LIBS_INIT})
+TARGET_LINK_LIBRARIES(protoc-bin protoc)

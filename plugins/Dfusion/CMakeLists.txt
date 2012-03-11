@@ -13,3 +13,4 @@ DFHACK_PLUGIN(dfusion  ${DFUSION_CPPS_ALL} ${DFUSION_HS} LINK_LIBRARIES lua)
 
 # installs into DF root
 install(DIRECTORY luafiles/ DESTINATION dfusion)
+install(FILES ../../library/include/df/codegen.out.xml DESTINATION dfusion/patterns/)

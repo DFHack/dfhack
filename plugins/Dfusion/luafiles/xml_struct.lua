@@ -84,7 +84,7 @@ local df_meta={}
 function df_meta:__index(key)
 	local addr=VersionInfo.getAddress(key)
 	local vartype=rawget(df,"types")[key];
-	if addr==nil then
+	if addr==0 then
 		error("No such global address exist")
 	elseif vartype==nil then
 		error("No such global type exist")
@@ -95,7 +95,7 @@ end
 function df_meta:__newindex(key,val)
 	local addr=VersionInfo.getAddress(key)
 	local vartype=rawget(df,"types")[key];
-	if addr==nil then
+	if addr==0 then
 		error("No such global address exist")
 	elseif vartype==nil then
 		error("No such global type exist")
@@ -129,3 +129,26 @@ for k,v in pairs(labels) do
 		end
 	end
 end--]=]
+function addressOf(var)
+	local addr=rawget(var,"ptr")
+	return addr
+end
+function printGlobals()
+	print("Globals:")
+	for k,v in pairs(rawget(df,"types")) do
+		print(k)
+	end
+end
+function printFields(object)
+	local tbl
+	if getmetatable(object)==xtypes["struct-type"].wrap then
+		tbl=rawget(object,"mtype")
+	elseif getmetatable(object)==xtypes["struct-type"] then
+		tbl=object
+	else
+		error("Not an class_type or a class_object")
+	end
+	for k,v in pairs(tbl.types) do
+		print(k)
+	end
+end

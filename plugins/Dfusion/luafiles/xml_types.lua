@@ -1,13 +1,13 @@
 function type_read(valtype,address)
 	if valtype.issimple then
-		print("Simple read:"..tostring(valtype.ctype))
+		--print("Simple read:"..tostring(valtype.ctype))
 		return engine.peek(address,valtype.ctype)
 	else
 		return valtype:makewrap(address)
 	end
 end
 function type_write(valtype,address,val)
-	if altype.issimple then
+	if valtype.issimple then
 		engine.poke(address,valtype.ctype,val)
 	else
 		engine.poke(address,DWORD,rawget(val,"ptr"))
@@ -20,6 +20,15 @@ function first_of_type(node,labelname)
 		end
 	end
 end
+function padAddress(curoff,sizetoadd) --return new offset to place things
+	--windows -> sizeof(x)==alignof(x)
+	if sizetoadd>8 then sizetoadd=8 end
+	if(math.mod(curoff,sizetoadd)==0) then 
+		return curoff
+	else
+		return curoff+(sizetoadd-math.mod(curoff,sizetoadd))
+	end
+end
 xtypes={} -- list of all types prototypes (e.g. enum-type -> announcement_type)
 -- type must have new and makewrap (that makes a wrapper around ptr)
 local sarr={} 
@@ -27,13 +36,13 @@ sarr.__index=sarr
 function sarr.new(node)
 	local o={}
 	setmetatable(o,sarr)
-	print("Making array.")
+	--print("Making array.")
 	o.count=tonumber(node.xarg.count)
-	print("got cound:"..o.count)
+	--print("got count:"..o.count)
 	o.ctype=makeType(first_of_type(node,"ld:item"))
 	
 	o.size=o.count*o.ctype.size
-	print("got subtypesize:"..o.ctype.size)
+	--print("got subtypesize:"..o.ctype.size)
 	return o
 end
 function sarr:makewrap(address)
@@ -45,6 +54,9 @@ function sarr:makewrap(address)
 end
 sarr.wrap={}
 function sarr.wrap:__index(key)
+	if key=="size" then
+		return rawget(self,"mtype").count
+	end
 	local num=tonumber(key)
 	local mtype=rawget(self,"mtype")
 	if num~=nil and num<mtype.count then
@@ -104,21 +116,84 @@ function type_enum.new(node)
 end
 xtypes["enum-type"]=type_enum
 
-local type_bitfield={}
+local type_bitfield={} --bitfield can be accessed by number (bf[1]=true) or by name bf.DO_MEGA=true
 type_bitfield.__index=type_bitfield
 function type_bitfield.new(node)
 	local o={}
 	setmetatable(o,type_bitfield)
 	o.size=0
+	o.fields={}
 	for k,v in pairs(node) do
 		if type(v)=="table" and v.xarg~=nil then
-			--print("\t"..k.." "..v.xarg.name)
-			o[k-1]=v.xarg.name
+			
+			local name=v.xarg.name
+			if name==nil then
+				name="anon_"..tostring(k)
+			end
+			--print("\t"..k.." "..name)
+			o.fields[k]=name
+			o.fields[name]=k
 			o.size=o.size+1
 		end
 	end
 	o.size=o.size/8 -- size in bytes, not bits.
 	return o
+end
+function type_bitfield:bitread(addr,nbit)
+	local byte=engine.peekb(addr+nbit/8)
+	if bit.band(byte,bit.lshift(1,nbit%8))~=0 then
+		return true
+	else
+		return false
+	end
+end
+function type_bitfield:bitwrite(addr,nbit,value)
+	local byte=engine.peekb(addr+nbit/8)
+	if self:bitread(addr,nbit)~= value then
+		local byte=bit.bxor(byte,bit.lshift(1,nbit%8))
+		engine.pokeb(addr+nbit/8,byte)
+	end
+end
+type_bitfield.wrap={}
+
+function type_bitfield:makewrap(address)
+	local o={}
+	o.mtype=self
+	o.ptr=address
+	setmetatable(o,self.wrap)
+	return o
+end
+function type_bitfield.wrap:__index(key)
+	local myptr=rawget(self,"ptr")
+	local mytype=rawget(self,"mtype")
+	local num=tonumber(key)
+	if num~=nil then
+		if mytype.fields[num]~=nil then
+			return mytype:bitread(myptr,num-1)
+		else
+			error("No bit with index:"..tostring(num))
+		end
+	elseif mytype.fields[key]~= nil then
+		return mytype:bitread(myptr,mytype.fields[key]-1)
+	else
+		error("No such field exists")
+	end
+end
+function type_bitfield.wrap:__newindex(key,value)
+	local myptr=rawget(self,"ptr")
+	local mytype=rawget(self,"mtype")
+	local num=tonumber(key)
+	if num~=nil then
+		if mytype.fields[num]~=nil then
+			return mytype:bitwrite(myptr,num-1,value)
+		else
+			error("No bit with index:"..tostring(num))
+		end
+	elseif mytype.fields[key]~= nil then
+		return mytype:bitwrite(myptr,mytype.fields[key]-1,value)
+	else
+		error("No such field exists")
+	end
 end
 xtypes["bitfield-type"]=type_bitfield
 
@@ -129,7 +204,19 @@ function type_class.new(node)
 	local o={}
 	setmetatable(o,type_class)
 	o.types={}
+	o.base={}
 	o.size=0
+	if node.xarg["inherits-from"]~=nil then
+		table.insert(o.base,getGlobal(node.xarg["inherits-from"]))
+		--error("Base class:"..node.xarg["inherits-from"])
+	end
+	for k,v in ipairs(o.base) do
+		for kk,vv in pairs(v.types) do
+			o.types[kk]={vv[1],vv[2]+o.size}
+		end
+		o.size=o.size+v.size
+	end
+	
 	for k,v in pairs(node) do
 		if type(v)=="table" and v.label=="ld:field" and v.xarg~=nil then
 			local t_name=""
@@ -141,6 +228,8 @@ function type_class.new(node)
 			--for k,v in pairs(ttype) do
 			--	print(k..tostring(v))
 			--end
+			local off=padAddress(o.size,ttype.size)
+			o.size=off
 			o.types[name]={ttype,o.size}
 			o.size=o.size+ttype.size
 		end
@@ -151,7 +240,7 @@ end
 type_class.wrap={}
 function type_class.wrap:__index(key)
 	local myptr=rawget(self,"ptr")
-	local mytype=rawget(self,"ptype")
+	local mytype=rawget(self,"mtype")
 	if mytype.types[key] ~= nil then
 		return type_read(mytype.types[key][1],myptr+mytype.types[key][2])
 	else
@@ -266,9 +355,13 @@ function farr:makewrap(address)
 end
 farr.wrap={}
 function farr.wrap:__index(key)
+	
 	local num=tonumber(key)
 	local mtype=rawget(self,"mtype")
 	local size=type_read(rawget(self,"ptr")+4,DWORD)
+	if key=="size" then
+		return size/mtype.ctype.size;
+	end
 	error("TODO make __index for df-flagarray")
 	if num~=nil and num<sizethen then
 		return type_read(mtype.ctype,num*mtype.ctype.size+rawget(self,"ptr"))
@@ -292,14 +385,15 @@ local stl_vec={}
 stl_vec.__index=stl_vec
 function stl_vec.new(node)
 	local o={}
-	setmetatable(o,stl_vec)
-	o.size=12
+	
+	o.size=16
 	local titem=first_of_type(node,"ld:item")
 	if titem~=nil then
 		o.item_type=makeType(titem)
 	else
 		o.item_type=getSimpleType("uint32_t")
 	end
+	setmetatable(o,stl_vec)
 	return o
 end
 function stl_vec:makewrap(address)
@@ -312,10 +406,13 @@ end
 stl_vec.wrap={}
 function stl_vec.wrap:__index(key)
 	local num=tonumber(key)
-	local mtype=rawget(self,"item_type")
+	local mtype=rawget(self,"mtype")
 	local ptr=rawget(self,"ptr")
-	local p_begin=type_read(ptr,DWORD)
-	local p_end=type_read(ptr+4,DWORD)
+	local p_begin=engine.peek(ptr,DWORD)
+	local p_end=engine.peek(ptr+4,DWORD)
+	if key=="size" then
+		return (p_end-p_begin)/mtype.item_type.size;
+	end
 	--allocend=type_read(ptr+8,DWORD)
 	error("TODO make __index for stl_vec")
 	if num~=nil and num<sizethen then
@@ -386,6 +483,16 @@ function bytes_pad.new(node)
 end
 xtypes["bytes"]=bytes_pad
 --------------------------------------------
+function getGlobal(name)
+	if types[name]== nil then
+			findAndParse(name)
+			if types[name]== nil then
+				error("type:"..name.." failed find-and-parse")
+			end
+			--error("type:"..node.xarg["type-name"].." should already be ready")
+		end
+		return types[name]
+end
 parser={}
 parser["ld:global-type"]=function  (node)
 	return xtypes[node.xarg.meta].new(node)
@@ -393,6 +500,7 @@ end
 parser["ld:global-object"]=function  (node)
 	
 end
+
 parser["ld:field"]=function (node)
 	local meta=node.xarg.meta
 	if meta=="number" or (meta=="primitive" and node.xarg.subtype=="stl-string") then
@@ -400,14 +508,7 @@ parser["ld:field"]=function (node)
 	elseif meta=="static-array" then
 		return xtypes["static-array"].new(node)
 	elseif meta=="global" then
-		if types[node.xarg["type-name"]]== nil then
-			findAndParse(node.xarg["type-name"])
-			if types[node.xarg["type-name"]]== nil then
-				error("type:"..node.xarg["type-name"].." failed find-and-parse")
-			end
-			--error("type:"..node.xarg["type-name"].." should already be ready")
-		end
-		return types[node.xarg["type-name"]]
+		return getGlobal(node.xarg["type-name"])
 	elseif meta=="compound" then
 		if node.xarg.subtype==nil then
 			return xtypes["struct-type"].new(node)

@@ -1,0 +1,7 @@
+<ld:data-definition xmlns:ld="http://github.com/peterix/dfhack/lowered-data-definition">
+	<ld:global-type ld:meta="struct-type"  type-name="coord">
+		<ld:field name="x" ld:meta="number" ld:subtype="int16_t" ld:bits="16"/>
+		<ld:field name="y" ld:meta="number" ld:subtype="int16_t" ld:bits="16"/>
+		<ld:field name="z" ld:meta="number" ld:subtype="int16_t" ld:bits="16"/>
+	</ld:global-type>
+</ld:data-definition>

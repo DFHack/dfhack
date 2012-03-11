@@ -46,7 +46,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 	lua::state st=lua::glua::Get();
 	//maybe remake it to run automaticaly
 	lua::RegisterConsole(st);
-	lua::RegisterProcess(st,c->p);
+	lua::RegisterProcess(st);
 	lua::RegisterHexsearch(st);
 	lua::RegisterMisc(st);
 	lua::RegisterVersionInfo(st);

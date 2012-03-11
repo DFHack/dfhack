@@ -40,7 +40,7 @@ function parseTree(t)
 end
 function parseTreeGlobals(t)
 	local glob={}
-	print("Parsing global-objects")
+	--print("Parsing global-objects")
 	for k,v in ipairs(t) do
 		if v.xarg~=nil and v.label=="ld:global-object" then
 			local name=v.xarg["name"];

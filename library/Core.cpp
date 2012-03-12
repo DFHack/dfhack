@@ -500,19 +500,22 @@ static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname)
 {
     core->con << "Loading script at " << fname << std::endl;
     ifstream script(fname);
-    if (script.bad())
+    if (script.good())
+    {
+        int tmp = 0;
+        string command;
+        while (getline(script, command))
+        {
+            if (!command.empty())
+                runInteractiveCommand(core, plug_mgr, tmp, command);
+        }
+    }
+    else
     {
         core->con.printerr("Error loading script\n");
-        return;
     }
 
-    int tmp = 0;
-    string command;
-    while (getline(script, command))
-    {
-        if (!command.empty())
-            runInteractiveCommand(core, plug_mgr, tmp, command);
-    }
+    script.close();
 }
 
 // A thread function... for the interactive console.

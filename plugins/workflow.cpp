@@ -701,6 +701,19 @@ static ItemConstraint *get_constraint(Core *c, const std::string &str, Persisten
     return nct;
 }
 
+static void delete_all_constraints(Core *c)
+{
+    for(std::vector<ItemConstraint*>::iterator iter = constraints.begin();
+        iter != constraints.end();
+        ++iter)
+    {
+        c->getWorld()->DeletePersistentData((*iter)->config);
+        delete (*iter);
+    }
+
+    constraints.clear();
+}
+
 static void delete_constraint(Core *c, ItemConstraint *cv)
 {
     int idx = linear_index(constraints, cv);
@@ -1556,6 +1569,15 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
 
         c->con.printerr("Constraint not found: %s\n", parameters[1].c_str());
         return CR_FAILURE;
+    }
+    else if (cmd == "clear")
+    {
+        if(parameters.size() == 1 && parameters[0] == "all")
+        {
+            delete_all_constraints(c);
+            return CR_OK;
+        }
+        return CR_WRONG_USAGE;
     }
     else
         return CR_WRONG_USAGE;

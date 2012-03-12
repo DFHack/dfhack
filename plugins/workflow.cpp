@@ -1573,8 +1573,8 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
         return CR_FAILURE;
     }
     else if (cmd == "clear")
-    {
-        if(parameters.size() == 1 && parameters[0] == "all")
+    {        
+        if(parameters.size() == 2 && parameters[1] == "all")
         {
             delete_all_constraints(c);
             return CR_OK;

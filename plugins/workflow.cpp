@@ -83,6 +83,8 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
                 "    Set a constraint. The first form counts each stack as only 1 item.\n"
                 "  workflow unlimit <constraint-spec>\n"
                 "    Delete a constraint.\n"
+                "  workflow clear all\n"
+                "    Deletes all constraints.  Be sure you want to do this.\n"
                 "Function:\n"
                 "  - When the plugin is enabled, it protects all repeat jobs from removal.\n"
                 "    If they do disappear due to any cause, they are immediately re-added\n"

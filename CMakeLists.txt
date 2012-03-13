@@ -11,13 +11,15 @@ else(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 # set up folder structures for IDE solutions
-if(NOT CMAKE_USING_VC_FREE_TOOLS)
+# MSVC Express won't load solutions that use this. It also doesn't include MFC supported
+# Check for MFC!
+find_package(MFC QUIET)
+if(MFC_FOUND OR (NOT MSVC))
     SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
     OPTION(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." ON)
 else()
     OPTION(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." OFF)
 endif()
-MARK_AS_ADVANCED(CMAKE_USE_FOLDERS)
 
 # macro for setting up IDE folders without nasty IF()s everywhere
 MACRO(IDE_FOLDER target folder)

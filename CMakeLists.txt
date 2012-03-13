@@ -15,10 +15,15 @@ endif(CMAKE_CONFIGURATION_TYPES)
 # Check for MFC!
 find_package(MFC QUIET)
 if(MFC_FOUND OR (NOT MSVC))
-    SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
     OPTION(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." ON)
 else()
     OPTION(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." OFF)
+endif()
+
+if(CMAKE_USE_FOLDERS)
+    SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
+else()
+    SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS OFF)
 endif()
 
 # macro for setting up IDE folders without nasty IF()s everywhere

@@ -34,6 +34,9 @@ function parseTree(t)
 				--end
 				types[name]=makeType(v)
 				--print("found "..name.." or type:"..v.xarg.meta or v.xarg.base)
+			
+			else
+				types[name]=makeType(v,types[name])
 			end
 		end
 	end
@@ -63,6 +66,8 @@ function parseTreeGlobals(t)
 	return glob
 end
 function findAndParse(tname)
+	--if types[tname]==nil then types[tname]={} end
+	-- [=[
 	for k,v in ipairs(main_tree) do
 		local name=v.xarg["type-name"];
 		if v.xarg~=nil and v.xarg["type-name"]~=nil and v.label=="ld:global-type" then
@@ -72,11 +77,12 @@ function findAndParse(tname)
 			--for kk,vv in pairs(v.xarg) do
 			--	print("\t"..kk.." "..tostring(vv))
 			--end
-			types[name]=makeType(v)
+			types[name]=makeType(v,types[name])
 			end
 			--print("found "..name.." or type:"..v.xarg.meta or v.xarg.base)
 		end
 	end
+	--]=]
 end
 df={}
 df.types=rawget(df,"types") or {} --temporary measure for debug
@@ -149,6 +155,6 @@ function printFields(object)
 		error("Not an class_type or a class_object")
 	end
 	for k,v in pairs(tbl.types) do
-		print(k)
+		print(string.format("%s %x",k,v[2]))
 	end
 end

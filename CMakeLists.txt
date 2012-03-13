@@ -10,6 +10,10 @@ else(CMAKE_CONFIGURATION_TYPES)
   endif (NOT CMAKE_BUILD_TYPE)
 endif(CMAKE_CONFIGURATION_TYPES)
 
+## some generic CMake magic
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+project(dfhack)
+
 # set up folder structures for IDE solutions
 # MSVC Express won't load solutions that use this. It also doesn't include MFC supported
 # Check for MFC!
@@ -32,10 +36,6 @@ MACRO(IDE_FOLDER target folder)
         SET_PROPERTY(TARGET ${target} PROPERTY FOLDER ${folder})
     endif()
 ENDMACRO()
-
-## some generic CMake magic
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
-project(dfhack)
 
 SET(CMAKE_MODULE_PATH
 ${dfhack_SOURCE_DIR}/CMake/Modules

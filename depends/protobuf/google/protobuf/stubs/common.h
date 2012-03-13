@@ -48,6 +48,22 @@
 #include <stdint.h>
 #endif
 
+// make MSVC shut up about some things
+#ifdef _MSC_VER
+    // don't spew nonsense!
+    #pragma warning( disable: 4251 )
+    // POSIX is OK, stop complaining.
+    #pragma warning( disable: 4996 )
+    // using 'this' in initializer lists...
+    #pragma warning( disable: 4355 )
+    // signed/unsigned mismatch
+    #pragma warning( disable: 4018 )
+    // possible loss of data from assignments between different numeric types
+    #pragma warning( disable: 4244 )
+    // forcing value to 'bool'
+    #pragma warning( disable: 4800 )
+#endif
+
 #if defined(_MSC_VER) && defined(_CPPUNWIND)
   #define PROTOBUF_USE_EXCEPTIONS
 #elif defined(__EXCEPTIONS)

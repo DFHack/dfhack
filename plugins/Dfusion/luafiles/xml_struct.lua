@@ -135,9 +135,20 @@ for k,v in pairs(labels) do
 		end
 	end
 end--]=]
-function addressOf(var)
-	local addr=rawget(var,"ptr")
-	return addr
+function addressOf(var,key)
+	if key== nil then
+		local addr=rawget(var,"ptr")
+		return addr
+	else
+		local meta=getmetatable(var)
+		if meta== nil then
+			error("Failed to get address, no metatable")
+		end
+		if meta.__address == nil then
+			error("Failed to get address, no __address function")
+		end
+		return meta.__address(var,key)
+	end
 end
 function printGlobals()
 	print("Globals:")

@@ -41,7 +41,7 @@ function embark(names)
 		count=MakeTable(modpos,modsize,names) --just remake tables
 	else
 	
-	tofind=VersionInfo.getGroup("Creatures"):getAddress("current_race")--offsets.getEx('CurrentRace')
+	tofind=addressOf(df.ui,"race_id")
 
 	loc=offsets.find(stoff,0xa1,DWORD_,tofind)
 

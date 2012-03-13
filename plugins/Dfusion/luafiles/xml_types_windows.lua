@@ -11,6 +11,7 @@ function stl_vec.new(node,obj)
 	local o=obj or {}
 	
 	o.size=16
+	o.__align=4
 	local titem=first_of_type(node,"ld:item")
 	if titem~=nil then
 		o.item_type=makeType(titem)

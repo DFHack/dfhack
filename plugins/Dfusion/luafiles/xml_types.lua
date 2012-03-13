@@ -28,7 +28,7 @@ elseif LINUX then
 	dofile("dfusion/xml_types_linux.lua")
 end
 
-function padAddress(curoff,sizetoadd) --return new offset to place things... Maybe linux is different?
+function padAddress(curoff,typetoadd) --return new offset to place things... Maybe linux is different?
 	--windows -> sizeof(x)==alignof(x)
 	--[=[
 	
@@ -39,7 +39,17 @@ function padAddress(curoff,sizetoadd) --return new offset to place things... May
 		return curoff+(sizetoadd-math.mod(curoff,sizetoadd))
 	end
 	--]=]
-	return curoff
+	if typetoadd==nil or typetoadd.__align==nil then
+		return curoff
+	else
+		
+		if(math.mod(curoff,typetoadd.__align)==0) then 
+			return curoff
+		else
+			print("padding off:"..curoff.." with align:"..typetoadd.__align.." pad="..(typetoadd.__align-math.mod(curoff,typetoadd.__align)))
+			return curoff+(typetoadd.__align-math.mod(curoff,typetoadd.__align))
+		end
+	end
 end
 
 
@@ -91,21 +101,22 @@ xtypes["static-array"]=sarr
 
 simpletypes={}
 
-simpletypes["s-float"]={FLOAT,4}
-simpletypes.int64_t={QWORD,8}
-simpletypes.uint32_t={DWORD,4}
-simpletypes.uint16_t={WORD,2}
-simpletypes.uint8_t={BYTE,1}
-simpletypes.int32_t={DWORD,4}
-simpletypes.int16_t={WORD,2}
-simpletypes.int8_t={BYTE,1}
-simpletypes.bool={BYTE,1}
-simpletypes["stl-string"]={STD_STRING,24}
+simpletypes["s-float"]={FLOAT,4,4}
+simpletypes.int64_t={QWORD,8,8}
+simpletypes.uint32_t={DWORD,4,4}
+simpletypes.uint16_t={WORD,2,2}
+simpletypes.uint8_t={BYTE,1,1}
+simpletypes.int32_t={DWORD,4,4}
+simpletypes.int16_t={WORD,2,2}
+simpletypes.int8_t={BYTE,1,1}
+simpletypes.bool={BYTE,1,1}
+simpletypes["stl-string"]={STD_STRING,24,8}
 function getSimpleType(typename,obj)
 	if simpletypes[typename] == nil then return end
 	local o=obj or {}
 	o.ctype=simpletypes[typename][1]
 	o.size=simpletypes[typename][2]
+	o.__align=simpletypes[typename][3]
 	o.issimple=true
 	return o
 end
@@ -136,6 +147,7 @@ function type_bitfield.new(node,obj)
 	o.size=0
 	o.fields_named={}
 	o.fields_numed={}
+	o.__align=8
 	for k,v in pairs(node) do
 		if type(v)=="table" and v.xarg~=nil then
 			
@@ -150,6 +162,10 @@ function type_bitfield.new(node,obj)
 		end
 	end
 	o.size=o.size/8 -- size in bytes, not bits.
+	o.size=math.ceil(o.size)
+	--[=[if math.mod(o.size,o.__align) ~= 0 then
+		o.size=o.size+ (o.__align-math.mod(o.size,o.__align))
+	end]=]
 	return o
 end
 function type_bitfield:bitread(addr,nbit)
@@ -228,6 +244,7 @@ function type_class.new(node,obj)
 	o.types={}
 	o.base={}
 	o.size=0
+	--o.baseoffset=0
 	if node.xarg["inherits-from"]~=nil then
 		table.insert(o.base,getGlobal(node.xarg["inherits-from"]))
 		--error("Base class:"..node.xarg["inherits-from"])
@@ -238,7 +255,8 @@ function type_class.new(node,obj)
 		end
 		o.size=o.size+v.size
 	end
-	
+	--o.baseoffset=o.size;
+	--o.size=0
 	for k,v in pairs(node) do
 		if type(v)=="table" and v.label=="ld:field" and v.xarg~=nil then
 			local t_name=""
@@ -247,13 +265,17 @@ function type_class.new(node,obj)
 			--print("\t"..k.." "..name.."->"..v.xarg.meta.." ttype:"..v.label)
 			local ttype=makeType(v)
 			if ttype.size==0 then error("Field with 0 size! type="..node.xarg["type-name"].."."..name) end
+			if ttype.size-math.ceil(ttype.size) ~= 0 then error("Field with real offset! type="..node.xarg["type-name"].."."..name) end
 			--for k,v in pairs(ttype) do
 			--	print(k..tostring(v))
 			--end
-			local off=padAddress(o.size,ttype.size)
+			local off=padAddress(o.size,ttype)
+			if off~=o.size then
+				print("var:"..name.."size:"..ttype.size)
+			end
 			--print("var:"..name.." ->"..tostring(off).. " :"..ttype.size)
 			o.size=off
-			o.types[name]={ttype,o.size}
+			o.types[name]={ttype,o.size}--+o.baseoffset
 			o.size=o.size+ttype.size
 		end
 	end
@@ -261,6 +283,15 @@ function type_class.new(node,obj)
 end
 
 type_class.wrap={}
+function type_class.wrap:__address(key)
+	local myptr=rawget(self,"ptr")
+	local mytype=rawget(self,"mtype")
+	if mytype.types[key] ~= nil then
+		return myptr+mytype.types[key][2]
+	else
+		error("No such field exists")
+	end
+end
 function type_class.wrap:__index(key)
 	local myptr=rawget(self,"ptr")
 	local mytype=rawget(self,"mtype")

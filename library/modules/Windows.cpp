@@ -32,7 +32,6 @@ distribution.
 #include "df/init.h"
 #include "df/ui.h"
 #include <df/graphic.h>
-#include <llex.h>
 #include "modules/Windows.h"
 
 using namespace DFHack;

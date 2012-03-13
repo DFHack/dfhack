@@ -10,21 +10,16 @@ IF(UNIX)
 ENDIF()
 
 include_directories (include)
-include_directories (depends/md5)
-include_directories (depends/tinyxml)
-include_directories (depends/tthread)
-add_subdirectory (depends/protobuf)
 
 SET(PERL_EXECUTABLE "perl" CACHE FILEPATH "This is the perl executable to run in the codegen step. Tweak it if you need to run a specific one.")
 
-execute_process(COMMAND ${PERL_EXECUTABLE} xml/list.pl xml include/df ";"
+execute_process(COMMAND ${PERL_EXECUTABLE} xml/list.pl xml ${dfapi_SOURCE_DIR}/include/df ";"
                 WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
                 OUTPUT_VARIABLE GENERATED_HDRS)
 
-SET(PROJECT_HDRS_INTERNAL
-)
+SET_SOURCE_FILES_PROPERTIES(${GENERATED_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE GENERATED TRUE)
 
-SET(PROJECT_HDRS
+SET(MAIN_HEADERS
 include/Internal.h
 include/DFHack.h
 include/Console.h
@@ -46,6 +41,52 @@ include/Types.h
 include/VersionInfo.h
 include/VersionInfoFactory.h
 include/Virtual.h
+)
+
+SET(MAIN_HEADERS_WINDOWS
+include/wdirent.h
+)
+
+SET(MAIN_SOURCES
+Core.cpp
+ColorText.cpp
+DataDefs.cpp
+DataStatics.cpp
+DataStaticsCtor.cpp
+MiscUtils.cpp
+PluginManager.cpp
+TileTypes.cpp
+VersionInfoFactory.cpp
+Virtual.cpp
+)
+
+SET(MAIN_SOURCES_WINDOWS
+Console-windows.cpp
+Hooks-windows.cpp
+PlugLoad-windows.cpp
+Process-windows.cpp
+)
+
+IF(WIN32)
+    SOURCE_GROUP("Main\\Headers" FILES ${MAIN_HEADERS} ${MAIN_HEADERS_WINDOWS})
+    SOURCE_GROUP("Main\\Sources" FILES ${MAIN_SOURCES} ${MAIN_SOURCES_WINDOWS})
+ENDIF()
+
+SET(MAIN_SOURCES_LINUX
+Console-linux.cpp
+Hooks-linux.cpp
+PlugLoad-linux.cpp
+Process-linux.cpp
+)
+
+SET(MAIN_SOURCES_LINUX_EGGY
+Console-linux.cpp
+Hooks-egg.cpp
+PlugLoad-linux.cpp
+Process-linux.cpp
+)
+
+SET(MODULE_HEADERS
 include/modules/Buildings.h
 include/modules/Constructions.h
 include/modules/Units.h
@@ -65,28 +106,7 @@ include/modules/World.h
 include/modules/Graphic.h
 )
 
-SET(PROJECT_SRCS
-Core.cpp
-ColorText.cpp
-DataDefs.cpp
-DataStatics.cpp
-DataStaticsCtor.cpp
-MiscUtils.cpp
-PluginManager.cpp
-TileTypes.cpp
-VersionInfoFactory.cpp
-Virtual.cpp
-
-depends/md5/md5.cpp
-depends/md5/md5wrapper.cpp
-
-depends/tinyxml/tinystr.cpp
-depends/tinyxml/tinyxml.cpp
-depends/tinyxml/tinyxmlerror.cpp
-depends/tinyxml/tinyxmlparser.cpp
-
-depends/tthread/tinythread.cpp
-
+SET( MODULE_SOURCES
 modules/Buildings.cpp
 modules/Constructions.cpp
 modules/Units.cpp
@@ -106,52 +126,39 @@ modules/Graphic.cpp
 modules/Windows.cpp
 )
 
-SET(PROJECT_HDRS_WINDOWS
-include/wdirent.h
-)
+IF(WIN32)
+    SOURCE_GROUP("Modules\\Headers" FILES ${MODULE_HEADERS})
+    SOURCE_GROUP("Modules\\Sources" FILES ${MODULE_SOURCES})
+    SOURCE_GROUP("Generated" FILES ${GENERATED_HDRS})
+ENDIF()
 
-SET(PROJECT_SRCS_LINUX
-Console-linux.cpp
-Hooks-linux.cpp
-PlugLoad-linux.cpp
-Process-linux.cpp
-)
-
-SET(PROJECT_SRCS_WINDOWS
-Console-windows.cpp
-Hooks-windows.cpp
-PlugLoad-windows.cpp
-Process-windows.cpp
-)
-
-SET(PROJECT_SRCS_LINUX_EGG
-Console-linux.cpp
-Hooks-egg.cpp
-PlugLoad-linux.cpp
-Process-linux.cpp
-)
+SET(PROJECT_HEADERS)
+LIST(APPEND PROJECT_HEADERS ${MAIN_HEADERS})
+LIST(APPEND PROJECT_HEADERS ${MODULE_HEADERS})
+SET(PROJECT_SOURCES)
+LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES})
+LIST(APPEND PROJECT_SOURCES ${MODULE_SOURCES})
 
 IF(UNIX)
     OPTION(BUILD_EGGY "Make DFHack strangely egg-shaped." OFF)
     IF(BUILD_EGGY)
-        LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_LINUX_EGG})
+        LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX_EGGY})
     ELSE()
-        LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_LINUX})
+        LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX})
     ENDIF()
-ELSE()
-    LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_WINDOWS})
-    LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_WINDOWS})
+ELSEIF(WIN32)
+    LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_WINDOWS})
+    LIST(APPEND PROJECT_HEADERS ${MAIN_HEADERS_WINDOWS})
 ENDIF()
 
 # Protobuf
-
 FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 
 STRING(REPLACE ".proto" ".pb.cc" PROJECT_PROTO_SRCS ${PROJECT_PROTOS})
 STRING(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS ${PROJECT_PROTOS})
 
-LIST(APPEND PROJECT_HDRS ${PROJECT_PROTO_HDRS})
-LIST(APPEND PROJECT_SRCS ${PROJECT_PROTO_SRCS})
+LIST(APPEND PROJECT_HEADERS ${PROJECT_PROTO_HDRS})
+LIST(APPEND PROJECT_HEADERS ${PROJECT_PROTO_SRCS})
 
 ADD_CUSTOM_COMMAND(
     OUTPUT ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
@@ -161,15 +168,12 @@ ADD_CUSTOM_COMMAND(
     DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
 
-#
-
-SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
-
-LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
+# Merge headers into sources
+SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HEADERS} PROPERTIES HEADER_FILE_ONLY TRUE )
+LIST(APPEND PROJECT_SOURCES ${PROJECT_HEADERS})
 
 # Generation
-
-SET_SOURCE_FILES_PROPERTIES(${GENERATED_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE GENERATED TRUE)
+LIST(APPEND PROJECT_SOURCES ${GENERATED_HDRS})
 
 FILE(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR}/xml/*.xslt)
 FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/*.xml)
@@ -198,13 +202,13 @@ IF(UNIX)
 ENDIF()
 
 IF(UNIX)
-  SET(PROJECT_LIBS rt dl)
+  SET(PROJECT_LIBS rt dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
 ELSE(WIN32)
-  #FIXME: do we really need this?
-  SET(PROJECT_LIBS psapi)
+  #FIXME: do we really need psapi?
+  SET(PROJECT_LIBS psapi dfhack-tinyxml dfhack-tinythread)
 ENDIF()
 
-ADD_LIBRARY(dfhack SHARED ${PROJECT_SRCS})
+ADD_LIBRARY(dfhack SHARED ${PROJECT_SOURCES})
 ADD_DEPENDENCIES(dfhack generate_headers)
 
 IF(BUILD_EGGY)
@@ -225,6 +229,7 @@ ENDIF()
 SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
 TARGET_LINK_LIBRARIES(dfhack protobuf-lite ${PROJECT_LIBS})
+SET_TARGET_PROPERTIES(dfhack PROPERTIES LINK_INTERFACE_LIBRARIES "")
 
 IF(UNIX)
     # On linux, copy our version of the df launch script which sets LD_PRELOAD

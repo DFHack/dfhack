@@ -1,14 +1,7 @@
 PROJECT(mapexport)
 
-#The protobuf sources we generate will require these headers
+# add *our* headers here.
 SET(PROJECT_HDRS
-${dfhack_SOURCE_DIR}/library/depends/protobuf/google/protobuf/stubs/once.h
-${dfhack_SOURCE_DIR}/library/depends/protobuf/google/protobuf/stubs/common.h
-${dfhack_SOURCE_DIR}/library/depends/protobuf/google/protobuf/io/coded_stream.h
-${dfhack_SOURCE_DIR}/library/depends/protobuf/google/protobuf/wire_format_lite_inl.h
-${dfhack_SOURCE_DIR}/library/depends/protobuf/google/protobuf/generated_message_util.h
-${dfhack_SOURCE_DIR}/library/depends/protobuf/google/protobuf/repeated_field.h
-${dfhack_SOURCE_DIR}/library/depends/protobuf/google/protobuf/extension_set.h
 )
 
 SET(PROJECT_SRCS
@@ -26,6 +19,9 @@ ${CMAKE_CURRENT_SOURCE_DIR}/proto/Map.proto
 #Create new lists of what sources and headers protoc will output after we invoke it
 STRING(REPLACE ".proto" ".pb.cc;" PROJECT_PROTO_SRCS ${PROJECT_PROTOS})
 STRING(REPLACE ".proto" ".pb.h;" PROJECT_PROTO_HDRS ${PROJECT_PROTOS})
+
+SET_SOURCE_FILES_PROPERTIES( ${PROJECT_PROTO_HDRS} PROPERTIES GENERATED TRUE)
+SET_SOURCE_FILES_PROPERTIES( ${PROJECT_PROTO_SRCS} PROPERTIES GENERATED TRUE)
 
 LIST(APPEND PROJECT_HDRS ${PROJECT_PROTO_HDRS})
 LIST(APPEND PROJECT_SRCS ${PROJECT_PROTO_SRCS})

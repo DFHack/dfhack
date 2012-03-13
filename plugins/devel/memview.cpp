@@ -3,7 +3,7 @@
 #include "PluginManager.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
-#include <../depends/tthread/tinythread.h> //not sure if correct
+#include <tinythread.h> //not sure if correct
 #include <string>
 #include <vector>
 #include <sstream>

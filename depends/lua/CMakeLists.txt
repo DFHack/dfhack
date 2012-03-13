@@ -13,6 +13,35 @@ IF(UNIX)
   SET(CMAKE_C_FLAGS "-m32")
 ENDIF()
 
+SET (HDR_LIBLUA
+include/bit.h
+include/lapi.h
+include/lauxlib.h
+include/lcode.h
+include/ldebug.h
+include/ldo.h
+include/lfunc.h
+include/lgc.h
+include/llex.h
+include/llimits.h
+include/lmem.h
+include/lobject.h
+include/lopcodes.h
+include/lparser.h
+include/lstate.h
+include/lstring.h
+include/ltable.h
+include/ltm.h
+include/lua.h
+include/luaconf.h
+include/lualib.h
+include/lundump.h
+include/lvm.h
+include/lzio.h
+)
+SET_SOURCE_FILES_PROPERTIES(${HDR_LIBLUA} PROPERTIES HEADER_FILE_ONLY TRUE)
+include_directories(include)
+
 # Build Libraries
 SET (SRC_LIBLUA
 src/lapi.c
@@ -45,9 +74,11 @@ src/lundump.c
 src/lvm.c
 src/lzio.c
 )
+LIST(APPEND SRC_LIBLUA ${HDR_LIBLUA})
 
-ADD_LIBRARY ( lua ${SRC_LIBLUA} )
+ADD_LIBRARY ( lua STATIC EXCLUDE_FROM_ALL ${SRC_LIBLUA} )
 TARGET_LINK_LIBRARIES ( lua ${LIBS})
+IDE_FOLDER(lua "Depends")
 
 #SET ( SRC_LUA src/lua.c )
 #SET ( SRC_LUAC src/luac.c src/print.c )

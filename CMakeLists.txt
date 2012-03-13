@@ -10,6 +10,22 @@ else(CMAKE_CONFIGURATION_TYPES)
   endif (NOT CMAKE_BUILD_TYPE)
 endif(CMAKE_CONFIGURATION_TYPES)
 
+# set up folder structures for IDE solutions
+if(NOT CMAKE_USING_VC_FREE_TOOLS)
+    SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
+    OPTION(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." ON)
+else()
+    OPTION(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." OFF)
+endif()
+MARK_AS_ADVANCED(CMAKE_USE_FOLDERS)
+
+# macro for setting up IDE folders without nasty IF()s everywhere
+MACRO(IDE_FOLDER target folder)
+    if(CMAKE_USE_FOLDERS)
+        SET_PROPERTY(TARGET ${target} PROPERTY FOLDER ${folder})
+    endif()
+ENDMACRO()
+
 ## some generic CMake magic
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 project(dfhack)
@@ -78,27 +94,25 @@ IF(UNIX)
   SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic")
 ENDIF()
 
-# find and make available libz
-if(NOT UNIX)
-    SET(ZLIB_INCLUDE_DIRS ${dfhack_SOURCE_DIR}/library/depends/zlib/include/)
-    SET(ZLIB_LIBRARIES ${dfhack_SOURCE_DIR}/library/depends/zlib/lib/zlib.lib)
-else()
-    find_package(ZLIB REQUIRED)
-endif()
-include_directories(${ZLIB_INCLUDE_DIRS})
-
-#add depends to include path
-INCLUDE_DIRECTORIES ( library/depends )
-INCLUDE_DIRECTORIES ( library/depends/protobuf/ )
-
 # use shared libraries for protobuf
 ADD_DEFINITIONS(-DPROTOBUF_USE_DLLS)
 
-IF(!UNIX)
-    # build the static lua for dfusion, win32 only
-    INCLUDE_DIRECTORIES ( lua/include )
-    add_subdirectory (lua)
-ENDIF()
+#### expose depends ####
+
+# find and make available libz
+if(NOT UNIX)
+    SET(ZLIB_ROOT depends/zlib/)
+endif()
+find_package(ZLIB REQUIRED)
+include_directories(depends/protobuf)
+include_directories(depends/lua/include)
+include_directories(depends/md5)
+include_directories(depends/tinyxml)
+include_directories(depends/tthread)
+include_directories(${ZLIB_INCLUDE_DIRS})
+add_subdirectory(depends)
+
+
 
 # build the lib itself
 IF(BUILD_LIBRARY)

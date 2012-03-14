@@ -78,11 +78,15 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
                 "    List workflow-controlled jobs (if in a workshop, filtered by it).\n"
                 "  workflow list\n"
                 "    List active constraints, and their job counts.\n"
+                "  workflow list-commands\n"
+                "    List workflow commands that re-create existing constraints.\n"
                 "  workflow count <constraint-spec> <cnt-limit> [cnt-gap]\n"
                 "  workflow amount <constraint-spec> <cnt-limit> [cnt-gap]\n"
                 "    Set a constraint. The first form counts each stack as only 1 item.\n"
                 "  workflow unlimit <constraint-spec>\n"
                 "    Delete a constraint.\n"
+                "  workflow unlimit-all\n"
+                "    Delete all constraints.\n"
                 "Function:\n"
                 "  - When the plugin is enabled, it protects all repeat jobs from removal.\n"
                 "    If they do disappear due to any cause, they are immediately re-added\n"
@@ -106,6 +110,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
                 "  workflow count BAR//COAL 20\n"
                 "  workflow count BAR//COPPER 30\n"
                 "    Make sure there are always 15-20 coal and 25-30 copper bars.\n"
+                "  workflow count CRAFTS//GOLD 20\n"
+                "    Produce 15-20 gold crafts.\n"
                 "  workflow count POWDER_MISC/SAND 20\n"
                 "  workflow count BOULDER/CLAY 20\n"
                 "    Collect 15-20 sand bags and clay boulders.\n"
@@ -269,6 +275,7 @@ typedef std::map<std::pair<int,int>, bool> TMaterialCache;
 struct ItemConstraint {
     PersistentDataItem config;
 
+    bool is_craft;
     ItemTypeInfo item;
 
     MaterialInfo material;
@@ -286,7 +293,7 @@ struct ItemConstraint {
 
 public:
     ItemConstraint()
-        : weight(0), item_amount(0), item_count(0), item_inuse(0)
+        : is_craft(false), weight(0), item_amount(0), item_count(0), item_inuse(0)
         , is_active(false), cant_resume_reported(false)
     {}
 
@@ -645,8 +652,12 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
 
     int weight = 0;
 
+    bool is_craft = false;
     ItemTypeInfo item;
-    if (!item.find(tokens[0]) || !item.isValid()) {
+
+    if (tokens[0] == "ANY_CRAFT" || tokens[0] == "CRAFTS") {
+        is_craft = true;
+    } else if (!item.find(tokens[0]) || !item.isValid()) {
         out.printerr("Cannot find item type: %s\n", tokens[0].c_str());
         return NULL;
     }
@@ -682,12 +693,14 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     for (size_t i = 0; i < constraints.size(); i++)
     {
         ItemConstraint *ct = constraints[i];
-        if (ct->item == item && ct->material == material &&
+        if (ct->is_craft == is_craft &&
+            ct->item == item && ct->material == material &&
             ct->mat_mask.whole == mat_mask.whole)
             return ct;
     }
 
     ItemConstraint *nct = new ItemConstraint;
+    nct->is_craft = is_craft;
     nct->item = item;
     nct->material = material;
     nct->mat_mask = mat_mask;
@@ -719,9 +732,22 @@ static void delete_constraint(color_ostream &out, ItemConstraint *cv)
  *   JOB-CONSTRAINT MAPPING   *
  ******************************/
 
+static bool isCraftItem(df::item_type type)
+{
+    using namespace df::enums::job_type;
+
+    auto lst = ENUM_ATTR(job_type, possible_item, MakeCrafts);
+    for (size_t i = 0; i < lst.size; i++)
+        if (lst.items[i] == type)
+            return true;
+
+    return false;
+}
+
 static void link_job_constraint(ProtectedJob *pj, df::item_type itype, int16_t isubtype,
                                 df::dfhack_material_category mat_mask,
-                                int16_t mat_type, int32_t mat_index)
+                                int16_t mat_type, int32_t mat_index,
+                                bool is_craft = false)
 {
     MaterialInfo mat(mat_type, mat_index);
 
@@ -729,9 +755,18 @@ static void link_job_constraint(ProtectedJob *pj, df::item_type itype, int16_t i
     {
         ItemConstraint *ct = constraints[i];
 
-        if (ct->item.type != itype ||
-            (ct->item.subtype != -1 && ct->item.subtype != isubtype))
-            continue;
+        if (is_craft)
+        {
+            if (!ct->is_craft && !isCraftItem(ct->item.type))
+                continue;
+        }
+        else
+        {
+            if (ct->item.type != itype ||
+                (ct->item.subtype != -1 && ct->item.subtype != isubtype))
+                continue;
+        }
+
         if (!mat.matches(ct->material))
             continue;
         if (ct->mat_mask.whole)
@@ -878,7 +913,8 @@ static void compute_job_outputs(color_ostream &out, ProtectedJob *pj)
     // Item type & subtype
     df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
     int16_t isubtype = job->item_subtype;
-    if (itype == item_type::NONE)
+
+    if (itype == item_type::NONE && job->job_type != MakeCrafts)
         return;
 
     // Item material & material category
@@ -917,6 +953,10 @@ static void compute_job_outputs(color_ostream &out, ProtectedJob *pj)
             return;
         }
         break;
+
+    case MakeCrafts:
+        link_job_constraint(pj, item_type::NONE, -1, mat_mask, mat.type, mat.index, true);
+        return;
 
 #define PLANT_PROCESS_MAT(flag, tag) \
         if (mat.plant && mat.plant->flags.is_set(plant_raw_flags::flag)) \
@@ -1116,9 +1156,18 @@ static void map_job_items(color_ostream &out)
         for (size_t i = 0; i < constraints.size(); i++)
         {
             ItemConstraint *cv = constraints[i];
-            if (cv->item.type != itype ||
-                (cv->item.subtype != -1 && cv->item.subtype != isubtype))
-                continue;
+
+            if (cv->is_craft)
+            {
+                if (!isCraftItem(itype))
+                    continue;
+            }
+            else
+            {
+                if (cv->item.type != itype ||
+                    (cv->item.subtype != -1 && cv->item.subtype != isubtype))
+                    continue;
+            }
 
             TMaterialCache::iterator it = cv->material_cache.find(matkey);
 
@@ -1227,6 +1276,9 @@ static void update_jobs_by_constraints(color_ostream &out)
                 break;
 
         std::string info = ct->item.toString();
+
+        if (ct->is_craft)
+            info = "crafts";
 
         if (ct->material.isValid())
             info = ct->material.toString() + " " + info;
@@ -1518,6 +1570,17 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
 
         return CR_OK;
     }
+    else if (cmd == "list-commands")
+    {
+        for (size_t i = 0; i < constraints.size(); i++)
+        {
+            auto cv = constraints[i];
+            out << "workflow " << (cv->goalByCount() ? "count " : "amount ")
+                << cv->config.val() << " " << cv->goalCount() << " " << cv->goalGap() << endl;
+        }
+
+        return CR_OK;
+    }
     else if (cmd == "count" || cmd == "amount")
     {
         if (parameters.size() < 3)
@@ -1560,6 +1623,17 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
 
         out.printerr("Constraint not found: %s\n", parameters[1].c_str());
         return CR_FAILURE;
+    }
+    else if (cmd == "unlimit-all")
+    {
+        if (parameters.size() != 1)
+            return CR_WRONG_USAGE;
+
+        while (!constraints.empty())
+            delete_constraint(out, constraints[0]);
+
+        out.print("Removed all constraints.\n");
+        return CR_OK;
     }
     else
         return CR_WRONG_USAGE;

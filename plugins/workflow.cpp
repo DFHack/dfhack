@@ -83,6 +83,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
                 "    Set a constraint. The first form counts each stack as only 1 item.\n"
                 "  workflow unlimit <constraint-spec>\n"
                 "    Delete a constraint.\n"
+                "  workflow clear all\n"
+                "    Deletes all constraints.  Be sure you want to do this.\n"
                 "Function:\n"
                 "  - When the plugin is enabled, it protects all repeat jobs from removal.\n"
                 "    If they do disappear due to any cause, they are immediately re-added\n"
@@ -705,7 +707,21 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     return nct;
 }
 
-static void delete_constraint(color_ostream &out, ItemConstraint *cv)
+static void delete_all_constraints()
+{
+    DFHack::World * w = Core::getInstance().getWorld();
+    for(std::vector<ItemConstraint*>::iterator iter = constraints.begin();
+        iter != constraints.end();
+        ++iter)
+    {
+        w->DeletePersistentData((*iter)->config);
+        delete (*iter);
+    }
+
+    constraints.clear();
+}
+
+static void delete_constraint(ItemConstraint *cv)
 {
     int idx = linear_index(constraints, cv);
     if (idx >= 0)
@@ -1554,12 +1570,21 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
             if (constraints[i]->config.val() != parameters[1])
                 continue;
 
-            delete_constraint(out, constraints[i]);
+            delete_constraint(constraints[i]);
             return CR_OK;
         }
 
         out.printerr("Constraint not found: %s\n", parameters[1].c_str());
         return CR_FAILURE;
+    }
+    else if (cmd == "clear")
+    {
+        if(parameters.size() == 2 && parameters[1] == "all")
+        {
+            delete_all_constraints();
+            return CR_OK;
+        }
+        return CR_WRONG_USAGE;
     }
     else
         return CR_WRONG_USAGE;

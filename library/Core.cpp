@@ -67,6 +67,12 @@ using namespace tthread;
 using namespace df::enums;
 using df::global::init;
 
+// FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
+
+static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname);
+static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clueless_counter, const string &command);
+static bool parseKeySpec(std::string keyspec, int *psym, int *pmod);
+
 struct Core::Cond
 {
     Cond()
@@ -371,6 +377,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                 "  fpause                - Force DF to pause.\n"
                 "  die                   - Force DF to close immediately\n"
                 "  keybinding            - Modify bindings of commands to keys\n"
+                "  script FILENAME       - Run the commands specified in a file.\n"
                 "  plug [PLUGIN|v]       - List plugin state and detailed description.\n"
                 "  load PLUGIN|all       - Load a plugin by name or load all possible plugins.\n"
                 "  unload PLUGIN|all     - Unload a plugin or all loaded plugins.\n"
@@ -466,6 +473,18 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
         {
             _exit(666);
         }
+        else if(first == "script")
+        {
+            if(parts.size() == 1)
+            {
+                loadScriptFile(core, plug_mgr, parts[0]);
+            }
+            else
+            {
+                con << "Usage:" << endl
+                    << "  script <filename>" << endl;
+            }
+        }
         else
         {
             command_result res = plug_mgr->InvokeCommand(con, first, parts);
@@ -478,19 +497,26 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
     }
 }
 
-static void loadInitFile(Core *core, PluginManager *plug_mgr, string fname)
+static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname)
 {
-    ifstream init(fname);
-    if (init.bad())
-        return;
-
-    int tmp = 0;
-    string command;
-    while (getline(init, command))
+    core->getConsole() << "Loading script at " << fname << std::endl;
+    ifstream script(fname);
+    if (script.good())
     {
-        if (!command.empty())
-            runInteractiveCommand(core, plug_mgr, tmp, command);
+        int tmp = 0;
+        string command;
+        while (getline(script, command))
+        {
+            if (!command.empty())
+                runInteractiveCommand(core, plug_mgr, tmp, command);
+        }
     }
+    else
+    {
+        core->getConsole().printerr("Error loading script\n");
+    }
+
+    script.close();
 }
 
 // A thread function... for the interactive console.
@@ -510,7 +536,7 @@ void fIOthread(void * iodata)
         return;
     }
 
-    loadInitFile(core, plug_mgr, "dfhack.init");
+    loadScriptFile(core, plug_mgr, "dfhack.init");
 
     con.print("DFHack is ready. Have a nice day!\n"
               "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");

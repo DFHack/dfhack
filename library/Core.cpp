@@ -48,6 +48,7 @@ using namespace std;
 #include "modules/World.h"
 #include "modules/Graphic.h"
 #include "modules/Windows.h"
+#include "RemoteServer.h"
 using namespace DFHack;
 
 #include "df/ui.h"
@@ -570,6 +571,7 @@ Core::Core()
     last_world_data_ptr = NULL;
     top_viewscreen = NULL;
     screen_window = NULL;
+    server = NULL;
 };
 
 void Core::fatal (std::string output, bool deactivate)
@@ -678,6 +680,12 @@ bool Core::Init()
     screen_window = new Windows::top_level_window();
     screen_window->addChild(new Windows::dfhack_dummy(5,10));
     started = true;
+
+    cerr << "Starting the TCP listener.\n";
+    server = new ServerMain();
+    if (!server->listen(RemoteClient::GetDefaultPort()))
+        cerr << "TCP listen failed.\n";
+
     cerr << "DFHack is running.\n";
     return true;
 }

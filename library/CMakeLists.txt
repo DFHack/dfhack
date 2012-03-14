@@ -10,6 +10,7 @@ IF(UNIX)
 ENDIF()
 
 include_directories (include)
+include_directories (proto)
 
 SET(PERL_EXECUTABLE "perl" CACHE FILEPATH "This is the perl executable to run in the codegen step. Tweak it if you need to run a specific one.")
 
@@ -41,6 +42,8 @@ include/Types.h
 include/VersionInfo.h
 include/VersionInfoFactory.h
 include/Virtual.h
+include/RemoteClient.h
+include/RemoteServer.h
 )
 
 SET(MAIN_HEADERS_WINDOWS
@@ -58,6 +61,8 @@ PluginManager.cpp
 TileTypes.cpp
 VersionInfoFactory.cpp
 Virtual.cpp
+RemoteClient.cpp
+RemoteServer.cpp
 )
 
 SET(MAIN_SOURCES_WINDOWS
@@ -158,7 +163,7 @@ STRING(REPLACE ".proto" ".pb.cc" PROJECT_PROTO_SRCS ${PROJECT_PROTOS})
 STRING(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS ${PROJECT_PROTOS})
 
 LIST(APPEND PROJECT_HEADERS ${PROJECT_PROTO_HDRS})
-LIST(APPEND PROJECT_HEADERS ${PROJECT_PROTO_SRCS})
+LIST(APPEND PROJECT_SOURCES ${PROJECT_PROTO_SRCS})
 
 ADD_CUSTOM_COMMAND(
     OUTPUT ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
@@ -211,6 +216,11 @@ ENDIF()
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SOURCES})
 ADD_DEPENDENCIES(dfhack generate_headers)
 
+ADD_EXECUTABLE(dfhack-run dfhack-run.cpp
+               RemoteClient.cpp ColorText.cpp MiscUtils.cpp
+               ${PROJECT_PROTO_SRCS})
+ADD_DEPENDENCIES(dfhack-run dfhack)
+
 IF(BUILD_EGGY)
     SET_TARGET_PROPERTIES(dfhack PROPERTIES OUTPUT_NAME "egg" )
 else()
@@ -221,8 +231,10 @@ endif()
 
 IF(WIN32)
     SET_TARGET_PROPERTIES(dfhack PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
+    SET_TARGET_PROPERTIES(dfhack-run PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
 ELSE()
     SET_TARGET_PROPERTIES(dfhack PROPERTIES COMPILE_FLAGS "-include Export.h" )
+    SET_TARGET_PROPERTIES(dfhack-run PROPERTIES COMPILE_FLAGS "-include Export.h" )
 ENDIF()
 
 #effectively disables debug builds...
@@ -230,6 +242,8 @@ SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
 TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket ${PROJECT_LIBS})
 SET_TARGET_PROPERTIES(dfhack PROPERTIES LINK_INTERFACE_LIBRARIES "")
+
+TARGET_LINK_LIBRARIES(dfhack-run protobuf-lite clsocket)
 
 IF(UNIX)
     # On linux, copy our version of the df launch script which sets LD_PRELOAD
@@ -253,12 +267,17 @@ else()
             LIBRARY DESTINATION ${DFHACK_EGGY_DESTINATION}
             RUNTIME DESTINATION ${DFHACK_EGGY_DESTINATION})
 endif()
+
 #install the offset file
 install(FILES xml/symbols.xml
         DESTINATION ${DFHACK_DATA_DESTINATION}) #linux: share/dfhack
 #install the example autoexec file
 install(FILES ../dfhack.init-example
         DESTINATION ${DFHACK_BINARY_DESTINATION})
+
+install(TARGETS dfhack-run
+        LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
+        RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 
 # Unused for so long that it's not even relevant now...
 if(BUILD_DEVEL)

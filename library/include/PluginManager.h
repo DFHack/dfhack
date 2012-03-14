@@ -30,6 +30,9 @@ distribution.
 #include <map>
 #include <string>
 #include <vector>
+
+#include "RemoteClient.h"
+
 struct DFLibrary;
 namespace tthread
 {
@@ -46,14 +49,6 @@ namespace DFHack
     class PluginManager;
     class virtual_identity;
 
-    enum command_result
-    {
-        CR_WOULD_BREAK = -2,
-        CR_NOT_IMPLEMENTED = -1,
-        CR_FAILURE = 0,
-        CR_OK = 1,
-        CR_WRONG_USAGE = 2
-    };
     enum state_change_event
     {
         SC_GAME_LOADED,

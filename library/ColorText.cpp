@@ -143,6 +143,16 @@ void color_ostream::reset_color(void)
     color(COLOR_RESET);
 }
 
+void color_ostream_wrapper::add_text(color_value, const std::string &text)
+{
+    out << text;
+}
+
+void color_ostream_wrapper::flush_proxy()
+{
+    out << std::flush;
+}
+
 void buffered_color_ostream::add_text(color_value color, const std::string &text)
 {
     if (text.empty())
@@ -165,23 +175,20 @@ void buffered_color_ostream::add_text(color_value color, const std::string &text
 
 void color_ostream_proxy::flush_proxy()
 {
-    if (!buffer.empty())
+    if (buffer.empty())
+        return;
+
+    if (target)
     {
         target->begin_batch();
 
         for (auto it = buffer.begin(); it != buffer.end(); ++it)
             target->add_text(it->first, it->second);
 
-        buffer.clear();
-
         target->end_batch();
     }
-}
 
-color_ostream_proxy::color_ostream_proxy(color_ostream &target)
-    : target(&target)
-{
-    //
+    buffer.clear();
 }
 
 color_ostream_proxy::~color_ostream_proxy()

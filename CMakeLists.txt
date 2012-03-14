@@ -104,6 +104,12 @@ ENDIF()
 # use shared libraries for protobuf
 ADD_DEFINITIONS(-DPROTOBUF_USE_DLLS)
 
+if(UNIX)
+    add_definitions(-D_LINUX)
+elseif(WIN32)
+    add_definitions(-DWIN32)
+endif()
+
 #### expose depends ####
 
 # find and make available libz

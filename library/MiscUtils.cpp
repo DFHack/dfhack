@@ -24,7 +24,6 @@ distribution.
 
 #include "Internal.h"
 #include "Export.h"
-#include "Core.h"
 #include "MiscUtils.h"
 
 #ifndef LINUX_BUILD

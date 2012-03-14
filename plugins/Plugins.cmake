@@ -6,6 +6,7 @@ IF(UNIX)
 ENDIF()
 
 include_directories("${dfhack_SOURCE_DIR}/library/include")
+include_directories("${dfhack_SOURCE_DIR}/library/proto")
 include_directories("${dfhack_SOURCE_DIR}/library/depends/xgetopt")
 
 MACRO(CAR var)

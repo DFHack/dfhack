@@ -63,19 +63,19 @@ static const char* physicals[] = {
 };
 
 static const char* mentals[] = {
-    "Willpower",
-    "Memory",
+    "AnalyticalAbility",
     "Focus",
+    "Willpower",
+    "Creatvity", //Speeling deliberate
     "Intuition",
     "Patience",
-    "Empathy",
-    "SocialAwareness",
-    "Creatvity", //Speeling deliberate
-    "Musicality",
-    "AnalyticalAbility",
+    "Memory",
     "LinguisticAbility",
     "SpatialSense",
+    "Musicality",
     "KinaestheticSense",
+    "Empathy",
+    "SocialAwareness",
 };
 
 static void element(const char* name, const char* content, ostream& out, const char* extra_indent="") {

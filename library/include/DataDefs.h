@@ -134,7 +134,7 @@ namespace DFHack
 
     template<class T>
     struct enum_list_attr {
-        int size;
+        size_t size;
         const T *items;
     };
 

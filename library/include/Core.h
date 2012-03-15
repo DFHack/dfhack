@@ -60,6 +60,7 @@ namespace DFHack
     class VersionInfoFactory;
     class PluginManager;
     class Core;
+    class ServerMain;
     namespace Windows
     {
         class df_window;
@@ -195,6 +196,10 @@ namespace DFHack
 
         tthread::mutex * misc_data_mutex;
         std::map<std::string,void*> misc_data_map;
+
+        friend class CoreService;
+        friend class ServerConnection;
+        ServerMain *server;
     };
 
     class CoreSuspender {

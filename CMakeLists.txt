@@ -53,7 +53,7 @@ set(DF_VERSION_MINOR "34")
 set(DF_VERSION_PATCH "05")
 set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
 
-set(DFHACK_RELEASE "1d")
+set(DFHACK_RELEASE "1e")
 
 set(DFHACK_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}-r${DFHACK_RELEASE}")
 add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")
@@ -103,6 +103,12 @@ ENDIF()
 
 # use shared libraries for protobuf
 ADD_DEFINITIONS(-DPROTOBUF_USE_DLLS)
+
+if(UNIX)
+    add_definitions(-D_LINUX)
+elseif(WIN32)
+    add_definitions(-DWIN32)
+endif()
 
 #### expose depends ####
 

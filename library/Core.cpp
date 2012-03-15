@@ -48,6 +48,7 @@ using namespace std;
 #include "modules/World.h"
 #include "modules/Graphic.h"
 #include "modules/Windows.h"
+#include "RemoteServer.h"
 using namespace DFHack;
 
 #include "df/ui.h"
@@ -170,7 +171,7 @@ void fHKthread(void * iodata)
 
             string first = args[0];
             args.erase(args.begin());
-            command_result cr = plug_mgr->InvokeCommand(out, first, args, false);
+            command_result cr = plug_mgr->InvokeCommand(out, first, args);
 
             if(cr == CR_WOULD_BREAK)
             {
@@ -277,7 +278,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for(size_t i = 0; i < plug_mgr->size();i++)
                     {
                         Plugin * plug = (plug_mgr->operator[](i));
-                        plug->load();
+                        plug->load(con);
                     }
                 }
                 else
@@ -289,7 +290,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     }
                     else
                     {
-                        plug->load();
+                        plug->load(con);
                     }
                 }
             }
@@ -304,7 +305,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for(size_t i = 0; i < plug_mgr->size();i++)
                     {
                         Plugin * plug = (plug_mgr->operator[](i));
-                        plug->reload();
+                        plug->reload(con);
                     }
                 }
                 else
@@ -316,7 +317,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     }
                     else
                     {
-                        plug->reload();
+                        plug->reload(con);
                     }
                 }
             }
@@ -331,7 +332,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for(size_t i = 0; i < plug_mgr->size();i++)
                     {
                         Plugin * plug = (plug_mgr->operator[](i));
-                        plug->unload();
+                        plug->unload(con);
                     }
                 }
                 else
@@ -343,7 +344,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     }
                     else
                     {
-                        plug->unload();
+                        plug->unload(con);
                     }
                 }
             }
@@ -596,6 +597,9 @@ Core::Core()
     last_world_data_ptr = NULL;
     top_viewscreen = NULL;
     screen_window = NULL;
+    server = NULL;
+
+    color_ostream::log_errors_to_stderr = true;
 };
 
 void Core::fatal (std::string output, bool deactivate)
@@ -704,6 +708,12 @@ bool Core::Init()
     screen_window = new Windows::top_level_window();
     screen_window->addChild(new Windows::dfhack_dummy(5,10));
     started = true;
+
+    cerr << "Starting the TCP listener.\n";
+    server = new ServerMain();
+    if (!server->listen(RemoteClient::GetDefaultPort()))
+        cerr << "TCP listen failed.\n";
+
     cerr << "DFHack is running.\n";
     return true;
 }

@@ -34,6 +34,11 @@ distribution.
 #include <stdarg.h>
 #include <sstream>
 
+namespace dfproto
+{
+    class CoreTextNotification;
+}
+
 namespace  DFHack
 {
     class DFHACK_EXPORT color_ostream : public std::ostream
@@ -112,6 +117,27 @@ namespace  DFHack
         void reset_color(void);
 
         virtual bool is_console() { return false; }
+        virtual color_ostream *proxy_target() { return NULL; }
+
+        static bool log_errors_to_stderr;
+    };
+
+    inline color_ostream &operator << (color_ostream &out, color_ostream::color_value clr)
+    {
+        out.color(clr);
+        return out;
+    }
+
+    class DFHACK_EXPORT color_ostream_wrapper : public color_ostream
+    {
+        std::ostream &out;
+
+    protected:
+        virtual void add_text(color_value color, const std::string &text);
+        virtual void flush_proxy();
+
+    public:
+        color_ostream_wrapper(std::ostream &os) : out(os) {}
     };
 
     class DFHACK_EXPORT buffered_color_ostream : public color_ostream
@@ -139,7 +165,11 @@ namespace  DFHack
         virtual void flush_proxy();
 
     public:
-        color_ostream_proxy(color_ostream &target);
+        color_ostream_proxy(color_ostream &target) : target(&target) {}
         ~color_ostream_proxy();
+
+        virtual color_ostream *proxy_target() { return target; }
+
+        void decode(dfproto::CoreTextNotification *data);
     };
 }

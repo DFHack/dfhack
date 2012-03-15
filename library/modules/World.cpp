@@ -209,7 +209,7 @@ void World::SetCurrentWeather(uint8_t weather)
 
 string World::ReadWorldFolder()
 {
-    return world->unk_192bd8.save_dir;
+    return world->cur_savegame.save_dir;
 }
 
 static PersistentDataItem dataFromHFig(df::historical_figure *hfig)

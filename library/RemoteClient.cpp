@@ -215,7 +215,7 @@ bool RemoteClient::bind(color_ostream &out, RemoteFunctionBase *function,
         in->set_output_msg(function->p_out_template->GetTypeName());
     }
 
-    if (bind_call.execute(out) != CR_OK)
+    if (bind_call(out) != CR_OK)
         return false;
 
     function->p_client = this;
@@ -239,7 +239,7 @@ command_result RemoteClient::run_command(color_ostream &out, const std::string &
     for (size_t i = 0; i < args.size(); i++)
         runcmd_call.in()->add_arguments(args[i]);
 
-    return runcmd_call.execute(out);
+    return runcmd_call(out);
 }
 
 void RPCFunctionBase::reset(bool free)

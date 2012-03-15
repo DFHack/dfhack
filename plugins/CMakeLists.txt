@@ -53,7 +53,8 @@ STRING(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS "${PROJECT_PROTOS}")
 
 ADD_CUSTOM_COMMAND(
     OUTPUT ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
-    COMMAND protoc-bin -I=${dfhack_SOURCE_DIR}/proto/ -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
+    COMMAND protoc-bin -I=${dfhack_SOURCE_DIR}/library/proto/
+                       -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
             --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/
             ${PROJECT_PROTOS}
     DEPENDS protoc-bin ${PROJECT_PROTOS}

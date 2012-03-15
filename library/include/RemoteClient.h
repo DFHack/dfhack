@@ -171,7 +171,7 @@ namespace  DFHack
 
         RemoteFunction() : RemoteFunctionBase(&In::default_instance(), &Out::default_instance()) {}
 
-        command_result execute(color_ostream &stream) {
+        command_result operator() (color_ostream &stream) {
             return RemoteFunctionBase::execute(stream, in(), out());
         }
         command_result operator() (color_ostream &stream, const In *input, Out *output) {
@@ -187,7 +187,7 @@ namespace  DFHack
 
         RemoteFunction() : RemoteFunctionBase(&In::default_instance(), &EmptyMessage::default_instance()) {}
 
-        command_result execute(color_ostream &stream) {
+        command_result operator() (color_ostream &stream) {
             return RemoteFunctionBase::execute(stream, in(), out());
         }
         command_result operator() (color_ostream &stream, const In *input) {

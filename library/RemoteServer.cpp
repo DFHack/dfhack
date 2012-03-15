@@ -192,6 +192,7 @@ ServerFunctionBase *ServerConnection::findFunction(color_ostream &out, const std
                 return NULL;
             }
 
+            svc->finalize(this, &functions);
             plugin_services[plugin] = svc;
         }
     }

@@ -34,6 +34,8 @@ distribution.
 namespace  DFHack
 {
     using dfproto::EmptyMessage;
+    using dfproto::IntMessage;
+    using dfproto::StringMessage;
 
     enum command_result
     {

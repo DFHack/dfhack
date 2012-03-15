@@ -27,7 +27,9 @@ distribution.
 #include "Export.h"
 #include "ColorText.h"
 
-#include "ActiveSocket.h"
+class CPassiveSocket;
+class CActiveSocket;
+class CSimpleSocket;
 
 #include "CoreProtocol.pb.h"
 
@@ -197,8 +199,8 @@ namespace  DFHack
         }
     };
 
-    bool readFullBuffer(CSimpleSocket &socket, void *buf, int size);
-    bool sendRemoteMessage(CSimpleSocket &socket, int16_t id,
+    bool readFullBuffer(CSimpleSocket *socket, void *buf, int size);
+    bool sendRemoteMessage(CSimpleSocket *socket, int16_t id,
                            const ::google::protobuf::MessageLite *msg, int *psz = NULL);
 
     class DFHACK_EXPORT RemoteClient
@@ -222,7 +224,7 @@ namespace  DFHack
 
     private:
         bool active;
-        CActiveSocket socket;
+        CActiveSocket * socket;
 
         RemoteFunction<dfproto::CoreBindRequest,dfproto::CoreBindReply> bind_call;
         RemoteFunction<dfproto::CoreRunCommandRequest> runcmd_call;

@@ -28,7 +28,9 @@ distribution.
 #include "RemoteClient.h"
 #include "Core.h"
 
-#include "PassiveSocket.h"
+class CPassiveSocket;
+class CActiveSocket;
+class CSimpleSocket;
 
 namespace  DFHack
 {
@@ -236,7 +238,7 @@ namespace  DFHack
     };
 
     class DFHACK_EXPORT ServerMain {
-        CPassiveSocket socket;
+        CPassiveSocket *socket;
 
         tthread::thread *thread;
         static void threadFn(void *);

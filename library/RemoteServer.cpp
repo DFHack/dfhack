@@ -43,8 +43,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <istream>
 #include <string>
+#include <stdint.h>
 
 #include "RemoteServer.h"
+#include "PassiveSocket.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
 
@@ -250,7 +252,7 @@ void ServerConnection::connection_ostream::flush_proxy()
 
     buffer.clear();
 
-    if (!sendRemoteMessage(*owner->socket, RPC_REPLY_TEXT, &msg))
+    if (!sendRemoteMessage(owner->socket, RPC_REPLY_TEXT, &msg))
     {
         owner->in_error = true;
         Core::printerr("Error writing text into client socket.\n");
@@ -267,7 +269,7 @@ void ServerConnection::threadFn(void *arg)
     {
         RPCHandshakeHeader header;
 
-        if (!readFullBuffer(*me->socket, &header, sizeof(header)))
+        if (!readFullBuffer(me->socket, &header, sizeof(header)))
         {
             out << "In RPC server: could not read handshake header." << endl;
             delete me;
@@ -301,7 +303,7 @@ void ServerConnection::threadFn(void *arg)
         // Read the message
         RPCMessageHeader header;
 
-        if (!readFullBuffer(*me->socket, &header, sizeof(header)))
+        if (!readFullBuffer(me->socket, &header, sizeof(header)))
         {
             out.printerr("In RPC server: I/O error in receive header.\n");
             break;
@@ -318,7 +320,7 @@ void ServerConnection::threadFn(void *arg)
 
         std::auto_ptr<uint8_t> buf(new uint8_t[header.size]);
 
-        if (!readFullBuffer(*me->socket, buf.get(), header.size))
+        if (!readFullBuffer(me->socket, buf.get(), header.size))
         {
             out.printerr("In RPC server: I/O error in receive %d bytes of data.\n", header.size);
             break;
@@ -363,7 +365,7 @@ void ServerConnection::threadFn(void *arg)
 
         if (res == CR_OK && reply)
         {
-            if (!sendRemoteMessage(*me->socket, RPC_REPLY_RESULT, reply, &out_size))
+            if (!sendRemoteMessage(me->socket, RPC_REPLY_RESULT, reply, &out_size))
             {
                 out.printerr("In RPC server: I/O error in send result.\n");
                 break;
@@ -398,12 +400,14 @@ void ServerConnection::threadFn(void *arg)
 
 ServerMain::ServerMain()
 {
+    socket = new CPassiveSocket();
     thread = NULL;
 }
 
 ServerMain::~ServerMain()
 {
-    socket.Close();
+    socket->Close();
+    delete socket;
 }
 
 bool ServerMain::listen(int port)
@@ -411,9 +415,9 @@ bool ServerMain::listen(int port)
     if (thread)
         return true;
 
-    socket.Initialize();
+    socket->Initialize();
 
-    if (!socket.Listen((const uint8 *)"127.0.0.1", port))
+    if (!socket->Listen((const uint8 *)"127.0.0.1", port))
         return false;
 
     thread = new tthread::thread(threadFn, this);
@@ -425,7 +429,7 @@ void ServerMain::threadFn(void *arg)
     ServerMain *me = (ServerMain*)arg;
     CActiveSocket *client;
 
-    while ((client = me->socket.Accept()) != NULL)
+    while ((client = me->socket->Accept()) != NULL)
     {
         new ServerConnection(client);
     }

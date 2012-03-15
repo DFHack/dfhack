@@ -43,8 +43,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <istream>
 #include <string>
+#include <stdint.h>
 
 #include "RemoteClient.h"
+#include <ActiveSocket.h>
 #include "MiscUtils.h"
 
 #include <cstdio>
@@ -88,24 +90,26 @@ void color_ostream_proxy::decode(CoreTextNotification *data)
 RemoteClient::RemoteClient()
 {
     active = false;
+    socket = new CActiveSocket();
 }
 
 RemoteClient::~RemoteClient()
 {
     disconnect();
+    delete socket;
 }
 
-bool DFHack::readFullBuffer(CSimpleSocket &socket, void *buf, int size)
+bool DFHack::readFullBuffer(CSimpleSocket *socket, void *buf, int size)
 {
-    if (!socket.IsSocketValid())
+    if (!socket->IsSocketValid())
         return false;
 
     char *ptr = (char*)buf;
     while (size > 0) {
-        int cnt = socket.Receive(size);
+        int cnt = socket->Receive(size);
         if (cnt <= 0)
             return false;
-        memcpy(ptr, socket.GetData(), cnt);
+        memcpy(ptr, socket->GetData(), cnt);
         ptr += cnt;
         size -= cnt;
     }
@@ -132,13 +136,13 @@ bool RemoteClient::connect(int port)
     if (port <= 0)
         port = GetDefaultPort();
 
-    if (!socket.Initialize())
+    if (!socket->Initialize())
     {
         std::cerr << "Socket init failed." << endl;
         return false;
     }
 
-    if (!socket.Open((const uint8 *)"localhost", port))
+    if (!socket->Open((const uint8 *)"localhost", port))
     {
         std::cerr << "Could not connect to localhost:" << port << endl;
         return false;
@@ -150,17 +154,17 @@ bool RemoteClient::connect(int port)
     memcpy(header.magic, RPCHandshakeHeader::REQUEST_MAGIC, sizeof(header.magic));
     header.version = 1;
 
-    if (socket.Send((uint8*)&header, sizeof(header)) != sizeof(header))
+    if (socket->Send((uint8*)&header, sizeof(header)) != sizeof(header))
     {
         std::cerr << "Could not send header." << endl;
-        socket.Close();
+        socket->Close();
         return active = false;
     }
 
     if (!readFullBuffer(socket, &header, sizeof(header)))
     {
         std::cerr << "Could not read header." << endl;
-        socket.Close();
+        socket->Close();
         return active = false;
     }
 
@@ -168,7 +172,7 @@ bool RemoteClient::connect(int port)
         header.version != 1)
     {
         std::cerr << "Invalid handshake response." << endl;
-        socket.Close();
+        socket->Close();
         return active = false;
     }
 
@@ -185,22 +189,22 @@ bool RemoteClient::connect(int port)
 
 void RemoteClient::disconnect()
 {
-    if (active && socket.IsSocketValid())
+    if (active && socket->IsSocketValid())
     {
         RPCMessageHeader header;
         header.id = RPC_REQUEST_QUIT;
         header.size = 0;
-        if (socket.Send((uint8_t*)&header, sizeof(header)) != sizeof(header))
+        if (socket->Send((uint8_t*)&header, sizeof(header)) != sizeof(header))
             std::cerr << "Could not send the disconnect message." << endl;
     }
 
-    socket.Close();
+    socket->Close();
 }
 
 bool RemoteClient::bind(color_ostream &out, RemoteFunctionBase *function,
                         const std::string &name, const std::string &proto)
 {
-    if (!active || !socket.IsSocketValid())
+    if (!active || !socket->IsSocketValid())
         return false;
 
     bind_call.reset();
@@ -227,7 +231,7 @@ bool RemoteClient::bind(color_ostream &out, RemoteFunctionBase *function,
 command_result RemoteClient::run_command(color_ostream &out, const std::string &cmd,
                                          const std::vector<std::string> &args)
 {
-    if (!active || !socket.IsSocketValid())
+    if (!active || !socket->IsSocketValid())
     {
         out.printerr("In RunCommand: client connection not valid.\n");
         return CR_FAILURE;
@@ -278,7 +282,7 @@ bool RemoteFunctionBase::bind(color_ostream &out, RemoteClient *client,
     return client->bind(out, this, name, proto);
 }
 
-bool DFHack::sendRemoteMessage(CSimpleSocket &socket, int16_t id, const MessageLite *msg, int *psz)
+bool DFHack::sendRemoteMessage(CSimpleSocket *socket, int16_t id, const MessageLite *msg, int *psz)
 {
     int size = msg->ByteSize();
     int fullsz = size + sizeof(RPCMessageHeader);
@@ -295,7 +299,7 @@ bool DFHack::sendRemoteMessage(CSimpleSocket &socket, int16_t id, const MessageL
     if (!msg->SerializeToArray(data.get() + sizeof(RPCMessageHeader), size))
         return false;
 
-    return (socket.Send(data.get(), fullsz) == fullsz);
+    return (socket->Send(data.get(), fullsz) == fullsz);
 }
 
 command_result RemoteFunctionBase::execute(color_ostream &out,
@@ -307,7 +311,7 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
         return CR_NOT_IMPLEMENTED;
     }
 
-    if (!p_client->socket.IsSocketValid())
+    if (!p_client->socket->IsSocketValid())
     {
         out.printerr("In call to %s::%s: invalid socket.\n",
                      this->proto.c_str(), this->name.c_str());

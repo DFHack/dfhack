@@ -60,7 +60,7 @@ using namespace DFHack;
 #include "df/unit_inventory_item.h"
 #include "df/report.h"
 #include "df/popup_message.h"
-#include "df/interface.h"
+#include "df/interfacest.h"
 #include "df/graphic.h"
 
 using namespace df::enums;

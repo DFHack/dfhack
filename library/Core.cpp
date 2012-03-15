@@ -54,7 +54,7 @@ using namespace DFHack;
 #include "df/ui.h"
 #include "df/world.h"
 #include "df/world_data.h"
-#include "df/interface.h"
+#include "df/interfacest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include <df/graphic.h>
 

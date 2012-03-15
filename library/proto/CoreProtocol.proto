@@ -45,6 +45,14 @@ message CoreErrorNotification {
 
 message EmptyMessage {}
 
+message IntMessage {
+    required int32 value = 1;
+}
+
+message StringMessage {
+    required string value = 1;
+}
+
 message CoreBindRequest {
     required string method = 1;
     required string input_msg = 2;

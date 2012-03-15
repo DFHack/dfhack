@@ -64,11 +64,21 @@ using dfproto::CoreTextFragment;
 using google::protobuf::MessageLite;
 
 CoreService::CoreService() {
+    suspend_depth = 0;
+
     // These 2 methods must be first, so that they get id 0 and 1
     addMethod("BindMethod", &CoreService::BindMethod);
     addMethod("RunCommand", &CoreService::RunCommand);
 
     // Add others here:
+    addMethod("CoreSuspend", &CoreService::CoreSuspend);
+    addMethod("CoreResume", &CoreService::CoreResume);
+}
+
+CoreService::~CoreService()
+{
+    while (suspend_depth-- > 0)
+        Core::getInstance().Resume();
 }
 
 command_result CoreService::BindMethod(color_ostream &stream,
@@ -105,6 +115,23 @@ command_result CoreService::RunCommand(color_ostream &stream,
         args.push_back(in->arguments(i));
 
     return Core::getInstance().plug_mgr->InvokeCommand(stream, cmd, args);
+}
+
+command_result CoreService::CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt)
+{
+    Core::getInstance().Suspend();
+    cnt->set_value(++suspend_depth);
+    return CR_OK;
+}
+
+command_result CoreService::CoreResume(color_ostream &stream, const EmptyMessage*, IntMessage *cnt)
+{
+    if (suspend_depth <= 0)
+        return CR_WRONG_USAGE;
+
+    Core::getInstance().Resume();
+    cnt->set_value(--suspend_depth);
+    return CR_OK;
 }
 
 RPCService::RPCService()

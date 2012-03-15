@@ -98,6 +98,20 @@ struct Core::Cond
     bool predicate;
 };
 
+struct Core::Private
+{
+    tthread::mutex AccessMutex;
+    tthread::mutex StackMutex;
+    std::stack<Core::Cond*> suspended_tools;
+    Core::Cond core_cond;
+    thread::id df_suspend_thread;
+    int df_suspend_depth;
+
+    Private() {
+        df_suspend_depth = 0;
+    }
+};
+
 void cheap_tokenise(string const& input, vector<string> &output)
 {
     string *cur = NULL;
@@ -550,6 +564,8 @@ void fIOthread(void * iodata)
 
 Core::Core()
 {
+    d = new Private();
+
     // init the console. This must be always the first step!
     plug_mgr = 0;
     vif = 0;
@@ -559,10 +575,6 @@ Core::Core()
     started = false;
     memset(&(s_mods), 0, sizeof(s_mods));
 
-    // create mutex for syncing with interactive tasks
-    AccessMutex = 0;
-    StackMutex = 0;
-    core_cond = 0;
     // set up hotkey capture
     hotkey_set = false;
     HotkeyMutex = 0;
@@ -661,10 +673,7 @@ bool Core::Init()
     df::global::InitGlobals();
 
     // create mutex for syncing with interactive tasks
-    StackMutex = new mutex();
-    AccessMutex = new mutex();
     misc_data_mutex=new mutex();
-    core_cond = new Core::Cond();
     cerr << "Initializing Plugins.\n";
     // create plugin manager
     plug_mgr = new PluginManager(this);
@@ -757,22 +766,49 @@ void *Core::GetData( std::string key )
 
 void Core::Suspend()
 {
-    Core::Cond * nc = new Core::Cond();
+    auto tid = this_thread::get_id();
+
+    // If recursive, just increment the count
+    {
+        lock_guard<mutex> lock(d->AccessMutex);
+
+        if (d->df_suspend_depth > 0 && d->df_suspend_thread == tid)
+        {
+            d->df_suspend_depth++;
+            return;
+        }
+    }
+
     // put the condition on a stack
-    StackMutex->lock();
-        suspended_tools.push(nc);
-    StackMutex->unlock();
+    Core::Cond *nc = new Core::Cond();
+
+    {
+        lock_guard<mutex> lock2(d->StackMutex);
+
+        d->suspended_tools.push(nc);
+    }
+
     // wait until Core::Update() wakes up the tool
-    AccessMutex->lock();
-        nc->Lock(AccessMutex);
-    AccessMutex->unlock();
+    {
+        lock_guard<mutex> lock(d->AccessMutex);
+
+        nc->Lock(&d->AccessMutex);
+
+        assert(d->df_suspend_depth == 0);
+        d->df_suspend_thread = tid;
+        d->df_suspend_depth = 1;
+    }
 }
 
 void Core::Resume()
 {
-    AccessMutex->lock();
-        core_cond->Unlock();
-    AccessMutex->unlock();
+    auto tid = this_thread::get_id();
+    lock_guard<mutex> lock(d->AccessMutex);
+
+    assert(d->df_suspend_depth > 0 && d->df_suspend_thread == tid);
+
+    if (--d->df_suspend_depth == 0)
+        d->core_cond.Unlock();
 }
 
 int Core::TileUpdate()
@@ -827,21 +863,24 @@ int Core::Update()
 
     // wake waiting tools
     // do not allow more tools to join in while we process stuff here
-    StackMutex->lock();
-    while (!suspended_tools.empty())
+    lock_guard<mutex> lock_stack(d->StackMutex);
+
+    while (!d->suspended_tools.empty())
     {
-        Core::Cond * nc = suspended_tools.top();
-        suspended_tools.pop();
-        AccessMutex->lock();
-            // wake tool
-            nc->Unlock();
-            // wait for tool to wake us
-            core_cond->Lock(AccessMutex);
-        AccessMutex->unlock();
+        Core::Cond * nc = d->suspended_tools.top();
+        d->suspended_tools.pop();
+
+        lock_guard<mutex> lock(d->AccessMutex);
+        // wake tool
+        nc->Unlock();
+        // wait for tool to wake us
+        d->core_cond.Lock(&d->AccessMutex);
+        // verify
+        assert(d->df_suspend_depth == 0);
         // destroy condition
         delete nc;
     }
-    StackMutex->unlock();
+
     return 0;
 };
 

@@ -189,14 +189,20 @@ namespace  DFHack
     };
 
     class CoreService : public RPCService {
+        int suspend_depth;
     public:
         CoreService();
+        ~CoreService();
 
         command_result BindMethod(color_ostream &stream,
                                   const dfproto::CoreBindRequest *in,
                                   dfproto::CoreBindReply *out);
         command_result RunCommand(color_ostream &stream,
                                   const dfproto::CoreRunCommandRequest *in);
+
+        // For batching
+        command_result CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt);
+        command_result CoreResume(color_ostream &stream, const EmptyMessage*, IntMessage *cnt);
     };
 
     class DFHACK_EXPORT ServerConnection {

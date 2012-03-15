@@ -141,24 +141,28 @@ namespace DFHack
         DFHack::Console con;
 
         Core();
+
+        class Private;
+        Private *d;
+
         bool Init();
         int Update (void);
         int TileUpdate (void);
         int Shutdown (void);
         int SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);
+
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement
+
         // report error to user while failing
         void fatal (std::string output, bool will_deactivate);
+
         // 1 = fatal failure
         bool errorstate;
         // regulate access to DF
         struct Cond;
-        tthread::mutex * AccessMutex;
-        tthread::mutex * StackMutex;
-        std::stack < Core::Cond * > suspended_tools;
-        Core::Cond * core_cond;
+
         // FIXME: shouldn't be kept around like this
         DFHack::VersionInfoFactory * vif;
         // Module storage

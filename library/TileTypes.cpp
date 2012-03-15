@@ -45,7 +45,7 @@ namespace DFHack
             return sourceTileType;
 
         #ifdef assert
-        assert(tiletype::is_valid(sourceTileType));
+        assert(is_valid_enum_item(sourceTileType));
         #endif
 
         // Special case for smooth pillars.

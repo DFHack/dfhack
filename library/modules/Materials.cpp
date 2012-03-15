@@ -505,7 +505,7 @@ bool DFHack::parseJobMaterialCategory(df::job_material_category *cat, const std:
 
     for (size_t i = 0; i < items.size(); i++)
     {
-        int id = findBitfieldField(*cat, items[i]);
+        int id = findBitfieldField<df::job_material_category>(items[i]);
         if (id < 0)
             return false;
 
@@ -524,7 +524,7 @@ bool DFHack::parseJobMaterialCategory(df::dfhack_material_category *cat, const s
 
     for (size_t i = 0; i < items.size(); i++)
     {
-        int id = findBitfieldField(*cat, items[i]);
+        int id = findBitfieldField<df::dfhack_material_category>(items[i]);
         if (id < 0)
             return false;
 

@@ -37,11 +37,12 @@ namespace  DFHack
 
     enum command_result
     {
-        CR_WOULD_BREAK = -2,
-        CR_NOT_IMPLEMENTED = -1,
-        CR_OK = 0,
-        CR_FAILURE = 1,
-        CR_WRONG_USAGE = 2
+        CR_WOULD_BREAK = -2,     // Attempt to call interactive command without console
+        CR_NOT_IMPLEMENTED = -1, // Command not implemented, or plugin not loaded
+        CR_OK = 0,               // Success
+        CR_FAILURE = 1,          // Failure
+        CR_WRONG_USAGE = 2,      // Wrong arguments or ui state
+        CR_NOT_FOUND = 3         // Target object not found (for RPC mainly)
     };
 
     enum DFHackReplyCode : int16_t {

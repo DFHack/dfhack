@@ -75,7 +75,7 @@ command_result CoreService::BindMethod(color_ostream &stream,
                                        const dfproto::CoreBindRequest *in,
                                        dfproto::CoreBindReply *out)
 {
-    ServerFunctionBase *fn = connection()->findFunction(in->plugin(), in->method());
+    ServerFunctionBase *fn = connection()->findFunction(stream, in->plugin(), in->method());
 
     if (!fn)
     {
@@ -104,7 +104,7 @@ command_result CoreService::RunCommand(color_ostream &stream,
     for (int i = 0; i < in->arguments_size(); i++)
         args.push_back(in->arguments(i));
 
-    return Core::getInstance().plug_mgr->InvokeCommand(stream, cmd, args, false);
+    return Core::getInstance().plug_mgr->InvokeCommand(stream, cmd, args);
 }
 
 RPCService::RPCService()
@@ -115,6 +115,9 @@ RPCService::RPCService()
 
 RPCService::~RPCService()
 {
+    if (holder)
+        holder->detach_connection(this);
+
     for (size_t i = 0; i < functions.size(); i++)
         delete functions[i];
 }
@@ -163,12 +166,37 @@ ServerConnection::~ServerConnection()
     delete core_service;
 }
 
-ServerFunctionBase *ServerConnection::findFunction(const std::string &plugin, const std::string &name)
+ServerFunctionBase *ServerConnection::findFunction(color_ostream &out, const std::string &plugin, const std::string &name)
 {
+    RPCService *svc;
+
     if (plugin.empty())
-        return core_service->getFunction(name);
+        svc = core_service;
     else
-        return NULL; // todo: add plugin api support
+    {
+        svc = plugin_services[plugin];
+
+        if (!svc)
+        {
+            Plugin *plug = Core::getInstance().plug_mgr->getPluginByName(plugin);
+            if (!plug)
+            {
+                out.printerr("No such plugin: %s\n", plugin.c_str());
+                return NULL;
+            }
+
+            svc = plug->rpc_connect(out);
+            if (!svc)
+            {
+                out.printerr("Plugin %s doesn't export any RPC methods.\n", plugin.c_str());
+                return NULL;
+            }
+
+            plugin_services[plugin] = svc;
+        }
+    }
+
+    return svc->getFunction(name);
 }
 
 void ServerConnection::connection_ostream::flush_proxy()

@@ -37,6 +37,7 @@ message CoreErrorNotification {
         CR_OK = 0;
         CR_FAILURE = 1;
         CR_WRONG_USAGE = 2;
+        CR_NOT_FOUND = 3;
     };
 
     required ErrorCode code = 1;

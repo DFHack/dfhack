@@ -45,6 +45,21 @@ if (BUILD_DWARFEXPORT)
     add_subdirectory (dwarfexport)
 endif()
 
+# Protobuf
+FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
+
+STRING(REPLACE ".proto" ".pb.cc" PROJECT_PROTO_SRCS "${PROJECT_PROTOS}")
+STRING(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS "${PROJECT_PROTOS}")
+
+ADD_CUSTOM_COMMAND(
+    OUTPUT ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
+    COMMAND protoc-bin -I=${dfhack_SOURCE_DIR}/proto/ -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
+            --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/
+            ${PROJECT_PROTOS}
+    DEPENDS protoc-bin ${PROJECT_PROTOS}
+)
+
+# Plugins
 OPTION(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(reveal reveal.cpp)
@@ -70,7 +85,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(seedwatch seedwatch.cpp)
     DFHACK_PLUGIN(initflags initflags.cpp)
     DFHACK_PLUGIN(stockpiles stockpiles.cpp)
-    DFHACK_PLUGIN(rename rename.cpp)
+    DFHACK_PLUGIN(rename rename.cpp PROTOBUFS rename)
     DFHACK_PLUGIN(jobutils jobutils.cpp)
     DFHACK_PLUGIN(workflow workflow.cpp)
     DFHACK_PLUGIN(showmood showmood.cpp)

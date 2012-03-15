@@ -132,6 +132,7 @@ namespace  DFHack
 
     class DFHACK_EXPORT RPCService {
         friend class ServerConnection;
+        friend class Plugin;
 
         std::vector<ServerFunctionBase*> functions;
         std::map<std::string, ServerFunctionBase*> lookup;
@@ -225,7 +226,7 @@ namespace  DFHack
         ServerConnection(CActiveSocket *socket);
         ~ServerConnection();
 
-        ServerFunctionBase *findFunction(const std::string &plugin, const std::string &name);
+        ServerFunctionBase *findFunction(color_ostream &out, const std::string &plugin, const std::string &name);
     };
 
     class DFHACK_EXPORT ServerMain {

@@ -198,6 +198,7 @@ namespace DFHack
         std::map<std::string,void*> misc_data_map;
 
         friend class CoreService;
+        friend class ServerConnection;
         ServerMain *server;
     };
 

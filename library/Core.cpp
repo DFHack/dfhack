@@ -165,7 +165,7 @@ void fHKthread(void * iodata)
 
             string first = args[0];
             args.erase(args.begin());
-            command_result cr = plug_mgr->InvokeCommand(out, first, args, false);
+            command_result cr = plug_mgr->InvokeCommand(out, first, args);
 
             if(cr == CR_WOULD_BREAK)
             {
@@ -272,7 +272,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for(size_t i = 0; i < plug_mgr->size();i++)
                     {
                         Plugin * plug = (plug_mgr->operator[](i));
-                        plug->load();
+                        plug->load(con);
                     }
                 }
                 else
@@ -284,7 +284,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     }
                     else
                     {
-                        plug->load();
+                        plug->load(con);
                     }
                 }
             }
@@ -299,7 +299,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for(size_t i = 0; i < plug_mgr->size();i++)
                     {
                         Plugin * plug = (plug_mgr->operator[](i));
-                        plug->reload();
+                        plug->reload(con);
                     }
                 }
                 else
@@ -311,7 +311,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     }
                     else
                     {
-                        plug->reload();
+                        plug->reload(con);
                     }
                 }
             }
@@ -326,7 +326,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for(size_t i = 0; i < plug_mgr->size();i++)
                     {
                         Plugin * plug = (plug_mgr->operator[](i));
-                        plug->unload();
+                        plug->unload(con);
                     }
                 }
                 else
@@ -338,7 +338,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     }
                     else
                     {
-                        plug->unload();
+                        plug->unload(con);
                     }
                 }
             }

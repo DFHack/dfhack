@@ -176,6 +176,10 @@ bool RemoteClient::connect(int port)
     bind_call.p_client = this;
     bind_call.id = 0;
 
+    runcmd_call.name = "RunCommand";
+    runcmd_call.p_client = this;
+    runcmd_call.id = 1;
+
     return true;
 }
 
@@ -220,6 +224,24 @@ bool RemoteClient::bind(color_ostream &out, RemoteFunctionBase *function,
     return true;
 }
 
+command_result RemoteClient::run_command(color_ostream &out, const std::string &cmd,
+                                         const std::vector<std::string> &args)
+{
+    if (!active || !socket.IsSocketValid())
+    {
+        out.printerr("In RunCommand: client connection not valid.\n");
+        return CR_FAILURE;
+    }
+
+    runcmd_call.reset();
+
+    runcmd_call.in()->set_command(cmd);
+    for (size_t i = 0; i < args.size(); i++)
+        runcmd_call.in()->add_arguments(args[i]);
+
+    return runcmd_call.execute(out);
+}
+
 void RPCFunctionBase::reset(bool free)
 {
     if (free)
@@ -256,10 +278,13 @@ bool RemoteFunctionBase::bind(color_ostream &out, RemoteClient *client,
     return client->bind(out, this, name, proto);
 }
 
-bool DFHack::sendRemoteMessage(CSimpleSocket &socket, int16_t id, const MessageLite *msg)
+bool DFHack::sendRemoteMessage(CSimpleSocket &socket, int16_t id, const MessageLite *msg, int *psz)
 {
     int size = msg->ByteSize();
     int fullsz = size + sizeof(RPCMessageHeader);
+
+    if (psz)
+        *psz = size;
 
     std::auto_ptr<uint8_t> data(new uint8_t[fullsz]);
     RPCMessageHeader *hdr = (RPCMessageHeader*)data.get();

@@ -42,7 +42,7 @@ message CoreErrorNotification {
     required ErrorCode code = 1;
 }
 
-message CoreVoidReply {}
+message EmptyMessage {}
 
 message CoreBindRequest {
     required string method = 1;

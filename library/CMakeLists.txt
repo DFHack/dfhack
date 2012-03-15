@@ -159,8 +159,8 @@ ENDIF()
 # Protobuf
 FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 
-STRING(REPLACE ".proto" ".pb.cc" PROJECT_PROTO_SRCS ${PROJECT_PROTOS})
-STRING(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS ${PROJECT_PROTOS})
+STRING(REPLACE ".proto" ".pb.cc" PROJECT_PROTO_SRCS "${PROJECT_PROTOS}")
+STRING(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS "${PROJECT_PROTOS}")
 
 LIST(APPEND PROJECT_HEADERS ${PROJECT_PROTO_HDRS})
 LIST(APPEND PROJECT_SOURCES ${PROJECT_PROTO_SRCS})
@@ -248,6 +248,8 @@ TARGET_LINK_LIBRARIES(dfhack-run protobuf-lite clsocket)
 IF(UNIX)
     # On linux, copy our version of the df launch script which sets LD_PRELOAD
     install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
+            DESTINATION .)
+    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
             DESTINATION .)
 ELSE()
     if(NOT BUILD_EGGY)

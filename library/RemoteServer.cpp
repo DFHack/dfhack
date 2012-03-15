@@ -64,10 +64,11 @@ using dfproto::CoreTextFragment;
 using google::protobuf::MessageLite;
 
 CoreService::CoreService() {
-    // This must be the first method, so that it gets id 0
+    // These 2 methods must be first, so that they get id 0 and 1
     addMethod("BindMethod", &CoreService::BindMethod);
-
     addMethod("RunCommand", &CoreService::RunCommand);
+
+    // Add others here:
 }
 
 command_result CoreService::BindMethod(color_ostream &stream,
@@ -96,8 +97,7 @@ command_result CoreService::BindMethod(color_ostream &stream,
 }
 
 command_result CoreService::RunCommand(color_ostream &stream,
-                                       const dfproto::CoreRunCommandRequest *in,
-                                       CoreVoidReply*)
+                                       const dfproto::CoreRunCommandRequest *in)
 {
     std::string cmd = in->command();
     std::vector<std::string> args;
@@ -242,6 +242,7 @@ void ServerConnection::threadFn(void *arg)
     std::cerr << "Client connection established." << endl;
 
     while (!me->in_error) {
+        // Read the message
         RPCMessageHeader header;
 
         if (!readFullBuffer(*me->socket, &header, sizeof(header)))
@@ -269,6 +270,9 @@ void ServerConnection::threadFn(void *arg)
 
         //out.print("Handling %d:%d\n", header.id, header.size);
 
+        // Find and call the function
+        int in_size = header.size;
+
         ServerFunctionBase *fn = vector_get(me->functions, header.id);
         MessageLite *reply = NULL;
         command_result res = CR_FAILURE;
@@ -290,6 +294,7 @@ void ServerConnection::threadFn(void *arg)
             }
         }
 
+        // Flush all text output
         if (me->in_error)
             break;
 
@@ -297,9 +302,12 @@ void ServerConnection::threadFn(void *arg)
 
         //out.print("Answer %d:%d\n", res, reply);
 
+        // Send reply
+        int out_size = 0;
+
         if (res == CR_OK && reply)
         {
-            if (!sendRemoteMessage(*me->socket, RPC_REPLY_RESULT, reply))
+            if (!sendRemoteMessage(*me->socket, RPC_REPLY_RESULT, reply, &out_size))
             {
                 out.printerr("In RPC server: I/O error in send result.\n");
                 break;
@@ -307,6 +315,9 @@ void ServerConnection::threadFn(void *arg)
         }
         else
         {
+            if (reply)
+                out_size = reply->ByteSize();
+
             header.id = RPC_REPLY_FAIL;
             header.size = res;
 
@@ -315,6 +326,12 @@ void ServerConnection::threadFn(void *arg)
                 out.printerr("In RPC server: I/O error in send failure code.\n");
                 break;
             }
+        }
+
+        // Cleanup
+        if (fn)
+        {
+            fn->reset(out_size > 32768 || in_size > 32768);
         }
     }
 

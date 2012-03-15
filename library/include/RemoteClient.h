@@ -33,7 +33,7 @@ distribution.
 
 namespace  DFHack
 {
-    using dfproto::CoreVoidReply;
+    using dfproto::EmptyMessage;
 
     enum command_result
     {
@@ -63,6 +63,43 @@ namespace  DFHack
         int16_t id;
         int32_t size;
     };
+
+    /* Protocol description:
+     *
+     * 1. Handshake
+     *
+     *   Client initiates connection by sending the handshake
+     *   request header. The server responds with the response
+     *   magic. Currently both versions must be 1.
+     *
+     * 2. Interaction
+     *
+     *   Requests are done by exchanging messages between the
+     *   client and the server. Messages consist of a serialized
+     *   protobuf message preceeded by RPCMessageHeader. The size
+     *   field specifies the length of the protobuf part.
+     *
+     *   NOTE: As a special exception, RPC_REPLY_FAIL uses the size
+     *         field to hold the error code directly.
+     *
+     *   Every callable function is assigned a non-negative id by
+     *   the server. Id 0 is reserved for BindMethod, which can be
+     *   used to request any other id by function name. Id 1 is
+     *   RunCommand, used to call console commands remotely.
+     *
+     *   The client initiates every call by sending a message with
+     *   appropriate function id and input arguments. The server
+     *   responds with zero or more RPC_REPLY_TEXT:CoreTextNotification
+     *   messages, followed by RPC_REPLY_RESULT containing the output
+     *   of the function if it succeeded, or RPC_REPLY_FAIL with the
+     *   error code if it did not.
+     *
+     * 3. Disconnect
+     *
+     *   The client terminates the connection by sending an
+     *   RPC_REQUEST_QUIT header with zero size and immediately
+     *   closing the socket.
+     */
 
     class DFHACK_EXPORT RemoteClient;
 
@@ -123,7 +160,7 @@ namespace  DFHack
         int16_t id;
     };
 
-    template<typename In, typename Out>
+    template<typename In, typename Out = EmptyMessage>
     class RemoteFunction : public RemoteFunctionBase {
     public:
         In *make_in() const { return static_cast<In*>(RemoteFunctionBase::make_in()); }
@@ -133,16 +170,33 @@ namespace  DFHack
 
         RemoteFunction() : RemoteFunctionBase(&In::default_instance(), &Out::default_instance()) {}
 
-        command_result execute(color_ostream &out) {
-            return RemoteFunctionBase::execute(out, this->in(), this->out());
+        command_result execute(color_ostream &stream) {
+            return RemoteFunctionBase::execute(stream, in(), out());
         }
-        command_result operator() (color_ostream &out, const In *input, Out *output) {
-            return RemoteFunctionBase::execute(out, input, output);
+        command_result operator() (color_ostream &stream, const In *input, Out *output) {
+            return RemoteFunctionBase::execute(stream, input, output);
+        }
+    };
+
+    template<typename In>
+    class RemoteFunction<In,EmptyMessage> : public RemoteFunctionBase {
+    public:
+        In *make_in() const { return static_cast<In*>(RemoteFunctionBase::make_in()); }
+        In *in() { return static_cast<In*>(RemoteFunctionBase::in()); }
+
+        RemoteFunction() : RemoteFunctionBase(&In::default_instance(), &EmptyMessage::default_instance()) {}
+
+        command_result execute(color_ostream &stream) {
+            return RemoteFunctionBase::execute(stream, in(), out());
+        }
+        command_result operator() (color_ostream &stream, const In *input) {
+            return RemoteFunctionBase::execute(stream, input, out());
         }
     };
 
     bool readFullBuffer(CSimpleSocket &socket, void *buf, int size);
-    bool sendRemoteMessage(CSimpleSocket &socket, int16_t id, const ::google::protobuf::MessageLite *msg);
+    bool sendRemoteMessage(CSimpleSocket &socket, int16_t id,
+                           const ::google::protobuf::MessageLite *msg, int *psz = NULL);
 
     class DFHACK_EXPORT RemoteClient
     {
@@ -160,10 +214,14 @@ namespace  DFHack
         bool connect(int port = -1);
         void disconnect();
 
+        command_result run_command(color_ostream &out, const std::string &cmd,
+                                   const std::vector<std::string> &args);
+
     private:
         bool active;
         CActiveSocket socket;
 
         RemoteFunction<dfproto::CoreBindRequest,dfproto::CoreBindReply> bind_call;
+        RemoteFunction<dfproto::CoreRunCommandRequest> runcmd_call;
     };
 }

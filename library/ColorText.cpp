@@ -56,6 +56,8 @@ using namespace DFHack;
 #include "tinythread.h"
 using namespace tthread;
 
+bool color_ostream::log_errors_to_stderr = false;
+
 void color_ostream::flush_buffer(bool flush)
 {
     auto buffer = buf();
@@ -122,7 +124,8 @@ void color_ostream::vprinterr(const char *format, va_list args)
 {
     color_value save = cur_color;
 
-    fprintf(stderr, format, args);
+    if (log_errors_to_stderr)
+        fprintf(stderr, format, args);
 
     color(COLOR_LIGHTRED);
     vprint(format, args);

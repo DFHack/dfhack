@@ -118,6 +118,8 @@ namespace  DFHack
 
         virtual bool is_console() { return false; }
         virtual color_ostream *proxy_target() { return NULL; }
+
+        static bool log_errors_to_stderr;
     };
 
     inline color_ostream &operator << (color_ostream &out, color_ostream::color_value clr)

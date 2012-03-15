@@ -572,6 +572,8 @@ Core::Core()
     top_viewscreen = NULL;
     screen_window = NULL;
     server = NULL;
+
+    color_ostream::log_errors_to_stderr = true;
 };
 
 void Core::fatal (std::string output, bool deactivate)

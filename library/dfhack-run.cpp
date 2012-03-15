@@ -71,19 +71,19 @@ int main (int argc, char *argv[])
     if (!client.connect())
         return 2;
 
-    // Bind to RunCommand
-    RemoteFunction<CoreRunCommandRequest,CoreVoidReply> command;
-
-    if (!command.bind(out, &client, "RunCommand"))
-        return 2;
-
-    // Execute it
-    command.in()->set_command(argv[1]);
+    // Call the command
+    std::vector<std::string> args;
     for (int i = 2; i < argc; i++)
-        command.in()->add_arguments(argv[i]);
+        args.push_back(argv[i]);
 
-    if (command.execute(out) != CR_OK)
+    command_result rv = client.run_command(out, argv[1], args);
+
+    if (rv != CR_OK) {
+        if (rv == CR_NOT_IMPLEMENTED)
+            out.printerr("%s is not a recognized command.\n", argv[1]);
+
         return 1;
+    }
 
     out.flush();
     return 0;

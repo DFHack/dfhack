@@ -304,6 +304,9 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
 
         switch (building.type)
         {
+        case building_type::Civzone:
+            out.print(", subtype %s", ENUM_KEY_STR(civzone_type, building.civzone_type));
+            break;
         case building_type::Furnace:
             out.print(", subtype %s", ENUM_KEY_STR(furnace_type, building.furnace_type));
             if (building.furnace_type == furnace_type::Custom)

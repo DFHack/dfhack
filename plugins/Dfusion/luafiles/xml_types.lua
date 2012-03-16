@@ -46,7 +46,9 @@ function padAddress(curoff,typetoadd) --return new offset to place things... May
 		if(math.mod(curoff,typetoadd.__align)==0) then 
 			return curoff
 		else
-			print("padding off:"..curoff.." with align:"..typetoadd.__align.." pad="..(typetoadd.__align-math.mod(curoff,typetoadd.__align)))
+			if PRINT_PADS then
+				print("padding off:"..curoff.." with align:"..typetoadd.__align.." pad="..(typetoadd.__align-math.mod(curoff,typetoadd.__align)))
+			end
 			return curoff+(typetoadd.__align-math.mod(curoff,typetoadd.__align))
 		end
 	end
@@ -62,7 +64,7 @@ function sarr.new(node,obj)
 	o.count=tonumber(node.xarg.count)
 	--print("got count:"..o.count)
 	o.ctype=makeType(first_of_type(node,"ld:item"))
-	
+	o.__align=o.ctype.__align or 4
 	o.size=o.count*o.ctype.size
 	--print("got subtypesize:"..o.ctype.size)
 	return o
@@ -110,7 +112,7 @@ simpletypes.int32_t={DWORD,4,4}
 simpletypes.int16_t={WORD,2,2}
 simpletypes.int8_t={BYTE,1,1}
 simpletypes.bool={BYTE,1,1}
-simpletypes["stl-string"]={STD_STRING,24,8}
+simpletypes["stl-string"]={STD_STRING,28,4}
 function getSimpleType(typename,obj)
 	if simpletypes[typename] == nil then return end
 	local o=obj or {}
@@ -135,6 +137,7 @@ function type_enum.new(node,obj)
 	--print(btype.." t="..convertType(btype))
 	o.type=getSimpleType(btype) -- should be simple type
 	o.size=o.type.size
+	o.__align=o.type.__align
 	return o
 end
 xtypes["enum-type"]=type_enum
@@ -147,7 +150,7 @@ function type_bitfield.new(node,obj)
 	o.size=0
 	o.fields_named={}
 	o.fields_numed={}
-	o.__align=8
+	o.__align=1
 	for k,v in pairs(node) do
 		if type(v)=="table" and v.xarg~=nil then
 			
@@ -244,11 +247,18 @@ function type_class.new(node,obj)
 	o.types={}
 	o.base={}
 	o.size=0
+	local isunion=false
+	if node.xarg["is-union"]=="true" then
+		--error("unions not supported!")
+		isunion=true
+	end
+	local firsttype;
 	--o.baseoffset=0
 	if node.xarg["inherits-from"]~=nil then
 		table.insert(o.base,getGlobal(node.xarg["inherits-from"]))
 		--error("Base class:"..node.xarg["inherits-from"])
 	end
+	
 	for k,v in ipairs(o.base) do
 		for kk,vv in pairs(v.types) do
 			o.types[kk]={vv[1],vv[2]+o.size}
@@ -269,16 +279,56 @@ function type_class.new(node,obj)
 			--for k,v in pairs(ttype) do
 			--	print(k..tostring(v))
 			--end
+			
 			local off=padAddress(o.size,ttype)
-			if off~=o.size then
-				print("var:"..name.."size:"..ttype.size)
+			if PRINT_PADS then
+				
+				if ttype.__align then
+					print(name.." "..ttype.__align .. " off:"..off.." "..math.mod(off,ttype.__align))
+					
+				end
+				if off~=o.size then
+					print("var:"..name.." size:"..ttype.size)
+				end
 			end
 			--print("var:"..name.." ->"..tostring(off).. " :"..ttype.size)
+			if isunion then
+				if ttype.size > o.size then
+					o.size=ttype.size
+				end
+				o.types[name]={ttype,0}
+			else
 			o.size=off
 			o.types[name]={ttype,o.size}--+o.baseoffset
 			o.size=o.size+ttype.size
+			end
+			if firsttype== nil then
+				firsttype=o.types[name][1]
+			end
+			
 		end
 	end
+	if isunion then
+		o.__align=0
+		for k,v in pairs(o.types) do
+			if v[1].__align~= nil and v[1].__align>o.__align then
+				o.__align=v[1].__align
+			end
+		end
+	else
+		if o.base[1]~= nil then
+			o.__align=o.base[1].__align
+		elseif firsttype~= nil then
+			o.__align=firsttype.__align
+			if o.__align~=nil then
+				print("\t\t setting align to:"..(o.__align or ""))
+			--else
+				--o.__align=4
+				--print("\t\t NIL ALIGNMENT!")
+			end
+		end
+	end
+
 	return o
 end
 
@@ -330,6 +380,7 @@ function type_pointer.new(node,obj)
 	end
 	
 	o.size=4
+	o.__align=4
 	return o
 end
 type_pointer.wrap={}
@@ -365,6 +416,7 @@ function dfarr.new(node,obj)
 	local o=obj or {}
 	setmetatable(o,dfarr)
 	o.size=8
+	o.__align=4
 	return o
 end
 function dfarr:makewrap(address)
@@ -403,6 +455,7 @@ function farr.new(node,obj)
 	local o=obj or {}
 	setmetatable(o,farr)
 	o.size=8
+	o.__align=4
 	return o
 end
 function farr:makewrap(address)
@@ -448,6 +501,10 @@ function bytes_pad.new(node,obj)
 	local o=obj or {}
 	setmetatable(o,bytes_pad)
 	o.size=tonumber(node.xarg.size)
+	if node.xarg.alignment~=nil then
+		print("Aligned bytes!")
+		o.__align=tonumber(node.xarg.alignment)
+	end
 	return o
 end
 xtypes["bytes"]=bytes_pad

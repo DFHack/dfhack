@@ -71,6 +71,7 @@ function stl_vec_bit.new(node,obj)
 	local o=obj or {}
 	setmetatable(o,stl_vec_bit)
 	o.size=20
+	o.align=4
 	return o
 end
 function stl_vec_bit:makewrap(address)
@@ -120,6 +121,7 @@ function stl_deque.new(node,obj)
 	local o=obj or {}
 	setmetatable(o,stl_deque)
 	o.size=24
+	o.__align=4
 	return o
 end
 xtypes.containers["stl-deque"]=stl_deque

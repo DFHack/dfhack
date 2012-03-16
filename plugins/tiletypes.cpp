@@ -233,7 +233,7 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
 
     if (option == "shape" || option == "sh" || option == "s")
     {
-        if (tiletype_shape::is_valid((df::tiletype_shape)valInt))
+        if (is_valid_enum_item((df::tiletype_shape)valInt))
         {
             paint.shape = (df::tiletype_shape)valInt;
             found = true;
@@ -258,7 +258,7 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
     }
     else if (option == "material" || option == "mat" || option == "m")
     {
-        if (tiletype_material::is_valid((df::tiletype_material)valInt))
+        if (is_valid_enum_item((df::tiletype_material)valInt))
         {
             paint.material = (df::tiletype_material)valInt;
             found = true;
@@ -283,7 +283,7 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
     }
     else if (option == "special" || option == "sp")
     {
-        if (tiletype_special::is_valid((df::tiletype_special)valInt))
+        if (is_valid_enum_item((df::tiletype_special)valInt))
         {
             paint.special = (df::tiletype_special)valInt;
             found = true;
@@ -308,7 +308,7 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
     }
     else if (option == "variant" || option == "var" || option == "v")
     {
-        if (tiletype_variant::is_valid((df::tiletype_variant)valInt))
+        if (is_valid_enum_item((df::tiletype_variant)valInt))
         {
             paint.variant = (df::tiletype_variant)valInt;
             found = true;

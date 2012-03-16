@@ -297,7 +297,7 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
             int sums[ENUM_LAST_ITEM(inclusion_type)+1] = { 0 };
 
             for (unsigned j = 0; j < layer->vein_mat.size(); j++)
-                if (inclusion_type::is_valid(layer->vein_type[j]))
+                if (is_valid_enum_item<df::inclusion_type>(layer->vein_type[j]))
                     sums[layer->vein_type[j]] += layer->vein_unk_38[j];
 
             for (unsigned j = 0; j < layer->vein_mat.size(); j++)

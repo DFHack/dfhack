@@ -169,7 +169,7 @@ std::string DFHack::bitfieldToString(const void *p, int size, const bitfield_ite
     std::string res;
     const char *data = (const char*)p;
 
-    for (int i = 0; i < size*8; i++) {
+    for (int i = 0; i < size; i++) {
         unsigned v;
 
         if (items[i].size > 1) {
@@ -199,10 +199,20 @@ std::string DFHack::bitfieldToString(const void *p, int size, const bitfield_ite
     return res;
 }
 
-int DFHack::findBitfieldField(const std::string &name, int size, const bitfield_item_info *items)
+int DFHack::findBitfieldField_(const std::string &name, int size, const bitfield_item_info *items)
 {
-    for (int i = 0; i < size*8; i++) {
+    for (int i = 0; i < size; i++) {
         if (items[i].name && items[i].name == name)
+            return i;
+    }
+
+    return -1;
+}
+
+int DFHack::findEnumItem_(const std::string &name, int size, const char *const *items)
+{
+    for (int i = 0; i < size; i++) {
+        if (items[i] && items[i] == name)
             return i;
     }
 

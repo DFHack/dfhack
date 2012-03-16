@@ -154,6 +154,12 @@ namespace DFHack
     }
 
     inline
+    df::tiletype_shape_basic tileShapeBasic(df::tiletype_shape tileshape)
+    {
+        return ENUM_ATTR(tiletype_shape, basic_shape, tileshape);
+    }
+
+    inline
     df::tiletype_special tileSpecial(df::tiletype tiletype)
     {
         return ENUM_ATTR(tiletype, special, tiletype);

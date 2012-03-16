@@ -68,7 +68,7 @@ int main (int argc, char *argv[])
     }
 
     // Connect to DFHack
-    RemoteClient client;
+    RemoteClient client(&out);
     if (!client.connect())
         return 2;
 
@@ -77,7 +77,7 @@ int main (int argc, char *argv[])
     for (int i = 2; i < argc; i++)
         args.push_back(argv[i]);
 
-    command_result rv = client.run_command(out, argv[1], args);
+    command_result rv = client.run_command(argv[1], args);
 
     if (rv != CR_OK) {
         if (rv == CR_NOT_IMPLEMENTED)

@@ -187,7 +187,7 @@ void fHKthread(void * iodata)
             args.erase(args.begin());
             command_result cr = plug_mgr->InvokeCommand(out, first, args);
 
-            if(cr == CR_WOULD_BREAK)
+            if(cr == CR_NEEDS_CONSOLE)
             {
                 out.printerr("It isn't possible to run an interactive command outside the console.\n");
             }

@@ -32,6 +32,7 @@ message CoreTextNotification {
 
 message CoreErrorNotification {
     enum ErrorCode {
+        CR_LINK_FAILURE = -3;
         CR_WOULD_BREAK = -2;
         CR_NOT_IMPLEMENTED = -1;
         CR_OK = 0;
@@ -49,8 +50,16 @@ message IntMessage {
     required int32 value = 1;
 }
 
+message IntListMessage {
+    repeated int32 value = 1;
+}
+
 message StringMessage {
     required string value = 1;
+}
+
+message StringListMessage {
+    repeated string value = 1;
 }
 
 message CoreBindRequest {

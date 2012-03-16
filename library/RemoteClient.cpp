@@ -87,16 +87,29 @@ void color_ostream_proxy::decode(CoreTextNotification *data)
     }
 }
 
-RemoteClient::RemoteClient()
+RemoteClient::RemoteClient(color_ostream *default_output)
+    : p_default_output(default_output)
 {
     active = false;
     socket = new CActiveSocket();
+    suspend_ready = false;
+
+    if (!p_default_output)
+    {
+        delete_output = true;
+        p_default_output = new color_ostream_wrapper(std::cout);
+    }
+    else
+        delete_output = false;
 }
 
 RemoteClient::~RemoteClient()
 {
     disconnect();
     delete socket;
+
+    if (delete_output)
+        delete p_default_output;
 }
 
 bool DFHack::readFullBuffer(CSimpleSocket *socket, void *buf, int size)
@@ -138,13 +151,13 @@ bool RemoteClient::connect(int port)
 
     if (!socket->Initialize())
     {
-        std::cerr << "Socket init failed." << endl;
+        default_output().printerr("Socket init failed.\n");
         return false;
     }
 
     if (!socket->Open((const uint8 *)"localhost", port))
     {
-        std::cerr << "Could not connect to localhost:" << port << endl;
+        default_output().printerr("Could not connect to localhost: %d\n", port);
         return false;
     }
 
@@ -156,14 +169,14 @@ bool RemoteClient::connect(int port)
 
     if (socket->Send((uint8*)&header, sizeof(header)) != sizeof(header))
     {
-        std::cerr << "Could not send header." << endl;
+        default_output().printerr("Could not send handshake header.\n");
         socket->Close();
         return active = false;
     }
 
     if (!readFullBuffer(socket, &header, sizeof(header)))
     {
-        std::cerr << "Could not read header." << endl;
+        default_output().printerr("Could not read handshake header.\n");
         socket->Close();
         return active = false;
     }
@@ -171,7 +184,7 @@ bool RemoteClient::connect(int port)
     if (memcmp(header.magic, RPCHandshakeHeader::RESPONSE_MAGIC, sizeof(header.magic)) ||
         header.version != 1)
     {
-        std::cerr << "Invalid handshake response." << endl;
+        default_output().printerr("Invalid handshake response.\n");
         socket->Close();
         return active = false;
     }
@@ -195,7 +208,7 @@ void RemoteClient::disconnect()
         header.id = RPC_REQUEST_QUIT;
         header.size = 0;
         if (socket->Send((uint8_t*)&header, sizeof(header)) != sizeof(header))
-            std::cerr << "Could not send the disconnect message." << endl;
+            default_output().printerr("Could not send the disconnect message.\n");
     }
 
     socket->Close();
@@ -222,7 +235,6 @@ bool RemoteClient::bind(color_ostream &out, RemoteFunctionBase *function,
     if (bind_call(out) != CR_OK)
         return false;
 
-    function->p_client = this;
     function->id = bind_call.out()->assigned_id();
 
     return true;
@@ -246,6 +258,35 @@ command_result RemoteClient::run_command(color_ostream &out, const std::string &
     return runcmd_call(out);
 }
 
+int RemoteClient::suspend_game()
+{
+    if (!active)
+        return -1;
+
+    if (!suspend_ready) {
+        suspend_ready = true;
+
+        suspend_call.bind(this, "CoreSuspend");
+        resume_call.bind(this, "CoreResume");
+    }
+
+    if (suspend_call(default_output()) == CR_OK)
+        return suspend_call.out()->value();
+    else
+        return -1;
+}
+
+int RemoteClient::resume_game()
+{
+    if (!suspend_ready)
+        return -1;
+
+    if (resume_call(default_output()) == CR_OK)
+        return resume_call.out()->value();
+    else
+        return -1;
+}
+
 void RPCFunctionBase::reset(bool free)
 {
     if (free)
@@ -266,11 +307,11 @@ void RPCFunctionBase::reset(bool free)
 bool RemoteFunctionBase::bind(color_ostream &out, RemoteClient *client,
                               const std::string &name, const std::string &proto)
 {
-    if (p_client == client)
-        return true;
-
-    if (p_client)
+    if (isValid())
     {
+        if (p_client == client && this->name == name && this->proto == proto)
+            return true;
+
         out.printerr("Function already bound to %s::%s\n",
                      this->proto.c_str(), this->name.c_str());
         return false;
@@ -278,6 +319,7 @@ bool RemoteFunctionBase::bind(color_ostream &out, RemoteClient *client,
 
     this->name = name;
     this->proto = proto;
+    this->p_client = client;
 
     return client->bind(out, this, name, proto);
 }
@@ -305,9 +347,10 @@ bool DFHack::sendRemoteMessage(CSimpleSocket *socket, int16_t id, const MessageL
 command_result RemoteFunctionBase::execute(color_ostream &out,
                                            const message_type *input, message_type *output)
 {
-    if (!p_client)
+    if (!isValid())
     {
-        out.printerr("Calling an unbound RPC function.\n");
+        out.printerr("Calling an unbound RPC function %s::%s.\n",
+                     this->proto.c_str(), this->name.c_str());
         return CR_NOT_IMPLEMENTED;
     }
 
@@ -315,14 +358,14 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
     {
         out.printerr("In call to %s::%s: invalid socket.\n",
                      this->proto.c_str(), this->name.c_str());
-        return CR_FAILURE;
+        return CR_LINK_FAILURE;
     }
 
     if (!sendRemoteMessage(p_client->socket, id, input))
     {
         out.printerr("In call to %s::%s: I/O error in send.\n",
                      this->proto.c_str(), this->name.c_str());
-        return CR_FAILURE;
+        return CR_LINK_FAILURE;
     }
 
     color_ostream_proxy text_decoder(out);
@@ -337,7 +380,7 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
         {
             out.printerr("In call to %s::%s: I/O error in receive header.\n",
                          this->proto.c_str(), this->name.c_str());
-            return CR_FAILURE;
+            return CR_LINK_FAILURE;
         }
 
         //out.print("Received %d:%d\n", header.id, header.size);
@@ -349,7 +392,7 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
         {
             out.printerr("In call to %s::%s: invalid received size %d.\n",
                          this->proto.c_str(), this->name.c_str(), header.size);
-            return CR_FAILURE;
+            return CR_LINK_FAILURE;
         }
 
         std::auto_ptr<uint8_t> buf(new uint8_t[header.size]);
@@ -358,7 +401,7 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
         {
             out.printerr("In call to %s::%s: I/O error in receive %d bytes of data.\n",
                          this->proto.c_str(), this->name.c_str(), header.size);
-            return CR_FAILURE;
+            return CR_LINK_FAILURE;
         }
 
         switch (header.id) {
@@ -367,7 +410,7 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
             {
                 out.printerr("In call to %s::%s: error parsing received result.\n",
                              this->proto.c_str(), this->name.c_str());
-                return CR_FAILURE;
+                return CR_LINK_FAILURE;
             }
 
             return CR_OK;

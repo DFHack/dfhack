@@ -41,7 +41,8 @@ namespace  DFHack
 
     enum command_result
     {
-        CR_WOULD_BREAK = -2,     // Attempt to call interactive command without console
+        CR_LINK_FAILURE = -3,    // RPC call failed due to I/O or protocol error
+        CR_NEEDS_CONSOLE = -2,   // Attempt to call interactive command without console
         CR_NOT_IMPLEMENTED = -1, // Command not implemented, or plugin not loaded
         CR_OK = 0,               // Success
         CR_FAILURE = 1,          // Failure
@@ -146,10 +147,13 @@ namespace  DFHack
 
     class DFHACK_EXPORT RemoteFunctionBase : public RPCFunctionBase {
     public:
+        bool bind(RemoteClient *client, const std::string &name,
+                  const std::string &proto = std::string());
         bool bind(color_ostream &out,
                   RemoteClient *client, const std::string &name,
                   const std::string &proto = std::string());
-        bool isValid() { return (p_client != NULL); }
+
+        bool isValid() { return (id >= 0); }
 
     protected:
         friend class RemoteClient;
@@ -158,6 +162,7 @@ namespace  DFHack
             : RPCFunctionBase(in, out), p_client(NULL), id(-1)
         {}
 
+        inline color_ostream &default_ostream();
         command_result execute(color_ostream &out, const message_type *input, message_type *output);
 
         std::string name, proto;
@@ -175,8 +180,16 @@ namespace  DFHack
 
         RemoteFunction() : RemoteFunctionBase(&In::default_instance(), &Out::default_instance()) {}
 
+        command_result operator() () {
+            return p_client ? RemoteFunctionBase::execute(default_ostream(), in(), out())
+                            : CR_NOT_IMPLEMENTED;
+        }
         command_result operator() (color_ostream &stream) {
             return RemoteFunctionBase::execute(stream, in(), out());
+        }
+        command_result operator() (const In *input, Out *output) {
+            return p_client ? RemoteFunctionBase::execute(default_ostream(), input, output)
+                            : CR_NOT_IMPLEMENTED;
         }
         command_result operator() (color_ostream &stream, const In *input, Out *output) {
             return RemoteFunctionBase::execute(stream, input, output);
@@ -191,8 +204,16 @@ namespace  DFHack
 
         RemoteFunction() : RemoteFunctionBase(&In::default_instance(), &EmptyMessage::default_instance()) {}
 
+        command_result operator() () {
+            return p_client ? RemoteFunctionBase::execute(default_ostream(), in(), out())
+                            : CR_NOT_IMPLEMENTED;
+        }
         command_result operator() (color_ostream &stream) {
             return RemoteFunctionBase::execute(stream, in(), out());
+        }
+        command_result operator() (const In *input) {
+            return p_client ? RemoteFunctionBase::execute(default_ostream(), input, out())
+                            : CR_NOT_IMPLEMENTED;
         }
         command_result operator() (color_ostream &stream, const In *input) {
             return RemoteFunctionBase::execute(stream, input, out());
@@ -211,22 +232,56 @@ namespace  DFHack
                   const std::string &name, const std::string &proto);
 
     public:
-        RemoteClient();
+        RemoteClient(color_ostream *default_output = NULL);
         ~RemoteClient();
 
         static int GetDefaultPort();
 
+        color_ostream &default_output() { return *p_default_output; };
+
         bool connect(int port = -1);
         void disconnect();
 
+        command_result run_command(const std::string &cmd, const std::vector<std::string> &args) {
+            return run_command(default_output(), cmd, args);
+        }
         command_result run_command(color_ostream &out, const std::string &cmd,
                                    const std::vector<std::string> &args);
 
+        // For executing multiple calls in rapid succession.
+        // Best used via RemoteSuspender.
+        int suspend_game();
+        int resume_game();
+
     private:
-        bool active;
-        CActiveSocket * socket;
+        bool active, delete_output;
+        CActiveSocket *socket;
+        color_ostream *p_default_output;
 
         RemoteFunction<dfproto::CoreBindRequest,dfproto::CoreBindReply> bind_call;
         RemoteFunction<dfproto::CoreRunCommandRequest> runcmd_call;
+
+        bool suspend_ready;
+        RemoteFunction<EmptyMessage, IntMessage> suspend_call, resume_call;
+    };
+
+    inline color_ostream &RemoteFunctionBase::default_ostream() {
+        return p_client->default_output();
+    }
+
+    inline bool RemoteFunctionBase::bind(RemoteClient *client, const std::string &name,
+                                         const std::string &proto) {
+        return bind(client->default_output(), client, name, proto);
+    }
+
+    class RemoteSuspender {
+        RemoteClient *client;
+    public:
+        RemoteSuspender(RemoteClient *client) : client(client) {
+            if (!client || client->suspend_game() <= 0) client = NULL;
+        }
+        ~RemoteSuspender() {
+            if (client) client->resume_game();
+        }
     };
 }

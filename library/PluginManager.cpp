@@ -291,7 +291,7 @@ command_result Plugin::invoke(color_ostream &out, const std::string & command, s
             {
                 // running interactive things from some other source than the console would break it
                 if(!out.is_console() && cmd.interactive)
-                    cr = CR_WOULD_BREAK;
+                    cr = CR_NEEDS_CONSOLE;
                 else if (cmd.guard)
                 {
                     // Execute hotkey commands in a way where they can

@@ -70,12 +70,12 @@ table.insert(plugins,{"editor","edit internals of df",EditDF})
 loadall(plugins)
 dofile_silent("dfusion/initcustom.lua")
 
---[=[print("Locating saves...")
-local str=engine.peekstr(0x1447A40+offsets.base())
+print("Locating saves...")
+local str=df.world.cur_savegame.save_dir
 print("Current region:"..str)
 str="data/save/"..str.."/dfusion/init.lua"
 dofile_silent(str)
---]=]
+
 if not INIT then
 mainmenu(plugins)
 end

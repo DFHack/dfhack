@@ -32,27 +32,21 @@ function tools.GiveSentience(names) --TODO make pattern...
 		end
 	end
 	for _,id in pairs(ids) do
-		local off=offsets.getEx('CreatureGloss')
-		local races=engine.peek(off,ptr_vector)
-		--print("Vector start:"..off)
-		
-		off=races:getval(id)
-		print(string.format("race location:%x",off))
-		local castes=engine.peek(off,ptr_CrGloss.castes)
-		print(string.format("Caste count:%i",castes:size()))
-		local flagPattern=ptt_dfflag.new(17)
-		for i =0,castes:size()-1 do
-			local offCaste=castes:getval(i)
-			print("Caste name:"..engine.peek(offCaste,ptr_CrCaste.name):getval().."...")
-			local flagoffset=engine.peek(offCaste,ptr_CrCaste.flags_ptr)
-			local flags=engine.peek(flagoffset,flagPattern)
+		local races=df.world.raws.creatures.all
+
+		local castes=races[id]:deref().caste
+		print(string.format("Caste count:%i",castes.size))
+		for i =0,castes.size-1 do
+			
+			print("Caste name:"..castes[i]:deref().caste_id.."...")
+			
+			local flags=castes[i]:deref().flags
 			--print(string.format("%x",flagoffset))
-			if flags:get(57) then
+			if flags.CAN_SPEAK then
 				print("\tis sentient.")
 			else
 				print("\tnon sentient. Allocating IQ...")
-				flags:set(57,1)
-				engine.poke(flagoffset,flagPattern,flags)
+				flags.CAN_SPEAK=true
 			end
 		end
 	end
@@ -162,16 +156,6 @@ function tools.MakeFollow()
 	end
 end
 tools.menu:add("Make creature follow",tools.MakeFollow)
-function tools.runscript(files)
-	if files==nil then
-	files={}
-	table.insert(files,getline())
-	end
-	for _,v in pairs(files) do
-		print("Running script:"..v)
-		ParseScript(v)
-	end
-end
 function tools.getsite(names)
 	if words==nil then --do once its slow.
 		words,rwords=BuildWordTables()
@@ -340,86 +324,6 @@ function tools.mouseBlock()
 	xs=math.floor(xs/16)
 	ys=math.floor(ys/16)
 	print("Mouse block is:"..xs.." "..ys.." "..zs)
-end
-function tools.protectsite()
-	local mapoffset=offsets.getEx("WorldData")--0x131C128+offsets.base()
-	local x=engine.peek(mapoffset+24,DWORD)
-	local y=engine.peek(mapoffset+28,DWORD)
-	local z=engine.peek(mapoffset+32,DWORD)
-	--vec=engine.peek(mapoffset,ptr_vector)
-	
-	print("Blocks loaded:"..x.." "..y.." "..z)
-	print("Select type:")
-	print("1. All (SLOW)")
-	print("2. range (x0 x1 y0 y1 z0 z1)")
-	print("3. One block around pointer")
-	print("anything else- quit")
-	q=getline()
-	n2=tonumber(q)
-	if n2==nil then return end
-	if n2>3 or n2<1 then return end
-	local xs,xe,ys,ye,zs,ze
-	if n2==1 then
-		xs=0
-		xe=x-1
-		ys=0
-		ye=y-1
-		zs=0
-		ze=z-1
-	elseif n2==2 then
-		print("enter x0:")
-		xs=tonumber(getline())
-		print("enter x1:")
-		xe=tonumber(getline())
-		print("enter y0:")
-		ys=tonumber(getline())
-		print("enter y1:")
-		ye=tonumber(getline())
-		print("enter z0:")
-		zs=tonumber(getline())
-		print("enter z1:")
-		ze=tonumber(getline())
-		function clamp(t,vmin,vmax)
-			if t> vmax then return vmax end
-			if t< vmin then return vmin end
-			return t
-		end
-		xs=clamp(xs,0,x-1)
-		ys=clamp(ys,0,y-1)
-		zs=clamp(zs,0,z-1)
-		xe=clamp(xe,xs,x-1)
-		ye=clamp(ye,ys,y-1)
-		ze=clamp(ze,zs,z-1)
-	else
-		xs,ys,zs=getxyz()
-		xs=math.floor(xs/16)
-		ys=math.floor(ys/16)
-		xe=xs
-		ye=ys
-		ze=zs
-	end
-	local xblocks=engine.peek(mapoffset,DWORD)
-	local flg=bit.lshift(1,14)
-	for xx=xs,xe do
-		local yblocks=engine.peek(xblocks+xx*4,DWORD)
-		for yy=ys,ye do
-			local zblocks=engine.peek(yblocks+yy*4,DWORD)
-			for zz=zs,ze do
-				
-				
-				
-				local myblock=engine.peek(zblocks+zz*4,DWORD)
-				if myblock~=0 then
-					for i=0,255 do
-						local ff=engine.peek(myblock+0x67c+i*4,DWORD)
-						ff=bit.bor(ff,flg) --set 14 flag to 1
-						engine.poke(myblock+0x67c+i*4,DWORD,ff)
-					end
-				end
-			end
-			print("Blocks done:"..xx.." "..yy)
-		end
-	end
 end
 function tools.fixwarp()
    local mapoffset=offsets.getEx("WorldData")--0x131C128+offsets.base()

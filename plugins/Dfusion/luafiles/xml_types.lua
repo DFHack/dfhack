@@ -130,9 +130,13 @@ function type_enum.new(node,obj)
 	setmetatable(o,type_enum)
 	o.names={}
 	for k,v in pairs(node) do
-		if type(v)=="table" and v.xarg~=nil then
-			--print("\t"..k.." "..v.xarg.name)
-			o.names[k-1]=v.xarg.name
+		if v.label=="enum-item" then
+			if  v.xarg~=nil and v.xarg.name then
+				--print("\t"..k.." "..v.xarg.name)
+				o.names[k-1]=v.xarg.name
+			else
+				o.names[k-1]=string.format("unk_%d",k-1)
+			end
 		end
 	end
 	local btype=node.xarg["base-type"] or "uint32_t"
@@ -486,6 +490,9 @@ function farr.new(node,obj)
 	setmetatable(o,farr)
 	o.size=8
 	o.__align=4
+	if node.xarg["index-enum"]~= nil then
+		o.index=getGlobal(node.xarg["index-enum"],true)
+	end
 	return o
 end
 function farr:makewrap(address)
@@ -495,29 +502,79 @@ function farr:makewrap(address)
 	setmetatable(o,self.wrap)
 	return o
 end
+function farr:bitread(addr,nbit)
+	local byte=engine.peekb(addr+nbit/8)
+	if bit.band(byte,bit.lshift(1,nbit%8))~=0 then
+		return true
+	else
+		return false
+	end
+end
+function farr:bitwrite(addr,nbit,value)
+	local byte=engine.peekb(addr+nbit/8)
+	if self:bitread(addr,nbit)~= value then
+		local byte=bit.bxor(byte,bit.lshift(1,nbit%8))
+		engine.pokeb(addr+nbit/8,byte)
+	end
+end
+type_bitfield.wrap={}
+
+function type_bitfield:makewrap(address)
+	local o={}
+	o.mtype=self
+	o.ptr=address
+	setmetatable(o,self.wrap)
+	return o
+end
+
 farr.wrap={}
+function farr.wrap.__next(tbl,key)
+	error("TODO")
+end
 function farr.wrap:__index(key)
 	
 	local num=tonumber(key)
 	local mtype=rawget(self,"mtype")
-	local size=type_read(rawget(self,"ptr")+4,DWORD)
+	local size=engine.peekd(rawget(self,"ptr")+4)*8
 	if key=="size" then
-		return size/mtype.ctype.size;
+		return size;
 	end
-	error("TODO make __index for df-flagarray")
-	if num~=nil and num<sizethen then
-		return type_read(mtype.ctype,num*mtype.ctype.size+rawget(self,"ptr"))
+	if mtype.index~=nil and num==nil then
+		--print("Requested:"..key)
+		for k,v in pairs(mtype.index.names) do
+			if v==key then
+				num=k
+				break
+			end
+		end
+			--print("is key:"..num)
+
+	end
+	if num~=nil and num<size then
+		return mtype:bitread(rawget(self,"ptr"),num)
 	else
 		error("invalid key to df-flagarray")
 	end
 end
 function farr.wrap:__newindex(key,val)
 	local num=tonumber(key)
-	error("TODO make __index for df-flagarray")
-	if num~=nil and num<rawget(self,"mtype").count then
-		return type_write(mtype.ctype,num*mtype.ctype.size+rawget(self,"ptr"),val)
+	local size=engine.peekd(rawget(self,"ptr")+4)*8
+	local mtype=rawget(self,"mtype")
+	if mtype.index~=nil and num==nil then
+		--print("Requested:"..key)
+		for k,v in pairs(mtype.index.names) do
+			if v==key then
+				num=k
+				break
+			end
+		end
+			--print("is key:"..num)
+
+	end
+	if num~=nil and num<size then
+		return mtype:bitwrite(rawget(self,"ptr"),num,val)
 	else
-		error("invalid key to static-array")
+		error("invalid key to df-flagarray")
 	end
 end
 

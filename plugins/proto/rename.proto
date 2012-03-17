@@ -1,0 +1,17 @@
+package dfproto;
+
+option optimize_for = LITE_RUNTIME;
+
+message RenameSquadRq {
+    required int32 squad_id = 1;
+
+    optional string nickname = 2;
+    optional string alias = 3;
+}
+
+message RenameUnitRq {
+    required int32 unit_id = 1;
+
+    optional string nickname = 2;
+    optional string profession = 3;
+}

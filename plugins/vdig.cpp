@@ -90,7 +90,7 @@ bool dig (MapExtras::MapCache & MCache,
     df::tiletype tt = MCache.tiletypeAt(at);
     df::tile_designation des = MCache.designationAt(at);
     // could be potentially used to locate hidden constructions?
-    if(tileMaterial(tt) == df::tiletype_material::CONSTRUCTION && !des.bits.hidden)
+    if(tileMaterial(tt) == tiletype_material::CONSTRUCTION && !des.bits.hidden)
         return false;
     df::tiletype_shape ts = tileShape(tt);
     if (ts == tiletype_shape::EMPTY)

@@ -15,7 +15,7 @@ IF(UNIX)
             ${include_directories}
             ${server_SOURCE_DIR}/zeromq
         )
-        install(PROGRAMS ${server_SOURCE_DIR}/zeromq/libzmq.so.1 DESTINATION "hack/deplibs")
+        install(PROGRAMS ${server_SOURCE_DIR}/zeromq/libzmq.so.1 DESTINATION ${DFHACK_LIBRARY_DESTINATION})
     ELSE()
         SET(PROJECT_LIBS
             zmq
@@ -31,7 +31,7 @@ ELSE()
             ${include_directories}
             ${server_SOURCE_DIR}/zeromq
         )
-        install(PROGRAMS ${server_SOURCE_DIR}/zeromq/libzmq.dll DESTINATION ".")
+        install(PROGRAMS ${server_SOURCE_DIR}/zeromq/libzmq.dll DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 
 ENDIF()
 

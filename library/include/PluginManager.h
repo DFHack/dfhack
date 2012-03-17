@@ -30,6 +30,9 @@ distribution.
 #include <map>
 #include <string>
 #include <vector>
+
+#include "RemoteClient.h"
+
 struct DFLibrary;
 namespace tthread
 {
@@ -45,15 +48,8 @@ namespace DFHack
     class Core;
     class PluginManager;
     class virtual_identity;
+    class RPCService;
 
-    enum command_result
-    {
-        CR_WOULD_BREAK = -2,
-        CR_NOT_IMPLEMENTED = -1,
-        CR_FAILURE = 0,
-        CR_OK = 1,
-        CR_WRONG_USAGE = 2
-    };
     enum state_change_event
     {
         SC_GAME_LOADED,
@@ -111,17 +107,23 @@ namespace DFHack
             PS_BROKEN
         };
         friend class PluginManager;
+        friend class RPCService;
         Plugin(DFHack::Core* core, const std::string& filepath, const std::string& filename, PluginManager * pm);
         ~Plugin();
         command_result on_update(color_ostream &out);
         command_result on_state_change(color_ostream &out, state_change_event event);
+        void detach_connection(RPCService *svc);
     public:
-        bool load();
-        bool unload();
-        bool reload();
-        command_result invoke(color_ostream &out, std::string & command, std::vector <std::string> & parameters, bool interactive );
-        bool can_invoke_hotkey( std::string & command, df::viewscreen *top );
+        bool load(color_ostream &out);
+        bool unload(color_ostream &out);
+        bool reload(color_ostream &out);
+
+        command_result invoke(color_ostream &out, const std::string & command, std::vector <std::string> & parameters);
+        bool can_invoke_hotkey(const std::string & command, df::viewscreen *top );
         plugin_state getState () const;
+
+        RPCService *rpc_connect(color_ostream &out);
+
         const PluginCommand& operator[] (std::size_t index) const
         {
             return commands[index];
@@ -137,6 +139,7 @@ namespace DFHack
     private:
         RefLock * access;
         std::vector <PluginCommand> commands;
+        std::vector <RPCService*> services;
         std::string filename;
         std::string name;
         DFLibrary * plugin_lib;
@@ -147,6 +150,7 @@ namespace DFHack
         command_result (*plugin_shutdown)(color_ostream &);
         command_result (*plugin_onupdate)(color_ostream &);
         command_result (*plugin_onstatechange)(color_ostream &, state_change_event);
+        RPCService* (*plugin_rpcconnect)(color_ostream &);
     };
     class DFHACK_EXPORT PluginManager
     {
@@ -163,8 +167,8 @@ namespace DFHack
     public:
         Plugin *getPluginByName (const std::string & name);
         Plugin *getPluginByCommand (const std::string &command);
-        command_result InvokeCommand(color_ostream &out, std::string & command, std::vector <std::string> & parameters, bool interactive = true );
-        bool CanInvokeHotkey(std::string &command, df::viewscreen *top);
+        command_result InvokeCommand(color_ostream &out, const std::string & command, std::vector <std::string> & parameters);
+        bool CanInvokeHotkey(const std::string &command, df::viewscreen *top);
         Plugin* operator[] (std::size_t index)
         {
             if(index >= all_plugins.size())

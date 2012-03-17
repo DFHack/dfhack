@@ -1,0 +1,6 @@
+PROJECT(dfhack-tinythread)
+ADD_LIBRARY(dfhack-tinythread STATIC EXCLUDE_FROM_ALL tinythread.cpp)
+if(UNIX)
+    target_link_libraries(dfhack-tinythread pthread)
+endif()
+IDE_FOLDER(dfhack-tinythread "Depends")

@@ -10,9 +10,16 @@
 #include "modules/World.h"
 #include "modules/MapCache.h"
 #include "modules/Gui.h"
+#include "df/construction.h"
+#include "df/block_square_event_frozen_liquidst.h"
 using MapExtras::MapCache;
+
+using std::string;
+using std::vector;
+
 using namespace DFHack;
 using namespace df::enums;
+
 using df::global::world;
 
 /*
@@ -20,8 +27,8 @@ using df::global::world;
  */
 bool isSafe(df::coord c)
 {
-    DFHack::t_feature local_feature;
-    DFHack::t_feature global_feature;
+    t_feature local_feature;
+    t_feature global_feature;
     // get features of block
     // error -> obviously not safe to manipulate
     if(!Maps::ReadFeatures(c.x >> 4,c.y >> 4,c.z,&local_feature,&global_feature))
@@ -45,7 +52,7 @@ struct hideblock
 
 // the saved data. we keep map size to check if things still match
 uint32_t x_max, y_max, z_max;
-std::vector <hideblock> hidesaved;
+vector <hideblock> hidesaved;
 bool nopause_state = false;
 
 enum revealstate
@@ -58,28 +65,30 @@ enum revealstate
 
 revealstate revealed = NOT_REVEALED;
 
-command_result reveal(color_ostream &out, std::vector<std::string> & params);
-command_result unreveal(color_ostream &out, std::vector<std::string> & params);
-command_result revtoggle(color_ostream &out, std::vector<std::string> & params);
-command_result revflood(color_ostream &out, std::vector<std::string> & params);
-command_result nopause(color_ostream &out, std::vector<std::string> & params);
+command_result reveal(color_ostream &out, vector<string> & params);
+command_result unreveal(color_ostream &out, vector<string> & params);
+command_result revtoggle(color_ostream &out, vector<string> & params);
+command_result revflood(color_ostream &out, vector<string> & params);
+command_result revforget(color_ostream &out, vector<string> & params);
+command_result nopause(color_ostream &out, vector<string> & params);
 
 DFHACK_PLUGIN("reveal");
 
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.clear();
     commands.push_back(PluginCommand("reveal","Reveal the map. 'reveal hell' will also reveal hell. 'reveal demon' won't pause.",reveal));
     commands.push_back(PluginCommand("unreveal","Revert the map to its previous state.",unreveal));
     commands.push_back(PluginCommand("revtoggle","Reveal/unreveal depending on state.",revtoggle));
     commands.push_back(PluginCommand("revflood","Hide all, reveal all tiles reachable from cursor position.",revflood));
+    commands.push_back(PluginCommand("revforget", "Forget the current reveal data, allowing to use reveal again.",revforget));
     commands.push_back(PluginCommand("nopause","Disable pausing (doesn't affect pause forced by reveal).",nopause));
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    DFHack::World *World = Core::getInstance().getWorld();
+    World *World = Core::getInstance().getWorld();
     t_gamemodes gm;
     World->ReadGameMode(gm);
     if(gm.g_mode == GAMEMODE_DWARF)
@@ -102,7 +111,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-command_result nopause (color_ostream &out, std::vector <std::string> & parameters)
+command_result nopause (color_ostream &out, vector <string> & parameters)
 {
     if (parameters.size() == 1 && (parameters[0] == "0" || parameters[0] == "1"))
     {
@@ -128,7 +137,7 @@ void revealAdventure(color_ostream &out)
         // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
         if (!isSafe(block->map_pos))
             continue;
-        DFHack::designations40d & designations = block->designation;
+        designations40d & designations = block->designation;
         // for each tile in block
         for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
         {
@@ -141,7 +150,7 @@ void revealAdventure(color_ostream &out)
     out.print("Local map revealed.\n");
 }
 
-command_result reveal(color_ostream &out, std::vector<std::string> & params)
+command_result reveal(color_ostream &out, vector<string> & params)
 {
     bool no_hell = true;
     bool pause = true;
@@ -177,7 +186,7 @@ command_result reveal(color_ostream &out, std::vector<std::string> & params)
 
     CoreSuspender suspend;
 
-    DFHack::World *World = Core::getInstance().getWorld();
+    World *World = Core::getInstance().getWorld();
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -206,7 +215,7 @@ command_result reveal(color_ostream &out, std::vector<std::string> & params)
             continue;
         hideblock hb;
         hb.c = block->map_pos;
-        DFHack::designations40d & designations = block->designation;
+        designations40d & designations = block->designation;
         // for each tile in block
         for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
         {
@@ -238,7 +247,7 @@ command_result reveal(color_ostream &out, std::vector<std::string> & params)
     return CR_OK;
 }
 
-command_result unreveal(color_ostream &out, std::vector<std::string> & params)
+command_result unreveal(color_ostream &out, vector<string> & params)
 {
     auto & con = out;
     for(size_t i = 0; i < params.size();i++)
@@ -256,7 +265,7 @@ command_result unreveal(color_ostream &out, std::vector<std::string> & params)
     }
     CoreSuspender suspend;
 
-    DFHack::World *World = Core::getInstance().getWorld();
+    World *World = Core::getInstance().getWorld();
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -295,7 +304,7 @@ command_result unreveal(color_ostream &out, std::vector<std::string> & params)
     return CR_OK;
 }
 
-command_result revtoggle (color_ostream &out, std::vector<std::string> & params)
+command_result revtoggle (color_ostream &out, vector<string> & params)
 {
     for(size_t i = 0; i < params.size();i++)
     {
@@ -315,7 +324,7 @@ command_result revtoggle (color_ostream &out, std::vector<std::string> & params)
     }
 }
 
-command_result revflood(color_ostream &out, std::vector<std::string> & params)
+command_result revflood(color_ostream &out, vector<string> & params)
 {
     for(size_t i = 0; i < params.size();i++)
     {
@@ -394,7 +403,7 @@ command_result revflood(color_ostream &out, std::vector<std::string> & params)
 
         if(!MCache->testCoord(current))
             continue;
-        df::tiletype tt = MCache->tiletypeAt(current);
+        df::tiletype tt = MCache->baseTiletypeAt(current);
         df::tile_designation des = MCache->designationAt(current);
         if(!des.bits.hidden)
         {
@@ -464,5 +473,28 @@ command_result revflood(color_ostream &out, std::vector<std::string> & params)
     }
     MCache->WriteAll();
     delete MCache;
+    return CR_OK;
+}
+
+command_result revforget(color_ostream &out, vector<string> & params)
+{
+    auto & con = out;
+    for(size_t i = 0; i < params.size();i++)
+    {
+        if(params[i] == "help" || params[i] == "?")
+        {
+            out.print("Forget the current reveal data, allowing to use reveal again.\n");
+            return CR_OK;
+        }
+    }
+    if(!revealed)
+    {
+        con.printerr("There's nothing to forget!\n");
+        return CR_FAILURE;
+    }
+    // give back memory.
+    hidesaved.clear();
+    revealed = NOT_REVEALED;
+    con.print("Reveal data forgotten!\n");
     return CR_OK;
 }

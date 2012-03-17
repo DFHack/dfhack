@@ -14,6 +14,29 @@ endif(CMAKE_CONFIGURATION_TYPES)
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 project(dfhack)
 
+# set up folder structures for IDE solutions
+# MSVC Express won't load solutions that use this. It also doesn't include MFC supported
+# Check for MFC!
+find_package(MFC QUIET)
+if(MFC_FOUND OR (NOT MSVC))
+    OPTION(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." ON)
+else()
+    OPTION(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." OFF)
+endif()
+
+if(CMAKE_USE_FOLDERS)
+    SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
+else()
+    SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS OFF)
+endif()
+
+# macro for setting up IDE folders without nasty IF()s everywhere
+MACRO(IDE_FOLDER target folder)
+    if(CMAKE_USE_FOLDERS)
+        SET_PROPERTY(TARGET ${target} PROPERTY FOLDER ${folder})
+    endif()
+ENDMACRO()
+
 SET(CMAKE_MODULE_PATH
 ${dfhack_SOURCE_DIR}/CMake/Modules
 ${CMAKE_MODULE_PATH}
@@ -30,7 +53,7 @@ set(DF_VERSION_MINOR "34")
 set(DF_VERSION_PATCH "05")
 set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
 
-set(DFHACK_RELEASE "1d")
+set(DFHACK_RELEASE "1e")
 
 set(DFHACK_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}-r${DFHACK_RELEASE}")
 add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")
@@ -78,25 +101,32 @@ IF(UNIX)
   SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic")
 ENDIF()
 
-# find and make available libz
-if(NOT UNIX)
-    SET(ZLIB_INCLUDE_DIRS ${dfhack_SOURCE_DIR}/library/depends/zlib/include/)
-    SET(ZLIB_LIBRARIES ${dfhack_SOURCE_DIR}/library/depends/zlib/lib/zlib.lib)
-else()
-    find_package(ZLIB REQUIRED)
-endif()
-include_directories(${ZLIB_INCLUDE_DIRS})
-
-#add depends to include path
-INCLUDE_DIRECTORIES ( library/depends )
-INCLUDE_DIRECTORIES ( library/depends/protobuf/ )
-
 # use shared libraries for protobuf
 ADD_DEFINITIONS(-DPROTOBUF_USE_DLLS)
 
-# build the static lua for dfusion
-INCLUDE_DIRECTORIES ( lua/include )
-add_subdirectory (lua)
+if(UNIX)
+    add_definitions(-D_LINUX)
+elseif(WIN32)
+    add_definitions(-DWIN32)
+endif()
+
+#### expose depends ####
+
+# find and make available libz
+if(NOT UNIX)
+    SET(ZLIB_ROOT depends/zlib/)
+endif()
+find_package(ZLIB REQUIRED)
+include_directories(depends/protobuf)
+include_directories(depends/lua/include)
+include_directories(depends/md5)
+include_directories(depends/tinyxml)
+include_directories(depends/tthread)
+include_directories(${ZLIB_INCLUDE_DIRS})
+include_directories(depends/clsocket/src)
+add_subdirectory(depends)
+
+
 
 # build the lib itself
 IF(BUILD_LIBRARY)

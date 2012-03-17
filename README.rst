@@ -242,6 +242,19 @@ Makes your minions move at ludicrous speeds.
  * Activate with 'fastdwarf 1'
  * Deactivate with 'fastdwarf 0'
 
+feature
+=======
+Enables management of map features.
+
+* Discovering a magma feature (magma pool, volcano, magma sea, or curious underground structure) permits magma workshops and furnaces to be built.
+* Discovering a cavern layer causes plants (trees, shrubs, and grass) from that cavern to grow within your fortress.
+
+Options
+-------
+:list:         Lists all map features in your current embark by index.
+:show X:       Marks the selected map feature as discovered.
+:hide X:       Marks the selected map feature as undiscovered.
+
 filltraffic
 ===========
 Set traffic designations using flood-fill starting at the cursor.
@@ -454,6 +467,21 @@ Switches between 'reveal' and 'unreveal'.
 revflood
 ========
 This command will hide the whole map and then reveal all the tiles that have a path to the in-game cursor.
+
+revforget
+=========
+When you use reveal, it saves information about what was/wasn't visible before revealing everything. Unreveal uses this information to hide things again. This command throws away the information. For example, use in cases where you abandoned with the fort revealed and no longer want the data.
+
+lair
+====
+This command allows you to mark the map as 'monster lair', preventing item scatter on abandon. When invoked as 'lair reset', it does the opposite.
+
+Unlike reveal, this command doesn't save the information about tiles - you won't be able to restore state of real monster lairs using 'lair reset'.
+
+Options
+-------
+:lair: Mark the map as monster lair
+:lair reset: Mark the map as ordinary (not lair)
 
 seedwatch
 =========

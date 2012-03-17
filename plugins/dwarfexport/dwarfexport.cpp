@@ -63,19 +63,19 @@ static const char* physicals[] = {
 };
 
 static const char* mentals[] = {
-    "Willpower",
-    "Memory",
+    "AnalyticalAbility",
     "Focus",
+    "Willpower",
+    "Creatvity", //Speeling deliberate
     "Intuition",
     "Patience",
-    "Empathy",
-    "SocialAwareness",
-    "Creatvity", //Speeling deliberate
-    "Musicality",
-    "AnalyticalAbility",
+    "Memory",
     "LinguisticAbility",
     "SpatialSense",
+    "Musicality",
     "KinaestheticSense",
+    "Empathy",
+    "SocialAwareness",
 };
 
 static void element(const char* name, const char* content, ostream& out, const char* extra_indent="") {
@@ -110,7 +110,7 @@ static void printTraits(color_ostream &con, df::unit* cre, ostream& out)
     {
         FOR_ENUM_ITEMS(personality_facet_type,index)
         {
-            out << "      <Trait name='" << df::enums::personality_facet_type::get_key(index) <<
+            out << "      <Trait name='" << ENUM_KEY_STR(personality_facet_type, index) <<
                 "' value='" << s->traits[index] << "'>";
             //FIXME: needs reimplementing trait string generation
             /*
@@ -143,12 +143,11 @@ static void printLabors(color_ostream &con, df::unit* cre, ostream& out)
 {
     // Using British spelling here, consistent with Runesmith
     out << "  <Labours>" << endl;
-    for (int iCount = 0; iCount < sizeof(cre->status.labors); iCount++)
+    FOR_ENUM_ITEMS(unit_labor, iCount)
     {
         if (cre->status.labors[iCount]) {
             // Get the caption for the labor index.
-            df::enums::unit_labor::unit_labor thisLabor = (df::enums::unit_labor::unit_labor)iCount;
-            element("Labour", get_caption(thisLabor), out);
+            element("Labour", ENUM_ATTR_STR(unit_labor, caption, iCount), out);
         }
     }
     out << "  </Labours>" << endl;
@@ -158,7 +157,7 @@ static void printSkill(color_ostream &con, df::unit_skill* skill, ostream& out)
 {
     out << "    <Skill>" << endl;
 
-    element("Name", get_caption(skill->id), out);
+    element("Name", ENUM_ATTR_STR(job_skill, caption, skill->id), out);
     element("Level", skill->rating, out);
 
     out << "    </Skill>" << endl;

@@ -26,6 +26,7 @@ distribution.
 #include "Export.h"
 #include "DataDefs.h"
 #include "df/building.h"
+#include "df/civzone_type.h"
 #include "df/furnace_type.h"
 #include "df/workshop_type.h"
 #include "df/construction_type.h"
@@ -53,6 +54,7 @@ struct t_building
     union
     {
         int16_t subtype;
+        df::civzone_type civzone_type;
         df::furnace_type furnace_type;
         df::workshop_type workshop_type;
         df::construction_type construction_type;

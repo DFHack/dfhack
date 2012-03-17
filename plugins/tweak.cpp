@@ -46,8 +46,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "tweak", "Various tweaks for minor bugs.", tweak, false,
         "  tweak clear-missing\n"
         "    Remove the missing status from the selected unit.\n"
-        "  tweak lair\n"
-        "    Mark the map as monster lair, preventing item scatter on reclaim.\n"
     ));
     return CR_OK;
 }
@@ -85,37 +83,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
                 crime->flags.bits.discovered = true;
         }
     }
-    else if(cmd == "lair")
-    {
-        return lair(out,parameters);
-    }
     else return CR_WRONG_USAGE;
 
-    return CR_OK;
-}
-
-#include "modules/Maps.h"
-
-command_result lair(color_ostream &out, std::vector<std::string> & params)
-{
-    if (!Maps::IsValid())
-    {
-        out.printerr("Map is not available!\n");
-        return CR_FAILURE;
-    }
-    uint32_t x_max,y_max,z_max;
-    Maps::getSize(x_max,y_max,z_max);
-    for (size_t i = 0; i < world->map.map_blocks.size(); i++)
-    {
-        df::map_block *block = world->map.map_blocks[i];
-        DFHack::occupancies40d & occupancies = block->occupancy;
-        // for each tile in block
-        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
-        {
-            // set to revealed
-            occupancies[x][y].bits.monster_lair = true;
-        }
-    }
-    out.print("Map monsterized.\n");
     return CR_OK;
 }

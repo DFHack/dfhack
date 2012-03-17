@@ -26,9 +26,11 @@ distribution.
 #include "Core.h"
 #include "MemAccess.h"
 #include "PluginManager.h"
+#include "RemoteServer.h"
 #include "Console.h"
 
 #include "DataDefs.h"
+#include "MiscUtils.h"
 
 using namespace DFHack;
 
@@ -146,6 +148,7 @@ Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _f
     plugin_status = 0;
     plugin_onupdate = 0;
     plugin_onstatechange = 0;
+    plugin_rpcconnect = 0;
     state = PS_UNLOADED;
     access = new RefLock();
 }
@@ -154,12 +157,12 @@ Plugin::~Plugin()
 {
     if(state == PS_LOADED)
     {
-        unload();
+        unload(Core::getInstance().getConsole());
     }
     delete access;
 }
 
-bool Plugin::load()
+bool Plugin::load(color_ostream &con)
 {
     RefAutolock lock(access);
     if(state == PS_BROKEN)
@@ -170,8 +173,6 @@ bool Plugin::load()
     {
         return true;
     }
-    Core & c = Core::getInstance();
-    Console & con = c.getConsole();
     DFLibrary * plug = OpenPlugin(filename.c_str());
     if(!plug)
     {
@@ -208,6 +209,7 @@ bool Plugin::load()
     plugin_onupdate = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_onupdate");
     plugin_shutdown = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_shutdown");
     plugin_onstatechange = (command_result (*)(color_ostream &, state_change_event)) LookupPlugin(plug, "plugin_onstatechange");
+    plugin_rpcconnect = (RPCService* (*)(color_ostream &)) LookupPlugin(plug, "plugin_rpcconnect");
     this->name = *plug_name;
     plugin_lib = plug;
     if(plugin_init(con,commands) == CR_OK)
@@ -225,17 +227,17 @@ bool Plugin::load()
     }
 }
 
-bool Plugin::unload()
+bool Plugin::unload(color_ostream &con)
 {
-    Core & c = Core::getInstance();
-    Console & con = c.getConsole();
     // get the mutex
     access->lock();
     // if we are actually loaded
     if(state == PS_LOADED)
     {
-        // notify plugin about shutdown
-        command_result cr = plugin_shutdown(con);
+        // notify plugin about shutdown, if it has a shutdown function
+        command_result cr = CR_OK;
+        if(plugin_shutdown)
+            cr = plugin_shutdown(con);
         // wait for all calls to finish
         access->wait();
         // cleanup...
@@ -264,18 +266,18 @@ bool Plugin::unload()
     return false;
 }
 
-bool Plugin::reload()
+bool Plugin::reload(color_ostream &out)
 {
     if(state != PS_LOADED)
         return false;
-    if(!unload())
+    if(!unload(out))
         return false;
-    if(!load())
+    if(!load(out))
         return false;
     return true;
 }
 
-command_result Plugin::invoke(color_ostream &out, std::string & command, std::vector <std::string> & parameters, bool interactive_)
+command_result Plugin::invoke(color_ostream &out, const std::string & command, std::vector <std::string> & parameters)
 {
     Core & c = Core::getInstance();
     command_result cr = CR_NOT_IMPLEMENTED;
@@ -288,8 +290,8 @@ command_result Plugin::invoke(color_ostream &out, std::string & command, std::ve
             if(cmd.name == command)
             {
                 // running interactive things from some other source than the console would break it
-                if(!(interactive_ && out.is_console()) && cmd.interactive)
-                    cr = CR_WOULD_BREAK;
+                if(!out.is_console() && cmd.interactive)
+                    cr = CR_NEEDS_CONSOLE;
                 else if (cmd.guard)
                 {
                     // Execute hotkey commands in a way where they can
@@ -323,7 +325,7 @@ command_result Plugin::invoke(color_ostream &out, std::string & command, std::ve
     return cr;
 }
 
-bool Plugin::can_invoke_hotkey( std::string & command, df::viewscreen *top )
+bool Plugin::can_invoke_hotkey(const std::string & command, df::viewscreen *top )
 {
     Core & c = Core::getInstance();
     bool cr = false;
@@ -373,6 +375,42 @@ command_result Plugin::on_state_change(color_ostream &out, state_change_event ev
     return cr;
 }
 
+RPCService *Plugin::rpc_connect(color_ostream &out)
+{
+    RPCService *rv = NULL;
+
+    access->lock_add();
+
+    if(state == PS_LOADED && plugin_rpcconnect)
+    {
+        rv = plugin_rpcconnect(out);
+    }
+
+    if (rv)
+    {
+        // Retain the access reference
+        assert(!rv->holder);
+        services.push_back(rv);
+        rv->holder = this;
+        return rv;
+    }
+    else
+    {
+        access->lock_sub();
+        return NULL;
+    }
+}
+
+void Plugin::detach_connection(RPCService *svc)
+{
+    int idx = linear_index(services, svc);
+
+    assert(svc->holder == this && idx >= 0);
+
+    vector_erase_at(services, idx);
+    access->lock_sub();
+}
+
 Plugin::plugin_state Plugin::getState() const
 {
     return state;
@@ -397,7 +435,7 @@ PluginManager::PluginManager(Core * core)
             Plugin * p = new Plugin(core, path + filez[i], filez[i], this);
             all_plugins.push_back(p);
             // make all plugins load by default (until a proper design emerges).
-            p->load();
+            p->load(core->getConsole());
         }
     }
 }
@@ -433,13 +471,13 @@ Plugin *PluginManager::getPluginByCommand(const std::string &command)
 }
 
 // FIXME: handle name collisions...
-command_result PluginManager::InvokeCommand(color_ostream &out, std::string & command, std::vector <std::string> & parameters, bool interactive)
+command_result PluginManager::InvokeCommand(color_ostream &out, const std::string & command, std::vector <std::string> & parameters)
 {
     Plugin *plugin = getPluginByCommand(command);
-    return plugin ? plugin->invoke(out, command, parameters, interactive) : CR_NOT_IMPLEMENTED;
+    return plugin ? plugin->invoke(out, command, parameters) : CR_NOT_IMPLEMENTED;
 }
 
-bool PluginManager::CanInvokeHotkey(std::string &command, df::viewscreen *top)
+bool PluginManager::CanInvokeHotkey(const std::string &command, df::viewscreen *top)
 {
     Plugin *plugin = getPluginByCommand(command);
     return plugin ? plugin->can_invoke_hotkey(command, top) : false;

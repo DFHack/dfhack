@@ -125,16 +125,9 @@ namespace DFHack
     template<class T>
     T *ifnull(T *a, T *b) { return a ? a : b; }
 
-    // Enums
-    template<class T, T start, bool (*isvalid)(T)>
-    inline T next_enum_item_(T v) {
-        v = T(int(v) + 1);
-        return isvalid(v) ? v : start;
-    }
-
     template<class T>
     struct enum_list_attr {
-        int size;
+        size_t size;
         const T *items;
     };
 
@@ -143,19 +136,6 @@ namespace DFHack
         const char *name;
         int size;
     };
-
-    DFHACK_EXPORT std::string bitfieldToString(const void *p, int size, const bitfield_item_info *items);
-    DFHACK_EXPORT int findBitfieldField(const std::string &name, int size, const bitfield_item_info *items);
-
-    template<class T>
-    inline int findBitfieldField(const T &val, const std::string &name) {
-        return findBitfieldField(name, sizeof(val.whole), val.get_items());
-    }
-
-    template<class T>
-    inline std::string bitfieldToString(const T &val) {
-        return bitfieldToString(&val.whole, sizeof(val.whole), val.get_items());
-    }
 }
 
 template<class T>
@@ -182,6 +162,12 @@ namespace df
     using DFHack::enum_list_attr;
     using DFHack::BitArray;
     using DFHack::DfArray;
+
+    template<class T>
+    struct enum_traits {};
+
+    template<class T>
+    struct bitfield_traits {};
 
     template<class T>
     class class_virtual_identity : public virtual_identity {
@@ -227,14 +213,70 @@ namespace df
     namespace enums {}
 }
 
-#define ENUM_ATTR(enum,attr,val) (df::enums::enum::get_##attr(val))
+namespace DFHack {
+    // Enums
+    template<class T>
+    inline typename df::enum_traits<T>::enum_type next_enum_item(T v) {
+        typedef df::enum_traits<T> traits;
+        typedef typename traits::base_type base_type;
+        base_type iv = base_type(v);
+        return (iv < traits::last_item_value) ? T(iv+1) : traits::first_item;
+    }
+
+    template<class T>
+    inline bool is_valid_enum_item(T v) {
+        return df::enum_traits<T>::is_valid(v);
+    }
+
+    template<class T>
+    inline const char *enum_item_raw_key(T val) {
+        typedef df::enum_traits<T> traits;
+        return traits::is_valid(val) ? traits::key_table[val - traits::first_item_value] : NULL;
+    }
+
+    template<class T>
+    inline const char *enum_item_key_str(T val) {
+        return ifnull(enum_item_raw_key(val), "?");
+    }
+
+    DFHACK_EXPORT int findEnumItem_(const std::string &name, int size, const char *const *items);
+
+    template<class T>
+    inline bool find_enum_item(T *var, const std::string &name) {
+        typedef df::enum_traits<T> traits;
+        int size = traits::last_item_value-traits::first_item_value+1;
+        int idx = findEnumItem_(name, size, traits::key_table);
+        if (idx < 0) return false;
+        *var = T(traits::first_item_value+idx);
+        return true;
+    }
+
+    DFHACK_EXPORT int findBitfieldField_(const std::string &name, int size, const bitfield_item_info *items);
+
+    template<class T>
+    inline int findBitfieldField(const std::string &name) {
+        typedef df::bitfield_traits<T> traits;
+        return findBitfieldField_(name, traits::bit_count, traits::bits);
+    }
+
+    DFHACK_EXPORT std::string bitfieldToString(const void *p, int size, const bitfield_item_info *items);
+
+    template<class T>
+    inline std::string bitfieldToString(const T &val) {
+        typedef df::bitfield_traits<T> traits;
+        return bitfieldToString(&val.whole, traits::bit_count, traits::bits);
+    }
+}
+
+
+#define ENUM_ATTR(enum,attr,val) (df::enum_traits<df::enum>::attrs(val).attr)
 #define ENUM_ATTR_STR(enum,attr,val) DFHack::ifnull(ENUM_ATTR(enum,attr,val),"?")
-#define ENUM_KEY_STR(enum,val) ENUM_ATTR_STR(enum,key,val)
-#define ENUM_FIRST_ITEM(enum) (df::enums::enum::_first_item_of_##enum)
-#define ENUM_LAST_ITEM(enum) (df::enums::enum::_last_item_of_##enum)
+#define ENUM_KEY_STR(enum,val) (DFHack::enum_item_key_str<df::enum>(val))
+#define ENUM_FIRST_ITEM(enum) (df::enum_traits<df::enum>::first_item)
+#define ENUM_LAST_ITEM(enum) (df::enum_traits<df::enum>::last_item)
 
 #define ENUM_NEXT_ITEM(enum,val) \
-    (DFHack::next_enum_item_<df::enum,ENUM_FIRST_ITEM(enum),df::enums::enum::is_valid>(val))
+    (DFHack::next_enum_item<df::enum>(val))
 #define FOR_ENUM_ITEMS(enum,iter) \
     for(df::enum iter = ENUM_FIRST_ITEM(enum); iter <= ENUM_LAST_ITEM(enum); iter = df::enum(1+int(iter)))
 

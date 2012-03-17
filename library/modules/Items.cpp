@@ -167,16 +167,8 @@ bool ItemTypeInfo::find(const std::string &token)
     if (items[0] == "NONE")
         return true;
 
-    FOR_ENUM_ITEMS(item_type, i)
-    {
-        const char *key = ENUM_ATTR(item_type, key, i);
-        if (key && key == items[0])
-        {
-            type = i;
-            break;
-        }
-    }
-
+    if (!find_enum_item(&type, items[0]))
+        return false;
     if (type == NONE)
         return false;
     if (items.size() == 1)

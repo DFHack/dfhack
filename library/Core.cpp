@@ -48,12 +48,13 @@ using namespace std;
 #include "modules/World.h"
 #include "modules/Graphic.h"
 #include "modules/Windows.h"
+#include "RemoteServer.h"
 using namespace DFHack;
 
 #include "df/ui.h"
 #include "df/world.h"
 #include "df/world_data.h"
-#include "df/interface.h"
+#include "df/interfacest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include <df/graphic.h>
 
@@ -62,11 +63,16 @@ using namespace DFHack;
 #include <stdlib.h>
 #include <fstream>
 #include "tinythread.h"
-#include <llex.h>
 
 using namespace tthread;
 using namespace df::enums;
 using df::global::init;
+
+// FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
+
+static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname);
+static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clueless_counter, const string &command);
+static bool parseKeySpec(std::string keyspec, int *psym, int *pmod);
 
 struct Core::Cond
 {
@@ -96,6 +102,20 @@ struct Core::Cond
     }
     tthread::condition_variable * wakeup;
     bool predicate;
+};
+
+struct Core::Private
+{
+    tthread::mutex AccessMutex;
+    tthread::mutex StackMutex;
+    std::stack<Core::Cond*> suspended_tools;
+    Core::Cond core_cond;
+    thread::id df_suspend_thread;
+    int df_suspend_depth;
+
+    Private() {
+        df_suspend_depth = 0;
+    }
 };
 
 void cheap_tokenise(string const& input, vector<string> &output)
@@ -165,9 +185,9 @@ void fHKthread(void * iodata)
 
             string first = args[0];
             args.erase(args.begin());
-            command_result cr = plug_mgr->InvokeCommand(out, first, args, false);
+            command_result cr = plug_mgr->InvokeCommand(out, first, args);
 
-            if(cr == CR_WOULD_BREAK)
+            if(cr == CR_NEEDS_CONSOLE)
             {
                 out.printerr("It isn't possible to run an interactive command outside the console.\n");
             }
@@ -230,7 +250,6 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                           "  die                   - Force DF to close immediately\n"
                           "  keybinding            - Modify bindings of commands to keys\n"
                           "Plugin management (useful for developers):\n"
-                          //"  belongs COMMAND       - Tell which plugin a command belongs to.\n"
                           "  plug [PLUGIN|v]       - List plugin state and description.\n"
                           "  load PLUGIN|all       - Load a plugin by name or load all possible plugins.\n"
                           "  unload PLUGIN|all     - Unload a plugin or all loaded plugins.\n"
@@ -273,7 +292,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for(size_t i = 0; i < plug_mgr->size();i++)
                     {
                         Plugin * plug = (plug_mgr->operator[](i));
-                        plug->load();
+                        plug->load(con);
                     }
                 }
                 else
@@ -285,7 +304,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     }
                     else
                     {
-                        plug->load();
+                        plug->load(con);
                     }
                 }
             }
@@ -300,7 +319,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for(size_t i = 0; i < plug_mgr->size();i++)
                     {
                         Plugin * plug = (plug_mgr->operator[](i));
-                        plug->reload();
+                        plug->reload(con);
                     }
                 }
                 else
@@ -312,7 +331,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     }
                     else
                     {
-                        plug->reload();
+                        plug->reload(con);
                     }
                 }
             }
@@ -327,7 +346,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for(size_t i = 0; i < plug_mgr->size();i++)
                     {
                         Plugin * plug = (plug_mgr->operator[](i));
-                        plug->unload();
+                        plug->unload(con);
                     }
                 }
                 else
@@ -339,7 +358,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     }
                     else
                     {
-                        plug->unload();
+                        plug->unload(con);
                     }
                 }
             }
@@ -373,7 +392,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                 "  fpause                - Force DF to pause.\n"
                 "  die                   - Force DF to close immediately\n"
                 "  keybinding            - Modify bindings of commands to keys\n"
-                "  belongs COMMAND       - Tell which plugin a command belongs to.\n"
+                "  script FILENAME       - Run the commands specified in a file.\n"
                 "  plug [PLUGIN|v]       - List plugin state and detailed description.\n"
                 "  load PLUGIN|all       - Load a plugin by name or load all possible plugins.\n"
                 "  unload PLUGIN|all     - Unload a plugin or all loaded plugins.\n"
@@ -469,6 +488,18 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
         {
             _exit(666);
         }
+        else if(first == "script")
+        {
+            if(parts.size() == 1)
+            {
+                loadScriptFile(core, plug_mgr, parts[0]);
+            }
+            else
+            {
+                con << "Usage:" << endl
+                    << "  script <filename>" << endl;
+            }
+        }
         else
         {
             command_result res = plug_mgr->InvokeCommand(con, first, parts);
@@ -481,19 +512,26 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
     }
 }
 
-static void loadInitFile(Core *core, PluginManager *plug_mgr, string fname)
+static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname)
 {
-    ifstream init(fname);
-    if (init.bad())
-        return;
-
-    int tmp = 0;
-    string command;
-    while (getline(init, command))
+    core->getConsole() << "Loading script at " << fname << std::endl;
+    ifstream script(fname);
+    if (script.good())
     {
-        if (!command.empty())
-            runInteractiveCommand(core, plug_mgr, tmp, command);
+        int tmp = 0;
+        string command;
+        while (getline(script, command))
+        {
+            if (!command.empty())
+                runInteractiveCommand(core, plug_mgr, tmp, command);
+        }
     }
+    else
+    {
+        core->getConsole().printerr("Error loading script\n");
+    }
+
+    script.close();
 }
 
 // A thread function... for the interactive console.
@@ -513,7 +551,7 @@ void fIOthread(void * iodata)
         return;
     }
 
-    loadInitFile(core, plug_mgr, "dfhack.init");
+    loadScriptFile(core, plug_mgr, "dfhack.init");
 
     con.print("DFHack is ready. Have a nice day!\n"
               "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");
@@ -552,6 +590,8 @@ void fIOthread(void * iodata)
 
 Core::Core()
 {
+    d = new Private();
+
     // init the console. This must be always the first step!
     plug_mgr = 0;
     vif = 0;
@@ -561,10 +601,6 @@ Core::Core()
     started = false;
     memset(&(s_mods), 0, sizeof(s_mods));
 
-    // create mutex for syncing with interactive tasks
-    AccessMutex = 0;
-    StackMutex = 0;
-    core_cond = 0;
     // set up hotkey capture
     hotkey_set = false;
     HotkeyMutex = 0;
@@ -573,6 +609,9 @@ Core::Core()
     last_world_data_ptr = NULL;
     top_viewscreen = NULL;
     screen_window = NULL;
+    server = NULL;
+
+    color_ostream::log_errors_to_stderr = true;
 };
 
 void Core::fatal (std::string output, bool deactivate)
@@ -660,10 +699,7 @@ bool Core::Init()
     df::global::InitGlobals();
 
     // create mutex for syncing with interactive tasks
-    StackMutex = new mutex();
-    AccessMutex = new mutex();
     misc_data_mutex=new mutex();
-    core_cond = new Core::Cond();
     cerr << "Initializing Plugins.\n";
     // create plugin manager
     plug_mgr = new PluginManager(this);
@@ -681,6 +717,12 @@ bool Core::Init()
     screen_window = new Windows::top_level_window();
     screen_window->addChild(new Windows::dfhack_dummy(5,10));
     started = true;
+
+    cerr << "Starting the TCP listener.\n";
+    server = new ServerMain();
+    if (!server->listen(RemoteClient::GetDefaultPort()))
+        cerr << "TCP listen failed.\n";
+
     cerr << "DFHack is running.\n";
     return true;
 }
@@ -750,22 +792,49 @@ void *Core::GetData( std::string key )
 
 void Core::Suspend()
 {
-    Core::Cond * nc = new Core::Cond();
+    auto tid = this_thread::get_id();
+
+    // If recursive, just increment the count
+    {
+        lock_guard<mutex> lock(d->AccessMutex);
+
+        if (d->df_suspend_depth > 0 && d->df_suspend_thread == tid)
+        {
+            d->df_suspend_depth++;
+            return;
+        }
+    }
+
     // put the condition on a stack
-    StackMutex->lock();
-        suspended_tools.push(nc);
-    StackMutex->unlock();
+    Core::Cond *nc = new Core::Cond();
+
+    {
+        lock_guard<mutex> lock2(d->StackMutex);
+
+        d->suspended_tools.push(nc);
+    }
+
     // wait until Core::Update() wakes up the tool
-    AccessMutex->lock();
-        nc->Lock(AccessMutex);
-    AccessMutex->unlock();
+    {
+        lock_guard<mutex> lock(d->AccessMutex);
+
+        nc->Lock(&d->AccessMutex);
+
+        assert(d->df_suspend_depth == 0);
+        d->df_suspend_thread = tid;
+        d->df_suspend_depth = 1;
+    }
 }
 
 void Core::Resume()
 {
-    AccessMutex->lock();
-        core_cond->Unlock();
-    AccessMutex->unlock();
+    auto tid = this_thread::get_id();
+    lock_guard<mutex> lock(d->AccessMutex);
+
+    assert(d->df_suspend_depth > 0 && d->df_suspend_thread == tid);
+
+    if (--d->df_suspend_depth == 0)
+        d->core_cond.Unlock();
 }
 
 int Core::TileUpdate()
@@ -820,21 +889,24 @@ int Core::Update()
 
     // wake waiting tools
     // do not allow more tools to join in while we process stuff here
-    StackMutex->lock();
-    while (!suspended_tools.empty())
+    lock_guard<mutex> lock_stack(d->StackMutex);
+
+    while (!d->suspended_tools.empty())
     {
-        Core::Cond * nc = suspended_tools.top();
-        suspended_tools.pop();
-        AccessMutex->lock();
-            // wake tool
-            nc->Unlock();
-            // wait for tool to wake us
-            core_cond->Lock(AccessMutex);
-        AccessMutex->unlock();
+        Core::Cond * nc = d->suspended_tools.top();
+        d->suspended_tools.pop();
+
+        lock_guard<mutex> lock(d->AccessMutex);
+        // wake tool
+        nc->Unlock();
+        // wait for tool to wake us
+        d->core_cond.Lock(&d->AccessMutex);
+        // verify
+        assert(d->df_suspend_depth == 0);
         // destroy condition
         delete nc;
     }
-    StackMutex->unlock();
+
     return 0;
 };
 

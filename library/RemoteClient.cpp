@@ -335,8 +335,9 @@ bool sendRemoteMessage(CSimpleSocket *socket, int16_t id, const MessageLite *msg
     hdr->id = id;
     hdr->size = size;
 
-    if (!msg->SerializeToArray(data.get() + sizeof(RPCMessageHeader), size))
-        return false;
+    uint8_t *pstart = data.get() + sizeof(RPCMessageHeader);
+    uint8_t *pend = msg->SerializeWithCachedSizesToArray(pstart);
+    assert((pend - pstart) == size);
 
     return (socket->Send(data.get(), fullsz) == fullsz);
 }

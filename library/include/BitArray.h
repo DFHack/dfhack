@@ -117,7 +117,7 @@ namespace DFHack
                 bits[byte] ^= bit;
             }
         }
-        bool is_set (T index)
+        bool is_set (T index) const
         {
             uint32_t byte = index / 8;
             if(byte < size)

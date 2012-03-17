@@ -2,6 +2,12 @@ package dfproto;
 
 option optimize_for = LITE_RUNTIME;
 
+message EnumItemName {
+    required int32 value = 1;
+    optional string name = 2;
+    optional int32 bit_size = 3 [default = 1];
+};
+
 message BasicMaterialId {
     required int32 type = 1;
     required sint32 index = 2;
@@ -10,14 +16,14 @@ message BasicMaterialId {
 message BasicMaterialInfo {
     required int32 type = 1;
     required sint32 index = 2;
-
     required string token = 3;
-    repeated string flags = 4;
+
+    repeated int32 flags = 4; // of material_flags
 
     optional int32 subtype = 5 [default = -1];
     optional int32 creature_id = 6 [default = -1];
     optional int32 plant_id = 7 [default = -1];
-    optional int32 hfig_id = 8 [default = -1];
+    optional int32 histfig_id = 8 [default = -1];
 
     optional string name_prefix = 9 [default = ""];
 
@@ -33,7 +39,7 @@ message BasicMaterialInfo {
     repeated string reaction_class = 13;
     repeated Product reaction_product = 14;
 
-    repeated string inorganic_flags = 15;
+    repeated int32 inorganic_flags = 15;
 };
 
 message BasicMaterialInfoMask {
@@ -49,6 +55,50 @@ message BasicMaterialInfoMask {
 
     optional bool flags = 2 [default = false];
     optional bool reaction = 3 [default = false];
-    optional int32 temperature = 4;
+    optional int32 temperature = 4 [default = 10015];
 };
 
+message NameInfo {
+    optional string first_name = 1;
+    optional string nickname = 2;
+
+    optional int32 language_id = 3 [default = -1];
+
+    optional string last_name = 4;
+    optional string english_name = 5;
+};
+
+message BasicUnitInfo {
+    required int32 unit_id = 1;
+
+    optional NameInfo name = 2;
+
+    required fixed32 flags1 = 3;
+    required fixed32 flags2 = 4;
+    required fixed32 flags3 = 5;
+
+    required int32 race = 6;
+    required int32 caste = 7;
+    optional int32 gender = 8 [default = -1];
+
+    optional int32 civ_id = 9 [default = -1];
+    optional int32 histfig_id = 10 [default = -1];
+
+    repeated int32 labors = 11;
+
+    message Skill {
+        required int32 id = 1;
+        required int32 level = 2;
+        required int32 experience = 3;
+    };
+    repeated Skill skills = 12;
+
+    required int32 pos_x = 13;
+    required int32 pos_y = 14;
+    required int32 pos_z = 15;
+};
+
+message BasicUnitInfoMask {
+    optional bool labors = 1 [default = false];
+    optional bool skills = 2 [default = false];
+};

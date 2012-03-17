@@ -331,7 +331,7 @@ void ServerConnection::threadFn(void *arg)
         // Cleanup
         if (fn)
         {
-            fn->reset(out_size > 32768 || in_size > 32768);
+            fn->reset(out_size > 128*1024 || in_size > 32*1024);
         }
     }
 

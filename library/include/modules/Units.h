@@ -192,6 +192,8 @@ DFHACK_EXPORT void CopyNameTo(df::unit *creature, df::language_name * target);
 
 DFHACK_EXPORT bool RemoveOwnedItemByIdx(const uint32_t index, int32_t id);
 DFHACK_EXPORT bool RemoveOwnedItemByPtr(df::unit * unit, int32_t id);
+
+DFHACK_EXPORT df::language_name *GetVisibleName(df::unit *unit);
 }
 }
 #endif

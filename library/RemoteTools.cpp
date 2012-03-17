@@ -50,8 +50,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "MiscUtils.h"
 
 #include "modules/Materials.h"
+#include "modules/Translation.h"
+#include "modules/Units.h"
 
 #include "DataDefs.h"
+#include "df/unit.h"
+#include "df/unit_soul.h"
+#include "df/unit_skill.h"
 #include "df/material.h"
 #include "df/matter_state.h"
 #include "df/inorganic_raw.h"
@@ -80,15 +85,47 @@ void DFHack::strVectorToRepeatedField(RepeatedPtrField<std::string> *pf,
         *pf->Add() = vec[i];
 }
 
+void DFHack::describeEnum(RepeatedPtrField<EnumItemName> *pf, int base,
+                          int size, const char* const *names)
+{
+    for (int i = 0; i < size; i++)
+    {
+        auto item = pf->Add();
+        item->set_value(base+i);
+        const char *key = names[i];
+        if (key)
+            item->set_name(key);
+    }
+}
+
+void DFHack::describeBitfield(RepeatedPtrField<EnumItemName> *pf,
+                              int size, const bitfield_item_info *items)
+{
+    for (int i = 0; i < size; i++)
+    {
+        auto item = pf->Add();
+        item->set_value(i);
+        const char *key = items[i].name;
+        if (key)
+            item->set_name(key);
+        if (items[i].size > 1)
+        {
+            item->set_bit_size(items[i].size);
+            i += items[i].size-1;
+        }
+    }
+}
+
 void DFHack::describeMaterial(BasicMaterialInfo *info, df::material *mat,
                               const BasicMaterialInfoMask *mask)
 {
     info->set_token(mat->id);
 
     if (mask && mask->flags())
-        flagarray_to_string(info->mutable_flags(), mat->flags);
+        flagarray_to_ints(info->mutable_flags(), mat->flags);
 
-    info->set_name_prefix(mat->prefix);
+    if (!mat->prefix.empty())
+        info->set_name_prefix(mat->prefix);
 
     if (!mask || mask->states_size() == 0)
     {
@@ -143,14 +180,14 @@ void DFHack::describeMaterial(BasicMaterialInfo *info, const MaterialInfo &mat,
     case MaterialInfo::Inorganic:
         info->set_token(mat.inorganic->id);
         if (mask && mask->flags())
-            flagarray_to_string(info->mutable_inorganic_flags(), mat.inorganic->flags);
+            flagarray_to_ints(info->mutable_inorganic_flags(), mat.inorganic->flags);
         break;
 
     case MaterialInfo::Creature:
         info->set_subtype(mat.subtype);
         if (mat.figure)
         {
-            info->set_hfig_id(mat.index);
+            info->set_histfig_id(mat.index);
             info->set_creature_id(mat.figure->race);
         }
         else
@@ -161,6 +198,89 @@ void DFHack::describeMaterial(BasicMaterialInfo *info, const MaterialInfo &mat,
         info->set_plant_id(mat.index);
         break;
     }
+}
+
+void DFHack::describeName(NameInfo *info, df::language_name *name)
+{
+    if (!name->first_name.empty())
+        info->set_first_name(name->first_name);
+    if (!name->nickname.empty())
+        info->set_nickname(name->nickname);
+
+    if (name->language >= 0)
+        info->set_language_id(name->language);
+
+    std::string lname = Translation::TranslateName(name, false, true);
+    if (!lname.empty())
+        info->set_last_name(lname);
+    lname = Translation::TranslateName(name, true, true);
+    if (!lname.empty())
+        info->set_english_name(lname);
+}
+
+void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
+                          const BasicUnitInfoMask *mask)
+{
+    info->set_unit_id(unit->id);
+
+    info->set_pos_x(unit->pos.x);
+    info->set_pos_y(unit->pos.y);
+    info->set_pos_z(unit->pos.z);
+
+    auto name = Units::GetVisibleName(unit);
+    if (name->has_name)
+        describeName(info->mutable_name(), name);
+
+    info->set_flags1(unit->flags1.whole);
+    info->set_flags2(unit->flags2.whole);
+    info->set_flags3(unit->flags3.whole);
+
+    info->set_race(unit->race);
+    info->set_caste(unit->caste);
+
+    if (unit->sex >= 0)
+        info->set_gender(unit->sex);
+    if (unit->civ_id >= 0)
+        info->set_civ_id(unit->civ_id);
+    if (unit->hist_figure_id >= 0)
+        info->set_histfig_id(unit->hist_figure_id);
+
+    if (mask && mask->labors())
+    {
+        for (int i = 0; i < sizeof(unit->status.labors)/sizeof(bool); i++)
+            if (unit->status.labors[i])
+                info->add_labors(i);
+    }
+
+    if (mask && mask->skills() && unit->status.current_soul)
+    {
+        auto &vec = unit->status.current_soul->skills;
+
+        for (size_t i = 0; i < vec.size(); i++)
+        {
+            auto skill = vec[i];
+            auto item = info->add_skills();
+            item->set_id(skill->id);
+            item->set_level(skill->rating);
+            item->set_experience(skill->experience);
+        }
+    }
+}
+
+static command_result ListEnums(color_ostream &stream,
+                                const EmptyMessage *, ListEnumsRes *out)
+{
+#define ENUM(name) describe_enum<df::name>(out->mutable_##name());
+#define BITFIELD(name) describe_bitfield<df::name>(out->mutable_##name());
+    ENUM(material_flags);
+    ENUM(inorganic_flags);
+    BITFIELD(unit_flags1);
+    BITFIELD(unit_flags2);
+    BITFIELD(unit_flags3);
+    ENUM(unit_labor);
+    ENUM(job_skill);
+#undef ENUM
+#undef BITFIELD
 }
 
 static void listMaterial(ListMaterialsRes *out, int type, int index, const BasicMaterialInfoMask *mask)
@@ -223,6 +343,42 @@ static command_result ListMaterials(color_ostream &stream,
     return out->value_size() ? CR_OK : CR_NOT_FOUND;
 }
 
+static command_result ListUnits(color_ostream &stream,
+                                const ListUnitsRq *in, ListUnitsRes *out)
+{
+    CoreSuspender suspend;
+
+    auto mask = in->has_mask() ? &in->mask() : NULL;
+
+    if (in->id_list_size() > 0)
+    {
+        for (int i = 0; i < in->id_list_size(); i++)
+        {
+            auto unit = df::unit::find(in->id_list(i));
+            if (unit)
+                describeUnit(out->add_value(), unit, mask);
+        }
+    }
+    else
+    {
+        auto &vec = df::unit::get_vector();
+
+        for (size_t i = 0; i < vec.size(); i++)
+        {
+            auto unit = vec[i];
+
+            if (in->has_race() && unit->race != in->race())
+                continue;
+            if (in->civ_id() && unit->civ_id != in->civ_id())
+                continue;
+
+            describeUnit(out->add_value(), unit, mask);
+        }
+    }
+
+    return out->value_size() ? CR_OK : CR_NOT_FOUND;
+}
+
 CoreService::CoreService() {
     suspend_depth = 0;
 
@@ -234,7 +390,9 @@ CoreService::CoreService() {
     addMethod("CoreSuspend", &CoreService::CoreSuspend);
     addMethod("CoreResume", &CoreService::CoreResume);
 
+    addFunction("ListEnums", ListEnums);
     addFunction("ListMaterials", ListMaterials);
+    addFunction("ListUnits", ListUnits);
 }
 
 CoreService::~CoreService()

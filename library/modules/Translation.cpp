@@ -91,29 +91,31 @@ void addNameWord (string &out, const string &word)
     out.append(upper);
 }
 
-string Translation::TranslateName(const df::language_name * name, bool inEnglish)
+string Translation::TranslateName(const df::language_name * name, bool inEnglish, bool onlyLastPart)
 {
     string out;
     string word;
 
-    if (!name->first_name.empty())
-        addNameWord(out, name->first_name);
+    if (!onlyLastPart) {
+        if (!name->first_name.empty())
+            addNameWord(out, name->first_name);
 
-    if (!name->nickname.empty())
-    {
-        word = "`" + name->nickname + "'";
-        switch (d_init ? d_init->nickname_dwarf : d_init_nickname::CENTRALIZE)
+        if (!name->nickname.empty())
         {
-        case d_init_nickname::REPLACE_ALL:
-            out = word;
-            return out;
-        case d_init_nickname::REPLACE_FIRST:
-            out = "";
-            break;
-        case d_init_nickname::CENTRALIZE:
-            break;
+            word = "`" + name->nickname + "'";
+            switch (d_init ? d_init->nickname_dwarf : d_init_nickname::CENTRALIZE)
+            {
+            case d_init_nickname::REPLACE_ALL:
+                out = word;
+                return out;
+            case d_init_nickname::REPLACE_FIRST:
+                out = "";
+                break;
+            case d_init_nickname::CENTRALIZE:
+                break;
+            }
+            addNameWord(out, word);
         }
-        addNameWord(out, word);
     }
 
     if (!inEnglish)

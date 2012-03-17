@@ -34,12 +34,15 @@ distribution.
 namespace df
 {
     struct material;
+    struct unit;
+    struct language_name;
 }
 
 namespace DFHack
 {
     class MaterialInfo;
 
+    using google::protobuf::RepeatedField;
     using google::protobuf::RepeatedPtrField;
 
     DFHACK_EXPORT void strVectorToRepeatedField(RepeatedPtrField<std::string> *pf,
@@ -65,6 +68,40 @@ namespace DFHack
         strVectorToRepeatedField(pf, tmp);
     }
 
+    /**
+     * Represent flagarray bits as a repeated int field.
+     */
+    template<class T>
+    void flagarray_to_ints(RepeatedField<google::protobuf::int32> *pf, const BitArray<T> &val) {
+        for (int i = 0; i < val.size*8; i++)
+            if (val.is_set(T(i)))
+                pf->Add(i);
+    }
+
+    using dfproto::EnumItemName;
+
+    DFHACK_EXPORT void describeEnum(RepeatedPtrField<EnumItemName> *pf, int base,
+                                    int size, const char* const *names);
+
+    template<class T>
+    void describe_enum(RepeatedPtrField<EnumItemName> *pf)
+    {
+        typedef df::enum_traits<T> traits;
+        int base = traits::first_item;
+        int size = traits::last_item - base + 1;
+        describeEnum(pf, base, size, traits::key_table);
+    }
+
+    DFHACK_EXPORT void describeBitfield(RepeatedPtrField<EnumItemName> *pf,
+                                        int size, const bitfield_item_info *items);
+
+    template<class T>
+    void describe_bitfield(RepeatedPtrField<EnumItemName> *pf)
+    {
+        typedef df::bitfield_traits<T> traits;
+        describeBitfield(pf, traits::bit_count, traits::bits);
+    }
+
     /////
 
     using dfproto::BasicMaterialInfo;
@@ -74,6 +111,16 @@ namespace DFHack
                                         const BasicMaterialInfoMask *mask = NULL);
     DFHACK_EXPORT void describeMaterial(BasicMaterialInfo *info, const MaterialInfo &mat,
                                         const BasicMaterialInfoMask *mask = NULL);
+
+    using dfproto::NameInfo;
+
+    DFHACK_EXPORT void describeName(NameInfo *info, df::language_name *name);
+
+    using dfproto::BasicUnitInfo;
+    using dfproto::BasicUnitInfoMask;
+
+    DFHACK_EXPORT void describeUnit(BasicUnitInfo *info, df::unit *unit,
+                                    const BasicUnitInfoMask *mask = NULL);
 
     /////
 

@@ -27,8 +27,26 @@ distribution.
 #include "Export.h"
 #include "RemoteServer.h"
 
-namespace  DFHack
+#include "DataDefs.h"
+
+namespace DFHack
 {
+    using google::protobuf::RepeatedPtrField;
+
+    DFHACK_EXPORT void strVectorToRepeatedField(RepeatedPtrField<std::string> *pf,
+                                                const std::vector<std::string> &vec);
+
+    /**
+     * Represent bitfield bits as a repeated string field.
+     */
+    template<class T>
+    inline void bitfield_to_string(RepeatedPtrField<std::string> *pf, const T &val) {
+        std::vector<std::string> tmp;
+        bitfield_to_string<T>(&tmp, val);
+        strVectorToRepeatedField(pf, tmp);
+    }
+
+
     class CoreService : public RPCService {
         int suspend_depth;
     public:

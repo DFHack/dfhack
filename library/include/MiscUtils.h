@@ -253,6 +253,7 @@ Link *linked_list_insert_after(Link *pos, Link *link)
 DFHACK_EXPORT bool split_string(std::vector<std::string> *out,
                                 const std::string &str, const std::string &separator,
                                 bool squash_empty = false);
+DFHACK_EXPORT std::string join_strings(const std::string &separator, const std::vector<std::string> &items);
 
 DFHACK_EXPORT std::string toUpper(const std::string &str);
 DFHACK_EXPORT std::string toLower(const std::string &str);

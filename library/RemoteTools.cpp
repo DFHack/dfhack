@@ -61,6 +61,13 @@ using dfproto::CoreTextNotification;
 using dfproto::CoreTextFragment;
 using google::protobuf::MessageLite;
 
+void DFHack::strVectorToRepeatedField(RepeatedPtrField<std::string> *pf,
+                                      const std::vector<std::string> &vec)
+{
+    for (size_t i = 0; i < vec.size(); ++i)
+        *pf->Add() = vec[i];
+}
+
 CoreService::CoreService() {
     suspend_depth = 0;
 

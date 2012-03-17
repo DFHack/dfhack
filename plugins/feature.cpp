@@ -38,7 +38,9 @@ static command_result feature(color_ostream &out, vector <string> &parameters)
             df::feature_init *feature_init = world->cur_savegame.map_features[i];
             string name;
             feature_init->getName(&name);
-            out.print("Feature #%i (\"%s\", type %s) is %s\n", i, name.c_str(), ENUM_KEY_STR(feature_type, feature_init->getType()), feature_init->flags.is_set(feature_init_flags::Discovered) ? "discovered" : "hidden");
+            out.print("Feature #%i (\"%s\", type %s) is %s\n",
+                      i, name.c_str(), ENUM_KEY_STR(feature_type, feature_init->getType()).c_str(),
+                      feature_init->flags.is_set(feature_init_flags::Discovered) ? "discovered" : "hidden");
         }
     }
     else if(cmd == "show")
@@ -60,7 +62,8 @@ static command_result feature(color_ostream &out, vector <string> &parameters)
         feature_init->flags.set(feature_init_flags::Discovered);
         string name;
         feature_init->getName(&name);
-        out.print("Feature #%i (\"%s\", type %s) is now discovered\n", i, name.c_str(), ENUM_KEY_STR(feature_type, feature_init->getType()));
+        out.print("Feature #%i (\"%s\", type %s) is now discovered\n",
+                  i, name.c_str(), ENUM_KEY_STR(feature_type, feature_init->getType()).c_str());
     }
     else if(cmd == "hide")
     {
@@ -81,7 +84,8 @@ static command_result feature(color_ostream &out, vector <string> &parameters)
         feature_init->flags.clear(feature_init_flags::Discovered);
         string name;
         feature_init->getName(&name);
-        out.print("Feature #%i (\"%s\", type %s) is now hidden\n", i, name.c_str(), ENUM_KEY_STR(feature_type, feature_init->getType()));
+        out.print("Feature #%i (\"%s\", type %s) is now hidden\n",
+                  i, name.c_str(), ENUM_KEY_STR(feature_type, feature_init->getType()).c_str());
     }
     else return CR_WRONG_USAGE;
 

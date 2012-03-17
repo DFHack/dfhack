@@ -164,52 +164,72 @@ void virtual_identity::Init(Core *core)
     */
 }
 
-std::string DFHack::bitfieldToString(const void *p, int size, const bitfield_item_info *items)
+bool DFHack::findBitfieldField(unsigned *idx, const std::string &name,
+                               unsigned size, const bitfield_item_info *items)
 {
-    std::string res;
-    const char *data = (const char*)p;
-
-    for (int i = 0; i < size; i++) {
-        unsigned v;
-
-        if (items[i].size > 1) {
-            unsigned pdv = *(unsigned*)&data[i/8];
-            v = (pdv >> (i%8)) & ((1 << items[i].size)-1);
-        } else {
-            v = (data[i/8]>>(i%8)) & 1;
+    for (unsigned i = 0; i < size; i++) {
+        if (items[i].name && items[i].name == name)
+        {
+            *idx = i;
+            return true;
         }
+    }
 
-        if (v) {
-            if (!res.empty())
-                res += ' ';
+    return false;
+}
 
-            if (items[i].name)
-                res += items[i].name;
-            else
-                res += stl_sprintf("UNK_%d", i);
+void DFHack::setBitfieldField(void *p, unsigned idx, unsigned size, int value)
+{
+    uint8_t *data = ((uint8_t*)p) + (idx/8);
+    unsigned shift = idx%8;
+    uint32_t mask = ((1<<size)-1) << shift;
+    uint32_t vmask = ((value << shift) & mask);
+
+#define ACCESS(type) *(type*)data = type((*(type*)data & ~mask) | vmask)
+
+    if (!(mask & ~0xFFU)) ACCESS(uint8_t);
+    else if (!(mask & ~0xFFFFU)) ACCESS(uint16_t);
+    else ACCESS(uint32_t);
+
+#undef ACCESS
+}
+
+int DFHack::getBitfieldField(const void *p, unsigned idx, unsigned size)
+{
+    const uint8_t *data = ((const uint8_t*)p) + (idx/8);
+    unsigned shift = idx%8;
+    uint32_t mask = ((1<<size)-1) << shift;
+
+#define ACCESS(type) return int((*(type*)data & mask) >> shift)
+
+    if (!(mask & ~0xFFU)) ACCESS(uint8_t);
+    else if (!(mask & ~0xFFFFU)) ACCESS(uint16_t);
+    else ACCESS(uint32_t);
+
+#undef ACCESS
+}
+
+void DFHack::bitfieldToString(std::vector<std::string> *pvec, const void *p,
+                              unsigned size, const bitfield_item_info *items)
+{
+    for (unsigned i = 0; i < size; i++) {
+        int value = getBitfieldField(p, i, std::min(1,items[i].size));
+
+        if (value) {
+            std::string name = format_key(items[i].name, i);
 
             if (items[i].size > 1)
-                res += stl_sprintf("=%u", v);
+                name += stl_sprintf("=%u", value);
+
+            pvec->push_back(name);
         }
 
         if (items[i].size > 1)
             i += items[i].size-1;
     }
-
-    return res;
 }
 
-int DFHack::findBitfieldField_(const std::string &name, int size, const bitfield_item_info *items)
-{
-    for (int i = 0; i < size; i++) {
-        if (items[i].name && items[i].name == name)
-            return i;
-    }
-
-    return -1;
-}
-
-int DFHack::findEnumItem_(const std::string &name, int size, const char *const *items)
+int DFHack::findEnumItem(const std::string &name, int size, const char *const *items)
 {
     for (int i = 0; i < size; i++) {
         if (items[i] && items[i] == name)
@@ -217,4 +237,19 @@ int DFHack::findEnumItem_(const std::string &name, int size, const char *const *
     }
 
     return -1;
+}
+
+void DFHack::flagarrayToString(std::vector<std::string> *pvec, const void *p,
+                               int bytes, int base, int size, const char *const *items)
+{
+    for (unsigned i = 0; i < bytes*8; i++) {
+        int value = getBitfieldField(p, i, 1);
+
+        if (value)
+        {
+            int ridx = int(i) - base;
+            const char *name = (ridx >= 0 && ridx < size) ? items[ridx] : NULL;
+            pvec->push_back(format_key(name, i));
+        }
+    }
 }

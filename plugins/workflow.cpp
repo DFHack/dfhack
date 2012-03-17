@@ -502,7 +502,7 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     if (!pj->holder)
     {
         out.printerr("Forgetting job %d (%s): holder building lost.",
-                        pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type));
+                        pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
         forget_job(out, pj);
         return true;
     }
@@ -511,7 +511,7 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     if (pj->holder->jobs.size() >= 10)
     {
         out.printerr("Forgetting job %d (%s): holder building has too many jobs.",
-                        pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type));
+                        pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
         forget_job(out, pj);
         return true;
     }
@@ -534,7 +534,7 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
         deleteJobStruct(recovered);
 
         out.printerr("Inconsistency: job %d (%s) already in list.",
-                        pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type));
+                        pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
         return true;
     }
 
@@ -1283,7 +1283,7 @@ static void update_jobs_by_constraints(color_ostream &out)
         if (ct->material.isValid())
             info = ct->material.toString() + " " + info;
         else if (ct->mat_mask.whole)
-            info = bitfieldToString(ct->mat_mask) + " " + info;
+            info = bitfield_to_string(ct->mat_mask) + " " + info;
 
         if (is_running != ct->is_active)
         {
@@ -1337,7 +1337,7 @@ static std::string shortJobDescription(df::job *job)
     if (mat.isValid())
         rv += " [" + mat.toString() + "]";
     else if (mat_mask.whole)
-        rv += " [" + bitfieldToString(mat_mask) + "]";
+        rv += " [" + bitfield_to_string(mat_mask) + "]";
 
     return rv;
 }

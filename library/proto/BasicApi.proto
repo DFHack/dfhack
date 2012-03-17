@@ -4,7 +4,7 @@ option optimize_for = LITE_RUNTIME;
 
 import "Basic.proto";
 
-message ListEnumsRes {
+message ListEnumsOut {
     repeated EnumItemName material_flags = 1;
     repeated EnumItemName inorganic_flags = 2;
 
@@ -16,7 +16,7 @@ message ListEnumsRes {
     repeated EnumItemName job_skill = 7;
 };
 
-message ListMaterialsRq {
+message ListMaterialsIn {
     optional BasicMaterialInfoMask mask = 1;
     repeated BasicMaterialId id_list = 2;
     optional bool builtin = 3;
@@ -24,17 +24,22 @@ message ListMaterialsRq {
     optional bool creatures = 5;
     optional bool plants = 6;
 };
-message ListMaterialsRes {
+message ListMaterialsOut {
     repeated BasicMaterialInfo value = 1;
 };
 
-message ListUnitsRq {
+message ListUnitsIn {
     optional BasicUnitInfoMask mask = 1;
     repeated int32 id_list = 2;
 
     optional int32 race = 3;
     optional int32 civ_id = 4;
 };
-message ListUnitsRes {
+message ListUnitsOut {
     repeated BasicUnitInfo value = 1;
 };
+
+message ListSquadsIn {}
+message ListSquadsOut {
+    repeated BasicSquadInfo value = 1;
+}

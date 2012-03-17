@@ -54,6 +54,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "modules/Units.h"
 
 #include "DataDefs.h"
+#include "df/ui.h"
 #include "df/unit.h"
 #include "df/unit_soul.h"
 #include "df/unit_skill.h"
@@ -63,6 +64,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "df/creature_raw.h"
 #include "df/plant_raw.h"
 #include "df/historical_figure.h"
+#include "df/historical_entity.h"
+#include "df/squad.h"
+#include "df/squad_position.h"
 
 #include "BasicApi.pb.h"
 
@@ -268,7 +272,7 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
 }
 
 static command_result ListEnums(color_ostream &stream,
-                                const EmptyMessage *, ListEnumsRes *out)
+                                const EmptyMessage *, ListEnumsOut *out)
 {
 #define ENUM(name) describe_enum<df::name>(out->mutable_##name());
 #define BITFIELD(name) describe_bitfield<df::name>(out->mutable_##name());
@@ -283,7 +287,7 @@ static command_result ListEnums(color_ostream &stream,
 #undef BITFIELD
 }
 
-static void listMaterial(ListMaterialsRes *out, int type, int index, const BasicMaterialInfoMask *mask)
+static void listMaterial(ListMaterialsOut *out, int type, int index, const BasicMaterialInfoMask *mask)
 {
     MaterialInfo info(type, index);
     if (info.isValid())
@@ -291,7 +295,7 @@ static void listMaterial(ListMaterialsRes *out, int type, int index, const Basic
 }
 
 static command_result ListMaterials(color_ostream &stream,
-                                    const ListMaterialsRq *in, ListMaterialsRes *out)
+                                    const ListMaterialsIn *in, ListMaterialsOut *out)
 {
     CoreSuspender suspend;
 
@@ -344,7 +348,7 @@ static command_result ListMaterials(color_ostream &stream,
 }
 
 static command_result ListUnits(color_ostream &stream,
-                                const ListUnitsRq *in, ListUnitsRes *out)
+                                const ListUnitsIn *in, ListUnitsOut *out)
 {
     CoreSuspender suspend;
 
@@ -379,6 +383,34 @@ static command_result ListUnits(color_ostream &stream,
     return out->value_size() ? CR_OK : CR_NOT_FOUND;
 }
 
+static command_result ListSquads(color_ostream &stream,
+                                 const ListSquadsIn *in, ListSquadsOut *out)
+{
+    auto entity = df::historical_entity::find(df::global::ui->group_id);
+    if (!entity)
+        return CR_NOT_FOUND;
+
+    for (size_t i = 0; i < entity->squads.size(); i++)
+    {
+        auto squad = df::squad::find(entity->squads[i]);
+        if (!squad)
+            continue;
+
+        auto item = out->add_value();
+        item->set_squad_id(squad->id);
+
+        if (squad->name.has_name)
+            describeName(item->mutable_name(), &squad->name);
+        if (!squad->alias.empty())
+            item->set_alias(squad->alias);
+
+        for (size_t j = 0; j < squad->positions.size(); j++)
+            item->add_members(squad->positions[j]->occupant);
+    }
+
+    return CR_OK;
+}
+
 CoreService::CoreService() {
     suspend_depth = 0;
 
@@ -390,9 +422,10 @@ CoreService::CoreService() {
     addMethod("CoreSuspend", &CoreService::CoreSuspend);
     addMethod("CoreResume", &CoreService::CoreResume);
 
-    addFunction("ListEnums", ListEnums);
-    addFunction("ListMaterials", ListMaterials);
+    addFunction("ListEnums", ListEnums, SF_CALLED_ONCE);
+    addFunction("ListMaterials", ListMaterials, SF_CALLED_ONCE);
     addFunction("ListUnits", ListUnits);
+    addFunction("ListSquads", ListSquads);
 }
 
 CoreService::~CoreService()

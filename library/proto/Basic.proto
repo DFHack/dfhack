@@ -52,10 +52,10 @@ message BasicMaterialInfoMask {
         Pressed = 5;
     };
     repeated StateType states = 1;
+    optional int32 temperature = 4 [default = 10015];
 
     optional bool flags = 2 [default = false];
     optional bool reaction = 3 [default = false];
-    optional int32 temperature = 4 [default = 10015];
 };
 
 message NameInfo {
@@ -66,6 +66,12 @@ message NameInfo {
 
     optional string last_name = 4;
     optional string english_name = 5;
+};
+
+message SkillInfo {
+    required int32 id = 1;
+    required int32 level = 2;
+    required int32 experience = 3;
 };
 
 message BasicUnitInfo {
@@ -86,12 +92,7 @@ message BasicUnitInfo {
 
     repeated int32 labors = 11;
 
-    message Skill {
-        required int32 id = 1;
-        required int32 level = 2;
-        required int32 experience = 3;
-    };
-    repeated Skill skills = 12;
+    repeated SkillInfo skills = 12;
 
     required int32 pos_x = 13;
     required int32 pos_y = 14;
@@ -101,4 +102,13 @@ message BasicUnitInfo {
 message BasicUnitInfoMask {
     optional bool labors = 1 [default = false];
     optional bool skills = 2 [default = false];
+};
+
+message BasicSquadInfo {
+    required int32 squad_id = 1;
+
+    optional NameInfo name = 2;
+    optional string alias = 3;
+
+    repeated sint32 members = 4;
 };

@@ -34,7 +34,10 @@ class CSimpleSocket;
 
 namespace  DFHack
 {
-    class DFHACK_EXPORT ServerConnection;
+    class Plugin;
+    class CoreService;
+    class ServerConnection;
+
     class DFHACK_EXPORT RPCService;
 
     class DFHACK_EXPORT ServerFunctionBase : public RPCFunctionBase {
@@ -130,8 +133,6 @@ namespace  DFHack
         function_type fptr;
     };
 
-    class Plugin;
-
     class DFHACK_EXPORT RPCService {
         friend class ServerConnection;
         friend class Plugin;
@@ -190,24 +191,7 @@ namespace  DFHack
         }
     };
 
-    class CoreService : public RPCService {
-        int suspend_depth;
-    public:
-        CoreService();
-        ~CoreService();
-
-        command_result BindMethod(color_ostream &stream,
-                                  const dfproto::CoreBindRequest *in,
-                                  dfproto::CoreBindReply *out);
-        command_result RunCommand(color_ostream &stream,
-                                  const dfproto::CoreRunCommandRequest *in);
-
-        // For batching
-        command_result CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt);
-        command_result CoreResume(color_ostream &stream, const EmptyMessage*, IntMessage *cnt);
-    };
-
-    class DFHACK_EXPORT ServerConnection {
+    class ServerConnection {
         class connection_ostream : public buffered_color_ostream {
             ServerConnection *owner;
 
@@ -237,7 +221,7 @@ namespace  DFHack
         ServerFunctionBase *findFunction(color_ostream &out, const std::string &plugin, const std::string &name);
     };
 
-    class DFHACK_EXPORT ServerMain {
+    class ServerMain {
         CPassiveSocket *socket;
 
         tthread::thread *thread;

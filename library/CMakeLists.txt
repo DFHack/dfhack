@@ -44,6 +44,7 @@ include/VersionInfoFactory.h
 include/Virtual.h
 include/RemoteClient.h
 include/RemoteServer.h
+include/RemoteTools.h
 )
 
 SET(MAIN_HEADERS_WINDOWS
@@ -63,6 +64,7 @@ VersionInfoFactory.cpp
 Virtual.cpp
 RemoteClient.cpp
 RemoteServer.cpp
+RemoteTools.cpp
 )
 
 SET(MAIN_SOURCES_WINDOWS

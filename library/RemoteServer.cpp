@@ -46,6 +46,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 
 #include "RemoteServer.h"
+#include "RemoteTools.h"
+
 #include "PassiveSocket.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
@@ -64,77 +66,6 @@ using namespace tthread;
 using dfproto::CoreTextNotification;
 using dfproto::CoreTextFragment;
 using google::protobuf::MessageLite;
-
-CoreService::CoreService() {
-    suspend_depth = 0;
-
-    // These 2 methods must be first, so that they get id 0 and 1
-    addMethod("BindMethod", &CoreService::BindMethod);
-    addMethod("RunCommand", &CoreService::RunCommand);
-
-    // Add others here:
-    addMethod("CoreSuspend", &CoreService::CoreSuspend);
-    addMethod("CoreResume", &CoreService::CoreResume);
-}
-
-CoreService::~CoreService()
-{
-    while (suspend_depth-- > 0)
-        Core::getInstance().Resume();
-}
-
-command_result CoreService::BindMethod(color_ostream &stream,
-                                       const dfproto::CoreBindRequest *in,
-                                       dfproto::CoreBindReply *out)
-{
-    ServerFunctionBase *fn = connection()->findFunction(stream, in->plugin(), in->method());
-
-    if (!fn)
-    {
-        stream.printerr("RPC method not found: %s::%s\n",
-                        in->plugin().c_str(), in->method().c_str());
-        return CR_FAILURE;
-    }
-
-    if (fn->p_in_template->GetTypeName() != in->input_msg() ||
-        fn->p_out_template->GetTypeName() != in->output_msg())
-    {
-        stream.printerr("Requested wrong signature for RPC method: %s::%s\n",
-                        in->plugin().c_str(), in->method().c_str());
-        return CR_FAILURE;
-    }
-
-    out->set_assigned_id(fn->getId());
-    return CR_OK;
-}
-
-command_result CoreService::RunCommand(color_ostream &stream,
-                                       const dfproto::CoreRunCommandRequest *in)
-{
-    std::string cmd = in->command();
-    std::vector<std::string> args;
-    for (int i = 0; i < in->arguments_size(); i++)
-        args.push_back(in->arguments(i));
-
-    return Core::getInstance().plug_mgr->InvokeCommand(stream, cmd, args);
-}
-
-command_result CoreService::CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt)
-{
-    Core::getInstance().Suspend();
-    cnt->set_value(++suspend_depth);
-    return CR_OK;
-}
-
-command_result CoreService::CoreResume(color_ostream &stream, const EmptyMessage*, IntMessage *cnt)
-{
-    if (suspend_depth <= 0)
-        return CR_WRONG_USAGE;
-
-    Core::getInstance().Resume();
-    cnt->set_value(--suspend_depth);
-    return CR_OK;
-}
 
 RPCService::RPCService()
 {

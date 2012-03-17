@@ -45,6 +45,11 @@ if (BUILD_DWARFEXPORT)
     add_subdirectory (dwarfexport)
 endif()
 
+OPTION(BUILD_AUTOLABOR "Build autolabor." ON)
+if (BUILD_AUTOLABOR)
+    add_subdirectory (autolabor)
+endif()
+
 # Protobuf
 FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 

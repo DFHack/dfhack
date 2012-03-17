@@ -2,13 +2,16 @@ tools={}
 tools.menu=MakeMenu()
 function tools.setrace()
 	RaceTable=RaceTable or BuildNameTable() --slow.If loaded don't load again
-	print("Your current race is:"..GetRaceToken(engine.peekw(offsets.getEx('CurrentRace'))))
-	print("Type new race's token name in full caps:")
+	print("Your current race is:"..GetRaceToken(df.ui.race_id))
+	print("Type new race's token name in full caps (q to quit):")
 	repeat
-	entry=io.stdin:read()
-	id=RaceTable[entry]
+		entry=io.stdin:read()
+		if entry=="q" then
+			return
+		end
+		id=RaceTable[entry]
 	until id~=nil
-	engine.pokew(offsets.getEx('CurrentRace'),id)
+	df.ui.race_id=id
 end
 tools.menu:add("Set current race",tools.setrace)
 function tools.GiveSentience(names) --TODO make pattern...

@@ -3,7 +3,7 @@ int lua::Hexsearch::find(lua_State *L)
 {
     lua::state st(L);
 	void * pos=p->FindNext();
-	st.push(pos);
+	st.push(reinterpret_cast<size_t>(pos));
 	return 1;
 }
 int lua::Hexsearch::findall(lua_State *L)
@@ -14,7 +14,7 @@ int lua::Hexsearch::findall(lua_State *L)
 	for(unsigned i=0;i<pos.size();i++)
 	{
 		st.push(i+1);
-		st.push(pos[i]);
+		st.push(reinterpret_cast<size_t>(pos[i]));
 		st.settable();
 	}
 	return 1;

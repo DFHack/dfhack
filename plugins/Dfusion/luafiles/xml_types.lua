@@ -63,10 +63,10 @@ function sarr.new(node,obj)
 	--print("Making array.")
 	o.count=tonumber(node.xarg.count)
 	--print("got count:"..o.count)
-	o.ctype=makeType(first_of_type(node,"ld:item"))
-	o.__align=o.ctype.__align or 4
-	o.size=o.count*o.ctype.size
-	--print("got subtypesize:"..o.ctype.size)
+	o.item_type=makeType(first_of_type(node,"ld:item"))
+	o.__align=o.item_type.__align or 4
+	o.size=o.count*o.item_type.size
+	--print("got subtypesize:"..o.item_type.size)
 	return o
 end
 function sarr:makewrap(address)
@@ -84,7 +84,7 @@ function sarr.wrap:__index(key)
 	local num=tonumber(key)
 	local mtype=rawget(self,"mtype")
 	if num~=nil and num<mtype.count then
-		return type_read(mtype.ctype,num*mtype.ctype.size+rawget(self,"ptr"))
+		return type_read(mtype.item_type,num*mtype.item_type.size+rawget(self,"ptr"))
 	else
 		error("invalid key to static-array")
 	end
@@ -92,7 +92,7 @@ end
 function sarr.wrap:__newindex(key,val)
 	local num=tonumber(key)
 	if num~=nil and num<rawget(self,"mtype").count then
-		return type_write(mtype.ctype,num*mtype.ctype.size+rawget(self,"ptr"),val)
+		return type_write(mtype.item_type,num*mtype.item_type.size+rawget(self,"ptr"),val)
 	else
 		error("invalid key to static-array")
 	end
@@ -116,6 +116,7 @@ simpletypes["stl-string"]={STD_STRING,28,4}
 function getSimpleType(typename,obj)
 	if simpletypes[typename] == nil then return end
 	local o=obj or {}
+	o.name=typename
 	o.ctype=simpletypes[typename][1]
 	o.size=simpletypes[typename][2]
 	o.__align=simpletypes[typename][3]
@@ -127,18 +128,38 @@ type_enum.__index=type_enum
 function type_enum.new(node,obj)
 	local o=obj or {}
 	setmetatable(o,type_enum)
+	o.names={}
 	for k,v in pairs(node) do
 		if type(v)=="table" and v.xarg~=nil then
 			--print("\t"..k.." "..v.xarg.name)
-			o[k-1]=v.xarg.name
+			o.names[k-1]=v.xarg.name
 		end
 	end
 	local btype=node.xarg["base-type"] or "uint32_t"
 	--print(btype.." t="..convertType(btype))
-	o.type=getSimpleType(btype) -- should be simple type
-	o.size=o.type.size
-	o.__align=o.type.__align
+	o.etype=getSimpleType(btype) -- should be simple type
+	o.size=o.etype.size
+	o.__align=o.etype.__align
 	return o
+end
+function type_enum:makewrap(address)
+	local o={}
+	o.mtype=self
+	o.ptr=address
+	setmetatable(o,self.wrap)
+	return o
+end
+type_enum.wrap={}
+type_enum.wrap.__index=type_enum.wrap
+type_enum.wrap.set=function (tbl,val)
+	local mtype=rawget(tbl,"mtype")
+	local ptr=rawget(tbl,"ptr")
+	type_write(mtype.etype,ptr,val)
+end
+type_enum.wrap.get=function (tbl)
+	local mtype=rawget(tbl,"mtype")
+	local ptr=rawget(tbl,"ptr")
+	return type_read(mtype.etype,ptr)
 end
 xtypes["enum-type"]=type_enum
 
@@ -281,7 +302,7 @@ function type_class.new(node,obj)
 			--end
 			
 			local off=padAddress(o.size,ttype)
-			if PRINT_PADS then
+			--[=[if PRINT_PADS then
 				
 				if ttype.__align then
 					print(name.." "..ttype.__align .. " off:"..off.." "..math.mod(off,ttype.__align))
@@ -290,7 +311,7 @@ function type_class.new(node,obj)
 				if off~=o.size then
 					print("var:"..name.." size:"..ttype.size)
 				end
-			end
+			end]=]
 			--print("var:"..name.." ->"..tostring(off).. " :"..ttype.size)
 			if isunion then
 				if ttype.size > o.size then
@@ -320,12 +341,12 @@ function type_class.new(node,obj)
 			o.__align=o.base[1].__align
 		elseif firsttype~= nil then
 			o.__align=firsttype.__align
-			if o.__align~=nil then
-				print("\t\t setting align to:"..(o.__align or ""))
+			--if o.__align~=nil then
+				--print("\t\t setting align to:"..(o.__align or ""))
 			--else
 				--o.__align=4
 				--print("\t\t NIL ALIGNMENT!")
-			end
+			--end
 		end
 	end
 
@@ -397,6 +418,11 @@ function type_pointer.wrap:deref()
 	local myptr=rawget(self,"ptr")
 	local mytype=rawget(self,"mtype")
 	return type_read(mytype.ptype,engine.peekd(myptr))
+end
+function type_pointer.wrap:setref(val)
+	local myptr=rawget(self,"ptr")
+	local mytype=rawget(self,"mtype")
+	return type_write(mytype.ptype,engine.peekd(myptr),val)
 end
 function type_pointer:makewrap(ptr)
 	local o={}
@@ -502,7 +528,7 @@ function bytes_pad.new(node,obj)
 	setmetatable(o,bytes_pad)
 	o.size=tonumber(node.xarg.size)
 	if node.xarg.alignment~=nil then
-		print("Aligned bytes!")
+		--print("Aligned bytes!")
 		o.__align=tonumber(node.xarg.alignment)
 	end
 	return o

@@ -27,11 +27,6 @@ function parseTree(t)
 	for k,v in ipairs(t) do
 		if v.xarg~=nil and v.xarg["type-name"]~=nil and v.label=="ld:global-type" then
 			local name=v.xarg["type-name"];
-			if name=="world" then
-				PRINT_PADS=1
-			else
-				PRINT_PADS=nil
-			end
 			if(types[name]==nil) then
 				
 				--for kk,vv in pairs(v.xarg) do

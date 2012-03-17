@@ -7,6 +7,7 @@ local stl_vec={}
    (make-instance 'padding :name $pad :size 4 :alignment 4)
 --]=] 
 stl_vec.__index=stl_vec
+
 function stl_vec.new(node,obj)
 	local o=obj or {}
 	
@@ -44,16 +45,28 @@ function stl_vec.wrap:__index(key)
 	if num~=nil and num<size then
 		return type_read(mtype.item_type,num*mtype.item_type.size+p_begin)
 	else
-		error("invalid key to df-flagarray")
+		error("invalid key to stl vector")
 	end
 end
 function stl_vec.wrap:__newindex(key,val)
 	local num=tonumber(key)
-	error("TODO make __index for stl_vec")
+	error("TODO make __newindex for stl_vec")
 	if num~=nil and num<rawget(self,"mtype").count then
 		return type_write(mtype.item_type,num*mtype.item_type.size+rawget(self,"ptr"),val)
 	else
-		error("invalid key to static-array")
+		error("invalid key to stl vector")
+	end
+end
+function stl_vec.wrap.__next(tbl,key)
+	--print("next with:"..tostring(key))
+	if key==nil then
+		return 0,tbl[0]
+	else
+		if key<tbl.size-1 then
+			return	key+1,tbl[key+1]
+		else
+			return nil
+		end
 	end
 end
 xtypes.containers["stl-vector"]=stl_vec
@@ -103,6 +116,17 @@ function stl_vec_bit.wrap:__newindex(key,val)
 		return type_write(mtype.ctype,num*mtype.ctype.size+rawget(self,"ptr"),val)
 	else
 		error("invalid key to static-array")
+	end
+end
+function stl_vec_bit.wrap:__next(tbl,key)
+	if key==nil then
+		return 0,self[0]
+	else
+		if key+1<self.size then
+			return	key+1,self[key+1]
+		else
+			return nil
+		end
 	end
 end
 xtypes.containers["stl-bit-vector"]=stl_vec_bit

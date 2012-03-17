@@ -359,33 +359,19 @@ function findVectors()
 end
 
 function GetRaceToken(p) --actually gets token...
-	print(string.format("%x vs %x",offsets.getEx('CreatureGloss'),VersionInfo.getGroup("Materials"):getAddress("creature_type_vector")))
-	--local vec=engine.peek(offsets.getEx('CreatureGloss'),ptr_vector)
-	local vec=engine.peek(VersionInfo.getGroup("Materials"):getAddress("creature_type_vector"),ptr_vector)
-	--print("Vector ok")
-	local off=vec:getval(p)
-	--print("Offset:"..off)
-	local crgloss=engine.peek(off,ptr_CrGloss)
-	--print("Peek ok")
-	return crgloss.token:getval()
+	local vec=df.world.raws.creatures.alphabetic
+	return vec[p]:deref().creature_id
 end
 function BuildNameTable()
 	local rtbl={}
-	local vec=engine.peek(offsets.getEx('CreatureGloss'),ptr_vector)
+	local vec=df.world.raws.creatures.alphabetic
 	--print(string.format("Vector start:%x",vec.st))
 	--print(string.format("Vector end:%x",vec.en))
-	--local i=0
-	for p=0,vec:size()-1 do
-		local off=vec:getval(p)
-		--print("First member:"..off)
-		local name=engine.peek(off,ptt_dfstring)
-		--print("Loading:"..p.."="..name:getval())
-		rtbl[name:getval()]=p
-		--i=i+1
-		--if i>100 then
-		--	io.stdin:read()
-		--	i=0
-		--end
+	--print("Creature count:"..vec.size)
+	for k,v in iter(vec) do
+		local name=v:deref().creature_id
+		--print(k.." "..tostring(name))
+		rtbl[name]=k		
 	end
 	return rtbl;
 end

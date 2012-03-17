@@ -43,7 +43,7 @@ function embark(names)
 	
 	tofind=addressOf(df.ui,"race_id")
 
-	loc=offsets.find(stoff,0xa1,DWORD_,tofind)
+	loc=offsets.find(stoff,0x0f,0xb7,0x0d,DWORD_,tofind) --MOVZX  ECX,WORD PTR[]
 
 	print("found:"..loc)
 

@@ -49,6 +49,18 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "PluginManager.h"
 #include "MiscUtils.h"
 
+#include "modules/Materials.h"
+
+#include "DataDefs.h"
+#include "df/material.h"
+#include "df/matter_state.h"
+#include "df/inorganic_raw.h"
+#include "df/creature_raw.h"
+#include "df/plant_raw.h"
+#include "df/historical_figure.h"
+
+#include "BasicApi.pb.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <sstream>
@@ -56,9 +68,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 using namespace DFHack;
+using namespace df::enums;
+using namespace dfproto;
 
-using dfproto::CoreTextNotification;
-using dfproto::CoreTextFragment;
 using google::protobuf::MessageLite;
 
 void DFHack::strVectorToRepeatedField(RepeatedPtrField<std::string> *pf,
@@ -66,6 +78,149 @@ void DFHack::strVectorToRepeatedField(RepeatedPtrField<std::string> *pf,
 {
     for (size_t i = 0; i < vec.size(); ++i)
         *pf->Add() = vec[i];
+}
+
+void DFHack::describeMaterial(BasicMaterialInfo *info, df::material *mat,
+                              const BasicMaterialInfoMask *mask)
+{
+    info->set_token(mat->id);
+
+    if (mask && mask->flags())
+        flagarray_to_string(info->mutable_flags(), mat->flags);
+
+    info->set_name_prefix(mat->prefix);
+
+    if (!mask || mask->states_size() == 0)
+    {
+        df::matter_state state = matter_state::Solid;
+        int temp = (mask && mask->has_temperature()) ? mask->temperature() : 10015;
+
+        if (temp >= mat->heat.melting_point)
+            state = matter_state::Liquid;
+        if (temp >= mat->heat.boiling_point)
+            state = matter_state::Gas;
+
+        info->add_state_color(mat->state_color[state]);
+        info->add_state_name(mat->state_name[state]);
+        info->add_state_adj(mat->state_adj[state]);
+    }
+    else
+    {
+        for (int i = 0; i < mask->states_size(); i++)
+        {
+            info->add_state_color(mat->state_color[i]);
+            info->add_state_name(mat->state_name[i]);
+            info->add_state_adj(mat->state_adj[i]);
+        }
+    }
+
+    if (mask && mask->reaction())
+    {
+        for (size_t i = 0; i < mat->reaction_class.size(); i++)
+            info->add_reaction_class(*mat->reaction_class[i]);
+
+        for (size_t i = 0; i < mat->reaction_product.id.size(); i++)
+        {
+            auto ptr = info->add_reaction_product();
+            ptr->set_id(*mat->reaction_product.id[i]);
+            ptr->set_type(mat->reaction_product.material.mat_type[i]);
+            ptr->set_index(mat->reaction_product.material.mat_index[i]);
+        }
+    }
+}
+
+void DFHack::describeMaterial(BasicMaterialInfo *info, const MaterialInfo &mat,
+                              const BasicMaterialInfoMask *mask)
+{
+    assert(mat.isValid());
+
+    info->set_type(mat.type);
+    info->set_index(mat.index);
+
+    describeMaterial(info, mat.material, mask);
+
+    switch (mat.mode) {
+    case MaterialInfo::Inorganic:
+        info->set_token(mat.inorganic->id);
+        if (mask && mask->flags())
+            flagarray_to_string(info->mutable_inorganic_flags(), mat.inorganic->flags);
+        break;
+
+    case MaterialInfo::Creature:
+        info->set_subtype(mat.subtype);
+        if (mat.figure)
+        {
+            info->set_hfig_id(mat.index);
+            info->set_creature_id(mat.figure->race);
+        }
+        else
+            info->set_creature_id(mat.index);
+        break;
+
+    case MaterialInfo::Plant:
+        info->set_plant_id(mat.index);
+        break;
+    }
+}
+
+static void listMaterial(ListMaterialsRes *out, int type, int index, const BasicMaterialInfoMask *mask)
+{
+    MaterialInfo info(type, index);
+    if (info.isValid())
+        describeMaterial(out->add_value(), info, mask);
+}
+
+static command_result ListMaterials(color_ostream &stream,
+                                    const ListMaterialsRq *in, ListMaterialsRes *out)
+{
+    CoreSuspender suspend;
+
+    auto mask = in->has_mask() ? &in->mask() : NULL;
+
+    for (int i = 0; i < in->id_list_size(); i++)
+    {
+        auto &elt = in->id_list(i);
+        listMaterial(out, elt.type(), elt.index(), mask);
+    }
+
+    if (in->builtin())
+    {
+        for (int i = 0; i < MaterialInfo::NUM_BUILTIN; i++)
+            listMaterial(out, i, -1, mask);
+    }
+
+    if (in->inorganic())
+    {
+        auto &vec = df::inorganic_raw::get_vector();
+        for (size_t i = 0; i < vec.size(); i++)
+            listMaterial(out, 0, i, mask);
+    }
+
+    if (in->creatures())
+    {
+        auto &vec = df::creature_raw::get_vector();
+        for (size_t i = 0; i < vec.size(); i++)
+        {
+            auto praw = vec[i];
+
+            for (size_t j = 0; j < praw->material.size(); j++)
+                listMaterial(out, MaterialInfo::CREATURE_BASE+j, i, mask);
+        }
+    }
+
+    if (in->plants())
+    {
+        auto &vec = df::plant_raw::get_vector();
+        for (size_t i = 0; i < vec.size(); i++)
+        {
+            auto praw = vec[i];
+
+            for (size_t j = 0; j < praw->material.size(); j++)
+                listMaterial(out, MaterialInfo::PLANT_BASE+j, i, mask);
+        }
+    }
+
+    return out->value_size() ? CR_OK : CR_NOT_FOUND;
 }
 
 CoreService::CoreService() {
@@ -78,6 +233,8 @@ CoreService::CoreService() {
     // Add others here:
     addMethod("CoreSuspend", &CoreService::CoreSuspend);
     addMethod("CoreResume", &CoreService::CoreResume);
+
+    addFunction("ListMaterials", ListMaterials);
 }
 
 CoreService::~CoreService()

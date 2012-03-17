@@ -218,8 +218,7 @@ ENDIF()
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SOURCES})
 ADD_DEPENDENCIES(dfhack generate_headers)
 
-ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp
-                                 proto/CoreProtocol.pb.cc)
+ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp ${PROJECT_PROTO_SRCS})
 ADD_DEPENDENCIES(dfhack-client dfhack)
 
 ADD_EXECUTABLE(dfhack-run dfhack-run.cpp)

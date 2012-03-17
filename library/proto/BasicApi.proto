@@ -1,0 +1,17 @@
+package dfproto;
+
+option optimize_for = LITE_RUNTIME;
+
+import "Basic.proto";
+
+message ListMaterialsRq {
+    optional BasicMaterialInfoMask mask = 1;
+    repeated BasicMaterialId id_list = 2;
+    optional bool builtin = 3;
+    optional bool inorganic = 4;
+    optional bool creatures = 5;
+    optional bool plants = 6;
+};
+message ListMaterialsRes {
+    repeated BasicMaterialInfo value = 1;
+};

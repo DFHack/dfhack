@@ -67,6 +67,11 @@ using dfproto::CoreTextNotification;
 using dfproto::CoreTextFragment;
 using google::protobuf::MessageLite;
 
+bool readFullBuffer(CSimpleSocket *socket, void *buf, int size);
+bool sendRemoteMessage(CSimpleSocket *socket, int16_t id,
+                        const ::google::protobuf::MessageLite *msg, bool size_ready);
+
+
 RPCService::RPCService()
 {
     owner = NULL;
@@ -183,7 +188,7 @@ void ServerConnection::connection_ostream::flush_proxy()
 
     buffer.clear();
 
-    if (!sendRemoteMessage(owner->socket, RPC_REPLY_TEXT, &msg))
+    if (!sendRemoteMessage(owner->socket, RPC_REPLY_TEXT, &msg, false))
     {
         owner->in_error = true;
         Core::printerr("Error writing text into client socket.\n");
@@ -243,7 +248,7 @@ void ServerConnection::threadFn(void *arg)
         if (header.id == RPC_REQUEST_QUIT)
             break;
 
-        if (header.size < 0 || header.size > 2*1048576)
+        if (header.size < 0 || header.size > RPCMessageHeader::MAX_MESSAGE_SIZE)
         {
             out.printerr("In RPC server: invalid received size %d.\n", header.size);
             break;
@@ -278,6 +283,8 @@ void ServerConnection::threadFn(void *arg)
             }
             else
             {
+                buf.reset();
+
                 reply = fn->out();
                 res = fn->execute(me->stream);
             }
@@ -287,16 +294,23 @@ void ServerConnection::threadFn(void *arg)
         if (me->in_error)
             break;
 
-        me->stream.flush();
-
         //out.print("Answer %d:%d\n", res, reply);
 
         // Send reply
-        int out_size = 0;
+        int out_size = (reply ? reply->ByteSize() : 0);
+
+        if (out_size > RPCMessageHeader::MAX_MESSAGE_SIZE)
+        {
+            me->stream.printerr("In call to %s: reply too large: %d.\n",
+                                (fn ? fn->name : "UNKNOWN"), out_size);
+            res = CR_LINK_FAILURE;
+        }
+
+        me->stream.flush();
 
         if (res == CR_OK && reply)
         {
-            if (!sendRemoteMessage(me->socket, RPC_REPLY_RESULT, reply, &out_size))
+            if (!sendRemoteMessage(me->socket, RPC_REPLY_RESULT, reply, true))
             {
                 out.printerr("In RPC server: I/O error in send result.\n");
                 break;
@@ -304,9 +318,6 @@ void ServerConnection::threadFn(void *arg)
         }
         else
         {
-            if (reply)
-                out_size = reply->ByteSize();
-
             header.id = RPC_REPLY_FAIL;
             header.size = res;
 

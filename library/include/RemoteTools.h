@@ -29,8 +29,17 @@ distribution.
 
 #include "DataDefs.h"
 
+#include "Basic.pb.h"
+
+namespace df
+{
+    struct material;
+}
+
 namespace DFHack
 {
+    class MaterialInfo;
+
     using google::protobuf::RepeatedPtrField;
 
     DFHACK_EXPORT void strVectorToRepeatedField(RepeatedPtrField<std::string> *pf,
@@ -46,6 +55,27 @@ namespace DFHack
         strVectorToRepeatedField(pf, tmp);
     }
 
+    /**
+     * Represent flagarray bits as a repeated string field.
+     */
+    template<class T>
+    inline void flagarray_to_string(RepeatedPtrField<std::string> *pf, const BitArray<T> &val) {
+        std::vector<std::string> tmp;
+        flagarray_to_string<T>(&tmp, val);
+        strVectorToRepeatedField(pf, tmp);
+    }
+
+    /////
+
+    using dfproto::BasicMaterialInfo;
+    using dfproto::BasicMaterialInfoMask;
+
+    DFHACK_EXPORT void describeMaterial(BasicMaterialInfo *info, df::material *mat,
+                                        const BasicMaterialInfoMask *mask = NULL);
+    DFHACK_EXPORT void describeMaterial(BasicMaterialInfo *info, const MaterialInfo &mat,
+                                        const BasicMaterialInfoMask *mask = NULL);
+
+    /////
 
     class CoreService : public RPCService {
         int suspend_depth;

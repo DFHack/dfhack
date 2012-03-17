@@ -1,0 +1,54 @@
+package dfproto;
+
+option optimize_for = LITE_RUNTIME;
+
+message BasicMaterialId {
+    required int32 type = 1;
+    required sint32 index = 2;
+};
+
+message BasicMaterialInfo {
+    required int32 type = 1;
+    required sint32 index = 2;
+
+    required string token = 3;
+    repeated string flags = 4;
+
+    optional int32 subtype = 5 [default = -1];
+    optional int32 creature_id = 6 [default = -1];
+    optional int32 plant_id = 7 [default = -1];
+    optional int32 hfig_id = 8 [default = -1];
+
+    optional string name_prefix = 9 [default = ""];
+
+    repeated fixed32 state_color = 10;
+    repeated string state_name = 11;
+    repeated string state_adj = 12;
+
+    message Product {
+        required string id = 1;
+        required int32 type = 2;
+        required sint32 index = 3;
+    };
+    repeated string reaction_class = 13;
+    repeated Product reaction_product = 14;
+
+    repeated string inorganic_flags = 15;
+};
+
+message BasicMaterialInfoMask {
+    enum StateType {
+        Solid = 0;
+        Liquid = 1;
+        Gas = 2;
+        Powder = 3;
+        Paste = 4;
+        Pressed = 5;
+    };
+    repeated StateType states = 1;
+
+    optional bool flags = 2 [default = false];
+    optional bool reaction = 3 [default = false];
+    optional int32 temperature = 4;
+};
+

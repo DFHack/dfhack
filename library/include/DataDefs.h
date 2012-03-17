@@ -373,7 +373,7 @@ namespace DFHack {
      * Find a flag array item by key string. Returns success code.
      */
     template<class T>
-    inline bool find_bitfield_field(unsigned *idx, const std::string &name, const BitArray<T>*) {
+    inline bool find_flagarray_field(unsigned *idx, const std::string &name, const BitArray<T>*) {
         T tmp;
         if (!find_enum_item(&tmp, name) || tmp < 0) return false;
         *idx = unsigned(tmp);
@@ -384,7 +384,7 @@ namespace DFHack {
      * Find a flag array item by key and set its value. Returns success code.
      */
     template<class T>
-    inline bool set_bitfield_field(BitArray<T> *bitfield, const std::string &name, int value)
+    inline bool set_flagarray_field(BitArray<T> *bitfield, const std::string &name, int value)
     {
         T tmp;
         if (!find_enum_item(&tmp, name) || tmp < 0) return false;
@@ -396,7 +396,7 @@ namespace DFHack {
      * Find a flag array item by key and retrieve its value. Returns success code.
      */
     template<class T>
-    inline bool get_bitfield_field(int *value, const BitArray<T> &bitfield, const std::string &name)
+    inline bool get_flagarray_field(int *value, const BitArray<T> &bitfield, const std::string &name)
     {
         T tmp;
         if (!find_enum_item(&tmp, name) || tmp < 0) return false;
@@ -411,13 +411,22 @@ namespace DFHack {
      * Represent flag array bits as strings in a vector.
      */
     template<class T>
-    inline void bitfield_to_string(std::vector<std::string> *pvec, const BitArray<T> &val) {
+    inline void flagarray_to_string(std::vector<std::string> *pvec, const BitArray<T> &val) {
         typedef df::enum_traits<T> traits;
         int size = traits::last_item_value-traits::first_item_value+1;
         flagarrayToString(pvec, val.bits, val.size,
                           (int)traits::first_item_value, size, traits::key_table);
     }
 
+    /**
+     * Represent flag array bits as a string, using sep as join separator.
+     */
+    template<class T>
+    inline std::string bitfield_to_string(const BitArray<T> &val, const std::string &sep = " ") {
+        std::vector<std::string> tmp;
+        flagarray_to_string<T>(&tmp, val);
+        return join_strings(sep, tmp);
+    }
 }
 
 #define ENUM_ATTR(enum,attr,val) (df::enum_traits<df::enum>::attrs(val).attr)

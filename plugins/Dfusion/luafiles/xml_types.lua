@@ -137,10 +137,13 @@ function type_enum.new(node,obj)
 	end
 	local btype=node.xarg["base-type"] or "uint32_t"
 	--print(btype.." t="..convertType(btype))
-	o.etype=getSimpleType(btype) -- should be simple type
-	o.size=o.etype.size
-	o.__align=o.etype.__align
+	o:setbtype(btype)
 	return o
+end
+function type_enum:setbtype(btype)
+	self.etype=getSimpleType(btype) -- should be simple type
+	self.size=self.etype.size
+	self.__align=self.etype.__align
 end
 function type_enum:makewrap(address)
 	local o={}
@@ -185,7 +188,8 @@ function type_bitfield.new(node,obj)
 			o.size=o.size+1
 		end
 	end
-	o.size=o.size/8 -- size in bytes, not bits.
+	--o.size=o.size/8 -- size in bytes, not bits.
+	o.size=4
 	o.size=math.ceil(o.size)
 	--[=[if math.mod(o.size,o.__align) ~= 0 then
 		o.size=o.size+ (o.__align-math.mod(o.size,o.__align))
@@ -571,7 +575,11 @@ parser["ld:field"]=function (node,obj,canDelay)
 	elseif meta=="static-array" then
 		return xtypes["static-array"].new(node,obj)
 	elseif meta=="global" then
-		return getGlobal(node.xarg["type-name"],canDelay)
+		local ltype=getGlobal(node.xarg["type-name"],canDelay)
+		if node.xarg["base-type"]~=nil then
+			ltype:setbtype(node.xarg["base-type"])
+		end
+		return ltype
 	elseif meta=="compound" then
 		if node.xarg.subtype==nil then
 			return xtypes["struct-type"].new(node,obj)

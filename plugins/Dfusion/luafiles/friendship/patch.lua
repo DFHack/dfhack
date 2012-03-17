@@ -1,7 +1,7 @@
 function friendship_in.patch()
 	UpdateRanges()
 	pos=GetTextRegion().start
-	local crace=VersionInfo.getGroup("Creatures"):getAddress("current_race")
+	local crace=addressOf(df.ui,"race_id")--VersionInfo.getGroup("Creatures"):getAddress("current_race")
 	hits={}
 	i=1
 	repeat

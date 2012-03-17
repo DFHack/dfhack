@@ -1,27 +1,7 @@
---[=[
-	bld=buildinglist[1]
-	bld.x1=10
-	bld.flags.exists=true
-	boolval=bld.flags.justice
-	if boolval then
-		bld.mat_type=bld.mat_type+1
-	end
-	
-	type info:
-	
---]=]
+if types ~= nil then
+	return
+end
 dofile("dfusion/xml_types.lua")
-
---[=[sometype={	
-}
-sometype.x1={INT32_T,0}
-sometype.y1={INT32_T,4}
---...
-sometype.flags={"building_flags",7*4}
---...
-
-types.building=sometype
-]=]
 
 function parseTree(t)
 	for k,v in ipairs(t) do

@@ -3,12 +3,12 @@ function friendship_in.install(names)
 RaceTable=RaceTable or BuildNameTable()
 mypos=engine.getmod("Friendship")
 if mypos then
-modpos=mypos
-_,modsize=engine.loadobj("dfusion/friendship/friendship.o")
-_=nil
+	modpos=mypos
+	_,modsize=engine.loadobj("dfusion/friendship/friendship.o")
+	_=nil
 else
-modpos,modsize=engine.loadmod("dfusion/friendship/friendship.o","Friendship",1024)
-print(string.format("Loaded module @:%x",modpos))
+	modpos,modsize=engine.loadmod("dfusion/friendship/friendship.o","Friendship",1024)
+	print(string.format("Loaded module @:%x",modpos))
 end
 count=0
 for _,v in pairs(names) do

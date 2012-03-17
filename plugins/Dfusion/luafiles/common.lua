@@ -6,6 +6,12 @@ BYTE=3
 QWORD=4
 DOUBLE=5
 FLOAT=6
+
+getline=function (inp)
+return Console.lineedit(inp or "")
+end
+io.stdin=nil
+
 function printd(...)
 	if DEBUG then
 		print(...)
@@ -243,7 +249,8 @@ function it_menu:display()
 	local ans
 	repeat
 		local r
-		r=io.stdin:read()
+		r=getline("")
+		if r==nil then return end
 		if r=='q' then return end
 		ans=tonumber(r)
 		
@@ -359,12 +366,12 @@ function findVectors()
 end
 
 function GetRaceToken(p) --actually gets token...
-	local vec=df.world.raws.creatures.alphabetic
+	local vec=df.world.raws.creatures.all
 	return vec[p]:deref().creature_id
 end
 function BuildNameTable()
 	local rtbl={}
-	local vec=df.world.raws.creatures.alphabetic
+	local vec=df.world.raws.creatures.all
 	--print(string.format("Vector start:%x",vec.st))
 	--print(string.format("Vector end:%x",vec.en))
 	--print("Creature count:"..vec.size)

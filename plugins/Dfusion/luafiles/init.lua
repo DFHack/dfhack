@@ -54,13 +54,15 @@ dofile("dfusion/xml_struct.lua")
 unlockDF()
 plugins={}
 table.insert(plugins,{"simple_embark","A simple embark dwarf count editor"})
---[=[table.insert(plugins,{"embark","Multi race embark"})
-table.insert(plugins,{"items","A collection of item hacking tools"})
-table.insert(plugins,{"offsets","Find all offsets"})
+table.insert(plugins,{"tools","some misc tools"})
+table.insert(plugins,{"embark","Multi race embark"})
 table.insert(plugins,{"friendship","Multi race fort enabler"})
+--[=[table.insert(plugins,{"items","A collection of item hacking tools"})
+table.insert(plugins,{"offsets","Find all offsets"})
+
 table.insert(plugins,{"friendship_civ","Multi civ fort enabler"})
 table.insert(plugins,{"adv_tools","some tools for (mainly) advneturer hacking"})
-table.insert(plugins,{"tools","some misc tools"})
+
 table.insert(plugins,{"triggers","a function calling plug (discontinued...)"})
 table.insert(plugins,{"migrants","multi race imigrations"})
 table.insert(plugins,{"onfunction","run lua on some df function"})--]=]

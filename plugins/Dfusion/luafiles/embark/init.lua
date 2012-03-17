@@ -16,6 +16,7 @@ function MakeTable(modpos,modsize,names)
 		  if RaceTable[line] == nil then 
 			error("Failure, "..line.." not found!")
 		  end
+		print("adding:"..line.." id:"..RaceTable[line])
 		engine.pokew(modpos+modsize+count*2,RaceTable[line]) -- add race
 		count = count + 1
 	end
@@ -45,20 +46,23 @@ function embark(names)
 
 	loc=offsets.find(stoff,0x0f,0xb7,0x0d,DWORD_,tofind) --MOVZX  ECX,WORD PTR[]
 
-	print("found:"..loc)
-
+	print(string.format("found:%x",loc))
 	if((loc~=0)and(loc-stoff<1000)) then
-		modpos,modsize=engine.loadmod('dfusion/embark/embark.o','Embark',256)
+		ModData=engine.installMod("dfusion/embark/embark.o","Embark",256)
+		modpos=ModData.pos
+		modsize=ModData.size
+		local castepos=modpos+engine.FindMarker(ModData,"caste")
+		local racepos=modpos+engine.FindMarker(ModData,"race")
 		count=MakeTable(modpos,modsize,names)
-		engine.poked(modpos+0x18,modpos+modsize) --fix array start for race
-		engine.poked(modpos+0x08,modpos+modsize+count*2) --fix array start for caste
+		engine.poked(castepos,modpos+modsize) --fix array start for race
+		engine.poked(racepos,modpos+modsize+count*2) --fix array start for caste
 		print("sucess loading mod @:"..modpos)
 		-- build race vector after module.
 		
 		
 		--finaly poke in the call!
-		engine.pokeb(loc,0x6a)
-		engine.pokeb(loc+1,0xFF)
+		engine.pokeb(loc,0x90)
+		engine.pokeb(loc+1,0x90)
 		engine.pokeb(loc+2,0xe8)
 		engine.poked(loc+3,modpos-loc-7) 
 		--engine.pokeb(loc+5,0x90)

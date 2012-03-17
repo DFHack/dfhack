@@ -1,11 +1,11 @@
 tools={}
 tools.menu=MakeMenu()
 function tools.setrace()
-	RaceTable=RaceTable or BuildNameTable() --slow.If loaded don't load again
+	RaceTable=BuildNameTable()
 	print("Your current race is:"..GetRaceToken(df.ui.race_id))
 	print("Type new race's token name in full caps (q to quit):")
 	repeat
-		entry=io.stdin:read()
+		entry=getline()
 		if entry=="q" then
 			return
 		end
@@ -20,7 +20,7 @@ function tools.GiveSentience(names) --TODO make pattern...
 		ids={}
 		print("Type race's  token name in full caps to give sentience to:")
 		repeat
-			entry=io.stdin:read()
+			entry=getline()
 			id=RaceTable[entry]
 		until id~=nil
 		table.insert(ids,id)
@@ -107,7 +107,7 @@ function tools.getCreatureId(vector)
 	end
 	print("=====================================")
 	print("type in name or number:")
-	r=io.stdin:read()
+	r=getline()
 	if tonumber(r) ==nil then
 		indx=rnames[r]
 		if indx==nil then return end
@@ -125,7 +125,7 @@ function tools.change_adv()
 	tval=vector:getval(0)
 	vector:setval(0,vector:getval(indx))
 	vector:setval(indx,tval)
-	r=io.stdin:read()
+	r=getline()
 	if r=='q' then
 		return
 	end
@@ -153,7 +153,7 @@ function tools.MakeFollow()
 	lfollow=engine.peek(vector:getval(indx)+ptr_Creature.followID.off,DWORD)
 	if lfollow ~=0xFFFFFFFF then
 		print("Already following, unfollow? y/N")
-		r=io.stdin:read()
+		r=getline()
 		if r== "y" then
 			engine.poke(vector:getval(indx)+ptr_Creature.followID.off,DWORD,0)
 		end
@@ -165,7 +165,7 @@ tools.menu:add("Make creature follow",tools.MakeFollow)
 function tools.runscript(files)
 	if files==nil then
 	files={}
-	table.insert(files,io.stdin:read())
+	table.insert(files,getline())
 	end
 	for _,v in pairs(files) do
 		print("Running script:"..v)
@@ -181,7 +181,7 @@ function tools.getsite(names)
 	print("Type words that are in the site name, FULLCAPS, no modifiers (lovely->LOVE), q to quit:")
 	names={}
 	repeat
-	w=io.stdin:read();
+	w=getline();
 	
 	if rwords[w]~=nil then
 		table.insert(names,w)
@@ -246,14 +246,14 @@ function tools.getsite(names)
 			print(string.format("%d)%s off=%x type=%s\t flags=%x",i,r,off,snames[typ+1],flg))
 			
 			if i%100==99 then
-				r=io.stdin:read()
+				r=getline()
 			end
 			
 		end
 	end
 	print("Type which to change (q cancels):")
 	repeat
-		r=io.stdin:read()
+		r=getline()
 		n=tonumber(r)
 		if(r=='q') then return end
 	until n~=nil
@@ -268,7 +268,7 @@ function tools.changesite(names)
 		print((k-1).."->"..v)
 	end
 	repeat
-		r=io.stdin:read()
+		r=getline()
 		n2=tonumber(r)
 		if(r=='q') then return end
 	until n2~=nil
@@ -300,7 +300,7 @@ function tools.changeflags(names)
 			end
 		end
 		print("Type number to flip, or 'q' to quit.")
-		q=io.stdin:read()
+		q=getline()
 		n2=tonumber(q)
 		if n2~=nil then
 			
@@ -354,7 +354,7 @@ function tools.protectsite()
 	print("2. range (x0 x1 y0 y1 z0 z1)")
 	print("3. One block around pointer")
 	print("anything else- quit")
-	q=io.stdin:read()
+	q=getline()
 	n2=tonumber(q)
 	if n2==nil then return end
 	if n2>3 or n2<1 then return end
@@ -368,17 +368,17 @@ function tools.protectsite()
 		ze=z-1
 	elseif n2==2 then
 		print("enter x0:")
-		xs=tonumber(io.stdin:read())
+		xs=tonumber(getline())
 		print("enter x1:")
-		xe=tonumber(io.stdin:read())
+		xe=tonumber(getline())
 		print("enter y0:")
-		ys=tonumber(io.stdin:read())
+		ys=tonumber(getline())
 		print("enter y1:")
-		ye=tonumber(io.stdin:read())
+		ye=tonumber(getline())
 		print("enter z0:")
-		zs=tonumber(io.stdin:read())
+		zs=tonumber(getline())
 		print("enter z1:")
-		ze=tonumber(io.stdin:read())
+		ze=tonumber(getline())
 		function clamp(t,vmin,vmax)
 			if t> vmax then return vmax end
 			if t< vmin then return vmin end
@@ -434,7 +434,7 @@ function tools.fixwarp()
    print("2. range (x0 x1 y0 y1 z0 z1)")
    print("3. One block around pointer")
    print("anything else- quit")
-   q=io.stdin:read()
+   q=getline()
    n2=tonumber(q)
    if n2==nil then return end
    if n2>3 or n2<1 then return end
@@ -448,17 +448,17 @@ function tools.fixwarp()
       ze=z-1
    elseif n2==2 then
       print("enter x0:")
-      xs=tonumber(io.stdin:read())
+      xs=tonumber(getline())
       print("enter x1:")
-      xe=tonumber(io.stdin:read())
+      xe=tonumber(getline())
       print("enter y0:")
-      ys=tonumber(io.stdin:read())
+      ys=tonumber(getline())
       print("enter y1:")
-      ye=tonumber(io.stdin:read())
+      ye=tonumber(getline())
       print("enter z0:")
-      zs=tonumber(io.stdin:read())
+      zs=tonumber(getline())
       print("enter z1:")
-      ze=tonumber(io.stdin:read())
+      ze=tonumber(getline())
       function clamp(t,vmin,vmax)
          if t> vmax then return vmax end
          if t< vmin then return vmin end

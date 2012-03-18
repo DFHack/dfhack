@@ -273,6 +273,7 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
         info->set_civ_id(unit->civ_id);
     if (unit->hist_figure_id >= 0)
         info->set_histfig_id(unit->hist_figure_id);
+
     if (unit->counters.death_id >= 0)
     {
         info->set_death_id(unit->counters.death_id);
@@ -280,10 +281,18 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
             info->set_death_flags(death->flags.whole);
     }
 
-    if (unit->military.squad_index >= 0)
+    if (mask && mask->profession())
     {
-        info->set_squad_id(unit->military.squad_index);
-        info->set_squad_position(unit->military.squad_position);
+        if (unit->profession >= 0)
+            info->set_profession(unit->profession);
+        if (!unit->custom_profession.empty())
+            info->set_custom_profession(unit->custom_profession);
+
+        if (unit->military.squad_index >= 0)
+        {
+            info->set_squad_id(unit->military.squad_index);
+            info->set_squad_position(unit->military.squad_position);
+        }
     }
 
     if (mask && mask->labors())
@@ -429,6 +438,8 @@ static command_result ListEnums(color_ostream &stream,
 
     describe_bitfield<df::death_info::T_flags>(out->mutable_death_info_flags());
 
+    ENUM(profession);
+
 #undef ENUM
 #undef BITFIELD
 }
@@ -505,7 +516,8 @@ static command_result ListUnits(color_ostream &stream,
                 describeUnit(out->add_value(), unit, mask);
         }
     }
-    else
+
+    if (in->scan_all())
     {
         auto &vec = df::unit::get_vector();
 
@@ -515,7 +527,13 @@ static command_result ListUnits(color_ostream &stream,
 
             if (in->has_race() && unit->race != in->race())
                 continue;
-            if (in->civ_id() && unit->civ_id != in->civ_id())
+            if (in->has_civ_id() && unit->civ_id != in->civ_id())
+                continue;
+            if (in->has_dead() && Units::isDead(unit) != in->dead())
+                continue;
+            if (in->has_alive() && Units::isAlive(unit) != in->alive())
+                continue;
+            if (in->has_sane() && Units::isSane(unit) != in->sane())
                 continue;
 
             describeUnit(out->add_value(), unit, mask);

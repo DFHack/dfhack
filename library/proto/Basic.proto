@@ -123,8 +123,12 @@ message BasicUnitInfo {
     optional int32 death_id = 17 [default = -1];
     optional uint32 death_flags = 18;
 
+    // IF mask.profession:
     optional int32 squad_id = 19 [default = -1];
     optional int32 squad_position = 20 [default = -1];
+
+    optional int32 profession = 22 [default = -1];
+    optional string custom_profession = 23;
 
     // IF mask.labors:
     repeated int32 labors = 11;
@@ -140,6 +144,7 @@ message BasicUnitInfo {
 message BasicUnitInfoMask {
     optional bool labors = 1 [default = false];
     optional bool skills = 2 [default = false];
+    optional bool profession = 3 [default = false];
 };
 
 message BasicSquadInfo {

@@ -42,6 +42,8 @@ message ListEnumsOut {
     repeated EnumItemName cie_add_tag_mask2 = 9;
 
     repeated EnumItemName death_info_flags = 10;
+
+    repeated EnumItemName profession = 11;
 };
 
 message ListMaterialsIn {
@@ -67,8 +69,13 @@ message ListUnitsIn {
     repeated int32 id_list = 2;
 
     // All units matching:
+    optional bool scan_all = 5;
+
     optional int32 race = 3;
     optional int32 civ_id = 4;
+    optional bool dead = 6; // i.e. passive corpse
+    optional bool alive = 7; // i.e. not dead or undead
+    optional bool sane = 8; // not dead, ghost, zombie, or insane
 };
 message ListUnitsOut {
     repeated BasicUnitInfo value = 1;

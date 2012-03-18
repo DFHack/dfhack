@@ -88,6 +88,7 @@ EditType["static-array"]=function(trg)
 	end
 end
 EditType["stl-vector"]=EditType["static-array"]
+EditType["df-array"]=EditType["static-array"]
 EditType["struct-type"]=function(trg)
 	local mtype=rawget(trg,"mtype")
 	local fields=getFields(trg)
@@ -104,6 +105,10 @@ end
 EditType["pointer"]=function(trg)
 	local mtype=rawget(trg,"mtype").ptype
 	local typename=getTypename(mtype)
+	if(trg:tonumber()==0) then
+			print("pointer points to nowhere!")
+			return
+	end
 	print("Auto dereferencing pointer! type:"..typename)
 	if EditType[typename] ~= nil then
 		EditType[typename](trg:deref())

@@ -260,6 +260,36 @@ function tools.changesite(names)
 	print(string.format("%x->%d",off,n2))
 	engine.poke(off,ptr_site.type,n2)
 end
+function tools.empregnate(unit)
+	if unit==nil then
+		unit=getSelectedUnit()
+	end
+	if unit==nil then
+		error("Failed to empregnate. Unit not selected/valide")
+	end
+	local arr1=unit.appearance.unk_51c
+	local arr2=unit.appearance.unk_51c
+	local created=false
+	if unit.relations.pregnancy_ptr:tonumber()==0 then
+		print("creating preg ptr.")
+		unit.relations.pregnancy_ptr:newref()
+		created=true
+	end
+	local tarr1=unit.relations.pregnancy_ptr:deref().anon_1
+	local tarr2=unit.relations.pregnancy_ptr:deref().anon_2
+	if created or tarr1.size~= arr1.size then
+		print("Setting up arr1")
+		initType(tarr1,arr1.size)
+	end
+	if created or tarr2.size~= arr2.size then
+		print("Setting up arr1")
+		initType(tarr2,arr2.size)
+	end
+	print("Setting preg timer.")
+	unit.relations.pregnancy_timer=10
+	unit.relations.pregnancy_mystery=1
+end
+tools.menu:add("Empregnate",tools.empregnate)
 function tools.changeflags(names)
 	myflag_pattern=ptt_dfflag.new(3*8)
 	off=tools.getsite(names)

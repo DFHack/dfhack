@@ -467,7 +467,14 @@ function ParseNames(path)
 	end
 	return ret
 end
-
+function getSelectedUnit()
+	local unit_indx=df.ui_selected_unit
+	if unit_indx<df.world.units.other[0].size then
+		return df.world.units.other[0][unit_indx]:deref()
+	else
+		return nil
+	end
+end
 function getxyz() -- this will return pointers x,y and z coordinates.
 	local off=VersionInfo.getGroup("Position"):getAddress("cursor_xyz") -- lets find where in memory its being held
 	-- now lets read them (they are double words (or unsigned longs or 4 bits each) and go in sucesion

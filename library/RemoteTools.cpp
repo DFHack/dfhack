@@ -48,13 +48,18 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "RemoteTools.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
+#include "VersionInfo.h"
 
 #include "modules/Materials.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
+#include "modules/World.h"
 
 #include "DataDefs.h"
 #include "df/ui.h"
+#include "df/ui_advmode.h"
+#include "df/world.h"
+#include "df/world_data.h"
 #include "df/unit.h"
 #include "df/unit_soul.h"
 #include "df/unit_skill.h"
@@ -63,10 +68,12 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "df/inorganic_raw.h"
 #include "df/creature_raw.h"
 #include "df/plant_raw.h"
+#include "df/nemesis_record.h"
 #include "df/historical_figure.h"
 #include "df/historical_entity.h"
 #include "df/squad.h"
 #include "df/squad_position.h"
+#include "df/death_info.h"
 
 #include "BasicApi.pb.h"
 
@@ -94,11 +101,13 @@ void DFHack::describeEnum(RepeatedPtrField<EnumItemName> *pf, int base,
 {
     for (int i = 0; i < size; i++)
     {
+        const char *key = names[i];
+        if (!key)
+            continue;
+
         auto item = pf->Add();
         item->set_value(base+i);
-        const char *key = names[i];
-        if (key)
-            item->set_name(key);
+        item->set_name(key);
     }
 }
 
@@ -107,11 +116,16 @@ void DFHack::describeBitfield(RepeatedPtrField<EnumItemName> *pf,
 {
     for (int i = 0; i < size; i++)
     {
-        auto item = pf->Add();
-        item->set_value(i);
         const char *key = items[i].name;
+        if (!key && items[i].size <= 1)
+            continue;
+
+        auto item = pf->Add();
+
+        item->set_value(i);
         if (key)
             item->set_name(key);
+
         if (items[i].size > 1)
         {
             item->set_bit_size(items[i].size);
@@ -217,9 +231,20 @@ void DFHack::describeName(NameInfo *info, df::language_name *name)
     std::string lname = Translation::TranslateName(name, false, true);
     if (!lname.empty())
         info->set_last_name(lname);
+
     lname = Translation::TranslateName(name, true, true);
     if (!lname.empty())
         info->set_english_name(lname);
+}
+
+void DFHack::describeNameTriple(NameTriple *info, const std::string &name,
+                                const std::string &plural, const std::string &adj)
+{
+    info->set_normal(name);
+    if (!plural.empty() && plural != name)
+        info->set_plural(plural);
+    if (!adj.empty() && adj != name)
+        info->set_adjective(adj);
 }
 
 void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
@@ -249,6 +274,27 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
     if (unit->hist_figure_id >= 0)
         info->set_histfig_id(unit->hist_figure_id);
 
+    if (unit->counters.death_id >= 0)
+    {
+        info->set_death_id(unit->counters.death_id);
+        if (auto death = df::death_info::find(unit->counters.death_id))
+            info->set_death_flags(death->flags.whole);
+    }
+
+    if (mask && mask->profession())
+    {
+        if (unit->profession >= 0)
+            info->set_profession(unit->profession);
+        if (!unit->custom_profession.empty())
+            info->set_custom_profession(unit->custom_profession);
+
+        if (unit->military.squad_index >= 0)
+        {
+            info->set_squad_id(unit->military.squad_index);
+            info->set_squad_position(unit->military.squad_position);
+        }
+    }
+
     if (mask && mask->labors())
     {
         for (int i = 0; i < sizeof(unit->status.labors)/sizeof(bool); i++)
@@ -269,6 +315,106 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
             item->set_experience(skill->experience);
         }
     }
+
+    if (unit->curse.add_tags1.whole ||
+        unit->curse.add_tags2.whole ||
+        unit->curse.rem_tags1.whole ||
+        unit->curse.rem_tags2.whole ||
+        unit->curse.name_visible)
+    {
+        auto curse = info->mutable_curse();
+
+        curse->set_add_tags1(unit->curse.add_tags1.whole);
+        curse->set_rem_tags1(unit->curse.rem_tags1.whole);
+        curse->set_add_tags2(unit->curse.add_tags2.whole);
+        curse->set_rem_tags2(unit->curse.rem_tags2.whole);
+
+        if (unit->curse.name_visible)
+            describeNameTriple(curse->mutable_name(), unit->curse.name,
+                               unit->curse.name_plural, unit->curse.name_adjective);
+    }
+
+    for (size_t i = 0; i < unit->burrows.size(); i++)
+        info->add_burrows(unit->burrows[i]);
+}
+
+static command_result GetVersion(color_ostream &stream,
+                                 const EmptyMessage *, StringMessage *out)
+{
+    out->set_value(DFHACK_VERSION);
+    return CR_OK;
+}
+
+static command_result GetDFVersion(color_ostream &stream,
+                                   const EmptyMessage *, StringMessage *out)
+{
+    out->set_value(Core::getInstance().vinfo->getVersion());
+    return CR_OK;
+}
+
+static command_result GetWorldInfo(color_ostream &stream,
+                                   const EmptyMessage *, GetWorldInfoOut *out)
+{
+    using df::global::ui;
+    using df::global::ui_advmode;
+    using df::global::world;
+
+    if (!ui || !world || !Core::getInstance().isWorldLoaded())
+        return CR_NOT_FOUND;
+
+    t_gamemodes mode;
+    if (!Core::getInstance().getWorld()->ReadGameMode(mode))
+        mode.g_type = GAMETYPE_DWARF_MAIN;
+
+    out->set_save_dir(world->cur_savegame.save_dir);
+
+    if (world->world_data->name.has_name)
+        describeName(out->mutable_world_name(), &world->world_data->name);
+
+    switch (mode.g_type)
+    {
+    case GAMETYPE_DWARF_MAIN:
+    case GAMETYPE_DWARF_RECLAIM:
+        out->set_mode(GetWorldInfoOut::MODE_DWARF);
+        out->set_civ_id(ui->civ_id);
+        out->set_site_id(ui->site_id);
+        out->set_group_id(ui->group_id);
+        out->set_race_id(ui->race_id);
+        break;
+
+    case GAMETYPE_ADVENTURE_MAIN:
+        out->set_mode(GetWorldInfoOut::MODE_ADVENTURE);
+
+        if (auto unit = vector_get(world->units.other[0], 0))
+            out->set_player_unit_id(unit->id);
+
+        if (!ui_advmode)
+            break;
+
+        if (auto nemesis = vector_get(world->nemesis.all, ui_advmode->player_id))
+        {
+            if (nemesis->figure)
+                out->set_player_histfig_id(nemesis->figure->id);
+
+            for (size_t i = 0; i < nemesis->companions.size(); i++)
+            {
+                auto unm = df::nemesis_record::find(nemesis->companions[i]);
+                if (!unm || !unm->figure)
+                    continue;
+                out->add_companion_histfig_ids(unm->figure->id);
+            }
+        }
+        break;
+
+    case GAMETYPE_VIEW_LEGENDS:
+        out->set_mode(GetWorldInfoOut::MODE_LEGENDS);
+        break;
+
+    default:
+        return CR_NOT_FOUND;
+    }
+
+    return CR_OK;
 }
 
 static command_result ListEnums(color_ostream &stream,
@@ -276,13 +422,24 @@ static command_result ListEnums(color_ostream &stream,
 {
 #define ENUM(name) describe_enum<df::name>(out->mutable_##name());
 #define BITFIELD(name) describe_bitfield<df::name>(out->mutable_##name());
+
     ENUM(material_flags);
     ENUM(inorganic_flags);
+
     BITFIELD(unit_flags1);
     BITFIELD(unit_flags2);
     BITFIELD(unit_flags3);
+
     ENUM(unit_labor);
     ENUM(job_skill);
+
+    BITFIELD(cie_add_tag_mask1);
+    BITFIELD(cie_add_tag_mask2);
+
+    describe_bitfield<df::death_info::T_flags>(out->mutable_death_info_flags());
+
+    ENUM(profession);
+
 #undef ENUM
 #undef BITFIELD
 }
@@ -297,8 +454,6 @@ static void listMaterial(ListMaterialsOut *out, int type, int index, const Basic
 static command_result ListMaterials(color_ostream &stream,
                                     const ListMaterialsIn *in, ListMaterialsOut *out)
 {
-    CoreSuspender suspend;
-
     auto mask = in->has_mask() ? &in->mask() : NULL;
 
     for (int i = 0; i < in->id_list_size(); i++)
@@ -350,8 +505,6 @@ static command_result ListMaterials(color_ostream &stream,
 static command_result ListUnits(color_ostream &stream,
                                 const ListUnitsIn *in, ListUnitsOut *out)
 {
-    CoreSuspender suspend;
-
     auto mask = in->has_mask() ? &in->mask() : NULL;
 
     if (in->id_list_size() > 0)
@@ -363,7 +516,8 @@ static command_result ListUnits(color_ostream &stream,
                 describeUnit(out->add_value(), unit, mask);
         }
     }
-    else
+
+    if (in->scan_all())
     {
         auto &vec = df::unit::get_vector();
 
@@ -373,7 +527,13 @@ static command_result ListUnits(color_ostream &stream,
 
             if (in->has_race() && unit->race != in->race())
                 continue;
-            if (in->civ_id() && unit->civ_id != in->civ_id())
+            if (in->has_civ_id() && unit->civ_id != in->civ_id())
+                continue;
+            if (in->has_dead() && Units::isDead(unit) != in->dead())
+                continue;
+            if (in->has_alive() && Units::isAlive(unit) != in->alive())
+                continue;
+            if (in->has_sane() && Units::isSane(unit) != in->sane())
                 continue;
 
             describeUnit(out->add_value(), unit, mask);
@@ -415,14 +575,21 @@ CoreService::CoreService() {
     suspend_depth = 0;
 
     // These 2 methods must be first, so that they get id 0 and 1
-    addMethod("BindMethod", &CoreService::BindMethod);
-    addMethod("RunCommand", &CoreService::RunCommand);
+    addMethod("BindMethod", &CoreService::BindMethod, SF_DONT_SUSPEND);
+    addMethod("RunCommand", &CoreService::RunCommand, SF_DONT_SUSPEND);
 
     // Add others here:
-    addMethod("CoreSuspend", &CoreService::CoreSuspend);
-    addMethod("CoreResume", &CoreService::CoreResume);
+    addMethod("CoreSuspend", &CoreService::CoreSuspend, SF_DONT_SUSPEND);
+    addMethod("CoreResume", &CoreService::CoreResume, SF_DONT_SUSPEND);
 
-    addFunction("ListEnums", ListEnums, SF_CALLED_ONCE);
+    // Functions:
+    addFunction("GetVersion", GetVersion, SF_DONT_SUSPEND);
+    addFunction("GetDFVersion", GetDFVersion, SF_DONT_SUSPEND);
+
+    addFunction("GetWorldInfo", GetWorldInfo);
+
+    addFunction("ListEnums", ListEnums, SF_CALLED_ONCE | SF_DONT_SUSPEND);
+
     addFunction("ListMaterials", ListMaterials, SF_CALLED_ONCE);
     addFunction("ListUnits", ListUnits);
     addFunction("ListSquads", ListSquads);

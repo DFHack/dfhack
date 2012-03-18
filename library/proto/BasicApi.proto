@@ -4,6 +4,29 @@ option optimize_for = LITE_RUNTIME;
 
 import "Basic.proto";
 
+message GetWorldInfoOut {
+    enum Mode {
+        MODE_DWARF = 1;
+        MODE_ADVENTURE = 2;
+        MODE_LEGENDS = 3;
+    };
+    required Mode mode = 1;
+
+    required string save_dir = 2;
+    optional NameInfo world_name = 3;
+
+    // Dwarf mode
+    optional int32 civ_id = 4;
+    optional int32 site_id = 5;
+    optional int32 group_id = 6;
+    optional int32 race_id = 7;
+
+    // Adventure mode
+    optional int32 player_unit_id = 8;
+    optional int32 player_histfig_id = 9;
+    repeated int32 companion_histfig_ids = 10;
+};
+
 message ListEnumsOut {
     repeated EnumItemName material_flags = 1;
     repeated EnumItemName inorganic_flags = 2;
@@ -14,11 +37,22 @@ message ListEnumsOut {
 
     repeated EnumItemName unit_labor = 6;
     repeated EnumItemName job_skill = 7;
+
+    repeated EnumItemName cie_add_tag_mask1 = 8;
+    repeated EnumItemName cie_add_tag_mask2 = 9;
+
+    repeated EnumItemName death_info_flags = 10;
+
+    repeated EnumItemName profession = 11;
 };
 
 message ListMaterialsIn {
     optional BasicMaterialInfoMask mask = 1;
+
+    // Specific materials:
     repeated BasicMaterialId id_list = 2;
+
+    // Complete list by type:
     optional bool builtin = 3;
     optional bool inorganic = 4;
     optional bool creatures = 5;
@@ -30,10 +64,18 @@ message ListMaterialsOut {
 
 message ListUnitsIn {
     optional BasicUnitInfoMask mask = 1;
+
+    // Specific units:
     repeated int32 id_list = 2;
+
+    // All units matching:
+    optional bool scan_all = 5;
 
     optional int32 race = 3;
     optional int32 civ_id = 4;
+    optional bool dead = 6; // i.e. passive corpse
+    optional bool alive = 7; // i.e. not dead or undead
+    optional bool sane = 8; // not dead, ghost, zombie, or insane
 };
 message ListUnitsOut {
     repeated BasicUnitInfo value = 1;

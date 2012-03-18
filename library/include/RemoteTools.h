@@ -116,6 +116,11 @@ namespace DFHack
 
     DFHACK_EXPORT void describeName(NameInfo *info, df::language_name *name);
 
+    using dfproto::NameTriple;
+
+    DFHACK_EXPORT void describeNameTriple(NameTriple *info, const std::string &name,
+                                          const std::string &plural, const std::string &adj);
+
     using dfproto::BasicUnitInfo;
     using dfproto::BasicUnitInfoMask;
 

@@ -54,6 +54,7 @@ using namespace std;
 #include "df/assumed_identity.h"
 
 using namespace DFHack;
+using namespace df::enums;
 using df::global::world;
 using df::global::ui;
 
@@ -550,4 +551,40 @@ df::language_name *Units::GetVisibleName(df::unit *unit)
     }
 
     return &unit->name;
+}
+
+bool DFHack::Units::isDead(df::unit *unit)
+{
+    return unit->flags1.bits.dead;
+}
+
+bool DFHack::Units::isAlive(df::unit *unit)
+{
+    return !unit->flags1.bits.dead &&
+           !unit->flags3.bits.ghostly &&
+           !unit->curse.add_tags1.bits.NOT_LIVING;
+}
+
+bool DFHack::Units::isSane(df::unit *unit)
+{
+    if (unit->flags1.bits.dead ||
+        unit->flags3.bits.ghostly ||
+        unit->curse.add_tags1.bits.OPPOSED_TO_LIFE ||
+        unit->curse.add_tags1.bits.CRAZED)
+        return false;
+
+    if (unit->flags1.bits.has_mood)
+    {
+        switch (unit->mood)
+        {
+        case mood_type::Melancholy:
+        case mood_type::Raving:
+        case mood_type::Berserk:
+            return false;
+        default:
+            break;
+        }
+    }
+
+    return true;
 }

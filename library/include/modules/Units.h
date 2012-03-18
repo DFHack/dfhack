@@ -194,6 +194,10 @@ DFHACK_EXPORT bool RemoveOwnedItemByIdx(const uint32_t index, int32_t id);
 DFHACK_EXPORT bool RemoveOwnedItemByPtr(df::unit * unit, int32_t id);
 
 DFHACK_EXPORT df::language_name *GetVisibleName(df::unit *unit);
+
+DFHACK_EXPORT bool isDead(df::unit *unit);
+DFHACK_EXPORT bool isAlive(df::unit *unit);
+DFHACK_EXPORT bool isSane(df::unit *unit);
 }
 }
 #endif

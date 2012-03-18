@@ -217,6 +217,7 @@ void DFHack::describeName(NameInfo *info, df::language_name *name)
     std::string lname = Translation::TranslateName(name, false, true);
     if (!lname.empty())
         info->set_last_name(lname);
+
     lname = Translation::TranslateName(name, true, true);
     if (!lname.empty())
         info->set_english_name(lname);
@@ -276,13 +277,17 @@ static command_result ListEnums(color_ostream &stream,
 {
 #define ENUM(name) describe_enum<df::name>(out->mutable_##name());
 #define BITFIELD(name) describe_bitfield<df::name>(out->mutable_##name());
+
     ENUM(material_flags);
     ENUM(inorganic_flags);
+
     BITFIELD(unit_flags1);
     BITFIELD(unit_flags2);
     BITFIELD(unit_flags3);
+
     ENUM(unit_labor);
     ENUM(job_skill);
+
 #undef ENUM
 #undef BITFIELD
 }
@@ -297,8 +302,6 @@ static void listMaterial(ListMaterialsOut *out, int type, int index, const Basic
 static command_result ListMaterials(color_ostream &stream,
                                     const ListMaterialsIn *in, ListMaterialsOut *out)
 {
-    CoreSuspender suspend;
-
     auto mask = in->has_mask() ? &in->mask() : NULL;
 
     for (int i = 0; i < in->id_list_size(); i++)
@@ -350,8 +353,6 @@ static command_result ListMaterials(color_ostream &stream,
 static command_result ListUnits(color_ostream &stream,
                                 const ListUnitsIn *in, ListUnitsOut *out)
 {
-    CoreSuspender suspend;
-
     auto mask = in->has_mask() ? &in->mask() : NULL;
 
     if (in->id_list_size() > 0)
@@ -415,14 +416,15 @@ CoreService::CoreService() {
     suspend_depth = 0;
 
     // These 2 methods must be first, so that they get id 0 and 1
-    addMethod("BindMethod", &CoreService::BindMethod);
-    addMethod("RunCommand", &CoreService::RunCommand);
+    addMethod("BindMethod", &CoreService::BindMethod, SF_DONT_SUSPEND);
+    addMethod("RunCommand", &CoreService::RunCommand, SF_DONT_SUSPEND);
 
     // Add others here:
-    addMethod("CoreSuspend", &CoreService::CoreSuspend);
-    addMethod("CoreResume", &CoreService::CoreResume);
+    addMethod("CoreSuspend", &CoreService::CoreSuspend, SF_DONT_SUSPEND);
+    addMethod("CoreResume", &CoreService::CoreResume, SF_DONT_SUSPEND);
 
-    addFunction("ListEnums", ListEnums, SF_CALLED_ONCE);
+    // Functions:
+    addFunction("ListEnums", ListEnums, SF_CALLED_ONCE | SF_DONT_SUSPEND);
     addFunction("ListMaterials", ListMaterials, SF_CALLED_ONCE);
     addFunction("ListUnits", ListUnits);
     addFunction("ListSquads", ListSquads);

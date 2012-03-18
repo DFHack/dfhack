@@ -124,8 +124,6 @@ void setUnitNickname(df::unit *unit, const std::string &nick)
 
 static command_result RenameSquad(color_ostream &stream, const RenameSquadIn *in)
 {
-    CoreSuspender suspend;
-
     df::squad *squad = df::squad::find(in->squad_id());
     if (!squad)
         return CR_NOT_FOUND;
@@ -140,8 +138,6 @@ static command_result RenameSquad(color_ostream &stream, const RenameSquadIn *in
 
 static command_result RenameUnit(color_ostream &stream, const RenameUnitIn *in)
 {
-    CoreSuspender suspend;
-
     df::unit *unit = df::unit::find(in->unit_id());
     if (!unit)
         return CR_NOT_FOUND;

@@ -5,6 +5,8 @@ option optimize_for = LITE_RUNTIME;
 message EnumItemName {
     required int32 value = 1;
     optional string name = 2;
+
+    // For bitfield members
     optional int32 bit_size = 3 [default = 1];
 };
 
@@ -16,10 +18,15 @@ message BasicMaterialId {
 message BasicMaterialInfo {
     required int32 type = 1;
     required sint32 index = 2;
+
+    // The raw token
     required string token = 3;
 
-    repeated int32 flags = 4; // of material_flags
+    // IF mask.flags:
+    // List of material_flags indices
+    repeated int32 flags = 4;
 
+    // Material type/index expanded:
     optional int32 subtype = 5 [default = -1];
     optional int32 creature_id = 6 [default = -1];
     optional int32 plant_id = 7 [default = -1];
@@ -27,10 +34,13 @@ message BasicMaterialInfo {
 
     optional string name_prefix = 9 [default = ""];
 
+    // IF mask.states: in listed order;
+    // ELSE: one state matching mask.temperature
     repeated fixed32 state_color = 10;
     repeated string state_name = 11;
     repeated string state_adj = 12;
 
+    // IF mask.reaction:
     message Product {
         required string id = 1;
         required int32 type = 2;
@@ -39,6 +49,7 @@ message BasicMaterialInfo {
     repeated string reaction_class = 13;
     repeated Product reaction_product = 14;
 
+    // IF mask.flags:
     repeated int32 inorganic_flags = 15;
 };
 
@@ -90,8 +101,10 @@ message BasicUnitInfo {
     optional int32 civ_id = 9 [default = -1];
     optional int32 histfig_id = 10 [default = -1];
 
+    // IF mask.labors:
     repeated int32 labors = 11;
 
+    // IF mask.skills:
     repeated SkillInfo skills = 12;
 
     required int32 pos_x = 13;
@@ -108,7 +121,10 @@ message BasicSquadInfo {
     required int32 squad_id = 1;
 
     optional NameInfo name = 2;
+
+    // A special field completely overriding the name:
     optional string alias = 3;
 
+    // Member histfig ids:
     repeated sint32 members = 4;
 };

@@ -43,7 +43,10 @@ namespace  DFHack
     enum ServerFunctionFlags {
         // The function is expected to be called only once per client,
         // so always delete all cached buffers after processing.
-        SF_CALLED_ONCE = 1
+        SF_CALLED_ONCE = 1,
+        // Don't automatically suspend the core around the call.
+        // The function is supposed to manage locking itself.
+        SF_DONT_SUSPEND = 2
     };
 
     class DFHACK_EXPORT ServerFunctionBase : public RPCFunctionBase {
@@ -225,6 +228,7 @@ namespace  DFHack
 
         tthread::thread *thread;
         static void threadFn(void *);
+        void threadFn();
 
     public:
         ServerConnection(CActiveSocket *socket);

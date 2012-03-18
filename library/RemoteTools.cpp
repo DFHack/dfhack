@@ -440,6 +440,7 @@ static command_result ListEnums(color_ostream &stream,
 
     ENUM(profession);
 
+    return CR_OK;
 #undef ENUM
 #undef BITFIELD
 }

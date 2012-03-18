@@ -49,7 +49,6 @@ dofile("dfusion/common.lua")
 dofile("dfusion/utils.lua")
 dofile("dfusion/offsets_misc.lua")
 dofile("dfusion/editor.lua")
-types=nil
 dofile("dfusion/xml_struct.lua")
 unlockDF()
 plugins={}

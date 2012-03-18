@@ -580,7 +580,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		}
 		else if (dwarfs[dwarf]->job.current_job == NULL)
 		{
-			if (is_on_break)
+			if (ENUM_ATTR(profession, military, dwarfs[dwarf]->profession))
+				dwarf_info[dwarf].state = MILITARY;
+			else if (is_on_break)
 				dwarf_info[dwarf].state = OTHER;
 			else if (dwarfs[dwarf]->meetings.size() > 0)
 				dwarf_info[dwarf].state = OTHER;

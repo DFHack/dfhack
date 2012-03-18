@@ -48,13 +48,18 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "RemoteTools.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
+#include "VersionInfo.h"
 
 #include "modules/Materials.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
+#include "modules/World.h"
 
 #include "DataDefs.h"
 #include "df/ui.h"
+#include "df/ui_advmode.h"
+#include "df/world.h"
+#include "df/world_data.h"
 #include "df/unit.h"
 #include "df/unit_soul.h"
 #include "df/unit_skill.h"
@@ -63,6 +68,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "df/inorganic_raw.h"
 #include "df/creature_raw.h"
 #include "df/plant_raw.h"
+#include "df/nemesis_record.h"
 #include "df/historical_figure.h"
 #include "df/historical_entity.h"
 #include "df/squad.h"
@@ -272,6 +278,85 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
     }
 }
 
+static command_result GetVersion(color_ostream &stream,
+                                 const EmptyMessage *, StringMessage *out)
+{
+    out->set_value(DFHACK_VERSION);
+    return CR_OK;
+}
+
+static command_result GetDFVersion(color_ostream &stream,
+                                   const EmptyMessage *, StringMessage *out)
+{
+    out->set_value(Core::getInstance().vinfo->getVersion());
+    return CR_OK;
+}
+
+static command_result GetWorldInfo(color_ostream &stream,
+                                   const EmptyMessage *, GetWorldInfoOut *out)
+{
+    using df::global::ui;
+    using df::global::ui_advmode;
+    using df::global::world;
+
+    if (!ui || !world || !Core::getInstance().isWorldLoaded())
+        return CR_NOT_FOUND;
+
+    t_gamemodes mode;
+    if (!Core::getInstance().getWorld()->ReadGameMode(mode))
+        mode.g_type = GAMETYPE_DWARF_MAIN;
+
+    out->set_save_dir(world->cur_savegame.save_dir);
+
+    if (world->world_data->name.has_name)
+        describeName(out->mutable_world_name(), &world->world_data->name);
+
+    switch (mode.g_type)
+    {
+    case GAMETYPE_DWARF_MAIN:
+    case GAMETYPE_DWARF_RECLAIM:
+        out->set_mode(GetWorldInfoOut::MODE_DWARF);
+        out->set_civ_id(ui->civ_id);
+        out->set_site_id(ui->site_id);
+        out->set_group_id(ui->group_id);
+        out->set_race_id(ui->race_id);
+        break;
+
+    case GAMETYPE_ADVENTURE_MAIN:
+        out->set_mode(GetWorldInfoOut::MODE_ADVENTURE);
+
+        if (auto unit = vector_get(world->units.other[0], 0))
+            out->set_player_unit_id(unit->id);
+
+        if (!ui_advmode)
+            break;
+
+        if (auto nemesis = vector_get(world->nemesis.all, ui_advmode->player_id))
+        {
+            if (nemesis->figure)
+                out->set_player_histfig_id(nemesis->figure->id);
+
+            for (size_t i = 0; i < nemesis->companions.size(); i++)
+            {
+                auto unm = df::nemesis_record::find(nemesis->companions[i]);
+                if (!unm || !unm->figure)
+                    continue;
+                out->add_companion_histfig_ids(unm->figure->id);
+            }
+        }
+        break;
+
+    case GAMETYPE_VIEW_LEGENDS:
+        out->set_mode(GetWorldInfoOut::MODE_LEGENDS);
+        break;
+
+    default:
+        return CR_NOT_FOUND;
+    }
+
+    return CR_OK;
+}
+
 static command_result ListEnums(color_ostream &stream,
                                 const EmptyMessage *, ListEnumsOut *out)
 {
@@ -424,7 +509,13 @@ CoreService::CoreService() {
     addMethod("CoreResume", &CoreService::CoreResume, SF_DONT_SUSPEND);
 
     // Functions:
+    addFunction("GetVersion", GetVersion, SF_DONT_SUSPEND);
+    addFunction("GetDFVersion", GetDFVersion, SF_DONT_SUSPEND);
+
+    addFunction("GetWorldInfo", GetWorldInfo);
+
     addFunction("ListEnums", ListEnums, SF_CALLED_ONCE | SF_DONT_SUSPEND);
+
     addFunction("ListMaterials", ListMaterials, SF_CALLED_ONCE);
     addFunction("ListUnits", ListUnits);
     addFunction("ListSquads", ListSquads);

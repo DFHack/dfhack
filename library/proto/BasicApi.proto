@@ -4,6 +4,29 @@ option optimize_for = LITE_RUNTIME;
 
 import "Basic.proto";
 
+message GetWorldInfoOut {
+    enum Mode {
+        MODE_DWARF = 1;
+        MODE_ADVENTURE = 2;
+        MODE_LEGENDS = 3;
+    };
+    required Mode mode = 1;
+
+    required string save_dir = 2;
+    optional NameInfo world_name = 3;
+
+    // Dwarf mode
+    optional int32 civ_id = 4;
+    optional int32 site_id = 5;
+    optional int32 group_id = 6;
+    optional int32 race_id = 7;
+
+    // Adventure mode
+    optional int32 player_unit_id = 8;
+    optional int32 player_histfig_id = 9;
+    repeated int32 companion_histfig_ids = 10;
+};
+
 message ListEnumsOut {
     repeated EnumItemName material_flags = 1;
     repeated EnumItemName inorganic_flags = 2;

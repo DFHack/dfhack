@@ -79,6 +79,21 @@ message NameInfo {
     optional string english_name = 5;
 };
 
+message NameTriple {
+    required string normal = 1;
+    optional string plural = 2;
+    optional string adjective = 3;
+};
+
+message UnitCurseInfo {
+    required fixed32 add_tags1 = 1;
+    required fixed32 rem_tags1 = 2;
+    required fixed32 add_tags2 = 3;
+    required fixed32 rem_tags2 = 4;
+
+    optional NameTriple name = 5;
+};
+
 message SkillInfo {
     required int32 id = 1;
     required int32 level = 2;
@@ -87,6 +102,10 @@ message SkillInfo {
 
 message BasicUnitInfo {
     required int32 unit_id = 1;
+
+    required int32 pos_x = 13;
+    required int32 pos_y = 14;
+    required int32 pos_z = 15;
 
     optional NameInfo name = 2;
 
@@ -101,15 +120,21 @@ message BasicUnitInfo {
     optional int32 civ_id = 9 [default = -1];
     optional int32 histfig_id = 10 [default = -1];
 
+    optional int32 death_id = 17 [default = -1];
+    optional uint32 death_flags = 18;
+
+    optional int32 squad_id = 19 [default = -1];
+    optional int32 squad_position = 20 [default = -1];
+
     // IF mask.labors:
     repeated int32 labors = 11;
 
     // IF mask.skills:
     repeated SkillInfo skills = 12;
 
-    required int32 pos_x = 13;
-    required int32 pos_y = 14;
-    required int32 pos_z = 15;
+    optional UnitCurseInfo curse = 16;
+
+    repeated int32 burrows = 21;
 };
 
 message BasicUnitInfoMask {

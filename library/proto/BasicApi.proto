@@ -37,6 +37,11 @@ message ListEnumsOut {
 
     repeated EnumItemName unit_labor = 6;
     repeated EnumItemName job_skill = 7;
+
+    repeated EnumItemName cie_add_tag_mask1 = 8;
+    repeated EnumItemName cie_add_tag_mask2 = 9;
+
+    repeated EnumItemName death_info_flags = 10;
 };
 
 message ListMaterialsIn {

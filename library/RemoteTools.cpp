@@ -73,6 +73,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "df/historical_entity.h"
 #include "df/squad.h"
 #include "df/squad_position.h"
+#include "df/death_info.h"
 
 #include "BasicApi.pb.h"
 
@@ -100,11 +101,13 @@ void DFHack::describeEnum(RepeatedPtrField<EnumItemName> *pf, int base,
 {
     for (int i = 0; i < size; i++)
     {
+        const char *key = names[i];
+        if (!key)
+            continue;
+
         auto item = pf->Add();
         item->set_value(base+i);
-        const char *key = names[i];
-        if (key)
-            item->set_name(key);
+        item->set_name(key);
     }
 }
 
@@ -113,11 +116,16 @@ void DFHack::describeBitfield(RepeatedPtrField<EnumItemName> *pf,
 {
     for (int i = 0; i < size; i++)
     {
-        auto item = pf->Add();
-        item->set_value(i);
         const char *key = items[i].name;
+        if (!key && items[i].size <= 1)
+            continue;
+
+        auto item = pf->Add();
+
+        item->set_value(i);
         if (key)
             item->set_name(key);
+
         if (items[i].size > 1)
         {
             item->set_bit_size(items[i].size);
@@ -229,6 +237,16 @@ void DFHack::describeName(NameInfo *info, df::language_name *name)
         info->set_english_name(lname);
 }
 
+void DFHack::describeNameTriple(NameTriple *info, const std::string &name,
+                                const std::string &plural, const std::string &adj)
+{
+    info->set_normal(name);
+    if (!plural.empty() && plural != name)
+        info->set_plural(plural);
+    if (!adj.empty() && adj != name)
+        info->set_adjective(adj);
+}
+
 void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
                           const BasicUnitInfoMask *mask)
 {
@@ -255,6 +273,18 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
         info->set_civ_id(unit->civ_id);
     if (unit->hist_figure_id >= 0)
         info->set_histfig_id(unit->hist_figure_id);
+    if (unit->counters.death_id >= 0)
+    {
+        info->set_death_id(unit->counters.death_id);
+        if (auto death = df::death_info::find(unit->counters.death_id))
+            info->set_death_flags(death->flags.whole);
+    }
+
+    if (unit->military.squad_index >= 0)
+    {
+        info->set_squad_id(unit->military.squad_index);
+        info->set_squad_position(unit->military.squad_position);
+    }
 
     if (mask && mask->labors())
     {
@@ -276,6 +306,27 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
             item->set_experience(skill->experience);
         }
     }
+
+    if (unit->curse.add_tags1.whole ||
+        unit->curse.add_tags2.whole ||
+        unit->curse.rem_tags1.whole ||
+        unit->curse.rem_tags2.whole ||
+        unit->curse.name_visible)
+    {
+        auto curse = info->mutable_curse();
+
+        curse->set_add_tags1(unit->curse.add_tags1.whole);
+        curse->set_rem_tags1(unit->curse.rem_tags1.whole);
+        curse->set_add_tags2(unit->curse.add_tags2.whole);
+        curse->set_rem_tags2(unit->curse.rem_tags2.whole);
+
+        if (unit->curse.name_visible)
+            describeNameTriple(curse->mutable_name(), unit->curse.name,
+                               unit->curse.name_plural, unit->curse.name_adjective);
+    }
+
+    for (size_t i = 0; i < unit->burrows.size(); i++)
+        info->add_burrows(unit->burrows[i]);
 }
 
 static command_result GetVersion(color_ostream &stream,
@@ -372,6 +423,11 @@ static command_result ListEnums(color_ostream &stream,
 
     ENUM(unit_labor);
     ENUM(job_skill);
+
+    BITFIELD(cie_add_tag_mask1);
+    BITFIELD(cie_add_tag_mask2);
+
+    describe_bitfield<df::death_info::T_flags>(out->mutable_death_info_flags());
 
 #undef ENUM
 #undef BITFIELD

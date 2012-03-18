@@ -66,15 +66,18 @@ table.insert(plugins,{"triggers","a function calling plug (discontinued...)"})
 table.insert(plugins,{"migrants","multi race imigrations"})
 table.insert(plugins,{"onfunction","run lua on some df function"})--]=]
 table.insert(plugins,{"editor","edit internals of df",EditDF})
+table.insert(plugins,{"saves","run current worlds's init.lua",RunSaved})
 loadall(plugins)
 dofile_silent("dfusion/initcustom.lua")
 
-print("Locating saves...")
-local str=df.world.cur_savegame.save_dir
-print("Current region:"..str)
-str="data/save/"..str.."/dfusion/init.lua"
-dofile_silent(str)
-
+function RunSaved() 
+	print("Locating saves...")
+	local str=df.world.cur_savegame.save_dir
+	print("Current region:"..str)
+	str="data/save/"..str.."/dfusion/init.lua"
+	print("Trying to run:"..str)
+	dofile_silent(str)
+end
 if not INIT then
 mainmenu(plugins)
 end

@@ -16,7 +16,7 @@ function MakeTable(modpos,modsize,names)
 		  if RaceTable[line] == nil then 
 			error("Failure, "..line.." not found!")
 		  end
-		print("adding:"..line.." id:"..RaceTable[line])
+		--print("adding:"..line.." id:"..RaceTable[line])
 		engine.pokew(modpos+modsize+count*2,RaceTable[line]) -- add race
 		count = count + 1
 	end
@@ -45,9 +45,16 @@ function embark(names)
 	tofind=addressOf(df.ui,"race_id")
 
 	loc=offsets.find(stoff,0x0f,0xb7,0x0d,DWORD_,tofind) --MOVZX  ECX,WORD PTR[]
-
+	
 	print(string.format("found:%x",loc))
 	if((loc~=0)and(loc-stoff<1000)) then
+		loc2=offsets.find(loc,0x83,0xc8,0xff) -- or eax, ffffff (for caste)
+		if loc2== 0 then
+			error ("Location for caste nulling not found!")
+		end
+		engine.pokeb(loc2,0x90)
+		engine.pokeb(loc2+1,0x90)
+		engine.pokeb(loc2+2,0x90)
 		ModData=engine.installMod("dfusion/embark/embark.o","Embark",256)
 		modpos=ModData.pos
 		modsize=ModData.size
@@ -66,6 +73,7 @@ function embark(names)
 		engine.pokeb(loc+2,0xe8)
 		engine.poked(loc+3,modpos-loc-7) 
 		--engine.pokeb(loc+5,0x90)
+		
 		SetExecute(modpos)
 	else
 		error("did not find patch location, failing...")

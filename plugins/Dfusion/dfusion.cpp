@@ -152,7 +152,9 @@ command_result lua_run (color_ostream &out, std::vector <std::string> &parameter
 	{
 		try{
 			s.loadfile(parameters[0]); //load file
-			s.pcall(0,0);// run it
+			for(size_t i=1;i<parameters.size();i++)
+				s.push(parameters[i]);
+			s.pcall(parameters.size()-1,0);// run it
 		}
 		catch(lua::exception &e)
 		{
@@ -168,7 +170,7 @@ command_result lua_run (color_ostream &out, std::vector <std::string> &parameter
 	mymutex->unlock();
 	return CR_OK;
 }
-void RunDfusion(color_ostream &out)
+void RunDfusion(color_ostream &out, std::vector <std::string> &parameters)
 {
 	mymutex->lock();
 	lua::state s=lua::glua::Get();
@@ -176,8 +178,9 @@ void RunDfusion(color_ostream &out)
 		s.getglobal("err");
 		int errpos=s.gettop();
 		s.loadfile("dfusion/init.lua"); //load script
-		
-		s.pcall(0,0,errpos);// run it
+		for(size_t i=0;i<parameters.size();i++)
+				s.push(parameters[i]);
+		s.pcall(parameters.size(),0,errpos);// run it
 	}
 	catch(lua::exception &e)
 	{
@@ -193,7 +196,7 @@ command_result dfuse(color_ostream &out, std::vector <std::string> &parameters)
 	lua::SetConsole(s,out);
 	s.push(1);
 	s.setglobal("INIT");
-	RunDfusion(out);
+	RunDfusion(out,parameters);
 	return CR_OK;
 }
 command_result dfusion (color_ostream &out, std::vector <std::string> &parameters)
@@ -202,6 +205,6 @@ command_result dfusion (color_ostream &out, std::vector <std::string> &parameter
 	lua::SetConsole(s,out);
 	s.push();
 	s.setglobal("INIT");
-	RunDfusion(out);
+	RunDfusion(out,parameters);
 	return CR_OK;
 }

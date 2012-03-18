@@ -300,38 +300,56 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
             continue;
         string name;
         building.origin->getName(&name);
-        out.print("Building %i - \"%s\" - type %s",
-                  building.origin->id, name.c_str(),
-                  ENUM_KEY_STR(building_type, building.type).c_str());
+        out.print("Building %i - \"%s\" - type %s (%i)",
+                  building.origin->id,
+                  name.c_str(),
+                  ENUM_KEY_STR(building_type, building.type).c_str(),
+                  building.type);
 
         switch (building.type)
         {
         case building_type::Civzone:
-            out.print(", subtype %s", ENUM_KEY_STR(civzone_type, building.civzone_type).c_str());
+            out.print(", subtype %s (%i)",
+                      ENUM_KEY_STR(civzone_type, building.civzone_type).c_str(),
+                      building.civzone_type);
             break;
         case building_type::Furnace:
-            out.print(", subtype %s", ENUM_KEY_STR(furnace_type, building.furnace_type).c_str());
+            out.print(", subtype %s (%i)",
+                      ENUM_KEY_STR(furnace_type, building.furnace_type).c_str(),
+                      building.furnace_type);
             if (building.furnace_type == furnace_type::Custom)
-                out.print(", custom type %i (%s)", building.custom_type,
-                          world->raws.buildings.all[building.custom_type]->code.c_str());
+                out.print(", custom type %s (%i)",
+                          world->raws.buildings.all[building.custom_type]->code.c_str(),
+                          building.custom_type);
             break;
         case building_type::Workshop:
-            out.print(", subtype %s", ENUM_KEY_STR(workshop_type, building.workshop_type).c_str());
+            out.print(", subtype %s (%i)",
+                      ENUM_KEY_STR(workshop_type, building.workshop_type).c_str(),
+                      building.workshop_type);
             if (building.workshop_type == workshop_type::Custom)
-                out.print(", custom type %i (%s)", building.custom_type,
-                          world->raws.buildings.all[building.custom_type]->code.c_str());
+                out.print(", custom type %s (%i)",
+                          world->raws.buildings.all[building.custom_type]->code.c_str(),
+                          building.custom_type);
             break;
         case building_type::Construction:
-            out.print(", subtype %s", ENUM_KEY_STR(construction_type, building.construction_type).c_str());
+            out.print(", subtype %s (%i)",
+                      ENUM_KEY_STR(construction_type, building.construction_type).c_str(),
+                      building.construction_type);
             break;
         case building_type::Shop:
-            out.print(", subtype %s", ENUM_KEY_STR(shop_type, building.shop_type).c_str());
+            out.print(", subtype %s (%i)",
+                      ENUM_KEY_STR(shop_type, building.shop_type).c_str(),
+                      building.shop_type);
             break;
         case building_type::SiegeEngine:
-            out.print(", subtype %s", ENUM_KEY_STR(siegeengine_type, building.siegeengine_type).c_str());
+            out.print(", subtype %s (%i)",
+                      ENUM_KEY_STR(siegeengine_type, building.siegeengine_type).c_str(),
+                      building.siegeengine_type);
             break;
         case building_type::Trap:
-            out.print(", subtype %s", ENUM_KEY_STR(trap_type, building.trap_type).c_str());
+            out.print(", subtype %s (%i)",
+                      ENUM_KEY_STR(trap_type, building.trap_type).c_str(),
+                      building.trap_type);
             break;
         default:
             if (building.subtype != -1)

@@ -142,7 +142,7 @@ namespace DFHack
 
         Core();
 
-        class Private;
+        struct Private;
         Private *d;
 
         bool Init();

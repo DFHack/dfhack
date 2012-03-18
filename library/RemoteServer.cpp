@@ -46,6 +46,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 
 #include "RemoteServer.h"
+#include "RemoteTools.h"
+
 #include "PassiveSocket.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
@@ -65,76 +67,10 @@ using dfproto::CoreTextNotification;
 using dfproto::CoreTextFragment;
 using google::protobuf::MessageLite;
 
-CoreService::CoreService() {
-    suspend_depth = 0;
+bool readFullBuffer(CSimpleSocket *socket, void *buf, int size);
+bool sendRemoteMessage(CSimpleSocket *socket, int16_t id,
+                        const ::google::protobuf::MessageLite *msg, bool size_ready);
 
-    // These 2 methods must be first, so that they get id 0 and 1
-    addMethod("BindMethod", &CoreService::BindMethod);
-    addMethod("RunCommand", &CoreService::RunCommand);
-
-    // Add others here:
-    addMethod("CoreSuspend", &CoreService::CoreSuspend);
-    addMethod("CoreResume", &CoreService::CoreResume);
-}
-
-CoreService::~CoreService()
-{
-    while (suspend_depth-- > 0)
-        Core::getInstance().Resume();
-}
-
-command_result CoreService::BindMethod(color_ostream &stream,
-                                       const dfproto::CoreBindRequest *in,
-                                       dfproto::CoreBindReply *out)
-{
-    ServerFunctionBase *fn = connection()->findFunction(stream, in->plugin(), in->method());
-
-    if (!fn)
-    {
-        stream.printerr("RPC method not found: %s::%s\n",
-                        in->plugin().c_str(), in->method().c_str());
-        return CR_FAILURE;
-    }
-
-    if (fn->p_in_template->GetTypeName() != in->input_msg() ||
-        fn->p_out_template->GetTypeName() != in->output_msg())
-    {
-        stream.printerr("Requested wrong signature for RPC method: %s::%s\n",
-                        in->plugin().c_str(), in->method().c_str());
-        return CR_FAILURE;
-    }
-
-    out->set_assigned_id(fn->getId());
-    return CR_OK;
-}
-
-command_result CoreService::RunCommand(color_ostream &stream,
-                                       const dfproto::CoreRunCommandRequest *in)
-{
-    std::string cmd = in->command();
-    std::vector<std::string> args;
-    for (int i = 0; i < in->arguments_size(); i++)
-        args.push_back(in->arguments(i));
-
-    return Core::getInstance().plug_mgr->InvokeCommand(stream, cmd, args);
-}
-
-command_result CoreService::CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt)
-{
-    Core::getInstance().Suspend();
-    cnt->set_value(++suspend_depth);
-    return CR_OK;
-}
-
-command_result CoreService::CoreResume(color_ostream &stream, const EmptyMessage*, IntMessage *cnt)
-{
-    if (suspend_depth <= 0)
-        return CR_WRONG_USAGE;
-
-    Core::getInstance().Resume();
-    cnt->set_value(--suspend_depth);
-    return CR_OK;
-}
 
 RPCService::RPCService()
 {
@@ -252,7 +188,7 @@ void ServerConnection::connection_ostream::flush_proxy()
 
     buffer.clear();
 
-    if (!sendRemoteMessage(owner->socket, RPC_REPLY_TEXT, &msg))
+    if (!sendRemoteMessage(owner->socket, RPC_REPLY_TEXT, &msg, false))
     {
         owner->in_error = true;
         Core::printerr("Error writing text into client socket.\n");
@@ -312,7 +248,7 @@ void ServerConnection::threadFn(void *arg)
         if (header.id == RPC_REQUEST_QUIT)
             break;
 
-        if (header.size < 0 || header.size > 2*1048576)
+        if (header.size < 0 || header.size > RPCMessageHeader::MAX_MESSAGE_SIZE)
         {
             out.printerr("In RPC server: invalid received size %d.\n", header.size);
             break;
@@ -347,6 +283,8 @@ void ServerConnection::threadFn(void *arg)
             }
             else
             {
+                buf.reset();
+
                 reply = fn->out();
                 res = fn->execute(me->stream);
             }
@@ -356,16 +294,23 @@ void ServerConnection::threadFn(void *arg)
         if (me->in_error)
             break;
 
-        me->stream.flush();
-
         //out.print("Answer %d:%d\n", res, reply);
 
         // Send reply
-        int out_size = 0;
+        int out_size = (reply ? reply->ByteSize() : 0);
+
+        if (out_size > RPCMessageHeader::MAX_MESSAGE_SIZE)
+        {
+            me->stream.printerr("In call to %s: reply too large: %d.\n",
+                                (fn ? fn->name : "UNKNOWN"), out_size);
+            res = CR_LINK_FAILURE;
+        }
+
+        me->stream.flush();
 
         if (res == CR_OK && reply)
         {
-            if (!sendRemoteMessage(me->socket, RPC_REPLY_RESULT, reply, &out_size))
+            if (!sendRemoteMessage(me->socket, RPC_REPLY_RESULT, reply, true))
             {
                 out.printerr("In RPC server: I/O error in send result.\n");
                 break;
@@ -373,9 +318,6 @@ void ServerConnection::threadFn(void *arg)
         }
         else
         {
-            if (reply)
-                out_size = reply->ByteSize();
-
             header.id = RPC_REPLY_FAIL;
             header.size = res;
 
@@ -389,7 +331,8 @@ void ServerConnection::threadFn(void *arg)
         // Cleanup
         if (fn)
         {
-            fn->reset(out_size > 32768 || in_size > 32768);
+            fn->reset((fn->flags & SF_CALLED_ONCE) ||
+                      (out_size > 128*1024 || in_size > 32*1024));
         }
     }
 

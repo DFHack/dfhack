@@ -66,6 +66,8 @@ namespace  DFHack
     };
 
     struct RPCMessageHeader {
+        static const int MAX_MESSAGE_SIZE = 8*1048756;
+
         int16_t id;
         int32_t size;
     };
@@ -219,10 +221,6 @@ namespace  DFHack
             return RemoteFunctionBase::execute(stream, input, out());
         }
     };
-
-    bool readFullBuffer(CSimpleSocket *socket, void *buf, int size);
-    bool sendRemoteMessage(CSimpleSocket *socket, int16_t id,
-                           const ::google::protobuf::MessageLite *msg, int *psz = NULL);
 
     class DFHACK_EXPORT RemoteClient
     {

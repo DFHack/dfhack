@@ -1,0 +1,45 @@
+package dfproto;
+
+option optimize_for = LITE_RUNTIME;
+
+import "Basic.proto";
+
+message ListEnumsOut {
+    repeated EnumItemName material_flags = 1;
+    repeated EnumItemName inorganic_flags = 2;
+
+    repeated EnumItemName unit_flags1 = 3;
+    repeated EnumItemName unit_flags2 = 4;
+    repeated EnumItemName unit_flags3 = 5;
+
+    repeated EnumItemName unit_labor = 6;
+    repeated EnumItemName job_skill = 7;
+};
+
+message ListMaterialsIn {
+    optional BasicMaterialInfoMask mask = 1;
+    repeated BasicMaterialId id_list = 2;
+    optional bool builtin = 3;
+    optional bool inorganic = 4;
+    optional bool creatures = 5;
+    optional bool plants = 6;
+};
+message ListMaterialsOut {
+    repeated BasicMaterialInfo value = 1;
+};
+
+message ListUnitsIn {
+    optional BasicUnitInfoMask mask = 1;
+    repeated int32 id_list = 2;
+
+    optional int32 race = 3;
+    optional int32 civ_id = 4;
+};
+message ListUnitsOut {
+    repeated BasicUnitInfo value = 1;
+};
+
+message ListSquadsIn {}
+message ListSquadsOut {
+    repeated BasicSquadInfo value = 1;
+}

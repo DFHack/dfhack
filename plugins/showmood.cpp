@@ -235,16 +235,16 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                     else
                         out.print("%s unknown body parts (%s:%s:%s)",
                                      mat_name.c_str(),
-                                     bitfieldToString(item->flags1).c_str(),
-                                     bitfieldToString(item->flags2).c_str(),
-                                     bitfieldToString(item->flags3).c_str());
+                                     bitfield_to_string(item->flags1).c_str(),
+                                     bitfield_to_string(item->flags2).c_str(),
+                                     bitfield_to_string(item->flags3).c_str());
                 }
                 else
                     out.print("indeterminate %s item (%s:%s:%s)",
                                  mat_name.c_str(),
-                                 bitfieldToString(item->flags1).c_str(),
-                                 bitfieldToString(item->flags2).c_str(),
-                                 bitfieldToString(item->flags3).c_str());
+                                 bitfield_to_string(item->flags1).c_str(),
+                                 bitfield_to_string(item->flags2).c_str(),
+                                 bitfield_to_string(item->flags3).c_str());
                 break;
             default:
                 {
@@ -252,9 +252,9 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
 
                     out.print("item %s material %s flags (%s:%s:%s)",
                                  itinfo.toString().c_str(), mat_name.c_str(),
-                                 bitfieldToString(item->flags1).c_str(),
-                                 bitfieldToString(item->flags2).c_str(),
-                                 bitfieldToString(item->flags3).c_str());
+                                 bitfield_to_string(item->flags1).c_str(),
+                                 bitfield_to_string(item->flags2).c_str(),
+                                 bitfield_to_string(item->flags3).c_str());
                     break;
                 }
             }

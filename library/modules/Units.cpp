@@ -48,6 +48,10 @@ using namespace std;
 #include "df/world.h"
 #include "df/ui.h"
 #include "df/unit_inventory_item.h"
+#include "df/historical_entity.h"
+#include "df/historical_figure.h"
+#include "df/historical_figure_info.h"
+#include "df/assumed_identity.h"
 
 using namespace DFHack;
 using df::global::world;
@@ -522,3 +526,28 @@ void Units::CopyNameTo(df::unit * creature, df::language_name * target)
     Translation::copyName(&creature->name, target);
 }
 
+df::language_name *Units::GetVisibleName(df::unit *unit)
+{
+    df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
+
+    if (figure)
+    {
+        // v0.34.01: added the vampire's assumed identity
+        if (figure->info && figure->info->reputation)
+        {
+            auto identity = df::assumed_identity::find(figure->info->reputation->cur_identity);
+
+            if (identity)
+            {
+                auto id_hfig = df::historical_figure::find(identity->histfig_id);
+
+                if (id_hfig)
+                    return &id_hfig->name;
+
+                return &identity->name;
+            }
+        }
+    }
+
+    return &unit->name;
+}

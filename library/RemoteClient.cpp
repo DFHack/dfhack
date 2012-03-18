@@ -112,7 +112,7 @@ RemoteClient::~RemoteClient()
         delete p_default_output;
 }
 
-bool DFHack::readFullBuffer(CSimpleSocket *socket, void *buf, int size)
+bool readFullBuffer(CSimpleSocket *socket, void *buf, int size)
 {
     if (!socket->IsSocketValid())
         return false;
@@ -324,13 +324,10 @@ bool RemoteFunctionBase::bind(color_ostream &out, RemoteClient *client,
     return client->bind(out, this, name, proto);
 }
 
-bool DFHack::sendRemoteMessage(CSimpleSocket *socket, int16_t id, const MessageLite *msg, int *psz)
+bool sendRemoteMessage(CSimpleSocket *socket, int16_t id, const MessageLite *msg, bool size_ready)
 {
-    int size = msg->ByteSize();
+    int size = size_ready ? msg->GetCachedSize() : msg->ByteSize();
     int fullsz = size + sizeof(RPCMessageHeader);
-
-    if (psz)
-        *psz = size;
 
     std::auto_ptr<uint8_t> data(new uint8_t[fullsz]);
     RPCMessageHeader *hdr = (RPCMessageHeader*)data.get();
@@ -338,8 +335,9 @@ bool DFHack::sendRemoteMessage(CSimpleSocket *socket, int16_t id, const MessageL
     hdr->id = id;
     hdr->size = size;
 
-    if (!msg->SerializeToArray(data.get() + sizeof(RPCMessageHeader), size))
-        return false;
+    uint8_t *pstart = data.get() + sizeof(RPCMessageHeader);
+    uint8_t *pend = msg->SerializeWithCachedSizesToArray(pstart);
+    assert((pend - pstart) == size);
 
     return (socket->Send(data.get(), fullsz) == fullsz);
 }
@@ -361,7 +359,16 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
         return CR_LINK_FAILURE;
     }
 
-    if (!sendRemoteMessage(p_client->socket, id, input))
+    int send_size = input->ByteSize();
+
+    if (send_size > RPCMessageHeader::MAX_MESSAGE_SIZE)
+    {
+        out.printerr("In call to %s::%s: message too large: %d.\n",
+                     this->proto.c_str(), this->name.c_str(), send_size);
+        return CR_LINK_FAILURE;
+    }
+
+    if (!sendRemoteMessage(p_client->socket, id, input, true))
     {
         out.printerr("In call to %s::%s: I/O error in send.\n",
                      this->proto.c_str(), this->name.c_str());
@@ -388,7 +395,7 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
         if (header.id == RPC_REPLY_FAIL)
             return header.size == CR_OK ? CR_FAILURE : command_result(header.size);
 
-        if (header.size < 0 || header.size > 2*1048576)
+        if (header.size < 0 || header.size > RPCMessageHeader::MAX_MESSAGE_SIZE)
         {
             out.printerr("In call to %s::%s: invalid received size %d.\n",
                          this->proto.c_str(), this->name.c_str(), header.size);

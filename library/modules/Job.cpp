@@ -159,11 +159,11 @@ static void print_job_item_details(color_ostream &out, df::job *job, unsigned id
     }
 
     if (item->flags1.whole)
-        out << "    flags1: " << bitfieldToString(item->flags1) << endl;
+        out << "    flags1: " << bitfield_to_string(item->flags1) << endl;
     if (item->flags2.whole)
-        out << "    flags2: " << bitfieldToString(item->flags2) << endl;
+        out << "    flags2: " << bitfield_to_string(item->flags2) << endl;
     if (item->flags3.whole)
-        out << "    flags3: " << bitfieldToString(item->flags3) << endl;
+        out << "    flags3: " << bitfield_to_string(item->flags3) << endl;
 
     if (!item->reaction_class.empty())
         out << "    reaction class: " << item->reaction_class << endl;
@@ -178,7 +178,7 @@ void DFHack::printJobDetails(color_ostream &out, df::job *job)
     out.color(job->flags.bits.suspend ? Console::COLOR_DARKGREY : Console::COLOR_GREY);
     out << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_type);
     if (job->flags.whole)
-           out << " (" << bitfieldToString(job->flags) << ")";
+           out << " (" << bitfield_to_string(job->flags) << ")";
     out << endl;
     out.reset_color();
 
@@ -192,7 +192,7 @@ void DFHack::printJobDetails(color_ostream &out, df::job *job)
     {
         out << "    material: " << mat.toString();
         if (job->material_category.whole)
-            out << " (" << bitfieldToString(job->material_category) << ")";
+            out << " (" << bitfield_to_string(job->material_category) << ")";
         out << endl;
     }
 
@@ -201,7 +201,7 @@ void DFHack::printJobDetails(color_ostream &out, df::job *job)
         ItemTypeInfo iinfo(itype, job->item_subtype);
 
         out << "    item: " << iinfo.toString()
-               << " (" << bitfieldToString(job->item_category) << ")" << endl;
+               << " (" << bitfield_to_string(job->item_category) << ")" << endl;
     }
 
     if (job->hist_figure_id >= 0)

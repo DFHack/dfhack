@@ -34,12 +34,22 @@ class CSimpleSocket;
 
 namespace  DFHack
 {
-    class DFHACK_EXPORT ServerConnection;
+    class Plugin;
+    class CoreService;
+    class ServerConnection;
+
     class DFHACK_EXPORT RPCService;
+
+    enum ServerFunctionFlags {
+        // The function is expected to be called only once per client,
+        // so always delete all cached buffers after processing.
+        SF_CALLED_ONCE = 1
+    };
 
     class DFHACK_EXPORT ServerFunctionBase : public RPCFunctionBase {
     public:
         const char *const name;
+        const int flags;
 
         virtual command_result execute(color_ostream &stream) = 0;
 
@@ -48,8 +58,9 @@ namespace  DFHack
     protected:
         friend class RPCService;
 
-        ServerFunctionBase(const message_type *in, const message_type *out, RPCService *owner, const char *name)
-            : RPCFunctionBase(in, out), name(name), owner(owner), id(-1)
+        ServerFunctionBase(const message_type *in, const message_type *out,
+                           RPCService *owner, const char *name, int flags)
+            : RPCFunctionBase(in, out), name(name), flags(flags), owner(owner), id(-1)
         {}
 
         RPCService *owner;
@@ -64,8 +75,8 @@ namespace  DFHack
         In *in() { return static_cast<In*>(RPCFunctionBase::in()); }
         Out *out() { return static_cast<Out*>(RPCFunctionBase::out()); }
 
-        ServerFunction(RPCService *owner, const char *name, function_type fptr)
-            : ServerFunctionBase(&In::default_instance(), &Out::default_instance(), owner, name),
+        ServerFunction(RPCService *owner, const char *name, int flags, function_type fptr)
+            : ServerFunctionBase(&In::default_instance(), &Out::default_instance(), owner, name, flags),
               fptr(fptr) {}
 
         virtual command_result execute(color_ostream &stream) { return fptr(stream, in(), out()); }
@@ -81,8 +92,8 @@ namespace  DFHack
 
         In *in() { return static_cast<In*>(RPCFunctionBase::in()); }
 
-        VoidServerFunction(RPCService *owner, const char *name, function_type fptr)
-            : ServerFunctionBase(&In::default_instance(), &EmptyMessage::default_instance(), owner, name),
+        VoidServerFunction(RPCService *owner, const char *name, int flags, function_type fptr)
+            : ServerFunctionBase(&In::default_instance(), &EmptyMessage::default_instance(), owner, name, flags),
               fptr(fptr) {}
 
         virtual command_result execute(color_ostream &stream) { return fptr(stream, in()); }
@@ -99,8 +110,8 @@ namespace  DFHack
         In *in() { return static_cast<In*>(RPCFunctionBase::in()); }
         Out *out() { return static_cast<Out*>(RPCFunctionBase::out()); }
 
-        ServerMethod(RPCService *owner, const char *name, function_type fptr)
-            : ServerFunctionBase(&In::default_instance(), &Out::default_instance(), owner, name),
+        ServerMethod(RPCService *owner, const char *name, int flags, function_type fptr)
+            : ServerFunctionBase(&In::default_instance(), &Out::default_instance(), owner, name, flags),
               fptr(fptr) {}
 
         virtual command_result execute(color_ostream &stream) {
@@ -118,8 +129,8 @@ namespace  DFHack
 
         In *in() { return static_cast<In*>(RPCFunctionBase::in()); }
 
-        VoidServerMethod(RPCService *owner, const char *name, function_type fptr)
-            : ServerFunctionBase(&In::default_instance(), &EmptyMessage::default_instance(), owner, name),
+        VoidServerMethod(RPCService *owner, const char *name, int flags, function_type fptr)
+            : ServerFunctionBase(&In::default_instance(), &EmptyMessage::default_instance(), owner, name, flags),
               fptr(fptr) {}
 
         virtual command_result execute(color_ostream &stream) {
@@ -129,8 +140,6 @@ namespace  DFHack
     private:
         function_type fptr;
     };
-
-    class Plugin;
 
     class DFHACK_EXPORT RPCService {
         friend class ServerConnection;
@@ -153,19 +162,21 @@ namespace  DFHack
         template<typename In, typename Out>
         void addFunction(
             const char *name,
-            command_result (*fptr)(color_ostream &out, const In *input, Out *output)
+            command_result (*fptr)(color_ostream &out, const In *input, Out *output),
+            int flags = 0
         ) {
             assert(!owner);
-            functions.push_back(new ServerFunction<In,Out>(this, name, fptr));
+            functions.push_back(new ServerFunction<In,Out>(this, name, flags, fptr));
         }
 
         template<typename In>
         void addFunction(
             const char *name,
-            command_result (*fptr)(color_ostream &out, const In *input)
+            command_result (*fptr)(color_ostream &out, const In *input),
+            int flags = 0
         ) {
             assert(!owner);
-            functions.push_back(new VoidServerFunction<In>(this, name, fptr));
+            functions.push_back(new VoidServerFunction<In>(this, name, flags, fptr));
         }
 
     protected:
@@ -174,40 +185,25 @@ namespace  DFHack
         template<typename Svc, typename In, typename Out>
         void addMethod(
             const char *name,
-            command_result (Svc::*fptr)(color_ostream &out, const In *input, Out *output)
+            command_result (Svc::*fptr)(color_ostream &out, const In *input, Out *output),
+            int flags = 0
         ) {
             assert(!owner);
-            functions.push_back(new ServerMethod<Svc,In,Out>(this, name, fptr));
+            functions.push_back(new ServerMethod<Svc,In,Out>(this, name, flags, fptr));
         }
 
         template<typename Svc, typename In>
         void addMethod(
             const char *name,
-            command_result (Svc::*fptr)(color_ostream &out, const In *input)
+            command_result (Svc::*fptr)(color_ostream &out, const In *input),
+            int flags = 0
         ) {
             assert(!owner);
-            functions.push_back(new VoidServerMethod<Svc,In>(this, name, fptr));
+            functions.push_back(new VoidServerMethod<Svc,In>(this, name, flags, fptr));
         }
     };
 
-    class CoreService : public RPCService {
-        int suspend_depth;
-    public:
-        CoreService();
-        ~CoreService();
-
-        command_result BindMethod(color_ostream &stream,
-                                  const dfproto::CoreBindRequest *in,
-                                  dfproto::CoreBindReply *out);
-        command_result RunCommand(color_ostream &stream,
-                                  const dfproto::CoreRunCommandRequest *in);
-
-        // For batching
-        command_result CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt);
-        command_result CoreResume(color_ostream &stream, const EmptyMessage*, IntMessage *cnt);
-    };
-
-    class DFHACK_EXPORT ServerConnection {
+    class ServerConnection {
         class connection_ostream : public buffered_color_ostream {
             ServerConnection *owner;
 
@@ -237,7 +233,7 @@ namespace  DFHack
         ServerFunctionBase *findFunction(color_ostream &out, const std::string &plugin, const std::string &name);
     };
 
-    class DFHACK_EXPORT ServerMain {
+    class ServerMain {
         CPassiveSocket *socket;
 
         tthread::thread *thread;

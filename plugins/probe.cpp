@@ -175,15 +175,15 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     df::tiletype_special special = tileSpecial(tiletype);
     df::tiletype_variant variant = tileVariant(tiletype);
     out.print("%-10s: %4d %s\n","Class"    ,shape,
-            ENUM_KEY_STR(tiletype_shape, shape));
+              ENUM_KEY_STR(tiletype_shape, shape).c_str());
     out.print("%-10s: %4d %s\n","Material" ,
-            material, ENUM_KEY_STR(tiletype_material, material));
+              material, ENUM_KEY_STR(tiletype_material, material).c_str());
     out.print("%-10s: %4d %s\n","Special"  ,
-            special, ENUM_KEY_STR(tiletype_special, special));
+              special, ENUM_KEY_STR(tiletype_special, special).c_str());
     out.print("%-10s: %4d %s\n"   ,"Variant"  ,
-            variant, ENUM_KEY_STR(tiletype_variant, variant));
+              variant, ENUM_KEY_STR(tiletype_variant, variant).c_str());
     out.print("%-10s: %s\n"    ,"Direction",
-            tileDirection(tiletype).getStr());
+              tileDirection(tiletype).getStr());
     out.print("\n");
 
     out.print("temperature1: %d U\n",mc.temperature1At(cursor));
@@ -300,34 +300,38 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
             continue;
         string name;
         building.origin->getName(&name);
-        out.print("Building %i - \"%s\" - type %s", building.origin->id, name.c_str(), ENUM_KEY_STR(building_type, building.type));
+        out.print("Building %i - \"%s\" - type %s",
+                  building.origin->id, name.c_str(),
+                  ENUM_KEY_STR(building_type, building.type).c_str());
 
         switch (building.type)
         {
         case building_type::Civzone:
-            out.print(", subtype %s", ENUM_KEY_STR(civzone_type, building.civzone_type));
+            out.print(", subtype %s", ENUM_KEY_STR(civzone_type, building.civzone_type).c_str());
             break;
         case building_type::Furnace:
-            out.print(", subtype %s", ENUM_KEY_STR(furnace_type, building.furnace_type));
+            out.print(", subtype %s", ENUM_KEY_STR(furnace_type, building.furnace_type).c_str());
             if (building.furnace_type == furnace_type::Custom)
-                out.print(", custom type %i (%s)", building.custom_type, world->raws.buildings.all[building.custom_type]->code.c_str());
+                out.print(", custom type %i (%s)", building.custom_type,
+                          world->raws.buildings.all[building.custom_type]->code.c_str());
             break;
         case building_type::Workshop:
-            out.print(", subtype %s", ENUM_KEY_STR(workshop_type, building.workshop_type));
+            out.print(", subtype %s", ENUM_KEY_STR(workshop_type, building.workshop_type).c_str());
             if (building.workshop_type == workshop_type::Custom)
-                out.print(", custom type %i (%s)", building.custom_type, world->raws.buildings.all[building.custom_type]->code.c_str());
+                out.print(", custom type %i (%s)", building.custom_type,
+                          world->raws.buildings.all[building.custom_type]->code.c_str());
             break;
         case building_type::Construction:
-            out.print(", subtype %s", ENUM_KEY_STR(construction_type, building.construction_type));
+            out.print(", subtype %s", ENUM_KEY_STR(construction_type, building.construction_type).c_str());
             break;
         case building_type::Shop:
-            out.print(", subtype %s", ENUM_KEY_STR(shop_type, building.shop_type));
+            out.print(", subtype %s", ENUM_KEY_STR(shop_type, building.shop_type).c_str());
             break;
         case building_type::SiegeEngine:
-            out.print(", subtype %s", ENUM_KEY_STR(siegeengine_type, building.siegeengine_type));
+            out.print(", subtype %s", ENUM_KEY_STR(siegeengine_type, building.siegeengine_type).c_str());
             break;
         case building_type::Trap:
-            out.print(", subtype %s", ENUM_KEY_STR(trap_type, building.trap_type));
+            out.print(", subtype %s", ENUM_KEY_STR(trap_type, building.trap_type).c_str());
             break;
         default:
             if (building.subtype != -1)

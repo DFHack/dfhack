@@ -44,6 +44,7 @@ include/VersionInfoFactory.h
 include/Virtual.h
 include/RemoteClient.h
 include/RemoteServer.h
+include/RemoteTools.h
 )
 
 SET(MAIN_HEADERS_WINDOWS
@@ -63,6 +64,7 @@ VersionInfoFactory.cpp
 Virtual.cpp
 RemoteClient.cpp
 RemoteServer.cpp
+RemoteTools.cpp
 )
 
 SET(MAIN_SOURCES_WINDOWS
@@ -216,8 +218,7 @@ ENDIF()
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SOURCES})
 ADD_DEPENDENCIES(dfhack generate_headers)
 
-ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp
-                                 proto/CoreProtocol.pb.cc)
+ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp ${PROJECT_PROTO_SRCS})
 ADD_DEPENDENCIES(dfhack-client dfhack)
 
 ADD_EXECUTABLE(dfhack-run dfhack-run.cpp)

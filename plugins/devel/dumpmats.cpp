@@ -245,13 +245,13 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
         FOR_ENUM_ITEMS(material_flags, i)
         {
             if (mat->flags.is_set(i))
-                out.print("\t[%s]\n", ENUM_KEY_STR(material_flags, i));
+                out.print("\t[%s]\n", ENUM_KEY_STR(material_flags, i).c_str());
         }
 
         if (mat->extract_storage != item_type::BARREL)
-            out.print("\t[EXTRACT_STORAGE:%s]\n", ENUM_KEY_STR(item_type, mat->extract_storage));
+            out.print("\t[EXTRACT_STORAGE:%s]\n", ENUM_KEY_STR(item_type, mat->extract_storage).c_str());
         if (mat->butcher_special_type != item_type::NONE || mat->butcher_special_subtype != -1)
-            out.print("\t[BUTCHER_SPECIAL:%s:%s]\n", ENUM_KEY_STR(item_type, mat->butcher_special_type), (mat->butcher_special_subtype == -1) ? "NONE" : "?");
+            out.print("\t[BUTCHER_SPECIAL:%s:%s]\n", ENUM_KEY_STR(item_type, mat->butcher_special_type).c_str(), (mat->butcher_special_subtype == -1) ? "NONE" : "?");
         if (mat->meat_name[0].size() || mat->meat_name[1].size() || mat->meat_name[2].size())
             out.print("\t[MEAT_NAME:%s:%s:%s]\n", mat->meat_name[0].c_str(), mat->meat_name[1].c_str(), mat->meat_name[2].c_str());
         if (mat->block_name[0].size() || mat->block_name[1].size())

@@ -122,7 +122,7 @@ void setUnitNickname(df::unit *unit, const std::string &nick)
     }
 }
 
-static command_result RenameSquad(color_ostream &stream, const RenameSquadRq *in)
+static command_result RenameSquad(color_ostream &stream, const RenameSquadIn *in)
 {
     CoreSuspender suspend;
 
@@ -138,7 +138,7 @@ static command_result RenameSquad(color_ostream &stream, const RenameSquadRq *in
     return CR_OK;
 }
 
-static command_result RenameUnit(color_ostream &stream, const RenameUnitRq *in)
+static command_result RenameUnit(color_ostream &stream, const RenameUnitIn *in)
 {
     CoreSuspender suspend;
 

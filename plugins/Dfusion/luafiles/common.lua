@@ -512,6 +512,14 @@ function Allocate(size)
 	engine.poked(ptr,curptr)
 	return curptr-size+ptr
 end
+function initType(object,...)
+	local m=getmetatable(object)
+	if m~=nil and m.__setup~=nil then
+		m.__setup(object,...)
+	else
+		error("This object does not have __setup function")
+	end
+end
 dofile("dfusion/patterns.lua")
 dofile("dfusion/patterns2.lua")
 dofile("dfusion/itempatterns.lua")

@@ -45,6 +45,14 @@ function mainmenu(t1)
 		end
 	end
 end
+function RunSaved() 
+	print("Locating saves...")
+	local str=df.world.cur_savegame.save_dir
+	print("Current region:"..str)
+	str="data/save/"..str.."/dfusion/init.lua"
+	print("Trying to run:"..str)
+	dofile_silent(str)
+end
 dofile("dfusion/common.lua")
 dofile("dfusion/utils.lua")
 dofile("dfusion/offsets_misc.lua")
@@ -70,14 +78,7 @@ table.insert(plugins,{"saves","run current worlds's init.lua",RunSaved})
 loadall(plugins)
 dofile_silent("dfusion/initcustom.lua")
 
-function RunSaved() 
-	print("Locating saves...")
-	local str=df.world.cur_savegame.save_dir
-	print("Current region:"..str)
-	str="data/save/"..str.."/dfusion/init.lua"
-	print("Trying to run:"..str)
-	dofile_silent(str)
-end
+
 if not INIT then
 mainmenu(plugins)
 end

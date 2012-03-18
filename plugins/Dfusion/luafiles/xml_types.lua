@@ -1,3 +1,6 @@
+--<angavrilov> otherwise you just maintain alignment granularity in addition to size for all fields,
+--  round up current offset to field alignment, 
+--	assign structs the max alignment of any field, and round up struct size to its alignment
 function type_read(valtype,address)
 	if valtype.issimple then
 		--print("Simple read:"..tostring(valtype.ctype))

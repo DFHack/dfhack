@@ -418,6 +418,13 @@ function type_pointer.wrap:tonumber()
 	local myptr=rawget(self,"ptr")
 	return engine.peekd(myptr)--type_read(DWORD,myptr)
 end
+function type_pointer.wrap:__setup(trg)
+	if trg~= nil then
+		self:fromnumber(trg)
+	else
+		self:fromnumber(0)
+	end
+end
 function type_pointer.wrap:fromnumber(num)
 	local myptr=rawget(self,"ptr")
 	return engine.poked(myptr,num)--type_write(DWORD,myptr,num)
@@ -431,6 +438,13 @@ function type_pointer.wrap:setref(val)
 	local myptr=rawget(self,"ptr")
 	local mytype=rawget(self,"mtype")
 	return type_write(mytype.ptype,engine.peekd(myptr),val)
+end
+function type_pointer.wrap:newref(val)
+	local myptr=rawget(self,"ptr")
+	local mytype=rawget(self,"mtype")
+	local ptr=engine.alloc(mytype.ptype.size)
+	self:fromnumber(ptr)
+	return ptr
 end
 function type_pointer:makewrap(ptr)
 	local o={}
@@ -451,6 +465,7 @@ function dfarr.new(node,obj)
 	setmetatable(o,dfarr)
 	o.size=8
 	o.__align=4
+	o.item_type=makeType(first_of_type(node,"ld:item"))
 	return o
 end
 function dfarr:makewrap(address)
@@ -461,24 +476,34 @@ function dfarr:makewrap(address)
 	return o
 end
 dfarr.wrap={}
+function dfarr.wrap:__setup(size)
+	local mtype=rawget(self,"mtype")
+	engine.pokew(rawget(self,"ptr")+4,size)
+	local newptr=engine.alloc(size*mtype.item_type.size)
+	engine.poked(rawget(self,"ptr"),newptr)
+end
 function dfarr.wrap:__index(key)
 	local num=tonumber(key)
 	local mtype=rawget(self,"mtype")
-	local size=type_read(rawget(self,"ptr")+4,DWORD)
-	error("TODO make __index for dfarray")
+	local size=engine.peekw(rawget(self,"ptr")+4)
+	if key=="size" then
+		return size
+	end
+	local item_start=engine.peekd(rawget(self,"ptr"))
 	if num~=nil and num<sizethen then
-		return type_read(mtype.ctype,num*mtype.ctype.size+rawget(self,"ptr"))
+		return type_read(mtype.item_type,num*mtype.item_type.size+item_start)
 	else
-		error("invalid key to df-flagarray")
+		error("invalid key to df-array")
 	end
 end
 function dfarr.wrap:__newindex(key,val)
 	local num=tonumber(key)
-	error("TODO make __index for dfarray")
-	if num~=nil and num<rawget(self,"mtype").count then
-		return type_write(mtype.ctype,num*mtype.ctype.size+rawget(self,"ptr"),val)
+	local size=engine.peekw(rawget(self,"ptr")+4)
+	local item_start=engine.peekd(rawget(self,"ptr"))
+	if num~=nil and num<size then
+		return type_write(mtype.item_type,num*mtype.item_type.size+item_start,val)
 	else
-		error("invalid key to static-array")
+		error("invalid key to df-array")
 	end
 end
 

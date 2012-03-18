@@ -129,6 +129,21 @@ static int GetMod(lua_State *L)
         st.push(pos);
     return 1;
 }
+static int lua_malloc(lua_State *L)
+{
+	lua::state st(L);
+    size_t size=st.as<size_t>(1);
+    size_t pos=reinterpret_cast<size_t>(malloc(size));
+	st.push(pos);
+    return 1;
+}
+static int lua_malloc_free(lua_State *L)
+{
+	lua::state st(L);
+    size_t ptr=st.as<size_t>(1);
+    free(reinterpret_cast<void*>(ptr));
+    return 0;
+}
 #ifdef LINUX_BUILD
 static size_t __attribute__((stdcall))  PushValue(size_t ret,uint32_t eax,uint32_t ebx,uint32_t ecx,uint32_t edx,uint32_t edi,uint32_t esi,uint32_t esp,uint32_t ebp)
 #else
@@ -197,6 +212,8 @@ static int Resume_Df(lua_State *L)
 }
 const luaL_Reg lua_misc_func[]=
 {
+	{"alloc",lua_malloc},
+	{"free",lua_malloc_free},
 	{"loadmod",LoadMod},
 	{"getmod",GetMod},
 	{"loadobj",LoadObj},

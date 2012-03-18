@@ -45,7 +45,7 @@ function stl_vec.wrap:__index(key)
 	if num~=nil and num<size then
 		return type_read(mtype.item_type,num*mtype.item_type.size+p_begin)
 	else
-		error("invalid key to stl vector")
+		error(string.format("Invalid key: %s max: %d",key,size))
 	end
 end
 function stl_vec.wrap:__newindex(key,val)

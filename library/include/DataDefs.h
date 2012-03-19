@@ -37,6 +37,8 @@ distribution.
 	#undef interface
 #endif
 
+typedef struct lua_State lua_State;
+
 /*
  * Definitions of DFHack namespace structs used by generated headers.
  */
@@ -155,6 +157,8 @@ namespace DFHack
 
         virtual identity_type type() { return IDTYPE_ENUM; }
 
+        int64_t getFirstItem() { return first_item_value; }
+        int64_t getLastItem() { return last_item_value; }
         int getCount() { return int(last_item_value-first_item_value+1); }
         const char *const *getKeys() { return keys; }
     };
@@ -279,6 +283,8 @@ namespace DFHack
 #define STRICT_VIRTUAL_CAST_VAR(var,type,input) type *var = strict_virtual_cast<type>(input)
 
     void InitDataDefGlobals(Core *core);
+
+    DFHACK_EXPORT void AttachDFGlobals(lua_State *state);
 
     template<class T>
     T *ifnull(T *a, T *b) { return a ? a : b; }

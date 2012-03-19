@@ -65,8 +65,7 @@ namespace df
     template<> struct identity_traits<type> { \
         static primitive_identity identity; \
         static primitive_identity *get() { return &identity; } \
-    }; \
-    primitive_identity identity_traits<type>::identity(sizeof(type));
+    };
 
     ATOM_IDENTITY_TRAITS(char);
     ATOM_IDENTITY_TRAITS(int8_t);

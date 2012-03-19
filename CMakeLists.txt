@@ -103,6 +103,7 @@ ENDIF()
 
 # use shared libraries for protobuf
 ADD_DEFINITIONS(-DPROTOBUF_USE_DLLS)
+ADD_DEFINITIONS(-DLUA_BUILD_AS_DLL)
 
 if(UNIX)
     add_definitions(-D_LINUX)

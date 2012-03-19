@@ -55,6 +55,7 @@ SET(MAIN_SOURCES
 Core.cpp
 ColorText.cpp
 DataDefs.cpp
+LuaWrapper.cpp
 DataStatics.cpp
 DataStaticsCtor.cpp
 DataStaticsFields.cpp
@@ -251,7 +252,7 @@ ENDIF()
 #effectively disables debug builds...
 SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
-TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket ${PROJECT_LIBS})
+TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua ${PROJECT_LIBS})
 SET_TARGET_PROPERTIES(dfhack PROPERTIES LINK_INTERFACE_LIBRARIES "")
 
 TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket)

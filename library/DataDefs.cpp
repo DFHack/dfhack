@@ -44,18 +44,107 @@ using namespace DFHack;
  * this list has to be plain data, so that it gets
  * initialized by the loader in the initial mmap.
  */
-virtual_identity *virtual_identity::list = NULL;
+compound_identity *compound_identity::list = NULL;
+std::vector<compound_identity*> compound_identity::top_scope;
 
-virtual_identity::virtual_identity(const char *dfhack_name, const char *original_name, virtual_identity *parent)
-    : dfhack_name(dfhack_name), original_name(original_name), parent(parent),
-      prev(NULL), vtable_ptr(NULL), has_children(true)
+compound_identity::compound_identity(size_t size, TAllocateFn alloc,
+                                     compound_identity *scope_parent, const char *dfhack_name)
+    : constructed_identity(size, alloc), scope_parent(scope_parent), dfhack_name(dfhack_name)
 {
-    // Link into the static list. Nothing else can be safely done at this point.
-    next = list; list = this;    
+    next = list; list = this;
+}
+
+void compound_identity::doInit(Core *)
+{
+    if (scope_parent)
+        scope_parent->scope_children.push_back(this);
+    else
+        top_scope.push_back(this);
+}
+
+static tthread::mutex *known_mutex = NULL;
+
+void compound_identity::Init(Core *core)
+{
+    if (!known_mutex)
+        known_mutex = new tthread::mutex();
+
+    // This cannot be done in the constructors, because
+    // they are called in an undefined order.
+    for (compound_identity *p = list; p; p = p->next)
+        p->doInit(core);
+
+    //FIXME: ... nuked. the group was empty...
+/*
+    // Read pre-filled vtable ptrs
+    OffsetGroup *ptr_table = core->vinfo->getGroup("vtable");
+    for (virtual_identity *p = list; p; p = p->next) {
+        void * tmp;
+        if (ptr_table->getSafeAddress(p->getName(),tmp))
+            p->vtable_ptr = tmp;
+    }
+    */
+}
+
+bitfield_identity::bitfield_identity(size_t size, TAllocateFn alloc,
+                                     compound_identity *scope_parent, const char *dfhack_name,
+                                     int num_bits, const bitfield_item_info *bits)
+    : compound_identity(size, alloc, scope_parent, dfhack_name), bits(bits), num_bits(num_bits)
+{
+}
+
+enum_identity::enum_identity(size_t size, TAllocateFn alloc,
+                             compound_identity *scope_parent, const char *dfhack_name,
+                             int64_t first_item_value, int64_t last_item_value,
+                             const char *const *keys)
+    : compound_identity(size, alloc, scope_parent, dfhack_name),
+      first_item_value(first_item_value), last_item_value(last_item_value), keys(keys)
+{
+}
+
+struct_identity::struct_identity(size_t size, TAllocateFn alloc,
+                                 compound_identity *scope_parent, const char *dfhack_name,
+                                 struct_identity *parent, const struct_field_info *fields)
+    : compound_identity(size, alloc, scope_parent, dfhack_name), parent(parent), has_children(false)
+{
+}
+
+void struct_identity::doInit(Core *core)
+{
+    compound_identity::doInit(core);
+
+    if (parent) {
+        parent->children.push_back(this);
+        parent->has_children = true;
+    }
+}
+
+bool struct_identity::is_subclass(struct_identity *actual)
+{
+    for (; actual; actual = actual->getParent())
+        if (actual == this) return true;
+
+    return false;
+}
+
+virtual_identity::virtual_identity(size_t size, TAllocateFn alloc,
+                                   const char *dfhack_name, const char *original_name,
+                                   virtual_identity *parent, const struct_field_info *fields)
+    : struct_identity(size, alloc, NULL, dfhack_name, parent, fields), original_name(original_name),
+      vtable_ptr(NULL)
+{
+}
+
+static std::map<std::string, virtual_identity*> name_lookup;
+
+void virtual_identity::doInit(Core *core)
+{
+    struct_identity::doInit(core);
+
+    name_lookup[getOriginalName()] = this;
 }
 
 /* Vtable to identity lookup. */
-static tthread::mutex *known_mutex = NULL;
 std::map<void*, virtual_identity*> virtual_identity::known;
 
 virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
@@ -78,8 +167,9 @@ virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
 
     virtual_identity *actual = NULL;
 
-    for (virtual_identity *p = list; p; p = p->next) {
-        if (strcmp(name.c_str(), p->getOriginalName()) != 0) continue;
+    auto name_it = name_lookup.find(name);
+    if (name_it != name_lookup.end()) {
+        virtual_identity *p = name_it->second;
 
         if (p->vtable_ptr && p->vtable_ptr != vtable) {
             std::cerr << "Conflicting vtable ptr for class '" << p->getName()
@@ -101,14 +191,6 @@ virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
 
     known[vtable] = NULL;
     return NULL;
-}
-
-bool virtual_identity::is_subclass(virtual_identity *actual)
-{
-    for (; actual; actual = actual->parent)
-        if (actual == this) return true;
-
-    return false;
 }
 
 void virtual_identity::adjust_vtable(virtual_ptr obj, virtual_identity *main)
@@ -133,35 +215,6 @@ virtual_ptr virtual_identity::clone(virtual_ptr obj)
     if (!copy) return NULL;
     id->do_copy(copy, obj);
     return copy;
-}
-
-void virtual_identity::Init(Core *core)
-{
-    if (!known_mutex)
-        known_mutex = new tthread::mutex();
-
-    // This cannot be done in the constructors, because
-    // they are called in an undefined order.
-    for (virtual_identity *p = list; p; p = p->next) {
-        p->has_children = false;
-        p->children.clear();
-    }
-    for (virtual_identity *p = list; p; p = p->next) {
-        if (p->parent) {
-            p->parent->children.push_back(p);
-            p->parent->has_children = true;
-        }
-    }
-    //FIXME: ... nuked. the group was empty...
-/*
-    // Read pre-filled vtable ptrs
-    OffsetGroup *ptr_table = core->vinfo->getGroup("vtable");
-    for (virtual_identity *p = list; p; p = p->next) {
-        void * tmp;
-        if (ptr_table->getSafeAddress(p->getName(),tmp))
-            p->vtable_ptr = tmp;
-    }
-    */
 }
 
 bool DFHack::findBitfieldField(unsigned *idx, const std::string &name,

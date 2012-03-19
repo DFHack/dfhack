@@ -57,6 +57,7 @@ ColorText.cpp
 DataDefs.cpp
 DataStatics.cpp
 DataStaticsCtor.cpp
+DataStaticsFields.cpp
 MiscUtils.cpp
 PluginManager.cpp
 TileTypes.cpp
@@ -194,6 +195,14 @@ ADD_CUSTOM_COMMAND(
 )
 
 ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/df/static.inc)
+
+IF(UNIX)
+  # Don't produce debug info for generated stubs
+  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp
+                              PROPERTIES COMPILE_FLAGS "-g0")
+ELSE(WIN32)
+ENDIF()
+
 
 # Compilation
 

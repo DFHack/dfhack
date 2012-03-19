@@ -21,6 +21,8 @@ namespace {
 #define INIT_GLOBAL_FUNCTION_ITEM(type,name) \
     if (global_table_->getAddress(#name,tmp_)) name = (type*)tmp_;
 
+#define TID(type) (&identity_traits< type >::identity)
+
 // Instantiate all the static objects
 #include "df/static.inc"
 #include "df/static.enums.inc"

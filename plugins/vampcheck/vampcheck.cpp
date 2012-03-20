@@ -144,9 +144,9 @@ command_result vampcheck (color_ostream &out, vector <string> & parameters)
             return CR_OK;
         }
         if(parameters[i] == "detail")
-		    giveDetails = true;
+            giveDetails = true;
         if(parameters[i] == "nick")
-		    giveNick = true;
+            giveNick = true;
     }
 
     // check whole map if no cursor is active

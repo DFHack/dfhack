@@ -55,6 +55,9 @@ namespace DFHack
 
         type_identity *getTarget() { return target; }
 
+        static int lua_read(lua_State *state, int fname_idx, void *ptr, type_identity *target);
+        static void lua_write(lua_State *state, int fname_idx, void *ptr, type_identity *target, int val_index);
+
         virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };

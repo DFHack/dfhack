@@ -306,7 +306,7 @@ namespace DFHack
 
     DFHACK_EXPORT void AttachDFGlobals(lua_State *state);
 
-    DFHACK_EXPORT int PushDFObject(lua_State *state, type_identity *type, void *ptr);
+    DFHACK_EXPORT void PushDFObject(lua_State *state, type_identity *type, void *ptr);
     DFHACK_EXPORT void *GetDFObject(lua_State *state, type_identity *type, int val_index);
 
     template<class T>

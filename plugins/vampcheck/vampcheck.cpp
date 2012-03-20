@@ -183,8 +183,8 @@ command_result vampcheck (color_ostream &out, vector <string> & parameters)
                     // if creature has no nickname, restofname will already contain firstname
                     // no need for double output
                     if(restofname.compare(0, firstname.length(),firstname) != 0)
-                        out.print("%s", firstname.c_str());
-                    out.print("%s", restofname.c_str());
+                        out.print("%s ", firstname.c_str());
+                    out.print("%s ", restofname.c_str());
                 }
                 else
                 {

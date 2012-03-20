@@ -1,7 +1,13 @@
-// check single tile or whole map/world for vampires
-// only tested in fortress mode, maybe it should bail out if called in another mode
-// TODO: add some check for deceased vampires, currently lists everybody who has a curse active
-//       curse probably persists after death to be evauluated for legends...
+// vampcheck plugin
+//
+// check single tile or whole map/world for vampires by checking if a valid curse date (!=-1) is set
+// if a cursor is active only the selected tile will be observed
+// without cursor the whole map will be checked
+// by default vampires will be only counted
+//
+// Options:
+//   detail  - print full name, date of birth, date of curse (vamp might use fake identity, though)
+//   nick    - set nickname to 'CURSED' (does not always show up ingame, some vamps don't like nicknames)
 
 #include <iostream>
 #include <iomanip>
@@ -13,20 +19,12 @@
 #include <cstdio>
 using namespace std;
 
-// TODO: check if all these includes are really necessary
-// (they were thrown together from the other plugins where the code was borrowed from)
-
 #include "Core.h"
 #include "Console.h"
-#include "Export.h"
 #include "PluginManager.h"
 #include "modules/Units.h"
 #include <modules/Translation.h>
-#include "modules/Maps.h"
 #include "modules/Gui.h"
-#include "modules/Materials.h"
-#include "modules/MapCache.h"
-#include "modules/Buildings.h"
 #include "MiscUtils.h"
 
 #include "df/unit.h"
@@ -36,10 +34,8 @@ using namespace std;
 #include "df/historical_figure_info.h"
 #include "df/assumed_identity.h"
 #include "df/language_name.h"
-
 #include "df/world.h"
 #include "df/world_raws.h"
-#include "df/building_def.h"
 
 using std::vector;
 using std::string;
@@ -142,7 +138,7 @@ command_result vampcheck (color_ostream &out, vector <string> & parameters)
                         "  will be checked. Without cursor the whole map/world will be scanned.\n"
                         "  By default cursed creatures are only counted to make it more interesting.\n"
                         "Options:\n"
-                        "  detail - show details (might give false names and ages)\n"
+                        "  detail - show details (name and age shown ingame might differ)\n"
                         "  nick   - try to set nickname to CURSED (does not always work)\n"
                         );
             return CR_OK;
@@ -180,16 +176,15 @@ command_result vampcheck (color_ostream &out, vector <string> & parameters)
             {
                 if(unit->name.has_name)
                 {
-                    // TODO: avoid printing the first name twice
-                    // currently it behaves like this (copied from dwarfexport):
-                    // firstname nickname restofname(s)  - if dwarf has nickname (fine)
-                    // firstname firstname restofname(s) - if dwarf has no nickname (ugly)
-                    // (so better use two strings and check if firstname occurs twice)
-                    string info = unit->name.first_name;
-                    info += " ";
-                    info += Translation::TranslateName(&unit->name, false);
-                    info[0] = toupper(info[0]);
-                    out.print("%s ", info.c_str());
+                    string firstname = unit->name.first_name;
+                    string restofname = Translation::TranslateName(&unit->name, false);
+                    firstname[0] = toupper(firstname[0]);
+
+                    // if creature has no nickname, restofname will already contain firstname
+                    // no need for double output
+                    if(restofname.compare(0, firstname.length(),firstname) != 0)
+                        out.print("%s", firstname.c_str());
+                    out.print("%s", restofname.c_str());
                 }
                 else
                 {

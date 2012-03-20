@@ -108,3 +108,9 @@ OPTION(BUILD_SKELETON "Build the skeleton plugin." OFF)
 if(BUILD_SKELETON)
     add_subdirectory(skeleton)
 endif()
+
+# this is a plugin which helps detect vampires
+OPTION(BUILD_VAMPCHECK "Build the vampcheck plugin." ON)
+if(BUILD_VAMPCHECK)
+    add_subdirectory(vampcheck)
+endif()

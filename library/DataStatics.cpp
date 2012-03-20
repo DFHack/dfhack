@@ -7,6 +7,8 @@
 #include "df/world_data.h"
 #include "df/ui.h"
 
+#include "DataIdentity.h"
+
 namespace {
     template<class T>
     inline T &_toref(T &r) { return r; }

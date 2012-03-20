@@ -44,6 +44,21 @@ namespace DFHack
         virtual identity_type type() { return IDTYPE_PRIMITIVE; }
     };
 
+    class DFHACK_EXPORT pointer_identity : public primitive_identity {
+        type_identity *target;
+
+    public:
+        pointer_identity(type_identity *target = NULL)
+            : primitive_identity(sizeof(void*)), target(target) {};
+
+        virtual identity_type type() { return IDTYPE_POINTER; }
+
+        type_identity *getTarget() { return target; }
+
+        virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
+    };
+
     class DFHACK_EXPORT container_identity : public constructed_identity {
         type_identity *item;
         enum_identity *ienum;
@@ -53,35 +68,101 @@ namespace DFHack
             : constructed_identity(size, alloc), item(item), ienum(ienum) {};
 
         virtual identity_type type() { return IDTYPE_CONTAINER; }
+
+        type_identity *getItemType() { return item; }
     };
 }
 
 namespace df
 {
     using DFHack::primitive_identity;
+    using DFHack::pointer_identity;
     using DFHack::container_identity;
 
-#define ATOM_IDENTITY_TRAITS(type) \
-    template<> struct identity_traits<type> { \
-        static primitive_identity identity; \
-        static primitive_identity *get() { return &identity; } \
+    class number_identity_base : public primitive_identity {
+    public:
+        number_identity_base(size_t size) : primitive_identity(size) {};
+
+        virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
+
+    protected:
+        virtual double read(void *ptr) = 0;
+        virtual void write(void *ptr, double val) = 0;
     };
 
-    ATOM_IDENTITY_TRAITS(char);
-    ATOM_IDENTITY_TRAITS(int8_t);
-    ATOM_IDENTITY_TRAITS(uint8_t);
-    ATOM_IDENTITY_TRAITS(int16_t);
-    ATOM_IDENTITY_TRAITS(uint16_t);
-    ATOM_IDENTITY_TRAITS(int32_t);
-    ATOM_IDENTITY_TRAITS(uint32_t);
-    ATOM_IDENTITY_TRAITS(int64_t);
-    ATOM_IDENTITY_TRAITS(uint64_t);
-    ATOM_IDENTITY_TRAITS(bool);
-    ATOM_IDENTITY_TRAITS(float);
-    ATOM_IDENTITY_TRAITS(std::string);
-    ATOM_IDENTITY_TRAITS(void*);
+    template<class T>
+    class number_identity : public number_identity_base {
+    public:
+        number_identity() : number_identity_base(sizeof(T)) {}
+    protected:
+        virtual double read(void *ptr) { return double(*(T*)ptr); }
+        virtual void write(void *ptr, double val) { *(T*)ptr = T(val); }
+    };
 
-#undef ATOM_IDENTITY_TRAITS
+    class bool_identity : public primitive_identity {
+    public:
+        bool_identity() : primitive_identity(sizeof(bool)) {};
+
+        virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
+    };
+
+    class stl_string_identity : public primitive_identity {
+    public:
+        stl_string_identity() : primitive_identity(sizeof(std::string)) {};
+
+        virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
+    };
+
+    class stl_ptr_vector_identity : public container_identity {
+    public:
+        stl_ptr_vector_identity(type_identity *item = NULL, enum_identity *ienum = NULL)
+            : container_identity(sizeof(std::vector<void*>),allocator_fn<std::vector<void*> >,item, ienum)
+        {};
+
+        virtual DFHack::identity_type type() { return DFHack::IDTYPE_STL_PTR_VECTOR; }
+    };
+
+#define NUMBER_IDENTITY_TRAITS(type) \
+    template<> struct identity_traits<type> { \
+        static number_identity<type> identity; \
+        static number_identity_base *get() { return &identity; } \
+    };
+
+    NUMBER_IDENTITY_TRAITS(char);
+    NUMBER_IDENTITY_TRAITS(int8_t);
+    NUMBER_IDENTITY_TRAITS(uint8_t);
+    NUMBER_IDENTITY_TRAITS(int16_t);
+    NUMBER_IDENTITY_TRAITS(uint16_t);
+    NUMBER_IDENTITY_TRAITS(int32_t);
+    NUMBER_IDENTITY_TRAITS(uint32_t);
+    NUMBER_IDENTITY_TRAITS(int64_t);
+    NUMBER_IDENTITY_TRAITS(uint64_t);
+    NUMBER_IDENTITY_TRAITS(float);
+
+    template<> struct identity_traits<bool> {
+        static bool_identity identity;
+        static bool_identity *get() { return &identity; }
+    };
+
+    template<> struct identity_traits<std::string> {
+        static stl_string_identity identity;
+        static stl_string_identity *get() { return &identity; }
+    };
+
+    template<> struct identity_traits<void*> {
+        static pointer_identity identity;
+        static pointer_identity *get() { return &identity; }
+    };
+
+    template<> struct identity_traits<std::vector<void*> > {
+        static stl_ptr_vector_identity identity;
+        static stl_ptr_vector_identity *get() { return &identity; }
+    };
+
+#undef NUMBER_IDENTITY_TRAITS
 
     // Container declarations
 
@@ -90,7 +171,7 @@ namespace df
     };
 
     template<class T> struct identity_traits<T *> {
-        static container_identity *get();
+        static pointer_identity *get();
     };
 
     template<class T, int sz> struct identity_traits<T [sz]> {
@@ -99,6 +180,10 @@ namespace df
 
     template<class T> struct identity_traits<std::vector<T> > {
         static container_identity *get();
+    };
+
+    template<class T> struct identity_traits<std::vector<T*> > {
+        static stl_ptr_vector_identity *get();
     };
 
     template<class T> struct identity_traits<std::deque<T> > {
@@ -117,15 +202,12 @@ namespace df
 
     template<class Enum, class FT>
     primitive_identity *identity_traits<enum_field<Enum,FT> >::get() {
-        static primitive_identity identity(sizeof(FT));
-        return &identity;
+        return identity_traits<FT>::get();
     }
 
     template<class T>
-    container_identity *identity_traits<T *>::get() {
-        typedef T * container;
-        static container_identity identity(sizeof(container), &allocator_fn<container>,
-                                            identity_traits<T>::get());
+    pointer_identity *identity_traits<T *>::get() {
+        static pointer_identity identity(identity_traits<T>::get());
         return &identity;
     }
 
@@ -142,6 +224,12 @@ namespace df
         typedef std::vector<T> container;
         static container_identity identity(sizeof(container), &allocator_fn<container>,
                                             identity_traits<T>::get());
+        return &identity;
+    }
+
+    template<class T>
+    stl_ptr_vector_identity *identity_traits<std::vector<T*> >::get() {
+        static stl_ptr_vector_identity identity(identity_traits<T>::get());
         return &identity;
     }
 

@@ -50,11 +50,13 @@ namespace DFHack
     enum identity_type {
         IDTYPE_GLOBAL,
         IDTYPE_PRIMITIVE,
+        IDTYPE_POINTER,
         IDTYPE_CONTAINER,
         IDTYPE_BITFIELD,
         IDTYPE_ENUM,
         IDTYPE_STRUCT,
-        IDTYPE_CLASS
+        IDTYPE_CLASS,
+        IDTYPE_STL_PTR_VECTOR
     };
 
     typedef void *(*TAllocateFn)(void*,const void*);
@@ -80,6 +82,9 @@ namespace DFHack
         size_t byte_size() { return size; }
 
         virtual identity_type type() = 0;
+
+        virtual int lua_read(lua_State *state, int fname_idx, void *ptr) = 0;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) = 0;
     };
 
     class DFHACK_EXPORT constructed_identity : public type_identity {
@@ -96,6 +101,9 @@ namespace DFHack
             if (allocator) allocator(tgt,src);
             else type_identity::do_copy(tgt, src);
         };
+
+        virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 
     class DFHACK_EXPORT compound_identity : public constructed_identity {
@@ -149,9 +157,12 @@ namespace DFHack
         int64_t first_item_value;
         int64_t last_item_value;
 
+        type_identity *base_type;
+
     public:
         enum_identity(size_t size, TAllocateFn alloc,
                       compound_identity *scope_parent, const char *dfhack_name,
+                      type_identity *base_type,
                       int64_t first_item_value, int64_t last_item_value,
                       const char *const *keys);
 
@@ -161,6 +172,11 @@ namespace DFHack
         int64_t getLastItem() { return last_item_value; }
         int getCount() { return int(last_item_value-first_item_value+1); }
         const char *const *getKeys() { return keys; }
+
+        type_identity *getBaseType() { return base_type; }
+
+        virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 
     struct struct_field_info {
@@ -187,6 +203,8 @@ namespace DFHack
         std::vector<struct_identity*> children;
         bool has_children;
 
+        const struct_field_info *fields;
+
     protected:
         virtual void doInit(Core *core);
 
@@ -200,6 +218,8 @@ namespace DFHack
         struct_identity *getParent() { return parent; }
         const std::vector<struct_identity*> &getChildren() { return children; }
         bool hasChildren() { return has_children; }
+
+        const struct_field_info *getFields() { return fields; }
 
         bool is_subclass(struct_identity *subtype);
     };
@@ -285,6 +305,9 @@ namespace DFHack
     void InitDataDefGlobals(Core *core);
 
     DFHACK_EXPORT void AttachDFGlobals(lua_State *state);
+
+    DFHACK_EXPORT int PushDFObject(lua_State *state, type_identity *type, void *ptr);
+    DFHACK_EXPORT void *GetDFObject(lua_State *state, type_identity *type, int val_index);
 
     template<class T>
     T *ifnull(T *a, T *b) { return a ? a : b; }

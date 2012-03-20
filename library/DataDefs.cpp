@@ -95,17 +95,20 @@ bitfield_identity::bitfield_identity(size_t size, TAllocateFn alloc,
 
 enum_identity::enum_identity(size_t size, TAllocateFn alloc,
                              compound_identity *scope_parent, const char *dfhack_name,
+                             type_identity *base_type,
                              int64_t first_item_value, int64_t last_item_value,
                              const char *const *keys)
     : compound_identity(size, alloc, scope_parent, dfhack_name),
-      first_item_value(first_item_value), last_item_value(last_item_value), keys(keys)
+      first_item_value(first_item_value), last_item_value(last_item_value),
+      keys(keys), base_type(base_type)
 {
 }
 
 struct_identity::struct_identity(size_t size, TAllocateFn alloc,
                                  compound_identity *scope_parent, const char *dfhack_name,
                                  struct_identity *parent, const struct_field_info *fields)
-    : compound_identity(size, alloc, scope_parent, dfhack_name), parent(parent), has_children(false)
+    : compound_identity(size, alloc, scope_parent, dfhack_name),
+      parent(parent), has_children(false), fields(fields)
 {
 }
 

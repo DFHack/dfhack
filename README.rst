@@ -387,7 +387,7 @@ For more information, refer to the command's internal help.
 liquidsgo-here
 ==============
 Run the liquid spawner with the current/last settings made in liquidsgo (if no settings in liquidsgo were made it paints a point of 7/7 magma by default).
-Can be used from a hotkey. Requires an active in-game cursor.
+Intended to be used as keybinding. Requires an active in-game cursor.
 	
 mode
 ====

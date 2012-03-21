@@ -85,10 +85,11 @@ namespace DFHack
 
         virtual identity_type type() = 0;
 
+        virtual std::string getFullName() = 0;
+
+        // For internal use in the lua wrapper
         virtual int lua_read(lua_State *state, int fname_idx, void *ptr) = 0;
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) = 0;
-
-        virtual std::string getFullName() = 0;
         virtual void build_metatable(lua_State *state);
 
         virtual bool isContainer() { return false; }
@@ -159,6 +160,8 @@ namespace DFHack
 
         int getNumBits() { return num_bits; }
         const bitfield_item_info *getBits() { return bits; }
+
+        virtual void build_metatable(lua_State *state);
     };
 
     class DFHACK_EXPORT enum_identity : public compound_identity {
@@ -317,9 +320,21 @@ namespace DFHack
 
     void InitDataDefGlobals(Core *core);
 
+    // LUA wrapper
+
+    /**
+     * Make DF objects available to the given interpreter.
+     */
     DFHACK_EXPORT void AttachDFGlobals(lua_State *state);
 
+    /**
+     * Push the pointer onto the stack as a wrapped DF object of the given type.
+     */
     DFHACK_EXPORT void PushDFObject(lua_State *state, type_identity *type, void *ptr);
+
+    /**
+     * Check that the value is a wrapped DF object of the given type, and if so return the pointer.
+     */
     DFHACK_EXPORT void *GetDFObject(lua_State *state, type_identity *type, int val_index);
 
     template<class T>
@@ -619,6 +634,24 @@ namespace DFHack {
         std::vector<std::string> tmp;
         flagarray_to_string<T>(&tmp, val);
         return join_strings(sep, tmp);
+    }
+
+    // LUA wrapper
+
+    /**
+     * Push the pointer onto the stack as a wrapped DF object of a specific type.
+     */
+    template<class T>
+    void PushDFObject(lua_State *state, T *ptr) {
+        PushDFObject(state, df::identity_traits<T>::get(), ptr);
+    }
+
+    /**
+     * Check that the value is a wrapped DF object of the correct type, and if so return the pointer.
+     */
+    template<class T>
+    T *GetDFObject(lua_State *state, int val_index) {
+        return GetDFObject(state, df::identity_traits<T>::get(), val_index);
     }
 }
 

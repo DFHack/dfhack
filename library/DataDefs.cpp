@@ -34,6 +34,7 @@ distribution.
 #include "tinythread.h"
 // must be last due to MS stupidity
 #include "DataDefs.h"
+#include "DataIdentity.h"
 
 #include "MiscUtils.h"
 
@@ -60,6 +61,14 @@ void compound_identity::doInit(Core *)
         scope_parent->scope_children.push_back(this);
     else
         top_scope.push_back(this);
+}
+
+std::string compound_identity::getFullName()
+{
+    if (scope_parent)
+        return scope_parent->getFullName() + "." + getName();
+    else
+        return getName();
 }
 
 static tthread::mutex *known_mutex = NULL;
@@ -128,6 +137,32 @@ bool struct_identity::is_subclass(struct_identity *actual)
         if (actual == this) return true;
 
     return false;
+}
+
+std::string pointer_identity::getFullName()
+{
+    return (target ? target->getFullName() : std::string("void")) + "*";
+}
+
+std::string container_identity::getFullName(type_identity *item)
+{
+    return "<" + (item ? item->getFullName() : std::string("void")) + ">";
+}
+
+std::string ptr_container_identity::getFullName(type_identity *item)
+{
+    return "<" + (item ? item->getFullName() : std::string("void")) + "*>";
+}
+
+std::string bit_container_identity::getFullName(type_identity *)
+{
+    return "<bool>";
+}
+
+std::string df::buffer_container_identity::getFullName(type_identity *item)
+{
+    return (item ? item->getFullName() : std::string("void")) +
+           (size > 0 ? stl_sprintf("[%d]", size) : std::string("[]"));
 }
 
 virtual_identity::virtual_identity(size_t size, TAllocateFn alloc,

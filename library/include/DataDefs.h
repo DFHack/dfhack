@@ -52,6 +52,8 @@ namespace DFHack
         IDTYPE_PRIMITIVE,
         IDTYPE_POINTER,
         IDTYPE_CONTAINER,
+        IDTYPE_PTR_CONTAINER,
+        IDTYPE_BIT_CONTAINER,
         IDTYPE_BITFIELD,
         IDTYPE_ENUM,
         IDTYPE_STRUCT,
@@ -85,6 +87,11 @@ namespace DFHack
 
         virtual int lua_read(lua_State *state, int fname_idx, void *ptr) = 0;
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) = 0;
+
+        virtual std::string getFullName() = 0;
+        virtual void build_metatable(lua_State *state);
+
+        virtual bool isContainer() { return false; }
     };
 
     class DFHACK_EXPORT constructed_identity : public type_identity {
@@ -123,6 +130,8 @@ namespace DFHack
 
     public:
         const char *getName() { return dfhack_name; }
+
+        virtual std::string getFullName();
 
         compound_identity *getScopeParent() { return scope_parent; }
         const std::vector<compound_identity*> &getScopeChildren() { return scope_children; }
@@ -222,6 +231,8 @@ namespace DFHack
         const struct_field_info *getFields() { return fields; }
 
         bool is_subclass(struct_identity *subtype);
+
+        virtual void build_metatable(lua_State *state);
     };
 
     class DFHACK_EXPORT global_identity : public struct_identity {
@@ -230,6 +241,8 @@ namespace DFHack
             : struct_identity(0,NULL,NULL,"global",NULL,fields) {}
 
         virtual identity_type type() { return IDTYPE_GLOBAL; }
+
+        virtual void build_metatable(lua_State *state);
     };
 
 #ifdef _MSC_VER

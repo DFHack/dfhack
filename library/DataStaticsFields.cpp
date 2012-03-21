@@ -15,7 +15,7 @@
 
 namespace df {
 #define NUMBER_IDENTITY_TRAITS(type) \
-    number_identity<type> identity_traits<type>::identity;
+    number_identity<type> identity_traits<type>::identity(#type);
 
     NUMBER_IDENTITY_TRAITS(char);
     NUMBER_IDENTITY_TRAITS(int8_t);
@@ -32,6 +32,9 @@ namespace df {
     stl_string_identity identity_traits<std::string>::identity;
     pointer_identity identity_traits<void*>::identity;
     stl_ptr_vector_identity identity_traits<std::vector<void*> >::identity;
+    stl_bit_vector_identity identity_traits<std::vector<bool> >::identity;
+
+    buffer_container_identity buffer_container_identity::base_instance;
 
 #undef NUMBER_IDENTITY_TRAITS
 }

@@ -44,7 +44,6 @@ DFHACK_PLUGIN("ruby")
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-out.print("plugin_init\n");
     m_irun = new tthread::mutex();
     m_mutex = new tthread::mutex();
     r_type = RB_INIT;
@@ -73,7 +72,6 @@ out.print("plugin_init\n");
                 "Ruby interpreter dev. Eval() a ruby string.",
                 df_rubyeval));
 
-out.print("plugin_init done\n");
     return CR_OK;
 }
 

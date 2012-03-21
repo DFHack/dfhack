@@ -379,6 +379,16 @@ For more information, refer to the command's internal help.
     Spawning and deleting liquids can F up pathing data and
     temperatures (creating heat traps). You've been warned.
 
+liquidsgo
+=========
+Allows adding magma, water and obsidian to the game. It replaces the normal dfhack command line and can't be used from a hotkey. Settings will be remembered as long as dfhack runs. Intended for use in combination with the command liquidsgo-here (which can be bound to a hotkey).
+For more information, refer to the command's internal help. 
+
+liquidsgo-here
+==============
+Run the liquid spawner with the current/last settings made in liquidsgo (if no settings in liquidsgo were made it paints a point of 7/7 magma by default).
+Can be used from a hotkey. Requires an active in-game cursor.
+	
 mode
 ====
 This command lets you see and change the game mode directly. Not all combinations are good for every situation and most of them will produce undesirable results.
@@ -530,6 +540,17 @@ Options
 tubefill
 ========
 Fills all the adamantine veins again. Veins that were empty will be filled in too, but might still trigger a demon invasion (this is a known bug).
+
+vampcheck
+=========
+Checks a single map tile or the whole map/world for cursed creatures (vampires).
+With an active in-game cursor only the selected tile will be observed. Without a cursor the whole map will be checked.
+By default vampires will be only counted in case you just want to find out if you have any of them running around in your fort.
+
+Options
+-------
+:detail:           Print full name, date of birth, date of curse (some vampires might use fake identities in-game, though).
+:nick:             Set nickname to 'CURSED' (does not always show up in-game, some vamps don't like nicknames).
 
 vdig
 ====

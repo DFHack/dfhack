@@ -114,3 +114,11 @@ OPTION(BUILD_VAMPCHECK "Build the vampcheck plugin." ON)
 if(BUILD_VAMPCHECK)
     add_subdirectory(vampcheck)
 endif()
+
+# alternative version of liquids which can be used non-interactively after configuring it
+# similar to digcircle: simply store stuff in statics and use it when called without parameters
+# this will allow to map the command to a keybinding for much more convenient messing with the map
+OPTION(BUILD_LIQUIDSGO "Build the liquidsgo plugin." ON)
+if(BUILD_LIQUIDSGO)
+    add_subdirectory(liquidsgo)
+endif()

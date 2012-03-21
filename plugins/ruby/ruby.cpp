@@ -44,6 +44,7 @@ DFHACK_PLUGIN("ruby")
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
+out.print("plugin_init\n");
     m_irun = new tthread::mutex();
     m_mutex = new tthread::mutex();
     r_type = RB_INIT;
@@ -72,6 +73,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
                 "Ruby interpreter dev. Eval() a ruby string.",
                 df_rubyeval));
 
+out.print("plugin_init done\n");
     return CR_OK;
 }
 
@@ -521,6 +523,7 @@ static void ruby_bind_world(void) {
     rb_c_world_T_units = rb_define_class_under(rb_c_world, "T_units", rb_c_WrapData);
 
     rb_define_method(rb_c_world, "units", RUBY_METHOD_FUNC(rb_m_world_units), 0);
+    rb_define_method(rb_c_world_T_units, "all", RUBY_METHOD_FUNC(rb_m_world_T_units_all), 0);
 }
 
 static VALUE rb_global_world(VALUE self) {
@@ -603,7 +606,7 @@ static void ruby_bind_dfhack(void) {
 
     // load the default ruby-level definitions
     int state=0;
-    rb_load_protect(rb_str_new2("./hack/plugins/ruby.rb"), Qfalse, &state);
+    rb_load_protect(rb_str_new2("./hack/ruby.rb"), Qfalse, &state);
     if (state)
         dump_rb_error();
 }

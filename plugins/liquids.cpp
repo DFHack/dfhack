@@ -605,5 +605,9 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
             out << command << " : unknown command." << endl;
         }
     }
+    
+    //cleanup
+    delete brush;
+
     return CR_OK;
 }

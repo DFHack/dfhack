@@ -1,0 +1,7 @@
+find_package(Ruby)
+if(RUBY_FOUND)
+    include_directories("${dfhack_SOURCE_DIR}/depends/tthread" ${RUBY_INCLUDE_PATH})
+    DFHACK_PLUGIN(ruby ruby.cpp LINK_LIBRARIES dfhack-tinythread)
+else(RUBY_FOUND)
+    MESSAGE(STATUS "Required library (ruby) not found - ruby plugin can't be built.")
+endif(RUBY_FOUND)

@@ -35,6 +35,11 @@ if (BUILD_DWARFEXPORT)
     add_subdirectory (dwarfexport)
 endif()
 
+OPTION(BUILD_RUBY "Build ruby binding." OFF)
+if (BUILD_RUBY)
+    add_subdirectory (ruby)
+endif()
+
 # Protobuf
 FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 

@@ -265,6 +265,8 @@ function tools.empregnate(unit)
 		unit=getSelectedUnit()
 	end
 	if unit==nil then
+		unit=getCreatureAtPos(getxyz())
+	if unit==nil then
 		error("Failed to empregnate. Unit not selected/valide")
 	end
 	local arr1=unit.appearance.unk_51c

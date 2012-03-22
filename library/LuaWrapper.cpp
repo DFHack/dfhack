@@ -265,29 +265,29 @@ int container_identity::lua_item_count(lua_State *state, void *ptr)
 
 int container_identity::lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx)
 {
-    void *pitem = item_pointer(ptr, idx);
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+    void *pitem = item_pointer(id, ptr, idx);
     return id->lua_read(state, fname_idx, pitem);
 }
 
 void container_identity::lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
 {
-    void *pitem = item_pointer(ptr, idx);
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+    void *pitem = item_pointer(id, ptr, idx);
     id->lua_write(state, fname_idx, pitem, val_index);
 }
 
 int ptr_container_identity::lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx)
 {
-    void *pitem = item_pointer(ptr, idx);
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+    void *pitem = item_pointer(&df::identity_traits<void*>::identity, ptr, idx);
     return df::pointer_identity::lua_read(state, fname_idx, pitem, id);
 }
 
 void ptr_container_identity::lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
 {
-    void *pitem = item_pointer(ptr, idx);
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+    void *pitem = item_pointer(&df::identity_traits<void*>::identity, ptr, idx);
     df::pointer_identity::lua_write(state, fname_idx, pitem, id, val_index);
 }
 
@@ -307,25 +307,12 @@ void bit_container_identity::lua_item_write(lua_State *state, int fname_idx, voi
         field_error(state, fname_idx, "boolean or number expected", "write");
 }
 
-int df::buffer_container_identity::lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx)
-{
-    auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
-    void *pitem = ((uint8_t*)ptr) + idx * id->byte_size();
-    return id->lua_read(state, fname_idx, pitem);
-}
-
-void df::buffer_container_identity::lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
-{
-    auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
-    void *pitem = ((uint8_t*)ptr) + idx * id->byte_size();
-    id->lua_write(state, fname_idx, pitem, val_index);
-}
-
 /* */
 
 static int change_error(lua_State *state)
 {
     luaL_error(state, "Attempt to change a read-only table.\n");
+    return 0;
 }
 
 /**
@@ -618,6 +605,8 @@ static int read_field(lua_State *state, const struct_field_info *field, void *pt
         case struct_field_info::END:
             return 0;
     }
+
+    return 0;
 }
 
 static void write_field(lua_State *state, const struct_field_info *field, void *ptr, int value_idx)

@@ -69,14 +69,12 @@ namespace DFHack
     protected:
         type_identity(size_t size) : size(size) {};
 
-        virtual void *do_instantiate() {
-            void *p = malloc(size);
-            memset(p, 0, size);
-            return p;
-        }
-        virtual void do_copy(void *tgt, const void *src) {
-            memmove(tgt, src, size);
-        };
+        void *do_allocate_pod();
+        void do_copy_pod(void *tgt, const void *src);
+
+        virtual bool can_allocate() { return true; }
+        virtual void *do_allocate() { return do_allocate_pod(); }
+        virtual void do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); }
 
     public:
         virtual ~type_identity() {}
@@ -93,6 +91,9 @@ namespace DFHack
         virtual void build_metatable(lua_State *state);
 
         virtual bool isContainer() { return false; }
+
+        void *allocate();
+        bool copy(void *tgt, const void *src);
     };
 
     class DFHACK_EXPORT constructed_identity : public type_identity {
@@ -102,13 +103,9 @@ namespace DFHack
         constructed_identity(size_t size, TAllocateFn alloc)
             : type_identity(size), allocator(alloc) {};
 
-        virtual void *do_instantiate() {
-            return allocator ? allocator(NULL,NULL) : type_identity::do_instantiate();
-        }
-        virtual void do_copy(void *tgt, const void *src) {
-            if (allocator) allocator(tgt,src);
-            else type_identity::do_copy(tgt, src);
-        };
+        virtual bool can_allocate() { return (allocator != NULL); }
+        virtual void *do_allocate() { return allocator(NULL,NULL); }
+        virtual void do_copy(void *tgt, const void *src) { allocator(tgt,src); }
 
         virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
@@ -151,8 +148,13 @@ namespace DFHack
         const bitfield_item_info *bits;
         int num_bits;
 
+    protected:
+        virtual bool can_allocate() { return true; }
+        virtual void *do_allocate() { return do_allocate_pod(); }
+        virtual void do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); }
+
     public:
-        bitfield_identity(size_t size, TAllocateFn alloc,
+        bitfield_identity(size_t size,
                           compound_identity *scope_parent, const char *dfhack_name,
                           int num_bits, const bitfield_item_info *bits);
 
@@ -171,8 +173,13 @@ namespace DFHack
 
         type_identity *base_type;
 
+    protected:
+        virtual bool can_allocate() { return true; }
+        virtual void *do_allocate();
+        virtual void do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); }
+
     public:
-        enum_identity(size_t size, TAllocateFn alloc,
+        enum_identity(size_t size,
                       compound_identity *scope_parent, const char *dfhack_name,
                       type_identity *base_type,
                       int64_t first_item_value, int64_t last_item_value,
@@ -266,6 +273,8 @@ namespace DFHack
 
         static void *get_vtable(virtual_ptr instance_ptr) { return *(void**)instance_ptr; }
 
+        bool can_allocate() { return struct_identity::can_allocate() && (vtable_ptr != NULL); }
+
     public:
         virtual_identity(size_t size, TAllocateFn alloc,
                          const char *dfhack_name, const char *original_name,
@@ -295,8 +304,8 @@ namespace DFHack
         }
 
     public:
-        bool can_instantiate() { return (vtable_ptr != NULL); }
-        virtual_ptr instantiate() { return can_instantiate() ? (virtual_ptr)do_instantiate() : NULL; }
+        bool can_instantiate() { return can_allocate(); }
+        virtual_ptr instantiate() { return can_instantiate() ? (virtual_ptr)do_allocate() : NULL; }
         static virtual_ptr clone(virtual_ptr obj);
 
     public:

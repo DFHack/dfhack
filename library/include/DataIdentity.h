@@ -92,7 +92,7 @@ namespace DFHack
 
     protected:
         virtual int item_count(void *ptr) = 0;
-        virtual void *item_pointer(void *ptr, int idx) = 0;
+        virtual void *item_pointer(type_identity *item, void *ptr, int idx) = 0;
     };
 
     class DFHACK_EXPORT ptr_container_identity : public container_identity {
@@ -122,7 +122,7 @@ namespace DFHack
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
 
     protected:
-        virtual void *item_pointer(void *, int) { return NULL; }
+        virtual void *item_pointer(type_identity *, void *, int) { return NULL; }
 
         virtual bool get_item(void *ptr, int idx) = 0;
         virtual void set_item(void *ptr, int idx, bool val) = 0;
@@ -185,6 +185,11 @@ namespace df
 
     class stl_ptr_vector_identity : public ptr_container_identity {
     public:
+        /*
+         * This class assumes that std::vector<T*> is equivalent
+         * in layout and behavior to std::vector<void*> for any T.
+         */
+
         stl_ptr_vector_identity(type_identity *item = NULL, enum_identity *ienum = NULL)
             : ptr_container_identity(sizeof(std::vector<void*>),allocator_fn<std::vector<void*> >,item, ienum)
         {};
@@ -199,7 +204,7 @@ namespace df
         virtual int item_count(void *ptr) {
             return ((std::vector<void*>*)ptr)->size();
         };
-        virtual void *item_pointer(void *ptr, int idx) {
+        virtual void *item_pointer(type_identity *, void *ptr, int idx) {
             return &(*(std::vector<void*>*)ptr)[idx];
         }
     };
@@ -220,12 +225,11 @@ namespace df
 
         static buffer_container_identity base_instance;
 
-        virtual int lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
-        virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
-
     protected:
         virtual int item_count(void *ptr) { return size; }
-        virtual void *item_pointer(void *ptr, int idx) { return NULL; }
+        virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
+            return ((uint8_t*)ptr) + idx * item->byte_size();
+        }
     };
 
     template<class T>
@@ -243,29 +247,35 @@ namespace df
 
     protected:
         virtual int item_count(void *ptr) { return ((T*)ptr)->size(); }
-        virtual void *item_pointer(void *ptr, int idx) { return &(*(T*)ptr)[idx]; }
+        virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
+            return &(*(T*)ptr)[idx];
+        }
     };
 
-    template<class T>
     class bit_array_identity : public bit_container_identity {
     public:
-        typedef BitArray<T> container;
+        /*
+         * This class assumes that BitArray<T> is equivalent
+         * in layout and behavior to BitArray<int> for any T.
+         */
+
+        typedef BitArray<int> container;
 
         bit_array_identity(enum_identity *ienum = NULL)
             : bit_container_identity(sizeof(container), &allocator_fn<container>, ienum)
         {}
 
         std::string getFullName(type_identity *item) {
-            return "BitArray" + bit_container_identity::getFullName(item);
+            return "BitArray<>";
         }
 
     protected:
         virtual int item_count(void *ptr) { return ((container*)ptr)->size * 8; }
         virtual bool get_item(void *ptr, int idx) {
-            return ((container*)ptr)->is_set(T(idx));
+            return ((container*)ptr)->is_set(idx);
         }
         virtual void set_item(void *ptr, int idx, bool val) {
-            ((container*)ptr)->set(T(idx), val);
+            ((container*)ptr)->set(idx, val);
         }
     };
 
@@ -412,7 +422,7 @@ namespace df
     bit_container_identity *identity_traits<BitArray<T> >::get() {
         static type_identity *eid = identity_traits<T>::get();
         static enum_identity *reid = eid->type() == DFHack::IDTYPE_ENUM ? (enum_identity*)eid : NULL;
-        static bit_array_identity<T> identity(reid);
+        static bit_array_identity identity(reid);
         return &identity;
     }
 

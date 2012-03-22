@@ -40,6 +40,37 @@ distribution.
 
 using namespace DFHack;
 
+
+void *type_identity::do_allocate_pod() {
+    void *p = malloc(size);
+    memset(p, 0, size);
+    return p;
+}
+
+void type_identity::do_copy_pod(void *tgt, const void *src) {
+    memmove(tgt, src, size);
+};
+
+void *type_identity::allocate() {
+    if (can_allocate())
+        return do_allocate();
+    else
+        return NULL;
+}
+
+bool type_identity::copy(void *tgt, const void *src) {
+    if (can_allocate() && tgt && src)
+        do_copy(tgt, src);
+    else
+        return false;
+}
+
+void *enum_identity::do_allocate() {
+    void *p = malloc(byte_size());
+    memcpy(p, &first_item_value, std::min(byte_size(), sizeof(int64_t)));
+    return p;
+}
+
 /* The order of global object constructor calls is
  * undefined between compilation units. Therefore,
  * this list has to be plain data, so that it gets
@@ -95,19 +126,19 @@ void compound_identity::Init(Core *core)
     */
 }
 
-bitfield_identity::bitfield_identity(size_t size, TAllocateFn alloc,
+bitfield_identity::bitfield_identity(size_t size,
                                      compound_identity *scope_parent, const char *dfhack_name,
                                      int num_bits, const bitfield_item_info *bits)
-    : compound_identity(size, alloc, scope_parent, dfhack_name), bits(bits), num_bits(num_bits)
+    : compound_identity(size, NULL, scope_parent, dfhack_name), bits(bits), num_bits(num_bits)
 {
 }
 
-enum_identity::enum_identity(size_t size, TAllocateFn alloc,
+enum_identity::enum_identity(size_t size,
                              compound_identity *scope_parent, const char *dfhack_name,
                              type_identity *base_type,
                              int64_t first_item_value, int64_t last_item_value,
                              const char *const *keys)
-    : compound_identity(size, alloc, scope_parent, dfhack_name),
+    : compound_identity(size, NULL, scope_parent, dfhack_name),
       first_item_value(first_item_value), last_item_value(last_item_value),
       keys(keys), base_type(base_type)
 {

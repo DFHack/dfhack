@@ -1,11 +1,11 @@
-PROJECT (vampcheck)
+PROJECT (cursecheck)
 # A list of source files
 SET(PROJECT_SRCS
-    vampcheck.cpp
+    cursecheck.cpp
 )
 # A list of headers
 SET(PROJECT_HDRS
-    vampcheck.h
+    cursecheck.h
 )
 SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
 
@@ -30,4 +30,4 @@ ELSE(UNIX)
     )
 ENDIF(UNIX)
 # this makes sure all the stuff is put in proper places and linked to dfhack
-DFHACK_PLUGIN(vampcheck ${PROJECT_SRCS} LINK_LIBRARIES ${PROJECT_LIBS})
+DFHACK_PLUGIN(cursecheck ${PROJECT_SRCS} LINK_LIBRARIES ${PROJECT_LIBS})

@@ -109,10 +109,10 @@ if(BUILD_SKELETON)
     add_subdirectory(skeleton)
 endif()
 
-# this is a plugin which helps detect vampires
-OPTION(BUILD_VAMPCHECK "Build the vampcheck plugin." ON)
-if(BUILD_VAMPCHECK)
-    add_subdirectory(vampcheck)
+# this is a plugin which helps detect cursed creatures (vampires, necromancers, werebeasts, ...)
+OPTION(BUILD_CURSECHECK "Build the cursecheck plugin." ON)
+if(BUILD_CURSECHECK)
+    add_subdirectory(cursecheck)
 endif()
 
 # alternative version of liquids which can be used non-interactively after configuring it

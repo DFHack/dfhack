@@ -536,21 +536,42 @@ Contains various tweaks for minor bugs (currently just one).
 Options
 -------
 :tweak clear-missing: Remove the missing status from the selected unit. This allows engraving slabs for ghostly, but not yet found, creatures.
+:tweak clear-ghostly: Remove the ghostly status from the selected unit and mark it as dead. This allows getting rid of bugged ghosts which do not show up in the engraving slab menu at all, even after using clear-missing. It works, but is potentially very dangerous - so use with care. Probably (almost certainly) it does not have the same effects like a proper burial. You've been warned.
 
 tubefill
 ========
 Fills all the adamantine veins again. Veins that were empty will be filled in too, but might still trigger a demon invasion (this is a known bug).
 
-vampcheck
-=========
-Checks a single map tile or the whole map/world for cursed creatures (vampires).
+cursecheck
+==========
+Checks a single map tile or the whole map/world for cursed creatures (ghosts, vampires, necromancers, werebeasts, zombies).
 With an active in-game cursor only the selected tile will be observed. Without a cursor the whole map will be checked.
-By default vampires will be only counted in case you just want to find out if you have any of them running around in your fort.
+By default cursed creatures will be only counted in case you just want to find out if you have any of them running around in your fort.
+By default dead and passive creatures (ghosts who were put to rest, killed vampires, ...) are ignored.
+Undead skeletons, corpses, bodyparts and the like are all thrown into the curse category "zombie".
+Anonymous zombies and resurrected body parts will show as "unnamed creature". 
 
 Options
 -------
-:detail:           Print full name, date of birth, date of curse (some vampires might use fake identities in-game, though).
-:nick:             Set nickname to 'CURSED' (does not always show up in-game, some vamps don't like nicknames).
+:detail:           Print full name, date of birth, date of curse and some status info (some vampires might use fake identities in-game, though).
+:nick:             Set the type of curse as nickname (does not always show up in-game, some vamps don't like nicknames).
+:all:              Include dead and passive cursed creatures (can result in a quite long list after having FUN with necromancers).
+:verbose:          Print all curse tags (if you really want to know it all).
+
+Examples:
+---------
+Check one single map tile if one of the creatures on it is cursed (in-game cursor required):
+  * cursecheck
+Count all active cursed creatures who roam around on your map (no in-game cursor) without giving more details:
+  * cursecheck
+Give detailed info about all cursed creatures including deceased ones (no in-game cursor):
+  * cursecheck detail all
+Give a nickname all living/active cursed creatures on the map(no in-game cursor):
+  * cursecheck nick
+
+.. note::
+
+    * If you do a full search (with the option "all") former ghosts will show up with the cursetype "unknown" because their ghostly flag is not set anymore. But if you happen to find a living/active creature with cursetype "unknown" please report that in the dfhack thread on the modding forum or per irc. This is likely to happen with mods which introduce new types of curses, for example.
 
 vdig
 ====

@@ -72,7 +72,8 @@ table.insert(plugins,{"adv_tools","some tools for (mainly) advneturer hacking"})
 
 table.insert(plugins,{"triggers","a function calling plug (discontinued...)"})
 table.insert(plugins,{"migrants","multi race imigrations"})
-table.insert(plugins,{"onfunction","run lua on some df function"})--]=]
+--]=]
+table.insert(plugins,{"onfunction","run lua on some df function"})
 table.insert(plugins,{"editor","edit internals of df",EditDF})
 table.insert(plugins,{"saves","run current worlds's init.lua",RunSaved})
 loadall(plugins)

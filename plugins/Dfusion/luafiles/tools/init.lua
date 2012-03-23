@@ -264,6 +264,11 @@ function tools.empregnate(unit)
 	if unit==nil then
 		unit=getSelectedUnit()
 	end
+	
+	if unit==nil then
+		unit=getCreatureAtPos(getxyz())
+	end
+	
 	if unit==nil then
 		error("Failed to empregnate. Unit not selected/valide")
 	end

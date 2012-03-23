@@ -151,11 +151,20 @@
 ** the libraries, you may want to use the following definition (define
 ** LUA_BUILD_AS_DLL to get it).
 */
+#ifdef __cplusplus
+    #define LUA_API_EXTERN extern "C"
+#else
+    #define LUA_API_EXTERN extern
+#endif
 #if defined(LUA_BUILD_AS_DLL)
-    #if defined(LUA_CORE) || defined(LUA_LIB)
-        #define LUA_API __declspec(dllexport)
+    #if defined(_MSC_VER)
+        #if defined(LUA_CORE) || defined(LUA_LIB)
+            #define LUA_API __declspec(dllexport) LUA_API_EXTERN
+        #else
+            #define LUA_API __declspec(dllimport) LUA_API_EXTERN
+        #endif
     #else
-        #define LUA_API __declspec(dllimport)
+        #define LUA_API  LUA_API_EXTERN __attribute__ ((visibility("default")))
     #endif
 #else
     #ifdef __cplusplus

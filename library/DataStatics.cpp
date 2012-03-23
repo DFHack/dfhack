@@ -7,6 +7,8 @@
 #include "df/world_data.h"
 #include "df/ui.h"
 
+#include "DataIdentity.h"
+
 namespace {
     template<class T>
     inline T &_toref(T &r) { return r; }
@@ -20,6 +22,8 @@ namespace {
 
 #define INIT_GLOBAL_FUNCTION_ITEM(type,name) \
     if (global_table_->getAddress(#name,tmp_)) name = (type*)tmp_;
+
+#define TID(type) (&identity_traits< type >::identity)
 
 // Instantiate all the static objects
 #include "df/static.inc"

@@ -62,18 +62,22 @@ message StringListMessage {
     repeated string value = 1;
 }
 
+// RPC BindMethod : CoreBindRequest -> CoreBindReply
 message CoreBindRequest {
     required string method = 1;
     required string input_msg = 2;
     required string output_msg = 3;
     optional string plugin = 4;
 }
-
 message CoreBindReply {
     required int32 assigned_id = 1;
 }
 
+// RPC RunCommand : CoreRunCommandRequest -> EmptyMessage
 message CoreRunCommandRequest {
     required string command = 1;
     repeated string arguments = 2;
 }
+
+// RPC CoreSuspend : EmptyMessage -> IntMessage
+// RPC CoreResume : EmptyMessage -> IntMessage

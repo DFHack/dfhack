@@ -476,28 +476,25 @@ function getSelectedUnit()
 	end
 end
 function getxyz() -- this will return pointers x,y and z coordinates.
-	local off=VersionInfo.getGroup("Position"):getAddress("cursor_xyz") -- lets find where in memory its being held
-	-- now lets read them (they are double words (or unsigned longs or 4 bits each) and go in sucesion
-	local x=engine.peekd(off)
-	local y=engine.peekd(off+4) --next is 4 from start
-	local z=engine.peekd(off+8) --next is 8 from start
-	--print("Pointer @:"..x..","..y..","..z)
+	local x=df.cursor.x
+	local y=df.cursor.y
+	local z=df.cursor.z	
 	return x,y,z -- return the coords
 end
-function GetCreatureAtPos(x,y,z) -- gets the creature index @ x,y,z coord
+function getCreatureAtPos(x,y,z) -- gets the creature index @ x,y,z coord
 	--local x,y,z=getxyz() --get 'X' coords
-	local vector=engine.peek(VersionInfo.getGroup("Creatures"):getAddress("vector"),ptr_vector) -- load all creatures
-	for i = 0, vector:size()-1 do -- look into all creatures offsets
-		local curoff=vector:getval(i) -- get i-th creatures offset
-		local cx=engine.peek(curoff,ptr_Creature.x) --get its coordinates
-		local cy=engine.peek(curoff,ptr_Creature.y) 
-		local cz=engine.peek(curoff,ptr_Creature.z)
+	local vector=df.world.units.all -- load all creatures
+	for i = 0, vector.size-1 do -- look into all creatures offsets
+		local curpos=vector[i]:deref().pos --get its coordinates
+		local cx=curpos.x 
+		local cy=curpos.y
+		local cz=curpos.z
 		if cx==x and cy==y and cz==z then --compare them
-			return i --return index
+			return vector[i]:deref() --return index
 		end
 	end
 	print("Creature not found!")
-	return -1
+	return nil
 	
 end
 function Allocate(size)

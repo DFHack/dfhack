@@ -86,6 +86,7 @@ namespace DFHack
 
         int lua_item_count(lua_State *state, void *ptr);
 
+        virtual void lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
 
@@ -104,6 +105,7 @@ namespace DFHack
 
         std::string getFullName(type_identity *item);
 
+        virtual void lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
     };
@@ -117,6 +119,7 @@ namespace DFHack
 
         std::string getFullName(type_identity *item);
 
+        virtual void lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
 

@@ -152,10 +152,9 @@ void *DFHack::GetDFObject(lua_State *state, type_identity *type, int val_index)
  * Identity object read/write methods *
  **************************************/
 
-int constructed_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
+void constructed_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
 {
     push_object_internal(state, this, ptr);
-    return 1;
 }
 
 void constructed_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
@@ -163,9 +162,9 @@ void constructed_identity::lua_write(lua_State *state, int fname_idx, void *ptr,
     field_error(state, fname_idx, "complex object", "write");
 }
 
-int enum_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
+void enum_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
 {
-    return base_type->lua_read(state, fname_idx, ptr);
+    base_type->lua_read(state, fname_idx, ptr);
 }
 
 void enum_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
@@ -173,10 +172,9 @@ void enum_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int va
     base_type->lua_write(state, fname_idx, ptr, val_index);
 }
 
-int df::number_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
+void df::number_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
 {
     lua_pushnumber(state, read(ptr));
-    return 1;
 }
 
 void df::number_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
@@ -187,10 +185,9 @@ void df::number_identity_base::lua_write(lua_State *state, int fname_idx, void *
     write(ptr, lua_tonumber(state, val_index));
 }
 
-int df::bool_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
+void df::bool_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
 {
     lua_pushboolean(state, *(bool*)ptr);
-    return 1;
 }
 
 void df::bool_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
@@ -205,11 +202,10 @@ void df::bool_identity::lua_write(lua_State *state, int fname_idx, void *ptr, in
         field_error(state, fname_idx, "boolean or number expected", "write");
 }
 
-int df::stl_string_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
+void df::stl_string_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
 {
     auto pstr = (std::string*)ptr;
     lua_pushlstring(state, pstr->data(), pstr->size());
-    return 1;
 }
 
 void df::stl_string_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
@@ -222,15 +218,14 @@ void df::stl_string_identity::lua_write(lua_State *state, int fname_idx, void *p
     *(std::string*)ptr = std::string(bytes, size);
 }
 
-int df::pointer_identity::lua_read(lua_State *state, int fname_idx, void *ptr, type_identity *target)
+void df::pointer_identity::lua_read(lua_State *state, int fname_idx, void *ptr, type_identity *target)
 {
     push_object_internal(state, target, *(void**)ptr);
-    return 1;
 }
 
-int df::pointer_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
+void df::pointer_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
 {
-    return lua_read(state, fname_idx, ptr, target);
+    lua_read(state, fname_idx, ptr, target);
 }
 
 void df::pointer_identity::lua_write(lua_State *state, int fname_idx, void *ptr,
@@ -263,11 +258,11 @@ int container_identity::lua_item_count(lua_State *state, void *ptr)
         return item_count(ptr);
 }
 
-int container_identity::lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx)
+void container_identity::lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx)
 {
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
     void *pitem = item_pointer(id, ptr, idx);
-    return id->lua_read(state, fname_idx, pitem);
+    id->lua_read(state, fname_idx, pitem);
 }
 
 void container_identity::lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
@@ -277,11 +272,11 @@ void container_identity::lua_item_write(lua_State *state, int fname_idx, void *p
     id->lua_write(state, fname_idx, pitem, val_index);
 }
 
-int ptr_container_identity::lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx)
+void ptr_container_identity::lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx)
 {
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
     void *pitem = item_pointer(&df::identity_traits<void*>::identity, ptr, idx);
-    return df::pointer_identity::lua_read(state, fname_idx, pitem, id);
+    df::pointer_identity::lua_read(state, fname_idx, pitem, id);
 }
 
 void ptr_container_identity::lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
@@ -291,10 +286,9 @@ void ptr_container_identity::lua_item_write(lua_State *state, int fname_idx, voi
     df::pointer_identity::lua_write(state, fname_idx, pitem, id, val_index);
 }
 
-int bit_container_identity::lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx)
+void bit_container_identity::lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx)
 {
     lua_pushboolean(state, get_item(ptr, idx));
-    return 1;
 }
 
 void bit_container_identity::lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
@@ -573,7 +567,7 @@ static uint8_t *get_object_addr(lua_State *state, int obj, int field, const char
 
 static void GetAdHocMetatable(lua_State *state, const struct_field_info *field);
 
-static int read_field(lua_State *state, const struct_field_info *field, void *ptr)
+static void read_field(lua_State *state, const struct_field_info *field, void *ptr)
 {
     switch (field->mode)
     {
@@ -581,32 +575,38 @@ static int read_field(lua_State *state, const struct_field_info *field, void *pt
         {
             int len = strnlen((char*)ptr, field->count);
             lua_pushlstring(state, (char*)ptr, len);
-            return 1;
+            return;
         }
 
         case struct_field_info::PRIMITIVE:
         case struct_field_info::SUBSTRUCT:
-            return field->type->lua_read(state, 2, ptr);
+            field->type->lua_read(state, 2, ptr);
+            return;
 
         case struct_field_info::POINTER:
-            return df::pointer_identity::lua_read(state, 2, ptr, field->type);
+            df::pointer_identity::lua_read(state, 2, ptr, field->type);
+            return;
 
         case struct_field_info::CONTAINER:
             if (!field->eid || !field->type->isContainer() ||
                 field->eid == ((container_identity*)field->type)->getIndexEnumType())
-                return field->type->lua_read(state, 2, ptr);
+            {
+                field->type->lua_read(state, 2, ptr);
+                return;
+            }
+            // fallthrough
 
         case struct_field_info::STATIC_ARRAY:
         case struct_field_info::STL_VECTOR_PTR:
             GetAdHocMetatable(state, field);
             push_object_ref(state, ptr);
-            return 1;
+            return;
 
         case struct_field_info::END:
-            return 0;
+            break;
     }
 
-    return 0;
+    lua_pushnil(state);
 }
 
 static void write_field(lua_State *state, const struct_field_info *field, void *ptr, int value_idx)
@@ -686,7 +686,8 @@ static int meta_struct_index(lua_State *state)
     auto field = (struct_field_info*)find_field(state, 2, "read");
     if (!field)
         return get_metafield(state);
-    return read_field(state, field, ptr + field->offset);
+    read_field(state, field, ptr + field->offset);
+    return 1;
 }
 
 /**
@@ -710,7 +711,8 @@ static int meta_primitive_index(lua_State *state)
     auto type = (type_identity*)find_field(state, 2, "read");
     if (!type)
         return get_metafield(state);
-    return type->lua_read(state, 2, ptr);
+    type->lua_read(state, 2, ptr);
+    return 1;
 }
 
 /**
@@ -788,7 +790,8 @@ static int meta_container_index(lua_State *state)
     auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
     int len = id->lua_item_count(state, ptr);
     int idx = check_container_index(state, len, 2, iidx, "read");
-    return id->lua_item_read(state, 2, ptr, idx);
+    id->lua_item_read(state, 2, ptr, idx);
+    return 1;
 }
 
 /**
@@ -893,7 +896,8 @@ static int meta_global_index(lua_State *state)
     void *ptr = *(void**)field->offset;
     if (!ptr)
         field_error(state, 2, "global address not known", "read");
-    return read_field(state, field, ptr);
+    read_field(state, field, ptr);
+    return 1;
 }
 
 /**

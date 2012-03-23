@@ -58,10 +58,10 @@ namespace DFHack
         std::string getFullName();
         virtual void build_metatable(lua_State *state);
 
-        static int lua_read(lua_State *state, int fname_idx, void *ptr, type_identity *target);
+        static void lua_read(lua_State *state, int fname_idx, void *ptr, type_identity *target);
         static void lua_write(lua_State *state, int fname_idx, void *ptr, type_identity *target, int val_index);
 
-        virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 
@@ -87,7 +87,7 @@ namespace DFHack
 
         int lua_item_count(lua_State *state, void *ptr);
 
-        virtual int lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
+        virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
 
     protected:
@@ -105,7 +105,7 @@ namespace DFHack
 
         std::string getFullName(type_identity *item);
 
-        virtual int lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
+        virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
     };
 
@@ -118,7 +118,7 @@ namespace DFHack
 
         std::string getFullName(type_identity *item);
 
-        virtual int lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
+        virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
 
     protected:
@@ -146,7 +146,7 @@ namespace df
 
         std::string getFullName() { return name; }
 
-        virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
 
     protected:
@@ -169,7 +169,7 @@ namespace df
 
         std::string getFullName() { return "bool"; }
 
-        virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 
@@ -179,7 +179,7 @@ namespace df
 
         std::string getFullName() { return "string"; }
 
-        virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 

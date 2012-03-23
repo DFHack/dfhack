@@ -86,7 +86,7 @@ namespace DFHack
         virtual std::string getFullName() = 0;
 
         // For internal use in the lua wrapper
-        virtual int lua_read(lua_State *state, int fname_idx, void *ptr) = 0;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) = 0;
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) = 0;
         virtual void build_metatable(lua_State *state);
 
@@ -107,7 +107,7 @@ namespace DFHack
         virtual void *do_allocate() { return allocator(NULL,NULL); }
         virtual void do_copy(void *tgt, const void *src) { allocator(tgt,src); }
 
-        virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 
@@ -194,7 +194,7 @@ namespace DFHack
 
         type_identity *getBaseType() { return base_type; }
 
-        virtual int lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 

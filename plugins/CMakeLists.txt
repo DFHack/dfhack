@@ -67,8 +67,6 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(probe probe.cpp)
     # this is a plugin which helps detect cursed creatures (vampires, necromancers, werebeasts, ...)
     DFHACK_PLUGIN(cursecheck cursecheck.cpp)
-    # alternative version of liquids which can be used non-interactively after configuring it
-    DFHACK_PLUGIN(liquidsgo liquidsgo.cpp)
     DFHACK_PLUGIN(drybuckets drybuckets.cpp)
     DFHACK_PLUGIN(getplants getplants.cpp)
     DFHACK_PLUGIN(plants plants.cpp)

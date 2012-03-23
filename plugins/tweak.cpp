@@ -46,6 +46,11 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "tweak", "Various tweaks for minor bugs.", tweak, false,
         "  tweak clear-missing\n"
         "    Remove the missing status from the selected unit.\n"
+        "  tweak clear-ghostly\n"
+        "    Remove the ghostly status from the selected unit.\n"
+        "    Intended to fix the case where you can't engrave memorials for ghosts.\n"
+        "    Note that this is very dirty and possibly dangerous!\n"
+        "    Most probably does not have the positive effect of a proper burial.\n"
     ));
     return CR_OK;
 }
@@ -81,6 +86,25 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
             auto crime = df::criminal_case::find(death->crime_id);
             if (crime)
                 crime->flags.bits.discovered = true;
+        }
+    }
+    else if (cmd == "clear-ghostly")
+    {
+        df::unit *unit = getSelectedUnit(out);
+        if (!unit)
+            return CR_FAILURE;
+
+        // don't accidentally kill non-ghosts!
+        if (unit->flags3.bits.ghostly)
+        {
+            // remove ghostly, set to dead instead
+            unit->flags3.bits.ghostly = 0;
+            unit->flags1.bits.dead = 1;
+        }
+        else
+        {
+            out.print("That's not a ghost!\n");
+            return CR_FAILURE;
         }
     }
     else return CR_WRONG_USAGE;

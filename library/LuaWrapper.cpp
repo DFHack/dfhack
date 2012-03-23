@@ -68,6 +68,7 @@ inline void lua_swap(lua_State *state) { lua_insert(state, -2); }
 #define DFHACK_COMPARE_NAME "DFHack::ComparePtrs"
 #define DFHACK_TYPE_TOSTRING_NAME "DFHack::TypeToString"
 #define DFHACK_SIZEOF_NAME "DFHack::Sizeof"
+#define DFHACK_DISPLACE_NAME "DFHack::Displace"
 
 /*
  * Upvalue: contents of DFHACK_TYPETABLE_NAME
@@ -514,7 +515,8 @@ static void *get_object_internal(lua_State *state, type_identity *type, int val_
 /**
  * Given a DF object reference or type, safely retrieve its identity pointer.
  */
-static type_identity *get_object_identity(lua_State *state, int objidx, const char *ctx)
+static type_identity *get_object_identity(lua_State *state, int objidx,
+                                          const char *ctx, bool allow_type = false)
 {
     if (!lua_getmetatable(state, objidx))
         luaL_error(state, "Invalid object in %s", ctx);
@@ -527,6 +529,9 @@ static type_identity *get_object_identity(lua_State *state, int objidx, const ch
     }
     else
     {
+        if (!allow_type)
+            luaL_error(state, "Object expected in %s", ctx);
+
         lua_pushvalue(state, objidx);
         LookupInTable(state, DFHACK_TYPEID_TABLE_NAME);
     }
@@ -604,7 +609,7 @@ static int meta_sizeof(lua_State *state)
         return 2;
     }
 
-    type_identity *id = get_object_identity(state, 1, "df.sizeof()");
+    type_identity *id = get_object_identity(state, 1, "df.sizeof()", true);
 
     lua_pushinteger(state, id->byte_size());
 
@@ -615,6 +620,62 @@ static int meta_sizeof(lua_State *state)
     }
     else
         return 1;
+}
+
+/**
+ * Method: displace for DF object references.
+ *
+ * Returns: a reference with the same type, but modified address
+ */
+static int meta_displace(lua_State *state)
+{
+    int argc = lua_gettop(state);
+
+    bool has_step = (argc >= 3);
+    if ((argc < 2 || argc > 3) ||
+        !lua_isnumber(state, 2) ||
+        (has_step && !lua_isnumber(state, 3)))
+    {
+        luaL_error(state, "Usage: object:_displace(index[,step]) or df._displace(object,...)");
+    }
+
+    int index = lua_tointeger(state, 2);
+    int step = has_step ? lua_tointeger(state, 3) : 1;
+
+    // Two special cases: nil and lightuserdata for NULL and void*
+    if (lua_isnil(state, 1))
+    {
+        lua_pushnil(state);
+        return 1;
+    }
+
+    if (lua_islightuserdata(state, 1))
+    {
+        if (!has_step)
+            luaL_error(state, "Step is mandatory in _displace of void*");
+
+        auto ptr = (uint8_t*)lua_touserdata(state, 1);
+        lua_pushlightuserdata(state, ptr + index*step);
+        return 1;
+    }
+
+    type_identity *id = get_object_identity(state, 1, "df._displace()");
+
+    if (!has_step)
+        step = id->byte_size();
+
+    if (index == 0 || step == 0)
+    {
+        lua_pushvalue(state, 1);
+    }
+    else
+    {
+        auto ptr = (uint8_t*)get_object_ref(state, 1);
+        lua_getmetatable(state, 1);
+        push_object_ref(state, ptr + index*step);
+    }
+
+    return 1;
 }
 
 /**
@@ -1063,9 +1124,14 @@ static void SetPtrMethods(lua_State *state, int meta_idx, int read_idx)
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
     lua_setfield(state, meta_idx, "sizeof");
 
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_DISPLACE_NAME);
+    lua_setfield(state, meta_idx, "_displace");
+
     EnableMetaField(state, read_idx, "_type");
     EnableMetaField(state, read_idx, "_kind");
+
     EnableMetaField(state, read_idx, "sizeof");
+    EnableMetaField(state, read_idx, "_displace");
 }
 
 /**
@@ -1485,6 +1551,9 @@ static void DoAttach(lua_State *state)
     lua_pushcfunction(state, meta_sizeof);
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
 
+    lua_pushcfunction(state, meta_displace);
+    lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_DISPLACE_NAME);
+
     luaL_register(state, "df", no_functions);
 
     {
@@ -1496,6 +1565,8 @@ static void DoAttach(lua_State *state)
 
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
         lua_setfield(state, -2, "sizeof");
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_DISPLACE_NAME);
+        lua_setfield(state, -2, "_displace");
 
         freeze_table(state, true, "df");
         lua_remove(state, -2);

@@ -67,6 +67,7 @@ inline void lua_swap(lua_State *state) { lua_insert(state, -2); }
 #define DFHACK_CHANGEERROR_NAME "DFHack::ChangeError"
 #define DFHACK_COMPARE_NAME "DFHack::ComparePtrs"
 #define DFHACK_TYPE_TOSTRING_NAME "DFHack::TypeToString"
+#define DFHACK_SIZEOF_NAME "DFHack::Sizeof"
 
 /*
  * Upvalue: contents of DFHACK_TYPETABLE_NAME
@@ -417,6 +418,14 @@ static void push_object_ref(lua_State *state, void *ptr)
     // stack: [userdata]
 }
 
+static void *get_object_ref(lua_State *state, int val_index)
+{
+    assert(!lua_islightuserdata(state, val_index));
+
+    auto ref = (DFRefHeader*)lua_touserdata(state, val_index);
+    return ref->ptr;
+}
+
 /**
  * Push the pointer using given identity.
  */
@@ -499,8 +508,42 @@ static void *get_object_internal(lua_State *state, type_identity *type, int val_
     /*
      * Finally decode the reference.
      */
-    auto ref = (DFRefHeader*)lua_touserdata(state, val_index);
-    return ref->ptr;
+    return get_object_ref(state, val_index);
+}
+
+/**
+ * Given a DF object reference or type, safely retrieve its identity pointer.
+ */
+static type_identity *get_object_identity(lua_State *state, int objidx, const char *ctx)
+{
+    if (!lua_getmetatable(state, objidx))
+        luaL_error(state, "Invalid object in %s", ctx);
+
+    // Verify object type validity
+    if (lua_isuserdata(state, objidx))
+    {
+        lua_dup(state);
+        LookupInTable(state, DFHACK_TYPETABLE_NAME);
+    }
+    else
+    {
+        lua_pushvalue(state, objidx);
+        LookupInTable(state, DFHACK_TYPEID_TABLE_NAME);
+    }
+
+    if (lua_isnil(state, -1))
+        luaL_error(state, "Invalid object metatable in %s", ctx);
+    lua_pop(state, 1);
+
+    // Extract identity from metatable
+    lua_getfield(state, -1, "_identity");
+
+    type_identity *id = (type_identity*)lua_touserdata(state, -1);
+    if (!id)
+        luaL_error(state, "Invalid object identity in %s", ctx);
+
+    lua_pop(state, 2);
+    return id;
 }
 
 /**
@@ -517,17 +560,61 @@ static int meta_ptr_compare(lua_State *state)
         return 1;
     }
 
-    if (!lua_equal(state, -1, -2))
+    if (get_object_ref(state, 1) != get_object_ref(state, 2))
+    {
+        lua_pushboolean(state, false);
+        return 1;
+    }
+
+    if (!lua_rawequal(state, -1, -2))
     {
         // todo: nonidentical type comparison
         lua_pushboolean(state, false);
         return 1;
     }
 
-    auto ref1 = (DFRefHeader*)lua_touserdata(state, 1);
-    auto ref2 = (DFRefHeader*)lua_touserdata(state, 2);
-    lua_pushboolean(state, ref1->ptr == ref2->ptr);
+    lua_pushboolean(state, true);
     return 1;
+}
+
+/**
+ * Method: sizeof for DF object references.
+ *
+ * Returns: size[, address]
+ */
+static int meta_sizeof(lua_State *state)
+{
+    int argc = lua_gettop(state);
+
+    if (argc != 1)
+        luaL_error(state, "Usage: object:sizeof() or df.sizeof(object)");
+
+    // Two special cases: nil and lightuserdata for NULL and void*
+    if (lua_isnil(state, 1))
+    {
+        lua_pushnil(state);
+        lua_pushinteger(state, 0);
+        return 2;
+    }
+
+    if (lua_islightuserdata(state, 1))
+    {
+        lua_pushnil(state);
+        lua_pushnumber(state, (size_t)lua_touserdata(state, 1));
+        return 2;
+    }
+
+    type_identity *id = get_object_identity(state, 1, "df.sizeof()");
+
+    lua_pushinteger(state, id->byte_size());
+
+    if (lua_isuserdata(state, 1))
+    {
+        lua_pushnumber(state, (size_t)get_object_ref(state, 1));
+        return 2;
+    }
+    else
+        return 1;
 }
 
 /**
@@ -566,8 +653,7 @@ static uint8_t *get_object_addr(lua_State *state, int obj, int field, const char
 
     lua_pop(state, 1);
 
-    auto ref = (DFRefHeader*)lua_touserdata(state, obj);
-    return (uint8_t*)ref->ptr;
+    return (uint8_t*)get_object_ref(state, obj);
 }
 
 static void GetAdHocMetatable(lua_State *state, const struct_field_info *field);
@@ -847,9 +933,9 @@ static int meta_bitfield_index(lua_State *state)
     // whole
     if (lua_isuserdata(state, iidx) && lua_touserdata(state, iidx) == id)
     {
-        lua_Integer intv = 0;
+        size_t intv = 0;
         memcpy(&intv, ptr, std::min(sizeof(intv), size_t(id->byte_size())));
-        lua_pushinteger(state, intv);
+        lua_pushnumber(state, intv);
         return 1;
     }
 
@@ -880,7 +966,7 @@ static int meta_bitfield_newindex(lua_State *state)
         if (!lua_isnumber(state, 3))
             field_error(state, 2, "number expected", "write");
 
-        lua_Integer intv = lua_tointeger(state, 3);
+        size_t intv = (size_t)lua_tonumber(state, 3);
         memcpy(ptr, &intv, std::min(sizeof(intv), size_t(id->byte_size())));
         return 0;
     }
@@ -974,8 +1060,12 @@ static void SetPtrMethods(lua_State *state, int meta_idx, int read_idx)
     lua_pushcclosure(state, meta_ptr_tostring, 2);
     lua_setfield(state, meta_idx, "__tostring");
 
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
+    lua_setfield(state, meta_idx, "sizeof");
+
     EnableMetaField(state, read_idx, "_type");
     EnableMetaField(state, read_idx, "_kind");
+    EnableMetaField(state, read_idx, "sizeof");
 }
 
 /**
@@ -1326,6 +1416,9 @@ static void RenderType(lua_State *state, compound_identity *node)
 
     assert(base == lua_gettop(state));
 
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
+    lua_setfield(state, base, "sizeof");
+
     if (node->type() == IDTYPE_GLOBAL)
     {
         BuildTypeMetatable(state, node);
@@ -1389,6 +1482,9 @@ static void DoAttach(lua_State *state)
     lua_pushcfunction(state, meta_type_tostring);
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_TYPE_TOSTRING_NAME);
 
+    lua_pushcfunction(state, meta_sizeof);
+    lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
+
     luaL_register(state, "df", no_functions);
 
     {
@@ -1397,6 +1493,9 @@ static void DoAttach(lua_State *state)
 
         // Render the type structure
         RenderTypeChildren(state, compound_identity::getTopScope());
+
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
+        lua_setfield(state, -2, "sizeof");
 
         freeze_table(state, true, "df");
         lua_remove(state, -2);

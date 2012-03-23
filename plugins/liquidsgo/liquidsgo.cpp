@@ -1,3 +1,25 @@
+// plugin liquidsgo
+//
+// This is a rewrite of the liquids module which can also be used non-interactively (hotkey).
+// First the user sets the mode and other parameters with the interactive command liqiudsgo
+// just like in the original liquids module.
+// They are stored in statics to allow being used after the interactive session was closed.
+// After defining an action the non-interactive command liquidsgo-here can be used to call the 
+// execute method without the necessity to go back to the console. This allows convenient painting
+// of liquids and obsidian using the ingame cursor and a hotkey.
+//
+// Commands:
+// liquidsgo      - basically the original liquids with the map changing stuff moved to an execute method
+// liquidsgo-here - runs the execute method with the last settings from liquidsgo
+//                  (intended to be mapped to a hotkey)
+// Options:
+// ?, help        - print some help
+//
+// TODO: 
+// - maybe allow all parameters be passed as command line options? tedious parsing but might be useful
+// - grab the code from digcircle to get a circle brush - could be nice when painting with obsidian
+// - maybe store the last parameters in a file to make them persistent after dfhack is closed?
+
 #include <iostream>
 #include <vector>
 #include <stack>
@@ -24,23 +46,32 @@ using namespace DFHack;
 using namespace df::enums;
 typedef vector <df::coord> coord_vec;
 
-CommandHistory liquids_hist;
+CommandHistory liquidsgo_hist;
 
-command_result df_liquids (color_ostream &out, vector <string> & parameters);
+command_result df_liquidsgo (color_ostream &out, vector <string> & parameters);
+command_result df_liquidsgo_here (color_ostream &out, vector <string> & parameters);
+command_result df_liquidsgo_execute (color_ostream &out);
 
-DFHACK_PLUGIN("liquids");
+DFHACK_PLUGIN("liquidsgo");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    liquids_hist.load("liquids.history");
+    liquidsgo_hist.load("liquidsgo.history");
     commands.clear();
-    commands.push_back(PluginCommand("liquids", "Place magma, water or obsidian.", df_liquids, true));
+    commands.push_back(PluginCommand(
+        "liquidsgo", "Place magma, water or obsidian.", 
+        df_liquidsgo, true)); // interactive, needs console for prompt
+    commands.push_back(PluginCommand(
+        "liquidsgo-here", "Use settings from liquidsgo at cursor position.",
+        df_liquidsgo_here, Gui::cursor_hotkey, // non-interactive, needs ingame cursor
+        "  Identical to pressing enter in liquidsgo, intended for use as keybinding.\n"
+        "  Can (but doesn't need to) be called while liquidsgo is running in the console."));
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    liquids_hist.save("liquids.history");
+    liquidsgo_hist.save("liquidsgo.history");
     return CR_OK;
 }
 
@@ -220,10 +251,17 @@ private:
 	Core *c_;
 };
 
-command_result df_liquids (color_ostream &out_, vector <string> & parameters)
-{
-    int32_t x,y,z;
 
+// static stuff to be remembered between sessions
+static string brushname = "point";
+static string mode="magma";
+static string flowmode="f+";
+static string setmode ="s.";
+static unsigned int amount = 7;
+static int width = 1, height = 1, z_levels = 1;
+
+command_result df_liquidsgo (color_ostream &out_, vector <string> & parameters)
+{
     assert(out_.is_console());
     Console &out = static_cast<Console&>(out_);
 
@@ -231,9 +269,11 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {
-            out.print("This tool allows placing magma, water and other similar things.\n"
-            "It is interactive and further help is available when you run it.\n"
-            );
+            out.print(  "This tool allows placing magma, water and other similar things.\n"
+                        "It is interactive and further help is available when you run it.\n"
+                        "The settings will be remembered until dfhack is closed and you can call\n"
+                        "'liquidsgo-here' (mapped to a hotkey) to paint liquids at the cursor position\n"
+                        "without the need to go back to the dfhack console.\n");
             return CR_OK;
         }
     }
@@ -244,23 +284,22 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    Brush * brush = new RectangleBrush(1,1);
-    string brushname = "point";
     bool end = false;
-    out << "Welcome to the liquid spawner.\nType 'help' or '?' for a list of available commands, 'q' to quit.\nPress return after a command to confirm." << std::endl;
-    string mode="magma";
 
-    string flowmode="f+";
-    string setmode ="s.";
-    unsigned int amount = 7;
-    int width = 1, height = 1, z_levels = 1;
+    out << "Welcome to the liquid spawner.\nType 'help' or '?' for a list of available commands, 'q' to quit.\nPress return after a command to confirm." << std::endl;
+
     while(!end)
     {
         string command = "";
+
         std::stringstream str;
-        str <<"[" << mode << ":" << brushname << ":" << amount << ":" << flowmode << ":" << setmode << "]#";
-        if(out.lineedit(str.str(),command,liquids_hist) == -1)
+        str <<"[" << mode << ":" << brushname;
+        if (brushname == "range")
+            str << "(w" << width << ":h" << height << ":z" << z_levels << ")";
+        str << ":" << amount << ":" << flowmode << ":" << setmode << "]#";
+        if(out.lineedit(str.str(),command,liquidsgo_hist) == -1)
             return CR_FAILURE;
+
         if(command=="help" || command == "?")
         {
             out << "Modes:" << endl
@@ -296,6 +335,7 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
                  << endl
                  << "Usage: point the DF cursor at a tile you want to modify" << endl
                  << "and use the commands available :)" << endl;
+            out << endl << "Settings will be remembered until you quit DF. You can call liquidsgo-here to execute the last configured action. Useful in combination with keybindings." << endl;
         }
         else if(command == "m")
         {
@@ -327,9 +367,7 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         }
         else if(command == "point" || command == "p")
         {
-            delete brush;
             brushname = "point";
-            brush = new RectangleBrush(1,1);
         }
         else if(command == "range" || command == "r")
         {
@@ -354,34 +392,26 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
             range_hist.add(command);
             z_levels = command == "" ? z_levels : atoi (command.c_str());
             if(z_levels < 1) z_levels = 1;
-            delete brush;
             if(width == 1 && height == 1 && z_levels == 1)
             {
-                brushname="point";
+                brushname = "point";
             }
             else
             {
                 brushname = "range";
             }
-            brush = new RectangleBrush(width,height,z_levels,0,0,0);
         }
         else if(command == "block")
         {
-            delete brush;
             brushname = "block";
-            brush = new BlockBrush();
         }
         else if(command == "column")
         {
-            delete brush;
             brushname = "column";
-            brush = new ColumnBrush();
         }
 		else if(command == "flood")
 		{
-			delete brush;
 			brushname = "flood";
-			brush = new FloodBrush(&Core::getInstance());
 		}
         else if(command == "q")
         {
@@ -430,175 +460,7 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
             amount = 7;
         else if(command.empty())
         {
-            CoreSuspender suspend;
-
-            do
-            {
-                if (!Maps::IsValid())
-                {
-                    out << "Can't see any DF map loaded." << endl;
-                    break;;
-                }
-                if(!Gui::getCursorCoords(x,y,z))
-                {
-                    out << "Can't get cursor coords! Make sure you have a cursor active in DF." << endl;
-                    break;
-                }
-                out << "cursor coords: " << x << "/" << y << "/" << z << endl;
-                MapCache mcache;
-                DFHack::DFCoord cursor(x,y,z);
-                coord_vec all_tiles = brush->points(mcache,cursor);
-                out << "working..." << endl;
-                if(mode == "obsidian")
-                {
-                    coord_vec::iterator iter = all_tiles.begin();
-                    while (iter != all_tiles.end())
-                    {
-                        mcache.setTiletypeAt(*iter, tiletype::LavaWall);
-                        mcache.setTemp1At(*iter,10015);
-                        mcache.setTemp2At(*iter,10015);
-                        df::tile_designation des = mcache.designationAt(*iter);
-                        des.bits.flow_size = 0;
-                        mcache.setDesignationAt(*iter, des);
-                        iter ++;
-                    }
-                }
-                if(mode == "obsidian_floor")
-                {
-                    coord_vec::iterator iter = all_tiles.begin();
-                    while (iter != all_tiles.end())
-                    {
-                        mcache.setTiletypeAt(*iter, findRandomVariant(tiletype::LavaFloor1));
-                        iter ++;
-                    }
-                }
-                else if(mode == "riversource")
-                {
-                    coord_vec::iterator iter = all_tiles.begin();
-                    while (iter != all_tiles.end())
-                    {
-                        mcache.setTiletypeAt(*iter, tiletype::RiverSource);
-
-                        df::tile_designation a = mcache.designationAt(*iter);
-                        a.bits.liquid_type = tile_liquid::Water;
-                        a.bits.liquid_static = false;
-                        a.bits.flow_size = 7;
-                        mcache.setTemp1At(*iter,10015);
-                        mcache.setTemp2At(*iter,10015);
-                        mcache.setDesignationAt(*iter,a);
-
-                        Block * b = mcache.BlockAt((*iter)/16);
-                        DFHack::t_blockflags bf = b->BlockFlags();
-                        bf.bits.liquid_1 = true;
-                        bf.bits.liquid_2 = true;
-                        b->setBlockFlags(bf);
-
-                        iter++;
-                    }
-                }
-                else if(mode=="wclean")
-                {
-                    coord_vec::iterator iter = all_tiles.begin();
-                    while (iter != all_tiles.end())
-                    {
-                        DFHack::DFCoord current = *iter;
-                        df::tile_designation des = mcache.designationAt(current);
-                        des.bits.water_salt = false;
-                        des.bits.water_stagnant = false;
-                        mcache.setDesignationAt(current,des);
-                        iter++;
-                    }
-                }
-                else if(mode== "magma" || mode== "water" || mode == "flowbits")
-                {
-                    set <Block *> seen_blocks;
-                    coord_vec::iterator iter = all_tiles.begin();
-                    while (iter != all_tiles.end())
-                    {
-                        DFHack::DFCoord current = *iter; // current tile coord
-                        DFHack::DFCoord curblock = current /16; // current block coord
-                        // check if the block is actually there
-                        if(!mcache.BlockAt(curblock))
-                        {
-                            iter ++;
-                            continue;
-                        }
-                        df::tile_designation des = mcache.designationAt(current);
-                        df::tiletype tt = mcache.tiletypeAt(current);
-                        // don't put liquids into places where they don't belong...
-                        if(!DFHack::FlowPassable(tt))
-                        {
-                            iter++;
-                            continue;
-                        }
-                        if(mode != "flowbits")
-                        {
-                            if(setmode == "s.")
-                            {
-                                des.bits.flow_size = amount;
-                            }
-                            else if(setmode == "s+")
-                            {
-                                if(des.bits.flow_size < amount)
-                                    des.bits.flow_size = amount;
-                            }
-                            else if(setmode == "s-")
-                            {
-                                if (des.bits.flow_size > amount)
-                                    des.bits.flow_size = amount;
-                            }
-                            if(amount != 0 && mode == "magma")
-                            {
-                                des.bits.liquid_type =  tile_liquid::Magma;
-                                mcache.setTemp1At(current,12000);
-                                mcache.setTemp2At(current,12000);
-                            }
-                            else if(amount != 0 && mode == "water")
-                            {
-                                des.bits.liquid_type =  tile_liquid::Water;
-                                mcache.setTemp1At(current,10015);
-                                mcache.setTemp2At(current,10015);
-                            }
-                            else if(amount == 0 && (mode == "water" || mode == "magma"))
-                            {
-                                // reset temperature to sane default
-                                mcache.setTemp1At(current,10015);
-                                mcache.setTemp2At(current,10015);
-                            }
-                            mcache.setDesignationAt(current,des);
-                        }
-                        seen_blocks.insert(mcache.BlockAt(current / 16));
-                        iter++;
-                    }
-                    set <Block *>::iterator biter = seen_blocks.begin();
-                    while (biter != seen_blocks.end())
-                    {
-                        DFHack::t_blockflags bflags = (*biter)->BlockFlags();
-                        if(flowmode == "f+")
-                        {
-                            bflags.bits.liquid_1 = true;
-                            bflags.bits.liquid_2 = true;
-                            (*biter)->setBlockFlags(bflags);
-                        }
-                        else if(flowmode == "f-")
-                        {
-                            bflags.bits.liquid_1 = false;
-                            bflags.bits.liquid_2 = false;
-                            (*biter)->setBlockFlags(bflags);
-                        }
-                        else
-                        {
-                            out << "flow bit 1 = " << bflags.bits.liquid_1 << endl; 
-                            out << "flow bit 2 = " << bflags.bits.liquid_2 << endl;
-                        }
-                        biter ++;
-                    }
-                }
-                if(mcache.WriteAll())
-                    out << "OK" << endl;
-                else
-                    out << "Something failed horribly! RUN!" << endl;
-            } while (0);
+            df_liquidsgo_execute(out);
         }
         else
         {
@@ -606,8 +468,242 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         }
     }
     
-    //cleanup
-    delete brush;
+    return CR_OK;
+}
 
+command_result df_liquidsgo_here (color_ostream &out, vector <string> & parameters)
+{
+    for(size_t i = 0; i < parameters.size();i++)
+    {
+        if(parameters[i] == "help" || parameters[i] == "?")
+        {
+            out << "This command is supposed to be mapped to a hotkey." << endl;
+            out << "It will use the current/last parameters set in liquidsgo." << endl;
+            return CR_OK;
+        }
+    }
+
+    out.print("Run liquidsgo-here with these parameters: ");
+    out << "[" << mode << ":" << brushname;
+    if (brushname == "range")
+        out << "(w" << width << ":h" << height << ":z" << z_levels << ")";
+    out << ":" << amount << ":" << flowmode << ":" << setmode << "]\n";
+
+    return df_liquidsgo_execute(out);
+}
+
+command_result df_liquidsgo_execute(color_ostream &out)
+{
+    // create brush type depending on old parameters
+    Brush * brush;
+
+    if (brushname == "point")
+    {
+        brush = new RectangleBrush(1,1,1,0,0,0);
+        //width = 1;
+        //height = 1;
+        //z_levels = 1;
+    }
+    else if (brushname == "range")
+    {
+        brush = new RectangleBrush(width,height,z_levels,0,0,0);
+    }
+    else if(brushname == "block")
+    {
+        brush = new BlockBrush();
+    }
+    else if(brushname == "column")
+    {
+        brush = new ColumnBrush();
+    }
+    else if(brushname == "flood")
+    {
+        brush = new FloodBrush(&Core::getInstance());
+	}
+    else
+    {
+        // this should never happen!
+        out << "Old brushtype is invalid! Resetting to point brush.\n";
+        brushname = "point";
+        width = 1;
+        height = 1;
+        z_levels = 1;
+        brush = new RectangleBrush(width,height,z_levels,0,0,0);
+	}
+
+    CoreSuspender suspend;
+
+    do
+    {
+        if (!Maps::IsValid())
+        {
+            out << "Can't see any DF map loaded." << endl;
+            break;;
+        }
+        int32_t x,y,z;
+        if(!Gui::getCursorCoords(x,y,z))
+        {
+            out << "Can't get cursor coords! Make sure you have a cursor active in DF." << endl;
+            break;
+        }
+        out << "cursor coords: " << x << "/" << y << "/" << z << endl;
+        MapCache mcache;
+        DFHack::DFCoord cursor(x,y,z);
+        coord_vec all_tiles = brush->points(mcache,cursor);
+        out << "working..." << endl;
+        if(mode == "obsidian")
+        {
+            coord_vec::iterator iter = all_tiles.begin();
+            while (iter != all_tiles.end())
+            {
+                mcache.setTiletypeAt(*iter, tiletype::LavaWall);
+                mcache.setTemp1At(*iter,10015);
+                mcache.setTemp2At(*iter,10015);
+                df::tile_designation des = mcache.designationAt(*iter);
+                des.bits.flow_size = 0;
+                mcache.setDesignationAt(*iter, des);
+                iter ++;
+            }
+        }
+        if(mode == "obsidian_floor")
+        {
+            coord_vec::iterator iter = all_tiles.begin();
+            while (iter != all_tiles.end())
+            {
+                mcache.setTiletypeAt(*iter, findRandomVariant(tiletype::LavaFloor1));
+                iter ++;
+            }
+        }
+        else if(mode == "riversource")
+        {
+            coord_vec::iterator iter = all_tiles.begin();
+            while (iter != all_tiles.end())
+            {
+                mcache.setTiletypeAt(*iter, tiletype::RiverSource);
+
+                df::tile_designation a = mcache.designationAt(*iter);
+                a.bits.liquid_type = tile_liquid::Water;
+                a.bits.liquid_static = false;
+                a.bits.flow_size = 7;
+                mcache.setTemp1At(*iter,10015);
+                mcache.setTemp2At(*iter,10015);
+                mcache.setDesignationAt(*iter,a);
+
+                Block * b = mcache.BlockAt((*iter)/16);
+                DFHack::t_blockflags bf = b->BlockFlags();
+                bf.bits.liquid_1 = true;
+                bf.bits.liquid_2 = true;
+                b->setBlockFlags(bf);
+
+                iter++;
+            }
+        }
+        else if(mode=="wclean")
+        {
+            coord_vec::iterator iter = all_tiles.begin();
+            while (iter != all_tiles.end())
+            {
+                DFHack::DFCoord current = *iter;
+                df::tile_designation des = mcache.designationAt(current);
+                des.bits.water_salt = false;
+                des.bits.water_stagnant = false;
+                mcache.setDesignationAt(current,des);
+                iter++;
+            }
+        }
+        else if(mode== "magma" || mode== "water" || mode == "flowbits")
+        {
+            set <Block *> seen_blocks;
+            coord_vec::iterator iter = all_tiles.begin();
+            while (iter != all_tiles.end())
+            {
+                DFHack::DFCoord current = *iter; // current tile coord
+                DFHack::DFCoord curblock = current /16; // current block coord
+                // check if the block is actually there
+                if(!mcache.BlockAt(curblock))
+                {
+                    iter ++;
+                    continue;
+                }
+                df::tile_designation des = mcache.designationAt(current);
+                df::tiletype tt = mcache.tiletypeAt(current);
+                // don't put liquids into places where they don't belong...
+                if(!DFHack::FlowPassable(tt))
+                {
+                    iter++;
+                    continue;
+                }
+                if(mode != "flowbits")
+                {
+                    if(setmode == "s.")
+                    {
+                        des.bits.flow_size = amount;
+                    }
+                    else if(setmode == "s+")
+                    {
+                        if(des.bits.flow_size < amount)
+                            des.bits.flow_size = amount;
+                    }
+                    else if(setmode == "s-")
+                    {
+                        if (des.bits.flow_size > amount)
+                            des.bits.flow_size = amount;
+                    }
+                    if(amount != 0 && mode == "magma")
+                    {
+                        des.bits.liquid_type =  tile_liquid::Magma;
+                        mcache.setTemp1At(current,12000);
+                        mcache.setTemp2At(current,12000);
+                    }
+                    else if(amount != 0 && mode == "water")
+                    {
+                        des.bits.liquid_type =  tile_liquid::Water;
+                        mcache.setTemp1At(current,10015);
+                        mcache.setTemp2At(current,10015);
+                    }
+                    else if(amount == 0 && (mode == "water" || mode == "magma"))
+                    {
+                        // reset temperature to sane default
+                        mcache.setTemp1At(current,10015);
+                        mcache.setTemp2At(current,10015);
+                    }
+                    mcache.setDesignationAt(current,des);
+                }
+                seen_blocks.insert(mcache.BlockAt(current / 16));
+                iter++;
+            }
+            set <Block *>::iterator biter = seen_blocks.begin();
+            while (biter != seen_blocks.end())
+            {
+                DFHack::t_blockflags bflags = (*biter)->BlockFlags();
+                if(flowmode == "f+")
+                {
+                    bflags.bits.liquid_1 = true;
+                    bflags.bits.liquid_2 = true;
+                    (*biter)->setBlockFlags(bflags);
+                }
+                else if(flowmode == "f-")
+                {
+                    bflags.bits.liquid_1 = false;
+                    bflags.bits.liquid_2 = false;
+                    (*biter)->setBlockFlags(bflags);
+                }
+                else
+                {
+                    out << "flow bit 1 = " << bflags.bits.liquid_1 << endl; 
+                    out << "flow bit 2 = " << bflags.bits.liquid_2 << endl;
+                }
+                biter ++;
+            }
+        }
+        if(mcache.WriteAll())
+            out << "OK" << endl;
+        else
+            out << "Something failed horribly! RUN!" << endl;
+    } while (0);
+
+    // cleanup
+    delete brush;
+    
     return CR_OK;
 }

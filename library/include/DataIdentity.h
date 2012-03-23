@@ -56,7 +56,6 @@ namespace DFHack
         type_identity *getTarget() { return target; }
 
         std::string getFullName();
-        virtual void build_metatable(lua_State *state);
 
         static void lua_read(lua_State *state, int fname_idx, void *ptr, type_identity *target);
         static void lua_write(lua_State *state, int fname_idx, void *ptr, type_identity *target, int val_index);

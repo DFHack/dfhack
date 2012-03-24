@@ -29,7 +29,6 @@ distribution.
 #include "Export.h"
 #include "Module.h"
 #include "Types.h"
-#include "Virtual.h"
 #include "modules/Materials.h"
 #include "MemAccess.h"
 
@@ -123,8 +122,6 @@ DFHACK_EXPORT bool copyItem(df::item * source, dfh_item & target);
 /// write copied item back to its origin
 DFHACK_EXPORT bool writeItem(const dfh_item & item);
 
-/// get the class name of an item
-DFHACK_EXPORT std::string getItemClass(const df::item * item);
 /// who owns this item we already read?
 DFHACK_EXPORT int32_t getItemOwnerID(const df::item * item);
 DFHACK_EXPORT df::unit *getItemOwner(const df::item * item);

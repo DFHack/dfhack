@@ -88,7 +88,10 @@ bool Maps::IsValid ()
 void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
 {
     if (!IsValid())
-        throw DFHack::Error::ModuleNotInitialized();
+    {
+        x = y = z = 0;
+        return;
+    }
     x = world->map.x_count_block;
     y = world->map.y_count_block;
     z = world->map.z_count_block;
@@ -98,7 +101,10 @@ void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
 void Maps::getPosition (int32_t& x, int32_t& y, int32_t& z)
 {
     if (!IsValid())
-        throw DFHack::Error::ModuleNotInitialized();
+    {
+        x = y = z = 0;
+        return;
+    }
     x = world->map.region_x;
     y = world->map.region_y;
     z = world->map.region_z;

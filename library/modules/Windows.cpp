@@ -24,7 +24,6 @@ distribution.
 
 #include "Export.h"
 #include "Module.h"
-#include "Virtual.h"
 #include "BitArray.h"
 #include <string>
 

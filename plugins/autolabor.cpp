@@ -27,9 +27,6 @@ using namespace df::enums;
 using df::global::ui;
 using df::global::world;
 
-// our own, empty header.
-#include "autolabor.h"
-
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
 static int enable_autolabor;
@@ -472,9 +469,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 	std::vector<dwarf_info> dwarf_info(n_dwarfs);
 
-	std::vector<int> best_noble(_countof(noble_skills));
-	std::vector<int> highest_noble_skill(_countof(noble_skills));
-	std::vector<int> highest_noble_experience(_countof(noble_skills));
+    std::vector<int> best_noble(ARRAY_COUNT(noble_skills));
+    std::vector<int> highest_noble_skill(ARRAY_COUNT(noble_skills));
+    std::vector<int> highest_noble_experience(ARRAY_COUNT(noble_skills));
 
 	// Find total skill and highest skill for each dwarf. More skilled dwarves shouldn't be used for minor tasks.
 
@@ -495,7 +492,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			// They are likely to have appointed noble positions, so should be kept free where possible.
 
 			int noble_skill_id = -1;
-			for (int i = 0; i < _countof(noble_skills); i++)
+            for (int i = 0; i < ARRAY_COUNT(noble_skills); i++)
 			{
 				if (skill == noble_skills[i])
 					noble_skill_id = i;
@@ -503,7 +500,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 			if (noble_skill_id >= 0)
 			{
-				assert(noble_skill_id < _countof(noble_skills));
+                assert(noble_skill_id < ARRAY_COUNT(noble_skills));
 
 				if (highest_noble_skill[noble_skill_id] < skill_level ||
 					(highest_noble_skill[noble_skill_id] == skill_level &&
@@ -528,7 +525,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 	// Mark the best nobles, so we try to keep them non-busy. (It would be better to find the actual assigned nobles.)
 
-	for (int i = 0; i < _countof(noble_skills); i++)
+	for (int i = 0; i < ARRAY_COUNT(noble_skills); i++)
 	{
 		assert(best_noble[i] >= 0);
 		assert(best_noble[i] < n_dwarfs);
@@ -551,7 +548,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 				continue;
 
 			assert(labor >= 0);
-			assert(labor < _countof(labor_infos));
+			assert(labor < ARRAY_COUNT(labor_infos));
 
 			if (labor_infos[labor].is_exclusive && dwarfs[dwarf]->status.labors[labor])
 				dwarf_info[dwarf].mastery_penalty -= 100;
@@ -597,7 +594,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			int job = dwarfs[dwarf]->job.current_job->job_type;
 
 			assert(job >= 0);
-			assert(job < _countof(dwarf_states));
+			assert(job < ARRAY_COUNT(dwarf_states));
 
 			dwarf_info[dwarf].state = dwarf_states[job];
 		}
@@ -617,7 +614,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		if (labor != df::enums::unit_labor::NONE)
 		{
 			assert(labor >= 0);
-			assert(labor < _countof(labor_to_skill));
+			assert(labor < ARRAY_COUNT(labor_to_skill));
 
 			labor_to_skill[labor] = skill;
 		}
@@ -631,7 +628,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			continue;
 
 		assert(labor >= 0);
-		assert(labor < _countof(labor_infos));
+		assert(labor < ARRAY_COUNT(labor_infos));
 
 		labors.push_back(labor);
 	}
@@ -645,7 +642,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		auto labor = *lp;
 
 		assert(labor >= 0);
-		assert(labor < _countof(labor_infos));
+		assert(labor < ARRAY_COUNT(labor_infos));
 
 		df::job_skill skill = labor_to_skill[labor];
 
@@ -821,7 +818,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			continue;
 
 		assert(labor >= 0);
-		assert(labor < _countof(labor_infos));
+		assert(labor < ARRAY_COUNT(labor_infos));
 
 		if (labor_infos[labor].mode != HAULERS)
 			continue;

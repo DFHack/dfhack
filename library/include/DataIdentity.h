@@ -84,14 +84,24 @@ namespace DFHack
 
         virtual std::string getFullName(type_identity *item);
 
-        int lua_item_count(lua_State *state, void *ptr);
+        enum CountMode {
+            COUNT_LEN, COUNT_READ, COUNT_WRITE
+        };
+
+        int lua_item_count(lua_State *state, void *ptr, CountMode cnt);
 
         virtual void lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
 
+        virtual bool resize(void *ptr, int size) { return false; }
+        virtual bool erase(void *ptr, int index) { return false; }
+        virtual bool insert(void *ptr, int index, void *pitem) { return false; }
+
+        virtual bool lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
+
     protected:
-        virtual int item_count(void *ptr) = 0;
+        virtual int item_count(void *ptr, CountMode cnt) = 0;
         virtual void *item_pointer(type_identity *item, void *ptr, int idx) = 0;
     };
 
@@ -108,6 +118,8 @@ namespace DFHack
         virtual void lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
+
+        virtual bool lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
     };
 
     class DFHACK_EXPORT bit_container_identity : public container_identity {
@@ -175,11 +187,17 @@ namespace df
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 
-    class stl_string_identity : public primitive_identity {
+    class stl_string_identity : public DFHack::constructed_identity {
     public:
-        stl_string_identity() : primitive_identity(sizeof(std::string)) {};
+        stl_string_identity()
+            : constructed_identity(sizeof(std::string), &allocator_fn<std::string>)
+        {};
 
         std::string getFullName() { return "string"; }
+
+        virtual DFHack::identity_type type() { return DFHack::IDTYPE_PRIMITIVE; }
+
+        virtual bool isPrimitive() { return true; }
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
@@ -187,13 +205,15 @@ namespace df
 
     class stl_ptr_vector_identity : public ptr_container_identity {
     public:
+        typedef std::vector<void*> container;
+
         /*
          * This class assumes that std::vector<T*> is equivalent
          * in layout and behavior to std::vector<void*> for any T.
          */
 
         stl_ptr_vector_identity(type_identity *item = NULL, enum_identity *ienum = NULL)
-            : ptr_container_identity(sizeof(std::vector<void*>),allocator_fn<std::vector<void*> >,item, ienum)
+            : ptr_container_identity(sizeof(container),allocator_fn<container>,item, ienum)
         {};
 
         std::string getFullName(type_identity *item) {
@@ -202,12 +222,27 @@ namespace df
 
         virtual DFHack::identity_type type() { return DFHack::IDTYPE_STL_PTR_VECTOR; }
 
+        virtual bool resize(void *ptr, int size) {
+            (*(container*)ptr).resize(size);
+            return true;
+        }
+        virtual bool erase(void *ptr, int size) {
+            auto &ct = *(container*)ptr;
+            ct.erase(ct.begin()+size);
+            return true;
+        }
+        virtual bool insert(void *ptr, int idx, void *item) {
+            auto &ct = *(container*)ptr;
+            ct.insert(ct.begin()+idx, item);
+            return true;
+        }
+
     protected:
-        virtual int item_count(void *ptr) {
-            return ((std::vector<void*>*)ptr)->size();
+        virtual int item_count(void *ptr, CountMode) {
+            return ((container*)ptr)->size();
         };
         virtual void *item_pointer(type_identity *, void *ptr, int idx) {
-            return &(*(std::vector<void*>*)ptr)[idx];
+            return &(*(container*)ptr)[idx];
         }
     };
 
@@ -231,7 +266,7 @@ namespace df
         static buffer_container_identity base_instance;
 
     protected:
-        virtual int item_count(void *ptr) { return size; }
+        virtual int item_count(void *ptr, CountMode) { return size; }
         virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
             return ((uint8_t*)ptr) + idx * item->byte_size();
         }
@@ -250,8 +285,23 @@ namespace df
             return name + container_identity::getFullName(item);
         }
 
+        virtual bool resize(void *ptr, int size) {
+            (*(T*)ptr).resize(size);
+            return true;
+        }
+        virtual bool erase(void *ptr, int size) {
+            auto &ct = *(T*)ptr;
+            ct.erase(ct.begin()+size);
+            return true;
+        }
+        virtual bool insert(void *ptr, int idx, void *item) {
+            auto &ct = *(T*)ptr;
+            ct.insert(ct.begin()+idx, *(typename T::value_type*)item);
+            return true;
+        }
+
     protected:
-        virtual int item_count(void *ptr) { return ((T*)ptr)->size(); }
+        virtual int item_count(void *ptr, CountMode) { return ((T*)ptr)->size(); }
         virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
             return &(*(T*)ptr)[idx];
         }
@@ -274,8 +324,15 @@ namespace df
             return "BitArray<>";
         }
 
+        virtual bool resize(void *ptr, int size) {
+            ((container*)ptr)->resize(size);
+            return true;
+        }
+
     protected:
-        virtual int item_count(void *ptr) { return ((container*)ptr)->size * 8; }
+        virtual int item_count(void *ptr, CountMode cnt) {
+            return cnt == COUNT_LEN ? ((container*)ptr)->size * 8 : -1;
+        }
         virtual bool get_item(void *ptr, int idx) {
             return ((container*)ptr)->is_set(idx);
         }
@@ -296,8 +353,15 @@ namespace df
             return "vector" + bit_container_identity::getFullName(item);
         }
 
+        virtual bool resize(void *ptr, int size) {
+            (*(container*)ptr).resize(size);
+            return true;
+        }
+
     protected:
-        virtual int item_count(void *ptr) { return ((container*)ptr)->size(); }
+        virtual int item_count(void *ptr, CountMode) {
+            return ((container*)ptr)->size();
+        }
         virtual bool get_item(void *ptr, int idx) {
             return (*(container*)ptr)[idx];
         }

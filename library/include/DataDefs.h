@@ -91,6 +91,11 @@ namespace DFHack
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) = 0;
         virtual void build_metatable(lua_State *state);
 
+        // lua_read doesn't just return a reference to the object
+        virtual bool isPrimitive() { return true; }
+        // needs constructor/destructor
+        virtual bool isConstructed() { return false; }
+        // inherits from container_identity
         virtual bool isContainer() { return false; }
 
         void *allocate();
@@ -103,6 +108,9 @@ namespace DFHack
     protected:
         constructed_identity(size_t size, TAllocateFn alloc)
             : type_identity(size), allocator(alloc) {};
+
+        virtual bool isPrimitive() { return false; }
+        virtual bool isConstructed() { return true; }
 
         virtual bool can_allocate() { return (allocator != NULL); }
         virtual void *do_allocate() { return allocator(NULL,NULL); }
@@ -161,6 +169,8 @@ namespace DFHack
 
         virtual identity_type type() { return IDTYPE_BITFIELD; }
 
+        virtual bool isConstructed() { return false; }
+
         int getNumBits() { return num_bits; }
         const bitfield_item_info *getBits() { return bits; }
 
@@ -194,6 +204,9 @@ namespace DFHack
         const char *const *getKeys() { return keys; }
 
         type_identity *getBaseType() { return base_type; }
+
+        virtual bool isPrimitive() { return true; }
+        virtual bool isConstructed() { return false; }
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);

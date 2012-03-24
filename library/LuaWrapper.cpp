@@ -593,7 +593,10 @@ static int meta_new(lua_State *state)
 
     void *ptr = id->allocate();
     if (!ptr)
-        return 0;
+    {
+        lua_pushnil(state);
+        return 1;
+    }
 
     if (lua_isuserdata(state, 1))
     {

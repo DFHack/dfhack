@@ -85,6 +85,7 @@ namespace DFHack { namespace LuaWrapper {
  * Fields that are actually in UPVAL_METATABLE are marked with NULL light udata.
  */
 #define UPVAL_FIELDTABLE lua_upvalueindex(3)
+#define UPVAL_METHOD_NAME lua_upvalueindex(3)
 
 /*
  * Only for containers: light udata with container identity.

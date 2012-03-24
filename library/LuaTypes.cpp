@@ -147,12 +147,12 @@ void df::pointer_identity::lua_write(lua_State *state, int fname_idx, void *ptr,
     lua_write(state, fname_idx, ptr, target, val_index);
 }
 
-int container_identity::lua_item_count(lua_State *state, void *ptr)
+int container_identity::lua_item_count(lua_State *state, void *ptr, CountMode mode)
 {
     if (lua_isnumber(state, UPVAL_ITEM_COUNT))
         return lua_tointeger(state, UPVAL_ITEM_COUNT);
     else
-        return item_count(ptr);
+        return item_count(ptr, mode);
 }
 
 void container_identity::lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx)
@@ -176,6 +176,31 @@ void container_identity::lua_item_write(lua_State *state, int fname_idx, void *p
     id->lua_write(state, fname_idx, pitem, val_index);
 }
 
+bool container_identity::lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+{
+    auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+
+    char tmp[32];
+    void *pitem = &tmp;
+
+    if (id->isPrimitive())
+    {
+        if (id->isConstructed())
+            luaL_error(state, "Temporaries of type %s not supported", id->getFullName().c_str());
+
+        assert(id->byte_size() <= sizeof(tmp));
+        id->lua_write(state, fname_idx, pitem, val_index);
+    }
+    else
+    {
+        pitem = get_object_internal(state, id, val_index, false);
+        if (!pitem)
+            field_error(state, fname_idx, "incompatible object type", "insert");
+    }
+
+    return insert(ptr, idx, pitem);
+}
+
 void ptr_container_identity::lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx)
 {
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
@@ -195,6 +220,16 @@ void ptr_container_identity::lua_item_write(lua_State *state, int fname_idx, voi
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
     void *pitem = item_pointer(&df::identity_traits<void*>::identity, ptr, idx);
     df::pointer_identity::lua_write(state, fname_idx, pitem, id, val_index);
+}
+
+bool ptr_container_identity::lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+{
+    auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+
+    void *pitem = NULL;
+    df::pointer_identity::lua_write(state, fname_idx, &pitem, id, val_index);
+
+    return insert(ptr, idx, pitem);
 }
 
 void bit_container_identity::lua_item_reference(lua_State *state, int, void *, int)
@@ -236,6 +271,15 @@ static void *find_field(lua_State *state, int index, const char *mode)
     void *p = lua_touserdata(state, -1);
     lua_pop(state, 1);
     return p;
+}
+
+static uint8_t *check_method_call(lua_State *state, int min_args, int max_args)
+{
+    int argc = lua_gettop(state)-1;
+    if (argc < min_args || argc > max_args)
+        field_error(state, UPVAL_METHOD_NAME, "wrong argument count", "call");
+
+    return get_object_addr(state, 1, UPVAL_METHOD_NAME, "call");
 }
 
 static void GetAdHocMetatable(lua_State *state, const struct_field_info *field);
@@ -456,7 +500,7 @@ static int meta_container_len(lua_State *state)
 {
     uint8_t *ptr = get_object_addr(state, 1, 0, "get length");
     auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
-    int len = id->lua_item_count(state, ptr);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_LEN);
     lua_pushinteger(state, len);
     return 1;
 }
@@ -497,7 +541,7 @@ static int check_container_index(lua_State *state, int len,
         field_error(state, fidx, "invalid index", mode);
 
     int idx = lua_tointeger(state, iidx);
-    if (idx < 0 || idx >= len)
+    if (idx < 0 || (idx >= len && len >= 0))
         field_error(state, fidx, "index out of bounds", mode);
 
     return idx;
@@ -514,7 +558,7 @@ static int meta_container_index(lua_State *state)
         return 1;
 
     auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
-    int len = id->lua_item_count(state, ptr);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_READ);
     int idx = check_container_index(state, len, 2, iidx, "read");
     id->lua_item_read(state, 2, ptr, idx);
     return 1;
@@ -531,7 +575,7 @@ static int meta_container_field_reference(lua_State *state)
     int iidx = lookup_container_field(state, 2, "reference");
 
     auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
-    int len = id->lua_item_count(state, ptr);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_WRITE);
     int idx = check_container_index(state, len, 2, iidx, "reference");
     id->lua_item_reference(state, 2, ptr, idx);
     return 1;
@@ -546,9 +590,57 @@ static int meta_container_newindex(lua_State *state)
     int iidx = lookup_container_field(state, 2, "write");
 
     auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
-    int len = id->lua_item_count(state, ptr);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_WRITE);
     int idx = check_container_index(state, len, 2, iidx, "write");
     id->lua_item_write(state, 2, ptr, idx, 3);
+    return 0;
+}
+
+/**
+ * Method: resize container
+ */
+static int method_container_resize(lua_State *state)
+{
+    uint8_t *ptr = check_method_call(state, 1, 1);
+
+    auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    int idx = check_container_index(state, -1, UPVAL_METHOD_NAME, 2, "call");
+
+    if (!id->resize(ptr, idx))
+        field_error(state, UPVAL_METHOD_NAME, "not supported", "call");
+    return 0;
+}
+
+/**
+ * Method: erase item from container
+ */
+static int method_container_erase(lua_State *state)
+{
+    uint8_t *ptr = check_method_call(state, 1, 1);
+
+    auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_LEN);
+    int idx = check_container_index(state, len, UPVAL_METHOD_NAME, 2, "call");
+
+    if (!id->erase(ptr, idx))
+        field_error(state, UPVAL_METHOD_NAME, "not supported", "call");
+    return 0;
+}
+
+/**
+ * Method: insert item into container
+ */
+static int method_container_insert(lua_State *state)
+{
+    uint8_t *ptr = check_method_call(state, 2, 2);
+
+    auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_LEN);
+    if (len >= 0) len++;
+    int idx = check_container_index(state, len, UPVAL_METHOD_NAME, 2, "call");
+
+    if (!id->lua_insert(state, UPVAL_METHOD_NAME, ptr, idx, 3))
+        field_error(state, UPVAL_METHOD_NAME, "not supported", "call");
     return 0;
 }
 
@@ -718,6 +810,17 @@ static void MakePrimitiveMetatable(lua_State *state, type_identity *type)
     SetStructMethod(state, base+1, base+2, meta_primitive_newindex, "__newindex");
 }
 
+static void AddContainerMethodFun(lua_State *state, int meta_idx, int field_idx,
+                                  lua_CFunction function, const char *name,
+                                  type_identity *container, type_identity *item, int count)
+{
+    lua_pushfstring(state, "%s()", name);
+    SetContainerMethod(state, meta_idx, lua_gettop(state), function, name, container, item, count);
+    lua_pop(state, 1);
+
+    EnableMetaField(state, field_idx, name);
+}
+
 /**
  * Make a container-style object metatable.
  */
@@ -749,6 +852,10 @@ static void MakeContainerMetatable(lua_State *state, container_identity *type,
     SetContainerMethod(state, base+1, base+2, meta_container_newindex, "__newindex", type, item, count);
 
     SetContainerMethod(state, base+1, base+2, meta_container_field_reference, "_field", type, item, count);
+
+    AddContainerMethodFun(state, base+1, base+2, method_container_resize, "resize", type, item, count);
+    AddContainerMethodFun(state, base+1, base+2, method_container_erase, "erase", type, item, count);
+    AddContainerMethodFun(state, base+1, base+2, method_container_insert, "insert", type, item, count);
 
     AttachEnumKeys(state, base+1, base+2, ienum);
 }

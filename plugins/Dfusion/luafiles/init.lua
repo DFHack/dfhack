@@ -57,7 +57,7 @@ dofile("dfusion/common.lua")
 dofile("dfusion/utils.lua")
 dofile("dfusion/offsets_misc.lua")
 dofile("dfusion/editor.lua")
-dofile("dfusion/xml_struct.lua")
+--dofile("dfusion/xml_struct.lua")
 unlockDF()
 plugins={}
 table.insert(plugins,{"simple_embark","A simple embark dwarf count editor"})

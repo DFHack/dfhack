@@ -1,4 +1,4 @@
-PROJECT ( lua C )
+PROJECT ( lua CXX )
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 # TODO: make this RelWithDebInfo only
@@ -77,9 +77,12 @@ src/lundump.c
 src/lvm.c
 src/lzio.c
 )
+# compile with C++ compiler
+set_source_files_properties(${SRC_LIBLUA} PROPERTIES LANGUAGE CXX)
+# append headers to sources to make them show up in MSVC GUI
 LIST(APPEND SRC_LIBLUA ${HDR_LIBLUA})
 
-ADD_LIBRARY ( lua SHARED EXCLUDE_FROM_ALL ${SRC_LIBLUA} )
+ADD_LIBRARY ( lua SHARED ${SRC_LIBLUA} )
 TARGET_LINK_LIBRARIES ( lua ${LIBS})
 
 install(TARGETS lua

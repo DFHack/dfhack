@@ -41,7 +41,6 @@ using namespace std;
 #include "modules/Units.h"
 #include "ModuleFactory.h"
 #include "Core.h"
-#include "Virtual.h"
 #include "MiscUtils.h"
 
 #include "df/world.h"
@@ -502,10 +501,3 @@ bool Items::removeItemOwner(df::item * item)
 
     return true;
 }
-
-std::string Items::getItemClass(const df::item * item)
-{
-    const t_virtual * virt = (t_virtual *) item;
-    return virt->getClassName();
-}
-

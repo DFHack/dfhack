@@ -43,7 +43,6 @@ include/TileTypes.h
 include/Types.h
 include/VersionInfo.h
 include/VersionInfoFactory.h
-include/Virtual.h
 include/RemoteClient.h
 include/RemoteServer.h
 include/RemoteTools.h
@@ -66,7 +65,6 @@ MiscUtils.cpp
 PluginManager.cpp
 TileTypes.cpp
 VersionInfoFactory.cpp
-Virtual.cpp
 RemoteClient.cpp
 RemoteServer.cpp
 RemoteTools.cpp

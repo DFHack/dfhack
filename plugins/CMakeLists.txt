@@ -60,6 +60,8 @@ ADD_CUSTOM_COMMAND(
     DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
 
+SET_SOURCE_FILES_PROPERTIES( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
+
 # Plugins
 OPTION(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if (BUILD_SUPPORTED)
@@ -79,8 +81,8 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(vdig vdig.cpp)
     DFHACK_PLUGIN(colonies colonies.cpp)
     DFHACK_PLUGIN(mode mode.cpp)
-    DFHACK_PLUGIN(liquids liquids.cpp)
-    DFHACK_PLUGIN(tiletypes tiletypes.cpp)
+    DFHACK_PLUGIN(liquids liquids.cpp Brushes.h)
+    DFHACK_PLUGIN(tiletypes tiletypes.cpp Brushes.h)
     DFHACK_PLUGIN(tubefill tubefill.cpp)
     DFHACK_PLUGIN(autodump autodump.cpp)
     DFHACK_PLUGIN(cleanowned cleanowned.cpp)

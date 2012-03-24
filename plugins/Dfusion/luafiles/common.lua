@@ -366,8 +366,8 @@ function findVectors()
 end
 
 function GetRaceToken(p) --actually gets token...
-	local vec=df.world.raws.creatures.all
-	return vec[p]:deref().creature_id
+	local vec=df.global.world.raws.creatures.all
+	return vec[p].creature_id
 end
 function BuildNameTable()
 	local rtbl={}

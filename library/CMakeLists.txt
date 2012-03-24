@@ -27,6 +27,8 @@ include/Console.h
 include/Core.h
 include/ColorText.h
 include/DataDefs.h
+include/DataIdentity.h
+include/LuaWrapper.h
 include/Error.h
 include/Export.h
 include/Hooks.h
@@ -56,6 +58,7 @@ Core.cpp
 ColorText.cpp
 DataDefs.cpp
 LuaWrapper.cpp
+LuaTypes.cpp
 DataStatics.cpp
 DataStaticsCtor.cpp
 DataStaticsFields.cpp

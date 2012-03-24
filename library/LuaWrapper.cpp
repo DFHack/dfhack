@@ -74,6 +74,8 @@ inline void lua_swap(lua_State *state) { lua_insert(state, -2); }
 #define DFHACK_TYPE_TOSTRING_NAME "DFHack::TypeToString"
 #define DFHACK_SIZEOF_NAME "DFHack::Sizeof"
 #define DFHACK_DISPLACE_NAME "DFHack::Displace"
+#define DFHACK_NEW_NAME "DFHack::New"
+#define DFHACK_ASSIGN_NAME "DFHack::Assign"
 
 /*
  * Upvalue: contents of DFHACK_TYPETABLE_NAME
@@ -143,16 +145,16 @@ static void field_error(lua_State *state, int index, const char *err, const char
  * If is_method is true, these use UPVAL_TYPETABLE to save a hash lookup.
  */
 static void push_object_internal(lua_State *state, type_identity *type, void *ptr, bool in_method = true);
-static void *get_object_internal(lua_State *state, type_identity *type, int val_index, bool in_method = true);
+static void *get_object_internal(lua_State *state, type_identity *type, int val_index, bool exact_type, bool in_method = true);
 
 void DFHack::PushDFObject(lua_State *state, type_identity *type, void *ptr)
 {
     push_object_internal(state, type, ptr, false);
 }
 
-void *DFHack::GetDFObject(lua_State *state, type_identity *type, int val_index)
+void *DFHack::GetDFObject(lua_State *state, type_identity *type, int val_index, bool exact_type)
 {
-    return get_object_internal(state, type, val_index, false);
+    return get_object_internal(state, type, val_index, exact_type, false);
 }
 
 static void push_adhoc_pointer(lua_State *state, void *ptr, type_identity *target);
@@ -246,7 +248,7 @@ void df::pointer_identity::lua_write(lua_State *state, int fname_idx, void *ptr,
         *pptr = NULL;
     else
     {
-        void *nval = get_object_internal(state, target, val_index);
+        void *nval = get_object_internal(state, target, val_index, false);
         if (nval)
             *pptr = nval;
         else
@@ -390,7 +392,7 @@ static bool LookupTypeInfo(lua_State *state, bool in_method)
 
     // stack: [info]
 
-    if (lua_isnil(state, -1))
+    if (!lua_islightuserdata(state, -1))
     {
         lua_pop(state, 1);
         return false;
@@ -495,10 +497,115 @@ static void push_object_internal(lua_State *state, type_identity *type, void *pt
     push_object_ref(state, ptr); // metatable -> userdata
 }
 
+static void fetch_container_details(lua_State *state, int meta, type_identity **pitem, int *pcount)
+{
+    if (!meta) return;
+
+    lua_getfield(state, meta, "_field_identity");
+    *pitem = (type_identity*)lua_touserdata(state, -1);
+    lua_pop(state, 1);
+
+    if (pcount)
+    {
+        lua_getfield(state, meta, "_count");
+        if (lua_isnumber(state, -1))
+            *pcount = lua_tointeger(state, -1);
+        lua_pop(state, 1);
+    }
+}
+
+/**
+ * Check if type1 and type2 are compatible, possibly using additional metatable data.
+ */
+static bool is_type_compatible(lua_State *state, type_identity *type1, int meta1,
+                               type_identity *type2, int meta2, bool exact_equal)
+{
+    if (type1 == type2)
+        return true;
+    if (!exact_equal && !type1)
+        return true;
+    if (!type1 || !type2)
+        return false;
+
+    auto t1 = type1->type();
+    if (t1 != type2->type())
+        return false;
+
+    switch (t1)
+    {
+    case IDTYPE_POINTER:
+        return is_type_compatible(state,
+                                  ((pointer_identity*)type1)->getTarget(), 0,
+                                  ((pointer_identity*)type2)->getTarget(), 0,
+                                  exact_equal);
+        break;
+
+    case IDTYPE_BUFFER:
+    {
+        auto b1 = (df::buffer_container_identity*)type1;
+        auto b2 = (df::buffer_container_identity*)type2;
+        type_identity *item1 = b1->getItemType(), *item2 = b2->getItemType();
+        int count1 = b1->getSize(), count2 = b2->getSize();
+
+        fetch_container_details(state, meta1, &item1, &count1);
+        fetch_container_details(state, meta2, &item2, &count2);
+
+        return item1 && item2 && count1 == count2 &&
+               is_type_compatible(state, item1, 0, item2, 0, true);
+    }
+
+    case IDTYPE_STL_PTR_VECTOR:
+    {
+        auto b1 = (df::stl_ptr_vector_identity*)type1;
+        auto b2 = (df::stl_ptr_vector_identity*)type2;
+        type_identity *item1 = b1->getItemType(), *item2 = b2->getItemType();
+
+        fetch_container_details(state, meta1, &item1, NULL);
+        fetch_container_details(state, meta1, &item2, NULL);
+
+        return is_type_compatible(state, item1, 0, item2, 0, exact_equal);
+    }
+
+    case IDTYPE_STRUCT:
+    case IDTYPE_CLASS:
+    {
+        auto b1 = (struct_identity*)type1;
+        auto b2 = (struct_identity*)type2;
+
+        return (!exact_equal && b1->is_subclass(b2));
+    }
+
+    default:
+        return false;
+    }
+}
+
+static bool is_type_compatible(lua_State *state, type_identity *type1, int meta1,
+                               int meta2, bool exact_equal)
+{
+    lua_getfield(state, meta2, "_identity");
+    auto type2 = (type_identity*)lua_touserdata(state, -1);
+    lua_pop(state, 1);
+
+    return is_type_compatible(state, type1, meta1, type2, meta2, exact_equal);
+}
+
+static bool is_type_compatible(lua_State *state, int meta1, int meta2, bool exact_equal)
+{
+    if (lua_rawequal(state, meta1, meta2))
+        return true;
+
+    lua_getfield(state, meta1, "_identity");
+    auto type1 = (type_identity*)lua_touserdata(state, -1);
+    lua_pop(state, 1);
+
+    return is_type_compatible(state, type1, meta1, meta2, exact_equal);
+}
+
 /**
  * Verify that the value matches the identity, and return ptr if so.
  */
-static void *get_object_internal(lua_State *state, type_identity *type, int val_index, bool in_method)
+static void *get_object_internal(lua_State *state, type_identity *type, int val_index, bool exact_type, bool in_method)
 {
     /*
      * Non-userdata results in NULL; nil for NULL gets handled here too.
@@ -524,13 +631,22 @@ static void *get_object_internal(lua_State *state, type_identity *type, int val_
     if (!LookupTypeInfo(state, in_method)) // metatable -> type?
         return NULL;
 
-    bool ok = lua_islightuserdata(state, -1) &&
-              (!type || lua_touserdata(state, -1) == type);
+    if (type && lua_touserdata(state, -1) != type)
+    {
+        /*
+         * If valid but different type, do an intelligent comparison.
+         */
+        lua_pop(state, 1); // type -> ()
+        lua_getmetatable(state, val_index);
+
+        if (!is_type_compatible(state, type, 0, lua_gettop(state), exact_type))
+        {
+            lua_pop(state, 1); // metatable -> ()
+            return NULL;
+        }
+    }
 
     lua_pop(state, 1); // type -> ()
-
-    if (!ok)
-        return NULL;
 
     /*
      * Finally decode the reference.
@@ -539,32 +655,42 @@ static void *get_object_internal(lua_State *state, type_identity *type, int val_
 }
 
 /**
- * Given a DF object reference or type, safely retrieve its identity pointer.
+ * Check if the object and metatable are a valid DF reference or type.
  */
-static type_identity *get_object_identity(lua_State *state, int objidx,
-                                          const char *ctx, bool allow_type = false)
+static bool is_valid_metatable(lua_State *state, int objidx, int metaidx)
 {
-    if (!lua_getmetatable(state, objidx))
-        luaL_error(state, "Invalid object in %s", ctx);
-
     // Verify object type validity
     if (lua_isuserdata(state, objidx))
     {
-        lua_dup(state);
-        LookupInTable(state, DFHACK_TYPETABLE_NAME);
+        lua_pushvalue(state, metaidx);
+        lua_rawget(state, UPVAL_TYPETABLE);
     }
     else
     {
-        if (!allow_type)
-            luaL_error(state, "Object expected in %s", ctx);
-
         lua_pushvalue(state, objidx);
         LookupInTable(state, DFHACK_TYPEID_TABLE_NAME);
     }
 
-    if (lua_isnil(state, -1))
-        luaL_error(state, "Invalid object metatable in %s", ctx);
+    bool ok = !lua_isnil(state, -1);
     lua_pop(state, 1);
+    return ok;
+}
+
+/**
+ * Given a DF object reference or type, safely retrieve its identity pointer.
+ */
+static type_identity *get_object_identity(lua_State *state, int objidx,
+                                          const char *ctx, bool allow_type = false,
+                                          bool keep_metatable = false)
+{
+    if (!lua_getmetatable(state, objidx))
+        luaL_error(state, "Invalid object in %s", ctx);
+
+    if (!allow_type && !lua_isuserdata(state, objidx))
+        luaL_error(state, "Object expected in %s", ctx);
+
+    if (!is_valid_metatable(state, objidx, -1))
+        luaL_error(state, "Invalid object metatable in %s", ctx);
 
     // Extract identity from metatable
     lua_getfield(state, -1, "_identity");
@@ -573,8 +699,30 @@ static type_identity *get_object_identity(lua_State *state, int objidx,
     if (!id)
         luaL_error(state, "Invalid object identity in %s", ctx);
 
-    lua_pop(state, 2);
+    lua_pop(state, keep_metatable ? 1 : 2);
     return id;
+}
+
+static void check_type_compatible(lua_State *state, int obj1, int obj2,
+                                  type_identity **type1, type_identity **type2,
+                                  const char *ctx, bool allow_type, bool exact)
+{
+    int base = lua_gettop(state);
+
+    *type1 = get_object_identity(state, obj1, ctx, allow_type, true);
+    *type2 = get_object_identity(state, obj2, ctx, allow_type, true);
+
+    if (!is_type_compatible(state, *type1, base+1, *type2, base+2, exact))
+    {
+        lua_getfield(state, base+1, "__metatable");
+        const char *cname1 = lua_tostring(state, -1);
+        lua_getfield(state, base+2, "__metatable");
+        const char *cname2 = lua_tostring(state, -1);
+
+        luaL_error(state, "Types %s and %s incompatible in %s", cname1, cname2, ctx);
+    }
+
+    lua_pop(state, 2);
 }
 
 /**
@@ -585,21 +733,10 @@ static type_identity *get_object_identity(lua_State *state, int objidx,
 static int meta_ptr_compare(lua_State *state)
 {
     if (!lua_isuserdata(state, 1) || !lua_isuserdata(state, 2) ||
-        !lua_getmetatable(state, 1) || !lua_getmetatable(state, 2))
+        !lua_getmetatable(state, 1) || !lua_getmetatable(state, 2) ||
+        get_object_ref(state, 1) != get_object_ref(state, 2) ||
+        !is_type_compatible(state, 3, 4, true))
     {
-        lua_pushboolean(state, false);
-        return 1;
-    }
-
-    if (get_object_ref(state, 1) != get_object_ref(state, 2))
-    {
-        lua_pushboolean(state, false);
-        return 1;
-    }
-
-    if (!lua_rawequal(state, -1, -2))
-    {
-        // todo: nonidentical type comparison
         lua_pushboolean(state, false);
         return 1;
     }
@@ -702,6 +839,54 @@ static int meta_displace(lua_State *state)
     }
 
     return 1;
+}
+
+/**
+ * Method: allocation for DF object references.
+ */
+static int meta_new(lua_State *state)
+{
+    int argc = lua_gettop(state);
+
+    if (argc != 1)
+        luaL_error(state, "Usage: object:new() or df.new(object)");
+
+    type_identity *id = get_object_identity(state, 1, "df.new()", true);
+
+    void *ptr = id->allocate();
+    if (!ptr)
+        return 0;
+
+    if (lua_isuserdata(state, 1))
+    {
+        lua_getmetatable(state, 1);
+        push_object_ref(state, ptr);
+
+        id->copy(ptr, get_object_ref(state, 1));
+    }
+    else
+        push_object_internal(state, id, ptr);
+
+    return 1;
+}
+
+/**
+ * Method: assign data between objects.
+ */
+static int meta_assign(lua_State *state)
+{
+    int argc = lua_gettop(state);
+
+    if (argc != 2)
+        luaL_error(state, "Usage: target:assign(src) or df.assign(target,src)");
+
+    type_identity *id1, *id2;
+    check_type_compatible(state, 1, 2, &id1, &id2, "df.assign()", false, false);
+
+    if (!id1->copy(get_object_ref(state, 1), get_object_ref(state, 2)))
+        luaL_error(state, "No copy support for %s", id1->getFullName().c_str());
+
+    return 0;
 }
 
 /**
@@ -1210,18 +1395,25 @@ static void SetPtrMethods(lua_State *state, int meta_idx, int read_idx)
     lua_pushcclosure(state, meta_ptr_tostring, 2);
     lua_setfield(state, meta_idx, "__tostring");
 
-    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
-    lua_setfield(state, meta_idx, "sizeof");
-
-    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_DISPLACE_NAME);
-    lua_setfield(state, meta_idx, "_displace");
-
     EnableMetaField(state, read_idx, "_type");
     EnableMetaField(state, read_idx, "_kind");
 
     EnableMetaField(state, read_idx, "_field");
 
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
+    lua_setfield(state, meta_idx, "sizeof");
     EnableMetaField(state, read_idx, "sizeof");
+
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
+    lua_setfield(state, meta_idx, "new");
+    EnableMetaField(state, read_idx, "new");
+
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
+    lua_setfield(state, meta_idx, "assign");
+    EnableMetaField(state, read_idx, "assign");
+
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_DISPLACE_NAME);
+    lua_setfield(state, meta_idx, "_displace");
     EnableMetaField(state, read_idx, "_displace");
 }
 
@@ -1614,6 +1806,8 @@ static void RenderType(lua_State *state, compound_identity *node)
 
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
     lua_setfield(state, base, "sizeof");
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
+    lua_setfield(state, base, "new");
 
     if (node->type() == IDTYPE_GLOBAL)
     {
@@ -1681,11 +1875,21 @@ static void DoAttach(lua_State *state)
     lua_pushcfunction(state, meta_type_tostring);
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_TYPE_TOSTRING_NAME);
 
-    lua_pushcfunction(state, meta_sizeof);
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
+    lua_pushcclosure(state, meta_sizeof, 1);
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
 
-    lua_pushcfunction(state, meta_displace);
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
+    lua_pushcclosure(state, meta_displace, 1);
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_DISPLACE_NAME);
+
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
+    lua_pushcclosure(state, meta_new, 1);
+    lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
+
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
+    lua_pushcclosure(state, meta_assign, 1);
+    lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
 
     luaL_register(state, "df", no_functions);
 
@@ -1698,8 +1902,12 @@ static void DoAttach(lua_State *state)
 
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
         lua_setfield(state, -2, "sizeof");
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
+        lua_setfield(state, -2, "new");
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_DISPLACE_NAME);
         lua_setfield(state, -2, "_displace");
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
+        lua_setfield(state, -2, "assign");
 
         freeze_table(state, true, "df");
         lua_remove(state, -2);

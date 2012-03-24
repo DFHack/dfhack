@@ -58,6 +58,7 @@ namespace DFHack
         IDTYPE_ENUM,
         IDTYPE_STRUCT,
         IDTYPE_CLASS,
+        IDTYPE_BUFFER,
         IDTYPE_STL_PTR_VECTOR
     };
 
@@ -344,7 +345,7 @@ namespace DFHack
     /**
      * Check that the value is a wrapped DF object of the given type, and if so return the pointer.
      */
-    DFHACK_EXPORT void *GetDFObject(lua_State *state, type_identity *type, int val_index);
+    DFHACK_EXPORT void *GetDFObject(lua_State *state, type_identity *type, int val_index, bool exact_type = false);
 
     template<class T>
     T *ifnull(T *a, T *b) { return a ? a : b; }
@@ -639,7 +640,7 @@ namespace DFHack {
      * Represent flag array bits as a string, using sep as join separator.
      */
     template<class T>
-    inline std::string bitfield_to_string(const BitArray<T> &val, const std::string &sep = " ") {
+    inline std::string flagarray_to_string(const BitArray<T> &val, const std::string &sep = " ") {
         std::vector<std::string> tmp;
         flagarray_to_string<T>(&tmp, val);
         return join_strings(sep, tmp);
@@ -659,8 +660,8 @@ namespace DFHack {
      * Check that the value is a wrapped DF object of the correct type, and if so return the pointer.
      */
     template<class T>
-    T *GetDFObject(lua_State *state, int val_index) {
-        return GetDFObject(state, df::identity_traits<T>::get(), val_index);
+    T *GetDFObject(lua_State *state, int val_index, bool exact_type = false) {
+        return (T*)GetDFObject(state, df::identity_traits<T>::get(), val_index, exact_type);
     }
 }
 

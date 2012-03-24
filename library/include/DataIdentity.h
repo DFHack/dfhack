@@ -224,6 +224,9 @@ namespace df
         {}
 
         std::string getFullName(type_identity *item);
+        int getSize() { return size; }
+
+        virtual DFHack::identity_type type() { return DFHack::IDTYPE_BUFFER; }
 
         static buffer_container_identity base_instance;
 

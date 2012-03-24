@@ -11,7 +11,7 @@
 //   detail  - print full name, date of birth, date of curse (vamp might use fake identity, though)
 //             show if the creature is active or dead, missing, ghostly (ghost vampires should not exist in 34.05)
 //             identify type of curse (works fine for vanilla ghosts, vamps, werebeasts, zombies and necromancers)
-//   nick    - set nickname to 'CURSED' (does not always show up ingame, some vamps don't like nicknames)
+//   nick    - set nickname to type of curse(does not always show up ingame, some vamps don't like nicknames)
 //   all     - don't ignore dead and inactive creatures (former ghosts, dead necromancers, ...)
 //   verbose - acts like detail but also lists all curse tags (if you want to know it all).
 

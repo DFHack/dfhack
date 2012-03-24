@@ -159,9 +159,9 @@
 #if defined(LUA_BUILD_AS_DLL)
     #if defined(_MSC_VER)
         #if defined(LUA_CORE) || defined(LUA_LIB)
-            #define LUA_API __declspec(dllexport) LUA_API_EXTERN
+            #define LUA_API LUA_API_EXTERN __declspec(dllexport)
         #else
-            #define LUA_API __declspec(dllimport) LUA_API_EXTERN
+            #define LUA_API LUA_API_EXTERN __declspec(dllimport)
         #endif
     #else
         #define LUA_API  LUA_API_EXTERN __attribute__ ((visibility("default")))

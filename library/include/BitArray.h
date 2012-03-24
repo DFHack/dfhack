@@ -184,9 +184,14 @@ namespace DFHack
             memcpy(m_data, other.m_data,m_size*sizeof(T));
         }
 
+        typedef T value_type;
+
         T *data() { return m_data; }
         const T *data() const { return m_data; }
         unsigned size() const { return m_size; }
+
+        T *begin() { return m_data; }
+        T *end() { return m_data+m_size; }
 
         T& operator[] (unsigned i) { return m_data[i]; }
         const T& operator[] (unsigned i) const { return m_data[i]; }
@@ -216,6 +221,16 @@ namespace DFHack
             resize(other.size());
             memcpy(data(), other.data(), sizeof(T)*size());
             return *this;
+        }
+
+        void erase(T *ptr) {
+            memmove(ptr, ptr+1, sizeof(T)*(m_size - (ptr - m_data))); m_size--;
+        }
+        void insert(T *ptr, const T &item) {
+            int idx = ptr - m_data;
+            resize(m_size+1);
+            memmove(m_data + idx + 1, m_data + idx, sizeof(T)*(m_size - idx - 1));
+            m_data[idx] = item;
         }
     };
 }

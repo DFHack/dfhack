@@ -164,6 +164,9 @@ void struct_identity::doInit(Core *core)
 
 bool struct_identity::is_subclass(struct_identity *actual)
 {
+    if (!has_children && actual != this)
+        return false;
+
     for (; actual; actual = actual->getParent())
         if (actual == this) return true;
 

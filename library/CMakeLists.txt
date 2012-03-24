@@ -27,6 +27,8 @@ include/Console.h
 include/Core.h
 include/ColorText.h
 include/DataDefs.h
+include/DataIdentity.h
+include/LuaWrapper.h
 include/Error.h
 include/Export.h
 include/Hooks.h
@@ -41,7 +43,6 @@ include/TileTypes.h
 include/Types.h
 include/VersionInfo.h
 include/VersionInfoFactory.h
-include/Virtual.h
 include/RemoteClient.h
 include/RemoteServer.h
 include/RemoteTools.h
@@ -56,6 +57,7 @@ Core.cpp
 ColorText.cpp
 DataDefs.cpp
 LuaWrapper.cpp
+LuaTypes.cpp
 DataStatics.cpp
 DataStaticsCtor.cpp
 DataStaticsFields.cpp
@@ -63,7 +65,6 @@ MiscUtils.cpp
 PluginManager.cpp
 TileTypes.cpp
 VersionInfoFactory.cpp
-Virtual.cpp
 RemoteClient.cpp
 RemoteServer.cpp
 RemoteTools.cpp

@@ -2,7 +2,7 @@ tools={}
 tools.menu=MakeMenu()
 function tools.setrace()
 	RaceTable=BuildNameTable()
-	print("Your current race is:"..GetRaceToken(df.ui.race_id))
+	print("Your current race is:"..GetRaceToken(df.global.ui.race_id))
 	print("Type new race's token name in full caps (q to quit):")
 	repeat
 		entry=getline()
@@ -11,7 +11,7 @@ function tools.setrace()
 		end
 		id=RaceTable[entry]
 	until id~=nil
-	df.ui.race_id=id
+	df.global.ui.race_id=id
 end
 tools.menu:add("Set current race",tools.setrace)
 function tools.GiveSentience(names) --TODO make pattern...
@@ -32,15 +32,15 @@ function tools.GiveSentience(names) --TODO make pattern...
 		end
 	end
 	for _,id in pairs(ids) do
-		local races=df.world.raws.creatures.all
+		local races=df.global.world.raws.creatures.all
 
-		local castes=races[id]:deref().caste
+		local castes=races[id].caste
 		print(string.format("Caste count:%i",castes.size))
-		for i =0,castes.size-1 do
+		for i =0,#castes-1 do
 			
-			print("Caste name:"..castes[i]:deref().caste_id.."...")
+			print("Caste name:"..castes[i].caste_id.."...")
 			
-			local flags=castes[i]:deref().flags
+			local flags=castes[i].flags
 			--print(string.format("%x",flagoffset))
 			if flags.CAN_SPEAK then
 				print("\tis sentient.")

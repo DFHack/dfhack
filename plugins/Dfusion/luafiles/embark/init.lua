@@ -42,7 +42,7 @@ function embark(names)
 		count=MakeTable(modpos,modsize,names) --just remake tables
 	else
 	
-	tofind=addressOf(df.ui,"race_id")
+	_,tofind=df.sizeof(df.global.ui:_field("race_id"))
 
 	loc=offsets.find(stoff,0x0f,0xb7,0x0d,DWORD_,tofind) --MOVZX  ECX,WORD PTR[]
 	

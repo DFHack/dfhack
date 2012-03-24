@@ -4,6 +4,10 @@ option optimize_for = LITE_RUNTIME;
 
 import "Basic.proto";
 
+// RPC GetVersion : EmptyMessage -> StringMessage
+// RPC GetDFVersion : EmptyMessage -> StringMessage
+
+// RPC GetWorldInfo : EmptyMessage -> GetWorldInfoOut
 message GetWorldInfoOut {
     enum Mode {
         MODE_DWARF = 1;
@@ -27,6 +31,7 @@ message GetWorldInfoOut {
     repeated int32 companion_histfig_ids = 10;
 };
 
+// RPC ListEnums : EmptyMessage -> ListEnumsOut
 message ListEnumsOut {
     repeated EnumItemName material_flags = 1;
     repeated EnumItemName inorganic_flags = 2;
@@ -46,6 +51,7 @@ message ListEnumsOut {
     repeated EnumItemName profession = 11;
 };
 
+// RPC ListMaterials : ListMaterialsIn -> ListMaterialsOut
 message ListMaterialsIn {
     optional BasicMaterialInfoMask mask = 1;
 
@@ -62,6 +68,7 @@ message ListMaterialsOut {
     repeated BasicMaterialInfo value = 1;
 };
 
+// RPC ListUnits : ListUnitsIn -> ListUnitsOut
 message ListUnitsIn {
     optional BasicUnitInfoMask mask = 1;
 
@@ -81,6 +88,7 @@ message ListUnitsOut {
     repeated BasicUnitInfo value = 1;
 };
 
+// RPC ListSquads : ListSquadsIn -> ListSquadsOut
 message ListSquadsIn {}
 message ListSquadsOut {
     repeated BasicSquadInfo value = 1;

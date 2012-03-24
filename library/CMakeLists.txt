@@ -55,8 +55,10 @@ SET(MAIN_SOURCES
 Core.cpp
 ColorText.cpp
 DataDefs.cpp
+LuaWrapper.cpp
 DataStatics.cpp
 DataStaticsCtor.cpp
+DataStaticsFields.cpp
 MiscUtils.cpp
 PluginManager.cpp
 TileTypes.cpp
@@ -195,6 +197,14 @@ ADD_CUSTOM_COMMAND(
 
 ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/df/static.inc)
 
+IF(UNIX)
+  # Don't produce debug info for generated stubs
+  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp
+                              PROPERTIES COMPILE_FLAGS "-g0 -O1")
+ELSE(WIN32)
+ENDIF()
+
+
 # Compilation
 
 ADD_DEFINITIONS(-DBUILD_DFHACK_LIB)
@@ -242,7 +252,7 @@ ENDIF()
 #effectively disables debug builds...
 SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
-TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket ${PROJECT_LIBS})
+TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua ${PROJECT_LIBS})
 SET_TARGET_PROPERTIES(dfhack PROPERTIES LINK_INTERFACE_LIBRARIES "")
 
 TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket)

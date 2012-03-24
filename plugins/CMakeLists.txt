@@ -45,11 +45,6 @@ if (BUILD_DWARFEXPORT)
     add_subdirectory (dwarfexport)
 endif()
 
-OPTION(BUILD_AUTOLABOR "Build autolabor." ON)
-if (BUILD_AUTOLABOR)
-    add_subdirectory (autolabor)
-endif()
-
 # Protobuf
 FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 
@@ -72,6 +67,8 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(probe probe.cpp)
     # this is a plugin which helps detect cursed creatures (vampires, necromancers, werebeasts, ...)
     DFHACK_PLUGIN(cursecheck cursecheck.cpp)
+    # automatically assign labors to dwarves!
+    DFHACK_PLUGIN(autolabor autolabor.cpp)
     DFHACK_PLUGIN(drybuckets drybuckets.cpp)
     DFHACK_PLUGIN(getplants getplants.cpp)
     DFHACK_PLUGIN(plants plants.cpp)

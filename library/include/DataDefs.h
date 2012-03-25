@@ -73,10 +73,12 @@ namespace DFHack
 
         void *do_allocate_pod();
         void do_copy_pod(void *tgt, const void *src);
+        bool do_destroy_pod(void *obj);
 
         virtual bool can_allocate() { return true; }
         virtual void *do_allocate() { return do_allocate_pod(); }
         virtual void do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); }
+        virtual bool do_destroy(void *obj) { return do_destroy_pod(obj); }
 
     public:
         virtual ~type_identity() {}
@@ -101,6 +103,7 @@ namespace DFHack
 
         void *allocate();
         bool copy(void *tgt, const void *src);
+        bool destroy(void *obj);
     };
 
     class DFHACK_EXPORT constructed_identity : public type_identity {
@@ -113,6 +116,7 @@ namespace DFHack
         virtual bool can_allocate() { return (allocator != NULL); }
         virtual void *do_allocate() { return allocator(NULL,NULL); }
         virtual void do_copy(void *tgt, const void *src) { allocator(tgt,src); }
+        virtual bool do_destroy(void *obj) { return allocator(NULL,obj) == obj; }
     public:
         virtual bool isPrimitive() { return false; }
         virtual bool isConstructed() { return true; }
@@ -162,6 +166,7 @@ namespace DFHack
         virtual bool can_allocate() { return true; }
         virtual void *do_allocate() { return do_allocate_pod(); }
         virtual void do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); }
+        virtual bool do_destroy(void *obj) { return do_destroy_pod(obj); }
 
     public:
         bitfield_identity(size_t size,
@@ -189,6 +194,7 @@ namespace DFHack
         virtual bool can_allocate() { return true; }
         virtual void *do_allocate();
         virtual void do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); }
+        virtual bool do_destroy(void *obj) { return do_destroy_pod(obj); }
 
     public:
         enum_identity(size_t size,

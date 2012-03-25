@@ -593,10 +593,7 @@ static int meta_new(lua_State *state)
 
     void *ptr = id->allocate();
     if (!ptr)
-    {
-        lua_pushnil(state);
-        return 1;
-    }
+        luaL_error(state, "Cannot allocate %s", id->getFullName().c_str());
 
     if (lua_isuserdata(state, 1))
     {
@@ -628,6 +625,30 @@ static int meta_assign(lua_State *state)
         luaL_error(state, "No copy support for %s", id1->getFullName().c_str());
 
     return 0;
+}
+
+/**
+ * Method: deallocation for DF object references.
+ */
+static int meta_delete(lua_State *state)
+{
+    int argc = lua_gettop(state);
+
+    if (argc != 1)
+        luaL_error(state, "Usage: object:delete() or df.delete(object)");
+
+    if (lua_isnil(state, 1))
+    {
+        lua_pushboolean(state, true);
+        return 1;
+    }
+
+    type_identity *id = get_object_identity(state, 1, "df.delete()", false);
+
+    bool ok = id->destroy(get_object_ref(state, 1));
+
+    lua_pushboolean(state, ok);
+    return 1;
 }
 
 /**
@@ -740,6 +761,10 @@ void LuaWrapper::SetPtrMethods(lua_State *state, int meta_idx, int read_idx)
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
     lua_setfield(state, meta_idx, "new");
     EnableMetaField(state, read_idx, "new");
+
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_DELETE_NAME);
+    lua_setfield(state, meta_idx, "delete");
+    EnableMetaField(state, read_idx, "delete");
 
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
     lua_setfield(state, meta_idx, "assign");
@@ -1022,6 +1047,10 @@ static void DoAttach(lua_State *state)
     lua_pushcclosure(state, meta_assign, 1);
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
 
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
+    lua_pushcclosure(state, meta_delete, 1);
+    lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_DELETE_NAME);
+
     luaL_register(state, "df", no_functions);
 
     {
@@ -1035,6 +1064,8 @@ static void DoAttach(lua_State *state)
         lua_setfield(state, -2, "sizeof");
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
         lua_setfield(state, -2, "new");
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_DELETE_NAME);
+        lua_setfield(state, -2, "delete");
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_DISPLACE_NAME);
         lua_setfield(state, -2, "_displace");
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);

@@ -68,6 +68,7 @@ namespace DFHack { namespace LuaWrapper {
 #define DFHACK_DISPLACE_NAME "DFHack::Displace"
 #define DFHACK_NEW_NAME "DFHack::New"
 #define DFHACK_ASSIGN_NAME "DFHack::Assign"
+#define DFHACK_DELETE_NAME "DFHack::Delete"
 
 /*
  * Upvalue: contents of DFHACK_TYPETABLE_NAME

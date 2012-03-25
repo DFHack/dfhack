@@ -123,7 +123,7 @@ INSTANTIATE_WRAPPERS(4, (A1,A2,A3,A4), (vA1,vA2,vA3,vA4),
 
     template<class T>
     inline function_identity_base *wrap_function(T ptr) {
-        static function_identity<T> identity(ptr);
-        return &identity;
+        // bah, but didn't have any idea how to allocate statically
+        return new function_identity<T>(ptr);
     }
 }

@@ -366,17 +366,17 @@ function findVectors()
 end
 
 function GetRaceToken(p) --actually gets token...
-	local vec=df.world.raws.creatures.all
-	return vec[p]:deref().creature_id
+	local vec=df.global.world.raws.creatures.all
+	return vec[p].creature_id
 end
 function BuildNameTable()
 	local rtbl={}
-	local vec=df.world.raws.creatures.all
+	local vec=df.global.world.raws.creatures.all
 	--print(string.format("Vector start:%x",vec.st))
 	--print(string.format("Vector end:%x",vec.en))
 	--print("Creature count:"..vec.size)
-	for k,v in iter(vec) do
-		local name=v:deref().creature_id
+	for k=0,#vec-1 do
+		local name=vec[k].creature_id
 		--print(k.." "..tostring(name))
 		rtbl[name]=k		
 	end
@@ -468,29 +468,29 @@ function ParseNames(path)
 	return ret
 end
 function getSelectedUnit()
-	local unit_indx=df.ui_selected_unit
-	if unit_indx<df.world.units.other[0].size then
-		return df.world.units.other[0][unit_indx]:deref()
+	local unit_indx=df.global.ui_selected_unit
+	if unit_indx<#df.global.world.units.other[0]-1 then
+		return df.global.world.units.other[0][unit_indx]
 	else
 		return nil
 	end
 end
 function getxyz() -- this will return pointers x,y and z coordinates.
-	local x=df.cursor.x
-	local y=df.cursor.y
-	local z=df.cursor.z	
+	local x=df.global.cursor.x
+	local y=df.global.cursor.y
+	local z=df.global.cursor.z	
 	return x,y,z -- return the coords
 end
 function getCreatureAtPos(x,y,z) -- gets the creature index @ x,y,z coord
 	--local x,y,z=getxyz() --get 'X' coords
-	local vector=df.world.units.all -- load all creatures
-	for i = 0, vector.size-1 do -- look into all creatures offsets
-		local curpos=vector[i]:deref().pos --get its coordinates
+	local vector=df.global.world.units.all -- load all creatures
+	for i = 0, #vector-1 do -- look into all creatures offsets
+		local curpos=vector[i].pos --get its coordinates
 		local cx=curpos.x 
 		local cy=curpos.y
 		local cz=curpos.z
 		if cx==x and cy==y and cz==z then --compare them
-			return vector[i]:deref() --return index
+			return vector[i] --return index
 		end
 	end
 	print("Creature not found!")

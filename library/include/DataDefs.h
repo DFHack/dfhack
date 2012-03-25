@@ -58,6 +58,7 @@ namespace DFHack
         IDTYPE_ENUM,
         IDTYPE_STRUCT,
         IDTYPE_CLASS,
+        IDTYPE_BUFFER,
         IDTYPE_STL_PTR_VECTOR
     };
 
@@ -90,6 +91,11 @@ namespace DFHack
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) = 0;
         virtual void build_metatable(lua_State *state);
 
+        // lua_read doesn't just return a reference to the object
+        virtual bool isPrimitive() { return true; }
+        // needs constructor/destructor
+        virtual bool isConstructed() { return false; }
+        // inherits from container_identity
         virtual bool isContainer() { return false; }
 
         void *allocate();
@@ -102,6 +108,9 @@ namespace DFHack
     protected:
         constructed_identity(size_t size, TAllocateFn alloc)
             : type_identity(size), allocator(alloc) {};
+
+        virtual bool isPrimitive() { return false; }
+        virtual bool isConstructed() { return true; }
 
         virtual bool can_allocate() { return (allocator != NULL); }
         virtual void *do_allocate() { return allocator(NULL,NULL); }
@@ -160,6 +169,8 @@ namespace DFHack
 
         virtual identity_type type() { return IDTYPE_BITFIELD; }
 
+        virtual bool isConstructed() { return false; }
+
         int getNumBits() { return num_bits; }
         const bitfield_item_info *getBits() { return bits; }
 
@@ -193,6 +204,9 @@ namespace DFHack
         const char *const *getKeys() { return keys; }
 
         type_identity *getBaseType() { return base_type; }
+
+        virtual bool isPrimitive() { return true; }
+        virtual bool isConstructed() { return false; }
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
@@ -344,7 +358,7 @@ namespace DFHack
     /**
      * Check that the value is a wrapped DF object of the given type, and if so return the pointer.
      */
-    DFHACK_EXPORT void *GetDFObject(lua_State *state, type_identity *type, int val_index);
+    DFHACK_EXPORT void *GetDFObject(lua_State *state, type_identity *type, int val_index, bool exact_type = false);
 
     template<class T>
     T *ifnull(T *a, T *b) { return a ? a : b; }
@@ -639,7 +653,7 @@ namespace DFHack {
      * Represent flag array bits as a string, using sep as join separator.
      */
     template<class T>
-    inline std::string bitfield_to_string(const BitArray<T> &val, const std::string &sep = " ") {
+    inline std::string flagarray_to_string(const BitArray<T> &val, const std::string &sep = " ") {
         std::vector<std::string> tmp;
         flagarray_to_string<T>(&tmp, val);
         return join_strings(sep, tmp);
@@ -659,8 +673,8 @@ namespace DFHack {
      * Check that the value is a wrapped DF object of the correct type, and if so return the pointer.
      */
     template<class T>
-    T *GetDFObject(lua_State *state, int val_index) {
-        return GetDFObject(state, df::identity_traits<T>::get(), val_index);
+    T *GetDFObject(lua_State *state, int val_index, bool exact_type = false) {
+        return (T*)GetDFObject(state, df::identity_traits<T>::get(), val_index, exact_type);
     }
 }
 

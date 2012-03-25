@@ -47,6 +47,7 @@ VersionInfoFactory::~VersionInfoFactory()
 {
     clear();
 }
+
 void VersionInfoFactory::clear()
 {
     // for each stored version, delete
@@ -83,11 +84,11 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
     TiXmlElement* pMemEntry;
     const char *cstr_name = entry->Attribute("name");
     if (!cstr_name)
-        throw Error::MemoryXmlBadAttribute("name");
+        throw Error::SymbolsXmlBadAttribute("name");
 
     const char *cstr_os = entry->Attribute("os-type");
     if (!cstr_os)
-        throw Error::MemoryXmlBadAttribute("os-type");
+        throw Error::SymbolsXmlBadAttribute("os-type");
 
     string os = cstr_os;
     mem->setVersion(cstr_name);
@@ -106,7 +107,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
     }
     else
     {
-        throw Error::MemoryXmlBadAttribute("os-type");
+        throw Error::SymbolsXmlBadAttribute("os-type");
     }
 
     // process additional entries
@@ -121,7 +122,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         {
             const char *cstr_key = pMemEntry->Attribute("name");
             if(!cstr_key)
-                throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);
+                throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             const char *cstr_value = pMemEntry->Attribute("value");
             if(!cstr_value)
             {
@@ -134,14 +135,14 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         {
             const char *cstr_value = pMemEntry->Attribute("value");
             if(!cstr_value)
-                throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);
+                throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             mem->addMD5(cstr_value);
         }
         else if (type == "binary-timestamp")
         {
             const char *cstr_value = pMemEntry->Attribute("value");
             if(!cstr_value)
-                throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);
+                throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             mem->addPE(strtol(cstr_value, 0, 16));
         }
     } // for
@@ -157,7 +158,7 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
     {
         error = true;
         cerr << "failed!\n";
-        throw Error::MemoryXmlParse(doc.ErrorDesc(), doc.ErrorId(), doc.ErrorRow(), doc.ErrorCol());
+        throw Error::SymbolsXmlParse(doc.ErrorDesc(), doc.ErrorId(), doc.ErrorRow(), doc.ErrorCol());
     }
     else
     {
@@ -174,13 +175,13 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
         if (!pElem)
         {
             error = true;
-            throw Error::MemoryXmlNoRoot();
+            throw Error::SymbolsXmlNoRoot();
         }
         string m_name=pElem->Value();
         if(m_name != "data-definition")
         {
             error = true;
-            throw Error::MemoryXmlNoRoot();
+            throw Error::SymbolsXmlNoRoot();
         }
         // save this for later
         hRoot=TiXmlHandle(pElem);

@@ -47,7 +47,7 @@ function mainmenu(t1)
 end
 function RunSaved() 
 	print("Locating saves...")
-	local str=df.world.cur_savegame.save_dir
+	local str=df.global.world.cur_savegame.save_dir
 	print("Current region:"..str)
 	str="data/save/"..str.."/dfusion/init.lua"
 	print("Trying to run:"..str)
@@ -57,11 +57,11 @@ dofile("dfusion/common.lua")
 dofile("dfusion/utils.lua")
 dofile("dfusion/offsets_misc.lua")
 dofile("dfusion/editor.lua")
-dofile("dfusion/xml_struct.lua")
+--dofile("dfusion/xml_struct.lua")
 unlockDF()
 plugins={}
 table.insert(plugins,{"simple_embark","A simple embark dwarf count editor"})
-table.insert(plugins,{"tools","some misc tools"})
+--table.insert(plugins,{"tools","some misc tools"})
 table.insert(plugins,{"embark","Multi race embark"})
 table.insert(plugins,{"friendship","Multi race fort enabler"})
 --[=[table.insert(plugins,{"items","A collection of item hacking tools"})
@@ -73,8 +73,8 @@ table.insert(plugins,{"adv_tools","some tools for (mainly) advneturer hacking"})
 table.insert(plugins,{"triggers","a function calling plug (discontinued...)"})
 table.insert(plugins,{"migrants","multi race imigrations"})
 --]=]
-table.insert(plugins,{"onfunction","run lua on some df function"})
-table.insert(plugins,{"editor","edit internals of df",EditDF})
+--table.insert(plugins,{"onfunction","run lua on some df function"})
+--table.insert(plugins,{"editor","edit internals of df",EditDF})
 table.insert(plugins,{"saves","run current worlds's init.lua",RunSaved})
 loadall(plugins)
 dofile_silent("dfusion/initcustom.lua")

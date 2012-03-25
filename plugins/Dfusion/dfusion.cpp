@@ -20,6 +20,7 @@
 #include "functioncall.h"
 #include "lua_FunctionCall.h"
 #include "lua_Offsets.h"
+#include "DataDefs.h"
 
 using std::vector;
 using std::string;
@@ -45,6 +46,8 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
 	lua::state st=lua::glua::Get();
 	//maybe remake it to run automaticaly
+	DFHack::AttachDFGlobals(st);
+
 	lua::RegisterConsole(st);
 	lua::RegisterProcess(st);
 	lua::RegisterHexsearch(st);

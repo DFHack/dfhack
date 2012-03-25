@@ -10,11 +10,6 @@ if(BUILD_DFUSION)
     add_subdirectory (Dfusion)
 endif()
 
-OPTION(BUILD_QTPLUG "Build the experimental Qt plugin." OFF)
-if(BUILD_QTPLUG)
-    add_subdirectory (qtplug)
-endif()
-
 OPTION(BUILD_STONESENSE "Build stonesense (needs a checkout first)." OFF)
 if(BUILD_STONESENSE)
     add_subdirectory (stonesense)
@@ -23,11 +18,6 @@ endif()
 OPTION(BUILD_DEV_PLUGINS "Build developer plugins." OFF)
 if(BUILD_DEV_PLUGINS)
     add_subdirectory (devel)
-endif()
-
-OPTION(BUILD_SERVER "Build server." OFF)
-if(BUILD_SERVER)
-    add_subdirectory (server)
 endif()
 
 OPTION(BUILD_DF2MC "Build DF2MC (needs a checkout first)." OFF)
@@ -60,6 +50,8 @@ ADD_CUSTOM_COMMAND(
     DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
 
+SET_SOURCE_FILES_PROPERTIES( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
+
 # Plugins
 OPTION(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if (BUILD_SUPPORTED)
@@ -79,8 +71,8 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(vdig vdig.cpp)
     DFHACK_PLUGIN(colonies colonies.cpp)
     DFHACK_PLUGIN(mode mode.cpp)
-    DFHACK_PLUGIN(liquids liquids.cpp)
-    DFHACK_PLUGIN(tiletypes tiletypes.cpp)
+    DFHACK_PLUGIN(liquids liquids.cpp Brushes.h)
+    DFHACK_PLUGIN(tiletypes tiletypes.cpp Brushes.h)
     DFHACK_PLUGIN(tubefill tubefill.cpp)
     DFHACK_PLUGIN(autodump autodump.cpp)
     DFHACK_PLUGIN(cleanowned cleanowned.cpp)

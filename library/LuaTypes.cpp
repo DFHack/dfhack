@@ -1,0 +1,979 @@
+/*
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any
+damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any
+purpose, including commercial applications, and to alter it and
+redistribute it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must
+not claim that you wrote the original software. If you use this
+software in a product, an acknowledgment in the product documentation
+would be appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and
+must not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source
+distribution.
+*/
+
+#include "Internal.h"
+
+#include <string>
+#include <vector>
+#include <map>
+
+#include "MemAccess.h"
+#include "Core.h"
+#include "VersionInfo.h"
+#include "tinythread.h"
+// must be last due to MS stupidity
+#include "DataDefs.h"
+#include "DataIdentity.h"
+#include "LuaWrapper.h"
+
+#include "MiscUtils.h"
+
+#include <lua.h>
+#include <lauxlib.h>
+
+using namespace DFHack;
+using namespace DFHack::LuaWrapper;
+
+/**************************************
+ * Identity object read/write methods *
+ **************************************/
+
+void constructed_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
+{
+    push_object_internal(state, this, ptr);
+}
+
+void constructed_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+{
+    field_error(state, fname_idx, "complex object", "write");
+}
+
+void enum_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
+{
+    base_type->lua_read(state, fname_idx, ptr);
+}
+
+void enum_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+{
+    base_type->lua_write(state, fname_idx, ptr, val_index);
+}
+
+void df::number_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
+{
+    lua_pushnumber(state, read(ptr));
+}
+
+void df::number_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+{
+    if (!lua_isnumber(state, val_index))
+        field_error(state, fname_idx, "number expected", "write");
+
+    write(ptr, lua_tonumber(state, val_index));
+}
+
+void df::bool_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
+{
+    lua_pushboolean(state, *(bool*)ptr);
+}
+
+void df::bool_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+{
+    char *pb = (char*)ptr;
+
+    if (lua_isboolean(state, val_index) || lua_isnil(state, val_index))
+        *pb = lua_toboolean(state, val_index);
+    else if (lua_isnumber(state, val_index))
+        *pb = lua_tointeger(state, val_index);
+    else
+        field_error(state, fname_idx, "boolean or number expected", "write");
+}
+
+void df::stl_string_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
+{
+    auto pstr = (std::string*)ptr;
+    lua_pushlstring(state, pstr->data(), pstr->size());
+}
+
+void df::stl_string_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+{
+    size_t size;
+    const char *bytes = lua_tolstring(state, val_index, &size);
+    if (!bytes)
+        field_error(state, fname_idx, "string expected", "write");
+
+    *(std::string*)ptr = std::string(bytes, size);
+}
+
+void df::pointer_identity::lua_read(lua_State *state, int fname_idx, void *ptr, type_identity *target)
+{
+    push_object_internal(state, target, *(void**)ptr);
+}
+
+void df::pointer_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
+{
+    lua_read(state, fname_idx, ptr, target);
+}
+
+void df::pointer_identity::lua_write(lua_State *state, int fname_idx, void *ptr,
+                                     type_identity *target, int val_index)
+{
+    auto pptr = (void**)ptr;
+
+    if (lua_isnil(state, val_index))
+        *pptr = NULL;
+    else
+    {
+        void *nval = get_object_internal(state, target, val_index, false);
+        if (nval)
+            *pptr = nval;
+        else
+            field_error(state, fname_idx, "incompatible pointer type", "write");
+    }
+}
+
+void df::pointer_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+{
+    lua_write(state, fname_idx, ptr, target, val_index);
+}
+
+int container_identity::lua_item_count(lua_State *state, void *ptr, CountMode mode)
+{
+    if (lua_isnumber(state, UPVAL_ITEM_COUNT))
+        return lua_tointeger(state, UPVAL_ITEM_COUNT);
+    else
+        return item_count(ptr, mode);
+}
+
+void container_identity::lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx)
+{
+    auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+    void *pitem = item_pointer(id, ptr, idx);
+    push_object_internal(state, id, pitem);
+}
+
+void container_identity::lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx)
+{
+    auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+    void *pitem = item_pointer(id, ptr, idx);
+    id->lua_read(state, fname_idx, pitem);
+}
+
+void container_identity::lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+{
+    auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+    void *pitem = item_pointer(id, ptr, idx);
+    id->lua_write(state, fname_idx, pitem, val_index);
+}
+
+bool container_identity::lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+{
+    auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+
+    char tmp[32];
+    void *pitem = &tmp;
+
+    if (id->isPrimitive())
+    {
+        if (id->isConstructed())
+            luaL_error(state, "Temporaries of type %s not supported", id->getFullName().c_str());
+
+        assert(id->byte_size() <= sizeof(tmp));
+        id->lua_write(state, fname_idx, pitem, val_index);
+    }
+    else
+    {
+        pitem = get_object_internal(state, id, val_index, false);
+        if (!pitem)
+            field_error(state, fname_idx, "incompatible object type", "insert");
+    }
+
+    return insert(ptr, idx, pitem);
+}
+
+void ptr_container_identity::lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx)
+{
+    auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+    void *pitem = item_pointer(id, ptr, idx);
+    push_adhoc_pointer(state, pitem, id);
+}
+
+void ptr_container_identity::lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx)
+{
+    auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+    void *pitem = item_pointer(&df::identity_traits<void*>::identity, ptr, idx);
+    df::pointer_identity::lua_read(state, fname_idx, pitem, id);
+}
+
+void ptr_container_identity::lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+{
+    auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+    void *pitem = item_pointer(&df::identity_traits<void*>::identity, ptr, idx);
+    df::pointer_identity::lua_write(state, fname_idx, pitem, id, val_index);
+}
+
+bool ptr_container_identity::lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+{
+    auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
+
+    void *pitem = NULL;
+    df::pointer_identity::lua_write(state, fname_idx, &pitem, id, val_index);
+
+    return insert(ptr, idx, pitem);
+}
+
+void bit_container_identity::lua_item_reference(lua_State *state, int, void *, int)
+{
+    lua_pushnil(state);
+}
+
+void bit_container_identity::lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx)
+{
+    lua_pushboolean(state, get_item(ptr, idx));
+}
+
+void bit_container_identity::lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+{
+    if (lua_isboolean(state, val_index) || lua_isnil(state, val_index))
+        set_item(ptr, idx, lua_toboolean(state, val_index));
+    else if (lua_isnumber(state, val_index))
+        set_item(ptr, idx, lua_tointeger(state, val_index) != 0);
+    else
+        field_error(state, fname_idx, "boolean or number expected", "write");
+}
+
+/**
+ * Resolve the field name in UPVAL_FIELDTABLE, die if not found.
+ */
+static void lookup_field(lua_State *state, int index, const char *mode)
+{
+    lua_pushvalue(state, index);
+    lua_gettable(state, UPVAL_FIELDTABLE); // uses metatable with enum keys
+
+    if (lua_isnil(state, -1))
+        field_error(state, index, "not found", mode);
+}
+
+static void *find_field(lua_State *state, int index, const char *mode)
+{
+    lookup_field(state, index, mode);
+
+    void *p = lua_touserdata(state, -1);
+    lua_pop(state, 1);
+    return p;
+}
+
+static uint8_t *check_method_call(lua_State *state, int min_args, int max_args)
+{
+    int argc = lua_gettop(state)-1;
+    if (argc < min_args || argc > max_args)
+        field_error(state, UPVAL_METHOD_NAME, "wrong argument count", "call");
+
+    return get_object_addr(state, 1, UPVAL_METHOD_NAME, "call");
+}
+
+static void GetAdHocMetatable(lua_State *state, const struct_field_info *field);
+
+static void read_field(lua_State *state, const struct_field_info *field, void *ptr)
+{
+    switch (field->mode)
+    {
+        case struct_field_info::STATIC_STRING:
+        {
+            int len = strnlen((char*)ptr, field->count);
+            lua_pushlstring(state, (char*)ptr, len);
+            return;
+        }
+
+        case struct_field_info::PRIMITIVE:
+        case struct_field_info::SUBSTRUCT:
+            field->type->lua_read(state, 2, ptr);
+            return;
+
+        case struct_field_info::POINTER:
+            df::pointer_identity::lua_read(state, 2, ptr, field->type);
+            return;
+
+        case struct_field_info::CONTAINER:
+            if (!field->eid || !field->type->isContainer() ||
+                field->eid == ((container_identity*)field->type)->getIndexEnumType())
+            {
+                field->type->lua_read(state, 2, ptr);
+                return;
+            }
+            // fallthrough
+
+        case struct_field_info::STATIC_ARRAY:
+        case struct_field_info::STL_VECTOR_PTR:
+            GetAdHocMetatable(state, field);
+            push_object_ref(state, ptr);
+            return;
+
+        case struct_field_info::END:
+            break;
+    }
+
+    lua_pushnil(state);
+}
+
+static void field_reference(lua_State *state, const struct_field_info *field, void *ptr)
+{
+    switch (field->mode)
+    {
+        case struct_field_info::PRIMITIVE:
+        case struct_field_info::SUBSTRUCT:
+            push_object_internal(state, field->type, ptr);
+            return;
+
+        case struct_field_info::POINTER:
+            push_adhoc_pointer(state, ptr, field->type);
+            return;
+
+        case struct_field_info::CONTAINER:
+            read_field(state, field, ptr);
+            return;
+
+        case struct_field_info::STATIC_STRING:
+        case struct_field_info::STATIC_ARRAY:
+        case struct_field_info::STL_VECTOR_PTR:
+            GetAdHocMetatable(state, field);
+            push_object_ref(state, ptr);
+            return;
+
+        case struct_field_info::END:
+            break;
+    }
+
+    lua_pushnil(state);
+}
+
+static void write_field(lua_State *state, const struct_field_info *field, void *ptr, int value_idx)
+{
+    switch (field->mode)
+    {
+        case struct_field_info::STATIC_STRING:
+        {
+            size_t size;
+            const char *str = lua_tolstring(state, value_idx, &size);
+            if (!str)
+                field_error(state, 2, "string expected", "write");
+            memcpy(ptr, str, std::min(size+1, size_t(field->count)));
+            return;
+        }
+
+        case struct_field_info::PRIMITIVE:
+        case struct_field_info::SUBSTRUCT:
+        case struct_field_info::CONTAINER:
+            field->type->lua_write(state, 2, ptr, value_idx);
+            return;
+
+        case struct_field_info::POINTER:
+            df::pointer_identity::lua_write(state, 2, ptr, field->type, value_idx);
+
+        case struct_field_info::STATIC_ARRAY:
+        case struct_field_info::STL_VECTOR_PTR:
+            field_error(state, 2, "complex object", "write");
+
+        case struct_field_info::END:
+            return;
+    }
+}
+
+/**
+ * Metamethod: represent a type node as string.
+ */
+static int meta_type_tostring(lua_State *state)
+{
+    if (!lua_getmetatable(state, 1))
+        return 0;
+
+    lua_getfield(state, -1, "__metatable");
+    const char *cname = lua_tostring(state, -1);
+
+    lua_pushstring(state, stl_sprintf("<type: %s>", cname).c_str());
+    return 1;
+}
+
+/**
+ * Metamethod: represent a DF object reference as string.
+ */
+static int meta_ptr_tostring(lua_State *state)
+{
+    uint8_t *ptr = get_object_addr(state, 1, 0, "access");
+
+    lua_getfield(state, UPVAL_METATABLE, "__metatable");
+    const char *cname = lua_tostring(state, -1);
+
+    lua_pushstring(state, stl_sprintf("<%s: 0x%08x>", cname, (unsigned)ptr).c_str());
+    return 1;
+}
+
+// Resolve the field in the metatable and return
+static int get_metafield(lua_State *state)
+{
+    lua_rawget(state, UPVAL_METATABLE);
+    return 1;
+}
+
+/**
+ * Metamethod: __index for structures.
+ */
+static int meta_struct_index(lua_State *state)
+{
+    uint8_t *ptr = get_object_addr(state, 1, 2, "read");
+    auto field = (struct_field_info*)find_field(state, 2, "read");
+    if (!field)
+        return get_metafield(state);
+    read_field(state, field, ptr + field->offset);
+    return 1;
+}
+
+/**
+ * Method: _field for structures.
+ */
+static int meta_struct_field_reference(lua_State *state)
+{
+    if (lua_gettop(state) != 2)
+        luaL_error(state, "Usage: object._field(name)");
+    uint8_t *ptr = get_object_addr(state, 1, 2, "reference");
+    auto field = (struct_field_info*)find_field(state, 2, "reference");
+    if (!field)
+        field_error(state, 2, "builtin property", "reference");
+    field_reference(state, field, ptr + field->offset);
+    return 1;
+}
+
+/**
+ * Metamethod: __newindex for structures.
+ */
+static int meta_struct_newindex(lua_State *state)
+{
+    uint8_t *ptr = get_object_addr(state, 1, 2, "write");
+    auto field = (struct_field_info*)find_field(state, 2, "write");
+    if (!field)
+        field_error(state, 2, "builtin property", "write");
+    write_field(state, field, ptr + field->offset, 3);
+    return 0;
+}
+
+/**
+ * Metamethod: __index for primitives, i.e. simple object references.
+ *   Fields point to identity, or NULL for metafields.
+ */
+static int meta_primitive_index(lua_State *state)
+{
+    uint8_t *ptr = get_object_addr(state, 1, 2, "read");
+    auto type = (type_identity*)find_field(state, 2, "read");
+    if (!type)
+        return get_metafield(state);
+    type->lua_read(state, 2, ptr);
+    return 1;
+}
+
+/**
+ * Metamethod: __newindex for primitives.
+ */
+static int meta_primitive_newindex(lua_State *state)
+{
+    uint8_t *ptr = get_object_addr(state, 1, 2, "write");
+    auto type = (type_identity*)find_field(state, 2, "write");
+    if (!type)
+        field_error(state, 2, "builtin property", "write");
+    type->lua_write(state, 2, ptr, 3);
+    return 0;
+}
+
+/**
+ * Metamethod: __len for containers.
+ */
+static int meta_container_len(lua_State *state)
+{
+    uint8_t *ptr = get_object_addr(state, 1, 0, "get length");
+    auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_LEN);
+    lua_pushinteger(state, len);
+    return 1;
+}
+
+/**
+ * Field lookup for containers:
+ *
+ *   - Numbers are indices and handled directly.
+ *   - NULL userdata are metafields; push and exit;
+ */
+static int lookup_container_field(lua_State *state, int field, const char *mode = NULL)
+{
+    if (lua_type(state, field) == LUA_TNUMBER)
+        return field;
+
+    lookup_field(state, field, mode ? mode : "read");
+
+    if (lua_isuserdata(state, -1) && !lua_touserdata(state, -1))
+    {
+        if (mode)
+            field_error(state, field, "builtin property", mode);
+
+        lua_pop(state, 1);
+        get_metafield(state);
+        return 0;
+    }
+
+    return -1;
+}
+
+/**
+ * Index verification: number and in range.
+ */
+static int check_container_index(lua_State *state, int len,
+                                 int fidx, int iidx, const char *mode)
+{
+    if (!lua_isnumber(state, iidx))
+        field_error(state, fidx, "invalid index", mode);
+
+    int idx = lua_tointeger(state, iidx);
+    if (idx < 0 || (idx >= len && len >= 0))
+        field_error(state, fidx, "index out of bounds", mode);
+
+    return idx;
+}
+
+/**
+ * Metamethod: __index for containers.
+ */
+static int meta_container_index(lua_State *state)
+{
+    uint8_t *ptr = get_object_addr(state, 1, 2, "read");
+    int iidx = lookup_container_field(state, 2);
+    if (!iidx)
+        return 1;
+
+    auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_READ);
+    int idx = check_container_index(state, len, 2, iidx, "read");
+    id->lua_item_read(state, 2, ptr, idx);
+    return 1;
+}
+
+/**
+ * Method: _field for containers.
+ */
+static int meta_container_field_reference(lua_State *state)
+{
+    if (lua_gettop(state) != 2)
+        luaL_error(state, "Usage: object._field(index)");
+    uint8_t *ptr = get_object_addr(state, 1, 2, "reference");
+    int iidx = lookup_container_field(state, 2, "reference");
+
+    auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_WRITE);
+    int idx = check_container_index(state, len, 2, iidx, "reference");
+    id->lua_item_reference(state, 2, ptr, idx);
+    return 1;
+}
+
+/**
+ * Metamethod: __index for containers.
+ */
+static int meta_container_newindex(lua_State *state)
+{
+    uint8_t *ptr = get_object_addr(state, 1, 2, "write");
+    int iidx = lookup_container_field(state, 2, "write");
+
+    auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_WRITE);
+    int idx = check_container_index(state, len, 2, iidx, "write");
+    id->lua_item_write(state, 2, ptr, idx, 3);
+    return 0;
+}
+
+/**
+ * Method: resize container
+ */
+static int method_container_resize(lua_State *state)
+{
+    uint8_t *ptr = check_method_call(state, 1, 1);
+
+    auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    int idx = check_container_index(state, -1, UPVAL_METHOD_NAME, 2, "call");
+
+    if (!id->resize(ptr, idx))
+        field_error(state, UPVAL_METHOD_NAME, "not supported", "call");
+    return 0;
+}
+
+/**
+ * Method: erase item from container
+ */
+static int method_container_erase(lua_State *state)
+{
+    uint8_t *ptr = check_method_call(state, 1, 1);
+
+    auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_LEN);
+    int idx = check_container_index(state, len, UPVAL_METHOD_NAME, 2, "call");
+
+    if (!id->erase(ptr, idx))
+        field_error(state, UPVAL_METHOD_NAME, "not supported", "call");
+    return 0;
+}
+
+/**
+ * Method: insert item into container
+ */
+static int method_container_insert(lua_State *state)
+{
+    uint8_t *ptr = check_method_call(state, 2, 2);
+
+    auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_LEN);
+    if (len >= 0) len++;
+    int idx = check_container_index(state, len, UPVAL_METHOD_NAME, 2, "call");
+
+    if (!id->lua_insert(state, UPVAL_METHOD_NAME, ptr, idx, 3))
+        field_error(state, UPVAL_METHOD_NAME, "not supported", "call");
+    return 0;
+}
+
+/**
+ * Metamethod: __len for bitfields.
+ */
+static int meta_bitfield_len(lua_State *state)
+{
+    uint8_t *ptr = get_object_addr(state, 1, 0, "get size");
+    auto id = (bitfield_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    lua_pushinteger(state, id->getNumBits());
+    return 1;
+}
+
+/**
+ * Metamethod: __index for bitfields.
+ */
+static int meta_bitfield_index(lua_State *state)
+{
+    uint8_t *ptr = get_object_addr(state, 1, 2, "read");
+    int iidx = lookup_container_field(state, 2);
+    if (!iidx)
+        return 1;
+
+    auto id = (bitfield_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+
+    // whole
+    if (lua_isuserdata(state, iidx) && lua_touserdata(state, iidx) == id)
+    {
+        size_t intv = 0;
+        memcpy(&intv, ptr, std::min(sizeof(intv), size_t(id->byte_size())));
+        lua_pushnumber(state, intv);
+        return 1;
+    }
+
+    int idx = check_container_index(state, id->getNumBits(), 2, iidx, "read");
+    int size = id->getBits()[idx].size;
+
+    int value = getBitfieldField(ptr, idx, size);
+    if (size <= 1)
+        lua_pushboolean(state, value != 0);
+    else
+        lua_pushinteger(state, value);
+    return 1;
+}
+
+/**
+ * Metamethod: __newindex for bitfields.
+ */
+static int meta_bitfield_newindex(lua_State *state)
+{
+    uint8_t *ptr = get_object_addr(state, 1, 2, "write");
+    int iidx = lookup_container_field(state, 2, "write");
+
+    auto id = (bitfield_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+
+    // whole
+    if (lua_isuserdata(state, iidx) && lua_touserdata(state, iidx) == id)
+    {
+        if (!lua_isnumber(state, 3))
+            field_error(state, 2, "number expected", "write");
+
+        size_t intv = (size_t)lua_tonumber(state, 3);
+        memcpy(ptr, &intv, std::min(sizeof(intv), size_t(id->byte_size())));
+        return 0;
+    }
+
+    int idx = check_container_index(state, id->getNumBits(), 2, iidx, "write");
+    int size = id->getBits()[idx].size;
+
+    if (lua_isboolean(state, 3) || lua_isnil(state, 3))
+        setBitfieldField(ptr, idx, size, lua_toboolean(state, 3));
+    else if (lua_isnumber(state, 3))
+        setBitfieldField(ptr, idx, size, lua_tointeger(state, 3));
+    else
+        field_error(state, 2, "number or boolean expected", "write");
+    return 0;
+}
+
+/**
+ * Metamethod: __index for df.global
+ */
+static int meta_global_index(lua_State *state)
+{
+    auto field = (struct_field_info*)find_field(state, 2, "read");
+    if (!field)
+        return get_metafield(state);
+    void *ptr = *(void**)field->offset;
+    if (!ptr)
+        field_error(state, 2, "global address not known", "read");
+    read_field(state, field, ptr);
+    return 1;
+}
+
+/**
+ * Metamethod: __newindex for df.global
+ */
+static int meta_global_newindex(lua_State *state)
+{
+    auto field = (struct_field_info*)find_field(state, 2, "write");
+    if (!field)
+        field_error(state, 2, "builtin property", "write");
+    void *ptr = *(void**)field->offset;
+    if (!ptr)
+        field_error(state, 2, "global address not known", "write");
+    write_field(state, field, ptr, 3);
+    return 0;
+}
+
+/**
+ * Add fields in the array to the UPVAL_FIELDTABLE candidates on the stack.
+ */
+static void IndexFields(lua_State *state, struct_identity *pstruct)
+{
+    // stack: fieldtable
+
+    int base = lua_gettop(state);
+
+    for (struct_identity *p = pstruct; p; p = p->getParent())
+    {
+        auto fields = p->getFields();
+
+        for (; fields; ++fields)
+        {
+            if (fields->mode == struct_field_info::END)
+                break;
+
+            lua_pushstring(state,fields->name);
+            lua_pushlightuserdata(state,(void*)fields);
+            lua_rawset(state,base);
+        }
+    }
+}
+
+/**
+ * Make a struct-style object metatable.
+ */
+static void MakeFieldMetatable(lua_State *state, struct_identity *pstruct,
+                               lua_CFunction reader, lua_CFunction writer)
+{
+    int base = lua_gettop(state);
+
+    MakeMetatable(state, pstruct, "struct"); // meta, fields
+
+    IndexFields(state, pstruct);
+
+    SetStructMethod(state, base+1, base+2, reader, "__index");
+    SetStructMethod(state, base+1, base+2, writer, "__newindex");
+
+    // returns: [metatable readfields writefields];
+}
+
+/**
+ * Make a primitive-style metatable
+ */
+static void MakePrimitiveMetatable(lua_State *state, type_identity *type)
+{
+    int base = lua_gettop(state);
+
+    MakeMetatable(state, type, "primitive");
+
+    SetPtrMethods(state, base+1, base+2);
+
+    EnableMetaField(state, base+2, "value", type);
+
+    SetStructMethod(state, base+1, base+2, meta_primitive_index, "__index");
+    SetStructMethod(state, base+1, base+2, meta_primitive_newindex, "__newindex");
+}
+
+static void AddContainerMethodFun(lua_State *state, int meta_idx, int field_idx,
+                                  lua_CFunction function, const char *name,
+                                  type_identity *container, type_identity *item, int count)
+{
+    lua_pushfstring(state, "%s()", name);
+    SetContainerMethod(state, meta_idx, lua_gettop(state), function, name, container, item, count);
+    lua_pop(state, 1);
+
+    EnableMetaField(state, field_idx, name);
+}
+
+/**
+ * Make a container-style object metatable.
+ */
+static void MakeContainerMetatable(lua_State *state, container_identity *type,
+                                   type_identity *item, int count, type_identity *ienum)
+{
+    int base = lua_gettop(state);
+
+    MakeMetatable(state, type, "container");
+    SetPtrMethods(state, base+1, base+2);
+
+    // Update the type name using full info
+    lua_pushstring(state, type->getFullName(item).c_str());
+    lua_dup(state);
+    lua_setfield(state, base+1, "__metatable");
+    lua_setfield(state, base+1, "_type");
+
+    lua_pushlightuserdata(state, item);
+    lua_setfield(state, base+1, "_field_identity");
+
+    if (count >= 0)
+    {
+        lua_pushinteger(state, count);
+        lua_setfield(state, base+1, "_count");
+    }
+
+    SetContainerMethod(state, base+1, base+2, meta_container_len, "__len", type, item, count);
+    SetContainerMethod(state, base+1, base+2, meta_container_index, "__index", type, item, count);
+    SetContainerMethod(state, base+1, base+2, meta_container_newindex, "__newindex", type, item, count);
+
+    SetContainerMethod(state, base+1, base+2, meta_container_field_reference, "_field", type, item, count);
+
+    AddContainerMethodFun(state, base+1, base+2, method_container_resize, "resize", type, item, count);
+    AddContainerMethodFun(state, base+1, base+2, method_container_erase, "erase", type, item, count);
+    AddContainerMethodFun(state, base+1, base+2, method_container_insert, "insert", type, item, count);
+
+    AttachEnumKeys(state, base+1, base+2, ienum);
+}
+
+/*
+ * Metatable construction identity methods.
+ */
+void type_identity::build_metatable(lua_State *state)
+{
+    MakePrimitiveMetatable(state, this);
+}
+
+void container_identity::build_metatable(lua_State *state)
+{
+    MakeContainerMetatable(state, this, getItemType(), -1, getIndexEnumType());
+}
+
+void bitfield_identity::build_metatable(lua_State *state)
+{
+    int base = lua_gettop(state);
+
+    MakeMetatable(state, this, "bitfield");
+
+    SetPtrMethods(state, base+1, base+2);
+
+    SetContainerMethod(state, base+1, base+2, meta_bitfield_len, "__len", this, NULL, -1);
+    SetContainerMethod(state, base+1, base+2, meta_bitfield_index, "__index", this, NULL, -1);
+    SetContainerMethod(state, base+1, base+2, meta_bitfield_newindex, "__newindex", this, NULL, -1);
+
+    AttachEnumKeys(state, base+1, base+2, this);
+
+    EnableMetaField(state, base+2, "whole", this);
+}
+
+void struct_identity::build_metatable(lua_State *state)
+{
+    int base = lua_gettop(state);
+    MakeFieldMetatable(state, this, meta_struct_index, meta_struct_newindex);
+    SetStructMethod(state, base+1, base+2, meta_struct_field_reference, "_field");
+    SetPtrMethods(state, base+1, base+2);
+}
+
+void global_identity::build_metatable(lua_State *state)
+{
+    MakeFieldMetatable(state, this, meta_global_index, meta_global_newindex);
+}
+
+/**
+ * Construct a metatable for an object type folded into the field descriptor.
+ * This is done to reduce compile-time symbol table bloat due to templates.
+ */
+static void GetAdHocMetatable(lua_State *state, const struct_field_info *field)
+{
+    lua_pushlightuserdata(state, (void*)field);
+
+    if (!LookupTypeInfo(state, true))
+    {
+        switch (field->mode)
+        {
+        case struct_field_info::CONTAINER:
+        {
+            auto ctype = (container_identity*)field->type;
+            MakeContainerMetatable(state, ctype, ctype->getItemType(), -1, field->eid);
+            break;
+        }
+
+        case struct_field_info::STATIC_STRING:
+            MakeContainerMetatable(state, &df::buffer_container_identity::base_instance,
+                                   &df::identity_traits<char>::identity, field->count, NULL);
+            break;
+
+        case struct_field_info::STATIC_ARRAY:
+            MakeContainerMetatable(state, &df::buffer_container_identity::base_instance,
+                                   field->type, field->count, field->eid);
+            break;
+
+        case struct_field_info::STL_VECTOR_PTR:
+            MakeContainerMetatable(state, &df::identity_traits<std::vector<void*> >::identity,
+                                   field->type, -1, field->eid);
+            break;
+
+        default:
+            luaL_error(state, "Invalid ad-hoc field: %d", field->mode);
+        }
+
+        lua_pop(state, 1);
+
+        SaveTypeInfo(state, (void*)field);
+    }
+}
+
+void LuaWrapper::push_adhoc_pointer(lua_State *state, void *ptr, type_identity *target)
+{
+    if (!target)
+    {
+        push_object_internal(state, &df::identity_traits<void*>::identity, ptr);
+        return;
+    }
+
+    LookupInTable(state, target, DFHACK_PTR_IDTABLE_NAME);
+
+    type_identity *id = (type_identity*)lua_touserdata(state, -1);
+    lua_pop(state, 1);
+
+    if (!id)
+    {
+        /*
+         * HACK: relies on
+         *   1) pointer_identity destructor being no-op
+         *   2) lua gc never moving objects in memory
+         */
+
+        void *newobj = lua_newuserdata(state, sizeof(pointer_identity));
+        id = new (newobj) pointer_identity(target);
+
+        SaveInTable(state, target, DFHACK_PTR_IDTABLE_NAME);
+        lua_pop(state, 1);
+    }
+
+    push_object_internal(state, id, ptr);
+}

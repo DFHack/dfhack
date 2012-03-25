@@ -2,8 +2,8 @@ if not(FILE) then
 	--sanity test
 	--print("race num:"..engine.peekw(offsets.getEx("CurrentRace")))
 	--print(string.format("%x vs %x",offsets.getEx("CurrentRace"),VersionInfo.getGroup("Creatures"):getAddress("current_race")))
-	print("Race num:"..df.ui.race_id)
-	print("Your current race is:"..GetRaceToken(df.ui.race_id))
+	print("Race num:"..df.global.ui.race_id)
+	print("Your current race is:"..GetRaceToken(df.global.ui.race_id))
 	print("If this is wrong please type 'q'")
 	if(getline()=='q') then
 		return

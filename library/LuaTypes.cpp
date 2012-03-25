@@ -843,6 +843,33 @@ static void IndexFields(lua_State *state, struct_identity *pstruct)
                 lua_pushstring(state,fields[i].name);
                 lua_pushlightuserdata(state,(void*)&fields[i]);
                 lua_rawset(state,base+2);
+                break;
+            }
+        }
+    }
+}
+
+void LuaWrapper::IndexStatics(lua_State *state, int meta_idx, int ftable_idx, struct_identity *pstruct)
+{
+    // stack: metatable fieldtable
+
+    for (struct_identity *p = pstruct; p; p = p->getParent())
+    {
+        auto fields = p->getFields();
+        if (!fields)
+            continue;
+
+        for (int i = 0; fields[i].mode != struct_field_info::END; ++i)
+        {
+            switch (fields[i].mode)
+            {
+            case struct_field_info::CLASS_METHOD:
+                AddMethodWrapper(state, meta_idx, ftable_idx, fields[i].name,
+                                 (function_identity_base*)fields[i].type);
+                break;
+
+            default:
+                break;
             }
         }
     }

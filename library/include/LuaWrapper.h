@@ -186,5 +186,7 @@ namespace DFHack { namespace LuaWrapper {
      * and the enum itself to the _enum metafield.
      */
     void AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, type_identity *ienum);
+
+    void IndexStatics(lua_State *state, int meta_idx, int ftable_idx, struct_identity *pstruct);
 }}
 

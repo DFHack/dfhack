@@ -183,12 +183,17 @@ namespace DFHack
         virtual void build_metatable(lua_State *state);
     };
 
+    class struct_identity;
+
     class DFHACK_EXPORT enum_identity : public compound_identity {
         const char *const *keys;
         int64_t first_item_value;
         int64_t last_item_value;
 
         type_identity *base_type;
+
+        const void *attrs;
+        struct_identity *attr_type;
 
     protected:
         virtual bool can_allocate() { return true; }
@@ -201,7 +206,8 @@ namespace DFHack
                       compound_identity *scope_parent, const char *dfhack_name,
                       type_identity *base_type,
                       int64_t first_item_value, int64_t last_item_value,
-                      const char *const *keys);
+                      const char *const *keys,
+                      const void *attrs, struct_identity *attr_type);
 
         virtual identity_type type() { return IDTYPE_ENUM; }
 
@@ -211,6 +217,8 @@ namespace DFHack
         const char *const *getKeys() { return keys; }
 
         type_identity *getBaseType() { return base_type; }
+        const void *getAttrs() { return attrs; }
+        struct_identity *getAttrType() { return attr_type; }
 
         virtual bool isPrimitive() { return true; }
         virtual bool isConstructed() { return false; }

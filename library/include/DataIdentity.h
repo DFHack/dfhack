@@ -205,6 +205,16 @@ namespace df
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 
+    class ptr_string_identity : public primitive_identity {
+    public:
+        ptr_string_identity() : primitive_identity(sizeof(char*)) {};
+
+        std::string getFullName() { return "char*"; }
+
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
+    };
+
     class stl_string_identity : public DFHack::constructed_identity {
     public:
         stl_string_identity()
@@ -388,6 +398,28 @@ namespace df
         }
     };
 
+    template<class T>
+    class enum_list_attr_identity : public container_identity {
+    public:
+        typedef enum_list_attr<T> container;
+
+        enum_list_attr_identity(type_identity *item)
+            : container_identity(sizeof(container), NULL, item, NULL)
+        {}
+
+        std::string getFullName(type_identity *item) {
+            return "enum_list_attr" + container_identity::getFullName(item);
+        }
+
+    protected:
+        virtual int item_count(void *ptr, CountMode cm) {
+            return cm == COUNT_WRITE ? 0 : ((container*)ptr)->size;
+        }
+        virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
+            return (void*)&((container*)ptr)->items[idx];
+        }
+    };
+
 #define NUMBER_IDENTITY_TRAITS(type) \
     template<> struct identity_traits<type> { \
         static number_identity<type> identity; \
@@ -413,6 +445,16 @@ namespace df
     template<> struct identity_traits<std::string> {
         static stl_string_identity identity;
         static stl_string_identity *get() { return &identity; }
+    };
+
+    template<> struct identity_traits<char*> {
+        static ptr_string_identity identity;
+        static ptr_string_identity *get() { return &identity; }
+    };
+
+    template<> struct identity_traits<const char*> {
+        static ptr_string_identity identity;
+        static ptr_string_identity *get() { return &identity; }
     };
 
     template<> struct identity_traits<void*> {
@@ -463,6 +505,10 @@ namespace df
     };
 
     template<class T> struct identity_traits<DfArray<T> > {
+        static container_identity *get();
+    };
+
+    template<class T> struct identity_traits<enum_list_attr<T> > {
         static container_identity *get();
     };
 
@@ -517,6 +563,12 @@ namespace df
     inline container_identity *identity_traits<DfArray<T> >::get() {
         typedef DfArray<T> container;
         static stl_container_identity<container> identity("DfArray", identity_traits<T>::get());
+        return &identity;
+    }
+
+    template<class T>
+    inline container_identity *identity_traits<enum_list_attr<T> >::get() {
+        static enum_list_attr_identity<T> identity(identity_traits<T>::get());
         return &identity;
     }
 }

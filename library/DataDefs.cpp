@@ -149,10 +149,11 @@ enum_identity::enum_identity(size_t size,
                              compound_identity *scope_parent, const char *dfhack_name,
                              type_identity *base_type,
                              int64_t first_item_value, int64_t last_item_value,
-                             const char *const *keys)
+                             const char *const *keys,
+                             const void *attrs, struct_identity *attr_type)
     : compound_identity(size, NULL, scope_parent, dfhack_name),
       first_item_value(first_item_value), last_item_value(last_item_value),
-      keys(keys), base_type(base_type)
+      keys(keys), base_type(base_type), attrs(attrs), attr_type(attr_type)
 {
 }
 

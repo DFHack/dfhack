@@ -699,6 +699,30 @@ static int meta_ptr_tostring(lua_State *state)
 }
 
 /**
+ * Metamethod: __index for enum.attrs
+ */
+static int meta_enum_attr_index(lua_State *state)
+{
+    if (!lua_isnumber(state, 2))
+        lua_rawget(state, UPVAL_FIELDTABLE);
+    if (!lua_isnumber(state, 2))
+        luaL_error(state, "Invalid index in enum.attrs[]");
+
+    auto id = (enum_identity*)lua_touserdata(state, lua_upvalueindex(2));
+
+    int64_t idx = lua_tonumber(state, 2);
+    if (idx < id->getFirstItem() || idx > id->getLastItem())
+        idx = id->getLastItem()+1;
+    idx -= id->getFirstItem();
+
+    uint8_t *ptr = (uint8_t*)id->getAttrs();
+    auto atype = id->getAttrType();
+
+    push_object_internal(state, atype, ptr + unsigned(atype->byte_size()*idx));
+    return 1;
+}
+
+/**
  * Make a metatable with most common fields, and an empty table for UPVAL_FIELDTABLE.
  */
 void LuaWrapper::MakeMetatable(lua_State *state, type_identity *type, const char *kind)
@@ -864,23 +888,48 @@ static void FillEnumKeys(lua_State *state, int ftable, enum_identity *eid)
 {
     const char *const *keys = eid->getKeys();
 
+    // Create a new table attached to ftable as __index
+    lua_newtable(state);
+
+    lua_dup(state);
+    lua_setmetatable(state, ftable);
+
+    int base = lua_gettop(state);
+
+    lua_newtable(state);
+
     // For enums, set mapping between keys and values
     for (int64_t i = eid->getFirstItem(), j = 0; i <= eid->getLastItem(); i++, j++)
     {
         if (keys[j])
-            AssociateId(state, ftable, i, keys[j]);
+            AssociateId(state, base+1, i, keys[j]);
     }
 
     if (eid->getFirstItem() <= eid->getLastItem())
     {
         lua_pushinteger(state, eid->getFirstItem());
-        lua_setfield(state, ftable, "_first_item");
+        lua_setfield(state, base+1, "_first_item");
 
         lua_pushinteger(state, eid->getLastItem());
-        lua_setfield(state, ftable, "_last_item");
+        lua_setfield(state, base+1, "_last_item");
     }
 
     SaveInTable(state, eid, DFHACK_ENUM_TABLE_NAME);
+
+    // Add an attribute table if any
+    if (eid->getAttrs())
+    {
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
+        lua_pushlightuserdata(state, eid);
+        lua_pushvalue(state, base+1);
+        lua_pushcclosure(state, meta_enum_attr_index, 3);
+
+        freeze_table(state, false, (eid->getFullName()+".attrs").c_str());
+        lua_setfield(state, ftable, "attrs");
+    }
+
+    lua_setfield(state, base, "__index");
+    lua_pop(state, 1);
 }
 
 static void FillBitfieldKeys(lua_State *state, int ftable, bitfield_identity *eid)
@@ -903,7 +952,6 @@ static void FillBitfieldKeys(lua_State *state, int ftable, bitfield_identity *ei
 
     SaveInTable(state, eid, DFHACK_ENUM_TABLE_NAME);
 }
-
 
 static void RenderType(lua_State *state, compound_identity *node)
 {

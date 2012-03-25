@@ -110,6 +110,20 @@ void df::bool_identity::lua_write(lua_State *state, int fname_idx, void *ptr, in
         field_error(state, fname_idx, "boolean or number expected", "write");
 }
 
+void df::ptr_string_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
+{
+    auto pstr = (char**)ptr;
+    if (*pstr)
+        lua_pushstring(state, *pstr);
+    else
+        lua_pushnil(state);
+}
+
+void df::ptr_string_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+{
+    field_error(state, fname_idx, "raw pointer string", "write");
+}
+
 void df::stl_string_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
 {
     auto pstr = (std::string*)ptr;

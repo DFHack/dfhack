@@ -49,6 +49,7 @@ namespace DFHack
 
     enum identity_type {
         IDTYPE_GLOBAL,
+        IDTYPE_FUNCTION,
         IDTYPE_PRIMITIVE,
         IDTYPE_POINTER,
         IDTYPE_CONTAINER,
@@ -109,12 +110,12 @@ namespace DFHack
         constructed_identity(size_t size, TAllocateFn alloc)
             : type_identity(size), allocator(alloc) {};
 
-        virtual bool isPrimitive() { return false; }
-        virtual bool isConstructed() { return true; }
-
         virtual bool can_allocate() { return (allocator != NULL); }
         virtual void *do_allocate() { return allocator(NULL,NULL); }
         virtual void do_copy(void *tgt, const void *src) { allocator(tgt,src); }
+    public:
+        virtual bool isPrimitive() { return false; }
+        virtual bool isConstructed() { return true; }
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
@@ -221,7 +222,9 @@ namespace DFHack
             STATIC_ARRAY,
             SUBSTRUCT,
             CONTAINER,
-            STL_VECTOR_PTR
+            STL_VECTOR_PTR,
+            OBJ_METHOD,
+            CLASS_METHOD
         };
         Mode mode;
         const char *name;
@@ -409,6 +412,14 @@ namespace df
     template<class T>
     void *allocator_fn(void *out, const void *in) {
         if (out) { *(T*)out = *(const T*)in; return out; }
+        else if (in) { delete (T*)in; return (T*)in; }
+        else return new T();
+    }
+
+    template<class T>
+    void *allocator_nodel_fn(void *out, const void *in) {
+        if (out) { *(T*)out = *(const T*)in; return out; }
+        else if (in) { return NULL; }
         else return new T();
     }
 

@@ -275,9 +275,9 @@ function tools.empregnate(unit)
 	local arr1=unit.appearance.unk_51c
 	local arr2=unit.appearance.unk_51c
 	local created=false
-	if unit.relations.pregnancy_ptr:tonumber()==0 then
+	if unit.relations.pregnancy_ptr == nil then
 		print("creating preg ptr.")
-		unit.relations.pregnancy_ptr:newref()
+		unit.relations.pregnancy_ptr=unit.relations:_field("pregnancy_ptr"):new()--=df.new(unit.relations.pregnancy_ptr._kind)
 		created=true
 	end
 	local tarr1=unit.relations.pregnancy_ptr:deref().anon_1

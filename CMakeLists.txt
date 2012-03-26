@@ -48,9 +48,6 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endif()
 
 # make sure all the necessary submodules have been set up
-#if (NOT EXISTS "depends/protobuf/CMakeLists.txt" OR NOT EXISTS "depends/clsocket/CMakeLists.txt")
-#    message(FATAL_ERROR "Required submodules could not be found! First run 'git submodule init' and 'git submodule update' from the root DFHack directory. (See the section 'Getting the Code' in Compile.html)")
-#endif()
 if (NOT EXISTS ${dfhack_SOURCE_DIR}/depends/protobuf/CMakeLists.txt OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt)
     message(FATAL_ERROR "Required submodules could not be found! First run 'git submodule init' and 'git submodule update' from the root DFHack directory. (See the section 'Getting the Code' in Compile.html)")
 endif()

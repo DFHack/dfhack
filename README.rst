@@ -115,7 +115,7 @@ Options
 :all-layers:        Change all layers on your map. Candy mountain, anyone? Will make your map quite boring, but tidy. 
 :force:             Allow changing stone to soil and vice versa. !!THIS CAN HAVE WEIRD EFFECTS, USE WITH CARE!!
                     Note that soil will not be magically replaced with stone. You will, however, get a stone floor after digging so it will allow the floor to be engraved.
-					Note that stone will not be magically replaced with soil. You will, however, get a soil floor after digging so it could be helpful for creating farm plots on maps with no soil.
+                    Note that stone will not be magically replaced with soil. You will, however, get a soil floor after digging so it could be helpful for creating farm plots on maps with no soil.
 :verbose:           Give some details about what is being changed.
 :trouble:           Give some advice about known problems.
 

@@ -103,9 +103,72 @@ Usage
 -----
 :list-equipped [all]: List armor and weapons equipped by your companions. If all is specified, also lists non-metal clothing.
 
+changelayer
+===========
+Changes material of the geology layer under cursor to the specified inorganic RAW material. Can have impact on all surrounding regions, not only your embark! By default changing stone to soil and vice versa is not allowed. By default changes only the layer at the cursor position. Note that one layer can stretch across lots of z levels. By default changes only the geology which is linked to the biome under the cursor. That geology might be linked to other biomes as well, though. Mineral veins and gem clusters will stay on the map. Use 'changevein' for them.
+tl;dr: You will end up with changing quite big areas in one go, especially if you use it in lower z levels. Use with care.
+
+Options
+-------
+:all_biomes:        Change layer for all biomes on your map.
+                    Result may be undesirable since the same layer can AND WILL be on different z-levels for different biomes. Use the tool 'probe' to get an idea how layers and biomes are distributed on your map.
+:all-layers:        Change all layers on your map. Candy mountain, anyone? Will make your map quite boring, but tidy. 
+:force:             Allow changing stone to soil and vice versa. !!THIS CAN HAVE WEIRD EFFECTS, USE WITH CARE!!
+                    Note that soil will not be magically replaced with stone. You will, however, get a stone floor after digging so it will allow the floor to be engraved.
+					Note that stone will not be magically replaced with soil. You will, however, get a soil floor after digging so it could be helpful for creating farm plots on maps with no soil.
+:verbose:           Give some details about what is being changed.
+:trouble:           Give some advice about known problems.
+
+Examples:
+---------
+``changelayer GRANITE`` : Convert layer at cursor position into granite.
+``changelayer SILTY_CLAY force`` : Convert layer at cursor position into clay even if it's stone.
+``changelayer MARBLE all_biomes all_layers`` : Convert all layers of all biomes which are not soil into marble.
+
+.. note::
+
+    * If you use changelayer and nothing happens, try to pause/unpause the game for a while and try to move the cursor to another tile.
+    * You should be fine if you only change single layers without the use of 'force'. Still it's advisable to save your game before messing with the map.
+    * When you force changelayer to convert soil to stone you might experience weird stuff (flashing tiles, tiles changed all over the map, ...). Try reverting the changes manually or even better use an older savegame. You did save your game, right?
+
 changevein
 ==========
 Changes material of the vein under cursor to the specified inorganic RAW material.
+
+Example:
+---------
+``changevein NATIVE_PLATINUM`` : Convert vein at cursor position into platinum ore.
+
+cursecheck
+==========
+Checks a single map tile or the whole map/world for cursed creatures (ghosts, vampires, necromancers, werebeasts, zombies).
+With an active in-game cursor only the selected tile will be observed. Without a cursor the whole map will be checked.
+By default cursed creatures will be only counted in case you just want to find out if you have any of them running around in your fort.
+By default dead and passive creatures (ghosts who were put to rest, killed vampires, ...) are ignored.
+Undead skeletons, corpses, bodyparts and the like are all thrown into the curse category "zombie".
+Anonymous zombies and resurrected body parts will show as "unnamed creature". 
+
+Options
+-------
+:detail:           Print full name, date of birth, date of curse and some status info (some vampires might use fake identities in-game, though).
+:nick:             Set the type of curse as nickname (does not always show up in-game, some vamps don't like nicknames).
+:all:              Include dead and passive cursed creatures (can result in a quite long list after having FUN with necromancers).
+:verbose:          Print all curse tags (if you really want to know it all).
+
+Examples:
+---------
+Check one single map tile if one of the creatures on it is cursed (in-game cursor required):
+  * cursecheck
+Count all active cursed creatures who roam around on your map (no in-game cursor) without giving more details:
+  * cursecheck
+Give detailed info about all cursed creatures including deceased ones (no in-game cursor):
+  * cursecheck detail all
+Give a nickname all living/active cursed creatures on the map(no in-game cursor):
+  * cursecheck nick
+
+.. note::
+
+    * If you do a full search (with the option "all") former ghosts will show up with the cursetype "unknown" because their ghostly flag is not set anymore. But if you happen to find a living/active creature with cursetype "unknown" please report that in the dfhack thread on the modding forum or per irc. This is likely to happen with mods which introduce new types of curses, for example.
 
 follow
 ======
@@ -371,21 +434,16 @@ When multiple commands are bound to the same key combination, DFHack selects the
 
 liquids
 =======
-Allows adding magma, water and obsidian to the game. It replaces the normal dfhack command line and can't be used from a hotkey.
-For more information, refer to the command's internal help.
+Allows adding magma, water and obsidian to the game. It replaces the normal dfhack command line and can't be used from a hotkey. Settings will be remembered as long as dfhack runs. Intended for use in combination with the command liquidsgo-here (which can be bound to a hotkey).
+For more information, refer to the command's internal help. 
 
 .. note::
 
     Spawning and deleting liquids can F up pathing data and
     temperatures (creating heat traps). You've been warned.
 
-liquidsgo
-=========
-Allows adding magma, water and obsidian to the game. It replaces the normal dfhack command line and can't be used from a hotkey. Settings will be remembered as long as dfhack runs. Intended for use in combination with the command liquidsgo-here (which can be bound to a hotkey).
-For more information, refer to the command's internal help. 
-
-liquidsgo-here
-==============
+liquids-here
+============
 Run the liquid spawner with the current/last settings made in liquidsgo (if no settings in liquidsgo were made it paints a point of 7/7 magma by default).
 Intended to be used as keybinding. Requires an active in-game cursor.
 	
@@ -541,37 +599,6 @@ Options
 tubefill
 ========
 Fills all the adamantine veins again. Veins that were empty will be filled in too, but might still trigger a demon invasion (this is a known bug).
-
-cursecheck
-==========
-Checks a single map tile or the whole map/world for cursed creatures (ghosts, vampires, necromancers, werebeasts, zombies).
-With an active in-game cursor only the selected tile will be observed. Without a cursor the whole map will be checked.
-By default cursed creatures will be only counted in case you just want to find out if you have any of them running around in your fort.
-By default dead and passive creatures (ghosts who were put to rest, killed vampires, ...) are ignored.
-Undead skeletons, corpses, bodyparts and the like are all thrown into the curse category "zombie".
-Anonymous zombies and resurrected body parts will show as "unnamed creature". 
-
-Options
--------
-:detail:           Print full name, date of birth, date of curse and some status info (some vampires might use fake identities in-game, though).
-:nick:             Set the type of curse as nickname (does not always show up in-game, some vamps don't like nicknames).
-:all:              Include dead and passive cursed creatures (can result in a quite long list after having FUN with necromancers).
-:verbose:          Print all curse tags (if you really want to know it all).
-
-Examples:
----------
-Check one single map tile if one of the creatures on it is cursed (in-game cursor required):
-  * cursecheck
-Count all active cursed creatures who roam around on your map (no in-game cursor) without giving more details:
-  * cursecheck
-Give detailed info about all cursed creatures including deceased ones (no in-game cursor):
-  * cursecheck detail all
-Give a nickname all living/active cursed creatures on the map(no in-game cursor):
-  * cursecheck nick
-
-.. note::
-
-    * If you do a full search (with the option "all") former ghosts will show up with the cursetype "unknown" because their ghostly flag is not set anymore. But if you happen to find a living/active creature with cursetype "unknown" please report that in the dfhack thread on the modding forum or per irc. This is likely to happen with mods which introduce new types of curses, for example.
 
 vdig
 ====

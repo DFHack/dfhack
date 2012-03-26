@@ -214,6 +214,14 @@ command_result changelayer (color_ostream &out, std::vector <std::string> & para
 
     // there is no Maps::WriteGeology or whatever, and I didn't want to mess with the library and add it
     // so I copied the stuff which reads the geology information and modified it to be able to change it
+    // 
+    // a more elegant solution would probably look like this:
+    // 1) modify Maps::ReadGeology to accept and fill one more optional vector 
+    //    where the geolayer ids of the 9 biomes are stored
+    // 2) call ReadGeology here, modify the data in the vectors without having to do all that map stuff
+    // 3) write Maps::WriteGeology, pass the vectors, let it do it's work
+    // Step 1) is optional, but it would make implementing 3) easier. 
+    // Otherwise that "check which geolayer is used by biome X" loop would need to be done again.
 
     // no need to touch the same geology more than once
     // though it wouldn't matter much since there is not much data to be processed

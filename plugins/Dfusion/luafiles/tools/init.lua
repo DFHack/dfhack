@@ -260,6 +260,20 @@ function tools.changesite(names)
 	print(string.format("%x->%d",off,n2))
 	engine.poke(off,ptr_site.type,n2)
 end
+function tools.project(unit)
+	if unit==nil then
+		unit=getSelectedUnit()
+	end
+	
+	if unit==nil then
+		unit=getCreatureAtPos(getxyz())
+	end
+	
+	if unit==nil then
+		error("Failed to project unit. Unit not selected/valid")
+	end
+	-- todo: add projectile to world, point to unit, add flag to unit, add gen-ref to projectile.
+end
 function tools.empregnate(unit)
 	if unit==nil then
 		unit=getSelectedUnit()
@@ -270,10 +284,11 @@ function tools.empregnate(unit)
 	end
 	
 	if unit==nil then
-		error("Failed to empregnate. Unit not selected/valide")
+		error("Failed to empregnate. Unit not selected/valid")
 	end
-	print(string.format("%x %x",df.sizeof(unit)))
-	
+	if unit.curse then
+		unit.curse.add_tags2.STERILE=false
+	end
 	local arr1=unit.appearance.unk_51c
 	local arr2=unit.appearance.unk_51c
 	local created=false

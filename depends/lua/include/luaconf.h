@@ -152,7 +152,7 @@
 ** LUA_BUILD_AS_DLL to get it).
 */
 #ifdef __cplusplus
-    #define LUA_API_EXTERN extern "C"
+    #define LUA_API_EXTERN extern
 #else
     #define LUA_API_EXTERN extern
 #endif

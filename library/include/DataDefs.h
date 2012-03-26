@@ -49,6 +49,7 @@ namespace DFHack
 
     enum identity_type {
         IDTYPE_GLOBAL,
+        IDTYPE_FUNCTION,
         IDTYPE_PRIMITIVE,
         IDTYPE_POINTER,
         IDTYPE_CONTAINER,
@@ -72,10 +73,12 @@ namespace DFHack
 
         void *do_allocate_pod();
         void do_copy_pod(void *tgt, const void *src);
+        bool do_destroy_pod(void *obj);
 
         virtual bool can_allocate() { return true; }
         virtual void *do_allocate() { return do_allocate_pod(); }
         virtual void do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); }
+        virtual bool do_destroy(void *obj) { return do_destroy_pod(obj); }
 
     public:
         virtual ~type_identity() {}
@@ -100,6 +103,7 @@ namespace DFHack
 
         void *allocate();
         bool copy(void *tgt, const void *src);
+        bool destroy(void *obj);
     };
 
     class DFHACK_EXPORT constructed_identity : public type_identity {
@@ -109,12 +113,13 @@ namespace DFHack
         constructed_identity(size_t size, TAllocateFn alloc)
             : type_identity(size), allocator(alloc) {};
 
-        virtual bool isPrimitive() { return false; }
-        virtual bool isConstructed() { return true; }
-
         virtual bool can_allocate() { return (allocator != NULL); }
         virtual void *do_allocate() { return allocator(NULL,NULL); }
         virtual void do_copy(void *tgt, const void *src) { allocator(tgt,src); }
+        virtual bool do_destroy(void *obj) { return allocator(NULL,obj) == obj; }
+    public:
+        virtual bool isPrimitive() { return false; }
+        virtual bool isConstructed() { return true; }
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
@@ -161,6 +166,7 @@ namespace DFHack
         virtual bool can_allocate() { return true; }
         virtual void *do_allocate() { return do_allocate_pod(); }
         virtual void do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); }
+        virtual bool do_destroy(void *obj) { return do_destroy_pod(obj); }
 
     public:
         bitfield_identity(size_t size,
@@ -177,6 +183,8 @@ namespace DFHack
         virtual void build_metatable(lua_State *state);
     };
 
+    class struct_identity;
+
     class DFHACK_EXPORT enum_identity : public compound_identity {
         const char *const *keys;
         int64_t first_item_value;
@@ -184,17 +192,22 @@ namespace DFHack
 
         type_identity *base_type;
 
+        const void *attrs;
+        struct_identity *attr_type;
+
     protected:
         virtual bool can_allocate() { return true; }
         virtual void *do_allocate();
         virtual void do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); }
+        virtual bool do_destroy(void *obj) { return do_destroy_pod(obj); }
 
     public:
         enum_identity(size_t size,
                       compound_identity *scope_parent, const char *dfhack_name,
                       type_identity *base_type,
                       int64_t first_item_value, int64_t last_item_value,
-                      const char *const *keys);
+                      const char *const *keys,
+                      const void *attrs, struct_identity *attr_type);
 
         virtual identity_type type() { return IDTYPE_ENUM; }
 
@@ -204,6 +217,8 @@ namespace DFHack
         const char *const *getKeys() { return keys; }
 
         type_identity *getBaseType() { return base_type; }
+        const void *getAttrs() { return attrs; }
+        struct_identity *getAttrType() { return attr_type; }
 
         virtual bool isPrimitive() { return true; }
         virtual bool isConstructed() { return false; }
@@ -221,7 +236,9 @@ namespace DFHack
             STATIC_ARRAY,
             SUBSTRUCT,
             CONTAINER,
-            STL_VECTOR_PTR
+            STL_VECTOR_PTR,
+            OBJ_METHOD,
+            CLASS_METHOD
         };
         Mode mode;
         const char *name;
@@ -409,6 +426,14 @@ namespace df
     template<class T>
     void *allocator_fn(void *out, const void *in) {
         if (out) { *(T*)out = *(const T*)in; return out; }
+        else if (in) { delete (T*)in; return (T*)in; }
+        else return new T();
+    }
+
+    template<class T>
+    void *allocator_nodel_fn(void *out, const void *in) {
+        if (out) { *(T*)out = *(const T*)in; return out; }
+        else if (in) { return NULL; }
         else return new T();
     }
 

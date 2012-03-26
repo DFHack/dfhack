@@ -33,7 +33,18 @@ distribution.
 #include "LuaWrapper.h"
 
 namespace df {
-    template<class T> struct function_wrapper {};
+    // A very simple and stupid implementation of some stuff from boost
+    template<class U, class V> struct is_same_type { static const bool value = false; };
+    template<class T> struct is_same_type<T,T> { static const bool value = true; };
+    template<class T> struct return_type {};
+
+    /*
+     * Workaround for a msvc bug suggested by:
+     *
+     * http://stackoverflow.com/questions/5110529/class-template-partial-specialization-parametrized-on-member-function-return-typ
+     */
+    template<class T, bool isvoid = is_same_type<typename return_type<T>::type,void>::value>
+    struct function_wrapper {};
 
     /*
      * Since templates can't match variable arg count,
@@ -54,23 +65,25 @@ namespace df {
     type v##type; df::identity_traits<type>::get()->lua_write(state, UPVAL_METHOD_NAME, &v##type, base++);
 
 #define INSTANTIATE_WRAPPERS(Count, FArgs, Args, Loads) \
-    template<FW_TARGS> struct function_wrapper<void (*) FArgs> { \
+    template<FW_TARGSC class RT> struct return_type<RT (*) FArgs> { typedef RT type; }; \
+    template<FW_TARGSC class RT, class CT> struct return_type<RT (CT::*) FArgs> { typedef RT type; }; \
+    template<FW_TARGS> struct function_wrapper<void (*) FArgs, true> { \
         static const bool is_method = false; \
         static const int num_args = Count; \
         static void execute(lua_State *state, int base, void (*cb) FArgs) { Loads; INVOKE_VOID(cb Args); } \
     }; \
-    template<FW_TARGSC class RT> struct function_wrapper<RT (*) FArgs> { \
+    template<FW_TARGSC class RT> struct function_wrapper<RT (*) FArgs, false> { \
         static const bool is_method = false; \
         static const int num_args = Count; \
         static void execute(lua_State *state, int base, RT (*cb) FArgs) { Loads; INVOKE_RV(cb Args); } \
     }; \
-    template<FW_TARGSC class CT> struct function_wrapper<void (CT::*) FArgs> { \
+    template<FW_TARGSC class CT> struct function_wrapper<void (CT::*) FArgs, true> { \
         static const bool is_method = true; \
         static const int num_args = Count+1; \
         static void execute(lua_State *state, int base, void (CT::*cb) FArgs) { \
             LOAD_CLASS() Loads; INVOKE_VOID((self->*cb) Args); } \
     }; \
-    template<FW_TARGSC class RT, class CT> struct function_wrapper<RT (CT::*) FArgs> { \
+    template<FW_TARGSC class RT, class CT> struct function_wrapper<RT (CT::*) FArgs, false> { \
         static const bool is_method = true; \
         static const int num_args = Count+1; \
         static void execute(lua_State *state, int base, RT (CT::*cb) FArgs) { \

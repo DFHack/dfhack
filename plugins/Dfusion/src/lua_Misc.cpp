@@ -236,5 +236,4 @@ void lua::RegisterMisc(lua::state &st)
 	}
 	lua::RegFunctionsLocal(st, lua_misc_func);
 	st.setglobal("engine");
-	luaopen_bit(st);
 }

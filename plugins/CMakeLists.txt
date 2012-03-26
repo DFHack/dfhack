@@ -105,3 +105,9 @@ if(BUILD_SKELETON)
     add_subdirectory(skeleton)
 endif()
 
+# this is the changelayer plugin. 
+OPTION(BUILD_CHANGELAYER "Build the changelayer plugin." ON)
+if(BUILD_CHANGELAYER)
+    add_subdirectory(changelayer)
+endif()
+

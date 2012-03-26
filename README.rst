@@ -112,7 +112,7 @@ Options
 -------
 :all_biomes:        Change layer for all biomes on your map.
                     Result may be undesirable since the same layer can AND WILL be on different z-levels for different biomes. Use the tool 'probe' to get an idea how layers and biomes are distributed on your map.
-:all-layers:        Change all layers on your map. Candy mountain, anyone? Will make your map quite boring, but tidy. 
+:all_layers:        Change all layers on your map. Candy mountain, anyone? Will make your map quite boring, but tidy. 
 :force:             Allow changing stone to soil and vice versa. !!THIS CAN HAVE WEIRD EFFECTS, USE WITH CARE!!
                     Note that soil will not be magically replaced with stone. You will, however, get a stone floor after digging so it will allow the floor to be engraved.
                     Note that stone will not be magically replaced with soil. You will, however, get a soil floor after digging so it could be helpful for creating farm plots on maps with no soil.

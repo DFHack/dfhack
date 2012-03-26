@@ -37,6 +37,23 @@ distribution.
 
 namespace DFHack
 {
+    class DFHACK_EXPORT function_identity_base : public type_identity {
+        int num_args;
+
+    public:
+        function_identity_base(int num_args) : type_identity(0), num_args(num_args) {};
+
+        virtual identity_type type() { return IDTYPE_FUNCTION; }
+
+        int getNumArgs() { return num_args; }
+        std::string getFullName() { return "function"; }
+
+        virtual void invoke(lua_State *state, int base) = 0;
+
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
+    };
+
     class DFHACK_EXPORT primitive_identity : public type_identity {
     public:
         primitive_identity(size_t size) : type_identity(size) {};
@@ -145,6 +162,7 @@ namespace DFHack
 
 namespace df
 {
+    using DFHack::function_identity_base;
     using DFHack::primitive_identity;
     using DFHack::pointer_identity;
     using DFHack::container_identity;
@@ -182,6 +200,16 @@ namespace df
         bool_identity() : primitive_identity(sizeof(bool)) {};
 
         std::string getFullName() { return "bool"; }
+
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
+    };
+
+    class ptr_string_identity : public primitive_identity {
+    public:
+        ptr_string_identity() : primitive_identity(sizeof(char*)) {};
+
+        std::string getFullName() { return "char*"; }
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
@@ -370,6 +398,28 @@ namespace df
         }
     };
 
+    template<class T>
+    class enum_list_attr_identity : public container_identity {
+    public:
+        typedef enum_list_attr<T> container;
+
+        enum_list_attr_identity(type_identity *item)
+            : container_identity(sizeof(container), NULL, item, NULL)
+        {}
+
+        std::string getFullName(type_identity *item) {
+            return "enum_list_attr" + container_identity::getFullName(item);
+        }
+
+    protected:
+        virtual int item_count(void *ptr, CountMode cm) {
+            return cm == COUNT_WRITE ? 0 : ((container*)ptr)->size;
+        }
+        virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
+            return (void*)&((container*)ptr)->items[idx];
+        }
+    };
+
 #define NUMBER_IDENTITY_TRAITS(type) \
     template<> struct identity_traits<type> { \
         static number_identity<type> identity; \
@@ -395,6 +445,16 @@ namespace df
     template<> struct identity_traits<std::string> {
         static stl_string_identity identity;
         static stl_string_identity *get() { return &identity; }
+    };
+
+    template<> struct identity_traits<char*> {
+        static ptr_string_identity identity;
+        static ptr_string_identity *get() { return &identity; }
+    };
+
+    template<> struct identity_traits<const char*> {
+        static ptr_string_identity identity;
+        static ptr_string_identity *get() { return &identity; }
     };
 
     template<> struct identity_traits<void*> {
@@ -448,47 +508,51 @@ namespace df
         static container_identity *get();
     };
 
+    template<class T> struct identity_traits<enum_list_attr<T> > {
+        static container_identity *get();
+    };
+
     // Container definitions
 
     template<class Enum, class FT>
-    primitive_identity *identity_traits<enum_field<Enum,FT> >::get() {
+    inline primitive_identity *identity_traits<enum_field<Enum,FT> >::get() {
         return identity_traits<FT>::get();
     }
 
     template<class T>
-    pointer_identity *identity_traits<T *>::get() {
+    inline pointer_identity *identity_traits<T *>::get() {
         static pointer_identity identity(identity_traits<T>::get());
         return &identity;
     }
 
     template<class T, int sz>
-    container_identity *identity_traits<T [sz]>::get() {
+    inline container_identity *identity_traits<T [sz]>::get() {
         static buffer_container_identity identity(sz, identity_traits<T>::get());
         return &identity;
     }
 
     template<class T>
-    container_identity *identity_traits<std::vector<T> >::get() {
+    inline container_identity *identity_traits<std::vector<T> >::get() {
         typedef std::vector<T> container;
         static stl_container_identity<container> identity("vector", identity_traits<T>::get());
         return &identity;
     }
 
     template<class T>
-    stl_ptr_vector_identity *identity_traits<std::vector<T*> >::get() {
+    inline stl_ptr_vector_identity *identity_traits<std::vector<T*> >::get() {
         static stl_ptr_vector_identity identity(identity_traits<T>::get());
         return &identity;
     }
 
     template<class T>
-    container_identity *identity_traits<std::deque<T> >::get() {
+    inline container_identity *identity_traits<std::deque<T> >::get() {
         typedef std::deque<T> container;
         static stl_container_identity<container> identity("deque", identity_traits<T>::get());
         return &identity;
     }
 
     template<class T>
-    bit_container_identity *identity_traits<BitArray<T> >::get() {
+    inline bit_container_identity *identity_traits<BitArray<T> >::get() {
         static type_identity *eid = identity_traits<T>::get();
         static enum_identity *reid = eid->type() == DFHack::IDTYPE_ENUM ? (enum_identity*)eid : NULL;
         static bit_array_identity identity(reid);
@@ -496,9 +560,15 @@ namespace df
     }
 
     template<class T>
-    container_identity *identity_traits<DfArray<T> >::get() {
+    inline container_identity *identity_traits<DfArray<T> >::get() {
         typedef DfArray<T> container;
         static stl_container_identity<container> identity("DfArray", identity_traits<T>::get());
+        return &identity;
+    }
+
+    template<class T>
+    inline container_identity *identity_traits<enum_list_attr<T> >::get() {
+        static enum_list_attr_identity<T> identity(identity_traits<T>::get());
         return &identity;
     }
 }

@@ -40,7 +40,7 @@ namespace df
 
 namespace DFHack
 {
-    class MaterialInfo;
+    struct MaterialInfo;
 
     using google::protobuf::RepeatedField;
     using google::protobuf::RepeatedPtrField;

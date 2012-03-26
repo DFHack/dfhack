@@ -36,6 +36,7 @@ distribution.
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "LuaWrapper.h"
+#include "DataFuncs.h"
 
 #include "MiscUtils.h"
 
@@ -48,6 +49,16 @@ using namespace DFHack::LuaWrapper;
 /**************************************
  * Identity object read/write methods *
  **************************************/
+
+void function_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
+{
+    field_error(state, fname_idx, "executable code", "read");
+}
+
+void function_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+{
+    field_error(state, fname_idx, "executable code", "write");
+}
 
 void constructed_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
 {
@@ -97,6 +108,20 @@ void df::bool_identity::lua_write(lua_State *state, int fname_idx, void *ptr, in
         *pb = lua_tointeger(state, val_index);
     else
         field_error(state, fname_idx, "boolean or number expected", "write");
+}
+
+void df::ptr_string_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
+{
+    auto pstr = (char**)ptr;
+    if (*pstr)
+        lua_pushstring(state, *pstr);
+    else
+        lua_pushnil(state);
+}
+
+void df::ptr_string_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+{
+    field_error(state, fname_idx, "raw pointer string", "write");
 }
 
 void df::stl_string_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
@@ -264,12 +289,31 @@ static void lookup_field(lua_State *state, int index, const char *mode)
         field_error(state, index, "not found", mode);
 }
 
+// Resolve the field in the metatable and return
+static int get_metafield(lua_State *state)
+{
+    lua_rawget(state, UPVAL_METATABLE);
+    return 1;
+}
+
 static void *find_field(lua_State *state, int index, const char *mode)
 {
     lookup_field(state, index, mode);
 
+    // Methods
+    if (lua_isfunction(state, -1))
+        return NULL;
+
+    // Otherwise must be a pointer
+    if (!lua_isuserdata(state, -1))
+        field_error(state, index, "corrupted field table", mode);
+
     void *p = lua_touserdata(state, -1);
     lua_pop(state, 1);
+
+    // NULL => metafield
+    if (!p)
+        get_metafield(state);
     return p;
 }
 
@@ -294,6 +338,10 @@ static void read_field(lua_State *state, const struct_field_info *field, void *p
             lua_pushlstring(state, (char*)ptr, len);
             return;
         }
+
+        case struct_field_info::OBJ_METHOD:
+        case struct_field_info::CLASS_METHOD:
+            // error
 
         case struct_field_info::PRIMITIVE:
         case struct_field_info::SUBSTRUCT:
@@ -339,6 +387,10 @@ static void field_reference(lua_State *state, const struct_field_info *field, vo
             push_adhoc_pointer(state, ptr, field->type);
             return;
 
+        case struct_field_info::OBJ_METHOD:
+        case struct_field_info::CLASS_METHOD:
+            // error
+
         case struct_field_info::CONTAINER:
             read_field(state, field, ptr);
             return;
@@ -370,6 +422,10 @@ static void write_field(lua_State *state, const struct_field_info *field, void *
             memcpy(ptr, str, std::min(size+1, size_t(field->count)));
             return;
         }
+
+        case struct_field_info::OBJ_METHOD:
+        case struct_field_info::CLASS_METHOD:
+            // error
 
         case struct_field_info::PRIMITIVE:
         case struct_field_info::SUBSTRUCT:
@@ -418,13 +474,6 @@ static int meta_ptr_tostring(lua_State *state)
     return 1;
 }
 
-// Resolve the field in the metatable and return
-static int get_metafield(lua_State *state)
-{
-    lua_rawget(state, UPVAL_METATABLE);
-    return 1;
-}
-
 /**
  * Metamethod: __index for structures.
  */
@@ -433,7 +482,7 @@ static int meta_struct_index(lua_State *state)
     uint8_t *ptr = get_object_addr(state, 1, 2, "read");
     auto field = (struct_field_info*)find_field(state, 2, "read");
     if (!field)
-        return get_metafield(state);
+        return 1;
     read_field(state, field, ptr + field->offset);
     return 1;
 }
@@ -448,7 +497,7 @@ static int meta_struct_field_reference(lua_State *state)
     uint8_t *ptr = get_object_addr(state, 1, 2, "reference");
     auto field = (struct_field_info*)find_field(state, 2, "reference");
     if (!field)
-        field_error(state, 2, "builtin property", "reference");
+        field_error(state, 2, "builtin property or method", "reference");
     field_reference(state, field, ptr + field->offset);
     return 1;
 }
@@ -461,7 +510,7 @@ static int meta_struct_newindex(lua_State *state)
     uint8_t *ptr = get_object_addr(state, 1, 2, "write");
     auto field = (struct_field_info*)find_field(state, 2, "write");
     if (!field)
-        field_error(state, 2, "builtin property", "write");
+        field_error(state, 2, "builtin property or method", "write");
     write_field(state, field, ptr + field->offset, 3);
     return 0;
 }
@@ -475,7 +524,7 @@ static int meta_primitive_index(lua_State *state)
     uint8_t *ptr = get_object_addr(state, 1, 2, "read");
     auto type = (type_identity*)find_field(state, 2, "read");
     if (!type)
-        return get_metafield(state);
+        return 1;
     type->lua_read(state, 2, ptr);
     return 1;
 }
@@ -488,7 +537,7 @@ static int meta_primitive_newindex(lua_State *state)
     uint8_t *ptr = get_object_addr(state, 1, 2, "write");
     auto type = (type_identity*)find_field(state, 2, "write");
     if (!type)
-        field_error(state, 2, "builtin property", "write");
+        field_error(state, 2, "builtin property or method", "write");
     type->lua_write(state, 2, ptr, 3);
     return 0;
 }
@@ -521,7 +570,7 @@ static int lookup_container_field(lua_State *state, int field, const char *mode 
     if (lua_isuserdata(state, -1) && !lua_touserdata(state, -1))
     {
         if (mode)
-            field_error(state, field, "builtin property", mode);
+            field_error(state, field, "builtin property or method", mode);
 
         lua_pop(state, 1);
         get_metafield(state);
@@ -727,7 +776,7 @@ static int meta_global_index(lua_State *state)
 {
     auto field = (struct_field_info*)find_field(state, 2, "read");
     if (!field)
-        return get_metafield(state);
+        return 1;
     void *ptr = *(void**)field->offset;
     if (!ptr)
         field_error(state, 2, "global address not known", "read");
@@ -742,7 +791,7 @@ static int meta_global_newindex(lua_State *state)
 {
     auto field = (struct_field_info*)find_field(state, 2, "write");
     if (!field)
-        field_error(state, 2, "builtin property", "write");
+        field_error(state, 2, "builtin property or method", "write");
     void *ptr = *(void**)field->offset;
     if (!ptr)
         field_error(state, 2, "global address not known", "write");
@@ -751,26 +800,91 @@ static int meta_global_newindex(lua_State *state)
 }
 
 /**
+ * Wrapper for c++ methods and functions.
+ */
+static int meta_call_function(lua_State *state)
+{
+    auto id = (function_identity_base*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    if (lua_gettop(state) != id->getNumArgs())
+        field_error(state, UPVAL_METHOD_NAME, "invalid argument count", "invoke");
+    id->invoke(state, 1);
+    return 1;
+}
+
+/**
+ * Create a closure invoking the given function, and add it to the field table.
+ */
+static void AddMethodWrapper(lua_State *state, int meta_idx, int field_idx,
+                             const char *name, function_identity_base *fun)
+{
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
+    lua_pushvalue(state, meta_idx);
+    lua_pushfstring(state, "%s()", name);
+    lua_pushlightuserdata(state, fun);
+    lua_pushcclosure(state, meta_call_function, 4);
+
+    lua_setfield(state, field_idx, name);
+}
+
+/**
  * Add fields in the array to the UPVAL_FIELDTABLE candidates on the stack.
  */
 static void IndexFields(lua_State *state, struct_identity *pstruct)
 {
-    // stack: fieldtable
+    // stack: metatable fieldtable
 
-    int base = lua_gettop(state);
+    int base = lua_gettop(state) - 2;
 
     for (struct_identity *p = pstruct; p; p = p->getParent())
     {
         auto fields = p->getFields();
+        if (!fields)
+            continue;
 
-        for (; fields; ++fields)
+        for (int i = 0; fields[i].mode != struct_field_info::END; ++i)
         {
-            if (fields->mode == struct_field_info::END)
+            switch (fields[i].mode)
+            {
+            case struct_field_info::OBJ_METHOD:
+                AddMethodWrapper(state, base+1, base+2, fields[i].name,
+                                 (function_identity_base*)fields[i].type);
                 break;
 
-            lua_pushstring(state,fields->name);
-            lua_pushlightuserdata(state,(void*)fields);
-            lua_rawset(state,base);
+            case struct_field_info::CLASS_METHOD:
+                break;
+
+            default:
+                lua_pushstring(state,fields[i].name);
+                lua_pushlightuserdata(state,(void*)&fields[i]);
+                lua_rawset(state,base+2);
+                break;
+            }
+        }
+    }
+}
+
+void LuaWrapper::IndexStatics(lua_State *state, int meta_idx, int ftable_idx, struct_identity *pstruct)
+{
+    // stack: metatable fieldtable
+
+    for (struct_identity *p = pstruct; p; p = p->getParent())
+    {
+        auto fields = p->getFields();
+        if (!fields)
+            continue;
+
+        for (int i = 0; fields[i].mode != struct_field_info::END; ++i)
+        {
+            switch (fields[i].mode)
+            {
+            case struct_field_info::CLASS_METHOD:
+                AddMethodWrapper(state, meta_idx, ftable_idx, fields[i].name,
+                                 (function_identity_base*)fields[i].type);
+                break;
+
+            default:
+                break;
+            }
         }
     }
 }

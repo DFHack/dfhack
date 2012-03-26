@@ -10,11 +10,6 @@ if(BUILD_DFUSION)
     add_subdirectory (Dfusion)
 endif()
 
-OPTION(BUILD_QTPLUG "Build the experimental Qt plugin." OFF)
-if(BUILD_QTPLUG)
-    add_subdirectory (qtplug)
-endif()
-
 OPTION(BUILD_STONESENSE "Build stonesense (needs a checkout first)." OFF)
 if(BUILD_STONESENSE)
     add_subdirectory (stonesense)
@@ -23,11 +18,6 @@ endif()
 OPTION(BUILD_DEV_PLUGINS "Build developer plugins." OFF)
 if(BUILD_DEV_PLUGINS)
     add_subdirectory (devel)
-endif()
-
-OPTION(BUILD_SERVER "Build server." OFF)
-if(BUILD_SERVER)
-    add_subdirectory (server)
 endif()
 
 OPTION(BUILD_DF2MC "Build DF2MC (needs a checkout first)." OFF)
@@ -113,5 +103,11 @@ endif()
 OPTION(BUILD_SKELETON "Build the skeleton plugin." OFF)
 if(BUILD_SKELETON)
     add_subdirectory(skeleton)
+endif()
+
+# this is the changelayer plugin. 
+OPTION(BUILD_CHANGELAYER "Build the changelayer plugin." ON)
+if(BUILD_CHANGELAYER)
+    add_subdirectory(changelayer)
 endif()
 

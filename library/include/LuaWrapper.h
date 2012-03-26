@@ -68,6 +68,7 @@ namespace DFHack { namespace LuaWrapper {
 #define DFHACK_DISPLACE_NAME "DFHack::Displace"
 #define DFHACK_NEW_NAME "DFHack::New"
 #define DFHACK_ASSIGN_NAME "DFHack::Assign"
+#define DFHACK_DELETE_NAME "DFHack::Delete"
 
 /*
  * Upvalue: contents of DFHACK_TYPETABLE_NAME
@@ -186,5 +187,7 @@ namespace DFHack { namespace LuaWrapper {
      * and the enum itself to the _enum metafield.
      */
     void AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, type_identity *ienum);
+
+    void IndexStatics(lua_State *state, int meta_idx, int ftable_idx, struct_identity *pstruct);
 }}
 

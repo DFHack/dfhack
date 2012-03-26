@@ -593,10 +593,7 @@ static int meta_new(lua_State *state)
 
     void *ptr = id->allocate();
     if (!ptr)
-    {
-        lua_pushnil(state);
-        return 1;
-    }
+        luaL_error(state, "Cannot allocate %s", id->getFullName().c_str());
 
     if (lua_isuserdata(state, 1))
     {
@@ -628,6 +625,30 @@ static int meta_assign(lua_State *state)
         luaL_error(state, "No copy support for %s", id1->getFullName().c_str());
 
     return 0;
+}
+
+/**
+ * Method: deallocation for DF object references.
+ */
+static int meta_delete(lua_State *state)
+{
+    int argc = lua_gettop(state);
+
+    if (argc != 1)
+        luaL_error(state, "Usage: object:delete() or df.delete(object)");
+
+    if (lua_isnil(state, 1))
+    {
+        lua_pushboolean(state, true);
+        return 1;
+    }
+
+    type_identity *id = get_object_identity(state, 1, "df.delete()", false);
+
+    bool ok = id->destroy(get_object_ref(state, 1));
+
+    lua_pushboolean(state, ok);
+    return 1;
 }
 
 /**
@@ -674,6 +695,30 @@ static int meta_ptr_tostring(lua_State *state)
     const char *cname = lua_tostring(state, -1);
 
     lua_pushstring(state, stl_sprintf("<%s: 0x%08x>", cname, (unsigned)ptr).c_str());
+    return 1;
+}
+
+/**
+ * Metamethod: __index for enum.attrs
+ */
+static int meta_enum_attr_index(lua_State *state)
+{
+    if (!lua_isnumber(state, 2))
+        lua_rawget(state, UPVAL_FIELDTABLE);
+    if (!lua_isnumber(state, 2))
+        luaL_error(state, "Invalid index in enum.attrs[]");
+
+    auto id = (enum_identity*)lua_touserdata(state, lua_upvalueindex(2));
+
+    int64_t idx = lua_tonumber(state, 2);
+    if (idx < id->getFirstItem() || idx > id->getLastItem())
+        idx = id->getLastItem()+1;
+    idx -= id->getFirstItem();
+
+    uint8_t *ptr = (uint8_t*)id->getAttrs();
+    auto atype = id->getAttrType();
+
+    push_object_internal(state, atype, ptr + unsigned(atype->byte_size()*idx));
     return 1;
 }
 
@@ -740,6 +785,10 @@ void LuaWrapper::SetPtrMethods(lua_State *state, int meta_idx, int read_idx)
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
     lua_setfield(state, meta_idx, "new");
     EnableMetaField(state, read_idx, "new");
+
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_DELETE_NAME);
+    lua_setfield(state, meta_idx, "delete");
+    EnableMetaField(state, read_idx, "delete");
 
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
     lua_setfield(state, meta_idx, "assign");
@@ -835,82 +884,152 @@ static void AssociateId(lua_State *state, int table, int val, const char *name)
     lua_rawset(state, table);
 }
 
+static void FillEnumKeys(lua_State *state, int ftable, enum_identity *eid)
+{
+    const char *const *keys = eid->getKeys();
+
+    // Create a new table attached to ftable as __index
+    lua_newtable(state);
+
+    lua_dup(state);
+    lua_setmetatable(state, ftable);
+
+    int base = lua_gettop(state);
+
+    lua_newtable(state);
+
+    // For enums, set mapping between keys and values
+    for (int64_t i = eid->getFirstItem(), j = 0; i <= eid->getLastItem(); i++, j++)
+    {
+        if (keys[j])
+            AssociateId(state, base+1, i, keys[j]);
+    }
+
+    if (eid->getFirstItem() <= eid->getLastItem())
+    {
+        lua_pushinteger(state, eid->getFirstItem());
+        lua_setfield(state, base+1, "_first_item");
+
+        lua_pushinteger(state, eid->getLastItem());
+        lua_setfield(state, base+1, "_last_item");
+    }
+
+    SaveInTable(state, eid, DFHACK_ENUM_TABLE_NAME);
+
+    // Add an attribute table if any
+    if (eid->getAttrs())
+    {
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
+        lua_pushlightuserdata(state, eid);
+        lua_pushvalue(state, base+1);
+        lua_pushcclosure(state, meta_enum_attr_index, 3);
+
+        freeze_table(state, false, (eid->getFullName()+".attrs").c_str());
+        lua_setfield(state, ftable, "attrs");
+    }
+
+    lua_setfield(state, base, "__index");
+    lua_pop(state, 1);
+}
+
+static void FillBitfieldKeys(lua_State *state, int ftable, bitfield_identity *eid)
+{
+    auto bits = eid->getBits();
+
+    for (int i = 0; i < eid->getNumBits(); i++)
+    {
+        if (bits[i].name)
+            AssociateId(state, ftable, i, bits[i].name);
+        if (bits[i].size > 1)
+            i += bits[i].size-1;
+    }
+
+    lua_pushinteger(state, 0);
+    lua_setfield(state, ftable, "_first_item");
+
+    lua_pushinteger(state, eid->getNumBits()-1);
+    lua_setfield(state, ftable, "_last_item");
+
+    SaveInTable(state, eid, DFHACK_ENUM_TABLE_NAME);
+}
+
 static void RenderType(lua_State *state, compound_identity *node)
 {
     assert(node->getName());
     std::string name = node->getFullName();
 
+    int base = lua_gettop(state);
+
     lua_newtable(state);
     if (!lua_checkstack(state, 20))
         return;
 
-    int base = lua_gettop(state);
+    SaveInTable(state, node, DFHACK_TYPEID_TABLE_NAME);
+
+    // metatable
+    lua_newtable(state);
+
+    lua_dup(state);
+    lua_setmetatable(state, base+1);
+
+    lua_pushstring(state, name.c_str());
+    lua_setfield(state, base+2, "__metatable");
+
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPE_TOSTRING_NAME);
+    lua_setfield(state, base+2, "__tostring");
+
+    lua_pushlightuserdata(state, node);
+    lua_setfield(state, base+2, "_identity");
+
+    // inner table
+    lua_newtable(state);
+
+    lua_dup(state);
+    lua_setfield(state, base+2, "__index");
+
+    int ftable = base+3;
 
     switch (node->type())
     {
     case IDTYPE_STRUCT:
         lua_pushstring(state, "struct-type");
-        lua_setfield(state, base, "_kind");
+        lua_setfield(state, ftable, "_kind");
+        IndexStatics(state, base+2, base+3, (struct_identity*)node);
         break;
 
     case IDTYPE_CLASS:
         lua_pushstring(state, "class-type");
-        lua_setfield(state, base, "_kind");
+        lua_setfield(state, ftable, "_kind");
+        IndexStatics(state, base+2, base+3, (struct_identity*)node);
         break;
 
     case IDTYPE_ENUM:
-        {
-            lua_pushstring(state, "enum-type");
-            lua_setfield(state, base, "_kind");
-
-            enum_identity *eid = (enum_identity*)node;
-            const char *const *keys = eid->getKeys();
-
-            // For enums, set mapping between keys and values
-            for (int64_t i = eid->getFirstItem(), j = 0; i <= eid->getLastItem(); i++, j++)
-            {
-                if (keys[j])
-                    AssociateId(state, base, i, keys[j]);
-            }
-
-            if (eid->getFirstItem() <= eid->getLastItem())
-            {
-                lua_pushinteger(state, eid->getFirstItem());
-                lua_setfield(state, base, "_first_item");
-
-                lua_pushinteger(state, eid->getLastItem());
-                lua_setfield(state, base, "_last_item");
-            }
-
-            SaveInTable(state, node, DFHACK_ENUM_TABLE_NAME);
-        }
+        lua_pushstring(state, "enum-type");
+        lua_setfield(state, ftable, "_kind");
+        FillEnumKeys(state, ftable, (enum_identity*)node);
         break;
 
     case IDTYPE_BITFIELD:
-        {
-            lua_pushstring(state, "bitfield-type");
-            lua_setfield(state, base, "_kind");
-
-            bitfield_identity *eid = (bitfield_identity*)node;
-            auto bits = eid->getBits();
-
-            for (int i = 0; i < eid->getNumBits(); i++)
-            {
-                if (bits[i].name)
-                    AssociateId(state, base, i, bits[i].name);
-                if (bits[i].size > 1)
-                    i += bits[i].size-1;
-            }
-
-            lua_pushinteger(state, 0);
-            lua_setfield(state, base, "_first_item");
-
-            lua_pushinteger(state, eid->getNumBits()-1);
-            lua_setfield(state, base, "_last_item");
-
-            SaveInTable(state, node, DFHACK_ENUM_TABLE_NAME);
-        }
+        lua_pushstring(state, "bitfield-type");
+        lua_setfield(state, ftable, "_kind");
+        FillBitfieldKeys(state, ftable, (bitfield_identity*)node);
         break;
+
+    case IDTYPE_GLOBAL:
+        {
+            RenderTypeChildren(state, node->getScopeChildren());
+
+            BuildTypeMetatable(state, node);
+
+            lua_dup(state);
+            lua_setmetatable(state, base+3);
+
+            lua_getfield(state, -1, "__newindex");
+            lua_setfield(state, base+2, "__newindex");
+
+            lua_pop(state, 3);
+            return;
+        }
 
     default:
         break;
@@ -918,44 +1037,13 @@ static void RenderType(lua_State *state, compound_identity *node)
 
     RenderTypeChildren(state, node->getScopeChildren());
 
-    assert(base == lua_gettop(state));
-
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
-    lua_setfield(state, base, "sizeof");
+    lua_setfield(state, ftable, "sizeof");
+
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
-    lua_setfield(state, base, "new");
+    lua_setfield(state, ftable, "new");
 
-    if (node->type() == IDTYPE_GLOBAL)
-    {
-        BuildTypeMetatable(state, node);
-
-        // Set metatable for the inner table
-        lua_dup(state);
-        lua_setmetatable(state, base);
-        lua_swap(state); // -> meta curtable
-
-        freeze_table(state, true, "global");
-
-        // Copy __newindex to the outer metatable
-        lua_getfield(state, base, "__newindex");
-        lua_setfield(state, -2, "__newindex");
-
-        lua_remove(state, base);
-    }
-    else
-    {
-        freeze_table(state, true, name.c_str());
-    }
-
-    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPE_TOSTRING_NAME);
-    lua_setfield(state, -2, "__tostring");
-
-    lua_pushlightuserdata(state, node);
-    lua_setfield(state, -2, "_identity");
-
-    lua_pop(state, 1);
-
-    SaveInTable(state, node, DFHACK_TYPEID_TABLE_NAME);
+    lua_pop(state, 2);
 }
 
 static void RenderTypeChildren(lua_State *state, const std::vector<compound_identity*> &children)
@@ -1007,6 +1095,10 @@ static void DoAttach(lua_State *state)
     lua_pushcclosure(state, meta_assign, 1);
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
 
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
+    lua_pushcclosure(state, meta_delete, 1);
+    lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_DELETE_NAME);
+
     luaL_register(state, "df", no_functions);
 
     {
@@ -1020,6 +1112,8 @@ static void DoAttach(lua_State *state)
         lua_setfield(state, -2, "sizeof");
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
         lua_setfield(state, -2, "new");
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_DELETE_NAME);
+        lua_setfield(state, -2, "delete");
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_DISPLACE_NAME);
         lua_setfield(state, -2, "_displace");
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);

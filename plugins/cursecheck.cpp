@@ -11,7 +11,7 @@
 //   detail  - print full name, date of birth, date of curse (vamp might use fake identity, though)
 //             show if the creature is active or dead, missing, ghostly (ghost vampires should not exist in 34.05)
 //             identify type of curse (works fine for vanilla ghosts, vamps, werebeasts, zombies and necromancers)
-//   nick    - set nickname to 'CURSED' (does not always show up ingame, some vamps don't like nicknames)
+//   nick    - set nickname to type of curse(does not always show up ingame, some vamps don't like nicknames)
 //   all     - don't ignore dead and inactive creatures (former ghosts, dead necromancers, ...)
 //   verbose - acts like detail but also lists all curse tags (if you want to know it all).
 
@@ -125,13 +125,13 @@ void setUnitNickname(df::unit *unit, const std::string &nick)
     }
 }
 
-void cursedump (color_ostream &out, df::unit * unit);
-
 std::string determineCurse(df::unit * unit)
 {
     string cursetype = "unknown";
             
     // ghosts: ghostly, duh
+    // as of DF 34.05 and higher vampire ghosts and the like should not be possible
+    // if they get reintroduced later it will become necessary to watch 'ghostly' seperately
     if(unit->flags3.bits.ghostly)
         cursetype = "ghost";
 
@@ -287,7 +287,9 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
                 // dump all curse flags on demand
                 if (verbose)
                 {
-                    cursedump(out, unit);
+                    out << "Curse flags: "
+                        << bitfield_to_string(unit->curse.add_tags1) << endl
+                        << bitfield_to_string(unit->curse.add_tags2) << endl;
                 }
             }
         }
@@ -299,74 +301,4 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
         out.print("Number of cursed creatures on tile: %d \n", cursecount);
     
     return CR_OK;
-}
-
-void cursedump (color_ostream &out, df::unit * unit)
-{
-    out << "Curse flags: ";
-    if(unit->curse.add_tags1.bits.BLOODSUCKER)
-        out << "bloodsucker ";
-    if(unit->curse.add_tags1.bits.EXTRAVISION)
-        out << "extravision ";
-    if(unit->curse.add_tags1.bits.OPPOSED_TO_LIFE)
-        out << "opposed_to_life ";
-    if(unit->curse.add_tags1.bits.NOT_LIVING)
-        out << "not_living ";
-    if(unit->curse.add_tags1.bits.NOEXERT)
-        out << "noexpert ";
-    if(unit->curse.add_tags1.bits.NOPAIN)
-        out << "nopain ";
-    if(unit->curse.add_tags1.bits.NOBREATHE)
-        out << "nobreathe ";
-    if(unit->curse.add_tags1.bits.HAS_BLOOD)
-        out << "has_blood ";
-    if(unit->curse.add_tags1.bits.NOSTUN)
-        out << "nostun ";
-    if(unit->curse.add_tags1.bits.NONAUSEA)
-        out << "nonausea ";
-    if(unit->curse.add_tags1.bits.NO_DIZZINESS)
-        out << "no_dizziness ";
-    if(unit->curse.add_tags1.bits.TRANCES)
-        out << "trances ";
-    if(unit->curse.add_tags1.bits.NOEMOTION)
-        out << "noemotion ";
-    if(unit->curse.add_tags1.bits.PARALYZEIMMUNE)
-        out << "paralyzeimmune ";
-    if(unit->curse.add_tags1.bits.NOFEAR)
-        out << "nofear ";
-    if(unit->curse.add_tags1.bits.NO_EAT)
-        out << "no_eat ";
-    if(unit->curse.add_tags1.bits.NO_DRINK)
-        out << "no_drink ";
-    if(unit->curse.add_tags1.bits.MISCHIEVOUS)
-        out << "mischievous ";
-    if(unit->curse.add_tags1.bits.NO_PHYS_ATT_GAIN)
-        out << "no_phys_att_gain ";
-    if(unit->curse.add_tags1.bits.NO_PHYS_ATT_RUST)
-        out << "no_phys_att_rust ";
-    if(unit->curse.add_tags1.bits.NOTHOUGHT)
-        out << "nothought ";
-    if(unit->curse.add_tags1.bits.NO_THOUGHT_CENTER_FOR_MOVEMENT)
-        out << "no_thought_center_for_movement ";
-    if(unit->curse.add_tags1.bits.CAN_SPEAK)
-        out << "can_speak ";
-    if(unit->curse.add_tags1.bits.CAN_LEARN)
-        out << "can_learn ";
-    if(unit->curse.add_tags1.bits.CRAZED)
-        out << "crazed ";
-    if(unit->curse.add_tags1.bits.BLOODSUCKER)
-        out << "bloodsucker ";
-    if(unit->curse.add_tags1.bits.SUPERNATURAL)
-        out << "supernatural ";
-
-    if(unit->curse.add_tags2.bits.NO_AGING)
-        out << "no_aging ";
-    if(unit->curse.add_tags2.bits.STERILE)
-        out << "sterile ";
-    if(unit->curse.add_tags2.bits.FIT_FOR_ANIMATION)
-        out << "fit_for_animation ";
-    if(unit->curse.add_tags2.bits.FIT_FOR_RESURRECTION)
-        out << "fit_for_resurrection ";
-
-    out << endl << endl;
 }

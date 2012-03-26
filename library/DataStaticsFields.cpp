@@ -8,6 +8,7 @@
 #include "df/ui.h"
 
 #include "DataIdentity.h"
+#include "DataFuncs.h"
 
 #include <stddef.h>
 
@@ -30,6 +31,8 @@ namespace df {
 
     bool_identity identity_traits<bool>::identity;
     stl_string_identity identity_traits<std::string>::identity;
+    ptr_string_identity identity_traits<char*>::identity;
+    ptr_string_identity identity_traits<const char*>::identity;
     pointer_identity identity_traits<void*>::identity;
     stl_ptr_vector_identity identity_traits<std::vector<void*> >::identity;
     stl_bit_vector_identity identity_traits<std::vector<bool> >::identity;
@@ -43,6 +46,7 @@ namespace df {
 
 #define FLD(mode, name) struct_field_info::mode, #name, offsetof(CUR_STRUCT, name)
 #define GFLD(mode, name) struct_field_info::mode, #name, (size_t)&df::global::name
+#define METHOD(mode, name) struct_field_info::mode, #name, 0, wrap_function(&CUR_STRUCT::name)
 #define FLD_END struct_field_info::END
 
 // Field definitions

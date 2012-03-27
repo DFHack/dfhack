@@ -96,7 +96,8 @@ const luaL_Reg lua_vinfo_func[]=
 	VI_FUNC(setAddress),
 	VI_FUNC(getAddress),
 	VI_FUNC(setOS),
-	VI_FUNC(getOS)
+	VI_FUNC(getOS),
+	{NULL,NULL}
 };
 #undef VI_FUNC
 void lua::RegisterVersionInfo(lua::state &st)

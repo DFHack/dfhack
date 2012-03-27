@@ -255,8 +255,8 @@ static void fetch_container_details(lua_State *state, int meta, type_identity **
 /**
  * Check if type1 and type2 are compatible, possibly using additional metatable data.
  */
-static bool is_type_compatible(lua_State *state, type_identity *type1, int meta1,
-                               type_identity *type2, int meta2, bool exact_equal)
+bool LuaWrapper::is_type_compatible(lua_State *state, type_identity *type1, int meta1,
+                                    type_identity *type2, int meta2, bool exact_equal)
 {
     if (type1 == type2)
         return true;
@@ -417,9 +417,9 @@ static bool is_valid_metatable(lua_State *state, int objidx, int metaidx)
 /**
  * Given a DF object reference or type, safely retrieve its identity pointer.
  */
-static type_identity *get_object_identity(lua_State *state, int objidx,
-                                          const char *ctx, bool allow_type = false,
-                                          bool keep_metatable = false)
+type_identity *LuaWrapper::get_object_identity(lua_State *state, int objidx,
+                                               const char *ctx, bool allow_type,
+                                               bool keep_metatable)
 {
     if (!lua_getmetatable(state, objidx))
         luaL_error(state, "Invalid object in %s", ctx);
@@ -608,6 +608,31 @@ static int meta_new(lua_State *state)
     return 1;
 }
 
+static void invoke_resize(lua_State *state, int table, lua_Integer size)
+{
+    lua_getfield(state, table, "resize");
+    lua_pushvalue(state, table);
+    lua_pushinteger(state, size);
+    lua_call(state, 2, 0);
+}
+
+static void copy_table(lua_State *state, int dest, int src, int skipkey)
+{
+    lua_pushnil(state);
+
+    while (lua_next(state, src))
+    {
+        if (lua_equal(state, -2, skipkey))
+            lua_pop(state, 1);
+        else
+        {
+            lua_pushvalue(state, -2);
+            lua_swap(state);
+            lua_settable(state, dest);
+        }
+    }
+}
+
 /**
  * Method: assign data between objects.
  */
@@ -618,11 +643,83 @@ static int meta_assign(lua_State *state)
     if (argc != 2)
         luaL_error(state, "Usage: target:assign(src) or df.assign(target,src)");
 
-    type_identity *id1, *id2;
-    check_type_compatible(state, 1, 2, &id1, &id2, "df.assign()", false, false);
+    if (!lua_istable(state, 2))
+    {
+        type_identity *id1, *id2;
+        check_type_compatible(state, 1, 2, &id1, &id2, "df.assign()", false, false);
 
-    if (!id1->copy(get_object_ref(state, 1), get_object_ref(state, 2)))
-        luaL_error(state, "No copy support for %s", id1->getFullName().c_str());
+        if (!id1->copy(get_object_ref(state, 1), get_object_ref(state, 2)))
+            luaL_error(state, "No copy support for %s", id1->getFullName().c_str());
+    }
+    else
+    {
+        type_identity *id = get_object_identity(state, 1, "df.assign()", false);
+
+        if (id->isContainer())
+        {
+            lua_pushstring(state, "resize");
+            int resize_str = lua_gettop(state);
+
+            lua_dup(state);
+            lua_rawget(state, 2);
+
+            if (lua_isnil(state,-1))
+            {
+                /*
+                 * nil or missing resize field => 1-based lua array
+                 */
+                int size = lua_objlen(state, 2);
+
+                lua_pop(state, 1);
+                invoke_resize(state, 1, size);
+
+                for (int i = 1; i <= size; i++)
+                {
+                    lua_pushinteger(state, i-1);
+                    lua_rawgeti(state, 2, i);
+                    lua_settable(state, 1);
+                }
+            }
+            else
+            {
+                if (lua_isboolean(state, -1))
+                {
+                    // resize=false => just assign
+                    // resize=true => find the largest index
+                    if (lua_toboolean(state, -1))
+                    {
+                        lua_Integer size = 0;
+
+                        lua_pushnil(state);
+                        while (lua_next(state, 2))
+                        {
+                            lua_pop(state, 1);
+                            if (lua_isnumber(state,-1))
+                                size = std::max(size, lua_tointeger(state,-1)+1);
+                        }
+
+                        invoke_resize(state, 1, size);
+                    }
+                }
+                else
+                {
+                    // otherwise, must be an explicit number
+                    if (!lua_isnumber(state,-1))
+                        luaL_error(state, "Invalid container.resize value in df.assign()");
+
+                    invoke_resize(state, 1, lua_tointeger(state, -1));
+                }
+
+                lua_pop(state, 1);
+                copy_table(state, 1, 2, resize_str);
+            }
+        }
+        else
+        {
+            lua_pushstring(state, "new");
+            copy_table(state, 1, 2, lua_gettop(state));
+        }
+    }
 
     return 0;
 }

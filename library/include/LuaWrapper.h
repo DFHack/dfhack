@@ -149,6 +149,13 @@ namespace DFHack { namespace LuaWrapper {
      */
     uint8_t *get_object_addr(lua_State *state, int obj, int field, const char *mode);
 
+    bool is_type_compatible(lua_State *state, type_identity *type1, int meta1,
+                            type_identity *type2, int meta2, bool exact_equal);
+
+    type_identity *get_object_identity(lua_State *state, int objidx,
+                                       const char *ctx, bool allow_type = false,
+                                       bool keep_metatable = false);
+
     void LookupInTable(lua_State *state, void *id, const char *tname);
     void SaveInTable(lua_State *state, void *node, const char *tname);
     void SaveTypeInfo(lua_State *state, void *node);

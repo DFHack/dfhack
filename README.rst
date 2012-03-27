@@ -435,7 +435,7 @@ When multiple commands are bound to the same key combination, DFHack selects the
 
 liquids
 =======
-Allows adding magma, water and obsidian to the game. It replaces the normal dfhack command line and can't be used from a hotkey. Settings will be remembered as long as dfhack runs. Intended for use in combination with the command liquidsgo-here (which can be bound to a hotkey).
+Allows adding magma, water and obsidian to the game. It replaces the normal dfhack command line and can't be used from a hotkey. Settings will be remembered as long as dfhack runs. Intended for use in combination with the command liquids-here (which can be bound to a hotkey).
 For more information, refer to the command's internal help. 
 
 .. note::
@@ -445,7 +445,7 @@ For more information, refer to the command's internal help.
 
 liquids-here
 ============
-Run the liquid spawner with the current/last settings made in liquidsgo (if no settings in liquidsgo were made it paints a point of 7/7 magma by default).
+Run the liquid spawner with the current/last settings made in liquids (if no settings in liquids were made it paints a point of 7/7 magma by default).
 Intended to be used as keybinding. Requires an active in-game cursor.
 	
 mode

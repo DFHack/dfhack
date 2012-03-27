@@ -1,11 +1,11 @@
 #ifndef LUNE_H
 #define LUNE_H
 
-extern "C" {
+
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
-}
+
 
 #include "luaxx.hpp"
 #include <string>

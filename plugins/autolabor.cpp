@@ -802,7 +802,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 	}
 
 	// Idle dwarves come first, then we sort from least-skilled to most-skilled.
-	
 	std::sort(hauler_ids.begin(), hauler_ids.end(), [&dwarf_info] (int i, int j) -> bool
 	{ 
 		if (dwarf_info[i].state == IDLE && dwarf_info[j].state != IDLE)
@@ -811,6 +810,11 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			return false;
 		return dwarf_info[i].mastery_penalty > dwarf_info[j].mastery_penalty; 
 	});
+
+	// don't set any haulers if everyone is off drinking or something
+	if (hauler_ids.size() == 0) {
+		num_haulers = 0;
+	}
 
 	FOR_ENUM_ITEMS(unit_labor, labor)
 	{
@@ -831,7 +835,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 			assert(dwarf >= 0);
 			assert(dwarf < n_dwarfs);
-
 			dwarfs[dwarf]->status.labors[labor] = true;
 			dwarf_info[dwarf].assigned_jobs++;
 		}
@@ -848,7 +851,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			dwarfs[dwarf]->status.labors[labor] = false;
 		}
 	}
-
     return CR_OK;
 }
 

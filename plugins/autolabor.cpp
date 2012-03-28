@@ -300,7 +300,9 @@ struct labor_info
 	int minimum_dwarfs;
 };
 
-static const struct labor_info labor_infos[] = {
+static struct labor_info* labor_infos;
+
+static const struct labor_info default_labor_infos[] = {
     /* MINE */				{AUTOMATIC, true, 2},
     /* HAUL_STONE */		{HAULERS, false, 1},
     /* HAUL_WOOD */			{HAULERS, false, 1},
@@ -395,6 +397,13 @@ struct dwarf_info
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
+	// initialize labor infos table from default table
+
+	labor_infos = new struct labor_info[ARRAY_COUNT(default_labor_infos)];
+	for (int i = 0; i < ARRAY_COUNT(default_labor_infos); i++) {
+		labor_infos[i] = default_labor_infos[i];
+	}
+
 	assert(ARRAY_COUNT(labor_infos) > ENUM_LAST_ITEM(unit_labor));
 
 	// Fill the command list with your commands.
@@ -406,6 +415,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  autolabor enable\n"
 		"  autolabor disable\n"
 		"    Enables or disables the plugin.\n"
+		"  autolabor miners <n>\n"
+		"    Set number of desired miners (defaults to 2)\n"
 		"Function:\n"
 		"  When enabled, autolabor periodically checks your dwarves and enables or\n"
 		"  disables labors. It tries to keep as many dwarves as possible busy but\n"
@@ -418,6 +429,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+	// release the labor info table;
+	delete [] labor_infos;
+
 	return CR_OK;
 }
 
@@ -857,15 +871,26 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 // A command! It sits around and looks pretty. And it's nice and friendly.
 command_result autolabor (color_ostream &out, std::vector <std::string> & parameters)
 {
-    if (parameters.size() == 1 && (parameters[0] == "0" || parameters[0] == "1"))
+	if (parameters.size() == 1 && 
+		(parameters[0] == "0" || parameters[0] == "enable" || 
+		 parameters[0] == "1" || parameters[0] == "disable"))
     {
-        if (parameters[0] == "0")
+        if (parameters[0] == "0" || parameters[0] == "disable")
             enable_autolabor = 0;
         else
             enable_autolabor = 1;
         out.print("autolabor %sactivated.\n", (enable_autolabor ? "" : "de"));
     }
-    else
+    else if (parameters.size() == 2 && parameters[0] == "miners") {
+		int nminers = atoi (parameters[1].c_str());
+		if (nminers >= 0) {
+			labor_infos[0].minimum_dwarfs = nminers;
+			out.print("miner count set to %d.\n", nminers);
+		} else {
+			out.print("Syntax: autolabor miners <n>, where n is 0 or more.\n"
+				"Current miner count: %d\n", labor_infos[0].minimum_dwarfs);
+		}
+	} else
     {
         out.print("Automatically assigns labors to dwarves.\n"
             "Activate with 'autolabor 1', deactivate with 'autolabor 0'.\n"

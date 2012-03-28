@@ -110,9 +110,10 @@ tl;dr: You will end up with changing quite big areas in one go, especially if yo
 
 Options
 -------
-:all_biomes:        Change layer for all biomes on your map.
+:all_biomes:        Change selected layer for all biomes on your map.
                     Result may be undesirable since the same layer can AND WILL be on different z-levels for different biomes. Use the tool 'probe' to get an idea how layers and biomes are distributed on your map.
-:all-layers:        Change all layers on your map. Candy mountain, anyone? Will make your map quite boring, but tidy. 
+:all_layers:        Change all layers on your map (only for the selected biome unless 'all_biomes' is added). 
+                    Candy mountain, anyone? Will make your map quite boring, but tidy. 
 :force:             Allow changing stone to soil and vice versa. !!THIS CAN HAVE WEIRD EFFECTS, USE WITH CARE!!
                     Note that soil will not be magically replaced with stone. You will, however, get a stone floor after digging so it will allow the floor to be engraved.
                     Note that stone will not be magically replaced with soil. You will, however, get a soil floor after digging so it could be helpful for creating farm plots on maps with no soil.
@@ -121,23 +122,27 @@ Options
 
 Examples:
 ---------
-``changelayer GRANITE`` : Convert layer at cursor position into granite.
-``changelayer SILTY_CLAY force`` : Convert layer at cursor position into clay even if it's stone.
-``changelayer MARBLE all_biomes all_layers`` : Convert all layers of all biomes which are not soil into marble.
+``changelayer GRANITE``
+   Convert layer at cursor position into granite.
+``changelayer SILTY_CLAY force``
+   Convert layer at cursor position into clay even if it's stone.
+``changelayer MARBLE all_biomes all_layers``
+   Convert all layers of all biomes which are not soil into marble.
 
-.. note::
+.. Notes::
 
-    * If you use changelayer and nothing happens, try to pause/unpause the game for a while and try to move the cursor to another tile.
+    * If you use changelayer and nothing happens, try to pause/unpause the game for a while and try to move the cursor to another tile. Then try again. If that doesn't help try temporarily changing some other layer, undo your changes and try again for the layer you want to change. Saving and reloading your map might also help.
     * You should be fine if you only change single layers without the use of 'force'. Still it's advisable to save your game before messing with the map.
-    * When you force changelayer to convert soil to stone you might experience weird stuff (flashing tiles, tiles changed all over the map, ...). Try reverting the changes manually or even better use an older savegame. You did save your game, right?
+    * When you force changelayer to convert soil to stone you might experience weird stuff (flashing tiles, tiles changed all over place etc). Try reverting the changes manually or even better use an older savegame. You did save your game, right?
 
 changevein
 ==========
 Changes material of the vein under cursor to the specified inorganic RAW material.
 
 Example:
----------
-``changevein NATIVE_PLATINUM`` : Convert vein at cursor position into platinum ore.
+--------
+``changevein NATIVE_PLATINUM``
+   Convert vein at cursor position into platinum ore.
 
 cursecheck
 ==========
@@ -157,14 +162,10 @@ Options
 
 Examples:
 ---------
-Check one single map tile if one of the creatures on it is cursed (in-game cursor required):
-  * cursecheck
-Count all active cursed creatures who roam around on your map (no in-game cursor) without giving more details:
-  * cursecheck
-Give detailed info about all cursed creatures including deceased ones (no in-game cursor):
-  * cursecheck detail all
-Give a nickname all living/active cursed creatures on the map(no in-game cursor):
-  * cursecheck nick
+``cursecheck detail all``
+   Give detailed info about all cursed creatures including deceased ones (no in-game cursor).
+``cursecheck nick``
+  Give a nickname all living/active cursed creatures on the map(no in-game cursor).
 
 .. note::
 
@@ -434,7 +435,7 @@ When multiple commands are bound to the same key combination, DFHack selects the
 
 liquids
 =======
-Allows adding magma, water and obsidian to the game. It replaces the normal dfhack command line and can't be used from a hotkey. Settings will be remembered as long as dfhack runs. Intended for use in combination with the command liquidsgo-here (which can be bound to a hotkey).
+Allows adding magma, water and obsidian to the game. It replaces the normal dfhack command line and can't be used from a hotkey. Settings will be remembered as long as dfhack runs. Intended for use in combination with the command liquids-here (which can be bound to a hotkey).
 For more information, refer to the command's internal help. 
 
 .. note::
@@ -444,7 +445,7 @@ For more information, refer to the command's internal help.
 
 liquids-here
 ============
-Run the liquid spawner with the current/last settings made in liquidsgo (if no settings in liquidsgo were made it paints a point of 7/7 magma by default).
+Run the liquid spawner with the current/last settings made in liquids (if no settings in liquids were made it paints a point of 7/7 magma by default).
 Intended to be used as keybinding. Requires an active in-game cursor.
 	
 mode

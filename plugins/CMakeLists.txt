@@ -90,6 +90,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(fixpositions fixpositions.cpp)
     DFHACK_PLUGIN(follow follow.cpp)
     DFHACK_PLUGIN(changevein changevein.cpp)
+    DFHACK_PLUGIN(changelayer changelayer.cpp)
     DFHACK_PLUGIN(advtools advtools.cpp)
     DFHACK_PLUGIN(tweak tweak.cpp)
     DFHACK_PLUGIN(feature feature.cpp)
@@ -104,10 +105,3 @@ OPTION(BUILD_SKELETON "Build the skeleton plugin." OFF)
 if(BUILD_SKELETON)
     add_subdirectory(skeleton)
 endif()
-
-# this is the changelayer plugin. 
-OPTION(BUILD_CHANGELAYER "Build the changelayer plugin." ON)
-if(BUILD_CHANGELAYER)
-    add_subdirectory(changelayer)
-endif()
-

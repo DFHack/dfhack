@@ -972,6 +972,7 @@ int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
 {
     // Assume keyboard layouts don't change the order of numbers:
     if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
+    if(SDL::K_F1 <= ke.ksym.sym && ke.ksym.sym <= SDL::K_F12) return ke.ksym.sym;
 
     int unicode = ke.ksym.unicode;
 

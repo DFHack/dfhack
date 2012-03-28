@@ -65,9 +65,22 @@ void constructed_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
     push_object_internal(state, this, ptr);
 }
 
+static void invoke_assign(lua_State *state, type_identity *id, void *ptr, int val_index)
+{
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
+    push_object_internal(state, id, ptr);
+    lua_pushvalue(state, val_index);
+    lua_call(state, 2, 0);
+}
+
 void constructed_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
 {
-    field_error(state, fname_idx, "complex object", "write");
+    if (lua_istable(state, val_index))
+    {
+        invoke_assign(state, this, ptr, val_index);
+    }
+    else
+        field_error(state, fname_idx, "complex object", "write");
 }
 
 void enum_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
@@ -150,6 +163,58 @@ void df::pointer_identity::lua_read(lua_State *state, int fname_idx, void *ptr)
     lua_read(state, fname_idx, ptr, target);
 }
 
+static void autovivify_ptr(lua_State *state, int fname_idx, void **pptr,
+                          type_identity *target, int val_index)
+{
+    lua_getfield(state, val_index, "new");
+
+    // false or nil => bail out
+    if (!lua_toboolean(state, -1))
+        field_error(state, fname_idx, "null and autovivify not requested", "write");
+
+    // not 'true' => call df.new()
+    if (!lua_isboolean(state, -1))
+    {
+        int top = lua_gettop(state);
+
+        // Verify new points to a reasonable type of object
+        type_identity *suggested = get_object_identity(state, top, "autovivify", true, true);
+
+        if (!is_type_compatible(state, target, 0, suggested, top+1, false))
+            field_error(state, fname_idx, "incompatible suggested autovivify type", "write");
+
+        lua_pop(state, 1);
+
+        // Invoke df.new()
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
+        lua_swap(state);
+        lua_call(state, 1, 1);
+
+        // Retrieve the pointer
+        void *nval = get_object_internal(state, target, top, false);
+
+        // shouldn't happen: this means suggested type is compatible,
+        // but its new() result isn't for some reason.
+        if (!nval)
+            field_error(state, fname_idx, "inconsistent autovivify type", "write");
+
+        *pptr = nval;
+    }
+    // otherwise use the target type
+    else
+    {
+        if (!target)
+            field_error(state, fname_idx, "trying to autovivify void*", "write");
+
+        *pptr = target->allocate();
+
+        if (!*pptr)
+            field_error(state, fname_idx, "could not allocate in autovivify", "write");
+    }
+
+    lua_pop(state, 1);
+}
+
 void df::pointer_identity::lua_write(lua_State *state, int fname_idx, void *ptr,
                                      type_identity *target, int val_index)
 {
@@ -157,6 +222,13 @@ void df::pointer_identity::lua_write(lua_State *state, int fname_idx, void *ptr,
 
     if (lua_isnil(state, val_index))
         *pptr = NULL;
+    else if (lua_istable(state, val_index))
+    {
+        if (!*pptr)
+            autovivify_ptr(state, fname_idx, pptr, target, val_index);
+
+        invoke_assign(state, target, *pptr, val_index);
+    }
     else
     {
         void *nval = get_object_internal(state, target, val_index, false);
@@ -435,10 +507,15 @@ static void write_field(lua_State *state, const struct_field_info *field, void *
 
         case struct_field_info::POINTER:
             df::pointer_identity::lua_write(state, 2, ptr, field->type, value_idx);
+            return;
 
         case struct_field_info::STATIC_ARRAY:
         case struct_field_info::STL_VECTOR_PTR:
-            field_error(state, 2, "complex object", "write");
+            lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
+            read_field(state, field, ptr);
+            lua_pushvalue(state, value_idx);
+            lua_call(state, 2, 0);
+            return;
 
         case struct_field_info::END:
             return;

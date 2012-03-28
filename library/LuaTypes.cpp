@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
@@ -168,10 +168,16 @@ static void autovivify_ptr(lua_State *state, int fname_idx, void **pptr,
 {
     lua_getfield(state, val_index, "new");
 
-    if (!lua_isnil(state, -1))
+    // false or nil => bail out
+    if (!lua_toboolean(state, -1))
+        field_error(state, fname_idx, "null and autovivify not requested", "write");
+
+    // not 'true' => call df.new()
+    if (!lua_isboolean(state, -1))
     {
         int top = lua_gettop(state);
 
+        // Verify new points to a reasonable type of object
         type_identity *suggested = get_object_identity(state, top, "autovivify", true, true);
 
         if (!is_type_compatible(state, target, 0, suggested, top+1, false))
@@ -179,17 +185,22 @@ static void autovivify_ptr(lua_State *state, int fname_idx, void **pptr,
 
         lua_pop(state, 1);
 
+        // Invoke df.new()
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
         lua_swap(state);
         lua_call(state, 1, 1);
 
+        // Retrieve the pointer
         void *nval = get_object_internal(state, target, top, false);
 
+        // shouldn't happen: this means suggested type is compatible,
+        // but its new() result isn't for some reason.
         if (!nval)
             field_error(state, fname_idx, "inconsistent autovivify type", "write");
 
         *pptr = nval;
     }
+    // otherwise use the target type
     else
     {
         if (!target)

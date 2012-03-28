@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
@@ -616,20 +616,32 @@ static void invoke_resize(lua_State *state, int table, lua_Integer size)
     lua_call(state, 2, 0);
 }
 
-static void copy_table(lua_State *state, int dest, int src, int skipkey)
+static void copy_table(lua_State *state, int dest, int src, int skipbase)
 {
+    // stack: (skipbase) skipkey skipkey |
+
+    int top = lua_gettop(state);
+
     lua_pushnil(state);
 
     while (lua_next(state, src))
     {
-        if (lua_equal(state, -2, skipkey))
-            lua_pop(state, 1);
-        else
+        for (int i = skipbase+1; i <= top; i++)
+        {
+            if (lua_rawequal(state, -2, i))
+            {
+                lua_pop(state, 1);
+                goto next_outer;
+            }
+        }
+
         {
             lua_pushvalue(state, -2);
             lua_swap(state);
             lua_settable(state, dest);
         }
+
+    next_outer:;
     }
 }
 
@@ -655,18 +667,40 @@ static int meta_assign(lua_State *state)
     {
         type_identity *id = get_object_identity(state, 1, "df.assign()", false);
 
+        int base = lua_gettop(state);
+
+        // x:assign{ assign = foo } => x:assign(foo)
+        bool has_assign = false;
+
+        lua_pushstring(state, "assign");
+        lua_dup(state);
+        lua_rawget(state, 2);
+
+        if (!lua_isnil(state,-1))
+        {
+            has_assign = true;
+            lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
+            lua_pushvalue(state, 1);
+            lua_pushvalue(state, base+2);
+            lua_call(state, 2, 0);
+        }
+
+        lua_pop(state, 1);
+
+        // new is used by autovivification and should be skipped
+        lua_pushstring(state, "new");
+
         if (id->isContainer())
         {
+            // check resize field
             lua_pushstring(state, "resize");
-            int resize_str = lua_gettop(state);
-
             lua_dup(state);
             lua_rawget(state, 2);
 
-            if (lua_isnil(state,-1))
+            if (lua_isnil(state,-1) && !has_assign)
             {
                 /*
-                 * nil or missing resize field => 1-based lua array
+                 * no assign && nil or missing resize field => 1-based lua array
                  */
                 int size = lua_objlen(state, 2);
 
@@ -682,7 +716,7 @@ static int meta_assign(lua_State *state)
             }
             else
             {
-                if (lua_isboolean(state, -1))
+                if (lua_isboolean(state, -1) || lua_isnil(state, -1))
                 {
                     // resize=false => just assign
                     // resize=true => find the largest index
@@ -711,13 +745,13 @@ static int meta_assign(lua_State *state)
                 }
 
                 lua_pop(state, 1);
-                copy_table(state, 1, 2, resize_str);
+                copy_table(state, 1, 2, base);
             }
         }
         else
         {
-            lua_pushstring(state, "new");
-            copy_table(state, 1, 2, lua_gettop(state));
+
+            copy_table(state, 1, 2, base);
         }
     }
 

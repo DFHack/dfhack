@@ -71,7 +71,9 @@ const string changelayer_help =
 const string changelayer_trouble = 
     "Known problems with changelayer:\n\n"
     "  Nothing happens, the material stays the old.\n"
-    "    Try pausing/unpausing the game or moving the cursor a bit.\n\n"
+    "    Pause/unpause the game and/or move the cursor a bit. Then retry.\n"
+    "    Try changing another layer, undo the changes and try again.\n"
+    "    Try saving and loading the game.\n\n"
     "  Weird stuff happening after using the 'force' option.\n"
     "    Change former stone layers back to stone, soil back to soil.\n"
     "    If in doubt, use the 'probe' tool to find tiles with soil walls\n"
@@ -221,7 +223,7 @@ command_result changelayer (color_ostream &out, std::vector <std::string> & para
     // 2) call ReadGeology here, modify the data in the vectors without having to do all that map stuff
     // 3) write Maps::WriteGeology, pass the vectors, let it do it's work
     // Step 1) is optional, but it would make implementing 3) easier. 
-    // Otherwise that "check which geolayer is used by biome X" loop would need to be done again.
+    // Otherwise that "check which geo_index is used by biome X" loop would need to be done again.
 
     // no need to touch the same geology more than once
     // though it wouldn't matter much since there is not much data to be processed
@@ -291,7 +293,7 @@ command_result changelayer (color_ostream &out, std::vector <std::string> & para
         vector <df::world_geo_layer*> &geolayers = geo_biome->layers;
 
         // complain if layer is out of range
-        // geology has up to 16 layers currently, but size can be < 15 sometimes!
+        // geology has up to 16 layers currently, but can have less!
         if(layer >= geolayers.size() || layer < 0)
         {
             if(verbose)
@@ -379,7 +381,10 @@ bool conversionAllowed(color_ostream &out, MaterialInfo mat_new, MaterialInfo ma
     {
         if(force)
         {
-            out << "You've been warned, good luck." << endl;
+            if(!warned)
+            {
+                out << "You've been warned, good luck." << endl;
+            }
             allowed = true;
         }
         else
@@ -389,10 +394,11 @@ bool conversionAllowed(color_ostream &out, MaterialInfo mat_new, MaterialInfo ma
                 out << "Use the option 'force' if you REALLY want to do that." << endl
                     << "Weird things can happen with your map, so save your game before trying!" << endl
                     << "Example: 'changelayer GRANITE force'" << endl;
-                warned = true;
             }
             allowed = false;
         }
+        // avoid multiple warnings for the same stuff
+        warned = true;
     }
     return allowed;
 }

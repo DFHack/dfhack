@@ -212,6 +212,7 @@ bool Plugin::load(color_ostream &con)
     plugin_rpcconnect = (RPCService* (*)(color_ostream &)) LookupPlugin(plug, "plugin_rpcconnect");
     this->name = *plug_name;
     plugin_lib = plug;
+    commands.clear();
     if(plugin_init(con,commands) == CR_OK)
     {
         state = PS_LOADED;
@@ -242,6 +243,7 @@ bool Plugin::unload(color_ostream &con)
         access->wait();
         // cleanup...
         parent->unregisterCommands(this);
+        commands.clear();
         if(cr == CR_OK)
         {
             ClosePlugin(plugin_lib);

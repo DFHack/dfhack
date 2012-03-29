@@ -129,7 +129,7 @@ Examples:
 ``changelayer MARBLE all_biomes all_layers``
    Convert all layers of all biomes which are not soil into marble.
 
-.. Notes::
+.. note::
 
     * If you use changelayer and nothing happens, try to pause/unpause the game for a while and try to move the cursor to another tile. Then try again. If that doesn't help try temporarily changing some other layer, undo your changes and try again for the layer you want to change. Saving and reloading your map might also help.
     * You should be fine if you only change single layers without the use of 'force'. Still it's advisable to save your game before messing with the map.

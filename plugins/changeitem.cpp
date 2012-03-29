@@ -146,6 +146,7 @@ command_result df_changeitem(color_ostream &out, vector <string> & parameters)
             if(i == parameters.size()-1)
             {
                 out.printerr("no material specified!\n");
+                return CR_WRONG_USAGE;
             }
             change_material = true;
             new_material = parameters[i+1];
@@ -157,6 +158,7 @@ command_result df_changeitem(color_ostream &out, vector <string> & parameters)
             if(i == parameters.size()-1)
             {
                 out.printerr("no quality specified!\n");
+                return CR_WRONG_USAGE;
             }
             string & q = parameters[i+1];
             // meh. should use a stringstream instead. but it's only 6 numbers

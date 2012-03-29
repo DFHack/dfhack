@@ -389,6 +389,43 @@ static void *find_field(lua_State *state, int index, const char *mode)
     return p;
 }
 
+static int cur_iter_index(lua_State *state, int len, int fidx, int first_idx = -1)
+{
+    int rv;
+
+    if (lua_isnil(state, fidx))
+        rv = first_idx;
+    else
+    {
+        if (lua_isnumber(state, fidx))
+            rv = lua_tointeger(state, fidx);
+        else
+        {
+            lua_pushvalue(state, fidx);
+            lua_rawget(state, UPVAL_FIELDTABLE);
+            if (!lua_isnumber(state, -1))
+                field_error(state, fidx, "index not found", "iterate");
+            rv = lua_tointeger(state, -1);
+            lua_pop(state, 1);
+        }
+
+        if (rv < 0 || rv >= len)
+            field_error(state, fidx, "index out of bounds", "iterate");
+    }
+
+    return rv;
+}
+
+static void iter_idx_to_name(lua_State *state, int idx)
+{
+    lua_pushvalue(state, idx);
+    lua_rawget(state, UPVAL_FIELDTABLE);
+    if (lua_isnil(state, -1))
+        lua_pop(state, 1);
+    else
+        lua_replace(state, idx);
+}
+
 static uint8_t *check_method_call(lua_State *state, int min_args, int max_args)
 {
     int argc = lua_gettop(state)-1;
@@ -593,6 +630,24 @@ static int meta_struct_newindex(lua_State *state)
 }
 
 /**
+ * Metamethod: iterator for structures.
+ */
+static int meta_struct_next(lua_State *state)
+{
+    if (lua_gettop(state) < 2) lua_pushnil(state);
+
+    int len = lua_objlen(state, UPVAL_FIELDTABLE);
+    int idx = cur_iter_index(state, len+1, 2, 0);
+    if (idx == len)
+        return 0;
+
+    lua_rawgeti(state, UPVAL_FIELDTABLE, idx+1);
+    lua_dup(state);
+    lua_gettable(state, 1);
+    return 2;
+}
+
+/**
  * Metamethod: __index for primitives, i.e. simple object references.
  *   Fields point to identity, or NULL for metafields.
  */
@@ -723,6 +778,39 @@ static int meta_container_newindex(lua_State *state)
 }
 
 /**
+ * Metamethod: integer iterator for containers.
+ */
+static int meta_container_nexti(lua_State *state)
+{
+    if (lua_gettop(state) < 2) lua_pushnil(state);
+
+    uint8_t *ptr = get_object_addr(state, 1, 2, "iterate");
+
+    auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    int len = id->lua_item_count(state, ptr, container_identity::COUNT_LEN);
+    int idx = cur_iter_index(state, len, 2);
+
+    if (++idx >= len)
+        return 0;
+
+    lua_pushinteger(state, idx);
+    id->lua_item_read(state, 2, ptr, idx);
+    return 2;
+}
+
+/**
+ * Metamethod: name iterator for containers.
+ */
+static int meta_container_next(lua_State *state)
+{
+    if (!meta_container_nexti(state))
+        return 0;
+
+    iter_idx_to_name(state, lua_gettop(state)-1);
+    return 2;
+}
+
+/**
  * Method: resize container
  */
 static int method_container_resize(lua_State *state)
@@ -781,6 +869,17 @@ static int meta_bitfield_len(lua_State *state)
     return 1;
 }
 
+static void read_bitfield(lua_State *state, uint8_t *ptr, bitfield_identity *id, int idx)
+{
+    int size = id->getBits()[idx].size;
+
+    int value = getBitfieldField(ptr, idx, size);
+    if (size <= 1)
+        lua_pushboolean(state, value != 0);
+    else
+        lua_pushinteger(state, value);
+}
+
 /**
  * Metamethod: __index for bitfields.
  */
@@ -803,13 +902,7 @@ static int meta_bitfield_index(lua_State *state)
     }
 
     int idx = check_container_index(state, id->getNumBits(), 2, iidx, "read");
-    int size = id->getBits()[idx].size;
-
-    int value = getBitfieldField(ptr, idx, size);
-    if (size <= 1)
-        lua_pushboolean(state, value != 0);
-    else
-        lua_pushinteger(state, value);
+    read_bitfield(state, ptr, id, idx);
     return 1;
 }
 
@@ -844,6 +937,44 @@ static int meta_bitfield_newindex(lua_State *state)
     else
         field_error(state, 2, "number or boolean expected", "write");
     return 0;
+}
+
+/**
+ * Metamethod: integer iterator for bitfields.
+ */
+static int meta_bitfield_nexti(lua_State *state)
+{
+    if (lua_gettop(state) < 2) lua_pushnil(state);
+
+    uint8_t *ptr = get_object_addr(state, 1, 2, "iterate");
+
+    auto id = (bitfield_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+    int len = id->getNumBits();
+    int idx = cur_iter_index(state, len, 2);
+
+    if (idx < 0)
+        idx = 0;
+    else
+        idx += std::max(1, (int)id->getBits()[idx].size);
+
+    if (idx >= len)
+        return 0;
+
+    lua_pushinteger(state, idx);
+    read_bitfield(state, ptr, id, idx);
+    return 2;
+}
+
+/**
+ * Metamethod: name iterator for bitfields.
+ */
+static int meta_bitfield_next(lua_State *state)
+{
+    if (!meta_bitfield_nexti(state))
+        return 0;
+
+    iter_idx_to_name(state, lua_gettop(state)-1);
+    return 2;
 }
 
 /**
@@ -906,36 +1037,43 @@ static void AddMethodWrapper(lua_State *state, int meta_idx, int field_idx,
 /**
  * Add fields in the array to the UPVAL_FIELDTABLE candidates on the stack.
  */
-static void IndexFields(lua_State *state, struct_identity *pstruct)
+static void IndexFields(lua_State *state, int base, struct_identity *pstruct)
 {
-    // stack: metatable fieldtable
+    if (pstruct->getParent())
+        IndexFields(state, base, pstruct->getParent());
 
-    int base = lua_gettop(state) - 2;
+    auto fields = pstruct->getFields();
+    if (!fields)
+        return;
 
-    for (struct_identity *p = pstruct; p; p = p->getParent())
+    int cnt = lua_objlen(state, base+3); // field iter table
+
+    for (int i = 0; fields[i].mode != struct_field_info::END; ++i)
     {
-        auto fields = p->getFields();
-        if (!fields)
-            continue;
+        // Qualify conflicting field names with the type
+        std::string name = fields[i].name;
 
-        for (int i = 0; fields[i].mode != struct_field_info::END; ++i)
+        lua_getfield(state, base+2, name.c_str());
+        if (!lua_isnil(state, -1))
+            name = pstruct->getName() + ("." + name);
+        lua_pop(state, 1);
+
+        // Handle the field
+        switch (fields[i].mode)
         {
-            switch (fields[i].mode)
-            {
-            case struct_field_info::OBJ_METHOD:
-                AddMethodWrapper(state, base+1, base+2, fields[i].name,
-                                 (function_identity_base*)fields[i].type);
-                break;
+        case struct_field_info::OBJ_METHOD:
+            AddMethodWrapper(state, base+1, base+2, name.c_str(),
+                             (function_identity_base*)fields[i].type);
+            break;
 
-            case struct_field_info::CLASS_METHOD:
-                break;
+        case struct_field_info::CLASS_METHOD:
+            break;
 
-            default:
-                lua_pushstring(state,fields[i].name);
-                lua_pushlightuserdata(state,(void*)&fields[i]);
-                lua_rawset(state,base+2);
-                break;
-            }
+        default:
+            AssociateId(state, base+3, ++cnt, name.c_str());
+            lua_pushlightuserdata(state, (void*)&fields[i]);
+            lua_setfield(state, base+2, name.c_str());
+            break;
         }
     }
 }
@@ -976,8 +1114,20 @@ static void MakeFieldMetatable(lua_State *state, struct_identity *pstruct,
 
     MakeMetatable(state, pstruct, "struct"); // meta, fields
 
-    IndexFields(state, pstruct);
+    // Index the fields
+    lua_newtable(state);
 
+    IndexFields(state, base, pstruct);
+
+    // Add the iteration metamethods
+    PushStructMethod(state, base+1, base+3, meta_struct_next);
+    SetPairsMethod(state, base+1, "__pairs");
+    lua_pushnil(state);
+    SetPairsMethod(state, base+1, "__ipairs");
+
+    lua_setfield(state, base+1, "_index_table");
+
+    // Add the indexing metamethods
     SetStructMethod(state, base+1, base+2, reader, "__index");
     SetStructMethod(state, base+1, base+2, writer, "__newindex");
 
@@ -995,8 +1145,21 @@ static void MakePrimitiveMetatable(lua_State *state, type_identity *type)
 
     SetPtrMethods(state, base+1, base+2);
 
-    EnableMetaField(state, base+2, "value", type);
+    // Index the fields
+    lua_newtable(state);
 
+    EnableMetaField(state, base+2, "value", type);
+    AssociateId(state, base+3, 1, "value");
+
+    // Add the iteration metamethods
+    PushStructMethod(state, base+1, base+3, meta_struct_next);
+    SetPairsMethod(state, base+1, "__pairs");
+    lua_pushnil(state);
+    SetPairsMethod(state, base+1, "__ipairs");
+
+    lua_setfield(state, base+1, "_index_table");
+
+    // Add the indexing metamethods
     SetStructMethod(state, base+1, base+2, meta_primitive_index, "__index");
     SetStructMethod(state, base+1, base+2, meta_primitive_newindex, "__newindex");
 }
@@ -1048,7 +1211,15 @@ static void MakeContainerMetatable(lua_State *state, container_identity *type,
     AddContainerMethodFun(state, base+1, base+2, method_container_erase, "erase", type, item, count);
     AddContainerMethodFun(state, base+1, base+2, method_container_insert, "insert", type, item, count);
 
+    // push the index table
     AttachEnumKeys(state, base+1, base+2, ienum);
+
+    PushContainerMethod(state, base+1, base+3, meta_container_next, type, item, count);
+    SetPairsMethod(state, base+1, "__pairs");
+    PushContainerMethod(state, base+1, base+3, meta_container_nexti, type, item, count);
+    SetPairsMethod(state, base+1, "__ipairs");
+
+    lua_pop(state, 1);
 }
 
 /*
@@ -1077,6 +1248,13 @@ void bitfield_identity::build_metatable(lua_State *state)
     SetContainerMethod(state, base+1, base+2, meta_bitfield_newindex, "__newindex", this, NULL, -1);
 
     AttachEnumKeys(state, base+1, base+2, this);
+
+    PushContainerMethod(state, base+1, base+3, meta_bitfield_next, this, NULL, -1);
+    SetPairsMethod(state, base+1, "__pairs");
+    PushContainerMethod(state, base+1, base+3, meta_bitfield_nexti, this, NULL, -1);
+    SetPairsMethod(state, base+1, "__ipairs");
+
+    lua_pop(state, 1);
 
     EnableMetaField(state, base+2, "whole", this);
 }

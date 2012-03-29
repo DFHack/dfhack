@@ -28,7 +28,6 @@ DFHACK_PLUGIN("plants");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("grow", "Grows saplings into trees (with active cursor, only the targetted one).", df_grow));
     commands.push_back(PluginCommand("immolate", "Set plants on fire (under cursor, 'shrubs', 'trees' or 'all').", df_immolate));
     commands.push_back(PluginCommand("extirpate", "Kill plants (same mechanics as immolate).", df_extirpate));

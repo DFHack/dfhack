@@ -30,7 +30,6 @@ DFHACK_PLUGIN("mapexport");
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
-    commands.clear();
     commands.push_back(PluginCommand("mapexport", "Exports the current map to a file.", mapexport, true));
     return CR_OK;
 }

@@ -316,7 +316,7 @@ command_result changeitem_execute(
             out.printerr("change denied: subtype doesn't match. use 'force' to override.\n");
         }
 
-        item->flags.bits.unk8 = 0;              // recalc temperatures next time touched
+        item->flags.bits.temps_computed = 0;              // recalc temperatures next time touched
         item->flags.bits.weight_computed = 0;   // recalc weight next time touched
     }
     return CR_OK;

@@ -243,7 +243,6 @@ DFHACK_PLUGIN("seedwatch");
 
 DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand>& commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("seedwatch", "Switches cookery based on quantity of seeds, to keep reserves", df_seedwatch));
     // fill in the abbreviations map, with abbreviations for the standard plants
     abbreviations["bs"] = "SLIVER_BARB";

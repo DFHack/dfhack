@@ -55,8 +55,6 @@ DFHACK_PLUGIN("advtools");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
-
     if (!ui_advmode)
         return CR_OK;
 

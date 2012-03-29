@@ -195,7 +195,6 @@ DFHACK_PLUGIN("prospector");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "prospect", "Show stats of available raw resources.",
         prospector, false,

@@ -215,12 +215,19 @@ static void autovivify_ptr(lua_State *state, int fname_idx, void **pptr,
     lua_pop(state, 1);
 }
 
+static bool is_null(lua_State *state, int val_index)
+{
+    return lua_isnil(state, val_index) ||
+           (lua_islightuserdata(state, val_index) &&
+            !lua_touserdata(state, val_index));
+}
+
 void df::pointer_identity::lua_write(lua_State *state, int fname_idx, void *ptr,
                                      type_identity *target, int val_index)
 {
     auto pptr = (void**)ptr;
 
-    if (lua_isnil(state, val_index))
+    if (is_null(state, val_index))
         *pptr = NULL;
     else if (lua_istable(state, val_index))
     {

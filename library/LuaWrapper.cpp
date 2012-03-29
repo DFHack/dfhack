@@ -496,14 +496,7 @@ static int meta_sizeof(lua_State *state)
         luaL_error(state, "Usage: object:sizeof() or df.sizeof(object)");
 
     // Two special cases: nil and lightuserdata for NULL and void*
-    if (lua_isnil(state, 1))
-    {
-        lua_pushnil(state);
-        lua_pushinteger(state, 0);
-        return 2;
-    }
-
-    if (lua_islightuserdata(state, 1))
+    if (lua_isnil(state, 1) || lua_islightuserdata(state, 1))
     {
         lua_pushnil(state);
         lua_pushnumber(state, (size_t)lua_touserdata(state, 1));
@@ -1313,6 +1306,11 @@ static void DoAttach(lua_State *state)
         lua_setfield(state, -2, "_displace");
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
         lua_setfield(state, -2, "assign");
+
+        lua_pushlightuserdata(state, NULL);
+        lua_setfield(state, -2, "NULL");
+        lua_pushlightuserdata(state, NULL);
+        lua_setglobal(state, "NULL");
 
         freeze_table(state, true, "df");
         lua_remove(state, -2);

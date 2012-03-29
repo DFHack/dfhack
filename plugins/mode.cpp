@@ -18,7 +18,6 @@ DFHACK_PLUGIN("mode");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "mode","View, change and track game mode.",
         mode, true,
@@ -96,7 +95,8 @@ void printCurrentModes(t_gamemodes gm, Console & con)
 
 command_result mode (color_ostream &out_, vector <string> & parameters)
 {
-    assert(out_.is_console());
+    if(!out_.is_console())
+        return CR_FAILURE;
     Console &out = static_cast<Console&>(out_);
 
     string command = "";

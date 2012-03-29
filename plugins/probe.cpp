@@ -41,7 +41,6 @@ DFHACK_PLUGIN("probe");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("probe",
                                      "A tile probe",
                                      df_probe));

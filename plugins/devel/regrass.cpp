@@ -56,7 +56,6 @@ DFHACK_PLUGIN("regrass");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("regrass", "Regrows all surface grass, restoring outdoor plant growth for pre-0.31.19 worlds.", df_regrass));
     return CR_OK;
 }

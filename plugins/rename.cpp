@@ -38,7 +38,6 @@ DFHACK_PLUGIN("rename");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     if (world && ui) {
         commands.push_back(PluginCommand(
             "rename", "Rename various things.", rename, false,

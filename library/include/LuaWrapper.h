@@ -69,6 +69,7 @@ namespace DFHack { namespace LuaWrapper {
 #define DFHACK_NEW_NAME "DFHack::New"
 #define DFHACK_ASSIGN_NAME "DFHack::Assign"
 #define DFHACK_DELETE_NAME "DFHack::Delete"
+#define DFHACK_EMPTY_TABLE_NAME "DFHack::EmptyTable"
 
 /*
  * Upvalue: contents of DFHACK_TYPETABLE_NAME
@@ -160,6 +161,8 @@ namespace DFHack { namespace LuaWrapper {
     void SaveInTable(lua_State *state, void *node, const char *tname);
     void SaveTypeInfo(lua_State *state, void *node);
 
+    void AssociateId(lua_State *state, int table, int val, const char *name);
+
     /**
      * Look up the key on the stack in DFHACK_TYPETABLE;
      * if found, put result on the stack and return true.
@@ -179,10 +182,25 @@ namespace DFHack { namespace LuaWrapper {
      */
     void SetPtrMethods(lua_State *state, int meta_idx, int read_idx);
     /**
+     * Add a __pairs/__ipairs metamethod using iterator on the top of stack.
+     */
+    void SetPairsMethod(lua_State *state, int meta_idx, const char *name);
+    /**
+     * Add a struct-style (3 upvalues) metamethod to the stack.
+     */
+    void PushStructMethod(lua_State *state, int meta_idx, int ftable_idx,
+                          lua_CFunction function);
+    /**
      * Add a struct-style (3 upvalues) metamethod to the metatable.
      */
     void SetStructMethod(lua_State *state, int meta_idx, int ftable_idx,
                          lua_CFunction function, const char *name);
+    /**
+     * Add a 6 upvalue metamethod to the stack.
+     */
+    void PushContainerMethod(lua_State *state, int meta_idx, int ftable_idx,
+                             lua_CFunction function,
+                             type_identity *container, type_identity *item, int count);
     /**
      * Add a 6 upvalue metamethod to the metatable.
      */
@@ -191,7 +209,7 @@ namespace DFHack { namespace LuaWrapper {
                             type_identity *container, type_identity *item, int count);
     /**
      * If ienum refers to a valid enum, attach its keys to UPVAL_FIELDTABLE,
-     * and the enum itself to the _enum metafield.
+     * and the enum itself to the _enum metafield. Pushes the key table on the stack.
      */
     void AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, type_identity *ienum);
 

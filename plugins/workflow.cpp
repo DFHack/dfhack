@@ -59,7 +59,6 @@ DFHACK_PLUGIN("workflow");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     if (!world || !ui)
         return CR_FAILURE;
 

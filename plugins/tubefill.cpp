@@ -23,7 +23,6 @@ DFHACK_PLUGIN("tubefill");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("tubefill","Fill in all the adamantine tubes again.",tubefill));
     return CR_OK;
 }

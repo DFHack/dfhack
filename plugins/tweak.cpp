@@ -41,7 +41,6 @@ DFHACK_PLUGIN("tweak");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "tweak", "Various tweaks for minor bugs.", tweak, false,
         "  tweak clear-missing\n"

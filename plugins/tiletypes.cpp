@@ -497,7 +497,6 @@ DFHACK_PLUGIN("tiletypes");
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     tiletypes_hist.load("tiletypes.history");
-    commands.clear();
     commands.push_back(PluginCommand("tiletypes", "Paint map tiles freely, similar to liquids.", df_tiletypes, true));
     return CR_OK;
 }
@@ -525,7 +524,8 @@ command_result df_tiletypes (color_ostream &out, vector <string> & parameters)
         }
     }
 
-    assert(out.is_console());
+    if(!out.is_console())
+        return CR_FAILURE;
     Console &con = static_cast<Console&>(out);
 
     TileType filter, paint;

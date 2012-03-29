@@ -57,7 +57,6 @@ DFHACK_PLUGIN("liquids");
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     liquids_hist.load("liquids.history");
-    commands.clear();
     commands.push_back(PluginCommand(
         "liquids", "Place magma, water or obsidian.",
         df_liquids, true)); // interactive, needs console for prompt

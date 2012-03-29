@@ -84,11 +84,8 @@ command_result changelayer (color_ostream &out, std::vector <std::string> & para
 
 DFHACK_PLUGIN("changelayer");
 
-// Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    // Fill the command list with your commands.
-    commands.clear();
     commands.push_back(PluginCommand(
         "changelayer", "Change a whole geology layer.",
         changelayer, false, /* true means that the command can't be used from non-interactive user interface */
@@ -98,12 +95,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     return CR_OK;
 }
 
-// This is called right before the plugin library is removed from memory.
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    // You *MUST* kill all threads you created before this returns.
-    // If everything fails, just return CR_FAILURE. Your plugin will be
-    // in a zombie state, but things won't crash.
     return CR_OK;
 }
 

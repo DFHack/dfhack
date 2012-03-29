@@ -27,7 +27,6 @@ DFHACK_PLUGIN("vdig");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "vdig","Dig a whole vein.",vdig,Gui::cursor_hotkey,
         "  Designates a whole vein under the cursor for digging.\n"

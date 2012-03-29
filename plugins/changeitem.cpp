@@ -61,7 +61,6 @@ const string changeitem_help =
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    //commands.clear();
     commands.push_back(PluginCommand(
         "changeitem", "Change item attributes (material, quality).",
         df_changeitem, false,

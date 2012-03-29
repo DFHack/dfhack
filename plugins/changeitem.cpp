@@ -53,7 +53,7 @@ const string changeitem_help =
     "  quality, q   - change base quality. must be followed by number (0-5)\n"
     "  force        - ignore subtypes, force change to new material.\n"
     "Example:\n"
-    "  changeitem m INORGANIC:GRANITE here"
+    "  changeitem m INORGANIC:GRANITE here\n"
     "    change material of all items under the cursor to granite\n"
     "  changeitem q 5\n"
     "    change currently selected item to masterpiece quality\n";
@@ -61,7 +61,7 @@ const string changeitem_help =
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    commands.clear();
+    //commands.clear();
     commands.push_back(PluginCommand(
         "changeitem", "Change item attributes (material, quality).",
         df_changeitem, false,

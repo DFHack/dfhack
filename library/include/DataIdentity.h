@@ -500,6 +500,11 @@ namespace df
         static container_identity *get();
     };
 
+    template<> struct identity_traits<BitArray<int> > {
+        static bit_array_identity identity;
+        static bit_container_identity *get() { return &identity; }
+    };
+
     template<class T> struct identity_traits<BitArray<T> > {
         static bit_container_identity *get();
     };
@@ -553,9 +558,7 @@ namespace df
 
     template<class T>
     inline bit_container_identity *identity_traits<BitArray<T> >::get() {
-        static type_identity *eid = identity_traits<T>::get();
-        static enum_identity *reid = eid->type() == DFHack::IDTYPE_ENUM ? (enum_identity*)eid : NULL;
-        static bit_array_identity identity(reid);
+        static bit_array_identity identity(identity_traits<T>::get());
         return &identity;
     }
 

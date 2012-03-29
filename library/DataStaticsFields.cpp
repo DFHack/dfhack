@@ -36,6 +36,7 @@ namespace df {
     pointer_identity identity_traits<void*>::identity;
     stl_ptr_vector_identity identity_traits<std::vector<void*> >::identity;
     stl_bit_vector_identity identity_traits<std::vector<bool> >::identity;
+    bit_array_identity identity_traits<BitArray<int> >::identity;
 
     buffer_container_identity buffer_container_identity::base_instance;
 

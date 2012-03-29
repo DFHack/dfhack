@@ -397,17 +397,14 @@ struct dwarf_info
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-	// initialize labor infos table from default table
-
-	labor_infos = new struct labor_info[ARRAY_COUNT(default_labor_infos)];
-	for (int i = 0; i < ARRAY_COUNT(default_labor_infos); i++) {
-		labor_infos[i] = default_labor_infos[i];
-	}
-
-	assert(ARRAY_COUNT(labor_infos) > ENUM_LAST_ITEM(unit_labor));
-
-	// Fill the command list with your commands.
-    commands.clear();
+    // initialize labor infos table from default table
+    if(ARRAY_COUNT(default_labor_infos) != ENUM_LAST_ITEM(unit_labor) + 1)
+        return CR_FAILURE;
+    labor_infos = new struct labor_info[ARRAY_COUNT(default_labor_infos)];
+    for (int i = 0; i < ARRAY_COUNT(default_labor_infos); i++) {
+        labor_infos[i] = default_labor_infos[i];
+    }
+    // Fill the command list with your commands.
     commands.push_back(PluginCommand(
         "autolabor", "Automatically manage dwarf labors.",
         autolabor, false, /* true means that the command can't be used from non-interactive user interface */

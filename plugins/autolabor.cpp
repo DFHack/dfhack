@@ -683,7 +683,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			if (labor_infos[labor].is_exclusive && dwarf_info[dwarf].has_exclusive_labor)
 				continue;
 
-			int value = dwarf_info[dwarf].mastery_penalty - dwarf_info[dwarf].assigned_jobs;
+			int value = dwarf_info[dwarf].mastery_penalty - dwarf_info[dwarf].assigned_jobs * 50;
 
 			if (skill != df::enums::job_skill::NONE)
 			{
@@ -796,8 +796,12 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 			dwarfs[dwarf]->status.labors[labor] = true;
 
-			if (labor_infos[labor].is_exclusive)
+			if (labor_infos[labor].is_exclusive) 
+			{
 				dwarf_info[dwarf].has_exclusive_labor = true;
+				// all the exclusive labors require equipment so this should force the dorf to reequip if needed
+				dwarfs[dwarf]->military.pickup_flags.bits.update = 1; 
+			}
 		}
 	}
 

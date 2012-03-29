@@ -96,7 +96,6 @@ DFHACK_PLUGIN("feature");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand(
         "feature", "List or manage map features.", feature, false,
         "  feature list\n"

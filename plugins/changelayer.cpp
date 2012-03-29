@@ -88,7 +88,6 @@ DFHACK_PLUGIN("changelayer");
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     // Fill the command list with your commands.
-    commands.clear();
     commands.push_back(PluginCommand(
         "changelayer", "Change a whole geology layer.",
         changelayer, false, /* true means that the command can't be used from non-interactive user interface */

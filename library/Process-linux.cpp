@@ -25,6 +25,7 @@ distribution.
 #include "Internal.h"
 #include <dirent.h>
 #include <errno.h>
+#include <unistd.h>
 #include <sys/mman.h>
 
 #include <string>

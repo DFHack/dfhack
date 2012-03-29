@@ -496,14 +496,7 @@ static int meta_sizeof(lua_State *state)
         luaL_error(state, "Usage: object:sizeof() or df.sizeof(object)");
 
     // Two special cases: nil and lightuserdata for NULL and void*
-    if (lua_isnil(state, 1))
-    {
-        lua_pushnil(state);
-        lua_pushinteger(state, 0);
-        return 2;
-    }
-
-    if (lua_islightuserdata(state, 1))
+    if (lua_isnil(state, 1) || lua_islightuserdata(state, 1))
     {
         lua_pushnil(state);
         lua_pushnumber(state, (size_t)lua_touserdata(state, 1));
@@ -853,6 +846,23 @@ static int meta_enum_attr_index(lua_State *state)
     return 1;
 }
 
+static int meta_nodata(lua_State *state)
+{
+    return 0;
+}
+
+/**
+ * Metamethod: __pairs, returning 1st upvalue as iterator
+ */
+static int meta_pairs(lua_State *state)
+{
+    luaL_checkany(state, 1);
+    lua_pushvalue(state, lua_upvalueindex(1));
+    lua_pushvalue(state, 1);
+    lua_pushnil(state);
+    return 3;
+}
+
 /**
  * Make a metatable with most common fields, and an empty table for UPVAL_FIELDTABLE.
  */
@@ -879,7 +889,8 @@ void LuaWrapper::MakeMetatable(lua_State *state, type_identity *type, const char
     lua_pushstring(state, kind);
     lua_setfield(state, base+1, "_kind");
 
-    lua_newtable(state); // fieldtable
+    // Create the field table
+    lua_newtable(state);
 }
 
 /**
@@ -931,24 +942,48 @@ void LuaWrapper::SetPtrMethods(lua_State *state, int meta_idx, int read_idx)
 }
 
 /**
+ * Add a __pairs/__ipairs metamethod using iterator on the top of stack.
+ */
+void LuaWrapper::SetPairsMethod(lua_State *state, int meta_idx, const char *name)
+{
+    if (lua_isnil(state, -1))
+    {
+        lua_pop(state, 1);
+        lua_pushcfunction(state, meta_nodata);
+    }
+
+    lua_pushcclosure(state, meta_pairs, 1);
+    lua_setfield(state, meta_idx, name);
+}
+
+/**
  * Add a struct-style (3 upvalues) metamethod to the metatable.
  */
-void LuaWrapper::SetStructMethod(lua_State *state, int meta_idx, int ftable_idx,
-                                 lua_CFunction function, const char *name)
+void LuaWrapper::PushStructMethod(lua_State *state, int meta_idx, int ftable_idx,
+                                  lua_CFunction function)
 {
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
     lua_pushvalue(state, meta_idx);
     lua_pushvalue(state, ftable_idx);
     lua_pushcclosure(state, function, 3);
+}
+
+/**
+ * Add a struct-style (3 upvalues) metamethod to the metatable.
+ */
+void LuaWrapper::SetStructMethod(lua_State *state, int meta_idx, int ftable_idx,
+                                 lua_CFunction function, const char *name)
+{
+    PushStructMethod(state, meta_idx, ftable_idx, function);
     lua_setfield(state, meta_idx, name);
 }
 
 /**
  * Add a 6 upvalue metamethod to the metatable.
  */
-void LuaWrapper::SetContainerMethod(lua_State *state, int meta_idx, int ftable_idx,
-                                    lua_CFunction function, const char *name,
-                                    type_identity *container, type_identity *item, int count)
+void LuaWrapper::PushContainerMethod(lua_State *state, int meta_idx, int ftable_idx,
+                                     lua_CFunction function,
+                                     type_identity *container, type_identity *item, int count)
 {
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
     lua_pushvalue(state, meta_idx);
@@ -962,31 +997,48 @@ void LuaWrapper::SetContainerMethod(lua_State *state, int meta_idx, int ftable_i
         lua_pushinteger(state, count);
 
     lua_pushcclosure(state, function, 6);
+}
+
+/**
+ * Add a 6 upvalue metamethod to the metatable.
+ */
+void LuaWrapper::SetContainerMethod(lua_State *state, int meta_idx, int ftable_idx,
+                                    lua_CFunction function, const char *name,
+                                    type_identity *container, type_identity *item, int count)
+{
+    PushContainerMethod(state, meta_idx, ftable_idx, function, container, item, count);
     lua_setfield(state, meta_idx, name);
 }
 
 /**
  * If ienum refers to a valid enum, attach its keys to UPVAL_FIELDTABLE,
- * and the enum itself to the _enum metafield.
+ * and the enum itself to the _enum metafield. Pushes the key table on the stack
  */
 void LuaWrapper::AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, type_identity *ienum)
 {
+    EnableMetaField(state, ftable_idx, "_enum");
+
+    LookupInTable(state, ienum, DFHACK_TYPEID_TABLE_NAME);
+    lua_setfield(state, meta_idx, "_enum");
+
     LookupInTable(state, ienum, DFHACK_ENUM_TABLE_NAME);
 
     if (!lua_isnil(state, -1))
     {
+        lua_dup(state);
         lua_newtable(state);
         lua_swap(state);
         lua_setfield(state, -2, "__index");
         lua_setmetatable(state, ftable_idx);
     }
     else
+    {
         lua_pop(state, 1);
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_EMPTY_TABLE_NAME);
+    }
 
-    LookupInTable(state, ienum, DFHACK_TYPEID_TABLE_NAME);
-    lua_setfield(state, meta_idx, "_enum");
-
-    EnableMetaField(state, ftable_idx, "_enum");
+    lua_dup(state);
+    lua_setfield(state, meta_idx, "_index_table");
 }
 
 static void BuildTypeMetatable(lua_State *state, type_identity *type)
@@ -1004,7 +1056,7 @@ static void BuildTypeMetatable(lua_State *state, type_identity *type)
 
 static void RenderTypeChildren(lua_State *state, const std::vector<compound_identity*> &children);
 
-static void AssociateId(lua_State *state, int table, int val, const char *name)
+void LuaWrapper::AssociateId(lua_State *state, int table, int val, const char *name)
 {
     lua_pushinteger(state, val);
     lua_pushstring(state, name);
@@ -1157,6 +1209,8 @@ static void RenderType(lua_State *state, compound_identity *node)
 
             lua_getfield(state, -1, "__newindex");
             lua_setfield(state, base+2, "__newindex");
+            lua_getfield(state, -1, "__pairs");
+            lua_setfield(state, base+2, "__pairs");
 
             lua_pop(state, 3);
             return;
@@ -1200,6 +1254,9 @@ static void DoAttach(lua_State *state)
 
     lua_newtable(state);
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_ENUM_TABLE_NAME);
+
+    lua_newtable(state);
+    lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_EMPTY_TABLE_NAME);
 
     lua_pushcfunction(state, change_error);
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_CHANGEERROR_NAME);
@@ -1249,6 +1306,11 @@ static void DoAttach(lua_State *state)
         lua_setfield(state, -2, "_displace");
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
         lua_setfield(state, -2, "assign");
+
+        lua_pushlightuserdata(state, NULL);
+        lua_setfield(state, -2, "NULL");
+        lua_pushlightuserdata(state, NULL);
+        lua_setglobal(state, "NULL");
 
         freeze_table(state, true, "df");
         lua_remove(state, -2);

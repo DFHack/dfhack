@@ -590,8 +590,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			if (labor == df::enums::unit_labor::NONE)
 				continue;
 
+            /*
 			assert(labor >= 0);
 			assert(labor < ARRAY_COUNT(labor_infos));
+			*/
 
 			if (labor_infos[labor].is_exclusive && dwarfs[dwarf]->status.labors[labor])
 				dwarf_info[dwarf].mastery_penalty -= 100;
@@ -636,8 +638,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		{
 			int job = dwarfs[dwarf]->job.current_job->job_type;
 
+            /*
 			assert(job >= 0);
 			assert(job < ARRAY_COUNT(dwarf_states));
+			*/
 
 			dwarf_info[dwarf].state = dwarf_states[job];
 		}
@@ -656,8 +660,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		int labor = ENUM_ATTR(job_skill, labor, skill);
 		if (labor != df::enums::unit_labor::NONE)
 		{
+            /*
 			assert(labor >= 0);
 			assert(labor < ARRAY_COUNT(labor_to_skill));
+			*/
 
 			labor_to_skill[labor] = skill;
 		}
@@ -670,8 +676,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		if (labor == df::enums::unit_labor::NONE)
 			continue;
 
+        /*
 		assert(labor >= 0);
 		assert(labor < ARRAY_COUNT(labor_infos));
+		*/
 
 		labors.push_back(labor);
 	}
@@ -684,8 +692,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 	{
 		auto labor = *lp;
 
+        /*
 		assert(labor >= 0);
 		assert(labor < ARRAY_COUNT(labor_infos));
+		*/
 
 		df::job_skill skill = labor_to_skill[labor];
 
@@ -864,8 +874,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		if (labor == df::enums::unit_labor::NONE)
 			continue;
 
+        /*
 		assert(labor >= 0);
 		assert(labor < ARRAY_COUNT(labor_infos));
+		*/
 
 		if (labor_infos[labor].mode != HAULERS)
 			continue;

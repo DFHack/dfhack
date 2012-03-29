@@ -524,7 +524,8 @@ command_result df_tiletypes (color_ostream &out, vector <string> & parameters)
         }
     }
 
-    assert(out.is_console());
+    if(!out.is_console())
+        return CR_FAILURE;
     Console &con = static_cast<Console&>(out);
 
     TileType filter, paint;

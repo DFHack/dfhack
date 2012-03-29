@@ -49,10 +49,7 @@ void SquashVeins (DFCoord bcoord, mapblock40d & mb, t_blockmaterials & materials
             for (size_t i = 0; i < veins.size(); i++)
             {
                 if (veins[i]->getassignment(x,y))
-                {
                     materials[x][y] = veins[i]->inorganic_mat;
-                    break;
-                }
             }
         }
     }

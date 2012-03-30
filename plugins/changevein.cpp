@@ -63,10 +63,9 @@ command_result df_changevein (color_ostream &out, vector <string> & parameters)
         df::block_square_event *evt = block->block_events[j];
         if (evt->getType() != block_square_event_type::mineral)
             continue;
-        mineral = (df::block_square_event_mineralst *)evt;
-        if (mineral->getassignment(tx, ty))
-            break;
-        mineral = NULL;
+        df::block_square_event_mineralst *cur = (df::block_square_event_mineralst *)evt;
+        if (cur->getassignment(tx, ty))
+            mineral = cur;
     }
     if (!mineral)
     {

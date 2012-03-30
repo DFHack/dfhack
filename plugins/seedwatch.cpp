@@ -32,7 +32,7 @@ bool ignoreSeeds(df::item_flags& f) // seeds with the following flags should not
     return
         f.bits.dump ||
         f.bits.forbid ||
-        f.bits.garbage_colect ||
+        f.bits.garbage_collect ||
         f.bits.hidden ||
         f.bits.hostile ||
         f.bits.on_fire ||

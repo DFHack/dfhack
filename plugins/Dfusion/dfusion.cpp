@@ -120,10 +120,11 @@ void InterpreterLoop(color_ostream &out)
 	DFHack::CommandHistory hist;
 	lua::state s=lua::glua::Get();
 	string curline;
-	out.print("Type quit to exit interactive mode.\n"
+	out.print("Type quit to exit interactive lua interpreter.\n"
               "Shortcuts:\n"
               " '= foo' => '_1,_2,... = foo'\n"
-              " '! foo' => 'print(foo)'\n");
+              " '! foo' => 'print(foo)'\n"
+              "Both assign the first result to '_'\n");
 	assert(out.is_console());
 	Console &con = static_cast<Console&>(out);
 	int vcnt = 1;
@@ -142,7 +143,9 @@ void InterpreterLoop(color_ostream &out)
 
 		try
 		{
-            if (curline[0] == '=')
+            char pfix = curline[0];
+
+            if (pfix == '=' || pfix == '!')
             {
                 curline = "return " + curline.substr(1);
 
@@ -150,14 +153,22 @@ void InterpreterLoop(color_ostream &out)
                 s.pcall(0, LUA_MULTRET);
                 int numret = s.gettop();
 
+                if (numret >= 1)
+                {
+                    s.pushvalue(1);
+                    s.setglobal("_");
+
+                    if (pfix == '!')
+                    {
+                        s.getglobal("print");
+                        s.insert(1);
+                        s.pcall(numret,0);
+                        numret = 0;
+                    }
+                }
+
                 for (int i = 1; i <= numret; i++)
                 {
-                    if (i == 1)
-                    {
-                        s.pushvalue(i);
-                        s.setglobal("_");
-                    }
-
                     std::string name = stl_sprintf("_%d", vcnt++);
                     s.pushvalue(i);
                     s.setglobal(name);
@@ -167,12 +178,6 @@ void InterpreterLoop(color_ostream &out)
                     s.pushvalue(i);
                     s.pcall(1,0);
                 }
-            }
-            else if (curline[0] == '!')
-            {
-                curline = "print(" + curline.substr(1) + ")";
-                s.loadstring(curline);
-                s.pcall();
             }
             else
             {

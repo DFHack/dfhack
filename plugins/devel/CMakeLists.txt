@@ -14,4 +14,5 @@ DFHACK_PLUGIN(frozen frozen.cpp)
 DFHACK_PLUGIN(dumpmats dumpmats.cpp)
 #DFHACK_PLUGIN(tiles tiles.cpp)
 DFHACK_PLUGIN(regrass regrass.cpp)
+DFHACK_PLUGIN(counters counters.cpp)
 

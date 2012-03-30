@@ -47,13 +47,18 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
    message(FATAL_ERROR "In-source builds are not allowed.")
 endif()
 
+# make sure all the necessary submodules have been set up
+if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt)
+    message(FATAL_ERROR "Required submodules could not be found! First run 'git submodule init' and 'git submodule update' from the root DFHack directory. (See the section 'Getting the Code' in Compile.html)")
+endif()
+
 # set up versioning.
 set(DF_VERSION_MAJOR "0")
 set(DF_VERSION_MINOR "34")
-set(DF_VERSION_PATCH "05")
+set(DF_VERSION_PATCH "06")
 set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
 
-set(DFHACK_RELEASE "1f")
+set(DFHACK_RELEASE "3")
 
 set(DFHACK_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}-r${DFHACK_RELEASE}")
 add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")

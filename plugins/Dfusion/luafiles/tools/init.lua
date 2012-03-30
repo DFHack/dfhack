@@ -260,6 +260,20 @@ function tools.changesite(names)
 	print(string.format("%x->%d",off,n2))
 	engine.poke(off,ptr_site.type,n2)
 end
+function tools.project(unit)
+	if unit==nil then
+		unit=getSelectedUnit()
+	end
+	
+	if unit==nil then
+		unit=getCreatureAtPos(getxyz())
+	end
+	
+	if unit==nil then
+		error("Failed to project unit. Unit not selected/valid")
+	end
+	-- todo: add projectile to world, point to unit, add flag to unit, add gen-ref to projectile.
+end
 function tools.empregnate(unit)
 	if unit==nil then
 		unit=getSelectedUnit()
@@ -270,25 +284,45 @@ function tools.empregnate(unit)
 	end
 	
 	if unit==nil then
-		error("Failed to empregnate. Unit not selected/valide")
+		error("Failed to empregnate. Unit not selected/valid")
+	end
+	if unit.curse then
+		unit.curse.add_tags2.STERILE=false
 	end
 	local arr1=unit.appearance.unk_51c
 	local arr2=unit.appearance.unk_51c
 	local created=false
-	if unit.relations.pregnancy_ptr:tonumber()==0 then
+	if unit.relations.pregnancy_ptr == nil then
 		print("creating preg ptr.")
-		unit.relations.pregnancy_ptr:newref()
+		if false then
+			print(string.format("%x %x",df.sizeof(unit.relations:_field("pregnancy_ptr"))))
+			return
+		end
+		local size,offset=df.sizeof(unit.relations:_field("pregnancy_ptr"))
+		local s1=df.sizeof(arr1)
+		local s2=df.sizeof(arr2)
+		engine.poked(offset,engine.alloc(s1+s2))
 		created=true
 	end
-	local tarr1=unit.relations.pregnancy_ptr:deref().anon_1
-	local tarr2=unit.relations.pregnancy_ptr:deref().anon_2
-	if created or tarr1.size~= arr1.size then
+	local tarr1=unit.relations.pregnancy_ptr.anon_1
+	local tarr2=unit.relations.pregnancy_ptr.anon_2
+	if created or #tarr1~= #arr1 then
+		print(string.format("Before: %d vs %d",#tarr1,#arr1))
 		print("Setting up arr1")
-		initType(tarr1,arr1.size)
+		print(string.format("%x %x",df.sizeof(tarr1)))
+		--tarr1=arr1:new()
+		local size,offset=df.sizeof(tarr1)
+		engine.poked(offset,engine.alloc(#arr1))
+		engine.poked(offset+4,#arr1)
+		print(string.format("after: %d vs %d",#tarr1,#arr1))
 	end
-	if created or tarr2.size~= arr2.size then
-		print("Setting up arr1")
-		initType(tarr2,arr2.size)
+	if created or #tarr2~= #arr2 then
+		print("Setting up arr2")
+		--tarr2=arr2:new()
+		local size,offset=df.sizeof(tarr2)
+		
+		engine.poked(offset,engine.alloc(#arr2*2))
+		engine.poked(offset+4,#arr2)
 	end
 	print("Setting preg timer.")
 	unit.relations.pregnancy_timer=10

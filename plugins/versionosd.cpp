@@ -46,7 +46,6 @@ DFTileSurface* createTile(int x, int y)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("versionosd",
                                      "Toggles displaying version in DF window",
                                      df_versionosd));

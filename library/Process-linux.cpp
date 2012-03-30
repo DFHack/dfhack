@@ -25,6 +25,7 @@ distribution.
 #include "Internal.h"
 #include <dirent.h>
 #include <errno.h>
+#include <unistd.h>
 #include <sys/mman.h>
 
 #include <string>
@@ -131,12 +132,12 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     {
         t_memrange temp;
         temp.name[0] = 0;
-        sscanf(buffer, "%zx-%zx %s %zx %2zu:%2zu %zu %[^\n]s",
+        sscanf(buffer, "%zx-%zx %s %zx %2zx:%2zx %zu %[^\n]",
                &start,
                &end,
                (char*)&permissions,
                &offset, &device1, &device2, &node,
-               (char*)&temp.name);
+               (char*)temp.name);
         temp.start = (void *) start;
         temp.end = (void *) end;
         temp.read = permissions[0] == 'r';

@@ -54,6 +54,8 @@ distribution.
     // just shut up already.
     #pragma warning( disable: 4244)
     #pragma warning( disable: 4018)
+    // nonstandard extension used: enum 'df::whatever::etc' used in qualified name
+    #pragma warning( disable: 4482)
 #endif
 
 #endif

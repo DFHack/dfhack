@@ -76,7 +76,6 @@ DFHACK_PLUGIN("reveal");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    commands.clear();
     commands.push_back(PluginCommand("reveal","Reveal the map. 'reveal hell' will also reveal hell. 'reveal demon' won't pause.",reveal));
     commands.push_back(PluginCommand("unreveal","Revert the map to its previous state.",unreveal));
     commands.push_back(PluginCommand("revtoggle","Reveal/unreveal depending on state.",revtoggle));

@@ -189,14 +189,14 @@ FILE(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR
 FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/*.xml)
 
 ADD_CUSTOM_COMMAND(
-    OUTPUT ${dfapi_SOURCE_DIR}/include/df/static.inc
+    OUTPUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml
     COMMAND ${PERL_EXECUTABLE} xml/codegen.pl xml include/df
     WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
     MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
     DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
 )
 
-ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/df/static.inc)
+ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
 
 IF(UNIX)
   # Don't produce debug info for generated stubs

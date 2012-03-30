@@ -29,7 +29,6 @@ DFHACK_PLUGIN("stockpiles");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.clear();
     if (world && ui) {
         commands.push_back(
             PluginCommand(

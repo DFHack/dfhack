@@ -70,7 +70,7 @@ using df::global::init;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
-static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname);
+static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname, bool silent);
 static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clueless_counter, const string &command);
 static bool parseKeySpec(std::string keyspec, int *psym, int *pmod);
 
@@ -492,7 +492,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
         {
             if(parts.size() == 1)
             {
-                loadScriptFile(core, plug_mgr, parts[0]);
+                loadScriptFile(core, plug_mgr, parts[0], false);
             }
             else
             {
@@ -512,9 +512,10 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
     }
 }
 
-static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname)
+static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname, bool silent)
 {
-    core->getConsole() << "Loading script at " << fname << std::endl;
+    if(!silent)
+        core->getConsole() << "Loading script at " << fname << std::endl;
     ifstream script(fname);
     if (script.good())
     {
@@ -528,7 +529,8 @@ static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname)
     }
     else
     {
-        core->getConsole().printerr("Error loading script\n");
+        if(!silent)
+            core->getConsole().printerr("Error loading script\n");
     }
 
     script.close();
@@ -551,7 +553,7 @@ void fIOthread(void * iodata)
         return;
     }
 
-    loadScriptFile(core, plug_mgr, "dfhack.init");
+    loadScriptFile(core, plug_mgr, "dfhack.init", true);
 
     con.print("DFHack is ready. Have a nice day!\n"
               "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");
@@ -972,6 +974,7 @@ int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
 {
     // Assume keyboard layouts don't change the order of numbers:
     if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
+    if(SDL::K_F1 <= ke.ksym.sym && ke.ksym.sym <= SDL::K_F12) return ke.ksym.sym;
 
     int unicode = ke.ksym.unicode;
 

@@ -76,6 +76,7 @@ src/ltm.c
 src/lundump.c
 src/lvm.c
 src/lzio.c
+src/bit.c
 )
 # compile with C++ compiler
 set_source_files_properties(${SRC_LIBLUA} PROPERTIES LANGUAGE CXX)

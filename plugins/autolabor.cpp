@@ -457,7 +457,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     for (int i = 0; i < world->units.all.size(); ++i)
     {
         df::unit* cre = world->units.all[i];
-		if (cre->race == race && cre->civ_id == civ && !cre->flags1.bits.marauder && !cre->flags1.bits.diplomat && !cre->flags1.bits.merchant && !cre->flags1.bits.dead) {
+		if (cre->race == race && cre->civ_id == civ && !cre->flags1.bits.marauder && !cre->flags1.bits.diplomat && !cre->flags1.bits.merchant &&
+			!cre->flags1.bits.dead && !cre->flags1.bits.forest) {
 			dwarfs.push_back(cre);
         }
     }

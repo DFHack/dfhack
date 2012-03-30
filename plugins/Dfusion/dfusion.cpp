@@ -64,6 +64,11 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 		st.setglobal("WINDOWS");
 	#endif
 
+    st.getglobal("Console");
+    st.getfield("println");
+    st.setglobal("print");
+    st.pop();
+
     commands.push_back(PluginCommand("dfusion","Run dfusion system (interactive i.e. can input further commands).",dfusion,true));
 	commands.push_back(PluginCommand("dfuse","Init dfusion system (not interactive).",dfuse,false));
 	commands.push_back(PluginCommand("lua", "Run interactive interpreter. Use 'lua <filename>' to run <filename> instead.",lua_run,true));
@@ -115,27 +120,74 @@ void InterpreterLoop(color_ostream &out)
 	DFHack::CommandHistory hist;
 	lua::state s=lua::glua::Get();
 	string curline;
-	out.print("Type quit to exit interactive mode\n");
+	out.print("Type quit to exit interactive mode.\n"
+              "Shortcuts:\n"
+              " '= foo' => '_1,_2,... = foo'\n"
+              " '! foo' => 'print(foo)'\n");
 	assert(out.is_console());
 	Console &con = static_cast<Console&>(out);
-	con.lineedit(">>",curline,hist);
+	int vcnt = 1;
 
-	while (curline!="quit") {
+    s.settop(0);
+
+    for (;;) {
+        con.lineedit("[lua]# ",curline,hist);
+
+        if (curline.empty())
+            continue;
+        if (curline == "quit")
+            break;
+
 		hist.add(curline);
+
 		try
 		{
-			s.loadstring(curline);
-			s.pcall();
+            if (curline[0] == '=')
+            {
+                curline = "return " + curline.substr(1);
+
+                s.loadstring(curline);
+                s.pcall(0, LUA_MULTRET);
+                int numret = s.gettop();
+
+                for (int i = 1; i <= numret; i++)
+                {
+                    if (i == 1)
+                    {
+                        s.pushvalue(i);
+                        s.setglobal("_");
+                    }
+
+                    std::string name = stl_sprintf("_%d", vcnt++);
+                    s.pushvalue(i);
+                    s.setglobal(name);
+
+                    con.print("%s = ", name.c_str());
+                    s.getglobal("print");
+                    s.pushvalue(i);
+                    s.pcall(1,0);
+                }
+            }
+            else if (curline[0] == '!')
+            {
+                curline = "print(" + curline.substr(1) + ")";
+                s.loadstring(curline);
+                s.pcall();
+            }
+            else
+            {
+                s.loadstring(curline);
+                s.pcall();
+            }
 		}
 		catch(lua::exception &e)
 		{
 			con.printerr("Error:%s\n",e.what());
             con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
-			s.settop(0);
 		}
-		con.lineedit(">>",curline,hist);
+
+        s.settop(0);
 	}
-	s.settop(0);
 }
 command_result lua_run_file (color_ostream &out, std::vector <std::string> &parameters)
 {

@@ -1,5 +1,5 @@
 function simple_embark(num)
-stoff=offsets.getEx('StartDwarfs')
+stoff=VersionInfo.getAddress('start_dwarf_count')
 print("Starting dwarves found:"..engine.peekd(stoff))
 engine.poked(stoff,num)
 end

@@ -13,4 +13,4 @@ WorldData : 0x1306148
 Xpointer : 0x7347f0
 vtableLegends : 0x6e7594
 Buildings : 0x12C4DA8
-StartDwarfs : 0x5DA790
+StartDwarfs : 0x5DFA90

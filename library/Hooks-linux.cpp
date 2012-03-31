@@ -141,24 +141,3 @@ DFhackCExport int SDL_Init(uint32_t flags)
     int ret = _SDL_Init(flags);
     return ret;
 }
-
-#ifdef MALLOC_FILL
-DFhackCExport void * malloc(size_t size)
-{
-    static void* (*real_malloc)(size_t) = NULL;
-    if (!real_malloc)
-        real_malloc = (void * (*)( size_t )) dlsym(RTLD_NEXT, "malloc");
-    // check if we got them
-    if(!real_malloc)
-    {
-        // bail, this would be a disaster otherwise
-        exit(1);
-    }
-    void * ret = real_malloc(size);
-    if(ret)
-    {
-        memset(ret, 0xCC, size);
-    }
-    return ret;
-}
-#endif

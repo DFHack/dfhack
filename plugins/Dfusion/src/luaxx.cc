@@ -215,7 +215,11 @@ namespace lua
    template<>
    std::string state::as(std::string default_value, int index) {
       if (lua_isstring(L, index))
-         return std::string(lua_tostring(L, index), lua_strlen(L, index));
+      {
+         size_t len;
+         const char *str = lua_tolstring(L, index, &len);
+         return std::string(str, len);
+      }
       else
          return default_value;
    }
@@ -674,7 +678,7 @@ namespace lua
     * @returns the length of the indicated value
     */
    size_t state::objlen(int index) {
-      return lua_objlen(L, index);
+      return lua_rawlen(L, index);
    }
 
    /** Get the value at index as a bool.
@@ -715,7 +719,11 @@ namespace lua
    template<>
    state& state::to(std::string& string, int index) {
       if (lua_isstring(L, index))
-         string.replace(0, std::string::npos, lua_tostring(L, index), lua_strlen(L, index));
+      {
+          size_t len;
+          const char *str = lua_tolstring(L, index, &len);
+          string.replace(0, std::string::npos, str, len);
+      }
       else
          throw bad_conversion("Cannot convert value to string");
 
@@ -755,7 +763,11 @@ namespace lua
    template<>
    std::string state::as(int index) {
       if (lua_isstring(L, index))
-         return std::string(lua_tostring(L, index), lua_strlen(L, index));
+      {
+          size_t len;
+          const char *str = lua_tolstring(L, index, &len);
+          return std::string(str, len);
+      }
       else
          throw bad_conversion("Cannot convert value to string");
    }

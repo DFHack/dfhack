@@ -17,10 +17,10 @@ IF(UNIX)
 ENDIF()
 
 SET (HDR_LIBLUA
-include/bit.h
 include/lapi.h
 include/lauxlib.h
 include/lcode.h
+include/lctype.h
 include/ldebug.h
 include/ldo.h
 include/lfunc.h
@@ -50,7 +50,10 @@ SET (SRC_LIBLUA
 src/lapi.c
 src/lauxlib.c
 src/lbaselib.c
+src/lbitlib.c
 src/lcode.c
+src/lcorolib.c
+src/lctype.c
 src/ldblib.c
 src/ldebug.c
 src/ldo.c
@@ -76,7 +79,6 @@ src/ltm.c
 src/lundump.c
 src/lvm.c
 src/lzio.c
-src/bit.c
 )
 # compile with C++ compiler
 set_source_files_properties(${SRC_LIBLUA} PROPERTIES LANGUAGE CXX)

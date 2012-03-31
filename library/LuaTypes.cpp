@@ -643,7 +643,7 @@ static int meta_struct_next(lua_State *state)
 {
     if (lua_gettop(state) < 2) lua_pushnil(state);
 
-    int len = lua_objlen(state, UPVAL_FIELDTABLE);
+    int len = lua_rawlen(state, UPVAL_FIELDTABLE);
     int idx = cur_iter_index(state, len+1, 2, 0);
     if (idx == len)
         return 0;
@@ -1053,7 +1053,7 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct)
     if (!fields)
         return;
 
-    int cnt = lua_objlen(state, base+3); // field iter table
+    int cnt = lua_rawlen(state, base+3); // field iter table
 
     for (int i = 0; fields[i].mode != struct_field_info::END; ++i)
     {

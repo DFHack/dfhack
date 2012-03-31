@@ -620,15 +620,23 @@ tubefill
 ========
 Fills all the adamantine veins again. Veins that were empty will be filled in too, but might still trigger a demon invasion (this is a known bug).
 
-vdig
+digv
 ====
 Designates a whole vein for digging. Requires an active in-game cursor placed over a vein tile. With the 'x' option, it will traverse z-levels (putting stairs between the same-material tiles).
 
-vdigx
+digvx
 =====
-A permanent alias for 'vdig x'.
+A permanent alias for 'digv x'.
 
-expdig
+digl
+====
+Designates layer stone for digging. Requires an active in-game cursor placed over a layer stone tile. With the 'x' option, it will traverse z-levels (putting stairs between the same-material tiles). With the 'undo' option it will remove the dig designation instead (if you realize that digging out a 50 z-level deep layer was not such a good idea after all).
+
+diglx
+=====
+A permanent alias for 'digl x'.
+
+digexp
 ======
 This command can be used for exploratory mining.
 

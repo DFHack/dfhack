@@ -139,7 +139,13 @@ class Block
     {
         return basemats[p.x][p.y];
     }
-    void ClearMaterialAt(df::coord2d p)
+
+    // the clear methods are used by the floodfill in digv and digl to mark tiles which were processed
+    void ClearBaseMaterialAt(df::coord2d p)
+    {
+        basemats[p.x][p.y] = -1;
+    }
+    void ClearVeinMaterialAt(df::coord2d p)
     {
         veinmats[p.x][p.y] = -1;
     }
@@ -412,12 +418,21 @@ class MapCache
         }
         return 0;
     }
-    bool clearMaterialAt (DFCoord tilecoord)
+    bool clearVeinMaterialAt (DFCoord tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
         {
-            b->ClearMaterialAt(tilecoord % 16);
+            b->ClearVeinMaterialAt(tilecoord % 16);
+        }
+        return 0;
+    }
+    bool clearBaseMaterialAt (DFCoord tilecoord)
+    {
+        Block * b= BlockAt(tilecoord / 16);
+        if(b && b->valid)
+        {
+            b->ClearBaseMaterialAt(tilecoord % 16);
         }
         return 0;
     }

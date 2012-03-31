@@ -1,11 +1,7 @@
 adv_tools=adv_tools or {}
 adv_tools.menu=adv_tools.menu or MakeMenu()
 function adv_tools.ressurect()
-	myoff=offsets.getEx("AdvCreatureVec")
-	vector=engine.peek(myoff,ptr_vector) 
-	indx=GetCreatureAtPos(getxyz())
-	if indx<0 then indx=0 end
-	--print(string.format("%x",vector:getval(indx)))
+	
 	v2=engine.peek(vector:getval(indx),ptr_Creature.hurt1)
 	for i=0,v2:size()-1 do
 		v2:setval(i,0)

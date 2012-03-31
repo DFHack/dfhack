@@ -33,7 +33,7 @@ end
 function embark(names) 
 	RaceTable=RaceTable or BuildNameTable()
 	mypos=engine.getmod('Embark')
-	stoff=offsets.getEx('StartDwarfs')
+	stoff=VersionInfo.getAddress('start_dwarf_count')
 	if mypos then --if mod already loaded
 		print("Mod already loaded @:"..mypos.." just updating")
 		modpos=mypos

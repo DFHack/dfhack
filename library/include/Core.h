@@ -135,6 +135,7 @@ namespace DFHack
         DFHack::VersionInfo * vinfo;
         DFHack::Windows::df_window * screen_window;
 
+        static void print(const char *format, ...);
         static void printerr(const char *format, ...);
 
     private:

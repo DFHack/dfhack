@@ -7,7 +7,7 @@ namespace lua
 {
 
 void RegisterConsole(lua::state &st);
-void SetConsole(lua::state &st,DFHack::color_ostream& stream);
+
 }
 
 #endif

@@ -757,6 +757,16 @@ std::string Core::getHotkeyCmd( void )
     return returner;
 }
 
+void Core::print(const char *format, ...)
+{
+    color_ostream_proxy proxy(getInstance().con);
+
+    va_list args;
+    va_start(args,format);
+    proxy.vprint(format,args);
+    va_end(args);
+}
+
 void Core::printerr(const char *format, ...)
 {
     color_ostream_proxy proxy(getInstance().con);

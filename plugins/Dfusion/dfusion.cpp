@@ -21,6 +21,7 @@
 #include "lua_FunctionCall.h"
 #include "lua_Offsets.h"
 #include "DataDefs.h"
+#include "LuaTools.h"
 
 using std::vector;
 using std::string;
@@ -42,11 +43,12 @@ DFhackCExport const char * plugin_name ( void )
     return "dfusion";
 }
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
 	lua::state st=lua::glua::Get();
+
 	//maybe remake it to run automaticaly
-	DFHack::AttachDFGlobals(st);
+    Lua::Open(out, st);
 
 	lua::RegisterConsole(st);
 	lua::RegisterProcess(st);
@@ -63,11 +65,6 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 		st.push(1);
 		st.setglobal("WINDOWS");
 	#endif
-
-    st.getglobal("Console");
-    st.getfield("println");
-    st.setglobal("print");
-    st.pop();
 
     commands.push_back(PluginCommand("dfusion","Run dfusion system (interactive i.e. can input further commands).",dfusion,true));
 	commands.push_back(PluginCommand("dfuse","Init dfusion system (not interactive).",dfuse,false));
@@ -113,87 +110,6 @@ DFhackCExport command_result plugin_onupdate_DISABLED ( Core * c )
 	mymutex->unlock();
 	return CR_OK;
 }
-
-void InterpreterLoop(color_ostream &out)
-{
-	
-	DFHack::CommandHistory hist;
-	lua::state s=lua::glua::Get();
-	string curline;
-	out.print("Type quit to exit interactive lua interpreter.\n"
-              "Shortcuts:\n"
-              " '= foo' => '_1,_2,... = foo'\n"
-              " '! foo' => 'print(foo)'\n"
-              "Both assign the first result to '_'\n");
-	assert(out.is_console());
-	Console &con = static_cast<Console&>(out);
-	int vcnt = 1;
-
-    s.settop(0);
-
-    for (;;) {
-        con.lineedit("[lua]# ",curline,hist);
-
-        if (curline.empty())
-            continue;
-        if (curline == "quit")
-            break;
-
-		hist.add(curline);
-
-		try
-		{
-            char pfix = curline[0];
-
-            if (pfix == '=' || pfix == '!')
-            {
-                curline = "return " + curline.substr(1);
-
-                s.loadstring(curline);
-                s.pcall(0, LUA_MULTRET);
-                int numret = s.gettop();
-
-                if (numret >= 1)
-                {
-                    s.pushvalue(1);
-                    s.setglobal("_");
-
-                    if (pfix == '!')
-                    {
-                        s.getglobal("print");
-                        s.insert(1);
-                        s.pcall(numret,0);
-                        numret = 0;
-                    }
-                }
-
-                for (int i = 1; i <= numret; i++)
-                {
-                    std::string name = stl_sprintf("_%d", vcnt++);
-                    s.pushvalue(i);
-                    s.setglobal(name);
-
-                    con.print("%s = ", name.c_str());
-                    s.getglobal("print");
-                    s.pushvalue(i);
-                    s.pcall(1,0);
-                }
-            }
-            else
-            {
-                s.loadstring(curline);
-                s.pcall();
-            }
-		}
-		catch(lua::exception &e)
-		{
-			con.printerr("Error:%s\n",e.what());
-            con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
-		}
-
-        s.settop(0);
-	}
-}
 command_result lua_run_file (color_ostream &out, std::vector <std::string> &parameters)
 {
 	if(parameters.size()==0)
@@ -207,14 +123,14 @@ command_result lua_run (color_ostream &out, std::vector <std::string> &parameter
 {
 	mymutex->lock();
 	lua::state s=lua::glua::Get();
-	lua::SetConsole(s,out);
+
 	if(parameters.size()>0)
 	{
 		try{
 			s.loadfile(parameters[0]); //load file
 			for(size_t i=1;i<parameters.size();i++)
 				s.push(parameters[i]);
-			s.pcall(parameters.size()-1,0);// run it
+            Lua::SafeCall(out, s, parameters.size()-1,0);// run it
 		}
 		catch(lua::exception &e)
 		{
@@ -224,7 +140,7 @@ command_result lua_run (color_ostream &out, std::vector <std::string> &parameter
 	}
 	else
 	{
-		InterpreterLoop(out);
+		Lua::InterpreterLoop(out, s);
 	}
 	s.settop(0);// clean up
 	mymutex->unlock();
@@ -235,12 +151,10 @@ void RunDfusion(color_ostream &out, std::vector <std::string> &parameters)
 	mymutex->lock();
 	lua::state s=lua::glua::Get();
 	try{
-		s.getglobal("err");
-		int errpos=s.gettop();
 		s.loadfile("dfusion/init.lua"); //load script
 		for(size_t i=0;i<parameters.size();i++)
 				s.push(parameters[i]);
-		s.pcall(parameters.size(),0,errpos);// run it
+        Lua::SafeCall(out, s, parameters.size(),0);
 	}
 	catch(lua::exception &e)
 	{
@@ -253,7 +167,6 @@ void RunDfusion(color_ostream &out, std::vector <std::string> &parameters)
 command_result dfuse(color_ostream &out, std::vector <std::string> &parameters)
 {
 	lua::state s=lua::glua::Get();
-	lua::SetConsole(s,out);
 	s.push(1);
 	s.setglobal("INIT");
 	RunDfusion(out,parameters);
@@ -262,7 +175,6 @@ command_result dfuse(color_ostream &out, std::vector <std::string> &parameters)
 command_result dfusion (color_ostream &out, std::vector <std::string> &parameters)
 {
 	lua::state s=lua::glua::Get();
-	lua::SetConsole(s,out);
 	s.push();
 	s.setglobal("INIT");
 	RunDfusion(out,parameters);

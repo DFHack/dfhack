@@ -29,6 +29,7 @@ include/ColorText.h
 include/DataDefs.h
 include/DataIdentity.h
 include/LuaWrapper.h
+include/LuaTools.h
 include/Error.h
 include/Export.h
 include/Hooks.h
@@ -58,6 +59,7 @@ ColorText.cpp
 DataDefs.cpp
 LuaWrapper.cpp
 LuaTypes.cpp
+LuaTools.cpp
 DataStatics.cpp
 DataStaticsCtor.cpp
 DataStaticsFields.cpp
@@ -294,6 +296,10 @@ install(FILES ../dfhack.init-example
 install(TARGETS dfhack-run dfhack-client
         LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
         RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+
+install(DIRECTORY lua/
+        DESTINATION ${DFHACK_LUA_DESTINATION}
+        FILES_MATCHING PATTERN "*.lua")
 
 # Unused for so long that it's not even relevant now...
 if(BUILD_DEVEL)

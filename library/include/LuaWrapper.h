@@ -214,5 +214,7 @@ namespace DFHack { namespace LuaWrapper {
     void AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, type_identity *ienum);
 
     void IndexStatics(lua_State *state, int meta_idx, int ftable_idx, struct_identity *pstruct);
+
+    void AttachDFGlobals(lua_State *state);
 }}
 

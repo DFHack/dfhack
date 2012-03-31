@@ -5,6 +5,7 @@
 #include "modules/Maps.h"
 #include "modules/Gui.h"
 #include "modules/MapCache.h"
+#include "modules/Materials.h"
 #include <vector>
 #include <cstdio>
 #include <stack>
@@ -16,31 +17,46 @@ using std::stack;
 using namespace DFHack;
 using namespace df::enums;
 
-command_result vdig (color_ostream &out, vector <string> & parameters);
-command_result vdigx (color_ostream &out, vector <string> & parameters);
-command_result autodig (color_ostream &out, vector <string> & parameters);
-command_result expdig (color_ostream &out, vector <string> & parameters);
+command_result digv (color_ostream &out, vector <string> & parameters);
+command_result digvx (color_ostream &out, vector <string> & parameters);
+command_result digl (color_ostream &out, vector <string> & parameters);
+command_result diglx (color_ostream &out, vector <string> & parameters);
+command_result digauto (color_ostream &out, vector <string> & parameters);
+command_result digexp (color_ostream &out, vector <string> & parameters);
 command_result digcircle (color_ostream &out, vector <string> & parameters);
 
 
-DFHACK_PLUGIN("vdig");
+DFHACK_PLUGIN("dig");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "vdig","Dig a whole vein.",vdig,Gui::cursor_hotkey,
+        "digv","Dig a whole vein.",digv,Gui::cursor_hotkey,
         "  Designates a whole vein under the cursor for digging.\n"
         "Options:\n"
         "  x - follow veins through z-levels with stairs.\n"
         ));
     commands.push_back(PluginCommand(
-        "vdigx","Dig a whole vein, following through z-levels.",vdigx,Gui::cursor_hotkey,
+        "digvx","Dig a whole vein, following through z-levels.",digvx,Gui::cursor_hotkey,
         "  Designates a whole vein under the cursor for digging.\n"
-        "  Also follows the vein between z-levels with stairs, like 'vdig x' would.\n"
+        "  Also follows the vein between z-levels with stairs, like 'digv x' would.\n"
         ));
-    commands.push_back(PluginCommand("expdig","Select or designate an exploratory pattern. Use 'expdig ?' for help.",expdig));
+   commands.push_back(PluginCommand(
+        "digl","Dig layerstone.",digl,Gui::cursor_hotkey,
+        "  Designates layerstone under the cursor for digging.\n"
+        "  Veins will not be touched.\n"
+        "Options:\n"
+        "  x    - follow layer through z-levels with stairs.\n"
+        "  undo - clear designation (can be used together with 'x').\n"
+        ));
+    commands.push_back(PluginCommand(
+        "diglx","Dig layerstone, following through z-levels.",diglx,Gui::cursor_hotkey,
+        "  Designates layerstone under the cursor for digging.\n"
+        "  Also follows the stone between z-levels with stairs, like 'digl x' would.\n"
+        ));
+    commands.push_back(PluginCommand("digexp","Select or designate an exploratory pattern. Use 'digexp ?' for help.",digexp));
     commands.push_back(PluginCommand("digcircle","Dig designate a circle (filled or hollow) with given radius.",digcircle));
-    //commands.push_back(PluginCommand("autodig","Mark a tile for continuous digging.",autodig));
+    //commands.push_back(PluginCommand("digauto","Mark a tile for continuous digging.",autodig));
     return CR_OK;
 }
 
@@ -772,7 +788,7 @@ bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
     return true;
 };
 
-command_result expdig (color_ostream &out, vector <string> & parameters)
+command_result digexp (color_ostream &out, vector <string> & parameters)
 {
     bool force_help = false;
     static explo_how how = EXPLO_NOTHING;
@@ -840,8 +856,8 @@ command_result expdig (color_ostream &out, vector <string> & parameters)
             " designated = Take current designation and apply pattern to it.\n"
             "\n"
             "After you have a pattern set, you can use 'expdig' to apply it:\n"
-            "'expdig diag5 hidden' = set filter to hidden, pattern to diag5.\n"
-            "'expdig' = apply the pattern with filter.\n"
+            "'digexp diag5 hidden' = set filter to hidden, pattern to diag5.\n"
+            "'digexp' = apply the pattern with filter.\n"
             );
         return CR_OK;
     }
@@ -948,15 +964,15 @@ command_result expdig (color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
-command_result vdigx (color_ostream &out, vector <string> & parameters)
+command_result digvx (color_ostream &out, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     vector <string> lol;
     lol.push_back("x");
-    return vdig(out,lol);
+    return digv(out,lol);
 }
 
-command_result vdig (color_ostream &out, vector <string> & parameters)
+command_result digv (color_ostream &out, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     uint32_t x_max,y_max,z_max;
@@ -1045,7 +1061,7 @@ command_result vdig (color_ostream &out, vector <string> & parameters)
         }
         if(MCache->testCoord(current))
         {
-            MCache->clearMaterialAt(current);
+            MCache->clearVeinMaterialAt(current);
             if(current.x < tx_max - 2)
             {
                 flood.push(DFHack::DFCoord(current.x + 1, current.y, current.z));
@@ -1113,7 +1129,213 @@ command_result vdig (color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
-command_result autodig (color_ostream &out, vector <string> & parameters)
+command_result diglx (color_ostream &out, vector <string> & parameters)
+{
+    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
+    vector <string> lol;
+    lol.push_back("x");
+    return digl(out,lol);
+}
+
+// TODO: 
+// digl and digv share the longish floodfill code and only use different conditions
+// to check if a tile should be marked for digging or not.
+// to make the plugin a bit smaller and cleaner a main execute method would be nice
+// (doing the floodfill stuff and do the checks dependin on whether called in
+// "vein" or "layer" mode)
+command_result digl (color_ostream &out, vector <string> & parameters)
+{
+    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
+    uint32_t x_max,y_max,z_max;
+    bool updown = false;
+    bool undo = false;
+    for(size_t i = 0; i < parameters.size();i++)
+    {
+        if(parameters[i]=="x")
+        {
+            out << "This might take a while for huge layers..." << std::endl;
+            updown = true;
+        }
+        else if(parameters[i]=="undo")
+        {
+            out << "Removing dig designation." << std::endl;
+            undo = true;
+        }
+        else
+            return CR_WRONG_USAGE;
+    }
+
+    auto &con = out;
+
+    if (!Maps::IsValid())
+    {
+        out.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+
+    int32_t cx, cy, cz;
+    Maps::getSize(x_max,y_max,z_max);
+    uint32_t tx_max = x_max * 16;
+    uint32_t ty_max = y_max * 16;
+    Gui::getCursorCoords(cx,cy,cz);
+    while(cx == -30000)
+    {
+        con.printerr("Cursor is not active. Point the cursor at a vein.\n");
+        return CR_FAILURE;
+    }
+    DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
+    if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)
+    {
+        con.printerr("I won't dig the borders. That would be cheating!\n");
+        return CR_FAILURE;
+    }
+    MapExtras::MapCache * MCache = new MapExtras::MapCache;
+    df::tile_designation des = MCache->designationAt(xy);
+    df::tiletype tt = MCache->tiletypeAt(xy);
+    int16_t veinmat = MCache->veinMaterialAt(xy);
+    int16_t basemat = MCache->baseMaterialAt(xy);
+    if( veinmat != -1 )
+    {
+        con.printerr("This is a vein. Use vdig instead!\n");
+        delete MCache;
+        return CR_FAILURE;
+    }
+    con.print("%d/%d/%d tiletype: %d, basemat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, basemat, des.whole);
+    stack <DFHack::DFCoord> flood;
+    flood.push(xy);
+
+    int i = 0;
+    while( !flood.empty() )
+    {
+        DFHack::DFCoord current = flood.top();
+        flood.pop();
+        int16_t vmat2 = MCache->veinMaterialAt(current);
+        int16_t bmat2 = MCache->baseMaterialAt(current);
+        tt = MCache->tiletypeAt(current);
+
+        if(!DFHack::isWallTerrain(tt))
+            continue;
+        if(vmat2!=-1)
+            continue;
+        if(bmat2!=basemat)
+            continue;
+
+        // don't dig out LAVA_STONE or MAGMA (semi-molten rock) accidentally
+        if(    tileMaterial(tt)!=tiletype_material::STONE
+            && tileMaterial(tt)!=tiletype_material::SOIL)
+            continue;
+
+        // found a good tile, dig+unset material
+        df::tile_designation des = MCache->designationAt(current);
+        df::tile_designation des_minus;
+        df::tile_designation des_plus;
+        des_plus.whole = des_minus.whole = 0;
+        int16_t vmat_minus = -1;
+        int16_t vmat_plus = -1;
+        int16_t bmat_minus = -1;
+        int16_t bmat_plus = -1;
+        df::tiletype tt_minus;
+        df::tiletype tt_plus;
+
+        if(MCache->testCoord(current))
+        {
+            MCache->clearBaseMaterialAt(current);
+            if(current.x < tx_max - 2)
+            {
+                flood.push(DFHack::DFCoord(current.x + 1, current.y, current.z));
+                if(current.y < ty_max - 2)
+                {
+                    flood.push(DFHack::DFCoord(current.x + 1, current.y + 1, current.z));
+                    flood.push(DFHack::DFCoord(current.x, current.y + 1, current.z));
+                }
+                if(current.y > 1)
+                {
+                    flood.push(DFHack::DFCoord(current.x + 1, current.y - 1, current.z));
+                    flood.push(DFHack::DFCoord(current.x, current.y - 1, current.z));
+                }
+            }
+            if(current.x > 1)
+            {
+                flood.push(DFHack::DFCoord(current.x - 1, current.y, current.z));
+                if(current.y < ty_max - 2)
+                {
+                    flood.push(DFHack::DFCoord(current.x - 1, current.y + 1, current.z));
+                    flood.push(DFHack::DFCoord(current.x, current.y + 1, current.z));
+                }
+                if(current.y > 1)
+                {
+                    flood.push(DFHack::DFCoord(current.x - 1, current.y - 1, current.z));
+                    flood.push(DFHack::DFCoord(current.x, current.y - 1, current.z));
+                }
+            }
+            if(updown)
+            {
+                bool below = 0;
+                bool above = 0;
+                if(MCache->testCoord(current-1))
+                {
+                    //below = 1;
+                    des_minus = MCache->designationAt(current-1);
+                    vmat_minus = MCache->veinMaterialAt(current-1);
+                    bmat_minus = MCache->baseMaterialAt(current-1);
+                    tt_minus = MCache->tiletypeAt(current-1);
+                    if (   tileMaterial(tt_minus)==tiletype_material::STONE
+                        || tileMaterial(tt_minus)==tiletype_material::SOIL)
+                        below = 1;
+                }
+                if(MCache->testCoord(current+1))
+                {
+                    //above = 1;
+                    des_plus = MCache->designationAt(current+1);
+                    vmat_plus = MCache->veinMaterialAt(current+1);
+                    bmat_plus = MCache->baseMaterialAt(current+1);
+                    tt_plus = MCache->tiletypeAt(current+1);
+                    if (   tileMaterial(tt_plus)==tiletype_material::STONE
+                        || tileMaterial(tt_plus)==tiletype_material::SOIL)
+                        above = 1;
+                }
+                if(current.z > 0 && below && vmat_minus == -1 && bmat_minus == basemat)
+                {
+                    flood.push(current-1);
+
+                    if(des_minus.bits.dig == tile_dig_designation::DownStair)
+                        des_minus.bits.dig = tile_dig_designation::UpDownStair;
+                    else
+                        des_minus.bits.dig = tile_dig_designation::UpStair;
+                    MCache->setDesignationAt(current-1,des_minus);
+
+                    des.bits.dig = tile_dig_designation::DownStair;
+                }
+                if(current.z < z_max - 1 && above && vmat_plus == -1 && bmat_plus == basemat)
+                {
+                    flood.push(current+ 1);
+
+                    if(des_plus.bits.dig == tile_dig_designation::UpStair)
+                        des_plus.bits.dig = tile_dig_designation::UpDownStair;
+                    else
+                        des_plus.bits.dig = tile_dig_designation::DownStair;
+                    MCache->setDesignationAt(current+1,des_plus);
+
+                    if(des.bits.dig == tile_dig_designation::DownStair)
+                        des.bits.dig = tile_dig_designation::UpDownStair;
+                    else
+                        des.bits.dig = tile_dig_designation::UpStair;
+                }
+            }
+            if(des.bits.dig == tile_dig_designation::No)
+                des.bits.dig = tile_dig_designation::Default;
+            // undo mode: clear designation
+            if(undo)
+                des.bits.dig = tile_dig_designation::No;
+            MCache->setDesignationAt(current,des);
+        }
+    }
+    MCache->WriteAll();
+    return CR_OK;
+}
+
+
+command_result digauto (color_ostream &out, vector <string> & parameters)
 {
     return CR_NOT_IMPLEMENTED;
 }

@@ -225,11 +225,16 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
     DFHack::CommandHistory hist;
     hist.load(hfile);
 
-    out.print("Type quit to exit interactive lua interpreter.\n"
-              "Shortcuts:\n"
-              " '= foo' => '_1,_2,... = foo'\n"
-              " '! foo' => 'print(foo)'\n"
-              "Both assign the first result to '_'\n");
+    out.print("Type quit to exit interactive lua interpreter.\n");
+
+    static bool print_banner = true;
+    if (print_banner) {
+        out.print("Shortcuts:\n"
+                  " '= foo' => '_1,_2,... = foo'\n"
+                  " '! foo' => 'print(foo)'\n"
+                  "Both save the first result as '_'.\n");
+        print_banner = false;
+    }
 
     Console &con = static_cast<Console&>(out);
 
@@ -305,7 +310,7 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
         {
             if (!load_with_env(out, state, curline, base))
                 continue;
-            if (!SafeCall(out, state, 0, LUA_MULTRET))
+            if (!SafeCall(out, state, 0, 0))
                 continue;
         }
     }

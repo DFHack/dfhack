@@ -26,6 +26,7 @@ function reload(module)
 end
 
 function printall(table)
+    if table == nil then return end
     for k,v in pairs(table) do
         print(k,"   = "..tostring(v))
     end

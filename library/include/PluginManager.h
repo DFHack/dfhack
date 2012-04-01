@@ -52,8 +52,10 @@ namespace DFHack
 
     enum state_change_event
     {
-        SC_GAME_LOADED,
-        SC_GAME_UNLOADED,
+        SC_WORLD_LOADED,
+        SC_WORLD_UNLOADED,
+        SC_MAP_LOADED,
+        SC_MAP_UNLOADED,
         SC_VIEWSCREEN_CHANGED
     };
     struct DFHACK_EXPORT PluginCommand

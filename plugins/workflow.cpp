@@ -138,11 +138,11 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
-    case SC_GAME_LOADED:
+    case SC_MAP_LOADED:
         cleanup_state(out);
         init_state(out);
         break;
-    case SC_GAME_UNLOADED:
+    case SC_MAP_UNLOADED:
         cleanup_state(out);
         break;
     default:

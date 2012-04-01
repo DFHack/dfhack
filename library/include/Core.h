@@ -126,6 +126,7 @@ namespace DFHack
         std::vector<std::string> ListKeyBindings(std::string keyspec);
 
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
+        bool isMapLoaded() { return (last_local_map_ptr != NULL && last_world_data_ptr != NULL); }
 
         static df::viewscreen *getTopViewscreen() { return getInstance().top_viewscreen; }
 
@@ -194,7 +195,10 @@ namespace DFHack
         int UnicodeAwareSym(const SDL::KeyboardEvent& ke);
         bool SelectHotkey(int key, int modifiers);
 
-        void *last_world_data_ptr; // for state change tracking
+        // for state change tracking
+        void *last_world_data_ptr;
+        // for state change tracking
+        void *last_local_map_ptr;
         df::viewscreen *top_viewscreen;
         // Very important!
         bool started;

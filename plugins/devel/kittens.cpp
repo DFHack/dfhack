@@ -22,6 +22,7 @@ bool final_flag = true;
 bool timering = false;
 bool trackmenu_flg = false;
 bool trackpos_flg = false;
+bool statetrack = false;
 int32_t last_designation[3] = {-30000, -30000, -30000};
 int32_t last_mouse[2] = {-1, -1};
 uint32_t last_menu = 0;
@@ -31,6 +32,7 @@ command_result kittens (color_ostream &out, vector <string> & parameters);
 command_result ktimer (color_ostream &out, vector <string> & parameters);
 command_result trackmenu (color_ostream &out, vector <string> & parameters);
 command_result trackpos (color_ostream &out, vector <string> & parameters);
+command_result trackstate (color_ostream &out, vector <string> & parameters);
 command_result colormods (color_ostream &out, vector <string> & parameters);
 command_result zoom (color_ostream &out, vector <string> & parameters);
 
@@ -42,6 +44,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(PluginCommand("ktimer","Measure time between game updates and console lag (toggle).",ktimer));
     commands.push_back(PluginCommand("trackmenu","Track menu ID changes (toggle).",trackmenu));
     commands.push_back(PluginCommand("trackpos","Track mouse and designation coords (toggle).",trackpos));
+    commands.push_back(PluginCommand("trackstate","Track world and map state (toggle).",trackstate));
     commands.push_back(PluginCommand("colormods","Dump colormod vectors.",colormods));
     commands.push_back(PluginCommand("zoom","Zoom to x y z.",zoom));
     return CR_OK;
@@ -53,6 +56,31 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     while(!final_flag)
     {
         Core::getInstance().getConsole().msleep(60);
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
+{
+    switch (event) {
+        case SC_MAP_LOADED:
+            out << "Map loaded" << endl;
+            break;
+        case SC_MAP_UNLOADED:
+            out << "Map unloaded" << endl;
+            break;
+        case SC_WORLD_LOADED:
+            out << "World loaded" << endl;
+            break;
+        case SC_WORLD_UNLOADED:
+            out << "World unloaded" << endl;
+            break;
+        case SC_VIEWSCREEN_CHANGED:
+            out << "Screen changed" << endl;
+            break;
+        default:
+            out << "Something else is happening, nobody knows what..." << endl;
+            break;
     }
     return CR_OK;
 }
@@ -125,6 +153,12 @@ command_result trackmenu (color_ostream &out, vector <string> & parameters)
 command_result trackpos (color_ostream &out, vector <string> & parameters)
 {
     trackpos_flg = !trackpos_flg;
+    return CR_OK;
+}
+
+command_result trackstate ( color_ostream& out, vector< string >& parameters )
+{
+    statetrack = !statetrack;
     return CR_OK;
 }
 

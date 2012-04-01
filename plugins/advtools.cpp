@@ -101,8 +101,8 @@ static bool in_transient_swap = false;
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
-    case SC_GAME_LOADED:
-    case SC_GAME_UNLOADED:
+    case SC_WORLD_LOADED:
+    case SC_WORLD_UNLOADED:
         in_transient_swap = false;
         break;
     default:

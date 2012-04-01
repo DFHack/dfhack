@@ -23,12 +23,16 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-static int enable_fastdwarf;
+static int enable_fastdwarf = false;
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    if (!enable_fastdwarf)
+    // check run conditions
+    if(!world->map.block_index || !enable_fastdwarf)
+    {
+        // give up if we shouldn't be running'
         return CR_OK;
+    }
     int32_t race = ui->race_id;
     int32_t civ = ui->civ_id;
 

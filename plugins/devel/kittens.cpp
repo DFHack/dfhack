@@ -62,6 +62,8 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
+    if(!statetrack)
+        return CR_OK;
     switch (event) {
         case SC_MAP_LOADED:
             out << "Map loaded" << endl;

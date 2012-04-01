@@ -25,5 +25,16 @@ function reload(module)
     dofile(path)
 end
 
+function printall(table)
+    for k,v in pairs(table) do
+        print(k,"   = "..tostring(v))
+    end
+end
+
+function dfhack.persistent:__tostring()
+    return "<persistent "..self.entry_id..":"..self.key.."=\""
+           ..self.value.."\":"..table.concat(self.ints,",")..">"
+end
+
 -- Feed the table back to the require() mechanism.
 return dfhack

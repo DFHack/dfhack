@@ -93,6 +93,7 @@ namespace DFHack
         static const int NumInts = 7;
 
         bool isValid() { return id != 0; }
+        int entry_id() { return -id; }
 
         const std::string &key() { return key_value; }
 
@@ -137,12 +138,18 @@ namespace DFHack
         // This ensures that the values are stored in save games.
         PersistentDataItem AddPersistentData(const std::string &key);
         PersistentDataItem GetPersistentData(const std::string &key);
-        void GetPersistentData(std::vector<PersistentDataItem> *vec, const std::string &key);
-        void DeletePersistentData(const PersistentDataItem &item);
+        PersistentDataItem GetPersistentData(int entry_id);
+        void GetPersistentData(std::vector<PersistentDataItem> *vec,
+                               const std::string &key, bool prefix = false);
+        bool DeletePersistentData(const PersistentDataItem &item);
 
-        private:
+        void ClearPersistentCache();
+
+    private:
         struct Private;
         Private *d;
+
+        bool BuildPersistentCache();
     };
 }
 #endif

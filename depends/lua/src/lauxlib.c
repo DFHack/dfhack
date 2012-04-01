@@ -863,8 +863,8 @@ LUALIB_API int luaL_getsubtable (lua_State *L, int idx, const char *fname) {
   lua_getfield(L, idx, fname);
   if (lua_istable(L, -1)) return 1;  /* table already there */
   else {
-    idx = lua_absindex(L, idx);
     lua_pop(L, 1);  /* remove previous result */
+    idx = lua_absindex(L, idx);
     lua_newtable(L);
     lua_pushvalue(L, -1);  /* copy to be left at top */
     lua_setfield(L, idx, fname);  /* assign new table to field */

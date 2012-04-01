@@ -120,7 +120,7 @@ bool LuaWrapper::LookupTypeInfo(lua_State *state, bool in_method)
 
     // stack: [info]
 
-    if (!lua_islightuserdata(state, -1))
+    if (lua_isnil(state, -1))
     {
         lua_pop(state, 1);
         return false;
@@ -132,8 +132,7 @@ bool LuaWrapper::LookupTypeInfo(lua_State *state, bool in_method)
 void LuaWrapper::LookupInTable(lua_State *state, void *id, const char *tname)
 {
     lua_getfield(state, LUA_REGISTRYINDEX, tname);
-    lua_pushlightuserdata(state, id);
-    lua_rawget(state, -2);
+    lua_rawgetp(state, -1, id);
     lua_remove(state, -2);
 }
 
@@ -142,9 +141,8 @@ void LuaWrapper::SaveInTable(lua_State *state, void *node, const char *tname)
     // stack: [info]
     lua_getfield(state, LUA_REGISTRYINDEX, tname);
 
-    lua_pushlightuserdata(state, node);
-    lua_pushvalue(state, -3);
-    lua_rawset(state, -3);
+    lua_pushvalue(state, -2);
+    lua_rawsetp(state, -2, node);
 
     lua_pushvalue(state, -2);
     lua_pushlightuserdata(state, node);

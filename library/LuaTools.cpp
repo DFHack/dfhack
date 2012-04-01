@@ -337,12 +337,44 @@ static int lua_dfhack_interpreter(lua_State *state)
     return 1;
 }
 
+static int lua_dfhack_with_suspend(lua_State *L)
+{
+    int ctx;
+    int rv = lua_getctx(L, &ctx);
+
+    // Non-resume entry point:
+    if (rv == LUA_OK)
+    {
+        int nargs = lua_gettop(L);
+
+        luaL_checktype(L, 1, LUA_TFUNCTION);
+
+        Core::getInstance().Suspend();
+
+        lua_pushcfunction(L, traceback);
+        lua_insert(L, 1);
+
+        rv = lua_pcallk(L, nargs-1, LUA_MULTRET, 1, 0, lua_dfhack_with_suspend);
+    }
+
+    // Return, resume, or error entry point:
+    lua_remove(L, 1);
+
+    Core::getInstance().Resume();
+
+    if (rv != LUA_OK && rv != LUA_YIELD)
+        lua_error(L);
+
+    return lua_gettop(L);
+}
+
 static const luaL_Reg dfhack_funcs[] = {
     { "print", lua_dfhack_print },
     { "println", lua_dfhack_println },
     { "printerr", lua_dfhack_printerr },
     { "traceback", traceback },
     { "interpreter", lua_dfhack_interpreter },
+    { "with_suspend", lua_dfhack_with_suspend },
     { NULL, NULL }
 };
 

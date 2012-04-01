@@ -431,9 +431,9 @@ type_identity *LuaWrapper::get_object_identity(lua_State *state, int objidx,
     return id;
 }
 
-static void check_type_compatible(lua_State *state, int obj1, int obj2,
+static bool check_type_compatible(lua_State *state, int obj1, int obj2,
                                   type_identity **type1, type_identity **type2,
-                                  const char *ctx, bool allow_type, bool exact)
+                                  const char *ctx, bool allow_type, bool exact, bool error = true)
 {
     int base = lua_gettop(state);
 
@@ -442,6 +442,12 @@ static void check_type_compatible(lua_State *state, int obj1, int obj2,
 
     if (!is_type_compatible(state, *type1, base+1, *type2, base+2, exact))
     {
+        if (!error)
+        {
+            lua_pop(state, 2);
+            return false;
+        }
+
         lua_getfield(state, base+1, "__metatable");
         const char *cname1 = lua_tostring(state, -1);
         lua_getfield(state, base+2, "__metatable");
@@ -451,6 +457,7 @@ static void check_type_compatible(lua_State *state, int obj1, int obj2,
     }
 
     lua_pop(state, 2);
+    return true;
 }
 
 /**
@@ -739,6 +746,30 @@ static int meta_assign(lua_State *state)
     }
 
     return 0;
+}
+
+/**
+ * Method: check if the two objects are assignment-compatible.
+ */
+static int meta_is_instance(lua_State *state)
+{
+    int argc = lua_gettop(state);
+
+    if (argc != 2)
+        luaL_error(state, "Usage: type:is_instance(obj) or df.is_instance(type,obj)");
+
+    // If garbage as second argument, return nil
+    if (!lua_istable(state, 2) && (!lua_isuserdata(state,2) || lua_islightuserdata(state, 2)))
+    {
+        lua_pushnil(state);
+        return 1;
+    }
+
+    type_identity *id1, *id2;
+    bool ok = check_type_compatible(state, 1, 2, &id1, &id2, "df.is_instance()", true, false, false);
+
+    lua_pushboolean(state, ok);
+    return 1;
 }
 
 /**
@@ -1063,12 +1094,7 @@ static void FillEnumKeys(lua_State *state, int ftable, enum_identity *eid)
 
     // Create a new table attached to ftable as __index
     lua_newtable(state);
-
-    lua_dup(state);
-    lua_setmetatable(state, ftable);
-
     int base = lua_gettop(state);
-
     lua_newtable(state);
 
     // For enums, set mapping between keys and values
@@ -1102,28 +1128,36 @@ static void FillEnumKeys(lua_State *state, int ftable, enum_identity *eid)
     }
 
     lua_setfield(state, base, "__index");
-    lua_pop(state, 1);
+    lua_setmetatable(state, ftable);
 }
 
 static void FillBitfieldKeys(lua_State *state, int ftable, bitfield_identity *eid)
 {
+    // Create a new table attached to ftable as __index
+    lua_newtable(state);
+    int base = lua_gettop(state);
+    lua_newtable(state);
+
     auto bits = eid->getBits();
 
     for (int i = 0; i < eid->getNumBits(); i++)
     {
         if (bits[i].name)
-            AssociateId(state, ftable, i, bits[i].name);
+            AssociateId(state, base+1, i, bits[i].name);
         if (bits[i].size > 1)
             i += bits[i].size-1;
     }
 
     lua_pushinteger(state, 0);
-    lua_setfield(state, ftable, "_first_item");
+    lua_setfield(state, base+1, "_first_item");
 
     lua_pushinteger(state, eid->getNumBits()-1);
-    lua_setfield(state, ftable, "_last_item");
+    lua_setfield(state, base+1, "_last_item");
 
     SaveInTable(state, eid, DFHACK_ENUM_TABLE_NAME);
+
+    lua_setfield(state, base, "__index");
+    lua_setmetatable(state, ftable);
 }
 
 static void RenderType(lua_State *state, compound_identity *node)
@@ -1218,6 +1252,9 @@ static void RenderType(lua_State *state, compound_identity *node)
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
     lua_setfield(state, ftable, "new");
 
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_IS_INSTANCE_NAME);
+    lua_setfield(state, ftable, "is_instance");
+
     lua_pop(state, 2);
 }
 
@@ -1274,6 +1311,10 @@ static int DoAttach(lua_State *state)
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
 
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
+    lua_pushcclosure(state, meta_is_instance, 1);
+    lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_IS_INSTANCE_NAME);
+
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
     lua_pushcclosure(state, meta_delete, 1);
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_DELETE_NAME);
 
@@ -1294,6 +1335,8 @@ static int DoAttach(lua_State *state)
         lua_setfield(state, -2, "_displace");
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
         lua_setfield(state, -2, "assign");
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_IS_INSTANCE_NAME);
+        lua_setfield(state, -2, "is_instance");
 
         lua_pushlightuserdata(state, NULL);
         lua_setfield(state, -2, "NULL");

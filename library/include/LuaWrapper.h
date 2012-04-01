@@ -39,26 +39,32 @@ distribution.
  */
 
 namespace DFHack { namespace LuaWrapper {
+    struct LuaToken;
 
-/*
- * Registry name: hash of type metatables <-> type identities.
- */
-#define DFHACK_TYPETABLE_NAME "DFHack::DFTypes"
+    /**
+     * Metatable pkey: type identity of the object
+     */
+    extern LuaToken DFHACK_IDENTITY_FIELD_TOKEN;
 
-/*
- * Registry name: hash of type identity -> node in df.etc...
- */
-#define DFHACK_TYPEID_TABLE_NAME "DFHack::DFTypeIds"
+    /**
+     * Registry pkey: hash of type metatables <-> type identities.
+     */
+    extern LuaToken DFHACK_TYPETABLE_TOKEN;
 
-/*
- * Registry name: hash of enum/bitfield identity -> index lookup table
- */
-#define DFHACK_ENUM_TABLE_NAME "DFHack::DFEnums"
+    /**
+     * Registry pkey: hash of type identity -> node in df.etc...
+     */
+    extern LuaToken DFHACK_TYPEID_TABLE_TOKEN;
 
-/*
- * Registry name: hash of pointer target identity <-> adhoc pointer identity userdata.
- */
-#define DFHACK_PTR_IDTABLE_NAME "DFHack::PtrDFTypes"
+    /**
+     * Registry pkey: hash of enum/bitfield identity -> index lookup table
+     */
+    extern LuaToken DFHACK_ENUM_TABLE_TOKEN;
+
+    /**
+     * Registry pkey: hash of pointer target identity <-> adhoc pointer identity userdata.
+     */
+    extern LuaToken DFHACK_PTR_IDTABLE_TOKEN;
 
 // Function registry names
 #define DFHACK_CHANGEERROR_NAME "DFHack::ChangeError"
@@ -70,7 +76,8 @@ namespace DFHack { namespace LuaWrapper {
 #define DFHACK_ASSIGN_NAME "DFHack::Assign"
 #define DFHACK_IS_INSTANCE_NAME "DFHack::IsInstance"
 #define DFHACK_DELETE_NAME "DFHack::Delete"
-#define DFHACK_EMPTY_TABLE_NAME "DFHack::EmptyTable"
+
+    extern LuaToken DFHACK_EMPTY_TABLE_TOKEN;
 
 /*
  * Upvalue: contents of DFHACK_TYPETABLE_NAME
@@ -158,8 +165,8 @@ namespace DFHack { namespace LuaWrapper {
                                        const char *ctx, bool allow_type = false,
                                        bool keep_metatable = false);
 
-    void LookupInTable(lua_State *state, void *id, const char *tname);
-    void SaveInTable(lua_State *state, void *node, const char *tname);
+    void LookupInTable(lua_State *state, void *id, LuaToken *tname);
+    void SaveInTable(lua_State *state, void *node, LuaToken *tname);
     void SaveTypeInfo(lua_State *state, void *node);
 
     void AssociateId(lua_State *state, int table, int val, const char *name);

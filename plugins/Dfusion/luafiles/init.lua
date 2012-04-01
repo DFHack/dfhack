@@ -1,3 +1,7 @@
+Console.print = dfhack.print
+Console.println = dfhack.println
+Console.printerr = dfhack.printerr
+
 function err(msg) --make local maybe...
 	print(msg)
 	print(debug.traceback())

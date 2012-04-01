@@ -189,7 +189,7 @@ bool DFHack::Lua::Require(color_ostream &out, lua_State *state,
 
 static bool load_with_env(color_ostream &out, lua_State *state, const std::string &code, int eidx)
 {
-    if (luaL_loadstring(state, code.c_str()) != LUA_OK)
+    if (luaL_loadbuffer(state, code.data(), code.size(), "=(interactive)") != LUA_OK)
     {
         report_error(out, state);
         return false;

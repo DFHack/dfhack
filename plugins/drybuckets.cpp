@@ -32,7 +32,7 @@ command_result df_drybuckets (color_ostream &out, vector <string> & parameters)
         df::item *item = world->items.all[i];
         if ((item->getType() == item_type::LIQUID_MISC) && (item->getMaterial() == builtin_mats::WATER))
         {
-            item->flags.bits.garbage_colect = 1;
+            item->flags.bits.garbage_collect = 1;
             dried_total++;
         }
     }

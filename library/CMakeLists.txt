@@ -6,7 +6,6 @@ OPTION(BUILD_DEVEL "Install/package files required for development (For SDK)." O
 OPTION(BUILD_DOXYGEN "Create/install/package doxygen documentation for DFHack (For SDK)." OFF)
 IF(UNIX)
     OPTION(CONSOLE_NO_CATCH "Make the console not catch 'CTRL+C' events for easier debugging." OFF)
-    OPTION(MALLOC_FILL "Make malloc calls fill the allocated memory with 0xCC values." OFF)
 ENDIF()
 
 include_directories (include)
@@ -29,6 +28,7 @@ include/ColorText.h
 include/DataDefs.h
 include/DataIdentity.h
 include/LuaWrapper.h
+include/LuaTools.h
 include/Error.h
 include/Export.h
 include/Hooks.h
@@ -58,6 +58,7 @@ ColorText.cpp
 DataDefs.cpp
 LuaWrapper.cpp
 LuaTypes.cpp
+LuaTools.cpp
 DataStatics.cpp
 DataStaticsCtor.cpp
 DataStaticsFields.cpp
@@ -214,9 +215,6 @@ IF(UNIX)
     IF(CONSOLE_NO_CATCH)
         ADD_DEFINITIONS(-DCONSOLE_NO_CATCH)
     ENDIF()
-    IF(MALLOC_FILL)
-        ADD_DEFINITIONS(-DMALLOC_FILL)
-    ENDIF()
 ENDIF()
 
 IF(UNIX)
@@ -294,6 +292,10 @@ install(FILES ../dfhack.init-example
 install(TARGETS dfhack-run dfhack-client
         LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
         RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+
+install(DIRECTORY lua/
+        DESTINATION ${DFHACK_LUA_DESTINATION}
+        FILES_MATCHING PATTERN "*.lua")
 
 # Unused for so long that it's not even relevant now...
 if(BUILD_DEVEL)

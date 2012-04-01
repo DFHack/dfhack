@@ -609,6 +609,7 @@ Core::Core()
     HotkeyCond = 0;
     misc_data_mutex=0;
     last_world_data_ptr = NULL;
+    last_local_map_ptr = NULL;
     top_viewscreen = NULL;
     screen_window = NULL;
     server = NULL;
@@ -757,6 +758,16 @@ std::string Core::getHotkeyCmd( void )
     return returner;
 }
 
+void Core::print(const char *format, ...)
+{
+    color_ostream_proxy proxy(getInstance().con);
+
+    va_list args;
+    va_start(args,format);
+    proxy.vprint(format,args);
+    va_end(args);
+}
+
 void Core::printerr(const char *format, ...)
 {
     color_ostream_proxy proxy(getInstance().con);
@@ -859,16 +870,41 @@ int Core::Update()
 
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
-    if (df::global::world) {
+    void *new_mapdata = NULL;
+    if (df::global::world)
+    {
         df::world_data *wdata = df::global::world->world_data;
         // when the game is unloaded, world_data isn't deleted, but its contents are
         if (wdata && !wdata->sites.empty())
             new_wdata = wdata;
+        new_mapdata = df::global::world->map.block_index;
     }
-    
-    if (new_wdata != last_world_data_ptr) {
+    // if the world changes
+    if (new_wdata != last_world_data_ptr)
+    {
+        // we check for map change too
+        bool mapchange = new_mapdata != last_local_map_ptr;
+        // and if the world is going away, we report the map change first
+        if(!new_wdata && mapchange)
+        {
+            last_local_map_ptr = new_mapdata;
+            plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+        }
+        // and if the world is appearing, we report map change after that
+        plug_mgr->OnStateChange(out, new_wdata ? SC_WORLD_LOADED : SC_WORLD_UNLOADED);
+        if(new_wdata && mapchange)
+        {
+            last_local_map_ptr = new_mapdata;
+            plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+        }
+        // update tracking variable
         last_world_data_ptr = new_wdata;
-        plug_mgr->OnStateChange(out, new_wdata ? SC_GAME_LOADED : SC_GAME_UNLOADED);
+    }
+    // otherwise just check for map change...
+    else if (new_mapdata != last_local_map_ptr)
+    {
+        last_local_map_ptr = new_mapdata;
+        plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
     }
 
     // detect if the viewscreen changed

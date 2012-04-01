@@ -138,11 +138,11 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
-    case SC_GAME_LOADED:
+    case SC_MAP_LOADED:
         cleanup_state(out);
         init_state(out);
         break;
-    case SC_GAME_UNLOADED:
+    case SC_MAP_UNLOADED:
         cleanup_state(out);
         break;
     default:
@@ -500,7 +500,7 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     pj->holder = df::building::find(pj->building_id);
     if (!pj->holder)
     {
-        out.printerr("Forgetting job %d (%s): holder building lost.",
+        out.printerr("Forgetting job %d (%s): holder building lost.\n",
                         pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
         forget_job(out, pj);
         return true;
@@ -509,7 +509,7 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     // Check its state and postpone or cancel if invalid
     if (pj->holder->jobs.size() >= 10)
     {
-        out.printerr("Forgetting job %d (%s): holder building has too many jobs.",
+        out.printerr("Forgetting job %d (%s): holder building has too many jobs.\n",
                         pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
         forget_job(out, pj);
         return true;
@@ -532,7 +532,7 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     {
         deleteJobStruct(recovered);
 
-        out.printerr("Inconsistency: job %d (%s) already in list.",
+        out.printerr("Inconsistency: job %d (%s) already in list.\n",
                         pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
         return true;
     }
@@ -1032,7 +1032,7 @@ static void dryBucket(df::item *item)
                 obj->getType() == item_type::LIQUID_MISC &&
                 obj->getMaterial() == builtin_mats::WATER)
             {
-                obj->flags.bits.garbage_colect = true;
+                obj->flags.bits.garbage_collect = true;
                 obj->flags.bits.hidden = true;
             }
         }
@@ -1049,7 +1049,7 @@ static bool itemBusy(df::item *item)
         if (ref->getType() == general_ref_type::CONTAINS_ITEM)
         {
             df::item *obj = ref->getItem();
-            if (obj && !obj->flags.bits.garbage_colect)
+            if (obj && !obj->flags.bits.garbage_collect)
                 return true;
         }
         else if (ref->getType() == general_ref_type::CONTAINS_UNIT)
@@ -1105,7 +1105,7 @@ static void map_job_items(color_ostream &out)
     bad_flags.whole = 0;
 
 #define F(x) bad_flags.bits.x = true;
-    F(dump); F(forbid); F(garbage_colect);
+    F(dump); F(forbid); F(garbage_collect);
     F(hostile); F(on_fire); F(rotten); F(trader);
     F(in_building); F(construction); F(artifact1);
 #undef F

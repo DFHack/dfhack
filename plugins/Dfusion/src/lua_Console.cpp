@@ -1,30 +1,12 @@
 #include "lua_Console.h"
+#include "LuaTools.h"
+
+#include <sstream>
+
 //TODO error management. Using lua error? or something other?
 static DFHack::color_ostream* GetConsolePtr(lua::state &st)
 {
-	int t=st.gettop();
-	st.getglobal("Console");
-	st.getfield("__pointer");
-	DFHack::color_ostream* c=static_cast<DFHack::color_ostream*>(lua_touserdata(st,-1));
-	st.settop(t);
-	return c;
-}
-static int lua_Console_print(lua_State *S)
-{
-	lua::state st(S);
-	int t=st.gettop();
-	DFHack::color_ostream* c=GetConsolePtr(st);
-	c->print("%s",st.as<string>(t).c_str());
-	return 0;
-}
-
-static int lua_Console_printerr(lua_State *S)
-{
-	lua::state st(S);
-	int t=st.gettop();
-	DFHack::color_ostream* c=GetConsolePtr(st);
-	c->printerr("%s",st.as<string>(t).c_str());
-	return 0;
+    return DFHack::Lua::GetOutput(st);
 }
 
 static int lua_Console_clear(lua_State *S)
@@ -122,8 +104,6 @@ static int lua_Console_lineedit(lua_State *S)
 }
 const luaL_Reg lua_console_func[]=
 {
-	{"print",lua_Console_print},
-	{"printerr",lua_Console_printerr},
 	{"clear",lua_Console_clear},
 	{"gotoxy",lua_Console_gotoxy},
 	{"color",lua_Console_color},
@@ -147,18 +127,4 @@ void lua::RegisterConsole(lua::state &st)
 	lua::RegFunctionsLocal(st, lua_console_func);
 	//TODO add color consts
 	st.setglobal("Console");
-}
-void lua::SetConsole(lua::state &st,DFHack::color_ostream& stream)
-{
-	int top=st.gettop();
-	st.getglobal("Console");
-	if(st.is<lua::nil>())
-	{
-		st.pop();
-		st.newtable();
-	}
-
-	st.pushlightuserdata(&stream);
-	st.setfield("__pointer");
-	st.settop(top);
 }

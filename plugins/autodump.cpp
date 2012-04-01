@@ -232,7 +232,7 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
             if (here && pos_item != pos_cursor)
                 continue;
 
-            itm->flags.bits.garbage_colect = true;
+            itm->flags.bits.garbage_collect = true;
 
             // Cosmetic changes: make them disappear from view instantly
             itm->flags.bits.forbid = true;
@@ -322,7 +322,7 @@ command_result df_autodump_destroy_item(color_ostream &out, vector <string> & pa
         df::item_flags old_flags = pending_destroy[item->id];
         pending_destroy.erase(item->id);
 
-        item->flags.bits.garbage_colect = false;
+        item->flags.bits.garbage_collect = false;
         item->flags.bits.hidden = old_flags.bits.hidden;
         item->flags.bits.dump = old_flags.bits.dump;
         item->flags.bits.forbid = old_flags.bits.forbid;
@@ -330,7 +330,7 @@ command_result df_autodump_destroy_item(color_ostream &out, vector <string> & pa
     }
 
     // Check the item is good to destroy
-    if (item->flags.bits.garbage_colect)
+    if (item->flags.bits.garbage_collect)
     {
         out.printerr("Item is already marked for destroy.\n");
         return CR_FAILURE;
@@ -357,7 +357,7 @@ command_result df_autodump_destroy_item(color_ostream &out, vector <string> & pa
     // Set the flags
     pending_destroy[item->id] = item->flags;
 
-    item->flags.bits.garbage_colect = true;
+    item->flags.bits.garbage_collect = true;
     item->flags.bits.hidden = true;
     item->flags.bits.dump = true;
     item->flags.bits.forbid = true;

@@ -59,16 +59,6 @@ void LuaWrapper::field_error(lua_State *state, int index, const char *err, const
                mode, (cname ? cname : "?"), (fname ? fname : "?"), err);
 }
 
-void DFHack::PushDFObject(lua_State *state, type_identity *type, void *ptr)
-{
-    push_object_internal(state, type, ptr, false);
-}
-
-void *DFHack::GetDFObject(lua_State *state, type_identity *type, int val_index, bool exact_type)
-{
-    return get_object_internal(state, type, val_index, exact_type, false);
-}
-
 /* */
 
 static int change_error(lua_State *state)
@@ -695,7 +685,7 @@ static int meta_assign(lua_State *state)
                 /*
                  * no assign && nil or missing resize field => 1-based lua array
                  */
-                int size = lua_objlen(state, 2);
+                int size = lua_rawlen(state, 2);
 
                 lua_pop(state, 1);
                 invoke_resize(state, 1, size);
@@ -1242,7 +1232,7 @@ static void RenderTypeChildren(lua_State *state, const std::vector<compound_iden
     }
 }
 
-static void DoAttach(lua_State *state)
+static int DoAttach(lua_State *state)
 {
     int base = lua_gettop(state);
 
@@ -1287,8 +1277,6 @@ static void DoAttach(lua_State *state)
     lua_pushcclosure(state, meta_delete, 1);
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_DELETE_NAME);
 
-    luaL_register(state, "df", no_functions);
-
     {
         // Assign df a metatable with read-only contents
         lua_newtable(state);
@@ -1312,22 +1300,23 @@ static void DoAttach(lua_State *state)
         lua_pushlightuserdata(state, NULL);
         lua_setglobal(state, "NULL");
 
-        freeze_table(state, true, "df");
-        lua_remove(state, -2);
-        lua_setmetatable(state, -2);
+        freeze_table(state, false, "df");
     }
 
-    lua_pop(state, 1);
+    return 1;
 }
 
 /**
  * Initialize access to DF objects from the interpreter
  * context, unless it has already been done.
  */
-void DFHack::AttachDFGlobals(lua_State *state)
+void LuaWrapper::AttachDFGlobals(lua_State *state)
 {
     if (luaL_newmetatable(state, DFHACK_TYPETABLE_NAME))
-        DoAttach(state);
+    {
+        luaL_requiref(state, "df", DoAttach, 1);
+        lua_pop(state, 1);
+    }
 
     lua_pop(state, 1);
 }

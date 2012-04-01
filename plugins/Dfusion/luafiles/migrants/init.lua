@@ -45,7 +45,8 @@ else
 	--patch part
 	--pos=62873C+DF
 	-- pattern: A1,DWORD_,"CURRENTRACE",56,89,ANYBYTE,ANYBYTE,34,e8
-	pos=offsets.find(offsets.base(),0xa1,DWORD_,offsets.getEx("CurrentRace"),0x56,0x89,ANYBYTE,ANYBYTE,0x34,0xe8)
+	_,raceoff=df.sizeof(df.global.ui:_field('race_id'))
+	pos=offsets.find(offsets.base(),0xa1,DWORD_,raceoff,0x56,0x89,ANYBYTE,ANYBYTE,0x34,0xe8)
 	function pokeCall(off)
 		engine.pokeb(off,0xe8)
 		engine.poked(off+1,modpos-off-5)

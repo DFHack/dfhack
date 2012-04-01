@@ -55,10 +55,10 @@ endif()
 # set up versioning.
 set(DF_VERSION_MAJOR "0")
 set(DF_VERSION_MINOR "34")
-set(DF_VERSION_PATCH "06")
+set(DF_VERSION_PATCH "07")
 set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
 
-set(DFHACK_RELEASE "3")
+set(DFHACK_RELEASE "1")
 
 set(DFHACK_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}-r${DFHACK_RELEASE}")
 add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")
@@ -82,6 +82,8 @@ SET(DFHACK_DATA_DESTINATION hack)
 SET(DFHACK_PLUGIN_DESTINATION hack/plugins)
 # dfhack header files go here:
 SET(DFHACK_INCLUDES_DESTINATION hack/include)
+# dfhack lua files go here:
+SET(DFHACK_LUA_DESTINATION hack/lua)
 # the windows .lib file goes here:
 SET(DFHACK_DEVLIB_DESTINATION hack)
 

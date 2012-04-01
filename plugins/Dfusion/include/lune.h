@@ -139,9 +139,8 @@ public:
 
         // store method table in globals so that
         // scripts can add functions written in Lua.
-        lua_pushstring(L, T::className);
         lua_pushvalue(L, methods);
-        lua_settable(L, LUA_GLOBALSINDEX);
+        lua_setglobal(L, T::className);
 
         lua_pushliteral(L, "__metatable");
         lua_pushvalue(L, methods);
@@ -212,7 +211,7 @@ public:
         userdataType *ud =
             static_cast<userdataType*>(luaL_checkudata(L, narg, T::className)); //TODO FIX THIs..
         //(lua_touserdata(L, narg));//
-        if(!ud) luaL_typerror(L, narg, T::className);
+        if(!ud) luaL_error(L, "Bad argument %d: expected type %s", narg, T::className);
         return ud->pT;  // pointer to T object
     }
 protected:

@@ -360,23 +360,6 @@ namespace DFHack
 
     void InitDataDefGlobals(Core *core);
 
-    // LUA wrapper
-
-    /**
-     * Make DF objects available to the given interpreter.
-     */
-    DFHACK_EXPORT void AttachDFGlobals(lua_State *state);
-
-    /**
-     * Push the pointer onto the stack as a wrapped DF object of the given type.
-     */
-    DFHACK_EXPORT void PushDFObject(lua_State *state, type_identity *type, void *ptr);
-
-    /**
-     * Check that the value is a wrapped DF object of the given type, and if so return the pointer.
-     */
-    DFHACK_EXPORT void *GetDFObject(lua_State *state, type_identity *type, int val_index, bool exact_type = false);
-
     template<class T>
     T *ifnull(T *a, T *b) { return a ? a : b; }
 
@@ -682,24 +665,6 @@ namespace DFHack {
         std::vector<std::string> tmp;
         flagarray_to_string<T>(&tmp, val);
         return join_strings(sep, tmp);
-    }
-
-    // LUA wrapper
-
-    /**
-     * Push the pointer onto the stack as a wrapped DF object of a specific type.
-     */
-    template<class T>
-    void PushDFObject(lua_State *state, T *ptr) {
-        PushDFObject(state, df::identity_traits<T>::get(), ptr);
-    }
-
-    /**
-     * Check that the value is a wrapped DF object of the correct type, and if so return the pointer.
-     */
-    template<class T>
-    T *GetDFObject(lua_State *state, int val_index, bool exact_type = false) {
-        return (T*)GetDFObject(state, df::identity_traits<T>::get(), val_index, exact_type);
     }
 }
 

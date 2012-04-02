@@ -111,7 +111,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 ///////////////
 // Various small tool functions
-// 
+// probably many of these should be moved to Unit.h and Building.h sometime later...
 int32_t getCreatureAge(df::unit* unit);
 bool isTame(df::unit* unit);
 bool isTrained(df::unit* unit);
@@ -145,6 +145,14 @@ int32_t getUnitAge(df::unit* unit)
     if (unit->relations.birth_time >= *df::global::cur_year_tick)
         yearDifference--;
     return yearDifference;
+}
+
+bool isDead(df::unit* unit)
+{
+	if(unit->flags1.bits.dead)
+		return true;
+	else
+		return false;
 }
 
 bool isTame(df::unit* creature)
@@ -231,6 +239,9 @@ bool isOwnCiv(df::unit* creature)
 // dump some unit info
 void unitInfo(color_ostream & out, df::unit* unit, bool list_refs = false)
 {
+	if(isDead(unit))
+		return;
+
     out.print("Unit %d", unit->id); //race %d, civ %d,", creature->race, creature->civ_id
     if(unit->name.has_name)
         out << ", name: " << unit->name.first_name << " " << unit->name.nickname;

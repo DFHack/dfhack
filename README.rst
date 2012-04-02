@@ -798,3 +798,22 @@ Export the current loaded map as a file. This will be eventually usable with vis
 dwarfexport
 ===========
 Export dwarves to RuneSmith-compatible XML.
+
+zone
+====
+Helps a bit with managing activity zones (pens, pastures and pits).
+
+Options:
+--------
+:set:       Set zone under cursor as default for future assigns.
+:assign:    Assign selected unit to the pen or pit marked with the 'set' command. 
+            Can also be followed by a valid zone id which will be set instead.
+:unassign:  Unassign selected creature from it's zone.
+:uinfo:     Print info about the selected unit.
+:zinfo:     Print info about zone(s) under the cursor (also lists chains and cages).
+:all:       In combination with 'zinfo' or 'cinfo': print info about all zones/units on the map.
+:verbose:   Print some more info.
+
+Usage
+-----
+One convenient way to use the zone tool is to bind the command 'zone assign' to a hotkey, maybe also the command 'zone set'. Place the in-game cursor over a pen/pasture or pit, use 'zone set' to mark it. Then you can select units on the map (in 'v' or 'k' mode), in the unit list or from inside cages and use 'zone assign' to assign them to their new home. Allows pitting your own dwarves, by the way. Some more features are planned for the future.

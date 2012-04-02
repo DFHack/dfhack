@@ -47,6 +47,29 @@ namespace DFHack { namespace Lua {
                                const std::string &module, bool setglobal = false);
 
     /**
+     * Check if the object at the given index is NIL or NULL.
+     */
+    DFHACK_EXPORT bool IsDFNull(lua_State *state, int val_index);
+
+    enum ObjectClass {
+        /** Not a DF wrapper object */
+        OBJ_INVALID = 0,
+        /** NIL or NULL */
+        OBJ_NULL,
+        /** A named type identity object */
+        OBJ_TYPE,
+        /** A void* reference, i.e. non-null lightuserdata */
+        OBJ_VOIDPTR,
+        /** A typed object reference */
+        OBJ_REF
+    };
+
+    /**
+     * Check if the object at the given index is a valid wrapper object.
+     */
+    DFHACK_EXPORT ObjectClass IsDFObject(lua_State *state, int val_index);
+
+    /**
      * Push the pointer onto the stack as a wrapped DF object of the given type.
      */
     DFHACK_EXPORT void PushDFObject(lua_State *state, type_identity *type, void *ptr);

@@ -36,6 +36,7 @@ distribution.
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "LuaWrapper.h"
+#include "LuaTools.h"
 
 #include "MiscUtils.h"
 
@@ -400,6 +401,46 @@ static bool is_valid_metatable(lua_State *state, int objidx, int metaidx)
     bool ok = !lua_isnil(state, -1);
     lua_pop(state, 1);
     return ok;
+}
+
+bool Lua::IsDFNull(lua_State *state, int val_index)
+{
+    if (lua_isnil(state, val_index))
+        return true;
+    if (lua_islightuserdata(state, val_index))
+        return lua_touserdata(state, val_index) == NULL;
+    return false;
+}
+
+Lua::ObjectClass Lua::IsDFObject(lua_State *state, int val_index)
+{
+    if (lua_isnil(state, val_index))
+        return Lua::OBJ_NULL;
+    if (lua_islightuserdata(state, val_index))
+        return lua_touserdata(state, val_index) ? Lua::OBJ_VOIDPTR : OBJ_NULL;
+
+    Lua::ObjectClass cls;
+
+    if (lua_istable(state, val_index))
+    {
+        cls = Lua::OBJ_TYPE;
+        lua_pushvalue(state, val_index);
+        LookupInTable(state, &DFHACK_TYPEID_TABLE_TOKEN);
+    }
+    else if (lua_isuserdata(state, val_index))
+    {
+        if (!lua_getmetatable(state, val_index))
+            return Lua::OBJ_INVALID;
+        cls = Lua::OBJ_REF;
+        LookupInTable(state, &DFHACK_TYPETABLE_TOKEN);
+    }
+    else
+        return Lua::OBJ_INVALID;
+
+    bool ok = !lua_isnil(state, -1);
+    lua_pop(state, 1);
+
+    return ok ? cls : Lua::OBJ_INVALID;
 }
 
 /**
@@ -865,6 +906,52 @@ static int meta_enum_attr_index(lua_State *state)
     return 1;
 }
 
+/**
+ * Metamethod: df.isvalid(obj[,allow_null])
+ */
+static int meta_isvalid(lua_State *state)
+{
+    luaL_checkany(state, 1);
+
+    switch (Lua::IsDFObject(state, 1))
+    {
+    case Lua::OBJ_NULL:
+        lua_settop(state, 2);
+        if (lua_toboolean(state, 2))
+            lua_pushvalue(state, lua_upvalueindex(1));
+        else
+            lua_pushnil(state);
+        return 1;
+
+    case Lua::OBJ_TYPE:
+        lua_pushvalue(state, lua_upvalueindex(2));
+        return 1;
+
+    case Lua::OBJ_VOIDPTR:
+        lua_pushvalue(state, lua_upvalueindex(3));
+        return 1;
+
+    case Lua::OBJ_REF:
+        lua_pushvalue(state, lua_upvalueindex(4));
+        return 1;
+
+    case Lua::OBJ_INVALID:
+    default:
+        lua_pushnil(state);
+        return 1;
+    }
+}
+
+/**
+ * Metamethod: df.isnull(obj)
+ */
+static int meta_isnull(lua_State *state)
+{
+    luaL_checkany(state, 1);
+    lua_pushboolean(state, Lua::IsDFNull(state, 1));
+    return 1;
+}
+
 static int meta_nodata(lua_State *state)
 {
     return 0;
@@ -1221,8 +1308,14 @@ static void RenderType(lua_State *state, compound_identity *node)
         break;
 
     case IDTYPE_GLOBAL:
+        lua_pushstring(state, "global");
+        lua_setfield(state, ftable, "_kind");
+
         {
             RenderTypeChildren(state, node->getScopeChildren());
+
+            lua_pushlightuserdata(state, node);
+            lua_setfield(state, ftable, "_identity");
 
             BuildTypeMetatable(state, node);
 
@@ -1243,6 +1336,9 @@ static void RenderType(lua_State *state, compound_identity *node)
     }
 
     RenderTypeChildren(state, node->getScopeChildren());
+
+    lua_pushlightuserdata(state, node);
+    lua_setfield(state, ftable, "_identity");
 
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
     lua_setfield(state, ftable, "sizeof");
@@ -1340,6 +1436,16 @@ static int DoAttach(lua_State *state)
         lua_setfield(state, -2, "NULL");
         lua_pushlightuserdata(state, NULL);
         lua_setglobal(state, "NULL");
+
+        lua_pushstring(state, "null");
+        lua_pushstring(state, "type");
+        lua_pushstring(state, "voidptr");
+        lua_pushstring(state, "ref");
+        lua_pushcclosure(state, meta_isvalid, 4);
+        lua_setfield(state, -2, "isvalid");
+
+        lua_pushcfunction(state, meta_isnull);
+        lua_setfield(state, -2, "isnull");
 
         freeze_table(state, false, "df");
     }

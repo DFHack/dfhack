@@ -29,7 +29,7 @@ coord2d operator-(const coord2d &other) const
 
 coord2d operator/(int number) const
 {
-    return coord2d(x/number, y/number);
+    return coord2d((x < 0 ? x - number : x)/number, (y < 0 ? y - number : y)/number);
 }
 coord2d operator*(int number) const
 {
@@ -37,5 +37,5 @@ coord2d operator*(int number) const
 }
 coord2d operator%(int number) const
 {
-    return coord2d(x%number, y%number);
+    return coord2d((x+number)%number, (y+number)%number);
 }

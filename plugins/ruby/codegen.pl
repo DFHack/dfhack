@@ -25,33 +25,24 @@ sub rb_ucase {
     return join("", map { ucfirst $_ } (split('_', $name)));
 }
 
-my %render_global_type = (
+my %global_type_renderer = (
     'enum-type' => \&render_global_enum,
     'struct-type' => \&render_global_class,
     'class-type' => \&render_global_class,
     'bitfield-type' => \&render_global_bitfield,
 );
 
-my %render_struct_field = (
-    'global' => \&render_field_global,
-    'number' => \&render_field_number,
-    'container' => \&render_field_container,
-    'compound' => \&render_field_compound,
-    'pointer' => \&render_field_pointer,
-    'static-array' => \&render_field_array,
-    'primitive' => \&render_field_primitive,
-    'bytes' => \&render_field_bytes,
-);
-
-my %render_item = (
-    'number' => \&render_item_number,
+my %item_renderer = (
     'global' => \&render_item_global,
-    'primitive' => \&render_item_primitive,
-    'pointer' => \&render_item_pointer,
-    'static-array' => \&render_item_array,
+    'number' => \&render_item_number,
     'container' => \&render_item_container,
     'compound' => \&render_item_compound,
+    'pointer' => \&render_item_pointer,
+    'static-array' => \&render_item_staticarray,
+    'primitive' => \&render_item_primitive,
+    'bytes' => \&render_item_bytes,
 );
+
 
 sub render_global_enum {
     my ($name, $type) = @_;
@@ -63,7 +54,6 @@ sub render_global_enum {
     };
     push @lines_rb, "end";
 }
-
 sub render_enum_fields {
     my ($type) = @_;
 
@@ -79,6 +69,7 @@ sub render_enum_fields {
     }
 }
 
+
 sub render_global_bitfield {
     my ($name, $type) = @_;
 
@@ -89,7 +80,6 @@ sub render_global_bitfield {
     };
     push @lines_rb, "end";
 }
-
 sub render_bitfield_fields {
     my ($type) = @_;
 
@@ -108,6 +98,7 @@ sub render_bitfield_fields {
     }
 }
 
+
 sub render_global_class {
     my ($name, $type) = @_;
 
@@ -121,124 +112,6 @@ sub render_global_class {
     };
     push @lines_rb, "end";
 }
-
-sub render_field_global {
-    my ($name, $field) = @_;
-
-    my $typename = $field->getAttribute('type-name');
-    my $rbname = rb_ucase($typename);
-    my $offset = "'offsetof_$name'";
-
-    push @lines_rb, "global :$name, $offset, :$rbname";
-}
-
-sub render_field_number {
-    my ($name, $field) = @_;
-
-    my $subtype = $field->getAttribute('ld:subtype');
-    my $offset = "'offsetof_$name'";
-   $subtype = 'float' if ($subtype eq 's-float');
-
-    push @lines_rb, "$subtype :$name, $offset"
-}
-
-sub render_field_compound {
-    my ($name, $field) = @_;
-
-    my $offset = "'offsetof_$name'";
-    my $subtype = $field->getAttribute('ld:subtype');
-    if (!$subtype || $subtype eq 'bitfield') {
-        push @lines_rb, "compound(:$name, $offset) {";
-        indent_rb {
-            if (!$subtype) {
-                render_struct_fields($field);
-            } else {
-                render_bitfield_fields($field);
-            }
-        };
-        push @lines_rb, "}"
-    } elsif ($subtype eq 'enum') {
-        render_enum_fields($field);
-    } else {
-        print "no render compound $subtype\n";
-    }
-}
-
-sub render_field_container {
-    my ($name, $field) = @_;
-
-    my $subtype = $field->getAttribute('ld:subtype');
-    my $offset = "'offsetof_$name'";
-
-    if ($subtype eq 'stl-deque') {
-        push @lines_rb, "stl_deque :$name, $offset";
-    } elsif ($subtype eq 'stl-bit-vector') {
-        push @lines_rb, "stl_bitvector :$name, $offset";
-    } elsif ($subtype eq 'stl-vector') {
-        my $item = $field->findnodes('child::ld:item')->[0] or return;
-        my $itemdesc = render_item($item);
-        push @lines_rb, "stl_vector(:$name, $offset, $itemdesc";
-    } elsif ($subtype eq 'df-array') {
-        my $item = $field->findnodes('child::ld:item')->[0] or return;
-        my $itemdesc = render_item($item);
-        push @lines_rb, "df_array(:$name, $offset, $itemdesc";
-    } elsif ($subtype eq 'df-linked-list') {
-        my $item = $field->findnodes('child::ld:item')->[0] or return;
-        my $itemdesc = render_item($item);
-        push @lines_rb, "df_linklist(:$name, $offset, $itemdesc";
-    } elsif ($subtype eq 'df-flagarray') {
-        push @lines_rb, "df_flagarray :$name, $offset";
-    } else {
-        print "no render field container $subtype\n";
-    }
-}
-
-
-sub render_field_pointer {
-    my ($name, $field) = @_;
-
-    my $offset = "'offsetof_$name'";
-    my $item = $field->findnodes('child::ld:item')->[0] or return;
-    my $itemdesc = render_item($item);
-    push @lines_rb, "pointer(:$name, $offset, $itemdesc";
-}
-
-sub render_field_array {
-    my ($name, $field) = @_;
-
-    my $offset = "'offsetof_$name'";
-    my $count = $field->getAttribute('count');
-    my $item = $field->findnodes('child::ld:item')->[0] or return;
-    my $itemdesc = render_item($item);
-    push @lines_rb, "staticarray(:$name, $offset, $count, $itemdesc";
-}
-
-sub render_field_primitive {
-    my ($name, $field) = @_;
-
-    my $offset = "'offsetof_$name'";
-    my $subtype = $field->getAttribute('ld:subtype');
-    if ($subtype eq 'stl-string') {
-        push @lines_rb, "string :$name, $offset";
-    } else {
-        print "no render primitive $subtype $name\n";
-    }
-}
-
-sub render_field_bytes {
-    my ($name, $field) = @_;
-
-    my $offset = "'offsetof_$name'";
-    my $subtype = $field->getAttribute('ld:subtype');
-    if ($subtype eq 'padding') {
-    } elsif ($subtype eq 'static-string') {
-        my $size = $field->getAttribute('ld:subtype');
-        push @lines_rb, "static_string :$name, $offset, $size";
-    } else {
-        print "no render field bytes $subtype $name\n";
-    }
-}
-
 sub render_struct_fields {
     my ($type) = @_;
 
@@ -246,24 +119,28 @@ sub render_struct_fields {
         my $name = $field->getAttribute('name');
         $name = $field->getAttribute('ld:anon-name') if (!$name);
         next if (!$name);
-        my $meta = $field->getAttribute('ld:meta');
+        my $offset = "'TODOoffsetof_$name'";
 
-        my $renderer = $render_struct_field{$meta};
-        if ($renderer) {
-            $renderer->($name, $field);
-        } else {
-            print "no render field $meta\n";
-        }
+        push @lines_rb, "field(:$name, $offset) {";
+        indent_rb {
+            render_item($field);
+        };
+        push @lines_rb, "}";
     }
 }
 
-sub render_item_number {
+sub render_item {
     my ($item) = @_;
+    return if (!$item);
 
-    my $sz = $item->getAttribute('ld:bits') / 8;
-    my $subtype = $item->getAttribute('ld:subtype');
-    $subtype = 'float' if ($subtype eq 's-float');
-    return "$sz) { a_$subtype }";
+    my $meta = $item->getAttribute('ld:meta');
+
+    my $renderer = $item_renderer{$meta};
+    if ($renderer) {
+        $renderer->($item);
+    } else {
+        print "no render item $meta\n";
+    }
 }
 
 sub render_item_global {
@@ -271,7 +148,105 @@ sub render_item_global {
 
     my $typename = $item->getAttribute('type-name');
     my $rbname = rb_ucase($typename);
-    return "nil) { a_global :$rbname }";
+
+    push @lines_rb, "global :$rbname";
+}
+
+sub render_item_number {
+    my ($item) = @_;
+
+    my $subtype = $item->getAttribute('ld:subtype');
+    $subtype = $item->getAttribute('base-type') if ($subtype eq 'enum');
+    $subtype = 'int32_t' if (!$subtype);
+
+         if ($subtype eq 'int64_t') {
+        push @lines_rb, 'number 64, true';
+    } elsif ($subtype eq 'uint32_t') {
+        push @lines_rb, 'number 32, false';
+    } elsif ($subtype eq 'int32_t') {
+        push @lines_rb, 'number 32, true';
+    } elsif ($subtype eq 'uint16_t') {
+        push @lines_rb, 'number 16, false';
+    } elsif ($subtype eq 'int16_t') {
+        push @lines_rb, 'number 16, true';
+    } elsif ($subtype eq 'uint8_t') {
+        push @lines_rb, 'number 8, false';
+    } elsif ($subtype eq 'int8_t') {
+        push @lines_rb, 'number 8, false';
+    } elsif ($subtype eq 'bool') {
+        push @lines_rb, 'number 8, true';
+    } elsif ($subtype eq 's-float') {
+        push @lines_rb, 'float';
+    } else {
+        print "no render number $subtype\n";
+    }
+}
+
+sub render_item_compound {
+    my ($item) = @_;
+
+    my $subtype = $item->getAttribute('ld:subtype');
+    if (!$subtype || $subtype eq 'bitfield') {
+        push @lines_rb, "compound {";
+        indent_rb {
+            if (!$subtype) {
+                render_struct_fields($item);
+            } else {
+                render_bitfield_fields($item);
+            }
+        };
+        push @lines_rb, "}"
+    } elsif ($subtype eq 'enum') {
+        # declare constants
+        render_enum_fields($item);
+        # actual field
+        render_item_number($item);
+    } else {
+        print "no render compound $subtype\n";
+    }
+}
+
+sub render_item_container {
+    my ($item) = @_;
+
+    my $subtype = $item->getAttribute('ld:subtype');
+    my $rbmethod = join('_', split('-', $subtype));
+    my $tg = $item->findnodes('child::ld:item')->[0];
+    if ($tg) {
+        my $tglen = get_tglen($tg);
+        push @lines_rb, "$rbmethod($tglen) {";
+        indent_rb {
+            render_item($tg);
+        };
+        push @lines_rb, "}";
+    } else {
+        push @lines_rb, "$rbmethod";
+    }
+}
+
+sub render_item_pointer {
+    my ($item) = @_;
+
+    my $tg = $item->findnodes('child::ld:item')->[0];
+    my $tglen = get_tglen($tg);
+    push @lines_rb, "pointer($tglen) {";
+    indent_rb {
+        render_item($tg);
+    };
+    push @lines_rb, "}";
+}
+
+sub render_item_staticarray {
+    my ($item) = @_;
+
+    my $count = $item->getAttribute('count');
+    my $tg = $item->findnodes('child::ld:item')->[0];
+    my $tglen = get_tglen($tg);
+    push @lines_rb, "static_array($count, $tglen) {";
+    indent_rb {
+        render_item($tg);
+    };
+    push @lines_rb, "}";
 }
 
 sub render_item_primitive {
@@ -279,57 +254,38 @@ sub render_item_primitive {
 
     my $subtype = $item->getAttribute('ld:subtype');
     if ($subtype eq 'stl-string') {
-        return "nil) { a_string }";
+        push @lines_rb, "stl_string";
     } else {
-        print "no render a_primitive $subtype\n";
-        return "nil)";
+        print "no render primitive $subtype\n";
     }
 }
 
-sub render_item_pointer {
+sub render_item_bytes {
     my ($item) = @_;
 
-    my $pitem = $item->findnodes('child::ld:item')->[0];
-    my $desc;
-    if ($pitem) {
-        $desc = render_item($pitem);
+    my $subtype = $item->getAttribute('ld:subtype');
+    if ($subtype eq 'padding') {
+    } elsif ($subtype eq 'static-string') {
+        my $size = $item->getAttribute('size');
+        push @lines_rb, "static_string($size)";
     } else {
-        $desc = 'nil)';
+        print "no render bytes $subtype\n";
     }
-    return "4) { a_pointer($desc }";
 }
 
-sub render_item_array {
-    my ($item) = @_;
 
-    print "no render item array\n";
-    return "nil)";
-}
+sub get_tglen {
+    my ($tg) = @_;
+    if (!$tg) { return 'nil'; }
 
-sub render_item_container {
-    my ($item) = @_;
-
-    print "no render item container\n";
-    return "nil)";
-}
-
-sub render_item_compound {
-    my ($item) = @_;
-
-    print "no render item compound\n";
-    return "nil)";
-}
-
-sub render_item {
-    my ($item) = @_;
-    my $meta = $item->getAttribute('ld:meta');
-
-    my $renderer = $render_item{$meta};
-    if ($renderer) {
-        return $renderer->($item);
+    my $meta = $tg->getAttribute('ld:meta');
+    if ($meta eq 'number') {
+        return $tg->getAttribute('ld:bits')/8;
+    } elsif ($meta eq 'pointer') {
+        return 4;
     } else {
-        print "no render field $meta\n";
-        return "nil)";
+        # TODO
+        return "'TODOsizeof($meta)'";
     }
 }
 
@@ -344,7 +300,7 @@ $global_types{$_->getAttribute('type-name')} = $_ foreach $doc->findnodes('/ld:d
 for my $name (sort { $a cmp $b } keys %global_types) {
     my $type = $global_types{$name};
     my $meta = $type->getAttribute('ld:meta');
-    my $renderer = $render_global_type{$meta};
+    my $renderer = $global_type_renderer{$meta};
     if ($renderer) {
         $renderer->($name, $type);
     } else {

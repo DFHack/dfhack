@@ -82,6 +82,8 @@ SET(DFHACK_DATA_DESTINATION hack)
 SET(DFHACK_PLUGIN_DESTINATION hack/plugins)
 # dfhack header files go here:
 SET(DFHACK_INCLUDES_DESTINATION hack/include)
+# dfhack lua files go here:
+SET(DFHACK_LUA_DESTINATION hack/lua)
 # the windows .lib file goes here:
 SET(DFHACK_DEVLIB_DESTINATION hack)
 

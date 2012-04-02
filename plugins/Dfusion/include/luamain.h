@@ -31,8 +31,8 @@ namespace lua
 	//dumps lua function trace, useless unless called from lua.
     string DebugDump(lua::state &L);
 	//register functions, first registers into global scope, second into current table
-	void RegFunctions(lua::state &L,luaL_reg const *arr);
-	void RegFunctionsLocal(lua::state &L,luaL_reg const *arr);
+	void RegFunctions(lua::state &L,luaL_Reg const *arr);
+	void RegFunctionsLocal(lua::state &L,luaL_Reg const *arr);
 }
 
 

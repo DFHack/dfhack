@@ -272,8 +272,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
-    case SC_GAME_LOADED:
-    case SC_GAME_UNLOADED:
+    case SC_MAP_LOADED:
+    case SC_MAP_UNLOADED:
         if (running)
             out.printerr("seedwatch deactivated due to game load/unload\n");
         running = false;

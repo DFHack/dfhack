@@ -643,7 +643,7 @@ static int meta_struct_next(lua_State *state)
 {
     if (lua_gettop(state) < 2) lua_pushnil(state);
 
-    int len = lua_objlen(state, UPVAL_FIELDTABLE);
+    int len = lua_rawlen(state, UPVAL_FIELDTABLE);
     int idx = cur_iter_index(state, len+1, 2, 0);
     if (idx == len)
         return 0;
@@ -1032,7 +1032,7 @@ static int meta_call_function(lua_State *state)
 static void AddMethodWrapper(lua_State *state, int meta_idx, int field_idx,
                              const char *name, function_identity_base *fun)
 {
-    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPETABLE_NAME);
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPETABLE_TOKEN);
     lua_pushvalue(state, meta_idx);
     lua_pushfstring(state, "%s()", name);
     lua_pushlightuserdata(state, fun);
@@ -1053,7 +1053,7 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct)
     if (!fields)
         return;
 
-    int cnt = lua_objlen(state, base+3); // field iter table
+    int cnt = lua_rawlen(state, base+3); // field iter table
 
     for (int i = 0; fields[i].mode != struct_field_info::END; ++i)
     {
@@ -1331,7 +1331,7 @@ void LuaWrapper::push_adhoc_pointer(lua_State *state, void *ptr, type_identity *
         return;
     }
 
-    LookupInTable(state, target, DFHACK_PTR_IDTABLE_NAME);
+    LookupInTable(state, target, &DFHACK_PTR_IDTABLE_TOKEN);
 
     type_identity *id = (type_identity*)lua_touserdata(state, -1);
     lua_pop(state, 1);
@@ -1347,7 +1347,7 @@ void LuaWrapper::push_adhoc_pointer(lua_State *state, void *ptr, type_identity *
         void *newobj = lua_newuserdata(state, sizeof(pointer_identity));
         id = new (newobj) pointer_identity(target);
 
-        SaveInTable(state, target, DFHACK_PTR_IDTABLE_NAME);
+        SaveInTable(state, target, &DFHACK_PTR_IDTABLE_TOKEN);
         lua_pop(state, 1);
     }
 

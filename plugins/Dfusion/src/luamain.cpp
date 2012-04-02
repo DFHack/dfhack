@@ -23,7 +23,7 @@ int lua_Ver_Lua(lua_State *L)
 }
 
 
-static const struct luaL_reg lua_basic_lib [] =
+static const struct luaL_Reg lua_basic_lib [] =
 {
     {"getluaver", lua_Ver_Lua},
     {NULL, NULL}  /* sentinel */
@@ -34,9 +34,9 @@ void lua::RegBasics(lua::state &L)
     RegFunctions(L,lua_basic_lib);
 }
 
-void lua::RegFunctions(lua::state &L,luaL_reg const*arr)
+void lua::RegFunctions(lua::state &L,luaL_Reg const*arr)
 {
-    luaL_reg const *cur=arr;
+    luaL_Reg const *cur=arr;
     while(cur->name!=NULL)
     {
         lua_pushcfunction(L, cur->func);
@@ -45,9 +45,9 @@ void lua::RegFunctions(lua::state &L,luaL_reg const*arr)
         cur++;
     }
 }
-void lua::RegFunctionsLocal(lua::state &L,luaL_reg const*arr)
+void lua::RegFunctionsLocal(lua::state &L,luaL_Reg const*arr)
 {
-    luaL_reg const *cur=arr;
+    luaL_Reg const *cur=arr;
     while(cur->name!=NULL)
     {
         lua_pushcfunction(L, cur->func);

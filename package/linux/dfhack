@@ -41,6 +41,7 @@ case "$1" in
   -g | --gdb)
     shift
     echo "set environment LD_PRELOAD=./hack/libdfhack.so" > gdbcmd.tmp
+    echo "set environment MALLOC_PERTURB_=45" >> gdbcmd.tmp
     gdb $DF_GDB_OPTS -x gdbcmd.tmp ./libs/Dwarf_Fortress $*
     rm gdbcmd.tmp
     ret=$?

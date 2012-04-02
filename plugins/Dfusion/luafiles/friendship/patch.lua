@@ -11,8 +11,7 @@ function friendship_in.patch()
 		pos3=offsets.find(pos+7,0xa1,DWORD_,crace) -- mov eax,[ptr]
 		pos4=offsets.find(pos+7,0x66,0x8b,ANYBYTE,DWORD_,crace) -- mov ANYREG,[ptr]
 		--pos5=offsets.find(pos+7,0x66,0x8b,0x15,DWORD_,crace) -- mov dx,[ptr]
-
-		pos=minEx(pos1,pos2,pos3,pos4)
+		pos=minEx{pos1,pos2,pos3,pos4}
 		if pos ~=0 then 
 			hits[i]=pos
 			i=i+1
@@ -28,7 +27,7 @@ function friendship_in.patch()
 			--TODO read offset from memory.xml
 			pos1=offsets.find(myp,0x39,ANYBYTE,0x8c,00,00,00) -- compare [reg+08c] (creature race) with any reg 
 			pos2=offsets.find(myp,0x3b,ANYBYTE,0x8c,00,00,00) -- compare  any reg with [reg+08c] (creature race)
-			pos=minEx(pos1,pos2)
+			pos=minEx{pos1,pos2}
 			if pos ~=0 then
 				
 				if(pos-p>250) then

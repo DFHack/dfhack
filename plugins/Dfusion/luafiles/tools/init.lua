@@ -289,29 +289,19 @@ function tools.empregnate(unit)
 	if unit.curse then
 		unit.curse.add_tags2.STERILE=false
 	end
-	local arr1=unit.appearance.unk_51c
-	local arr2=unit.appearance.unk_524
+	local genes = unit.appearance.genes
 	if unit.relations.pregnancy_ptr == nil then
 		print("creating preg ptr.")
 		if false then
 			print(string.format("%x %x",df.sizeof(unit.relations:_field("pregnancy_ptr"))))
 			return
 		end
-		unit.relations.pregnancy_ptr={ new = true, anon_1 = { assign = arr1 }, anon_2 = { assign = arr2 } }
+		unit.relations.pregnancy_ptr = { new = true, assign = genes }
 	end
-	local tarr1=unit.relations.pregnancy_ptr.anon_1
-	local tarr2=unit.relations.pregnancy_ptr.anon_2
-	if #tarr1~= #arr1 then
-		print("First array incorrect, fixing.")
-		print(string.format("Before: %d vs %d",#tarr1,#arr1))
-		tarr1:assign(arr1)
-		print(string.format("after: %d vs %d",#tarr1,#arr1))
-	end
-	if created or #tarr2~= #arr2 then
-		print("Second array incorrect, fixing.")
-		print(string.format("Before: %d vs %d",#tarr2,#arr2))
-		tarr2:assign(arr2)
-		print(string.format("after: %d vs %d",#tarr2,#arr2))
+	local ngenes = unit.relations.pregnancy_ptr
+	if #ngenes.appearance ~= #genes.appearance or #ngenes.colors ~= #genes.colors then
+		print("Array sizes incorrect, fixing.")
+		ngenes:assign(genes);
 	end
 	print("Setting preg timer.")
 	unit.relations.pregnancy_timer=10

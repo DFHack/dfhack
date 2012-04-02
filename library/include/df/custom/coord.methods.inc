@@ -33,7 +33,7 @@ coord operator-(const coord &other) const
 
 coord operator/(int number) const
 {
-    return coord(x/number, y/number, z);
+    return coord((x < 0 ? x - number : x)/number, (y < 0 ? y - number : y)/number, z);
 }
 coord operator*(int number) const
 {
@@ -41,7 +41,7 @@ coord operator*(int number) const
 }
 coord operator%(int number) const
 {
-    return coord(x%number, y%number, z);
+    return coord((x+number)%number, (y+number)%number, z);
 }
 
 coord operator-(int number) const

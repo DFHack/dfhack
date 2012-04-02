@@ -138,11 +138,11 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
-    case SC_GAME_LOADED:
+    case SC_MAP_LOADED:
         cleanup_state(out);
         init_state(out);
         break;
-    case SC_GAME_UNLOADED:
+    case SC_MAP_UNLOADED:
         cleanup_state(out);
         break;
     default:
@@ -500,7 +500,7 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     pj->holder = df::building::find(pj->building_id);
     if (!pj->holder)
     {
-        out.printerr("Forgetting job %d (%s): holder building lost.",
+        out.printerr("Forgetting job %d (%s): holder building lost.\n",
                         pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
         forget_job(out, pj);
         return true;
@@ -509,7 +509,7 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     // Check its state and postpone or cancel if invalid
     if (pj->holder->jobs.size() >= 10)
     {
-        out.printerr("Forgetting job %d (%s): holder building has too many jobs.",
+        out.printerr("Forgetting job %d (%s): holder building has too many jobs.\n",
                         pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
         forget_job(out, pj);
         return true;
@@ -532,7 +532,7 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     {
         deleteJobStruct(recovered);
 
-        out.printerr("Inconsistency: job %d (%s) already in list.",
+        out.printerr("Inconsistency: job %d (%s) already in list.\n",
                         pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
         return true;
     }

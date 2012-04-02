@@ -1,8 +1,7 @@
 PROJECT ( lua CXX )
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
-# TODO: make this RelWithDebInfo only
-ADD_DEFINITIONS(-DLUA_USE_APICHECK)
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-DLUA_USE_APICHECK")
 
 IF(WIN32)
     ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE )
@@ -17,10 +16,10 @@ IF(UNIX)
 ENDIF()
 
 SET (HDR_LIBLUA
-include/bit.h
 include/lapi.h
 include/lauxlib.h
 include/lcode.h
+include/lctype.h
 include/ldebug.h
 include/ldo.h
 include/lfunc.h
@@ -50,7 +49,10 @@ SET (SRC_LIBLUA
 src/lapi.c
 src/lauxlib.c
 src/lbaselib.c
+src/lbitlib.c
 src/lcode.c
+src/lcorolib.c
+src/lctype.c
 src/ldblib.c
 src/ldebug.c
 src/ldo.c
@@ -76,7 +78,6 @@ src/ltm.c
 src/lundump.c
 src/lvm.c
 src/lzio.c
-src/bit.c
 )
 # compile with C++ compiler
 set_source_files_properties(${SRC_LIBLUA} PROPERTIES LANGUAGE CXX)

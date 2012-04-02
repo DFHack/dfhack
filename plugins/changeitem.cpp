@@ -22,6 +22,7 @@ using namespace std;
 
 #include "DataDefs.h"
 #include "df/item.h"
+#include "df/itemdef.h"
 #include "df/world.h"
 #include "df/general_ref.h"
 
@@ -50,6 +51,7 @@ const string changeitem_help =
     "  info         - don't change anything, print some item info instead\n"
     "  here         - change all items at cursor position\n"
     "  material, m  - change material. must be followed by material RAW id\n"
+    "  subtype, s   - change subtype. must be followed by correct RAW id\n"
     "  quality, q   - change base quality. must be followed by number (0-5)\n"
     "  force        - ignore subtypes, force change to new material.\n"
     "Example:\n"
@@ -102,7 +104,8 @@ command_result changeitem_execute(
     color_ostream &out, df::item * item,
     bool info, bool force,
     bool change_material, string new_material,
-    bool change_quality, int new_quality);
+    bool change_quality, int new_quality,
+    bool change_subtype, string new_subtype);
 
 command_result df_changeitem(color_ostream &out, vector <string> & parameters)
 {
@@ -114,6 +117,9 @@ command_result df_changeitem(color_ostream &out, vector <string> & parameters)
 
     bool change_material = false;
     string new_material = "none";
+
+    bool change_subtype = false;
+    string new_subtype = "NONE";
 
     bool change_quality = false;
     int new_quality = 0;
@@ -183,6 +189,19 @@ command_result df_changeitem(color_ostream &out, vector <string> & parameters)
             change_quality = true;
             i++;
         }
+        else if (p == "subtype" || p == "s" )
+        {
+            // must be followed by subtype RAW id
+            // (string like 'ITEM_GLOVES_GAUNTLETS', 'ITEM_WEAPON_DAGGER_LARGE', 'ITEM_TOOL_KNIFE_MEAT_CLEAVER', ...)
+            if(i == parameters.size()-1)
+            {
+                out.printerr("no subtype specified!\n");
+                return CR_WRONG_USAGE;
+            }
+            change_subtype = true;
+            new_subtype = parameters[i+1];
+            i++;
+        }
         else
         {
             out << p << ": Unknown command!" << endl;
@@ -246,7 +265,7 @@ command_result df_changeitem(color_ostream &out, vector <string> & parameters)
             if (pos_item != pos_cursor)
                 continue;
 
-            changeitem_execute(out, item, info, force, change_material, new_material, change_quality, new_quality);
+            changeitem_execute(out, item, info, force, change_material, new_material, change_quality, new_quality, change_subtype, new_subtype);
             processed_total++;
         }
         out.print("Done. %d items processed.\n", processed_total);
@@ -260,7 +279,7 @@ command_result df_changeitem(color_ostream &out, vector <string> & parameters)
             out.printerr("No item selected.\n");
             return CR_FAILURE;
         }
-        changeitem_execute(out, item, info, force, change_material, new_material, change_quality, new_quality);
+        changeitem_execute(out, item, info, force, change_material, new_material, change_quality, new_quality, change_subtype, new_subtype);
     }
     return CR_OK;
 }
@@ -269,20 +288,43 @@ command_result changeitem_execute(
     color_ostream &out, df::item * item,
     bool info, bool force,
     bool change_material, string new_material,
-    bool change_quality, int new_quality )
+    bool change_quality, int new_quality,
+    bool change_subtype, string new_subtype )
 {
     MaterialInfo mat_new;
     MaterialInfo mat_old;
+
+    ItemTypeInfo sub_old;
+    ItemTypeInfo sub_new;
+    int new_subtype_id = -1;
 
     if(change_material)
         mat_new.find(new_material);
     if(change_material || info)
         mat_old.decode(item);
 
+    if(change_subtype || info)
+        sub_old.decode(item);
+    if(change_subtype)
+    {
+        string new_type = ENUM_KEY_STR(item_type, item->getType()) + ":" + new_subtype;
+        if (new_subtype == "NONE")
+            new_subtype_id = -1;
+        else if (sub_new.find(new_type))
+            new_subtype_id = sub_new.subtype;
+        else
+        {
+//          out.printerr("Invalid subtype for selected item, skipping\n");
+            return CR_FAILURE;
+        }
+    }
+
     // print some info, don't change stuff
     if(info)
     {
         out << "Item info: " << endl;
+        out << "  type:    " << ENUM_KEY_STR(item_type, item->getType()) << endl;
+        out << "  subtype: " << (sub_old.custom ? sub_old.custom->id : "NONE") << endl;
         out << "  quality: " << describeQuality(item->getQuality()) << endl;
         //if(item->isImproved())
         //    out << "  imp.quality: " << describeQuality(item->getImprovementQuality()) << endl;
@@ -317,6 +359,12 @@ command_result changeitem_execute(
         }
 
         item->flags.bits.temps_computed = 0;              // recalc temperatures next time touched
+        item->flags.bits.weight_computed = 0;   // recalc weight next time touched
+    }
+
+    if(change_subtype)
+    {
+        item->setSubtype(new_subtype_id);
         item->flags.bits.weight_computed = 0;   // recalc weight next time touched
     }
     return CR_OK;

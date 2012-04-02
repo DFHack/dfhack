@@ -816,4 +816,4 @@ Options:
 
 Usage
 -----
-One convenient way to use the zone tool is to bind the command 'zone assign' to a hotkey, maybe also the command 'zone set'. Place the in-game cursor over a pen/pasture or pit, use 'zone set' to mark it. Then you can select units on the map (in 'v' or 'k' mode), in the unit list or from inside cages and use 'zone assign' to assign them to their new home. Allows pitting your own dwarves, by the way. Some more features are planned for the future.
+One convenient way to use the zone tool is to bind the command 'zone assign' to a hotkey, maybe also the command 'zone set'. Place the in-game cursor over a pen/pasture or pit, use 'zone set' to mark it. Then you can select units on the map (in 'v' or 'k' mode), in the unit list or from inside cages and use 'zone assign' to assign them to their new home. Allows pitting your own dwarves, by the way.

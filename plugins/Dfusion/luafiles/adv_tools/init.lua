@@ -46,11 +46,11 @@ function adv_tools.reincarnate(swap_soul) --only for adventurer i guess, TODO so
 		end
 	end
 	tools.change_adv(trg_unit_final)
-	if swap_souls then --actually add a soul...
-		t_soul=adv.status.cur_soul
-		adv.status.cur_soul=df.NULL
+	if swap_soul then --actually add a soul...
+		t_soul=adv.status.current_soul
+		adv.status.current_soul=df.NULL
 		adv.status.souls:resize(0)
-		trg_unit_final.status.cur_soul=t_soul
+		trg_unit_final.status.current_soul=t_soul
 		trg_unit_final.status.souls:insert(#trg_unit_final.status.souls,t_soul)
 	end
 end

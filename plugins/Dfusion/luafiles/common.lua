@@ -521,7 +521,11 @@ end
 function getNemesis(unit)
 	local id=getNemesisId(unit)
 	if id then
-		return df.global.world.nemesis.all[id]
+		for k,v in pairs(df.global.world.nemesis.all)	do
+			if id==v.id then
+				return v
+			end
+		end
 	end
 end
 function Allocate(size)

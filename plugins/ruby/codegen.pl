@@ -6,7 +6,9 @@ use warnings;
 use XML::LibXML;
 
 our @lines_rb;
-our @lines_cpp;
+my @lines_cpp;
+my @include_cpp;
+my %offsets;
 
 sub indent_rb(&) {
     my ($sub) = @_;
@@ -99,52 +101,56 @@ sub render_bitfield_fields {
 }
 
 
+my $cpp_var_count = 0;
 sub render_global_class {
     my ($name, $type) = @_;
 
-    #my $cppvar = 'v';  # for offsetof
+    my $cppvar = "v_$cpp_var_count";
+    $cpp_var_count += 1;
+    push @lines_cpp, "df::$name $cppvar;";
+    push @include_cpp, $name;
 
     my $rbname = rb_ucase($name);
     my $parent = rb_ucase($type->getAttribute('inherits-from') || 'MemStruct');
     push @lines_rb, "class $rbname < $parent";
     indent_rb {
-        render_struct_fields($type);
+        render_struct_fields($type, $cppvar);
     };
     push @lines_rb, "end";
 }
 sub render_struct_fields {
-    my ($type) = @_;
+    my ($type, $cppvar) = @_;
 
     for my $field ($type->findnodes('child::ld:field')) {
         my $name = $field->getAttribute('name');
         $name = $field->getAttribute('ld:anon-name') if (!$name);
         next if (!$name);
-        my $offset = "'TODOoffsetof_$name'";
+        my $offset = get_offset($cppvar, $name);
 
         push @lines_rb, "field(:$name, $offset) {";
         indent_rb {
-            render_item($field);
+            render_item($field, "$cppvar.$name");
         };
         push @lines_rb, "}";
     }
 }
 
 sub render_item {
-    my ($item) = @_;
+    my ($item, $cppvar) = @_;
     return if (!$item);
 
     my $meta = $item->getAttribute('ld:meta');
 
     my $renderer = $item_renderer{$meta};
     if ($renderer) {
-        $renderer->($item);
+        $renderer->($item, $cppvar);
     } else {
         print "no render item $meta\n";
     }
 }
 
 sub render_item_global {
-    my ($item) = @_;
+    my ($item, $cppvar) = @_;
 
     my $typename = $item->getAttribute('type-name');
     my $rbname = rb_ucase($typename);
@@ -153,7 +159,7 @@ sub render_item_global {
 }
 
 sub render_item_number {
-    my ($item) = @_;
+    my ($item, $cppvar) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     $subtype = $item->getAttribute('base-type') if ($subtype eq 'enum');
@@ -183,14 +189,14 @@ sub render_item_number {
 }
 
 sub render_item_compound {
-    my ($item) = @_;
+    my ($item, $cppvar) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     if (!$subtype || $subtype eq 'bitfield') {
         push @lines_rb, "compound {";
         indent_rb {
             if (!$subtype) {
-                render_struct_fields($item);
+                render_struct_fields($item, $cppvar);
             } else {
                 render_bitfield_fields($item);
             }
@@ -200,23 +206,23 @@ sub render_item_compound {
         # declare constants
         render_enum_fields($item);
         # actual field
-        render_item_number($item);
+        render_item_number($item, $cppvar);
     } else {
         print "no render compound $subtype\n";
     }
 }
 
 sub render_item_container {
-    my ($item) = @_;
+    my ($item, $cppvar) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     my $rbmethod = join('_', split('-', $subtype));
     my $tg = $item->findnodes('child::ld:item')->[0];
     if ($tg) {
-        my $tglen = get_tglen($tg);
+        my $tglen = get_tglen($tg, $cppvar);
         push @lines_rb, "$rbmethod($tglen) {";
         indent_rb {
-            render_item($tg);
+            render_item($tg, "${cppvar}[0]");
         };
         push @lines_rb, "}";
     } else {
@@ -225,32 +231,32 @@ sub render_item_container {
 }
 
 sub render_item_pointer {
-    my ($item) = @_;
+    my ($item, $cppvar) = @_;
 
     my $tg = $item->findnodes('child::ld:item')->[0];
-    my $tglen = get_tglen($tg);
+    my $tglen = get_tglen($tg, $cppvar);
     push @lines_rb, "pointer($tglen) {";
     indent_rb {
-        render_item($tg);
+        render_item($tg, "${cppvar}[0]");
     };
     push @lines_rb, "}";
 }
 
 sub render_item_staticarray {
-    my ($item) = @_;
+    my ($item, $cppvar) = @_;
 
     my $count = $item->getAttribute('count');
     my $tg = $item->findnodes('child::ld:item')->[0];
-    my $tglen = get_tglen($tg);
+    my $tglen = get_tglen($tg, $cppvar);
     push @lines_rb, "static_array($count, $tglen) {";
     indent_rb {
-        render_item($tg);
+        render_item($tg, "${cppvar}[0]");
     };
     push @lines_rb, "}";
 }
 
 sub render_item_primitive {
-    my ($item) = @_;
+    my ($item, $cppvar) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     if ($subtype eq 'stl-string') {
@@ -261,7 +267,7 @@ sub render_item_primitive {
 }
 
 sub render_item_bytes {
-    my ($item) = @_;
+    my ($item, $cppvar) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     if ($subtype eq 'padding') {
@@ -274,9 +280,18 @@ sub render_item_bytes {
 }
 
 
+sub get_offset {
+    my ($cppvar, $fname) = @_;
+
+    return query_cpp("offsetof(typeof($cppvar), $fname)");
+}
+
 sub get_tglen {
-    my ($tg) = @_;
-    if (!$tg) { return 'nil'; }
+    my ($tg, $cppvar) = @_;
+
+    if (!$tg) {
+        return query_cpp("sizeof(${cppvar}[0])");
+    }
 
     my $meta = $tg->getAttribute('ld:meta');
     if ($meta eq 'number') {
@@ -284,14 +299,40 @@ sub get_tglen {
     } elsif ($meta eq 'pointer') {
         return 4;
     } else {
-        # TODO
-        return "'TODOsizeof($meta)'";
+        return query_cpp("sizeof(${cppvar}[0])");
     }
 }
 
+sub query_cpp {
+    my ($query) = @_;
+
+    my $ans = $offsets{$query};
+    return $ans if ($ans);
+
+    push @lines_cpp, "cout << \"$query = \" << $query << endl;";
+    return "'$query'";
+}
+
+
+
 my $input = $ARGV[0] || '../../library/include/df/codegen.out.xml';
-my $output_rb = $ARGV[1] || 'ruby-autogen.rb';
-my $output_cpp = $ARGV[2] || 'ruby-autogen.cpp';
+
+# run once with output = 'ruby-autogen.cpp'
+# compile
+# execute, save output to 'ruby-autogen.offsets'
+# re-run this script with output = 'ruby-autogen.rb' and offsetfile = 'ruby-autogen.offsets'
+# delete binary
+# delete offsets
+my $output = $ARGV[1] or die "need output file";
+my $offsetfile = $ARGV[2];
+
+if ($offsetfile) {
+    while (<$offsetfile>) {
+        my @val = split(' = ');
+        $offsets{$val[0]} = $val[1];
+    }
+}
+
 
 my $doc = XML::LibXML->new()->parse_file($input);
 my %global_types;
@@ -310,12 +351,16 @@ for my $name (sort { $a cmp $b } keys %global_types) {
 
 for my $obj ($doc->findnodes('/ld:data-definition/ld:global-object')) {
     my $name = $obj->getAttribute('name');
+    # TODO
 }
 
-open FH, ">$output_rb";
-print FH "$_\n" for @lines_rb;
-close FH;
-
-open FH, ">$output_cpp";
-print FH "$_\n" for @lines_cpp;
+open FH, ">$output";
+if ($output =~ /\.cpp$/) {
+    print FH "#include \"$_\"\n" for @include_cpp;
+    print FH "void main(void) {\n";
+    print FH "    $_\n" for @lines_cpp;
+    print FH "}\n";
+} else {
+    print FH "$_\n" for @lines_rb;
+}
 close FH;

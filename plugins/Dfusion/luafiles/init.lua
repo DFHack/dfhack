@@ -73,7 +73,7 @@ table.insert(plugins,{"friendship","Multi race fort enabler"})
 table.insert(plugins,{"offsets","Find all offsets"})
 
 table.insert(plugins,{"friendship_civ","Multi civ fort enabler"})
-table.insert(plugins,{"adv_tools","some tools for (mainly) advneturer hacking"})
+
 
 table.insert(plugins,{"triggers","a function calling plug (discontinued...)"})
 table.insert(plugins,{"migrants","multi race imigrations"})
@@ -81,6 +81,7 @@ table.insert(plugins,{"migrants","multi race imigrations"})
 --table.insert(plugins,{"onfunction","run lua on some df function"})
 --table.insert(plugins,{"editor","edit internals of df",EditDF})
 table.insert(plugins,{"saves","run current worlds's init.lua",RunSaved})
+table.insert(plugins,{"adv_tools","some tools for (mainly) advneturer hacking"})
 loadall(plugins)
 dofile_silent("dfusion/initcustom.lua")
 

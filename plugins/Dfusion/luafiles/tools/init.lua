@@ -134,7 +134,7 @@ function tools.change_adv(unit,nemesis)
 			other_nem.flags[1]=true
 		end
 		if nem then
-			nem.flags[1]=true
+			nem.flags[0]=true
 			nem.flags[2]=true
 			df.global.ui_advmode.player_id=nem.id
 		else

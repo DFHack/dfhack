@@ -338,21 +338,6 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
         info->add_burrows(unit->burrows[i]);
 }
 
-void DFHack::describeJobSkills(RepeatedPtrField<JobSkillInfo> *pf)
-{
-    FOR_ENUM_ITEMS(job_skill, skill)
-    {
-        auto item = pf->Add();
-
-        item->set_id(skill);
-        item->set_caption(ENUM_ATTR_STR(job_skill, caption, skill));
-        item->set_caption_noun(ENUM_ATTR_STR(job_skill, caption_noun, skill));
-        item->set_profession(ENUM_ATTR(job_skill, profession, skill));
-        item->set_labor(ENUM_ATTR(job_skill, labor, skill));
-        item->set_type(ENUM_ATTR(job_skill, type, skill));
-    }
-}
-
 static command_result GetVersion(color_ostream &stream,
                                  const EmptyMessage *, StringMessage *out)
 {
@@ -462,7 +447,20 @@ static command_result ListEnums(color_ostream &stream,
 
 static command_result ListJobSkills(color_ostream &stream, const EmptyMessage *, ListJobSkillsOut *out)
 {
-    describeJobSkills(out->mutable_value());
+    auto pf = out->mutable_value();
+
+    FOR_ENUM_ITEMS(job_skill, skill)
+    {
+        auto item = pf->Add();
+
+        item->set_id(skill);
+        item->set_caption(ENUM_ATTR_STR(job_skill, caption, skill));
+        item->set_caption_noun(ENUM_ATTR_STR(job_skill, caption_noun, skill));
+        item->set_profession(ENUM_ATTR(job_skill, profession, skill));
+        item->set_labor(ENUM_ATTR(job_skill, labor, skill));
+        item->set_type(ENUM_ATTR(job_skill, type, skill));
+    }
+
     return CR_OK;
 }
 

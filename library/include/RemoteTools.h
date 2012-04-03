@@ -127,6 +127,10 @@ namespace DFHack
     DFHACK_EXPORT void describeUnit(BasicUnitInfo *info, df::unit *unit,
                                     const BasicUnitInfoMask *mask = NULL);
 
+    using dfproto::JobSkillInfo;
+
+    DFHACK_EXPORT void describeJobSkills(RepeatedPtrField<JobSkillInfo> *pf);
+
     /////
 
     class CoreService : public RPCService {

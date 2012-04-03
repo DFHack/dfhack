@@ -69,6 +69,17 @@ message BasicMaterialInfoMask {
     optional bool reaction = 3 [default = false];
 };
 
+message JobSkillInfo {
+    required int32 id = 1;
+
+    optional string caption = 2;
+    optional string caption_noun = 3;
+
+    optional int32 profession = 4;
+    optional int32 labor = 5;
+    optional int32 type = 6;
+};
+
 message NameInfo {
     optional string first_name = 1;
     optional string nickname = 2;

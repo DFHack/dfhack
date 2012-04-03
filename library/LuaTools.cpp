@@ -36,6 +36,8 @@ distribution.
 #include "DataDefs.h"
 #include "DataIdentity.h"
 
+#include "modules/World.h"
+
 #include "LuaWrapper.h"
 #include "LuaTools.h"
 
@@ -189,7 +191,7 @@ bool DFHack::Lua::Require(color_ostream &out, lua_State *state,
 
 static bool load_with_env(color_ostream &out, lua_State *state, const std::string &code, int eidx)
 {
-    if (luaL_loadstring(state, code.c_str()) != LUA_OK)
+    if (luaL_loadbuffer(state, code.data(), code.size(), "=(interactive)") != LUA_OK)
     {
         report_error(out, state);
         return false;
@@ -223,11 +225,16 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
     DFHack::CommandHistory hist;
     hist.load(hfile);
 
-    out.print("Type quit to exit interactive lua interpreter.\n"
-              "Shortcuts:\n"
-              " '= foo' => '_1,_2,... = foo'\n"
-              " '! foo' => 'print(foo)'\n"
-              "Both assign the first result to '_'\n");
+    out.print("Type quit to exit interactive lua interpreter.\n");
+
+    static bool print_banner = true;
+    if (print_banner) {
+        out.print("Shortcuts:\n"
+                  " '= foo' => '_1,_2,... = foo'\n"
+                  " '! foo' => 'print(foo)'\n"
+                  "Both save the first result as '_'.\n");
+        print_banner = false;
+    }
 
     Console &con = static_cast<Console&>(out);
 
@@ -303,7 +310,7 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
         {
             if (!load_with_env(out, state, curline, base))
                 continue;
-            if (!SafeCall(out, state, 0, LUA_MULTRET))
+            if (!SafeCall(out, state, 0, 0))
                 continue;
         }
     }
@@ -330,14 +337,253 @@ static int lua_dfhack_interpreter(lua_State *state)
     return 1;
 }
 
+static int lua_dfhack_with_suspend(lua_State *L)
+{
+    int ctx;
+    int rv = lua_getctx(L, &ctx);
+
+    // Non-resume entry point:
+    if (rv == LUA_OK)
+    {
+        int nargs = lua_gettop(L);
+
+        luaL_checktype(L, 1, LUA_TFUNCTION);
+
+        Core::getInstance().Suspend();
+
+        lua_pushcfunction(L, traceback);
+        lua_insert(L, 1);
+
+        rv = lua_pcallk(L, nargs-1, LUA_MULTRET, 1, 0, lua_dfhack_with_suspend);
+    }
+
+    // Return, resume, or error entry point:
+    lua_remove(L, 1);
+
+    Core::getInstance().Resume();
+
+    if (rv != LUA_OK && rv != LUA_YIELD)
+        lua_error(L);
+
+    return lua_gettop(L);
+}
+
 static const luaL_Reg dfhack_funcs[] = {
     { "print", lua_dfhack_print },
     { "println", lua_dfhack_println },
     { "printerr", lua_dfhack_printerr },
     { "traceback", traceback },
     { "interpreter", lua_dfhack_interpreter },
+    { "with_suspend", lua_dfhack_with_suspend },
     { NULL, NULL }
 };
+
+/*
+ * Per-world persistent configuration storage.
+ */
+
+static PersistentDataItem persistent_by_struct(lua_State *state, int idx)
+{
+    lua_getfield(state, idx, "entry_id");
+    int id = lua_tointeger(state, -1);
+    lua_pop(state, 1);
+
+    PersistentDataItem ref = Core::getInstance().getWorld()->GetPersistentData(id);
+
+    if (ref.isValid())
+    {
+        lua_getfield(state, idx, "key");
+        const char *str = lua_tostring(state, -1);
+        if (!str || str != ref.key())
+            luaL_argerror(state, idx, "inconsistent id and key");
+        lua_pop(state, 1);
+    }
+
+    return ref;
+}
+
+static int read_persistent(lua_State *state, PersistentDataItem ref, bool create)
+{
+    if (!ref.isValid())
+    {
+        lua_pushnil(state);
+        lua_pushstring(state, "entry not found");
+        return 2;
+    }
+
+    if (create)
+        lua_createtable(state, 0, 4);
+
+    lua_pushvalue(state, lua_upvalueindex(1));
+    lua_setmetatable(state, -2);
+
+    lua_pushinteger(state, ref.entry_id());
+    lua_setfield(state, -2, "entry_id");
+    lua_pushstring(state, ref.key().c_str());
+    lua_setfield(state, -2, "key");
+    lua_pushstring(state, ref.val().c_str());
+    lua_setfield(state, -2, "value");
+
+    lua_createtable(state, PersistentDataItem::NumInts, 0);
+    for (int i = 0; i < PersistentDataItem::NumInts; i++)
+    {
+        lua_pushinteger(state, ref.ival(i));
+        lua_rawseti(state, -2, i+1);
+    }
+    lua_setfield(state, -2, "ints");
+
+    return 1;
+}
+
+static PersistentDataItem get_persistent(lua_State *state)
+{
+    luaL_checkany(state, 1);
+
+    if (lua_istable(state, 1))
+    {
+        if (!lua_getmetatable(state, 1) ||
+            !lua_rawequal(state, -1, lua_upvalueindex(1)))
+            luaL_argerror(state, 1, "invalid table type");
+
+        lua_settop(state, 1);
+
+        return persistent_by_struct(state, 1);
+    }
+    else
+    {
+        const char *str = luaL_checkstring(state, 1);
+
+        return Core::getInstance().getWorld()->GetPersistentData(str);
+    }
+}
+
+static int dfhack_persistent_get(lua_State *state)
+{
+    auto ref = get_persistent(state);
+
+    return read_persistent(state, ref, !lua_istable(state, 1));
+}
+
+static int dfhack_persistent_delete(lua_State *state)
+{
+    auto ref = get_persistent(state);
+
+    bool ok = Core::getInstance().getWorld()->DeletePersistentData(ref);
+
+    lua_pushboolean(state, ok);
+    return 1;
+}
+
+static int dfhack_persistent_get_all(lua_State *state)
+{
+    const char *str = luaL_checkstring(state, 1);
+    bool prefix = (lua_gettop(state)>=2 ? lua_toboolean(state,2) : false);
+
+    std::vector<PersistentDataItem> data;
+    Core::getInstance().getWorld()->GetPersistentData(&data, str, prefix);
+
+    if (data.empty())
+    {
+        lua_pushnil(state);
+    }
+    else
+    {
+        lua_createtable(state, data.size(), 0);
+        for (size_t i = 0; i < data.size(); ++i)
+        {
+            read_persistent(state, data[i], true);
+            lua_rawseti(state, -2, i+1);
+        }
+    }
+
+    return 1;
+}
+
+static int dfhack_persistent_save(lua_State *state)
+{
+    lua_settop(state, 2);
+    luaL_checktype(state, 1, LUA_TTABLE);
+    bool add = lua_toboolean(state, 2);
+
+    lua_getfield(state, 1, "key");
+    const char *str = lua_tostring(state, -1);
+    if (!str)
+        luaL_argerror(state, 1, "no key field");
+
+    lua_settop(state, 1);
+
+    PersistentDataItem ref;
+    bool added = false;
+
+    if (add)
+    {
+        ref = Core::getInstance().getWorld()->AddPersistentData(str);
+        added = true;
+    }
+    else if (lua_getmetatable(state, 1))
+    {
+        if (!lua_rawequal(state, -1, lua_upvalueindex(1)))
+            return luaL_argerror(state, 1, "invalid table type");
+        lua_pop(state, 1);
+
+        ref = persistent_by_struct(state, 1);
+    }
+    else
+    {
+        ref = Core::getInstance().getWorld()->GetPersistentData(str);
+    }
+
+    if (!ref.isValid())
+    {
+        ref = Core::getInstance().getWorld()->AddPersistentData(str);
+        if (!ref.isValid())
+            luaL_error(state, "cannot create persistent entry");
+        added = true;
+    }
+
+    lua_getfield(state, 1, "value");
+    if (const char *str = lua_tostring(state, -1))
+        ref.val() = str;
+    lua_pop(state, 1);
+
+    lua_getfield(state, 1, "ints");
+    if (lua_istable(state, -1))
+    {
+        for (int i = 0; i < PersistentDataItem::NumInts; i++)
+        {
+            lua_rawgeti(state, -1, i+1);
+            if (lua_isnumber(state, -1))
+                ref.ival(i) = lua_tointeger(state, -1);
+            lua_pop(state, 1);
+        }
+    }
+    lua_pop(state, 1);
+
+    read_persistent(state, ref, false);
+    lua_pushboolean(state, added);
+    return 2;
+}
+
+static const luaL_Reg dfhack_persistent_funcs[] = {
+    { "get", dfhack_persistent_get },
+    { "delete", dfhack_persistent_delete },
+    { "get_all", dfhack_persistent_get_all },
+    { "save", dfhack_persistent_save },
+    { NULL, NULL }
+};
+
+static void OpenPersistent(lua_State *state)
+{
+    luaL_getsubtable(state, lua_gettop(state), "persistent");
+
+    lua_dup(state);
+    luaL_setfuncs(state, dfhack_persistent_funcs, 1);
+
+    lua_dup(state);
+    lua_setfield(state, -2, "__index");
+
+    lua_pop(state, 1);
+}
 
 lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
 {
@@ -354,6 +600,9 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     // Create and initialize the dfhack global
     lua_newtable(state);
     luaL_setfuncs(state, dfhack_funcs, 0);
+
+    OpenPersistent(state);
+
     lua_setglobal(state, "dfhack");
 
     // load dfhack.lua

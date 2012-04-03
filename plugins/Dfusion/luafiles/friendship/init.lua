@@ -14,9 +14,9 @@ function analyzeF(off)
 		return pos
 	end
 end
-function minEx(...)
-	local imin=arg[1]
-	for _,v in ipairs(arg) do
+function minEx(list)
+	local imin=list[1]
+	for _,v in ipairs(list) do
 		if imin> v and v~=0 then
 			imin=v
 		end

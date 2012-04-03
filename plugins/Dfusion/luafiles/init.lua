@@ -1,3 +1,7 @@
+Console.print = dfhack.print
+Console.println = dfhack.println
+Console.printerr = dfhack.printerr
+
 function err(msg) --make local maybe...
 	print(msg)
 	print(debug.traceback())
@@ -14,6 +18,10 @@ function dofile_silent(filename) --safer dofile, with traceback, no file not fou
 	f,perr=loadfile(filename)
 	if f~=nil then
 		return xpcall(f,err)
+	else
+		if(string.sub(perr,1,11)~="cannot open") then --ugly hack
+			print(perr)	
+		end
 	end
 end
 function loadall(t1) --loads all non interactive plugin parts, so that later they could be used

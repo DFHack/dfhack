@@ -769,6 +769,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		std::vector<int> values(n_dwarfs);
 		std::vector<int> candidates;
 		std::map<int, int> dwarf_skill;
+		std::vector<bool> previously_enabled(n_dwarfs);
 
 		auto mode = labor_infos[labor].mode;
 
@@ -834,6 +835,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			if (dwarf_info[dwarf].state == CHILD)
 				continue;
 			
+			previously_enabled[dwarf] = dwarfs[dwarf]->status.labors[labor];
 			dwarfs[dwarf]->status.labors[labor] = false;
 		}
 
@@ -850,14 +852,22 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		if (state_count[IDLE] < 2)
 			want_idle_dwarf = false;
 
-		for (int i = 0; i < candidates.size() && labor_infos[labor].active_dwarfs < max_dwarfs && (labor_infos[labor].active_dwarfs < min_dwarfs || want_idle_dwarf); i++)
+		for (int i = 0; i < candidates.size() && labor_infos[labor].active_dwarfs < max_dwarfs; i++)
 		{
 			int dwarf = candidates[i];
 
 			assert(dwarf >= 0);
 			assert(dwarf < n_dwarfs);
 
-			if (labor_infos[labor].active_dwarfs >= min_dwarfs && dwarf_info[dwarf].state != IDLE && dwarf_skill[dwarf] == 0)
+			bool preferred_dwarf = false;
+			if (want_idle_dwarf && dwarf_info[dwarf].state == IDLE)
+				preferred_dwarf = true;
+			if (dwarf_skill[dwarf] > 0)
+				preferred_dwarf = true;
+			if (previously_enabled[dwarf] && labor_infos[labor].is_exclusive)
+				preferred_dwarf = true;
+
+			if (labor_infos[labor].active_dwarfs >= min_dwarfs && !preferred_dwarf)
 				continue;
 
 			if (!dwarfs[dwarf]->status.labors[labor])
@@ -878,7 +888,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
 				labor_infos[labor].active_dwarfs++;
 
-			if (labor_infos[labor].active_dwarfs >= min_dwarfs && dwarf_info[dwarf].state == IDLE)
+			if (dwarf_info[dwarf].state == IDLE)
 				want_idle_dwarf = false;
 		}
 	}

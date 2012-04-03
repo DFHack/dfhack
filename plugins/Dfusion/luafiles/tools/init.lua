@@ -1,20 +1,28 @@
 tools={}
 tools.menu=MakeMenu()
-function tools.setrace()
+function tools.setrace(name)
 	RaceTable=BuildNameTable()
 	print("Your current race is:"..GetRaceToken(df.global.ui.race_id))
-	print("Type new race's token name in full caps (q to quit):")
-	repeat
-		entry=getline()
-		if entry=="q" then
-			return
+	local id
+	if name == nil then
+		print("Type new race's token name in full caps (q to quit):")
+		repeat
+			entry=getline()
+			if entry=="q" then
+				return
+			end
+			id=RaceTable[entry]
+		until id~=nil
+	else
+		id=RaceTable[name]
+		if id==nil then
+			error("Name not found!")
 		end
-		id=RaceTable[entry]
-	until id~=nil
+	end
 	df.global.ui.race_id=id
 end
 tools.menu:add("Set current race",tools.setrace)
-function tools.GiveSentience(names) --TODO make pattern...
+function tools.GiveSentience(names)
 	RaceTable=RaceTable or BuildNameTable() --slow.If loaded don't load again
 	if names ==nil then
 		ids={}
@@ -63,23 +71,7 @@ function tools.embark()
 	end
 end
 tools.menu:add("Embark anywhere",tools.embark)
-function tools.getlegendsid(croff)
-	local vec=engine.peek(croff,ptr_Creature.legends)
-	if vec:size()==0 then
-		return 0
-	end
-	for i =0,vector:size()-1 do
-		--if engine.peekd(vec:getval(i))~=0 then
-		--	print(string.format("%x",engine.peekd(vec:getval(i))-offsets.base()))
-		--end
-		if(engine.peekd(vec:getval(i))==offsets.getEx("vtableLegends")) then --easy to get.. just copy from player's-base
-			return engine.peekd(vec:getval(i)+4)
-		end
-	end
-	return 0
-end
-function tools.getCreatureId(vector)
-
+function tools.getCreatureId(vector) --redo it to getcreature by name
 	tnames={}
 	rnames={}
 	--[[print("vector1 size:"..vector:size())
@@ -137,22 +129,25 @@ function tools.change_adv()
 end
 tools.menu:add("Change Adventurer",tools.change_adv)
 
-function tools.MakeFollow()
-	myoff=offsets.getEx("AdvCreatureVec")
-	vector=engine.peek(myoff,ptr_vector)
-	indx=tools.getCreatureId(vector)
-	print(string.format("current creature:%x",vector:getval(indx)))
+function tools.MakeFollow(unit,trgunit)
 	
-	trgid=engine.peek(vector:getval(0)+ptr_Creature.ID.off,DWORD)
-	lfollow=engine.peek(vector:getval(indx)+ptr_Creature.followID.off,DWORD)
-	if lfollow ~=0xFFFFFFFF then
-		print("Already following, unfollow? y/N")
-		r=getline()
-		if r== "y" then
-			engine.poke(vector:getval(indx)+ptr_Creature.followID.off,DWORD,0)
-		end
-	else
-		engine.poke(vector:getval(indx)+ptr_Creature.followID.off,DWORD,trgid)
+	if unit == nil then
+		unit=getCreature()
+	end
+	if unit== nil then
+		error("Invalid creature")
+	end
+	if trgunit==nil then
+		trgunit=df.global.world.units.other[0][0]
+	end
+	unit.relations.group_leader_id=trgunit.id
+	local u_nem=getNemesis(unit)
+	local t_nem=getNemesis(trgunit)
+	if u_nem then
+		u_nem.group_leader_id=t_nem.id
+	end
+	if t_nem and u_nem then
+		t_nem.companions:insert(#t_nem.companions,u_nem.id)
 	end
 end
 tools.menu:add("Make creature follow",tools.MakeFollow)

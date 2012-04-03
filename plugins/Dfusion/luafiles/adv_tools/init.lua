@@ -1,5 +1,6 @@
 adv_tools=adv_tools or {}
 adv_tools.menu=adv_tools.menu or MakeMenu()
+--TODO make every tool generic (work for both modes)
 function adv_tools.ressurect()
 	
 	v2=engine.peek(vector:getval(indx),ptr_Creature.hurt1)

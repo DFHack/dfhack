@@ -496,9 +496,33 @@ function getCreatureAtPos(x,y,z) -- gets the creature index @ x,y,z coord
 			return vector[i] --return index
 		end
 	end
-	print("Creature not found!")
+	--print("Creature not found!")
 	return nil
 	
+end
+function getCreatureAtPointer()
+	return getCreatureAtPos(getxyz())
+end
+function getCreature()
+	local unit=getSelectedUnit()
+	if unit==nil then
+		unit=getCreatureAtPointer()
+	end
+	--any other selection methods...
+	return unit
+end
+function getNemesisId(unit)
+	for k,v in pairs(unit.refs) do
+		if tostring(v._type)=="<type: general_ref_is_nemesisst>" then
+			return v.nemesis_id
+		end
+	end
+end
+function getNemesis(unit)
+	local id=getNemesisId(unit)
+	if id then
+		return df.global.world.nemesis.all[id]
+	end
 end
 function Allocate(size)
 	local ptr=engine.getmod('General_Space')
@@ -511,14 +535,6 @@ function Allocate(size)
 	curptr=curptr+size
 	engine.poked(ptr,curptr)
 	return curptr-size+ptr
-end
-function initType(object,...)
-	local m=getmetatable(object)
-	if m~=nil and m.__setup~=nil then
-		m.__setup(object,...)
-	else
-		error("This object does not have __setup function")
-	end
 end
 dofile("dfusion/patterns.lua")
 dofile("dfusion/patterns2.lua")

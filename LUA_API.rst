@@ -410,6 +410,10 @@ Currently it defines the following features:
 
   Same as println; intended for errors. Uses red color and logs to stderr.log.
 
+* ``safecall(f[,args...])``, ``dfhack.safecall(f[,args...])``
+
+  Just like pcall, but prints the error with traceback using printerr.
+
 * ``dfhack.interpreter([prompt[,env[,history_filename]]])``
 
   Starts an interactive lua interpreter, using the specified prompt

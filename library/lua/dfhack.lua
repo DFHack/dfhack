@@ -1,6 +1,8 @@
 -- Common startup file for all dfhack plugins with lua support
 -- The global dfhack table is already created by C++ init code.
 
+safecall = dfhack.safecall
+
 function mkmodule(module,env)
     local pkg = package.loaded[module]
     if pkg == nil then

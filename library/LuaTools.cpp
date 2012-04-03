@@ -141,6 +141,49 @@ static int traceback (lua_State *L) {
     return 1;
 }
 
+static int finish_dfhack_safecall (lua_State *L, bool success)
+{
+    if (!lua_checkstack(L, 1))
+    {
+        lua_settop(L, 0);  /* create space for return values */
+        lua_pushboolean(L, 0);
+        lua_pushstring(L, "stack overflow in dfhack.safecall()");
+        success = false;
+    }
+    else
+    {
+        lua_pushboolean(L, success);
+        lua_replace(L, 1); /* put first result in first slot */
+    }
+
+    if (!success)
+    {
+        const char *msg = lua_tostring(L, -1);
+        if (!msg) msg = "In dfhack.safecall: error message is not a string.";
+        if (color_ostream *out = Lua::GetOutput(L))
+            out->printerr("%s\n", msg);
+        else
+            Core::printerr("%s\n", msg);
+    }
+
+    return lua_gettop(L);
+}
+
+static int safecall_cont (lua_State *L)
+{
+    int status = lua_getctx(L, NULL);
+    return finish_dfhack_safecall(L, (status == LUA_YIELD));
+}
+
+static int lua_dfhack_safecall (lua_State *L)
+{
+    luaL_checkany(L, 1);
+    lua_pushcfunction(L, traceback);
+    lua_insert(L, 1);
+    int status = lua_pcallk(L, lua_gettop(L) - 2, LUA_MULTRET, 1, 0, safecall_cont);
+    return finish_dfhack_safecall(L, (status == LUA_OK));
+}
+
 static void report_error(color_ostream &out, lua_State *L)
 {
     const char *msg = lua_tostring(L, -1);
@@ -189,24 +232,48 @@ bool DFHack::Lua::Require(color_ostream &out, lua_State *state,
     return true;
 }
 
-static bool load_with_env(color_ostream &out, lua_State *state, const std::string &code, int eidx)
+bool DFHack::Lua::AssignDFObject(color_ostream &out, lua_State *state,
+                                 type_identity *type, void *target, int val_index, bool perr)
 {
-    if (luaL_loadbuffer(state, code.data(), code.size(), "=(interactive)") != LUA_OK)
+    val_index = lua_absindex(state, val_index);
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
+    PushDFObject(state, type, target);
+    lua_pushvalue(state, val_index);
+    return Lua::SafeCall(out, state, 2, 0, perr);
+}
+
+bool DFHack::Lua::SafeCallString(color_ostream &out, lua_State *state, const std::string &code,
+                                 int nargs, int nres, bool perr,
+                                 const char *debug_tag, int env_idx)
+{
+    if (!debug_tag)
+        debug_tag = code.c_str();
+    if (env_idx)
+        env_idx = lua_absindex(state, env_idx);
+
+    int base = lua_gettop(state);
+
+    // Parse the code
+    if (luaL_loadbuffer(state, code.data(), code.size(), debug_tag) != LUA_OK)
     {
-        report_error(out, state);
+        if (perr)
+            report_error(out, state);
+
         return false;
     }
 
     // Replace _ENV
-    lua_pushvalue(state, eidx);
-
-    if (!lua_setupvalue(state, -2, 1))
+    if (env_idx)
     {
-        out.printerr("No _ENV upvalue.\n");
-        return false;
+        lua_pushvalue(state, env_idx);
+        lua_setupvalue(state, -2, 1);
+        assert(lua_gettop(state) == base+1);
     }
 
-    return true;
+    if (nargs > 0)
+        lua_insert(state, -1-nargs);
+
+    return Lua::SafeCall(out, state, nargs, nres, perr);
 }
 
 bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
@@ -273,9 +340,7 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
         {
             curline = "return " + curline.substr(1);
 
-            if (!load_with_env(out, state, curline, base))
-                continue;
-            if (!SafeCall(out, state, 0, LUA_MULTRET))
+            if (!Lua::SafeCallString(out, state, curline, 0, LUA_MULTRET, true, "=(interactive)", base))
                 continue;
 
             int numret = lua_gettop(state) - base;
@@ -309,9 +374,7 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
         }
         else
         {
-            if (!load_with_env(out, state, curline, base))
-                continue;
-            if (!SafeCall(out, state, 0, 0))
+            if (!Lua::SafeCallString(out, state, curline, 0, LUA_MULTRET, true, "=(interactive)", base))
                 continue;
         }
     }
@@ -352,8 +415,7 @@ static int lua_dfhack_interpreter(lua_State *state)
 
 static int lua_dfhack_with_suspend(lua_State *L)
 {
-    int ctx;
-    int rv = lua_getctx(L, &ctx);
+    int rv = lua_getctx(L, NULL);
 
     // Non-resume entry point:
     if (rv == LUA_OK)
@@ -385,7 +447,8 @@ static const luaL_Reg dfhack_funcs[] = {
     { "print", lua_dfhack_print },
     { "println", lua_dfhack_println },
     { "printerr", lua_dfhack_printerr },
-    { "traceback", traceback },
+    { "safecall", lua_dfhack_safecall },
+    { "onerror", traceback },
     { "interpreter", lua_dfhack_interpreter },
     { "with_suspend", lua_dfhack_with_suspend },
     { NULL, NULL }

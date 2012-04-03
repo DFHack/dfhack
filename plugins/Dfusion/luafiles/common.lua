@@ -254,11 +254,11 @@ function it_menu:display()
 		if r=='q' then return end
 		ans=tonumber(r)
 		
-		if ans==nil or not(ans<=table.maxn(self.items) and ans>0) then
+		if ans==nil or not(ans<=#self.items and ans>0) then
 			print("incorrect choice")
 		end
 		
-	until ans~=nil and (ans<=table.maxn(self.items) and ans>0)
+	until ans~=nil and (ans<=#self.items and ans>0)
 	self.items[ans][1]()
 end
 function MakeMenu()

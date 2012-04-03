@@ -71,7 +71,7 @@ function tools.embark()
 	end
 end
 tools.menu:add("Embark anywhere",tools.embark)
-function tools.getCreatureId(vector) --redo it to getcreature by name
+function tools.getCreatureId(vector) --redo it to getcreature by name/id or something
 	tnames={}
 	rnames={}
 	--[[print("vector1 size:"..vector:size())
@@ -103,28 +103,43 @@ function tools.getCreatureId(vector) --redo it to getcreature by name
 	end
 	return indx
 end
-function tools.change_adv()
-	myoff=offsets.getEx("AdvCreatureVec")
-	vector=engine.peek(myoff,ptr_vector)
-	indx=tools.getCreatureId(vector)
-	print("Swaping, press enter when done or 'q' to stay, 's' to stay with legends id change")
-	tval=vector:getval(0)
-	vector:setval(0,vector:getval(indx))
-	vector:setval(indx,tval)
-	r=getline()
-	if r=='q' then
-		return
+function tools.change_adv(unit,nemesis)
+	if nemesis==nil then
+		nemesis=true --default value is nemesis switch too.
 	end
-	if r~='s' then
-	tval=vector:getval(0)
-	vector:setval(0,vector:getval(indx))
-	vector:setval(indx,tval)
+	if unit==nil then
+		unit=getCreatureAtPointer()
 	end
-	local lid=tools.getlegendsid(vector:getval(0))
-	if lid~=0 then
-		engine.poked(offsets.getEx("PlayerLegend"),lid)
-	else
-		print("Warning target does not have a valid legends id!")
+	if unit==nil then
+		error("Invalid unit!")
+	end
+	local other=df.global.world.units.other[0]
+	local unit_indx
+	for k,v in pairs(other) do
+		if v==unit then
+			unit_indx=k
+			break
+		end
+	end
+	if unit_indx==nil then
+		error("Unit not found in array?!") --should not happen
+	end
+	other[unit_indx]=other[0]
+	other[0]=unit
+	if nemesis then --basicly copied from advtools plugin...
+		local nem=getNemesis(unit)
+		local other_nem=getNemesis(other[unit_indx])
+		if other_nem then
+			other_nem.flags[0]=false
+			other_nem.flags[1]=true
+		end
+		if nem then
+			nem.flags[1]=true
+			nem.flags[2]=true
+			df.global.ui_advmode.player_id=nem.id
+		else
+			error("Current unit does not have nemesis record, further working not guaranteed")
+		end
 	end
 end
 tools.menu:add("Change Adventurer",tools.change_adv)

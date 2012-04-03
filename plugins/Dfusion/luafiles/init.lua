@@ -84,7 +84,15 @@ table.insert(plugins,{"saves","run current worlds's init.lua",RunSaved})
 loadall(plugins)
 dofile_silent("dfusion/initcustom.lua")
 
-
+local args={...}
+for k,v in pairs(args) do
+	local f,err=load(v)
+	if f then
+		f()
+	else
+		Console.printerr(err)
+	end
+end
 if not INIT then
 mainmenu(plugins)
 end

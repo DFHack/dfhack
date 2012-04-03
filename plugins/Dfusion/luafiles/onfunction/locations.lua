@@ -8,7 +8,8 @@ if WINDOWS then --windows function defintions
 	onfunction.AddFunction(0x5af826+offsets.base(),"Hurt",{target="esi",attacker={off=0x74,rtype=DWORD,reg="esp"}}) 
 	onfunction.AddFunction(0x3D5886+offsets.base(),"Flip",{building="esi"}) 
 	onfunction.AddFunction(0x35E340+offsets.base(),"ItemCreate")--]=]
-	onfunction.AddFunction(4B34B6+offsets.base(),"ReactionFinish") --esp item. Ecx creature, edx?
+	--onfunction.AddFunction(0x4B34B6+offsets.base(),"ReactionFinish") --esp item. Ecx creature, edx? 0.34.07
+	onfunction.AddFunction(0x72aB6+offsets.base(),"Die",{creature="edi"}) --0.34.07
 else --linux
 	--[=[onfunction.AddFunction(0x899befe+offsets.base(),"Move") -- found out by attaching watch...
 	onfunction.AddFunction(0x850eecd+offsets.base(),"Die",{creature="ebx"})  -- same--]=]

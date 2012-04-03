@@ -468,6 +468,9 @@ function ParseNames(path)
 	return ret
 end
 function getSelectedUnit()
+	if df.global.ui.main.mode~=23 then
+		return nil
+	end
 	local unit_indx=df.global.ui_selected_unit
 	if unit_indx<#df.global.world.units.other[0]-1 then
 		return df.global.world.units.other[0][unit_indx]

@@ -853,6 +853,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			assert(dwarf >= 0);
 			assert(dwarf < n_dwarfs);
 
+			if (labor_infos[labor].active_dwarfs >= min_dwarfs && dwarf_info[dwarf].state != IDLE && dwarf_skill[dwarf] == 0)
+				continue;
+
 			if (!dwarfs[dwarf]->status.labors[labor])
 				dwarf_info[dwarf].assigned_jobs++;
 

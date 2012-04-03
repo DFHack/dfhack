@@ -240,6 +240,8 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
 
     // Make a proxy global environment.
     lua_newtable(state);
+    int base = lua_gettop(state);
+
     lua_newtable(state);
     if (env)
         lua_pushvalue(state, env);
@@ -249,7 +251,6 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
     lua_setmetatable(state, -2);
 
     // Main interactive loop
-    int base = lua_gettop(state);
     int vcnt = 1;
     string curline;
     string prompt_str = "[" + string(prompt) + "]# ";
@@ -324,8 +325,20 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
 static int lua_dfhack_interpreter(lua_State *state)
 {
     color_ostream *pstream = Lua::GetOutput(state);
+
     if (!pstream)
-        luaL_error(state, "Cannot use dfhack.interpreter() without output.");
+    {
+        lua_pushnil(state);
+        lua_pushstring(state, "no output stream");
+        return 2;
+    }
+
+    if (!pstream->is_console())
+    {
+        lua_pushnil(state);
+        lua_pushstring(state, "not an interactive console");
+        return 2;
+    }
 
     int argc = lua_gettop(state);
 
@@ -459,6 +472,8 @@ static PersistentDataItem get_persistent(lua_State *state)
 
 static int dfhack_persistent_get(lua_State *state)
 {
+    CoreSuspender suspend;
+
     auto ref = get_persistent(state);
 
     return read_persistent(state, ref, !lua_istable(state, 1));
@@ -466,6 +481,8 @@ static int dfhack_persistent_get(lua_State *state)
 
 static int dfhack_persistent_delete(lua_State *state)
 {
+    CoreSuspender suspend;
+
     auto ref = get_persistent(state);
 
     bool ok = Core::getInstance().getWorld()->DeletePersistentData(ref);
@@ -476,6 +493,8 @@ static int dfhack_persistent_delete(lua_State *state)
 
 static int dfhack_persistent_get_all(lua_State *state)
 {
+    CoreSuspender suspend;
+
     const char *str = luaL_checkstring(state, 1);
     bool prefix = (lua_gettop(state)>=2 ? lua_toboolean(state,2) : false);
 
@@ -501,6 +520,8 @@ static int dfhack_persistent_get_all(lua_State *state)
 
 static int dfhack_persistent_save(lua_State *state)
 {
+    CoreSuspender suspend;
+
     lua_settop(state, 2);
     luaL_checktype(state, 1, LUA_TTABLE);
     bool add = lua_toboolean(state, 2);

@@ -127,10 +127,15 @@ They implement the following features:
 
   Valid fields of the structure may be accessed by subscript.
 
-  In case of inheritance, *superclass* fields have precedence
+  Primitive typed fields, i.e. numbers & strings, are converted
+  to/from matching lua values. The value of a pointer is a reference
+  to the target, or nil/NULL. Complex types are represented by
+  a reference to the field within the structure; unless recursive
+  lua table assignment is used, such fields can only be read.
+
+  **NOTE:** In case of inheritance, *superclass* fields have precedence
   over the subclass, but fields shadowed in this way can still
   be accessed as ``ref['subclasstype.field']``.
-
   This shadowing order is necessary because vtable-based classes
   are automatically exposed in their exact type, and the reverse
   rule would make access to superclass fields unreliable.
@@ -138,8 +143,8 @@ They implement the following features:
 * ``ref._field(field)``
 
   Returns a reference to a valid field. That is, unlike regular
-  subscript, it returns a pointer reference even for primitive
-  typed fields.
+  subscript, it returns a reference to the field within the structure
+  even for primitive typed fields and pointers.
 
 * ``ref:vmethod(args...)``
 
@@ -297,3 +302,171 @@ The ``df`` table itself contains the following functions and values:
 * ``df.is_instance(type,obj)``
 
   Equivalent to the method, but also allows a reference as proxy for its type.
+
+Recursive table assignment
+==========================
+
+Recursive assignment is invoked when a lua table is assigned
+to a C++ object or field, i.e. one of:
+
+* ``ref:assign{...}``
+* ``ref.field = {...}``
+
+The general mode of operation is that all fields of the table
+are assigned to the fields of the target structure, roughly
+emulating the following code::
+
+    function rec_assign(ref,table)
+        for key,value in pairs(table) do
+            ref[key] = value
+        end
+    end
+
+Since assigning a table to a field using = invokes the same
+process, it is recursive.
+
+There are however some variations to this process depending
+on the type of the field being assigned to:
+
+1. If the table contains an ``assign`` field, it is
+   applied first, using the ``ref:assign(value)`` method.
+   It is never assigned as a usual field.
+
+2. When a table is assigned to a non-NULL pointer field
+   using the ``ref.field = {...}`` syntax, it is applied
+   to the target of the pointer instead.
+
+   If the pointer is NULL, the table is checked for a ``new`` field:
+
+   a. If it is *nil* or *false*, assignment fails with an error.
+
+   b. If it is *true*, the pointer is initialized with a newly
+      allocated object of the declared target type of the pointer.
+
+   c. Otherwise, ``table.new`` must be a named type, or an
+      object of a type compatible with the pointer. The pointer
+      is initialized with the result of calling ``table.new:new()``.
+
+   After this auto-vivification process, assignment proceeds
+   as if the pointer wasn't NULL.
+
+   Obviously, the ``new`` field inside the table is always skipped
+   during the actual per-field assignment processing.
+
+3. If the target of the assignment is a container, a separate
+   rule set is used:
+
+   a. If the table contains neither ``assign`` nor ``resize``
+      fields, it is interpreted as an ordinary *1-based* lua
+      array. The container is resized to the #-size of the
+      table, and elements are assigned in numeric order::
+
+        ref:resize(#table);
+        for i=1,#table do ref[i-1] = table[i] end
+
+   b. Otherwise, ``resize`` must be *true*, *false*, or
+      an explicit number. If it is not false, the container
+      is resized. After that the usual struct-like 'pairs'
+      assignment is performed.
+
+      In case ``resize`` is *true*, the size is computed
+      by scanning the table for the largest numeric key.
+
+   This means that in order to reassign only one element of
+   a container using this system, it is necessary to use::
+
+      { resize=false, [idx]=value }
+
+Since nil inside a table is indistinguishable from missing key,
+it is necessary to use ``df.NULL`` as a null pointer value.
+
+This system is intended as a way to define a nested object
+tree using pure lua data structures, and then materialize it in
+C++ memory in one go. Note that if pointer auto-vivification
+is used, an error in the middle of the recursive walk would
+not destroy any objects allocated in this way, so the user
+should be prepared to catch the error and do the necessary
+cleanup.
+
+================
+DFHack utilities
+================
+
+DFHack utility functions are placed in the ``dfhack`` global tree.
+
+Currently it defines the following features:
+
+* ``dfhack.print(args...)``
+
+  Output tab-separated args as standard lua print would do,
+  but without a newline.
+
+* ``print(args...)``, ``dfhack.println(args...)``
+
+  A replacement of the standard library print function that
+  works with DFHack output infrastructure.
+
+* ``dfhack.printerr(args...)``
+
+  Same as println; intended for errors. Uses red color and logs to stderr.log.
+
+* ``dfhack.interpreter([prompt[,env[,history_filename]]])``
+
+  Starts an interactive lua interpreter, using the specified prompt
+  string, global environment and command-line history file.
+
+  If the interactive console is not accessible, returns *nil, error*.
+
+* ``dfhack.with_suspend(f[,args...])``
+
+  Calls ``f`` with arguments after grabbing the DF core suspend lock.
+  Suspending is necessary for accessing a consistent state of DF memory.
+
+  Returned values and errors are propagated through after releasing
+  the lock. It is safe to nest suspends.
+
+  Every thread is allowed only one suspend per DF frame, so it is best
+  to group operations together in one big critical section. A plugin
+  can choose to run all lua code inside a C++-side suspend lock.
+
+Persistent configuration storage
+================================
+
+This api is intended for storing configuration options in the world itself.
+It probably should be restricted to data that is world-dependent.
+
+Entries are identified by a string ``key``, but it is also possible to manage
+multiple entries with the same key; their identity is determined by ``entry_id``.
+Every entry has a mutable string ``value``, and an array of 7 mutable ``ints``.
+
+* ``dfhack.persistent.get(key)``, ``entry:get()``
+
+  Retrieves a persistent config record with the given string key,
+  or refreshes an already retrieved entry. If there are multiple
+  entries with the same key, it is undefined which one is retrieved
+  by the first version of the call.
+
+  Returns entry, or *nil* if not found.
+
+* ``dfhack.persistent.delete(key)``, ``entry:delete()``
+
+  Removes an existing entry. Returns *true* if succeeded.
+
+* ``dfhack.persistent.get_all(key[,match_prefix])``
+
+  Retrieves all entries with the same key, or starting with key..'/'.
+  Calling ``get_all('',true)`` will match all entries.
+
+  If none found, returns nil; otherwise returns an array of entries.
+
+* ``dfhack.persistent.save({key=str1, ...}[,new])``, ``entry:save([new])``
+
+  Saves changes in an entry, or creates a new one. Passing true as
+  new forces creation of a new entry even if one already exists;
+  otherwise the existing one is simply updated.
+  Returns *entry, did_create_new*
+
+Since the data is hidden in data structures owned by the DF world,
+and automatically stored in the save game, these save and retrieval
+functions can just copy values in memory without doing any actual I/O.
+However, currently every entry has a 180+-byte dead-weight overhead.

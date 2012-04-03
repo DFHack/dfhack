@@ -846,7 +846,11 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		if (df::enums::unit_labor::FISH == labor && !has_fishery)
 			min_dwarfs = max_dwarfs = 0;
 
-		for (int i = 0; i < candidates.size() && labor_infos[labor].active_dwarfs < max_dwarfs; i++)
+		bool want_idle_dwarf = true;
+		if (state_count[IDLE] < 2)
+			want_idle_dwarf = false;
+
+		for (int i = 0; i < candidates.size() && labor_infos[labor].active_dwarfs < max_dwarfs && (labor_infos[labor].active_dwarfs < min_dwarfs || want_idle_dwarf); i++)
 		{
 			int dwarf = candidates[i];
 
@@ -874,8 +878,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
 				labor_infos[labor].active_dwarfs++;
 
-			if (labor_infos[labor].active_dwarfs >= min_dwarfs && (dwarf_info[dwarf].state == IDLE || state_count[IDLE] < 2))
-				break;
+			if (labor_infos[labor].active_dwarfs >= min_dwarfs && dwarf_info[dwarf].state == IDLE)
+				want_idle_dwarf = false;
 		}
 	}
 

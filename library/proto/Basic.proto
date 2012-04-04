@@ -69,6 +69,36 @@ message BasicMaterialInfoMask {
     optional bool reaction = 3 [default = false];
 };
 
+message JobSkillAttr {
+    required int32 id = 1;
+    required string key = 2;
+
+    optional string caption = 3;
+    optional string caption_noun = 4;
+
+    optional int32 profession = 5;
+    optional int32 labor = 6;
+    optional string type = 7;
+};
+
+message ProfessionAttr {
+    required int32 id = 1;
+    required string key = 2;
+
+    optional string caption = 3;
+    optional bool military = 4;
+    optional bool can_assign_labor = 5;
+
+    optional int32 parent = 6;
+};
+
+message UnitLaborAttr {
+    required int32 id = 1;
+    required string key = 2;
+
+    optional string caption = 3;
+};
+
 message NameInfo {
     optional string first_name = 1;
     optional string nickname = 2;

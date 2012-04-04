@@ -51,6 +51,13 @@ message ListEnumsOut {
     repeated EnumItemName profession = 11;
 };
 
+// RPC ListJobSkills : EmptyMessage -> ListJobSkillsOut
+message ListJobSkillsOut {
+    repeated JobSkillAttr skill = 1;
+    repeated ProfessionAttr profession = 2;
+    repeated UnitLaborAttr labor = 3;
+};
+
 // RPC ListMaterials : ListMaterialsIn -> ListMaterialsOut
 message ListMaterialsIn {
     optional BasicMaterialInfoMask mask = 1;

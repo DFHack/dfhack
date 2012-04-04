@@ -136,7 +136,11 @@ function tools.change_adv(unit,nemesis)
 		if nem then
 			nem.flags[0]=true
 			nem.flags[2]=true
-			df.global.ui_advmode.player_id=nem.id
+			for k,v in pairs(df.global.world.nemesis.all) do
+				if v.id==nem.id then
+					df.global.ui_advmode.player_id=k
+				end
+			end
 		else
 			error("Current unit does not have nemesis record, further working not guaranteed")
 		end

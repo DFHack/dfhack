@@ -513,7 +513,7 @@ function getCreature()
 end
 function getNemesisId(unit)
 	for k,v in pairs(unit.refs) do
-		if tostring(v._type)=="<type: general_ref_is_nemesisst>" then
+		if df.general_ref_is_nemesisst:is_instance(v) then
 			return v.nemesis_id
 		end
 	end
@@ -521,11 +521,7 @@ end
 function getNemesis(unit)
 	local id=getNemesisId(unit)
 	if id then
-		for k,v in pairs(df.global.world.nemesis.all)	do
-			if id==v.id then
-				return v
-			end
-		end
+		return df.nemesis_record.find(id)
 	end
 end
 function Allocate(size)

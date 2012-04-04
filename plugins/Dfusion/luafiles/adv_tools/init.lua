@@ -1,7 +1,7 @@
 adv_tools= {}
 adv_tools.menu=MakeMenu()
 --TODO make every tool generic (work for both modes)
-function adv_tools.reincarnate(swap_soul) --only for adventurer i guess, TODO soul swap...
+function adv_tools.reincarnate(swap_soul) --only for adventurer i guess
 	if swap_soul==nil then
 		swap_soul=true
 	end
@@ -15,12 +15,15 @@ function adv_tools.reincarnate(swap_soul) --only for adventurer i guess, TODO so
 	end
 	local events=df.global.world.history.events
 	local trg_hist_fig
-	for i=#events-1,0,-1 do
+	for i=#events-1,0,-1 do -- reverse search because almost always it will be last entry
 		if df.history_event_hist_figure_diedst:is_instance(events[i]) then
 			--print("is instance:"..i)
 			if events[i].hfid==hist_fig.id then
 				--print("Is same id:"..i)
 				trg_hist_fig=events[i].slayer
+				if trg_hist_fig then
+					trg_hist_fig=df.historical_figure.find(trg_hist_fig)
+				end
 				break
 			end
 		end
@@ -28,23 +31,13 @@ function adv_tools.reincarnate(swap_soul) --only for adventurer i guess, TODO so
 	if trg_hist_fig ==nil then
 		error("Slayer not found")
 	end
-	local trg_unit
-	for k,v in pairs(df.global.world.history.figures) do --maybe getting it by [] would be enought?
-		if v.id==trg_hist_fig then
-			trg_unit=v.unit_id
-			break
-		end
-	end
+	
+	local trg_unit=trg_hist_fig.unit_id
 	if trg_unit==nil then
 		error("Unit id not found!")
 	end
-	local trg_unit_final
-	for k,v in pairs(df.global.world.units.all) do
-		if v.id==trg_unit then
-			trg_unit_final=v
-			break
-		end
-	end
+	local trg_unit_final=df.unit.find(trg_unit)
+	
 	tools.change_adv(trg_unit_final)
 	if swap_soul then --actually add a soul...
 		t_soul=adv.status.current_soul

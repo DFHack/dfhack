@@ -53,7 +53,9 @@ message ListEnumsOut {
 
 // RPC ListJobSkills : EmptyMessage -> ListJobSkillsOut
 message ListJobSkillsOut {
-    repeated JobSkillInfo value = 1;
+    repeated JobSkillAttr skill = 1;
+    repeated ProfessionAttr profession = 2;
+    repeated UnitLaborAttr labor = 3;
 };
 
 // RPC ListMaterials : ListMaterialsIn -> ListMaterialsOut

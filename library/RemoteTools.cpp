@@ -447,18 +447,41 @@ static command_result ListEnums(color_ostream &stream,
 
 static command_result ListJobSkills(color_ostream &stream, const EmptyMessage *, ListJobSkillsOut *out)
 {
-    auto pf = out->mutable_value();
-
+    auto pf_skill = out->mutable_skill();
     FOR_ENUM_ITEMS(job_skill, skill)
     {
-        auto item = pf->Add();
+        auto item = pf_skill->Add();
 
         item->set_id(skill);
+        item->set_key(ENUM_KEY_STR(job_skill, skill));
         item->set_caption(ENUM_ATTR_STR(job_skill, caption, skill));
         item->set_caption_noun(ENUM_ATTR_STR(job_skill, caption_noun, skill));
         item->set_profession(ENUM_ATTR(job_skill, profession, skill));
         item->set_labor(ENUM_ATTR(job_skill, labor, skill));
-        item->set_type(ENUM_ATTR(job_skill, type, skill));
+        item->set_type(ENUM_KEY_STR(job_skill_class, ENUM_ATTR(job_skill, type, skill)));
+    }
+
+    auto pf_profession = out->mutable_profession();
+    FOR_ENUM_ITEMS(profession, p)
+    {
+        auto item = pf_profession->Add();
+
+        item->set_id(p);
+        item->set_key(ENUM_KEY_STR(profession, p));
+        item->set_caption(ENUM_ATTR_STR(profession, caption, p));
+        item->set_military(ENUM_ATTR(profession, military, p));
+        item->set_can_assign_labor(ENUM_ATTR(profession, can_assign_labor, p));
+        item->set_parent(ENUM_ATTR(profession, parent, p));
+    }
+
+    auto pf_labor = out->mutable_labor();
+    FOR_ENUM_ITEMS(unit_labor, labor)
+    {
+        auto item = pf_labor->Add();
+
+        item->set_id(labor);
+        item->set_key(ENUM_KEY_STR(unit_labor, labor));
+        item->set_caption(ENUM_ATTR_STR(unit_labor, caption, labor));
     }
 
     return CR_OK;

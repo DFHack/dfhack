@@ -809,9 +809,8 @@ Options:
 :assign:       Assign unit(s) to the pen or pit marked with the 'set' command. If no filters are set a unit must be selected in the in-game ui. Can also be followed by a valid zone id which will be set instead.
 :unassign:     Unassign selected creature from it's zone.
 :autonestbox:  Assign all (unless count is specified) unpastured female egg-layers to empty pens which contain a nestbox. If the pen is bigger than 1x1 the nestbox must be placed at the top left corner to be recognized. Only 1 unit will be assigned per pen.
-:uinfo:        Print info about the selected unit.
-:zinfo:        Print info about zone(s) under the cursor (also lists chains and cages).
-:all:          In combination with 'zinfo' or 'cinfo': print info about all zones/units on the map.
+:uinfo:        Print info about unit(s). If no filters are set a unit must be selected in the in-game ui.
+:zinfo:        Print info about zone(s). If no filters are set zones under the cursor are listed.
 :verbose:      Print some more info.
 :filters:      Print list of valid filter options.
 :examples:     Print some usage examples.

@@ -31,6 +31,31 @@ using df::global::world;
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
+/*
+ * Autolabor module for dfhack
+ *
+ * The idea behind this module is to constantly adjust labors so that the right dwarves
+ * are assigned to new tasks. The key is that, for almost all labors, once a dwarf begins
+ * a job it will finish that job even if the associated labor is removed. Thus the
+ * strategy is to frequently decide, for each labor, which dwarves should possibly take
+ * a new job for that labor if it comes in and which shouldn't, and then set the labors
+ * appropriately. The updating should happen as often as can be reasonably done without
+ * causing lag.
+ *
+ * The obvious thing to do is to just set each labor on a single idle dwarf who is best
+ * suited to doing new jobs of that labor. This works in a way, but it leads to a lot
+ * of idle dwarves since only one dwarf will be dispatched for each labor in an update
+ * cycle, and dwarves that finish tasks will wait for the next update before being
+ * dispatched. An improvement is to also set some labors on dwarves that are currently
+ * doing a job, so that they will immediately take a new job when they finish. The
+ * details of which dwarves should have labors set is mostly a heuristic.
+ *
+ * A complication to the above simple scheme is labors that have associated equipment.
+ * Enabling/disabling these labors causes dwarves to change equipment, and disabling
+ * them in the middle of a job may cause the job to be abandoned. Those labors
+ * (mining, hunting, and woodcutting) need to be handled carefully to minimize churn.
+ */
+
 static int enable_autolabor = 0;
 
 static bool print_debug = 0;
@@ -659,11 +684,11 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		{
 			dwarf_info[dwarf].state = CHILD;
 		}
+		else if (ENUM_ATTR(profession, military, dwarfs[dwarf]->profession))
+			dwarf_info[dwarf].state = MILITARY;
 		else if (dwarfs[dwarf]->job.current_job == NULL)
 		{
-			if (ENUM_ATTR(profession, military, dwarfs[dwarf]->profession))
-				dwarf_info[dwarf].state = MILITARY;
-			else if (is_on_break)
+			if (is_on_break)
 				dwarf_info[dwarf].state = OTHER;
 			else if (dwarfs[dwarf]->meetings.size() > 0)
 				dwarf_info[dwarf].state = OTHER;
@@ -773,6 +798,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 		auto mode = labor_infos[labor].mode;
 
+		// Find candidate dwarfs, and calculate a preference value for each dwarf
 		for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
 		{
 			if (dwarf_info[dwarf].state == CHILD)
@@ -827,9 +853,11 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 		}
 
+		// Sort candidates by preference value
         values_sorter ivs(values);
 		std::sort(candidates.begin(), candidates.end(), ivs);
 
+		// Disable the labor on everyone
 		for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
 		{
 			if (dwarf_info[dwarf].state == CHILD)
@@ -852,6 +880,17 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		if (state_count[IDLE] < 2)
 			want_idle_dwarf = false;
 
+		/*
+		 * Assign dwarfs to this labor. We assign at least the minimum number of dwarfs, in
+		 * order of preference, and then assign additional dwarfs that meet any of these conditions:
+		 * - The dwarf is idle and there are no idle dwarves assigned to this labor
+		 * - The dwarf has nonzero skill associated with the labor
+		 * - The labor is mining, hunting, or woodcutting and the dwarf currently has it enabled.
+		 * We stop assigning dwarfs when we reach the maximum allowed.
+		 * Note that only idle and busy dwarfs count towards the number of dwarfs. "Other" dwarfs
+		 * (sleeping, eating, on break, etc.) will have labors assigned, but will not be counted.
+		 * Military and children/nobles will not have labors assigned.
+		 */
 		for (int i = 0; i < candidates.size() && labor_infos[labor].active_dwarfs < max_dwarfs; i++)
 		{
 			int dwarf = candidates[i];

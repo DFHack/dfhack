@@ -3,6 +3,10 @@
 
 safecall = dfhack.safecall
 
+function dfhack.pcall(f, ...)
+    return xpcall(f, dfhack.onerror, ...)
+end
+
 function mkmodule(module,env)
     local pkg = package.loaded[module]
     if pkg == nil then

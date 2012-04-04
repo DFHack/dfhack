@@ -430,9 +430,19 @@ Currently it defines the following features:
 
   If the interactive console is not accessible, returns *nil, error*.
 
+* ``dfhack.pcall(f[,args...])``
+
+  Invokes f via xpcall, using an error function that attaches
+  a stack trace to the error. The same function is used by SafeCall
+  in C++, and dfhack.safecall.
+
+  The returned error is a table with separate ``message`` and
+  ``stacktrace`` string fields; it implements ``__tostring``.
+
 * ``safecall(f[,args...])``, ``dfhack.safecall(f[,args...])``
 
-  Just like pcall, but prints the error with traceback using printerr.
+  Just like pcall, but also prints the error using printerr before
+  returning. Intended as a convenience function.
 
 * ``dfhack.with_suspend(f[,args...])``
 

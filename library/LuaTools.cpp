@@ -141,13 +141,18 @@ static int lua_dfhack_println(lua_State *S)
     return 0;
 }
 
-static int lua_dfhack_printerr(lua_State *S)
+static void dfhack_printerr(lua_State *S, const std::string &str)
 {
-    std::string str = lua_print_fmt(S);
     if (color_ostream *out = Lua::GetOutput(S))
         out->printerr("%s\n", str.c_str());
     else
         Core::printerr("%s\n", str.c_str());
+}
+
+static int lua_dfhack_printerr(lua_State *S)
+{
+    std::string str = lua_print_fmt(S);
+    dfhack_printerr(S, str);
     return 0;
 }
 
@@ -201,20 +206,135 @@ static int lua_dfhack_lineedit(lua_State *S)
     }
 }
 
-static int traceback (lua_State *L) {
-    const char *msg = lua_tostring(L, 1);
-    if (msg)
-        luaL_traceback(L, L, msg, 1);
-    else if (!lua_isnoneornil(L, 1)) {  /* is there an error object? */
-        if (!luaL_callmeta(L, 1, "__tostring"))  /* try its 'tostring' metamethod */
-            lua_pushliteral(L, "(no error message)");
+static int DFHACK_EXCEPTION_META_TOKEN = 0;
+
+static void error_tostring(lua_State *L)
+{
+    lua_getglobal(L, "tostring");
+    lua_pushvalue(L, -2);
+    bool ok = lua_pcall(L, 1, 1, 0) == LUA_OK;
+
+    const char *msg = lua_tostring(L, -1);
+    if (!msg)
+    {
+        msg = "tostring didn't return a string";
+        ok = false;
     }
+
+    if (!ok)
+    {
+        lua_pushfstring(L, "(invalid error: %s)", msg);
+        lua_remove(L, -2);
+    }
+}
+
+static void report_error(lua_State *L, color_ostream *out = NULL)
+{
+    lua_dup(L);
+    error_tostring(L);
+
+    const char *msg = lua_tostring(L, -1);
+    assert(msg);
+
+    if (out)
+        out->printerr("%s\n", msg);
+    else
+        dfhack_printerr(L, msg);
+
+    lua_pop(L, 1);
+}
+
+static bool convert_to_exception(lua_State *L)
+{
+    int base = lua_gettop(L);
+
+    bool force_unknown = false;
+
+    if (lua_istable(L, base) && lua_getmetatable(L, base))
+    {
+        lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_EXCEPTION_META_TOKEN);
+        bool is_exception = lua_rawequal(L, -1, -2);
+        lua_settop(L, base);
+
+        // If it is an exception, return as is
+        if (is_exception)
+            return false;
+
+        force_unknown = true;
+    }
+
+    if (!lua_istable(L, base) || force_unknown)
+    {
+        lua_newtable(L);
+        lua_swap(L);
+
+        if (lua_isstring(L, -1))
+            lua_setfield(L, base, "message");
+        else
+        {
+            error_tostring(L);
+            lua_setfield(L, base, "message");
+            lua_setfield(L, base, "object");
+        }
+    }
+    else
+    {
+        lua_getfield(L, base, "message");
+
+        if (!lua_isstring(L, -1))
+        {
+            error_tostring(L);
+            lua_setfield(L, base, "message");
+        }
+
+        lua_settop(L, base);
+    }
+
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_EXCEPTION_META_TOKEN);
+    lua_setmetatable(L, base);
+    return true;
+}
+
+static int dfhack_onerror(lua_State *L)
+{
+    luaL_checkany(L, 1);
+    lua_settop(L, 1);
+
+    bool changed = convert_to_exception(L);
+    if (!changed)
+        return 1;
+
+    luaL_traceback(L, L, NULL, 1);
+    lua_setfield(L, 1, "stacktrace");
+
+    return 1;
+}
+
+static int dfhack_exception_tostring(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);
+
+    int base = lua_gettop(L);
+
+    lua_getfield(L, 1, "message");
+    if (!lua_isstring(L, -1))
+    {
+        lua_pop(L, 1);
+        lua_pushstring(L, "(error message is not a string)");
+    }
+
+    lua_pushstring(L, "\n");
+    lua_getfield(L, 1, "stacktrace");
+    if (!lua_isstring(L, -1))
+        lua_pop(L, 2);
+
+    lua_concat(L, lua_gettop(L) - base);
     return 1;
 }
 
 static int finish_dfhack_safecall (lua_State *L, bool success)
 {
-    if (!lua_checkstack(L, 1))
+    if (!lua_checkstack(L, 2))
     {
         lua_settop(L, 0);  /* create space for return values */
         lua_pushboolean(L, 0);
@@ -228,14 +348,7 @@ static int finish_dfhack_safecall (lua_State *L, bool success)
     }
 
     if (!success)
-    {
-        const char *msg = lua_tostring(L, -1);
-        if (!msg) msg = "In dfhack.safecall: error message is not a string.";
-        if (color_ostream *out = Lua::GetOutput(L))
-            out->printerr("%s\n", msg);
-        else
-            Core::printerr("%s\n", msg);
-    }
+        report_error(L);
 
     return lua_gettop(L);
 }
@@ -249,20 +362,10 @@ static int safecall_cont (lua_State *L)
 static int lua_dfhack_safecall (lua_State *L)
 {
     luaL_checkany(L, 1);
-    lua_pushcfunction(L, traceback);
+    lua_pushcfunction(L, dfhack_onerror);
     lua_insert(L, 1);
     int status = lua_pcallk(L, lua_gettop(L) - 2, LUA_MULTRET, 1, 0, safecall_cont);
     return finish_dfhack_safecall(L, (status == LUA_OK));
-}
-
-static void report_error(color_ostream &out, lua_State *L)
-{
-    const char *msg = lua_tostring(L, -1);
-    if (msg)
-        out.printerr("%s\n", msg);
-    else
-        out.printerr("In Lua::SafeCall: error message is not a string.\n", msg);
-    lua_pop(L, 1);
 }
 
 bool DFHack::Lua::SafeCall(color_ostream &out, lua_State *L, int nargs, int nres, bool perr)
@@ -272,16 +375,19 @@ bool DFHack::Lua::SafeCall(color_ostream &out, lua_State *L, int nargs, int nres
     color_ostream *cur_out = Lua::GetOutput(L);
     set_dfhack_output(L, &out);
 
-    lua_pushcfunction(L, traceback);
+    lua_pushcfunction(L, dfhack_onerror);
     lua_insert(L, base);
 
     bool ok = lua_pcall(L, nargs, nres, base) == LUA_OK;
 
+    if (!ok && perr)
+    {
+        report_error(L, &out);
+        lua_pop(L, 1);
+    }
+
     lua_remove(L, base);
     set_dfhack_output(L, cur_out);
-
-    if (!ok && perr)
-        report_error(out, L);
 
     return ok;
 }
@@ -328,7 +434,10 @@ bool DFHack::Lua::SafeCallString(color_ostream &out, lua_State *state, const std
     if (luaL_loadbuffer(state, code.data(), code.size(), debug_tag) != LUA_OK)
     {
         if (perr)
-            report_error(out, state);
+        {
+            report_error(state, &out);
+            lua_pop(state, 1);
+        }
 
         return false;
     }
@@ -485,7 +594,7 @@ static int lua_dfhack_with_suspend(lua_State *L)
 
         Core::getInstance().Suspend();
 
-        lua_pushcfunction(L, traceback);
+        lua_pushcfunction(L, dfhack_onerror);
         lua_insert(L, 1);
 
         rv = lua_pcallk(L, nargs-1, LUA_MULTRET, 1, 0, lua_dfhack_with_suspend);
@@ -511,7 +620,7 @@ static const luaL_Reg dfhack_funcs[] = {
     { "lineedit", lua_dfhack_lineedit },
     { "interpreter", lua_dfhack_interpreter },
     { "safecall", lua_dfhack_safecall },
-    { "onerror", traceback },
+    { "onerror", dfhack_onerror },
     { "with_suspend", lua_dfhack_with_suspend },
     { NULL, NULL }
 };
@@ -743,8 +852,18 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     lua_pushcfunction(state, lua_dfhack_println);
     lua_setglobal(state, "print");
 
-    // Create and initialize the dfhack global
+    // Create the dfhack global
     lua_newtable(state);
+
+    // Create the metatable for exceptions
+    lua_newtable(state);
+    lua_pushcfunction(state, dfhack_exception_tostring);
+    lua_setfield(state, -2, "__tostring");
+    lua_dup(state);
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_EXCEPTION_META_TOKEN);
+    lua_setfield(state, -2, "exception");
+
+    // Initialize the dfhack global
     luaL_setfuncs(state, dfhack_funcs, 0);
 
     OpenPersistent(state);

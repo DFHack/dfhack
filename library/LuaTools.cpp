@@ -76,6 +76,27 @@ static void set_dfhack_output(lua_State *L, color_ostream *p)
     lua_rawsetp(L, LUA_REGISTRYINDEX, &DFHACK_OSTREAM_TOKEN);
 }
 
+static Console *get_console(lua_State *state)
+{
+    color_ostream *pstream = Lua::GetOutput(state);
+
+    if (!pstream)
+    {
+        lua_pushnil(state);
+        lua_pushstring(state, "no output stream");
+        return NULL;
+    }
+
+    if (!pstream->is_console())
+    {
+        lua_pushnil(state);
+        lua_pushstring(state, "not an interactive console");
+        return NULL;
+    }
+
+    return static_cast<Console*>(pstream);
+}
+
 static std::string lua_print_fmt(lua_State *L)
 {
     /* Copied from lua source to fully replicate builtin print */
@@ -128,6 +149,56 @@ static int lua_dfhack_printerr(lua_State *S)
     else
         Core::printerr("%s\n", str.c_str());
     return 0;
+}
+
+static int lua_dfhack_color(lua_State *S)
+{
+    int cv = luaL_optint(S, 1, -1);
+
+    if (cv < -1 || cv > color_ostream::COLOR_MAX)
+        luaL_argerror(S, 1, "invalid color value");
+
+    color_ostream *out = Lua::GetOutput(S);
+    if (out)
+        out->color(color_ostream::color_value(cv));
+    return 0;
+}
+
+static int lua_dfhack_is_interactive(lua_State *S)
+{
+    lua_pushboolean(S, get_console(S) != NULL);
+    return 1;
+}
+
+static int lua_dfhack_lineedit(lua_State *S)
+{
+    const char *prompt = luaL_optstring(S, 1, ">> ");
+    const char *hfile = luaL_optstring(S, 2, NULL);
+
+    Console *pstream = get_console(S);
+    if (!pstream)
+        return 2;
+
+    DFHack::CommandHistory hist;
+    if (hfile)
+        hist.load(hfile);
+
+    std::string ret;
+    int rv = pstream->lineedit(prompt, ret, hist);
+
+    if (rv < 0)
+    {
+        lua_pushnil(S);
+        lua_pushstring(S, "input error");
+        return 2;
+    }
+    else
+    {
+        if (hfile)
+            hist.save(hfile);
+        lua_pushlstring(S, ret.data(), ret.size());
+        return 1;
+    }
 }
 
 static int traceback (lua_State *L) {
@@ -387,21 +458,9 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
 
 static int lua_dfhack_interpreter(lua_State *state)
 {
-    color_ostream *pstream = Lua::GetOutput(state);
-
+    Console *pstream = get_console(state);
     if (!pstream)
-    {
-        lua_pushnil(state);
-        lua_pushstring(state, "no output stream");
         return 2;
-    }
-
-    if (!pstream->is_console())
-    {
-        lua_pushnil(state);
-        lua_pushstring(state, "not an interactive console");
-        return 2;
-    }
 
     int argc = lua_gettop(state);
 
@@ -447,9 +506,12 @@ static const luaL_Reg dfhack_funcs[] = {
     { "print", lua_dfhack_print },
     { "println", lua_dfhack_println },
     { "printerr", lua_dfhack_printerr },
+    { "color", lua_dfhack_color },
+    { "is_interactive", lua_dfhack_is_interactive },
+    { "lineedit", lua_dfhack_lineedit },
+    { "interpreter", lua_dfhack_interpreter },
     { "safecall", lua_dfhack_safecall },
     { "onerror", traceback },
-    { "interpreter", lua_dfhack_interpreter },
     { "with_suspend", lua_dfhack_with_suspend },
     { NULL, NULL }
 };

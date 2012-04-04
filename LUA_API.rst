@@ -410,9 +410,18 @@ Currently it defines the following features:
 
   Same as println; intended for errors. Uses red color and logs to stderr.log.
 
-* ``safecall(f[,args...])``, ``dfhack.safecall(f[,args...])``
+* ``dfhack.color([color])``
 
-  Just like pcall, but prints the error with traceback using printerr.
+  Sets the current output color. If color is *nil* or *-1*, resets to default.
+
+* ``dfhack.is_interactive()``
+
+  Checks if the thread can access the interactive console and returns *true* or *false*.
+
+* ``dfhack.lineedit([prompt[,history_filename]])``
+
+  If the thread owns the interactive console, shows a prompt
+  and returns the entered string. Otherwise returns *nil, error*.
 
 * ``dfhack.interpreter([prompt[,env[,history_filename]]])``
 
@@ -420,6 +429,10 @@ Currently it defines the following features:
   string, global environment and command-line history file.
 
   If the interactive console is not accessible, returns *nil, error*.
+
+* ``safecall(f[,args...])``, ``dfhack.safecall(f[,args...])``
+
+  Just like pcall, but prints the error with traceback using printerr.
 
 * ``dfhack.with_suspend(f[,args...])``
 

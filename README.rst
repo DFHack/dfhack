@@ -845,8 +845,10 @@ Usage with filters
 ------------------
 All filters can be used together with the 'assign' command. The only restriction is that it's not possible to assign units who are inside built cages or chained because in most cases that won't be desirable anyways. Usually you should always use the filter 'own' (which implies tame) unless you want to use the zone tool for pitting hostiles. 'own' ignores own dwarves unless you specify 'race DWARF' (so it's safe to use 'assign all own' to one big pasture if you want to have all your animals at the same place). 'egglayer' and 'milkable' should be used together with 'female' unless you have a mod with egg-laying male elves who give milk or whatever.
 
-``zone assign all own grazer maxage 10``
-   Assign all own grazers who are up to 10 years old to the selected pasture.
+``zone assign all own ALPACA minage 3 maxage 10``
+   Assign all own alpacas who are between 3 and 10 years old to the selected pasture.
+``zone assign all own caged grazer``
+   Assign all own grazers who are sitting in cages on stockpiles (e.g. after buying them from merchants) to the selected pasture.
 ``zone assign count 5 own female milkable``
    Assign up to 5 own female milkable creatures to the selected pasture.
 ``zone assign all own race DWARF maxage 2``

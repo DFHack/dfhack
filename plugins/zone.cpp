@@ -1118,25 +1118,27 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         }
         else if(p == "assign")
         {
-            if(i == parameters.size()-1)
+            // if followed by another parameter, check if it's numeric
+            if(i < parameters.size()-1)
             {
-                if(target_zone == -1)
+                stringstream ss(parameters[i+1]);
+                int new_zone = -1;
+                ss >> new_zone;
+                if(new_zone != -1)
                 {
-                    out.printerr("No zone id specified and current one is invalid!");
-                    return CR_WRONG_USAGE;
+                    i++;
+                    target_zone = new_zone;
+                    out << "Assign selected unit(s) to zone #" << target_zone <<std::endl;
                 }
-                else
-                {
-                    out << "No zone id specified. Will try to use #" << target_zone << endl;
-                    zone_assign = true;
-                }
+            }
+            if(target_zone == -1)
+            {
+                out.printerr("No zone id specified and current one is invalid!\n");
+                return CR_WRONG_USAGE;
             }
             else
             {
-                stringstream ss(parameters[i+1]);
-                i++;
-                ss >> target_zone;
-                out << "Assign selected unit to zone #" << target_zone <<std::endl;
+                out << "No zone id specified. Will try to use #" << target_zone << endl;
                 zone_assign = true;
             }
         }
@@ -1291,13 +1293,13 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         {
             find_milkable = true;
         }
-
         else if(p == "set")
         {
             zone_set = true;
         }
         else if(p == "all")
         {
+            out << "Filter: all" << endl;
             all = true;
         }
         else

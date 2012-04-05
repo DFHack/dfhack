@@ -254,6 +254,8 @@ bool World::BuildPersistentCache()
 
         d->persistent_index.insert(T_persistent_item(hfvec[i]->name.first_name, -hfvec[i]->id));
     }
+
+    return true;
 }
 
 PersistentDataItem World::AddPersistentData(const std::string &key)

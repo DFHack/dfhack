@@ -119,7 +119,7 @@ const string zone_help_examples =
     "  (dfhack) 'zone set' to use this zone for future assignments\n"
     "  (dfhack) map 'zone assign' to a hotkey of your choice\n"
     "  (ingame) select unit with 'v', 'k' or from unit list or inside a cage\n"
-	"  (ingame) press hotkey to assign unit to it's new home (or pit)\n"
+    "  (ingame) press hotkey to assign unit to it's new home (or pit)\n"
     "Examples for assigning with filters:\n"
     "  (this assumes you have already set up a target zone)\n"
     "  zone assign all own grazer maxage 10\n"
@@ -185,8 +185,8 @@ bool isBuiltCageAtPos(df::coord pos);
 
 int32_t getUnitAge(df::unit* unit)
 {
-	// If the birthday this year has not yet passed, subtract one year.
-	// ASSUMPTION: birth_time is on the same scale as cur_year_tick
+    // If the birthday this year has not yet passed, subtract one year.
+    // ASSUMPTION: birth_time is on the same scale as cur_year_tick
     int32_t yearDifference = *df::global::cur_year - unit->relations.birth_year;
     if (unit->relations.birth_time >= *df::global::cur_year_tick)
         yearDifference--;
@@ -195,10 +195,26 @@ int32_t getUnitAge(df::unit* unit)
 
 bool isDead(df::unit* unit)
 {
-	if(unit->flags1.bits.dead)
-		return true;
-	else
-		return false;
+    if(unit->flags1.bits.dead)
+        return true;
+    else
+        return false;
+}
+
+
+// marked for slaughter?
+bool isMarkedForSlaughter(df::unit* unit)
+{
+    if(unit->flags2.bits.slaughter)
+        return true;
+    else
+        return false;
+}
+
+// mark for slaughter
+void doMarkForSlaughter(df::unit* unit)
+{
+    unit->flags2.bits.slaughter = 1;
 }
 
 bool isTame(df::unit* creature)
@@ -272,6 +288,7 @@ bool isHunter(df::unit* creature)
         return false;
 }
 
+
 // check if creature belongs to the player's civilization
 // (don't try to pasture/slaughter random untame animals)
 bool isOwnCiv(df::unit* creature)
@@ -294,13 +311,29 @@ bool isOwnRace(df::unit* creature)
 
 string getRaceName(df::unit* unit)
 {
-	df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
     return raw->creature_id;
+}
+
+bool isBaby(df::unit* unit)
+{
+    if(unit->profession != df::profession::BABY)
+        return true;
+    else
+        return false;
+}
+
+bool isChild(df::unit* unit)
+{
+    if(unit->profession != df::profession::CHILD)
+        return true;
+    else
+        return false;
 }
 
 bool isEggLayer(df::unit* unit)
 {
-	df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
     size_t sizecas = raw->caste.size();
     for (size_t j = 0; j < sizecas;j++)
     {
@@ -314,7 +347,7 @@ bool isEggLayer(df::unit* unit)
 
 bool isGrazer(df::unit* unit)
 {
-	df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
     size_t sizecas = raw->caste.size();
     for (size_t j = 0; j < sizecas;j++)
     {
@@ -327,7 +360,7 @@ bool isGrazer(df::unit* unit)
 
 bool isMilkable(df::unit* unit)
 {
-	df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
     size_t sizecas = raw->caste.size();
     for (size_t j = 0; j < sizecas;j++)
     {
@@ -356,23 +389,23 @@ bool isFemale(df::unit* unit)
 // dump some unit info
 void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
 {
-	if(isDead(unit))
-		return;
+    if(isDead(unit))
+        return;
 
     out.print("Unit %d ", unit->id); //race %d, civ %d,", creature->race, creature->civ_id
     if(unit->name.has_name)
-	{
-		// units given a nick with the rename tool might not have a first name (animals etc)
-		string firstname = unit->name.first_name;
-		if(firstname.size() > 0)
-		{
-			firstname[0] = toupper(firstname[0]);
-			out << "Name: " << firstname;
-		}
-		if(unit->name.nickname.size() > 0)
-			out << " '" << unit->name.nickname << "'";
+    {
+        // units given a nick with the rename tool might not have a first name (animals etc)
+        string firstname = unit->name.first_name;
+        if(firstname.size() > 0)
+        {
+            firstname[0] = toupper(firstname[0]);
+            out << "Name: " << firstname;
+        }
+        if(unit->name.nickname.size() > 0)
+            out << " '" << unit->name.nickname << "'";
         out << ", ";
-	}
+    }
     out << getRaceName(unit) << " (";
     switch(unit->sex)
     {
@@ -485,16 +518,16 @@ bool isCage(df::building * building)
 {
     if(building->getType() == building_type::Cage)
         return true;
-	else
-		return false;
+    else
+        return false;
 }
 
 bool isChain(df::building * building)
 {
     if(building->getType() == building_type::Chain)
         return true;
-	else
-		return false;
+    else
+        return false;
 }
 
 bool isActive(df::building * building)
@@ -648,14 +681,14 @@ bool isAssigned(df::unit* unit)
     for (size_t r=0; r < unit->refs.size(); r++)
     {
         df::general_ref * ref = unit->refs[r];
-		auto rtype = ref->getType();
+        auto rtype = ref->getType();
         if(    rtype == df::general_ref_type::BUILDING_CIVZONE_ASSIGNED
-			|| rtype == df::general_ref_type::BUILDING_CAGED
-			|| rtype == df::general_ref_type::BUILDING_CHAIN
+            || rtype == df::general_ref_type::BUILDING_CAGED
+            || rtype == df::general_ref_type::BUILDING_CHAIN
             || (rtype == df::general_ref_type::CONTAINED_IN_ITEM && isBuiltCageAtPos(unit->pos))
-			)
+            )
         {
-			assigned = true;
+            assigned = true;
             break;
         }
     }
@@ -864,7 +897,7 @@ command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building
             out << "no old zone info found.";
     }
 
-	ref->building_id = building->id;
+    ref->building_id = building->id;
     unit->refs.push_back(ref);
 
     df::building_civzonest * civz = (df::building_civzonest *) building;
@@ -946,11 +979,11 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose = false)
         return;
     out << endl;
     out << "x1:" <<building->x1
-		<< " x2:" <<building->x2
-		<< " y1:" <<building->y1
-		<< " y2:" <<building->y2
-		<< " z:" <<building->z
-		<< endl;
+        << " x2:" <<building->x2
+        << " y1:" <<building->y1
+        << " y2:" <<building->y2
+        << " z:" <<building->z
+        << endl;
 
     int32_t creaturecount = civ->assigned_creature.size();
     out << "Creatures in this zone: " << creaturecount << endl;
@@ -985,10 +1018,10 @@ void cageInfo(color_ostream & out, df::building* building, bool verbose = false)
                 building->getType());
     out.print("\n");
 
-	out << "x:"  << building->x1
-		<< " y:" << building->y1
-		<< " z:" << building->z
-		<< endl;
+    out << "x:"  << building->x1
+        << " y:" << building->y1
+        << " z:" << building->z
+        << endl;
 
     df::building_cagest * cage = (df::building_cagest*) building;
     int32_t creaturecount = cage->assigned_creature.size();
@@ -1025,16 +1058,16 @@ void chainInfo(color_ostream & out, df::building* building, bool list_refs = fal
     out.print("\n");
 
     df::building_chainst* chain = (df::building_chainst*) building;
-	if(chain->assigned)
-	{
-		out << "assigned: ";
-		unitInfo(out, chain->assigned, true);
-	}
-	if(chain->chained)
-	{
-		out << "chained: ";
-		unitInfo(out, chain->chained, true);
-	}
+    if(chain->assigned)
+    {
+        out << "assigned: ";
+        unitInfo(out, chain->assigned, true);
+    }
+    if(chain->chained)
+    {
+        out << "chained: ";
+        unitInfo(out, chain->chained, true);
+    }
 }
 
 command_result df_zone (color_ostream &out, vector <string> & parameters)
@@ -1046,16 +1079,16 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool zone_info = false;
     //bool cage_info = false;
     //bool chain_info = false;
-	
-	bool find_unassigned = false;
-	bool find_caged = false;
-	bool find_uncaged = false;
-	bool find_foreign = false;
-	bool find_untrained = false;
-	//bool find_trained = false;
-	bool find_war = false;
-	bool find_own = false;
-	bool find_tame = false;
+    
+    bool find_unassigned = false;
+    bool find_caged = false;
+    bool find_uncaged = false;
+    bool find_foreign = false;
+    bool find_untrained = false;
+    //bool find_trained = false;
+    bool find_war = false;
+    bool find_own = false;
+    bool find_tame = false;
     bool find_male = false;
     bool find_female = false;
     bool find_egglayer = false;
@@ -1071,7 +1104,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     size_t target_count = 0;
 
     bool find_race = false;
-	string target_race = "";
+    string target_race = "";
 
     bool zone_assign = false;
     bool zone_unassign = false;
@@ -1079,6 +1112,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool verbose = false;
     bool all = false;
     bool auto_nestbox = false;
+    bool unit_slaughter = false;
     static int target_zone = -1;
 
     for (size_t i = 0; i < parameters.size(); i++)
@@ -1151,7 +1185,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             }
             else
             {
-				target_race = parameters[i+1];
+                target_race = parameters[i+1];
                 i++;
                 out << "Filter by race " << target_race << endl;
                 find_race = true;
@@ -1201,6 +1235,11 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         {
             out << "Auto-assign female tame owned egg-layers to free nestboxes." << endl;
             auto_nestbox = true;
+        }
+        else if(p == "slaughter")
+        {
+            out << "Assign animals for slaughter." << endl;
+            unit_slaughter = true;
         }
         else if(p == "count")
         {
@@ -1303,10 +1342,10 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             all = true;
         }
         else
-		{
-			out << "Unknown command: " << p << endl;
+        {
+            out << "Unknown command: " << p << endl;
             return CR_WRONG_USAGE;
-		}
+        }
     }
 
     if((zone_info && !all) || zone_set)
@@ -1405,12 +1444,12 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     }
 
     // assign to pen or pit
-    if(zone_assign || unit_info)
+    if(zone_assign || unit_info || unit_slaughter)
     {
         df::building * building;
         if(zone_assign)
         {
-		    // try to get building index from the id
+            // try to get building index from the id
             int32_t index = findBuildingIndexById(target_zone);
             if(index == -1)
             {
@@ -1463,12 +1502,17 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                         out << "invalid unit pos" << endl;
                     unitInfo(out, unit, verbose);
                 }
-                else
+                else if(zone_assign)
                 {            
                     command_result result = assignUnitToBuilding(out, unit, building, verbose);
                     if(result != CR_OK)
                         return result;
                 }
+                else if(unit_slaughter)
+                {
+                    doMarkForSlaughter(unit);
+                }
+
                 count++;
                 if(find_count && count >= target_count)
                     break;
@@ -1490,8 +1534,16 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 unitInfo(out, unit, verbose);
                 return CR_OK;
             }
+            else if(zone_assign)
+            {
+                return assignUnitToBuilding(out, unit, building, verbose);
+            }
+            else if(unit_slaughter)
+            {
+                doMarkForSlaughter(unit);
+                return CR_OK;
+            }
             
-            return assignUnitToBuilding(out, unit, building, verbose);
         }
     }
 

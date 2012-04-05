@@ -101,20 +101,22 @@ sub render_bitfield_fields {
 }
 
 
-my $cpp_var_count = 0;
+my $cpp_var_counter = 0;
 sub render_global_class {
     my ($name, $type) = @_;
 
-    my $cppvar = "*v_$cpp_var_count";
-    $cpp_var_count += 1;
-    push @lines_cpp, "df::$name $cppvar;";
+    my $cppvar = "v_$cpp_var_counter";
+    $cpp_var_counter++;
+    push @lines_cpp, "}" if @include_cpp;
+    push @lines_cpp, "void cpp_$name(FILE *fout) {";
+    push @lines_cpp, "    df::$name *$cppvar = (df::$name*)moo;";
     push @include_cpp, $name;
 
     my $rbname = rb_ucase($name);
     my $parent = rb_ucase($type->getAttribute('inherits-from') || 'MemStruct');
     push @lines_rb, "class $rbname < $parent";
     indent_rb {
-        render_struct_fields($type, "($cppvar)");
+        render_struct_fields($type, "(*$cppvar)");
     };
     push @lines_rb, "end";
 }
@@ -218,7 +220,8 @@ sub render_item_container {
     my $subtype = $item->getAttribute('ld:subtype');
     my $rbmethod = join('_', split('-', $subtype));
     my $tg = $item->findnodes('child::ld:item')->[0];
-    if ($tg) {
+    # df-linked-list has no list[0]
+    if ($tg and $rbmethod ne 'df_linked_list') {
         my $tglen = get_tglen($tg, $cppvar);
         push @lines_rb, "$rbmethod($tglen) {";
         indent_rb {
@@ -292,7 +295,7 @@ sub get_tglen {
     my ($tg, $cppvar) = @_;
 
     if (!$tg) {
-        return query_cpp("sizeof(${cppvar}[0])");
+        return 'nil';
     }
 
     my $meta = $tg->getAttribute('ld:meta');
@@ -309,9 +312,9 @@ sub query_cpp {
     my ($query) = @_;
 
     my $ans = $offsets{$query};
-    return $ans if ($ans);
+    return $ans if (defined($ans));
 
-    push @lines_cpp, "fout << \"$query = \" << $query << std::endl;";
+    push @lines_cpp, "    fprintf(fout, \"%s = %d\\n\", \"$query\", $query);";
     return "'$query'";
 }
 
@@ -330,9 +333,10 @@ my $offsetfile = $ARGV[2];
 
 if ($offsetfile) {
     open OF, "<$offsetfile";
-    while (<OF>) {
-        my @val = split(' = ', chomp);
-        $offsets{$val[0]} = $val[1];
+    while (my $line = <OF>) {
+        chomp($line);
+        my ($key, $val) = split(' = ', $line);
+        $offsets{$key} = $val;
     }
     close OF;
 }
@@ -366,14 +370,18 @@ if ($output =~ /\.cpp$/) {
     print FH "#include \"PluginManager.h\"\n";
     print FH "#include \"DataDefs.h\"\n";
     print FH "#include \"df/$_.h\"\n" for @include_cpp;
-    print FH "#include <iostream>\n";
-    print FH "#include <fstream>\n";
+    print FH "#include <stdio.h>\n";
+    print FH "static void *moo[1024];\n";
+    print FH "$_\n" for @lines_cpp;
+    print FH "}\n";
     print FH "int main(int argc, char **argv) {\n";
-    print FH "    std::ofstream fout;\n";
+    print FH "    FILE *fout;\n";
     print FH "    if (argc < 2) return 1;\n";
-    print FH "    fout.open(argv[1]);\n";
-    print FH "    $_\n" for @lines_cpp;
-    print FH "    fout.close();\n";
+    # sometimes gcc will generate accesses to the structures at 0 just for a sizeof/offsetof, this works around the segfaults...
+    print FH "    for (int i=0 ; i<1024 ; i++) moo[i] = &moo;\n";
+    print FH "    fout = fopen(argv[1], \"w\");\n";
+    print FH "    cpp_$_(fout);\n" for @include_cpp;
+    print FH "    fclose(fout);\n";
     print FH "    return 0;\n";
     print FH "}\n";
 } else {

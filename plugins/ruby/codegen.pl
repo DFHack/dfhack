@@ -105,7 +105,7 @@ my $cpp_var_count = 0;
 sub render_global_class {
     my ($name, $type) = @_;
 
-    my $cppvar = "v_$cpp_var_count";
+    my $cppvar = "*v_$cpp_var_count";
     $cpp_var_count += 1;
     push @lines_cpp, "df::$name $cppvar;";
     push @include_cpp, $name;
@@ -114,7 +114,7 @@ sub render_global_class {
     my $parent = rb_ucase($type->getAttribute('inherits-from') || 'MemStruct');
     push @lines_rb, "class $rbname < $parent";
     indent_rb {
-        render_struct_fields($type, $cppvar);
+        render_struct_fields($type, "($cppvar)");
     };
     push @lines_rb, "end";
 }
@@ -283,7 +283,9 @@ sub render_item_bytes {
 sub get_offset {
     my ($cppvar, $fname) = @_;
 
-    return query_cpp("offsetof(typeof($cppvar), $fname)");
+    # GCC fails with this
+    #return query_cpp("offsetof(typeof($cppvar), $fname)");
+    return query_cpp("((char*)&$cppvar.$fname - (char*)&$cppvar)");
 }
 
 sub get_tglen {
@@ -309,7 +311,7 @@ sub query_cpp {
     my $ans = $offsets{$query};
     return $ans if ($ans);
 
-    push @lines_cpp, "cout << \"$query = \" << $query << endl;";
+    push @lines_cpp, "fout << \"$query = \" << $query << std::endl;";
     return "'$query'";
 }
 
@@ -327,10 +329,12 @@ my $output = $ARGV[1] or die "need output file";
 my $offsetfile = $ARGV[2];
 
 if ($offsetfile) {
-    while (<$offsetfile>) {
-        my @val = split(' = ');
+    open OF, "<$offsetfile";
+    while (<OF>) {
+        my @val = split(' = ', chomp);
         $offsets{$val[0]} = $val[1];
     }
+    close OF;
 }
 
 
@@ -356,9 +360,21 @@ for my $obj ($doc->findnodes('/ld:data-definition/ld:global-object')) {
 
 open FH, ">$output";
 if ($output =~ /\.cpp$/) {
-    print FH "#include \"$_\"\n" for @include_cpp;
-    print FH "void main(void) {\n";
+    print FH "#include \"Core.h\"\n";
+    print FH "#include \"Console.h\"\n";
+    print FH "#include \"Export.h\"\n";
+    print FH "#include \"PluginManager.h\"\n";
+    print FH "#include \"DataDefs.h\"\n";
+    print FH "#include \"df/$_.h\"\n" for @include_cpp;
+    print FH "#include <iostream>\n";
+    print FH "#include <fstream>\n";
+    print FH "int main(int argc, char **argv) {\n";
+    print FH "    std::ofstream fout;\n";
+    print FH "    if (argc < 2) return 1;\n";
+    print FH "    fout.open(argv[1]);\n";
     print FH "    $_\n" for @lines_cpp;
+    print FH "    fout.close();\n";
+    print FH "    return 0;\n";
     print FH "}\n";
 } else {
     print FH "$_\n" for @lines_rb;

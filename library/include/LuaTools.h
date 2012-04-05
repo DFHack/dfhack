@@ -80,6 +80,13 @@ namespace DFHack { namespace Lua {
     DFHACK_EXPORT void *GetDFObject(lua_State *state, type_identity *type, int val_index, bool exact_type = false);
 
     /**
+     * Assign the value at val_index to the target of given identity using df.assign().
+     * Return behavior is of SafeCall below.
+     */
+    DFHACK_EXPORT bool AssignDFObject(color_ostream &out, lua_State *state,
+                                      type_identity *type, void *target, int val_index, bool perr = true);
+
+    /**
      * Push the pointer onto the stack as a wrapped DF object of a specific type.
      */
     template<class T>
@@ -96,10 +103,26 @@ namespace DFHack { namespace Lua {
     }
 
     /**
+     * Assign the value at val_index to the target using df.assign().
+     */
+    template<class T>
+    bool AssignDFObject(color_ostream &out, lua_State *state, T *target, int val_index, bool perr = true) {
+        return AssignDFObject(out, state, df::identity_traits<T>::get(), target, val_index, perr);
+    }
+
+    /**
      * Invoke lua function via pcall. Returns true if success.
      * If an error is signalled, and perr is true, it is printed and popped from the stack.
      */
     DFHACK_EXPORT bool SafeCall(color_ostream &out, lua_State *state, int nargs, int nres, bool perr = true);
+
+    /**
+     * Parse code from string with debug_tag and env_idx, then call it using SafeCall.
+     * In case of error, it is either left on the stack, or printed like SafeCall does.
+     */
+    DFHACK_EXPORT bool SafeCallString(color_ostream &out, lua_State *state, const std::string &code,
+                                      int nargs, int nres, bool perr = true,
+                                      const char *debug_tag = NULL, int env_idx = 0);
 
     /**
      * Returns the ostream passed to SafeCall.

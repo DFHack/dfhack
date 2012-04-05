@@ -798,3 +798,58 @@ Export the current loaded map as a file. This will be eventually usable with vis
 dwarfexport
 ===========
 Export dwarves to RuneSmith-compatible XML.
+
+zone
+====
+Helps a bit with managing activity zones (pens, pastures and pits).
+
+Options:
+--------
+:set:          Set zone under cursor as default for future assigns.
+:assign:       Assign unit(s) to the pen or pit marked with the 'set' command. If no filters are set a unit must be selected in the in-game ui. Can also be followed by a valid zone id which will be set instead.
+:unassign:     Unassign selected creature from it's zone.
+:autonestbox:  Assign all (unless count is specified) unpastured female egg-layers to empty pens which contain a nestbox. If the pen is bigger than 1x1 the nestbox must be placed at the top left corner to be recognized. Only 1 unit will be assigned per pen.
+:uinfo:        Print info about unit(s). If no filters are set a unit must be selected in the in-game ui.
+:zinfo:        Print info about zone(s). If no filters are set zones under the cursor are listed.
+:verbose:      Print some more info.
+:filters:      Print list of valid filter options.
+:examples:     Print some usage examples.
+
+Filters:
+--------
+:all:         Process all units (to be used with additional filters).
+:count:       Must be followed by a number. Process only n units (to be used with additional filters). 
+:race:        Must be followed by a race raw id (e.g. BIRD_TURKEY, ALPACA etc).
+:unassigned:  Not assigned to zone, chain or built cage.
+:caged:       In a built cage.
+:uncaged:     Not in a cage (in case you want your stockpiles to be left alone).
+:foreign:     Not of own civilization (i.e. own fortress).
+:own:         From own civilization (i.e. own fortress).
+:war:         Trained war creature.
+:tamed:       Creature is tame.
+:trained:     Creature is trained.
+:untrained:   Creature is untrained.
+:male:        Creature is male.
+:female:      Creature is female.
+:egglayer:    Race lays eggs.
+:grazer:      Race is a grazer.
+:milkable:    Race is milkable.
+:minage:      Minimum age. Must be followed by number.
+:maxage:      Maximum age. Must be followed by number.
+
+Usage with single units
+-----------------------
+One convenient way to use the zone tool is to bind the command 'zone assign' to a hotkey, maybe also the command 'zone set'. Place the in-game cursor over a pen/pasture or pit, use 'zone set' to mark it. Then you can select units on the map (in 'v' or 'k' mode), in the unit list or from inside cages and use 'zone assign' to assign them to their new home. Allows pitting your own dwarves, by the way.
+
+Usage with filters
+------------------
+All filters can be used together with the 'assign' command. The only restriction is that it's not possible to assign units who are inside built cages or chained because in most cases that won't be desirable anyways. Usually you should always use the filter 'own' (which implies tame) unless you want to use the zone tool for pitting hostiles. 'own' ignores own dwarves unless you specify 'race DWARF' (so it's safe to use 'assign all own' to one big pasture if you want to have all your animals at the same place). 'egglayer' and 'milkable' should be used together with 'female' unless you have a mod with egg-laying male elves who give milk or whatever.
+
+``zone assign all own ALPACA minage 3 maxage 10``
+   Assign all own alpacas who are between 3 and 10 years old to the selected pasture.
+``zone assign all own caged grazer``
+   Assign all own grazers who are sitting in cages on stockpiles (e.g. after buying them from merchants) to the selected pasture.
+``zone assign count 5 own female milkable``
+   Assign up to 5 own female milkable creatures to the selected pasture.
+``zone assign all own race DWARF maxage 2``
+   Throw all useless kids into a pit :)

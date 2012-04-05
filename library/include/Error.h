@@ -39,6 +39,18 @@ namespace DFHack
          * the whole array of DFHack exceptions from the rest
          */
         class DFHACK_EXPORT All : public std::exception{};
+
+        class DFHACK_EXPORT NullPointer : public All {
+            const char *varname_;
+        public:
+            NullPointer(const char *varname_ = NULL) : varname_(varname_) {}
+            const char *varname() const { return varname_; }
+            virtual const char *what() const throw();
+        };
+
+#define CHECK_NULL_POINTER(var) \
+    { if (var == NULL) throw DFHack::Error::NullPointer(#var); }
+
         class DFHACK_EXPORT AllSymbols : public All{};
         // Syntax errors and whatnot, the xml can't be read
         class DFHACK_EXPORT SymbolsXmlParse : public AllSymbols

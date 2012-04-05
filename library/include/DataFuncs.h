@@ -50,6 +50,13 @@ namespace df {
     template<class T, bool isvoid = is_same_type<typename return_type<T>::type,void>::value>
     struct function_wrapper {};
 
+    class cur_lua_ostream_argument {
+        DFHack::color_ostream *out;
+    public:
+        cur_lua_ostream_argument(lua_State *state);
+        operator DFHack::color_ostream& () { return *out; }
+    };
+
     /*
      * Since templates can't match variable arg count,
      * a separate specialization is needed for every
@@ -69,7 +76,7 @@ namespace df {
     type v##type; df::identity_traits<type>::get()->lua_write(state, UPVAL_METHOD_NAME, &v##type, base++);
 #define OSTREAM_ARG DFHack::color_ostream&
 #define LOAD_OSTREAM(name) \
-    DFHack::color_ostream_proxy name(DFHack::Core::getInstance().getConsole());
+    cur_lua_ostream_argument name(state);
 
 #define INSTANTIATE_RETURN_TYPE(FArgs) \
     template<FW_TARGSC class RT> struct return_type<RT (*) FArgs> { typedef RT type; }; \

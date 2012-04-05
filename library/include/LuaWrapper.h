@@ -220,11 +220,16 @@ namespace DFHack { namespace LuaWrapper {
      * and the enum itself to the _enum metafield. Pushes the key table on the stack.
      */
     void AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, type_identity *ienum);
+
+    struct FunctionReg {
+        const char *name;
+        function_identity_base *identity;
+    };
+
     /**
-     * Create a closure invoking the given function, and add it to the field table.
+     * Wrap functions and add them to the table on the top of the stack.
      */
-    void AddMethodWrapper(lua_State *state, int meta_idx, int field_idx,
-                          const char *name, function_identity_base *fun);
+    void SetFunctionWrappers(lua_State *state, const FunctionReg *reg);
 
     void IndexStatics(lua_State *state, int meta_idx, int ftable_idx, struct_identity *pstruct);
 

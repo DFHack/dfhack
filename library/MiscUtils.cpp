@@ -25,6 +25,7 @@ distribution.
 #include "Internal.h"
 #include "Export.h"
 #include "MiscUtils.h"
+#include "Error.h"
 
 #ifndef LINUX_BUILD
     #include <Windows.h>
@@ -38,6 +39,10 @@ distribution.
 
 #include <sstream>
 #include <map>
+
+const char *DFHack::Error::NullPointer::what() const throw() {
+    return "NULL pointer access";
+}
 
 std::string stl_sprintf(const char *fmt, ...) {
     va_list lst;

@@ -39,6 +39,7 @@ distribution.
 
 #include "modules/World.h"
 #include "modules/Gui.h"
+#include "modules/Job.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -46,6 +47,10 @@ distribution.
 #include "MiscUtils.h"
 
 #include "df/job.h"
+#include "df/job_item.h"
+#include "df/building.h"
+#include "df/unit.h"
+#include "df/item.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -72,6 +77,13 @@ color_ostream *DFHack::Lua::GetOutput(lua_State *L)
     auto rv = (color_ostream*)lua_touserdata(L, -1);
     lua_pop(L, 1);
     return rv;
+}
+
+df::cur_lua_ostream_argument::cur_lua_ostream_argument(lua_State *state)
+{
+    out = DFHack::Lua::GetOutput(state);
+    if (!out)
+        LuaWrapper::field_error(state, UPVAL_METHOD_NAME, "no output stream", "invoke");
 }
 
 static void set_dfhack_output(lua_State *L, color_ostream *p)
@@ -844,6 +856,39 @@ static void OpenPersistent(lua_State *state)
     lua_pop(state, 1);
 }
 
+static void OpenModule(lua_State *state, const char *mname, const LuaWrapper::FunctionReg *reg)
+{
+    luaL_getsubtable(state, lua_gettop(state), mname);
+    LuaWrapper::SetFunctionWrappers(state, reg);
+    lua_pop(state, 1);
+}
+
+#define WRAPM(module, function) { #function, df::wrap_function(&module::function) }
+#define WRAP(function) { #function, df::wrap_function(&function) }
+#define WRAPN(name, function) { #name, df::wrap_function(&function) }
+
+static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
+    WRAPM(Gui, getSelectedWorkshopJob),
+    WRAPM(Gui, getSelectedJob),
+    WRAPM(Gui, getSelectedUnit),
+    WRAPM(Gui, getSelectedItem),
+    WRAPM(Gui, showAnnouncement),
+    WRAPM(Gui, showPopupAnnouncement),
+    { NULL, NULL }
+};
+
+static bool jobEqual(df::job *job1, df::job *job2) { return *job1 == *job2; }
+static bool jobItemEqual(df::job_item *job1, df::job_item *job2) { return *job1 == *job2; }
+
+static const LuaWrapper::FunctionReg dfhack_job_module[] = {
+    WRAP(cloneJobStruct),
+    WRAP(printJobDetails),
+    WRAP(getJobHolder),
+    WRAPN(is_equal, jobEqual),
+    WRAPN(is_item_equal, jobItemEqual),
+    { NULL, NULL }
+};
+
 lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
 {
     if (!state)
@@ -872,7 +917,8 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
 
     OpenPersistent(state);
 
-    LuaWrapper::AddMethodWrapper(state, 0, -1, "getSelectedJob", df::wrap_function(&Gui::getSelectedJob));
+    OpenModule(state, "gui", dfhack_gui_module);
+    OpenModule(state, "job", dfhack_job_module);
 
     lua_setglobal(state, "dfhack");
 

@@ -1,11 +1,35 @@
 -- Common startup file for all dfhack plugins with lua support
 -- The global dfhack table is already created by C++ init code.
 
+-- Console color constants
+
+COLOR_RESET = -1
+COLOR_BLACK = 0
+COLOR_BLUE = 1
+COLOR_GREEN = 2
+COLOR_CYAN = 3
+COLOR_RED = 4
+COLOR_MAGENTA = 5
+COLOR_BROWN = 6
+COLOR_GREY = 7
+COLOR_DARKGREY = 8
+COLOR_LIGHTBLUE = 9
+COLOR_LIGHTGREEN = 10
+COLOR_LIGHTCYAN = 11
+COLOR_LIGHTRED = 12
+COLOR_LIGHTMAGENTA = 13
+COLOR_YELLOW = 14
+COLOR_WHITE = 15
+
+-- Error handling
+
 safecall = dfhack.safecall
 
 function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
 end
+
+-- Module loading
 
 function mkmodule(module,env)
     local pkg = package.loaded[module]
@@ -30,6 +54,8 @@ function reload(module)
     end
     dofile(path)
 end
+
+-- Misc functions
 
 function printall(table)
     if table == nil then return end

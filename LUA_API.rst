@@ -497,3 +497,64 @@ Since the data is hidden in data structures owned by the DF world,
 and automatically stored in the save game, these save and retrieval
 functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.
+
+C++ function wrappers
+=====================
+
+Thin wrappers around C++ functions, similar to the ones for virtual methods.
+
+Gui module
+----------
+
+* ``dfhack.gui.getSelectedWorkshopJob(silent)``
+
+  When a job is selected in *'q'* mode, returns the job, else
+  prints error unless silent and returns *nil*.
+
+* ``dfhack.gui.getSelectedJob(silent)``
+
+  Returns the job selected in a workshop or unit/jobs screen.
+
+* ``dfhack.gui.getSelectedUnit(silent)``
+
+  Returns the unit selected via *'v'*, *'k'*, unit/jobs, or
+  a full-screen item view of a cage or suchlike.
+
+* ``dfhack.gui.getSelectedItem(silent)``
+
+  Returns the item selected via *'v'* ->inventory, *'k'*, *'t'*, or
+  a full-screen item view of a container. Note that in the
+  last case, the highlighted *contained item* is returned, not
+  the container itself.
+
+* ``dfhack.gui.showAnnouncement(text,color,is_bright)``
+
+  Adds a regular announcement with given text, color, and brightness.
+  The is_bright boolean actually seems to invert the brightness.
+
+* ``dfhack.gui.showPopupAnnouncement(text,color,is_bright)``
+
+  Pops up a titan-style modal announcement window.
+
+Job module
+----------
+
+* ``dfhack.job.cloneJobStruct(job)``
+
+  Creates a deep copy of the given job.
+
+* ``dfhack.job.printJobDetails(job)``
+
+  Prints info about the job.
+
+* ``dfhack.job.getJobHolder(job)``
+
+  Returns the building holding the job.
+
+* ``dfhack.job.is_equal(job1,job2)``
+
+  Compares important fields in the job and nested item structures.
+
+* ``dfhack.job.is_item_equal(job_item1,job_item2)``
+
+  Compares important fields in the job item structures.

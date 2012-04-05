@@ -1,8 +1,9 @@
 mypos=engine.getmod("functions")
 function DeathMsg(values)
 	local name
-	name=engine.peek(values[onfunction.hints["Die"].creature],ptt_dfstring)
-	print(name:getval().." died")
+	local u=engine.cast(df.unit,values[onfunction.hints["Die"].creature])
+	
+	print(u.name.first_name.." died")
 end
 if mypos then
 	print("Onfunction already installed")

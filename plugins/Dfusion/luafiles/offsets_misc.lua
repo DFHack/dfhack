@@ -1,7 +1,7 @@
 offsets=offsets or {} 
 function offsets.find(startoffset,...)
-	local endadr=GetTextRegion()["end"];
-	--[=[if startoffset== 0 then
+	-- [=[
+	if startoffset== 0 then
 		local text=GetTextRegion()
 		--print("searching in:"..text.name)
 		startoffset=text.start
@@ -14,7 +14,8 @@ function offsets.find(startoffset,...)
 			return 0
 		end
 		endadr=reg["end"]
-	end--]=]
+	end
+	--]=]
 	--print(string.format("Searching (%x->%x)",startoffset,endadr))
 	local h=hexsearch(startoffset,endadr,...)
 	local pos=h:find()

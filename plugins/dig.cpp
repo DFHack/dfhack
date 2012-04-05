@@ -1302,6 +1302,9 @@ command_result digl (color_ostream &out, vector <string> & parameters)
                         des_minus.bits.dig = tile_dig_designation::UpDownStair;
                     else
                         des_minus.bits.dig = tile_dig_designation::UpStair;
+                    // undo mode: clear designation
+                    if(undo)
+                        des_minus.bits.dig = tile_dig_designation::No;
                     MCache->setDesignationAt(current-1,des_minus);
 
                     des.bits.dig = tile_dig_designation::DownStair;
@@ -1314,6 +1317,9 @@ command_result digl (color_ostream &out, vector <string> & parameters)
                         des_plus.bits.dig = tile_dig_designation::UpDownStair;
                     else
                         des_plus.bits.dig = tile_dig_designation::DownStair;
+                    // undo mode: clear designation
+                    if(undo)
+                        des_plus.bits.dig = tile_dig_designation::No;
                     MCache->setDesignationAt(current+1,des_plus);
 
                     if(des.bits.dig == tile_dig_designation::DownStair)

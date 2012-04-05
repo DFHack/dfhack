@@ -254,11 +254,11 @@ function it_menu:display()
 		if r=='q' then return end
 		ans=tonumber(r)
 		
-		if ans==nil or not(ans<=table.maxn(self.items) and ans>0) then
+		if ans==nil or not(ans<=#self.items and ans>0) then
 			print("incorrect choice")
 		end
 		
-	until ans~=nil and (ans<=table.maxn(self.items) and ans>0)
+	until ans~=nil and (ans<=#self.items and ans>0)
 	self.items[ans][1]()
 end
 function MakeMenu()
@@ -468,6 +468,9 @@ function ParseNames(path)
 	return ret
 end
 function getSelectedUnit()
+	if df.global.ui.main.mode~=23 then
+		return nil
+	end
 	local unit_indx=df.global.ui_selected_unit
 	if unit_indx<#df.global.world.units.other[0]-1 then
 		return df.global.world.units.other[0][unit_indx]
@@ -493,9 +496,33 @@ function getCreatureAtPos(x,y,z) -- gets the creature index @ x,y,z coord
 			return vector[i] --return index
 		end
 	end
-	print("Creature not found!")
+	--print("Creature not found!")
 	return nil
 	
+end
+function getCreatureAtPointer()
+	return getCreatureAtPos(getxyz())
+end
+function getCreature()
+	local unit=getSelectedUnit()
+	if unit==nil then
+		unit=getCreatureAtPointer()
+	end
+	--any other selection methods...
+	return unit
+end
+function getNemesisId(unit)
+	for k,v in pairs(unit.refs) do
+		if df.general_ref_is_nemesisst:is_instance(v) then
+			return v.nemesis_id
+		end
+	end
+end
+function getNemesis(unit)
+	local id=getNemesisId(unit)
+	if id then
+		return df.nemesis_record.find(id)
+	end
 end
 function Allocate(size)
 	local ptr=engine.getmod('General_Space')
@@ -508,14 +535,6 @@ function Allocate(size)
 	curptr=curptr+size
 	engine.poked(ptr,curptr)
 	return curptr-size+ptr
-end
-function initType(object,...)
-	local m=getmetatable(object)
-	if m~=nil and m.__setup~=nil then
-		m.__setup(object,...)
-	else
-		error("This object does not have __setup function")
-	end
 end
 dofile("dfusion/patterns.lua")
 dofile("dfusion/patterns2.lua")

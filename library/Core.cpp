@@ -868,6 +868,15 @@ int Core::Update()
 
     color_ostream_proxy out(con);
 
+    // Pretend this thread has suspended the core in the usual way
+    {
+        lock_guard<mutex> lock(d->AccessMutex);
+
+        assert(d->df_suspend_depth == 0);
+        d->df_suspend_thread = this_thread::get_id();
+        d->df_suspend_depth = 1000;
+    }
+
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
     void *new_mapdata = NULL;
@@ -921,6 +930,14 @@ int Core::Update()
 
     // notify all the plugins that a game tick is finished
     plug_mgr->OnUpdate(out);
+
+    // Release the fake suspend lock
+    {
+        lock_guard<mutex> lock(d->AccessMutex);
+
+        assert(d->df_suspend_depth == 1000);
+        d->df_suspend_depth = 0;
+    }
 
     out << std::flush;
 

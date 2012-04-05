@@ -799,12 +799,12 @@ df::unit * findFreeEgglayer()
 bool unassignUnitFromZone(df::unit* unit)
 {
     bool success = false;
-    for (size_t or = 0; or < unit->refs.size(); or++)
+    for (std::size_t idx = 0; idx < unit->refs.size(); idx++)
     {
-        df::general_ref * oldref = unit->refs[or];
+        df::general_ref * oldref = unit->refs[idx];
         if(oldref->getType() == df::general_ref_type::BUILDING_CIVZONE_ASSIGNED)
         {
-            unit->refs.erase(unit->refs.begin() + or);
+            unit->refs.erase(unit->refs.begin() + idx);
             df::building_civzonest * oldciv = (df::building_civzonest *) oldref->getBuilding();
             for(size_t oc=0; oc<oldciv->assigned_creature.size(); oc++)
             {

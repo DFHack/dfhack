@@ -32,6 +32,10 @@ distribution.
 #include "DataIdentity.h"
 #include "LuaWrapper.h"
 
+#ifndef BUILD_DFHACK_LIB
+#error Due to export issues this header is internal to the main library.
+#endif
+
 namespace df {
     // A very simple and stupid implementation of some stuff from boost
     template<class U, class V> struct is_same_type { static const bool value = false; };

@@ -300,6 +300,21 @@ PersistentDataItem World::GetPersistentData(int entry_id)
     return PersistentDataItem();
 }
 
+PersistentDataItem World::GetPersistentData(const std::string &key, bool *added)
+{
+    *added = false;
+
+    PersistentDataItem rv = GetPersistentData(key);
+
+    if (!rv.isValid())
+    {
+        *added = true;
+        rv = AddPersistentData(key);
+    }
+
+    return rv;
+}
+
 void World::GetPersistentData(std::vector<PersistentDataItem> *vec, const std::string &key, bool prefix)
 {
     if (!BuildPersistentCache())

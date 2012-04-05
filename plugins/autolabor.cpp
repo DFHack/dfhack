@@ -22,6 +22,8 @@
 #include <df/workshop_type.h>
 #include <df/unit_misc_trait.h>
 
+using std::string;
+using std::endl;
 using namespace DFHack;
 using namespace df::enums;
 using df::global::ui;
@@ -29,8 +31,36 @@ using df::global::world;
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
+/*
+ * Autolabor module for dfhack
+ *
+ * The idea behind this module is to constantly adjust labors so that the right dwarves
+ * are assigned to new tasks. The key is that, for almost all labors, once a dwarf begins
+ * a job it will finish that job even if the associated labor is removed. Thus the
+ * strategy is to frequently decide, for each labor, which dwarves should possibly take
+ * a new job for that labor if it comes in and which shouldn't, and then set the labors
+ * appropriately. The updating should happen as often as can be reasonably done without
+ * causing lag.
+ *
+ * The obvious thing to do is to just set each labor on a single idle dwarf who is best
+ * suited to doing new jobs of that labor. This works in a way, but it leads to a lot
+ * of idle dwarves since only one dwarf will be dispatched for each labor in an update
+ * cycle, and dwarves that finish tasks will wait for the next update before being
+ * dispatched. An improvement is to also set some labors on dwarves that are currently
+ * doing a job, so that they will immediately take a new job when they finish. The
+ * details of which dwarves should have labors set is mostly a heuristic.
+ *
+ * A complication to the above simple scheme is labors that have associated equipment.
+ * Enabling/disabling these labors causes dwarves to change equipment, and disabling
+ * them in the middle of a job may cause the job to be abandoned. Those labors
+ * (mining, hunting, and woodcutting) need to be handled carefully to minimize churn.
+ */
+
 static int enable_autolabor = 0;
 
+static bool print_debug = 0;
+
+static std::vector<int> state_count(5);
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
@@ -41,10 +71,9 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 DFHACK_PLUGIN("autolabor");
 
 enum labor_mode {
-	FIXED,
-	AUTOMATIC,
-	EVERYONE,
+	DISABLE,
 	HAULERS,
+	AUTOMATIC,
 };
 
 enum dwarf_state {
@@ -62,6 +91,16 @@ enum dwarf_state {
 
 	// Doing something that precludes working, may be busy for a while
 	OTHER
+};
+
+const int NUM_STATE = 5;
+
+static const char *state_names[] = {
+	"IDLE",
+	"BUSY",
+	"MILITARY",
+	"CHILD",
+	"OTHER",
 };
 
 static const dwarf_state dwarf_states[] = {
@@ -298,84 +337,86 @@ struct labor_info
 	labor_mode mode;
 	bool is_exclusive;
 	int minimum_dwarfs;
+	int maximum_dwarfs;
+	int active_dwarfs;
 };
 
 static struct labor_info* labor_infos;
 
 static const struct labor_info default_labor_infos[] = {
-    /* MINE */				{AUTOMATIC, true, 2},
-    /* HAUL_STONE */		{HAULERS, false, 1},
-    /* HAUL_WOOD */			{HAULERS, false, 1},
-    /* HAUL_BODY */			{HAULERS, false, 1},
-    /* HAUL_FOOD */			{HAULERS, false, 1},
-    /* HAUL_REFUSE */		{HAULERS, false, 1},
-    /* HAUL_ITEM */			{HAULERS, false, 1},
-    /* HAUL_FURNITURE */	{HAULERS, false, 1},
-    /* HAUL_ANIMAL */		{HAULERS, false, 1},
-    /* CLEAN */				{HAULERS, false, 1},
-    /* CUTWOOD */			{AUTOMATIC, true, 1},
-    /* CARPENTER */			{AUTOMATIC, false, 1},
-    /* DETAIL */			{AUTOMATIC, false, 1},
-    /* MASON */				{AUTOMATIC, false, 1},
-    /* ARCHITECT */			{AUTOMATIC, false, 1},
-    /* ANIMALTRAIN */		{AUTOMATIC, false, 1},
-    /* ANIMALCARE */		{AUTOMATIC, false, 1},
-    /* DIAGNOSE */			{AUTOMATIC, false, 1},
-    /* SURGERY */			{AUTOMATIC, false, 1},
-    /* BONE_SETTING */		{AUTOMATIC, false, 1},
-    /* SUTURING */			{AUTOMATIC, false, 1},
-    /* DRESSING_WOUNDS */	{AUTOMATIC, false, 1},
-	/* FEED_WATER_CIVILIANS */ {EVERYONE, false, 1},
-    /* RECOVER_WOUNDED */	{HAULERS, false, 1},
-    /* BUTCHER */			{AUTOMATIC, false, 1},
-    /* TRAPPER */			{AUTOMATIC, false, 1},
-    /* DISSECT_VERMIN */	{AUTOMATIC, false, 1},
-    /* LEATHER */			{AUTOMATIC, false, 1},
-    /* TANNER */			{AUTOMATIC, false, 1},
-    /* BREWER */			{AUTOMATIC, false, 1},
-    /* ALCHEMIST */			{AUTOMATIC, false, 1},
-    /* SOAP_MAKER */		{AUTOMATIC, false, 1},
-    /* WEAVER */			{AUTOMATIC, false, 1},
-    /* CLOTHESMAKER */		{AUTOMATIC, false, 1},
-    /* MILLER */			{AUTOMATIC, false, 1},
-    /* PROCESS_PLANT */		{AUTOMATIC, false, 1},
-    /* MAKE_CHEESE */		{AUTOMATIC, false, 1},
-    /* MILK */				{AUTOMATIC, false, 1},
-    /* COOK */				{AUTOMATIC, false, 1},
-    /* PLANT */				{AUTOMATIC, false, 1},
-    /* HERBALIST */			{AUTOMATIC, false, 1},
-    /* FISH */				{FIXED, false, 1},
-    /* CLEAN_FISH */		{AUTOMATIC, false, 1},
-    /* DISSECT_FISH */		{AUTOMATIC, false, 1},
-    /* HUNT */				{FIXED, true, 1},
-    /* SMELT */				{AUTOMATIC, false, 1},
-    /* FORGE_WEAPON */		{AUTOMATIC, false, 1},
-    /* FORGE_ARMOR */		{AUTOMATIC, false, 1},
-    /* FORGE_FURNITURE */	{AUTOMATIC, false, 1},
-    /* METAL_CRAFT */		{AUTOMATIC, false, 1},
-    /* CUT_GEM */			{AUTOMATIC, false, 1},
-    /* ENCRUST_GEM */		{AUTOMATIC, false, 1},
-    /* WOOD_CRAFT */		{AUTOMATIC, false, 1},
-    /* STONE_CRAFT */		{AUTOMATIC, false, 1},
-    /* BONE_CARVE */		{AUTOMATIC, false, 1},
-    /* GLASSMAKER */		{AUTOMATIC, false, 1},
-    /* EXTRACT_STRAND */	{AUTOMATIC, false, 1},
-    /* SIEGECRAFT */		{AUTOMATIC, false, 1},
-    /* SIEGEOPERATE */		{AUTOMATIC, false, 1},
-    /* BOWYER */			{AUTOMATIC, false, 1},
-    /* MECHANIC */			{AUTOMATIC, false, 1},
-    /* POTASH_MAKING */		{AUTOMATIC, false, 1},
-    /* LYE_MAKING */		{AUTOMATIC, false, 1},
-    /* DYER */				{AUTOMATIC, false, 1},
-    /* BURN_WOOD */			{AUTOMATIC, false, 1},
-    /* OPERATE_PUMP */		{AUTOMATIC, false, 1},
-    /* SHEARER */			{AUTOMATIC, false, 1},
-    /* SPINNER */			{AUTOMATIC, false, 1},
-    /* POTTERY */			{AUTOMATIC, false, 1},
-    /* GLAZING */			{AUTOMATIC, false, 1},
-    /* PRESSING */			{AUTOMATIC, false, 1},
-    /* BEEKEEPING */		{AUTOMATIC, false, 1},
-	/* WAX_WORKING */		{AUTOMATIC, false, 1},
+    /* MINE */				{AUTOMATIC, true, 2, 200, 0},
+    /* HAUL_STONE */		{HAULERS, false, 1, 200, 0},
+    /* HAUL_WOOD */			{HAULERS, false, 1, 200, 0},
+    /* HAUL_BODY */			{HAULERS, false, 1, 200, 0},
+    /* HAUL_FOOD */			{HAULERS, false, 1, 200, 0},
+    /* HAUL_REFUSE */		{HAULERS, false, 1, 200, 0},
+    /* HAUL_ITEM */			{HAULERS, false, 1, 200, 0},
+    /* HAUL_FURNITURE */	{HAULERS, false, 1, 200, 0},
+    /* HAUL_ANIMAL */		{HAULERS, false, 1, 200, 0},
+    /* CLEAN */				{HAULERS, false, 1, 200, 0},
+    /* CUTWOOD */			{AUTOMATIC, true, 1, 200, 0},
+    /* CARPENTER */			{AUTOMATIC, false, 1, 200, 0},
+    /* DETAIL */			{AUTOMATIC, false, 1, 200, 0},
+    /* MASON */				{AUTOMATIC, false, 1, 200, 0},
+    /* ARCHITECT */			{AUTOMATIC, false, 1, 200, 0},
+    /* ANIMALTRAIN */		{AUTOMATIC, false, 1, 200, 0},
+    /* ANIMALCARE */		{AUTOMATIC, false, 1, 200, 0},
+    /* DIAGNOSE */			{AUTOMATIC, false, 1, 200, 0},
+    /* SURGERY */			{AUTOMATIC, false, 1, 200, 0},
+    /* BONE_SETTING */		{AUTOMATIC, false, 1, 200, 0},
+    /* SUTURING */			{AUTOMATIC, false, 1, 200, 0},
+    /* DRESSING_WOUNDS */	{AUTOMATIC, false, 1, 200, 0},
+	/* FEED_WATER_CIVILIANS */ {AUTOMATIC, false, 200, 200, 0},
+    /* RECOVER_WOUNDED */	{HAULERS, false, 1, 200, 0},
+    /* BUTCHER */			{AUTOMATIC, false, 1, 200, 0},
+    /* TRAPPER */			{AUTOMATIC, false, 1, 200, 0},
+    /* DISSECT_VERMIN */	{AUTOMATIC, false, 1, 200, 0},
+    /* LEATHER */			{AUTOMATIC, false, 1, 200, 0},
+    /* TANNER */			{AUTOMATIC, false, 1, 200, 0},
+    /* BREWER */			{AUTOMATIC, false, 1, 200, 0},
+    /* ALCHEMIST */			{AUTOMATIC, false, 1, 200, 0},
+    /* SOAP_MAKER */		{AUTOMATIC, false, 1, 200, 0},
+    /* WEAVER */			{AUTOMATIC, false, 1, 200, 0},
+    /* CLOTHESMAKER */		{AUTOMATIC, false, 1, 200, 0},
+    /* MILLER */			{AUTOMATIC, false, 1, 200, 0},
+    /* PROCESS_PLANT */		{AUTOMATIC, false, 1, 200, 0},
+    /* MAKE_CHEESE */		{AUTOMATIC, false, 1, 200, 0},
+    /* MILK */				{AUTOMATIC, false, 1, 200, 0},
+    /* COOK */				{AUTOMATIC, false, 1, 200, 0},
+    /* PLANT */				{AUTOMATIC, false, 1, 200, 0},
+    /* HERBALIST */			{AUTOMATIC, false, 1, 200, 0},
+    /* FISH */				{AUTOMATIC, false, 1, 1, 0},
+    /* CLEAN_FISH */		{AUTOMATIC, false, 1, 200, 0},
+    /* DISSECT_FISH */		{AUTOMATIC, false, 1, 200, 0},
+    /* HUNT */				{AUTOMATIC, true, 1, 1, 0},
+    /* SMELT */				{AUTOMATIC, false, 1, 200, 0},
+    /* FORGE_WEAPON */		{AUTOMATIC, false, 1, 200, 0},
+    /* FORGE_ARMOR */		{AUTOMATIC, false, 1, 200, 0},
+    /* FORGE_FURNITURE */	{AUTOMATIC, false, 1, 200, 0},
+    /* METAL_CRAFT */		{AUTOMATIC, false, 1, 200, 0},
+    /* CUT_GEM */			{AUTOMATIC, false, 1, 200, 0},
+    /* ENCRUST_GEM */		{AUTOMATIC, false, 1, 200, 0},
+    /* WOOD_CRAFT */		{AUTOMATIC, false, 1, 200, 0},
+    /* STONE_CRAFT */		{AUTOMATIC, false, 1, 200, 0},
+    /* BONE_CARVE */		{AUTOMATIC, false, 1, 200, 0},
+    /* GLASSMAKER */		{AUTOMATIC, false, 1, 200, 0},
+    /* EXTRACT_STRAND */	{AUTOMATIC, false, 1, 200, 0},
+    /* SIEGECRAFT */		{AUTOMATIC, false, 1, 200, 0},
+    /* SIEGEOPERATE */		{AUTOMATIC, false, 1, 200, 0},
+    /* BOWYER */			{AUTOMATIC, false, 1, 200, 0},
+    /* MECHANIC */			{AUTOMATIC, false, 1, 200, 0},
+    /* POTASH_MAKING */		{AUTOMATIC, false, 1, 200, 0},
+    /* LYE_MAKING */		{AUTOMATIC, false, 1, 200, 0},
+    /* DYER */				{AUTOMATIC, false, 1, 200, 0},
+    /* BURN_WOOD */			{AUTOMATIC, false, 1, 200, 0},
+    /* OPERATE_PUMP */		{AUTOMATIC, false, 1, 200, 0},
+    /* SHEARER */			{AUTOMATIC, false, 1, 200, 0},
+    /* SPINNER */			{AUTOMATIC, false, 1, 200, 0},
+    /* POTTERY */			{AUTOMATIC, false, 1, 200, 0},
+    /* GLAZING */			{AUTOMATIC, false, 1, 200, 0},
+    /* PRESSING */			{AUTOMATIC, false, 1, 200, 0},
+    /* BEEKEEPING */		{AUTOMATIC, false, 1, 200, 0},
+	/* WAX_WORKING */		{AUTOMATIC, false, 1, 200, 0},
 };
 
 static const df::job_skill noble_skills[] = {
@@ -412,14 +453,29 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  autolabor enable\n"
 		"  autolabor disable\n"
 		"    Enables or disables the plugin.\n"
-		"  autolabor miners <n>\n"
-		"    Set number of desired miners (defaults to 2)\n"
+		"  autolabor <labor> <minimum> [<maximum>]\n"
+		"    Set number of dwarves assigned to a labor.\n"
+		"  autolabor <labor> haulers\n"
+		"    Set a labor to be handled by hauler dwarves.\n"
+		"  autolabor <labor> disable\n"
+		"    Turn off autolabor for a specific labor.\n"
+		"  autolabor list\n"
+		"    List current status of all labors.\n"
 		"Function:\n"
 		"  When enabled, autolabor periodically checks your dwarves and enables or\n"
 		"  disables labors. It tries to keep as many dwarves as possible busy but\n"
 		"  also tries to have dwarves specialize in specific skills.\n"
 		"  Warning: autolabor will override any manual changes you make to labors\n"
 		"  while it is enabled.\n"
+		"Examples:\n"
+		"  autolabor MINE 2\n"
+		"    Keep at least 2 dwarves with mining enabled.\n"
+		"  autolabor CUT_GEM 1 1\n"
+		"    Keep exactly 1 dwarf with gemcutting enabled.\n"
+		"  autolabor FEED_WATER_CIVILIANS haulers\n"
+		"    Have haulers feed and water wounded dwarves.\n"
+		"  autolabor CUTWOOD disable\n"
+		"    Turn off autolabor for wood cutting.\n"
     ));
     return CR_OK;
 }
@@ -607,7 +663,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 	// Find the activity state for each dwarf. It's important to get this right - a dwarf who we think is IDLE but
 	// can't work will gum everything up. In the future I might add code to auto-detect slacker dwarves.
 
-	std::vector<int> state_count(5);
+	state_count.clear();
+	state_count.resize(NUM_STATE);
 
 	for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
 	{
@@ -627,11 +684,11 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		{
 			dwarf_info[dwarf].state = CHILD;
 		}
+		else if (ENUM_ATTR(profession, military, dwarfs[dwarf]->profession))
+			dwarf_info[dwarf].state = MILITARY;
 		else if (dwarfs[dwarf]->job.current_job == NULL)
 		{
-			if (ENUM_ATTR(profession, military, dwarfs[dwarf]->profession))
-				dwarf_info[dwarf].state = MILITARY;
-			else if (is_on_break)
+			if (is_on_break)
 				dwarf_info[dwarf].state = OTHER;
 			else if (dwarfs[dwarf]->meetings.size() > 0)
 				dwarf_info[dwarf].state = OTHER;
@@ -651,6 +708,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		}
 
 		state_count[dwarf_info[dwarf].state]++;
+
+		if (print_debug)
+			out.print("Dwarf %i \"%s\": penalty %i, state %s\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), dwarf_info[dwarf].mastery_penalty, state_names[dwarf_info[dwarf].state]);
 	}
 
 	// Generate labor -> skill mapping
@@ -685,10 +745,32 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		assert(labor < ARRAY_COUNT(labor_infos));
 		*/
 
+		labor_infos[labor].active_dwarfs = 0;
+
 		labors.push_back(labor);
 	}
     laborinfo_sorter lasorter;
 	std::sort(labors.begin(), labors.end(), lasorter);
+
+	// Handle DISABLED skills (just bookkeeping)
+	for (auto lp = labors.begin(); lp != labors.end(); ++lp)
+	{
+		auto labor = *lp;
+
+		if (labor_infos[labor].mode != DISABLE)
+			continue;
+
+		for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
+		{
+			if (dwarfs[dwarf]->status.labors[labor])
+			{
+				if (labor_infos[labor].is_exclusive)
+					dwarf_info[dwarf].has_exclusive_labor = true;
+
+				dwarf_info[dwarf].assigned_jobs++;
+			}
+		}
+	}
 
 	// Handle all skills except those marked HAULERS
 
@@ -703,7 +785,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 		df::job_skill skill = labor_to_skill[labor];
 
-		if (labor_infos[labor].mode == HAULERS)
+		if (labor_infos[labor].mode != AUTOMATIC)
 			continue;
 
 		int best_dwarf = 0;
@@ -711,22 +793,23 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 		std::vector<int> values(n_dwarfs);
 		std::vector<int> candidates;
-		std::vector<int> backup_candidates;
 		std::map<int, int> dwarf_skill;
+		std::vector<bool> previously_enabled(n_dwarfs);
 
 		auto mode = labor_infos[labor].mode;
-		if (AUTOMATIC == mode && state_count[IDLE] == 0)
-			mode = FIXED;
 
+		// Find candidate dwarfs, and calculate a preference value for each dwarf
 		for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
 		{
-			if (dwarf_info[dwarf].state != IDLE && dwarf_info[dwarf].state != BUSY && mode != EVERYONE)
+			if (dwarf_info[dwarf].state == CHILD)
+				continue;
+			if (dwarf_info[dwarf].state == MILITARY)
 				continue;
 
 			if (labor_infos[labor].is_exclusive && dwarf_info[dwarf].has_exclusive_labor)
 				continue;
 
-			int value = dwarf_info[dwarf].mastery_penalty - dwarf_info[dwarf].assigned_jobs * 50;
+			int value = dwarf_info[dwarf].mastery_penalty;
 
 			if (skill != df::enums::job_skill::NONE)
 			{
@@ -766,76 +849,65 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 			values[dwarf] = value;
 
-			if (mode == AUTOMATIC && dwarf_info[dwarf].state != IDLE)
-				backup_candidates.push_back(dwarf);
-			else
-				candidates.push_back(dwarf);
+			candidates.push_back(dwarf);
 
 		}
 
-		if (candidates.size() == 0)
-		{
-			candidates = backup_candidates;
-			mode = FIXED;
-		}
+		// Sort candidates by preference value
+        values_sorter ivs(values);
+		std::sort(candidates.begin(), candidates.end(), ivs);
 
-		if (labor_infos[labor].mode != EVERYONE)
-        {
-            values_sorter ivs(values);
-			std::sort(candidates.begin(), candidates.end(), ivs);
-        }
-
+		// Disable the labor on everyone
 		for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
 		{
-			bool allow_labor = false;
+			if (dwarf_info[dwarf].state == CHILD)
+				continue;
 			
-			if (dwarf_info[dwarf].state == BUSY && 
-				  mode == AUTOMATIC && 
-				  (labor_infos[labor].is_exclusive || dwarf_skill[dwarf] > 0))
-			{
-				allow_labor = true;
-			}
-
-			if (dwarf_info[dwarf].state == OTHER &&
-				  mode == AUTOMATIC && 
-				  dwarf_skill[dwarf] > 0 &&
-				  !dwarf_info[dwarf].is_best_noble)
-			{
-				allow_labor = true;
-			}
-
-			if (dwarfs[dwarf]->status.labors[labor] &&
-				allow_labor && 
-				!(labor_infos[labor].is_exclusive && dwarf_info[dwarf].has_exclusive_labor))
-			{
-				if (labor_infos[labor].is_exclusive)
-					dwarf_info[dwarf].has_exclusive_labor = true;
-
-				dwarf_info[dwarf].assigned_jobs++;
-			}
-			else
-			{
-				dwarfs[dwarf]->status.labors[labor] = false;
-			}
+			previously_enabled[dwarf] = dwarfs[dwarf]->status.labors[labor];
+			dwarfs[dwarf]->status.labors[labor] = false;
 		}
 
-		int minimum_dwarfs = labor_infos[labor].minimum_dwarfs;
-
-		if (labor_infos[labor].mode == EVERYONE)
-			minimum_dwarfs = n_dwarfs;
+		int min_dwarfs = labor_infos[labor].minimum_dwarfs;
+		int max_dwarfs = labor_infos[labor].maximum_dwarfs;
 
 		// Special - don't assign hunt without a butchers, or fish without a fishery
 		if (df::enums::unit_labor::HUNT == labor && !has_butchers)
-			minimum_dwarfs = 0;
+			min_dwarfs = max_dwarfs = 0;
 		if (df::enums::unit_labor::FISH == labor && !has_fishery)
-			minimum_dwarfs = 0;
+			min_dwarfs = max_dwarfs = 0;
 
-		for (int i = 0; i < candidates.size() && i < minimum_dwarfs; i++)
+		bool want_idle_dwarf = true;
+		if (state_count[IDLE] < 2)
+			want_idle_dwarf = false;
+
+		/*
+		 * Assign dwarfs to this labor. We assign at least the minimum number of dwarfs, in
+		 * order of preference, and then assign additional dwarfs that meet any of these conditions:
+		 * - The dwarf is idle and there are no idle dwarves assigned to this labor
+		 * - The dwarf has nonzero skill associated with the labor
+		 * - The labor is mining, hunting, or woodcutting and the dwarf currently has it enabled.
+		 * We stop assigning dwarfs when we reach the maximum allowed.
+		 * Note that only idle and busy dwarfs count towards the number of dwarfs. "Other" dwarfs
+		 * (sleeping, eating, on break, etc.) will have labors assigned, but will not be counted.
+		 * Military and children/nobles will not have labors assigned.
+		 */
+		for (int i = 0; i < candidates.size() && labor_infos[labor].active_dwarfs < max_dwarfs; i++)
 		{
 			int dwarf = candidates[i];
 
 			assert(dwarf >= 0);
 			assert(dwarf < n_dwarfs);
+
+			bool preferred_dwarf = false;
+			if (want_idle_dwarf && dwarf_info[dwarf].state == IDLE)
+				preferred_dwarf = true;
+			if (dwarf_skill[dwarf] > 0)
+				preferred_dwarf = true;
+			if (previously_enabled[dwarf] && labor_infos[labor].is_exclusive)
+				preferred_dwarf = true;
+
+			if (labor_infos[labor].active_dwarfs >= min_dwarfs && !preferred_dwarf)
+				continue;
 
 			if (!dwarfs[dwarf]->status.labors[labor])
 				dwarf_info[dwarf].assigned_jobs++;
@@ -848,6 +920,15 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 				// all the exclusive labors require equipment so this should force the dorf to reequip if needed
 				dwarfs[dwarf]->military.pickup_flags.bits.update = 1; 
 			}
+
+			if (print_debug)
+				out.print("Dwarf %i \"%s\" assigned %s: value %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf]);
+
+			if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
+				labor_infos[labor].active_dwarfs++;
+
+			if (dwarf_info[dwarf].state == IDLE)
+				want_idle_dwarf = false;
 		}
 	}
 
@@ -896,6 +977,12 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			assert(dwarf < n_dwarfs);
 			dwarfs[dwarf]->status.labors[labor] = true;
 			dwarf_info[dwarf].assigned_jobs++;
+
+			if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
+				labor_infos[labor].active_dwarfs++;
+
+			if (print_debug)
+				out.print("Dwarf %i \"%s\" assigned %s: hauler\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str());
 		}
 
 		for (int i = num_haulers; i < hauler_ids.size(); i++)
@@ -910,10 +997,30 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			dwarfs[dwarf]->status.labors[labor] = false;
 		}
 	}
+
+	print_debug = 0;
+
     return CR_OK;
 }
 
-// A command! It sits around and looks pretty. And it's nice and friendly.
+void print_labor (df::enums::unit_labor::unit_labor labor, color_ostream &out)
+{
+	string labor_name = ENUM_KEY_STR(unit_labor, labor);
+	out << labor_name << ": ";
+	for (int i = 0; i < 20 - (int)labor_name.length(); i++)
+		out << ' ';
+	if (labor_infos[labor].mode == DISABLE)
+		out << "disabled" << endl;
+	else
+	{
+		if (labor_infos[labor].mode == HAULERS)
+			out << "haulers";
+		else
+			out << "minimum " << labor_infos[labor].minimum_dwarfs << ", maximum " << labor_infos[labor].maximum_dwarfs;
+		out << ", currently " << labor_infos[labor].active_dwarfs << " dwarfs" << endl;
+	}
+}
+
 command_result autolabor (color_ostream &out, std::vector <std::string> & parameters)
 {
 	if (parameters.size() == 1 && 
@@ -926,16 +1033,81 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
             enable_autolabor = 1;
         out.print("autolabor %sactivated.\n", (enable_autolabor ? "" : "de"));
     }
-    else if (parameters.size() == 2 && parameters[0] == "miners") {
-		int nminers = atoi (parameters[1].c_str());
-		if (nminers >= 0) {
-			labor_infos[0].minimum_dwarfs = nminers;
-			out.print("miner count set to %d.\n", nminers);
-		} else {
-			out.print("Syntax: autolabor miners <n>, where n is 0 or more.\n"
-				"Current miner count: %d\n", labor_infos[0].minimum_dwarfs);
+    else if (parameters.size() == 2 || parameters.size() == 3) {
+		df::enums::unit_labor::unit_labor labor = df::enums::unit_labor::NONE;
+
+		FOR_ENUM_ITEMS(unit_labor, test_labor)
+		{
+			if (parameters[0] == ENUM_KEY_STR(unit_labor, test_labor))
+				labor = test_labor;
 		}
-	} else
+
+		if (labor == df::enums::unit_labor::NONE)
+		{
+			out.printerr("Could not find labor %s.", parameters[0].c_str());
+			return CR_WRONG_USAGE;
+		}
+
+		if (parameters[1] == "haulers")
+		{
+			labor_infos[labor].mode = HAULERS;
+			print_labor(labor, out);
+			return CR_OK;
+		}
+		if (parameters[1] == "disable")
+		{
+			labor_infos[labor].mode = DISABLE;
+			print_labor(labor, out);
+			return CR_OK;
+		}
+
+		int minimum = atoi (parameters[1].c_str());
+		int maximum = 200;
+		if (parameters.size() == 3)
+			maximum = atoi (parameters[2].c_str());
+
+		if (maximum < minimum || maximum < 0 || minimum < 0)
+		{
+			out.printerr("Syntax: autolabor <labor> <minimum> [<maximum>]\n", maximum, minimum);
+			return CR_WRONG_USAGE;
+		}
+
+		labor_infos[labor].minimum_dwarfs = minimum;
+		labor_infos[labor].maximum_dwarfs = maximum;
+		labor_infos[labor].mode = AUTOMATIC;
+		print_labor(labor, out);
+	} 
+	else if (parameters.size() == 1 && parameters[0] == "list") {
+		if (!enable_autolabor)
+		{
+			out << "autolabor not activated." << endl;
+			return CR_OK;
+		}
+
+		bool need_comma = 0;
+		for (int i = 0; i < NUM_STATE; i++)
+		{
+			if (state_count[i] == 0)
+				continue;
+			if (need_comma)
+				out << ", ";
+			out << state_count[i] << ' ' << state_names[i];
+			need_comma = 1;
+		}
+		out << endl;
+
+		FOR_ENUM_ITEMS(unit_labor, labor)
+		{
+			if (labor == df::enums::unit_labor::NONE)
+				continue;
+
+			print_labor(labor, out);
+		}
+	}
+	else if (parameters.size() == 1 && parameters[0] == "debug") {
+		print_debug = 1;
+	}
+	else
     {
         out.print("Automatically assigns labors to dwarves.\n"
             "Activate with 'autolabor 1', deactivate with 'autolabor 0'.\n"

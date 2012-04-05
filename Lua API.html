@@ -330,6 +330,11 @@ ul.auto-toc {
 </li>
 <li><a class="reference internal" href="#named-types" id="id7">Named types</a></li>
 <li><a class="reference internal" href="#global-functions" id="id8">Global functions</a></li>
+<li><a class="reference internal" href="#recursive-table-assignment" id="id9">Recursive table assignment</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#dfhack-utilities" id="id10">DFHack utilities</a><ul>
+<li><a class="reference internal" href="#persistent-configuration-storage" id="id11">Persistent configuration storage</a></li>
 </ul>
 </li>
 </ul>
@@ -430,17 +435,22 @@ or as a result of calling the <tt class="docutils literal">_field()</tt> method.
 <ul>
 <li><p class="first"><tt class="docutils literal">ref.field</tt>, <tt class="docutils literal">ref.field = value</tt></p>
 <p>Valid fields of the structure may be accessed by subscript.</p>
-<p>In case of inheritance, <em>superclass</em> fields have precedence
+<p>Primitive typed fields, i.e. numbers &amp; strings, are converted
+to/from matching lua values. The value of a pointer is a reference
+to the target, or nil/NULL. Complex types are represented by
+a reference to the field within the structure; unless recursive
+lua table assignment is used, such fields can only be read.</p>
+<p><strong>NOTE:</strong> In case of inheritance, <em>superclass</em> fields have precedence
 over the subclass, but fields shadowed in this way can still
-be accessed as <tt class="docutils literal"><span class="pre">ref['subclasstype.field']</span></tt>.</p>
-<p>This shadowing order is necessary because vtable-based classes
+be accessed as <tt class="docutils literal"><span class="pre">ref['subclasstype.field']</span></tt>.
+This shadowing order is necessary because vtable-based classes
 are automatically exposed in their exact type, and the reverse
 rule would make access to superclass fields unreliable.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">ref._field(field)</tt></p>
 <p>Returns a reference to a valid field. That is, unlike regular
-subscript, it returns a pointer reference even for primitive
-typed fields.</p>
+subscript, it returns a reference to the field within the structure
+even for primitive typed fields and pointers.</p>
 </li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">ref:vmethod(args...)</span></tt></p>
 <p>Named virtual methods are also exposed, subject to the same
@@ -573,6 +583,175 @@ lightuserdata (step is mandatory then).</p>
 <p>Equivalent to the method, but also allows a reference as proxy for its type.</p>
 </li>
 </ul>
+</div>
+<div class="section" id="recursive-table-assignment">
+<h2><a class="toc-backref" href="#id9">Recursive table assignment</a></h2>
+<p>Recursive assignment is invoked when a lua table is assigned
+to a C++ object or field, i.e. one of:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">ref:assign{...}</span></tt></li>
+<li><tt class="docutils literal">ref.field = <span class="pre">{...}</span></tt></li>
+</ul>
+<p>The general mode of operation is that all fields of the table
+are assigned to the fields of the target structure, roughly
+emulating the following code:</p>
+<pre class="literal-block">
+function rec_assign(ref,table)
+    for key,value in pairs(table) do
+        ref[key] = value
+    end
+end
+</pre>
+<p>Since assigning a table to a field using = invokes the same
+process, it is recursive.</p>
+<p>There are however some variations to this process depending
+on the type of the field being assigned to:</p>
+<ol class="arabic">
+<li><p class="first">If the table contains an <tt class="docutils literal">assign</tt> field, it is
+applied first, using the <tt class="docutils literal">ref:assign(value)</tt> method.
+It is never assigned as a usual field.</p>
+</li>
+<li><p class="first">When a table is assigned to a non-NULL pointer field
+using the <tt class="docutils literal">ref.field = <span class="pre">{...}</span></tt> syntax, it is applied
+to the target of the pointer instead.</p>
+<p>If the pointer is NULL, the table is checked for a <tt class="docutils literal">new</tt> field:</p>
+<ol class="loweralpha simple">
+<li>If it is <em>nil</em> or <em>false</em>, assignment fails with an error.</li>
+<li>If it is <em>true</em>, the pointer is initialized with a newly
+allocated object of the declared target type of the pointer.</li>
+<li>Otherwise, <tt class="docutils literal">table.new</tt> must be a named type, or an
+object of a type compatible with the pointer. The pointer
+is initialized with the result of calling <tt class="docutils literal">table.new:new()</tt>.</li>
+</ol>
+<p>After this auto-vivification process, assignment proceeds
+as if the pointer wasn't NULL.</p>
+<p>Obviously, the <tt class="docutils literal">new</tt> field inside the table is always skipped
+during the actual per-field assignment processing.</p>
+</li>
+<li><p class="first">If the target of the assignment is a container, a separate
+rule set is used:</p>
+<ol class="loweralpha">
+<li><p class="first">If the table contains neither <tt class="docutils literal">assign</tt> nor <tt class="docutils literal">resize</tt>
+fields, it is interpreted as an ordinary <em>1-based</em> lua
+array. The container is resized to the #-size of the
+table, and elements are assigned in numeric order:</p>
+<pre class="literal-block">
+ref:resize(#table);
+for i=1,#table do ref[i-1] = table[i] end
+</pre>
+</li>
+<li><p class="first">Otherwise, <tt class="docutils literal">resize</tt> must be <em>true</em>, <em>false</em>, or
+an explicit number. If it is not false, the container
+is resized. After that the usual struct-like 'pairs'
+assignment is performed.</p>
+<p>In case <tt class="docutils literal">resize</tt> is <em>true</em>, the size is computed
+by scanning the table for the largest numeric key.</p>
+</li>
+</ol>
+<p>This means that in order to reassign only one element of
+a container using this system, it is necessary to use:</p>
+<pre class="literal-block">
+{ resize=false, [idx]=value }
+</pre>
+</li>
+</ol>
+<p>Since nil inside a table is indistinguishable from missing key,
+it is necessary to use <tt class="docutils literal">df.NULL</tt> as a null pointer value.</p>
+<p>This system is intended as a way to define a nested object
+tree using pure lua data structures, and then materialize it in
+C++ memory in one go. Note that if pointer auto-vivification
+is used, an error in the middle of the recursive walk would
+not destroy any objects allocated in this way, so the user
+should be prepared to catch the error and do the necessary
+cleanup.</p>
+</div>
+</div>
+<div class="section" id="dfhack-utilities">
+<h1><a class="toc-backref" href="#id10">DFHack utilities</a></h1>
+<p>DFHack utility functions are placed in the <tt class="docutils literal">dfhack</tt> global tree.</p>
+<p>Currently it defines the following features:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.print(args...)</span></tt></p>
+<p>Output tab-separated args as standard lua print would do,
+but without a newline.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">print(args...)</span></tt>, <tt class="docutils literal"><span class="pre">dfhack.println(args...)</span></tt></p>
+<p>A replacement of the standard library print function that
+works with DFHack output infrastructure.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.printerr(args...)</span></tt></p>
+<p>Same as println; intended for errors. Uses red color and logs to stderr.log.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.color([color])</span></tt></p>
+<p>Sets the current output color. If color is <em>nil</em> or <em>-1</em>, resets to default.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.is_interactive()</tt></p>
+<p>Checks if the thread can access the interactive console and returns <em>true</em> or <em>false</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.lineedit([prompt[,history_filename]])</span></tt></p>
+<p>If the thread owns the interactive console, shows a prompt
+and returns the entered string. Otherwise returns <em>nil, error</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.interpreter([prompt[,env[,history_filename]]])</span></tt></p>
+<p>Starts an interactive lua interpreter, using the specified prompt
+string, global environment and command-line history file.</p>
+<p>If the interactive console is not accessible, returns <em>nil, error</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.pcall(f[,args...])</span></tt></p>
+<p>Invokes f via xpcall, using an error function that attaches
+a stack trace to the error. The same function is used by SafeCall
+in C++, and dfhack.safecall.</p>
+<p>The returned error is a table with separate <tt class="docutils literal">message</tt> and
+<tt class="docutils literal">stacktrace</tt> string fields; it implements <tt class="docutils literal">__tostring</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">safecall(f[,args...])</span></tt>, <tt class="docutils literal"><span class="pre">dfhack.safecall(f[,args...])</span></tt></p>
+<p>Just like pcall, but also prints the error using printerr before
+returning. Intended as a convenience function.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_suspend(f[,args...])</span></tt></p>
+<p>Calls <tt class="docutils literal">f</tt> with arguments after grabbing the DF core suspend lock.
+Suspending is necessary for accessing a consistent state of DF memory.</p>
+<p>Returned values and errors are propagated through after releasing
+the lock. It is safe to nest suspends.</p>
+<p>Every thread is allowed only one suspend per DF frame, so it is best
+to group operations together in one big critical section. A plugin
+can choose to run all lua code inside a C++-side suspend lock.</p>
+</li>
+</ul>
+<div class="section" id="persistent-configuration-storage">
+<h2><a class="toc-backref" href="#id11">Persistent configuration storage</a></h2>
+<p>This api is intended for storing configuration options in the world itself.
+It probably should be restricted to data that is world-dependent.</p>
+<p>Entries are identified by a string <tt class="docutils literal">key</tt>, but it is also possible to manage
+multiple entries with the same key; their identity is determined by <tt class="docutils literal">entry_id</tt>.
+Every entry has a mutable string <tt class="docutils literal">value</tt>, and an array of 7 mutable <tt class="docutils literal">ints</tt>.</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">dfhack.persistent.get(key)</tt>, <tt class="docutils literal">entry:get()</tt></p>
+<p>Retrieves a persistent config record with the given string key,
+or refreshes an already retrieved entry. If there are multiple
+entries with the same key, it is undefined which one is retrieved
+by the first version of the call.</p>
+<p>Returns entry, or <em>nil</em> if not found.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.persistent.delete(key)</tt>, <tt class="docutils literal">entry:delete()</tt></p>
+<p>Removes an existing entry. Returns <em>true</em> if succeeded.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.persistent.get_all(key[,match_prefix])</span></tt></p>
+<p>Retrieves all entries with the same key, or starting with key..'/'.
+Calling <tt class="docutils literal"><span class="pre">get_all('',true)</span></tt> will match all entries.</p>
+<p>If none found, returns nil; otherwise returns an array of entries.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.persistent.save({key=str1,</span> <span class="pre">...}[,new])</span></tt>, <tt class="docutils literal"><span class="pre">entry:save([new])</span></tt></p>
+<p>Saves changes in an entry, or creates a new one. Passing true as
+new forces creation of a new entry even if one already exists;
+otherwise the existing one is simply updated.
+Returns <em>entry, did_create_new</em></p>
+</li>
+</ul>
+<p>Since the data is hidden in data structures owned by the DF world,
+and automatically stored in the save game, these save and retrieval
+functions can just copy values in memory without doing any actual I/O.
+However, currently every entry has a 180+-byte dead-weight overhead.</p>
 </div>
 </div>
 </div>

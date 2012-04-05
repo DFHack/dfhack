@@ -1,0 +1,580 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.8.1: http://docutils.sourceforge.net/" />
+<title>DFHack Lua API</title>
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 7056 2011-06-17 10:50:48Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+object[type="image/svg+xml"], object[type="application/x-shockwave-flash"] {
+  overflow: hidden;
+}
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left, object.align-left {
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right, object.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+img.align-center, .figure.align-center, object.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: inherit }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block, pre.math {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="dfhack-lua-api">
+<h1 class="title">DFHack Lua API</h1>
+
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#df-structure-wrapper" id="id1">DF structure wrapper</a><ul>
+<li><a class="reference internal" href="#typed-object-references" id="id2">Typed object references</a><ul>
+<li><a class="reference internal" href="#primitive-references" id="id3">Primitive references</a></li>
+<li><a class="reference internal" href="#struct-references" id="id4">Struct references</a></li>
+<li><a class="reference internal" href="#container-references" id="id5">Container references</a></li>
+<li><a class="reference internal" href="#bitfield-references" id="id6">Bitfield references</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#named-types" id="id7">Named types</a></li>
+<li><a class="reference internal" href="#global-functions" id="id8">Global functions</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="df-structure-wrapper">
+<h1><a class="toc-backref" href="#id1">DF structure wrapper</a></h1>
+<p>DF structures described by the xml files in library/xml are exported
+to lua code as a tree of objects and functions under the <tt class="docutils literal">df</tt> global,
+which broadly maps to the <tt class="docutils literal">df</tt> namespace in C++.</p>
+<p><strong>WARNING</strong>: The wrapper provides almost raw access to the memory
+of the game, so mistakes in manipulating objects are as likely to
+crash the game as equivalent plain C++ code would be. E.g. NULL
+pointer access is safely detected, but dangling pointers aren't.</p>
+<p>Objects managed by the wrapper can be broadly classified into the following groups:</p>
+<ol class="arabic">
+<li><p class="first">Typed object pointers (references).</p>
+<p>References represent objects in DF memory with a known type.</p>
+<p>In addition to fields and methods defined by the wrapped type,
+every reference has some built-in properties and methods.</p>
+</li>
+<li><p class="first">Untyped pointers</p>
+<p>Represented as lightuserdata.</p>
+<p>In assignment to a pointer NULL can be represented either as
+<tt class="docutils literal">nil</tt>, or a NULL lightuserdata; reading a NULL pointer field
+returns <tt class="docutils literal">nil</tt>.</p>
+</li>
+<li><p class="first">Named types</p>
+<p>Objects in the <tt class="docutils literal">df</tt> tree that represent identity of struct, class,
+enum and bitfield types. They host nested named types, static
+methods, builtin properties &amp; methods, and, for enums and bitfields,
+the bi-directional mapping between key names and values.</p>
+</li>
+<li><p class="first">The <tt class="docutils literal">global</tt> object</p>
+<p><tt class="docutils literal">df.global</tt> corresponds to the <tt class="docutils literal"><span class="pre">df::global</span></tt> namespace, and
+behaves as a mix between a named type and a reference, containing
+both nested types and fields corresponding to global symbols.</p>
+</li>
+</ol>
+<p>In addition to the <tt class="docutils literal">global</tt> object and top-level types the <tt class="docutils literal">df</tt>
+global also contains a few global builtin utility functions.</p>
+<div class="section" id="typed-object-references">
+<h2><a class="toc-backref" href="#id2">Typed object references</a></h2>
+<p>The underlying primitive lua object is userdata with a metatable.
+Every structured field access produces a new userdata instance.</p>
+<p>All typed objects have the following built-in features:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">ref1 == ref2</tt>, <tt class="docutils literal">tostring(ref)</tt></p>
+<p>References implement equality by type &amp; pointer value, and string conversion.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">pairs(ref)</tt></p>
+<p>Returns an iterator for the sequence of actual C++ field names
+and values. Fields are enumerated in memory order. Methods and
+lua wrapper properties are not included in the iteration.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">ref._kind</tt></p>
+<p>Returns one of: <tt class="docutils literal">primitive</tt>, <tt class="docutils literal">struct</tt>, <tt class="docutils literal">container</tt>,
+or <tt class="docutils literal">bitfield</tt>, as appropriate for the referenced object.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">ref._type</tt></p>
+<p>Returns the named type object or a string that represents
+the referenced object type.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">ref:sizeof()</tt></p>
+<p>Returns <em>size, address</em></p>
+</li>
+<li><p class="first"><tt class="docutils literal">ref:new()</tt></p>
+<p>Allocates a new instance of the same type, and copies data
+from the current object.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">ref:delete()</tt></p>
+<p>Destroys the object with the C++ <tt class="docutils literal">delete</tt> operator.
+If destructor is not available, returns <em>false</em>.</p>
+<p><strong>WARNING</strong>: the lua reference object remains as a dangling
+pointer, like a raw C++ pointer would.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">ref:assign(object)</tt></p>
+<p>Assigns data from object to ref. Object must either be another
+ref of a compatible type, or a lua table; in the latter case
+special recursive assignment rules are applied.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">ref:_displace(index[,step])</span></tt></p>
+<p>Returns a new reference with the pointer adjusted by index*step.
+Step defaults to the natural object size.</p>
+</li>
+</ul>
+<div class="section" id="primitive-references">
+<h3><a class="toc-backref" href="#id3">Primitive references</a></h3>
+<p>References of the <em>_kind</em> <tt class="docutils literal">'primitive'</tt> are used for objects
+that don't fit any of the other reference types. Such
+references can only appear as a value of a pointer field,
+or as a result of calling the <tt class="docutils literal">_field()</tt> method.</p>
+<p>They behave as structs with one field <tt class="docutils literal">value</tt> of the right type.</p>
+</div>
+<div class="section" id="struct-references">
+<h3><a class="toc-backref" href="#id4">Struct references</a></h3>
+<p>Struct references are used for class and struct objects.</p>
+<p>They implement the following features:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">ref.field</tt>, <tt class="docutils literal">ref.field = value</tt></p>
+<p>Valid fields of the structure may be accessed by subscript.</p>
+<p>In case of inheritance, <em>superclass</em> fields have precedence
+over the subclass, but fields shadowed in this way can still
+be accessed as <tt class="docutils literal"><span class="pre">ref['subclasstype.field']</span></tt>.</p>
+<p>This shadowing order is necessary because vtable-based classes
+are automatically exposed in their exact type, and the reverse
+rule would make access to superclass fields unreliable.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">ref._field(field)</tt></p>
+<p>Returns a reference to a valid field. That is, unlike regular
+subscript, it returns a pointer reference even for primitive
+typed fields.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">ref:vmethod(args...)</span></tt></p>
+<p>Named virtual methods are also exposed, subject to the same
+shadowing rules.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">pairs(ref)</tt></p>
+<p>Enumerates all real fields (but not methods) in memory
+(= declaration) order.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="container-references">
+<h3><a class="toc-backref" href="#id5">Container references</a></h3>
+<p>Containers represent vectors and arrays, possibly resizable.</p>
+<p>A container field can associate an enum to the container
+reference, which allows accessing elements using string keys
+instead of numerical indices.</p>
+<p>Implemented features:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">ref._enum</tt></p>
+<p>If the container has an associated enum, returns the matching
+named type object.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">#ref</tt></p>
+<p>Returns the <em>length</em> of the container.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">ref[index]</tt></p>
+<p>Accesses the container element, using either a <em>0-based</em> numerical
+index, or, if an enum is associated, a valid enum key string.</p>
+<p>Accessing an invalid index is an error, but some container types
+may return a default value, or auto-resize instead for convenience.
+Currently this relaxed mode is implemented by df-flagarray aka BitArray.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">ref._field(index)</tt></p>
+<p>Like with structs, returns a pointer to the array element, if possible.
+Flag and bit arrays cannot return such pointer, so it fails with an error.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">pairs(ref)</tt>, <tt class="docutils literal">ipairs(ref)</tt></p>
+<p>If the container has no associated enum, both behave identically,
+iterating over numerical indices in order. Otherwise, ipairs still
+uses numbers, while pairs tries to substitute enum keys whenever
+possible.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">ref:resize(new_size)</tt></p>
+<p>Resizes the container if supported, or fails with an error.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">ref:insert(index,item)</tt></p>
+<p>Inserts a new item at the specified index. To add at the end,
+use <tt class="docutils literal">#ref</tt> as index.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">ref:erase(index)</tt></p>
+<p>Removes the element at the given valid index.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="bitfield-references">
+<h3><a class="toc-backref" href="#id6">Bitfield references</a></h3>
+<p>Bitfields behave like special fixed-size containers.
+The <tt class="docutils literal">_enum</tt> property points to the bitfield type.</p>
+<p>Numerical indices correspond to the shift value,
+and if a subfield occupies multiple bits, the
+<tt class="docutils literal">ipairs</tt> order would have a gap.</p>
+</div>
+</div>
+<div class="section" id="named-types">
+<h2><a class="toc-backref" href="#id7">Named types</a></h2>
+<p>Named types are exposed in the <tt class="docutils literal">df</tt> tree with names identical
+to the C++ version, except for the <tt class="docutils literal">::</tt> vs <tt class="docutils literal">.</tt> difference.</p>
+<p>All types and the global object have the following features:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">type._kind</tt></p>
+<p>Evaluates to one of <tt class="docutils literal"><span class="pre">struct-type</span></tt>, <tt class="docutils literal"><span class="pre">class-type</span></tt>, <tt class="docutils literal"><span class="pre">enum-type</span></tt>,
+<tt class="docutils literal"><span class="pre">bitfield-type</span></tt> or <tt class="docutils literal">global</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">type._identity</tt></p>
+<p>Contains a lightuserdata pointing to the underlying
+DFHack::type_instance object.</p>
+</li>
+</ul>
+<p>Types excluding the global object also support:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">type:sizeof()</tt></p>
+<p>Returns the size of an object of the type.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">type:new()</tt></p>
+<p>Creates a new instance of an object of the type.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">type:is_instance(object)</tt></p>
+<p>Returns true if object is same or subclass type, or a reference
+to an object of same or subclass type. It is permissible to pass
+nil, NULL or non-wrapper value as object; in this case the
+method returns nil.</p>
+</li>
+</ul>
+<p>In addition to this, enum and bitfield types contain a
+bi-directional mapping between key strings and values, and
+also map <tt class="docutils literal">_first_item</tt> and <tt class="docutils literal">_last_item</tt> to the min and
+max values.</p>
+<p>Struct and class types with instance-vector attribute in the
+xml have a <tt class="docutils literal">type.find(key)</tt> function that wraps the find
+method provided in C++.</p>
+</div>
+<div class="section" id="global-functions">
+<h2><a class="toc-backref" href="#id8">Global functions</a></h2>
+<p>The <tt class="docutils literal">df</tt> table itself contains the following functions and values:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">NULL</tt>, <tt class="docutils literal">df.NULL</tt></p>
+<p>Contains the NULL lightuserdata.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">df.isnull(obj)</tt></p>
+<p>Evaluates to true if obj is nil or NULL; false otherwise.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">df.isvalid(obj[,allow_null])</span></tt></p>
+<p>For supported objects returns one of <tt class="docutils literal">type</tt>, <tt class="docutils literal">voidptr</tt>, <tt class="docutils literal">ref</tt>.</p>
+<p>If <em>allow_null</em> is true, and obj is nil or NULL, returns <tt class="docutils literal">null</tt>.</p>
+<p>Otherwise returns <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">df.sizeof(obj)</tt></p>
+<p>For types and refs identical to <tt class="docutils literal">obj:sizeof()</tt>.
+For lightuserdata returns <em>nil, address</em></p>
+</li>
+<li><p class="first"><tt class="docutils literal">df.new(obj)</tt>, <tt class="docutils literal">df.delete(obj)</tt>, <tt class="docutils literal">df.assign(obj, obj2)</tt></p>
+<p>Equivalent to using the matching methods of obj.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">df._displace(obj,index[,step])</span></tt></p>
+<p>For refs equivalent to the method, but also works with
+lightuserdata (step is mandatory then).</p>
+</li>
+<li><p class="first"><tt class="docutils literal">df.is_instance(type,obj)</tt></p>
+<p>Equivalent to the method, but also allows a reference as proxy for its type.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

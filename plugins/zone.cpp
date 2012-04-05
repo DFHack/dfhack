@@ -65,9 +65,9 @@ using df::global::ui;
 
 using namespace DFHack::Gui;
 
-struct genref : df::general_ref_building_civzone_assignedst {};
-
 command_result df_zone (color_ostream &out, vector <string> & parameters);
+command_result df_autonestbox (color_ostream &out, vector <string> & parameters);
+//command_result df_autoslaughter (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("zone");
 
@@ -78,10 +78,10 @@ const string zone_help =
     "  assign       - assign creature(s) to a pen or pit\n"
     "                 if no filters are used, a single unit must be selected.\n"
     "                 can be followed by valid zone id which will then be set.\n"
+    "  slaughter    - mark creature(s) for slaughter\n"
+    "                 if no filters are used, a single unit must be selected.\n"
+    "                 with filters named units are ignored unless specified.\n"
     "  unassign     - unassign selected creature from it's zone\n"
-    "  autonestbox  - assign unpastured female egg-layers to nestbox zones\n"
-    "                 requires you to create 1-tile pastures above nestboxes\n"
-    "                 filters (except count) will be ignored currently\n"
     "  uinfo        - print info about selected unit\n"
     "  zinfo        - print info about zone(s) under cursor\n"
     "  verbose      - print some more info, mostly useless debug stuff\n"
@@ -103,6 +103,8 @@ const string zone_help_filters =
     "  own          - from own civilization (fortress)\n"
     "  war          - trained war creature\n"
     "  tamed        - tamed\n"
+    "  named        - has name or nickname\n"
+    "                 can be used to mark named units for slaughter\n"
     "  trained      - obvious\n"
     "  untrained    - obvious\n"
     "  male         - obvious\n"
@@ -137,6 +139,20 @@ const string zone_help_examples =
     "  unless you have a mod with egg-laying male elves who give milk.\n";
 
 
+const string autonestbox_help =
+    "Assigns unpastured female egg-layers to nestbox zones.\n"
+    "Requires that you create pen/pasture zones above nestboxes.\n"
+    "If the pen is bigger than 1x1 the nestbox must be in the top left corner.\n"
+    "Only 1 unit will be assigned per pen, regardless of the size.\n"
+    "The age of the units is currently not checked, most birds grow up quite fast.\n"
+    "When called without options autonestbox will instantly run once.\n"
+    "Options:\n"
+    "  start        - run every X frames (df simulation ticks)\n"
+    "                 default: X=6000  (~60 seconds at 100fps)\n"
+    "  stop         - stop running automatically\n"
+    "  sleep X      - change timer to sleep X frames between runs.\n";
+
+
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
@@ -144,11 +160,78 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         df_zone, false,
         zone_help.c_str()
         ));
+    commands.push_back(PluginCommand(
+        "autonestbox", "auto-assign nestbox zones.",
+        df_autonestbox, false,
+        zone_help.c_str()
+        ));
+//    commands.push_back(PluginCommand(
+//        "autoslaughter", "auto-butcher lifestock.",
+//        df_autoslaughter, false,
+//        zone_help.c_str()
+//        ));
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    return CR_OK;
+}
+
+///////////////
+// stuff for autonestbox and autoslaughter
+// should be moved to own plugin once the tool methods it shares with the zone plugin are moved to Unit.h / Building.h
+
+command_result autoNestbox( color_ostream &out, bool verbose );
+command_result autoSlaughter( color_ostream &out, bool verbose );
+
+static bool enable_autonestbox = false;
+static bool enable_autoslaughter = false;
+static size_t sleep_autonestbox = 6000;
+static size_t sleep_autoslaughter = 6000;
+static bool autonestbox_did_complain = false; // avoids message spam
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
+{
+    switch (event) 
+    {
+    case DFHack::SC_MAP_LOADED:
+        // initialize from the world just loaded
+        break;
+    case DFHack::SC_MAP_UNLOADED:
+        enable_autonestbox = false;
+        enable_autoslaughter = false;
+        // cleanup
+        break;
+    default:
+        break;
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate ( color_ostream &out )
+{
+    static size_t ticks_autonestbox = 0;
+    static size_t ticks_autoslaughter = 0;
+
+    if(enable_autonestbox)
+    {
+        if(++ticks_autonestbox >= sleep_autonestbox)
+        {
+            ticks_autonestbox = 0;
+            autoNestbox(out, false);
+        }
+    }
+    
+    if(enable_autoslaughter)
+    {
+        if(++ticks_autoslaughter >= sleep_autoslaughter)
+        {
+            ticks_autoslaughter = 0;
+            autoSlaughter(out, false);
+        }
+    }
+
     return CR_OK;
 }
 
@@ -164,6 +247,7 @@ bool isTrained(df::unit* creature);
 bool isWar(df::unit* creature);
 bool isHunter(df::unit* creature);
 bool isOwnCiv(df::unit* creature);
+
 bool isActivityZone(df::building * building);
 bool isPenPasture(df::building * building);
 bool isPit(df::building * building);
@@ -177,10 +261,10 @@ int32_t findChainAtCursor();
 df::general_ref_building_civzone_assignedst * createCivzoneRef();
 bool unassignUnitFromZone(df::unit* unit);
 command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building* building, bool verbose);
-void unitInfo(color_ostream & out, df::unit* creature, bool list_refs);
-void zoneInfo(color_ostream & out, df::building* building, bool list_refs);
-void cageInfo(color_ostream & out, df::building* building, bool list_refs);
-void chainInfo(color_ostream & out, df::building* building, bool list_refs);
+void unitInfo(color_ostream & out, df::unit* creature, bool verbose);
+void zoneInfo(color_ostream & out, df::building* building, bool verbose);
+void cageInfo(color_ostream & out, df::building* building, bool verbose);
+void chainInfo(color_ostream & out, df::building* building, bool verbose);
 bool isBuiltCageAtPos(df::coord pos);
 
 int32_t getUnitAge(df::unit* unit)
@@ -195,23 +279,14 @@ int32_t getUnitAge(df::unit* unit)
 
 bool isDead(df::unit* unit)
 {
-    if(unit->flags1.bits.dead)
-        return true;
-    else
-        return false;
+    return unit->flags1.bits.dead;
 }
 
-
-// marked for slaughter?
 bool isMarkedForSlaughter(df::unit* unit)
 {
-    if(unit->flags2.bits.slaughter)
-        return true;
-    else
-        return false;
+    return unit->flags2.bits.slaughter;
 }
 
-// mark for slaughter
 void doMarkForSlaughter(df::unit* unit)
 {
     unit->flags2.bits.slaughter = 1;
@@ -293,20 +368,14 @@ bool isHunter(df::unit* creature)
 // (don't try to pasture/slaughter random untame animals)
 bool isOwnCiv(df::unit* creature)
 {
-    if(creature->civ_id == ui->civ_id)
-        return true;
-    else
-        return false;
+    return creature->civ_id == ui->civ_id;
 }
 
 // check if creature belongs to the player's race
 // (in combination with check for civ helps to filter out own dwarves)
 bool isOwnRace(df::unit* creature)
 {
-    if(creature->race == ui->race_id)
-        return true;
-    else
-        return false;
+    return creature->race == ui->race_id;
 }
 
 string getRaceName(df::unit* unit)
@@ -314,21 +383,30 @@ string getRaceName(df::unit* unit)
     df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
     return raw->creature_id;
 }
+string getRaceBabyName(df::unit* unit)
+{
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    return raw->general_baby_name[0];
+}
+string getRaceChildName(df::unit* unit)
+{
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    return raw->general_child_name[0];
+}
 
 bool isBaby(df::unit* unit)
 {
-    if(unit->profession != df::profession::BABY)
-        return true;
-    else
-        return false;
+    return unit->profession == df::profession::BABY;
 }
 
 bool isChild(df::unit* unit)
 {
-    if(unit->profession != df::profession::CHILD)
-        return true;
-    else
-        return false;
+    return unit->profession == df::profession::CHILD;
+}
+
+bool isAdult(df::unit* unit)
+{
+    return !isBaby(unit) && !isChild(unit);
 }
 
 bool isEggLayer(df::unit* unit)
@@ -373,17 +451,12 @@ bool isMilkable(df::unit* unit)
 
 bool isMale(df::unit* unit)
 {
-    if(unit->sex==1)
-        return true;
-    else
-        return false;
+    return unit->sex == 1;
 }
+
 bool isFemale(df::unit* unit)
 {
-    if(unit->sex==0)
-        return true;
-    else
-        return false;
+    return unit->sex == 0;
 }
 
 // dump some unit info
@@ -406,6 +479,19 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
             out << " '" << unit->name.nickname << "'";
         out << ", ";
     }
+    
+    if(isAdult(unit))
+        out << "adult";
+    else if(isBaby(unit))
+        out << "baby";
+    else if(isChild(unit))
+        out << "child";
+    out << " ";
+    // sometimes empty even in vanilla RAWS, sometimes contains full race name (e.g. baby alpaca) 
+    // all animals I looked at don't have babies anyways, their offspring starts as CHILD
+    //out << getRaceBabyName(unit);
+    //out << getRaceChildName(unit);
+
     out << getRaceName(unit) << " (";
     switch(unit->sex)
     {
@@ -516,18 +602,12 @@ bool isPit(df::building * building)
 
 bool isCage(df::building * building)
 {
-    if(building->getType() == building_type::Cage)
-        return true;
-    else
-        return false;
+    return building->getType() == building_type::Cage;
 }
 
 bool isChain(df::building * building)
 {
-    if(building->getType() == building_type::Chain)
-        return true;
-    else
-        return false;
+    return building->getType() == building_type::Chain;
 }
 
 bool isActive(df::building * building)
@@ -695,7 +775,6 @@ bool isAssigned(df::unit* unit)
     return assigned;
 }
 
-
 // check if assigned to a chain or built cage
 // (need to check if the ref needs to be removed, until then touching them is forbidden)
 bool isChained(df::unit* unit)
@@ -713,8 +792,6 @@ bool isChained(df::unit* unit)
     }
     return contained;
 }
-
-
 
 // check if contained in item (e.g. animals in cages)
 bool isContainedInItem(df::unit* unit)
@@ -787,14 +864,12 @@ bool isEmptyPasture(df::building* building)
 df::building* findFreeNestboxZone()
 {
     df::building * free_building = NULL;
-    
-    //df::unit * free_unit = findFreeEgglayer();
-
     bool cage = false;
     for (size_t b=0; b < world->buildings.all.size(); b++)
     {
         df::building* building = world->buildings.all[b];
         if( isEmptyPasture(building) &&
+            isActive(building) &&
             isNestboxAtPos(building->x1, building->y1, building->z))
         {
             free_building = building;
@@ -804,18 +879,27 @@ df::building* findFreeNestboxZone()
     return free_building;
 }
 
+bool isFreeEgglayer(df::unit * unit)
+{
+    if( !isDead(unit)
+        && isFemale(unit)
+        && isTame(unit)
+        && isOwnCiv(unit)
+        && isEggLayer(unit)
+        && !isAssigned(unit)
+        )
+        return true;
+    else
+        return false;
+}
+
 df::unit * findFreeEgglayer()
 {
     df::unit* free_unit = NULL;
     for (size_t i=0; i < world->units.all.size(); i++)
     {
         df::unit* unit = world->units.all[i];
-        if( isFemale(unit)
-            && isTame(unit)
-            && isOwnCiv(unit)
-            && isEggLayer(unit)
-            && !isAssigned(unit)
-            )
+        if(isFreeEgglayer(unit))
         {
             free_unit = unit;
             break;
@@ -824,6 +908,17 @@ df::unit * findFreeEgglayer()
     return free_unit;
 }
 
+size_t countFreeEgglayers()
+{
+    size_t count = 0;
+    for (size_t i=0; i < world->units.all.size(); i++)
+    {
+        df::unit* unit = world->units.all[i];
+        if(isFreeEgglayer(unit))
+            count ++;
+    }
+    return count;
+}
 
 // check if unit is already assigned to a zone, remove that ref from unit and old zone
 // returns false if no pasture information was found
@@ -1094,6 +1189,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool find_egglayer = false;
     bool find_grazer = false;
     bool find_milkable = false;
+    bool find_named = false;
 
     bool find_agemin = false;
     bool find_agemax = false;
@@ -1111,7 +1207,6 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool zone_set = false;
     bool verbose = false;
     bool all = false;
-    bool auto_nestbox = false;
     bool unit_slaughter = false;
     static int target_zone = -1;
 
@@ -1231,10 +1326,10 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             out << "Filter by 'tame'." << endl;
             find_tame = true;
         }
-        else if(p == "autonestbox")
+        else if(p == "named")
         {
-            out << "Auto-assign female tame owned egg-layers to free nestboxes." << endl;
-            auto_nestbox = true;
+            out << "Filter by 'has name or nickname'." << endl;
+            find_named = true;
         }
         else if(p == "slaughter")
         {
@@ -1348,6 +1443,12 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         }
     }
 
+    if (!Maps::IsValid())
+    {
+        out.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+
     if((zone_info && !all) || zone_set)
         need_cursor = true;
 
@@ -1365,47 +1466,12 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     }
 
     // try to cope with user dumbness
-    if(target_agemin > target_agemax || target_agemax < target_agemin)
+    if(target_agemin > target_agemax)
     {
         out << "Invalid values for minage/maxage specified! I'll swap them." << endl;
         int oldmin = target_agemin;
         target_agemin = target_agemax;
         target_agemax = oldmin;
-    }
-
-    // auto-assign to empty nestboxes. this requires an empty 1x1 pen/pasture zone placed over a nestbox
-    // currently it will not be checked if the nestbox is already claimed by another egglayer
-    if(auto_nestbox)
-    {
-        bool stop = false;
-        size_t processed = 0;
-        do
-        {
-            df::building * free_building = findFreeNestboxZone();
-            df::unit * free_unit = findFreeEgglayer();
-            if(free_building && free_unit)
-            {
-                command_result result = assignUnitToBuilding(out, free_unit, free_building, verbose);
-                if(result != CR_OK)
-                    return result;
-                processed ++;
-                if(find_count && processed >= target_count)
-                    stop = true;
-            }
-            else
-            {
-                stop = true;
-                if(free_unit && !free_building)
-                {
-                    out << "Not enough free nestbox zones found!" << endl;
-                    out << "You can check how many more you need with:" << endl;
-                    out << "'zone uinfo all unassigned own female egglayer'" << endl;
-                    out << "Or simply build some more and use 'zone autonestbox' again." << endl;
-                }
-            }
-        } while (!stop);
-        out << processed << " units assigned to their new nestboxes." << endl;
-        return CR_OK;
     }
 
     // give info on zone(s), chain or cage under cursor
@@ -1493,6 +1559,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     || (find_milkable && !isMilkable(unit))
                     || (find_male && !isMale(unit))
                     || (find_female && !isFemale(unit))
+                    || (find_named && !unit->name.has_name)
                     )
                     continue;
 
@@ -1510,6 +1577,9 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 }
                 else if(unit_slaughter)
                 {
+                    // don't slaughter named creatures unless told to do so
+                    if(!find_named && unit->name.has_name)
+                        continue;
                     doMarkForSlaughter(unit);
                 }
 
@@ -1540,6 +1610,13 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             }
             else if(unit_slaughter)
             {
+                // by default behave like the game: only allow slaughtering of named war/hunting pets
+                //if(unit->name.has_name && !find_named && !(isWar(unit)||isHunter(unit)))
+                //{
+                //    out << "Slaughter of named unit denied. Use the filter 'named' to override this check." << endl;
+                //    return CR_OK;
+                //}
+
                 doMarkForSlaughter(unit);
                 return CR_OK;
             }
@@ -1569,5 +1646,141 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         return CR_OK;
     }
 
+    return CR_OK;
+}
+
+command_result df_autonestbox(color_ostream &out, vector <string> & parameters)
+{
+    CoreSuspender suspend;
+
+    bool verbose = false;
+
+    for (size_t i = 0; i < parameters.size(); i++)
+    {
+        string & p = parameters[i];
+        
+        if (p == "help" || p == "?")
+        {
+            out << autonestbox_help << endl;
+            return CR_OK;
+        }
+        if (p == "start")
+        {
+            enable_autonestbox = true;
+            autonestbox_did_complain = false;
+            out << "Autonestbox started.";
+            return autoNestbox(out, verbose);
+            //return CR_OK;
+        }
+        if (p == "stop")
+        {
+            enable_autonestbox = false;
+            out << "Autonestbox stopped.";
+            return CR_OK;
+        }
+        else if(p == "verbose")
+        {
+            verbose = true;
+        }
+        else if(p == "sleep")
+        {
+            if(i == parameters.size()-1)
+            {
+                out.printerr("No duration specified!");
+                return CR_WRONG_USAGE;
+            }
+            else
+            {
+                size_t ticks = 0;
+                stringstream ss(parameters[i+1]);
+                i++;
+                ss >> ticks;
+                if(ticks <= 0)
+                {
+                    out.printerr("Invalid duration specified (must be > 0)!");
+                    return CR_WRONG_USAGE;
+                }
+                sleep_autonestbox = ticks;
+                out << "New sleep timer for autonestbox: " << ticks << " ticks." << endl;
+                return CR_OK;
+            }
+        }
+        else
+        {
+            out << "Unknown command: " << p << endl;
+            return CR_WRONG_USAGE;
+        }
+    }
+    return autoNestbox(out, verbose);
+    //return CR_OK;
+}
+
+command_result autoNestbox( color_ostream &out, bool verbose = false )
+{
+    bool stop = false;
+    size_t processed = 0;
+
+    if (!Maps::IsValid())
+    {
+        out.printerr("Map is not available!\n");
+        enable_autonestbox = false;
+        return CR_FAILURE;
+    }
+
+    do
+    {
+        df::building * free_building = findFreeNestboxZone();
+        df::unit * free_unit = findFreeEgglayer();
+        if(free_building && free_unit)
+        {
+            command_result result = assignUnitToBuilding(out, free_unit, free_building, verbose);
+            if(result != CR_OK)
+                return result;
+            processed ++;
+            //if(find_count && processed >= target_count)
+            //    stop = true;
+        }
+        else
+        {
+            stop = true;
+            if(free_unit && !free_building)
+            {
+                static size_t old_count = 0;
+                size_t freeEgglayers = countFreeEgglayers();
+                // avoid spamming the same message
+                if(old_count != freeEgglayers)
+                    autonestbox_did_complain = false;
+                old_count = freeEgglayers;
+                if(!autonestbox_did_complain)
+                {
+                    stringstream ss;
+                    ss << freeEgglayers;
+                    string announce = "Not enough free nestbox zones found! You need " + ss.str() + " more.";
+                    Gui::showAnnouncement(announce, 6, true);
+                    out << announce << endl;
+                    autonestbox_did_complain = true;
+                }
+            }
+        }
+    } while (!stop);
+    if(processed > 0)
+    {
+        stringstream ss;
+        ss << processed;
+        string announce;
+        announce = ss.str() + " nestboxes were assigned.";
+        Gui::showAnnouncement(announce, 2, false);
+        out << announce << endl;
+        // can complain again
+        // (might lead to spamming the same message twice, but catches the case 
+        // where for example 2 new egglayers hatched right after 2 zones were created and assigned)
+        autonestbox_did_complain = false;
+    }
+    return CR_OK;
+}
+
+command_result autoSlaughter( color_ostream &out, bool verbose = false )
+{
+    out << "Autoslaughter would run now." << endl;
     return CR_OK;
 }

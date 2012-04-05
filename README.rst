@@ -808,7 +808,6 @@ Options:
 :set:          Set zone under cursor as default for future assigns.
 :assign:       Assign unit(s) to the pen or pit marked with the 'set' command. If no filters are set a unit must be selected in the in-game ui. Can also be followed by a valid zone id which will be set instead.
 :unassign:     Unassign selected creature from it's zone.
-:autonestbox:  Assign all (unless count is specified) unpastured female egg-layers to empty pens which contain a nestbox. If the pen is bigger than 1x1 the nestbox must be placed at the top left corner to be recognized. Only 1 unit will be assigned per pen.
 :uinfo:        Print info about unit(s). If no filters are set a unit must be selected in the in-game ui.
 :zinfo:        Print info about zone(s). If no filters are set zones under the cursor are listed.
 :verbose:      Print some more info.
@@ -853,3 +852,13 @@ All filters can be used together with the 'assign' command. The only restriction
    Assign up to 5 own female milkable creatures to the selected pasture.
 ``zone assign all own race DWARF maxage 2``
    Throw all useless kids into a pit :)
+
+autonestbox
+===========
+Assigns unpastured female egg-layers to nestbox zones. Requires that you create pen/pasture zones above nestboxes. If the pen is bigger than 1x1 the nestbox must be in the top left corner. Only 1 unit will be assigned per pen, regardless of the size. The age of the units is currently not checked, most birds grow up quite fast. When called without options autonestbox will instantly run once.
+
+Options:
+--------
+:start:        Start running every X frames (df simulation ticks). Default: X=6000, which would be every 60 seconds at 100fps.
+:stop:         Stop running automatically.
+:sleep:        Must be followed by number X. Changes the timer to sleep X frames between runs.

@@ -140,7 +140,7 @@ add_subdirectory(depends)
 IF(BUILD_LIBRARY)
     add_subdirectory (library)
     ## install the default documentation files
-    install(FILES LICENSE Readme.html Compile.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES LICENSE Readme.html Compile.html Lua\ API.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
 #build the plugins

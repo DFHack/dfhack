@@ -35,13 +35,17 @@ distribution.
 // must be last due to MS stupidity
 #include "DataDefs.h"
 #include "DataIdentity.h"
+#include "DataFuncs.h"
 
 #include "modules/World.h"
+#include "modules/Gui.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
 
 #include "MiscUtils.h"
+
+#include "df/job.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -867,6 +871,8 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     luaL_setfuncs(state, dfhack_funcs, 0);
 
     OpenPersistent(state);
+
+    LuaWrapper::AddMethodWrapper(state, 0, -1, "getSelectedJob", df::wrap_function(&Gui::getSelectedJob));
 
     lua_setglobal(state, "dfhack");
 

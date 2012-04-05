@@ -53,7 +53,10 @@ static luaL_Reg no_functions[] = { { NULL, NULL } };
  */
 void LuaWrapper::field_error(lua_State *state, int index, const char *err, const char *mode)
 {
-    lua_getfield(state, UPVAL_METATABLE, "__metatable");
+    if (lua_islightuserdata(state, UPVAL_METATABLE))
+        lua_pushstring(state, "(global)");
+    else
+        lua_getfield(state, UPVAL_METATABLE, "__metatable");
     const char *cname = lua_tostring(state, -1);
     const char *fname = index ? lua_tostring(state, index) : "*";
     luaL_error(state, "Cannot %s field %s.%s: %s.",

@@ -1029,11 +1029,16 @@ static int meta_call_function(lua_State *state)
 /**
  * Create a closure invoking the given function, and add it to the field table.
  */
-static void AddMethodWrapper(lua_State *state, int meta_idx, int field_idx,
-                             const char *name, function_identity_base *fun)
+void LuaWrapper::AddMethodWrapper(lua_State *state, int meta_idx, int field_idx,
+                                  const char *name, function_identity_base *fun)
 {
+    field_idx = lua_absindex(state, field_idx);
+
     lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPETABLE_TOKEN);
-    lua_pushvalue(state, meta_idx);
+    if (meta_idx)
+        lua_pushvalue(state, meta_idx);
+    else
+        lua_pushlightuserdata(state, NULL); // can't be a metatable
     lua_pushfstring(state, "%s()", name);
     lua_pushlightuserdata(state, fun);
     lua_pushcclosure(state, meta_call_function, 4);

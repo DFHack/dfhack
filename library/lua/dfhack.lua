@@ -70,5 +70,9 @@ function dfhack.persistent:__tostring()
            ..self.value.."\":"..table.concat(self.ints,",")..">"
 end
 
+function dfhack.matinfo:__tostring()
+    return "<material "..self.type..":"..self.index.." "..self:getToken()..">"
+end
+
 -- Feed the table back to the require() mechanism.
 return dfhack

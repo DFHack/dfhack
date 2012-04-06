@@ -498,6 +498,59 @@ and automatically stored in the save game, these save and retrieval
 functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.
 
+Material info lookup
+====================
+
+A material info record has fields:
+
+* ``type``, ``index``, ``material``
+
+  DF material code pair, and a reference to the material object.
+
+* ``mode``
+
+  One of ``'builtin'``, ``'inorganic'``, ``'plant'``, ``'creature'``.
+
+* ``inorganic``, ``plant``, ``creature``
+
+  If the material is of the matching type, contains a reference to the raw object.
+
+* ``figure``
+
+  For a specific creature material contains a ref to the historical figure.
+
+Functions:
+
+* ``dfhack.matinfo.decode(type,index)``
+
+  Looks up material info for the given number pair; if not found, returs *nil*.
+
+* ``....decode(matinfo)``, ``....decode(item)``, ``....decode(obj)``
+
+  Uses ``matinfo.type``/``matinfo.index``, item getter vmethods,
+  or ``obj.mat_type``/``obj.mat_index`` to get the code pair.
+
+* ``dfhack.matinfo.find(token[,token...])``
+
+  Looks up material by a token string, or a pre-split string token sequence.
+
+* ``dfhack.matinfo.getToken(...)``, ``info:getToken()``
+
+  Applies ``decode`` and constructs a string token.
+
+* ``info:toString([temperature[,named]])``
+
+  Returns the human-readable name at the given temperature.
+
+* ``info:getCraftClass()``
+
+  Returns the classification used for craft skills.
+
+* ``info:matches(obj)``
+
+  Checks if the material matches job_material_category or job_item.
+  Accept dfhack_material_category auto-assign table.
+
 C++ function wrappers
 =====================
 

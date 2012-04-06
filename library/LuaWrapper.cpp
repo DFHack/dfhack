@@ -699,6 +699,9 @@ static int meta_assign(lua_State *state)
     {
         type_identity *id = get_object_identity(state, 1, "df.assign()", false);
 
+        if (lua_getmetatable(state, 2))
+            luaL_error(state, "cannot use lua tables with metatable in df.assign()");
+
         int base = lua_gettop(state);
 
         // x:assign{ assign = foo } => x:assign(foo)

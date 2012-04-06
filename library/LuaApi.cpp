@@ -42,6 +42,7 @@ distribution.
 #include "modules/Job.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
+#include "modules/Materials.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -53,6 +54,13 @@ distribution.
 #include "df/building.h"
 #include "df/unit.h"
 #include "df/item.h"
+#include "df/material.h"
+#include "df/historical_figure.h"
+#include "df/plant_raw.h"
+#include "df/creature_raw.h"
+#include "df/inorganic_raw.h"
+#include "df/dfhack_material_category.h"
+#include "df/job_material_category.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -281,6 +289,230 @@ static void OpenPersistent(lua_State *state)
 }
 
 /************************
+ * Material info lookup *
+ ************************/
+
+static void push_matinfo(lua_State *state, MaterialInfo &info)
+{
+    if (!info.isValid())
+    {
+        lua_pushnil(state);
+        return;
+    }
+
+    lua_newtable(state);
+    lua_pushvalue(state, lua_upvalueindex(1));
+    lua_setmetatable(state, -2);
+
+    lua_pushinteger(state, info.type);
+    lua_setfield(state, -2, "type");
+    lua_pushinteger(state, info.index);
+    lua_setfield(state, -2, "index");
+
+#define SETOBJ(name) { \
+    Lua::PushDFObject(state, info.name); \
+    lua_setfield(state, -2, #name); \
+}
+    SETOBJ(material);
+    if (info.plant) SETOBJ(plant);
+    if (info.creature) SETOBJ(creature);
+    if (info.inorganic) SETOBJ(inorganic);
+    if (info.figure) SETOBJ(figure);
+#undef SETOBJ
+
+    if (info.mode != MaterialInfo::Builtin)
+    {
+        lua_pushinteger(state, info.subtype);
+        lua_setfield(state, -2, "subtype");
+    }
+
+    const char *id = "builtin";
+    switch (info.mode)
+    {
+        case MaterialInfo::Plant: id = "plant"; break;
+        case MaterialInfo::Creature: id = "creature"; break;
+        case MaterialInfo::Inorganic: id = "inorganic"; break;
+    }
+
+    lua_pushstring(state, id);
+    lua_setfield(state, -2, "mode");
+}
+
+static int dfhack_matinfo_find(lua_State *state)
+{
+    MaterialInfo info;
+    int argc = lua_gettop(state);
+
+    if (argc == 1)
+        info.find(luaL_checkstring(state, 1));
+    else
+    {
+        std::vector<std::string> tokens;
+
+        for (int i = 1; i < argc; i++)
+            tokens.push_back(luaL_checkstring(state, i));
+
+        info.find(tokens);
+    }
+
+    push_matinfo(state, info);
+    return 1;
+}
+
+static bool decode_matinfo(lua_State *state, MaterialInfo *info, bool numpair = false)
+{
+    int curtop = lua_gettop(state);
+
+    luaL_checkany(state, 1);
+
+    if (!lua_isnumber(state, 1))
+    {
+        if (lua_isnil(state, 1))
+            return false;
+
+        if (lua_getmetatable(state, 1))
+        {
+            if (lua_rawequal(state, -1, lua_upvalueindex(1)))
+            {
+                lua_getfield(state, 1, "type");
+                lua_getfield(state, 1, "index");
+                goto int_pair;
+            }
+
+            lua_pop(state, 1);
+        }
+
+        if (lua_isuserdata(state, 1))
+        {
+            if (auto item = Lua::GetDFObject<df::item>(state, 1))
+                return info->decode(item);
+            if (auto mvec = Lua::GetDFObject<df::material_vec_ref>(state, 1))
+                return info->decode(*mvec, luaL_checkint(state, 2));
+        }
+
+        lua_getfield(state, 1, "mat_type");
+        lua_getfield(state, 1, "mat_index");
+        goto int_pair;
+    }
+    else
+    {
+        if (!numpair)
+            luaL_argerror(state, 1, "material info object expected");
+
+        if (curtop < 2)
+            lua_settop(state, 2);
+    }
+
+int_pair:
+    {
+        int ok;
+        int type = lua_tointegerx(state, -2, &ok);
+        if (!ok)
+            luaL_argerror(state, 1, "material id is not a number");
+        int index = lua_tointegerx(state, -1, &ok);
+        if (!ok)
+            index = -1;
+
+        lua_settop(state, curtop);
+
+        return info->decode(type, index);
+    }
+}
+
+static int dfhack_matinfo_decode(lua_State *state)
+{
+    MaterialInfo info;
+    decode_matinfo(state, &info, true);
+    push_matinfo(state, info);
+    return 1;
+}
+
+static int dfhack_matinfo_getToken(lua_State *state)
+{
+    MaterialInfo info;
+    decode_matinfo(state, &info, true);
+    auto str = info.getToken();
+    lua_pushstring(state, str.c_str());
+    return 1;
+}
+
+static int dfhack_matinfo_toString(lua_State *state)
+{
+    MaterialInfo info;
+    decode_matinfo(state, &info);
+
+    lua_settop(state, 3);
+    auto str = info.toString(luaL_optint(state, 2, 10015), lua_toboolean(state, 3));
+    lua_pushstring(state, str.c_str());
+    return 1;
+}
+
+static int dfhack_matinfo_getCraftClass(lua_State *state)
+{
+    MaterialInfo info;
+    if (decode_matinfo(state, &info, true))
+        lua_pushinteger(state, info.getCraftClass());
+    else
+        lua_pushnil(state);
+    return 1;
+}
+
+static int dfhack_matinfo_matches(lua_State *state)
+{
+    MaterialInfo info;
+    if (!decode_matinfo(state, &info))
+        luaL_argerror(state, 1, "material info object expected");
+
+    luaL_checkany(state, 2);
+
+    if (lua_isuserdata(state, 2))
+    {
+        if (auto mc = Lua::GetDFObject<df::job_material_category>(state, 2))
+            lua_pushboolean(state, info.matches(*mc));
+        else if (auto mc = Lua::GetDFObject<df::dfhack_material_category>(state, 2))
+            lua_pushboolean(state, info.matches(*mc));
+        else if (auto mc = Lua::GetDFObject<df::job_item>(state, 2))
+            lua_pushboolean(state, info.matches(*mc));
+        else
+            luaL_argerror(state, 2, "material category object expected");
+    }
+    else if (lua_istable(state, 2))
+    {
+        df::dfhack_material_category tmp;
+        if (!Lua::AssignDFObject(*Lua::GetOutput(state), state, &tmp, 2, false))
+            lua_error(state);
+        lua_pushboolean(state, info.matches(tmp));
+    }
+    else
+        luaL_argerror(state, 2, "material category object expected");
+
+    return 1;
+}
+
+static const luaL_Reg dfhack_matinfo_funcs[] = {
+    { "find", dfhack_matinfo_find },
+    { "decode", dfhack_matinfo_decode },
+    { "getToken", dfhack_matinfo_getToken },
+    { "toString", dfhack_matinfo_toString },
+    { "getCraftClass", dfhack_matinfo_getCraftClass },
+    { "matches", dfhack_matinfo_matches },
+    { NULL, NULL }
+};
+
+static void OpenMatinfo(lua_State *state)
+{
+    luaL_getsubtable(state, lua_gettop(state), "matinfo");
+
+    lua_dup(state);
+    luaL_setfuncs(state, dfhack_matinfo_funcs, 1);
+
+    lua_dup(state);
+    lua_setfield(state, -2, "__index");
+
+    lua_pop(state, 1);
+}
+
+/************************
  * Wrappers for C++ API *
  ************************/
 
@@ -337,6 +569,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
 void OpenDFHackApi(lua_State *state)
 {
     OpenPersistent(state);
+    OpenMatinfo(state);
 
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
     OpenModule(state, "gui", dfhack_gui_module);

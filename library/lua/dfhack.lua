@@ -58,9 +58,10 @@ end
 -- Misc functions
 
 function printall(table)
-    if table == nil then return end
-    for k,v in pairs(table) do
-        print(k,"   = "..tostring(v))
+    if type(table) == 'table' or df.isvalid(table) == 'ref' then
+        for k,v in pairs(table) do
+            print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
+        end
     end
 end
 

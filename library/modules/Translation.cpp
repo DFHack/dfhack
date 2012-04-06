@@ -35,6 +35,7 @@ using namespace std;
 #include "Types.h"
 #include "ModuleFactory.h"
 #include "Core.h"
+#include "Error.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -93,6 +94,8 @@ void addNameWord (string &out, const string &word)
 
 string Translation::TranslateName(const df::language_name * name, bool inEnglish, bool onlyLastPart)
 {
+    CHECK_NULL_POINTER(name);
+
     string out;
     string word;
 

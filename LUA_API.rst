@@ -503,6 +503,10 @@ C++ function wrappers
 
 Thin wrappers around C++ functions, similar to the ones for virtual methods.
 
+* ``dfhack.TranslateName(name,in_english,only_last_name)``
+
+  Convert a language_name or only the last name part to string.
+
 Gui module
 ----------
 
@@ -558,3 +562,22 @@ Job module
 * ``dfhack.job.is_item_equal(job_item1,job_item2)``
 
   Compares important fields in the job item structures.
+
+Units module
+------------
+
+* ``dfhack.units.getVisibleName(unit)``
+
+  Returns the name visible in game, accounting for false identities.
+
+* ``dfhack.units.isDead(unit)``
+
+  The unit is completely dead and passive.
+
+* ``dfhack.units.isAlive(unit)``
+
+  The unit isn't dead or undead.
+
+* ``dfhack.units.isSane(unit)``
+
+  The unit is capable of rational action, i.e. not dead, insane or zombie.

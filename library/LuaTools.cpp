@@ -40,6 +40,8 @@ distribution.
 #include "modules/World.h"
 #include "modules/Gui.h"
 #include "modules/Job.h"
+#include "modules/Translation.h"
+#include "modules/Units.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -641,9 +643,9 @@ static const luaL_Reg dfhack_funcs[] = {
     { NULL, NULL }
 };
 
-/*
- * Per-world persistent configuration storage.
- */
+/**************************************************
+ * Per-world persistent configuration storage API *
+ **************************************************/
 
 static PersistentDataItem persistent_by_struct(lua_State *state, int idx)
 {
@@ -783,6 +785,7 @@ static int dfhack_persistent_save(lua_State *state)
 
     lua_settop(state, 1);
 
+    // Retrieve existing or create a new entry
     PersistentDataItem ref;
     bool added = false;
 
@@ -804,6 +807,7 @@ static int dfhack_persistent_save(lua_State *state)
         ref = Core::getInstance().getWorld()->GetPersistentData(str);
     }
 
+    // Auto-add if not found
     if (!ref.isValid())
     {
         ref = Core::getInstance().getWorld()->AddPersistentData(str);
@@ -812,6 +816,7 @@ static int dfhack_persistent_save(lua_State *state)
         added = true;
     }
 
+    // Copy data from lua to C++ memory
     lua_getfield(state, 1, "value");
     if (const char *str = lua_tostring(state, -1))
         ref.val() = str;
@@ -830,6 +835,7 @@ static int dfhack_persistent_save(lua_State *state)
     }
     lua_pop(state, 1);
 
+    // Reinitialize lua from C++ and return
     read_persistent(state, ref, false);
     lua_pushboolean(state, added);
     return 2;
@@ -856,6 +862,10 @@ static void OpenPersistent(lua_State *state)
     lua_pop(state, 1);
 }
 
+/************************
+ * Wrappers for C++ API *
+ ************************/
+
 static void OpenModule(lua_State *state, const char *mname, const LuaWrapper::FunctionReg *reg)
 {
     luaL_getsubtable(state, lua_gettop(state), mname);
@@ -866,6 +876,11 @@ static void OpenModule(lua_State *state, const char *mname, const LuaWrapper::Fu
 #define WRAPM(module, function) { #function, df::wrap_function(&module::function) }
 #define WRAP(function) { #function, df::wrap_function(&function) }
 #define WRAPN(name, function) { #name, df::wrap_function(&function) }
+
+static const LuaWrapper::FunctionReg dfhack_module[] = {
+    WRAPM(Translation, TranslateName),
+    { NULL, NULL }
+};
 
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getSelectedWorkshopJob),
@@ -888,6 +903,18 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPN(is_item_equal, jobItemEqual),
     { NULL, NULL }
 };
+
+static const LuaWrapper::FunctionReg dfhack_units_module[] = {
+    WRAPM(Units, getVisibleName),
+    WRAPM(Units, isDead),
+    WRAPM(Units, isAlive),
+    WRAPM(Units, isSane),
+    { NULL, NULL }
+};
+
+/************************
+ *  Main Open function  *
+ ************************/
 
 lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
 {
@@ -917,8 +944,10 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
 
     OpenPersistent(state);
 
+    LuaWrapper::SetFunctionWrappers(state, dfhack_module);
     OpenModule(state, "gui", dfhack_gui_module);
     OpenModule(state, "job", dfhack_job_module);
+    OpenModule(state, "units", dfhack_units_module);
 
     lua_setglobal(state, "dfhack");
 

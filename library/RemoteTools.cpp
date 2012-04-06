@@ -256,7 +256,7 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
     info->set_pos_y(unit->pos.y);
     info->set_pos_z(unit->pos.z);
 
-    auto name = Units::GetVisibleName(unit);
+    auto name = Units::getVisibleName(unit);
     if (name->has_name)
         describeName(info->mutable_name(), name);
 

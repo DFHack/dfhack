@@ -527,8 +527,10 @@ void Units::CopyNameTo(df::unit * creature, df::language_name * target)
     Translation::copyName(&creature->name, target);
 }
 
-df::language_name *Units::GetVisibleName(df::unit *unit)
+df::language_name *Units::getVisibleName(df::unit *unit)
 {
+    CHECK_NULL_POINTER(unit);
+
     df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
 
     if (figure)
@@ -555,11 +557,15 @@ df::language_name *Units::GetVisibleName(df::unit *unit)
 
 bool DFHack::Units::isDead(df::unit *unit)
 {
+    CHECK_NULL_POINTER(unit);
+
     return unit->flags1.bits.dead;
 }
 
 bool DFHack::Units::isAlive(df::unit *unit)
 {
+    CHECK_NULL_POINTER(unit);
+
     return !unit->flags1.bits.dead &&
            !unit->flags3.bits.ghostly &&
            !unit->curse.add_tags1.bits.NOT_LIVING;
@@ -567,23 +573,22 @@ bool DFHack::Units::isAlive(df::unit *unit)
 
 bool DFHack::Units::isSane(df::unit *unit)
 {
+    CHECK_NULL_POINTER(unit);
+
     if (unit->flags1.bits.dead ||
         unit->flags3.bits.ghostly ||
         unit->curse.add_tags1.bits.OPPOSED_TO_LIFE ||
         unit->curse.add_tags1.bits.CRAZED)
         return false;
 
-    if (unit->flags1.bits.has_mood)
+    switch (unit->mood)
     {
-        switch (unit->mood)
-        {
-        case mood_type::Melancholy:
-        case mood_type::Raving:
-        case mood_type::Berserk:
-            return false;
-        default:
-            break;
-        }
+    case mood_type::Melancholy:
+    case mood_type::Raving:
+    case mood_type::Berserk:
+        return false;
+    default:
+        break;
     }
 
     return true;

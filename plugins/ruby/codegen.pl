@@ -46,11 +46,13 @@ my %item_renderer = (
 );
 
 
+my %seen_enum_name;
 sub render_global_enum {
     my ($name, $type) = @_;
 
     my $rbname = rb_ucase($name);
     push @lines_rb, "class $rbname";
+    %seen_enum_name = ();
     indent_rb {
         render_enum_fields($type);
     };
@@ -66,6 +68,8 @@ sub render_enum_fields {
 
         if ($elemname) {
             my $rbelemname = rb_ucase($elemname);
+            $rbelemname .= '_' while ($seen_enum_name{$rbelemname});
+            $seen_enum_name{$rbelemname}++;
             push @lines_rb, "$rbelemname = $value";
         }
     }
@@ -76,7 +80,7 @@ sub render_global_bitfield {
     my ($name, $type) = @_;
 
     my $rbname = rb_ucase($name);
-    push @lines_rb, "class $rbname < MemStruct";
+    push @lines_rb, "class $rbname < Compound";
     indent_rb {
         render_bitfield_fields($type);
     };
@@ -92,18 +96,32 @@ sub render_bitfield_fields {
         $name = $field->getAttribute('ld:anon-name') if (!$name);
         print "bitfield $name !number\n" if (!($field->getAttribute('ld:meta') eq 'number'));
         if ($count == 1) {
-            push @lines_rb, "bit :$name, $shift" if ($name);
+            push @lines_rb, "field(:$name, 0) { bit $shift }" if ($name);
         } else {
-            push @lines_rb, "bits :$name, $shift, $count" if ($name);
+            push @lines_rb, "field(:$name, 0) { bits $shift, $count }" if ($name);
         }
         $shift += $count;
     }
 }
 
 
+my %global_types;
 my $cpp_var_counter = 0;
+my %seen_class;
 sub render_global_class {
     my ($name, $type) = @_;
+
+    my $rbname = rb_ucase($name);
+
+    # ensure pre-definition of ancestors
+    my $parent = $type->getAttribute('inherits-from');
+    render_global_class($parent, $global_types{$parent}) if ($parent and !$seen_class{$parent});
+
+    return if $seen_class{$name};
+    $seen_class{$name}++;
+    %seen_enum_name = ();
+
+    my $rbparent = ($parent ? rb_ucase($parent) : 'Compound');
 
     my $cppvar = "v_$cpp_var_counter";
     $cpp_var_counter++;
@@ -112,9 +130,7 @@ sub render_global_class {
     push @lines_cpp, "    df::$name *$cppvar = (df::$name*)moo;";
     push @include_cpp, $name;
 
-    my $rbname = rb_ucase($name);
-    my $parent = rb_ucase($type->getAttribute('inherits-from') || 'MemStruct');
-    push @lines_rb, "class $rbname < $parent";
+    push @lines_rb, "class $rbname < $rbparent";
     indent_rb {
         render_struct_fields($type, "(*$cppvar)");
     };
@@ -343,7 +359,6 @@ if ($offsetfile) {
 
 
 my $doc = XML::LibXML->new()->parse_file($input);
-my %global_types;
 $global_types{$_->getAttribute('type-name')} = $_ foreach $doc->findnodes('/ld:data-definition/ld:global-type');
 
 for my $name (sort { $a cmp $b } keys %global_types) {
@@ -385,6 +400,10 @@ if ($output =~ /\.cpp$/) {
     print FH "    return 0;\n";
     print FH "}\n";
 } else {
+    print FH "module DFHack\n";
+    print FH "module MemHack\n";
     print FH "$_\n" for @lines_rb;
+    print FH "end\n";
+    print FH "end\n";
 }
 close FH;

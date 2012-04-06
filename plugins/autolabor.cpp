@@ -348,17 +348,14 @@ struct labor_info
 	bool is_exclusive;
 	int active_dwarfs;
 
-	labor_mode mode() { return (labor_mode) config.ival(1); }
-	void set_mode(labor_mode mode) { config.ival(1) = mode; }
+	labor_mode mode() { return (labor_mode) config.ival(0); }
+	void set_mode(labor_mode mode) { config.ival(0) = mode; }
 
-	int minimum_dwarfs() { return config.ival(2); }
-	void set_minimum_dwarfs(int minimum_dwarfs) { config.ival(2) = minimum_dwarfs; }
+	int minimum_dwarfs() { return config.ival(1); }
+	void set_minimum_dwarfs(int minimum_dwarfs) { config.ival(1) = minimum_dwarfs; }
 
-	int maximum_dwarfs() { return config.ival(3); }
-	void set_maximum_dwarfs(int maximum_dwarfs) { config.ival(3) = maximum_dwarfs; }
-
-	df::enums::unit_labor::unit_labor labor() { return (df::enums::unit_labor::unit_labor) config.ival(0); }
-	void set_labor(df::enums::unit_labor::unit_labor labor) { config.ival(0) = labor; }
+	int maximum_dwarfs() { return config.ival(2); }
+	void set_maximum_dwarfs(int maximum_dwarfs) { config.ival(2) = maximum_dwarfs; }
 
 };
 
@@ -492,7 +489,6 @@ static void reset_labor(df::enums::unit_labor::unit_labor labor)
 	labor_infos[labor].set_minimum_dwarfs(default_labor_infos[labor].minimum_dwarfs);
 	labor_infos[labor].set_maximum_dwarfs(default_labor_infos[labor].maximum_dwarfs);
 	labor_infos[labor].set_mode(default_labor_infos[labor].mode);
-	labor_infos[labor].set_labor(labor);
 }
 
 static void init_state()
@@ -512,11 +508,12 @@ static void init_state()
 	labor_infos.resize(ARRAY_COUNT(default_labor_infos));
 
 	std::vector<PersistentDataItem> items;
-    pworld->GetPersistentData(&items, "autolabor/labors");
+    pworld->GetPersistentData(&items, "autolabor/labors/", true);
 
 	for (auto p = items.begin(); p != items.end(); p++)
 	{
-		df::enums::unit_labor::unit_labor labor = (df::enums::unit_labor::unit_labor) p->ival(0);
+		string key = p->key();
+		df::enums::unit_labor::unit_labor labor = (df::enums::unit_labor::unit_labor) atoi(key.substr(strlen("autolabor/labors/")).c_str());
 		if (labor >= 0 && labor <= labor_infos.size())
 		{
 			labor_infos[labor].config = *p;
@@ -530,7 +527,10 @@ static void init_state()
 		if (labor_infos[i].config.isValid())
 			continue;
 
-		labor_infos[i].config = pworld->AddPersistentData("autolabor/labors");
+		std::stringstream name;
+		name << "autolabor/labors/" << i;
+
+		labor_infos[i].config = pworld->AddPersistentData(name.str());
 
 		labor_infos[i].is_exclusive = default_labor_infos[i].is_exclusive;
 		labor_infos[i].active_dwarfs = 0;

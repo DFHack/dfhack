@@ -346,6 +346,7 @@ my $input = $ARGV[0] || '../../library/include/df/codegen.out.xml';
 # delete offsets
 my $output = $ARGV[1] or die "need output file";
 my $offsetfile = $ARGV[2];
+my $memstruct = $ARGV[3];
 
 if ($offsetfile) {
     open OF, "<$offsetfile";
@@ -379,10 +380,6 @@ for my $obj ($doc->findnodes('/ld:data-definition/ld:global-object')) {
 
 open FH, ">$output";
 if ($output =~ /\.cpp$/) {
-    print FH "#include \"Core.h\"\n";
-    print FH "#include \"Console.h\"\n";
-    print FH "#include \"Export.h\"\n";
-    print FH "#include \"PluginManager.h\"\n";
     print FH "#include \"DataDefs.h\"\n";
     print FH "#include \"df/$_.h\"\n" for @include_cpp;
     print FH "#include <stdio.h>\n";
@@ -402,6 +399,11 @@ if ($output =~ /\.cpp$/) {
 } else {
     print FH "module DFHack\n";
     print FH "module MemHack\n";
+    if ($memstruct) {
+        open MH, "<$memstruct";
+        print FH "$_" while(<MH>);
+        close MH;
+    }
     print FH "$_\n" for @lines_rb;
     print FH "end\n";
     print FH "end\n";

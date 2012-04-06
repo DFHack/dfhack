@@ -1,6 +1,3 @@
-module DFHack
-module MemHack
-
 class MemStruct
 	attr_accessor :_memaddr
 	def _at(addr) ; @_memaddr = addr ; self ; end
@@ -194,7 +191,5 @@ class Global < MemStruct
 	def _at(addr) ; g = const_get(@_glob) ; g._at(addr) ; end
 end
 
-end
-end
 
-require 'ruby-autogen'
+

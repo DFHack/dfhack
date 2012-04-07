@@ -172,12 +172,12 @@ const string autobutcher_help =
     "  sleep X      - change timer to sleep X frames between runs.\n"
     "  watch R      - start watching race(s)\n"
     "                 R = valid race RAW id (ALPACA, BIRD_TURKEY, etc)\n"
-    //"                 or a list of RAW ids seperated by spaces\n"
+    "                 or a list of RAW ids seperated by spaces\n"
     //"                 or the keyword 'all' which adds all races with\n"
     //"                 at least one owned tame unit in your fortress\n"
-    "  unwatch R    - stop watching race\n"
+    "  unwatch R    - stop watching race(s)\n"
     "                 the current target settings will be remembered\n"
-    "  forget R     - unwatch race and forget target settings for it\n"
+    "  forget R     - unwatch race(s) and forget target settings for it/them\n"
     //"  autowatch    - automatically adds all new races (animals you buy\n"
     //"                 from merchants, tame yourself or get from migrants)\n"
     //"                 to the watch list using default target count\n"
@@ -197,13 +197,13 @@ const string autobutcher_help =
 
 const string autobutcher_help_example =
     "Examples:\n"
-    "  autobutcher target 4 3 2 1 ALPACA\n"
-    "  autobutcher watch ALPACA\n"
+    "  autobutcher target 4 3 2 1 ALPACA BIRD_TURKEY\n"
+    "  autobutcher watch ALPACA BIRD_TURKEY\n"
     "  autobutcher start\n"
     "    This means you want to have max 7 kids (4 female, 3 male) and max 3 adults\n"
-    "    (2 female, 1 male) of the race alpaca. Once the kids grow up the oldest\n"
-    "    adults will get slaughtered. Excess kids will get slaughtered starting with\n"
-    "    the youngest to allow that the older ones grow into adults.\n"
+    "    (2 female, 1 male) of the races alpaca and turkey. Once the kids grow up the\n"
+    "    oldest adults will get slaughtered. Excess kids will get slaughtered starting\n"
+    "    the the youngest to allow that the older ones grow into adults.\n"
     //"  autobutcher target 0 0 0 0 all\n"
     //"  autobutcher autowatch\n"
     //"  autobutcher start\n"
@@ -2058,7 +2058,9 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     bool forget_race = false;
     bool list_watched = false;
     bool change_target = false;
-    string target_racename = "";
+    vector <string> target_racenames;
+    vector <int> target_raceids;
+
     int target_fk = default_fk;
     int target_mk = default_mk;
     int target_fa = default_fa;
@@ -2066,165 +2068,117 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
 
     int32_t target_raceid = -1;
 
-    for (size_t i = 0; i < parameters.size(); i++)
+    if(!parameters.size())
     {
-        string & p = parameters[i];
-        
-        if (p == "help" || p == "?")
+        out << "You must specify a command!" << endl;
+        out << autobutcher_help << endl;
+        return CR_OK;
+    }
+
+    // parse main command
+    string & p = parameters[0];        
+    if (p == "help" || p == "?")
+    {
+        out << autobutcher_help << endl;
+        return CR_OK;
+    }
+    if (p == "example")
+    {
+        out << autobutcher_help_example << endl;
+        return CR_OK;
+    }
+    else if (p == "start")
+    {
+        enable_autobutcher = true;
+        out << "Autobutcher started.";
+        return autoButcher(out, verbose);
+    }
+    else if (p == "stop")
+    {
+        enable_autobutcher = false;
+        out << "Autobutcher stopped.";
+        return CR_OK;
+    }
+    else if(p == "sleep")
+    {
+        parameters.erase(parameters.begin());
+        if(!parameters.size())
         {
-            out << autobutcher_help << endl;
-            return CR_OK;
-        }
-        if (p == "example")
-        {
-            out << autobutcher_help_example << endl;
-            return CR_OK;
-        }
-        else if (p == "start")
-        {
-            enable_autobutcher = true;
-            out << "Autobutcher started.";
-            return autoButcher(out, verbose);
-        }
-        else if (p == "stop")
-        {
-            enable_autobutcher = false;
-            out << "Autobutcher stopped.";
-            return CR_OK;
-        }
-        else if(p == "verbose")
-        {
-            verbose = true;
-        }
-        else if(p == "sleep")
-        {
-            if(i == parameters.size()-1)
-            {
-                out.printerr("No duration specified!");
-                return CR_WRONG_USAGE;
-            }
-            else
-            {
-                size_t ticks = 0;
-                stringstream ss(parameters[i+1]);
-                i++;
-                ss >> ticks;
-                if(ticks <= 0)
-                {
-                    out.printerr("Invalid duration specified (must be > 0)!");
-                    return CR_WRONG_USAGE;
-                }
-                sleep_autobutcher = ticks;
-                out << "New sleep timer for autobutcher: " << ticks << " ticks." << endl;
-                return CR_OK;
-            }
-        }
-        else if(p == "watch")
-        {
-            if(i == parameters.size()-1)
-            {
-                out.printerr("No race specified!");
-                return CR_WRONG_USAGE;
-            }
-            else
-            {
-                // todo: parse more than one race
-                target_racename = parameters[i+1];
-                i++;
-                out << "Start watching race " << target_racename << endl;
-                watch_race = true;
-            }
-        }
-        else if(p == "unwatch")
-        {
-            if(i == parameters.size()-1)
-            {
-                out.printerr("No race specified!");
-                return CR_WRONG_USAGE;
-            }
-            else
-            {
-                // todo: parse more than one race
-                target_racename = parameters[i+1];
-                i++;
-                out << "Stop watching race " << target_racename << endl;
-                unwatch_race = true;
-            }
-        }
-        else if(p == "forget")
-        {
-            if(i == parameters.size()-1)
-            {
-                out.printerr("No race specified!");
-                return CR_WRONG_USAGE;
-            }
-            else
-            {
-                // todo: parse more than one race
-                target_racename = parameters[i+1];
-                i++;
-                out << "Forget settings for race " << target_racename << endl;
-                forget_race = true;
-            }
-        }
-        else if(p == "target")
-        {
-            // needs at least 5 more parameters:
-            // fk mk fa ma R (can have more than 1 R)
-            if(parameters.size() < 6)
-            {
-                out.printerr("Not enough parameters!");
-                return CR_WRONG_USAGE;
-            }
-            else
-            {
-                stringstream fk(parameters[i+1]);
-                stringstream mk(parameters[i+2]);
-                stringstream fa(parameters[i+3]);
-                stringstream ma(parameters[i+4]);
-                fk >> target_fk;
-                mk >> target_mk;
-                fa >> target_fa;
-                ma >> target_ma;
-                
-                // todo: parse more than one race, handle 'all' and 'new'
-                target_racename = parameters[i+5];
-                i+=5;
-                out << "Target count for " << target_racename << ":"
-                    << " fk=" << target_fk
-                    << " mk=" << target_mk
-                    << " fa=" << target_fa
-                    << " ma=" << target_ma
-                    << endl;
-                change_target = true;
-            }
-        }
-        else if(p == "autowatch")
-        {
-            out << "not supported yet, sorry" << endl;
-            return CR_OK;
-        }
-        else if(p == "noautowatch")
-        {
-            out << "not supported yet, sorry" << endl;
-            return CR_OK;
-        }
-        else if(p == "list")
-        {
-            list_watched = true;
+            out.printerr("No duration specified!");
+            return CR_WRONG_USAGE;
         }
         else
         {
-            out << "Unknown command: " << p << endl;
-            return CR_WRONG_USAGE;
+            size_t ticks = 0;
+            stringstream ss(parameters.back());
+            //i++;
+            ss >> ticks;
+            if(ticks <= 0)
+            {
+                out.printerr("Invalid duration specified (must be > 0)!");
+                return CR_WRONG_USAGE;
+            }
+            sleep_autobutcher = ticks;
+            out << "New sleep timer for autobutcher: " << ticks << " ticks." << endl;
+            return CR_OK;
         }
     }
-
-    if( target_racename == "all" ||
-        target_racename == "new" )
+    else if(p == "watch")
     {
-        out << "'all' and 'new' are not supported yet, sorry." << endl;
+        parameters.erase(parameters.begin());
+        watch_race = true;
+    }
+    else if(p == "unwatch")
+    {
+        parameters.erase(parameters.begin());
+        unwatch_race = true;
+    }
+    else if(p == "forget")
+    {
+        parameters.erase(parameters.begin());
+        forget_race = true;
+    }
+    else if(p == "target")
+    {
+        // needs at least 5 more parameters:
+        // fk mk fa ma R (can have more than 1 R)
+        if(parameters.size() < 6)
+        {
+            out.printerr("Not enough parameters!");
+            return CR_WRONG_USAGE;
+        }
+        else
+        {
+            stringstream fk(parameters[1]);
+            stringstream mk(parameters[2]);
+            stringstream fa(parameters[3]);
+            stringstream ma(parameters[4]);
+            fk >> target_fk;
+            mk >> target_mk;
+            fa >> target_fa;
+            ma >> target_ma;
+            parameters.erase(parameters.begin(), parameters.begin()+5);
+            change_target = true;
+        }
+    }
+    else if(p == "autowatch")
+    {
+        out << "not supported yet, sorry" << endl;
         return CR_OK;
+    }
+    else if(p == "noautowatch")
+    {
+        out << "not supported yet, sorry" << endl;
+        return CR_OK;
+    }
+    else if(p == "list")
+    {
+        list_watched = true;
+    }
+    else
+    {
+        out << "Unknown command: " << p << endl;
+        return CR_WRONG_USAGE;
     }
 
     if(list_watched)
@@ -2248,102 +2202,123 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         return CR_OK;
     }
 
-    size_t num_races = df::global::world->raws.creatures.all.size(); 
-    bool found_race = false;
-    for(size_t i=0; i<num_races; i++)
+    // parse rest of parameters for commands followed by a list of races
+    if(    watch_race 
+        || unwatch_race 
+        || forget_race
+        || change_target )
     {
-        df::creature_raw *raw = df::global::world->raws.creatures.all[i];
-        if(raw->creature_id == target_racename)
+        if(!parameters.size())
         {
-            target_raceid = i;
-            found_race = true;
-            break;
+            out.printerr("No race(s) specified!");
+            return CR_WRONG_USAGE;
+        }
+        while(parameters.size())
+        {
+            string tr = parameters.back();
+            target_racenames.push_back(tr);
+            parameters.pop_back();
         }
     }
-    if(!found_race)
+
+    if( target_racenames.size() &&
+        (target_racenames[0] == "all" ||
+         target_racenames[0] == "new") )
     {
-        out << "Race not found!" << endl;
+        out << "'all' and 'new' are not supported yet, sorry." << endl;
         return CR_OK;
+    }
+
+    size_t num_races = df::global::world->raws.creatures.all.size(); 
+    while(target_racenames.size())
+    {
+        bool found_race = false;
+        for(size_t i=0; i<num_races; i++)
+        {
+            df::creature_raw *raw = df::global::world->raws.creatures.all[i];
+            if(raw->creature_id == target_racenames.back())
+            {
+                target_raceids.push_back(i);
+                target_racenames.pop_back();
+                found_race = true;
+                break;
+            }
+        }
+        if(!found_race)
+        {
+            out << "Race not found: " << target_racenames.back() << endl;
+            return CR_OK;
+        }
     }
 
     if(unwatch_race)
     {
-        bool found = false;
-        for(size_t i=0; i<watched_races.size(); i++)
+        while(target_raceids.size())
         {
-            WatchedRace * w = watched_races[i];
-            if(w->raceId == target_raceid)
+            for(size_t i=0; i<watched_races.size(); i++)
             {
-                found=true;
-                w->isWatched=false;
-                break;
+                WatchedRace * w = watched_races[i];
+                if(w->raceId == target_raceids.back())
+                {
+                    w->isWatched=false;
+                    target_raceids.pop_back();
+                    break;
+                }
             }
         }
-        if(found)
-            out << target_racename << " is not watched anymore." << endl;
-        else
-            out << target_racename << " was not being watched!" << endl;
         return CR_OK;
     }
 
     if(watch_race || change_target)
     {
-        bool watching = false;
-        for(size_t i=0; i<watched_races.size(); i++)
+        while(target_raceids.size())
         {
-            WatchedRace * w = watched_races[i];
-            if(w->raceId == target_raceid)
+            bool entry_found = false;
+            for(size_t i=0; i<watched_races.size(); i++)
             {
-                if(watch_race)
+                WatchedRace * w = watched_races[i];
+                if(w->raceId == target_raceids.back())
                 {
-                    if(w->isWatched)
-                        out << target_racename << " is already being watched." << endl;
-                    w->isWatched = true;
-                    watching = true;
+                    if(watch_race)
+                    {
+                        w->isWatched = true;
+                    }
+                    else if(change_target)
+                    {
+                        w->fk = target_fk;
+                        w->mk = target_mk;
+                        w->fa = target_fa;
+                        w->ma = target_ma;
+                    }
+                    entry_found = true;
+                    break;
                 }
-
-                if(change_target)
-                {
-                    w->fk = target_fk;
-                    w->mk = target_mk;
-                    w->fa = target_fa;
-                    w->ma = target_ma;
-                }
-                break;
             }
+            if(!entry_found)
+            {
+                WatchedRace * w = new WatchedRace(watch_race, target_raceids.back(), target_fk, target_mk, target_fa, target_ma);
+                watched_races.push_back(w);
+            }
+            target_raceids.pop_back();
         }
-        if(!watching)
-        {
-            WatchedRace * w = new WatchedRace(watch_race, target_raceid, target_fk, target_mk, target_fa, target_ma);
-            watched_races.push_back(w);
-        }
-        out << target_racename << " is now being watched." << endl;
         return CR_OK;
     }
 
     if(forget_race)
     {
-        bool watched = false;
-        for(size_t i=0; i<watched_races.size(); i++)
+        while(target_raceids.size())
         {
-            WatchedRace * w = watched_races[i];
-            if(w->raceId == target_raceid)
+            for(size_t i=0; i<watched_races.size(); i++)
             {
-                watched_races.erase(watched_races.begin()+i);
-
-                if(w->isWatched)
-                    out << target_racename << " is already being watched." << endl;
-                w->isWatched = true;
-                watched = true;
-                break;
+                WatchedRace * w = watched_races[i];
+                if(w->raceId == target_raceids.back())
+                {
+                    watched_races.erase(watched_races.begin()+i);
+                    break;
+                }
             }
+            target_raceids.pop_back();
         }
-        if(!watched)
-        {
-            out << target_racename << " was not on the watchlist." << endl;
-            return CR_OK;
-        }
-        out << target_racename << " was forgotten." << endl;
         return CR_OK;
     }
 

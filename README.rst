@@ -872,7 +872,7 @@ Options:
 :start:        Start running every X frames (df simulation ticks). Default: X=6000, which would be every 60 seconds at 100fps.
 :stop:         Stop running automatically.
 :sleep:        Must be followed by number X. Changes the timer to sleep X frames between runs.
-:watch R:      Start watching a race. R must be a valid race RAW id (ALPACA, BIRD_TURKEY, etc).
+:watch R:      Start watching a race. R must be a valid race RAW id (ALPACA, BIRD_TURKEY, etc) or a list of ids seperated by spaces.
 :unwatch R:    Stop watching a race. The current target settings will be remembered (currently only until you save or quit the game). 
 :forget R:     Stop watching a race and forget it's target settings.
 :list:          Print a list of watched races.
@@ -885,10 +885,11 @@ Options:
 
 Examples:
 ---------
-You want to keep max 7 kids (4 female, 3 male) and max 3 adults (2 female, 1 male) of the race alpaca. Once the kids grow up the oldest adults will get slaughtered. Excess kids will get slaughtered starting with the youngest to allow that the older ones grow into adults.
+You want to keep max 7 kids (4 female, 3 male) and max 3 adults (2 female, 1 male) of the race alpaca. Once the kids grow up the oldest adults will get slaughtered. Excess kids will get slaughtered starting with the youngest to allow that the older ones grow into adults. Any unnamed cats will be slaughtered as soon as possible.
 ::  
 
-     autobutcher target 4 3 2 1 ALPACA
-     autobutcher watch ALPACA
+     autobutcher target 4 3 2 1 ALPACA BIRD_TURKEY
+     autobutcher target 0 0 0 0 CAT
+     autobutcher watch ALPACA BIRD_TURKEY CAT
      autobutcher start
     

@@ -597,7 +597,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     
     if(verbose)
     {
-        //out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ")" << endl;
+        out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ")" << endl;
         if(isEggLayer(unit))
             out << ", egglayer";
         if(isGrazer(unit))
@@ -1640,13 +1640,17 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     )
                     continue;
 
-                if(!hasValidMapPos(unit))
+                // animals bought in cages have an invalid map pos until they are freed for the first time
+                // but if they are not in a cage and have an invalid pos it's better not to touch them
+                if(!isContainedInItem(unit) && !hasValidMapPos(unit))
                 {
-                    uint32_t max_x, max_y, max_z;
-                    Maps::getSize(max_x, max_y, max_z);
-                    out << "("<<max_x << "/"<< max_y << "/" << max_z << "). map max" << endl;
-                    out << "invalid unit pos: " ;
-                    out << "("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << "). will skip this unit" << endl;
+                    if(verbose)
+                    {
+                        out << "----------"<<endl;
+                        out << "invalid unit pos but not in cage either. will skip this unit." << endl;
+                        unitInfo(out, unit, verbose);
+                        out << "----------"<<endl;
+                    }
                     continue;
                 }
 
@@ -2229,6 +2233,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         return CR_OK;
     }
 
+    // map race names to ids
     size_t num_races = df::global::world->raws.creatures.all.size(); 
     while(target_racenames.size())
     {
@@ -2363,13 +2368,14 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
             || isMarkedForSlaughter(unit)
             || !isOwnCiv(unit)
             || !isTame(unit)
+            || (isContainedInItem(unit) && hasValidMapPos(unit) && isBuiltCageAtPos(unit->pos))
             || unit->name.has_name
             )
             continue;
 
-        // found a bugged unit which had invalid coordinates.
+        // found a bugged unit which had invalid coordinates but was not in a cage.
         // marking it for slaughter didn't seem to have negative effects, but you never know...
-        if(!hasValidMapPos(unit))
+        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
             continue;
 
         int watched_index = getWatchedIndex(unit->race);

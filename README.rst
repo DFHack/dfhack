@@ -808,7 +808,6 @@ Options:
 :set:          Set zone under cursor as default for future assigns.
 :assign:       Assign unit(s) to the pen or pit marked with the 'set' command. If no filters are set a unit must be selected in the in-game ui. Can also be followed by a valid zone id which will be set instead.
 :unassign:     Unassign selected creature from it's zone.
-:autonestbox:  Assign all (unless count is specified) unpastured female egg-layers to empty pens which contain a nestbox. If the pen is bigger than 1x1 the nestbox must be placed at the top left corner to be recognized. Only 1 unit will be assigned per pen.
 :uinfo:        Print info about unit(s). If no filters are set a unit must be selected in the in-game ui.
 :zinfo:        Print info about zone(s). If no filters are set zones under the cursor are listed.
 :verbose:      Print some more info.
@@ -853,3 +852,54 @@ All filters can be used together with the 'assign' command. The only restriction
    Assign up to 5 own female milkable creatures to the selected pasture.
 ``zone assign all own race DWARF maxage 2``
    Throw all useless kids into a pit :)
+
+autonestbox
+===========
+Assigns unpastured female egg-layers to nestbox zones. Requires that you create pen/pasture zones above nestboxes. If the pen is bigger than 1x1 the nestbox must be in the top left corner. Only 1 unit will be assigned per pen, regardless of the size. The age of the units is currently not checked, most birds grow up quite fast. When called without options autonestbox will instantly run once.
+
+Options:
+--------
+:start:        Start running every X frames (df simulation ticks). Default: X=6000, which would be every 60 seconds at 100fps.
+:stop:         Stop running automatically.
+:sleep:        Must be followed by number X. Changes the timer to sleep X frames between runs.
+
+autobutcher
+===========
+Assigns lifestock for slaughter once it reaches a specific count. Requires that you add the target race(s) to a watch list. Only tame units of the own civilization will be processed. Named units will be completely ignored (you can give animals nicknames with the tool 'rename unit' to protect them from autobutcher). Once you have too much adults, the oldest will be butchered first. Once you have too much kids, the youngest will be butchered first. If you don't set any target count the following default will be used: 1 male kid, 5 female kids, 1 male adult, 5 female adults.
+
+Options:
+--------
+:start:        Start running every X frames (df simulation ticks). Default: X=6000, which would be every 60 seconds at 100fps.
+:stop:         Stop running automatically.
+:sleep:        Must be followed by number X. Changes the timer to sleep X frames between runs.
+:watch R:      Start watching a race. R can be a valid race RAW id (ALPACA, BIRD_TURKEY, etc) or a list of ids seperated by spaces or the keyword 'all' which adds all races with at least one owned tame unit in your fortress to the list.	
+:unwatch R:    Stop watching a race. The current target settings will be remembered (currently only until you save or quit the game). 
+:forget R:     Stop watching a race and forget it's target settings.
+:autowatch:    Automatically adds all new races (animals you buy from merchants, tame yourself or get from migrants) 
+               to the watch list using default target count. 
+:noautowatch:  Stop auto-adding new races to the watchlist.
+:list:         Print a list of watched races.
+:target fk mk fa ma R: Set target count for specified race(s).
+                 fk = number of female kids,
+                 mk = number of male kids,
+                 fa = number of female adults,
+                 ma = number of female adults.
+:example:      Print some usage examples.
+
+Examples:
+---------
+You want to keep max 7 kids (4 female, 3 male) and max 3 adults (2 female, 1 male) of the race alpaca. Once the kids grow up the oldest adults will get slaughtered. Excess kids will get slaughtered starting with the youngest to allow that the older ones grow into adults. Any unnamed cats will be slaughtered as soon as possible.
+::  
+
+     autobutcher target 4 3 2 1 ALPACA BIRD_TURKEY
+     autobutcher target 0 0 0 0 CAT
+     autobutcher watch ALPACA BIRD_TURKEY CAT
+     autobutcher start
+    
+Automatically put all new races onto the watchlist and mark unnamed tame units for slaughter as soon as they arrive in your fort. Settings already made for specific races will be left untouched.
+::  
+
+     autobutcher target 0 0 0 0 new
+     autobutcher autowatch
+     autobutcher start
+    

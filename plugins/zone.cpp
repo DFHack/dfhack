@@ -4,10 +4,6 @@
 // - dump info about pastures, pastured animals, count non-pastured tame animals, print gender info
 // - help finding caged dwarves? (maybe even allow to build their cages for fast release)
 // - dump info about caged goblins, animals, ...
-// - allow to mark old animals for slaughter automatically?
-//   that should include a check to ensure that at least one male and one female remain for breeding
-//   allow some fine-tuning like how many males/females should per race should be left alive
-//   and at what age they are being marked for slaughter. don't slaughter pregnant females?
 // - count grass tiles on pastures, move grazers to new pasture if old pasture is empty
 //   move hungry unpastured grazers to pasture with grass
 // 
@@ -21,11 +17,16 @@
 //   go through all pens, check if they are empty and placed over a nestbox
 //   find female tame egg-layer who is not assigned to another pen and assign it to nestbox pasture
 //   maybe check for minimum age? it's not that useful to fill nestboxes with freshly hatched birds
+// - full automation of marking live-stock for slaughtering
+//   races can be added to a watchlist and it can be set how many male/female kids/adults are left alive
+//   adding to the watchlist can be automated as well.
+//   TODO: - save config
 
 #include <iostream>
 #include <iomanip>
 #include <climits>
 #include <vector>
+#include <algorithm>
 #include <string>
 #include <sstream>
 #include <ctime>
@@ -65,9 +66,9 @@ using df::global::ui;
 
 using namespace DFHack::Gui;
 
-struct genref : df::general_ref_building_civzone_assignedst {};
-
 command_result df_zone (color_ostream &out, vector <string> & parameters);
+command_result df_autonestbox (color_ostream &out, vector <string> & parameters);
+command_result df_autobutcher(color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("zone");
 
@@ -78,10 +79,10 @@ const string zone_help =
     "  assign       - assign creature(s) to a pen or pit\n"
     "                 if no filters are used, a single unit must be selected.\n"
     "                 can be followed by valid zone id which will then be set.\n"
+    "  slaughter    - mark creature(s) for slaughter\n"
+    "                 if no filters are used, a single unit must be selected.\n"
+    "                 with filters named units are ignored unless specified.\n"
     "  unassign     - unassign selected creature from it's zone\n"
-    "  autonestbox  - assign unpastured female egg-layers to nestbox zones\n"
-    "                 requires you to create 1-tile pastures above nestboxes\n"
-    "                 filters (except count) will be ignored currently\n"
     "  uinfo        - print info about selected unit\n"
     "  zinfo        - print info about zone(s) under cursor\n"
     "  verbose      - print some more info, mostly useless debug stuff\n"
@@ -103,6 +104,8 @@ const string zone_help_filters =
     "  own          - from own civilization (fortress)\n"
     "  war          - trained war creature\n"
     "  tamed        - tamed\n"
+    "  named        - has name or nickname\n"
+    "                 can be used to mark named units for slaughter\n"
     "  trained      - obvious\n"
     "  untrained    - obvious\n"
     "  male         - obvious\n"
@@ -119,7 +122,7 @@ const string zone_help_examples =
     "  (dfhack) 'zone set' to use this zone for future assignments\n"
     "  (dfhack) map 'zone assign' to a hotkey of your choice\n"
     "  (ingame) select unit with 'v', 'k' or from unit list or inside a cage\n"
-	"  (ingame) press hotkey to assign unit to it's new home (or pit)\n"
+    "  (ingame) press hotkey to assign unit to it's new home (or pit)\n"
     "Examples for assigning with filters:\n"
     "  (this assumes you have already set up a target zone)\n"
     "  zone assign all own grazer maxage 10\n"
@@ -137,6 +140,77 @@ const string zone_help_examples =
     "  unless you have a mod with egg-laying male elves who give milk.\n";
 
 
+const string autonestbox_help =
+    "Assigns unpastured female egg-layers to nestbox zones.\n"
+    "Requires that you create pen/pasture zones above nestboxes.\n"
+    "If the pen is bigger than 1x1 the nestbox must be in the top left corner.\n"
+    "Only 1 unit will be assigned per pen, regardless of the size.\n"
+    "The age of the units is currently not checked, most birds grow up quite fast.\n"
+    "When called without options autonestbox will instantly run once.\n"
+    "Options:\n"
+    "  start        - run every X frames (df simulation ticks)\n"
+    "                 default: X=6000  (~60 seconds at 100fps)\n"
+    "  stop         - stop running automatically\n"
+    "  sleep X      - change timer to sleep X frames between runs.\n";
+
+const string autobutcher_help =
+    "Assigns your lifestock for slaughter once it reaches a specific count. Requires\n"
+    "that you add the target race(s) to a watch list. Only tame units of your own\n"
+    "civilization will be processed. Named units will be completely ignored (you can\n"
+    "give animals nicknames with the tool 'rename unit' to protect them from\n"
+    "getting slaughtered automatically.\n"
+    "Once you have too much adults, the oldest will be butchered first.\n"
+    "Once you have too much kids, the youngest will be butchered first.\n"
+    "If you don't set a target count the following default will be used:\n"
+    "1 male kid, 5 female kids, 1 male adult, 5 female adults.\n"
+    "Options:\n"
+    "  start        - run every X frames (df simulation ticks)\n"
+    "                 default: X=6000  (~60 seconds at 100fps)\n"
+    "  stop         - stop running automatically\n"
+    "  sleep X      - change timer to sleep X frames between runs.\n"
+    "  watch R      - start watching race(s)\n"
+    "                 R = valid race RAW id (ALPACA, BIRD_TURKEY, etc)\n"
+    "                 or a list of RAW ids seperated by spaces\n"
+    "                 or the keyword 'all' which adds all races with\n"
+    "                 at least one owned tame unit in your fortress\n"
+    "  unwatch R    - stop watching race(s)\n"
+    "                 the current target settings will be remembered\n"
+    "  forget R     - unwatch race(s) and forget target settings for it/them\n"
+    "  autowatch    - automatically adds all new races (animals you buy\n"
+    "                 from merchants, tame yourself or get from migrants)\n"
+    "                 to the watch list using default target count\n"
+    "  noautowatch  - stop auto-adding new races to the watch list\n"
+    "  list         - print a list of watched races\n"
+    "  target fk mk fa ma R\n"
+    "               - set target count for specified race:\n"
+    "                 fk = number of female kids\n"
+    "                 mk = number of male kids\n"
+    "                 fa = number of female adults\n"
+    "                 ma = number of female adults\n"
+    "                 R = 'all' sets count for all races on the current watchlist\n"
+    "                 including the races which are currenly set to 'unwatched'\n"
+    "                 and sets the new default for future watch commands\n"
+    "                 R = 'new' sets the new default for future watch commands\n"
+    "                 without changing your current watchlist\n"
+    "  example      - print some usage examples\n";
+
+const string autobutcher_help_example =
+    "Examples:\n"
+    "  autobutcher target 4 3 2 1 ALPACA BIRD_TURKEY\n"
+    "  autobutcher watch ALPACA BIRD_TURKEY\n"
+    "  autobutcher start\n"
+    "    This means you want to have max 7 kids (4 female, 3 male) and max 3 adults\n"
+    "    (2 female, 1 male) of the races alpaca and turkey. Once the kids grow up the\n"
+    "    oldest adults will get slaughtered. Excess kids will get slaughtered starting\n"
+    "    the the youngest to allow that the older ones grow into adults.\n"
+    "  autobutcher target 0 0 0 0 new\n"
+    "  autobutcher autowatch\n"
+    "  autobutcher start\n"
+    "    This tells autobutcher to automatically put all new races onto the watchlist\n"
+    "    and mark unnamed tame units for slaughter as soon as they arrive in your\n"
+    "    fortress. Settings already made for some races will be left untouched.\n";
+
+
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
@@ -144,11 +218,82 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         df_zone, false,
         zone_help.c_str()
         ));
+    commands.push_back(PluginCommand(
+        "autonestbox", "auto-assign nestbox zones.",
+        df_autonestbox, false,
+        autonestbox_help.c_str()
+        ));
+    commands.push_back(PluginCommand(
+        "autobutcher", "auto-assign lifestock for butchering.",
+        df_autobutcher, false,
+        autobutcher_help.c_str()
+        ));
     return CR_OK;
 }
 
+command_result autobutcher_cleanup(color_ostream &out);
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    autobutcher_cleanup(out);
+    return CR_OK;
+}
+
+///////////////
+// stuff for autonestbox and autobutcher
+// should be moved to own plugin once the tool methods it shares with the zone plugin are moved to Unit.h / Building.h
+
+command_result autoNestbox( color_ostream &out, bool verbose );
+command_result autoButcher( color_ostream &out, bool verbose );
+
+static bool enable_autonestbox = false;
+static bool enable_autobutcher = false;
+static bool enable_autobutcher_autowatch = false;
+static size_t sleep_autonestbox = 6000;
+static size_t sleep_autobutcher = 6000;
+static bool autonestbox_did_complain = false; // avoids message spam
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
+{
+    switch (event) 
+    {
+    case DFHack::SC_MAP_LOADED:
+        // initialize from the world just loaded
+        break;
+    case DFHack::SC_MAP_UNLOADED:
+        enable_autonestbox = false;
+        enable_autobutcher = false;
+        // cleanup
+        autobutcher_cleanup(out);
+        break;
+    default:
+        break;
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate ( color_ostream &out )
+{
+    static size_t ticks_autonestbox = 0;
+    static size_t ticks_autobutcher = 0;
+
+    if(enable_autonestbox)
+    {
+        if(++ticks_autonestbox >= sleep_autonestbox)
+        {
+            ticks_autonestbox = 0;
+            autoNestbox(out, false);
+        }
+    }
+    
+    if(enable_autobutcher)
+    {
+        if(++ticks_autobutcher >= sleep_autobutcher)
+        {
+            ticks_autobutcher= 0;
+            autoButcher(out, false);
+        }
+    }
+
     return CR_OK;
 }
 
@@ -164,6 +309,7 @@ bool isTrained(df::unit* creature);
 bool isWar(df::unit* creature);
 bool isHunter(df::unit* creature);
 bool isOwnCiv(df::unit* creature);
+
 bool isActivityZone(df::building * building);
 bool isPenPasture(df::building * building);
 bool isPit(df::building * building);
@@ -177,16 +323,16 @@ int32_t findChainAtCursor();
 df::general_ref_building_civzone_assignedst * createCivzoneRef();
 bool unassignUnitFromZone(df::unit* unit);
 command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building* building, bool verbose);
-void unitInfo(color_ostream & out, df::unit* creature, bool list_refs);
-void zoneInfo(color_ostream & out, df::building* building, bool list_refs);
-void cageInfo(color_ostream & out, df::building* building, bool list_refs);
-void chainInfo(color_ostream & out, df::building* building, bool list_refs);
+void unitInfo(color_ostream & out, df::unit* creature, bool verbose);
+void zoneInfo(color_ostream & out, df::building* building, bool verbose);
+void cageInfo(color_ostream & out, df::building* building, bool verbose);
+void chainInfo(color_ostream & out, df::building* building, bool verbose);
 bool isBuiltCageAtPos(df::coord pos);
 
 int32_t getUnitAge(df::unit* unit)
 {
-	// If the birthday this year has not yet passed, subtract one year.
-	// ASSUMPTION: birth_time is on the same scale as cur_year_tick
+    // If the birthday this year has not yet passed, subtract one year.
+    // ASSUMPTION: birth_time is on the same scale as cur_year_tick
     int32_t yearDifference = *df::global::cur_year - unit->relations.birth_year;
     if (unit->relations.birth_time >= *df::global::cur_year_tick)
         yearDifference--;
@@ -195,10 +341,17 @@ int32_t getUnitAge(df::unit* unit)
 
 bool isDead(df::unit* unit)
 {
-	if(unit->flags1.bits.dead)
-		return true;
-	else
-		return false;
+    return unit->flags1.bits.dead;
+}
+
+bool isMarkedForSlaughter(df::unit* unit)
+{
+    return unit->flags2.bits.slaughter;
+}
+
+void doMarkForSlaughter(df::unit* unit)
+{
+    unit->flags2.bits.slaughter = 1;
 }
 
 bool isTame(df::unit* creature)
@@ -272,35 +425,55 @@ bool isHunter(df::unit* creature)
         return false;
 }
 
+
 // check if creature belongs to the player's civilization
 // (don't try to pasture/slaughter random untame animals)
 bool isOwnCiv(df::unit* creature)
 {
-    if(creature->civ_id == ui->civ_id)
-        return true;
-    else
-        return false;
+    return creature->civ_id == ui->civ_id;
 }
 
 // check if creature belongs to the player's race
 // (in combination with check for civ helps to filter out own dwarves)
 bool isOwnRace(df::unit* creature)
 {
-    if(creature->race == ui->race_id)
-        return true;
-    else
-        return false;
+    return creature->race == ui->race_id;
 }
 
 string getRaceName(df::unit* unit)
 {
-	df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
     return raw->creature_id;
+}
+string getRaceBabyName(df::unit* unit)
+{
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    return raw->general_baby_name[0];
+}
+string getRaceChildName(df::unit* unit)
+{
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    return raw->general_child_name[0];
+}
+
+bool isBaby(df::unit* unit)
+{
+    return unit->profession == df::profession::BABY;
+}
+
+bool isChild(df::unit* unit)
+{
+    return unit->profession == df::profession::CHILD;
+}
+
+bool isAdult(df::unit* unit)
+{
+    return !isBaby(unit) && !isChild(unit);
 }
 
 bool isEggLayer(df::unit* unit)
 {
-	df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
     size_t sizecas = raw->caste.size();
     for (size_t j = 0; j < sizecas;j++)
     {
@@ -314,7 +487,7 @@ bool isEggLayer(df::unit* unit)
 
 bool isGrazer(df::unit* unit)
 {
-	df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
     size_t sizecas = raw->caste.size();
     for (size_t j = 0; j < sizecas;j++)
     {
@@ -327,7 +500,7 @@ bool isGrazer(df::unit* unit)
 
 bool isMilkable(df::unit* unit)
 {
-	df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
     size_t sizecas = raw->caste.size();
     for (size_t j = 0; j < sizecas;j++)
     {
@@ -340,14 +513,23 @@ bool isMilkable(df::unit* unit)
 
 bool isMale(df::unit* unit)
 {
-    if(unit->sex==1)
-        return true;
-    else
-        return false;
+    return unit->sex == 1;
 }
+
 bool isFemale(df::unit* unit)
 {
-    if(unit->sex==0)
+    return unit->sex == 0;
+}
+
+// found a unit with weird position values on one of my maps (negative and in the thousands)
+// it didn't appear in the animal stocks screen, but looked completely fine otherwise (alive, tame, own, etc)
+// maybe a rare but, but better avoid assigning such units to zones or slaughter etc.
+bool hasValidMapPos(df::unit* unit)
+{
+    if(    unit->pos.x >=0 && unit->pos.y >= 0 && unit->pos.z >= 0
+        && unit->pos.x < world->map.x_count 
+        && unit->pos.y < world->map.y_count 
+        && unit->pos.z < world->map.z_count)
         return true;
     else
         return false;
@@ -356,23 +538,36 @@ bool isFemale(df::unit* unit)
 // dump some unit info
 void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
 {
-	if(isDead(unit))
-		return;
+    if(isDead(unit))
+        return;
 
     out.print("Unit %d ", unit->id); //race %d, civ %d,", creature->race, creature->civ_id
     if(unit->name.has_name)
-	{
-		// units given a nick with the rename tool might not have a first name (animals etc)
-		string firstname = unit->name.first_name;
-		if(firstname.size() > 0)
-		{
-			firstname[0] = toupper(firstname[0]);
-			out << "Name: " << firstname;
-		}
-		if(unit->name.nickname.size() > 0)
-			out << " '" << unit->name.nickname << "'";
+    {
+        // units given a nick with the rename tool might not have a first name (animals etc)
+        string firstname = unit->name.first_name;
+        if(firstname.size() > 0)
+        {
+            firstname[0] = toupper(firstname[0]);
+            out << "Name: " << firstname;
+        }
+        if(unit->name.nickname.size() > 0)
+            out << " '" << unit->name.nickname << "'";
         out << ", ";
-	}
+    }
+    
+    if(isAdult(unit))
+        out << "adult";
+    else if(isBaby(unit))
+        out << "baby";
+    else if(isChild(unit))
+        out << "child";
+    out << " ";
+    // sometimes empty even in vanilla RAWS, sometimes contains full race name (e.g. baby alpaca) 
+    // all animals I looked at don't have babies anyways, their offspring starts as CHILD
+    //out << getRaceBabyName(unit);
+    //out << getRaceChildName(unit);
+
     out << getRaceName(unit) << " (";
     switch(unit->sex)
     {
@@ -401,7 +596,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     
     if(verbose)
     {
-        //out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ")" << endl;
+        out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ")" << endl;
         if(isEggLayer(unit))
             out << ", egglayer";
         if(isGrazer(unit))
@@ -483,18 +678,12 @@ bool isPit(df::building * building)
 
 bool isCage(df::building * building)
 {
-    if(building->getType() == building_type::Cage)
-        return true;
-	else
-		return false;
+    return building->getType() == building_type::Cage;
 }
 
 bool isChain(df::building * building)
 {
-    if(building->getType() == building_type::Chain)
-        return true;
-	else
-		return false;
+    return building->getType() == building_type::Chain;
 }
 
 bool isActive(df::building * building)
@@ -648,20 +837,19 @@ bool isAssigned(df::unit* unit)
     for (size_t r=0; r < unit->refs.size(); r++)
     {
         df::general_ref * ref = unit->refs[r];
-		auto rtype = ref->getType();
+        auto rtype = ref->getType();
         if(    rtype == df::general_ref_type::BUILDING_CIVZONE_ASSIGNED
-			|| rtype == df::general_ref_type::BUILDING_CAGED
-			|| rtype == df::general_ref_type::BUILDING_CHAIN
+            || rtype == df::general_ref_type::BUILDING_CAGED
+            || rtype == df::general_ref_type::BUILDING_CHAIN
             || (rtype == df::general_ref_type::CONTAINED_IN_ITEM && isBuiltCageAtPos(unit->pos))
-			)
+            )
         {
-			assigned = true;
+            assigned = true;
             break;
         }
     }
     return assigned;
 }
-
 
 // check if assigned to a chain or built cage
 // (need to check if the ref needs to be removed, until then touching them is forbidden)
@@ -680,8 +868,6 @@ bool isChained(df::unit* unit)
     }
     return contained;
 }
-
-
 
 // check if contained in item (e.g. animals in cages)
 bool isContainedInItem(df::unit* unit)
@@ -754,14 +940,12 @@ bool isEmptyPasture(df::building* building)
 df::building* findFreeNestboxZone()
 {
     df::building * free_building = NULL;
-    
-    //df::unit * free_unit = findFreeEgglayer();
-
     bool cage = false;
     for (size_t b=0; b < world->buildings.all.size(); b++)
     {
         df::building* building = world->buildings.all[b];
         if( isEmptyPasture(building) &&
+            isActive(building) &&
             isNestboxAtPos(building->x1, building->y1, building->z))
         {
             free_building = building;
@@ -771,18 +955,27 @@ df::building* findFreeNestboxZone()
     return free_building;
 }
 
+bool isFreeEgglayer(df::unit * unit)
+{
+    if( !isDead(unit)
+        && isFemale(unit)
+        && isTame(unit)
+        && isOwnCiv(unit)
+        && isEggLayer(unit)
+        && !isAssigned(unit)
+        )
+        return true;
+    else
+        return false;
+}
+
 df::unit * findFreeEgglayer()
 {
     df::unit* free_unit = NULL;
     for (size_t i=0; i < world->units.all.size(); i++)
     {
         df::unit* unit = world->units.all[i];
-        if( isFemale(unit)
-            && isTame(unit)
-            && isOwnCiv(unit)
-            && isEggLayer(unit)
-            && !isAssigned(unit)
-            )
+        if(isFreeEgglayer(unit))
         {
             free_unit = unit;
             break;
@@ -791,6 +984,17 @@ df::unit * findFreeEgglayer()
     return free_unit;
 }
 
+size_t countFreeEgglayers()
+{
+    size_t count = 0;
+    for (size_t i=0; i < world->units.all.size(); i++)
+    {
+        df::unit* unit = world->units.all[i];
+        if(isFreeEgglayer(unit))
+            count ++;
+    }
+    return count;
+}
 
 // check if unit is already assigned to a zone, remove that ref from unit and old zone
 // returns false if no pasture information was found
@@ -864,7 +1068,7 @@ command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building
             out << "no old zone info found.";
     }
 
-	ref->building_id = building->id;
+    ref->building_id = building->id;
     unit->refs.push_back(ref);
 
     df::building_civzonest * civz = (df::building_civzonest *) building;
@@ -946,11 +1150,11 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose = false)
         return;
     out << endl;
     out << "x1:" <<building->x1
-		<< " x2:" <<building->x2
-		<< " y1:" <<building->y1
-		<< " y2:" <<building->y2
-		<< " z:" <<building->z
-		<< endl;
+        << " x2:" <<building->x2
+        << " y1:" <<building->y1
+        << " y2:" <<building->y2
+        << " z:" <<building->z
+        << endl;
 
     int32_t creaturecount = civ->assigned_creature.size();
     out << "Creatures in this zone: " << creaturecount << endl;
@@ -985,10 +1189,10 @@ void cageInfo(color_ostream & out, df::building* building, bool verbose = false)
                 building->getType());
     out.print("\n");
 
-	out << "x:"  << building->x1
-		<< " y:" << building->y1
-		<< " z:" << building->z
-		<< endl;
+    out << "x:"  << building->x1
+        << " y:" << building->y1
+        << " z:" << building->z
+        << endl;
 
     df::building_cagest * cage = (df::building_cagest*) building;
     int32_t creaturecount = cage->assigned_creature.size();
@@ -1025,16 +1229,16 @@ void chainInfo(color_ostream & out, df::building* building, bool list_refs = fal
     out.print("\n");
 
     df::building_chainst* chain = (df::building_chainst*) building;
-	if(chain->assigned)
-	{
-		out << "assigned: ";
-		unitInfo(out, chain->assigned, true);
-	}
-	if(chain->chained)
-	{
-		out << "chained: ";
-		unitInfo(out, chain->chained, true);
-	}
+    if(chain->assigned)
+    {
+        out << "assigned: ";
+        unitInfo(out, chain->assigned, true);
+    }
+    if(chain->chained)
+    {
+        out << "chained: ";
+        unitInfo(out, chain->chained, true);
+    }
 }
 
 command_result df_zone (color_ostream &out, vector <string> & parameters)
@@ -1046,21 +1250,22 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool zone_info = false;
     //bool cage_info = false;
     //bool chain_info = false;
-	
-	bool find_unassigned = false;
-	bool find_caged = false;
-	bool find_uncaged = false;
-	bool find_foreign = false;
-	bool find_untrained = false;
-	//bool find_trained = false;
-	bool find_war = false;
-	bool find_own = false;
-	bool find_tame = false;
+    
+    bool find_unassigned = false;
+    bool find_caged = false;
+    bool find_uncaged = false;
+    bool find_foreign = false;
+    bool find_untrained = false;
+    //bool find_trained = false;
+    bool find_war = false;
+    bool find_own = false;
+    bool find_tame = false;
     bool find_male = false;
     bool find_female = false;
     bool find_egglayer = false;
     bool find_grazer = false;
     bool find_milkable = false;
+    bool find_named = false;
 
     bool find_agemin = false;
     bool find_agemax = false;
@@ -1071,14 +1276,14 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     size_t target_count = 0;
 
     bool find_race = false;
-	string target_race = "";
+    string target_race = "";
 
     bool zone_assign = false;
     bool zone_unassign = false;
     bool zone_set = false;
     bool verbose = false;
     bool all = false;
-    bool auto_nestbox = false;
+    bool unit_slaughter = false;
     static int target_zone = -1;
 
     for (size_t i = 0; i < parameters.size(); i++)
@@ -1151,7 +1356,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             }
             else
             {
-				target_race = parameters[i+1];
+                target_race = parameters[i+1];
                 i++;
                 out << "Filter by race " << target_race << endl;
                 find_race = true;
@@ -1197,10 +1402,15 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             out << "Filter by 'tame'." << endl;
             find_tame = true;
         }
-        else if(p == "autonestbox")
+        else if(p == "named")
         {
-            out << "Auto-assign female tame owned egg-layers to free nestboxes." << endl;
-            auto_nestbox = true;
+            out << "Filter by 'has name or nickname'." << endl;
+            find_named = true;
+        }
+        else if(p == "slaughter")
+        {
+            out << "Assign animals for slaughter." << endl;
+            unit_slaughter = true;
         }
         else if(p == "count")
         {
@@ -1303,10 +1513,16 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             all = true;
         }
         else
-		{
-			out << "Unknown command: " << p << endl;
+        {
+            out << "Unknown command: " << p << endl;
             return CR_WRONG_USAGE;
-		}
+        }
+    }
+
+    if (!Maps::IsValid())
+    {
+        out.printerr("Map is not available!\n");
+        return CR_FAILURE;
     }
 
     if((zone_info && !all) || zone_set)
@@ -1326,47 +1542,12 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     }
 
     // try to cope with user dumbness
-    if(target_agemin > target_agemax || target_agemax < target_agemin)
+    if(target_agemin > target_agemax)
     {
         out << "Invalid values for minage/maxage specified! I'll swap them." << endl;
         int oldmin = target_agemin;
         target_agemin = target_agemax;
         target_agemax = oldmin;
-    }
-
-    // auto-assign to empty nestboxes. this requires an empty 1x1 pen/pasture zone placed over a nestbox
-    // currently it will not be checked if the nestbox is already claimed by another egglayer
-    if(auto_nestbox)
-    {
-        bool stop = false;
-        size_t processed = 0;
-        do
-        {
-            df::building * free_building = findFreeNestboxZone();
-            df::unit * free_unit = findFreeEgglayer();
-            if(free_building && free_unit)
-            {
-                command_result result = assignUnitToBuilding(out, free_unit, free_building, verbose);
-                if(result != CR_OK)
-                    return result;
-                processed ++;
-                if(find_count && processed >= target_count)
-                    stop = true;
-            }
-            else
-            {
-                stop = true;
-                if(free_unit && !free_building)
-                {
-                    out << "Not enough free nestbox zones found!" << endl;
-                    out << "You can check how many more you need with:" << endl;
-                    out << "'zone uinfo all unassigned own female egglayer'" << endl;
-                    out << "Or simply build some more and use 'zone autonestbox' again." << endl;
-                }
-            }
-        } while (!stop);
-        out << processed << " units assigned to their new nestboxes." << endl;
-        return CR_OK;
     }
 
     // give info on zone(s), chain or cage under cursor
@@ -1405,12 +1586,12 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     }
 
     // assign to pen or pit
-    if(zone_assign || unit_info)
+    if(zone_assign || unit_info || unit_slaughter)
     {
         df::building * building;
         if(zone_assign)
         {
-		    // try to get building index from the id
+            // try to get building index from the id
             int32_t index = findBuildingIndexById(target_zone);
             if(index == -1)
             {
@@ -1454,21 +1635,42 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     || (find_milkable && !isMilkable(unit))
                     || (find_male && !isMale(unit))
                     || (find_female && !isFemale(unit))
+                    || (find_named && !unit->name.has_name)
                     )
                     continue;
 
+                // animals bought in cages have an invalid map pos until they are freed for the first time
+                // but if they are not in a cage and have an invalid pos it's better not to touch them
+                if(!isContainedInItem(unit) && !hasValidMapPos(unit))
+                {
+                    if(verbose)
+                    {
+                        out << "----------"<<endl;
+                        out << "invalid unit pos but not in cage either. will skip this unit." << endl;
+                        unitInfo(out, unit, verbose);
+                        out << "----------"<<endl;
+                    }
+                    continue;
+                }
+
                 if(unit_info)
                 {
-                    if(unit->pos.x <0 || unit->pos.y<0 || unit->pos.z<0)
-                        out << "invalid unit pos" << endl;
                     unitInfo(out, unit, verbose);
                 }
-                else
+                else if(zone_assign)
                 {            
                     command_result result = assignUnitToBuilding(out, unit, building, verbose);
                     if(result != CR_OK)
                         return result;
                 }
+                else if(unit_slaughter)
+                {
+                    // don't slaughter named creatures unless told to do so
+                    if(!find_named && unit->name.has_name)
+                        continue;
+                    doMarkForSlaughter(unit);
+                }
+
                 count++;
                 if(find_count && count >= target_count)
                     break;
@@ -1490,8 +1692,23 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 unitInfo(out, unit, verbose);
                 return CR_OK;
             }
+            else if(zone_assign)
+            {
+                return assignUnitToBuilding(out, unit, building, verbose);
+            }
+            else if(unit_slaughter)
+            {
+                // by default behave like the game: only allow slaughtering of named war/hunting pets
+                //if(unit->name.has_name && !find_named && !(isWar(unit)||isHunter(unit)))
+                //{
+                //    out << "Slaughter of named unit denied. Use the filter 'named' to override this check." << endl;
+                //    return CR_OK;
+                //}
+
+                doMarkForSlaughter(unit);
+                return CR_OK;
+            }
             
-            return assignUnitToBuilding(out, unit, building, verbose);
         }
     }
 
@@ -1516,6 +1733,654 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             out << "Unit is not assigned to an activity zone!" << endl;
         return CR_OK;
     }
+
+    return CR_OK;
+}
+
+command_result df_autonestbox(color_ostream &out, vector <string> & parameters)
+{
+    CoreSuspender suspend;
+
+    bool verbose = false;
+
+    for (size_t i = 0; i < parameters.size(); i++)
+    {
+        string & p = parameters[i];
+        
+        if (p == "help" || p == "?")
+        {
+            out << autonestbox_help << endl;
+            return CR_OK;
+        }
+        if (p == "start")
+        {
+            enable_autonestbox = true;
+            autonestbox_did_complain = false;
+            out << "Autonestbox started.";
+            return autoNestbox(out, verbose);
+            //return CR_OK;
+        }
+        if (p == "stop")
+        {
+            enable_autonestbox = false;
+            out << "Autonestbox stopped.";
+            return CR_OK;
+        }
+        else if(p == "verbose")
+        {
+            verbose = true;
+        }
+        else if(p == "sleep")
+        {
+            if(i == parameters.size()-1)
+            {
+                out.printerr("No duration specified!");
+                return CR_WRONG_USAGE;
+            }
+            else
+            {
+                size_t ticks = 0;
+                stringstream ss(parameters[i+1]);
+                i++;
+                ss >> ticks;
+                if(ticks <= 0)
+                {
+                    out.printerr("Invalid duration specified (must be > 0)!");
+                    return CR_WRONG_USAGE;
+                }
+                sleep_autonestbox = ticks;
+                out << "New sleep timer for autonestbox: " << ticks << " ticks." << endl;
+                return CR_OK;
+            }
+        }
+        else
+        {
+            out << "Unknown command: " << p << endl;
+            return CR_WRONG_USAGE;
+        }
+    }
+    return autoNestbox(out, verbose);
+    //return CR_OK;
+}
+
+command_result autoNestbox( color_ostream &out, bool verbose = false )
+{
+    bool stop = false;
+    size_t processed = 0;
+
+    if (!Maps::IsValid())
+    {
+        out.printerr("Map is not available!\n");
+        enable_autonestbox = false;
+        return CR_FAILURE;
+    }
+
+    do
+    {
+        df::building * free_building = findFreeNestboxZone();
+        df::unit * free_unit = findFreeEgglayer();
+        if(free_building && free_unit)
+        {
+            command_result result = assignUnitToBuilding(out, free_unit, free_building, verbose);
+            if(result != CR_OK)
+                return result;
+            processed ++;
+            //if(find_count && processed >= target_count)
+            //    stop = true;
+        }
+        else
+        {
+            stop = true;
+            if(free_unit && !free_building)
+            {
+                static size_t old_count = 0;
+                size_t freeEgglayers = countFreeEgglayers();
+                // avoid spamming the same message
+                if(old_count != freeEgglayers)
+                    autonestbox_did_complain = false;
+                old_count = freeEgglayers;
+                if(!autonestbox_did_complain)
+                {
+                    stringstream ss;
+                    ss << freeEgglayers;
+                    string announce = "Not enough free nestbox zones found! You need " + ss.str() + " more.";
+                    Gui::showAnnouncement(announce, 6, true);
+                    out << announce << endl;
+                    autonestbox_did_complain = true;
+                }
+            }
+        }
+    } while (!stop);
+    if(processed > 0)
+    {
+        stringstream ss;
+        ss << processed;
+        string announce;
+        announce = ss.str() + " nestboxes were assigned.";
+        Gui::showAnnouncement(announce, 2, false);
+        out << announce << endl;
+        // can complain again
+        // (might lead to spamming the same message twice, but catches the case 
+        // where for example 2 new egglayers hatched right after 2 zones were created and assigned)
+        autonestbox_did_complain = false;
+    }
+    return CR_OK;
+}
+
+
+// getUnitAge() returns 0 if born in current year, therefore the look at birth_time in that case
+// (assuming that the value from there indicates in which tick of the current year the unit was born)
+bool compareUnitAgesYounger(df::unit* i, df::unit* j) 
+{
+    int32_t age_i = getUnitAge(i);
+    int32_t age_j = getUnitAge(j);
+    if(age_i == 0 && age_j == 0)
+    {
+        age_i = i->relations.birth_time;
+        age_j = j->relations.birth_time;
+    }
+    return (age_i < age_j); 
+}
+bool compareUnitAgesOlder(df::unit* i, df::unit* j) 
+{ 
+    int32_t age_i = getUnitAge(i);
+    int32_t age_j = getUnitAge(j);
+    if(age_i == 0 && age_j == 0)
+    {
+        age_i = i->relations.birth_time;
+        age_j = j->relations.birth_time;
+    }
+    return (age_i > age_j); 
+}
+
+//enum WatchedRaceSubtypes
+//{
+//    femaleKid=0,
+//    maleKid,
+//    femaleAdult,
+//    maleAdult
+//};
+
+struct WatchedRace
+{
+public:
+
+    bool isWatched; // if true, autobutcher will process this race
+    int raceId;
+    int fk; // max female kids
+    int mk; // max male kids
+    int fa; // max female adults
+    int ma; // max male adults
+
+    // bah, this should better be an array of 4 vectors
+    // that way there's no need for the 4 ugly process methods
+    vector <df::unit*> fk_ptr;
+    vector <df::unit*> mk_ptr;
+    vector <df::unit*> fa_ptr;
+    vector <df::unit*> ma_ptr;
+    
+    WatchedRace(bool watch, int id, int _fk, int _mk, int _fa, int _ma)
+    {
+        isWatched = watch;
+        raceId = id;
+        fk = _fk;
+        mk = _mk;
+        fa = _fa;
+        ma = _ma;
+    }
+
+    ~WatchedRace()
+    {
+        ClearUnits();
+    }
+
+    void SortUnitsByAge()
+    {
+        sort(fk_ptr.begin(), fk_ptr.end(), compareUnitAgesOlder);
+        sort(mk_ptr.begin(), mk_ptr.end(), compareUnitAgesOlder);
+        sort(fa_ptr.begin(), fa_ptr.end(), compareUnitAgesYounger);
+        sort(ma_ptr.begin(), ma_ptr.end(), compareUnitAgesYounger);
+    }
+    
+    void PushUnit(df::unit * unit)
+    {
+        if(isFemale(unit))
+        {
+            if(isBaby(unit) || isChild(unit))
+                fk_ptr.push_back(unit);
+            else
+                fa_ptr.push_back(unit);
+        }
+        else //treat sex n/a like it was male
+        {
+            if(isBaby(unit) || isChild(unit))
+                mk_ptr.push_back(unit);
+            else
+                ma_ptr.push_back(unit);
+        }
+    }
+
+    void ClearUnits()
+    {
+        fk_ptr.clear();
+        mk_ptr.clear();
+        fa_ptr.clear();
+        ma_ptr.clear();
+    }
+
+    int ProcessUnits_fk()
+    {
+        int subcount = 0;
+        while(fk_ptr.size() > fk)
+        {
+            df::unit* unit = fk_ptr.back();
+            doMarkForSlaughter(unit);
+            fk_ptr.pop_back();
+            subcount++;
+        }
+        return subcount;
+    }
+    int ProcessUnits_mk()
+    {
+        int subcount = 0;
+        while(mk_ptr.size() > mk)
+        {
+            df::unit* unit = mk_ptr.back();
+            doMarkForSlaughter(unit);
+            mk_ptr.pop_back();
+            subcount++;
+        }
+        return subcount;
+    }
+    int ProcessUnits_fa()
+    {
+        int subcount = 0;
+        while(fa_ptr.size() > fa)
+        {
+            df::unit* unit = fa_ptr.back();
+            doMarkForSlaughter(unit);
+            fa_ptr.pop_back();
+            subcount++;
+        }
+        return subcount;
+    }
+    int ProcessUnits_ma()
+    {
+        int subcount = 0;
+        while(ma_ptr.size() > ma)
+        {
+            df::unit* unit = ma_ptr.back();
+            doMarkForSlaughter(unit);
+            ma_ptr.pop_back();
+            subcount++;
+        }
+        return subcount;
+    }
+
+    int ProcessUnits()
+    {
+        SortUnitsByAge();
+        int slaughter_count = 0;
+        slaughter_count += ProcessUnits_fk();
+        slaughter_count += ProcessUnits_mk();
+        slaughter_count += ProcessUnits_fa();
+        slaughter_count += ProcessUnits_ma();
+        ClearUnits();
+        return slaughter_count;
+    }
+};
+// vector of races handled by autobutcher
+// the name is a bit misleading since entries can be set to 'unwatched' 
+// to ignore them for a while but still keep the target count settings
+std::vector<WatchedRace*> watched_races;
+
+// default target values
+// move those somewhere else for persistency
+static int default_fk = 5;
+static int default_mk = 1;
+static int default_fa = 5;
+static int default_ma = 1;
+
+
+command_result autobutcher_cleanup(color_ostream &out)
+{
+    for(size_t i=0; i<watched_races.size(); i++)
+    {
+        //watched_races.ClearUnits();
+        delete watched_races[i];
+    }
+    watched_races.clear();
+    return CR_OK;
+}
+
+command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
+{
+    CoreSuspender suspend;
+
+    bool verbose = false;
+    bool watch_race = false;
+    bool unwatch_race = false;
+    bool forget_race = false;
+    bool list_watched = false;
+    bool change_target = false;
+    vector <string> target_racenames;
+    vector <int> target_raceids;
+
+    int target_fk = default_fk;
+    int target_mk = default_mk;
+    int target_fa = default_fa;
+    int target_ma = default_ma;
+
+    int32_t target_raceid = -1;
+
+    if(!parameters.size())
+    {
+        out << "You must specify a command!" << endl;
+        out << autobutcher_help << endl;
+        return CR_OK;
+    }
+
+    // parse main command
+    string & p = parameters[0];        
+    if (p == "help" || p == "?")
+    {
+        out << autobutcher_help << endl;
+        return CR_OK;
+    }
+    if (p == "example")
+    {
+        out << autobutcher_help_example << endl;
+        return CR_OK;
+    }
+    else if (p == "start")
+    {
+        enable_autobutcher = true;
+        out << "Autobutcher started.";
+        return autoButcher(out, verbose);
+    }
+    else if (p == "stop")
+    {
+        enable_autobutcher = false;
+        out << "Autobutcher stopped.";
+        return CR_OK;
+    }
+    else if(p == "sleep")
+    {
+        parameters.erase(parameters.begin());
+        if(!parameters.size())
+        {
+            out.printerr("No duration specified!");
+            return CR_WRONG_USAGE;
+        }
+        else
+        {
+            size_t ticks = 0;
+            stringstream ss(parameters.back());
+            ss >> ticks;
+            if(ticks <= 0)
+            {
+                out.printerr("Invalid duration specified (must be > 0)!");
+                return CR_WRONG_USAGE;
+            }
+            sleep_autobutcher = ticks;
+            out << "New sleep timer for autobutcher: " << ticks << " ticks." << endl;
+            return CR_OK;
+        }
+    }
+    else if(p == "watch")
+    {
+        parameters.erase(parameters.begin());
+        watch_race = true;
+    }
+    else if(p == "unwatch")
+    {
+        parameters.erase(parameters.begin());
+        unwatch_race = true;
+    }
+    else if(p == "forget")
+    {
+        parameters.erase(parameters.begin());
+        forget_race = true;
+    }
+    else if(p == "target")
+    {
+        // needs at least 5 more parameters:
+        // fk mk fa ma R (can have more than 1 R)
+        if(parameters.size() < 6)
+        {
+            out.printerr("Not enough parameters!");
+            return CR_WRONG_USAGE;
+        }
+        else
+        {
+            stringstream fk(parameters[1]);
+            stringstream mk(parameters[2]);
+            stringstream fa(parameters[3]);
+            stringstream ma(parameters[4]);
+            fk >> target_fk;
+            mk >> target_mk;
+            fa >> target_fa;
+            ma >> target_ma;
+            parameters.erase(parameters.begin(), parameters.begin()+5);
+            change_target = true;
+        }
+    }
+    else if(p == "autowatch")
+    {
+        out << "Auto-adding to watchlist started." << endl;
+        enable_autobutcher_autowatch = true;
+        return CR_OK;
+    }
+    else if(p == "noautowatch")
+    {
+        out << "Auto-adding to watchlist stopped." << endl;
+        enable_autobutcher_autowatch = false;
+        return CR_OK;
+    }
+    else if(p == "list")
+    {
+        list_watched = true;
+    }
+    else
+    {
+        out << "Unknown command: " << p << endl;
+        return CR_WRONG_USAGE;
+    }
+
+    if(list_watched)
+    {
+        for(size_t i=0; i<watched_races.size(); i++)
+        {
+            WatchedRace * w = watched_races[i];
+            df::creature_raw * raw = df::global::world->raws.creatures.all[w->raceId];
+            string name = raw->creature_id;
+            if(w->isWatched)
+                out << "watched: ";
+            else
+                out << "not watched: ";
+            out << name 
+                << " fk=" << w->fk
+                << " mk=" << w->mk
+                << " fa=" << w->fa
+                << " ma=" << w->ma
+                << endl;
+        }
+        return CR_OK;
+    }
+
+    // parse rest of parameters for commands followed by a list of races
+    if(    watch_race 
+        || unwatch_race 
+        || forget_race
+        || change_target )
+    {
+        if(!parameters.size())
+        {
+            out.printerr("No race(s) specified!");
+            return CR_WRONG_USAGE;
+        }
+        while(parameters.size())
+        {
+            string tr = parameters.back();
+            target_racenames.push_back(tr);
+            parameters.pop_back();
+        }
+    }
+
+    if(target_racenames.size() && target_racenames[0] == "all")
+    {
+        out << "Setting target count for all races on watchlist." << endl;
+        for(size_t i=0; i<watched_races.size(); i++)
+        {
+            WatchedRace * w = watched_races[i];
+            w->fk = target_fk;
+            w->mk = target_mk;
+            w->fa = target_fa;
+            w->ma = target_ma;
+        }
+    }
+
+    if(target_racenames.size() && (target_racenames[0] == "all" || target_racenames[0] == "new"))
+    {
+        out << "Setting target count for the future." << endl;
+        default_fk = target_fk;
+        default_mk = target_mk;
+        default_fa = target_fa;
+        default_ma = target_ma;
+        return CR_OK;
+    }
+
+    // map race names to ids
+    size_t num_races = df::global::world->raws.creatures.all.size(); 
+    while(target_racenames.size())
+    {
+        bool found_race = false;
+        for(size_t i=0; i<num_races; i++)
+        {
+            df::creature_raw *raw = df::global::world->raws.creatures.all[i];
+            if(raw->creature_id == target_racenames.back())
+            {
+                target_raceids.push_back(i);
+                target_racenames.pop_back();
+                found_race = true;
+                break;
+            }
+        }
+        if(!found_race)
+        {
+            out << "Race not found: " << target_racenames.back() << endl;
+            return CR_OK;
+        }
+    }
+
+    while(target_raceids.size())
+    {
+        bool entry_found = false;
+        for(size_t i=0; i<watched_races.size(); i++)
+        {
+            WatchedRace * w = watched_races[i];
+            if(w->raceId == target_raceids.back())
+            {
+                if(unwatch_race)
+                    w->isWatched=false;
+                else if(forget_race)
+                    watched_races.erase(watched_races.begin()+i);
+                else if(watch_race)
+                    w->isWatched = true;
+                else if(change_target)
+                {
+                    w->fk = target_fk;
+                    w->mk = target_mk;
+                    w->fa = target_fa;
+                    w->ma = target_ma;
+                }
+                entry_found = true;
+                break;
+            }
+        }
+        if(!entry_found && (watch_race||change_target))
+        {
+            WatchedRace * w = new WatchedRace(watch_race, target_raceids.back(), target_fk, target_mk, target_fa, target_ma);
+            watched_races.push_back(w);
+        }
+        target_raceids.pop_back();
+    }
+
+    return CR_OK;
+}
+
+int getWatchedIndex(int id)
+{
+    for(size_t i=0; i<watched_races.size(); i++)
+    {
+        WatchedRace * w = watched_races[i];
+        if(w->raceId == id && w->isWatched)
+            return i;
+    }
+    return -1;
+}
+
+command_result autoButcher( color_ostream &out, bool verbose = false )
+{
+    // don't run if not supposed to
+    if(!Maps::IsValid())
+        return CR_OK;
+
+    // check if there is anything to watch before walking through units vector
+    bool watching = false;
+    for(size_t i=0; i<watched_races.size(); i++)
+    {
+        WatchedRace * w = watched_races[i];
+        if(w->isWatched)
+        {
+            watching = true;
+            break;
+        }
+    }
+    if(!watching)
+        return CR_OK;
+
+    for(size_t i=0; i<world->units.all.size(); i++)
+    {
+        df::unit * unit = world->units.all[i];
+        if(    isDead(unit)
+            || isMarkedForSlaughter(unit)
+            || !isOwnCiv(unit)
+            || !isTame(unit)
+            || (isContainedInItem(unit) && hasValidMapPos(unit) && isBuiltCageAtPos(unit->pos))
+            || unit->name.has_name
+            )
+            continue;
+
+        // found a bugged unit which had invalid coordinates but was not in a cage.
+        // marking it for slaughter didn't seem to have negative effects, but you never know...
+        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
+            continue;
+
+        int watched_index = getWatchedIndex(unit->race);
+        if(watched_index != -1)
+        {
+            WatchedRace * w = watched_races[watched_index];
+            w->PushUnit(unit);
+        }
+        else if(enable_autobutcher_autowatch)
+        {
+            WatchedRace * w = new WatchedRace(true, unit->race, default_fk, default_mk, default_fa, default_ma);
+            watched_races.push_back(w);
+            w->PushUnit(unit);
+        }
+    }
+
+    int slaughter_count = 0;
+    for(size_t i=0; i<watched_races.size(); i++)
+    {
+        WatchedRace * w = watched_races[i];
+        int slaughter_subcount = w->ProcessUnits();
+        slaughter_count += slaughter_subcount;
+        df::creature_raw *raw = df::global::world->raws.creatures.all[w->raceId];
+        out << raw->creature_id << " marked for slaughter: " << slaughter_subcount << endl;
+    }
+    out << slaughter_count << " units total marked for slaughter." << endl;
 
     return CR_OK;
 }

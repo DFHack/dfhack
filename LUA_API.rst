@@ -644,9 +644,17 @@ Job module
 Units module
 ------------
 
+* ``dfhack.units.setNickname(unit,nick)``
+
+  Sets the unit's nickname properly.
+
 * ``dfhack.units.getVisibleName(unit)``
 
-  Returns the name visible in game, accounting for false identities.
+  Returns the language_name object visible in game, accounting for false identities.
+
+* ``dfhack.units.getNemesis(unit)``
+
+  Returns the nemesis record of the unit if it has one, or *nil*.
 
 * ``dfhack.units.isDead(unit)``
 

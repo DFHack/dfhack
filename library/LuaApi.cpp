@@ -55,6 +55,7 @@ distribution.
 #include "df/unit.h"
 #include "df/item.h"
 #include "df/material.h"
+#include "df/nemesis_record.h"
 #include "df/historical_figure.h"
 #include "df/plant_raw.h"
 #include "df/creature_raw.h"
@@ -555,7 +556,9 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
 };
 
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
+    WRAPM(Units, setNickname),
     WRAPM(Units, getVisibleName),
+    WRAPM(Units, getNemesis),
     WRAPM(Units, isDead),
     WRAPM(Units, isAlive),
     WRAPM(Units, isSane),

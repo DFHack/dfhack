@@ -8,6 +8,8 @@
 #include "modules/Materials.h"
 #include "modules/Maps.h"
 #include "modules/Items.h"
+#include "modules/Gui.h"
+#include "modules/Units.h"
 
 #include "DataDefs.h"
 #include "df/world.h"
@@ -159,31 +161,6 @@ static bool bodyswap_hotkey(df::viewscreen *top)
            !!virtual_cast<df::viewscreen_dungeon_monsterstatusst>(top);
 }
 
-df::unit *getCurUnit()
-{
-    auto top = Core::getTopViewscreen();
-
-    if (VIRTUAL_CAST_VAR(ms, df::viewscreen_dungeon_monsterstatusst, top))
-        return ms->unit;
-
-    return NULL;
-}
-
-df::nemesis_record *getNemesis(df::unit *unit)
-{
-    if (!unit)
-        return NULL;
-
-    for (unsigned i = 0; i < unit->refs.size(); i++)
-    {
-        df::nemesis_record *rv = unit->refs[i]->getNemesis();
-        if (rv && rv->unit == unit)
-            return rv;
-    }
-
-    return NULL;
-}
-
 bool bodySwap(color_ostream &out, df::unit *player)
 {
     if (!player)
@@ -219,7 +196,7 @@ df::nemesis_record *getPlayerNemesis(color_ostream &out, bool restore_swap)
     if (restore_swap)
     {
         df::unit *ctl = world->units.other[0][0];
-        auto ctl_nemesis = getNemesis(ctl);
+        auto ctl_nemesis = Units::getNemesis(ctl);
 
         if (ctl_nemesis != real_nemesis)
         {
@@ -672,8 +649,8 @@ command_result adv_bodyswap (color_ostream &out, std::vector <std::string> & par
         return CR_FAILURE;
 
     // Get the unit to swap to
-    auto new_unit = getCurUnit();
-    auto new_nemesis = getNemesis(new_unit);
+    auto new_unit = Gui::getSelectedUnit(out, true);
+    auto new_nemesis = Units::getNemesis(new_unit);
 
     if (!new_nemesis)
     {

@@ -48,6 +48,8 @@ using namespace std;
 #include "df/world.h"
 #include "df/ui.h"
 #include "df/unit_inventory_item.h"
+#include "df/unit_soul.h"
+#include "df/nemesis_record.h"
 #include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
@@ -527,6 +529,47 @@ void Units::CopyNameTo(df::unit * creature, df::language_name * target)
     Translation::copyName(&creature->name, target);
 }
 
+void Units::setNickname(df::unit *unit, std::string nick)
+{
+    CHECK_NULL_POINTER(unit);
+
+    // There are >=3 copies of the name, and the one
+    // in the unit is not the authoritative one.
+    // This is the reason why military units often
+    // lose nicknames set from Dwarf Therapist.
+    Translation::setNickname(&unit->name, nick);
+
+    if (unit->status.current_soul)
+        Translation::setNickname(&unit->status.current_soul->name, nick);
+
+    df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
+    if (figure)
+    {
+        Translation::setNickname(&figure->name, nick);
+
+        // v0.34.01: added the vampire's assumed identity
+        if (figure->info && figure->info->reputation)
+        {
+            auto identity = df::assumed_identity::find(figure->info->reputation->cur_identity);
+
+            if (identity)
+            {
+                auto id_hfig = df::historical_figure::find(identity->histfig_id);
+
+                if (id_hfig)
+                {
+                    // Even DF doesn't do this bit, because it's apparently
+                    // only used for demons masquerading as gods, so you
+                    // can't ever change their nickname in-game.
+                    Translation::setNickname(&id_hfig->name, nick);
+                }
+                else
+                    Translation::setNickname(&identity->name, nick);
+            }
+        }
+    }
+}
+
 df::language_name *Units::getVisibleName(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
@@ -554,6 +597,22 @@ df::language_name *Units::getVisibleName(df::unit *unit)
 
     return &unit->name;
 }
+
+df::nemesis_record *Units::getNemesis(df::unit *unit)
+{
+    if (!unit)
+        return NULL;
+
+    for (unsigned i = 0; i < unit->refs.size(); i++)
+    {
+        df::nemesis_record *rv = unit->refs[i]->getNemesis();
+        if (rv && rv->unit == unit)
+            return rv;
+    }
+
+    return NULL;
+}
+
 
 bool DFHack::Units::isDead(df::unit *unit)
 {

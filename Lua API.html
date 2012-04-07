@@ -883,8 +883,14 @@ The is_bright boolean actually seems to invert the brightness.</p>
 <div class="section" id="units-module">
 <h3><a class="toc-backref" href="#id16">Units module</a></h3>
 <ul>
+<li><p class="first"><tt class="docutils literal">dfhack.units.setNickname(unit,nick)</tt></p>
+<p>Sets the unit's nickname properly.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.getVisibleName(unit)</tt></p>
-<p>Returns the name visible in game, accounting for false identities.</p>
+<p>Returns the language_name object visible in game, accounting for false identities.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getNemesis(unit)</tt></p>
+<p>Returns the nemesis record of the unit if it has one, or <em>nil</em>.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.isDead(unit)</tt></p>
 <p>The unit is completely dead and passive.</p>

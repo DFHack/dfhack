@@ -875,7 +875,7 @@ Options:
 :watch R:      Start watching a race. R must be a valid race RAW id (ALPACA, BIRD_TURKEY, etc).
 :unwatch R:    Stop watching a race. The current target settings will be remembered (currently only until you save or quit the game). 
 :forget R:     Stop watching a race and forget it's target settings.
-:list          Print a list of watched races.
+:list:          Print a list of watched races.
 :target fk mk fa ma R: Set target count for specified race(s).
                  fk = number of female kids
                  mk = number of male kids

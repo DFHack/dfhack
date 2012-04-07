@@ -456,6 +456,31 @@ Currently it defines the following features:
   to group operations together in one big critical section. A plugin
   can choose to run all lua code inside a C++-side suspend lock.
 
+* ``dfhack.call_with_finalizer(num_cleanup_args,always,cleanup_fn[,cleanup_args...],fn[,args...])``
+
+  Invokes ``fn`` with ``args``, and after it returns or throws an
+  error calls ``cleanup_fn`` with ``cleanup_args``. Any return values from
+  ``fn`` are propagated, and errors are re-thrown.
+
+  The ``num_cleanup_args`` integer specifies the number of ``cleanup_args``,
+  and the ``always`` boolean specifies if cleanup should be called in any case,
+  or only in case of an error.
+
+* ``dfhack.with_finalize(cleanup_fn,fn[,args...])``
+
+  Calls ``fn`` with arguments, then finalizes with ``cleanup_fn``.
+  Implemented using ``call_with_finalizer(0,true,...)``.
+
+* ``dfhack.with_onerror(cleanup_fn,fn[,args...])``
+
+  Calls ``fn`` with arguments, then finalizes with ``cleanup_fn`` on any thrown error.
+  Implemented using ``call_with_finalizer(0,false,...)``.
+
+* ``dfhack.with_temp_object(obj,fn[,args...])``
+
+  Calls ``fn(obj,args...)``, then finalizes with ``obj:delete()``.
+
+
 Persistent configuration storage
 ================================
 

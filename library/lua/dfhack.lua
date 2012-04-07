@@ -29,6 +29,21 @@ function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
 end
 
+function dfhack.with_finalize(...)
+    return dfhack.call_with_finalizer(0,true,...)
+end
+function dfhack.with_onerror(...)
+    return dfhack.call_with_finalizer(0,false,...)
+end
+
+local function call_delete(obj)
+    if obj then obj:delete() end
+end
+
+function dfhack.with_temp_object(obj,fn,...)
+    return dfhack.call_with_finalizer(1,true,call_delete,obj,fn,obj,...)
+end
+
 -- Module loading
 
 function mkmodule(module,env)

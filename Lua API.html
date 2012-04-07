@@ -724,6 +724,25 @@ the lock. It is safe to nest suspends.</p>
 to group operations together in one big critical section. A plugin
 can choose to run all lua code inside a C++-side suspend lock.</p>
 </li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.call_with_finalizer(num_cleanup_args,always,cleanup_fn[,cleanup_args...],fn[,args...])</span></tt></p>
+<p>Invokes <tt class="docutils literal">fn</tt> with <tt class="docutils literal">args</tt>, and after it returns or throws an
+error calls <tt class="docutils literal">cleanup_fn</tt> with <tt class="docutils literal">cleanup_args</tt>. Any return values from
+<tt class="docutils literal">fn</tt> are propagated, and errors are re-thrown.</p>
+<p>The <tt class="docutils literal">num_cleanup_args</tt> integer specifies the number of <tt class="docutils literal">cleanup_args</tt>,
+and the <tt class="docutils literal">always</tt> boolean specifies if cleanup should be called in any case,
+or only in case of an error.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_finalize(cleanup_fn,fn[,args...])</span></tt></p>
+<p>Calls <tt class="docutils literal">fn</tt> with arguments, then finalizes with <tt class="docutils literal">cleanup_fn</tt>.
+Implemented using <tt class="docutils literal"><span class="pre">call_with_finalizer(0,true,...)</span></tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_onerror(cleanup_fn,fn[,args...])</span></tt></p>
+<p>Calls <tt class="docutils literal">fn</tt> with arguments, then finalizes with <tt class="docutils literal">cleanup_fn</tt> on any thrown error.
+Implemented using <tt class="docutils literal"><span class="pre">call_with_finalizer(0,false,...)</span></tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_temp_object(obj,fn[,args...])</span></tt></p>
+<p>Calls <tt class="docutils literal"><span class="pre">fn(obj,args...)</span></tt>, then finalizes with <tt class="docutils literal">obj:delete()</tt>.</p>
+</li>
 </ul>
 <div class="section" id="persistent-configuration-storage">
 <h2><a class="toc-backref" href="#id11">Persistent configuration storage</a></h2>
@@ -799,7 +818,8 @@ or <tt class="docutils literal">obj.mat_type</tt>/<tt class="docutils literal">o
 <p>Returns the classification used for craft skills.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">info:matches(obj)</tt></p>
-<p>Checks if the material matches job_material_category or job_item.</p>
+<p>Checks if the material matches job_material_category or job_item.
+Accept dfhack_material_category auto-assign table.</p>
 </li>
 </ul>
 </div>

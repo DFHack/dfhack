@@ -226,10 +226,14 @@ static int lua_dfhack_lineedit(lua_State *S)
 
 static int DFHACK_EXCEPTION_META_TOKEN = 0;
 
-static void error_tostring(lua_State *L)
+static void error_tostring(lua_State *L, bool keep_old = false)
 {
     lua_getglobal(L, "tostring");
-    lua_pushvalue(L, -2);
+    if (keep_old)
+        lua_pushvalue(L, -2);
+    else
+        lua_swap(L);
+
     bool ok = lua_pcall(L, 1, 1, 0) == LUA_OK;
 
     const char *msg = lua_tostring(L, -1);
@@ -248,8 +252,7 @@ static void error_tostring(lua_State *L)
 
 static void report_error(lua_State *L, color_ostream *out = NULL)
 {
-    lua_dup(L);
-    error_tostring(L);
+    error_tostring(L, true);
 
     const char *msg = lua_tostring(L, -1);
     assert(msg);
@@ -290,7 +293,7 @@ static bool convert_to_exception(lua_State *L)
             lua_setfield(L, base, "message");
         else
         {
-            error_tostring(L);
+            error_tostring(L, true);
             lua_setfield(L, base, "message");
             lua_setfield(L, base, "object");
         }
@@ -346,24 +349,51 @@ static int dfhack_exception_tostring(lua_State *L)
     if (!lua_isstring(L, -1))
         lua_pop(L, 2);
 
+    lua_pushstring(L, "\ncaused by:\n");
+    lua_getfield(L, 1, "cause");
+    if (lua_isnil(L, -1))
+        lua_pop(L, 2);
+    else
+        error_tostring(L);
+
     lua_concat(L, lua_gettop(L) - base);
     return 1;
 }
 
-static int finish_dfhack_safecall (lua_State *L, bool success)
+static void push_simple_error(lua_State *L, const char *str)
 {
-    if (!lua_checkstack(L, 2))
+    lua_pushstring(L, str);
+
+    if (lua_checkstack(L, 5))
+        convert_to_exception(L);
+
+    if (lua_checkstack(L, LUA_MINSTACK))
     {
-        lua_settop(L, 0);  /* create space for return values */
+        luaL_traceback(L, L, NULL, 1);
+        lua_setfield(L, -2, "stacktrace");
+    }
+}
+
+static bool do_finish_pcall(lua_State *L, bool success, int base = 1, int space = 2)
+{
+    if (!lua_checkstack(L, space))
+    {
+        lua_settop(L, base-1);  /* create space for return values */
         lua_pushboolean(L, 0);
-        lua_pushstring(L, "stack overflow in dfhack.safecall()");
-        success = false;
+        push_simple_error(L, "stack overflow");
+        return false;
     }
     else
     {
         lua_pushboolean(L, success);
-        lua_replace(L, 1); /* put first result in first slot */
+        lua_replace(L, base); /* put first result in first slot */
+        return true;
     }
+}
+
+static int finish_dfhack_safecall (lua_State *L, bool success)
+{
+    success = do_finish_pcall(L, success);
 
     if (!success)
         report_error(L);
@@ -599,32 +629,118 @@ static int lua_dfhack_interpreter(lua_State *state)
     return 1;
 }
 
-static int lua_dfhack_with_suspend(lua_State *L)
+static bool do_invoke_cleanup(lua_State *L, int nargs, int errorfun, bool success)
 {
-    int rv = lua_getctx(L, NULL);
+    bool ok = lua_pcall(L, nargs, 0, errorfun) == LUA_OK;
 
-    // Non-resume entry point:
-    if (rv == LUA_OK)
+    if (!ok)
     {
-        int nargs = lua_gettop(L);
+        // If finalization failed, attach the previous error
+        if (lua_istable(L, -1) && !success)
+        {
+            lua_swap(L);
+            lua_setfield(L, -2, "cause");
+        }
 
-        luaL_checktype(L, 1, LUA_TFUNCTION);
-
-        Core::getInstance().Suspend();
-
-        lua_pushcfunction(L, dfhack_onerror);
-        lua_insert(L, 1);
-
-        rv = lua_pcallk(L, nargs-1, LUA_MULTRET, 1, 0, lua_dfhack_with_suspend);
+        success = false;
     }
 
-    // Return, resume, or error entry point:
-    lua_remove(L, 1);
+    return success;
+}
 
-    Core::getInstance().Resume();
+static int finish_dfhack_cleanup (lua_State *L, bool success)
+{
+    int nargs = lua_tointeger(L, 1);
+    bool always = lua_toboolean(L, 2);
+    int rvbase = 4+nargs;
 
-    if (rv != LUA_OK && rv != LUA_YIELD)
+    // stack: [nargs] [always] [errorfun] [cleanup fun] [cleanup args...] |rvbase+1:| [rvals/error...]
+
+    int numret = lua_gettop(L) - rvbase;
+
+    if (!success || always)
+    {
+        if (numret > 0)
+        {
+            if (numret == 1)
+            {
+                // Inject the only result instead of pulling cleanup args
+                lua_insert(L, 4);
+            }
+            else if (!lua_checkstack(L, nargs+1))
+            {
+                success = false;
+                lua_settop(L, rvbase);
+                push_simple_error(L, "stack overflow");
+                lua_insert(L, 4);
+            }
+            else
+            {
+                for (int i = 0; i <= nargs; i++)
+                    lua_pushvalue(L, 4+i);
+            }
+        }
+
+        success = do_invoke_cleanup(L, nargs, 3, success);
+    }
+
+    if (!success)
         lua_error(L);
+
+    return numret;
+}
+
+static int dfhack_cleanup_cont (lua_State *L)
+{
+    int status = lua_getctx(L, NULL);
+    return finish_dfhack_cleanup(L, (status == LUA_YIELD));
+}
+
+static int dfhack_call_with_finalizer (lua_State *L)
+{
+    int nargs = luaL_checkint(L, 1);
+    if (nargs < 0)
+        luaL_argerror(L, 1, "invalid cleanup argument count");
+    luaL_checktype(L, 3, LUA_TFUNCTION);
+
+    // Inject errorfun
+    lua_pushcfunction(L, dfhack_onerror);
+    lua_insert(L, 3);
+
+    int rvbase = 4+nargs; // rvbase+1 points to the function argument
+
+    if (lua_gettop(L) < rvbase)
+        luaL_error(L, "not enough arguments even to invoke cleanup");
+
+    // stack: [nargs] [always] [errorfun] [cleanup fun] [cleanup args...] |rvbase+1:| [fun] [args...]
+
+    // Not enough stack to call and post-cleanup, or nothing to call?
+    bool no_args = lua_gettop(L) == rvbase;
+
+    if (!lua_checkstack(L, nargs+2) || no_args)
+    {
+        push_simple_error(L, no_args ? "fn argument expected" : "stack overflow");
+        lua_insert(L, 4);
+
+        // stack: ... [errorfun] [error] [cleanup fun] [cleanup args...]
+        do_invoke_cleanup(L, nargs, 3, false);
+        lua_error(L);
+    }
+
+    // Actually invoke
+
+    // stack: [nargs] [always] [errorfun] [cleanup fun] [cleanup args...] |rvbase+1:| [fun] [args...]
+    int status = lua_pcallk(L, lua_gettop(L)-rvbase-1, LUA_MULTRET, 3, 0, dfhack_cleanup_cont);
+    return finish_dfhack_cleanup(L, (status == LUA_OK));
+}
+
+static int lua_dfhack_with_suspend(lua_State *L)
+{
+    int nargs = lua_gettop(L);
+    luaL_checktype(L, 1, LUA_TFUNCTION);
+
+    CoreSuspender suspend;
+    lua_call(L, nargs-1, LUA_MULTRET);
 
     return lua_gettop(L);
 }
@@ -639,6 +755,7 @@ static const luaL_Reg dfhack_funcs[] = {
     { "interpreter", lua_dfhack_interpreter },
     { "safecall", lua_dfhack_safecall },
     { "onerror", dfhack_onerror },
+    { "call_with_finalizer", dfhack_call_with_finalizer },
     { "with_suspend", lua_dfhack_with_suspend },
     { NULL, NULL }
 };

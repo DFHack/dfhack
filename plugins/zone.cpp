@@ -19,10 +19,8 @@
 //   maybe check for minimum age? it's not that useful to fill nestboxes with freshly hatched birds
 // - full automation of marking live-stock for slaughtering
 //   races can be added to a watchlist and it can be set how many male/female kids/adults are left alive
-//   TODO: - parse more than one race in one command
-//         - support keywords 'all' and 'new'
-//         - autowatch
-//         - save config
+//   adding to the watchlist can be automated as well.
+//   TODO: - save config
 
 #include <iostream>
 #include <iomanip>
@@ -173,14 +171,15 @@ const string autobutcher_help =
     "  watch R      - start watching race(s)\n"
     "                 R = valid race RAW id (ALPACA, BIRD_TURKEY, etc)\n"
     "                 or a list of RAW ids seperated by spaces\n"
-    //"                 or the keyword 'all' which adds all races with\n"
-    //"                 at least one owned tame unit in your fortress\n"
+    "                 or the keyword 'all' which adds all races with\n"
+    "                 at least one owned tame unit in your fortress\n"
     "  unwatch R    - stop watching race(s)\n"
     "                 the current target settings will be remembered\n"
     "  forget R     - unwatch race(s) and forget target settings for it/them\n"
-    //"  autowatch    - automatically adds all new races (animals you buy\n"
-    //"                 from merchants, tame yourself or get from migrants)\n"
-    //"                 to the watch list using default target count\n"
+    "  autowatch    - automatically adds all new races (animals you buy\n"
+    "                 from merchants, tame yourself or get from migrants)\n"
+    "                 to the watch list using default target count\n"
+    "  noautowatch  - stop auto-adding new races to the watch list\n"
     "  list         - print a list of watched races\n"
     "  target fk mk fa ma R\n"
     "               - set target count for specified race:\n"
@@ -188,11 +187,11 @@ const string autobutcher_help =
     "                 mk = number of male kids\n"
     "                 fa = number of female adults\n"
     "                 ma = number of female adults\n"
-    //"                 R = 'all' sets count for all races on the current watchlist\n"
-    //"                 including the races which are currenly set to 'unwatched'\n"
-    //"                 and sets the new default for future watch commands\n"
-    //"                 R = 'new' sets the new default for future watch commands\n"
-    //"                 without changing your current watchlist\n"
+    "                 R = 'all' sets count for all races on the current watchlist\n"
+    "                 including the races which are currenly set to 'unwatched'\n"
+    "                 and sets the new default for future watch commands\n"
+    "                 R = 'new' sets the new default for future watch commands\n"
+    "                 without changing your current watchlist\n"
     "  example      - print some usage examples\n";
 
 const string autobutcher_help_example =
@@ -204,13 +203,12 @@ const string autobutcher_help_example =
     "    (2 female, 1 male) of the races alpaca and turkey. Once the kids grow up the\n"
     "    oldest adults will get slaughtered. Excess kids will get slaughtered starting\n"
     "    the the youngest to allow that the older ones grow into adults.\n"
-    //"  autobutcher target 0 0 0 0 all\n"
-    //"  autobutcher autowatch\n"
-    //"  autobutcher start\n"
-    //"    This tells autobutcher to automatically put all new races onto the watchlist\n"
-    //"    and mark unnamed tame units for slaughter as soon as they arrive in your\n"
-    //"    fortress. Settings already made for some races will be left untouched.\n"
-    ;
+    "  autobutcher target 0 0 0 0 new\n"
+    "  autobutcher autowatch\n"
+    "  autobutcher start\n"
+    "    This tells autobutcher to automatically put all new races onto the watchlist\n"
+    "    and mark unnamed tame units for slaughter as soon as they arrive in your\n"
+    "    fortress. Settings already made for some races will be left untouched.\n";
 
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
@@ -249,6 +247,7 @@ command_result autoButcher( color_ostream &out, bool verbose );
 
 static bool enable_autonestbox = false;
 static bool enable_autobutcher = false;
+static bool enable_autobutcher_autowatch = false;
 static size_t sleep_autonestbox = 6000;
 static size_t sleep_autobutcher = 6000;
 static bool autonestbox_did_complain = false; // avoids message spam
@@ -2035,6 +2034,14 @@ public:
 // to ignore them for a while but still keep the target count settings
 std::vector<WatchedRace*> watched_races;
 
+// default target values
+// move those somewhere else for persistency
+static int default_fk = 5;
+static int default_mk = 1;
+static int default_fa = 5;
+static int default_ma = 1;
+
+
 command_result autobutcher_cleanup(color_ostream &out)
 {
     for(size_t i=0; i<watched_races.size(); i++)
@@ -2048,12 +2055,6 @@ command_result autobutcher_cleanup(color_ostream &out)
 
 command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
 {
-    // move those somewhere else for persistency
-    static int default_fk = 5;
-    static int default_mk = 1;
-    static int default_fa = 5;
-    static int default_ma = 1;
-
     CoreSuspender suspend;
 
     bool verbose = false;
@@ -2115,7 +2116,6 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         {
             size_t ticks = 0;
             stringstream ss(parameters.back());
-            //i++;
             ss >> ticks;
             if(ticks <= 0)
             {
@@ -2167,12 +2167,14 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     }
     else if(p == "autowatch")
     {
-        out << "not supported yet, sorry" << endl;
+        out << "Auto-adding to watchlist started." << endl;
+        enable_autobutcher_autowatch = true;
         return CR_OK;
     }
     else if(p == "noautowatch")
     {
-        out << "not supported yet, sorry" << endl;
+        out << "Auto-adding to watchlist stopped." << endl;
+        enable_autobutcher_autowatch = false;
         return CR_OK;
     }
     else if(p == "list")
@@ -2225,11 +2227,26 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         }
     }
 
-    if( target_racenames.size() &&
-        (target_racenames[0] == "all" ||
-         target_racenames[0] == "new") )
+    if(target_racenames.size() && target_racenames[0] == "all")
     {
-        out << "'all' and 'new' are not supported yet, sorry." << endl;
+        out << "Setting target count for all races on watchlist." << endl;
+        for(size_t i=0; i<watched_races.size(); i++)
+        {
+            WatchedRace * w = watched_races[i];
+            w->fk = target_fk;
+            w->mk = target_mk;
+            w->fa = target_fa;
+            w->ma = target_ma;
+        }
+    }
+
+    if(target_racenames.size() && (target_racenames[0] == "all" || target_racenames[0] == "new"))
+    {
+        out << "Setting target count for the future." << endl;
+        default_fk = target_fk;
+        default_mk = target_mk;
+        default_fa = target_fa;
+        default_ma = target_ma;
         return CR_OK;
     }
 
@@ -2256,75 +2273,37 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         }
     }
 
-    if(unwatch_race)
+    while(target_raceids.size())
     {
-        while(target_raceids.size())
+        bool entry_found = false;
+        for(size_t i=0; i<watched_races.size(); i++)
         {
-            for(size_t i=0; i<watched_races.size(); i++)
+            WatchedRace * w = watched_races[i];
+            if(w->raceId == target_raceids.back())
             {
-                WatchedRace * w = watched_races[i];
-                if(w->raceId == target_raceids.back())
-                {
+                if(unwatch_race)
                     w->isWatched=false;
-                    target_raceids.pop_back();
-                    break;
-                }
-            }
-        }
-        return CR_OK;
-    }
-
-    if(watch_race || change_target)
-    {
-        while(target_raceids.size())
-        {
-            bool entry_found = false;
-            for(size_t i=0; i<watched_races.size(); i++)
-            {
-                WatchedRace * w = watched_races[i];
-                if(w->raceId == target_raceids.back())
-                {
-                    if(watch_race)
-                    {
-                        w->isWatched = true;
-                    }
-                    else if(change_target)
-                    {
-                        w->fk = target_fk;
-                        w->mk = target_mk;
-                        w->fa = target_fa;
-                        w->ma = target_ma;
-                    }
-                    entry_found = true;
-                    break;
-                }
-            }
-            if(!entry_found)
-            {
-                WatchedRace * w = new WatchedRace(watch_race, target_raceids.back(), target_fk, target_mk, target_fa, target_ma);
-                watched_races.push_back(w);
-            }
-            target_raceids.pop_back();
-        }
-        return CR_OK;
-    }
-
-    if(forget_race)
-    {
-        while(target_raceids.size())
-        {
-            for(size_t i=0; i<watched_races.size(); i++)
-            {
-                WatchedRace * w = watched_races[i];
-                if(w->raceId == target_raceids.back())
-                {
+                else if(forget_race)
                     watched_races.erase(watched_races.begin()+i);
-                    break;
+                else if(watch_race)
+                    w->isWatched = true;
+                else if(change_target)
+                {
+                    w->fk = target_fk;
+                    w->mk = target_mk;
+                    w->fa = target_fa;
+                    w->ma = target_ma;
                 }
+                entry_found = true;
+                break;
             }
-            target_raceids.pop_back();
         }
-        return CR_OK;
+        if(!entry_found && (watch_race||change_target))
+        {
+            WatchedRace * w = new WatchedRace(watch_race, target_raceids.back(), target_fk, target_mk, target_fa, target_ma);
+            watched_races.push_back(w);
+        }
+        target_raceids.pop_back();
     }
 
     return CR_OK;
@@ -2382,6 +2361,12 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
         if(watched_index != -1)
         {
             WatchedRace * w = watched_races[watched_index];
+            w->PushUnit(unit);
+        }
+        else if(enable_autobutcher_autowatch)
+        {
+            WatchedRace * w = new WatchedRace(true, unit->race, default_fk, default_mk, default_fa, default_ma);
+            watched_races.push_back(w);
             w->PushUnit(unit);
         }
     }

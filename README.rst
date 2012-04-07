@@ -872,16 +872,19 @@ Options:
 :start:        Start running every X frames (df simulation ticks). Default: X=6000, which would be every 60 seconds at 100fps.
 :stop:         Stop running automatically.
 :sleep:        Must be followed by number X. Changes the timer to sleep X frames between runs.
-:watch R:      Start watching a race. R must be a valid race RAW id (ALPACA, BIRD_TURKEY, etc) or a list of ids seperated by spaces.
+:watch R:      Start watching a race. R can be a valid race RAW id (ALPACA, BIRD_TURKEY, etc) or a list of ids seperated by spaces or the keyword 'all' which adds all races with at least one owned tame unit in your fortress to the list.	
 :unwatch R:    Stop watching a race. The current target settings will be remembered (currently only until you save or quit the game). 
 :forget R:     Stop watching a race and forget it's target settings.
-:list:          Print a list of watched races.
+:autowatch:    Automatically adds all new races (animals you buy from merchants, tame yourself or get from migrants) 
+               to the watch list using default target count. 
+:noautowatch:  Stop auto-adding new races to the watchlist.
+:list:         Print a list of watched races.
 :target fk mk fa ma R: Set target count for specified race(s).
-                 fk = number of female kids
-                 mk = number of male kids
-                 fa = number of female adults
-                 ma = number of female adults
-:example:       Print some usage examples.
+                 fk = number of female kids,
+                 mk = number of male kids,
+                 fa = number of female adults,
+                 ma = number of female adults.
+:example:      Print some usage examples.
 
 Examples:
 ---------
@@ -891,5 +894,12 @@ You want to keep max 7 kids (4 female, 3 male) and max 3 adults (2 female, 1 mal
      autobutcher target 4 3 2 1 ALPACA BIRD_TURKEY
      autobutcher target 0 0 0 0 CAT
      autobutcher watch ALPACA BIRD_TURKEY CAT
+     autobutcher start
+    
+Automatically put all new races onto the watchlist and mark unnamed tame units for slaughter as soon as they arrive in your fort. Settings already made for specific races will be left untouched.
+::  
+
+     autobutcher target 0 0 0 0 new
+     autobutcher autowatch
      autobutcher start
     

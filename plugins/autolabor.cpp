@@ -9,6 +9,8 @@
 #include <vector>
 #include <algorithm>
 
+#include "modules/World.h"
+
 // DF data structure definition headers
 #include "DataDefs.h"
 #include <df/ui.h>
@@ -61,6 +63,13 @@ static int enable_autolabor = 0;
 static bool print_debug = 0;
 
 static std::vector<int> state_count(5);
+
+static PersistentDataItem config;
+
+enum ConfigFlags {
+    CF_ENABLED = 1,
+};
+
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
@@ -334,6 +343,24 @@ static const dwarf_state dwarf_states[] = {
 
 struct labor_info
 {
+    PersistentDataItem config;
+
+	bool is_exclusive;
+	int active_dwarfs;
+
+	labor_mode mode() { return (labor_mode) config.ival(0); }
+	void set_mode(labor_mode mode) { config.ival(0) = mode; }
+
+	int minimum_dwarfs() { return config.ival(1); }
+	void set_minimum_dwarfs(int minimum_dwarfs) { config.ival(1) = minimum_dwarfs; }
+
+	int maximum_dwarfs() { return config.ival(2); }
+	void set_maximum_dwarfs(int maximum_dwarfs) { config.ival(2) = maximum_dwarfs; }
+
+};
+
+struct labor_default
+{
 	labor_mode mode;
 	bool is_exclusive;
 	int minimum_dwarfs;
@@ -341,9 +368,9 @@ struct labor_info
 	int active_dwarfs;
 };
 
-static struct labor_info* labor_infos;
+static std::vector<struct labor_info> labor_infos;
 
-static const struct labor_info default_labor_infos[] = {
+static const struct labor_default default_labor_infos[] = {
     /* MINE */				{AUTOMATIC, true, 2, 200, 0},
     /* HAUL_STONE */		{HAULERS, false, 1, 200, 0},
     /* HAUL_WOOD */			{HAULERS, false, 1, 200, 0},
@@ -436,15 +463,105 @@ struct dwarf_info_t
 	bool has_exclusive_labor;
 };
 
+static bool isOptionEnabled(unsigned flag)
+{
+    return config.isValid() && (config.ival(0) & flag) != 0;
+}
+
+static void setOptionEnabled(ConfigFlags flag, bool on)
+{
+    if (!config.isValid())
+        return;
+
+    if (on)
+        config.ival(0) |= flag;
+    else
+        config.ival(0) &= ~flag;
+}
+
+static void cleanup_state()
+{
+	labor_infos.clear();
+}
+
+static void reset_labor(df::enums::unit_labor::unit_labor labor)
+{
+	labor_infos[labor].set_minimum_dwarfs(default_labor_infos[labor].minimum_dwarfs);
+	labor_infos[labor].set_maximum_dwarfs(default_labor_infos[labor].maximum_dwarfs);
+	labor_infos[labor].set_mode(default_labor_infos[labor].mode);
+}
+
+static void init_state()
+{
+    auto pworld = Core::getInstance().getWorld();
+
+    config = pworld->GetPersistentData("autolabor/config");
+    if (config.isValid() && config.ival(0) == -1)
+        config.ival(0) = 0;
+
+	enable_autolabor = isOptionEnabled(CF_ENABLED);
+
+	if (!enable_autolabor)
+		return;
+
+	// Load labors from save
+	labor_infos.resize(ARRAY_COUNT(default_labor_infos));
+
+	std::vector<PersistentDataItem> items;
+    pworld->GetPersistentData(&items, "autolabor/labors/", true);
+
+	for (auto p = items.begin(); p != items.end(); p++)
+	{
+		string key = p->key();
+		df::enums::unit_labor::unit_labor labor = (df::enums::unit_labor::unit_labor) atoi(key.substr(strlen("autolabor/labors/")).c_str());
+		if (labor >= 0 && labor <= labor_infos.size())
+		{
+			labor_infos[labor].config = *p;
+			labor_infos[labor].is_exclusive = default_labor_infos[labor].is_exclusive;
+			labor_infos[labor].active_dwarfs = 0;
+		}
+	}
+
+	// Add default labors for those not in save
+    for (int i = 0; i < ARRAY_COUNT(default_labor_infos); i++) {
+		if (labor_infos[i].config.isValid())
+			continue;
+
+		std::stringstream name;
+		name << "autolabor/labors/" << i;
+
+		labor_infos[i].config = pworld->AddPersistentData(name.str());
+
+		labor_infos[i].is_exclusive = default_labor_infos[i].is_exclusive;
+		labor_infos[i].active_dwarfs = 0;
+		reset_labor((df::enums::unit_labor::unit_labor) i);
+    }
+}
+
+static void enable_plugin(color_ostream &out)
+{
+    auto pworld = Core::getInstance().getWorld();
+
+    if (!config.isValid())
+    {
+        config = pworld->AddPersistentData("autolabor/config");
+        config.ival(0) = 0;
+    }
+
+    setOptionEnabled(CF_ENABLED, true);
+    enable_autolabor = true;
+    out << "Enabling the plugin." << endl;
+
+	cleanup_state();
+	init_state();
+}
+
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     // initialize labor infos table from default table
     if(ARRAY_COUNT(default_labor_infos) != ENUM_LAST_ITEM(unit_labor) + 1)
         return CR_FAILURE;
-    labor_infos = new struct labor_info[ARRAY_COUNT(default_labor_infos)];
-    for (int i = 0; i < ARRAY_COUNT(default_labor_infos); i++) {
-        labor_infos[i] = default_labor_infos[i];
-    }
+
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
         "autolabor", "Automatically manage dwarf labors.",
@@ -459,8 +576,14 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 		"    Set a labor to be handled by hauler dwarves.\n"
 		"  autolabor <labor> disable\n"
 		"    Turn off autolabor for a specific labor.\n"
+		"  autolabor <labor> reset\n"
+		"    Return a labor to the default handling.\n"
+		"  autolabor reset-all\n"
+		"    Return all labors to the default handling.\n"
 		"  autolabor list\n"
 		"    List current status of all labors.\n"
+		"  autolabor status\n"
+		"    Show basic status information.\n"
 		"Function:\n"
 		"  When enabled, autolabor periodically checks your dwarves and enables or\n"
 		"  disables labors. It tries to keep as many dwarves as possible busy but\n"
@@ -477,13 +600,15 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 		"  autolabor CUTWOOD disable\n"
 		"    Turn off autolabor for wood cutting.\n"
     ));
+
+	init_state();
+
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-	// release the labor info table;
-	delete [] labor_infos;
+	cleanup_state();
 
 	return CR_OK;
 }
@@ -506,7 +631,7 @@ struct laborinfo_sorter
 {
     bool operator() (int i,int j)
     {
-        return labor_infos[i].mode < labor_infos[j].mode;
+        return labor_infos[i].mode() < labor_infos[j].mode();
     };
 };
 
@@ -519,6 +644,23 @@ struct values_sorter
     };
     std::vector<int> & values;
 };
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
+{
+    switch (event) {
+    case SC_MAP_LOADED:
+        cleanup_state();
+        init_state();
+        break;
+    case SC_MAP_UNLOADED:
+        cleanup_state();
+        break;
+    default:
+        break;
+    }
+
+    return CR_OK;
+}
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
@@ -757,7 +899,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 	{
 		auto labor = *lp;
 
-		if (labor_infos[labor].mode != DISABLE)
+		if (labor_infos[labor].mode() != DISABLE)
 			continue;
 
 		for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
@@ -785,7 +927,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 		df::job_skill skill = labor_to_skill[labor];
 
-		if (labor_infos[labor].mode != AUTOMATIC)
+		if (labor_infos[labor].mode() != AUTOMATIC)
 			continue;
 
 		int best_dwarf = 0;
@@ -796,7 +938,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		std::map<int, int> dwarf_skill;
 		std::vector<bool> previously_enabled(n_dwarfs);
 
-		auto mode = labor_infos[labor].mode;
+		auto mode = labor_infos[labor].mode();
 
 		// Find candidate dwarfs, and calculate a preference value for each dwarf
 		for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
@@ -867,8 +1009,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			dwarfs[dwarf]->status.labors[labor] = false;
 		}
 
-		int min_dwarfs = labor_infos[labor].minimum_dwarfs;
-		int max_dwarfs = labor_infos[labor].maximum_dwarfs;
+		int min_dwarfs = labor_infos[labor].minimum_dwarfs();
+		int max_dwarfs = labor_infos[labor].maximum_dwarfs();
 
 		// Special - don't assign hunt without a butchers, or fish without a fishery
 		if (df::enums::unit_labor::HUNT == labor && !has_butchers)
@@ -964,7 +1106,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		assert(labor < ARRAY_COUNT(labor_infos));
 		*/
 
-		if (labor_infos[labor].mode != HAULERS)
+		if (labor_infos[labor].mode() != HAULERS)
 			continue;
 
 		for (int i = 0; i < num_haulers; i++)
@@ -1009,31 +1151,58 @@ void print_labor (df::enums::unit_labor::unit_labor labor, color_ostream &out)
 	out << labor_name << ": ";
 	for (int i = 0; i < 20 - (int)labor_name.length(); i++)
 		out << ' ';
-	if (labor_infos[labor].mode == DISABLE)
+	if (labor_infos[labor].mode() == DISABLE)
 		out << "disabled" << endl;
 	else
 	{
-		if (labor_infos[labor].mode == HAULERS)
+		if (labor_infos[labor].mode() == HAULERS)
 			out << "haulers";
 		else
-			out << "minimum " << labor_infos[labor].minimum_dwarfs << ", maximum " << labor_infos[labor].maximum_dwarfs;
+			out << "minimum " << labor_infos[labor].minimum_dwarfs() << ", maximum " << labor_infos[labor].maximum_dwarfs();
 		out << ", currently " << labor_infos[labor].active_dwarfs << " dwarfs" << endl;
 	}
 }
 
 command_result autolabor (color_ostream &out, std::vector <std::string> & parameters)
 {
+    CoreSuspender suspend;
+
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("World is not loaded: please load a game first.\n");
+        return CR_FAILURE;
+    }
+
 	if (parameters.size() == 1 && 
 		(parameters[0] == "0" || parameters[0] == "enable" || 
 		 parameters[0] == "1" || parameters[0] == "disable"))
     {
-        if (parameters[0] == "0" || parameters[0] == "disable")
-            enable_autolabor = 0;
+        bool enable = (parameters[0] == "1" || parameters[0] == "enable");
+        if (enable && !enable_autolabor)
+        {
+            enable_plugin(out);
+        }
         else
-            enable_autolabor = 1;
-        out.print("autolabor %sactivated.\n", (enable_autolabor ? "" : "de"));
+        {
+            if (enable_autolabor)
+            {
+                enable_autolabor = false;
+                setOptionEnabled(CF_ENABLED, false);
+            }
+
+            out << "The plugin is disabled." << endl;
+            return CR_OK;
+        }
+
+		return CR_OK;
     }
-    else if (parameters.size() == 2 || parameters.size() == 3) {
+	
+	if (!enable_autolabor)
+	{
+		out << "Error: The plugin is not enabled." << endl;
+		return CR_FAILURE;
+	}
+
+	if (parameters.size() == 2 || parameters.size() == 3) {
 		df::enums::unit_labor::unit_labor labor = df::enums::unit_labor::NONE;
 
 		FOR_ENUM_ITEMS(unit_labor, test_labor)
@@ -1050,13 +1219,19 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
 		if (parameters[1] == "haulers")
 		{
-			labor_infos[labor].mode = HAULERS;
+			labor_infos[labor].set_mode(HAULERS);
 			print_labor(labor, out);
 			return CR_OK;
 		}
 		if (parameters[1] == "disable")
 		{
-			labor_infos[labor].mode = DISABLE;
+			labor_infos[labor].set_mode(DISABLE);
+			print_labor(labor, out);
+			return CR_OK;
+		}
+		if (parameters[1] == "reset")
+		{
+			reset_labor(labor);
 			print_labor(labor, out);
 			return CR_OK;
 		}
@@ -1072,12 +1247,22 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 			return CR_WRONG_USAGE;
 		}
 
-		labor_infos[labor].minimum_dwarfs = minimum;
-		labor_infos[labor].maximum_dwarfs = maximum;
-		labor_infos[labor].mode = AUTOMATIC;
+		labor_infos[labor].set_minimum_dwarfs(minimum);
+		labor_infos[labor].set_maximum_dwarfs(maximum);
+		labor_infos[labor].set_mode(AUTOMATIC);
 		print_labor(labor, out);
+
+		return CR_OK;
 	} 
-	else if (parameters.size() == 1 && parameters[0] == "list") {
+	else if (parameters.size() == 1 && parameters[0] == "reset-all") {
+		for (int i = 0; i < labor_infos.size(); i++)
+		{
+			reset_labor((df::enums::unit_labor::unit_labor) i);
+		}
+		out << "All labors reset." << endl;
+		return CR_OK;
+	}
+	else if (parameters.size() == 1 && parameters[0] == "list" || parameters[0] == "status") {
 		if (!enable_autolabor)
 		{
 			out << "autolabor not activated." << endl;
@@ -1096,23 +1281,30 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 		}
 		out << endl;
 
-		FOR_ENUM_ITEMS(unit_labor, labor)
+		if (parameters[0] == "list")
 		{
-			if (labor == df::enums::unit_labor::NONE)
-				continue;
+			FOR_ENUM_ITEMS(unit_labor, labor)
+			{
+				if (labor == df::enums::unit_labor::NONE)
+					continue;
 
-			print_labor(labor, out);
+				print_labor(labor, out);
+			}
 		}
+
+		return CR_OK;
 	}
 	else if (parameters.size() == 1 && parameters[0] == "debug") {
 		print_debug = 1;
+
+		return CR_OK;
 	}
 	else
     {
         out.print("Automatically assigns labors to dwarves.\n"
             "Activate with 'autolabor 1', deactivate with 'autolabor 0'.\n"
             "Current state: %d.\n", enable_autolabor);
-    }
 
-    return CR_OK;
+		return CR_OK;
+	}
 }

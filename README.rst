@@ -862,3 +862,33 @@ Options:
 :start:        Start running every X frames (df simulation ticks). Default: X=6000, which would be every 60 seconds at 100fps.
 :stop:         Stop running automatically.
 :sleep:        Must be followed by number X. Changes the timer to sleep X frames between runs.
+
+autobutcher
+===========
+Assigns lifestock for slaughter once it reaches a specific count. Requires that you add the target race(s) to a watch list. Only tame units of the own civilization will be processed. Named units will be completely ignored (you can give animals nicknames with the tool 'rename unit' to protect them from autobutcher). Once you have too much adults, the oldest will be butchered first. Once you have too much kids, the youngest will be butchered first. If you don't set any target count the following default will be used: 1 male kid, 5 female kids, 1 male adult, 5 female adults.
+
+Options:
+--------
+:start:        Start running every X frames (df simulation ticks). Default: X=6000, which would be every 60 seconds at 100fps.
+:stop:         Stop running automatically.
+:sleep:        Must be followed by number X. Changes the timer to sleep X frames between runs.
+:watch R:      Start watching a race. R must be a valid race RAW id (ALPACA, BIRD_TURKEY, etc).
+:unwatch R:    Stop watching a race. The current target settings will be remembered (currently only until you save or quit the game). 
+:forget R:     Stop watching a race and forget it's target settings.
+:list          Print a list of watched races.
+:target fk mk fa ma R: Set target count for specified race(s).
+                 fk = number of female kids
+                 mk = number of male kids
+                 fa = number of female adults
+                 ma = number of female adults
+:example:       Print some usage examples.
+
+Examples:
+---------
+You want to keep max 7 kids (4 female, 3 male) and max 3 adults (2 female, 1 male) of the race alpaca. Once the kids grow up the oldest adults will get slaughtered. Excess kids will get slaughtered starting with the youngest to allow that the older ones grow into adults.
+::  
+
+     autobutcher target 4 3 2 1 ALPACA
+     autobutcher watch ALPACA
+     autobutcher start
+    

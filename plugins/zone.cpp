@@ -4,10 +4,6 @@
 // - dump info about pastures, pastured animals, count non-pastured tame animals, print gender info
 // - help finding caged dwarves? (maybe even allow to build their cages for fast release)
 // - dump info about caged goblins, animals, ...
-// - allow to mark old animals for slaughter automatically?
-//   that should include a check to ensure that at least one male and one female remain for breeding
-//   allow some fine-tuning like how many males/females should per race should be left alive
-//   and at what age they are being marked for slaughter. don't slaughter pregnant females?
 // - count grass tiles on pastures, move grazers to new pasture if old pasture is empty
 //   move hungry unpastured grazers to pasture with grass
 // 
@@ -21,11 +17,18 @@
 //   go through all pens, check if they are empty and placed over a nestbox
 //   find female tame egg-layer who is not assigned to another pen and assign it to nestbox pasture
 //   maybe check for minimum age? it's not that useful to fill nestboxes with freshly hatched birds
+// - full automation of marking live-stock for slaughtering
+//   races can be added to a watchlist and it can be set how many male/female kids/adults are left alive
+//   TODO: - parse more than one race in one command
+//         - support keywords 'all' and 'new'
+//         - autowatch
+//         - save config
 
 #include <iostream>
 #include <iomanip>
 #include <climits>
 #include <vector>
+#include <algorithm>
 #include <string>
 #include <sstream>
 #include <ctime>
@@ -67,7 +70,7 @@ using namespace DFHack::Gui;
 
 command_result df_zone (color_ostream &out, vector <string> & parameters);
 command_result df_autonestbox (color_ostream &out, vector <string> & parameters);
-//command_result df_autoslaughter (color_ostream &out, vector <string> & parameters);
+command_result df_autobutcher(color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("zone");
 
@@ -152,6 +155,63 @@ const string autonestbox_help =
     "  stop         - stop running automatically\n"
     "  sleep X      - change timer to sleep X frames between runs.\n";
 
+const string autobutcher_help =
+    "Assigns your lifestock for slaughter once it reaches a specific count. Requires\n"
+    "that you add the target race(s) to a watch list. Only tame units of your own\n"
+    "civilization will be processed. Named units will be completely ignored (you can\n"
+    "give animals nicknames with the tool 'rename unit' to protect them from\n"
+    "getting slaughtered automatically.\n"
+    "Once you have too much adults, the oldest will be butchered first.\n"
+    "Once you have too much kids, the youngest will be butchered first.\n"
+    "If you don't set a target count the following default will be used:\n"
+    "1 male kid, 5 female kids, 1 male adult, 5 female adults.\n"
+    "Options:\n"
+    "  start        - run every X frames (df simulation ticks)\n"
+    "                 default: X=6000  (~60 seconds at 100fps)\n"
+    "  stop         - stop running automatically\n"
+    "  sleep X      - change timer to sleep X frames between runs.\n"
+    "  watch R      - start watching race(s)\n"
+    "                 R = valid race RAW id (ALPACA, BIRD_TURKEY, etc)\n"
+    //"                 or a list of RAW ids seperated by spaces\n"
+    //"                 or the keyword 'all' which adds all races with\n"
+    //"                 at least one owned tame unit in your fortress\n"
+    "  unwatch R    - stop watching race\n"
+    "                 the current target settings will be remembered\n"
+    "  forget R     - unwatch race and forget target settings for it\n"
+    //"  autowatch    - automatically adds all new races (animals you buy\n"
+    //"                 from merchants, tame yourself or get from migrants)\n"
+    //"                 to the watch list using default target count\n"
+    "  list         - print a list of watched races\n"
+    "  target fk mk fa ma R\n"
+    "               - set target count for specified race:\n"
+    "                 fk = number of female kids\n"
+    "                 mk = number of male kids\n"
+    "                 fa = number of female adults\n"
+    "                 ma = number of female adults\n"
+    //"                 R = 'all' sets count for all races on the current watchlist\n"
+    //"                 including the races which are currenly set to 'unwatched'\n"
+    //"                 and sets the new default for future watch commands\n"
+    //"                 R = 'new' sets the new default for future watch commands\n"
+    //"                 without changing your current watchlist\n"
+    "  example      - print some usage examples\n";
+
+const string autobutcher_help_example =
+    "Examples:\n"
+    "  autobutcher target 4 3 2 1 ALPACA\n"
+    "  autobutcher watch ALPACA\n"
+    "  autobutcher start\n"
+    "    This means you want to have max 7 kids (4 female, 3 male) and max 3 adults\n"
+    "    (2 female, 1 male) of the race alpaca. Once the kids grow up the oldest\n"
+    "    adults will get slaughtered. Excess kids will get slaughtered starting with\n"
+    "    the youngest to allow that the older ones grow into adults.\n"
+    //"  autobutcher target 0 0 0 0 all\n"
+    //"  autobutcher autowatch\n"
+    //"  autobutcher start\n"
+    //"    This tells autobutcher to automatically put all new races onto the watchlist\n"
+    //"    and mark unnamed tame units for slaughter as soon as they arrive in your\n"
+    //"    fortress. Settings already made for some races will be left untouched.\n"
+    ;
+
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -163,32 +223,34 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(PluginCommand(
         "autonestbox", "auto-assign nestbox zones.",
         df_autonestbox, false,
-        zone_help.c_str()
+        autonestbox_help.c_str()
         ));
-//    commands.push_back(PluginCommand(
-//        "autoslaughter", "auto-butcher lifestock.",
-//        df_autoslaughter, false,
-//        zone_help.c_str()
-//        ));
+    commands.push_back(PluginCommand(
+        "autobutcher", "auto-assign lifestock for butchering.",
+        df_autobutcher, false,
+        autobutcher_help.c_str()
+        ));
     return CR_OK;
 }
 
+command_result autobutcher_cleanup(color_ostream &out);
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    autobutcher_cleanup(out);
     return CR_OK;
 }
 
 ///////////////
-// stuff for autonestbox and autoslaughter
+// stuff for autonestbox and autobutcher
 // should be moved to own plugin once the tool methods it shares with the zone plugin are moved to Unit.h / Building.h
 
 command_result autoNestbox( color_ostream &out, bool verbose );
-command_result autoSlaughter( color_ostream &out, bool verbose );
+command_result autoButcher( color_ostream &out, bool verbose );
 
 static bool enable_autonestbox = false;
-static bool enable_autoslaughter = false;
+static bool enable_autobutcher = false;
 static size_t sleep_autonestbox = 6000;
-static size_t sleep_autoslaughter = 6000;
+static size_t sleep_autobutcher = 6000;
 static bool autonestbox_did_complain = false; // avoids message spam
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
@@ -200,8 +262,9 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         break;
     case DFHack::SC_MAP_UNLOADED:
         enable_autonestbox = false;
-        enable_autoslaughter = false;
+        enable_autobutcher = false;
         // cleanup
+        autobutcher_cleanup(out);
         break;
     default:
         break;
@@ -212,7 +275,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     static size_t ticks_autonestbox = 0;
-    static size_t ticks_autoslaughter = 0;
+    static size_t ticks_autobutcher = 0;
 
     if(enable_autonestbox)
     {
@@ -223,12 +286,12 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         }
     }
     
-    if(enable_autoslaughter)
+    if(enable_autobutcher)
     {
-        if(++ticks_autoslaughter >= sleep_autoslaughter)
+        if(++ticks_autobutcher >= sleep_autobutcher)
         {
-            ticks_autoslaughter = 0;
-            autoSlaughter(out, false);
+            ticks_autobutcher= 0;
+            autoButcher(out, false);
         }
     }
 
@@ -457,6 +520,20 @@ bool isMale(df::unit* unit)
 bool isFemale(df::unit* unit)
 {
     return unit->sex == 0;
+}
+
+// found a unit with weird position values on one of my maps (negative and in the thousands)
+// it didn't appear in the animal stocks screen, but looked completely fine otherwise (alive, tame, own, etc)
+// maybe a rare but, but better avoid assigning such units to zones or slaughter etc.
+bool hasValidMapPos(df::unit* unit)
+{
+    if(    unit->pos.x >=0 && unit->pos.y >= 0 && unit->pos.z >= 0
+        && unit->pos.x < world->map.x_count 
+        && unit->pos.y < world->map.y_count 
+        && unit->pos.z < world->map.z_count)
+        return true;
+    else
+        return false;
 }
 
 // dump some unit info
@@ -1563,10 +1640,18 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     )
                     continue;
 
+                if(!hasValidMapPos(unit))
+                {
+                    uint32_t max_x, max_y, max_z;
+                    Maps::getSize(max_x, max_y, max_z);
+                    out << "("<<max_x << "/"<< max_y << "/" << max_z << "). map max" << endl;
+                    out << "invalid unit pos: " ;
+                    out << "("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << "). will skip this unit" << endl;
+                    continue;
+                }
+
                 if(unit_info)
                 {
-                    if(unit->pos.x <0 || unit->pos.y<0 || unit->pos.z<0)
-                        out << "invalid unit pos" << endl;
                     unitInfo(out, unit, verbose);
                 }
                 else if(zone_assign)
@@ -1779,8 +1864,557 @@ command_result autoNestbox( color_ostream &out, bool verbose = false )
     return CR_OK;
 }
 
-command_result autoSlaughter( color_ostream &out, bool verbose = false )
+
+// getUnitAge() returns 0 if born in current year, therefore the look at birth_time in that case
+// (assuming that the value from there indicates in which tick of the current year the unit was born)
+bool compareUnitAgesYounger(df::unit* i, df::unit* j) 
 {
-    out << "Autoslaughter would run now." << endl;
+    int32_t age_i = getUnitAge(i);
+    int32_t age_j = getUnitAge(j);
+    if(age_i == 0 && age_j == 0)
+    {
+        age_i = i->relations.birth_time;
+        age_j = j->relations.birth_time;
+    }
+    return (age_i < age_j); 
+}
+bool compareUnitAgesOlder(df::unit* i, df::unit* j) 
+{ 
+    int32_t age_i = getUnitAge(i);
+    int32_t age_j = getUnitAge(j);
+    if(age_i == 0 && age_j == 0)
+    {
+        age_i = i->relations.birth_time;
+        age_j = j->relations.birth_time;
+    }
+    return (age_i > age_j); 
+}
+
+//enum WatchedRaceSubtypes
+//{
+//    femaleKid=0,
+//    maleKid,
+//    femaleAdult,
+//    maleAdult
+//};
+
+struct WatchedRace
+{
+public:
+
+    bool isWatched; // if true, autobutcher will process this race
+    int raceId;
+    int fk; // max female kids
+    int mk; // max male kids
+    int fa; // max female adults
+    int ma; // max male adults
+
+    // bah, this should better be an array of 4 vectors
+    // that way there's no need for the 4 ugly process methods
+    vector <df::unit*> fk_ptr;
+    vector <df::unit*> mk_ptr;
+    vector <df::unit*> fa_ptr;
+    vector <df::unit*> ma_ptr;
+    
+    WatchedRace(bool watch, int id, int _fk, int _mk, int _fa, int _ma)
+    {
+        isWatched = watch;
+        raceId = id;
+        fk = _fk;
+        mk = _mk;
+        fa = _fa;
+        ma = _ma;
+    }
+
+    ~WatchedRace()
+    {
+        ClearUnits();
+    }
+
+    void SortUnitsByAge()
+    {
+        sort(fk_ptr.begin(), fk_ptr.end(), compareUnitAgesOlder);
+        sort(mk_ptr.begin(), mk_ptr.end(), compareUnitAgesOlder);
+        sort(fa_ptr.begin(), fa_ptr.end(), compareUnitAgesYounger);
+        sort(ma_ptr.begin(), ma_ptr.end(), compareUnitAgesYounger);
+    }
+    
+    void PushUnit(df::unit * unit)
+    {
+        if(isFemale(unit))
+        {
+            if(isBaby(unit) || isChild(unit))
+                fk_ptr.push_back(unit);
+            else
+                fa_ptr.push_back(unit);
+        }
+        else //treat sex n/a like it was male
+        {
+            if(isBaby(unit) || isChild(unit))
+                mk_ptr.push_back(unit);
+            else
+                ma_ptr.push_back(unit);
+        }
+    }
+
+    void ClearUnits()
+    {
+        fk_ptr.clear();
+        mk_ptr.clear();
+        fa_ptr.clear();
+        ma_ptr.clear();
+    }
+
+    int ProcessUnits_fk()
+    {
+        int subcount = 0;
+        while(fk_ptr.size() > fk)
+        {
+            df::unit* unit = fk_ptr.back();
+            doMarkForSlaughter(unit);
+            fk_ptr.pop_back();
+            subcount++;
+        }
+        return subcount;
+    }
+    int ProcessUnits_mk()
+    {
+        int subcount = 0;
+        while(mk_ptr.size() > mk)
+        {
+            df::unit* unit = mk_ptr.back();
+            doMarkForSlaughter(unit);
+            mk_ptr.pop_back();
+            subcount++;
+        }
+        return subcount;
+    }
+    int ProcessUnits_fa()
+    {
+        int subcount = 0;
+        while(fa_ptr.size() > fa)
+        {
+            df::unit* unit = fa_ptr.back();
+            doMarkForSlaughter(unit);
+            fa_ptr.pop_back();
+            subcount++;
+        }
+        return subcount;
+    }
+    int ProcessUnits_ma()
+    {
+        int subcount = 0;
+        while(ma_ptr.size() > ma)
+        {
+            df::unit* unit = ma_ptr.back();
+            doMarkForSlaughter(unit);
+            ma_ptr.pop_back();
+            subcount++;
+        }
+        return subcount;
+    }
+
+    int ProcessUnits()
+    {
+        SortUnitsByAge();
+        int slaughter_count = 0;
+        slaughter_count += ProcessUnits_fk();
+        slaughter_count += ProcessUnits_mk();
+        slaughter_count += ProcessUnits_fa();
+        slaughter_count += ProcessUnits_ma();
+        ClearUnits();
+        return slaughter_count;
+    }
+};
+// vector of races handled by autobutcher
+// the name is a bit misleading since entries can be set to 'unwatched' 
+// to ignore them for a while but still keep the target count settings
+std::vector<WatchedRace*> watched_races;
+
+command_result autobutcher_cleanup(color_ostream &out)
+{
+    for(size_t i=0; i<watched_races.size(); i++)
+    {
+        //watched_races.ClearUnits();
+        delete watched_races[i];
+    }
+    watched_races.clear();
+    return CR_OK;
+}
+
+command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
+{
+    // move those somewhere else for persistency
+    static int default_fk = 5;
+    static int default_mk = 1;
+    static int default_fa = 5;
+    static int default_ma = 1;
+
+    CoreSuspender suspend;
+
+    bool verbose = false;
+    bool watch_race = false;
+    bool unwatch_race = false;
+    bool forget_race = false;
+    bool list_watched = false;
+    bool change_target = false;
+    string target_racename = "";
+    int target_fk = default_fk;
+    int target_mk = default_mk;
+    int target_fa = default_fa;
+    int target_ma = default_ma;
+
+    int32_t target_raceid = -1;
+
+    for (size_t i = 0; i < parameters.size(); i++)
+    {
+        string & p = parameters[i];
+        
+        if (p == "help" || p == "?")
+        {
+            out << autobutcher_help << endl;
+            return CR_OK;
+        }
+        if (p == "example")
+        {
+            out << autobutcher_help_example << endl;
+            return CR_OK;
+        }
+        else if (p == "start")
+        {
+            enable_autobutcher = true;
+            out << "Autobutcher started.";
+            return autoButcher(out, verbose);
+        }
+        else if (p == "stop")
+        {
+            enable_autobutcher = false;
+            out << "Autobutcher stopped.";
+            return CR_OK;
+        }
+        else if(p == "verbose")
+        {
+            verbose = true;
+        }
+        else if(p == "sleep")
+        {
+            if(i == parameters.size()-1)
+            {
+                out.printerr("No duration specified!");
+                return CR_WRONG_USAGE;
+            }
+            else
+            {
+                size_t ticks = 0;
+                stringstream ss(parameters[i+1]);
+                i++;
+                ss >> ticks;
+                if(ticks <= 0)
+                {
+                    out.printerr("Invalid duration specified (must be > 0)!");
+                    return CR_WRONG_USAGE;
+                }
+                sleep_autobutcher = ticks;
+                out << "New sleep timer for autobutcher: " << ticks << " ticks." << endl;
+                return CR_OK;
+            }
+        }
+        else if(p == "watch")
+        {
+            if(i == parameters.size()-1)
+            {
+                out.printerr("No race specified!");
+                return CR_WRONG_USAGE;
+            }
+            else
+            {
+                // todo: parse more than one race
+                target_racename = parameters[i+1];
+                i++;
+                out << "Start watching race " << target_racename << endl;
+                watch_race = true;
+            }
+        }
+        else if(p == "unwatch")
+        {
+            if(i == parameters.size()-1)
+            {
+                out.printerr("No race specified!");
+                return CR_WRONG_USAGE;
+            }
+            else
+            {
+                // todo: parse more than one race
+                target_racename = parameters[i+1];
+                i++;
+                out << "Stop watching race " << target_racename << endl;
+                unwatch_race = true;
+            }
+        }
+        else if(p == "forget")
+        {
+            if(i == parameters.size()-1)
+            {
+                out.printerr("No race specified!");
+                return CR_WRONG_USAGE;
+            }
+            else
+            {
+                // todo: parse more than one race
+                target_racename = parameters[i+1];
+                i++;
+                out << "Forget settings for race " << target_racename << endl;
+                forget_race = true;
+            }
+        }
+        else if(p == "target")
+        {
+            // needs at least 5 more parameters:
+            // fk mk fa ma R (can have more than 1 R)
+            if(parameters.size() < 6)
+            {
+                out.printerr("Not enough parameters!");
+                return CR_WRONG_USAGE;
+            }
+            else
+            {
+                stringstream fk(parameters[i+1]);
+                stringstream mk(parameters[i+2]);
+                stringstream fa(parameters[i+3]);
+                stringstream ma(parameters[i+4]);
+                fk >> target_fk;
+                mk >> target_mk;
+                fa >> target_fa;
+                ma >> target_ma;
+                
+                // todo: parse more than one race, handle 'all' and 'new'
+                target_racename = parameters[i+5];
+                i+=5;
+                out << "Target count for " << target_racename << ":"
+                    << " fk=" << target_fk
+                    << " mk=" << target_mk
+                    << " fa=" << target_fa
+                    << " ma=" << target_ma
+                    << endl;
+                change_target = true;
+            }
+        }
+        else if(p == "autowatch")
+        {
+            out << "not supported yet, sorry" << endl;
+            return CR_OK;
+        }
+        else if(p == "noautowatch")
+        {
+            out << "not supported yet, sorry" << endl;
+            return CR_OK;
+        }
+        else if(p == "list")
+        {
+            list_watched = true;
+        }
+        else
+        {
+            out << "Unknown command: " << p << endl;
+            return CR_WRONG_USAGE;
+        }
+    }
+
+    if( target_racename == "all" ||
+        target_racename == "new" )
+    {
+        out << "'all' and 'new' are not supported yet, sorry." << endl;
+        return CR_OK;
+    }
+
+    if(list_watched)
+    {
+        for(size_t i=0; i<watched_races.size(); i++)
+        {
+            WatchedRace * w = watched_races[i];
+            df::creature_raw * raw = df::global::world->raws.creatures.all[w->raceId];
+            string name = raw->creature_id;
+            if(w->isWatched)
+                out << "watched: ";
+            else
+                out << "not watched: ";
+            out << name 
+                << " fk=" << w->fk
+                << " mk=" << w->mk
+                << " fa=" << w->fa
+                << " ma=" << w->ma
+                << endl;
+        }
+        return CR_OK;
+    }
+
+    size_t num_races = df::global::world->raws.creatures.all.size(); 
+    bool found_race = false;
+    for(size_t i=0; i<num_races; i++)
+    {
+        df::creature_raw *raw = df::global::world->raws.creatures.all[i];
+        if(raw->creature_id == target_racename)
+        {
+            target_raceid = i;
+            found_race = true;
+            break;
+        }
+    }
+    if(!found_race)
+    {
+        out << "Race not found!" << endl;
+        return CR_OK;
+    }
+
+    if(unwatch_race)
+    {
+        bool found = false;
+        for(size_t i=0; i<watched_races.size(); i++)
+        {
+            WatchedRace * w = watched_races[i];
+            if(w->raceId == target_raceid)
+            {
+                found=true;
+                w->isWatched=false;
+                break;
+            }
+        }
+        if(found)
+            out << target_racename << " is not watched anymore." << endl;
+        else
+            out << target_racename << " was not being watched!" << endl;
+        return CR_OK;
+    }
+
+    if(watch_race || change_target)
+    {
+        bool watching = false;
+        for(size_t i=0; i<watched_races.size(); i++)
+        {
+            WatchedRace * w = watched_races[i];
+            if(w->raceId == target_raceid)
+            {
+                if(watch_race)
+                {
+                    if(w->isWatched)
+                        out << target_racename << " is already being watched." << endl;
+                    w->isWatched = true;
+                    watching = true;
+                }
+
+                if(change_target)
+                {
+                    w->fk = target_fk;
+                    w->mk = target_mk;
+                    w->fa = target_fa;
+                    w->ma = target_ma;
+                }
+                break;
+            }
+        }
+        if(!watching)
+        {
+            WatchedRace * w = new WatchedRace(watch_race, target_raceid, target_fk, target_mk, target_fa, target_ma);
+            watched_races.push_back(w);
+        }
+        out << target_racename << " is now being watched." << endl;
+        return CR_OK;
+    }
+
+    if(forget_race)
+    {
+        bool watched = false;
+        for(size_t i=0; i<watched_races.size(); i++)
+        {
+            WatchedRace * w = watched_races[i];
+            if(w->raceId == target_raceid)
+            {
+                watched_races.erase(watched_races.begin()+i);
+
+                if(w->isWatched)
+                    out << target_racename << " is already being watched." << endl;
+                w->isWatched = true;
+                watched = true;
+                break;
+            }
+        }
+        if(!watched)
+        {
+            out << target_racename << " was not on the watchlist." << endl;
+            return CR_OK;
+        }
+        out << target_racename << " was forgotten." << endl;
+        return CR_OK;
+    }
+
+    return CR_OK;
+}
+
+int getWatchedIndex(int id)
+{
+    for(size_t i=0; i<watched_races.size(); i++)
+    {
+        WatchedRace * w = watched_races[i];
+        if(w->raceId == id && w->isWatched)
+            return i;
+    }
+    return -1;
+}
+
+command_result autoButcher( color_ostream &out, bool verbose = false )
+{
+    // don't run if not supposed to
+    if(!Maps::IsValid())
+        return CR_OK;
+
+    // check if there is anything to watch before walking through units vector
+    bool watching = false;
+    for(size_t i=0; i<watched_races.size(); i++)
+    {
+        WatchedRace * w = watched_races[i];
+        if(w->isWatched)
+        {
+            watching = true;
+            break;
+        }
+    }
+    if(!watching)
+        return CR_OK;
+
+    for(size_t i=0; i<world->units.all.size(); i++)
+    {
+        df::unit * unit = world->units.all[i];
+        if(    isDead(unit)
+            || isMarkedForSlaughter(unit)
+            || !isOwnCiv(unit)
+            || !isTame(unit)
+            || unit->name.has_name
+            )
+            continue;
+
+        // found a bugged unit which had invalid coordinates.
+        // marking it for slaughter didn't seem to have negative effects, but you never know...
+        if(!hasValidMapPos(unit))
+            continue;
+
+        int watched_index = getWatchedIndex(unit->race);
+        if(watched_index != -1)
+        {
+            WatchedRace * w = watched_races[watched_index];
+            w->PushUnit(unit);
+        }
+    }
+
+    int slaughter_count = 0;
+    for(size_t i=0; i<watched_races.size(); i++)
+    {
+        WatchedRace * w = watched_races[i];
+        int slaughter_subcount = w->ProcessUnits();
+        slaughter_count += slaughter_subcount;
+        df::creature_raw *raw = df::global::world->raws.creatures.all[w->raceId];
+        out << raw->creature_id << " marked for slaughter: " << slaughter_subcount << endl;
+    }
+    out << slaughter_count << " units total marked for slaughter." << endl;
+
     return CR_OK;
 }

@@ -310,6 +310,7 @@ bool isWar(df::unit* creature);
 bool isHunter(df::unit* creature);
 bool isOwnCiv(df::unit* creature);
 bool isMerchant(df::unit* creature);
+bool isForest(df::unit* creature);
 
 bool isActivityZone(df::building * building);
 bool isPenPasture(df::building * building);
@@ -348,6 +349,11 @@ bool isDead(df::unit* unit)
 bool isMerchant(df::unit* unit)
 {
 	return unit->flags1.bits.merchant;
+}
+
+bool isForest(df::unit* unit)
+{
+	return unit->flags1.bits.forest;
 }
 
 bool isMarkedForSlaughter(df::unit* unit)
@@ -590,8 +596,8 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     }
     out << ")";
     out << ", age: " << getUnitAge(unit);
-    
-    if(isTame(unit))
+
+	if(isTame(unit))
         out << ", tame";    
     if(isOwnCiv(unit))
         out << ", owned";
@@ -599,6 +605,10 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
         out << ", war";
     if(isHunter(unit))
         out << ", hunter";
+	if(isMerchant(unit))
+		out << ", merchant";
+	if(isForest(unit))
+		out << ", forest";
     
     if(verbose)
     {
@@ -970,6 +980,8 @@ bool isFreeEgglayer(df::unit * unit)
         && isEggLayer(unit)
         && !isAssigned(unit)
 		&& !isGrazer(unit) // exclude grazing birds because they're messy
+		&& !isMerchant(unit) // don't steal merchant mounts
+		&& !isForest(unit)  // don't steal birds from traders, they hate that
         )
         return true;
     else
@@ -1621,8 +1633,9 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 					continue;
 
 				// ignore merchant units
-				if (isMerchant(unit))
+				if (isMerchant(unit) || isForest(unit))
 					continue;
+
                 if(find_race && getRaceName(unit) != target_race)
                     continue;
                 // ignore own dwarves by default

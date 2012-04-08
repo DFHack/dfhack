@@ -5,8 +5,8 @@
 keybinding add Ctrl-W twaterlvl
 
 # with cursor:
-keybinding add Ctrl-V vdig
-keybinding add Ctrl-Shift-V "vdig x"
+keybinding add Ctrl-V digv
+keybinding add Ctrl-Shift-V "digv x"
 keybinding add Ctrl-C spotclean
 keybinding add Ctrl-Shift-K autodump-destroy-here
 

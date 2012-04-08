@@ -221,6 +221,16 @@ namespace DFHack { namespace LuaWrapper {
      */
     void AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, type_identity *ienum);
 
+    struct FunctionReg {
+        const char *name;
+        function_identity_base *identity;
+    };
+
+    /**
+     * Wrap functions and add them to the table on the top of the stack.
+     */
+    void SetFunctionWrappers(lua_State *state, const FunctionReg *reg);
+
     void IndexStatics(lua_State *state, int meta_idx, int ftable_idx, struct_identity *pstruct);
 
     void AttachDFGlobals(lua_State *state);

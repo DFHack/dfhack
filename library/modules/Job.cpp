@@ -32,6 +32,7 @@ distribution.
 using namespace std;
 
 #include "Core.h"
+#include "Error.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
 
@@ -54,6 +55,8 @@ using namespace df::enums;
 
 df::job *DFHack::cloneJobStruct(df::job *job)
 {
+    CHECK_NULL_POINTER(job);
+
     df::job *pnew = new df::job(*job);
 
     // Clean out transient fields
@@ -105,6 +108,9 @@ void DFHack::deleteJobStruct(df::job *job)
 
 bool DFHack::operator== (const df::job_item &a, const df::job_item &b)
 {
+    CHECK_NULL_POINTER(&a);
+    CHECK_NULL_POINTER(&b);
+
     if (!(CMP(item_type) && CMP(item_subtype) &&
           CMP(mat_type) && CMP(mat_index) &&
           CMP(flags1.whole) && CMP(quantity) && CMP(vector_id) &&
@@ -125,6 +131,9 @@ bool DFHack::operator== (const df::job_item &a, const df::job_item &b)
 
 bool DFHack::operator== (const df::job &a, const df::job &b)
 {
+    CHECK_NULL_POINTER(&a);
+    CHECK_NULL_POINTER(&b);
+
     if (!(CMP(job_type) && CMP(unk2) &&
           CMP(mat_type) && CMP(mat_index) &&
           CMP(item_subtype) && CMP(item_category.whole) &&
@@ -141,6 +150,8 @@ bool DFHack::operator== (const df::job &a, const df::job &b)
 
 static void print_job_item_details(color_ostream &out, df::job *job, unsigned idx, df::job_item *item)
 {
+    CHECK_NULL_POINTER(item);
+
     ItemTypeInfo info(item);
     out << "  Input Item " << (idx+1) << ": " << info.toString();
 
@@ -175,6 +186,8 @@ static void print_job_item_details(color_ostream &out, df::job *job, unsigned id
 
 void DFHack::printJobDetails(color_ostream &out, df::job *job)
 {
+    CHECK_NULL_POINTER(job);
+
     out.color(job->flags.bits.suspend ? Console::COLOR_DARKGREY : Console::COLOR_GREY);
     out << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_type);
     if (job->flags.whole)
@@ -216,6 +229,8 @@ void DFHack::printJobDetails(color_ostream &out, df::job *job)
 
 df::building *DFHack::getJobHolder(df::job *job)
 {
+    CHECK_NULL_POINTER(job);
+
     for (size_t i = 0; i < job->references.size(); i++)
     {
         VIRTUAL_CAST_VAR(ref, df::general_ref_building_holderst, job->references[i]);

@@ -114,6 +114,7 @@ namespace DFHack
         }
 
         bool find(const std::string &token);
+        bool find(const std::vector<std::string> &tokens);
 
         bool findBuiltin(const std::string &token);
         bool findInorganic(const std::string &token);

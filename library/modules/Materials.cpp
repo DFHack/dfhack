@@ -164,6 +164,13 @@ bool MaterialInfo::find(const std::string &token)
 {
     std::vector<std::string> items;
     split_string(&items, token, ":");
+    return find(items);
+}
+
+bool MaterialInfo::find(const std::vector<std::string> &items)
+{
+    if (items.empty())
+        return false;
 
     if (items[0] == "INORGANIC" && items.size() > 1)
         return findInorganic(vector_get(items,1));
@@ -204,8 +211,11 @@ bool MaterialInfo::findBuiltin(const std::string &token)
 
     df::world_raws &raws = world->raws;
     for (int i = 1; i < NUM_BUILTIN; i++)
-        if (raws.mat_table.builtin[i]->id == token)
+    {
+        auto obj = raws.mat_table.builtin[i];
+        if (obj && obj->id == token)
             return decode(i, -1);
+    }
     return decode(-1);
 }
 

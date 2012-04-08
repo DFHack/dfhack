@@ -160,6 +160,8 @@ namespace DFHack
     };
 }
 
+// Due to export issues, this stuff can only work in the main dll
+#ifdef BUILD_DFHACK_LIB
 namespace df
 {
     using DFHack::function_identity_base;
@@ -575,4 +577,4 @@ namespace df
         return &identity;
     }
 }
-
+#endif

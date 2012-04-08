@@ -456,6 +456,31 @@ Currently it defines the following features:
   to group operations together in one big critical section. A plugin
   can choose to run all lua code inside a C++-side suspend lock.
 
+* ``dfhack.call_with_finalizer(num_cleanup_args,always,cleanup_fn[,cleanup_args...],fn[,args...])``
+
+  Invokes ``fn`` with ``args``, and after it returns or throws an
+  error calls ``cleanup_fn`` with ``cleanup_args``. Any return values from
+  ``fn`` are propagated, and errors are re-thrown.
+
+  The ``num_cleanup_args`` integer specifies the number of ``cleanup_args``,
+  and the ``always`` boolean specifies if cleanup should be called in any case,
+  or only in case of an error.
+
+* ``dfhack.with_finalize(cleanup_fn,fn[,args...])``
+
+  Calls ``fn`` with arguments, then finalizes with ``cleanup_fn``.
+  Implemented using ``call_with_finalizer(0,true,...)``.
+
+* ``dfhack.with_onerror(cleanup_fn,fn[,args...])``
+
+  Calls ``fn`` with arguments, then finalizes with ``cleanup_fn`` on any thrown error.
+  Implemented using ``call_with_finalizer(0,false,...)``.
+
+* ``dfhack.with_temp_object(obj,fn[,args...])``
+
+  Calls ``fn(obj,args...)``, then finalizes with ``obj:delete()``.
+
+
 Persistent configuration storage
 ================================
 
@@ -497,3 +522,148 @@ Since the data is hidden in data structures owned by the DF world,
 and automatically stored in the save game, these save and retrieval
 functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.
+
+Material info lookup
+====================
+
+A material info record has fields:
+
+* ``type``, ``index``, ``material``
+
+  DF material code pair, and a reference to the material object.
+
+* ``mode``
+
+  One of ``'builtin'``, ``'inorganic'``, ``'plant'``, ``'creature'``.
+
+* ``inorganic``, ``plant``, ``creature``
+
+  If the material is of the matching type, contains a reference to the raw object.
+
+* ``figure``
+
+  For a specific creature material contains a ref to the historical figure.
+
+Functions:
+
+* ``dfhack.matinfo.decode(type,index)``
+
+  Looks up material info for the given number pair; if not found, returs *nil*.
+
+* ``....decode(matinfo)``, ``....decode(item)``, ``....decode(obj)``
+
+  Uses ``matinfo.type``/``matinfo.index``, item getter vmethods,
+  or ``obj.mat_type``/``obj.mat_index`` to get the code pair.
+
+* ``dfhack.matinfo.find(token[,token...])``
+
+  Looks up material by a token string, or a pre-split string token sequence.
+
+* ``dfhack.matinfo.getToken(...)``, ``info:getToken()``
+
+  Applies ``decode`` and constructs a string token.
+
+* ``info:toString([temperature[,named]])``
+
+  Returns the human-readable name at the given temperature.
+
+* ``info:getCraftClass()``
+
+  Returns the classification used for craft skills.
+
+* ``info:matches(obj)``
+
+  Checks if the material matches job_material_category or job_item.
+  Accept dfhack_material_category auto-assign table.
+
+C++ function wrappers
+=====================
+
+Thin wrappers around C++ functions, similar to the ones for virtual methods.
+
+* ``dfhack.TranslateName(name,in_english,only_last_name)``
+
+  Convert a language_name or only the last name part to string.
+
+Gui module
+----------
+
+* ``dfhack.gui.getSelectedWorkshopJob(silent)``
+
+  When a job is selected in *'q'* mode, returns the job, else
+  prints error unless silent and returns *nil*.
+
+* ``dfhack.gui.getSelectedJob(silent)``
+
+  Returns the job selected in a workshop or unit/jobs screen.
+
+* ``dfhack.gui.getSelectedUnit(silent)``
+
+  Returns the unit selected via *'v'*, *'k'*, unit/jobs, or
+  a full-screen item view of a cage or suchlike.
+
+* ``dfhack.gui.getSelectedItem(silent)``
+
+  Returns the item selected via *'v'* ->inventory, *'k'*, *'t'*, or
+  a full-screen item view of a container. Note that in the
+  last case, the highlighted *contained item* is returned, not
+  the container itself.
+
+* ``dfhack.gui.showAnnouncement(text,color,is_bright)``
+
+  Adds a regular announcement with given text, color, and brightness.
+  The is_bright boolean actually seems to invert the brightness.
+
+* ``dfhack.gui.showPopupAnnouncement(text,color,is_bright)``
+
+  Pops up a titan-style modal announcement window.
+
+Job module
+----------
+
+* ``dfhack.job.cloneJobStruct(job)``
+
+  Creates a deep copy of the given job.
+
+* ``dfhack.job.printJobDetails(job)``
+
+  Prints info about the job.
+
+* ``dfhack.job.getJobHolder(job)``
+
+  Returns the building holding the job.
+
+* ``dfhack.job.is_equal(job1,job2)``
+
+  Compares important fields in the job and nested item structures.
+
+* ``dfhack.job.is_item_equal(job_item1,job_item2)``
+
+  Compares important fields in the job item structures.
+
+Units module
+------------
+
+* ``dfhack.units.setNickname(unit,nick)``
+
+  Sets the unit's nickname properly.
+
+* ``dfhack.units.getVisibleName(unit)``
+
+  Returns the language_name object visible in game, accounting for false identities.
+
+* ``dfhack.units.getNemesis(unit)``
+
+  Returns the nemesis record of the unit if it has one, or *nil*.
+
+* ``dfhack.units.isDead(unit)``
+
+  The unit is completely dead and passive.
+
+* ``dfhack.units.isAlive(unit)``
+
+  The unit isn't dead or undead.
+
+* ``dfhack.units.isSane(unit)``
+
+  The unit is capable of rational action, i.e. not dead, insane or zombie.

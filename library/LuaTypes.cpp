@@ -30,6 +30,7 @@ distribution.
 
 #include "MemAccess.h"
 #include "Core.h"
+#include "Error.h"
 #include "VersionInfo.h"
 #include "tinythread.h"
 // must be last due to MS stupidity
@@ -1022,7 +1023,20 @@ static int meta_call_function(lua_State *state)
     auto id = (function_identity_base*)lua_touserdata(state, UPVAL_CONTAINER_ID);
     if (lua_gettop(state) != id->getNumArgs())
         field_error(state, UPVAL_METHOD_NAME, "invalid argument count", "invoke");
-    id->invoke(state, 1);
+
+    try {
+        id->invoke(state, 1);
+    }
+    catch (Error::NullPointer &e) {
+        const char *vn = e.varname();
+        std::string tmp = stl_sprintf("NULL pointer: %s", vn ? vn : "?");
+        field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
+    }
+    catch (std::exception &e) {
+        std::string tmp = stl_sprintf("C++ exception: %s", e.what());
+        field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
+    }
+
     return 1;
 }
 
@@ -1033,12 +1047,26 @@ static void AddMethodWrapper(lua_State *state, int meta_idx, int field_idx,
                              const char *name, function_identity_base *fun)
 {
     lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPETABLE_TOKEN);
-    lua_pushvalue(state, meta_idx);
+    if (meta_idx)
+        lua_pushvalue(state, meta_idx);
+    else
+        lua_pushlightuserdata(state, NULL); // can't be a metatable
     lua_pushfstring(state, "%s()", name);
     lua_pushlightuserdata(state, fun);
     lua_pushcclosure(state, meta_call_function, 4);
 
     lua_setfield(state, field_idx, name);
+}
+
+/**
+ * Wrap functions and add them to the table on the top of the stack.
+ */
+void LuaWrapper::SetFunctionWrappers(lua_State *state, const FunctionReg *reg)
+{
+    int base = lua_gettop(state);
+
+    for (; reg && reg->name; ++reg)
+        AddMethodWrapper(state, 0, base, reg->name, reg->identity);
 }
 
 /**

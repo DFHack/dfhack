@@ -963,6 +963,7 @@ bool isFreeEgglayer(df::unit * unit)
         && isOwnCiv(unit)
         && isEggLayer(unit)
         && !isAssigned(unit)
+		&& !isGrazer(unit) // exclude grazing birds because they're messy
         )
         return true;
     else

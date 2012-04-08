@@ -1609,6 +1609,11 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             for(size_t c = 0; c < world->units.all.size(); c++)
             {
                 df::unit *unit = world->units.all[c];
+
+				// ignore dead units
+				if (isDead(unit)) 
+					continue;
+
                 if(find_race && getRaceName(unit) != target_race)
                     continue;
                 // ignore own dwarves by default

@@ -101,11 +101,14 @@ const string zone_help_filters =
     "  caged        - in a built cage\n"
     "  uncaged      - not in cage\n"
     "  foreign      - not of own civilization (i.e. own fortress)\n"
-    "  own          - from own civilization (fortress)\n"
+    "  own          - from own civilization\n"
     "  war          - trained war creature\n"
     "  tamed        - tamed\n"
     "  named        - has name or nickname\n"
     "                 can be used to mark named units for slaughter\n"
+    "  merchant     - is a merchant / belongs to a merchant\n"
+    "                 can be used to pit merchants and slaughter their animals\n"
+    "                 (could have weird effects during trading, be careful)\n"
     "  trained      - obvious\n"
     "  untrained    - obvious\n"
     "  male         - obvious\n"
@@ -136,6 +139,7 @@ const string zone_help_examples =
     "  'own' ignores own dwarves unless you specify 'race DWARF'\n"
     "  (so it's safe to use 'assign all own' to one big pasture\n"
     "  if you want to have all your animals at the same place).\n"
+    "  Merchants and their animals are ignored by default.\n"
     "  'egglayer' and 'milkable' should be used together with 'female'\n"
     "  unless you have a mod with egg-laying male elves who give milk.\n";
 
@@ -158,7 +162,7 @@ const string autobutcher_help =
     "that you add the target race(s) to a watch list. Only tame units of your own\n"
     "civilization will be processed. Named units will be completely ignored (you can\n"
     "give animals nicknames with the tool 'rename unit' to protect them from\n"
-    "getting slaughtered automatically.\n"
+    "getting slaughtered automatically. Trained war or hunting pets will be ignored.\n"
     "Once you have too much adults, the oldest will be butchered first.\n"
     "Once you have too much kids, the youngest will be butchered first.\n"
     "If you don't set a target count the following default will be used:\n"
@@ -348,12 +352,12 @@ bool isDead(df::unit* unit)
 
 bool isMerchant(df::unit* unit)
 {
-	return unit->flags1.bits.merchant;
+    return unit->flags1.bits.merchant;
 }
 
 bool isForest(df::unit* unit)
 {
-	return unit->flags1.bits.forest;
+    return unit->flags1.bits.forest;
 }
 
 bool isMarkedForSlaughter(df::unit* unit)
@@ -535,7 +539,7 @@ bool isFemale(df::unit* unit)
 
 // found a unit with weird position values on one of my maps (negative and in the thousands)
 // it didn't appear in the animal stocks screen, but looked completely fine otherwise (alive, tame, own, etc)
-// maybe a rare but, but better avoid assigning such units to zones or slaughter etc.
+// maybe a rare bug, but better avoid assigning such units to zones or slaughter etc.
 bool hasValidMapPos(df::unit* unit)
 {
     if(    unit->pos.x >=0 && unit->pos.y >= 0 && unit->pos.z >= 0
@@ -550,9 +554,6 @@ bool hasValidMapPos(df::unit* unit)
 // dump some unit info
 void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
 {
-    if(isDead(unit))
-        return;
-
     out.print("Unit %d ", unit->id); //race %d, civ %d,", creature->race, creature->civ_id
     if(unit->name.has_name)
     {
@@ -597,7 +598,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     out << ")";
     out << ", age: " << getUnitAge(unit);
 
-	if(isTame(unit))
+    if(isTame(unit))
         out << ", tame";    
     if(isOwnCiv(unit))
         out << ", owned";
@@ -605,10 +606,10 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
         out << ", war";
     if(isHunter(unit))
         out << ", hunter";
-	if(isMerchant(unit))
-		out << ", merchant";
-	if(isForest(unit))
-		out << ", forest";
+    if(isMerchant(unit))
+        out << ", merchant";
+    if(isForest(unit))
+        out << ", forest";
     
     if(verbose)
     {
@@ -979,9 +980,9 @@ bool isFreeEgglayer(df::unit * unit)
         && isOwnCiv(unit)
         && isEggLayer(unit)
         && !isAssigned(unit)
-		&& !isGrazer(unit) // exclude grazing birds because they're messy
-		&& !isMerchant(unit) // don't steal merchant mounts
-		&& !isForest(unit)  // don't steal birds from traders, they hate that
+        && !isGrazer(unit) // exclude grazing birds because they're messy
+        && !isMerchant(unit) // don't steal merchant mounts
+        && !isForest(unit)  // don't steal birds from traders, they hate that
         )
         return true;
     else
@@ -1048,18 +1049,10 @@ bool unassignUnitFromZone(df::unit* unit)
 // assign to pen or pit
 command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building* building, bool verbose = false)
 {
-    //if(!isOwnCiv(unit) || !isTame(unit))
-    //{
-    //    out << "Creature must be tame and your own." << endl;
-    //    return CR_WRONG_USAGE;
-    //}
-
     // building must be a pen/pasture or pit
-    //df::building * building = world->buildings.all.at(index);
     if(!isPenPasture(building) && !isPit(building))
     {
         out << "Invalid building type. This is not a pen/pasture or pit." << endl;
-        //target_zone = -1;
         return CR_WRONG_USAGE;
     }
 
@@ -1279,6 +1272,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool find_war = false;
     bool find_own = false;
     bool find_tame = false;
+    bool find_merchant = false;
     bool find_male = false;
     bool find_female = false;
     bool find_egglayer = false;
@@ -1518,6 +1512,10 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         {
             find_grazer = true;
         }
+        else if(p == "merchant")
+        {
+            find_merchant = true;
+        }
         else if(p == "milkable")
         {
             find_milkable = true;
@@ -1628,13 +1626,16 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             {
                 df::unit *unit = world->units.all[c];
 
-				// ignore dead units
-				if (isDead(unit)) 
-					continue;
+                // ignore dead units
+                if (isDead(unit)) 
+                    continue;
 
-				// ignore merchant units
-				if (isMerchant(unit) || isForest(unit))
-					continue;
+                // ignore merchant units by default
+                if (!find_merchant && (isMerchant(unit) || isForest(unit)))
+                    continue;
+                // but allow pitting them and stealing from them if specified :)
+                if (find_merchant && !isMerchant(unit) && !isForest(unit))
+                    continue;
 
                 if(find_race && getRaceName(unit) != target_race)
                     continue;
@@ -1828,7 +1829,6 @@ command_result df_autonestbox(color_ostream &out, vector <string> & parameters)
         }
     }
     return autoNestbox(out, verbose);
-    //return CR_OK;
 }
 
 command_result autoNestbox( color_ostream &out, bool verbose = false )
@@ -2008,6 +2008,7 @@ public:
         }
         return subcount;
     }
+
     int ProcessUnits_mk()
     {
         int subcount = 0;
@@ -2020,6 +2021,7 @@ public:
         }
         return subcount;
     }
+
     int ProcessUnits_fa()
     {
         int subcount = 0;
@@ -2032,6 +2034,7 @@ public:
         }
         return subcount;
     }
+
     int ProcessUnits_ma()
     {
         int subcount = 0;
@@ -2123,13 +2126,13 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     else if (p == "start")
     {
         enable_autobutcher = true;
-        out << "Autobutcher started.";
+        out << "Autobutcher started." << endl;
         return autoButcher(out, verbose);
     }
     else if (p == "stop")
     {
         enable_autobutcher = false;
-        out << "Autobutcher stopped.";
+        out << "Autobutcher stopped." << endl;
         return CR_OK;
     }
     else if(p == "sleep")
@@ -2137,7 +2140,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         parameters.erase(parameters.begin());
         if(!parameters.size())
         {
-            out.printerr("No duration specified!");
+            out.printerr("No duration specified!\n");
             return CR_WRONG_USAGE;
         }
         else
@@ -2147,7 +2150,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
             ss >> ticks;
             if(ticks <= 0)
             {
-                out.printerr("Invalid duration specified (must be > 0)!");
+                out.printerr("Invalid duration specified (must be > 0)!\n");
                 return CR_WRONG_USAGE;
             }
             sleep_autobutcher = ticks;
@@ -2159,16 +2162,19 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     {
         parameters.erase(parameters.begin());
         watch_race = true;
+        out << "Start watching race(s)." << endl;
     }
     else if(p == "unwatch")
     {
         parameters.erase(parameters.begin());
         unwatch_race = true;
+        out << "Stop watching race(s)." << endl;
     }
     else if(p == "forget")
     {
         parameters.erase(parameters.begin());
         forget_race = true;
+        out << "Removing race(s) from watchlist." << endl;
     }
     else if(p == "target")
     {
@@ -2176,7 +2182,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         // fk mk fa ma R (can have more than 1 R)
         if(parameters.size() < 6)
         {
-            out.printerr("Not enough parameters!");
+            out.printerr("Not enough parameters!\n");
             return CR_WRONG_USAGE;
         }
         else
@@ -2191,6 +2197,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
             ma >> target_ma;
             parameters.erase(parameters.begin(), parameters.begin()+5);
             change_target = true;
+            out << "Setting new target count for race(s)." << endl;
         }
     }
     else if(p == "autowatch")
@@ -2217,6 +2224,13 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
 
     if(list_watched)
     {
+        if(!watched_races.size())
+        {
+            out << "The autobutcher race list is empty." << endl;
+            return CR_OK;
+        }
+
+        out << "Races on autobutcher list: " << endl;
         for(size_t i=0; i<watched_races.size(); i++)
         {
             WatchedRace * w = watched_races[i];
@@ -2244,7 +2258,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     {
         if(!parameters.size())
         {
-            out.printerr("No race(s) specified!");
+            out.printerr("No race(s) specified!\n");
             return CR_WRONG_USAGE;
         }
         while(parameters.size())
@@ -2252,7 +2266,9 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
             string tr = parameters.back();
             target_racenames.push_back(tr);
             parameters.pop_back();
+            out << tr << " ";
         }
+        out << endl;
     }
 
     if(target_racenames.size() && target_racenames[0] == "all")
@@ -2337,12 +2353,14 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
+// check watched_races vector for a race id, return -1 if nothing found
+// calling method needs to check itself if the race is currently being watched or ignored
 int getWatchedIndex(int id)
 {
     for(size_t i=0; i<watched_races.size(); i++)
     {
         WatchedRace * w = watched_races[i];
-        if(w->raceId == id && w->isWatched)
+        if(w->raceId == id) // && w->isWatched)
             return i;
     }
     return -1;
@@ -2373,8 +2391,12 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
         df::unit * unit = world->units.all[i];
         if(    isDead(unit)
             || isMarkedForSlaughter(unit)
+            || isMerchant(unit) // ignore merchants' draught animals
+            || isForest(unit) // ignore merchants' caged animals
             || !isOwnCiv(unit)
             || !isTame(unit)
+            || isWar(unit) // ignore war dogs etc
+            || isHunter(unit) // ignore hunting dogs etc
             || (isContainedInItem(unit) && hasValidMapPos(unit) && isBuiltCageAtPos(unit->pos))
             || unit->name.has_name
             )
@@ -2389,13 +2411,16 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
         if(watched_index != -1)
         {
             WatchedRace * w = watched_races[watched_index];
-            w->PushUnit(unit);
+            if(w->isWatched)
+                w->PushUnit(unit);
         }
         else if(enable_autobutcher_autowatch)
         {
             WatchedRace * w = new WatchedRace(true, unit->race, default_fk, default_mk, default_fa, default_ma);
             watched_races.push_back(w);
             w->PushUnit(unit);
+            df::creature_raw *raw = df::global::world->raws.creatures.all[w->raceId];
+            out << "New race added to autoslaughter watchlist: " << raw->creature_id << endl;
         }
     }
 
@@ -2406,9 +2431,10 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
         int slaughter_subcount = w->ProcessUnits();
         slaughter_count += slaughter_subcount;
         df::creature_raw *raw = df::global::world->raws.creatures.all[w->raceId];
-        out << raw->creature_id << " marked for slaughter: " << slaughter_subcount << endl;
+        if(slaughter_subcount)
+            out << raw->creature_id << " marked for slaughter: " << slaughter_subcount << endl;
     }
-    out << slaughter_count << " units total marked for slaughter." << endl;
+    //out << slaughter_count << " units total marked for slaughter." << endl;
 
     return CR_OK;
 }

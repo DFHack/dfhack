@@ -822,8 +822,9 @@ Filters:
 :unassigned:  Not assigned to zone, chain or built cage.
 :caged:       In a built cage.
 :uncaged:     Not in a cage (in case you want your stockpiles to be left alone).
-:foreign:     Not of own civilization (i.e. own fortress).
-:own:         From own civilization (i.e. own fortress).
+:foreign:     Not of own civilization.
+:own:         From own civilization.
+:merchant:    Is a merchant / belongs to a merchant. Should only be used for pitting, not for stealing animals (slaughter should work).
 :war:         Trained war creature.
 :tamed:       Creature is tame.
 :trained:     Creature is trained.
@@ -842,7 +843,7 @@ One convenient way to use the zone tool is to bind the command 'zone assign' to 
 
 Usage with filters
 ------------------
-All filters can be used together with the 'assign' command. The only restriction is that it's not possible to assign units who are inside built cages or chained because in most cases that won't be desirable anyways. Usually you should always use the filter 'own' (which implies tame) unless you want to use the zone tool for pitting hostiles. 'own' ignores own dwarves unless you specify 'race DWARF' (so it's safe to use 'assign all own' to one big pasture if you want to have all your animals at the same place). 'egglayer' and 'milkable' should be used together with 'female' unless you have a mod with egg-laying male elves who give milk or whatever.
+All filters can be used together with the 'assign' command. The only restriction is that it's not possible to assign units who are inside built cages or chained because in most cases that won't be desirable anyways. Usually you should always use the filter 'own' (which implies tame) unless you want to use the zone tool for pitting hostiles. 'own' ignores own dwarves unless you specify 'race DWARF' (so it's safe to use 'assign all own' to one big pasture if you want to have all your animals at the same place). 'egglayer' and 'milkable' should be used together with 'female' unless you have a mod with egg-laying male elves who give milk or whatever. Merchants and their animals are ignored unless you specify 'merchant' (pitting them should be no problem, but stealing and pasturing their animals is not a good idea since currently they are not properly added to your own stocks; slaughtering them should work).
 
 ``zone assign all own ALPACA minage 3 maxage 10``
    Assign all own alpacas who are between 3 and 10 years old to the selected pasture.
@@ -855,7 +856,7 @@ All filters can be used together with the 'assign' command. The only restriction
 
 autonestbox
 ===========
-Assigns unpastured female egg-layers to nestbox zones. Requires that you create pen/pasture zones above nestboxes. If the pen is bigger than 1x1 the nestbox must be in the top left corner. Only 1 unit will be assigned per pen, regardless of the size. The age of the units is currently not checked, most birds grow up quite fast. When called without options autonestbox will instantly run once.
+Assigns unpastured female egg-layers to nestbox zones. Requires that you create pen/pasture zones above nestboxes. If the pen is bigger than 1x1 the nestbox must be in the top left corner. Only 1 unit will be assigned per pen, regardless of the size. The age of the units is currently not checked, most birds grow up quite fast. Egglayers who are also grazers will be ignored, since confining them to a 1x1 pasture is not a good idea. When called without options autonestbox will instantly run once.
 
 Options:
 --------
@@ -865,7 +866,7 @@ Options:
 
 autobutcher
 ===========
-Assigns lifestock for slaughter once it reaches a specific count. Requires that you add the target race(s) to a watch list. Only tame units of the own civilization will be processed. Named units will be completely ignored (you can give animals nicknames with the tool 'rename unit' to protect them from autobutcher). Once you have too much adults, the oldest will be butchered first. Once you have too much kids, the youngest will be butchered first. If you don't set any target count the following default will be used: 1 male kid, 5 female kids, 1 male adult, 5 female adults.
+Assigns lifestock for slaughter once it reaches a specific count. Requires that you add the target race(s) to a watch list. Only tame units of the own civilization will be processed. Named units will be completely ignored (you can give animals nicknames with the tool 'rename unit' to protect them from autobutcher). Creatures trained for war or hunting will be ignored as well. Once you have too much adults, the oldest will be butchered first. Once you have too much kids, the youngest will be butchered first. If you don't set any target count the following default will be used: 1 male kid, 5 female kids, 1 male adult, 5 female adults.
 
 Options:
 --------

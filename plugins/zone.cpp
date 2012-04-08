@@ -309,6 +309,7 @@ bool isTrained(df::unit* creature);
 bool isWar(df::unit* creature);
 bool isHunter(df::unit* creature);
 bool isOwnCiv(df::unit* creature);
+bool isMerchant(df::unit* creature);
 
 bool isActivityZone(df::building * building);
 bool isPenPasture(df::building * building);
@@ -342,6 +343,11 @@ int32_t getUnitAge(df::unit* unit)
 bool isDead(df::unit* unit)
 {
     return unit->flags1.bits.dead;
+}
+
+bool isMerchant(df::unit* unit)
+{
+	return unit->flags1.bits.merchant;
 }
 
 bool isMarkedForSlaughter(df::unit* unit)
@@ -1614,6 +1620,9 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 				if (isDead(unit)) 
 					continue;
 
+				// ignore merchant units
+				if (isMerchant(unit))
+					continue;
                 if(find_race && getRaceName(unit) != target_race)
                     continue;
                 // ignore own dwarves by default

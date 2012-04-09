@@ -35,13 +35,24 @@ distribution.
 // must be last due to MS stupidity
 #include "DataDefs.h"
 #include "DataIdentity.h"
+#include "DataFuncs.h"
 
 #include "modules/World.h"
+#include "modules/Gui.h"
+#include "modules/Job.h"
+#include "modules/Translation.h"
+#include "modules/Units.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
 
 #include "MiscUtils.h"
+
+#include "df/job.h"
+#include "df/job_item.h"
+#include "df/building.h"
+#include "df/unit.h"
+#include "df/item.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -68,6 +79,13 @@ color_ostream *DFHack::Lua::GetOutput(lua_State *L)
     auto rv = (color_ostream*)lua_touserdata(L, -1);
     lua_pop(L, 1);
     return rv;
+}
+
+df::cur_lua_ostream_argument::cur_lua_ostream_argument(lua_State *state)
+{
+    out = DFHack::Lua::GetOutput(state);
+    if (!out)
+        LuaWrapper::field_error(state, UPVAL_METHOD_NAME, "no output stream", "invoke");
 }
 
 static void set_dfhack_output(lua_State *L, color_ostream *p)
@@ -208,10 +226,14 @@ static int lua_dfhack_lineedit(lua_State *S)
 
 static int DFHACK_EXCEPTION_META_TOKEN = 0;
 
-static void error_tostring(lua_State *L)
+static void error_tostring(lua_State *L, bool keep_old = false)
 {
     lua_getglobal(L, "tostring");
-    lua_pushvalue(L, -2);
+    if (keep_old)
+        lua_pushvalue(L, -2);
+    else
+        lua_swap(L);
+
     bool ok = lua_pcall(L, 1, 1, 0) == LUA_OK;
 
     const char *msg = lua_tostring(L, -1);
@@ -230,8 +252,7 @@ static void error_tostring(lua_State *L)
 
 static void report_error(lua_State *L, color_ostream *out = NULL)
 {
-    lua_dup(L);
-    error_tostring(L);
+    error_tostring(L, true);
 
     const char *msg = lua_tostring(L, -1);
     assert(msg);
@@ -272,7 +293,7 @@ static bool convert_to_exception(lua_State *L)
             lua_setfield(L, base, "message");
         else
         {
-            error_tostring(L);
+            error_tostring(L, true);
             lua_setfield(L, base, "message");
             lua_setfield(L, base, "object");
         }
@@ -328,24 +349,51 @@ static int dfhack_exception_tostring(lua_State *L)
     if (!lua_isstring(L, -1))
         lua_pop(L, 2);
 
+    lua_pushstring(L, "\ncaused by:\n");
+    lua_getfield(L, 1, "cause");
+    if (lua_isnil(L, -1))
+        lua_pop(L, 2);
+    else
+        error_tostring(L);
+
     lua_concat(L, lua_gettop(L) - base);
     return 1;
 }
 
-static int finish_dfhack_safecall (lua_State *L, bool success)
+static void push_simple_error(lua_State *L, const char *str)
 {
-    if (!lua_checkstack(L, 2))
+    lua_pushstring(L, str);
+
+    if (lua_checkstack(L, 5))
+        convert_to_exception(L);
+
+    if (lua_checkstack(L, LUA_MINSTACK))
     {
-        lua_settop(L, 0);  /* create space for return values */
+        luaL_traceback(L, L, NULL, 1);
+        lua_setfield(L, -2, "stacktrace");
+    }
+}
+
+static bool do_finish_pcall(lua_State *L, bool success, int base = 1, int space = 2)
+{
+    if (!lua_checkstack(L, space))
+    {
+        lua_settop(L, base-1);  /* create space for return values */
         lua_pushboolean(L, 0);
-        lua_pushstring(L, "stack overflow in dfhack.safecall()");
-        success = false;
+        push_simple_error(L, "stack overflow");
+        return false;
     }
     else
     {
         lua_pushboolean(L, success);
-        lua_replace(L, 1); /* put first result in first slot */
+        lua_replace(L, base); /* put first result in first slot */
+        return true;
     }
+}
+
+static int finish_dfhack_safecall (lua_State *L, bool success)
+{
+    success = do_finish_pcall(L, success);
 
     if (!success)
         report_error(L);
@@ -581,32 +629,118 @@ static int lua_dfhack_interpreter(lua_State *state)
     return 1;
 }
 
-static int lua_dfhack_with_suspend(lua_State *L)
+static bool do_invoke_cleanup(lua_State *L, int nargs, int errorfun, bool success)
 {
-    int rv = lua_getctx(L, NULL);
+    bool ok = lua_pcall(L, nargs, 0, errorfun) == LUA_OK;
 
-    // Non-resume entry point:
-    if (rv == LUA_OK)
+    if (!ok)
     {
-        int nargs = lua_gettop(L);
+        // If finalization failed, attach the previous error
+        if (lua_istable(L, -1) && !success)
+        {
+            lua_swap(L);
+            lua_setfield(L, -2, "cause");
+        }
 
-        luaL_checktype(L, 1, LUA_TFUNCTION);
-
-        Core::getInstance().Suspend();
-
-        lua_pushcfunction(L, dfhack_onerror);
-        lua_insert(L, 1);
-
-        rv = lua_pcallk(L, nargs-1, LUA_MULTRET, 1, 0, lua_dfhack_with_suspend);
+        success = false;
     }
 
-    // Return, resume, or error entry point:
-    lua_remove(L, 1);
+    return success;
+}
 
-    Core::getInstance().Resume();
+static int finish_dfhack_cleanup (lua_State *L, bool success)
+{
+    int nargs = lua_tointeger(L, 1);
+    bool always = lua_toboolean(L, 2);
+    int rvbase = 4+nargs;
 
-    if (rv != LUA_OK && rv != LUA_YIELD)
+    // stack: [nargs] [always] [errorfun] [cleanup fun] [cleanup args...] |rvbase+1:| [rvals/error...]
+
+    int numret = lua_gettop(L) - rvbase;
+
+    if (!success || always)
+    {
+        if (numret > 0)
+        {
+            if (numret == 1)
+            {
+                // Inject the only result instead of pulling cleanup args
+                lua_insert(L, 4);
+            }
+            else if (!lua_checkstack(L, nargs+1))
+            {
+                success = false;
+                lua_settop(L, rvbase);
+                push_simple_error(L, "stack overflow");
+                lua_insert(L, 4);
+            }
+            else
+            {
+                for (int i = 0; i <= nargs; i++)
+                    lua_pushvalue(L, 4+i);
+            }
+        }
+
+        success = do_invoke_cleanup(L, nargs, 3, success);
+    }
+
+    if (!success)
         lua_error(L);
+
+    return numret;
+}
+
+static int dfhack_cleanup_cont (lua_State *L)
+{
+    int status = lua_getctx(L, NULL);
+    return finish_dfhack_cleanup(L, (status == LUA_YIELD));
+}
+
+static int dfhack_call_with_finalizer (lua_State *L)
+{
+    int nargs = luaL_checkint(L, 1);
+    if (nargs < 0)
+        luaL_argerror(L, 1, "invalid cleanup argument count");
+    luaL_checktype(L, 3, LUA_TFUNCTION);
+
+    // Inject errorfun
+    lua_pushcfunction(L, dfhack_onerror);
+    lua_insert(L, 3);
+
+    int rvbase = 4+nargs; // rvbase+1 points to the function argument
+
+    if (lua_gettop(L) < rvbase)
+        luaL_error(L, "not enough arguments even to invoke cleanup");
+
+    // stack: [nargs] [always] [errorfun] [cleanup fun] [cleanup args...] |rvbase+1:| [fun] [args...]
+
+    // Not enough stack to call and post-cleanup, or nothing to call?
+    bool no_args = lua_gettop(L) == rvbase;
+
+    if (!lua_checkstack(L, nargs+2) || no_args)
+    {
+        push_simple_error(L, no_args ? "fn argument expected" : "stack overflow");
+        lua_insert(L, 4);
+
+        // stack: ... [errorfun] [error] [cleanup fun] [cleanup args...]
+        do_invoke_cleanup(L, nargs, 3, false);
+        lua_error(L);
+    }
+
+    // Actually invoke
+
+    // stack: [nargs] [always] [errorfun] [cleanup fun] [cleanup args...] |rvbase+1:| [fun] [args...]
+    int status = lua_pcallk(L, lua_gettop(L)-rvbase-1, LUA_MULTRET, 3, 0, dfhack_cleanup_cont);
+    return finish_dfhack_cleanup(L, (status == LUA_OK));
+}
+
+static int lua_dfhack_with_suspend(lua_State *L)
+{
+    int nargs = lua_gettop(L);
+    luaL_checktype(L, 1, LUA_TFUNCTION);
+
+    CoreSuspender suspend;
+    lua_call(L, nargs-1, LUA_MULTRET);
 
     return lua_gettop(L);
 }
@@ -621,224 +755,16 @@ static const luaL_Reg dfhack_funcs[] = {
     { "interpreter", lua_dfhack_interpreter },
     { "safecall", lua_dfhack_safecall },
     { "onerror", dfhack_onerror },
+    { "call_with_finalizer", dfhack_call_with_finalizer },
     { "with_suspend", lua_dfhack_with_suspend },
     { NULL, NULL }
 };
 
-/*
- * Per-world persistent configuration storage.
- */
+/************************
+ *  Main Open function  *
+ ************************/
 
-static PersistentDataItem persistent_by_struct(lua_State *state, int idx)
-{
-    lua_getfield(state, idx, "entry_id");
-    int id = lua_tointeger(state, -1);
-    lua_pop(state, 1);
-
-    PersistentDataItem ref = Core::getInstance().getWorld()->GetPersistentData(id);
-
-    if (ref.isValid())
-    {
-        lua_getfield(state, idx, "key");
-        const char *str = lua_tostring(state, -1);
-        if (!str || str != ref.key())
-            luaL_argerror(state, idx, "inconsistent id and key");
-        lua_pop(state, 1);
-    }
-
-    return ref;
-}
-
-static int read_persistent(lua_State *state, PersistentDataItem ref, bool create)
-{
-    if (!ref.isValid())
-    {
-        lua_pushnil(state);
-        lua_pushstring(state, "entry not found");
-        return 2;
-    }
-
-    if (create)
-        lua_createtable(state, 0, 4);
-
-    lua_pushvalue(state, lua_upvalueindex(1));
-    lua_setmetatable(state, -2);
-
-    lua_pushinteger(state, ref.entry_id());
-    lua_setfield(state, -2, "entry_id");
-    lua_pushstring(state, ref.key().c_str());
-    lua_setfield(state, -2, "key");
-    lua_pushstring(state, ref.val().c_str());
-    lua_setfield(state, -2, "value");
-
-    lua_createtable(state, PersistentDataItem::NumInts, 0);
-    for (int i = 0; i < PersistentDataItem::NumInts; i++)
-    {
-        lua_pushinteger(state, ref.ival(i));
-        lua_rawseti(state, -2, i+1);
-    }
-    lua_setfield(state, -2, "ints");
-
-    return 1;
-}
-
-static PersistentDataItem get_persistent(lua_State *state)
-{
-    luaL_checkany(state, 1);
-
-    if (lua_istable(state, 1))
-    {
-        if (!lua_getmetatable(state, 1) ||
-            !lua_rawequal(state, -1, lua_upvalueindex(1)))
-            luaL_argerror(state, 1, "invalid table type");
-
-        lua_settop(state, 1);
-
-        return persistent_by_struct(state, 1);
-    }
-    else
-    {
-        const char *str = luaL_checkstring(state, 1);
-
-        return Core::getInstance().getWorld()->GetPersistentData(str);
-    }
-}
-
-static int dfhack_persistent_get(lua_State *state)
-{
-    CoreSuspender suspend;
-
-    auto ref = get_persistent(state);
-
-    return read_persistent(state, ref, !lua_istable(state, 1));
-}
-
-static int dfhack_persistent_delete(lua_State *state)
-{
-    CoreSuspender suspend;
-
-    auto ref = get_persistent(state);
-
-    bool ok = Core::getInstance().getWorld()->DeletePersistentData(ref);
-
-    lua_pushboolean(state, ok);
-    return 1;
-}
-
-static int dfhack_persistent_get_all(lua_State *state)
-{
-    CoreSuspender suspend;
-
-    const char *str = luaL_checkstring(state, 1);
-    bool prefix = (lua_gettop(state)>=2 ? lua_toboolean(state,2) : false);
-
-    std::vector<PersistentDataItem> data;
-    Core::getInstance().getWorld()->GetPersistentData(&data, str, prefix);
-
-    if (data.empty())
-    {
-        lua_pushnil(state);
-    }
-    else
-    {
-        lua_createtable(state, data.size(), 0);
-        for (size_t i = 0; i < data.size(); ++i)
-        {
-            read_persistent(state, data[i], true);
-            lua_rawseti(state, -2, i+1);
-        }
-    }
-
-    return 1;
-}
-
-static int dfhack_persistent_save(lua_State *state)
-{
-    CoreSuspender suspend;
-
-    lua_settop(state, 2);
-    luaL_checktype(state, 1, LUA_TTABLE);
-    bool add = lua_toboolean(state, 2);
-
-    lua_getfield(state, 1, "key");
-    const char *str = lua_tostring(state, -1);
-    if (!str)
-        luaL_argerror(state, 1, "no key field");
-
-    lua_settop(state, 1);
-
-    PersistentDataItem ref;
-    bool added = false;
-
-    if (add)
-    {
-        ref = Core::getInstance().getWorld()->AddPersistentData(str);
-        added = true;
-    }
-    else if (lua_getmetatable(state, 1))
-    {
-        if (!lua_rawequal(state, -1, lua_upvalueindex(1)))
-            return luaL_argerror(state, 1, "invalid table type");
-        lua_pop(state, 1);
-
-        ref = persistent_by_struct(state, 1);
-    }
-    else
-    {
-        ref = Core::getInstance().getWorld()->GetPersistentData(str);
-    }
-
-    if (!ref.isValid())
-    {
-        ref = Core::getInstance().getWorld()->AddPersistentData(str);
-        if (!ref.isValid())
-            luaL_error(state, "cannot create persistent entry");
-        added = true;
-    }
-
-    lua_getfield(state, 1, "value");
-    if (const char *str = lua_tostring(state, -1))
-        ref.val() = str;
-    lua_pop(state, 1);
-
-    lua_getfield(state, 1, "ints");
-    if (lua_istable(state, -1))
-    {
-        for (int i = 0; i < PersistentDataItem::NumInts; i++)
-        {
-            lua_rawgeti(state, -1, i+1);
-            if (lua_isnumber(state, -1))
-                ref.ival(i) = lua_tointeger(state, -1);
-            lua_pop(state, 1);
-        }
-    }
-    lua_pop(state, 1);
-
-    read_persistent(state, ref, false);
-    lua_pushboolean(state, added);
-    return 2;
-}
-
-static const luaL_Reg dfhack_persistent_funcs[] = {
-    { "get", dfhack_persistent_get },
-    { "delete", dfhack_persistent_delete },
-    { "get_all", dfhack_persistent_get_all },
-    { "save", dfhack_persistent_save },
-    { NULL, NULL }
-};
-
-static void OpenPersistent(lua_State *state)
-{
-    luaL_getsubtable(state, lua_gettop(state), "persistent");
-
-    lua_dup(state);
-    luaL_setfuncs(state, dfhack_persistent_funcs, 1);
-
-    lua_dup(state);
-    lua_setfield(state, -2, "__index");
-
-    lua_pop(state, 1);
-}
+void OpenDFHackApi(lua_State *state);
 
 lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
 {
@@ -866,7 +792,7 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     // Initialize the dfhack global
     luaL_setfuncs(state, dfhack_funcs, 0);
 
-    OpenPersistent(state);
+    OpenDFHackApi(state);
 
     lua_setglobal(state, "dfhack");
 

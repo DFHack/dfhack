@@ -139,8 +139,16 @@ namespace DFHack
         PersistentDataItem AddPersistentData(const std::string &key);
         PersistentDataItem GetPersistentData(const std::string &key);
         PersistentDataItem GetPersistentData(int entry_id);
+        // Calls GetPersistentData(key); if not found, adds and sets added to true.
+        // The result can still be not isValid() e.g. if the world is not loaded.
+        PersistentDataItem GetPersistentData(const std::string &key, bool *added);
+        // Lists all items with the given key.
+        // If prefix is true, search for keys starting with key+"/".
+        // GetPersistentData(&vec,"",true) returns all items.
+        // Items have alphabetic order by key; same key ordering is undefined.
         void GetPersistentData(std::vector<PersistentDataItem> *vec,
                                const std::string &key, bool prefix = false);
+        // Deletes the item; returns true if success.
         bool DeletePersistentData(const PersistentDataItem &item);
 
         void ClearPersistentCache();

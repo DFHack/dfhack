@@ -50,6 +50,8 @@ DFHACK_EXPORT bool IsValid ();
 DFHACK_EXPORT bool readName(t_name & name, df::language_name * address);
 DFHACK_EXPORT bool copyName(df::language_name * address, df::language_name * target);
 
+DFHACK_EXPORT void setNickname(df::language_name *name, std::string nick);
+
 // translate a name using the loaded dictionaries
 DFHACK_EXPORT std::string TranslateName (const df::language_name * name, bool inEnglish = true,
                                          bool onlyLastPart = false);

@@ -33,6 +33,11 @@ distribution.
 #include "DataDefs.h"
 #include "df/unit.h"
 
+namespace df
+{
+    struct nemesis_record;
+}
+
 /**
  * \defgroup grp_units Unit module parts
  * @ingroup grp_modules
@@ -193,7 +198,10 @@ DFHACK_EXPORT void CopyNameTo(df::unit *creature, df::language_name * target);
 DFHACK_EXPORT bool RemoveOwnedItemByIdx(const uint32_t index, int32_t id);
 DFHACK_EXPORT bool RemoveOwnedItemByPtr(df::unit * unit, int32_t id);
 
-DFHACK_EXPORT df::language_name *GetVisibleName(df::unit *unit);
+DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
+DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
+
+DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
 
 DFHACK_EXPORT bool isDead(df::unit *unit);
 DFHACK_EXPORT bool isAlive(df::unit *unit);

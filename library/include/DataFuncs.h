@@ -32,6 +32,10 @@ distribution.
 #include "DataIdentity.h"
 #include "LuaWrapper.h"
 
+#ifndef BUILD_DFHACK_LIB
+#error Due to export issues this header is internal to the main library.
+#endif
+
 namespace df {
     // A very simple and stupid implementation of some stuff from boost
     template<class U, class V> struct is_same_type { static const bool value = false; };
@@ -45,6 +49,13 @@ namespace df {
      */
     template<class T, bool isvoid = is_same_type<typename return_type<T>::type,void>::value>
     struct function_wrapper {};
+
+    class cur_lua_ostream_argument {
+        DFHack::color_ostream *out;
+    public:
+        cur_lua_ostream_argument(lua_State *state);
+        operator DFHack::color_ostream& () { return *out; }
+    };
 
     /*
      * Since templates can't match variable arg count,
@@ -63,10 +74,15 @@ namespace df {
     CT *self = (CT*)DFHack::LuaWrapper::get_object_addr(state, base++, UPVAL_METHOD_NAME, "invoke");
 #define LOAD_ARG(type) \
     type v##type; df::identity_traits<type>::get()->lua_write(state, UPVAL_METHOD_NAME, &v##type, base++);
+#define OSTREAM_ARG DFHack::color_ostream&
+#define LOAD_OSTREAM(name) \
+    cur_lua_ostream_argument name(state);
+
+#define INSTANTIATE_RETURN_TYPE(FArgs) \
+    template<FW_TARGSC class RT> struct return_type<RT (*) FArgs> { typedef RT type; }; \
+    template<FW_TARGSC class RT, class CT> struct return_type<RT (CT::*) FArgs> { typedef RT type; };
 
 #define INSTANTIATE_WRAPPERS(Count, FArgs, Args, Loads) \
-    template<FW_TARGSC class RT> struct return_type<RT (*) FArgs> { typedef RT type; }; \
-    template<FW_TARGSC class RT, class CT> struct return_type<RT (CT::*) FArgs> { typedef RT type; }; \
     template<FW_TARGS> struct function_wrapper<void (*) FArgs, true> { \
         static const bool is_method = false; \
         static const int num_args = Count; \
@@ -92,24 +108,35 @@ namespace df {
 
 #define FW_TARGSC
 #define FW_TARGS
+INSTANTIATE_RETURN_TYPE(())
 INSTANTIATE_WRAPPERS(0, (), (), ;)
+INSTANTIATE_WRAPPERS(0, (OSTREAM_ARG), (out), LOAD_OSTREAM(out);)
 #undef FW_TARGS
 
 #undef FW_TARGSC
 #define FW_TARGSC FW_TARGS,
 #define FW_TARGS class A1
+INSTANTIATE_RETURN_TYPE((A1))
 INSTANTIATE_WRAPPERS(1, (A1), (vA1), LOAD_ARG(A1);)
+INSTANTIATE_WRAPPERS(1, (OSTREAM_ARG,A1), (out,vA1), LOAD_OSTREAM(out); LOAD_ARG(A1);)
 #undef FW_TARGS
 
 #define FW_TARGS class A1, class A2
+INSTANTIATE_RETURN_TYPE((A1,A2))
 INSTANTIATE_WRAPPERS(2, (A1,A2), (vA1,vA2), LOAD_ARG(A1); LOAD_ARG(A2);)
+INSTANTIATE_WRAPPERS(2, (OSTREAM_ARG,A1,A2), (out,vA1,vA2),
+                     LOAD_OSTREAM(out); LOAD_ARG(A1); LOAD_ARG(A2);)
 #undef FW_TARGS
 
 #define FW_TARGS class A1, class A2, class A3
+INSTANTIATE_RETURN_TYPE((A1,A2,A3))
 INSTANTIATE_WRAPPERS(3, (A1,A2,A3), (vA1,vA2,vA3), LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);)
+INSTANTIATE_WRAPPERS(3, (OSTREAM_ARG,A1,A2,A3), (out,vA1,vA2,vA3),
+                     LOAD_OSTREAM(out); LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);)
 #undef FW_TARGS
 
 #define FW_TARGS class A1, class A2, class A3, class A4
+INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4))
 INSTANTIATE_WRAPPERS(4, (A1,A2,A3,A4), (vA1,vA2,vA3,vA4),
                      LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);)
 #undef FW_TARGS
@@ -120,6 +147,8 @@ INSTANTIATE_WRAPPERS(4, (A1,A2,A3,A4), (vA1,vA2,vA3,vA4),
 #undef INVOKE_RV
 #undef LOAD_CLASS
 #undef LOAD_ARG
+#undef OSTREAM_ARG
+#undef LOAD_OSTREAM
 
     template<class T>
     class function_identity : public function_identity_base {

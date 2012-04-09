@@ -911,7 +911,7 @@ Settings and watchlist are stored in the savegame, so that you can have differen
 ::  
 
      Load savegame where you made the settings.
-	 Start a CMD shell and navigate to the df directory. Type the following into the shell:
-	 dfhack-run autobutcher list_export > autobutcher.bat
+     Start a CMD shell and navigate to the df directory. Type the following into the shell:
+     dfhack-run autobutcher list_export > autobutcher.bat
      Load the savegame where you want to copy the settings to, run the batch file (from the shell):
-	 autobutcher.bat
+     autobutcher.bat

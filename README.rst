@@ -866,7 +866,7 @@ Options:
 
 autobutcher
 ===========
-Assigns lifestock for slaughter once it reaches a specific count. Requires that you add the target race(s) to a watch list. Only tame units of the own civilization will be processed. Named units will be completely ignored (you can give animals nicknames with the tool 'rename unit' to protect them from autobutcher). Creatures trained for war or hunting will be ignored as well. Once you have too much adults, the oldest will be butchered first. Once you have too much kids, the youngest will be butchered first. If you don't set any target count the following default will be used: 1 male kid, 5 female kids, 1 male adult, 5 female adults.
+Assigns lifestock for slaughter once it reaches a specific count. Requires that you add the target race(s) to a watch list. Only tame units will be processed. Named units will be completely ignored (you can give animals nicknames with the tool 'rename unit' to protect them from autobutcher). Creatures trained for war or hunting will be ignored as well. Once you have too much adults, the oldest will be butchered first. Once you have too much kids, the youngest will be butchered first. If you don't set any target count the following default will be used: 1 male kid, 5 female kids, 1 male adult, 5 female adults.
 
 Options:
 --------
@@ -879,7 +879,8 @@ Options:
 :autowatch:    Automatically adds all new races (animals you buy from merchants, tame yourself or get from migrants) 
                to the watch list using default target count. 
 :noautowatch:  Stop auto-adding new races to the watchlist.
-:list:         Print a list of watched races.
+:list:         Print the current status and watchlist.
+:list_export:  Print status and watchlist in a format which can be used to import them to another savegame (see notes).
 :target fk mk fa ma R: Set target count for specified race(s).
                  fk = number of female kids,
                  mk = number of male kids,
@@ -904,3 +905,13 @@ Automatically put all new races onto the watchlist and mark unnamed tame units f
      autobutcher autowatch
      autobutcher start
     
+Note:
+-----
+Settings and watchlist are stored in the savegame, so that you can have different settings for each world. If you want to copy your watchlist to another savegame you can use the command list_export:
+::  
+
+     Load savegame where you made the settings.
+	 Start a CMD shell and navigate to the df directory. Type the following into the shell:
+	 dfhack-run autobutcher list_export > autobutcher.bat
+     Load the savegame where you want to copy the settings to, run the batch file (from the shell):
+	 autobutcher.bat

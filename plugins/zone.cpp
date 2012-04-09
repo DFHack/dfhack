@@ -17,10 +17,12 @@
 //   go through all pens, check if they are empty and placed over a nestbox
 //   find female tame egg-layer who is not assigned to another pen and assign it to nestbox pasture
 //   maybe check for minimum age? it's not that useful to fill nestboxes with freshly hatched birds
+//   state and sleep setting is saved the first time autonestbox is started (to avoid writing stuff if the plugin is never used)
 // - full automation of marking live-stock for slaughtering
 //   races can be added to a watchlist and it can be set how many male/female kids/adults are left alive
 //   adding to the watchlist can be automated as well.
-//   TODO: - save config
+//   config for autobutcher (state and sleep setting) is saved the first time autobutcher is started
+//   config for watchlist entries is saved when they are created or modified
 
 #include <iostream>
 #include <iomanip>
@@ -43,6 +45,7 @@ using namespace std;
 #include "modules/Materials.h"
 #include "modules/MapCache.h"
 #include "modules/Buildings.h"
+#include "modules/World.h"
 #include "MiscUtils.h"
 
 #include <df/ui.h>
@@ -100,8 +103,8 @@ const string zone_help_filters =
     "  unassigned   - not assigned to zone, chain or built cage\n"
     "  caged        - in a built cage\n"
     "  uncaged      - not in cage\n"
-    "  foreign      - not of own civilization (i.e. own fortress)\n"
     "  own          - from own civilization\n"
+    "  foreign      - not of own civilization\n"
     "  war          - trained war creature\n"
     "  tamed        - tamed\n"
     "  named        - has name or nickname\n"
@@ -133,15 +136,14 @@ const string zone_help_examples =
     "  zone assign all own race DWARF maxage 2\n"
     "    throw all useless kids into a pit :)\n"
     "Notes:\n"
-    "  Assigning per filters ignores built cages and chains currently.\n"
-    "  Usually you should always use the filter 'own' (which implies tame)\n"
-    "  unless you want to use the zone tool for pitting hostiles.\n"
-    "  'own' ignores own dwarves unless you specify 'race DWARF'\n"
-    "  (so it's safe to use 'assign all own' to one big pasture\n"
+    "  Assigning per filters ignores built cages and chains currently. Usually you\n"
+    "  should always use the filter 'own' (which implies tame) unless you want to\n"
+    "  use the zone tool for pitting hostiles. 'own' ignores own dwarves unless you\n"
+    "  specify 'race DWARF' and it ignores merchants and their animals unless you\n"
+    "  specify 'merchant' (so it's safe to use 'assign all own' to one big pasture\n"
     "  if you want to have all your animals at the same place).\n"
-    "  Merchants and their animals are ignored by default.\n"
     "  'egglayer' and 'milkable' should be used together with 'female'\n"
-    "  unless you have a mod with egg-laying male elves who give milk.\n";
+    "  well, unless you have a mod with egg-laying male elves who give milk...\n";
 
 
 const string autonestbox_help =
@@ -159,10 +161,10 @@ const string autonestbox_help =
 
 const string autobutcher_help =
     "Assigns your lifestock for slaughter once it reaches a specific count. Requires\n"
-    "that you add the target race(s) to a watch list. Only tame units of your own\n"
-    "civilization will be processed. Named units will be completely ignored (you can\n"
-    "give animals nicknames with the tool 'rename unit' to protect them from\n"
-    "getting slaughtered automatically. Trained war or hunting pets will be ignored.\n"
+    "that you add the target race(s) to a watch list. Only tame units will be\n"
+    "processed. Named units will be completely ignored (you can give animals\n"
+    "nicknames with the tool 'rename unit' to protect them from getting slaughtered\n"
+    "automatically. Trained war or hunting pets will be ignored.\n"
     "Once you have too much adults, the oldest will be butchered first.\n"
     "Once you have too much kids, the youngest will be butchered first.\n"
     "If you don't set a target count the following default will be used:\n"
@@ -184,7 +186,10 @@ const string autobutcher_help =
     "                 from merchants, tame yourself or get from migrants)\n"
     "                 to the watch list using default target count\n"
     "  noautowatch  - stop auto-adding new races to the watch list\n"
-    "  list         - print a list of watched races\n"
+    "  list         - print status and watchlist\n"
+    "  list_export  - print status and watchlist in batchfile format\n"
+    "                 can be used to copy settings into another savegame\n"
+    "                 usage: 'dfhack-run autobutcher list_export > xyz.bat' \n"
     "  target fk mk fa ma R\n"
     "               - set target count for specified race:\n"
     "                 fk = number of female kids\n"
@@ -214,6 +219,13 @@ const string autobutcher_help_example =
     "    and mark unnamed tame units for slaughter as soon as they arrive in your\n"
     "    fortress. Settings already made for some races will be left untouched.\n";
 
+command_result init_autobutcher(color_ostream &out);
+command_result cleanup_autobutcher(color_ostream &out);
+command_result start_autobutcher(color_ostream &out);
+
+command_result init_autonestbox(color_ostream &out);
+command_result cleanup_autonestbox(color_ostream &out);
+command_result start_autonestbox(color_ostream &out);
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -232,13 +244,15 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         df_autobutcher, false,
         autobutcher_help.c_str()
         ));
+    init_autobutcher(out);
+    init_autonestbox(out);
     return CR_OK;
 }
 
-command_result autobutcher_cleanup(color_ostream &out);
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    autobutcher_cleanup(out);
+    cleanup_autobutcher(out);
+    cleanup_autonestbox(out);
     return CR_OK;
 }
 
@@ -256,18 +270,25 @@ static size_t sleep_autonestbox = 6000;
 static size_t sleep_autobutcher = 6000;
 static bool autonestbox_did_complain = false; // avoids message spam
 
+static PersistentDataItem config_autobutcher;
+static PersistentDataItem config_autonestbox;
+
+
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) 
     {
     case DFHack::SC_MAP_LOADED:
         // initialize from the world just loaded
+        init_autobutcher(out);
+        init_autonestbox(out);
         break;
     case DFHack::SC_MAP_UNLOADED:
         enable_autonestbox = false;
         enable_autobutcher = false;
         // cleanup
-        autobutcher_cleanup(out);
+        cleanup_autobutcher(out);
+        cleanup_autonestbox(out);
         break;
     default:
         break;
@@ -348,6 +369,14 @@ int32_t getUnitAge(df::unit* unit)
 bool isDead(df::unit* unit)
 {
     return unit->flags1.bits.dead;
+}
+
+// ignore vampires, they should be treated like normal dwarves
+bool isUndead(df::unit* unit)
+{
+    return (unit->flags3.bits.ghostly ||
+            ( (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE || unit->curse.add_tags1.bits.NOT_LIVING)
+             && !unit->curse.add_tags1.bits.BLOODSUCKER ));
 }
 
 bool isMerchant(df::unit* unit)
@@ -456,6 +485,11 @@ bool isOwnRace(df::unit* creature)
     return creature->race == ui->race_id;
 }
 
+string getRaceName(int32_t id)
+{
+    df::creature_raw *raw = df::global::world->raws.creatures.all[id];
+    return raw->creature_id;
+}
 string getRaceName(df::unit* unit)
 {
     df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
@@ -610,16 +644,16 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
         out << ", merchant";
     if(isForest(unit))
         out << ", forest";
+    if(isEggLayer(unit))
+        out << ", egglayer";
+    if(isGrazer(unit))
+        out << ", grazer";
+    if(isMilkable(unit))
+        out << ", milkable";
     
     if(verbose)
     {
         out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ")" << endl;
-        if(isEggLayer(unit))
-            out << ", egglayer";
-        if(isGrazer(unit))
-            out << ", grazer";
-        if(isMilkable(unit))
-            out << ", milkable";
     }
     out << endl;
 
@@ -974,7 +1008,7 @@ df::building* findFreeNestboxZone()
 
 bool isFreeEgglayer(df::unit * unit)
 {
-    if( !isDead(unit)
+    if( !isDead(unit) && !isUndead(unit)
         && isFemale(unit)
         && isTame(unit)
         && isOwnCiv(unit)
@@ -1086,9 +1120,8 @@ command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building
     df::building_civzonest * civz = (df::building_civzonest *) building;
     civz->assigned_creature.push_back(unit->id);
 
-    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
     out << "Unit " << unit->id 
-        << "(" << raw->creature_id << ")" 
+        << "(" << getRaceName(unit) << ")" 
         << " assigned to zone " << building->id;
     if(isPit(building))
         out << " (pit).";
@@ -1626,8 +1659,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             {
                 df::unit *unit = world->units.all[c];
 
-                // ignore dead units
-                if (isDead(unit)) 
+                // ignore dead and undead units
+                if (isDead(unit) || isUndead(unit)) 
                     continue;
 
                 // ignore merchant units by default
@@ -1766,6 +1799,9 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
+////////////////////
+// autonestbox stuff
+
 command_result df_autonestbox(color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
@@ -1783,16 +1819,16 @@ command_result df_autonestbox(color_ostream &out, vector <string> & parameters)
         }
         if (p == "start")
         {
-            enable_autonestbox = true;
             autonestbox_did_complain = false;
-            out << "Autonestbox started.";
+            start_autonestbox(out);
             return autoNestbox(out, verbose);
-            //return CR_OK;
         }
         if (p == "stop")
         {
             enable_autonestbox = false;
-            out << "Autonestbox stopped.";
+            if(config_autonestbox.isValid())
+                config_autonestbox.ival(0) = 0;
+            out << "Autonestbox stopped." << endl;
             return CR_OK;
         }
         else if(p == "verbose")
@@ -1818,6 +1854,8 @@ command_result df_autonestbox(color_ostream &out, vector <string> & parameters)
                     return CR_WRONG_USAGE;
                 }
                 sleep_autonestbox = ticks;
+                if(config_autonestbox.isValid())
+                    config_autonestbox.ival(1) = sleep_autonestbox;
                 out << "New sleep timer for autonestbox: " << ticks << " ticks." << endl;
                 return CR_OK;
             }
@@ -1853,8 +1891,6 @@ command_result autoNestbox( color_ostream &out, bool verbose = false )
             if(result != CR_OK)
                 return result;
             processed ++;
-            //if(find_count && processed >= target_count)
-            //    stop = true;
         }
         else
         {
@@ -1895,6 +1931,8 @@ command_result autoNestbox( color_ostream &out, bool verbose = false )
     return CR_OK;
 }
 
+////////////////////
+// autobutcher stuff
 
 // getUnitAge() returns 0 if born in current year, therefore the look at birth_time in that case
 // (assuming that the value from there indicates in which tick of the current year the unit was born)
@@ -1932,6 +1970,7 @@ bool compareUnitAgesOlder(df::unit* i, df::unit* j)
 struct WatchedRace
 {
 public:
+    PersistentDataItem rconfig;
 
     bool isWatched; // if true, autobutcher will process this race
     int raceId;
@@ -1960,6 +1999,40 @@ public:
     ~WatchedRace()
     {
         ClearUnits();
+    }
+
+    void UpdateConfig(color_ostream & out)
+    {
+        if(!rconfig.isValid())
+        {
+            string keyname = "autobutcher/watchlist/" + getRaceName(raceId);
+            auto pworld = Core::getInstance().getWorld();
+            rconfig = pworld->GetPersistentData(keyname);
+            if(!rconfig.isValid())
+                rconfig = pworld->AddPersistentData(keyname);
+        }
+        if(rconfig.isValid())
+        {
+            rconfig.ival(0) = raceId;
+            rconfig.ival(1) = isWatched;
+            rconfig.ival(2) = fk;
+            rconfig.ival(3) = mk;
+            rconfig.ival(4) = fa;
+            rconfig.ival(5) = ma;
+        }
+        else
+        {
+            // this should never happen
+            string keyname = "autobutcher/watchlist/" + getRaceName(raceId);
+            out << "Something failed, could not find/create config key " << keyname << "!" << endl;
+        }
+    } 
+    
+    void RemoveConfig(color_ostream & out)
+    {
+        if(!rconfig.isValid())
+            return;
+        Core::getInstance().getWorld()->DeletePersistentData(rconfig);
     }
 
     void SortUnitsByAge()
@@ -2065,24 +2138,11 @@ public:
 // to ignore them for a while but still keep the target count settings
 std::vector<WatchedRace*> watched_races;
 
-// default target values
-// move those somewhere else for persistency
+// default target values for autobutcher
 static int default_fk = 5;
 static int default_mk = 1;
 static int default_fa = 5;
 static int default_ma = 1;
-
-
-command_result autobutcher_cleanup(color_ostream &out)
-{
-    for(size_t i=0; i<watched_races.size(); i++)
-    {
-        //watched_races.ClearUnits();
-        delete watched_races[i];
-    }
-    watched_races.clear();
-    return CR_OK;
-}
 
 command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
 {
@@ -2093,6 +2153,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     bool unwatch_race = false;
     bool forget_race = false;
     bool list_watched = false;
+    bool list_export = false;
     bool change_target = false;
     vector <string> target_racenames;
     vector <int> target_raceids;
@@ -2126,12 +2187,14 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     else if (p == "start")
     {
         enable_autobutcher = true;
-        out << "Autobutcher started." << endl;
+        start_autobutcher(out);
         return autoButcher(out, verbose);
     }
     else if (p == "stop")
     {
         enable_autobutcher = false;
+        if(config_autobutcher.isValid())
+            config_autobutcher.ival(0) = enable_autobutcher;
         out << "Autobutcher stopped." << endl;
         return CR_OK;
     }
@@ -2154,6 +2217,8 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
                 return CR_WRONG_USAGE;
             }
             sleep_autobutcher = ticks;
+            if(config_autobutcher.isValid())
+                config_autobutcher.ival(1) = sleep_autobutcher;
             out << "New sleep timer for autobutcher: " << ticks << " ticks." << endl;
             return CR_OK;
         }
@@ -2197,24 +2262,32 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
             ma >> target_ma;
             parameters.erase(parameters.begin(), parameters.begin()+5);
             change_target = true;
-            out << "Setting new target count for race(s)." << endl;
+            out << "Setting new target count for race(s):" << endl;
         }
     }
     else if(p == "autowatch")
     {
         out << "Auto-adding to watchlist started." << endl;
         enable_autobutcher_autowatch = true;
+        if(config_autobutcher.isValid())
+            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
         return CR_OK;
     }
     else if(p == "noautowatch")
     {
         out << "Auto-adding to watchlist stopped." << endl;
         enable_autobutcher_autowatch = false;
+        if(config_autobutcher.isValid())
+            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
         return CR_OK;
     }
     else if(p == "list")
     {
         list_watched = true;
+    }
+    else if(p == "list_export")
+    {
+        list_export = true;
     }
     else
     {
@@ -2224,6 +2297,27 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
 
     if(list_watched)
     {
+        out << "Autobutcher status: ";
+        
+        if(enable_autobutcher)
+            out << "enabled,";
+        else
+            out << "not enabled,";
+        
+        if (enable_autobutcher_autowatch)
+            out << " autowatch,";
+        else
+            out << " noautowatch,";
+        
+        out << " sleep: " << sleep_autobutcher << endl;
+        
+        out << "Default setting for new races:"
+            << " fk=" << default_fk
+            << " mk=" << default_mk
+            << " fa=" << default_fa
+            << " ma=" << default_ma
+            << endl;
+
         if(!watched_races.size())
         {
             out << "The autobutcher race list is empty." << endl;
@@ -2246,6 +2340,48 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
                 << " fa=" << w->fa
                 << " ma=" << w->ma
                 << endl;
+        }
+        return CR_OK;
+    }
+
+    if(list_export)
+    {
+        string run = "dfhack-run autobutcher ";
+#ifdef LINUX_BUILD
+        run = "./dfhack-run autobutcher "
+#endif
+        // force creation of config
+        out << run << "start" << endl;
+
+        if(!enable_autobutcher)
+            out << run << "stop" << endl;        
+
+        if (enable_autobutcher_autowatch)
+            out << run << "autowatch" << endl;
+
+        out << run << "sleep " << sleep_autobutcher << endl;
+        out << run << "target"
+            << " " << default_fk
+            << " " << default_mk
+            << " " << default_fa
+            << " " << default_ma
+            << " new" << endl;
+
+        for(size_t i=0; i<watched_races.size(); i++)
+        {
+            WatchedRace * w = watched_races[i];
+            df::creature_raw * raw = df::global::world->raws.creatures.all[w->raceId];
+            string name = raw->creature_id;
+
+            out << run << "target"
+                << " " << w->fk
+                << " " << w->mk
+                << " " << w->fa
+                << " " << w->ma
+                << " " << name << endl;
+
+            if(w->isWatched)
+                out << run << "watch " << name << endl;
         }
         return CR_OK;
     }
@@ -2281,6 +2417,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
             w->mk = target_mk;
             w->fa = target_fa;
             w->ma = target_ma;
+            w->UpdateConfig(out);
         }
     }
 
@@ -2291,6 +2428,13 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         default_mk = target_mk;
         default_fa = target_fa;
         default_ma = target_ma;
+        if(config_autobutcher.isValid())
+        {
+            config_autobutcher.ival(3) = default_fk;
+            config_autobutcher.ival(4) = default_mk;
+            config_autobutcher.ival(5) = default_fa;
+            config_autobutcher.ival(6) = default_ma;
+        }
         return CR_OK;
     }
 
@@ -2301,8 +2445,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         bool found_race = false;
         for(size_t i=0; i<num_races; i++)
         {
-            df::creature_raw *raw = df::global::world->raws.creatures.all[i];
-            if(raw->creature_id == target_racenames.back())
+            if(getRaceName(i) == target_racenames.back())
             {
                 target_raceids.push_back(i);
                 target_racenames.pop_back();
@@ -2326,17 +2469,27 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
             if(w->raceId == target_raceids.back())
             {
                 if(unwatch_race)
+                {
                     w->isWatched=false;
+                    w->UpdateConfig(out);
+                }
                 else if(forget_race)
+                {
+                    w->RemoveConfig(out);
                     watched_races.erase(watched_races.begin()+i);
+                }
                 else if(watch_race)
+                {
                     w->isWatched = true;
+                    w->UpdateConfig(out);
+                }
                 else if(change_target)
                 {
                     w->fk = target_fk;
                     w->mk = target_mk;
                     w->fa = target_fa;
                     w->ma = target_ma;
+                    w->UpdateConfig(out);
                 }
                 entry_found = true;
                 break;
@@ -2345,6 +2498,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         if(!entry_found && (watch_race||change_target))
         {
             WatchedRace * w = new WatchedRace(watch_race, target_raceids.back(), target_fk, target_mk, target_fa, target_ma);
+            w->UpdateConfig(out);
             watched_races.push_back(w);
         }
         target_raceids.pop_back();
@@ -2390,6 +2544,7 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
     {
         df::unit * unit = world->units.all[i];
         if(    isDead(unit)
+            || isUndead(unit)
             || isMarkedForSlaughter(unit)
             || isMerchant(unit) // ignore merchants' draught animals
             || isForest(unit) // ignore merchants' caged animals
@@ -2417,10 +2572,14 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
         else if(enable_autobutcher_autowatch)
         {
             WatchedRace * w = new WatchedRace(true, unit->race, default_fk, default_mk, default_fa, default_ma);
+            w->UpdateConfig(out);
             watched_races.push_back(w);
             w->PushUnit(unit);
-            df::creature_raw *raw = df::global::world->raws.creatures.all[w->raceId];
-            out << "New race added to autoslaughter watchlist: " << raw->creature_id << endl;
+
+            string announce;
+            announce = "New race added to autobutcher watchlist: " + getRaceName(w->raceId);
+            Gui::showAnnouncement(announce, 2, false);
+            //out << announce << endl;       
         }
     }
 
@@ -2430,11 +2589,164 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
         WatchedRace * w = watched_races[i];
         int slaughter_subcount = w->ProcessUnits();
         slaughter_count += slaughter_subcount;
-        df::creature_raw *raw = df::global::world->raws.creatures.all[w->raceId];
         if(slaughter_subcount)
-            out << raw->creature_id << " marked for slaughter: " << slaughter_subcount << endl;
+        {
+            stringstream ss;
+            ss << slaughter_subcount;
+            string announce;
+            announce = getRaceName(w->raceId) + " marked for slaughter: " + ss.str();
+            Gui::showAnnouncement(announce, 2, false);
+            //out << announce << endl;       
+        }
     }
     //out << slaughter_count << " units total marked for slaughter." << endl;
 
+    return CR_OK;
+}
+
+////////////////////////////////////////////////////
+// autobutcher and autonestbox start/init/cleanup
+
+command_result start_autobutcher(color_ostream &out)
+{
+    auto pworld = Core::getInstance().getWorld();
+
+    enable_autobutcher = true;
+    if (!config_autobutcher.isValid())
+    {
+        config_autobutcher = pworld->AddPersistentData("autobutcher/config");
+        config_autobutcher.ival(0) = enable_autobutcher;
+        config_autobutcher.ival(1) = sleep_autobutcher;
+        config_autobutcher.ival(2) = enable_autobutcher_autowatch;
+        config_autobutcher.ival(3) = default_fk;
+        config_autobutcher.ival(4) = default_mk;
+        config_autobutcher.ival(5) = default_fa;
+        config_autobutcher.ival(6) = default_ma;
+    }
+
+    out << "Starting autobutcher." << endl;
+	cleanup_autobutcher(out);
+	init_autobutcher(out);
+    return CR_OK;
+}
+
+command_result init_autobutcher(color_ostream &out)
+{
+    auto pworld = Core::getInstance().getWorld();
+    if(!pworld)
+    {
+        out << "Autobutcher has no world to read from!" << endl;
+        return CR_OK;
+    }
+
+    config_autobutcher = pworld->GetPersistentData("autobutcher/config");
+    if(config_autobutcher.isValid())
+    {
+        if (config_autobutcher.ival(0) == -1)
+        {
+            config_autobutcher.ival(0) = enable_autobutcher;
+            config_autobutcher.ival(1) = sleep_autobutcher;
+            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
+            config_autobutcher.ival(3) = default_fk;
+            config_autobutcher.ival(4) = default_mk;
+            config_autobutcher.ival(5) = default_fa;
+            config_autobutcher.ival(6) = default_ma;
+            out << "Autobutcher's persistent config object was invalid!" << endl;
+        }
+        else
+        {
+            enable_autobutcher = config_autobutcher.ival(0);
+            sleep_autobutcher = config_autobutcher.ival(1);
+            enable_autobutcher_autowatch = config_autobutcher.ival(2);
+            default_fk = config_autobutcher.ival(3);
+            default_mk = config_autobutcher.ival(4);
+            default_fa = config_autobutcher.ival(5);
+            default_ma = config_autobutcher.ival(6);
+        }
+    }
+
+    if(!enable_autobutcher)
+        return CR_OK;
+
+    // read watchlist from save
+
+    std::vector<PersistentDataItem> items;
+    pworld->GetPersistentData(&items, "autobutcher/watchlist/", true);
+	for (auto p = items.begin(); p != items.end(); p++)
+	{
+		string key = p->key();
+        out << "Reading from save: " << key << endl;
+        //out << "  raceid: "   << p->ival(0) << endl;
+        //out << "  watched: "  << p->ival(1) << endl;
+        //out << "  fk: "       << p->ival(2) << endl;
+        //out << "  mk: "       << p->ival(3) << endl;
+        //out << "  fa: "       << p->ival(4) << endl;
+        //out << "  ma: "       << p->ival(5) << endl;
+        
+        WatchedRace * w = new WatchedRace(p->ival(1), p->ival(0), p->ival(2), p->ival(3),p->ival(4),p->ival(5));
+        w->rconfig = *p;
+        watched_races.push_back(w);
+    }
+    return CR_OK;
+}
+
+command_result cleanup_autobutcher(color_ostream &out)
+{
+    for(size_t i=0; i<watched_races.size(); i++)
+    {
+        delete watched_races[i];
+    }
+    watched_races.clear();
+    return CR_OK;
+}
+
+command_result start_autonestbox(color_ostream &out)
+{
+    auto pworld = Core::getInstance().getWorld();
+    enable_autonestbox = true;
+    if (!config_autobutcher.isValid())
+    {
+        config_autonestbox = pworld->AddPersistentData("autonestbox/config");
+        config_autonestbox.ival(0) = enable_autonestbox;
+        config_autonestbox.ival(1) = sleep_autonestbox;
+        //out << "autonestbox created persistent config object." << endl;
+    }
+    out << "Starting autonestbox." << endl;
+	cleanup_autonestbox(out);
+	init_autonestbox(out);
+    return CR_OK;
+}
+
+command_result init_autonestbox(color_ostream &out)
+{
+    auto pworld = Core::getInstance().getWorld();
+    if(!pworld)
+    {
+        out << "Autonestbox has no world to read from!" << endl;
+        return CR_OK;
+    }
+
+    config_autonestbox = pworld->GetPersistentData("autonestbox/config");
+    if(config_autonestbox.isValid())
+    {
+        if (config_autonestbox.ival(0) == -1)
+        {
+            config_autonestbox.ival(0) = enable_autonestbox;
+            config_autonestbox.ival(1) = sleep_autonestbox;
+            out << "Autonestbox's persistent config object was invalid!" << endl;
+        }
+        else
+        {
+            enable_autonestbox = config_autonestbox.ival(0);
+            sleep_autonestbox = config_autonestbox.ival(1);
+        }
+    }
+    return CR_OK;
+}
+
+command_result cleanup_autonestbox(color_ostream &out)
+{
+    // nothing to cleanup currently
+    // (future version of autonestbox could store info about cages for useless male kids)
     return CR_OK;
 }

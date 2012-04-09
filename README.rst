@@ -904,6 +904,11 @@ Automatically put all new races onto the watchlist and mark unnamed tame units f
      autobutcher target 0 0 0 0 new
      autobutcher autowatch
      autobutcher start
+
+Stop watching the races alpaca and cat, but remember the target count settings so that you can use 'unwatch' without the need to enter the values again. Note: 'autobutcher unwatch all' works, but only makes sense if you want to keep the plugin running with the 'autowatch' feature or manually add some new races with 'watch'. If you simply want to stop it completely use 'autobutcher stop' instead.
+::  
+
+     autobutcher unwatch ALPACA CAT
     
 Note:
 -----

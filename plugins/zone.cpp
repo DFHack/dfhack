@@ -2226,19 +2226,19 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     {
         parameters.erase(parameters.begin());
         watch_race = true;
-        out << "Start watching race(s)." << endl;
+        out << "Start watching race(s): "; // << endl;
     }
     else if(p == "unwatch")
     {
         parameters.erase(parameters.begin());
         unwatch_race = true;
-        out << "Stop watching race(s)." << endl;
+        out << "Stop watching race(s): "; // << endl;
     }
     else if(p == "forget")
     {
         parameters.erase(parameters.begin());
         forget_race = true;
-        out << "Removing race(s) from watchlist." << endl;
+        out << "Removing race(s) from watchlist: "; // << endl;
     }
     else if(p == "target")
     {
@@ -2261,7 +2261,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
             ma >> target_ma;
             parameters.erase(parameters.begin(), parameters.begin()+5);
             change_target = true;
-            out << "Setting new target count for race(s):" << endl;
+            out << "Setting new target count for race(s): "; // << endl;
         }
     }
     else if(p == "autowatch")
@@ -2406,7 +2406,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         out << endl;
     }
 
-    if(target_racenames.size() && target_racenames[0] == "all")
+    if(change_target && target_racenames.size() && target_racenames[0] == "all")
     {
         out << "Setting target count for all races on watchlist." << endl;
         for(size_t i=0; i<watched_races.size(); i++)
@@ -2422,40 +2422,68 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
 
     if(target_racenames.size() && (target_racenames[0] == "all" || target_racenames[0] == "new"))
     {
-        out << "Setting target count for the future." << endl;
-        default_fk = target_fk;
-        default_mk = target_mk;
-        default_fa = target_fa;
-        default_ma = target_ma;
-        if(config_autobutcher.isValid())
+        if(change_target)
         {
-            config_autobutcher.ival(3) = default_fk;
-            config_autobutcher.ival(4) = default_mk;
-            config_autobutcher.ival(5) = default_fa;
-            config_autobutcher.ival(6) = default_ma;
+            out << "Setting target count for the future." << endl;
+            default_fk = target_fk;
+            default_mk = target_mk;
+            default_fa = target_fa;
+            default_ma = target_ma;
+            if(config_autobutcher.isValid())
+            {
+                config_autobutcher.ival(3) = default_fk;
+                config_autobutcher.ival(4) = default_mk;
+                config_autobutcher.ival(5) = default_fa;
+                config_autobutcher.ival(6) = default_ma;
+            }
+            return CR_OK;
         }
-        return CR_OK;
+        else if(target_racenames[0] == "new")
+        {
+            out << "The only valid usage of 'new' is in combination when setting a target count!" << endl;
+
+            // hm, maybe instead of complaining start/stop autowatch instead? and get rid of the autowatch option?
+            if(unwatch_race)
+                out << "'unwatch new' makes no sense! Use 'noautowatch' instead." << endl;
+            else if(forget_race)
+                out << "'forget new' makes no sense, 'forget' is only for existing watchlist entries! Use 'noautowatch' instead." << endl;
+            else if(watch_race)
+                out << "'watch new' makes no sense! Use 'autowatch' instead." << endl;
+            return CR_WRONG_USAGE;
+        }
     }
 
-    // map race names to ids
-    size_t num_races = df::global::world->raws.creatures.all.size(); 
-    while(target_racenames.size())
+    if(target_racenames.size() && target_racenames[0] == "all")
     {
-        bool found_race = false;
-        for(size_t i=0; i<num_races; i++)
+        // fill with race ids from watchlist
+        for(size_t i=0; i<watched_races.size(); i++)
         {
-            if(getRaceName(i) == target_racenames.back())
-            {
-                target_raceids.push_back(i);
-                target_racenames.pop_back();
-                found_race = true;
-                break;
-            }
+            WatchedRace * w = watched_races[i];
+            target_raceids.push_back(w->raceId);
         }
-        if(!found_race)
+    }
+    else
+    {
+        // map race names from parameter list to ids
+        size_t num_races = df::global::world->raws.creatures.all.size(); 
+        while(target_racenames.size())
         {
-            out << "Race not found: " << target_racenames.back() << endl;
-            return CR_OK;
+            bool found_race = false;
+            for(size_t i=0; i<num_races; i++)
+            {
+                if(getRaceName(i) == target_racenames.back())
+                {
+                    target_raceids.push_back(i);
+                    target_racenames.pop_back();
+                    found_race = true;
+                    break;
+                }
+            }
+            if(!found_race)
+            {
+                out << "Race not found: " << target_racenames.back() << endl;
+                return CR_OK;
+            }
         }
     }
 

@@ -2348,7 +2348,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     {
         string run = "dfhack-run autobutcher ";
 #ifdef LINUX_BUILD
-        run = "./dfhack-run autobutcher "
+        run = "./dfhack-run autobutcher ";
 #endif
         // force creation of config
         out << run << "start" << endl;

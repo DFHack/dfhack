@@ -874,8 +874,8 @@ Options:
 :stop:         Stop running automatically.
 :sleep:        Must be followed by number X. Changes the timer to sleep X frames between runs.
 :watch R:      Start watching a race. R can be a valid race RAW id (ALPACA, BIRD_TURKEY, etc) or a list of ids seperated by spaces or the keyword 'all' which affects all races on your current watchlist.	
-:unwatch R:    Stop watching race(s). The current target settings will be remembered. 
-:forget R:     Stop watching race(s) and forget it's/their target settings.
+:unwatch R:    Stop watching race(s). The current target settings will be remembered. R can be a list of ids or the keyword 'all'.
+:forget R:     Stop watching race(s) and forget it's/their target settings. R can be a list of ids or the keyword 'all'.
 :autowatch:    Automatically adds all new races (animals you buy from merchants, tame yourself or get from migrants) 
                to the watch list using default target count. 
 :noautowatch:  Stop auto-adding new races to the watchlist.
@@ -886,6 +886,7 @@ Options:
                  mk = number of male kids,
                  fa = number of female adults,
                  ma = number of female adults.
+                 R can be a list of ids or the keyword 'all' or 'new'. R = 'all': change target count for all races on watchlist and set the new default for the future. R = 'new': don't touch current settings on the watchlist, only set the new default for future entries.
 :example:      Print some usage examples.
 
 Examples:

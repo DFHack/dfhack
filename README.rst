@@ -873,9 +873,9 @@ Options:
 :start:        Start running every X frames (df simulation ticks). Default: X=6000, which would be every 60 seconds at 100fps.
 :stop:         Stop running automatically.
 :sleep:        Must be followed by number X. Changes the timer to sleep X frames between runs.
-:watch R:      Start watching a race. R can be a valid race RAW id (ALPACA, BIRD_TURKEY, etc) or a list of ids seperated by spaces or the keyword 'all' which adds all races with at least one owned tame unit in your fortress to the list.	
-:unwatch R:    Stop watching a race. The current target settings will be remembered. 
-:forget R:     Stop watching a race and forget it's target settings.
+:watch R:      Start watching a race. R can be a valid race RAW id (ALPACA, BIRD_TURKEY, etc) or a list of ids seperated by spaces or the keyword 'all' which affects all races on your current watchlist.	
+:unwatch R:    Stop watching race(s). The current target settings will be remembered. 
+:forget R:     Stop watching race(s) and forget it's/their target settings.
 :autowatch:    Automatically adds all new races (animals you buy from merchants, tame yourself or get from migrants) 
                to the watch list using default target count. 
 :noautowatch:  Stop auto-adding new races to the watchlist.

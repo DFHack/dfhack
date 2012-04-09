@@ -50,6 +50,14 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Intended to fix the case where you can't engrave memorials for ghosts.\n"
         "    Note that this is very dirty and possibly dangerous!\n"
         "    Most probably does not have the positive effect of a proper burial.\n"
+        "  tweak clear-resident\n"
+        "    Remove the resident flag from the selected unit.\n"
+        "    Intended to fix bugged migrants who stay at the map edge.\n"
+        "    Only works for dwarves of the own civilization.\n"
+        "  tweak clear-merchant\n"
+        "    Remove the merchant flag from the selected unit.\n"
+        "    Assimilates bugged merchants who don't leave the map into your fort.\n"
+        "    Only works for dwarves of the own civilization.\n"
     ));
     return CR_OK;
 }
@@ -103,6 +111,46 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         else
         {
             out.print("That's not a ghost!\n");
+            return CR_FAILURE;
+        }
+    }
+    else if (cmd == "clear-resident")
+    {
+        df::unit *unit = getSelectedUnit(out);
+        if (!unit)
+            return CR_FAILURE;
+
+        // must be own race and civ and a merchant
+        if (   unit->flags2.bits.resident
+            && unit->race == df::global::ui->race_id
+            && unit->civ_id == df::global::ui->civ_id)
+        {
+            // remove resident flag
+            unit->flags2.bits.resident = 0;
+        }
+        else
+        {
+            out.print("That's not a resident dwarf of your civilization!\n");
+            return CR_FAILURE;
+        }
+    }
+    else if (cmd == "clear-merchant")
+    {
+        df::unit *unit = getSelectedUnit(out);
+        if (!unit)
+            return CR_FAILURE;
+
+        // must be own race and civ and a merchant
+        if (   unit->flags1.bits.merchant
+            && unit->race == df::global::ui->race_id
+            && unit->civ_id == df::global::ui->civ_id)
+        {
+            // remove merchant flag
+            unit->flags1.bits.merchant = 0;
+        }
+        else
+        {
+            out.print("That's not a dwarf merchant of your civilization!\n");
             return CR_FAILURE;
         }
     }

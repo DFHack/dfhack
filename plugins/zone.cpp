@@ -584,6 +584,17 @@ bool hasValidMapPos(df::unit* unit)
         return false;
 }
 
+int getUnitIndexFromId(df::unit* unit_)
+{
+    for (size_t i=0; i < world->units.all.size(); i++)
+    {
+        df::unit* unit = world->units.all[i];
+        if(unit->id == unit_->id)
+            return i;
+    }
+    return -1;
+}
+
 // dump some unit info
 void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
 {
@@ -652,7 +663,8 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     
     if(verbose)
     {
-        out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ")" << endl;
+        out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ") " << endl;
+        out << "index in units vector: " << getUnitIndexFromId(unit) << endl;
     }
     out << endl;
 

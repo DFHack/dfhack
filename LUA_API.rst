@@ -68,6 +68,11 @@ All typed objects have the following built-in features:
   and values. Fields are enumerated in memory order. Methods and
   lua wrapper properties are not included in the iteration.
 
+  **WARNING**: a few of the data structures (like ui_look_list)
+  contain unions with pointers to different types with vtables.
+  Using pairs on such structs is an almost sure way to crash with
+  an access violation.
+
 * ``ref._kind``
 
   Returns one of: ``primitive``, ``struct``, ``container``,

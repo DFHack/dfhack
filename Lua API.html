@@ -395,6 +395,10 @@ Every structured field access produces a new userdata instance.</p>
 <p>Returns an iterator for the sequence of actual C++ field names
 and values. Fields are enumerated in memory order. Methods and
 lua wrapper properties are not included in the iteration.</p>
+<p><strong>WARNING</strong>: a few of the data structures (like ui_look_list)
+contain unions with pointers to different types with vtables.
+Using pairs on such structs is an almost sure way to crash with
+an access violation.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">ref._kind</tt></p>
 <p>Returns one of: <tt class="docutils literal">primitive</tt>, <tt class="docutils literal">struct</tt>, <tt class="docutils literal">container</tt>,

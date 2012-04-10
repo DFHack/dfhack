@@ -117,7 +117,8 @@ const string zone_help_filters =
     "  male         - obvious\n"
     "  female       - obvious\n"
     "  egglayer     - race lays eggs (use together with 'female')\n"
-    "  grazer       - obvious\n"
+    "  grazer       - is a grazer\n"
+    "  nograzer     - not a grazer\n"
     "  milkable     - race is milkable (use together with 'female')\n"
     "  minage       - minimum age. must be followed by number\n"
     "  maxage       - maximum age. must be followed by number\n";
@@ -468,7 +469,6 @@ bool isHunter(df::unit* creature)
     else
         return false;
 }
-
 
 // check if creature belongs to the player's civilization
 // (don't try to pasture/slaughter random untame animals)
@@ -1321,6 +1321,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool find_female = false;
     bool find_egglayer = false;
     bool find_grazer = false;
+    bool find_nograzer = false;
     bool find_milkable = false;
     bool find_named = false;
 
@@ -1556,6 +1557,10 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         {
             find_grazer = true;
         }
+        else if(p == "nograzer")
+        {
+            find_nograzer = true;
+        }
         else if(p == "merchant")
         {
             find_merchant = true;
@@ -1600,6 +1605,21 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     {
         find_male=false;
         find_female=false;
+    }
+
+    // search for trained and untrained is exclusive, so drop the flags if both are specified
+    // (there is no trained filter, since it doesn't make much sense to throw war and hunting pets together)
+    //if(find_trained && find_untrained)
+    //{
+    //    find_trained=false;
+    //    find_female=false;
+    //}
+
+    // search for grazer and nograzer is exclusive, so drop the flags if both are specified
+    if(find_grazer && find_nograzer)
+    {
+        find_grazer=false;
+        find_nograzer=false;
     }
 
     // try to cope with user dumbness
@@ -1704,6 +1724,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     || (find_agemin && getUnitAge(unit)<target_agemin)
                     || (find_agemax && getUnitAge(unit)>target_agemax)
                     || (find_grazer && !isGrazer(unit))
+                    || (find_nograzer && isGrazer(unit))
                     || (find_egglayer && !isEggLayer(unit))
                     || (find_milkable && !isMilkable(unit))
                     || (find_male && !isMale(unit))

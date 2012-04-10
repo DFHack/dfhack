@@ -835,6 +835,7 @@ Filters:
 :female:      Creature is female.
 :egglayer:    Race lays eggs.
 :grazer:      Race is a grazer.
+:nograzer:    Race is not a grazer.
 :milkable:    Race is milkable.
 :minage:      Minimum age. Must be followed by number.
 :maxage:      Maximum age. Must be followed by number.

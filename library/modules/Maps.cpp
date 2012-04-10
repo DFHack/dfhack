@@ -385,6 +385,7 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
     valid = false;
     bcoord = _bcoord;
     block = Maps::getBlock(bcoord);
+    item_counts = NULL;
 
     memset(tags,0,sizeof(tags));
 
@@ -420,6 +421,11 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
         memset(icetiles,0,sizeof(icetiles));
         memset(basemats,-1,sizeof(basemats));
     }
+}
+
+MapExtras::Block::~Block()
+{
+    delete[] item_counts;
 }
 
 bool MapExtras::Block::Write ()
@@ -556,6 +562,77 @@ bool MapExtras::Block::GetLocalFeature(t_feature *out)
     if (!valid || block->local_feature < 0)
         return false;
     return Maps::GetLocalFeature(*out, block->map_pos/16, block->local_feature);
+}
+
+void MapExtras::Block::init_item_counts()
+{
+    if (item_counts) return;
+
+    item_counts = new T_item_counts[16];
+    memset(item_counts, 0, sizeof(T_item_counts));
+
+    if (!block) return;
+
+    for (size_t i = 0; i < block->items.size(); i++)
+    {
+        auto it = df::item::find(block->items[i]);
+        if (!it || !it->flags.bits.on_ground)
+            continue;
+
+        df::coord tidx = it->pos - block->map_pos;
+        if (!is_valid_tile_coord(tidx) || tidx.z != 0)
+            continue;
+
+        item_counts[tidx.x][tidx.y]++;
+    }
+}
+
+bool MapExtras::Block::addItemOnGround(df::item *item)
+{
+    if (!block)
+        return false;
+
+    init_item_counts();
+
+    bool inserted;
+    insert_into_vector(block->items, item->id, &inserted);
+
+    if (inserted)
+    {
+        int &count = index_tile<int&>(item_counts,item->pos);
+
+        if (count++ == 0)
+        {
+            index_tile<df::tile_occupancy&>(occupancy,item->pos).bits.item = true;
+            index_tile<df::tile_occupancy&>(block->occupancy,item->pos).bits.item = true;
+        }
+    }
+
+    return inserted;
+}
+
+bool MapExtras::Block::removeItemOnGround(df::item *item)
+{
+    if (!block)
+        return false;
+
+    init_item_counts();
+
+    int idx = binsearch_index(block->items, item->id);
+    if (idx < 0)
+        return false;
+
+    vector_erase_at(block->items, idx);
+
+    int &count = index_tile<int&>(item_counts,item->pos);
+
+    if (--count == 0)
+    {
+        index_tile<df::tile_occupancy&>(occupancy,item->pos).bits.item = false;
+        index_tile<df::tile_occupancy&>(block->occupancy,item->pos).bits.item = false;
+    }
+
+    return true;
 }
 
 MapExtras::Block *MapExtras::MapCache::BlockAt(DFCoord blockcoord)

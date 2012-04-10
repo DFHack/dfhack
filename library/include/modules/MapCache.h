@@ -33,6 +33,7 @@ distribution.
 #include "df/map_block.h"
 #include "df/block_square_event_mineralst.h"
 #include "df/construction.h"
+#include "df/item.h"
 
 using namespace DFHack;
 
@@ -45,10 +46,15 @@ template<class R, class T> inline R index_tile(T &v, df::coord2d p) {
     return v[p.x&15][p.y&15];
 }
 
+inline bool is_valid_tile_coord(df::coord2d p) {
+    return (p.x & ~15) == 0 && (p.y & ~15) == 0;
+}
+
 class DFHACK_EXPORT Block
 {
 public:
     Block(MapCache *parent, DFCoord _bcoord);
+    ~Block();
 
     /*
      * All coordinates are taken mod 16.
@@ -143,6 +149,12 @@ public:
         return true;
     }
 
+    int itemCountAt(df::coord2d p)
+    {
+        if (!item_counts) init_item_counts();
+        return index_tile<int>(item_counts,p);
+    }
+
     t_blockflags BlockFlags()
     {
         return blockflags;
@@ -188,6 +200,13 @@ private:
     DFCoord bcoord;
 
     int16_t tags[16][16];
+
+    typedef int T_item_counts[16];
+    T_item_counts *item_counts;
+    void init_item_counts();
+
+    bool addItemOnGround(df::item *item);
+    bool removeItemOnGround(df::item *item);
 
     tiletypes40d rawtiles;
     designations40d designation;
@@ -320,6 +339,15 @@ class DFHACK_EXPORT MapCache
     {
         Block * b= BlockAtTile(tilecoord);
         return (b && b->valid);
+    }
+
+    bool addItemOnGround(df::item *item) {
+        Block * b= BlockAtTile(item->pos);
+        return b ? b->addItemOnGround(item) : false;
+    }
+    bool removeItemOnGround(df::item *item) {
+        Block * b= BlockAtTile(item->pos);
+        return b ? b->removeItemOnGround(item) : false;
     }
 
     bool WriteAll()

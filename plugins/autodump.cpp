@@ -147,25 +147,12 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
             }
         }
     }
-    coordmap counts;
+
     // proceed with the dumpification operation
     for(size_t i=0; i< numItems; i++)
     {
         df::item * itm = world->items.all[i];
         DFCoord pos_item(itm->pos.x, itm->pos.y, itm->pos.z);
-
-        // keep track how many items are at places. all items.
-        coordmap::iterator it = counts.find(pos_item);
-        if(it == counts.end())
-        {
-            pair< coordmap::iterator, bool > inserted = counts.insert(make_pair(pos_item,1));
-            it = inserted.first;
-        }
-        else
-        {
-            it->second ++;
-        }
-        // iterator is valid here, we use it later to decrement the pile counter if the item is moved
 
         // only dump the stuff marked for dumping and laying on the ground
         if (   !itm->flags.bits.dump
@@ -194,38 +181,16 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
             itm->flags.bits.forbid = true;
 
             // Don't move items if they're already at the cursor
-            if (pos_cursor == pos_item)
-                continue;
-
-            // Do we need to fix block-local item ID vector?
-            if(pos_item/16 != pos_cursor/16)
+            if (pos_cursor != pos_item)
             {
-                // yes...
-                cerr << "Moving from block to block!" << endl;
-                df::map_block * bl_src = Maps::getBlockAbs(itm->pos.x, itm->pos.y, itm->pos.z);
-                df::map_block * bl_tgt = Maps::getBlockAbs(cx, cy, cz);
-                if(bl_src)
-                {
-                    remove(bl_src->items.begin(), bl_src->items.end(),itm->id);
-                }
-                else
-                {
-                    cerr << "No source block" << endl;
-                }
-                if(bl_tgt)
-                {
-                    bl_tgt->items.push_back(itm->id);
-                }
-                else
-                {
-                    cerr << "No target block" << endl;
-                }
-            }
+                if (!MC.removeItemOnGround(itm))
+                    out.printerr("Item %d wasn't in the source block.\n", itm->id);
 
-            // Move the item
-            itm->pos.x = pos_cursor.x;
-            itm->pos.y = pos_cursor.y;
-            itm->pos.z = pos_cursor.z;
+                itm->pos = pos_cursor;
+
+                if (!MC.addItemOnGround(itm))
+                    out.printerr("Could not add item %d to destination block.\n", itm->id);
+            }
         }
         else // destroy
         {
@@ -238,42 +203,14 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
             itm->flags.bits.forbid = true;
             itm->flags.bits.hidden = true;
         }
-        // keeping track of item pile sizes ;)
-        it->second --;
+
         dumped_total++;
     }
-    if(!destroy) // TODO: do we have to do any of this when destroying items?
-    {
-        // for each item pile, see if it reached zero. if so, unset item flag on the tile it's on
-        coordmap::iterator it = counts.begin();
-        coordmap::iterator end = counts.end();
-        while(it != end)
-        {
-            if(it->second == 0)
-            {
-                df::tile_occupancy occ = MC.occupancyAt(it->first);
-                occ.bits.item = false;
-                MC.setOccupancyAt(it->first, occ);
-            }
-            it++;
-        }
-        // Set "item here" flag on target tile, if we moved any items to the target tile.
-        if (dumped_total > 0)
-        {
-            // assume there is a possibility the cursor points at some weird location with missing block data
-            Block * b = MC.BlockAt(pos_cursor / 16);
-            if(b)
-            {
-                df::tile_occupancy occ = MC.occupancyAt(pos_cursor);
-                occ.bits.item = 1;
-                MC.setOccupancyAt(pos_cursor,occ);
-            }
-        }
-        // write map changes back to DF.
+
+    // write map changes back to DF.
+    if(!destroy)
         MC.WriteAll();
-        // Is this necessary?  Is "forbid" a dirtyable attribute like "dig" is?
-        //Maps::WriteDirtyBit(cx/16, cy/16, cz, true);
-    }
+
     out.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for destruction" : "quickdumped");
     return CR_OK;
 }

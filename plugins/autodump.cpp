@@ -272,7 +272,7 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
         // write map changes back to DF.
         MC.WriteAll();
         // Is this necessary?  Is "forbid" a dirtyable attribute like "dig" is?
-        Maps::WriteDirtyBit(cx/16, cy/16, cz, true);
+        //Maps::WriteDirtyBit(cx/16, cy/16, cz, true);
     }
     out.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for destruction" : "quickdumped");
     return CR_OK;

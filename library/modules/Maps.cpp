@@ -33,11 +33,13 @@ distribution.
 using namespace std;
 
 #include "modules/Maps.h"
+#include "modules/MapCache.h"
 #include "Error.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
 #include "ModuleFactory.h"
 #include "Core.h"
+#include "MiscUtils.h"
 
 #include "DataDefs.h"
 #include "df/world_data.h"
@@ -136,182 +138,6 @@ df::map_block *Maps::getBlockAbs (int32_t x, int32_t y, int32_t z)
     return world->map.block_index[x >> 4][y >> 4][z];
 }
 
-bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer)
-{
-    df::map_block * block = getBlock(x,y,z);
-    if (block)
-    {
-        buffer->position = DFCoord(x,y,z);
-        memcpy(buffer->tiletypes,block->tiletype, sizeof(tiletypes40d));
-        memcpy(buffer->designation,block->designation, sizeof(designations40d));
-        memcpy(buffer->occupancy,block->occupancy, sizeof(occupancies40d));
-        memcpy(buffer->biome_indices,block->region_offset, sizeof(block->region_offset));
-        buffer->global_feature = block->global_feature;
-        buffer->local_feature = block->local_feature;
-        buffer->mystery = block->unk2;
-        buffer->origin = block;
-        buffer->blockflags.whole = block->flags.whole;
-        return true;
-    }
-    return false;
-}
-
-/*
- * Tiletypes
- */
-
-bool Maps::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        memcpy(buffer, block->tiletype, sizeof(tiletypes40d));
-        return true;
-    }
-    return false;
-}
-
-bool Maps::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        memcpy(block->tiletype, buffer, sizeof(tiletypes40d));
-        return true;
-    }
-    return false;
-}
-
-/*
- * Dirty bit
- */
-bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        dirtybit = block->flags.bits.designated;
-        return true;
-    }
-    return false;
-}
-
-bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        block->flags.bits.designated = true;
-        return true;
-    }
-    return false;
-}
-/*
- * Block flags
- */
-// FIXME: maybe truncates, still bullshit
-bool Maps::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &blockflags)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        blockflags.whole = block->flags.whole;
-        return true;
-    }
-    return false;
-}
-//FIXME: maybe truncated, still bullshit
-bool Maps::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags blockflags)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        block->flags.whole = blockflags.whole;
-        return true;
-    }
-    return false;
-}
-
-/*
- * Designations
- */
-bool Maps::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        memcpy(buffer, block->designation, sizeof(designations40d));
-        return true;
-    }
-    return false;
-}
-
-bool Maps::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        memcpy(block->designation, buffer, sizeof(designations40d));
-        return true;
-    }
-    return false;
-}
-
-/*
- * Occupancies
- */
-bool Maps::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        memcpy(buffer, block->occupancy, sizeof(occupancies40d));
-        return true;
-    }
-    return false;
-}
-
-bool Maps::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        memcpy(block->occupancy, buffer, sizeof(occupancies40d));
-        return true;
-    }
-    return false;
-}
-
-/*
- * Temperatures
- */
-bool Maps::ReadTemperatures(uint32_t x, uint32_t y, uint32_t z, t_temperatures *temp1, t_temperatures *temp2)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        if(temp1)
-            memcpy(temp1, block->temperature_1, sizeof(t_temperatures));
-        if(temp2)
-            memcpy(temp2, block->temperature_2, sizeof(t_temperatures));
-        return true;
-    }
-    return false;
-}
-bool Maps::WriteTemperatures (uint32_t x, uint32_t y, uint32_t z, t_temperatures *temp1, t_temperatures *temp2)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        if(temp1)
-            memcpy(block->temperature_1, temp1, sizeof(t_temperatures));
-        if(temp2)
-            memcpy(block->temperature_2, temp2, sizeof(t_temperatures));
-        return true;
-    }
-    return false;
-}
-
 /*
  * Region Offsets - used for layer geology
  */
@@ -381,58 +207,15 @@ bool Maps::GetLocalFeature(t_feature &feature, df::coord2d coord, int32_t index)
     return true;
 }
 
-bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, int32_t & local, int32_t & global)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        local = block->local_feature;
-        global = block->global_feature;
-        return true;
-    }
-    return false;
-}
-
-bool Maps::WriteFeatures(uint32_t x, uint32_t y, uint32_t z, const int32_t & local, const int32_t & global)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        block->local_feature = local;
-        block->global_feature = global;
-        return true;
-    }
-    return false;
-}
-
 bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature *local, t_feature *global)
 {
-    int32_t loc, glob;
-    if (!ReadFeatures(x, y, z, loc, glob))
+    df::map_block *block = getBlock(x,y,z);
+    if (!block)
         return false;
-
-    bool result = true;
-    if (global)
-    {
-        if (glob != -1)
-            result &= GetGlobalFeature(*global, glob);
-        else
-            global->type = (df::feature_type)-1;
-    }
-    if (local)
-    {
-        if (loc != -1)
-        {
-            df::coord2d coord(x,y);
-            result &= GetLocalFeature(*local, coord, loc);
-        }
-        else
-            local->type = (df::feature_type)-1;
-    }
-    return result;
+    return ReadFeatures(block, local, global);
 }
 
-bool Maps::ReadFeatures(mapblock40d * block, t_feature * local, t_feature * global)
+bool Maps::ReadFeatures(df::map_block * block, t_feature * local, t_feature * global)
 {
     bool result = true;
     if (global)
@@ -445,39 +228,17 @@ bool Maps::ReadFeatures(mapblock40d * block, t_feature * local, t_feature * glob
     if (local)
     {
         if (block->local_feature != -1)
-            result &= GetLocalFeature(*local, block->position, block->local_feature);
+            result &= GetLocalFeature(*local, block->map_pos/16, block->local_feature);
         else
             local->type = (df::feature_type)-1;
     }
     return result;
 }
 
-bool Maps::SetBlockLocalFeature(uint32_t x, uint32_t y, uint32_t z, int32_t local)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        block->local_feature = local;
-        return true;
-    }
-    return false;
-}
-
-bool Maps::SetBlockGlobalFeature(uint32_t x, uint32_t y, uint32_t z, int32_t global)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        block->global_feature = global;
-        return true;
-    }
-    return false;
-}
-
 /*
  * Block events
  */
-bool Maps::SortBlockEvents(uint32_t x, uint32_t y, uint32_t z,
+bool Maps::SortBlockEvents(df::map_block *block,
     vector <df::block_square_event_mineralst *>* veins,
     vector <df::block_square_event_frozen_liquidst *>* ices,
     vector <df::block_square_event_material_spatterst *> *splatter,
@@ -495,7 +256,6 @@ bool Maps::SortBlockEvents(uint32_t x, uint32_t y, uint32_t z,
     if (constructions)
         constructions->clear();
 
-    df::map_block * block = getBlock(x,y,z);
     if (!block)
         return false;
 
@@ -535,27 +295,35 @@ bool Maps::RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square
     df::map_block * block = getBlock(x,y,z);
     if (!block)
         return false;
-    for (size_t i = 0; i < block->block_events.size(); i++)
+
+    int idx = linear_index(block->block_events, which);
+    if (idx >= 0)
     {
-        if (block->block_events[i] == which)
-        {
-            delete which;
-            block->block_events.erase(block->block_events.begin() + i);
-            return true;
-        }
+        delete which;
+        vector_erase_at(block->block_events, idx);
+        return true;
     }
-    return false;
+    else
+        return false;
 }
 
 /*
 * Layer geology
 */
-bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
+bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<int16_t> *geoidx)
 {
     if (!world->world_data)
         return false;
 
-    vector<uint16_t> v_geology[eBiomeCount];
+    layer_mats->resize(eBiomeCount);
+    geoidx->resize(eBiomeCount);
+
+    for (int i = 0; i < eBiomeCount; i++)
+    {
+        (*layer_mats)[i].clear();
+        (*geoidx)[i] = -1;
+    }
+
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
     {
@@ -571,7 +339,9 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         if (bioRY >= world->world_data->world_height) bioRY = world->world_data->world_height - 1;
 
         // get index into geoblock vector
-        uint16_t geoindex = world->world_data->region_map[bioRX][bioRY].geo_index;
+        int16_t geoindex = world->world_data->region_map[bioRX][bioRY].geo_index;
+
+        (*geoidx)[i] = geoindex;
 
         /// geology blocks have a vector of layer descriptors
         // get the vector with pointer to layers
@@ -579,20 +349,17 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         if (!geo_biome)
             continue;
 
-        vector <df::world_geo_layer*> &geolayers = geo_biome->layers;
+        auto &geolayers = geo_biome->layers;
+        auto &matvec = (*layer_mats)[i];
 
         /// layer descriptor has a field that determines the type of stone/soil
-        v_geology[i].reserve(geolayers.size());
+        matvec.resize(geolayers.size());
 
         // finally, read the layer matgloss
         for (size_t j = 0; j < geolayers.size(); j++)
-            v_geology[i].push_back(geolayers[j]->mat_index);
+            matvec[j] = geolayers[j]->mat_index;
     }
 
-    assign.clear();
-    assign.reserve(eBiomeCount);
-    for (int i = 0; i < eBiomeCount; i++)
-        assign.push_back(v_geology[i]);
     return true;
 }
 
@@ -605,3 +372,212 @@ bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df::pl
     plants = &block->plants;
     return true;
 }
+
+#define COPY(a,b) memcpy(&a,&b,sizeof(a))
+
+MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
+{
+    dirty_designations = false;
+    dirty_tiletypes = false;
+    dirty_temperatures = false;
+    dirty_blockflags = false;
+    dirty_occupancies = false;
+    valid = false;
+    bcoord = _bcoord;
+    block = Maps::getBlock(bcoord);
+
+    memset(tags,0,sizeof(tags));
+
+    if(block)
+    {
+        COPY(rawtiles, block->tiletype);
+        COPY(designation, block->designation);
+        COPY(occupancy, block->occupancy);
+        blockflags = block->flags;
+
+        COPY(temp1, block->temperature_1);
+        COPY(temp2, block->temperature_2);
+
+        SquashVeins(block,veinmats);
+        SquashConstructions(block, contiles);
+        SquashFrozenLiquids(block, icetiles);
+        if(parent->validgeo)
+            SquashRocks(block,basemats,&parent->layer_mats);
+        else
+            memset(basemats,-1,sizeof(basemats));
+        valid = true;
+    }
+    else
+    {
+        blockflags.whole = 0;
+        memset(rawtiles,0,sizeof(rawtiles));
+        memset(designation,0,sizeof(designation));
+        memset(occupancy,0,sizeof(occupancy));
+        memset(temp1,0,sizeof(temp1));
+        memset(temp2,0,sizeof(temp2));
+        memset(veinmats,-1,sizeof(veinmats));
+        memset(contiles,0,sizeof(contiles));
+        memset(icetiles,0,sizeof(icetiles));
+        memset(basemats,-1,sizeof(basemats));
+    }
+}
+
+bool MapExtras::Block::Write ()
+{
+    if(!valid) return false;
+
+    if(dirty_blockflags)
+    {
+        block->flags = blockflags;
+        dirty_blockflags = false;
+    }
+    if(dirty_designations)
+    {
+        COPY(block->designation, designation);
+        block->flags.bits.designated = true;
+        dirty_designations = false;
+    }
+    if(dirty_tiletypes)
+    {
+        COPY(block->tiletype, rawtiles);
+        dirty_tiletypes = false;
+    }
+    if(dirty_temperatures)
+    {
+        COPY(block->temperature_1, temp1);
+        COPY(block->temperature_2, temp2);
+        dirty_temperatures = false;
+    }
+    if(dirty_occupancies)
+    {
+        COPY(block->occupancy, occupancy);
+        dirty_occupancies = false;
+    }
+    return true;
+}
+
+void MapExtras::Block::SquashVeins(df::map_block *mb, t_blockmaterials & materials)
+{
+    memset(materials,-1,sizeof(materials));
+    std::vector <df::block_square_event_mineralst *> veins;
+    Maps::SortBlockEvents(mb,&veins);
+    for (uint32_t x = 0;x<16;x++) for (uint32_t y = 0; y< 16;y++)
+    {
+        df::tiletype tt = mb->tiletype[x][y];
+        if (tileMaterial(tt) == tiletype_material::MINERAL)
+        {
+            for (size_t i = 0; i < veins.size(); i++)
+            {
+                if (veins[i]->getassignment(x,y))
+                    materials[x][y] = veins[i]->inorganic_mat;
+            }
+        }
+    }
+}
+
+void MapExtras::Block::SquashFrozenLiquids(df::map_block *mb, tiletypes40d & frozen)
+{
+    std::vector <df::block_square_event_frozen_liquidst *> ices;
+    Maps::SortBlockEvents(mb,NULL,&ices);
+    for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
+    {
+        df::tiletype tt = mb->tiletype[x][y];
+        frozen[x][y] = tiletype::Void;
+        if (tileMaterial(tt) == tiletype_material::FROZEN_LIQUID)
+        {
+            for (size_t i = 0; i < ices.size(); i++)
+            {
+                df::tiletype tt2 = ices[i]->tiles[x][y];
+                if (tt2 != tiletype::Void)
+                {
+                    frozen[x][y] = tt2;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void MapExtras::Block::SquashConstructions (df::map_block *mb, tiletypes40d & constructions)
+{
+    for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
+    {
+        df::tiletype tt = mb->tiletype[x][y];
+        constructions[x][y] = tiletype::Void;
+        if (tileMaterial(tt) == tiletype_material::CONSTRUCTION)
+        {
+            DFCoord coord = mb->map_pos + df::coord(x,y,0);
+            df::construction *con = df::construction::find(coord);
+            if (con)
+                constructions[x][y] = con->original_tile;
+        }
+    }
+}
+
+void MapExtras::Block::SquashRocks (df::map_block *mb, t_blockmaterials & materials,
+                                   std::vector< std::vector <int16_t> > * layerassign)
+{
+    // get the layer materials
+    for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
+    {
+        materials[x][y] = -1;
+        uint8_t test = mb->designation[x][y].bits.biome;
+        if (test >= 9)
+            continue;
+        uint8_t idx = mb->region_offset[test];
+        if (idx < layerassign->size())
+            materials[x][y] = layerassign->at(idx)[mb->designation[x][y].bits.geolayer_index];
+    }
+}
+
+int16_t MapExtras::Block::GeoIndexAt(df::coord2d p)
+{
+    auto des = index_tile<df::tile_designation>(designation,p);
+    uint8_t idx = des.bits.biome;
+    if (idx >= 9)
+        return -1;
+    idx = block->region_offset[idx];
+    if (idx >= parent->geoidx.size())
+        return -1;
+    return parent->geoidx[idx];
+}
+
+bool MapExtras::Block::GetGlobalFeature(t_feature *out)
+{
+    out->type = (df::feature_type)-1;
+    if (!valid || block->global_feature < 0)
+        return false;
+    return Maps::GetGlobalFeature(*out, block->global_feature);
+}
+
+bool MapExtras::Block::GetLocalFeature(t_feature *out)
+{
+    out->type = (df::feature_type)-1;
+    if (!valid || block->local_feature < 0)
+        return false;
+    return Maps::GetLocalFeature(*out, block->map_pos/16, block->local_feature);
+}
+
+MapExtras::Block *MapExtras::MapCache::BlockAt(DFCoord blockcoord)
+{
+    if(!valid)
+        return 0;
+    std::map <DFCoord, Block*>::iterator iter = blocks.find(blockcoord);
+    if(iter != blocks.end())
+    {
+        return (*iter).second;
+    }
+    else
+    {
+        if(blockcoord.x >= 0 && blockcoord.x < x_bmax &&
+            blockcoord.y >= 0 && blockcoord.y < y_bmax &&
+            blockcoord.z >= 0 && blockcoord.z < z_max)
+        {
+            Block * nblo = new Block(this, blockcoord);
+            blocks[blockcoord] = nblo;
+            return nblo;
+        }
+        return 0;
+    }
+}
+

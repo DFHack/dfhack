@@ -90,7 +90,7 @@ bool dig (MapExtras::MapCache & MCache,
 {
     DFCoord at (x,y,z);
     auto b = MCache.BlockAt(at/16);
-    if(!b || !b->valid)
+    if(!b || !b->is_valid())
         return false;
     if(x == 0 || x == x_max * 16 - 1)
     {
@@ -1027,6 +1027,8 @@ command_result digv (color_ostream &out, vector <string> & parameters)
     {
         DFHack::DFCoord current = flood.top();
         flood.pop();
+        if (MCache->tagAt(current))
+            continue;
         int16_t vmat2 = MCache->veinMaterialAt(current);
         tt = MCache->tiletypeAt(current);
         if(!DFHack::isWallTerrain(tt))
@@ -1061,7 +1063,8 @@ command_result digv (color_ostream &out, vector <string> & parameters)
         }
         if(MCache->testCoord(current))
         {
-            MCache->clearVeinMaterialAt(current);
+            MCache->setTagAt(current, 1);
+
             if(current.x < tx_max - 2)
             {
                 flood.push(DFHack::DFCoord(current.x + 1, current.y, current.z));
@@ -1209,6 +1212,8 @@ command_result digl (color_ostream &out, vector <string> & parameters)
     {
         DFHack::DFCoord current = flood.top();
         flood.pop();
+        if (MCache->tagAt(current))
+            continue;
         int16_t vmat2 = MCache->veinMaterialAt(current);
         int16_t bmat2 = MCache->baseMaterialAt(current);
         tt = MCache->tiletypeAt(current);
@@ -1239,7 +1244,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
 
         if(MCache->testCoord(current))
         {
-            MCache->clearBaseMaterialAt(current);
+            MCache->setTagAt(current, 1);
             if(current.x < tx_max - 2)
             {
                 flood.push(DFHack::DFCoord(current.x + 1, current.y, current.z));

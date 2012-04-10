@@ -39,3 +39,7 @@ coord2d operator%(int number) const
 {
     return coord2d((x+number)%number, (y+number)%number);
 }
+coord2d operator&(int number) const
+{
+    return coord2d(x&number, y&number);
+}

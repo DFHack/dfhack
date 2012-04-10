@@ -127,13 +127,14 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     uint32_t tileY = cursorY % 16;
 
     MapExtras::Block * b = mc.BlockAt(cursor/16);
-    if(!b && !b->valid)
+    if(!b || !b->is_valid())
     {
         out.printerr("No data.\n");
         return CR_OK;
     }
-    mapblock40d & block = b->raw;
-    out.print("block addr: 0x%x\n\n", block.origin);
+
+    auto &block = *b->getRaw();
+    out.print("block addr: 0x%x\n\n", &block);
 /*
     if (showBlock)
     {
@@ -250,7 +251,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
 
     t_feature local;
     t_feature global;
-    Maps::ReadFeatures(&(b->raw),&local,&global);
+    Maps::ReadFeatures(&block,&local,&global);
     PRINT_FLAG( des, feature_local );
     if(local.type != -1)
     {
@@ -273,7 +274,6 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         << endl;
     out << "global feature idx: " << block.global_feature
         << endl;
-    out << "mystery: " << block.mystery << endl;
     out << std::endl;
     return CR_OK;
 }

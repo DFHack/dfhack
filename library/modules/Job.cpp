@@ -53,7 +53,7 @@ using namespace std;
 using namespace DFHack;
 using namespace df::enums;
 
-df::job *DFHack::cloneJobStruct(df::job *job)
+df::job *DFHack::Job::cloneJobStruct(df::job *job)
 {
     CHECK_NULL_POINTER(job);
 
@@ -87,7 +87,7 @@ df::job *DFHack::cloneJobStruct(df::job *job)
     return pnew;
 }
 
-void DFHack::deleteJobStruct(df::job *job)
+void DFHack::Job::deleteJobStruct(df::job *job)
 {
     if (!job)
         return;
@@ -148,7 +148,7 @@ bool DFHack::operator== (const df::job &a, const df::job &b)
     return true;
 }
 
-static void print_job_item_details(color_ostream &out, df::job *job, unsigned idx, df::job_item *item)
+void DFHack::Job::printItemDetails(color_ostream &out, df::job_item *item, int idx)
 {
     CHECK_NULL_POINTER(item);
 
@@ -184,7 +184,7 @@ static void print_job_item_details(color_ostream &out, df::job *job, unsigned id
         out << "    tool use: " << ENUM_KEY_STR(tool_uses, item->has_tool_use) << endl;
 }
 
-void DFHack::printJobDetails(color_ostream &out, df::job *job)
+void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
 {
     CHECK_NULL_POINTER(job);
 
@@ -224,10 +224,10 @@ void DFHack::printJobDetails(color_ostream &out, df::job *job)
         out << "    reaction: " << job->reaction_name << endl;
 
     for (size_t i = 0; i < job->job_items.size(); i++)
-        print_job_item_details(out, job, i, job->job_items[i]);
+        printItemDetails(out, job->job_items[i], i);
 }
 
-df::building *DFHack::getJobHolder(df::job *job)
+df::building *DFHack::Job::getHolder(df::job *job)
 {
     CHECK_NULL_POINTER(job);
 
@@ -241,7 +241,21 @@ df::building *DFHack::getJobHolder(df::job *job)
     return NULL;
 }
 
-bool DFHack::linkJobIntoWorld(df::job *job, bool new_id)
+df::unit *DFHack::Job::getWorker(df::job *job)
+{
+    CHECK_NULL_POINTER(job);
+
+    for (size_t i = 0; i < job->references.size(); i++)
+    {
+        VIRTUAL_CAST_VAR(ref, df::general_ref_unit_workerst, job->references[i]);
+        if (ref)
+            return ref->getUnit();
+    }
+
+    return NULL;
+}
+
+bool DFHack::Job::linkIntoWorld(df::job *job, bool new_id)
 {
     using df::global::world;
     using df::global::job_next_id;
@@ -268,4 +282,32 @@ bool DFHack::linkJobIntoWorld(df::job *job, bool new_id)
         linked_list_insert_after(ins_pos, job->list_link);
         return true;
     }
+}
+
+bool DFHack::Job::listNewlyCreated(std::vector<df::job*> *pvec, int *id_var)
+{
+    using df::global::world;
+    using df::global::job_next_id;
+
+    pvec->clear();
+
+    if (!job_next_id || *job_next_id <= *id_var)
+        return false;
+
+    int old_id = *id_var;
+    int cur_id = *job_next_id;
+
+    *id_var = cur_id;
+
+    pvec->reserve(std::min(20,cur_id - old_id));
+
+    df::job_list_link *link = world->job_list.next;
+    for (; link; link = link->next)
+    {
+        int id = link->item->id;
+        if (id >= old_id)
+            pvec->push_back(link->item);
+    }
+
+    return true;
 }

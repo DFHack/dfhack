@@ -184,9 +184,9 @@ public:
     ProtectedJob(df::job *job) : id(job->id)
     {
         tick_idx = cur_tick_idx;
-        holder = getJobHolder(job);
+        holder = Job::getHolder(job);
         building_id = holder ? holder->id : -1;
-        job_copy = cloneJobStruct(job);
+        job_copy = Job::cloneJobStruct(job);
         actual_job = job;
         reaction_id = -1;
 
@@ -196,7 +196,7 @@ public:
 
     ~ProtectedJob()
     {
-        deleteJobStruct(job_copy);
+        Job::deleteJobStruct(job_copy);
     }
 
     bool isActuallyResumed() {
@@ -214,8 +214,8 @@ public:
             return;
 
         reaction_id = -1;
-        deleteJobStruct(job_copy);
-        job_copy = cloneJobStruct(job);
+        Job::deleteJobStruct(job_copy);
+        job_copy = Job::cloneJobStruct(job);
     }
 
     void tick_job(df::job *job, int ticks)
@@ -365,7 +365,7 @@ static ProtectedJob *get_known(int id)
 static bool isSupportedJob(df::job *job)
 {
     return job->misc_links.empty() &&
-           getJobHolder(job) &&
+           Job::getHolder(job) &&
            (!job->job_items.empty() ||
             job->job_type == job_type::CollectClay ||
             job->job_type == job_type::CollectSand);
@@ -526,11 +526,11 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     }
 
     // Create and link in the actual job structure
-    df::job *recovered = cloneJobStruct(pj->job_copy);
+    df::job *recovered = Job::cloneJobStruct(pj->job_copy);
 
-    if (!linkJobIntoWorld(recovered, false)) // reuse same id
+    if (!Job::linkIntoWorld(recovered, false)) // reuse same id
     {
-        deleteJobStruct(recovered);
+        Job::deleteJobStruct(recovered);
 
         out.printerr("Inconsistency: job %d (%s) already in list.\n",
                         pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
@@ -1435,7 +1435,7 @@ static void print_job(color_ostream &out, ProtectedJob *pj)
 
     df::job *job = pj->isLive() ? pj->actual_job : pj->job_copy;
 
-    printJobDetails(out, job);
+    Job::printJobDetails(out, job);
 
     if (job->job_type == job_type::MeltMetalObject &&
         isOptionEnabled(CF_AUTOMELT))
@@ -1560,7 +1560,7 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
                     pending = true;
                 }
 
-                printJobDetails(out, pending_recover[i]->job_copy);
+                Job::printJobDetails(out, pending_recover[i]->job_copy);
             }
         }
 

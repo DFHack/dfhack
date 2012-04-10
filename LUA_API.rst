@@ -68,6 +68,11 @@ All typed objects have the following built-in features:
   and values. Fields are enumerated in memory order. Methods and
   lua wrapper properties are not included in the iteration.
 
+  **WARNING**: a few of the data structures (like ui_look_list)
+  contain unions with pointers to different types with vtables.
+  Using pairs on such structs is an almost sure way to crash with
+  an access violation.
+
 * ``ref._kind``
 
   Returns one of: ``primitive``, ``struct``, ``container``,
@@ -629,9 +634,17 @@ Job module
 
   Prints info about the job.
 
-* ``dfhack.job.getJobHolder(job)``
+* ``dfhack.job.printItemDetails(jobitem,idx)``
+
+  Prints info about the job item.
+
+* ``dfhack.job.getHolder(job)``
 
   Returns the building holding the job.
+
+* ``dfhack.job.getWorker(job)``
+
+  Returns the unit performing the job.
 
 * ``dfhack.job.is_equal(job1,job2)``
 
@@ -640,6 +653,12 @@ Job module
 * ``dfhack.job.is_item_equal(job_item1,job_item2)``
 
   Compares important fields in the job item structures.
+
+* ``dfhack.job.listNewlyCreated(first_id)``
+
+  Returns the current value of ``df.global.job_next_id``, and
+  if there are any jobs with ``first_id <= id < job_next_id``,
+  a lua list containing them.
 
 Units module
 ------------

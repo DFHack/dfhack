@@ -1072,10 +1072,10 @@ void LuaWrapper::SetFunctionWrappers(lua_State *state, const FunctionReg *reg)
 /**
  * Add fields in the array to the UPVAL_FIELDTABLE candidates on the stack.
  */
-static void IndexFields(lua_State *state, int base, struct_identity *pstruct)
+static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bool globals)
 {
     if (pstruct->getParent())
-        IndexFields(state, base, pstruct->getParent());
+        IndexFields(state, base, pstruct->getParent(), globals);
 
     auto fields = pstruct->getFields();
     if (!fields)
@@ -1105,7 +1105,10 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct)
             break;
 
         default:
-            AssociateId(state, base+3, ++cnt, name.c_str());
+            // Do not add invalid globals to the enumeration order
+            if (!globals || *(void**)fields[i].offset)
+                AssociateId(state, base+3, ++cnt, name.c_str());
+
             lua_pushlightuserdata(state, (void*)&fields[i]);
             lua_setfield(state, base+2, name.c_str());
             break;
@@ -1143,7 +1146,7 @@ void LuaWrapper::IndexStatics(lua_State *state, int meta_idx, int ftable_idx, st
  * Make a struct-style object metatable.
  */
 static void MakeFieldMetatable(lua_State *state, struct_identity *pstruct,
-                               lua_CFunction reader, lua_CFunction writer)
+                               lua_CFunction reader, lua_CFunction writer, bool globals = false)
 {
     int base = lua_gettop(state);
 
@@ -1152,7 +1155,7 @@ static void MakeFieldMetatable(lua_State *state, struct_identity *pstruct,
     // Index the fields
     lua_newtable(state);
 
-    IndexFields(state, base, pstruct);
+    IndexFields(state, base, pstruct, globals);
 
     // Add the iteration metamethods
     PushStructMethod(state, base+1, base+3, meta_struct_next);
@@ -1304,7 +1307,7 @@ void struct_identity::build_metatable(lua_State *state)
 
 void global_identity::build_metatable(lua_State *state)
 {
-    MakeFieldMetatable(state, this, meta_global_index, meta_global_newindex);
+    MakeFieldMetatable(state, this, meta_global_index, meta_global_newindex, true);
 }
 
 /**

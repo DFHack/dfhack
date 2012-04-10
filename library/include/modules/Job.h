@@ -36,24 +36,32 @@ namespace df
     struct job_item;
     struct job_item_filter;
     struct building;
+    struct unit;
 }
 
 namespace DFHack
 {
-    // Duplicate the job structure. It is not linked into any DF lists.
-    DFHACK_EXPORT df::job *cloneJobStruct(df::job *job);
+    namespace Job {
+        // Duplicate the job structure. It is not linked into any DF lists.
+        DFHACK_EXPORT df::job *cloneJobStruct(df::job *job);
 
-    // Delete a cloned structure.
-    DFHACK_EXPORT void deleteJobStruct(df::job *job);
+        // Delete a cloned structure.
+        DFHACK_EXPORT void deleteJobStruct(df::job *job);
+
+        DFHACK_EXPORT void printItemDetails(color_ostream &out, df::job_item *item, int idx);
+        DFHACK_EXPORT void printJobDetails(color_ostream &out, df::job *job);
+
+        DFHACK_EXPORT df::building *getHolder(df::job *job);
+        DFHACK_EXPORT df::unit *getWorker(df::job *job);
+
+        DFHACK_EXPORT bool linkIntoWorld(df::job *job, bool new_id = true);
+
+        // lists jobs with ids >= *id_var, and sets *id_var = *job_next_id;
+        DFHACK_EXPORT bool listNewlyCreated(std::vector<df::job*> *pvec, int *id_var);
+    }
 
     DFHACK_EXPORT bool operator== (const df::job_item &a, const df::job_item &b);
     DFHACK_EXPORT bool operator== (const df::job &a, const df::job &b);
-
-    DFHACK_EXPORT void printJobDetails(color_ostream &out, df::job *job);
-
-    DFHACK_EXPORT df::building *getJobHolder(df::job *job);
-
-    DFHACK_EXPORT bool linkJobIntoWorld(df::job *job, bool new_id = true);
 }
 #endif
 

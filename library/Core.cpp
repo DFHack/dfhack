@@ -893,26 +893,31 @@ int Core::Update()
     if (new_wdata != last_world_data_ptr)
     {
         // we check for map change too
-        bool mapchange = new_mapdata != last_local_map_ptr;
+        bool had_map = isMapLoaded();
         last_world_data_ptr = new_wdata;
         last_local_map_ptr = new_mapdata;
 
         getWorld()->ClearPersistentCache();
 
         // and if the world is going away, we report the map change first
-        if(!new_wdata && mapchange)
-            plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+        if(had_map)
+            plug_mgr->OnStateChange(out, SC_MAP_UNLOADED);
         // and if the world is appearing, we report map change after that
         plug_mgr->OnStateChange(out, new_wdata ? SC_WORLD_LOADED : SC_WORLD_UNLOADED);
-        if(new_wdata && mapchange)
-            plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+        if(isMapLoaded())
+            plug_mgr->OnStateChange(out, SC_MAP_LOADED);
     }
     // otherwise just check for map change...
     else if (new_mapdata != last_local_map_ptr)
     {
+        bool had_map = isMapLoaded();
         last_local_map_ptr = new_mapdata;
-        getWorld()->ClearPersistentCache();
-        plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+
+        if (isMapLoaded() != had_map)
+        {
+            getWorld()->ClearPersistentCache();
+            plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+        }
     }
 
     // detect if the viewscreen changed

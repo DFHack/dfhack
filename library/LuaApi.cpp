@@ -517,10 +517,13 @@ static void OpenMatinfo(lua_State *state)
  * Wrappers for C++ API *
  ************************/
 
-static void OpenModule(lua_State *state, const char *mname, const LuaWrapper::FunctionReg *reg)
+static void OpenModule(lua_State *state, const char *mname,
+                       const LuaWrapper::FunctionReg *reg, const luaL_Reg *reg2 = NULL)
 {
     luaL_getsubtable(state, lua_gettop(state), mname);
     LuaWrapper::SetFunctionWrappers(state, reg);
+    if (reg2)
+        luaL_setfuncs(state, reg2, 0);
     lua_pop(state, 1);
 }
 
@@ -547,13 +550,45 @@ static bool jobEqual(df::job *job1, df::job *job2) { return *job1 == *job2; }
 static bool jobItemEqual(df::job_item *job1, df::job_item *job2) { return *job1 == *job2; }
 
 static const LuaWrapper::FunctionReg dfhack_job_module[] = {
-    WRAP(cloneJobStruct),
-    WRAP(printJobDetails),
-    WRAP(getJobHolder),
+    WRAPM(Job,cloneJobStruct),
+    WRAPM(Job,printItemDetails),
+    WRAPM(Job,printJobDetails),
+    WRAPM(Job,getHolder),
+    WRAPM(Job,getWorker),
     WRAPN(is_equal, jobEqual),
     WRAPN(is_item_equal, jobItemEqual),
     { NULL, NULL }
 };
+
+static int job_listNewlyCreated(lua_State *state)
+{
+    int nxid = luaL_checkint(state, 1);
+
+    lua_settop(state, 1);
+
+    std::vector<df::job*> pvec;
+    if (Job::listNewlyCreated(&pvec, &nxid))
+    {
+        lua_pushinteger(state, nxid);
+        lua_newtable(state);
+
+        for (size_t i = 0; i < pvec.size(); i++)
+        {
+            Lua::PushDFObject(state, pvec[i]);
+            lua_rawseti(state, -2, i+1);
+        }
+
+        return 2;
+    }
+    else
+        return 1;
+}
+
+static const luaL_Reg dfhack_job_funcs[] = {
+    { "listNewlyCreated", job_listNewlyCreated },
+    { NULL, NULL }
+};
+
 
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, setNickname),
@@ -576,6 +611,6 @@ void OpenDFHackApi(lua_State *state)
 
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
     OpenModule(state, "gui", dfhack_gui_module);
-    OpenModule(state, "job", dfhack_job_module);
+    OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "units", dfhack_units_module);
 }

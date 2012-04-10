@@ -289,9 +289,9 @@ static command_result job_duplicate(color_ostream &out, vector <string> & parame
     }
 
     // Actually clone
-    df::job *pnew = cloneJobStruct(job);
+    df::job *pnew = Job::cloneJobStruct(job);
 
-    linkJobIntoWorld(pnew);
+    Job::linkIntoWorld(pnew);
     vector_insert_at(building->jobs, ++*ui_workshop_job_cursor, pnew);
 
     return CR_OK;
@@ -325,14 +325,14 @@ static command_result job_cmd(color_ostream &out, vector <string> & parameters)
             return CR_WRONG_USAGE;
 
         if (cmd == "query") {
-            printJobDetails(out, job);
+            Job::printJobDetails(out, job);
         } else {
             if (!Gui::workshop_job_hotkey(Core::getTopViewscreen()))
                 return CR_WRONG_USAGE;
 
             df::building *selected = world->selected_building;
             for (size_t i = 0; i < selected->jobs.size(); i++)
-                printJobDetails(out, selected->jobs[i]);
+                Job::printJobDetails(out, selected->jobs[i]);
         }
     }
     else if (cmd == "item-material")
@@ -355,7 +355,7 @@ static command_result job_cmd(color_ostream &out, vector <string> & parameters)
 
         if (minfo.isValid() && !iinfo.matches(*item, &minfo)) {
             out.printerr("Material does not match the requirements.\n");
-            printJobDetails(out, job);
+            Job::printJobDetails(out, job);
             return CR_FAILURE;
         }
 
@@ -376,7 +376,7 @@ static command_result job_cmd(color_ostream &out, vector <string> & parameters)
             out.printerr("WARNING: Due to a probable bug, creature & plant material subtype\n"
                             "         is ignored unless the item type is also specified.\n");
 
-        printJobDetails(out, job);
+        Job::printJobDetails(out, job);
         return CR_OK;
     }
     else if (cmd == "item-type")
@@ -399,7 +399,7 @@ static command_result job_cmd(color_ostream &out, vector <string> & parameters)
 
         if (iinfo.isValid() && !iinfo.matches(*item, &minfo)) {
             out.printerr("Item type does not match the requirements.\n");
-            printJobDetails(out, job);
+            Job::printJobDetails(out, job);
             return CR_FAILURE;
         }
 
@@ -407,7 +407,7 @@ static command_result job_cmd(color_ostream &out, vector <string> & parameters)
         item->item_subtype = iinfo.subtype;
 
         out << "Job item updated." << endl;
-        printJobDetails(out, job);
+        Job::printJobDetails(out, job);
         return CR_OK;
     }
     else

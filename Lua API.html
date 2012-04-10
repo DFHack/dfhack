@@ -395,6 +395,10 @@ Every structured field access produces a new userdata instance.</p>
 <p>Returns an iterator for the sequence of actual C++ field names
 and values. Fields are enumerated in memory order. Methods and
 lua wrapper properties are not included in the iteration.</p>
+<p><strong>WARNING</strong>: a few of the data structures (like ui_look_list)
+contain unions with pointers to different types with vtables.
+Using pairs on such structs is an almost sure way to crash with
+an access violation.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">ref._kind</tt></p>
 <p>Returns one of: <tt class="docutils literal">primitive</tt>, <tt class="docutils literal">struct</tt>, <tt class="docutils literal">container</tt>,
@@ -869,14 +873,25 @@ The is_bright boolean actually seems to invert the brightness.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.job.printJobDetails(job)</tt></p>
 <p>Prints info about the job.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.job.getJobHolder(job)</tt></p>
+<li><p class="first"><tt class="docutils literal">dfhack.job.printItemDetails(jobitem,idx)</tt></p>
+<p>Prints info about the job item.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.getHolder(job)</tt></p>
 <p>Returns the building holding the job.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.getWorker(job)</tt></p>
+<p>Returns the unit performing the job.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.job.is_equal(job1,job2)</tt></p>
 <p>Compares important fields in the job and nested item structures.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.job.is_item_equal(job_item1,job_item2)</tt></p>
 <p>Compares important fields in the job item structures.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.listNewlyCreated(first_id)</tt></p>
+<p>Returns the current value of <tt class="docutils literal">df.global.job_next_id</tt>, and
+if there are any jobs with <tt class="docutils literal">first_id &lt;= id &lt; job_next_id</tt>,
+a lua list containing them.</p>
 </li>
 </ul>
 </div>

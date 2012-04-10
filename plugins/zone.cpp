@@ -11,6 +11,7 @@
 // - print detailed info about activity zone and units under cursor (mostly for checking refs and stuff)
 // - mark a zone which is used for future assignment commands
 // - assign single selected creature to a zone
+// - mass-assign creatures using filters
 // - unassign single creature under cursor from current zone
 // - pitting own dwarves :)
 // - full automation of handling mini-pastures over nestboxes:
@@ -76,16 +77,17 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters);
 DFHACK_PLUGIN("zone");
 
 const string zone_help =
-    "Allows easier management of pens/pastures and pits.\n"
+    "Allows easier management of pens/pastures, pits and cages.\n"
     "Options:\n"
     "  set          - set zone under cursor as default for future assigns\n"
     "  assign       - assign creature(s) to a pen or pit\n"
     "                 if no filters are used, a single unit must be selected.\n"
-    "                 can be followed by valid zone id which will then be set.\n"
+    "                 can be followed by valid building id which will then be set.\n"
+    "                 building must be a pen/pasture, pit or cage.\n"
     "  slaughter    - mark creature(s) for slaughter\n"
     "                 if no filters are used, a single unit must be selected.\n"
     "                 with filters named units are ignored unless specified.\n"
-    "  unassign     - unassign selected creature from it's zone\n"
+    "  unassign     - unassign selected creature(s) from it's zone or cage\n"
     "  uinfo        - print info about selected unit\n"
     "  zinfo        - print info about zone(s) under cursor\n"
     "  verbose      - print some more info, mostly useless debug stuff\n"
@@ -137,7 +139,7 @@ const string zone_help_examples =
     "  zone assign all own race DWARF maxage 2\n"
     "    throw all useless kids into a pit :)\n"
     "Notes:\n"
-    "  Assigning per filters ignores built cages and chains currently. Usually you\n"
+    "  Unassigning per filters ignores built cages and chains currently. Usually you\n"
     "  should always use the filter 'own' (which implies tame) unless you want to\n"
     "  use the zone tool for pitting hostiles. 'own' ignores own dwarves unless you\n"
     "  specify 'race DWARF' and it ignores merchants and their animals unless you\n"
@@ -348,7 +350,7 @@ int32_t findCageAtCursor();
 int32_t findChainAtCursor();
 
 df::general_ref_building_civzone_assignedst * createCivzoneRef();
-bool unassignUnitFromZone(df::unit* unit);
+bool unassignUnitFromBuilding(df::unit* unit);
 command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building* building, bool verbose);
 void unitInfo(color_ostream & out, df::unit* creature, bool verbose);
 void zoneInfo(color_ostream & out, df::building* building, bool verbose);
@@ -948,6 +950,31 @@ bool isContainedInItem(df::unit* unit)
     return contained;
 }
 
+bool isInBuiltCage(df::unit* unit)
+{
+    bool caged = false;
+    for (size_t b=0; b < world->buildings.all.size(); b++)
+    {
+        df::building* building = world->buildings.all[b];
+        if( building->getType() == building_type::Cage)
+        {
+            df::building_cagest* oldcage = (df::building_cagest*) building;
+            for(size_t oc=0; oc<oldcage->assigned_creature.size(); oc++)
+            {
+                if(oldcage->assigned_creature[oc] == unit->id)
+                {
+                    oldcage->assigned_creature.erase(oldcage->assigned_creature.begin() + oc);
+                    caged = true;
+                    break;
+                }
+            }
+        }
+        if(caged)
+            break;
+    }
+    return caged;
+}
+
 // check a map position for a built cage
 // animals in cages are CONTAINED_IN_ITEM, no matter if they are on a stockpile or inside a built cage
 // if they are on animal stockpiles they should count as unassigned to allow pasturing them
@@ -964,6 +991,24 @@ bool isBuiltCageAtPos(df::coord pos)
             && building->z  == pos.z )
         {
             cage = true;
+            break;
+        }
+    }
+    return cage;
+}
+
+df::building * getBuiltCageAtPos(df::coord pos)
+{
+    df::building* cage = NULL;
+    for (size_t b=0; b < world->buildings.all.size(); b++)
+    {
+        df::building* building = world->buildings.all[b];
+        if( building->getType() == building_type::Cage
+            && building->x1 == pos.x
+            && building->y1 == pos.y
+            && building->z  == pos.z )
+        {
+            cage = building;
             break;
         }
     }
@@ -1062,30 +1107,88 @@ size_t countFreeEgglayers()
 }
 
 // check if unit is already assigned to a zone, remove that ref from unit and old zone
-// returns false if no pasture information was found
+// check if unit is already assigned to a cage, remove that ref from the cage
+// returns false if no cage or pasture information was found
 // helps as workaround for http://www.bay12games.com/dwarves/mantisbt/view.php?id=4475 by the way
 // (pastured animals assigned to chains will get hauled back and forth because the pasture ref is not deleted)
-bool unassignUnitFromZone(df::unit* unit)
+bool unassignUnitFromBuilding(df::unit* unit)
 {
     bool success = false;
     for (std::size_t idx = 0; idx < unit->refs.size(); idx++)
     {
         df::general_ref * oldref = unit->refs[idx];
-        if(oldref->getType() == df::general_ref_type::BUILDING_CIVZONE_ASSIGNED)
+        switch(oldref->getType())
         {
-            unit->refs.erase(unit->refs.begin() + idx);
-            df::building_civzonest * oldciv = (df::building_civzonest *) oldref->getBuilding();
-            for(size_t oc=0; oc<oldciv->assigned_creature.size(); oc++)
+        case df::general_ref_type::BUILDING_CIVZONE_ASSIGNED:
             {
-                if(oldciv->assigned_creature[oc] == unit->id)
+                unit->refs.erase(unit->refs.begin() + idx);
+                df::building_civzonest * oldciv = (df::building_civzonest *) oldref->getBuilding();
+                for(size_t oc=0; oc<oldciv->assigned_creature.size(); oc++)
                 {
-                    oldciv->assigned_creature.erase(oldciv->assigned_creature.begin() + oc);
-                    break;
+                    if(oldciv->assigned_creature[oc] == unit->id)
+                    {
+                        oldciv->assigned_creature.erase(oldciv->assigned_creature.begin() + oc);
+                        break;
+                    }
                 }
+                delete oldref;
+                success = true;
+                break;
             }
-            delete oldref;
-            success = true;
-            break;
+
+        case df::general_ref_type::CONTAINED_IN_ITEM:
+            {
+                // game does not erase the ref until creature gets removed from cage
+                //unit->refs.erase(unit->refs.begin() + idx);
+                
+                // walk through buildings, check cages for inhabitants, compare ids
+                for (size_t b=0; b < world->buildings.all.size(); b++)
+                {
+                    bool found = false;
+                    df::building* building = world->buildings.all[b];
+                    if(isCage(building))
+                    {
+                        df::building_cagest* oldcage = (df::building_cagest*) building;
+                        for(size_t oc=0; oc<oldcage->assigned_creature.size(); oc++)
+                        {
+                            if(oldcage->assigned_creature[oc] == unit->id)
+                            {
+                                oldcage->assigned_creature.erase(oldcage->assigned_creature.begin() + oc);
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    if(found)
+                        break;
+                }
+                success = true;
+                break;
+            }
+
+        case df::general_ref_type::BUILDING_CHAIN:
+            {
+                // try not erasing the ref and see what happens
+                //unit->refs.erase(unit->refs.begin() + idx);
+                // probably need to delete chain reference here
+                //success = true;
+                break;
+            }
+
+        case df::general_ref_type::BUILDING_CAGED:
+            {
+                // not sure what to do here, doesn't seem to get used by the game
+                //unit->refs.erase(unit->refs.begin() + idx);
+                //success = true;
+                break;
+            }
+
+        default:
+            {
+                // some reference which probably shouldn't get deleted
+                // (animals who are historical figures and have a NEMESIS reference or whatever)
+                break;
+            }
         }
     }
     return success;
@@ -1112,10 +1215,11 @@ command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building
     }
         
     // check if unit is already pastured, remove that ref from unit and old pasture
-    //    testing showed that this only seems to be necessary for pastured creatures
+    //    testing showed that removing the ref from the unit only seems to be necessary for pastured creatures
     //    if they are in cages on stockpiles the game unassigns them automatically
-    //    (need to check if that is also true for chains and built cages)
-    bool cleared_old = unassignUnitFromZone(unit);
+    //    if they are in built cages the pointer to the creature needs to be removed from the cage
+    //    TODO: check what needs to be done for chains
+    bool cleared_old = unassignUnitFromBuilding(unit);
 
     if(verbose)
     {
@@ -1143,19 +1247,56 @@ command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building
     return CR_OK;
 }
 
-command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::building* building, bool verbose = false)
+command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::building* building, bool verbose)
 {
-    out << "sorry. assigning to cages is not possible yet." << endl;
-    return CR_WRONG_USAGE;
+    // building must be a pen/pasture or pit
+    if(!isCage(building))
+    {
+        out << "Invalid building type. This is not a cage." << endl;
+        return CR_WRONG_USAGE;
+    }
+
+    // try to get a fresh civzone ref
+    //df::general_ref_building_civzone_assignedst * ref = createCivzoneRef();
+    //if(!ref)
+    //{
+    //    out << "Could not find a clonable activity zone reference" << endl
+    //        << "You need to pen/pasture/pit at least one creature" << endl
+    //        << "before using 'assign' for the first time." << endl;
+    //    return CR_WRONG_USAGE;
+    //}
+        
+    // check if unit is already pastured or caged, remove refs where necessary
+    bool cleared_old = unassignUnitFromBuilding(unit);
+    if(verbose)
+    {
+        if(cleared_old)
+            out << "old zone info cleared.";
+        else
+            out << "no old zone info found.";
+    }
+
+    //ref->building_id = building->id;
+    //unit->refs.push_back(ref);
+
+    df::building_cagest* civz = (df::building_cagest*) building;
+    civz->assigned_creature.push_back(unit->id);
+
+    out << "Unit " << unit->id 
+        << "(" << getRaceName(unit) << ")" 
+        << " assigned to cage " << building->id;
+    out << endl;
+
+    return CR_OK;
 }
 
-command_result assignUnitToChain(color_ostream& out, df::unit* unit, df::building* building, bool verbose = false)
+command_result assignUnitToChain(color_ostream& out, df::unit* unit, df::building* building, bool verbose)
 {
     out << "sorry. assigning to chains is not possible yet." << endl;
     return CR_WRONG_USAGE;
 }
 
-command_result assignUnitToBuilding(color_ostream& out, df::unit* unit, df::building* building, bool verbose = false)
+command_result assignUnitToBuilding(color_ostream& out, df::unit* unit, df::building* building, bool verbose)
 {
     command_result result = CR_WRONG_USAGE;
 
@@ -1172,7 +1313,7 @@ command_result assignUnitToBuilding(color_ostream& out, df::unit* unit, df::buil
 }
 
 // dump some zone info
-void zoneInfo(color_ostream & out, df::building* building, bool verbose = false)
+void zoneInfo(color_ostream & out, df::building* building, bool verbose)
 {
     if(building->getType()!= building_type::Civzone)
         return;
@@ -1231,7 +1372,7 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose = false)
 }
 
 // dump some cage info
-void cageInfo(color_ostream & out, df::building* building, bool verbose = false)
+void cageInfo(color_ostream & out, df::building* building, bool verbose)
 {
     if(!isCage(building))
         return;
@@ -1336,13 +1477,13 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool find_race = false;
     string target_race = "";
 
-    bool zone_assign = false;
-    bool zone_unassign = false;
-    bool zone_set = false;
+    bool building_assign = false;
+    bool building_unassign = false;
+    bool building_set = false;
     bool verbose = false;
     bool all = false;
     bool unit_slaughter = false;
-    static int target_zone = -1;
+    static int target_building = -1;
 
     for (size_t i = 0; i < parameters.size(); i++)
     {
@@ -1377,7 +1518,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         }
         else if(p == "unassign")
         {
-            zone_unassign = true;
+            building_unassign = true;
         }
         else if(p == "assign")
         {
@@ -1385,24 +1526,24 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             if(i < parameters.size()-1)
             {
                 stringstream ss(parameters[i+1]);
-                int new_zone = -1;
-                ss >> new_zone;
-                if(new_zone != -1)
+                int new_building = -1;
+                ss >> new_building;
+                if(new_building != -1)
                 {
                     i++;
-                    target_zone = new_zone;
-                    out << "Assign selected unit(s) to zone #" << target_zone <<std::endl;
+                    target_building = new_building;
+                    out << "Assign selected unit(s) to building #" << target_building <<std::endl;
                 }
             }
-            if(target_zone == -1)
+            if(target_building == -1)
             {
-                out.printerr("No zone id specified and current one is invalid!\n");
+                out.printerr("No building id specified and current one is invalid!\n");
                 return CR_WRONG_USAGE;
             }
             else
             {
-                out << "No zone id specified. Will try to use #" << target_zone << endl;
-                zone_assign = true;
+                out << "No buiding id specified. Will try to use #" << target_building << endl;
+                building_assign = true;
             }
         }
         else if(p == "race")
@@ -1571,7 +1712,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         }
         else if(p == "set")
         {
-            zone_set = true;
+            building_set = true;
         }
         else if(p == "all")
         {
@@ -1591,7 +1732,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    if((zone_info && !all) || zone_set)
+    if((zone_info && !all) || building_set)
         need_cursor = true;
 
     if(need_cursor && cursor->x == -30000)
@@ -1653,31 +1794,43 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         return CR_OK;
     }
 
-    // set building at cursor position to be new target zone
-    if(zone_set)
+    // set building at cursor position to be new target building
+    if(building_set)
     {
-        target_zone = findPenPitAtCursor();
-        if(target_zone==-1)
+        target_building = findCageAtCursor();
+        if(target_building != -1)
         {
-            out << "No pen/pasture or pit under cursor!" << endl;
-            return CR_WRONG_USAGE;
+            out << "Target building type: cage." << endl;
         }
-        out << "Current zone set to #" << target_zone << endl;
+        else
+        {
+            target_building = findPenPitAtCursor();
+            if(target_building == -1)
+            {
+                out << "No pen/pasture or pit under cursor!" << endl;
+                return CR_WRONG_USAGE;
+            }
+            else
+            {
+                out << "Target building type: pen/pasture or pit." << endl;
+            }
+        }
+        out << "Current building set to #" << target_building << endl;
         return CR_OK;
     }
 
     // assign to pen or pit
-    if(zone_assign || unit_info || unit_slaughter)
+    if(building_assign || unit_info || unit_slaughter)
     {
         df::building * building;
-        if(zone_assign)
+        if(building_assign)
         {
             // try to get building index from the id
-            int32_t index = findBuildingIndexById(target_zone);
+            int32_t index = findBuildingIndexById(target_building);
             if(index == -1)
             {
                 out << "Invalid building id." << endl;
-                target_zone = -1;
+                target_building = -1;
                 return CR_WRONG_USAGE;
             }
             building = world->buildings.all.at(index);
@@ -1713,7 +1866,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 }
 
                 if(    (find_unassigned && isAssigned(unit))
-                    || (isContainedInItem(unit) && (find_uncaged || isBuiltCageAtPos(unit->pos)))
+                    // avoid tampering with creatures who are currently being hauled to a built cage
+                    || (isContainedInItem(unit) && (find_uncaged || isInBuiltCage(unit)))
                     || (isChained(unit))
                     || (find_caged && !isContainedInItem(unit))
                     || (find_own && !isOwnCiv(unit))
@@ -1751,7 +1905,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 {
                     unitInfo(out, unit, verbose);
                 }
-                else if(zone_assign)
+                else if(building_assign)
                 {            
                     command_result result = assignUnitToBuilding(out, unit, building, verbose);
                     if(result != CR_OK)
@@ -1786,7 +1940,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 unitInfo(out, unit, verbose);
                 return CR_OK;
             }
-            else if(zone_assign)
+            else if(building_assign)
             {
                 return assignUnitToBuilding(out, unit, building, verbose);
             }
@@ -1810,7 +1964,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     // using the zone tool to free creatures from cages or chains 
     // is pointless imo since that is already quite easy using the ingame UI. 
     // but it's easy to implement so I might as well add it later
-    if(zone_unassign)
+    if(building_unassign)
     {
         // must have unit selected
         df::unit *unit = getSelectedUnit(out);
@@ -1821,7 +1975,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         }
 
         // remove assignment reference from unit and old zone
-        if(unassignUnitFromZone(unit))
+        if(unassignUnitFromBuilding(unit))
             out << "Unit unassigned." << endl;
         else
             out << "Unit is not assigned to an activity zone!" << endl;
@@ -2685,13 +2839,13 @@ command_result start_autobutcher(color_ostream &out)
     }
 
     out << "Starting autobutcher." << endl;
-	cleanup_autobutcher(out);
 	init_autobutcher(out);
     return CR_OK;
 }
 
 command_result init_autobutcher(color_ostream &out)
 {
+	cleanup_autobutcher(out);
     auto pworld = Core::getInstance().getWorld();
     if(!pworld)
     {
@@ -2772,13 +2926,13 @@ command_result start_autonestbox(color_ostream &out)
         //out << "autonestbox created persistent config object." << endl;
     }
     out << "Starting autonestbox." << endl;
-	cleanup_autonestbox(out);
 	init_autonestbox(out);
     return CR_OK;
 }
 
 command_result init_autonestbox(color_ostream &out)
 {
+	cleanup_autonestbox(out);
     auto pworld = Core::getInstance().getWorld();
     if(!pworld)
     {

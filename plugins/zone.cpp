@@ -341,7 +341,7 @@ bool isForest(df::unit* creature);
 
 bool isActivityZone(df::building * building);
 bool isPenPasture(df::building * building);
-bool isPit(df::building * building);
+bool isPitPond(df::building * building);
 bool isActive(df::building * building);
 
 int32_t findBuildingIndexById(int32_t id);
@@ -727,14 +727,14 @@ bool isPenPasture(df::building * building)
         return false;
 }
 
-bool isPit(df::building * building)
+bool isPitPond(df::building * building)
 {
     if(!isActivityZone(building))
         return false;
 
     df::building_civzonest * civ = (df::building_civzonest *) building;
 
-    if(civ->zone_flags.bits.pit_pond && civ->pit_flags==0)
+    if(civ->zone_flags.bits.pit_pond) // && civ->pit_flags==0)
         return true;
     else 
         return false;
@@ -790,7 +790,7 @@ int32_t findPenPitAtCursor()
             building->z == cursor->z))
             continue;
 
-        if(isPenPasture(building) || isPit(building))
+        if(isPenPasture(building) || isPitPond(building))
         {
             foundID = building->id;
             break;
@@ -1198,9 +1198,9 @@ bool unassignUnitFromBuilding(df::unit* unit)
 command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building* building, bool verbose = false)
 {
     // building must be a pen/pasture or pit
-    if(!isPenPasture(building) && !isPit(building))
+    if(!isPenPasture(building) && !isPitPond(building))
     {
-        out << "Invalid building type. This is not a pen/pasture or pit." << endl;
+        out << "Invalid building type. This is not a pen/pasture or pit/pond." << endl;
         return CR_WRONG_USAGE;
     }
 
@@ -1238,8 +1238,8 @@ command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building
     out << "Unit " << unit->id 
         << "(" << getRaceName(unit) << ")" 
         << " assigned to zone " << building->id;
-    if(isPit(building))
-        out << " (pit).";
+    if(isPitPond(building))
+        out << " (pit/pond).";
     if(isPenPasture(building))
         out << " (pen/pasture).";
     out << endl;
@@ -1341,10 +1341,14 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
 
     if(civ->zone_flags.bits.pen_pasture)
         out << ", pen/pasture";
-    else if (civ->zone_flags.bits.pit_pond && civ->pit_flags==0)
-        out << ", pit";
-    else
-        return;
+    else if (civ->zone_flags.bits.pit_pond)
+    {
+        out << " (pit flags:" << civ->pit_flags << ")";
+        if(civ->pit_flags & 1)
+            out << ", pond";
+        else 
+            out << ", pit";
+    }
     out << endl;
     out << "x1:" <<building->x1
         << " x2:" <<building->x2

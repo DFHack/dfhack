@@ -43,6 +43,7 @@ distribution.
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/Materials.h"
+#include "modules/Maps.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -527,9 +528,9 @@ static void OpenModule(lua_State *state, const char *mname,
     lua_pop(state, 1);
 }
 
-#define WRAPM(module, function) { #function, df::wrap_function(&module::function) }
-#define WRAP(function) { #function, df::wrap_function(&function) }
-#define WRAPN(name, function) { #name, df::wrap_function(&function) }
+#define WRAPM(module, function) { #function, df::wrap_function(module::function) }
+#define WRAP(function) { #function, df::wrap_function(function) }
+#define WRAPN(name, function) { #name, df::wrap_function(function) }
 
 static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAPM(Translation, TranslateName),
@@ -600,6 +601,15 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     { NULL, NULL }
 };
 
+static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
+    WRAPN(getBlock, (df::map_block* (*)(int32_t,int32_t,int32_t))Maps::getBlock),
+    WRAPN(getTileBlock, (df::map_block* (*)(df::coord))Maps::getTileBlock),
+    WRAPM(Maps, getRegionBiome),
+    WRAPM(Maps, getGlobalInitFeature),
+    WRAPM(Maps, getLocalInitFeature),
+    { NULL, NULL }
+};
+
 /************************
  *  Main Open function  *
  ************************/
@@ -613,4 +623,5 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "gui", dfhack_gui_module);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "units", dfhack_units_module);
+    OpenModule(state, "maps", dfhack_maps_module);
 }

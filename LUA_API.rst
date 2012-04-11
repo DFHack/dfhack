@@ -686,3 +686,34 @@ Units module
 * ``dfhack.units.isSane(unit)``
 
   The unit is capable of rational action, i.e. not dead, insane or zombie.
+
+Maps module
+-----------
+
+* ``dfhack.maps.getSize()``
+
+  Returns map size in blocks: *x, y, z*
+
+* ``dfhack.maps.getTileSize()``
+
+  Returns map size in tiles: *x, y, z*
+
+* ``dfhack.maps.getBlock(x,y,z)``
+
+  Returns a map block object for given x,y,z in local block coordinates.
+
+* ``dfhack.maps.getTileBlock(coords)``
+
+  Returns a map block object for given df::coord in local tile coordinates.
+
+* ``dfhack.maps.getRegionBiome(region_coord2d)``
+
+  Returns the biome info struct for the given global map region.
+
+* ``dfhack.maps.getGlobalInitFeature(index)``
+
+  Returns the global feature object with the given index.
+
+* ``dfhack.maps.getLocalInitFeature(region_coord2d,index)``
+
+  Returns the local feature object with the given region coords and index.

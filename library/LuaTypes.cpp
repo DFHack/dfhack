@@ -80,6 +80,15 @@ void constructed_identity::lua_write(lua_State *state, int fname_idx, void *ptr,
     {
         invoke_assign(state, this, ptr, val_index);
     }
+    // Allow by-value assignment for wrapped function parameters
+    else if (fname_idx == UPVAL_METHOD_NAME && lua_isuserdata(state, val_index))
+    {
+        void *nval = get_object_internal(state, this, val_index, false);
+        if (!nval)
+            field_error(state, fname_idx, "incompatible type in complex assignment", "write");
+        if (!copy(ptr, nval))
+            field_error(state, fname_idx, "no copy support", "write");
+    }
     else
         field_error(state, fname_idx, "complex object", "write");
 }

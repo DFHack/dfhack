@@ -340,7 +340,8 @@ ul.auto-toc {
 <li><a class="reference internal" href="#gui-module" id="id14">Gui module</a></li>
 <li><a class="reference internal" href="#job-module" id="id15">Job module</a></li>
 <li><a class="reference internal" href="#units-module" id="id16">Units module</a></li>
-<li><a class="reference internal" href="#maps-module" id="id17">Maps module</a></li>
+<li><a class="reference internal" href="#items-module" id="id17">Items module</a></li>
+<li><a class="reference internal" href="#maps-module" id="id18">Maps module</a></li>
 </ul>
 </li>
 </ul>
@@ -925,8 +926,20 @@ a lua list containing them.</p>
 </li>
 </ul>
 </div>
+<div class="section" id="items-module">
+<h3><a class="toc-backref" href="#id17">Items module</a></h3>
+<ul>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getOwner(item)</tt></p>
+<p>Returns the owner unit or <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.setOwner(item,unit)</tt></p>
+<p>Replaces the owner of the item. If unit is <em>nil</em>, removes ownership.
+Returns <em>false</em> in case of error.</p>
+</li>
+</ul>
+</div>
 <div class="section" id="maps-module">
-<h3><a class="toc-backref" href="#id17">Maps module</a></h3>
+<h3><a class="toc-backref" href="#id18">Maps module</a></h3>
 <ul>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getSize()</tt></p>
 <p>Returns map size in blocks: <em>x, y, z</em></p>

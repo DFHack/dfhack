@@ -495,37 +495,6 @@ bool Units::ReadInventoryByPtr(const df::unit * unit, std::vector<df::item *> & 
     return true;
 }
 
-bool Units::ReadOwnedItemsByIdx(const uint32_t index, std::vector<int32_t> & item)
-{
-    if(index >= world->units.all.size()) return false;
-    df::unit * temp = world->units.all[index];
-    return ReadOwnedItemsByPtr(temp, item);
-}
-
-bool Units::ReadOwnedItemsByPtr(const df::unit * unit, std::vector<int32_t> & items)
-{
-    if(!isValid()) return false;
-    if(!unit) return false;
-    items = unit->owned_items;
-    return true;
-}
-
-bool Units::RemoveOwnedItemByIdx(const uint32_t index, int32_t id)
-{
-    if(index >= world->units.all.size()) return false;
-    df::unit * temp = world->units.all[index];
-    return RemoveOwnedItemByPtr(temp, id);
-}
-
-bool Units::RemoveOwnedItemByPtr(df::unit * unit, int32_t id)
-{
-    if(!isValid()) return false;
-    if(!unit) return false;
-    vector <int32_t> & vec = unit->owned_items;
-    vec.erase(std::remove(vec.begin(), vec.end(), id), vec.end());
-    return true;
-}
-
 void Units::CopyNameTo(df::unit * creature, df::language_name * target)
 {
     Translation::copyName(&creature->name, target);

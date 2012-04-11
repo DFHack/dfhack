@@ -42,6 +42,7 @@ distribution.
 #include "modules/Job.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
+#include "modules/Items.h"
 #include "modules/Materials.h"
 #include "modules/Maps.h"
 
@@ -609,6 +610,12 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     { NULL, NULL }
 };
 
+static const LuaWrapper::FunctionReg dfhack_items_module[] = {
+    WRAPM(Items, getOwner),
+    WRAPM(Items, setOwner),
+    { NULL, NULL }
+};
+
 static bool maps_isBlockBurrowTile(df::burrow *burrow, df::map_block *block, int x, int y)
 {
     return Maps::isBlockBurrowTile(burrow, block, df::coord2d(x,y));
@@ -666,5 +673,6 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "gui", dfhack_gui_module);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "units", dfhack_units_module);
+    OpenModule(state, "items", dfhack_items_module);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
 }

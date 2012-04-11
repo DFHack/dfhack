@@ -696,6 +696,19 @@ Units module
   Adds or removes the unit from the burrow.
 
 
+Items module
+------------
+
+* ``dfhack.items.getOwner(item)``
+
+  Returns the owner unit or *nil*.
+
+* ``dfhack.items.setOwner(item,unit)``
+
+  Replaces the owner of the item. If unit is *nil*, removes ownership.
+  Returns *false* in case of error.
+
+
 Maps module
 -----------
 

@@ -104,13 +104,32 @@ command_result df_regrass (color_ostream &out, vector <string> & parameters)
                         {
                             df::block_square_event_grassst * gr_ev = (df::block_square_event_grassst *)blev;
                             gr_ev->amount[x][y] = 100;
-                            break;
                         }
                     }
                 }
                 else
                 {
-                    grev->amount[x][y]=100;
+                    // try to find the 'original' event
+                    bool regrew = false;
+                    for(size_t e=0; e<cur->block_events.size(); e++)
+                    {            
+                        df::block_square_event * blev = cur->block_events[e];
+                        df::block_square_event_type blevtype = blev->getType();
+                        if(blevtype == df::block_square_event_type::grass)
+                        {
+                            df::block_square_event_grassst * gr_ev = (df::block_square_event_grassst *)blev;
+                            if(gr_ev->amount[x][y] > 0)
+                            {
+                                gr_ev->amount[x][y] = 100;
+                                regrew = true;
+                                break;
+                            }
+                        }
+                    }
+                    // if original could not be found (meaning it was already depleted):
+                    // refresh the first grass event in the map block
+                    if(!regrew)
+                        grev->amount[x][y]=100;
                 }
                 cur->tiletype[x][y] = findRandomVariant((rand() & 1) ? tiletype::GrassLightFloor1 : tiletype::GrassDarkFloor1);
                 count++;

@@ -38,7 +38,7 @@ distribution.
 #include "modules/Materials.h"
 
 #include "df/world.h"
-#include "df/feature_init.h"
+#include "df/world_data.h"
 #include "df/map_block.h"
 #include "df/block_square_event.h"
 #include "df/block_square_event_mineralst.h"
@@ -49,12 +49,19 @@ distribution.
 #include "df/tile_liquid.h"
 #include "df/tile_dig_designation.h"
 #include "df/tile_traffic.h"
-#include "df/world_data.h"
+#include "df/feature_init.h"
 
 /**
  * \defgroup grp_maps Maps module and its types
  * @ingroup grp_modules
  */
+
+namespace df
+{
+    struct burrow;
+    struct world_data;
+    struct block_burrow;
+}
 
 namespace DFHack
 {
@@ -248,6 +255,26 @@ extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
 
 /// remove a block event from the block by address
 extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which );
+
+/*
+ * BURROWS
+ */
+
+DFHACK_EXPORT df::burrow *findBurrowByName(std::string name);
+
+void listBurrowBlocks(std::vector<df::map_block*> *pvec, df::burrow *burrow);
+
+df::block_burrow *getBlockBurrowMask(df::burrow *burrow, df::map_block *block, bool create = false);
+
+bool isBlockBurrowTile(df::burrow *burrow, df::map_block *block, df::coord2d tile);
+bool setBlockBurrowTile(df::burrow *burrow, df::map_block *block, df::coord2d tile, bool enable);
+
+inline bool isBurrowTile(df::burrow *burrow, df::coord tile) {
+    return isBlockBurrowTile(burrow, getTileBlock(tile), tile);
+}
+inline bool setBurrowTile(df::burrow *burrow, df::coord tile, bool enable) {
+    return setBlockBurrowTile(burrow, getTileBlock(tile), tile, enable);
+}
 
 }
 }

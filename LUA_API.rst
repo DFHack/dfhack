@@ -687,6 +687,15 @@ Units module
 
   The unit is capable of rational action, i.e. not dead, insane or zombie.
 
+* ``dfhack.units.isInBurrow(unit,burrow)``
+
+  Checks if the unit is in the burrow.
+
+* ``dfhack.units.setInBurrow(unit,burrow,enable)``
+
+  Adds or removes the unit from the burrow.
+
+
 Maps module
 -----------
 
@@ -717,3 +726,27 @@ Maps module
 * ``dfhack.maps.getLocalInitFeature(region_coord2d,index)``
 
   Returns the local feature object with the given region coords and index.
+
+* ``dfhack.maps.findBurrowByName(name)``
+
+  Returns the burrow pointer or *nil*.
+
+* ``dfhack.maps.listBurrowBlocks(burrow)``
+
+  Returns a table of map block pointers.
+
+* ``dfhack.maps.isBurrowTile(burrow,tile_coord)``
+
+  Checks if the tile is in burrow.
+
+* ``dfhack.maps.setBurrowTile(burrow,tile_coord,enable)``
+
+  Adds or removes the tile from the burrow. Returns *false* if invalid coords.
+
+* ``dfhack.maps.isBlockBurrowTile(burrow,block,x,y)``
+
+  Checks if the tile within the block is in burrow.
+
+* ``dfhack.maps.setBlockBurrowTile(burrow,block,x,y,enable)``
+
+  Adds or removes the tile from the burrow. Returns *false* if invalid coords.

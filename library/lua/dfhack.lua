@@ -80,6 +80,12 @@ function printall(table)
     end
 end
 
+function copyall(table)
+    local rv = {}
+    for k,v in pairs(table) do rv[k] = v end
+    return rv
+end
+
 function dfhack.persistent:__tostring()
     return "<persistent "..self.entry_id..":"..self.key.."=\""
            ..self.value.."\":"..table.concat(self.ints,",")..">"

@@ -63,6 +63,7 @@ distribution.
 #include "df/inorganic_raw.h"
 #include "df/dfhack_material_category.h"
 #include "df/job_material_category.h"
+#include "df/burrow.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -70,6 +71,18 @@ distribution.
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
+
+template<class T>
+void push_pointer_vector(lua_State *state, const std::vector<T*> &pvec)
+{
+    lua_createtable(state,pvec.size(),0);
+
+    for (size_t i = 0; i < pvec.size(); i++)
+    {
+        Lua::PushDFObject(state, pvec[i]);
+        lua_rawseti(state, -2, i+1);
+    }
+}
 
 /**************************************************
  * Per-world persistent configuration storage API *
@@ -571,14 +584,7 @@ static int job_listNewlyCreated(lua_State *state)
     if (Job::listNewlyCreated(&pvec, &nxid))
     {
         lua_pushinteger(state, nxid);
-        lua_newtable(state);
-
-        for (size_t i = 0; i < pvec.size(); i++)
-        {
-            Lua::PushDFObject(state, pvec[i]);
-            lua_rawseti(state, -2, i+1);
-        }
-
+        push_pointer_vector(state, pvec);
         return 2;
     }
     else
@@ -598,8 +604,20 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isDead),
     WRAPM(Units, isAlive),
     WRAPM(Units, isSane),
+    WRAPM(Units, isInBurrow),
+    WRAPM(Units, setInBurrow),
     { NULL, NULL }
 };
+
+static bool maps_isBlockBurrowTile(df::burrow *burrow, df::map_block *block, int x, int y)
+{
+    return Maps::isBlockBurrowTile(burrow, block, df::coord2d(x,y));
+}
+
+static bool maps_setBlockBurrowTile(df::burrow *burrow, df::map_block *block, int x, int y, bool enable)
+{
+    return Maps::setBlockBurrowTile(burrow, block, df::coord2d(x,y), enable);
+}
 
 static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPN(getBlock, (df::map_block* (*)(int32_t,int32_t,int32_t))Maps::getBlock),
@@ -607,8 +625,33 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPM(Maps, getRegionBiome),
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
+    WRAPM(Maps, findBurrowByName),
+    WRAPN(isBlockBurrowTile, maps_isBlockBurrowTile),
+    WRAPN(setBlockBurrowTile, maps_setBlockBurrowTile),
+    WRAPM(Maps, isBurrowTile),
+    WRAPM(Maps, setBurrowTile),
     { NULL, NULL }
 };
+
+static int maps_listBurrowBlocks(lua_State *state)
+{
+    luaL_checkany(state, 1);
+
+    auto ptr = Lua::GetDFObject<df::burrow>(state, 1);
+    if (!ptr)
+        luaL_argerror(state, 1, "invalid burrow type");
+
+    std::vector<df::map_block*> pvec;
+    Maps::listBurrowBlocks(&pvec, ptr);
+    push_pointer_vector(state, pvec);
+    return 1;
+}
+
+static const luaL_Reg dfhack_maps_funcs[] = {
+    { "listBurrowBlocks", maps_listBurrowBlocks },
+    { NULL, NULL }
+};
+
 
 /************************
  *  Main Open function  *
@@ -623,5 +666,5 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "gui", dfhack_gui_module);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "units", dfhack_units_module);
-    OpenModule(state, "maps", dfhack_maps_module);
+    OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
 }

@@ -917,6 +917,12 @@ a lua list containing them.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.units.isSane(unit)</tt></p>
 <p>The unit is capable of rational action, i.e. not dead, insane or zombie.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.isInBurrow(unit,burrow)</tt></p>
+<p>Checks if the unit is in the burrow.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.setInBurrow(unit,burrow,enable)</tt></p>
+<p>Adds or removes the unit from the burrow.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="maps-module">
@@ -942,6 +948,24 @@ a lua list containing them.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getLocalInitFeature(region_coord2d,index)</tt></p>
 <p>Returns the local feature object with the given region coords and index.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.findBurrowByName(name)</tt></p>
+<p>Returns the burrow pointer or <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.listBurrowBlocks(burrow)</tt></p>
+<p>Returns a table of map block pointers.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.isBurrowTile(burrow,tile_coord)</tt></p>
+<p>Checks if the tile is in burrow.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.setBurrowTile(burrow,tile_coord,enable)</tt></p>
+<p>Adds or removes the tile from the burrow. Returns <em>false</em> if invalid coords.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.isBlockBurrowTile(burrow,block,x,y)</tt></p>
+<p>Checks if the tile within the block is in burrow.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.setBlockBurrowTile(burrow,block,x,y,enable)</tt></p>
+<p>Adds or removes the tile from the burrow. Returns <em>false</em> if invalid coords.</p>
 </li>
 </ul>
 </div>

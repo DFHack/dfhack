@@ -47,6 +47,10 @@ using namespace std;
 #include "df/world_geo_biome.h"
 #include "df/world_geo_layer.h"
 #include "df/feature_init.h"
+#include "df/world_data.h"
+#include "df/burrow.h"
+#include "df/block_burrow.h"
+#include "df/block_burrow_link.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -679,5 +683,99 @@ MapExtras::Block *MapExtras::MapCache::BlockAt(DFCoord blockcoord)
         }
         return 0;
     }
+}
+
+df::burrow *Maps::findBurrowByName(std::string name)
+{
+    auto &vec = df::burrow::get_vector();
+
+    for (size_t i = 0; i < vec.size(); i++)
+        if (vec[i]->name == name)
+            return vec[i];
+
+    return NULL;
+}
+
+void Maps::listBurrowBlocks(std::vector<df::map_block*> *pvec, df::burrow *burrow)
+{
+    CHECK_NULL_POINTER(burrow);
+
+    pvec->clear();
+    pvec->reserve(burrow->block_x.size());
+
+    df::coord base(world->map.region_x*3,world->map.region_y*3,world->map.region_z);
+
+    for (size_t i = 0; i < burrow->block_x.size(); i++)
+    {
+        df::coord pos(burrow->block_x[i], burrow->block_y[i], burrow->block_z[i]);
+
+        auto block = getBlock(pos - base);
+        if (block)
+            pvec->push_back(block);
+    }
+}
+
+df::block_burrow *Maps::getBlockBurrowMask(df::burrow *burrow, df::map_block *block, bool create)
+{
+    CHECK_NULL_POINTER(burrow);
+    CHECK_NULL_POINTER(block);
+
+    int32_t id = burrow->id;
+    df::block_burrow_link *prev = &block->block_burrows;
+    df::block_burrow_link *link = prev->next;
+
+    for (; link; prev = link, link = link->next)
+        if (link->item->id == id)
+            return link->item;
+
+    if (create)
+    {
+        link = new df::block_burrow_link;
+        link->item = new df::block_burrow;
+
+        link->item->id = burrow->id;
+        memset(link->item->tile_bitmask,0,sizeof(link->item->tile_bitmask));
+        link->item->link = link;
+
+        link->next = NULL;
+        link->prev = prev;
+        prev->next = link;
+
+        df::coord base(world->map.region_x*3,world->map.region_y*3,world->map.region_z);
+        df::coord pos = base + block->map_pos/16;
+
+        burrow->block_x.push_back(pos.x);
+        burrow->block_y.push_back(pos.y);
+        burrow->block_z.push_back(pos.z);
+
+        return link->item;
+    }
+
+    return NULL;
+}
+
+bool Maps::isBlockBurrowTile(df::burrow *burrow, df::map_block *block, df::coord2d tile)
+{
+    CHECK_NULL_POINTER(burrow);
+
+    if (!block) return false;
+
+    auto mask = getBlockBurrowMask(burrow, block);
+
+    return mask ? mask->getassignment(tile & 15) : false;
+}
+
+bool Maps::setBlockBurrowTile(df::burrow *burrow, df::map_block *block, df::coord2d tile, bool enable)
+{
+    CHECK_NULL_POINTER(burrow);
+
+    if (!block) return false;
+
+    auto mask = getBlockBurrowMask(burrow, block, enable);
+
+    if (mask)
+        mask->setassignment(tile & 15, enable);
+
+    return true;
 }
 

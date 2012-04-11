@@ -207,6 +207,22 @@ unsigned insert_into_vector(std::vector<CT*> &vec, FT CT::*field, CT *obj, bool 
     return pos;
 }
 
+template<typename FT>
+bool erase_from_vector(std::vector<FT> &vec, FT key)
+{
+    int pos = binsearch_index(vec, key);
+    vector_erase_at(vec, pos);
+    return pos >= 0;
+}
+
+template<typename CT, typename FT>
+bool erase_from_vector(std::vector<CT*> &vec, FT CT::*field, FT key)
+{
+    int pos = binsearch_index(vec, field, key);
+    vector_erase_at(vec, pos);
+    return pos >= 0;
+}
+
 template <typename CT, typename KT>
 CT *binsearch_in_vector(const std::vector<CT*> &vec, KT value)
 {

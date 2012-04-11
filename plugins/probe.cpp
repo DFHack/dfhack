@@ -15,6 +15,7 @@ using namespace std;
 #include "Export.h"
 #include "PluginManager.h"
 #include "modules/Units.h"
+#include "df/unit_inventory_item.h"
 #include "modules/Maps.h"
 #include "modules/Gui.h"
 #include "modules/Materials.h"
@@ -75,7 +76,26 @@ command_result df_cprobe (color_ostream &out, vector <string> & parameters)
             if(unit->pos.x == cursorX && unit->pos.y == cursorY && unit->pos.z == cursorZ)
             {
                 out.print("Creature %d, race %d (%x), civ %d (%x)\n", unit->id, unit->race, unit->race, unit->civ_id, unit->civ_id);
-                break;
+                
+                for(size_t j=0; j<unit->inventory.size(); j++)
+                {
+                    df::unit_inventory_item* inv_item = unit->inventory[j];
+                    df::item* item = inv_item->item;
+                    if(inv_item->mode == df::unit_inventory_item::T_mode::Worn)
+                    {
+                        out << "   wears item: #" << item->id;
+                        if(item->flags.bits.owned)
+                            out << " (owned)";
+                        else
+                            out << " (not owned)";
+                        if(item->getEffectiveArmorLevel() != 0)
+                            out << ", armor";
+                        out << endl;
+                    }
+                }
+                
+                // don't leave loop, there may be more than 1 creature at the cursor position
+                //break;
             }
         }
     }

@@ -170,6 +170,7 @@ public:
 
     bool Write();
 
+    df::coord2d biomeRegionAt(df::coord2d p);
     int16_t GeoIndexAt(df::coord2d p);
 
     bool GetGlobalFeature(t_feature *out);
@@ -385,7 +386,7 @@ private:
     uint32_t x_tmax;
     uint32_t y_tmax;
     uint32_t z_max;
-    std::vector<int16_t> geoidx;
+    std::vector<df::coord2d> geoidx;
     std::vector< std::vector <int16_t> > layer_mats;
     std::map<DFCoord, Block *> blocks;
 };

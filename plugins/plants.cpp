@@ -125,8 +125,9 @@ static command_result immolations (color_ostream &out, do_what what, bool shrubs
         int32_t x,y,z;
         if(Gui::getCursorCoords(x,y,z))
         {
-            vector<df::plant *> * alltrees;
-            if(Maps::ReadVegetation(x/16,y/16,z,alltrees))
+            auto block = Maps::getTileBlock(x,y,z);
+            vector<df::plant *> *alltrees = block ? &block->plants : NULL;
+            if(alltrees)
             {
                 bool didit = false;
                 for(size_t i = 0 ; i < alltrees->size(); i++)
@@ -206,8 +207,9 @@ command_result df_grow (color_ostream &out, vector <string> & parameters)
     int32_t x,y,z;
     if(Gui::getCursorCoords(x,y,z))
     {
-        vector<df::plant *> * alltrees;
-        if(Maps::ReadVegetation(x/16,y/16,z,alltrees))
+        auto block = Maps::getTileBlock(x,y,z);
+        vector<df::plant *> *alltrees = block ? &block->plants : NULL;
+        if(alltrees)
         {
             for(size_t i = 0 ; i < alltrees->size(); i++)
             {

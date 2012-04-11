@@ -49,6 +49,7 @@ distribution.
 #include "df/tile_liquid.h"
 #include "df/tile_dig_designation.h"
 #include "df/tile_traffic.h"
+#include "df/world_data.h"
 
 /**
  * \defgroup grp_maps Maps module and its types
@@ -188,7 +189,7 @@ void DfMap::applyGeoMatgloss(Block * b)
  * @endcode
  */
 extern DFHACK_EXPORT bool ReadGeology(std::vector<std::vector<int16_t> > *layer_mats,
-                                      std::vector<int16_t> *geoidx);
+                                      std::vector<df::coord2d> *geoidx);
 /**
  * Get pointers to features of a block
  */
@@ -198,11 +199,22 @@ extern DFHACK_EXPORT bool ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_fea
  */
 extern DFHACK_EXPORT bool ReadFeatures(df::map_block * block,t_feature * local, t_feature * global);
 
+
+/**
+ * Get a pointer to a specific global feature directly.
+ */
+DFHACK_EXPORT df::feature_init *getGlobalInitFeature(int32_t index);
+/**
+ * Get a pointer to a specific local feature directly. rgn_coord is in the world region grid.
+ */
+DFHACK_EXPORT df::feature_init *getLocalInitFeature(df::coord2d rgn_coord, int32_t index);
+
 /**
  * Read a specific global or local feature directly
  */
 extern DFHACK_EXPORT bool GetGlobalFeature(t_feature &feature, int32_t index);
-extern DFHACK_EXPORT bool GetLocalFeature(t_feature &feature, df::coord2d coord, int32_t index);
+//extern DFHACK_EXPORT bool GetLocalFeature(t_feature &feature, df::coord2d rgn_coord, int32_t index);
+
 
 /*
  * BLOCK DATA
@@ -217,13 +229,12 @@ extern DFHACK_EXPORT void getPosition(int32_t& x, int32_t& y, int32_t& z);
  * Get the map block or NULL if block is not valid
  */
 extern DFHACK_EXPORT df::map_block * getBlock (int32_t blockx, int32_t blocky, int32_t blockz);
-extern DFHACK_EXPORT df::map_block * getBlockAbs (int32_t x, int32_t y, int32_t z);
+extern DFHACK_EXPORT df::map_block * getTileBlock (int32_t x, int32_t y, int32_t z);
 
 inline df::map_block * getBlock (df::coord pos) { return getBlock(pos.x, pos.y, pos.z); }
-inline df::map_block * getBlockAbs (df::coord pos) { return getBlockAbs(pos.x, pos.y, pos.z); }
+inline df::map_block * getTileBlock (df::coord pos) { return getTileBlock(pos.x, pos.y, pos.z); }
 
-/// copy region offsets of a block - used for determining layer stone matgloss
-extern DFHACK_EXPORT bool ReadRegionOffsets(uint32_t blockx, uint32_t blocky, uint32_t blockz, biome_indices40d *buffer);
+DFHACK_EXPORT df::world_data::T_region_map *getRegionBiome(df::coord2d rgn_pos);
 
 /// sorts the block event vector into multiple vectors by type
 /// mineral veins, what's under ice, blood smears and mud
@@ -237,9 +248,6 @@ extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
 
 /// remove a block event from the block by address
 extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which );
-
-/// read all plants in this block
-extern DFHACK_EXPORT bool ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df::plant *>*& plants);
 
 }
 }

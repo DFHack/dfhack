@@ -127,7 +127,7 @@ df::map_block *Maps::getBlock (int32_t blockx, int32_t blocky, int32_t blockz)
     return world->map.block_index[blockx][blocky][blockz];
 }
 
-df::map_block *Maps::getBlockAbs (int32_t x, int32_t y, int32_t z)
+df::map_block *Maps::getTileBlock (int32_t x, int32_t y, int32_t z)
 {
     if (!IsValid())
         return NULL;
@@ -138,30 +138,39 @@ df::map_block *Maps::getBlockAbs (int32_t x, int32_t y, int32_t z)
     return world->map.block_index[x >> 4][y >> 4][z];
 }
 
-/*
- * Region Offsets - used for layer geology
- */
-bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices40d *buffer)
+df::world_data::T_region_map *Maps::getRegionBiome(df::coord2d rgn_pos)
 {
-    df::map_block *block = getBlock(x,y,z);
-    if (block)
-    {
-        memcpy(buffer, block->region_offset,sizeof(biome_indices40d));
-        return true;
-    }
-    return false;
+    auto data = world->world_data;
+    if (!data)
+        return NULL;
+
+    if (rgn_pos.x < 0 || rgn_pos.x >= data->world_width ||
+        rgn_pos.y < 0 || rgn_pos.y >= data->world_height)
+        return NULL;
+
+    return &data->region_map[rgn_pos.x][rgn_pos.y];
+}
+
+df::feature_init *Maps::getGlobalInitFeature(int32_t index)
+{
+    auto data = world->world_data;
+    if (!data)
+        return NULL;
+
+    auto rgn = vector_get(data->underground_regions, index);
+    if (!rgn)
+        return NULL;
+
+    return rgn->feature_init;
 }
 
 bool Maps::GetGlobalFeature(t_feature &feature, int32_t index)
 {
     feature.type = (df::feature_type)-1;
-    if (!world->world_data)
-        return false;
 
-    if ((index < 0) || (index >= world->world_data->underground_regions.size()))
+    auto f = Maps::getGlobalInitFeature(index);
+    if (!f)
         return false;
-
-	df::feature_init *f = world->world_data->underground_regions[index]->feature_init;
 
     feature.discovered = false;
     feature.origin = f;
@@ -170,35 +179,38 @@ bool Maps::GetGlobalFeature(t_feature &feature, int32_t index)
     return true;
 }
 
-bool Maps::GetLocalFeature(t_feature &feature, df::coord2d coord, int32_t index)
+df::feature_init *Maps::getLocalInitFeature(df::coord2d rgn_pos, int32_t index)
 {
-    feature.type = (df::feature_type)-1;
-    if (!world->world_data)
-        return false;
+    auto data = world->world_data;
+    if (!data)
+        return NULL;
 
-    // regionX and regionY are in embark squares!
-    // we convert to full region tiles
-    // this also works in adventure mode
-    // region X coord - whole regions
-    uint32_t region_x = ( (coord.x / 3) + world->map.region_x ) / 16;
-    // region Y coord - whole regions
-    uint32_t region_y = ( (coord.y / 3) + world->map.region_y ) / 16;
+    if (rgn_pos.x < 0 || rgn_pos.x >= data->world_width ||
+        rgn_pos.y < 0 || rgn_pos.y >= data->world_height)
+        return NULL;
 
-    uint32_t bigregion_x = region_x / 16;
-    uint32_t bigregion_y = region_y / 16;
-
-    uint32_t sub_x = region_x % 16;
-    uint32_t sub_y = region_y % 16;
     // megaregions = 16x16 squares of regions = 256x256 squares of embark squares
+    df::coord2d bigregion = rgn_pos / 16;
 
     // bigregion is 16x16 regions. for each bigregion in X dimension:
-    if (!world->world_data->unk_204[bigregion_x][bigregion_y].features)
-        return false;
+    auto fptr = data->unk_204[bigregion.x][bigregion.y].features;
+    if (!fptr)
+        return NULL;
 
-    vector <df::feature_init *> &features = world->world_data->unk_204[bigregion_x][bigregion_y].features->feature_init[sub_x][sub_y];
-    if ((index < 0) || (index >= features.size()))
+    df::coord2d sub = rgn_pos & 15;
+
+    vector <df::feature_init *> &features = fptr->feature_init[sub.x][sub.y];
+
+    return vector_get(features, index);
+}
+
+static bool GetLocalFeature(t_feature &feature, df::coord2d rgn_pos, int32_t index)
+{
+    feature.type = (df::feature_type)-1;
+
+    auto f = Maps::getLocalInitFeature(rgn_pos, index);
+    if (!f)
         return false;
-    df::feature_init *f = features[index];
 
     feature.discovered = false;
     feature.origin = f;
@@ -228,7 +240,7 @@ bool Maps::ReadFeatures(df::map_block * block, t_feature * local, t_feature * gl
     if (local)
     {
         if (block->local_feature != -1)
-            result &= GetLocalFeature(*local, block->map_pos/16, block->local_feature);
+            result &= GetLocalFeature(*local, block->region_pos, block->local_feature);
         else
             local->type = (df::feature_type)-1;
     }
@@ -310,7 +322,7 @@ bool Maps::RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square
 /*
 * Layer geology
 */
-bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<int16_t> *geoidx)
+bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<df::coord2d> *geoidx)
 {
     if (!world->world_data)
         return false;
@@ -321,8 +333,11 @@ bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<int16_t> *ge
     for (int i = 0; i < eBiomeCount; i++)
     {
         (*layer_mats)[i].clear();
-        (*geoidx)[i] = -1;
+        (*geoidx)[i] = df::coord2d(-30000,-30000);
     }
+
+    int world_width = world->world_data->world_width;
+    int world_height = world->world_data->world_height;
 
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
@@ -332,16 +347,18 @@ bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<int16_t> *ge
         // regionX/16 is in 16x16 embark square regions
         // i provides -1 .. +1 offset from the current region
         int bioRX = world->map.region_x / 16 + ((i % 3) - 1);
-        if (bioRX < 0) bioRX = 0;
-        if (bioRX >= world->world_data->world_width) bioRX = world->world_data->world_width - 1;
         int bioRY = world->map.region_y / 16 + ((i / 3) - 1);
-        if (bioRY < 0) bioRY = 0;
-        if (bioRY >= world->world_data->world_height) bioRY = world->world_data->world_height - 1;
+
+        df::coord2d rgn_pos(clip_range(bioRX,0,world_width-1),clip_range(bioRX,0,world_height-1));
+
+        (*geoidx)[i] = rgn_pos;
+
+        auto biome = getRegionBiome(rgn_pos);
+        if (!biome)
+            continue;
 
         // get index into geoblock vector
-        int16_t geoindex = world->world_data->region_map[bioRX][bioRY].geo_index;
-
-        (*geoidx)[i] = geoindex;
+        int16_t geoindex = biome->geo_index;
 
         /// geology blocks have a vector of layer descriptors
         // get the vector with pointer to layers
@@ -360,16 +377,6 @@ bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<int16_t> *ge
             matvec[j] = geolayers[j]->mat_index;
     }
 
-    return true;
-}
-
-bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df::plant *>*& plants)
-{
-    df::map_block *block = getBlock(x,y,z);
-    if (!block)
-        return false;
-
-    plants = &block->plants;
     return true;
 }
 
@@ -536,16 +543,32 @@ void MapExtras::Block::SquashRocks (df::map_block *mb, t_blockmaterials & materi
     }
 }
 
-int16_t MapExtras::Block::GeoIndexAt(df::coord2d p)
+df::coord2d MapExtras::Block::biomeRegionAt(df::coord2d p)
 {
+    if (!block)
+        return df::coord2d(-30000,-30000);
+
     auto des = index_tile<df::tile_designation>(designation,p);
     uint8_t idx = des.bits.biome;
     if (idx >= 9)
-        return -1;
+        return block->region_pos;
     idx = block->region_offset[idx];
     if (idx >= parent->geoidx.size())
-        return -1;
+        return block->region_pos;
     return parent->geoidx[idx];
+}
+
+int16_t MapExtras::Block::GeoIndexAt(df::coord2d p)
+{
+    df::coord2d biome = biomeRegionAt(p);
+    if (!biome.isValid())
+        return -1;
+
+    auto pinfo = Maps::getRegionBiome(biome);
+    if (!pinfo)
+        return -1;
+
+    return pinfo->geo_index;
 }
 
 bool MapExtras::Block::GetGlobalFeature(t_feature *out)
@@ -561,7 +584,7 @@ bool MapExtras::Block::GetLocalFeature(t_feature *out)
     out->type = (df::feature_type)-1;
     if (!valid || block->local_feature < 0)
         return false;
-    return Maps::GetLocalFeature(*out, block->map_pos/16, block->local_feature);
+    return ::GetLocalFeature(*out, block->region_pos, block->local_feature);
 }
 
 void MapExtras::Block::init_item_counts()

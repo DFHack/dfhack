@@ -50,7 +50,7 @@ command_result df_changevein (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    df::map_block *block = Maps::getBlockAbs(cursor->x, cursor->y, cursor->z);
+    df::map_block *block = Maps::getTileBlock(cursor->x, cursor->y, cursor->z);
     if (!block)
     {
         out.printerr("Invalid tile selected.\n");

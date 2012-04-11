@@ -241,9 +241,9 @@ command_result mapexport (color_ostream &out, std::vector <std::string> & parame
                     }
                 }
 
-                PlantList *plants;
-                if (Maps::ReadVegetation(b_x, b_y, z, plants))
+                if (b->getRaw())
                 {
+                    PlantList *plants = &b->getRaw()->plants;
                     for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
                     {
                         const df::plant & plant = *(*it);

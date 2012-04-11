@@ -38,7 +38,7 @@ command_result df_deramp (color_ostream &out, vector <string> & parameters)
     for (int i = 0; i < blocks_total; i++)
     {
         df::map_block *block = world->map.map_blocks[i];
-        df::map_block *above = Maps::getBlockAbs(block->map_pos.x, block->map_pos.y, block->map_pos.z + 1);
+        df::map_block *above = Maps::getTileBlock(block->map_pos + df::coord(0,0,1));
 
         for (int x = 0; x < 16; x++)
         {

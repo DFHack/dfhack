@@ -189,13 +189,13 @@ command_result changelayer (color_ostream &out, std::vector <std::string> & para
     uint32_t tileY = cursorY % 16;
 
     MapExtras::Block * b = mc.BlockAt(cursor/16);
-    if(!b && !b->valid)
+    if(!b || !b->is_valid())
     {
         out.printerr("No data.\n");
         return CR_OK;
     }
-    mapblock40d & block = b->raw;   
-    df::tile_designation &des = block.designation[tileX][tileY];
+
+    df::tile_designation des = b->DesignationAt(cursor%16);
 
     // get biome and geolayer at cursor position
     uint32_t biome = des.bits.biome;

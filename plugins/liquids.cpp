@@ -413,8 +413,8 @@ command_result df_liquids_execute(color_ostream &out)
 
                 Block * b = mcache.BlockAt((*iter)/16);
                 DFHack::t_blockflags bf = b->BlockFlags();
-                bf.bits.liquid_1 = true;
-                bf.bits.liquid_2 = true;
+                bf.bits.update_liquid = true;
+                bf.bits.update_liquid_twice = true;
                 b->setBlockFlags(bf);
 
                 iter++;
@@ -500,20 +500,20 @@ command_result df_liquids_execute(color_ostream &out)
                 DFHack::t_blockflags bflags = (*biter)->BlockFlags();
                 if(flowmode == "f+")
                 {
-                    bflags.bits.liquid_1 = true;
-                    bflags.bits.liquid_2 = true;
+                    bflags.bits.update_liquid = true;
+                    bflags.bits.update_liquid_twice = true;
                     (*biter)->setBlockFlags(bflags);
                 }
                 else if(flowmode == "f-")
                 {
-                    bflags.bits.liquid_1 = false;
-                    bflags.bits.liquid_2 = false;
+                    bflags.bits.update_liquid = false;
+                    bflags.bits.update_liquid_twice = false;
                     (*biter)->setBlockFlags(bflags);
                 }
                 else
                 {
-                    out << "flow bit 1 = " << bflags.bits.liquid_1 << endl; 
-                    out << "flow bit 2 = " << bflags.bits.liquid_2 << endl;
+                    out << "flow bit 1 = " << bflags.bits.update_liquid << endl; 
+                    out << "flow bit 2 = " << bflags.bits.update_liquid_twice << endl;
                 }
                 biter ++;
             }

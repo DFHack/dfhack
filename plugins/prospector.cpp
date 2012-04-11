@@ -426,20 +426,14 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                 // Get the map block
                 df::coord2d blockCoord(b_x, b_y);
                 MapExtras::Block *b = map.BlockAt(DFHack::DFCoord(b_x, b_y, z));
-                if (!b || !b->valid)
+                if (!b || !b->is_valid())
                 {
                     continue;
                 }
 
-                { // Find features
-                    uint32_t index = b->raw.global_feature;
-                    if (index != -1)
-                        Maps::GetGlobalFeature(blockFeatureGlobal, index);
-
-                    index = b->raw.local_feature;
-                    if (index != -1)
-                        Maps::GetLocalFeature(blockFeatureLocal, blockCoord, index);
-                }
+                // Find features
+                b->GetGlobalFeature(&blockFeatureGlobal);
+                b->GetLocalFeature(&blockFeatureLocal);
 
                 int global_z = world->map.region_z + z;
 
@@ -550,8 +544,9 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                 // and we can check visibility more easily here
                 if (showPlants)
                 {
-                    PlantList * plants;
-                    if (Maps::ReadVegetation(b_x, b_y, z, plants))
+                    auto block = Maps::getBlock(b_x,b_y,z);
+                    vector<df::plant *> *plants = block ? &block->plants : NULL;
+                    if(plants)
                     {
                         for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
                         {

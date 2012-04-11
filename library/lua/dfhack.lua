@@ -80,6 +80,12 @@ function printall(table)
     end
 end
 
+function copyall(table)
+    local rv = {}
+    for k,v in pairs(table) do rv[k] = v end
+    return rv
+end
+
 function dfhack.persistent:__tostring()
     return "<persistent "..self.entry_id..":"..self.key.."=\""
            ..self.value.."\":"..table.concat(self.ints,",")..">"
@@ -87,6 +93,16 @@ end
 
 function dfhack.matinfo:__tostring()
     return "<material "..self.type..":"..self.index.." "..self:getToken()..">"
+end
+
+function dfhack.maps.getSize()
+    local map = df.global.world.map
+    return map.x_count_block, map.y_count_block, map.z_count_block
+end
+
+function dfhack.maps.getTileSize()
+    local map = df.global.world.map
+    return map.x_count, map.y_count, map.z_count
 end
 
 -- Feed the table back to the require() mechanism.

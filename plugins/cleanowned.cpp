@@ -98,8 +98,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
 
         if (!item->flags.bits.owned)
         {
-            int32_t owner = Items::getItemOwnerID(item);
-            if (owner >= 0)
+            if (Items::getOwner(item))
             {
                 out.print("Fixing a misflagged item: \t");
                 confiscate = true;
@@ -168,14 +167,14 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
                 item->getWear()
             );
 
-            df::unit *owner = Items::getItemOwner(item);
+            df::unit *owner = Items::getOwner(item);
 
             if (owner)
                 out.print(", owner %s", Translation::TranslateName(&owner->name,false).c_str());
 
             if (!dry_run)
             {
-                if (!Items::removeItemOwner(item))
+                if (!Items::setOwner(item,NULL))
                     out.print("(unsuccessfully) ");
                 if (dump)
                     item->flags.bits.dump = 1;

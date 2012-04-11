@@ -65,8 +65,7 @@ command_result df_fixveins (color_ostream &out, vector <string> & parameters)
                 has_mineral[k] |= mineral->tile_bitmask[k];
         }
         t_feature local, global;
-        Maps::GetGlobalFeature(global, block->global_feature);
-        Maps::GetLocalFeature(local, df::coord2d(block->map_pos.x / 16, block->map_pos.y / 16), block->local_feature);
+        Maps::ReadFeatures(block, &local, &global);
         for (int x = 0; x < 16; x++)
         {
             for (int y = 0; y < 16; y++)

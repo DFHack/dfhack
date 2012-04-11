@@ -41,6 +41,7 @@ using namespace std;
 #include "modules/Units.h"
 #include "ModuleFactory.h"
 #include "Core.h"
+#include "Error.h"
 #include "MiscUtils.h"
 
 #include "df/world.h"
@@ -63,6 +64,7 @@ using namespace std;
 #include "df/trapcomp_flags.h"
 #include "df/job_item.h"
 #include "df/general_ref.h"
+#include "df/general_ref_unit_itemownerst.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -415,27 +417,61 @@ bool Items::copyItem(df::item * itembase, DFHack::dfh_item &item)
     return true;
 }
 
-int32_t Items::getItemOwnerID(const df::item * item)
+df::unit *Items::getOwner(df::item * item)
 {
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
-    {
-        df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() == general_ref_type::UNIT_ITEMOWNER)
-            return ref->getID();
-    }
-    return -1;
-}
+    CHECK_NULL_POINTER(item);
 
-df::unit *Items::getItemOwner(const df::item * item)
-{
     for (size_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() == general_ref_type::UNIT_ITEMOWNER)
+        if (strict_virtual_cast<df::general_ref_unit_itemownerst>(ref))
             return ref->getUnit();
     }
+
     return NULL;
 }
+
+bool Items::setOwner(df::item *item, df::unit *unit)
+{
+    CHECK_NULL_POINTER(item);
+
+    for (int i = item->itemrefs.size()-1; i >= 0; i--)
+    {
+        df::general_ref *ref = item->itemrefs[i];
+
+        if (!strict_virtual_cast<df::general_ref_unit_itemownerst>(ref))
+            continue;
+
+        if (auto cur = ref->getUnit())
+        {
+            if (cur == unit)
+                return true;
+
+            erase_from_vector(cur->owned_items, item->id);
+        }
+
+        delete ref;
+        vector_erase_at(item->itemrefs, i);
+    }
+
+    if (unit)
+    {
+        auto ref = df::allocate<df::general_ref_unit_itemownerst>();
+        if (!ref)
+            return false;
+
+        item->flags.bits.owned = true;
+        ref->unit_id = unit->id;
+
+        insert_into_vector(unit->owned_items, item->id);
+        item->itemrefs.push_back(ref);
+    }
+    else
+        item->flags.bits.owned = false;
+
+    return true;
+}
+
 
 int32_t Items::getItemContainerID(const df::item * item)
 {
@@ -476,28 +512,4 @@ bool Items::readItemRefs(const df::item * item, df::general_ref_type type, std::
     }
 
     return !values.empty();
-}
-
-bool Items::removeItemOwner(df::item * item)
-{
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
-    {
-        df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() != general_ref_type::UNIT_ITEMOWNER)
-            continue;
-
-        df::unit *unit = ref->getUnit();
-
-        if (unit == NULL || !Units::RemoveOwnedItemByPtr(unit, item->id))
-        {
-            cerr << "RemoveOwnedItemIdx: CREATURE " << ref->getID() << " ID " << item->id << " FAILED!" << endl;
-            return false;
-        }
-        delete ref;
-        item->itemrefs.erase(item->itemrefs.begin() + i--);
-    }
-
-    item->flags.bits.owned = 0;
-
-    return true;
 }

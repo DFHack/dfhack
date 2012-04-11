@@ -290,7 +290,7 @@ command_result unreveal(color_ostream &out, vector<string> & params)
     for(size_t i = 0; i < hidesaved.size();i++)
     {
         hideblock & hb = hidesaved[i];
-        df::map_block * b = Maps::getBlockAbs(hb.c.x,hb.c.y,hb.c.z);
+        df::map_block * b = Maps::getTileBlock(hb.c.x,hb.c.y,hb.c.z);
         for (uint32_t x = 0; x < 16;x++) for (uint32_t y = 0; y < 16;y++)
         {
             b->designation[x][y].bits.hidden = hb.hiddens[x][y];

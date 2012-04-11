@@ -780,7 +780,7 @@ command_result adv_tools (color_ostream &out, std::vector <std::string> & parame
             if (!num)
                 continue;
 
-            df::map_block *block = Maps::getBlockAbs(item->pos);
+            df::map_block *block = Maps::getTileBlock(item->pos);
             if (!block)
                 continue;
 

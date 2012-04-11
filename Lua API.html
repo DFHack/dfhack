@@ -340,6 +340,8 @@ ul.auto-toc {
 <li><a class="reference internal" href="#gui-module" id="id14">Gui module</a></li>
 <li><a class="reference internal" href="#job-module" id="id15">Job module</a></li>
 <li><a class="reference internal" href="#units-module" id="id16">Units module</a></li>
+<li><a class="reference internal" href="#items-module" id="id17">Items module</a></li>
+<li><a class="reference internal" href="#maps-module" id="id18">Maps module</a></li>
 </ul>
 </li>
 </ul>
@@ -915,6 +917,68 @@ a lua list containing them.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.isSane(unit)</tt></p>
 <p>The unit is capable of rational action, i.e. not dead, insane or zombie.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.isInBurrow(unit,burrow)</tt></p>
+<p>Checks if the unit is in the burrow.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.setInBurrow(unit,burrow,enable)</tt></p>
+<p>Adds or removes the unit from the burrow.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="items-module">
+<h3><a class="toc-backref" href="#id17">Items module</a></h3>
+<ul>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getOwner(item)</tt></p>
+<p>Returns the owner unit or <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.setOwner(item,unit)</tt></p>
+<p>Replaces the owner of the item. If unit is <em>nil</em>, removes ownership.
+Returns <em>false</em> in case of error.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="maps-module">
+<h3><a class="toc-backref" href="#id18">Maps module</a></h3>
+<ul>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getSize()</tt></p>
+<p>Returns map size in blocks: <em>x, y, z</em></p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileSize()</tt></p>
+<p>Returns map size in tiles: <em>x, y, z</em></p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getBlock(x,y,z)</tt></p>
+<p>Returns a map block object for given x,y,z in local block coordinates.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileBlock(coords)</tt></p>
+<p>Returns a map block object for given df::coord in local tile coordinates.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getRegionBiome(region_coord2d)</tt></p>
+<p>Returns the biome info struct for the given global map region.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getGlobalInitFeature(index)</tt></p>
+<p>Returns the global feature object with the given index.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getLocalInitFeature(region_coord2d,index)</tt></p>
+<p>Returns the local feature object with the given region coords and index.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.findBurrowByName(name)</tt></p>
+<p>Returns the burrow pointer or <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.listBurrowBlocks(burrow)</tt></p>
+<p>Returns a table of map block pointers.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.isBurrowTile(burrow,tile_coord)</tt></p>
+<p>Checks if the tile is in burrow.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.setBurrowTile(burrow,tile_coord,enable)</tt></p>
+<p>Adds or removes the tile from the burrow. Returns <em>false</em> if invalid coords.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.isBlockBurrowTile(burrow,block,x,y)</tt></p>
+<p>Checks if the tile within the block is in burrow.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.setBlockBurrowTile(burrow,block,x,y,enable)</tt></p>
+<p>Adds or removes the tile from the burrow. Returns <em>false</em> if invalid coords.</p>
 </li>
 </ul>
 </div>

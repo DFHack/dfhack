@@ -188,3 +188,9 @@ message BasicSquadInfo {
     // Member histfig ids:
     repeated sint32 members = 4;
 };
+
+message UnitLaborState {
+    required int32 unit_id = 1;
+    required int32 labor = 2;
+    required bool value = 3;
+};

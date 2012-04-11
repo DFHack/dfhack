@@ -614,6 +614,20 @@ static command_result ListSquads(color_ostream &stream,
     return CR_OK;
 }
 
+static command_result SetUnitLabors(color_ostream &stream, const SetUnitLaborsIn *in)
+{
+    for (size_t i = 0; i < in->change_size(); i++)
+    {
+        auto change = in->change(i);
+        auto unit = df::unit::find(change.unit_id());
+
+        if (unit)
+            unit->status.labors[change.labor()] = change.value();
+    }
+
+    return CR_OK;
+}
+
 CoreService::CoreService() {
     suspend_depth = 0;
 
@@ -637,6 +651,8 @@ CoreService::CoreService() {
     addFunction("ListMaterials", ListMaterials, SF_CALLED_ONCE);
     addFunction("ListUnits", ListUnits);
     addFunction("ListSquads", ListSquads);
+
+    addFunction("SetUnitLabors", SetUnitLabors);
 }
 
 CoreService::~CoreService()

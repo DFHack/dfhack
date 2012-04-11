@@ -7,6 +7,8 @@
 #include "PluginManager.h"
 
 #include "modules/Gui.h"
+#include "modules/Units.h"
+#include "modules/Items.h"
 
 #include "DataDefs.h"
 #include "df/ui.h"
@@ -21,6 +23,7 @@
 #include "df/language_name.h"
 #include "df/death_info.h"
 #include "df/criminal_case.h"
+#include "df/unit_inventory_item.h"
 
 #include <stdlib.h>
 
@@ -68,6 +71,55 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
 }
 
 static command_result lair(color_ostream &out, std::vector<std::string> & params);
+
+
+// to be called by tweak-merchant and tweak-resident
+// units forced into the fort by removing the flags do not own their clothes
+// which has the result that they drop all their clothes and become unhappy because they are naked
+command_result fix_clothing_ownership(color_ostream &out, df::unit* unit)
+{
+    // first, find one owned item to initialize the vtable
+    bool vt_initialized = false;
+    size_t numItems = world->items.all.size();
+    for(size_t i=0; i< numItems; i++)
+    {
+        df::item * item = world->items.all[i];
+        if(Items::getOwner(item))
+        {
+            vt_initialized = true;
+            break;
+        }
+    }
+    if(!vt_initialized)
+    {
+        out << "fix_clothing_ownership: could not initialize vtable!" << endl;
+        return CR_FAILURE;
+    }
+
+    int fixcount = 0;
+    for(size_t j=0; j<unit->inventory.size(); j++)
+    {
+        df::unit_inventory_item* inv_item = unit->inventory[j];
+        df::item* item = inv_item->item;
+        if(inv_item->mode == df::unit_inventory_item::T_mode::Worn)
+        {
+            // ignore armor?
+            // it could be leather boots, for example, in which case it would not be nice to forbid ownership
+            //if(item->getEffectiveArmorLevel() != 0)
+            //    continue;
+
+            if(!Items::getOwner(item))
+            {
+                if(Items::setOwner(item, unit))
+                    fixcount++;
+                else
+                    out << "could not change ownership for item!" << endl;
+            }
+        }
+    }
+    out << "ownership for " << fixcount << " clothes fixed" << endl;
+    return CR_OK;
+}
 
 static command_result tweak(color_ostream &out, vector <string> &parameters)
 {
@@ -127,6 +179,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         {
             // remove resident flag
             unit->flags2.bits.resident = 0;
+            return fix_clothing_ownership(out, unit);
         }
         else
         {
@@ -147,6 +200,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         {
             // remove merchant flag
             unit->flags1.bits.merchant = 0;
+            return fix_clothing_ownership(out, unit);
         }
         else
         {

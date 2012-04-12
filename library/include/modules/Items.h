@@ -42,6 +42,10 @@ namespace df
     struct itemdef;
 }
 
+namespace MapExtras {
+    class MapCache;
+}
+
 /**
  * \defgroup grp_items Items module and its types
  * @ingroup grp_modules
@@ -128,13 +132,15 @@ DFHACK_EXPORT df::unit *getOwner(df::item *item);
 DFHACK_EXPORT bool setOwner(df::item *item, df::unit *unit);
 
 /// which item is it contained in?
-DFHACK_EXPORT int32_t getItemContainerID(const df::item * item);
-DFHACK_EXPORT df::item *getItemContainer(const df::item * item);
+DFHACK_EXPORT df::item *getContainer(df::item *item);
 /// which items does it contain?
-DFHACK_EXPORT bool getContainedItems(const df::item * item, /*output*/ std::vector<int32_t> &items);
+DFHACK_EXPORT void getContainedItems(df::item *item, /*output*/ std::vector<df::item*> *items);
 
-/// read item references, filtered by class
-DFHACK_EXPORT bool readItemRefs(const df::item * item, const df::general_ref_type type,
-                  /*output*/ std::vector<int32_t> &values);
+/// Returns the true position of the item.
+DFHACK_EXPORT df::coord getPosition(df::item *item);
+
+DFHACK_EXPORT bool moveToGround(MapExtras::MapCache &mc, df::item *item, df::coord pos);
+DFHACK_EXPORT bool moveToContainer(MapExtras::MapCache &mc, df::item *item, df::item *container);
+
 }
 }

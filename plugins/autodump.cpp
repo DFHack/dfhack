@@ -182,15 +182,7 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
 
             // Don't move items if they're already at the cursor
             if (pos_cursor != pos_item)
-            {
-                if (!MC.removeItemOnGround(itm))
-                    out.printerr("Item %d wasn't in the source block.\n", itm->id);
-
-                itm->pos = pos_cursor;
-
-                if (!MC.addItemOnGround(itm))
-                    out.printerr("Could not add item %d to destination block.\n", itm->id);
-            }
+                Items::moveToGround(MC, itm, pos_cursor);
         }
         else // destroy
         {

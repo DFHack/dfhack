@@ -60,7 +60,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Intended to fix bugged migrants and merchants who stay at the map edge.\n"
         "    Only works for units of your own race. Can be used for stealing caravan\n"
         "    traders and guards, but might result into weirdness during trading.\n"
-        "    Currently all assimilated units will drop all their clothes.\n"
     ));
     return CR_OK;
 }

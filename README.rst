@@ -615,8 +615,7 @@ Options
 -------
 :tweak clear-missing:  Remove the missing status from the selected unit. This allows engraving slabs for ghostly, but not yet found, creatures.
 :tweak clear-ghostly:  Remove the ghostly status from the selected unit and mark it as dead. This allows getting rid of bugged ghosts which do not show up in the engraving slab menu at all, even after using clear-missing. It works, but is potentially very dangerous - so use with care. Probably (almost certainly) it does not have the same effects like a proper burial. You've been warned.
-:tweak clear-resident: Remove the resident flag from the selected unit. Intended to fix bugged migrants who stay at the map edge and don't enter your fort. Only works for dwarves of the own civilization.
-:tweak clear-merchant: Remove the merchant flag from the selected unit. Assimilates bugged merchants who don't leave the map into your fort. Only works for dwarves of the own civilization.
+:tweak fixmigrant:     Remove the resident/merchant flag from the selected unit. Intended to fix bugged migrants/traders who stay at the map edge and don't enter your fort. Only works for dwarves (or generally the player's race in modded games). Can be abused to grab caravan merchants, but that might result into weirdness during trading.
 
 tubefill
 ========

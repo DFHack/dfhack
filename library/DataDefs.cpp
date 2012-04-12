@@ -260,8 +260,10 @@ virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
                       << ", previous 0x" << unsigned(p->vtable_ptr) << std::dec << std::endl;
             abort();
         } else if (!p->vtable_ptr) {
+            uint32_t pv = unsigned(vtable);
+            pv -= Core::getInstance().vinfo->getRebaseDelta();
             std::cerr << "<vtable-address name='" << p->getOriginalName() << "' value='0x"
-                      << std::hex << unsigned(vtable) << std::dec << "'/>" << std::endl;
+                      << std::hex << pv << std::dec << "'/>" << std::endl;
         }
 
         known[vtable] = p;

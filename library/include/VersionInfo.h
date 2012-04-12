@@ -53,12 +53,13 @@ namespace DFHack
         std::map <std::string, uint32_t> Addresses;
         std::map <std::string, uint32_t> VTables;
         uint32_t base;
+        int rebase_delta;
         std::string version;
         OSType OS;
     public:
         VersionInfo()
         {
-            base = 0;
+            base = 0; rebase_delta = 0;
             version = "invalid";
             OS = OS_BAD;
         };
@@ -69,11 +70,13 @@ namespace DFHack
             Addresses = rhs.Addresses;
             VTables = rhs.VTables;
             base = rhs.base;
+            rebase_delta = rhs.rebase_delta;
             version = rhs.version;
             OS = rhs.OS;
         };
 
         uint32_t getBase () const { return base; };
+        int getRebaseDelta() const { return rebase_delta; }
         void setBase (const uint32_t _base) { base = _base; };
         void rebaseTo(const uint32_t new_base)
         {
@@ -81,6 +84,7 @@ namespace DFHack
             int64_t newx = new_base;
             int64_t rebase = newx - old;
             base = new_base;
+            rebase_delta += rebase;
             for (auto iter = Addresses.begin(); iter != Addresses.end(); ++iter)
                 iter->second += rebase;
             for (auto iter = VTables.begin(); iter != VTables.end(); ++iter)

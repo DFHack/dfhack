@@ -454,6 +454,8 @@ bool Items::setOwner(df::item *item, df::unit *unit)
         vector_erase_at(item->itemrefs, i);
     }
 
+    item->flags.bits.owned = false;
+
     if (unit)
     {
         auto ref = df::allocate<df::general_ref_unit_itemownerst>();
@@ -466,8 +468,6 @@ bool Items::setOwner(df::item *item, df::unit *unit)
         insert_into_vector(unit->owned_items, item->id);
         item->itemrefs.push_back(ref);
     }
-    else
-        item->flags.bits.owned = false;
 
     return true;
 }

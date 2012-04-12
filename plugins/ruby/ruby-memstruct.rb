@@ -77,36 +77,65 @@ class Number < MemStruct
 		@_bits = bits
 		@_signed = signed
 	end
+
+	def _get
+		v = case @_bits
+		when 32; DFHack.memory_read_int32(@_memaddr)
+		when 16; DFHack.memory_read_int16(@_memaddr)
+		when 8;  DFHack.memory_read_int8( @_memaddr)
+		when 64;(DFHack.memory_read_int32(@_memaddr) & 0xffffffff) + (DFHack.memory_read_int32(@_memaddr+4) << 32)
+		end
+		v &= (1 << @_bits) - 1 if not @_signed
+		v
+	end
+
+	def _set(v)
+		case @_bits
+		when 32; DFHack.memory_write_int32(@_memaddr, v)
+		when 16; DFHack.memory_write_int16(@_memaddr, v)
+		when 8;  DFHack.memory_write_int8( @_memaddr, v)
+		when 64; DFHack.memory_write_int32(@_memaddr, v & 0xffffffff) ; DFHack.memory_write_int32(@memaddr+4, v>>32)
+		end
+	end
 end
 class Float < MemStruct
+	# _get/_set defined in ruby.cpp
+	def _get
+		DFHack.memory_read_float(@_memaddr)
+	end
+
+	def _set(v)
+		DFHack.memory_write_float(@_memaddr, v)
+	end
 end
-class BitField < Number
+class BitField < MemStruct
 	attr_accessor :_shift, :_len
 	def initialize(shift, len)
 		@_shift = shift
 		@_len = len
-		super(32, false)
+	end
+	def _mask
+		(1 << @_len) - 1
 	end
 
-	def _get(whole=false)
-		v = super()
-		return v if whole
-		v = (v >> @_shift) % (1 << @_len)
+	def _get
+		v = DFHack.memory_read_int32(@_memaddr) >> @_shift
 		if @_len == 1
-			v == 0 ? false : true
+			((v & 1) == 0) ? false : true
 		else
-			v
+			v & _mask
 		end
 	end
 
 	def _set(v)
 		if @_len == 1
+			# allow 'bit = 0'
 			v = (v && v != 0 ? 1 : 0)
 		end
-		v = ((v % (1 << @_len)) << @_shift)
+		v = (v & _mask) << @_shift
 
-		ori = _get(true)
-		super(ori - (ori & (-1 % (1 << @_len)) << @_shift) + v)
+		ori = DFHack.memory_read_int32(@_memaddr) & 0xffffffff
+		DFHack.memory_write_int32(@_memaddr, ori - (ori & ((-1 & _mask) << @_shift)) + v)
 	end
 end
 
@@ -116,6 +145,30 @@ class Pointer < MemStruct
 		@_tglen = tglen
 		@_tg = tg
 	end
+
+	def _getp
+		DFHack.memory_read_int32(@_memaddr) & 0xffffffff
+	end
+	def _setp(v)
+		DFHack.memory_write_int32(@_memaddr, v)
+	end
+
+	# _getp/_setp defined in ruby.cpp, access the pointer value
+	def _get
+		addr = _getp
+		return if addr == 0	# XXX are there pointers with -1 as 'empty' value ?
+		@_tg._at(addr)._get
+	end
+	def _set(v)
+		addr = _getp
+		raise 'null pointer' if addr == 0	# TODO malloc ?
+		@_tg._at(addr)._set(v)
+	end
+
+	# the pointer is invisible, forward all methods to the pointed object
+	def method_missing(*a)
+		_get.send(*a)
+	end
 end
 class StaticArray < MemStruct
 	attr_accessor :_tglen, :_length, :_tg
@@ -124,27 +177,33 @@ class StaticArray < MemStruct
 		@_length = length
 		@_tg = tg
 	end
-	def _set(a) ; a.each_with_index { |v, i| self[i] = v } ; end
+	def _set(a)
+		a.each_with_index { |v, i| self[i] = v }
+	end
 	alias length _length
 	alias size _length
 	def _tgat(i)
-		tg._at(@_memaddr + i*@_tglen)
+		@_tg._at(@_memaddr + i*@_tglen) if i >= 0 and i < @_length
 	end
 	def [](i)
-		if (i > 0) or (@_length and i < @_length)
-			tgat(i)._get
-		end
+		i += @_length if i < 0
+		tgat(i)._get
 	end
 	def []=(i, v)
-		if (i > 0) or (@_length and i < @_length)
-			tgat(i)._set
-		end
+		i += @_length if i < 0
+		tgat(i)._set(v)
 	end
 end
 class StaticString < MemStruct
 	attr_accessor :_length
 	def initialize(length)
 		@_length = length
+	end
+	def _get
+		DFHack.memory_read(@_memaddr, @_length)
+	end
+	def _set(v)
+		DFHack.memory_write(@_memaddr, v[0, @_length])
 	end
 end
 
@@ -154,10 +213,87 @@ class StlVector < MemStruct
 		@_tglen = tglen
 		@_tg = tg
 	end
+
+	def length
+		case @_tglen
+		when 1; DFHack.memory_vector8_length(@_memaddr)
+		when 2; DFHack.memory_vector16_length(@_memaddr)
+		else    DFHack.memory_vector32_length(@_memaddr)
+		end
+	end
+	alias size length
+
+	def value_at(idx)
+		case @_tglen
+		when 1; DFHack.memory_vector8_at(@_memaddr, idx)
+		when 2; DFHack.memory_vector16_at(@_memaddr, idx)
+		else    DFHack.memory_vector32_at(@_memaddr, idx)
+		end
+	end
+	def insert_at(idx, val)
+		case @_tglen
+		when 1; DFHack.memory_vector8_insert(@_memaddr, idx, val)
+		when 2; DFHack.memory_vector16_insert(@_memaddr, idx, val)
+		else    DFHack.memory_vector32_insert(@_memaddr, idx, val)
+		end
+	end
+	def delete_at(idx)
+		case @_tglen
+		when 1; DFHack.memory_vector8_delete(@_memaddr, idx)
+		when 2; DFHack.memory_vector16_delete(@_memaddr, idx)
+		else    DFHack.memory_vector32_delete(@_memaddr, idx)
+		end
+	end
+
+	def _set(v)
+		delete_at(length-1) while length > v.length	# match lengthes
+		v.each_with_index { |e, i| self[i] = e }	# patch entries
+	end
+
+	def clear
+		delete_at(length-1) while length > 0
+	end
+	def [](idx)
+		idx += length if idx < 0
+		@_tg._at(value_at(idx)) if idx >= 0 and idx < length
+	end
+	def []=(idx, v)
+		idx += length if idx < 0
+		if idx >= length
+			insert_at(idx, v)
+		elsif idx < 0
+			raise 'invalid idx'
+		else
+			set_value_at(idx, v)
+		end
+	end
+	def <<(v)
+		insert_at(length, v)
+		self
+	end
+	def pop
+		l = length
+		if l > 0
+			v = self[l-1]
+			delete_at(l-1)
+		end
+		v
+	end
+	def to_a
+		(0...length).map { |i| self[i] }
+	end
 end
 class StlString < MemStruct
+	def _get
+		DFHack.memory_read_stlstring(@_memaddr)
+	end
+
+	def _set(v)
+		DFHack.memory_write_stlstring(@_memaddr, v)
+	end
 end
 class StlBitVector < MemStruct
+	# TODO
 end
 class StlDeque < MemStruct
 	attr_accessor :_tglen, :_tg
@@ -168,6 +304,7 @@ class StlDeque < MemStruct
 end
 
 class DfFlagarray < MemStruct
+	# TODO
 end
 class DfArray < MemStruct
 	attr_accessor :_tglen, :_tg
@@ -175,6 +312,8 @@ class DfArray < MemStruct
 		@_tglen = tglen
 		@_tg = tg
 	end
+
+	# TODO
 end
 class DfLinkedList < MemStruct
 	attr_accessor :_tg

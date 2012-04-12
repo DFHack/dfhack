@@ -12,14 +12,16 @@
 
 #include <ruby.h>
 
-using std::string;
-using std::vector;
 using namespace DFHack;
 
 
+
+// DFHack stuff
+
+
 static void df_rubythread(void*);
-static command_result df_rubyload(color_ostream &out, vector <string> & parameters);
-static command_result df_rubyeval(color_ostream &out, vector <string> & parameters);
+static command_result df_rubyload(color_ostream &out, std::vector <std::string> & parameters);
+static command_result df_rubyeval(color_ostream &out, std::vector <std::string> & parameters);
 static void ruby_bind_dfhack(void);
 
 // inter-thread communication stuff
@@ -39,7 +41,6 @@ static command_result r_result;
 static tthread::thread *r_thread;
 static int onupdate_active;
 
-// dfhack interface
 DFHACK_PLUGIN("ruby")
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
@@ -122,7 +123,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     return ret;
 }
 
-static command_result df_rubyload(color_ostream &out, vector <string> & parameters)
+static command_result df_rubyload(color_ostream &out, std::vector <std::string> & parameters)
 {
     command_result ret;
 
@@ -154,7 +155,7 @@ static command_result df_rubyload(color_ostream &out, vector <string> & paramete
     return ret;
 }
 
-static command_result df_rubyeval(color_ostream &out, vector <string> & parameters)
+static command_result df_rubyeval(color_ostream &out, std::vector <std::string> & parameters)
 {
     command_result ret;
 
@@ -194,6 +195,8 @@ static command_result df_rubyeval(color_ostream &out, vector <string> & paramete
 }
 
 
+
+// ruby stuff
 
 // ruby thread code
 static void dump_rb_error(void)
@@ -275,12 +278,12 @@ static void df_rubythread(void *p)
 
 
 
-// ruby classes
+// main DFHack ruby module
 static VALUE rb_cDFHack;
-static VALUE rb_c_WrapData;
 
 
-// DFHack methods
+// DFHack module ruby methods, binds specific dfhack methods
+
 // enable/disable calls to DFHack.onupdate()
 static VALUE rb_dfonupdateactive(VALUE self)
 {
@@ -308,16 +311,33 @@ static VALUE rb_dfsuspend(VALUE self)
     return Qtrue;
 }
 
-/*
-static VALUE rb_dfgetversion(VALUE self)
+// returns the delta to apply to dfhack xml addrs wrt actual memory addresses
+// usage: real_addr = addr_from_xml + this_delta;
+static VALUE rb_dfrebase_delta(void)
 {
-    return rb_str_new2(getcore().vinfo->getVersion().c_str());
-}
-*/
+    uint32_t expected_base_address;
+    uint32_t actual_base_address = 0;
+#ifdef WIN32
+    expected_base_address = 0x00400000;
+    actual_base_address = (uint32_t)GetModuleHandle(0);
+#else
+    expected_base_address = 0x08048000;
+    FILE *f = fopen("/proc/self/maps", "r");
+    char line[256];
+    while (fgets(line, sizeof(line), f)) {
+        if (strstr(line, "libs/Dwarf_Fortress")) {
+            actual_base_address = strtoul(line, 0, 16);
+            break;
+        }
+    }
+#endif
 
-// TODO color_ostream proxy yadda yadda
+    return rb_int2inum(actual_base_address - expected_base_address);
+}
+
 static VALUE rb_dfprint_str(VALUE self, VALUE s)
 {
+    // TODO color_ostream proxy yadda yadda
     //getcore().con.print("%s", rb_string_value_ptr(&s));
     Core::printerr("%s", rb_string_value_ptr(&s));
     return Qnil;
@@ -329,53 +349,8 @@ static VALUE rb_dfprint_err(VALUE self, VALUE s)
     return Qnil;
 }
 
-// raw memory access
-// WARNING: may cause game crash ! double-check your addresses !
-static VALUE rb_dfmemread(VALUE self, VALUE addr, VALUE len)
-{
-    return rb_str_new((char*)rb_num2ulong(addr), rb_num2ulong(len));
-}
-
-static VALUE rb_dfmemwrite(VALUE self, VALUE addr, VALUE raw)
-{
-    // no stable api for raw.length between rb1.8/rb1.9 ...
-    int strlen = FIX2INT(rb_funcall(raw, rb_intern("length"), 0));
-
-    memcpy((void*)rb_num2ulong(addr), rb_string_value_ptr(&raw), strlen);
-
-    return Qtrue;
-}
-
-static VALUE rb_dfmalloc(VALUE self, VALUE len)
-{
-    return rb_uint2inum((long)malloc(FIX2INT(len)));
-}
-
-static VALUE rb_dffree(VALUE self, VALUE ptr)
-{
-    free((void*)rb_num2ulong(ptr));
-    return Qtrue;
-}
-
-// raw c++ wrappers
-// return the nth element of a vector
-static VALUE rb_dfvectorat(VALUE self, VALUE vect_addr, VALUE idx)
-{
-    vector<uint32_t> *v = (vector<uint32_t>*)rb_num2ulong(vect_addr);
-    return rb_uint2inum(v->at(FIX2INT(idx)));
-}
-
-// return a c++ string as a ruby string (nul-terminated)
-static VALUE rb_dfreadstring(VALUE self, VALUE str_addr)
-{
-    string *s = (string*)rb_num2ulong(str_addr);
-    return rb_str_new2(s->c_str());
-}
-
-
-
-
-/* XXX this needs a custom DFHack::Plugin subclass to pass the cmdname to invoke(), to match the ruby callback
+/* TODO needs main dfhack support
+   this needs a custom DFHack::Plugin subclass to pass the cmdname to invoke(), to match the ruby callback
 // register a ruby method as dfhack console command
 // usage: DFHack.register("moo", "this commands prints moo on the console") { DFHack.puts "moo !" }
 static VALUE rb_dfregister(VALUE self, VALUE name, VALUE descr)
@@ -393,178 +368,187 @@ static VALUE rb_dfregister(VALUE self, VALUE name, VALUE descr)
 }
 
 
-// return the address of the struct in DF memory (for raw memread/write)
-static VALUE rb_memaddr(VALUE self)
+
+
+// raw memory access
+// used by the ruby class definitions
+// WARNING: may cause game crash ! double-check your addresses !
+
+static VALUE rb_dfmalloc(VALUE self, VALUE len)
 {
-    void *data;
-    Data_Get_Struct(self, void, data);
-
-    return rb_uint2inum((uint32_t)data);
+    return rb_uint2inum((long)malloc(FIX2INT(len)));
 }
 
-
-
-
-// BEGIN GENERATED SECTION
-
-// begin generated T_cursor binding
-static VALUE rb_c_T_cursor;
-
-static VALUE rb_m_T_cursor_x(VALUE self) {
-    struct df::global::T_cursor *var;
-    Data_Get_Struct(self, struct df::global::T_cursor, var);
-    return rb_uint2inum(var->x);
-}
-static VALUE rb_m_T_cursor_x_set(VALUE self, VALUE val) {
-    struct df::global::T_cursor *var;
-    Data_Get_Struct(self, struct df::global::T_cursor, var);
-    var->x = rb_num2ulong(val);
+static VALUE rb_dffree(VALUE self, VALUE ptr)
+{
+    free((void*)rb_num2ulong(ptr));
     return Qtrue;
 }
 
-static VALUE rb_m_T_cursor_y(VALUE self) {
-    struct df::global::T_cursor *var;
-    Data_Get_Struct(self, struct df::global::T_cursor, var);
-    return rb_uint2inum(var->y);
+
+// memory reading (buffer)
+static VALUE rb_dfmemory_read(VALUE self, VALUE addr, VALUE len)
+{
+    return rb_str_new((char*)rb_num2ulong(addr), rb_num2ulong(len));
 }
-static VALUE rb_m_T_cursor_y_set(VALUE self, VALUE val) {
-    struct df::global::T_cursor *var;
-    Data_Get_Struct(self, struct df::global::T_cursor, var);
-    var->y = rb_num2ulong(val);
+static VALUE rb_dfmemory_read_stlstring(VALUE self, VALUE addr)
+{
+    std::string *s = (std::string*)rb_num2ulong(addr);
+    return rb_str_new(s->c_str(), s->length());
+}
+
+// memory reading (integers/floats)
+static VALUE rb_dfmemory_read_int8(VALUE self, VALUE addr)
+{
+    return rb_int2inum(*(char*)rb_num2ulong(addr));
+}
+static VALUE rb_dfmemory_read_int16(VALUE self, VALUE addr)
+{
+    return rb_int2inum(*(short*)rb_num2ulong(addr));
+}
+static VALUE rb_dfmemory_read_int32(VALUE self, VALUE addr)
+{
+    return rb_int2inum(*(int*)rb_num2ulong(addr));
+}
+
+static VALUE rb_dfmemory_read_float(VALUE self, VALUE addr)
+{
+    return rb_float_new(*(float*)rb_num2ulong(addr));
+}
+
+
+// memory writing (buffer)
+static VALUE rb_dfmemory_write(VALUE self, VALUE addr, VALUE raw)
+{
+    // no stable api for raw.length between rb1.8/rb1.9 ...
+    int strlen = FIX2INT(rb_funcall(raw, rb_intern("length"), 0));
+
+    memcpy((void*)rb_num2ulong(addr), rb_string_value_ptr(&raw), strlen);
+
+    return Qtrue;
+}
+static VALUE rb_dfmemory_write_stlstring(VALUE self, VALUE addr, VALUE val)
+{
+    std::string *s = (std::string*)rb_num2ulong(addr);
+    int strlen = FIX2INT(rb_funcall(val, rb_intern("length"), 0));
+    s->assign(rb_string_value_ptr(&val), strlen);
     return Qtrue;
 }
 
-static VALUE rb_m_T_cursor_z(VALUE self) {
-    struct df::global::T_cursor *var;
-    Data_Get_Struct(self, struct df::global::T_cursor, var);
-    return rb_uint2inum(var->z);
+// memory writing (integers/floats)
+static VALUE rb_dfmemory_write_int8(VALUE self, VALUE addr, VALUE val)
+{
+    *(char*)rb_num2ulong(addr) = rb_num2ulong(val);
+    return Qtrue;
 }
-static VALUE rb_m_T_cursor_z_set(VALUE self, VALUE val) {
-    struct df::global::T_cursor *var;
-    Data_Get_Struct(self, struct df::global::T_cursor, var);
-    var->z = rb_num2ulong(val);
+static VALUE rb_dfmemory_write_int16(VALUE self, VALUE addr, VALUE val)
+{
+    *(short*)rb_num2ulong(addr) = rb_num2ulong(val);
+    return Qtrue;
+}
+static VALUE rb_dfmemory_write_int32(VALUE self, VALUE addr, VALUE val)
+{
+    *(int*)rb_num2ulong(addr) = rb_num2ulong(val);
     return Qtrue;
 }
 
-// link methods to the class
-static void ruby_bind_T_cursor(void) {
-    // create a class, child of WrapData, in module DFHack
-    rb_c_T_cursor = rb_define_class_under(rb_cDFHack, "T_cursor", rb_c_WrapData);
-
-    // reader for 'x' (0 = no arg)
-    rb_define_method(rb_c_T_cursor, "x",  RUBY_METHOD_FUNC(rb_m_T_cursor_x), 0);
-    // writer for 'x' (1 arg)
-    rb_define_method(rb_c_T_cursor, "x=", RUBY_METHOD_FUNC(rb_m_T_cursor_x_set), 1);
-    rb_define_method(rb_c_T_cursor, "y",  RUBY_METHOD_FUNC(rb_m_T_cursor_y), 0);
-    rb_define_method(rb_c_T_cursor, "y=", RUBY_METHOD_FUNC(rb_m_T_cursor_y_set), 1);
-    rb_define_method(rb_c_T_cursor, "z",  RUBY_METHOD_FUNC(rb_m_T_cursor_z), 0);
-    rb_define_method(rb_c_T_cursor, "z=", RUBY_METHOD_FUNC(rb_m_T_cursor_z_set), 1);
-}
-
-
-// create an instance of T_cursor from global::cursor
-// this method is linked to DFHack.cursor in ruby_bind_dfhack()
-static VALUE rb_global_cursor(VALUE self) {
-    return Data_Wrap_Struct(rb_c_T_cursor, 0, 0, df::global::cursor);
-}
-
-
-// begin generated unit binding
-static VALUE rb_c_unit;
-
-static VALUE rb_m_unit_id(VALUE self) {
-    struct df::unit *var;
-    Data_Get_Struct(self, struct df::unit, var);
-
-    return rb_uint2inum(var->id);
-}
-static VALUE rb_m_unit_id_set(VALUE self, VALUE val) {
-    struct df::unit *var;
-    Data_Get_Struct(self, struct df::unit, var);
-    var->id = rb_num2ulong(val);
+static VALUE rb_dfmemory_write_float(VALUE self, VALUE addr, VALUE val)
+{
+    *(float*)rb_num2ulong(addr) = rb_num2dbl(val);
     return Qtrue;
 }
 
-static void ruby_bind_unit(void) {
-    // ruby class name must begin with uppercase
-    rb_c_unit = rb_define_class_under(rb_cDFHack, "Unit", rb_c_WrapData);
 
-    rb_define_method(rb_c_unit, "id",  RUBY_METHOD_FUNC(rb_m_unit_id), 0);
-    rb_define_method(rb_c_unit, "id=", RUBY_METHOD_FUNC(rb_m_unit_id_set), 1);
-}
-
-
-// begin generated world binding
-static VALUE rb_c_world;
-static VALUE rb_c_world_T_units;
-
-static VALUE rb_m_world_T_units_all(VALUE self) {
-    struct df::world::T_units *var;
-    Data_Get_Struct(self, struct df::world::T_units, var);
-
-    // read a vector
-    VALUE ret = rb_ary_new();
-    for (unsigned i=0 ; i<var->all.size() ; ++i)
-        rb_ary_push(ret, Data_Wrap_Struct(rb_c_unit, 0, 0, var->all[i]));
-
-    return ret;
-}
-
-static VALUE rb_m_world_units(VALUE self) {
-    struct df::world *var;
-    Data_Get_Struct(self, struct df::world, var);
-    return Data_Wrap_Struct(rb_c_world_T_units, 0, 0, &var->units);
-}
-
-static void ruby_bind_world(void) {
-    rb_c_world = rb_define_class_under(rb_cDFHack, "World", rb_c_WrapData);
-    rb_c_world_T_units = rb_define_class_under(rb_c_world, "T_units", rb_c_WrapData);
-
-    rb_define_method(rb_c_world, "units", RUBY_METHOD_FUNC(rb_m_world_units), 0);
-    rb_define_method(rb_c_world_T_units, "all", RUBY_METHOD_FUNC(rb_m_world_T_units_all), 0);
-}
-
-static VALUE rb_global_world(VALUE self) {
-    return Data_Wrap_Struct(rb_c_world, 0, 0, df::global::world);
-}
-
-/*
-static VALUE rb_dfcreatures(VALUE self)
+// vector access
+// vector<uint8>
+static VALUE rb_dfmemory_vec8_length(VALUE self, VALUE addr)
 {
-    OffsetGroup *ogc = getcore().vinfo->getGroup("Creatures");
-    vector <df_creature*> *v = (vector<df_creature*>*)ogc->getAddress("vector");
-
-    VALUE ret = rb_ary_new();
-    for (unsigned i=0 ; i<v->size() ; ++i)
-        rb_ary_push(ret, Data_Wrap_Struct(rb_cCreature, 0, 0, v->at(i)));
-
-    return ret;
+    std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
+    return rb_uint2inum(v->size());
 }
-
-static VALUE rb_getlaborname(VALUE self, VALUE idx)
+static VALUE rb_dfmemory_vec8_at(VALUE self, VALUE addr, VALUE idx)
 {
-    return rb_str_new2(getcore().vinfo->getLabor(FIX2INT(idx)).c_str());
+    std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
+    return rb_uint2inum(v->at(FIX2INT(idx)));
 }
-
-static VALUE rb_getskillname(VALUE self, VALUE idx)
+static VALUE rb_dfmemory_vec8_set(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
-    return rb_str_new2(getcore().vinfo->getSkill(FIX2INT(idx)).c_str());
+    std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
+    v->at(FIX2INT(idx)) = rb_num2ulong(val);
+    return Qtrue;
 }
-
-static VALUE rb_mapblock(VALUE self, VALUE x, VALUE y, VALUE z)
+static VALUE rb_dfmemory_vec8_insert(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
-    Maps *map;
-    Data_Get_Struct(self, Maps, map);
-    df_block *block;
-
-    block = map->getBlock(FIX2INT(x)/16, FIX2INT(y)/16, FIX2INT(z));
-    if (!block)
-        return Qnil;
-
-    return Data_Wrap_Struct(rb_cMapBlock, 0, 0, block);
+    std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
+    v->insert(v->begin()+FIX2INT(idx), rb_num2ulong(val));
+    return Qtrue;
 }
-*/
+static VALUE rb_dfmemory_vec8_delete(VALUE self, VALUE addr, VALUE idx)
+{
+    std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
+    v->erase(v->begin()+FIX2INT(idx));
+    return Qtrue;
+}
 
+// vector<uint16>
+static VALUE rb_dfmemory_vec16_length(VALUE self, VALUE addr)
+{
+    std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
+    return rb_uint2inum(v->size());
+}
+static VALUE rb_dfmemory_vec16_at(VALUE self, VALUE addr, VALUE idx)
+{
+    std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
+    return rb_uint2inum(v->at(FIX2INT(idx)));
+}
+static VALUE rb_dfmemory_vec16_set(VALUE self, VALUE addr, VALUE idx, VALUE val)
+{
+    std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
+    v->at(FIX2INT(idx)) = rb_num2ulong(val);
+    return Qtrue;
+}
+static VALUE rb_dfmemory_vec16_insert(VALUE self, VALUE addr, VALUE idx, VALUE val)
+{
+    std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
+    v->insert(v->begin()+FIX2INT(idx), rb_num2ulong(val));
+    return Qtrue;
+}
+static VALUE rb_dfmemory_vec16_delete(VALUE self, VALUE addr, VALUE idx)
+{
+    std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
+    v->erase(v->begin()+FIX2INT(idx));
+    return Qtrue;
+}
+
+// vector<uint32>
+static VALUE rb_dfmemory_vec32_length(VALUE self, VALUE addr)
+{
+    std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
+    return rb_uint2inum(v->size());
+}
+static VALUE rb_dfmemory_vec32_at(VALUE self, VALUE addr, VALUE idx)
+{
+    std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
+    return rb_uint2inum(v->at(FIX2INT(idx)));
+}
+static VALUE rb_dfmemory_vec32_set(VALUE self, VALUE addr, VALUE idx, VALUE val)
+{
+    std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
+    v->at(FIX2INT(idx)) = rb_num2ulong(val);
+    return Qtrue;
+}
+static VALUE rb_dfmemory_vec32_insert(VALUE self, VALUE addr, VALUE idx, VALUE val)
+{
+    std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
+    v->insert(v->begin()+FIX2INT(idx), rb_num2ulong(val));
+    return Qtrue;
+}
+static VALUE rb_dfmemory_vec32_delete(VALUE self, VALUE addr, VALUE idx)
+{
+    std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
+    v->erase(v->begin()+FIX2INT(idx));
+    return Qtrue;
+}
 
 
 
@@ -577,30 +561,42 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "onupdate_active=", RUBY_METHOD_FUNC(rb_dfonupdateactiveset), 1);
     rb_define_singleton_method(rb_cDFHack, "resume", RUBY_METHOD_FUNC(rb_dfresume), 0);
     rb_define_singleton_method(rb_cDFHack, "do_suspend", RUBY_METHOD_FUNC(rb_dfsuspend), 0);
-    rb_define_singleton_method(rb_cDFHack, "resume", RUBY_METHOD_FUNC(rb_dfresume), 0);
-    //rb_define_singleton_method(rb_cDFHack, "version", RUBY_METHOD_FUNC(rb_dfgetversion), 0);
+    rb_define_singleton_method(rb_cDFHack, "register_dfcommand", RUBY_METHOD_FUNC(rb_dfregister), 2);
     rb_define_singleton_method(rb_cDFHack, "print_str", RUBY_METHOD_FUNC(rb_dfprint_str), 1);
     rb_define_singleton_method(rb_cDFHack, "print_err", RUBY_METHOD_FUNC(rb_dfprint_err), 1);
-    rb_define_singleton_method(rb_cDFHack, "memread", RUBY_METHOD_FUNC(rb_dfmemread), 2);
-    rb_define_singleton_method(rb_cDFHack, "memwrite", RUBY_METHOD_FUNC(rb_dfmemwrite), 2);
     rb_define_singleton_method(rb_cDFHack, "malloc", RUBY_METHOD_FUNC(rb_dfmalloc), 1);
     rb_define_singleton_method(rb_cDFHack, "free", RUBY_METHOD_FUNC(rb_dffree), 1);
-    rb_define_singleton_method(rb_cDFHack, "vectorat", RUBY_METHOD_FUNC(rb_dfvectorat), 2);
-    rb_define_singleton_method(rb_cDFHack, "readstring", RUBY_METHOD_FUNC(rb_dfreadstring), 1);
-    rb_define_singleton_method(rb_cDFHack, "register_dfcommand", RUBY_METHOD_FUNC(rb_dfregister), 2);
+    rb_define_const(rb_cDFHack, "REBASE_DELTA", rb_dfrebase_delta());
 
-    // accessors for dfhack globals
-    rb_define_singleton_method(rb_cDFHack, "cursor", RUBY_METHOD_FUNC(rb_global_cursor), 0);
-    rb_define_singleton_method(rb_cDFHack, "world", RUBY_METHOD_FUNC(rb_global_world), 0);
+    rb_define_singleton_method(rb_cDFHack, "memory_read", RUBY_METHOD_FUNC(rb_dfmemory_read), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_read_stlstring", RUBY_METHOD_FUNC(rb_dfmemory_read_stlstring), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_read_int8",  RUBY_METHOD_FUNC(rb_dfmemory_read_int8),  1);
+    rb_define_singleton_method(rb_cDFHack, "memory_read_int16", RUBY_METHOD_FUNC(rb_dfmemory_read_int16), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_read_int32", RUBY_METHOD_FUNC(rb_dfmemory_read_int32), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_read_float", RUBY_METHOD_FUNC(rb_dfmemory_read_float), 1);
 
-    // parent class for all wrapped objects
-    rb_c_WrapData = rb_define_class_under(rb_cDFHack, "WrapData", rb_cObject);
-    rb_define_method(rb_c_WrapData, "memaddr", RUBY_METHOD_FUNC(rb_memaddr), 0);
+    rb_define_singleton_method(rb_cDFHack, "memory_write", RUBY_METHOD_FUNC(rb_dfmemory_write), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_write_stlstring", RUBY_METHOD_FUNC(rb_dfmemory_write_stlstring), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_write_int8",  RUBY_METHOD_FUNC(rb_dfmemory_write_int8),  2);
+    rb_define_singleton_method(rb_cDFHack, "memory_write_int16", RUBY_METHOD_FUNC(rb_dfmemory_write_int16), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_write_int32", RUBY_METHOD_FUNC(rb_dfmemory_write_int32), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_write_float", RUBY_METHOD_FUNC(rb_dfmemory_write_float), 2);
 
-    // call generated bindings
-    ruby_bind_T_cursor();
-    ruby_bind_unit();
-    ruby_bind_world();
+    rb_define_singleton_method(rb_cDFHack, "memory_vector8_length",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_length), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector8_at",      RUBY_METHOD_FUNC(rb_dfmemory_vec8_at), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector8_set",     RUBY_METHOD_FUNC(rb_dfmemory_vec8_set), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector8_insert",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_insert), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector8_delete",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_delete), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector16_length", RUBY_METHOD_FUNC(rb_dfmemory_vec16_length), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector16_at",     RUBY_METHOD_FUNC(rb_dfmemory_vec16_at), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector16_set",    RUBY_METHOD_FUNC(rb_dfmemory_vec16_set), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector16_insert", RUBY_METHOD_FUNC(rb_dfmemory_vec16_insert), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector16_delete", RUBY_METHOD_FUNC(rb_dfmemory_vec16_delete), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector32_length", RUBY_METHOD_FUNC(rb_dfmemory_vec32_length), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector32_at",     RUBY_METHOD_FUNC(rb_dfmemory_vec32_at), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector32_set",    RUBY_METHOD_FUNC(rb_dfmemory_vec32_set), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector32_insert", RUBY_METHOD_FUNC(rb_dfmemory_vec32_insert), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector32_delete", RUBY_METHOD_FUNC(rb_dfmemory_vec32_delete), 2);
 
     // load the default ruby-level definitions
     int state=0;

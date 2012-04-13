@@ -663,6 +663,14 @@ Job module
 Units module
 ------------
 
+* ``dfhack.units.getPosition(unit)``
+
+  Returns true *x,y,z* of the unit; may be not equal to unit.pos if caged.
+
+* ``dfhack.units.getContainer(unit)``
+
+  Returns the container (cage) item or *nil*.
+
 * ``dfhack.units.setNickname(unit,nick)``
 
   Sets the unit's nickname properly.
@@ -701,7 +709,7 @@ Items module
 
 * ``dfhack.items.getPosition(item)``
 
-  Returns true *x,y,z* of the item.
+  Returns true *x,y,z* of the item; may be not equal to item.pos if in inventory.
 
 * ``dfhack.items.getOwner(item)``
 

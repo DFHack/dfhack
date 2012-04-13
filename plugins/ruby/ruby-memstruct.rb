@@ -39,6 +39,7 @@ class Compound < MemStruct
 
 		def stl_vector(tglen=nil)
 			tg = yield if tglen
+			tg = tg._tg if tg.kind_of?(Pointer)	# Vector.at(4) already dereferences
 			case tglen
 			when 1; StlVector8.new(tg)
 			when 2; StlVector16.new(tg)

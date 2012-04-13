@@ -219,9 +219,14 @@ sub render_item_global {
     my ($item, $cppvar) = @_;
 
     my $typename = $item->getAttribute('type-name');
-    my $rbname = rb_ucase($typename);
+    my $subtype = $item->getAttribute('ld:subtype');
 
-    push @lines_rb, "global :$rbname";
+    if ($subtype and $subtype eq 'enum') {
+        render_item_number($item, $cppvar);
+    } else {
+        my $rbname = rb_ucase($typename);
+        push @lines_rb, "global :$rbname";
+    }
 }
 
 sub render_item_number {

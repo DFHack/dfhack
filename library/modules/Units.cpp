@@ -40,6 +40,7 @@ using namespace std;
 
 // we connect to those
 #include "modules/Units.h"
+#include "modules/Items.h"
 #include "modules/Materials.h"
 #include "modules/Translation.h"
 #include "ModuleFactory.h"
@@ -498,6 +499,34 @@ bool Units::ReadInventoryByPtr(const df::unit * unit, std::vector<df::item *> & 
 void Units::CopyNameTo(df::unit * creature, df::language_name * target)
 {
     Translation::copyName(&creature->name, target);
+}
+
+df::coord Units::getPosition(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if (unit->flags1.bits.caged)
+    {
+        auto cage = getContainer(unit);
+        if (cage)
+            return Items::getPosition(cage);
+    }
+
+    return unit->pos;
+}
+
+df::item *Units::getContainer(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    for (size_t i = 0; i < unit->refs.size(); i++)
+    {
+        df::general_ref *ref = unit->refs[i];
+        if (ref->getType() == general_ref_type::CONTAINED_IN_ITEM)
+            return ref->getItem();
+    }
+
+    return NULL;
 }
 
 void Units::setNickname(df::unit *unit, std::string nick)

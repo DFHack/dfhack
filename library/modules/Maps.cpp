@@ -596,7 +596,7 @@ void MapExtras::Block::init_item_counts()
     if (item_counts) return;
 
     item_counts = new T_item_counts[16];
-    memset(item_counts, 0, sizeof(T_item_counts));
+    memset(item_counts, 0, sizeof(T_item_counts)*16);
 
     if (!block) return;
 

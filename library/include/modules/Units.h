@@ -193,6 +193,11 @@ DFHACK_EXPORT int32_t GetDwarfCivId ( void );
 
 DFHACK_EXPORT void CopyNameTo(df::unit *creature, df::language_name * target);
 
+/// Returns the true position of the unit (non-trivial in case of caged).
+DFHACK_EXPORT df::coord getPosition(df::unit *unit);
+
+DFHACK_EXPORT df::item *getContainer(df::unit *unit);
+
 DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
 DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
 

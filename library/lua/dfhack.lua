@@ -86,6 +86,21 @@ function copyall(table)
     return rv
 end
 
+function pos2xyz(pos)
+    local x = pos.x
+    if x and x ~= -30000 then
+        return x, pos.y, pos.z
+    end
+end
+
+function xyz2pos(x,y,z)
+    if x then
+        return {x=x,y=y,z=z}
+    else
+        return {x=-30000,y=-30000,z=-30000}
+    end
+end
+
 function dfhack.persistent:__tostring()
     return "<persistent "..self.entry_id..":"..self.key.."=\""
            ..self.value.."\":"..table.concat(self.ints,",")..">"

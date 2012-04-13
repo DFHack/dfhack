@@ -97,6 +97,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(feature feature.cpp)
     DFHACK_PLUGIN(lair lair.cpp)
     DFHACK_PLUGIN(zone zone.cpp)
+    DFHACK_PLUGIN(burrows burrows.cpp)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
 endif()

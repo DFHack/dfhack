@@ -3,6 +3,7 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
+#include "VersionInfo.h"
 
 #include "DataDefs.h"
 #include "df/world.h"
@@ -367,6 +368,12 @@ static VALUE rb_dfregister(VALUE self, VALUE name, VALUE descr)
     rb_raise(rb_eRuntimeError, "not implemented");
 }
 
+static VALUE rb_dfget_global_address(VALUE self, VALUE name)
+{
+    uint32_t addr = Core::getInstance().vinfo->getAddress(rb_string_value_ptr(&name));
+    return rb_uint2inum(addr);
+}
+
 
 
 
@@ -561,6 +568,7 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "onupdate_active=", RUBY_METHOD_FUNC(rb_dfonupdateactiveset), 1);
     rb_define_singleton_method(rb_cDFHack, "resume", RUBY_METHOD_FUNC(rb_dfresume), 0);
     rb_define_singleton_method(rb_cDFHack, "do_suspend", RUBY_METHOD_FUNC(rb_dfsuspend), 0);
+    rb_define_singleton_method(rb_cDFHack, "get_global_address", RUBY_METHOD_FUNC(rb_dfget_global_address), 1);
     rb_define_singleton_method(rb_cDFHack, "register_dfcommand", RUBY_METHOD_FUNC(rb_dfregister), 2);
     rb_define_singleton_method(rb_cDFHack, "print_str", RUBY_METHOD_FUNC(rb_dfprint_str), 1);
     rb_define_singleton_method(rb_cDFHack, "print_err", RUBY_METHOD_FUNC(rb_dfprint_err), 1);

@@ -38,7 +38,12 @@ class Compound < MemStruct
 		end
 
 		def stl_vector(tglen=nil)
-			StlVector.new(tglen, (yield if tglen))
+			tg = yield if tglen
+			case tglen
+			when 1; StlVector8.new(tg)
+			when 2; StlVector16.new(tg)
+			else StlVector32.new(tg)
+			end
 		end
 		def stl_string
 			StlString.new
@@ -66,7 +71,7 @@ class Compound < MemStruct
 		def compound(&b)
 			m = Class.new(Compound)
 			m.instance_eval(&b)
-			m
+			m.new
 		end
 	end
 	def _set(h) ; h.each { |k, v| send("_#{k}=", v) } ; end
@@ -193,6 +198,9 @@ class StaticArray < MemStruct
 		i += @_length if i < 0
 		tgat(i)._set(v)
 	end
+
+	include Enumerable
+	def each; (0...length).each { |i| yield self[i] }; end
 end
 class StaticString < MemStruct
 	attr_accessor :_length
@@ -207,42 +215,24 @@ class StaticString < MemStruct
 	end
 end
 
-class StlVector < MemStruct
-	attr_accessor :_tglen, :_tg
-	def initialize(tglen, tg)
-		@_tglen = tglen
+class StlVector32 < MemStruct
+	attr_accessor :_tg
+	def initialize(tg)
 		@_tg = tg
 	end
 
 	def length
-		case @_tglen
-		when 1; DFHack.memory_vector8_length(@_memaddr)
-		when 2; DFHack.memory_vector16_length(@_memaddr)
-		else    DFHack.memory_vector32_length(@_memaddr)
-		end
+		DFHack.memory_vector32_length(@_memaddr)
 	end
 	alias size length
-
 	def value_at(idx)
-		case @_tglen
-		when 1; DFHack.memory_vector8_at(@_memaddr, idx)
-		when 2; DFHack.memory_vector16_at(@_memaddr, idx)
-		else    DFHack.memory_vector32_at(@_memaddr, idx)
-		end
+		DFHack.memory_vector32_at(@_memaddr, idx)
 	end
 	def insert_at(idx, val)
-		case @_tglen
-		when 1; DFHack.memory_vector8_insert(@_memaddr, idx, val)
-		when 2; DFHack.memory_vector16_insert(@_memaddr, idx, val)
-		else    DFHack.memory_vector32_insert(@_memaddr, idx, val)
-		end
+		DFHack.memory_vector32_insert(@_memaddr, idx, val)
 	end
 	def delete_at(idx)
-		case @_tglen
-		when 1; DFHack.memory_vector8_delete(@_memaddr, idx)
-		when 2; DFHack.memory_vector16_delete(@_memaddr, idx)
-		else    DFHack.memory_vector32_delete(@_memaddr, idx)
-		end
+		DFHack.memory_vector32_delete(@_memaddr, idx)
 	end
 
 	def _set(v)
@@ -279,8 +269,37 @@ class StlVector < MemStruct
 		end
 		v
 	end
-	def to_a
-		(0...length).map { |i| self[i] }
+	include Enumerable
+	def each; (0...length).each { |i| yield self[i] }; end
+end
+class StlVector16 < StlVector32
+	def length
+		DFHack.memory_vector16_length(@_memaddr)
+	end
+	alias size length
+	def value_at(idx)
+		DFHack.memory_vector16_at(@_memaddr, idx)
+	end
+	def insert_at(idx, val)
+		DFHack.memory_vector16_insert(@_memaddr, idx, val)
+	end
+	def delete_at(idx)
+		DFHack.memory_vector16_delete(@_memaddr, idx)
+	end
+end
+class StlVector8 < StlVector32
+	def length
+		DFHack.memory_vector8_length(@_memaddr)
+	end
+	alias size length
+	def value_at(idx)
+		DFHack.memory_vector8_at(@_memaddr, idx)
+	end
+	def insert_at(idx, val)
+		DFHack.memory_vector8_insert(@_memaddr, idx, val)
+	end
+	def delete_at(idx)
+		DFHack.memory_vector8_delete(@_memaddr, idx)
 	end
 end
 class StlString < MemStruct
@@ -327,7 +346,7 @@ class Global < MemStruct
 	def initialize(glob)
 		@_glob = glob
 	end
-	def _at(addr) ; g = const_get(@_glob) ; g._at(addr) ; end
+	def _at(addr) ; g = DFHack::MemHack.const_get(@_glob) ; g.new._at(addr) ; end
 end
 
 

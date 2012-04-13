@@ -56,7 +56,7 @@ sub render_global_enum {
     indent_rb {
         render_enum_fields($type);
     };
-    push @lines_rb, "end";
+    push @lines_rb, "end\n";
 }
 sub render_enum_fields {
     my ($type) = @_;
@@ -84,10 +84,16 @@ sub render_global_bitfield {
     indent_rb {
         render_bitfield_fields($type);
     };
-    push @lines_rb, "end";
+    push @lines_rb, "end\n";
 }
 sub render_bitfield_fields {
     my ($type) = @_;
+
+    push @lines_rb, "field(:_whole, 0) {";
+    indent_rb {
+        render_item_number($type, '');
+    };
+    push @lines_rb, "}";
 
     my $shift = 0;
     for my $field ($type->findnodes('child::ld:field')) {
@@ -134,7 +140,7 @@ sub render_global_class {
     indent_rb {
         render_struct_fields($type, "(*$cppvar)");
     };
-    push @lines_rb, "end";
+    push @lines_rb, "end\n";
 }
 sub render_struct_fields {
     my ($type, $cppvar) = @_;
@@ -152,6 +158,48 @@ sub render_struct_fields {
         push @lines_rb, "}";
     }
 }
+
+sub render_global_objects {
+    my (@objects) = @_;
+    my @global_objects;
+
+    my $sname = 'global_objects';
+    my $rbname = rb_ucase($sname);
+
+    %seen_enum_name = ();
+
+    push @lines_cpp, "}" if @include_cpp;
+    push @lines_cpp, "void cpp_$sname(FILE *fout) {";
+    push @include_cpp, $sname;
+
+    push @lines_rb, "class $rbname < Compound";
+    indent_rb {
+        for my $obj (@objects) {
+            my $oname = $obj->getAttribute('name');
+            my $addr = "DFHack.get_global_address('$oname')";
+            push @lines_rb, "field(:$oname, $addr) {";
+            my $item = $obj->findnodes('child::ld:item')->[0];
+            indent_rb {
+                render_item($item, "(*df::global::$oname)");
+            };
+            push @lines_rb, "}";
+
+            push @global_objects, $oname;
+        }
+    };
+    push @lines_rb, "end";
+
+    push @lines_rb, "module ::DFHack";
+    indent_rb {
+        push @lines_rb, "Global = GlobalObjects.new._at(0)";
+        for my $obj (@global_objects) {
+            push @lines_rb, "def self.$obj ; Global.$obj ; end";
+            push @lines_rb, "def self.$obj=(v) ; Global.$obj = v ; end";
+        }
+    };
+    push @lines_rb, "end";
+}
+
 
 sub render_item {
     my ($item, $cppvar) = @_;
@@ -180,7 +228,7 @@ sub render_item_number {
     my ($item, $cppvar) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
-    $subtype = $item->getAttribute('base-type') if ($subtype eq 'enum');
+    $subtype = $item->getAttribute('base-type') if (!$subtype or $subtype eq 'enum' or $subtype eq 'bitfield');
     $subtype = 'int32_t' if (!$subtype);
 
          if ($subtype eq 'int64_t') {
@@ -298,7 +346,6 @@ sub render_item_bytes {
     }
 }
 
-
 sub get_offset {
     my ($cppvar, $fname) = @_;
 
@@ -373,10 +420,9 @@ for my $name (sort { $a cmp $b } keys %global_types) {
     }
 }
 
-for my $obj ($doc->findnodes('/ld:data-definition/ld:global-object')) {
-    my $name = $obj->getAttribute('name');
-    # TODO
-}
+
+render_global_objects($doc->findnodes('/ld:data-definition/ld:global-object'));
+
 
 open FH, ">$output";
 if ($output =~ /\.cpp$/) {
@@ -396,6 +442,7 @@ if ($output =~ /\.cpp$/) {
     print FH "    fclose(fout);\n";
     print FH "    return 0;\n";
     print FH "}\n";
+
 } else {
     print FH "module DFHack\n";
     print FH "module MemHack\n";

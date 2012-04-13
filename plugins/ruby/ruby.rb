@@ -1,3 +1,5 @@
+require 'hack/ruby-autogen'
+
 module DFHack
     class << self
         def suspend
@@ -29,8 +31,7 @@ module DFHack
             puts "starting"
 
             suspend {
-                c = cursor
-                puts "cursor pos: #{c.x} #{c.y} #{c.z}"
+                puts "cursor pos: #{cursor.x} #{cursor.y} #{cursor.z}"
 
                 puts "unit[0] id: #{world.units.all[0].id}"
             }

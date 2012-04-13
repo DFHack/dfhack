@@ -19,12 +19,14 @@ module DFHack
             a.flatten.each { |l|
                 print_str(l.to_s.chomp + "\n")
             }
+            nil
         end
 
         def puts_err(*a)
             a.flatten.each { |l|
                 print_err(l.to_s.chomp + "\n")
             }
+            nil
         end
 
         def test
@@ -34,6 +36,11 @@ module DFHack
                 puts "cursor pos: #{cursor.x} #{cursor.y} #{cursor.z}"
 
                 puts "unit[0] id: #{world.units.all[0].id}"
+
+                if cursor.x >= 0
+                    world.map.block_index[cursor.x/16][cursor.y/16][cursor.z].designation[cursor.x%16][cursor.y%16].dig = TileDigDesignation::Default
+                    puts "dug cursor tile"
+                end
             }
 
             puts "done"

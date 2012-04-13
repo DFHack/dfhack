@@ -51,7 +51,8 @@ sub render_global_enum {
     my ($name, $type) = @_;
 
     my $rbname = rb_ucase($name);
-    push @lines_rb, "class $rbname";
+    # store constants in DFHack::EnumName and not in DFHack::MemHack::EnumName
+    push @lines_rb, "class ::DFHack::$rbname";
     %seen_enum_name = ();
     indent_rb {
         render_enum_fields($type);

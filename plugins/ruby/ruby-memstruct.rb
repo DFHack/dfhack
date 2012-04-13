@@ -152,28 +152,29 @@ class Pointer < MemStruct
 		@_tg = tg
 	end
 
-	def _getp
-		DFHack.memory_read_int32(@_memaddr) & 0xffffffff
+	def _getp(i=0)
+		delta = (i != 0 ? i*@_tglen : 0)
+		(DFHack.memory_read_int32(@_memaddr) & 0xffffffff) + delta
 	end
 	def _setp(v)
 		DFHack.memory_write_int32(@_memaddr, v)
 	end
+	def _get ; self ; end
 
-	# _getp/_setp defined in ruby.cpp, access the pointer value
-	def _get
-		addr = _getp
-		return if addr == 0	# XXX are there pointers with -1 as 'empty' value ?
+	def [](i)
+		addr = _getp(i)
+		return if addr == 0
 		@_tg._at(addr)._get
 	end
-	def _set(v)
-		addr = _getp
-		raise 'null pointer' if addr == 0	# TODO malloc ?
+	def []=(i, v)
+		addr = _getp(i)
+		raise 'null pointer' if addr == 0
 		@_tg._at(addr)._set(v)
 	end
 
 	# the pointer is invisible, forward all methods to the pointed object
 	def method_missing(*a)
-		_get.send(*a)
+		self[0].send(*a)
 	end
 end
 class StaticArray < MemStruct
@@ -193,11 +194,11 @@ class StaticArray < MemStruct
 	end
 	def [](i)
 		i += @_length if i < 0
-		tgat(i)._get
+		_tgat(i)._get
 	end
 	def []=(i, v)
 		i += @_length if i < 0
-		tgat(i)._set(v)
+		_tgat(i)._set(v)
 	end
 
 	include Enumerable

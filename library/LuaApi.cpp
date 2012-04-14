@@ -634,6 +634,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isDead),
     WRAPM(Units, isAlive),
     WRAPM(Units, isSane),
+    WRAPM(Units, clearBurrowMembers),
     WRAPM(Units, isInBurrow),
     WRAPM(Units, setInBurrow),
     { NULL, NULL }
@@ -707,6 +708,7 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
     WRAPM(Maps, findBurrowByName),
+    WRAPM(Maps, clearBurrowTiles),
     WRAPN(isBlockBurrowTile, maps_isBlockBurrowTile),
     WRAPN(setBlockBurrowTile, maps_setBlockBurrowTile),
     WRAPM(Maps, isBurrowTile),

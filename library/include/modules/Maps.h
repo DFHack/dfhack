@@ -263,8 +263,16 @@ extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, d
 DFHACK_EXPORT df::burrow *findBurrowByName(std::string name);
 
 DFHACK_EXPORT void listBurrowBlocks(std::vector<df::map_block*> *pvec, df::burrow *burrow);
+DFHACK_EXPORT void clearBurrowTiles(df::burrow *burrow);
 
 DFHACK_EXPORT df::block_burrow *getBlockBurrowMask(df::burrow *burrow, df::map_block *block, bool create = false);
+DFHACK_EXPORT bool deleteBlockBurrowMask(df::burrow *burrow, df::map_block *block, df::block_burrow *mask);
+
+inline bool deleteBlockBurrowMask(df::burrow *burrow, df::map_block *block)
+{
+    return deleteBlockBurrowMask(burrow, block, getBlockBurrowMask(burrow, block));
+}
+
 
 DFHACK_EXPORT bool isBlockBurrowTile(df::burrow *burrow, df::map_block *block, df::coord2d tile);
 DFHACK_EXPORT bool setBlockBurrowTile(df::burrow *burrow, df::map_block *block, df::coord2d tile, bool enable);

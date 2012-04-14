@@ -206,6 +206,10 @@ DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
 DFHACK_EXPORT bool isDead(df::unit *unit);
 DFHACK_EXPORT bool isAlive(df::unit *unit);
 DFHACK_EXPORT bool isSane(df::unit *unit);
+DFHACK_EXPORT bool isCitizen(df::unit *unit);
+DFHACK_EXPORT bool isDwarf(df::unit *unit);
+
+DFHACK_EXPORT void clearBurrowMembers(df::burrow *burrow);
 
 DFHACK_EXPORT bool isInBurrow(df::unit *unit, df::burrow *burrow);
 DFHACK_EXPORT void setInBurrow(df::unit *unit, df::burrow *burrow, bool enable);

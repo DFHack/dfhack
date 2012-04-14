@@ -102,7 +102,8 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(feature feature.cpp)
     DFHACK_PLUGIN(lair lair.cpp)
     DFHACK_PLUGIN(zone zone.cpp)
-    DFHACK_PLUGIN(burrows burrows.cpp)
+    # this one exports functions to lua
+    DFHACK_PLUGIN(burrows burrows.cpp LINK_LIBRARIES lua)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
 endif()

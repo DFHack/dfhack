@@ -99,4 +99,9 @@ message ListUnitsOut {
 message ListSquadsIn {}
 message ListSquadsOut {
     repeated BasicSquadInfo value = 1;
-}
+};
+
+// RPC SetUnitLabors : SetUnitLaborsIn -> EmptyMessage
+message SetUnitLaborsIn {
+    repeated UnitLaborState change = 1;
+};

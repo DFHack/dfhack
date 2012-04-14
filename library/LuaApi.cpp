@@ -627,14 +627,26 @@ static const luaL_Reg dfhack_job_funcs[] = {
 
 
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
+    WRAPM(Units, getContainer),
     WRAPM(Units, setNickname),
     WRAPM(Units, getVisibleName),
     WRAPM(Units, getNemesis),
     WRAPM(Units, isDead),
     WRAPM(Units, isAlive),
     WRAPM(Units, isSane),
+    WRAPM(Units, clearBurrowMembers),
     WRAPM(Units, isInBurrow),
     WRAPM(Units, setInBurrow),
+    { NULL, NULL }
+};
+
+static int units_getPosition(lua_State *state)
+{
+    return push_pos(state, Units::getPosition(get_checked_arg<df::unit>(state,1)));
+}
+
+static const luaL_Reg dfhack_units_funcs[] = {
+    { "getPosition", units_getPosition },
     { NULL, NULL }
 };
 
@@ -696,6 +708,7 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
     WRAPM(Maps, findBurrowByName),
+    WRAPM(Maps, clearBurrowTiles),
     WRAPN(isBlockBurrowTile, maps_isBlockBurrowTile),
     WRAPN(setBlockBurrowTile, maps_setBlockBurrowTile),
     WRAPM(Maps, isBurrowTile),
@@ -729,7 +742,7 @@ void OpenDFHackApi(lua_State *state)
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
     OpenModule(state, "gui", dfhack_gui_module);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
-    OpenModule(state, "units", dfhack_units_module);
+    OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
 }

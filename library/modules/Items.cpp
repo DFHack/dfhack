@@ -529,7 +529,7 @@ df::coord Items::getPosition(df::item *item)
 
             case general_ref_type::UNIT_HOLDER:
                 if (auto unit = ref->getUnit())
-                    return unit->pos;
+                    return Units::getPosition(unit);
                 break;
 
             case general_ref_type::BUILDING_HOLDER:
@@ -579,7 +579,11 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
             {
             case general_ref_type::CONTAINED_IN_ITEM:
                 if (auto item2 = ref->getItem())
+                {
+                    item2->flags.bits.weight_computed = false;
+
                     removeRef(item2->itemrefs, general_ref_type::CONTAINS_ITEM, item->id);
+                }
                 break;
 
             case general_ref_type::UNIT_HOLDER:
@@ -648,6 +652,8 @@ bool DFHack::Items::moveToContainer(MapExtras::MapCache &mc, df::item *item, df:
     item->pos = container->pos;
     item->flags.bits.in_inventory = true;
     container->flags.bits.container = true;
+
+    container->flags.bits.weight_computed = false;
 
     ref1->item_id = item->id;
     container->itemrefs.push_back(ref1);

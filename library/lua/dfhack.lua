@@ -55,6 +55,10 @@ function mkmodule(module,env)
             error("Not a table in package.loaded["..module.."]")
         end
     end
+    local plugname = string.match(module,'^plugins%.(%w+)$')
+    if plugname then
+        dfhack.open_plugin(pkg,plugname)
+    end
     setmetatable(pkg, { __index = (env or _G) })
     return pkg
 end

@@ -1030,6 +1030,12 @@ static int meta_global_newindex(lua_State *state)
 static int meta_call_function(lua_State *state)
 {
     auto id = (function_identity_base*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+
+    return method_wrapper_core(state, id);
+}
+
+int LuaWrapper::method_wrapper_core(lua_State *state, function_identity_base *id)
+{
     if (lua_gettop(state) != id->getNumArgs())
         field_error(state, UPVAL_METHOD_NAME, "invalid argument count", "invoke");
 

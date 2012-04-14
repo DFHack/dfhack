@@ -36,6 +36,10 @@ if (BUILD_DWARFEXPORT)
     add_subdirectory (dwarfexport)
 endif()
 
+install(DIRECTORY lua/
+        DESTINATION ${DFHACK_LUA_DESTINATION}/plugins
+        FILES_MATCHING PATTERN "*.lua")
+
 # Protobuf
 FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 
@@ -98,6 +102,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(feature feature.cpp)
     DFHACK_PLUGIN(lair lair.cpp)
     DFHACK_PLUGIN(zone zone.cpp)
+    DFHACK_PLUGIN(burrows burrows.cpp)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
 endif()

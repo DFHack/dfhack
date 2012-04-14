@@ -905,7 +905,7 @@ bool isAssigned(df::unit* unit)
         if(    rtype == df::general_ref_type::BUILDING_CIVZONE_ASSIGNED
             || rtype == df::general_ref_type::BUILDING_CAGED
             || rtype == df::general_ref_type::BUILDING_CHAIN
-            || (rtype == df::general_ref_type::CONTAINED_IN_ITEM && isBuiltCageAtPos(unit->pos))
+            || (rtype == df::general_ref_type::CONTAINED_IN_ITEM && isInBuiltCage(unit))
             )
         {
             assigned = true;
@@ -958,12 +958,11 @@ bool isInBuiltCage(df::unit* unit)
         df::building* building = world->buildings.all[b];
         if( building->getType() == building_type::Cage)
         {
-            df::building_cagest* oldcage = (df::building_cagest*) building;
-            for(size_t oc=0; oc<oldcage->assigned_creature.size(); oc++)
+            df::building_cagest* cage = (df::building_cagest*) building;
+            for(size_t c=0; c<cage->assigned_creature.size(); c++)
             {
-                if(oldcage->assigned_creature[oc] == unit->id)
+                if(cage->assigned_creature[c] == unit->id)
                 {
-                    oldcage->assigned_creature.erase(oldcage->assigned_creature.begin() + oc);
                     caged = true;
                     break;
                 }
@@ -2770,7 +2769,9 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
             || !isTame(unit)
             || isWar(unit) // ignore war dogs etc
             || isHunter(unit) // ignore hunting dogs etc
-            || (isContainedInItem(unit) && hasValidMapPos(unit) && isBuiltCageAtPos(unit->pos))
+            // ignore creatures in built cages to leave zoos alone
+            // (TODO: allow some kind of slaughter cages which you can place near the butcher)
+            || (isContainedInItem(unit) && isInBuiltCage(unit)) 
             || unit->name.has_name
             )
             continue;

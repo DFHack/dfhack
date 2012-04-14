@@ -14,8 +14,10 @@ endif(CMAKE_CONFIGURATION_TYPES)
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 project(dfhack)
 
+if(MSVC)
 # disable C4819 code-page warning
 add_definitions( "/wd4819" )
+endif()
 
 # set up folder structures for IDE solutions
 # MSVC Express won't load solutions that use this. It also doesn't include MFC supported

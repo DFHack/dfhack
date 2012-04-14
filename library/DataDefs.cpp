@@ -128,17 +128,6 @@ void compound_identity::Init(Core *core)
     // they are called in an undefined order.
     for (compound_identity *p = list; p; p = p->next)
         p->doInit(core);
-
-    //FIXME: ... nuked. the group was empty...
-/*
-    // Read pre-filled vtable ptrs
-    OffsetGroup *ptr_table = core->vinfo->getGroup("vtable");
-    for (virtual_identity *p = list; p; p = p->next) {
-        void * tmp;
-        if (ptr_table->getSafeAddress(p->getName(),tmp))
-            p->vtable_ptr = tmp;
-    }
-    */
 }
 
 bitfield_identity::bitfield_identity(size_t size,
@@ -223,17 +212,23 @@ virtual_identity::virtual_identity(size_t size, TAllocateFn alloc,
 {
 }
 
+/* Vtable name to identity lookup. */
 static std::map<std::string, virtual_identity*> name_lookup;
+
+/* Vtable pointer to identity lookup. */
+std::map<void*, virtual_identity*> virtual_identity::known;
 
 void virtual_identity::doInit(Core *core)
 {
     struct_identity::doInit(core);
 
-    name_lookup[getOriginalName()] = this;
-}
+    auto vtname = getOriginalName();
+    name_lookup[vtname] = this;
 
-/* Vtable to identity lookup. */
-std::map<void*, virtual_identity*> virtual_identity::known;
+    vtable_ptr = core->vinfo->getVTable(vtname);
+    if (vtable_ptr)
+        known[vtable_ptr] = this;
+}
 
 virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
 {
@@ -265,8 +260,10 @@ virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
                       << ", previous 0x" << unsigned(p->vtable_ptr) << std::dec << std::endl;
             abort();
         } else if (!p->vtable_ptr) {
-            std::cerr << "class '" << p->getName() << "': vtable = 0x"
-                      << std::hex << unsigned(vtable) << std::dec << std::endl;
+            uint32_t pv = unsigned(vtable);
+            pv -= Core::getInstance().vinfo->getRebaseDelta();
+            std::cerr << "<vtable-address name='" << p->getOriginalName() << "' value='0x"
+                      << std::hex << pv << std::dec << "'/>" << std::endl;
         }
 
         known[vtable] = p;

@@ -118,7 +118,8 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         string type, name, value;
         const char *cstr_type = pMemEntry->Value();
         type = cstr_type;
-        if(type == "global-address")
+        bool is_vtable = (type == "vtable-address");
+        if(is_vtable || type == "global-address")
         {
             const char *cstr_key = pMemEntry->Attribute("name");
             if(!cstr_key)
@@ -129,7 +130,11 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
                 cerr << "Dummy symbol table entry: " << cstr_key << endl;
                 continue;
             }
-            mem->setAddress(cstr_key, strtol(cstr_value, 0, 0));
+            uint32_t addr = strtol(cstr_value, 0, 0);
+            if (is_vtable)
+                mem->setVTable(cstr_key, addr);
+            else
+                mem->setAddress(cstr_key, addr);
         }
         else if (type == "md5-hash")
         {

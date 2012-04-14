@@ -745,6 +745,22 @@ static int lua_dfhack_with_suspend(lua_State *L)
     return lua_gettop(L);
 }
 
+static int dfhack_open_plugin(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);
+    luaL_checktype(L, 2, LUA_TSTRING);
+    const char *name = lua_tostring(L, 2);
+
+    PluginManager *pmgr = Core::getInstance().getPluginManager();
+    Plugin *plugin = pmgr->getPluginByName(name);
+
+    if (!plugin)
+        luaL_error(L, "plugin not found: '%s'", name);
+
+    plugin->open_lua(L, 1);
+    return 0;
+}
+
 static const luaL_Reg dfhack_funcs[] = {
     { "print", lua_dfhack_print },
     { "println", lua_dfhack_println },
@@ -757,6 +773,7 @@ static const luaL_Reg dfhack_funcs[] = {
     { "onerror", dfhack_onerror },
     { "call_with_finalizer", dfhack_call_with_finalizer },
     { "with_suspend", lua_dfhack_with_suspend },
+    { "open_plugin", dfhack_open_plugin },
     { NULL, NULL }
 };
 

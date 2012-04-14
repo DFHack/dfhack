@@ -139,6 +139,8 @@ namespace DFHack
         static void print(const char *format, ...);
         static void printerr(const char *format, ...);
 
+        PluginManager *getPluginManager() { return plug_mgr; }
+
     private:
         DFHack::Console con;
 

@@ -2,6 +2,9 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
+#include "Error.h"
+
+#include "DataFuncs.h"
 
 #include "modules/Gui.h"
 #include "modules/Job.h"
@@ -420,6 +423,9 @@ static df::burrow *findByName(color_ostream &out, std::string name, bool silent 
 
 static void copyUnits(df::burrow *target, df::burrow *source, bool enable)
 {
+    CHECK_NULL_POINTER(target);
+    CHECK_NULL_POINTER(source);
+
     if (source == target)
     {
         if (!enable)
@@ -439,6 +445,9 @@ static void copyUnits(df::burrow *target, df::burrow *source, bool enable)
 
 static void copyTiles(df::burrow *target, df::burrow *source, bool enable)
 {
+    CHECK_NULL_POINTER(target);
+    CHECK_NULL_POINTER(source);
+
     if (source == target)
     {
         if (!enable)
@@ -480,6 +489,8 @@ static void copyTiles(df::burrow *target, df::burrow *source, bool enable)
 static void setTilesByDesignation(df::burrow *target, df::tile_designation d_mask,
                                   df::tile_designation d_value, bool enable)
 {
+    CHECK_NULL_POINTER(target);
+
     auto &blocks = world->map.map_blocks;
 
     for (size_t i = 0; i < blocks.size(); i++)
@@ -512,6 +523,8 @@ static void setTilesByDesignation(df::burrow *target, df::tile_designation d_mas
 
 static bool setTilesByKeyword(df::burrow *target, std::string name, bool enable)
 {
+    CHECK_NULL_POINTER(target);
+
     df::tile_designation mask(0);
     df::tile_designation value(0);
 
@@ -537,6 +550,14 @@ static bool setTilesByKeyword(df::burrow *target, std::string name, bool enable)
     setTilesByDesignation(target, mask, value, enable);
     return true;
 }
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(findByName),
+    DFHACK_LUA_FUNCTION(copyUnits),
+    DFHACK_LUA_FUNCTION(copyTiles),
+    DFHACK_LUA_FUNCTION(setTilesByKeyword),
+    DFHACK_LUA_END
+};
 
 static command_result burrow(color_ostream &out, vector <string> &parameters)
 {

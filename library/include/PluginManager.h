@@ -33,6 +33,8 @@ distribution.
 
 #include "RemoteClient.h"
 
+typedef struct lua_State lua_State;
+
 struct DFLibrary;
 namespace tthread
 {
@@ -49,6 +51,7 @@ namespace DFHack
     class PluginManager;
     class virtual_identity;
     class RPCService;
+    class function_identity_base;
 
     enum state_change_event
     {
@@ -56,7 +59,17 @@ namespace DFHack
         SC_WORLD_UNLOADED,
         SC_MAP_LOADED,
         SC_MAP_UNLOADED,
-        SC_VIEWSCREEN_CHANGED
+        SC_VIEWSCREEN_CHANGED,
+        SC_CORE_INITIALIZED,
+        SC_BEGIN_UNLOAD
+    };
+    struct DFHACK_EXPORT CommandReg {
+        const char *name;
+        int (*command)(lua_State*);
+    };
+    struct DFHACK_EXPORT FunctionReg {
+        const char *name;
+        function_identity_base *identity;
     };
     struct DFHACK_EXPORT PluginCommand
     {
@@ -102,6 +115,7 @@ namespace DFHack
     {
         struct RefLock;
         struct RefAutolock;
+        struct RefAutoinc;
         enum plugin_state
         {
             PS_UNLOADED,
@@ -138,6 +152,9 @@ namespace DFHack
         {
             return name;
         }
+
+        void open_lua(lua_State *state, int table);
+
     private:
         RefLock * access;
         std::vector <PluginCommand> commands;
@@ -147,6 +164,26 @@ namespace DFHack
         DFLibrary * plugin_lib;
         PluginManager * parent;
         plugin_state state;
+
+        struct LuaCommand {
+            Plugin *owner;
+            std::string name;
+            int (*command)(lua_State *state);
+        };
+        std::map<std::string, LuaCommand*> lua_commands;
+        static int lua_cmd_wrapper(lua_State *state);
+
+        struct LuaFunction {
+            Plugin *owner;
+            std::string name;
+            function_identity_base *identity;
+        };
+        std::map<std::string, LuaFunction*> lua_functions;
+        static int lua_fun_wrapper(lua_State *state);
+
+        void index_lua(DFLibrary *lib);
+        void reset_lua();
+
         command_result (*plugin_init)(color_ostream &, std::vector <PluginCommand> &);
         command_result (*plugin_status)(color_ostream &, std::string &);
         command_result (*plugin_shutdown)(color_ostream &);
@@ -199,5 +236,15 @@ namespace DFHack
 };
 
 /// You have to have this in every plugin you write - just once. Ideally on top of the main file.
-#define DFHACK_PLUGIN(plugin_name) DFhackDataExport const char * version = DFHACK_VERSION;\
-DFhackDataExport const char * name = plugin_name;
+#define DFHACK_PLUGIN(plugin_name) \
+    DFhackDataExport const char * version = DFHACK_VERSION;\
+    DFhackDataExport const char * name = plugin_name;
+
+#define DFHACK_PLUGIN_LUA_COMMANDS \
+    DFhackCExport const DFHack::CommandReg plugin_lua_commands[] =
+#define DFHACK_PLUGIN_LUA_FUNCTIONS \
+    DFhackCExport const DFHack::FunctionReg plugin_lua_functions[] =
+
+#define DFHACK_LUA_COMMAND(name) { #name, name }
+#define DFHACK_LUA_FUNCTION(name) { #name, df::wrap_function(name) }
+#define DFHACK_LUA_END { NULL, NULL }

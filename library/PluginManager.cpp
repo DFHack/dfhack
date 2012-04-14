@@ -32,6 +32,8 @@ distribution.
 #include "DataDefs.h"
 #include "MiscUtils.h"
 
+#include "LuaWrapper.h"
+
 using namespace DFHack;
 
 #include <string>
@@ -107,8 +109,8 @@ struct Plugin::RefLock
     void lock_sub()
     {
         mut->lock();
-        refcount --;
-        wakeup->notify_one();
+        if (--refcount == 0)
+            wakeup->notify_one();
         mut->unlock();
     }
     void wait()
@@ -128,6 +130,13 @@ struct Plugin::RefAutolock
     RefLock * lock;
     RefAutolock(RefLock * lck):lock(lck){ lock->lock(); };
     ~RefAutolock(){ lock->unlock(); };
+};
+
+struct Plugin::RefAutoinc
+{
+    RefLock * lock;
+    RefAutoinc(RefLock * lck):lock(lck){ lock->lock_add(); };
+    ~RefAutoinc(){ lock->lock_sub(); };
 };
 
 Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _filename, PluginManager * pm)
@@ -210,6 +219,7 @@ bool Plugin::load(color_ostream &con)
     plugin_shutdown = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_shutdown");
     plugin_onstatechange = (command_result (*)(color_ostream &, state_change_event)) LookupPlugin(plug, "plugin_onstatechange");
     plugin_rpcconnect = (RPCService* (*)(color_ostream &)) LookupPlugin(plug, "plugin_rpcconnect");
+    index_lua(plug);
     this->name = *plug_name;
     plugin_lib = plug;
     commands.clear();
@@ -222,6 +232,7 @@ bool Plugin::load(color_ostream &con)
     else
     {
         con.printerr("Plugin %s has failed to initialize properly.\n", filename.c_str());
+        reset_lua();
         ClosePlugin(plugin_lib);
         state = PS_BROKEN;
         return false;
@@ -235,13 +246,22 @@ bool Plugin::unload(color_ostream &con)
     // if we are actually loaded
     if(state == PS_LOADED)
     {
+        // notify the plugin about an attempt to shutdown
+        if (plugin_onstatechange &&
+            plugin_onstatechange(con, SC_BEGIN_UNLOAD) == CR_NOT_FOUND)
+        {
+            con.printerr("Plugin %s has refused to be unloaded.\n", name.c_str());
+            access->unlock();
+            return false;
+        }
+        // wait for all calls to finish
+        access->wait();
         // notify plugin about shutdown, if it has a shutdown function
         command_result cr = CR_OK;
         if(plugin_shutdown)
             cr = plugin_shutdown(con);
-        // wait for all calls to finish
-        access->wait();
         // cleanup...
+        reset_lua();
         parent->unregisterCommands(this);
         commands.clear();
         if(cr == CR_OK)
@@ -416,6 +436,90 @@ void Plugin::detach_connection(RPCService *svc)
 Plugin::plugin_state Plugin::getState() const
 {
     return state;
+}
+
+void Plugin::index_lua(DFLibrary *lib)
+{
+    if (auto cmdlist = (CommandReg*)LookupPlugin(lib, "plugin_lua_commands"))
+    {
+        for (; cmdlist->name; ++cmdlist)
+        {
+            auto &cmd = lua_commands[cmdlist->name];
+            if (!cmd) cmd = new LuaCommand;
+            cmd->owner = this;
+            cmd->name = cmdlist->name;
+            cmd->command = cmdlist->command;
+        }
+    }
+    if (auto funlist = (FunctionReg*)LookupPlugin(lib, "plugin_lua_functions"))
+    {
+        for (; funlist->name; ++funlist)
+        {
+            auto &cmd = lua_functions[funlist->name];
+            if (!cmd) cmd = new LuaFunction;
+            cmd->owner = this;
+            cmd->name = funlist->name;
+            cmd->identity = funlist->identity;
+        }
+    }
+}
+
+void Plugin::reset_lua()
+{
+    for (auto it = lua_commands.begin(); it != lua_commands.end(); ++it)
+        it->second->command = NULL;
+    for (auto it = lua_functions.begin(); it != lua_functions.end(); ++it)
+        it->second->identity = NULL;
+}
+
+int Plugin::lua_cmd_wrapper(lua_State *state)
+{
+    auto cmd = (LuaCommand*)lua_touserdata(state, lua_upvalueindex(1));
+
+    RefAutoinc lock(cmd->owner->access);
+
+    if (!cmd->command)
+        luaL_error(state, "plugin command %s() has been unloaded",
+                   (cmd->owner->name+"."+cmd->name).c_str());
+
+    return cmd->command(state);
+}
+
+int Plugin::lua_fun_wrapper(lua_State *state)
+{
+    auto cmd = (LuaFunction*)lua_touserdata(state, UPVAL_CONTAINER_ID);
+
+    RefAutoinc lock(cmd->owner->access);
+
+    if (!cmd->identity)
+        luaL_error(state, "plugin function %s() has been unloaded",
+                   (cmd->owner->name+"."+cmd->name).c_str());
+
+    return LuaWrapper::method_wrapper_core(state, cmd->identity);
+}
+
+void Plugin::open_lua(lua_State *state, int table)
+{
+    table = lua_absindex(state, table);
+
+    RefAutolock lock(access);
+
+    for (auto it = lua_commands.begin(); it != lua_commands.end(); ++it)
+    {
+        lua_pushlightuserdata(state, it->second);
+        lua_pushcclosure(state, lua_cmd_wrapper, 1);
+        lua_setfield(state, table, it->first.c_str());
+    }
+
+    for (auto it = lua_functions.begin(); it != lua_functions.end(); ++it)
+    {
+        lua_rawgetp(state, LUA_REGISTRYINDEX, &LuaWrapper::DFHACK_TYPETABLE_TOKEN);
+        lua_pushlightuserdata(state, NULL);
+        lua_pushfstring(state, "%s.%s()", name.c_str(), it->second->name.c_str());
+        lua_pushlightuserdata(state, it->second);
+        lua_pushcclosure(state, lua_fun_wrapper, 4);
+        lua_setfield(state, table, it->first.c_str());
+    }
 }
 
 PluginManager::PluginManager(Core * core)

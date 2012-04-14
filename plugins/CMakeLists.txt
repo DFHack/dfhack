@@ -35,6 +35,10 @@ if (BUILD_DWARFEXPORT)
     add_subdirectory (dwarfexport)
 endif()
 
+install(DIRECTORY lua/
+        DESTINATION ${DFHACK_LUA_DESTINATION}/plugins
+        FILES_MATCHING PATTERN "*.lua")
+
 # Protobuf
 FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 

@@ -861,12 +861,8 @@ int Core::TileUpdate()
 // should always be from simulation thread!
 int Core::Update()
 {
-    if(!started)
-        Init();
     if(errorstate)
         return -1;
-
-    color_ostream_proxy out(con);
 
     // Pretend this thread has suspended the core in the usual way
     {
@@ -876,6 +872,22 @@ int Core::Update()
         d->df_suspend_thread = this_thread::get_id();
         d->df_suspend_depth = 1000;
     }
+
+    // Initialize the core
+    bool first_update = false;
+
+    if(!started)
+    {
+        first_update = true;
+        Init();
+        if(errorstate)
+            return -1;
+    }
+
+    color_ostream_proxy out(con);
+
+    if (first_update)
+        plug_mgr->OnStateChange(out, SC_CORE_INITIALIZED);
 
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;

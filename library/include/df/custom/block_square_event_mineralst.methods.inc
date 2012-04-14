@@ -17,3 +17,10 @@ inline void setassignment( int x, int y, bool bit )
     else
         tile_bitmask[y] &= ~(1 << x);
 }
+bool has_assignments()
+{
+    for (int i = 0; i < 16; i++)
+        if (tile_bitmask[i])
+            return true;
+    return false;
+}

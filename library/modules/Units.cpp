@@ -653,6 +653,51 @@ bool DFHack::Units::isSane(df::unit *unit)
     return true;
 }
 
+bool DFHack::Units::isCitizen(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->civ_id == ui->civ_id &&
+           !unit->flags1.bits.merchant &&
+           !unit->flags1.bits.diplomat &&
+           !unit->flags2.bits.resident &&
+           !unit->flags1.bits.dead &&
+           !unit->flags3.bits.ghostly;
+}
+
+bool DFHack::Units::isDwarf(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->race == ui->race_id;
+}
+
+void DFHack::Units::clearBurrowMembers(df::burrow *burrow)
+{
+    CHECK_NULL_POINTER(burrow);
+
+    for (size_t i = 0; i < burrow->units.size(); i++)
+    {
+        auto unit = df::unit::find(burrow->units[i]);
+
+        if (unit)
+            erase_from_vector(unit->burrows, burrow->id);
+    }
+
+    burrow->units.clear();
+
+    // Sync ui if active
+    if (ui && ui->main.mode == ui_sidebar_mode::Burrows &&
+        ui->burrows.in_add_units_mode && ui->burrows.sel_id == burrow->id)
+    {
+        auto &sel = ui->burrows.sel_units;
+
+        for (size_t i = 0; i < sel.size(); i++)
+            sel[i] = false;
+    }
+}
+
+
 bool DFHack::Units::isInBurrow(df::unit *unit, df::burrow *burrow)
 {
     CHECK_NULL_POINTER(unit);

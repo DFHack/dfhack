@@ -695,6 +695,10 @@ Units module
 
   The unit is capable of rational action, i.e. not dead, insane or zombie.
 
+* ``dfhack.units.clearBurrowMembers(burrow)``
+
+  Removes all units from the burrow.
+
 * ``dfhack.units.isInBurrow(unit,burrow)``
 
   Checks if the unit is in the burrow.
@@ -775,6 +779,10 @@ Maps module
 * ``dfhack.maps.listBurrowBlocks(burrow)``
 
   Returns a table of map block pointers.
+
+* ``dfhack.maps.clearBurrowTiles(burrow)``
+
+  Removes all tiles from the burrow.
 
 * ``dfhack.maps.isBurrowTile(burrow,tile_coord)``
 

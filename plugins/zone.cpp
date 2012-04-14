@@ -963,7 +963,6 @@ bool isInBuiltCage(df::unit* unit)
             {
                 if(oldcage->assigned_creature[oc] == unit->id)
                 {
-                    oldcage->assigned_creature.erase(oldcage->assigned_creature.begin() + oc);
                     caged = true;
                     break;
                 }

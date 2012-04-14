@@ -101,6 +101,8 @@ command_result fix_clothing_ownership(color_ostream &out, df::unit* unit)
     {
         df::unit_inventory_item* inv_item = unit->inventory[j];
         df::item* item = inv_item->item;
+        // unforbid items (for the case of kidnapping caravan escorts who have their stuff forbidden by default)
+        inv_item->item->flags.bits.forbid = 0;
         if(inv_item->mode == df::unit_inventory_item::T_mode::Worn)
         {
             // ignore armor?
@@ -205,6 +207,26 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         if(unit->civ_id != df::global::ui->civ_id)
             unit->civ_id = df::global::ui->civ_id;
 
+        return fix_clothing_ownership(out, unit);
+    }
+    else if (cmd == "makeown")
+    {
+        // force a unit into your fort, regardless of civ or race
+        // allows to "steal" caravan guards etc
+        df::unit *unit = getSelectedUnit(out);
+        if (!unit)
+        {
+            out << "No unit selected!" << endl;
+            return CR_FAILURE;
+        }
+        if (unit->flags2.bits.resident)
+            unit->flags2.bits.resident = 0;
+        if(unit->flags1.bits.merchant)
+            unit->flags1.bits.merchant = 0;
+        if(unit->flags1.bits.forest)
+            unit->flags1.bits.forest = 0;
+        if(unit->civ_id != df::global::ui->civ_id)
+            unit->civ_id = df::global::ui->civ_id;
         return fix_clothing_ownership(out, unit);
     }
     else 

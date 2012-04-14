@@ -890,6 +890,8 @@ df::general_ref_building_civzone_assignedst * createCivzoneRef()
     return newref;
 }
 
+bool isInBuiltCage(df::unit* unit);
+
 // check if assigned to pen, pit, (built) cage or chain
 // note: BUILDING_CAGED is not set for animals (maybe it's used for dwarves who get caged as sentence)
 // animals in cages (no matter if built or on stockpile) get the ref CONTAINED_IN_ITEM instead

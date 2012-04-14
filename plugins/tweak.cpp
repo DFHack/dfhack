@@ -10,6 +10,8 @@
 #include "modules/Units.h"
 #include "modules/Items.h"
 
+#include "MiscUtils.h"
+
 #include "DataDefs.h"
 #include "df/ui.h"
 #include "df/world.h"
@@ -58,7 +60,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Intended to fix bugged migrants and merchants who stay at the map edge.\n"
         "    Only works for units of your own race. Can be used for stealing caravan\n"
         "    traders and guards, but might result into weirdness during trading.\n"
-        "    Currently all assimilated units will drop all their clothes.\n"
     ));
     return CR_OK;
 }
@@ -71,9 +72,10 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
 static command_result lair(color_ostream &out, std::vector<std::string> & params);
 
 
-// to be called by tweak-merchant and tweak-resident
+// to be called by tweak-fixmigrant
 // units forced into the fort by removing the flags do not own their clothes
 // which has the result that they drop all their clothes and become unhappy because they are naked
+// so we need to make them own their clothes and add them to their uniform
 command_result fix_clothing_ownership(color_ostream &out, df::unit* unit)
 {
     // first, find one owned item to initialize the vtable
@@ -99,6 +101,8 @@ command_result fix_clothing_ownership(color_ostream &out, df::unit* unit)
     {
         df::unit_inventory_item* inv_item = unit->inventory[j];
         df::item* item = inv_item->item;
+        // unforbid items (for the case of kidnapping caravan escorts who have their stuff forbidden by default)
+        inv_item->item->flags.bits.forbid = 0;
         if(inv_item->mode == df::unit_inventory_item::T_mode::Worn)
         {
             // ignore armor?
@@ -109,12 +113,18 @@ command_result fix_clothing_ownership(color_ostream &out, df::unit* unit)
             if(!Items::getOwner(item))
             {
                 if(Items::setOwner(item, unit))
+                {
+                    // add to uniform, so they know they should wear their clothes
+                    insert_into_vector(unit->military.uniforms[0], item->id);
                     fixcount++;
+                }
                 else
                     out << "could not change ownership for item!" << endl;
             }
         }
     }
+    // clear uniform_drop (without this they would drop their clothes and pick them up some time later)
+    unit->military.uniform_drop.clear();
     out << "ownership for " << fixcount << " clothes fixed" << endl;
     return CR_OK;
 }
@@ -180,18 +190,43 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
             return CR_FAILURE;
         }
 
+        // case #1: migrants who have the resident flag set
+        // see http://dffd.wimbli.com/file.php?id=6139 for a save
         if (unit->flags2.bits.resident)
             unit->flags2.bits.resident = 0;
         
+        // case #2: migrants who have the merchant flag
+        // happens on almost all maps after a few migrant waves
         if(unit->flags1.bits.merchant)
             unit->flags1.bits.merchant = 0;
 
-        // this one is a cheat, but bugged migrants usually have the same civ_id
-        // but if it happens that the player has 'foreign' units of the same race 
-        // (dwarves not from moutainhome in vanilla df) on his map, just grab them
+        // this one is a cheat, but bugged migrants usually have the same civ_id 
+        // so it should not be triggered in most cases
+        // if it happens that the player has 'foreign' units of the same race 
+        // (vanilla df: dwarves not from mountainhome) on his map, just grab them
         if(unit->civ_id != df::global::ui->civ_id)
             unit->civ_id = df::global::ui->civ_id;
 
+        return fix_clothing_ownership(out, unit);
+    }
+    else if (cmd == "makeown")
+    {
+        // force a unit into your fort, regardless of civ or race
+        // allows to "steal" caravan guards etc
+        df::unit *unit = getSelectedUnit(out);
+        if (!unit)
+        {
+            out << "No unit selected!" << endl;
+            return CR_FAILURE;
+        }
+        if (unit->flags2.bits.resident)
+            unit->flags2.bits.resident = 0;
+        if(unit->flags1.bits.merchant)
+            unit->flags1.bits.merchant = 0;
+        if(unit->flags1.bits.forest)
+            unit->flags1.bits.forest = 0;
+        if(unit->civ_id != df::global::ui->civ_id)
+            unit->civ_id = df::global::ui->civ_id;
         return fix_clothing_ownership(out, unit);
     }
     else 

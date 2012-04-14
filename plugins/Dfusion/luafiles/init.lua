@@ -86,14 +86,15 @@ loadall(plugins)
 dofile_silent("dfusion/initcustom.lua")
 
 local args={...}
-for k,v in pairs(args) do
-	local f,err=load(v)
-	if f then
-		f()
-	else
-		Console.printerr(err)
-	end
+
+
+local f,err=load(table.concat(args,' '))
+if f then
+	f()
+else
+	Console.printerr(err)
 end
+
 if not INIT then
 mainmenu(plugins)
 end

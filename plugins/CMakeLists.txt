@@ -20,10 +20,11 @@ if(BUILD_DEV_PLUGINS)
     add_subdirectory (devel)
 endif()
 
-OPTION(BUILD_DF2MC "Build DF2MC (needs a checkout first)." OFF)
-if(BUILD_DF2MC)
-    add_subdirectory (df2mc)
-endif()
+#It's dead :<
+#OPTION(BUILD_DF2MC "Build DF2MC (needs a checkout first)." OFF)
+#if(BUILD_DF2MC)
+#    add_subdirectory (df2mc)
+#endif()
 
 OPTION(BUILD_MAPEXPORT "Build map exporter." ON)
 if (BUILD_MAPEXPORT)

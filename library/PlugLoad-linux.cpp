@@ -14,7 +14,7 @@
 #include <map>
 
 #include "DFHack.h"
-#include "Core.h"
+#include "PluginManager.h"
 #include "Hooks.h"
 #include <iostream>
 

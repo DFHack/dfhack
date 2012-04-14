@@ -35,7 +35,6 @@ distribution.
 
 typedef struct lua_State lua_State;
 
-struct DFLibrary;
 namespace tthread
 {
     class mutex;
@@ -52,6 +51,16 @@ namespace DFHack
     class virtual_identity;
     class RPCService;
     class function_identity_base;
+
+    // anon type, pretty much
+    struct DFLibrary;
+
+    // Open a plugin library
+    DFLibrary * OpenPlugin (const char * filename);
+    // find a symbol inside plugin
+    void * LookupPlugin (DFLibrary * plugin ,const char * function);
+    // Close a plugin library
+    void ClosePlugin (DFLibrary * plugin);
 
     enum state_change_event
     {

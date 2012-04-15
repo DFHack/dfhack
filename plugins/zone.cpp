@@ -119,6 +119,7 @@ const string zone_help_filters =
     "  male         - obvious\n"
     "  female       - obvious\n"
     "  egglayer     - race lays eggs (use together with 'female')\n"
+	"  noegglayer   - race does not lay eggs\n"
     "  grazer       - is a grazer\n"
     "  nograzer     - not a grazer\n"
     "  milkable     - race is milkable (use together with 'female')\n"
@@ -1466,6 +1467,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool find_male = false;
     bool find_female = false;
     bool find_egglayer = false;
+	bool find_noegglayer = false;
     bool find_grazer = false;
     bool find_nograzer = false;
     bool find_milkable = false;
@@ -1699,6 +1701,10 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         {
             find_egglayer = true;
         }
+		else if(p == "noegglayer")
+		{
+			find_noegglayer = true;
+		}
         else if(p == "grazer")
         {
             find_grazer = true;
@@ -1885,6 +1891,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     || (find_grazer && !isGrazer(unit))
                     || (find_nograzer && isGrazer(unit))
                     || (find_egglayer && !isEggLayer(unit))
+					|| (find_noegglayer && isEggLayer(unit))
                     || (find_milkable && !isMilkable(unit))
                     || (find_male && !isMale(unit))
                     || (find_female && !isFemale(unit))

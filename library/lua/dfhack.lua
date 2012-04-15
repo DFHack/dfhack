@@ -105,6 +105,10 @@ function xyz2pos(x,y,z)
     end
 end
 
+function dfhack.event:__tostring()
+    return "<event>"
+end
+
 function dfhack.persistent:__tostring()
     return "<persistent "..self.entry_id..":"..self.key.."=\""
            ..self.value.."\":"..table.concat(self.ints,",")..">"

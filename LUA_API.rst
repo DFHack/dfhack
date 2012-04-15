@@ -799,3 +799,17 @@ Maps module
 * ``dfhack.maps.setBlockBurrowTile(burrow,block,x,y,enable)``
 
   Adds or removes the tile from the burrow. Returns *false* if invalid coords.
+
+
+Core interpreter context
+========================
+
+While plugins can create any number of interpreter instances,
+there is one special context managed by dfhack core. It is the
+only context that can receive events from DF and plugins.
+
+Core context specific functions:
+
+* ``dfhack.is_core_context``
+
+  Boolean value; *true* in the core context.

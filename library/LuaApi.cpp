@@ -74,30 +74,7 @@ distribution.
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
 
-template<class T>
-void push_pointer_vector(lua_State *state, const std::vector<T*> &pvec)
-{
-    lua_createtable(state,pvec.size(),0);
-
-    for (size_t i = 0; i < pvec.size(); i++)
-    {
-        Lua::PushDFObject(state, pvec[i]);
-        lua_rawseti(state, -2, i+1);
-    }
-}
-
-template<class T>
-T *get_checked_arg(lua_State *state, int arg)
-{
-    luaL_checkany(state, arg);
-
-    auto ptr = Lua::GetDFObject<T>(state, arg);
-    if (!ptr)
-        luaL_argerror(state, arg, "invalid type");
-    return ptr;
-}
-
-int push_pos(lua_State *state, df::coord pos)
+int Lua::PushPosXYZ(lua_State *state, df::coord pos)
 {
     if (!pos.isValid())
     {
@@ -570,9 +547,9 @@ static void OpenModule(lua_State *state, const char *mname,
     lua_pop(state, 1);
 }
 
-#define WRAPM(module, function) { #function, df::wrap_function(module::function) }
-#define WRAP(function) { #function, df::wrap_function(function) }
-#define WRAPN(name, function) { #name, df::wrap_function(function) }
+#define WRAPM(module, function) { #function, df::wrap_function(module::function,true) }
+#define WRAP(function) { #function, df::wrap_function(function,true) }
+#define WRAPN(name, function) { #name, df::wrap_function(function,true) }
 
 static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAPM(Translation, TranslateName),
@@ -613,7 +590,7 @@ static int job_listNewlyCreated(lua_State *state)
     if (Job::listNewlyCreated(&pvec, &nxid))
     {
         lua_pushinteger(state, nxid);
-        push_pointer_vector(state, pvec);
+        Lua::PushVector(state, pvec);
         return 2;
     }
     else
@@ -642,7 +619,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
 
 static int units_getPosition(lua_State *state)
 {
-    return push_pos(state, Units::getPosition(get_checked_arg<df::unit>(state,1)));
+    return Lua::PushPosXYZ(state, Units::getPosition(Lua::CheckDFObject<df::unit>(state,1)));
 }
 
 static const luaL_Reg dfhack_units_funcs[] = {
@@ -673,14 +650,14 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
 
 static int items_getPosition(lua_State *state)
 {
-    return push_pos(state, Items::getPosition(get_checked_arg<df::item>(state,1)));
+    return Lua::PushPosXYZ(state, Items::getPosition(Lua::CheckDFObject<df::item>(state,1)));
 }
 
 static int items_getContainedItems(lua_State *state)
 {
     std::vector<df::item*> pvec;
-    Items::getContainedItems(get_checked_arg<df::item>(state,1),&pvec);
-    push_pointer_vector(state, pvec);
+    Items::getContainedItems(Lua::CheckDFObject<df::item>(state,1),&pvec);
+    Lua::PushVector(state, pvec);
     return 1;
 }
 
@@ -719,8 +696,8 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
 static int maps_listBurrowBlocks(lua_State *state)
 {
     std::vector<df::map_block*> pvec;
-    Maps::listBurrowBlocks(&pvec, get_checked_arg<df::burrow>(state,1));
-    push_pointer_vector(state, pvec);
+    Maps::listBurrowBlocks(&pvec, Lua::CheckDFObject<df::burrow>(state,1));
+    Lua::PushVector(state, pvec);
     return 1;
 }
 

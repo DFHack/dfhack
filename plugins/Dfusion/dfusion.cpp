@@ -123,8 +123,7 @@ command_result lua_run (color_ostream &out, std::vector <std::string> &parameter
 {
     if (!parameters.empty() && parameters[0] == "--core-context")
     {
-        CoreSuspender suspend;
-        Lua::InterpreterLoop(out, Lua::Core::State);
+        Lua::InterpreterLoop(out, Lua::Core::State, "core lua");
         return CR_OK;
     }
 

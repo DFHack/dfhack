@@ -160,9 +160,17 @@ namespace DFHack {namespace Lua {
 
     /**
      * Run an interactive interpreter loop if possible, or return false.
+     * Uses RunCoreQueryLoop internally.
      */
     DFHACK_EXPORT bool InterpreterLoop(color_ostream &out, lua_State *state,
-                                       const char *prompt = NULL, int env = 0, const char *hfile = NULL);
+                                       const char *prompt = NULL, const char *hfile = NULL);
+
+    /**
+     * Run an interactive prompt loop. All access to lua is done inside CoreSuspender.
+     */
+    DFHACK_EXPORT bool RunCoreQueryLoop(color_ostream &out, lua_State *state,
+                                        bool (*init)(color_ostream&, lua_State*, lua_State*, void*),
+                                        void *arg);
 
     /**
      * Push utility functions

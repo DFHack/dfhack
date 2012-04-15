@@ -128,5 +128,80 @@ function dfhack.maps.getTileSize()
     return map.x_count, map.y_count, map.z_count
 end
 
+-- Interactive
+
+function dfhack.query(prompt,hfile)
+    local _,main = coroutine.running()
+    if main then
+        return dfhack.lineedit(prompt,hfile)
+    else
+        return coroutine.yield(prompt,hfile)
+    end
+end
+
+local print_banner = true
+
+function dfhack.interpreter(prompt,hfile,env)
+    if not dfhack.is_interactive() then
+        return nil, 'not interactive'
+    end
+
+    print("Type quit to exit interactive lua interpreter.")
+
+    if print_banner then
+        print("Shortcuts:\n"..
+              " '= foo' => '_1,_2,... = foo'\n"..
+              " '! foo' => 'print(foo)'\n"..
+              "Both save the first result as '_'.")
+        print_banner = false
+    end
+
+    local prompt_str = "["..(prompt or 'lua').."]# "
+    local prompt_env = {}
+    local vcnt = 1
+
+    setmetatable(prompt_env, { __index = env or _G })
+
+    while true do
+        local cmdline = dfhack.query(prompt_str, hfile)
+
+        if cmdline == nil or cmdline == 'quit' then
+            break
+        elseif cmdline ~= '' then
+            local pfix = string.sub(cmdline,1,1)
+
+            if pfix == '!' or pfix == '=' then
+                cmdline = 'return '..string.sub(cmdline,2)
+            end
+
+            local code,err = load(cmdline, '=(interactive)', 't', prompt_env)
+
+            if code == nil then
+                dfhack.printerr(err)
+            else
+                local data = table.pack(safecall(code))
+
+                if data[1] and data.n > 1 then
+                    prompt_env._ = data[2]
+
+                    if pfix == '!' then
+                        safecall(print, table.unpack(data,2,data.n))
+                    else
+                        for i=2,data.n do
+                            local varname = '_'..vcnt
+                            prompt_env[varname] = data[i]
+                            dfhack.print(varname..' = ')
+                            safecall(print, data[i])
+                            vcnt = vcnt + 1
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return true
+end
+
 -- Feed the table back to the require() mechanism.
 return dfhack

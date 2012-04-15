@@ -426,7 +426,7 @@ static bool do_finish_pcall(lua_State *L, bool success, int base = 1, int space 
     {
         lua_pushboolean(L, success);
         lua_replace(L, base); /* put first result in first slot */
-        return true;
+        return success;
     }
 }
 
@@ -586,14 +586,145 @@ bool DFHack::Lua::SafeCallString(color_ostream &out, lua_State *state, const std
     return Lua::SafeCall(out, state, nargs, nres, perr);
 }
 
-bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
-                                  const char *prompt, int env, const char *hfile)
+static int resume_query_loop(color_ostream &out,
+                             lua_State *thread, lua_State *state, bool start,
+                             std::string &prompt, std::string &histfile)
 {
-    AssertCoreSuspend(state);
+    color_ostream *cur_out = Lua::GetOutput(state);
+    set_dfhack_output(state, &out);
 
+    int rv = lua_resume(thread, state, lua_gettop(thread)-(start?1:0));
+
+    set_dfhack_output(state, cur_out);
+
+    if (rv == LUA_YIELD || rv == LUA_OK)
+    {
+        lua_settop(thread, 2);
+        prompt = ifnull(lua_tostring(thread, 1), "");
+        histfile = ifnull(lua_tostring(thread, 2), "");
+    }
+
+    return rv;
+}
+
+bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
+                                   bool (*init)(color_ostream&, lua_State*, lua_State*, void*),
+                                   void *arg)
+{
     if (!out.is_console())
         return false;
     if (!lua_checkstack(state, 20))
+        return false;
+
+    Console &con = static_cast<Console&>(out);
+
+    lua_State *thread;
+    int rv;
+    std::string prompt;
+    std::string histfile;
+
+    DFHack::CommandHistory hist;
+    std::string histname;
+
+    {
+        CoreSuspender suspend;
+
+        int base = lua_gettop(state);
+        thread = lua_newthread(state);
+
+        if (!init(out, state, thread, arg))
+        {
+            lua_settop(state, base);
+            return false;
+        }
+
+        lua_settop(state, base+1);
+        lua_rawsetp(state, LUA_REGISTRYINDEX, thread);
+
+        rv = resume_query_loop(out, thread, state, true, prompt, histfile);
+    }
+
+    while (rv == LUA_YIELD)
+    {
+        if (histfile != histname)
+        {
+            if (!histname.empty())
+                hist.save(histname.c_str());
+
+            hist.clear();
+            histname = histfile;
+
+            if (!histname.empty())
+                hist.load(histname.c_str());
+        }
+
+        if (prompt.empty())
+            prompt = ">> ";
+
+        std::string curline;
+        con.lineedit(prompt,curline,hist);
+        hist.add(curline);
+
+        {
+            CoreSuspender suspend;
+
+            lua_settop(thread, 0);
+            lua_pushlstring(thread, curline.data(), curline.size());
+
+            rv = resume_query_loop(out, thread, state, false, prompt, histfile);
+        }
+    }
+
+    if (!histname.empty())
+        hist.save(histname.c_str());
+
+    {
+        CoreSuspender suspend;
+
+        if (rv != LUA_OK)
+        {
+            lua_xmove(thread, state, 1);
+
+            if (convert_to_exception(state))
+            {
+                luaL_traceback(state, thread, NULL, 1);
+                lua_setfield(state, -2, "stacktrace");
+            }
+
+            report_error(state, &out);
+            lua_pop(state, 1);
+        }
+
+        lua_pushnil(state);
+        lua_rawsetp(state, LUA_REGISTRYINDEX, thread);
+    }
+
+    return (rv == LUA_OK);
+}
+
+namespace {
+    struct InterpreterArgs {
+        const char *prompt;
+        const char *hfile;
+    };
+}
+
+static bool init_interpreter(color_ostream &out, lua_State *state, lua_State *thread, void *info)
+{
+    auto args = (InterpreterArgs*)info;
+    lua_getglobal(state, "dfhack");
+    lua_getfield(state, -1, "interpreter");
+    lua_pushstring(state, args->prompt);
+    lua_pushstring(state, args->hfile);
+    lua_xmove(state, thread, 3);
+    lua_pop(state, 1);
+    return true;
+}
+
+bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
+                                  const char *prompt, const char *hfile)
+{
+    if (!out.is_console())
         return false;
 
     if (!hfile)
@@ -601,116 +732,11 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
     if (!prompt)
         prompt = "lua";
 
-    DFHack::CommandHistory hist;
-    hist.load(hfile);
+    InterpreterArgs args;
+    args.prompt = prompt;
+    args.hfile = hfile;
 
-    out.print("Type quit to exit interactive lua interpreter.\n");
-
-    static bool print_banner = true;
-    if (print_banner) {
-        out.print("Shortcuts:\n"
-                  " '= foo' => '_1,_2,... = foo'\n"
-                  " '! foo' => 'print(foo)'\n"
-                  "Both save the first result as '_'.\n");
-        print_banner = false;
-    }
-
-    Console &con = static_cast<Console&>(out);
-
-    // Make a proxy global environment.
-    lua_newtable(state);
-    int base = lua_gettop(state);
-
-    lua_newtable(state);
-    if (env)
-        lua_pushvalue(state, env);
-    else
-        lua_rawgeti(state, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);
-    lua_setfield(state, -2, "__index");
-    lua_setmetatable(state, -2);
-
-    // Main interactive loop
-    int vcnt = 1;
-    string curline;
-    string prompt_str = "[" + string(prompt) + "]# ";
-
-    for (;;) {
-        lua_settop(state, base);
-
-        con.lineedit(prompt_str,curline,hist);
-
-        if (curline.empty())
-            continue;
-        if (curline == "quit")
-            break;
-
-        hist.add(curline);
-
-        char pfix = curline[0];
-
-        if (pfix == '=' || pfix == '!')
-        {
-            curline = "return " + curline.substr(1);
-
-            if (!Lua::SafeCallString(out, state, curline, 0, LUA_MULTRET, true, "=(interactive)", base))
-                continue;
-
-            int numret = lua_gettop(state) - base;
-
-            if (numret >= 1)
-            {
-                lua_pushvalue(state, base+1);
-                lua_setfield(state, base, "_");
-
-                if (pfix == '!')
-                {
-                    lua_pushcfunction(state, lua_dfhack_println);
-                    lua_insert(state, base+1);
-                    SafeCall(out, state, numret, 0);
-                    continue;
-                }
-            }
-
-            for (int i = 1; i <= numret; i++)
-            {
-                std::string name = stl_sprintf("_%d", vcnt++);
-                lua_pushvalue(state, base + i);
-                lua_setfield(state, base, name.c_str());
-
-                out.print("%s = ", name.c_str());
-
-                lua_pushcfunction(state, lua_dfhack_println);
-                lua_pushvalue(state, base + i);
-                SafeCall(out, state, 1, 0);
-            }
-        }
-        else
-        {
-            if (!Lua::SafeCallString(out, state, curline, 0, LUA_MULTRET, true, "=(interactive)", base))
-                continue;
-        }
-    }
-
-    lua_settop(state, base-1);
-
-    hist.save(hfile);
-    return true;
-}
-
-static int lua_dfhack_interpreter(lua_State *state)
-{
-    Console *pstream = get_console(state);
-    if (!pstream)
-        return 2;
-
-    int argc = lua_gettop(state);
-
-    const char *prompt = (argc >= 1 ? lua_tostring(state, 1) : NULL);
-    int env = (argc >= 2 && !lua_isnil(state,2) ? 2 : 0);
-    const char *hfile = (argc >= 3 ? lua_tostring(state, 3) : NULL);
-
-    lua_pushboolean(state, Lua::InterpreterLoop(*pstream, state, prompt, env, hfile));
-    return 1;
+    return RunCoreQueryLoop(out, state, init_interpreter, &args);
 }
 
 static bool do_invoke_cleanup(lua_State *L, int nargs, int errorfun, bool success)
@@ -861,7 +887,6 @@ static const luaL_Reg dfhack_funcs[] = {
     { "color", lua_dfhack_color },
     { "is_interactive", lua_dfhack_is_interactive },
     { "lineedit", lua_dfhack_lineedit },
-    { "interpreter", lua_dfhack_interpreter },
     { "safecall", lua_dfhack_safecall },
     { "onerror", dfhack_onerror },
     { "call_with_finalizer", dfhack_call_with_finalizer },

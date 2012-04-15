@@ -56,6 +56,7 @@ using namespace std;
 #include "df/building_civzonest.h"
 #include "df/building_cagest.h"
 #include "df/building_chainst.h"
+#include "df/building_nest_boxst.h"
 #include "df/general_ref_building_civzone_assignedst.h"
 #include <df/creature_raw.h>
 #include <df/caste_raw.h>
@@ -1063,6 +1064,28 @@ bool isNestboxAtPos(int32_t x, int32_t y, int32_t z)
     return found;
 }
 
+bool isFreeNestboxAtPos(int32_t x, int32_t y, int32_t z)
+{
+    bool found = false;
+    for (size_t b=0; b < world->buildings.all.size(); b++)
+    {
+        df::building* building = world->buildings.all[b];
+        if( building->getType() == building_type::NestBox
+            && building->x1 == x
+            && building->y1 == y
+            && building->z  == z )
+        {
+            df::building_nest_boxst* nestbox = (df::building_nest_boxst*) building;
+            if(nestbox->claimed_by == -1 && nestbox->contained_items.size() == 1)
+            {
+                found = true;
+                break;
+            }
+        }
+    }
+    return found;
+}
+
 bool isEmptyPasture(df::building* building)
 {
     if(!isPenPasture(building))
@@ -1083,7 +1106,7 @@ df::building* findFreeNestboxZone()
         df::building* building = world->buildings.all[b];
         if( isEmptyPasture(building) &&
             isActive(building) &&
-            isNestboxAtPos(building->x1, building->y1, building->z))
+            isFreeNestboxAtPos(building->x1, building->y1, building->z))
         {
             free_building = building;
             break;

@@ -16,6 +16,7 @@ using namespace std;
 #include "PluginManager.h"
 #include "modules/Units.h"
 #include "df/unit_inventory_item.h"
+#include "df/building_nest_boxst.h"
 #include "modules/Maps.h"
 #include "modules/Gui.h"
 #include "modules/Materials.h"
@@ -370,6 +371,12 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
                       ENUM_KEY_STR(trap_type, building.trap_type).c_str(),
                       building.trap_type);
             break;
+        case building_type::NestBox:
+            {
+                df::building_nest_boxst* nestbox = (df::building_nest_boxst*) building.origin;
+                out.print(", claimed:(%i), items:%i", nestbox->claimed_by, nestbox->contained_items.size());
+                break;
+            }
         default:
             if (building.subtype != -1)
                 out.print(", subtype %i", building.subtype);

@@ -817,27 +817,29 @@ Options:
 
 Filters:
 --------
-:all:         Process all units (to be used with additional filters).
-:count:       Must be followed by a number. Process only n units (to be used with additional filters). 
-:race:        Must be followed by a race raw id (e.g. BIRD_TURKEY, ALPACA etc).
-:unassigned:  Not assigned to zone, chain or built cage.
-:caged:       In a built cage.
-:uncaged:     Not in a cage (in case you want your stockpiles to be left alone).
-:foreign:     Not of own civilization.
-:own:         From own civilization.
-:merchant:    Is a merchant / belongs to a merchant. Should only be used for pitting, not for stealing animals (slaughter should work).
-:war:         Trained war creature.
-:tamed:       Creature is tame.
-:trained:     Creature is trained.
-:untrained:   Creature is untrained.
-:male:        Creature is male.
-:female:      Creature is female.
-:egglayer:    Race lays eggs.
-:grazer:      Race is a grazer.
-:nograzer:    Race is not a grazer.
-:milkable:    Race is milkable.
-:minage:      Minimum age. Must be followed by number.
-:maxage:      Maximum age. Must be followed by number.
+:all:           Process all units (to be used with additional filters).
+:count:         Must be followed by a number. Process only n units (to be used with additional filters). 
+:race:          Must be followed by a race raw id (e.g. BIRD_TURKEY, ALPACA etc).
+:unassigned:    Not assigned to zone, chain or built cage.
+:caged:         In a built cage.
+:uncaged:       Not in a cage (in case you want your stockpiles to be left alone).
+:foreign:       Not of own civilization.
+:own:           From own civilization.
+:merchant:      Is a merchant / belongs to a merchant. Should only be used for pitting, not for stealing animals (slaughter should work).
+:war:           Trained war creature.
+:tamed:         Creature is tame.
+:trained:       Creature is trained.
+:untrained:     Creature is untrained.
+:trainablewar:  Creature can be trained for war (and is not already trained for war/hunt).
+:trainablehunt: Creature can be trained for hunting (and is not already trained for war/hunt).
+:male:          Creature is male.
+:female:        Creature is female.
+:egglayer:      Race lays eggs.
+:grazer:        Race is a grazer.
+:nograzer:      Race is not a grazer.
+:milkable:      Race is milkable.
+:minage:        Minimum age. Must be followed by number.
+:maxage:        Maximum age. Must be followed by number.
 
 Usage with single units
 -----------------------

@@ -116,6 +116,8 @@ const string zone_help_filters =
     "                 (could have weird effects during trading, be careful)\n"
     "  trained      - obvious\n"
     "  untrained    - obvious\n"
+    "  trainablewar - can be trained for war (and is not already trained)\n"
+    "  trainablehunt- can be trained for hunting (and is not already trained)\n"
     "  male         - obvious\n"
     "  female       - obvious\n"
     "  egglayer     - race lays eggs (use together with 'female')\n"
@@ -558,6 +560,32 @@ bool isMilkable(df::unit* unit)
     {
         df::caste_raw *caste = raw->caste[j];
         if(caste->flags.is_set(caste_raw_flags::MILKABLE))
+            return true;
+    }
+    return false;
+}
+
+bool isTrainableWar(df::unit* unit)
+{
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    size_t sizecas = raw->caste.size();
+    for (size_t j = 0; j < sizecas;j++)
+    {
+        df::caste_raw *caste = raw->caste[j];
+        if(caste->flags.is_set(caste_raw_flags::TRAINABLE_WAR))
+            return true;
+    }
+    return false;
+}
+
+bool isTrainableHunting(df::unit* unit)
+{
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    size_t sizecas = raw->caste.size();
+    for (size_t j = 0; j < sizecas;j++)
+    {
+        df::caste_raw *caste = raw->caste[j];
+        if(caste->flags.is_set(caste_raw_flags::TRAINABLE_HUNTING))
             return true;
     }
     return false;
@@ -1459,6 +1487,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool find_uncaged = false;
     bool find_foreign = false;
     bool find_untrained = false;
+    bool find_trainable_war = false;
+    bool find_trainable_hunting = false;
     //bool find_trained = false;
     bool find_war = false;
     bool find_own = false;
@@ -1592,6 +1622,16 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         {
             out << "Filter by 'untrained'." << endl;
             find_untrained = true;
+        }
+        else if(p == "trainablewar")
+        {
+            out << "Filter by 'trainable for war'." << endl;
+            find_trainable_war = true;
+        }
+        else if(p == "trainablehunt")
+        {
+            out << "Filter by 'trainable for hunting'." << endl;
+            find_trainable_hunting = true;
         }
         else if(p == "war")
         {
@@ -1896,6 +1936,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     || (find_male && !isMale(unit))
                     || (find_female && !isFemale(unit))
                     || (find_named && !unit->name.has_name)
+                    || (find_trainable_war && (isWar(unit) || isHunter(unit) || !isTrainableWar(unit)))
+                    || (find_trainable_hunting && (isWar(unit) || isHunter(unit) || !isTrainableHunting(unit)))
                     )
                     continue;
 

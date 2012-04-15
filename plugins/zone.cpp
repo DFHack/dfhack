@@ -96,17 +96,20 @@ const string zone_help =
 
 const string zone_help_filters =
     "Filters (to be used in combination with 'all' or 'count'):\n"
+    "These filters can not be used with the prefix 'not':"
     "  all          - in combinations with zinfo/uinfo: print all zones/units\n"
     "                 in combination with assign: process all units\n"
     "                 should be used in combination with further filters\n"
     "  count        - must be followed by number. process X units\n"
     "                 should be used in combination with further filters\n"
-    "  race         - must be followed by a race raw id (e.g. BIRD_TURKEY)\n"
     "  unassigned   - not assigned to zone, chain or built cage\n"
+    "  age          - exact age. must be followed by number\n"
+    "  minage       - minimum age. must be followed by number\n"
+    "  maxage       - maximum age. must be followed by number\n"
+    "These filters can be used with the prefix 'not' (e.g. 'not own'):"
+    "  race         - must be followed by a race raw id (e.g. BIRD_TURKEY)\n"
     "  caged        - in a built cage\n"
-    "  uncaged      - not in cage\n"
     "  own          - from own civilization\n"
-    "  foreign      - not of own civilization\n"
     "  war          - trained war creature\n"
     "  tamed        - tamed\n"
     "  named        - has name or nickname\n"
@@ -115,18 +118,14 @@ const string zone_help_filters =
     "                 can be used to pit merchants and slaughter their animals\n"
     "                 (could have weird effects during trading, be careful)\n"
     "  trained      - obvious\n"
-    "  untrained    - obvious\n"
     "  trainablewar - can be trained for war (and is not already trained)\n"
     "  trainablehunt- can be trained for hunting (and is not already trained)\n"
     "  male         - obvious\n"
     "  female       - obvious\n"
     "  egglayer     - race lays eggs (use together with 'female')\n"
-	"  noegglayer   - race does not lay eggs\n"
     "  grazer       - is a grazer\n"
-    "  nograzer     - not a grazer\n"
     "  milkable     - race is milkable (use together with 'female')\n"
-    "  minage       - minimum age. must be followed by number\n"
-    "  maxage       - maximum age. must be followed by number\n";
+    ;
 
 const string zone_help_examples =
     "Example for assigning single units:\n"
@@ -138,6 +137,7 @@ const string zone_help_examples =
     "Examples for assigning with filters:\n"
     "  (this assumes you have already set up a target zone)\n"
     "  zone assign all own grazer maxage 10\n"
+    "  zone assign all own milkable not grazer\n"
     "  zone assign count 5 own female milkable\n"
     "  zone assign all own race DWARF maxage 2\n"
     "    throw all useless kids into a pit :)\n"
@@ -1482,26 +1482,38 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     //bool cage_info = false;
     //bool chain_info = false;
     
+    bool invert_filter = false;
     bool find_unassigned = false;
     bool find_caged = false;
-    bool find_uncaged = false;
-    bool find_foreign = false;
-    bool find_untrained = false;
+    bool find_not_caged = false;
     bool find_trainable_war = false;
+    bool find_not_trainable_war = false;
     bool find_trainable_hunting = false;
-    //bool find_trained = false;
+    bool find_not_trainable_hunting = false;
+    bool find_trained = false;
+    bool find_not_trained = false;
     bool find_war = false;
+    bool find_not_war = false;
+    bool find_hunter = false;
+    bool find_not_hunter = false;
     bool find_own = false;
+    bool find_not_own = false;
     bool find_tame = false;
+    bool find_not_tame = false;
     bool find_merchant = false;
+    bool find_not_merchant = false;
     bool find_male = false;
+    bool find_not_male = false;
     bool find_female = false;
+    bool find_not_female = false;
     bool find_egglayer = false;
-	bool find_noegglayer = false;
+	bool find_not_egglayer = false;
     bool find_grazer = false;
-    bool find_nograzer = false;
+    bool find_not_grazer = false;
     bool find_milkable = false;
+    bool find_not_milkable = false;
     bool find_named = false;
+    bool find_not_named = false;
 
     bool find_agemin = false;
     bool find_agemax = false;
@@ -1512,6 +1524,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     size_t target_count = 0;
 
     bool find_race = false;
+    bool find_not_race = false;
     string target_race = "";
 
     bool building_assign = false;
@@ -1544,21 +1557,39 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         else if(p == "zinfo")
         {
             zone_info = true;
+            invert_filter=false;
         }
         else if(p == "uinfo")
         {
             unit_info = true;
+            invert_filter=false;
         }
         else if(p == "verbose")
         {
             verbose = true;
+            if(invert_filter)
+            {
+                verbose = false;
+                invert_filter=false;
+            }
         }
         else if(p == "unassign")
         {
+            if(invert_filter)
+            {
+                out << "'not unassign' makes no sense." << endl;
+                return CR_WRONG_USAGE;
+            }
             building_unassign = true;
         }
         else if(p == "assign")
         {
+            if(invert_filter)
+            {
+                out << "'not assign' makes no sense. (did you want to use unassign?)" << endl;
+                return CR_WRONG_USAGE;
+            }
+
             // if followed by another parameter, check if it's numeric
             if(i < parameters.size()-1)
             {
@@ -1583,7 +1614,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 building_assign = true;
             }
         }
-        else if(p == "race")
+        else if(p == "race" && !invert_filter)
         {
             if(i == parameters.size()-1)
             {
@@ -1598,68 +1629,132 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 find_race = true;
             }
         }
-        else if(p == "foreign")
+        else if(p == "race" && invert_filter)
         {
-            out << "Filter by 'foreign' (i.e. not from the fortress civ, can be a dwarf)." << endl;
-            find_foreign = true;
+            if(i == parameters.size()-1)
+            {
+                out.printerr("No race id specified!");
+                return CR_WRONG_USAGE;
+            }
+            else
+            {
+                target_race = parameters[i+1];
+                i++;
+                out << "Excluding race: " << target_race << endl;
+                find_not_race = true;
+            }
+            invert_filter = false;
+        }
+        else if(p == "not")
+        {
+            invert_filter = true;
         }
         else if(p == "unassigned")
         {
+            if(invert_filter)
+                return CR_WRONG_USAGE;
             out << "Filter by 'unassigned'." << endl;
             find_unassigned = true;
         }
-        else if(p == "caged")
+        else if(p == "caged" && !invert_filter)
         {
             out << "Filter by 'caged' (ignores built cages)." << endl;
             find_caged = true;
         }
-        else if(p == "uncaged")
+        else if(p == "caged" && invert_filter)
         {
-            out << "Filter by 'uncaged'." << endl;
-            find_uncaged = true;
+            out << "Filter by 'not caged'." << endl;
+            find_not_caged = true;
+            invert_filter = false;
         }
-        else if(p == "untrained")
+        else if(p == "trained" && !invert_filter)
+        {
+            out << "Filter by 'trained'." << endl;
+            find_trained = true;
+        }
+        else if(p == "trained" && invert_filter)
         {
             out << "Filter by 'untrained'." << endl;
-            find_untrained = true;
+            find_not_trained = true;
+            invert_filter = false;
         }
-        else if(p == "trainablewar")
+        else if(p == "trainablewar" && !invert_filter)
         {
             out << "Filter by 'trainable for war'." << endl;
             find_trainable_war = true;
         }
-        else if(p == "trainablehunt")
+        else if(p == "trainablewar" && invert_filter)
+        {
+            out << "Filter by 'not trainable for war'." << endl;
+            find_not_trainable_war = true;
+            invert_filter = false;
+        }
+        else if(p == "trainablehunt"&& !invert_filter)
         {
             out << "Filter by 'trainable for hunting'." << endl;
             find_trainable_hunting = true;
         }
-        else if(p == "war")
+        else if(p == "trainablehunt"&& invert_filter)
+        {
+            out << "Filter by 'not trainable for hunting'." << endl;
+            find_not_trainable_hunting = true;
+            invert_filter = false;
+        }
+        else if(p == "war" && !invert_filter)
         {
             out << "Filter by 'trained war creature'." << endl;
             find_war = true;
         }
-        else if(p == "own")
+        else if(p == "war" && invert_filter)
+        {
+            out << "Filter by 'not a trained war creature'." << endl;
+            find_not_war = true;
+            invert_filter = false;
+        }
+        else if(p == "own"&& !invert_filter)
         {
             out << "Filter by 'own civilization'." << endl;
             find_own = true;
         }
-        else if(p == "tame")
+        else if(p == "own" && invert_filter)
+        {
+            out << "Filter by 'not own' (i.e. not from the fortress civ, can be a dwarf)." << endl;
+            find_not_own = true;
+            invert_filter = false;
+        }
+        else if(p == "tame" && !invert_filter)
         {
             out << "Filter by 'tame'." << endl;
             find_tame = true;
         }
-        else if(p == "named")
+        else if(p == "tame" && invert_filter)
+        {
+            out << "Filter by 'not tame'." << endl;
+            find_not_tame = true;
+            invert_filter=false;
+        }
+        else if(p == "named" && !invert_filter)
         {
             out << "Filter by 'has name or nickname'." << endl;
             find_named = true;
         }
+        else if(p == "named" && invert_filter)
+        {
+            out << "Filter by 'has no name or nickname'." << endl;
+            find_not_named = true;
+            invert_filter=false;
+        }
         else if(p == "slaughter")
         {
+            if(invert_filter)
+                return CR_WRONG_USAGE;
             out << "Assign animals for slaughter." << endl;
             unit_slaughter = true;
         }
         else if(p == "count")
         {
+            if(invert_filter)
+                return CR_WRONG_USAGE;
             if(i == parameters.size()-1)
             {
                 out.printerr("No count specified!");
@@ -1681,6 +1776,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         }
         else if(p == "age")
         {
+            if(invert_filter)
+                return CR_WRONG_USAGE;
             if(i == parameters.size()-1)
             {
                 out.printerr("No age specified!");
@@ -1699,6 +1796,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         }
         else if(p == "minage")
         {
+            if(invert_filter)
+                return CR_WRONG_USAGE;
             if(i == parameters.size()-1)
             {
                 out.printerr("No age specified!");
@@ -1715,6 +1814,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         }
         else if(p == "maxage")
         {
+            if(invert_filter)
+                return CR_WRONG_USAGE;
             if(i == parameters.size()-1)
             {
                 out.printerr("No age specified!");
@@ -1729,44 +1830,61 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 out << "Filter by maximum age of " << target_agemax << endl;
             }
         }
-        else if(p == "male")
+        else if(p == "male" && !invert_filter)
         {
             find_male = true;
         }
-        else if(p == "female")
+        else if(p == "female" && !invert_filter)
         {
             find_female = true;
         }
-        else if(p == "egglayer")
+        else if(p == "egglayer" && !invert_filter)
         {
             find_egglayer = true;
         }
-		else if(p == "noegglayer")
-		{
-			find_noegglayer = true;
-		}
-        else if(p == "grazer")
+        else if(p == "egglayer" && invert_filter)
+        {
+            find_not_egglayer = true;
+            invert_filter=false;
+        }
+        else if(p == "grazer" && !invert_filter)
         {
             find_grazer = true;
         }
-        else if(p == "nograzer")
+        else if(p == "grazer" && invert_filter)
         {
-            find_nograzer = true;
+            find_not_grazer = true;
+            invert_filter=false;
         }
-        else if(p == "merchant")
+        else if(p == "merchant" && !invert_filter)
         {
             find_merchant = true;
         }
-        else if(p == "milkable")
+        else if(p == "merchant" && invert_filter)
+        {
+            // actually 'not merchant' is pointless since merchant units are ignored by default
+            find_not_merchant = true;
+            invert_filter=false;
+        }
+        else if(p == "milkable" && !invert_filter)
         {
             find_milkable = true;
         }
+        else if(p == "milkable" && invert_filter)
+        {
+            find_not_milkable = true;
+            invert_filter=false;
+        }
         else if(p == "set")
         {
+            if(invert_filter)
+                return CR_WRONG_USAGE;
             building_set = true;
         }
         else if(p == "all")
         {
+            if(invert_filter)
+                return CR_WRONG_USAGE;
             out << "Filter: all" << endl;
             all = true;
         }
@@ -1792,6 +1910,20 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
+    // search for male and not male is exclusive, so drop the flags if both are specified
+    if(find_male && find_not_male)
+    {
+        find_male=false;
+        find_not_male=false;
+    }
+
+    // search for female and not female is exclusive, so drop the flags if both are specified
+    if(find_female && find_not_female)
+    {
+        find_female=false;
+        find_not_female=false;
+    }
+
     // search for male and female is exclusive, so drop the flags if both are specified
     if(find_male && find_female)
     {
@@ -1808,10 +1940,10 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     //}
 
     // search for grazer and nograzer is exclusive, so drop the flags if both are specified
-    if(find_grazer && find_nograzer)
+    if(find_grazer && find_not_grazer)
     {
         find_grazer=false;
-        find_nograzer=false;
+        find_not_grazer=false;
     }
 
     // try to cope with user dumbness
@@ -1907,6 +2039,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 
                 if(find_race && getRaceName(unit) != target_race)
                     continue;
+                if(find_not_race && getRaceName(unit) == target_race)
+                    continue;
                 // ignore own dwarves by default
                 if(isOwnCiv(unit) && isOwnRace(unit))
                 {
@@ -1918,26 +2052,38 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 
                 if(    (find_unassigned && isAssigned(unit))
                     // avoid tampering with creatures who are currently being hauled to a built cage
-                    || (isContainedInItem(unit) && (find_uncaged || isInBuiltCage(unit)))
+                    || (isContainedInItem(unit) && (find_not_caged || isInBuiltCage(unit)))
                     || (isChained(unit))
                     || (find_caged && !isContainedInItem(unit))
+                    || (find_not_caged && isContainedInItem(unit))
                     || (find_own && !isOwnCiv(unit))
-                    || (find_foreign && isOwnCiv(unit))
+                    || (find_not_own && isOwnCiv(unit))
                     || (find_tame && !isTame(unit))
-                    || (find_untrained && isTrained(unit))
+                    || (find_not_tame && isTame(unit))
+                    || (find_trained && !isTrained(unit))
+                    || (find_not_trained && isTrained(unit))
                     || (find_war && !isWar(unit))
+                    || (find_not_war && isWar(unit))
+                    || (find_hunter && !isHunter(unit))
+                    || (find_not_hunter && isHunter(unit))
                     || (find_agemin && getUnitAge(unit)<target_agemin)
                     || (find_agemax && getUnitAge(unit)>target_agemax)
                     || (find_grazer && !isGrazer(unit))
-                    || (find_nograzer && isGrazer(unit))
+                    || (find_not_grazer && isGrazer(unit))
                     || (find_egglayer && !isEggLayer(unit))
-					|| (find_noegglayer && isEggLayer(unit))
+					|| (find_not_egglayer && isEggLayer(unit))
                     || (find_milkable && !isMilkable(unit))
+                    || (find_not_milkable && isMilkable(unit))
                     || (find_male && !isMale(unit))
+                    || (find_not_male && isMale(unit))
                     || (find_female && !isFemale(unit))
+                    || (find_not_female && isFemale(unit))
                     || (find_named && !unit->name.has_name)
+                    || (find_not_named && unit->name.has_name)
                     || (find_trainable_war && (isWar(unit) || isHunter(unit) || !isTrainableWar(unit)))
+                    || (find_not_trainable_war && isTrainableWar(unit)) // hm, is this check enough?
                     || (find_trainable_hunting && (isWar(unit) || isHunter(unit) || !isTrainableHunting(unit)))
+                    || (find_not_trainable_hunting && isTrainableHunting(unit)) // hm, is this check enough?
                     )
                     continue;
 

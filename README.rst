@@ -802,11 +802,11 @@ Export dwarves to RuneSmith-compatible XML.
 
 zone
 ====
-Helps a bit with managing activity zones (pens, pastures and pits).
+Helps a bit with managing activity zones (pens, pastures and pits) and cages.
 
 Options:
 --------
-:set:          Set zone under cursor as default for future assigns.
+:set:          Set zone or cage under cursor as default for future assigns.
 :assign:       Assign unit(s) to the pen or pit marked with the 'set' command. If no filters are set a unit must be selected in the in-game ui. Can also be followed by a valid zone id which will be set instead.
 :unassign:     Unassign selected creature from it's zone.
 :uinfo:        Print info about unit(s). If no filters are set a unit must be selected in the in-game ui.
@@ -814,32 +814,29 @@ Options:
 :verbose:      Print some more info.
 :filters:      Print list of valid filter options.
 :examples:     Print some usage examples.
+:not:          Negates the next filter keyword.
 
 Filters:
 --------
 :all:           Process all units (to be used with additional filters).
 :count:         Must be followed by a number. Process only n units (to be used with additional filters). 
-:race:          Must be followed by a race raw id (e.g. BIRD_TURKEY, ALPACA etc).
 :unassigned:    Not assigned to zone, chain or built cage.
-:caged:         In a built cage.
-:uncaged:       Not in a cage (in case you want your stockpiles to be left alone).
-:foreign:       Not of own civilization.
-:own:           From own civilization.
-:merchant:      Is a merchant / belongs to a merchant. Should only be used for pitting, not for stealing animals (slaughter should work).
-:war:           Trained war creature.
-:tamed:         Creature is tame.
-:trained:       Creature is trained.
-:untrained:     Creature is untrained.
-:trainablewar:  Creature can be trained for war (and is not already trained for war/hunt).
-:trainablehunt: Creature can be trained for hunting (and is not already trained for war/hunt).
-:male:          Creature is male.
-:female:        Creature is female.
-:egglayer:      Race lays eggs.
-:grazer:        Race is a grazer.
-:nograzer:      Race is not a grazer.
-:milkable:      Race is milkable.
 :minage:        Minimum age. Must be followed by number.
 :maxage:        Maximum age. Must be followed by number.
+:race:          Must be followed by a race raw id (e.g. BIRD_TURKEY, ALPACA etc). Negatable.
+:caged:         In a built cage. Negatable.
+:own:           From own civilization. Negatable.
+:merchant:      Is a merchant / belongs to a merchant. Should only be used for pitting, not for stealing animals (slaughter should work).
+:war:           Trained war creature. Negatable.
+:tamed:         Creature is tame. Negatable.
+:trained:       Creature is trained. Negatable.
+:trainablewar:  Creature can be trained for war (and is not already trained for war/hunt). Negatable.
+:trainablehunt: Creature can be trained for hunting (and is not already trained for war/hunt). Negatable.
+:male:          Creature is male. Negatable.
+:female:        Creature is female. Negatable.
+:egglayer:      Race lays eggs. Negatable.
+:grazer:        Race is a grazer. Negatable.
+:milkable:      Race is milkable. Negatable.
 
 Usage with single units
 -----------------------
@@ -847,12 +844,14 @@ One convenient way to use the zone tool is to bind the command 'zone assign' to 
 
 Usage with filters
 ------------------
-All filters can be used together with the 'assign' command. The only restriction is that it's not possible to assign units who are inside built cages or chained because in most cases that won't be desirable anyways. Usually you should always use the filter 'own' (which implies tame) unless you want to use the zone tool for pitting hostiles. 'own' ignores own dwarves unless you specify 'race DWARF' (so it's safe to use 'assign all own' to one big pasture if you want to have all your animals at the same place). 'egglayer' and 'milkable' should be used together with 'female' unless you have a mod with egg-laying male elves who give milk or whatever. Merchants and their animals are ignored unless you specify 'merchant' (pitting them should be no problem, but stealing and pasturing their animals is not a good idea since currently they are not properly added to your own stocks; slaughtering them should work).
+All filters can be used together with the 'assign' command. The only restriction is that it's not possible to assign units who are inside built cages or chained because in most cases that won't be desirable anyways. Usually you should always use the filter 'own' (which implies tame) unless you want to use the zone tool for pitting hostiles. 'own' ignores own dwarves unless you specify 'race DWARF' (so it's safe to use 'assign all own' to one big pasture if you want to have all your animals at the same place). 'egglayer' and 'milkable' should be used together with 'female' unless you have a mod with egg-laying male elves who give milk or whatever. Merchants and their animals are ignored unless you specify 'merchant' (pitting them should be no problem, but stealing and pasturing their animals is not a good idea since currently they are not properly added to your own stocks; slaughtering them should work). Most filters can be negated (e.g. 'not grazer' -> race is not a grazer).
 
 ``zone assign all own ALPACA minage 3 maxage 10``
    Assign all own alpacas who are between 3 and 10 years old to the selected pasture.
 ``zone assign all own caged grazer``
    Assign all own grazers who are sitting in cages on stockpiles (e.g. after buying them from merchants) to the selected pasture.
+``zone assign all own not grazer not race CAT``
+   Assign all own animals who are not grazers, excluding cats.
 ``zone assign count 5 own female milkable``
    Assign up to 5 own female milkable creatures to the selected pasture.
 ``zone assign all own race DWARF maxage 2``

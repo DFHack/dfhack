@@ -55,6 +55,10 @@ function mkmodule(module,env)
             error("Not a table in package.loaded["..module.."]")
         end
     end
+    local plugname = string.match(module,'^plugins%.(%w+)$')
+    if plugname then
+        dfhack.open_plugin(pkg,plugname)
+    end
     setmetatable(pkg, { __index = (env or _G) })
     return pkg
 end
@@ -84,6 +88,21 @@ function copyall(table)
     local rv = {}
     for k,v in pairs(table) do rv[k] = v end
     return rv
+end
+
+function pos2xyz(pos)
+    local x = pos.x
+    if x and x ~= -30000 then
+        return x, pos.y, pos.z
+    end
+end
+
+function xyz2pos(x,y,z)
+    if x then
+        return {x=x,y=y,z=z}
+    else
+        return {x=-30000,y=-30000,z=-30000}
+    end
 end
 
 function dfhack.persistent:__tostring()

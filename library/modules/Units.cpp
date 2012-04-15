@@ -40,6 +40,7 @@ using namespace std;
 
 // we connect to those
 #include "modules/Units.h"
+#include "modules/Items.h"
 #include "modules/Materials.h"
 #include "modules/Translation.h"
 #include "ModuleFactory.h"
@@ -500,6 +501,34 @@ void Units::CopyNameTo(df::unit * creature, df::language_name * target)
     Translation::copyName(&creature->name, target);
 }
 
+df::coord Units::getPosition(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if (unit->flags1.bits.caged)
+    {
+        auto cage = getContainer(unit);
+        if (cage)
+            return Items::getPosition(cage);
+    }
+
+    return unit->pos;
+}
+
+df::item *Units::getContainer(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    for (size_t i = 0; i < unit->refs.size(); i++)
+    {
+        df::general_ref *ref = unit->refs[i];
+        if (ref->getType() == general_ref_type::CONTAINED_IN_ITEM)
+            return ref->getItem();
+    }
+
+    return NULL;
+}
+
 void Units::setNickname(df::unit *unit, std::string nick)
 {
     CHECK_NULL_POINTER(unit);
@@ -623,6 +652,51 @@ bool DFHack::Units::isSane(df::unit *unit)
 
     return true;
 }
+
+bool DFHack::Units::isCitizen(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->civ_id == ui->civ_id &&
+           !unit->flags1.bits.merchant &&
+           !unit->flags1.bits.diplomat &&
+           !unit->flags2.bits.resident &&
+           !unit->flags1.bits.dead &&
+           !unit->flags3.bits.ghostly;
+}
+
+bool DFHack::Units::isDwarf(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->race == ui->race_id;
+}
+
+void DFHack::Units::clearBurrowMembers(df::burrow *burrow)
+{
+    CHECK_NULL_POINTER(burrow);
+
+    for (size_t i = 0; i < burrow->units.size(); i++)
+    {
+        auto unit = df::unit::find(burrow->units[i]);
+
+        if (unit)
+            erase_from_vector(unit->burrows, burrow->id);
+    }
+
+    burrow->units.clear();
+
+    // Sync ui if active
+    if (ui && ui->main.mode == ui_sidebar_mode::Burrows &&
+        ui->burrows.in_add_units_mode && ui->burrows.sel_id == burrow->id)
+    {
+        auto &sel = ui->burrows.sel_units;
+
+        for (size_t i = 0; i < sel.size(); i++)
+            sel[i] = false;
+    }
+}
+
 
 bool DFHack::Units::isInBurrow(df::unit *unit, df::burrow *burrow)
 {

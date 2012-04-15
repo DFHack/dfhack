@@ -61,6 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/unit.h"
+#include "df/unit_misc_trait.h"
 #include "df/unit_soul.h"
 #include "df/unit_skill.h"
 #include "df/material.h"
@@ -313,6 +314,19 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
             item->set_id(skill->id);
             item->set_level(skill->rating);
             item->set_experience(skill->experience);
+        }
+    }
+
+    if (mask && mask->misc_traits())
+    {
+        auto &vec = unit -> status.misc_traits;
+
+        for (size_t i = 0; i < vec.size(); i++)
+        {
+            auto trait = vec[i];
+            auto item = info->add_misc_traits();
+            item->set_id(trait->id);
+            item->set_value(trait->value);
         }
     }
 
@@ -614,6 +628,20 @@ static command_result ListSquads(color_ostream &stream,
     return CR_OK;
 }
 
+static command_result SetUnitLabors(color_ostream &stream, const SetUnitLaborsIn *in)
+{
+    for (size_t i = 0; i < in->change_size(); i++)
+    {
+        auto change = in->change(i);
+        auto unit = df::unit::find(change.unit_id());
+
+        if (unit)
+            unit->status.labors[change.labor()] = change.value();
+    }
+
+    return CR_OK;
+}
+
 CoreService::CoreService() {
     suspend_depth = 0;
 
@@ -637,6 +665,8 @@ CoreService::CoreService() {
     addFunction("ListMaterials", ListMaterials, SF_CALLED_ONCE);
     addFunction("ListUnits", ListUnits);
     addFunction("ListSquads", ListSquads);
+
+    addFunction("SetUnitLabors", SetUnitLabors);
 }
 
 CoreService::~CoreService()

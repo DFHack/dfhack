@@ -130,6 +130,11 @@ message SkillInfo {
     required int32 experience = 3;
 };
 
+message UnitMiscTrait {
+    required int32 id = 1;
+    required int32 value = 2;
+};
+
 message BasicUnitInfo {
     required int32 unit_id = 1;
 
@@ -166,6 +171,9 @@ message BasicUnitInfo {
     // IF mask.skills:
     repeated SkillInfo skills = 12;
 
+    // IF mask.misc_traits:
+    repeated UnitMiscTrait misc_traits = 24;
+
     optional UnitCurseInfo curse = 16;
 
     repeated int32 burrows = 21;
@@ -175,6 +183,7 @@ message BasicUnitInfoMask {
     optional bool labors = 1 [default = false];
     optional bool skills = 2 [default = false];
     optional bool profession = 3 [default = false];
+    optional bool misc_traits = 4 [default = false];
 };
 
 message BasicSquadInfo {
@@ -187,4 +196,10 @@ message BasicSquadInfo {
 
     // Member histfig ids:
     repeated sint32 members = 4;
+};
+
+message UnitLaborState {
+    required int32 unit_id = 1;
+    required int32 labor = 2;
+    required bool value = 3;
 };

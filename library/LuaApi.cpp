@@ -45,6 +45,7 @@ distribution.
 #include "modules/Items.h"
 #include "modules/Materials.h"
 #include "modules/Maps.h"
+#include "modules/MapCache.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -82,6 +83,33 @@ void push_pointer_vector(lua_State *state, const std::vector<T*> &pvec)
     {
         Lua::PushDFObject(state, pvec[i]);
         lua_rawseti(state, -2, i+1);
+    }
+}
+
+template<class T>
+T *get_checked_arg(lua_State *state, int arg)
+{
+    luaL_checkany(state, arg);
+
+    auto ptr = Lua::GetDFObject<T>(state, arg);
+    if (!ptr)
+        luaL_argerror(state, arg, "invalid type");
+    return ptr;
+}
+
+int push_pos(lua_State *state, df::coord pos)
+{
+    if (!pos.isValid())
+    {
+        lua_pushnil(state);
+        return 1;
+    }
+    else
+    {
+        lua_pushinteger(state, pos.x);
+        lua_pushinteger(state, pos.y);
+        lua_pushinteger(state, pos.z);
+        return 3;
     }
 }
 
@@ -599,22 +627,69 @@ static const luaL_Reg dfhack_job_funcs[] = {
 
 
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
+    WRAPM(Units, getContainer),
     WRAPM(Units, setNickname),
     WRAPM(Units, getVisibleName),
     WRAPM(Units, getNemesis),
     WRAPM(Units, isDead),
     WRAPM(Units, isAlive),
     WRAPM(Units, isSane),
+    WRAPM(Units, clearBurrowMembers),
     WRAPM(Units, isInBurrow),
     WRAPM(Units, setInBurrow),
     { NULL, NULL }
 };
 
+static int units_getPosition(lua_State *state)
+{
+    return push_pos(state, Units::getPosition(get_checked_arg<df::unit>(state,1)));
+}
+
+static const luaL_Reg dfhack_units_funcs[] = {
+    { "getPosition", units_getPosition },
+    { NULL, NULL }
+};
+
+static bool items_moveToGround(df::item *item, df::coord pos)
+{
+    MapExtras::MapCache mc;
+    return Items::moveToGround(mc, item, pos);
+}
+
+static bool items_moveToContainer(df::item *item, df::item *container)
+{
+    MapExtras::MapCache mc;
+    return Items::moveToContainer(mc, item, container);
+}
+
 static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getOwner),
     WRAPM(Items, setOwner),
+    WRAPM(Items, getContainer),
+    WRAPN(moveToGround, items_moveToGround),
+    WRAPN(moveToContainer, items_moveToContainer),
     { NULL, NULL }
 };
+
+static int items_getPosition(lua_State *state)
+{
+    return push_pos(state, Items::getPosition(get_checked_arg<df::item>(state,1)));
+}
+
+static int items_getContainedItems(lua_State *state)
+{
+    std::vector<df::item*> pvec;
+    Items::getContainedItems(get_checked_arg<df::item>(state,1),&pvec);
+    push_pointer_vector(state, pvec);
+    return 1;
+}
+
+static const luaL_Reg dfhack_items_funcs[] = {
+    { "getPosition", items_getPosition },
+    { "getContainedItems", items_getContainedItems },
+    { NULL, NULL }
+};
+
 
 static bool maps_isBlockBurrowTile(df::burrow *burrow, df::map_block *block, int x, int y)
 {
@@ -633,6 +708,7 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
     WRAPM(Maps, findBurrowByName),
+    WRAPM(Maps, clearBurrowTiles),
     WRAPN(isBlockBurrowTile, maps_isBlockBurrowTile),
     WRAPN(setBlockBurrowTile, maps_setBlockBurrowTile),
     WRAPM(Maps, isBurrowTile),
@@ -642,14 +718,8 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
 
 static int maps_listBurrowBlocks(lua_State *state)
 {
-    luaL_checkany(state, 1);
-
-    auto ptr = Lua::GetDFObject<df::burrow>(state, 1);
-    if (!ptr)
-        luaL_argerror(state, 1, "invalid burrow type");
-
     std::vector<df::map_block*> pvec;
-    Maps::listBurrowBlocks(&pvec, ptr);
+    Maps::listBurrowBlocks(&pvec, get_checked_arg<df::burrow>(state,1));
     push_pointer_vector(state, pvec);
     return 1;
 }
@@ -672,7 +742,7 @@ void OpenDFHackApi(lua_State *state)
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
     OpenModule(state, "gui", dfhack_gui_module);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
-    OpenModule(state, "units", dfhack_units_module);
-    OpenModule(state, "items", dfhack_items_module);
+    OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
+    OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
 }

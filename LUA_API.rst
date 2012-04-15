@@ -663,6 +663,14 @@ Job module
 Units module
 ------------
 
+* ``dfhack.units.getPosition(unit)``
+
+  Returns true *x,y,z* of the unit; may be not equal to unit.pos if caged.
+
+* ``dfhack.units.getContainer(unit)``
+
+  Returns the container (cage) item or *nil*.
+
 * ``dfhack.units.setNickname(unit,nick)``
 
   Sets the unit's nickname properly.
@@ -687,6 +695,10 @@ Units module
 
   The unit is capable of rational action, i.e. not dead, insane or zombie.
 
+* ``dfhack.units.clearBurrowMembers(burrow)``
+
+  Removes all units from the burrow.
+
 * ``dfhack.units.isInBurrow(unit,burrow)``
 
   Checks if the unit is in the burrow.
@@ -699,6 +711,10 @@ Units module
 Items module
 ------------
 
+* ``dfhack.items.getPosition(item)``
+
+  Returns true *x,y,z* of the item; may be not equal to item.pos if in inventory.
+
 * ``dfhack.items.getOwner(item)``
 
   Returns the owner unit or *nil*.
@@ -707,6 +723,22 @@ Items module
 
   Replaces the owner of the item. If unit is *nil*, removes ownership.
   Returns *false* in case of error.
+
+* ``dfhack.items.getContainer(item)``
+
+  Returns the container item or *nil*.
+
+* ``dfhack.items.getContainedItems(item)``
+
+  Returns a list of items contained in this one.
+
+* ``dfhack.items.moveToGround(item,pos)``
+
+  Move the item to the ground at position. Returns *false* if impossible.
+
+* ``dfhack.items.moveToContainer(item,container)``
+
+  Move the item to the container. Returns *false* if impossible.
 
 
 Maps module
@@ -747,6 +779,10 @@ Maps module
 * ``dfhack.maps.listBurrowBlocks(burrow)``
 
   Returns a table of map block pointers.
+
+* ``dfhack.maps.clearBurrowTiles(burrow)``
+
+  Removes all tiles from the burrow.
 
 * ``dfhack.maps.isBurrowTile(burrow,tile_coord)``
 

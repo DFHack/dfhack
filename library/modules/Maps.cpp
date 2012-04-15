@@ -596,7 +596,7 @@ void MapExtras::Block::init_item_counts()
     if (item_counts) return;
 
     item_counts = new T_item_counts[16];
-    memset(item_counts, 0, sizeof(T_item_counts));
+    memset(item_counts, 0, sizeof(T_item_counts)*16);
 
     if (!block) return;
 
@@ -715,6 +715,42 @@ void Maps::listBurrowBlocks(std::vector<df::map_block*> *pvec, df::burrow *burro
     }
 }
 
+static void destroyBurrowMask(df::block_burrow *mask)
+{
+    if (!mask) return;
+
+    auto link = mask->link;
+
+    link->prev->next = link->next;
+    if (link->next)
+        link->next->prev = link->prev;
+    delete link;
+
+    delete mask;
+}
+
+void Maps::clearBurrowTiles(df::burrow *burrow)
+{
+    CHECK_NULL_POINTER(burrow);
+
+    df::coord base(world->map.region_x*3,world->map.region_y*3,world->map.region_z);
+
+    for (size_t i = 0; i < burrow->block_x.size(); i++)
+    {
+        df::coord pos(burrow->block_x[i], burrow->block_y[i], burrow->block_z[i]);
+
+        auto block = getBlock(pos - base);
+        if (!block)
+            continue;
+
+        destroyBurrowMask(getBlockBurrowMask(burrow, block));
+    }
+
+    burrow->block_x.clear();
+    burrow->block_y.clear();
+    burrow->block_z.clear();
+}
+
 df::block_burrow *Maps::getBlockBurrowMask(df::burrow *burrow, df::map_block *block, bool create)
 {
     CHECK_NULL_POINTER(burrow);
@@ -754,6 +790,36 @@ df::block_burrow *Maps::getBlockBurrowMask(df::burrow *burrow, df::map_block *bl
     return NULL;
 }
 
+bool Maps::deleteBlockBurrowMask(df::burrow *burrow, df::map_block *block, df::block_burrow *mask)
+{
+    CHECK_NULL_POINTER(burrow);
+    CHECK_NULL_POINTER(block);
+
+    if (!mask)
+        return false;
+
+    df::coord base(world->map.region_x*3,world->map.region_y*3,world->map.region_z);
+    df::coord pos = base + block->map_pos/16;
+
+    destroyBurrowMask(mask);
+
+    for (size_t i = 0; i < burrow->block_x.size(); i++)
+    {
+        df::coord cur(burrow->block_x[i], burrow->block_y[i], burrow->block_z[i]);
+
+        if (cur == pos)
+        {
+            vector_erase_at(burrow->block_x, i);
+            vector_erase_at(burrow->block_y, i);
+            vector_erase_at(burrow->block_z, i);
+
+            break;
+        }
+    }
+
+    return true;
+}
+
 bool Maps::isBlockBurrowTile(df::burrow *burrow, df::map_block *block, df::coord2d tile)
 {
     CHECK_NULL_POINTER(burrow);
@@ -774,7 +840,12 @@ bool Maps::setBlockBurrowTile(df::burrow *burrow, df::map_block *block, df::coor
     auto mask = getBlockBurrowMask(burrow, block, enable);
 
     if (mask)
+    {
         mask->setassignment(tile & 15, enable);
+
+        if (!enable && !mask->has_assignments())
+            deleteBlockBurrowMask(burrow, block, mask);
+    }
 
     return true;
 }

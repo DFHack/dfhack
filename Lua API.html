@@ -900,6 +900,12 @@ a lua list containing them.</p>
 <div class="section" id="units-module">
 <h3><a class="toc-backref" href="#id16">Units module</a></h3>
 <ul>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getPosition(unit)</tt></p>
+<p>Returns true <em>x,y,z</em> of the unit; may be not equal to unit.pos if caged.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getContainer(unit)</tt></p>
+<p>Returns the container (cage) item or <em>nil</em>.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.setNickname(unit,nick)</tt></p>
 <p>Sets the unit's nickname properly.</p>
 </li>
@@ -918,6 +924,9 @@ a lua list containing them.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.units.isSane(unit)</tt></p>
 <p>The unit is capable of rational action, i.e. not dead, insane or zombie.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.clearBurrowMembers(burrow)</tt></p>
+<p>Removes all units from the burrow.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.isInBurrow(unit,burrow)</tt></p>
 <p>Checks if the unit is in the burrow.</p>
 </li>
@@ -929,12 +938,27 @@ a lua list containing them.</p>
 <div class="section" id="items-module">
 <h3><a class="toc-backref" href="#id17">Items module</a></h3>
 <ul>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getPosition(item)</tt></p>
+<p>Returns true <em>x,y,z</em> of the item; may be not equal to item.pos if in inventory.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.items.getOwner(item)</tt></p>
 <p>Returns the owner unit or <em>nil</em>.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.items.setOwner(item,unit)</tt></p>
 <p>Replaces the owner of the item. If unit is <em>nil</em>, removes ownership.
 Returns <em>false</em> in case of error.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getContainer(item)</tt></p>
+<p>Returns the container item or <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getContainedItems(item)</tt></p>
+<p>Returns a list of items contained in this one.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.moveToGround(item,pos)</tt></p>
+<p>Move the item to the ground at position. Returns <em>false</em> if impossible.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.moveToContainer(item,container)</tt></p>
+<p>Move the item to the container. Returns <em>false</em> if impossible.</p>
 </li>
 </ul>
 </div>
@@ -967,6 +991,9 @@ Returns <em>false</em> in case of error.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.listBurrowBlocks(burrow)</tt></p>
 <p>Returns a table of map block pointers.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.clearBurrowTiles(burrow)</tt></p>
+<p>Removes all tiles from the burrow.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.isBurrowTile(burrow,tile_coord)</tt></p>
 <p>Checks if the tile is in burrow.</p>

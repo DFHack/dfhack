@@ -227,6 +227,10 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
             unit->flags1.bits.forest = 0;
         if(unit->civ_id != df::global::ui->civ_id)
             unit->civ_id = df::global::ui->civ_id;
+        if(unit->profession == df::profession::MERCHANT)
+            unit->profession = df::profession::TRADER;
+        if(unit->profession2 == df::profession::MERCHANT)
+            unit->profession2 = df::profession::TRADER;
         return fix_clothing_ownership(out, unit);
     }
     else 

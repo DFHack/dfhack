@@ -49,6 +49,8 @@ using namespace std;
 #include "modules/Graphic.h"
 #include "modules/Windows.h"
 #include "RemoteServer.h"
+#include "LuaTools.h"
+
 using namespace DFHack;
 
 #include "df/ui.h"
@@ -701,6 +703,9 @@ bool Core::Init()
     virtual_identity::Init(this);
     df::global::InitGlobals();
 
+    // initialize common lua context
+    Lua::Core::Init(con);
+
     // create mutex for syncing with interactive tasks
     misc_data_mutex=new mutex();
     cerr << "Initializing Plugins.\n";
@@ -803,6 +808,13 @@ void *Core::GetData( std::string key )
     }
 }
 
+bool Core::isSuspended(void)
+{
+    lock_guard<mutex> lock(d->AccessMutex);
+
+    return (d->df_suspend_depth > 0 && d->df_suspend_thread == this_thread::get_id());
+}
+
 void Core::Suspend()
 {
     auto tid = this_thread::get_id();
@@ -861,12 +873,8 @@ int Core::TileUpdate()
 // should always be from simulation thread!
 int Core::Update()
 {
-    if(!started)
-        Init();
     if(errorstate)
         return -1;
-
-    color_ostream_proxy out(con);
 
     // Pretend this thread has suspended the core in the usual way
     {
@@ -876,6 +884,25 @@ int Core::Update()
         d->df_suspend_thread = this_thread::get_id();
         d->df_suspend_depth = 1000;
     }
+
+    // Initialize the core
+    bool first_update = false;
+
+    if(!started)
+    {
+        first_update = true;
+        Init();
+        if(errorstate)
+            return -1;
+        Lua::Core::Reset(con, "core init");
+    }
+
+    color_ostream_proxy out(con);
+
+    Lua::Core::Reset(out, "DF code execution");
+
+    if (first_update)
+        plug_mgr->OnStateChange(out, SC_CORE_INITIALIZED);
 
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
@@ -964,6 +991,8 @@ int Core::Update()
         assert(d->df_suspend_depth == 0);
         // destroy condition
         delete nc;
+        // check lua stack depth
+        Lua::Core::Reset(con, "suspend");
     }
 
     return 0;

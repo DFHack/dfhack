@@ -663,6 +663,14 @@ Job module
 Units module
 ------------
 
+* ``dfhack.units.getPosition(unit)``
+
+  Returns true *x,y,z* of the unit; may be not equal to unit.pos if caged.
+
+* ``dfhack.units.getContainer(unit)``
+
+  Returns the container (cage) item or *nil*.
+
 * ``dfhack.units.setNickname(unit,nick)``
 
   Sets the unit's nickname properly.
@@ -687,6 +695,10 @@ Units module
 
   The unit is capable of rational action, i.e. not dead, insane or zombie.
 
+* ``dfhack.units.clearBurrowMembers(burrow)``
+
+  Removes all units from the burrow.
+
 * ``dfhack.units.isInBurrow(unit,burrow)``
 
   Checks if the unit is in the burrow.
@@ -701,7 +713,7 @@ Items module
 
 * ``dfhack.items.getPosition(item)``
 
-  Returns true *x,y,z* of the item.
+  Returns true *x,y,z* of the item; may be not equal to item.pos if in inventory.
 
 * ``dfhack.items.getOwner(item)``
 
@@ -768,6 +780,10 @@ Maps module
 
   Returns a table of map block pointers.
 
+* ``dfhack.maps.clearBurrowTiles(burrow)``
+
+  Removes all tiles from the burrow.
+
 * ``dfhack.maps.isBurrowTile(burrow,tile_coord)``
 
   Checks if the tile is in burrow.
@@ -783,3 +799,17 @@ Maps module
 * ``dfhack.maps.setBlockBurrowTile(burrow,block,x,y,enable)``
 
   Adds or removes the tile from the burrow. Returns *false* if invalid coords.
+
+
+Core interpreter context
+========================
+
+While plugins can create any number of interpreter instances,
+there is one special context managed by dfhack core. It is the
+only context that can receive events from DF and plugins.
+
+Core context specific functions:
+
+* ``dfhack.is_core_context``
+
+  Boolean value; *true* in the core context.

@@ -32,10 +32,6 @@ distribution.
 #include "DataIdentity.h"
 #include "LuaWrapper.h"
 
-#ifndef BUILD_DFHACK_LIB
-#error Due to export issues this header is internal to the main library.
-#endif
-
 namespace df {
     // A very simple and stupid implementation of some stuff from boost
     template<class U, class V> struct is_same_type { static const bool value = false; };
@@ -50,7 +46,7 @@ namespace df {
     template<class T, bool isvoid = is_same_type<typename return_type<T>::type,void>::value>
     struct function_wrapper {};
 
-    class cur_lua_ostream_argument {
+    class DFHACK_EXPORT cur_lua_ostream_argument {
         DFHack::color_ostream *out;
     public:
         cur_lua_ostream_argument(lua_State *state);
@@ -165,15 +161,15 @@ INSTANTIATE_WRAPPERS(5, (A1,A2,A3,A4,A5), (vA1,vA2,vA3,vA4,vA5),
     public:
         typedef function_wrapper<T> wrapper;
 
-        function_identity(T ptr)
-            : function_identity_base(wrapper::num_args), ptr(ptr) {};
+        function_identity(T ptr, bool vararg)
+            : function_identity_base(wrapper::num_args, vararg), ptr(ptr) {};
 
         virtual void invoke(lua_State *state, int base) { wrapper::execute(state, base, ptr); }
     };
 
     template<class T>
-    inline function_identity_base *wrap_function(T ptr) {
+    inline function_identity_base *wrap_function(T ptr, bool vararg = false) {
         // bah, but didn't have any idea how to allocate statically
-        return new function_identity<T>(ptr);
+        return new function_identity<T>(ptr, vararg);
     }
 }

@@ -30,6 +30,7 @@ distribution.
 #include <map>
 
 #include "DataDefs.h"
+#include "PluginManager.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -156,7 +157,7 @@ namespace DFHack { namespace LuaWrapper {
      * Verify that the object is a DF ref with UPVAL_METATABLE.
      * If everything ok, extract the address.
      */
-    uint8_t *get_object_addr(lua_State *state, int obj, int field, const char *mode);
+    DFHACK_EXPORT uint8_t *get_object_addr(lua_State *state, int obj, int field, const char *mode);
 
     bool is_type_compatible(lua_State *state, type_identity *type1, int meta1,
                             type_identity *type2, int meta2, bool exact_equal);
@@ -221,15 +222,19 @@ namespace DFHack { namespace LuaWrapper {
      */
     void AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, type_identity *ienum);
 
-    struct FunctionReg {
-        const char *name;
-        function_identity_base *identity;
-    };
+    /**
+     * Push a closure invoking the given function.
+     */
+    void PushFunctionWrapper(lua_State *state, int meta_idx,
+                             const char *name, function_identity_base *fun);
 
     /**
      * Wrap functions and add them to the table on the top of the stack.
      */
+    using DFHack::FunctionReg;
     void SetFunctionWrappers(lua_State *state, const FunctionReg *reg);
+
+    int method_wrapper_core(lua_State *state, function_identity_base *id);
 
     void IndexStatics(lua_State *state, int meta_idx, int ftable_idx, struct_identity *pstruct);
 

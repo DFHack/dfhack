@@ -39,13 +39,17 @@ namespace DFHack
 {
     class DFHACK_EXPORT function_identity_base : public type_identity {
         int num_args;
+        bool vararg;
 
     public:
-        function_identity_base(int num_args) : type_identity(0), num_args(num_args) {};
+        function_identity_base(int num_args, bool vararg = false)
+            : type_identity(0), num_args(num_args), vararg(vararg) {};
 
         virtual identity_type type() { return IDTYPE_FUNCTION; }
 
         int getNumArgs() { return num_args; }
+        bool adjustArgs() { return vararg; }
+
         std::string getFullName() { return "function"; }
 
         virtual void invoke(lua_State *state, int base) = 0;
@@ -160,8 +164,6 @@ namespace DFHack
     };
 }
 
-// Due to export issues, this stuff can only work in the main dll
-#ifdef BUILD_DFHACK_LIB
 namespace df
 {
     using DFHack::function_identity_base;
@@ -171,7 +173,7 @@ namespace df
     using DFHack::ptr_container_identity;
     using DFHack::bit_container_identity;
 
-    class number_identity_base : public primitive_identity {
+    class DFHACK_EXPORT number_identity_base : public primitive_identity {
         const char *name;
 
     public:
@@ -197,7 +199,7 @@ namespace df
         virtual void write(void *ptr, double val) { *(T*)ptr = T(val); }
     };
 
-    class bool_identity : public primitive_identity {
+    class DFHACK_EXPORT bool_identity : public primitive_identity {
     public:
         bool_identity() : primitive_identity(sizeof(bool)) {};
 
@@ -207,7 +209,7 @@ namespace df
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 
-    class ptr_string_identity : public primitive_identity {
+    class DFHACK_EXPORT ptr_string_identity : public primitive_identity {
     public:
         ptr_string_identity() : primitive_identity(sizeof(char*)) {};
 
@@ -217,7 +219,7 @@ namespace df
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 
-    class stl_string_identity : public DFHack::constructed_identity {
+    class DFHACK_EXPORT stl_string_identity : public DFHack::constructed_identity {
     public:
         stl_string_identity()
             : constructed_identity(sizeof(std::string), &allocator_fn<std::string>)
@@ -233,7 +235,7 @@ namespace df
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 
-    class stl_ptr_vector_identity : public ptr_container_identity {
+    class DFHACK_EXPORT stl_ptr_vector_identity : public ptr_container_identity {
     public:
         typedef std::vector<void*> container;
 
@@ -276,6 +278,8 @@ namespace df
         }
     };
 
+// Due to export issues, this stuff can only work in the main dll
+#ifdef BUILD_DFHACK_LIB
     class buffer_container_identity : public container_identity {
         int size;
 
@@ -370,8 +374,9 @@ namespace df
             ((container*)ptr)->set(idx, val);
         }
     };
+#endif
 
-    class stl_bit_vector_identity : public bit_container_identity {
+    class DFHACK_EXPORT stl_bit_vector_identity : public bit_container_identity {
     public:
         typedef std::vector<bool> container;
 
@@ -400,6 +405,7 @@ namespace df
         }
     };
 
+#ifdef BUILD_DFHACK_LIB
     template<class T>
     class enum_list_attr_identity : public container_identity {
     public:
@@ -421,9 +427,10 @@ namespace df
             return (void*)&((container*)ptr)->items[idx];
         }
     };
+#endif
 
 #define NUMBER_IDENTITY_TRAITS(type) \
-    template<> struct identity_traits<type> { \
+    template<> struct DFHACK_EXPORT identity_traits<type> { \
         static number_identity<type> identity; \
         static number_identity_base *get() { return &identity; } \
     };
@@ -439,37 +446,37 @@ namespace df
     NUMBER_IDENTITY_TRAITS(uint64_t);
     NUMBER_IDENTITY_TRAITS(float);
 
-    template<> struct identity_traits<bool> {
+    template<> struct DFHACK_EXPORT identity_traits<bool> {
         static bool_identity identity;
         static bool_identity *get() { return &identity; }
     };
 
-    template<> struct identity_traits<std::string> {
+    template<> struct DFHACK_EXPORT identity_traits<std::string> {
         static stl_string_identity identity;
         static stl_string_identity *get() { return &identity; }
     };
 
-    template<> struct identity_traits<char*> {
+    template<> struct DFHACK_EXPORT identity_traits<char*> {
         static ptr_string_identity identity;
         static ptr_string_identity *get() { return &identity; }
     };
 
-    template<> struct identity_traits<const char*> {
+    template<> struct DFHACK_EXPORT identity_traits<const char*> {
         static ptr_string_identity identity;
         static ptr_string_identity *get() { return &identity; }
     };
 
-    template<> struct identity_traits<void*> {
+    template<> struct DFHACK_EXPORT identity_traits<void*> {
         static pointer_identity identity;
         static pointer_identity *get() { return &identity; }
     };
 
-    template<> struct identity_traits<std::vector<void*> > {
+    template<> struct DFHACK_EXPORT identity_traits<std::vector<void*> > {
         static stl_ptr_vector_identity identity;
         static stl_ptr_vector_identity *get() { return &identity; }
     };
 
-    template<> struct identity_traits<std::vector<bool> > {
+    template<> struct DFHACK_EXPORT identity_traits<std::vector<bool> > {
         static stl_bit_vector_identity identity;
         static stl_bit_vector_identity *get() { return &identity; }
     };
@@ -478,14 +485,17 @@ namespace df
 
     // Container declarations
 
+#ifdef BUILD_DFHACK_LIB
     template<class Enum, class FT> struct identity_traits<enum_field<Enum,FT> > {
         static primitive_identity *get();
     };
+#endif
 
     template<class T> struct identity_traits<T *> {
         static pointer_identity *get();
     };
 
+#ifdef BUILD_DFHACK_LIB
     template<class T, int sz> struct identity_traits<T [sz]> {
         static container_identity *get();
     };
@@ -493,11 +503,13 @@ namespace df
     template<class T> struct identity_traits<std::vector<T> > {
         static container_identity *get();
     };
+#endif
 
     template<class T> struct identity_traits<std::vector<T*> > {
         static stl_ptr_vector_identity *get();
     };
 
+#ifdef BUILD_DFHACK_LIB
     template<class T> struct identity_traits<std::deque<T> > {
         static container_identity *get();
     };
@@ -518,13 +530,16 @@ namespace df
     template<class T> struct identity_traits<enum_list_attr<T> > {
         static container_identity *get();
     };
+#endif
 
     // Container definitions
 
+#ifdef BUILD_DFHACK_LIB
     template<class Enum, class FT>
     inline primitive_identity *identity_traits<enum_field<Enum,FT> >::get() {
         return identity_traits<FT>::get();
     }
+#endif
 
     template<class T>
     inline pointer_identity *identity_traits<T *>::get() {
@@ -532,6 +547,7 @@ namespace df
         return &identity;
     }
 
+#ifdef BUILD_DFHACK_LIB
     template<class T, int sz>
     inline container_identity *identity_traits<T [sz]>::get() {
         static buffer_container_identity identity(sz, identity_traits<T>::get());
@@ -544,6 +560,7 @@ namespace df
         static stl_container_identity<container> identity("vector", identity_traits<T>::get());
         return &identity;
     }
+#endif
 
     template<class T>
     inline stl_ptr_vector_identity *identity_traits<std::vector<T*> >::get() {
@@ -551,6 +568,7 @@ namespace df
         return &identity;
     }
 
+#ifdef BUILD_DFHACK_LIB
     template<class T>
     inline container_identity *identity_traits<std::deque<T> >::get() {
         typedef std::deque<T> container;
@@ -576,5 +594,5 @@ namespace df
         static enum_list_attr_identity<T> identity(identity_traits<T>::get());
         return &identity;
     }
-}
 #endif
+}

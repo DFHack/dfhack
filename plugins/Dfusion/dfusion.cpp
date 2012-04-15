@@ -121,6 +121,13 @@ command_result lua_run_file (color_ostream &out, std::vector <std::string> &para
 }
 command_result lua_run (color_ostream &out, std::vector <std::string> &parameters)
 {
+    if (!parameters.empty() && parameters[0] == "--core-context")
+    {
+        CoreSuspender suspend;
+        Lua::InterpreterLoop(out, Lua::Core::State);
+        return CR_OK;
+    }
+
 	mymutex->lock();
 	lua::state s=lua::glua::Get();
 

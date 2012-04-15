@@ -55,6 +55,10 @@ function mkmodule(module,env)
             error("Not a table in package.loaded["..module.."]")
         end
     end
+    local plugname = string.match(module,'^plugins%.(%w+)$')
+    if plugname then
+        dfhack.open_plugin(pkg,plugname)
+    end
     setmetatable(pkg, { __index = (env or _G) })
     return pkg
 end
@@ -99,6 +103,10 @@ function xyz2pos(x,y,z)
     else
         return {x=-30000,y=-30000,z=-30000}
     end
+end
+
+function dfhack.event:__tostring()
+    return "<event>"
 end
 
 function dfhack.persistent:__tostring()

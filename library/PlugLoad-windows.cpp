@@ -28,7 +28,7 @@ distribution.
 #include <stdint.h>
 #include <vector>
 #include <string>
-#include "Core.h"
+#include "PluginManager.h"
 #include "Hooks.h"
 #include <stdio.h>
 

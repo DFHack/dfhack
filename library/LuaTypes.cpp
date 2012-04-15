@@ -1030,7 +1030,15 @@ static int meta_global_newindex(lua_State *state)
 static int meta_call_function(lua_State *state)
 {
     auto id = (function_identity_base*)lua_touserdata(state, UPVAL_CONTAINER_ID);
-    if (lua_gettop(state) != id->getNumArgs())
+
+    return method_wrapper_core(state, id);
+}
+
+int LuaWrapper::method_wrapper_core(lua_State *state, function_identity_base *id)
+{
+    if (id->adjustArgs())
+        lua_settop(state, id->getNumArgs());
+    else if (lua_gettop(state) != id->getNumArgs())
         field_error(state, UPVAL_METHOD_NAME, "invalid argument count", "invoke");
 
     try {
@@ -1050,10 +1058,10 @@ static int meta_call_function(lua_State *state)
 }
 
 /**
- * Create a closure invoking the given function, and add it to the field table.
+ * Push a closure invoking the given function.
  */
-static void AddMethodWrapper(lua_State *state, int meta_idx, int field_idx,
-                             const char *name, function_identity_base *fun)
+void LuaWrapper::PushFunctionWrapper(lua_State *state, int meta_idx,
+                                     const char *name, function_identity_base *fun)
 {
     lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPETABLE_TOKEN);
     if (meta_idx)
@@ -1063,7 +1071,15 @@ static void AddMethodWrapper(lua_State *state, int meta_idx, int field_idx,
     lua_pushfstring(state, "%s()", name);
     lua_pushlightuserdata(state, fun);
     lua_pushcclosure(state, meta_call_function, 4);
+}
 
+/**
+ * Create a closure invoking the given function, and add it to the field table.
+ */
+static void AddMethodWrapper(lua_State *state, int meta_idx, int field_idx,
+                             const char *name, function_identity_base *fun)
+{
+    PushFunctionWrapper(state, meta_idx, name, fun);
     lua_setfield(state, field_idx, name);
 }
 

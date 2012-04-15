@@ -118,7 +118,7 @@ struct Core::Private
     }
 };
 
-void cheap_tokenise(string const& input, vector<string> &output)
+void Core::cheap_tokenise(string const& input, vector<string> &output)
 {
     string *cur = NULL;
 
@@ -177,7 +177,7 @@ void fHKthread(void * iodata)
             color_ostream_proxy out(core->getConsole());
 
             vector <string> args;
-            cheap_tokenise(stuff, args);
+            Core::cheap_tokenise(stuff, args);
             if (args.empty()) {
                 out.printerr("Empty hotkey command.\n");
                 continue;
@@ -218,7 +218,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
     {
         // cut the input into parts
         vector <string> parts;
-        cheap_tokenise(command,parts);
+        Core::cheap_tokenise(command,parts);
         if(parts.size() == 0)
         {
             clueless_counter ++;

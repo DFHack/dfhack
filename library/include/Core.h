@@ -135,6 +135,8 @@ namespace DFHack
 
         PluginManager *getPluginManager() { return plug_mgr; }
 
+        static void cheap_tokenise(std::string const& input, std::vector<std::string> &output);
+
     private:
         DFHack::Console con;
 

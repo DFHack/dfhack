@@ -1309,15 +1309,9 @@ command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::building
         return CR_WRONG_USAGE;
     }
 
-    // try to get a fresh civzone ref
-    //df::general_ref_building_civzone_assignedst * ref = createCivzoneRef();
-    //if(!ref)
-    //{
-    //    out << "Could not find a clonable activity zone reference" << endl
-    //        << "You need to pen/pasture/pit at least one creature" << endl
-    //        << "before using 'assign' for the first time." << endl;
-    //    return CR_WRONG_USAGE;
-    //}
+    // don't assign owned pets to a cage. the owner will release them, resulting into infinite hauling (df bug)
+    if(unit->relations.pet_owner_id != -1)
+        return CR_OK;
         
     // check if unit is already pastured or caged, remove refs where necessary
     bool cleared_old = unassignUnitFromBuilding(unit);
@@ -1955,12 +1949,11 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     }
 
     // search for trained and untrained is exclusive, so drop the flags if both are specified
-    // (there is no trained filter, since it doesn't make much sense to throw war and hunting pets together)
-    //if(find_trained && find_untrained)
-    //{
-    //    find_trained=false;
-    //    find_female=false;
-    //}
+    if(find_trained && find_not_trained)
+    {
+        find_trained=false;
+        find_not_trained=false;
+    }
 
     // search for grazer and nograzer is exclusive, so drop the flags if both are specified
     if(find_grazer && find_not_grazer)
@@ -1968,6 +1961,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         find_grazer=false;
         find_not_grazer=false;
     }
+
+    // todo: maybe add this type of sanity check for all remaining bools, maybe not (lots of code just to avoid parsing dumb input)
 
     // try to cope with user dumbness
     if(target_agemin > target_agemax)
@@ -2129,7 +2124,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     unitInfo(out, unit, verbose);
                 }
                 else if(building_assign)
-                {            
+                {
                     command_result result = assignUnitToBuilding(out, unit, building, verbose);
                     if(result != CR_OK)
                         return result;

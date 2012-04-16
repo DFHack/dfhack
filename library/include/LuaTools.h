@@ -140,6 +140,32 @@ namespace DFHack {namespace Lua {
     }
 
     /**
+     * Check if the status is a success, i.e. LUA_OK or LUA_YIELD.
+     */
+    inline bool IsSuccess(int status) {
+        return (status == LUA_OK || status == LUA_YIELD);
+    }
+
+    // Internal helper
+    template<int (*cb)(lua_State*,int,int)>
+    int TailPCallK_Thunk(lua_State *state) {
+        int tmp;
+        int rv = lua_getctx(state, &tmp);
+        return cb(state, rv, tmp);
+    }
+
+    /**
+     * A utility for using the restartable pcall feature more conveniently;
+     * specifically, the callback is called with the same kind of arguments
+     * in both yield and non-yield case.
+     */
+    template<int (*cb)(lua_State*,int,int)>
+    int TailPCallK(lua_State *state, int narg, int nret, int errfun, int ctx) {
+        int rv = lua_pcallk(state, narg, nret, errfun, ctx, &TailPCallK_Thunk<cb>);
+        return cb(state, rv, ctx);
+    }
+
+    /**
      * Invoke lua function via pcall. Returns true if success.
      * If an error is signalled, and perr is true, it is printed and popped from the stack.
      */

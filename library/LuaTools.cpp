@@ -467,29 +467,24 @@ static bool do_finish_pcall(lua_State *L, bool success, int base = 1, int space 
     }
 }
 
-static int finish_dfhack_safecall (lua_State *L, bool success)
-{
-    success = do_finish_pcall(L, success);
+namespace {
+    int safecall_cont(lua_State *L, int status, int)
+    {
+        bool success = do_finish_pcall(L, Lua::IsSuccess(status));
 
-    if (!success)
-        report_error(L);
+        if (!success)
+            report_error(L);
 
-    return lua_gettop(L);
+        return lua_gettop(L);
+    }
 }
 
-static int safecall_cont (lua_State *L)
-{
-    int status = lua_getctx(L, NULL);
-    return finish_dfhack_safecall(L, (status == LUA_YIELD));
-}
-
-static int lua_dfhack_safecall (lua_State *L)
+static int dfhack_safecall (lua_State *L)
 {
     luaL_checkany(L, 1);
     lua_pushcfunction(L, dfhack_onerror);
     lua_insert(L, 1);
-    int status = lua_pcallk(L, lua_gettop(L) - 2, LUA_MULTRET, 1, 0, safecall_cont);
-    return finish_dfhack_safecall(L, (status == LUA_OK));
+    return Lua::TailPCallK<safecall_cont>(L, lua_gettop(L) - 2, LUA_MULTRET, 1, 0);
 }
 
 bool DFHack::Lua::SafeCall(color_ostream &out, lua_State *L, int nargs, int nres, bool perr)
@@ -538,7 +533,7 @@ static int resume_helper(lua_State *L, lua_State *co, int narg, int nres)
     }
     lua_xmove(L, co, narg);
     int status = lua_resume(co, L, narg);
-    if (status == LUA_OK || status == LUA_YIELD)
+    if (Lua::IsSuccess(status))
     {
         int nact = lua_gettop(co);
         if (nres == LUA_MULTRET)
@@ -569,7 +564,7 @@ static int dfhack_coresume (lua_State *L) {
     lua_State *co = lua_tothread(L, 1);
     luaL_argcheck(L, !!co, 1, "coroutine expected");
     int r = resume_helper(L, co, lua_gettop(L) - 1, LUA_MULTRET);
-    bool ok = (r == LUA_OK || r == LUA_YIELD);
+    bool ok = Lua::IsSuccess(r);
     lua_pushboolean(L, ok);
     lua_insert(L, 2);
     return lua_gettop(L) - 1;
@@ -579,7 +574,7 @@ static int dfhack_saferesume (lua_State *L) {
     lua_State *co = lua_tothread(L, 1);
     luaL_argcheck(L, !!co, 1, "coroutine expected");
     int r = resume_helper(L, co, lua_gettop(L) - 1, LUA_MULTRET);
-    bool ok = (r == LUA_OK || r == LUA_YIELD);
+    bool ok = Lua::IsSuccess(r);
     lua_pushboolean(L, ok);
     lua_insert(L, 2);
     if (!ok)
@@ -590,7 +585,7 @@ static int dfhack_saferesume (lua_State *L) {
 static int dfhack_coauxwrap (lua_State *L) {
     lua_State *co = lua_tothread(L, lua_upvalueindex(1));
     int r = resume_helper(L, co, lua_gettop(L), LUA_MULTRET);
-    if (r == LUA_OK || r == LUA_YIELD)
+    if (Lua::IsSuccess(r))
         return lua_gettop(L);
     else
         return lua_error(L);
@@ -620,7 +615,7 @@ int DFHack::Lua::SafeResume(color_ostream &out, lua_State *from, lua_State *thre
 
     int rv = resume_helper(from, thread, nargs, nres);
 
-    if (rv != LUA_OK && rv != LUA_YIELD && perr)
+    if (!Lua::IsSuccess(rv) && perr)
     {
         report_error(from, &out);
         lua_pop(from, 1);
@@ -761,7 +756,7 @@ static int resume_query_loop(color_ostream &out,
 {
     int rv = Lua::SafeResume(out, state, thread, nargs, 2);
 
-    if (rv == LUA_YIELD || rv == LUA_OK)
+    if (Lua::IsSuccess(rv))
     {
         prompt = ifnull(lua_tostring(state, -2), "");
         histfile = ifnull(lua_tostring(state, -1), "");
@@ -906,8 +901,10 @@ static bool do_invoke_cleanup(lua_State *L, int nargs, int errorfun, bool succes
     return success;
 }
 
-static int finish_dfhack_cleanup (lua_State *L, bool success)
+int dfhack_cleanup_cont(lua_State *L, int status, int)
 {
+    bool success = Lua::IsSuccess(status);
+
     int nargs = lua_tointeger(L, 1);
     bool always = lua_toboolean(L, 2);
     int rvbase = 4+nargs;
@@ -948,12 +945,6 @@ static int finish_dfhack_cleanup (lua_State *L, bool success)
     return numret;
 }
 
-static int dfhack_cleanup_cont (lua_State *L)
-{
-    int status = lua_getctx(L, NULL);
-    return finish_dfhack_cleanup(L, (status == LUA_YIELD));
-}
-
 static int dfhack_call_with_finalizer (lua_State *L)
 {
     int nargs = luaL_checkint(L, 1);
@@ -988,8 +979,7 @@ static int dfhack_call_with_finalizer (lua_State *L)
     // Actually invoke
 
     // stack: [nargs] [always] [errorfun] [cleanup fun] [cleanup args...] |rvbase+1:| [fun] [args...]
-    int status = lua_pcallk(L, lua_gettop(L)-rvbase-1, LUA_MULTRET, 3, 0, dfhack_cleanup_cont);
-    return finish_dfhack_cleanup(L, (status == LUA_OK));
+    return Lua::TailPCallK<dfhack_cleanup_cont>(L, lua_gettop(L)-rvbase-1, LUA_MULTRET, 3, 0);
 }
 
 static int lua_dfhack_with_suspend(lua_State *L)
@@ -1034,8 +1024,8 @@ static const luaL_Reg dfhack_funcs[] = {
     { "printerr", lua_dfhack_printerr },
     { "color", lua_dfhack_color },
     { "is_interactive", lua_dfhack_is_interactive },
-    { "lineedit", lua_dfhack_lineedit },
-    { "safecall", lua_dfhack_safecall },
+    { "lineedit", dfhack_lineedit },
+    { "safecall", dfhack_safecall },
     { "saferesume", dfhack_saferesume },
     { "onerror", dfhack_onerror },
     { "call_with_finalizer", dfhack_call_with_finalizer },

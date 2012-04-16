@@ -149,12 +149,13 @@ function dfhack.interpreter(prompt,hfile,env)
 
     local prompt_str = "["..(prompt or 'lua').."]# "
     local prompt_env = {}
+	local t_prompt
     local vcnt = 1
 
     setmetatable(prompt_env, { __index = env or _G })
-
+	local cmdlinelist={}
     while true do
-        local cmdline = dfhack.lineedit(prompt_str, hfile)
+        local cmdline = dfhack.lineedit(t_prompt or prompt_str, hfile)
 
         if cmdline == nil or cmdline == 'quit' then
             break
@@ -164,12 +165,23 @@ function dfhack.interpreter(prompt,hfile,env)
             if pfix == '!' or pfix == '=' then
                 cmdline = 'return '..string.sub(cmdline,2)
             end
-
-            local code,err = load(cmdline, '=(interactive)', 't', prompt_env)
+			table.insert(cmdlinelist,cmdline)
+            local code,err = load(table.concat(cmdlinelist,'\n'), '=(interactive)', 't', prompt_env)
 
             if code == nil then
-                dfhack.printerr(err)
+				if err:sub(-5)=="<eof>" then
+					t_prompt="[cont]"
+					
+				else
+					dfhack.printerr(err)
+					cmdlinelist={}
+					t_prompt=nil
+				end
             else
+			
+				cmdlinelist={}
+				t_prompt=nil
+				
                 local data = table.pack(safecall(code))
 
                 if data[1] and data.n > 1 then

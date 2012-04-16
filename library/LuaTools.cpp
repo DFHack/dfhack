@@ -70,6 +70,10 @@ inline void AssertCoreSuspend(lua_State *state)
     assert(!Lua::IsCoreContext(state) || DFHack::Core::getInstance().isSuspended());
 }
 
+/*
+ * Public DF object reference handling API
+ */
+
 void DFHack::Lua::PushDFObject(lua_State *state, type_identity *type, void *ptr)
 {
     push_object_internal(state, type, ptr, false);
@@ -109,6 +113,10 @@ void *DFHack::Lua::CheckDFObject(lua_State *state, type_identity *type, int val_
 
     return rv;
 }
+
+/*
+ * Console I/O wrappers
+ */
 
 static int DFHACK_OSTREAM_TOKEN = 0;
 
@@ -263,6 +271,10 @@ static int lua_dfhack_lineedit(lua_State *S)
     }
 }
 
+/*
+ * Exception handling
+ */
+
 static int DFHACK_EXCEPTION_META_TOKEN = 0;
 
 static void error_tostring(lua_State *L, bool keep_old = false)
@@ -304,8 +316,21 @@ static void report_error(lua_State *L, color_ostream *out = NULL)
     lua_pop(L, 1);
 }
 
-static bool convert_to_exception(lua_State *L)
+static bool convert_to_exception(lua_State *L, int slevel, lua_State *thread = NULL)
 {
+    if (!thread)
+        thread = L;
+
+    if (thread == L)
+        lua_pushthread(L);
+    else
+    {
+        lua_pushthread(thread);
+        lua_xmove(thread, L, 1);
+    }
+
+    lua_swap(L);
+
     int base = lua_gettop(L);
 
     bool force_unknown = false;
@@ -316,13 +341,33 @@ static bool convert_to_exception(lua_State *L)
         bool is_exception = lua_rawequal(L, -1, -2);
         lua_settop(L, base);
 
-        // If it is an exception, return as is
         if (is_exception)
-            return false;
+        {
+            // If it is an exception from the same thread, return as is
+            lua_getfield(L, base, "thread");
+            bool same_thread = lua_rawequal(L, -1, base-1);
+            lua_settop(L, base);
 
-        force_unknown = true;
+            if (same_thread)
+            {
+                lua_remove(L, base-1);
+                return false;
+            }
+
+            // Create a new exception for this thread
+            lua_newtable(L);
+            luaL_where(L, 1);
+            lua_pushstring(L, "coroutine resume failed");
+            lua_concat(L, 2);
+            lua_setfield(L, -2, "message");
+            lua_swap(L);
+            lua_setfield(L, -2, "cause");
+        }
+        else
+            force_unknown = true;
     }
 
+    // Promote non-table to table, and do some sanity checks
     if (!lua_istable(L, base) || force_unknown)
     {
         lua_newtable(L);
@@ -352,6 +397,10 @@ static bool convert_to_exception(lua_State *L)
 
     lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_EXCEPTION_META_TOKEN);
     lua_setmetatable(L, base);
+    lua_swap(L);
+    lua_setfield(L, -2, "thread");
+    luaL_traceback(L, thread, NULL, slevel);
+    lua_setfield(L, -2, "stacktrace");
     return true;
 }
 
@@ -360,13 +409,7 @@ static int dfhack_onerror(lua_State *L)
     luaL_checkany(L, 1);
     lua_settop(L, 1);
 
-    bool changed = convert_to_exception(L);
-    if (!changed)
-        return 1;
-
-    luaL_traceback(L, L, NULL, 1);
-    lua_setfield(L, 1, "stacktrace");
-
+    convert_to_exception(L, 1);
     return 1;
 }
 
@@ -403,14 +446,8 @@ static void push_simple_error(lua_State *L, const char *str)
 {
     lua_pushstring(L, str);
 
-    if (lua_checkstack(L, 5))
-        convert_to_exception(L);
-
     if (lua_checkstack(L, LUA_MINSTACK))
-    {
-        luaL_traceback(L, L, NULL, 1);
-        lua_setfield(L, -2, "stacktrace");
-    }
+        convert_to_exception(L, 0);
 }
 
 static bool do_finish_pcall(lua_State *L, bool success, int base = 1, int space = 2)
@@ -480,6 +517,134 @@ bool DFHack::Lua::SafeCall(color_ostream &out, lua_State *L, int nargs, int nres
 
     return ok;
 }
+
+// Copied from lcorolib.c, with error handling modifications
+static int resume_helper(lua_State *L, lua_State *co, int narg, int nres)
+{
+    if (!co) {
+        lua_pop(L, narg);
+        push_simple_error(L, "coroutine expected in resume");
+        return LUA_ERRRUN;
+    }
+    if (!lua_checkstack(co, narg)) {
+        lua_pop(L, narg);
+        push_simple_error(L, "too many arguments to resume");
+        return LUA_ERRRUN;
+    }
+    if (lua_status(co) == LUA_OK && lua_gettop(co) == 0) {
+        lua_pop(L, narg);
+        push_simple_error(L, "cannot resume dead coroutine");
+        return LUA_ERRRUN;
+    }
+    lua_xmove(L, co, narg);
+    int status = lua_resume(co, L, narg);
+    if (status == LUA_OK || status == LUA_YIELD)
+    {
+        int nact = lua_gettop(co);
+        if (nres == LUA_MULTRET)
+            nres = nact;
+        else if (nres < nact)
+            lua_settop(co, nact = nres);
+        if (!lua_checkstack(L, nres + 1)) {
+            lua_settop(co, 0);
+            push_simple_error(L, "too many results to resume");
+            return LUA_ERRRUN;
+        }
+        int ttop = lua_gettop(L) + nres;
+        lua_xmove(co, L, nact);
+        lua_settop(L, ttop);
+    }
+    else
+    {
+        lua_xmove(co, L, 1);
+
+        // A cross-thread version of dfhack_onerror
+        if (lua_checkstack(L, LUA_MINSTACK))
+            convert_to_exception(L, 0, co);
+    }
+    return status;
+}
+
+static int dfhack_coresume (lua_State *L) {
+    lua_State *co = lua_tothread(L, 1);
+    luaL_argcheck(L, !!co, 1, "coroutine expected");
+    int r = resume_helper(L, co, lua_gettop(L) - 1, LUA_MULTRET);
+    bool ok = (r == LUA_OK || r == LUA_YIELD);
+    lua_pushboolean(L, ok);
+    lua_insert(L, 2);
+    return lua_gettop(L) - 1;
+}
+
+static int dfhack_saferesume (lua_State *L) {
+    lua_State *co = lua_tothread(L, 1);
+    luaL_argcheck(L, !!co, 1, "coroutine expected");
+    int r = resume_helper(L, co, lua_gettop(L) - 1, LUA_MULTRET);
+    bool ok = (r == LUA_OK || r == LUA_YIELD);
+    lua_pushboolean(L, ok);
+    lua_insert(L, 2);
+    if (!ok)
+        report_error(L);
+    return lua_gettop(L) - 1;
+}
+
+static int dfhack_coauxwrap (lua_State *L) {
+    lua_State *co = lua_tothread(L, lua_upvalueindex(1));
+    int r = resume_helper(L, co, lua_gettop(L), LUA_MULTRET);
+    if (r == LUA_OK || r == LUA_YIELD)
+        return lua_gettop(L);
+    else
+        return lua_error(L);
+}
+
+static int dfhack_cowrap (lua_State *L) {
+    luaL_checktype(L, 1, LUA_TFUNCTION);
+    lua_settop(L, 1);
+    Lua::NewCoroutine(L);
+    lua_pushcclosure(L, dfhack_coauxwrap, 1);
+    return 1;
+}
+
+lua_State *DFHack::Lua::NewCoroutine(lua_State *L) {
+    lua_State *NL = lua_newthread(L);
+    lua_swap(L);
+    lua_xmove(L, NL, 1); /* move function from L to NL */
+    return NL;
+}
+
+int DFHack::Lua::SafeResume(color_ostream &out, lua_State *from, lua_State *thread, int nargs, int nres, bool perr)
+{
+    AssertCoreSuspend(from);
+
+    color_ostream *cur_out = Lua::GetOutput(from);
+    set_dfhack_output(from, &out);
+
+    int rv = resume_helper(from, thread, nargs, nres);
+
+    if (rv != LUA_OK && rv != LUA_YIELD && perr)
+    {
+        report_error(from, &out);
+        lua_pop(from, 1);
+    }
+
+    set_dfhack_output(from, cur_out);
+
+    return rv;
+}
+
+int DFHack::Lua::SafeResume(color_ostream &out, lua_State *from, int nargs, int nres, bool perr)
+{
+    int base = lua_gettop(from) - nargs;
+    lua_State *thread = lua_tothread(from, base);
+
+    int rv = SafeResume(out, from, thread, nargs, nres, perr);
+
+    lua_remove(from, base);
+    return rv;
+}
+
+/*
+ * Module loading
+ */
 
 static int DFHACK_LOADED_TOKEN = 0;
 
@@ -586,29 +751,28 @@ bool DFHack::Lua::SafeCallString(color_ostream &out, lua_State *state, const std
     return Lua::SafeCall(out, state, nargs, nres, perr);
 }
 
+/*
+ * Coroutine interactive query loop
+ */
+
 static int resume_query_loop(color_ostream &out,
-                             lua_State *thread, lua_State *state, bool start,
+                             lua_State *thread, lua_State *state, int nargs,
                              std::string &prompt, std::string &histfile)
 {
-    color_ostream *cur_out = Lua::GetOutput(state);
-    set_dfhack_output(state, &out);
-
-    int rv = lua_resume(thread, state, lua_gettop(thread)-(start?1:0));
-
-    set_dfhack_output(state, cur_out);
+    int rv = Lua::SafeResume(out, state, thread, nargs, 2);
 
     if (rv == LUA_YIELD || rv == LUA_OK)
     {
-        lua_settop(thread, 2);
-        prompt = ifnull(lua_tostring(thread, 1), "");
-        histfile = ifnull(lua_tostring(thread, 2), "");
+        prompt = ifnull(lua_tostring(state, -2), "");
+        histfile = ifnull(lua_tostring(state, -1), "");
+        lua_pop(state, 2);
     }
 
     return rv;
 }
 
 bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
-                                   bool (*init)(color_ostream&, lua_State*, lua_State*, void*),
+                                   bool (*init)(color_ostream&, lua_State*, void*),
                                    void *arg)
 {
     if (!out.is_console())
@@ -630,18 +794,19 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
         CoreSuspender suspend;
 
         int base = lua_gettop(state);
-        thread = lua_newthread(state);
 
-        if (!init(out, state, thread, arg))
+        if (!init(out, state, arg))
         {
             lua_settop(state, base);
             return false;
         }
 
-        lua_settop(state, base+1);
+        lua_pushvalue(state, base+1);
+        lua_remove(state, base+1);
+        thread = Lua::NewCoroutine(state);
         lua_rawsetp(state, LUA_REGISTRYINDEX, thread);
 
-        rv = resume_query_loop(out, thread, state, true, prompt, histfile);
+        rv = resume_query_loop(out, thread, state, lua_gettop(state)-base, prompt, histfile);
     }
 
     while (rv == LUA_YIELD)
@@ -668,10 +833,8 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
         {
             CoreSuspender suspend;
 
-            lua_settop(thread, 0);
-            lua_pushlstring(thread, curline.data(), curline.size());
-
-            rv = resume_query_loop(out, thread, state, false, prompt, histfile);
+            lua_pushlstring(state, curline.data(), curline.size());
+            rv = resume_query_loop(out, thread, state, 1, prompt, histfile);
         }
     }
 
@@ -680,20 +843,6 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
 
     {
         CoreSuspender suspend;
-
-        if (rv != LUA_OK)
-        {
-            lua_xmove(thread, state, 1);
-
-            if (convert_to_exception(state))
-            {
-                luaL_traceback(state, thread, NULL, 1);
-                lua_setfield(state, -2, "stacktrace");
-            }
-
-            report_error(state, &out);
-            lua_pop(state, 1);
-        }
 
         lua_pushnil(state);
         lua_rawsetp(state, LUA_REGISTRYINDEX, thread);
@@ -709,15 +858,14 @@ namespace {
     };
 }
 
-static bool init_interpreter(color_ostream &out, lua_State *state, lua_State *thread, void *info)
+static bool init_interpreter(color_ostream &out, lua_State *state, void *info)
 {
     auto args = (InterpreterArgs*)info;
     lua_getglobal(state, "dfhack");
     lua_getfield(state, -1, "interpreter");
+    lua_remove(state, -2);
     lua_pushstring(state, args->prompt);
     lua_pushstring(state, args->hfile);
-    lua_xmove(state, thread, 3);
-    lua_pop(state, 1);
     return true;
 }
 
@@ -888,10 +1036,17 @@ static const luaL_Reg dfhack_funcs[] = {
     { "is_interactive", lua_dfhack_is_interactive },
     { "lineedit", lua_dfhack_lineedit },
     { "safecall", lua_dfhack_safecall },
+    { "saferesume", dfhack_saferesume },
     { "onerror", dfhack_onerror },
     { "call_with_finalizer", dfhack_call_with_finalizer },
     { "with_suspend", lua_dfhack_with_suspend },
     { "open_plugin", dfhack_open_plugin },
+    { NULL, NULL }
+};
+
+static const luaL_Reg dfhack_coro_funcs[] = {
+    { "resume", dfhack_coresume },
+    { "wrap", dfhack_cowrap },
     { NULL, NULL }
 };
 
@@ -1075,6 +1230,11 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     lua_getfield(state, -1, "loaded");
     assert(lua_istable(state, -1));
     lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_LOADED_TOKEN);
+    lua_pop(state, 1);
+
+    // replace some coroutine functions
+    lua_getglobal(state, "coroutine");
+    luaL_setfuncs(state, dfhack_coro_funcs, 0);
     lua_pop(state, 1);
 
     // load dfhack.lua

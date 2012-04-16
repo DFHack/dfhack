@@ -146,6 +146,24 @@ namespace DFHack {namespace Lua {
     DFHACK_EXPORT bool SafeCall(color_ostream &out, lua_State *state, int nargs, int nres, bool perr = true);
 
     /**
+     * Pops a function from the top of the stack, and pushes a new coroutine.
+     */
+    DFHACK_EXPORT lua_State *NewCoroutine(lua_State *state);
+
+    /**
+     * Resume the coroutine using nargs values from state from. Results or the error are moved back.
+     * If an error is signalled, and perr is true, it is printed and popped from the stack.
+     * Returns the lua_resume return value.
+     */
+    DFHACK_EXPORT int SafeResume(color_ostream &out, lua_State *from, lua_State *thread, int nargs, int nres, bool perr = true);
+
+    /**
+     * Works just like SafeCall, only expects a coroutine on the stack
+     * instead of a function. Returns the lua_resume return value.
+     */
+    DFHACK_EXPORT int SafeResume(color_ostream &out, lua_State *from, int nargs, int nres, bool perr = true);
+
+    /**
      * Parse code from string with debug_tag and env_idx, then call it using SafeCall.
      * In case of error, it is either left on the stack, or printed like SafeCall does.
      */
@@ -166,10 +184,12 @@ namespace DFHack {namespace Lua {
                                        const char *prompt = NULL, const char *hfile = NULL);
 
     /**
-     * Run an interactive prompt loop. All access to lua is done inside CoreSuspender.
+     * Run an interactive prompt loop. All access to the lua state
+     * is done inside CoreSuspender, while waiting for input happens
+     * without the suspend lock.
      */
     DFHACK_EXPORT bool RunCoreQueryLoop(color_ostream &out, lua_State *state,
-                                        bool (*init)(color_ostream&, lua_State*, lua_State*, void*),
+                                        bool (*init)(color_ostream&, lua_State*, void*),
                                         void *arg);
 
     /**

@@ -812,6 +812,7 @@ Options:
 :unassign:     Unassign selected creature from it's zone.
 :nick:         Mass-assign nicknames, must be followed by the name you want to set.
 :remnick:      Mass-remove nicknames.
+:tocages:      Assign unit(s) to cages inside a pasture.
 :uinfo:        Print info about unit(s). If no filters are set a unit must be selected in the in-game ui.
 :zinfo:        Print info about zone(s). If no filters are set zones under the cursor are listed.
 :verbose:      Print some more info.
@@ -854,6 +855,12 @@ Mass-renaming
 -------------
 Using the 'nick' command you can set the same nickname for multiple units. If used without 'assign', 'all' or 'count' it will rename all units in the current default target zone. Combined with 'assign', 'all' or 'count' (and further optional filters) it will rename units matching the filter conditions. 
 
+Cage zones
+----------
+Using the 'tocages' command you can assign units to a set of cages, for example a room next to your butcher shop(s). They will be spread evenly among available cages to optimize hauling to and butchering from them. For this to work you need to build cages and then place one pen/pasture activity zone above them, covering all cages you want to use. Then use 'zone set' (like with 'assign') and use 'zone tocages filter1 filter2 ...'. 'tocages' overwrites 'assign' because it would make no sense, but can be used together with 'nick' or 'remnick' and all the usual filters.
+
+Examples
+--------
 ``zone assign all own ALPACA minage 3 maxage 10``
    Assign all own alpacas who are between 3 and 10 years old to the selected pasture.
 ``zone assign all own caged grazer nick ineedgrass``
@@ -866,7 +873,9 @@ Using the 'nick' command you can set the same nickname for multiple units. If us
    Throw all useless kids into a pit :)
 ``zone nick donttouchme``
    Nicknames all units in the current default zone or cage to 'donttouchme'. Mostly intended to be used for special pastures or cages which are not marked as rooms you want to protect from autobutcher.
-
+``zone tocages count 50 own tame male not grazer``
+   Stuff up to 50 owned tame male animals who are not grazers into cages built on the current default zone.
+   
 autonestbox
 ===========
 Assigns unpastured female egg-layers to nestbox zones. Requires that you create pen/pasture zones above nestboxes. If the pen is bigger than 1x1 the nestbox must be in the top left corner. Only 1 unit will be assigned per pen, regardless of the size. The age of the units is currently not checked, most birds grow up quite fast. Egglayers who are also grazers will be ignored, since confining them to a 1x1 pasture is not a good idea. When called without options autonestbox will instantly run once.

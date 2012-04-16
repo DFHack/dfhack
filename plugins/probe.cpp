@@ -382,6 +382,10 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
                 out.print(", subtype %i", building.subtype);
             break;
         }
+        if(building.origin->isRoom())
+            out << ", is room";
+        else
+            out << ", not a room";
         out.print("\n");
 
     }

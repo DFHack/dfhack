@@ -347,6 +347,9 @@ command_result changeitem_execute(
         // subtype and mode should match to avoid doing dumb stuff like changing boulders into meat whatever
         // changing a stone cabinet to wood is fine, though. as well as lots of other combinations.
         // still, it's better to make the user activate 'force' if he really wants to.
+
+        // fixme: changing material of cloth items needs more work...
+        // <_Q> cloth items have a "CLOTH" improvement which tells you about the cloth that was used to make it
         
         if(force||(mat_old.subtype == mat_new.subtype && mat_old.mode==mat_new.mode))
         {

@@ -615,7 +615,8 @@ Options
 -------
 :tweak clear-missing:  Remove the missing status from the selected unit. This allows engraving slabs for ghostly, but not yet found, creatures.
 :tweak clear-ghostly:  Remove the ghostly status from the selected unit and mark it as dead. This allows getting rid of bugged ghosts which do not show up in the engraving slab menu at all, even after using clear-missing. It works, but is potentially very dangerous - so use with care. Probably (almost certainly) it does not have the same effects like a proper burial. You've been warned.
-:tweak fixmigrant:     Remove the resident/merchant flag from the selected unit. Intended to fix bugged migrants/traders who stay at the map edge and don't enter your fort. Only works for dwarves (or generally the player's race in modded games). Can be abused to grab caravan merchants, but that might result into weirdness during trading.
+:tweak fixmigrant:     Remove the resident/merchant flag from the selected unit. Intended to fix bugged migrants/traders who stay at the map edge and don't enter your fort. Only works for dwarves (or generally the player's race in modded games). Do NOT abuse this for 'real' caravan merchants (if you really want to kidnap them, use 'tweak makeown' instead, otherwise they will have their clothes set to forbidden etc).
+:tweak makeown:        Force selected unit to become a member of your fort. Can be abused to grab caravan merchants and escorts, even if they don't belong to the player's race. Foreign sentients (humans, elves) can be put to work, but you can't assign rooms to them and they don't show up in DwarfTherapist because the game treats them like pets. Grabbing draft animals from a caravan can result in weirdness (animals go insane or berserk and are not flagged as tame), but you are allowed to mark them for slaughter. Grabbing wagons results in some funny spam, then they are scuttled.
 
 tubefill
 ========
@@ -802,42 +803,45 @@ Export dwarves to RuneSmith-compatible XML.
 
 zone
 ====
-Helps a bit with managing activity zones (pens, pastures and pits).
+Helps a bit with managing activity zones (pens, pastures and pits) and cages.
 
 Options:
 --------
-:set:          Set zone under cursor as default for future assigns.
+:set:          Set zone or cage under cursor as default for future assigns.
 :assign:       Assign unit(s) to the pen or pit marked with the 'set' command. If no filters are set a unit must be selected in the in-game ui. Can also be followed by a valid zone id which will be set instead.
 :unassign:     Unassign selected creature from it's zone.
+:nick:         Mass-assign nicknames, must be followed by the name you want to set.
+:remnick:      Mass-remove nicknames.
+:tocages:      Assign unit(s) to cages inside a pasture.
 :uinfo:        Print info about unit(s). If no filters are set a unit must be selected in the in-game ui.
 :zinfo:        Print info about zone(s). If no filters are set zones under the cursor are listed.
 :verbose:      Print some more info.
 :filters:      Print list of valid filter options.
 :examples:     Print some usage examples.
+:not:          Negates the next filter keyword.
 
 Filters:
 --------
-:all:         Process all units (to be used with additional filters).
-:count:       Must be followed by a number. Process only n units (to be used with additional filters). 
-:race:        Must be followed by a race raw id (e.g. BIRD_TURKEY, ALPACA etc).
-:unassigned:  Not assigned to zone, chain or built cage.
-:caged:       In a built cage.
-:uncaged:     Not in a cage (in case you want your stockpiles to be left alone).
-:foreign:     Not of own civilization.
-:own:         From own civilization.
-:merchant:    Is a merchant / belongs to a merchant. Should only be used for pitting, not for stealing animals (slaughter should work).
-:war:         Trained war creature.
-:tamed:       Creature is tame.
-:trained:     Creature is trained.
-:untrained:   Creature is untrained.
-:male:        Creature is male.
-:female:      Creature is female.
-:egglayer:    Race lays eggs.
-:grazer:      Race is a grazer.
-:nograzer:    Race is not a grazer.
-:milkable:    Race is milkable.
-:minage:      Minimum age. Must be followed by number.
-:maxage:      Maximum age. Must be followed by number.
+:all:           Process all units (to be used with additional filters).
+:count:         Must be followed by a number. Process only n units (to be used with additional filters). 
+:unassigned:    Not assigned to zone, chain or built cage.
+:minage:        Minimum age. Must be followed by number.
+:maxage:        Maximum age. Must be followed by number.
+:race:          Must be followed by a race raw id (e.g. BIRD_TURKEY, ALPACA etc). Negatable.
+:caged:         In a built cage. Negatable.
+:own:           From own civilization. Negatable.
+:merchant:      Is a merchant / belongs to a merchant. Should only be used for pitting, not for stealing animals (slaughter should work).
+:war:           Trained war creature. Negatable.
+:hunting:       Trained hunting creature. Negatable.
+:tamed:         Creature is tame. Negatable.
+:trained:       Creature is trained. Finds war/hunting creatures as well as creatures who have a training level greater than 'domesticated'. If you want to specifically search for war/hunting creatures use 'war' or 'hunting' Negatable.
+:trainablewar:  Creature can be trained for war (and is not already trained for war/hunt). Negatable.
+:trainablehunt: Creature can be trained for hunting (and is not already trained for war/hunt). Negatable.
+:male:          Creature is male. Negatable.
+:female:        Creature is female. Negatable.
+:egglayer:      Race lays eggs. Negatable.
+:grazer:        Race is a grazer. Negatable.
+:milkable:      Race is milkable. Negatable.
 
 Usage with single units
 -----------------------
@@ -845,17 +849,33 @@ One convenient way to use the zone tool is to bind the command 'zone assign' to 
 
 Usage with filters
 ------------------
-All filters can be used together with the 'assign' command. The only restriction is that it's not possible to assign units who are inside built cages or chained because in most cases that won't be desirable anyways. Usually you should always use the filter 'own' (which implies tame) unless you want to use the zone tool for pitting hostiles. 'own' ignores own dwarves unless you specify 'race DWARF' (so it's safe to use 'assign all own' to one big pasture if you want to have all your animals at the same place). 'egglayer' and 'milkable' should be used together with 'female' unless you have a mod with egg-laying male elves who give milk or whatever. Merchants and their animals are ignored unless you specify 'merchant' (pitting them should be no problem, but stealing and pasturing their animals is not a good idea since currently they are not properly added to your own stocks; slaughtering them should work).
+All filters can be used together with the 'assign' command. Restrictions: It's not possible to assign units who are inside built cages or chained because in most cases that won't be desirable anyways. It's not possible to cage owned pets because in that case the owner uncages them after a while which results in infinite hauling back and forth. Usually you should always use the filter 'own' (which implies tame) unless you want to use the zone tool for pitting hostiles. 'own' ignores own dwarves unless you specify 'race DWARF' (so it's safe to use 'assign all own' to one big pasture if you want to have all your animals at the same place). 'egglayer' and 'milkable' should be used together with 'female' unless you have a mod with egg-laying male elves who give milk or whatever. Merchants and their animals are ignored unless you specify 'merchant' (pitting them should be no problem, but stealing and pasturing their animals is not a good idea since currently they are not properly added to your own stocks; slaughtering them should work). Most filters can be negated (e.g. 'not grazer' -> race is not a grazer).
 
+Mass-renaming
+-------------
+Using the 'nick' command you can set the same nickname for multiple units. If used without 'assign', 'all' or 'count' it will rename all units in the current default target zone. Combined with 'assign', 'all' or 'count' (and further optional filters) it will rename units matching the filter conditions. 
+
+Cage zones
+----------
+Using the 'tocages' command you can assign units to a set of cages, for example a room next to your butcher shop(s). They will be spread evenly among available cages to optimize hauling to and butchering from them. For this to work you need to build cages and then place one pen/pasture activity zone above them, covering all cages you want to use. Then use 'zone set' (like with 'assign') and use 'zone tocages filter1 filter2 ...'. 'tocages' overwrites 'assign' because it would make no sense, but can be used together with 'nick' or 'remnick' and all the usual filters.
+
+Examples
+--------
 ``zone assign all own ALPACA minage 3 maxage 10``
    Assign all own alpacas who are between 3 and 10 years old to the selected pasture.
-``zone assign all own caged grazer``
-   Assign all own grazers who are sitting in cages on stockpiles (e.g. after buying them from merchants) to the selected pasture.
+``zone assign all own caged grazer nick ineedgrass``
+   Assign all own grazers who are sitting in cages on stockpiles (e.g. after buying them from merchants) to the selected pasture and give them the nickname 'ineedgrass'.
+``zone assign all own not grazer not race CAT``
+   Assign all own animals who are not grazers, excluding cats.
 ``zone assign count 5 own female milkable``
    Assign up to 5 own female milkable creatures to the selected pasture.
 ``zone assign all own race DWARF maxage 2``
    Throw all useless kids into a pit :)
-
+``zone nick donttouchme``
+   Nicknames all units in the current default zone or cage to 'donttouchme'. Mostly intended to be used for special pastures or cages which are not marked as rooms you want to protect from autobutcher.
+``zone tocages count 50 own tame male not grazer``
+   Stuff up to 50 owned tame male animals who are not grazers into cages built on the current default zone.
+   
 autonestbox
 ===========
 Assigns unpastured female egg-layers to nestbox zones. Requires that you create pen/pasture zones above nestboxes. If the pen is bigger than 1x1 the nestbox must be in the top left corner. Only 1 unit will be assigned per pen, regardless of the size. The age of the units is currently not checked, most birds grow up quite fast. Egglayers who are also grazers will be ignored, since confining them to a 1x1 pasture is not a good idea. When called without options autonestbox will instantly run once.
@@ -868,7 +888,7 @@ Options:
 
 autobutcher
 ===========
-Assigns lifestock for slaughter once it reaches a specific count. Requires that you add the target race(s) to a watch list. Only tame units will be processed. Named units will be completely ignored (you can give animals nicknames with the tool 'rename unit' to protect them from autobutcher). Creatures trained for war or hunting will be ignored as well. Once you have too much adults, the oldest will be butchered first. Once you have too much kids, the youngest will be butchered first. If you don't set any target count the following default will be used: 1 male kid, 5 female kids, 1 male adult, 5 female adults.
+Assigns lifestock for slaughter once it reaches a specific count. Requires that you add the target race(s) to a watch list. Only tame units will be processed. Named units will be completely ignored (to protect specific animals fro autobutcher you can give them nicknames with the tool 'rename unit' for single units or with 'zone nick' to mass-rename units in pastures and cages). Creatures trained for war or hunting will be ignored as well. Creatures assigned to cages will be ignored if the cage is defined as a room (to avoid butchering unnamed zoo animals). Once you have too much adults, the oldest will be butchered first. Once you have too much kids, the youngest will be butchered first. If you don't set any target count the following default will be used: 1 male kid, 5 female kids, 1 male adult, 5 female adults.
 
 Options:
 --------

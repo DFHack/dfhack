@@ -410,6 +410,7 @@ void doMarkForSlaughter(df::unit* unit)
     unit->flags2.bits.slaughter = 1;
 }
 
+// check if creature is tame
 bool isTame(df::unit* creature)
 {
     bool tame = false;
@@ -429,6 +430,26 @@ bool isTame(df::unit* creature)
         case df::animal_training_level::SemiWild: //??
         case df::animal_training_level::Unk8:     //??
         case df::animal_training_level::WildUntamed:
+        default:
+            tame=false;
+            break;
+        }
+    }
+    return tame;
+}
+
+// check if creature is domesticated
+// seems to be the only way to really tell if it's completely safe to autonestbox it (training can revert)
+bool isDomesticated(df::unit* creature)
+{
+    bool tame = false;
+    if(creature->flags1.bits.tame)
+    {
+        switch (creature->training_level)
+        {
+        case df::animal_training_level::Domesticated:
+            tame=true;
+            break;
         default:
             tame=false;
             break;
@@ -1181,7 +1202,7 @@ bool isFreeEgglayer(df::unit * unit)
 {
     if( !isDead(unit) && !isUndead(unit)
         && isFemale(unit)
-        && isTame(unit)
+        && isDomesticated(unit) // better strict than sorry (medium trained wild animals can revert into wild state)
         && isOwnCiv(unit)
         && isEggLayer(unit)
         && !isAssigned(unit)
@@ -1436,10 +1457,6 @@ command_result assignUnitsToCagezone(color_ostream& out, vector<df::unit*> units
     int32_t y1 = building->y1;
     int32_t y2 = building->y2;
     int32_t z  = building->z;
-    //out << " x1:"<<x1<<" x2:"<<x2
-    //    << " y1:"<<y1<<" y2:"<<x2
-    //    << " z:"<<z<<endl;
-    //out << "filling vector with cages on this zone" << endl;
     vector <df::building_cagest*> cages;
     for (int32_t x = x1; x<=x2; x++)
     {
@@ -1477,10 +1494,10 @@ command_result assignUnitsToCagezone(color_ostream& out, vector<df::unit*> units
             }
         }
         df::unit* unit = units.back();
+        units.pop_back();
         command_result result = assignUnitToCage(out, unit, (df::building*) bestcage, verbose);
         if(result!=CR_OK)
             return result;
-        units.pop_back();
     }
 
     return CR_OK;
@@ -2416,12 +2433,6 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 
                 if(cagezone_assign)
                 {
-                    // !!! optimize me: collect a vector of unit pointers which match the search and pass it to
-                    // a method assignUnitsToCagezone(out, units, building) which only builds the vector of cages once
-                    //command_result result = assignUnitToCagezone(out, unit, building, verbose);
-                    //if(result != CR_OK)
-                    //    return result;
-                    //continue;
                     units_for_cagezone.push_back(unit);
                 }
                 else if(building_assign)
@@ -2472,7 +2483,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             }
             else if(unit_slaughter)
             {
-                // by default behave like the game: only allow slaughtering of named war/hunting pets
+                // by default behave like the game? only allow slaughtering of named war/hunting pets
                 //if(unit->name.has_name && !find_named && !(isWar(unit)||isHunter(unit)))
                 //{
                 //    out << "Slaughter of named unit denied. Use the filter 'named' to override this check." << endl;
@@ -3453,7 +3464,6 @@ command_result start_autonestbox(color_ostream &out)
         config_autonestbox = pworld->AddPersistentData("autonestbox/config");
         config_autonestbox.ival(0) = enable_autonestbox;
         config_autonestbox.ival(1) = sleep_autonestbox;
-        //out << "autonestbox created persistent config object." << endl;
     }
     out << "Starting autonestbox." << endl;
 	init_autonestbox(out);

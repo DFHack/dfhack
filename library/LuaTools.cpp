@@ -240,14 +240,13 @@ static int lua_dfhack_is_interactive(lua_State *S)
     return 1;
 }
 
-static int lua_dfhack_lineedit(lua_State *S)
+static int dfhack_lineedit_sync(lua_State *S, Console *pstream)
 {
-    const char *prompt = luaL_optstring(S, 1, ">> ");
-    const char *hfile = luaL_optstring(S, 2, NULL);
-
-    Console *pstream = get_console(S);
     if (!pstream)
         return 2;
+
+    const char *prompt = luaL_optstring(S, 1, ">> ");
+    const char *hfile = luaL_optstring(S, 2, NULL);
 
     DFHack::CommandHistory hist;
     if (hfile)
@@ -269,6 +268,47 @@ static int lua_dfhack_lineedit(lua_State *S)
         lua_pushlstring(S, ret.data(), ret.size());
         return 1;
     }
+}
+
+static int DFHACK_QUERY_COROTABLE_TOKEN = 0;
+
+static int yield_helper(lua_State *S)
+{
+    return lua_yield(S, lua_gettop(S));
+}
+
+namespace {
+    int dfhack_lineedit_cont(lua_State *L, int status, int)
+    {
+        if (Lua::IsSuccess(status))
+            return lua_gettop(L) - 2;
+        else
+            return dfhack_lineedit_sync(L, get_console(L));
+    }
+}
+
+static int dfhack_lineedit(lua_State *S)
+{
+    lua_settop(S, 2);
+
+    Console *pstream = get_console(S);
+    if (!pstream)
+        return 2;
+
+    lua_rawgetp(S, LUA_REGISTRYINDEX, &DFHACK_QUERY_COROTABLE_TOKEN);
+    lua_rawgetp(S, -1, S);
+    bool in_coroutine = !lua_isnil(S, -1);
+    lua_settop(S, 2);
+
+    if (in_coroutine)
+    {
+        lua_pushcfunction(S, yield_helper);
+        lua_pushvalue(S, 1);
+        lua_pushvalue(S, 2);
+        return Lua::TailPCallK<dfhack_lineedit_cont>(S, 2, LUA_MULTRET, 0, 0);
+    }
+
+    return dfhack_lineedit_sync(S, pstream);
 }
 
 /*
@@ -796,10 +836,12 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
             return false;
         }
 
+        lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_QUERY_COROTABLE_TOKEN);
         lua_pushvalue(state, base+1);
         lua_remove(state, base+1);
         thread = Lua::NewCoroutine(state);
-        lua_rawsetp(state, LUA_REGISTRYINDEX, thread);
+        lua_rawsetp(state, -2, thread);
+        lua_pop(state, 1);
 
         rv = resume_query_loop(out, thread, state, lua_gettop(state)-base, prompt, histfile);
     }
@@ -839,8 +881,10 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
     {
         CoreSuspender suspend;
 
+        lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_QUERY_COROTABLE_TOKEN);
         lua_pushnil(state);
-        lua_rawsetp(state, LUA_REGISTRYINDEX, thread);
+        lua_rawsetp(state, -2, thread);
+        lua_pop(state, 1);
     }
 
     return (rv == LUA_OK);
@@ -1179,6 +1223,10 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
 
     luaL_openlibs(state);
     AttachDFGlobals(state);
+
+    // Table of query coroutines
+    lua_newtable(state);
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_QUERY_COROTABLE_TOKEN);
 
     // Replace the print function of the standard library
     lua_pushcfunction(state, lua_dfhack_println);

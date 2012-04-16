@@ -808,7 +808,7 @@ static void compute_custom_job(ProtectedJob *pj, df::job *job)
         using namespace df::enums::reaction_product_item_flags;
 
         VIRTUAL_CAST_VAR(prod, df::reaction_product_itemst, r->products[i]);
-        if (!prod || prod->item_type < 0)
+        if (!prod || (prod->item_type < 0 && !prod->flags.is_set(CRAFTS)))
             continue;
 
         MaterialInfo mat(prod);
@@ -854,7 +854,7 @@ static void compute_custom_job(ProtectedJob *pj, df::job *job)
         }
 
         link_job_constraint(pj, prod->item_type, prod->item_subtype,
-                            mat_mask, mat.type, mat.index);
+                            mat_mask, mat.type, mat.index, prod->flags.is_set(CRAFTS)); 
     }
 }
 

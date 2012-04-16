@@ -803,6 +803,25 @@ int32_t findBuildingIndexById(int32_t id)
     return -1;
 }
 
+int32_t findUnitIndexById(int32_t id)
+{
+    for (size_t i = 0; i < world->units.all.size(); i++)
+    {
+        if(world->units.all.at(i)->id == id)
+            return i;
+    }
+    return -1;
+}
+
+df::unit* findUnitById(int32_t id)
+{
+    int32_t index = findUnitIndexById(id);
+    if(index != -1)
+        return world->units.all[index];
+    else
+        return NULL;
+}
+
 // returns id of pen/pit at cursor position (-1 if nothing found)
 int32_t findPenPitAtCursor()
 {
@@ -1005,6 +1024,31 @@ bool isInBuiltCage(df::unit* unit)
             break;
     }
     return caged;
+}
+
+// built cage defined as room (supposed to detect zoo cages)
+bool isInBuiltCageRoom(df::unit* unit)
+{
+    bool caged_room = false;
+    for (size_t b=0; b < world->buildings.all.size(); b++)
+    {
+        df::building* building = world->buildings.all[b];
+        if(building->isRoom() && building->getType() == building_type::Cage)
+        {
+            df::building_cagest* cage = (df::building_cagest*) building;
+            for(size_t c=0; c<cage->assigned_creature.size(); c++)
+            {
+                if(cage->assigned_creature[c] == unit->id)
+                {
+                    caged_room = true;
+                    break;
+                }
+            }
+        }
+        if(caged_room)
+            break;
+    }
+    return caged_room;
 }
 
 // check a map position for a built cage
@@ -1360,6 +1404,68 @@ command_result assignUnitToBuilding(color_ostream& out, df::unit* unit, df::buil
     return result;
 }
 
+command_result nickUnitsInZone(color_ostream& out, df::building* building, string nick)
+{
+    // building must be a pen/pasture or pit
+    if(!isPenPasture(building) && !isPitPond(building))
+    {
+        out << "Invalid building type. This is not a pen/pasture or pit/pond." << endl;
+        return CR_WRONG_USAGE;
+    }
+
+    df::building_civzonest * civz = (df::building_civzonest *) building;
+    for(size_t i = 0; i < civz->assigned_creature.size(); i++)
+    {
+        df::unit* unit = findUnitById(civz->assigned_creature[i]);
+        if(unit)
+            Units::setNickname(unit, nick);
+    }
+
+    return CR_OK;
+}
+
+command_result nickUnitsInCage(color_ostream& out, df::building* building, string nick)
+{
+    // building must be a pen/pasture or pit
+    if(!isCage(building))
+    {
+        out << "Invalid building type. This is not a cage." << endl;
+        return CR_WRONG_USAGE;
+    }
+
+    df::building_cagest* cage = (df::building_cagest*) building;
+    for(size_t i=0; i<cage->assigned_creature.size(); i++)
+    {
+        df::unit* unit = findUnitById(cage->assigned_creature[i]);
+        if(unit)
+            Units::setNickname(unit, nick);
+    }
+
+    return CR_OK;
+}
+
+command_result nickUnitsInChain(color_ostream& out, df::building* building, string nick)
+{
+    out << "sorry. nicknaming chained units is not possible yet." << endl;
+    return CR_WRONG_USAGE;
+}
+
+command_result nickUnitsInBuilding(color_ostream& out, df::building* building, string nick)
+{
+    command_result result = CR_WRONG_USAGE;
+
+    if(isActivityZone(building))
+        result = nickUnitsInZone(out, building, nick);
+    else if(isCage(building))
+        result = nickUnitsInCage(out, building, nick);
+    else if(isChain(building))
+        result = nickUnitsInChain(out, building, nick);
+    else
+        out << "Cannot nickname units in this type of building!" << endl;
+
+    return result;
+}
+
 // dump some zone info
 void zoneInfo(color_ostream & out, df::building* building, bool verbose)
 {
@@ -1552,6 +1658,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool all = false;
     bool unit_slaughter = false;
     static int target_building = -1;
+    bool nick_set = false;
+    string target_nick = "";
 
     for (size_t i = 0; i < parameters.size(); i++)
     {
@@ -1909,6 +2017,31 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 return CR_WRONG_USAGE;
             building_set = true;
         }
+        else if(p == "nick")
+        {
+            if(invert_filter)
+                return CR_WRONG_USAGE;
+
+            if(i == parameters.size()-1)
+            {
+                out.printerr("No nickname specified! Use 'remnick' to remove nicknames!");
+                return CR_WRONG_USAGE;
+            }
+            nick_set = true;
+            target_nick = parameters[i+1];
+            i++;
+            out << "Set nickname to: " << target_nick << endl;
+        }
+        else if(p == "remnick")
+        {
+            if(invert_filter)
+                return CR_WRONG_USAGE;
+
+            nick_set = true;
+            target_nick = "";
+            i++;
+            out << "Remove nickname." << endl;
+        }
         else if(p == "all")
         {
             if(invert_filter)
@@ -2031,11 +2164,10 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         return CR_OK;
     }
 
-    // assign to pen or pit
-    if(building_assign || unit_info || unit_slaughter)
+    if(building_assign || unit_info || unit_slaughter || nick_set)
     {
         df::building * building;
-        if(building_assign)
+        if(building_assign || (nick_set && !all && !find_count))
         {
             // try to get building index from the id
             int32_t index = findBuildingIndexById(target_building);
@@ -2046,6 +2178,12 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 return CR_WRONG_USAGE;
             }
             building = world->buildings.all.at(index);
+
+            if(nick_set && !building_assign)
+            {
+                out << "Renaming all units in target building." << endl;
+                return nickUnitsInBuilding(out, building, target_nick);
+            }
         }
 
         if(all || find_count)
@@ -2133,14 +2271,22 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 if(unit_info)
                 {
                     unitInfo(out, unit, verbose);
+                    continue;
                 }
-                else if(building_assign)
+                
+                if(nick_set)
+                {
+                    Units::setNickname(unit, target_nick);
+                }
+                
+                if(building_assign)
                 {
                     command_result result = assignUnitToBuilding(out, unit, building, verbose);
                     if(result != CR_OK)
                         return result;
                 }
-                else if(unit_slaughter)
+
+                if(unit_slaughter)
                 {
                     // don't slaughter named creatures unless told to do so
                     if(!find_named && unit->name.has_name)
@@ -2185,7 +2331,6 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 doMarkForSlaughter(unit);
                 return CR_OK;
             }
-            
         }
     }
 
@@ -2995,9 +3140,9 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
             || !isTame(unit)
             || isWar(unit) // ignore war dogs etc
             || isHunter(unit) // ignore hunting dogs etc
-            // ignore creatures in built cages to leave zoos alone
-            // (TODO: allow some kind of slaughter cages which you can place near the butcher)
-            || (isContainedInItem(unit) && isInBuiltCage(unit)) 
+            // ignore creatures in built cages which are defined as rooms to leave zoos alone
+            // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
+            || (isContainedInItem(unit) && isInBuiltCageRoom(unit)) 
             || unit->name.has_name
             )
             continue;

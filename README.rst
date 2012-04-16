@@ -810,6 +810,8 @@ Options:
 :set:          Set zone or cage under cursor as default for future assigns.
 :assign:       Assign unit(s) to the pen or pit marked with the 'set' command. If no filters are set a unit must be selected in the in-game ui. Can also be followed by a valid zone id which will be set instead.
 :unassign:     Unassign selected creature from it's zone.
+:nick:         Mass-assign nicknames, must be followed by the name you want to set.
+:remnick:      Mass-remove nicknames.
 :uinfo:        Print info about unit(s). If no filters are set a unit must be selected in the in-game ui.
 :zinfo:        Print info about zone(s). If no filters are set zones under the cursor are listed.
 :verbose:      Print some more info.
@@ -848,16 +850,22 @@ Usage with filters
 ------------------
 All filters can be used together with the 'assign' command. Restrictions: It's not possible to assign units who are inside built cages or chained because in most cases that won't be desirable anyways. It's not possible to cage owned pets because in that case the owner uncages them after a while which results in infinite hauling back and forth. Usually you should always use the filter 'own' (which implies tame) unless you want to use the zone tool for pitting hostiles. 'own' ignores own dwarves unless you specify 'race DWARF' (so it's safe to use 'assign all own' to one big pasture if you want to have all your animals at the same place). 'egglayer' and 'milkable' should be used together with 'female' unless you have a mod with egg-laying male elves who give milk or whatever. Merchants and their animals are ignored unless you specify 'merchant' (pitting them should be no problem, but stealing and pasturing their animals is not a good idea since currently they are not properly added to your own stocks; slaughtering them should work). Most filters can be negated (e.g. 'not grazer' -> race is not a grazer).
 
+Mass-renaming
+-------------
+Using the 'nick' command you can set the same nickname for multiple units. If used without 'assign', 'all' or 'count' it will rename all units in the current default target zone. Combined with 'assign', 'all' or 'count' (and further optional filters) it will rename units matching the filter conditions. 
+
 ``zone assign all own ALPACA minage 3 maxage 10``
    Assign all own alpacas who are between 3 and 10 years old to the selected pasture.
-``zone assign all own caged grazer``
-   Assign all own grazers who are sitting in cages on stockpiles (e.g. after buying them from merchants) to the selected pasture.
+``zone assign all own caged grazer nick ineedgrass``
+   Assign all own grazers who are sitting in cages on stockpiles (e.g. after buying them from merchants) to the selected pasture and give them the nickname 'ineedgrass'.
 ``zone assign all own not grazer not race CAT``
    Assign all own animals who are not grazers, excluding cats.
 ``zone assign count 5 own female milkable``
    Assign up to 5 own female milkable creatures to the selected pasture.
 ``zone assign all own race DWARF maxage 2``
    Throw all useless kids into a pit :)
+``zone nick donttouchme``
+   Nicknames all units in the current default zone or cage to 'donttouchme'. Mostly intended to be used for special pastures or cages which are not marked as rooms you want to protect from autobutcher.
 
 autonestbox
 ===========
@@ -871,7 +879,7 @@ Options:
 
 autobutcher
 ===========
-Assigns lifestock for slaughter once it reaches a specific count. Requires that you add the target race(s) to a watch list. Only tame units will be processed. Named units will be completely ignored (you can give animals nicknames with the tool 'rename unit' to protect them from autobutcher). Creatures trained for war or hunting will be ignored as well. Once you have too much adults, the oldest will be butchered first. Once you have too much kids, the youngest will be butchered first. If you don't set any target count the following default will be used: 1 male kid, 5 female kids, 1 male adult, 5 female adults.
+Assigns lifestock for slaughter once it reaches a specific count. Requires that you add the target race(s) to a watch list. Only tame units will be processed. Named units will be completely ignored (to protect specific animals fro autobutcher you can give them nicknames with the tool 'rename unit' for single units or with 'zone nick' to mass-rename units in pastures and cages). Creatures trained for war or hunting will be ignored as well. Creatures assigned to cages will be ignored if the cage is defined as a room (to avoid butchering unnamed zoo animals). Once you have too much adults, the oldest will be butchered first. Once you have too much kids, the youngest will be butchered first. If you don't set any target count the following default will be used: 1 male kid, 5 female kids, 1 male adult, 5 female adults.
 
 Options:
 --------

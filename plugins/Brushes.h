@@ -6,6 +6,9 @@ class Brush
 public:
     virtual ~Brush(){};
     virtual coord_vec points(MapExtras::MapCache & mc,DFHack::DFCoord start) = 0;
+    virtual std::string str() const {
+        return "unknown";
+    }
 };
 /**
  * generic 3D rectangle brush. you can specify the dimensions of
@@ -56,6 +59,13 @@ public:
         return v;
     };
     ~RectangleBrush(){};
+    std::string str() const {
+        if (x_ == 1 && y_ == 1 && z_ == 1) {
+            return "point";
+        } else {
+            return "rectangle";
+        }
+    }
 private:
     int x_, y_, z_;
     int cx_, cy_, cz_;
@@ -89,6 +99,9 @@ public:
         }
         return v;
     };
+    std::string str() const {
+        return "block";
+    }
 };
 
 /**
@@ -117,6 +130,9 @@ public:
         }
         return v;
     };
+    std::string str() const {
+        return "column";
+    }
 };
 
 /**
@@ -168,6 +184,9 @@ public:
 
         return v;
     }
+    std::string str() const {
+        return "flood";
+    }
 private:
     void maybeFlood(DFCoord c, std::stack<DFCoord> &to_flood, MapExtras::MapCache &mc) {
         if (mc.testCoord(c)) {
@@ -176,3 +195,7 @@ private:
     }
     Core *c_;
 };
+
+std::ostream &operator<<(std::ostream &stream, const Brush& brush) {
+    stream << brush.str();
+}

@@ -89,11 +89,16 @@ const string zone_help =
     "                 if no filters are used, a single unit must be selected.\n"
     "                 with filters named units are ignored unless specified.\n"
     "  unassign     - unassign selected creature(s) from it's zone or cage\n"
+    "  nick         - give unit(s) nicknames (e.g. all units in a cage)\n"
+    "  remnick      - remove nicknames\n"
+    "  tocages      - assign to (multiple) built cages inside a pen/pasture\n"
+    "                 spreads creatures evenly among cages for faster hauling.\n"
     "  uinfo        - print info about selected unit\n"
     "  zinfo        - print info about zone(s) under cursor\n"
     "  verbose      - print some more info, mostly useless debug stuff\n"
     "  filters      - print list of supported filters\n"
-    "  examples     - print some usage examples\n";
+    "  examples     - print some usage examples\n"
+    ;
 
 const string zone_help_filters =
     "Filters (to be used in combination with 'all' or 'count'):\n"
@@ -360,6 +365,7 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose);
 void cageInfo(color_ostream & out, df::building* building, bool verbose);
 void chainInfo(color_ostream & out, df::building* building, bool verbose);
 bool isBuiltCageAtPos(df::coord pos);
+bool isInBuiltCageRoom(df::unit*);
 
 int32_t getUnitAge(df::unit* unit)
 {
@@ -734,6 +740,10 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
         }
         out << endl;
     }
+    if(isInBuiltCageRoom(unit))
+    {
+        out << "in a room." << endl;
+    }
 }
 
 bool isActivityZone(df::building * building)
@@ -1033,7 +1043,14 @@ bool isInBuiltCageRoom(df::unit* unit)
     for (size_t b=0; b < world->buildings.all.size(); b++)
     {
         df::building* building = world->buildings.all[b];
-        if(building->isRoom() && building->getType() == building_type::Cage)
+        
+        // !!! for whatever reason isRoom() returns true if a cage is not a room
+        // !!! and false if it was defined as a room/zoo ingame
+        // !!! (seems not general behaviour, activity zones return false, for example)
+        if(building->isRoom())
+            continue;
+        
+        if(building->getType() == building_type::Cage)
         {
             df::building_cagest* cage = (df::building_cagest*) building;
             for(size_t c=0; c<cage->assigned_creature.size(); c++)
@@ -1404,6 +1421,71 @@ command_result assignUnitToBuilding(color_ostream& out, df::unit* unit, df::buil
     return result;
 }
 
+command_result assignUnitsToCagezone(color_ostream& out, vector<df::unit*> units, df::building* building, bool verbose)
+{
+    command_result result = CR_WRONG_USAGE;
+
+    if(!isPenPasture(building))
+    {
+        out << "A cage zone needs to be a pen/pasture containing at least one cage!" << endl;
+        return CR_WRONG_USAGE;
+    }
+
+    int32_t x1 = building->x1;
+    int32_t x2 = building->x2;
+    int32_t y1 = building->y1;
+    int32_t y2 = building->y2;
+    int32_t z  = building->z;
+    //out << " x1:"<<x1<<" x2:"<<x2
+    //    << " y1:"<<y1<<" y2:"<<x2
+    //    << " z:"<<z<<endl;
+    //out << "filling vector with cages on this zone" << endl;
+    vector <df::building_cagest*> cages;
+    for (int32_t x = x1; x<=x2; x++)
+    {
+        for (int32_t y = y1; y<=y2; y++)
+        {
+            df::building* cage = getBuiltCageAtPos(df::coord(x,y,z));
+            if(cage)
+            {
+                df::building_cagest* cagest = (df::building_cagest*) cage;
+                cages.push_back(cagest);
+            }
+        }
+    }
+    if(!cages.size())
+    {
+        out << "No cages found in this zone!" << endl;
+        return CR_WRONG_USAGE;
+    }
+    else
+    {
+        out << "Number of cages: " << cages.size() << endl;
+    }
+
+    while(units.size())
+    {
+        // hrm, better use sort() instead?
+        df::building_cagest * bestcage = cages[0];
+        size_t lowest = cages[0]->assigned_creature.size();
+        for(size_t i=1; i<cages.size(); i++)
+        {
+            if(cages[i]->assigned_creature.size()<lowest)
+            {
+                lowest = cages[i]->assigned_creature.size();
+                bestcage = cages[i];
+            }
+        }
+        df::unit* unit = units.back();
+        command_result result = assignUnitToCage(out, unit, (df::building*) bestcage, verbose);
+        if(result!=CR_OK)
+            return result;
+        units.pop_back();
+    }
+
+    return CR_OK;
+}
+
 command_result nickUnitsInZone(color_ostream& out, df::building* building, string nick)
 {
     // building must be a pen/pasture or pit
@@ -1450,6 +1532,8 @@ command_result nickUnitsInChain(color_ostream& out, df::building* building, stri
     return CR_WRONG_USAGE;
 }
 
+// give all units inside a pasture or cage the same nickname
+// (usage example: protect them from being autobutchered)
 command_result nickUnitsInBuilding(color_ostream& out, df::building* building, string nick)
 {
     command_result result = CR_WRONG_USAGE;
@@ -1492,6 +1576,11 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
         out << "active";
     else
         out << "not active";
+
+    //if(building->isRoom())
+    //    out <<", room";
+    //else
+    //    out << ", not a room";
 
     if(civ->zone_flags.bits.pen_pasture)
         out << ", pen/pasture";
@@ -1549,7 +1638,17 @@ void cageInfo(color_ostream & out, df::building* building, bool verbose)
         << " z:" << building->z
         << endl;
 
+    //if(building->isRoom())
+    //    out <<", bldg room";
+    //else
+    //    out << ", bldg not a room";
+
     df::building_cagest * cage = (df::building_cagest*) building;
+    //if(cage->isRoom())
+    //    out <<", cage is room";
+    //else
+    //    out << ", cage is not a room";
+
     int32_t creaturecount = cage->assigned_creature.size();
     out << "Creatures in this cage: " << creaturecount << endl;
     for(size_t c = 0; c < creaturecount; c++)
@@ -1654,6 +1753,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool building_assign = false;
     bool building_unassign = false;
     bool building_set = false;
+    bool cagezone_assign = false;
     bool verbose = false;
     bool all = false;
     bool unit_slaughter = false;
@@ -1738,6 +1838,38 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             {
                 out << "No buiding id specified. Will try to use #" << target_building << endl;
                 building_assign = true;
+            }
+        }
+        else if(p == "tocages")
+        {
+            if(invert_filter)
+            {
+                out << "'not tocages' makes no sense." << endl;
+                return CR_WRONG_USAGE;
+            }
+
+            // if followed by another parameter, check if it's numeric
+            if(i < parameters.size()-1)
+            {
+                stringstream ss(parameters[i+1]);
+                int new_building = -1;
+                ss >> new_building;
+                if(new_building != -1)
+                {
+                    i++;
+                    target_building = new_building;
+                    out << "Assign selected unit(s) to cagezone #" << target_building <<std::endl;
+                }
+            }
+            if(target_building == -1)
+            {
+                out.printerr("No building id specified and current one is invalid!\n");
+                return CR_WRONG_USAGE;
+            }
+            else
+            {
+                out << "No buiding id specified. Will try to use #" << target_building << endl;
+                cagezone_assign = true;
             }
         }
         else if(p == "race" && !invert_filter)
@@ -2142,7 +2274,9 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     // set building at cursor position to be new target building
     if(building_set)
     {
-        target_building = findCageAtCursor();
+        // cagezone wants a pen/pit as starting point
+        if(!cagezone_assign)
+            target_building = findCageAtCursor();
         if(target_building != -1)
         {
             out << "Target building type: cage." << endl;
@@ -2164,10 +2298,10 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         return CR_OK;
     }
 
-    if(building_assign || unit_info || unit_slaughter || nick_set)
+    if(building_assign || cagezone_assign || unit_info || unit_slaughter || nick_set)
     {
         df::building * building;
-        if(building_assign || (nick_set && !all && !find_count))
+        if(building_assign || cagezone_assign || (nick_set && !all && !find_count))
         {
             // try to get building index from the id
             int32_t index = findBuildingIndexById(target_building);
@@ -2188,6 +2322,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 
         if(all || find_count)
         {
+            vector <df::unit*> units_for_cagezone;
             size_t count = 0;
             for(size_t c = 0; c < world->units.all.size(); c++)
             {
@@ -2278,8 +2413,18 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 {
                     Units::setNickname(unit, target_nick);
                 }
-                
-                if(building_assign)
+
+                if(cagezone_assign)
+                {
+                    // !!! optimize me: collect a vector of unit pointers which match the search and pass it to
+                    // a method assignUnitsToCagezone(out, units, building) which only builds the vector of cages once
+                    //command_result result = assignUnitToCagezone(out, unit, building, verbose);
+                    //if(result != CR_OK)
+                    //    return result;
+                    //continue;
+                    units_for_cagezone.push_back(unit);
+                }
+                else if(building_assign)
                 {
                     command_result result = assignUnitToBuilding(out, unit, building, verbose);
                     if(result != CR_OK)
@@ -2289,15 +2434,21 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 if(unit_slaughter)
                 {
                     // don't slaughter named creatures unless told to do so
-                    if(!find_named && unit->name.has_name)
-                        continue;
-                    doMarkForSlaughter(unit);
+                    if(!unit->name.has_name || find_named)
+                        doMarkForSlaughter(unit);
                 }
 
                 count++;
                 if(find_count && count >= target_count)
                     break;
             }
+            if(cagezone_assign)
+            {
+                command_result result = assignUnitsToCagezone(out, units_for_cagezone, building, verbose);
+                if(result != CR_OK)
+                    return result;
+            }
+
             out << "Processed creatures: " << count << endl;
         }
         else
@@ -3115,18 +3266,21 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
         return CR_OK;
 
     // check if there is anything to watch before walking through units vector
-    bool watching = false;
-    for(size_t i=0; i<watched_races.size(); i++)
+    if(!enable_autobutcher_autowatch)
     {
-        WatchedRace * w = watched_races[i];
-        if(w->isWatched)
+        bool watching = false;
+        for(size_t i=0; i<watched_races.size(); i++)
         {
-            watching = true;
-            break;
+            WatchedRace * w = watched_races[i];
+            if(w->isWatched)
+            {
+                watching = true;
+                break;
+            }
         }
+        if(!watching)
+            return CR_OK;
     }
-    if(!watching)
-        return CR_OK;
 
     for(size_t i=0; i<world->units.all.size(); i++)
     {
@@ -3142,7 +3296,7 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
             || isHunter(unit) // ignore hunting dogs etc
             // ignore creatures in built cages which are defined as rooms to leave zoos alone
             // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
-            || (isContainedInItem(unit) && isInBuiltCageRoom(unit)) 
+            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom() 
             || unit->name.has_name
             )
             continue;

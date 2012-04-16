@@ -336,12 +336,11 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 int32_t getUnitAge(df::unit* unit);
 bool isTame(df::unit* unit);
 bool isTrained(df::unit* unit);
-bool isTrained(df::unit* creature);
-bool isWar(df::unit* creature);
-bool isHunter(df::unit* creature);
-bool isOwnCiv(df::unit* creature);
-bool isMerchant(df::unit* creature);
-bool isForest(df::unit* creature);
+bool isWar(df::unit* unit);
+bool isHunter(df::unit* unit);
+bool isOwnCiv(df::unit* unit);
+bool isMerchant(df::unit* unit);
+bool isForest(df::unit* unit);
 
 bool isActivityZone(df::building * building);
 bool isPenPasture(df::building * building);
@@ -433,44 +432,46 @@ bool isTame(df::unit* creature)
 }
 
 // check if trained (might be useful if pasturing war dogs etc)
-bool isTrained(df::unit* creature)
+bool isTrained(df::unit* unit)
 {
+    // case a: trained for war/hunting (those don't have a training level, strangely)
+    if(isWar(unit) || isHunter(unit))
+        return true;
+
+    // case b: tamed and trained wild creature, gets a training level
     bool trained = false;
-    if(creature->flags1.bits.tame)
+    switch (unit->training_level)
     {
-        switch (creature->training_level)
-        {
-        case df::animal_training_level::Trained:
-        case df::animal_training_level::WellTrained:
-        case df::animal_training_level::SkilfullyTrained:
-        case df::animal_training_level::ExpertlyTrained:
-        case df::animal_training_level::ExceptionallyTrained:
-        case df::animal_training_level::MasterfullyTrained:
-        //case df::animal_training_level::Domesticated:
-            trained = true;
-            break;
-        default:
-            break;
-        }
+    case df::animal_training_level::Trained:
+    case df::animal_training_level::WellTrained:
+    case df::animal_training_level::SkilfullyTrained:
+    case df::animal_training_level::ExpertlyTrained:
+    case df::animal_training_level::ExceptionallyTrained:
+    case df::animal_training_level::MasterfullyTrained:
+    //case df::animal_training_level::Domesticated:
+        trained = true;
+        break;
+    default:
+        break;
     }
     return trained;
 }
 
 // check for profession "war creature"
-bool isWar(df::unit* creature)
+bool isWar(df::unit* unit)
 {
-    if(   creature->profession  == df::profession::TRAINED_WAR
-       || creature->profession2 == df::profession::TRAINED_WAR)
+    if(   unit->profession  == df::profession::TRAINED_WAR
+       || unit->profession2 == df::profession::TRAINED_WAR)
         return true;
     else
         return false;
 }
 
 // check for profession "hunting creature"
-bool isHunter(df::unit* creature)
+bool isHunter(df::unit* unit)
 {
-    if(   creature->profession  == df::profession::TRAINED_HUNTER
-       || creature->profession2 == df::profession::TRAINED_HUNTER)
+    if(   unit->profession  == df::profession::TRAINED_HUNTER
+       || unit->profession2 == df::profession::TRAINED_HUNTER)
         return true;
     else
         return false;
@@ -478,16 +479,16 @@ bool isHunter(df::unit* creature)
 
 // check if creature belongs to the player's civilization
 // (don't try to pasture/slaughter random untame animals)
-bool isOwnCiv(df::unit* creature)
+bool isOwnCiv(df::unit* unit)
 {
-    return creature->civ_id == ui->civ_id;
+    return unit->civ_id == ui->civ_id;
 }
 
 // check if creature belongs to the player's race
 // (in combination with check for civ helps to filter out own dwarves)
-bool isOwnRace(df::unit* creature)
+bool isOwnRace(df::unit* unit)
 {
-    return creature->race == ui->race_id;
+    return unit->race == ui->race_id;
 }
 
 string getRaceName(int32_t id)
@@ -1728,7 +1729,17 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             find_not_war = true;
             invert_filter = false;
         }
-        else if(p == "own"&& !invert_filter)
+        else if(p == "hunting" && !invert_filter)
+        {
+            out << "Filter by 'trained hunting creature'." << endl;
+            find_hunter = true;
+        }
+        else if(p == "hunting" && invert_filter)
+        {
+            out << "Filter by 'not a trained hunting creature'." << endl;
+            find_not_hunter = true;
+            invert_filter = false;
+        }else if(p == "own"&& !invert_filter)
         {
             out << "Filter by 'own civilization'." << endl;
             find_own = true;

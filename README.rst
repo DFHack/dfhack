@@ -829,8 +829,9 @@ Filters:
 :own:           From own civilization. Negatable.
 :merchant:      Is a merchant / belongs to a merchant. Should only be used for pitting, not for stealing animals (slaughter should work).
 :war:           Trained war creature. Negatable.
+:hunting:       Trained hunting creature. Negatable.
 :tamed:         Creature is tame. Negatable.
-:trained:       Creature is trained. Negatable.
+:trained:       Creature is trained. Finds war/hunting creatures as well as creatures who have a training level greater than 'domesticated'. If you want to specifically search for war/hunting creatures use 'war' or 'hunting' Negatable.
 :trainablewar:  Creature can be trained for war (and is not already trained for war/hunt). Negatable.
 :trainablehunt: Creature can be trained for hunting (and is not already trained for war/hunt). Negatable.
 :male:          Creature is male. Negatable.

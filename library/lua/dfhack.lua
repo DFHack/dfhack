@@ -130,15 +130,6 @@ end
 
 -- Interactive
 
-function dfhack.query(prompt,hfile)
-    local _,main = coroutine.running()
-    if main then
-        return dfhack.lineedit(prompt,hfile)
-    else
-        return coroutine.yield(prompt,hfile)
-    end
-end
-
 local print_banner = true
 
 function dfhack.interpreter(prompt,hfile,env)
@@ -163,7 +154,7 @@ function dfhack.interpreter(prompt,hfile,env)
     setmetatable(prompt_env, { __index = env or _G })
 
     while true do
-        local cmdline = dfhack.query(prompt_str, hfile)
+        local cmdline = dfhack.lineedit(prompt_str, hfile)
 
         if cmdline == nil or cmdline == 'quit' then
             break

@@ -537,7 +537,7 @@ void Plugin::open_lua(lua_State *state, int table)
     {
         for (auto it = lua_events.begin(); it != lua_events.end(); ++it)
         {
-            Lua::CreateEvent(state, it->second);
+            Lua::MakeEvent(state, it->second);
 
             push_function(state, &it->second->handler);
             lua_rawsetp(state, -2, NULL);

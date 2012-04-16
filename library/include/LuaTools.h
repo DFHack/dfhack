@@ -140,10 +140,54 @@ namespace DFHack {namespace Lua {
     }
 
     /**
+     * Check if the status is a success, i.e. LUA_OK or LUA_YIELD.
+     */
+    inline bool IsSuccess(int status) {
+        return (status == LUA_OK || status == LUA_YIELD);
+    }
+
+    // Internal helper
+    template<int (*cb)(lua_State*,int,int)>
+    int TailPCallK_Thunk(lua_State *state) {
+        int tmp;
+        int rv = lua_getctx(state, &tmp);
+        return cb(state, rv, tmp);
+    }
+
+    /**
+     * A utility for using the restartable pcall feature more conveniently;
+     * specifically, the callback is called with the same kind of arguments
+     * in both yield and non-yield case.
+     */
+    template<int (*cb)(lua_State*,int,int)>
+    int TailPCallK(lua_State *state, int narg, int nret, int errfun, int ctx) {
+        int rv = lua_pcallk(state, narg, nret, errfun, ctx, &TailPCallK_Thunk<cb>);
+        return cb(state, rv, ctx);
+    }
+
+    /**
      * Invoke lua function via pcall. Returns true if success.
      * If an error is signalled, and perr is true, it is printed and popped from the stack.
      */
     DFHACK_EXPORT bool SafeCall(color_ostream &out, lua_State *state, int nargs, int nres, bool perr = true);
+
+    /**
+     * Pops a function from the top of the stack, and pushes a new coroutine.
+     */
+    DFHACK_EXPORT lua_State *NewCoroutine(lua_State *state);
+
+    /**
+     * Resume the coroutine using nargs values from state from. Results or the error are moved back.
+     * If an error is signalled, and perr is true, it is printed and popped from the stack.
+     * Returns the lua_resume return value.
+     */
+    DFHACK_EXPORT int SafeResume(color_ostream &out, lua_State *from, lua_State *thread, int nargs, int nres, bool perr = true);
+
+    /**
+     * Works just like SafeCall, only expects a coroutine on the stack
+     * instead of a function. Returns the lua_resume return value.
+     */
+    DFHACK_EXPORT int SafeResume(color_ostream &out, lua_State *from, int nargs, int nres, bool perr = true);
 
     /**
      * Parse code from string with debug_tag and env_idx, then call it using SafeCall.
@@ -166,15 +210,18 @@ namespace DFHack {namespace Lua {
                                        const char *prompt = NULL, const char *hfile = NULL);
 
     /**
-     * Run an interactive prompt loop. All access to lua is done inside CoreSuspender.
+     * Run an interactive prompt loop. All access to the lua state
+     * is done inside CoreSuspender, while waiting for input happens
+     * without the suspend lock.
      */
     DFHACK_EXPORT bool RunCoreQueryLoop(color_ostream &out, lua_State *state,
-                                        bool (*init)(color_ostream&, lua_State*, lua_State*, void*),
+                                        bool (*init)(color_ostream&, lua_State*, void*),
                                         void *arg);
 
     /**
      * Push utility functions
      */
+#if 0
 #define NUMBER_PUSH(type) inline void Push(lua_State *state, type value) { lua_pushnumber(state, value); }
     NUMBER_PUSH(char)
     NUMBER_PUSH(int8_t) NUMBER_PUSH(uint8_t)
@@ -183,6 +230,11 @@ namespace DFHack {namespace Lua {
     NUMBER_PUSH(int64_t) NUMBER_PUSH(uint64_t)
     NUMBER_PUSH(float) NUMBER_PUSH(double)
 #undef NUMBER_PUSH
+#else
+    template<class T> inline void Push(lua_State *state, T value) {
+        lua_pushnumber(state, lua_Number(value));
+    }
+#endif
     inline void Push(lua_State *state, bool value) {
         lua_pushboolean(state, value);
     }
@@ -212,7 +264,7 @@ namespace DFHack {namespace Lua {
     DFHACK_EXPORT bool IsCoreContext(lua_State *state);
 
     DFHACK_EXPORT int NewEvent(lua_State *state);
-    DFHACK_EXPORT void CreateEvent(lua_State *state, void *key);
+    DFHACK_EXPORT void MakeEvent(lua_State *state, void *key);
     DFHACK_EXPORT void InvokeEvent(color_ostream &out, lua_State *state, void *key, int num_args);
 
     /**

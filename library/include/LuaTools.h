@@ -175,6 +175,7 @@ namespace DFHack {namespace Lua {
     /**
      * Push utility functions
      */
+#if 0
 #define NUMBER_PUSH(type) inline void Push(lua_State *state, type value) { lua_pushnumber(state, value); }
     NUMBER_PUSH(char)
     NUMBER_PUSH(int8_t) NUMBER_PUSH(uint8_t)
@@ -183,6 +184,11 @@ namespace DFHack {namespace Lua {
     NUMBER_PUSH(int64_t) NUMBER_PUSH(uint64_t)
     NUMBER_PUSH(float) NUMBER_PUSH(double)
 #undef NUMBER_PUSH
+#else
+    template<class T> inline void Push(lua_State *state, T value) {
+        lua_pushnumber(state, lua_Number(value));
+    }
+#endif
     inline void Push(lua_State *state, bool value) {
         lua_pushboolean(state, value);
     }
@@ -212,7 +218,7 @@ namespace DFHack {namespace Lua {
     DFHACK_EXPORT bool IsCoreContext(lua_State *state);
 
     DFHACK_EXPORT int NewEvent(lua_State *state);
-    DFHACK_EXPORT void CreateEvent(lua_State *state, void *key);
+    DFHACK_EXPORT void MakeEvent(lua_State *state, void *key);
     DFHACK_EXPORT void InvokeEvent(color_ostream &out, lua_State *state, void *key, int num_args);
 
     /**

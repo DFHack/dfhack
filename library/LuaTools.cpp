@@ -981,7 +981,7 @@ void DFHack::Lua::InvokeEvent(color_ostream &out, lua_State *state, void *key, i
     set_dfhack_output(state, cur_out);
 }
 
-void DFHack::Lua::CreateEvent(lua_State *state, void *key)
+void DFHack::Lua::MakeEvent(lua_State *state, void *key)
 {
     lua_rawgetp(state, LUA_REGISTRYINDEX, key);
 
@@ -1009,7 +1009,7 @@ void DFHack::Lua::Notification::bind(lua_State *state, void *key)
 
 void DFHack::Lua::Notification::bind(lua_State *state, const char *name)
 {
-    CreateEvent(state, this);
+    MakeEvent(state, this);
 
     if (handler)
     {

@@ -5,6 +5,7 @@
 #include "Error.h"
 
 #include "DataFuncs.h"
+#include "LuaTools.h"
 
 #include "modules/Gui.h"
 #include "modules/Job.h"
@@ -121,6 +122,8 @@ static int name_burrow_id = -1;
 
 static void handle_burrow_rename(color_ostream &out, df::burrow *burrow);
 
+DEFINE_LUA_EVENT_1(onBurrowRename, handle_burrow_rename, df::burrow*);
+
 static void detect_burrow_renames(color_ostream &out)
 {
     if (ui->main.mode == ui_sidebar_mode::Burrows &&
@@ -134,7 +137,7 @@ static void detect_burrow_renames(color_ostream &out)
         auto burrow = df::burrow::find(name_burrow_id);
         name_burrow_id = -1;
         if (burrow)
-            handle_burrow_rename(out, burrow);
+            onBurrowRename(out, burrow);
     }
 }
 
@@ -150,6 +153,9 @@ static std::map<int,DigJob> diggers;
 
 static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord pos,
                                 df::tiletype old_tile, df::tiletype new_tile);
+
+DEFINE_LUA_EVENT_4(onDigComplete, handle_dig_complete,
+                   df::job_type, df::coord, df::tiletype, df::tiletype);
 
 static void detect_digging(color_ostream &out)
 {
@@ -172,7 +178,7 @@ static void detect_digging(color_ostream &out)
 
                 if (new_tile != it->second.old_tile)
                 {
-                    handle_dig_complete(out, it->second.job, pos, it->second.old_tile, new_tile);
+                    onDigComplete(out, it->second.job, pos, it->second.old_tile, new_tile);
 
                     //if (worker && !worker->job.current_job)
                     //    worker->counters.think_counter = worker->counters.job_counter = 0;
@@ -410,6 +416,17 @@ static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord 
     }
 }
 
+static void renameBurrow(color_ostream &out, df::burrow *burrow, std::string name)
+{
+    CHECK_NULL_POINTER(burrow);
+
+    // The event makes this absolutely necessary
+    CoreSuspender suspend;
+
+    burrow->name = name;
+    onBurrowRename(out, burrow);
+}
+
 static df::burrow *findByName(color_ostream &out, std::string name, bool silent = false)
 {
     int id = -1;
@@ -552,10 +569,17 @@ static bool setTilesByKeyword(df::burrow *target, std::string name, bool enable)
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(renameBurrow),
     DFHACK_LUA_FUNCTION(findByName),
     DFHACK_LUA_FUNCTION(copyUnits),
     DFHACK_LUA_FUNCTION(copyTiles),
     DFHACK_LUA_FUNCTION(setTilesByKeyword),
+    DFHACK_LUA_END
+};
+
+DFHACK_PLUGIN_LUA_EVENTS {
+    DFHACK_LUA_EVENT(onBurrowRename),
+    DFHACK_LUA_EVENT(onDigComplete),
     DFHACK_LUA_END
 };
 

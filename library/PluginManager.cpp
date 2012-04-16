@@ -33,6 +33,7 @@ distribution.
 #include "MiscUtils.h"
 
 #include "LuaWrapper.h"
+#include "LuaTools.h"
 
 using namespace DFHack;
 
@@ -380,6 +381,7 @@ command_result Plugin::on_update(color_ostream &out)
     if(state == PS_LOADED && plugin_onupdate)
     {
         cr = plugin_onupdate(out);
+        Lua::Core::Reset(out, "plugin_onupdate");
     }
     access->lock_sub();
     return cr;
@@ -392,6 +394,7 @@ command_result Plugin::on_state_change(color_ostream &out, state_change_event ev
     if(state == PS_LOADED && plugin_onstatechange)
     {
         cr = plugin_onstatechange(out, event);
+        Lua::Core::Reset(out, "plugin_onstatechange");
     }
     access->lock_sub();
     return cr;
@@ -445,9 +448,7 @@ void Plugin::index_lua(DFLibrary *lib)
         for (; cmdlist->name; ++cmdlist)
         {
             auto &cmd = lua_commands[cmdlist->name];
-            if (!cmd) cmd = new LuaCommand;
-            cmd->owner = this;
-            cmd->name = cmdlist->name;
+            if (!cmd) cmd = new LuaCommand(this,cmdlist->name);
             cmd->command = cmdlist->command;
         }
     }
@@ -456,10 +457,20 @@ void Plugin::index_lua(DFLibrary *lib)
         for (; funlist->name; ++funlist)
         {
             auto &cmd = lua_functions[funlist->name];
-            if (!cmd) cmd = new LuaFunction;
-            cmd->owner = this;
-            cmd->name = funlist->name;
+            if (!cmd) cmd = new LuaFunction(this,funlist->name);
             cmd->identity = funlist->identity;
+        }
+    }
+    if (auto evlist = (EventReg*)LookupPlugin(lib, "plugin_lua_events"))
+    {
+        for (; evlist->name; ++evlist)
+        {
+            auto &cmd = lua_events[evlist->name];
+            if (!cmd) cmd = new LuaEvent(this,evlist->name);
+            cmd->handler.identity = evlist->event->get_handler();
+            cmd->event = evlist->event;
+            if (cmd->active)
+                cmd->event->bind(Lua::Core::State, cmd);
         }
     }
 }
@@ -470,6 +481,11 @@ void Plugin::reset_lua()
         it->second->command = NULL;
     for (auto it = lua_functions.begin(); it != lua_functions.end(); ++it)
         it->second->identity = NULL;
+    for (auto it = lua_events.begin(); it != lua_events.end(); ++it)
+    {
+        it->second->handler.identity = NULL;
+        it->second->event = NULL;
+    }
 }
 
 int Plugin::lua_cmd_wrapper(lua_State *state)
@@ -513,13 +529,35 @@ void Plugin::open_lua(lua_State *state, int table)
 
     for (auto it = lua_functions.begin(); it != lua_functions.end(); ++it)
     {
-        lua_rawgetp(state, LUA_REGISTRYINDEX, &LuaWrapper::DFHACK_TYPETABLE_TOKEN);
-        lua_pushlightuserdata(state, NULL);
-        lua_pushfstring(state, "%s.%s()", name.c_str(), it->second->name.c_str());
-        lua_pushlightuserdata(state, it->second);
-        lua_pushcclosure(state, lua_fun_wrapper, 4);
+        push_function(state, it->second);
         lua_setfield(state, table, it->first.c_str());
     }
+
+    if (Lua::IsCoreContext(state))
+    {
+        for (auto it = lua_events.begin(); it != lua_events.end(); ++it)
+        {
+            Lua::MakeEvent(state, it->second);
+
+            push_function(state, &it->second->handler);
+            lua_rawsetp(state, -2, NULL);
+
+            it->second->active = true;
+            if (it->second->event)
+                it->second->event->bind(state, it->second);
+
+            lua_setfield(state, table, it->first.c_str());
+        }
+    }
+}
+
+void Plugin::push_function(lua_State *state, LuaFunction *fn)
+{
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &LuaWrapper::DFHACK_TYPETABLE_TOKEN);
+    lua_pushlightuserdata(state, NULL);
+    lua_pushfstring(state, "%s.%s()", name.c_str(), fn->name.c_str());
+    lua_pushlightuserdata(state, fn);
+    lua_pushcclosure(state, lua_fun_wrapper, 4);
 }
 
 PluginManager::PluginManager(Core * core)

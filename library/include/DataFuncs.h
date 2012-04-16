@@ -161,15 +161,15 @@ INSTANTIATE_WRAPPERS(5, (A1,A2,A3,A4,A5), (vA1,vA2,vA3,vA4,vA5),
     public:
         typedef function_wrapper<T> wrapper;
 
-        function_identity(T ptr)
-            : function_identity_base(wrapper::num_args), ptr(ptr) {};
+        function_identity(T ptr, bool vararg)
+            : function_identity_base(wrapper::num_args, vararg), ptr(ptr) {};
 
         virtual void invoke(lua_State *state, int base) { wrapper::execute(state, base, ptr); }
     };
 
     template<class T>
-    inline function_identity_base *wrap_function(T ptr) {
+    inline function_identity_base *wrap_function(T ptr, bool vararg = false) {
         // bah, but didn't have any idea how to allocate statically
-        return new function_identity<T>(ptr);
+        return new function_identity<T>(ptr, vararg);
     }
 }

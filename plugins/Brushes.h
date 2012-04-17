@@ -196,6 +196,12 @@ private:
     Core *c_;
 };
 
-std::ostream &operator<<(std::ostream &stream, const Brush& brush) {
+inline std::ostream &operator<<(std::ostream &stream, const Brush& brush) {
     stream << brush.str();
+    return stream;
+}
+
+inline std::ostream &operator<<(std::ostream &stream, const Brush* brush) {
+    stream << brush->str();
+    return stream;
 }

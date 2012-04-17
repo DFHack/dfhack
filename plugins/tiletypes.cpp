@@ -325,7 +325,7 @@ void printState(color_ostream &out)
 {
     out << "Filter: " << filter << std::endl
         << "Paint: "  << paint  << std::endl
-        << "Brush: "  << brush->str() << std::endl;
+        << "Brush: "  << brush << std::endl;
 }
 
 //zilpin: These two functions were giving me compile errors in VS2008, so I cheated with the C style loop below, just to get it to build.
@@ -559,6 +559,7 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
     }
     else if (option == "all" || option == "a")
     {
+        loc--;
         for (; loc < end; loc++)
         {
             std::string param = params[loc];

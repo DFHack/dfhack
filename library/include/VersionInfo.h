@@ -51,13 +51,15 @@ namespace DFHack
         std::vector <std::string> md5_list;
         std::vector <uint32_t> PE_list;
         std::map <std::string, uint32_t> Addresses;
+        std::map <std::string, uint32_t> VTables;
         uint32_t base;
+        int rebase_delta;
         std::string version;
         OSType OS;
     public:
         VersionInfo()
         {
-            base = 0;
+            base = 0; rebase_delta = 0;
             version = "invalid";
             OS = OS_BAD;
         };
@@ -66,12 +68,15 @@ namespace DFHack
             md5_list = rhs.md5_list;
             PE_list = rhs.PE_list;
             Addresses = rhs.Addresses;
+            VTables = rhs.VTables;
             base = rhs.base;
+            rebase_delta = rhs.rebase_delta;
             version = rhs.version;
             OS = rhs.OS;
         };
 
         uint32_t getBase () const { return base; };
+        int getRebaseDelta() const { return rebase_delta; }
         void setBase (const uint32_t _base) { base = _base; };
         void rebaseTo(const uint32_t new_base)
         {
@@ -79,13 +84,11 @@ namespace DFHack
             int64_t newx = new_base;
             int64_t rebase = newx - old;
             base = new_base;
-            auto iter = Addresses.begin();
-            while (iter != Addresses.end())
-            {
-                uint32_t & ref = (*iter).second;
-                ref += rebase;
-                iter ++;
-            }
+            rebase_delta += rebase;
+            for (auto iter = Addresses.begin(); iter != Addresses.end(); ++iter)
+                iter->second += rebase;
+            for (auto iter = VTables.begin(); iter != VTables.end(); ++iter)
+                iter->second += rebase;
         };
 
         void addMD5 (const std::string & _md5)
@@ -125,12 +128,25 @@ namespace DFHack
             value = (T) (*i).second;
             return true;
         };
+
         uint32_t getAddress (const std::string& key) const
         {
             auto i = Addresses.find(key);
             if(i == Addresses.end())
                 return 0;
             return (*i).second;
+        }
+
+        void setVTable (const std::string& key, const uint32_t value)
+        {
+            VTables[key] = value;
+        };
+        void *getVTable (const std::string& key) const
+        {
+            auto i = VTables.find(key);
+            if(i == VTables.end())
+                return 0;
+            return (void*)i->second;
         }
 
         void setOS(const OSType os)

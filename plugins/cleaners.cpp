@@ -127,7 +127,7 @@ command_result spotclean (color_ostream &out, vector <string> & parameters)
         out.printerr("Map is not available.\n");
         return CR_FAILURE;
     }
-    df::map_block *block = Maps::getBlockAbs(cursor->x, cursor->y, cursor->z);
+    df::map_block *block = Maps::getTileBlock(cursor->x, cursor->y, cursor->z);
     if (block == NULL)
     {
         out.printerr("Invalid map block selected!\n");

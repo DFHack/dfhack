@@ -254,6 +254,8 @@ bool World::BuildPersistentCache()
 
         d->persistent_index.insert(T_persistent_item(hfvec[i]->name.first_name, -hfvec[i]->id));
     }
+
+    return true;
 }
 
 PersistentDataItem World::AddPersistentData(const std::string &key)
@@ -298,6 +300,21 @@ PersistentDataItem World::GetPersistentData(int entry_id)
         return dataFromHFig(hfig);
 
     return PersistentDataItem();
+}
+
+PersistentDataItem World::GetPersistentData(const std::string &key, bool *added)
+{
+    *added = false;
+
+    PersistentDataItem rv = GetPersistentData(key);
+
+    if (!rv.isValid())
+    {
+        *added = true;
+        rv = AddPersistentData(key);
+    }
+
+    return rv;
 }
 
 void World::GetPersistentData(std::vector<PersistentDataItem> *vec, const std::string &key, bool prefix)

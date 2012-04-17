@@ -59,6 +59,7 @@ DataDefs.cpp
 LuaWrapper.cpp
 LuaTypes.cpp
 LuaTools.cpp
+LuaApi.cpp
 DataStatics.cpp
 DataStaticsCtor.cpp
 DataStaticsFields.cpp

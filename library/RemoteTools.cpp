@@ -61,6 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/unit.h"
+#include "df/unit_misc_trait.h"
 #include "df/unit_soul.h"
 #include "df/unit_skill.h"
 #include "df/material.h"
@@ -221,30 +222,30 @@ void DFHack::describeMaterial(BasicMaterialInfo *info, const MaterialInfo &mat,
 void DFHack::describeName(NameInfo *info, df::language_name *name)
 {
     if (!name->first_name.empty())
-        info->set_first_name(name->first_name);
+        info->set_first_name(DF2UTF(name->first_name));
     if (!name->nickname.empty())
-        info->set_nickname(name->nickname);
+        info->set_nickname(DF2UTF(name->nickname));
 
     if (name->language >= 0)
         info->set_language_id(name->language);
 
     std::string lname = Translation::TranslateName(name, false, true);
     if (!lname.empty())
-        info->set_last_name(lname);
+        info->set_last_name(DF2UTF(lname));
 
     lname = Translation::TranslateName(name, true, true);
     if (!lname.empty())
-        info->set_english_name(lname);
+        info->set_english_name(DF2UTF(lname));
 }
 
 void DFHack::describeNameTriple(NameTriple *info, const std::string &name,
                                 const std::string &plural, const std::string &adj)
 {
-    info->set_normal(name);
+    info->set_normal(DF2UTF(name));
     if (!plural.empty() && plural != name)
-        info->set_plural(plural);
+        info->set_plural(DF2UTF(plural));
     if (!adj.empty() && adj != name)
-        info->set_adjective(adj);
+        info->set_adjective(DF2UTF(adj));
 }
 
 void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
@@ -256,7 +257,7 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
     info->set_pos_y(unit->pos.y);
     info->set_pos_z(unit->pos.z);
 
-    auto name = Units::GetVisibleName(unit);
+    auto name = Units::getVisibleName(unit);
     if (name->has_name)
         describeName(info->mutable_name(), name);
 
@@ -313,6 +314,19 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
             item->set_id(skill->id);
             item->set_level(skill->rating);
             item->set_experience(skill->experience);
+        }
+    }
+
+    if (mask && mask->misc_traits())
+    {
+        auto &vec = unit -> status.misc_traits;
+
+        for (size_t i = 0; i < vec.size(); i++)
+        {
+            auto trait = vec[i];
+            auto item = info->add_misc_traits();
+            item->set_id(trait->id);
+            item->set_value(trait->value);
         }
     }
 
@@ -614,6 +628,20 @@ static command_result ListSquads(color_ostream &stream,
     return CR_OK;
 }
 
+static command_result SetUnitLabors(color_ostream &stream, const SetUnitLaborsIn *in)
+{
+    for (size_t i = 0; i < in->change_size(); i++)
+    {
+        auto change = in->change(i);
+        auto unit = df::unit::find(change.unit_id());
+
+        if (unit)
+            unit->status.labors[change.labor()] = change.value();
+    }
+
+    return CR_OK;
+}
+
 CoreService::CoreService() {
     suspend_depth = 0;
 
@@ -637,6 +665,8 @@ CoreService::CoreService() {
     addFunction("ListMaterials", ListMaterials, SF_CALLED_ONCE);
     addFunction("ListUnits", ListUnits);
     addFunction("ListSquads", ListSquads);
+
+    addFunction("SetUnitLabors", SetUnitLabors);
 }
 
 CoreService::~CoreService()

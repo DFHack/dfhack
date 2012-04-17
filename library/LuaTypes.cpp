@@ -30,6 +30,7 @@ distribution.
 
 #include "MemAccess.h"
 #include "Core.h"
+#include "Error.h"
 #include "VersionInfo.h"
 #include "tinythread.h"
 // must be last due to MS stupidity
@@ -78,6 +79,15 @@ void constructed_identity::lua_write(lua_State *state, int fname_idx, void *ptr,
     if (lua_istable(state, val_index))
     {
         invoke_assign(state, this, ptr, val_index);
+    }
+    // Allow by-value assignment for wrapped function parameters
+    else if (fname_idx == UPVAL_METHOD_NAME && lua_isuserdata(state, val_index))
+    {
+        void *nval = get_object_internal(state, this, val_index, false);
+        if (!nval)
+            field_error(state, fname_idx, "incompatible type in complex assignment", "write");
+        if (!copy(ptr, nval))
+            field_error(state, fname_idx, "no copy support", "write");
     }
     else
         field_error(state, fname_idx, "complex object", "write");
@@ -1020,10 +1030,47 @@ static int meta_global_newindex(lua_State *state)
 static int meta_call_function(lua_State *state)
 {
     auto id = (function_identity_base*)lua_touserdata(state, UPVAL_CONTAINER_ID);
-    if (lua_gettop(state) != id->getNumArgs())
+
+    return method_wrapper_core(state, id);
+}
+
+int LuaWrapper::method_wrapper_core(lua_State *state, function_identity_base *id)
+{
+    if (id->adjustArgs())
+        lua_settop(state, id->getNumArgs());
+    else if (lua_gettop(state) != id->getNumArgs())
         field_error(state, UPVAL_METHOD_NAME, "invalid argument count", "invoke");
-    id->invoke(state, 1);
+
+    try {
+        id->invoke(state, 1);
+    }
+    catch (Error::NullPointer &e) {
+        const char *vn = e.varname();
+        std::string tmp = stl_sprintf("NULL pointer: %s", vn ? vn : "?");
+        field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
+    }
+    catch (std::exception &e) {
+        std::string tmp = stl_sprintf("C++ exception: %s", e.what());
+        field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
+    }
+
     return 1;
+}
+
+/**
+ * Push a closure invoking the given function.
+ */
+void LuaWrapper::PushFunctionWrapper(lua_State *state, int meta_idx,
+                                     const char *name, function_identity_base *fun)
+{
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPETABLE_TOKEN);
+    if (meta_idx)
+        lua_pushvalue(state, meta_idx);
+    else
+        lua_pushlightuserdata(state, NULL); // can't be a metatable
+    lua_pushfstring(state, "%s()", name);
+    lua_pushlightuserdata(state, fun);
+    lua_pushcclosure(state, meta_call_function, 4);
 }
 
 /**
@@ -1032,22 +1079,28 @@ static int meta_call_function(lua_State *state)
 static void AddMethodWrapper(lua_State *state, int meta_idx, int field_idx,
                              const char *name, function_identity_base *fun)
 {
-    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPETABLE_TOKEN);
-    lua_pushvalue(state, meta_idx);
-    lua_pushfstring(state, "%s()", name);
-    lua_pushlightuserdata(state, fun);
-    lua_pushcclosure(state, meta_call_function, 4);
-
+    PushFunctionWrapper(state, meta_idx, name, fun);
     lua_setfield(state, field_idx, name);
+}
+
+/**
+ * Wrap functions and add them to the table on the top of the stack.
+ */
+void LuaWrapper::SetFunctionWrappers(lua_State *state, const FunctionReg *reg)
+{
+    int base = lua_gettop(state);
+
+    for (; reg && reg->name; ++reg)
+        AddMethodWrapper(state, 0, base, reg->name, reg->identity);
 }
 
 /**
  * Add fields in the array to the UPVAL_FIELDTABLE candidates on the stack.
  */
-static void IndexFields(lua_State *state, int base, struct_identity *pstruct)
+static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bool globals)
 {
     if (pstruct->getParent())
-        IndexFields(state, base, pstruct->getParent());
+        IndexFields(state, base, pstruct->getParent(), globals);
 
     auto fields = pstruct->getFields();
     if (!fields)
@@ -1077,7 +1130,10 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct)
             break;
 
         default:
-            AssociateId(state, base+3, ++cnt, name.c_str());
+            // Do not add invalid globals to the enumeration order
+            if (!globals || *(void**)fields[i].offset)
+                AssociateId(state, base+3, ++cnt, name.c_str());
+
             lua_pushlightuserdata(state, (void*)&fields[i]);
             lua_setfield(state, base+2, name.c_str());
             break;
@@ -1115,7 +1171,7 @@ void LuaWrapper::IndexStatics(lua_State *state, int meta_idx, int ftable_idx, st
  * Make a struct-style object metatable.
  */
 static void MakeFieldMetatable(lua_State *state, struct_identity *pstruct,
-                               lua_CFunction reader, lua_CFunction writer)
+                               lua_CFunction reader, lua_CFunction writer, bool globals = false)
 {
     int base = lua_gettop(state);
 
@@ -1124,7 +1180,7 @@ static void MakeFieldMetatable(lua_State *state, struct_identity *pstruct,
     // Index the fields
     lua_newtable(state);
 
-    IndexFields(state, base, pstruct);
+    IndexFields(state, base, pstruct, globals);
 
     // Add the iteration metamethods
     PushStructMethod(state, base+1, base+3, meta_struct_next);
@@ -1276,7 +1332,7 @@ void struct_identity::build_metatable(lua_State *state)
 
 void global_identity::build_metatable(lua_State *state)
 {
-    MakeFieldMetatable(state, this, meta_global_index, meta_global_newindex);
+    MakeFieldMetatable(state, this, meta_global_index, meta_global_newindex, true);
 }
 
 /**

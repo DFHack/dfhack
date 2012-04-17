@@ -59,12 +59,9 @@ command_result tubefill(color_ostream &out, std::vector<std::string> & params)
     for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block *block = world->map.map_blocks[i];
-        df::map_block *above = Maps::getBlockAbs(block->map_pos.x, block->map_pos.y, block->map_pos.z + 1);
-        if (block->local_feature == -1)
-            continue;
+        df::map_block *above = Maps::getTileBlock(block->map_pos + df::coord(0,0,1));
         DFHack::t_feature feature;
-        DFCoord coord(block->map_pos.x >> 4, block->map_pos.y >> 4, block->map_pos.z);
-        if (!Maps::GetLocalFeature(feature, coord, block->local_feature))
+        if (!Maps::ReadFeatures(block, &feature, NULL))
             continue;
         if (feature.type != feature_type::deep_special_tube)
             continue;

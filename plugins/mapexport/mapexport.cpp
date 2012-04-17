@@ -151,7 +151,7 @@ command_result mapexport (color_ostream &out, std::vector <std::string> & parame
                 // Get the map block
                 df::coord2d blockCoord(b_x, b_y);
                 MapExtras::Block *b = map.BlockAt(DFHack::DFCoord(b_x, b_y, z));
-                if (!b || !b->valid)
+                if (!b || !b->is_valid())
                 {
                     continue;
                 }
@@ -161,15 +161,9 @@ command_result mapexport (color_ostream &out, std::vector <std::string> & parame
                 protoblock.set_y(b_y);
                 protoblock.set_z(z);
 
-                { // Find features
-                    uint32_t index = b->raw.global_feature;
-                    if (index != -1)
-                        Maps::GetGlobalFeature(blockFeatureGlobal, index);
-
-                    index = b->raw.local_feature;
-                    if (index != -1)
-                        Maps::GetLocalFeature(blockFeatureLocal, blockCoord, index);
-                }
+                // Find features
+                b->GetGlobalFeature(&blockFeatureGlobal);
+                b->GetLocalFeature(&blockFeatureLocal);
 
                 int global_z = df::global::world->map.region_z + z;
 
@@ -247,9 +241,9 @@ command_result mapexport (color_ostream &out, std::vector <std::string> & parame
                     }
                 }
 
-                PlantList *plants;
-                if (Maps::ReadVegetation(b_x, b_y, z, plants))
+                if (b->getRaw())
                 {
+                    PlantList *plants = &b->getRaw()->plants;
                     for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
                     {
                         const df::plant & plant = *(*it);

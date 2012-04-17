@@ -207,6 +207,22 @@ unsigned insert_into_vector(std::vector<CT*> &vec, FT CT::*field, CT *obj, bool 
     return pos;
 }
 
+template<typename FT>
+bool erase_from_vector(std::vector<FT> &vec, FT key)
+{
+    int pos = binsearch_index(vec, key);
+    vector_erase_at(vec, pos);
+    return pos >= 0;
+}
+
+template<typename CT, typename FT>
+bool erase_from_vector(std::vector<CT*> &vec, FT CT::*field, FT key)
+{
+    int pos = binsearch_index(vec, field, key);
+    vector_erase_at(vec, pos);
+    return pos >= 0;
+}
+
 template <typename CT, typename KT>
 CT *binsearch_in_vector(const std::vector<CT*> &vec, KT value)
 {
@@ -279,3 +295,7 @@ DFHACK_EXPORT uint64_t GetTimeMs64();
 
 DFHACK_EXPORT std::string stl_sprintf(const char *fmt, ...);
 DFHACK_EXPORT std::string stl_vsprintf(const char *fmt, va_list args);
+
+// Conversion between CP437 and UTF-8
+DFHACK_EXPORT std::string UTF2DF(const std::string &in);
+DFHACK_EXPORT std::string DF2UTF(const std::string &in);

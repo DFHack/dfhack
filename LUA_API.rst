@@ -68,6 +68,11 @@ All typed objects have the following built-in features:
   and values. Fields are enumerated in memory order. Methods and
   lua wrapper properties are not included in the iteration.
 
+  **WARNING**: a few of the data structures (like ui_look_list)
+  contain unions with pointers to different types with vtables.
+  Using pairs on such structs is an almost sure way to crash with
+  an access violation.
+
 * ``ref._kind``
 
   Returns one of: ``primitive``, ``struct``, ``container``,
@@ -456,6 +461,31 @@ Currently it defines the following features:
   to group operations together in one big critical section. A plugin
   can choose to run all lua code inside a C++-side suspend lock.
 
+* ``dfhack.call_with_finalizer(num_cleanup_args,always,cleanup_fn[,cleanup_args...],fn[,args...])``
+
+  Invokes ``fn`` with ``args``, and after it returns or throws an
+  error calls ``cleanup_fn`` with ``cleanup_args``. Any return values from
+  ``fn`` are propagated, and errors are re-thrown.
+
+  The ``num_cleanup_args`` integer specifies the number of ``cleanup_args``,
+  and the ``always`` boolean specifies if cleanup should be called in any case,
+  or only in case of an error.
+
+* ``dfhack.with_finalize(cleanup_fn,fn[,args...])``
+
+  Calls ``fn`` with arguments, then finalizes with ``cleanup_fn``.
+  Implemented using ``call_with_finalizer(0,true,...)``.
+
+* ``dfhack.with_onerror(cleanup_fn,fn[,args...])``
+
+  Calls ``fn`` with arguments, then finalizes with ``cleanup_fn`` on any thrown error.
+  Implemented using ``call_with_finalizer(0,false,...)``.
+
+* ``dfhack.with_temp_object(obj,fn[,args...])``
+
+  Calls ``fn(obj,args...)``, then finalizes with ``obj:delete()``.
+
+
 Persistent configuration storage
 ================================
 
@@ -497,3 +527,289 @@ Since the data is hidden in data structures owned by the DF world,
 and automatically stored in the save game, these save and retrieval
 functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.
+
+Material info lookup
+====================
+
+A material info record has fields:
+
+* ``type``, ``index``, ``material``
+
+  DF material code pair, and a reference to the material object.
+
+* ``mode``
+
+  One of ``'builtin'``, ``'inorganic'``, ``'plant'``, ``'creature'``.
+
+* ``inorganic``, ``plant``, ``creature``
+
+  If the material is of the matching type, contains a reference to the raw object.
+
+* ``figure``
+
+  For a specific creature material contains a ref to the historical figure.
+
+Functions:
+
+* ``dfhack.matinfo.decode(type,index)``
+
+  Looks up material info for the given number pair; if not found, returs *nil*.
+
+* ``....decode(matinfo)``, ``....decode(item)``, ``....decode(obj)``
+
+  Uses ``matinfo.type``/``matinfo.index``, item getter vmethods,
+  or ``obj.mat_type``/``obj.mat_index`` to get the code pair.
+
+* ``dfhack.matinfo.find(token[,token...])``
+
+  Looks up material by a token string, or a pre-split string token sequence.
+
+* ``dfhack.matinfo.getToken(...)``, ``info:getToken()``
+
+  Applies ``decode`` and constructs a string token.
+
+* ``info:toString([temperature[,named]])``
+
+  Returns the human-readable name at the given temperature.
+
+* ``info:getCraftClass()``
+
+  Returns the classification used for craft skills.
+
+* ``info:matches(obj)``
+
+  Checks if the material matches job_material_category or job_item.
+  Accept dfhack_material_category auto-assign table.
+
+C++ function wrappers
+=====================
+
+Thin wrappers around C++ functions, similar to the ones for virtual methods.
+
+* ``dfhack.TranslateName(name,in_english,only_last_name)``
+
+  Convert a language_name or only the last name part to string.
+
+Gui module
+----------
+
+* ``dfhack.gui.getSelectedWorkshopJob(silent)``
+
+  When a job is selected in *'q'* mode, returns the job, else
+  prints error unless silent and returns *nil*.
+
+* ``dfhack.gui.getSelectedJob(silent)``
+
+  Returns the job selected in a workshop or unit/jobs screen.
+
+* ``dfhack.gui.getSelectedUnit(silent)``
+
+  Returns the unit selected via *'v'*, *'k'*, unit/jobs, or
+  a full-screen item view of a cage or suchlike.
+
+* ``dfhack.gui.getSelectedItem(silent)``
+
+  Returns the item selected via *'v'* ->inventory, *'k'*, *'t'*, or
+  a full-screen item view of a container. Note that in the
+  last case, the highlighted *contained item* is returned, not
+  the container itself.
+
+* ``dfhack.gui.showAnnouncement(text,color,is_bright)``
+
+  Adds a regular announcement with given text, color, and brightness.
+  The is_bright boolean actually seems to invert the brightness.
+
+* ``dfhack.gui.showPopupAnnouncement(text,color,is_bright)``
+
+  Pops up a titan-style modal announcement window.
+
+Job module
+----------
+
+* ``dfhack.job.cloneJobStruct(job)``
+
+  Creates a deep copy of the given job.
+
+* ``dfhack.job.printJobDetails(job)``
+
+  Prints info about the job.
+
+* ``dfhack.job.printItemDetails(jobitem,idx)``
+
+  Prints info about the job item.
+
+* ``dfhack.job.getHolder(job)``
+
+  Returns the building holding the job.
+
+* ``dfhack.job.getWorker(job)``
+
+  Returns the unit performing the job.
+
+* ``dfhack.job.is_equal(job1,job2)``
+
+  Compares important fields in the job and nested item structures.
+
+* ``dfhack.job.is_item_equal(job_item1,job_item2)``
+
+  Compares important fields in the job item structures.
+
+* ``dfhack.job.listNewlyCreated(first_id)``
+
+  Returns the current value of ``df.global.job_next_id``, and
+  if there are any jobs with ``first_id <= id < job_next_id``,
+  a lua list containing them.
+
+Units module
+------------
+
+* ``dfhack.units.getPosition(unit)``
+
+  Returns true *x,y,z* of the unit; may be not equal to unit.pos if caged.
+
+* ``dfhack.units.getContainer(unit)``
+
+  Returns the container (cage) item or *nil*.
+
+* ``dfhack.units.setNickname(unit,nick)``
+
+  Sets the unit's nickname properly.
+
+* ``dfhack.units.getVisibleName(unit)``
+
+  Returns the language_name object visible in game, accounting for false identities.
+
+* ``dfhack.units.getNemesis(unit)``
+
+  Returns the nemesis record of the unit if it has one, or *nil*.
+
+* ``dfhack.units.isDead(unit)``
+
+  The unit is completely dead and passive.
+
+* ``dfhack.units.isAlive(unit)``
+
+  The unit isn't dead or undead.
+
+* ``dfhack.units.isSane(unit)``
+
+  The unit is capable of rational action, i.e. not dead, insane or zombie.
+
+* ``dfhack.units.clearBurrowMembers(burrow)``
+
+  Removes all units from the burrow.
+
+* ``dfhack.units.isInBurrow(unit,burrow)``
+
+  Checks if the unit is in the burrow.
+
+* ``dfhack.units.setInBurrow(unit,burrow,enable)``
+
+  Adds or removes the unit from the burrow.
+
+
+Items module
+------------
+
+* ``dfhack.items.getPosition(item)``
+
+  Returns true *x,y,z* of the item; may be not equal to item.pos if in inventory.
+
+* ``dfhack.items.getOwner(item)``
+
+  Returns the owner unit or *nil*.
+
+* ``dfhack.items.setOwner(item,unit)``
+
+  Replaces the owner of the item. If unit is *nil*, removes ownership.
+  Returns *false* in case of error.
+
+* ``dfhack.items.getContainer(item)``
+
+  Returns the container item or *nil*.
+
+* ``dfhack.items.getContainedItems(item)``
+
+  Returns a list of items contained in this one.
+
+* ``dfhack.items.moveToGround(item,pos)``
+
+  Move the item to the ground at position. Returns *false* if impossible.
+
+* ``dfhack.items.moveToContainer(item,container)``
+
+  Move the item to the container. Returns *false* if impossible.
+
+
+Maps module
+-----------
+
+* ``dfhack.maps.getSize()``
+
+  Returns map size in blocks: *x, y, z*
+
+* ``dfhack.maps.getTileSize()``
+
+  Returns map size in tiles: *x, y, z*
+
+* ``dfhack.maps.getBlock(x,y,z)``
+
+  Returns a map block object for given x,y,z in local block coordinates.
+
+* ``dfhack.maps.getTileBlock(coords)``
+
+  Returns a map block object for given df::coord in local tile coordinates.
+
+* ``dfhack.maps.getRegionBiome(region_coord2d)``
+
+  Returns the biome info struct for the given global map region.
+
+* ``dfhack.maps.getGlobalInitFeature(index)``
+
+  Returns the global feature object with the given index.
+
+* ``dfhack.maps.getLocalInitFeature(region_coord2d,index)``
+
+  Returns the local feature object with the given region coords and index.
+
+* ``dfhack.maps.findBurrowByName(name)``
+
+  Returns the burrow pointer or *nil*.
+
+* ``dfhack.maps.listBurrowBlocks(burrow)``
+
+  Returns a table of map block pointers.
+
+* ``dfhack.maps.clearBurrowTiles(burrow)``
+
+  Removes all tiles from the burrow.
+
+* ``dfhack.maps.isBurrowTile(burrow,tile_coord)``
+
+  Checks if the tile is in burrow.
+
+* ``dfhack.maps.setBurrowTile(burrow,tile_coord,enable)``
+
+  Adds or removes the tile from the burrow. Returns *false* if invalid coords.
+
+* ``dfhack.maps.isBlockBurrowTile(burrow,block,x,y)``
+
+  Checks if the tile within the block is in burrow.
+
+* ``dfhack.maps.setBlockBurrowTile(burrow,block,x,y,enable)``
+
+  Adds or removes the tile from the burrow. Returns *false* if invalid coords.
+
+
+Core interpreter context
+========================
+
+While plugins can create any number of interpreter instances,
+there is one special context managed by dfhack core. It is the
+only context that can receive events from DF and plugins.
+
+Core context specific functions:
+
+* ``dfhack.is_core_context``
+
+  Boolean value; *true* in the core context.

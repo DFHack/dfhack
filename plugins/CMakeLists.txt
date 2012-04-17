@@ -20,10 +20,11 @@ if(BUILD_DEV_PLUGINS)
     add_subdirectory (devel)
 endif()
 
-OPTION(BUILD_DF2MC "Build DF2MC (needs a checkout first)." OFF)
-if(BUILD_DF2MC)
-    add_subdirectory (df2mc)
-endif()
+#It's dead :<
+#OPTION(BUILD_DF2MC "Build DF2MC (needs a checkout first)." OFF)
+#if(BUILD_DF2MC)
+#    add_subdirectory (df2mc)
+#endif()
 
 OPTION(BUILD_MAPEXPORT "Build map exporter." ON)
 if (BUILD_MAPEXPORT)
@@ -39,6 +40,10 @@ OPTION(BUILD_RUBY "Build ruby binding." OFF)
 if (BUILD_RUBY)
     add_subdirectory (ruby)
 endif()
+
+install(DIRECTORY lua/
+        DESTINATION ${DFHACK_LUA_DESTINATION}/plugins
+        FILES_MATCHING PATTERN "*.lua")
 
 # Protobuf
 FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
@@ -102,6 +107,8 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(feature feature.cpp)
     DFHACK_PLUGIN(lair lair.cpp)
     DFHACK_PLUGIN(zone zone.cpp)
+    # this one exports functions to lua
+    DFHACK_PLUGIN(burrows burrows.cpp LINK_LIBRARIES lua)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
 endif()

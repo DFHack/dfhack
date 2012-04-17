@@ -46,6 +46,7 @@ using namespace DFHack;
 #include "df/global_objects.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_dungeonmodest.h"
+#include "df/viewscreen_dungeon_monsterstatusst.h"
 #include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_itemst.h"
@@ -283,6 +284,9 @@ static df::unit *getAnyUnit(df::viewscreen *top)
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitlistst, top))
         return vector_get(screen->units[screen->page], screen->cursor_pos[screen->page]);
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_dungeon_monsterstatusst, top))
+        return screen->unit;
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_itemst, top))
     {

@@ -40,18 +40,23 @@ using namespace std;
 
 // we connect to those
 #include "modules/Units.h"
+#include "modules/Items.h"
 #include "modules/Materials.h"
 #include "modules/Translation.h"
 #include "ModuleFactory.h"
 #include "Core.h"
+#include "MiscUtils.h"
 
 #include "df/world.h"
 #include "df/ui.h"
 #include "df/unit_inventory_item.h"
+#include "df/unit_soul.h"
+#include "df/nemesis_record.h"
 #include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
 #include "df/assumed_identity.h"
+#include "df/burrow.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -491,44 +496,84 @@ bool Units::ReadInventoryByPtr(const df::unit * unit, std::vector<df::item *> & 
     return true;
 }
 
-bool Units::ReadOwnedItemsByIdx(const uint32_t index, std::vector<int32_t> & item)
-{
-    if(index >= world->units.all.size()) return false;
-    df::unit * temp = world->units.all[index];
-    return ReadOwnedItemsByPtr(temp, item);
-}
-
-bool Units::ReadOwnedItemsByPtr(const df::unit * unit, std::vector<int32_t> & items)
-{
-    if(!isValid()) return false;
-    if(!unit) return false;
-    items = unit->owned_items;
-    return true;
-}
-
-bool Units::RemoveOwnedItemByIdx(const uint32_t index, int32_t id)
-{
-    if(index >= world->units.all.size()) return false;
-    df::unit * temp = world->units.all[index];
-    return RemoveOwnedItemByPtr(temp, id);
-}
-
-bool Units::RemoveOwnedItemByPtr(df::unit * unit, int32_t id)
-{
-    if(!isValid()) return false;
-    if(!unit) return false;
-    vector <int32_t> & vec = unit->owned_items;
-    vec.erase(std::remove(vec.begin(), vec.end(), id), vec.end());
-    return true;
-}
-
 void Units::CopyNameTo(df::unit * creature, df::language_name * target)
 {
     Translation::copyName(&creature->name, target);
 }
 
-df::language_name *Units::GetVisibleName(df::unit *unit)
+df::coord Units::getPosition(df::unit *unit)
 {
+    CHECK_NULL_POINTER(unit);
+
+    if (unit->flags1.bits.caged)
+    {
+        auto cage = getContainer(unit);
+        if (cage)
+            return Items::getPosition(cage);
+    }
+
+    return unit->pos;
+}
+
+df::item *Units::getContainer(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    for (size_t i = 0; i < unit->refs.size(); i++)
+    {
+        df::general_ref *ref = unit->refs[i];
+        if (ref->getType() == general_ref_type::CONTAINED_IN_ITEM)
+            return ref->getItem();
+    }
+
+    return NULL;
+}
+
+void Units::setNickname(df::unit *unit, std::string nick)
+{
+    CHECK_NULL_POINTER(unit);
+
+    // There are >=3 copies of the name, and the one
+    // in the unit is not the authoritative one.
+    // This is the reason why military units often
+    // lose nicknames set from Dwarf Therapist.
+    Translation::setNickname(&unit->name, nick);
+
+    if (unit->status.current_soul)
+        Translation::setNickname(&unit->status.current_soul->name, nick);
+
+    df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
+    if (figure)
+    {
+        Translation::setNickname(&figure->name, nick);
+
+        // v0.34.01: added the vampire's assumed identity
+        if (figure->info && figure->info->reputation)
+        {
+            auto identity = df::assumed_identity::find(figure->info->reputation->cur_identity);
+
+            if (identity)
+            {
+                auto id_hfig = df::historical_figure::find(identity->histfig_id);
+
+                if (id_hfig)
+                {
+                    // Even DF doesn't do this bit, because it's apparently
+                    // only used for demons masquerading as gods, so you
+                    // can't ever change their nickname in-game.
+                    Translation::setNickname(&id_hfig->name, nick);
+                }
+                else
+                    Translation::setNickname(&identity->name, nick);
+            }
+        }
+    }
+}
+
+df::language_name *Units::getVisibleName(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
     df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
 
     if (figure)
@@ -553,13 +598,33 @@ df::language_name *Units::GetVisibleName(df::unit *unit)
     return &unit->name;
 }
 
+df::nemesis_record *Units::getNemesis(df::unit *unit)
+{
+    if (!unit)
+        return NULL;
+
+    for (unsigned i = 0; i < unit->refs.size(); i++)
+    {
+        df::nemesis_record *rv = unit->refs[i]->getNemesis();
+        if (rv && rv->unit == unit)
+            return rv;
+    }
+
+    return NULL;
+}
+
+
 bool DFHack::Units::isDead(df::unit *unit)
 {
+    CHECK_NULL_POINTER(unit);
+
     return unit->flags1.bits.dead;
 }
 
 bool DFHack::Units::isAlive(df::unit *unit)
 {
+    CHECK_NULL_POINTER(unit);
+
     return !unit->flags1.bits.dead &&
            !unit->flags3.bits.ghostly &&
            !unit->curse.add_tags1.bits.NOT_LIVING;
@@ -567,24 +632,105 @@ bool DFHack::Units::isAlive(df::unit *unit)
 
 bool DFHack::Units::isSane(df::unit *unit)
 {
+    CHECK_NULL_POINTER(unit);
+
     if (unit->flags1.bits.dead ||
         unit->flags3.bits.ghostly ||
         unit->curse.add_tags1.bits.OPPOSED_TO_LIFE ||
         unit->curse.add_tags1.bits.CRAZED)
         return false;
 
-    if (unit->flags1.bits.has_mood)
+    switch (unit->mood)
     {
-        switch (unit->mood)
-        {
-        case mood_type::Melancholy:
-        case mood_type::Raving:
-        case mood_type::Berserk:
-            return false;
-        default:
-            break;
-        }
+    case mood_type::Melancholy:
+    case mood_type::Raving:
+    case mood_type::Berserk:
+        return false;
+    default:
+        break;
     }
 
     return true;
 }
+
+bool DFHack::Units::isCitizen(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->civ_id == ui->civ_id &&
+           !unit->flags1.bits.merchant &&
+           !unit->flags1.bits.diplomat &&
+           !unit->flags2.bits.resident &&
+           !unit->flags1.bits.dead &&
+           !unit->flags3.bits.ghostly;
+}
+
+bool DFHack::Units::isDwarf(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->race == ui->race_id;
+}
+
+void DFHack::Units::clearBurrowMembers(df::burrow *burrow)
+{
+    CHECK_NULL_POINTER(burrow);
+
+    for (size_t i = 0; i < burrow->units.size(); i++)
+    {
+        auto unit = df::unit::find(burrow->units[i]);
+
+        if (unit)
+            erase_from_vector(unit->burrows, burrow->id);
+    }
+
+    burrow->units.clear();
+
+    // Sync ui if active
+    if (ui && ui->main.mode == ui_sidebar_mode::Burrows &&
+        ui->burrows.in_add_units_mode && ui->burrows.sel_id == burrow->id)
+    {
+        auto &sel = ui->burrows.sel_units;
+
+        for (size_t i = 0; i < sel.size(); i++)
+            sel[i] = false;
+    }
+}
+
+
+bool DFHack::Units::isInBurrow(df::unit *unit, df::burrow *burrow)
+{
+    CHECK_NULL_POINTER(unit);
+    CHECK_NULL_POINTER(burrow);
+
+    return binsearch_index(unit->burrows, burrow->id) >= 0;
+}
+
+void DFHack::Units::setInBurrow(df::unit *unit, df::burrow *burrow, bool enable)
+{
+    using df::global::ui;
+
+    CHECK_NULL_POINTER(unit);
+    CHECK_NULL_POINTER(burrow);
+
+    if (enable)
+    {
+        insert_into_vector(unit->burrows, burrow->id);
+        insert_into_vector(burrow->units, unit->id);
+    }
+    else
+    {
+        erase_from_vector(unit->burrows, burrow->id);
+        erase_from_vector(burrow->units, unit->id);
+    }
+
+    // Sync ui if active
+    if (ui && ui->main.mode == ui_sidebar_mode::Burrows &&
+        ui->burrows.in_add_units_mode && ui->burrows.sel_id == burrow->id)
+    {
+        int idx = linear_index(ui->burrows.list_units, unit);
+        if (idx >= 0)
+            ui->burrows.sel_units[idx] = enable;
+    }
+}
+

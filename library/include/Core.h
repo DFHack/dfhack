@@ -65,12 +65,6 @@ namespace DFHack
     {
         class df_window;
     }
-    // anon type, pretty much
-    struct DFLibrary;
-
-    DFLibrary * OpenPlugin (const char * filename);
-    void * LookupPlugin (DFLibrary * plugin ,const char * function);
-    void ClosePlugin (DFLibrary * plugin);
 
     // Core is a singleton. Why? Because it is closely tied to SDL calls. It tracks the global state of DF.
     // There should never be more than one instance
@@ -96,6 +90,8 @@ namespace DFHack
             static Core instance;
             return instance;
         }
+        /// check if the activity lock is owned by this thread
+        bool isSuspended(void);
         /// try to acquire the activity lock
         void Suspend(void);
         /// return activity lock
@@ -138,6 +134,10 @@ namespace DFHack
 
         static void print(const char *format, ...);
         static void printerr(const char *format, ...);
+
+        PluginManager *getPluginManager() { return plug_mgr; }
+
+        static void cheap_tokenise(std::string const& input, std::vector<std::string> &output);
 
     private:
         DFHack::Console con;

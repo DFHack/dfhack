@@ -204,6 +204,18 @@ namespace DFHack
     }
 
     inline
+    bool isWalkable(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype_shape, walkable, tileShape(tiletype));
+    }
+
+    inline
+    bool isWalkableUp(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype_shape, walkable_up, tileShape(tiletype));
+    }
+
+    inline
     bool isWallTerrain(df::tiletype tiletype)
     {
         return ENUM_ATTR(tiletype_shape, basic_shape, tileShape(tiletype)) == tiletype_shape_basic::Wall;

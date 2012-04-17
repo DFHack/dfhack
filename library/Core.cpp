@@ -49,6 +49,8 @@ using namespace std;
 #include "modules/Graphic.h"
 #include "modules/Windows.h"
 #include "RemoteServer.h"
+#include "LuaTools.h"
+
 using namespace DFHack;
 
 #include "df/ui.h"
@@ -118,7 +120,7 @@ struct Core::Private
     }
 };
 
-void cheap_tokenise(string const& input, vector<string> &output)
+void Core::cheap_tokenise(string const& input, vector<string> &output)
 {
     string *cur = NULL;
 
@@ -177,7 +179,7 @@ void fHKthread(void * iodata)
             color_ostream_proxy out(core->getConsole());
 
             vector <string> args;
-            cheap_tokenise(stuff, args);
+            Core::cheap_tokenise(stuff, args);
             if (args.empty()) {
                 out.printerr("Empty hotkey command.\n");
                 continue;
@@ -218,7 +220,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
     {
         // cut the input into parts
         vector <string> parts;
-        cheap_tokenise(command,parts);
+        Core::cheap_tokenise(command,parts);
         if(parts.size() == 0)
         {
             clueless_counter ++;
@@ -701,6 +703,9 @@ bool Core::Init()
     virtual_identity::Init(this);
     df::global::InitGlobals();
 
+    // initialize common lua context
+    Lua::Core::Init(con);
+
     // create mutex for syncing with interactive tasks
     misc_data_mutex=new mutex();
     cerr << "Initializing Plugins.\n";
@@ -803,6 +808,13 @@ void *Core::GetData( std::string key )
     }
 }
 
+bool Core::isSuspended(void)
+{
+    lock_guard<mutex> lock(d->AccessMutex);
+
+    return (d->df_suspend_depth > 0 && d->df_suspend_thread == this_thread::get_id());
+}
+
 void Core::Suspend()
 {
     auto tid = this_thread::get_id();
@@ -861,12 +873,8 @@ int Core::TileUpdate()
 // should always be from simulation thread!
 int Core::Update()
 {
-    if(!started)
-        Init();
     if(errorstate)
         return -1;
-
-    color_ostream_proxy out(con);
 
     // Pretend this thread has suspended the core in the usual way
     {
@@ -876,6 +884,25 @@ int Core::Update()
         d->df_suspend_thread = this_thread::get_id();
         d->df_suspend_depth = 1000;
     }
+
+    // Initialize the core
+    bool first_update = false;
+
+    if(!started)
+    {
+        first_update = true;
+        Init();
+        if(errorstate)
+            return -1;
+        Lua::Core::Reset(con, "core init");
+    }
+
+    color_ostream_proxy out(con);
+
+    Lua::Core::Reset(out, "DF code execution");
+
+    if (first_update)
+        plug_mgr->OnStateChange(out, SC_CORE_INITIALIZED);
 
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
@@ -893,26 +920,31 @@ int Core::Update()
     if (new_wdata != last_world_data_ptr)
     {
         // we check for map change too
-        bool mapchange = new_mapdata != last_local_map_ptr;
+        bool had_map = isMapLoaded();
         last_world_data_ptr = new_wdata;
         last_local_map_ptr = new_mapdata;
 
         getWorld()->ClearPersistentCache();
 
         // and if the world is going away, we report the map change first
-        if(!new_wdata && mapchange)
-            plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+        if(had_map)
+            plug_mgr->OnStateChange(out, SC_MAP_UNLOADED);
         // and if the world is appearing, we report map change after that
         plug_mgr->OnStateChange(out, new_wdata ? SC_WORLD_LOADED : SC_WORLD_UNLOADED);
-        if(new_wdata && mapchange)
-            plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+        if(isMapLoaded())
+            plug_mgr->OnStateChange(out, SC_MAP_LOADED);
     }
     // otherwise just check for map change...
     else if (new_mapdata != last_local_map_ptr)
     {
+        bool had_map = isMapLoaded();
         last_local_map_ptr = new_mapdata;
-        getWorld()->ClearPersistentCache();
-        plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+
+        if (isMapLoaded() != had_map)
+        {
+            getWorld()->ClearPersistentCache();
+            plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+        }
     }
 
     // detect if the viewscreen changed
@@ -959,6 +991,8 @@ int Core::Update()
         assert(d->df_suspend_depth == 0);
         // destroy condition
         delete nc;
+        // check lua stack depth
+        Lua::Core::Reset(con, "suspend");
     }
 
     return 0;

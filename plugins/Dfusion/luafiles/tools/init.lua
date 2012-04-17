@@ -274,19 +274,50 @@ function tools.changesite(names)
 	print(string.format("%x->%d",off,n2))
 	engine.poke(off,ptr_site.type,n2)
 end
-function tools.project(unit)
+function tools.project(unit,trg)
 	if unit==nil then
-		unit=getSelectedUnit()
-	end
-	
-	if unit==nil then
-		unit=getCreatureAtPos(getxyz())
+		unit=getCreatureAtPointer()
 	end
 	
 	if unit==nil then
 		error("Failed to project unit. Unit not selected/valid")
 	end
 	-- todo: add projectile to world, point to unit, add flag to unit, add gen-ref to projectile.
+	local p=df.proj_unitst:new()
+	local startpos={x=unit.pos.x,y=unit.pos.y,z=unit.pos.z}
+	p.origin_pos=startpos
+	p.target_pos=trg
+	p.cur_pos=startpos
+	p.prev_pos=startpos
+	p.unit=unit
+	--- wtf stuff
+	p.unk14=100
+	p.unk16=-1
+	p.unk23=-1
+	p.fall_delay=5
+	p.fall_counter=5
+	p.collided=true
+	-- end wtf
+	local citem=df.global.world.proj_list
+	local maxid=1
+	local newlink=df.proj_list_link:new()
+	newlink.item=p
+	while citem.item~= nil do
+		if citem.item.id>maxid then maxid=citem.item.id end
+		if citem.next ~= nil then 
+			citem=citem.next
+		else
+			break
+		end
+	end
+	p.id=maxid+1
+	newlink.prev=citem
+	citem.next=newlink
+	
+	local proj_ref=df.general_ref_projectile:new()
+	proj_ref.projectile_id=p.id
+	unit.refs:insert(#unit.refs,proj_ref)
+	unit.flags1.projectile=true
 end
 function tools.empregnate(unit)
 	if unit==nil then

@@ -4,6 +4,8 @@
 #include "PluginManager.h"
 
 #include "modules/Gui.h"
+#include "modules/Translation.h"
+#include "modules/Units.h"
 
 #include "DataDefs.h"
 #include "df/ui.h"
@@ -19,6 +21,8 @@
 
 #include "RemoteServer.h"
 #include "rename.pb.h"
+
+#include "MiscUtils.h"
 
 #include <stdlib.h>
 
@@ -57,19 +61,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-static void set_nickname(df::language_name *name, std::string nick)
-{
-    if (!name->has_name)
-    {
-        *name = df::language_name();
-
-        name->language = 0;
-        name->has_name = true;
-    }
-
-    name->nickname = nick;
-}
-
 static df::squad *getSquadByIndex(unsigned idx)
 {
     auto entity = df::historical_entity::find(ui->group_id);
@@ -82,45 +73,6 @@ static df::squad *getSquadByIndex(unsigned idx)
     return df::squad::find(entity->squads[idx]);
 }
 
-void setUnitNickname(df::unit *unit, const std::string &nick)
-{
-    // There are >=3 copies of the name, and the one
-    // in the unit is not the authoritative one.
-    // This is the reason why military units often
-    // lose nicknames set from Dwarf Therapist.
-    set_nickname(&unit->name, nick);
-
-    if (unit->status.current_soul)
-        set_nickname(&unit->status.current_soul->name, nick);
-
-    df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
-    if (figure)
-    {
-        set_nickname(&figure->name, nick);
-
-        // v0.34.01: added the vampire's assumed identity
-        if (figure->info && figure->info->reputation)
-        {
-            auto identity = df::assumed_identity::find(figure->info->reputation->cur_identity);
-
-            if (identity)
-            {
-                auto id_hfig = df::historical_figure::find(identity->histfig_id);
-
-                if (id_hfig)
-                {
-                    // Even DF doesn't do this bit, because it's apparently
-                    // only used for demons masquerading as gods, so you
-                    // can't ever change their nickname in-game.
-                    set_nickname(&id_hfig->name, nick);
-                }
-                else
-                    set_nickname(&identity->name, nick);
-            }
-        }
-    }
-}
-
 static command_result RenameSquad(color_ostream &stream, const RenameSquadIn *in)
 {
     df::squad *squad = df::squad::find(in->squad_id());
@@ -128,9 +80,9 @@ static command_result RenameSquad(color_ostream &stream, const RenameSquadIn *in
         return CR_NOT_FOUND;
 
     if (in->has_nickname())
-        set_nickname(&squad->name, in->nickname());
+        Translation::setNickname(&squad->name, UTF2DF(in->nickname()));
     if (in->has_alias())
-        squad->alias = in->alias();
+        squad->alias = UTF2DF(in->alias());
 
     return CR_OK;
 }
@@ -142,9 +94,9 @@ static command_result RenameUnit(color_ostream &stream, const RenameUnitIn *in)
         return CR_NOT_FOUND;
 
     if (in->has_nickname())
-        setUnitNickname(unit, in->nickname());
+        Units::setNickname(unit, UTF2DF(in->nickname()));
     if (in->has_profession())
-        unit->custom_profession = in->profession();
+        unit->custom_profession = UTF2DF(in->profession());
 
     return CR_OK;
 }
@@ -202,7 +154,7 @@ static command_result rename(color_ostream &out, vector <string> &parameters)
         if (!unit)
             return CR_WRONG_USAGE;
 
-        setUnitNickname(unit, parameters[1]);
+        Units::setNickname(unit, parameters[1]);
     }
     else if (cmd == "unit-profession")
     {

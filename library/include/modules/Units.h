@@ -33,6 +33,12 @@ distribution.
 #include "DataDefs.h"
 #include "df/unit.h"
 
+namespace df
+{
+    struct nemesis_record;
+    struct burrow;
+}
+
 /**
  * \defgroup grp_units Unit module parts
  * @ingroup grp_modules
@@ -179,9 +185,6 @@ DFHACK_EXPORT bool ReadJob(const df::unit * unit, std::vector<t_material> & mat)
 DFHACK_EXPORT bool ReadInventoryByIdx(const uint32_t index, std::vector<df::item *> & item);
 DFHACK_EXPORT bool ReadInventoryByPtr(const df::unit * unit, std::vector<df::item *> & item);
 
-DFHACK_EXPORT bool ReadOwnedItemsByIdx(const uint32_t index, std::vector<int32_t> & item);
-DFHACK_EXPORT bool ReadOwnedItemsByPtr(const df::unit * unit, std::vector<int32_t> & item);
-
 DFHACK_EXPORT int32_t FindIndexById(int32_t id);
 
 /* Getters */
@@ -190,14 +193,27 @@ DFHACK_EXPORT int32_t GetDwarfCivId ( void );
 
 DFHACK_EXPORT void CopyNameTo(df::unit *creature, df::language_name * target);
 
-DFHACK_EXPORT bool RemoveOwnedItemByIdx(const uint32_t index, int32_t id);
-DFHACK_EXPORT bool RemoveOwnedItemByPtr(df::unit * unit, int32_t id);
+/// Returns the true position of the unit (non-trivial in case of caged).
+DFHACK_EXPORT df::coord getPosition(df::unit *unit);
 
-DFHACK_EXPORT df::language_name *GetVisibleName(df::unit *unit);
+DFHACK_EXPORT df::item *getContainer(df::unit *unit);
+
+DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
+DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
+
+DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
 
 DFHACK_EXPORT bool isDead(df::unit *unit);
 DFHACK_EXPORT bool isAlive(df::unit *unit);
 DFHACK_EXPORT bool isSane(df::unit *unit);
+DFHACK_EXPORT bool isCitizen(df::unit *unit);
+DFHACK_EXPORT bool isDwarf(df::unit *unit);
+
+DFHACK_EXPORT void clearBurrowMembers(df::burrow *burrow);
+
+DFHACK_EXPORT bool isInBurrow(df::unit *unit, df::burrow *burrow);
+DFHACK_EXPORT void setInBurrow(df::unit *unit, df::burrow *burrow, bool enable);
+
 }
 }
 #endif

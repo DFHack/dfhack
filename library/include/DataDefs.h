@@ -426,6 +426,9 @@ namespace df
     };
 
     template<class T>
+    inline T* allocate() { return (T*)identity_traits<T>::get()->allocate(); }
+
+    template<class T>
     struct enum_traits {};
 
     template<class T>

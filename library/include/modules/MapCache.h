@@ -33,251 +33,187 @@ distribution.
 #include "df/map_block.h"
 #include "df/block_square_event_mineralst.h"
 #include "df/construction.h"
+#include "df/item.h"
+
 using namespace DFHack;
+
 namespace MapExtras
 {
-void SquashVeins (DFCoord bcoord, mapblock40d & mb, t_blockmaterials & materials)
-{
-    memset(materials,-1,sizeof(materials));
-    std::vector <df::block_square_event_mineralst *> veins;
-    Maps::SortBlockEvents(bcoord.x,bcoord.y,bcoord.z,&veins);
-    for (uint32_t x = 0;x<16;x++) for (uint32_t y = 0; y< 16;y++)
-    {
-        df::tiletype tt = mb.tiletypes[x][y];
-        if (tileMaterial(tt) == tiletype_material::MINERAL)
-        {
-            for (size_t i = 0; i < veins.size(); i++)
-            {
-                if (veins[i]->getassignment(x,y))
-                    materials[x][y] = veins[i]->inorganic_mat;
-            }
-        }
-    }
+
+class DFHACK_EXPORT MapCache;
+
+template<class R, class T> inline R index_tile(T &v, df::coord2d p) {
+    return v[p.x&15][p.y&15];
 }
 
-void SquashFrozenLiquids (DFCoord bcoord, mapblock40d & mb, tiletypes40d & frozen)
-{
-    std::vector <df::block_square_event_frozen_liquidst *> ices;
-    Maps::SortBlockEvents(bcoord.x,bcoord.y,bcoord.z,NULL,&ices);
-    for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
-    {
-        df::tiletype tt = mb.tiletypes[x][y];
-        frozen[x][y] = tiletype::Void;
-        if (tileMaterial(tt) == tiletype_material::FROZEN_LIQUID)
-        {
-            for (size_t i = 0; i < ices.size(); i++)
-            {
-                df::tiletype tt2 = ices[i]->tiles[x][y];
-                if (tt2 != tiletype::Void)
-                {
-                    frozen[x][y] = tt2;
-                    break;
-                }
-            }
-        }
-    }
+inline bool is_valid_tile_coord(df::coord2d p) {
+    return (p.x & ~15) == 0 && (p.y & ~15) == 0;
 }
 
-void SquashConstructions (DFCoord bcoord, mapblock40d & mb, tiletypes40d & constructions)
+class DFHACK_EXPORT Block
 {
-    for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
-    {
-        df::tiletype tt = mb.tiletypes[x][y];
-        constructions[x][y] = tiletype::Void;
-        if (tileMaterial(tt) == tiletype_material::CONSTRUCTION)
-        {
-            DFCoord coord(bcoord.x*16 + x, bcoord.y*16 + y, bcoord.z);
-            df::construction *con = df::construction::find(coord);
-            if (con)
-                constructions[x][y] = con->original_tile;
-        }
-    }
-}
+public:
+    Block(MapCache *parent, DFCoord _bcoord);
+    ~Block();
 
-void SquashRocks ( std::vector< std::vector <uint16_t> > * layerassign, mapblock40d & mb, t_blockmaterials & materials)
-{
-    // get the layer materials
-    for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
-    {
-        materials[x][y] = -1;
-        uint8_t test = mb.designation[x][y].bits.biome;
-        if ((test < sizeof(mb.biome_indices)) && (mb.biome_indices[test] < layerassign->size()))
-            materials[x][y] = layerassign->at(mb.biome_indices[test])[mb.designation[x][y].bits.geolayer_index];
-    }
-}
+    /*
+     * All coordinates are taken mod 16.
+     */
 
-class Block
-{
-    public:
-    Block(DFCoord _bcoord, std::vector< std::vector <uint16_t> > * layerassign = 0)
-    {
-        dirty_designations = false;
-        dirty_tiletypes = false;
-        dirty_temperatures = false;
-        dirty_blockflags = false;
-        dirty_occupancies = false;
-        valid = false;
-        bcoord = _bcoord;
-        if(Maps::ReadBlock40d(bcoord.x,bcoord.y,bcoord.z,&raw))
-        {
-            Maps::ReadTemperatures(bcoord.x,bcoord.y, bcoord.z,&temp1,&temp2);
-            SquashVeins(bcoord,raw,veinmats);
-            SquashConstructions(bcoord, raw, contiles);
-            SquashFrozenLiquids(bcoord, raw, icetiles);
-            if(layerassign)
-                SquashRocks(layerassign,raw,basemats);
-            else
-                memset(basemats,-1,sizeof(basemats));
-            valid = true;
-        }
+    //Arbitrary tag field for flood fills etc.
+    int16_t &tag(df::coord2d p) {
+        return index_tile<int16_t&>(tags, p);
     }
+
     int16_t veinMaterialAt(df::coord2d p)
     {
-        return veinmats[p.x][p.y];
+        return index_tile<int16_t>(veinmats,p);
     }
     int16_t baseMaterialAt(df::coord2d p)
     {
-        return basemats[p.x][p.y];
-    }
-
-    // the clear methods are used by the floodfill in digv and digl to mark tiles which were processed
-    void ClearBaseMaterialAt(df::coord2d p)
-    {
-        basemats[p.x][p.y] = -1;
-    }
-    void ClearVeinMaterialAt(df::coord2d p)
-    {
-        veinmats[p.x][p.y] = -1;
+        return index_tile<int16_t>(basemats,p);
     }
 
     df::tiletype BaseTileTypeAt(df::coord2d p)
     {
-        if (contiles[p.x][p.y] != tiletype::Void)
-            return contiles[p.x][p.y];
-        else if (icetiles[p.x][p.y] != tiletype::Void)
-            return icetiles[p.x][p.y];
-        else
-            return raw.tiletypes[p.x][p.y];
+        auto tt = index_tile<df::tiletype>(contiles,p);
+        if (tt != tiletype::Void) return tt;
+        tt = index_tile<df::tiletype>(icetiles,p);
+        if (tt != tiletype::Void) return tt;
+        return index_tile<df::tiletype>(rawtiles,p);
     }
     df::tiletype TileTypeAt(df::coord2d p)
     {
-        return raw.tiletypes[p.x][p.y];
+        return index_tile<df::tiletype>(rawtiles,p);
     }
     bool setTiletypeAt(df::coord2d p, df::tiletype tiletype)
     {
         if(!valid) return false;
         dirty_tiletypes = true;
         //printf("setting block %d/%d/%d , %d %d\n",x,y,z, p.x, p.y);
-        raw.tiletypes[p.x][p.y] = tiletype;
+        index_tile<df::tiletype&>(rawtiles,p) = tiletype;
         return true;
     }
 
     uint16_t temperature1At(df::coord2d p)
     {
-        return temp1[p.x][p.y];
+        return index_tile<uint16_t>(temp1,p);
     }
     bool setTemp1At(df::coord2d p, uint16_t temp)
     {
         if(!valid) return false;
         dirty_temperatures = true;
-        temp1[p.x][p.y] = temp;
+        index_tile<uint16_t&>(temp1,p) = temp;
         return true;
     }
 
     uint16_t temperature2At(df::coord2d p)
     {
-        return temp2[p.x][p.y];
+        return index_tile<uint16_t>(temp2,p);
     }
     bool setTemp2At(df::coord2d p, uint16_t temp)
     {
         if(!valid) return false;
         dirty_temperatures = true;
-        temp2[p.x][p.y] = temp;
+        index_tile<uint16_t&>(temp2,p) = temp;
         return true;
     }
 
     df::tile_designation DesignationAt(df::coord2d p)
     {
-        return raw.designation[p.x][p.y];
+        return index_tile<df::tile_designation>(designation,p);
     }
     bool setDesignationAt(df::coord2d p, df::tile_designation des)
     {
         if(!valid) return false;
         dirty_designations = true;
         //printf("setting block %d/%d/%d , %d %d\n",x,y,z, p.x, p.y);
-        raw.designation[p.x][p.y] = des;
+        index_tile<df::tile_designation&>(designation,p) = des;
         if(des.bits.dig)
         {
             dirty_blockflags = true;
-            raw.blockflags.bits.designated = true;
+            blockflags.bits.designated = true;
         }
         return true;
     }
 
     df::tile_occupancy OccupancyAt(df::coord2d p)
     {
-        return raw.occupancy[p.x][p.y];
+        return index_tile<df::tile_occupancy>(occupancy,p);
     }
     bool setOccupancyAt(df::coord2d p, df::tile_occupancy des)
     {
         if(!valid) return false;
         dirty_occupancies = true;
-        raw.occupancy[p.x][p.y] = des;
+        index_tile<df::tile_occupancy&>(occupancy,p) = des;
         return true;
+    }
+
+    int itemCountAt(df::coord2d p)
+    {
+        if (!item_counts) init_item_counts();
+        return index_tile<int>(item_counts,p);
     }
 
     t_blockflags BlockFlags()
     {
-        return raw.blockflags;
+        return blockflags;
     }
     bool setBlockFlags(t_blockflags des)
     {
         if(!valid) return false;
         dirty_blockflags = true;
         //printf("setting block %d/%d/%d , %d %d\n",x,y,z, p.x, p.y);
-        raw.blockflags = des;
+        blockflags = des;
         return true;
     }
 
-    bool Write ()
-    {
-        if(!valid) return false;
-        if(dirty_designations)
-        {
-            Maps::WriteDesignations(bcoord.x,bcoord.y,bcoord.z, &raw.designation);
-            Maps::WriteDirtyBit(bcoord.x,bcoord.y,bcoord.z,true);
-            dirty_designations = false;
-        }
-        if(dirty_tiletypes)
-        {
-            Maps::WriteTileTypes(bcoord.x,bcoord.y,bcoord.z, &raw.tiletypes);
-            dirty_tiletypes = false;
-        }
-        if(dirty_temperatures)
-        {
-            Maps::WriteTemperatures(bcoord.x,bcoord.y,bcoord.z, &temp1, &temp2);
-            dirty_temperatures = false;
-        }
-        if(dirty_blockflags)
-        {
-            Maps::WriteBlockFlags(bcoord.x,bcoord.y,bcoord.z,raw.blockflags);
-            dirty_blockflags = false;
-        }
-        if(dirty_occupancies)
-        {
-            Maps::WriteOccupancy(bcoord.x,bcoord.y,bcoord.z,&raw.occupancy);
-            dirty_occupancies = false;
-        }
-        return true;
-    }
-    bool valid:1;
+    bool Write();
+
+    df::coord2d biomeRegionAt(df::coord2d p);
+    int16_t GeoIndexAt(df::coord2d p);
+
+    bool GetGlobalFeature(t_feature *out);
+    bool GetLocalFeature(t_feature *out);
+
+    bool is_valid() { return valid; }
+    df::map_block *getRaw() { return block; }
+
+private:
+    friend class MapCache;
+
+    MapCache *parent;
+    df::map_block *block;
+
+    static void SquashVeins(df::map_block *mb, t_blockmaterials & materials);
+    static void SquashFrozenLiquids (df::map_block *mb, tiletypes40d & frozen);
+    static void SquashConstructions (df::map_block *mb, tiletypes40d & constructions);
+    static void SquashRocks (df::map_block *mb, t_blockmaterials & materials,
+                             std::vector< std::vector <int16_t> > * layerassign);
+
+    bool valid;
     bool dirty_designations:1;
     bool dirty_tiletypes:1;
     bool dirty_temperatures:1;
     bool dirty_blockflags:1;
     bool dirty_occupancies:1;
-    mapblock40d raw;
+
     DFCoord bcoord;
+
+    int16_t tags[16][16];
+
+    typedef int T_item_counts[16];
+    T_item_counts *item_counts;
+    void init_item_counts();
+
+    bool addItemOnGround(df::item *item);
+    bool removeItemOnGround(df::item *item);
+
+    tiletypes40d rawtiles;
+    designations40d designation;
+    occupancies40d occupancy;
+    t_blockflags blockflags;
+
     t_blockmaterials veinmats;
     t_blockmaterials basemats;
     t_temperatures temp1;
@@ -286,14 +222,15 @@ class Block
     tiletypes40d icetiles; // what's underneath ice
 };
 
-class MapCache
+class DFHACK_EXPORT MapCache
 {
     public:
     MapCache()
     {
         valid = 0;
         Maps::getSize(x_bmax, y_bmax, z_max);
-        validgeo = Maps::ReadGeology( layerassign );
+        x_tmax = x_bmax*16; y_tmax = y_bmax*16;
+        validgeo = Maps::ReadGeology(&layer_mats, &geoidx);
         valid = true;
     };
     ~MapCache()
@@ -304,192 +241,116 @@ class MapCache
     {
         return valid;
     }
+
     /// get the map block at a *block* coord. Block coord = tile coord / 16
-    Block * BlockAt (DFCoord blockcoord)
-    {
-        if(!valid)
-            return 0;
-        std::map <DFCoord, Block*>::iterator iter = blocks.find(blockcoord);
-        if(iter != blocks.end())
-        {
-            return (*iter).second;
-        }
-        else
-        {
-            if(blockcoord.x >= 0 && blockcoord.x < x_bmax &&
-                blockcoord.y >= 0 && blockcoord.y < y_bmax &&
-                blockcoord.z >= 0 && blockcoord.z < z_max)
-            {
-                Block * nblo;
-                if(validgeo)
-                    nblo = new Block(blockcoord, &layerassign);
-                else
-                    nblo = new Block(blockcoord);
-                blocks[blockcoord] = nblo;
-                return nblo;
-            }
-            return 0;
-        }
+    Block *BlockAt(DFCoord blockcoord);
+    /// get the map block at a tile coord.
+    Block *BlockAtTile(DFCoord coord) {
+        return BlockAt(df::coord(coord.x>>4,coord.y>>4,coord.z));
     }
+
     df::tiletype baseTiletypeAt (DFCoord tilecoord)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return b->BaseTileTypeAt(tilecoord % 16);
-        }
-        return tiletype::Void;
+        Block * b= BlockAtTile(tilecoord);
+        return b ? b->BaseTileTypeAt(tilecoord) : tiletype::Void;
     }
     df::tiletype tiletypeAt (DFCoord tilecoord)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return b->TileTypeAt(tilecoord % 16);
-        }
-        return tiletype::Void;
+        Block * b= BlockAtTile(tilecoord);
+        return b ? b->TileTypeAt(tilecoord) : tiletype::Void;
     }
     bool setTiletypeAt(DFCoord tilecoord, df::tiletype tiletype)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            b->setTiletypeAt(tilecoord % 16, tiletype);
-            return true;
-        }
+        if (Block * b= BlockAtTile(tilecoord))
+            return b->setTiletypeAt(tilecoord, tiletype);
         return false;
     }
 
     uint16_t temperature1At (DFCoord tilecoord)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return b->temperature1At(tilecoord % 16);
-        }
-        return 0;
+        Block * b= BlockAtTile(tilecoord);
+        return b ? b->temperature1At(tilecoord) : 0;
     }
     bool setTemp1At(DFCoord tilecoord, uint16_t temperature)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            b->setTemp1At(tilecoord % 16, temperature);
-            return true;
-        }
+        if (Block * b= BlockAtTile(tilecoord))
+            return b->setTemp1At(tilecoord, temperature);
         return false;
     }
 
     uint16_t temperature2At (DFCoord tilecoord)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return b->temperature2At(tilecoord % 16);
-        }
-        return 0;
+        Block * b= BlockAtTile(tilecoord);
+        return b ? b->temperature2At(tilecoord) : 0;
     }
     bool setTemp2At(DFCoord tilecoord, uint16_t temperature)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            b->setTemp2At(tilecoord % 16, temperature);
-            return true;
-        }
+        if (Block * b= BlockAtTile(tilecoord))
+            return b->setTemp2At(tilecoord, temperature);
         return false;
     }
 
     int16_t veinMaterialAt (DFCoord tilecoord)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return b->veinMaterialAt(tilecoord % 16);
-        }
-        return 0;
+        Block * b= BlockAtTile(tilecoord);
+        return b ? b->veinMaterialAt(tilecoord) : -1;
     }
     int16_t baseMaterialAt (DFCoord tilecoord)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return b->baseMaterialAt(tilecoord % 16);
-        }
-        return 0;
+        Block * b= BlockAtTile(tilecoord);
+        return b ? b->baseMaterialAt(tilecoord) : -1;
     }
-    bool clearVeinMaterialAt (DFCoord tilecoord)
+
+    int16_t tagAt(DFCoord tilecoord)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            b->ClearVeinMaterialAt(tilecoord % 16);
-        }
-        return 0;
+        Block * b= BlockAtTile(tilecoord);
+        return b ? b->tag(tilecoord) : 0;
     }
-    bool clearBaseMaterialAt (DFCoord tilecoord)
+    void setTagAt(DFCoord tilecoord, int16_t val)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            b->ClearBaseMaterialAt(tilecoord % 16);
-        }
-        return 0;
+        Block * b= BlockAtTile(tilecoord);
+        if (b) b->tag(tilecoord) = val;
     }
-    
+
     df::tile_designation designationAt (DFCoord tilecoord)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return b->DesignationAt(tilecoord % 16);
-        }
-        df::tile_designation temp;
-        temp.whole = 0;
-        return temp;
+        Block * b= BlockAtTile(tilecoord);
+        return b ? b->DesignationAt(tilecoord) : df::tile_designation(0);
     }
     bool setDesignationAt (DFCoord tilecoord, df::tile_designation des)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            b->setDesignationAt(tilecoord % 16, des);
-            return true;
-        }
+        if(Block * b= BlockAtTile(tilecoord))
+            return b->setDesignationAt(tilecoord, des);
         return false;
     }
-    
+
     df::tile_occupancy occupancyAt (DFCoord tilecoord)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return b->OccupancyAt(tilecoord % 16);
-        }
-        df::tile_occupancy temp;
-        temp.whole = 0;
-        return temp;
+        Block * b= BlockAtTile(tilecoord);
+        return b ? b->OccupancyAt(tilecoord) : df::tile_occupancy(0);
     }
     bool setOccupancyAt (DFCoord tilecoord, df::tile_occupancy occ)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            b->setOccupancyAt(tilecoord % 16, occ);
-            return true;
-        }
+        if (Block * b= BlockAtTile(tilecoord))
+            return b->setOccupancyAt(tilecoord, occ);
         return false;
     }
-    
+
     bool testCoord (DFCoord tilecoord)
     {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return true;
-        }
-        return false;
+        Block * b= BlockAtTile(tilecoord);
+        return (b && b->valid);
     }
+
+    bool addItemOnGround(df::item *item) {
+        Block * b= BlockAtTile(item->pos);
+        return b ? b->addItemOnGround(item) : false;
+    }
+    bool removeItemOnGround(df::item *item) {
+        Block * b= BlockAtTile(item->pos);
+        return b ? b->removeItemOnGround(item) : false;
+    }
+
     bool WriteAll()
     {
         std::map<DFCoord, Block *>::iterator p;
@@ -508,15 +369,25 @@ class MapCache
         }
         blocks.clear();
     }
-    private:
-    volatile bool valid;
-    volatile bool validgeo;
+
+    uint32_t maxBlockX() { return x_bmax; }
+    uint32_t maxBlockY() { return y_bmax; }
+    uint32_t maxTileX() { return x_tmax; }
+    uint32_t maxTileY() { return y_tmax; }
+    uint32_t maxZ() { return z_max; }
+
+private:
+    friend class Block;
+
+    bool valid;
+    bool validgeo;
     uint32_t x_bmax;
     uint32_t y_bmax;
     uint32_t x_tmax;
     uint32_t y_tmax;
     uint32_t z_max;
-    std::vector< std::vector <uint16_t> > layerassign;
+    std::vector<df::coord2d> geoidx;
+    std::vector< std::vector <int16_t> > layer_mats;
     std::map<DFCoord, Block *> blocks;
 };
 }

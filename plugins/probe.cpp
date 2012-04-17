@@ -15,6 +15,8 @@ using namespace std;
 #include "Export.h"
 #include "PluginManager.h"
 #include "modules/Units.h"
+#include "df/unit_inventory_item.h"
+#include "df/building_nest_boxst.h"
 #include "modules/Maps.h"
 #include "modules/Gui.h"
 #include "modules/Materials.h"
@@ -75,7 +77,26 @@ command_result df_cprobe (color_ostream &out, vector <string> & parameters)
             if(unit->pos.x == cursorX && unit->pos.y == cursorY && unit->pos.z == cursorZ)
             {
                 out.print("Creature %d, race %d (%x), civ %d (%x)\n", unit->id, unit->race, unit->race, unit->civ_id, unit->civ_id);
-                break;
+                
+                for(size_t j=0; j<unit->inventory.size(); j++)
+                {
+                    df::unit_inventory_item* inv_item = unit->inventory[j];
+                    df::item* item = inv_item->item;
+                    if(inv_item->mode == df::unit_inventory_item::T_mode::Worn)
+                    {
+                        out << "   wears item: #" << item->id;
+                        if(item->flags.bits.owned)
+                            out << " (owned)";
+                        else
+                            out << " (not owned)";
+                        if(item->getEffectiveArmorLevel() != 0)
+                            out << ", armor";
+                        out << endl;
+                    }
+                }
+                
+                // don't leave loop, there may be more than 1 creature at the cursor position
+                //break;
             }
         }
     }
@@ -127,13 +148,14 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     uint32_t tileY = cursorY % 16;
 
     MapExtras::Block * b = mc.BlockAt(cursor/16);
-    if(!b && !b->valid)
+    if(!b || !b->is_valid())
     {
         out.printerr("No data.\n");
         return CR_OK;
     }
-    mapblock40d & block = b->raw;
-    out.print("block addr: 0x%x\n\n", block.origin);
+
+    auto &block = *b->getRaw();
+    out.print("block addr: 0x%x\n\n", &block);
 /*
     if (showBlock)
     {
@@ -250,7 +272,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
 
     t_feature local;
     t_feature global;
-    Maps::ReadFeatures(&(b->raw),&local,&global);
+    Maps::ReadFeatures(&block,&local,&global);
     PRINT_FLAG( des, feature_local );
     if(local.type != -1)
     {
@@ -273,7 +295,6 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         << endl;
     out << "global feature idx: " << block.global_feature
         << endl;
-    out << "mystery: " << block.mystery << endl;
     out << std::endl;
     return CR_OK;
 }
@@ -350,11 +371,21 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
                       ENUM_KEY_STR(trap_type, building.trap_type).c_str(),
                       building.trap_type);
             break;
+        case building_type::NestBox:
+            {
+                df::building_nest_boxst* nestbox = (df::building_nest_boxst*) building.origin;
+                out.print(", claimed:(%i), items:%i", nestbox->claimed_by, nestbox->contained_items.size());
+                break;
+            }
         default:
             if (building.subtype != -1)
                 out.print(", subtype %i", building.subtype);
             break;
         }
+        if(building.origin->isRoom())
+            out << ", is room";
+        else
+            out << ", not a room";
         out.print("\n");
 
     }

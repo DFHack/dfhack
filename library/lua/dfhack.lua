@@ -21,6 +21,17 @@ COLOR_LIGHTMAGENTA = 13
 COLOR_YELLOW = 14
 COLOR_WHITE = 15
 
+-- Events
+
+if dfhack.is_core_context then
+    SC_WORLD_LOADED = 0
+    SC_WORLD_UNLOADED = 1
+    SC_MAP_LOADED = 2
+    SC_MAP_UNLOADED = 3
+    SC_VIEWSCREEN_CHANGED = 4
+    SC_CORE_INITIALIZED = 5
+end
+
 -- Error handling
 
 safecall = dfhack.safecall

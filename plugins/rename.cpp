@@ -150,7 +150,7 @@ static command_result rename(color_ostream &out, vector <string> &parameters)
         if (parameters.size() != 2)
             return CR_WRONG_USAGE;
 
-        df::unit *unit = Gui::getSelectedUnit(out);
+        df::unit *unit = Gui::getSelectedUnit(out, true);
         if (!unit)
             return CR_WRONG_USAGE;
 
@@ -161,7 +161,7 @@ static command_result rename(color_ostream &out, vector <string> &parameters)
         if (parameters.size() != 2)
             return CR_WRONG_USAGE;
 
-        df::unit *unit = Gui::getSelectedUnit(out);
+        df::unit *unit = Gui::getSelectedUnit(out, true);
         if (!unit)
             return CR_WRONG_USAGE;
 

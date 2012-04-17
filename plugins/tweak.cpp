@@ -140,7 +140,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
 
     if (cmd == "clear-missing")
     {
-        df::unit *unit = getSelectedUnit(out);
+        df::unit *unit = getSelectedUnit(out, true);
         if (!unit)
             return CR_FAILURE;
 
@@ -157,7 +157,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     }
     else if (cmd == "clear-ghostly")
     {
-        df::unit *unit = getSelectedUnit(out);
+        df::unit *unit = getSelectedUnit(out, true);
         if (!unit)
             return CR_FAILURE;
 
@@ -176,13 +176,9 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     }
     else if (cmd == "fixmigrant")
     {
-        df::unit *unit = getSelectedUnit(out);
-
+        df::unit *unit = getSelectedUnit(out, true);
         if (!unit)
-        {
-            out << "No unit selected!" << endl;
             return CR_FAILURE;
-        }
         
         if(unit->race != df::global::ui->race_id)
         {
@@ -213,12 +209,10 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     {
         // force a unit into your fort, regardless of civ or race
         // allows to "steal" caravan guards etc
-        df::unit *unit = getSelectedUnit(out);
+        df::unit *unit = getSelectedUnit(out, true);
         if (!unit)
-        {
-            out << "No unit selected!" << endl;
             return CR_FAILURE;
-        }
+
         if (unit->flags2.bits.resident)
             unit->flags2.bits.resident = 0;
         if(unit->flags1.bits.merchant)

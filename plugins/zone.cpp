@@ -897,6 +897,10 @@ int32_t findCageAtCursor()
             building->z == cursor->z))
             continue;
 
+        // don't set id if cage is not constructed yet
+        if(building->getBuildStage()!=building->getMaxBuildStage())
+            break;
+
         if(isCage(building))
         {
             foundID = building->id;
@@ -1122,6 +1126,10 @@ df::building * getBuiltCageAtPos(df::coord pos)
             && building->y1 == pos.y
             && building->z  == pos.z )
         {
+            // don't set pointer if not constructed yet
+            if(building->getBuildStage()!=building->getMaxBuildStage())
+                break;
+
             cage = building;
             break;
         }

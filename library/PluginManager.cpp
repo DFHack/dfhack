@@ -641,6 +641,8 @@ void PluginManager::OnStateChange(color_ostream &out, state_change_event event)
     {
         all_plugins[i]->on_state_change(out, event);
     }
+
+    Lua::Core::onStateChange(out, event);
 }
 
 // FIXME: doesn't check name collisions!

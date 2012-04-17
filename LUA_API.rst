@@ -209,7 +209,7 @@ Implemented features:
 * ``ref:insert(index,item)``
 
   Inserts a new item at the specified index. To add at the end,
-  use ``#ref`` as index.
+  use ``#ref``, or just ``'#'`` as index.
 
 * ``ref:erase(index)``
 
@@ -428,6 +428,11 @@ Currently it defines the following features:
   If the thread owns the interactive console, shows a prompt
   and returns the entered string. Otherwise returns *nil, error*.
 
+  Depending on the context, this function may actually yield the
+  running coroutine and let the C++ code release the core suspend
+  lock. Using an explicit ``dfhack.with_suspend`` will prevent
+  this, forcing the function to block on input with lock held.
+
 * ``dfhack.interpreter([prompt[,env[,history_filename]]])``
 
   Starts an interactive lua interpreter, using the specified prompt
@@ -448,6 +453,10 @@ Currently it defines the following features:
 
   Just like pcall, but also prints the error using printerr before
   returning. Intended as a convenience function.
+
+* ``dfhack.saferesume(coroutine[,args...])``
+
+  Compares to coroutine.resume like dfhack.safecall vs pcall.
 
 * ``dfhack.with_suspend(f[,args...])``
 
@@ -813,3 +822,37 @@ Core context specific functions:
 * ``dfhack.is_core_context``
 
   Boolean value; *true* in the core context.
+
+* ``dfhack.onStateChange.foo = function(code)``
+
+  Event. Receives the same codes as plugin_onstatechange in C++.
+
+
+Event type
+----------
+
+An event is just a lua table with a predefined metatable that
+contains a __call metamethod. When it is invoked, it loops
+through the table with next and calls all contained values.
+This is intended as an extensible way to add listeners.
+
+This type itself is available in any context, but only the
+core context has the actual events defined by C++ code.
+
+Features:
+
+* ``dfhack.event.new()``
+
+  Creates a new instance of an event.
+
+* ``event[key] = function``
+
+  Sets the function as one of the listeners.
+
+  **NOTE**: The ``df.NULL`` key is reserved for the use by
+  the C++ owner of the event, and has some special semantics.
+
+* ``event(args...)``
+
+  Invokes all listeners contained in the event in an arbitrary
+  order using ``dfhack.safecall``.

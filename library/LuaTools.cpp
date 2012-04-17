@@ -1098,6 +1098,18 @@ int DFHack::Lua::NewEvent(lua_State *state)
     return 1;
 }
 
+static void do_invoke_event(lua_State *L, int argbase, int num_args, int errorfun)
+{
+    for (int i = 0; i < num_args; i++)
+        lua_pushvalue(L, argbase+i);
+
+    if (lua_pcall(L, num_args, 0, errorfun) != LUA_OK)
+    {
+        report_error(L);
+        lua_pop(L, 1);
+    }
+}
+
 static void dfhack_event_invoke(lua_State *L, int base, bool from_c)
 {
     int event = base+1;
@@ -1108,23 +1120,31 @@ static void dfhack_event_invoke(lua_State *L, int base, bool from_c)
     lua_insert(L, errorfun);
 
     int argbase = base+3;
+
+    // stack: |base| event errorfun (args)
+
+    if (!from_c)
+    {
+        // Invoke the NULL key first
+        lua_rawgetp(L, event, NULL);
+
+        if (lua_isnil(L, -1))
+            lua_pop(L, 1);
+        else
+            do_invoke_event(L, argbase, num_args, errorfun);
+    }
+
     lua_pushnil(L);
 
-    // stack: |base| event errorfun (args) key cb (args)
+    // stack: |base| event errorfun (args) key || cb (args)
 
     while (lua_next(L, event))
     {
-        if (from_c && lua_islightuserdata(L, -1) && !lua_touserdata(L, -1))
-            continue;
-
-        for (int i = 0; i < num_args; i++)
-            lua_pushvalue(L, argbase+i);
-
-        if (lua_pcall(L, num_args, 0, errorfun) != LUA_OK)
-        {
-            report_error(L);
+        // Skip the NULL key in the main loop
+        if (lua_islightuserdata(L, -2) && !lua_touserdata(L, -2))
             lua_pop(L, 1);
-        }
+        else
+            do_invoke_event(L, argbase, num_args, errorfun);
     }
 
     lua_settop(L, base);
@@ -1285,13 +1305,29 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     return state;
 }
 
+void DFHack::Lua::Core::onStateChange(color_ostream &out, int code) {
+    if (!State) return;
+
+    Lua::Push(State, code);
+    Lua::InvokeEvent(out, State, (void*)onStateChange, 1);
+}
+
 void DFHack::Lua::Core::Init(color_ostream &out)
 {
     if (State)
         return;
 
     State = luaL_newstate();
+
     Lua::Open(out, State);
+
+    // Register events
+    lua_getglobal(State, "dfhack");
+
+    MakeEvent(State, (void*)onStateChange);
+    lua_setfield(State, -2, "onStateChange");
+
+    lua_pop(State, 1);
 }
 
 void DFHack::Lua::Core::Reset(color_ostream &out, const char *where)

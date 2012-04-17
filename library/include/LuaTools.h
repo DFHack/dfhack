@@ -278,6 +278,9 @@ namespace DFHack {namespace Lua {
         void Init(color_ostream &out);
         void Reset(color_ostream &out, const char *where);
 
+        // Events signalled by the core
+        void onStateChange(color_ostream &out, int code);
+
         template<class T> inline void Push(T &arg) { Lua::Push(State, arg); }
         template<class T> inline void Push(const T &arg) { Lua::Push(State, arg); }
         template<class T> inline void PushVector(const T &arg) { Lua::PushVector(State, arg); }

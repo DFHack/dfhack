@@ -67,13 +67,13 @@ namespace DFHack
 
     enum state_change_event
     {
-        SC_WORLD_LOADED,
-        SC_WORLD_UNLOADED,
-        SC_MAP_LOADED,
-        SC_MAP_UNLOADED,
-        SC_VIEWSCREEN_CHANGED,
-        SC_CORE_INITIALIZED,
-        SC_BEGIN_UNLOAD
+        SC_WORLD_LOADED = 0,
+        SC_WORLD_UNLOADED = 1,
+        SC_MAP_LOADED = 2,
+        SC_MAP_UNLOADED = 3,
+        SC_VIEWSCREEN_CHANGED = 4,
+        SC_CORE_INITIALIZED = 5,
+        SC_BEGIN_UNLOAD = 6
     };
     struct DFHACK_EXPORT CommandReg {
         const char *name;

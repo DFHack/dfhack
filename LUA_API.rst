@@ -209,7 +209,7 @@ Implemented features:
 * ``ref:insert(index,item)``
 
   Inserts a new item at the specified index. To add at the end,
-  use ``#ref`` as index.
+  use ``#ref``, or just ``'#'`` as index.
 
 * ``ref:erase(index)``
 

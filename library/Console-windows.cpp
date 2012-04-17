@@ -223,12 +223,13 @@ namespace DFHack
             size_t plen = prompt.size();
             const char * buf = raw_buffer.c_str();
             size_t len = raw_buffer.size();
+            int cooked_cursor = raw_cursor;
 
-            while ((plen + raw_cursor) >= cols)
+            while ((plen + cooked_cursor) >= cols)
             {
                 buf++;
                 len--;
-                raw_cursor--;
+                cooked_cursor--;
             }
             while (plen + len > cols)
             {
@@ -247,7 +248,7 @@ namespace DFHack
                 output(tmp, inf.dwSize.X - (plen + len), len + plen, inf.dwCursorPosition.Y);
                 free(tmp);
             }
-            inf.dwCursorPosition.X = (SHORT)(raw_cursor + plen);
+            inf.dwCursorPosition.X = (SHORT)(cooked_cursor + plen);
             SetConsoleCursorPosition(console_out, inf.dwCursorPosition);
         }
 

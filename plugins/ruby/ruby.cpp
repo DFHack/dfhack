@@ -273,7 +273,7 @@ static void df_rubythread(void *p)
         r_result = CR_OK;
         r_type = RB_IDLE;
         m_irun->unlock();
-	tthread::this_thread::yield();
+        tthread::this_thread::yield();
     }
 }
 
@@ -372,6 +372,18 @@ static VALUE rb_dfget_global_address(VALUE self, VALUE name)
 {
     uint32_t addr = Core::getInstance().vinfo->getAddress(rb_string_value_ptr(&name));
     return rb_uint2inum(addr);
+}
+
+static VALUE rb_dfget_vtable(VALUE self, VALUE name)
+{
+    uint32_t addr = (uint32_t)Core::getInstance().vinfo->getVTable(rb_string_value_ptr(&name));
+    return rb_uint2inum(addr);
+}
+
+static VALUE rb_dfget_rtti_classname(VALUE self, VALUE objptr)
+{
+    void **ptr = (void**)rb_num2ulong(objptr);
+    return rb_str_new2(typeid(*ptr).name());
 }
 
 
@@ -569,6 +581,8 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "resume", RUBY_METHOD_FUNC(rb_dfresume), 0);
     rb_define_singleton_method(rb_cDFHack, "do_suspend", RUBY_METHOD_FUNC(rb_dfsuspend), 0);
     rb_define_singleton_method(rb_cDFHack, "get_global_address", RUBY_METHOD_FUNC(rb_dfget_global_address), 1);
+    rb_define_singleton_method(rb_cDFHack, "get_vtable", RUBY_METHOD_FUNC(rb_dfget_vtable), 1);
+    rb_define_singleton_method(rb_cDFHack, "get_rtti_classname", RUBY_METHOD_FUNC(rb_dfget_rtti_classname), 1);
     rb_define_singleton_method(rb_cDFHack, "register_dfcommand", RUBY_METHOD_FUNC(rb_dfregister), 2);
     rb_define_singleton_method(rb_cDFHack, "print_str", RUBY_METHOD_FUNC(rb_dfprint_str), 1);
     rb_define_singleton_method(rb_cDFHack, "print_err", RUBY_METHOD_FUNC(rb_dfprint_err), 1);

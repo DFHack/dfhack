@@ -149,6 +149,9 @@ sub render_struct_fields {
     for my $field ($type->findnodes('child::ld:field')) {
         my $name = $field->getAttribute('name');
         $name = $field->getAttribute('ld:anon-name') if (!$name);
+        if (!$name and $field->getAttribute('ld:anon-compound')) {
+            render_struct_fields($field, $cppvar);
+        }
         next if (!$name);
         my $offset = get_offset($cppvar, $name);
 

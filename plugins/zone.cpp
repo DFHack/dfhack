@@ -897,6 +897,10 @@ int32_t findCageAtCursor()
             building->z == cursor->z))
             continue;
 
+        // don't set id if cage is not constructed yet
+        if(building->getBuildStage()!=building->getMaxBuildStage())
+            break;
+
         if(isCage(building))
         {
             foundID = building->id;
@@ -1065,10 +1069,10 @@ bool isInBuiltCageRoom(df::unit* unit)
     {
         df::building* building = world->buildings.all[b];
         
-        // !!! for whatever reason isRoom() returns true if a cage is not a room
-        // !!! and false if it was defined as a room/zoo ingame
-        // !!! (seems not general behaviour, activity zones return false, for example)
-        if(building->isRoom())
+        // !!! building->isRoom() returns true if the building can be made a room but currently isn't
+        // !!! except for coffins/tombs which always return false
+        // !!! using the bool is_room however gives the correct state/value
+        if(!building->is_room)
             continue;
         
         if(building->getType() == building_type::Cage)
@@ -1122,6 +1126,10 @@ df::building * getBuiltCageAtPos(df::coord pos)
             && building->y1 == pos.y
             && building->z  == pos.z )
         {
+            // don't set pointer if not constructed yet
+            if(building->getBuildStage()!=building->getMaxBuildStage())
+                break;
+
             cage = building;
             break;
         }
@@ -1594,11 +1602,6 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
     else
         out << "not active";
 
-    //if(building->isRoom())
-    //    out <<", room";
-    //else
-    //    out << ", not a room";
-
     if(civ->zone_flags.bits.pen_pasture)
         out << ", pen/pasture";
     else if (civ->zone_flags.bits.pit_pond)
@@ -1655,16 +1658,7 @@ void cageInfo(color_ostream & out, df::building* building, bool verbose)
         << " z:" << building->z
         << endl;
 
-    //if(building->isRoom())
-    //    out <<", bldg room";
-    //else
-    //    out << ", bldg not a room";
-
     df::building_cagest * cage = (df::building_cagest*) building;
-    //if(cage->isRoom())
-    //    out <<", cage is room";
-    //else
-    //    out << ", cage is not a room";
 
     int32_t creaturecount = cage->assigned_creature.size();
     out << "Creatures in this cage: " << creaturecount << endl;
@@ -2277,8 +2271,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             // find building under cursor
             if (!all &&
                 !(building->x1 <= cursor->x && cursor->x <= building->x2 &&
-                building->y1 <= cursor->y && cursor->y <= building->y2 &&
-                building->z == cursor->z))
+                  building->y1 <= cursor->y && cursor->y <= building->y2 &&
+                  building->z  == cursor->z))
                 continue;
 
             zoneInfo(out, building, verbose);
@@ -2465,12 +2459,9 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         else
         {
             // must have unit selected
-            df::unit *unit = getSelectedUnit(out);
+            df::unit *unit = getSelectedUnit(out, true);
             if (!unit)
-            {
-                out << "No unit selected." << endl;
                 return CR_WRONG_USAGE;
-            }
 
             if(unit_info)
             {
@@ -2503,18 +2494,16 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     if(building_unassign)
     {
         // must have unit selected
-        df::unit *unit = getSelectedUnit(out);
+        df::unit *unit = getSelectedUnit(out, true);
         if (!unit)
-        {
-            out << "No unit selected." << endl;
             return CR_WRONG_USAGE;
-        }
 
         // remove assignment reference from unit and old zone
         if(unassignUnitFromBuilding(unit))
             out << "Unit unassigned." << endl;
         else
             out << "Unit is not assigned to an activity zone!" << endl;
+        
         return CR_OK;
     }
 

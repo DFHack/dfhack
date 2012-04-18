@@ -8,10 +8,14 @@
 #include "df/ui.h"
 #include "df/building_stockpilest.h"
 #include "df/global_objects.h"
-#include "df/viewscreen_dwarfmodest.h"
 #include "df/item.h"
+#include "df/unit.h"
+#include "df/building.h"
 #include "df/items_other_id.h"
+#include "df/item_stockpile_ref.h"
 #include "modules/MapCache.h"
+#include "modules/Items.h"
+
 
 using std::vector;
 using std::string;
@@ -35,9 +39,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 {
     if (world && ui) {
 		commands.push_back(
-			PluginCommand("stockcheck", "Check for stockpile adequacy.",
+			PluginCommand("stockcheck", "Check for unprotected rottable items.",
 				stockcheck, false, 
-				"Scan world for unstockpiled items and verify stockpiles exist for them.\n"
+				"Scan world for items that are susceptible to rot.  Currently just lists the items.\n"
 			)
 		);
     }
@@ -49,10 +53,74 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
+struct StockpileInfo {
+	building_stockpilest* sp;
+	int size;
+	int free;
+	int x1, x2, y1, y2, z;
+
+public:
+	StockpileInfo(building_stockpilest *sp_) : sp(sp_) 
+	{
+		MapExtras::MapCache mc;
+
+		z = sp_->z;
+		x1 = sp_->room.x; 
+		x2 = sp_->room.x + sp_->room.width;
+		y1 = sp_->room.y;
+		y2 = sp_->room.y + sp_->room.height;
+		int e = 0;
+		size = 0;
+		free = 0;
+		for (int y = y1; y < y2; y++) 
+			for (int x = x1; x < x2; x++) 
+				if (sp_->room.extents[e++] == 1) 
+				{
+					size++;
+					DFCoord cursor (x,y,z);
+					uint32_t blockX = x / 16;
+					uint32_t tileX = x % 16;
+					uint32_t blockY = y / 16;
+					uint32_t tileY = y % 16;
+					MapExtras::Block * b = mc.BlockAt(cursor/16);
+					if(b && b->is_valid())
+					{
+						auto &block = *b->getRaw();
+						df::tile_occupancy &occ = block.occupancy[tileX][tileY];
+						if (!occ.bits.item)
+							free++;
+					}
+				}
+	}
+
+	bool isFull() { return free == 0; }
+
+	bool canHold(df::item *i) 
+	{
+		return false;
+	}
+	
+	bool inStockpile(df::item *i)
+	{
+		df::item *container = Items::getContainer(i);
+		if (container) 
+			return inStockpile(container);
+
+		if (i->pos.z != z) return false;
+		if (i->pos.x < x1 || i->pos.x >= x2 ||
+			i->pos.y < y1 || i->pos.y >= y2) return false;
+		int e = (i->pos.x - x1) + (i->pos.y - y1) * sp->room.width;
+		return sp->room.extents[e] == 1;
+	}
+
+	int getId() { return sp->id; }
+};
+
 static command_result stockcheck(color_ostream &out, vector <string> & parameters)
 {
 	CoreSuspender suspend;
-	MapExtras::MapCache mc;
+	
+	std::vector<StockpileInfo*> stockpiles;
 
 	for (int i = 0; i < world->buildings.all.size(); ++i)
 	{
@@ -61,38 +129,10 @@ static command_result stockcheck(color_ostream &out, vector <string> & parameter
 		if (df::enums::building_type::Stockpile == type)
 		{
 			building_stockpilest *sp = virtual_cast<building_stockpilest>(build);
-			df::stockpile_settings st = sp->settings;
-			out << "Stockpile " << sp->stockpile_number << ":\n";
-			out << " width=" << build->room.width << " height= " << build->room.height << endl;
-
-			int x1 = build->room.x; 
-			int x2 = build->room.x + build->room.width;
-			int y1 = build->room.y;
-			int y2 = build->room.y + build->room.height;
-			int e = 0;
-			int size = 0, free = 0;
-			for (int x = x1; x < x2; x++) 
-				for (int y = y1; y < y2; y++) 
-					if (build->room.extents[e++] == 1) 
-					{
-						size++;
-						DFCoord cursor (x,y,build->z);
-						uint32_t blockX = x / 16;
-						uint32_t tileX = x % 16;
-						uint32_t blockY = y / 16;
-						uint32_t tileY = y % 16;
-						MapExtras::Block * b = mc.BlockAt(cursor/16);
-						if(b && b->is_valid())
-						{
-							auto &block = *b->getRaw();
-						    df::tile_occupancy &occ = block.occupancy[tileX][tileY];
-							if (!occ.bits.item)
-								free++;
-						}
-					}
-						
-			out << " size=" << size << " free= " << free << endl;
+			StockpileInfo *spi = new StockpileInfo(sp);
+			stockpiles.push_back(spi);
 		}
+
 	}
 
 	std::vector<df::item*> &items = world->items.other[items_other_id::ANY_FREE];
@@ -105,6 +145,7 @@ static command_result stockcheck(color_ostream &out, vector <string> & parameter
     F(dump); F(forbid); F(garbage_collect);
     F(hostile); F(on_fire); F(rotten); F(trader);
     F(in_building); F(construction); F(artifact1);
+	F(spider_web); F(owned); F(in_job);
 #undef F
 
     for (size_t i = 0; i < items.size(); i++)
@@ -113,9 +154,125 @@ static command_result stockcheck(color_ostream &out, vector <string> & parameter
 		if (item->flags.whole & bad_flags.whole)
             continue;
 
+		// we really only care about MEAT, FISH, FISH_RAW, PLANT, CHEESE, FOOD, and EGG
+
+		df::item_type typ = item->getType();
+		if (typ != df::enums::item_type::MEAT &&
+			typ != df::enums::item_type::FISH &&
+			typ != df::enums::item_type::FISH_RAW &&
+			typ != df::enums::item_type::PLANT &&
+			typ != df::enums::item_type::CHEESE &&
+			typ != df::enums::item_type::FOOD &&
+			typ != df::enums::item_type::EGG)
+			continue;
+
+		df::item *container = 0;
+		df::unit *holder = 0;
+		df::building *building = 0;
+
+        for (size_t i = 0; i < item->itemrefs.size(); i++)
+        {
+            df::general_ref *ref = item->itemrefs[i];
+
+            switch (ref->getType())
+            {
+            case general_ref_type::CONTAINED_IN_ITEM:
+				container = ref->getItem();
+                break;
+
+            case general_ref_type::UNIT_HOLDER:
+				holder = ref->getUnit();
+                break;
+
+            case general_ref_type::BUILDING_HOLDER:
+				building = ref->getBuilding();
+                break;
+            
+			}
+		}
+
+		df::item *nextcontainer = container;
+		df::item *lastcontainer = 0;
+
+		while(nextcontainer) {
+			df::item *thiscontainer = nextcontainer;
+			nextcontainer = 0;
+	        for (size_t i = 0; i < thiscontainer->itemrefs.size(); i++)
+		    {
+			    df::general_ref *ref = thiscontainer->itemrefs[i];
+
+	            switch (ref->getType())
+				{
+	            case general_ref_type::CONTAINED_IN_ITEM:
+					lastcontainer = nextcontainer = ref->getItem();
+			        break;
+
+	            case general_ref_type::UNIT_HOLDER:
+					holder = ref->getUnit();
+			        break;
+
+	            case general_ref_type::BUILDING_HOLDER:
+					building = ref->getBuilding();
+			        break;
+            
+				}
+			}
+		}
+
+		if (holder) 
+			continue; // carried items do not rot as far as i know
+		
+		if (building) {
+			df::building_type btype = building->getType();
+			if (btype == df::enums::building_type::TradeDepot ||
+				btype == df::enums::building_type::Wagon)
+				continue; // items in trade depot or the embark wagon do not rot
+			
+			if (typ == df::enums::item_type::EGG && btype ==df::enums::building_type::NestBox)
+				continue; // eggs in nest box do not rot			
+		}
+
+		int canHoldCount = 0;
+		StockpileInfo *current = 0;
+
+		for (int idx = 0; idx < stockpiles.size(); idx++)
+		{
+			StockpileInfo *spi = stockpiles[idx];
+			if (spi->canHold(item)) canHoldCount++;
+			if (spi->inStockpile(item)) current=spi;
+		}
+
+		if (current) 
+			continue;
+
+		std::string description;
+		item->getItemDescription(&description, 0);
+		out << " * " << description;
+
+        if (container) {
+			std::string containerDescription;
+			container->getItemDescription(&containerDescription, 0);
+			out << ", in container " << containerDescription;
+			if (lastcontainer) {
+				std::string lastcontainerDescription;
+				lastcontainer->getItemDescription(&lastcontainerDescription, 0);
+				out << ", in container " << lastcontainerDescription;
+			}
+		}
+
+		if (holder) {
+			out << ", carried";
+		}
+
+		if (building) {
+			out << ", in building " << building->id << " (type=" << building->getType() << ")";
+		}
+
+		out << ", flags=" << std::hex << item->flags.whole << std::dec;
+		out << endl;
 
 	}
-	out << "Stockcheck done" << endl;
 
 	return CR_OK;
 }
+

@@ -128,6 +128,20 @@ sub render_global_class {
     $seen_class{$name}++;
     %seen_enum_name = ();
 
+    my $rtti_name = $type->getAttribute('original-name') ||
+                    $type->getAttribute('type-name');
+
+    my $has_rtti = $parent;
+    if (!$parent and $type->getAttribute('ld:meta') eq 'class-type') {
+        for my $anytypename (keys %global_types) {
+            my $anytype = $global_types{$anytypename};
+            if ($anytype->getAttribute('ld:meta') eq 'class-type') {
+                my $anyparent = $anytype->getAttribute('inherits-from');
+                $has_rtti = 1 if ($anyparent and $anyparent eq $name);
+            }
+        }
+    }
+
     my $rbparent = ($parent ? rb_ucase($parent) : 'Compound');
 
     my $cppvar = "v_$cpp_var_counter";
@@ -139,6 +153,7 @@ sub render_global_class {
 
     push @lines_rb, "class $rbname < $rbparent";
     indent_rb {
+        push @lines_rb, "rtti_classname '$rtti_name'" if $has_rtti;
         render_struct_fields($type, "(*$cppvar)");
     };
     push @lines_rb, "end\n";

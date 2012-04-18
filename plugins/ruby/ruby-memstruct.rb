@@ -74,6 +74,10 @@ class Compound < MemStruct
 			m.instance_eval(&b)
 			m.new
 		end
+		def rtti_classname(n)
+			# TODO store total size for allocate() ? what about non-virtual ones ?
+			DFHack.rtti_register(n, self)
+		end
 	end
 	def _set(h) ; h.each { |k, v| send("_#{k}=", v) } ; end
 end
@@ -348,8 +352,34 @@ class Global < MemStruct
 	def initialize(glob)
 		@_glob = glob
 	end
-	def _at(addr) ; g = DFHack::MemHack.const_get(@_glob) ; g.new._at(addr) ; end
+	def _at(addr)
+		g = DFHack::MemHack.const_get(@_glob)
+		g = DFHack.rtti_getclass(g, addr)
+		g.new._at(addr)
+	end
 end
 
+module ::DFHack
+	def self.rtti_register(cname, cls)
+		@rtti_n2c ||= {}
+		@rtti_class ||= {}
+		@rtti_n2c[cname] = cls
+		@rtti_class[cls] = true
+	end
 
+	# return the ruby class to use for a given address if rtti info is available
+	def self.rtti_getclass(cls, addr)
+		@rtti_n2c ||= {}
+		@rtti_class ||= {}
+		if addr != 0 and @rtti_class[cls]
+			@rtti_n2c[rtti_readclassname(get_vtable_ptr(addr))] || cls
+		else
+			cls
+		end
+	end
 
+	def self.rtti_readclassname(vptr)
+		@rtti_v2n ||= {}
+		@rtti_v2n[vptr] ||= get_rtti_classname(vptr)
+	end
+end

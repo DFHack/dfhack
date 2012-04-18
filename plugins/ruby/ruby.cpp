@@ -380,10 +380,29 @@ static VALUE rb_dfget_vtable(VALUE self, VALUE name)
     return rb_uint2inum(addr);
 }
 
-static VALUE rb_dfget_rtti_classname(VALUE self, VALUE objptr)
+// read the c++ class name from a vtable pointer, inspired from doReadClassName
+// XXX virtual classes only! dark pointer arithmetic, use with caution !
+static VALUE rb_dfget_rtti_classname(VALUE self, VALUE vptr)
 {
-    void **ptr = (void**)rb_num2ulong(objptr);
-    return rb_str_new2(typeid(*ptr).name());
+    char *ptr = (char*)rb_num2ulong(vptr);
+#ifdef WIN32
+    char *rtti = *(char**)(ptr - 0x4);
+    char *typeinfo = *(char**)(rtti + 0xC);
+    // skip the .?AV, trim @@ from end
+    return rb_str_new(typeinfo+0xc, strlen(typeinfo+0xc)-2);
+#else
+    char *typeinfo = *(char**)(ptr - 0x4);
+    char *typestring = *(char**)(typeinfo + 0x4);
+    while (*typestring >= '0' && *typestring <= '9')
+        typestring++;
+    return rb_str_new2(typestring);
+#endif
+}
+
+static VALUE rb_dfget_vtable_ptr(VALUE self, VALUE objptr)
+{
+    // actually, rb_dfmemory_read_int32
+    return rb_uint2inum(*(uint32_t*)rb_num2ulong(objptr));
 }
 
 
@@ -391,7 +410,7 @@ static VALUE rb_dfget_rtti_classname(VALUE self, VALUE objptr)
 
 // raw memory access
 // used by the ruby class definitions
-// WARNING: may cause game crash ! double-check your addresses !
+// XXX may cause game crash ! double-check your addresses !
 
 static VALUE rb_dfmalloc(VALUE self, VALUE len)
 {
@@ -583,6 +602,7 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "get_global_address", RUBY_METHOD_FUNC(rb_dfget_global_address), 1);
     rb_define_singleton_method(rb_cDFHack, "get_vtable", RUBY_METHOD_FUNC(rb_dfget_vtable), 1);
     rb_define_singleton_method(rb_cDFHack, "get_rtti_classname", RUBY_METHOD_FUNC(rb_dfget_rtti_classname), 1);
+    rb_define_singleton_method(rb_cDFHack, "get_vtable_ptr", RUBY_METHOD_FUNC(rb_dfget_vtable_ptr), 1);
     rb_define_singleton_method(rb_cDFHack, "register_dfcommand", RUBY_METHOD_FUNC(rb_dfregister), 2);
     rb_define_singleton_method(rb_cDFHack, "print_str", RUBY_METHOD_FUNC(rb_dfprint_str), 1);
     rb_define_singleton_method(rb_cDFHack, "print_err", RUBY_METHOD_FUNC(rb_dfprint_err), 1);

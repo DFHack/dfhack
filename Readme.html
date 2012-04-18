@@ -1557,8 +1557,8 @@ paint shape FLOOR
 <p>This will turn all stone fortifications into floors, preserving the material.</p>
 <p>Or this:</p>
 <pre class="literal-block">
-filter material FLOOR
-filter shape MINERAL
+filter shape FLOOR
+filter material MINERAL
 paint shape WALL
 </pre>
 <p>Turning mineral vein floors back into walls.</p>
@@ -1566,8 +1566,9 @@ paint shape WALL
 <p>Or this:</p>
 <pre class="literal-block">
 paint hidden 1
+paint hidden 0
 </pre>
-<p>This will hide previously revealed tiles.</p>
+<p>This will hide previously revealed tiles (or show hidden with the 0 option).</p>
 <p>Any paint or filter option can be disabled entirely by using the ANY keyword:</p>
 <pre class="literal-block">
 paint hidden ANY

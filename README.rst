@@ -808,8 +808,8 @@ This will turn all stone fortifications into floors, preserving the material.
 Or this:
 ::  
 
-        filter material FLOOR
-        filter shape MINERAL
+        filter shape FLOOR
+        filter material MINERAL
         paint shape WALL
 
 Turning mineral vein floors back into walls.
@@ -821,8 +821,9 @@ Or this:
 ::  
 
         paint hidden 1
+        paint hidden 0
 
-This will hide previously revealed tiles.
+This will hide previously revealed tiles (or show hidden with the 0 option).
 
 Any paint or filter option can be disabled entirely by using the ANY keyword:
 

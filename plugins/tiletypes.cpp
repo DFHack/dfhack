@@ -859,6 +859,7 @@ command_result df_tiletypes (color_ostream &out_, vector <string> & parameters)
 
         if (out.lineedit("tiletypes> ",input,tiletypes_hist) == -1)
             return CR_FAILURE;
+        tiletypes_hist.add(input);
 
         commands.clear();
         Core::cheap_tokenise(input, commands);

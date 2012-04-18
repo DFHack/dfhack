@@ -122,6 +122,7 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         str << ":" << amount << ":" << flowmode << ":" << setmode << "]#";
         if(out.lineedit(str.str(),command,liquids_hist) == -1)
             return CR_FAILURE;
+        liquids_hist.add(command);
 
         if(command=="help" || command == "?")
         {

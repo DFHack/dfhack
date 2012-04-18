@@ -45,7 +45,8 @@ Copy the files from a release archive so that:
 
 Uninstalling is basically the same, in reverse:
 
- * On Windows, first delete SDL.dll and rename SDLreal.dll to SDL.dll. Then remove the other DFHack files
+ * On Windows, first delete SDL.dll and rename SDLreal.dll to SDL.dll. Then
+   remove the other DFHack files
  * On Linux, Remove the DFHack files.
 
 The stonesense plugin might require some additional libraries on Linux.
@@ -123,11 +124,16 @@ Usage
 advtools
 ========
 A package of different adventure mode tools (currently just one)
+  
+
 
 Usage
 -----
 :list-equipped [all]: List armor and weapons equipped by your companions.
                       If all is specified, also lists non-metal clothing.
+:metal-detector [all-types] [non-trader]: Reveal metal armor and weapons in
+                                          shops. The options disable the checks
+                                          on item type and being in shop.
 
 changelayer
 ===========
@@ -319,6 +325,40 @@ autodump-destroy-item
 =====================
 Destroy the selected item. The item may be selected in the 'k' list, or inside
 a container. If called again before the game is resumed, cancels destroy.
+
+burrow
+======
+Miscellaneous burrow control. Allows manipulating burrows and automated burrow
+expansion while digging.
+
+Options
+-------
+:enable feature ...:
+:disable feature ...:    Enable or Disable features of the plugin.
+:clear-unit burrow burrow ...:
+:clear-tiles burrow burrow ...: Removes all units or tiles from the burrows.
+:set-units target-burrow src-burrow ...:
+:add-units target-burrow src-burrow ...:
+:remove-units target-burrow src-burrow ...: Adds or removes units in source
+       burrows to/from the target burrow. Set is equivalent to clear and add.
+:set-tiles target-burrow src-burrow ...:
+:add-tiles target-burrow src-burrow ...:
+:remove-tiles target-burrow src-burrow ...: Adds or removes tiles in source
+       burrows to/from the target burrow. In place of a source burrow it is
+       possible to use one of the following keywords: ABOVE_GROUND,
+       SUBTERRANEAN, INSIDE, OUTSIDE, LIGHT, DARK, HIDDEN, REVEALED
+
+Features
+--------
+:auto-grow: When a wall inside a burrow with a name ending in '+' is dug
+            out, the burrow is extended to newly-revealed adjacent walls.
+            This final '+' may be omitted in burrow name args of commands above.
+            Digging 1-wide corridors with the miner inside the burrow is SLOW.
+
+catsplosion
+===========
+Makes cats just *multiply*. It is not a good idea to run this more than once or
+twice.
 
 clean
 =====
@@ -644,6 +684,10 @@ Options
 -------
 :all:            processes all tiles, even hidden ones.
 
+regrass
+=======
+Regrows grass. Not much to it ;)
+
 rename
 ======
 Allows renaming various things.
@@ -737,12 +781,90 @@ http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository
 
 tiletypes
 =========
-Can be used for painting map tiles and is a interactive command, much like
-liquids. You can paint tiles by their properties - shape, general material and
-a few others (paint). You can also paint only over tiles that match a set
-of properties (filter)
+Can be used for painting map tiles and is an interactive command, much like
+liquids.
+
+The tool works with two set of options and a brush. The brush determines which
+tiles will be processed. First set of options is the filter, which can exclude
+some of the tiles from the brush by looking at the tile properties. The second
+set of options is the paint - this determines how the selected tiles are
+changed.
+
+Both paint and filter can have many different properties including things like
+general shape (WALL, FLOOR, etc.), general material (SOIL, STONE, MINERAL,
+etc.), state of 'designated', 'hidden' and 'light' flags.
+
+The properties of filter and paint can be partially defined. This means that
+you can for example do something like this:
+
+::  
+
+        filter material STONE
+        filter shape FORTIFICATION
+        paint shape FLOOR
+
+This will turn all stone fortifications into floors, preserving the material.
+
+Or this:
+::  
+
+        filter material FLOOR
+        filter shape MINERAL
+        paint shape WALL
+
+Turning mineral vein floors back into walls.
+
+The tool also allows tweaking some tile flags:
+
+Or this:
+
+::  
+
+        paint hidden 1
+
+This will hide previously revealed tiles.
+
+Any paint or filter option can be disabled entirely by using the ANY keyword:
+
+::  
+
+        paint hidden ANY
+        paint shape ANY
+        filter material any
+        filter shape any
+
+You can use several different brushes for painting tiles:
+ * Point. (point)
+ * Rectangular range. (range)
+ * A column ranging from current cursor to the first solid tile above. (column)
+ * DF map block - 16x16 tiles, in a regular grid. (block)
+
+Example:
+
+::  
+
+        range 10 10 1
+
+This will change the brush to a rectangle spanning 10x10 tiles on one z-level.
+The range starts at the position of the cursor and goes to the east, south and
+up.
 
 For more details, see the 'help' command while using this.
+
+tiletypes-commands
+==================
+Runs tiletypes commands, separated by ;. This makes it possible to change
+tiletypes modes from a hotkey.
+
+tiletypes-here
+==============
+Apply the current tiletypes options at the in-game cursor position, including
+the brush. Can be used from a hotkey.
+
+tiletypes-here-point
+====================
+Apply the current tiletypes options at the in-game cursor position to a single
+tile. Can be used from a hotkey.
 
 tweak
 =====
@@ -1215,3 +1337,19 @@ another savegame you can use the command list_export:
      dfhack-run autobutcher list_export > autobutcher.bat
      Load the savegame where you want to copy the settings to, run the batch file (from the shell):
      autobutcher.bat
+
+
+autolabor
+=========
+Automatically manage dwarf labors.
+
+When enabled, autolabor periodically checks your dwarves and enables or
+disables labors. It tries to keep as many dwarves as possible busy but
+also tries to have dwarves specialize in specific skills.
+
+.. note::
+
+    Warning: autolabor will override any manual changes you make to labors
+    while it is enabled.
+
+For detailed usage information, see 'help autolabor'.

@@ -39,13 +39,17 @@ namespace DFHack
 {
     class DFHACK_EXPORT function_identity_base : public type_identity {
         int num_args;
+        bool vararg;
 
     public:
-        function_identity_base(int num_args) : type_identity(0), num_args(num_args) {};
+        function_identity_base(int num_args, bool vararg = false)
+            : type_identity(0), num_args(num_args), vararg(vararg) {};
 
         virtual identity_type type() { return IDTYPE_FUNCTION; }
 
         int getNumArgs() { return num_args; }
+        bool adjustArgs() { return vararg; }
+
         std::string getFullName() { return "function"; }
 
         virtual void invoke(lua_State *state, int base) = 0;

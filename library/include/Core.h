@@ -90,6 +90,8 @@ namespace DFHack
             static Core instance;
             return instance;
         }
+        /// check if the activity lock is owned by this thread
+        bool isSuspended(void);
         /// try to acquire the activity lock
         void Suspend(void);
         /// return activity lock
@@ -134,6 +136,8 @@ namespace DFHack
         static void printerr(const char *format, ...);
 
         PluginManager *getPluginManager() { return plug_mgr; }
+
+        static void cheap_tokenise(std::string const& input, std::vector<std::string> &output);
 
     private:
         DFHack::Console con;

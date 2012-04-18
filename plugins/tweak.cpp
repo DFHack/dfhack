@@ -56,10 +56,17 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Note that this is very dirty and possibly dangerous!\n"
         "    Most probably does not have the positive effect of a proper burial.\n"
         "  tweak fixmigrant\n"
-        "    Forces the selected unit to become a member or your fortress.\n"
-        "    Intended to fix bugged migrants and merchants who stay at the map edge.\n"
-        "    Only works for units of your own race. Can be used for stealing caravan\n"
-        "    traders and guards, but might result into weirdness during trading.\n"
+        "    Remove the resident/merchant flag from the selected unit.\n"
+        "    Intended to fix bugged migrants/traders who stay at the\n"
+        "    map edge and don't enter your fort. Only works for\n"
+        "    dwarves (or generally the player's race in modded games).\n"
+        "  tweak makeown\n"
+        "    Force selected unit to become a member of your fort.\n"
+        "    Can be abused to grab caravan merchants and escorts, even if\n"
+        "    they don't belong to the player's race. Foreign sentients\n"
+        "    (humans, elves) can be put to work, but you can't assign rooms\n"
+        "    to them and they don't show up in DwarfTherapist because the\n"
+        "    game treats them like pets.\n"
     ));
     return CR_OK;
 }
@@ -140,7 +147,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
 
     if (cmd == "clear-missing")
     {
-        df::unit *unit = getSelectedUnit(out);
+        df::unit *unit = getSelectedUnit(out, true);
         if (!unit)
             return CR_FAILURE;
 
@@ -157,7 +164,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     }
     else if (cmd == "clear-ghostly")
     {
-        df::unit *unit = getSelectedUnit(out);
+        df::unit *unit = getSelectedUnit(out, true);
         if (!unit)
             return CR_FAILURE;
 
@@ -176,13 +183,9 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     }
     else if (cmd == "fixmigrant")
     {
-        df::unit *unit = getSelectedUnit(out);
-
+        df::unit *unit = getSelectedUnit(out, true);
         if (!unit)
-        {
-            out << "No unit selected!" << endl;
             return CR_FAILURE;
-        }
         
         if(unit->race != df::global::ui->race_id)
         {
@@ -213,12 +216,10 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     {
         // force a unit into your fort, regardless of civ or race
         // allows to "steal" caravan guards etc
-        df::unit *unit = getSelectedUnit(out);
+        df::unit *unit = getSelectedUnit(out, true);
         if (!unit)
-        {
-            out << "No unit selected!" << endl;
             return CR_FAILURE;
-        }
+
         if (unit->flags2.bits.resident)
             unit->flags2.bits.resident = 0;
         if(unit->flags1.bits.merchant)

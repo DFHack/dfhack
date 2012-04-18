@@ -223,6 +223,12 @@ namespace DFHack { namespace LuaWrapper {
     void AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, type_identity *ienum);
 
     /**
+     * Push a closure invoking the given function.
+     */
+    void PushFunctionWrapper(lua_State *state, int meta_idx,
+                             const char *name, function_identity_base *fun);
+
+    /**
      * Wrap functions and add them to the table on the top of the stack.
      */
     using DFHack::FunctionReg;

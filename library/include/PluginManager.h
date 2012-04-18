@@ -51,6 +51,9 @@ namespace DFHack
     class virtual_identity;
     class RPCService;
     class function_identity_base;
+    namespace Lua {
+        class Notification;
+    }
 
     // anon type, pretty much
     struct DFLibrary;
@@ -64,13 +67,13 @@ namespace DFHack
 
     enum state_change_event
     {
-        SC_WORLD_LOADED,
-        SC_WORLD_UNLOADED,
-        SC_MAP_LOADED,
-        SC_MAP_UNLOADED,
-        SC_VIEWSCREEN_CHANGED,
-        SC_CORE_INITIALIZED,
-        SC_BEGIN_UNLOAD
+        SC_WORLD_LOADED = 0,
+        SC_WORLD_UNLOADED = 1,
+        SC_MAP_LOADED = 2,
+        SC_MAP_UNLOADED = 3,
+        SC_VIEWSCREEN_CHANGED = 4,
+        SC_CORE_INITIALIZED = 5,
+        SC_BEGIN_UNLOAD = 6
     };
     struct DFHACK_EXPORT CommandReg {
         const char *name;
@@ -79,6 +82,10 @@ namespace DFHack
     struct DFHACK_EXPORT FunctionReg {
         const char *name;
         function_identity_base *identity;
+    };
+    struct DFHACK_EXPORT EventReg {
+        const char *name;
+        Lua::Notification *event;
     };
     struct DFHACK_EXPORT PluginCommand
     {
@@ -178,6 +185,7 @@ namespace DFHack
             Plugin *owner;
             std::string name;
             int (*command)(lua_State *state);
+            LuaCommand(Plugin *owner, std::string name) : owner(owner), name(name) {}
         };
         std::map<std::string, LuaCommand*> lua_commands;
         static int lua_cmd_wrapper(lua_State *state);
@@ -186,9 +194,19 @@ namespace DFHack
             Plugin *owner;
             std::string name;
             function_identity_base *identity;
+            LuaFunction(Plugin *owner, std::string name) : owner(owner), name(name) {}
         };
         std::map<std::string, LuaFunction*> lua_functions;
         static int lua_fun_wrapper(lua_State *state);
+        void push_function(lua_State *state, LuaFunction *fn);
+
+        struct LuaEvent {
+            LuaFunction handler;
+            Lua::Notification *event;
+            bool active;
+            LuaEvent(Plugin *owner, std::string name) : handler(owner,name), active(false) {}
+        };
+        std::map<std::string, LuaEvent*> lua_events;
 
         void index_lua(DFLibrary *lib);
         void reset_lua();
@@ -253,7 +271,10 @@ namespace DFHack
     DFhackCExport const DFHack::CommandReg plugin_lua_commands[] =
 #define DFHACK_PLUGIN_LUA_FUNCTIONS \
     DFhackCExport const DFHack::FunctionReg plugin_lua_functions[] =
+#define DFHACK_PLUGIN_LUA_EVENTS \
+    DFhackCExport const DFHack::EventReg plugin_lua_events[] =
 
 #define DFHACK_LUA_COMMAND(name) { #name, name }
-#define DFHACK_LUA_FUNCTION(name) { #name, df::wrap_function(name) }
+#define DFHACK_LUA_FUNCTION(name) { #name, df::wrap_function(name,true) }
+#define DFHACK_LUA_EVENT(name) { #name, &name##_event }
 #define DFHACK_LUA_END { NULL, NULL }

@@ -35,9 +35,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
-        "catsplosion", "Do nothing, look pretty.",
+        "catsplosion", "Make cats just /multiply/.",
         catsplosion, false,
-        "  This command does nothing at all. For now.\n"
+        "  Makes cats abnormally abundant, if you provide some base population ;)\n"
     ));
     return CR_OK;
 }

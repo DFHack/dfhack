@@ -1,6 +1,8 @@
+module DFHack
+module MemHack
 class MemStruct
 	attr_accessor :_memaddr
-	def _at(addr) ; @_memaddr = addr ; self ; end
+	def _at(addr) ; @_memaddr = addr ; dup ; end
 	def _get ; self ; end
 end
 
@@ -27,8 +29,11 @@ class Compound < MemStruct
 		def bits(shift, len)
 			BitField.new(shift, len)
 		end
-		def pointer(tglen=nil)
-			Pointer.new(tglen, (yield if tglen))
+		def pointer
+			Pointer.new((yield if block_given?))
+		end
+		def pointer_ary(tglen)
+			PointerAry.new(tglen, yield)
 		end
 		def static_array(len, tglen)
 			StaticArray.new(tglen, len, yield)
@@ -80,6 +85,7 @@ class Compound < MemStruct
 	end
 	def _set(h) ; h.each { |k, v| send("_#{k}=", v) } ; end
 end
+
 class Number < MemStruct
 	attr_accessor :_bits, :_signed
 	def initialize(bits, signed)
@@ -149,6 +155,23 @@ class BitField < MemStruct
 end
 
 class Pointer < MemStruct
+	attr_accessor :_tg
+	def initialize(tg)
+		@_tg = tg
+	end
+
+	def _getp
+		DFHack.memory_read_int32(@_memaddr) & 0xffffffff
+	end
+
+	# the pointer is invisible, forward all methods to the pointed object
+	def method_missing(*a)
+		addr = _getp
+		tg = (addr == 0 ? nil : @_tg._at(addr)._get)
+		tg.send(*a)
+	end
+end
+class PointerAry < MemStruct
 	attr_accessor :_tglen, :_tg
 	def initialize(tglen, tg)
 		@_tglen = tglen
@@ -159,10 +182,6 @@ class Pointer < MemStruct
 		delta = (i != 0 ? i*@_tglen : 0)
 		(DFHack.memory_read_int32(@_memaddr) & 0xffffffff) + delta
 	end
-	def _setp(v)
-		DFHack.memory_write_int32(@_memaddr, v)
-	end
-	def _get ; self ; end
 
 	def [](i)
 		addr = _getp(i)
@@ -173,11 +192,6 @@ class Pointer < MemStruct
 		addr = _getp(i)
 		raise 'null pointer' if addr == 0
 		@_tg._at(addr)._set(v)
-	end
-
-	# the pointer is invisible, forward all methods to the pointed object
-	def method_missing(*a)
-		self[0].send(*a)
 	end
 end
 class StaticArray < MemStruct
@@ -205,7 +219,7 @@ class StaticArray < MemStruct
 	end
 
 	include Enumerable
-	def each; (0...length).each { |i| yield self[i] }; end
+	def each ; (0...length).each { |i| yield self[i] } ; end
 end
 class StaticString < MemStruct
 	attr_accessor :_length
@@ -274,8 +288,9 @@ class StlVector32 < MemStruct
 		end
 		v
 	end
+
 	include Enumerable
-	def each; (0...length).each { |i| yield self[i] }; end
+	def each ; (0...length).each { |i| yield self[i] } ; end
 end
 class StlVector16 < StlVector32
 	def length
@@ -346,19 +361,41 @@ class StlDeque < MemStruct
 		@_tglen = tglen
 		@_tg = tg
 	end
+	# TODO
 end
 
 class DfFlagarray < MemStruct
 	# TODO
 end
-class DfArray < MemStruct
+class DfArray < Compound
 	attr_accessor :_tglen, :_tg
 	def initialize(tglen, tg)
 		@_tglen = tglen
 		@_tg = tg
 	end
 
-	# TODO
+	field(:_length, 0) { number 32, false }
+	field(:_ptr, 4) { number 32, false }
+
+	def length ; _length ; end
+	def size ; _length ; end
+	def _tgat(i)
+		@_tg._at(_ptr + i*@_tglen) if i >= 0 and i < _length
+	end
+	def [](i)
+		i += _length if i < 0
+		_tgat(i)._get
+	end
+	def []=(i, v)
+		i += _length if i < 0
+		_tgat(i)._set(v)
+	end
+	def _set(a)
+		a.each_with_index { |v, i| self[i] = v }
+	end
+
+	include Enumerable
+	def each ; (0...length).each { |i| yield self[i] } ; end
 end
 class DfLinkedList < MemStruct
 	attr_accessor :_tg
@@ -373,33 +410,60 @@ class Global < MemStruct
 		@_glob = glob
 	end
 	def _at(addr)
-		g = DFHack::MemHack.const_get(@_glob)
-		g = DFHack.rtti_getclass(g, addr)
+		g = DFHack.const_get(@_glob)
+		g = DFHack.rtti_getclassat(g, addr)
 		g.new._at(addr)
 	end
 end
+end	# module MemHack
 
-module ::DFHack
-	def self.rtti_register(cname, cls)
-		@rtti_n2c ||= {}
-		@rtti_class ||= {}
-		@rtti_n2c[cname] = cls
-		@rtti_class[cls] = true
-	end
 
-	# return the ruby class to use for a given address if rtti info is available
-	def self.rtti_getclass(cls, addr)
-		@rtti_n2c ||= {}
-		@rtti_class ||= {}
-		if addr != 0 and @rtti_class[cls]
-			@rtti_n2c[rtti_readclassname(get_vtable_ptr(addr))] || cls
-		else
-			cls
-		end
-	end
+# cpp rtti name -> rb class
+@rtti_n2c = {}
+@rtti_c2n = {}
 
-	def self.rtti_readclassname(vptr)
-		@rtti_v2n ||= {}
-		@rtti_v2n[vptr] ||= get_rtti_classname(vptr)
+# vtableptr -> cpp rtti name (cache)
+@rtti_n2v = {}
+@rtti_v2n = {}
+
+def self.rtti_n2c ; @rtti_n2c ; end
+def self.rtti_c2n ; @rtti_c2n ; end
+
+# register a ruby class with a cpp rtti class name
+def self.rtti_register(cname, cls)
+	@rtti_n2c[cname] = cls
+	@rtti_c2n[cls] = cname
+end
+
+# return the ruby class to use for the cpp object at address if rtti info is available
+def self.rtti_getclassat(cls, addr)
+	if addr != 0 and @rtti_c2n[cls]
+		# rtti info exist for class => cpp object has a vtable
+		@rtti_n2c[rtti_readclassname(get_vtable_ptr(addr))] || cls
+	else
+		cls
 	end
 end
+
+# try to read the rtti classname from an object vtable pointer
+def self.rtti_readclassname(vptr)
+	unless n = @rtti_v2n[vptr]
+		n = @rtti_v2n[vptr] = get_rtti_classname(vptr)
+		@rtti_n2v[n] = vptr
+	end
+	n
+end
+
+# return the vtable pointer from the cpp rtti name
+def self.rtti_getvtable(cname)
+	unless v = @rtti_n2v[cname]
+		v = get_vtable(cname)
+		@rtti_n2v[cname] = v
+		@rtti_v2n[v] = cname if v != 0
+	end
+	v if v != 0
+end
+
+end
+
+

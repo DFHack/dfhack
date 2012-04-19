@@ -51,8 +51,7 @@ sub render_global_enum {
     my ($name, $type) = @_;
 
     my $rbname = rb_ucase($name);
-    # store constants in DFHack::EnumName and not in DFHack::MemHack::EnumName
-    push @lines_rb, "class ::DFHack::$rbname";
+    push @lines_rb, "class $rbname";
     %seen_enum_name = ();
     indent_rb {
         render_enum_fields($type);
@@ -81,7 +80,7 @@ sub render_global_bitfield {
     my ($name, $type) = @_;
 
     my $rbname = rb_ucase($name);
-    push @lines_rb, "class $rbname < Compound";
+    push @lines_rb, "class $rbname < MemHack::Compound";
     indent_rb {
         render_bitfield_fields($type);
     };
@@ -142,7 +141,7 @@ sub render_global_class {
         }
     }
 
-    my $rbparent = ($parent ? rb_ucase($parent) : 'Compound');
+    my $rbparent = ($parent ? rb_ucase($parent) : 'MemHack::Compound');
 
     my $cppvar = "v_$cpp_var_counter";
     $cpp_var_counter++;
@@ -191,7 +190,7 @@ sub render_global_objects {
     push @lines_cpp, "void cpp_$sname(FILE *fout) {";
     push @include_cpp, $sname;
 
-    push @lines_rb, "class $rbname < Compound";
+    push @lines_rb, "class $rbname < MemHack::Compound";
     indent_rb {
         for my $obj (@objects) {
             my $oname = $obj->getAttribute('name');
@@ -208,7 +207,6 @@ sub render_global_objects {
     };
     push @lines_rb, "end";
 
-    push @lines_rb, "module ::DFHack";
     indent_rb {
         push @lines_rb, "Global = GlobalObjects.new._at(0)";
         for my $obj (@global_objects) {
@@ -216,7 +214,6 @@ sub render_global_objects {
             push @lines_rb, "def self.$obj=(v) ; Global.$obj = v ; end";
         }
     };
-    push @lines_rb, "end";
 }
 
 
@@ -325,8 +322,13 @@ sub render_item_pointer {
     my ($item, $cppvar) = @_;
 
     my $tg = $item->findnodes('child::ld:item')->[0];
-    my $tglen = get_tglen($tg, $cppvar);
-    push @lines_rb, "pointer($tglen) {";
+    my $ary = $item->getAttribute('is-array');
+    if ($ary and $ary eq 'true') {
+        my $tglen = get_tglen($tg, $cppvar);
+        push @lines_rb, "pointer_ary($tglen) {";
+    } else {
+        push @lines_rb, "pointer {";
+    }
     indent_rb {
         render_item($tg, "${cppvar}[0]");
     };
@@ -468,15 +470,13 @@ if ($output =~ /\.cpp$/) {
     print FH "}\n";
 
 } else {
-    print FH "module DFHack\n";
-    print FH "module MemHack\n";
     if ($memstruct) {
         open MH, "<$memstruct";
         print FH "$_" while(<MH>);
         close MH;
     }
+    print FH "module DFHack\n";
     print FH "$_\n" for @lines_rb;
-    print FH "end\n";
     print FH "end\n";
 }
 close FH;

@@ -370,14 +370,12 @@ static VALUE rb_dfregister(VALUE self, VALUE name, VALUE descr)
 
 static VALUE rb_dfget_global_address(VALUE self, VALUE name)
 {
-    uint32_t addr = Core::getInstance().vinfo->getAddress(rb_string_value_ptr(&name));
-    return rb_uint2inum(addr);
+    return rb_uint2inum(Core::getInstance().vinfo->getAddress(rb_string_value_ptr(&name)));
 }
 
 static VALUE rb_dfget_vtable(VALUE self, VALUE name)
 {
-    uint32_t addr = (uint32_t)Core::getInstance().vinfo->getVTable(rb_string_value_ptr(&name));
-    return rb_uint2inum(addr);
+    return rb_uint2inum((uint32_t)Core::getInstance().vinfo->getVTable(rb_string_value_ptr(&name)));
 }
 
 // read the c++ class name from a vtable pointer, inspired from doReadClassName

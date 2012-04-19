@@ -193,7 +193,7 @@ command_result mapexport (color_ostream &out, std::vector <std::string> & parame
                             prototile->set_flow_size(des.bits.flow_size);
                         }
 
-                        df::tiletype type = b->TileTypeAt(coord);
+                        df::tiletype type = b->tiletypeAt(coord);
                         prototile->set_type((dfproto::Tile::TileType)tileShape(type));
                         prototile->set_tile_material((dfproto::Tile::TileMaterialType)tileMaterial(type));
 
@@ -204,7 +204,7 @@ command_result mapexport (color_ostream &out, std::vector <std::string> & parame
                         case tiletype_material::SOIL:
                         case tiletype_material::STONE:
                             prototile->set_material_type(0);
-                            prototile->set_material_index(b->baseMaterialAt(coord));
+                            prototile->set_material_index(b->layerMaterialAt(coord));
                             break;
                         case tiletype_material::MINERAL:
                             prototile->set_material_type(0);

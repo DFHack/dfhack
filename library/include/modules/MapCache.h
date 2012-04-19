@@ -262,9 +262,12 @@ public:
 
 private:
     friend class MapCache;
+    friend class BlockInfo;
 
     MapCache *parent;
     df::map_block *block;
+
+    int biomeIndexAt(df::coord2d p);
 
     bool valid;
     bool dirty_designations:1;
@@ -521,6 +524,8 @@ private:
     uint32_t y_tmax;
     uint32_t z_max;
     std::vector<df::coord2d> geoidx;
+    std::vector<int> default_soil;
+    std::vector<int> default_stone;
     std::vector< std::vector <int16_t> > layer_mats;
     std::map<df::coord2d, df::world_region_details*> region_details;
     std::map<DFCoord, Block *> blocks;

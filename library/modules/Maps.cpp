@@ -676,11 +676,42 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     int x = pos.x, y = pos.y;
 
     switch (tileMaterial(tt)) {
-    case CONSTRUCTION: // just a fallback
+    case DRIFTWOOD:
     case SOIL:
-    case STONE:
+    {
         rv.mat_index = basemats[x][y];
+
+        if (auto raw = df::inorganic_raw::find(rv.mat_index))
+        {
+            if (raw->flags.is_set(inorganic_flags::SOIL_ANY))
+                break;
+
+            int biome = mblock->biomeIndexAt(pos);
+            int idx = vector_get(parent->default_soil, biome, -1);
+            if (idx >= 0)
+                rv.mat_index = idx;
+        }
+
         break;
+    }
+
+    case STONE:
+    {
+        rv.mat_index = basemats[x][y];
+
+        if (auto raw = df::inorganic_raw::find(rv.mat_index))
+        {
+            if (!raw->flags.is_set(inorganic_flags::SOIL_ANY))
+                break;
+
+            int biome = mblock->biomeIndexAt(pos);
+            int idx = vector_get(parent->default_stone, biome, -1);
+            if (idx >= 0)
+                rv.mat_index = idx;
+        }
+
+        break;
+    }
 
     case MINERAL:
         rv.mat_index = veinmats[x][y];
@@ -727,11 +758,17 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
         break;
     }
 
+    case CONSTRUCTION: // just a fallback
+        break;
+
     case FROZEN_LIQUID:
+        rv.mat_type = builtin_mats::WATER;
+        break;
+
     case POOL:
     case BROOK:
     case RIVER:
-        rv.mat_type = builtin_mats::WATER;
+        rv.mat_index = basemats[x][y];
         break;
 
     case ASHES:
@@ -816,18 +853,30 @@ void MapExtras::BlockInfo::SquashGrass(df::map_block *mb, t_blockmaterials &mate
     }
 }
 
+int MapExtras::Block::biomeIndexAt(df::coord2d p)
+{
+    if (!block)
+        return -1;
+
+    auto des = index_tile<df::tile_designation>(designation,p);
+    uint8_t idx = des.bits.biome;
+    if (idx >= 9)
+        return -1;
+    idx = block->region_offset[idx];
+    if (idx >= parent->geoidx.size())
+        return -1;
+    return idx;
+}
+
 df::coord2d MapExtras::Block::biomeRegionAt(df::coord2d p)
 {
     if (!block)
         return df::coord2d(-30000,-30000);
 
-    auto des = index_tile<df::tile_designation>(designation,p);
-    uint8_t idx = des.bits.biome;
-    if (idx >= 9)
+    int idx = biomeIndexAt(p);
+    if (idx < 0)
         return block->region_pos;
-    idx = block->region_offset[idx];
-    if (idx >= parent->geoidx.size())
-        return block->region_pos;
+
     return parent->geoidx[idx];
 }
 
@@ -945,6 +994,28 @@ MapExtras::MapCache::MapCache()
         {
             auto info = data->region_details[i];
             region_details[info->pos] = info;
+        }
+    }
+
+    default_soil.resize(layer_mats.size());
+    default_stone.resize(layer_mats.size());
+
+    for (size_t i = 0; i < layer_mats.size(); i++)
+    {
+        default_soil[i] = -1;
+        default_stone[i] = -1;
+
+        for (size_t j = 0; j < layer_mats[i].size(); j++)
+        {
+            auto raw = df::inorganic_raw::find(layer_mats[i][j]);
+            if (!raw)
+                continue;
+
+            bool is_soil = raw->flags.is_set(inorganic_flags::SOIL_ANY);
+            if (is_soil)
+                default_soil[i] = layer_mats[i][j];
+            else if (default_stone[i] == -1)
+                default_stone[i] = layer_mats[i][j];
         }
     }
 }

@@ -1196,7 +1196,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
     df::tile_designation des = MCache->designationAt(xy);
     df::tiletype tt = MCache->tiletypeAt(xy);
     int16_t veinmat = MCache->veinMaterialAt(xy);
-    int16_t basemat = MCache->baseMaterialAt(xy);
+    int16_t basemat = MCache->layerMaterialAt(xy);
     if( veinmat != -1 )
     {
         con.printerr("This is a vein. Use vdig instead!\n");
@@ -1215,7 +1215,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
         if (MCache->tagAt(current))
             continue;
         int16_t vmat2 = MCache->veinMaterialAt(current);
-        int16_t bmat2 = MCache->baseMaterialAt(current);
+        int16_t bmat2 = MCache->layerMaterialAt(current);
         tt = MCache->tiletypeAt(current);
 
         if(!DFHack::isWallTerrain(tt))
@@ -1282,7 +1282,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
                     //below = 1;
                     des_minus = MCache->designationAt(current-1);
                     vmat_minus = MCache->veinMaterialAt(current-1);
-                    bmat_minus = MCache->baseMaterialAt(current-1);
+                    bmat_minus = MCache->layerMaterialAt(current-1);
                     tt_minus = MCache->tiletypeAt(current-1);
                     if (   tileMaterial(tt_minus)==tiletype_material::STONE
                         || tileMaterial(tt_minus)==tiletype_material::SOIL)
@@ -1293,7 +1293,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
                     //above = 1;
                     des_plus = MCache->designationAt(current+1);
                     vmat_plus = MCache->veinMaterialAt(current+1);
-                    bmat_plus = MCache->baseMaterialAt(current+1);
+                    bmat_plus = MCache->layerMaterialAt(current+1);
                     tt_plus = MCache->tiletypeAt(current+1);
                     if (   tileMaterial(tt_plus)==tiletype_material::STONE
                         || tileMaterial(tt_plus)==tiletype_material::SOIL)

@@ -51,6 +51,9 @@ using namespace std;
 #include "df/burrow.h"
 #include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
+#include "df/world_region_details.h"
+#include "df/builtin_mats.h"
+#include "df/block_square_event_grassst.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -158,7 +161,7 @@ df::world_data::T_region_map *Maps::getRegionBiome(df::coord2d rgn_pos)
 df::feature_init *Maps::getGlobalInitFeature(int32_t index)
 {
     auto data = world->world_data;
-    if (!data)
+    if (!data || index < 0)
         return NULL;
 
     auto rgn = vector_get(data->underground_regions, index);
@@ -186,7 +189,7 @@ bool Maps::GetGlobalFeature(t_feature &feature, int32_t index)
 df::feature_init *Maps::getLocalInitFeature(df::coord2d rgn_pos, int32_t index)
 {
     auto data = world->world_data;
-    if (!data)
+    if (!data || index < 0)
         return NULL;
 
     if (rgn_pos.x < 0 || rgn_pos.x >= data->world_width ||
@@ -353,7 +356,7 @@ bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<df::coord2d>
         int bioRX = world->map.region_x / 16 + ((i % 3) - 1);
         int bioRY = world->map.region_y / 16 + ((i / 3) - 1);
 
-        df::coord2d rgn_pos(clip_range(bioRX,0,world_width-1),clip_range(bioRX,0,world_height-1));
+        df::coord2d rgn_pos(clip_range(bioRX,0,world_width-1),clip_range(bioRY,0,world_height-1));
 
         (*geoidx)[i] = rgn_pos;
 
@@ -389,7 +392,7 @@ bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<df::coord2d>
 MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
 {
     dirty_designations = false;
-    dirty_tiletypes = false;
+    dirty_tiles = false;
     dirty_temperatures = false;
     dirty_blockflags = false;
     dirty_occupancies = false;
@@ -397,12 +400,12 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
     bcoord = _bcoord;
     block = Maps::getBlock(bcoord);
     item_counts = NULL;
-
-    memset(tags,0,sizeof(tags));
+    tags = NULL;
+    tiles = NULL;
+    basemats = NULL;
 
     if(block)
     {
-        COPY(rawtiles, block->tiletype);
         COPY(designation, block->designation);
         COPY(occupancy, block->occupancy);
         blockflags = block->flags;
@@ -410,33 +413,189 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
         COPY(temp1, block->temperature_1);
         COPY(temp2, block->temperature_2);
 
-        SquashVeins(block,veinmats);
-        SquashConstructions(block, contiles);
-        SquashFrozenLiquids(block, icetiles);
-        if(parent->validgeo)
-            SquashRocks(block,basemats,&parent->layer_mats);
-        else
-            memset(basemats,-1,sizeof(basemats));
         valid = true;
     }
     else
     {
         blockflags.whole = 0;
-        memset(rawtiles,0,sizeof(rawtiles));
         memset(designation,0,sizeof(designation));
         memset(occupancy,0,sizeof(occupancy));
         memset(temp1,0,sizeof(temp1));
         memset(temp2,0,sizeof(temp2));
-        memset(veinmats,-1,sizeof(veinmats));
-        memset(contiles,0,sizeof(contiles));
-        memset(icetiles,0,sizeof(icetiles));
-        memset(basemats,-1,sizeof(basemats));
     }
 }
 
 MapExtras::Block::~Block()
 {
     delete[] item_counts;
+    delete[] tags;
+    delete tiles;
+    delete basemats;
+}
+
+void MapExtras::Block::init_tags()
+{
+    if (!tags)
+        tags = new T_tags[16];
+    memset(tags,0,sizeof(T_tags)*16);
+}
+
+void MapExtras::Block::init_tiles(bool basemat)
+{
+    if (!tiles)
+    {
+        tiles = new TileInfo();
+
+        if (block)
+            ParseTiles(tiles);
+    }
+
+    if (basemat && !basemats)
+    {
+        basemats = new BasematInfo();
+
+        if (block)
+            ParseBasemats(tiles, basemats);
+    }
+}
+
+MapExtras::Block::TileInfo::TileInfo()
+{
+    frozen.clear();
+    dirty_raw.clear();
+    memset(raw_tiles,0,sizeof(raw_tiles));
+    con_info = NULL;
+    dirty_base.clear();
+    memset(base_tiles,0,sizeof(base_tiles));
+}
+
+MapExtras::Block::TileInfo::~TileInfo()
+{
+    delete con_info;
+}
+
+void MapExtras::Block::TileInfo::init_coninfo()
+{
+    if (con_info)
+        return;
+
+    con_info = new ConInfo();
+    con_info->constructed.clear();
+    COPY(con_info->tiles, base_tiles);
+    memset(con_info->mattype, -1, sizeof(con_info->mattype));
+    memset(con_info->matindex, -1, sizeof(con_info->matindex));
+}
+
+MapExtras::Block::BasematInfo::BasematInfo()
+{
+    dirty.clear();
+    memset(mattype,0,sizeof(mattype));
+    memset(matindex,-1,sizeof(matindex));
+    memset(layermat,-1,sizeof(layermat));
+}
+
+bool MapExtras::Block::setTiletypeAt(df::coord2d pos, df::tiletype tt, bool force)
+{
+    if (!block)
+        return false;
+
+    if (!basemats)
+        init_tiles(true);
+
+    pos = pos & 15;
+
+    dirty_tiles = true;
+    tiles->raw_tiles[pos.x][pos.y] = tt;
+    tiles->dirty_raw.setassignment(pos, true);
+
+    return true;
+}
+
+void MapExtras::Block::ParseTiles(TileInfo *tiles)
+{
+    tiletypes40d icetiles;
+    BlockInfo::SquashFrozenLiquids(block, icetiles);
+
+    COPY(tiles->raw_tiles, block->tiletype);
+
+    for (int x = 0; x < 16; x++)
+    {
+        for (int y = 0; y < 16; y++)
+        {
+            using namespace df::enums::tiletype_material;
+
+            df::tiletype tt = tiles->raw_tiles[x][y];
+            df::coord coord = block->map_pos + df::coord(x,y,0);
+
+            // Frozen liquid comes topmost
+            if (tileMaterial(tt) == FROZEN_LIQUID)
+            {
+                tiles->frozen.setassignment(x,y,true);
+                if (icetiles[x][y] != tiletype::Void)
+                {
+                    tt = icetiles[x][y];
+                }
+            }
+
+            // The next layer may be construction
+            bool is_con = false;
+
+            if (tileMaterial(tt) == CONSTRUCTION)
+            {
+                df::construction *con = df::construction::find(coord);
+                if (con)
+                {
+                    if (!tiles->con_info)
+                        tiles->init_coninfo();
+
+                    is_con = true;
+                    tiles->con_info->constructed.setassignment(x,y,true);
+                    tiles->con_info->tiles[x][y] = tt;
+                    tiles->con_info->mattype[x][y] = con->mat_type;
+                    tiles->con_info->matindex[x][y] = con->mat_index;
+
+                    tt = con->original_tile;
+                }
+            }
+
+            // Finally, base material
+            tiles->base_tiles[x][y] = tt;
+
+            // Copy base info back to construction layer
+            if (tiles->con_info && !is_con)
+                tiles->con_info->tiles[x][y] = tt;
+        }
+    }
+}
+
+void MapExtras::Block::ParseBasemats(TileInfo *tiles, BasematInfo *bmats)
+{
+    BlockInfo info;
+
+    info.prepare(this);
+
+    COPY(bmats->layermat, info.basemats);
+
+    for (int x = 0; x < 16; x++)
+    {
+        for (int y = 0; y < 16; y++)
+        {
+            using namespace df::enums::tiletype_material;
+
+            auto tt = tiles->base_tiles[x][y];
+            auto mat = info.getBaseMaterial(tt, df::coord2d(x,y));
+
+            bmats->mattype[x][y] = mat.mat_type;
+            bmats->matindex[x][y] = mat.mat_index;
+
+            // Copy base info back to construction layer
+            if (tiles->con_info && !tiles->con_info->constructed.getassignment(x,y))
+            {
+                tiles->con_info->mattype[x][y] = mat.mat_type;
+                tiles->con_info->matindex[x][y] = mat.mat_index;
+            }
+        }
+    }
 }
 
 bool MapExtras::Block::Write ()
@@ -454,10 +613,21 @@ bool MapExtras::Block::Write ()
         block->flags.bits.designated = true;
         dirty_designations = false;
     }
-    if(dirty_tiletypes)
+    if(dirty_tiles && tiles)
     {
-        COPY(block->tiletype, rawtiles);
-        dirty_tiletypes = false;
+        dirty_tiles = false;
+
+        for (int x = 0; x < 16; x++)
+        {
+            for (int y = 0; y < 16; y++)
+            {
+                if (tiles->dirty_raw.getassignment(x,y))
+                    block->tiletype[x][y] = tiles->raw_tiles[x][y];
+            }
+        }
+
+        delete tiles; tiles = NULL;
+        delete basemats; basemats = NULL;
     }
     if(dirty_temperatures)
     {
@@ -473,65 +643,145 @@ bool MapExtras::Block::Write ()
     return true;
 }
 
-void MapExtras::Block::SquashVeins(df::map_block *mb, t_blockmaterials & materials)
+void MapExtras::BlockInfo::prepare(Block *mblock)
 {
-    memset(materials,-1,sizeof(materials));
+    this->mblock = mblock;
+
+    block = mblock->getRaw();
+    parent = mblock->getParent();
+
+    SquashVeins(block,veinmats);
+    SquashGrass(block, grass);
+
+    if (parent->validgeo)
+        SquashRocks(block,basemats,&parent->layer_mats);
+    else
+        memset(basemats,-1,sizeof(basemats));
+
+    for (size_t i = 0; i < block->plants.size(); i++)
+    {
+        auto pp = block->plants[i];
+        plants[pp->pos] = pp;
+    }
+
+    global_feature = Maps::getGlobalInitFeature(block->global_feature);
+    local_feature = Maps::getLocalInitFeature(block->region_pos, block->local_feature);
+}
+
+t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos)
+{
+    using namespace df::enums::tiletype_material;
+
+    t_matpair rv(0,-1);
+    int x = pos.x, y = pos.y;
+
+    switch (tileMaterial(tt)) {
+    case CONSTRUCTION: // just a fallback
+    case SOIL:
+    case STONE:
+        rv.mat_index = basemats[x][y];
+        break;
+
+    case MINERAL:
+        rv.mat_index = veinmats[x][y];
+        break;
+
+    case LAVA_STONE:
+        if (auto details = parent->region_details[mblock->biomeRegionAt(pos)])
+            rv.mat_index = details->lava_stone;
+        break;
+
+    case PLANT:
+        rv.mat_type = MaterialInfo::PLANT_BASE;
+        if (auto plant = plants[block->map_pos + df::coord(x,y,0)])
+        {
+            if (auto raw = df::plant_raw::find(plant->material))
+            {
+                rv.mat_type = raw->material_defs.type_basic_mat;
+                rv.mat_index = raw->material_defs.idx_basic_mat;
+            }
+        }
+        break;
+
+    case GRASS_LIGHT:
+    case GRASS_DARK:
+    case GRASS_DRY:
+    case GRASS_DEAD:
+        rv.mat_type = MaterialInfo::PLANT_BASE;
+        if (auto raw = df::plant_raw::find(grass[x][y]))
+        {
+            rv.mat_type = raw->material_defs.type_basic_mat;
+            rv.mat_index = raw->material_defs.idx_basic_mat;
+        }
+        break;
+
+    case FEATURE:
+    {
+        auto dsgn = block->designation[x][y];
+
+        if (dsgn.bits.feature_local && local_feature)
+            local_feature->getMaterial(&rv.mat_type, &rv.mat_index);
+        else if (dsgn.bits.feature_global && global_feature)
+            global_feature->getMaterial(&rv.mat_type, &rv.mat_index);
+
+        break;
+    }
+
+    case FROZEN_LIQUID:
+    case POOL:
+    case BROOK:
+    case RIVER:
+        rv.mat_type = builtin_mats::WATER;
+        break;
+
+    case ASHES:
+    case FIRE:
+    case CAMPFIRE:
+        rv.mat_type = builtin_mats::ASH;
+        break;
+
+    default:
+        rv.mat_type = -1;
+    }
+
+    return rv;
+}
+
+void MapExtras::BlockInfo::SquashVeins(df::map_block *mb, t_blockmaterials & materials)
+{
     std::vector <df::block_square_event_mineralst *> veins;
     Maps::SortBlockEvents(mb,&veins);
+    memset(materials,-1,sizeof(materials));
     for (uint32_t x = 0;x<16;x++) for (uint32_t y = 0; y< 16;y++)
     {
-        df::tiletype tt = mb->tiletype[x][y];
-        if (tileMaterial(tt) == tiletype_material::MINERAL)
+        for (size_t i = 0; i < veins.size(); i++)
         {
-            for (size_t i = 0; i < veins.size(); i++)
-            {
-                if (veins[i]->getassignment(x,y))
-                    materials[x][y] = veins[i]->inorganic_mat;
-            }
+            if (veins[i]->getassignment(x,y))
+                materials[x][y] = veins[i]->inorganic_mat;
         }
     }
 }
 
-void MapExtras::Block::SquashFrozenLiquids(df::map_block *mb, tiletypes40d & frozen)
+void MapExtras::BlockInfo::SquashFrozenLiquids(df::map_block *mb, tiletypes40d & frozen)
 {
     std::vector <df::block_square_event_frozen_liquidst *> ices;
     Maps::SortBlockEvents(mb,NULL,&ices);
+    memset(frozen,0,sizeof(frozen));
     for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
     {
-        df::tiletype tt = mb->tiletype[x][y];
-        frozen[x][y] = tiletype::Void;
-        if (tileMaterial(tt) == tiletype_material::FROZEN_LIQUID)
+        for (size_t i = 0; i < ices.size(); i++)
         {
-            for (size_t i = 0; i < ices.size(); i++)
+            df::tiletype tt2 = ices[i]->tiles[x][y];
+            if (tt2 != tiletype::Void)
             {
-                df::tiletype tt2 = ices[i]->tiles[x][y];
-                if (tt2 != tiletype::Void)
-                {
-                    frozen[x][y] = tt2;
-                    break;
-                }
+                frozen[x][y] = tt2;
+                break;
             }
         }
     }
 }
 
-void MapExtras::Block::SquashConstructions (df::map_block *mb, tiletypes40d & constructions)
-{
-    for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
-    {
-        df::tiletype tt = mb->tiletype[x][y];
-        constructions[x][y] = tiletype::Void;
-        if (tileMaterial(tt) == tiletype_material::CONSTRUCTION)
-        {
-            DFCoord coord = mb->map_pos + df::coord(x,y,0);
-            df::construction *con = df::construction::find(coord);
-            if (con)
-                constructions[x][y] = con->original_tile;
-        }
-    }
-}
-
-void MapExtras::Block::SquashRocks (df::map_block *mb, t_blockmaterials & materials,
+void MapExtras::BlockInfo::SquashRocks (df::map_block *mb, t_blockmaterials & materials,
                                    std::vector< std::vector <int16_t> > * layerassign)
 {
     // get the layer materials
@@ -544,6 +794,25 @@ void MapExtras::Block::SquashRocks (df::map_block *mb, t_blockmaterials & materi
         uint8_t idx = mb->region_offset[test];
         if (idx < layerassign->size())
             materials[x][y] = layerassign->at(idx)[mb->designation[x][y].bits.geolayer_index];
+    }
+}
+
+void MapExtras::BlockInfo::SquashGrass(df::map_block *mb, t_blockmaterials &materials)
+{
+    std::vector<df::block_square_event_grassst*> grasses;
+    Maps::SortBlockEvents(mb, NULL, NULL, NULL, &grasses);
+    memset(materials,-1,sizeof(materials));
+    for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
+    {
+        int amount = 0;
+        for (size_t i = 0; i < grasses.size(); i++)
+        {
+            if (grasses[i]->amount[x][y] >= amount)
+            {
+                amount = grasses[i]->amount[x][y];
+                materials[x][y] = grasses[i]->plant_index;
+            }
+        }
     }
 }
 
@@ -662,6 +931,24 @@ bool MapExtras::Block::removeItemOnGround(df::item *item)
     return true;
 }
 
+MapExtras::MapCache::MapCache()
+{
+    valid = 0;
+    Maps::getSize(x_bmax, y_bmax, z_max);
+    x_tmax = x_bmax*16; y_tmax = y_bmax*16;
+    validgeo = Maps::ReadGeology(&layer_mats, &geoidx);
+    valid = true;
+
+    if (auto data = df::global::world->world_data)
+    {
+        for (size_t i = 0; i < data->region_details.size(); i++)
+        {
+            auto info = data->region_details[i];
+            region_details[info->pos] = info;
+        }
+    }
+}
+
 MapExtras::Block *MapExtras::MapCache::BlockAt(DFCoord blockcoord)
 {
     if(!valid)
@@ -682,6 +969,15 @@ MapExtras::Block *MapExtras::MapCache::BlockAt(DFCoord blockcoord)
             return nblo;
         }
         return 0;
+    }
+}
+
+void MapExtras::MapCache::resetTags()
+{
+    for (auto it = blocks.begin(); it != blocks.end(); ++it)
+    {
+        delete[] it->second->tags;
+        it->second->tags = NULL;
     }
 }
 

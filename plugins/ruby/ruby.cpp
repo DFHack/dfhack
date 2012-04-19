@@ -504,16 +504,10 @@ static VALUE rb_dfmemory_vec8_length(VALUE self, VALUE addr)
     std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
     return rb_uint2inum(v->size());
 }
-static VALUE rb_dfmemory_vec8_at(VALUE self, VALUE addr, VALUE idx)
+static VALUE rb_dfmemory_vec8_ptrat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
-    return rb_uint2inum(v->at(FIX2INT(idx)));
-}
-static VALUE rb_dfmemory_vec8_set(VALUE self, VALUE addr, VALUE idx, VALUE val)
-{
-    std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
-    v->at(FIX2INT(idx)) = rb_num2ulong(val);
-    return Qtrue;
+    return rb_uint2inum((uint32_t)&v->at(FIX2INT(idx)));
 }
 static VALUE rb_dfmemory_vec8_insert(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
@@ -534,16 +528,10 @@ static VALUE rb_dfmemory_vec16_length(VALUE self, VALUE addr)
     std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
     return rb_uint2inum(v->size());
 }
-static VALUE rb_dfmemory_vec16_at(VALUE self, VALUE addr, VALUE idx)
+static VALUE rb_dfmemory_vec16_ptrat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
-    return rb_uint2inum(v->at(FIX2INT(idx)));
-}
-static VALUE rb_dfmemory_vec16_set(VALUE self, VALUE addr, VALUE idx, VALUE val)
-{
-    std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
-    v->at(FIX2INT(idx)) = rb_num2ulong(val);
-    return Qtrue;
+    return rb_uint2inum((uint32_t)&v->at(FIX2INT(idx)));
 }
 static VALUE rb_dfmemory_vec16_insert(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
@@ -564,16 +552,10 @@ static VALUE rb_dfmemory_vec32_length(VALUE self, VALUE addr)
     std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
     return rb_uint2inum(v->size());
 }
-static VALUE rb_dfmemory_vec32_at(VALUE self, VALUE addr, VALUE idx)
+static VALUE rb_dfmemory_vec32_ptrat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
-    return rb_uint2inum(v->at(FIX2INT(idx)));
-}
-static VALUE rb_dfmemory_vec32_set(VALUE self, VALUE addr, VALUE idx, VALUE val)
-{
-    std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
-    v->at(FIX2INT(idx)) = rb_num2ulong(val);
-    return Qtrue;
+    return rb_uint2inum((uint32_t)&v->at(FIX2INT(idx)));
 }
 static VALUE rb_dfmemory_vec32_insert(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
@@ -584,6 +566,42 @@ static VALUE rb_dfmemory_vec32_insert(VALUE self, VALUE addr, VALUE idx, VALUE v
 static VALUE rb_dfmemory_vec32_delete(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
+    v->erase(v->begin()+FIX2INT(idx));
+    return Qtrue;
+}
+
+// vector<bool>
+static VALUE rb_dfmemory_vecbool_length(VALUE self, VALUE addr)
+{
+    std::vector<bool> *v = (std::vector<bool>*)rb_num2ulong(addr);
+    return rb_uint2inum(v->size());
+}
+static VALUE rb_dfmemory_vecbool_at(VALUE self, VALUE addr, VALUE idx)
+{
+    std::vector<bool> *v = (std::vector<bool>*)rb_num2ulong(addr);
+    return v->at(FIX2INT(idx)) ? Qtrue : Qfalse;
+}
+static VALUE rb_dfmemory_vecbool_setat(VALUE self, VALUE addr, VALUE idx, VALUE val)
+{
+    std::vector<bool> *v = (std::vector<bool>*)rb_num2ulong(addr);
+    if (val == Qnil || val == Qfalse || val == FIX2INT(0))
+        v->at(FIX2INT(idx)) = 0;
+    else
+        v->at(FIX2INT(idx)) = 1;
+    return Qtrue;
+}
+static VALUE rb_dfmemory_vecbool_insert(VALUE self, VALUE addr, VALUE idx, VALUE val)
+{
+    std::vector<bool> *v = (std::vector<bool>*)rb_num2ulong(addr);
+    if (val == Qnil || val == Qfalse || val == FIX2INT(0))
+        v->insert(v->begin()+FIX2INT(idx), 0);
+    else
+        v->insert(v->begin()+FIX2INT(idx), 1);
+    return Qtrue;
+}
+static VALUE rb_dfmemory_vecbool_delete(VALUE self, VALUE addr, VALUE idx)
+{
+    std::vector<bool> *v = (std::vector<bool>*)rb_num2ulong(addr);
     v->erase(v->begin()+FIX2INT(idx));
     return Qtrue;
 }
@@ -625,20 +643,22 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "memory_write_float", RUBY_METHOD_FUNC(rb_dfmemory_write_float), 2);
 
     rb_define_singleton_method(rb_cDFHack, "memory_vector8_length",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_length), 1);
-    rb_define_singleton_method(rb_cDFHack, "memory_vector8_at",      RUBY_METHOD_FUNC(rb_dfmemory_vec8_at), 2);
-    rb_define_singleton_method(rb_cDFHack, "memory_vector8_set",     RUBY_METHOD_FUNC(rb_dfmemory_vec8_set), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector8_ptrat",   RUBY_METHOD_FUNC(rb_dfmemory_vec8_ptrat), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vector8_insert",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_insert), 3);
     rb_define_singleton_method(rb_cDFHack, "memory_vector8_delete",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_delete), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vector16_length", RUBY_METHOD_FUNC(rb_dfmemory_vec16_length), 1);
-    rb_define_singleton_method(rb_cDFHack, "memory_vector16_at",     RUBY_METHOD_FUNC(rb_dfmemory_vec16_at), 2);
-    rb_define_singleton_method(rb_cDFHack, "memory_vector16_set",    RUBY_METHOD_FUNC(rb_dfmemory_vec16_set), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector16_ptrat",  RUBY_METHOD_FUNC(rb_dfmemory_vec16_ptrat), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vector16_insert", RUBY_METHOD_FUNC(rb_dfmemory_vec16_insert), 3);
     rb_define_singleton_method(rb_cDFHack, "memory_vector16_delete", RUBY_METHOD_FUNC(rb_dfmemory_vec16_delete), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vector32_length", RUBY_METHOD_FUNC(rb_dfmemory_vec32_length), 1);
-    rb_define_singleton_method(rb_cDFHack, "memory_vector32_at",     RUBY_METHOD_FUNC(rb_dfmemory_vec32_at), 2);
-    rb_define_singleton_method(rb_cDFHack, "memory_vector32_set",    RUBY_METHOD_FUNC(rb_dfmemory_vec32_set), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector32_ptrat",  RUBY_METHOD_FUNC(rb_dfmemory_vec32_ptrat), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vector32_insert", RUBY_METHOD_FUNC(rb_dfmemory_vec32_insert), 3);
     rb_define_singleton_method(rb_cDFHack, "memory_vector32_delete", RUBY_METHOD_FUNC(rb_dfmemory_vec32_delete), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_length", RUBY_METHOD_FUNC(rb_dfmemory_vecbool_length), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_at",     RUBY_METHOD_FUNC(rb_dfmemory_vecbool_at), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_setat",  RUBY_METHOD_FUNC(rb_dfmemory_vecbool_setat), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_insert", RUBY_METHOD_FUNC(rb_dfmemory_vecbool_insert), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_delete", RUBY_METHOD_FUNC(rb_dfmemory_vecbool_delete), 2);
 
     // load the default ruby-level definitions
     int state=0;

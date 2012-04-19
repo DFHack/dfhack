@@ -107,5 +107,10 @@ module DFHack
     end
 end
 
+# alias, so we can write 'df.world.units.all[0]'
+def df
+    DFHack
+end
+
 # load user-specified startup file
 load 'ruby_custom.rb' if File.exist?('ruby_custom.rb')

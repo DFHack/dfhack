@@ -39,7 +39,6 @@ class Compound < MemStruct
 
 		def stl_vector(tglen=nil)
 			tg = yield if tglen
-			tg = tg._tg if tg.kind_of?(Pointer)	# Vector.at(4) already dereferences
 			case tglen
 			when 1; StlVector8.new(tg)
 			when 2; StlVector16.new(tg)
@@ -230,9 +229,9 @@ class StlVector32 < MemStruct
 	def length
 		DFHack.memory_vector32_length(@_memaddr)
 	end
-	alias size length
-	def value_at(idx)
-		DFHack.memory_vector32_at(@_memaddr, idx)
+	def size ; length ; end	# alias wouldnt work for subclasses
+	def valueptr_at(idx)
+		DFHack.memory_vector32_ptrat(@_memaddr, idx)
 	end
 	def insert_at(idx, val)
 		DFHack.memory_vector32_insert(@_memaddr, idx, val)
@@ -251,22 +250,22 @@ class StlVector32 < MemStruct
 	end
 	def [](idx)
 		idx += length if idx < 0
-		@_tg._at(value_at(idx)) if idx >= 0 and idx < length
+		@_tg._at(valueptr_at(idx))._get if idx >= 0 and idx < length
 	end
 	def []=(idx, v)
 		idx += length if idx < 0
 		if idx >= length
-			insert_at(idx, v)
+			insert_at(idx, 0)
 		elsif idx < 0
 			raise 'invalid idx'
-		else
-			set_value_at(idx, v)
 		end
+		@_tg._at(valueptr_at(idx))._set(v)
 	end
-	def <<(v)
-		insert_at(length, v)
+	def push(v)
+		self[length] = v
 		self
 	end
+	def <<(v) ; push(v) ; end
 	def pop
 		l = length
 		if l > 0
@@ -282,9 +281,8 @@ class StlVector16 < StlVector32
 	def length
 		DFHack.memory_vector16_length(@_memaddr)
 	end
-	alias size length
-	def value_at(idx)
-		DFHack.memory_vector16_at(@_memaddr, idx)
+	def valueptr_at(idx)
+		DFHack.memory_vector16_ptrat(@_memaddr, idx)
 	end
 	def insert_at(idx, val)
 		DFHack.memory_vector16_insert(@_memaddr, idx, val)
@@ -297,15 +295,40 @@ class StlVector8 < StlVector32
 	def length
 		DFHack.memory_vector8_length(@_memaddr)
 	end
-	alias size length
-	def value_at(idx)
-		DFHack.memory_vector8_at(@_memaddr, idx)
+	def valueptr_at(idx)
+		DFHack.memory_vector8_ptrat(@_memaddr, idx)
 	end
 	def insert_at(idx, val)
 		DFHack.memory_vector8_insert(@_memaddr, idx, val)
 	end
 	def delete_at(idx)
 		DFHack.memory_vector8_delete(@_memaddr, idx)
+	end
+end
+class StlBitVector < StlVector32
+	def initialize ; end
+	def length
+		DFHack.memory_vectorbool_length(@_memaddr)
+	end
+	def insert_at(idx, val)
+		DFHack.memory_vectorbool_insert(@_memaddr, idx, val)
+	end
+	def delete_at(idx)
+		DFHack.memory_vectorbool_delete(@_memaddr, idx)
+	end
+	def [](idx)
+		idx += length if idx < 0
+		DFHack.memory_vectorbool_at(@_memaddr, idx) if idx >= 0 and idx < length
+	end
+	def []=(idx, v)
+		idx += length if idx < 0
+		if idx >= length
+			insert_at(idx, v)
+		elsif idx < 0
+			raise 'invalid idx'
+		else
+			DFHack.memory_vectorbool_setat(@_memaddr, idx, v)
+		end
 	end
 end
 class StlString < MemStruct
@@ -316,9 +339,6 @@ class StlString < MemStruct
 	def _set(v)
 		DFHack.memory_write_stlstring(@_memaddr, v)
 	end
-end
-class StlBitVector < MemStruct
-	# TODO
 end
 class StlDeque < MemStruct
 	attr_accessor :_tglen, :_tg

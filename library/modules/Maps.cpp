@@ -770,7 +770,7 @@ df::block_burrow *Maps::getBlockBurrowMask(df::burrow *burrow, df::map_block *bl
         link->item = new df::block_burrow;
 
         link->item->id = burrow->id;
-        memset(link->item->tile_bitmask,0,sizeof(link->item->tile_bitmask));
+        link->item->tile_bitmask.clear();
         link->item->link = link;
 
         link->next = NULL;

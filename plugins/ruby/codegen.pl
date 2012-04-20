@@ -62,6 +62,10 @@ sub render_enum_fields {
     my ($type) = @_;
 
     my $value = -1;
+    my $idxname = 'ENUM';
+    $idxname .= '_' while ($seen_enum_name{$idxname});
+    $seen_enum_name{$idxname}++;
+    push @lines_rb, "$idxname = {}";
     for my $item ($type->findnodes('child::enum-item')) {
         $value = $item->getAttribute('value') || ($value+1);
         my $elemname = $item->getAttribute('name'); # || "unk_$value";
@@ -70,7 +74,7 @@ sub render_enum_fields {
             my $rbelemname = rb_ucase($elemname);
             $rbelemname .= '_' while ($seen_enum_name{$rbelemname});
             $seen_enum_name{$rbelemname}++;
-            push @lines_rb, "$rbelemname = $value";
+            push @lines_rb, "$rbelemname = $value ; ${idxname}[$value] = :$rbelemname";
         }
     }
 }

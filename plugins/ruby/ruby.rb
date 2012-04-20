@@ -2,6 +2,7 @@ require 'hack/ruby-autogen'
 
 module DFHack
     class << self
+        # update the ruby.cpp version to accept a block
         def suspend
             if block_given?
                 begin
@@ -15,26 +16,48 @@ module DFHack
             end
         end
 
-        def puts(*a)
-            a.flatten.each { |l|
-                print_str(l.to_s.chomp + "\n")
-            }
-            nil
+        module ::Kernel
+            def puts(*a)
+                a.flatten.each { |l|
+                    DFHack.print_str(l.to_s.chomp + "\n")
+                }
+                nil
+            end
+
+            def puts_err(*a)
+                a.flatten.each { |l|
+                    DFHack.print_err(l.to_s.chomp + "\n")
+                }
+                nil
+            end
         end
 
-        def puts_err(*a)
-            a.flatten.each { |l|
-                print_err(l.to_s.chomp + "\n")
-            }
-            nil
+        # register a callback to be called every gframe or more
+        # ex: DFHack.onupdate_register { DFHack.world.units[0].counters.job_counter = 0 }
+        def onupdate_register(&b)
+            @onupdate_list ||= []
+            @onupdate_list << b
+            DFHack.onupdate_active = true
+            @onupdate_list.last
+        end
+
+        # delete the callback for onupdate ; use the value returned by onupdate_register
+        def onupdate_unregister(b)
+            @onupdate_list.delete b
+            DFHack.onupdate_active = false if @onupdate_list.empty?
+        end
+
+        # this method is called by dfhack every 'onupdate' if onupdate_active is true
+        def onupdate
+            @onupdate_list.each { |cb| cb.call }
         end
 
         # return an Unit
-        # with no arg, return currently selected unit in df UI (v or k menu)
+        # with no arg, return currently selected unit in df UI ('v' or 'k' menu)
         # with numeric arg, search unit by unit.id
         # with an argument that respond to x/y/z (eg cursor), find first unit at this position
-        def find_unit(what=nil)
-            if what == nil
+        def find_unit(what=:selected)
+            if what == :selected
                 case ui.main.mode
                 when UiSidebarMode::ViewUnits
                     # nobody selected => idx == 0
@@ -56,9 +79,9 @@ module DFHack
         end
 
         # return an Item
-        # arg similar to find_unit
-        def find_item(what=nil)
-            if what == nil
+        # arg similar to find_unit; no arg = 'k' menu
+        def find_item(what=:selected)
+            if what == :selected
                 case ui.main.mode
                 when UiSidebarMode::LookAround
                     k = ui_look_list.items[ui_look_cursor]
@@ -75,13 +98,72 @@ module DFHack
             end
         end
 
-        # return a map block
-        # can use find_map_block(cursor) or anything that respond to x/y/z
+        # return a map block by tile coordinates
+        # you can also use find_map_block(cursor) or anything that respond to x/y/z
         def find_map_block(x=cursor, y=nil, z=nil)
             x = x.pos if x.respond_to?(:pos)
             x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
             if x >= 0 and x < world.map.x_count and y >= 0 and y < world.map.y_count and z >= 0 and z < world.map.z_count
                 world.map.block_index[x/16][y/16][z]
+            end
+        end
+
+        def center_viewscreen(x, y=nil, z=nil)
+            x = x.pos if x.respond_to?(:pos)
+            x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
+
+            # compute screen 'map' size (tiles)
+            menuwidth = ui_menu_width
+            # ui_menu_width shows only the 'tab' status
+            menuwidth = 1 if menuwidth == 2 and ui_area_map_width == 2 and cursor.x != -30000
+            menuwidth = 2 if menuwidth == 3 and cursor.x != -30000
+            w_w = gps.dimx - 2
+            w_h = gps.dimy - 2
+            case menuwidth
+            when 1; w_w -= 55
+            when 2; w_w -= (ui_area_map_width == 2 ? 24 : 31)
+            end
+
+            # center view
+            w_x = x - w_w/2
+            w_y = y - w_h/2
+            w_z = z
+            # round view coordinates (optional)
+            #w_x -= w_x % 10
+            #w_y -= w_y % 10
+            # crop to map limits
+            w_x = [[w_x, world.map.x_count - w_w].min, 0].max
+            w_y = [[w_y, world.map.y_count - w_h].min, 0].max
+
+            self.window_x = w_x
+            self.window_y = w_y
+            self.window_z = w_z
+
+            if cursor.x != -30000
+                cursor.x, cursor.y, cursor.z = x, y, z
+            end
+        end
+
+        # add an announcement
+        # color = integer, bright = bool
+        def add_announcement(str, color=0, bright=false)
+            cont = false
+            while str.length > 0
+                rep = Report.cpp_alloc
+                rep.color = color
+                rep.bright = ((bright && bright != 0) ? 1 : 0)
+                rep.year = cur_year
+                rep.time = cur_year_tick
+                rep.flags.continuation = cont
+                cont = true
+                rep.flags.announcement = true
+                rep.text = str[0, 73]
+                str = str[73..-1].to_s
+                rep.id = world.status.next_report_id
+                world.status.next_report_id += 1
+                world.status.reports << rep
+                world.status.announcements << rep
+                world.status.display_timer = 2000
             end
         end
 
@@ -107,7 +189,7 @@ module DFHack
     end
 end
 
-# alias, so we can write 'df.world.units.all[0]'
+# global alias so we can write 'df.world.units.all[0]'
 def df
     DFHack
 end

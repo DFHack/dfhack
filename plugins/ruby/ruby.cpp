@@ -296,7 +296,7 @@ static VALUE rb_dfonupdateactive(VALUE self)
 
 static VALUE rb_dfonupdateactiveset(VALUE self, VALUE val)
 {
-    onupdate_active = (val == Qtrue || val == INT2FIX(1)) ? 1 : 0;
+    onupdate_active = (val == Qfalse || val == Qnil || val == INT2FIX(0)) ? 0 : 1;
     return Qtrue;
 }
 

@@ -204,6 +204,9 @@ class Pointer < MemStruct
 	def method_missing(*a)
 		_getv.send(*a)
 	end
+	def respond_to?(q)
+		_getv.respond_to?(q)
+	end
 
 	def inspect
 		cn = (@_tg ? @_tg.class.name.sub(/^DFHack::/, '') : '')
@@ -412,10 +415,12 @@ class StlDeque < MemStruct
 		@_tg = tg
 	end
 	# TODO
+	def inspect ; "#<StlDeque>" ; end
 end
 
 class DfFlagarray < MemStruct
 	# TODO
+	def inspect ; "#<DfFlagarray>" ; end
 end
 class DfArray < Compound
 	attr_accessor :_tglen, :_tg
@@ -453,6 +458,8 @@ class DfLinkedList < MemStruct
 	def initialize(tg)
 		@_tg = tg
 	end
+	# TODO
+	def inspect ; "#<DfLinkedList>" ; end
 end
 
 class Global < MemStruct

@@ -278,6 +278,7 @@ static void df_rubythread(void *p)
 }
 
 
+#define BOOL_ISFALSE(v) ((v) == Qfalse || (v) == Qnil || (v) == FIX2INT(0))
 
 // main DFHack ruby module
 static VALUE rb_cDFHack;
@@ -296,7 +297,7 @@ static VALUE rb_dfonupdateactive(VALUE self)
 
 static VALUE rb_dfonupdateactiveset(VALUE self, VALUE val)
 {
-    onupdate_active = (val == Qfalse || val == Qnil || val == INT2FIX(0)) ? 0 : 1;
+    onupdate_active = (BOOL_ISFALSE(val) ? 0 : 1);
     return Qtrue;
 }
 
@@ -582,25 +583,43 @@ static VALUE rb_dfmemory_vecbool_at(VALUE self, VALUE addr, VALUE idx)
 static VALUE rb_dfmemory_vecbool_setat(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
     std::vector<bool> *v = (std::vector<bool>*)rb_num2ulong(addr);
-    if (val == Qnil || val == Qfalse || val == FIX2INT(0))
-        v->at(FIX2INT(idx)) = 0;
-    else
-        v->at(FIX2INT(idx)) = 1;
+    v->at(FIX2INT(idx)) = (BOOL_ISFALSE(val) ? 0 : 1);
     return Qtrue;
 }
 static VALUE rb_dfmemory_vecbool_insert(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
     std::vector<bool> *v = (std::vector<bool>*)rb_num2ulong(addr);
-    if (val == Qnil || val == Qfalse || val == FIX2INT(0))
-        v->insert(v->begin()+FIX2INT(idx), 0);
-    else
-        v->insert(v->begin()+FIX2INT(idx), 1);
+    v->insert(v->begin()+FIX2INT(idx), (BOOL_ISFALSE(val) ? 0 : 1));
     return Qtrue;
 }
 static VALUE rb_dfmemory_vecbool_delete(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<bool> *v = (std::vector<bool>*)rb_num2ulong(addr);
     v->erase(v->begin()+FIX2INT(idx));
+    return Qtrue;
+}
+
+// BitArray
+static VALUE rb_dfmemory_bitarray_length(VALUE self, VALUE addr)
+{
+    DFHack::BitArray<int> *b = (DFHack::BitArray<int>*)rb_num2ulong(addr);
+    return rb_uint2inum(b->size);
+}
+static VALUE rb_dfmemory_bitarray_resize(VALUE self, VALUE addr, VALUE sz)
+{
+    DFHack::BitArray<int> *b = (DFHack::BitArray<int>*)rb_num2ulong(addr);
+    b->resize(rb_num2ulong(sz));
+    return Qtrue;
+}
+static VALUE rb_dfmemory_bitarray_isset(VALUE self, VALUE addr, VALUE idx)
+{
+    DFHack::BitArray<int> *b = (DFHack::BitArray<int>*)rb_num2ulong(addr);
+    return b->is_set(rb_num2ulong(idx)) ? Qtrue : Qfalse;
+}
+static VALUE rb_dfmemory_bitarray_set(VALUE self, VALUE addr, VALUE idx, VALUE val)
+{
+    DFHack::BitArray<int> *b = (DFHack::BitArray<int>*)rb_num2ulong(addr);
+    b->set(rb_num2ulong(idx), (BOOL_ISFALSE(val) ? 0 : 1));
     return Qtrue;
 }
 
@@ -657,6 +676,10 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_setat",  RUBY_METHOD_FUNC(rb_dfmemory_vecbool_setat), 3);
     rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_insert", RUBY_METHOD_FUNC(rb_dfmemory_vecbool_insert), 3);
     rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_delete", RUBY_METHOD_FUNC(rb_dfmemory_vecbool_delete), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_bitarray_length", RUBY_METHOD_FUNC(rb_dfmemory_bitarray_length), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_bitarray_resize", RUBY_METHOD_FUNC(rb_dfmemory_bitarray_resize), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_bitarray_isset",  RUBY_METHOD_FUNC(rb_dfmemory_bitarray_isset), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_bitarray_set",    RUBY_METHOD_FUNC(rb_dfmemory_bitarray_set), 3);
 
     // load the default ruby-level definitions
     int state=0;

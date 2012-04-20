@@ -419,8 +419,29 @@ class StlDeque < MemStruct
 end
 
 class DfFlagarray < MemStruct
-	# TODO
-	def inspect ; "#<DfFlagarray>" ; end
+	def length
+		DFHack.memory_bitarray_length(@_memaddr)
+	end
+	def size ; length ; end
+	def resize(len)
+		DFHack.memory_bitarray_resize(@_memaddr, len)
+	end
+	def [](idx)
+		idx += length if idx < 0
+		DFHack.memory_bitarray_isset(@_memaddr, idx) if idx >= 0 and idx < length
+	end
+	def []=(idx, v)
+		idx += length if idx < 0
+		if idx >= length or idx < 0
+			raise 'invalid idx'
+		else
+			DFHack.memory_bitarray_set(@_memaddr, idx, v)
+		end
+	end
+
+	include Enumerable
+	def each ; (0...length).each { |i| yield self[i] } ; end
+	def inspect ; to_a.inspect ; end
 end
 class DfArray < Compound
 	attr_accessor :_tglen, :_tg

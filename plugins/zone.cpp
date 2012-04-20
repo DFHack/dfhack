@@ -367,6 +367,7 @@ void chainInfo(color_ostream & out, df::building* building, bool verbose);
 bool isBuiltCageAtPos(df::coord pos);
 bool isInBuiltCageRoom(df::unit*);
 bool isNaked(df::unit *);
+bool isTamable(df::unit *);
 
 int32_t getUnitAge(df::unit* unit)
 {
@@ -616,6 +617,20 @@ bool isTrainableHunting(df::unit* unit)
     {
         df::caste_raw *caste = raw->caste[j];
         if(caste->flags.is_set(caste_raw_flags::TRAINABLE_HUNTING))
+            return true;
+    }
+    return false;
+}
+
+bool isTamable(df::unit* unit)
+{
+    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    size_t sizecas = raw->caste.size();
+    for (size_t j = 0; j < sizecas;j++)
+    {
+        df::caste_raw *caste = raw->caste[j];
+        if(caste->flags.is_set(caste_raw_flags::PET) ||
+			caste->flags.is_set(caste_raw_flags::PET_EXOTIC)) 
             return true;
     }
     return false;
@@ -1757,6 +1772,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool find_not_named = false;
 	bool find_naked = false;
 	bool find_not_naked = false;
+	bool find_tamable = false;
+	bool find_not_tamable = false;
 
     bool find_agemin = false;
     bool find_agemax = false;
@@ -2144,6 +2161,15 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             find_not_naked = true;
             invert_filter=false;
         }
+        else if(p == "tamable" && !invert_filter)
+        {
+            find_tamable = true;
+        }
+        else if(p == "tamable" && invert_filter)
+        {
+            find_not_tamable = true;
+            invert_filter=false;
+        }
         else if(p == "grazer" && !invert_filter)
         {
             find_grazer = true;
@@ -2413,6 +2439,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     || (find_not_named && unit->name.has_name)
 					|| (find_naked && !isNaked(unit))
 					|| (find_not_naked && isNaked(unit))
+					|| (find_tamable && !isTamable(unit))
+					|| (find_not_tamable && isTamable(unit))
                     || (find_trainable_war && (isWar(unit) || isHunter(unit) || !isTrainableWar(unit)))
                     || (find_not_trainable_war && isTrainableWar(unit)) // hm, is this check enough?
                     || (find_trainable_hunting && (isWar(unit) || isHunter(unit) || !isTrainableHunting(unit)))

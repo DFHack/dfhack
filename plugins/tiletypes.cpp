@@ -819,45 +819,21 @@ command_result processCommand(color_ostream &out, std::vector<std::string> &comm
     {
         int width = 0, height = 0, z_levels = 0;
 
-        if (commands.size() > loc + 1)
+        if (commands.size() >= loc)
         {
             width = toint(commands[loc++]);
             height = toint(commands[loc++]);
 
-            if (commands.size() > loc) {
+            if (commands.size() >= loc) {
                 z_levels = toint(commands[loc++]);
             }
         }
 
-        if (width < 1 || height < 1) {
-            width = width < 1? 1 : width;
-            height = height < 1? 1 : height;
-            z_levels = z_levels < 1? 1 : z_levels;
-            if (hasConsole) {
-                Console &con = static_cast<Console&>(out);
-                CommandHistory hist;
-
-                ss_o << "Set range width <" << width << "> ";
-                con.lineedit(ss_o.str(),command,hist);
-                width = command == "" ? width : toint(command);
-
-                ss_o.str("");
-                ss_o << "Set range height <" << height << "> ";
-                con.lineedit(ss_o.str(),command,hist);
-                height = command == "" ? height : toint(command);
-
-                ss_o.str("");
-                ss_o << "Set range z-levels <" << z_levels << "> ";
-                con.lineedit(ss_o.str(),command,hist);
-                z_levels = command == "" ? z_levels : toint(command);
-            } else {
-                return CR_WRONG_USAGE;
-            }
+        command_result res = parseRectangle(out, width, height, z_levels, width, height, z_levels, hasConsole);
+        if (res != CR_OK)
+        {
+            return res;
         }
-
-        width = width < 1? 1 : width;
-        height = height < 1? 1 : height;
-        z_levels = z_levels < 1? 1 : z_levels;
 
         delete brush;
         brush = new RectangleBrush(width, height, z_levels, 0, 0, 0);

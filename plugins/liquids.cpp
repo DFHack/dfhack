@@ -107,22 +107,27 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         return CR_FAILURE;
     }
 
+    std::vector<std::string> commands;
     bool end = false;
 
     out << "Welcome to the liquid spawner.\nType 'help' or '?' for a list of available commands, 'q' to quit.\nPress return after a command to confirm." << std::endl;
 
     while(!end)
     {
-        string command = "";
+        string input = "";
 
         std::stringstream str;
         str <<"[" << mode << ":" << brushname;
         if (brushname == "range")
             str << "(w" << width << ":h" << height << ":z" << z_levels << ")";
         str << ":" << amount << ":" << flowmode << ":" << setmode << "]#";
-        if(out.lineedit(str.str(),command,liquids_hist) == -1)
+        if(out.lineedit(str.str(),input,liquids_hist) == -1)
             return CR_FAILURE;
-        liquids_hist.add(command);
+        liquids_hist.add(input);
+
+        commands.clear();
+        Core::cheap_tokenise(input, commands);
+        string command =  commands.empty() ? "" : commands[0];
 
         if(command=="help" || command == "?")
         {
@@ -195,28 +200,28 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         }
         else if(command == "range" || command == "r")
         {
-            std::stringstream str;
-            CommandHistory range_hist;
-            str << " :set range width<" << width << "># ";
-            out.lineedit(str.str(),command,range_hist);
-            range_hist.add(command);
-            width = command == "" ? width : atoi (command.c_str());
-            if(width < 1) width = 1;
+            int oldWidth = width, oldHeight = height, oldZLevels = z_levels;
+            width = height = z_levels = 0;
 
-            str.str("");
-            str << " :set range height<" << height << "># ";
-            out.lineedit(str.str(),command,range_hist);
-            range_hist.add(command);
-            height = command == "" ? height : atoi (command.c_str());
-            if(height < 1) height = 1;
+            if (commands.size() >= 3)
+            {
+                width = atoi(commands[1].c_str());
+                height = atoi(commands[2].c_str());
 
-            str.str("");
-            str << " :set range z-levels<" << z_levels << "># ";
-            out.lineedit(str.str(),command,range_hist);
-            range_hist.add(command);
-            z_levels = command == "" ? z_levels : atoi (command.c_str());
-            if(z_levels < 1) z_levels = 1;
-            if(width == 1 && height == 1 && z_levels == 1)
+                if (commands.size() >= 4) {
+                    z_levels = atoi(commands[3].c_str());
+                }
+            }
+
+            command_result res = parseRectangle(out, width, height, z_levels,
+                                                oldWidth, oldHeight, oldZLevels);
+
+            if (res != CR_OK)
+            {
+                return res;
+            }
+
+            if (width == 1 && height == 1 && z_levels == 1)
             {
                 brushname = "point";
             }

@@ -508,6 +508,15 @@ class DfLinkedList < Compound
 		_at(addr)
 	end
 
+	include Enumerable
+	def each
+		o = self
+		while o
+			yield o.item if o.item
+			o = o.next
+		end
+	end
+
 	def inspect ; "#<DfLinkedList prev=#{'0x%X' % _prev} next=#{'0x%X' % _next} #{item.inspect}>" ; end
 end
 

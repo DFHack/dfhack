@@ -4,6 +4,7 @@ class MemStruct
 	attr_accessor :_memaddr
 	def _at(addr) ; @_memaddr = addr ; dup ; end
 	def _get ; self ; end
+	def inspect ; _get.inspect ; end
 end
 
 class Compound < MemStruct
@@ -84,6 +85,33 @@ class Compound < MemStruct
 		end
 	end
 	def _set(h) ; h.each { |k, v| send("_#{k}=", v) } ; end
+	def _fields ; self.class._fields.to_a ; end
+	def inspect
+		cn = self.class.name.sub(/^DFHack::/, '')
+		cn << ' @' << ('0x%X' % _memaddr) if cn != ''
+		out = "#<#{cn}"
+		_fields.each { |n, o, s|
+			out << ' ' if out.length != 0 and out[-1, 1] != ' '
+			if out.length > 1024
+				out << '...'
+				break
+			end
+			out << inspect_field(n, o, s)
+		}
+		out << '>'
+	end
+	def inspect_field(n, o, s)
+		if s.kind_of?(BitField) and s._len == 1
+			send(n) ? n.to_s : ''
+		elsif n == :_whole
+			"_whole=0x#{_whole.to_s(16)}"
+		else
+			v = send(n).inspect
+			"#{n}=#{v}"
+		end
+	rescue
+		"#{n}=ERR(#{$!})"
+	end
 end
 
 class Number < MemStruct
@@ -164,11 +192,23 @@ class Pointer < MemStruct
 		DFHack.memory_read_int32(@_memaddr) & 0xffffffff
 	end
 
-	# the pointer is invisible, forward all methods to the pointed object
-	def method_missing(*a)
+	def _getv
 		addr = _getp
-		tg = (addr == 0 ? nil : @_tg._at(addr)._get)
-		tg.send(*a)
+		return if addr == 0
+		@_tg._at(addr)._get
+	end
+
+	# these ruby Object methods should be forwarded to the ptr
+	undef id
+	undef type
+	def method_missing(*a)
+		_getv.send(*a)
+	end
+
+	def inspect
+		cn = (@_tg ? @_tg.class.name.sub(/^DFHack::/, '') : '')
+		cn = @_tg._glob if cn == 'MemHack::Global'
+		"#<Pointer #{cn} #{'0x%X' % _getp}>"
 	end
 end
 class PointerAry < MemStruct
@@ -193,6 +233,8 @@ class PointerAry < MemStruct
 		raise 'null pointer' if addr == 0
 		@_tg._at(addr)._set(v)
 	end
+
+	def inspect ; "#<PointerAry #{'0x%X' % _getp}>" ; end
 end
 class StaticArray < MemStruct
 	attr_accessor :_tglen, :_length, :_tg
@@ -220,6 +262,7 @@ class StaticArray < MemStruct
 
 	include Enumerable
 	def each ; (0...length).each { |i| yield self[i] } ; end
+	def inspect ; to_a.inspect ; end
 end
 class StaticString < MemStruct
 	attr_accessor :_length
@@ -291,6 +334,13 @@ class StlVector32 < MemStruct
 
 	include Enumerable
 	def each ; (0...length).each { |i| yield self[i] } ; end
+	def inspect
+		if _tg and _tg.kind_of?(Pointer)
+			length > 0 ? "[#{length}*#{self[0].inspect}]" : '[]'
+		else
+			to_a.inspect
+		end
+	end
 end
 class StlVector16 < StlVector32
 	def length
@@ -374,8 +424,8 @@ class DfArray < Compound
 		@_tg = tg
 	end
 
-	field(:_length, 0) { number 32, false }
-	field(:_ptr, 4) { number 32, false }
+	field(:_ptr, 0) { number 32, false }
+	field(:_length, 4) { number 16, false }
 
 	def length ; _length ; end
 	def size ; _length ; end
@@ -396,6 +446,7 @@ class DfArray < Compound
 
 	include Enumerable
 	def each ; (0...length).each { |i| yield self[i] } ; end
+	def inspect ; to_a.inspect ; end
 end
 class DfLinkedList < MemStruct
 	attr_accessor :_tg
@@ -414,6 +465,7 @@ class Global < MemStruct
 		g = DFHack.rtti_getclassat(g, addr)
 		g.new._at(addr)
 	end
+	def inspect ; "#<#{@_glob}>" ; end
 end
 end	# module MemHack
 

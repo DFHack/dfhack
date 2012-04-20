@@ -2,7 +2,7 @@ module DFHack
 module MemHack
 class MemStruct
 	attr_accessor :_memaddr
-	def _at(addr) ; @_memaddr = addr ; dup ; end
+	def _at(addr) ; d = dup ; d._memaddr = addr ; d ; end
 	def _get ; self ; end
 	def inspect ; _get.inspect ; end
 end
@@ -68,7 +68,7 @@ class Compound < MemStruct
 			DfArray.new(tglen, (yield if tglen))
 		end
 		def df_linked_list
-			DfLinkedList.new((yield if block_given?))
+			DfLinkedList.new(yield)
 		end
 
 		def global(glob)
@@ -474,13 +474,41 @@ class DfArray < Compound
 	def each ; (0...length).each { |i| yield self[i] } ; end
 	def inspect ; to_a.inspect ; end
 end
-class DfLinkedList < MemStruct
+class DfLinkedList < Compound
 	attr_accessor :_tg
 	def initialize(tg)
 		@_tg = tg
 	end
-	# TODO
-	def inspect ; "#<DfLinkedList>" ; end
+
+	field(:_ptr, 0) { number 32, false }
+	field(:_prev, 4) { number 32, false }
+	field(:_next, 8) { number 32, false }
+
+	def item
+		addr = _ptr
+		return if addr == 0
+		@_tg._at(addr)._get
+	end
+
+	def item=(v)
+		addr = _ptr
+		raise 'null pointer' if addr == 0
+		@_tg.at(addr)._set(v)
+	end
+
+	def prev
+		addr = _prev
+		return if addr == 0
+		_at(addr)
+	end
+
+	def next
+		addr = _next
+		return if addr == 0
+		_at(addr)
+	end
+
+	def inspect ; "#<DfLinkedList prev=#{'0x%X' % _prev} next=#{'0x%X' % _next} #{item.inspect}>" ; end
 end
 
 class Global < MemStruct

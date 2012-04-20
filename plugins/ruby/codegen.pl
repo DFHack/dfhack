@@ -309,10 +309,13 @@ sub render_item_container {
     my $subtype = $item->getAttribute('ld:subtype');
     my $rbmethod = join('_', split('-', $subtype));
     my $tg = $item->findnodes('child::ld:item')->[0];
-    # df-linked-list has no list[0]
-    if ($tg and $rbmethod ne 'df_linked_list') {
-        my $tglen = get_tglen($tg, $cppvar);
-        push @lines_rb, "$rbmethod($tglen) {";
+    if ($tg) {
+        if ($rbmethod eq 'df_linked_list') {
+            push @lines_rb, "$rbmethod {";
+        } else {
+            my $tglen = get_tglen($tg, $cppvar);
+            push @lines_rb, "$rbmethod($tglen) {";
+        }
         indent_rb {
             render_item($tg, "${cppvar}[0]");
         };

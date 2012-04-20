@@ -42,13 +42,14 @@ using namespace DFHack;
 
 
 void *type_identity::do_allocate_pod() {
-    void *p = malloc(size);
-    memset(p, 0, size);
+    size_t sz = byte_size();
+    void *p = malloc(sz);
+    memset(p, 0, sz);
     return p;
 }
 
 void type_identity::do_copy_pod(void *tgt, const void *src) {
-    memmove(tgt, src, size);
+    memmove(tgt, src, byte_size());
 };
 
 bool type_identity::do_destroy_pod(void *obj) {
@@ -81,8 +82,9 @@ bool type_identity::destroy(void *obj) {
 }
 
 void *enum_identity::do_allocate() {
-    void *p = malloc(byte_size());
-    memcpy(p, &first_item_value, std::min(byte_size(), sizeof(int64_t)));
+    size_t sz = byte_size();
+    void *p = malloc(sz);
+    memcpy(p, &first_item_value, std::min(sz, sizeof(int64_t)));
     return p;
 }
 

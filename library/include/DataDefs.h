@@ -83,7 +83,7 @@ namespace DFHack
     public:
         virtual ~type_identity() {}
 
-        size_t byte_size() { return size; }
+        virtual size_t byte_size() { return size; }
 
         virtual identity_type type() = 0;
 

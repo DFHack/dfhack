@@ -372,14 +372,14 @@ namespace DFHack
 
 template<class T>
 int linear_index(const DFHack::enum_list_attr<T> &lst, T val) {
-    for (int i = 0; i < lst.size; i++)
+    for (size_t i = 0; i < lst.size; i++)
         if (lst.items[i] == val)
             return i;
     return -1;
 }
 
 inline int linear_index(const DFHack::enum_list_attr<const char*> &lst, const std::string &val) {
-    for (int i = 0; i < lst.size; i++)
+    for (size_t i = 0; i < lst.size; i++)
         if (lst.items[i] == val)
             return i;
     return -1;

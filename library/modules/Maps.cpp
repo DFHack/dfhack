@@ -676,6 +676,11 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     int x = pos.x, y = pos.y;
 
     switch (tileMaterial(tt)) {
+    case NONE:
+    case AIR:
+        rv.mat_type = -1;
+        break;
+
     case DRIFTWOOD:
     case SOIL:
     {
@@ -759,6 +764,9 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     }
 
     case CONSTRUCTION: // just a fallback
+    case MAGMA:
+    case HFS:
+        // use generic 'rock'
         break;
 
     case FROZEN_LIQUID:
@@ -776,9 +784,6 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     case CAMPFIRE:
         rv.mat_type = builtin_mats::ASH;
         break;
-
-    default:
-        rv.mat_type = -1;
     }
 
     return rv;
@@ -1031,9 +1036,9 @@ MapExtras::Block *MapExtras::MapCache::BlockAt(DFCoord blockcoord)
     }
     else
     {
-        if(blockcoord.x >= 0 && blockcoord.x < x_bmax &&
-            blockcoord.y >= 0 && blockcoord.y < y_bmax &&
-            blockcoord.z >= 0 && blockcoord.z < z_max)
+        if(unsigned(blockcoord.x) < x_bmax &&
+           unsigned(blockcoord.y) < y_bmax &&
+           unsigned(blockcoord.z) < z_max)
         {
             Block * nblo = new Block(this, blockcoord);
             blocks[blockcoord] = nblo;

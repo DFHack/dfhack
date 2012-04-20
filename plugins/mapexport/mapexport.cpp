@@ -2,7 +2,7 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include "modules/MapCache.h"f
+#include "modules/MapCache.h"
 using namespace DFHack;
 
 #include <fstream>
@@ -50,6 +50,7 @@ static dfproto::Tile::TileMaterialType toProto(df::tiletype_material mat)
     switch (mat)
     {
 #define CONVERT(name) case tiletype_material::name: return dfproto::Tile::name;
+        case tiletype_material::NONE:
         CONVERT(AIR)
         case tiletype_material::PLANT:
         CONVERT(SOIL)
@@ -74,9 +75,8 @@ static dfproto::Tile::TileMaterialType toProto(df::tiletype_material mat)
         CONVERT(BROOK)
         CONVERT(RIVER)
 #undef CONVERT
-        default:
-            return dfproto::Tile::AIR;
     }
+    return dfproto::Tile::AIR;
 }
 
 command_result mapexport (color_ostream &out, std::vector <std::string> & parameters)

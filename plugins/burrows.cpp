@@ -604,7 +604,7 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
 
         bool state = (cmd == "enable");
 
-        for (int i = 1; i < parameters.size(); i++)
+        for (size_t i = 1; i < parameters.size(); i++)
         {
             string &option = parameters[i];
 
@@ -619,7 +619,7 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
         if (parameters.size() < 2)
             return CR_WRONG_USAGE;
 
-        for (int i = 1; i < parameters.size(); i++)
+        for (size_t i = 1; i < parameters.size(); i++)
         {
             auto target = findByName(out, parameters[i]);
             if (!target)
@@ -642,7 +642,7 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
 
         bool enable = (cmd != "remove-units");
 
-        for (int i = 2; i < parameters.size(); i++)
+        for (size_t i = 2; i < parameters.size(); i++)
         {
             auto source = findByName(out, parameters[i]);
             if (!source)
@@ -656,7 +656,7 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
         if (parameters.size() < 2)
             return CR_WRONG_USAGE;
 
-        for (int i = 1; i < parameters.size(); i++)
+        for (size_t i = 1; i < parameters.size(); i++)
         {
             auto target = findByName(out, parameters[i]);
             if (!target)
@@ -679,7 +679,7 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
 
         bool enable = (cmd != "remove-tiles");
 
-        for (int i = 2; i < parameters.size(); i++)
+        for (size_t i = 2; i < parameters.size(); i++)
         {
             if (setTilesByKeyword(target, parameters[i], enable))
                 continue;

@@ -353,6 +353,7 @@ static void push_matinfo(lua_State *state, MaterialInfo &info)
         case MaterialInfo::Plant: id = "plant"; break;
         case MaterialInfo::Creature: id = "creature"; break;
         case MaterialInfo::Inorganic: id = "inorganic"; break;
+        default: break;
     }
 
     lua_pushstring(state, id);

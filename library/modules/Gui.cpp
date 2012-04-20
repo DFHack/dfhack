@@ -223,7 +223,7 @@ df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet)
     df::building *selected = world->selected_building;
     int idx = *ui_workshop_job_cursor;
 
-    if (idx < 0 || idx >= selected->jobs.size())
+    if (size_t(idx) >= selected->jobs.size())
     {
         out.printerr("Invalid job cursor index: %d\n", idx);
         return NULL;

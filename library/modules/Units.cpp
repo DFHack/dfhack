@@ -78,7 +78,7 @@ df::unit * Units::GetCreature (const int32_t index)
     if (!isValid()) return NULL;
 
     // read pointer from vector at position
-    if(index > world->units.all.size())
+    if(size_t(index) > world->units.all.size())
         return 0;
     return world->units.all[index];
 }

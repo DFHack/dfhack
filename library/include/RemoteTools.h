@@ -73,7 +73,7 @@ namespace DFHack
      */
     template<class T>
     void flagarray_to_ints(RepeatedField<google::protobuf::int32> *pf, const BitArray<T> &val) {
-        for (int i = 0; i < val.size*8; i++)
+        for (size_t i = 0; i < val.size*8; i++)
             if (val.is_set(T(i)))
                 pf->Add(i);
     }

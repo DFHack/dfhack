@@ -577,35 +577,6 @@ static void write_field(lua_State *state, const struct_field_info *field, void *
 }
 
 /**
- * Metamethod: represent a type node as string.
- */
-static int meta_type_tostring(lua_State *state)
-{
-    if (!lua_getmetatable(state, 1))
-        return 0;
-
-    lua_getfield(state, -1, "__metatable");
-    const char *cname = lua_tostring(state, -1);
-
-    lua_pushstring(state, stl_sprintf("<type: %s>", cname).c_str());
-    return 1;
-}
-
-/**
- * Metamethod: represent a DF object reference as string.
- */
-static int meta_ptr_tostring(lua_State *state)
-{
-    uint8_t *ptr = get_object_addr(state, 1, 0, "access");
-
-    lua_getfield(state, UPVAL_METATABLE, "__metatable");
-    const char *cname = lua_tostring(state, -1);
-
-    lua_pushstring(state, stl_sprintf("<%s: 0x%08x>", cname, (unsigned)ptr).c_str());
-    return 1;
-}
-
-/**
  * Metamethod: __index for structures.
  */
 static int meta_struct_index(lua_State *state)

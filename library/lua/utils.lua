@@ -38,6 +38,10 @@ end
     * compare = function(a,b)
         Comparison function. Defaults to compare above.
         Called on non-nil keys; nil sorts last.
+    * nil_first
+        If true, nil keys are sorted first instead of last.
+    * reverse
+        If true, sort non-nil keys in descending order.
 
     Returns a table of integer indices into data.
 --]]
@@ -84,12 +88,15 @@ function make_sort_order(data,ordering)
             -- Sort nil keys to the end
             if ka == nil then
                 if kb ~= nil then
-                    return false
+                    return ordering[i].nil_first
                 end
             elseif kb == nil then
-                return true
+                return not ordering[i].nil_first
             else
                 local cmpv = cmps[i](ka,kb)
+                if ordering[i].reverse then
+                    cmpv = -cmpv
+                end
                 if cmpv < 0 then
                     return true
                 elseif cmpv > 0 then

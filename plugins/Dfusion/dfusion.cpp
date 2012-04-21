@@ -121,10 +121,26 @@ command_result lua_run_file (color_ostream &out, std::vector <std::string> &para
 }
 command_result lua_run (color_ostream &out, std::vector <std::string> &parameters)
 {
-    if (!parameters.empty() && parameters[0] == "--core-context")
+    if (!parameters.empty())
     {
-        Lua::InterpreterLoop(out, Lua::Core::State, "core lua");
-        return CR_OK;
+        if (parameters[0] == "--core-context")
+        {
+            Lua::InterpreterLoop(out, Lua::Core::State, "core lua");
+            return CR_OK;
+        }
+        else if (parameters[0] == "--core-reload")
+        {
+            CoreSuspender suspend;
+
+            for (size_t i = 1; i < parameters.size(); i++)
+            {
+                lua_getglobal(Lua::Core::State, "reload");
+                lua_pushstring(Lua::Core::State, parameters[i].c_str());
+                Lua::SafeCall(out, Lua::Core::State, 1, 0);
+            }
+
+            return CR_OK;
+        }
     }
 
 	mymutex->lock();

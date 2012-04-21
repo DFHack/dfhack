@@ -39,8 +39,13 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 {
     commands.push_back(PluginCommand(
         "sort-units", "Sort the visible unit list.", sort_units, unit_list_hotkey,
-        "  sort-units filter...\n"
+        "  sort-units order [order...]\n"
         "    Sort the unit list using the given sequence of comparisons.\n"
+        "    The '<' prefix for an order makes undefined values sort first.\n"
+        "    The '>' prefix reverses the sort order for defined values.\n"
+        "  Unit order examples:\n"
+        "    name, age, arrival, squad, squad_position, profession\n"
+        "The orderings are defined in hack/lua/plugins/sort/*.lua\n"
     ));
     return CR_OK;
 }

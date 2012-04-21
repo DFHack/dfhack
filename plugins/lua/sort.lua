@@ -15,12 +15,33 @@ function parse_ordering_spec(type,...)
 
     local specs = table.pack(...)
     local rv = { }
+
     for _,spec in ipairs(specs) do
+        local nil_first = false
+        if string.sub(spec,1,1) == '<' then
+            nil_first = true
+            spec = string.sub(spec,2)
+        end
+
+        local reverse = false
+        if string.sub(spec,1,1) == '>' then
+            reverse = true
+            spec = string.sub(spec,2)
+        end
+
         local cm = group[spec]
+
         if cm == nil then
             dfhack.printerr('Unknown order for '..type..': '..tostring(spec))
             return nil
         end
+
+        if nil_first or reverse then
+            cm = copyall(cm)
+            cm.nil_first = nil_first
+            cm.reverse = reverse
+        end
+
         rv[#rv+1] = cm
     end
 

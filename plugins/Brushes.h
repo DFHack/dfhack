@@ -196,12 +196,60 @@ private:
     Core *c_;
 };
 
-inline std::ostream &operator<<(std::ostream &stream, const Brush& brush) {
+command_result parseRectangle(color_ostream & out,
+                              int & width, int & height, int & zLevels,
+                              int oldWidth, int oldHeight, int oldZLevels,
+                              bool hasConsole = true)
+{
+    out << "Parse:" << endl
+        << "\tW:" << width << " - " << oldWidth << endl
+        << "\tW:" << height << " - " << oldHeight << endl
+        << "\tW:" << zLevels << " - " << oldZLevels << endl
+        << "Console: " << hasConsole << endl;
+    if (width < 1 || height < 1) {
+        if (hasConsole) {
+            string command = "";
+            std::stringstream str;
+            Console &con = static_cast<Console&>(out);
+            CommandHistory hist;
+
+            str.str("");
+            str << "Set range width <" << oldWidth << "> ";
+            con.lineedit(str.str(), command, hist);
+            hist.add(command);
+            width = command == "" ? oldWidth : atoi(command.c_str());
+
+            str.str("");
+            str << "Set range height <" << oldHeight << "> ";
+            con.lineedit(str.str(), command, hist);
+            hist.add(command);
+            height = command == "" ? oldHeight : atoi(command.c_str());
+
+            str.str("");
+            str << "Set range z-levels <" << oldZLevels << "> ";
+            con.lineedit(str.str(), command, hist);
+            hist.add(command);
+            zLevels = command == "" ? oldZLevels : atoi(command.c_str());
+        } else {
+            return CR_WRONG_USAGE;
+        }
+    }
+
+    width = width < 1? 1 : width;
+    height = height < 1? 1 : height;
+    zLevels = zLevels < 1? 1 : zLevels;
+
+    return CR_OK;
+}
+
+inline std::ostream &operator<<(std::ostream &stream, const Brush& brush)
+{
     stream << brush.str();
     return stream;
 }
 
-inline std::ostream &operator<<(std::ostream &stream, const Brush* brush) {
+inline std::ostream &operator<<(std::ostream &stream, const Brush* brush)
+{
     stream << brush->str();
     return stream;
 }

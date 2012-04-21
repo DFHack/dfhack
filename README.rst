@@ -825,7 +825,7 @@ Or this:
 
 This will hide previously revealed tiles (or show hidden with the 0 option).
 
-Any paint or filter option can be disabled entirely by using the ANY keyword:
+Any paint or filter option (or the entire paint or filter) can be disabled entirely by using the ANY keyword:
 
 ::  
 
@@ -833,6 +833,7 @@ Any paint or filter option can be disabled entirely by using the ANY keyword:
         paint shape ANY
         filter material any
         filter shape any
+        filter any
 
 You can use several different brushes for painting tiles:
  * Point. (point)

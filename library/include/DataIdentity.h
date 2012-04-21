@@ -447,6 +447,7 @@ namespace df
     NUMBER_IDENTITY_TRAITS(int64_t);
     NUMBER_IDENTITY_TRAITS(uint64_t);
     NUMBER_IDENTITY_TRAITS(float);
+    NUMBER_IDENTITY_TRAITS(double);
 
     template<> struct DFHACK_EXPORT identity_traits<bool> {
         static bool_identity identity;

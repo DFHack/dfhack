@@ -734,3 +734,19 @@ void DFHack::Units::setInBurrow(df::unit *unit, df::burrow *burrow, bool enable)
     }
 }
 
+double DFHack::Units::getAge(df::unit *unit)
+{
+    using df::global::cur_year;
+    using df::global::cur_year_tick;
+
+    CHECK_NULL_POINTER(unit);
+
+    if (!cur_year || !cur_year_tick)
+        return -1;
+
+    double year_ticks = 403200.0;
+    double birth_time = unit->relations.birth_year + unit->relations.birth_time/year_ticks;
+    double cur_time = *cur_year + *cur_year_tick / year_ticks;
+
+    return cur_time - birth_time;
+}

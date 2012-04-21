@@ -214,6 +214,8 @@ DFHACK_EXPORT void clearBurrowMembers(df::burrow *burrow);
 DFHACK_EXPORT bool isInBurrow(df::unit *unit, df::burrow *burrow);
 DFHACK_EXPORT void setInBurrow(df::unit *unit, df::burrow *burrow, bool enable);
 
+DFHACK_EXPORT double getAge(df::unit *unit);
+
 }
 }
 #endif

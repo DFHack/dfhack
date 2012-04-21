@@ -28,6 +28,7 @@ namespace df {
     NUMBER_IDENTITY_TRAITS(int64_t);
     NUMBER_IDENTITY_TRAITS(uint64_t);
     NUMBER_IDENTITY_TRAITS(float);
+    NUMBER_IDENTITY_TRAITS(double);
 
     bool_identity identity_traits<bool>::identity;
     stl_string_identity identity_traits<std::string>::identity;

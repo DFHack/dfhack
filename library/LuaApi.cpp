@@ -615,6 +615,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, clearBurrowMembers),
     WRAPM(Units, isInBurrow),
     WRAPM(Units, setInBurrow),
+    WRAPM(Units, getAge),
     { NULL, NULL }
 };
 

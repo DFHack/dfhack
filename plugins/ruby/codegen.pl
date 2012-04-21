@@ -147,37 +147,35 @@ sub render_global_class {
 
     my $rbparent = ($parent ? rb_ucase($parent) : 'MemHack::Compound');
 
-    my $cppvar = "v_$cpp_var_counter";
-    $cpp_var_counter++;
+    my $cppns = "df::$name"; 
     push @lines_cpp, "}" if @include_cpp;
     push @lines_cpp, "void cpp_$name(FILE *fout) {";
-    push @lines_cpp, "    df::$name *$cppvar = (df::$name*)moo;";
     push @include_cpp, $name;
 
     push @lines_rb, "class $rbname < $rbparent";
     indent_rb {
-        my $sz = query_cpp("sizeof(*$cppvar)");
+        my $sz = query_cpp("sizeof($cppns)");
         push @lines_rb, "sizeof $sz";
         push @lines_rb, "rtti_classname '$rtti_name'" if $has_rtti;
-        render_struct_fields($type, "(*$cppvar)");
+        render_struct_fields($type, "$cppns");
     };
     push @lines_rb, "end\n";
 }
 sub render_struct_fields {
-    my ($type, $cppvar) = @_;
+    my ($type, $cppns) = @_;
 
     for my $field ($type->findnodes('child::ld:field')) {
         my $name = $field->getAttribute('name');
         $name = $field->getAttribute('ld:anon-name') if (!$name);
         if (!$name and $field->getAttribute('ld:anon-compound')) {
-            render_struct_fields($field, $cppvar);
+            render_struct_fields($field, $cppns);
         }
         next if (!$name);
-        my $offset = get_offset($cppvar, $name);
+        my $offset = get_offset($cppns, $name);
 
         push @lines_rb, "field(:$name, $offset) {";
         indent_rb {
-            render_item($field, "$cppvar.$name");
+            render_item($field, "$cppns");
         };
         push @lines_rb, "}";
     }
@@ -204,7 +202,7 @@ sub render_global_objects {
             push @lines_rb, "field(:$oname, $addr) {";
             my $item = $obj->findnodes('child::ld:item')->[0];
             indent_rb {
-                render_item($item, "(*df::global::$oname)");
+                render_item($item, 'df::global');
             };
             push @lines_rb, "}";
 
@@ -224,27 +222,27 @@ sub render_global_objects {
 
 
 sub render_item {
-    my ($item, $cppvar) = @_;
+    my ($item, $pns) = @_;
     return if (!$item);
 
     my $meta = $item->getAttribute('ld:meta');
 
     my $renderer = $item_renderer{$meta};
     if ($renderer) {
-        $renderer->($item, $cppvar);
+        $renderer->($item, $pns);
     } else {
         print "no render item $meta\n";
     }
 }
 
 sub render_item_global {
-    my ($item, $cppvar) = @_;
+    my ($item, $pns) = @_;
 
     my $typename = $item->getAttribute('type-name');
     my $subtype = $item->getAttribute('ld:subtype');
 
     if ($subtype and $subtype eq 'enum') {
-        render_item_number($item, $cppvar);
+        render_item_number($item, $pns);
     } else {
         my $rbname = rb_ucase($typename);
         push @lines_rb, "global :$rbname";
@@ -252,7 +250,7 @@ sub render_item_global {
 }
 
 sub render_item_number {
-    my ($item, $cppvar) = @_;
+    my ($item, $pns) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     $subtype = $item->getAttribute('base-type') if (!$subtype or $subtype eq 'enum' or $subtype eq 'bitfield');
@@ -282,14 +280,15 @@ sub render_item_number {
 }
 
 sub render_item_compound {
-    my ($item, $cppvar) = @_;
+    my ($item, $pns) = @_;
 
+    my $cppns = $pns . '::' . $item->getAttribute('ld:typedef-name');
     my $subtype = $item->getAttribute('ld:subtype');
     if (!$subtype || $subtype eq 'bitfield') {
         push @lines_rb, "compound {";
         indent_rb {
             if (!$subtype) {
-                render_struct_fields($item, $cppvar);
+                render_struct_fields($item, $cppns);
             } else {
                 render_bitfield_fields($item);
             }
@@ -299,14 +298,14 @@ sub render_item_compound {
         # declare constants
         render_enum_fields($item);
         # actual field
-        render_item_number($item, $cppvar);
+        render_item_number($item, $cppns);
     } else {
         print "no render compound $subtype\n";
     }
 }
 
 sub render_item_container {
-    my ($item, $cppvar) = @_;
+    my ($item, $pns) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     my $rbmethod = join('_', split('-', $subtype));
@@ -315,11 +314,11 @@ sub render_item_container {
         if ($rbmethod eq 'df_linked_list') {
             push @lines_rb, "$rbmethod {";
         } else {
-            my $tglen = get_tglen($tg, $cppvar);
+            my $tglen = get_tglen($tg, $pns);
             push @lines_rb, "$rbmethod($tglen) {";
         }
         indent_rb {
-            render_item($tg, "${cppvar}[0]");
+            render_item($tg, $pns);
         };
         push @lines_rb, "}";
     } else {
@@ -328,37 +327,37 @@ sub render_item_container {
 }
 
 sub render_item_pointer {
-    my ($item, $cppvar) = @_;
+    my ($item, $pns) = @_;
 
     my $tg = $item->findnodes('child::ld:item')->[0];
     my $ary = $item->getAttribute('is-array');
     if ($ary and $ary eq 'true') {
-        my $tglen = get_tglen($tg, $cppvar);
+        my $tglen = get_tglen($tg, $pns);
         push @lines_rb, "pointer_ary($tglen) {";
     } else {
         push @lines_rb, "pointer {";
     }
     indent_rb {
-        render_item($tg, "${cppvar}[0]");
+        render_item($tg, $pns);
     };
     push @lines_rb, "}";
 }
 
 sub render_item_staticarray {
-    my ($item, $cppvar) = @_;
+    my ($item, $pns) = @_;
 
     my $count = $item->getAttribute('count');
     my $tg = $item->findnodes('child::ld:item')->[0];
-    my $tglen = get_tglen($tg, $cppvar);
+    my $tglen = get_tglen($tg, $pns);
     push @lines_rb, "static_array($count, $tglen) {";
     indent_rb {
-        render_item($tg, "${cppvar}[0]");
+        render_item($tg, $pns);
     };
     push @lines_rb, "}";
 }
 
 sub render_item_primitive {
-    my ($item, $cppvar) = @_;
+    my ($item, $pns) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     if ($subtype eq 'stl-string') {
@@ -369,7 +368,7 @@ sub render_item_primitive {
 }
 
 sub render_item_bytes {
-    my ($item, $cppvar) = @_;
+    my ($item, $pns) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     if ($subtype eq 'padding') {
@@ -382,15 +381,13 @@ sub render_item_bytes {
 }
 
 sub get_offset {
-    my ($cppvar, $fname) = @_;
+    my ($cppns, $fname) = @_;
 
-    # GCC fails with this
-    #return query_cpp("offsetof(typeof($cppvar), $fname)");
-    return query_cpp("((char*)&$cppvar.$fname - (char*)&$cppvar)");
+    return query_cpp("offsetof($cppns, $fname)");
 }
 
 sub get_tglen {
-    my ($tg, $cppvar) = @_;
+    my ($tg, $cppns) = @_;
 
     if (!$tg) {
         return 'nil';
@@ -401,16 +398,66 @@ sub get_tglen {
         return $tg->getAttribute('ld:bits')/8;
     } elsif ($meta eq 'pointer') {
         return 4;
+    } elsif ($meta eq 'container') {
+        my $subtype = $tg->getAttribute('ld:subtype');
+        if ($subtype eq 'stl-vector') {
+            return query_cpp("sizeof(std::vector<int>)");
+        } elsif ($subtype eq 'df-linked-list') {
+            return 12;
+        } else {
+            print "cannot tglen container $subtype\n";
+        }
+    } elsif ($meta eq 'compound') {
+        my $cname = $tg->getAttribute('ld:typedef-name');
+        return query_cpp("sizeof(${cppns}::$cname)");
+    } elsif ($meta eq 'static-array') {
+        my $count = $tg->getAttribute('count');
+        my $ttg = $tg->findnodes('child::ld:item')->[0];
+        my $ttgl = get_tglen($ttg, $cppns);
+        if ($ttgl =~ /^\d+$/) {
+            return $count * $ttgl;
+        } else {
+            return "$count*$ttgl";
+        }
+    } elsif ($meta eq 'global') {
+        my $typename = $tg->getAttribute('type-name');
+        my $subtype = $tg->getAttribute('ld:subtype');
+        if ($subtype and $subtype eq 'enum') {
+            my $base = $tg->getAttribute('base-type') || 'int32_t';
+            if ($base eq 'int32_t') {
+                return 4;
+            } elsif ($base eq 'int16_t') {
+                return 2;
+            } elsif ($base eq 'int8_t') {
+                return 1;
+            } else {
+                print "cannot tglen enum $base\n";
+            }
+        } else {
+            return query_cpp("sizeof(df::$typename)");
+        }
+    } elsif ($meta eq 'primitive') {
+        my $subtype = $tg->getAttribute('ld:subtype');
+        if ($subtype eq 'stl-string') {
+            return query_cpp("sizeof(std::string)");
+        } else {
+            print "cannot tglen primitive $subtype\n";
+        }
     } else {
-        return query_cpp("sizeof(${cppvar}[0])");
+        print "cannot tglen $meta\n";
     }
 }
 
+my %query_cpp_cache;
 sub query_cpp {
     my ($query) = @_;
 
     my $ans = $offsets{$query};
     return $ans if (defined($ans));
+
+    my $cached = $query_cpp_cache{$query};
+    return $cached if (defined($cached));
+    $query_cpp_cache{$query} = 1;
 
     push @lines_cpp, "    fprintf(fout, \"%s = %d\\n\", \"$query\", $query);";
     return "'$query'";
@@ -464,14 +511,12 @@ if ($output =~ /\.cpp$/) {
     print FH "#include \"DataDefs.h\"\n";
     print FH "#include \"df/$_.h\"\n" for @include_cpp;
     print FH "#include <stdio.h>\n";
-    print FH "static void *moo[1024];\n";
+    print FH "#include <stddef.h>\n";
     print FH "$_\n" for @lines_cpp;
     print FH "}\n";
     print FH "int main(int argc, char **argv) {\n";
     print FH "    FILE *fout;\n";
     print FH "    if (argc < 2) return 1;\n";
-    # sometimes gcc will generate accesses to the structures at 0 just for a sizeof/offsetof, this works around the segfaults...
-    print FH "    for (int i=0 ; i<1024 ; i++) moo[i] = &moo;\n";
     print FH "    fout = fopen(argv[1], \"w\");\n";
     print FH "    cpp_$_(fout);\n" for @include_cpp;
     print FH "    fclose(fout);\n";

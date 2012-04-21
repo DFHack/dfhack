@@ -6,6 +6,9 @@ if(RUBY_FOUND)
         DEPENDS ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml codegen.pl
     )
     ADD_EXECUTABLE(ruby-autogen ruby-autogen.cpp)
+    if(CMAKE_COMPILER_IS_GNUCC)
+        set_target_properties (ruby-autogen PROPERTIES COMPILE_FLAGS "-Wno-invalid-offsetof")
+    endif(CMAKE_COMPILER_IS_GNUCC)
     ADD_CUSTOM_COMMAND(
         OUTPUT ruby-autogen.offsets
         COMMAND ruby-autogen ${CMAKE_CURRENT_BINARY_DIR}/ruby-autogen.offsets

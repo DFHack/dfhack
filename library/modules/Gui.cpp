@@ -194,7 +194,7 @@ bool Gui::view_unit_hotkey(df::viewscreen *top)
     if (!ui_selected_unit) // allow missing
         return false;
 
-    return vector_get(world->units.other[0], *ui_selected_unit) != NULL;
+    return vector_get(world->units.active, *ui_selected_unit) != NULL;
 }
 
 bool Gui::unit_inventory_hotkey(df::viewscreen *top)
@@ -303,7 +303,7 @@ static df::unit *getAnyUnit(df::viewscreen *top)
         if (!ui_selected_unit)
             return NULL;
 
-        return vector_get(world->units.other[0], *ui_selected_unit);
+        return vector_get(world->units.active, *ui_selected_unit);
     }
     case LookAround:
     {

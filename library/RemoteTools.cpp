@@ -402,7 +402,7 @@ static command_result GetWorldInfo(color_ostream &stream,
     case GAMETYPE_ADVENTURE_MAIN:
         out->set_mode(GetWorldInfoOut::MODE_ADVENTURE);
 
-        if (auto unit = vector_get(world->units.other[0], 0))
+        if (auto unit = vector_get(world->units.active, 0))
             out->set_player_unit_id(unit->id);
 
         if (!ui_advmode)

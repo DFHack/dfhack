@@ -113,7 +113,7 @@ function tools.change_adv(unit,nemesis)
 	if unit==nil then
 		error("Invalid unit!")
 	end
-	local other=df.global.world.units.other[0]
+	local other=df.global.world.units.active
 	local unit_indx
 	for k,v in pairs(other) do
 		if v==unit then
@@ -157,7 +157,7 @@ function tools.MakeFollow(unit,trgunit)
 		error("Invalid creature")
 	end
 	if trgunit==nil then
-		trgunit=df.global.world.units.other[0][0]
+		trgunit=df.global.world.units.active[0]
 	end
 	unit.relations.group_leader_id=trgunit.id
 	local u_nem=getNemesis(unit)

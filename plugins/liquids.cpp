@@ -200,22 +200,8 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         }
         else if(command == "range" || command == "r")
         {
-            int oldWidth = width, oldHeight = height, oldZLevels = z_levels;
-            width = height = z_levels = 0;
-
-            if (commands.size() >= 3)
-            {
-                width = atoi(commands[1].c_str());
-                height = atoi(commands[2].c_str());
-
-                if (commands.size() >= 4) {
-                    z_levels = atoi(commands[3].c_str());
-                }
-            }
-
-            command_result res = parseRectangle(out, width, height, z_levels,
-                                                oldWidth, oldHeight, oldZLevels);
-
+            command_result res = parseRectangle(out, commands, 1, commands.size(),
+                                                width, height, z_levels);
             if (res != CR_OK)
             {
                 return res;

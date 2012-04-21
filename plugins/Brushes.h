@@ -197,47 +197,72 @@ private:
 };
 
 command_result parseRectangle(color_ostream & out,
+                              vector<string>  & input, int start, int end,
                               int & width, int & height, int & zLevels,
-                              int oldWidth, int oldHeight, int oldZLevels,
                               bool hasConsole = true)
 {
-    out << "Parse:" << endl
-        << "\tW:" << width << " - " << oldWidth << endl
-        << "\tW:" << height << " - " << oldHeight << endl
-        << "\tW:" << zLevels << " - " << oldZLevels << endl
-        << "Console: " << hasConsole << endl;
-    if (width < 1 || height < 1) {
+    int newWidth = 0, newHeight = 0, newZLevels = 1;
+    // z is different so 'range w h' won't ask for it.
+
+    if (end > start + 1)
+    {
+        newWidth = atoi(input[start++].c_str());
+        newHeight = atoi(input[start++].c_str());
+    }
+
+    if (end > start) {
+        newZLevels = atoi(input[start++].c_str());
+    }
+
+    string command = "";
+    std::stringstream str;
+    CommandHistory hist;
+
+    if (newWidth < 1) {
         if (hasConsole) {
-            string command = "";
-            std::stringstream str;
             Console &con = static_cast<Console&>(out);
-            CommandHistory hist;
 
             str.str("");
-            str << "Set range width <" << oldWidth << "> ";
+            str << "Set range width <" << width << "> ";
             con.lineedit(str.str(), command, hist);
             hist.add(command);
-            width = command == "" ? oldWidth : atoi(command.c_str());
-
-            str.str("");
-            str << "Set range height <" << oldHeight << "> ";
-            con.lineedit(str.str(), command, hist);
-            hist.add(command);
-            height = command == "" ? oldHeight : atoi(command.c_str());
-
-            str.str("");
-            str << "Set range z-levels <" << oldZLevels << "> ";
-            con.lineedit(str.str(), command, hist);
-            hist.add(command);
-            zLevels = command == "" ? oldZLevels : atoi(command.c_str());
+            newWidth = command == "" ? width : atoi(command.c_str());
         } else {
             return CR_WRONG_USAGE;
         }
     }
 
-    width = width < 1? 1 : width;
-    height = height < 1? 1 : height;
-    zLevels = zLevels < 1? 1 : zLevels;
+    if (newHeight < 1) {
+        if (hasConsole) {
+            Console &con = static_cast<Console&>(out);
+
+            str.str("");
+            str << "Set range height <" << height << "> ";
+            con.lineedit(str.str(), command, hist);
+            hist.add(command);
+            newHeight = command == "" ? height : atoi(command.c_str());
+        } else {
+            return CR_WRONG_USAGE;
+        }
+    }
+
+    if (newZLevels < 1) {
+        if (hasConsole) {
+            Console &con = static_cast<Console&>(out);
+
+            str.str("");
+            str << "Set range z-levels <" << zLevels << "> ";
+            con.lineedit(str.str(), command, hist);
+            hist.add(command);
+            newZLevels = command == "" ? zLevels : atoi(command.c_str());
+        } else {
+            return CR_WRONG_USAGE;
+        }
+    }
+
+    width = newWidth < 1? 1 : newWidth;
+    height = newHeight < 1? 1 : newHeight;
+    zLevels = newZLevels < 1? 1 : zLevels;
 
     return CR_OK;
 }

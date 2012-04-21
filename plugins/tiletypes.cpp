@@ -788,7 +788,6 @@ command_result processCommand(color_ostream &out, std::vector<std::string> &comm
         return executePaintJob(out);
     }
 
-    std::ostringstream ss_o;
     int loc = start;
 
     std::string command = commands[loc++];
@@ -817,26 +816,17 @@ command_result processCommand(color_ostream &out, std::vector<std::string> &comm
     }
     else if (command == "range" || command == "r")
     {
-        int width = 0, height = 0, z_levels = 0;
+        int width = 1, height = 1, zLevels = 1;
 
-        if (commands.size() >= loc)
-        {
-            width = toint(commands[loc++]);
-            height = toint(commands[loc++]);
-
-            if (commands.size() >= loc) {
-                z_levels = toint(commands[loc++]);
-            }
-        }
-
-        command_result res = parseRectangle(out, width, height, z_levels, width, height, z_levels, hasConsole);
+        command_result res = parseRectangle(out, commands, loc, end,
+                                            width, height, zLevels, hasConsole);
         if (res != CR_OK)
         {
             return res;
         }
 
         delete brush;
-        brush = new RectangleBrush(width, height, z_levels, 0, 0, 0);
+        brush = new RectangleBrush(width, height, zLevels, 0, 0, 0);
     }
     else if (command == "block")
     {

@@ -9,7 +9,7 @@ end
 
 class Compound < MemStruct
 	class << self
-		attr_accessor :_fields
+		attr_accessor :_fields, :_rtti_classname, :_sizeof
 		def field(name, offset)
 			struct = yield
 			@_fields ||= []
@@ -57,15 +57,15 @@ class Compound < MemStruct
 		def stl_bit_vector
 			StlBitVector.new
 		end
-		def stl_deque(tglen=nil)
-			StlDeque.new(tglen, (yield if tglen))
+		def stl_deque(tglen)
+			StlDeque.new(tglen, yield)
 		end
 
 		def df_flagarray
 			DfFlagarray.new
 		end
-		def df_array(tglen=nil)
-			DfArray.new(tglen, (yield if tglen))
+		def df_array(tglen)
+			DfArray.new(tglen, yield)
 		end
 		def df_linked_list
 			DfLinkedList.new(yield)
@@ -80,12 +80,17 @@ class Compound < MemStruct
 			m.new
 		end
 		def rtti_classname(n)
-			# TODO store total size for allocate() ? what about non-virtual ones ?
 			DFHack.rtti_register(n, self)
+			@_rtti_classname = n
+		end
+		def sizeof(n)
+			@_sizeof = n
 		end
 	end
 	def _set(h) ; h.each { |k, v| send("_#{k}=", v) } ; end
 	def _fields ; self.class._fields.to_a ; end
+	def _rtti_classname ; self.class._rtti_classname ; end
+	def _sizeof ; self.class._sizeof ; end
 	def inspect
 		cn = self.class.name.sub(/^DFHack::/, '')
 		cn << ' @' << ('0x%X' % _memaddr) if cn != ''
@@ -414,7 +419,8 @@ class StlDeque < MemStruct
 		@_tglen = tglen
 		@_tg = tg
 	end
-	# TODO
+	# XXX DF uses stl::deque<some_struct>, so to have a C binding we'd need to single-case every
+	# possible struct size, like for StlVector. Just ignore it for now, deque are rare enough.
 	def inspect ; "#<StlDeque>" ; end
 end
 
@@ -539,17 +545,19 @@ end	# module MemHack
 @rtti_n2c = {}
 @rtti_c2n = {}
 
-# vtableptr -> cpp rtti name (cache)
+# cpp rtti name -> vtable ptr
 @rtti_n2v = {}
 @rtti_v2n = {}
 
 def self.rtti_n2c ; @rtti_n2c ; end
 def self.rtti_c2n ; @rtti_c2n ; end
+def self.rtti_n2v ; @rtti_n2v ; end
+def self.rtti_v2n ; @rtti_v2n ; end
 
 # register a ruby class with a cpp rtti class name
-def self.rtti_register(cname, cls)
-	@rtti_n2c[cname] = cls
-	@rtti_c2n[cls] = cname
+def self.rtti_register(cppname, cls)
+	@rtti_n2c[cppname] = cls
+	@rtti_c2n[cls] = cppname
 end
 
 # return the ruby class to use for the cpp object at address if rtti info is available
@@ -572,11 +580,11 @@ def self.rtti_readclassname(vptr)
 end
 
 # return the vtable pointer from the cpp rtti name
-def self.rtti_getvtable(cname)
-	unless v = @rtti_n2v[cname]
-		v = get_vtable(cname)
-		@rtti_n2v[cname] = v
-		@rtti_v2n[v] = cname if v != 0
+def self.rtti_getvtable(cppname)
+	unless v = @rtti_n2v[cppname]
+		v = get_vtable(cppname)
+		@rtti_n2v[cppname] = v
+		@rtti_v2n[v] = cppname if v != 0
 	end
 	v if v != 0
 end

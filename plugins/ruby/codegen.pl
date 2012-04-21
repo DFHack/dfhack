@@ -156,6 +156,8 @@ sub render_global_class {
 
     push @lines_rb, "class $rbname < $rbparent";
     indent_rb {
+        my $sz = query_cpp("sizeof(*$cppvar)");
+        push @lines_rb, "sizeof $sz";
         push @lines_rb, "rtti_classname '$rtti_name'" if $has_rtti;
         render_struct_fields($type, "(*$cppvar)");
     };

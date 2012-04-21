@@ -21,6 +21,17 @@ COLOR_LIGHTMAGENTA = 13
 COLOR_YELLOW = 14
 COLOR_WHITE = 15
 
+-- Events
+
+if dfhack.is_core_context then
+    SC_WORLD_LOADED = 0
+    SC_WORLD_UNLOADED = 1
+    SC_MAP_LOADED = 2
+    SC_MAP_UNLOADED = 3
+    SC_VIEWSCREEN_CHANGED = 4
+    SC_CORE_INITIALIZED = 5
+end
+
 -- Error handling
 
 safecall = dfhack.safecall
@@ -105,6 +116,10 @@ function xyz2pos(x,y,z)
     end
 end
 
+function dfhack.event:__tostring()
+    return "<event>"
+end
+
 function dfhack.persistent:__tostring()
     return "<persistent "..self.entry_id..":"..self.key.."=\""
            ..self.value.."\":"..table.concat(self.ints,",")..">"
@@ -122,6 +137,84 @@ end
 function dfhack.maps.getTileSize()
     local map = df.global.world.map
     return map.x_count, map.y_count, map.z_count
+end
+
+-- Interactive
+
+local print_banner = true
+
+function dfhack.interpreter(prompt,hfile,env)
+    if not dfhack.is_interactive() then
+        return nil, 'not interactive'
+    end
+
+    print("Type quit to exit interactive lua interpreter.")
+
+    if print_banner then
+        print("Shortcuts:\n"..
+              " '= foo' => '_1,_2,... = foo'\n"..
+              " '! foo' => 'print(foo)'\n"..
+              "Both save the first result as '_'.")
+        print_banner = false
+    end
+
+    local prompt_str = "["..(prompt or 'lua').."]# "
+    local prompt_env = {}
+	local t_prompt
+    local vcnt = 1
+
+    setmetatable(prompt_env, { __index = env or _G })
+	local cmdlinelist={}
+    while true do
+        local cmdline = dfhack.lineedit(t_prompt or prompt_str, hfile)
+
+        if cmdline == nil or cmdline == 'quit' then
+            break
+        elseif cmdline ~= '' then
+            local pfix = string.sub(cmdline,1,1)
+
+            if pfix == '!' or pfix == '=' then
+                cmdline = 'return '..string.sub(cmdline,2)
+            end
+			table.insert(cmdlinelist,cmdline)
+            local code,err = load(table.concat(cmdlinelist,'\n'), '=(interactive)', 't', prompt_env)
+
+            if code == nil then
+				if err:sub(-5)=="<eof>" then
+					t_prompt="[cont]"
+					
+				else
+					dfhack.printerr(err)
+					cmdlinelist={}
+					t_prompt=nil
+				end
+            else
+			
+				cmdlinelist={}
+				t_prompt=nil
+				
+                local data = table.pack(safecall(code))
+
+                if data[1] and data.n > 1 then
+                    prompt_env._ = data[2]
+
+                    if pfix == '!' then
+                        safecall(print, table.unpack(data,2,data.n))
+                    else
+                        for i=2,data.n do
+                            local varname = '_'..vcnt
+                            prompt_env[varname] = data[i]
+                            dfhack.print(varname..' = ')
+                            safecall(print, data[i])
+                            vcnt = vcnt + 1
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return true
 end
 
 -- Feed the table back to the require() mechanism.

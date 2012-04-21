@@ -14,4 +14,5 @@ DFHACK_PLUGIN(dumpmats dumpmats.cpp)
 #DFHACK_PLUGIN(tiles tiles.cpp)
 DFHACK_PLUGIN(counters counters.cpp)
 DFHACK_PLUGIN(stockcheck stockcheck.cpp)
+DFHACK_PLUGIN(stripcaged stripcaged.cpp)
 

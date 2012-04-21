@@ -1,6 +1,15 @@
 -- Common startup file for all dfhack plugins with lua support
 -- The global dfhack table is already created by C++ init code.
 
+-- Setup the global environment.
+-- BASE_G is the original lua global environment,
+-- preserved as a common denominator for all modules.
+-- This file uses it instead of the new default one.
+
+local dfhack = dfhack
+local base_env = dfhack.BASE_G
+local _ENV = base_env
+
 -- Console color constants
 
 COLOR_RESET = -1
@@ -70,7 +79,7 @@ function mkmodule(module,env)
     if plugname then
         dfhack.open_plugin(pkg,plugname)
     end
-    setmetatable(pkg, { __index = (env or _G) })
+    setmetatable(pkg, { __index = (env or base_env) })
     return pkg
 end
 

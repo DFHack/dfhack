@@ -162,11 +162,13 @@ static Console *get_console(lua_State *state)
     return static_cast<Console*>(pstream);
 }
 
+static int DFHACK_TOSTRING_TOKEN = 0;
+
 static std::string lua_print_fmt(lua_State *L)
 {
     /* Copied from lua source to fully replicate builtin print */
     int n = lua_gettop(L);  /* number of arguments */
-    lua_getglobal(L, "tostring");
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_TOSTRING_TOKEN);
 
     std::stringstream ss;
 
@@ -319,7 +321,7 @@ static int DFHACK_EXCEPTION_META_TOKEN = 0;
 
 static void error_tostring(lua_State *L, bool keep_old = false)
 {
-    lua_getglobal(L, "tostring");
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_TOSTRING_TOKEN);
     if (keep_old)
         lua_pushvalue(L, -2);
     else
@@ -682,6 +684,9 @@ int DFHack::Lua::SafeResume(color_ostream &out, lua_State *from, int nargs, int 
  */
 
 static int DFHACK_LOADED_TOKEN = 0;
+static int DFHACK_DFHACK_TOKEN = 0;
+static int DFHACK_BASE_G_TOKEN = 0;
+static int DFHACK_REQUIRE_TOKEN = 0;
 
 bool DFHack::Lua::PushModule(color_ostream &out, lua_State *state, const char *module)
 {
@@ -699,7 +704,7 @@ bool DFHack::Lua::PushModule(color_ostream &out, lua_State *state, const char *m
     }
 
     lua_pop(state, 2);
-    lua_getglobal(state, "require");
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_REQUIRE_TOKEN);
     lua_pushstring(state, module);
 
     return Lua::SafeCall(out, state, 1, 1);
@@ -730,7 +735,11 @@ bool DFHack::Lua::Require(color_ostream &out, lua_State *state,
         return false;
 
     if (setglobal)
-        lua_setglobal(state, module.c_str());
+    {
+        lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_BASE_G_TOKEN);
+        lua_swap(state);
+        lua_setfield(state, -2, module.c_str());
+    }
     else
         lua_pop(state, 1);
 
@@ -900,7 +909,7 @@ namespace {
 static bool init_interpreter(color_ostream &out, lua_State *state, void *info)
 {
     auto args = (InterpreterArgs*)info;
-    lua_getglobal(state, "dfhack");
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_DFHACK_TOKEN);
     lua_getfield(state, -1, "interpreter");
     lua_remove(state, -2);
     lua_pushstring(state, args->prompt);
@@ -1252,8 +1261,21 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     lua_pushcfunction(state, lua_dfhack_println);
     lua_setglobal(state, "print");
 
+    lua_getglobal(state, "require");
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_REQUIRE_TOKEN);
+    lua_getglobal(state, "tostring");
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_TOSTRING_TOKEN);
+
     // Create the dfhack global
     lua_newtable(state);
+
+    lua_dup(state);
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_DFHACK_TOKEN);
+
+    lua_rawgeti(state, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);
+    lua_dup(state);
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_BASE_G_TOKEN);
+    lua_setfield(state, -2, "BASE_G");
 
     lua_pushboolean(state, IsCoreContext(state));
     lua_setfield(state, -2, "is_core_context");
@@ -1295,6 +1317,17 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     luaL_setfuncs(state, dfhack_coro_funcs, 0);
     lua_pop(state, 1);
 
+    // split the global environment
+    lua_newtable(state);
+    lua_newtable(state);
+    lua_rawgeti(state, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);
+    lua_setfield(state, -2, "__index");
+    lua_setmetatable(state, -2);
+    lua_dup(state);
+    lua_setglobal(state, "_G");
+    lua_dup(state);
+    lua_rawseti(state, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);
+
     // load dfhack.lua
     Require(out, state, "dfhack");
 
@@ -1322,7 +1355,7 @@ void DFHack::Lua::Core::Init(color_ostream &out)
     Lua::Open(out, State);
 
     // Register events
-    lua_getglobal(State, "dfhack");
+    lua_rawgetp(State, LUA_REGISTRYINDEX, &DFHACK_DFHACK_TOKEN);
 
     MakeEvent(State, (void*)onStateChange);
     lua_setfield(State, -2, "onStateChange");

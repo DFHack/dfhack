@@ -383,14 +383,10 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
             break;
         }
         if(building.origin->is_room)  //isRoom())
-            out << ", is room";
-        else
-            out << ", not a room";
+            out << ", room";
         if(building.origin->getBuildStage()!=building.origin->getMaxBuildStage())
             out << ", in construction";
         out.print("\n");
-
-
     }
     return CR_OK;
 }

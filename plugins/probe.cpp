@@ -314,6 +314,39 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     out << "global feature idx: " << block.global_feature
         << endl;
     out << std::endl;
+
+    if(block.occupancy[tileX][tileY].bits.no_grow)
+        out << "no grow" << endl;
+
+    for(size_t e=0; e<block.block_events.size(); e++)
+    {            
+        df::block_square_event * blev = block.block_events[e];
+        df::block_square_event_type blevtype = blev->getType();
+        switch(blevtype)
+        {
+        case df::block_square_event_type::grass:
+            {
+                df::block_square_event_grassst * gr_ev = (df::block_square_event_grassst *)blev;
+                if(gr_ev->amount[tileX][tileY] > 0)
+                {
+                    out << "amount of grass: " << (int)gr_ev->amount[tileX][tileY] << endl;
+                }
+                break;
+            }
+        case df::block_square_event_type::world_construction:
+            {
+                df::block_square_event_world_constructionst * co_ev = (df::block_square_event_world_constructionst*)blev;
+                uint16_t bits = co_ev->tile_bitmask[tileY];
+                out << "construction bits: " << bits << endl;
+                break;
+            }
+        default:
+            //out << "unhandled block event type!" << endl;
+            break;
+        }
+    }
+
+
     return CR_OK;
 }
 

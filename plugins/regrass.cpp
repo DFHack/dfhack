@@ -83,7 +83,8 @@ command_result df_regrass (color_ostream &out, vector <string> & parameters)
             {
                 if (   tileShape(cur->tiletype[x][y]) != tiletype_shape::FLOOR
                     || cur->designation[x][y].bits.subterranean
-                    || cur->occupancy[x][y].bits.building)
+                    || cur->occupancy[x][y].bits.building
+                    || cur->occupancy[x][y].bits.no_grow)
                     continue;
 
                 // don't touch furrowed tiles (dirt roads made on soil)

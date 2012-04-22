@@ -49,6 +49,7 @@ function make_sort_order(data,ordering)
     -- Compute sort keys and comparators
     local keys = {}
     local cmps = {}
+    local size = data.n or #data
 
     for i=1,#ordering do
         local order = ordering[i]
@@ -58,7 +59,7 @@ function make_sort_order(data,ordering)
         elseif order.key then
             local kt = {}
             local kf = order.key
-            for j=1,#data do
+            for j=1,size do
                 if data[j] == nil then
                     kt[j] = nil
                 else
@@ -75,7 +76,7 @@ function make_sort_order(data,ordering)
 
     -- Make an order table
     local index = {}
-    for i=1,#data do
+    for i=1,size do
         index[i] = i
     end
 

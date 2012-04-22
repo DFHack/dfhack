@@ -4,6 +4,13 @@ local utils = require('utils')
 
 orders = orders or {}
 
+-- Relies on NULL being auto-translated to NULL, and then sorted
+orders.exists = {
+    key = function(unit)
+        return 1
+    end
+}
+
 orders.name = {
     key = function(unit)
         if unit.name.has_name then

@@ -248,9 +248,15 @@ namespace DFHack {namespace Lua {
     }
 
     template<class T>
-    void PushVector(lua_State *state, const T &pvec)
+    void PushVector(lua_State *state, const T &pvec, bool addn = false)
     {
-        lua_createtable(state,pvec.size(),0);
+        lua_createtable(state,pvec.size(), addn?1:0);
+
+        if (addn)
+        {
+            lua_pushinteger(state, pvec.size());
+            lua_setfield(state, -2, "n");
+        }
 
         for (size_t i = 0; i < pvec.size(); i++)
         {
@@ -266,6 +272,26 @@ namespace DFHack {namespace Lua {
     DFHACK_EXPORT int NewEvent(lua_State *state);
     DFHACK_EXPORT void MakeEvent(lua_State *state, void *key);
     DFHACK_EXPORT void InvokeEvent(color_ostream &out, lua_State *state, void *key, int num_args);
+
+    class StackUnwinder {
+        lua_State *state;
+        int top;
+    public:
+        StackUnwinder(lua_State *state, int bias = 0) : state(state), top(0) {
+            if (state) top = lua_gettop(state) - bias;
+        }
+        ~StackUnwinder() {
+            if (state) lua_settop(state, top);
+        }
+        operator int () { return top; }
+        int operator+ (int v) { return top + v; }
+        int operator- (int v) { return top + v; }
+        int operator[] (int v) { return top + v; }
+        StackUnwinder &operator += (int v) { top += v; return *this; }
+        StackUnwinder &operator -= (int v) { top += v; return *this; }
+        StackUnwinder &operator ++ () { top++; return *this; }
+        StackUnwinder &operator -- () { top--; return *this; }
+    };
 
     /**
      * Namespace for the common lua interpreter state.

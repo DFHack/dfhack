@@ -61,6 +61,9 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
 
+    bool set = false;
+    int to_set, set_val;
+
     // Embark screen active: estimate using world geology data
     VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, Core::getTopViewscreen());
 	
@@ -73,6 +76,17 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
+    if (parameters.size() == 1) 
+    {
+        if (!screen->biome_highlighted) 
+        {
+            return CR_WRONG_USAGE;
+        }
+        set = true;
+        to_set = screen->biome_idx;
+        set_val = atoi(parameters[0].c_str());
+    }
+
     df::world_data *data = world->world_data;
     coord2d cur_region = screen->region_pos;
 
@@ -80,9 +94,15 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
     for (int i = 0; i < screen->biome_rgn.size(); i++) 
     {
         coord2d rg = screen->biome_rgn[i];
-        out << i << ": x = " << rg.x << ", y = " << rg.y;
 
         df::world_data::T_region_map* rd = &data->region_map[rg.x][rg.y];
+
+        if (set && i == to_set) {
+            rd->evilness = set_val;
+            out << "* Set evilness to " << set_val << endl;
+        }
+
+        out << i << ": x = " << rg.x << ", y = " << rg.y;
 
         out <<
             " region_id: " << rd->region_id <<

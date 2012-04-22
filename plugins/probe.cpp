@@ -216,9 +216,18 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     df::world_data::T_region_map* biome = 
         &world->world_data->region_map[region_pos.x][region_pos.y];
 
+    int sav = biome->savagery;
+    int evi = biome->evilness;
+    int sindex = sav > 65 ? 2 : sav < 33 ? 0 : 1;
+    int eindex = evi > 65 ? 2 : evi < 33 ? 0 : 1;
+    int surr = sindex + eindex * 3;
+
+    char* surroundings[] = { "Serene", "Mirthful", "Joyous Wilds", "Calm", "Wilderness", "Untamed Wilds", "Sinister", "Haunted", "Terrifying" };
+
     // biome, geolayer
     out << "biome: " << des.bits.biome << " (" << 
         "region id=" << biome->region_id << ", " <<
+        surroundings[surr] << ", " <<
         "savagery " << biome->savagery << ", " <<
         "evilness " << biome->evilness << ")" << std::endl;
     out << "geolayer: " << des.bits.geolayer_index

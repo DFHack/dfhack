@@ -86,12 +86,17 @@ command_result df_regrass (color_ostream &out, vector <string> & parameters)
                     || cur->occupancy[x][y].bits.building)
                     continue;
 
+                // don't touch furrowed tiles (dirt roads made on soil)
+                if(tileSpecial(cur->tiletype[x][y]) == tiletype_special::FURROWED)
+                    continue;
+
                 int mat = tileMaterial(cur->tiletype[x][y]);
                 if (   mat != tiletype_material::SOIL
                     && mat != tiletype_material::GRASS_DARK  // refill existing grass, too
                     && mat != tiletype_material::GRASS_LIGHT // refill existing grass, too
                     )
                     continue;
+
 
                 // max = set amounts of all grass events on that tile to 100
                 if(max)

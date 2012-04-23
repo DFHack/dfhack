@@ -62,7 +62,7 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
     CoreSuspender suspend;
 
     bool set = false;
-    int to_set, set_val;
+    int to_set, set_field, set_val;
 
     // Embark screen active: estimate using world geology data
     VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, Core::getTopViewscreen());
@@ -76,15 +76,33 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    if (parameters.size() == 1) 
+
+    if (parameters.size() == 2) 
     {
-        if (!screen->biome_highlighted) 
-        {
+        if (parameters[0] == "wet") 
+            set_field = 0;
+        else if (parameters[0] == "veg")
+            set_field = 1;
+        else if (parameters[0] == "tem")
+            set_field = 2;
+        else if (parameters[0] == "evi")
+            set_field = 3;
+        else if (parameters[0] == "hil")
+            set_field = 4;
+        else if (parameters[0] == "sav")
+            set_field = 5;
+        else if (parameters[0] == "sal")
+            set_field = 6;
+        else
             return CR_WRONG_USAGE;
-        }
+
+        if (screen->biome_highlighted) 
+            to_set = screen->biome_idx;
+        else
+            to_set = 0;
+
         set = true;
-        to_set = screen->biome_idx;
-        set_val = atoi(parameters[0].c_str());
+        set_val = atoi(parameters[1].c_str());
     }
 
     df::world_data *data = world->world_data;
@@ -98,8 +116,20 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
         df::world_data::T_region_map* rd = &data->region_map[rg.x][rg.y];
 
         if (set && i == to_set) {
-            rd->evilness = set_val;
-            out << "* Set evilness to " << set_val << endl;
+            if (set_field == 0)
+                rd->wetness = set_val;
+            else if (set_field == 1)
+                rd->vegetation = set_val;
+            else if (set_field == 2)
+                rd->temperature = set_val;
+            else if (set_field == 3)
+                rd->evilness = set_val;
+            else if (set_field == 4)
+                rd->hilliness = set_val;
+            else if (set_field == 5)
+                rd->savagery = set_val;
+            else if (set_field == 6)
+                rd->saltiness = set_val;
         }
 
         out << i << ": x = " << rg.x << ", y = " << rg.y;
@@ -108,10 +138,16 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
             " region_id: " << rd->region_id <<
             " geo_index: " << rd->geo_index <<
             " landmass_id: " << rd->landmass_id <<
-            " flags: " << hex << rd->flags.as_int() << dec <<
-            " sav: " << rd->savagery <<
-            " evil: " << rd->evilness;
-
+            " flags: " << hex << rd->flags.as_int() << dec << endl;
+        out << 
+            "wet: " << rd->wetness << " " <<
+            "veg: " << rd->vegetation << " " <<
+            "tem: " << rd->temperature << " " <<
+            "evi: " << rd->evilness << " " <<
+            "hil: " << rd->hilliness << " " <<
+            "sav: " << rd->savagery << " " <<
+            "sal: " << rd->saltiness;
+            
         int32_t *p = (int32_t *)rd;
         int c = sizeof(*rd) / sizeof(int32_t);
         for (int j = 0; j < c; j++) {

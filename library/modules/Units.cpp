@@ -49,6 +49,7 @@ using namespace std;
 
 #include "df/world.h"
 #include "df/ui.h"
+#include "df/job.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_soul.h"
 #include "df/nemesis_record.h"
@@ -210,24 +211,18 @@ void Units::CopyCreature(df::unit * source, t_unit & furball)
         }
     }
     */
-	/*
-    furball.current_job.occupationPtr = p->readDWord (addr_cr + offs.current_job_offset);
-    if(furball.current_job.occupationPtr)
+    if(source->job.current_job == NULL)
     {
-        furball.current_job.active = true;
-        furball.current_job.jobType = p->readByte (furball.current_job.occupationPtr + offs.job_type_offset );
-        furball.current_job.jobId = p->readWord (furball.current_job.occupationPtr + offs.job_id_offset);
+        furball.current_job.active = false;
     }
     else
     {
-        furball.current_job.active = false;
-    }
-    */
-	// no jobs for now...
-    {
-        furball.current_job.active = false;
+        furball.current_job.active = true;
+        furball.current_job.jobType = source->job.current_job->job_type;
+        furball.current_job.jobId = source->job.current_job->id;
     }
 }
+
 int32_t Units::FindIndexById(int32_t creature_id)
 {
     return df::unit::binsearch_index(world->units.all, creature_id);

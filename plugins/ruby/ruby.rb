@@ -30,6 +30,12 @@ module DFHack
                 }
                 nil
             end
+
+	    def p(*a)
+		    a.each { |e|
+			    puts e.inspect
+		    }
+	    end
         end
 
         # register a callback to be called every gframe or more
@@ -108,6 +114,33 @@ module DFHack
             end
         end
 
+	# yields every map block
+	def each_map_block
+		(0...world.map.x_count_block).each { |xb|
+			xl = world.map.block_index[xb]
+			(0...world.map.y_count_block).each { |yb|
+				yl = xl[yb]
+				(0...world.map.z_count_block).each { |z|
+					p = yl[z]
+					yield p._getv if p._getp != 0
+				}
+			}
+		}
+	end
+
+	# yields every map block for a given z level
+	def each_map_block_z(z)
+		(0...world.map.x_count_block).each { |xb|
+			xl = world.map.block_index[xb]
+			(0...world.map.y_count_block).each { |yb|
+				p = xl[yb][z]
+				yield p._getv if p._getp != 0
+			}
+		}
+	end
+
+	# center the DF screen on something
+	# updates the cursor position if visible
         def center_viewscreen(x, y=nil, z=nil)
             x = x.pos if x.respond_to?(:pos)
             x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
@@ -166,6 +199,16 @@ module DFHack
                 world.status.display_timer = 2000
             end
         end
+
+	# try to match a user-specified name to one from the raws
+	# uses case-switching and substring matching
+	# eg match_rawname('coal', ['COAL_BITUMINOUS', 'BAUXITE']) => 'COAL_BITUMINOUS'
+	def match_rawname(name, rawlist)
+		rawlist.each { |r| return r if name == r }
+		rawlist.each { |r| return r if name.downcase == r.downcase }
+		may = rawlist.find_all { |r| r.downcase.index(name.downcase) }
+		may.first if may.length == 1
+	end
 
         def test
             puts "starting"

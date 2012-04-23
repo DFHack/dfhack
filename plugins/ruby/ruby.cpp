@@ -603,7 +603,7 @@ static VALUE rb_dfmemory_vecbool_delete(VALUE self, VALUE addr, VALUE idx)
 static VALUE rb_dfmemory_bitarray_length(VALUE self, VALUE addr)
 {
     DFHack::BitArray<int> *b = (DFHack::BitArray<int>*)rb_num2ulong(addr);
-    return rb_uint2inum(b->size);
+    return rb_uint2inum(b->size*8);	// b->size is in bytes
 }
 static VALUE rb_dfmemory_bitarray_resize(VALUE self, VALUE addr, VALUE sz)
 {

@@ -106,13 +106,29 @@ module DFHack
 
         # return a map block by tile coordinates
         # you can also use find_map_block(cursor) or anything that respond to x/y/z
-        def find_map_block(x=cursor, y=nil, z=nil)
+        def map_block_at(x, y=nil, z=nil)
             x = x.pos if x.respond_to?(:pos)
             x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
             if x >= 0 and x < world.map.x_count and y >= 0 and y < world.map.y_count and z >= 0 and z < world.map.z_count
                 world.map.block_index[x/16][y/16][z]
             end
         end
+
+	def map_designation_at(x, y=nil, z=nil)
+		x = x.pos if x.respond_to?(:pos)
+		x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
+		if b = map_block_at(x, y, z)
+			b.designation[x%16][y%16]
+		end
+	end
+
+	def map_occupancy_at(x, y=nil, z=nil)
+		x = x.pos if x.respond_to?(:pos)
+		x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
+		if b = map_block_at(x, y, z)
+			b.occupancy[x%16][y%16]
+		end
+	end
 
 	# yields every map block
 	def each_map_block
@@ -137,6 +153,18 @@ module DFHack
 				yield p._getv if p._getp != 0
 			}
 		}
+	end
+
+	# return true if the argument is under the cursor
+	def at_cursor?(obj)
+		same_pos?(obj, cursor)
+	end
+
+	# returns true if both arguments are at the same x/y/z
+	def same_pos?(pos1, pos2)
+		pos1 = pos1.pos if pos1.respond_to?(:pos)
+		pos2 = pos2.pos if pos2.respond_to?(:pos)
+		pos1.x == pos2.x and pos1.y == pos2.y and pos1.z == pos2.z
 	end
 
 	# center the DF screen on something
@@ -220,8 +248,8 @@ module DFHack
                     puts "selected unit id: #{u.id}"
                 end
 
-                if b = find_map_block
-                    b.designation[cursor.x%16][cursor.y%16].dig = TileDigDesignation::Default
+                if b = map_block_at(cursor)
+                    map_designation_at(cursor).dig = TileDigDesignation::Default
                     b.flags.designated = true
                     puts "dug cursor tile"
                 end

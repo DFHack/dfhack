@@ -119,7 +119,7 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
             out << endl << setfill('0') << setw(8) << hex << (int)(rd+j) << ": ";
             out << " " << setfill('0') << setw(8) << hex << p[j];
         }
-        out << dec << endl;
+        out << setfill(' ') << setw(0) << dec << endl;
 
     }
     

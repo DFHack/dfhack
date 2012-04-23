@@ -13,8 +13,9 @@ orders.exists = {
 
 orders.name = {
     key = function(unit)
-        if unit.name.has_name then
-            return dfhack.TranslateName(unit.name)
+        local name = dfhack.units.getVisibleName(unit)
+        if name and name.has_name then
+            return dfhack.TranslateName(name)
         end
     end,
     compare = utils.compare_name
@@ -29,28 +30,55 @@ orders.age = {
 -- This assumes that units are added to active in arrival order
 orders.arrival = {
     key_table = function(units)
-        local tmp={}
-        for i,v in ipairs(units) do
-            tmp[v.id] = i
+        local size = units.n or #units
+        local lookup={}
+        for i=1,size do
+            if units[i] then
+                lookup[units[i].id] = i
+            end
         end
         local idx={}
         for i,v in ipairs(df.global.world.units.active) do
-            local ix = tmp[v.id]
-            if ix ~= nil then
-                idx[ix] = i
+            if lookup[v.id] then
+                idx[lookup[v.id]] = i
             end
         end
         return idx
     end
 }
 
+local function findRaceCaste(unit)
+    local rraw = df.creature_raw.find(unit.race)
+    return rraw, safe_index(rraw, 'caste', unit.caste)
+end
+
 orders.profession = {
     key = function(unit)
-        local cp = unit.custom_profession
-        if cp == '' then
-            cp = df.profession.attrs[unit.profession].caption
+        local cp = dfhack.units.getProfessionName(unit)
+        if cp and cp ~= '' then
+            return string.lower(cp)
         end
-        return cp
+    end
+}
+
+orders.profession_class = {
+    key = function(unit)
+        local pid = unit.profession
+        local parent = df.profession.attrs[pid].parent
+        if parent >= 0 then
+            return parent
+        else
+            return pid
+        end
+    end
+}
+
+orders.race = {
+    key = function(unit)
+        local rraw = findRaceCaste(unit)
+        if rraw then
+            return rraw.name[0]
+        end
     end
 }
 

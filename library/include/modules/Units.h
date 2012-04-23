@@ -37,6 +37,7 @@ namespace df
 {
     struct nemesis_record;
     struct burrow;
+    struct assumed_identity;
 }
 
 /**
@@ -201,6 +202,7 @@ DFHACK_EXPORT df::item *getContainer(df::unit *unit);
 DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
 DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
 
+DFHACK_EXPORT df::assumed_identity *getIdentity(df::unit *unit);
 DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
 
 DFHACK_EXPORT bool isDead(df::unit *unit);
@@ -214,8 +216,10 @@ DFHACK_EXPORT void clearBurrowMembers(df::burrow *burrow);
 DFHACK_EXPORT bool isInBurrow(df::unit *unit, df::burrow *burrow);
 DFHACK_EXPORT void setInBurrow(df::unit *unit, df::burrow *burrow, bool enable);
 
-DFHACK_EXPORT double getAge(df::unit *unit);
+DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 
+DFHACK_EXPORT std::string getProfessionName(df::unit *unit, bool plural = false);
+DFHACK_EXPORT std::string getCasteProfessionName(int race, int caste, df::profession pid, bool plural = false);
 }
 }
 #endif

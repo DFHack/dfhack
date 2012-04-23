@@ -58,6 +58,7 @@ distribution.
 #include "df/unit.h"
 #include "df/item.h"
 #include "df/material.h"
+#include "df/assumed_identity.h"
 #include "df/nemesis_record.h"
 #include "df/historical_figure.h"
 #include "df/plant_raw.h"
@@ -608,6 +609,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getContainer),
     WRAPM(Units, setNickname),
     WRAPM(Units, getVisibleName),
+    WRAPM(Units, getIdentity),
     WRAPM(Units, getNemesis),
     WRAPM(Units, isDead),
     WRAPM(Units, isAlive),
@@ -616,6 +618,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isInBurrow),
     WRAPM(Units, setInBurrow),
     WRAPM(Units, getAge),
+    WRAPM(Units, getProfessionName),
+    WRAPM(Units, getCasteProfessionName),
     { NULL, NULL }
 };
 

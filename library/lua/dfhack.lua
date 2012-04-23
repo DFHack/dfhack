@@ -125,6 +125,23 @@ function xyz2pos(x,y,z)
     end
 end
 
+function safe_index(obj,idx,...)
+    if obj == nil or idx == nil then
+        return nil
+    end
+    if type(idx) == 'number' and (idx < 0 or idx >= #obj) then
+        return nil
+    end
+    obj = obj[idx]
+    if select('#',...) > 0 then
+        return safe_index(obj,...)
+    else
+        return obj
+    end
+end
+
+-- String conversions
+
 function dfhack.event:__tostring()
     return "<event>"
 end
@@ -168,12 +185,14 @@ function dfhack.interpreter(prompt,hfile,env)
     end
 
     local prompt_str = "["..(prompt or 'lua').."]# "
+    local prompt_cont = string.rep(' ',#prompt_str-4)..">>> "
     local prompt_env = {}
-	local t_prompt
+    local cmdlinelist = {}
+    local t_prompt = nil
     local vcnt = 1
 
     setmetatable(prompt_env, { __index = env or _G })
-	local cmdlinelist={}
+
     while true do
         local cmdline = dfhack.lineedit(t_prompt or prompt_str, hfile)
 
@@ -182,26 +201,29 @@ function dfhack.interpreter(prompt,hfile,env)
         elseif cmdline ~= '' then
             local pfix = string.sub(cmdline,1,1)
 
-            if pfix == '!' or pfix == '=' then
+            if not t_prompt and (pfix == '!' or pfix == '=') then
                 cmdline = 'return '..string.sub(cmdline,2)
+            else
+                pfix = nil
             end
-			table.insert(cmdlinelist,cmdline)
-            local code,err = load(table.concat(cmdlinelist,'\n'), '=(interactive)', 't', prompt_env)
+
+            table.insert(cmdlinelist,cmdline)
+            cmdline = table.concat(cmdlinelist,'\n')
+
+            local code,err = load(cmdline, '=(interactive)', 't', prompt_env)
 
             if code == nil then
-				if err:sub(-5)=="<eof>" then
-					t_prompt="[cont]"
-					
-				else
-					dfhack.printerr(err)
-					cmdlinelist={}
-					t_prompt=nil
-				end
+                if not pfix and err:sub(-5)=="<eof>" then
+                    t_prompt=prompt_cont
+                else
+                    dfhack.printerr(err)
+                    cmdlinelist={}
+                    t_prompt=nil
+                end
             else
-			
-				cmdlinelist={}
-				t_prompt=nil
-				
+                cmdlinelist={}
+                t_prompt=nil
+
                 local data = table.pack(safecall(code))
 
                 if data[1] and data.n > 1 then

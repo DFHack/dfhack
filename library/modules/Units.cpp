@@ -57,6 +57,8 @@ using namespace std;
 #include "df/historical_figure_info.h"
 #include "df/assumed_identity.h"
 #include "df/burrow.h"
+#include "df/creature_raw.h"
+#include "df/caste_raw.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -529,6 +531,23 @@ df::item *Units::getContainer(df::unit *unit)
     return NULL;
 }
 
+static df::assumed_identity *getFigureIdentity(df::historical_figure *figure)
+{
+    if (figure && figure->info && figure->info->reputation)
+        return df::assumed_identity::find(figure->info->reputation->cur_identity);
+
+    return NULL;
+}
+
+df::assumed_identity *Units::getIdentity(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
+
+    return getFigureIdentity(figure);
+}
+
 void Units::setNickname(df::unit *unit, std::string nick)
 {
     CHECK_NULL_POINTER(unit);
@@ -547,25 +566,19 @@ void Units::setNickname(df::unit *unit, std::string nick)
     {
         Translation::setNickname(&figure->name, nick);
 
-        // v0.34.01: added the vampire's assumed identity
-        if (figure->info && figure->info->reputation)
+        if (auto identity = getFigureIdentity(figure))
         {
-            auto identity = df::assumed_identity::find(figure->info->reputation->cur_identity);
+            auto id_hfig = df::historical_figure::find(identity->histfig_id);
 
-            if (identity)
+            if (id_hfig)
             {
-                auto id_hfig = df::historical_figure::find(identity->histfig_id);
-
-                if (id_hfig)
-                {
-                    // Even DF doesn't do this bit, because it's apparently
-                    // only used for demons masquerading as gods, so you
-                    // can't ever change their nickname in-game.
-                    Translation::setNickname(&id_hfig->name, nick);
-                }
-                else
-                    Translation::setNickname(&identity->name, nick);
+                // Even DF doesn't do this bit, because it's apparently
+                // only used for demons masquerading as gods, so you
+                // can't ever change their nickname in-game.
+                Translation::setNickname(&id_hfig->name, nick);
             }
+            else
+                Translation::setNickname(&identity->name, nick);
         }
     }
 }
@@ -574,25 +587,14 @@ df::language_name *Units::getVisibleName(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
-
-    if (figure)
+    if (auto identity = getIdentity(unit))
     {
-        // v0.34.01: added the vampire's assumed identity
-        if (figure->info && figure->info->reputation)
-        {
-            auto identity = df::assumed_identity::find(figure->info->reputation->cur_identity);
+        auto id_hfig = df::historical_figure::find(identity->histfig_id);
 
-            if (identity)
-            {
-                auto id_hfig = df::historical_figure::find(identity->histfig_id);
+        if (id_hfig)
+            return &id_hfig->name;
 
-                if (id_hfig)
-                    return &id_hfig->name;
-
-                return &identity->name;
-            }
-        }
+        return &identity->name;
     }
 
     return &unit->name;
@@ -734,7 +736,7 @@ void DFHack::Units::setInBurrow(df::unit *unit, df::burrow *burrow, bool enable)
     }
 }
 
-double DFHack::Units::getAge(df::unit *unit)
+double DFHack::Units::getAge(df::unit *unit, bool true_age)
 {
     using df::global::cur_year;
     using df::global::cur_year_tick;
@@ -748,5 +750,139 @@ double DFHack::Units::getAge(df::unit *unit)
     double birth_time = unit->relations.birth_year + unit->relations.birth_time/year_ticks;
     double cur_time = *cur_year + *cur_year_tick / year_ticks;
 
+    if (!true_age && unit->relations.curse_year >= 0)
+    {
+        if (auto identity = getIdentity(unit))
+        {
+            if (identity->histfig_id < 0)
+                birth_time = identity->birth_year + identity->birth_second/year_ticks;
+        }
+    }
+
     return cur_time - birth_time;
+}
+
+std::string DFHack::Units::getProfessionName(df::unit *unit, bool plural)
+{
+    std::string prof = unit->custom_profession;
+
+    if (prof.empty())
+        prof = getCasteProfessionName(unit->race, unit->caste, unit->profession, plural);
+
+    return prof;
+}
+
+std::string DFHack::Units::getCasteProfessionName(int race, int casteid, df::profession pid, bool plural)
+{
+    std::string prof, race_prefix;
+
+    if (pid < 0 || !is_valid_enum_item(pid))
+        return "";
+
+    bool use_race_prefix = (race >= 0 && race != df::global::ui->race_id);
+
+    if (auto creature = df::creature_raw::find(race))
+    {
+        if (auto caste = vector_get(creature->caste, casteid))
+        {
+            race_prefix = caste->caste_name[0];
+
+            if (plural)
+                prof = caste->caste_profession_name.plural[pid];
+            else
+                prof = caste->caste_profession_name.singular[pid];
+
+            if (prof.empty())
+            {
+                switch (pid)
+                {
+                case profession::CHILD:
+                    prof = caste->child_name[plural ? 1 : 0];
+                    if (!prof.empty())
+                        use_race_prefix = false;
+                    break;
+
+                case profession::BABY:
+                    prof = caste->baby_name[plural ? 1 : 0];
+                    if (!prof.empty())
+                        use_race_prefix = false;
+                    break;
+
+                default:
+                    break;
+                }
+            }
+        }
+
+        if (race_prefix.empty())
+            race_prefix = creature->name[0];
+
+        if (prof.empty())
+        {
+            if (plural)
+                prof = creature->profession_name.plural[pid];
+            else
+                prof = creature->profession_name.singular[pid];
+
+            if (prof.empty())
+            {
+                switch (pid)
+                {
+                case profession::CHILD:
+                    prof = creature->general_child_name[plural ? 1 : 0];
+                    if (!prof.empty())
+                        use_race_prefix = false;
+                    break;
+
+                case profession::BABY:
+                    prof = creature->general_baby_name[plural ? 1 : 0];
+                    if (!prof.empty())
+                        use_race_prefix = false;
+                    break;
+
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
+    if (race_prefix.empty())
+        race_prefix = "Animal";
+
+    if (prof.empty())
+    {
+        switch (pid)
+        {
+        case profession::TRAINED_WAR:
+            prof = "War " + (use_race_prefix ? race_prefix : "Peasant");
+            use_race_prefix = false;
+            break;
+
+        case profession::TRAINED_HUNTER:
+            prof = "Hunting " + (use_race_prefix ? race_prefix : "Peasant");
+            use_race_prefix = false;
+            break;
+
+        case profession::STANDARD:
+            if (!use_race_prefix)
+                prof = "Peasant";
+            break;
+
+        default:
+            if (auto caption = ENUM_ATTR(profession, caption, pid))
+                prof = caption;
+            else
+                prof = ENUM_KEY_STR(profession, pid);
+        }
+    }
+
+    if (use_race_prefix)
+    {
+        if (!prof.empty())
+            race_prefix += " ";
+        prof = race_prefix + prof;
+    }
+
+    return Translation::capitalize(prof, true);
 }

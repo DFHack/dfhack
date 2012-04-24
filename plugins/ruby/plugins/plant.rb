@@ -1,37 +1,37 @@
 module DFHack
 def self.each_tree(material=:any)
-	@raw_tree_name ||= {}
-	if @raw_tree_name.empty?
+	@raws_tree_name ||= {}
+	if @raws_tree_name.empty?
 		df.world.raws.plants.all.each_with_index { |p, idx|
-			@raw_tree_name[idx] = p.id if p.flags[PlantRawFlags::TREE]
+			@raws_tree_name[idx] = p.id if p.flags[PlantRawFlags::TREE]
 		}
 	end
 
 	if material != :any
-		mat = match_rawname(material, @raw_tree_name.values)
-		unless wantmat = @raw_tree_name.index(mat)
+		mat = match_rawname(material, @raws_tree_name.values)
+		unless wantmat = @raws_tree_name.index(mat)
 			raise "invalid tree material #{material}"
 		end
 	end
 
 	world.plants.all.each { |plant|
-		next if not @raw_tree_name[plant.material]
+		next if not @raws_tree_name[plant.material]
 		next if wantmat and plant.material != wantmat
 		yield plant
 	}
 end
 
 def self.each_shrub(material=:any)
-	@raw_shrub_name ||= {}
-	if @raw_tree_name.empty?
+	@raws_shrub_name ||= {}
+	if @raws_tree_name.empty?
 		df.world.raws.plants.all.each_with_index { |p, idx|
-			@raw_shrub_name[idx] = p.id if not p.flags[PlantRawFlags::GRASS] and not p.flags[PlantRawFlags::TREE]
+			@raws_shrub_name[idx] = p.id if not p.flags[PlantRawFlags::GRASS] and not p.flags[PlantRawFlags::TREE]
 		}
 	end
 
 	if material != :any
-		mat = match_rawname(material, @raw_shrub_name.values)
-		unless wantmat = @raw_shrub_name.index(mat)
+		mat = match_rawname(material, @raws_shrub_name.values)
+		unless wantmat = @raws_shrub_name.index(mat)
 			raise "invalid shrub material #{material}"
 		end
 	end
@@ -48,7 +48,7 @@ def self.cuttrees(material=nil, count_max=100)
 			cnt[plant.material] += 1
 		}
 		cnt.sort_by { |mat, c| c }.each { |mat, c|
-			name = @raw_tree_name[mat]
+			name = @raws_tree_name[mat]
 			puts " #{name} #{c}"
 		}
 	else
@@ -79,7 +79,7 @@ def self.growtrees(material=nil, count_max=100)
 			cnt[plant.material] += 1
 		}
 		cnt.sort_by { |mat, c| c }.each { |mat, c|
-			name = @raw_tree_name[mat]
+			name = @raws_tree_name[mat]
 			puts " #{name} #{c}"
 		}
 	else
@@ -91,7 +91,50 @@ def self.growtrees(material=nil, count_max=100)
 			cnt += 1
 			break if cnt == count_max
 		}
-		puts "Grown #{cnt} sapling"
+		puts "Grown #{cnt} saplings"
+	end
+end
+
+def self.growcrops(material=nil, count_max=100)
+	@raws_plant_name ||= {}
+	@raws_plant_growdur ||= {}
+	if @raws_plant_name.empty?
+		df.world.raws.plants.all.each_with_index { |p, idx|
+			@raws_plant_name[idx] = p.id
+			@raws_plant_growdur[idx] = p.growdur
+		}
+	end
+
+	if !material
+		cnt = Hash.new(0)
+		world.items.other[ItemsOtherId::SEEDS].each { |seed|
+			next if not seed.flags.in_building
+			next if not seed.itemrefs.find { |ref| ref._rtti_classname == 'general_ref_building_holderst' }
+			next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
+			cnt[seed.mat_index] += 1
+		}
+		cnt.sort_by { |mat, c| c }.each { |mat, c|
+			name = world.raws.plants.all[mat].id
+			puts " #{name} #{c}"
+		}
+	else
+		if material != :any
+			mat = match_rawname(material, @raws_plant_name.values)
+			unless wantmat = @raws_plant_name.index(mat)
+				raise "invalid plant material #{material}"
+			end
+		end
+
+		cnt = 0
+		world.items.other[ItemsOtherId::SEEDS].each { |seed|
+			next if wantmat and seed.mat_index != wantmat
+			next if not seed.flags.in_building
+			next if not seed.itemrefs.find { |ref| ref._rtti_classname == 'general_ref_building_holderst' }
+			next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
+			seed.grow_counter = @raws_plant_growdur[seed.mat_index]
+			cnt += 1
+		}
+		puts "Grown #{cnt} crops"
 	end
 end
 end

@@ -199,12 +199,17 @@ sub render_global_objects {
         for my $obj (@objects) {
             my $oname = $obj->getAttribute('name');
             my $addr = "DFHack.get_global_address('$oname')";
-            push @lines_rb, "field(:$oname, $addr) {";
-            my $item = $obj->findnodes('child::ld:item')->[0];
+            push @lines_rb, "addr = $addr";
+            push @lines_rb, "if addr != 0";
             indent_rb {
-                render_item($item, 'df::global');
+                push @lines_rb, "field(:$oname, addr) {";
+                my $item = $obj->findnodes('child::ld:item')->[0];
+                indent_rb {
+                    render_item($item, 'df::global');
+                };
+                push @lines_rb, "}";
             };
-            push @lines_rb, "}";
+            push @lines_rb, "end";
 
             push @global_objects, $oname;
         }

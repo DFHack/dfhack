@@ -95,7 +95,13 @@ class Compound < MemStruct
 		cn = self.class.name.sub(/^DFHack::/, '')
 		cn << ' @' << ('0x%X' % _memaddr) if cn != ''
 		out = "#<#{cn}"
-		_fields.each { |n, o, s|
+		fields = _fields
+		cls = self.class.superclass
+		while cls.respond_to?(:_fields)
+			fields += cls._fields.to_a
+			cls = cls.superclass
+		end
+		fields.each { |n, o, s|
 			out << ' ' if out.length != 0 and out[-1, 1] != ' '
 			if out.length > 1024
 				out << '...'

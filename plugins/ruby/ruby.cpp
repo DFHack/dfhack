@@ -278,7 +278,7 @@ static void df_rubythread(void *p)
 }
 
 
-#define BOOL_ISFALSE(v) ((v) == Qfalse || (v) == Qnil || (v) == FIX2INT(0))
+#define BOOL_ISFALSE(v) ((v) == Qfalse || (v) == Qnil || (v) == INT2FIX(0))
 
 // main DFHack ruby module
 static VALUE rb_cDFHack;

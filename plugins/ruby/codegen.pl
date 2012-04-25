@@ -315,6 +315,7 @@ sub render_item_container {
     my $subtype = $item->getAttribute('ld:subtype');
     my $rbmethod = join('_', split('-', $subtype));
     my $tg = $item->findnodes('child::ld:item')->[0];
+    my $indexenum = $item->getAttribute('index-enum');
     if ($tg) {
         if ($rbmethod eq 'df_linked_list') {
             push @lines_rb, "$rbmethod {";
@@ -326,6 +327,9 @@ sub render_item_container {
             render_item($tg, $pns);
         };
         push @lines_rb, "}";
+    } elsif ($indexenum) {
+        $indexenum = rb_ucase($indexenum);
+        push @lines_rb, "$rbmethod(:$indexenum)";
     } else {
         push @lines_rb, "$rbmethod";
     }
@@ -354,7 +358,13 @@ sub render_item_staticarray {
     my $count = $item->getAttribute('count');
     my $tg = $item->findnodes('child::ld:item')->[0];
     my $tglen = get_tglen($tg, $pns);
-    push @lines_rb, "static_array($count, $tglen) {";
+    my $indexenum = $item->getAttribute('index-enum');
+    if ($indexenum) {
+        $indexenum = rb_ucase($indexenum);
+        push @lines_rb, "static_array($count, $tglen, :$indexenum) {";
+    } else {
+        push @lines_rb, "static_array($count, $tglen) {";
+    }
     indent_rb {
         render_item($tg, $pns);
     };

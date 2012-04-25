@@ -36,8 +36,8 @@ class Compound < MemStruct
 		def pointer_ary(tglen)
 			PointerAry.new(tglen, yield)
 		end
-		def static_array(len, tglen)
-			StaticArray.new(tglen, len, yield)
+		def static_array(len, tglen, indexenum=nil)
+			StaticArray.new(tglen, len, indexenum, yield)
 		end
 		def static_string(len)
 			StaticString.new(len)
@@ -61,8 +61,8 @@ class Compound < MemStruct
 			StlDeque.new(tglen, yield)
 		end
 
-		def df_flagarray
-			DfFlagarray.new
+		def df_flagarray(indexenum=nil)
+			DfFlagarray.new(indexenum)
 		end
 		def df_array(tglen)
 			DfArray.new(tglen, yield)
@@ -250,11 +250,22 @@ class PointerAry < MemStruct
 
 	def inspect ; "#<PointerAry #{'0x%X' % _getp}>" ; end
 end
+module IndexEnum
+	def indexenum(idx)
+		if idx.kind_of?(::Symbol) or idx.kind_of?(::String) and _indexenum
+			DFHack.const_get(_indexenum).const_get(idx) || idx
+		else
+			idx
+		end
+	end
+end
 class StaticArray < MemStruct
-	attr_accessor :_tglen, :_length, :_tg
-	def initialize(tglen, length, tg)
+	include IndexEnum
+	attr_accessor :_tglen, :_length, :_indexenum, :_tg
+	def initialize(tglen, length, indexenum, tg)
 		@_tglen = tglen
 		@_length = length
+		@_indexenum = indexenum
 		@_tg = tg
 	end
 	def _set(a)
@@ -266,17 +277,26 @@ class StaticArray < MemStruct
 		@_tg._at(@_memaddr + i*@_tglen) if i >= 0 and i < @_length
 	end
 	def [](i)
+		i = indexenum(i)
 		i += @_length if i < 0
 		_tgat(i)._get
 	end
 	def []=(i, v)
+		i = indexenum(i)
 		i += @_length if i < 0
 		_tgat(i)._set(v)
 	end
 
 	include Enumerable
 	def each ; (0...length).each { |i| yield self[i] } ; end
-	def inspect ; to_a.inspect ; end
+	def inspect
+		if _indexenum
+ 			e = DFHack.const_get(_indexenum)::ENUM
+			'[' + (0...length).map { |i| "#{e[i]}=#{self[i].inspect}" }.join(' ') + ']'
+		else
+			to_a.inspect
+		end
+	end
 end
 class StaticString < MemStruct
 	attr_accessor :_length
@@ -431,6 +451,11 @@ class StlDeque < MemStruct
 end
 
 class DfFlagarray < MemStruct
+	include IndexEnum
+	attr_accessor :_indexenum
+	def initialize(indexenum)
+		@_indexenum = indexenum
+	end
 	def length
 		DFHack.memory_bitarray_length(@_memaddr)
 	end
@@ -439,10 +464,12 @@ class DfFlagarray < MemStruct
 		DFHack.memory_bitarray_resize(@_memaddr, len)
 	end
 	def [](idx)
+		idx = indexenum(idx)
 		idx += length if idx < 0
 		DFHack.memory_bitarray_isset(@_memaddr, idx) if idx >= 0 and idx < length
 	end
 	def []=(idx, v)
+		idx = indexenum(idx)
 		idx += length if idx < 0
 		if idx >= length or idx < 0
 			raise 'invalid idx'
@@ -453,7 +480,14 @@ class DfFlagarray < MemStruct
 
 	include Enumerable
 	def each ; (0...length).each { |i| yield self[i] } ; end
-	def inspect ; to_a.inspect ; end
+	def inspect
+		if _indexenum
+ 			e = DFHack.const_get(_indexenum)::ENUM
+			'[' + (0...length).map { |i| if self[i] ; e[i] || i ; end }.compact.join(' ') + ']'
+		else
+			to_a.inspect
+		end
+	end
 end
 class DfArray < Compound
 	attr_accessor :_tglen, :_tg

@@ -413,7 +413,11 @@ static VALUE rb_dfget_vtable_ptr(VALUE self, VALUE objptr)
 
 static VALUE rb_dfmalloc(VALUE self, VALUE len)
 {
-    return rb_uint2inum((long)malloc(FIX2INT(len)));
+    char *ptr = (char*)malloc(FIX2INT(len));
+    if (!ptr)
+        rb_raise(rb_eRuntimeError, "no memory");
+    memset(ptr, 0, FIX2INT(len));
+    return rb_uint2inum((long)ptr);
 }
 
 static VALUE rb_dffree(VALUE self, VALUE ptr)
@@ -422,16 +426,10 @@ static VALUE rb_dffree(VALUE self, VALUE ptr)
     return Qtrue;
 }
 
-
 // memory reading (buffer)
 static VALUE rb_dfmemory_read(VALUE self, VALUE addr, VALUE len)
 {
     return rb_str_new((char*)rb_num2ulong(addr), rb_num2ulong(len));
-}
-static VALUE rb_dfmemory_read_stlstring(VALUE self, VALUE addr)
-{
-    std::string *s = (std::string*)rb_num2ulong(addr);
-    return rb_str_new(s->c_str(), s->length());
 }
 
 // memory reading (integers/floats)
@@ -464,13 +462,6 @@ static VALUE rb_dfmemory_write(VALUE self, VALUE addr, VALUE raw)
 
     return Qtrue;
 }
-static VALUE rb_dfmemory_write_stlstring(VALUE self, VALUE addr, VALUE val)
-{
-    std::string *s = (std::string*)rb_num2ulong(addr);
-    int strlen = FIX2INT(rb_funcall(val, rb_intern("length"), 0));
-    s->assign(rb_string_value_ptr(&val), strlen);
-    return Qtrue;
-}
 
 // memory writing (integers/floats)
 static VALUE rb_dfmemory_write_int8(VALUE self, VALUE addr, VALUE val)
@@ -496,7 +487,35 @@ static VALUE rb_dfmemory_write_float(VALUE self, VALUE addr, VALUE val)
 }
 
 
+// stl::string
+static VALUE rb_dfmemory_stlstring_init(VALUE self, VALUE addr)
+{
+    // XXX THIS IS TERRIBLE
+    std::string *ptr = new std::string;
+    memcpy((void*)rb_num2ulong(addr), (void*)ptr, sizeof(*ptr));
+    return Qtrue;
+}
+static VALUE rb_dfmemory_read_stlstring(VALUE self, VALUE addr)
+{
+    std::string *s = (std::string*)rb_num2ulong(addr);
+    return rb_str_new(s->c_str(), s->length());
+}
+static VALUE rb_dfmemory_write_stlstring(VALUE self, VALUE addr, VALUE val)
+{
+    std::string *s = (std::string*)rb_num2ulong(addr);
+    int strlen = FIX2INT(rb_funcall(val, rb_intern("length"), 0));
+    s->assign(rb_string_value_ptr(&val), strlen);
+    return Qtrue;
+}
+
+
 // vector access
+static VALUE rb_dfmemory_vec_init(VALUE self, VALUE addr)
+{
+    std::vector<uint8_t> *ptr = new std::vector<uint8_t>;
+    memcpy((void*)rb_num2ulong(addr), (void*)ptr, sizeof(*ptr));
+    return Qtrue;
+}
 // vector<uint8>
 static VALUE rb_dfmemory_vec8_length(VALUE self, VALUE addr)
 {
@@ -646,19 +665,21 @@ static void ruby_bind_dfhack(void) {
     rb_define_const(rb_cDFHack, "REBASE_DELTA", rb_dfrebase_delta());
 
     rb_define_singleton_method(rb_cDFHack, "memory_read", RUBY_METHOD_FUNC(rb_dfmemory_read), 2);
-    rb_define_singleton_method(rb_cDFHack, "memory_read_stlstring", RUBY_METHOD_FUNC(rb_dfmemory_read_stlstring), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_read_int8",  RUBY_METHOD_FUNC(rb_dfmemory_read_int8),  1);
     rb_define_singleton_method(rb_cDFHack, "memory_read_int16", RUBY_METHOD_FUNC(rb_dfmemory_read_int16), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_read_int32", RUBY_METHOD_FUNC(rb_dfmemory_read_int32), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_read_float", RUBY_METHOD_FUNC(rb_dfmemory_read_float), 1);
 
     rb_define_singleton_method(rb_cDFHack, "memory_write", RUBY_METHOD_FUNC(rb_dfmemory_write), 2);
-    rb_define_singleton_method(rb_cDFHack, "memory_write_stlstring", RUBY_METHOD_FUNC(rb_dfmemory_write_stlstring), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_int8",  RUBY_METHOD_FUNC(rb_dfmemory_write_int8),  2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_int16", RUBY_METHOD_FUNC(rb_dfmemory_write_int16), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_int32", RUBY_METHOD_FUNC(rb_dfmemory_write_int32), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_float", RUBY_METHOD_FUNC(rb_dfmemory_write_float), 2);
 
+    rb_define_singleton_method(rb_cDFHack, "memory_stlstring_init",  RUBY_METHOD_FUNC(rb_dfmemory_stlstring_init), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_read_stlstring", RUBY_METHOD_FUNC(rb_dfmemory_read_stlstring), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_write_stlstring", RUBY_METHOD_FUNC(rb_dfmemory_write_stlstring), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector_init",  RUBY_METHOD_FUNC(rb_dfmemory_vec_init), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_vector8_length",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_length), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_vector8_ptrat",   RUBY_METHOD_FUNC(rb_dfmemory_vec8_ptrat), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vector8_insert",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_insert), 3);

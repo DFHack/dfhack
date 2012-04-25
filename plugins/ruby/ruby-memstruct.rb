@@ -17,6 +17,13 @@ class Compound < MemStruct
 			define_method(name) { struct._at(@_memaddr+offset)._get }
 			define_method("#{name}=") { |v| struct._at(@_memaddr+offset)._set(v) }
 		end
+		def _fields_ancestors
+			if superclass.respond_to?(:_fields_ancestors)
+				superclass._fields_ancestors + _fields.to_a
+			else
+				_fields.to_a
+			end
+		end
 
 		def number(bits, signed)
 			Number.new(bits, signed)
@@ -86,22 +93,41 @@ class Compound < MemStruct
 		def sizeof(n)
 			@_sizeof = n
 		end
+
+		# allocate a new c++ object, return its ruby wrapper
+		def cpp_new
+			ptr = DFHack.malloc(_sizeof)
+			if _rtti_classname and vt = DFHack.rtti_getvtable(_rtti_classname)
+				DFHack.memory_write_int32(ptr, vt)
+				# TODO call constructor
+			end
+			new._at(ptr)._cpp_init
+		end
+	end
+	def _cpp_init
+		_fields.each { |n, o, s|
+			case s
+			when StlString
+				DFHack.memory_stlstring_init(@_memaddr+o)
+			when StlVector32
+				# englobes all vectors
+				DFHack.memory_vector_init(@_memaddr+o)
+			when Compound
+				send(n)._cpp_init
+			end
+		}
+		self
 	end
 	def _set(h) ; h.each { |k, v| send("_#{k}=", v) } ; end
 	def _fields ; self.class._fields.to_a ; end
+	def _fields_ancestors ; self.class._fields_ancestors.to_a ; end
 	def _rtti_classname ; self.class._rtti_classname ; end
 	def _sizeof ; self.class._sizeof ; end
 	def inspect
 		cn = self.class.name.sub(/^DFHack::/, '')
 		cn << ' @' << ('0x%X' % _memaddr) if cn != ''
 		out = "#<#{cn}"
-		fields = _fields
-		cls = self.class.superclass
-		while cls.respond_to?(:_fields)
-			fields += cls._fields.to_a
-			cls = cls.superclass
-		end
-		fields.each { |n, o, s|
+		_fields_ancestors.each { |n, o, s|
 			out << ' ' if out.length != 0 and out[-1, 1] != ' '
 			if out.length > 1024
 				out << '...'
@@ -207,6 +233,17 @@ class Pointer < MemStruct
 		addr = _getp
 		return if addr == 0
 		@_tg._at(addr)._get
+	end
+
+	# XXX shaky...
+	def _set(v)
+		if v.kind_of?(Pointer)
+			DFHack.memory_write_int32(@_memaddr, v._getv)
+		elsif v.kind_of?(MemStruct)
+			DFHack.memory_write_int32(@_memaddr, v._memaddr)
+		else
+			_getv._set(v)
+		end
 	end
 
 	# these ruby Object methods should be forwarded to the ptr

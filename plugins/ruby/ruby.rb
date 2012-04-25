@@ -31,11 +31,11 @@ module DFHack
                 nil
             end
 
-	    def p(*a)
-		    a.each { |e|
-			    puts e.inspect
-		    }
-	    end
+            def p(*a)
+                a.each { |e|
+                    puts_err e.inspect
+                }
+            end
         end
 
         # register a callback to be called every gframe or more
@@ -114,61 +114,61 @@ module DFHack
             end
         end
 
-	def map_designation_at(x, y=nil, z=nil)
-		x = x.pos if x.respond_to?(:pos)
-		x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
-		if b = map_block_at(x, y, z)
-			b.designation[x%16][y%16]
-		end
-	end
+        def map_designation_at(x, y=nil, z=nil)
+            x = x.pos if x.respond_to?(:pos)
+            x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
+            if b = map_block_at(x, y, z)
+                b.designation[x%16][y%16]
+            end
+        end
 
-	def map_occupancy_at(x, y=nil, z=nil)
-		x = x.pos if x.respond_to?(:pos)
-		x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
-		if b = map_block_at(x, y, z)
-			b.occupancy[x%16][y%16]
-		end
-	end
+        def map_occupancy_at(x, y=nil, z=nil)
+            x = x.pos if x.respond_to?(:pos)
+            x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
+            if b = map_block_at(x, y, z)
+                b.occupancy[x%16][y%16]
+            end
+        end
 
-	# yields every map block
-	def each_map_block
-		(0...world.map.x_count_block).each { |xb|
-			xl = world.map.block_index[xb]
-			(0...world.map.y_count_block).each { |yb|
-				yl = xl[yb]
-				(0...world.map.z_count_block).each { |z|
-					p = yl[z]
-					yield p._getv if p._getp != 0
-				}
-			}
-		}
-	end
+        # yields every map block
+        def each_map_block
+            (0...world.map.x_count_block).each { |xb|
+                xl = world.map.block_index[xb]
+                (0...world.map.y_count_block).each { |yb|
+                    yl = xl[yb]
+                    (0...world.map.z_count_block).each { |z|
+                        p = yl[z]
+                        yield p._getv if p._getp != 0
+                    }
+                }
+            }
+        end
 
-	# yields every map block for a given z level
-	def each_map_block_z(z)
-		(0...world.map.x_count_block).each { |xb|
-			xl = world.map.block_index[xb]
-			(0...world.map.y_count_block).each { |yb|
-				p = xl[yb][z]
-				yield p._getv if p._getp != 0
-			}
-		}
-	end
+        # yields every map block for a given z level
+        def each_map_block_z(z)
+            (0...world.map.x_count_block).each { |xb|
+                xl = world.map.block_index[xb]
+                (0...world.map.y_count_block).each { |yb|
+                    p = xl[yb][z]
+                    yield p._getv if p._getp != 0
+                }
+            }
+        end
 
-	# return true if the argument is under the cursor
-	def at_cursor?(obj)
-		same_pos?(obj, cursor)
-	end
+        # return true if the argument is under the cursor
+        def at_cursor?(obj)
+            same_pos?(obj, cursor)
+        end
 
-	# returns true if both arguments are at the same x/y/z
-	def same_pos?(pos1, pos2)
-		pos1 = pos1.pos if pos1.respond_to?(:pos)
-		pos2 = pos2.pos if pos2.respond_to?(:pos)
-		pos1.x == pos2.x and pos1.y == pos2.y and pos1.z == pos2.z
-	end
+        # returns true if both arguments are at the same x/y/z
+        def same_pos?(pos1, pos2)
+            pos1 = pos1.pos if pos1.respond_to?(:pos)
+            pos2 = pos2.pos if pos2.respond_to?(:pos)
+            pos1.x == pos2.x and pos1.y == pos2.y and pos1.z == pos2.z
+        end
 
-	# center the DF screen on something
-	# updates the cursor position if visible
+        # center the DF screen on something
+        # updates the cursor position if visible
         def center_viewscreen(x, y=nil, z=nil)
             x = x.pos if x.respond_to?(:pos)
             x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
@@ -207,10 +207,10 @@ module DFHack
 
         # add an announcement
         # color = integer, bright = bool
-        def add_announcement(str, color=0, bright=false)
+        def add_announcement(str, color=7, bright=false)
             cont = false
             while str.length > 0
-                rep = Report.cpp_alloc
+                rep = Report.cpp_new
                 rep.color = color
                 rep.bright = ((bright && bright != 0) ? 1 : 0)
                 rep.year = cur_year
@@ -228,15 +228,15 @@ module DFHack
             end
         end
 
-	# try to match a user-specified name to one from the raws
-	# uses case-switching and substring matching
-	# eg match_rawname('coal', ['COAL_BITUMINOUS', 'BAUXITE']) => 'COAL_BITUMINOUS'
-	def match_rawname(name, rawlist)
-		rawlist.each { |r| return r if name == r }
-		rawlist.each { |r| return r if name.downcase == r.downcase }
-		may = rawlist.find_all { |r| r.downcase.index(name.downcase) }
-		may.first if may.length == 1
-	end
+        # try to match a user-specified name to one from the raws
+        # uses case-switching and substring matching
+        # eg match_rawname('coal', ['COAL_BITUMINOUS', 'BAUXITE']) => 'COAL_BITUMINOUS'
+        def match_rawname(name, rawlist)
+            rawlist.each { |r| return r if name == r }
+            rawlist.each { |r| return r if name.downcase == r.downcase }
+            may = rawlist.find_all { |r| r.downcase.index(name.downcase) }
+            may.first if may.length == 1
+        end
 
         def test
             puts "starting"

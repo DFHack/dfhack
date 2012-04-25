@@ -42,10 +42,12 @@ def self.cuttrees(material=nil, count_max=100)
 	if !material
 		# list trees
 		cnt = Hash.new(0)
-		each_tree { |plant|
-			next if plant.grow_counter < SaplingToTreeAge
-			next if find_map_designation(plant).hidden
-			cnt[plant.material] += 1
+		suspend {
+			each_tree { |plant|
+				next if plant.grow_counter < SaplingToTreeAge
+				next if map_designation_at(plant).hidden
+				cnt[plant.material] += 1
+			}
 		}
 		cnt.sort_by { |mat, c| c }.each { |mat, c|
 			name = @raws_tree_name[mat]
@@ -53,17 +55,19 @@ def self.cuttrees(material=nil, count_max=100)
 		}
 	else
 		cnt = 0
-		each_tree(material) { |plant|
-			next if plant.grow_counter < SaplingToTreeAge
-			b = find_map_block(plant)
-			d = b.designation[plant.pos.x%16][plant.pos.y%16]
-			next if d.hidden
-			if d.dig == TileDigDesignation::No
-				d.dig = TileDigDesignation::Default
-				b.flags.designated = true
-				cnt += 1
-				break if cnt == count_max
-			end
+		suspend {
+			each_tree(material) { |plant|
+				next if plant.grow_counter < SaplingToTreeAge
+				b = map_block_at(plant)
+				d = b.designation[plant.pos.x%16][plant.pos.y%16]
+				next if d.hidden
+				if d.dig == TileDigDesignation::No
+					d.dig = TileDigDesignation::Default
+					b.flags.designated = true
+					cnt += 1
+					break if cnt == count_max
+				end
+			}
 		}
 		puts "Updated #{cnt} plant designations"
 	end
@@ -73,10 +77,12 @@ def self.growtrees(material=nil, count_max=100)
 	if !material
 		# list plants
 		cnt = Hash.new(0)
-		each_tree { |plant|
-			next if plant.grow_counter >= SaplingToTreeAge
-			next if find_map_designation(plant).hidden
-			cnt[plant.material] += 1
+		suspend {
+			each_tree { |plant|
+				next if plant.grow_counter >= SaplingToTreeAge
+				next if map_designation_at(plant).hidden
+				cnt[plant.material] += 1
+			}
 		}
 		cnt.sort_by { |mat, c| c }.each { |mat, c|
 			name = @raws_tree_name[mat]
@@ -84,12 +90,14 @@ def self.growtrees(material=nil, count_max=100)
 		}
 	else
 		cnt = 0
-		each_tree(material) { |plant|
-			next if plant.grow_counter >= SaplingToTreeAge
-			next if find_map_designation(plant).hidden
-			p.grow_counter = SaplingToTreeAge
-			cnt += 1
-			break if cnt == count_max
+		suspend {
+			each_tree(material) { |plant|
+				next if plant.grow_counter >= SaplingToTreeAge
+				next if map_designation_at(plant).hidden
+				plant.grow_counter = SaplingToTreeAge
+				cnt += 1
+				break if cnt == count_max
+			}
 		}
 		puts "Grown #{cnt} saplings"
 	end
@@ -107,11 +115,13 @@ def self.growcrops(material=nil, count_max=100)
 
 	if !material
 		cnt = Hash.new(0)
-		world.items.other[ItemsOtherId::SEEDS].each { |seed|
-			next if not seed.flags.in_building
-			next if not seed.itemrefs.find { |ref| ref._rtti_classname == 'general_ref_building_holderst' }
-			next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
-			cnt[seed.mat_index] += 1
+		suspend {
+			world.items.other[ItemsOtherId::SEEDS].each { |seed|
+				next if not seed.flags.in_building
+				next if not seed.itemrefs.find { |ref| ref._rtti_classname == 'general_ref_building_holderst' }
+				next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
+				cnt[seed.mat_index] += 1
+			}
 		}
 		cnt.sort_by { |mat, c| c }.each { |mat, c|
 			name = world.raws.plants.all[mat].id
@@ -126,13 +136,15 @@ def self.growcrops(material=nil, count_max=100)
 		end
 
 		cnt = 0
-		world.items.other[ItemsOtherId::SEEDS].each { |seed|
-			next if wantmat and seed.mat_index != wantmat
-			next if not seed.flags.in_building
-			next if not seed.itemrefs.find { |ref| ref._rtti_classname == 'general_ref_building_holderst' }
-			next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
-			seed.grow_counter = @raws_plant_growdur[seed.mat_index]
-			cnt += 1
+		suspend {
+			world.items.other[ItemsOtherId::SEEDS].each { |seed|
+				next if wantmat and seed.mat_index != wantmat
+				next if not seed.flags.in_building
+				next if not seed.itemrefs.find { |ref| ref._rtti_classname == 'general_ref_building_holderst' }
+				next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
+				seed.grow_counter = @raws_plant_growdur[seed.mat_index]
+				cnt += 1
+			}
 		}
 		puts "Grown #{cnt} crops"
 	end

@@ -30,7 +30,6 @@ enum RB_command {
     RB_IDLE,
     RB_INIT,
     RB_DIE,
-    RB_LOAD,
     RB_EVAL,
     RB_CUSTOM,
 };
@@ -70,10 +69,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
                 "Ruby interpreter. Eval() a ruby string.",
                 df_rubyeval));
 
-    commands.push_back(PluginCommand("r",
-                "Ruby interpreter dev. Eval() a ruby string.",
-                df_rubyeval));
-
     return CR_OK;
 }
 
@@ -98,24 +93,26 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onupdate ( color_ostream &out )
+// send a single ruby line to be evaluated by the ruby thread
+static command_result plugin_eval_rb(const char *command)
 {
-    if (!onupdate_active)
-        return CR_OK;
-
     command_result ret;
 
+    // serialize 'accesses' to the ruby thread
     m_mutex->lock();
     if (!r_thread)
+        // raced with plugin_shutdown ?
         return CR_OK;
 
     r_type = RB_EVAL;
-    r_command = "DFHack.onupdate";
+    r_command = command;
     m_irun->unlock();
 
+    // could use a condition_variable or something...
     while (r_type != RB_IDLE)
         tthread::this_thread::yield();
 
+    // XXX non-atomic with previous r_type change check
     ret = r_result;
 
     m_irun->lock();
@@ -124,36 +121,49 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     return ret;
 }
 
+static command_result plugin_eval_rb(std::string &command)
+{
+    return plugin_eval_rb(command.c_str());
+}
+
+DFhackCExport command_result plugin_onupdate ( color_ostream &out )
+{
+    if (!onupdate_active)
+        return CR_OK;
+
+    return plugin_eval_rb("DFHack.onupdate");
+}
+
+DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_change_event e)
+{
+    std::string cmd = "DFHack.onstatechange ";
+    switch (e) {
+#define SCASE(s) case SC_ ## s : cmd += ":" # s ; break
+        SCASE(WORLD_LOADED);
+        SCASE(WORLD_UNLOADED);
+        SCASE(MAP_LOADED);
+        SCASE(MAP_UNLOADED);
+        SCASE(VIEWSCREEN_CHANGED);
+        SCASE(CORE_INITIALIZED);
+        SCASE(BEGIN_UNLOAD);
+    }
+
+    return plugin_eval_rb(cmd);
+}
+
 static command_result df_rubyload(color_ostream &out, std::vector <std::string> & parameters)
 {
-    command_result ret;
-
     if (parameters.size() == 1 && (parameters[0] == "help" || parameters[0] == "?"))
     {
         out.print("This command loads the ruby script whose path is given as parameter, and run it.\n");
         return CR_OK;
     }
 
-    // serialize 'accesses' to the ruby thread
-    m_mutex->lock();
-    if (!r_thread)
-        // raced with plugin_shutdown ?
-        return CR_OK;
+    std::string cmd = "load '";
+    cmd += parameters[0];       // TODO escape singlequotes
+    cmd += "'";
 
-    r_type = RB_LOAD;
-    r_command = parameters[0].c_str();
-    m_irun->unlock();
-
-    // could use a condition_variable or something...
-    while (r_type != RB_IDLE)
-        tthread::this_thread::yield();
-    // XXX non-atomic with previous r_type change check
-    ret = r_result;
-
-    m_irun->lock();
-    m_mutex->unlock();
-
-    return ret;
+    return plugin_eval_rb(cmd);
 }
 
 static command_result df_rubyeval(color_ostream &out, std::vector <std::string> & parameters)
@@ -167,32 +177,14 @@ static command_result df_rubyeval(color_ostream &out, std::vector <std::string> 
     }
 
     std::string full = "";
-    full += "DFHack.puts((";
 
     for (unsigned i=0 ; i<parameters.size() ; ++i) {
         full += parameters[i];
-        full += " ";
+        if (i != parameters.size()-1)
+            full += " ";
     }
 
-    full += ").inspect)";
-
-    m_mutex->lock();
-    if (!r_thread)
-        return CR_OK;
-
-    r_type = RB_EVAL;
-    r_command = full.c_str();
-    m_irun->unlock();
-
-    while (r_type != RB_IDLE)
-        tthread::this_thread::yield();
-
-    ret = r_result;
-
-    m_irun->lock();
-    m_mutex->unlock();
-
-    return ret;
+    return plugin_eval_rb(full);
 }
 
 
@@ -219,6 +211,8 @@ static void dump_rb_error(void)
             Core::printerr(" %s\n", rb_string_value_ptr(&s));
 }
 
+static color_ostream_proxy *console_proxy;
+
 // ruby thread main loop
 static void df_rubythread(void *p)
 {
@@ -232,6 +226,8 @@ static void df_rubythread(void *p)
 
     // create the ruby objects to map DFHack to ruby methods
     ruby_bind_dfhack();
+
+    console_proxy = new color_ostream_proxy(Core::getInstance().getConsole());
 
     r_result = CR_OK;
     r_type = RB_IDLE;
@@ -249,13 +245,6 @@ static void df_rubythread(void *p)
         case RB_DIE:
             running = 0;
             ruby_finalize();
-            break;
-
-        case RB_LOAD:
-            state = 0;
-            rb_load_protect(rb_str_new2(r_command), Qfalse, &state);
-            if (state)
-                dump_rb_error();
             break;
 
         case RB_EVAL:
@@ -339,9 +328,7 @@ static VALUE rb_dfrebase_delta(void)
 
 static VALUE rb_dfprint_str(VALUE self, VALUE s)
 {
-    // TODO color_ostream proxy yadda yadda
-    //getcore().con.print("%s", rb_string_value_ptr(&s));
-    Core::printerr("%s", rb_string_value_ptr(&s));
+    console_proxy->print("%s", rb_string_value_ptr(&s));
     return Qnil;
 }
 
@@ -622,7 +609,7 @@ static VALUE rb_dfmemory_vecbool_delete(VALUE self, VALUE addr, VALUE idx)
 static VALUE rb_dfmemory_bitarray_length(VALUE self, VALUE addr)
 {
     DFHack::BitArray<int> *b = (DFHack::BitArray<int>*)rb_num2ulong(addr);
-    return rb_uint2inum(b->size*8);	// b->size is in bytes
+    return rb_uint2inum(b->size*8);     // b->size is in bytes
 }
 static VALUE rb_dfmemory_bitarray_resize(VALUE self, VALUE addr, VALUE sz)
 {

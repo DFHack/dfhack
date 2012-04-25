@@ -55,8 +55,29 @@ module DFHack
 
         # this method is called by dfhack every 'onupdate' if onupdate_active is true
         def onupdate
+            @onupdate_list ||= []
             @onupdate_list.each { |cb| cb.call }
         end
+
+        # register a callback to be called every gframe or more
+        # ex: DFHack.onstatechange_register { |newstate| puts "state changed to #{newstate}" }
+        def onstatechange_register(&b)
+            @onstatechange_list ||= []
+            @onstatechange_list << b
+            @onstatechange_list.last
+        end
+
+        # delete the callback for onstatechange ; use the value returned by onstatechange_register
+        def onstatechange_unregister(b)
+            @onstatechange_list.delete b
+        end
+
+        # this method is called by dfhack every 'onstatechange'
+        def onstatechange(newstate)
+            @onstatechange_list ||= []
+            @onstatechange_list.each { |cb| cb.call(newstate) }
+        end
+
 
         # return an Unit
         # with no arg, return currently selected unit in df UI ('v' or 'k' menu)
@@ -236,26 +257,6 @@ module DFHack
             rawlist.each { |r| return r if name.downcase == r.downcase }
             may = rawlist.find_all { |r| r.downcase.index(name.downcase) }
             may.first if may.length == 1
-        end
-
-        def test
-            puts "starting"
-
-            suspend {
-                puts "cursor pos: #{cursor.x} #{cursor.y} #{cursor.z}"
-
-                if u = find_unit
-                    puts "selected unit id: #{u.id}"
-                end
-
-                if b = map_block_at(cursor)
-                    map_designation_at(cursor).dig = TileDigDesignation::Default
-                    b.flags.designated = true
-                    puts "dug cursor tile"
-                end
-            }
-
-            puts "done"
         end
     end
 end

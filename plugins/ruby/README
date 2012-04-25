@@ -112,5 +112,4 @@ really a Pointer (with no 'pos' method).
 Todo
 ----
 
-New C++ object allocation ; update vector/compound fields with pointers ; bind
-onstatechange
+Correct c++ object (de)allocation (call ctor etc)

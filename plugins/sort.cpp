@@ -34,9 +34,12 @@ using namespace df::enums;
 
 using df::global::ui;
 using df::global::world;
-using df::global::ui_building_in_owner;
+using df::global::ui_building_in_assign;
 using df::global::ui_building_item_cursor;
-using df::global::ui_owner_candidates;
+using df::global::ui_building_assign_type;
+using df::global::ui_building_assign_is_marked;
+using df::global::ui_building_assign_units;
+using df::global::ui_building_assign_items;
 
 static bool unit_list_hotkey(df::viewscreen *top);
 
@@ -452,22 +455,44 @@ static bool maybe_sort_units(color_ostream *pout, lua_State *L,
             return true;
 
         case ui_sidebar_mode::QueryBuilding:
-            if (ui_building_in_owner && *ui_building_in_owner &&
-                ui_owner_candidates && ui_building_item_cursor)
+            if (!ui_building_in_assign || !*ui_building_in_assign)
+                return false;
+            // fall through for building owner / chain assign animal
+
+        case ui_sidebar_mode::ZonesPenInfo:
+            if (ui_building_item_cursor &&
+                ui_building_assign_type &&
+                ui_building_assign_is_marked &&
+                ui_building_assign_units &&
+                ui_building_assign_items &&
+                ui_building_assign_type->size() == ui_building_assign_units->size() &&
+                !ui_building_assign_type->empty())
             {
                 if (!L) return true;
 
                 /*
-                 * Sort building owner candidate units in the 'q' sidebar mode.
+                 * Sort building owner candidate units in the 'q' sidebar mode,
+                 * or pen assignment candidate units in 'z'->'N', or cage assignment.
                  */
 
-                sort_null_first(parameters);
+                // TODO: better way
+                bool is_assign_owner = ((*ui_building_assign_type)[0] == -1);
+
+                if (is_assign_owner)
+                    sort_null_first(parameters);
+
                 PARSE_SPEC("units", parameters);
 
-                if (compute_order(*pout, L, top, &order, *ui_owner_candidates))
+                if (compute_order(*pout, L, top, &order, *ui_building_assign_units))
                 {
                     reorder_cursor(ui_building_item_cursor, order);
-                    reorder_vector(ui_owner_candidates, order);
+                    reorder_vector(ui_building_assign_type, order);
+                    reorder_vector(ui_building_assign_units, order);
+
+                    if (ui_building_assign_units->size() == ui_building_assign_items->size())
+                        reorder_vector(ui_building_assign_items, order);
+                    if (ui_building_assign_units->size() == ui_building_assign_is_marked->size())
+                        reorder_vector(ui_building_assign_is_marked, order);
                 }
 
                 return true;

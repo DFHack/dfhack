@@ -374,6 +374,10 @@ command_result df_liquids_execute(color_ostream &out)
         DFHack::DFCoord cursor(x,y,z);
         coord_vec all_tiles = brush->points(mcache,cursor);
         out << "working..." << endl;
+
+        // Force the game to recompute its walkability cache
+        df::global::world->reindex_pathfinding = true;
+
         if(mode == "obsidian")
         {
             coord_vec::iterator iter = all_tiles.begin();

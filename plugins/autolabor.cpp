@@ -784,6 +784,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                     dwarf_info[dwarf].medical = true;
 
             }
+            dwarf_info[dwarf].noble_penalty = noble_penalty;
         }
 
 		for (auto s = dwarfs[dwarf]->status.souls[0]->skills.begin(); s != dwarfs[dwarf]->status.souls[0]->skills.end(); s++)

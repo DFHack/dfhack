@@ -45,6 +45,7 @@ my %item_renderer = (
     'bytes' => \&render_item_bytes,
 );
 
+my %global_types;
 
 my %seen_enum_name;
 sub render_global_enum {
@@ -65,7 +66,32 @@ sub render_enum_fields {
     my $idxname = 'ENUM';
     $idxname .= '_' while ($seen_enum_name{$idxname});
     $seen_enum_name{$idxname}++;
-    push @lines_rb, "$idxname = {}";
+    push @lines_rb, "$idxname = Hash.new";
+
+    my %attr_type;
+    for my $attr ($type->findnodes('child::enum-attr')) {
+        my $rbattr = rb_ucase($attr->getAttribute('name'));
+        my $typeattr = $attr->getAttribute('type-name');
+        if ($typeattr) {
+            if ($global_types{$typeattr}) {
+                $attr_type{$rbattr} = 'symbol';
+            } else {
+                $attr_type{$rbattr} = 'naked';
+            }
+        } else {
+            $attr_type{$rbattr} = 'quote';
+        }
+
+        my $def = $attr->getAttribute('default-value');
+        if ($def) {
+            $def = ":$def" if ($attr_type{$rbattr} eq 'symbol');
+            $def = "'$def'" if ($attr_type{$rbattr} eq 'quote');
+            push @lines_rb, "$rbattr = Hash.new($def)";
+        } else {
+            push @lines_rb, "$rbattr = Hash.new";
+        }
+    }
+
     for my $item ($type->findnodes('child::enum-item')) {
         $value = $item->getAttribute('value') || ($value+1);
         my $elemname = $item->getAttribute('name'); # || "unk_$value";
@@ -75,6 +101,14 @@ sub render_enum_fields {
             $rbelemname .= '_' while ($seen_enum_name{$rbelemname});
             $seen_enum_name{$rbelemname}++;
             push @lines_rb, "$rbelemname = $value ; ${idxname}[$value] = :$rbelemname";
+            for my $iattr ($item->findnodes('child::item-attr')) {
+                my $ian = $iattr->getAttribute('name');
+                my $iav = $iattr->getAttribute('value');
+                my $rbattr = rb_ucase($ian);
+                $iav = ":$iav" if ($attr_type{$rbattr} eq 'symbol');
+                $iav = "'$iav'" if ($attr_type{$rbattr} eq 'quote');
+                $lines_rb[$#lines_rb] .= " ; ${rbattr}[$value] = $iav";
+            }
         }
     }
 }
@@ -115,7 +149,6 @@ sub render_bitfield_fields {
 }
 
 
-my %global_types;
 my $cpp_var_counter = 0;
 my %seen_class;
 sub render_global_class {

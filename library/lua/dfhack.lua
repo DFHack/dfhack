@@ -125,6 +125,14 @@ function xyz2pos(x,y,z)
     end
 end
 
+function rawset_default(target,source)
+    for k,v in pairs(source) do
+        if rawget(target,k) == nil then
+            rawset(target,k,v)
+        end
+    end
+end
+
 function safe_index(obj,idx,...)
     if obj == nil or idx == nil then
         return nil

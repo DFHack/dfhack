@@ -214,11 +214,6 @@ DFHACK_EXPORT bool isSane(df::unit *unit);
 DFHACK_EXPORT bool isCitizen(df::unit *unit);
 DFHACK_EXPORT bool isDwarf(df::unit *unit);
 
-DFHACK_EXPORT void clearBurrowMembers(df::burrow *burrow);
-
-DFHACK_EXPORT bool isInBurrow(df::unit *unit, df::burrow *burrow);
-DFHACK_EXPORT void setInBurrow(df::unit *unit, df::burrow *burrow, bool enable);
-
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 
 struct NoblePosition {

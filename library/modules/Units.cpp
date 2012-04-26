@@ -677,68 +677,6 @@ bool DFHack::Units::isDwarf(df::unit *unit)
     return unit->race == ui->race_id;
 }
 
-void DFHack::Units::clearBurrowMembers(df::burrow *burrow)
-{
-    CHECK_NULL_POINTER(burrow);
-
-    for (size_t i = 0; i < burrow->units.size(); i++)
-    {
-        auto unit = df::unit::find(burrow->units[i]);
-
-        if (unit)
-            erase_from_vector(unit->burrows, burrow->id);
-    }
-
-    burrow->units.clear();
-
-    // Sync ui if active
-    if (ui && ui->main.mode == ui_sidebar_mode::Burrows &&
-        ui->burrows.in_add_units_mode && ui->burrows.sel_id == burrow->id)
-    {
-        auto &sel = ui->burrows.sel_units;
-
-        for (size_t i = 0; i < sel.size(); i++)
-            sel[i] = false;
-    }
-}
-
-
-bool DFHack::Units::isInBurrow(df::unit *unit, df::burrow *burrow)
-{
-    CHECK_NULL_POINTER(unit);
-    CHECK_NULL_POINTER(burrow);
-
-    return binsearch_index(unit->burrows, burrow->id) >= 0;
-}
-
-void DFHack::Units::setInBurrow(df::unit *unit, df::burrow *burrow, bool enable)
-{
-    using df::global::ui;
-
-    CHECK_NULL_POINTER(unit);
-    CHECK_NULL_POINTER(burrow);
-
-    if (enable)
-    {
-        insert_into_vector(unit->burrows, burrow->id);
-        insert_into_vector(burrow->units, unit->id);
-    }
-    else
-    {
-        erase_from_vector(unit->burrows, burrow->id);
-        erase_from_vector(burrow->units, unit->id);
-    }
-
-    // Sync ui if active
-    if (ui && ui->main.mode == ui_sidebar_mode::Burrows &&
-        ui->burrows.in_add_units_mode && ui->burrows.sel_id == burrow->id)
-    {
-        int idx = linear_index(ui->burrows.list_units, unit);
-        if (idx >= 0)
-            ui->burrows.sel_units[idx] = enable;
-    }
-}
-
 double DFHack::Units::getAge(df::unit *unit, bool true_age)
 {
     using df::global::cur_year;

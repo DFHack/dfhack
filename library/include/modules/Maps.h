@@ -255,35 +255,6 @@ extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
 
 /// remove a block event from the block by address
 extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which );
-
-/*
- * BURROWS
- */
-
-DFHACK_EXPORT df::burrow *findBurrowByName(std::string name);
-
-DFHACK_EXPORT void listBurrowBlocks(std::vector<df::map_block*> *pvec, df::burrow *burrow);
-DFHACK_EXPORT void clearBurrowTiles(df::burrow *burrow);
-
-DFHACK_EXPORT df::block_burrow *getBlockBurrowMask(df::burrow *burrow, df::map_block *block, bool create = false);
-DFHACK_EXPORT bool deleteBlockBurrowMask(df::burrow *burrow, df::map_block *block, df::block_burrow *mask);
-
-inline bool deleteBlockBurrowMask(df::burrow *burrow, df::map_block *block)
-{
-    return deleteBlockBurrowMask(burrow, block, getBlockBurrowMask(burrow, block));
-}
-
-
-DFHACK_EXPORT bool isBlockBurrowTile(df::burrow *burrow, df::map_block *block, df::coord2d tile);
-DFHACK_EXPORT bool setBlockBurrowTile(df::burrow *burrow, df::map_block *block, df::coord2d tile, bool enable);
-
-inline bool isBurrowTile(df::burrow *burrow, df::coord tile) {
-    return isBlockBurrowTile(burrow, getTileBlock(tile), tile);
-}
-inline bool setBurrowTile(df::burrow *burrow, df::coord tile, bool enable) {
-    return setBlockBurrowTile(burrow, getTileBlock(tile), tile, enable);
-}
-
 }
 }
 #endif

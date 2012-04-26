@@ -342,17 +342,18 @@ ul.auto-toc {
 <li><a class="reference internal" href="#units-module" id="id16">Units module</a></li>
 <li><a class="reference internal" href="#items-module" id="id17">Items module</a></li>
 <li><a class="reference internal" href="#maps-module" id="id18">Maps module</a></li>
+<li><a class="reference internal" href="#burrows-module" id="id19">Burrows module</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#core-interpreter-context" id="id19">Core interpreter context</a><ul>
-<li><a class="reference internal" href="#event-type" id="id20">Event type</a></li>
+<li><a class="reference internal" href="#core-interpreter-context" id="id20">Core interpreter context</a><ul>
+<li><a class="reference internal" href="#event-type" id="id21">Event type</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#plugins" id="id21">Plugins</a><ul>
-<li><a class="reference internal" href="#burrows" id="id22">burrows</a></li>
-<li><a class="reference internal" href="#sort" id="id23">sort</a></li>
+<li><a class="reference internal" href="#plugins" id="id22">Plugins</a><ul>
+<li><a class="reference internal" href="#burrows" id="id23">burrows</a></li>
+<li><a class="reference internal" href="#sort" id="id24">sort</a></li>
 </ul>
 </li>
 </ul>
@@ -946,15 +947,6 @@ a lua list containing them.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.units.isSane(unit)</tt></p>
 <p>The unit is capable of rational action, i.e. not dead, insane or zombie.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.units.clearBurrowMembers(burrow)</tt></p>
-<p>Removes all units from the burrow.</p>
-</li>
-<li><p class="first"><tt class="docutils literal">dfhack.units.isInBurrow(unit,burrow)</tt></p>
-<p>Checks if the unit is in the burrow.</p>
-</li>
-<li><p class="first"><tt class="docutils literal">dfhack.units.setInBurrow(unit,burrow,enable)</tt></p>
-<p>Adds or removes the unit from the burrow.</p>
-</li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.units.getAge(unit[,true_age])</span></tt></p>
 <p>Returns the age of the unit in years as a floating-point value.
 If <tt class="docutils literal">true_age</tt> is true, ignores false identities.</p>
@@ -1023,32 +1015,46 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getLocalInitFeature(region_coord2d,index)</tt></p>
 <p>Returns the local feature object with the given region coords and index.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.maps.findBurrowByName(name)</tt></p>
+</ul>
+</div>
+<div class="section" id="burrows-module">
+<h3><a class="toc-backref" href="#id19">Burrows module</a></h3>
+<ul>
+<li><p class="first"><tt class="docutils literal">dfhack.burrows.findByName(name)</tt></p>
 <p>Returns the burrow pointer or <em>nil</em>.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.maps.listBurrowBlocks(burrow)</tt></p>
-<p>Returns a table of map block pointers.</p>
+<li><p class="first"><tt class="docutils literal">dfhack.burrows.clearUnits(burrow)</tt></p>
+<p>Removes all units from the burrow.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.maps.clearBurrowTiles(burrow)</tt></p>
+<li><p class="first"><tt class="docutils literal">dfhack.burrows.isAssignedUnit(burrow,unit)</tt></p>
+<p>Checks if the unit is in the burrow.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.burrows.setAssignedUnit(burrow,unit,enable)</tt></p>
+<p>Adds or removes the unit from the burrow.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.burrows.clearTiles(burrow)</tt></p>
 <p>Removes all tiles from the burrow.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.maps.isBurrowTile(burrow,tile_coord)</tt></p>
+<li><p class="first"><tt class="docutils literal">dfhack.burrows.listBlocks(burrow)</tt></p>
+<p>Returns a table of map block pointers.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.burrows.isAssignedTile(burrow,tile_coord)</tt></p>
 <p>Checks if the tile is in burrow.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.maps.setBurrowTile(burrow,tile_coord,enable)</tt></p>
+<li><p class="first"><tt class="docutils literal">dfhack.burrows.setAssignedTile(burrow,tile_coord,enable)</tt></p>
 <p>Adds or removes the tile from the burrow. Returns <em>false</em> if invalid coords.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.maps.isBlockBurrowTile(burrow,block,x,y)</tt></p>
+<li><p class="first"><tt class="docutils literal">dfhack.burrows.isAssignedBlockTile(burrow,block,x,y)</tt></p>
 <p>Checks if the tile within the block is in burrow.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.maps.setBlockBurrowTile(burrow,block,x,y,enable)</tt></p>
+<li><p class="first"><tt class="docutils literal">dfhack.burrows.setAssignedBlockTile(burrow,block,x,y,enable)</tt></p>
 <p>Adds or removes the tile from the burrow. Returns <em>false</em> if invalid coords.</p>
 </li>
 </ul>
 </div>
 </div>
 <div class="section" id="core-interpreter-context">
-<h2><a class="toc-backref" href="#id19">Core interpreter context</a></h2>
+<h2><a class="toc-backref" href="#id20">Core interpreter context</a></h2>
 <p>While plugins can create any number of interpreter instances,
 there is one special context managed by dfhack core. It is the
 only context that can receive events from DF and plugins.</p>
@@ -1062,7 +1068,7 @@ only context that can receive events from DF and plugins.</p>
 </li>
 </ul>
 <div class="section" id="event-type">
-<h3><a class="toc-backref" href="#id20">Event type</a></h3>
+<h3><a class="toc-backref" href="#id21">Event type</a></h3>
 <p>An event is just a lua table with a predefined metatable that
 contains a __call metamethod. When it is invoked, it loops
 through the table with next and calls all contained values.
@@ -1088,14 +1094,14 @@ order using <tt class="docutils literal">dfhack.safecall</tt>.</p>
 </div>
 </div>
 <div class="section" id="plugins">
-<h1><a class="toc-backref" href="#id21">Plugins</a></h1>
+<h1><a class="toc-backref" href="#id22">Plugins</a></h1>
 <p>DFHack plugins may export native functions and events
 to lua contexts. They are automatically imported by
 <tt class="docutils literal"><span class="pre">mkmodule('plugins.&lt;name&gt;')</span></tt>; this means that a lua
 module file is still necessary for <tt class="docutils literal">require</tt> to read.</p>
 <p>The following plugins have lua support.</p>
 <div class="section" id="burrows">
-<h2><a class="toc-backref" href="#id22">burrows</a></h2>
+<h2><a class="toc-backref" href="#id23">burrows</a></h2>
 <p>Implements extended burrow manipulations.</p>
 <p>Events:</p>
 <ul>
@@ -1130,11 +1136,10 @@ parameter specifies if they are to be added or removed.</p>
 set is the same as used by the command line.</p>
 </li>
 </ul>
-<p>The lua module file also re-exports or wraps some of the
-functions implemented by the dfhack core for convenience.</p>
+<p>The lua module file also re-exports functions from <tt class="docutils literal">dfhack.burrows</tt>.</p>
 </div>
 <div class="section" id="sort">
-<h2><a class="toc-backref" href="#id23">sort</a></h2>
+<h2><a class="toc-backref" href="#id24">sort</a></h2>
 <p>Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.</p>
 </div>

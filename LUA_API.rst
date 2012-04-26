@@ -711,18 +711,6 @@ Units module
 
   The unit is capable of rational action, i.e. not dead, insane or zombie.
 
-* ``dfhack.units.clearBurrowMembers(burrow)``
-
-  Removes all units from the burrow.
-
-* ``dfhack.units.isInBurrow(unit,burrow)``
-
-  Checks if the unit is in the burrow.
-
-* ``dfhack.units.setInBurrow(unit,burrow,enable)``
-
-  Adds or removes the unit from the burrow.
-
 * ``dfhack.units.getAge(unit[,true_age])``
 
   Returns the age of the unit in years as a floating-point value.
@@ -807,31 +795,47 @@ Maps module
 
   Returns the local feature object with the given region coords and index.
 
-* ``dfhack.maps.findBurrowByName(name)``
+
+Burrows module
+--------------
+
+* ``dfhack.burrows.findByName(name)``
 
   Returns the burrow pointer or *nil*.
 
-* ``dfhack.maps.listBurrowBlocks(burrow)``
+* ``dfhack.burrows.clearUnits(burrow)``
 
-  Returns a table of map block pointers.
+  Removes all units from the burrow.
 
-* ``dfhack.maps.clearBurrowTiles(burrow)``
+* ``dfhack.burrows.isAssignedUnit(burrow,unit)``
+
+  Checks if the unit is in the burrow.
+
+* ``dfhack.burrows.setAssignedUnit(burrow,unit,enable)``
+
+  Adds or removes the unit from the burrow.
+
+* ``dfhack.burrows.clearTiles(burrow)``
 
   Removes all tiles from the burrow.
 
-* ``dfhack.maps.isBurrowTile(burrow,tile_coord)``
+* ``dfhack.burrows.listBlocks(burrow)``
+
+  Returns a table of map block pointers.
+
+* ``dfhack.burrows.isAssignedTile(burrow,tile_coord)``
 
   Checks if the tile is in burrow.
 
-* ``dfhack.maps.setBurrowTile(burrow,tile_coord,enable)``
+* ``dfhack.burrows.setAssignedTile(burrow,tile_coord,enable)``
 
   Adds or removes the tile from the burrow. Returns *false* if invalid coords.
 
-* ``dfhack.maps.isBlockBurrowTile(burrow,block,x,y)``
+* ``dfhack.burrows.isAssignedBlockTile(burrow,block,x,y)``
 
   Checks if the tile within the block is in burrow.
 
-* ``dfhack.maps.setBlockBurrowTile(burrow,block,x,y,enable)``
+* ``dfhack.burrows.setAssignedBlockTile(burrow,block,x,y,enable)``
 
   Adds or removes the tile from the burrow. Returns *false* if invalid coords.
 
@@ -937,8 +941,7 @@ Native functions:
   Adds or removes tiles matching a predefined keyword. The keyword
   set is the same as used by the command line.
 
-The lua module file also re-exports or wraps some of the
-functions implemented by the dfhack core for convenience.
+The lua module file also re-exports functions from ``dfhack.burrows``.
 
 sort
 ====

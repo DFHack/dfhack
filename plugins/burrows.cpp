@@ -13,6 +13,7 @@
 #include "modules/MapCache.h"
 #include "modules/World.h"
 #include "modules/Units.h"
+#include "modules/Burrows.h"
 #include "TileTypes.h"
 
 #include "DataDefs.h"
@@ -345,7 +346,7 @@ static void handle_burrow_rename(color_ostream &out, df::burrow *burrow)
 static void add_to_burrows(std::vector<df::burrow*> &burrows, df::coord pos)
 {
     for (size_t i = 0; i < burrows.size(); i++)
-        Maps::setBurrowTile(burrows[i], pos, true);
+        Burrows::setAssignedTile(burrows[i], pos, true);
 }
 
 static void add_walls_to_burrows(color_ostream &out, std::vector<df::burrow*> &burrows,
@@ -379,7 +380,7 @@ static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord 
     for (size_t i = 0; i < grow_burrows.size(); i++)
     {
         auto b = df::burrow::find(grow_burrows[i]);
-        if (b && Maps::isBurrowTile(b, pos))
+        if (b && Burrows::isAssignedTile(b, pos))
             to_grow.push_back(b);
     }
 
@@ -446,7 +447,7 @@ static void copyUnits(df::burrow *target, df::burrow *source, bool enable)
     if (source == target)
     {
         if (!enable)
-            Units::clearBurrowMembers(target);
+            Burrows::clearUnits(target);
 
         return;
     }
@@ -456,7 +457,7 @@ static void copyUnits(df::burrow *target, df::burrow *source, bool enable)
         auto unit = df::unit::find(source->units[i]);
 
         if (unit)
-            Units::setInBurrow(unit, target, enable);
+            Burrows::setAssignedUnit(target, unit, enable);
     }
 }
 
@@ -468,22 +469,22 @@ static void copyTiles(df::burrow *target, df::burrow *source, bool enable)
     if (source == target)
     {
         if (!enable)
-            Maps::clearBurrowTiles(target);
+            Burrows::clearTiles(target);
 
         return;
     }
 
     std::vector<df::map_block*> pvec;
-    Maps::listBurrowBlocks(&pvec, source);
+    Burrows::listBlocks(&pvec, source);
 
     for (size_t i = 0; i < pvec.size(); i++)
     {
         auto block = pvec[i];
-        auto smask = Maps::getBlockBurrowMask(source, block);
+        auto smask = Burrows::getBlockMask(source, block);
         if (!smask)
             continue;
 
-        auto tmask = Maps::getBlockBurrowMask(target, block, enable);
+        auto tmask = Burrows::getBlockMask(target, block, enable);
         if (!tmask)
             continue;
 
@@ -498,7 +499,7 @@ static void copyTiles(df::burrow *target, df::burrow *source, bool enable)
                 tmask->tile_bitmask[j] &= ~smask->tile_bitmask[j];
 
             if (!tmask->has_assignments())
-                Maps::deleteBlockBurrowMask(target, block, tmask);
+                Burrows::deleteBlockMask(target, block, tmask);
         }
     }
 }
@@ -523,7 +524,7 @@ static void setTilesByDesignation(df::burrow *target, df::tile_designation d_mas
                     continue;
 
                 if (!mask)
-                    mask = Maps::getBlockBurrowMask(target, block, enable);
+                    mask = Burrows::getBlockMask(target, block, enable);
                 if (!mask)
                     goto next_block;
 
@@ -532,7 +533,7 @@ static void setTilesByDesignation(df::burrow *target, df::tile_designation d_mas
         }
 
         if (mask && !enable && !mask->has_assignments())
-            Maps::deleteBlockBurrowMask(target, block, mask);
+            Burrows::deleteBlockMask(target, block, mask);
 
     next_block:;
     }
@@ -625,7 +626,7 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
             if (!target)
                 return CR_WRONG_USAGE;
 
-            Units::clearBurrowMembers(target);
+            Burrows::clearUnits(target);
         }
     }
     else if (cmd == "set-units" || cmd == "add-units" || cmd == "remove-units")
@@ -638,7 +639,7 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
             return CR_WRONG_USAGE;
 
         if (cmd == "set-units")
-            Units::clearBurrowMembers(target);
+            Burrows::clearUnits(target);
 
         bool enable = (cmd != "remove-units");
 
@@ -662,7 +663,7 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
             if (!target)
                 return CR_WRONG_USAGE;
 
-            Maps::clearBurrowTiles(target);
+            Burrows::clearTiles(target);
         }
     }
     else if (cmd == "set-tiles" || cmd == "add-tiles" || cmd == "remove-tiles")
@@ -675,7 +676,7 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
             return CR_WRONG_USAGE;
 
         if (cmd == "set-tiles")
-            Maps::clearBurrowTiles(target);
+            Burrows::clearTiles(target);
 
         bool enable = (cmd != "remove-tiles");
 

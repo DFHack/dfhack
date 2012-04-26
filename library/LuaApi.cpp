@@ -46,6 +46,7 @@ distribution.
 #include "modules/Materials.h"
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
+#include "modules/Burrows.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -618,9 +619,6 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isDead),
     WRAPM(Units, isAlive),
     WRAPM(Units, isSane),
-    WRAPM(Units, clearBurrowMembers),
-    WRAPM(Units, isInBurrow),
-    WRAPM(Units, setInBurrow),
     WRAPM(Units, getAge),
     WRAPM(Units, getProfessionName),
     WRAPM(Units, getCasteProfessionName),
@@ -704,42 +702,52 @@ static const luaL_Reg dfhack_items_funcs[] = {
     { NULL, NULL }
 };
 
-
-static bool maps_isBlockBurrowTile(df::burrow *burrow, df::map_block *block, int x, int y)
-{
-    return Maps::isBlockBurrowTile(burrow, block, df::coord2d(x,y));
-}
-
-static bool maps_setBlockBurrowTile(df::burrow *burrow, df::map_block *block, int x, int y, bool enable)
-{
-    return Maps::setBlockBurrowTile(burrow, block, df::coord2d(x,y), enable);
-}
-
 static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPN(getBlock, (df::map_block* (*)(int32_t,int32_t,int32_t))Maps::getBlock),
     WRAPN(getTileBlock, (df::map_block* (*)(df::coord))Maps::getTileBlock),
     WRAPM(Maps, getRegionBiome),
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
-    WRAPM(Maps, findBurrowByName),
-    WRAPM(Maps, clearBurrowTiles),
-    WRAPN(isBlockBurrowTile, maps_isBlockBurrowTile),
-    WRAPN(setBlockBurrowTile, maps_setBlockBurrowTile),
-    WRAPM(Maps, isBurrowTile),
-    WRAPM(Maps, setBurrowTile),
     { NULL, NULL }
 };
 
-static int maps_listBurrowBlocks(lua_State *state)
+static const luaL_Reg dfhack_maps_funcs[] = {
+    { NULL, NULL }
+};
+
+static bool burrows_isAssignedBlockTile(df::burrow *burrow, df::map_block *block, int x, int y)
+{
+    return Burrows::isAssignedBlockTile(burrow, block, df::coord2d(x,y));
+}
+
+static bool burrows_setAssignedBlockTile(df::burrow *burrow, df::map_block *block, int x, int y, bool enable)
+{
+    return Burrows::setAssignedBlockTile(burrow, block, df::coord2d(x,y), enable);
+}
+
+static const LuaWrapper::FunctionReg dfhack_burrows_module[] = {
+    WRAPM(Burrows, findByName),
+    WRAPM(Burrows, clearUnits),
+    WRAPM(Burrows, isAssignedUnit),
+    WRAPM(Burrows, setAssignedUnit),
+    WRAPM(Burrows, clearTiles),
+    WRAPN(isAssignedBlockTile, burrows_isAssignedBlockTile),
+    WRAPN(setAssignedBlockTile, burrows_setAssignedBlockTile),
+    WRAPM(Burrows, isAssignedTile),
+    WRAPM(Burrows, setAssignedTile),
+    { NULL, NULL }
+};
+
+static int burrows_listBlocks(lua_State *state)
 {
     std::vector<df::map_block*> pvec;
-    Maps::listBurrowBlocks(&pvec, Lua::CheckDFObject<df::burrow>(state,1));
+    Burrows::listBlocks(&pvec, Lua::CheckDFObject<df::burrow>(state,1));
     Lua::PushVector(state, pvec);
     return 1;
 }
 
-static const luaL_Reg dfhack_maps_funcs[] = {
-    { "listBurrowBlocks", maps_listBurrowBlocks },
+static const luaL_Reg dfhack_burrows_funcs[] = {
+    { "listBlocks", burrows_listBlocks },
     { NULL, NULL }
 };
 
@@ -759,4 +767,5 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
+    OpenModule(state, "burrows", dfhack_burrows_module, dfhack_burrows_funcs);
 }

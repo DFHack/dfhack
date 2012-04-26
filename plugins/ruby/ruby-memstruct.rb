@@ -421,6 +421,24 @@ class StlVector32 < MemStruct
 			to_a.inspect
 		end
 	end
+	# do a binary search in an ordered vector for a specific target attribute
+	# ex: world.history.figures.binsearch(unit.hist_figure_id)
+	def binsearch(target, field=:id)
+		o_start = 0
+		o_end = length - 1
+		while o_end >= o_start
+			o_half = o_start + (o_end-o_start)/2
+			obj = self[o_half]
+			oval = obj.send(field)
+			if oval == target
+				return obj
+			elsif oval < target
+				o_start = o_half+1
+			else
+				o_end = o_half-1
+			end
+		end
+	end
 end
 class StlVector16 < StlVector32
 	def length

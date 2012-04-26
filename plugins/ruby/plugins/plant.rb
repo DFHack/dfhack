@@ -3,7 +3,7 @@ def self.each_tree(material=:any)
 	@raws_tree_name ||= {}
 	if @raws_tree_name.empty?
 		df.world.raws.plants.all.each_with_index { |p, idx|
-			@raws_tree_name[idx] = p.id if p.flags[PlantRawFlags::TREE]
+			@raws_tree_name[idx] = p.id if p.flags[:TREE]
 		}
 	end
 
@@ -25,7 +25,7 @@ def self.each_shrub(material=:any)
 	@raws_shrub_name ||= {}
 	if @raws_tree_name.empty?
 		df.world.raws.plants.all.each_with_index { |p, idx|
-			@raws_shrub_name[idx] = p.id if not p.flags[PlantRawFlags::GRASS] and not p.flags[PlantRawFlags::TREE]
+			@raws_shrub_name[idx] = p.id if not p.flags[:GRASS] and not p.flags[:TREE]
 		}
 	end
 
@@ -61,8 +61,8 @@ def self.cuttrees(material=nil, count_max=100)
 				b = map_block_at(plant)
 				d = b.designation[plant.pos.x%16][plant.pos.y%16]
 				next if d.hidden
-				if d.dig == TileDigDesignation::No
-					d.dig = TileDigDesignation::Default
+				if d.dig == :No
+					d.dig = :Default
 					b.flags.designated = true
 					cnt += 1
 					break if cnt == count_max
@@ -116,9 +116,9 @@ def self.growcrops(material=nil, count_max=100)
 	if !material
 		cnt = Hash.new(0)
 		suspend {
-			world.items.other[ItemsOtherId::SEEDS].each { |seed|
+			world.items.other[:SEEDS].each { |seed|
 				next if not seed.flags.in_building
-				next if not seed.itemrefs.find { |ref| ref._rtti_classname == 'general_ref_building_holderst' }
+				next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
 				next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
 				cnt[seed.mat_index] += 1
 			}
@@ -137,10 +137,10 @@ def self.growcrops(material=nil, count_max=100)
 
 		cnt = 0
 		suspend {
-			world.items.other[ItemsOtherId::SEEDS].each { |seed|
+			world.items.other[:SEEDS].each { |seed|
 				next if wantmat and seed.mat_index != wantmat
 				next if not seed.flags.in_building
-				next if not seed.itemrefs.find { |ref| ref._rtti_classname == 'general_ref_building_holderst' }
+				next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
 				next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
 				seed.grow_counter = @raws_plant_growdur[seed.mat_index]
 				cnt += 1

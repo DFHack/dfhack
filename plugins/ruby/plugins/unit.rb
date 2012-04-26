@@ -7,7 +7,7 @@ def self.unit_citizens
 		u.race == race and u.civ_id == civ and !u.flags1.dead and !u.flags1.merchant and
 		!u.flags1.diplomat and !u.flags2.resident and !u.flags3.ghostly and
 		!u.curse.add_tags1.OPPOSED_TO_LIFE and !u.curse.add_tags1.CRAZED and
-		u.mood != MoodType::Berserk
+		u.mood != :Berserk
 		# TODO check curse ; currently this should keep vampires, but may include werebeasts
 	}
 end
@@ -15,9 +15,9 @@ end
 # list workers (citizen, not crazy / child / inmood / noble)
 def self.unit_workers
 	unit_citizens.find_all { |u|
-		u.mood == MoodType::None and
-		Profession::ENUM[u.profession] != :CHILD and
-		Profession::ENUM[u.profession] != :BABY and
+		u.mood == :None and
+		u.profession != :CHILD and
+		u.profession != :BABY and
 		# TODO MENIAL_WORK_EXEMPTION_SPOUSE
 		!unit_entitypositions(u).find { |pos| pos.flags[:MENIAL_WORK_EXEMPTION] }
 	}
@@ -33,7 +33,7 @@ def self.unit_idlers
 		# filter soldiers (TODO check schedule)
 		u.military.squad_index == -1 and
 		# filter 'on break'
-		!u.status.misc_traits.find { |t| id = UnitMiscTrait::ENUM[t.id] ; id == :OnBreak }
+		!u.status.misc_traits.find { |t| id == :OnBreak }
 	}
 end
 
@@ -41,7 +41,7 @@ def self.unit_entitypositions(unit)
 	list = []
 	return list if not hf = world.history.figures.binsearch(unit.hist_figure_id)
 	hf.entity_links.each { |el|
-		next if el._rtti_classname != 'histfig_entity_link_positionst'
+		next if el._rtti_classname != :histfig_entity_link_positionst
 		next if not ent = world.entities.all.binsearch(el.entity_id)
 		next if not pa = ent.positions.assignments.binsearch(el.assignment_id)
 		next if not pos = ent.positions.own.binsearch(pa.position_id)

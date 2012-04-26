@@ -47,7 +47,7 @@ my %item_renderer = (
 
 my %global_types;
 
-my %seen_enum_name;
+our %seen_enum_name;
 sub render_global_enum {
     my ($name, $type) = @_;
 
@@ -72,6 +72,7 @@ sub render_enum_fields {
     for my $attr ($type->findnodes('child::enum-attr')) {
         my $rbattr = rb_ucase($attr->getAttribute('name'));
         my $typeattr = $attr->getAttribute('type-name');
+        # find how we need to encode the attribute values: string, symbol (for enums), raw (number, bool)
         if ($typeattr) {
             if ($global_types{$typeattr}) {
                 $attr_type{$rbattr} = 'symbol';
@@ -85,6 +86,7 @@ sub render_enum_fields {
         my $def = $attr->getAttribute('default-value');
         if ($def) {
             $def = ":$def" if ($attr_type{$rbattr} eq 'symbol');
+            $def =~ s/'/\\'/g if ($attr_type{$rbattr} eq 'quote');
             $def = "'$def'" if ($attr_type{$rbattr} eq 'quote');
             push @lines_rb, "$rbattr = Hash.new($def)";
         } else {
@@ -106,6 +108,7 @@ sub render_enum_fields {
                 my $iav = $iattr->getAttribute('value');
                 my $rbattr = rb_ucase($ian);
                 $iav = ":$iav" if ($attr_type{$rbattr} eq 'symbol');
+                $iav =~ s/'/\\'/g if ($attr_type{$rbattr} eq 'quote');
                 $iav = "'$iav'" if ($attr_type{$rbattr} eq 'quote');
                 $lines_rb[$#lines_rb] .= " ; ${rbattr}[$value] = $iav";
             }
@@ -137,10 +140,14 @@ sub render_bitfield_fields {
     for my $field ($type->findnodes('child::ld:field')) {
         my $count = $field->getAttribute('count') || 1;
         my $name = $field->getAttribute('name');
+        my $type = $field->getAttribute('type-name');
+        my $enum = rb_ucase($type) if ($type and $global_types{$type});
         $name = $field->getAttribute('ld:anon-name') if (!$name);
         print "bitfield $name !number\n" if (!($field->getAttribute('ld:meta') eq 'number'));
         if ($count == 1) {
             push @lines_rb, "field(:$name, 0) { bit $shift }" if ($name);
+        } elsif ($enum) {
+            push @lines_rb, "field(:$name, 0) { bits $shift, $count, :$enum }" if ($name);
         } else {
             push @lines_rb, "field(:$name, 0) { bits $shift, $count }" if ($name);
         }
@@ -189,7 +196,7 @@ sub render_global_class {
     indent_rb {
         my $sz = query_cpp("sizeof($cppns)");
         push @lines_rb, "sizeof $sz";
-        push @lines_rb, "rtti_classname '$rtti_name'" if $has_rtti;
+        push @lines_rb, "rtti_classname :$rtti_name" if $has_rtti;
         render_struct_fields($type, "$cppns");
     };
     push @lines_rb, "end\n";
@@ -292,10 +299,13 @@ sub render_item_number {
 
     my $subtype = $item->getAttribute('ld:subtype');
     my $initvalue = $item->getAttribute('init-value');
+    my $typename = $item->getAttribute('type-name');
+    $typename = rb_ucase($typename) if $typename;
+    $typename = $pns if (!$typename and $subtype eq 'enum');	# compound enum
 
     $initvalue = 1 if ($initvalue and $initvalue eq 'true');
-    # XXX needs pre-declaration of the enum...
-    $initvalue = rb_ucase($item->getAttribute('type-name')) . '::' . $initvalue if ($initvalue and $subtype and $subtype eq 'enum' and $initvalue =~ /[a-zA-Z]/);
+    $initvalue = ":$initvalue" if ($initvalue and $typename and $initvalue =~ /[a-zA-Z]/);
+    $initvalue ||= 'nil' if $typename;
 
     $subtype = $item->getAttribute('base-type') if (!$subtype or $subtype eq 'enum' or $subtype eq 'bitfield');
     $subtype = 'int32_t' if (!$subtype);
@@ -324,6 +334,7 @@ sub render_item_number {
         return;
     }
     $lines_rb[$#lines_rb] .= ", $initvalue" if ($initvalue);
+    $lines_rb[$#lines_rb] .= ", :$typename" if ($typename);
 }
 
 sub render_item_compound {
@@ -342,10 +353,19 @@ sub render_item_compound {
         };
         push @lines_rb, "}"
     } elsif ($subtype eq 'enum') {
-        # declare constants
-        render_enum_fields($item);
+        my @namecomponents = split('::', $cppns);
+        shift @namecomponents;
+        my $enumclassname = join('_', map { rb_ucase($_) } @namecomponents);
+        local %seen_enum_name;
+        push @lines_rb, "class ::DFHack::$enumclassname";
+        indent_rb {
+            # declare constants
+            render_enum_fields($item);
+        };
+        push @lines_rb, "end\n";
+
         # actual field
-        render_item_number($item, $cppns);
+        render_item_number($item, $enumclassname);
     } else {
         print "no render compound $subtype\n";
     }

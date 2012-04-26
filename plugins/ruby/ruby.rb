@@ -86,13 +86,13 @@ module DFHack
         def find_unit(what=:selected)
             if what == :selected
                 case ui.main.mode
-                when UiSidebarMode::ViewUnits
+                when :ViewUnits
                     # nobody selected => idx == 0
                     v = world.units.other[0][ui_selected_unit]
                     v if v and v.pos.z == cursor.z
-                when UiSidebarMode::LookAround
+                when :LookAround
                     k = ui_look_list.items[ui_look_cursor]
-                    k.unit if k.type == UiLookList::Unit
+                    k.unit if k.type == :Unit
                 end
             elsif what.kind_of?(Integer)
                 world.units.all.find { |u| u.id == what }
@@ -110,9 +110,9 @@ module DFHack
         def find_item(what=:selected)
             if what == :selected
                 case ui.main.mode
-                when UiSidebarMode::LookAround
+                when :LookAround
                     k = ui_look_list.items[ui_look_cursor]
-                    k.item if k.type == UiLookList::Item
+                    k.item if k.type == :Item
                 end
             elsif what.kind_of?(Integer)
                 world.items.all.find { |i| i.id == what }

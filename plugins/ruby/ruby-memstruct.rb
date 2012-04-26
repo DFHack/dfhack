@@ -26,8 +26,8 @@ class Compound < MemStruct
 			end
 		end
 
-		def number(bits, signed, initvalue=nil)
-			Number.new(bits, signed, initvalue)
+		def number(bits, signed, initvalue=nil, enum=nil)
+			Number.new(bits, signed, initvalue, enum)
 		end
 		def float
 			Float.new
@@ -35,8 +35,8 @@ class Compound < MemStruct
 		def bit(shift)
 			BitField.new(shift, 1)
 		end
-		def bits(shift, len)
-			BitField.new(shift, len)
+		def bits(shift, len, enum=nil)
+			BitField.new(shift, len, enum)
 		end
 		def pointer
 			Pointer.new((yield if block_given?))
@@ -144,11 +144,12 @@ class Compound < MemStruct
 end
 
 class Number < MemStruct
-	attr_accessor :_bits, :_signed, :_initvalue
-	def initialize(bits, signed, initvalue)
+	attr_accessor :_bits, :_signed, :_initvalue, :_enum
+	def initialize(bits, signed, initvalue, enum)
 		@_bits = bits
 		@_signed = signed
 		@_initvalue = initvalue
+		@_enum = enum
 	end
 
 	def _get
@@ -159,10 +160,12 @@ class Number < MemStruct
 		when 64;(DFHack.memory_read_int32(@_memaddr) & 0xffffffff) + (DFHack.memory_read_int32(@_memaddr+4) << 32)
 		end
 		v &= (1 << @_bits) - 1 if not @_signed
+		v = DFHack.const_get(@_enum)::ENUM[v] || v if @_enum
 		v
 	end
 
 	def _set(v)
+		v = DFHack.const_get(@_enum).const_get(v) if @_enum and v.kind_of?(::Symbol)
 		case @_bits
 		when 32; DFHack.memory_write_int32(@_memaddr, v)
 		when 16; DFHack.memory_write_int16(@_memaddr, v)
@@ -190,10 +193,11 @@ class Float < MemStruct
 	end
 end
 class BitField < MemStruct
-	attr_accessor :_shift, :_len
-	def initialize(shift, len)
+	attr_accessor :_shift, :_len, :_enum
+	def initialize(shift, len, enum=nil)
 		@_shift = shift
 		@_len = len
+		@_enum = enum
 	end
 	def _mask
 		(1 << @_len) - 1
@@ -204,7 +208,9 @@ class BitField < MemStruct
 		if @_len == 1
 			((v & 1) == 0) ? false : true
 		else
-			v & _mask
+			v &= _mask
+			v = DFHack.const_get(@_enum)::ENUM[v] || v if @_enum
+			v
 		end
 	end
 
@@ -213,6 +219,7 @@ class BitField < MemStruct
 			# allow 'bit = 0'
 			v = (v && v != 0 ? 1 : 0)
 		end
+		v = DFHack.const_get(@_enum).const_get(v) if @_enum and v.kind_of?(::Symbol)
 		v = (v & _mask) << @_shift
 
 		ori = DFHack.memory_read_int32(@_memaddr) & 0xffffffff
@@ -683,7 +690,7 @@ end
 # try to read the rtti classname from an object vtable pointer
 def self.rtti_readclassname(vptr)
 	unless n = @rtti_v2n[vptr]
-		n = @rtti_v2n[vptr] = get_rtti_classname(vptr)
+		n = @rtti_v2n[vptr] = get_rtti_classname(vptr).to_sym
 		@rtti_n2v[n] = vptr
 	end
 	n

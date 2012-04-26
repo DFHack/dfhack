@@ -728,9 +728,15 @@ Units module
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
 
-* ``dfhack.units.getProfessionName(unit[,plural])``
+* ``dfhack.units.getNoblePositions(unit)``
 
-  Retrieves the profession name using custom profession or raws.
+  Returns a list of tables describing noble position assignments, or *nil*.
+  Every table has fields ``entity``, ``assignment`` and ``position``.
+
+* ``dfhack.units.getProfessionName(unit[,ignore_noble,plural])``
+
+  Retrieves the profession name using custom profession, noble assignments
+  or raws. The ``ignore_noble`` boolean disables the use of noble positions.
 
 * ``dfhack.units.getCasteProfessionName(race,caste,prof_id[,plural])``
 

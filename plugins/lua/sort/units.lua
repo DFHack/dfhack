@@ -52,6 +52,15 @@ local function findRaceCaste(unit)
     return rraw, safe_index(rraw, 'caste', unit.caste)
 end
 
+orders.noble = {
+    key = function(unit)
+        local info = dfhack.units.getNoblePositions(unit)
+        if info then
+            return info[1].position.precedence
+        end
+    end
+}
+
 orders.profession = {
     key = function(unit)
         local cp = dfhack.units.getProfessionName(unit)

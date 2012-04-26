@@ -55,6 +55,9 @@ using namespace std;
 #include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
+#include "df/entity_position.h"
+#include "df/entity_position_assignment.h"
+#include "df/histfig_entity_link_positionst.h"
 #include "df/assumed_identity.h"
 #include "df/burrow.h"
 #include "df/creature_raw.h"
@@ -762,14 +765,85 @@ double DFHack::Units::getAge(df::unit *unit, bool true_age)
     return cur_time - birth_time;
 }
 
-std::string DFHack::Units::getProfessionName(df::unit *unit, bool plural)
+static bool noble_pos_compare(const Units::NoblePosition &a, const Units::NoblePosition &b)
+{
+    if (a.position->precedence < b.position->precedence)
+        return true;
+    if (a.position->precedence > b.position->precedence)
+        return false;
+    return a.position->id < b.position->id;
+}
+
+bool DFHack::Units::getNoblePositions(std::vector<NoblePosition> *pvec, df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    pvec->clear();
+
+    auto histfig = df::historical_figure::find(unit->hist_figure_id);
+    if (!histfig)
+        return false;
+
+    for (size_t i = 0; i < histfig->entity_links.size(); i++)
+    {
+        auto link = histfig->entity_links[i];
+        auto epos = strict_virtual_cast<df::histfig_entity_link_positionst>(link);
+        if (!epos)
+            continue;
+
+        NoblePosition pos;
+
+        pos.entity = df::historical_entity::find(epos->entity_id);
+        if (!pos.entity)
+            continue;
+
+        pos.assignment = binsearch_in_vector(pos.entity->positions.assignments, epos->assignment_id);
+        if (!pos.assignment)
+            continue;
+
+        pos.position = binsearch_in_vector(pos.entity->positions.own, pos.assignment->position_id);
+        if (!pos.position)
+            continue;
+
+        pvec->push_back(pos);
+    }
+
+    if (pvec->empty())
+        return false;
+
+    std::sort(pvec->begin(), pvec->end(), noble_pos_compare);
+    return true;
+}
+
+std::string DFHack::Units::getProfessionName(df::unit *unit, bool ignore_noble, bool plural)
 {
     std::string prof = unit->custom_profession;
+    if (!prof.empty())
+        return prof;
 
-    if (prof.empty())
-        prof = getCasteProfessionName(unit->race, unit->caste, unit->profession, plural);
+    std::vector<NoblePosition> np;
 
-    return prof;
+    if (!ignore_noble && getNoblePositions(&np, unit))
+    {
+        switch (unit->sex)
+        {
+        case 0:
+            prof = np[0].position->name_female[plural ? 1 : 0];
+            break;
+        case 1:
+            prof = np[0].position->name_male[plural ? 1 : 0];
+            break;
+        default:
+            break;
+        }
+
+        if (prof.empty())
+            prof = np[0].position->name[plural ? 1 : 0];
+        if (!prof.empty())
+            return prof;
+    }
+
+    return getCasteProfessionName(unit->race, unit->caste, unit->profession, plural);
 }
 
 std::string DFHack::Units::getCasteProfessionName(int race, int casteid, df::profession pid, bool plural)

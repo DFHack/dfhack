@@ -959,8 +959,13 @@ a lua list containing them.</p>
 <p>Returns the age of the unit in years as a floating-point value.
 If <tt class="docutils literal">true_age</tt> is true, ignores false identities.</p>
 </li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.units.getProfessionName(unit[,plural])</span></tt></p>
-<p>Retrieves the profession name using custom profession or raws.</p>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getNoblePositions(unit)</tt></p>
+<p>Returns a list of tables describing noble position assignments, or <em>nil</em>.
+Every table has fields <tt class="docutils literal">entity</tt>, <tt class="docutils literal">assignment</tt> and <tt class="docutils literal">position</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.units.getProfessionName(unit[,ignore_noble,plural])</span></tt></p>
+<p>Retrieves the profession name using custom profession, noble assignments
+or raws. The <tt class="docutils literal">ignore_noble</tt> boolean disables the use of noble positions.</p>
 </li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.units.getCasteProfessionName(race,caste,prof_id[,plural])</span></tt></p>
 <p>Retrieves the profession name for the given race/caste using raws.</p>

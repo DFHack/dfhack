@@ -38,6 +38,9 @@ namespace df
     struct nemesis_record;
     struct burrow;
     struct assumed_identity;
+    struct historical_entity;
+    struct entity_position_assignment;
+    struct entity_position;
 }
 
 /**
@@ -218,7 +221,15 @@ DFHACK_EXPORT void setInBurrow(df::unit *unit, df::burrow *burrow, bool enable);
 
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 
-DFHACK_EXPORT std::string getProfessionName(df::unit *unit, bool plural = false);
+struct NoblePosition {
+    df::historical_entity *entity;
+    df::entity_position_assignment *assignment;
+    df::entity_position *position;
+};
+
+DFHACK_EXPORT bool getNoblePositions(std::vector<NoblePosition> *pvec, df::unit *unit);
+
+DFHACK_EXPORT std::string getProfessionName(df::unit *unit, bool ignore_noble = false, bool plural = false);
 DFHACK_EXPORT std::string getCasteProfessionName(int race, int caste, df::profession pid, bool plural = false);
 }
 }

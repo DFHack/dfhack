@@ -61,6 +61,10 @@ distribution.
 #include "df/assumed_identity.h"
 #include "df/nemesis_record.h"
 #include "df/historical_figure.h"
+#include "df/historical_entity.h"
+#include "df/entity_position.h"
+#include "df/entity_position_assignment.h"
+#include "df/histfig_entity_link_positionst.h"
 #include "df/plant_raw.h"
 #include "df/creature_raw.h"
 #include "df/inorganic_raw.h"
@@ -628,8 +632,35 @@ static int units_getPosition(lua_State *state)
     return Lua::PushPosXYZ(state, Units::getPosition(Lua::CheckDFObject<df::unit>(state,1)));
 }
 
+static int units_getNoblePositions(lua_State *state)
+{
+    std::vector<Units::NoblePosition> np;
+
+    if (Units::getNoblePositions(&np, Lua::CheckDFObject<df::unit>(state,1)))
+    {
+        lua_createtable(state, np.size(), 0);
+
+        for (size_t i = 0; i < np.size(); i++)
+        {
+            lua_createtable(state, 0, 3);
+            Lua::PushDFObject(state, np[i].entity);
+            lua_setfield(state, -2, "entity");
+            Lua::PushDFObject(state, np[i].assignment);
+            lua_setfield(state, -2, "assignment");
+            Lua::PushDFObject(state, np[i].position);
+            lua_setfield(state, -2, "position");
+            lua_rawseti(state, -2, i+1);
+        }
+    }
+    else
+        lua_pushnil(state);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_units_funcs[] = {
     { "getPosition", units_getPosition },
+    { "getNoblePositions", units_getNoblePositions },
     { NULL, NULL }
 };
 

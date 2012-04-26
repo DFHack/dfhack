@@ -36,6 +36,10 @@ distribution.
 
 namespace DFHack {
     class function_identity_base;
+
+    namespace Units {
+        struct NoblePosition;
+    }
 }
 
 namespace DFHack {namespace Lua {
@@ -243,6 +247,7 @@ namespace DFHack {namespace Lua {
     }
     inline void Push(lua_State *state, df::coord &obj) { PushDFObject(state, &obj); }
     inline void Push(lua_State *state, df::coord2d &obj) { PushDFObject(state, &obj); }
+    void Push(lua_State *state, const Units::NoblePosition &pos);
     template<class T> inline void Push(lua_State *state, T *ptr) {
         PushDFObject(state, ptr);
     }

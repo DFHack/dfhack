@@ -1015,6 +1015,15 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getLocalInitFeature(region_coord2d,index)</tt></p>
 <p>Returns the local feature object with the given region coords and index.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.canWalkBetween(pos1, pos2)</tt></p>
+<p>Checks if a dwarf may be able to walk between the two tiles,
+using a pathfinding cache maintained by the game. Note that
+this cache is only updated when the game is unpaused, and thus
+can get out of date if doors are forbidden or unforbidden, or
+tools like liquids or tiletypes are used. It also cannot possibly
+take into account anything that depends on the actual units, like
+burrows, or the presence of invaders.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="burrows-module">

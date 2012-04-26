@@ -387,6 +387,20 @@ bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<df::coord2d>
     return true;
 }
 
+bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
+{
+    auto block1 = getTileBlock(pos1);
+    auto block2 = getTileBlock(pos2);
+
+    if (!block1 || !block2)
+        return false;
+
+    auto tile1 = MapExtras::index_tile<uint16_t>(block1->walkable, pos1);
+    auto tile2 = MapExtras::index_tile<uint16_t>(block2->walkable, pos2);
+
+    return tile1 && tile1 == tile2;
+}
+
 #define COPY(a,b) memcpy(&a,&b,sizeof(a))
 
 MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)

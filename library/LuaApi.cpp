@@ -80,6 +80,17 @@ distribution.
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
 
+void Lua::Push(lua_State *state, const Units::NoblePosition &pos)
+{
+    lua_createtable(state, 0, 3);
+    Lua::PushDFObject(state, pos.entity);
+    lua_setfield(state, -2, "entity");
+    Lua::PushDFObject(state, pos.assignment);
+    lua_setfield(state, -2, "assignment");
+    Lua::PushDFObject(state, pos.position);
+    lua_setfield(state, -2, "position");
+}
+
 int Lua::PushPosXYZ(lua_State *state, df::coord pos)
 {
     if (!pos.isValid())
@@ -558,10 +569,14 @@ static void OpenModule(lua_State *state, const char *mname,
 #define WRAP(function) { #function, df::wrap_function(function,true) }
 #define WRAPN(name, function) { #name, df::wrap_function(function,true) }
 
+/***** Translation module *****/
+
 static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAPM(Translation, TranslateName),
     { NULL, NULL }
 };
+
+/***** Gui module *****/
 
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getSelectedWorkshopJob),
@@ -572,6 +587,8 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, showPopupAnnouncement),
     { NULL, NULL }
 };
+
+/***** Job module *****/
 
 static bool jobEqual(df::job *job1, df::job *job2) { return *job1 == *job2; }
 static bool jobItemEqual(df::job_item *job1, df::job_item *job2) { return *job1 == *job2; }
@@ -609,6 +626,7 @@ static const luaL_Reg dfhack_job_funcs[] = {
     { NULL, NULL }
 };
 
+/***** Units module *****/
 
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getContainer),
@@ -635,21 +653,7 @@ static int units_getNoblePositions(lua_State *state)
     std::vector<Units::NoblePosition> np;
 
     if (Units::getNoblePositions(&np, Lua::CheckDFObject<df::unit>(state,1)))
-    {
-        lua_createtable(state, np.size(), 0);
-
-        for (size_t i = 0; i < np.size(); i++)
-        {
-            lua_createtable(state, 0, 3);
-            Lua::PushDFObject(state, np[i].entity);
-            lua_setfield(state, -2, "entity");
-            Lua::PushDFObject(state, np[i].assignment);
-            lua_setfield(state, -2, "assignment");
-            Lua::PushDFObject(state, np[i].position);
-            lua_setfield(state, -2, "position");
-            lua_rawseti(state, -2, i+1);
-        }
-    }
+        Lua::PushVector(state, np);
     else
         lua_pushnil(state);
 
@@ -661,6 +665,8 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getNoblePositions", units_getNoblePositions },
     { NULL, NULL }
 };
+
+/***** Items module *****/
 
 static bool items_moveToGround(df::item *item, df::coord pos)
 {
@@ -702,18 +708,23 @@ static const luaL_Reg dfhack_items_funcs[] = {
     { NULL, NULL }
 };
 
+/***** Maps module *****/
+
 static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPN(getBlock, (df::map_block* (*)(int32_t,int32_t,int32_t))Maps::getBlock),
     WRAPN(getTileBlock, (df::map_block* (*)(df::coord))Maps::getTileBlock),
     WRAPM(Maps, getRegionBiome),
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
+    WRAPM(Maps, canWalkBetween),
     { NULL, NULL }
 };
 
 static const luaL_Reg dfhack_maps_funcs[] = {
     { NULL, NULL }
 };
+
+/***** Burrows module *****/
 
 static bool burrows_isAssignedBlockTile(df::burrow *burrow, df::map_block *block, int x, int y)
 {

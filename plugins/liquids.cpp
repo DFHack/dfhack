@@ -388,6 +388,7 @@ command_result df_liquids_execute(color_ostream &out)
                 mcache.setTemp2At(*iter,10015);
                 df::tile_designation des = mcache.designationAt(*iter);
                 des.bits.flow_size = 0;
+                des.bits.flow_forbid = false;
                 mcache.setDesignationAt(*iter, des);
                 iter ++;
             }
@@ -494,6 +495,9 @@ command_result df_liquids_execute(color_ostream &out)
                         mcache.setTemp1At(current,10015);
                         mcache.setTemp2At(current,10015);
                     }
+                    // mark the tile passable or impassable like the game does
+                    des.bits.flow_forbid = des.bits.flow_size &&
+                        (des.bits.liquid_type == tile_liquid::Magma || des.bits.flow_size > 3);
                     mcache.setDesignationAt(current,des);
                 }
                 seen_blocks.insert(mcache.BlockAt(current / 16));

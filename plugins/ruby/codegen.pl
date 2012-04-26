@@ -262,7 +262,7 @@ sub render_item_number {
 
     $initvalue = 1 if ($initvalue and $initvalue eq 'true');
     # XXX needs pre-declaration of the enum...
-    $initvalue = rb_ucase($item->getAttribute('type-name')) . '::' . $initvalue if ($subtype and $subtype eq 'enum' and $initvalue =~ /[a-zA-Z]/);
+    $initvalue = rb_ucase($item->getAttribute('type-name')) . '::' . $initvalue if ($initvalue and $subtype and $subtype eq 'enum' and $initvalue =~ /[a-zA-Z]/);
 
     $subtype = $item->getAttribute('base-type') if (!$subtype or $subtype eq 'enum' or $subtype eq 'bitfield');
     $subtype = 'int32_t' if (!$subtype);

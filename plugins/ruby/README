@@ -112,4 +112,4 @@ really a Pointer (with no 'pos' method).
 Todo
 ----
 
-Correct c++ object (de)allocation (call ctor etc)
+Correct c++ object (de)allocation (call ctor etc) ; ability to call vtable methods

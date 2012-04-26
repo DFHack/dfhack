@@ -258,6 +258,12 @@ sub render_item_number {
     my ($item, $pns) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
+    my $initvalue = $item->getAttribute('init-value');
+
+    $initvalue = 1 if ($initvalue and $initvalue eq 'true');
+    # XXX needs pre-declaration of the enum...
+    $initvalue = rb_ucase($item->getAttribute('type-name')) . '::' . $initvalue if ($subtype and $subtype eq 'enum' and $initvalue =~ /[a-zA-Z]/);
+
     $subtype = $item->getAttribute('base-type') if (!$subtype or $subtype eq 'enum' or $subtype eq 'bitfield');
     $subtype = 'int32_t' if (!$subtype);
 
@@ -279,9 +285,12 @@ sub render_item_number {
         push @lines_rb, 'number 8, true';
     } elsif ($subtype eq 's-float') {
         push @lines_rb, 'float';
+        return;
     } else {
         print "no render number $subtype\n";
+        return;
     }
+    $lines_rb[$#lines_rb] .= ", $initvalue" if ($initvalue);
 }
 
 sub render_item_compound {

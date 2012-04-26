@@ -4,6 +4,7 @@ class MemStruct
 	attr_accessor :_memaddr
 	def _at(addr) ; d = dup ; d._memaddr = addr ; d ; end
 	def _get ; self ; end
+	def _cpp_init ; end
 	def inspect ; _get.inspect ; end
 end
 
@@ -25,8 +26,8 @@ class Compound < MemStruct
 			end
 		end
 
-		def number(bits, signed)
-			Number.new(bits, signed)
+		def number(bits, signed, initvalue=nil)
+			Number.new(bits, signed, initvalue)
 		end
 		def float
 			Float.new
@@ -101,22 +102,13 @@ class Compound < MemStruct
 				DFHack.memory_write_int32(ptr, vt)
 				# TODO call constructor
 			end
-			new._at(ptr)._cpp_init
+			o = new._at(ptr)
+			o._cpp_init
+			o
 		end
 	end
 	def _cpp_init
-		_fields.each { |n, o, s|
-			case s
-			when StlString
-				DFHack.memory_stlstring_init(@_memaddr+o)
-			when StlVector32
-				# englobes all vectors
-				DFHack.memory_vector_init(@_memaddr+o)
-			when Compound
-				send(n)._cpp_init
-			end
-		}
-		self
+		_fields_ancestors.each { |n, o, s| s._at(@_memaddr+o)._cpp_init }
 	end
 	def _set(h) ; h.each { |k, v| send("_#{k}=", v) } ; end
 	def _fields ; self.class._fields.to_a ; end
@@ -152,10 +144,11 @@ class Compound < MemStruct
 end
 
 class Number < MemStruct
-	attr_accessor :_bits, :_signed
-	def initialize(bits, signed)
+	attr_accessor :_bits, :_signed, :_initvalue
+	def initialize(bits, signed, initvalue)
 		@_bits = bits
 		@_signed = signed
+		@_initvalue = initvalue
 	end
 
 	def _get
@@ -177,6 +170,10 @@ class Number < MemStruct
 		when 64; DFHack.memory_write_int32(@_memaddr, v & 0xffffffff) ; DFHack.memory_write_int32(@memaddr+4, v>>32)
 		end
 	end
+
+	def _cpp_init
+		_set(@_initvalue) if @_initvalue
+	end
 end
 class Float < MemStruct
 	# _get/_set defined in ruby.cpp
@@ -186,6 +183,10 @@ class Float < MemStruct
 
 	def _set(v)
 		DFHack.memory_write_float(@_memaddr, v)
+	end
+
+	def _cpp_init
+		_set(0.0)
 	end
 end
 class BitField < MemStruct
@@ -308,6 +309,9 @@ class StaticArray < MemStruct
 	def _set(a)
 		a.each_with_index { |v, i| self[i] = v }
 	end
+	def _cpp_init
+		_length.times { |i| _tgat(i)._cpp_init }
+	end
 	alias length _length
 	alias size _length
 	def _tgat(i)
@@ -334,6 +338,7 @@ class StaticArray < MemStruct
 			to_a.inspect
 		end
 	end
+	def flatten ; map { |e| e.respond_to?(:flatten) ? e.flatten : e }.flatten ; end
 end
 class StaticString < MemStruct
 	attr_accessor :_length
@@ -371,6 +376,10 @@ class StlVector32 < MemStruct
 	def _set(v)
 		delete_at(length-1) while length > v.length	# match lengthes
 		v.each_with_index { |e, i| self[i] = e }	# patch entries
+	end
+
+	def _cpp_init
+		DFHack.memory_vector_init(@_memaddr)
 	end
 
 	def clear
@@ -475,6 +484,10 @@ class StlString < MemStruct
 	def _set(v)
 		DFHack.memory_write_stlstring(@_memaddr, v)
 	end
+
+	def _cpp_init
+		DFHack.memory_stlstring_init(@_memaddr)
+	end
 end
 class StlDeque < MemStruct
 	attr_accessor :_tglen, :_tg
@@ -496,6 +509,7 @@ class DfFlagarray < MemStruct
 	def length
 		DFHack.memory_bitarray_length(@_memaddr)
 	end
+	# TODO _cpp_init
 	def size ; length ; end
 	def resize(len)
 		DFHack.memory_bitarray_resize(@_memaddr, len)
@@ -538,6 +552,7 @@ class DfArray < Compound
 
 	def length ; _length ; end
 	def size ; _length ; end
+	# TODO _cpp_init
 	def _tgat(i)
 		@_tg._at(_ptr + i*@_tglen) if i >= 0 and i < _length
 	end

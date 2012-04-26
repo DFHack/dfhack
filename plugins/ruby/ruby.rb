@@ -228,12 +228,12 @@ module DFHack
 
         # add an announcement
         # color = integer, bright = bool
-        def add_announcement(str, color=7, bright=false)
+        def add_announcement(str, color=nil, bright=nil)
             cont = false
             while str.length > 0
                 rep = Report.cpp_new
-                rep.color = color
-                rep.bright = ((bright && bright != 0) ? 1 : 0)
+                rep.color = color if color
+                rep.bright = ((bright && bright != 0) ? 1 : 0) if bright != nil
                 rep.year = cur_year
                 rep.time = cur_year_tick
                 rep.flags.continuation = cont

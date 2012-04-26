@@ -30,6 +30,7 @@
 #include <df/histfig_entity_link_positionst.h>
 #include <df/entity_position_assignment.h>
 #include <df/entity_position.h>
+#include <df/building_tradedepotst.h>
 
 #include <MiscUtils.h>
 
@@ -493,6 +494,7 @@ struct dwarf_info_t
 	bool has_exclusive_labor;
     int noble_penalty; // penalty for assignment due to noble status
     bool medical; // this dwarf has medical responsibility
+    bool trader;  // this dwarf has trade responsibility
 };
 
 static bool isOptionEnabled(unsigned flag)
@@ -715,6 +717,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 	bool has_butchers = false;
 	bool has_fishery = false;
+    bool trader_requested = false;
 
 	for (int i = 0; i < world->buildings.all.size(); ++i)
 	{
@@ -727,7 +730,14 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 				has_butchers = true;
 			if (df::enums::workshop_type::Fishery == subType)
 				has_fishery = true;
-		}
+        } 
+        else if (df::enums::building_type::TradeDepot == type)
+        {
+            df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
+            trader_requested = depot->flags.bits.trader_requested;
+            if (print_debug)
+                out.print("Trade depot found and trader requested, trader will be excluded from all labors.\n");
+        }
 	}
 
     for (int i = 0; i < world->units.all.size(); ++i)
@@ -782,6 +792,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
                 if (position->responsibilities[df::entity_position_responsibility::HEALTH_MANAGEMENT])
                     dwarf_info[dwarf].medical = true;
+
+                if (position->responsibilities[df::entity_position_responsibility::TRADE])
+                    dwarf_info[dwarf].trader = true;
 
             }
             dwarf_info[dwarf].noble_penalty = noble_penalty;
@@ -1069,8 +1082,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			assert(dwarf >= 0);
 			assert(dwarf < n_dwarfs);
 
-
-
 			bool preferred_dwarf = false;
 			if (want_idle_dwarf && dwarf_info[dwarf].state == IDLE)
 				preferred_dwarf = true;
@@ -1080,6 +1091,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 				preferred_dwarf = true;
             if (dwarf_info[dwarf].medical && labor == df::unit_labor::DIAGNOSE)
                 preferred_dwarf = true;
+            if (dwarf_info[dwarf].trader && trader_requested)
+                continue;
 
 			if (labor_infos[labor].active_dwarfs >= min_dwarfs && !preferred_dwarf)
 				continue;

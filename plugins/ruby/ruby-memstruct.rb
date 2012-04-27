@@ -303,6 +303,7 @@ module IndexEnum
 end
 module Enumerable
 	include ::Enumerable
+	attr_accessor :_indexenum
 	def each ; (0...length).each { |i| yield self[i] } ; end
 	def inspect
 		enum = DFHack.const_get(_indexenum)::ENUM if _indexenum

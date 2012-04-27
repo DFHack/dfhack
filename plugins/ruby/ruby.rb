@@ -95,7 +95,7 @@ module DFHack
                     k.unit if k.type == :Unit
                 end
             elsif what.kind_of?(Integer)
-                world.units.all.find { |u| u.id == what }
+                world.units.all.binsearch(what)
             elsif what.respond_to?(:x) or what.respond_to?(:pos)
                 what = what.pos if what.respond_to?(:pos)
                 x, y, z = what.x, what.y, what.z
@@ -115,7 +115,7 @@ module DFHack
                     k.item if k.type == :Item
                 end
             elsif what.kind_of?(Integer)
-                world.items.all.find { |i| i.id == what }
+                world.items.all.binsearch(what)
             elsif what.respond_to?(:x) or what.respond_to?(:pos)
                 what = what.pos if what.respond_to?(:pos)
                 x, y, z = what.x, what.y, what.z

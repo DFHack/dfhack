@@ -1,11 +1,11 @@
 module DFHack
 module MemHack
+INSPECT_SIZE_LIMIT=1024
 class MemStruct
 	attr_accessor :_memaddr
 	def _at(addr) ; d = dup ; d._memaddr = addr ; d ; end
 	def _get ; self ; end
 	def _cpp_init ; end
-	def inspect ; _get.inspect ; end
 end
 
 class Compound < MemStruct
@@ -121,7 +121,7 @@ class Compound < MemStruct
 		out = "#<#{cn}"
 		_fields_ancestors.each { |n, o, s|
 			out << ' ' if out.length != 0 and out[-1, 1] != ' '
-			if out.length > 1024
+			if out.length > INSPECT_SIZE_LIMIT
 				out << '...'
 				break
 			end
@@ -132,6 +132,8 @@ class Compound < MemStruct
 	def inspect_field(n, o, s)
 		if s.kind_of?(BitField) and s._len == 1
 			send(n) ? n.to_s : ''
+		elsif s.kind_of?(Pointer)
+			s._at(@_memaddr+o).inspect
 		elsif n == :_whole
 			"_whole=0x#{_whole.to_s(16)}"
 		else
@@ -237,7 +239,7 @@ class Pointer < MemStruct
 		DFHack.memory_read_int32(@_memaddr) & 0xffffffff
 	end
 
-	def _getv
+	def _get
 		addr = _getp
 		return if addr == 0
 		@_tg._at(addr)._get
@@ -246,28 +248,23 @@ class Pointer < MemStruct
 	# XXX shaky...
 	def _set(v)
 		if v.kind_of?(Pointer)
-			DFHack.memory_write_int32(@_memaddr, v._getv)
+			DFHack.memory_write_int32(@_memaddr, v._getp)
 		elsif v.kind_of?(MemStruct)
 			DFHack.memory_write_int32(@_memaddr, v._memaddr)
 		else
-			_getv._set(v)
+			_get._set(v)
 		end
 	end
 
-	# these ruby Object methods should be forwarded to the ptr
-	undef id
-	undef type
-	def method_missing(*a)
-		_getv.send(*a)
-	end
-	def respond_to?(q)
-		_getv.respond_to?(q)
-	end
-
 	def inspect
-		cn = (@_tg ? @_tg.class.name.sub(/^DFHack::/, '') : '')
-		cn = @_tg._glob if cn == 'MemHack::Global'
-		"#<Pointer #{cn} #{'0x%X' % _getp}>"
+		ptr = _getp
+		if ptr == 0
+			'NULL'
+		else
+			cn = (@_tg ? @_tg.class.name.sub(/^DFHack::/, '') : '')
+			cn = @_tg._glob if cn == 'MemHack::Global'
+			"#<Pointer #{cn} #{'0x%X' % _getp}>"
+		end
 	end
 end
 class PointerAry < MemStruct
@@ -304,6 +301,25 @@ module IndexEnum
 		end
 	end
 end
+module Enumerable
+	include ::Enumerable
+	def each ; (0...length).each { |i| yield self[i] } ; end
+	def inspect
+		enum = DFHack.const_get(_indexenum)::ENUM if _indexenum
+		out = '['
+		each { |i|
+			out << ', ' if out.length > 1
+			if out.length > INSPECT_SIZE_LIMIT
+				out << '...'
+				break
+			end
+			out << "#{enum[i]}=" if enum
+			out << i.inspect
+		}
+		out << ']'
+	end
+	def flatten ; map { |e| e.respond_to?(:flatten) ? e.flatten : e }.flatten ; end
+end
 class StaticArray < MemStruct
 	include IndexEnum
 	attr_accessor :_tglen, :_length, :_indexenum, :_tg
@@ -336,16 +352,6 @@ class StaticArray < MemStruct
 	end
 
 	include Enumerable
-	def each ; (0...length).each { |i| yield self[i] } ; end
-	def inspect
-		if _indexenum
- 			e = DFHack.const_get(_indexenum)::ENUM
-			'[' + (0...length).map { |i| "#{e[i]}=#{self[i].inspect}" }.join(' ') + ']'
-		else
-			to_a.inspect
-		end
-	end
-	def flatten ; map { |e| e.respond_to?(:flatten) ? e.flatten : e }.flatten ; end
 end
 class StaticString < MemStruct
 	attr_accessor :_length
@@ -420,14 +426,6 @@ class StlVector32 < MemStruct
 	end
 
 	include Enumerable
-	def each ; (0...length).each { |i| yield self[i] } ; end
-	def inspect
-		if _tg and _tg.kind_of?(Pointer)
-			length > 0 ? "[#{length}*#{self[0].inspect}]" : '[]'
-		else
-			to_a.inspect
-		end
-	end
 	# do a binary search in an ordered vector for a specific target attribute
 	# ex: world.history.figures.binsearch(unit.hist_figure_id)
 	def binsearch(target, field=:id)
@@ -555,15 +553,6 @@ class DfFlagarray < MemStruct
 	end
 
 	include Enumerable
-	def each ; (0...length).each { |i| yield self[i] } ; end
-	def inspect
-		if _indexenum
- 			e = DFHack.const_get(_indexenum)::ENUM
-			'[' + (0...length).map { |i| if self[i] ; e[i] || i ; end }.compact.join(' ') + ']'
-		else
-			to_a.inspect
-		end
-	end
 end
 class DfArray < Compound
 	attr_accessor :_tglen, :_tg
@@ -594,8 +583,6 @@ class DfArray < Compound
 	end
 
 	include Enumerable
-	def each ; (0...length).each { |i| yield self[i] } ; end
-	def inspect ; to_a.inspect ; end
 end
 class DfLinkedList < Compound
 	attr_accessor :_tg
@@ -608,27 +595,32 @@ class DfLinkedList < Compound
 	field(:_next, 8) { number 32, false }
 
 	def item
-		addr = _ptr
-		return if addr == 0
-		@_tg._at(addr)._get
+		# With the current xml structure, currently _tg designate
+		# the type of the 'next' and 'prev' fields, not 'item'.
+		# List head has item == NULL, so we can safely return nil.
+
+		#addr = _ptr
+		#return if addr == 0
+		#@_tg._at(addr)._get
 	end
 
 	def item=(v)
-		addr = _ptr
-		raise 'null pointer' if addr == 0
-		@_tg.at(addr)._set(v)
+		#addr = _ptr
+		#raise 'null pointer' if addr == 0
+		#@_tg.at(addr)._set(v)
+		raise 'null pointer'
 	end
 
 	def prev
 		addr = _prev
 		return if addr == 0
-		_at(addr)
+		@_tg._at(addr)._get
 	end
 
 	def next
 		addr = _next
 		return if addr == 0
-		_at(addr)
+		@_tg._at(addr)._get
 	end
 
 	include Enumerable
@@ -639,8 +631,7 @@ class DfLinkedList < Compound
 			o = o.next
 		end
 	end
-
-	def inspect ; "#<DfLinkedList prev=#{'0x%X' % _prev} next=#{'0x%X' % _next} #{item.inspect}>" ; end
+	def inspect ; "#<DfLinkedList #{item.inspect} prev=#{'0x%X' % _prev} next=#{'0x%X' % _next}>" ; end
 end
 
 class Global < MemStruct

@@ -100,13 +100,11 @@ the block specifies the member type. See ruby-memstruct.rb for more information.
 Primitive type access is done through native methods in ruby.cpp (vector length,
 raw memory access, etc)
 
-MemHack::Pointers have a special behavior: they accept and forward any method to
-the pointed object. To retrieve the pointed object directly, use the _getv
-method. Null pointers resolve to 'nil'.
-Beware, invalid pointers (!= 0) will crash the plugin and the game.
+MemHack::Pointers are automatically dereferenced ; so a vector of pointer to
+Units will yield Units directly. Null pointers yield the 'nil' value.
 
-This allows to use code such as 'df.world.units.all[0].pos', with all[0] being
-really a Pointer (with no 'pos' method).
+This allows to use code such as 'df.world.units.all[0].pos', with 'all' being
+really a vector of pointer.
 
 
 Todo

@@ -159,7 +159,7 @@ module DFHack
                     yl = xl[yb]
                     (0...world.map.z_count_block).each { |z|
                         p = yl[z]
-                        yield p._getv if p._getp != 0
+                        yield p if p
                     }
                 }
             }
@@ -171,7 +171,7 @@ module DFHack
                 xl = world.map.block_index[xb]
                 (0...world.map.y_count_block).each { |yb|
                     p = xl[yb][z]
-                    yield p._getv if p._getp != 0
+                    yield p if p
                 }
             }
         end

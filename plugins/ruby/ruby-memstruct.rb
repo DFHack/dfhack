@@ -262,8 +262,9 @@ class Pointer < MemStruct
 		if ptr == 0
 			'NULL'
 		else
-			cn = (@_tg ? @_tg.class.name.sub(/^DFHack::/, '') : '')
-			cn = @_tg._glob if cn == 'MemHack::Global'
+			cn = ''
+			cn = @_tg.class.name.sub(/^DFHack::/, '').sub(/^MemHack::/, '') if @_tg
+			cn = @_tg._glob if cn == 'Global'
 			"#<Pointer #{cn} #{'0x%X' % _getp}>"
 		end
 	end
@@ -320,6 +321,7 @@ module Enumerable
 		}
 		out << ']'
 	end
+	def empty? ; length == 0 ; end
 	def flatten ; map { |e| e.respond_to?(:flatten) ? e.flatten : e }.flatten ; end
 end
 class StaticArray < MemStruct

@@ -328,8 +328,13 @@ sub render_item_compound {
 
     my $cppns = $pns . '::' . $item->getAttribute('ld:typedef-name');
     my $subtype = $item->getAttribute('ld:subtype');
+
+    my @namecomponents = split('::', $cppns);
+    shift @namecomponents;
+    my $classname = join('_', map { rb_ucase($_) } @namecomponents);
+
     if (!$subtype || $subtype eq 'bitfield') {
-        push @lines_rb, "compound {";
+        push @lines_rb, "compound(:$classname) {";
         indent_rb {
             if (!$subtype) {
                 render_struct_fields($item, $cppns);
@@ -339,10 +344,7 @@ sub render_item_compound {
         };
         push @lines_rb, "}"
     } elsif ($subtype eq 'enum') {
-        my @namecomponents = split('::', $cppns);
-        shift @namecomponents;
-        my $enumclassname = join('_', map { rb_ucase($_) } @namecomponents);
-        push @lines_rb, "class ::DFHack::$enumclassname";
+        push @lines_rb, "class ::DFHack::$classname";
         indent_rb {
             # declare constants
             render_enum_fields($item);
@@ -350,7 +352,7 @@ sub render_item_compound {
         push @lines_rb, "end\n";
 
         # actual field
-        render_item_number($item, $enumclassname);
+        render_item_number($item, $classname);
     } else {
         print "no render compound $subtype\n";
     }

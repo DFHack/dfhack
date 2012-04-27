@@ -82,8 +82,9 @@ class Compound < MemStruct
 		def global(glob)
 			Global.new(glob)
 		end
-		def compound(&b)
+		def compound(name=nil, &b)
 			m = Class.new(Compound)
+			DFHack.const_set(name, m) if name
 			m.instance_eval(&b)
 			m.new
 		end

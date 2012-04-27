@@ -164,18 +164,11 @@ sub render_global_class {
     return if $seen_class{$name};
     $seen_class{$name}++;
 
-    my $rtti_name = $type->getAttribute('original-name') ||
-                    $type->getAttribute('type-name');
-
-    my $has_rtti = $parent;
-    if (!$parent and $type->getAttribute('ld:meta') eq 'class-type') {
-        for my $anytypename (keys %global_types) {
-            my $anytype = $global_types{$anytypename};
-            if ($anytype->getAttribute('ld:meta') eq 'class-type') {
-                my $anyparent = $anytype->getAttribute('inherits-from');
-                $has_rtti = 1 if ($anyparent and $anyparent eq $name);
-            }
-        }
+    my $rtti_name;
+    if ($type->getAttribute('ld:meta') eq 'class-type') {
+        $rtti_name = $type->getAttribute('original-name') ||
+                     $type->getAttribute('type-name') ||
+                     $name;
     }
 
     my $rbparent = ($parent ? rb_ucase($parent) : 'MemHack::Compound');
@@ -189,7 +182,7 @@ sub render_global_class {
     indent_rb {
         my $sz = query_cpp("sizeof($cppns)");
         push @lines_rb, "sizeof $sz";
-        push @lines_rb, "rtti_classname :$rtti_name" if $has_rtti;
+        push @lines_rb, "rtti_classname :$rtti_name" if $rtti_name;
         render_struct_fields($type, "$cppns");
     };
     push @lines_rb, "end\n";

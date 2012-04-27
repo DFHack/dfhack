@@ -111,7 +111,13 @@ class Compound < MemStruct
 	def _cpp_init
 		_fields_ancestors.each { |n, o, s| s._at(@_memaddr+o)._cpp_init }
 	end
-	def _set(h) ; h.each { |k, v| send("_#{k}=", v) } ; end
+	def _set(h)
+		case h
+		when Hash; h.each { |k, v| send("_#{k}=", v) }
+		when Compound; _fields.each { |n, o, s| send("#{n}=", h.send(n)) }
+		else raise 'wut?'
+		end
+	end
 	def _fields ; self.class._fields.to_a ; end
 	def _fields_ancestors ; self.class._fields_ancestors.to_a ; end
 	def _rtti_classname ; self.class._rtti_classname ; end
@@ -695,7 +701,7 @@ end
 # return the vtable pointer from the cpp rtti name
 def self.rtti_getvtable(cppname)
 	unless v = @rtti_n2v[cppname]
-		v = get_vtable(cppname)
+		v = get_vtable(cppname.to_s)
 		@rtti_n2v[cppname] = v
 		@rtti_v2n[v] = cppname if v != 0
 	end

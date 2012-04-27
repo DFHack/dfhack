@@ -127,13 +127,14 @@ class Compound < MemStruct
 			end
 			out << inspect_field(n, o, s)
 		}
+		out.chomp!(' ')
 		out << '>'
 	end
 	def inspect_field(n, o, s)
 		if s.kind_of?(BitField) and s._len == 1
 			send(n) ? n.to_s : ''
 		elsif s.kind_of?(Pointer)
-			s._at(@_memaddr+o).inspect
+			"#{n}=#{s._at(@_memaddr+o).inspect}"
 		elsif n == :_whole
 			"_whole=0x#{_whole.to_s(16)}"
 		else

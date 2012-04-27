@@ -47,13 +47,11 @@ my %item_renderer = (
 
 my %global_types;
 
-our %seen_enum_name;
 sub render_global_enum {
     my ($name, $type) = @_;
 
     my $rbname = rb_ucase($name);
     push @lines_rb, "class $rbname";
-    %seen_enum_name = ();
     indent_rb {
         render_enum_fields($type);
     };
@@ -64,8 +62,6 @@ sub render_enum_fields {
 
     my $value = -1;
     my $idxname = 'ENUM';
-    $idxname .= '_' while ($seen_enum_name{$idxname});
-    $seen_enum_name{$idxname}++;
     push @lines_rb, "$idxname = Hash.new";
 
     my %attr_type;
@@ -100,8 +96,6 @@ sub render_enum_fields {
 
         if ($elemname) {
             my $rbelemname = rb_ucase($elemname);
-            $rbelemname .= '_' while ($seen_enum_name{$rbelemname});
-            $seen_enum_name{$rbelemname}++;
             push @lines_rb, "$rbelemname = $value ; ${idxname}[$value] = :$rbelemname";
             for my $iattr ($item->findnodes('child::item-attr')) {
                 my $ian = $iattr->getAttribute('name');
@@ -169,7 +163,6 @@ sub render_global_class {
 
     return if $seen_class{$name};
     $seen_class{$name}++;
-    %seen_enum_name = ();
 
     my $rtti_name = $type->getAttribute('original-name') ||
                     $type->getAttribute('type-name');
@@ -227,8 +220,6 @@ sub render_global_objects {
 
     my $sname = 'global_objects';
     my $rbname = rb_ucase($sname);
-
-    %seen_enum_name = ();
 
     push @lines_cpp, "}" if @include_cpp;
     push @lines_cpp, "void cpp_$sname(FILE *fout) {";
@@ -356,7 +347,6 @@ sub render_item_compound {
         my @namecomponents = split('::', $cppns);
         shift @namecomponents;
         my $enumclassname = join('_', map { rb_ucase($_) } @namecomponents);
-        local %seen_enum_name;
         push @lines_rb, "class ::DFHack::$enumclassname";
         indent_rb {
             # declare constants

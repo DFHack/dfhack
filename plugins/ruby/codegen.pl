@@ -282,10 +282,12 @@ sub render_item_number {
     my ($item, $pns) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
+    my $meta = $item->getAttribute('ld:meta');
     my $initvalue = $item->getAttribute('init-value');
     my $typename = $item->getAttribute('type-name');
+    undef $typename if ($meta and $meta eq 'bitfield-type');
     $typename = rb_ucase($typename) if $typename;
-    $typename = $pns if (!$typename and $subtype eq 'enum');	# compound enum
+    $typename = $pns if (!$typename and $subtype and $subtype eq 'enum');      # compound enum
 
     $initvalue = 1 if ($initvalue and $initvalue eq 'true');
     $initvalue = ":$initvalue" if ($initvalue and $typename and $initvalue =~ /[a-zA-Z]/);

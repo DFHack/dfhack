@@ -216,6 +216,9 @@ void DFHack::describeMaterial(BasicMaterialInfo *info, const MaterialInfo &mat,
     case MaterialInfo::Plant:
         info->set_plant_id(mat.index);
         break;
+
+    default:
+        break;
     }
 }
 
@@ -298,7 +301,7 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
 
     if (mask && mask->labors())
     {
-        for (int i = 0; i < sizeof(unit->status.labors)/sizeof(bool); i++)
+        for (size_t i = 0; i < sizeof(unit->status.labors)/sizeof(bool); i++)
             if (unit->status.labors[i])
                 info->add_labors(i);
     }
@@ -399,7 +402,7 @@ static command_result GetWorldInfo(color_ostream &stream,
     case GAMETYPE_ADVENTURE_MAIN:
         out->set_mode(GetWorldInfoOut::MODE_ADVENTURE);
 
-        if (auto unit = vector_get(world->units.other[0], 0))
+        if (auto unit = vector_get(world->units.active, 0))
             out->set_player_unit_id(unit->id);
 
         if (!ui_advmode)
@@ -630,7 +633,7 @@ static command_result ListSquads(color_ostream &stream,
 
 static command_result SetUnitLabors(color_ostream &stream, const SetUnitLaborsIn *in)
 {
-    for (size_t i = 0; i < in->change_size(); i++)
+    for (int i = 0; i < in->change_size(); i++)
     {
         auto change = in->change(i);
         auto unit = df::unit::find(change.unit_id());

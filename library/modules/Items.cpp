@@ -536,6 +536,9 @@ df::coord Items::getPosition(df::item *item)
                 if (auto bld = ref->getBuilding())
                     return df::coord(bld->centerx, bld->centery, bld->z);
                 break;
+
+            default:
+                break;
             }
         }
     }

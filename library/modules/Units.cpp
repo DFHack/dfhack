@@ -55,8 +55,13 @@ using namespace std;
 #include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
+#include "df/entity_position.h"
+#include "df/entity_position_assignment.h"
+#include "df/histfig_entity_link_positionst.h"
 #include "df/assumed_identity.h"
 #include "df/burrow.h"
+#include "df/creature_raw.h"
+#include "df/caste_raw.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -78,7 +83,7 @@ df::unit * Units::GetCreature (const int32_t index)
     if (!isValid()) return NULL;
 
     // read pointer from vector at position
-    if(index > world->units.all.size())
+    if(size_t(index) > world->units.all.size())
         return 0;
     return world->units.all[index];
 }
@@ -529,6 +534,23 @@ df::item *Units::getContainer(df::unit *unit)
     return NULL;
 }
 
+static df::assumed_identity *getFigureIdentity(df::historical_figure *figure)
+{
+    if (figure && figure->info && figure->info->reputation)
+        return df::assumed_identity::find(figure->info->reputation->cur_identity);
+
+    return NULL;
+}
+
+df::assumed_identity *Units::getIdentity(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
+
+    return getFigureIdentity(figure);
+}
+
 void Units::setNickname(df::unit *unit, std::string nick)
 {
     CHECK_NULL_POINTER(unit);
@@ -547,25 +569,19 @@ void Units::setNickname(df::unit *unit, std::string nick)
     {
         Translation::setNickname(&figure->name, nick);
 
-        // v0.34.01: added the vampire's assumed identity
-        if (figure->info && figure->info->reputation)
+        if (auto identity = getFigureIdentity(figure))
         {
-            auto identity = df::assumed_identity::find(figure->info->reputation->cur_identity);
+            auto id_hfig = df::historical_figure::find(identity->histfig_id);
 
-            if (identity)
+            if (id_hfig)
             {
-                auto id_hfig = df::historical_figure::find(identity->histfig_id);
-
-                if (id_hfig)
-                {
-                    // Even DF doesn't do this bit, because it's apparently
-                    // only used for demons masquerading as gods, so you
-                    // can't ever change their nickname in-game.
-                    Translation::setNickname(&id_hfig->name, nick);
-                }
-                else
-                    Translation::setNickname(&identity->name, nick);
+                // Even DF doesn't do this bit, because it's apparently
+                // only used for demons masquerading as gods, so you
+                // can't ever change their nickname in-game.
+                Translation::setNickname(&id_hfig->name, nick);
             }
+            else
+                Translation::setNickname(&identity->name, nick);
         }
     }
 }
@@ -574,25 +590,14 @@ df::language_name *Units::getVisibleName(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
-
-    if (figure)
+    if (auto identity = getIdentity(unit))
     {
-        // v0.34.01: added the vampire's assumed identity
-        if (figure->info && figure->info->reputation)
-        {
-            auto identity = df::assumed_identity::find(figure->info->reputation->cur_identity);
+        auto id_hfig = df::historical_figure::find(identity->histfig_id);
 
-            if (identity)
-            {
-                auto id_hfig = df::historical_figure::find(identity->histfig_id);
+        if (id_hfig)
+            return &id_hfig->name;
 
-                if (id_hfig)
-                    return &id_hfig->name;
-
-                return &identity->name;
-            }
-        }
+        return &identity->name;
     }
 
     return &unit->name;
@@ -672,65 +677,224 @@ bool DFHack::Units::isDwarf(df::unit *unit)
     return unit->race == ui->race_id;
 }
 
-void DFHack::Units::clearBurrowMembers(df::burrow *burrow)
+double DFHack::Units::getAge(df::unit *unit, bool true_age)
 {
-    CHECK_NULL_POINTER(burrow);
-
-    for (size_t i = 0; i < burrow->units.size(); i++)
-    {
-        auto unit = df::unit::find(burrow->units[i]);
-
-        if (unit)
-            erase_from_vector(unit->burrows, burrow->id);
-    }
-
-    burrow->units.clear();
-
-    // Sync ui if active
-    if (ui && ui->main.mode == ui_sidebar_mode::Burrows &&
-        ui->burrows.in_add_units_mode && ui->burrows.sel_id == burrow->id)
-    {
-        auto &sel = ui->burrows.sel_units;
-
-        for (size_t i = 0; i < sel.size(); i++)
-            sel[i] = false;
-    }
-}
-
-
-bool DFHack::Units::isInBurrow(df::unit *unit, df::burrow *burrow)
-{
-    CHECK_NULL_POINTER(unit);
-    CHECK_NULL_POINTER(burrow);
-
-    return binsearch_index(unit->burrows, burrow->id) >= 0;
-}
-
-void DFHack::Units::setInBurrow(df::unit *unit, df::burrow *burrow, bool enable)
-{
-    using df::global::ui;
+    using df::global::cur_year;
+    using df::global::cur_year_tick;
 
     CHECK_NULL_POINTER(unit);
-    CHECK_NULL_POINTER(burrow);
 
-    if (enable)
+    if (!cur_year || !cur_year_tick)
+        return -1;
+
+    double year_ticks = 403200.0;
+    double birth_time = unit->relations.birth_year + unit->relations.birth_time/year_ticks;
+    double cur_time = *cur_year + *cur_year_tick / year_ticks;
+
+    if (!true_age && unit->relations.curse_year >= 0)
     {
-        insert_into_vector(unit->burrows, burrow->id);
-        insert_into_vector(burrow->units, unit->id);
-    }
-    else
-    {
-        erase_from_vector(unit->burrows, burrow->id);
-        erase_from_vector(burrow->units, unit->id);
+        if (auto identity = getIdentity(unit))
+        {
+            if (identity->histfig_id < 0)
+                birth_time = identity->birth_year + identity->birth_second/year_ticks;
+        }
     }
 
-    // Sync ui if active
-    if (ui && ui->main.mode == ui_sidebar_mode::Burrows &&
-        ui->burrows.in_add_units_mode && ui->burrows.sel_id == burrow->id)
-    {
-        int idx = linear_index(ui->burrows.list_units, unit);
-        if (idx >= 0)
-            ui->burrows.sel_units[idx] = enable;
-    }
+    return cur_time - birth_time;
 }
 
+static bool noble_pos_compare(const Units::NoblePosition &a, const Units::NoblePosition &b)
+{
+    if (a.position->precedence < b.position->precedence)
+        return true;
+    if (a.position->precedence > b.position->precedence)
+        return false;
+    return a.position->id < b.position->id;
+}
+
+bool DFHack::Units::getNoblePositions(std::vector<NoblePosition> *pvec, df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    pvec->clear();
+
+    auto histfig = df::historical_figure::find(unit->hist_figure_id);
+    if (!histfig)
+        return false;
+
+    for (size_t i = 0; i < histfig->entity_links.size(); i++)
+    {
+        auto link = histfig->entity_links[i];
+        auto epos = strict_virtual_cast<df::histfig_entity_link_positionst>(link);
+        if (!epos)
+            continue;
+
+        NoblePosition pos;
+
+        pos.entity = df::historical_entity::find(epos->entity_id);
+        if (!pos.entity)
+            continue;
+
+        pos.assignment = binsearch_in_vector(pos.entity->positions.assignments, epos->assignment_id);
+        if (!pos.assignment)
+            continue;
+
+        pos.position = binsearch_in_vector(pos.entity->positions.own, pos.assignment->position_id);
+        if (!pos.position)
+            continue;
+
+        pvec->push_back(pos);
+    }
+
+    if (pvec->empty())
+        return false;
+
+    std::sort(pvec->begin(), pvec->end(), noble_pos_compare);
+    return true;
+}
+
+std::string DFHack::Units::getProfessionName(df::unit *unit, bool ignore_noble, bool plural)
+{
+    std::string prof = unit->custom_profession;
+    if (!prof.empty())
+        return prof;
+
+    std::vector<NoblePosition> np;
+
+    if (!ignore_noble && getNoblePositions(&np, unit))
+    {
+        switch (unit->sex)
+        {
+        case 0:
+            prof = np[0].position->name_female[plural ? 1 : 0];
+            break;
+        case 1:
+            prof = np[0].position->name_male[plural ? 1 : 0];
+            break;
+        default:
+            break;
+        }
+
+        if (prof.empty())
+            prof = np[0].position->name[plural ? 1 : 0];
+        if (!prof.empty())
+            return prof;
+    }
+
+    return getCasteProfessionName(unit->race, unit->caste, unit->profession, plural);
+}
+
+std::string DFHack::Units::getCasteProfessionName(int race, int casteid, df::profession pid, bool plural)
+{
+    std::string prof, race_prefix;
+
+    if (pid < 0 || !is_valid_enum_item(pid))
+        return "";
+
+    bool use_race_prefix = (race >= 0 && race != df::global::ui->race_id);
+
+    if (auto creature = df::creature_raw::find(race))
+    {
+        if (auto caste = vector_get(creature->caste, casteid))
+        {
+            race_prefix = caste->caste_name[0];
+
+            if (plural)
+                prof = caste->caste_profession_name.plural[pid];
+            else
+                prof = caste->caste_profession_name.singular[pid];
+
+            if (prof.empty())
+            {
+                switch (pid)
+                {
+                case profession::CHILD:
+                    prof = caste->child_name[plural ? 1 : 0];
+                    if (!prof.empty())
+                        use_race_prefix = false;
+                    break;
+
+                case profession::BABY:
+                    prof = caste->baby_name[plural ? 1 : 0];
+                    if (!prof.empty())
+                        use_race_prefix = false;
+                    break;
+
+                default:
+                    break;
+                }
+            }
+        }
+
+        if (race_prefix.empty())
+            race_prefix = creature->name[0];
+
+        if (prof.empty())
+        {
+            if (plural)
+                prof = creature->profession_name.plural[pid];
+            else
+                prof = creature->profession_name.singular[pid];
+
+            if (prof.empty())
+            {
+                switch (pid)
+                {
+                case profession::CHILD:
+                    prof = creature->general_child_name[plural ? 1 : 0];
+                    if (!prof.empty())
+                        use_race_prefix = false;
+                    break;
+
+                case profession::BABY:
+                    prof = creature->general_baby_name[plural ? 1 : 0];
+                    if (!prof.empty())
+                        use_race_prefix = false;
+                    break;
+
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
+    if (race_prefix.empty())
+        race_prefix = "Animal";
+
+    if (prof.empty())
+    {
+        switch (pid)
+        {
+        case profession::TRAINED_WAR:
+            prof = "War " + (use_race_prefix ? race_prefix : "Peasant");
+            use_race_prefix = false;
+            break;
+
+        case profession::TRAINED_HUNTER:
+            prof = "Hunting " + (use_race_prefix ? race_prefix : "Peasant");
+            use_race_prefix = false;
+            break;
+
+        case profession::STANDARD:
+            if (!use_race_prefix)
+                prof = "Peasant";
+            break;
+
+        default:
+            if (auto caption = ENUM_ATTR(profession, caption, pid))
+                prof = caption;
+            else
+                prof = ENUM_KEY_STR(profession, pid);
+        }
+    }
+
+    if (use_race_prefix)
+    {
+        if (!prof.empty())
+            race_prefix += " ";
+        prof = race_prefix + prof;
+    }
+
+    return Translation::capitalize(prof, true);
+}

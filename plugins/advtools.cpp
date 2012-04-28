@@ -169,7 +169,7 @@ bool bodySwap(color_ostream &out, df::unit *player)
         return false;
     }
 
-    auto &vec = world->units.other[0];
+    auto &vec = world->units.active;
 
     int idx = linear_index(vec, player);
     if (idx < 0)
@@ -195,7 +195,7 @@ df::nemesis_record *getPlayerNemesis(color_ostream &out, bool restore_swap)
 
     if (restore_swap)
     {
-        df::unit *ctl = world->units.other[0][0];
+        df::unit *ctl = world->units.active[0];
         auto ctl_nemesis = Units::getNemesis(ctl);
 
         if (ctl_nemesis != real_nemesis)

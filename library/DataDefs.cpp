@@ -42,13 +42,14 @@ using namespace DFHack;
 
 
 void *type_identity::do_allocate_pod() {
-    void *p = malloc(size);
-    memset(p, 0, size);
+    size_t sz = byte_size();
+    void *p = malloc(sz);
+    memset(p, 0, sz);
     return p;
 }
 
 void type_identity::do_copy_pod(void *tgt, const void *src) {
-    memmove(tgt, src, size);
+    memmove(tgt, src, byte_size());
 };
 
 bool type_identity::do_destroy_pod(void *obj) {
@@ -81,8 +82,9 @@ bool type_identity::destroy(void *obj) {
 }
 
 void *enum_identity::do_allocate() {
-    void *p = malloc(byte_size());
-    memcpy(p, &first_item_value, std::min(byte_size(), sizeof(int64_t)));
+    size_t sz = byte_size();
+    void *p = malloc(sz);
+    memcpy(p, &first_item_value, std::min(sz, sizeof(int64_t)));
     return p;
 }
 
@@ -96,7 +98,7 @@ std::vector<compound_identity*> compound_identity::top_scope;
 
 compound_identity::compound_identity(size_t size, TAllocateFn alloc,
                                      compound_identity *scope_parent, const char *dfhack_name)
-    : constructed_identity(size, alloc), scope_parent(scope_parent), dfhack_name(dfhack_name)
+    : constructed_identity(size, alloc), dfhack_name(dfhack_name), scope_parent(scope_parent)
 {
     next = list; list = this;
 }
@@ -144,8 +146,8 @@ enum_identity::enum_identity(size_t size,
                              const char *const *keys,
                              const void *attrs, struct_identity *attr_type)
     : compound_identity(size, NULL, scope_parent, dfhack_name),
-      first_item_value(first_item_value), last_item_value(last_item_value),
-      keys(keys), base_type(base_type), attrs(attrs), attr_type(attr_type)
+      keys(keys), first_item_value(first_item_value), last_item_value(last_item_value),
+      base_type(base_type), attrs(attrs), attr_type(attr_type)
 {
 }
 
@@ -380,7 +382,7 @@ int DFHack::findEnumItem(const std::string &name, int size, const char *const *i
 void DFHack::flagarrayToString(std::vector<std::string> *pvec, const void *p,
                                int bytes, int base, int size, const char *const *items)
 {
-    for (unsigned i = 0; i < bytes*8; i++) {
+    for (int i = 0; i < bytes*8; i++) {
         int value = getBitfieldField(p, i, 1);
 
         if (value)

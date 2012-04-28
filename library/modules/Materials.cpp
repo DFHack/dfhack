@@ -80,7 +80,7 @@ bool MaterialInfo::decode(df::item *item)
 
 bool MaterialInfo::decode(const df::material_vec_ref &vr, int idx)
 {
-    if (idx < 0 || idx >= vr.mat_type.size() || idx >= vr.mat_index.size())
+    if (size_t(idx) >= vr.mat_type.size() || size_t(idx) >= vr.mat_index.size())
         return decode(-1);
     else
         return decode(vr.mat_type[idx], vr.mat_index[idx]);
@@ -103,7 +103,7 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
 
     df::world_raws &raws = world->raws;
 
-    if (type >= sizeof(raws.mat_table.builtin)/sizeof(void*))
+    if (size_t(type) >= sizeof(raws.mat_table.builtin)/sizeof(void*))
         return false;
 
     if (index < 0)
@@ -127,7 +127,7 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
         mode = Creature;
         subtype = type-CREATURE_BASE;
         creature = df::creature_raw::find(index);
-        if (!creature || subtype >= creature->material.size())
+        if (!creature || size_t(subtype) >= creature->material.size())
             return false;
         material = creature->material[subtype];
     }
@@ -139,7 +139,7 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
         if (!figure)
             return false;
         creature = df::creature_raw::find(figure->race);
-        if (!creature || subtype >= creature->material.size())
+        if (!creature || size_t(subtype) >= creature->material.size())
             return false;
         material = creature->material[subtype];
     }
@@ -148,7 +148,7 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
         mode = Plant;
         subtype = type-PLANT_BASE;
         plant = df::plant_raw::find(index);
-        if (!plant || subtype >= plant->material.size())
+        if (!plant || size_t(subtype) >= plant->material.size())
             return false;
         material = plant->material[subtype];
     }

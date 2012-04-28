@@ -1,6 +1,15 @@
 -- Common startup file for all dfhack plugins with lua support
 -- The global dfhack table is already created by C++ init code.
 
+-- Setup the global environment.
+-- BASE_G is the original lua global environment,
+-- preserved as a common denominator for all modules.
+-- This file uses it instead of the new default one.
+
+local dfhack = dfhack
+local base_env = dfhack.BASE_G
+local _ENV = base_env
+
 -- Console color constants
 
 COLOR_RESET = -1
@@ -70,7 +79,7 @@ function mkmodule(module,env)
     if plugname then
         dfhack.open_plugin(pkg,plugname)
     end
-    setmetatable(pkg, { __index = (env or _G) })
+    setmetatable(pkg, { __index = (env or base_env) })
     return pkg
 end
 
@@ -116,6 +125,31 @@ function xyz2pos(x,y,z)
     end
 end
 
+function rawset_default(target,source)
+    for k,v in pairs(source) do
+        if rawget(target,k) == nil then
+            rawset(target,k,v)
+        end
+    end
+end
+
+function safe_index(obj,idx,...)
+    if obj == nil or idx == nil then
+        return nil
+    end
+    if type(idx) == 'number' and (idx < 0 or idx >= #obj) then
+        return nil
+    end
+    obj = obj[idx]
+    if select('#',...) > 0 then
+        return safe_index(obj,...)
+    else
+        return obj
+    end
+end
+
+-- String conversions
+
 function dfhack.event:__tostring()
     return "<event>"
 end
@@ -159,12 +193,14 @@ function dfhack.interpreter(prompt,hfile,env)
     end
 
     local prompt_str = "["..(prompt or 'lua').."]# "
+    local prompt_cont = string.rep(' ',#prompt_str-4)..">>> "
     local prompt_env = {}
-	local t_prompt
+    local cmdlinelist = {}
+    local t_prompt = nil
     local vcnt = 1
 
     setmetatable(prompt_env, { __index = env or _G })
-	local cmdlinelist={}
+
     while true do
         local cmdline = dfhack.lineedit(t_prompt or prompt_str, hfile)
 
@@ -173,26 +209,29 @@ function dfhack.interpreter(prompt,hfile,env)
         elseif cmdline ~= '' then
             local pfix = string.sub(cmdline,1,1)
 
-            if pfix == '!' or pfix == '=' then
+            if not t_prompt and (pfix == '!' or pfix == '=') then
                 cmdline = 'return '..string.sub(cmdline,2)
+            else
+                pfix = nil
             end
-			table.insert(cmdlinelist,cmdline)
-            local code,err = load(table.concat(cmdlinelist,'\n'), '=(interactive)', 't', prompt_env)
+
+            table.insert(cmdlinelist,cmdline)
+            cmdline = table.concat(cmdlinelist,'\n')
+
+            local code,err = load(cmdline, '=(interactive)', 't', prompt_env)
 
             if code == nil then
-				if err:sub(-5)=="<eof>" then
-					t_prompt="[cont]"
-					
-				else
-					dfhack.printerr(err)
-					cmdlinelist={}
-					t_prompt=nil
-				end
+                if not pfix and err:sub(-5)=="<eof>" then
+                    t_prompt=prompt_cont
+                else
+                    dfhack.printerr(err)
+                    cmdlinelist={}
+                    t_prompt=nil
+                end
             else
-			
-				cmdlinelist={}
-				t_prompt=nil
-				
+                cmdlinelist={}
+                t_prompt=nil
+
                 local data = table.pack(safecall(code))
 
                 if data[1] and data.n > 1 then

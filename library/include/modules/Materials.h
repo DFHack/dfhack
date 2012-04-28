@@ -60,6 +60,14 @@ namespace df
 
 namespace DFHack
 {
+    struct t_matpair {
+        int16_t mat_type;
+        int32_t mat_index;
+
+        t_matpair(int16_t type = -1, int32_t index = -1)
+            : mat_type(type), mat_index(index) {}
+    };
+
     struct DFHACK_EXPORT MaterialInfo {
         static const int NUM_BUILTIN = 19;
         static const int GROUP_SIZE = 200;
@@ -91,6 +99,7 @@ namespace DFHack
 
     public:
         MaterialInfo(int16_t type = -1, int32_t index = -1) { decode(type, index); }
+        MaterialInfo(const t_matpair &mp) { decode(mp.mat_type, mp.mat_index); }
         template<class T> MaterialInfo(T *ptr) { decode(ptr); }
 
         bool isValid() const { return material != NULL; }
@@ -107,6 +116,7 @@ namespace DFHack
         bool decode(int16_t type, int32_t index = -1);
         bool decode(df::item *item);
         bool decode(const df::material_vec_ref &vr, int idx);
+        bool decode(const t_matpair &mp) { return decode(mp.mat_type, mp.mat_index); }
 
         template<class T> bool decode(T *ptr) {
             // Assume and exploit a certain naming convention

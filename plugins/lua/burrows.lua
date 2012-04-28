@@ -2,6 +2,11 @@ local _ENV = mkmodule('plugins.burrows')
 
 --[[
 
+ Native events:
+
+ * onBurrowRename(burrow)
+ * onDigComplete(job_type,pos,old_tiletype,new_tiletype)
+
  Native functions:
 
  * findByName(name) -> burrow
@@ -13,21 +18,6 @@ local _ENV = mkmodule('plugins.burrows')
 
 --]]
 
-clearUnits = dfhack.units.clearBurrowMembers
-
-function isBurrowUnit(burrow,unit)
-    return dfhack.units.isInBurrow(unit,burrow)
-end
-function setBurrowUnit(burrow,unit,enable)
-    return dfhack.units.setInBurrow(unit,burrow,enable)
-end
-
-clearTiles = dfhack.maps.clearBurrowTiles
-listBlocks = dfhack.maps.listBurrowBlocks
-
-isBurrowTile = dfhack.maps.isBurrowTile
-setBurrowTile = dfhack.maps.setBurrowTile
-isBlockBurrowTile = dfhack.maps.isBlockBurrowTile
-setBlockBurrowTile = dfhack.maps.setBlockBurrowTile
+rawset_default(_ENV, dfhack.burrows)
 
 return _ENV

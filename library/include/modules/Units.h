@@ -37,6 +37,10 @@ namespace df
 {
     struct nemesis_record;
     struct burrow;
+    struct assumed_identity;
+    struct historical_entity;
+    struct entity_position_assignment;
+    struct entity_position;
 }
 
 /**
@@ -201,6 +205,7 @@ DFHACK_EXPORT df::item *getContainer(df::unit *unit);
 DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
 DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
 
+DFHACK_EXPORT df::assumed_identity *getIdentity(df::unit *unit);
 DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
 
 DFHACK_EXPORT bool isDead(df::unit *unit);
@@ -209,11 +214,18 @@ DFHACK_EXPORT bool isSane(df::unit *unit);
 DFHACK_EXPORT bool isCitizen(df::unit *unit);
 DFHACK_EXPORT bool isDwarf(df::unit *unit);
 
-DFHACK_EXPORT void clearBurrowMembers(df::burrow *burrow);
+DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 
-DFHACK_EXPORT bool isInBurrow(df::unit *unit, df::burrow *burrow);
-DFHACK_EXPORT void setInBurrow(df::unit *unit, df::burrow *burrow, bool enable);
+struct NoblePosition {
+    df::historical_entity *entity;
+    df::entity_position_assignment *assignment;
+    df::entity_position *position;
+};
 
+DFHACK_EXPORT bool getNoblePositions(std::vector<NoblePosition> *pvec, df::unit *unit);
+
+DFHACK_EXPORT std::string getProfessionName(df::unit *unit, bool ignore_noble = false, bool plural = false);
+DFHACK_EXPORT std::string getCasteProfessionName(int race, int caste, df::profession pid, bool plural = false);
 }
 }
 #endif

@@ -100,6 +100,7 @@ Process-linux.cpp
 
 SET(MODULE_HEADERS
 include/modules/Buildings.h
+include/modules/Burrows.h
 include/modules/Constructions.h
 include/modules/Units.h
 include/modules/Engravings.h
@@ -120,6 +121,7 @@ include/modules/Graphic.h
 
 SET( MODULE_SOURCES
 modules/Buildings.cpp
+modules/Burrows.cpp
 modules/Constructions.cpp
 modules/Units.cpp
 modules/Engravings.cpp

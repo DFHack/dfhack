@@ -892,6 +892,9 @@ static void guess_job_material(df::job *job, MaterialInfo &mat, df::dfhack_mater
         case item_type::WOOD:
             mat_mask.bits.wood = mat_mask.bits.wood2 = true;
             break;
+
+        default:
+            break;
         }
     }
 }
@@ -1147,6 +1150,9 @@ static void map_job_items(color_ostream &out)
         case item_type::CLOTH:
             if (item->getTotalDimension() < 10000)
                 is_invalid = true;
+            break;
+
+        default:
             break;
         }
 

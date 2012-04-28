@@ -474,7 +474,7 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                                 liquidWater.add(global_z);
                         }
 
-                        df::tiletype type = b->TileTypeAt(coord);
+                        df::tiletype type = b->tiletypeAt(coord);
                         df::tiletype_shape tileshape = tileShape(type);
                         df::tiletype_material tilemat = tileMaterial(type);
 
@@ -506,7 +506,7 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                         {
                         case tiletype_material::SOIL:
                         case tiletype_material::STONE:
-                            layerMats[b->baseMaterialAt(coord)].add(global_z);
+                            layerMats[b->layerMaterialAt(coord)].add(global_z);
                             break;
                         case tiletype_material::MINERAL:
                             veinMats[b->veinMaterialAt(coord)].add(global_z);

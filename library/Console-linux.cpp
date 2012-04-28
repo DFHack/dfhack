@@ -163,6 +163,7 @@ namespace DFHack
                     return false;
                 return true;
             }
+            return false;
         }
 
     public:
@@ -489,7 +490,7 @@ namespace DFHack
                         {
                             right_arrow:
                             /* right arrow */
-                            if (raw_cursor != raw_buffer.size())
+                            if (size_t(raw_cursor) != raw_buffer.size())
                             {
                                 raw_cursor++;
                                 prompt_refresh();
@@ -510,7 +511,7 @@ namespace DFHack
                                     history_index = 0;
                                     break;
                                 }
-                                else if (history_index >= history.size())
+                                else if (size_t(history_index) >= history.size())
                                 {
                                     history_index = history.size()-1;
                                     break;
@@ -545,7 +546,7 @@ namespace DFHack
                             if (seq[1] == '3' && seq2 == '~' )
                             {
                                 // delete
-                                if (raw_buffer.size() > 0 && raw_cursor < raw_buffer.size())
+                                if (raw_buffer.size() > 0 && size_t(raw_cursor) < raw_buffer.size())
                                 {
                                     raw_buffer.erase(raw_cursor,1);
                                     prompt_refresh();
@@ -555,11 +556,11 @@ namespace DFHack
                     }
                     break;
                 default:
-                    if (raw_buffer.size() == raw_cursor)
+                    if (raw_buffer.size() == size_t(raw_cursor))
                     {
                         raw_buffer.append(1,c);
                         raw_cursor++;
-                        if (plen+raw_buffer.size() < get_columns())
+                        if (plen+raw_buffer.size() < size_t(get_columns()))
                         {
                             /* Avoid a full update of the line in the
                              * trivial case. */

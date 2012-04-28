@@ -99,6 +99,7 @@ function SetExecute(pos)
 	UpdateRanges()
 	local reg=GetRegionIn(pos)
 	reg.execute=true
+	reg["write"]=true
 	Process.setPermisions(reg,reg) -- TODO maybe make a page with only execute permisions or sth
 end
 -- engine bindings
@@ -223,6 +224,11 @@ function engine.LoadModData(file)
 		end
 	end
 	return T2
+end
+function engine.FindMarkerCall(moddata,name)
+	if moddata.symbols[name] ~=nil then
+		return moddata.symbols[name]+1
+	end
 end
 function engine.FindMarker(moddata,name)
 	if moddata.symbols[name] ~=nil then

@@ -34,6 +34,13 @@ distribution.
 #include "df/siegeengine_type.h"
 #include "df/trap_type.h"
 
+namespace df
+{
+    struct job_item;
+    struct item;
+    struct building_extents;
+}
+
 namespace DFHack
 {
 namespace Buildings
@@ -83,6 +90,44 @@ DFHACK_EXPORT bool Read (const uint32_t index, t_building & building);
  * custom_type of -1 implies ordinary building
  */
 DFHACK_EXPORT bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
+
+/**
+ * Allocates a building object using this type and position.
+ */
+DFHACK_EXPORT df::building *allocInstance(df::coord pos, df::building_type type, int subtype = -1, int custom = -1);
+
+/**
+ * Sets size and center to the correct dimensions of the building.
+ * If part of the original size value was used, returns true.
+ */
+DFHACK_EXPORT bool getCorrectSize(df::coord2d &size, df::coord2d &center,
+                                  df::building_type type, int subtype = -1, int custom = -1,
+                                  int direction = 0);
+
+/**
+ * Checks if the tiles are free to be built upon.
+ */
+DFHACK_EXPORT bool checkFreeTiles(df::coord pos, df::coord2d size,
+                                  df::building_extents *ext = NULL, bool create_ext = false);
+
+/**
+ * Sets the size of the building, using size and direction as guidance.
+ * Returns true if the building can be created at its position, using that size.
+ */
+DFHACK_EXPORT bool setSize(df::building *bld, df::coord2d size, int direction = 0);
+
+/**
+ * Initiates construction of the building, using specified items as inputs.
+ * Returns true if success.
+ */
+DFHACK_EXPORT bool constructWithItems(df::building *bld, std::vector<df::item*> items);
+
+/**
+ * Initiates construction of the building, using specified item filters.
+ * Assumes immediate ownership of the item objects, and deletes them in case of error.
+ * Returns true if success.
+ */
+DFHACK_EXPORT bool constructWithFilters(df::building *bld, std::vector<df::job_item*> items);
 
 }
 }

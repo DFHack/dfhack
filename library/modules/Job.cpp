@@ -311,3 +311,40 @@ bool DFHack::Job::listNewlyCreated(std::vector<df::job*> *pvec, int *id_var)
 
     return true;
 }
+
+bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
+                                df::job_item_ref::T_role role,
+                                int filter_idx, int insert_idx)
+{
+    CHECK_NULL_POINTER(job);
+    CHECK_NULL_POINTER(item);
+
+    /*
+     * Functionality 100% reverse-engineered from DF code.
+     */
+
+    if (role != df::job_item_ref::TargetContainer)
+    {
+        if (item->flags.bits.in_job)
+            return false;
+
+        item->flags.bits.in_job = true;
+    }
+
+    auto item_link = new df::item::T_jobs();
+    item_link->type = 2;
+    item_link->job = job;
+    item->jobs.push_back(item_link);
+
+    auto job_link = new df::job_item_ref();
+    job_link->item = item;
+    job_link->role = role;
+    job_link->job_item_idx = filter_idx;
+
+    if (size_t(insert_idx) < job->items.size())
+        vector_insert_at(job->items, insert_idx, job_link);
+    else
+        job->items.push_back(job_link);
+
+    return true;
+}

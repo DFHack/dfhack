@@ -199,6 +199,25 @@ function dfhack.interpreter(prompt,hfile,env)
     local t_prompt = nil
     local vcnt = 1
 
+    local pfix_handlers = {
+        ['!'] = function(data)
+            print(table.unpack(data,2,data.n))
+        end,
+        ['~'] = function(data)
+            print(table.unpack(data,2,data.n))
+            printall(data[2])
+        end,
+        ['='] = function(data)
+            for i=2,data.n do
+                local varname = '_'..vcnt
+                prompt_env[varname] = data[i]
+                dfhack.print(varname..' = ')
+                safecall(print, data[i])
+                vcnt = vcnt + 1
+            end
+        end
+    }
+
     setmetatable(prompt_env, { __index = env or _G })
 
     while true do
@@ -209,7 +228,7 @@ function dfhack.interpreter(prompt,hfile,env)
         elseif cmdline ~= '' then
             local pfix = string.sub(cmdline,1,1)
 
-            if not t_prompt and (pfix == '!' or pfix == '=') then
+            if not t_prompt and pfix_handlers[pfix] then
                 cmdline = 'return '..string.sub(cmdline,2)
             else
                 pfix = nil
@@ -236,18 +255,7 @@ function dfhack.interpreter(prompt,hfile,env)
 
                 if data[1] and data.n > 1 then
                     prompt_env._ = data[2]
-
-                    if pfix == '!' then
-                        safecall(print, table.unpack(data,2,data.n))
-                    else
-                        for i=2,data.n do
-                            local varname = '_'..vcnt
-                            prompt_env[varname] = data[i]
-                            dfhack.print(varname..' = ')
-                            safecall(print, data[i])
-                            vcnt = vcnt + 1
-                        end
-                    end
+                    safecall(pfix_handlers[pfix], data)
                 end
             end
         end

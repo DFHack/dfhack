@@ -41,7 +41,11 @@ distribution.
 #include <map>
 
 const char *DFHack::Error::NullPointer::what() const throw() {
-    return "NULL pointer access";
+    return "DFHack::Error::NullPointer";
+}
+
+const char *DFHack::Error::InvalidArgument::what() const throw() {
+    return "DFHack::Error::InvalidArgument";
 }
 
 std::string stl_sprintf(const char *fmt, ...) {

@@ -1029,6 +1029,11 @@ int LuaWrapper::method_wrapper_core(lua_State *state, function_identity_base *id
         std::string tmp = stl_sprintf("NULL pointer: %s", vn ? vn : "?");
         field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
     }
+    catch (Error::InvalidArgument &e) {
+        const char *vn = e.expr();
+        std::string tmp = stl_sprintf("Invalid argument; expected: %s", vn ? vn : "?");
+        field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
+    }
     catch (std::exception &e) {
         std::string tmp = stl_sprintf("C++ exception: %s", e.what());
         field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");

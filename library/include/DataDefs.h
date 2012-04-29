@@ -318,6 +318,9 @@ namespace DFHack
     public:
         static virtual_identity *get(virtual_ptr instance_ptr);
 
+        static virtual_identity *find(void *vtable);
+        static virtual_identity *find(const std::string &name);
+
         bool is_instance(virtual_ptr instance_ptr) {
             if (!instance_ptr) return false;
             if (vtable_ptr) {

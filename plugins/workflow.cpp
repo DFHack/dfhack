@@ -1084,7 +1084,7 @@ static bool itemInRealJob(df::item *item)
         return false;
 
     if (item->jobs.size() != 1 ||
-        item->jobs[0]->unk1 != 2 ||
+        item->jobs[0]->type != 2 ||
         item->jobs[0]->job == NULL)
         return true;
 

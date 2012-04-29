@@ -47,6 +47,7 @@ distribution.
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
 #include "modules/Burrows.h"
+#include "modules/Buildings.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -762,6 +763,40 @@ static const luaL_Reg dfhack_burrows_funcs[] = {
     { NULL, NULL }
 };
 
+/***** Buildings module *****/
+
+static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
+    WRAPM(Buildings, allocInstance),
+    WRAPM(Buildings, checkFreeTiles),
+    WRAPM(Buildings, setSize),
+    WRAPM(Buildings, constructWithItems),
+    WRAPM(Buildings, constructWithFilters),
+    { NULL, NULL }
+};
+
+static int buildings_getCorrectSize(lua_State *state)
+{
+    int w = luaL_optint(state, 1, 1);
+    int h = luaL_optint(state, 2, 1);
+    int t = luaL_optint(state, 3, -1);
+    int st = luaL_optint(state, 4, -1);
+    int cu = luaL_optint(state, 5, -1);
+    int d = luaL_optint(state, 6, 0);
+    df::coord2d size(w,h);
+    df::coord2d center;
+    bool flexible = Buildings::getCorrectSize(size, center, df::building_type(t), st, cu, d);
+    lua_pushboolean(state, flexible);
+    lua_pushinteger(state, size.x);
+    lua_pushinteger(state, size.y);
+    lua_pushinteger(state, center.x);
+    lua_pushinteger(state, center.y);
+    return 5;
+}
+
+static const luaL_Reg dfhack_buildings_funcs[] = {
+    { "getCorrectSize", buildings_getCorrectSize },
+    { NULL, NULL }
+};
 
 /************************
  *  Main Open function  *
@@ -779,4 +814,5 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
     OpenModule(state, "burrows", dfhack_burrows_module, dfhack_burrows_funcs);
+    OpenModule(state, "buildings", dfhack_buildings_module, dfhack_buildings_funcs);
 }

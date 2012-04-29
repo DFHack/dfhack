@@ -30,6 +30,9 @@ distribution.
 #include "Module.h"
 #include <ostream>
 
+#include "DataDefs.h"
+#include "df/job_item_ref.h"
+
 namespace df
 {
     struct job;
@@ -58,6 +61,10 @@ namespace DFHack
 
         // lists jobs with ids >= *id_var, and sets *id_var = *job_next_id;
         DFHACK_EXPORT bool listNewlyCreated(std::vector<df::job*> *pvec, int *id_var);
+
+        DFHACK_EXPORT bool attachJobItem(df::job *job, df::item *item,
+                                         df::job_item_ref::T_role role,
+                                         int filter_idx = -1, int insert_idx = -1);
     }
 
     DFHACK_EXPORT bool operator== (const df::job_item &a, const df::job_item &b);

@@ -1130,6 +1130,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 	std::vector<int> hauler_ids;
 	for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
 	{
+        if (dwarf_info[dwarf].trader && trader_requested)
+            continue;
 		if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
 			hauler_ids.push_back(dwarf);
 	}

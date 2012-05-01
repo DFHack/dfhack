@@ -108,13 +108,29 @@ DFHACK_EXPORT bool getCorrectSize(df::coord2d &size, df::coord2d &center,
  * Checks if the tiles are free to be built upon.
  */
 DFHACK_EXPORT bool checkFreeTiles(df::coord pos, df::coord2d size,
-                                  df::building_extents *ext = NULL, bool create_ext = false);
+                                  df::building_extents *ext = NULL,
+                                  bool create_ext = false, bool allow_occupied = false);
+
+/**
+ * Returns the number of tiles included by the extent, or defval.
+ */
+DFHACK_EXPORT int countExtentTiles(df::building_extents *ext, int defval = -1);
+
+/**
+ * Checks if the area has support from the terrain.
+ */
+DFHACK_EXPORT bool hasSupport(df::coord pos, df::coord2d size);
 
 /**
  * Sets the size of the building, using size and direction as guidance.
  * Returns true if the building can be created at its position, using that size.
  */
 DFHACK_EXPORT bool setSize(df::building *bld, df::coord2d size, int direction = 0);
+
+/**
+ * Decodes the size of the building into pos and size.
+ */
+DFHACK_EXPORT std::pair<df::coord,df::coord2d> getSize(df::building *bld);
 
 /**
  * Initiates construction of the building, using specified items as inputs.

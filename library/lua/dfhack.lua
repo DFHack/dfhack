@@ -173,6 +173,11 @@ function dfhack.maps.getTileSize()
     return map.x_count, map.y_count, map.z_count
 end
 
+function dfhack.buildings.getSize(bld)
+    local x, y = bld.x1, bld.y1
+    return bld.x2+1-x, bld.y2+1-y, bld.centerx-x, bld.centery-y
+end
+
 -- Interactive
 
 local print_banner = true

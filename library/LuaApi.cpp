@@ -768,7 +768,8 @@ static const luaL_Reg dfhack_burrows_funcs[] = {
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, allocInstance),
     WRAPM(Buildings, checkFreeTiles),
-    WRAPM(Buildings, setSize),
+    WRAPM(Buildings, countExtentTiles),
+    WRAPM(Buildings, hasSupport),
     WRAPM(Buildings, constructWithItems),
     WRAPM(Buildings, constructWithFilters),
     { NULL, NULL }
@@ -776,15 +777,16 @@ static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
 
 static int buildings_getCorrectSize(lua_State *state)
 {
-    int w = luaL_optint(state, 1, 1);
-    int h = luaL_optint(state, 2, 1);
-    int t = luaL_optint(state, 3, -1);
+    df::coord2d size(luaL_optint(state, 1, 1), luaL_optint(state, 2, 1));
+
+    auto t = (df::building_type)luaL_optint(state, 3, -1);
     int st = luaL_optint(state, 4, -1);
     int cu = luaL_optint(state, 5, -1);
     int d = luaL_optint(state, 6, 0);
-    df::coord2d size(w,h);
+
     df::coord2d center;
-    bool flexible = Buildings::getCorrectSize(size, center, df::building_type(t), st, cu, d);
+    bool flexible = Buildings::getCorrectSize(size, center, t, st, cu, d);
+
     lua_pushboolean(state, flexible);
     lua_pushinteger(state, size.x);
     lua_pushinteger(state, size.y);
@@ -793,8 +795,30 @@ static int buildings_getCorrectSize(lua_State *state)
     return 5;
 }
 
+static int buildings_setSize(lua_State *state)
+{
+    auto bld = Lua::CheckDFObject<df::building>(state, 1);
+    df::coord2d size(luaL_optint(state, 2, 1), luaL_optint(state, 3, 1));
+    int dir = luaL_optint(state, 4, 0);
+    bool ok = Buildings::setSize(bld, size, dir);
+    lua_pushboolean(state, ok);
+    if (ok)
+    {
+        auto size = Buildings::getSize(bld).second;
+        int area = size.x*size.y;
+        lua_pushinteger(state, size.x);
+        lua_pushinteger(state, size.y);
+        lua_pushinteger(state, area);
+        lua_pushinteger(state, Buildings::countExtentTiles(&bld->room, area));
+        return 5;
+    }
+    else
+        return 1;
+}
+
 static const luaL_Reg dfhack_buildings_funcs[] = {
     { "getCorrectSize", buildings_getCorrectSize },
+    { "setSize", buildings_setSize },
     { NULL, NULL }
 };
 

@@ -151,7 +151,7 @@ void Units::CopyCreature(df::unit * source, t_unit & furball)
 
     // mood stuff
     furball.mood = source->mood;
-    furball.mood_skill = source->job.unk_2f8; // FIXME: really? More like currently used skill anyway.
+    furball.mood_skill = source->job.mood_skill; // FIXME: really? More like currently used skill anyway.
     Translation::readName(furball.artifact_name, &source->status.artifact_name);
 
     // labors

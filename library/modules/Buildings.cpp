@@ -160,8 +160,7 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
     case building_type::Coffin:
         {
             auto obj = (df::building_coffinst*)bld;
-            if (d_init && d_init->flags3.is_set(d_init_flags3::COFFIN_NO_PETS_DEFAULT))
-                obj->burial_mode.bits.no_pets = true;
+            obj->initBurialFlags(); // DF has this copy&pasted
             break;
         }
     case building_type::Trap:
@@ -332,18 +331,27 @@ static uint8_t *getExtentTile(df::building_extents &extent, df::coord2d tile)
 }
 
 bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
-                               df::building_extents *ext, bool create_ext)
+                               df::building_extents *ext,
+                               bool create_ext, bool allow_occupied)
 {
+    bool found_any = false;
+
     for (int dx = 0; dx < size.x; dx++)
     {
         for (int dy = 0; dy < size.y; dy++)
         {
             df::coord tile = pos + df::coord(dx,dy,0);
-            uint8_t *etile = (ext ? getExtentTile(*ext, tile) : NULL);
+            uint8_t *etile = NULL;
 
-            if (etile && !*etile)
-                continue;
+            // Exclude using extents
+            if (ext && ext->extents)
+            {
+                etile = getExtentTile(*ext, tile);
+                if (!etile || !*etile)
+                    continue;
+            }
 
+            // Look up map block
             df::map_block *block = Maps::getTileBlock(tile);
             if (!block)
                 return false;
@@ -352,7 +360,9 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
 
             bool allowed = true;
 
-            if (block->occupancy[btile.x][btile.y].bits.building)
+            // Check occupancy and tile type
+            if (!allow_occupied &&
+                block->occupancy[btile.x][btile.y].bits.building)
                 allowed = false;
             else
             {
@@ -361,7 +371,10 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
                     allowed = false;
             }
 
-            if (!allowed)
+            // Create extents if requested
+            if (allowed)
+                found_any = true;
+            else
             {
                 if (!ext || !create_ext)
                     return false;
@@ -386,15 +399,72 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
         }
     }
 
-    return true;
+    return found_any;
 }
 
-static bool checkBuildingTiles(df::building *bld, bool can_use_extents)
+std::pair<df::coord,df::coord2d> Buildings::getSize(df::building *bld)
 {
+    CHECK_NULL_POINTER(bld);
+
     df::coord pos(bld->x1,bld->y1,bld->z);
 
-    return Buildings::checkFreeTiles(pos, df::coord2d(bld->x2+1,bld->y2+1) - pos,
-                                     &bld->room, can_use_extents);
+    return std::pair<df::coord,df::coord2d>(pos, df::coord2d(bld->x2+1,bld->y2+1) - pos);
+}
+
+static bool checkBuildingTiles(df::building *bld, bool can_change)
+{
+    auto psize = Buildings::getSize(bld);
+
+    return Buildings::checkFreeTiles(psize.first, psize.second, &bld->room,
+                                     can_change && bld->isExtentShaped(),
+                                     !bld->isSettingOccupancy());
+}
+
+int Buildings::countExtentTiles(df::building_extents *ext, int defval)
+{
+    if (!ext || !ext->extents)
+        return defval;
+
+    int cnt = 0;
+    for (int i = 0; i < ext->width * ext->height; i++)
+        if (ext->extents[i])
+            cnt++;
+    return cnt;
+}
+
+bool Buildings::hasSupport(df::coord pos, df::coord2d size)
+{
+    for (int dx = -1; dx <= size.x; dx++)
+    {
+        for (int dy = -1; dy <= size.y; dy++)
+        {
+            // skip corners
+            if ((dx < 0 || dx == size.x) && (dy < 0 || dy == size.y))
+                continue;
+
+            df::coord tile = pos + df::coord(dx,dy,0);
+            df::map_block *block = Maps::getTileBlock(tile);
+            if (!block)
+                continue;
+
+            df::coord2d btile = df::coord2d(tile) & 15;
+            if (!isOpenTerrain(block->tiletype[btile.x][btile.y]))
+                return true;
+        }
+    }
+
+    return false;
+}
+
+static int computeMaterialAmount(df::building *bld)
+{
+    auto size = Buildings::getSize(bld).second;
+    int cnt = size.x * size.y;
+
+    if (bld->room.extents && bld->isExtentShaped())
+        cnt = Buildings::countExtentTiles(&bld->room, cnt);
+
+    return cnt/4 + 1;
 }
 
 bool Buildings::setSize(df::building *bld, df::coord2d size, int direction)
@@ -402,12 +472,14 @@ bool Buildings::setSize(df::building *bld, df::coord2d size, int direction)
     CHECK_NULL_POINTER(bld);
     CHECK_INVALID_ARGUMENT(bld->id == -1);
 
+    // Delete old extents
     if (bld->room.extents)
     {
         delete[] bld->room.extents;
         bld->room.extents = NULL;
     }
 
+    // Compute correct size and apply it
     df::coord2d center;
     getCorrectSize(size, center, bld->getType(), bld->getSubtype(),
                    bld->getCustomType(), direction);
@@ -418,7 +490,6 @@ bool Buildings::setSize(df::building *bld, df::coord2d size, int direction)
     bld->centery = bld->y1 + center.y;
 
     auto type = bld->getType();
-    bool can_use_extents = false;
 
     using namespace df::enums::building_type;
 
@@ -445,62 +516,65 @@ bool Buildings::setSize(df::building *bld, df::coord2d size, int direction)
     case Bridge:
         {
             auto obj = (df::building_bridgest*)bld;
-            // TODO: computes some kind of flag from tile data
+            auto psize = getSize(bld);
+            obj->gate_flags.bits.has_support = hasSupport(psize.first, psize.second);
             obj->direction = (df::building_bridgest::T_direction)direction;
             break;
         }
-    case FarmPlot:
-    case RoadDirt:
-    case RoadPaved:
-    case Stockpile:
-    case Civzone:
-        can_use_extents = true;
-        break;
     default:
         break;
     }
 
-    bool ok = checkBuildingTiles(bld, can_use_extents);
+    bool ok = checkBuildingTiles(bld, true);
 
     if (type != building_type::Construction)
-    {
-        int cnt = size.x * size.y;
-
-        if (bld->room.extents)
-        {
-            cnt = 0;
-            for (int i = 0; i < bld->room.width * bld->room.height; i++)
-                if (bld->room.extents[i] == 1)
-                    cnt++;
-        }
-
-        bld->setMaterialAmount(cnt/4 + 1);
-    }
+        bld->setMaterialAmount(computeMaterialAmount(bld));
 
     return ok;
 }
 
-static void markBuildingTiles(df::building *bld, df::tile_building_occ occv, bool stockpile)
+static void markBuildingTiles(df::building *bld, bool remove)
 {
+    bool use_extents = bld->room.extents && bld->isExtentShaped();
+    bool stockpile = (bld->getType() == building_type::Stockpile);
+    bool complete = (bld->getBuildStage() >= bld->getMaxBuildStage());
+
+    if (remove)
+        stockpile = complete = false;
+
     for (int tx = bld->x1; tx <= bld->x2; tx++)
     {
         for (int ty = bld->y1; ty <= bld->y2; ty++)
         {
             df::coord tile(tx,ty,bld->z);
 
-            uint8_t *etile = getExtentTile(bld->room, tile);
-            if (etile && !*etile)
-                continue;
+            if (use_extents)
+            {
+                uint8_t *etile = getExtentTile(bld->room, tile);
+                if (!etile || !*etile)
+                    continue;
+            }
 
             df::map_block *block = Maps::getTileBlock(tile);
             df::coord2d btile = df::coord2d(tile) & 15;
 
-            auto &occ = block->occupancy[btile.x][btile.y];
-            occ.bits.building = occv;
-
             auto &des = block->designation[btile.x][btile.y];
-            des.bits.dig = tile_dig_designation::No;
+
             des.bits.pile = stockpile;
+            if (!remove)
+                des.bits.dig = tile_dig_designation::No;
+
+            if (complete)
+                bld->updateOccupancy(tx, ty);
+            else
+            {
+                auto &occ = block->occupancy[btile.x][btile.y];
+
+                if (remove)
+                    occ.bits.building = tile_building_occ::None;
+                else
+                    occ.bits.building = tile_building_occ::Planned;
+            }
         }
     }
 }
@@ -539,7 +613,8 @@ static void linkBuilding(df::building *bld)
     world->buildings.all.push_back(bld);
     bld->categorize(true);
 
-    markBuildingTiles(bld, tile_building_occ::Planned, false);
+    if (bld->isSettingOccupancy())
+        markBuildingTiles(bld, false);
 
     linkRooms(bld);
 
@@ -651,6 +726,9 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
 
     for (size_t i = 0; i < items.size(); i++)
     {
+        if (items[i]->quantity < 0)
+            items[i]->quantity = computeMaterialAmount(bld);
+
         job->job_items.push_back(items[i]);
 
         if (items[i]->item_type == item_type::BOULDER)

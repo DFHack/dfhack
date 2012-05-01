@@ -850,6 +850,70 @@ Burrows module
   Adds or removes the tile from the burrow. Returns *false* if invalid coords.
 
 
+Buildings module
+----------------
+
+* ``dfhack.buildings.getSize(building)``
+
+  Returns *width, height, centerx, centery*.
+
+* ``dfhack.buildings.getCorrectSize(width, height, type, subtype, custom, direction)``
+
+  Computes correct dimensions for the specified building type and orientation,
+  using width and height for flexible dimensions.
+  Returns *is_flexible, width, height, center_x, center_y*.
+
+* ``dfhack.buildings.checkFreeTiles(pos,size[,extents,change_extents,allow_occupied])``
+
+  Checks if the rectangle defined by ``pos`` and ``size``, and possibly extents,
+  can be used for placing a building. If ``change_extents`` is true, bad tiles
+  are removed from extents. If ``allow_occupied``, the occupancy test is skipped.
+
+* ``dfhack.buildings.countExtentTiles(extents,defval)``
+
+  Returns the number of tiles included by extents, or defval.
+
+* ``dfhack.buildings.hasSupport(pos,size)``
+
+  Checks if a bridge constructed at specified position would have
+  support from terrain, and thus won't collapse if retracted.
+
+Low-level building creation functions;
+
+* ``dfhack.buildings.allocInstance(pos, type, subtype, custom)``
+
+  Creates a new building instance of given type, subtype and custom type,
+  at specified position. Returns the object, or *nil* in case of an error.
+
+* ``dfhack.buildings.setSize(building, width, height, direction)``
+
+  Configures an object returned by ``allocInstance``, using specified
+  parameters wherever appropriate. If the building has fixed size along
+  any dimension, the corresponding input parameter will be ignored.
+  Returns *nil* if the building cannot be placed, or *true, width,
+  height, rect_area, true_area*. Returned width and height are the
+  final values used by the building; true_area is less than rect_area
+  if any tiles were removed from designation.
+
+* ``dfhack.buildings.constructWithItems(building, items)``
+
+  Links a fully configured object created by ``allocInstance`` into the
+  world for construction, using a list of specific items as material.
+  Returns *true*, or *false* if impossible.
+
+* ``dfhack.buildings.constructWithFilters(building, job_items)``
+
+  Links a fully configured object created by ``allocInstance`` into the
+  world for construction, using a list of job_item filters as inputs.
+  Returns *true*, or *false* if impossible. Filter objects are claimed
+  and possibly destroyed in any case.
+  Use a negative ``quantity`` field value to auto-compute the amount
+  from the size of the building.
+
+More high-level functions are implemented in lua and can be loaded by
+``require('dfhack.buildings')``. See ``hack/lua/dfhack/buildings.lua``.
+
+
 Core interpreter context
 ========================
 

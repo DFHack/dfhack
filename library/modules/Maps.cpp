@@ -145,6 +145,24 @@ df::map_block *Maps::getTileBlock (int32_t x, int32_t y, int32_t z)
     return world->map.block_index[x >> 4][y >> 4][z];
 }
 
+df::tiletype *Maps::getTileType(int32_t x, int32_t y, int32_t z)
+{
+    df::map_block *block = getTileBlock(x,y,z);
+    return block ? &block->tiletype[x&15][y&15] : NULL;
+}
+
+df::tile_designation *Maps::getTileDesignation(int32_t x, int32_t y, int32_t z)
+{
+    df::map_block *block = getTileBlock(x,y,z);
+    return block ? &block->designation[x&15][y&15] : NULL;
+}
+
+df::tile_occupancy *Maps::getTileOccupancy(int32_t x, int32_t y, int32_t z)
+{
+    df::map_block *block = getTileBlock(x,y,z);
+    return block ? &block->occupancy[x&15][y&15] : NULL;
+}
+
 df::world_data::T_region_map *Maps::getRegionBiome(df::coord2d rgn_pos)
 {
     auto data = world->world_data;

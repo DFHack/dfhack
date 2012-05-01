@@ -72,6 +72,17 @@ using df::global::building_next_id;
 using df::global::process_jobs;
 using df::building_def;
 
+static uint8_t *getExtentTile(df::building_extents &extent, df::coord2d tile)
+{
+    if (!extent.extents)
+        return NULL;
+    int dx = tile.x - extent.x;
+    int dy = tile.y - extent.y;
+    if (dx < 0 || dy < 0 || dx >= extent.width || dy >= extent.height)
+        return NULL;
+    return &extent.extents[dx + dy*extent.width];
+}
+
 uint32_t Buildings::getNumBuildings()
 {
     return world->buildings.all.size();
@@ -108,6 +119,38 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
         btypes[temp->id] = temp->code;
     }
     return true;
+}
+
+df::building *Buildings::findAtTile(df::coord pos)
+{
+    auto occ = Maps::getTileOccupancy(pos);
+    if (!occ || !occ->bits.building)
+        return NULL;
+
+    auto &vec = df::building::get_vector();
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        auto bld = vec[i];
+
+        if (pos.z != bld->z ||
+            pos.x < bld->x1 || pos.x > bld->x2 ||
+            pos.y < bld->y1 || pos.y > bld->y2)
+            continue;
+
+        if (!bld->isSettingOccupancy())
+            continue;
+
+        if (bld->room.extents && bld->isExtentShaped())
+        {
+            auto etile = getExtentTile(bld->room, pos);
+            if (!etile || !*etile)
+                continue;
+        }
+
+        return bld;
+    }
+
+    return NULL;
 }
 
 df::building *Buildings::allocInstance(df::coord pos, df::building_type type, int subtype, int custom)
@@ -317,17 +360,6 @@ bool Buildings::getCorrectSize(df::coord2d &size, df::coord2d &center,
         center = df::coord2d(0,0);
         return false;
     }
-}
-
-static uint8_t *getExtentTile(df::building_extents &extent, df::coord2d tile)
-{
-    if (!extent.extents)
-        return NULL;
-    int dx = tile.x - extent.x;
-    int dy = tile.y - extent.y;
-    if (dx < 0 || dy < 0 || dx >= extent.width || dy >= extent.height)
-        return NULL;
-    return &extent.extents[dx + dy*extent.width];
 }
 
 bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,

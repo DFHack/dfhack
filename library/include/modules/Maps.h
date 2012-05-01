@@ -241,6 +241,20 @@ extern DFHACK_EXPORT df::map_block * getTileBlock (int32_t x, int32_t y, int32_t
 inline df::map_block * getBlock (df::coord pos) { return getBlock(pos.x, pos.y, pos.z); }
 inline df::map_block * getTileBlock (df::coord pos) { return getTileBlock(pos.x, pos.y, pos.z); }
 
+extern DFHACK_EXPORT df::tiletype *getTileType(int32_t x, int32_t y, int32_t z);
+extern DFHACK_EXPORT df::tile_designation *getTileDesignation(int32_t x, int32_t y, int32_t z);
+extern DFHACK_EXPORT df::tile_occupancy *getTileOccupancy(int32_t x, int32_t y, int32_t z);
+
+inline df::tiletype *getTileType(df::coord pos) {
+    return getTileType(pos.x, pos.y, pos.z);
+}
+inline df::tile_designation *getTileDesignation(df::coord pos) {
+    return getTileDesignation(pos.x, pos.y, pos.z);
+}
+inline df::tile_occupancy *getTileOccupancy(df::coord pos) {
+    return getTileOccupancy(pos.x, pos.y, pos.z);
+}
+
 DFHACK_EXPORT df::world_data::T_region_map *getRegionBiome(df::coord2d rgn_pos);
 
 /// sorts the block event vector into multiple vectors by type

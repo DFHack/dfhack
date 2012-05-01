@@ -48,6 +48,7 @@ distribution.
 #include "modules/MapCache.h"
 #include "modules/Burrows.h"
 #include "modules/Buildings.h"
+#include "modules/Constructions.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -766,6 +767,7 @@ static const luaL_Reg dfhack_burrows_funcs[] = {
 /***** Buildings module *****/
 
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
+    WRAPM(Buildings, findAtTile),
     WRAPM(Buildings, allocInstance),
     WRAPM(Buildings, checkFreeTiles),
     WRAPM(Buildings, countExtentTiles),
@@ -822,6 +824,14 @@ static const luaL_Reg dfhack_buildings_funcs[] = {
     { NULL, NULL }
 };
 
+/***** Constructions module *****/
+
+static const LuaWrapper::FunctionReg dfhack_constructions_module[] = {
+    WRAPM(Constructions, designateNew),
+    { NULL, NULL }
+};
+
+
 /************************
  *  Main Open function  *
  ************************/
@@ -839,4 +849,5 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
     OpenModule(state, "burrows", dfhack_burrows_module, dfhack_burrows_funcs);
     OpenModule(state, "buildings", dfhack_buildings_module, dfhack_buildings_funcs);
+    OpenModule(state, "constructions", dfhack_constructions_module);
 }

@@ -857,6 +857,11 @@ Buildings module
 
   Returns *width, height, centerx, centery*.
 
+* ``dfhack.buildings.findAtTile(pos)``
+
+  Scans the buildings for the one located at the given tile.
+  Does not work on civzones. Warning: linear scan.
+
 * ``dfhack.buildings.getCorrectSize(width, height, type, subtype, custom, direction)``
 
   Computes correct dimensions for the specified building type and orientation,
@@ -912,6 +917,16 @@ Low-level building creation functions;
 
 More high-level functions are implemented in lua and can be loaded by
 ``require('dfhack.buildings')``. See ``hack/lua/dfhack/buildings.lua``.
+
+Constructions module
+--------------------
+
+* ``dfhack.constructions.designateNew(pos,type,item_type,mat_index)``
+
+  Designates a new construction at given position. If there already is
+  a planned but not completed construction there, changes its type.
+  Returns *true*, or *false* if obstructed.
+  Note that designated constructions are technically buildings.
 
 
 Core interpreter context

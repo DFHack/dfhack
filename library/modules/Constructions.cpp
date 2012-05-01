@@ -35,9 +35,20 @@ using namespace std;
 #include "MemAccess.h"
 #include "Types.h"
 #include "Core.h"
+
 #include "modules/Constructions.h"
+#include "modules/Buildings.h"
+#include "modules/Maps.h"
+
+#include "TileTypes.h"
+
 #include "df/world.h"
+#include "df/job_item.h"
+#include "df/building_type.h"
+#include "df/building_constructionst.h"
+
 using namespace DFHack;
+using namespace df::enums;
 using df::global::world;
 
 bool Constructions::isValid()
@@ -73,3 +84,48 @@ bool Constructions::copyConstruction(const int32_t index, t_construction &out)
     out.original_tile = out.origin->original_tile;
     return true;
 }
+
+bool Constructions::designateNew(df::coord pos, df::construction_type type,
+                                 df::item_type item, int mat_index)
+{
+    auto ttype = Maps::getTileType(pos);
+    if (!ttype || tileMaterial(*ttype) == tiletype_material::CONSTRUCTION)
+        return false;
+
+    auto current = Buildings::findAtTile(pos);
+    if (current)
+    {
+        auto cons = strict_virtual_cast<df::building_constructionst>(current);
+        if (!cons)
+            return false;
+
+        cons->type = type;
+        return true;
+    }
+
+    auto newinst = Buildings::allocInstance(pos, building_type::Construction);
+    if (!newinst)
+        return false;
+
+    auto newcons = strict_virtual_cast<df::building_constructionst>(newinst);
+    newcons->type = type;
+
+    df::job_item *filter = new df::job_item();
+    filter->item_type = item;
+    filter->mat_index = mat_index;
+    filter->flags2.bits.building_material = true;
+    if (mat_index < 0)
+        filter->flags2.bits.non_economic = true;
+
+    std::vector<df::job_item*> filters;
+    filters.push_back(filter);
+
+    if (!Buildings::constructWithFilters(newinst, filters))
+    {
+        delete newinst;
+        return false;
+    }
+
+    return true;
+}
+

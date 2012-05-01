@@ -91,6 +91,12 @@ DFHACK_EXPORT bool Read (const uint32_t index, t_building & building);
  */
 DFHACK_EXPORT bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
 
+/*
+ * Find the building located at the specified tile.
+ * Does not work on civzones.
+ */
+DFHACK_EXPORT df::building *findAtTile(df::coord pos);
+
 /**
  * Allocates a building object using this type and position.
  */

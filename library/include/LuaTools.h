@@ -109,7 +109,15 @@ namespace DFHack {namespace Lua {
      * Return behavior is of SafeCall below.
      */
     DFHACK_EXPORT bool AssignDFObject(color_ostream &out, lua_State *state,
-                                      type_identity *type, void *target, int val_index, bool perr = true);
+                                      type_identity *type, void *target, int val_index,
+                                      bool exact_type = false, bool perr = true);
+
+    /**
+     * Assign the value at val_index to the target of given identity using df.assign().
+     * Otherwise throws an error.
+     */
+    DFHACK_EXPORT void CheckDFObject(lua_State *state, type_identity *type,
+                                     void *target, int val_index, bool exact_type = false);
 
     /**
      * Push the pointer onto the stack as a wrapped DF object of a specific type.
@@ -139,8 +147,19 @@ namespace DFHack {namespace Lua {
      * Assign the value at val_index to the target using df.assign().
      */
     template<class T>
-    bool AssignDFObject(color_ostream &out, lua_State *state, T *target, int val_index, bool perr = true) {
-        return AssignDFObject(out, state, df::identity_traits<T>::get(), target, val_index, perr);
+    bool AssignDFObject(color_ostream &out, lua_State *state, T *target,
+                        int val_index, bool exact_type = false, bool perr = true) {
+        return AssignDFObject(out, state, df::identity_traits<T>::get(),
+                              target, val_index, exact_type, perr);
+    }
+
+    /**
+     * Assign the value at val_index to the target using df.assign().
+     * Throws in case of an error.
+     */
+    template<class T>
+    void CheckDFObject(lua_State *state, T *target, int val_index, bool exact_type = false) {
+        CheckDFObject(state, df::identity_traits<T>::get(), target, val_index, exact_type);
     }
 
     /**

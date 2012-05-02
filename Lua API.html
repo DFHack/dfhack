@@ -1005,8 +1005,8 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getBlock(x,y,z)</tt></p>
 <p>Returns a map block object for given x,y,z in local block coordinates.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileBlock(coords)</tt></p>
-<p>Returns a map block object for given df::coord in local tile coordinates.</p>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileBlock(coords)</tt>, or <tt class="docutils literal">getTileBlock(x,y,z)</tt></p>
+<p>Returns a map block object for given df::coord or x,y,z in local tile coordinates.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getRegionBiome(region_coord2d)</tt></p>
 <p>Returns the biome info struct for the given global map region.</p>
@@ -1129,7 +1129,7 @@ from the size of the building.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.constructions.designateNew(pos,type,item_type,mat_index)</tt></p>
 <p>Designates a new construction at given position. If there already is
 a planned but not completed construction there, changes its type.
-Returns <em>true</em> or <em>false</em> if obstructed.
+Returns <em>true</em>, or <em>false</em> if obstructed.
 Note that designated constructions are technically buildings.</p>
 </li>
 </ul>

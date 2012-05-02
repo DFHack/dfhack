@@ -520,8 +520,7 @@ static int dfhack_matinfo_matches(lua_State *state)
     else if (lua_istable(state, 2))
     {
         df::dfhack_material_category tmp;
-        if (!Lua::AssignDFObject(*Lua::GetOutput(state), state, &tmp, 2, false))
-            lua_error(state);
+        Lua::CheckDFObject(state, &tmp, 2, false);
         lua_pushboolean(state, info.matches(tmp));
     }
     else
@@ -714,7 +713,6 @@ static const luaL_Reg dfhack_items_funcs[] = {
 
 static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPN(getBlock, (df::map_block* (*)(int32_t,int32_t,int32_t))Maps::getBlock),
-    WRAPN(getTileBlock, (df::map_block* (*)(df::coord))Maps::getTileBlock),
     WRAPM(Maps, getRegionBiome),
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
@@ -722,7 +720,27 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     { NULL, NULL }
 };
 
+static int maps_getTileBlock(lua_State *L)
+{
+    df::map_block *block;
+    if (lua_gettop(L) == 1)
+    {
+        df::coord pos;
+        Lua::CheckDFObject(L, &pos, 1);
+        block = Maps::getTileBlock(pos);
+    }
+    else
+    {
+        block = Maps::getTileBlock(
+            luaL_checkint(L, 1), luaL_checkint(L, 2), luaL_checkint(L, 3)
+        );
+    }
+    Lua::PushDFObject(L, block);
+    return 1;
+}
+
 static const luaL_Reg dfhack_maps_funcs[] = {
+    { "getTileBlock", maps_getTileBlock },
     { NULL, NULL }
 };
 

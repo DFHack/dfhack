@@ -779,9 +779,9 @@ Maps module
 
   Returns a map block object for given x,y,z in local block coordinates.
 
-* ``dfhack.maps.getTileBlock(coords)``
+* ``dfhack.maps.getTileBlock(coords)``, or ``getTileBlock(x,y,z)``
 
-  Returns a map block object for given df::coord in local tile coordinates.
+  Returns a map block object for given df::coord or x,y,z in local tile coordinates.
 
 * ``dfhack.maps.getRegionBiome(region_coord2d)``
 

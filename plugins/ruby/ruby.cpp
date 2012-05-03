@@ -630,6 +630,21 @@ static VALUE rb_dfmemory_bitarray_set(VALUE self, VALUE addr, VALUE idx, VALUE v
 }
 
 
+/* call an arbitrary object virtual method */
+static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE cppvoff, VALUE a0, VALUE a1, VALUE a2, VALUE a3)
+{
+#ifdef WIN32
+    __thiscall
+#endif
+    int (*fptr)(char **me, int, int, int, int);
+    char **that = (char**)rb_num2ulong(cppobj);
+    int ret;
+    fptr = (decltype(fptr))*(void**)(*that + rb_num2ulong(cppvoff));
+    ret = fptr(that, rb_num2ulong(a0), rb_num2ulong(a1), rb_num2ulong(a2), rb_num2ulong(a3));
+    return rb_uint2inum(ret);
+}
+
+
 
 // define module DFHack and its methods
 static void ruby_bind_dfhack(void) {
@@ -649,6 +664,7 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "print_err", RUBY_METHOD_FUNC(rb_dfprint_err), 1);
     rb_define_singleton_method(rb_cDFHack, "malloc", RUBY_METHOD_FUNC(rb_dfmalloc), 1);
     rb_define_singleton_method(rb_cDFHack, "free", RUBY_METHOD_FUNC(rb_dffree), 1);
+    rb_define_singleton_method(rb_cDFHack, "vmethod_do_call", RUBY_METHOD_FUNC(rb_dfvcall), 6);
     rb_define_const(rb_cDFHack, "REBASE_DELTA", rb_dfrebase_delta());
 
     rb_define_singleton_method(rb_cDFHack, "memory_read", RUBY_METHOD_FUNC(rb_dfmemory_read), 2);

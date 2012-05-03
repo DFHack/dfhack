@@ -29,7 +29,7 @@ sub rb_ucase {
 
 my %global_type_renderer = (
     'enum-type' => \&render_global_enum,
-    'struct-type' => \&render_global_class,
+    'struct-type' => \&render_global_struct,
     'class-type' => \&render_global_class,
     'bitfield-type' => \&render_global_bitfield,
 );
@@ -150,7 +150,24 @@ sub render_bitfield_fields {
 }
 
 
-my $cpp_var_counter = 0;
+sub render_global_struct {
+    my ($name, $type) = @_;
+
+    my $rbname = rb_ucase($name);
+
+    my $cppns = "df::$name"; 
+    push @lines_cpp, "}" if @include_cpp;
+    push @lines_cpp, "void cpp_$name(FILE *fout) {";
+    push @include_cpp, $name;
+
+    push @lines_rb, "class $rbname < MemHack::Compound";
+    indent_rb {
+        my $sz = query_cpp("sizeof($cppns)");
+        push @lines_rb, "sizeof $sz";
+        render_struct_fields($type, "$cppns");
+    };
+    push @lines_rb, "end\n";
+}
 my %seen_class;
 sub render_global_class {
     my ($name, $type) = @_;
@@ -184,6 +201,8 @@ sub render_global_class {
         push @lines_rb, "sizeof $sz";
         push @lines_rb, "rtti_classname :$rtti_name" if $rtti_name;
         render_struct_fields($type, "$cppns");
+	my $vms = $type->findnodes('child::virtual-methods')->[0];
+        render_class_vmethods($vms) if $vms;
     };
     push @lines_rb, "end\n";
 }
@@ -205,6 +224,28 @@ sub render_struct_fields {
         };
         push @lines_rb, "}";
     }
+}
+sub render_class_vmethods {
+    my ($vms) = @_;
+    my $voff = 0;
+    for my $meth ($vms->findnodes('child::vmethod')) {
+        my $name = $meth->getAttribute('name');
+        if ($name) {
+            my @argnames;
+            for my $arg ($meth->findnodes('child::ld:field')) {
+                my $nr = $#argnames + 1;
+                push @argnames, lcfirst($arg->getAttribute('name') || "arg$nr");
+            }
+            push @lines_rb, "def $name(" . join(', ', @argnames) . ')';
+            indent_rb {
+                push @lines_rb, "DFHack.vmethod_call(self, $voff" . join('', map { ", $_" } @argnames) . ')'
+                # TODO interpret return type (eg pointer to vector)
+            };
+            push @lines_rb, 'end';
+        }
+        $voff += 4;
+    }
+    
 }
 
 sub render_global_objects {

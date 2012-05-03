@@ -191,7 +191,6 @@ class Number < MemStruct
 	end
 end
 class Float < MemStruct
-	# _get/_set defined in ruby.cpp
 	def _get
 		DFHack.memory_read_float(@_memaddr)
 	end
@@ -708,6 +707,21 @@ def self.rtti_getvtable(cppname)
 		@rtti_v2n[v] = cppname if v != 0
 	end
 	v if v != 0
+end
+
+def self.vmethod_call(obj, voff, a0=0, a1=0, a2=0, a3=0, a4=0)
+	vmethod_do_call(obj._memaddr, voff, vmethod_arg(a0), vmethod_arg(a1), vmethod_arg(a2), vmethod_arg(a3))
+end
+
+def self.vmethod_arg(arg)
+	case arg
+	when nil, false; 0
+	when true; 1
+	when Integer; arg
+	#when String; [arg].pack('p').unpack('L')[0]	# raw pointer to buffer
+	when MemHack::Compound; arg._memaddr
+	else raise "bad vmethod arg #{arg.class}"
+	end
 end
 
 end

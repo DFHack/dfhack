@@ -201,7 +201,7 @@ sub render_global_class {
         push @lines_rb, "sizeof $sz";
         push @lines_rb, "rtti_classname :$rtti_name" if $rtti_name;
         render_struct_fields($type, "$cppns");
-	my $vms = $type->findnodes('child::virtual-methods')->[0];
+        my $vms = $type->findnodes('child::virtual-methods')->[0];
         render_class_vmethods($vms) if $vms;
     };
     push @lines_rb, "end\n";
@@ -243,9 +243,10 @@ sub render_class_vmethods {
             };
             push @lines_rb, 'end';
         }
+        # on linux, the destructor uses 2 entries
+        $voff += 4 if $meth->getAttribute('is-destructor') and $^O =~ /linux/i;
         $voff += 4;
     }
-    
 }
 
 sub render_global_objects {

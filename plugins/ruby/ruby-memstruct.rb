@@ -114,12 +114,14 @@ class Compound < MemStruct
 	def _set(h)
 		case h
 		when Hash; h.each { |k, v| send("_#{k}=", v) }
-		when Compound; _fields.each { |n, o, s| send("#{n}=", h.send(n)) }
+		when Array; names = _field_names ; raise 'bad size' if names.length != h.length ; names.zip(h).each { |n, a| send("#{n}=", a }
+		when Compound; _field_names.each { |n| send("#{n}=", h.send(n)) }
 		else raise 'wut?'
 		end
 	end
 	def _fields ; self.class._fields.to_a ; end
 	def _fields_ancestors ; self.class._fields_ancestors.to_a ; end
+	def _field_names ; _fields_ancestors.map { |n, o, s| n } ; end
 	def _rtti_classname ; self.class._rtti_classname ; end
 	def _sizeof ; self.class._sizeof ; end
 	def inspect
@@ -317,14 +319,14 @@ module Enumerable
 	def inspect
 		enum = DFHack.const_get(_indexenum)::ENUM if _indexenum
 		out = '['
-		each { |i|
+		each_with_index { |e, idx|
 			out << ', ' if out.length > 1
 			if out.length > INSPECT_SIZE_LIMIT
 				out << '...'
 				break
 			end
-			out << "#{enum[i]}=" if enum
-			out << i.inspect
+			out << "#{enum[idx] || idx}=" if enum
+			out << e.inspect
 		}
 		out << ']'
 	end

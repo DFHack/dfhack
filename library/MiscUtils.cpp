@@ -26,6 +26,7 @@ distribution.
 #include "Export.h"
 #include "MiscUtils.h"
 #include "Error.h"
+#include "Types.h"
 
 #ifndef LINUX_BUILD
     #include <Windows.h>
@@ -122,6 +123,62 @@ std::string toLower(const std::string &str)
     for (unsigned i = 0; i < str.size(); ++i)
         rv[i] = tolower(str[i]);
     return rv;
+}
+
+df::general_ref *DFHack::findRef(std::vector<df::general_ref*> &vec, df::general_ref_type type)
+{
+    for (int i = vec.size()-1; i >= 0; i--)
+    {
+        df::general_ref *ref = vec[i];
+        if (ref->getType() == type)
+            return ref;
+    }
+
+    return NULL;
+}
+
+bool DFHack::removeRef(std::vector<df::general_ref*> &vec, df::general_ref_type type, int id)
+{
+    for (int i = vec.size()-1; i >= 0; i--)
+    {
+        df::general_ref *ref = vec[i];
+        if (ref->getType() != type || ref->getID() != id)
+            continue;
+
+        vector_erase_at(vec, i);
+        delete ref;
+        return true;
+    }
+
+    return false;
+}
+
+df::specific_ref *DFHack::findRef(std::vector<df::specific_ref*> &vec, df::specific_ref_type type)
+{
+    for (int i = vec.size()-1; i >= 0; i--)
+    {
+        df::specific_ref *ref = vec[i];
+        if (ref->type == type)
+            return ref;
+    }
+
+    return NULL;
+}
+
+bool DFHack::removeRef(std::vector<df::specific_ref*> &vec, df::specific_ref_type type, void *ptr)
+{
+    for (int i = vec.size()-1; i >= 0; i--)
+    {
+        df::specific_ref *ref = vec[i];
+        if (ref->type != type || ref->object != ptr)
+            continue;
+
+        vector_erase_at(vec, i);
+        delete ref;
+        return true;
+    }
+
+    return false;
 }
 
 #ifdef LINUX_BUILD // Linux

@@ -682,6 +682,8 @@ static bool items_moveToContainer(df::item *item, df::item *container)
 }
 
 static const LuaWrapper::FunctionReg dfhack_items_module[] = {
+    WRAPM(Items, getGeneralRef),
+    WRAPM(Items, getSpecificRef),
     WRAPM(Items, getOwner),
     WRAPM(Items, setOwner),
     WRAPM(Items, getContainer),

@@ -46,6 +46,7 @@ using namespace std;
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/job_list_link.h"
+#include "df/specific_ref.h"
 #include "df/general_ref.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/general_ref_building_holderst.h"
@@ -67,7 +68,7 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job)
     pnew->list_link = NULL;
     pnew->completion_timer = -1;
     pnew->items.clear();
-    pnew->misc_links.clear();
+    pnew->specific_refs.clear();
 
     // Clone refs
     for (int i = pnew->references.size()-1; i >= 0; i--)
@@ -93,7 +94,7 @@ void DFHack::Job::deleteJobStruct(df::job *job)
         return;
 
     // Only allow free-floating job structs
-    assert(!job->list_link && job->items.empty() && job->misc_links.empty());
+    assert(!job->list_link && job->items.empty() && job->specific_refs.empty());
 
     for (int i = job->references.size()-1; i >= 0; i--)
         delete job->references[i];
@@ -331,10 +332,10 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
         item->flags.bits.in_job = true;
     }
 
-    auto item_link = new df::item::T_jobs();
-    item_link->type = 2;
+    auto item_link = new df::specific_ref();
+    item_link->type = specific_ref_type::JOB;
     item_link->job = job;
-    item->jobs.push_back(item_link);
+    item->specific_refs.push_back(item_link);
 
     auto job_link = new df::job_item_ref();
     job_link->item = item;

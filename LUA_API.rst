@@ -738,6 +738,14 @@ Items module
 
   Returns true *x,y,z* of the item; may be not equal to item.pos if in inventory.
 
+* ``dfhack.items.getGeneralRef(item, type)``
+
+  Searches for a general_ref with the given type.
+
+* ``dfhack.items.getSpecificRef(item, type)``
+
+  Searches for a specific_ref with the given type.
+
 * ``dfhack.items.getOwner(item)``
 
   Returns the owner unit or *nil*.

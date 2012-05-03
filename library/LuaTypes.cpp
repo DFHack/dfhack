@@ -1103,26 +1103,39 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
             name = pstruct->getName() + ("." + name);
         lua_pop(state, 1);
 
+        bool add_to_enum = true;
+
         // Handle the field
         switch (fields[i].mode)
         {
         case struct_field_info::OBJ_METHOD:
             AddMethodWrapper(state, base+1, base+2, name.c_str(),
                              (function_identity_base*)fields[i].type);
-            break;
+            continue;
 
         case struct_field_info::CLASS_METHOD:
+            continue;
+
+        case struct_field_info::POINTER:
+            // Skip class-typed pointers within unions
+            if ((fields[i].count & 2) != 0 && fields[i].type &&
+                fields[i].type->type() == IDTYPE_CLASS)
+                add_to_enum = false;
             break;
 
         default:
-            // Do not add invalid globals to the enumeration order
-            if (!globals || *(void**)fields[i].offset)
-                AssociateId(state, base+3, ++cnt, name.c_str());
-
-            lua_pushlightuserdata(state, (void*)&fields[i]);
-            lua_setfield(state, base+2, name.c_str());
             break;
         }
+
+        // Do not add invalid globals to the enumeration order
+        if (globals && !*(void**)fields[i].offset)
+            add_to_enum = false;
+
+        if (add_to_enum)
+            AssociateId(state, base+3, ++cnt, name.c_str());
+
+        lua_pushlightuserdata(state, (void*)&fields[i]);
+        lua_setfield(state, base+2, name.c_str());
     }
 }
 

@@ -272,7 +272,7 @@ static command_result job_duplicate(color_ostream &out, vector <string> & parame
     if (!job)
         return CR_FAILURE;
 
-    if (!job->misc_links.empty() ||
+    if (!job->specific_refs.empty() ||
         (job->job_items.empty() &&
          job->job_type != job_type::CollectSand &&
          job->job_type != job_type::CollectClay))

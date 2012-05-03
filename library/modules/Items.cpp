@@ -421,18 +421,25 @@ bool Items::copyItem(df::item * itembase, DFHack::dfh_item &item)
     return true;
 }
 
-df::unit *Items::getOwner(df::item * item)
+df::general_ref *Items::getGeneralRef(df::item *item, df::general_ref_type type)
 {
     CHECK_NULL_POINTER(item);
 
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
-    {
-        df::general_ref *ref = item->itemrefs[i];
-        if (strict_virtual_cast<df::general_ref_unit_itemownerst>(ref))
-            return ref->getUnit();
-    }
+    return findRef(item->itemrefs, type);
+}
 
-    return NULL;
+df::specific_ref *Items::getSpecificRef(df::item *item, df::specific_ref_type type)
+{
+    CHECK_NULL_POINTER(item);
+
+    return findRef(item->specific_refs, type);
+}
+
+df::unit *Items::getOwner(df::item * item)
+{
+    auto ref = getGeneralRef(item, general_ref_type::UNIT_ITEMOWNER);
+
+    return ref ? ref->getUnit() : NULL;
 }
 
 bool Items::setOwner(df::item *item, df::unit *unit)
@@ -478,16 +485,9 @@ bool Items::setOwner(df::item *item, df::unit *unit)
 
 df::item *Items::getContainer(df::item * item)
 {
-    CHECK_NULL_POINTER(item);
+    auto ref = getGeneralRef(item, general_ref_type::CONTAINED_IN_ITEM);
 
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
-    {
-        df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() == general_ref_type::CONTAINED_IN_ITEM)
-            return ref->getItem();
-    }
-
-    return NULL;
+    return ref ? ref->getItem() : NULL;
 }
 
 void Items::getContainedItems(df::item *item, std::vector<df::item*> *items)
@@ -544,19 +544,6 @@ df::coord Items::getPosition(df::item *item)
     }
 
     return item->pos;
-}
-
-static void removeRef(std::vector<df::general_ref*> &vec, df::general_ref_type type, int id)
-{
-    for (int i = vec.size()-1; i >= 0; i--)
-    {
-        df::general_ref *ref = vec[i];
-        if (ref->getType() != type || ref->getID() != id)
-            continue;
-
-        vector_erase_at(vec, i);
-        delete ref;
-    }
 }
 
 static bool detachItem(MapExtras::MapCache &mc, df::item *item)

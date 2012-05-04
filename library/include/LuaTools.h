@@ -48,6 +48,9 @@ namespace DFHack {namespace Lua {
      */
     DFHACK_EXPORT lua_State *Open(color_ostream &out, lua_State *state = NULL);
 
+    DFHACK_EXPORT void PushDFHack(lua_State *state);
+    DFHACK_EXPORT void PushBaseGlobals(lua_State *state);
+
     /**
      * Load a module using require(). Leaves the stack as is.
      */

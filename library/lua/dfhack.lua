@@ -269,5 +269,23 @@ function dfhack.interpreter(prompt,hfile,env)
     return true
 end
 
+-- Command scripts
+
+dfhack.scripts = dfhack.scripts or {}
+
+function dfhack.run_script(file,...)
+    local env = dfhack.scripts[file]
+    if env == nil then
+        env = {}
+        setmetatable(env, { __index = base_env })
+        dfhack.scripts[file] = env
+    end
+    local f,perr = loadfile(file, 't', env)
+    if f == nil then
+        error(perr)
+    end
+    return f(...)
+end
+
 -- Feed the table back to the require() mechanism.
 return dfhack

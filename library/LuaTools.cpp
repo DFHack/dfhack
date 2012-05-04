@@ -706,6 +706,16 @@ static int DFHACK_DFHACK_TOKEN = 0;
 static int DFHACK_BASE_G_TOKEN = 0;
 static int DFHACK_REQUIRE_TOKEN = 0;
 
+void Lua::PushDFHack(lua_State *state)
+{
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_DFHACK_TOKEN);
+}
+
+void Lua::PushBaseGlobals(lua_State *state)
+{
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_BASE_G_TOKEN);
+}
+
 bool DFHack::Lua::PushModule(color_ostream &out, lua_State *state, const char *module)
 {
     AssertCoreSuspend(state);
@@ -884,12 +894,8 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
                                    bool (*init)(color_ostream&, lua_State*, void*),
                                    void *arg)
 {
-    if (!out.is_console())
-        return false;
     if (!lua_checkstack(state, 20))
         return false;
-
-    Console &con = static_cast<Console&>(out);
 
     lua_State *thread;
     int rv;
@@ -910,6 +916,10 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
             return false;
         }
 
+        // If not interactive, run without coroutine and bail out
+        if (!out.is_console())
+            return SafeCall(out, state, lua_gettop(state)-base-1, 0);
+
         lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_QUERY_COROTABLE_TOKEN);
         lua_pushvalue(state, base+1);
         lua_remove(state, base+1);
@@ -919,6 +929,8 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
 
         rv = resume_query_loop(out, thread, state, lua_gettop(state)-base, prompt, histfile);
     }
+
+    Console &con = static_cast<Console&>(out);
 
     while (rv == LUA_YIELD)
     {

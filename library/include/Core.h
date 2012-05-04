@@ -35,6 +35,8 @@ distribution.
 #include "modules/Graphic.h"
 #include "SDL_events.h"
 
+#include "RemoteClient.h"
+
 struct WINDOW;
 
 namespace tthread
@@ -117,9 +119,15 @@ namespace DFHack
         /// returns a named pointer.
         void *GetData(std::string key);
 
+        command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters);
+        command_result runCommand(color_ostream &out, const std::string &command);
+        bool loadScriptFile(color_ostream &out, std::string fname, bool silent = false);
+
         bool ClearKeyBindings(std::string keyspec);
         bool AddKeyBinding(std::string keyspec, std::string cmdline);
         std::vector<std::string> ListKeyBindings(std::string keyspec);
+
+        std::string getHackPath();
 
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
         bool isMapLoaded() { return (last_local_map_ptr != NULL && last_world_data_ptr != NULL); }
@@ -177,7 +185,7 @@ namespace DFHack
         } s_mods;
         std::vector <Module *> allModules;
         DFHack::PluginManager * plug_mgr;
-        
+
         // hotkey-related stuff
         struct KeyBinding {
             int modifiers;

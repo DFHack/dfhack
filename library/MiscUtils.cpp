@@ -30,9 +30,12 @@ distribution.
 
 #ifndef LINUX_BUILD
     #include <Windows.h>
+    #include "wdirent.h"
 #else
     #include <sys/time.h>
     #include <ctime>
+    #include <dirent.h>
+    #include <errno.h>
 #endif
 
 #include <ctype.h>
@@ -124,6 +127,34 @@ std::string toLower(const std::string &str)
         rv[i] = tolower(str[i]);
     return rv;
 }
+
+int getdir(std::string dir, std::vector<std::string> &files)
+{
+    DIR *dp;
+    struct dirent *dirp;
+    if((dp  = opendir(dir.c_str())) == NULL)
+    {
+        return errno;
+    }
+    while ((dirp = readdir(dp)) != NULL) {
+        files.push_back(std::string(dirp->d_name));
+    }
+    closedir(dp);
+    return 0;
+}
+
+bool hasEnding (std::string const &fullString, std::string const &ending)
+{
+    if (fullString.length() > ending.length())
+    {
+        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
+    }
+    else
+    {
+        return false;
+    }
+}
+
 
 df::general_ref *DFHack::findRef(std::vector<df::general_ref*> &vec, df::general_ref_type type)
 {

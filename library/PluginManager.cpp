@@ -45,41 +45,8 @@ using namespace std;
 #include "tinythread.h"
 using namespace tthread;
 
-#ifdef LINUX_BUILD
-    #include <dirent.h>
-    #include <errno.h>
-#else
-    #include "wdirent.h"
-#endif
-
 #include <assert.h>
 
-static int getdir (string dir, vector<string> &files)
-{
-    DIR *dp;
-    struct dirent *dirp;
-    if((dp  = opendir(dir.c_str())) == NULL)
-    {
-        return errno;
-    }
-    while ((dirp = readdir(dp)) != NULL) {
-    files.push_back(string(dirp->d_name));
-    }
-    closedir(dp);
-    return 0;
-}
-
-bool hasEnding (std::string const &fullString, std::string const &ending)
-{
-    if (fullString.length() > ending.length())
-    {
-        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
-    }
-    else
-    {
-        return false;
-    }
-}
 struct Plugin::RefLock
 {
     RefLock()
@@ -563,10 +530,10 @@ void Plugin::push_function(lua_State *state, LuaFunction *fn)
 PluginManager::PluginManager(Core * core)
 {
 #ifdef LINUX_BUILD
-    string path = core->p->getPath() + "/hack/plugins/";
+    string path = core->getHackPath() + "plugins/";
     const string searchstr = ".plug.so";
 #else
-    string path = core->p->getPath() + "\\hack\\plugins\\";
+    string path = core->getHackPath() + "plugins\\";
     const string searchstr = ".plug.dll";
 #endif
     cmdlist_mutex = new mutex();

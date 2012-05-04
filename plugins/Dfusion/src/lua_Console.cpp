@@ -1,5 +1,6 @@
-#include "lua_Console.h"
 #include "LuaTools.h"
+
+#include "lua_Console.h"
 
 #include <sstream>
 

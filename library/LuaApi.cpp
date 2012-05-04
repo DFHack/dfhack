@@ -570,9 +570,14 @@ static void OpenModule(lua_State *state, const char *mname,
 #define WRAP(function) { #function, df::wrap_function(function,true) }
 #define WRAPN(name, function) { #name, df::wrap_function(function,true) }
 
-/***** Translation module *****/
+/***** DFHack module *****/
+
+static bool isWorldLoaded() { return Core::getInstance().isWorldLoaded(); }
+static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
 
 static const LuaWrapper::FunctionReg dfhack_module[] = {
+    WRAP(isWorldLoaded),
+    WRAP(isMapLoaded),
     WRAPM(Translation, TranslateName),
     { NULL, NULL }
 };

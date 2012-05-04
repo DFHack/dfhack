@@ -53,6 +53,7 @@ distribution.
 #include "df/building.h"
 #include "df/unit.h"
 #include "df/item.h"
+#include "df/world.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -1412,11 +1413,133 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     return state;
 }
 
+static int next_timeout_id = 0;
+static int frame_idx = 0;
+static std::multimap<int,int> frame_timers;
+static std::multimap<int,int> tick_timers;
+
+int DFHACK_TIMEOUTS_TOKEN = 0;
+
+static const char *const timeout_modes[] = {
+    "frames", "ticks", "days", "months", "years", NULL
+};
+
+int dfhack_timeout(lua_State *L)
+{
+    using df::global::world;
+    using df::global::enabler;
+
+    lua_Number time = luaL_checknumber(L, 1);
+    int mode = luaL_checkoption(L, 2, NULL, timeout_modes);
+    luaL_checktype(L, 3, LUA_TFUNCTION);
+    lua_settop(L, 3);
+
+    if (mode > 0 && !Core::getInstance().isWorldLoaded())
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    switch (mode)
+    {
+    case 2:
+        time *= 1200;
+        break;
+    case 3:
+        time *= 33600;
+        break;
+    case 4:
+        time *= 403200;
+        break;
+    default:;
+    }
+
+    int id = next_timeout_id++;
+    int delta = time;
+
+    if (delta <= 0)
+        luaL_error(L, "Invalid timeout: %d", delta);
+
+    if (mode)
+        tick_timers.insert(std::pair<int,int>(world->frame_counter+delta, id));
+    else
+        frame_timers.insert(std::pair<int,int>(frame_idx+delta, id));
+
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
+    lua_swap(L);
+    lua_rawseti(L, -2, id);
+
+    lua_pushinteger(L, id);
+    return 1;
+}
+
+static void cancel_tick_timers()
+{
+    using Lua::Core::State;
+
+    Lua::StackUnwinder frame(State);
+    lua_rawgetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
+
+    for (auto it = tick_timers.begin(); it != tick_timers.end(); ++it)
+    {
+        lua_pushnil(State);
+        lua_rawseti(State, frame[1], it->second);
+    }
+
+    tick_timers.clear();
+}
+
 void DFHack::Lua::Core::onStateChange(color_ostream &out, int code) {
     if (!State) return;
 
+    switch (code)
+    {
+    case SC_MAP_UNLOADED:
+    case SC_WORLD_UNLOADED:
+        cancel_tick_timers();
+        break;
+
+    default:;
+    }
+
     Lua::Push(State, code);
     Lua::InvokeEvent(out, State, (void*)onStateChange, 1);
+}
+
+void DFHack::Lua::Core::onUpdate(color_ostream &out)
+{
+    using df::global::world;
+
+    Lua::StackUnwinder frame(State);
+    lua_rawgetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
+
+    frame_idx++;
+
+    while (!frame_timers.empty() &&
+           frame_timers.begin()->first <= frame_idx)
+    {
+        int id = frame_timers.begin()->second;
+        frame_timers.erase(frame_timers.begin());
+
+        lua_rawgeti(State, frame[1], id);
+        lua_pushnil(State);
+        lua_rawseti(State, frame[1], id);
+
+        Lua::SafeCall(out, State, 0, 0);
+    }
+
+    while (!tick_timers.empty() &&
+           tick_timers.begin()->first <= world->frame_counter)
+    {
+        int id = tick_timers.begin()->second;
+        tick_timers.erase(tick_timers.begin());
+
+        lua_rawgeti(State, frame[1], id);
+        lua_pushnil(State);
+        lua_rawseti(State, frame[1], id);
+
+        Lua::SafeCall(out, State, 0, 0);
+    }
 }
 
 void DFHack::Lua::Core::Init(color_ostream &out)
@@ -1428,11 +1551,17 @@ void DFHack::Lua::Core::Init(color_ostream &out)
 
     Lua::Open(out, State);
 
+    lua_newtable(State);
+    lua_rawsetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
+
     // Register events
     lua_rawgetp(State, LUA_REGISTRYINDEX, &DFHACK_DFHACK_TOKEN);
 
     MakeEvent(State, (void*)onStateChange);
     lua_setfield(State, -2, "onStateChange");
+
+    lua_pushcfunction(State, dfhack_timeout);
+    lua_setfield(State, -2, "timeout");
 
     lua_pop(State, 1);
 }

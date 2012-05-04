@@ -355,6 +355,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 {
                     string help = getLuaHelp(filename);
                     con.print("%s: %s\n", parts[0].c_str(), help.c_str());
+                    return CR_OK;
                 }
                 con.printerr("Unknown command: %s\n", parts[0].c_str());
             }
@@ -1076,6 +1077,9 @@ int Core::Update()
 
     // notify all the plugins that a game tick is finished
     plug_mgr->OnUpdate(out);
+
+    // process timers in lua
+    Lua::Core::onUpdate(out);
 
     // Release the fake suspend lock
     {

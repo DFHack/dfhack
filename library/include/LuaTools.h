@@ -333,6 +333,8 @@ namespace DFHack {namespace Lua {
 
         // Events signalled by the core
         void onStateChange(color_ostream &out, int code);
+        // Signals timers
+        void onUpdate(color_ostream &out);
 
         template<class T> inline void Push(T &arg) { Lua::Push(State, arg); }
         template<class T> inline void Push(const T &arg) { Lua::Push(State, arg); }

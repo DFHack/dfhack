@@ -591,7 +591,7 @@ command_result PluginManager::InvokeCommand(color_ostream &out, const std::strin
 bool PluginManager::CanInvokeHotkey(const std::string &command, df::viewscreen *top)
 {
     Plugin *plugin = getPluginByCommand(command);
-    return plugin ? plugin->can_invoke_hotkey(command, top) : false;
+    return plugin ? plugin->can_invoke_hotkey(command, top) : true;
 }
 
 void PluginManager::OnUpdate(color_ostream &out)

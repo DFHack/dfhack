@@ -855,6 +855,12 @@ One notable difference is that these explicit wrappers allow argument count
 adjustment according to the usual lua rules, so trailing false/nil arguments
 can be omitted.</p>
 <ul>
+<li><p class="first"><tt class="docutils literal">dfhack.isWorldLoaded()</tt></p>
+<p>Checks if the world is loaded.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.isMapLoaded()</tt></p>
+<p>Checks if the world and map are loaded.</p>
+</li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.TranslateName(name[,in_english,only_last_name])</span></tt></p>
 <p>Convert a language_name or only the last name part to string.</p>
 </li>
@@ -1150,6 +1156,17 @@ only context that can receive events from DF and plugins.</p>
 <ul>
 <li><p class="first"><tt class="docutils literal">dfhack.is_core_context</tt></p>
 <p>Boolean value; <em>true</em> in the core context.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.timeout(time,mode,callback)</tt></p>
+<p>Arranges for the callback to be called once the specified
+period of time passes. The <tt class="docutils literal">mode</tt> argument specifies the
+unit of time used, and may be one of <tt class="docutils literal">'frames'</tt> (raw FPS),
+<tt class="docutils literal">'ticks'</tt> (unpaused FPS), <tt class="docutils literal">'days'</tt>, <tt class="docutils literal">'months'</tt>,
+<tt class="docutils literal">'years'</tt> (in-game time). All timers other than
+<tt class="docutils literal">'frames'</tt> are cancelled when the world is unloaded,
+and cannot be queued until it is loaded again.
+Returns the timer id, or <em>nil</em> if unsuccessful due to
+world being unloaded.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.onStateChange.foo = function(code)</tt></p>
 <p>Event. Receives the same codes as plugin_onstatechange in C++.</p>

@@ -598,6 +598,14 @@ One notable difference is that these explicit wrappers allow argument count
 adjustment according to the usual lua rules, so trailing false/nil arguments
 can be omitted.
 
+* ``dfhack.isWorldLoaded()``
+
+  Checks if the world is loaded.
+
+* ``dfhack.isMapLoaded()``
+
+  Checks if the world and map are loaded.
+
 * ``dfhack.TranslateName(name[,in_english,only_last_name])``
 
   Convert a language_name or only the last name part to string.
@@ -949,6 +957,18 @@ Core context specific functions:
 * ``dfhack.is_core_context``
 
   Boolean value; *true* in the core context.
+
+* ``dfhack.timeout(time,mode,callback)``
+
+  Arranges for the callback to be called once the specified
+  period of time passes. The ``mode`` argument specifies the
+  unit of time used, and may be one of ``'frames'`` (raw FPS),
+  ``'ticks'`` (unpaused FPS), ``'days'``, ``'months'``,
+  ``'years'`` (in-game time). All timers other than
+  ``'frames'`` are cancelled when the world is unloaded,
+  and cannot be queued until it is loaded again.
+  Returns the timer id, or *nil* if unsuccessful due to
+  world being unloaded.
 
 * ``dfhack.onStateChange.foo = function(code)``
 

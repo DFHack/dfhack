@@ -124,10 +124,13 @@ class Compound < MemStruct
 	def _field_names ; _fields_ancestors.map { |n, o, s| n } ; end
 	def _rtti_classname ; self.class._rtti_classname ; end
 	def _sizeof ; self.class._sizeof ; end
+	@@inspecting = {}	# avoid infinite recursion on mutually-referenced objects
 	def inspect
 		cn = self.class.name.sub(/^DFHack::/, '')
 		cn << ' @' << ('0x%X' % _memaddr) if cn != ''
 		out = "#<#{cn}"
+		return out << ' ...>' if @@inspecting[_memaddr]
+		@@inspecting[_memaddr] = true
 		_fields_ancestors.each { |n, o, s|
 			out << ' ' if out.length != 0 and out[-1, 1] != ' '
 			if out.length > INSPECT_SIZE_LIMIT
@@ -137,6 +140,7 @@ class Compound < MemStruct
 			out << inspect_field(n, o, s)
 		}
 		out.chomp!(' ')
+		@@inspecting.delete _memaddr
 		out << '>'
 	end
 	def inspect_field(n, o, s)

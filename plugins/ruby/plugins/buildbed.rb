@@ -3,50 +3,29 @@ def self.buildbedhere
 	suspend {
 		raise 'where to ?' if cursor.x < 0
 
-		# TODO tweak that more
 		item = world.items.all.find { |i|
 			i.kind_of?(ItemBedst) and
 			i.itemrefs.empty? and
-			i.jobs.empty?
+			!i.flags.in_job
 		}
 		raise 'no free bed, build more !' if not item
 
-		puts 'alloc c++'
 		job = Job.cpp_new
-		joblink = JobListLink.cpp_new
 		jobitemref = JobItemRef.cpp_new
 		refbuildingholder = GeneralRefBuildingHolderst.cpp_new
 		building = BuildingBedst.cpp_new
-		itemtjobs = Item_TJobs.cpp_new
+		itemjob = SpecificRef.cpp_new
 
-		puts 'update global counters'
-		# TODO
-		buildingid = world.buildings.all[-1].id + 1
-		jobid = df.job_next_id
-		df.job_next_id = jobid+1
+		buildingid = df.building_next_id
+		df.building_next_id += 1
 
-		puts 'init objects'
-		job.id = jobid
-		job.list_link = joblink
 		job.job_type = :ConstructBuilding
-		job.unk2 = -1	# XXX
 		job.pos = cursor
-		job.completion_timer = -1
-		# unk4a/4b uninit
 		job.mat_type = item.mat_type
 		job.mat_index = item.mat_index
-		job.unk5 = -1
-		job.unk6 = -1
-		job.item_subtype = -1
 		job.hist_figure_id = -1
 		job.items << jobitemref
 		job.references << refbuildingholder
-
-		lastjob = world.job_list
-		lastjob = lastjob.next while lastjob.next
-		lastjob.next = joblink
-		joblink.prev = lastjob
-		joblink.item = job
 
 		jobitemref.item = item
 		jobitemref.role = :Hauled
@@ -62,26 +41,18 @@ def self.buildbedhere
 		building.race = ui.race_id
 		building.id = buildingid
 		building.jobs << job
-		building.anon_3 = -1
-		building.anon_4 = -1
+		building.specific_squad = -1
 
-		itemtjobs.unk1 = 2
-		itemtjobs.job = job
+		itemjob.type = :JOB
+		itemjob.job = job
 
 		item.flags.in_job = true
-		item.jobs << itemtjobs
+		item.specific_refs << itemjob
 
-		puts 'update vectors'
+		map_block_at(cursor).occupancy[cursor.x%16][cursor.y%16].building = :Planned
+		link_job job
 		world.buildings.all << building
-		# XXX
-		world.buildings.other[0] << building
-		world.buildings.other[4] << building
-		world.buildings.other[8] << building
-		world.buildings.other[9] << building
-		world.buildings.other[10] << building
-		world.buildings.other[32] << building
-		# not in bad
-
+		building.categorize(true)
 	}
 end
 end

@@ -1,6 +1,6 @@
 module DFHack
 module MemHack
-INSPECT_SIZE_LIMIT=1024
+INSPECT_SIZE_LIMIT=16384
 class MemStruct
 	attr_accessor :_memaddr
 	def _at(addr) ; d = dup ; d._memaddr = addr ; d ; end
@@ -13,6 +13,7 @@ class Compound < MemStruct
 		attr_accessor :_fields, :_rtti_classname, :_sizeof
 		def field(name, offset)
 			struct = yield
+			return if not struct
 			@_fields ||= []
 			@_fields << [name, offset, struct]
 			define_method(name) { struct._at(@_memaddr+offset)._get }

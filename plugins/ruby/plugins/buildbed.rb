@@ -55,4 +55,16 @@ def self.buildbedhere
 		building.categorize(true)
 	}
 end
+def self.deconstructbldhere
+	suspend {
+		raise "'q'uery a building" if ui.main.mode != :QueryBuilding or not building = world.selected_building
+		job = Job.cpp_new
+		refbuildingholder = GeneralRefBuildingHolderst.cpp_new
+		job.job_type = :DestroyBuilding
+		refbuildingholder.building_id = building.id
+		job.references << refbuildingholder
+		building.jobs << job
+		link_job job
+	}
+end
 end

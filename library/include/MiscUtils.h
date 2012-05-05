@@ -274,9 +274,6 @@ DFHACK_EXPORT std::string join_strings(const std::string &separator, const std::
 DFHACK_EXPORT std::string toUpper(const std::string &str);
 DFHACK_EXPORT std::string toLower(const std::string &str);
 
-DFHACK_EXPORT int getdir(std::string dir, std::vector<std::string> &files);
-DFHACK_EXPORT bool hasEnding (std::string const &fullString, std::string const &ending);
-
 inline bool bits_match(unsigned required, unsigned ok, unsigned mask)
 {
     return (required & mask) == (required & mask & ok);

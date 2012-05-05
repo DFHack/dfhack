@@ -74,6 +74,9 @@ namespace DFHack
         uint32_t xpNxtLvl;
     };
 
+    DFHACK_EXPORT int getdir(std::string dir, std::vector<std::string> &files);
+    DFHACK_EXPORT bool hasEnding (std::string const &fullString, std::string const &ending);
+
     DFHACK_EXPORT df::general_ref *findRef(std::vector<df::general_ref*> &vec, df::general_ref_type type);
     DFHACK_EXPORT bool removeRef(std::vector<df::general_ref*> &vec, df::general_ref_type type, int id);
 

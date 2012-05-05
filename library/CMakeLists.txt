@@ -64,6 +64,7 @@ DataStatics.cpp
 DataStaticsCtor.cpp
 DataStaticsFields.cpp
 MiscUtils.cpp
+Types.cpp
 PluginManager.cpp
 TileTypes.cpp
 VersionInfoFactory.cpp

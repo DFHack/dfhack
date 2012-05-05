@@ -28,6 +28,7 @@ distribution.
 #include "PluginManager.h"
 #include "RemoteServer.h"
 #include "Console.h"
+#include "Types.h"
 
 #include "DataDefs.h"
 #include "MiscUtils.h"

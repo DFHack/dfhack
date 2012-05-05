@@ -220,8 +220,26 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     out.print("temperature1: %d U\n",mc.temperature1At(cursor));
     out.print("temperature2: %d U\n",mc.temperature2At(cursor));
 
+    int offset = block.region_offset[des.bits.biome];
+    df::coord2d region_pos = block.region_pos + df::coord2d ((offset % 3) - 1, (offset / 3) -1);
+
+    df::world_data::T_region_map* biome = 
+        &world->world_data->region_map[region_pos.x][region_pos.y];
+
+    int sav = biome->savagery;
+    int evi = biome->evilness;
+    int sindex = sav > 65 ? 2 : sav < 33 ? 0 : 1;
+    int eindex = evi > 65 ? 2 : evi < 33 ? 0 : 1;
+    int surr = sindex + eindex * 3;
+
+    char* surroundings[] = { "Serene", "Mirthful", "Joyous Wilds", "Calm", "Wilderness", "Untamed Wilds", "Sinister", "Haunted", "Terrifying" };
+
     // biome, geolayer
-    out << "biome: " << des.bits.biome << std::endl;
+    out << "biome: " << des.bits.biome << " (" << 
+        "region id=" << biome->region_id << ", " <<
+        surroundings[surr] << ", " <<
+        "savagery " << biome->savagery << ", " <<
+        "evilness " << biome->evilness << ")" << std::endl;
     out << "geolayer: " << des.bits.geolayer_index
         << std::endl;
     int16_t base_rock = mc.layerMaterialAt(cursor);

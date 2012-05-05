@@ -829,7 +829,7 @@ bool DFHack::Lua::AssignDFObject(color_ostream &out, lua_State *state,
     return doAssignDFObject(&out, state, type, target, val_index, exact_type, perr, false);
 }
 
-void DFHack::Lua::CheckDFObject(lua_State *state, type_identity *type,
+void DFHack::Lua::CheckDFAssign(lua_State *state, type_identity *type,
                                 void *target, int val_index, bool exact_type)
 {
     doAssignDFObject(NULL, state, type, target, val_index, exact_type, false, true);

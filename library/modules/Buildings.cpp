@@ -559,7 +559,7 @@ bool Buildings::setSize(df::building *bld, df::coord2d size, int direction)
 
     bool ok = checkBuildingTiles(bld, true);
 
-    if (type != building_type::Construction)
+    if (type != Construction)
         bld->setMaterialAmount(computeMaterialAmount(bld));
 
     return ok;

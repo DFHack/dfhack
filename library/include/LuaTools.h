@@ -119,7 +119,7 @@ namespace DFHack {namespace Lua {
      * Assign the value at val_index to the target of given identity using df.assign().
      * Otherwise throws an error.
      */
-    DFHACK_EXPORT void CheckDFObject(lua_State *state, type_identity *type,
+    DFHACK_EXPORT void CheckDFAssign(lua_State *state, type_identity *type,
                                      void *target, int val_index, bool exact_type = false);
 
     /**
@@ -161,8 +161,8 @@ namespace DFHack {namespace Lua {
      * Throws in case of an error.
      */
     template<class T>
-    void CheckDFObject(lua_State *state, T *target, int val_index, bool exact_type = false) {
-        CheckDFObject(state, df::identity_traits<T>::get(), target, val_index, exact_type);
+    void CheckDFAssign(lua_State *state, T *target, int val_index, bool exact_type = false) {
+        CheckDFAssign(state, df::identity_traits<T>::get(), target, val_index, exact_type);
     }
 
     /**

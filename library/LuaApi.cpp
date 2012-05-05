@@ -520,7 +520,7 @@ static int dfhack_matinfo_matches(lua_State *state)
     else if (lua_istable(state, 2))
     {
         df::dfhack_material_category tmp;
-        Lua::CheckDFObject(state, &tmp, 2, false);
+        Lua::CheckDFAssign(state, &tmp, 2, false);
         lua_pushboolean(state, info.matches(tmp));
     }
     else
@@ -733,7 +733,7 @@ static int maps_getTileBlock(lua_State *L)
     if (lua_gettop(L) == 1)
     {
         df::coord pos;
-        Lua::CheckDFObject(L, &pos, 1);
+        Lua::CheckDFAssign(L, &pos, 1);
         block = Maps::getTileBlock(pos);
     }
     else

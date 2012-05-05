@@ -258,6 +258,20 @@ module DFHack
             may = rawlist.find_all { |r| r.downcase.index(name.downcase) }
             may.first if may.length == 1
         end
+
+        # link a job to the world
+        # allocate & set job.id, allocate a JobListLink, link to job & world.job_list
+        def link_job(job)
+            lastjob = world.job_list
+            lastjob = lastjob.next while lastjob.next
+            joblink = JobListLink.cpp_new
+            joblink.prev = lastjob
+            joblink.item = job
+            job.list_link = joblink
+            job.id = df.job_next_id
+            df.job_next_id += 1
+            lastjob.next = joblink
+        end
     end
 end
 

@@ -111,4 +111,29 @@ function make_sort_order(data,ordering)
     return index
 end
 
+--[[
+    Recursively assign data into a table.
+--]]
+function assign(tgt,src)
+    if df.isvalid(tgt) == 'ref' then
+        df.assign(tgt, src)
+    elseif type(tgt) == 'table' then
+        for k,v in pairs(src) do
+            if type(v) == 'table' or df.isvalid(v) == 'ref' then
+                local cv = tgt[k]
+                if cv == nil then
+                    cv = {}
+                    tgt[k] = cv
+                end
+                assign(cv, v)
+            else
+                tgt[k] = v
+            end
+        end
+    else
+        error('Invalid assign target type: '..tostring(tgt))
+    end
+    return tgt
+end
+
 return _ENV

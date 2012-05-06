@@ -46,6 +46,7 @@ using namespace DFHack;
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/ui.h"
+#include "df/ui_look_list.h"
 #include "df/d_init.h"
 #include "df/item.h"
 #include "df/job.h"
@@ -59,6 +60,7 @@ using namespace DFHack;
 #include "df/building_bridgest.h"
 #include "df/building_coffinst.h"
 #include "df/building_civzonest.h"
+#include "df/building_stockpilest.h"
 #include "df/building_furnacest.h"
 #include "df/building_workshopst.h"
 #include "df/building_screw_pumpst.h"
@@ -683,6 +685,18 @@ static void linkRooms(df::building *bld)
         df::global::ui->equipment.update.bits.buildings = true;
 }
 
+static void unlinkRooms(df::building *bld)
+{
+    for (size_t i = 0; i < bld->parents.size(); i++)
+    {
+        auto parent = bld->parents[i];
+        int idx = linear_index(parent->children, bld);
+        vector_erase_at(parent->children, idx);
+    }
+
+    bld->parents.clear();
+}
+
 static void linkBuilding(df::building *bld)
 {
     bld->id = (*building_next_id)++;
@@ -713,6 +727,52 @@ static void createDesign(df::building *bld, bool rough)
 
         act->design->flags.bits.rough = rough;
     }
+}
+
+static int getMaxStockpileId()
+{
+    auto &vec = world->buildings.other[buildings_other_id::STOCKPILE];
+    int max_id = 0;
+
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        auto bld = strict_virtual_cast<df::building_stockpilest>(vec[i]);
+        if (bld)
+            max_id = std::max(max_id, bld->stockpile_number);
+    }
+
+    return max_id;
+}
+
+bool Buildings::constructAbstract(df::building *bld)
+{
+    CHECK_NULL_POINTER(bld);
+    CHECK_INVALID_ARGUMENT(bld->id == -1);
+    CHECK_INVALID_ARGUMENT(!bld->isActual());
+
+    if (!checkBuildingTiles(bld, false))
+        return false;
+
+    switch (bld->getType())
+    {
+        case building_type::Stockpile:
+            if (auto stock = strict_virtual_cast<df::building_stockpilest>(bld))
+                stock->stockpile_number = getMaxStockpileId() + 1;
+            break;
+
+        default:
+            break;
+    }
+
+    linkBuilding(bld);
+
+    if (!bld->flags.bits.exists)
+    {
+        bld->flags.bits.exists = true;
+        bld->initFarmSeasons();
+    }
+
+    return true;
 }
 
 static bool linkForConstruct(df::job* &job, df::building *bld)
@@ -836,3 +896,64 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
     return true;
 }
 
+bool Buildings::deconstruct(df::building *bld)
+{
+    using df::global::ui;
+    using df::global::world;
+    using df::global::process_jobs;
+    using df::global::process_dig;
+    using df::global::ui_look_list;
+
+    CHECK_NULL_POINTER(bld);
+
+    if (bld->isActual() && bld->getBuildStage() > 0)
+    {
+        bld->queueDestroy();
+        return false;
+    }
+
+    /* Immediate destruction code path.
+       Should only happen for abstract and unconstructed buildings.*/
+
+    if (bld->isSettingOccupancy())
+    {
+        markBuildingTiles(bld, true);
+        bld->cleanupMap();
+    }
+
+    bld->removeUses(false, false);
+    // Assume: no parties.
+    unlinkRooms(bld);
+    // Assume: not unit destroy target
+    vector_erase_at(ui->unk8.unk10, linear_index(ui->unk8.unk10, bld));
+    // Assume: not used in punishment
+    // Assume: not used in non-own jobs
+    // Assume: does not affect pathfinding
+    bld->deconstructItems(false, false);
+    // Don't clear arrows.
+
+    bld->uncategorize();
+    delete bld;
+
+    if (world->selected_building == bld)
+    {
+        world->selected_building = NULL;
+        world->update_selected_building = true;
+    }
+
+    for (int i = ui_look_list->items.size()-1; i >= 0; i--)
+    {
+        auto item = ui_look_list->items[i];
+        if (item->type == df::ui_look_list::T_items::Building &&
+            item->building == bld)
+        {
+            vector_erase_at(ui_look_list->items, i);
+            delete item;
+        }
+    }
+
+    if (process_dig) *process_dig = true;
+    if (process_jobs) *process_jobs = true;
+
+    return true;
+}

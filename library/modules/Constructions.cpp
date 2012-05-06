@@ -129,3 +129,43 @@ bool Constructions::designateNew(df::coord pos, df::construction_type type,
     return true;
 }
 
+bool Constructions::designateRemove(df::coord pos, bool *immediate)
+{
+    using df::global::process_dig;
+
+    if (immediate)
+        *immediate = false;
+
+    if (auto current = Buildings::findAtTile(pos))
+    {
+        auto cons = strict_virtual_cast<df::building_constructionst>(current);
+        if (!cons)
+            return false;
+
+        if (Buildings::deconstruct(cons))
+        {
+            if (immediate)
+                *immediate = true;
+        }
+
+        return true;
+    }
+
+    auto block = Maps::getTileBlock(pos);
+    if (!block)
+        return false;
+
+    auto ttype = block->tiletype[pos.x&15][pos.y&15];
+
+    if (tileMaterial(ttype) == tiletype_material::CONSTRUCTION)
+    {
+        auto &dsgn = block->designation[pos.x&15][pos.y&15];
+        dsgn.bits.dig = tile_dig_designation::Default;
+        block->flags.bits.designated = true;
+        if (process_dig)
+            *process_dig = true;
+        return true;
+    }
+
+    return false;
+}

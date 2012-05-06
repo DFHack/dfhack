@@ -821,8 +821,10 @@ static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, countExtentTiles),
     WRAPN(containsTile, buildings_containsTile),
     WRAPM(Buildings, hasSupport),
+    WRAPM(Buildings, constructAbstract),
     WRAPM(Buildings, constructWithItems),
     WRAPM(Buildings, constructWithFilters),
+    WRAPM(Buildings, deconstruct),
     { NULL, NULL }
 };
 
@@ -897,6 +899,20 @@ static const luaL_Reg dfhack_buildings_funcs[] = {
 
 static const LuaWrapper::FunctionReg dfhack_constructions_module[] = {
     WRAPM(Constructions, designateNew),
+    { NULL, NULL }
+};
+
+static int constructions_designateRemove(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    bool imm = false;
+    lua_pushboolean(L, Constructions::designateRemove(pos, &imm));
+    lua_pushboolean(L, imm);
+    return 2;
+}
+
+static const luaL_Reg dfhack_constructions_funcs[] = {
+    { "designateRemove", constructions_designateRemove },
     { NULL, NULL }
 };
 

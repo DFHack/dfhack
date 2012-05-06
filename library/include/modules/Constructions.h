@@ -62,6 +62,9 @@ DFHACK_EXPORT df::construction * getConstruction (const int32_t index);
 
 DFHACK_EXPORT bool designateNew(df::coord pos, df::construction_type type,
                                 df::item_type item = df::item_type::NONE, int mat_index = -1);
+
+DFHACK_EXPORT bool designateRemove(df::coord pos, bool *immediate = NULL);
+
 }
 }
 #endif

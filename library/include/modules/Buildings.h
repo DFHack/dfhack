@@ -150,6 +150,11 @@ DFHACK_EXPORT bool setSize(df::building *bld, df::coord2d size, int direction = 
 DFHACK_EXPORT std::pair<df::coord,df::coord2d> getSize(df::building *bld);
 
 /**
+ * Constructs an abstract building, i.e. stockpile or civzone.
+ */
+DFHACK_EXPORT bool constructAbstract(df::building *bld);
+
+/**
  * Initiates construction of the building, using specified items as inputs.
  * Returns true if success.
  */
@@ -161,6 +166,12 @@ DFHACK_EXPORT bool constructWithItems(df::building *bld, std::vector<df::item*> 
  * Returns true if success.
  */
 DFHACK_EXPORT bool constructWithFilters(df::building *bld, std::vector<df::job_item*> items);
+
+/**
+ * Deconstructs or queues deconstruction of a building.
+ * Returns true if the building has been destroyed instantly.
+ */
+DFHACK_EXPORT bool deconstruct(df::building *bld);
 
 }
 }

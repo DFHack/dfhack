@@ -28,6 +28,8 @@ local buildings = dfhack.buildings
         items = { item, item ... },
       -- OR
         filter = { { ... }, { ... }... }
+      -- OR
+        abstract = true
     }
 
     Returns: the created building, or 'nil, error'
@@ -41,8 +43,8 @@ function buildings.constructBuilding(info)
     if not (info.pos or info.x) then
         error('position is required')
     end
-    if not (info.items or info.filters) then
-        error('either items or filters are required')
+    if not (info.abstract or info.items or info.filters) then
+        error('one of items, filters or abstract are required')
     elseif info.filters then
         for _,v in ipairs(info.filters) do
             v.new = true
@@ -77,7 +79,9 @@ function buildings.constructBuilding(info)
             if info.full_rectangle and area ~= r_area then
                 return nil, "not all tiles can be used"
             end
-            if info.items then
+            if info.abstract then
+                ok = buildings.constructAbstract(instance)
+            elseif info.items then
                 ok = buildings.constructWithItems(instance, info.items)
             else
                 ok = buildings.constructWithFilters(instance, info.filters)

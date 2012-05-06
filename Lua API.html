@@ -1126,6 +1126,11 @@ height, rect_area, true_area</em>. Returned width and height are the
 final values used by the building; true_area is less than rect_area
 if any tiles were removed from designation.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.constructAbstract(building)</tt></p>
+<p>Links a fully configured object created by <tt class="docutils literal">allocInstance</tt> into the
+world. The object must be an abstract building, i.e. a stockpile or civzone.
+Returns <em>true</em>, or <em>false</em> if impossible.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.buildings.constructWithItems(building, items)</tt></p>
 <p>Links a fully configured object created by <tt class="docutils literal">allocInstance</tt> into the
 world for construction, using a list of specific items as material.
@@ -1139,6 +1144,10 @@ and possibly destroyed in any case.
 Use a negative <tt class="docutils literal">quantity</tt> field value to auto-compute the amount
 from the size of the building.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.deconstruct(building)</tt></p>
+<p>Destroys the building, or queues a deconstruction job.
+Returns <em>true</em> if the building was destroyed and deallocated immediately.</p>
+</li>
 </ul>
 <p>More high-level functions are implemented in lua and can be loaded by
 <tt class="docutils literal"><span class="pre">require('dfhack.buildings')</span></tt>. See <tt class="docutils literal">hack/lua/dfhack/buildings.lua</tt>.</p>
@@ -1151,6 +1160,11 @@ from the size of the building.</p>
 a planned but not completed construction there, changes its type.
 Returns <em>true</em>, or <em>false</em> if obstructed.
 Note that designated constructions are technically buildings.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.constructions.designateRemove(pos)</tt>, or <tt class="docutils literal">designateRemove(x,y,z)</tt></p>
+<p>If there is a construction or a planned construction at the specified
+coordinates, designates it for removal, or instantly cancels the planned one.
+Returns <em>true, was_only_planned</em> if removed; or <em>false</em> if none found.</p>
 </li>
 </ul>
 </div>

@@ -926,6 +926,12 @@ Low-level building creation functions;
   final values used by the building; true_area is less than rect_area
   if any tiles were removed from designation.
 
+* ``dfhack.buildings.constructAbstract(building)``
+
+  Links a fully configured object created by ``allocInstance`` into the
+  world. The object must be an abstract building, i.e. a stockpile or civzone.
+  Returns *true*, or *false* if impossible.
+
 * ``dfhack.buildings.constructWithItems(building, items)``
 
   Links a fully configured object created by ``allocInstance`` into the
@@ -941,6 +947,11 @@ Low-level building creation functions;
   Use a negative ``quantity`` field value to auto-compute the amount
   from the size of the building.
 
+* ``dfhack.buildings.deconstruct(building)``
+
+  Destroys the building, or queues a deconstruction job.
+  Returns *true* if the building was destroyed and deallocated immediately.
+
 More high-level functions are implemented in lua and can be loaded by
 ``require('dfhack.buildings')``. See ``hack/lua/dfhack/buildings.lua``.
 
@@ -953,6 +964,12 @@ Constructions module
   a planned but not completed construction there, changes its type.
   Returns *true*, or *false* if obstructed.
   Note that designated constructions are technically buildings.
+
+* ``dfhack.constructions.designateRemove(pos)``, or ``designateRemove(x,y,z)``
+
+  If there is a construction or a planned construction at the specified
+  coordinates, designates it for removal, or instantly cancels the planned one.
+  Returns *true, was_only_planned* if removed; or *false* if none found.
 
 
 Core interpreter context

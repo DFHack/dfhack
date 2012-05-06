@@ -698,12 +698,28 @@ static bool linkForConstruct(df::job* &job, df::building *bld)
     return true;
 }
 
+static bool needsItems(df::building *bld)
+{
+    if (!bld->isActual())
+        return false;
+
+    switch (bld->getType())
+    {
+        case building_type::FarmPlot:
+        case building_type::RoadDirt:
+            return false;
+
+        default:
+            return true;
+    }
+}
+
 bool Buildings::constructWithItems(df::building *bld, std::vector<df::item*> items)
 {
     CHECK_NULL_POINTER(bld);
-    CHECK_INVALID_ARGUMENT(!items.empty());
     CHECK_INVALID_ARGUMENT(bld->id == -1);
     CHECK_INVALID_ARGUMENT(bld->isActual());
+    CHECK_INVALID_ARGUMENT(!items.empty() == needsItems(bld));
 
     for (size_t i = 0; i < items.size(); i++)
     {
@@ -738,9 +754,9 @@ bool Buildings::constructWithItems(df::building *bld, std::vector<df::item*> ite
 bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item*> items)
 {
     CHECK_NULL_POINTER(bld);
-    CHECK_INVALID_ARGUMENT(!items.empty());
     CHECK_INVALID_ARGUMENT(bld->id == -1);
     CHECK_INVALID_ARGUMENT(bld->isActual());
+    CHECK_INVALID_ARGUMENT(!items.empty() == needsItems(bld));
 
     for (size_t i = 0; i < items.size(); i++)
         CHECK_NULL_POINTER(items[i]);

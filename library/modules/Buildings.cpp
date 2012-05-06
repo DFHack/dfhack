@@ -58,6 +58,7 @@ using namespace DFHack;
 #include "df/building_trapst.h"
 #include "df/building_bridgest.h"
 #include "df/building_coffinst.h"
+#include "df/building_civzonest.h"
 #include "df/building_furnacest.h"
 #include "df/building_workshopst.h"
 #include "df/building_screw_pumpst.h"
@@ -151,6 +152,25 @@ df::building *Buildings::findAtTile(df::coord pos)
     }
 
     return NULL;
+}
+
+bool Buildings::findCivzonesAt(std::vector<df::building_civzonest*> *pvec, df::coord pos)
+{
+    pvec->clear();
+
+    auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
+
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        auto bld = strict_virtual_cast<df::building_civzonest>(vec[i]);
+
+        if (!bld || bld->z != pos.z || !containsTile(bld, pos))
+            continue;
+
+        pvec->push_back(bld);
+    }
+
+    return !pvec->empty();
 }
 
 df::building *Buildings::allocInstance(df::coord pos, df::building_type type, int subtype, int custom)
@@ -462,6 +482,31 @@ int Buildings::countExtentTiles(df::building_extents *ext, int defval)
         if (ext->extents[i])
             cnt++;
     return cnt;
+}
+
+bool Buildings::containsTile(df::building *bld, df::coord2d tile, bool room)
+{
+    CHECK_NULL_POINTER(bld);
+
+    if (room)
+    {
+        if (!bld->is_room || !bld->room.extents)
+            return false;
+    }
+    else
+    {
+        if (tile.x < bld->x1 || tile.x > bld->x2 || tile.y < bld->y1 || tile.y >= bld->y2)
+            return false;
+    }
+
+    if (bld->room.extents && (room || bld->isExtentShaped()))
+    {
+        uint8_t *etile = getExtentTile(bld->room, tile);
+        if (!etile || !*etile)
+            return false;
+    }
+
+    return true;
 }
 
 bool Buildings::hasSupport(df::coord pos, df::coord2d size)

@@ -873,10 +873,16 @@ Buildings module
 
   Returns *width, height, centerx, centery*.
 
-* ``dfhack.buildings.findAtTile(pos)``
+* ``dfhack.buildings.findAtTile(pos)``, or ``findAtTile(x,y,z)``
 
   Scans the buildings for the one located at the given tile.
-  Does not work on civzones. Warning: linear scan.
+  Does not work on civzones. Warning: linear scan if the map
+  tile indicates there are buildings at it.
+
+* ``dfhack.buildings.findCivzonesAt(pos)``, or ``findCivzonesAt(x,y,z)``
+
+  Scans civzones, and returns a lua sequence of those that touch
+  the given tile, or *nil* if none.
 
 * ``dfhack.buildings.getCorrectSize(width, height, type, subtype, custom, direction)``
 
@@ -893,6 +899,10 @@ Buildings module
 * ``dfhack.buildings.countExtentTiles(extents,defval)``
 
   Returns the number of tiles included by extents, or defval.
+
+* ``dfhack.buildings.containsTile(building, x, y[, room])``
+
+  Checks if the building contains the specified tile, either directly, or as room.
 
 * ``dfhack.buildings.hasSupport(pos,size)``
 
@@ -911,7 +921,7 @@ Low-level building creation functions;
   Configures an object returned by ``allocInstance``, using specified
   parameters wherever appropriate. If the building has fixed size along
   any dimension, the corresponding input parameter will be ignored.
-  Returns *nil* if the building cannot be placed, or *true, width,
+  Returns *false* if the building cannot be placed, or *true, width,
   height, rect_area, true_area*. Returned width and height are the
   final values used by the building; true_area is less than rect_area
   if any tiles were removed from designation.

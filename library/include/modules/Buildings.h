@@ -39,6 +39,7 @@ namespace df
     struct job_item;
     struct item;
     struct building_extents;
+    struct building_civzonest;
 }
 
 namespace DFHack
@@ -91,11 +92,16 @@ DFHACK_EXPORT bool Read (const uint32_t index, t_building & building);
  */
 DFHACK_EXPORT bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
 
-/*
+/**
  * Find the building located at the specified tile.
  * Does not work on civzones.
  */
 DFHACK_EXPORT df::building *findAtTile(df::coord pos);
+
+/**
+ * Find civzones located at the specified tile.
+ */
+DFHACK_EXPORT bool findCivzonesAt(std::vector<df::building_civzonest*> *pvec, df::coord pos);
 
 /**
  * Allocates a building object using this type and position.
@@ -121,6 +127,11 @@ DFHACK_EXPORT bool checkFreeTiles(df::coord pos, df::coord2d size,
  * Returns the number of tiles included by the extent, or defval.
  */
 DFHACK_EXPORT int countExtentTiles(df::building_extents *ext, int defval = -1);
+
+/**
+ * Checks if the building contains the specified tile.
+ */
+DFHACK_EXPORT bool containsTile(df::building *bld, df::coord2d tile, bool room = false);
 
 /**
  * Checks if the area has support from the terrain.

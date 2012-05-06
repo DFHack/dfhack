@@ -1081,9 +1081,14 @@ burrows, or the presence of invaders.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.buildings.getSize(building)</tt></p>
 <p>Returns <em>width, height, centerx, centery</em>.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.buildings.findAtTile(pos)</tt></p>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.findAtTile(pos)</tt>, or <tt class="docutils literal">findAtTile(x,y,z)</tt></p>
 <p>Scans the buildings for the one located at the given tile.
-Does not work on civzones. Warning: linear scan.</p>
+Does not work on civzones. Warning: linear scan if the map
+tile indicates there are buildings at it.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.findCivzonesAt(pos)</tt>, or <tt class="docutils literal">findCivzonesAt(x,y,z)</tt></p>
+<p>Scans civzones, and returns a lua sequence of those that touch
+the given tile, or <em>nil</em> if none.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.buildings.getCorrectSize(width, height, type, subtype, custom, direction)</tt></p>
 <p>Computes correct dimensions for the specified building type and orientation,
@@ -1097,6 +1102,9 @@ are removed from extents. If <tt class="docutils literal">allow_occupied</tt>, t
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.buildings.countExtentTiles(extents,defval)</tt></p>
 <p>Returns the number of tiles included by extents, or defval.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.containsTile(building, x, y[, room])</tt></p>
+<p>Checks if the building contains the specified tile, either directly, or as room.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.buildings.hasSupport(pos,size)</tt></p>
 <p>Checks if a bridge constructed at specified position would have
@@ -1113,7 +1121,7 @@ at specified position. Returns the object, or <em>nil</em> in case of an error.<
 <p>Configures an object returned by <tt class="docutils literal">allocInstance</tt>, using specified
 parameters wherever appropriate. If the building has fixed size along
 any dimension, the corresponding input parameter will be ignored.
-Returns <em>nil</em> if the building cannot be placed, or <em>true, width,
+Returns <em>false</em> if the building cannot be placed, or <em>true, width,
 height, rect_area, true_area</em>. Returned width and height are the
 final values used by the building; true_area is less than rect_area
 if any tiles were removed from designation.</p>

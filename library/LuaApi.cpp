@@ -74,6 +74,7 @@ distribution.
 #include "df/dfhack_material_category.h"
 #include "df/job_material_category.h"
 #include "df/burrow.h"
+#include "df/building_civzonest.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -107,6 +108,37 @@ int Lua::PushPosXYZ(lua_State *state, df::coord pos)
         lua_pushinteger(state, pos.z);
         return 3;
     }
+}
+
+static df::coord2d CheckCoordXY(lua_State *state, int base, bool vararg = false)
+{
+    df::coord2d p;
+    if (vararg && lua_gettop(state) <= base)
+        Lua::CheckDFAssign(state, &p, base);
+    else
+    {
+        p = df::coord2d(
+            luaL_checkint(state, base),
+            luaL_checkint(state, base+1)
+        );
+    }
+    return p;
+}
+
+static df::coord CheckCoordXYZ(lua_State *state, int base, bool vararg = false)
+{
+    df::coord p;
+    if (vararg && lua_gettop(state) <= base)
+        Lua::CheckDFAssign(state, &p, base);
+    else
+    {
+        p = df::coord(
+            luaL_checkint(state, base),
+            luaL_checkint(state, base+1),
+            luaL_checkint(state, base+2)
+        );
+    }
+    return p;
 }
 
 /**************************************************
@@ -729,20 +761,8 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
 
 static int maps_getTileBlock(lua_State *L)
 {
-    df::map_block *block;
-    if (lua_gettop(L) == 1)
-    {
-        df::coord pos;
-        Lua::CheckDFAssign(L, &pos, 1);
-        block = Maps::getTileBlock(pos);
-    }
-    else
-    {
-        block = Maps::getTileBlock(
-            luaL_checkint(L, 1), luaL_checkint(L, 2), luaL_checkint(L, 3)
-        );
-    }
-    Lua::PushDFObject(L, block);
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Maps::getTileBlock(pos));
     return 1;
 }
 
@@ -791,16 +811,38 @@ static const luaL_Reg dfhack_burrows_funcs[] = {
 
 /***** Buildings module *****/
 
+static bool buildings_containsTile(df::building *bld, int x, int y, bool room) {
+    return Buildings::containsTile(bld, df::coord2d(x,y), room);
+}
+
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
-    WRAPM(Buildings, findAtTile),
     WRAPM(Buildings, allocInstance),
     WRAPM(Buildings, checkFreeTiles),
     WRAPM(Buildings, countExtentTiles),
+    WRAPN(containsTile, buildings_containsTile),
     WRAPM(Buildings, hasSupport),
     WRAPM(Buildings, constructWithItems),
     WRAPM(Buildings, constructWithFilters),
     { NULL, NULL }
 };
+
+static int buildings_findAtTile(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Buildings::findAtTile(pos));
+    return 1;
+}
+
+static int buildings_findCivzonesAt(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    std::vector<df::building_civzonest*> pvec;
+    if (Buildings::findCivzonesAt(&pvec, pos))
+        Lua::PushVector(L, pvec);
+    else
+        lua_pushnil(L);
+    return 1;
+}
 
 static int buildings_getCorrectSize(lua_State *state)
 {
@@ -844,6 +886,8 @@ static int buildings_setSize(lua_State *state)
 }
 
 static const luaL_Reg dfhack_buildings_funcs[] = {
+    { "findAtTile", buildings_findAtTile },
+    { "findCivzonesAt", buildings_findCivzonesAt },
     { "getCorrectSize", buildings_getCorrectSize },
     { "setSize", buildings_setSize },
     { NULL, NULL }

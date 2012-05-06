@@ -294,6 +294,12 @@ class PointerAry < MemStruct
 		(DFHack.memory_read_int32(@_memaddr) & 0xffffffff) + delta
 	end
 
+	def _get
+		addr = _getp
+		return if addr == 0
+		self
+	end
+
 	def [](i)
 		addr = _getp(i)
 		return if addr == 0
@@ -305,7 +311,7 @@ class PointerAry < MemStruct
 		@_tg._at(addr)._set(v)
 	end
 
-	def inspect ; "#<PointerAry #{'0x%X' % _getp}>" ; end
+	def inspect ; ptr = _getp ; (ptr == 0) ? 'NULL' : "#<PointerAry #{'0x%X' % ptr}>" ; end
 end
 module IndexEnum
 	def indexenum(idx)

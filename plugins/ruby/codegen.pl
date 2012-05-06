@@ -65,6 +65,7 @@ sub render_enum_fields {
     push @lines_rb, "$idxname = Hash.new";
 
     my %attr_type;
+    my %attr_list;
     for my $attr ($type->findnodes('child::enum-attr')) {
         my $rbattr = rb_ucase($attr->getAttribute('name'));
         my $typeattr = $attr->getAttribute('type-name');
@@ -80,7 +81,10 @@ sub render_enum_fields {
         }
 
         my $def = $attr->getAttribute('default-value');
-        if ($def) {
+        if ($attr->getAttribute('is-list')) {
+            push @lines_rb, "$rbattr = Hash.new { |h, k| h[k] = [] }";
+            $attr_list{$rbattr} = 1;
+        } elsif ($def) {
             $def = ":$def" if ($attr_type{$rbattr} eq 'symbol');
             $def =~ s/'/\\'/g if ($attr_type{$rbattr} eq 'quote');
             $def = "'$def'" if ($attr_type{$rbattr} eq 'quote');
@@ -101,10 +105,11 @@ sub render_enum_fields {
                 my $ian = $iattr->getAttribute('name');
                 my $iav = $iattr->getAttribute('value');
                 my $rbattr = rb_ucase($ian);
+                my $op = ($attr_list{$rbattr} ? '<<' : '=');
                 $iav = ":$iav" if ($attr_type{$rbattr} eq 'symbol');
                 $iav =~ s/'/\\'/g if ($attr_type{$rbattr} eq 'quote');
                 $iav = "'$iav'" if ($attr_type{$rbattr} eq 'quote');
-                $lines_rb[$#lines_rb] .= " ; ${rbattr}[$value] = $iav";
+                $lines_rb[$#lines_rb] .= " ; ${rbattr}[:$rbelemname] $op $iav";
             }
         }
     }

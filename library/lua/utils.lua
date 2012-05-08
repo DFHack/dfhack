@@ -290,7 +290,7 @@ function insert_sorted(vector,item,field,cmp)
 end
 
 -- Binary search, then insert or overwrite
-function insert_or_replace(vector,item,field,cmp)
+function insert_or_update(vector,item,field,cmp)
     local added,cur,pos = insert_sorted(vector,item,field,cmp)
     if not added then
         vector[pos] = item

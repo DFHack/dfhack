@@ -461,14 +461,10 @@ bool tryVariant(std::string value, TileType &paint)
 
 bool processTileType(color_ostream & out, TileType &paint, std::vector<std::string> &params, int start, int end)
 {
-    if (params.size() < start + 2)
-    {
-        return false;
-    }
-
     int loc = start;
     std::string option = params[loc++];
-    std::string value = params[loc++];
+    std::string value = end <= loc ? "" : params[loc++];
+    tolower(option);
     toupper(value);
     int valInt;
     if (value == "ANY")
@@ -603,6 +599,18 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
         else
         {
             out << "Unknown skyview flag: " << value << std::endl;
+        }
+    }
+    else if (option == "aquifer" || option == "aqua")
+    {
+        if (valInt >= -1 && valInt < 2)
+        {
+            paint.aquifer = valInt;
+            found = true;
+        }
+        else
+        {
+            out << "Unknown aquifer flag: " << value << std::endl;
         }
     }
     else if (option == "all" || option == "a")

@@ -201,17 +201,17 @@ command_result parseRectangle(color_ostream & out,
                               int & width, int & height, int & zLevels,
                               bool hasConsole = true)
 {
-    int newWidth = 0, newHeight = 0, newZLevels = 1;
-    // z is different so 'range w h' won't ask for it.
+    int newWidth = 0, newHeight = 0, newZLevels = 0;
 
     if (end > start + 1)
     {
         newWidth = atoi(input[start++].c_str());
         newHeight = atoi(input[start++].c_str());
-    }
-
-    if (end > start) {
-        newZLevels = atoi(input[start++].c_str());
+        if (end > start) {
+            newZLevels = atoi(input[start++].c_str());
+        } else {
+            newZLevels = 1; // So 'range w h' won't ask for it.
+        }
     }
 
     string command = "";
@@ -226,7 +226,7 @@ command_result parseRectangle(color_ostream & out,
             str << "Set range width <" << width << "> ";
             con.lineedit(str.str(), command, hist);
             hist.add(command);
-            newWidth = command == "" ? width : atoi(command.c_str());
+            newWidth = command.empty() ? width : atoi(command.c_str());
         } else {
             return CR_WRONG_USAGE;
         }
@@ -240,7 +240,7 @@ command_result parseRectangle(color_ostream & out,
             str << "Set range height <" << height << "> ";
             con.lineedit(str.str(), command, hist);
             hist.add(command);
-            newHeight = command == "" ? height : atoi(command.c_str());
+            newHeight = command.empty() ? height : atoi(command.c_str());
         } else {
             return CR_WRONG_USAGE;
         }
@@ -254,7 +254,7 @@ command_result parseRectangle(color_ostream & out,
             str << "Set range z-levels <" << zLevels << "> ";
             con.lineedit(str.str(), command, hist);
             hist.add(command);
-            newZLevels = command == "" ? zLevels : atoi(command.c_str());
+            newZLevels = command.empty() ? zLevels : atoi(command.c_str());
         } else {
             return CR_WRONG_USAGE;
         }
@@ -262,7 +262,7 @@ command_result parseRectangle(color_ostream & out,
 
     width = newWidth < 1? 1 : newWidth;
     height = newHeight < 1? 1 : newHeight;
-    zLevels = newZLevels < 1? 1 : zLevels;
+    zLevels = newZLevels < 1? 1 : newZLevels;
 
     return CR_OK;
 }

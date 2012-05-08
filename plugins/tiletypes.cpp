@@ -781,6 +781,7 @@ command_result executePaintJob(color_ostream &out)
     if (map.WriteAll())
     {
         out.print("OK\n");
+        return CR_OK;
     }
     else
     {

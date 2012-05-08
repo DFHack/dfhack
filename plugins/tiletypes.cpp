@@ -670,6 +670,9 @@ command_result executePaintJob(color_ostream &out)
     coord_vec all_tiles = brush->points(map, cursor);
     out.print("working...\n");
 
+    // Force the game to recompute its walkability cache
+    df::global::world->reindex_pathfinding = true;
+
     for (coord_vec::iterator iter = all_tiles.begin(); iter != all_tiles.end(); ++iter)
     {
         const df::tiletype source = map.tiletypeAt(*iter);

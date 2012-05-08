@@ -51,6 +51,8 @@ using namespace std;
 #include "RemoteServer.h"
 #include "LuaTools.h"
 
+#include "MiscUtils.h"
+
 using namespace DFHack;
 
 #include "df/ui.h"
@@ -72,8 +74,6 @@ using df::global::init;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
-static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname, bool silent);
-static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clueless_counter, const string &command);
 static bool parseKeySpec(std::string keyspec, int *psym, int *pmod);
 
 struct Core::Cond
@@ -178,21 +178,10 @@ void fHKthread(void * iodata)
         {
             color_ostream_proxy out(core->getConsole());
 
-            vector <string> args;
-            Core::cheap_tokenise(stuff, args);
-            if (args.empty()) {
-                out.printerr("Empty hotkey command.\n");
-                continue;
-            }
+            auto rv = core->runCommand(out, stuff);
 
-            string first = args[0];
-            args.erase(args.begin());
-            command_result cr = plug_mgr->InvokeCommand(out, first, args);
-
-            if(cr == CR_NEEDS_CONSOLE)
-            {
-                out.printerr("It isn't possible to run an interactive command outside the console.\n");
-            }
+            if (rv == CR_NOT_IMPLEMENTED)
+                out.printerr("Invalid hotkey command: '%s'\n", stuff.c_str());
         }
     }
 }
@@ -212,38 +201,122 @@ struct sortable
     };
 };
 
-static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clueless_counter, const string &command)
+static std::string getLuaHelp(std::string path)
 {
-    Console & con = core->getConsole();
-    
+    ifstream script(path);
+
+    if (script.good())
+    {
+        std::string help;
+        if (getline(script, help) &&
+            help.substr(0,3) == "-- ")
+            return help.substr(3);
+    }
+
+    return "Lua script.";
+}
+
+static std::map<string,string> listLuaScripts(std::string path)
+{
+    std::vector<string> files;
+    getdir(path, files);
+
+    std::map<string,string> pset;
+    for (size_t i = 0; i < files.size(); i++)
+    {
+        if (hasEnding(files[i], ".lua"))
+        {
+            std::string help = getLuaHelp(path + files[i]);
+
+            pset[files[i].substr(0, files[i].size()-4)] = help;
+        }
+    }
+    return pset;
+}
+
+static bool fileExists(std::string path)
+{
+    ifstream script(path);
+    return script.good();
+}
+
+namespace {
+    struct ScriptArgs {
+        const string *pcmd;
+        vector<string> *pargs;
+    };
+}
+
+static bool init_run_script(color_ostream &out, lua_State *state, void *info)
+{
+    auto args = (ScriptArgs*)info;
+    if (!lua_checkstack(state, args->pargs->size()+10))
+        return false;
+    Lua::PushDFHack(state);
+    lua_getfield(state, -1, "run_script");
+    lua_remove(state, -2);
+    lua_pushstring(state, args->pcmd->c_str());
+    for (size_t i = 0; i < args->pargs->size(); i++)
+        lua_pushstring(state, (*args->pargs)[i].c_str());
+    return true;
+}
+
+static command_result runLuaScript(color_ostream &out, std::string filename, vector<string> &args)
+{
+    ScriptArgs data;
+    data.pcmd = &filename;
+    data.pargs = &args;
+
+#ifndef LINUX_BUILD
+    filename = toLower(filename);
+#endif
+
+    bool ok = Lua::RunCoreQueryLoop(out, Lua::Core::State, init_run_script, &data);
+
+    return ok ? CR_OK : CR_FAILURE;
+}
+
+command_result Core::runCommand(color_ostream &out, const std::string &command)
+{
     if (!command.empty())
     {
-        // cut the input into parts
         vector <string> parts;
         Core::cheap_tokenise(command,parts);
         if(parts.size() == 0)
-        {
-            clueless_counter ++;
-            return;
-        }
+            return CR_NOT_IMPLEMENTED;
+
         string first = parts[0];
         parts.erase(parts.begin());
 
-        if (first[0] == '#') return;
+        if (first[0] == '#')
+            return CR_OK;
 
         cerr << "Invoking: " << command << endl;
-        
+
+        return runCommand(out, first, parts);
+    }
+    else
+        return CR_NOT_IMPLEMENTED;
+}
+
+command_result Core::runCommand(color_ostream &con, const std::string &first, vector<string> &parts)
+{
+    if (!first.empty())
+    {
         // let's see what we actually got
         if(first=="help" || first == "?" || first == "man")
         {
             if(!parts.size())
             {
-                con.print("This is the DFHack console. You can type commands in and manage DFHack plugins from it.\n"
-                          "Some basic editing capabilities are included (single-line text editing).\n"
-                          "The console also has a command history - you can navigate it with Up and Down keys.\n"
-                          "On Windows, you may have to resize your console window. The appropriate menu is accessible\n"
-                          "by clicking on the program icon in the top bar of the window.\n\n"
-                          "Basic commands:\n"
+                if (con.is_console())
+                {
+                    con.print("This is the DFHack console. You can type commands in and manage DFHack plugins from it.\n"
+                              "Some basic editing capabilities are included (single-line text editing).\n"
+                              "The console also has a command history - you can navigate it with Up and Down keys.\n"
+                              "On Windows, you may have to resize your console window. The appropriate menu is accessible\n"
+                              "by clicking on the program icon in the top bar of the window.\n\n");
+                }
+                con.print("Basic commands:\n"
                           "  help|?|man            - This text.\n"
                           "  help COMMAND          - Usage help for the given command.\n"
                           "  ls|dir [PLUGIN]       - List available commands. Optionally for single plugin.\n"
@@ -274,8 +347,15 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                         con.reset_color();
                         if (!pcmd.usage.empty())
                             con << "Usage:\n" << pcmd.usage << flush;
-                        return;
+                        return CR_OK;
                     }
+                }
+                auto filename = getHackPath() + "scripts/" + parts[0] + ".lua";
+                if (fileExists(filename))
+                {
+                    string help = getLuaHelp(filename);
+                    con.print("%s: %s\n", parts[0].c_str(), help.c_str());
+                    return CR_OK;
                 }
                 con.printerr("Unknown command: %s\n", parts[0].c_str());
             }
@@ -421,6 +501,13 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     con.print("  %-22s- %s\n",(*iter).name.c_str(), (*iter).description.c_str());
                     con.reset_color();
                 }
+                auto scripts = listLuaScripts(getHackPath() + "scripts/");
+                if (!scripts.empty())
+                {
+                    con.print("\nscripts:\n");
+                    for (auto iter = scripts.begin(); iter != scripts.end(); ++iter)
+                        con.print("  %-22s- %s\n", iter->first.c_str(), iter->second.c_str());
+                }
             }
         }
         else if(first == "plug")
@@ -439,10 +526,10 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
             {
                 std::string keystr = parts[1];
                 if (parts[0] == "set")
-                    core->ClearKeyBindings(keystr);
+                    ClearKeyBindings(keystr);
                 for (int i = parts.size()-1; i >= 2; i--) 
                 {
-                    if (!core->AddKeyBinding(keystr, parts[i])) {
+                    if (!AddKeyBinding(keystr, parts[i])) {
                         con.printerr("Invalid key spec: %s\n", keystr.c_str());
                         break;
                     }
@@ -452,7 +539,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
             {
                 for (size_t i = 1; i < parts.size(); i++)
                 {
-                    if (!core->ClearKeyBindings(parts[i])) {
+                    if (!ClearKeyBindings(parts[i])) {
                         con.printerr("Invalid key spec: %s\n", parts[i].c_str());
                         break;
                     }
@@ -460,7 +547,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
             }
             else if (parts.size() == 2 && parts[0] == "list")
             {
-                std::vector<std::string> list = core->ListKeyBindings(parts[1]);
+                std::vector<std::string> list = ListKeyBindings(parts[1]);
                 if (list.empty())
                     con << "No bindings." << endl;
                 for (size_t i = 0; i < list.size(); i++)
@@ -478,13 +565,19 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
         }
         else if(first == "fpause")
         {
-            World * w = core->getWorld();
+            World * w = getWorld();
             w->SetPauseState(true);
-            con.print("The game was forced to pause!");
+            con.print("The game was forced to pause!\n");
         }
         else if(first == "cls")
         {
-            con.clear();
+            if (con.is_console())
+                ((Console&)con).clear();
+            else
+            {
+                con.printerr("No console to clear.\n");
+                return CR_NEEDS_CONSOLE;
+            }
         }
         else if(first == "die")
         {
@@ -494,12 +587,13 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
         {
             if(parts.size() == 1)
             {
-                loadScriptFile(core, plug_mgr, parts[0], false);
+                loadScriptFile(con, parts[0], false);
             }
             else
             {
                 con << "Usage:" << endl
                     << "  script <filename>" << endl;
+                return CR_WRONG_USAGE;
             }
         }
         else
@@ -507,35 +601,44 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
             command_result res = plug_mgr->InvokeCommand(con, first, parts);
             if(res == CR_NOT_IMPLEMENTED)
             {
-                con.printerr("%s is not a recognized command.\n", first.c_str());
-                clueless_counter ++;
+                auto filename = getHackPath() + "scripts/" + first + ".lua";
+                if (fileExists(filename))
+                    res = runLuaScript(con, filename, parts);
+                else
+                    con.printerr("%s is not a recognized command.\n", first.c_str());
             }
+            else if (res == CR_NEEDS_CONSOLE)
+                con.printerr("%s needs interactive console to work.\n", first.c_str());
+            return res;
         }
+
+        return CR_OK;
     }
+
+    return CR_NOT_IMPLEMENTED;
 }
 
-static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname, bool silent)
+bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
 {
     if(!silent)
-        core->getConsole() << "Loading script at " << fname << std::endl;
+        out << "Loading script at " << fname << std::endl;
     ifstream script(fname);
     if (script.good())
     {
-        int tmp = 0;
         string command;
         while (getline(script, command))
         {
             if (!command.empty())
-                runInteractiveCommand(core, plug_mgr, tmp, command);
+                runCommand(out, command);
         }
+        return true;
     }
     else
     {
         if(!silent)
-            core->getConsole().printerr("Error loading script\n");
+            out.printerr("Error loading script\n");
+        return false;
     }
-
-    script.close();
 }
 
 // A thread function... for the interactive console.
@@ -555,7 +658,7 @@ void fIOthread(void * iodata)
         return;
     }
 
-    loadScriptFile(core, plug_mgr, "dfhack.init", true);
+    core->loadScriptFile(con, "dfhack.init", true);
 
     con.print("DFHack is ready. Have a nice day!\n"
               "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");
@@ -582,7 +685,10 @@ void fIOthread(void * iodata)
             main_history.save("dfhack.history");
         }
 
-        runInteractiveCommand(core, plug_mgr, clueless_counter, command);
+        auto rv = core->runCommand(con, command);
+
+        if (rv == CR_NOT_IMPLEMENTED)
+            clueless_counter++;
 
         if(clueless_counter == 3)
         {
@@ -633,6 +739,15 @@ void Core::fatal (std::string output, bool deactivate)
 #ifndef LINUX_BUILD
     out << "Check file stderr.log for details\n";
     MessageBox(0,out.str().c_str(),"DFHack error!", MB_OK | MB_ICONERROR);
+#endif
+}
+
+std::string Core::getHackPath()
+{
+#ifdef LINUX_BUILD
+    return p->getPath() + "/hack/";
+#else
+    return p->getPath() + "\\hack\\";
 #endif
 }
 
@@ -962,6 +1077,9 @@ int Core::Update()
 
     // notify all the plugins that a game tick is finished
     plug_mgr->OnUpdate(out);
+
+    // process timers in lua
+    Lua::Core::onUpdate(out);
 
     // Release the fake suspend lock
     {

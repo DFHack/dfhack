@@ -81,15 +81,32 @@ bool Translation::copyName(df::language_name * source, df::language_name * targe
     return true;
 }
 
+std::string Translation::capitalize(const std::string &str, bool all_words)
+{
+    string upper = str;
+
+    if (!upper.empty())
+    {
+        upper[0] = toupper(upper[0]);
+
+        if (all_words)
+        {
+            for (size_t i = 1; i < upper.size(); i++)
+                if (isspace(upper[i-1]))
+                    upper[i] = toupper(upper[i]);
+        }
+    }
+
+    return upper;
+}
+
 void addNameWord (string &out, const string &word)
 {
     if (word.empty())
         return;
-    string upper = word;
-    upper[0] = toupper(upper[0]);
     if (out.length() > 0)
         out.append(" ");
-    out.append(upper);
+    out.append(Translation::capitalize(word));
 }
 
 void Translation::setNickname(df::language_name *name, std::string nick)

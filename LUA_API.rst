@@ -594,41 +594,52 @@ C++ function wrappers
 =====================
 
 Thin wrappers around C++ functions, similar to the ones for virtual methods.
+One notable difference is that these explicit wrappers allow argument count
+adjustment according to the usual lua rules, so trailing false/nil arguments
+can be omitted.
 
-* ``dfhack.TranslateName(name,in_english,only_last_name)``
+* ``dfhack.isWorldLoaded()``
+
+  Checks if the world is loaded.
+
+* ``dfhack.isMapLoaded()``
+
+  Checks if the world and map are loaded.
+
+* ``dfhack.TranslateName(name[,in_english,only_last_name])``
 
   Convert a language_name or only the last name part to string.
 
 Gui module
 ----------
 
-* ``dfhack.gui.getSelectedWorkshopJob(silent)``
+* ``dfhack.gui.getSelectedWorkshopJob([silent])``
 
   When a job is selected in *'q'* mode, returns the job, else
   prints error unless silent and returns *nil*.
 
-* ``dfhack.gui.getSelectedJob(silent)``
+* ``dfhack.gui.getSelectedJob([silent])``
 
   Returns the job selected in a workshop or unit/jobs screen.
 
-* ``dfhack.gui.getSelectedUnit(silent)``
+* ``dfhack.gui.getSelectedUnit([silent])``
 
   Returns the unit selected via *'v'*, *'k'*, unit/jobs, or
   a full-screen item view of a cage or suchlike.
 
-* ``dfhack.gui.getSelectedItem(silent)``
+* ``dfhack.gui.getSelectedItem([silent])``
 
   Returns the item selected via *'v'* ->inventory, *'k'*, *'t'*, or
   a full-screen item view of a container. Note that in the
   last case, the highlighted *contained item* is returned, not
   the container itself.
 
-* ``dfhack.gui.showAnnouncement(text,color,is_bright)``
+* ``dfhack.gui.showAnnouncement(text,color[,is_bright])``
 
   Adds a regular announcement with given text, color, and brightness.
   The is_bright boolean actually seems to invert the brightness.
 
-* ``dfhack.gui.showPopupAnnouncement(text,color,is_bright)``
+* ``dfhack.gui.showPopupAnnouncement(text,color[,is_bright])``
 
   Pops up a titan-style modal announcement window.
 
@@ -688,6 +699,10 @@ Units module
 
   Returns the language_name object visible in game, accounting for false identities.
 
+* ``dfhack.units.getIdentity(unit)``
+
+  Returns the false identity of the unit if it has one, or *nil*.
+
 * ``dfhack.units.getNemesis(unit)``
 
   Returns the nemesis record of the unit if it has one, or *nil*.
@@ -704,17 +719,24 @@ Units module
 
   The unit is capable of rational action, i.e. not dead, insane or zombie.
 
-* ``dfhack.units.clearBurrowMembers(burrow)``
+* ``dfhack.units.getAge(unit[,true_age])``
 
-  Removes all units from the burrow.
+  Returns the age of the unit in years as a floating-point value.
+  If ``true_age`` is true, ignores false identities.
 
-* ``dfhack.units.isInBurrow(unit,burrow)``
+* ``dfhack.units.getNoblePositions(unit)``
 
-  Checks if the unit is in the burrow.
+  Returns a list of tables describing noble position assignments, or *nil*.
+  Every table has fields ``entity``, ``assignment`` and ``position``.
 
-* ``dfhack.units.setInBurrow(unit,burrow,enable)``
+* ``dfhack.units.getProfessionName(unit[,ignore_noble,plural])``
 
-  Adds or removes the unit from the burrow.
+  Retrieves the profession name using custom profession, noble assignments
+  or raws. The ``ignore_noble`` boolean disables the use of noble positions.
+
+* ``dfhack.units.getCasteProfessionName(race,caste,prof_id[,plural])``
+
+  Retrieves the profession name for the given race/caste using raws.
 
 
 Items module
@@ -723,6 +745,14 @@ Items module
 * ``dfhack.items.getPosition(item)``
 
   Returns true *x,y,z* of the item; may be not equal to item.pos if in inventory.
+
+* ``dfhack.items.getGeneralRef(item, type)``
+
+  Searches for a general_ref with the given type.
+
+* ``dfhack.items.getSpecificRef(item, type)``
+
+  Searches for a specific_ref with the given type.
 
 * ``dfhack.items.getOwner(item)``
 
@@ -765,9 +795,9 @@ Maps module
 
   Returns a map block object for given x,y,z in local block coordinates.
 
-* ``dfhack.maps.getTileBlock(coords)``
+* ``dfhack.maps.getTileBlock(coords)``, or ``getTileBlock(x,y,z)``
 
-  Returns a map block object for given df::coord in local tile coordinates.
+  Returns a map block object for given df::coord or x,y,z in local tile coordinates.
 
 * ``dfhack.maps.getRegionBiome(region_coord2d)``
 
@@ -781,33 +811,165 @@ Maps module
 
   Returns the local feature object with the given region coords and index.
 
-* ``dfhack.maps.findBurrowByName(name)``
+* ``dfhack.maps.canWalkBetween(pos1, pos2)``
+
+  Checks if a dwarf may be able to walk between the two tiles,
+  using a pathfinding cache maintained by the game. Note that
+  this cache is only updated when the game is unpaused, and thus
+  can get out of date if doors are forbidden or unforbidden, or
+  tools like liquids or tiletypes are used. It also cannot possibly
+  take into account anything that depends on the actual units, like
+  burrows, or the presence of invaders.
+
+
+Burrows module
+--------------
+
+* ``dfhack.burrows.findByName(name)``
 
   Returns the burrow pointer or *nil*.
 
-* ``dfhack.maps.listBurrowBlocks(burrow)``
+* ``dfhack.burrows.clearUnits(burrow)``
 
-  Returns a table of map block pointers.
+  Removes all units from the burrow.
 
-* ``dfhack.maps.clearBurrowTiles(burrow)``
+* ``dfhack.burrows.isAssignedUnit(burrow,unit)``
+
+  Checks if the unit is in the burrow.
+
+* ``dfhack.burrows.setAssignedUnit(burrow,unit,enable)``
+
+  Adds or removes the unit from the burrow.
+
+* ``dfhack.burrows.clearTiles(burrow)``
 
   Removes all tiles from the burrow.
 
-* ``dfhack.maps.isBurrowTile(burrow,tile_coord)``
+* ``dfhack.burrows.listBlocks(burrow)``
+
+  Returns a table of map block pointers.
+
+* ``dfhack.burrows.isAssignedTile(burrow,tile_coord)``
 
   Checks if the tile is in burrow.
 
-* ``dfhack.maps.setBurrowTile(burrow,tile_coord,enable)``
+* ``dfhack.burrows.setAssignedTile(burrow,tile_coord,enable)``
 
   Adds or removes the tile from the burrow. Returns *false* if invalid coords.
 
-* ``dfhack.maps.isBlockBurrowTile(burrow,block,x,y)``
+* ``dfhack.burrows.isAssignedBlockTile(burrow,block,x,y)``
 
   Checks if the tile within the block is in burrow.
 
-* ``dfhack.maps.setBlockBurrowTile(burrow,block,x,y,enable)``
+* ``dfhack.burrows.setAssignedBlockTile(burrow,block,x,y,enable)``
 
   Adds or removes the tile from the burrow. Returns *false* if invalid coords.
+
+
+Buildings module
+----------------
+
+* ``dfhack.buildings.getSize(building)``
+
+  Returns *width, height, centerx, centery*.
+
+* ``dfhack.buildings.findAtTile(pos)``, or ``findAtTile(x,y,z)``
+
+  Scans the buildings for the one located at the given tile.
+  Does not work on civzones. Warning: linear scan if the map
+  tile indicates there are buildings at it.
+
+* ``dfhack.buildings.findCivzonesAt(pos)``, or ``findCivzonesAt(x,y,z)``
+
+  Scans civzones, and returns a lua sequence of those that touch
+  the given tile, or *nil* if none.
+
+* ``dfhack.buildings.getCorrectSize(width, height, type, subtype, custom, direction)``
+
+  Computes correct dimensions for the specified building type and orientation,
+  using width and height for flexible dimensions.
+  Returns *is_flexible, width, height, center_x, center_y*.
+
+* ``dfhack.buildings.checkFreeTiles(pos,size[,extents,change_extents,allow_occupied])``
+
+  Checks if the rectangle defined by ``pos`` and ``size``, and possibly extents,
+  can be used for placing a building. If ``change_extents`` is true, bad tiles
+  are removed from extents. If ``allow_occupied``, the occupancy test is skipped.
+
+* ``dfhack.buildings.countExtentTiles(extents,defval)``
+
+  Returns the number of tiles included by extents, or defval.
+
+* ``dfhack.buildings.containsTile(building, x, y[, room])``
+
+  Checks if the building contains the specified tile, either directly, or as room.
+
+* ``dfhack.buildings.hasSupport(pos,size)``
+
+  Checks if a bridge constructed at specified position would have
+  support from terrain, and thus won't collapse if retracted.
+
+Low-level building creation functions;
+
+* ``dfhack.buildings.allocInstance(pos, type, subtype, custom)``
+
+  Creates a new building instance of given type, subtype and custom type,
+  at specified position. Returns the object, or *nil* in case of an error.
+
+* ``dfhack.buildings.setSize(building, width, height, direction)``
+
+  Configures an object returned by ``allocInstance``, using specified
+  parameters wherever appropriate. If the building has fixed size along
+  any dimension, the corresponding input parameter will be ignored.
+  Returns *false* if the building cannot be placed, or *true, width,
+  height, rect_area, true_area*. Returned width and height are the
+  final values used by the building; true_area is less than rect_area
+  if any tiles were removed from designation.
+
+* ``dfhack.buildings.constructAbstract(building)``
+
+  Links a fully configured object created by ``allocInstance`` into the
+  world. The object must be an abstract building, i.e. a stockpile or civzone.
+  Returns *true*, or *false* if impossible.
+
+* ``dfhack.buildings.constructWithItems(building, items)``
+
+  Links a fully configured object created by ``allocInstance`` into the
+  world for construction, using a list of specific items as material.
+  Returns *true*, or *false* if impossible.
+
+* ``dfhack.buildings.constructWithFilters(building, job_items)``
+
+  Links a fully configured object created by ``allocInstance`` into the
+  world for construction, using a list of job_item filters as inputs.
+  Returns *true*, or *false* if impossible. Filter objects are claimed
+  and possibly destroyed in any case.
+  Use a negative ``quantity`` field value to auto-compute the amount
+  from the size of the building.
+
+* ``dfhack.buildings.deconstruct(building)``
+
+  Destroys the building, or queues a deconstruction job.
+  Returns *true* if the building was destroyed and deallocated immediately.
+
+More high-level functions are implemented in lua and can be loaded by
+``require('dfhack.buildings')``. See ``hack/lua/dfhack/buildings.lua``.
+
+Constructions module
+--------------------
+
+* ``dfhack.constructions.designateNew(pos,type,item_type,mat_index)``
+
+  Designates a new construction at given position. If there already is
+  a planned but not completed construction there, changes its type.
+  Returns *true*, or *false* if obstructed.
+  Note that designated constructions are technically buildings.
+
+* ``dfhack.constructions.designateRemove(pos)``, or ``designateRemove(x,y,z)``
+
+  If there is a construction or a planned construction at the specified
+  coordinates, designates it for removal, or instantly cancels the planned one.
+  Returns *true, was_only_planned* if removed; or *false* if none found.
 
 
 Core interpreter context
@@ -822,6 +984,18 @@ Core context specific functions:
 * ``dfhack.is_core_context``
 
   Boolean value; *true* in the core context.
+
+* ``dfhack.timeout(time,mode,callback)``
+
+  Arranges for the callback to be called once the specified
+  period of time passes. The ``mode`` argument specifies the
+  unit of time used, and may be one of ``'frames'`` (raw FPS),
+  ``'ticks'`` (unpaused FPS), ``'days'``, ``'months'``,
+  ``'years'`` (in-game time). All timers other than
+  ``'frames'`` are cancelled when the world is unloaded,
+  and cannot be queued until it is loaded again.
+  Returns the timer id, or *nil* if unsuccessful due to
+  world being unloaded.
 
 * ``dfhack.onStateChange.foo = function(code)``
 
@@ -856,3 +1030,65 @@ Features:
 
   Invokes all listeners contained in the event in an arbitrary
   order using ``dfhack.safecall``.
+
+=======
+Plugins
+=======
+
+DFHack plugins may export native functions and events
+to lua contexts. They are automatically imported by
+``mkmodule('plugins.<name>')``; this means that a lua
+module file is still necessary for ``require`` to read.
+
+The following plugins have lua support.
+
+burrows
+=======
+
+Implements extended burrow manipulations.
+
+Events:
+
+* ``onBurrowRename.foo = function(burrow)``
+
+  Emitted when a burrow might have been renamed either through
+  the game UI, or ``renameBurrow()``.
+
+* ``onDigComplete.foo = function(job_type,pos,old_tiletype,new_tiletype)``
+
+  Emitted when a tile might have been dug out. Only tracked if the
+  auto-growing burrows feature is enabled.
+
+Native functions:
+
+* ``renameBurrow(burrow,name)``
+
+  Renames the burrow, emitting ``onBurrowRename`` and updating auto-grow state properly.
+
+* ``findByName(burrow,name)``
+
+  Finds a burrow by name, using the same rules as the plugin command line interface.
+  Namely, trailing ``'+'`` characters marking auto-grow burrows are ignored.
+
+* ``copyUnits(target,source,enable)``
+
+  Applies units from ``source`` burrow to ``target``. The ``enable``
+  parameter specifies if they are to be added or removed.
+
+* ``copyTiles(target,source,enable)``
+
+  Applies tiles from ``source`` burrow to ``target``. The ``enable``
+  parameter specifies if they are to be added or removed.
+
+* ``setTilesByKeyword(target,keyword,enable)``
+
+  Adds or removes tiles matching a predefined keyword. The keyword
+  set is the same as used by the command line.
+
+The lua module file also re-exports functions from ``dfhack.burrows``.
+
+sort
+====
+
+Does not export any native functions as of now. Instead, it
+calls lua code to perform the actual ordering of list items.

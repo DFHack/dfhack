@@ -241,6 +241,20 @@ extern DFHACK_EXPORT df::map_block * getTileBlock (int32_t x, int32_t y, int32_t
 inline df::map_block * getBlock (df::coord pos) { return getBlock(pos.x, pos.y, pos.z); }
 inline df::map_block * getTileBlock (df::coord pos) { return getTileBlock(pos.x, pos.y, pos.z); }
 
+extern DFHACK_EXPORT df::tiletype *getTileType(int32_t x, int32_t y, int32_t z);
+extern DFHACK_EXPORT df::tile_designation *getTileDesignation(int32_t x, int32_t y, int32_t z);
+extern DFHACK_EXPORT df::tile_occupancy *getTileOccupancy(int32_t x, int32_t y, int32_t z);
+
+inline df::tiletype *getTileType(df::coord pos) {
+    return getTileType(pos.x, pos.y, pos.z);
+}
+inline df::tile_designation *getTileDesignation(df::coord pos) {
+    return getTileDesignation(pos.x, pos.y, pos.z);
+}
+inline df::tile_occupancy *getTileOccupancy(df::coord pos) {
+    return getTileOccupancy(pos.x, pos.y, pos.z);
+}
+
 DFHACK_EXPORT df::world_data::T_region_map *getRegionBiome(df::coord2d rgn_pos);
 
 /// sorts the block event vector into multiple vectors by type
@@ -256,34 +270,7 @@ extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
 /// remove a block event from the block by address
 extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which );
 
-/*
- * BURROWS
- */
-
-DFHACK_EXPORT df::burrow *findBurrowByName(std::string name);
-
-DFHACK_EXPORT void listBurrowBlocks(std::vector<df::map_block*> *pvec, df::burrow *burrow);
-DFHACK_EXPORT void clearBurrowTiles(df::burrow *burrow);
-
-DFHACK_EXPORT df::block_burrow *getBlockBurrowMask(df::burrow *burrow, df::map_block *block, bool create = false);
-DFHACK_EXPORT bool deleteBlockBurrowMask(df::burrow *burrow, df::map_block *block, df::block_burrow *mask);
-
-inline bool deleteBlockBurrowMask(df::burrow *burrow, df::map_block *block)
-{
-    return deleteBlockBurrowMask(burrow, block, getBlockBurrowMask(burrow, block));
-}
-
-
-DFHACK_EXPORT bool isBlockBurrowTile(df::burrow *burrow, df::map_block *block, df::coord2d tile);
-DFHACK_EXPORT bool setBlockBurrowTile(df::burrow *burrow, df::map_block *block, df::coord2d tile, bool enable);
-
-inline bool isBurrowTile(df::burrow *burrow, df::coord tile) {
-    return isBlockBurrowTile(burrow, getTileBlock(tile), tile);
-}
-inline bool setBurrowTile(df::burrow *burrow, df::coord tile, bool enable) {
-    return setBlockBurrowTile(burrow, getTileBlock(tile), tile, enable);
-}
-
+DFHACK_EXPORT bool canWalkBetween(df::coord pos1, df::coord pos2);
 }
 }
 #endif

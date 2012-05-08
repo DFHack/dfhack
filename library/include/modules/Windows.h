@@ -117,11 +117,11 @@ namespace Windows
             for ( auto iter = str.begin(); iter != str.end(); iter++)
             {
                 auto elem = *iter;
-                if(cursor_y >= height)
+                if(cursor_y >= (int)height)
                     break;
                 if(wrap)
                 {
-                    if(cursor_x >= width)
+                    if(cursor_x >= (int)width)
                         cursor_x = wrap_column;
                 }
                 df_screentile & tile = buffer[cursor_x * height + cursor_y];
@@ -224,12 +224,12 @@ namespace Windows
         virtual void blit_to_parent ()
         {
             df_tilebuf par = parent->getBuffer();
-            for(int xi = 0; xi < width; xi++)
+            for(unsigned xi = 0; xi < width; xi++)
             {
-                for(int yi = 0; yi < height; yi++)
+                for(unsigned yi = 0; yi < height; yi++)
                 {
-                    int parx = left + xi;
-                    int pary = top + yi;
+                    unsigned parx = left + xi;
+                    unsigned pary = top + yi;
                     if(pary >= par.height) continue;
                     if(parx >= par.width) continue;
                     par.data[parx * par.height + pary] = buffer[xi * height + yi];

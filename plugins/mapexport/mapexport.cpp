@@ -39,6 +39,46 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
+static dfproto::Tile::TileMaterialType toProto(df::tiletype_material mat)
+{
+    /*
+     * This is surely ugly, but casting enums without officially
+     * defined numerical values to protobuf enums is against the
+     * way protobufs are supposed to be used, because it defeats
+     * the backward compatible nature of the protocols.
+     */
+    switch (mat)
+    {
+#define CONVERT(name) case tiletype_material::name: return dfproto::Tile::name;
+        case tiletype_material::NONE:
+        CONVERT(AIR)
+        case tiletype_material::PLANT:
+        CONVERT(SOIL)
+        CONVERT(STONE)
+        CONVERT(FEATURE)
+        CONVERT(LAVA_STONE)
+        CONVERT(MINERAL)
+        CONVERT(FROZEN_LIQUID)
+        CONVERT(CONSTRUCTION)
+        CONVERT(GRASS_LIGHT)
+        CONVERT(GRASS_DARK)
+        CONVERT(GRASS_DRY)
+        CONVERT(GRASS_DEAD)
+        CONVERT(HFS)
+        CONVERT(CAMPFIRE)
+        CONVERT(FIRE)
+        CONVERT(ASHES)
+        case tiletype_material::MAGMA:
+            return dfproto::Tile::MAGMA_TYPE;
+        CONVERT(DRIFTWOOD)
+        CONVERT(POOL)
+        CONVERT(BROOK)
+        CONVERT(RIVER)
+#undef CONVERT
+    }
+    return dfproto::Tile::AIR;
+}
+
 command_result mapexport (color_ostream &out, std::vector <std::string> & parameters)
 {
     bool showHidden = false;
@@ -193,9 +233,9 @@ command_result mapexport (color_ostream &out, std::vector <std::string> & parame
                             prototile->set_flow_size(des.bits.flow_size);
                         }
 
-                        df::tiletype type = b->TileTypeAt(coord);
+                        df::tiletype type = b->tiletypeAt(coord);
                         prototile->set_type((dfproto::Tile::TileType)tileShape(type));
-                        prototile->set_tile_material((dfproto::Tile::TileMaterialType)tileMaterial(type));
+                        prototile->set_tile_material(toProto(tileMaterial(type)));
 
                         df::coord map_pos = df::coord(b_x*16+x,b_y*16+y,z);
                         
@@ -204,7 +244,7 @@ command_result mapexport (color_ostream &out, std::vector <std::string> & parame
                         case tiletype_material::SOIL:
                         case tiletype_material::STONE:
                             prototile->set_material_type(0);
-                            prototile->set_material_index(b->baseMaterialAt(coord));
+                            prototile->set_material_index(b->layerMaterialAt(coord));
                             break;
                         case tiletype_material::MINERAL:
                             prototile->set_material_type(0);

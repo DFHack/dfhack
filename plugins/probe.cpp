@@ -103,6 +103,30 @@ command_result df_cprobe (color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
+void describeTile(color_ostream &out, df::tiletype tiletype)
+{
+    out.print("%d", tiletype);
+    if(tileName(tiletype))
+        out.print(" = %s",tileName(tiletype));
+    out.print("\n");
+
+    df::tiletype_shape shape = tileShape(tiletype);
+    df::tiletype_material material = tileMaterial(tiletype);
+    df::tiletype_special special = tileSpecial(tiletype);
+    df::tiletype_variant variant = tileVariant(tiletype);
+    out.print("%-10s: %4d %s\n","Class"    ,shape,
+              ENUM_KEY_STR(tiletype_shape, shape).c_str());
+    out.print("%-10s: %4d %s\n","Material" ,
+              material, ENUM_KEY_STR(tiletype_material, material).c_str());
+    out.print("%-10s: %4d %s\n","Special"  ,
+              special, ENUM_KEY_STR(tiletype_special, special).c_str());
+    out.print("%-10s: %4d %s\n"   ,"Variant"  ,
+              variant, ENUM_KEY_STR(tiletype_variant, variant).c_str());
+    out.print("%-10s: %s\n"    ,"Direction",
+              tileDirection(tiletype).getStr());
+    out.print("\n");
+}
+
 command_result df_probe (color_ostream &out, vector <string> & parameters)
 {
     //bool showBlock, showDesig, showOccup, showTile, showMisc;
@@ -186,35 +210,39 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
 */
 
     // tiletype
-    out.print("tiletype: %d", tiletype);
-    if(tileName(tiletype))
-        out.print(" = %s",tileName(tiletype));
-    out.print("\n");
-
-    df::tiletype_shape shape = tileShape(tiletype);
-    df::tiletype_material material = tileMaterial(tiletype);
-    df::tiletype_special special = tileSpecial(tiletype);
-    df::tiletype_variant variant = tileVariant(tiletype);
-    out.print("%-10s: %4d %s\n","Class"    ,shape,
-              ENUM_KEY_STR(tiletype_shape, shape).c_str());
-    out.print("%-10s: %4d %s\n","Material" ,
-              material, ENUM_KEY_STR(tiletype_material, material).c_str());
-    out.print("%-10s: %4d %s\n","Special"  ,
-              special, ENUM_KEY_STR(tiletype_special, special).c_str());
-    out.print("%-10s: %4d %s\n"   ,"Variant"  ,
-              variant, ENUM_KEY_STR(tiletype_variant, variant).c_str());
-    out.print("%-10s: %s\n"    ,"Direction",
-              tileDirection(tiletype).getStr());
-    out.print("\n");
+    out.print("tiletype: ");
+    describeTile(out, tiletype);
+    out.print("static: ");
+    describeTile(out, mc.staticTiletypeAt(cursor));
+    out.print("base: ");
+    describeTile(out, mc.baseTiletypeAt(cursor));
 
     out.print("temperature1: %d U\n",mc.temperature1At(cursor));
     out.print("temperature2: %d U\n",mc.temperature2At(cursor));
 
+    int offset = block.region_offset[des.bits.biome];
+    df::coord2d region_pos = block.region_pos + df::coord2d ((offset % 3) - 1, (offset / 3) -1);
+
+    df::world_data::T_region_map* biome = 
+        &world->world_data->region_map[region_pos.x][region_pos.y];
+
+    int sav = biome->savagery;
+    int evi = biome->evilness;
+    int sindex = sav > 65 ? 2 : sav < 33 ? 0 : 1;
+    int eindex = evi > 65 ? 2 : evi < 33 ? 0 : 1;
+    int surr = sindex + eindex * 3;
+
+    char* surroundings[] = { "Serene", "Mirthful", "Joyous Wilds", "Calm", "Wilderness", "Untamed Wilds", "Sinister", "Haunted", "Terrifying" };
+
     // biome, geolayer
-    out << "biome: " << des.bits.biome << std::endl;
+    out << "biome: " << des.bits.biome << " (" << 
+        "region id=" << biome->region_id << ", " <<
+        surroundings[surr] << ", " <<
+        "savagery " << biome->savagery << ", " <<
+        "evilness " << biome->evilness << ")" << std::endl;
     out << "geolayer: " << des.bits.geolayer_index
         << std::endl;
-    int16_t base_rock = mc.baseMaterialAt(cursor);
+    int16_t base_rock = mc.layerMaterialAt(cursor);
     if(base_rock != -1)
     {
         out << "Layer material: " << dec << base_rock;
@@ -238,6 +266,12 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         else
             out << endl;
     }
+    MaterialInfo minfo(mc.baseMaterialAt(cursor));
+    if (minfo.isValid())
+        out << "Base material: " << minfo.getToken() << " / " << minfo.toString() << endl;
+    minfo.decode(mc.staticMaterialAt(cursor));
+    if (minfo.isValid())
+        out << "Static material: " << minfo.getToken() << " / " << minfo.toString() << endl;
     // liquids
     if(des.bits.flow_size)
     {
@@ -296,6 +330,39 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     out << "global feature idx: " << block.global_feature
         << endl;
     out << std::endl;
+
+    if(block.occupancy[tileX][tileY].bits.no_grow)
+        out << "no grow" << endl;
+
+    for(size_t e=0; e<block.block_events.size(); e++)
+    {            
+        df::block_square_event * blev = block.block_events[e];
+        df::block_square_event_type blevtype = blev->getType();
+        switch(blevtype)
+        {
+        case df::block_square_event_type::grass:
+            {
+                df::block_square_event_grassst * gr_ev = (df::block_square_event_grassst *)blev;
+                if(gr_ev->amount[tileX][tileY] > 0)
+                {
+                    out << "amount of grass: " << (int)gr_ev->amount[tileX][tileY] << endl;
+                }
+                break;
+            }
+        case df::block_square_event_type::world_construction:
+            {
+                df::block_square_event_world_constructionst * co_ev = (df::block_square_event_world_constructionst*)blev;
+                uint16_t bits = co_ev->tile_bitmask[tileY];
+                out << "construction bits: " << bits << endl;
+                break;
+            }
+        default:
+            //out << "unhandled block event type!" << endl;
+            break;
+        }
+    }
+
+
     return CR_OK;
 }
 
@@ -383,14 +450,10 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
             break;
         }
         if(building.origin->is_room)  //isRoom())
-            out << ", is room";
-        else
-            out << ", not a room";
+            out << ", room";
         if(building.origin->getBuildStage()!=building.origin->getMaxBuildStage())
             out << ", in construction";
         out.print("\n");
-
-
     }
     return CR_OK;
 }

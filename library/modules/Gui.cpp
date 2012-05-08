@@ -50,6 +50,11 @@ using namespace DFHack;
 #include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_itemst.h"
+#include "df/viewscreen_layerst.h"
+#include "df/viewscreen_layer_workshop_profilest.h"
+#include "df/viewscreen_layer_noblelistst.h"
+#include "df/viewscreen_layer_overall_healthst.h"
+#include "df/viewscreen_petst.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/ui_sidebar_menus.h"
 #include "df/ui_look_list.h"
@@ -63,11 +68,17 @@ using namespace DFHack;
 #include "df/popup_message.h"
 #include "df/interfacest.h"
 #include "df/graphic.h"
+#include "df/layer_object_listst.h"
 
 using namespace df::enums;
 using df::global::gview;
 using df::global::init;
 using df::global::gps;
+
+static df::layer_object_listst *getLayerList(df::viewscreen_layerst *layer, int idx)
+{
+    return virtual_cast<df::layer_object_listst>(vector_get(layer->layer_objects,idx));
+}
 
 // Predefined common guard functions
 
@@ -194,7 +205,7 @@ bool Gui::view_unit_hotkey(df::viewscreen *top)
     if (!ui_selected_unit) // allow missing
         return false;
 
-    return vector_get(world->units.other[0], *ui_selected_unit) != NULL;
+    return vector_get(world->units.active, *ui_selected_unit) != NULL;
 }
 
 bool Gui::unit_inventory_hotkey(df::viewscreen *top)
@@ -223,7 +234,7 @@ df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet)
     df::building *selected = world->selected_building;
     int idx = *ui_workshop_job_cursor;
 
-    if (idx < 0 || idx >= selected->jobs.size())
+    if (size_t(idx) >= selected->jobs.size())
     {
         out.printerr("Invalid job cursor index: %d\n", idx);
         return NULL;
@@ -294,6 +305,62 @@ static df::unit *getAnyUnit(df::viewscreen *top)
         return ref ? ref->getUnit() : NULL;
     }
 
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_workshop_profilest, top))
+    {
+        if (auto list1 = getLayerList(screen, 0))
+            return vector_get(screen->workers, list1->cursor);
+        return NULL;
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_noblelistst, top))
+    {
+        switch (screen->mode)
+        {
+        case df::viewscreen_layer_noblelistst::List:
+            if (auto list1 = getLayerList(screen, 0))
+            {
+                if (auto info = vector_get(screen->info, list1->cursor))
+                    return info->unit;
+            }
+            return NULL;
+
+        case df::viewscreen_layer_noblelistst::Appoint:
+            if (auto list2 = getLayerList(screen, 1))
+            {
+                if (auto info = vector_get(screen->candidates, list2->cursor))
+                    return info->unit;
+            }
+            return NULL;
+
+        default:
+            return NULL;
+        }
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_petst, top))
+    {
+        switch (screen->mode)
+        {
+        case df::viewscreen_petst::List:
+            if (!vector_get(screen->is_vermin, screen->cursor))
+                return (df::unit*)vector_get(screen->animal, screen->cursor);
+            return NULL;
+
+        case df::viewscreen_petst::SelectTrainer:
+            return vector_get(screen->trainer_unit, screen->trainer_cursor);
+
+        default:
+            return NULL;
+        }
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_overall_healthst, top))
+    {
+        if (auto list1 = getLayerList(screen, 0))
+            return vector_get(screen->unit, list1->cursor);
+        return NULL;
+    }
+
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
 
@@ -303,7 +370,7 @@ static df::unit *getAnyUnit(df::viewscreen *top)
         if (!ui_selected_unit)
             return NULL;
 
-        return vector_get(world->units.other[0], *ui_selected_unit);
+        return vector_get(world->units.active, *ui_selected_unit);
     }
     case LookAround:
     {

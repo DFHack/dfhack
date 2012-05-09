@@ -119,7 +119,7 @@ command_result writeFlag (color_ostream &out, vector <string> & parameters)
     MapExtras::MapCache * MCache = new MapExtras::MapCache();
     t_occupancy oc = MCache->occupancyAt(cursor);
 
-    oc.bits.building = value;
+    oc.bits.building = df::tile_building_occ(value);
     MCache->setOccupancyAt(cursor, oc);
     MCache->WriteAll();
 

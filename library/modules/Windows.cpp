@@ -41,7 +41,7 @@ Windows::df_screentile *Windows::getScreenBuffer()
 }
 
 Windows::df_window::df_window(int x, int y, unsigned int width, unsigned int height)
-:buffer(0), parent(0), left(x), top(y), width(width), height(height), current_painter(NULL)
+:buffer(0), width(width), height(height), parent(0), left(x), top(y), current_painter(NULL)
 {
     buffer = 0;
 };

@@ -36,6 +36,10 @@ distribution.
 
 namespace DFHack {
     class function_identity_base;
+
+    namespace Units {
+        struct NoblePosition;
+    }
 }
 
 namespace DFHack {namespace Lua {
@@ -43,6 +47,9 @@ namespace DFHack {namespace Lua {
      * Create or initialize a lua interpreter with access to DFHack tools.
      */
     DFHACK_EXPORT lua_State *Open(color_ostream &out, lua_State *state = NULL);
+
+    DFHACK_EXPORT void PushDFHack(lua_State *state);
+    DFHACK_EXPORT void PushBaseGlobals(lua_State *state);
 
     /**
      * Load a module using require(). Leaves the stack as is.
@@ -105,7 +112,15 @@ namespace DFHack {namespace Lua {
      * Return behavior is of SafeCall below.
      */
     DFHACK_EXPORT bool AssignDFObject(color_ostream &out, lua_State *state,
-                                      type_identity *type, void *target, int val_index, bool perr = true);
+                                      type_identity *type, void *target, int val_index,
+                                      bool exact_type = false, bool perr = true);
+
+    /**
+     * Assign the value at val_index to the target of given identity using df.assign().
+     * Otherwise throws an error.
+     */
+    DFHACK_EXPORT void CheckDFAssign(lua_State *state, type_identity *type,
+                                     void *target, int val_index, bool exact_type = false);
 
     /**
      * Push the pointer onto the stack as a wrapped DF object of a specific type.
@@ -135,8 +150,19 @@ namespace DFHack {namespace Lua {
      * Assign the value at val_index to the target using df.assign().
      */
     template<class T>
-    bool AssignDFObject(color_ostream &out, lua_State *state, T *target, int val_index, bool perr = true) {
-        return AssignDFObject(out, state, df::identity_traits<T>::get(), target, val_index, perr);
+    bool AssignDFObject(color_ostream &out, lua_State *state, T *target,
+                        int val_index, bool exact_type = false, bool perr = true) {
+        return AssignDFObject(out, state, df::identity_traits<T>::get(),
+                              target, val_index, exact_type, perr);
+    }
+
+    /**
+     * Assign the value at val_index to the target using df.assign().
+     * Throws in case of an error.
+     */
+    template<class T>
+    void CheckDFAssign(lua_State *state, T *target, int val_index, bool exact_type = false) {
+        CheckDFAssign(state, df::identity_traits<T>::get(), target, val_index, exact_type);
     }
 
     /**
@@ -243,14 +269,21 @@ namespace DFHack {namespace Lua {
     }
     inline void Push(lua_State *state, df::coord &obj) { PushDFObject(state, &obj); }
     inline void Push(lua_State *state, df::coord2d &obj) { PushDFObject(state, &obj); }
+    void Push(lua_State *state, const Units::NoblePosition &pos);
     template<class T> inline void Push(lua_State *state, T *ptr) {
         PushDFObject(state, ptr);
     }
 
     template<class T>
-    void PushVector(lua_State *state, const T &pvec)
+    void PushVector(lua_State *state, const T &pvec, bool addn = false)
     {
-        lua_createtable(state,pvec.size(),0);
+        lua_createtable(state,pvec.size(), addn?1:0);
+
+        if (addn)
+        {
+            lua_pushinteger(state, pvec.size());
+            lua_setfield(state, -2, "n");
+        }
 
         for (size_t i = 0; i < pvec.size(); i++)
         {
@@ -267,6 +300,26 @@ namespace DFHack {namespace Lua {
     DFHACK_EXPORT void MakeEvent(lua_State *state, void *key);
     DFHACK_EXPORT void InvokeEvent(color_ostream &out, lua_State *state, void *key, int num_args);
 
+    class StackUnwinder {
+        lua_State *state;
+        int top;
+    public:
+        StackUnwinder(lua_State *state, int bias = 0) : state(state), top(0) {
+            if (state) top = lua_gettop(state) - bias;
+        }
+        ~StackUnwinder() {
+            if (state) lua_settop(state, top);
+        }
+        operator int () { return top; }
+        int operator+ (int v) { return top + v; }
+        int operator- (int v) { return top + v; }
+        int operator[] (int v) { return top + v; }
+        StackUnwinder &operator += (int v) { top += v; return *this; }
+        StackUnwinder &operator -= (int v) { top += v; return *this; }
+        StackUnwinder &operator ++ () { top++; return *this; }
+        StackUnwinder &operator -- () { top--; return *this; }
+    };
+
     /**
      * Namespace for the common lua interpreter state.
      * All accesses must be done under CoreSuspender.
@@ -280,6 +333,8 @@ namespace DFHack {namespace Lua {
 
         // Events signalled by the core
         void onStateChange(color_ostream &out, int code);
+        // Signals timers
+        void onUpdate(color_ostream &out);
 
         template<class T> inline void Push(T &arg) { Lua::Push(State, arg); }
         template<class T> inline void Push(const T &arg) { Lua::Push(State, arg); }

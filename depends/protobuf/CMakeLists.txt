@@ -57,7 +57,7 @@ IF(CMAKE_COMPILER_IS_GNUCC)
     ENDIF()
 
     IF (HAVE_HASH_MAP EQUAL 0)
-        MESSAGE(SEND_ERROR "Could not find a working hash map implementation. Please update GCC.")
+        MESSAGE(SEND_ERROR "Could not find a working hash map implementation. Please install GCC >= 4.4, and all necessary 32-bit C++ development libraries.")
     ENDIF()
 
     FIND_PACKAGE(Threads)
@@ -199,6 +199,8 @@ google/protobuf/compiler/zip_writer.cc
 )
 
 LIST(APPEND LIBPROTOBUF_FULL_SRCS ${LIBPROTOBUF_LITE_SRCS})
+
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wno-sign-compare")
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 SET(PROTOBUF_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})

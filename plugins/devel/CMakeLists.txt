@@ -13,4 +13,7 @@ DFHACK_PLUGIN(frozen frozen.cpp)
 DFHACK_PLUGIN(dumpmats dumpmats.cpp)
 #DFHACK_PLUGIN(tiles tiles.cpp)
 DFHACK_PLUGIN(counters counters.cpp)
-
+DFHACK_PLUGIN(stockcheck stockcheck.cpp)
+DFHACK_PLUGIN(stripcaged stripcaged.cpp)
+DFHACK_PLUGIN(rprobe rprobe.cpp)
+DFHACK_PLUGIN(nestboxes nestboxes.cpp)

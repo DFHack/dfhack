@@ -234,20 +234,70 @@ sub render_class_vmethods {
         my $name = $meth->getAttribute('name');
         if ($name) {
             my @argnames;
+            my @argargs;
             for my $arg ($meth->findnodes('child::ld:field')) {
                 my $nr = $#argnames + 1;
-                push @argnames, lcfirst($arg->getAttribute('name') || "arg$nr");
+                my $argname = lcfirst($arg->getAttribute('name') || "arg$nr");
+                push @argnames, $argname;
+                if ($arg->getAttribute('ld:meta') eq 'global' and $arg->getAttribute('ld:subtype') eq 'enum') {
+                    push @argargs, rb_ucase($arg->getAttribute('type-name')) . ".to_i($argname)";
+                } else {
+                    push @argargs, $argname;
+                }
             }
             push @lines_rb, "def $name(" . join(', ', @argnames) . ')';
             indent_rb {
-                push @lines_rb, "DFHack.vmethod_call(self, $voff" . join('', map { ", $_" } @argnames) . ')'
-                # TODO interpret return type (eg pointer to vector)
+                my $args = join('', map { ", $_" } @argargs);
+                my $call = "DFHack.vmethod_call(self, $voff$args)";
+                my $ret = $meth->findnodes('child::ret-type')->[0];
+                render_class_vmethod_ret($call, $ret);
             };
             push @lines_rb, 'end';
         }
         # on linux, the destructor uses 2 entries
         $voff += 4 if $meth->getAttribute('is-destructor') and $^O =~ /linux/i;
         $voff += 4;
+    }
+}
+
+sub render_class_vmethod_ret {
+    my ($call, $ret) = @_;
+    if (!$ret) {
+        push @lines_rb, "$call ; nil";
+        return;
+    }
+    my $retmeta = $ret->getAttribute('ld:meta') || '';
+    if ($retmeta eq 'global') { # enum
+        my $retname = $ret->getAttribute('type-name');
+        if ($retname and $global_types{$retname} and
+                $global_types{$retname}->getAttribute('ld:meta') eq 'enum-type') {
+            push @lines_rb, rb_ucase($retname) . ".to_sym($call)";
+        } else {
+            print "vmethod global nonenum $call\n";
+            push @lines_rb, $call;
+        }
+    } elsif ($retmeta eq 'number') {
+        my $retsubtype = $ret->getAttribute('ld:subtype');
+        my $retbits = $ret->getAttribute('ld:bits');
+        push @lines_rb, "val = $call";
+        if ($retsubtype eq 'bool') {
+            push @lines_rb, "(val & 1) != 0";
+        } elsif ($ret->getAttribute('ld:unsigned')) {
+            push @lines_rb, "val & ((1 << $retbits) - 1)";
+        } else { # signed
+            push @lines_rb, "val &= ((1 << $retbits) - 1)";
+            push @lines_rb, "((val >> ($retbits-1)) & 1) == 0 ? val : val - (1 << $retbits)";
+        }
+    } elsif ($retmeta eq 'pointer') {
+        push @lines_rb, "ptr = $call";
+        push @lines_rb, "class << self";
+        indent_rb {
+            render_item($ret->findnodes('child::ld:item')->[0]);
+        };
+        push @lines_rb, "end._at(ptr) if ptr != 0";
+    } else {
+        print "vmethod unkret $call\n";
+        push @lines_rb, $call;
     }
 }
 

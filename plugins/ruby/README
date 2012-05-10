@@ -40,7 +40,7 @@ Set a custom nickname to unit with id '123'
  df.find_unit(123).name.nickname = 'moo'
 
 Show current unit profession
- p DFHack::Profession::ENUM[df.find_unit.profession]
+ p df.find_unit.profession
 
 Center the screen on unit '123'
  df.center_viewscreen(df.find_unit(123))

@@ -27,13 +27,6 @@ sub rb_ucase {
     return join("", map { ucfirst $_ } (split('_', $name)));
 }
 
-my %global_type_renderer = (
-    'enum-type' => \&render_global_enum,
-    'struct-type' => \&render_global_struct,
-    'class-type' => \&render_global_class,
-    'bitfield-type' => \&render_global_bitfield,
-);
-
 my %item_renderer = (
     'global' => \&render_item_global,
     'number' => \&render_item_number,
@@ -51,7 +44,7 @@ sub render_global_enum {
     my ($name, $type) = @_;
 
     my $rbname = rb_ucase($name);
-    push @lines_rb, "class $rbname";
+    push @lines_rb, "class $rbname < MemHack::Enum";
     indent_rb {
         render_enum_fields($type);
     };
@@ -61,8 +54,8 @@ sub render_enum_fields {
     my ($type) = @_;
 
     my $value = -1;
-    my $idxname = 'ENUM';
-    push @lines_rb, "$idxname = Hash.new";
+    push @lines_rb, "ENUM = Hash.new";
+    push @lines_rb, "NUME = Hash.new";
 
     my %attr_type;
     my %attr_list;
@@ -100,7 +93,7 @@ sub render_enum_fields {
 
         if ($elemname) {
             my $rbelemname = rb_ucase($elemname);
-            push @lines_rb, "$rbelemname = $value ; ${idxname}[$value] = :$rbelemname";
+            push @lines_rb, "ENUM[$value] = :$rbelemname ; NUME[:$rbelemname] = $value";
             for my $iattr ($item->findnodes('child::item-attr')) {
                 my $ian = $iattr->getAttribute('name');
                 my $iav = $iattr->getAttribute('value');
@@ -118,6 +111,10 @@ sub render_enum_fields {
 
 sub render_global_bitfield {
     my ($name, $type) = @_;
+
+    push @lines_cpp, "}" if @include_cpp;
+    push @lines_cpp, "void cpp_$name(FILE *fout) {";
+    push @include_cpp, $name;
 
     my $rbname = rb_ucase($name);
     push @lines_rb, "class $rbname < MemHack::Compound";
@@ -146,7 +143,7 @@ sub render_bitfield_fields {
         if ($count == 1) {
             push @lines_rb, "field(:$name, 0) { bit $shift }" if ($name);
         } elsif ($enum) {
-            push @lines_rb, "field(:$name, 0) { bits $shift, $count, :$enum }" if ($name);
+            push @lines_rb, "field(:$name, 0) { bits $shift, $count, $enum }" if ($name);
         } else {
             push @lines_rb, "field(:$name, 0) { bits $shift, $count }" if ($name);
         }
@@ -367,7 +364,7 @@ sub render_item_number {
         return;
     }
     $lines_rb[$#lines_rb] .= ", $initvalue" if ($initvalue);
-    $lines_rb[$#lines_rb] .= ", :$typename" if ($typename);
+    $lines_rb[$#lines_rb] .= ", $typename" if ($typename);
 }
 
 sub render_item_compound {
@@ -391,7 +388,7 @@ sub render_item_compound {
         };
         push @lines_rb, "}"
     } elsif ($subtype eq 'enum') {
-        push @lines_rb, "class ::DFHack::$classname";
+        push @lines_rb, "class ::DFHack::$classname < MemHack::Enum";
         indent_rb {
             # declare constants
             render_enum_fields($item);
@@ -425,7 +422,7 @@ sub render_item_container {
         push @lines_rb, "}";
     } elsif ($indexenum) {
         $indexenum = rb_ucase($indexenum);
-        push @lines_rb, "$rbmethod(:$indexenum)";
+        push @lines_rb, "$rbmethod($indexenum)";
     } else {
         push @lines_rb, "$rbmethod";
     }
@@ -457,7 +454,7 @@ sub render_item_staticarray {
     my $indexenum = $item->getAttribute('index-enum');
     if ($indexenum) {
         $indexenum = rb_ucase($indexenum);
-        push @lines_rb, "static_array($count, $tglen, :$indexenum) {";
+        push @lines_rb, "static_array($count, $tglen, $indexenum) {";
     } else {
         push @lines_rb, "static_array($count, $tglen) {";
     }
@@ -602,12 +599,26 @@ if ($offsetfile) {
 my $doc = XML::LibXML->new()->parse_file($input);
 $global_types{$_->getAttribute('type-name')} = $_ foreach $doc->findnodes('/ld:data-definition/ld:global-type');
 
+my @nonenums;
 for my $name (sort { $a cmp $b } keys %global_types) {
     my $type = $global_types{$name};
     my $meta = $type->getAttribute('ld:meta');
-    my $renderer = $global_type_renderer{$meta};
-    if ($renderer) {
-        $renderer->($name, $type);
+    if ($meta eq 'enum-type') {
+        render_global_enum($name, $type);
+    } else {
+        push @nonenums, $name;
+    }
+}
+
+for my $name (@nonenums) {
+    my $type = $global_types{$name};
+    my $meta = $type->getAttribute('ld:meta');
+    if ($meta eq 'struct-type') {
+        render_global_struct($name, $type);
+    } elsif ($meta eq 'class-type') {
+        render_global_class($name, $type);
+    } elsif ($meta eq 'bitfield-type') {
+        render_global_bitfield($name, $type);
     } else {
         print "no render global type $meta\n";
     }

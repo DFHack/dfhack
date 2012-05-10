@@ -3,7 +3,7 @@ module DFHack
 def self.unit_citizens
 	race = ui.race_id
 	civ = ui.civ_id
-	world.units.other[0].find_all { |u| 
+	world.units.active.find_all { |u| 
 		u.race == race and u.civ_id == civ and !u.flags1.dead and !u.flags1.merchant and
 		!u.flags1.diplomat and !u.flags2.resident and !u.flags3.ghostly and
 		!u.curse.add_tags1.OPPOSED_TO_LIFE and !u.curse.add_tags1.CRAZED and

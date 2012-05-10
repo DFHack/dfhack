@@ -160,6 +160,25 @@ class Compound < MemStruct
 	end
 end
 
+class Enum
+	# number -> symbol
+	def self.enum
+		# ruby weirdness, needed to make the constants 'virtual'
+		@enum ||= const_get(:ENUM)
+	end
+	# symbol -> number
+	def self.nume
+		@nume ||= const_get(:NUME)
+	end
+
+	def self.to_i(i)
+		nume[i] || i
+	end
+	def self.to_sym(i)
+		enum[i] || i
+	end
+end
+
 class Number < MemStruct
 	attr_accessor :_bits, :_signed, :_initvalue, :_enum
 	def initialize(bits, signed, initvalue, enum)
@@ -177,12 +196,12 @@ class Number < MemStruct
 		when 64;(DFHack.memory_read_int32(@_memaddr) & 0xffffffff) + (DFHack.memory_read_int32(@_memaddr+4) << 32)
 		end
 		v &= (1 << @_bits) - 1 if not @_signed
-		v = DFHack.const_get(@_enum)::ENUM[v] || v if @_enum
+		v = @_enum.to_sym(v) if @_enum
 		v
 	end
 
 	def _set(v)
-		v = DFHack.const_get(@_enum).const_get(v) if @_enum and v.kind_of?(::Symbol)
+		v = @_enum.to_i(v) if @_enum
 		case @_bits
 		when 32; DFHack.memory_write_int32(@_memaddr, v)
 		when 16; DFHack.memory_write_int16(@_memaddr, v)
@@ -225,7 +244,7 @@ class BitField < MemStruct
 			((v & 1) == 0) ? false : true
 		else
 			v &= _mask
-			v = DFHack.const_get(@_enum)::ENUM[v] || v if @_enum
+			v = @_enum.to_sym(v) if @_enum
 			v
 		end
 	end
@@ -235,7 +254,7 @@ class BitField < MemStruct
 			# allow 'bit = 0'
 			v = (v && v != 0 ? 1 : 0)
 		end
-		v = DFHack.const_get(@_enum).const_get(v) if @_enum and v.kind_of?(::Symbol)
+		v = @_enum.to_i(v) if @_enum
 		v = (v & _mask) << @_shift
 
 		ori = DFHack.memory_read_int32(@_memaddr) & 0xffffffff
@@ -313,21 +332,11 @@ class PointerAry < MemStruct
 
 	def inspect ; ptr = _getp ; (ptr == 0) ? 'NULL' : "#<PointerAry #{'0x%X' % ptr}>" ; end
 end
-module IndexEnum
-	def indexenum(idx)
-		if idx.kind_of?(::Symbol) or idx.kind_of?(::String) and _indexenum
-			DFHack.const_get(_indexenum).const_get(idx) || idx
-		else
-			idx
-		end
-	end
-end
 module Enumerable
 	include ::Enumerable
 	attr_accessor :_indexenum
 	def each ; (0...length).each { |i| yield self[i] } ; end
 	def inspect
-		enum = DFHack.const_get(_indexenum)::ENUM if _indexenum
 		out = '['
 		each_with_index { |e, idx|
 			out << ', ' if out.length > 1
@@ -335,7 +344,7 @@ module Enumerable
 				out << '...'
 				break
 			end
-			out << "#{enum[idx] || idx}=" if enum
+			out << "#{_indexenum.to_sym(idx)}=" if _indexenum
 			out << e.inspect
 		}
 		out << ']'
@@ -344,7 +353,6 @@ module Enumerable
 	def flatten ; map { |e| e.respond_to?(:flatten) ? e.flatten : e }.flatten ; end
 end
 class StaticArray < MemStruct
-	include IndexEnum
 	attr_accessor :_tglen, :_length, :_indexenum, :_tg
 	def initialize(tglen, length, indexenum, tg)
 		@_tglen = tglen
@@ -364,12 +372,12 @@ class StaticArray < MemStruct
 		@_tg._at(@_memaddr + i*@_tglen) if i >= 0 and i < @_length
 	end
 	def [](i)
-		i = indexenum(i)
+		i = _indexenum.to_i(i) if _indexenum
 		i += @_length if i < 0
 		_tgat(i)._get
 	end
 	def []=(i, v)
-		i = indexenum(i)
+		i = _indexenum.to_i(i) if _indexenum
 		i += @_length if i < 0
 		_tgat(i)._set(v)
 	end
@@ -547,7 +555,6 @@ class StlDeque < MemStruct
 end
 
 class DfFlagarray < MemStruct
-	include IndexEnum
 	attr_accessor :_indexenum
 	def initialize(indexenum)
 		@_indexenum = indexenum
@@ -561,12 +568,12 @@ class DfFlagarray < MemStruct
 		DFHack.memory_bitarray_resize(@_memaddr, len)
 	end
 	def [](idx)
-		idx = indexenum(idx)
+		idx = _indexenum.to_i(idx) if _indexenum
 		idx += length if idx < 0
 		DFHack.memory_bitarray_isset(@_memaddr, idx) if idx >= 0 and idx < length
 	end
 	def []=(idx, v)
-		idx = indexenum(idx)
+		idx = _indexenum.to_i(idx) if _indexenum
 		idx += length if idx < 0
 		if idx >= length or idx < 0
 			raise 'invalid idx'

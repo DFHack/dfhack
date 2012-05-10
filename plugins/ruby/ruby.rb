@@ -88,7 +88,7 @@ module DFHack
                 case ui.main.mode
                 when :ViewUnits
                     # nobody selected => idx == 0
-                    v = world.units.other[0][ui_selected_unit]
+                    v = world.units.active[ui_selected_unit]
                     v if v and v.pos.z == cursor.z
                 when :LookAround
                     k = ui_look_list.items[ui_look_cursor]
@@ -261,7 +261,7 @@ module DFHack
 
         # link a job to the world
         # allocate & set job.id, allocate a JobListLink, link to job & world.job_list
-        def link_job(job)
+        def job_link(job)
             lastjob = world.job_list
             lastjob = lastjob.next while lastjob.next
             joblink = JobListLink.cpp_new

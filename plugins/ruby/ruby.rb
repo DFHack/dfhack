@@ -272,6 +272,24 @@ module DFHack
             df.job_next_id += 1
             lastjob.next = joblink
         end
+
+        # attach an item to a job, flag item in_job
+        def job_attachitem(job, item, role=:Hauled, filter_idx=-1)
+            if role != :TargetContainer
+                item.flags.in_job = true
+            end
+
+            itemlink = SpecificRef.cpp_new
+            itemlink.type = :JOB
+            itemlink.job = job
+            item.specific_refs << itemlink
+
+            joblink = JobItemRef.cpp_new
+            joblink.item = item
+            joblink.role = role
+            joblink.job_item_idx = filter_idx
+            job.items << joblink
+        end
     end
 end
 

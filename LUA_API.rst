@@ -1066,7 +1066,7 @@ Events:
   Emitted when a burrow might have been renamed either through
   the game UI, or ``renameBurrow()``.
 
-* ``onDigComplete.foo = function(job_type,pos,old_tiletype,new_tiletype)``
+* ``onDigComplete.foo = function(job_type,pos,old_tiletype,new_tiletype,worker)``
 
   Emitted when a tile might have been dug out. Only tracked if the
   auto-growing burrows feature is enabled.

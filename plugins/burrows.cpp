@@ -153,10 +153,10 @@ static int next_job_id_save = 0;
 static std::map<int,DigJob> diggers;
 
 static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord pos,
-                                df::tiletype old_tile, df::tiletype new_tile);
+                                df::tiletype old_tile, df::tiletype new_tile, df::unit *worker);
 
-DEFINE_LUA_EVENT_4(onDigComplete, handle_dig_complete,
-                   df::job_type, df::coord, df::tiletype, df::tiletype);
+DEFINE_LUA_EVENT_5(onDigComplete, handle_dig_complete,
+                   df::job_type, df::coord, df::tiletype, df::tiletype, df::unit*);
 
 static void detect_digging(color_ostream &out)
 {
@@ -179,10 +179,7 @@ static void detect_digging(color_ostream &out)
 
                 if (new_tile != it->second.old_tile)
                 {
-                    onDigComplete(out, it->second.job, pos, it->second.old_tile, new_tile);
-
-                    //if (worker && !worker->job.current_job)
-                    //    worker->counters.think_counter = worker->counters.job_counter = 0;
+                    onDigComplete(out, it->second.job, pos, it->second.old_tile, new_tile, worker);
                 }
             }
 
@@ -370,7 +367,7 @@ static void add_walls_to_burrows(color_ostream &out, std::vector<df::burrow*> &b
 }
 
 static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord pos,
-                                df::tiletype old_tile, df::tiletype new_tile)
+                                df::tiletype old_tile, df::tiletype new_tile, df::unit *worker)
 {
     if (!isWalkable(new_tile))
         return;
@@ -390,9 +387,11 @@ static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord 
         return;
 
     MapExtras::MapCache mc;
+    bool changed = false;
 
     if (!isWalkable(old_tile))
     {
+        changed = true;
         add_walls_to_burrows(out, to_grow, mc, pos+df::coord(-1,-1,0), pos+df::coord(1,1,0));
 
         if (isWalkableUp(new_tile))
@@ -407,6 +406,7 @@ static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord 
 
     if (LowPassable(new_tile) && !LowPassable(old_tile))
     {
+        changed = true;
         add_to_burrows(to_grow, pos-df::coord(0,0,1));
 
         if (tileShape(new_tile) == tiletype_shape::RAMP_TOP)
@@ -415,6 +415,9 @@ static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord 
                                  pos+df::coord(-1,-1,-1), pos+df::coord(1,1,-1));
         }
     }
+
+    if (changed && worker && !worker->job.current_job)
+        Job::checkDesignationsNow();
 }
 
 static void renameBurrow(color_ostream &out, df::burrow *burrow, std::string name)

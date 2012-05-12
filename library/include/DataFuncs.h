@@ -143,6 +143,23 @@ INSTANTIATE_WRAPPERS(4, (OSTREAM_ARG,A1,A2,A3,A4), (out,vA1,vA2,vA3,vA4),
 INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5))
 INSTANTIATE_WRAPPERS(5, (A1,A2,A3,A4,A5), (vA1,vA2,vA3,vA4,vA5),
                      LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4); LOAD_ARG(A5);)
+INSTANTIATE_WRAPPERS(5, (OSTREAM_ARG,A1,A2,A3,A4,A5), (out,vA1,vA2,vA3,vA4,vA5),
+                     LOAD_OSTREAM(out); LOAD_ARG(A1); LOAD_ARG(A2);
+                     LOAD_ARG(A3); LOAD_ARG(A4); LOAD_ARG(A5);)
+#undef FW_TARGS
+
+#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6
+INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6))
+INSTANTIATE_WRAPPERS(6, (A1,A2,A3,A4,A5,A6), (vA1,vA2,vA3,vA4,vA5,vA6),
+                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);
+                     LOAD_ARG(A4); LOAD_ARG(A5); LOAD_ARG(A6);)
+INSTANTIATE_WRAPPERS(6, (OSTREAM_ARG,A1,A2,A3,A4,A5,A6), (out,vA1,vA2,vA3,vA4,vA5,vA6),
+                     LOAD_OSTREAM(out); LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);
+                     LOAD_ARG(A4); LOAD_ARG(A5); LOAD_ARG(A6);)
+#undef FW_TARGS
+
+#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7
+INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7))
 #undef FW_TARGS
 
 #undef FW_TARGSC

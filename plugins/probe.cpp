@@ -232,7 +232,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     int eindex = evi > 65 ? 2 : evi < 33 ? 0 : 1;
     int surr = sindex + eindex * 3;
 
-    char* surroundings[] = { "Serene", "Mirthful", "Joyous Wilds", "Calm", "Wilderness", "Untamed Wilds", "Sinister", "Haunted", "Terrifying" };
+    const char* surroundings[] = { "Serene", "Mirthful", "Joyous Wilds", "Calm", "Wilderness", "Untamed Wilds", "Sinister", "Haunted", "Terrifying" };
 
     // biome, geolayer
     out << "biome: " << des.bits.biome << " (" << 

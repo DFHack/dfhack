@@ -452,7 +452,7 @@ static const struct labor_default default_labor_infos[] = {
     /* POTTERY */			{AUTOMATIC, false, 1, 200, 0},
     /* GLAZING */			{AUTOMATIC, false, 1, 200, 0},
     /* PRESSING */			{AUTOMATIC, false, 1, 200, 0},
-    /* BEEKEEPING */		{AUTOMATIC, false, 1, 200, 0},
+    /* BEEKEEPING */		{AUTOMATIC, false, 1, 1, 0}, // reduce risk of stuck beekeepers (see http://www.bay12games.com/dwarves/mantisbt/view.php?id=3981)
 	/* WAX_WORKING */		{AUTOMATIC, false, 1, 200, 0},
 };
 

@@ -257,6 +257,9 @@ inline df::tile_occupancy *getTileOccupancy(df::coord pos) {
 
 DFHACK_EXPORT df::world_data::T_region_map *getRegionBiome(df::coord2d rgn_pos);
 
+// Enables per-frame updates for liquid flow and/or temperature.
+DFHACK_EXPORT void enableBlockUpdates(df::map_block *blk, bool flow = false, bool temperature = false);
+
 /// sorts the block event vector into multiple vectors by type
 /// mineral veins, what's under ice, blood smears and mud
 extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,

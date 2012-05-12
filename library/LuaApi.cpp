@@ -637,6 +637,8 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,printJobDetails),
     WRAPM(Job,getHolder),
     WRAPM(Job,getWorker),
+    WRAPM(Job,checkBuildingsNow),
+    WRAPM(Job,checkDesignationsNow),
     WRAPN(is_equal, jobEqual),
     WRAPN(is_item_equal, jobItemEqual),
     { NULL, NULL }
@@ -753,6 +755,7 @@ static const luaL_Reg dfhack_items_funcs[] = {
 static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPN(getBlock, (df::map_block* (*)(int32_t,int32_t,int32_t))Maps::getBlock),
     WRAPM(Maps, getRegionBiome),
+    WRAPM(Maps, enableBlockUpdates),
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
     WRAPM(Maps, canWalkBetween),

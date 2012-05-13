@@ -709,8 +709,7 @@ static void linkBuilding(df::building *bld)
 
     linkRooms(bld);
 
-    if (process_jobs)
-        *process_jobs = true;
+    Job::checkBuildingsNow();
 }
 
 static void createDesign(df::building *bld, bool rough)
@@ -900,8 +899,6 @@ bool Buildings::deconstruct(df::building *bld)
 {
     using df::global::ui;
     using df::global::world;
-    using df::global::process_jobs;
-    using df::global::process_dig;
     using df::global::ui_look_list;
 
     CHECK_NULL_POINTER(bld);
@@ -952,8 +949,8 @@ bool Buildings::deconstruct(df::building *bld)
         }
     }
 
-    if (process_dig) *process_dig = true;
-    if (process_jobs) *process_jobs = true;
+    Job::checkBuildingsNow();
+    Job::checkDesignationsNow();
 
     return true;
 }

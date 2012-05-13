@@ -666,6 +666,14 @@ Job module
 
   Returns the unit performing the job.
 
+* ``dfhack.job.checkBuildingsNow()``
+
+  Instructs the game to check buildings for jobs next frame and assign workers.
+
+* ``dfhack.job.checkDesignationsNow()``
+
+  Instructs the game to check designations for jobs next frame and assign workers.
+
 * ``dfhack.job.is_equal(job1,job2)``
 
   Compares important fields in the job and nested item structures.
@@ -802,6 +810,10 @@ Maps module
 * ``dfhack.maps.getRegionBiome(region_coord2d)``
 
   Returns the biome info struct for the given global map region.
+
+* ``dfhack.maps.enableBlockUpdates(block[,flow,temperature])``
+
+  Enables updates for liquid flow or temperature, unless already active.
 
 * ``dfhack.maps.getGlobalInitFeature(index)``
 
@@ -1054,7 +1066,7 @@ Events:
   Emitted when a burrow might have been renamed either through
   the game UI, or ``renameBurrow()``.
 
-* ``onDigComplete.foo = function(job_type,pos,old_tiletype,new_tiletype)``
+* ``onDigComplete.foo = function(job_type,pos,old_tiletype,new_tiletype,worker)``
 
   Emitted when a tile might have been dug out. Only tracked if the
   auto-growing burrows feature is enabled.

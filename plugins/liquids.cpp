@@ -418,10 +418,7 @@ command_result df_liquids_execute(color_ostream &out)
                 mcache.setDesignationAt(*iter,a);
 
                 Block * b = mcache.BlockAt((*iter)/16);
-                DFHack::t_blockflags bf = b->BlockFlags();
-                bf.bits.update_liquid = true;
-                bf.bits.update_liquid_twice = true;
-                b->setBlockFlags(bf);
+                b->enableBlockUpdates(true);
 
                 iter++;
             }
@@ -448,7 +445,8 @@ command_result df_liquids_execute(color_ostream &out)
                 DFHack::DFCoord current = *iter; // current tile coord
                 DFHack::DFCoord curblock = current /16; // current block coord
                 // check if the block is actually there
-                if(!mcache.BlockAt(curblock))
+                auto block = mcache.BlockAt(curblock);
+                if(!block)
                 {
                     iter ++;
                     continue;
@@ -463,64 +461,77 @@ command_result df_liquids_execute(color_ostream &out)
                 }
                 if(mode != "flowbits")
                 {
+                    unsigned old_amount = des.bits.flow_size;
+                    unsigned new_amount = old_amount;
+                    df::tile_liquid old_liquid = des.bits.liquid_type;
+                    df::tile_liquid new_liquid = old_liquid;
+                    // Compute new liquid type and amount
                     if(setmode == "s.")
                     {
-                        des.bits.flow_size = amount;
+                        new_amount = amount;
                     }
                     else if(setmode == "s+")
                     {
-                        if(des.bits.flow_size < amount)
-                            des.bits.flow_size = amount;
+                        if(old_amount < amount)
+                            new_amount = amount;
                     }
                     else if(setmode == "s-")
                     {
-                        if (des.bits.flow_size > amount)
-                            des.bits.flow_size = amount;
+                        if (old_amount > amount)
+                            new_amount = amount;
                     }
-                    if(amount != 0 && mode == "magma")
+                    if (mode == "magma")
+                        new_liquid = tile_liquid::Magma;
+                    else if (mode == "water")
+                        new_liquid = tile_liquid::Water;
+                    // Store new amount and type
+                    des.bits.flow_size = new_amount;
+                    des.bits.liquid_type = new_liquid;
+                    // Compute temperature
+                    if (!old_amount)
+                        old_liquid = tile_liquid::Water;
+                    if (!new_amount)
+                        new_liquid = tile_liquid::Water;
+                    if (old_liquid != new_liquid)
                     {
-                        des.bits.liquid_type =  tile_liquid::Magma;
-                        mcache.setTemp1At(current,12000);
-                        mcache.setTemp2At(current,12000);
-                    }
-                    else if(amount != 0 && mode == "water")
-                    {
-                        des.bits.liquid_type =  tile_liquid::Water;
-                        mcache.setTemp1At(current,10015);
-                        mcache.setTemp2At(current,10015);
-                    }
-                    else if(amount == 0 && (mode == "water" || mode == "magma"))
-                    {
-                        // reset temperature to sane default
-                        mcache.setTemp1At(current,10015);
-                        mcache.setTemp2At(current,10015);
+                        if (new_liquid == tile_liquid::Water)
+                        {
+                            mcache.setTemp1At(current,10015);
+                            mcache.setTemp2At(current,10015);
+                        }
+                        else
+                        {
+                            mcache.setTemp1At(current,12000);
+                            mcache.setTemp2At(current,12000);
+                        }
                     }
                     // mark the tile passable or impassable like the game does
-                    des.bits.flow_forbid = des.bits.flow_size &&
-                        (des.bits.liquid_type == tile_liquid::Magma || des.bits.flow_size > 3);
+                    des.bits.flow_forbid = (new_liquid == tile_liquid::Magma || new_amount > 3);
                     mcache.setDesignationAt(current,des);
+                    // request flow engine updates
+                    block->enableBlockUpdates(new_amount != old_amount, new_liquid != old_liquid);
                 }
-                seen_blocks.insert(mcache.BlockAt(current / 16));
+                seen_blocks.insert(block);
                 iter++;
             }
             set <Block *>::iterator biter = seen_blocks.begin();
             while (biter != seen_blocks.end())
             {
-                DFHack::t_blockflags bflags = (*biter)->BlockFlags();
                 if(flowmode == "f+")
                 {
-                    bflags.bits.update_liquid = true;
-                    bflags.bits.update_liquid_twice = true;
-                    (*biter)->setBlockFlags(bflags);
+                    (*biter)->enableBlockUpdates(true);
                 }
                 else if(flowmode == "f-")
                 {
-                    bflags.bits.update_liquid = false;
-                    bflags.bits.update_liquid_twice = false;
-                    (*biter)->setBlockFlags(bflags);
+                    if (auto block = (*biter)->getRaw())
+                    {
+                        block->flags.bits.update_liquid = false;
+                        block->flags.bits.update_liquid_twice = false;
+                    }
                 }
                 else
                 {
+                    auto bflags = (*biter)->BlockFlags();
                     out << "flow bit 1 = " << bflags.bits.update_liquid << endl; 
                     out << "flow bit 2 = " << bflags.bits.update_liquid_twice << endl;
                 }

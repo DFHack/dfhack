@@ -54,6 +54,7 @@ using namespace std;
 #include "df/world_region_details.h"
 #include "df/builtin_mats.h"
 #include "df/block_square_event_grassst.h"
+#include "df/z_level_flags.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -174,6 +175,30 @@ df::world_data::T_region_map *Maps::getRegionBiome(df::coord2d rgn_pos)
         return NULL;
 
     return &data->region_map[rgn_pos.x][rgn_pos.y];
+}
+
+void Maps::enableBlockUpdates(df::map_block *blk, bool flow, bool temperature)
+{
+    if (!blk || !(flow || temperature)) return;
+
+    if (temperature)
+        blk->flags.bits.update_temperature = true;
+
+    if (flow)
+    {
+        blk->flags.bits.update_liquid = true;
+        blk->flags.bits.update_liquid_twice = true;
+    }
+
+    auto z_flags = world->map.z_level_flags;
+    int z_level = blk->map_pos.z;
+
+    if (z_flags && z_level >= 0 && z_level < world->map.z_count_block)
+    {
+        z_flags += z_level;
+        z_flags->bits.update = true;
+        z_flags->bits.update_twice = true;
+    }
 }
 
 df::feature_init *Maps::getGlobalInitFeature(int32_t index)
@@ -426,7 +451,6 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
     dirty_designations = false;
     dirty_tiles = false;
     dirty_temperatures = false;
-    dirty_blockflags = false;
     dirty_occupancies = false;
     valid = false;
     bcoord = _bcoord;
@@ -440,7 +464,6 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
     {
         COPY(designation, block->designation);
         COPY(occupancy, block->occupancy);
-        blockflags = block->flags;
 
         COPY(temp1, block->temperature_1);
         COPY(temp2, block->temperature_2);
@@ -449,7 +472,6 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
     }
     else
     {
-        blockflags.whole = 0;
         memset(designation,0,sizeof(designation));
         memset(occupancy,0,sizeof(occupancy));
         memset(temp1,0,sizeof(temp1));
@@ -634,11 +656,6 @@ bool MapExtras::Block::Write ()
 {
     if(!valid) return false;
 
-    if(dirty_blockflags)
-    {
-        block->flags = blockflags;
-        dirty_blockflags = false;
-    }
     if(dirty_designations)
     {
         COPY(block->designation, designation);

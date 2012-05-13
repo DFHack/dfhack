@@ -912,6 +912,12 @@ The is_bright boolean actually seems to invert the brightness.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.job.getWorker(job)</tt></p>
 <p>Returns the unit performing the job.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.checkBuildingsNow()</tt></p>
+<p>Instructs the game to check buildings for jobs next frame and assign workers.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.checkDesignationsNow()</tt></p>
+<p>Instructs the game to check designations for jobs next frame and assign workers.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.job.is_equal(job1,job2)</tt></p>
 <p>Compares important fields in the job and nested item structures.</p>
 </li>
@@ -1022,6 +1028,9 @@ Returns <em>false</em> in case of error.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getRegionBiome(region_coord2d)</tt></p>
 <p>Returns the biome info struct for the given global map region.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.maps.enableBlockUpdates(block[,flow,temperature])</span></tt></p>
+<p>Enables updates for liquid flow or temperature, unless already active.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getGlobalInitFeature(index)</tt></p>
 <p>Returns the global feature object with the given index.</p>
@@ -1236,7 +1245,7 @@ module file is still necessary for <tt class="docutils literal">require</tt> to 
 <p>Emitted when a burrow might have been renamed either through
 the game UI, or <tt class="docutils literal">renameBurrow()</tt>.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">onDigComplete.foo = function(job_type,pos,old_tiletype,new_tiletype)</tt></p>
+<li><p class="first"><tt class="docutils literal">onDigComplete.foo = function(job_type,pos,old_tiletype,new_tiletype,worker)</tt></p>
 <p>Emitted when a tile might have been dug out. Only tracked if the
 auto-growing burrows feature is enabled.</p>
 </li>

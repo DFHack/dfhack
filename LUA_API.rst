@@ -807,7 +807,7 @@ Maps module
 
   Returns a map block object for given df::coord or x,y,z in local tile coordinates.
 
-* ``dfhack.maps.getRegionBiome(region_coord2d)``
+* ``dfhack.maps.getRegionBiome(region_coord2d)``, or ``getRegionBiome(x,y)``
 
   Returns the biome info struct for the given global map region.
 
@@ -822,6 +822,10 @@ Maps module
 * ``dfhack.maps.getLocalInitFeature(region_coord2d,index)``
 
   Returns the local feature object with the given region coords and index.
+
+* ``dfhack.maps.getTileBiomeRgn(coords)``, or ``getTileBiomeRgn(x,y,z)``
+
+  Returns *x, y* for use with ``getRegionBiome``.
 
 * ``dfhack.maps.canWalkBetween(pos1, pos2)``
 

@@ -111,9 +111,11 @@ function copyall(table)
 end
 
 function pos2xyz(pos)
-    local x = pos.x
-    if x and x ~= -30000 then
-        return x, pos.y, pos.z
+    if pos then
+        local x = pos.x
+        if x and x ~= -30000 then
+            return x, pos.y, pos.z
+        end
     end
 end
 

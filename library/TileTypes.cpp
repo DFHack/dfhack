@@ -68,6 +68,8 @@ namespace DFHack
                 return tiletype::LavaPillar;
             case tiletype_material::STONE:
                 return tiletype::StonePillar;
+            default:
+                break;
             }
         }
 

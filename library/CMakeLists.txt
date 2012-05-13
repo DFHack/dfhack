@@ -64,6 +64,7 @@ DataStatics.cpp
 DataStaticsCtor.cpp
 DataStaticsFields.cpp
 MiscUtils.cpp
+Types.cpp
 PluginManager.cpp
 TileTypes.cpp
 VersionInfoFactory.cpp
@@ -100,6 +101,7 @@ Process-linux.cpp
 
 SET(MODULE_HEADERS
 include/modules/Buildings.h
+include/modules/Burrows.h
 include/modules/Constructions.h
 include/modules/Units.h
 include/modules/Engravings.h
@@ -120,6 +122,7 @@ include/modules/Graphic.h
 
 SET( MODULE_SOURCES
 modules/Buildings.cpp
+modules/Burrows.cpp
 modules/Constructions.cpp
 modules/Units.cpp
 modules/Engravings.cpp
@@ -297,6 +300,9 @@ install(TARGETS dfhack-run dfhack-client
 install(DIRECTORY lua/
         DESTINATION ${DFHACK_LUA_DESTINATION}
         FILES_MATCHING PATTERN "*.lua")
+
+install(DIRECTORY ${dfhack_SOURCE_DIR}/scripts
+        DESTINATION ${DFHACK_DATA_DESTINATION})
 
 # Unused for so long that it's not even relevant now...
 if(BUILD_DEVEL)

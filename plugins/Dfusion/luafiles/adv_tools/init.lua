@@ -5,7 +5,7 @@ function adv_tools.reincarnate(swap_soul) --only for adventurer i guess
 	if swap_soul==nil then
 		swap_soul=true
 	end
-	local adv=df.global.world.units.other[0][0]
+	local adv=df.global.world.units.active[0]
 	if adv.flags1.dead==false then
 		error("You are not dead (yet)!")
 	end

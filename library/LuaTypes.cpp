@@ -577,35 +577,6 @@ static void write_field(lua_State *state, const struct_field_info *field, void *
 }
 
 /**
- * Metamethod: represent a type node as string.
- */
-static int meta_type_tostring(lua_State *state)
-{
-    if (!lua_getmetatable(state, 1))
-        return 0;
-
-    lua_getfield(state, -1, "__metatable");
-    const char *cname = lua_tostring(state, -1);
-
-    lua_pushstring(state, stl_sprintf("<type: %s>", cname).c_str());
-    return 1;
-}
-
-/**
- * Metamethod: represent a DF object reference as string.
- */
-static int meta_ptr_tostring(lua_State *state)
-{
-    uint8_t *ptr = get_object_addr(state, 1, 0, "access");
-
-    lua_getfield(state, UPVAL_METATABLE, "__metatable");
-    const char *cname = lua_tostring(state, -1);
-
-    lua_pushstring(state, stl_sprintf("<%s: 0x%08x>", cname, (unsigned)ptr).c_str());
-    return 1;
-}
-
-/**
  * Metamethod: __index for structures.
  */
 static int meta_struct_index(lua_State *state)
@@ -1058,6 +1029,11 @@ int LuaWrapper::method_wrapper_core(lua_State *state, function_identity_base *id
         std::string tmp = stl_sprintf("NULL pointer: %s", vn ? vn : "?");
         field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
     }
+    catch (Error::InvalidArgument &e) {
+        const char *vn = e.expr();
+        std::string tmp = stl_sprintf("Invalid argument; expected: %s", vn ? vn : "?");
+        field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
+    }
     catch (std::exception &e) {
         std::string tmp = stl_sprintf("C++ exception: %s", e.what());
         field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
@@ -1127,26 +1103,39 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
             name = pstruct->getName() + ("." + name);
         lua_pop(state, 1);
 
+        bool add_to_enum = true;
+
         // Handle the field
         switch (fields[i].mode)
         {
         case struct_field_info::OBJ_METHOD:
             AddMethodWrapper(state, base+1, base+2, name.c_str(),
                              (function_identity_base*)fields[i].type);
-            break;
+            continue;
 
         case struct_field_info::CLASS_METHOD:
+            continue;
+
+        case struct_field_info::POINTER:
+            // Skip class-typed pointers within unions
+            if ((fields[i].count & 2) != 0 && fields[i].type &&
+                fields[i].type->type() == IDTYPE_CLASS)
+                add_to_enum = false;
             break;
 
         default:
-            // Do not add invalid globals to the enumeration order
-            if (!globals || *(void**)fields[i].offset)
-                AssociateId(state, base+3, ++cnt, name.c_str());
-
-            lua_pushlightuserdata(state, (void*)&fields[i]);
-            lua_setfield(state, base+2, name.c_str());
             break;
         }
+
+        // Do not add invalid globals to the enumeration order
+        if (globals && !*(void**)fields[i].offset)
+            add_to_enum = false;
+
+        if (add_to_enum)
+            AssociateId(state, base+3, ++cnt, name.c_str());
+
+        lua_pushlightuserdata(state, (void*)&fields[i]);
+        lua_setfield(state, base+2, name.c_str());
     }
 }
 

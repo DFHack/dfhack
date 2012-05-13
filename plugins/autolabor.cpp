@@ -873,7 +873,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		{
 			if (is_on_break)
 				dwarf_info[dwarf].state = OTHER;
-			else if (dwarfs[dwarf]->meetings.size() > 0)
+			else if (dwarfs[dwarf]->specific_refs.size() > 0)
 				dwarf_info[dwarf].state = OTHER;
 			else
 				dwarf_info[dwarf].state = IDLE;

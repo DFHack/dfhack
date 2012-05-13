@@ -1628,8 +1628,8 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
         out << ", pen/pasture";
     else if (civ->zone_flags.bits.pit_pond)
     {
-        out << " (pit flags:" << civ->pit_flags << ")";
-        if(civ->pit_flags & 1)
+        out << " (pit flags:" << civ->pit_flags.whole << ")";
+        if(civ->pit_flags.bits.is_pond)
             out << ", pond";
         else 
             out << ", pit";

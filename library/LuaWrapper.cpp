@@ -542,10 +542,23 @@ static int meta_sizeof(lua_State *state)
         return 2;
     }
 
-    type_identity *id = get_object_identity(state, 1, "df.sizeof()", true);
+    type_identity *id = get_object_identity(state, 1, "df.sizeof()", true, true);
 
-    lua_pushinteger(state, id->byte_size());
+    // Static arrays need special handling
+    if (id->type() == IDTYPE_BUFFER)
+    {
+        auto buf = (df::buffer_container_identity*)id;
+        type_identity *item = buf->getItemType();
+        int count = buf->getSize();
 
+        fetch_container_details(state, lua_gettop(state), &item, &count);
+
+        lua_pushinteger(state, item->byte_size() * count);
+    }
+    else
+        lua_pushinteger(state, id->byte_size());
+
+    // Add the address
     if (lua_isuserdata(state, 1))
     {
         lua_pushnumber(state, (size_t)get_object_ref(state, 1));

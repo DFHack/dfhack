@@ -289,8 +289,10 @@ namespace df
         {}
 
         buffer_container_identity(int size, type_identity *item, enum_identity *ienum = NULL)
-            : container_identity(item->byte_size()*size, NULL, item, ienum), size(size)
+            : container_identity(0, NULL, item, ienum), size(size)
         {}
+
+        size_t byte_size() { return getItemType()->byte_size()*size; }
 
         std::string getFullName(type_identity *item);
         int getSize() { return size; }
@@ -445,6 +447,7 @@ namespace df
     NUMBER_IDENTITY_TRAITS(int64_t);
     NUMBER_IDENTITY_TRAITS(uint64_t);
     NUMBER_IDENTITY_TRAITS(float);
+    NUMBER_IDENTITY_TRAITS(double);
 
     template<> struct DFHACK_EXPORT identity_traits<bool> {
         static bool_identity identity;

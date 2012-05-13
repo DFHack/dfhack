@@ -187,7 +187,9 @@ static command_result stockcheck(color_ostream &out, vector <string> & parameter
             case general_ref_type::BUILDING_HOLDER:
 				building = ref->getBuilding();
                 break;
-            
+
+            default:
+                break;
 			}
 		}
 
@@ -214,7 +216,9 @@ static command_result stockcheck(color_ostream &out, vector <string> & parameter
 	            case general_ref_type::BUILDING_HOLDER:
 					building = ref->getBuilding();
 			        break;
-            
+
+                default:
+                    break;
 				}
 			}
 		}

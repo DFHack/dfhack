@@ -36,6 +36,7 @@ distribution.
 #include "df/item.h"
 #include "df/item_type.h"
 #include "df/general_ref.h"
+#include "df/specific_ref.h"
 
 namespace df
 {
@@ -125,6 +126,10 @@ DFHACK_EXPORT df::item * findItemByID(int32_t id);
 DFHACK_EXPORT bool copyItem(df::item * source, dfh_item & target);
 /// write copied item back to its origin
 DFHACK_EXPORT bool writeItem(const dfh_item & item);
+
+/// Retrieve refs
+DFHACK_EXPORT df::general_ref *getGeneralRef(df::item *item, df::general_ref_type type);
+DFHACK_EXPORT df::specific_ref *getSpecificRef(df::item *item, df::specific_ref_type type);
 
 /// Retrieve the owner of the item.
 DFHACK_EXPORT df::unit *getOwner(df::item *item);

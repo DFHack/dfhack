@@ -472,8 +472,8 @@ function getSelectedUnit()
 		return nil
 	end
 	local unit_indx=df.global.ui_selected_unit
-	if unit_indx<#df.global.world.units.other[0]-1 then
-		return df.global.world.units.other[0][unit_indx]
+	if unit_indx<#df.global.world.units.active-1 then
+		return df.global.world.units.active[unit_indx]
 	else
 		return nil
 	end

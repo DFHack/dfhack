@@ -255,7 +255,19 @@ inline df::tile_occupancy *getTileOccupancy(df::coord pos) {
     return getTileOccupancy(pos.x, pos.y, pos.z);
 }
 
+/**
+ * Returns biome info about the specified world region.
+ */
 DFHACK_EXPORT df::world_data::T_region_map *getRegionBiome(df::coord2d rgn_pos);
+
+/**
+ * Returns biome world region coordinates for the given tile within given block.
+ */
+DFHACK_EXPORT df::coord2d getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos);
+
+inline df::coord2d getTileBiomeRgn(df::coord pos) {
+    return getBlockTileBiomeRgn(getTileBlock(pos), pos);
+}
 
 // Enables per-frame updates for liquid flow and/or temperature.
 DFHACK_EXPORT void enableBlockUpdates(df::map_block *blk, bool flow = false, bool temperature = false);

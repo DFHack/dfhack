@@ -264,11 +264,14 @@ namespace DFHack {namespace Lua {
     inline void Push(lua_State *state, bool value) {
         lua_pushboolean(state, value);
     }
+    inline void Push(lua_State *state, const char *str) {
+        lua_pushstring(state, str);
+    }
     inline void Push(lua_State *state, const std::string &str) {
         lua_pushlstring(state, str.data(), str.size());
     }
-    inline void Push(lua_State *state, df::coord &obj) { PushDFObject(state, &obj); }
-    inline void Push(lua_State *state, df::coord2d &obj) { PushDFObject(state, &obj); }
+    DFHACK_EXPORT void Push(lua_State *state, df::coord obj);
+    DFHACK_EXPORT void Push(lua_State *state, df::coord2d obj);
     void Push(lua_State *state, const Units::NoblePosition &pos);
     template<class T> inline void Push(lua_State *state, T *ptr) {
         PushDFObject(state, ptr);
@@ -293,6 +296,7 @@ namespace DFHack {namespace Lua {
     }
 
     DFHACK_EXPORT int PushPosXYZ(lua_State *state, df::coord pos);
+    DFHACK_EXPORT int PushPosXY(lua_State *state, df::coord2d pos);
 
     DFHACK_EXPORT bool IsCoreContext(lua_State *state);
 

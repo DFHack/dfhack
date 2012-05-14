@@ -221,6 +221,68 @@ function clone(obj,deep)
     end
 end
 
+local function get_default(default,key,base)
+    if type(default) == 'table' then
+        local dv = default[key]
+        if dv == nil then
+            dv = default._default
+        end
+        if dv == nil then
+            dv = base
+        end
+        return dv
+    else
+        return default
+    end
+end
+
+-- Copy the object as lua data structures, skipping values matching defaults.
+function clone_with_default(obj,default,force)
+    local rv = nil
+    local function setrv(k,v)
+        if v ~= nil then
+            if rv == nil then
+                rv = {}
+            end
+            rv[k] = v
+        end
+    end
+    if default == nil then
+        return nil
+    elseif type(obj) == 'table' then
+        for k,v in pairs(obj) do
+            setrv(k, clone_with_default(v, get_default(default,k)))
+        end
+    elseif df.isvalid(obj) == 'ref' then
+        local kind = obj._kind
+        if kind == 'primitive' then
+            return clone_with_default(obj.value,default,force)
+        elseif kind == 'bitfield' then
+            for k,v in pairs(obj) do
+                setrv(k, clone_with_default(v, get_default(default,k,false)))
+            end
+        elseif kind == 'container' then
+            for k,v in ipairs(obj) do
+                setrv(k+1, clone_with_default(v, default, true))
+            end
+        else -- struct
+            for k,v in pairs(obj) do
+                setrv(k, clone_with_default(v, get_default(default,k)))
+            end
+        end
+    elseif obj == default and not force then
+        return nil
+    elseif obj == nil then
+        return NULL
+    else
+        return obj
+    end
+    if force and rv == nil then
+        rv = {}
+    end
+    return rv
+end
+
 -- Sort a vector or lua table
 function sort_vector(vector,field,cmp)
     local fcmp = compare_field(field,cmp)

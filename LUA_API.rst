@@ -807,7 +807,7 @@ Maps module
 
   Returns a map block object for given df::coord or x,y,z in local tile coordinates.
 
-* ``dfhack.maps.getRegionBiome(region_coord2d)``
+* ``dfhack.maps.getRegionBiome(region_coord2d)``, or ``getRegionBiome(x,y)``
 
   Returns the biome info struct for the given global map region.
 
@@ -822,6 +822,10 @@ Maps module
 * ``dfhack.maps.getLocalInitFeature(region_coord2d,index)``
 
   Returns the local feature object with the given region coords and index.
+
+* ``dfhack.maps.getTileBiomeRgn(coords)``, or ``getTileBiomeRgn(x,y,z)``
+
+  Returns *x, y* for use with ``getRegionBiome``.
 
 * ``dfhack.maps.canWalkBetween(pos1, pos2)``
 
@@ -966,6 +970,80 @@ Low-level building creation functions;
 
 More high-level functions are implemented in lua and can be loaded by
 ``require('dfhack.buildings')``. See ``hack/lua/dfhack/buildings.lua``.
+
+Among them are:
+
+* ``dfhack.buildings.getFiltersByType(argtable,type,subtype,custom)``
+
+  Returns a sequence of lua structures, describing input item filters
+  suitable for the specified building type, or *nil* if unknown or invalid.
+  The returned sequence is suitable for use as the ``job_items`` argument
+  of ``constructWithFilters``.
+  Uses tables defined in ``buildings.lua``.
+
+  Argtable members ``material`` (the default name), ``bucket``, ``barrel``,
+  ``chain``, ``mechanism``, ``screw``, ``pipe``, ``anvil``, ``weapon`` are used to
+  augment the basic attributes with more detailed information if the
+  building has input items with the matching name (see the tables for naming details).
+  Note that it is impossible to *override* any properties this way, only supply those that
+  are not mentioned otherwise; one exception is that flags2.non_economic
+  is automatically cleared if an explicit material is specified.
+
+* ``dfhack.buildings.constructBuilding{...}``
+
+  Creates a building in one call, using options contained
+  in the argument table. Returns the building, or *nil, error*.
+
+  **NOTE:** Despite the name, unless the building is abstract,
+  the function creates it in an 'unconstructed' stage, with
+  a queued in-game job that will actually construct it. I.e.
+  the function replicates programmatically what can be done
+  through the construct building menu in the game ui, except
+  that it does less environment constraint checking.
+
+  The following options can be used:
+
+  - ``pos = coordinates``, or ``x = ..., y = ..., z = ...``
+
+    Mandatory. Specifies the left upper corner of the building.
+
+  - ``type = df.building_type.FOO, subtype = ..., custom = ...``
+
+    Mandatory. Specifies the type of the building. Obviously, subtype
+    and custom are only expected if the type requires them.
+
+  - ``fields = { ... }``
+
+    Initializes fields of the building object after creation with ``df.assign``.
+
+  - ``width = ..., height = ..., direction = ...``
+
+    Sets size and orientation of the building. If it is
+    fixed-size, specified dimensions are ignored.
+
+  - ``full_rectangle = true``
+
+    For buildings like stockpiles or farm plots that can normally
+    accomodate individual tile exclusion, forces an error if any
+    tiles within the specified width*height are obstructed.
+
+  - ``items = { item, item ... }``, or ``filters = { {...}, {...}... }``
+
+    Specifies explicit items or item filters to use in construction.
+    It is the job of the user to ensure they are correct for the building type.
+
+  - ``abstract = true``
+
+    Specifies that the building is abstract and does not require construction.
+    Required for stockpiles and civzones; an error otherwise.
+
+  - ``material = {...}, mechanism = {...}, ...``
+
+    If none of ``items``, ``filter``, or ``abstract`` is used,
+    the function uses ``getFiltersByType`` to compute the input
+    item filters, and passes the argument table through. If no filters
+    can be determined this way, ``constructBuilding`` throws an error.
+
 
 Constructions module
 --------------------

@@ -1026,7 +1026,7 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getTileBlock(coords)</tt>, or <tt class="docutils literal">getTileBlock(x,y,z)</tt></p>
 <p>Returns a map block object for given df::coord or x,y,z in local tile coordinates.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.maps.getRegionBiome(region_coord2d)</tt></p>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getRegionBiome(region_coord2d)</tt>, or <tt class="docutils literal">getRegionBiome(x,y)</tt></p>
 <p>Returns the biome info struct for the given global map region.</p>
 </li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.maps.enableBlockUpdates(block[,flow,temperature])</span></tt></p>
@@ -1037,6 +1037,9 @@ Returns <em>false</em> in case of error.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getLocalInitFeature(region_coord2d,index)</tt></p>
 <p>Returns the local feature object with the given region coords and index.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileBiomeRgn(coords)</tt>, or <tt class="docutils literal">getTileBiomeRgn(x,y,z)</tt></p>
+<p>Returns <em>x, y</em> for use with <tt class="docutils literal">getRegionBiome</tt>.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.canWalkBetween(pos1, pos2)</tt></p>
 <p>Checks if a dwarf may be able to walk between the two tiles,
@@ -1160,6 +1163,69 @@ Returns <em>true</em> if the building was destroyed and deallocated immediately.
 </ul>
 <p>More high-level functions are implemented in lua and can be loaded by
 <tt class="docutils literal"><span class="pre">require('dfhack.buildings')</span></tt>. See <tt class="docutils literal">hack/lua/dfhack/buildings.lua</tt>.</p>
+<p>Among them are:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.getFiltersByType(argtable,type,subtype,custom)</tt></p>
+<p>Returns a sequence of lua structures, describing input item filters
+suitable for the specified building type, or <em>nil</em> if unknown or invalid.
+The returned sequence is suitable for use as the <tt class="docutils literal">job_items</tt> argument
+of <tt class="docutils literal">constructWithFilters</tt>.
+Uses tables defined in <tt class="docutils literal">buildings.lua</tt>.</p>
+<p>Argtable members <tt class="docutils literal">material</tt> (the default name), <tt class="docutils literal">bucket</tt>, <tt class="docutils literal">barrel</tt>,
+<tt class="docutils literal">chain</tt>, <tt class="docutils literal">mechanism</tt>, <tt class="docutils literal">screw</tt>, <tt class="docutils literal">pipe</tt>, <tt class="docutils literal">anvil</tt>, <tt class="docutils literal">weapon</tt> are used to
+augment the basic attributes with more detailed information if the
+building has input items with the matching name (see the tables for naming details).
+Note that it is impossible to <em>override</em> any properties this way, only supply those that
+are not mentioned otherwise; one exception is that flags2.non_economic
+is automatically cleared if an explicit material is specified.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.buildings.constructBuilding{...}</span></tt></p>
+<p>Creates a building in one call, using options contained
+in the argument table. Returns the building, or <em>nil, error</em>.</p>
+<p><strong>NOTE:</strong> Despite the name, unless the building is abstract,
+the function creates it in an 'unconstructed' stage, with
+a queued in-game job that will actually construct it. I.e.
+the function replicates programmatically what can be done
+through the construct building menu in the game ui, except
+that it does less environment constraint checking.</p>
+<p>The following options can be used:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">pos = coordinates</tt>, or <tt class="docutils literal">x = <span class="pre">...,</span> y = <span class="pre">...,</span> z = ...</tt></p>
+<p>Mandatory. Specifies the left upper corner of the building.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">type = df.building_type.FOO, subtype = <span class="pre">...,</span> custom = ...</tt></p>
+<p>Mandatory. Specifies the type of the building. Obviously, subtype
+and custom are only expected if the type requires them.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">fields = { ... }</tt></p>
+<p>Initializes fields of the building object after creation with <tt class="docutils literal">df.assign</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">width = <span class="pre">...,</span> height = <span class="pre">...,</span> direction = ...</tt></p>
+<p>Sets size and orientation of the building. If it is
+fixed-size, specified dimensions are ignored.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">full_rectangle = true</tt></p>
+<p>For buildings like stockpiles or farm plots that can normally
+accomodate individual tile exclusion, forces an error if any
+tiles within the specified width*height are obstructed.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">items = { item, item ... }</tt>, or <tt class="docutils literal">filters = { <span class="pre">{...},</span> <span class="pre">{...}...</span> }</tt></p>
+<p>Specifies explicit items or item filters to use in construction.
+It is the job of the user to ensure they are correct for the building type.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">abstract = true</tt></p>
+<p>Specifies that the building is abstract and does not require construction.
+Required for stockpiles and civzones; an error otherwise.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">material = <span class="pre">{...},</span> mechanism = <span class="pre">{...},</span> ...</tt></p>
+<p>If none of <tt class="docutils literal">items</tt>, <tt class="docutils literal">filter</tt>, or <tt class="docutils literal">abstract</tt> is used,
+the function uses <tt class="docutils literal">getFiltersByType</tt> to compute the input
+item filters, and passes the argument table through. If no filters
+can be determined this way, <tt class="docutils literal">constructBuilding</tt> throws an error.</p>
+</li>
+</ul>
+</li>
+</ul>
 </div>
 <div class="section" id="constructions-module">
 <h3><a class="toc-backref" href="#id21">Constructions module</a></h3>

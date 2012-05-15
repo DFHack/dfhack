@@ -1,4 +1,9 @@
 #pragma once
+#include <llimits.h>
+#include <sstream>
+#include <string>
+#include <stack>
+#include <set>
 
 typedef vector <df::coord> coord_vec;
 class Brush
@@ -60,10 +65,15 @@ public:
     };
     ~RectangleBrush(){};
     std::string str() const {
-        if (x_ == 1 && y_ == 1 && z_ == 1) {
+        if (x_ == 1 && y_ == 1 && z_ == 1)
+        {
             return "point";
-        } else {
-            return "rectangle";
+        }
+        else
+        {
+            std::ostringstream ss;
+            ss << "rect: " << x_ << "/" << y_ << "/" << z_ << std::endl;
+            return ss.str();
         }
     }
 private:

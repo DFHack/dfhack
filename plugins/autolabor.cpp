@@ -348,7 +348,12 @@ static const dwarf_state dwarf_states[] = {
 	OTHER /* CauseTrouble */,
 	OTHER /* DrinkBlood */,
 	OTHER /* ReportCrime */,
-	OTHER /* ExecuteCriminal */
+	OTHER /* ExecuteCriminal */,
+        BUSY /* TrainAnimal */,
+        BUSY /* CarveTrack */,
+        BUSY /* PushTrackVehicle */,
+        BUSY /* PlaceTrackVehicle */,
+        BUSY /* StoreItemInVehicle */
 };
 
 struct labor_info
@@ -886,8 +891,13 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			assert(job >= 0);
 			assert(job < ARRAY_COUNT(dwarf_states));
 			*/
-
-			dwarf_info[dwarf].state = dwarf_states[job];
+                        if (job >= 0 && job < ARRAY_COUNT(dwarf_states))
+                            dwarf_info[dwarf].state = dwarf_states[job];
+                        else 
+                        {
+                            out.print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
+                            dwarf_info[dwarf].state = OTHER;
+                        }
 		}
 
 		state_count[dwarf_info[dwarf].state]++;

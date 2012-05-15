@@ -458,7 +458,8 @@ static const struct labor_default default_labor_infos[] = {
     /* GLAZING */			{AUTOMATIC, false, 1, 200, 0},
     /* PRESSING */			{AUTOMATIC, false, 1, 200, 0},
     /* BEEKEEPING */		{AUTOMATIC, false, 1, 1, 0}, // reduce risk of stuck beekeepers (see http://www.bay12games.com/dwarves/mantisbt/view.php?id=3981)
-	/* WAX_WORKING */		{AUTOMATIC, false, 1, 200, 0},
+    /* WAX_WORKING */		{AUTOMATIC, false, 1, 200, 0},
+    /* PUSH_HAUL_VEHICLES */	{HAULERS, false, 1, 200, 0}
 };
 
 static const int responsibility_penalties[] = {
@@ -1271,7 +1272,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
 		if (labor == df::enums::unit_labor::NONE)
 		{
-			out.printerr("Could not find labor %s.", parameters[0].c_str());
+			out.printerr("Could not find labor %s.\n", parameters[0].c_str());
 			return CR_WRONG_USAGE;
 		}
 

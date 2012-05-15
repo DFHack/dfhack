@@ -37,6 +37,7 @@ distribution.
 #include "df/item_type.h"
 #include "df/general_ref.h"
 #include "df/specific_ref.h"
+#include "df/body_part_raw.h"
 
 namespace df
 {
@@ -146,6 +147,6 @@ DFHACK_EXPORT df::coord getPosition(df::item *item);
 
 DFHACK_EXPORT bool moveToGround(MapExtras::MapCache &mc, df::item *item, df::coord pos);
 DFHACK_EXPORT bool moveToContainer(MapExtras::MapCache &mc, df::item *item, df::item *container);
-
+DFHACK_EXPORT bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit, df::body_part_raw * targetBodyPart, bool ignoreRestrictions, int multiEquipLimit, bool verbose);
 }
 }

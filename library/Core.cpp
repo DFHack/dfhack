@@ -1180,6 +1180,18 @@ int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
     if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
     if(SDL::K_F1 <= ke.ksym.sym && ke.ksym.sym <= SDL::K_F12) return ke.ksym.sym;
 
+    // These keys are mapped to the same control codes as Ctrl-?
+    switch (ke.ksym.sym) {
+    case SDL::K_RETURN:
+    case SDL::K_KP_ENTER:
+    case SDL::K_TAB:
+    case SDL::K_ESCAPE:
+    case SDL::K_DELETE:
+        return ke.ksym.sym;
+    default:
+        break;
+    }
+
     int unicode = ke.ksym.unicode;
 
     // convert Ctrl characters to their 0x40-0x5F counterparts:

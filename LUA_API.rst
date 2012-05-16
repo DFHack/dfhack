@@ -1087,6 +1087,13 @@ Core context specific functions:
   Returns the timer id, or *nil* if unsuccessful due to
   world being unloaded.
 
+* ``dfhack.timeout_active(id[,new_callback])``
+
+  Returns the active callback with the given id, or *nil*
+  if inactive or nil id. If called with 2 arguments, replaces
+  the current callback with the given value, if still active.
+  Using ``timeout_active(id,nil)`` cancels the timer.
+
 * ``dfhack.onStateChange.foo = function(code)``
 
   Event. Receives the same codes as plugin_onstatechange in C++.

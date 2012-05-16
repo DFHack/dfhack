@@ -1265,6 +1265,12 @@ and cannot be queued until it is loaded again.
 Returns the timer id, or <em>nil</em> if unsuccessful due to
 world being unloaded.</p>
 </li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.timeout_active(id[,new_callback])</span></tt></p>
+<p>Returns the active callback with the given id, or <em>nil</em>
+if inactive or nil id. If called with 2 arguments, replaces
+the current callback with the given value, if still active.
+Using <tt class="docutils literal">timeout_active(id,nil)</tt> cancels the timer.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.onStateChange.foo = function(code)</tt></p>
 <p>Event. Receives the same codes as plugin_onstatechange in C++.</p>
 </li>

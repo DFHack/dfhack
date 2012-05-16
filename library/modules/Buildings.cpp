@@ -66,6 +66,7 @@ using namespace DFHack;
 #include "df/building_screw_pumpst.h"
 #include "df/building_water_wheelst.h"
 #include "df/building_wellst.h"
+#include "df/building_rollersst.h"
 
 using namespace df::enums;
 using df::global::ui;
@@ -287,6 +288,10 @@ bool Buildings::getCorrectSize(df::coord2d &size, df::coord2d &center,
 
     case AxleHorizontal:
         makeOneDim(size, center, direction);
+        return true;
+
+    case Rollers:
+        makeOneDim(size, center, (direction&1) == 0);
         return true;
 
     case WaterWheel:
@@ -592,6 +597,12 @@ bool Buildings::setSize(df::building *bld, df::coord2d size, int direction)
             obj->direction = (df::screw_pump_direction)direction;
             break;
         }
+    case Rollers:
+        {
+            auto obj = (df::building_rollersst*)bld;
+            obj->direction = (df::screw_pump_direction)direction;
+            break;
+        }
     case Bridge:
         {
             auto obj = (df::building_bridgest*)bld;
@@ -881,7 +892,11 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
         if (items[i]->quantity < 0)
             items[i]->quantity = computeMaterialAmount(bld);
 
-        job->job_items.push_back(items[i]);
+        /* The game picks up explicitly listed items in reverse
+         * order, but processes filters straight. This reverses
+         * the order of filters so as to produce the same final
+         * contained_items ordering as the normal ui way. */
+        vector_insert_at(job->job_items, 0, items[i]);
 
         if (items[i]->item_type == item_type::BOULDER)
             rough = true;

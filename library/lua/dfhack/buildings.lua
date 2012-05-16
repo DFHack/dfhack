@@ -178,7 +178,20 @@ local building_inputs = {
     },
     [df.building_type.Slab] = { { item_type=df.item_type.SLAB } },
     [df.building_type.NestBox] = { { has_tool_use=df.tool_uses.NEST_BOX, item_type=df.item_type.TOOL } },
-    [df.building_type.Hive] = { { has_tool_use=df.tool_uses.HIVE, item_type=df.item_type.TOOL } }
+    [df.building_type.Hive] = { { has_tool_use=df.tool_uses.HIVE, item_type=df.item_type.TOOL } },
+    [df.building_type.Rollers] = {
+        {
+            name='mechanism',
+            item_type=df.item_type.TRAPPARTS,
+            quantity=-1,
+            vector_id=df.job_item_vector_id.TRAPPARTS
+        },
+        {
+            name='chain',
+            item_type=df.item_type.CHAIN,
+            vector_id=df.job_item_vector_id.CHAIN
+        }
+    }
 }
 
 --[[ Furnace building input material table. ]]
@@ -318,7 +331,8 @@ local trap_inputs = {
             item_type=df.item_type.TRAPPARTS,
             vector_id=df.job_item_vector_id.TRAPPARTS
         }
-    }
+    },
+    [df.trap_type.TrackStop] = { { flags2={ building_material=true, non_economic=true } } }
 }
 
 --[[ Functions for lookup in tables. ]]

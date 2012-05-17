@@ -1017,7 +1017,7 @@ int Core::Update()
     Lua::Core::Reset(out, "DF code execution");
 
     if (first_update)
-        plug_mgr->OnStateChange(out, SC_CORE_INITIALIZED);
+        onStateChange(out, SC_CORE_INITIALIZED);
 
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
@@ -1043,11 +1043,11 @@ int Core::Update()
 
         // and if the world is going away, we report the map change first
         if(had_map)
-            plug_mgr->OnStateChange(out, SC_MAP_UNLOADED);
+            onStateChange(out, SC_MAP_UNLOADED);
         // and if the world is appearing, we report map change after that
-        plug_mgr->OnStateChange(out, new_wdata ? SC_WORLD_LOADED : SC_WORLD_UNLOADED);
+        onStateChange(out, new_wdata ? SC_WORLD_LOADED : SC_WORLD_UNLOADED);
         if(isMapLoaded())
-            plug_mgr->OnStateChange(out, SC_MAP_LOADED);
+            onStateChange(out, SC_MAP_LOADED);
     }
     // otherwise just check for map change...
     else if (new_mapdata != last_local_map_ptr)
@@ -1058,7 +1058,7 @@ int Core::Update()
         if (isMapLoaded() != had_map)
         {
             getWorld()->ClearPersistentCache();
-            plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+            onStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
         }
     }
 
@@ -1071,15 +1071,12 @@ int Core::Update()
         if (screen != top_viewscreen) 
         {
             top_viewscreen = screen;
-            plug_mgr->OnStateChange(out, SC_VIEWSCREEN_CHANGED);
+            onStateChange(out, SC_VIEWSCREEN_CHANGED);
         }
     }
 
-    // notify all the plugins that a game tick is finished
-    plug_mgr->OnUpdate(out);
-
-    // process timers in lua
-    Lua::Core::onUpdate(out);
+    // Execute per-frame handlers
+    onUpdate(out);
 
     // Release the fake suspend lock
     {
@@ -1115,6 +1112,22 @@ int Core::Update()
 
     return 0;
 };
+
+void Core::onUpdate(color_ostream &out)
+{
+    // notify all the plugins that a game tick is finished
+    plug_mgr->OnUpdate(out);
+
+    // process timers in lua
+    Lua::Core::onUpdate(out);
+}
+
+void Core::onStateChange(color_ostream &out, state_change_event event)
+{
+    plug_mgr->OnStateChange(out, event);
+
+    Lua::Core::onStateChange(out, event);
+}
 
 // FIXME: needs to terminate the IO threads and properly dismantle all the machinery involved.
 int Core::Shutdown ( void )

@@ -71,6 +71,7 @@ using namespace DFHack;
 using namespace tthread;
 using namespace df::enums;
 using df::global::init;
+using df::global::world;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
@@ -1113,8 +1114,18 @@ int Core::Update()
     return 0;
 };
 
+extern bool buildings_do_onupdate;
+void buildings_onStateChange(color_ostream &out, state_change_event event);
+void buildings_onUpdate(color_ostream &out);
+
+static int buildings_timer = 0;
+
 void Core::onUpdate(color_ostream &out)
 {
+    // convert building reagents
+    if (buildings_do_onupdate && (++buildings_timer & 1))
+        buildings_onUpdate(out);
+
     // notify all the plugins that a game tick is finished
     plug_mgr->OnUpdate(out);
 
@@ -1124,6 +1135,8 @@ void Core::onUpdate(color_ostream &out)
 
 void Core::onStateChange(color_ostream &out, state_change_event event)
 {
+    buildings_onStateChange(out, event);
+
     plug_mgr->OnStateChange(out, event);
 
     Lua::Core::onStateChange(out, event);

@@ -66,6 +66,7 @@ using namespace DFHack;
 #include "df/building_screw_pumpst.h"
 #include "df/building_water_wheelst.h"
 #include "df/building_wellst.h"
+#include "df/building_rollersst.h"
 
 using namespace df::enums;
 using df::global::ui;
@@ -84,6 +85,58 @@ static uint8_t *getExtentTile(df::building_extents &extent, df::coord2d tile)
     if (dx < 0 || dy < 0 || dx >= extent.width || dy >= extent.height)
         return NULL;
     return &extent.extents[dx + dy*extent.width];
+}
+
+/*
+ * A monitor to work around this bug, in its application to buildings:
+ *
+ * http://www.bay12games.com/dwarves/mantisbt/view.php?id=1416
+ */
+bool buildings_do_onupdate = false;
+
+void buildings_onStateChange(color_ostream &out, state_change_event event)
+{
+    switch (event) {
+    case SC_MAP_LOADED:
+        buildings_do_onupdate = true;
+        break;
+    case SC_MAP_UNLOADED:
+        buildings_do_onupdate = false;
+        break;
+    default:
+        break;
+    }
+}
+
+void buildings_onUpdate(color_ostream &out)
+{
+    buildings_do_onupdate = false;
+
+    df::job_list_link *link = world->job_list.next;
+    for (; link; link = link->next) {
+        df::job *job = link->item;
+
+        if (job->job_type != job_type::ConstructBuilding)
+            continue;
+        if (job->job_items.empty())
+            continue;
+
+        buildings_do_onupdate = true;
+
+        for (size_t i = 0; i < job->items.size(); i++)
+        {
+            df::job_item_ref *iref = job->items[i];
+            if (iref->role != df::job_item_ref::Reagent)
+                continue;
+            df::job_item *item = vector_get(job->job_items, iref->job_item_idx);
+            if (!item)
+                continue;
+            // Convert Reagent to Hauled, while decrementing quantity
+            item->quantity = std::max(0, item->quantity-1);
+            iref->role = df::job_item_ref::Hauled;
+            iref->job_item_idx = -1;
+        }
+    }
 }
 
 uint32_t Buildings::getNumBuildings()
@@ -287,6 +340,10 @@ bool Buildings::getCorrectSize(df::coord2d &size, df::coord2d &center,
 
     case AxleHorizontal:
         makeOneDim(size, center, direction);
+        return true;
+
+    case Rollers:
+        makeOneDim(size, center, (direction&1) == 0);
         return true;
 
     case WaterWheel:
@@ -592,6 +649,12 @@ bool Buildings::setSize(df::building *bld, df::coord2d size, int direction)
             obj->direction = (df::screw_pump_direction)direction;
             break;
         }
+    case Rollers:
+        {
+            auto obj = (df::building_rollersst*)bld;
+            obj->direction = (df::screw_pump_direction)direction;
+            break;
+        }
     case Bridge:
         {
             auto obj = (df::building_bridgest*)bld;
@@ -881,7 +944,11 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
         if (items[i]->quantity < 0)
             items[i]->quantity = computeMaterialAmount(bld);
 
-        job->job_items.push_back(items[i]);
+        /* The game picks up explicitly listed items in reverse
+         * order, but processes filters straight. This reverses
+         * the order of filters so as to produce the same final
+         * contained_items ordering as the normal ui way. */
+        vector_insert_at(job->job_items, 0, items[i]);
 
         if (items[i]->item_type == item_type::BOULDER)
             rough = true;
@@ -890,6 +957,8 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
         if (bld->mat_index == -1)
             bld->mat_index = items[i]->mat_index;
     }
+
+    buildings_do_onupdate = true;
 
     createDesign(bld, rough);
     return true;
@@ -954,3 +1023,4 @@ bool Buildings::deconstruct(df::building *bld)
 
     return true;
 }
+

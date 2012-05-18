@@ -693,7 +693,7 @@ Units module
 
 * ``dfhack.units.getPosition(unit)``
 
-  Returns true *x,y,z* of the unit; may be not equal to unit.pos if caged.
+  Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
 
 * ``dfhack.units.getContainer(unit)``
 
@@ -752,7 +752,7 @@ Items module
 
 * ``dfhack.items.getPosition(item)``
 
-  Returns true *x,y,z* of the item; may be not equal to item.pos if in inventory.
+  Returns true *x,y,z* of the item, or *nil* if invalid; may be not equal to item.pos if in inventory.
 
 * ``dfhack.items.getGeneralRef(item, type)``
 

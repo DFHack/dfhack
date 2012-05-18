@@ -31,6 +31,8 @@ distribution.
 #include <string>
 #include <vector>
 
+#include "Core.h"
+
 #include "RemoteClient.h"
 
 typedef struct lua_State lua_State;

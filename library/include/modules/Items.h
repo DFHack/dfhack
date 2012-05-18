@@ -37,6 +37,7 @@ distribution.
 #include "df/item_type.h"
 #include "df/general_ref.h"
 #include "df/specific_ref.h"
+#include "df/building_actual.h"
 
 namespace df
 {
@@ -147,5 +148,6 @@ DFHACK_EXPORT df::coord getPosition(df::item *item);
 DFHACK_EXPORT bool moveToGround(MapExtras::MapCache &mc, df::item *item, df::coord pos);
 DFHACK_EXPORT bool moveToContainer(MapExtras::MapCache &mc, df::item *item, df::item *container);
 
+DFHACK_EXPORT bool moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,int16_t use_mode);
 }
 }

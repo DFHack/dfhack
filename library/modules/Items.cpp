@@ -48,6 +48,7 @@ using namespace std;
 #include "df/world.h"
 #include "df/item.h"
 #include "df/building.h"
+#include "df/building_actual.h"
 #include "df/tool_uses.h"
 #include "df/itemdef_weaponst.h"
 #include "df/itemdef_trapcompst.h"
@@ -69,6 +70,7 @@ using namespace std;
 #include "df/general_ref_unit_itemownerst.h"
 #include "df/general_ref_contains_itemst.h"
 #include "df/general_ref_contained_in_itemst.h"
+#include "df/general_ref_building_holderst.h"
 #include "df/vermin.h"
 
 using namespace DFHack;
@@ -674,5 +676,36 @@ bool DFHack::Items::moveToContainer(MapExtras::MapCache &mc, df::item *item, df:
     ref2->item_id = container->id;
     item->itemrefs.push_back(ref2);
 
+    return true;
+}
+DFHACK_EXPORT bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,int16_t use_mode)
+{
+    CHECK_NULL_POINTER(item);
+    CHECK_NULL_POINTER(building);
+
+    auto ref = df::allocate<df::general_ref_building_holderst>();
+    if(!ref)
+    {
+        delete ref;
+        Core::printerr("Could not allocate building holder refs.\n");
+        return false;
+    }
+    if (!detachItem(mc, item))
+    {
+        delete ref;
+        return false;
+    }
+    item->pos.x=building->centerx;
+    item->pos.y=building->centery;
+    item->pos.z=building->z;
+    item->flags.bits.in_building=true;
+
+    ref->building_id=building->id;
+    item->itemrefs.push_back(ref);
+
+    auto con=new df::building_actual::T_contained_items;
+    con->item=item;
+    con->use_mode=use_mode;
+    building->contained_items.push_back(con);
     return true;
 }

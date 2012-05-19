@@ -75,7 +75,7 @@ using df::global::world;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
-static bool parseKeySpec(std::string keyspec, int *psym, int *pmod);
+static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = NULL);
 
 struct Core::Cond
 {
@@ -558,10 +558,15 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
             {
                 con << "Usage:" << endl
                     << "  keybinding list <key>" << endl
-                    << "  keybinding clear <key> <key>..." << endl
-                    << "  keybinding set <key> \"cmdline\" \"cmdline\"..." << endl
-                    << "  keybinding add <key> \"cmdline\" \"cmdline\"..." << endl
-                    << "Later adds, and earlier items within one command have priority." << endl;
+                    << "  keybinding clear <key>[@context]..." << endl
+                    << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"..." << endl
+                    << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"..." << endl
+                    << "Later adds, and earlier items within one command have priority." << endl
+                    << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, or F1-F9, or Enter)." << endl
+                    << "Context may be used to limit the scope of the binding, by" << endl
+                    << "requiring the current context to have a certain prefix." << endl
+                    << "Current UI context is: "
+                    << Gui::getFocusString(Core::getTopViewscreen()) << endl;
             }
         }
         else if(first == "fpause")
@@ -1254,7 +1259,7 @@ int Core::SDL_Event(SDL::Event* ev)
     if(!started) return true;
     if(!ev)
         return true;
-    if(ev && ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP)
+    if(ev && (ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP))
     {
         SDL::KeyboardEvent * ke = (SDL::KeyboardEvent *)ev;
 
@@ -1299,15 +1304,21 @@ bool Core::SelectHotkey(int sym, int modifiers)
     while (screen->child)
         screen = screen->child;
 
+    if (sym == SDL::K_KP_ENTER)
+        sym = SDL::K_RETURN;
+
     std::string cmd;
-    
+
     {
         tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
-    
+
         // Check the internal keybindings
         std::vector<KeyBinding> &bindings = key_bindings[sym];
         for (int i = bindings.size()-1; i >= 0; --i) {
             if (bindings[i].modifiers != modifiers)
+                continue;
+            if (!bindings[i].focus.empty() &&
+                !prefix_matches(bindings[i].focus, Gui::getFocusString(screen)))
                 continue;
             if (!plug_mgr->CanInvokeHotkey(bindings[i].command[0], screen))
                 continue;
@@ -1340,9 +1351,21 @@ bool Core::SelectHotkey(int sym, int modifiers)
         return false;
 }
 
-static bool parseKeySpec(std::string keyspec, int *psym, int *pmod)
+static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus)
 {
     *pmod = 0;
+
+    if (pfocus)
+    {
+        *pfocus = "";
+
+        size_t idx = keyspec.find('@');
+        if (idx != std::string::npos)
+        {
+            *pfocus = keyspec.substr(idx+1);
+            keyspec = keyspec.substr(0, idx);
+        }
+    }
 
     // ugh, ugly
     for (;;) {
@@ -1365,6 +1388,9 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod)
     } else if (keyspec.size() == 2 && keyspec[0] == 'F' && keyspec[1] >= '1' && keyspec[1] <= '9') {
         *psym = SDL::K_F1 + (keyspec[1]-'1');
         return true;
+    } else if (keyspec == "Enter") {
+        *psym = SDL::K_RETURN;
+        return true;
     } else
         return false;
 }
@@ -1372,14 +1398,15 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod)
 bool Core::ClearKeyBindings(std::string keyspec)
 {
     int sym, mod;
-    if (!parseKeySpec(keyspec, &sym, &mod))
+    std::string focus;
+    if (!parseKeySpec(keyspec, &sym, &mod, &focus))
         return false;
 
     tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
 
     std::vector<KeyBinding> &bindings = key_bindings[sym];
     for (int i = bindings.size()-1; i >= 0; --i) {
-        if (bindings[i].modifiers == mod)
+        if (bindings[i].modifiers == mod && prefix_matches(focus, bindings[i].focus))
             bindings.erase(bindings.begin()+i);
     }
 
@@ -1390,7 +1417,7 @@ bool Core::AddKeyBinding(std::string keyspec, std::string cmdline)
 {
     int sym;
     KeyBinding binding;
-    if (!parseKeySpec(keyspec, &sym, &binding.modifiers))
+    if (!parseKeySpec(keyspec, &sym, &binding.modifiers, &binding.focus))
         return false;
 
     cheap_tokenise(cmdline, binding.command);
@@ -1403,7 +1430,8 @@ bool Core::AddKeyBinding(std::string keyspec, std::string cmdline)
     std::vector<KeyBinding> &bindings = key_bindings[sym];
     for (int i = bindings.size()-1; i >= 0; --i) {
         if (bindings[i].modifiers == binding.modifiers &&
-            bindings[i].cmdline == cmdline)
+            bindings[i].cmdline == cmdline &&
+            bindings[i].focus == binding.focus)
             return true;
     }
 
@@ -1424,7 +1452,12 @@ std::vector<std::string> Core::ListKeyBindings(std::string keyspec)
     std::vector<KeyBinding> &bindings = key_bindings[sym];
     for (int i = bindings.size()-1; i >= 0; --i) {
         if (bindings[i].modifiers == mod)
-            rv.push_back(bindings[i].cmdline);
+        {
+            std::string cmd = bindings[i].cmdline;
+            if (!bindings[i].focus.empty())
+                cmd = "@" + bindings[i].focus + ": " + cmd;
+            rv.push_back(cmd);
+        }
     }
 
     return rv;

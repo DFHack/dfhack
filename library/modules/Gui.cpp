@@ -393,14 +393,25 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_assigntrade)
 
 std::string Gui::getFocusString(df::viewscreen *top)
 {
-    virtual_identity *id = virtual_identity::get(top);
-    std::string name = getNameChunk(id, 11, 2);
+    if (!top)
+        return "";
 
-    auto handler = map_find(getFocusStringHandlers, id);
-    if (handler)
-        handler(name, top);
+    if (virtual_identity *id = virtual_identity::get(top))
+    {
+        std::string name = getNameChunk(id, 11, 2);
 
-    return name;
+        auto handler = map_find(getFocusStringHandlers, id);
+        if (handler)
+            handler(name, top);
+
+        return name;
+    }
+    else
+    {
+        Core &core = Core::getInstance();
+        std::string name = core.p->readClassName(*(void**)top);
+        return name.substr(11, name.size()-11-2);
+    }
 }
 
 // Predefined common guard functions

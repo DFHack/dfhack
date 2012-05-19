@@ -55,6 +55,10 @@ namespace DFHack
      */
     namespace Gui
     {
+        inline df::viewscreen *getCurViewscreen() { return Core::getTopViewscreen(); }
+
+        DFHACK_EXPORT std::string getFocusString(df::viewscreen *top);
+
         // Full-screen item details view
         DFHACK_EXPORT bool item_details_hotkey(df::viewscreen *top);
         // 'u'nits or 'j'obs full-screen view

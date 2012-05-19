@@ -613,6 +613,15 @@ can be omitted.
 Gui module
 ----------
 
+* ``dfhack.gui.getCurViewscreen()``
+
+  Returns the viewscreen that is current in the core.
+
+* ``dfhack.gui.getFocusString(viewscreen)``
+
+  Returns a string representation of the current focus position
+  in the ui. The string has a "screen/foo/bar/baz..." format.
+
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
 
   When a job is selected in *'q'* mode, returns the job, else

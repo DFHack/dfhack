@@ -264,11 +264,14 @@ namespace DFHack {namespace Lua {
     inline void Push(lua_State *state, bool value) {
         lua_pushboolean(state, value);
     }
+    inline void Push(lua_State *state, const char *str) {
+        lua_pushstring(state, str);
+    }
     inline void Push(lua_State *state, const std::string &str) {
         lua_pushlstring(state, str.data(), str.size());
     }
-    inline void Push(lua_State *state, df::coord &obj) { PushDFObject(state, &obj); }
-    inline void Push(lua_State *state, df::coord2d &obj) { PushDFObject(state, &obj); }
+    DFHACK_EXPORT void Push(lua_State *state, df::coord obj);
+    DFHACK_EXPORT void Push(lua_State *state, df::coord2d obj);
     void Push(lua_State *state, const Units::NoblePosition &pos);
     template<class T> inline void Push(lua_State *state, T *ptr) {
         PushDFObject(state, ptr);
@@ -293,6 +296,7 @@ namespace DFHack {namespace Lua {
     }
 
     DFHACK_EXPORT int PushPosXYZ(lua_State *state, df::coord pos);
+    DFHACK_EXPORT int PushPosXY(lua_State *state, df::coord2d pos);
 
     DFHACK_EXPORT bool IsCoreContext(lua_State *state);
 
@@ -422,5 +426,19 @@ namespace DFHack {namespace Lua {
             DFHack::Lua::Push(state, arg3); \
             DFHack::Lua::Push(state, arg4); \
             name##_event.invoke(out, 4); \
+        } \
+    }
+
+#define DEFINE_LUA_EVENT_5(name, handler, arg_type1, arg_type2, arg_type3, arg_type4, arg_type5) \
+    static DFHack::Lua::Notification name##_event(df::wrap_function(handler, true)); \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4, arg_type5 arg5) { \
+        handler(out, arg1, arg2, arg3, arg4, arg5); \
+        if (auto state = name##_event.get_state()) { \
+            DFHack::Lua::Push(state, arg1); \
+            DFHack::Lua::Push(state, arg2); \
+            DFHack::Lua::Push(state, arg3); \
+            DFHack::Lua::Push(state, arg4); \
+            DFHack::Lua::Push(state, arg5); \
+            name##_event.invoke(out, 5); \
         } \
     }

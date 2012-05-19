@@ -71,6 +71,7 @@ using namespace DFHack;
 using namespace tthread;
 using namespace df::enums;
 using df::global::init;
+using df::global::world;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
@@ -1017,7 +1018,7 @@ int Core::Update()
     Lua::Core::Reset(out, "DF code execution");
 
     if (first_update)
-        plug_mgr->OnStateChange(out, SC_CORE_INITIALIZED);
+        onStateChange(out, SC_CORE_INITIALIZED);
 
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
@@ -1043,11 +1044,11 @@ int Core::Update()
 
         // and if the world is going away, we report the map change first
         if(had_map)
-            plug_mgr->OnStateChange(out, SC_MAP_UNLOADED);
+            onStateChange(out, SC_MAP_UNLOADED);
         // and if the world is appearing, we report map change after that
-        plug_mgr->OnStateChange(out, new_wdata ? SC_WORLD_LOADED : SC_WORLD_UNLOADED);
+        onStateChange(out, new_wdata ? SC_WORLD_LOADED : SC_WORLD_UNLOADED);
         if(isMapLoaded())
-            plug_mgr->OnStateChange(out, SC_MAP_LOADED);
+            onStateChange(out, SC_MAP_LOADED);
     }
     // otherwise just check for map change...
     else if (new_mapdata != last_local_map_ptr)
@@ -1058,7 +1059,7 @@ int Core::Update()
         if (isMapLoaded() != had_map)
         {
             getWorld()->ClearPersistentCache();
-            plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+            onStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
         }
     }
 
@@ -1071,15 +1072,12 @@ int Core::Update()
         if (screen != top_viewscreen) 
         {
             top_viewscreen = screen;
-            plug_mgr->OnStateChange(out, SC_VIEWSCREEN_CHANGED);
+            onStateChange(out, SC_VIEWSCREEN_CHANGED);
         }
     }
 
-    // notify all the plugins that a game tick is finished
-    plug_mgr->OnUpdate(out);
-
-    // process timers in lua
-    Lua::Core::onUpdate(out);
+    // Execute per-frame handlers
+    onUpdate(out);
 
     // Release the fake suspend lock
     {
@@ -1115,6 +1113,34 @@ int Core::Update()
 
     return 0;
 };
+
+extern bool buildings_do_onupdate;
+void buildings_onStateChange(color_ostream &out, state_change_event event);
+void buildings_onUpdate(color_ostream &out);
+
+static int buildings_timer = 0;
+
+void Core::onUpdate(color_ostream &out)
+{
+    // convert building reagents
+    if (buildings_do_onupdate && (++buildings_timer & 1))
+        buildings_onUpdate(out);
+
+    // notify all the plugins that a game tick is finished
+    plug_mgr->OnUpdate(out);
+
+    // process timers in lua
+    Lua::Core::onUpdate(out);
+}
+
+void Core::onStateChange(color_ostream &out, state_change_event event)
+{
+    buildings_onStateChange(out, event);
+
+    plug_mgr->OnStateChange(out, event);
+
+    Lua::Core::onStateChange(out, event);
+}
 
 // FIXME: needs to terminate the IO threads and properly dismantle all the machinery involved.
 int Core::Shutdown ( void )
@@ -1179,6 +1205,18 @@ int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
     // Assume keyboard layouts don't change the order of numbers:
     if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
     if(SDL::K_F1 <= ke.ksym.sym && ke.ksym.sym <= SDL::K_F12) return ke.ksym.sym;
+
+    // These keys are mapped to the same control codes as Ctrl-?
+    switch (ke.ksym.sym) {
+    case SDL::K_RETURN:
+    case SDL::K_KP_ENTER:
+    case SDL::K_TAB:
+    case SDL::K_ESCAPE:
+    case SDL::K_DELETE:
+        return ke.ksym.sym;
+    default:
+        break;
+    }
 
     int unicode = ke.ksym.unicode;
 

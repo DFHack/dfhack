@@ -4,7 +4,32 @@ local buildings = dfhack.buildings
 
 local utils = require 'utils'
 
---[[ Building input material tables. ]]
+-- Uninteresting values for filter attributes when reading them from DF memory.
+-- Differs from the actual defaults of the job_item constructor in allow_artifact.
+
+buildings.input_filter_defaults = {
+    item_type = -1,
+    item_subtype = -1,
+    mat_type = -1,
+    mat_index = -1,
+    flags1 = {},
+    -- Instead of noting those that allow artifacts, mark those that forbid them.
+    -- Leaves actually enabling artifacts to the discretion of the API user,
+    -- which is the right thing because unlike the game UI these filters are
+    -- used in a way that does not give the user a chance to choose manually.
+    flags2 = { allow_artifact = true },
+    flags3 = {},
+    flags4 = 0,
+    flags5 = 0,
+    reaction_class = '',
+    has_material_reaction_product = '',
+    metal_ore = -1,
+    min_dimension = -1,
+    has_tool_use = -1,
+    quantity = 1
+}
+
+--[[ Building input material table. ]]
 
 local building_inputs = {
     [df.building_type.Chair] = { { item_type=df.item_type.CHAIR, vector_id=df.job_item_vector_id.CHAIR } },
@@ -12,7 +37,6 @@ local building_inputs = {
     [df.building_type.Table] = { { item_type=df.item_type.TABLE, vector_id=df.job_item_vector_id.TABLE } },
     [df.building_type.Coffin] = { { item_type=df.item_type.COFFIN, vector_id=df.job_item_vector_id.COFFIN } },
     [df.building_type.FarmPlot] = { },
-    [df.building_type.Furnace] = { { flags2={ building_material=true, fire_safe=true, non_economic=true } } },
     [df.building_type.TradeDepot] = { { flags2={ building_material=true, non_economic=true }, quantity=3 } },
     [df.building_type.Door] = { { item_type=df.item_type.DOOR, vector_id=df.job_item_vector_id.DOOR } },
     [df.building_type.Floodgate] = {
@@ -40,7 +64,6 @@ local building_inputs = {
             vector_id=df.job_item_vector_id.ARMORSTAND
         }
     },
-    [df.building_type.Workshop] = { { flags2={ building_material=true, non_economic=true } } },
     [df.building_type.Cabinet] = {
         { item_type=df.item_type.CABINET, vector_id=df.job_item_vector_id.CABINET }
     },
@@ -89,7 +112,7 @@ local building_inputs = {
     [df.building_type.ArcheryTarget] = { { flags2={ building_material=true, non_economic=true } } },
     [df.building_type.Chain] = { { item_type=df.item_type.CHAIN, vector_id=df.job_item_vector_id.CHAIN } },
     [df.building_type.Cage] = { { item_type=df.item_type.CAGE, vector_id=df.job_item_vector_id.CAGE } },
-    [df.building_type.Weapon] = { { vector_id=df.job_item_vector_id.ANY_SPIKE } },
+    [df.building_type.Weapon] = { { name='weapon', vector_id=df.job_item_vector_id.ANY_SPIKE } },
     [df.building_type.ScrewPump] = {
         {
             item_type=df.item_type.BLOCKS,
@@ -155,8 +178,23 @@ local building_inputs = {
     },
     [df.building_type.Slab] = { { item_type=df.item_type.SLAB } },
     [df.building_type.NestBox] = { { has_tool_use=df.tool_uses.NEST_BOX, item_type=df.item_type.TOOL } },
-    [df.building_type.Hive] = { { has_tool_use=df.tool_uses.HIVE, item_type=df.item_type.TOOL } }
+    [df.building_type.Hive] = { { has_tool_use=df.tool_uses.HIVE, item_type=df.item_type.TOOL } },
+    [df.building_type.Rollers] = {
+        {
+            name='mechanism',
+            item_type=df.item_type.TRAPPARTS,
+            quantity=-1,
+            vector_id=df.job_item_vector_id.TRAPPARTS
+        },
+        {
+            name='chain',
+            item_type=df.item_type.CHAIN,
+            vector_id=df.job_item_vector_id.CHAIN
+        }
+    }
 }
+
+--[[ Furnace building input material table. ]]
 
 local furnace_inputs = {
     [df.furnace_type.WoodFurnace] = { { flags2={ building_material=true, fire_safe=true, non_economic=true } } },
@@ -167,6 +205,8 @@ local furnace_inputs = {
     [df.furnace_type.MagmaGlassFurnace] = { { flags2={ building_material=true, magma_safe=true, non_economic=true } } },
     [df.furnace_type.MagmaKiln] = { { flags2={ building_material=true, magma_safe=true, non_economic=true } } }
 }
+
+--[[ Workshop building input material table. ]]
 
 local workshop_inputs = {
     [df.workshop_type.Carpenters] = { { flags2={ building_material=true, non_economic=true } } },
@@ -250,6 +290,8 @@ local workshop_inputs = {
     }
 }
 
+--[[ Trap building input material table. ]]
+
 local trap_inputs = {
     [df.trap_type.StoneFallTrap] = {
         {
@@ -264,7 +306,10 @@ local trap_inputs = {
             item_type=df.item_type.TRAPPARTS,
             vector_id=df.job_item_vector_id.TRAPPARTS
         },
-        { vector_id=df.job_item_vector_id.ANY_WEAPON }
+        {
+            name='weapon',
+            vector_id=df.job_item_vector_id.ANY_WEAPON
+        }
     },
     [df.trap_type.Lever] = {
         {
@@ -286,14 +331,32 @@ local trap_inputs = {
             item_type=df.item_type.TRAPPARTS,
             vector_id=df.job_item_vector_id.TRAPPARTS
         }
-    }
+    },
+    [df.trap_type.TrackStop] = { { flags2={ building_material=true, non_economic=true } } }
 }
+
+--[[ Functions for lookup in tables. ]]
+
+local function get_custom_inputs(custom)
+    local defn = df.building_def.find(custom)
+    if defn ~= nil then
+        return utils.clone_with_default(defn.build_items, buildings.input_filter_defaults)
+    end
+end
 
 local function get_inputs_by_type(type,subtype,custom)
     if type == df.building_type.Workshop then
-        return workshop_inputs[subtype]
+        if subtype == df.workshop_type.Custom then
+            return get_custom_inputs(custom)
+        else
+            return workshop_inputs[subtype]
+        end
     elseif type == df.building_type.Furnace then
-        return furnace_inputs[subtype]
+        if subtype == df.furnace_type.Custom then
+            return get_custom_inputs(custom)
+        else
+            return furnace_inputs[subtype]
+        end
     elseif type == df.building_type.Trap then
         return trap_inputs[subtype]
     else
@@ -357,7 +420,7 @@ end
       -- Materials:
         items = { item, item ... },
       -- OR
-        filter = { { ... }, { ... }... }
+        filters = { { ... }, { ... }... }
       -- OR
         abstract = true
       -- OR

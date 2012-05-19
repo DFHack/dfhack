@@ -93,6 +93,12 @@ public:
     Block(MapCache *parent, DFCoord _bcoord);
     ~Block();
 
+    DFCoord getCoord() { return bcoord; }
+
+    void enableBlockUpdates(bool flow = false, bool temp = false) {
+        Maps::enableBlockUpdates(block, flow, temp);
+    }
+
     /*
      * All coordinates are taken mod 16.
      */
@@ -208,11 +214,8 @@ public:
         dirty_designations = true;
         //printf("setting block %d/%d/%d , %d %d\n",x,y,z, p.x, p.y);
         index_tile<df::tile_designation&>(designation,p) = des;
-        if(des.bits.dig)
-        {
-            dirty_blockflags = true;
-            blockflags.bits.designated = true;
-        }
+        if(des.bits.dig && block)
+            block->flags.bits.designated = true;
         return true;
     }
 
@@ -236,15 +239,7 @@ public:
 
     t_blockflags BlockFlags()
     {
-        return blockflags;
-    }
-    bool setBlockFlags(t_blockflags des)
-    {
-        if(!valid) return false;
-        dirty_blockflags = true;
-        //printf("setting block %d/%d/%d , %d %d\n",x,y,z, p.x, p.y);
-        blockflags = des;
-        return true;
+        return block ? block->flags : t_blockflags();
     }
 
     bool Write();
@@ -273,7 +268,6 @@ private:
     bool dirty_designations:1;
     bool dirty_tiles:1;
     bool dirty_temperatures:1;
-    bool dirty_blockflags:1;
     bool dirty_occupancies:1;
 
     DFCoord bcoord;
@@ -328,7 +322,6 @@ private:
 
     designations40d designation;
     occupancies40d occupancy;
-    t_blockflags blockflags;
 
     t_temperatures temp1;
     t_temperatures temp2;

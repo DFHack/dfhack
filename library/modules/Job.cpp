@@ -256,6 +256,18 @@ df::unit *DFHack::Job::getWorker(df::job *job)
     return NULL;
 }
 
+void DFHack::Job::checkBuildingsNow()
+{
+    if (df::global::process_jobs)
+        *df::global::process_jobs = true;
+}
+
+void DFHack::Job::checkDesignationsNow()
+{
+    if (df::global::process_dig)
+        *df::global::process_dig = true;
+}
+
 bool DFHack::Job::linkIntoWorld(df::job *job, bool new_id)
 {
     using df::global::world;

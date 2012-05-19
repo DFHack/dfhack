@@ -94,6 +94,26 @@ void Lua::Push(lua_State *state, const Units::NoblePosition &pos)
     lua_setfield(state, -2, "position");
 }
 
+void Lua::Push(lua_State *state, df::coord pos)
+{
+    lua_createtable(state, 0, 3);
+    lua_pushinteger(state, pos.x);
+    lua_setfield(state, -2, "x");
+    lua_pushinteger(state, pos.y);
+    lua_setfield(state, -2, "y");
+    lua_pushinteger(state, pos.z);
+    lua_setfield(state, -2, "z");
+}
+
+void Lua::Push(lua_State *state, df::coord2d pos)
+{
+    lua_createtable(state, 0, 2);
+    lua_pushinteger(state, pos.x);
+    lua_setfield(state, -2, "x");
+    lua_pushinteger(state, pos.y);
+    lua_setfield(state, -2, "y");
+}
+
 int Lua::PushPosXYZ(lua_State *state, df::coord pos)
 {
     if (!pos.isValid())
@@ -107,6 +127,21 @@ int Lua::PushPosXYZ(lua_State *state, df::coord pos)
         lua_pushinteger(state, pos.y);
         lua_pushinteger(state, pos.z);
         return 3;
+    }
+}
+
+int Lua::PushPosXY(lua_State *state, df::coord2d pos)
+{
+    if (!pos.isValid())
+    {
+        lua_pushnil(state);
+        return 1;
+    }
+    else
+    {
+        lua_pushinteger(state, pos.x);
+        lua_pushinteger(state, pos.y);
+        return 2;
     }
 }
 
@@ -637,6 +672,8 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,printJobDetails),
     WRAPM(Job,getHolder),
     WRAPM(Job,getWorker),
+    WRAPM(Job,checkBuildingsNow),
+    WRAPM(Job,checkDesignationsNow),
     WRAPN(is_equal, jobEqual),
     WRAPN(is_item_equal, jobItemEqual),
     { NULL, NULL }
@@ -718,6 +755,12 @@ static bool items_moveToContainer(df::item *item, df::item *container)
     return Items::moveToContainer(mc, item, container);
 }
 
+static bool items_moveToBuilding(df::item *item, df::building_actual *building, int use_mode)
+{
+    MapExtras::MapCache mc;
+    return Items::moveToBuilding(mc, item, building,use_mode);
+}
+
 static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getGeneralRef),
     WRAPM(Items, getSpecificRef),
@@ -726,6 +769,7 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getContainer),
     WRAPN(moveToGround, items_moveToGround),
     WRAPN(moveToContainer, items_moveToContainer),
+    WRAPN(moveToBuilding, items_moveToBuilding),
     { NULL, NULL }
 };
 
@@ -752,7 +796,7 @@ static const luaL_Reg dfhack_items_funcs[] = {
 
 static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPN(getBlock, (df::map_block* (*)(int32_t,int32_t,int32_t))Maps::getBlock),
-    WRAPM(Maps, getRegionBiome),
+    WRAPM(Maps, enableBlockUpdates),
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
     WRAPM(Maps, canWalkBetween),
@@ -766,8 +810,24 @@ static int maps_getTileBlock(lua_State *L)
     return 1;
 }
 
+static int maps_getRegionBiome(lua_State *L)
+{
+    auto pos = CheckCoordXY(L, 1, true);
+    Lua::PushDFObject(L, Maps::getRegionBiome(pos));
+    return 1;
+}
+
+static int maps_getTileBiomeRgn(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushPosXY(L, Maps::getTileBiomeRgn(pos));
+    return 1;
+}
+
 static const luaL_Reg dfhack_maps_funcs[] = {
     { "getTileBlock", maps_getTileBlock },
+    { "getRegionBiome", maps_getRegionBiome },
+    { "getTileBiomeRgn", maps_getTileBiomeRgn },
     { NULL, NULL }
 };
 

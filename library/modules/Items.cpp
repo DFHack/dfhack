@@ -73,9 +73,20 @@ using namespace std;
 #include "df/general_ref_building_holderst.h"
 #include "df/vermin.h"
 
+#include "df/unit_inventory_item.h"
+#include "df/body_part_raw.h"
+#include "df/unit.h"
+#include "df/creature_raw.h"
+#include "df/caste_raw.h"
+#include "df/body_part_template_flags.h"
+#include "df/general_ref_unit_holderst.h"
+
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
+
+const int const_GloveRightHandedness = 1;
+const int const_GloveLeftHandedness = 2;
 
 #define ITEMDEF_VECTORS \
     ITEM(WEAPON, weapons, itemdef_weaponst) \
@@ -599,6 +610,25 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
                 break;
 
             case general_ref_type::UNIT_HOLDER:
+                // Remove the item from the unit's inventory
+                for (int inv = 0; inv < ref->getUnit()->inventory.size(); inv++)
+                {
+                    df::unit_inventory_item * currInvItem = ref->getUnit()->inventory.at(inv);
+                    if(currInvItem->item->id == item->id)
+                    {
+                        // Match found; remove it
+                        ref->getUnit()->inventory.erase(ref->getUnit()->inventory.begin() + inv);
+                        // No other pointers to this object should exist; delete it to prevent memleak
+                        delete currInvItem;
+                        // Note: we might expect to recalculate the unit's weight at this point, in order to account for the 
+                        // detached item.  In fact, this recalculation occurs automatically during each dwarf's "turn".
+                        // The slight delay in recalculation is probably not worth worrying about.
+                        
+                        // Since no item will ever occur twice in a unit's inventory, further searching is unnecessary.
+                        break;
+                    }
+                }
+                break;
             case general_ref_type::BUILDING_HOLDER:
                 return false;
 
@@ -678,6 +708,7 @@ bool DFHack::Items::moveToContainer(MapExtras::MapCache &mc, df::item *item, df:
 
     return true;
 }
+<<<<<<< HEAD
 DFHACK_EXPORT bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,int16_t use_mode)
 {
     CHECK_NULL_POINTER(item);
@@ -709,3 +740,217 @@ DFHACK_EXPORT bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::it
     building->contained_items.push_back(con);
     return true;
 }
+=======
+
+bool DFHack::Items::moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit, df::body_part_raw * targetBodyPart, bool ignoreRestrictions, int multiEquipLimit, bool verbose)
+{
+    // Step 1: Check for anti-requisite conditions
+    df::unit * itemOwner = Items::getOwner(item);
+    if (ignoreRestrictions) 
+    {
+        // If the ignoreRestrictions cmdline switch was specified, then skip all of the normal preventative rules
+        if (verbose) { Core::print("Skipping integrity checks...\n"); }
+    }
+    else if(!item->isClothing() && !item->isArmorNotClothing())
+    {
+        if (verbose) { Core::printerr("Item %d is not clothing or armor; it cannot be equipped.  Please choose a different item (or use the Ignore option if you really want to equip an inappropriate item).\n", item->id); }
+        return false;
+    }
+    else if (!item->getType() == df::enums::item_type::GLOVES &&
+        !item->getType() == df::enums::item_type::HELM && 
+        !item->getType() == df::enums::item_type::ARMOR && 
+        !item->getType() == df::enums::item_type::PANTS &&
+        !item->getType() == df::enums::item_type::SHOES &&
+        !targetBodyPart)
+    {
+        if (verbose) { Core::printerr("Item %d is of an unrecognized type; it cannot be equipped (because the module wouldn't know where to put it).\n", item->id); }
+        return false;
+    }
+    else if (itemOwner && itemOwner->id != unit->id)
+    {
+        if (verbose) { Core::printerr("Item %d is owned by someone else.  Equipping it on this unit is not recommended.  Please use DFHack's Confiscate plugin, choose a different item, or use the Ignore option to proceed in spite of this warning.\n", item->id); }
+        return false;
+    }
+    else if (item->flags.bits.in_inventory)
+    {
+        if (verbose) { Core::printerr("Item %d is already in a unit's inventory.  Direct inventory transfers are not recommended; please move the item to the ground first (or use the Ignore option).\n", item->id); }
+        return false;
+    }
+    else if (item->flags.bits.in_job)
+    {
+        if (verbose) { Core::printerr("Item %d is reserved for use in a queued job.  Equipping it is not recommended, as this might interfere with the completion of vital jobs.  Use the Ignore option to ignore this warning.\n", item->id); }
+        return false;
+    }
+
+    // ASSERT: anti-requisite conditions have been satisfied (or disregarded)
+
+
+    // Step 2: Try to find a bodypart which is eligible to receive equipment AND which is appropriate for the specified item
+    df::body_part_raw * confirmedBodyPart = NULL;
+    int bpIndex;
+    for(bpIndex = 0; bpIndex < unit->body.body_plan->body_parts.size(); bpIndex++)
+    {
+        df::body_part_raw * currPart = unit->body.body_plan->body_parts[bpIndex];
+
+        // Short-circuit the search process if a BP was specified in the function call
+        // Note: this causes a bit of inefficient busy-looping, but the search space is tiny (<100) and we NEED to get the correct bpIndex value in order to perform inventory manipulations
+        if (!targetBodyPart)
+        {
+            // The function call did not specify any particular body part; proceed with normal iteration and evaluation of BP eligibility
+        }
+        else if (currPart == targetBodyPart)
+        {
+            // A specific body part was included in the function call, and we've found it; proceed with the normal BP evaluation (suitability, emptiness, etc)
+        }
+        else if (bpIndex < unit->body.body_plan->body_parts.size())
+        {
+            // The current body part is not the one that was specified in the function call, but we can keep searching
+            if (verbose) { Core::printerr("Found bodypart %s; not a match; continuing search.\n", currPart->part_code.c_str()); }
+            continue;
+        }
+        else 
+        {
+            // The specified body part has not been found, and we've reached the end of the list.  Report failure.
+            if (verbose) { Core::printerr("The specified body part (%s) does not belong to the chosen unit.  Please double-check to ensure that your spelling is correct, and that you have not chosen a dismembered bodypart.\n"); }
+            return false;
+        }
+
+        if (verbose) { Core::print("Inspecting bodypart %s.\n", currPart->part_code.c_str()); }
+
+        // Inspect the current bodypart
+        if (item->getType() == df::enums::item_type::GLOVES && currPart->flags.is_set(df::body_part_template_flags::GRASP) &&
+            ((item->getGloveHandedness() == const_GloveLeftHandedness && currPart->flags.is_set(df::body_part_template_flags::LEFT)) ||
+            (item->getGloveHandedness() == const_GloveRightHandedness && currPart->flags.is_set(df::body_part_template_flags::RIGHT))))
+        {
+            if (verbose) { Core::print("Hand found (%s)...", currPart->part_code.c_str()); }
+        }
+        else if (item->getType() == df::enums::item_type::HELM && currPart->flags.is_set(df::body_part_template_flags::HEAD))
+        {
+            if (verbose) { Core::print("Head found (%s)...", currPart->part_code.c_str()); }
+        }
+        else if (item->getType() == df::enums::item_type::ARMOR && currPart->flags.is_set(df::body_part_template_flags::UPPERBODY))
+        {
+            if (verbose) { Core::print("Upper body found (%s)...", currPart->part_code.c_str()); }
+        }
+        else if (item->getType() == df::enums::item_type::PANTS && currPart->flags.is_set(df::body_part_template_flags::LOWERBODY))
+        {
+            if (verbose) { Core::print("Lower body found (%s)...", currPart->part_code.c_str()); }
+        }
+        else if (item->getType() == df::enums::item_type::SHOES && currPart->flags.is_set(df::body_part_template_flags::STANCE))
+        {
+            if (verbose) { Core::print("Foot found (%s)...", currPart->part_code.c_str()); }
+        }
+        else if (targetBodyPart && ignoreRestrictions)
+        {
+            // The BP in question would normally be considered ineligible for equipment.  But since it was deliberately specified by the user, we'll proceed anyways.
+            if (verbose) { Core::print("Non-standard bodypart found (%s)...", targetBodyPart->part_code.c_str()); }
+        }
+        else if (targetBodyPart)
+        {
+            // The BP in question is not eligible for equipment and the ignore flag was not specified.  Report failure.
+            if (verbose) { Core::printerr("Non-standard bodypart found, but it is ineligible for standard equipment.  Use the Ignore flag to override this warning.\n"); }
+            return false;
+        }
+        else
+        {
+            if (verbose) { Core::print("Skipping ineligible bodypart.\n"); }
+            // This body part is not eligible for the equipment in question; skip it
+            continue;
+        }
+
+        // ASSERT: The current body part is able to support the specified equipment (or the test has been overridden).  Check whether it is currently empty/available.
+
+        if (multiEquipLimit == INT_MAX)
+        {
+            // Note: this loop/check is skipped if the MultiEquip option is specified; we'll simply add the item to the bodyPart even if it's already holding a dozen gloves, shoes, and millstones (or whatever)
+            if (verbose) { Core::print(" inventory checking skipped..."); }
+            confirmedBodyPart = currPart;
+            break;
+        }
+        else
+        {
+            confirmedBodyPart = currPart;        // Assume that the bodypart is valid; we'll invalidate it if we detect too many collisions while looping
+            int collisions = 0;
+            for (int inventoryID=0; inventoryID < unit->inventory.size(); inventoryID++)
+            {
+                df::unit_inventory_item * currInvItem = unit->inventory[inventoryID];
+                if (currInvItem->body_part_id == bpIndex)
+                {
+                    // Collision detected; have we reached the limit?
+                    if (++collisions >= multiEquipLimit)
+                    {
+                        if (verbose) { Core::printerr(" but it already carries %d piece(s) of equipment.  Either remove the existing equipment or use the Multi option.\n", multiEquipLimit); }                    
+                        confirmedBodyPart = NULL;
+                        break;
+                    }
+                }
+            }
+
+            if (confirmedBodyPart) 
+            {
+                // Match found; no need to examine any other BPs
+                if (verbose) { Core::print(" eligibility confirmed..."); }
+                break;
+            }
+            else if (!targetBodyPart)
+            {
+                // This body part is not eligible to receive the specified equipment; return to the loop and check the next BP
+                continue;
+            }
+            else
+            {
+                // A specific body part was designated in the function call, but it was found to be ineligible.
+                // Don't return to the BP loop; just fall-through to the failure-reporting code a few lines below.
+                break;
+            }
+        }
+    }
+
+    if (!confirmedBodyPart) {
+        // No matching body parts found; report failure
+        if (verbose) { Core::printerr("\nThe item could not be equipped because the relevant body part(s) of the unit are missing or already occupied.  Try again with the Multi option if you're like to over-equip a body part, or choose a different unit-item combination (e.g. stop trying to put shoes on a trout).\n" ); }
+        return false;
+    }
+
+    // ASSERT: We've found a bodypart which is suitable for the designated item and ready to receive it (or overridden the relevant checks)
+
+    // Step 3: Perform the manipulations
+    if (verbose) { Core::print("equipping item..."); }
+    // 3a: attempt to release the item from its current position
+    if (!detachItem(mc, item))
+    {
+        if (verbose) { Core::printerr("\nEquipping failed - failed to retrieve item from its current location/container/inventory.  Please move it to the ground and try again.\n"); }
+        return false;
+    }
+    // 3b: register the item in the unit's inventory
+    df::unit_inventory_item * newInventoryItem = df::allocate<df::unit_inventory_item>();
+    newInventoryItem->body_part_id = bpIndex;
+    newInventoryItem->item = item;
+    newInventoryItem->mode = newInventoryItem->Worn;
+    unit->inventory.push_back(newInventoryItem);
+    item->flags.bits.in_inventory = true;
+
+    // 3c: register a "unit holds item" relationship at the item level
+    df::general_ref_unit_holderst * holderReference = df::allocate<df::general_ref_unit_holderst>();
+    holderReference->setID(unit->id);
+    item->itemrefs.push_back(holderReference);
+
+    // 3d: tell the unit to begin "using" the item (note: if this step is skipped then the unit may not gain any actual protection from its armour)
+    if (item->isClothing() || item->isArmorNotClothing()) {
+        df::unit::T_used_items * newUsedItem = df::allocate<df::unit::T_used_items>();
+        newUsedItem->id = item->id;
+        unit->used_items.push_back(newUsedItem);
+        if (verbose) { Core::print("Item is clothing/armor; protection aspects have been enabled.\n"); }
+    }
+    else
+    {
+        if (verbose) { Core::print("Item is neither clothing nor armor; unit has NOT been instructed to \"use\" it as such.\n"); }
+    }
+
+    // 3e: Remove the item from its current location (note: if this step is skipped then the item will appear BOTH on the ground and in the unit's inventory)
+    mc.removeItemOnGround(item);
+
+    if (verbose) { Core::print("  Success!\n"); }
+    return true;
+}
+>>>>>>> 0d2849ca5aef2bb96cc786d9f63661a010f6e766

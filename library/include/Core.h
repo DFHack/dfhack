@@ -68,6 +68,17 @@ namespace DFHack
         class df_window;
     }
 
+    enum state_change_event
+    {
+        SC_WORLD_LOADED = 0,
+        SC_WORLD_UNLOADED = 1,
+        SC_MAP_LOADED = 2,
+        SC_MAP_UNLOADED = 3,
+        SC_VIEWSCREEN_CHANGED = 4,
+        SC_CORE_INITIALIZED = 5,
+        SC_BEGIN_UNLOAD = 6
+    };
+
     // Core is a singleton. Why? Because it is closely tied to SDL calls. It tracks the global state of DF.
     // There should never be more than one instance
     // Better than tracking some weird variables all over the place.
@@ -161,6 +172,9 @@ namespace DFHack
         int Shutdown (void);
         int SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);
+
+        void onUpdate(color_ostream &out);
+        void onStateChange(color_ostream &out, state_change_event event);
 
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement

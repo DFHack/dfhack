@@ -54,7 +54,9 @@ using namespace DFHack;
 #include "df/viewscreen_layer_workshop_profilest.h"
 #include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_layer_overall_healthst.h"
+#include "df/viewscreen_layer_assigntradest.h"
 #include "df/viewscreen_petst.h"
+#include "df/viewscreen_tradegoodsst.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/ui_sidebar_menus.h"
 #include "df/ui_look_list.h"
@@ -69,6 +71,7 @@ using namespace DFHack;
 #include "df/interfacest.h"
 #include "df/graphic.h"
 #include "df/layer_object_listst.h"
+#include "df/assign_trade_status.h"
 
 using namespace df::enums;
 using df::global::gview;
@@ -418,6 +421,33 @@ static df::item *getAnyItem(df::viewscreen *top)
     {
         df::general_ref *ref = vector_get(screen->entry_ref, screen->cursor_pos);
         return ref ? ref->getItem() : NULL;
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_assigntradest, top))
+    {
+        auto list1 = getLayerList(screen, 0);
+        auto list2 = getLayerList(screen, 1);
+        if (!list1 || !list2 || !list2->bright)
+            return NULL;
+
+        int list_idx = vector_get(screen->visible_lists, list1->cursor, (int16_t)-1);
+        unsigned num_lists = sizeof(screen->lists)/sizeof(std::vector<int32_t>);
+        if (unsigned(list_idx) >= num_lists)
+            return NULL;
+
+        int idx = vector_get(screen->lists[list_idx], list2->cursor, -1);
+        if (auto info = vector_get(screen->info, idx))
+            return info->item;
+
+        return NULL;
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_tradegoodsst, top))
+    {
+        if (screen->in_right_pane)
+            return vector_get(screen->broker_items, screen->broker_cursor);
+        else
+            return vector_get(screen->trader_items, screen->trader_cursor);
     }
 
     if (!Gui::dwarfmode_hotkey(top))

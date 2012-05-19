@@ -693,7 +693,7 @@ Units module
 
 * ``dfhack.units.getPosition(unit)``
 
-  Returns true *x,y,z* of the unit; may be not equal to unit.pos if caged.
+  Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
 
 * ``dfhack.units.getContainer(unit)``
 
@@ -752,7 +752,7 @@ Items module
 
 * ``dfhack.items.getPosition(item)``
 
-  Returns true *x,y,z* of the item; may be not equal to item.pos if in inventory.
+  Returns true *x,y,z* of the item, or *nil* if invalid; may be not equal to item.pos if in inventory.
 
 * ``dfhack.items.getGeneralRef(item, type)``
 
@@ -1086,6 +1086,13 @@ Core context specific functions:
   and cannot be queued until it is loaded again.
   Returns the timer id, or *nil* if unsuccessful due to
   world being unloaded.
+
+* ``dfhack.timeout_active(id[,new_callback])``
+
+  Returns the active callback with the given id, or *nil*
+  if inactive or nil id. If called with 2 arguments, replaces
+  the current callback with the given value, if still active.
+  Using ``timeout_active(id,nil)`` cancels the timer.
 
 * ``dfhack.onStateChange.foo = function(code)``
 

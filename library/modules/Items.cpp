@@ -708,8 +708,8 @@ bool DFHack::Items::moveToContainer(MapExtras::MapCache &mc, df::item *item, df:
 
     return true;
 }
-<<<<<<< HEAD
-DFHACK_EXPORT bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,int16_t use_mode)
+
+bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,int16_t use_mode)
 {
     CHECK_NULL_POINTER(item);
     CHECK_NULL_POINTER(building);
@@ -740,7 +740,6 @@ DFHACK_EXPORT bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::it
     building->contained_items.push_back(con);
     return true;
 }
-=======
 
 bool DFHack::Items::moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit, df::body_part_raw * targetBodyPart, bool ignoreRestrictions, int multiEquipLimit, bool verbose)
 {
@@ -953,4 +952,3 @@ bool DFHack::Items::moveToInventory(MapExtras::MapCache &mc, df::item *item, df:
     if (verbose) { Core::print("  Success!\n"); }
     return true;
 }
->>>>>>> 0d2849ca5aef2bb96cc786d9f63661a010f6e766

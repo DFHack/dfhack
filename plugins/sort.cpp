@@ -18,9 +18,12 @@
 #include "df/viewscreen_layer_workshop_profilest.h"
 #include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_layer_overall_healthst.h"
+#include "df/viewscreen_layer_assigntradest.h"
+#include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_petst.h"
 #include "df/layer_object_listst.h"
+#include "df/assign_trade_status.h"
 
 #include "MiscUtils.h"
 
@@ -42,8 +45,10 @@ using df::global::ui_building_assign_units;
 using df::global::ui_building_assign_items;
 
 static bool unit_list_hotkey(df::viewscreen *top);
+static bool item_list_hotkey(df::viewscreen *top);
 
 static command_result sort_units(color_ostream &out, vector <string> & parameters);
+static command_result sort_items(color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("sort");
 
@@ -57,6 +62,16 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    The '>' prefix reverses the sort order for defined values.\n"
         "  Unit order examples:\n"
         "    name, age, arrival, squad, squad_position, profession\n"
+        "The orderings are defined in hack/lua/plugins/sort/*.lua\n"
+    ));
+    commands.push_back(PluginCommand(
+        "sort-items", "Sort the visible item list.", sort_items, item_list_hotkey,
+        "  sort-items order [order...]\n"
+        "    Sort the item list using the given sequence of comparisons.\n"
+        "    The '<' prefix for an order makes undefined values sort first.\n"
+        "    The '>' prefix reverses the sort order for defined values.\n"
+        "  Item order examples:\n"
+        "    description, material, wear, type, quality\n"
         "The orderings are defined in hack/lua/plugins/sort/*.lua\n"
     ));
     return CR_OK;
@@ -179,7 +194,7 @@ bool compute_order(color_ostream &out, lua_State *L, int base, std::vector<unsig
 
 static bool ParseSpec(color_ostream &out, lua_State *L, const char *type, vector<string> &params)
 {
-    if (!parse_ordering_spec(out, L, "units", params))
+    if (!parse_ordering_spec(out, L, type, params))
     {
         out.printerr("Invalid ordering specification for %s.\n", type);
         return false;
@@ -190,6 +205,20 @@ static bool ParseSpec(color_ostream &out, lua_State *L, const char *type, vector
 
 #define PARSE_SPEC(type, params) \
     if (!ParseSpec(*pout, L, type, params)) return false;
+
+static bool prepare_sort(color_ostream *pout, lua_State *L)
+{
+    if (L)
+    {
+        if (!Lua::PushModulePublic(*pout, L, "plugins.sort", "make_sort_order"))
+        {
+            pout->printerr("Cannot access the sorter function.\n");
+            return false;
+        }
+    }
+
+    return true;
+}
 
 static void sort_null_first(vector<string> &parameters)
 {
@@ -206,14 +235,8 @@ static bool maybe_sort_units(color_ostream *pout, lua_State *L,
 {
     Lua::StackUnwinder top(L);
 
-    if (L)
-    {
-        if (!Lua::PushModulePublic(*pout, L, "plugins.sort", "make_sort_order"))
-        {
-            pout->printerr("Cannot access the sorter function.\n");
-            return false;
-        }
-    }
+    if (!prepare_sort(pout, L))
+        return false;
 
     std::vector<unsigned> order;
 
@@ -522,6 +545,99 @@ static command_result sort_units(color_ostream &out, vector <string> &parameters
     auto screen = Core::getInstance().getTopViewscreen();
 
     if (!maybe_sort_units(&out, L, screen, parameters))
+        return CR_WRONG_USAGE;
+
+    return CR_OK;
+}
+
+static bool maybe_sort_items(color_ostream *pout, lua_State *L,
+                             df::viewscreen *screen, vector<string> &parameters)
+{
+    Lua::StackUnwinder top(L);
+
+    if (!prepare_sort(pout, L))
+        return false;
+
+    std::vector<unsigned> order;
+
+    if (auto trade = strict_virtual_cast<df::viewscreen_tradegoodsst>(screen))
+    {
+        if (!L) return true;
+
+        PARSE_SPEC("items", parameters);
+
+        if (trade->in_right_pane)
+        {
+            if (compute_order(*pout, L, top, &order, trade->broker_items))
+            {
+                reorder_cursor(&trade->broker_cursor, order);
+                reorder_vector(&trade->broker_items, order);
+                reorder_vector(&trade->broker_selected, order);
+                reorder_vector(&trade->broker_count, order);
+            }
+        }
+        else
+        {
+            if (compute_order(*pout, L, top, &order, trade->trader_items))
+            {
+                reorder_cursor(&trade->trader_cursor, order);
+                reorder_vector(&trade->trader_items, order);
+                reorder_vector(&trade->trader_selected, order);
+                reorder_vector(&trade->trader_count, order);
+            }
+        }
+
+        return true;
+    }
+    else if (auto bring = strict_virtual_cast<df::viewscreen_layer_assigntradest>(screen))
+    {
+        auto list1 = getLayerList(bring, 0);
+        auto list2 = getLayerList(bring, 1);
+        if (!list1 || !list2 || !list2->bright)
+            return false;
+
+        int list_idx = vector_get(bring->visible_lists, list1->cursor, (int16_t)-1);
+        unsigned num_lists = sizeof(bring->lists)/sizeof(std::vector<int32_t>);
+        if (unsigned(list_idx) >= num_lists)
+            return false;
+
+        if (!L) return true;
+
+        PARSE_SPEC("items", parameters);
+
+        auto &vec = bring->lists[list_idx];
+
+        std::vector<df::item*> items;
+        for (size_t i = 0; i < vec.size(); i++)
+            items.push_back(bring->info[vec[i]]->item);
+
+        if (compute_order(*pout, L, top, &order, items))
+        {
+            reorder_cursor(&list2->cursor, order);
+            reorder_vector(&vec, order);
+        }
+
+        return true;
+    }
+    else
+        return false;
+}
+
+static bool item_list_hotkey(df::viewscreen *screen)
+{
+    vector<string> dummy;
+    return maybe_sort_items(NULL, NULL, screen, dummy);
+}
+
+static command_result sort_items(color_ostream &out, vector <string> &parameters)
+{
+    if (parameters.empty())
+        return CR_WRONG_USAGE;
+
+    auto L = Lua::Core::State;
+    auto screen = Core::getInstance().getTopViewscreen();
+
+    if (!maybe_sort_items(&out, L, screen, parameters))
         return CR_WRONG_USAGE;
 
     return CR_OK;

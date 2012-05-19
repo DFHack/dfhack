@@ -446,6 +446,13 @@ Lua::ObjectClass Lua::IsDFObject(lua_State *state, int val_index)
     return ok ? cls : Lua::OBJ_INVALID;
 }
 
+static const char *const primitive_types[] = {
+    "string", NULL
+};
+static type_identity *const primitive_identities[] = {
+    df::identity_traits<std::string>::get(), NULL
+};
+
 /**
  * Given a DF object reference or type, safely retrieve its identity pointer.
  */
@@ -453,6 +460,12 @@ type_identity *LuaWrapper::get_object_identity(lua_State *state, int objidx,
                                                const char *ctx, bool allow_type,
                                                bool keep_metatable)
 {
+    if (allow_type && !keep_metatable && lua_isstring(state, objidx))
+    {
+        int idx = luaL_checkoption(state, objidx, NULL, primitive_types);
+        return primitive_identities[idx];
+    }
+
     if (!lua_getmetatable(state, objidx))
         luaL_error(state, "Invalid object in %s", ctx);
 

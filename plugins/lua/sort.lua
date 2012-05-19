@@ -2,9 +2,11 @@ local _ENV = mkmodule('plugins.sort')
 
 local utils = require('utils')
 local units = require('plugins.sort.units')
+local items = require('plugins.sort.items')
 
 orders = orders or {}
 orders.units = units.orders
+orders.items = items.orders
 
 function parse_ordering_spec(type,...)
     local group = orders[type]

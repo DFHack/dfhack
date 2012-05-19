@@ -109,4 +109,10 @@ orders.squad_position = {
     end
 }
 
+orders.happiness = {
+    key = function(unit)
+        return unit.status.happiness
+    end
+}
+
 return _ENV

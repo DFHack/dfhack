@@ -755,11 +755,11 @@ bool DFHack::Items::moveToInventory(MapExtras::MapCache &mc, df::item *item, df:
         if (verbose) { Core::printerr("Item %d is not clothing or armor; it cannot be equipped.  Please choose a different item (or use the Ignore option if you really want to equip an inappropriate item).\n", item->id); }
         return false;
     }
-    else if (!item->getType() == df::enums::item_type::GLOVES &&
-        !item->getType() == df::enums::item_type::HELM && 
-        !item->getType() == df::enums::item_type::ARMOR && 
-        !item->getType() == df::enums::item_type::PANTS &&
-        !item->getType() == df::enums::item_type::SHOES &&
+    else if (item->getType() != df::enums::item_type::GLOVES &&
+        item->getType() != df::enums::item_type::HELM && 
+        item->getType() != df::enums::item_type::ARMOR && 
+        item->getType() != df::enums::item_type::PANTS &&
+        item->getType() != df::enums::item_type::SHOES &&
         !targetBodyPart)
     {
         if (verbose) { Core::printerr("Item %d is of an unrecognized type; it cannot be equipped (because the module wouldn't know where to put it).\n", item->id); }

@@ -796,6 +796,9 @@ Items module
 
   Move the item to the container. Returns *false* if impossible.
 
+* ``dfhack.items.moveToBuilding(item,building,use_mode)``
+
+  Move the item to the building. Returns *false* if impossible.
 
 Maps module
 -----------

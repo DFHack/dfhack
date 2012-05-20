@@ -104,6 +104,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(zone zone.cpp)
     DFHACK_PLUGIN(catsplosion catsplosion.cpp)
     DFHACK_PLUGIN(regrass regrass.cpp)
+    DFHACK_PLUGIN(forceequip forceequip.cpp)
     # this one exports functions to lua
     DFHACK_PLUGIN(burrows burrows.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(sort sort.cpp LINK_LIBRARIES lua)

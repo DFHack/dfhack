@@ -36,7 +36,7 @@ if (BUILD_DWARFEXPORT)
     add_subdirectory (dwarfexport)
 endif()
 
-OPTION(BUILD_RUBY "Build ruby binding." ON)
+OPTION(BUILD_RUBY "Build ruby binding." OFF)
 if (BUILD_RUBY)
     add_subdirectory (ruby)
 endif()

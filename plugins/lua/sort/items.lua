@@ -19,14 +19,7 @@ orders.type = {
 
 orders.description = {
     key = function(item)
-        return dfhack.with_temp_object(
-            df.new "string",
-            function(str,item)
-                item:getItemDescription(str,0)
-                return str.value
-            end,
-            item
-        )
+        return dfhack.items.getDescription(item,0)
     end
 }
 

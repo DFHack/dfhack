@@ -763,6 +763,11 @@ Items module
 
   Returns true *x,y,z* of the item, or *nil* if invalid; may be not equal to item.pos if in inventory.
 
+* ``dfhack.items.getDescription(item, type[, decorate])``
+
+  Returns the string description of the item, as produced by the getItemDescription
+  method. If decorate is true, also adds markings for quality and improvements.
+
 * ``dfhack.items.getGeneralRef(item, type)``
 
   Searches for a general_ref with the given type.
@@ -799,6 +804,11 @@ Items module
 * ``dfhack.items.moveToBuilding(item,building,use_mode)``
 
   Move the item to the building. Returns *false* if impossible.
+
+* ``dfhack.items.moveToInventory(item,unit,use_mode,body_part)``
+
+  Move the item to the unit inventory. Returns *false* if impossible.
+
 
 Maps module
 -----------

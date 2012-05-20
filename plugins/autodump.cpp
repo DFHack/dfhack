@@ -148,8 +148,6 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
         }
     }
 
-	bool inventoryDumpingSkipped = false;
-
     // proceed with the dumpification operation
     for(size_t i=0; i< numItems; i++)
     {
@@ -175,14 +173,6 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
             continue;
         if (!need_forbidden && itm->flags.bits.forbid)
             continue;
-		if (itm->flags.bits.in_inventory && Gui::getSelectedUnit(out, true))
-		{
-			// Due to GUI caching/redraw rules, Dwarf Fortress tends to crash if we make any changes to a unit's inventory
-			// while the player is looking at the inventory menu.  Therefore, we'll simply skip such items until they
-			// change something (e.g. switch from "v" to "k" mode).
-			inventoryDumpingSkipped = true;
-			continue;
-		}
 
         if(!destroy) // move to cursor
         {
@@ -192,7 +182,11 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
 
             // Don't move items if they're already at the cursor
             if (pos_cursor != pos_item)
-                Items::moveToGround(MC, itm, pos_cursor);
+            {
+                if (!Items::moveToGround(MC, itm, pos_cursor))
+                    out.print("Could not move item: %s\n",
+                              Items::getDescription(itm, 0, true).c_str());
+            }
         }
         else // destroy
         {
@@ -213,7 +207,6 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
     if(!destroy)
         MC.WriteAll();
 
-	if (inventoryDumpingSkipped) { out.printerr("Some inventory items could not be autodumped because the unit/inventory screen is currently active.  Please close the unit screen and repeat the operation.\n"); }
     out.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for destruction" : "quickdumped");
     return CR_OK;
 }

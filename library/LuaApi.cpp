@@ -61,6 +61,7 @@ distribution.
 #include "df/unit.h"
 #include "df/item.h"
 #include "df/material.h"
+#include "df/viewscreen.h"
 #include "df/assumed_identity.h"
 #include "df/nemesis_record.h"
 #include "df/historical_figure.h"
@@ -652,6 +653,8 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
 /***** Gui module *****/
 
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
+    WRAPM(Gui, getCurViewscreen),
+    WRAPM(Gui, getFocusString),
     WRAPM(Gui, getSelectedWorkshopJob),
     WRAPM(Gui, getSelectedJob),
     WRAPM(Gui, getSelectedUnit),

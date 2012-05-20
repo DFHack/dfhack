@@ -205,6 +205,7 @@ namespace DFHack
             int modifiers;
             std::vector<std::string> command;
             std::string cmdline;
+            std::string focus;
         };
 
         std::map<int, std::vector<KeyBinding> > key_bindings;

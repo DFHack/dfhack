@@ -36,6 +36,7 @@ distribution.
 
 #include <ctype.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include <sstream>
 #include <map>
@@ -122,6 +123,29 @@ std::string toLower(const std::string &str)
     for (unsigned i = 0; i < str.size(); ++i)
         rv[i] = tolower(str[i]);
     return rv;
+}
+
+bool prefix_matches(const std::string &prefix, const std::string &key, std::string *tail)
+{
+    size_t ksize = key.size();
+    size_t psize = prefix.size();
+    if (ksize < psize || memcmp(prefix.data(), key.data(), psize) != 0)
+        return false;
+    if (tail)
+        tail->clear();
+    if (ksize == psize)
+        return true;
+    if (psize == 0 || prefix[psize-1] == '/')
+    {
+        if (tail) *tail = key.substr(psize);
+        return true;
+    }
+    if (key[psize] == '/')
+    {
+        if (tail) *tail = key.substr(psize+1);
+        return true;
+    }
+    return false;
 }
 
 #ifdef LINUX_BUILD // Linux

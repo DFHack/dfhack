@@ -868,6 +868,13 @@ can be omitted.</p>
 <div class="section" id="gui-module">
 <h3><a class="toc-backref" href="#id14">Gui module</a></h3>
 <ul>
+<li><p class="first"><tt class="docutils literal">dfhack.gui.getCurViewscreen()</tt></p>
+<p>Returns the viewscreen that is current in the core.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.gui.getFocusString(viewscreen)</tt></p>
+<p>Returns a string representation of the current focus position
+in the ui. The string has a &quot;screen/foo/bar/baz...&quot; format.</p>
+</li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.getSelectedWorkshopJob([silent])</span></tt></p>
 <p>When a job is selected in <em>'q'</em> mode, returns the job, else
 prints error unless silent and returns <em>nil</em>.</p>

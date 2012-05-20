@@ -452,6 +452,9 @@ namespace df
         }
     };
 
+    template<class ET, class IT>
+    struct enum_traits<enum_field<ET, IT> > : public enum_traits<ET> {};
+
     template<class EnumType, class IntType1, class IntType2>
     inline bool operator== (enum_field<EnumType,IntType1> a, enum_field<EnumType,IntType2> b)
     {

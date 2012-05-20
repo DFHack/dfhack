@@ -41,6 +41,8 @@ using namespace std;
 #include "Core.h"
 #include "MiscUtils.h"
 
+#include "modules/Buildings.h"
+
 #include "DataDefs.h"
 #include "df/world_data.h"
 #include "df/world_underground_region.h"
@@ -1055,7 +1057,21 @@ bool MapExtras::Block::removeItemOnGround(df::item *item)
     if (--count == 0)
     {
         index_tile<df::tile_occupancy&>(occupancy,item->pos).bits.item = false;
-        index_tile<df::tile_occupancy&>(block->occupancy,item->pos).bits.item = false;
+
+        auto &occ = index_tile<df::tile_occupancy&>(block->occupancy,item->pos);
+
+        occ.bits.item = false;
+
+        // Clear the 'site blocked' flag in the building, if any.
+        // Otherwise the job would be re-suspended without actually checking items.
+        if (occ.bits.building == tile_building_occ::Planned)
+        {
+            if (auto bld = Buildings::findAtTile(item->pos))
+            {
+                // TODO: maybe recheck other tiles like the game does.
+                bld->flags.bits.site_blocked = false;
+            }
+        }
     }
 
     return true;

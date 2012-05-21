@@ -6,6 +6,7 @@
 #include "modules/Gui.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
+#include "modules/Job.h"
 
 #include "LuaTools.h"
 
@@ -22,6 +23,7 @@
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_petst.h"
+#include "df/viewscreen_storesst.h"
 #include "df/layer_object_listst.h"
 #include "df/assign_trade_status.h"
 
@@ -273,7 +275,16 @@ DEFINE_SORT_HANDLER(unit_sorters, joblist, "", jobs)
 {
     PARSE_SPEC("units", parameters);
 
-    if (compute_order(*pout, L, top, &order, jobs->units))
+    std::vector<df::unit*> units;
+    for (size_t i = 0; i < jobs->units.size(); i++)
+    {
+        auto unit = jobs->units[i];
+        if (!unit && jobs->jobs[i])
+            unit = Job::getWorker(jobs->jobs[i]);
+        units.push_back(unit);
+    }
+
+    if (compute_order(*pout, L, top, &order, units))
     {
         reorder_cursor(&jobs->cursor_pos, order);
         reorder_vector(&jobs->units, order);
@@ -523,6 +534,17 @@ DEFINE_SORT_HANDLER(item_sorters, layer_assigntrade, "/Items", bring)
     {
         reorder_cursor(&list2->cursor, order);
         reorder_vector(&vec, order);
+    }
+}
+
+DEFINE_SORT_HANDLER(item_sorters, stores, "/Items", stocks)
+{
+    PARSE_SPEC("items", parameters);
+
+    if (compute_order(*pout, L, top, &order, stocks->items))
+    {
+        reorder_cursor(&stocks->item_cursor, order);
+        reorder_vector(&stocks->items, order);
     }
 }
 

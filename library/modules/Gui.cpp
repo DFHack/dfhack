@@ -41,6 +41,8 @@ using namespace std;
 #include "MiscUtils.h"
 using namespace DFHack;
 
+#include "modules/Job.h"
+
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/global_objects.h"
@@ -58,6 +60,7 @@ using namespace DFHack;
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_petst.h"
 #include "df/viewscreen_tradegoodsst.h"
+#include "df/viewscreen_storesst.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/ui_sidebar_menus.h"
 #include "df/ui_look_list.h"
@@ -353,6 +356,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(pet)
         if (vector_get(screen->trainer_unit, screen->trainer_cursor))
             focus += "/Unit";
         break;
+
+    default:
+        break;
     }
 }
 
@@ -636,7 +642,13 @@ static df::unit *getAnyUnit(df::viewscreen *top)
     using df::global::ui_selected_unit;
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
-        return vector_get(screen->units, screen->cursor_pos);
+    {
+        if (auto unit = vector_get(screen->units, screen->cursor_pos))
+            return unit;
+        if (auto job = vector_get(screen->jobs, screen->cursor_pos))
+            return Job::getWorker(job);
+        return NULL;
+    }
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitlistst, top))
         return vector_get(screen->units[screen->page], screen->cursor_pos[screen->page]);
@@ -790,6 +802,14 @@ static df::item *getAnyItem(df::viewscreen *top)
             return vector_get(screen->broker_items, screen->broker_cursor);
         else
             return vector_get(screen->trader_items, screen->trader_cursor);
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_storesst, top))
+    {
+        if (screen->in_right_list && !screen->in_group_mode)
+            return vector_get(screen->items, screen->item_cursor);
+
+        return NULL;
     }
 
     if (!Gui::dwarfmode_hotkey(top))

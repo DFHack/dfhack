@@ -391,6 +391,17 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_assigntrade)
         focus += "/Items";
 }
 
+DEFINE_GET_FOCUS_STRING_HANDLER(stores)
+{
+    if (!screen->in_right_list)
+        focus += "/Categories";
+    else if (screen->in_group_mode)
+        focus += "/Groups";
+    else
+        focus += "/Items";
+}
+
+
 std::string Gui::getFocusString(df::viewscreen *top)
 {
     if (!top)

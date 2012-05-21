@@ -764,15 +764,24 @@ static bool items_moveToBuilding(df::item *item, df::building_actual *building, 
     return Items::moveToBuilding(mc, item, building,use_mode);
 }
 
+static bool items_moveToInventory
+    (df::item *item, df::unit *unit, df::unit_inventory_item::T_mode mode, int body_part)
+{
+    MapExtras::MapCache mc;
+    return Items::moveToInventory(mc, item, unit, mode, body_part);
+}
+
 static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getGeneralRef),
     WRAPM(Items, getSpecificRef),
     WRAPM(Items, getOwner),
     WRAPM(Items, setOwner),
     WRAPM(Items, getContainer),
+    WRAPM(Items, getDescription),
     WRAPN(moveToGround, items_moveToGround),
     WRAPN(moveToContainer, items_moveToContainer),
     WRAPN(moveToBuilding, items_moveToBuilding),
+    WRAPN(moveToInventory, items_moveToInventory),
     { NULL, NULL }
 };
 

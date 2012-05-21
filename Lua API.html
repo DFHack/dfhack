@@ -991,6 +991,10 @@ or raws. The <tt class="docutils literal">ignore_noble</tt> boolean disables the
 <li><p class="first"><tt class="docutils literal">dfhack.items.getPosition(item)</tt></p>
 <p>Returns true <em>x,y,z</em> of the item, or <em>nil</em> if invalid; may be not equal to item.pos if in inventory.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getDescription(item, type[, decorate])</tt></p>
+<p>Returns the string description of the item, as produced by the getItemDescription
+method. If decorate is true, also adds markings for quality and improvements.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.items.getGeneralRef(item, type)</tt></p>
 <p>Searches for a general_ref with the given type.</p>
 </li>
@@ -1015,6 +1019,12 @@ Returns <em>false</em> in case of error.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.items.moveToContainer(item,container)</tt></p>
 <p>Move the item to the container. Returns <em>false</em> if impossible.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.moveToBuilding(item,building,use_mode)</tt></p>
+<p>Move the item to the building. Returns <em>false</em> if impossible.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.moveToInventory(item,unit,use_mode,body_part)</tt></p>
+<p>Move the item to the unit inventory. Returns <em>false</em> if impossible.</p>
 </li>
 </ul>
 </div>

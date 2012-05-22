@@ -960,13 +960,20 @@ a lua list containing them.</p>
 <p>Returns the nemesis record of the unit if it has one, or <em>nil</em>.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.isDead(unit)</tt></p>
-<p>The unit is completely dead and passive.</p>
+<p>The unit is completely dead and passive, or a ghost.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.isAlive(unit)</tt></p>
 <p>The unit isn't dead or undead.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.isSane(unit)</tt></p>
-<p>The unit is capable of rational action, i.e. not dead, insane or zombie.</p>
+<p>The unit is capable of rational action, i.e. not dead, insane, zombie, or active werewolf.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.isDwarf(unit)</tt></p>
+<p>The unit is of the correct race of the fortress.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.isCitizen(unit)</tt></p>
+<p>The unit is an alive sane citizen of the fortress; wraps the
+same checks the game uses to decide game-over by extinction.</p>
 </li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.units.getAge(unit[,true_age])</span></tt></p>
 <p>Returns the age of the unit in years as a floating-point value.

@@ -613,12 +613,45 @@ df::nemesis_record *Units::getNemesis(df::unit *unit)
     return NULL;
 }
 
+static bool casteFlagSet(int race, int caste, df::caste_raw_flags flag)
+{
+    auto creature = df::creature_raw::find(race);
+    if (!creature)
+        return false;
+
+    auto craw = vector_get(creature->caste, caste);
+    if (!craw)
+        return false;
+
+    return craw->flags.is_set(flag);
+}
+
+static bool isCrazed(df::unit *unit)
+{
+    if (unit->flags3.bits.scuttle)
+        return false;
+    if (unit->curse.rem_tags1.bits.CRAZED)
+        return false;
+    if (unit->curse.add_tags1.bits.CRAZED)
+        return true;
+    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::CRAZED);
+}
+
+static bool isOpposedToLife(df::unit *unit)
+{
+    if (unit->curse.rem_tags1.bits.OPPOSED_TO_LIFE)
+        return false;
+    if (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE)
+        return true;
+    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::CANNOT_UNDEAD);
+}
 
 bool DFHack::Units::isDead(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    return unit->flags1.bits.dead;
+    return unit->flags1.bits.dead ||
+           unit->flags3.bits.ghostly;
 }
 
 bool DFHack::Units::isAlive(df::unit *unit)
@@ -636,8 +669,11 @@ bool DFHack::Units::isSane(df::unit *unit)
 
     if (unit->flags1.bits.dead ||
         unit->flags3.bits.ghostly ||
-        unit->curse.add_tags1.bits.OPPOSED_TO_LIFE ||
-        unit->curse.add_tags1.bits.CRAZED)
+        isOpposedToLife(unit) ||
+        unit->unknown8.unk2)
+        return false;
+
+    if (unit->unknown8.normal_race == unit->unknown8.were_race && isCrazed(unit))
         return false;
 
     switch (unit->mood)
@@ -657,19 +693,38 @@ bool DFHack::Units::isCitizen(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
+    // Copied from the conditions used to decide game over,
+    // except that the game appears to let melancholy/raving
+    // dwarves count as citizens.
+
+    if (!isDwarf(unit) || !isSane(unit))
+        return false;
+
+    if (unit->flags1.bits.marauder ||
+        unit->flags1.bits.invader_origin ||
+        unit->flags1.bits.active_invader ||
+        unit->flags1.bits.forest ||
+        unit->flags1.bits.merchant ||
+        unit->flags1.bits.diplomat)
+        return false;
+
+    if (unit->flags1.bits.tame)
+        return true;
+
     return unit->civ_id == ui->civ_id &&
-           !unit->flags1.bits.merchant &&
-           !unit->flags1.bits.diplomat &&
+           unit->civ_id != -1 &&
+           !unit->flags2.bits.underworld &&
            !unit->flags2.bits.resident &&
-           !unit->flags1.bits.dead &&
-           !unit->flags3.bits.ghostly;
+           !unit->flags2.bits.visitor_uninvited &&
+           !unit->flags2.bits.visitor;
 }
 
 bool DFHack::Units::isDwarf(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    return unit->race == ui->race_id;
+    return unit->race == ui->race_id ||
+           unit->unknown8.normal_race == ui->race_id;
 }
 
 double DFHack::Units::getAge(df::unit *unit, bool true_age)

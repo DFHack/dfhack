@@ -998,16 +998,29 @@ bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t 
 
 bool Gui::getMousePos (int32_t & x, int32_t & y)
 {
-    x = gps->mouse_x;
-    y = gps->mouse_y;
+    if (gps) {
+        x = gps->mouse_x;
+        y = gps->mouse_y;
+    }
+    else {
+        x = -1;
+        y = -1;
+    }
     return (x == -1) ? false : true;
 }
 
 bool Gui::getWindowSize (int32_t &width, int32_t &height)
 {
-    width = gps->dimx;
-    height = gps->dimy;
-    return true;
+    if (gps) {
+        width = gps->dimx;
+        height = gps->dimy;
+        return true;
+    }
+    else {
+        width = 80;
+        height = 25;
+        return false;
+    }
 }
 
 bool Gui::getMenuWidth(uint8_t &menu_width, uint8_t &area_map_width)

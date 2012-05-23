@@ -40,16 +40,6 @@ namespace DFHack
     /**
      * \ingroup grp_world
      */
-    enum WeatherType
-    {
-        CLEAR,
-        RAINING,
-        SNOWING
-    };
-    typedef unsigned char weather_map [5][5];
-    /**
-     * \ingroup grp_world
-     */
     enum GameMode
     {
         GAMEMODE_DWARF,
@@ -113,7 +103,6 @@ namespace DFHack
     class DFHACK_EXPORT World : public Module
     {
         public:
-        weather_map * wmap;
         World();
         ~World();
         bool Start();

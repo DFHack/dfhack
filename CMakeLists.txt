@@ -141,7 +141,6 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
 if(APPLE)
 	include_directories(${CMAKE_INSTALL_PREFIX}/libs/SDL.framework/Headers)
-	SET(PROJECT_LIBS SDL)
 endif()
 add_subdirectory(depends)
 

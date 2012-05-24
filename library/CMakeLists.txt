@@ -205,6 +205,8 @@ IF(UNIX)
   SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp
                               PROPERTIES COMPILE_FLAGS "-g0 -O1")
 ELSE(WIN32)
+  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp
+                              PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
 ENDIF()
 
 

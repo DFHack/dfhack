@@ -28,7 +28,7 @@ static int enable_fastdwarf = false;
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     // check run conditions
-    if(!world->map.block_index || !enable_fastdwarf)
+    if(!world || !world->map.block_index || !enable_fastdwarf)
     {
         // give up if we shouldn't be running'
         return CR_OK;

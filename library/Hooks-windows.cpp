@@ -431,7 +431,7 @@ DFhackCExport int SDL_PollEvent(SDL::Event* event)
     {
         DFHack::Core & c = DFHack::Core::getInstance();
         // if we consume the event, ask SDL for more.
-        if(!c.SDL_Event(event))
+        if(!c.DFH_SDL_Event(event))
             goto pollevent_again;
     }
     return orig_return;

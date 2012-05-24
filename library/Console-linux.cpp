@@ -60,6 +60,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <errno.h>
 #include <deque>
 
+// George Vulov for MacOSX
+#ifndef __LINUX__
+#define TEMP_FAILURE_RETRY(expr) \
+    ({ long int _res; \
+        do _res = (long int) (expr); \
+        while (_res == -1L && errno == EINTR); \
+        _res; })
+#endif
+
 #include "Console.h"
 #include "Hooks.h"
 using namespace DFHack;

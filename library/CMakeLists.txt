@@ -36,9 +36,6 @@ include/MiscUtils.h
 include/Module.h
 include/Pragma.h
 include/MemAccess.h
-include/SDL_events.h
-include/SDL_keyboard.h
-include/SDL_keysym.h
 include/TileTypes.h
 include/Types.h
 include/VersionInfo.h
@@ -223,6 +220,10 @@ ENDIF()
 
 IF(UNIX)
   SET(PROJECT_LIBS rt dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
+  IF(APPLE)
+  	SET(PROJECT_LIBS dl dfhack-md5 dfhack-tinyxml dfhack-tinythread SDL)
+#  	include_directories(${CMAKE_INSTALL_PREFIX}/libs/SDL.framework/Headers)
+  ENDIF()
 ELSE(WIN32)
   #FIXME: do we really need psapi?
   SET(PROJECT_LIBS psapi dfhack-tinyxml dfhack-tinythread)
@@ -254,6 +255,10 @@ ENDIF()
 
 #effectively disables debug builds...
 SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
+
+IF(APPLE)
+	TARGET_LINK_LIBRARIES(dfhack ${CMAKE_INSTALL_PREFIX}/libs/SDL.framework/SDL)
+ENDIF()
 
 TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua ${PROJECT_LIBS})
 SET_TARGET_PROPERTIES(dfhack PROPERTIES LINK_INTERFACE_LIBRARIES "")

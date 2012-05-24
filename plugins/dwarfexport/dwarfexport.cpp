@@ -213,7 +213,7 @@ command_result export_dwarves (color_ostream &con, std::vector <std::string> & p
         return CR_OK;
     }
 
-    ofstream outf(filename);
+    ofstream outf(filename.c_str());
     if (!outf) {
         con.printerr("Failed to open file %s\n", filename.c_str());
         return CR_FAILURE;

@@ -124,7 +124,7 @@ command_result mapexport (color_ostream &out, std::vector <std::string> & parame
     if (filename.rfind(".dfmap") == std::string::npos) filename += ".dfmap";
     out << "Writing to " << filename << "..." << std::endl;
 
-    std::ofstream output_file(filename, std::ios::out | std::ios::trunc | std::ios::binary);
+    std::ofstream output_file(filename.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
     if (!output_file.is_open())
     {
         out.printerr("Couldn't open the output file.\n");

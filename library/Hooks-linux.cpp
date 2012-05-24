@@ -38,16 +38,31 @@ distribution.
 #include <string>
 #include <map>
 
+typedef struct interpose_s
+{
+  void *new_func;
+  void *orig_func;
+} interpose_t;
+
 #include "DFHack.h"
 #include "Core.h"
 #include "Hooks.h"
 #include <iostream>
 
+static const interpose_t interposers[] __attribute__ ((section("__DATA, __interpose"))) = 
+{
+     { (void *)DFH_SDL_Init,  (void *)SDL_Init  },
+     { (void *)DFH_SDL_PollEvent, (void *)SDL_PollEvent },
+     { (void *)DFH_SDL_Quit, (void *)SDL_Quit },
+     { (void *)DFH_SDL_NumJoysticks, (void *)SDL_NumJoysticks },
+     
+};
+
 /*******************************************************************************
 *                           SDL part starts here                               *
 *******************************************************************************/
 // hook - called for each game tick (or more often)
-DFhackCExport int SDL_NumJoysticks(void)
+DFhackCExport int DFH_SDL_NumJoysticks(void)
 {
     DFHack::Core & c = DFHack::Core::getInstance();
     return c.Update();
@@ -55,23 +70,24 @@ DFhackCExport int SDL_NumJoysticks(void)
 
 // hook - called at program exit
 static void (*_SDL_Quit)(void) = 0;
-DFhackCExport void SDL_Quit(void)
+DFhackCExport void DFH_SDL_Quit(void)
 {
     DFHack::Core & c = DFHack::Core::getInstance();
     c.Shutdown();
-    if(_SDL_Quit)
+    /*if(_SDL_Quit)
     {
         _SDL_Quit();
-    }
+    }*/
+    SDL_Quit();
 }
 
 // called by DF to check input events
-static int (*_SDL_PollEvent)(SDL::Event* event) = 0;
-DFhackCExport int SDL_PollEvent(SDL::Event* event)
+static int (*_SDL_PollEvent)(SDL_Event* event) = 0;
+DFhackCExport int DFH_SDL_PollEvent(SDL_Event* event)
 {
     pollevent_again:
     // if SDL returns 0 here, it means there are no more events. return 0
-    int orig_return = _SDL_PollEvent(event);
+    int orig_return = SDL_PollEvent(event);
     if(!orig_return)
         return 0;
     // otherwise we have an event to filter
@@ -79,7 +95,7 @@ DFhackCExport int SDL_PollEvent(SDL::Event* event)
     {
         DFHack::Core & c = DFHack::Core::getInstance();
         // if we consume the event, ask SDL for more.
-        if(!c.SDL_Event(event))
+        if(!c.DFH_SDL_Event(event))
             goto pollevent_again;
     }
     return orig_return;
@@ -111,20 +127,21 @@ DFhackCExport int wgetch(WINDOW *win)
 
 // hook - called at program start, initialize some stuffs we'll use later
 static int (*_SDL_Init)(uint32_t flags) = 0;
-DFhackCExport int SDL_Init(uint32_t flags)
+DFhackCExport int DFH_SDL_Init(uint32_t flags)
 {
     // reroute stderr
+    fprintf(stderr,"dfhack: attempting to hook in\n");
     freopen("stderr.log", "w", stderr);
     // we don't reroute stdout until  we figure out if this should be done at all
     // See: Console-linux.cpp
 
-    // find real functions
-    _SDL_Init = (int (*)( uint32_t )) dlsym(RTLD_NEXT, "SDL_Init");
-    _SDL_Quit = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_Quit");
-    _SDL_PollEvent = (int (*)(SDL::Event*))dlsym(RTLD_NEXT,"SDL_PollEvent");
+    // find real functions -- unnecessary in Mac OS X
+//    _SDL_Init = (int (*)( uint32_t )) dlsym(RTLD_NEXT, "SDL_Init");
+ //   _SDL_Quit = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_Quit");
+  //  _SDL_PollEvent = (int (*)(SDL::Event*))dlsym(RTLD_NEXT,"SDL_PollEvent");
 
     // check if we got them
-    if(_SDL_Init && _SDL_Quit && _SDL_PollEvent)
+/*    if(_SDL_Init && _SDL_Quit && _SDL_PollEvent)
     {
         fprintf(stderr,"dfhack: hooking successful\n");
     }
@@ -133,11 +150,11 @@ DFhackCExport int SDL_Init(uint32_t flags)
         // bail, this would be a disaster otherwise
         fprintf(stderr,"dfhack: something went horribly wrong\n");
         exit(1);
-    }
+    }*/
     /*
     DFHack::Core & c = DFHack::Core::getInstance();
     c.Init();
     */
-    int ret = _SDL_Init(flags);
+    int ret = SDL_Init(flags);
     return ret;
 }

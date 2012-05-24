@@ -23,5 +23,5 @@ if #items==0 then
     error("No items found!")
 end
 for k,v in pairs(items) do
-    dfhack.items.moveToBuilding(v,build,1)
+    dfhack.items.moveToBuilding(v,build,0)
 end

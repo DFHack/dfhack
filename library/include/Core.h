@@ -84,10 +84,10 @@ namespace DFHack
     // Better than tracking some weird variables all over the place.
     class DFHACK_EXPORT Core
     {
-        friend int  ::DFH_SDL_NumJoysticks(void);
-        friend void ::DFH_SDL_Quit(void);
-        friend int  ::DFH_SDL_PollEvent(SDL_Event *);
-        friend int  ::DFH_SDL_Init(uint32_t flags);
+        friend int  ::SDL_NumJoysticks(void);
+        friend void ::SDL_Quit(void);
+        friend int  ::SDL_PollEvent(SDL_Event *);
+        friend int  ::SDL_Init(uint32_t flags);
         friend int  ::wgetch(WINDOW * w);
         friend int  ::egg_init(void);
         friend int  ::egg_shutdown(void);

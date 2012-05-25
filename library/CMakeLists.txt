@@ -89,6 +89,14 @@ PlugLoad-linux.cpp
 Process-linux.cpp
 )
 
+SET(MAIN_SOURCES_DARWIN
+Console-darwin.cpp
+Hooks-darwin.cpp
+PlugLoad-darwin.cpp
+Process-darwin.cpp
+#MacPool.m
+)
+
 SET(MAIN_SOURCES_LINUX_EGGY
 Console-linux.cpp
 Hooks-egg.cpp
@@ -155,6 +163,8 @@ IF(UNIX)
     OPTION(BUILD_EGGY "Make DFHack strangely egg-shaped." OFF)
     IF(BUILD_EGGY)
         LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX_EGGY})
+    ELSEIF(APPLE)
+    	LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_DARWIN})
     ELSE()
         LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX})
     ENDIF()

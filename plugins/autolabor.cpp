@@ -706,7 +706,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
 	static int step_count = 0;
     // check run conditions
-    if(!world->map.block_index || !enable_autolabor)
+    if(!world || !world->map.block_index || !enable_autolabor)
     {
         // give up if we shouldn't be running'
         return CR_OK;

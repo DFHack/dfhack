@@ -292,7 +292,7 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
         else if (bpIndex < unit->body.body_plan->body_parts.size())
         {
             // The current body part is not the one that was specified in the function call, but we can keep searching
-            if (verbose) { Core::printerr("Found bodypart %s; not a match; continuing search.\n", currPart->part_code.c_str()); }
+            if (verbose) { Core::printerr("Found bodypart %s; not a match; continuing search.\n", currPart->token.c_str()); }
             continue;
         }
         else 
@@ -302,35 +302,35 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
             return false;
         }
 
-        if (verbose) { Core::print("Inspecting bodypart %s.\n", currPart->part_code.c_str()); }
+        if (verbose) { Core::print("Inspecting bodypart %s.\n", currPart->token.c_str()); }
 
         // Inspect the current bodypart
         if (item->getType() == df::enums::item_type::GLOVES && currPart->flags.is_set(df::body_part_template_flags::GRASP) &&
             ((item->getGloveHandedness() == const_GloveLeftHandedness && currPart->flags.is_set(df::body_part_template_flags::LEFT)) ||
             (item->getGloveHandedness() == const_GloveRightHandedness && currPart->flags.is_set(df::body_part_template_flags::RIGHT))))
         {
-            if (verbose) { Core::print("Hand found (%s)...", currPart->part_code.c_str()); }
+            if (verbose) { Core::print("Hand found (%s)...", currPart->token.c_str()); }
         }
         else if (item->getType() == df::enums::item_type::HELM && currPart->flags.is_set(df::body_part_template_flags::HEAD))
         {
-            if (verbose) { Core::print("Head found (%s)...", currPart->part_code.c_str()); }
+            if (verbose) { Core::print("Head found (%s)...", currPart->token.c_str()); }
         }
         else if (item->getType() == df::enums::item_type::ARMOR && currPart->flags.is_set(df::body_part_template_flags::UPPERBODY))
         {
-            if (verbose) { Core::print("Upper body found (%s)...", currPart->part_code.c_str()); }
+            if (verbose) { Core::print("Upper body found (%s)...", currPart->token.c_str()); }
         }
         else if (item->getType() == df::enums::item_type::PANTS && currPart->flags.is_set(df::body_part_template_flags::LOWERBODY))
         {
-            if (verbose) { Core::print("Lower body found (%s)...", currPart->part_code.c_str()); }
+            if (verbose) { Core::print("Lower body found (%s)...", currPart->token.c_str()); }
         }
         else if (item->getType() == df::enums::item_type::SHOES && currPart->flags.is_set(df::body_part_template_flags::STANCE))
         {
-            if (verbose) { Core::print("Foot found (%s)...", currPart->part_code.c_str()); }
+            if (verbose) { Core::print("Foot found (%s)...", currPart->token.c_str()); }
         }
         else if (targetBodyPart && ignoreRestrictions)
         {
             // The BP in question would normally be considered ineligible for equipment.  But since it was deliberately specified by the user, we'll proceed anyways.
-            if (verbose) { Core::print("Non-standard bodypart found (%s)...", targetBodyPart->part_code.c_str()); }
+            if (verbose) { Core::print("Non-standard bodypart found (%s)...", targetBodyPart->token.c_str()); }
         }
         else if (targetBodyPart)
         {
@@ -538,16 +538,16 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
 		{
 			// Tentatively assume that the part is a match
 			targetBodyPart = targetUnit->body.body_plan->body_parts.at(bpIndex);
-			if (targetBodyPart->part_code.compare(targetBodyPartCode) == 0) 
+			if (targetBodyPart->token.compare(targetBodyPartCode) == 0) 
 			{
 				// It is indeed a match; exit the loop (while leaving the variable populated)
-				if (verbose) { out.print("Matching bodypart (%s) found.\n", targetBodyPart->part_name.c_str()); }
+				if (verbose) { out.print("Matching bodypart (%s) found.\n", targetBodyPart->token.c_str()); }
 				break;
 			}
 			else 
 			{
 				// Not a match; nullify the variable (it will get re-populated on the next pass through the loop)
-				if (verbose) { out.printerr("Bodypart \"%s\" does not match \"%s\".\n", targetBodyPart->part_code.c_str(), targetBodyPartCode.c_str()); }
+				if (verbose) { out.printerr("Bodypart \"%s\" does not match \"%s\".\n", targetBodyPart->token.c_str(), targetBodyPartCode.c_str()); }
 				targetBodyPart = NULL;
 			}
 		}

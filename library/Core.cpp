@@ -279,21 +279,29 @@ static command_result runLuaScript(color_ostream &out, std::string filename, vec
 
 command_result Core::runCommand(color_ostream &out, const std::string &command)
 {
+	fprintf(stderr,"Inside runCommand");
+	fprintf(stderr," with command %s\n",command.c_str());
     if (!command.empty())
     {
+		fprintf(stderr,"Command is not empty, tokenizing\n");
         vector <string> parts;
         Core::cheap_tokenise(command,parts);
+		fprintf(stderr,"Tokenized, got %d parts\n",parts.size());
         if(parts.size() == 0)
             return CR_NOT_IMPLEMENTED;
 
         string first = parts[0];
+		fprintf(stderr,"Erasing beginning\n");
         parts.erase(parts.begin());
+        
+		fprintf(stderr,"I think we're about there\n");
 
         if (first[0] == '#')
             return CR_OK;
 
         cerr << "Invoking: " << command << endl;
 
+		fprintf(stderr,"Returning with the next recursion\n");
         return runCommand(out, first, parts);
     }
     else
@@ -674,6 +682,7 @@ void fIOthread(void * iodata)
     {
         string command = "";
         int ret = con.lineedit("[DFHack]# ",command, main_history);
+        fprintf(stderr,"Command: [%s]\n",command.c_str());
         if(ret == -2)
         {
             cerr << "Console is shutting down properly." << endl;
@@ -687,9 +696,13 @@ void fIOthread(void * iodata)
         else if(ret)
         {
             // a proper, non-empty command was entered
+			fprintf(stderr,"Adding command to history\n");
             main_history.add(command);
+			fprintf(stderr,"Saving history\n");
             main_history.save("dfhack.history");
         }
+        
+		fprintf(stderr,"Running command\n");
 
         auto rv = core->runCommand(con, command);
 

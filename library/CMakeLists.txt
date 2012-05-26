@@ -49,6 +49,10 @@ SET(MAIN_HEADERS_WINDOWS
 include/wdirent.h
 )
 
+SET(MAIN_HEADERS_DARWIN
+MacPool.h
+)
+
 SET(MAIN_SOURCES
 Core.cpp
 ColorText.cpp
@@ -94,7 +98,10 @@ Console-darwin.cpp
 Hooks-darwin.cpp
 PlugLoad-darwin.cpp
 Process-darwin.cpp
-#MacPool.m
+)
+
+SET(OBJC_SOURCES_DARWIN
+MacPool.mm
 )
 
 SET(MAIN_SOURCES_LINUX_EGGY
@@ -165,6 +172,11 @@ IF(UNIX)
         LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX_EGGY})
     ELSEIF(APPLE)
     	LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_DARWIN})
+  	    SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic")
+  	    SET(CPP_SOURCES)
+    	LIST(APPEND CPP_SOURCES ${PROJECT_SOURCES})
+    	LIST(APPEND PROJECT_SOURCES ${OBJC_SOURCES_DARWIN})
+		LIST(APPEND PROJECT_HEADERS ${MAIN_HEADERS_DARWIN})
     ELSE()
         LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX})
     ENDIF()
@@ -219,6 +231,23 @@ ELSE(WIN32)
                               PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
 ENDIF()
 
+if(APPLE)
+	SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32 -mtune=generic" )
+	foreach(f ${PROJECT_SOURCES})
+		if(f MATCHES MacPool.mm)
+			MESSAGE(STATUS "Not setting properties for ${f}")
+			SET_SOURCE_FILES_PROPERTIES(${f} PROPERTIES COMPILE_FLAGS "-arch i386 -framework Foundation -x objective-c")
+		else()
+			if(f MATCHES MacPool.h)
+			else()
+				SET_SOURCE_FILES_PROPERTIES(${f} PROPERTIES COMPILE_FLAGS "-std=c++0x -march=i686")
+				MESSAGE(STATUS "Setting properties for ${f}")
+			endif()
+		endif()
+	endforeach()
+	SET_SOURCE_FILES_PROPERTIES(dfhack-run.cpp PROPERTIES COMPILE_FLAGS "-std=c++0x -march=i686")
+	SET(CMAKE_SHARED_LINKER_FLAGS "-arch i386")
+endif()
 
 # Compilation
 
@@ -271,6 +300,7 @@ SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 IF(APPLE)
 	SET(SDL_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/SDL.framework)
 	TARGET_LINK_LIBRARIES(dfhack ${SDL_LIBRARY})
+	TARGET_LINK_LIBRARIES(dfhack /System/Library/Frameworks/Foundation.framework)
 	SET_TARGET_PROPERTIES(dfhack PROPERTIES VERSION 1.0.0)
 	SET_TARGET_PROPERTIES(dfhack PROPERTIES SOVERSION 1.0.0)
 ENDIF()

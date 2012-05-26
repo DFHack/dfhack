@@ -49,8 +49,6 @@ distribution.
 #include "Hooks.h"
 #include <iostream>
 
-#include "MacPool.h"
-
 /*static const interpose_t interposers[] __attribute__ ((section("__DATA, __interpose"))) = 
 {
      { (void *)DFH_SDL_Init,  (void *)SDL_Init  },
@@ -59,6 +57,9 @@ distribution.
      { (void *)DFH_SDL_NumJoysticks, (void *)SDL_NumJoysticks },
      
 };*/
+
+extern "C" int create_pool();
+extern "C" int destroy_pool();
 
 /*******************************************************************************
 *                           SDL part starts here                               *
@@ -81,7 +82,7 @@ DFhackCExport void SDL_Quit(void)
         _SDL_Quit();
     }*/
     
-//    destroy_pool();
+    destroy_pool();
     
     _SDL_Quit();
 }
@@ -140,7 +141,7 @@ DFhackCExport int SDL_Init(uint32_t flags)
     // we don't reroute stdout until  we figure out if this should be done at all
     // See: Console-linux.cpp
 	
-//	create_pool();
+	create_pool();
 
     // find real functions
     fprintf(stderr,"dfhack: saving real SDL functions\n");

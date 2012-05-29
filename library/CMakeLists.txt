@@ -232,7 +232,7 @@ IF(UNIX)
   SET(PROJECT_LIBS rt dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
   IF(APPLE)
   	SET(PROJECT_LIBS dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
-  ENDIF()
+ ENDIF()
 ELSE(WIN32)
   #FIXME: do we really need psapi?
   SET(PROJECT_LIBS psapi dfhack-tinyxml dfhack-tinythread)
@@ -268,8 +268,7 @@ SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 IF(APPLE)
 	SET(SDL_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/SDL.framework)
 	TARGET_LINK_LIBRARIES(dfhack ${SDL_LIBRARY})
-	TARGET_LINK_LIBRARIES(dfhack /System/Library/Frameworks/Foundation.framework)
-	TARGET_LINK_LIBRARIES(dfhack /usr/lib/libc++.dylib)
+#	TARGET_LINK_LIBRARIES(dfhack /usr/lib/libc++.dylib)
 	SET_TARGET_PROPERTIES(dfhack PROPERTIES VERSION 1.0.0)
 	SET_TARGET_PROPERTIES(dfhack PROPERTIES SOVERSION 1.0.0)
 ENDIF()
@@ -281,11 +280,18 @@ TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket)
 TARGET_LINK_LIBRARIES(dfhack-run dfhack-client)
 
 IF(UNIX)
-    # On linux, copy our version of the df launch script which sets LD_PRELOAD
-    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
+	if (APPLE)
+		install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack
+				DESTINATION .)
+		install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack-run
+				DESTINATION .)
+    else()
+	    # On linux, copy our version of the df launch script which sets LD_PRELOAD
+    	install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
             DESTINATION .)
-    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
+	    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
             DESTINATION .)
+    endif()
 ELSE()
     if(NOT BUILD_EGGY)
         # On windows, copy the renamed SDL so DF can still run.

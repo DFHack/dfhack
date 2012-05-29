@@ -160,7 +160,11 @@ endif()
 
 # Packaging with CPack!
 IF(UNIX)
-    SET(CPACK_GENERATOR "TGZ")
+	if(APPLE)
+		SET(CPACK_GENERATOR "ZIP")
+	else()
+	    SET(CPACK_GENERATOR "TGZ")
+	endif()
 ELSEIF(WIN32)
     SET(CPACK_GENERATOR "ZIP")
 ENDIF()

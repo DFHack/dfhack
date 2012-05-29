@@ -6,9 +6,13 @@ use warnings;
 use XML::LibXML;
 
 our @lines_rb;
-my @lines_cpp;
-my @include_cpp;
-my %offsets;
+
+my $os;
+if ($^O =~ /linux/i) {
+    $os = 'linux';
+} else {
+    $os = 'windows';
+}
 
 sub indent_rb(&) {
     my ($sub) = @_;
@@ -39,6 +43,7 @@ my %item_renderer = (
 );
 
 my %global_types;
+our $current_typename;
 
 sub render_global_enum {
     my ($name, $type) = @_;
@@ -112,10 +117,6 @@ sub render_enum_fields {
 sub render_global_bitfield {
     my ($name, $type) = @_;
 
-    push @lines_cpp, "}" if @include_cpp;
-    push @lines_cpp, "void cpp_$name(FILE *fout) {";
-    push @include_cpp, $name;
-
     my $rbname = rb_ucase($name);
     push @lines_rb, "class $rbname < MemHack::Compound";
     indent_rb {
@@ -128,7 +129,7 @@ sub render_bitfield_fields {
 
     push @lines_rb, "field(:_whole, 0) {";
     indent_rb {
-        render_item_number($type, '');
+        render_item_number($type);
     };
     push @lines_rb, "}";
 
@@ -152,25 +153,8 @@ sub render_bitfield_fields {
 }
 
 
-sub render_global_struct {
-    my ($name, $type) = @_;
-
-    my $rbname = rb_ucase($name);
-
-    my $cppns = "df::$name"; 
-    push @lines_cpp, "}" if @include_cpp;
-    push @lines_cpp, "void cpp_$name(FILE *fout) {";
-    push @include_cpp, $name;
-
-    push @lines_rb, "class $rbname < MemHack::Compound";
-    indent_rb {
-        my $sz = query_cpp("sizeof($cppns)");
-        push @lines_rb, "sizeof $sz";
-        render_struct_fields($type, "$cppns");
-    };
-    push @lines_rb, "end\n";
-}
 my %seen_class;
+our $compound_off;
 sub render_global_class {
     my ($name, $type) = @_;
 
@@ -183,8 +167,12 @@ sub render_global_class {
     return if $seen_class{$name};
     $seen_class{$name}++;
 
+    local $compound_off = 0;
+
     my $rtti_name;
-    if ($type->getAttribute('ld:meta') eq 'class-type') {
+    my $meta = $type->getAttribute('ld:meta');
+    if ($meta eq 'class-type') {
+        $compound_off = 4;
         $rtti_name = $type->getAttribute('original-name') ||
                      $type->getAttribute('type-name') ||
                      $name;
@@ -192,39 +180,42 @@ sub render_global_class {
 
     my $rbparent = ($parent ? rb_ucase($parent) : 'MemHack::Compound');
 
-    my $cppns = "df::$name"; 
-    push @lines_cpp, "}" if @include_cpp;
-    push @lines_cpp, "void cpp_$name(FILE *fout) {";
-    push @include_cpp, $name;
+    $compound_off = sizeof($global_types{$parent}) if $parent;
+    local $current_typename = $rbname;
 
     push @lines_rb, "class $rbname < $rbparent";
     indent_rb {
-        my $sz = query_cpp("sizeof($cppns)");
+        my $sz = sizeof($type);
+        # see comment is sub sizeof ; but gcc has sizeof(cls) aligned
+        $sz = align_field($sz, 4) if $os eq 'linux' and $meta eq 'class-type';
         push @lines_rb, "sizeof $sz";
         push @lines_rb, "rtti_classname :$rtti_name" if $rtti_name;
-        render_struct_fields($type, "$cppns");
+        render_struct_fields($type);
         my $vms = $type->findnodes('child::virtual-methods')->[0];
         render_class_vmethods($vms) if $vms;
     };
     push @lines_rb, "end\n";
 }
 sub render_struct_fields {
-    my ($type, $cppns) = @_;
+    my ($type) = @_;
 
+    my $isunion = $type->getAttribute('is-union');
     for my $field ($type->findnodes('child::ld:field')) {
         my $name = $field->getAttribute('name');
         $name = $field->getAttribute('ld:anon-name') if (!$name);
         if (!$name and $field->getAttribute('ld:anon-compound')) {
-            render_struct_fields($field, $cppns);
+            render_struct_fields($field);
+        } else {
+            $compound_off = align_field($compound_off, get_field_align($field));
+            if ($name) {
+                push @lines_rb, "field(:$name, $compound_off) {";
+                indent_rb {
+                    render_item($field);
+                };
+                push @lines_rb, "}";
+            }
         }
-        next if (!$name);
-        my $offset = get_offset($cppns, $name);
-
-        push @lines_rb, "field(:$name, $offset) {";
-        indent_rb {
-            render_item($field, "$cppns");
-        };
-        push @lines_rb, "}";
+        $compound_off += sizeof($field) if (!$isunion);
     }
 }
 sub render_class_vmethods {
@@ -255,11 +246,10 @@ sub render_class_vmethods {
             push @lines_rb, 'end';
         }
         # on linux, the destructor uses 2 entries
-        $voff += 4 if $meth->getAttribute('is-destructor') and $^O =~ /linux/i;
+        $voff += 4 if $meth->getAttribute('is-destructor') and $os eq 'linux';
         $voff += 4;
     }
 }
-
 sub render_class_vmethod_ret {
     my ($call, $ret) = @_;
     if (!$ret) {
@@ -283,9 +273,9 @@ sub render_class_vmethod_ret {
         if ($retsubtype eq 'bool') {
             push @lines_rb, "(val & 1) != 0";
         } elsif ($ret->getAttribute('ld:unsigned')) {
-            push @lines_rb, "val & ((1 << $retbits) - 1)";
+            push @lines_rb, "val & ((1 << $retbits) - 1)"; # if $retbits != 32;
         } else { # signed
-            push @lines_rb, "val &= ((1 << $retbits) - 1)";
+            push @lines_rb, "val &= ((1 << $retbits) - 1)"; # if $retbits != 32;
             push @lines_rb, "((val >> ($retbits-1)) & 1) == 0 ? val : val - (1 << $retbits)";
         }
     } elsif ($retmeta eq 'pointer') {
@@ -308,9 +298,8 @@ sub render_global_objects {
     my $sname = 'global_objects';
     my $rbname = rb_ucase($sname);
 
-    push @lines_cpp, "}" if @include_cpp;
-    push @lines_cpp, "void cpp_$sname(FILE *fout) {";
-    push @include_cpp, $sname;
+    local $compound_off = 0;
+    local $current_typename = 'Global';
 
     push @lines_rb, "class $rbname < MemHack::Compound";
     indent_rb {
@@ -323,7 +312,7 @@ sub render_global_objects {
                 push @lines_rb, "field(:$oname, addr) {";
                 my $item = $obj->findnodes('child::ld:item')->[0];
                 indent_rb {
-                    render_item($item, 'df::global');
+                    render_item($item);
                 };
                 push @lines_rb, "}";
             };
@@ -344,28 +333,209 @@ sub render_global_objects {
 }
 
 
+sub align_field {
+    my ($off, $fldalign) = @_;
+    my $dt = $off % $fldalign;
+    $off += $fldalign - $dt if $dt > 0;
+    return $off;
+}
+
+my %align_cache;
+my %sizeof_cache;
+sub get_field_align {
+    my ($field) = @_;
+    my $al = 4;
+    my $meta = $field->getAttribute('ld:meta');
+    if ($meta eq 'number') {
+        $al = $field->getAttribute('ld:bits')/8;
+        $al = 4 if $al > 4;
+    } elsif ($meta eq 'global') {
+        my $typename = $field->getAttribute('type-name');
+        return $align_cache{$typename} if $align_cache{$typename};
+        my $g = $global_types{$typename};
+        my $st = $field->getAttribute('ld:subtype') || '';
+        if ($st eq 'bitfield' or $st eq 'enum' or $g->getAttribute('ld:meta') eq 'bitfield-type') {
+            my $base = $field->getAttribute('base-type') || $g->getAttribute('base-type') || 'uint32_t';
+            print "$st type $base\n" if $base !~ /int(\d+)_t/;
+            # dont cache, field->base-type may differ
+            return $1/8;
+        }
+        $al = 1;
+        for my $gf ($g->findnodes('child::ld:field')) {
+            my $fal = get_field_align($gf);
+            $al = $fal if $fal > $al;
+        }
+        $align_cache{$typename} = $al;
+    } elsif ($meta eq 'compound') {
+        my $st = $field->getAttribute('ld:subtype') || '';
+        if ($st eq 'bitfield' or $st eq 'enum') {
+            my $base = $field->getAttribute('base-type') || 'uint32_t';
+            print "$st type $base\n" if $base !~ /int(\d+)_t/;
+            return $1/8;
+        }
+        $al = 1;
+        for my $f ($field->findnodes('child::ld:field')) {
+            my $fal = get_field_align($f);
+            $al = $fal if $fal > $al;
+        }
+    } elsif ($meta eq 'static-array') {
+        my $tg = $field->findnodes('child::ld:item')->[0];
+        $al = get_field_align($tg);
+    } elsif ($meta eq 'bytes') {
+        $al = $field->getAttribute('alignment') || 1;
+    }
+    return $al;
+}
+
+sub sizeof {
+    my ($field) = @_;
+    my $meta = $field->getAttribute('ld:meta');
+    if ($meta eq 'number') {
+        return $field->getAttribute('ld:bits')/8;
+    } elsif ($meta eq 'pointer') {
+        return 4;
+    } elsif ($meta eq 'static-array') {
+        my $count = $field->getAttribute('count');
+        my $tg = $field->findnodes('child::ld:item')->[0];
+        return $count * sizeof($tg);
+    } elsif ($meta eq 'bitfield-type' or $meta eq 'enum-type') {
+        my $base = $field->getAttribute('base-type') || 'uint32_t';
+        print "$meta type $base\n" if $base !~ /int(\d+)_t/;
+        return $1/8;
+    } elsif ($meta eq 'global') {
+        my $typename = $field->getAttribute('type-name');
+        return $sizeof_cache{$typename} if $sizeof_cache{$typename};
+        my $g = $global_types{$typename};
+        my $st = $field->getAttribute('ld:subtype') || '';
+        if ($st eq 'bitfield' or $st eq 'enum' or $g->getAttribute('ld:meta') eq 'bitfield-type') {
+            my $base = $field->getAttribute('base-type') || $g->getAttribute('base-type') || 'uint32_t';
+            print "$st type $base\n" if $base !~ /int(\d+)_t/;
+            return $1/8;
+        }
+        return sizeof($g);
+    } elsif ($meta eq 'class-type') {
+        my $typename = $field->getAttribute('type-name');
+        return $sizeof_cache{$typename} if $sizeof_cache{$typename};
+        my $off = 4;
+        my $parent = $field->getAttribute('inherits-from');
+        $off = sizeof($global_types{$parent}) if ($parent);
+        for my $f ($field->findnodes('child::ld:field')) {
+            $off = align_field($off, get_field_align($f));
+            $off += sizeof($f);
+        }
+        # GCC: class a { vtable; char; } ; class b:a { char c2; } -> c2 has offset 5 (Windows MSVC: offset 8)
+        $off = align_field($off, 4) if $os ne 'linux';
+        $sizeof_cache{$typename} = $off;
+        return $off;
+    } elsif ($meta eq 'struct-type' or $meta eq 'compound') {
+        my $typename = $field->getAttribute('type-name');
+        return $sizeof_cache{$typename} if $typename and $sizeof_cache{$typename};
+        my $st = $field->getAttribute('ld:subtype') || '';
+        if ($st eq 'bitfield' or $st eq 'enum') {
+            my $base = $field->getAttribute('base-type') || 'uint32_t';
+            print "$st type $base\n" if $base !~ /int(\d+)_t/;
+            $sizeof_cache{$typename} = $1/8 if $typename;
+            return $1/8;
+        }
+        if ($field->getAttribute('is-union')) {
+            my $sz = 0;
+            for my $f ($field->findnodes('child::ld:field')) {
+                my $fsz = sizeof($f);
+                $sz = $fsz if $fsz > $sz;
+            }
+            return $sz;
+        }
+        my $off = 0;
+        my $parent = $field->getAttribute('inherits-from');
+        $off = sizeof($global_types{$parent}) if ($parent);
+        my $al = 1;
+        for my $f ($field->findnodes('child::ld:field')) {
+            my $fa = get_field_align($f);
+            $al = $fa if $fa > $al;
+            $off = align_field($off, $fa);
+            $off += sizeof($f);
+        }
+        $off = align_field($off, $al);
+        $sizeof_cache{$typename} = $off if $typename;
+        return $off;
+    } elsif ($meta eq 'container') {
+        my $subtype = $field->getAttribute('ld:subtype');
+        if ($subtype eq 'stl-vector') {
+            if ($os eq 'linux') {
+                return 12;
+            } elsif ($os eq 'windows') {
+                return 16;
+            } else {
+                print "sizeof stl-vector on $os\n";
+            }
+        } elsif ($subtype eq 'stl-bit-vector') {
+            if ($os eq 'linux') {
+                return 20;
+            } elsif ($os eq 'windows') {
+                return 20;
+            } else {
+                print "sizeof stl-bit-vector on $os\n";
+            }
+        } elsif ($subtype eq 'stl-deque') {
+            if ($os eq 'linux') {
+                return 40;
+            } elsif ($os eq 'windows') {
+                return 24;
+            } else {
+                print "sizeof stl-deque on $os\n";
+            }
+        } elsif ($subtype eq 'df-linked-list') {
+            return 12;
+        } elsif ($subtype eq 'df-flagarray') {
+            return 8;
+        } elsif ($subtype eq 'df-array') {
+            return 8;   # XXX 6 ?
+        } else {
+            print "sizeof container $subtype\n";
+        }
+    } elsif ($meta eq 'primitive') {
+        my $subtype = $field->getAttribute('ld:subtype');
+        if ($subtype eq 'stl-string') {
+            if ($os eq 'linux') {
+                return 4;
+            } elsif ($os eq 'windows') {
+                return 28;
+            } else {
+                print "sizeof stl-string on $os\n";
+            }
+            print "sizeof stl-string\n";
+        } else {
+            print "sizeof primitive $subtype\n";
+        }
+    } elsif ($meta eq 'bytes') {
+        return $field->getAttribute('size');
+    } else {
+        print "sizeof $meta\n";
+    }
+}
+
 sub render_item {
-    my ($item, $pns) = @_;
+    my ($item) = @_;
     return if (!$item);
 
     my $meta = $item->getAttribute('ld:meta');
 
     my $renderer = $item_renderer{$meta};
     if ($renderer) {
-        $renderer->($item, $pns);
+        $renderer->($item);
     } else {
         print "no render item $meta\n";
     }
 }
 
 sub render_item_global {
-    my ($item, $pns) = @_;
+    my ($item) = @_;
 
     my $typename = $item->getAttribute('type-name');
     my $subtype = $item->getAttribute('ld:subtype');
 
     if ($subtype and $subtype eq 'enum') {
-        render_item_number($item, $pns);
+        render_item_number($item);
     } else {
         my $rbname = rb_ucase($typename);
         push @lines_rb, "global :$rbname";
@@ -373,7 +543,7 @@ sub render_item_global {
 }
 
 sub render_item_number {
-    my ($item, $pns) = @_;
+    my ($item, $classname) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     my $meta = $item->getAttribute('ld:meta');
@@ -381,13 +551,13 @@ sub render_item_number {
     my $typename = $item->getAttribute('type-name');
     undef $typename if ($meta and $meta eq 'bitfield-type');
     $typename = rb_ucase($typename) if $typename;
-    $typename = $pns if (!$typename and $subtype and $subtype eq 'enum');      # compound enum
+    $typename = $classname if (!$typename and $subtype and $subtype eq 'enum');      # compound enum
 
     $initvalue = 1 if ($initvalue and $initvalue eq 'true');
     $initvalue = ":$initvalue" if ($initvalue and $typename and $initvalue =~ /[a-zA-Z]/);
     $initvalue ||= 'nil' if $typename;
 
-    $subtype = $item->getAttribute('base-type') if (!$subtype or $subtype eq 'enum' or $subtype eq 'bitfield');
+    $subtype = $item->getAttribute('base-type') if (!$subtype or $subtype eq 'bitfield' or $subtype eq 'enum');
     $subtype = 'int32_t' if (!$subtype);
 
          if ($subtype eq 'int64_t') {
@@ -418,20 +588,20 @@ sub render_item_number {
 }
 
 sub render_item_compound {
-    my ($item, $pns) = @_;
+    my ($item) = @_;
 
-    my $cppns = $pns . '::' . $item->getAttribute('ld:typedef-name');
     my $subtype = $item->getAttribute('ld:subtype');
 
-    my @namecomponents = split('::', $cppns);
-    shift @namecomponents;
-    my $classname = join('_', map { rb_ucase($_) } @namecomponents);
+    local $compound_off = 0;
+    my $classname = $current_typename . '_' . rb_ucase($item->getAttribute('ld:typedef-name'));
+    local $current_typename = $classname;
 
     if (!$subtype || $subtype eq 'bitfield') {
         push @lines_rb, "compound(:$classname) {";
+        #push @lines_rb, 'sizeof';
         indent_rb {
             if (!$subtype) {
-                render_struct_fields($item, $cppns);
+                render_struct_fields($item);
             } else {
                 render_bitfield_fields($item);
             }
@@ -453,7 +623,7 @@ sub render_item_compound {
 }
 
 sub render_item_container {
-    my ($item, $pns) = @_;
+    my ($item) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     my $rbmethod = join('_', split('-', $subtype));
@@ -463,11 +633,11 @@ sub render_item_container {
         if ($rbmethod eq 'df_linked_list') {
             push @lines_rb, "$rbmethod {";
         } else {
-            my $tglen = get_tglen($tg, $pns);
+            my $tglen = sizeof($tg) if $tg;
             push @lines_rb, "$rbmethod($tglen) {";
         }
         indent_rb {
-            render_item($tg, $pns);
+            render_item($tg);
         };
         push @lines_rb, "}";
     } elsif ($indexenum) {
@@ -479,28 +649,28 @@ sub render_item_container {
 }
 
 sub render_item_pointer {
-    my ($item, $pns) = @_;
+    my ($item) = @_;
 
     my $tg = $item->findnodes('child::ld:item')->[0];
     my $ary = $item->getAttribute('is-array');
     if ($ary and $ary eq 'true') {
-        my $tglen = get_tglen($tg, $pns);
+        my $tglen = sizeof($tg) if $tg;
         push @lines_rb, "pointer_ary($tglen) {";
     } else {
         push @lines_rb, "pointer {";
     }
     indent_rb {
-        render_item($tg, $pns);
+        render_item($tg);
     };
     push @lines_rb, "}";
 }
 
 sub render_item_staticarray {
-    my ($item, $pns) = @_;
+    my ($item) = @_;
 
     my $count = $item->getAttribute('count');
     my $tg = $item->findnodes('child::ld:item')->[0];
-    my $tglen = get_tglen($tg, $pns);
+    my $tglen = sizeof($tg) if $tg;
     my $indexenum = $item->getAttribute('index-enum');
     if ($indexenum) {
         $indexenum = rb_ucase($indexenum);
@@ -509,13 +679,13 @@ sub render_item_staticarray {
         push @lines_rb, "static_array($count, $tglen) {";
     }
     indent_rb {
-        render_item($tg, $pns);
+        render_item($tg);
     };
     push @lines_rb, "}";
 }
 
 sub render_item_primitive {
-    my ($item, $pns) = @_;
+    my ($item) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     if ($subtype eq 'stl-string') {
@@ -526,7 +696,7 @@ sub render_item_primitive {
 }
 
 sub render_item_bytes {
-    my ($item, $pns) = @_;
+    my ($item) = @_;
 
     my $subtype = $item->getAttribute('ld:subtype');
     if ($subtype eq 'padding') {
@@ -538,113 +708,10 @@ sub render_item_bytes {
     }
 }
 
-sub get_offset {
-    my ($cppns, $fname) = @_;
-
-    return query_cpp("offsetof($cppns, $fname)");
-}
-
-sub get_tglen {
-    my ($tg, $cppns) = @_;
-
-    if (!$tg) {
-        return 'nil';
-    }
-
-    my $meta = $tg->getAttribute('ld:meta');
-    if ($meta eq 'number') {
-        return $tg->getAttribute('ld:bits')/8;
-    } elsif ($meta eq 'pointer') {
-        return 4;
-    } elsif ($meta eq 'container') {
-        my $subtype = $tg->getAttribute('ld:subtype');
-        if ($subtype eq 'stl-vector') {
-            return query_cpp("sizeof(std::vector<int>)");
-        } elsif ($subtype eq 'df-linked-list') {
-            return 12;
-        } else {
-            print "cannot tglen container $subtype\n";
-        }
-    } elsif ($meta eq 'compound') {
-        my $cname = $tg->getAttribute('ld:typedef-name');
-        return query_cpp("sizeof(${cppns}::$cname)");
-    } elsif ($meta eq 'static-array') {
-        my $count = $tg->getAttribute('count');
-        my $ttg = $tg->findnodes('child::ld:item')->[0];
-        my $ttgl = get_tglen($ttg, $cppns);
-        if ($ttgl =~ /^\d+$/) {
-            return $count * $ttgl;
-        } else {
-            return "$count*$ttgl";
-        }
-    } elsif ($meta eq 'global') {
-        my $typename = $tg->getAttribute('type-name');
-        my $subtype = $tg->getAttribute('ld:subtype');
-        if ($subtype and $subtype eq 'enum') {
-            my $base = $tg->getAttribute('base-type') || 'int32_t';
-            if ($base eq 'int32_t') {
-                return 4;
-            } elsif ($base eq 'int16_t') {
-                return 2;
-            } elsif ($base eq 'int8_t') {
-                return 1;
-            } else {
-                print "cannot tglen enum $base\n";
-            }
-        } else {
-            return query_cpp("sizeof(df::$typename)");
-        }
-    } elsif ($meta eq 'primitive') {
-        my $subtype = $tg->getAttribute('ld:subtype');
-        if ($subtype eq 'stl-string') {
-            return query_cpp("sizeof(std::string)");
-        } else {
-            print "cannot tglen primitive $subtype\n";
-        }
-    } else {
-        print "cannot tglen $meta\n";
-    }
-}
-
-my %query_cpp_cache;
-sub query_cpp {
-    my ($query) = @_;
-
-    my $ans = $offsets{$query};
-    return $ans if (defined($ans));
-
-    my $cached = $query_cpp_cache{$query};
-    return $cached if (defined($cached));
-    $query_cpp_cache{$query} = 1;
-
-    push @lines_cpp, "    fprintf(fout, \"%s = %d\\n\", \"$query\", $query);";
-    return "'$query'";
-}
-
-
-
 my $input = $ARGV[0] || '../../library/include/df/codegen.out.xml';
 
-# run once with output = 'ruby-autogen.cpp'
-# compile
-# execute, save output to 'ruby-autogen.offsets'
-# re-run this script with output = 'ruby-autogen.rb' and offsetfile = 'ruby-autogen.offsets'
-# delete binary
-# delete offsets
 my $output = $ARGV[1] or die "need output file";
-my $offsetfile = $ARGV[2];
-my $memstruct = $ARGV[3];
-
-if ($offsetfile) {
-    open OF, "<$offsetfile";
-    while (my $line = <OF>) {
-        chomp($line);
-        my ($key, $val) = split(' = ', $line);
-        $offsets{$key} = $val;
-    }
-    close OF;
-}
-
+my $memstruct = $ARGV[2];
 
 my $doc = XML::LibXML->new()->parse_file($input);
 $global_types{$_->getAttribute('type-name')} = $_ foreach $doc->findnodes('/ld:data-definition/ld:global-type');
@@ -663,9 +730,7 @@ for my $name (sort { $a cmp $b } keys %global_types) {
 for my $name (@nonenums) {
     my $type = $global_types{$name};
     my $meta = $type->getAttribute('ld:meta');
-    if ($meta eq 'struct-type') {
-        render_global_struct($name, $type);
-    } elsif ($meta eq 'class-type') {
+    if ($meta eq 'struct-type' or $meta eq 'class-type') {
         render_global_class($name, $type);
     } elsif ($meta eq 'bitfield-type') {
         render_global_bitfield($name, $type);
@@ -679,30 +744,12 @@ render_global_objects($doc->findnodes('/ld:data-definition/ld:global-object'));
 
 
 open FH, ">$output";
-if ($output =~ /\.cpp$/) {
-    print FH "#include \"DataDefs.h\"\n";
-    print FH "#include \"df/$_.h\"\n" for @include_cpp;
-    print FH "#include <stdio.h>\n";
-    print FH "#include <stddef.h>\n";
-    print FH "$_\n" for @lines_cpp;
-    print FH "}\n";
-    print FH "int main(int argc, char **argv) {\n";
-    print FH "    FILE *fout;\n";
-    print FH "    if (argc < 2) return 1;\n";
-    print FH "    fout = fopen(argv[1], \"w\");\n";
-    print FH "    cpp_$_(fout);\n" for @include_cpp;
-    print FH "    fclose(fout);\n";
-    print FH "    return 0;\n";
-    print FH "}\n";
-
-} else {
-    if ($memstruct) {
-        open MH, "<$memstruct";
-        print FH "$_" while(<MH>);
-        close MH;
-    }
-    print FH "module DFHack\n";
-    print FH "$_\n" for @lines_rb;
-    print FH "end\n";
+if ($memstruct) {
+    open MH, "<$memstruct";
+    print FH "$_" while(<MH>);
+    close MH;
 }
+print FH "module DFHack\n";
+print FH "$_\n" for @lines_rb;
+print FH "end\n";
 close FH;

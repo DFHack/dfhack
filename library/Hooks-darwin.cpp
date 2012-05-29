@@ -58,9 +58,6 @@ distribution.
      
 };*/
 
-extern "C" int create_pool();
-extern "C" int destroy_pool();
-
 /*******************************************************************************
 *                           SDL part starts here                               *
 *******************************************************************************/
@@ -81,8 +78,6 @@ DFhackCExport void SDL_Quit(void)
     {
         _SDL_Quit();
     }*/
-    
-    destroy_pool();
     
     _SDL_Quit();
 }
@@ -140,8 +135,6 @@ DFhackCExport int SDL_Init(uint32_t flags)
     //freopen("stderr.log", "w", stderr);
     // we don't reroute stdout until  we figure out if this should be done at all
     // See: Console-linux.cpp
-	
-	create_pool();
 
     // find real functions
     fprintf(stderr,"dfhack: saving real SDL functions\n");
@@ -163,7 +156,7 @@ DFhackCExport int SDL_Init(uint32_t flags)
     }
     
     DFHack::Core & c = DFHack::Core::getInstance();
-    c.Init();
+    //c.Init();
     
     int ret = _SDL_Init(flags);
     return ret;

@@ -2,7 +2,7 @@ find_package(Ruby)
 if(RUBY_FOUND)
     ADD_CUSTOM_COMMAND(
         OUTPUT ruby-autogen.rb
-	COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen.pl ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml ${CMAKE_CURRENT_SOURCE_DIR}/ruby-autogen.rb ${CMAKE_CURRENT_SOURCE_DIR}/ruby-memstruct.rb
+        COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen.pl ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml ${CMAKE_CURRENT_SOURCE_DIR}/ruby-autogen.rb
         DEPENDS ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml codegen.pl
     )
     ADD_CUSTOM_TARGET(ruby-autogen-rb ALL DEPENDS ruby-autogen.rb)

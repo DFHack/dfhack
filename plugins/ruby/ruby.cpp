@@ -641,7 +641,7 @@ static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE cppvoff, VALUE a0, VALUE
     int ret;
     fptr = (decltype(fptr))*(void**)(*that + rb_num2ulong(cppvoff));
     ret = fptr(that, rb_num2ulong(a0), rb_num2ulong(a1), rb_num2ulong(a2), rb_num2ulong(a3));
-    return rb_uint2inum(ret);
+    return rb_int2inum(ret);
 }
 
 

@@ -28,7 +28,7 @@ using namespace std;
 #include "df/body_part_raw.h"
 #include "MiscUtils.h"
 #include "df/unit_inventory_item.h"
-#include "df/body_part_template_flags.h"
+#include "df/body_part_raw_flags.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
 #include "df/body_detail_plan.h"
@@ -305,25 +305,25 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
         if (verbose) { Core::print("Inspecting bodypart %s.\n", currPart->token.c_str()); }
 
         // Inspect the current bodypart
-        if (item->getType() == df::enums::item_type::GLOVES && currPart->flags.is_set(df::body_part_template_flags::GRASP) &&
-            ((item->getGloveHandedness() == const_GloveLeftHandedness && currPart->flags.is_set(df::body_part_template_flags::LEFT)) ||
-            (item->getGloveHandedness() == const_GloveRightHandedness && currPart->flags.is_set(df::body_part_template_flags::RIGHT))))
+        if (item->getType() == df::enums::item_type::GLOVES && currPart->flags.is_set(df::body_part_raw_flags::GRASP) &&
+            ((item->getGloveHandedness() == const_GloveLeftHandedness && currPart->flags.is_set(df::body_part_raw_flags::LEFT)) ||
+            (item->getGloveHandedness() == const_GloveRightHandedness && currPart->flags.is_set(df::body_part_raw_flags::RIGHT))))
         {
             if (verbose) { Core::print("Hand found (%s)...", currPart->token.c_str()); }
         }
-        else if (item->getType() == df::enums::item_type::HELM && currPart->flags.is_set(df::body_part_template_flags::HEAD))
+        else if (item->getType() == df::enums::item_type::HELM && currPart->flags.is_set(df::body_part_raw_flags::HEAD))
         {
             if (verbose) { Core::print("Head found (%s)...", currPart->token.c_str()); }
         }
-        else if (item->getType() == df::enums::item_type::ARMOR && currPart->flags.is_set(df::body_part_template_flags::UPPERBODY))
+        else if (item->getType() == df::enums::item_type::ARMOR && currPart->flags.is_set(df::body_part_raw_flags::UPPERBODY))
         {
             if (verbose) { Core::print("Upper body found (%s)...", currPart->token.c_str()); }
         }
-        else if (item->getType() == df::enums::item_type::PANTS && currPart->flags.is_set(df::body_part_template_flags::LOWERBODY))
+        else if (item->getType() == df::enums::item_type::PANTS && currPart->flags.is_set(df::body_part_raw_flags::LOWERBODY))
         {
             if (verbose) { Core::print("Lower body found (%s)...", currPart->token.c_str()); }
         }
-        else if (item->getType() == df::enums::item_type::SHOES && currPart->flags.is_set(df::body_part_template_flags::STANCE))
+        else if (item->getType() == df::enums::item_type::SHOES && currPart->flags.is_set(df::body_part_raw_flags::STANCE))
         {
             if (verbose) { Core::print("Foot found (%s)...", currPart->token.c_str()); }
         }

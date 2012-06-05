@@ -63,15 +63,8 @@ struct World::Private
     bool Inited;
 
     bool PauseInited;
-    void * pause_state_offset;
-
     bool StartedWeather;
-    char * weather_offset;
-
     bool StartedMode;
-    void * gamemode_offset;
-    void * controlmode_offset;
-    void * controlmodecopy_offset;
 
     int next_persistent_id;
     std::multimap<std::string, int> persistent_index;
@@ -86,21 +79,14 @@ World::World()
     Core & c = Core::getInstance();
     d = new Private;
     d->owner = c.p;
-    wmap = 0;
 
-    d->pause_state_offset = (void *) c.vinfo->getAddress ("pause_state");
-    if(d->pause_state_offset)
+    if(df::global::pause_state)
         d->PauseInited = true;
 
-    d->weather_offset = (char *) c.vinfo->getAddress( "current_weather" );
-    if(d->weather_offset)
-    {
-        wmap = (weather_map *) d->weather_offset;
+    if(df::global::current_weather)
         d->StartedWeather = true;
-    }
-    d->gamemode_offset = (void *) c.vinfo->getAddress( "game_mode" );
-    d->controlmode_offset = (void *) c.vinfo->getAddress( "control_mode" );
-    d->StartedMode = true;
+    if (df::global::game_mode && df::global::control_mode)
+        d->StartedMode = true;
 
     d->Inited = true;
 }
@@ -123,14 +109,13 @@ bool World::Finish()
 bool World::ReadPauseState()
 {
     if(!d->PauseInited) return false;
-    uint8_t pauseState = d->owner->readByte (d->pause_state_offset);
-    return pauseState & 1;
+    return *df::global::pause_state;
 }
 
 void World::SetPauseState(bool paused)
 {
-    if(!d->PauseInited) return;
-    d->owner->writeByte (d->pause_state_offset, paused);
+    if (d->PauseInited)
+        *df::global::pause_state = paused;
 }
 
 uint32_t World::ReadCurrentYear()
@@ -147,8 +132,8 @@ bool World::ReadGameMode(t_gamemodes& rd)
 {
     if(d->Inited && d->StartedMode)
     {
-        rd.g_mode = (GameMode) d->owner->readDWord( d->controlmode_offset);
-        rd.g_type = (GameType) d->owner->readDWord(d->gamemode_offset);
+        rd.g_mode = (DFHack::GameMode)*df::global::control_mode;
+        rd.g_type = (DFHack::GameType)*df::global::game_mode;
         return true;
     }
     return false;
@@ -157,8 +142,8 @@ bool World::WriteGameMode(const t_gamemodes & wr)
 {
     if(d->Inited && d->StartedMode)
     {
-        d->owner->writeDWord(d->gamemode_offset,wr.g_type);
-        d->owner->writeDWord(d->controlmode_offset,wr.g_mode);
+        *df::global::control_mode = wr.g_mode;
+        *df::global::game_mode = wr.g_type;
         return true;
     }
     return false;
@@ -199,18 +184,14 @@ uint32_t World::ReadCurrentDay()
 uint8_t World::ReadCurrentWeather()
 {
     if (d->Inited && d->StartedWeather)
-        return(d->owner->readByte(d->weather_offset + 12));
+        return (*df::global::current_weather)[2][2];
     return 0;
 }
 
 void World::SetCurrentWeather(uint8_t weather)
 {
     if (d->Inited && d->StartedWeather)
-    {
-        uint8_t buf[25];
-        memset(&buf,weather, sizeof(buf));
-        d->owner->write(d->weather_offset,sizeof(buf),buf);
-    }
+        memset(df::global::current_weather, weather, 25);
 }
 
 string World::ReadWorldFolder()

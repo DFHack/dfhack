@@ -965,6 +965,9 @@ static void compute_job_outputs(color_ostream &out, ProtectedJob *pj)
             mat.decode(mat.plant->material_defs.type_##tag, \
                        mat.plant->material_defs.idx_##tag); \
         else mat.decode(-1);
+    case BrewDrink:
+        PLANT_PROCESS_MAT(DRINK, drink);
+        break;
     case MillPlants:
         PLANT_PROCESS_MAT(MILL, mill);
         break;

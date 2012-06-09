@@ -153,6 +153,7 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
         SCASE(VIEWSCREEN_CHANGED);
         SCASE(CORE_INITIALIZED);
         SCASE(BEGIN_UNLOAD);
+#undef SCASE
     }
 
     return plugin_eval_rb(cmd);
@@ -252,7 +253,7 @@ static int df_loadruby(void)
 #ifdef WIN32
         "msvcrt-ruby191.dll";
 #else
-        "libruby1.9.so.1.9.0";
+        "./libruby-1.9.1.so.1.9.1";
 #endif
 
     libruby_handle = OpenPlugin(libpath);
@@ -329,6 +330,13 @@ static color_ostream_proxy *console_proxy;
 static void df_rubythread(void *p)
 {
     int state, running;
+
+    if (ruby_sysinit) {
+        // ruby1.9 specific API
+        static int argc;
+        static const char *argv[] = { "dfhack", 0 };
+        ruby_sysinit(&argc, (const char ***)&argv);
+    }
 
     // initialize the ruby interpreter
     ruby_init();

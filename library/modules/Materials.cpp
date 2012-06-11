@@ -761,8 +761,8 @@ bool Materials::ReadCreatureTypesEx (void)
             {
                 df::body_part_raw *bp = ca->body_info.body_parts[k];
                 t_bodypart part;
-                part.id = bp->part_code;
-                part.category = bp->part_name;
+                part.id = bp->token;
+                part.category = bp->category;
                 caste.bodypart.push_back(part);
             }
             using namespace df::enums::mental_attribute_type;

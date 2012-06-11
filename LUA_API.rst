@@ -726,7 +726,7 @@ Units module
 
 * ``dfhack.units.isDead(unit)``
 
-  The unit is completely dead and passive.
+  The unit is completely dead and passive, or a ghost.
 
 * ``dfhack.units.isAlive(unit)``
 
@@ -734,7 +734,16 @@ Units module
 
 * ``dfhack.units.isSane(unit)``
 
-  The unit is capable of rational action, i.e. not dead, insane or zombie.
+  The unit is capable of rational action, i.e. not dead, insane, zombie, or active werewolf.
+
+* ``dfhack.units.isDwarf(unit)``
+
+  The unit is of the correct race of the fortress.
+
+* ``dfhack.units.isCitizen(unit)``
+
+  The unit is an alive sane citizen of the fortress; wraps the
+  same checks the game uses to decide game-over by extinction.
 
 * ``dfhack.units.getAge(unit[,true_age])``
 

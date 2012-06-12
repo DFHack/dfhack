@@ -1,19 +1,19 @@
 OPTION(DL_RUBY "download libruby from the internet" ON)
 IF (DL_RUBY)
     IF (UNIX)
-        FILE(DOWNLOAD http://cloud.github.com/downloads/jjyg/dfhack/libruby-1.9.1.so.zip
-            ${dfhack_SOURCE_DIR}/libruby-1.9.1.so.zip
-            EXPECTED_MD5 f38c4d3effc547ccc60ac4620f40bd14)
-        execute_process(COMMAND unzip ${dfhack_SOURCE_DIR}/libruby-1.9.1.so.zip
-            WORKING_DIRECTORY ${dfhack_SOURCE_DIR})
-        SET(RUBYLIB ${dfhack_SOURCE_DIR}/libruby-1.9.1.so.1.9.1)
+        FILE(DOWNLOAD http://github.com/downloads/jjyg/dfhack/libruby187.tar.gz ${CMAKE_CURRENT_SOURCE_DIR}/libruby187.tar.gz
+            EXPECTED_MD5 eb2adea59911f68e6066966c1352f291)
+        EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xzf libruby187.tar.gz
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+        FILE(RENAME libruby1.8.so.1.8.7 libruby.so)
+        SET(RUBYLIB libruby.so)
     ELSE (UNIX)
-        FILE(DOWNLOAD http://cloud.github.com/downloads/jjyg/dfhack/msvcrt-ruby191.zip
-            ${dfhack_SOURCE_DIR}/msvcrt-ruby191.zip
-            EXPECTED_MD5 ed90e11e150b4b00588b66807a6276e7)
-        execute_process(COMMAND unzip ${dfhack_SOURCE_DIR}/msvcrt-ruby191.zip
-            WORKING_DIRECTORY ${dfhack_SOURCE_DIR})
-        SET(RUBYLIB ${dfhack_SOURCE_DIR}/msvcrt-ruby191.dll)
+        FILE(DOWNLOAD http://github.com/downloads/jjyg/dfhack/msvcrtruby187.tar.gz ${CMAKE_CURRENT_SOURCE_DIR}/msvcrtruby187.tar.gz
+            EXPECTED_MD5 9f4a1659ac3a5308f32d3a1937bbeeae)
+        EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xzf msvcrtruby187.tar.gz
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+        FILE(RENAME msvcrt-ruby18.dll libruby.dll)
+        SET(RUBYLIB libruby.dll)
     ENDIF(UNIX)
 ENDIF(DL_RUBY)
 
@@ -25,9 +25,9 @@ ADD_CUSTOM_COMMAND(
 )
 ADD_CUSTOM_TARGET(ruby-autogen-rb DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ruby-autogen.rb)
 
-include_directories("${dfhack_SOURCE_DIR}/depends/tthread")
+INCLUDE_DIRECTORIES("${dfhack_SOURCE_DIR}/depends/tthread")
 
 DFHACK_PLUGIN(ruby ruby.cpp LINK_LIBRARIES dfhack-tinythread)
 ADD_DEPENDENCIES(ruby ruby-autogen-rb)
 
-install(FILES ruby.rb ruby-autogen.rb ${RUBYLIB} DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+INSTALL(FILES ruby.rb ruby-autogen.rb ${RUBYLIB} DESTINATION ${DFHACK_LIBRARY_DESTINATION})

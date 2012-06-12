@@ -11,8 +11,7 @@ access to the raw DF data structures in memory is provided.
 Some library methods are stored in the ruby.rb file, with shortcuts to read a
 map block, find an unit or an item, etc.
 
-Global objects are stored in the GlobalObjects class ; each object accessor is
-mirrored as a DFHack module method (eg df.world).
+Global objects are accessible through the 'df' accessor (eg df.world).
 
 The ruby plugin defines 2 dfhack console commands:
  rb_load <filename> ; load a ruby script. Ex: rb_load hack/plants.rb (no quotes)
@@ -20,6 +19,12 @@ The ruby plugin defines 2 dfhack console commands:
 console. Ex: rb_eval df.find_unit.name.first_name
 You can use single-quotes for strings ; avoid double-quotes that are parsed
 and removed by the dfhack console.
+
+If dfhack reports 'rb_eval is not a recognized command', check stderr.log. You
+need a valid 32-bit ruby library to work, and ruby1.8 is prefered (ruby1.9 may
+crash DF on startup for now). Install the library in the df root folder (or
+hack/ on linux), the library should be named 'libruby.dll' (.so on linux).
+You can download a tested version at http://github.com/jjyg/dfhack/downloads/
 
 The plugin also interfaces with dfhack 'onupdate' hook.
 To register ruby code to be run every graphic frame, use:
@@ -33,7 +38,7 @@ The same mechanism is available for onstatechange.
 Exemples
 --------
 
-For more complex exemples, check the ruby/plugins/ folder.
+For more complex exemples, check the ruby/plugins/ source folder.
 
 Show info on the currently selected unit ('v' or 'k' DF menu)
  p df.find_unit.flags1

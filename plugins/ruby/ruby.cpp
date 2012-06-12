@@ -45,10 +45,10 @@ DFHACK_PLUGIN("ruby")
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!df_loadruby()) {
-        Core::printerr("failed to load libruby\n");
-        return CR_FAILURE;
-    }
+    // fail silently instead of spamming the console with 'failed to initialize' if libruby is not present
+    // the error is still logged in stderr.log
+    if (!df_loadruby())
+        return CR_OK;
 
     m_irun = new tthread::mutex();
     m_mutex = new tthread::mutex();
@@ -79,9 +79,10 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    m_mutex->lock();
     if (!r_thread)
         return CR_OK;
+
+    m_mutex->lock();
 
     r_type = RB_DIE;
     r_command = 0;
@@ -135,6 +136,9 @@ static command_result plugin_eval_rb(std::string &command)
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
+    if (!r_thread)
+        return CR_OK;
+
     if (!onupdate_active)
         return CR_OK;
 
@@ -143,6 +147,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_change_event e)
 {
+    if (!r_thread)
+        return CR_OK;
+
     std::string cmd = "DFHack.onstatechange ";
     switch (e) {
 #define SCASE(s) case SC_ ## s : cmd += ":" # s ; break
@@ -251,14 +258,16 @@ static int df_loadruby(void)
 {
     const char *libpath =
 #ifdef WIN32
-        "msvcrt-ruby191.dll";
+        "./libruby.dll";
 #else
-        "./libruby-1.9.1.so.1.9.1";
+        "hack/libruby.so";
 #endif
 
     libruby_handle = OpenPlugin(libpath);
-    if (!libruby_handle)
+    if (!libruby_handle) {
+        fprintf(stderr, "Cannot initialize ruby plugin: failed to load %s\n", libpath);
         return 0;
+    }
 
     if (!(rb_eRuntimeError = (VALUE*)LookupPlugin(libruby_handle, "rb_eRuntimeError")))
         return 0;

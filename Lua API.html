@@ -453,6 +453,10 @@ that don't fit any of the other reference types. Such
 references can only appear as a value of a pointer field,
 or as a result of calling the <tt class="docutils literal">_field()</tt> method.</p>
 <p>They behave as structs with one field <tt class="docutils literal">value</tt> of the right type.</p>
+<p>To make working with numeric buffers easier, they also allow
+numeric indices. Note that other than excluding negative values
+no bound checking is performed, since buffer length is not available.
+Index 0 is equivalent to the <tt class="docutils literal">value</tt> field.</p>
 </div>
 <div class="section" id="struct-references">
 <h3><a class="toc-backref" href="#id4">Struct references</a></h3>

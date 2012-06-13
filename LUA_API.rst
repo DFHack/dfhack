@@ -121,6 +121,12 @@ or as a result of calling the ``_field()`` method.
 
 They behave as structs with one field ``value`` of the right type.
 
+To make working with numeric buffers easier, they also allow
+numeric indices. Note that other than excluding negative values
+no bound checking is performed, since buffer length is not available.
+Index 0 is equivalent to the ``value`` field.
+
+
 Struct references
 -----------------
 

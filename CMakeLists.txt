@@ -60,7 +60,7 @@ endif()
 # set up versioning.
 set(DF_VERSION_MAJOR "0")
 set(DF_VERSION_MINOR "34")
-set(DF_VERSION_PATCH "10")
+set(DF_VERSION_PATCH "11")
 set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
 
 SET(DFHACK_RELEASE "r1" CACHE STRING "Current release revision.")

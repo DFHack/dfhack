@@ -27,7 +27,7 @@ Compatibility
 DFHack works on Windows XP, Vista, 7 or any modern Linux distribution.
 OSX is not supported due to lack of developers with a Mac.
 
-Currently, only versions 0.34.06 and 0.34.07 are supported. If you need DFHack
+Currently, versions 0.34.08 - 0.34.11 are supported. If you need DFHack
 for older versions, look for older releases.
 
 On Windows, you have to use the SDL version of DF.

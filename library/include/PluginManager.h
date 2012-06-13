@@ -61,11 +61,11 @@ namespace DFHack
     struct DFLibrary;
 
     // Open a plugin library
-    DFLibrary * OpenPlugin (const char * filename);
+    DFHACK_EXPORT DFLibrary * OpenPlugin (const char * filename);
     // find a symbol inside plugin
-    void * LookupPlugin (DFLibrary * plugin ,const char * function);
+    DFHACK_EXPORT void * LookupPlugin (DFLibrary * plugin ,const char * function);
     // Close a plugin library
-    void ClosePlugin (DFLibrary * plugin);
+    DFHACK_EXPORT void ClosePlugin (DFLibrary * plugin);
 
     struct DFHACK_EXPORT CommandReg {
         const char *name;

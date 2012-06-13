@@ -345,17 +345,18 @@ ul.auto-toc {
 <li><a class="reference internal" href="#burrows-module" id="id19">Burrows module</a></li>
 <li><a class="reference internal" href="#buildings-module" id="id20">Buildings module</a></li>
 <li><a class="reference internal" href="#constructions-module" id="id21">Constructions module</a></li>
+<li><a class="reference internal" href="#internal-api" id="id22">Internal API</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#core-interpreter-context" id="id22">Core interpreter context</a><ul>
-<li><a class="reference internal" href="#event-type" id="id23">Event type</a></li>
+<li><a class="reference internal" href="#core-interpreter-context" id="id23">Core interpreter context</a><ul>
+<li><a class="reference internal" href="#event-type" id="id24">Event type</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#plugins" id="id24">Plugins</a><ul>
-<li><a class="reference internal" href="#burrows" id="id25">burrows</a></li>
-<li><a class="reference internal" href="#sort" id="id26">sort</a></li>
+<li><a class="reference internal" href="#plugins" id="id25">Plugins</a><ul>
+<li><a class="reference internal" href="#burrows" id="id26">burrows</a></li>
+<li><a class="reference internal" href="#sort" id="id27">sort</a></li>
 </ul>
 </li>
 </ul>
@@ -862,6 +863,18 @@ One notable difference is that these explicit wrappers allow argument count
 adjustment according to the usual lua rules, so trailing false/nil arguments
 can be omitted.</p>
 <ul>
+<li><p class="first"><tt class="docutils literal">dfhack.getOSType()</tt></p>
+<p>Returns the OS type string from <tt class="docutils literal">symbols.xml</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.getDFVersion()</tt></p>
+<p>Returns the DF version string from <tt class="docutils literal">symbols.xml</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.getDFPath()</tt></p>
+<p>Returns the DF directory path.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.getHackPath()</tt></p>
+<p>Returns the dfhack directory path, i.e. <tt class="docutils literal"><span class="pre">&quot;.../df/hack/&quot;</span></tt>.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.isWorldLoaded()</tt></p>
 <p>Checks if the world is loaded.</p>
 </li>
@@ -1274,9 +1287,28 @@ Returns <em>true, was_only_planned</em> if removed; or <em>false</em> if none fo
 </li>
 </ul>
 </div>
+<div class="section" id="internal-api">
+<h3><a class="toc-backref" href="#id22">Internal API</a></h3>
+<p>These functions are intended for the use by dfhack developers,
+and are only documented here for completeness:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.getAddress(name)</tt></p>
+<p>Returns the global address <tt class="docutils literal">name</tt>, or <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.setAddress(name, value)</tt></p>
+<p>Sets the global address <tt class="docutils literal">name</tt>. Returns the value of <tt class="docutils literal">getAddress</tt> before the change.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.getBase()</tt></p>
+<p>Returns the base address of the process.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.getMemRanges()</tt></p>
+<p>Returns a sequence of tables describing virtual memory ranges of the process.</p>
+</li>
+</ul>
+</div>
 </div>
 <div class="section" id="core-interpreter-context">
-<h2><a class="toc-backref" href="#id22">Core interpreter context</a></h2>
+<h2><a class="toc-backref" href="#id23">Core interpreter context</a></h2>
 <p>While plugins can create any number of interpreter instances,
 there is one special context managed by dfhack core. It is the
 only context that can receive events from DF and plugins.</p>
@@ -1307,7 +1339,7 @@ Using <tt class="docutils literal">timeout_active(id,nil)</tt> cancels the timer
 </li>
 </ul>
 <div class="section" id="event-type">
-<h3><a class="toc-backref" href="#id23">Event type</a></h3>
+<h3><a class="toc-backref" href="#id24">Event type</a></h3>
 <p>An event is just a lua table with a predefined metatable that
 contains a __call metamethod. When it is invoked, it loops
 through the table with next and calls all contained values.
@@ -1333,14 +1365,14 @@ order using <tt class="docutils literal">dfhack.safecall</tt>.</p>
 </div>
 </div>
 <div class="section" id="plugins">
-<h1><a class="toc-backref" href="#id24">Plugins</a></h1>
+<h1><a class="toc-backref" href="#id25">Plugins</a></h1>
 <p>DFHack plugins may export native functions and events
 to lua contexts. They are automatically imported by
 <tt class="docutils literal"><span class="pre">mkmodule('plugins.&lt;name&gt;')</span></tt>; this means that a lua
 module file is still necessary for <tt class="docutils literal">require</tt> to read.</p>
 <p>The following plugins have lua support.</p>
 <div class="section" id="burrows">
-<h2><a class="toc-backref" href="#id25">burrows</a></h2>
+<h2><a class="toc-backref" href="#id26">burrows</a></h2>
 <p>Implements extended burrow manipulations.</p>
 <p>Events:</p>
 <ul>
@@ -1378,7 +1410,7 @@ set is the same as used by the command line.</p>
 <p>The lua module file also re-exports functions from <tt class="docutils literal">dfhack.burrows</tt>.</p>
 </div>
 <div class="section" id="sort">
-<h2><a class="toc-backref" href="#id26">sort</a></h2>
+<h2><a class="toc-backref" href="#id27">sort</a></h2>
 <p>Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.</p>
 </div>

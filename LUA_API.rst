@@ -607,6 +607,22 @@ One notable difference is that these explicit wrappers allow argument count
 adjustment according to the usual lua rules, so trailing false/nil arguments
 can be omitted.
 
+* ``dfhack.getOSType()``
+
+  Returns the OS type string from ``symbols.xml``.
+
+* ``dfhack.getDFVersion()``
+
+  Returns the DF version string from ``symbols.xml``.
+
+* ``dfhack.getDFPath()``
+
+  Returns the DF directory path.
+
+* ``dfhack.getHackPath()``
+
+  Returns the dfhack directory path, i.e. ``".../df/hack/"``.
+
 * ``dfhack.isWorldLoaded()``
 
   Checks if the world is loaded.
@@ -1100,6 +1116,29 @@ Constructions module
   If there is a construction or a planned construction at the specified
   coordinates, designates it for removal, or instantly cancels the planned one.
   Returns *true, was_only_planned* if removed; or *false* if none found.
+
+
+Internal API
+------------
+
+These functions are intended for the use by dfhack developers,
+and are only documented here for completeness:
+
+* ``dfhack.internal.getAddress(name)``
+
+  Returns the global address ``name``, or *nil*.
+
+* ``dfhack.internal.setAddress(name, value)``
+
+  Sets the global address ``name``. Returns the value of ``getAddress`` before the change.
+
+* ``dfhack.internal.getBase()``
+
+  Returns the base address of the process.
+
+* ``dfhack.internal.getMemRanges()``
+
+  Returns a sequence of tables describing virtual memory ranges of the process.
 
 
 Core interpreter context

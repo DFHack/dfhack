@@ -84,6 +84,8 @@ distribution.
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
 
+void dfhack_printerr(lua_State *S, const std::string &str);
+
 void Lua::Push(lua_State *state, const Units::NoblePosition &pos)
 {
     lua_createtable(state, 0, 3);
@@ -640,10 +642,37 @@ static void OpenModule(lua_State *state, const char *mname,
 
 /***** DFHack module *****/
 
+static std::string getOSType()
+{
+    switch (Core::getInstance().vinfo->getOS())
+    {
+        case OS_WINDOWS:
+            return "windows";
+
+        case OS_LINUX:
+            return "linux";
+
+        case OS_APPLE:
+            return "darwin";
+
+        default:
+            return "unknown";
+    }
+}
+
+static std::string getDFVersion() { return Core::getInstance().vinfo->getVersion(); }
+
+static std::string getDFPath() { return Core::getInstance().p->getPath(); }
+static std::string getHackPath() { return Core::getInstance().getHackPath(); }
+
 static bool isWorldLoaded() { return Core::getInstance().isWorldLoaded(); }
 static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
 
 static const LuaWrapper::FunctionReg dfhack_module[] = {
+    WRAP(getOSType),
+    WRAP(getDFVersion),
+    WRAP(getDFPath),
+    WRAP(getHackPath),
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),
     WRAPM(Translation, TranslateName),
@@ -990,6 +1019,91 @@ static const luaL_Reg dfhack_constructions_funcs[] = {
     { NULL, NULL }
 };
 
+/***** Internal module *****/
+
+static uint32_t getBase() { return Core::getInstance().p->getBase(); }
+
+static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
+    WRAP(getBase),
+    { NULL, NULL }
+};
+
+static int internal_getAddress(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    uint32_t addr = Core::getInstance().vinfo->getAddress(name);
+    if (addr)
+        lua_pushnumber(L, addr);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static int internal_setAddress(lua_State *L)
+{
+    std::string name = luaL_checkstring(L, 1);
+    uint32_t addr = luaL_checkint(L, 2);
+    internal_getAddress(L);
+
+    // Set the address
+    Core::getInstance().vinfo->setAddress(name, addr);
+
+    auto fields = df::global::_identity.getFields();
+
+    for (int i = 0; fields && fields[i].mode != struct_field_info::END; ++i)
+    {
+        if (fields[i].name != name)
+            continue;
+
+        *(void**)fields[i].offset = (void*)addr;
+    }
+
+    // Print via printerr, so that it is definitely logged to stderr.log.
+    std::string msg = stl_sprintf("<global-address name='%s' value='0x%x'/>", name.c_str(), addr);
+    dfhack_printerr(L, msg);
+
+    return 1;
+}
+
+static int internal_getMemRanges(lua_State *L)
+{
+    std::vector<DFHack::t_memrange> ranges;
+    Core::getInstance().p->getMemRanges(ranges);
+
+    lua_newtable(L);
+
+    for(size_t i = 0; i < ranges.size(); i++)
+    {
+        lua_newtable(L);
+        lua_pushnumber(L, (uint32_t)ranges[i].start);
+        lua_setfield(L, -2, "start");
+        lua_pushnumber(L, (uint32_t)ranges[i].end);
+        lua_setfield(L, -2, "end");
+        lua_pushstring(L, ranges[i].name);
+        lua_setfield(L, -2, "name");
+        lua_pushboolean(L, ranges[i].read);
+        lua_setfield(L, -2, "read");
+        lua_pushboolean(L, ranges[i].write);
+        lua_setfield(L, -2, "write");
+        lua_pushboolean(L, ranges[i].execute);
+        lua_setfield(L, -2, "execute");
+        lua_pushboolean(L, ranges[i].shared);
+        lua_setfield(L, -2, "shared");
+        lua_pushboolean(L, ranges[i].valid);
+        lua_setfield(L, -2, "valid");
+        lua_rawseti(L, -2, i+1);
+    }
+
+    return 1;
+}
+
+static const luaL_Reg dfhack_internal_funcs[] = {
+    { "getAddress", internal_getAddress },
+    { "setAddress", internal_setAddress },
+    { "getMemRanges", internal_getMemRanges },
+    { NULL, NULL }
+};
+
 
 /************************
  *  Main Open function  *
@@ -1009,4 +1123,5 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "burrows", dfhack_burrows_module, dfhack_burrows_funcs);
     OpenModule(state, "buildings", dfhack_buildings_module, dfhack_buildings_funcs);
     OpenModule(state, "constructions", dfhack_constructions_module);
+    OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

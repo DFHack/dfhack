@@ -950,7 +950,7 @@ void Gui::showAnnouncement(std::string message, int color, bool bright)
         new_rep->flags.bits.continuation = continued;
         new_rep->flags.bits.announcement = true;
 
-        int size = std::min(message.size(), 73U);
+        int size = std::min(message.size(), (size_t)73);
         new_rep->text = message.substr(0, size);
         message = message.substr(size);
 

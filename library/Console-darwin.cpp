@@ -264,7 +264,7 @@ namespace DFHack
         void color(Console::color_value index)
         {
             if(!rawmode)
-                fprintf(dfout_C, "%s", getANSIColor(index));
+                fprintf(dfout_C,getANSIColor(index));
             else
             {
                 const char * colstr = getANSIColor(index);

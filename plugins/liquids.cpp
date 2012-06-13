@@ -78,7 +78,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 static string brushname = "point";
 static string mode="magma";
 static string flowmode="f+";
-static string setmode ="s.";
+static string _setmode ="s.";
 static unsigned int amount = 7;
 static int width = 1, height = 1, z_levels = 1;
 
@@ -120,7 +120,7 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         str <<"[" << mode << ":" << brushname;
         if (brushname == "range")
             str << "(w" << width << ":h" << height << ":z" << z_levels << ")";
-        str << ":" << amount << ":" << flowmode << ":" << setmode << "]#";
+        str << ":" << amount << ":" << flowmode << ":" << _setmode << "]#";
         if(out.lineedit(str.str(),input,liquids_hist) == -1)
             return CR_FAILURE;
         liquids_hist.add(input);
@@ -246,15 +246,15 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         }
         else if(command == "s+")
         {
-            setmode = "s+";
+            _setmode = "s+";
         }
         else if(command == "s-")
         {
-            setmode = "s-";
+            _setmode = "s-";
         }
         else if(command == "s.")
         {
-            setmode = "s.";
+            _setmode = "s.";
         }
         // blah blah, bad code, bite me.
         else if(command == "0")
@@ -301,7 +301,7 @@ command_result df_liquids_here (color_ostream &out, vector <string> & parameters
     out << "[" << mode << ":" << brushname;
     if (brushname == "range")
         out << "(w" << width << ":h" << height << ":z" << z_levels << ")";
-    out << ":" << amount << ":" << flowmode << ":" << setmode << "]\n";
+    out << ":" << amount << ":" << flowmode << ":" << _setmode << "]\n";
 
     return df_liquids_execute(out);
 }
@@ -457,16 +457,16 @@ command_result df_liquids_execute(color_ostream &out)
                     df::tile_liquid old_liquid = des.bits.liquid_type;
                     df::tile_liquid new_liquid = old_liquid;
                     // Compute new liquid type and amount
-                    if(setmode == "s.")
+                    if(_setmode == "s.")
                     {
                         new_amount = amount;
                     }
-                    else if(setmode == "s+")
+                    else if(_setmode == "s+")
                     {
                         if(old_amount < amount)
                             new_amount = amount;
                     }
-                    else if(setmode == "s-")
+                    else if(_setmode == "s-")
                     {
                         if (old_amount > amount)
                             new_amount = amount;

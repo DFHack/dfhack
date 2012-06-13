@@ -204,7 +204,7 @@ struct sortable
 
 static std::string getLuaHelp(std::string path)
 {
-    ifstream script(path);
+    ifstream script(path.c_str());
 
     if (script.good())
     {
@@ -237,7 +237,7 @@ static std::map<string,string> listLuaScripts(std::string path)
 
 static bool fileExists(std::string path)
 {
-    ifstream script(path);
+    ifstream script(path.c_str());
     return script.good();
 }
 
@@ -279,21 +279,29 @@ static command_result runLuaScript(color_ostream &out, std::string filename, vec
 
 command_result Core::runCommand(color_ostream &out, const std::string &command)
 {
+	fprintf(stderr,"Inside runCommand");
+	fprintf(stderr," with command %s\n",command.c_str());
     if (!command.empty())
     {
+		fprintf(stderr,"Command is not empty, tokenizing\n");
         vector <string> parts;
         Core::cheap_tokenise(command,parts);
+		fprintf(stderr,"Tokenized, got %d parts\n",parts.size());
         if(parts.size() == 0)
             return CR_NOT_IMPLEMENTED;
 
         string first = parts[0];
+		fprintf(stderr,"Erasing beginning\n");
         parts.erase(parts.begin());
+        
+		fprintf(stderr,"I think we're about there\n");
 
         if (first[0] == '#')
             return CR_OK;
 
         cerr << "Invoking: " << command << endl;
 
+		fprintf(stderr,"Returning with the next recursion\n");
         return runCommand(out, first, parts);
     }
     else
@@ -628,7 +636,7 @@ bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
 {
     if(!silent)
         out << "Loading script at " << fname << std::endl;
-    ifstream script(fname);
+    ifstream script(fname.c_str());
     if (script.good())
     {
         string command;
@@ -674,6 +682,7 @@ void fIOthread(void * iodata)
     {
         string command = "";
         int ret = con.lineedit("[DFHack]# ",command, main_history);
+        fprintf(stderr,"Command: [%s]\n",command.c_str());
         if(ret == -2)
         {
             cerr << "Console is shutting down properly." << endl;
@@ -687,9 +696,13 @@ void fIOthread(void * iodata)
         else if(ret)
         {
             // a proper, non-empty command was entered
+			fprintf(stderr,"Adding command to history\n");
             main_history.add(command);
+			fprintf(stderr,"Saving history\n");
             main_history.save("dfhack.history");
         }
+        
+		fprintf(stderr,"Running command\n");
 
         auto rv = core->runCommand(con, command);
 
@@ -1205,25 +1218,25 @@ bool Core::ncurses_wgetch(int in, int & out)
     return true;
 }
 
-int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
+int Core::UnicodeAwareSym(const SDL_KeyboardEvent& ke)
 {
     // Assume keyboard layouts don't change the order of numbers:
-    if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
-    if(SDL::K_F1 <= ke.ksym.sym && ke.ksym.sym <= SDL::K_F12) return ke.ksym.sym;
+    if( '0' <= ke.keysym.sym && ke.keysym.sym <= '9') return ke.keysym.sym;
+    if(SDLK_F1 <= ke.keysym.sym && ke.keysym.sym <= SDLK_F12) return ke.keysym.sym;
 
     // These keys are mapped to the same control codes as Ctrl-?
-    switch (ke.ksym.sym) {
-    case SDL::K_RETURN:
-    case SDL::K_KP_ENTER:
-    case SDL::K_TAB:
-    case SDL::K_ESCAPE:
-    case SDL::K_DELETE:
-        return ke.ksym.sym;
+    switch (ke.keysym.sym) {
+    case SDLK_RETURN:
+    case SDLK_KP_ENTER:
+    case SDLK_TAB:
+    case SDLK_ESCAPE:
+    case SDLK_DELETE:
+        return ke.keysym.sym;
     default:
         break;
     }
 
-    int unicode = ke.ksym.unicode;
+    int unicode = ke.keysym.unicode;
 
     // convert Ctrl characters to their 0x40-0x5F counterparts:
     if (unicode < ' ')
@@ -1253,28 +1266,28 @@ int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
 }
 
 //MEMO: return false if event is consumed
-int Core::SDL_Event(SDL::Event* ev)
+int Core::DFH_SDL_Event(SDL_Event* ev)
 {
     // do NOT process events before we are ready.
     if(!started) return true;
     if(!ev)
         return true;
-    if(ev && (ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP))
+    if(ev && (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP))
     {
-        SDL::KeyboardEvent * ke = (SDL::KeyboardEvent *)ev;
+        SDL_KeyboardEvent * ke = (SDL_KeyboardEvent *)ev;
 
-        if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
+        if(ke->state == SDL_PRESSED && !hotkey_states[ke->keysym.sym])
         {
-            hotkey_states[ke->ksym.sym] = true;
+            hotkey_states[ke->keysym.sym] = true;
 
             int mod = 0;
-            if (ke->ksym.mod & SDL::KMOD_SHIFT) mod |= 1;
-            if (ke->ksym.mod & SDL::KMOD_CTRL) mod |= 2;
-            if (ke->ksym.mod & SDL::KMOD_ALT) mod |= 4;
+            if (ke->keysym.mod & KMOD_SHIFT) mod |= 1;
+            if (ke->keysym.mod & KMOD_CTRL) mod |= 2;
+            if (ke->keysym.mod & KMOD_ALT) mod |= 4;
 
             // Use unicode so Windows gives the correct value for the
             // user's Input Language
-            if((ke->ksym.unicode & 0xff80) == 0)
+            if((ke->keysym.unicode & 0xff80) == 0)
             {
                 int key = UnicodeAwareSym(*ke);
                 SelectHotkey(key, mod);
@@ -1282,12 +1295,12 @@ int Core::SDL_Event(SDL::Event* ev)
             else
             {
                 // Pretend non-ascii characters don't happen:
-                SelectHotkey(ke->ksym.sym, mod);
+                SelectHotkey(ke->keysym.sym, mod);
             }
         }
-        else if(ke->state == SDL::BTN_RELEASED)
+        else if(ke->state == SDL_RELEASED)
         {
-            hotkey_states[ke->ksym.sym] = false;
+            hotkey_states[ke->keysym.sym] = false;
         }
     }
     return true;
@@ -1304,8 +1317,8 @@ bool Core::SelectHotkey(int sym, int modifiers)
     while (screen->child)
         screen = screen->child;
 
-    if (sym == SDL::K_KP_ENTER)
-        sym = SDL::K_RETURN;
+    if (sym == SDLK_KP_ENTER)
+        sym = SDLK_RETURN;
 
     std::string cmd;
 
@@ -1328,7 +1341,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
 
         if (cmd.empty()) {
             // Check the hotkey keybindings
-            int idx = sym - SDL::K_F1;
+            int idx = sym - SDLK_F1;
             if(idx >= 0 && idx < 8)
             {
                 if (modifiers & 1)
@@ -1383,13 +1396,13 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
     }
 
     if (keyspec.size() == 1 && keyspec[0] >= 'A' && keyspec[0] <= 'Z') {
-        *psym = SDL::K_a + (keyspec[0]-'A');
+        *psym = SDLK_a + (keyspec[0]-'A');
         return true;
     } else if (keyspec.size() == 2 && keyspec[0] == 'F' && keyspec[1] >= '1' && keyspec[1] <= '9') {
-        *psym = SDL::K_F1 + (keyspec[1]-'1');
+        *psym = SDLK_F1 + (keyspec[1]-'1');
         return true;
     } else if (keyspec == "Enter") {
-        *psym = SDL::K_RETURN;
+        *psym = SDLK_RETURN;
         return true;
     } else
         return false;

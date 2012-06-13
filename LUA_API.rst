@@ -317,6 +317,24 @@ The ``df`` table itself contains the following functions and values:
 
   Equivalent to the method, but also allows a reference as proxy for its type.
 
+* ``df.new(ptype[,count])``
+
+  Allocate a new instance, or an array of built-in types.
+  The ``ptype`` argument is a string from the following list:
+  ``string``, ``int8_t``, ``uint8_t``, ``int16_t``, ``uint16_t``,
+  ``int32_t``, ``uint32_t``, ``int64_t``, ``uint64_t``, ``bool``,
+  ``float``, ``double``. All of these except ``string`` can be
+  used with the count argument to allocate an array.
+
+* ``df.reinterpret_cast(type,ptr)``
+
+  Converts ptr to a ref of specified type. The type may be anything
+  acceptable to ``df.is_instance``. Ptr may be *nil*, a ref,
+  a lightuserdata, or a number.
+
+  Returns *nil* if NULL, or a ref.
+
+
 Recursive table assignment
 ==========================
 

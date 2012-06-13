@@ -615,6 +615,20 @@ lightuserdata (step is mandatory then).</p>
 <li><p class="first"><tt class="docutils literal">df.is_instance(type,obj)</tt></p>
 <p>Equivalent to the method, but also allows a reference as proxy for its type.</p>
 </li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">df.new(ptype[,count])</span></tt></p>
+<p>Allocate a new instance, or an array of built-in types.
+The <tt class="docutils literal">ptype</tt> argument is a string from the following list:
+<tt class="docutils literal">string</tt>, <tt class="docutils literal">int8_t</tt>, <tt class="docutils literal">uint8_t</tt>, <tt class="docutils literal">int16_t</tt>, <tt class="docutils literal">uint16_t</tt>,
+<tt class="docutils literal">int32_t</tt>, <tt class="docutils literal">uint32_t</tt>, <tt class="docutils literal">int64_t</tt>, <tt class="docutils literal">uint64_t</tt>, <tt class="docutils literal">bool</tt>,
+<tt class="docutils literal">float</tt>, <tt class="docutils literal">double</tt>. All of these except <tt class="docutils literal">string</tt> can be
+used with the count argument to allocate an array.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">df.reinterpret_cast(type,ptr)</tt></p>
+<p>Converts ptr to a ref of specified type. The type may be anything
+acceptable to <tt class="docutils literal">df.is_instance</tt>. Ptr may be <em>nil</em>, a ref,
+a lightuserdata, or a number.</p>
+<p>Returns <em>nil</em> if NULL, or a ref.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="recursive-table-assignment">

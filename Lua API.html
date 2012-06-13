@@ -534,10 +534,17 @@ use <tt class="docutils literal">#ref</tt>, or just <tt class="docutils literal"
 <div class="section" id="bitfield-references">
 <h3><a class="toc-backref" href="#id6">Bitfield references</a></h3>
 <p>Bitfields behave like special fixed-size containers.
-The <tt class="docutils literal">_enum</tt> property points to the bitfield type.</p>
-<p>Numerical indices correspond to the shift value,
+Consider them to be something in between structs and
+fixed-size vectors.</p>
+<p>The <tt class="docutils literal">_enum</tt> property points to the bitfield type.
+Numerical indices correspond to the shift value,
 and if a subfield occupies multiple bits, the
 <tt class="docutils literal">ipairs</tt> order would have a gap.</p>
+<p>Since currently there is no API to allocate a bitfield
+object fully in GC-managed lua heap, consider using the
+lua table assignment feature outlined below in order to
+pass bitfield values to dfhack API functions that need
+them, e.g. <tt class="docutils literal">matinfo:matches{metal=true}</tt>.</p>
 </div>
 </div>
 <div class="section" id="named-types">

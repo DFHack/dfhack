@@ -219,11 +219,20 @@ Bitfield references
 -------------------
 
 Bitfields behave like special fixed-size containers.
-The ``_enum`` property points to the bitfield type.
+Consider them to be something in between structs and
+fixed-size vectors.
 
+The ``_enum`` property points to the bitfield type.
 Numerical indices correspond to the shift value,
 and if a subfield occupies multiple bits, the
 ``ipairs`` order would have a gap.
+
+Since currently there is no API to allocate a bitfield
+object fully in GC-managed lua heap, consider using the
+lua table assignment feature outlined below in order to
+pass bitfield values to dfhack API functions that need
+them, e.g. ``matinfo:matches{metal=true}``.
+
 
 Named types
 ===========

@@ -483,6 +483,7 @@ static VALUE rb_dfregister(VALUE self, VALUE name, VALUE descr)
 static VALUE rb_dfregister(VALUE self, VALUE name, VALUE descr)
 {
     rb_raise(*rb_eRuntimeError, "not implemented");
+    return Qnil;
 }
 
 static VALUE rb_dfget_global_address(VALUE self, VALUE name)
@@ -841,7 +842,8 @@ static void ruby_bind_dfhack(void) {
 
     // load the default ruby-level definitions
     int state=0;
-    rb_load_protect(rb_str_new2("./hack/ruby.rb"), Qfalse, &state);
+    // windows cmake installs files in df/, linux installs files in df/hack/
+    rb_eval_string_protect("File.exist?('hack/ruby.rb') ? load('hack/ruby.rb') : load('ruby.rb')", &state);
     if (state)
         dump_rb_error();
 }

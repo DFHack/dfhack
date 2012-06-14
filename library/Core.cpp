@@ -1220,9 +1220,8 @@ bool Core::ncurses_wgetch(int in, int & out)
     return true;
 }
 
-int UnicodeAwareSym(const SDL::Event& event)
+int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
 {
-    auto ke = (const SDL::KeyboardEvent &) event;
     // Assume keyboard layouts don't change the order of numbers:
     if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
     if(SDL::K_F1 <= ke.ksym.sym && ke.ksym.sym <= SDL::K_F12) return ke.ksym.sym;

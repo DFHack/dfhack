@@ -971,9 +971,6 @@ static void compute_job_outputs(color_ostream &out, ProtectedJob *pj)
     case MillPlants:
         PLANT_PROCESS_MAT(MILL, mill);
         break;
-    case BrewDrink:
-        PLANT_PROCESS_MAT(DRINK, drink);
-        break;
     case ProcessPlants:
         PLANT_PROCESS_MAT(THREAD, thread);
         break;

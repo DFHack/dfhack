@@ -811,14 +811,19 @@ bool Core::Init()
     }
     cerr << "Version: " << vinfo->getVersion() << endl;
 
+    // Init global object pointers
+    df::global::InitGlobals();
+
     cerr << "Initializing Console.\n";
     // init the console.
     bool is_text_mode = false;
     if(init && init->display.flag.is_set(init_display_flags::TEXT))
     {
         is_text_mode = true;
+        con.init(true);
+        cerr << "Console is not available. Use dfhack-run to send commands.\n";
     }
-    if(con.init(is_text_mode))
+    else if(con.init(false))
         cerr << "Console is running.\n";
     else
         fatal ("Console has failed to initialize!\n", false);
@@ -833,7 +838,6 @@ bool Core::Init()
     */
     // initialize data defs
     virtual_identity::Init(this);
-    df::global::InitGlobals();
 
     // initialize common lua context
     Lua::Core::Init(con);
@@ -843,12 +847,15 @@ bool Core::Init()
     cerr << "Initializing Plugins.\n";
     // create plugin manager
     plug_mgr = new PluginManager(this);
-    cerr << "Starting IO thread.\n";
-    // create IO thread
     IODATA *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
-    thread * IO = new thread(fIOthread, (void *) temp);
+    if (!is_text_mode)
+    {
+        cerr << "Starting IO thread.\n";
+        // create IO thread
+        thread * IO = new thread(fIOthread, (void *) temp);
+    }
     cerr << "Starting DF input capture thread.\n";
     // set up hotkey capture
     HotkeyMutex = new mutex();

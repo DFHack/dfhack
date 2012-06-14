@@ -33,8 +33,6 @@ distribution.
 #include <string>
 #include <stdint.h>
 
-#include "SDL.h"
-
 // function and variable pointer... we don't try to understand what SDL does here
 typedef void * fPtr;
 typedef void * vPtr;
@@ -48,7 +46,7 @@ namespace SDL
 // be declared as friend functions/known
 DFhackCExport int SDL_NumJoysticks(void);
 DFhackCExport void SDL_Quit(void);
-DFhackCExport int SDL_PollEvent(SDL_Event* event);
+DFhackCExport int SDL_PollEvent(SDL::Event* event);
 DFhackCExport int SDL_Init(uint32_t flags);
 DFhackCExport int wgetch(WINDOW * win);
 
@@ -65,7 +63,7 @@ DFhackCExport int egg_tick(void);
 DFhackCExport int egg_prerender(void);
 
 // hook - called for each SDL event, can filter both the event and the return value
-DFhackCExport int egg_sdl_event(SDL_Event* event);
+DFhackCExport int egg_sdl_event(SDL::Event* event);
 
 // hook - ncurses event. return -1 to consume
 DFhackCExport int egg_curses_event(int orig_return);

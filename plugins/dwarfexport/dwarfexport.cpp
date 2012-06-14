@@ -89,13 +89,13 @@ static void element(const char* name, const uint32_t content, ostream& out, cons
 static void printAttributes(color_ostream &con, df::unit* cre, ostream& out) {
     out << "    <Attributes>" << endl;
     for (int i = 0; i < NUM_CREATURE_PHYSICAL_ATTRIBUTES; i++) {
-        element(physicals[i], cre->body.physical_attrs[i].unk1, out, "  ");
+        element(physicals[i], cre->body.physical_attrs[i].value, out, "  ");
     }
 
     df::unit_soul * s = cre->status.current_soul;
     if (s) {
         for (int i = 0; i < NUM_CREATURE_MENTAL_ATTRIBUTES; i++) {
-            element(mentals[i], s->mental_attrs[i].unk1, out, "  ");
+            element(mentals[i], s->mental_attrs[i].value, out, "  ");
         }
     }
     out << "    </Attributes>" << endl;

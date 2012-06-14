@@ -68,6 +68,8 @@ using namespace DFHack;
 #include <fstream>
 #include "tinythread.h"
 
+#include "SDL_events.h"
+
 using namespace tthread;
 using namespace df::enums;
 using df::global::init;
@@ -1218,29 +1220,30 @@ bool Core::ncurses_wgetch(int in, int & out)
     return true;
 }
 
-int Core::UnicodeAwareSym(const SDL_KeyboardEvent& ke)
+int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
 {
     // Assume keyboard layouts don't change the order of numbers:
-    if( '0' <= ke.keysym.sym && ke.keysym.sym <= '9') return ke.keysym.sym;
-    if(SDLK_F1 <= ke.keysym.sym && ke.keysym.sym <= SDLK_F12) return ke.keysym.sym;
+    if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
+    if(SDL::K_F1 <= ke.ksym.sym && ke.ksym.sym <= SDL::K_F12) return ke.ksym.sym;
 
     // These keys are mapped to the same control codes as Ctrl-?
-    switch (ke.keysym.sym) {
-    case SDLK_RETURN:
-    case SDLK_KP_ENTER:
-    case SDLK_TAB:
-    case SDLK_ESCAPE:
-    case SDLK_DELETE:
-        return ke.keysym.sym;
-    default:
-        break;
+    switch (ke.ksym.sym)
+    {
+        case SDL::K_RETURN:
+        case SDL::K_KP_ENTER:
+        case SDL::K_TAB:
+        case SDL::K_ESCAPE:
+        case SDL::K_DELETE:
+            return ke.ksym.sym;
+        default:
+            break;
     }
 
-    int unicode = ke.keysym.unicode;
+    int unicode = ke.ksym.unicode;
 
     // convert Ctrl characters to their 0x40-0x5F counterparts:
     if (unicode < ' ')
-    {        
+    {
         unicode += 'A' - 1;
     }
 
@@ -1248,7 +1251,7 @@ int Core::UnicodeAwareSym(const SDL_KeyboardEvent& ke)
     if('A' < unicode && unicode < 'Z')
     {
         unicode += 'a' - 'A';
-    }    
+    }
 
     // convert various other punctuation marks:
     if('\"' == unicode) unicode = '\'';
@@ -1265,29 +1268,30 @@ int Core::UnicodeAwareSym(const SDL_KeyboardEvent& ke)
     return unicode;
 }
 
+
 //MEMO: return false if event is consumed
-int Core::DFH_SDL_Event(SDL_Event* ev)
+int Core::DFH_SDL_Event(SDL::Event* ev)
 {
     // do NOT process events before we are ready.
     if(!started) return true;
     if(!ev)
         return true;
-    if(ev && (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP))
+    if(ev && (ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP))
     {
-        SDL_KeyboardEvent * ke = (SDL_KeyboardEvent *)ev;
+        auto ke = (SDL::KeyboardEvent *)ev;
 
-        if(ke->state == SDL_PRESSED && !hotkey_states[ke->keysym.sym])
+        if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
         {
-            hotkey_states[ke->keysym.sym] = true;
+            hotkey_states[ke->ksym.sym] = true;
 
             int mod = 0;
-            if (ke->keysym.mod & KMOD_SHIFT) mod |= 1;
-            if (ke->keysym.mod & KMOD_CTRL) mod |= 2;
-            if (ke->keysym.mod & KMOD_ALT) mod |= 4;
+            if (ke->ksym.mod & SDL::KMOD_SHIFT) mod |= 1;
+            if (ke->ksym.mod & SDL::KMOD_CTRL) mod |= 2;
+            if (ke->ksym.mod & SDL::KMOD_ALT) mod |= 4;
 
             // Use unicode so Windows gives the correct value for the
             // user's Input Language
-            if((ke->keysym.unicode & 0xff80) == 0)
+            if((ke->ksym.unicode & 0xff80) == 0)
             {
                 int key = UnicodeAwareSym(*ke);
                 SelectHotkey(key, mod);
@@ -1295,12 +1299,12 @@ int Core::DFH_SDL_Event(SDL_Event* ev)
             else
             {
                 // Pretend non-ascii characters don't happen:
-                SelectHotkey(ke->keysym.sym, mod);
+                SelectHotkey(ke->ksym.sym, mod);
             }
         }
-        else if(ke->state == SDL_RELEASED)
+        else if(ke->state == SDL::BTN_RELEASED)
         {
-            hotkey_states[ke->keysym.sym] = false;
+            hotkey_states[ke->ksym.sym] = false;
         }
     }
     return true;
@@ -1317,8 +1321,8 @@ bool Core::SelectHotkey(int sym, int modifiers)
     while (screen->child)
         screen = screen->child;
 
-    if (sym == SDLK_KP_ENTER)
-        sym = SDLK_RETURN;
+    if (sym == SDL::K_KP_ENTER)
+        sym = SDL::K_RETURN;
 
     std::string cmd;
 
@@ -1341,7 +1345,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
 
         if (cmd.empty()) {
             // Check the hotkey keybindings
-            int idx = sym - SDLK_F1;
+            int idx = sym - SDL::K_F1;
             if(idx >= 0 && idx < 8)
             {
                 if (modifiers & 1)
@@ -1396,13 +1400,13 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
     }
 
     if (keyspec.size() == 1 && keyspec[0] >= 'A' && keyspec[0] <= 'Z') {
-        *psym = SDLK_a + (keyspec[0]-'A');
+        *psym = SDL::K_a + (keyspec[0]-'A');
         return true;
     } else if (keyspec.size() == 2 && keyspec[0] == 'F' && keyspec[1] >= '1' && keyspec[1] <= '9') {
-        *psym = SDLK_F1 + (keyspec[1]-'1');
+        *psym = SDL::K_F1 + (keyspec[1]-'1');
         return true;
     } else if (keyspec == "Enter") {
-        *psym = SDLK_RETURN;
+        *psym = SDL::K_RETURN;
         return true;
     } else
         return false;

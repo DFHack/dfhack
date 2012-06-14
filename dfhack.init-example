@@ -13,6 +13,9 @@ keybinding add Ctrl-Shift-K autodump-destroy-here
 # any item:
 keybinding add Ctrl-K autodump-destroy-item
 
+# quicksave, only in main dwarfmode screen and menu page
+keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
+
 ##############################
 # Generic adv mode bindings  #
 ##############################

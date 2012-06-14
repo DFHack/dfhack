@@ -633,8 +633,14 @@ produce undesirable results. There are a few good ones though.
 
      You are in fort game mode, managing your fortress and paused.
      You switch to the arena game mode, *assume control of a creature* and then
-     switch to adventure game mode(1).
+     switch to adventure game mode(1). 
      You just lost a fortress and gained an adventurer.
+     You could also do this.
+     You are in fort game mode, managing your fortress and paused at the esc menu.
+     You switch to the adventure game mode, then use Dfusion to *assume control of a creature* and then
+     save or retire. 
+     You just created a returnable mountain home and gained an adventurer.
+
 
 I take no responsibility of anything that happens as a result of using this tool
 

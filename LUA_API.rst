@@ -491,6 +491,13 @@ Currently it defines the following features:
 
   Compares to coroutine.resume like dfhack.safecall vs pcall.
 
+* ``dfhack.run_script(name[,args...])``
+
+  Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
+  The ``name`` argument should be the name stem, as would be used on the command line.
+  Note that the script is re-read from the file every time it is called, and errors
+  are propagated to the caller.
+
 * ``dfhack.with_suspend(f[,args...])``
 
   Calls ``f`` with arguments after grabbing the DF core suspend lock.
@@ -1147,6 +1154,11 @@ Internal API
 
 These functions are intended for the use by dfhack developers,
 and are only documented here for completeness:
+
+* ``dfhack.internal.scripts``
+
+  The table used by ``dfhack.run_script()`` to give every script its own
+  global environment, persistent between calls to the script.
 
 * ``dfhack.internal.getAddress(name)``
 

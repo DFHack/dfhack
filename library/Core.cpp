@@ -264,15 +264,11 @@ static bool init_run_script(color_ostream &out, lua_State *state, void *info)
     return true;
 }
 
-static command_result runLuaScript(color_ostream &out, std::string filename, vector<string> &args)
+static command_result runLuaScript(color_ostream &out, std::string name, vector<string> &args)
 {
     ScriptArgs data;
-    data.pcmd = &filename;
+    data.pcmd = &name;
     data.pargs = &args;
-
-#ifndef LINUX_BUILD
-    filename = toLower(filename);
-#endif
 
     bool ok = Lua::RunCoreQueryLoop(out, Lua::Core::State, init_run_script, &data);
 
@@ -619,7 +615,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
             {
                 auto filename = getHackPath() + "scripts/" + first + ".lua";
                 if (fileExists(filename))
-                    res = runLuaScript(con, filename, parts);
+                    res = runLuaScript(con, first, parts);
                 else
                     con.printerr("%s is not a recognized command.\n", first.c_str());
             }

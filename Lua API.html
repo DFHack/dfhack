@@ -766,6 +766,12 @@ returning. Intended as a convenience function.</p>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.saferesume(coroutine[,args...])</span></tt></p>
 <p>Compares to coroutine.resume like dfhack.safecall vs pcall.</p>
 </li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.run_script(name[,args...])</span></tt></p>
+<p>Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
+The <tt class="docutils literal">name</tt> argument should be the name stem, as would be used on the command line.
+Note that the script is re-read from the file every time it is called, and errors
+are propagated to the caller.</p>
+</li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_suspend(f[,args...])</span></tt></p>
 <p>Calls <tt class="docutils literal">f</tt> with arguments after grabbing the DF core suspend lock.
 Suspending is necessary for accessing a consistent state of DF memory.</p>
@@ -1310,6 +1316,10 @@ Returns <em>true, was_only_planned</em> if removed; or <em>false</em> if none fo
 <p>These functions are intended for the use by dfhack developers,
 and are only documented here for completeness:</p>
 <ul>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.scripts</tt></p>
+<p>The table used by <tt class="docutils literal">dfhack.run_script()</tt> to give every script its own
+global environment, persistent between calls to the script.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getAddress(name)</tt></p>
 <p>Returns the global address <tt class="docutils literal">name</tt>, or <em>nil</em>.</p>
 </li>

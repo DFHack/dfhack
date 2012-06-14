@@ -1,0 +1,9 @@
+#!/bin/sh
+
+DF_DIR=$(dirname "$0")
+cd "${DF_DIR}"
+
+export DYLD_LIBRARY_PATH=${PWD}/hack:${PWD}/libs
+export DYLD_FRAMEWORK_PATH=${PWD}/hack${PWD}/libs
+
+exec hack/dfhack-run "$@"

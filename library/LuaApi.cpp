@@ -1076,9 +1076,9 @@ static int internal_getMemRanges(lua_State *L)
     {
         lua_newtable(L);
         lua_pushnumber(L, (uint32_t)ranges[i].start);
-        lua_setfield(L, -2, "start");
+        lua_setfield(L, -2, "start_addr");
         lua_pushnumber(L, (uint32_t)ranges[i].end);
-        lua_setfield(L, -2, "end");
+        lua_setfield(L, -2, "end_addr");
         lua_pushstring(L, ranges[i].name);
         lua_setfield(L, -2, "name");
         lua_pushboolean(L, ranges[i].read);

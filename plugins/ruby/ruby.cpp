@@ -763,13 +763,18 @@ static VALUE rb_dfmemory_bitarray_set(VALUE self, VALUE addr, VALUE idx, VALUE v
 static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE cppvoff, VALUE a0, VALUE a1, VALUE a2, VALUE a3)
 {
 #ifdef WIN32
-    __thiscall
-#endif
+    int (__fastcall *fptr)(char **me, int dummy_edx, int, int, int, int);
+#else
     int (*fptr)(char **me, int, int, int, int);
+#endif
     char **that = (char**)rb_num2ulong(cppobj);
     int ret;
     fptr = (decltype(fptr))*(void**)(*that + rb_num2ulong(cppvoff));
-    ret = fptr(that, rb_num2ulong(a0), rb_num2ulong(a1), rb_num2ulong(a2), rb_num2ulong(a3));
+    ret = fptr(that,
+#ifdef WIN32
+            0,
+#endif
+            rb_num2ulong(a0), rb_num2ulong(a1), rb_num2ulong(a2), rb_num2ulong(a3));
     return rb_int2inum(ret);
 }
 

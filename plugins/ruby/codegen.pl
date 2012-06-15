@@ -687,6 +687,7 @@ sub render_item_number {
     my $initvalue = $item->getAttribute('init-value');
     my $typename = $item->getAttribute('type-name');
     undef $typename if ($meta and $meta eq 'bitfield-type');
+    my $g = $global_types{$typename} if ($typename);
     $typename = rb_ucase($typename) if $typename;
     $typename = $classname if (!$typename and $subtype and $subtype eq 'enum');      # compound enum
 
@@ -695,6 +696,7 @@ sub render_item_number {
     $initvalue ||= 'nil' if $typename;
 
     $subtype = $item->getAttribute('base-type') if (!$subtype or $subtype eq 'bitfield' or $subtype eq 'enum');
+    $subtype = $g->getAttribute('base-type') if ($g);
     $subtype = 'int32_t' if (!$subtype);
 
          if ($subtype eq 'int64_t') {

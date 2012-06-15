@@ -47,6 +47,8 @@ distribution.
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
 #include "modules/Burrows.h"
+#include "modules/Buildings.h"
+#include "modules/Constructions.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -59,6 +61,7 @@ distribution.
 #include "df/unit.h"
 #include "df/item.h"
 #include "df/material.h"
+#include "df/viewscreen.h"
 #include "df/assumed_identity.h"
 #include "df/nemesis_record.h"
 #include "df/historical_figure.h"
@@ -72,6 +75,7 @@ distribution.
 #include "df/dfhack_material_category.h"
 #include "df/job_material_category.h"
 #include "df/burrow.h"
+#include "df/building_civzonest.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -79,6 +83,8 @@ distribution.
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
+
+void dfhack_printerr(lua_State *S, const std::string &str);
 
 void Lua::Push(lua_State *state, const Units::NoblePosition &pos)
 {
@@ -89,6 +95,26 @@ void Lua::Push(lua_State *state, const Units::NoblePosition &pos)
     lua_setfield(state, -2, "assignment");
     Lua::PushDFObject(state, pos.position);
     lua_setfield(state, -2, "position");
+}
+
+void Lua::Push(lua_State *state, df::coord pos)
+{
+    lua_createtable(state, 0, 3);
+    lua_pushinteger(state, pos.x);
+    lua_setfield(state, -2, "x");
+    lua_pushinteger(state, pos.y);
+    lua_setfield(state, -2, "y");
+    lua_pushinteger(state, pos.z);
+    lua_setfield(state, -2, "z");
+}
+
+void Lua::Push(lua_State *state, df::coord2d pos)
+{
+    lua_createtable(state, 0, 2);
+    lua_pushinteger(state, pos.x);
+    lua_setfield(state, -2, "x");
+    lua_pushinteger(state, pos.y);
+    lua_setfield(state, -2, "y");
 }
 
 int Lua::PushPosXYZ(lua_State *state, df::coord pos)
@@ -105,6 +131,52 @@ int Lua::PushPosXYZ(lua_State *state, df::coord pos)
         lua_pushinteger(state, pos.z);
         return 3;
     }
+}
+
+int Lua::PushPosXY(lua_State *state, df::coord2d pos)
+{
+    if (!pos.isValid())
+    {
+        lua_pushnil(state);
+        return 1;
+    }
+    else
+    {
+        lua_pushinteger(state, pos.x);
+        lua_pushinteger(state, pos.y);
+        return 2;
+    }
+}
+
+static df::coord2d CheckCoordXY(lua_State *state, int base, bool vararg = false)
+{
+    df::coord2d p;
+    if (vararg && lua_gettop(state) <= base)
+        Lua::CheckDFAssign(state, &p, base);
+    else
+    {
+        p = df::coord2d(
+            luaL_checkint(state, base),
+            luaL_checkint(state, base+1)
+        );
+    }
+    return p;
+}
+
+static df::coord CheckCoordXYZ(lua_State *state, int base, bool vararg = false)
+{
+    df::coord p;
+    if (vararg && lua_gettop(state) <= base)
+        Lua::CheckDFAssign(state, &p, base);
+    else
+    {
+        p = df::coord(
+            luaL_checkint(state, base),
+            luaL_checkint(state, base+1),
+            luaL_checkint(state, base+2)
+        );
+    }
+    return p;
 }
 
 /**************************************************
@@ -518,8 +590,7 @@ static int dfhack_matinfo_matches(lua_State *state)
     else if (lua_istable(state, 2))
     {
         df::dfhack_material_category tmp;
-        if (!Lua::AssignDFObject(*Lua::GetOutput(state), state, &tmp, 2, false))
-            lua_error(state);
+        Lua::CheckDFAssign(state, &tmp, 2, false);
         lua_pushboolean(state, info.matches(tmp));
     }
     else
@@ -569,9 +640,41 @@ static void OpenModule(lua_State *state, const char *mname,
 #define WRAP(function) { #function, df::wrap_function(function,true) }
 #define WRAPN(name, function) { #name, df::wrap_function(function,true) }
 
-/***** Translation module *****/
+/***** DFHack module *****/
+
+static std::string getOSType()
+{
+    switch (Core::getInstance().vinfo->getOS())
+    {
+        case OS_WINDOWS:
+            return "windows";
+
+        case OS_LINUX:
+            return "linux";
+
+        case OS_APPLE:
+            return "darwin";
+
+        default:
+            return "unknown";
+    }
+}
+
+static std::string getDFVersion() { return Core::getInstance().vinfo->getVersion(); }
+
+static std::string getDFPath() { return Core::getInstance().p->getPath(); }
+static std::string getHackPath() { return Core::getInstance().getHackPath(); }
+
+static bool isWorldLoaded() { return Core::getInstance().isWorldLoaded(); }
+static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
 
 static const LuaWrapper::FunctionReg dfhack_module[] = {
+    WRAP(getOSType),
+    WRAP(getDFVersion),
+    WRAP(getDFPath),
+    WRAP(getHackPath),
+    WRAP(isWorldLoaded),
+    WRAP(isMapLoaded),
     WRAPM(Translation, TranslateName),
     { NULL, NULL }
 };
@@ -579,6 +682,8 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
 /***** Gui module *****/
 
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
+    WRAPM(Gui, getCurViewscreen),
+    WRAPM(Gui, getFocusString),
     WRAPM(Gui, getSelectedWorkshopJob),
     WRAPM(Gui, getSelectedJob),
     WRAPM(Gui, getSelectedUnit),
@@ -599,6 +704,8 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,printJobDetails),
     WRAPM(Job,getHolder),
     WRAPM(Job,getWorker),
+    WRAPM(Job,checkBuildingsNow),
+    WRAPM(Job,checkDesignationsNow),
     WRAPN(is_equal, jobEqual),
     WRAPN(is_item_equal, jobItemEqual),
     { NULL, NULL }
@@ -637,6 +744,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isDead),
     WRAPM(Units, isAlive),
     WRAPM(Units, isSane),
+    WRAPM(Units, isDwarf),
+    WRAPM(Units, isCitizen),
     WRAPM(Units, getAge),
     WRAPM(Units, getProfessionName),
     WRAPM(Units, getCasteProfessionName),
@@ -680,12 +789,30 @@ static bool items_moveToContainer(df::item *item, df::item *container)
     return Items::moveToContainer(mc, item, container);
 }
 
+static bool items_moveToBuilding(df::item *item, df::building_actual *building, int use_mode)
+{
+    MapExtras::MapCache mc;
+    return Items::moveToBuilding(mc, item, building,use_mode);
+}
+
+static bool items_moveToInventory
+    (df::item *item, df::unit *unit, df::unit_inventory_item::T_mode mode, int body_part)
+{
+    MapExtras::MapCache mc;
+    return Items::moveToInventory(mc, item, unit, mode, body_part);
+}
+
 static const LuaWrapper::FunctionReg dfhack_items_module[] = {
+    WRAPM(Items, getGeneralRef),
+    WRAPM(Items, getSpecificRef),
     WRAPM(Items, getOwner),
     WRAPM(Items, setOwner),
     WRAPM(Items, getContainer),
+    WRAPM(Items, getDescription),
     WRAPN(moveToGround, items_moveToGround),
     WRAPN(moveToContainer, items_moveToContainer),
+    WRAPN(moveToBuilding, items_moveToBuilding),
+    WRAPN(moveToInventory, items_moveToInventory),
     { NULL, NULL }
 };
 
@@ -712,15 +839,38 @@ static const luaL_Reg dfhack_items_funcs[] = {
 
 static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPN(getBlock, (df::map_block* (*)(int32_t,int32_t,int32_t))Maps::getBlock),
-    WRAPN(getTileBlock, (df::map_block* (*)(df::coord))Maps::getTileBlock),
-    WRAPM(Maps, getRegionBiome),
+    WRAPM(Maps, enableBlockUpdates),
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
     WRAPM(Maps, canWalkBetween),
     { NULL, NULL }
 };
 
+static int maps_getTileBlock(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Maps::getTileBlock(pos));
+    return 1;
+}
+
+static int maps_getRegionBiome(lua_State *L)
+{
+    auto pos = CheckCoordXY(L, 1, true);
+    Lua::PushDFObject(L, Maps::getRegionBiome(pos));
+    return 1;
+}
+
+static int maps_getTileBiomeRgn(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushPosXY(L, Maps::getTileBiomeRgn(pos));
+    return 1;
+}
+
 static const luaL_Reg dfhack_maps_funcs[] = {
+    { "getTileBlock", maps_getTileBlock },
+    { "getRegionBiome", maps_getRegionBiome },
+    { "getTileBiomeRgn", maps_getTileBiomeRgn },
     { NULL, NULL }
 };
 
@@ -762,6 +912,198 @@ static const luaL_Reg dfhack_burrows_funcs[] = {
     { NULL, NULL }
 };
 
+/***** Buildings module *****/
+
+static bool buildings_containsTile(df::building *bld, int x, int y, bool room) {
+    return Buildings::containsTile(bld, df::coord2d(x,y), room);
+}
+
+static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
+    WRAPM(Buildings, allocInstance),
+    WRAPM(Buildings, checkFreeTiles),
+    WRAPM(Buildings, countExtentTiles),
+    WRAPN(containsTile, buildings_containsTile),
+    WRAPM(Buildings, hasSupport),
+    WRAPM(Buildings, constructAbstract),
+    WRAPM(Buildings, constructWithItems),
+    WRAPM(Buildings, constructWithFilters),
+    WRAPM(Buildings, deconstruct),
+    { NULL, NULL }
+};
+
+static int buildings_findAtTile(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Buildings::findAtTile(pos));
+    return 1;
+}
+
+static int buildings_findCivzonesAt(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    std::vector<df::building_civzonest*> pvec;
+    if (Buildings::findCivzonesAt(&pvec, pos))
+        Lua::PushVector(L, pvec);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static int buildings_getCorrectSize(lua_State *state)
+{
+    df::coord2d size(luaL_optint(state, 1, 1), luaL_optint(state, 2, 1));
+
+    auto t = (df::building_type)luaL_optint(state, 3, -1);
+    int st = luaL_optint(state, 4, -1);
+    int cu = luaL_optint(state, 5, -1);
+    int d = luaL_optint(state, 6, 0);
+
+    df::coord2d center;
+    bool flexible = Buildings::getCorrectSize(size, center, t, st, cu, d);
+
+    lua_pushboolean(state, flexible);
+    lua_pushinteger(state, size.x);
+    lua_pushinteger(state, size.y);
+    lua_pushinteger(state, center.x);
+    lua_pushinteger(state, center.y);
+    return 5;
+}
+
+static int buildings_setSize(lua_State *state)
+{
+    auto bld = Lua::CheckDFObject<df::building>(state, 1);
+    df::coord2d size(luaL_optint(state, 2, 1), luaL_optint(state, 3, 1));
+    int dir = luaL_optint(state, 4, 0);
+    bool ok = Buildings::setSize(bld, size, dir);
+    lua_pushboolean(state, ok);
+    if (ok)
+    {
+        auto size = Buildings::getSize(bld).second;
+        int area = size.x*size.y;
+        lua_pushinteger(state, size.x);
+        lua_pushinteger(state, size.y);
+        lua_pushinteger(state, area);
+        lua_pushinteger(state, Buildings::countExtentTiles(&bld->room, area));
+        return 5;
+    }
+    else
+        return 1;
+}
+
+static const luaL_Reg dfhack_buildings_funcs[] = {
+    { "findAtTile", buildings_findAtTile },
+    { "findCivzonesAt", buildings_findCivzonesAt },
+    { "getCorrectSize", buildings_getCorrectSize },
+    { "setSize", buildings_setSize },
+    { NULL, NULL }
+};
+
+/***** Constructions module *****/
+
+static const LuaWrapper::FunctionReg dfhack_constructions_module[] = {
+    WRAPM(Constructions, designateNew),
+    { NULL, NULL }
+};
+
+static int constructions_designateRemove(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    bool imm = false;
+    lua_pushboolean(L, Constructions::designateRemove(pos, &imm));
+    lua_pushboolean(L, imm);
+    return 2;
+}
+
+static const luaL_Reg dfhack_constructions_funcs[] = {
+    { "designateRemove", constructions_designateRemove },
+    { NULL, NULL }
+};
+
+/***** Internal module *****/
+
+static uint32_t getBase() { return Core::getInstance().p->getBase(); }
+
+static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
+    WRAP(getBase),
+    { NULL, NULL }
+};
+
+static int internal_getAddress(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    uint32_t addr = Core::getInstance().vinfo->getAddress(name);
+    if (addr)
+        lua_pushnumber(L, addr);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static int internal_setAddress(lua_State *L)
+{
+    std::string name = luaL_checkstring(L, 1);
+    uint32_t addr = luaL_checkint(L, 2);
+    internal_getAddress(L);
+
+    // Set the address
+    Core::getInstance().vinfo->setAddress(name, addr);
+
+    auto fields = df::global::_identity.getFields();
+
+    for (int i = 0; fields && fields[i].mode != struct_field_info::END; ++i)
+    {
+        if (fields[i].name != name)
+            continue;
+
+        *(void**)fields[i].offset = (void*)addr;
+    }
+
+    // Print via printerr, so that it is definitely logged to stderr.log.
+    std::string msg = stl_sprintf("<global-address name='%s' value='0x%x'/>", name.c_str(), addr);
+    dfhack_printerr(L, msg);
+
+    return 1;
+}
+
+static int internal_getMemRanges(lua_State *L)
+{
+    std::vector<DFHack::t_memrange> ranges;
+    Core::getInstance().p->getMemRanges(ranges);
+
+    lua_newtable(L);
+
+    for(size_t i = 0; i < ranges.size(); i++)
+    {
+        lua_newtable(L);
+        lua_pushnumber(L, (uint32_t)ranges[i].start);
+        lua_setfield(L, -2, "start_addr");
+        lua_pushnumber(L, (uint32_t)ranges[i].end);
+        lua_setfield(L, -2, "end_addr");
+        lua_pushstring(L, ranges[i].name);
+        lua_setfield(L, -2, "name");
+        lua_pushboolean(L, ranges[i].read);
+        lua_setfield(L, -2, "read");
+        lua_pushboolean(L, ranges[i].write);
+        lua_setfield(L, -2, "write");
+        lua_pushboolean(L, ranges[i].execute);
+        lua_setfield(L, -2, "execute");
+        lua_pushboolean(L, ranges[i].shared);
+        lua_setfield(L, -2, "shared");
+        lua_pushboolean(L, ranges[i].valid);
+        lua_setfield(L, -2, "valid");
+        lua_rawseti(L, -2, i+1);
+    }
+
+    return 1;
+}
+
+static const luaL_Reg dfhack_internal_funcs[] = {
+    { "getAddress", internal_getAddress },
+    { "setAddress", internal_setAddress },
+    { "getMemRanges", internal_getMemRanges },
+    { NULL, NULL }
+};
+
 
 /************************
  *  Main Open function  *
@@ -779,4 +1121,7 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
     OpenModule(state, "burrows", dfhack_burrows_module, dfhack_burrows_funcs);
+    OpenModule(state, "buildings", dfhack_buildings_module, dfhack_buildings_funcs);
+    OpenModule(state, "constructions", dfhack_constructions_module);
+    OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

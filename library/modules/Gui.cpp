@@ -41,6 +41,8 @@ using namespace std;
 #include "MiscUtils.h"
 using namespace DFHack;
 
+#include "modules/Job.h"
+
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/global_objects.h"
@@ -54,14 +56,22 @@ using namespace DFHack;
 #include "df/viewscreen_layer_workshop_profilest.h"
 #include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_layer_overall_healthst.h"
+#include "df/viewscreen_layer_assigntradest.h"
+#include "df/viewscreen_layer_militaryst.h"
+#include "df/viewscreen_layer_stockpilest.h"
 #include "df/viewscreen_petst.h"
+#include "df/viewscreen_tradegoodsst.h"
+#include "df/viewscreen_storesst.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/ui_sidebar_menus.h"
 #include "df/ui_look_list.h"
+#include "df/ui_advmode.h"
 #include "df/job.h"
 #include "df/ui_build_selector.h"
 #include "df/building_workshopst.h"
 #include "df/building_furnacest.h"
+#include "df/building_trapst.h"
+#include "df/building_civzonest.h"
 #include "df/general_ref.h"
 #include "df/unit_inventory_item.h"
 #include "df/report.h"
@@ -69,15 +79,399 @@ using namespace DFHack;
 #include "df/interfacest.h"
 #include "df/graphic.h"
 #include "df/layer_object_listst.h"
+#include "df/assign_trade_status.h"
 
 using namespace df::enums;
 using df::global::gview;
 using df::global::init;
 using df::global::gps;
+using df::global::ui;
+using df::global::world;
 
 static df::layer_object_listst *getLayerList(df::viewscreen_layerst *layer, int idx)
 {
     return virtual_cast<df::layer_object_listst>(vector_get(layer->layer_objects,idx));
+}
+
+static std::string getNameChunk(virtual_identity *id, int start, int end)
+{
+    if (!id)
+        return "UNKNOWN";
+    const char *name = id->getName();
+    int len = strlen(name);
+    if (len > start + end)
+        return std::string(name+start, len-start-end);
+    else
+        return name;
+}
+
+/*
+ * Classifying focus context by means of a string path.
+ */
+
+typedef void (*getFocusStringHandler)(std::string &str, df::viewscreen *screen);
+static std::map<virtual_identity*, getFocusStringHandler> getFocusStringHandlers;
+
+#define VIEWSCREEN(name) df::viewscreen_##name##st
+#define DEFINE_GET_FOCUS_STRING_HANDLER(screen_type) \
+    static void getFocusString_##screen_type(std::string &focus, VIEWSCREEN(screen_type) *screen);\
+    DFHACK_STATIC_ADD_TO_MAP(\
+        &getFocusStringHandlers, &VIEWSCREEN(screen_type)::_identity, \
+        (getFocusStringHandler)getFocusString_##screen_type \
+    ); \
+    static void getFocusString_##screen_type(std::string &focus, VIEWSCREEN(screen_type) *screen)
+
+DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
+{
+    using namespace df::enums::ui_sidebar_mode;
+
+    using df::global::ui_workshop_in_add;
+    using df::global::ui_build_selector;
+    using df::global::ui_selected_unit;
+    using df::global::ui_look_list;
+    using df::global::ui_look_cursor;
+    using df::global::ui_building_item_cursor;
+    using df::global::ui_building_assign_type;
+    using df::global::ui_building_assign_is_marked;
+    using df::global::ui_building_assign_units;
+    using df::global::ui_building_assign_items;
+    using df::global::ui_building_in_assign;
+
+    focus += "/" + enum_item_key(ui->main.mode);
+
+    switch (ui->main.mode)
+    {
+    case QueryBuilding:
+        if (df::building *selected = world->selected_building)
+        {
+            if (!selected->jobs.empty() &&
+                selected->jobs[0]->job_type == job_type::DestroyBuilding)
+            {
+                focus += "/Destroying";
+                break;
+            }
+
+            focus += "/Some";
+
+            virtual_identity *id = virtual_identity::get(selected);
+
+            bool jobs = false;
+
+            if (id == &df::building_workshopst::_identity ||
+                id == &df::building_furnacest::_identity)
+            {
+                focus += "/Workshop";
+                jobs = true;
+            }
+            else if (id == &df::building_trapst::_identity)
+            {
+                auto trap = (df::building_trapst*)selected;
+                if (trap->trap_type == trap_type::Lever) {
+                    focus += "/Lever";
+                    jobs = true;
+                }
+            }
+            else if (ui_building_in_assign && *ui_building_in_assign &&
+                     ui_building_assign_type && ui_building_assign_units &&
+                     ui_building_assign_type->size() == ui_building_assign_units->size())
+            {
+                focus += "/Assign";
+                if (ui_building_item_cursor)
+                {
+                    auto unit = vector_get(*ui_building_assign_units, *ui_building_item_cursor);
+                    focus += unit ? "/Unit" : "/None";
+                }
+            }
+
+            if (jobs)
+            {
+                if (ui_workshop_in_add && *ui_workshop_in_add)
+                    focus += "/AddJob";
+                else if (!selected->jobs.empty())
+                    focus += "/Job";
+                else
+                    focus += "/Empty";
+            }
+        }
+        else
+            focus += "/None";
+        break;
+
+    case Build:
+        if (ui_build_selector)
+        {
+            // Not selecting, or no choices?
+            if (ui_build_selector->building_type < 0)
+                focus += "/Type";
+            else if (ui_build_selector->stage != 2)
+                focus += "/Position";
+            else
+            {
+                focus += "/Material";
+                if (ui_build_selector->is_grouped)
+                    focus += "/Groups";
+                else
+                    focus += "/Items";
+            }
+        }
+        break;
+
+    case ViewUnits:
+        if (ui_selected_unit)
+        {
+            if (auto unit = vector_get(world->units.active, *ui_selected_unit))
+            {
+                focus += "/Some";
+
+                using df::global::ui_unit_view_mode;
+
+                if (ui_unit_view_mode)
+                    focus += "/" + enum_item_key(ui_unit_view_mode->value);
+            }
+            else
+                focus += "/None";
+        }
+        break;
+
+    case LookAround:
+        if (ui_look_list && ui_look_cursor)
+        {
+            auto item = vector_get(ui_look_list->items, *ui_look_cursor);
+            if (item)
+                focus += "/" + enum_item_key(item->type);
+            else
+                focus += "/None";
+        }
+        break;
+
+    case BuildingItems:
+        if (VIRTUAL_CAST_VAR(selected, df::building_actual, world->selected_building))
+        {
+            if (selected->contained_items.empty())
+                focus += "/Some/Empty";
+            else
+                focus += "/Some/Item";
+        }
+        else
+            focus += "/None";
+        break;
+
+    case ZonesPenInfo:
+        if (ui_building_assign_type && ui_building_assign_units &&
+            ui_building_assign_is_marked && ui_building_assign_items &&
+            ui_building_assign_type->size() == ui_building_assign_units->size())
+        {
+            focus += "/Assign";
+            if (ui_building_item_cursor)
+            {
+                if (vector_get(*ui_building_assign_units, *ui_building_item_cursor))
+                    focus += "/Unit";
+                else if (vector_get(*ui_building_assign_items, *ui_building_item_cursor))
+                    focus += "/Vermin";
+                else
+                    focus += "/None";
+            }
+        }
+        break;
+
+    case Burrows:
+        if (ui->burrows.in_confirm_delete)
+            focus += "/ConfirmDelete";
+        else if (ui->burrows.in_add_units_mode)
+            focus += "/AddUnits";
+        else if (ui->burrows.in_edit_name_mode)
+            focus += "/EditName";
+        else if (ui->burrows.in_define_mode)
+            focus += "/Define";
+        else
+            focus += "/List";
+        break;
+
+    default:
+        break;
+    }
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
+{
+    using df::global::ui_advmode;
+
+    if (!ui_advmode)
+        return;
+
+    focus += "/" + enum_item_key(ui_advmode->menu);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(unitlist)
+{
+    focus += "/" + enum_item_key(screen->page);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(layer_military)
+{
+    auto list1 = getLayerList(screen, 0);
+    auto list2 = getLayerList(screen, 1);
+    auto list3 = getLayerList(screen, 2);
+    if (!list1 || !list2 || !list3) return;
+
+    focus += "/" + enum_item_key(screen->page);
+
+    int cur_list;
+    if (list1->bright) cur_list = 0;
+    else if (list2->bright) cur_list = 1;
+    else if (list3->bright) cur_list = 2;
+    else return;
+
+    switch (screen->page)
+    {
+    case df::viewscreen_layer_militaryst::Positions:
+        {
+            static const char *lists[] = { "/Squads", "/Positions", "/Candidates" };
+            focus += lists[cur_list];
+            break;
+        }
+
+    default:
+        break;
+    }
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(layer_workshop_profile)
+{
+    auto list1 = getLayerList(screen, 0);
+    if (!list1) return;
+
+    if (vector_get(screen->workers, list1->cursor))
+        focus += "/Unit";
+    else
+        focus += "/None";
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(layer_noblelist)
+{
+    auto list1 = getLayerList(screen, 0);
+    auto list2 = getLayerList(screen, 1);
+    if (!list1 || !list2) return;
+
+    focus += "/" + enum_item_key(screen->mode);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(pet)
+{
+    focus += "/" + enum_item_key(screen->mode);
+
+    switch (screen->mode)
+    {
+    case df::viewscreen_petst::List:
+        focus += vector_get(screen->is_vermin, screen->cursor) ? "/Vermin" : "/Unit";
+        break;
+
+    case df::viewscreen_petst::SelectTrainer:
+        if (vector_get(screen->trainer_unit, screen->trainer_cursor))
+            focus += "/Unit";
+        break;
+
+    default:
+        break;
+    }
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(layer_overall_health)
+{
+    auto list1 = getLayerList(screen, 0);
+    if (!list1) return;
+
+    focus += "/Units";
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(tradegoods)
+{
+    if (!screen->has_traders || screen->is_unloading)
+        focus += "/NoTraders";
+    else if (screen->in_edit_count)
+        focus += "/EditCount";
+    else
+        focus += (screen->in_right_pane ? "/Items/Broker" : "/Items/Trader");
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(layer_assigntrade)
+{
+    auto list1 = getLayerList(screen, 0);
+    auto list2 = getLayerList(screen, 1);
+    if (!list1 || !list2) return;
+
+    int list_idx = vector_get(screen->visible_lists, list1->cursor, (int16_t)-1);
+    unsigned num_lists = sizeof(screen->lists)/sizeof(screen->lists[0]);
+    if (unsigned(list_idx) >= num_lists)
+        return;
+
+    if (list1->bright)
+        focus += "/Groups";
+    else
+        focus += "/Items";
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(stores)
+{
+    if (!screen->in_right_list)
+        focus += "/Categories";
+    else if (screen->in_group_mode)
+        focus += "/Groups";
+    else
+        focus += "/Items";
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(layer_stockpile)
+{
+    auto list1 = getLayerList(screen, 0);
+    auto list2 = getLayerList(screen, 1);
+    auto list3 = getLayerList(screen, 2);
+    if (!list1 || !list2 || !list3 || !screen->settings) return;
+
+    auto group = screen->cur_group;
+    if (group != vector_get(screen->group_ids, list1->cursor))
+        return;
+
+    focus += "/" + enum_item_key(group);
+
+    auto bits = vector_get(screen->group_bits, list1->cursor);
+    if (bits.whole && !(bits.whole & screen->settings->flags.whole))
+    {
+        focus += "/Off";
+        return;
+    }
+
+    focus += "/On";
+
+    if (list2->bright || list3->bright || screen->list_ids.empty()) {
+        focus += "/" + enum_item_key(screen->cur_list);
+
+        if (list3->bright)
+            focus += (screen->item_names.empty() ? "/None" : "/Item");
+    }
+}
+
+std::string Gui::getFocusString(df::viewscreen *top)
+{
+    if (!top)
+        return "";
+
+    if (virtual_identity *id = virtual_identity::get(top))
+    {
+        std::string name = getNameChunk(id, 11, 2);
+
+        auto handler = map_find(getFocusStringHandlers, id);
+        if (handler)
+            handler(name, top);
+
+        return name;
+    }
+    else
+    {
+        Core &core = Core::getInstance();
+        std::string name = core.p->readClassName(*(void**)top);
+        return name.substr(11, name.size()-11-2);
+    }
 }
 
 // Predefined common guard functions
@@ -291,7 +685,13 @@ static df::unit *getAnyUnit(df::viewscreen *top)
     using df::global::ui_selected_unit;
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
-        return vector_get(screen->units, screen->cursor_pos);
+    {
+        if (auto unit = vector_get(screen->units, screen->cursor_pos))
+            return unit;
+        if (auto job = vector_get(screen->jobs, screen->cursor_pos))
+            return Job::getWorker(job);
+        return NULL;
+    }
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitlistst, top))
         return vector_get(screen->units[screen->page], screen->cursor_pos[screen->page]);
@@ -420,6 +820,41 @@ static df::item *getAnyItem(df::viewscreen *top)
         return ref ? ref->getItem() : NULL;
     }
 
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_assigntradest, top))
+    {
+        auto list1 = getLayerList(screen, 0);
+        auto list2 = getLayerList(screen, 1);
+        if (!list1 || !list2 || !list2->bright)
+            return NULL;
+
+        int list_idx = vector_get(screen->visible_lists, list1->cursor, (int16_t)-1);
+        unsigned num_lists = sizeof(screen->lists)/sizeof(std::vector<int32_t>);
+        if (unsigned(list_idx) >= num_lists)
+            return NULL;
+
+        int idx = vector_get(screen->lists[list_idx], list2->cursor, -1);
+        if (auto info = vector_get(screen->info, idx))
+            return info->item;
+
+        return NULL;
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_tradegoodsst, top))
+    {
+        if (screen->in_right_pane)
+            return vector_get(screen->broker_items, screen->broker_cursor);
+        else
+            return vector_get(screen->trader_items, screen->trader_cursor);
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_storesst, top))
+    {
+        if (screen->in_right_list && !screen->in_group_mode)
+            return vector_get(screen->items, screen->item_cursor);
+
+        return NULL;
+    }
+
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
 
@@ -515,7 +950,7 @@ void Gui::showAnnouncement(std::string message, int color, bool bright)
         new_rep->flags.bits.continuation = continued;
         new_rep->flags.bits.announcement = true;
 
-        int size = std::min(message.size(), 73U);
+        int size = std::min(message.size(), (size_t)73);
         new_rep->text = message.substr(0, size);
         message = message.substr(size);
 
@@ -606,16 +1041,29 @@ bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t 
 
 bool Gui::getMousePos (int32_t & x, int32_t & y)
 {
-    x = gps->mouse_x;
-    y = gps->mouse_y;
+    if (gps) {
+        x = gps->mouse_x;
+        y = gps->mouse_y;
+    }
+    else {
+        x = -1;
+        y = -1;
+    }
     return (x == -1) ? false : true;
 }
 
 bool Gui::getWindowSize (int32_t &width, int32_t &height)
 {
-    width = gps->dimx;
-    height = gps->dimy;
-    return true;
+    if (gps) {
+        width = gps->dimx;
+        height = gps->dimy;
+        return true;
+    }
+    else {
+        width = 80;
+        height = 25;
+        return false;
+    }
 }
 
 bool Gui::getMenuWidth(uint8_t &menu_width, uint8_t &area_map_width)

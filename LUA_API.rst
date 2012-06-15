@@ -121,6 +121,12 @@ or as a result of calling the ``_field()`` method.
 
 They behave as structs with one field ``value`` of the right type.
 
+To make working with numeric buffers easier, they also allow
+numeric indices. Note that other than excluding negative values
+no bound checking is performed, since buffer length is not available.
+Index 0 is equivalent to the ``value`` field.
+
+
 Struct references
 -----------------
 
@@ -219,11 +225,20 @@ Bitfield references
 -------------------
 
 Bitfields behave like special fixed-size containers.
-The ``_enum`` property points to the bitfield type.
+Consider them to be something in between structs and
+fixed-size vectors.
 
+The ``_enum`` property points to the bitfield type.
 Numerical indices correspond to the shift value,
 and if a subfield occupies multiple bits, the
 ``ipairs`` order would have a gap.
+
+Since currently there is no API to allocate a bitfield
+object fully in GC-managed lua heap, consider using the
+lua table assignment feature outlined below in order to
+pass bitfield values to dfhack API functions that need
+them, e.g. ``matinfo:matches{metal=true}``.
+
 
 Named types
 ===========
@@ -307,6 +322,24 @@ The ``df`` table itself contains the following functions and values:
 * ``df.is_instance(type,obj)``
 
   Equivalent to the method, but also allows a reference as proxy for its type.
+
+* ``df.new(ptype[,count])``
+
+  Allocate a new instance, or an array of built-in types.
+  The ``ptype`` argument is a string from the following list:
+  ``string``, ``int8_t``, ``uint8_t``, ``int16_t``, ``uint16_t``,
+  ``int32_t``, ``uint32_t``, ``int64_t``, ``uint64_t``, ``bool``,
+  ``float``, ``double``. All of these except ``string`` can be
+  used with the count argument to allocate an array.
+
+* ``df.reinterpret_cast(type,ptr)``
+
+  Converts ptr to a ref of specified type. The type may be anything
+  acceptable to ``df.is_instance``. Ptr may be *nil*, a ref,
+  a lightuserdata, or a number.
+
+  Returns *nil* if NULL, or a ref.
+
 
 Recursive table assignment
 ==========================
@@ -458,6 +491,13 @@ Currently it defines the following features:
 
   Compares to coroutine.resume like dfhack.safecall vs pcall.
 
+* ``dfhack.run_script(name[,args...])``
+
+  Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
+  The ``name`` argument should be the name stem, as would be used on the command line.
+  Note that the script is re-read from the file every time it is called, and errors
+  are propagated to the caller.
+
 * ``dfhack.with_suspend(f[,args...])``
 
   Calls ``f`` with arguments after grabbing the DF core suspend lock.
@@ -598,12 +638,45 @@ One notable difference is that these explicit wrappers allow argument count
 adjustment according to the usual lua rules, so trailing false/nil arguments
 can be omitted.
 
+* ``dfhack.getOSType()``
+
+  Returns the OS type string from ``symbols.xml``.
+
+* ``dfhack.getDFVersion()``
+
+  Returns the DF version string from ``symbols.xml``.
+
+* ``dfhack.getDFPath()``
+
+  Returns the DF directory path.
+
+* ``dfhack.getHackPath()``
+
+  Returns the dfhack directory path, i.e. ``".../df/hack/"``.
+
+* ``dfhack.isWorldLoaded()``
+
+  Checks if the world is loaded.
+
+* ``dfhack.isMapLoaded()``
+
+  Checks if the world and map are loaded.
+
 * ``dfhack.TranslateName(name[,in_english,only_last_name])``
 
   Convert a language_name or only the last name part to string.
 
 Gui module
 ----------
+
+* ``dfhack.gui.getCurViewscreen()``
+
+  Returns the viewscreen that is current in the core.
+
+* ``dfhack.gui.getFocusString(viewscreen)``
+
+  Returns a string representation of the current focus position
+  in the ui. The string has a "screen/foo/bar/baz..." format.
 
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
 
@@ -658,6 +731,14 @@ Job module
 
   Returns the unit performing the job.
 
+* ``dfhack.job.checkBuildingsNow()``
+
+  Instructs the game to check buildings for jobs next frame and assign workers.
+
+* ``dfhack.job.checkDesignationsNow()``
+
+  Instructs the game to check designations for jobs next frame and assign workers.
+
 * ``dfhack.job.is_equal(job1,job2)``
 
   Compares important fields in the job and nested item structures.
@@ -677,7 +758,7 @@ Units module
 
 * ``dfhack.units.getPosition(unit)``
 
-  Returns true *x,y,z* of the unit; may be not equal to unit.pos if caged.
+  Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
 
 * ``dfhack.units.getContainer(unit)``
 
@@ -701,7 +782,7 @@ Units module
 
 * ``dfhack.units.isDead(unit)``
 
-  The unit is completely dead and passive.
+  The unit is completely dead and passive, or a ghost.
 
 * ``dfhack.units.isAlive(unit)``
 
@@ -709,7 +790,16 @@ Units module
 
 * ``dfhack.units.isSane(unit)``
 
-  The unit is capable of rational action, i.e. not dead, insane or zombie.
+  The unit is capable of rational action, i.e. not dead, insane, zombie, or active werewolf.
+
+* ``dfhack.units.isDwarf(unit)``
+
+  The unit is of the correct race of the fortress.
+
+* ``dfhack.units.isCitizen(unit)``
+
+  The unit is an alive sane citizen of the fortress; wraps the
+  same checks the game uses to decide game-over by extinction.
 
 * ``dfhack.units.getAge(unit[,true_age])``
 
@@ -736,7 +826,20 @@ Items module
 
 * ``dfhack.items.getPosition(item)``
 
-  Returns true *x,y,z* of the item; may be not equal to item.pos if in inventory.
+  Returns true *x,y,z* of the item, or *nil* if invalid; may be not equal to item.pos if in inventory.
+
+* ``dfhack.items.getDescription(item, type[, decorate])``
+
+  Returns the string description of the item, as produced by the getItemDescription
+  method. If decorate is true, also adds markings for quality and improvements.
+
+* ``dfhack.items.getGeneralRef(item, type)``
+
+  Searches for a general_ref with the given type.
+
+* ``dfhack.items.getSpecificRef(item, type)``
+
+  Searches for a specific_ref with the given type.
 
 * ``dfhack.items.getOwner(item)``
 
@@ -763,6 +866,14 @@ Items module
 
   Move the item to the container. Returns *false* if impossible.
 
+* ``dfhack.items.moveToBuilding(item,building,use_mode)``
+
+  Move the item to the building. Returns *false* if impossible.
+
+* ``dfhack.items.moveToInventory(item,unit,use_mode,body_part)``
+
+  Move the item to the unit inventory. Returns *false* if impossible.
+
 
 Maps module
 -----------
@@ -779,13 +890,17 @@ Maps module
 
   Returns a map block object for given x,y,z in local block coordinates.
 
-* ``dfhack.maps.getTileBlock(coords)``
+* ``dfhack.maps.getTileBlock(coords)``, or ``getTileBlock(x,y,z)``
 
-  Returns a map block object for given df::coord in local tile coordinates.
+  Returns a map block object for given df::coord or x,y,z in local tile coordinates.
 
-* ``dfhack.maps.getRegionBiome(region_coord2d)``
+* ``dfhack.maps.getRegionBiome(region_coord2d)``, or ``getRegionBiome(x,y)``
 
   Returns the biome info struct for the given global map region.
+
+* ``dfhack.maps.enableBlockUpdates(block[,flow,temperature])``
+
+  Enables updates for liquid flow or temperature, unless already active.
 
 * ``dfhack.maps.getGlobalInitFeature(index)``
 
@@ -794,6 +909,10 @@ Maps module
 * ``dfhack.maps.getLocalInitFeature(region_coord2d,index)``
 
   Returns the local feature object with the given region coords and index.
+
+* ``dfhack.maps.getTileBiomeRgn(coords)``, or ``getTileBiomeRgn(x,y,z)``
+
+  Returns *x, y* for use with ``getRegionBiome``.
 
 * ``dfhack.maps.canWalkBetween(pos1, pos2)``
 
@@ -850,6 +969,214 @@ Burrows module
   Adds or removes the tile from the burrow. Returns *false* if invalid coords.
 
 
+Buildings module
+----------------
+
+* ``dfhack.buildings.getSize(building)``
+
+  Returns *width, height, centerx, centery*.
+
+* ``dfhack.buildings.findAtTile(pos)``, or ``findAtTile(x,y,z)``
+
+  Scans the buildings for the one located at the given tile.
+  Does not work on civzones. Warning: linear scan if the map
+  tile indicates there are buildings at it.
+
+* ``dfhack.buildings.findCivzonesAt(pos)``, or ``findCivzonesAt(x,y,z)``
+
+  Scans civzones, and returns a lua sequence of those that touch
+  the given tile, or *nil* if none.
+
+* ``dfhack.buildings.getCorrectSize(width, height, type, subtype, custom, direction)``
+
+  Computes correct dimensions for the specified building type and orientation,
+  using width and height for flexible dimensions.
+  Returns *is_flexible, width, height, center_x, center_y*.
+
+* ``dfhack.buildings.checkFreeTiles(pos,size[,extents,change_extents,allow_occupied])``
+
+  Checks if the rectangle defined by ``pos`` and ``size``, and possibly extents,
+  can be used for placing a building. If ``change_extents`` is true, bad tiles
+  are removed from extents. If ``allow_occupied``, the occupancy test is skipped.
+
+* ``dfhack.buildings.countExtentTiles(extents,defval)``
+
+  Returns the number of tiles included by extents, or defval.
+
+* ``dfhack.buildings.containsTile(building, x, y[, room])``
+
+  Checks if the building contains the specified tile, either directly, or as room.
+
+* ``dfhack.buildings.hasSupport(pos,size)``
+
+  Checks if a bridge constructed at specified position would have
+  support from terrain, and thus won't collapse if retracted.
+
+Low-level building creation functions;
+
+* ``dfhack.buildings.allocInstance(pos, type, subtype, custom)``
+
+  Creates a new building instance of given type, subtype and custom type,
+  at specified position. Returns the object, or *nil* in case of an error.
+
+* ``dfhack.buildings.setSize(building, width, height, direction)``
+
+  Configures an object returned by ``allocInstance``, using specified
+  parameters wherever appropriate. If the building has fixed size along
+  any dimension, the corresponding input parameter will be ignored.
+  Returns *false* if the building cannot be placed, or *true, width,
+  height, rect_area, true_area*. Returned width and height are the
+  final values used by the building; true_area is less than rect_area
+  if any tiles were removed from designation.
+
+* ``dfhack.buildings.constructAbstract(building)``
+
+  Links a fully configured object created by ``allocInstance`` into the
+  world. The object must be an abstract building, i.e. a stockpile or civzone.
+  Returns *true*, or *false* if impossible.
+
+* ``dfhack.buildings.constructWithItems(building, items)``
+
+  Links a fully configured object created by ``allocInstance`` into the
+  world for construction, using a list of specific items as material.
+  Returns *true*, or *false* if impossible.
+
+* ``dfhack.buildings.constructWithFilters(building, job_items)``
+
+  Links a fully configured object created by ``allocInstance`` into the
+  world for construction, using a list of job_item filters as inputs.
+  Returns *true*, or *false* if impossible. Filter objects are claimed
+  and possibly destroyed in any case.
+  Use a negative ``quantity`` field value to auto-compute the amount
+  from the size of the building.
+
+* ``dfhack.buildings.deconstruct(building)``
+
+  Destroys the building, or queues a deconstruction job.
+  Returns *true* if the building was destroyed and deallocated immediately.
+
+More high-level functions are implemented in lua and can be loaded by
+``require('dfhack.buildings')``. See ``hack/lua/dfhack/buildings.lua``.
+
+Among them are:
+
+* ``dfhack.buildings.getFiltersByType(argtable,type,subtype,custom)``
+
+  Returns a sequence of lua structures, describing input item filters
+  suitable for the specified building type, or *nil* if unknown or invalid.
+  The returned sequence is suitable for use as the ``job_items`` argument
+  of ``constructWithFilters``.
+  Uses tables defined in ``buildings.lua``.
+
+  Argtable members ``material`` (the default name), ``bucket``, ``barrel``,
+  ``chain``, ``mechanism``, ``screw``, ``pipe``, ``anvil``, ``weapon`` are used to
+  augment the basic attributes with more detailed information if the
+  building has input items with the matching name (see the tables for naming details).
+  Note that it is impossible to *override* any properties this way, only supply those that
+  are not mentioned otherwise; one exception is that flags2.non_economic
+  is automatically cleared if an explicit material is specified.
+
+* ``dfhack.buildings.constructBuilding{...}``
+
+  Creates a building in one call, using options contained
+  in the argument table. Returns the building, or *nil, error*.
+
+  **NOTE:** Despite the name, unless the building is abstract,
+  the function creates it in an 'unconstructed' stage, with
+  a queued in-game job that will actually construct it. I.e.
+  the function replicates programmatically what can be done
+  through the construct building menu in the game ui, except
+  that it does less environment constraint checking.
+
+  The following options can be used:
+
+  - ``pos = coordinates``, or ``x = ..., y = ..., z = ...``
+
+    Mandatory. Specifies the left upper corner of the building.
+
+  - ``type = df.building_type.FOO, subtype = ..., custom = ...``
+
+    Mandatory. Specifies the type of the building. Obviously, subtype
+    and custom are only expected if the type requires them.
+
+  - ``fields = { ... }``
+
+    Initializes fields of the building object after creation with ``df.assign``.
+
+  - ``width = ..., height = ..., direction = ...``
+
+    Sets size and orientation of the building. If it is
+    fixed-size, specified dimensions are ignored.
+
+  - ``full_rectangle = true``
+
+    For buildings like stockpiles or farm plots that can normally
+    accomodate individual tile exclusion, forces an error if any
+    tiles within the specified width*height are obstructed.
+
+  - ``items = { item, item ... }``, or ``filters = { {...}, {...}... }``
+
+    Specifies explicit items or item filters to use in construction.
+    It is the job of the user to ensure they are correct for the building type.
+
+  - ``abstract = true``
+
+    Specifies that the building is abstract and does not require construction.
+    Required for stockpiles and civzones; an error otherwise.
+
+  - ``material = {...}, mechanism = {...}, ...``
+
+    If none of ``items``, ``filter``, or ``abstract`` is used,
+    the function uses ``getFiltersByType`` to compute the input
+    item filters, and passes the argument table through. If no filters
+    can be determined this way, ``constructBuilding`` throws an error.
+
+
+Constructions module
+--------------------
+
+* ``dfhack.constructions.designateNew(pos,type,item_type,mat_index)``
+
+  Designates a new construction at given position. If there already is
+  a planned but not completed construction there, changes its type.
+  Returns *true*, or *false* if obstructed.
+  Note that designated constructions are technically buildings.
+
+* ``dfhack.constructions.designateRemove(pos)``, or ``designateRemove(x,y,z)``
+
+  If there is a construction or a planned construction at the specified
+  coordinates, designates it for removal, or instantly cancels the planned one.
+  Returns *true, was_only_planned* if removed; or *false* if none found.
+
+
+Internal API
+------------
+
+These functions are intended for the use by dfhack developers,
+and are only documented here for completeness:
+
+* ``dfhack.internal.scripts``
+
+  The table used by ``dfhack.run_script()`` to give every script its own
+  global environment, persistent between calls to the script.
+
+* ``dfhack.internal.getAddress(name)``
+
+  Returns the global address ``name``, or *nil*.
+
+* ``dfhack.internal.setAddress(name, value)``
+
+  Sets the global address ``name``. Returns the value of ``getAddress`` before the change.
+
+* ``dfhack.internal.getBase()``
+
+  Returns the base address of the process.
+
+* ``dfhack.internal.getMemRanges()``
+
+  Returns a sequence of tables describing virtual memory ranges of the process.
+
+
 Core interpreter context
 ========================
 
@@ -862,6 +1189,25 @@ Core context specific functions:
 * ``dfhack.is_core_context``
 
   Boolean value; *true* in the core context.
+
+* ``dfhack.timeout(time,mode,callback)``
+
+  Arranges for the callback to be called once the specified
+  period of time passes. The ``mode`` argument specifies the
+  unit of time used, and may be one of ``'frames'`` (raw FPS),
+  ``'ticks'`` (unpaused FPS), ``'days'``, ``'months'``,
+  ``'years'`` (in-game time). All timers other than
+  ``'frames'`` are cancelled when the world is unloaded,
+  and cannot be queued until it is loaded again.
+  Returns the timer id, or *nil* if unsuccessful due to
+  world being unloaded.
+
+* ``dfhack.timeout_active(id[,new_callback])``
+
+  Returns the active callback with the given id, or *nil*
+  if inactive or nil id. If called with 2 arguments, replaces
+  the current callback with the given value, if still active.
+  Using ``timeout_active(id,nil)`` cancels the timer.
 
 * ``dfhack.onStateChange.foo = function(code)``
 
@@ -920,7 +1266,7 @@ Events:
   Emitted when a burrow might have been renamed either through
   the game UI, or ``renameBurrow()``.
 
-* ``onDigComplete.foo = function(job_type,pos,old_tiletype,new_tiletype)``
+* ``onDigComplete.foo = function(job_type,pos,old_tiletype,new_tiletype,worker)``
 
   Emitted when a tile might have been dug out. Only tracked if the
   auto-growing burrows feature is enabled.

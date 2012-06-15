@@ -232,15 +232,26 @@ void virtual_identity::doInit(Core *core)
         known[vtable_ptr] = this;
 }
 
+virtual_identity *virtual_identity::find(const std::string &name)
+{
+    auto name_it = name_lookup.find(name);
+
+    return (name_it != name_lookup.end()) ? name_it->second : NULL;
+}
+
 virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
 {
     if (!instance_ptr) return NULL;
 
+    return find(get_vtable(instance_ptr));
+}
+
+virtual_identity *virtual_identity::find(void *vtable)
+{
     // Actually, a reader/writer lock would be sufficient,
     // since the table is only written once per class.
     tthread::lock_guard<tthread::mutex> lock(*known_mutex);
 
-    void *vtable = get_vtable(instance_ptr);
     std::map<void*, virtual_identity*>::iterator it = known.find(vtable);
 
     if (it != known.end())

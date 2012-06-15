@@ -36,9 +36,6 @@ include/MiscUtils.h
 include/Module.h
 include/Pragma.h
 include/MemAccess.h
-include/SDL_events.h
-include/SDL_keyboard.h
-include/SDL_keysym.h
 include/TileTypes.h
 include/Types.h
 include/VersionInfo.h
@@ -64,6 +61,7 @@ DataStatics.cpp
 DataStaticsCtor.cpp
 DataStaticsFields.cpp
 MiscUtils.cpp
+Types.cpp
 PluginManager.cpp
 TileTypes.cpp
 VersionInfoFactory.cpp
@@ -89,6 +87,13 @@ Console-linux.cpp
 Hooks-linux.cpp
 PlugLoad-linux.cpp
 Process-linux.cpp
+)
+
+SET(MAIN_SOURCES_DARWIN
+Console-darwin.cpp
+PlugLoad-darwin.cpp
+Process-darwin.cpp
+Hooks-darwin.cpp
 )
 
 SET(MAIN_SOURCES_LINUX_EGGY
@@ -157,6 +162,8 @@ IF(UNIX)
     OPTION(BUILD_EGGY "Make DFHack strangely egg-shaped." OFF)
     IF(BUILD_EGGY)
         LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX_EGGY})
+    ELSEIF(APPLE)
+    	LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_DARWIN})
     ELSE()
         LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX})
     ENDIF()
@@ -207,8 +214,9 @@ IF(UNIX)
   SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp
                               PROPERTIES COMPILE_FLAGS "-g0 -O1")
 ELSE(WIN32)
+  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp
+                              PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
 ENDIF()
-
 
 # Compilation
 
@@ -222,6 +230,9 @@ ENDIF()
 
 IF(UNIX)
   SET(PROJECT_LIBS rt dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
+  IF(APPLE)
+  	SET(PROJECT_LIBS dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
+ ENDIF()
 ELSE(WIN32)
   #FIXME: do we really need psapi?
   SET(PROJECT_LIBS psapi dfhack-tinyxml dfhack-tinythread)
@@ -254,6 +265,14 @@ ENDIF()
 #effectively disables debug builds...
 SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
+IF(APPLE)
+	SET(SDL_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/SDL.framework)
+	TARGET_LINK_LIBRARIES(dfhack ${SDL_LIBRARY})
+#	TARGET_LINK_LIBRARIES(dfhack /usr/lib/libc++.dylib)
+	SET_TARGET_PROPERTIES(dfhack PROPERTIES VERSION 1.0.0)
+	SET_TARGET_PROPERTIES(dfhack PROPERTIES SOVERSION 1.0.0)
+ENDIF()
+
 TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua ${PROJECT_LIBS})
 SET_TARGET_PROPERTIES(dfhack PROPERTIES LINK_INTERFACE_LIBRARIES "")
 
@@ -261,11 +280,18 @@ TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket)
 TARGET_LINK_LIBRARIES(dfhack-run dfhack-client)
 
 IF(UNIX)
-    # On linux, copy our version of the df launch script which sets LD_PRELOAD
-    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
+	if (APPLE)
+		install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack
+				DESTINATION .)
+		install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack-run
+				DESTINATION .)
+    else()
+	    # On linux, copy our version of the df launch script which sets LD_PRELOAD
+    	install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
             DESTINATION .)
-    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
+	    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
             DESTINATION .)
+    endif()
 ELSE()
     if(NOT BUILD_EGGY)
         # On windows, copy the renamed SDL so DF can still run.
@@ -299,6 +325,9 @@ install(TARGETS dfhack-run dfhack-client
 install(DIRECTORY lua/
         DESTINATION ${DFHACK_LUA_DESTINATION}
         FILES_MATCHING PATTERN "*.lua")
+
+install(DIRECTORY ${dfhack_SOURCE_DIR}/scripts
+        DESTINATION ${DFHACK_DATA_DESTINATION})
 
 # Unused for so long that it's not even relevant now...
 if(BUILD_DEVEL)

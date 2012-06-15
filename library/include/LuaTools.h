@@ -48,6 +48,9 @@ namespace DFHack {namespace Lua {
      */
     DFHACK_EXPORT lua_State *Open(color_ostream &out, lua_State *state = NULL);
 
+    DFHACK_EXPORT void PushDFHack(lua_State *state);
+    DFHACK_EXPORT void PushBaseGlobals(lua_State *state);
+
     /**
      * Load a module using require(). Leaves the stack as is.
      */
@@ -109,7 +112,15 @@ namespace DFHack {namespace Lua {
      * Return behavior is of SafeCall below.
      */
     DFHACK_EXPORT bool AssignDFObject(color_ostream &out, lua_State *state,
-                                      type_identity *type, void *target, int val_index, bool perr = true);
+                                      type_identity *type, void *target, int val_index,
+                                      bool exact_type = false, bool perr = true);
+
+    /**
+     * Assign the value at val_index to the target of given identity using df.assign().
+     * Otherwise throws an error.
+     */
+    DFHACK_EXPORT void CheckDFAssign(lua_State *state, type_identity *type,
+                                     void *target, int val_index, bool exact_type = false);
 
     /**
      * Push the pointer onto the stack as a wrapped DF object of a specific type.
@@ -139,8 +150,19 @@ namespace DFHack {namespace Lua {
      * Assign the value at val_index to the target using df.assign().
      */
     template<class T>
-    bool AssignDFObject(color_ostream &out, lua_State *state, T *target, int val_index, bool perr = true) {
-        return AssignDFObject(out, state, df::identity_traits<T>::get(), target, val_index, perr);
+    bool AssignDFObject(color_ostream &out, lua_State *state, T *target,
+                        int val_index, bool exact_type = false, bool perr = true) {
+        return AssignDFObject(out, state, df::identity_traits<T>::get(),
+                              target, val_index, exact_type, perr);
+    }
+
+    /**
+     * Assign the value at val_index to the target using df.assign().
+     * Throws in case of an error.
+     */
+    template<class T>
+    void CheckDFAssign(lua_State *state, T *target, int val_index, bool exact_type = false) {
+        CheckDFAssign(state, df::identity_traits<T>::get(), target, val_index, exact_type);
     }
 
     /**
@@ -242,11 +264,14 @@ namespace DFHack {namespace Lua {
     inline void Push(lua_State *state, bool value) {
         lua_pushboolean(state, value);
     }
+    inline void Push(lua_State *state, const char *str) {
+        lua_pushstring(state, str);
+    }
     inline void Push(lua_State *state, const std::string &str) {
         lua_pushlstring(state, str.data(), str.size());
     }
-    inline void Push(lua_State *state, df::coord &obj) { PushDFObject(state, &obj); }
-    inline void Push(lua_State *state, df::coord2d &obj) { PushDFObject(state, &obj); }
+    DFHACK_EXPORT void Push(lua_State *state, df::coord obj);
+    DFHACK_EXPORT void Push(lua_State *state, df::coord2d obj);
     void Push(lua_State *state, const Units::NoblePosition &pos);
     template<class T> inline void Push(lua_State *state, T *ptr) {
         PushDFObject(state, ptr);
@@ -271,6 +296,7 @@ namespace DFHack {namespace Lua {
     }
 
     DFHACK_EXPORT int PushPosXYZ(lua_State *state, df::coord pos);
+    DFHACK_EXPORT int PushPosXY(lua_State *state, df::coord2d pos);
 
     DFHACK_EXPORT bool IsCoreContext(lua_State *state);
 
@@ -311,6 +337,8 @@ namespace DFHack {namespace Lua {
 
         // Events signalled by the core
         void onStateChange(color_ostream &out, int code);
+        // Signals timers
+        void onUpdate(color_ostream &out);
 
         template<class T> inline void Push(T &arg) { Lua::Push(State, arg); }
         template<class T> inline void Push(const T &arg) { Lua::Push(State, arg); }
@@ -398,5 +426,19 @@ namespace DFHack {namespace Lua {
             DFHack::Lua::Push(state, arg3); \
             DFHack::Lua::Push(state, arg4); \
             name##_event.invoke(out, 4); \
+        } \
+    }
+
+#define DEFINE_LUA_EVENT_5(name, handler, arg_type1, arg_type2, arg_type3, arg_type4, arg_type5) \
+    static DFHack::Lua::Notification name##_event(df::wrap_function(handler, true)); \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4, arg_type5 arg5) { \
+        handler(out, arg1, arg2, arg3, arg4, arg5); \
+        if (auto state = name##_event.get_state()) { \
+            DFHack::Lua::Push(state, arg1); \
+            DFHack::Lua::Push(state, arg2); \
+            DFHack::Lua::Push(state, arg3); \
+            DFHack::Lua::Push(state, arg4); \
+            DFHack::Lua::Push(state, arg5); \
+            name##_event.invoke(out, 5); \
         } \
     }

@@ -711,7 +711,7 @@ command_result CoreService::RunCommand(color_ostream &stream,
     for (int i = 0; i < in->arguments_size(); i++)
         args.push_back(in->arguments(i));
 
-    return Core::getInstance().plug_mgr->InvokeCommand(stream, cmd, args);
+    return Core::getInstance().runCommand(stream, cmd, args);
 }
 
 command_result CoreService::CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt)

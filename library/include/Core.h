@@ -33,7 +33,8 @@ distribution.
 #include <stdint.h>
 #include "Console.h"
 #include "modules/Graphic.h"
-#include "SDL_events.h"
+
+#include "RemoteClient.h"
 
 struct WINDOW;
 
@@ -65,6 +66,17 @@ namespace DFHack
     {
         class df_window;
     }
+
+    enum state_change_event
+    {
+        SC_WORLD_LOADED = 0,
+        SC_WORLD_UNLOADED = 1,
+        SC_MAP_LOADED = 2,
+        SC_MAP_UNLOADED = 3,
+        SC_VIEWSCREEN_CHANGED = 4,
+        SC_CORE_INITIALIZED = 5,
+        SC_BEGIN_UNLOAD = 6
+    };
 
     // Core is a singleton. Why? Because it is closely tied to SDL calls. It tracks the global state of DF.
     // There should never be more than one instance
@@ -117,9 +129,15 @@ namespace DFHack
         /// returns a named pointer.
         void *GetData(std::string key);
 
+        command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters);
+        command_result runCommand(color_ostream &out, const std::string &command);
+        bool loadScriptFile(color_ostream &out, std::string fname, bool silent = false);
+
         bool ClearKeyBindings(std::string keyspec);
         bool AddKeyBinding(std::string keyspec, std::string cmdline);
         std::vector<std::string> ListKeyBindings(std::string keyspec);
+
+        std::string getHackPath();
 
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
         bool isMapLoaded() { return (last_local_map_ptr != NULL && last_world_data_ptr != NULL); }
@@ -151,8 +169,11 @@ namespace DFHack
         int Update (void);
         int TileUpdate (void);
         int Shutdown (void);
-        int SDL_Event(SDL::Event* event);
+        int DFH_SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);
+
+        void onUpdate(color_ostream &out);
+        void onStateChange(color_ostream &out, state_change_event event);
 
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement
@@ -177,12 +198,13 @@ namespace DFHack
         } s_mods;
         std::vector <Module *> allModules;
         DFHack::PluginManager * plug_mgr;
-        
+
         // hotkey-related stuff
         struct KeyBinding {
             int modifiers;
             std::vector<std::string> command;
             std::string cmdline;
+            std::string focus;
         };
 
         std::map<int, std::vector<KeyBinding> > key_bindings;
@@ -192,7 +214,6 @@ namespace DFHack
         tthread::mutex * HotkeyMutex;
         tthread::condition_variable * HotkeyCond;
 
-        int UnicodeAwareSym(const SDL::KeyboardEvent& ke);
         bool SelectHotkey(int key, int modifiers);
 
         // for state change tracking

@@ -220,8 +220,26 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     out.print("temperature1: %d U\n",mc.temperature1At(cursor));
     out.print("temperature2: %d U\n",mc.temperature2At(cursor));
 
+    int offset = block.region_offset[des.bits.biome];
+    df::coord2d region_pos = block.region_pos + df::coord2d ((offset % 3) - 1, (offset / 3) -1);
+
+    df::world_data::T_region_map* biome = 
+        &world->world_data->region_map[region_pos.x][region_pos.y];
+
+    int sav = biome->savagery;
+    int evi = biome->evilness;
+    int sindex = sav > 65 ? 2 : sav < 33 ? 0 : 1;
+    int eindex = evi > 65 ? 2 : evi < 33 ? 0 : 1;
+    int surr = sindex + eindex * 3;
+
+    const char* surroundings[] = { "Serene", "Mirthful", "Joyous Wilds", "Calm", "Wilderness", "Untamed Wilds", "Sinister", "Haunted", "Terrifying" };
+
     // biome, geolayer
-    out << "biome: " << des.bits.biome << std::endl;
+    out << "biome: " << des.bits.biome << " (" << 
+        "region id=" << biome->region_id << ", " <<
+        surroundings[surr] << ", " <<
+        "savagery " << biome->savagery << ", " <<
+        "evilness " << biome->evilness << ")" << std::endl;
     out << "geolayer: " << des.bits.geolayer_index
         << std::endl;
     int16_t base_rock = mc.layerMaterialAt(cursor);
@@ -312,6 +330,39 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     out << "global feature idx: " << block.global_feature
         << endl;
     out << std::endl;
+
+    if(block.occupancy[tileX][tileY].bits.no_grow)
+        out << "no grow" << endl;
+
+    for(size_t e=0; e<block.block_events.size(); e++)
+    {            
+        df::block_square_event * blev = block.block_events[e];
+        df::block_square_event_type blevtype = blev->getType();
+        switch(blevtype)
+        {
+        case df::block_square_event_type::grass:
+            {
+                df::block_square_event_grassst * gr_ev = (df::block_square_event_grassst *)blev;
+                if(gr_ev->amount[tileX][tileY] > 0)
+                {
+                    out << "amount of grass: " << (int)gr_ev->amount[tileX][tileY] << endl;
+                }
+                break;
+            }
+        case df::block_square_event_type::world_construction:
+            {
+                df::block_square_event_world_constructionst * co_ev = (df::block_square_event_world_constructionst*)blev;
+                uint16_t bits = co_ev->tile_bitmask[tileY];
+                out << "construction bits: " << bits << endl;
+                break;
+            }
+        default:
+            //out << "unhandled block event type!" << endl;
+            break;
+        }
+    }
+
+
     return CR_OK;
 }
 
@@ -399,14 +450,10 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
             break;
         }
         if(building.origin->is_room)  //isRoom())
-            out << ", is room";
-        else
-            out << ", not a room";
+            out << ", room";
         if(building.origin->getBuildStage()!=building.origin->getMaxBuildStage())
             out << ", in construction";
         out.print("\n");
-
-
     }
     return CR_OK;
 }

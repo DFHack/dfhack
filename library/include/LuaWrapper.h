@@ -77,6 +77,7 @@ namespace DFHack { namespace LuaWrapper {
 #define DFHACK_ASSIGN_NAME "DFHack::Assign"
 #define DFHACK_IS_INSTANCE_NAME "DFHack::IsInstance"
 #define DFHACK_DELETE_NAME "DFHack::Delete"
+#define DFHACK_CAST_NAME "DFHack::Cast"
 
     extern LuaToken DFHACK_EMPTY_TABLE_TOKEN;
 

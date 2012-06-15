@@ -42,27 +42,27 @@ case "$1" in
     shift
     echo "set environment LD_PRELOAD=./hack/libdfhack.so" > gdbcmd.tmp
     echo "set environment MALLOC_PERTURB_=45" >> gdbcmd.tmp
-    gdb $DF_GDB_OPTS -x gdbcmd.tmp ./libs/Dwarf_Fortress $*
+    gdb $DF_GDB_OPTS -x gdbcmd.tmp ./libs/Dwarf_Fortress "$@"
     rm gdbcmd.tmp
     ret=$?
     ;;
   -h | --helgrind)
     shift
-    LD_PRELOAD=./hack/libdfhack.so setarch i386 -R valgrind $DF_HELGRIND_OPTS --tool=helgrind --log-file=helgrind.log ./libs/Dwarf_Fortress $*
+    LD_PRELOAD=./hack/libdfhack.so setarch i386 -R valgrind $DF_HELGRIND_OPTS --tool=helgrind --log-file=helgrind.log ./libs/Dwarf_Fortress "$@"
     ret=$?
     ;;
   -v | --valgrind)
     shift
-    LD_PRELOAD=./hack/libdfhack.so setarch i386 -R valgrind $DF_VALGRIND_OPTS --log-file=valgrind.log ./libs/Dwarf_Fortress $*
+    LD_PRELOAD=./hack/libdfhack.so setarch i386 -R valgrind $DF_VALGRIND_OPTS --log-file=valgrind.log ./libs/Dwarf_Fortress "$@"
     ret=$?
     ;;
   -c | --callgrind)
     shift
-    LD_PRELOAD=./hack/libdfhack.so setarch i386 -R valgrind $DF_CALLGRIND_OPTS --tool=callgrind --separate-threads=yes --dump-instr=yes --instr-atstart=no --log-file=callgrind.log ./libs/Dwarf_Fortress $*
+    LD_PRELOAD=./hack/libdfhack.so setarch i386 -R valgrind $DF_CALLGRIND_OPTS --tool=callgrind --separate-threads=yes --dump-instr=yes --instr-atstart=no --log-file=callgrind.log ./libs/Dwarf_Fortress "$@"
     ret=$?
     ;;
   *)
-    LD_PRELOAD=./hack/libdfhack.so setarch i386 -R ./libs/Dwarf_Fortress $*
+    setarch i386 -R env LD_PRELOAD=./hack/libdfhack.so ./libs/Dwarf_Fortress "$@"
     ret=$?
     ;;
 esac

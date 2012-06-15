@@ -31,6 +31,8 @@ distribution.
 #include <string>
 #include <vector>
 
+#include "Core.h"
+
 #include "RemoteClient.h"
 
 typedef struct lua_State lua_State;
@@ -59,22 +61,12 @@ namespace DFHack
     struct DFLibrary;
 
     // Open a plugin library
-    DFLibrary * OpenPlugin (const char * filename);
+    DFHACK_EXPORT DFLibrary * OpenPlugin (const char * filename);
     // find a symbol inside plugin
-    void * LookupPlugin (DFLibrary * plugin ,const char * function);
+    DFHACK_EXPORT void * LookupPlugin (DFLibrary * plugin ,const char * function);
     // Close a plugin library
-    void ClosePlugin (DFLibrary * plugin);
+    DFHACK_EXPORT void ClosePlugin (DFLibrary * plugin);
 
-    enum state_change_event
-    {
-        SC_WORLD_LOADED = 0,
-        SC_WORLD_UNLOADED = 1,
-        SC_MAP_LOADED = 2,
-        SC_MAP_UNLOADED = 3,
-        SC_VIEWSCREEN_CHANGED = 4,
-        SC_CORE_INITIALIZED = 5,
-        SC_BEGIN_UNLOAD = 6
-    };
     struct DFHACK_EXPORT CommandReg {
         const char *name;
         int (*command)(lua_State*);

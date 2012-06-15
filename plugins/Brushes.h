@@ -1,4 +1,9 @@
 #pragma once
+#include <llimits.h>
+#include <sstream>
+#include <string>
+#include <stack>
+#include <set>
 
 typedef vector <df::coord> coord_vec;
 class Brush
@@ -60,10 +65,15 @@ public:
     };
     ~RectangleBrush(){};
     std::string str() const {
-        if (x_ == 1 && y_ == 1 && z_ == 1) {
+        if (x_ == 1 && y_ == 1 && z_ == 1)
+        {
             return "point";
-        } else {
-            return "rectangle";
+        }
+        else
+        {
+            std::ostringstream ss;
+            ss << "rect: " << x_ << "/" << y_ << "/" << z_ << std::endl;
+            return ss.str();
         }
     }
 private:
@@ -196,12 +206,85 @@ private:
     Core *c_;
 };
 
-inline std::ostream &operator<<(std::ostream &stream, const Brush& brush) {
+command_result parseRectangle(color_ostream & out,
+                              vector<string>  & input, int start, int end,
+                              int & width, int & height, int & zLevels,
+                              bool hasConsole = true)
+{
+    int newWidth = 0, newHeight = 0, newZLevels = 0;
+
+    if (end > start + 1)
+    {
+        newWidth = atoi(input[start++].c_str());
+        newHeight = atoi(input[start++].c_str());
+        if (end > start) {
+            newZLevels = atoi(input[start++].c_str());
+        } else {
+            newZLevels = 1; // So 'range w h' won't ask for it.
+        }
+    }
+
+    string command = "";
+    std::stringstream str;
+    CommandHistory hist;
+
+    if (newWidth < 1) {
+        if (hasConsole) {
+            Console &con = static_cast<Console&>(out);
+
+            str.str("");
+            str << "Set range width <" << width << "> ";
+            con.lineedit(str.str(), command, hist);
+            hist.add(command);
+            newWidth = command.empty() ? width : atoi(command.c_str());
+        } else {
+            return CR_WRONG_USAGE;
+        }
+    }
+
+    if (newHeight < 1) {
+        if (hasConsole) {
+            Console &con = static_cast<Console&>(out);
+
+            str.str("");
+            str << "Set range height <" << height << "> ";
+            con.lineedit(str.str(), command, hist);
+            hist.add(command);
+            newHeight = command.empty() ? height : atoi(command.c_str());
+        } else {
+            return CR_WRONG_USAGE;
+        }
+    }
+
+    if (newZLevels < 1) {
+        if (hasConsole) {
+            Console &con = static_cast<Console&>(out);
+
+            str.str("");
+            str << "Set range z-levels <" << zLevels << "> ";
+            con.lineedit(str.str(), command, hist);
+            hist.add(command);
+            newZLevels = command.empty() ? zLevels : atoi(command.c_str());
+        } else {
+            return CR_WRONG_USAGE;
+        }
+    }
+
+    width = newWidth < 1? 1 : newWidth;
+    height = newHeight < 1? 1 : newHeight;
+    zLevels = newZLevels < 1? 1 : newZLevels;
+
+    return CR_OK;
+}
+
+inline std::ostream &operator<<(std::ostream &stream, const Brush& brush)
+{
     stream << brush.str();
     return stream;
 }
 
-inline std::ostream &operator<<(std::ostream &stream, const Brush* brush) {
+inline std::ostream &operator<<(std::ostream &stream, const Brush* brush)
+{
     stream << brush->str();
     return stream;
 }

@@ -107,7 +107,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
     }
     else
     {
-        throw Error::SymbolsXmlBadAttribute("os-type");
+        return; // ignore it if it's invalid
     }
 
     // process additional entries

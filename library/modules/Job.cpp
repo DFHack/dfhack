@@ -46,6 +46,7 @@ using namespace std;
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/job_list_link.h"
+#include "df/specific_ref.h"
 #include "df/general_ref.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/general_ref_building_holderst.h"
@@ -67,7 +68,7 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job)
     pnew->list_link = NULL;
     pnew->completion_timer = -1;
     pnew->items.clear();
-    pnew->misc_links.clear();
+    pnew->specific_refs.clear();
 
     // Clone refs
     for (int i = pnew->references.size()-1; i >= 0; i--)
@@ -93,7 +94,7 @@ void DFHack::Job::deleteJobStruct(df::job *job)
         return;
 
     // Only allow free-floating job structs
-    assert(!job->list_link && job->items.empty() && job->misc_links.empty());
+    assert(!job->list_link && job->items.empty() && job->specific_refs.empty());
 
     for (int i = job->references.size()-1; i >= 0; i--)
         delete job->references[i];
@@ -255,6 +256,18 @@ df::unit *DFHack::Job::getWorker(df::job *job)
     return NULL;
 }
 
+void DFHack::Job::checkBuildingsNow()
+{
+    if (df::global::process_jobs)
+        *df::global::process_jobs = true;
+}
+
+void DFHack::Job::checkDesignationsNow()
+{
+    if (df::global::process_dig)
+        *df::global::process_dig = true;
+}
+
 bool DFHack::Job::linkIntoWorld(df::job *job, bool new_id)
 {
     using df::global::world;
@@ -308,6 +321,43 @@ bool DFHack::Job::listNewlyCreated(std::vector<df::job*> *pvec, int *id_var)
         if (id >= old_id)
             pvec->push_back(link->item);
     }
+
+    return true;
+}
+
+bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
+                                df::job_item_ref::T_role role,
+                                int filter_idx, int insert_idx)
+{
+    CHECK_NULL_POINTER(job);
+    CHECK_NULL_POINTER(item);
+
+    /*
+     * Functionality 100% reverse-engineered from DF code.
+     */
+
+    if (role != df::job_item_ref::TargetContainer)
+    {
+        if (item->flags.bits.in_job)
+            return false;
+
+        item->flags.bits.in_job = true;
+    }
+
+    auto item_link = new df::specific_ref();
+    item_link->type = specific_ref_type::JOB;
+    item_link->job = job;
+    item->specific_refs.push_back(item_link);
+
+    auto job_link = new df::job_item_ref();
+    job_link->item = item;
+    job_link->role = role;
+    job_link->job_item_idx = filter_idx;
+
+    if (size_t(insert_idx) < job->items.size())
+        vector_insert_at(job->items, insert_idx, job_link);
+    else
+        job->items.push_back(job_link);
 
     return true;
 }

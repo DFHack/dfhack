@@ -364,7 +364,7 @@ static ProtectedJob *get_known(int id)
 
 static bool isSupportedJob(df::job *job)
 {
-    return job->misc_links.empty() &&
+    return job->specific_refs.empty() &&
            Job::getHolder(job) &&
            (!job->job_items.empty() ||
             job->job_type == job_type::CollectClay ||
@@ -965,6 +965,9 @@ static void compute_job_outputs(color_ostream &out, ProtectedJob *pj)
             mat.decode(mat.plant->material_defs.type_##tag, \
                        mat.plant->material_defs.idx_##tag); \
         else mat.decode(-1);
+    case BrewDrink:
+        PLANT_PROCESS_MAT(DRINK, drink);
+        break;
     case MillPlants:
         PLANT_PROCESS_MAT(MILL, mill);
         break;
@@ -1083,12 +1086,11 @@ static bool itemInRealJob(df::item *item)
     if (!item->flags.bits.in_job)
         return false;
 
-    if (item->jobs.size() != 1 ||
-        item->jobs[0]->unk1 != 2 ||
-        item->jobs[0]->job == NULL)
+    auto ref = Items::getSpecificRef(item, specific_ref_type::JOB);
+    if (!ref || !ref->job)
         return true;
 
-    return ENUM_ATTR(job_type, type, item->jobs[0]->job->job_type)
+    return ENUM_ATTR(job_type, type, ref->job->job_type)
                != job_type_class::Hauling;
 }
 

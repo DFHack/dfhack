@@ -78,7 +78,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 static string brushname = "point";
 static string mode="magma";
 static string flowmode="f+";
-static string setmode ="s.";
+static string _setmode ="s.";
 static unsigned int amount = 7;
 static int width = 1, height = 1, z_levels = 1;
 
@@ -107,22 +107,27 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         return CR_FAILURE;
     }
 
+    std::vector<std::string> commands;
     bool end = false;
 
     out << "Welcome to the liquid spawner.\nType 'help' or '?' for a list of available commands, 'q' to quit.\nPress return after a command to confirm." << std::endl;
 
     while(!end)
     {
-        string command = "";
+        string input = "";
 
         std::stringstream str;
         str <<"[" << mode << ":" << brushname;
         if (brushname == "range")
             str << "(w" << width << ":h" << height << ":z" << z_levels << ")";
-        str << ":" << amount << ":" << flowmode << ":" << setmode << "]#";
-        if(out.lineedit(str.str(),command,liquids_hist) == -1)
+        str << ":" << amount << ":" << flowmode << ":" << _setmode << "]#";
+        if(out.lineedit(str.str(),input,liquids_hist) == -1)
             return CR_FAILURE;
-        liquids_hist.add(command);
+        liquids_hist.add(input);
+
+        commands.clear();
+        Core::cheap_tokenise(input, commands);
+        string command =  commands.empty() ? "" : commands[0];
 
         if(command=="help" || command == "?")
         {
@@ -195,28 +200,14 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         }
         else if(command == "range" || command == "r")
         {
-            std::stringstream str;
-            CommandHistory range_hist;
-            str << " :set range width<" << width << "># ";
-            out.lineedit(str.str(),command,range_hist);
-            range_hist.add(command);
-            width = command == "" ? width : atoi (command.c_str());
-            if(width < 1) width = 1;
+            command_result res = parseRectangle(out, commands, 1, commands.size(),
+                                                width, height, z_levels);
+            if (res != CR_OK)
+            {
+                return res;
+            }
 
-            str.str("");
-            str << " :set range height<" << height << "># ";
-            out.lineedit(str.str(),command,range_hist);
-            range_hist.add(command);
-            height = command == "" ? height : atoi (command.c_str());
-            if(height < 1) height = 1;
-
-            str.str("");
-            str << " :set range z-levels<" << z_levels << "># ";
-            out.lineedit(str.str(),command,range_hist);
-            range_hist.add(command);
-            z_levels = command == "" ? z_levels : atoi (command.c_str());
-            if(z_levels < 1) z_levels = 1;
-            if(width == 1 && height == 1 && z_levels == 1)
+            if (width == 1 && height == 1 && z_levels == 1)
             {
                 brushname = "point";
             }
@@ -255,15 +246,15 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         }
         else if(command == "s+")
         {
-            setmode = "s+";
+            _setmode = "s+";
         }
         else if(command == "s-")
         {
-            setmode = "s-";
+            _setmode = "s-";
         }
         else if(command == "s.")
         {
-            setmode = "s.";
+            _setmode = "s.";
         }
         // blah blah, bad code, bite me.
         else if(command == "0")
@@ -310,7 +301,7 @@ command_result df_liquids_here (color_ostream &out, vector <string> & parameters
     out << "[" << mode << ":" << brushname;
     if (brushname == "range")
         out << "(w" << width << ":h" << height << ":z" << z_levels << ")";
-    out << ":" << amount << ":" << flowmode << ":" << setmode << "]\n";
+    out << ":" << amount << ":" << flowmode << ":" << _setmode << "]\n";
 
     return df_liquids_execute(out);
 }
@@ -418,10 +409,7 @@ command_result df_liquids_execute(color_ostream &out)
                 mcache.setDesignationAt(*iter,a);
 
                 Block * b = mcache.BlockAt((*iter)/16);
-                DFHack::t_blockflags bf = b->BlockFlags();
-                bf.bits.update_liquid = true;
-                bf.bits.update_liquid_twice = true;
-                b->setBlockFlags(bf);
+                b->enableBlockUpdates(true);
 
                 iter++;
             }
@@ -448,7 +436,8 @@ command_result df_liquids_execute(color_ostream &out)
                 DFHack::DFCoord current = *iter; // current tile coord
                 DFHack::DFCoord curblock = current /16; // current block coord
                 // check if the block is actually there
-                if(!mcache.BlockAt(curblock))
+                auto block = mcache.BlockAt(curblock);
+                if(!block)
                 {
                     iter ++;
                     continue;
@@ -463,64 +452,77 @@ command_result df_liquids_execute(color_ostream &out)
                 }
                 if(mode != "flowbits")
                 {
-                    if(setmode == "s.")
+                    unsigned old_amount = des.bits.flow_size;
+                    unsigned new_amount = old_amount;
+                    df::tile_liquid old_liquid = des.bits.liquid_type;
+                    df::tile_liquid new_liquid = old_liquid;
+                    // Compute new liquid type and amount
+                    if(_setmode == "s.")
                     {
-                        des.bits.flow_size = amount;
+                        new_amount = amount;
                     }
-                    else if(setmode == "s+")
+                    else if(_setmode == "s+")
                     {
-                        if(des.bits.flow_size < amount)
-                            des.bits.flow_size = amount;
+                        if(old_amount < amount)
+                            new_amount = amount;
                     }
-                    else if(setmode == "s-")
+                    else if(_setmode == "s-")
                     {
-                        if (des.bits.flow_size > amount)
-                            des.bits.flow_size = amount;
+                        if (old_amount > amount)
+                            new_amount = amount;
                     }
-                    if(amount != 0 && mode == "magma")
+                    if (mode == "magma")
+                        new_liquid = tile_liquid::Magma;
+                    else if (mode == "water")
+                        new_liquid = tile_liquid::Water;
+                    // Store new amount and type
+                    des.bits.flow_size = new_amount;
+                    des.bits.liquid_type = new_liquid;
+                    // Compute temperature
+                    if (!old_amount)
+                        old_liquid = tile_liquid::Water;
+                    if (!new_amount)
+                        new_liquid = tile_liquid::Water;
+                    if (old_liquid != new_liquid)
                     {
-                        des.bits.liquid_type =  tile_liquid::Magma;
-                        mcache.setTemp1At(current,12000);
-                        mcache.setTemp2At(current,12000);
-                    }
-                    else if(amount != 0 && mode == "water")
-                    {
-                        des.bits.liquid_type =  tile_liquid::Water;
-                        mcache.setTemp1At(current,10015);
-                        mcache.setTemp2At(current,10015);
-                    }
-                    else if(amount == 0 && (mode == "water" || mode == "magma"))
-                    {
-                        // reset temperature to sane default
-                        mcache.setTemp1At(current,10015);
-                        mcache.setTemp2At(current,10015);
+                        if (new_liquid == tile_liquid::Water)
+                        {
+                            mcache.setTemp1At(current,10015);
+                            mcache.setTemp2At(current,10015);
+                        }
+                        else
+                        {
+                            mcache.setTemp1At(current,12000);
+                            mcache.setTemp2At(current,12000);
+                        }
                     }
                     // mark the tile passable or impassable like the game does
-                    des.bits.flow_forbid = des.bits.flow_size &&
-                        (des.bits.liquid_type == tile_liquid::Magma || des.bits.flow_size > 3);
+                    des.bits.flow_forbid = (new_liquid == tile_liquid::Magma || new_amount > 3);
                     mcache.setDesignationAt(current,des);
+                    // request flow engine updates
+                    block->enableBlockUpdates(new_amount != old_amount, new_liquid != old_liquid);
                 }
-                seen_blocks.insert(mcache.BlockAt(current / 16));
+                seen_blocks.insert(block);
                 iter++;
             }
             set <Block *>::iterator biter = seen_blocks.begin();
             while (biter != seen_blocks.end())
             {
-                DFHack::t_blockflags bflags = (*biter)->BlockFlags();
                 if(flowmode == "f+")
                 {
-                    bflags.bits.update_liquid = true;
-                    bflags.bits.update_liquid_twice = true;
-                    (*biter)->setBlockFlags(bflags);
+                    (*biter)->enableBlockUpdates(true);
                 }
                 else if(flowmode == "f-")
                 {
-                    bflags.bits.update_liquid = false;
-                    bflags.bits.update_liquid_twice = false;
-                    (*biter)->setBlockFlags(bflags);
+                    if (auto block = (*biter)->getRaw())
+                    {
+                        block->flags.bits.update_liquid = false;
+                        block->flags.bits.update_liquid_twice = false;
+                    }
                 }
                 else
                 {
+                    auto bflags = (*biter)->BlockFlags();
                     out << "flow bit 1 = " << bflags.bits.update_liquid << endl; 
                     out << "flow bit 2 = " << bflags.bits.update_liquid_twice << endl;
                 }

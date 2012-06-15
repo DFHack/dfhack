@@ -156,11 +156,11 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
 
         // only dump the stuff marked for dumping and laying on the ground
         if (   !itm->flags.bits.dump
-            || !itm->flags.bits.on_ground
+//          || !itm->flags.bits.on_ground
             ||  itm->flags.bits.construction
             ||  itm->flags.bits.in_building
             ||  itm->flags.bits.in_chest
-            ||  itm->flags.bits.in_inventory
+//          ||  itm->flags.bits.in_inventory
             ||  itm->flags.bits.artifact1
         )
             continue;
@@ -182,7 +182,11 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
 
             // Don't move items if they're already at the cursor
             if (pos_cursor != pos_item)
-                Items::moveToGround(MC, itm, pos_cursor);
+            {
+                if (!Items::moveToGround(MC, itm, pos_cursor))
+                    out.print("Could not move item: %s\n",
+                              Items::getDescription(itm, 0, true).c_str());
+            }
         }
         else // destroy
         {

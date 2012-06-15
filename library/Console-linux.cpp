@@ -60,6 +60,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <errno.h>
 #include <deque>
 
+// George Vulov for MacOSX
+#ifndef __LINUX__
+#define TEMP_FAILURE_RETRY(expr) \
+    ({ long int _res; \
+        do _res = (long int) (expr); \
+        while (_res == -1L && errno == EINTR); \
+        _res; })
+#endif
+
 #include "Console.h"
 #include "Hooks.h"
 using namespace DFHack;
@@ -255,7 +264,7 @@ namespace DFHack
         void color(Console::color_value index)
         {
             if(!rawmode)
-                fprintf(dfout_C,getANSIColor(index));
+                fprintf(dfout_C, "%s", getANSIColor(index));
             else
             {
                 const char * colstr = getANSIColor(index);
@@ -707,6 +716,8 @@ void Console::add_text(color_value color, const std::string &text)
     lock_guard <recursive_mutex> g(*wlock);
     if (inited)
         d->print_text(color, text);
+    else
+        fwrite(text.data(), 1, text.size(), stderr);
 }
 
 int Console::get_columns(void)

@@ -41,6 +41,8 @@ using namespace std;
 #include "Core.h"
 #include "MiscUtils.h"
 
+#include "modules/Buildings.h"
+
 #include "DataDefs.h"
 #include "df/world_data.h"
 #include "df/world_underground_region.h"
@@ -54,6 +56,7 @@ using namespace std;
 #include "df/world_region_details.h"
 #include "df/builtin_mats.h"
 #include "df/block_square_event_grassst.h"
+#include "df/z_level_flags.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -145,6 +148,24 @@ df::map_block *Maps::getTileBlock (int32_t x, int32_t y, int32_t z)
     return world->map.block_index[x >> 4][y >> 4][z];
 }
 
+df::tiletype *Maps::getTileType(int32_t x, int32_t y, int32_t z)
+{
+    df::map_block *block = getTileBlock(x,y,z);
+    return block ? &block->tiletype[x&15][y&15] : NULL;
+}
+
+df::tile_designation *Maps::getTileDesignation(int32_t x, int32_t y, int32_t z)
+{
+    df::map_block *block = getTileBlock(x,y,z);
+    return block ? &block->designation[x&15][y&15] : NULL;
+}
+
+df::tile_occupancy *Maps::getTileOccupancy(int32_t x, int32_t y, int32_t z)
+{
+    df::map_block *block = getTileBlock(x,y,z);
+    return block ? &block->occupancy[x&15][y&15] : NULL;
+}
+
 df::world_data::T_region_map *Maps::getRegionBiome(df::coord2d rgn_pos)
 {
     auto data = world->world_data;
@@ -156,6 +177,30 @@ df::world_data::T_region_map *Maps::getRegionBiome(df::coord2d rgn_pos)
         return NULL;
 
     return &data->region_map[rgn_pos.x][rgn_pos.y];
+}
+
+void Maps::enableBlockUpdates(df::map_block *blk, bool flow, bool temperature)
+{
+    if (!blk || !(flow || temperature)) return;
+
+    if (temperature)
+        blk->flags.bits.update_temperature = true;
+
+    if (flow)
+    {
+        blk->flags.bits.update_liquid = true;
+        blk->flags.bits.update_liquid_twice = true;
+    }
+
+    auto z_flags = world->map.z_level_flags;
+    int z_level = blk->map_pos.z;
+
+    if (z_flags && z_level >= 0 && z_level < world->map.z_count_block)
+    {
+        z_flags += z_level;
+        z_flags->bits.update = true;
+        z_flags->bits.update_twice = true;
+    }
 }
 
 df::feature_init *Maps::getGlobalInitFeature(int32_t index)
@@ -326,6 +371,39 @@ bool Maps::RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square
         return false;
 }
 
+static df::coord2d biome_offsets[9] = {
+    df::coord2d(-1,-1), df::coord2d(0,-1), df::coord2d(1,-1),
+    df::coord2d(-1,0), df::coord2d(0,0), df::coord2d(1,0),
+    df::coord2d(-1,1), df::coord2d(0,1), df::coord2d(1,1)
+};
+
+inline df::coord2d getBiomeRgnPos(df::coord2d base, int idx)
+{
+    auto r = base + biome_offsets[idx];
+
+    int world_width = world->world_data->world_width;
+    int world_height = world->world_data->world_height;
+
+    return df::coord2d(clip_range(r.x,0,world_width-1),clip_range(r.y,0,world_height-1));
+}
+
+df::coord2d Maps::getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos)
+{
+    if (!block || !world->world_data)
+        return df::coord2d();
+
+    auto des = MapExtras::index_tile<df::tile_designation>(block->designation,pos);
+    unsigned idx = des.bits.biome;
+    if (idx < 9)
+    {
+        idx = block->region_offset[idx];
+        if (idx < 9)
+            return getBiomeRgnPos(block->region_pos, idx);
+    }
+
+    return df::coord2d();
+}
+
 /*
 * Layer geology
 */
@@ -343,20 +421,14 @@ bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<df::coord2d>
         (*geoidx)[i] = df::coord2d(-30000,-30000);
     }
 
-    int world_width = world->world_data->world_width;
-    int world_height = world->world_data->world_height;
+    // regionX is in embark squares
+    // regionX/16 is in 16x16 embark square regions
+    df::coord2d map_region(world->map.region_x / 16, world->map.region_y / 16);
 
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
     {
-        // check against worldmap boundaries, fix if needed
-        // regionX is in embark squares
-        // regionX/16 is in 16x16 embark square regions
-        // i provides -1 .. +1 offset from the current region
-        int bioRX = world->map.region_x / 16 + ((i % 3) - 1);
-        int bioRY = world->map.region_y / 16 + ((i / 3) - 1);
-
-        df::coord2d rgn_pos(clip_range(bioRX,0,world_width-1),clip_range(bioRY,0,world_height-1));
+        df::coord2d rgn_pos = getBiomeRgnPos(map_region, i);
 
         (*geoidx)[i] = rgn_pos;
 
@@ -408,7 +480,6 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
     dirty_designations = false;
     dirty_tiles = false;
     dirty_temperatures = false;
-    dirty_blockflags = false;
     dirty_occupancies = false;
     valid = false;
     bcoord = _bcoord;
@@ -422,7 +493,6 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
     {
         COPY(designation, block->designation);
         COPY(occupancy, block->occupancy);
-        blockflags = block->flags;
 
         COPY(temp1, block->temperature_1);
         COPY(temp2, block->temperature_2);
@@ -431,7 +501,6 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
     }
     else
     {
-        blockflags.whole = 0;
         memset(designation,0,sizeof(designation));
         memset(occupancy,0,sizeof(occupancy));
         memset(temp1,0,sizeof(temp1));
@@ -616,11 +685,6 @@ bool MapExtras::Block::Write ()
 {
     if(!valid) return false;
 
-    if(dirty_blockflags)
-    {
-        block->flags = blockflags;
-        dirty_blockflags = false;
-    }
     if(dirty_designations)
     {
         COPY(block->designation, designation);
@@ -993,7 +1057,21 @@ bool MapExtras::Block::removeItemOnGround(df::item *item)
     if (--count == 0)
     {
         index_tile<df::tile_occupancy&>(occupancy,item->pos).bits.item = false;
-        index_tile<df::tile_occupancy&>(block->occupancy,item->pos).bits.item = false;
+
+        auto &occ = index_tile<df::tile_occupancy&>(block->occupancy,item->pos);
+
+        occ.bits.item = false;
+
+        // Clear the 'site blocked' flag in the building, if any.
+        // Otherwise the job would be re-suspended without actually checking items.
+        if (occ.bits.building == tile_building_occ::Planned)
+        {
+            if (auto bld = Buildings::findAtTile(item->pos))
+            {
+                // TODO: maybe recheck other tiles like the game does.
+                bld->flags.bits.site_blocked = false;
+            }
+        }
     }
 
     return true;

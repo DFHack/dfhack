@@ -636,13 +636,35 @@ static int meta_struct_next(lua_State *state)
 }
 
 /**
+ * Field lookup for primitive refs: behave as a quasi-array with numeric indices.
+ */
+static type_identity *find_primitive_field(lua_State *state, int field, const char *mode, uint8_t **ptr)
+{
+    if (lua_type(state, field) == LUA_TNUMBER)
+    {
+        int idx = lua_tointeger(state, field);
+        if (idx < 0)
+            field_error(state, 2, "negative index", mode);
+
+        lua_rawgetp(state, UPVAL_METATABLE, &DFHACK_IDENTITY_FIELD_TOKEN);
+        auto id = (type_identity *)lua_touserdata(state, -1);
+        lua_pop(state, 1);
+
+        *ptr += int(id->byte_size()) * idx;
+        return id;
+    }
+
+    return (type_identity*)find_field(state, field, mode);
+}
+
+/**
  * Metamethod: __index for primitives, i.e. simple object references.
  *   Fields point to identity, or NULL for metafields.
  */
 static int meta_primitive_index(lua_State *state)
 {
     uint8_t *ptr = get_object_addr(state, 1, 2, "read");
-    auto type = (type_identity*)find_field(state, 2, "read");
+    auto type = find_primitive_field(state, 2, "read", &ptr);
     if (!type)
         return 1;
     type->lua_read(state, 2, ptr);
@@ -655,7 +677,7 @@ static int meta_primitive_index(lua_State *state)
 static int meta_primitive_newindex(lua_State *state)
 {
     uint8_t *ptr = get_object_addr(state, 1, 2, "write");
-    auto type = (type_identity*)find_field(state, 2, "write");
+    auto type = find_primitive_field(state, 2, "write", &ptr);
     if (!type)
         field_error(state, 2, "builtin property or method", "write");
     type->lua_write(state, 2, ptr, 3);
@@ -1029,6 +1051,11 @@ int LuaWrapper::method_wrapper_core(lua_State *state, function_identity_base *id
         std::string tmp = stl_sprintf("NULL pointer: %s", vn ? vn : "?");
         field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
     }
+    catch (Error::InvalidArgument &e) {
+        const char *vn = e.expr();
+        std::string tmp = stl_sprintf("Invalid argument; expected: %s", vn ? vn : "?");
+        field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
+    }
     catch (std::exception &e) {
         std::string tmp = stl_sprintf("C++ exception: %s", e.what());
         field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
@@ -1098,26 +1125,39 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
             name = pstruct->getName() + ("." + name);
         lua_pop(state, 1);
 
+        bool add_to_enum = true;
+
         // Handle the field
         switch (fields[i].mode)
         {
         case struct_field_info::OBJ_METHOD:
             AddMethodWrapper(state, base+1, base+2, name.c_str(),
                              (function_identity_base*)fields[i].type);
-            break;
+            continue;
 
         case struct_field_info::CLASS_METHOD:
+            continue;
+
+        case struct_field_info::POINTER:
+            // Skip class-typed pointers within unions
+            if ((fields[i].count & 2) != 0 && fields[i].type &&
+                fields[i].type->type() == IDTYPE_CLASS)
+                add_to_enum = false;
             break;
 
         default:
-            // Do not add invalid globals to the enumeration order
-            if (!globals || *(void**)fields[i].offset)
-                AssociateId(state, base+3, ++cnt, name.c_str());
-
-            lua_pushlightuserdata(state, (void*)&fields[i]);
-            lua_setfield(state, base+2, name.c_str());
             break;
         }
+
+        // Do not add invalid globals to the enumeration order
+        if (globals && !*(void**)fields[i].offset)
+            add_to_enum = false;
+
+        if (add_to_enum)
+            AssociateId(state, base+3, ++cnt, name.c_str());
+
+        lua_pushlightuserdata(state, (void*)&fields[i]);
+        lua_setfield(state, base+2, name.c_str());
     }
 }
 

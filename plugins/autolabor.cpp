@@ -23,6 +23,16 @@
 #include <df/building.h>
 #include <df/workshop_type.h>
 #include <df/unit_misc_trait.h>
+#include <df/entity_position_responsibility.h>
+#include <df/historical_figure.h>
+#include <df/historical_entity.h>
+#include <df/histfig_entity_link.h>
+#include <df/histfig_entity_link_positionst.h>
+#include <df/entity_position_assignment.h>
+#include <df/entity_position.h>
+#include <df/building_tradedepotst.h>
+
+#include <MiscUtils.h>
 
 using std::string;
 using std::endl;
@@ -338,7 +348,12 @@ static const dwarf_state dwarf_states[] = {
 	OTHER /* CauseTrouble */,
 	OTHER /* DrinkBlood */,
 	OTHER /* ReportCrime */,
-	OTHER /* ExecuteCriminal */
+	OTHER /* ExecuteCriminal */,
+        BUSY /* TrainAnimal */,
+        BUSY /* CarveTrack */,
+        BUSY /* PushTrackVehicle */,
+        BUSY /* PlaceTrackVehicle */,
+        BUSY /* StoreItemInVehicle */
 };
 
 struct labor_info
@@ -442,25 +457,50 @@ static const struct labor_default default_labor_infos[] = {
     /* POTTERY */			{AUTOMATIC, false, 1, 200, 0},
     /* GLAZING */			{AUTOMATIC, false, 1, 200, 0},
     /* PRESSING */			{AUTOMATIC, false, 1, 200, 0},
-    /* BEEKEEPING */		{AUTOMATIC, false, 1, 200, 0},
-	/* WAX_WORKING */		{AUTOMATIC, false, 1, 200, 0},
+    /* BEEKEEPING */		{AUTOMATIC, false, 1, 1, 0}, // reduce risk of stuck beekeepers (see http://www.bay12games.com/dwarves/mantisbt/view.php?id=3981)
+    /* WAX_WORKING */		{AUTOMATIC, false, 1, 200, 0},
+    /* PUSH_HAUL_VEHICLES */	{HAULERS, false, 1, 200, 0}
 };
 
-static const df::job_skill noble_skills[] = {
-	df::enums::job_skill::APPRAISAL,
-	df::enums::job_skill::ORGANIZATION,
-	df::enums::job_skill::RECORD_KEEPING,
+static const int responsibility_penalties[] = {
+        0,      /* LAW_MAKING */
+        0,      /* LAW_ENFORCEMENT */
+        3000,    /* RECEIVE_DIPLOMATS */
+        0,      /* MEET_WORKERS */
+        1000,    /* MANAGE_PRODUCTION */
+        3000,   /* TRADE */
+        1000,    /* ACCOUNTING */
+        0,      /* ESTABLISH_COLONY_TRADE_AGREEMENTS */
+        0,      /* MAKE_INTRODUCTIONS */
+        0,      /* MAKE_PEACE_AGREEMENTS */
+        0,      /* MAKE_TOPIC_AGREEMENTS */
+        0,      /* COLLECT_TAXES */
+        0,      /* ESCORT_TAX_COLLECTOR */
+        0,      /* EXECUTIONS */
+        0,      /* TAME_EXOTICS */
+        0,      /* RELIGION */
+        0,      /* ATTACK_ENEMIES */
+        0,      /* PATROL_TERRITORY */
+        0,      /* MILITARY_GOALS */
+        0,      /* MILITARY_STRATEGY */
+        0,      /* UPGRADE_SQUAD_EQUIPMENT */
+        0,      /* EQUIPMENT_MANIFESTS */
+        0,      /* SORT_AMMUNITION */
+        0,      /* BUILD_MORALE */
+        5000    /* HEALTH_MANAGEMENT */
 };
 
 struct dwarf_info_t
 {
 	int highest_skill;
 	int total_skill;
-	bool is_best_noble;
 	int mastery_penalty;
 	int assigned_jobs;
 	dwarf_state state;
 	bool has_exclusive_labor;
+    int noble_penalty; // penalty for assignment due to noble status
+    bool medical; // this dwarf has medical responsibility
+    bool trader;  // this dwarf has trade responsibility
 };
 
 static bool isOptionEnabled(unsigned flag)
@@ -666,7 +706,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
 	static int step_count = 0;
     // check run conditions
-    if(!world->map.block_index || !enable_autolabor)
+    if(!world || !world->map.block_index || !enable_autolabor)
     {
         // give up if we shouldn't be running'
         return CR_OK;
@@ -683,6 +723,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 	bool has_butchers = false;
 	bool has_fishery = false;
+    bool trader_requested = false;
 
 	for (int i = 0; i < world->buildings.all.size(); ++i)
 	{
@@ -695,7 +736,14 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 				has_butchers = true;
 			if (df::enums::workshop_type::Fishery == subType)
 				has_fishery = true;
-		}
+        } 
+        else if (df::enums::building_type::TradeDepot == type)
+        {
+            df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
+            trader_requested = depot->flags.bits.trader_requested;
+            if (print_debug)
+                out.print("Trade depot found and trader requested, trader will be excluded from all labors.\n");
+        }
 	}
 
     for (int i = 0; i < world->units.all.size(); ++i)
@@ -714,15 +762,49 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 	std::vector<dwarf_info_t> dwarf_info(n_dwarfs);
 
-    std::vector<int> best_noble(ARRAY_COUNT(noble_skills));
-    std::vector<int> highest_noble_skill(ARRAY_COUNT(noble_skills));
-    std::vector<int> highest_noble_experience(ARRAY_COUNT(noble_skills));
-
 	// Find total skill and highest skill for each dwarf. More skilled dwarves shouldn't be used for minor tasks.
 
 	for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
 	{
-		assert(dwarfs[dwarf]->status.souls.size() > 0);
+//		assert(dwarfs[dwarf]->status.souls.size() > 0);
+//      assert fails can cause DF to crash, so don't do that
+
+        if (dwarfs[dwarf]->status.souls.size() <= 0)
+            continue;
+
+        // compute noble penalty
+
+        int noble_penalty = 0;
+
+        df::historical_figure* hf = df::historical_figure::find(dwarfs[dwarf]->hist_figure_id);
+        for (int i = 0; i < hf->entity_links.size(); i++) {
+            df::histfig_entity_link* hfelink = hf->entity_links.at(i);
+            if (hfelink->getType() == df::histfig_entity_link_type::POSITION) {
+                df::histfig_entity_link_positionst *epos = 
+                    (df::histfig_entity_link_positionst*) hfelink;
+                df::historical_entity* entity = df::historical_entity::find(epos->entity_id);
+                if (!entity) 
+                    continue;
+                df::entity_position_assignment* assignment = binsearch_in_vector(entity->positions.assignments, epos->assignment_id);
+                if (!assignment)
+                    continue;
+                df::entity_position* position = binsearch_in_vector(entity->positions.own, assignment->position_id);
+                if (!position)
+                    continue;
+
+                for (int n = 0; n < 25; n++) 
+                    if (position->responsibilities[n]) 
+                        noble_penalty += responsibility_penalties[n];
+
+                if (position->responsibilities[df::entity_position_responsibility::HEALTH_MANAGEMENT])
+                    dwarf_info[dwarf].medical = true;
+
+                if (position->responsibilities[df::entity_position_responsibility::TRADE])
+                    dwarf_info[dwarf].trader = true;
+
+            }
+            dwarf_info[dwarf].noble_penalty = noble_penalty;
+        }
 
 		for (auto s = dwarfs[dwarf]->status.souls[0]->skills.begin(); s != dwarfs[dwarf]->status.souls[0]->skills.end(); s++)
 		{
@@ -732,30 +814,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 			int skill_level = (*s)->rating;
 			int skill_experience = (*s)->experience;
-
-			// Track the dwarfs with the best Appraisal, Organization, and Record Keeping skills.
-			// They are likely to have appointed noble positions, so should be kept free where possible.
-
-			int noble_skill_id = -1;
-            for (int i = 0; i < ARRAY_COUNT(noble_skills); i++)
-			{
-				if (skill == noble_skills[i])
-					noble_skill_id = i;
-			}
-
-			if (noble_skill_id >= 0)
-			{
-                assert(noble_skill_id < ARRAY_COUNT(noble_skills));
-
-				if (highest_noble_skill[noble_skill_id] < skill_level ||
-					(highest_noble_skill[noble_skill_id] == skill_level &&
-						highest_noble_experience[noble_skill_id] < skill_experience))
-				{
-					highest_noble_skill[noble_skill_id] = skill_level;
-					highest_noble_experience[noble_skill_id] = skill_experience;
-					best_noble[noble_skill_id] = dwarf;
-				}
-			}
 
 			// Track total & highest skill among normal/medical skills. (We don't care about personal or social skills.)
 
@@ -768,24 +826,13 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		}
 	}
 
-	// Mark the best nobles, so we try to keep them non-busy. (It would be better to find the actual assigned nobles.)
-
-	for (int i = 0; i < ARRAY_COUNT(noble_skills); i++)
-	{
-		assert(best_noble[i] >= 0);
-		assert(best_noble[i] < n_dwarfs);
-
-		dwarf_info[best_noble[i]].is_best_noble = true;
-	}
-
 	// Calculate a base penalty for using each dwarf for a task he isn't good at.
 
 	for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
 	{
 		dwarf_info[dwarf].mastery_penalty -= 40 * dwarf_info[dwarf].highest_skill;
 		dwarf_info[dwarf].mastery_penalty -= 10 * dwarf_info[dwarf].total_skill;
-		if (dwarf_info[dwarf].is_best_noble)
-			dwarf_info[dwarf].mastery_penalty -= 250;
+        dwarf_info[dwarf].mastery_penalty -= dwarf_info[dwarf].noble_penalty;
 
 		for (int labor = ENUM_FIRST_ITEM(unit_labor); labor <= ENUM_LAST_ITEM(unit_labor); labor++)
 		{
@@ -832,7 +879,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		{
 			if (is_on_break)
 				dwarf_info[dwarf].state = OTHER;
-			else if (dwarfs[dwarf]->meetings.size() > 0)
+			else if (dwarfs[dwarf]->specific_refs.size() > 0)
 				dwarf_info[dwarf].state = OTHER;
 			else
 				dwarf_info[dwarf].state = IDLE;
@@ -845,8 +892,13 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			assert(job >= 0);
 			assert(job < ARRAY_COUNT(dwarf_states));
 			*/
-
-			dwarf_info[dwarf].state = dwarf_states[job];
+                        if (job >= 0 && job < ARRAY_COUNT(dwarf_states))
+                            dwarf_info[dwarf].state = dwarf_states[job];
+                        else 
+                        {
+                            out.print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
+                            dwarf_info[dwarf].state = OTHER;
+                        }
 		}
 
 		state_count[dwarf_info[dwarf].state]++;
@@ -1032,6 +1084,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		 * Note that only idle and busy dwarfs count towards the number of dwarfs. "Other" dwarfs
 		 * (sleeping, eating, on break, etc.) will have labors assigned, but will not be counted.
 		 * Military and children/nobles will not have labors assigned.
+         * Dwarfs with the "health management" responsibility are always assigned DIAGNOSIS.
 		 */
 		for (int i = 0; i < candidates.size() && labor_infos[labor].active_dwarfs < max_dwarfs; i++)
 		{
@@ -1047,6 +1100,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 				preferred_dwarf = true;
 			if (previously_enabled[dwarf] && labor_infos[labor].is_exclusive)
 				preferred_dwarf = true;
+            if (dwarf_info[dwarf].medical && labor == df::unit_labor::DIAGNOSE)
+                preferred_dwarf = true;
+            if (dwarf_info[dwarf].trader && trader_requested)
+                continue;
 
 			if (labor_infos[labor].active_dwarfs >= min_dwarfs && !preferred_dwarf)
 				continue;
@@ -1084,6 +1141,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 	std::vector<int> hauler_ids;
 	for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
 	{
+        if (dwarf_info[dwarf].trader && trader_requested)
+            continue;
 		if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
 			hauler_ids.push_back(dwarf);
 	}
@@ -1213,7 +1272,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
 		if (labor == df::enums::unit_labor::NONE)
 		{
-			out.printerr("Could not find labor %s.", parameters[0].c_str());
+			out.printerr("Could not find labor %s.\n", parameters[0].c_str());
 			return CR_WRONG_USAGE;
 		}
 

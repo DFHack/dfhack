@@ -241,7 +241,36 @@ extern DFHACK_EXPORT df::map_block * getTileBlock (int32_t x, int32_t y, int32_t
 inline df::map_block * getBlock (df::coord pos) { return getBlock(pos.x, pos.y, pos.z); }
 inline df::map_block * getTileBlock (df::coord pos) { return getTileBlock(pos.x, pos.y, pos.z); }
 
+extern DFHACK_EXPORT df::tiletype *getTileType(int32_t x, int32_t y, int32_t z);
+extern DFHACK_EXPORT df::tile_designation *getTileDesignation(int32_t x, int32_t y, int32_t z);
+extern DFHACK_EXPORT df::tile_occupancy *getTileOccupancy(int32_t x, int32_t y, int32_t z);
+
+inline df::tiletype *getTileType(df::coord pos) {
+    return getTileType(pos.x, pos.y, pos.z);
+}
+inline df::tile_designation *getTileDesignation(df::coord pos) {
+    return getTileDesignation(pos.x, pos.y, pos.z);
+}
+inline df::tile_occupancy *getTileOccupancy(df::coord pos) {
+    return getTileOccupancy(pos.x, pos.y, pos.z);
+}
+
+/**
+ * Returns biome info about the specified world region.
+ */
 DFHACK_EXPORT df::world_data::T_region_map *getRegionBiome(df::coord2d rgn_pos);
+
+/**
+ * Returns biome world region coordinates for the given tile within given block.
+ */
+DFHACK_EXPORT df::coord2d getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos);
+
+inline df::coord2d getTileBiomeRgn(df::coord pos) {
+    return getBlockTileBiomeRgn(getTileBlock(pos), pos);
+}
+
+// Enables per-frame updates for liquid flow and/or temperature.
+DFHACK_EXPORT void enableBlockUpdates(df::map_block *blk, bool flow = false, bool temperature = false);
 
 /// sorts the block event vector into multiple vectors by type
 /// mineral veins, what's under ice, blood smears and mud

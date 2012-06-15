@@ -30,6 +30,9 @@ distribution.
 #include "Module.h"
 #include <ostream>
 
+#include "DataDefs.h"
+#include "df/job_item_ref.h"
+
 namespace df
 {
     struct job;
@@ -54,10 +57,18 @@ namespace DFHack
         DFHACK_EXPORT df::building *getHolder(df::job *job);
         DFHACK_EXPORT df::unit *getWorker(df::job *job);
 
+        // Instruct the game to check and assign workers
+        DFHACK_EXPORT void checkBuildingsNow();
+        DFHACK_EXPORT void checkDesignationsNow();
+
         DFHACK_EXPORT bool linkIntoWorld(df::job *job, bool new_id = true);
 
         // lists jobs with ids >= *id_var, and sets *id_var = *job_next_id;
         DFHACK_EXPORT bool listNewlyCreated(std::vector<df::job*> *pvec, int *id_var);
+
+        DFHACK_EXPORT bool attachJobItem(df::job *job, df::item *item,
+                                         df::job_item_ref::T_role role,
+                                         int filter_idx = -1, int insert_idx = -1);
     }
 
     DFHACK_EXPORT bool operator== (const df::job_item &a, const df::job_item &b);

@@ -51,6 +51,8 @@ using namespace std;
 #include "RemoteServer.h"
 #include "LuaTools.h"
 
+#include "MiscUtils.h"
+
 using namespace DFHack;
 
 #include "df/ui.h"
@@ -66,15 +68,16 @@ using namespace DFHack;
 #include <fstream>
 #include "tinythread.h"
 
+#include "SDL_events.h"
+
 using namespace tthread;
 using namespace df::enums;
 using df::global::init;
+using df::global::world;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
-static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname, bool silent);
-static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clueless_counter, const string &command);
-static bool parseKeySpec(std::string keyspec, int *psym, int *pmod);
+static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = NULL);
 
 struct Core::Cond
 {
@@ -178,21 +181,10 @@ void fHKthread(void * iodata)
         {
             color_ostream_proxy out(core->getConsole());
 
-            vector <string> args;
-            Core::cheap_tokenise(stuff, args);
-            if (args.empty()) {
-                out.printerr("Empty hotkey command.\n");
-                continue;
-            }
+            auto rv = core->runCommand(out, stuff);
 
-            string first = args[0];
-            args.erase(args.begin());
-            command_result cr = plug_mgr->InvokeCommand(out, first, args);
-
-            if(cr == CR_NEEDS_CONSOLE)
-            {
-                out.printerr("It isn't possible to run an interactive command outside the console.\n");
-            }
+            if (rv == CR_NOT_IMPLEMENTED)
+                out.printerr("Invalid hotkey command: '%s'\n", stuff.c_str());
         }
     }
 }
@@ -212,38 +204,126 @@ struct sortable
     };
 };
 
-static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clueless_counter, const string &command)
+static std::string getLuaHelp(std::string path)
 {
-    Console & con = core->getConsole();
-    
+    ifstream script(path.c_str());
+
+    if (script.good())
+    {
+        std::string help;
+        if (getline(script, help) &&
+            help.substr(0,3) == "-- ")
+            return help.substr(3);
+    }
+
+    return "Lua script.";
+}
+
+static std::map<string,string> listLuaScripts(std::string path)
+{
+    std::vector<string> files;
+    getdir(path, files);
+
+    std::map<string,string> pset;
+    for (size_t i = 0; i < files.size(); i++)
+    {
+        if (hasEnding(files[i], ".lua"))
+        {
+            std::string help = getLuaHelp(path + files[i]);
+
+            pset[files[i].substr(0, files[i].size()-4)] = help;
+        }
+    }
+    return pset;
+}
+
+static bool fileExists(std::string path)
+{
+    ifstream script(path.c_str());
+    return script.good();
+}
+
+namespace {
+    struct ScriptArgs {
+        const string *pcmd;
+        vector<string> *pargs;
+    };
+}
+
+static bool init_run_script(color_ostream &out, lua_State *state, void *info)
+{
+    auto args = (ScriptArgs*)info;
+    if (!lua_checkstack(state, args->pargs->size()+10))
+        return false;
+    Lua::PushDFHack(state);
+    lua_getfield(state, -1, "run_script");
+    lua_remove(state, -2);
+    lua_pushstring(state, args->pcmd->c_str());
+    for (size_t i = 0; i < args->pargs->size(); i++)
+        lua_pushstring(state, (*args->pargs)[i].c_str());
+    return true;
+}
+
+static command_result runLuaScript(color_ostream &out, std::string name, vector<string> &args)
+{
+    ScriptArgs data;
+    data.pcmd = &name;
+    data.pargs = &args;
+
+    bool ok = Lua::RunCoreQueryLoop(out, Lua::Core::State, init_run_script, &data);
+
+    return ok ? CR_OK : CR_FAILURE;
+}
+
+command_result Core::runCommand(color_ostream &out, const std::string &command)
+{
+	fprintf(stderr,"Inside runCommand");
+	fprintf(stderr," with command %s\n",command.c_str());
     if (!command.empty())
     {
-        // cut the input into parts
+		fprintf(stderr,"Command is not empty, tokenizing\n");
         vector <string> parts;
         Core::cheap_tokenise(command,parts);
+		fprintf(stderr,"Tokenized, got %d parts\n",parts.size());
         if(parts.size() == 0)
-        {
-            clueless_counter ++;
-            return;
-        }
-        string first = parts[0];
-        parts.erase(parts.begin());
+            return CR_NOT_IMPLEMENTED;
 
-        if (first[0] == '#') return;
+        string first = parts[0];
+		fprintf(stderr,"Erasing beginning\n");
+        parts.erase(parts.begin());
+        
+		fprintf(stderr,"I think we're about there\n");
+
+        if (first[0] == '#')
+            return CR_OK;
 
         cerr << "Invoking: " << command << endl;
-        
+
+		fprintf(stderr,"Returning with the next recursion\n");
+        return runCommand(out, first, parts);
+    }
+    else
+        return CR_NOT_IMPLEMENTED;
+}
+
+command_result Core::runCommand(color_ostream &con, const std::string &first, vector<string> &parts)
+{
+    if (!first.empty())
+    {
         // let's see what we actually got
         if(first=="help" || first == "?" || first == "man")
         {
             if(!parts.size())
             {
-                con.print("This is the DFHack console. You can type commands in and manage DFHack plugins from it.\n"
-                          "Some basic editing capabilities are included (single-line text editing).\n"
-                          "The console also has a command history - you can navigate it with Up and Down keys.\n"
-                          "On Windows, you may have to resize your console window. The appropriate menu is accessible\n"
-                          "by clicking on the program icon in the top bar of the window.\n\n"
-                          "Basic commands:\n"
+                if (con.is_console())
+                {
+                    con.print("This is the DFHack console. You can type commands in and manage DFHack plugins from it.\n"
+                              "Some basic editing capabilities are included (single-line text editing).\n"
+                              "The console also has a command history - you can navigate it with Up and Down keys.\n"
+                              "On Windows, you may have to resize your console window. The appropriate menu is accessible\n"
+                              "by clicking on the program icon in the top bar of the window.\n\n");
+                }
+                con.print("Basic commands:\n"
                           "  help|?|man            - This text.\n"
                           "  help COMMAND          - Usage help for the given command.\n"
                           "  ls|dir [PLUGIN]       - List available commands. Optionally for single plugin.\n"
@@ -274,8 +354,15 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                         con.reset_color();
                         if (!pcmd.usage.empty())
                             con << "Usage:\n" << pcmd.usage << flush;
-                        return;
+                        return CR_OK;
                     }
+                }
+                auto filename = getHackPath() + "scripts/" + parts[0] + ".lua";
+                if (fileExists(filename))
+                {
+                    string help = getLuaHelp(filename);
+                    con.print("%s: %s\n", parts[0].c_str(), help.c_str());
+                    return CR_OK;
                 }
                 con.printerr("Unknown command: %s\n", parts[0].c_str());
             }
@@ -421,6 +508,13 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     con.print("  %-22s- %s\n",(*iter).name.c_str(), (*iter).description.c_str());
                     con.reset_color();
                 }
+                auto scripts = listLuaScripts(getHackPath() + "scripts/");
+                if (!scripts.empty())
+                {
+                    con.print("\nscripts:\n");
+                    for (auto iter = scripts.begin(); iter != scripts.end(); ++iter)
+                        con.print("  %-22s- %s\n", iter->first.c_str(), iter->second.c_str());
+                }
             }
         }
         else if(first == "plug")
@@ -439,10 +533,10 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
             {
                 std::string keystr = parts[1];
                 if (parts[0] == "set")
-                    core->ClearKeyBindings(keystr);
+                    ClearKeyBindings(keystr);
                 for (int i = parts.size()-1; i >= 2; i--) 
                 {
-                    if (!core->AddKeyBinding(keystr, parts[i])) {
+                    if (!AddKeyBinding(keystr, parts[i])) {
                         con.printerr("Invalid key spec: %s\n", keystr.c_str());
                         break;
                     }
@@ -452,7 +546,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
             {
                 for (size_t i = 1; i < parts.size(); i++)
                 {
-                    if (!core->ClearKeyBindings(parts[i])) {
+                    if (!ClearKeyBindings(parts[i])) {
                         con.printerr("Invalid key spec: %s\n", parts[i].c_str());
                         break;
                     }
@@ -460,7 +554,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
             }
             else if (parts.size() == 2 && parts[0] == "list")
             {
-                std::vector<std::string> list = core->ListKeyBindings(parts[1]);
+                std::vector<std::string> list = ListKeyBindings(parts[1]);
                 if (list.empty())
                     con << "No bindings." << endl;
                 for (size_t i = 0; i < list.size(); i++)
@@ -470,21 +564,32 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
             {
                 con << "Usage:" << endl
                     << "  keybinding list <key>" << endl
-                    << "  keybinding clear <key> <key>..." << endl
-                    << "  keybinding set <key> \"cmdline\" \"cmdline\"..." << endl
-                    << "  keybinding add <key> \"cmdline\" \"cmdline\"..." << endl
-                    << "Later adds, and earlier items within one command have priority." << endl;
+                    << "  keybinding clear <key>[@context]..." << endl
+                    << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"..." << endl
+                    << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"..." << endl
+                    << "Later adds, and earlier items within one command have priority." << endl
+                    << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, or F1-F9, or Enter)." << endl
+                    << "Context may be used to limit the scope of the binding, by" << endl
+                    << "requiring the current context to have a certain prefix." << endl
+                    << "Current UI context is: "
+                    << Gui::getFocusString(Core::getTopViewscreen()) << endl;
             }
         }
         else if(first == "fpause")
         {
-            World * w = core->getWorld();
+            World * w = getWorld();
             w->SetPauseState(true);
-            con.print("The game was forced to pause!");
+            con.print("The game was forced to pause!\n");
         }
         else if(first == "cls")
         {
-            con.clear();
+            if (con.is_console())
+                ((Console&)con).clear();
+            else
+            {
+                con.printerr("No console to clear.\n");
+                return CR_NEEDS_CONSOLE;
+            }
         }
         else if(first == "die")
         {
@@ -494,12 +599,13 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
         {
             if(parts.size() == 1)
             {
-                loadScriptFile(core, plug_mgr, parts[0], false);
+                loadScriptFile(con, parts[0], false);
             }
             else
             {
                 con << "Usage:" << endl
                     << "  script <filename>" << endl;
+                return CR_WRONG_USAGE;
             }
         }
         else
@@ -507,35 +613,44 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
             command_result res = plug_mgr->InvokeCommand(con, first, parts);
             if(res == CR_NOT_IMPLEMENTED)
             {
-                con.printerr("%s is not a recognized command.\n", first.c_str());
-                clueless_counter ++;
+                auto filename = getHackPath() + "scripts/" + first + ".lua";
+                if (fileExists(filename))
+                    res = runLuaScript(con, first, parts);
+                else
+                    con.printerr("%s is not a recognized command.\n", first.c_str());
             }
+            else if (res == CR_NEEDS_CONSOLE)
+                con.printerr("%s needs interactive console to work.\n", first.c_str());
+            return res;
         }
+
+        return CR_OK;
     }
+
+    return CR_NOT_IMPLEMENTED;
 }
 
-static void loadScriptFile(Core *core, PluginManager *plug_mgr, string fname, bool silent)
+bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
 {
     if(!silent)
-        core->getConsole() << "Loading script at " << fname << std::endl;
-    ifstream script(fname);
+        out << "Loading script at " << fname << std::endl;
+    ifstream script(fname.c_str());
     if (script.good())
     {
-        int tmp = 0;
         string command;
         while (getline(script, command))
         {
             if (!command.empty())
-                runInteractiveCommand(core, plug_mgr, tmp, command);
+                runCommand(out, command);
         }
+        return true;
     }
     else
     {
         if(!silent)
-            core->getConsole().printerr("Error loading script\n");
+            out.printerr("Error loading script\n");
+        return false;
     }
-
-    script.close();
 }
 
 // A thread function... for the interactive console.
@@ -555,7 +670,7 @@ void fIOthread(void * iodata)
         return;
     }
 
-    loadScriptFile(core, plug_mgr, "dfhack.init", true);
+    core->loadScriptFile(con, "dfhack.init", true);
 
     con.print("DFHack is ready. Have a nice day!\n"
               "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");
@@ -565,6 +680,7 @@ void fIOthread(void * iodata)
     {
         string command = "";
         int ret = con.lineedit("[DFHack]# ",command, main_history);
+        fprintf(stderr,"Command: [%s]\n",command.c_str());
         if(ret == -2)
         {
             cerr << "Console is shutting down properly." << endl;
@@ -578,11 +694,18 @@ void fIOthread(void * iodata)
         else if(ret)
         {
             // a proper, non-empty command was entered
+			fprintf(stderr,"Adding command to history\n");
             main_history.add(command);
+			fprintf(stderr,"Saving history\n");
             main_history.save("dfhack.history");
         }
+        
+		fprintf(stderr,"Running command\n");
 
-        runInteractiveCommand(core, plug_mgr, clueless_counter, command);
+        auto rv = core->runCommand(con, command);
+
+        if (rv == CR_NOT_IMPLEMENTED)
+            clueless_counter++;
 
         if(clueless_counter == 3)
         {
@@ -636,6 +759,15 @@ void Core::fatal (std::string output, bool deactivate)
 #endif
 }
 
+std::string Core::getHackPath()
+{
+#ifdef LINUX_BUILD
+    return p->getPath() + "/hack/";
+#else
+    return p->getPath() + "\\hack\\";
+#endif
+}
+
 bool Core::Init()
 {
     if(started)
@@ -679,14 +811,19 @@ bool Core::Init()
     }
     cerr << "Version: " << vinfo->getVersion() << endl;
 
+    // Init global object pointers
+    df::global::InitGlobals();
+
     cerr << "Initializing Console.\n";
     // init the console.
     bool is_text_mode = false;
     if(init && init->display.flag.is_set(init_display_flags::TEXT))
     {
         is_text_mode = true;
+        con.init(true);
+        cerr << "Console is not available. Use dfhack-run to send commands.\n";
     }
-    if(con.init(is_text_mode))
+    else if(con.init(false))
         cerr << "Console is running.\n";
     else
         fatal ("Console has failed to initialize!\n", false);
@@ -701,7 +838,6 @@ bool Core::Init()
     */
     // initialize data defs
     virtual_identity::Init(this);
-    df::global::InitGlobals();
 
     // initialize common lua context
     Lua::Core::Init(con);
@@ -711,12 +847,15 @@ bool Core::Init()
     cerr << "Initializing Plugins.\n";
     // create plugin manager
     plug_mgr = new PluginManager(this);
-    cerr << "Starting IO thread.\n";
-    // create IO thread
     IODATA *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
-    thread * IO = new thread(fIOthread, (void *) temp);
+    if (!is_text_mode)
+    {
+        cerr << "Starting IO thread.\n";
+        // create IO thread
+        thread * IO = new thread(fIOthread, (void *) temp);
+    }
     cerr << "Starting DF input capture thread.\n";
     // set up hotkey capture
     HotkeyMutex = new mutex();
@@ -902,7 +1041,7 @@ int Core::Update()
     Lua::Core::Reset(out, "DF code execution");
 
     if (first_update)
-        plug_mgr->OnStateChange(out, SC_CORE_INITIALIZED);
+        onStateChange(out, SC_CORE_INITIALIZED);
 
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
@@ -928,11 +1067,11 @@ int Core::Update()
 
         // and if the world is going away, we report the map change first
         if(had_map)
-            plug_mgr->OnStateChange(out, SC_MAP_UNLOADED);
+            onStateChange(out, SC_MAP_UNLOADED);
         // and if the world is appearing, we report map change after that
-        plug_mgr->OnStateChange(out, new_wdata ? SC_WORLD_LOADED : SC_WORLD_UNLOADED);
+        onStateChange(out, new_wdata ? SC_WORLD_LOADED : SC_WORLD_UNLOADED);
         if(isMapLoaded())
-            plug_mgr->OnStateChange(out, SC_MAP_LOADED);
+            onStateChange(out, SC_MAP_LOADED);
     }
     // otherwise just check for map change...
     else if (new_mapdata != last_local_map_ptr)
@@ -943,7 +1082,7 @@ int Core::Update()
         if (isMapLoaded() != had_map)
         {
             getWorld()->ClearPersistentCache();
-            plug_mgr->OnStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+            onStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
         }
     }
 
@@ -956,12 +1095,12 @@ int Core::Update()
         if (screen != top_viewscreen) 
         {
             top_viewscreen = screen;
-            plug_mgr->OnStateChange(out, SC_VIEWSCREEN_CHANGED);
+            onStateChange(out, SC_VIEWSCREEN_CHANGED);
         }
     }
 
-    // notify all the plugins that a game tick is finished
-    plug_mgr->OnUpdate(out);
+    // Execute per-frame handlers
+    onUpdate(out);
 
     // Release the fake suspend lock
     {
@@ -997,6 +1136,34 @@ int Core::Update()
 
     return 0;
 };
+
+extern bool buildings_do_onupdate;
+void buildings_onStateChange(color_ostream &out, state_change_event event);
+void buildings_onUpdate(color_ostream &out);
+
+static int buildings_timer = 0;
+
+void Core::onUpdate(color_ostream &out)
+{
+    // convert building reagents
+    if (buildings_do_onupdate && (++buildings_timer & 1))
+        buildings_onUpdate(out);
+
+    // notify all the plugins that a game tick is finished
+    plug_mgr->OnUpdate(out);
+
+    // process timers in lua
+    Lua::Core::onUpdate(out);
+}
+
+void Core::onStateChange(color_ostream &out, state_change_event event)
+{
+    buildings_onStateChange(out, event);
+
+    plug_mgr->OnStateChange(out, event);
+
+    Lua::Core::onStateChange(out, event);
+}
 
 // FIXME: needs to terminate the IO threads and properly dismantle all the machinery involved.
 int Core::Shutdown ( void )
@@ -1056,17 +1223,30 @@ bool Core::ncurses_wgetch(int in, int & out)
     return true;
 }
 
-int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
+int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
 {
     // Assume keyboard layouts don't change the order of numbers:
     if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
     if(SDL::K_F1 <= ke.ksym.sym && ke.ksym.sym <= SDL::K_F12) return ke.ksym.sym;
 
+    // These keys are mapped to the same control codes as Ctrl-?
+    switch (ke.ksym.sym)
+    {
+        case SDL::K_RETURN:
+        case SDL::K_KP_ENTER:
+        case SDL::K_TAB:
+        case SDL::K_ESCAPE:
+        case SDL::K_DELETE:
+            return ke.ksym.sym;
+        default:
+            break;
+    }
+
     int unicode = ke.ksym.unicode;
 
     // convert Ctrl characters to their 0x40-0x5F counterparts:
     if (unicode < ' ')
-    {        
+    {
         unicode += 'A' - 1;
     }
 
@@ -1074,7 +1254,7 @@ int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
     if('A' < unicode && unicode < 'Z')
     {
         unicode += 'a' - 'A';
-    }    
+    }
 
     // convert various other punctuation marks:
     if('\"' == unicode) unicode = '\'';
@@ -1091,16 +1271,17 @@ int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
     return unicode;
 }
 
+
 //MEMO: return false if event is consumed
-int Core::SDL_Event(SDL::Event* ev)
+int Core::DFH_SDL_Event(SDL::Event* ev)
 {
     // do NOT process events before we are ready.
     if(!started) return true;
     if(!ev)
         return true;
-    if(ev && ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP)
+    if(ev && (ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP))
     {
-        SDL::KeyboardEvent * ke = (SDL::KeyboardEvent *)ev;
+        auto ke = (SDL::KeyboardEvent *)ev;
 
         if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
         {
@@ -1143,15 +1324,21 @@ bool Core::SelectHotkey(int sym, int modifiers)
     while (screen->child)
         screen = screen->child;
 
+    if (sym == SDL::K_KP_ENTER)
+        sym = SDL::K_RETURN;
+
     std::string cmd;
-    
+
     {
         tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
-    
+
         // Check the internal keybindings
         std::vector<KeyBinding> &bindings = key_bindings[sym];
         for (int i = bindings.size()-1; i >= 0; --i) {
             if (bindings[i].modifiers != modifiers)
+                continue;
+            if (!bindings[i].focus.empty() &&
+                !prefix_matches(bindings[i].focus, Gui::getFocusString(screen)))
                 continue;
             if (!plug_mgr->CanInvokeHotkey(bindings[i].command[0], screen))
                 continue;
@@ -1184,9 +1371,21 @@ bool Core::SelectHotkey(int sym, int modifiers)
         return false;
 }
 
-static bool parseKeySpec(std::string keyspec, int *psym, int *pmod)
+static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus)
 {
     *pmod = 0;
+
+    if (pfocus)
+    {
+        *pfocus = "";
+
+        size_t idx = keyspec.find('@');
+        if (idx != std::string::npos)
+        {
+            *pfocus = keyspec.substr(idx+1);
+            keyspec = keyspec.substr(0, idx);
+        }
+    }
 
     // ugh, ugly
     for (;;) {
@@ -1209,6 +1408,9 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod)
     } else if (keyspec.size() == 2 && keyspec[0] == 'F' && keyspec[1] >= '1' && keyspec[1] <= '9') {
         *psym = SDL::K_F1 + (keyspec[1]-'1');
         return true;
+    } else if (keyspec == "Enter") {
+        *psym = SDL::K_RETURN;
+        return true;
     } else
         return false;
 }
@@ -1216,14 +1418,15 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod)
 bool Core::ClearKeyBindings(std::string keyspec)
 {
     int sym, mod;
-    if (!parseKeySpec(keyspec, &sym, &mod))
+    std::string focus;
+    if (!parseKeySpec(keyspec, &sym, &mod, &focus))
         return false;
 
     tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
 
     std::vector<KeyBinding> &bindings = key_bindings[sym];
     for (int i = bindings.size()-1; i >= 0; --i) {
-        if (bindings[i].modifiers == mod)
+        if (bindings[i].modifiers == mod && prefix_matches(focus, bindings[i].focus))
             bindings.erase(bindings.begin()+i);
     }
 
@@ -1234,7 +1437,7 @@ bool Core::AddKeyBinding(std::string keyspec, std::string cmdline)
 {
     int sym;
     KeyBinding binding;
-    if (!parseKeySpec(keyspec, &sym, &binding.modifiers))
+    if (!parseKeySpec(keyspec, &sym, &binding.modifiers, &binding.focus))
         return false;
 
     cheap_tokenise(cmdline, binding.command);
@@ -1247,7 +1450,8 @@ bool Core::AddKeyBinding(std::string keyspec, std::string cmdline)
     std::vector<KeyBinding> &bindings = key_bindings[sym];
     for (int i = bindings.size()-1; i >= 0; --i) {
         if (bindings[i].modifiers == binding.modifiers &&
-            bindings[i].cmdline == cmdline)
+            bindings[i].cmdline == cmdline &&
+            bindings[i].focus == binding.focus)
             return true;
     }
 
@@ -1268,7 +1472,12 @@ std::vector<std::string> Core::ListKeyBindings(std::string keyspec)
     std::vector<KeyBinding> &bindings = key_bindings[sym];
     for (int i = bindings.size()-1; i >= 0; --i) {
         if (bindings[i].modifiers == mod)
-            rv.push_back(bindings[i].cmdline);
+        {
+            std::string cmd = bindings[i].cmdline;
+            if (!bindings[i].focus.empty())
+                cmd = "@" + bindings[i].focus + ": " + cmd;
+            rv.push_back(cmd);
+        }
     }
 
     return rv;

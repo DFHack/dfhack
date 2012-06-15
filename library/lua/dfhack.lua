@@ -111,9 +111,11 @@ function copyall(table)
 end
 
 function pos2xyz(pos)
-    local x = pos.x
-    if x and x ~= -30000 then
-        return x, pos.y, pos.z
+    if pos then
+        local x = pos.x
+        if x and x ~= -30000 then
+            return x, pos.y, pos.z
+        end
     end
 end
 
@@ -173,6 +175,11 @@ function dfhack.maps.getTileSize()
     return map.x_count, map.y_count, map.z_count
 end
 
+function dfhack.buildings.getSize(bld)
+    local x, y = bld.x1, bld.y1
+    return bld.x2+1-x, bld.y2+1-y, bld.centerx-x, bld.centery-y
+end
+
 -- Interactive
 
 local print_banner = true
@@ -199,6 +206,25 @@ function dfhack.interpreter(prompt,hfile,env)
     local t_prompt = nil
     local vcnt = 1
 
+    local pfix_handlers = {
+        ['!'] = function(data)
+            print(table.unpack(data,2,data.n))
+        end,
+        ['~'] = function(data)
+            print(table.unpack(data,2,data.n))
+            printall(data[2])
+        end,
+        ['='] = function(data)
+            for i=2,data.n do
+                local varname = '_'..vcnt
+                prompt_env[varname] = data[i]
+                dfhack.print(varname..' = ')
+                safecall(print, data[i])
+                vcnt = vcnt + 1
+            end
+        end
+    }
+
     setmetatable(prompt_env, { __index = env or _G })
 
     while true do
@@ -209,7 +235,7 @@ function dfhack.interpreter(prompt,hfile,env)
         elseif cmdline ~= '' then
             local pfix = string.sub(cmdline,1,1)
 
-            if not t_prompt and (pfix == '!' or pfix == '=') then
+            if not t_prompt and pfix_handlers[pfix] then
                 cmdline = 'return '..string.sub(cmdline,2)
             else
                 pfix = nil
@@ -236,24 +262,36 @@ function dfhack.interpreter(prompt,hfile,env)
 
                 if data[1] and data.n > 1 then
                     prompt_env._ = data[2]
-
-                    if pfix == '!' then
-                        safecall(print, table.unpack(data,2,data.n))
-                    else
-                        for i=2,data.n do
-                            local varname = '_'..vcnt
-                            prompt_env[varname] = data[i]
-                            dfhack.print(varname..' = ')
-                            safecall(print, data[i])
-                            vcnt = vcnt + 1
-                        end
-                    end
+                    safecall(pfix_handlers[pfix], data)
                 end
             end
         end
     end
 
     return true
+end
+
+-- Command scripts
+
+dfhack.internal.scripts = dfhack.internal.scripts or {}
+
+local scripts = dfhack.internal.scripts
+local hack_path = dfhack.getHackPath()
+
+function dfhack.run_script(name,...)
+    local key = string.lower(name)
+    local file = hack_path..'scripts/'..name..'.lua'
+    local env = scripts[key]
+    if env == nil then
+        env = {}
+        setmetatable(env, { __index = base_env })
+    end
+    local f,perr = loadfile(file, 't', env)
+    if f == nil then
+        error(perr)
+    end
+    scripts[key] = env
+    return f(...)
 end
 
 -- Feed the table back to the require() mechanism.

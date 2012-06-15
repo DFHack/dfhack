@@ -318,6 +318,9 @@ namespace DFHack
     public:
         static virtual_identity *get(virtual_ptr instance_ptr);
 
+        static virtual_identity *find(void *vtable);
+        static virtual_identity *find(const std::string &name);
+
         bool is_instance(virtual_ptr instance_ptr) {
             if (!instance_ptr) return false;
             if (vtable_ptr) {
@@ -448,6 +451,9 @@ namespace df
             value = IntType(ev); return *this;
         }
     };
+
+    template<class ET, class IT>
+    struct enum_traits<enum_field<ET, IT> > : public enum_traits<ET> {};
 
     template<class EnumType, class IntType1, class IntType2>
     inline bool operator== (enum_field<EnumType,IntType1> a, enum_field<EnumType,IntType2> b)

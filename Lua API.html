@@ -1332,6 +1332,22 @@ global environment, persistent between calls to the script.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getMemRanges()</tt></p>
 <p>Returns a sequence of tables describing virtual memory ranges of the process.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.memmove(dest,src,count)</tt></p>
+<p>Wraps the standard memmove function. Accepts both numbers and refs as pointers.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.memcmp(ptr1,ptr2,count)</tt></p>
+<p>Wraps the standard memcmp function.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.memscan(haystack,count,step,needle,nsize)</tt></p>
+<p>Searches for <tt class="docutils literal">needle</tt> of <tt class="docutils literal">nsize</tt> bytes in <tt class="docutils literal">haystack</tt>,
+using <tt class="docutils literal">count</tt> steps of <tt class="docutils literal">step</tt> bytes.
+Returns: <em>step_idx, sum_idx, found_ptr</em>, or <em>nil</em> if not found.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.diffscan(old_data, new_data, start_idx, end_idx, eltsize[, oldval, newval, delta])</tt></p>
+<p>Searches for differences between buffers at ptr1 and ptr2, as integers of size eltsize.
+The oldval, newval or delta arguments may be used to specify additional constraints.
+Returns: <em>found_index</em>, or <em>nil</em> if end reached.</p>
+</li>
 </ul>
 </div>
 </div>

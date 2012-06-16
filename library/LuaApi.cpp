@@ -1021,6 +1021,21 @@ static const luaL_Reg dfhack_constructions_funcs[] = {
 
 /***** Internal module *****/
 
+static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
+{
+    luaL_checkany(L, idx);
+    void *rv;
+    if (lua_isnil(L, idx))
+        rv = NULL;
+    else if (lua_type(L, idx) == LUA_TNUMBER)
+        rv = (void*)lua_tointeger(L, idx);
+    else
+        rv = Lua::CheckDFObject(L, NULL, idx);
+    if (!rv && !allow_null)
+        luaL_argerror(L, idx, "null pointer");
+    return rv;
+}
+
 static uint32_t getBase() { return Core::getInstance().p->getBase(); }
 
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
@@ -1042,7 +1057,7 @@ static int internal_getAddress(lua_State *L)
 static int internal_setAddress(lua_State *L)
 {
     std::string name = luaL_checkstring(L, 1);
-    uint32_t addr = luaL_checkint(L, 2);
+    uint32_t addr = (uint32_t)checkaddr(L, 2, true);
     internal_getAddress(L);
 
     // Set the address
@@ -1097,10 +1112,99 @@ static int internal_getMemRanges(lua_State *L)
     return 1;
 }
 
+static int internal_memmove(lua_State *L)
+{
+    void *dest = checkaddr(L, 1);
+    void *src = checkaddr(L, 2);
+    int size = luaL_checkint(L, 3);
+    if (size < 0) luaL_argerror(L, 1, "negative size");
+    memmove(dest, src, size);
+    return 0;
+}
+
+static int internal_memcmp(lua_State *L)
+{
+    void *dest = checkaddr(L, 1);
+    void *src = checkaddr(L, 2);
+    int size = luaL_checkint(L, 3);
+    if (size < 0) luaL_argerror(L, 1, "negative size");
+    lua_pushinteger(L, memcmp(dest, src, size));
+    return 1;
+}
+
+static int internal_memscan(lua_State *L)
+{
+    uint8_t *haystack = (uint8_t*)checkaddr(L, 1);
+    int hcount = luaL_checkint(L, 2);
+    int hstep = luaL_checkint(L, 3);
+    if (hstep == 0) luaL_argerror(L, 3, "zero step");
+    void *needle = checkaddr(L, 4);
+    int nsize = luaL_checkint(L, 5);
+    if (nsize < 0) luaL_argerror(L, 5, "negative size");
+
+    for (int i = 0; i <= hcount; i++)
+    {
+        uint8_t *p = haystack + i*hstep;
+        if (memcmp(p, needle, nsize) == 0) {
+            lua_pushinteger(L, i);
+            lua_pushinteger(L, (lua_Integer)p);
+            return 2;
+        }
+    }
+
+    lua_pushnil(L);
+    return 1;
+}
+
+static int internal_diffscan(lua_State *L)
+{
+    lua_settop(L, 8);
+    void *old_data = checkaddr(L, 1);
+    void *new_data = checkaddr(L, 2);
+    int start_idx = luaL_checkint(L, 3);
+    int end_idx = luaL_checkint(L, 4);
+    int eltsize = luaL_checkint(L, 5);
+    bool has_oldv = !lua_isnil(L, 6);
+    bool has_newv = !lua_isnil(L, 7);
+    bool has_diffv = !lua_isnil(L, 8);
+
+#define LOOP(esz, etype) \
+    case esz: {          \
+        etype *pold = (etype*)old_data; \
+        etype *pnew = (etype*)new_data; \
+        etype oldv = (etype)luaL_optint(L, 6, 0); \
+        etype newv = (etype)luaL_optint(L, 7, 0); \
+        etype diffv = (etype)luaL_optint(L, 8, 0); \
+        for (int i = start_idx; i < end_idx; i++) { \
+            if (pold[i] == pnew[i]) continue; \
+            if (has_oldv && pold[i] != oldv) continue; \
+            if (has_newv && pnew[i] != newv) continue; \
+            if (has_diffv && etype(pnew[i]-pold[i]) != diffv) continue; \
+            lua_pushinteger(L, i); return 1; \
+        } \
+        break; \
+    }
+    switch (eltsize) {
+        LOOP(1, uint8_t);
+        LOOP(2, uint16_t);
+        LOOP(4, uint32_t);
+        default:
+            luaL_argerror(L, 5, "invalid element size");
+    }
+#undef LOOP
+
+    lua_pushnil(L);
+    return 1;
+}
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
     { "getMemRanges", internal_getMemRanges },
+    { "memmove", internal_memmove },
+    { "memcmp", internal_memcmp },
+    { "memscan", internal_memscan },
+    { "diffscan", internal_diffscan },
     { NULL, NULL }
 };
 

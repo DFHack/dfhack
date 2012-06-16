@@ -1176,6 +1176,26 @@ and are only documented here for completeness:
 
   Returns a sequence of tables describing virtual memory ranges of the process.
 
+* ``dfhack.internal.memmove(dest,src,count)``
+
+  Wraps the standard memmove function. Accepts both numbers and refs as pointers.
+
+* ``dfhack.internal.memcmp(ptr1,ptr2,count)``
+
+  Wraps the standard memcmp function.
+
+* ``dfhack.internal.memscan(haystack,count,step,needle,nsize)``
+
+  Searches for ``needle`` of ``nsize`` bytes in ``haystack``,
+  using ``count`` steps of ``step`` bytes.
+  Returns: *step_idx, sum_idx, found_ptr*, or *nil* if not found.
+
+* ``dfhack.internal.diffscan(old_data, new_data, start_idx, end_idx, eltsize[, oldval, newval, delta])``
+
+  Searches for differences between buffers at ptr1 and ptr2, as integers of size eltsize.
+  The oldval, newval or delta arguments may be used to specify additional constraints.
+  Returns: *found_index*, or *nil* if end reached.
+
 
 Core interpreter context
 ========================

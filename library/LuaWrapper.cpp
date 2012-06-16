@@ -715,7 +715,7 @@ static int meta_reinterpret_cast(lua_State *state)
     if (lua_isnil(state, 2))
         ptr = NULL;
     else if (lua_isnumber(state, 2))
-        ptr = (void*)lua_tointeger(state, 2);
+        ptr = (void*)lua_tounsigned(state, 2);
     else
     {
         ptr = get_object_internal(state, NULL, 2, false, true);

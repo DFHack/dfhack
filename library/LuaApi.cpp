@@ -1028,7 +1028,7 @@ static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
     if (lua_isnil(L, idx))
         rv = NULL;
     else if (lua_type(L, idx) == LUA_TNUMBER)
-        rv = (void*)lua_tointeger(L, idx);
+        rv = (void*)lua_tounsigned(L, idx);
     else
         rv = Lua::CheckDFObject(L, NULL, idx);
     if (!rv && !allow_null)

@@ -10,7 +10,7 @@ using namespace std;
 #include "modules/World.h"
 #include <stdlib.h>
 using namespace DFHack;
-
+using namespace df::enums;
 
 command_result mode (color_ostream &out, vector <string> & parameters);
 
@@ -44,28 +44,28 @@ void printCurrentModes(t_gamemodes gm, Console & con)
     con << "Current game type:\t" << gm.g_type << " (";
     switch(gm.g_type)
     {
-    case GAMETYPE_DWARF_MAIN:
+    case game_type::DWARF_MAIN:
         con << "Fortress)" << endl;
         break;
-    case GAMETYPE_ADVENTURE_MAIN:
+    case game_type::ADVENTURE_MAIN:
         con << "Adventurer)" << endl;
         break;
-    case GAMETYPE_VIEW_LEGENDS:
+    case game_type::VIEW_LEGENDS:
         con << "Legends)" << endl;
         break;
-    case GAMETYPE_DWARF_RECLAIM:
+    case game_type::DWARF_RECLAIM:
         con << "Reclaim)" << endl;
         break;
-    case GAMETYPE_DWARF_ARENA:
+    case game_type::DWARF_ARENA:
         con << "Arena)" << endl;
         break;
-    case GAMETYPE_ADVENTURE_ARENA:
+    case game_type::ADVENTURE_ARENA:
         con << "Arena - control creature)" << endl;
         break;
-    case GAMETYPENUM:
+    case game_type::num:
         con << "INVALID)" << endl;
         break;
-    case GAMETYPE_NONE:
+    case game_type::NONE:
         con << "NONE)" << endl;
         break;
     default:
@@ -75,16 +75,16 @@ void printCurrentModes(t_gamemodes gm, Console & con)
     con << "Current game mode:\t" << gm.g_mode << " (";
     switch (gm.g_mode)
     {
-    case GAMEMODE_DWARF:
+    case game_mode::DWARF:
         con << "Dwarf)" << endl;
         break;
-    case GAMEMODE_ADVENTURE:
+    case game_mode::ADVENTURE:
         con << "Adventure)" << endl;
         break;
-    case GAMEMODENUM:
+    case game_mode::num:
         con << "INVALID)" << endl;
         break;
-    case GAMEMODE_NONE:
+    case game_mode::NONE:
         con << "NONE)" << endl;
         break;
     default:
@@ -132,7 +132,7 @@ command_result mode (color_ostream &out_, vector <string> & parameters)
     {
         if(!abuse)
         {
-            if( gm.g_mode == GAMEMODE_NONE || gm.g_type == GAMETYPE_VIEW_LEGENDS)
+            if( gm.g_mode == game_mode::NONE || gm.g_type == game_type::VIEW_LEGENDS)
             {
                 out.printerr("It is not safe to set modes in menus.\n");
                 return CR_FAILURE;
@@ -163,24 +163,24 @@ command_result mode (color_ostream &out_, vector <string> & parameters)
             switch(select)
             {
                 case 0:
-                    gm.g_mode = GAMEMODE_DWARF;
-                    gm.g_type = GAMETYPE_DWARF_MAIN;
+                    gm.g_mode = game_mode::DWARF;
+                    gm.g_type = game_type::DWARF_MAIN;
                     break;
                 case 1:
-                    gm.g_mode = GAMEMODE_ADVENTURE;
-                    gm.g_type = GAMETYPE_ADVENTURE_MAIN;
+                    gm.g_mode = game_mode::ADVENTURE;
+                    gm.g_type = game_type::ADVENTURE_MAIN;
                     break;
                 case 2:
-                    gm.g_mode = GAMEMODE_DWARF;
-                    gm.g_type = GAMETYPE_DWARF_ARENA;
+                    gm.g_mode = game_mode::DWARF;
+                    gm.g_type = game_type::DWARF_ARENA;
                     break;
                 case 3:
-                    gm.g_mode = GAMEMODE_ADVENTURE;
-                    gm.g_type = GAMETYPE_ADVENTURE_ARENA;
+                    gm.g_mode = game_mode::ADVENTURE;
+                    gm.g_type = game_type::ADVENTURE_ARENA;
                     break;
                 case 4:
-                    gm.g_mode = GAMEMODE_DWARF;
-                    gm.g_type = GAMETYPE_DWARF_RECLAIM;
+                    gm.g_mode = game_mode::DWARF;
+                    gm.g_type = game_type::DWARF_RECLAIM;
                     break;
             }
         }

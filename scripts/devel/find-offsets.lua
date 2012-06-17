@@ -5,15 +5,9 @@ local ms = require 'memscan'
 
 local is_known = dfhack.internal.getAddress
 
-local scan_all = false
 local force_scan = {}
-
 for _,v in ipairs({...}) do
-    if v == 'all' then
-        scan_all = true
-    else
-        force_scan[v] = true
-    end
+    force_scan[v] = true
 end
 
 collectgarbage()
@@ -43,7 +37,7 @@ if not data then
     error('Could not find data segment')
 end
 
-print('Data section: '..tostring(data))
+print('\nData section: '..tostring(data))
 if data.size < 5000000 then
     error('Data segment too short.')
 end
@@ -59,10 +53,10 @@ local function validate_offset(name,validator,addr,tname,...)
 end
 
 local function exec_finder(finder, names)
-    local search = scan_all
     if type(names) ~= 'table' then
         names = { names }
     end
+    local search = force_scan['all']
     for _,v in ipairs(names) do
         if force_scan[v] or not is_known(v) then
             search = true
@@ -472,7 +466,9 @@ local function find_ui_workshop_in_add()
     local addr = searcher:find_menu_cursor([[
 Searching for ui_workshop_in_add. Please activate the 'q'
 mode, find a workshop without jobs (or delete jobs),
-and do as instructed:]],
+and do as instructed below.
+
+NOTE: After first 3 steps resize the game window.]],
         'int8_t',
         { 1, 0 },
         { [1] = 'enter the add job menu',
@@ -481,7 +477,7 @@ and do as instructed:]],
     ms.found_offset('ui_workshop_in_add', addr)
 end
 
---exec_finder(find_ui_workshop_in_add, 'ui_workshop_in_add')
+exec_finder(find_ui_workshop_in_add, 'ui_workshop_in_add')
 
 --
 -- ui_workshop_job_cursor
@@ -503,6 +499,49 @@ mode, find a workshop with many jobs, and select as instructed:]],
 end
 
 exec_finder(find_ui_workshop_job_cursor, 'ui_workshop_job_cursor')
+
+--
+-- ui_building_in_assign
+--
+
+local function find_ui_building_in_assign()
+    local addr = searcher:find_menu_cursor([[
+Searching for ui_building_in_assign. Please activate
+the 'q' mode, select a room building (e.g. a bedroom)
+and do as instructed below.
+
+NOTE: After first 3 steps resize the game window.]],
+        'int8_t',
+        { 1, 0 },
+        { [1] = 'enter the Assign owner menu',
+          [0] = 'press Esc to exit assign' }
+    )
+    ms.found_offset('ui_building_in_assign', addr)
+end
+
+exec_finder(find_ui_building_in_assign, 'ui_building_in_assign')
+
+--
+-- ui_building_in_resize
+--
+
+local function find_ui_building_in_resize()
+    local addr = searcher:find_menu_cursor([[
+Searching for ui_building_in_resize. Please activate
+the 'q' mode, select a room building (e.g. a bedroom)
+and do as instructed below.
+
+NOTE: After first 3 steps resize the game window.]],
+        'int8_t',
+        { 1, 0 },
+        { [1] = 'enter the Resize room mode',
+          [0] = 'press Esc to exit resize' }
+    )
+    ms.found_offset('ui_building_in_resize', addr)
+end
+
+exec_finder(find_ui_building_in_resize, 'ui_building_in_resize')
+
 
 --
 -- window_x
@@ -543,14 +582,16 @@ exec_finder(find_window_y, 'window_y')
 local function find_window_z()
     local addr = searcher:find_counter([[
 Searching for window_z. Please exit to main dwarfmode menu,
-scroll to ground level, then do as instructed:]],
+scroll to ground level, then do as instructed below.
+
+NOTE: After first 3 steps resize the game window.]],
         'int32_t', -1,
-        "Please press '>' to scroll 1 Z level down."
+        "Please press '>' to scroll one Z level down."
     )
     ms.found_offset('window_z', addr)
 end
 
---exec_finder(find_window_z, 'window_z')
+exec_finder(find_window_z, 'window_z')
 
 --
 -- THE END

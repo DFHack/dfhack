@@ -1168,6 +1168,10 @@ and are only documented here for completeness:
 
   Sets the global address ``name``. Returns the value of ``getAddress`` before the change.
 
+* ``dfhack.internal.getVTable(name)``
+
+  Returns the pre-extracted vtable address ``name``, or *nil*.
+
 * ``dfhack.internal.getBase()``
 
   Returns the base address of the process.

@@ -1080,6 +1080,17 @@ static int internal_setAddress(lua_State *L)
     return 1;
 }
 
+static int internal_getVTable(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    uint32_t addr = (uint32_t)Core::getInstance().vinfo->getVTable(name);
+    if (addr)
+        lua_pushnumber(L, addr);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
 static int internal_getMemRanges(lua_State *L)
 {
     std::vector<DFHack::t_memrange> ranges;
@@ -1200,6 +1211,7 @@ static int internal_diffscan(lua_State *L)
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
+    { "getVTable", internal_getVTable },
     { "getMemRanges", internal_getMemRanges },
     { "memmove", internal_memmove },
     { "memcmp", internal_memcmp },

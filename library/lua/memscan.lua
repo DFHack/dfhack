@@ -344,62 +344,41 @@ function DiffSearcher:idx2addr(idx)
     return self.area[self.type]:idx2addr(idx)
 end
 
--- Menu search utility
+-- Interactive search utility
 
-function find_menu_cursor(searcher,prompt,data_type,choices,enum)
+function DiffSearcher:find_interactive(prompt,data_type,condition_cb)
     enum = enum or {}
 
     -- Loop for restarting search from scratch
     while true do
         print('\n'..prompt)
 
-        searcher:begin_search(data_type)
+        self:begin_search(data_type)
 
         local found = false
         local ccursor = 0
 
         -- Loop through choices
         while true do
-            local choice
+            print('')
 
-            -- Select the next value to search for
-            if type(choices) == 'function' then
-                print('')
+            local ok, value, delta = condition_cb(ccursor)
 
-                choice = choices(ccursor)
-                ccursor = ccursor + 1
+            ccursor = ccursor + 1
 
-                if not choice then
-                    break
-                end
-            else
-                choice = choices[ccursor+1]
-                ccursor = (ccursor+1) % #choices
-
-                local cname = enum[choice] or choice
-                if type(choice) == 'string' and type(cname) == 'number' then
-                    choice, cname = cname, choice
-                end
-                if cname ~= choice then
-                    cname = cname..' ('..choice..')'
-                end
-
-                -- Ask the user to select it
-                print('\n  Please select: '..cname)
-                if not utils.prompt_yes_no('  Continue?', true) then
-                    break
-                end
+            if not ok then
+                break
             end
 
             -- Search for it in the memory
-            local cnt, set = searcher:advance_search(choice)
+            local cnt, set = self:advance_search(value, delta)
             if not cnt then
                 dfhack.printerr('  Converged to zero candidates; probably a mistake somewhere.')
                 break
             elseif set and cnt == 1 then
                 -- To confirm, wait for two 1-candidate results in a row
                 if found then
-                    local addr = searcher:idx2addr(set[1])
+                    local addr = self:idx2addr(set[1])
                     print(string.format('  Confirmed address: %x\n', addr))
                     return addr, set[1]
                 else
@@ -414,6 +393,63 @@ function find_menu_cursor(searcher,prompt,data_type,choices,enum)
             return nil
         end
     end
+end
+
+function DiffSearcher:find_menu_cursor(prompt,data_type,choices,enum)
+    enum = enum or {}
+
+    return self:find_interactive(
+        prompt, data_type,
+        function(ccursor)
+            local choice
+
+            -- Select the next value to search for
+            if type(choices) == 'function' then
+                choice = choices(ccursor)
+
+                if not choice then
+                    return false
+                end
+            else
+                choice = choices[(ccursor % #choices) + 1]
+            end
+
+            -- Ask the user to select it
+            if enum ~= 'noprompt' then
+                local cname = enum[choice] or choice
+                if type(choice) == 'string' and type(cname) == 'number' then
+                    choice, cname = cname, choice
+                end
+                if cname ~= choice then
+                    cname = cname..' ('..choice..')'
+                end
+
+                print('  Please select: '..cname)
+                if not utils.prompt_yes_no('  Continue?', true) then
+                    return false
+                end
+            end
+
+            return true, choice
+        end
+    )
+end
+
+function DiffSearcher:find_counter(prompt,data_type,delta,action_prompt)
+    delta = delta or 1
+
+    return self:find_interactive(
+        prompt, data_type,
+        function(ccursor)
+            if ccursor > 0 then
+                print("  "..(action_prompt or 'Please do the action.'))
+            end
+            if not utils.prompt_yes_no('  Continue?', true) then
+                return false
+            end
+            return true, nil, delta
+        end
+    )
 end
 
 return _ENV

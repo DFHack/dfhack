@@ -3,8 +3,18 @@
 local utils = require 'utils'
 local ms = require 'memscan'
 
-local scan_all = false
 local is_known = dfhack.internal.getAddress
+
+local scan_all = false
+local force_scan = {}
+
+for _,v in ipairs({...}) do
+    if v == 'all' then
+        scan_all = true
+    else
+        force_scan[v] = true
+    end
+end
 
 collectgarbage()
 
@@ -46,6 +56,52 @@ local function validate_offset(name,validator,addr,tname,...)
         obj = nil
     end
     ms.found_offset(name,obj)
+end
+
+local function exec_finder(finder, names)
+    local search = scan_all
+    if type(names) ~= 'table' then
+        names = { names }
+    end
+    for _,v in ipairs(names) do
+        if force_scan[v] or not is_known(v) then
+            search = true
+        end
+    end
+    if search then
+        if not dfhack.safecall(finder) then
+            if not utils.prompt_yes_no('Proceed with the rest of the script?') then
+                searcher:reset()
+                error('Quit')
+            end
+        end
+    else
+        print('Already known: '..table.concat(names,', '))
+    end
+end
+
+local ordinal_names = {
+    [0] = '1st entry',
+    [1] = '2nd entry'
+}
+setmetatable(ordinal_names, {
+    __index = function(self,idx) return (idx+1)..'th entry' end
+})
+
+local function list_index_choices(length_func)
+    return function(id)
+        if id > 0 then
+            local ok, len = pcall(length_func)
+            if not ok then
+                len = 5
+            elseif len > 10 then
+                len = 10
+            end
+            return id % len
+        else
+            return 0
+        end
+    end
 end
 
 --
@@ -90,19 +146,14 @@ local function find_cursor()
     return false
 end
 
-if scan_all or not (
-    is_known 'cursor' and is_known 'selection_rect' and
-    is_known 'gamemode' and is_known 'gametype'
-) then
-    find_cursor()
-end
+exec_finder(find_cursor, { 'cursor', 'selection_rect', 'gamemode', 'gametype' })
 
 --
 -- Announcements
 --
 
 local function find_announcements()
-    idx, addr = data.int32_t:find_one{
+    local idx, addr = data.int32_t:find_one{
         25, 25, 31, 31, 24, 24, 40, 40, 40, 40, 40, 40, 40
     }
     if idx then
@@ -113,9 +164,7 @@ local function find_announcements()
     dfhack.printerr('Could not find announcements.')
 end
 
-if scan_all or not is_known 'announcements' then
-    find_announcements()
-end
+exec_finder(find_announcements, 'announcements')
 
 --
 -- d_init
@@ -142,7 +191,7 @@ local function is_valid_d_init(di)
 end
 
 local function find_d_init()
-    idx, addr = data.int16_t:find_one{
+    local idx, addr = data.int16_t:find_one{
         1,0, 2,0, 5,0, 25,0,   -- path_cost
         4,4,                   -- embark_rect
         20,1000,1000,1000,1000 -- store_dist
@@ -155,9 +204,29 @@ local function find_d_init()
     dfhack.printerr('Could not find d_init')
 end
 
-if scan_all or not is_known 'd_init' then
-    find_d_init()
+exec_finder(find_d_init, 'd_init')
+
+--
+-- gview
+--
+
+local function find_gview()
+    local vs_vtable = dfhack.internal.getVTable('viewscreenst')
+    if not vs_vtable then
+        dfhack.printerr('Cannot search for gview - no viewscreenst vtable.')
+        return
+    end
+
+    local idx, addr = data.uint32_t:find_one{0, vs_vtable}
+    if idx then
+        ms.found_offset('gview', addr)
+        return
+    end
+
+    dfhack.printerr('Could not find gview')
 end
+
+exec_finder(find_gview, 'gview')
 
 --
 -- World
@@ -184,10 +253,9 @@ local function is_valid_world(world)
 end
 
 local function find_world()
-    local addr = ms.find_menu_cursor(
-        searcher, [[
+    local addr = searcher:find_menu_cursor([[
 Searching for world. Please open the stockpile creation
-menu, and follow instructions below:]],
+menu, and select different types as instructed below:]],
         'int32_t',
         { 'Corpses', 'Refuse', 'Stone', 'Wood', 'Gems', 'Bars', 'Cloth', 'Leather', 'Ammo', 'Coins' },
         df.stockpile_category
@@ -195,9 +263,7 @@ menu, and follow instructions below:]],
     validate_offset('world', is_valid_world, addr, df.world, 'selected_stockpile_type')
 end
 
-if scan_all or not is_known 'world' then
-    find_world()
-end
+exec_finder(find_world, 'world')
 
 --
 -- UI
@@ -220,10 +286,9 @@ local function is_valid_ui(ui)
 end
 
 local function find_ui()
-    local addr = ms.find_menu_cursor(
-        searcher, [[
+    local addr = searcher:find_menu_cursor([[
 Searching for ui. Please open the designation
-menu, and follow instructions below:]],
+menu, and switch modes as instructed below:]],
         'int16_t',
         { 'DesignateMine', 'DesignateChannel', 'DesignateRemoveRamps', 'DesignateUpStair',
           'DesignateDownStair', 'DesignateUpDownStair', 'DesignateUpRamp', 'DesignateChopTrees' },
@@ -232,9 +297,7 @@ menu, and follow instructions below:]],
     validate_offset('ui', is_valid_ui, addr, df.ui, 'main', 'mode')
 end
 
-if scan_all or not is_known 'ui' then
-    find_ui()
-end
+exec_finder(find_ui, 'ui')
 
 --
 -- ui_sidebar_menus
@@ -261,21 +324,19 @@ local function is_valid_ui_sidebar_menus(usm)
 end
 
 local function find_ui_sidebar_menus()
-    local addr = ms.find_menu_cursor(
-        searcher, [[
+    local addr = searcher:find_menu_cursor([[
 Searching for ui_sidebar_menus. Please open the add job
 ui of Mason, Craftsdwarfs, or Carpenters workshop, and
 select entries in the list:]],
         'int32_t',
-        { 0, 1, 2, 3, 4, 5, 6 }
+        { 0, 1, 2, 3, 4, 5, 6 },
+        ordinal_names
     )
     validate_offset('ui_sidebar_menus', is_valid_ui_sidebar_menus,
                     addr, df.ui_sidebar_menus, 'workshop_job', 'cursor')
 end
 
-if scan_all or not is_known 'ui_sidebar_menus' then
-    find_ui_sidebar_menus()
-end
+exec_finder(find_ui_sidebar_menus, 'ui_sidebar_menus')
 
 --
 -- ui_build_selector
@@ -299,8 +360,7 @@ local function is_valid_ui_build_selector(ubs)
 end
 
 local function find_ui_build_selector()
-    local addr = ms.find_menu_cursor(
-        searcher, [[
+    local addr = searcher:find_menu_cursor([[
 Searching for ui_build_selector. Please start constructing
 a pressure plate, and enable creatures. Then change the min
 weight as requested, remembering that the ui truncates the
@@ -312,9 +372,7 @@ number, so when it shows "Min (5000df", it means 50000:]],
                     addr, df.ui_build_selector, 'plate_info', 'unit_min')
 end
 
-if scan_all or not is_known 'ui_build_selector' then
-    find_ui_build_selector()
-end
+exec_finder(find_ui_build_selector, 'ui_build_selector')
 
 --
 -- ui_selected_unit
@@ -322,7 +380,7 @@ end
 
 local function find_ui_selected_unit()
     if not is_known 'world' then
-        dfhack.printerr('Cannot find ui_selected_unit: no world')
+        dfhack.printerr('Cannot search for ui_selected_unit: no world')
         return
     end
 
@@ -330,30 +388,27 @@ local function find_ui_selected_unit()
         dfhack.units.setNickname(unit, i)
     end
 
-    local addr = ms.find_menu_cursor(
-        searcher, [[
+    local addr = searcher:find_menu_cursor([[
 Searching for ui_selected_unit. Please activate the 'v'
 mode, point it at units, and enter their numeric nickname
 into the prompts below:]],
         'int32_t',
         function()
             return utils.prompt_input('  Enter index: ', utils.check_number)
-        end
+        end,
+        'noprompt'
     )
     ms.found_offset('ui_selected_unit', addr)
 end
 
-if scan_all or not is_known 'ui_selected_unit' then
-    find_ui_selected_unit()
-end
+exec_finder(find_ui_selected_unit, 'ui_selected_unit')
 
 --
 -- ui_unit_view_mode
 --
 
 local function find_ui_unit_view_mode()
-    local addr = ms.find_menu_cursor(
-        searcher, [[
+    local addr = searcher:find_menu_cursor([[
 Searching for ui_unit_view_mode. Having selected a unit
 with 'v', switch the pages as requested:]],
         'int32_t',
@@ -363,6 +418,143 @@ with 'v', switch the pages as requested:]],
     ms.found_offset('ui_unit_view_mode', addr)
 end
 
-if scan_all or not is_known 'ui_unit_view_mode' then
-    find_ui_unit_view_mode()
+exec_finder(find_ui_unit_view_mode, 'ui_unit_view_mode')
+
+--
+-- ui_look_cursor
+--
+
+local function look_item_list_count()
+    return #df.global.ui_look_list.items
 end
+
+local function find_ui_look_cursor()
+    local addr = searcher:find_menu_cursor([[
+Searching for ui_look_cursor. Please activate the 'k'
+mode, find a tile with many items or units on the ground,
+and select list entries as instructed:]],
+        'int32_t',
+        list_index_choices(look_item_list_count),
+        ordinal_names
+    )
+    ms.found_offset('ui_look_cursor', addr)
+end
+
+exec_finder(find_ui_look_cursor, 'ui_look_cursor')
+
+--
+-- ui_building_item_cursor
+--
+
+local function building_item_list_count()
+    return #df.global.world.selected_building.contained_items
+end
+
+local function find_ui_building_item_cursor()
+    local addr = searcher:find_menu_cursor([[
+Searching for ui_building_item_cursor. Please activate the 't'
+mode, find a cluttered workshop, trade depot, or other building
+with many contained items, and select as instructed:]],
+        'int32_t',
+        list_index_choices(building_item_list_count),
+        ordinal_names
+    )
+    ms.found_offset('ui_building_item_cursor', addr)
+end
+
+exec_finder(find_ui_building_item_cursor, 'ui_building_item_cursor')
+
+--
+-- ui_workshop_in_add
+--
+
+local function find_ui_workshop_in_add()
+    local addr = searcher:find_menu_cursor([[
+Searching for ui_workshop_in_add. Please activate the 'q'
+mode, find a workshop without jobs (or delete jobs),
+and do as instructed:]],
+        'int8_t',
+        { 1, 0 },
+        { [1] = 'enter the add job menu',
+          [0] = 'add job, thus exiting the menu' }
+    )
+    ms.found_offset('ui_workshop_in_add', addr)
+end
+
+--exec_finder(find_ui_workshop_in_add, 'ui_workshop_in_add')
+
+--
+-- ui_workshop_job_cursor
+--
+
+local function workshop_job_list_count()
+    return #df.global.world.selected_building.jobs
+end
+
+local function find_ui_workshop_job_cursor()
+    local addr = searcher:find_menu_cursor([[
+Searching for ui_workshop_job_cursor. Please activate the 'q'
+mode, find a workshop with many jobs, and select as instructed:]],
+        'int32_t',
+        list_index_choices(workshop_job_list_count),
+        ordinal_names
+    )
+    ms.found_offset('ui_workshop_job_cursor', addr)
+end
+
+exec_finder(find_ui_workshop_job_cursor, 'ui_workshop_job_cursor')
+
+--
+-- window_x
+--
+
+local function find_window_x()
+    local addr = searcher:find_counter([[
+Searching for window_x. Please exit to main dwarfmode menu,
+scroll to the LEFT edge, then do as instructed:]],
+        'int32_t', 10,
+        'Please press Right to scroll right one step.'
+    )
+    ms.found_offset('window_x', addr)
+end
+
+exec_finder(find_window_x, 'window_x')
+
+--
+-- window_y
+--
+
+local function find_window_y()
+    local addr = searcher:find_counter([[
+Searching for window_y. Please exit to main dwarfmode menu,
+scroll to the TOP edge, then do as instructed:]],
+        'int32_t', 10,
+        'Please press Down to scroll down one step.'
+    )
+    ms.found_offset('window_y', addr)
+end
+
+exec_finder(find_window_y, 'window_y')
+
+--
+-- window_z
+--
+
+local function find_window_z()
+    local addr = searcher:find_counter([[
+Searching for window_z. Please exit to main dwarfmode menu,
+scroll to ground level, then do as instructed:]],
+        'int32_t', -1,
+        "Please press '>' to scroll 1 Z level down."
+    )
+    ms.found_offset('window_z', addr)
+end
+
+--exec_finder(find_window_z, 'window_z')
+
+--
+-- THE END
+--
+
+print('Done.')
+searcher:reset()

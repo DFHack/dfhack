@@ -367,9 +367,9 @@ function prompt_yes_no(msg,default)
     if default == nil then
         prompt = prompt..' (y/n): '
     elseif default then
-        prompt = prompt..' (y/n/enter=y): '
+        prompt = prompt..' (y/n)[y]: '
     else
-        prompt = prompt..' (y/n/enter=n): '
+        prompt = prompt..' (y/n)[n]: '
     end
     while true do
         local rv = dfhack.lineedit(prompt)
@@ -378,6 +378,8 @@ function prompt_yes_no(msg,default)
                 return true
             elseif string.match(rv,'^[Nn]') then
                 return false
+            elseif rv == 'abort' then
+                error('User abort in utils.prompt_yes_no()')
             elseif rv == '' and default ~= nil then
                 return default
             end

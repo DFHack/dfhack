@@ -89,25 +89,21 @@
 ** In Windows, any exclamation mark ('!') in the path is replaced by the
 ** path of the directory of the executable file of the current process.
 */
-#define LUA_LDIR	"!\\lua\\"
+#define LUA_LDIR	"!\\hack\\lua\\"
 #define LUA_CDIR	"!\\"
 #define LUA_PATH_DEFAULT  \
-		LUA_LDIR"?.lua;"  LUA_LDIR"?\\init.lua;" \
-		LUA_CDIR"?.lua;"  LUA_CDIR"?\\init.lua;" ".\\?.lua"
+		LUA_LDIR"?.lua;"  LUA_LDIR"?\\init.lua;" ".\\?.lua"
 #define LUA_CPATH_DEFAULT \
-		LUA_CDIR"?.dll;" LUA_CDIR"loadall.dll;" ".\\?.dll"
+		LUA_CDIR"?.dll;" ".\\?.dll"
 
 #else			/* }{ */
 
-#define LUA_VDIR	LUA_VERSION_MAJOR "." LUA_VERSION_MINOR "/"
-#define LUA_ROOT	"/usr/local/"
-#define LUA_LDIR	LUA_ROOT "share/lua/" LUA_VDIR
-#define LUA_CDIR	LUA_ROOT "lib/lua/" LUA_VDIR
+#define LUA_LDIR	"./hack/lua/"
+#define LUA_CDIR	"./hack/"
 #define LUA_PATH_DEFAULT  \
-		LUA_LDIR"?.lua;"  LUA_LDIR"?/init.lua;" \
-		LUA_CDIR"?.lua;"  LUA_CDIR"?/init.lua;" "./?.lua"
+		LUA_LDIR"?.lua;"  LUA_LDIR"?/init.lua;" "./?.lua"
 #define LUA_CPATH_DEFAULT \
-		LUA_CDIR"?.so;" LUA_CDIR"loadall.so;" "./?.so"
+		LUA_CDIR"?.so;" "./?.so"
 #endif			/* } */
 
 
@@ -142,11 +138,15 @@
 */
 #if defined(LUA_BUILD_AS_DLL)	/* { */
 
+#if defined(_MSC_VER)
 #if defined(LUA_CORE) || defined(LUA_LIB)	/* { */
 #define LUA_API __declspec(dllexport)
 #else						/* }{ */
 #define LUA_API __declspec(dllimport)
 #endif						/* } */
+#else
+#define LUA_API __attribute__ ((visibility("default")))
+#endif
 
 #else				/* }{ */
 

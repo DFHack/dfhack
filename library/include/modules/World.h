@@ -35,32 +35,15 @@ distribution.
 #include "Module.h"
 #include <ostream>
 
+#include "DataDefs.h"
+
 namespace DFHack
 {
-    /**
-     * \ingroup grp_world
-     */
-    enum GameMode
-    {
-        GAMEMODE_DWARF,
-        GAMEMODE_ADVENTURE,
-        GAMEMODENUM,
-        GAMEMODE_NONE
-    };
-    /**
-     * \ingroup grp_world
-     */
-    enum GameType
-    {
-        GAMETYPE_DWARF_MAIN,
-        GAMETYPE_ADVENTURE_MAIN,
-        GAMETYPE_VIEW_LEGENDS,
-        GAMETYPE_DWARF_RECLAIM,
-        GAMETYPE_DWARF_ARENA,
-        GAMETYPE_ADVENTURE_ARENA,
-        GAMETYPENUM,
-        GAMETYPE_NONE
-    };
+    typedef df::game_mode GameMode;
+    typedef df::game_type GameType;
+
+#define GAMEMODE_ADVENTURE df::enums::game_mode::ADVENTURE
+
     /**
      * \ingroup grp_world
      */

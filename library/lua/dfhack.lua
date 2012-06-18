@@ -273,19 +273,24 @@ end
 
 -- Command scripts
 
-dfhack.scripts = dfhack.scripts or {}
+dfhack.internal.scripts = dfhack.internal.scripts or {}
 
-function dfhack.run_script(file,...)
-    local env = dfhack.scripts[file]
+local scripts = dfhack.internal.scripts
+local hack_path = dfhack.getHackPath()
+
+function dfhack.run_script(name,...)
+    local key = string.lower(name)
+    local file = hack_path..'scripts/'..name..'.lua'
+    local env = scripts[key]
     if env == nil then
         env = {}
         setmetatable(env, { __index = base_env })
-        dfhack.scripts[file] = env
     end
     local f,perr = loadfile(file, 't', env)
     if f == nil then
         error(perr)
     end
+    scripts[key] = env
     return f(...)
 end
 

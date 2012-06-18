@@ -766,6 +766,12 @@ returning. Intended as a convenience function.</p>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.saferesume(coroutine[,args...])</span></tt></p>
 <p>Compares to coroutine.resume like dfhack.safecall vs pcall.</p>
 </li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.run_script(name[,args...])</span></tt></p>
+<p>Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
+The <tt class="docutils literal">name</tt> argument should be the name stem, as would be used on the command line.
+Note that the script is re-read from the file every time it is called, and errors
+are propagated to the caller.</p>
+</li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_suspend(f[,args...])</span></tt></p>
 <p>Calls <tt class="docutils literal">f</tt> with arguments after grabbing the DF core suspend lock.
 Suspending is necessary for accessing a consistent state of DF memory.</p>
@@ -1310,17 +1316,40 @@ Returns <em>true, was_only_planned</em> if removed; or <em>false</em> if none fo
 <p>These functions are intended for the use by dfhack developers,
 and are only documented here for completeness:</p>
 <ul>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.scripts</tt></p>
+<p>The table used by <tt class="docutils literal">dfhack.run_script()</tt> to give every script its own
+global environment, persistent between calls to the script.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getAddress(name)</tt></p>
 <p>Returns the global address <tt class="docutils literal">name</tt>, or <em>nil</em>.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.setAddress(name, value)</tt></p>
 <p>Sets the global address <tt class="docutils literal">name</tt>. Returns the value of <tt class="docutils literal">getAddress</tt> before the change.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.getVTable(name)</tt></p>
+<p>Returns the pre-extracted vtable address <tt class="docutils literal">name</tt>, or <em>nil</em>.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getBase()</tt></p>
 <p>Returns the base address of the process.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getMemRanges()</tt></p>
 <p>Returns a sequence of tables describing virtual memory ranges of the process.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.memmove(dest,src,count)</tt></p>
+<p>Wraps the standard memmove function. Accepts both numbers and refs as pointers.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.memcmp(ptr1,ptr2,count)</tt></p>
+<p>Wraps the standard memcmp function.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.memscan(haystack,count,step,needle,nsize)</tt></p>
+<p>Searches for <tt class="docutils literal">needle</tt> of <tt class="docutils literal">nsize</tt> bytes in <tt class="docutils literal">haystack</tt>,
+using <tt class="docutils literal">count</tt> steps of <tt class="docutils literal">step</tt> bytes.
+Returns: <em>step_idx, sum_idx, found_ptr</em>, or <em>nil</em> if not found.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.diffscan(old_data, new_data, start_idx, end_idx, eltsize[, oldval, newval, delta])</tt></p>
+<p>Searches for differences between buffers at ptr1 and ptr2, as integers of size eltsize.
+The oldval, newval or delta arguments may be used to specify additional constraints.
+Returns: <em>found_index</em>, or <em>nil</em> if end reached.</p>
 </li>
 </ul>
 </div>

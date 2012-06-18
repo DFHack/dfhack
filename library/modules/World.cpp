@@ -85,7 +85,7 @@ World::World()
 
     if(df::global::current_weather)
         d->StartedWeather = true;
-    if (df::global::game_mode && df::global::control_mode)
+    if (df::global::gamemode && df::global::gametype)
         d->StartedMode = true;
 
     d->Inited = true;
@@ -132,8 +132,8 @@ bool World::ReadGameMode(t_gamemodes& rd)
 {
     if(d->Inited && d->StartedMode)
     {
-        rd.g_mode = (DFHack::GameMode)*df::global::control_mode;
-        rd.g_type = (DFHack::GameType)*df::global::game_mode;
+        rd.g_mode = (DFHack::GameMode)*df::global::gamemode;
+        rd.g_type = (DFHack::GameType)*df::global::gametype;
         return true;
     }
     return false;
@@ -142,8 +142,8 @@ bool World::WriteGameMode(const t_gamemodes & wr)
 {
     if(d->Inited && d->StartedMode)
     {
-        *df::global::control_mode = wr.g_mode;
-        *df::global::game_mode = wr.g_type;
+        *df::global::gamemode = wr.g_mode;
+        *df::global::gametype = wr.g_type;
         return true;
     }
     return false;

@@ -361,4 +361,50 @@ function insert_or_update(vector,item,field,cmp)
     return added,cur,pos
 end
 
+-- Ask a yes-no question
+function prompt_yes_no(msg,default)
+    local prompt = msg
+    if default == nil then
+        prompt = prompt..' (y/n): '
+    elseif default then
+        prompt = prompt..' (y/n)[y]: '
+    else
+        prompt = prompt..' (y/n)[n]: '
+    end
+    while true do
+        local rv = dfhack.lineedit(prompt)
+        if rv then
+            if string.match(rv,'^[Yy]') then
+                return true
+            elseif string.match(rv,'^[Nn]') then
+                return false
+            elseif rv == 'abort' then
+                error('User abort in utils.prompt_yes_no()')
+            elseif rv == '' and default ~= nil then
+                return default
+            end
+        end
+    end
+end
+
+-- Ask for input with check function
+function prompt_input(prompt,check,quit_str)
+    quit_str = quit_str or '~~~'
+    while true do
+        local rv = dfhack.lineedit(prompt)
+        if rv == quit_str then
+            return nil
+        end
+        local rtbl = table.pack(check(rv))
+        if rtbl[1] then
+            return table.unpack(rtbl,2,rtbl.n)
+        end
+    end
+end
+
+function check_number(text)
+    local nv = tonumber(text)
+    return nv ~= nil, nv
+end
+
 return _ENV

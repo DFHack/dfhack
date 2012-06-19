@@ -1172,9 +1172,9 @@ and are only documented here for completeness:
 
   Returns the pre-extracted vtable address ``name``, or *nil*.
 
-* ``dfhack.internal.getBase()``
+* ``dfhack.internal.getRebaseDelta()``
 
-  Returns the base address of the process.
+  Returns the ASLR rebase offset of the DF executable.
 
 * ``dfhack.internal.getMemRanges()``
 

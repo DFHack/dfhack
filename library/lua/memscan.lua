@@ -208,7 +208,8 @@ local function find_data_segment()
             end
         elseif mem.read and mem.write
            and (string.match(mem.name,'/dwarfort%.exe$')
-             or string.match(mem.name,'/Dwarf_Fortress$'))
+             or string.match(mem.name,'/Dwarf_Fortress$')
+             or string.match(mem.name,'Dwarf Fortress%.exe'))
         then
             data_start = mem.start_addr
             data_end = mem.end_addr

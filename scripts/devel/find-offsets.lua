@@ -5,6 +5,8 @@ local ms = require 'memscan'
 
 local is_known = dfhack.internal.getAddress
 
+local os_type = dfhack.getOSType()
+
 local force_scan = {}
 for _,v in ipairs({...}) do
     force_scan[v] = true
@@ -20,10 +22,14 @@ MAKE IT RUN CORRECTLY if any data structures
 changed, thus possibly leading to CRASHES AND/OR
 PERMANENT SAVE CORRUPTION.
 
-This script should be initially started immediately
-after loading the game, WITHOUT first loading a world.
-It expects vanilla game configuration, without any
-custom tilesets or init file changes.
+Finding the first few globals requires this script to be
+started immediately after loading the game, WITHOUT
+first loading a world.
+
+The script expects vanilla game configuration, without
+any custom tilesets or init file changes. Never unpause
+the game unless instructed. When done, quit the game
+without saving using 'die'.
 ]]
 
 if not utils.prompt_yes_no('Proceed?') then
@@ -52,6 +58,34 @@ local function validate_offset(name,validator,addr,tname,...)
     ms.found_offset(name,obj)
 end
 
+local function zoomed_searcher(startn, end_or_sz)
+    if force_scan.nozoom then
+        return nil
+    end
+    local sv = is_known(startn)
+    if not sv then
+        return nil
+    end
+    local ev
+    if type(end_or_sz) == 'number' then
+        ev = sv + end_or_sz
+        if end_or_sz < 0 then
+            sv, ev = ev, sv
+        end
+    else
+        ev = is_known(end_or_sz)
+        if not ev then
+            return nil
+        end
+    end
+    sv = sv - (sv % 4)
+    ev = ev + 3
+    ev = ev - (ev % 4)
+    if data:contains_range(sv, ev-sv) then
+        return ms.DiffSearcher.new(ms.MemoryArea.new(sv,ev))
+    end
+end
+
 local function exec_finder(finder, names)
     if type(names) ~= 'table' then
         names = { names }
@@ -76,7 +110,8 @@ end
 
 local ordinal_names = {
     [0] = '1st entry',
-    [1] = '2nd entry'
+    [1] = '2nd entry',
+    [2] = '3rd entry'
 }
 setmetatable(ordinal_names, {
     __index = function(self,idx) return (idx+1)..'th entry' end
@@ -140,8 +175,6 @@ local function find_cursor()
     return false
 end
 
-exec_finder(find_cursor, { 'cursor', 'selection_rect', 'gamemode', 'gametype' })
-
 --
 -- Announcements
 --
@@ -157,8 +190,6 @@ local function find_announcements()
 
     dfhack.printerr('Could not find announcements.')
 end
-
-exec_finder(find_announcements, 'announcements')
 
 --
 -- d_init
@@ -198,8 +229,6 @@ local function find_d_init()
     dfhack.printerr('Could not find d_init')
 end
 
-exec_finder(find_d_init, 'd_init')
-
 --
 -- gview
 --
@@ -219,8 +248,6 @@ local function find_gview()
 
     dfhack.printerr('Could not find gview')
 end
-
-exec_finder(find_gview, 'gview')
 
 --
 -- World
@@ -257,8 +284,6 @@ menu, and select different types as instructed below:]],
     validate_offset('world', is_valid_world, addr, df.world, 'selected_stockpile_type')
 end
 
-exec_finder(find_world, 'world')
-
 --
 -- UI
 --
@@ -291,8 +316,6 @@ menu, and switch modes as instructed below:]],
     validate_offset('ui', is_valid_ui, addr, df.ui, 'main', 'mode')
 end
 
-exec_finder(find_ui, 'ui')
-
 --
 -- ui_sidebar_menus
 --
@@ -319,9 +342,9 @@ end
 
 local function find_ui_sidebar_menus()
     local addr = searcher:find_menu_cursor([[
-Searching for ui_sidebar_menus. Please open the add job
-ui of Mason, Craftsdwarfs, or Carpenters workshop, and
-select entries in the list:]],
+Searching for ui_sidebar_menus. Please switch to 'q' mode,
+select a Mason, Craftsdwarfs, or Carpenters workshop, open
+the Add Job menu, and move the cursor within:]],
         'int32_t',
         { 0, 1, 2, 3, 4, 5, 6 },
         ordinal_names
@@ -329,8 +352,6 @@ select entries in the list:]],
     validate_offset('ui_sidebar_menus', is_valid_ui_sidebar_menus,
                     addr, df.ui_sidebar_menus, 'workshop_job', 'cursor')
 end
-
-exec_finder(find_ui_sidebar_menus, 'ui_sidebar_menus')
 
 --
 -- ui_build_selector
@@ -366,7 +387,25 @@ number, so when it shows "Min (5000df", it means 50000:]],
                     addr, df.ui_build_selector, 'plate_info', 'unit_min')
 end
 
-exec_finder(find_ui_build_selector, 'ui_build_selector')
+--
+-- ui_menu_width
+--
+
+local function find_ui_menu_width()
+    local addr = searcher:find_menu_cursor([[
+Searching for ui_menu_width. Please exit to the main
+dwarfmode menu, then use Tab to do as instructed below:]],
+        'int8_t',
+        { 2, 3, 1 },
+        { [2] = 'switch to the most usual [mapmap][menu] layout',
+          [3] = 'hide the menu completely',
+          [1] = 'switch to the default [map][menu][map] layout' }
+    )
+    ms.found_offset('ui_menu_width', addr)
+
+    -- NOTE: Assume that the vars are adjacent, as always
+    ms.found_offset('ui_area_map_width', addr+1)
+end
 
 --
 -- ui_selected_unit
@@ -395,8 +434,6 @@ into the prompts below:]],
     ms.found_offset('ui_selected_unit', addr)
 end
 
-exec_finder(find_ui_selected_unit, 'ui_selected_unit')
-
 --
 -- ui_unit_view_mode
 --
@@ -411,8 +448,6 @@ with 'v', switch the pages as requested:]],
     )
     ms.found_offset('ui_unit_view_mode', addr)
 end
-
-exec_finder(find_ui_unit_view_mode, 'ui_unit_view_mode')
 
 --
 -- ui_look_cursor
@@ -434,8 +469,6 @@ and select list entries as instructed:]],
     ms.found_offset('ui_look_cursor', addr)
 end
 
-exec_finder(find_ui_look_cursor, 'ui_look_cursor')
-
 --
 -- ui_building_item_cursor
 --
@@ -456,8 +489,6 @@ with many contained items, and select as instructed:]],
     ms.found_offset('ui_building_item_cursor', addr)
 end
 
-exec_finder(find_ui_building_item_cursor, 'ui_building_item_cursor')
-
 --
 -- ui_workshop_in_add
 --
@@ -468,7 +499,7 @@ Searching for ui_workshop_in_add. Please activate the 'q'
 mode, find a workshop without jobs (or delete jobs),
 and do as instructed below.
 
-NOTE: After first 3 steps resize the game window.]],
+NOTE: If not done after first 3-4 steps, resize the game window.]],
         'int8_t',
         { 1, 0 },
         { [1] = 'enter the add job menu',
@@ -476,8 +507,6 @@ NOTE: After first 3 steps resize the game window.]],
     )
     ms.found_offset('ui_workshop_in_add', addr)
 end
-
-exec_finder(find_ui_workshop_in_add, 'ui_workshop_in_add')
 
 --
 -- ui_workshop_job_cursor
@@ -498,8 +527,6 @@ mode, find a workshop with many jobs, and select as instructed:]],
     ms.found_offset('ui_workshop_job_cursor', addr)
 end
 
-exec_finder(find_ui_workshop_job_cursor, 'ui_workshop_job_cursor')
-
 --
 -- ui_building_in_assign
 --
@@ -510,7 +537,7 @@ Searching for ui_building_in_assign. Please activate
 the 'q' mode, select a room building (e.g. a bedroom)
 and do as instructed below.
 
-NOTE: After first 3 steps resize the game window.]],
+NOTE: If not done after first 3-4 steps, resize the game window.]],
         'int8_t',
         { 1, 0 },
         { [1] = 'enter the Assign owner menu',
@@ -518,8 +545,6 @@ NOTE: After first 3 steps resize the game window.]],
     )
     ms.found_offset('ui_building_in_assign', addr)
 end
-
-exec_finder(find_ui_building_in_assign, 'ui_building_in_assign')
 
 --
 -- ui_building_in_resize
@@ -531,7 +556,7 @@ Searching for ui_building_in_resize. Please activate
 the 'q' mode, select a room building (e.g. a bedroom)
 and do as instructed below.
 
-NOTE: After first 3 steps resize the game window.]],
+NOTE: If not done after first 3-4 steps, resize the game window.]],
         'int8_t',
         { 1, 0 },
         { [1] = 'enter the Resize room mode',
@@ -539,9 +564,6 @@ NOTE: After first 3 steps resize the game window.]],
     )
     ms.found_offset('ui_building_in_resize', addr)
 end
-
-exec_finder(find_ui_building_in_resize, 'ui_building_in_resize')
-
 
 --
 -- window_x
@@ -557,8 +579,6 @@ scroll to the LEFT edge, then do as instructed:]],
     ms.found_offset('window_x', addr)
 end
 
-exec_finder(find_window_x, 'window_x')
-
 --
 -- window_y
 --
@@ -573,8 +593,6 @@ scroll to the TOP edge, then do as instructed:]],
     ms.found_offset('window_y', addr)
 end
 
-exec_finder(find_window_y, 'window_y')
-
 --
 -- window_z
 --
@@ -582,20 +600,173 @@ exec_finder(find_window_y, 'window_y')
 local function find_window_z()
     local addr = searcher:find_counter([[
 Searching for window_z. Please exit to main dwarfmode menu,
-scroll to ground level, then do as instructed below.
+scroll to a Z level near surface, then do as instructed below.
 
-NOTE: After first 3 steps resize the game window.]],
+NOTE: If not done after first 3-4 steps, resize the game window.]],
         'int32_t', -1,
         "Please press '>' to scroll one Z level down."
     )
     ms.found_offset('window_z', addr)
 end
 
+--
+-- cur_year
+--
+
+local function find_cur_year()
+    local zone
+    if os_type == 'windows' then
+        zone = zoomed_searcher('formation_next_id', 32)
+    elseif os_type == 'darwin' then
+        zone = zoomed_searcher('cursor', -32)
+    elseif os_type == 'linux' then
+        zone = zoomed_searcher('ui_building_assign_type', -512)
+    end
+    if not zone then
+        dfhack.printerr('Cannot search for cur_year - prerequisites missing.')
+        return
+    end
+
+    local yvalue = utils.prompt_input('Please enter current in-game year: ', utils.check_number)
+    local idx, addr = zone.area.int32_t:find_one{yvalue}
+    if idx then
+        ms.found_offset('cur_year', addr)
+        return
+    end
+
+    dfhack.printerr('Could not find cur_year')
+end
+
+--
+-- cur_year_tick
+--
+
+local function find_cur_year_tick()
+    local zone
+    if os_type == 'windows' then
+        zone = zoomed_searcher('artifact_next_id', -32)
+    else
+        zone = zoomed_searcher('cur_year', 128)
+    end
+    if not zone then
+        dfhack.printerr('Cannot search for cur_year_tick - prerequisites missing.')
+        return
+    end
+
+    local addr = zone:find_counter([[
+Searching for cur_year_tick. Please exit to main dwarfmode
+menu, then do as instructed below:]],
+        'int32_t', 1,
+        "Please press '.' to step the game one frame."
+    )
+    ms.found_offset('cur_year_tick', addr)
+end
+
+--
+-- process_jobs
+--
+
+local function get_process_zone()
+    if os_type == 'windows' then
+        return zoomed_searcher('ui_workshop_job_cursor', 'ui_building_in_resize')
+    else
+        return zoomed_searcher('cur_year', 'cur_year_tick')
+    end
+end
+
+local function find_process_jobs()
+    local zone = get_process_zone() or searcher
+
+    local addr = zone:find_menu_cursor([[
+Searching for process_jobs. Please do as instructed below:]],
+        'int8_t',
+        { 1, 0 },
+        { [1] = 'designate a building to be constructed, e.g a bed',
+          [0] = 'step or unpause the game to reset the flag' }
+    )
+    ms.found_offset('process_jobs', addr)
+end
+
+--
+-- process_dig
+--
+
+local function find_process_dig()
+    local zone = get_process_zone() or searcher
+
+    local addr = zone:find_menu_cursor([[
+Searching for process_dig. Please do as instructed below:]],
+        'int8_t',
+        { 1, 0 },
+        { [1] = 'designate a tile to be mined out',
+          [0] = 'step or unpause the game to reset the flag' }
+    )
+    ms.found_offset('process_dig', addr)
+end
+
+--
+-- pause_state
+--
+
+local function find_pause_state()
+    local zone
+    if os_type == 'linux' then
+        zone = zoomed_searcher('ui_look_cursor', 32)
+    elseif os_type == 'windows' then
+        zone = zoomed_searcher('ui_workshop_job_cursor', 64)
+    end
+    zone = zone or searcher
+
+    local addr = zone:find_menu_cursor([[
+Searching for pause_state. Please do as instructed below:]],
+        'int8_t',
+        { 1, 0 },
+        { [1] = 'PAUSE the game',
+          [0] = 'UNPAUSE the game' }
+    )
+    ms.found_offset('pause_state', addr)
+end
+
+--
+-- MAIN FLOW
+--
+
+print('\nInitial globals (need title screen):\n')
+
+exec_finder(find_cursor, { 'cursor', 'selection_rect', 'gamemode', 'gametype' })
+exec_finder(find_announcements, 'announcements')
+exec_finder(find_d_init, 'd_init')
+exec_finder(find_gview, 'gview')
+
+print('\nCompound globals (need loaded world):\n')
+
+exec_finder(find_world, 'world')
+exec_finder(find_ui, 'ui')
+exec_finder(find_ui_sidebar_menus, 'ui_sidebar_menus')
+exec_finder(find_ui_build_selector, 'ui_build_selector')
+
+print('\nPrimitive globals:\n')
+
+exec_finder(find_ui_menu_width, { 'ui_menu_width', 'ui_area_map_width' })
+exec_finder(find_ui_selected_unit, 'ui_selected_unit')
+exec_finder(find_ui_unit_view_mode, 'ui_unit_view_mode')
+exec_finder(find_ui_look_cursor, 'ui_look_cursor')
+exec_finder(find_ui_building_item_cursor, 'ui_building_item_cursor')
+exec_finder(find_ui_workshop_in_add, 'ui_workshop_in_add')
+exec_finder(find_ui_workshop_job_cursor, 'ui_workshop_job_cursor')
+exec_finder(find_ui_building_in_assign, 'ui_building_in_assign')
+exec_finder(find_ui_building_in_resize, 'ui_building_in_resize')
+exec_finder(find_window_x, 'window_x')
+exec_finder(find_window_y, 'window_y')
 exec_finder(find_window_z, 'window_z')
 
---
--- THE END
---
+print('\nUnpausing globals:\n')
 
-print('Done.')
+exec_finder(find_cur_year, 'cur_year')
+exec_finder(find_cur_year_tick, 'cur_year_tick')
+exec_finder(find_process_jobs, 'process_jobs')
+exec_finder(find_process_dig, 'process_dig')
+exec_finder(find_pause_state, 'pause_state')
+
+print('\nDone. Now add newly-found globals to symbols.xml.')
 searcher:reset()

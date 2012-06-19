@@ -130,6 +130,16 @@ string Process::doReadClassName (void * vptr)
 #include <mach/vm_statistics.h>
 #include <dlfcn.h>
 
+const char *
+inheritance_strings[] = {
+    "SHARE", "COPY", "NONE", "DONATE_COPY",
+};
+
+const char *
+behavior_strings[] = {
+    "DEFAULT", "RANDOM", "SEQUENTIAL", "RESQNTL", "WILLNEED", "DONTNEED",
+};
+
 void Process::getMemRanges( vector<t_memrange> & ranges )
 {
 
@@ -162,7 +172,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
             int dlcheck;
             dlcheck = dladdr((const void*)address, &dlinfo);
             if (dlcheck==0) {
-            	dlinfo.dli_fname = "(none)";
+            	dlinfo.dli_fname = "";
             }
             
             t_memrange temp;
@@ -177,20 +187,36 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
 			temp.valid = true;
 			ranges.push_back(temp);
 			
+			fprintf(stderr,
+            "%08x-%08x %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
+                            address, (address + vmsize), (vmsize >> 10),
+                            (info.protection & VM_PROT_READ)        ? 'r' : '-',
+                            (info.protection & VM_PROT_WRITE)       ? 'w' : '-',
+                            (info.protection & VM_PROT_EXECUTE)     ? 'x' : '-',
+                            (info.max_protection & VM_PROT_READ)    ? 'r' : '-',
+                            (info.max_protection & VM_PROT_WRITE)   ? 'w' : '-',
+                            (info.max_protection & VM_PROT_EXECUTE) ? 'x' : '-',
+                            inheritance_strings[info.inheritance],
+                            (info.shared) ? "shared" : "-",
+                            behavior_strings[info.behavior],
+                            info.user_wired_count,
+                            info.reserved,
+                            dlinfo.dli_fname);
+			
             address += vmsize;
         } else if (kr != KERN_INVALID_ADDRESS) {
 
-            if (the_task != MACH_PORT_NULL) {
+            /*if (the_task != MACH_PORT_NULL) {
                 mach_port_deallocate(mach_task_self(), the_task);
-            }
+            }*/
             return;
         }
     } while (kr != KERN_INVALID_ADDRESS);
 
 
-    if (the_task != MACH_PORT_NULL) {
+/*    if (the_task != MACH_PORT_NULL) {
         mach_port_deallocate(mach_task_self(), the_task);
-    }
+    }*/
 }
 
 uint32_t Process::getBase()

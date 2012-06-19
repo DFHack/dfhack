@@ -1036,7 +1036,7 @@ static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
     return rv;
 }
 
-static uint32_t getRebaseDelta() { return Core::getInstance().vinfo->getRebaseDelta(); }
+static int getRebaseDelta() { return Core::getInstance().vinfo->getRebaseDelta(); }
 
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getRebaseDelta),

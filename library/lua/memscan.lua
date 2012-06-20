@@ -168,7 +168,7 @@ function MemoryArea:__tostring()
     return string.format('<MemoryArea: %x..%x>', self.start_addr, self.end_addr)
 end
 function MemoryArea:contains_range(start,size)
-    return start >= self.start_addr and (start+size) <= self.end_addr
+    return size >= 0 and start >= self.start_addr and (start+size) <= self.end_addr
 end
 function MemoryArea:contains_obj(obj,count)
     local size, base = df.sizeof(obj)

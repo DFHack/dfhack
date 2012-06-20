@@ -24,7 +24,10 @@ PERMANENT SAVE CORRUPTION.
 
 Finding the first few globals requires this script to be
 started immediately after loading the game, WITHOUT
-first loading a world.
+first loading a world. The rest expect a loaded save,
+not a fresh embark. Finding current_weather requires
+a special save previously processed with devel/prepare-save
+on a DF version with working dfhack.
 
 The script expects vanilla game configuration, without
 any custom tilesets or init file changes. Never unpause
@@ -388,6 +391,43 @@ number, so when it shows "Min (5000df", it means 50000:]],
 end
 
 --
+-- current_weather
+--
+
+local function find_current_weather()
+    print('\nPlease load the save previously processed with prepare-save.')
+    if not utils.prompt_yes_no('Proceed?', true) then
+        return
+    end
+
+    local zone
+    if os_type == 'windows' then
+        zone = zoomed_searcher('crime_next_id', 512)
+    elseif os_type == 'darwin' then
+        zone = zoomed_searcher('cursor', -64)
+    elseif os_type == 'linux' then
+        zone = zoomed_searcher('ui_building_assign_type', -512)
+    end
+    zone = zone or searcher
+
+    local wbytes = {
+        2, 1, 0, 2, 0,
+        1, 2, 1, 0, 0,
+        2, 0, 2, 1, 2,
+        1, 2, 0, 1, 1,
+        2, 0, 1, 0, 2
+    }
+
+    local idx, addr = zone.area.int8_t:find_one(wbytes)
+    if idx then
+        ms.found_offset('current_weather', addr)
+        return
+    end
+
+    dfhack.printerr('Could not find current_weather - must be a wrong save.')
+end
+
+--
 -- ui_menu_width
 --
 
@@ -669,7 +709,7 @@ end
 local function get_process_zone()
     if os_type == 'windows' then
         return zoomed_searcher('ui_workshop_job_cursor', 'ui_building_in_resize')
-    else
+    elseif os_type == 'linux' or os_type == 'darwin' then
         return zoomed_searcher('cur_year', 'cur_year_tick')
     end
 end
@@ -710,10 +750,10 @@ end
 
 local function find_pause_state()
     local zone
-    if os_type == 'linux' then
+    if os_type == 'linux' or os_type == 'darwin' then
         zone = zoomed_searcher('ui_look_cursor', 32)
     elseif os_type == 'windows' then
-        zone = zoomed_searcher('ui_workshop_job_cursor', 64)
+        zone = zoomed_searcher('ui_workshop_job_cursor', 80)
     end
     zone = zone or searcher
 
@@ -747,6 +787,7 @@ exec_finder(find_ui_build_selector, 'ui_build_selector')
 
 print('\nPrimitive globals:\n')
 
+exec_finder(find_current_weather, 'current_weather')
 exec_finder(find_ui_menu_width, { 'ui_menu_width', 'ui_area_map_width' })
 exec_finder(find_ui_selected_unit, 'ui_selected_unit')
 exec_finder(find_ui_unit_view_mode, 'ui_unit_view_mode')

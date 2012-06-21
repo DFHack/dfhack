@@ -253,6 +253,83 @@ local function find_gview()
 end
 
 --
+-- enabler
+--
+
+local function is_valid_enabler(e)
+    if not ms.is_valid_vector(e.textures.raws, 4)
+    or not ms.is_valid_vector(e.text_system, 4)
+    then
+        dfhack.printerr('Vector layout check failed.')
+        return false
+    end
+
+    return true
+end
+
+local function find_enabler()
+    -- Data from data/init/colors.txt
+    local colors = {
+        0, 0, 0,       0, 0, 128,      0, 128, 0,
+        0, 128, 128,   128, 0, 0,      128, 0, 128,
+        128, 128, 0,   192, 192, 192,  128, 128, 128,
+        0, 0, 255,     0, 255, 0,      0, 255, 255,
+        255, 0, 0,     255, 0, 255,    255, 255, 0,
+        255, 255, 255
+    }
+
+    for i = 1,#colors do colors[i] = colors[i]/255 end
+
+    local idx, addr = data.float:find_one(colors)
+    if idx then
+        validate_offset('enabler', is_valid_enabler, addr, df.enabler, 'ccolor')
+        return
+    end
+
+    dfhack.printerr('Could not find enabler')
+end
+
+--
+-- gps
+--
+
+local function is_valid_gps(g)
+    if g.clipx[0] < 0 or g.clipx[0] > g.clipx[1] or g.clipx[1] >= g.dimx then
+        dfhack.printerr('Invalid clipx: ', g.clipx[0], g.clipx[1], g.dimx)
+    end
+    if g.clipy[0] < 0 or g.clipy[0] > g.clipy[1] or g.clipy[1] >= g.dimy then
+        dfhack.printerr('Invalid clipy: ', g.clipy[0], g.clipy[1], g.dimy)
+    end
+
+    return true
+end
+
+local function find_gps()
+    print('\nPlease ensure the mouse cursor is not over the game window.')
+    if not utils.prompt_yes_no('Proceed?', true) then
+        return
+    end
+
+    local zone
+    if os_type == 'windows' or os_type == 'linux' then
+        zone = zoomed_searcher('cursor', 0x1000)
+    elseif os_type == 'darwin' then
+        zone = zoomed_searcher('enabler', 0x1000)
+    end
+    zone = zone or searcher
+
+    local w,h = ms.get_screen_size()
+
+    local idx, addr = zone.area.int32_t:find_one{w, h, -1, -1}
+    if idx then
+        validate_offset('gps', is_valid_gps, addr, df.graphic, 'dimx')
+        return
+    end
+
+    dfhack.printerr('Could not find gps')
+end
+
+--
 -- World
 --
 
@@ -388,6 +465,51 @@ number, so when it shows "Min (5000df", it means 50000:]],
     )
     validate_offset('ui_build_selector', is_valid_ui_build_selector,
                     addr, df.ui_build_selector, 'plate_info', 'unit_min')
+end
+
+--
+-- init
+--
+
+local function is_valid_init(i)
+    -- derived from curses_*.png image sizes presumably
+    if i.font.small_font_dispx ~= 8 or i.font.small_font_dispy ~= 12 or
+       i.font.large_font_dispx ~= 10 or i.font.large_font_dispy ~= 12 then
+        print('Unexpected font sizes: ',
+              i.font.small_font_dispx, i.font.small_font_dispy,
+              i.font.large_font_dispx, i.font.large_font_dispy)
+        if not utils.prompt_yes_no('Ignore?') then
+            return false
+        end
+    end
+
+    return true
+end
+
+local function find_init()
+    local zone
+    if os_type == 'windows' then
+        zone = zoomed_searcher('ui_build_selector', 0x3000)
+    elseif os_type == 'linux' or os_type == 'darwin' then
+        zone = zoomed_searcher('d_init', -0x2000)
+    end
+    zone = zone or searcher
+
+    local idx, addr = zone.area.int32_t:find_one{250, 150, 15, 0}
+    if idx then
+        validate_offset('init', is_valid_init, addr, df.init, 'input', 'hold_time')
+        return
+    end
+
+    local w,h = ms.get_screen_size()
+
+    local idx, addr = zone.area.int32_t:find_one{w, h}
+    if idx then
+        validate_offset('init', is_valid_init, addr, df.init, 'display', 'grid_x')
+        return
+    end
+
+    dfhack.printerr('Could not find init')
 end
 
 --
@@ -777,6 +899,8 @@ exec_finder(find_cursor, { 'cursor', 'selection_rect', 'gamemode', 'gametype' })
 exec_finder(find_announcements, 'announcements')
 exec_finder(find_d_init, 'd_init')
 exec_finder(find_gview, 'gview')
+exec_finder(find_enabler, 'enabler')
+exec_finder(find_gps, 'gps')
 
 print('\nCompound globals (need loaded world):\n')
 
@@ -784,6 +908,7 @@ exec_finder(find_world, 'world')
 exec_finder(find_ui, 'ui')
 exec_finder(find_ui_sidebar_menus, 'ui_sidebar_menus')
 exec_finder(find_ui_build_selector, 'ui_build_selector')
+exec_finder(find_init, 'init')
 
 print('\nPrimitive globals:\n')
 

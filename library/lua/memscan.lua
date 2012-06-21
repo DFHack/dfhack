@@ -154,7 +154,8 @@ function MemoryArea.new(astart, aend)
         int16_t = CheckedArray.new('int16_t',astart,aend),
         uint16_t = CheckedArray.new('uint16_t',astart,aend),
         int32_t = CheckedArray.new('int32_t',astart,aend),
-        uint32_t = CheckedArray.new('uint32_t',astart,aend)
+        uint32_t = CheckedArray.new('uint32_t',astart,aend),
+        float = CheckedArray.new('float',astart,aend)
     }
     setmetatable(obj, MemoryArea)
     return obj
@@ -451,6 +452,32 @@ function DiffSearcher:find_counter(prompt,data_type,delta,action_prompt)
             return true, nil, delta
         end
     )
+end
+
+-- Screen size
+
+function get_screen_size()
+    -- Use already known globals
+    if dfhack.internal.getAddress('init') then
+        local d = df.global.init.display
+        return d.grid_x, d.grid_y
+    end
+    if dfhack.internal.getAddress('gps') then
+        local g = df.global.gps
+        return g.dimx, g.dimy
+    end
+
+    -- Parse stdout.log for resize notifications
+    io.stdout:flush()
+
+    local w,h = 80,25
+    for line in io.lines('stdout.log') do
+        local cw, ch = string.match(line, '^Resizing grid to (%d+)x(%d+)$')
+        if cw and ch then
+            w, h = tonumber(cw), tonumber(ch)
+        end
+    end
+    return w,h
 end
 
 return _ENV

@@ -451,6 +451,7 @@ Currently it defines the following features:
 * ``dfhack.color([color])``
 
   Sets the current output color. If color is *nil* or *-1*, resets to default.
+  Returns the previous color value.
 
 * ``dfhack.is_interactive()``
 

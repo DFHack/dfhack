@@ -734,7 +734,8 @@ works with DFHack output infrastructure.</p>
 <p>Same as println; intended for errors. Uses red color and logs to stderr.log.</p>
 </li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.color([color])</span></tt></p>
-<p>Sets the current output color. If color is <em>nil</em> or <em>-1</em>, resets to default.</p>
+<p>Sets the current output color. If color is <em>nil</em> or <em>-1</em>, resets to default.
+Returns the previous color value.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.is_interactive()</tt></p>
 <p>Checks if the thread can access the interactive console and returns <em>true</em> or <em>false</em>.</p>

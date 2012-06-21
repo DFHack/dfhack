@@ -252,6 +252,16 @@ function found_offset(name,val)
         end
     else
         dfhack.internal.setAddress(name, val)
+
+        local ival = val - dfhack.internal.getRebaseDelta()
+        local entry = string.format("<global-address name='%s' value='0x%x'/>\n", name, ival)
+
+        local ccolor = dfhack.color(COLOR_LIGHTGREEN)
+        dfhack.print(entry)
+        dfhack.color(ccolor)
+
+        io.stdout:write(entry)
+        io.stdout:flush()
     end
 end
 

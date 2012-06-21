@@ -1074,9 +1074,9 @@ static int internal_setAddress(lua_State *L)
     }
 
     // Print via printerr, so that it is definitely logged to stderr.log.
-    addr -= Core::getInstance().vinfo->getRebaseDelta();
-    std::string msg = stl_sprintf("<global-address name='%s' value='0x%x'/>", name.c_str(), addr);
-    dfhack_printerr(L, msg);
+    uint32_t iaddr = addr - Core::getInstance().vinfo->getRebaseDelta();
+    fprintf(stderr, "Setting global '%s' to %x (%x)\n", name.c_str(), addr, iaddr);
+    fflush(stderr);
 
     return 1;
 }

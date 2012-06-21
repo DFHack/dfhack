@@ -256,8 +256,11 @@ static int lua_dfhack_color(lua_State *S)
         luaL_argerror(S, 1, "invalid color value");
 
     color_ostream *out = Lua::GetOutput(S);
-    if (out)
+    if (out) {
+        lua_pushinteger(S, (int)out->color());
         out->color(color_ostream::color_value(cv));
+        return 1;
+    }
     return 0;
 }
 

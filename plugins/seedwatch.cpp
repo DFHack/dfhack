@@ -111,7 +111,7 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
     w->ReadGameMode(gm);// FIXME: check return value
 
     // if game mode isn't fortress mode
-    if(gm.g_mode != GAMEMODE_DWARF || gm.g_type != GAMETYPE_DWARF_MAIN)
+    if(gm.g_mode != game_mode::DWARF || gm.g_type != game_type::DWARF_MAIN)
     {
         // just print the help
         printHelp(out);
@@ -299,7 +299,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
         t_gamemodes gm;
         w->ReadGameMode(gm);// FIXME: check return value
         // if game mode isn't fortress mode
-        if(gm.g_mode != GAMEMODE_DWARF || gm.g_type != GAMETYPE_DWARF_MAIN)
+        if(gm.g_mode != game_mode::DWARF || gm.g_type != game_type::DWARF_MAIN)
         {
             // stop running.
             running = false;

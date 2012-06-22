@@ -116,8 +116,7 @@ if opt then
     if opt == '--fix' then
         fix = true
     else
-        dfhack.printerr('Invalid option: '..opt)
-        return
+        qerror('Invalid option: '..opt)
     end
 end
 

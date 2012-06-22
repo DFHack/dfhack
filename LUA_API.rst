@@ -4,9 +4,26 @@ DFHack Lua API
 
 .. contents::
 
-====================
-DF structure wrapper
-====================
+The current version of DFHack has extensive support for
+the Lua scripting language, providing access to:
+
+1. Raw data structures used by the game.
+2. Many C++ functions for high-level access to these
+   structures, and interaction with dfhack itself.
+3. Some functions exported by C++ plugins.
+
+Lua code can be used both for writing scripts, which
+are treated by DFHack command line prompt almost as
+native C++ commands, and invoked by plugins written in c++.
+
+This document describes native API available to Lua in detail.
+For the most part it does not describe utility functions
+implemented by Lua files located in hack/lua/...
+
+
+=========================
+DF data structure wrapper
+=========================
 
 DF structures described by the xml files in library/xml are exported
 to lua code as a tree of objects and functions under the ``df`` global,
@@ -479,29 +496,6 @@ Input & Output
   If the interactive console is not accessible, returns *nil, error*.
 
 
-Miscellaneous
--------------
-
-* ``dfhack.run_script(name[,args...])``
-
-  Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
-  The ``name`` argument should be the name stem, as would be used on the command line.
-  Note that the script is re-read from the file every time it is called, and errors
-  are propagated to the caller.
-
-* ``dfhack.with_suspend(f[,args...])``
-
-  Calls ``f`` with arguments after grabbing the DF core suspend lock.
-  Suspending is necessary for accessing a consistent state of DF memory.
-
-  Returned values and errors are propagated through after releasing
-  the lock. It is safe to nest suspends.
-
-  Every thread is allowed only one suspend per DF frame, so it is best
-  to group operations together in one big critical section. A plugin
-  can choose to run all lua code inside a C++-side suspend lock.
-
-
 Exception handling
 ------------------
 
@@ -531,30 +525,6 @@ Exception handling
 
   Compares to coroutine.resume like dfhack.safecall vs pcall.
 
-* ``dfhack.call_with_finalizer(num_cleanup_args,always,cleanup_fn[,cleanup_args...],fn[,args...])``
-
-  Invokes ``fn`` with ``args``, and after it returns or throws an
-  error calls ``cleanup_fn`` with ``cleanup_args``. Any return values from
-  ``fn`` are propagated, and errors are re-thrown.
-
-  The ``num_cleanup_args`` integer specifies the number of ``cleanup_args``,
-  and the ``always`` boolean specifies if cleanup should be called in any case,
-  or only in case of an error.
-
-* ``dfhack.with_finalize(cleanup_fn,fn[,args...])``
-
-  Calls ``fn`` with arguments, then finalizes with ``cleanup_fn``.
-  Implemented using ``call_with_finalizer(0,true,...)``.
-
-* ``dfhack.with_onerror(cleanup_fn,fn[,args...])``
-
-  Calls ``fn`` with arguments, then finalizes with ``cleanup_fn`` on any thrown error.
-  Implemented using ``call_with_finalizer(0,false,...)``.
-
-* ``dfhack.with_temp_object(obj,fn[,args...])``
-
-  Calls ``fn(obj,args...)``, then finalizes with ``obj:delete()``.
-
 * ``dfhack.exception``
 
   Metatable of error objects used by dfhack. The objects have the
@@ -578,6 +548,46 @@ Exception handling
 * ``dfhack.exception.verbose``
 
   The default value of the ``verbose`` argument of ``err:tostring()``.
+
+
+Locking and finalization
+------------------------
+
+* ``dfhack.with_suspend(f[,args...])``
+
+  Calls ``f`` with arguments after grabbing the DF core suspend lock.
+  Suspending is necessary for accessing a consistent state of DF memory.
+
+  Returned values and errors are propagated through after releasing
+  the lock. It is safe to nest suspends.
+
+  Every thread is allowed only one suspend per DF frame, so it is best
+  to group operations together in one big critical section. A plugin
+  can choose to run all lua code inside a C++-side suspend lock.
+
+* ``dfhack.call_with_finalizer(num_cleanup_args,always,cleanup_fn[,cleanup_args...],fn[,args...])``
+
+  Invokes ``fn`` with ``args``, and after it returns or throws an
+  error calls ``cleanup_fn`` with ``cleanup_args``. Any return values from
+  ``fn`` are propagated, and errors are re-thrown.
+
+  The ``num_cleanup_args`` integer specifies the number of ``cleanup_args``,
+  and the ``always`` boolean specifies if cleanup should be called in any case,
+  or only in case of an error.
+
+* ``dfhack.with_finalize(cleanup_fn,fn[,args...])``
+
+  Calls ``fn`` with arguments, then finalizes with ``cleanup_fn``.
+  Implemented using ``call_with_finalizer(0,true,...)``.
+
+* ``dfhack.with_onerror(cleanup_fn,fn[,args...])``
+
+  Calls ``fn`` with arguments, then finalizes with ``cleanup_fn`` on any thrown error.
+  Implemented using ``call_with_finalizer(0,false,...)``.
+
+* ``dfhack.with_temp_object(obj,fn[,args...])``
+
+  Calls ``fn(obj,args...)``, then finalizes with ``obj:delete()``.
 
 
 Persistent configuration storage
@@ -1312,6 +1322,42 @@ Features:
   Invokes all listeners contained in the event in an arbitrary
   order using ``dfhack.safecall``.
 
+
+=======
+Modules
+=======
+
+DFHack sets up the lua interpreter so that the built-in ``require``
+function can be used to load shared lua code from hack/lua/.
+The ``dfhack`` namespace reference itself may be obtained via
+``require('dfhack')``, although it is initially created as a
+global by C++ bootstrap code.
+
+The following functions are provided:
+
+* ``mkmodule(name)``
+
+  Creates an environment table for the module. Intended to be used as::
+
+    local _ENV = mkmodule('foo')
+    ...
+    return _ENV
+
+  If called the second time, returns the same table; thus providing reload support.
+
+* ``reload(name)``
+
+  Reloads a previously ``require``-d module *"name"* from the file.
+  Intended as a help for module development.
+
+* ``dfhack.BASE_G``
+
+  This variable contains the root global environment table, which is
+  used as a base for all module and script environments. Its contents
+  should be kept limited to the standard Lua library and API described
+  in this document.
+
+
 =======
 Plugins
 =======
@@ -1373,3 +1419,40 @@ sort
 
 Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.
+
+
+=======
+Scripts
+=======
+
+Any files with the .lua extension placed into hack/scripts/*
+are automatically used by the DFHack core as commands. The
+matching command name consists of the name of the file sans
+the extension.
+
+**NOTE:** Scripts placed in subdirectories still can be accessed, but
+do not clutter the ``ls`` command list; thus it is preferred
+for obscure developer-oriented scripts and scripts used by tools.
+When calling such scripts, always use '/' as the separator for
+directories, e.g. ``devel/lua-example``.
+
+Scripts are re-read from disk every time they are used
+(this may be changed later to check the file change time); however
+the global variable values persist in memory between calls.
+Every script gets its own separate environment for global
+variables.
+
+Arguments are passed in to the scripts via the **...** built-in
+quasi-variable; when the script is called by the DFHack core,
+they are all guaranteed to be non-nil strings.
+
+DFHack core invokes the scripts in the *core context* (see above);
+however it is possible to call them from any lua code (including
+from other scripts) in any context, via the same function the core uses:
+
+* ``dfhack.run_script(name[,args...])``
+
+  Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
+  The ``name`` argument should be the name stem, as would be used on the command line.
+
+Note that this function lets errors propagate to the caller.

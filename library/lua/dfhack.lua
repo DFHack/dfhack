@@ -68,6 +68,8 @@ function dfhack.with_temp_object(obj,fn,...)
     return dfhack.call_with_finalizer(1,true,call_delete,obj,fn,obj,...)
 end
 
+dfhack.exception.__index = dfhack.exception
+
 -- Module loading
 
 function mkmodule(module,env)

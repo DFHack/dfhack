@@ -320,7 +320,7 @@ ul.auto-toc {
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#df-structure-wrapper" id="id1">DF structure wrapper</a><ul>
+<li><a class="reference internal" href="#df-data-structure-wrapper" id="id1">DF data structure wrapper</a><ul>
 <li><a class="reference internal" href="#typed-object-references" id="id2">Typed object references</a><ul>
 <li><a class="reference internal" href="#primitive-references" id="id3">Primitive references</a></li>
 <li><a class="reference internal" href="#struct-references" id="id4">Struct references</a></li>
@@ -336,8 +336,8 @@ ul.auto-toc {
 <li><a class="reference internal" href="#dfhack-api" id="id10">DFHack API</a><ul>
 <li><a class="reference internal" href="#native-utilities" id="id11">Native utilities</a><ul>
 <li><a class="reference internal" href="#input-output" id="id12">Input &amp; Output</a></li>
-<li><a class="reference internal" href="#miscellaneous" id="id13">Miscellaneous</a></li>
-<li><a class="reference internal" href="#exception-handling" id="id14">Exception handling</a></li>
+<li><a class="reference internal" href="#exception-handling" id="id13">Exception handling</a></li>
+<li><a class="reference internal" href="#locking-and-finalization" id="id14">Locking and finalization</a></li>
 <li><a class="reference internal" href="#persistent-configuration-storage" id="id15">Persistent configuration storage</a></li>
 <li><a class="reference internal" href="#material-info-lookup" id="id16">Material info lookup</a></li>
 </ul>
@@ -360,15 +360,31 @@ ul.auto-toc {
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#plugins" id="id29">Plugins</a><ul>
-<li><a class="reference internal" href="#burrows" id="id30">burrows</a></li>
-<li><a class="reference internal" href="#sort" id="id31">sort</a></li>
+<li><a class="reference internal" href="#modules" id="id29">Modules</a></li>
+<li><a class="reference internal" href="#plugins" id="id30">Plugins</a><ul>
+<li><a class="reference internal" href="#burrows" id="id31">burrows</a></li>
+<li><a class="reference internal" href="#sort" id="id32">sort</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#scripts" id="id33">Scripts</a></li>
 </ul>
 </div>
-<div class="section" id="df-structure-wrapper">
-<h1><a class="toc-backref" href="#id1">DF structure wrapper</a></h1>
+<p>The current version of DFHack has extensive support for
+the Lua scripting language, providing access to:</p>
+<ol class="arabic simple">
+<li>Raw data structures used by the game.</li>
+<li>Many C++ functions for high-level access to these
+structures, and interaction with dfhack itself.</li>
+<li>Some functions exported by C++ plugins.</li>
+</ol>
+<p>Lua code can be used both for writing scripts, which
+are treated by DFHack command line prompt almost as
+native C++ commands, and invoked by plugins written in c++.</p>
+<p>This document describes native API available to Lua in detail.
+For the most part it does not describe utility functions
+implemented by Lua files located in hack/lua/...</p>
+<div class="section" id="df-data-structure-wrapper">
+<h1><a class="toc-backref" href="#id1">DF data structure wrapper</a></h1>
 <p>DF structures described by the xml files in library/xml are exported
 to lua code as a tree of objects and functions under the <tt class="docutils literal">df</tt> global,
 which broadly maps to the <tt class="docutils literal">df</tt> namespace in C++.</p>
@@ -764,28 +780,8 @@ string, global environment and command-line history file.</p>
 </li>
 </ul>
 </div>
-<div class="section" id="miscellaneous">
-<h3><a class="toc-backref" href="#id13">Miscellaneous</a></h3>
-<ul>
-<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.run_script(name[,args...])</span></tt></p>
-<p>Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
-The <tt class="docutils literal">name</tt> argument should be the name stem, as would be used on the command line.
-Note that the script is re-read from the file every time it is called, and errors
-are propagated to the caller.</p>
-</li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_suspend(f[,args...])</span></tt></p>
-<p>Calls <tt class="docutils literal">f</tt> with arguments after grabbing the DF core suspend lock.
-Suspending is necessary for accessing a consistent state of DF memory.</p>
-<p>Returned values and errors are propagated through after releasing
-the lock. It is safe to nest suspends.</p>
-<p>Every thread is allowed only one suspend per DF frame, so it is best
-to group operations together in one big critical section. A plugin
-can choose to run all lua code inside a C++-side suspend lock.</p>
-</li>
-</ul>
-</div>
 <div class="section" id="exception-handling">
-<h3><a class="toc-backref" href="#id14">Exception handling</a></h3>
+<h3><a class="toc-backref" href="#id13">Exception handling</a></h3>
 <ul>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.error(msg[,level[,verbose]])</span></tt></p>
 <p>Throws a dfhack exception object with location and stack trace.
@@ -807,25 +803,6 @@ returning. Intended as a convenience function.</p>
 </li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.saferesume(coroutine[,args...])</span></tt></p>
 <p>Compares to coroutine.resume like dfhack.safecall vs pcall.</p>
-</li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.call_with_finalizer(num_cleanup_args,always,cleanup_fn[,cleanup_args...],fn[,args...])</span></tt></p>
-<p>Invokes <tt class="docutils literal">fn</tt> with <tt class="docutils literal">args</tt>, and after it returns or throws an
-error calls <tt class="docutils literal">cleanup_fn</tt> with <tt class="docutils literal">cleanup_args</tt>. Any return values from
-<tt class="docutils literal">fn</tt> are propagated, and errors are re-thrown.</p>
-<p>The <tt class="docutils literal">num_cleanup_args</tt> integer specifies the number of <tt class="docutils literal">cleanup_args</tt>,
-and the <tt class="docutils literal">always</tt> boolean specifies if cleanup should be called in any case,
-or only in case of an error.</p>
-</li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_finalize(cleanup_fn,fn[,args...])</span></tt></p>
-<p>Calls <tt class="docutils literal">fn</tt> with arguments, then finalizes with <tt class="docutils literal">cleanup_fn</tt>.
-Implemented using <tt class="docutils literal"><span class="pre">call_with_finalizer(0,true,...)</span></tt>.</p>
-</li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_onerror(cleanup_fn,fn[,args...])</span></tt></p>
-<p>Calls <tt class="docutils literal">fn</tt> with arguments, then finalizes with <tt class="docutils literal">cleanup_fn</tt> on any thrown error.
-Implemented using <tt class="docutils literal"><span class="pre">call_with_finalizer(0,false,...)</span></tt>.</p>
-</li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_temp_object(obj,fn[,args...])</span></tt></p>
-<p>Calls <tt class="docutils literal"><span class="pre">fn(obj,args...)</span></tt>, then finalizes with <tt class="docutils literal">obj:delete()</tt>.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.exception</tt></p>
 <p>Metatable of error objects used by dfhack. The objects have the
@@ -856,6 +833,39 @@ following properties:</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.exception.verbose</tt></p>
 <p>The default value of the <tt class="docutils literal">verbose</tt> argument of <tt class="docutils literal">err:tostring()</tt>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="locking-and-finalization">
+<h3><a class="toc-backref" href="#id14">Locking and finalization</a></h3>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_suspend(f[,args...])</span></tt></p>
+<p>Calls <tt class="docutils literal">f</tt> with arguments after grabbing the DF core suspend lock.
+Suspending is necessary for accessing a consistent state of DF memory.</p>
+<p>Returned values and errors are propagated through after releasing
+the lock. It is safe to nest suspends.</p>
+<p>Every thread is allowed only one suspend per DF frame, so it is best
+to group operations together in one big critical section. A plugin
+can choose to run all lua code inside a C++-side suspend lock.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.call_with_finalizer(num_cleanup_args,always,cleanup_fn[,cleanup_args...],fn[,args...])</span></tt></p>
+<p>Invokes <tt class="docutils literal">fn</tt> with <tt class="docutils literal">args</tt>, and after it returns or throws an
+error calls <tt class="docutils literal">cleanup_fn</tt> with <tt class="docutils literal">cleanup_args</tt>. Any return values from
+<tt class="docutils literal">fn</tt> are propagated, and errors are re-thrown.</p>
+<p>The <tt class="docutils literal">num_cleanup_args</tt> integer specifies the number of <tt class="docutils literal">cleanup_args</tt>,
+and the <tt class="docutils literal">always</tt> boolean specifies if cleanup should be called in any case,
+or only in case of an error.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_finalize(cleanup_fn,fn[,args...])</span></tt></p>
+<p>Calls <tt class="docutils literal">fn</tt> with arguments, then finalizes with <tt class="docutils literal">cleanup_fn</tt>.
+Implemented using <tt class="docutils literal"><span class="pre">call_with_finalizer(0,true,...)</span></tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_onerror(cleanup_fn,fn[,args...])</span></tt></p>
+<p>Calls <tt class="docutils literal">fn</tt> with arguments, then finalizes with <tt class="docutils literal">cleanup_fn</tt> on any thrown error.
+Implemented using <tt class="docutils literal"><span class="pre">call_with_finalizer(0,false,...)</span></tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.with_temp_object(obj,fn[,args...])</span></tt></p>
+<p>Calls <tt class="docutils literal"><span class="pre">fn(obj,args...)</span></tt>, then finalizes with <tt class="docutils literal">obj:delete()</tt>.</p>
 </li>
 </ul>
 </div>
@@ -1470,15 +1480,45 @@ order using <tt class="docutils literal">dfhack.safecall</tt>.</p>
 </div>
 </div>
 </div>
+<div class="section" id="modules">
+<h1><a class="toc-backref" href="#id29">Modules</a></h1>
+<p>DFHack sets up the lua interpreter so that the built-in <tt class="docutils literal">require</tt>
+function can be used to load shared lua code from hack/lua/.
+The <tt class="docutils literal">dfhack</tt> namespace reference itself may be obtained via
+<tt class="docutils literal"><span class="pre">require('dfhack')</span></tt>, although it is initially created as a
+global by C++ bootstrap code.</p>
+<p>The following functions are provided:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">mkmodule(name)</tt></p>
+<p>Creates an environment table for the module. Intended to be used as:</p>
+<pre class="literal-block">
+local _ENV = mkmodule('foo')
+...
+return _ENV
+</pre>
+<p>If called the second time, returns the same table; thus providing reload support.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">reload(name)</tt></p>
+<p>Reloads a previously <tt class="docutils literal">require</tt>-d module <em>&quot;name&quot;</em> from the file.
+Intended as a help for module development.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.BASE_G</tt></p>
+<p>This variable contains the root global environment table, which is
+used as a base for all module and script environments. Its contents
+should be kept limited to the standard Lua library and API described
+in this document.</p>
+</li>
+</ul>
+</div>
 <div class="section" id="plugins">
-<h1><a class="toc-backref" href="#id29">Plugins</a></h1>
+<h1><a class="toc-backref" href="#id30">Plugins</a></h1>
 <p>DFHack plugins may export native functions and events
 to lua contexts. They are automatically imported by
 <tt class="docutils literal"><span class="pre">mkmodule('plugins.&lt;name&gt;')</span></tt>; this means that a lua
 module file is still necessary for <tt class="docutils literal">require</tt> to read.</p>
 <p>The following plugins have lua support.</p>
 <div class="section" id="burrows">
-<h2><a class="toc-backref" href="#id30">burrows</a></h2>
+<h2><a class="toc-backref" href="#id31">burrows</a></h2>
 <p>Implements extended burrow manipulations.</p>
 <p>Events:</p>
 <ul>
@@ -1516,10 +1556,40 @@ set is the same as used by the command line.</p>
 <p>The lua module file also re-exports functions from <tt class="docutils literal">dfhack.burrows</tt>.</p>
 </div>
 <div class="section" id="sort">
-<h2><a class="toc-backref" href="#id31">sort</a></h2>
+<h2><a class="toc-backref" href="#id32">sort</a></h2>
 <p>Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.</p>
 </div>
+</div>
+<div class="section" id="scripts">
+<h1><a class="toc-backref" href="#id33">Scripts</a></h1>
+<p>Any files with the .lua extension placed into hack/scripts/*
+are automatically used by the DFHack core as commands. The
+matching command name consists of the name of the file sans
+the extension.</p>
+<p><strong>NOTE:</strong> Scripts placed in subdirectories still can be accessed, but
+do not clutter the <tt class="docutils literal">ls</tt> command list; thus it is preferred
+for obscure developer-oriented scripts and scripts used by tools.
+When calling such scripts, always use '/' as the separator for
+directories, e.g. <tt class="docutils literal"><span class="pre">devel/lua-example</span></tt>.</p>
+<p>Scripts are re-read from disk every time they are used
+(this may be changed later to check the file change time); however
+the global variable values persist in memory between calls.
+Every script gets its own separate environment for global
+variables.</p>
+<p>Arguments are passed in to the scripts via the <strong>...</strong> built-in
+quasi-variable; when the script is called by the DFHack core,
+they are all guaranteed to be non-nil strings.</p>
+<p>DFHack core invokes the scripts in the <em>core context</em> (see above);
+however it is possible to call them from any lua code (including
+from other scripts) in any context, via the same function the core uses:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.run_script(name[,args...])</span></tt></p>
+<p>Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
+The <tt class="docutils literal">name</tt> argument should be the name stem, as would be used on the command line.</p>
+</li>
+</ul>
+<p>Note that this function lets errors propagate to the caller.</p>
 </div>
 </div>
 </body>

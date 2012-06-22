@@ -426,13 +426,17 @@ not destroy any objects allocated in this way, so the user
 should be prepared to catch the error and do the necessary
 cleanup.
 
-================
-DFHack utilities
-================
+==========
+DFHack API
+==========
 
 DFHack utility functions are placed in the ``dfhack`` global tree.
 
-Currently it defines the following features:
+Native utilities
+================
+
+Input & Output
+--------------
 
 * ``dfhack.print(args...)``
 
@@ -451,6 +455,7 @@ Currently it defines the following features:
 * ``dfhack.color([color])``
 
   Sets the current output color. If color is *nil* or *-1*, resets to default.
+  Returns the previous color value.
 
 * ``dfhack.is_interactive()``
 
@@ -473,23 +478,9 @@ Currently it defines the following features:
 
   If the interactive console is not accessible, returns *nil, error*.
 
-* ``dfhack.pcall(f[,args...])``
 
-  Invokes f via xpcall, using an error function that attaches
-  a stack trace to the error. The same function is used by SafeCall
-  in C++, and dfhack.safecall.
-
-  The returned error is a table with separate ``message`` and
-  ``stacktrace`` string fields; it implements ``__tostring``.
-
-* ``safecall(f[,args...])``, ``dfhack.safecall(f[,args...])``
-
-  Just like pcall, but also prints the error using printerr before
-  returning. Intended as a convenience function.
-
-* ``dfhack.saferesume(coroutine[,args...])``
-
-  Compares to coroutine.resume like dfhack.safecall vs pcall.
+Miscellaneous
+-------------
 
 * ``dfhack.run_script(name[,args...])``
 
@@ -509,6 +500,36 @@ Currently it defines the following features:
   Every thread is allowed only one suspend per DF frame, so it is best
   to group operations together in one big critical section. A plugin
   can choose to run all lua code inside a C++-side suspend lock.
+
+
+Exception handling
+------------------
+
+* ``dfhack.error(msg[,level[,verbose]])``
+
+  Throws a dfhack exception object with location and stack trace.
+  The verbose parameter controls whether the trace is printed by default.
+
+* ``qerror(msg[,level])``
+
+  Calls ``dfhack.error()`` with ``verbose`` being *false*. Intended to
+  be used for user-caused errors in scripts, where stack traces are not
+  desirable.
+
+* ``dfhack.pcall(f[,args...])``
+
+  Invokes f via xpcall, using an error function that attaches
+  a stack trace to the error. The same function is used by SafeCall
+  in C++, and dfhack.safecall.
+
+* ``safecall(f[,args...])``, ``dfhack.safecall(f[,args...])``
+
+  Just like pcall, but also prints the error using printerr before
+  returning. Intended as a convenience function.
+
+* ``dfhack.saferesume(coroutine[,args...])``
+
+  Compares to coroutine.resume like dfhack.safecall vs pcall.
 
 * ``dfhack.call_with_finalizer(num_cleanup_args,always,cleanup_fn[,cleanup_args...],fn[,args...])``
 
@@ -534,9 +555,33 @@ Currently it defines the following features:
 
   Calls ``fn(obj,args...)``, then finalizes with ``obj:delete()``.
 
+* ``dfhack.exception``
+
+  Metatable of error objects used by dfhack. The objects have the
+  following properties:
+
+  ``err.where``
+    The location prefix string, or *nil*.
+  ``err.message``
+    The base message string.
+  ``err.stacktrace``
+    The stack trace string, or *nil*.
+  ``err.cause``
+    A different exception object, or *nil*.
+  ``err.thread``
+    The coroutine that has thrown the exception.
+  ``err.verbose``
+    Boolean, or *nil*; specifies if where and stacktrace should be printed.
+  ``tostring(err)``, or ``err:tostring([verbose])``
+    Converts the exception to string.
+
+* ``dfhack.exception.verbose``
+
+  The default value of the ``verbose`` argument of ``err:tostring()``.
+
 
 Persistent configuration storage
-================================
+--------------------------------
 
 This api is intended for storing configuration options in the world itself.
 It probably should be restricted to data that is world-dependent.
@@ -578,7 +623,7 @@ functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.
 
 Material info lookup
-====================
+--------------------
 
 A material info record has fields:
 

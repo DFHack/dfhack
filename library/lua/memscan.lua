@@ -154,7 +154,8 @@ function MemoryArea.new(astart, aend)
         int16_t = CheckedArray.new('int16_t',astart,aend),
         uint16_t = CheckedArray.new('uint16_t',astart,aend),
         int32_t = CheckedArray.new('int32_t',astart,aend),
-        uint32_t = CheckedArray.new('uint32_t',astart,aend)
+        uint32_t = CheckedArray.new('uint32_t',astart,aend),
+        float = CheckedArray.new('float',astart,aend)
     }
     setmetatable(obj, MemoryArea)
     return obj
@@ -168,7 +169,7 @@ function MemoryArea:__tostring()
     return string.format('<MemoryArea: %x..%x>', self.start_addr, self.end_addr)
 end
 function MemoryArea:contains_range(start,size)
-    return start >= self.start_addr and (start+size) <= self.end_addr
+    return size >= 0 and start >= self.start_addr and (start+size) <= self.end_addr
 end
 function MemoryArea:contains_obj(obj,count)
     local size, base = df.sizeof(obj)
@@ -234,7 +235,7 @@ function found_offset(name,val)
     if not val then
         print('Could not find offset '..name)
         if not cval and not utils.prompt_yes_no('Continue with the script?') then
-            error('User quit')
+            qerror('User quit')
         end
         return
     end
@@ -251,6 +252,16 @@ function found_offset(name,val)
         end
     else
         dfhack.internal.setAddress(name, val)
+
+        local ival = val - dfhack.internal.getRebaseDelta()
+        local entry = string.format("<global-address name='%s' value='0x%x'/>\n", name, ival)
+
+        local ccolor = dfhack.color(COLOR_LIGHTGREEN)
+        dfhack.print(entry)
+        dfhack.color(ccolor)
+
+        io.stdout:write(entry)
+        io.stdout:flush()
     end
 end
 
@@ -451,6 +462,32 @@ function DiffSearcher:find_counter(prompt,data_type,delta,action_prompt)
             return true, nil, delta
         end
     )
+end
+
+-- Screen size
+
+function get_screen_size()
+    -- Use already known globals
+    if dfhack.internal.getAddress('init') then
+        local d = df.global.init.display
+        return d.grid_x, d.grid_y
+    end
+    if dfhack.internal.getAddress('gps') then
+        local g = df.global.gps
+        return g.dimx, g.dimy
+    end
+
+    -- Parse stdout.log for resize notifications
+    io.stdout:flush()
+
+    local w,h = 80,25
+    for line in io.lines('stdout.log') do
+        local cw, ch = string.match(line, '^Resizing grid to (%d+)x(%d+)$')
+        if cw and ch then
+            w, h = tonumber(cw), tonumber(ch)
+        end
+    end
+    return w,h
 end
 
 return _ENV

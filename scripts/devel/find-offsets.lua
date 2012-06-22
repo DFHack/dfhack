@@ -43,12 +43,12 @@ end
 
 local data = ms.get_data_segment()
 if not data then
-    error('Could not find data segment')
+    qerror('Could not find data segment')
 end
 
 print('\nData section: '..tostring(data))
 if data.size < 5000000 then
-    error('Data segment too short.')
+    qerror('Data segment too short.')
 end
 
 local searcher = ms.DiffSearcher.new(data)
@@ -103,7 +103,7 @@ local function exec_finder(finder, names)
         if not dfhack.safecall(finder) then
             if not utils.prompt_yes_no('Proceed with the rest of the script?') then
                 searcher:reset()
-                error('Quit')
+                qerror('Quit')
             end
         end
     else

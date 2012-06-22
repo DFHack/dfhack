@@ -235,7 +235,7 @@ function found_offset(name,val)
     if not val then
         print('Could not find offset '..name)
         if not cval and not utils.prompt_yes_no('Continue with the script?') then
-            error('User quit')
+            qerror('User quit')
         end
         return
     end

@@ -49,6 +49,10 @@ function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
 end
 
+function qerror(msg, level)
+    dfhack.error(msg, (level or 1) + 1, false)
+end
+
 function dfhack.with_finalize(...)
     return dfhack.call_with_finalizer(0,true,...)
 end

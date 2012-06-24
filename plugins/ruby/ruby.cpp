@@ -96,8 +96,11 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 }
 
 // send a single ruby line to be evaluated by the ruby thread
-static command_result plugin_eval_rb(const char *command)
+DFhackCExport command_result plugin_eval_ruby(const char *command)
 {
+    if (!r_thread)
+        return CR_FAILURE;
+
     command_result ret;
 
     // serialize 'accesses' to the ruby thread
@@ -123,11 +126,6 @@ static command_result plugin_eval_rb(const char *command)
     return ret;
 }
 
-static command_result plugin_eval_rb(std::string &command)
-{
-    return plugin_eval_rb(command.c_str());
-}
-
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     if (!r_thread)
@@ -136,7 +134,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     if (!onupdate_active)
         return CR_OK;
 
-    return plugin_eval_rb("DFHack.onupdate");
+    return plugin_eval_ruby("DFHack.onupdate");
 }
 
 DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_change_event e)
@@ -157,7 +155,7 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
 #undef SCASE
     }
 
-    return plugin_eval_rb(cmd);
+    return plugin_eval_ruby(cmd.c_str());
 }
 
 static command_result df_rubyeval(color_ostream &out, std::vector <std::string> & parameters)
@@ -178,7 +176,7 @@ static command_result df_rubyeval(color_ostream &out, std::vector <std::string> 
             full += " ";
     }
 
-    return plugin_eval_rb(full);
+    return plugin_eval_ruby(full.c_str());
 }
 
 

@@ -353,6 +353,7 @@ module DFHack
             end
             def empty? ; length == 0 ; end
             def flatten ; map { |e| e.respond_to?(:flatten) ? e.flatten : e }.flatten ; end
+            def index(elem=nil, &b) ; (0...length).find { |i| b ? b[self[i]] : self[i] == elem } ; end
         end
         class StaticArray < MemStruct
             attr_accessor :_tglen, :_length, :_indexenum, :_tg

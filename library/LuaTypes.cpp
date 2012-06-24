@@ -636,13 +636,35 @@ static int meta_struct_next(lua_State *state)
 }
 
 /**
+ * Field lookup for primitive refs: behave as a quasi-array with numeric indices.
+ */
+static type_identity *find_primitive_field(lua_State *state, int field, const char *mode, uint8_t **ptr)
+{
+    if (lua_type(state, field) == LUA_TNUMBER)
+    {
+        int idx = lua_tointeger(state, field);
+        if (idx < 0)
+            field_error(state, 2, "negative index", mode);
+
+        lua_rawgetp(state, UPVAL_METATABLE, &DFHACK_IDENTITY_FIELD_TOKEN);
+        auto id = (type_identity *)lua_touserdata(state, -1);
+        lua_pop(state, 1);
+
+        *ptr += int(id->byte_size()) * idx;
+        return id;
+    }
+
+    return (type_identity*)find_field(state, field, mode);
+}
+
+/**
  * Metamethod: __index for primitives, i.e. simple object references.
  *   Fields point to identity, or NULL for metafields.
  */
 static int meta_primitive_index(lua_State *state)
 {
     uint8_t *ptr = get_object_addr(state, 1, 2, "read");
-    auto type = (type_identity*)find_field(state, 2, "read");
+    auto type = find_primitive_field(state, 2, "read", &ptr);
     if (!type)
         return 1;
     type->lua_read(state, 2, ptr);
@@ -655,7 +677,7 @@ static int meta_primitive_index(lua_State *state)
 static int meta_primitive_newindex(lua_State *state)
 {
     uint8_t *ptr = get_object_addr(state, 1, 2, "write");
-    auto type = (type_identity*)find_field(state, 2, "write");
+    auto type = find_primitive_field(state, 2, "write", &ptr);
     if (!type)
         field_error(state, 2, "builtin property or method", "write");
     type->lua_write(state, 2, ptr, 3);

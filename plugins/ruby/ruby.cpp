@@ -11,8 +11,6 @@
 
 #include "tinythread.h"
 
-#include <ruby.h>
-
 using namespace DFHack;
 
 
@@ -20,6 +18,8 @@ using namespace DFHack;
 // DFHack stuff
 
 
+static int df_loadruby(void);
+static void df_unloadruby(void);
 static void df_rubythread(void*);
 static command_result df_rubyload(color_ostream &out, std::vector <std::string> & parameters);
 static command_result df_rubyeval(color_ostream &out, std::vector <std::string> & parameters);
@@ -45,6 +45,11 @@ DFHACK_PLUGIN("ruby")
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
+    // fail silently instead of spamming the console with 'failed to initialize' if libruby is not present
+    // the error is still logged in stderr.log
+    if (!df_loadruby())
+        return CR_OK;
+
     m_irun = new tthread::mutex();
     m_mutex = new tthread::mutex();
     r_type = RB_INIT;
@@ -74,9 +79,10 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    m_mutex->lock();
     if (!r_thread)
         return CR_OK;
+
+    m_mutex->lock();
 
     r_type = RB_DIE;
     r_command = 0;
@@ -89,6 +95,8 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     delete m_irun;
     m_mutex->unlock();
     delete m_mutex;
+
+    df_unloadruby();
 
     return CR_OK;
 }
@@ -128,6 +136,9 @@ static command_result plugin_eval_rb(std::string &command)
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
+    if (!r_thread)
+        return CR_OK;
+
     if (!onupdate_active)
         return CR_OK;
 
@@ -136,6 +147,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_change_event e)
 {
+    if (!r_thread)
+        return CR_OK;
+
     std::string cmd = "DFHack.onstatechange ";
     switch (e) {
 #define SCASE(s) case SC_ ## s : cmd += ":" # s ; break
@@ -146,6 +160,7 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
         SCASE(VIEWSCREEN_CHANGED);
         SCASE(CORE_INITIALIZED);
         SCASE(BEGIN_UNLOAD);
+#undef SCASE
     }
 
     return plugin_eval_rb(cmd);
@@ -191,6 +206,113 @@ static command_result df_rubyeval(color_ostream &out, std::vector <std::string> 
 
 // ruby stuff
 
+// ruby-dev on windows is messy
+// ruby.h on linux 64 is broken
+// so we dynamically load libruby instead of linking it at compile time
+// lib path can be set in dfhack.ini to use the system libruby, but by
+// default we'll embed our own (downloaded by cmake)
+
+// these ruby definitions are invalid for windows 64bit
+typedef unsigned long VALUE;
+typedef unsigned long ID;
+
+#define Qfalse ((VALUE)0)
+#define Qtrue  ((VALUE)2)
+#define Qnil   ((VALUE)4)
+
+#define INT2FIX(i) ((VALUE)((((long)i) << 1) | 1))
+#define FIX2INT(i) (((long)i) >> 1)
+#define RUBY_METHOD_FUNC(func) ((VALUE(*)(...))func)
+
+VALUE *rb_eRuntimeError;
+
+void (*ruby_sysinit)(int *, const char ***);
+void (*ruby_init)(void);
+void (*ruby_init_loadpath)(void);
+void (*ruby_script)(const char*);
+void (*ruby_finalize)(void);
+ID (*rb_intern)(const char*);
+VALUE (*rb_raise)(VALUE, const char*, ...);
+VALUE (*rb_funcall)(VALUE, ID, int, ...);
+VALUE (*rb_define_module)(const char*);
+void (*rb_define_singleton_method)(VALUE, const char*, VALUE(*)(...), int);
+void (*rb_define_const)(VALUE, const char*, VALUE);
+void (*rb_load_protect)(VALUE, int, int*);
+VALUE (*rb_gv_get)(const char*);
+VALUE (*rb_str_new)(const char*, long);
+VALUE (*rb_str_new2)(const char*);
+char* (*rb_string_value_ptr)(VALUE*);
+VALUE (*rb_eval_string_protect)(const char*, int*);
+VALUE (*rb_ary_shift)(VALUE);
+VALUE (*rb_float_new)(double);
+double (*rb_num2dbl)(VALUE);
+VALUE (*rb_int2inum)(long);
+VALUE (*rb_uint2inum)(unsigned long);
+unsigned long (*rb_num2ulong)(VALUE);
+// end of rip(ruby.h)
+
+DFHack::DFLibrary *libruby_handle;
+
+// load the ruby library, initialize function pointers
+static int df_loadruby(void)
+{
+    const char *libpath =
+#ifdef WIN32
+        "./libruby.dll";
+#else
+        "hack/libruby.so";
+#endif
+
+    libruby_handle = OpenPlugin(libpath);
+    if (!libruby_handle) {
+        fprintf(stderr, "Cannot initialize ruby plugin: failed to load %s\n", libpath);
+        return 0;
+    }
+
+    if (!(rb_eRuntimeError = (VALUE*)LookupPlugin(libruby_handle, "rb_eRuntimeError")))
+        return 0;
+
+    // XXX does msvc support decltype ? might need a #define decltype typeof
+    // or just assign to *(void**)(&s) = ...
+    // ruby_sysinit is optional (ruby1.9 only)
+    ruby_sysinit = (decltype(ruby_sysinit))LookupPlugin(libruby_handle, "ruby_sysinit");
+#define rbloadsym(s) if (!(s = (decltype(s))LookupPlugin(libruby_handle, #s))) return 0
+    rbloadsym(ruby_init);
+    rbloadsym(ruby_init_loadpath);
+    rbloadsym(ruby_script);
+    rbloadsym(ruby_finalize);
+    rbloadsym(rb_intern);
+    rbloadsym(rb_raise);
+    rbloadsym(rb_funcall);
+    rbloadsym(rb_define_module);
+    rbloadsym(rb_define_singleton_method);
+    rbloadsym(rb_define_const);
+    rbloadsym(rb_load_protect);
+    rbloadsym(rb_gv_get);
+    rbloadsym(rb_str_new);
+    rbloadsym(rb_str_new2);
+    rbloadsym(rb_string_value_ptr);
+    rbloadsym(rb_eval_string_protect);
+    rbloadsym(rb_ary_shift);
+    rbloadsym(rb_float_new);
+    rbloadsym(rb_num2dbl);
+    rbloadsym(rb_int2inum);
+    rbloadsym(rb_uint2inum);
+    rbloadsym(rb_num2ulong);
+#undef rbloadsym
+
+    return 1;
+}
+
+static void df_unloadruby(void)
+{
+    if (libruby_handle) {
+        ClosePlugin(libruby_handle);
+        libruby_handle = 0;
+    }
+}
+
+
 // ruby thread code
 static void dump_rb_error(void)
 {
@@ -217,6 +339,13 @@ static color_ostream_proxy *console_proxy;
 static void df_rubythread(void *p)
 {
     int state, running;
+
+    if (ruby_sysinit) {
+        // ruby1.9 specific API
+        static int argc;
+        static const char *argv[] = { "dfhack", 0 };
+        ruby_sysinit(&argc, (const char ***)&argv);
+    }
 
     // initialize the ruby interpreter
     ruby_init();
@@ -353,7 +482,7 @@ static VALUE rb_dfregister(VALUE self, VALUE name, VALUE descr)
 */
 static VALUE rb_dfregister(VALUE self, VALUE name, VALUE descr)
 {
-    rb_raise(rb_eRuntimeError, "not implemented");
+    rb_raise(*rb_eRuntimeError, "not implemented");
 }
 
 static VALUE rb_dfget_global_address(VALUE self, VALUE name)
@@ -402,7 +531,7 @@ static VALUE rb_dfmalloc(VALUE self, VALUE len)
 {
     char *ptr = (char*)malloc(FIX2INT(len));
     if (!ptr)
-        rb_raise(rb_eRuntimeError, "no memory");
+        rb_raise(*rb_eRuntimeError, "no memory");
     memset(ptr, 0, FIX2INT(len));
     return rb_uint2inum((long)ptr);
 }
@@ -641,7 +770,7 @@ static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE cppvoff, VALUE a0, VALUE
     int ret;
     fptr = (decltype(fptr))*(void**)(*that + rb_num2ulong(cppvoff));
     ret = fptr(that, rb_num2ulong(a0), rb_num2ulong(a1), rb_num2ulong(a2), rb_num2ulong(a3));
-    return rb_uint2inum(ret);
+    return rb_int2inum(ret);
 }
 
 

@@ -124,34 +124,99 @@ string Process::doReadClassName (void * vptr)
     return raw.substr(start,end-start);
 }
 
-//FIXME: cross-reference with ELF segment entries?
+#include <mach/mach.h>
+#include <mach/mach_vm.h>
+#include <mach/vm_region.h>
+#include <mach/vm_statistics.h>
+#include <dlfcn.h>
+
+const char *
+inheritance_strings[] = {
+    "SHARE", "COPY", "NONE", "DONATE_COPY",
+};
+
+const char *
+behavior_strings[] = {
+    "DEFAULT", "RANDOM", "SEQUENTIAL", "RESQNTL", "WILLNEED", "DONTNEED",
+};
+
 void Process::getMemRanges( vector<t_memrange> & ranges )
 {
-    char buffer[1024];
-    char permissions[5]; // r/-, w/-, x/-, p/s, 0
 
-    FILE *mapFile = ::fopen("/proc/self/maps", "r");
-    size_t start, end, offset, device1, device2, node;
+    kern_return_t kr;
+    task_t the_task;
 
-    while (fgets(buffer, 1024, mapFile))
-    {
-        t_memrange temp;
-        temp.name[0] = 0;
-        sscanf(buffer, "%zx-%zx %s %zx %2zx:%2zx %zu %[^\n]",
-               &start,
-               &end,
-               (char*)&permissions,
-               &offset, &device1, &device2, &node,
-               (char*)temp.name);
-        temp.start = (void *) start;
-        temp.end = (void *) end;
-        temp.read = permissions[0] == 'r';
-        temp.write = permissions[1] == 'w';
-        temp.execute = permissions[2] == 'x';
-        temp.shared = permissions[3] == 's';
-        temp.valid = true;
-        ranges.push_back(temp);
-    }
+    the_task = mach_task_self();
+
+    vm_size_t vmsize;
+    vm_address_t address;
+    vm_region_basic_info_data_t info;
+    mach_msg_type_number_t info_count;
+    vm_region_flavor_t flavor;
+    memory_object_name_t object;
+
+    kr = KERN_SUCCESS;
+    address = 0;
+
+    do {
+        flavor = VM_REGION_BASIC_INFO;
+        info_count = VM_REGION_BASIC_INFO_COUNT;
+        kr = vm_region(the_task, &address, &vmsize, flavor,
+                       (vm_region_info_t)&info, &info_count, &object);
+        if (kr == KERN_SUCCESS) {
+            if (info.reserved==1) {
+				address += vmsize;
+            	continue;
+            }
+            Dl_info dlinfo;
+            int dlcheck;
+            dlcheck = dladdr((const void*)address, &dlinfo);
+            if (dlcheck==0) {
+            	dlinfo.dli_fname = "";
+            }
+            
+            t_memrange temp;
+			strncpy( temp.name, dlinfo.dli_fname, 1023 );
+			temp.name[1023] = 0;
+			temp.start = (void *) address;
+			temp.end = (void *) (address+vmsize);
+			temp.read = (info.protection & VM_PROT_READ);
+			temp.write = (info.protection & VM_PROT_WRITE);
+			temp.execute = (info.protection & VM_PROT_EXECUTE);
+			temp.shared = info.shared;
+			temp.valid = true;
+			ranges.push_back(temp);
+			
+			fprintf(stderr,
+            "%08x-%08x %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
+                            address, (address + vmsize), (vmsize >> 10),
+                            (info.protection & VM_PROT_READ)        ? 'r' : '-',
+                            (info.protection & VM_PROT_WRITE)       ? 'w' : '-',
+                            (info.protection & VM_PROT_EXECUTE)     ? 'x' : '-',
+                            (info.max_protection & VM_PROT_READ)    ? 'r' : '-',
+                            (info.max_protection & VM_PROT_WRITE)   ? 'w' : '-',
+                            (info.max_protection & VM_PROT_EXECUTE) ? 'x' : '-',
+                            inheritance_strings[info.inheritance],
+                            (info.shared) ? "shared" : "-",
+                            behavior_strings[info.behavior],
+                            info.user_wired_count,
+                            info.reserved,
+                            dlinfo.dli_fname);
+			
+            address += vmsize;
+        } else if (kr != KERN_INVALID_ADDRESS) {
+
+            /*if (the_task != MACH_PORT_NULL) {
+                mach_port_deallocate(mach_task_self(), the_task);
+            }*/
+            return;
+        }
+    } while (kr != KERN_INVALID_ADDRESS);
+
+
+/*    if (the_task != MACH_PORT_NULL) {
+        mach_port_deallocate(mach_task_self(), the_task);
+    }*/
 }
 
 uint32_t Process::getBase()

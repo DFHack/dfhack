@@ -160,6 +160,17 @@ INSTANTIATE_WRAPPERS(6, (OSTREAM_ARG,A1,A2,A3,A4,A5,A6), (out,vA1,vA2,vA3,vA4,vA
 
 #define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7
 INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7))
+INSTANTIATE_WRAPPERS(7, (A1,A2,A3,A4,A5,A6,A7), (vA1,vA2,vA3,vA4,vA5,vA6,vA7),
+                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);
+                     LOAD_ARG(A4); LOAD_ARG(A5); LOAD_ARG(A6);
+                     LOAD_ARG(A7);)
+INSTANTIATE_WRAPPERS(7, (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7), (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7),
+                     LOAD_OSTREAM(out); LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);
+                     LOAD_ARG(A4); LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7);)
+#undef FW_TARGS
+
+#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8
+INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7,A8))
 #undef FW_TARGS
 
 #undef FW_TARGSC

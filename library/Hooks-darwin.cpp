@@ -83,8 +83,8 @@ DFhackCExport void SDL_Quit(void)
 }
 
 // called by DF to check input events
-static int (*_SDL_PollEvent)(SDL_Event* event) = 0;
-DFhackCExport int SDL_PollEvent(SDL_Event* event)
+static int (*_SDL_PollEvent)(SDL::Event* event) = 0;
+DFhackCExport int SDL_PollEvent(SDL::Event* event)
 {
     pollevent_again:
     // if SDL returns 0 here, it means there are no more events. return 0
@@ -140,7 +140,7 @@ DFhackCExport int SDL_Init(uint32_t flags)
     fprintf(stderr,"dfhack: saving real SDL functions\n");
     _SDL_Init = (int (*)( uint32_t )) dlsym(RTLD_NEXT, "SDL_Init");
     _SDL_Quit = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_Quit");
-    _SDL_PollEvent = (int (*)(SDL_Event*))dlsym(RTLD_NEXT,"SDL_PollEvent");
+    _SDL_PollEvent = (int (*)(SDL::Event*))dlsym(RTLD_NEXT,"SDL_PollEvent");
 
     fprintf(stderr,"dfhack: saved real SDL functions\n");
     // check if we got them

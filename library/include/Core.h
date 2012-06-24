@@ -33,7 +33,6 @@ distribution.
 #include <stdint.h>
 #include "Console.h"
 #include "modules/Graphic.h"
-#include "SDL_events.h"
 
 #include "RemoteClient.h"
 
@@ -86,14 +85,14 @@ namespace DFHack
     {
         friend int  ::SDL_NumJoysticks(void);
         friend void ::SDL_Quit(void);
-        friend int  ::SDL_PollEvent(SDL_Event *);
+        friend int  ::SDL_PollEvent(SDL::Event *);
         friend int  ::SDL_Init(uint32_t flags);
         friend int  ::wgetch(WINDOW * w);
         friend int  ::egg_init(void);
         friend int  ::egg_shutdown(void);
         friend int  ::egg_tick(void);
         friend int  ::egg_prerender(void);
-        friend int  ::egg_sdl_event(SDL_Event* event);
+        friend int  ::egg_sdl_event(SDL::Event* event);
         friend int  ::egg_curses_event(int orig_return);
     public:
         /// Get the single Core instance or make one.
@@ -170,7 +169,7 @@ namespace DFHack
         int Update (void);
         int TileUpdate (void);
         int Shutdown (void);
-        int DFH_SDL_Event(SDL_Event* event);
+        int DFH_SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);
 
         void onUpdate(color_ostream &out);
@@ -215,7 +214,6 @@ namespace DFHack
         tthread::mutex * HotkeyMutex;
         tthread::condition_variable * HotkeyCond;
 
-        int UnicodeAwareSym(const SDL_KeyboardEvent& ke);
         bool SelectHotkey(int key, int modifiers);
 
         // for state change tracking

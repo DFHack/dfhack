@@ -2,7 +2,6 @@ module DFHack
 
 # allocate a new building object
 def self.building_alloc(type, subtype=-1, custom=-1)
-	type = BuildingType.to_sym(type)
 	cls = rtti_n2c[BuildingType::Classname[type].to_sym]
 	raise "invalid building type #{type.inspect}" if not cls
 	bld = cls.cpp_new

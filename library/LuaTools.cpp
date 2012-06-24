@@ -66,6 +66,8 @@ using namespace DFHack::LuaWrapper;
 
 lua_State *DFHack::Lua::Core::State = NULL;
 
+void dfhack_printerr(lua_State *S, const std::string &str);
+
 inline void AssertCoreSuspend(lua_State *state)
 {
     assert(!Lua::IsCoreContext(state) || DFHack::Core::getInstance().isSuspended());
@@ -95,8 +97,6 @@ static void check_valid_ptr_index(lua_State *state, int val_index)
             luaL_error(state, "at index %d: pointer expected", val_index);
     }
 }
-
-static void dfhack_printerr(lua_State *S, const std::string &str);
 
 static void signal_typeid_error(color_ostream *out, lua_State *state,
                                 type_identity *type, const char *msg,
@@ -233,7 +233,7 @@ static int lua_dfhack_println(lua_State *S)
     return 0;
 }
 
-static void dfhack_printerr(lua_State *S, const std::string &str)
+void dfhack_printerr(lua_State *S, const std::string &str)
 {
     if (color_ostream *out = Lua::GetOutput(S))
         out->printerr("%s\n", str.c_str());

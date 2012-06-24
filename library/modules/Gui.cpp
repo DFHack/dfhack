@@ -58,12 +58,14 @@ using namespace DFHack;
 #include "df/viewscreen_layer_overall_healthst.h"
 #include "df/viewscreen_layer_assigntradest.h"
 #include "df/viewscreen_layer_militaryst.h"
+#include "df/viewscreen_layer_stockpilest.h"
 #include "df/viewscreen_petst.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_storesst.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/ui_sidebar_menus.h"
 #include "df/ui_look_list.h"
+#include "df/ui_advmode.h"
 #include "df/job.h"
 #include "df/ui_build_selector.h"
 #include "df/building_workshopst.h"
@@ -273,7 +275,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         break;
 
     case Burrows:
-        if (ui->burrows.in_add_units_mode)
+        if (ui->burrows.in_confirm_delete)
+            focus += "/ConfirmDelete";
+        else if (ui->burrows.in_add_units_mode)
             focus += "/AddUnits";
         else if (ui->burrows.in_edit_name_mode)
             focus += "/EditName";
@@ -286,6 +290,16 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     default:
         break;
     }
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
+{
+    using df::global::ui_advmode;
+
+    if (!ui_advmode)
+        return;
+
+    focus += "/" + enum_item_key(ui_advmode->menu);
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(unitlist)
@@ -407,6 +421,35 @@ DEFINE_GET_FOCUS_STRING_HANDLER(stores)
         focus += "/Items";
 }
 
+DEFINE_GET_FOCUS_STRING_HANDLER(layer_stockpile)
+{
+    auto list1 = getLayerList(screen, 0);
+    auto list2 = getLayerList(screen, 1);
+    auto list3 = getLayerList(screen, 2);
+    if (!list1 || !list2 || !list3 || !screen->settings) return;
+
+    auto group = screen->cur_group;
+    if (group != vector_get(screen->group_ids, list1->cursor))
+        return;
+
+    focus += "/" + enum_item_key(group);
+
+    auto bits = vector_get(screen->group_bits, list1->cursor);
+    if (bits.whole && !(bits.whole & screen->settings->flags.whole))
+    {
+        focus += "/Off";
+        return;
+    }
+
+    focus += "/On";
+
+    if (list2->bright || list3->bright || screen->list_ids.empty()) {
+        focus += "/" + enum_item_key(screen->cur_list);
+
+        if (list3->bright)
+            focus += (screen->item_names.empty() ? "/None" : "/Item");
+    }
+}
 
 std::string Gui::getFocusString(df::viewscreen *top)
 {

@@ -1,29 +1,33 @@
-find_package(Ruby)
-if(RUBY_FOUND)
-    ADD_CUSTOM_COMMAND(
-        OUTPUT ruby-autogen.cpp
-        COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen.pl ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml ${CMAKE_CURRENT_BINARY_DIR}/ruby-autogen.cpp
-        DEPENDS ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml codegen.pl
-    )
-    ADD_EXECUTABLE(ruby-autogen ruby-autogen.cpp)
-    if(CMAKE_COMPILER_IS_GNUCC)
-        set_target_properties (ruby-autogen PROPERTIES COMPILE_FLAGS "-Wno-invalid-offsetof")
-    endif(CMAKE_COMPILER_IS_GNUCC)
-    ADD_CUSTOM_COMMAND(
-        OUTPUT ruby-autogen.offsets
-        COMMAND ruby-autogen ${CMAKE_CURRENT_BINARY_DIR}/ruby-autogen.offsets
-        DEPENDS ruby-autogen
-    )
-    ADD_CUSTOM_COMMAND(
-        OUTPUT ruby-autogen.rb
-	COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen.pl ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml ${CMAKE_CURRENT_SOURCE_DIR}/ruby-autogen.rb ${CMAKE_CURRENT_BINARY_DIR}/ruby-autogen.offsets ${CMAKE_CURRENT_SOURCE_DIR}/ruby-memstruct.rb
-        DEPENDS ruby-autogen.offsets ruby-memstruct.rb
-    )
-    ADD_CUSTOM_TARGET(ruby-autogen-rb ALL DEPENDS ruby-autogen.rb)
-    include_directories("${dfhack_SOURCE_DIR}/depends/tthread" ${RUBY_INCLUDE_PATH})
-    DFHACK_PLUGIN(ruby ruby.cpp LINK_LIBRARIES dfhack-tinythread)
-    target_link_libraries(ruby ${RUBY_LIBRARY})
-    install(FILES ruby.rb ruby-autogen.rb DESTINATION ${DFHACK_LIBRARY_DESTINATION})
-else(RUBY_FOUND)
-    MESSAGE(STATUS "Required library (ruby) not found - ruby plugin can't be built.")
-endif(RUBY_FOUND)
+OPTION(DL_RUBY "download libruby from the internet" ON)
+IF (DL_RUBY)
+    IF (UNIX)
+        FILE(DOWNLOAD http://cloud.github.com/downloads/jjyg/dfhack/libruby187.tar.gz ${CMAKE_CURRENT_SOURCE_DIR}/libruby187.tar.gz
+            EXPECTED_MD5 eb2adea59911f68e6066966c1352f291)
+        EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xzf libruby187.tar.gz
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+        FILE(RENAME libruby1.8.so.1.8.7 libruby.so)
+        SET(RUBYLIB libruby.so)
+    ELSE (UNIX)
+        FILE(DOWNLOAD http://cloud.github.com/downloads/jjyg/dfhack/msvcrtruby187.tar.gz ${CMAKE_CURRENT_SOURCE_DIR}/msvcrtruby187.tar.gz
+            EXPECTED_MD5 9f4a1659ac3a5308f32d3a1937bbeeae)
+        EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xzf msvcrtruby187.tar.gz
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+        FILE(RENAME msvcrt-ruby18.dll libruby.dll)
+        SET(RUBYLIB libruby.dll)
+    ENDIF(UNIX)
+ENDIF(DL_RUBY)
+
+ADD_CUSTOM_COMMAND(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/ruby-autogen.rb
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen.pl ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml ${CMAKE_CURRENT_SOURCE_DIR}/ruby-autogen.rb
+    DEPENDS ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml ${CMAKE_CURRENT_SOURCE_DIR}/codegen.pl
+    COMMENT ruby-autogen.rb
+)
+ADD_CUSTOM_TARGET(ruby-autogen-rb DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ruby-autogen.rb)
+
+INCLUDE_DIRECTORIES("${dfhack_SOURCE_DIR}/depends/tthread")
+
+DFHACK_PLUGIN(ruby ruby.cpp LINK_LIBRARIES dfhack-tinythread)
+ADD_DEPENDENCIES(ruby ruby-autogen-rb)
+
+INSTALL(FILES ruby.rb ruby-autogen.rb ${RUBYLIB} DESTINATION ${DFHACK_LIBRARY_DESTINATION})

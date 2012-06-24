@@ -121,6 +121,12 @@ or as a result of calling the ``_field()`` method.
 
 They behave as structs with one field ``value`` of the right type.
 
+To make working with numeric buffers easier, they also allow
+numeric indices. Note that other than excluding negative values
+no bound checking is performed, since buffer length is not available.
+Index 0 is equivalent to the ``value`` field.
+
+
 Struct references
 -----------------
 
@@ -219,11 +225,20 @@ Bitfield references
 -------------------
 
 Bitfields behave like special fixed-size containers.
-The ``_enum`` property points to the bitfield type.
+Consider them to be something in between structs and
+fixed-size vectors.
 
+The ``_enum`` property points to the bitfield type.
 Numerical indices correspond to the shift value,
 and if a subfield occupies multiple bits, the
 ``ipairs`` order would have a gap.
+
+Since currently there is no API to allocate a bitfield
+object fully in GC-managed lua heap, consider using the
+lua table assignment feature outlined below in order to
+pass bitfield values to dfhack API functions that need
+them, e.g. ``matinfo:matches{metal=true}``.
+
 
 Named types
 ===========
@@ -307,6 +322,24 @@ The ``df`` table itself contains the following functions and values:
 * ``df.is_instance(type,obj)``
 
   Equivalent to the method, but also allows a reference as proxy for its type.
+
+* ``df.new(ptype[,count])``
+
+  Allocate a new instance, or an array of built-in types.
+  The ``ptype`` argument is a string from the following list:
+  ``string``, ``int8_t``, ``uint8_t``, ``int16_t``, ``uint16_t``,
+  ``int32_t``, ``uint32_t``, ``int64_t``, ``uint64_t``, ``bool``,
+  ``float``, ``double``. All of these except ``string`` can be
+  used with the count argument to allocate an array.
+
+* ``df.reinterpret_cast(type,ptr)``
+
+  Converts ptr to a ref of specified type. The type may be anything
+  acceptable to ``df.is_instance``. Ptr may be *nil*, a ref,
+  a lightuserdata, or a number.
+
+  Returns *nil* if NULL, or a ref.
+
 
 Recursive table assignment
 ==========================
@@ -458,6 +491,13 @@ Currently it defines the following features:
 
   Compares to coroutine.resume like dfhack.safecall vs pcall.
 
+* ``dfhack.run_script(name[,args...])``
+
+  Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
+  The ``name`` argument should be the name stem, as would be used on the command line.
+  Note that the script is re-read from the file every time it is called, and errors
+  are propagated to the caller.
+
 * ``dfhack.with_suspend(f[,args...])``
 
   Calls ``f`` with arguments after grabbing the DF core suspend lock.
@@ -598,6 +638,22 @@ One notable difference is that these explicit wrappers allow argument count
 adjustment according to the usual lua rules, so trailing false/nil arguments
 can be omitted.
 
+* ``dfhack.getOSType()``
+
+  Returns the OS type string from ``symbols.xml``.
+
+* ``dfhack.getDFVersion()``
+
+  Returns the DF version string from ``symbols.xml``.
+
+* ``dfhack.getDFPath()``
+
+  Returns the DF directory path.
+
+* ``dfhack.getHackPath()``
+
+  Returns the dfhack directory path, i.e. ``".../df/hack/"``.
+
 * ``dfhack.isWorldLoaded()``
 
   Checks if the world is loaded.
@@ -726,7 +782,7 @@ Units module
 
 * ``dfhack.units.isDead(unit)``
 
-  The unit is completely dead and passive.
+  The unit is completely dead and passive, or a ghost.
 
 * ``dfhack.units.isAlive(unit)``
 
@@ -734,7 +790,16 @@ Units module
 
 * ``dfhack.units.isSane(unit)``
 
-  The unit is capable of rational action, i.e. not dead, insane or zombie.
+  The unit is capable of rational action, i.e. not dead, insane, zombie, or active werewolf.
+
+* ``dfhack.units.isDwarf(unit)``
+
+  The unit is of the correct race of the fortress.
+
+* ``dfhack.units.isCitizen(unit)``
+
+  The unit is an alive sane citizen of the fortress; wraps the
+  same checks the game uses to decide game-over by extinction.
 
 * ``dfhack.units.getAge(unit[,true_age])``
 
@@ -1082,6 +1147,58 @@ Constructions module
   If there is a construction or a planned construction at the specified
   coordinates, designates it for removal, or instantly cancels the planned one.
   Returns *true, was_only_planned* if removed; or *false* if none found.
+
+
+Internal API
+------------
+
+These functions are intended for the use by dfhack developers,
+and are only documented here for completeness:
+
+* ``dfhack.internal.scripts``
+
+  The table used by ``dfhack.run_script()`` to give every script its own
+  global environment, persistent between calls to the script.
+
+* ``dfhack.internal.getAddress(name)``
+
+  Returns the global address ``name``, or *nil*.
+
+* ``dfhack.internal.setAddress(name, value)``
+
+  Sets the global address ``name``. Returns the value of ``getAddress`` before the change.
+
+* ``dfhack.internal.getVTable(name)``
+
+  Returns the pre-extracted vtable address ``name``, or *nil*.
+
+* ``dfhack.internal.getBase()``
+
+  Returns the base address of the process.
+
+* ``dfhack.internal.getMemRanges()``
+
+  Returns a sequence of tables describing virtual memory ranges of the process.
+
+* ``dfhack.internal.memmove(dest,src,count)``
+
+  Wraps the standard memmove function. Accepts both numbers and refs as pointers.
+
+* ``dfhack.internal.memcmp(ptr1,ptr2,count)``
+
+  Wraps the standard memcmp function.
+
+* ``dfhack.internal.memscan(haystack,count,step,needle,nsize)``
+
+  Searches for ``needle`` of ``nsize`` bytes in ``haystack``,
+  using ``count`` steps of ``step`` bytes.
+  Returns: *step_idx, sum_idx, found_ptr*, or *nil* if not found.
+
+* ``dfhack.internal.diffscan(old_data, new_data, start_idx, end_idx, eltsize[, oldval, newval, delta])``
+
+  Searches for differences between buffers at ptr1 and ptr2, as integers of size eltsize.
+  The oldval, newval or delta arguments may be used to specify additional constraints.
+  Returns: *found_index*, or *nil* if end reached.
 
 
 Core interpreter context

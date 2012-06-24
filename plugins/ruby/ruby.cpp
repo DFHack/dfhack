@@ -761,22 +761,49 @@ static VALUE rb_dfmemory_bitarray_set(VALUE self, VALUE addr, VALUE idx, VALUE v
 
 
 /* call an arbitrary object virtual method */
+#ifdef WIN32
+__declspec(naked) static int raw_vcall(char **that, unsigned long voff, unsigned long a0,
+        unsigned long a1, unsigned long a2, unsigned long a3)
+{
+    // __thiscall requires that the callee cleans up the stack
+    // here we dont know how many arguments it will take, so
+    // we simply fix esp across the funcall
+    __asm {
+        push ebp
+        mov ebp, esp
+
+        push a3
+        push a2
+        push a1
+        push a0
+
+        mov ecx, that
+
+        mov eax, [ecx]
+        add eax, voff
+        call [eax]
+
+        mov esp, ebp
+        pop ebp
+        ret
+    }
+}
+#else
+static int raw_vcall(char **that, unsigned long voff, unsigned long a0,
+        unsigned long a1, unsigned long a2, unsigned long a3)
+{
+    int (*fptr)(char **me, int, int, int, int);
+    fptr = (decltype(fptr))*(void**)(*that + voff);
+    return fptr(that, a0, a1, a2, a3);
+}
+#endif
+
+// call an arbitrary vmethod, convert args/ret to native values for raw_vcall
 static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE cppvoff, VALUE a0, VALUE a1, VALUE a2, VALUE a3)
 {
-#ifdef WIN32
-    int (__fastcall *fptr)(char **me, int dummy_edx, int, int, int, int);
-#else
-    int (*fptr)(char **me, int, int, int, int);
-#endif
-    char **that = (char**)rb_num2ulong(cppobj);
-    int ret;
-    fptr = (decltype(fptr))*(void**)(*that + rb_num2ulong(cppvoff));
-    ret = fptr(that,
-#ifdef WIN32
-            0,
-#endif
-            rb_num2ulong(a0), rb_num2ulong(a1), rb_num2ulong(a2), rb_num2ulong(a3));
-    return rb_int2inum(ret);
+    return rb_int2inum(raw_vcall((char**)rb_num2ulong(cppobj), rb_num2ulong(cppvoff),
+                rb_num2ulong(a0), rb_num2ulong(a1),
+                rb_num2ulong(a2), rb_num2ulong(a3)));
 }
 
 

@@ -1,3 +1,26 @@
+module Kernel
+    def puts(*a)
+        a.flatten.each { |l|
+            DFHack.print_str(l.to_s.chomp + "\n")
+        }
+        nil
+    end
+
+    def puts_err(*a)
+        a.flatten.each { |l|
+            DFHack.print_err(l.to_s.chomp + "\n")
+        }
+        nil
+    end
+
+    def p(*a)
+        a.each { |e|
+            puts_err e.inspect
+        }
+        nil
+    end
+end
+
 module DFHack
     class << self
         # update the ruby.cpp version to accept a block
@@ -11,28 +34,6 @@ module DFHack
                 end
             else
                 do_suspend
-            end
-        end
-
-        module ::Kernel
-            def puts(*a)
-                a.flatten.each { |l|
-                    DFHack.print_str(l.to_s.chomp + "\n")
-                }
-                nil
-            end
-
-            def puts_err(*a)
-                a.flatten.each { |l|
-                    DFHack.print_err(l.to_s.chomp + "\n")
-                }
-                nil
-            end
-
-            def p(*a)
-                a.each { |e|
-                    puts_err e.inspect
-                }
             end
         end
 
@@ -1047,8 +1048,7 @@ end
 
 end
 
-# load autogen'd file
-File.exist?('hack/ruby-autogen.rb') ? require('hack/ruby-autogen') : require('ruby-autogen')
-
-# load optional user-specified startup file
-load 'ruby_custom.rb' if File.exist?('ruby_custom.rb')
+# load autogenned file
+require './hack/ruby/ruby-autogen'
+# load all modules
+Dir['./hack/ruby/*.rb'].each { |m| require m.chomp('.rb') }

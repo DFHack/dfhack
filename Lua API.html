@@ -360,13 +360,18 @@ ul.auto-toc {
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#modules" id="id29">Modules</a></li>
-<li><a class="reference internal" href="#plugins" id="id30">Plugins</a><ul>
-<li><a class="reference internal" href="#burrows" id="id31">burrows</a></li>
-<li><a class="reference internal" href="#sort" id="id32">sort</a></li>
+<li><a class="reference internal" href="#lua-modules" id="id29">Lua Modules</a><ul>
+<li><a class="reference internal" href="#global-environment" id="id30">Global environment</a></li>
+<li><a class="reference internal" href="#utils" id="id31">utils</a></li>
+<li><a class="reference internal" href="#dumper" id="id32">dumper</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#scripts" id="id33">Scripts</a></li>
+<li><a class="reference internal" href="#plugins" id="id33">Plugins</a><ul>
+<li><a class="reference internal" href="#burrows" id="id34">burrows</a></li>
+<li><a class="reference internal" href="#sort" id="id35">sort</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#scripts" id="id36">Scripts</a></li>
 </ul>
 </div>
 <p>The current version of DFHack has extensive support for
@@ -381,7 +386,7 @@ structures, and interaction with dfhack itself.</li>
 are treated by DFHack command line prompt almost as
 native C++ commands, and invoked by plugins written in c++.</p>
 <p>This document describes native API available to Lua in detail.
-For the most part it does not describe utility functions
+It does not describe all of the utility functions
 implemented by Lua files located in hack/lua/...</p>
 <div class="section" id="df-data-structure-wrapper">
 <h1><a class="toc-backref" href="#id1">DF data structure wrapper</a></h1>
@@ -1480,14 +1485,14 @@ order using <tt class="docutils literal">dfhack.safecall</tt>.</p>
 </div>
 </div>
 </div>
-<div class="section" id="modules">
-<h1><a class="toc-backref" href="#id29">Modules</a></h1>
+<div class="section" id="lua-modules">
+<h1><a class="toc-backref" href="#id29">Lua Modules</a></h1>
 <p>DFHack sets up the lua interpreter so that the built-in <tt class="docutils literal">require</tt>
 function can be used to load shared lua code from hack/lua/.
 The <tt class="docutils literal">dfhack</tt> namespace reference itself may be obtained via
 <tt class="docutils literal"><span class="pre">require('dfhack')</span></tt>, although it is initially created as a
 global by C++ bootstrap code.</p>
-<p>The following functions are provided:</p>
+<p>The following module management functions are provided:</p>
 <ul>
 <li><p class="first"><tt class="docutils literal">mkmodule(name)</tt></p>
 <p>Creates an environment table for the module. Intended to be used as:</p>
@@ -1509,16 +1514,172 @@ should be kept limited to the standard Lua library and API described
 in this document.</p>
 </li>
 </ul>
+<div class="section" id="global-environment">
+<h2><a class="toc-backref" href="#id30">Global environment</a></h2>
+<p>A number of variables and functions are provided in the base global
+environment by the mandatory init file dfhack.lua:</p>
+<ul>
+<li><p class="first">Color constants</p>
+<p>These are applicable both for <tt class="docutils literal">dfhack.color()</tt> and color fields
+in DF functions or structures:</p>
+<p>COLOR_RESET, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN,
+COLOR_RED, COLOR_MAGENTA, COLOR_BROWN, COLOR_GREY, COLOR_DARKGREY,
+COLOR_LIGHTBLUE, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN, COLOR_LIGHTRED,
+COLOR_LIGHTMAGENTA, COLOR_YELLOW, COLOR_WHITE</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.onStateChange</tt> event codes</p>
+<p>Available only in the core context, as is the event itself:</p>
+<p>SC_WORLD_LOADED, SC_WORLD_UNLOADED, SC_MAP_LOADED,
+SC_MAP_UNLOADED, SC_VIEWSCREEN_CHANGED, SC_CORE_INITIALIZED</p>
+</li>
+<li><p class="first">Functions already described above</p>
+<p>safecall, qerror, mkmodule, reload</p>
+</li>
+<li><p class="first"><tt class="docutils literal">printall(obj)</tt></p>
+<p>If the argument is a lua table or DF object reference, prints all fields.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">copyall(obj)</tt></p>
+<p>Returns a shallow copy of the table or reference as a lua table.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">pos2xyz(obj)</tt></p>
+<p>The object must have fields x, y and z. Returns them as 3 values.
+If obj is <em>nil</em>, or x is -30000 (the usual marker for undefined
+coordinates), returns <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">xyz2pos(x,y,z)</tt></p>
+<p>Returns a table with x, y and z as fields.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">safe_index(obj,index...)</span></tt></p>
+<p>Walks a sequence of dereferences, which may be represented by numbers or strings.
+Returns <em>nil</em> if any of obj or indices is <em>nil</em>, or a numeric index is out of array bounds.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="utils">
+<h2><a class="toc-backref" href="#id31">utils</a></h2>
+<ul>
+<li><p class="first"><tt class="docutils literal">utils.compare(a,b)</tt></p>
+<p>Comparator function; returns <em>-1</em> if a&lt;b, <em>1</em> if a&gt;b, <em>0</em> otherwise.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.compare_name(a,b)</tt></p>
+<p>Comparator for names; compares empty string last.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.is_container(obj)</tt></p>
+<p>Checks if obj is a container ref.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.make_index_sequence(start,end)</tt></p>
+<p>Returns a lua sequence of numbers in start..end.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.make_sort_order(data, ordering)</tt></p>
+<p>Computes an ordering of objects in data, as a table of integer
+indices into the data sequence. Uses <tt class="docutils literal">data.n</tt> as input length
+if present.</p>
+<p>The ordering argument is a sequence of ordering specs, represented
+as lua tables with following possible fields:</p>
+<dl class="docutils">
+<dt>ord.key = <em>function(value)</em></dt>
+<dd><p class="first last">Computes comparison key from a data value. Not called on nil.
+If omitted, the comparison key is the value itself.</p>
+</dd>
+<dt>ord.key_table = <em>function(data)</em></dt>
+<dd><p class="first last">Computes a key table from the data table in one go.</p>
+</dd>
+<dt>ord.compare = <em>function(a,b)</em></dt>
+<dd><p class="first last">Comparison function. Defaults to <tt class="docutils literal">utils.compare</tt> above.
+Called on non-nil keys; nil sorts last.</p>
+</dd>
+<dt>ord.nil_first = <em>true/false</em></dt>
+<dd><p class="first last">If true, nil keys are sorted first instead of last.</p>
+</dd>
+<dt>ord.reverse = <em>true/false</em></dt>
+<dd><p class="first last">If true, sort non-nil keys in descending order.</p>
+</dd>
+</dl>
+<p>This function is used by the sort plugin.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.assign(tgt, src)</tt></p>
+<p>Does a recursive assignment of src into tgt.
+Uses <tt class="docutils literal">df.assign</tt> if tgt is a native object ref; otherwise
+recurses into lua tables.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.clone(obj, deep)</tt></p>
+<p>Performs a shallow, or semi-deep copy of the object as a lua table tree.
+The deep mode recurses into lua tables and subobjects, except pointers
+to other heap objects.
+Null pointers are represented as df.NULL. Zero-based native containers
+are converted to 1-based lua sequences.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.clone_with_default(obj, default, force)</tt></p>
+<p>Copies the object, using the <tt class="docutils literal">default</tt> lua table tree
+as a guide to which values should be skipped as uninteresting.
+The <tt class="docutils literal">force</tt> argument makes it always return a non-<em>nil</em> value.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.sort_vector(vector,field,cmpfun)</tt></p>
+<p>Sorts a native vector or lua sequence using the comparator function.
+If <tt class="docutils literal">field</tt> is not <em>nil</em>, applies the comparator to the field instead
+of the whole object.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.binsearch(vector,key,field,cmpfun,min,max)</tt></p>
+<p>Does a binary search in a native vector or lua sequence for
+<tt class="docutils literal">key</tt>, using <tt class="docutils literal">cmpfun</tt> and <tt class="docutils literal">field</tt> like sort_vector.
+If <tt class="docutils literal">min</tt> and <tt class="docutils literal">max</tt> are specified, they are used as the
+search subrange bounds.</p>
+<p>If found, returns <em>item, true, idx</em>. Otherwise returns
+<em>nil, false, insert_idx</em>, where <em>insert_idx</em> is the correct
+insertion point.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.insert_sorted(vector,item,field,cmpfun)</tt></p>
+<p>Does a binary search, and inserts item if not found.
+Returns <em>did_insert, vector[idx], idx</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.insert_or_update(vector,item,field,cmpfun)</tt></p>
+<p>Like <tt class="docutils literal">insert_sorted</tt>, but also assigns the item into
+the vector cell if insertion didn't happen.</p>
+<p>As an example, you can use this to set skill values:</p>
+<pre class="literal-block">
+utils.insert_or_update(soul.skills, {new=true, id=..., rating=...}, 'id')
+</pre>
+<p>(For an explanation of <tt class="docutils literal">new=true</tt>, see table assignment in the wrapper section)</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.prompt_yes_no(prompt, default)</tt></p>
+<p>Presents a yes/no prompt to the user. If <tt class="docutils literal">default</tt> is not <em>nil</em>,
+allows just pressing Enter to submit the default choice.
+If the user enters <tt class="docutils literal">'abort'</tt>, throws an error.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.prompt_input(prompt, checkfun, quit_str)</tt></p>
+<p>Presents a prompt to input data, until a valid string is entered.
+Once <tt class="docutils literal">checkfun(input)</tt> returns <em>true, ...</em>, passes the values
+through. If the user enters the quit_str (defaults to <tt class="docutils literal"><span class="pre">'~~~'</span></tt>),
+throws an error.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.check_number(text)</tt></p>
+<p>A <tt class="docutils literal">prompt_input</tt> <tt class="docutils literal">checkfun</tt> that verifies a number input.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="dumper">
+<h2><a class="toc-backref" href="#id32">dumper</a></h2>
+<p>A third-party lua table dumper module from
+<a class="reference external" href="http://lua-users.org/wiki/DataDumper">http://lua-users.org/wiki/DataDumper</a>. Defines one
+function:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">dumper.DataDumper(value, varname, fastmode, ident, indent_step)</tt></p>
+<p>Returns <tt class="docutils literal">value</tt> converted to a string. The <tt class="docutils literal">indent_step</tt>
+argument specifies the indentation step size in spaces. For
+the other arguments see the original documentation link above.</p>
+</li>
+</ul>
+</div>
 </div>
 <div class="section" id="plugins">
-<h1><a class="toc-backref" href="#id30">Plugins</a></h1>
+<h1><a class="toc-backref" href="#id33">Plugins</a></h1>
 <p>DFHack plugins may export native functions and events
 to lua contexts. They are automatically imported by
 <tt class="docutils literal"><span class="pre">mkmodule('plugins.&lt;name&gt;')</span></tt>; this means that a lua
 module file is still necessary for <tt class="docutils literal">require</tt> to read.</p>
 <p>The following plugins have lua support.</p>
 <div class="section" id="burrows">
-<h2><a class="toc-backref" href="#id31">burrows</a></h2>
+<h2><a class="toc-backref" href="#id34">burrows</a></h2>
 <p>Implements extended burrow manipulations.</p>
 <p>Events:</p>
 <ul>
@@ -1556,13 +1717,13 @@ set is the same as used by the command line.</p>
 <p>The lua module file also re-exports functions from <tt class="docutils literal">dfhack.burrows</tt>.</p>
 </div>
 <div class="section" id="sort">
-<h2><a class="toc-backref" href="#id32">sort</a></h2>
+<h2><a class="toc-backref" href="#id35">sort</a></h2>
 <p>Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.</p>
 </div>
 </div>
 <div class="section" id="scripts">
-<h1><a class="toc-backref" href="#id33">Scripts</a></h1>
+<h1><a class="toc-backref" href="#id36">Scripts</a></h1>
 <p>Any files with the .lua extension placed into hack/scripts/*
 are automatically used by the DFHack core as commands. The
 matching command name consists of the name of the file sans

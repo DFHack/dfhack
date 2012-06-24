@@ -33,9 +33,9 @@ enum RB_command {
 };
 tthread::mutex *m_irun;
 tthread::mutex *m_mutex;
-static RB_command r_type;
+static volatile RB_command r_type;
+static volatile command_result r_result;
 static const char *r_command;
-static command_result r_result;
 static tthread::thread *r_thread;
 static int onupdate_active;
 
@@ -43,26 +43,38 @@ DFHACK_PLUGIN("ruby")
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    // fail silently instead of spamming the console with 'failed to initialize' if libruby is not present
-    // the error is still logged in stderr.log
+    onupdate_active = 0;
+
+    // fail silently instead of spamming the console with 'failed to initialize'
+    // if libruby is not present, the error is still logged in stderr.log
     if (!df_loadruby())
         return CR_OK;
 
+    // the ruby thread sleeps trying to lock this
+    // when it gets it, it runs according to r_type
+    // when finished, it sets r_type to IDLE and unlocks
     m_irun = new tthread::mutex();
+
+    // when any thread is going to request something to the ruby thread,
+    // lock this before anything, and release when everything is done
     m_mutex = new tthread::mutex();
+
     r_type = RB_INIT;
 
+    // create the dedicated ruby thread
+    // df_rubythread starts the ruby interpreter and goes to type=IDLE when done
     r_thread = new tthread::thread(df_rubythread, 0);
 
+    // wait until init phase 1 is done
     while (r_type != RB_IDLE)
         tthread::this_thread::yield();
 
+    // ensure the ruby thread sleeps until we have a command to handle
     m_irun->lock();
 
+    // check return value from rbinit
     if (r_result == CR_FAILURE)
         return CR_FAILURE;
-
-    onupdate_active = 0;
 
     commands.push_back(PluginCommand("rb_eval",
                 "Ruby interpreter. Eval() a ruby string.",
@@ -73,23 +85,30 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    // if dlopen failed
     if (!r_thread)
         return CR_OK;
 
+    // ensure ruby thread is idle
     m_mutex->lock();
 
     r_type = RB_DIE;
-    r_command = 0;
+    r_command = NULL;
+    // start ruby thread
     m_irun->unlock();
 
+    // wait until ruby thread ends after RB_DIE
     r_thread->join();
 
+    // cleanup everything
     delete r_thread;
     r_thread = 0;
     delete m_irun;
+    // we can release m_mutex, other users will check r_thread
     m_mutex->unlock();
     delete m_mutex;
 
+    // dlclose libruby
     df_unloadruby();
 
     return CR_OK;
@@ -98,29 +117,32 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 // send a single ruby line to be evaluated by the ruby thread
 DFhackCExport command_result plugin_eval_ruby(const char *command)
 {
+    // if dlopen failed
     if (!r_thread)
         return CR_FAILURE;
 
     command_result ret;
 
-    // serialize 'accesses' to the ruby thread
+    // ensure ruby thread is idle
     m_mutex->lock();
     if (!r_thread)
-        // raced with plugin_shutdown ?
+        // raced with plugin_shutdown
         return CR_OK;
 
     r_type = RB_EVAL;
     r_command = command;
+    // wake ruby thread up
     m_irun->unlock();
 
-    // could use a condition_variable or something...
+    // semi-active loop until ruby thread is done
     while (r_type != RB_IDLE)
         tthread::this_thread::yield();
 
-    // XXX non-atomic with previous r_type change check
     ret = r_result;
 
+    // block ruby thread
     m_irun->lock();
+    // let other plugin_eval_ruby run
     m_mutex->unlock();
 
     return ret;
@@ -131,6 +153,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     if (!r_thread)
         return CR_OK;
 
+    // ruby sets this flag when needed, to avoid lag running ruby code every
+    // frame if not necessary
+    // TODO dynamic check on df::cur_year{_tick}
     if (!onupdate_active)
         return CR_OK;
 
@@ -168,6 +193,7 @@ static command_result df_rubyeval(color_ostream &out, std::vector <std::string> 
         return CR_OK;
     }
 
+    // reconstruct the text from dfhack console line
     std::string full = "";
 
     for (unsigned i=0 ; i<parameters.size() ; ++i) {
@@ -321,12 +347,25 @@ static void df_rubythread(void *p)
 
     console_proxy = new color_ostream_proxy(Core::getInstance().getConsole());
 
+    // ensure noone bothers us while we load data defs in the background
+    m_mutex->lock();
+
+    // tell the main thread our initialization is finished
     r_result = CR_OK;
     r_type = RB_IDLE;
 
+    // load the default ruby-level definitions in the background
+    state=0;
+    rb_eval_string_protect("require './hack/ruby/ruby'", &state);
+    if (state)
+        dump_rb_error();
+
+    // ready to go
+    m_mutex->unlock();
+
     running = 1;
     while (running) {
-        // wait for new command
+        // sleep waiting for new command
         m_irun->lock();
 
         switch (r_type) {
@@ -728,7 +767,6 @@ static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE cppvoff, VALUE a0, VALUE
 static void ruby_bind_dfhack(void) {
     rb_cDFHack = rb_define_module("DFHack");
 
-    // global DFHack commands
     rb_define_singleton_method(rb_cDFHack, "onupdate_active", RUBY_METHOD_FUNC(rb_dfonupdateactive), 0);
     rb_define_singleton_method(rb_cDFHack, "onupdate_active=", RUBY_METHOD_FUNC(rb_dfonupdateactiveset), 1);
     rb_define_singleton_method(rb_cDFHack, "resume", RUBY_METHOD_FUNC(rb_dfresume), 0);
@@ -780,10 +818,4 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_resize", RUBY_METHOD_FUNC(rb_dfmemory_bitarray_resize), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_isset",  RUBY_METHOD_FUNC(rb_dfmemory_bitarray_isset), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_set",    RUBY_METHOD_FUNC(rb_dfmemory_bitarray_set), 3);
-
-    // load the default ruby-level definitions
-    int state=0;
-    rb_eval_string_protect("require './hack/ruby/ruby'", &state);
-    if (state)
-        dump_rb_error();
 }

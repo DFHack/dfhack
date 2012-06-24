@@ -2,61 +2,110 @@ This plugins embeds a ruby interpreter inside DFHack (ie inside Dwarf Fortress).
 
 The plugin maps all the structures available in library/xml/ to ruby objects.
 
-These objects are described in ruby-autogen.rb, they are all in the DFHack::
+These objects are described in ruby-autogen.rb, they are all in the DFHack
 module. The toplevel 'df' method is a shortcut to the DFHack module.
 
 The plugin does *not* map most of dfhack methods (MapCache, ...) ; only direct
 access to the raw DF data structures in memory is provided.
 
-Some library methods are stored in the ruby.rb file, with shortcuts to read a
-map block, find an unit or an item, etc.
+Some library methods are stored in the various .rb file, e.g. shortcuts to read
+a map block, find an unit or an item, etc.
 
-Global objects are accessible through the 'df' accessor (eg df.world).
+Global dfhack objects are accessible through the 'df' accessor (eg 'df.world').
 
-The ruby plugin defines 2 dfhack console commands:
- rb_load <filename> ; load a ruby script. Ex: rb_load hack/plants.rb (no quotes)
- rb_eval <ruby expression> ; evaluate a ruby expression, show the result in the
-console. Ex: rb_eval df.find_unit.name.first_name
+
+DFHack console
+--------------
+
+The ruby plugin defines 1 dfhack console command:
+ rb_eval <ruby expression> ; evaluate a ruby expression and show the result in
+the console. Ex: rb_eval df.unit_find().name.first_name
 You can use single-quotes for strings ; avoid double-quotes that are parsed
-and removed by the dfhack console.
+and removed by the dfhack console code.
+
+Text output from ruby code, through the standard 'puts', 'p' or 'raise' are
+redirected to the dfhack console window.
 
 If dfhack reports 'rb_eval is not a recognized command', check stderr.log. You
 need a valid 32-bit ruby library to work, and ruby1.8 is prefered (ruby1.9 may
 crash DF on startup for now). Install the library in the df root folder (or
-hack/ on linux), the library should be named 'libruby.dll' (.so on linux).
+df/hack/ on linux), the library should be named 'libruby.dll' (.so on linux).
 You can download a tested version at http://github.com/jjyg/dfhack/downloads/
 
-The plugin also interfaces with dfhack 'onupdate' hook.
+
+DFHack callbacks
+----------------
+
+The plugin interfaces with dfhack 'onupdate' hook.
 To register ruby code to be run every graphic frame, use:
  handle = df.onupdate_register { puts 'i love flooding the console' }
 To stop being called, use:
  df.onupdate_unregister handle
 
-The same mechanism is available for onstatechange.
+The same mechanism is available for 'onstatechange'.
+
+
+C++ object manipulation
+-----------------------
+
+The ruby classes defined in ruby-autogen.rb are accessors to the underlying
+df C++ objects in-memory. To allocate a new C++ object for use in DF, use the
+RubyClass.cpp_new method (see buildings.rb for exemples), works for Compounds
+only.
+
+Deallocation is not supported. You may manually call df.free if you know
+what you are doing (maps directly to the native malloc/free)
+
+C++ std::string fields may be directly re-allocated using standard ruby strings,
+e.g. some_unit.name.nickname = 'moo'
+More subtle string manipulation, e.g. changing a single character, are not
+supported. Read the whole string, manipulate it in ruby, and re-assign it
+instead.
+
+C++ std::vector<> can be iterated as standard ruby Enumerable objects, using
+each/map/etc.
+To append data to a vector, use vector << newelement or vector.push(newelement)
+To insert at a given pos, vector.insert_at(index, value)
+To delete an element, vector.delete_at(index)
+
+You can binary search an element in a vector for a given numeric field value:
+ df.world.unit.all.binsearch(42, :id)
+will find the element whose 'id' field is 42 (needs the vector to be initially
+sorted by this field). The binsearch 2nd argument defaults to :id.
+
+Any numeric field defined as being an enum value will be converted to a ruby
+Symbol. This works for array indexes too.
+
+Virtual method calls are supported for C++ objects, with a maximum of 4
+arguments. Arguments / return value are interpreted as Compound/Enums as
+specified in the vmethod definition in the xmls.
+
+Pointer fields are automatically dereferenced ; so a vector of pointer to
+Units will yield Units directly. NULL pointers yield the 'nil' value.
 
 
 Exemples
 --------
 
-For more complex exemples, check the ruby/plugins/ source folder.
+For more complex exemples, check the dfhack/scripts/*.rb files.
 
 Show info on the currently selected unit ('v' or 'k' DF menu)
- p df.find_unit.flags1
+ p df.unit_find.flags1
 
 Set a custom nickname to unit with id '123'
- df.find_unit(123).name.nickname = 'moo'
+ df.unit_find(123).name.nickname = 'moo'
 
 Show current unit profession
- p df.find_unit.profession
+ p df.unit_find.profession
 
 Change current unit profession
- df.find_unit.profession = :MASON
+ df.unit_find.profession = :MASON
 
-Center the screen on unit '123'
- df.center_viewscreen(df.find_unit(123))
+Center the screen on unit ID '123'
+ df.center_viewscreen(df.unit_find(123))
 
 Find an item at a given position, show its C++ classname
- df.find_item(df.cursor)._rtti_classname
+ p df.item_find(df.cursor)._rtti_classname
 
 Find the raws name of the plant under cursor
  plant = df.world.plants.all.find { |plt| df.at_cursor?(plt) }
@@ -67,15 +116,14 @@ Dig a channel under the cursor
  df.map_block_at(df.cursor).flags.designated = true
 
 
-Compilation
------------
+Plugin compilation
+------------------
 
-The plugin consists of the ruby.rb file including user comfort functions and
+The plugin consists of the *.rb file including user comfort functions and
 describing basic classes used by the autogenerated code, and ruby-autogen.rb,
 the auto-generated code.
 
-The generated code is generated by codegen.pl, which takes the codegen.out.xml
-file as input.
+autogen is output by codegen.pl from dfhack/library/include/df/codegen.out.xml
 
 For exemple,
  <ld:global-type ld:meta="struct-type" type-name="unit">
@@ -89,17 +137,10 @@ Will generate
   field(:custom_profession, 60) { stl_string }
   field(:profession, 64) { number 16, true }
 
-The syntax for the 'field' method is:
+The syntax for the 'field' method in ruby-autogen.rb is:
 1st argument = name of the method
-2nd argument = offset of this field from the beginning of the struct.
-
+2nd argument = offset of this field from the beginning of the current struct.
 The block argument describes the type of the field: uint32, ptr to global...
 
-Primitive type access is done through native methods in ruby.cpp (vector length,
+Primitive type access is done through native methods from ruby.cpp (vector length,
 raw memory access, etc)
-
-MemHack::Pointers are automatically dereferenced ; so a vector of pointer to
-Units will yield Units directly. Null pointers yield the 'nil' value.
-
-This allows to use code such as 'df.world.units.all[0].pos', with 'all' being
-in fact a vector of *pointers* to DFHack::Unit objects.

@@ -54,7 +54,7 @@ module DFHack
         def unit_idlers
             unit_workers.find_all { |u|
                 # current_job includes eat/drink/sleep/pickupequip
-                !u.job.current_job._getv and 
+                !u.job.current_job and 
                 # filter 'attend meeting'
                 u.meetings.length == 0 and
                 # filter soldiers (TODO check schedule)

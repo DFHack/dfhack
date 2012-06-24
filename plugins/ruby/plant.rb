@@ -115,52 +115,5 @@ module DFHack
                 puts "Grown #{cnt} saplings"
             end
         end
-
-        def growcrops(material=nil, count_max=100)
-            @raws_plant_name ||= {}
-            @raws_plant_growdur ||= {}
-            if @raws_plant_name.empty?
-                df.world.raws.plants.all.each_with_index { |p, idx|
-                    @raws_plant_name[idx] = p.id
-                    @raws_plant_growdur[idx] = p.growdur
-                }
-            end
-
-            if !material
-                cnt = Hash.new(0)
-                suspend {
-                    world.items.other[:SEEDS].each { |seed|
-                    next if not seed.flags.in_building
-                    next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
-                    next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
-                    cnt[seed.mat_index] += 1
-                }
-                }
-                cnt.sort_by { |mat, c| c }.each { |mat, c|
-                    name = world.raws.plants.all[mat].id
-                    puts " #{name} #{c}"
-                }
-            else
-                if material != :any
-                    mat = match_rawname(material, @raws_plant_name.values)
-                    unless wantmat = @raws_plant_name.index(mat)
-                        raise "invalid plant material #{material}"
-                    end
-                end
-
-                cnt = 0
-                suspend {
-                    world.items.other[:SEEDS].each { |seed|
-                    next if wantmat and seed.mat_index != wantmat
-                    next if not seed.flags.in_building
-                    next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
-                    next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
-                    seed.grow_counter = @raws_plant_growdur[seed.mat_index]
-                    cnt += 1
-                }
-                }
-                puts "Grown #{cnt} crops"
-            end
-        end
     end
 end

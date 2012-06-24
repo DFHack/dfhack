@@ -13,6 +13,10 @@ a map block, find an unit or an item, etc.
 
 Global dfhack objects are accessible through the 'df' accessor (eg 'df.world').
 
+DFHack structures are renamed in CamelCase in the ruby namespace.
+
+For a list of the structures and their methods, grep the ruby-autogen.rb file.
+
 
 DFHack console
 --------------
@@ -45,6 +49,64 @@ The script can access the console command arguments through the global variable
 
 The help string displayed in dfhack 'ls' command is the first line of the
 script, if it is a comment (starts with '# ').
+
+
+Ruby helper functions
+---------------------
+
+This is an excerpt of the functions defined in dfhack/plugins/ruby/*.rb. Check
+the files and the comments for a complete list.
+
+ df.suspend {  }
+Ensures that the main game thread is paused while exec'ing the content of the
+block. Similar to df.suspend() ; <run_block> ; df.resume().
+
+ df.same_pos?(obj1, obj2)
+Returns true if both objects are at the same game coordinates.
+obj1 and 2 should respond to #pos and #x #y #z.
+
+ df.map_block_at(pos) / map_block_at(x, y, z)
+Returns the MapBlock for the coordinates or nil.
+
+ df.each_map_block { |b|  }
+ df.each_map_block_z(zlevel) { |b|  }
+Iterates over every map block (opt. on a single z-level).
+
+ df.center_viewscreen(coords)
+Centers the DF view on the given coordinates. Accepts x/y/z arguments, or a
+single argument responding to pos/x/y/z, eg an Unit, Item, ...
+
+ df.unit_find(arg)
+Returns an Unit.
+With no arg, returns the currently selected unit (through the (v) or (k) menus)
+With a number, returns the unit with this ID
+With something else, returns the first unit at the same game coordinates
+
+ df.unit_workers
+Returns a list of worker citizen: units of your race & civilization, adults,
+not dead, crazy, ghosts or nobles exempted of work.
+
+ df.unit_entitypositions(unit)
+Returns the list of EntityPosition occupied by the unit.
+Check the 'code' field for a readable name (MANAGER, CHIEF_MEDICAL_DWARF, ...)
+
+ df.match_rawname(name, list)
+String fuzzy matching. Returns the list entry most similar to 'name'.
+First searches for an exact match, then for a case-insensitive match, and
+finally for a case-insensitive substring.
+Returns the element from list if there is only one match, or nil.
+Most useful to allow the user to specify a raw-defined name,
+eg 'gob' for 'GOBLIN' or 'coal' for 'COAL_BITUMINOUS', hence the name.
+
+ df.building_alloc(type, subtype, customtype)
+ df.building_position(bld, pos, w, h)
+ df.building_construct(bld, item_list)
+Allocates a new building in DF memory, define its position / dimensions, and
+create a dwarf job to construct it from the given list of items.
+See buildings.rb/buildbed for an exemple.
+
+ df.each_tree(material) { |t|  }
+Iterates over every tree of the given material (eg 'maple').
 
 
 DFHack callbacks

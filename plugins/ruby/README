@@ -116,7 +116,8 @@ To register ruby code to be run every graphic frame, use:
 To stop being called, use:
  df.onupdate_unregister handle
 
-The same mechanism is available for 'onstatechange'.
+The same mechanism is available for 'onstatechange', but the
+SC_BEGIN_UNLOAD event is not propagated to the ruby handler.
 
 
 C++ object manipulation

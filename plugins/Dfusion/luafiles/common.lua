@@ -36,7 +36,7 @@ function GetTextRegion()
 		--if num>=100 then
 		--print(string.format("%d %x->%x %s %s",k,v["start"],v["end"],v.name or "",flgs))
 		--end
-		local pos=string.find(v.name,".text") or string.find(v.name,"libs/Dwarf_Fortress")
+		local pos=string.find(v.name,"Dwarf Fortress.exe") or string.find(v.name,"libs/Dwarf_Fortress")
 		if(pos~=nil) and v["execute"] then
 			__TEXT=v;
 			return v;

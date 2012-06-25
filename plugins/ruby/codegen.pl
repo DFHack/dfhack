@@ -260,11 +260,38 @@ sub render_struct_fields {
                     render_item($field);
                 };
                 push @lines_rb, "}";
+
+                my $reftg = $field->getAttribute('ref-target');
+                render_field_reftarget($type, $field, $name, $reftg) if ($reftg);
             }
         }
 
         $compound_off += sizeof($field) if (!$isunion);
     }
+}
+
+sub render_field_reftarget {
+    my ($parent, $field, $name, $reftg) = @_;
+
+    my $aux = $field->getAttribute('aux-value');
+    return if ($aux); # TODO
+
+    my $tg = $global_types{$reftg};
+    return if (!$tg);
+    my $tgvec = $tg->getAttribute('instance-vector');
+    return if (!$tgvec);
+    $tgvec =~ s/\$global/df/;
+    return if $tgvec !~ /^[\w\.]+$/;
+
+    my $tgname = "${name}_tg";
+    $tgname =~ s/_id_tg//;
+
+    for my $otherfield ($parent->findnodes('child::ld:field')) {
+        my $othername = $otherfield->getAttribute('name');
+        $tgname .= '_' if ($othername and $tgname eq $othername);
+    }
+
+    push @lines_rb, "def $tgname ; ${tgvec}[$name] ; end";
 }
 
 sub render_class_vmethods {

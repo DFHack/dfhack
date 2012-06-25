@@ -379,19 +379,19 @@ static command_result GetWorldInfo(color_ostream &stream,
     if (!ui || !world || !Core::getInstance().isWorldLoaded())
         return CR_NOT_FOUND;
 
-    t_gamemodes mode;
-    if (!Core::getInstance().getWorld()->ReadGameMode(mode))
-        mode.g_type = GAMETYPE_DWARF_MAIN;
+    df::game_type gt = game_type::DWARF_MAIN;
+    if (df::global::gametype)
+        gt = *df::global::gametype;
 
     out->set_save_dir(world->cur_savegame.save_dir);
 
     if (world->world_data->name.has_name)
         describeName(out->mutable_world_name(), &world->world_data->name);
 
-    switch (mode.g_type)
+    switch (gt)
     {
-    case GAMETYPE_DWARF_MAIN:
-    case GAMETYPE_DWARF_RECLAIM:
+    case game_type::DWARF_MAIN:
+    case game_type::DWARF_RECLAIM:
         out->set_mode(GetWorldInfoOut::MODE_DWARF);
         out->set_civ_id(ui->civ_id);
         out->set_site_id(ui->site_id);
@@ -399,7 +399,7 @@ static command_result GetWorldInfo(color_ostream &stream,
         out->set_race_id(ui->race_id);
         break;
 
-    case GAMETYPE_ADVENTURE_MAIN:
+    case game_type::ADVENTURE_MAIN:
         out->set_mode(GetWorldInfoOut::MODE_ADVENTURE);
 
         if (auto unit = vector_get(world->units.active, 0))
@@ -423,7 +423,7 @@ static command_result GetWorldInfo(color_ostream &stream,
         }
         break;
 
-    case GAMETYPE_VIEW_LEGENDS:
+    case game_type::VIEW_LEGENDS:
         out->set_mode(GetWorldInfoOut::MODE_LEGENDS);
         break;
 

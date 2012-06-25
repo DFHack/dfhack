@@ -4,9 +4,26 @@ DFHack Lua API
 
 .. contents::
 
-====================
-DF structure wrapper
-====================
+The current version of DFHack has extensive support for
+the Lua scripting language, providing access to:
+
+1. Raw data structures used by the game.
+2. Many C++ functions for high-level access to these
+   structures, and interaction with dfhack itself.
+3. Some functions exported by C++ plugins.
+
+Lua code can be used both for writing scripts, which
+are treated by DFHack command line prompt almost as
+native C++ commands, and invoked by plugins written in c++.
+
+This document describes native API available to Lua in detail.
+It does not describe all of the utility functions
+implemented by Lua files located in hack/lua/...
+
+
+=========================
+DF data structure wrapper
+=========================
 
 DF structures described by the xml files in library/xml are exported
 to lua code as a tree of objects and functions under the ``df`` global,
@@ -426,13 +443,17 @@ not destroy any objects allocated in this way, so the user
 should be prepared to catch the error and do the necessary
 cleanup.
 
-================
-DFHack utilities
-================
+==========
+DFHack API
+==========
 
 DFHack utility functions are placed in the ``dfhack`` global tree.
 
-Currently it defines the following features:
+Native utilities
+================
+
+Input & Output
+--------------
 
 * ``dfhack.print(args...)``
 
@@ -451,6 +472,7 @@ Currently it defines the following features:
 * ``dfhack.color([color])``
 
   Sets the current output color. If color is *nil* or *-1*, resets to default.
+  Returns the previous color value.
 
 * ``dfhack.is_interactive()``
 
@@ -473,14 +495,26 @@ Currently it defines the following features:
 
   If the interactive console is not accessible, returns *nil, error*.
 
+
+Exception handling
+------------------
+
+* ``dfhack.error(msg[,level[,verbose]])``
+
+  Throws a dfhack exception object with location and stack trace.
+  The verbose parameter controls whether the trace is printed by default.
+
+* ``qerror(msg[,level])``
+
+  Calls ``dfhack.error()`` with ``verbose`` being *false*. Intended to
+  be used for user-caused errors in scripts, where stack traces are not
+  desirable.
+
 * ``dfhack.pcall(f[,args...])``
 
   Invokes f via xpcall, using an error function that attaches
   a stack trace to the error. The same function is used by SafeCall
   in C++, and dfhack.safecall.
-
-  The returned error is a table with separate ``message`` and
-  ``stacktrace`` string fields; it implements ``__tostring``.
 
 * ``safecall(f[,args...])``, ``dfhack.safecall(f[,args...])``
 
@@ -491,12 +525,33 @@ Currently it defines the following features:
 
   Compares to coroutine.resume like dfhack.safecall vs pcall.
 
-* ``dfhack.run_script(name[,args...])``
+* ``dfhack.exception``
 
-  Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
-  The ``name`` argument should be the name stem, as would be used on the command line.
-  Note that the script is re-read from the file every time it is called, and errors
-  are propagated to the caller.
+  Metatable of error objects used by dfhack. The objects have the
+  following properties:
+
+  ``err.where``
+    The location prefix string, or *nil*.
+  ``err.message``
+    The base message string.
+  ``err.stacktrace``
+    The stack trace string, or *nil*.
+  ``err.cause``
+    A different exception object, or *nil*.
+  ``err.thread``
+    The coroutine that has thrown the exception.
+  ``err.verbose``
+    Boolean, or *nil*; specifies if where and stacktrace should be printed.
+  ``tostring(err)``, or ``err:tostring([verbose])``
+    Converts the exception to string.
+
+* ``dfhack.exception.verbose``
+
+  The default value of the ``verbose`` argument of ``err:tostring()``.
+
+
+Locking and finalization
+------------------------
 
 * ``dfhack.with_suspend(f[,args...])``
 
@@ -536,7 +591,7 @@ Currently it defines the following features:
 
 
 Persistent configuration storage
-================================
+--------------------------------
 
 This api is intended for storing configuration options in the world itself.
 It probably should be restricted to data that is world-dependent.
@@ -578,7 +633,7 @@ functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.
 
 Material info lookup
-====================
+--------------------
 
 A material info record has fields:
 
@@ -1168,13 +1223,37 @@ and are only documented here for completeness:
 
   Sets the global address ``name``. Returns the value of ``getAddress`` before the change.
 
-* ``dfhack.internal.getBase()``
+* ``dfhack.internal.getVTable(name)``
 
-  Returns the base address of the process.
+  Returns the pre-extracted vtable address ``name``, or *nil*.
+
+* ``dfhack.internal.getRebaseDelta()``
+
+  Returns the ASLR rebase offset of the DF executable.
 
 * ``dfhack.internal.getMemRanges()``
 
   Returns a sequence of tables describing virtual memory ranges of the process.
+
+* ``dfhack.internal.memmove(dest,src,count)``
+
+  Wraps the standard memmove function. Accepts both numbers and refs as pointers.
+
+* ``dfhack.internal.memcmp(ptr1,ptr2,count)``
+
+  Wraps the standard memcmp function.
+
+* ``dfhack.internal.memscan(haystack,count,step,needle,nsize)``
+
+  Searches for ``needle`` of ``nsize`` bytes in ``haystack``,
+  using ``count`` steps of ``step`` bytes.
+  Returns: *step_idx, sum_idx, found_ptr*, or *nil* if not found.
+
+* ``dfhack.internal.diffscan(old_data, new_data, start_idx, end_idx, eltsize[, oldval, newval, delta])``
+
+  Searches for differences between buffers at ptr1 and ptr2, as integers of size eltsize.
+  The oldval, newval or delta arguments may be used to specify additional constraints.
+  Returns: *found_index*, or *nil* if end reached.
 
 
 Core interpreter context
@@ -1243,6 +1322,218 @@ Features:
   Invokes all listeners contained in the event in an arbitrary
   order using ``dfhack.safecall``.
 
+
+===========
+Lua Modules
+===========
+
+DFHack sets up the lua interpreter so that the built-in ``require``
+function can be used to load shared lua code from hack/lua/.
+The ``dfhack`` namespace reference itself may be obtained via
+``require('dfhack')``, although it is initially created as a
+global by C++ bootstrap code.
+
+The following module management functions are provided:
+
+* ``mkmodule(name)``
+
+  Creates an environment table for the module. Intended to be used as::
+
+    local _ENV = mkmodule('foo')
+    ...
+    return _ENV
+
+  If called the second time, returns the same table; thus providing reload support.
+
+* ``reload(name)``
+
+  Reloads a previously ``require``-d module *"name"* from the file.
+  Intended as a help for module development.
+
+* ``dfhack.BASE_G``
+
+  This variable contains the root global environment table, which is
+  used as a base for all module and script environments. Its contents
+  should be kept limited to the standard Lua library and API described
+  in this document.
+
+Global environment
+==================
+
+A number of variables and functions are provided in the base global
+environment by the mandatory init file dfhack.lua:
+
+* Color constants
+
+  These are applicable both for ``dfhack.color()`` and color fields
+  in DF functions or structures:
+
+  COLOR_RESET, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN,
+  COLOR_RED, COLOR_MAGENTA, COLOR_BROWN, COLOR_GREY, COLOR_DARKGREY,
+  COLOR_LIGHTBLUE, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN, COLOR_LIGHTRED,
+  COLOR_LIGHTMAGENTA, COLOR_YELLOW, COLOR_WHITE
+
+* ``dfhack.onStateChange`` event codes
+
+  Available only in the core context, as is the event itself:
+
+  SC_WORLD_LOADED, SC_WORLD_UNLOADED, SC_MAP_LOADED,
+  SC_MAP_UNLOADED, SC_VIEWSCREEN_CHANGED, SC_CORE_INITIALIZED
+
+* Functions already described above
+
+  safecall, qerror, mkmodule, reload
+
+* ``printall(obj)``
+
+  If the argument is a lua table or DF object reference, prints all fields.
+
+* ``copyall(obj)``
+
+  Returns a shallow copy of the table or reference as a lua table.
+
+* ``pos2xyz(obj)``
+
+  The object must have fields x, y and z. Returns them as 3 values.
+  If obj is *nil*, or x is -30000 (the usual marker for undefined
+  coordinates), returns *nil*.
+
+* ``xyz2pos(x,y,z)``
+
+  Returns a table with x, y and z as fields.
+
+* ``safe_index(obj,index...)``
+
+  Walks a sequence of dereferences, which may be represented by numbers or strings.
+  Returns *nil* if any of obj or indices is *nil*, or a numeric index is out of array bounds.
+
+utils
+=====
+
+* ``utils.compare(a,b)``
+
+  Comparator function; returns *-1* if a<b, *1* if a>b, *0* otherwise.
+
+* ``utils.compare_name(a,b)``
+
+  Comparator for names; compares empty string last.
+
+* ``utils.is_container(obj)``
+
+  Checks if obj is a container ref.
+
+* ``utils.make_index_sequence(start,end)``
+
+  Returns a lua sequence of numbers in start..end.
+
+* ``utils.make_sort_order(data, ordering)``
+
+  Computes an ordering of objects in data, as a table of integer
+  indices into the data sequence. Uses ``data.n`` as input length
+  if present.
+
+  The ordering argument is a sequence of ordering specs, represented
+  as lua tables with following possible fields:
+
+  ord.key = *function(value)*
+    Computes comparison key from a data value. Not called on nil.
+    If omitted, the comparison key is the value itself.
+  ord.key_table = *function(data)*
+    Computes a key table from the data table in one go.
+  ord.compare = *function(a,b)*
+    Comparison function. Defaults to ``utils.compare`` above.
+    Called on non-nil keys; nil sorts last.
+  ord.nil_first = *true/false*
+    If true, nil keys are sorted first instead of last.
+  ord.reverse = *true/false*
+    If true, sort non-nil keys in descending order.
+
+  This function is used by the sort plugin.
+
+* ``utils.assign(tgt, src)``
+
+  Does a recursive assignment of src into tgt.
+  Uses ``df.assign`` if tgt is a native object ref; otherwise
+  recurses into lua tables.
+
+* ``utils.clone(obj, deep)``
+
+  Performs a shallow, or semi-deep copy of the object as a lua table tree.
+  The deep mode recurses into lua tables and subobjects, except pointers
+  to other heap objects.
+  Null pointers are represented as df.NULL. Zero-based native containers
+  are converted to 1-based lua sequences.
+
+* ``utils.clone_with_default(obj, default, force)``
+
+  Copies the object, using the ``default`` lua table tree
+  as a guide to which values should be skipped as uninteresting.
+  The ``force`` argument makes it always return a non-*nil* value.
+
+* ``utils.sort_vector(vector,field,cmpfun)``
+
+  Sorts a native vector or lua sequence using the comparator function.
+  If ``field`` is not *nil*, applies the comparator to the field instead
+  of the whole object.
+
+* ``utils.binsearch(vector,key,field,cmpfun,min,max)``
+
+  Does a binary search in a native vector or lua sequence for
+  ``key``, using ``cmpfun`` and ``field`` like sort_vector.
+  If ``min`` and ``max`` are specified, they are used as the
+  search subrange bounds.
+
+  If found, returns *item, true, idx*. Otherwise returns
+  *nil, false, insert_idx*, where *insert_idx* is the correct
+  insertion point.
+
+* ``utils.insert_sorted(vector,item,field,cmpfun)``
+
+  Does a binary search, and inserts item if not found.
+  Returns *did_insert, vector[idx], idx*.
+
+* ``utils.insert_or_update(vector,item,field,cmpfun)``
+
+  Like ``insert_sorted``, but also assigns the item into
+  the vector cell if insertion didn't happen.
+
+  As an example, you can use this to set skill values::
+
+    utils.insert_or_update(soul.skills, {new=true, id=..., rating=...}, 'id')
+
+  (For an explanation of ``new=true``, see table assignment in the wrapper section)
+
+* ``utils.prompt_yes_no(prompt, default)``
+
+  Presents a yes/no prompt to the user. If ``default`` is not *nil*,
+  allows just pressing Enter to submit the default choice.
+  If the user enters ``'abort'``, throws an error.
+
+* ``utils.prompt_input(prompt, checkfun, quit_str)``
+
+  Presents a prompt to input data, until a valid string is entered.
+  Once ``checkfun(input)`` returns *true, ...*, passes the values
+  through. If the user enters the quit_str (defaults to ``'~~~'``),
+  throws an error.
+
+* ``utils.check_number(text)``
+
+  A ``prompt_input`` ``checkfun`` that verifies a number input.
+
+dumper
+======
+
+A third-party lua table dumper module from
+http://lua-users.org/wiki/DataDumper. Defines one
+function:
+
+* ``dumper.DataDumper(value, varname, fastmode, ident, indent_step)``
+
+  Returns ``value`` converted to a string. The ``indent_step``
+  argument specifies the indentation step size in spaces. For
+  the other arguments see the original documentation link above.
+
+
 =======
 Plugins
 =======
@@ -1304,3 +1595,43 @@ sort
 
 Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.
+
+
+=======
+Scripts
+=======
+
+Any files with the .lua extension placed into hack/scripts/*
+are automatically used by the DFHack core as commands. The
+matching command name consists of the name of the file sans
+the extension.
+
+If the first line of the script is a one-line comment, it is
+used by the built-in ``ls`` and ``help`` commands.
+
+**NOTE:** Scripts placed in subdirectories still can be accessed, but
+do not clutter the ``ls`` command list; thus it is preferred
+for obscure developer-oriented scripts and scripts used by tools.
+When calling such scripts, always use '/' as the separator for
+directories, e.g. ``devel/lua-example``.
+
+Scripts are re-read from disk every time they are used
+(this may be changed later to check the file change time); however
+the global variable values persist in memory between calls.
+Every script gets its own separate environment for global
+variables.
+
+Arguments are passed in to the scripts via the **...** built-in
+quasi-variable; when the script is called by the DFHack core,
+they are all guaranteed to be non-nil strings.
+
+DFHack core invokes the scripts in the *core context* (see above);
+however it is possible to call them from any lua code (including
+from other scripts) in any context, via the same function the core uses:
+
+* ``dfhack.run_script(name[,args...])``
+
+  Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
+  The ``name`` argument should be the name stem, as would be used on the command line.
+
+Note that this function lets errors propagate to the caller.

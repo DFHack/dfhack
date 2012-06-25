@@ -111,6 +111,8 @@ namespace  DFHack
         void printerr(const char *format, ...);
         void vprinterr(const char *format, va_list args);
 
+        /// Get color
+        color_value color() { return cur_color; }
         /// Set color (ANSI color number)
         void color(color_value c);
         /// Reset color to default

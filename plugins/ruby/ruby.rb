@@ -1048,7 +1048,7 @@ end
 end
 
 # load autogen'd file
-require 'hack/ruby-autogen'
+File.exist?('hack/ruby-autogen.rb') ? require('hack/ruby-autogen') : require('ruby-autogen')
 
 # load optional user-specified startup file
 load 'ruby_custom.rb' if File.exist?('ruby_custom.rb')

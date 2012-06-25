@@ -277,29 +277,20 @@ static command_result runLuaScript(color_ostream &out, std::string name, vector<
 
 command_result Core::runCommand(color_ostream &out, const std::string &command)
 {
-	fprintf(stderr,"Inside runCommand");
-	fprintf(stderr," with command %s\n",command.c_str());
     if (!command.empty())
     {
-		fprintf(stderr,"Command is not empty, tokenizing\n");
         vector <string> parts;
         Core::cheap_tokenise(command,parts);
-		fprintf(stderr,"Tokenized, got %d parts\n",parts.size());
         if(parts.size() == 0)
             return CR_NOT_IMPLEMENTED;
 
         string first = parts[0];
-		fprintf(stderr,"Erasing beginning\n");
         parts.erase(parts.begin());
-        
-		fprintf(stderr,"I think we're about there\n");
 
         if (first[0] == '#')
             return CR_OK;
 
         cerr << "Invoking: " << command << endl;
-
-		fprintf(stderr,"Returning with the next recursion\n");
         return runCommand(out, first, parts);
     }
     else

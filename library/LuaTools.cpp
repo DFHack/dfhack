@@ -256,8 +256,11 @@ static int lua_dfhack_color(lua_State *S)
         luaL_argerror(S, 1, "invalid color value");
 
     color_ostream *out = Lua::GetOutput(S);
-    if (out)
+    if (out) {
+        lua_pushinteger(S, (int)out->color());
         out->color(color_ostream::color_value(cv));
+        return 1;
+    }
     return 0;
 }
 
@@ -423,10 +426,12 @@ static bool convert_to_exception(lua_State *L, int slevel, lua_State *thread = N
 
             // Create a new exception for this thread
             lua_newtable(L);
-            luaL_where(L, 1);
+            luaL_where(L, slevel);
+            lua_setfield(L, -2, "where");
             lua_pushstring(L, "coroutine resume failed");
-            lua_concat(L, 2);
             lua_setfield(L, -2, "message");
+            lua_getfield(L, -2, "verbose");
+            lua_setfield(L, -2, "verbose");
             lua_swap(L);
             lua_setfield(L, -2, "cause");
         }
@@ -480,11 +485,56 @@ static int dfhack_onerror(lua_State *L)
     return 1;
 }
 
+static int dfhack_error(lua_State *L)
+{
+    luaL_checkany(L, 1);
+    lua_settop(L, 3);
+    int level = std::max(1, luaL_optint(L, 2, 1));
+
+    lua_pushvalue(L, 1);
+
+    if (convert_to_exception(L, level))
+    {
+        luaL_where(L, level);
+        lua_setfield(L, -2, "where");
+
+        if (!lua_isnil(L, 3))
+        {
+            lua_pushvalue(L, 3);
+            lua_setfield(L, -2, "verbose");
+        }
+    }
+
+    return lua_error(L);
+}
+
 static int dfhack_exception_tostring(lua_State *L)
 {
     luaL_checktype(L, 1, LUA_TTABLE);
+    lua_settop(L, 2);
+
+    if (lua_isnil(L, 2))
+    {
+        lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_EXCEPTION_META_TOKEN);
+        lua_getfield(L, -1, "verbose");
+        lua_insert(L, 2);
+        lua_settop(L, 2);
+    }
+
+    lua_getfield(L, 1, "verbose");
+
+    bool verbose =
+        lua_toboolean(L, 2) || lua_toboolean(L, 3) ||
+        (lua_isnil(L, 2) && lua_isnil(L, 3));
 
     int base = lua_gettop(L);
+
+    if (verbose || lua_isnil(L, 3))
+    {
+        lua_getfield(L, 1, "where");
+        if (!lua_isstring(L, -1))
+            lua_pop(L, 1);
+    }
 
     lua_getfield(L, 1, "message");
     if (!lua_isstring(L, -1))
@@ -493,15 +543,26 @@ static int dfhack_exception_tostring(lua_State *L)
         lua_pushstring(L, "(error message is not a string)");
     }
 
-    lua_pushstring(L, "\n");
-    lua_getfield(L, 1, "stacktrace");
-    if (!lua_isstring(L, -1))
-        lua_pop(L, 2);
+    if (verbose)
+    {
+        lua_pushstring(L, "\n");
+        lua_getfield(L, 1, "stacktrace");
+        if (!lua_isstring(L, -1))
+            lua_pop(L, 2);
+    }
 
     lua_pushstring(L, "\ncaused by:\n");
     lua_getfield(L, 1, "cause");
     if (lua_isnil(L, -1))
         lua_pop(L, 2);
+    else if (lua_istable(L, -1))
+    {
+        lua_pushcfunction(L, dfhack_exception_tostring);
+        lua_swap(L);
+        lua_pushvalue(L, 2);
+        if (lua_pcall(L, 2, 1, 0) != LUA_OK)
+            error_tostring(L);
+    }
     else
         error_tostring(L);
 
@@ -652,7 +713,12 @@ static int dfhack_coauxwrap (lua_State *L) {
     if (Lua::IsSuccess(r))
         return lua_gettop(L);
     else
+    {
+        if (lua_checkstack(L, LUA_MINSTACK))
+            convert_to_exception(L, 1);
+
         return lua_error(L);
+    }
 }
 
 static int dfhack_cowrap (lua_State *L) {
@@ -1159,6 +1225,7 @@ static const luaL_Reg dfhack_funcs[] = {
     { "safecall", dfhack_safecall },
     { "saferesume", dfhack_saferesume },
     { "onerror", dfhack_onerror },
+    { "error", dfhack_error },
     { "call_with_finalizer", dfhack_call_with_finalizer },
     { "with_suspend", lua_dfhack_with_suspend },
     { "open_plugin", dfhack_open_plugin },
@@ -1359,6 +1426,8 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     lua_newtable(state);
     lua_pushcfunction(state, dfhack_exception_tostring);
     lua_setfield(state, -2, "__tostring");
+    lua_pushcfunction(state, dfhack_exception_tostring);
+    lua_setfield(state, -2, "tostring");
     lua_dup(state);
     lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_EXCEPTION_META_TOKEN);
     lua_setfield(state, -2, "exception");

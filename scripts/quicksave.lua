@@ -1,8 +1,7 @@
 -- Makes the game immediately save the state.
 
 if not dfhack.isMapLoaded() then
-    dfhack.printerr("World and map aren't loaded.")
-    return
+    qerror("World and map aren't loaded.")
 end
 
 local ui_main = df.global.ui.main

@@ -248,20 +248,18 @@ module DFHack
 
         # exemple usage
         def buildbed(pos=cursor)
-            suspend {
-                raise 'where to ?' if pos.x < 0
+            raise 'where to ?' if pos.x < 0
 
-                item = world.items.all.find { |i|
-                    i.kind_of?(ItemBedst) and
-                    i.itemrefs.empty? and
-                    !i.flags.in_job
-                }
-                raise 'no free bed, build more !' if not item
-
-                bld = building_alloc(:Bed)
-                building_position(bld, pos)
-                building_construct(bld, [item])
+            item = world.items.all.find { |i|
+                i.kind_of?(ItemBedst) and
+                i.itemrefs.empty? and
+                !i.flags.in_job
             }
+            raise 'no free bed, build more !' if not item
+
+            bld = building_alloc(:Bed)
+            building_position(bld, pos)
+            building_construct(bld, [item])
         end
     end
 end

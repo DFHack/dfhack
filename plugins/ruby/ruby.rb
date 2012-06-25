@@ -24,20 +24,6 @@ end
 
 module DFHack
     class << self
-        # update the ruby.cpp version to accept a block
-        def suspend
-            if block_given?
-                begin
-                    do_suspend
-                    yield
-                ensure
-                    resume
-                end
-            else
-                do_suspend
-            end
-        end
-
         # register a callback to be called every gframe or more
         # ex: DFHack.onupdate_register { DFHack.world.units[0].counters.job_counter = 0 }
         def onupdate_register(&b)

@@ -121,6 +121,11 @@ DFhackCExport command_result plugin_eval_ruby(const char *command)
     if (!r_thread)
         return CR_FAILURE;
 
+    // wrap all ruby code inside a suspend block
+    // if we dont do that and rely on ruby code doing it, we'll deadlock in
+    // onupdate
+    CoreSuspender suspend;
+
     command_result ret;
 
     // ensure ruby thread is idle
@@ -414,18 +419,6 @@ static VALUE rb_dfonupdateactive(VALUE self)
 static VALUE rb_dfonupdateactiveset(VALUE self, VALUE val)
 {
     onupdate_active = (BOOL_ISFALSE(val) ? 0 : 1);
-    return Qtrue;
-}
-
-static VALUE rb_dfresume(VALUE self)
-{
-    Core::getInstance().Resume();
-    return Qtrue;
-}
-
-static VALUE rb_dfsuspend(VALUE self)
-{
-    Core::getInstance().Suspend();
     return Qtrue;
 }
 
@@ -769,8 +762,6 @@ static void ruby_bind_dfhack(void) {
 
     rb_define_singleton_method(rb_cDFHack, "onupdate_active", RUBY_METHOD_FUNC(rb_dfonupdateactive), 0);
     rb_define_singleton_method(rb_cDFHack, "onupdate_active=", RUBY_METHOD_FUNC(rb_dfonupdateactiveset), 1);
-    rb_define_singleton_method(rb_cDFHack, "resume", RUBY_METHOD_FUNC(rb_dfresume), 0);
-    rb_define_singleton_method(rb_cDFHack, "do_suspend", RUBY_METHOD_FUNC(rb_dfsuspend), 0);
     rb_define_singleton_method(rb_cDFHack, "get_global_address", RUBY_METHOD_FUNC(rb_dfget_global_address), 1);
     rb_define_singleton_method(rb_cDFHack, "get_vtable", RUBY_METHOD_FUNC(rb_dfget_vtable), 1);
     rb_define_singleton_method(rb_cDFHack, "get_rtti_classname", RUBY_METHOD_FUNC(rb_dfget_rtti_classname), 1);

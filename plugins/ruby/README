@@ -17,6 +17,8 @@ DFHack structures are renamed in CamelCase in the ruby namespace.
 
 For a list of the structures and their methods, grep the ruby-autogen.rb file.
 
+All ruby code runs while the main DF process and other plugins are suspended.
+
 
 DFHack console
 --------------
@@ -56,10 +58,6 @@ Ruby helper functions
 
 This is an excerpt of the functions defined in dfhack/plugins/ruby/*.rb. Check
 the files and the comments for a complete list.
-
- df.suspend {  }
-Ensures that the main game thread is paused while exec'ing the content of the
-block. Similar to df.suspend() ; <run_block> ; df.resume().
 
  df.same_pos?(obj1, obj2)
 Returns true if both objects are at the same game coordinates.

@@ -55,12 +55,10 @@ module DFHack
             if !material
                 # list trees
                 cnt = Hash.new(0)
-                suspend {
-                    each_tree { |plant|
+                each_tree { |plant|
                     next if plant.grow_counter < SaplingToTreeAge
                     next if map_designation_at(plant).hidden
                     cnt[plant.material] += 1
-                }
                 }
                 cnt.sort_by { |mat, c| c }.each { |mat, c|
                     name = @raws_tree_name[mat]
@@ -68,8 +66,7 @@ module DFHack
                 }
             else
                 cnt = 0
-                suspend {
-                    each_tree(material) { |plant|
+                each_tree(material) { |plant|
                     next if plant.grow_counter < SaplingToTreeAge
                     b = map_block_at(plant)
                     d = b.designation[plant.pos.x%16][plant.pos.y%16]
@@ -81,7 +78,6 @@ module DFHack
                         break if cnt == count_max
                     end
                 }
-                }
                 puts "Updated #{cnt} plant designations"
             end
         end
@@ -90,12 +86,10 @@ module DFHack
             if !material
                 # list plants
                 cnt = Hash.new(0)
-                suspend {
-                    each_tree { |plant|
+                each_tree { |plant|
                     next if plant.grow_counter >= SaplingToTreeAge
                     next if map_designation_at(plant).hidden
                     cnt[plant.material] += 1
-                }
                 }
                 cnt.sort_by { |mat, c| c }.each { |mat, c|
                     name = @raws_tree_name[mat]
@@ -103,14 +97,12 @@ module DFHack
                 }
             else
                 cnt = 0
-                suspend {
-                    each_tree(material) { |plant|
+                each_tree(material) { |plant|
                     next if plant.grow_counter >= SaplingToTreeAge
                     next if map_designation_at(plant).hidden
                     plant.grow_counter = SaplingToTreeAge
                     cnt += 1
                     break if cnt == count_max
-                }
                 }
                 puts "Grown #{cnt} saplings"
             end

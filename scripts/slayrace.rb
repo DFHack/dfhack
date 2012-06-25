@@ -9,13 +9,11 @@ raise 'invalid race' if not raw_race
 race_nr = df.world.raws.creatures.all.index { |cr| cr.creature_id == raw_race }
 count = 0
 
-df.suspend {
-	df.world.units.active.each { |u|
-		if u.race == race_nr and u.body.blood_count != 0
-			u.body.blood_count = 0
-			count += 1
-		end
-	}
+df.world.units.active.each { |u|
+	if u.race == race_nr and u.body.blood_count != 0
+		u.body.blood_count = 0
+		count += 1
+	end
 }
 
 puts "slain #{count} #{raw_race}"

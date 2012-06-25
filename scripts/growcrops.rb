@@ -17,13 +17,11 @@ end
 if !material or material == 'help' or material == 'list'
 	# show a list of available crop types
 	cnt = Hash.new(0)
-	df.suspend {
-		df.world.items.other[:SEEDS].each { |seed|
-			next if not seed.flags.in_building
-			next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
-			next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
-			cnt[seed.mat_index] += 1
-		}
+	df.world.items.other[:SEEDS].each { |seed|
+		next if not seed.flags.in_building
+		next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
+		next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
+		cnt[seed.mat_index] += 1
 	}
 
 	cnt.sort_by { |mat, c| c }.each { |mat, c|
@@ -39,15 +37,13 @@ else
 	end
 
 	cnt = 0
-	df.suspend {
-		df.world.items.other[:SEEDS].each { |seed|
-			next if seed.mat_index != wantmat
-			next if not seed.flags.in_building
-			next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
-			next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
-			seed.grow_counter = @raws_plant_growdur[seed.mat_index]
-			cnt += 1
-		}
+	df.world.items.other[:SEEDS].each { |seed|
+		next if seed.mat_index != wantmat
+		next if not seed.flags.in_building
+		next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
+		next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
+		seed.grow_counter = @raws_plant_growdur[seed.mat_index]
+		cnt += 1
 	}
 	puts "Grown #{cnt} #{mat}"
 end

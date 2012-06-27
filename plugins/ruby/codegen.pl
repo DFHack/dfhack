@@ -261,12 +261,29 @@ sub render_struct_fields {
                 };
                 push @lines_rb, "}";
 
-                my $reftg = $field->getAttribute('ref-target');
-                render_field_reftarget($type, $field, $name, $reftg) if ($reftg);
+                render_struct_field_refs($type, $field, $name);
             }
         }
 
         $compound_off += sizeof($field) if (!$isunion);
+    }
+}
+
+# handle generating accessor for xml attributes ref-target, refers-to etc
+sub render_struct_field_refs {
+    my ($parent, $field, $name) = @_;
+
+    my $reftg = $field->getAttribute('ref-target');
+    render_field_reftarget($parent, $field, $name, $reftg) if ($reftg);
+
+    my $refto = $field->getAttribute('refers-to');
+    render_field_refto($parent, $name, $refto) if ($refto);
+
+    my $meta = $field->getAttribute('ld:meta');
+    my $item = $field->findnodes('child::ld:item')->[0];
+    if ($meta and $meta eq 'container' and $item) {
+        my $itemreftg = $item->getAttribute('ref-target');
+        render_container_reftarget($parent, $item, $name, $itemreftg) if $itemreftg;
     }
 }
 
@@ -280,18 +297,50 @@ sub render_field_reftarget {
     return if (!$tg);
     my $tgvec = $tg->getAttribute('instance-vector');
     return if (!$tgvec);
-    $tgvec =~ s/\$global/df/;
+
+    render_field_refto($parent, $name, $tgvec);
+}
+
+sub render_field_refto {
+    my ($parent, $name, $tgvec) = @_;
+
+    $tgvec =~ s/^\$global/df/;
+    $tgvec =~ s/\[\$\]$//;
     return if $tgvec !~ /^[\w\.]+$/;
 
     my $tgname = "${name}_tg";
-    $tgname =~ s/_id_tg//;
+    $tgname =~ s/_id(.?.?)_tg/_tg$1/;
 
-    for my $otherfield ($parent->findnodes('child::ld:field')) {
-        my $othername = $otherfield->getAttribute('name');
+    for my $othername (map { $_->getAttribute('name') } $parent->findnodes('child::ld:field')) {
         $tgname .= '_' if ($othername and $tgname eq $othername);
     }
 
     push @lines_rb, "def $tgname ; ${tgvec}[$name] ; end";
+}
+
+sub render_container_reftarget {
+    my ($parent, $item, $name, $reftg) = @_;
+
+    my $aux = $item->getAttribute('aux-value');
+    return if ($aux); # TODO
+
+    my $tg = $global_types{$reftg};
+    return if (!$tg);
+    my $tgvec = $tg->getAttribute('instance-vector');
+    return if (!$tgvec);
+
+    $tgvec =~ s/^\$global/df/;
+    $tgvec =~ s/\[\$\]$//;
+    return if $tgvec !~ /^[\w\.]+$/;
+
+    my $tgname = "${name}_tg";
+    $tgname =~ s/_id(.?.?)_tg/_tg$1/;
+
+    for my $othername (map { $_->getAttribute('name') } $parent->findnodes('child::ld:field')) {
+        $tgname .= '_' if ($othername and $tgname eq $othername);
+    }
+
+    push @lines_rb, "def $tgname ; $name.map { |i| ${tgvec}[i] } ; end";
 }
 
 sub render_class_vmethods {
@@ -742,7 +791,7 @@ sub render_item_number {
         push @lines_rb, 'number 8, false';
     } elsif ($subtype eq 'bool') {
         push @lines_rb, 'number 8, true';
-	$initvalue ||= 'nil';
+        $initvalue ||= 'nil';
         $typename ||= 'BooleanEnum';
     } elsif ($subtype eq 's-float') {
         push @lines_rb, 'float';

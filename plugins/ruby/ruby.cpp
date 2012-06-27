@@ -181,9 +181,9 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
         SCASE(MAP_UNLOADED);
         SCASE(VIEWSCREEN_CHANGED);
         SCASE(CORE_INITIALIZED);
-	// if we go through plugin_eval at BEGIN_UNLOAD, it'll
-	// try to get the suspend lock and deadlock at df exit
-	case SC_BEGIN_UNLOAD : return CR_OK;
+        // if we go through plugin_eval at BEGIN_UNLOAD, it'll
+        // try to get the suspend lock and deadlock at df exit
+        case SC_BEGIN_UNLOAD : return CR_OK;
 #undef SCASE
     }
 

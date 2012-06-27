@@ -221,10 +221,11 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     out.print("temperature2: %d U\n",mc.temperature2At(cursor));
 
     int offset = block.region_offset[des.bits.biome];
-    df::coord2d region_pos = block.region_pos + df::coord2d ((offset % 3) - 1, (offset / 3) -1);
+    int bx = clip_range(block.region_pos.x + (offset % 3) - 1, 0, world->world_data->world_width-1);
+    int by = clip_range(block.region_pos.y + (offset / 3) - 1, 0, world->world_data->world_height-1);
 
     df::world_data::T_region_map* biome = 
-        &world->world_data->region_map[region_pos.x][region_pos.y];
+        &world->world_data->region_map[bx][by];
 
     int sav = biome->savagery;
     int evi = biome->evilness;

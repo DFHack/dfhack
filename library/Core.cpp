@@ -1224,7 +1224,8 @@ bool Core::ncurses_wgetch(int in, int & out)
         {
             df::viewscreen * ws = Gui::GetCurrentScreen();
             if (strict_virtual_cast<df::viewscreen_dwarfmodest>(ws) &&
-                df::global::ui->main.mode != ui_sidebar_mode::Hotkeys)
+                df::global::ui->main.mode != ui_sidebar_mode::Hotkeys &&
+                df::global::ui->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
             {
                 setHotkeyCmd(df::global::ui->main.hotkeys[idx].name);
                 return false;
@@ -1372,7 +1373,8 @@ bool Core::SelectHotkey(int sym, int modifiers)
                     idx += 8;
 
                 if (strict_virtual_cast<df::viewscreen_dwarfmodest>(screen) &&
-                    df::global::ui->main.mode != ui_sidebar_mode::Hotkeys)
+                    df::global::ui->main.mode != ui_sidebar_mode::Hotkeys &&
+                    df::global::ui->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
                 {
                     cmd = df::global::ui->main.hotkeys[idx].name;
                 }

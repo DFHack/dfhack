@@ -14,8 +14,6 @@ module DFHack
                 when :LookAround
                     k = ui_look_list.items[ui_look_cursor]
                     k.unit if k.type == :Unit
-                else
-                    raise "bad UI mode #{ui.main.mode.inspect}"
                 end
             elsif what.kind_of?(Integer)
                 world.units.all.binsearch(what)

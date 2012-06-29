@@ -14,36 +14,36 @@ if @raws_plant_name.empty?
 	}
 end
 
+inventory = Hash.new(0)
+df.world.items.other[:SEEDS].each { |seed|
+	next if not seed.flags.in_building
+	next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
+	next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
+	inventory[seed.mat_index] += 1
+}
+
 if !material or material == 'help' or material == 'list'
 	# show a list of available crop types
-	cnt = Hash.new(0)
-	df.world.items.other[:SEEDS].each { |seed|
-		next if not seed.flags.in_building
-		next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
-		next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
-		cnt[seed.mat_index] += 1
-	}
-
-	cnt.sort_by { |mat, c| c }.each { |mat, c|
+	inventory.sort_by { |mat, c| c }.each { |mat, c|
 		name = df.world.raws.plants.all[mat].id
 		puts " #{name} #{c}"
 	}
 
 else
 
-	mat = df.match_rawname(material, @raws_plant_name.values)
+	mat = df.match_rawname(material, inventory.keys.map { |k| @raws_plant_name[k] })
 	unless wantmat = @raws_plant_name.index(mat)
 		raise "invalid plant material #{material}"
 	end
 
-	cnt = 0
+	count = 0
 	df.world.items.other[:SEEDS].each { |seed|
 		next if seed.mat_index != wantmat
 		next if not seed.flags.in_building
 		next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
 		next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
 		seed.grow_counter = @raws_plant_growdur[seed.mat_index]
-		cnt += 1
+		count += 1
 	}
-	puts "Grown #{cnt} #{mat}"
+	puts "Grown #{count} #{mat}"
 end

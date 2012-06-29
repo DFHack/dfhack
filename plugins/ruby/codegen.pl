@@ -772,7 +772,7 @@ sub render_item_number {
     $initvalue ||= 'nil' if $typename;
 
     $subtype = $item->getAttribute('base-type') if (!$subtype or $subtype eq 'bitfield' or $subtype eq 'enum');
-    $subtype = $g->getAttribute('base-type') if ($g);
+    $subtype ||= $g->getAttribute('base-type') if ($g);
     $subtype = 'int32_t' if (!$subtype);
 
          if ($subtype eq 'int64_t') {

@@ -1361,3 +1361,60 @@ also tries to have dwarves specialize in specific skills.
     while it is enabled.
 
 For detailed usage information, see 'help autolabor'.
+
+
+growcrops
+=========
+Instantly grow seeds inside farming plots.
+
+With no argument, this command list the various seed types currently in
+use in your farming plots.
+With a seed type, the script will grow 100 of these seeds, ready to be
+harvested. You can change the number with a 2nd argument.
+
+For exemple, to grow 40 plump helmet spawn:
+:: 
+
+    growcrops plump 40
+
+This is a ruby script and needs the ruby plugin.
+
+
+removebadthoughts
+=================
+This script remove negative thoughts from your dwarves. Very useful against
+tantrum spirals.
+
+With a selected unit in 'v' mode, will clear this unit's mind, otherwise
+clear all your fort's units minds.
+
+Individual dwarf happiness may not increase right after this command is run,
+but in the short term your dwarves will get much more joyful.
+The thoughts are set to be very old, and the game will remove them soon when
+you unpause.
+
+With the optional ``-v`` parameter, the script will dump the negative thoughts
+it removed.
+
+This is a ruby script and needs the ruby plugin.
+
+
+slayrace
+========
+Kills any unit of a given race.
+
+With no argument, lists the available races.
+
+Any non-dead non-caged unit of the specified race gets its ``blood_count``
+set to 0, which means immediate death at the next game tick. May not work
+on vampires and other weird creatures.
+
+Targets any unit on a revealed tile of the map, including ambushers. Ex:
+:: 
+    slayrace gob
+
+To kill a single creature in the same way, you can use the following line,
+after selecting the unit with the 'v' cursor:
+:: 
+    rb_eval df.unit_find.body.blood_count = 0
+

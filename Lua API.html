@@ -1571,14 +1571,14 @@ Returns <em>nil</em> if any of obj or indices is <em>nil</em>, or a numeric inde
 <p>Returns a lua sequence of numbers in start..end.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">utils.make_sort_order(data, ordering)</tt></p>
-<p>Computes an ordering of objects in data, as a table of integer
+<p>Computes a sorted permutation of objects in data, as a table of integer
 indices into the data sequence. Uses <tt class="docutils literal">data.n</tt> as input length
 if present.</p>
 <p>The ordering argument is a sequence of ordering specs, represented
 as lua tables with following possible fields:</p>
 <dl class="docutils">
 <dt>ord.key = <em>function(value)</em></dt>
-<dd><p class="first last">Computes comparison key from a data value. Not called on nil.
+<dd><p class="first last">Computes comparison key from input data value. Not called on nil.
 If omitted, the comparison key is the value itself.</p>
 </dd>
 <dt>ord.key_table = <em>function(data)</em></dt>
@@ -1595,7 +1595,18 @@ Called on non-nil keys; nil sorts last.</p>
 <dd><p class="first last">If true, sort non-nil keys in descending order.</p>
 </dd>
 </dl>
-<p>This function is used by the sort plugin.</p>
+<p>For every comparison during sorting the specs are applied in
+order until an unambiguous decision is reached. Sorting is stable.</p>
+<p>Example of sorting a sequence by field foo:</p>
+<pre class="literal-block">
+local spec = { key = function(v) return v.foo end }
+local order = utils.make_sort_order(data, { spec })
+local output = {}
+for i = 1,#order do output[i] = data[order[i]] end
+</pre>
+<p>Separating the actual reordering of the sequence in this
+way enables applying the same permutation to multiple arrays.
+This function is used by the sort plugin.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">utils.assign(tgt, src)</tt></p>
 <p>Does a recursive assignment of src into tgt.
@@ -1728,6 +1739,8 @@ calls lua code to perform the actual ordering of list items.</p>
 are automatically used by the DFHack core as commands. The
 matching command name consists of the name of the file sans
 the extension.</p>
+<p>If the first line of the script is a one-line comment, it is
+used by the built-in <tt class="docutils literal">ls</tt> and <tt class="docutils literal">help</tt> commands.</p>
 <p><strong>NOTE:</strong> Scripts placed in subdirectories still can be accessed, but
 do not clutter the <tt class="docutils literal">ls</tt> command list; thus it is preferred
 for obscure developer-oriented scripts and scripts used by tools.

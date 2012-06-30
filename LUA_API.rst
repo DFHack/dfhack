@@ -1428,7 +1428,7 @@ utils
 
 * ``utils.make_sort_order(data, ordering)``
 
-  Computes an ordering of objects in data, as a table of integer
+  Computes a sorted permutation of objects in data, as a table of integer
   indices into the data sequence. Uses ``data.n`` as input length
   if present.
 
@@ -1436,7 +1436,7 @@ utils
   as lua tables with following possible fields:
 
   ord.key = *function(value)*
-    Computes comparison key from a data value. Not called on nil.
+    Computes comparison key from input data value. Not called on nil.
     If omitted, the comparison key is the value itself.
   ord.key_table = *function(data)*
     Computes a key table from the data table in one go.
@@ -1448,6 +1448,18 @@ utils
   ord.reverse = *true/false*
     If true, sort non-nil keys in descending order.
 
+  For every comparison during sorting the specs are applied in
+  order until an unambiguous decision is reached. Sorting is stable.
+
+  Example of sorting a sequence by field foo::
+
+    local spec = { key = function(v) return v.foo end }
+    local order = utils.make_sort_order(data, { spec })
+    local output = {}
+    for i = 1,#order do output[i] = data[order[i]] end
+
+  Separating the actual reordering of the sequence in this
+  way enables applying the same permutation to multiple arrays.
   This function is used by the sort plugin.
 
 * ``utils.assign(tgt, src)``

@@ -13,6 +13,7 @@ if ($^O =~ /linux/i) {
 } else {
     $os = 'windows';
 }
+$os = $ARGV[2] if ($ARGV[2]);
 
 sub indent_rb(&) {
     my ($sub) = @_;

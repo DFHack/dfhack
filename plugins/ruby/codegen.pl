@@ -8,7 +8,7 @@ use XML::LibXML;
 our @lines_rb;
 
 my $os;
-if ($^O =~ /linux/i) {
+if ($^O =~ /linux/i or $^O =~ /darwin/i) {
     $os = 'linux';
 } else {
     $os = 'windows';

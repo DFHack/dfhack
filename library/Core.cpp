@@ -204,7 +204,7 @@ struct sortable
     };
 };
 
-static std::string getLuaHelp(std::string path)
+static std::string getScriptHelp(std::string path, std::string helpprefix)
 {
     ifstream script(path.c_str());
 
@@ -212,14 +212,14 @@ static std::string getLuaHelp(std::string path)
     {
         std::string help;
         if (getline(script, help) &&
-            help.substr(0,3) == "-- ")
-            return help.substr(3);
+            help.substr(0,helpprefix.length()) == helpprefix)
+            return help.substr(helpprefix.length());
     }
 
-    return "Lua script.";
+    return "No help available.";
 }
 
-static std::map<string,string> listLuaScripts(std::string path)
+static std::map<string,string> listScripts(PluginManager *plug_mgr, std::string path)
 {
     std::vector<string> files;
     getdir(path, files);
@@ -229,9 +229,15 @@ static std::map<string,string> listLuaScripts(std::string path)
     {
         if (hasEnding(files[i], ".lua"))
         {
-            std::string help = getLuaHelp(path + files[i]);
+            std::string help = getScriptHelp(path + files[i], "-- ");
 
             pset[files[i].substr(0, files[i].size()-4)] = help;
+        }
+        else if (plug_mgr->eval_ruby && hasEnding(files[i], ".rb"))
+        {
+            std::string help = getScriptHelp(path + files[i], "# ");
+
+            pset[files[i].substr(0, files[i].size()-3)] = help;
         }
     }
     return pset;
@@ -275,31 +281,34 @@ static command_result runLuaScript(color_ostream &out, std::string name, vector<
     return ok ? CR_OK : CR_FAILURE;
 }
 
+static command_result runRubyScript(PluginManager *plug_mgr, std::string name, vector<string> &args)
+{
+    std::string rbcmd = "$script_args = [";
+    for (size_t i = 0; i < args.size(); i++)
+        rbcmd += "'" + args[i] + "', ";
+    rbcmd += "]\n";
+
+    rbcmd += "load './hack/scripts/" + name + ".rb'";
+
+    return plug_mgr->eval_ruby(rbcmd.c_str());
+}
+
 command_result Core::runCommand(color_ostream &out, const std::string &command)
 {
-	//fprintf(stderr,"Inside runCommand");
-	//fprintf(stderr," with command %s\n",command.c_str());
     if (!command.empty())
     {
-		//fprintf(stderr,"Command is not empty, tokenizing\n");
         vector <string> parts;
         Core::cheap_tokenise(command,parts);
-		//fprintf(stderr,"Tokenized, got %d parts\n",parts.size());
         if(parts.size() == 0)
             return CR_NOT_IMPLEMENTED;
 
         string first = parts[0];
-		//fprintf(stderr,"Erasing beginning\n");
         parts.erase(parts.begin());
-        
-		//fprintf(stderr,"I think we're about there\n");
 
         if (first[0] == '#')
             return CR_OK;
 
         cerr << "Invoking: " << command << endl;
-
-		//fprintf(stderr,"Returning with the next recursion\n");
         return runCommand(out, first, parts);
     }
     else
@@ -357,10 +366,16 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                         return CR_OK;
                     }
                 }
-                auto filename = getHackPath() + "scripts/" + parts[0] + ".lua";
-                if (fileExists(filename))
+                auto filename = getHackPath() + "scripts/" + parts[0];
+                if (fileExists(filename + ".lua"))
                 {
-                    string help = getLuaHelp(filename);
+                    string help = getScriptHelp(filename + ".lua", "-- ");
+                    con.print("%s: %s\n", parts[0].c_str(), help.c_str());
+                    return CR_OK;
+                }
+                if (plug_mgr->eval_ruby && fileExists(filename + ".rb"))
+                {
+                    string help = getScriptHelp(filename + ".rb", "# ");
                     con.print("%s: %s\n", parts[0].c_str(), help.c_str());
                     return CR_OK;
                 }
@@ -508,7 +523,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                     con.print("  %-22s- %s\n",(*iter).name.c_str(), (*iter).description.c_str());
                     con.reset_color();
                 }
-                auto scripts = listLuaScripts(getHackPath() + "scripts/");
+                auto scripts = listScripts(plug_mgr, getHackPath() + "scripts/");
                 if (!scripts.empty())
                 {
                     con.print("\nscripts:\n");
@@ -613,9 +628,11 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
             command_result res = plug_mgr->InvokeCommand(con, first, parts);
             if(res == CR_NOT_IMPLEMENTED)
             {
-                auto filename = getHackPath() + "scripts/" + first + ".lua";
-                if (fileExists(filename))
+                auto filename = getHackPath() + "scripts/" + first;
+                if (fileExists(filename + ".lua"))
                     res = runLuaScript(con, first, parts);
+                else if (plug_mgr->eval_ruby && fileExists(filename + ".rb"))
+                    res = runRubyScript(plug_mgr, first, parts);
                 else
                     con.printerr("%s is not a recognized command.\n", first.c_str());
             }
@@ -680,7 +697,7 @@ void fIOthread(void * iodata)
     {
         string command = "";
         int ret = con.lineedit("[DFHack]# ",command, main_history);
-        //fprintf(stderr,"Command: [%s]\n",command.c_str());
+        fprintf(stderr,"Command: [%s]\n",command.c_str());
         if(ret == -2)
         {
             cerr << "Console is shutting down properly." << endl;
@@ -694,13 +711,13 @@ void fIOthread(void * iodata)
         else if(ret)
         {
             // a proper, non-empty command was entered
-			//fprintf(stderr,"Adding command to history\n");
+			fprintf(stderr,"Adding command to history\n");
             main_history.add(command);
-			//fprintf(stderr,"Saving history\n");
+			fprintf(stderr,"Saving history\n");
             main_history.save("dfhack.history");
         }
         
-		//fprintf(stderr,"Running command\n");
+		fprintf(stderr,"Running command\n");
 
         auto rv = core->runCommand(con, command);
 
@@ -1207,7 +1224,8 @@ bool Core::ncurses_wgetch(int in, int & out)
         {
             df::viewscreen * ws = Gui::GetCurrentScreen();
             if (strict_virtual_cast<df::viewscreen_dwarfmodest>(ws) &&
-                df::global::ui->main.mode != ui_sidebar_mode::Hotkeys)
+                df::global::ui->main.mode != ui_sidebar_mode::Hotkeys &&
+                df::global::ui->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
             {
                 setHotkeyCmd(df::global::ui->main.hotkeys[idx].name);
                 return false;
@@ -1355,7 +1373,8 @@ bool Core::SelectHotkey(int sym, int modifiers)
                     idx += 8;
 
                 if (strict_virtual_cast<df::viewscreen_dwarfmodest>(screen) &&
-                    df::global::ui->main.mode != ui_sidebar_mode::Hotkeys)
+                    df::global::ui->main.mode != ui_sidebar_mode::Hotkeys &&
+                    df::global::ui->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
                 {
                     cmd = df::global::ui->main.hotkeys[idx].name;
                 }

@@ -24,7 +24,10 @@ PERMANENT SAVE CORRUPTION.
 
 Finding the first few globals requires this script to be
 started immediately after loading the game, WITHOUT
-first loading a world.
+first loading a world. The rest expect a loaded save,
+not a fresh embark. Finding current_weather requires
+a special save previously processed with devel/prepare-save
+on a DF version with working dfhack.
 
 The script expects vanilla game configuration, without
 any custom tilesets or init file changes. Never unpause
@@ -40,12 +43,12 @@ end
 
 local data = ms.get_data_segment()
 if not data then
-    error('Could not find data segment')
+    qerror('Could not find data segment')
 end
 
 print('\nData section: '..tostring(data))
 if data.size < 5000000 then
-    error('Data segment too short.')
+    qerror('Data segment too short.')
 end
 
 local searcher = ms.DiffSearcher.new(data)
@@ -100,7 +103,7 @@ local function exec_finder(finder, names)
         if not dfhack.safecall(finder) then
             if not utils.prompt_yes_no('Proceed with the rest of the script?') then
                 searcher:reset()
-                error('Quit')
+                qerror('Quit')
             end
         end
     else
@@ -250,6 +253,83 @@ local function find_gview()
 end
 
 --
+-- enabler
+--
+
+local function is_valid_enabler(e)
+    if not ms.is_valid_vector(e.textures.raws, 4)
+    or not ms.is_valid_vector(e.text_system, 4)
+    then
+        dfhack.printerr('Vector layout check failed.')
+        return false
+    end
+
+    return true
+end
+
+local function find_enabler()
+    -- Data from data/init/colors.txt
+    local colors = {
+        0, 0, 0,       0, 0, 128,      0, 128, 0,
+        0, 128, 128,   128, 0, 0,      128, 0, 128,
+        128, 128, 0,   192, 192, 192,  128, 128, 128,
+        0, 0, 255,     0, 255, 0,      0, 255, 255,
+        255, 0, 0,     255, 0, 255,    255, 255, 0,
+        255, 255, 255
+    }
+
+    for i = 1,#colors do colors[i] = colors[i]/255 end
+
+    local idx, addr = data.float:find_one(colors)
+    if idx then
+        validate_offset('enabler', is_valid_enabler, addr, df.enabler, 'ccolor')
+        return
+    end
+
+    dfhack.printerr('Could not find enabler')
+end
+
+--
+-- gps
+--
+
+local function is_valid_gps(g)
+    if g.clipx[0] < 0 or g.clipx[0] > g.clipx[1] or g.clipx[1] >= g.dimx then
+        dfhack.printerr('Invalid clipx: ', g.clipx[0], g.clipx[1], g.dimx)
+    end
+    if g.clipy[0] < 0 or g.clipy[0] > g.clipy[1] or g.clipy[1] >= g.dimy then
+        dfhack.printerr('Invalid clipy: ', g.clipy[0], g.clipy[1], g.dimy)
+    end
+
+    return true
+end
+
+local function find_gps()
+    print('\nPlease ensure the mouse cursor is not over the game window.')
+    if not utils.prompt_yes_no('Proceed?', true) then
+        return
+    end
+
+    local zone
+    if os_type == 'windows' or os_type == 'linux' then
+        zone = zoomed_searcher('cursor', 0x1000)
+    elseif os_type == 'darwin' then
+        zone = zoomed_searcher('enabler', 0x1000)
+    end
+    zone = zone or searcher
+
+    local w,h = ms.get_screen_size()
+
+    local idx, addr = zone.area.int32_t:find_one{w, h, -1, -1}
+    if idx then
+        validate_offset('gps', is_valid_gps, addr, df.graphic, 'dimx')
+        return
+    end
+
+    dfhack.printerr('Could not find gps')
+end
+
+--
 -- World
 --
 
@@ -385,6 +465,88 @@ number, so when it shows "Min (5000df", it means 50000:]],
     )
     validate_offset('ui_build_selector', is_valid_ui_build_selector,
                     addr, df.ui_build_selector, 'plate_info', 'unit_min')
+end
+
+--
+-- init
+--
+
+local function is_valid_init(i)
+    -- derived from curses_*.png image sizes presumably
+    if i.font.small_font_dispx ~= 8 or i.font.small_font_dispy ~= 12 or
+       i.font.large_font_dispx ~= 10 or i.font.large_font_dispy ~= 12 then
+        print('Unexpected font sizes: ',
+              i.font.small_font_dispx, i.font.small_font_dispy,
+              i.font.large_font_dispx, i.font.large_font_dispy)
+        if not utils.prompt_yes_no('Ignore?') then
+            return false
+        end
+    end
+
+    return true
+end
+
+local function find_init()
+    local zone
+    if os_type == 'windows' then
+        zone = zoomed_searcher('ui_build_selector', 0x3000)
+    elseif os_type == 'linux' or os_type == 'darwin' then
+        zone = zoomed_searcher('d_init', -0x2000)
+    end
+    zone = zone or searcher
+
+    local idx, addr = zone.area.int32_t:find_one{250, 150, 15, 0}
+    if idx then
+        validate_offset('init', is_valid_init, addr, df.init, 'input', 'hold_time')
+        return
+    end
+
+    local w,h = ms.get_screen_size()
+
+    local idx, addr = zone.area.int32_t:find_one{w, h}
+    if idx then
+        validate_offset('init', is_valid_init, addr, df.init, 'display', 'grid_x')
+        return
+    end
+
+    dfhack.printerr('Could not find init')
+end
+
+--
+-- current_weather
+--
+
+local function find_current_weather()
+    print('\nPlease load the save previously processed with prepare-save.')
+    if not utils.prompt_yes_no('Proceed?', true) then
+        return
+    end
+
+    local zone
+    if os_type == 'windows' then
+        zone = zoomed_searcher('crime_next_id', 512)
+    elseif os_type == 'darwin' then
+        zone = zoomed_searcher('cursor', -64)
+    elseif os_type == 'linux' then
+        zone = zoomed_searcher('ui_building_assign_type', -512)
+    end
+    zone = zone or searcher
+
+    local wbytes = {
+        2, 1, 0, 2, 0,
+        1, 2, 1, 0, 0,
+        2, 0, 2, 1, 2,
+        1, 2, 0, 1, 1,
+        2, 0, 1, 0, 2
+    }
+
+    local idx, addr = zone.area.int8_t:find_one(wbytes)
+    if idx then
+        ms.found_offset('current_weather', addr)
+        return
+    end
+
+    dfhack.printerr('Could not find current_weather - must be a wrong save.')
 end
 
 --
@@ -669,7 +831,7 @@ end
 local function get_process_zone()
     if os_type == 'windows' then
         return zoomed_searcher('ui_workshop_job_cursor', 'ui_building_in_resize')
-    else
+    elseif os_type == 'linux' or os_type == 'darwin' then
         return zoomed_searcher('cur_year', 'cur_year_tick')
     end
 end
@@ -710,10 +872,10 @@ end
 
 local function find_pause_state()
     local zone
-    if os_type == 'linux' then
+    if os_type == 'linux' or os_type == 'darwin' then
         zone = zoomed_searcher('ui_look_cursor', 32)
     elseif os_type == 'windows' then
-        zone = zoomed_searcher('ui_workshop_job_cursor', 64)
+        zone = zoomed_searcher('ui_workshop_job_cursor', 80)
     end
     zone = zone or searcher
 
@@ -737,6 +899,8 @@ exec_finder(find_cursor, { 'cursor', 'selection_rect', 'gamemode', 'gametype' })
 exec_finder(find_announcements, 'announcements')
 exec_finder(find_d_init, 'd_init')
 exec_finder(find_gview, 'gview')
+exec_finder(find_enabler, 'enabler')
+exec_finder(find_gps, 'gps')
 
 print('\nCompound globals (need loaded world):\n')
 
@@ -744,9 +908,11 @@ exec_finder(find_world, 'world')
 exec_finder(find_ui, 'ui')
 exec_finder(find_ui_sidebar_menus, 'ui_sidebar_menus')
 exec_finder(find_ui_build_selector, 'ui_build_selector')
+exec_finder(find_init, 'init')
 
 print('\nPrimitive globals:\n')
 
+exec_finder(find_current_weather, 'current_weather')
 exec_finder(find_ui_menu_width, { 'ui_menu_width', 'ui_area_map_width' })
 exec_finder(find_ui_selected_unit, 'ui_selected_unit')
 exec_finder(find_ui_unit_view_mode, 'ui_unit_view_mode')

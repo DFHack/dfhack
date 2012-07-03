@@ -15,6 +15,10 @@ module DFHack
                     when :BuildingItems
                         bld = world.selected_building
                         bld.contained_items[ui_building_item_cursor].item if bld
+                    when :ViewUnits
+                        u = world.units.active[ui_selected_unit]
+                        u.inventory[ui_look_cursor].item if u and u.pos.z == cursor.z and
+                                ui_unit_view_mode == :Inventory and u.inventory[ui_look_cursor]
                     end
                 end
             elsif what.kind_of?(Integer)

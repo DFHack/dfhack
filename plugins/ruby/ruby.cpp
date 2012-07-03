@@ -35,9 +35,12 @@ tthread::mutex *m_irun;
 tthread::mutex *m_mutex;
 static volatile RB_command r_type;
 static volatile command_result r_result;
+static color_ostream *r_console;       // color_ostream given as argument, if NULL resort to console_proxy
 static const char *r_command;
 static tthread::thread *r_thread;
 static int onupdate_active;
+static color_ostream_proxy *console_proxy;
+
 
 DFHACK_PLUGIN("ruby")
 
@@ -115,7 +118,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 }
 
 // send a single ruby line to be evaluated by the ruby thread
-DFhackCExport command_result plugin_eval_ruby(const char *command)
+DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *command)
 {
     // if dlopen failed
     if (!r_thread)
@@ -136,6 +139,7 @@ DFhackCExport command_result plugin_eval_ruby(const char *command)
 
     r_type = RB_EVAL;
     r_command = command;
+    r_console = &out;
     // wake ruby thread up
     m_irun->unlock();
 
@@ -144,6 +148,7 @@ DFhackCExport command_result plugin_eval_ruby(const char *command)
         tthread::this_thread::yield();
 
     ret = r_result;
+    r_console = NULL;
 
     // block ruby thread
     m_irun->lock();
@@ -164,7 +169,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     if (!onupdate_active)
         return CR_OK;
 
-    return plugin_eval_ruby("DFHack.onupdate");
+    return plugin_eval_ruby(out, "DFHack.onupdate");
 }
 
 DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_change_event e)
@@ -187,7 +192,7 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
 #undef SCASE
     }
 
-    return plugin_eval_ruby(cmd.c_str());
+    return plugin_eval_ruby(out, cmd.c_str());
 }
 
 static command_result df_rubyeval(color_ostream &out, std::vector <std::string> & parameters)
@@ -209,7 +214,7 @@ static command_result df_rubyeval(color_ostream &out, std::vector <std::string> 
             full += " ";
     }
 
-    return plugin_eval_ruby(full.c_str());
+    return plugin_eval_ruby(out, full.c_str());
 }
 
 
@@ -265,7 +270,7 @@ static int df_loadruby(void)
 #if defined(WIN32)
         "./libruby.dll";
 #elif defined(__APPLE__)
-	"/System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/lib/libruby.1.dylib";
+        "/System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/lib/libruby.1.dylib";
 #else
         "hack/libruby.so";
 #endif
@@ -310,6 +315,13 @@ static void df_unloadruby(void)
     }
 }
 
+static void printerr(const char* fmt, const char *arg)
+{
+    if (r_console)
+        r_console->printerr(fmt, arg);
+    else
+        Core::printerr(fmt, arg);
+}
 
 // ruby thread code
 static void dump_rb_error(void)
@@ -320,18 +332,16 @@ static void dump_rb_error(void)
 
     s = rb_funcall(err, rb_intern("class"), 0);
     s = rb_funcall(s, rb_intern("name"), 0);
-    Core::printerr("E: %s: ", rb_string_value_ptr(&s));
+    printerr("E: %s: ", rb_string_value_ptr(&s));
 
     s = rb_funcall(err, rb_intern("message"), 0);
-    Core::printerr("%s\n", rb_string_value_ptr(&s));
+    printerr("%s\n", rb_string_value_ptr(&s));
 
     err = rb_funcall(err, rb_intern("backtrace"), 0);
     for (int i=0 ; i<8 ; ++i)
         if ((s = rb_ary_shift(err)) != Qnil)
-            Core::printerr(" %s\n", rb_string_value_ptr(&s));
+            printerr(" %s\n", rb_string_value_ptr(&s));
 }
-
-static color_ostream_proxy *console_proxy;
 
 // ruby thread main loop
 static void df_rubythread(void *p)
@@ -428,13 +438,16 @@ static VALUE rb_dfonupdateactiveset(VALUE self, VALUE val)
 
 static VALUE rb_dfprint_str(VALUE self, VALUE s)
 {
-    console_proxy->print("%s", rb_string_value_ptr(&s));
+    if (r_console)
+        r_console->print("%s", rb_string_value_ptr(&s));
+    else
+        console_proxy->print("%s", rb_string_value_ptr(&s));
     return Qnil;
 }
 
 static VALUE rb_dfprint_err(VALUE self, VALUE s)
 {
-    Core::printerr("%s", rb_string_value_ptr(&s));
+    printerr("%s", rb_string_value_ptr(&s));
     return Qnil;
 }
 

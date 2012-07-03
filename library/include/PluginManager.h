@@ -209,7 +209,7 @@ namespace DFHack
         command_result (*plugin_onupdate)(color_ostream &);
         command_result (*plugin_onstatechange)(color_ostream &, state_change_event);
         RPCService* (*plugin_rpcconnect)(color_ostream &);
-        command_result (*plugin_eval_ruby)(const char*);
+        command_result (*plugin_eval_ruby)(color_ostream &, const char*);
     };
     class DFHACK_EXPORT PluginManager
     {
@@ -238,7 +238,7 @@ namespace DFHack
         {
             return all_plugins.size();
         }
-        command_result (*eval_ruby)(const char*);
+        command_result (*eval_ruby)(color_ostream &, const char*);
     // DATA
     private:
         tthread::mutex * cmdlist_mutex;

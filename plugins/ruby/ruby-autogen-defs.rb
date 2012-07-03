@@ -277,6 +277,7 @@ module DFHack
             def _get
                 addr = _getp
                 return if addr == 0
+                return addr if not @_tg
                 @_tg._at(addr)._get
             end
 

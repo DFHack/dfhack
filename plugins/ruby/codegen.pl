@@ -298,8 +298,21 @@ sub render_field_reftarget {
     return if (!$tg);
     my $tgvec = $tg->getAttribute('instance-vector');
     return if (!$tgvec);
+    my $idx = $tg->getAttribute('key-field') || 'id';
 
-    render_field_refto($parent, $name, $tgvec);
+    $tgvec =~ s/^\$global/df/;
+    return if $tgvec !~ /^[\w\.]+$/;
+
+    my $tgname = "${name}_tg";
+    $tgname =~ s/_id(.?.?)_tg/_tg$1/;
+
+    for my $othername (map { $_->getAttribute('name') } $parent->findnodes('child::ld:field')) {
+        $tgname .= '_' if ($othername and $tgname eq $othername);
+    }
+
+    my $fidx = '';
+    $fidx = ', :' . $idx if ($idx ne 'id');
+    push @lines_rb, "def $tgname ; ${tgvec}.binsearch($name$fidx) ; end";
 }
 
 sub render_field_refto {
@@ -329,9 +342,9 @@ sub render_container_reftarget {
     return if (!$tg);
     my $tgvec = $tg->getAttribute('instance-vector');
     return if (!$tgvec);
+    my $idx = $tg->getAttribute('key-field') || 'id';
 
     $tgvec =~ s/^\$global/df/;
-    $tgvec =~ s/\[\$\]$//;
     return if $tgvec !~ /^[\w\.]+$/;
 
     my $tgname = "${name}_tg";
@@ -341,7 +354,9 @@ sub render_container_reftarget {
         $tgname .= '_' if ($othername and $tgname eq $othername);
     }
 
-    push @lines_rb, "def $tgname ; $name.map { |i| ${tgvec}[i] } ; end";
+    my $fidx = '';
+    $fidx = ', :' . $idx if ($idx ne 'id');
+    push @lines_rb, "def $tgname ; $name.map { |i| $tgvec.binsearch(i$fidx) } ; end";
 }
 
 sub render_class_vmethods {

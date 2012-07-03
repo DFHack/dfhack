@@ -6,14 +6,19 @@ module DFHack
         # with an argument that respond to x/y/z (eg cursor), find first unit at this position
         def unit_find(what=:selected)
             if what == :selected
-                case ui.main.mode
-                when :ViewUnits
-                    # nobody selected => idx == 0
-                    v = world.units.active[ui_selected_unit]
-                    v if v and v.pos.z == cursor.z
-                when :LookAround
-                    k = ui_look_list.items[ui_look_cursor]
-                    k.unit if k.type == :Unit
+                if curview._rtti_classname == :viewscreen_itemst
+                    ref = curview.entry_ref[curview.cursor_pos]
+                    ref.unit_tg if ref.kind_of?(GeneralRefUnit)
+                else
+                    case ui.main.mode
+                    when :ViewUnits
+                        # nobody selected => idx == 0
+                        v = world.units.active[ui_selected_unit]
+                        v if v and v.pos.z == cursor.z
+                    when :LookAround
+                        k = ui_look_list.items[ui_look_cursor]
+                        k.unit if k.type == :Unit
+                    end
                 end
             elsif what.kind_of?(Integer)
                 world.units.all.binsearch(what)

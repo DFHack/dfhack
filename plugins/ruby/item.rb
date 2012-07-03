@@ -4,10 +4,18 @@ module DFHack
         # arg similar to unit.rb/unit_find; no arg = 'k' menu
         def item_find(what=:selected)
             if what == :selected
-                case ui.main.mode
-                when :LookAround
-                    k = ui_look_list.items[ui_look_cursor]
-                    k.item if k.type == :Item
+                if curview._rtti_classname == :viewscreen_itemst
+                    ref = curview.entry_ref[curview.cursor_pos]
+                    ref.item_tg if ref.kind_of?(GeneralRefItem)
+                else
+                    case ui.main.mode
+                    when :LookAround
+                        k = ui_look_list.items[ui_look_cursor]
+                        k.item if k.type == :Item
+                    when :BuildingItems
+                        bld = world.selected_building
+                        bld.contained_items[ui_building_item_cursor].item if bld
+                    end
                 end
             elsif what.kind_of?(Integer)
                 world.items.all.binsearch(what)

@@ -1,6 +1,13 @@
 # df user-interface related methods
 module DFHack
     class << self
+        # returns the current active viewscreen
+        def curview
+            ret = gview.view
+            ret = ret.child while ret.child
+            ret
+        end
+
         # center the DF screen on something
         # updates the cursor position if visible
         def center_viewscreen(x, y=nil, z=nil)

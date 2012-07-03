@@ -516,7 +516,9 @@ sub get_field_align {
 
     if ($meta eq 'number') {
         $al = $field->getAttribute('ld:bits')/8;
-        $al = 4 if $al > 4;
+        # linux aligns int64_t to 4, windows to 8
+        # floats are 4 bytes so no pb
+        $al = 4 if ($al > 4 and ($os eq 'linux' or $al != 8));
     } elsif ($meta eq 'global') {
         $al = get_global_align($field);
     } elsif ($meta eq 'compound') {

@@ -85,6 +85,57 @@ module DFHack
             may = rawlist.find_all { |r| r.downcase.index(name.downcase) }
             may.first if may.length == 1
         end
+
+        def translate_name(name, english=true, onlylastpart=false)
+            out = []
+
+            if not onlylastpart
+                out << name.first_name if name.first_name != ''
+                if name.nickname != ''
+                    case respond_to?(:d_init) && d_init.nickname_dwarf
+                    when :REPLACE_ALL; return "`#{name.nickname}'"
+                    when :REPLACE_FIRST; out.pop
+                    end
+                    out << "`#{name.nickname}'"
+                end
+            end
+            return out.join(' ') unless name.words.find { |w| w >= 0 }
+
+            if not english
+                tsl = world.raws.language.translations[name.language]
+                if name.words[0] >= 0 or name.words[1] >= 0
+                    out << ''
+                    out.last << tsl.words[name.words[0]] if name.words[0] >= 0
+                    out.last << tsl.words[name.words[1]] if name.words[1] >= 0
+                end
+                if name.words[5] >= 0
+                    out << ''
+                    (2..5).each { |i| out.last << tsl.words[name.words[i]] if name.words[i] >= 0 }
+                end
+                if name.words[6] >= 0
+                    out << tsl.words[name.words[6]]
+                end
+            else
+                wl = world.raws.language
+                if name.words[0] >= 0 or name.words[1] >= 0
+                    out << ''
+                    out.last << wl.words[name.words[0]].forms[name.parts_of_speech[0]] if name.words[0] >= 0
+                    out.last << wl.words[name.words[1]].forms[name.parts_of_speech[1]] if name.words[1] >= 0
+                end
+                if name.words[5] >= 0
+                    out << 'the '
+                    out.last.capitalize! if out.length == 1
+                    (2..5).each { |i| out.last << wl.words[name.words[i]].forms[name.parts_of_speech[i]] if name.words[i] >= 0 }
+                end
+                if name.words[6] >= 0
+                    out << 'of'
+                    out.last.capitalize! if out.length == 1
+                    out << wl.words[name.words[6]].forms[name.parts_of_speech[6]]
+                end
+            end
+
+            out.join(' ')
+        end
     end
 end
 

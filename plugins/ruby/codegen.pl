@@ -298,7 +298,7 @@ sub render_field_reftarget {
     return if (!$tg);
     my $tgvec = $tg->getAttribute('instance-vector');
     return if (!$tgvec);
-    my $idx = $tg->getAttribute('key-field') || 'id';
+    my $idx = $tg->getAttribute('key-field');
 
     $tgvec =~ s/^\$global/df/;
     return if $tgvec !~ /^[\w\.]+$/;
@@ -310,9 +310,14 @@ sub render_field_reftarget {
         $tgname .= '_' if ($othername and $tgname eq $othername);
     }
 
-    my $fidx = '';
-    $fidx = ', :' . $idx if ($idx ne 'id');
-    push @lines_rb, "def $tgname ; ${tgvec}.binsearch($name$fidx) ; end";
+    if ($idx) {
+        my $fidx = '';
+        $fidx = ', :' . $idx if ($idx ne 'id');
+        push @lines_rb, "def $tgname ; ${tgvec}.binsearch($name$fidx) ; end";
+    } else {
+        push @lines_rb, "def $tgname ; ${tgvec}[$name] ; end";
+    }
+
 }
 
 sub render_field_refto {
@@ -342,7 +347,7 @@ sub render_container_reftarget {
     return if (!$tg);
     my $tgvec = $tg->getAttribute('instance-vector');
     return if (!$tgvec);
-    my $idx = $tg->getAttribute('key-field') || 'id';
+    my $idx = $tg->getAttribute('key-field');
 
     $tgvec =~ s/^\$global/df/;
     return if $tgvec !~ /^[\w\.]+$/;
@@ -354,9 +359,13 @@ sub render_container_reftarget {
         $tgname .= '_' if ($othername and $tgname eq $othername);
     }
 
-    my $fidx = '';
-    $fidx = ', :' . $idx if ($idx ne 'id');
-    push @lines_rb, "def $tgname ; $name.map { |i| $tgvec.binsearch(i$fidx) } ; end";
+    if ($idx) {
+        my $fidx = '';
+        $fidx = ', :' . $idx if ($idx ne 'id');
+        push @lines_rb, "def $tgname ; $name.map { |i| $tgvec.binsearch(i$fidx) } ; end";
+    } else {
+        push @lines_rb, "def $tgname ; $name.map { |i| ${tgvec}[i] } ; end";
+    }
 }
 
 sub render_class_vmethods {

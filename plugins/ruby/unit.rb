@@ -80,4 +80,10 @@ module DFHack
             list
         end
     end
+
+    class LanguageName
+        def to_s(english=true)
+            df.translate_name(self, english)
+        end
+    end
 end

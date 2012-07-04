@@ -18,7 +18,7 @@ module DFHack
                     when :ViewUnits
                         u = world.units.active[ui_selected_unit]
                         u.inventory[ui_look_cursor].item if u and u.pos.z == cursor.z and
-                                ui_unit_view_mode == :Inventory and u.inventory[ui_look_cursor]
+                                ui_unit_view_mode.value == :Inventory and u.inventory[ui_look_cursor]
                     end
                 end
             elsif what.kind_of?(Integer)

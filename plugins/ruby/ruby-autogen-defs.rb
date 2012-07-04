@@ -87,7 +87,7 @@ module DFHack
                 def compound(name=nil, &b)
                     m = Class.new(Compound)
                     DFHack.const_set(name, m) if name
-                    m.instance_eval(&b)
+                    m.class_eval(&b)
                     m.new
                 end
                 def rtti_classname(n)

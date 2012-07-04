@@ -4,7 +4,7 @@ module DFHack
         # with no arg, return currently selected unit in df UI ('v' or 'k' menu)
         # with numeric arg, search unit by unit.id
         # with an argument that respond to x/y/z (eg cursor), find first unit at this position
-        def unit_find(what=:selected)
+        def unit_find(what=:selected, y=nil, z=nil)
             if what == :selected
                 if curview._rtti_classname == :viewscreen_itemst
                     ref = curview.entry_ref[curview.cursor_pos]
@@ -21,7 +21,11 @@ module DFHack
                     end
                 end
             elsif what.kind_of?(Integer)
-                world.units.all.binsearch(what)
+                # search by id
+                return world.units.all.binsearch(what) if not z
+                # search by coords
+                x = what
+                world.units.all.find { |u| u.pos.x == x and u.pos.y == y and u.pos.z == z }
             elsif what.respond_to?(:x) or what.respond_to?(:pos)
                 world.units.all.find { |u| same_pos?(what, u) }
             else

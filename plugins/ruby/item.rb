@@ -2,7 +2,7 @@ module DFHack
     class << self
         # return an Item
         # arg similar to unit.rb/unit_find; no arg = 'k' menu
-        def item_find(what=:selected)
+        def item_find(what=:selected, y=nil, z=nil)
             if what == :selected
                 if curview._rtti_classname == :viewscreen_itemst
                     ref = curview.entry_ref[curview.cursor_pos]
@@ -29,7 +29,11 @@ module DFHack
                     end
                 end
             elsif what.kind_of?(Integer)
-                world.items.all.binsearch(what)
+                # search by id
+                return world.items.all.binsearch(what) if not z
+                # search by position
+                x = what
+		world.items.all.find { |i| i.pos.x == x and i.pos.y == y and i.pos.z == z }
             elsif what.respond_to?(:x) or what.respond_to?(:pos)
                 world.items.all.find { |i| same_pos?(what, i) }
             else

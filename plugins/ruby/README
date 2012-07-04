@@ -106,6 +106,14 @@ See buildings.rb/buildbed for an exemple.
  df.each_tree(material) { |t|  }
 Iterates over every tree of the given material (eg 'maple').
 
+ df.translate_name(name, in_english=true, only_lastpart=false)
+Decode the LanguageName structure as a String as displayed in the game UI.
+A shortcut is available through name.to_s
+
+ df.decode_mat(obj)
+Returns a MaterialInfo definition for the given object, using its mat_type
+and mat_index fields. Also works with a token string argument ('STONE:DOLOMITE')
+
 
 DFHack callbacks
 ----------------

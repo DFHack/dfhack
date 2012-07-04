@@ -15,8 +15,9 @@ module DFHack
                         when :Item
                             k.item
                         when :Building
-                            # hilight a constructed bed
-                            k.building.contained_items[0].item if k.building.contained_items.length == 1
+                            # hilight a constructed bed/coffer
+                            mats = k.building.contained_items.find_all { |i| i.use_mode == 2 }
+                            mats[0].item if mats.length == 1
                         end
                     when :BuildingItems
                         bld = world.selected_building

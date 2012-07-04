@@ -11,7 +11,13 @@ module DFHack
                     case ui.main.mode
                     when :LookAround
                         k = ui_look_list.items[ui_look_cursor]
-                        k.item if k.type == :Item
+                        case k.type
+                        when :Item
+                            k.item
+                        when :Building
+                            # hilight a constructed bed
+                            k.building.contained_items[0].item if k.building.contained_items.length == 1
+                        end
                     when :BuildingItems
                         bld = world.selected_building
                         bld.contained_items[ui_building_item_cursor].item if bld

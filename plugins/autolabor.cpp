@@ -740,7 +740,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         else if (df::enums::building_type::TradeDepot == type)
         {
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
-            trader_requested = depot->flags.bits.trader_requested;
+            trader_requested = depot->trade_flags.bits.trader_requested;
             if (print_debug)
                 out.print("Trade depot found and trader requested, trader will be excluded from all labors.\n");
         }

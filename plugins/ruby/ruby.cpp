@@ -6,8 +6,7 @@
 #include "VersionInfo.h"
 
 #include "DataDefs.h"
-#include "df/world.h"
-#include "df/unit.h"
+#include "df/global_objects.h"
 
 #include "tinythread.h"
 
@@ -39,6 +38,7 @@ static color_ostream *r_console;       // color_ostream given as argument, if NU
 static const char *r_command;
 static tthread::thread *r_thread;
 static int onupdate_active;
+static int onupdate_minyear, onupdate_minyeartick;
 static color_ostream_proxy *console_proxy;
 
 
@@ -165,8 +165,13 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
     // ruby sets this flag when needed, to avoid lag running ruby code every
     // frame if not necessary
-    // TODO dynamic check on df::cur_year{_tick}
     if (!onupdate_active)
+        return CR_OK;
+
+    if (*df::global::cur_year < onupdate_minyear)
+        return CR_OK;
+    if (*df::global::cur_year == onupdate_minyear &&
+            *df::global::cur_year_tick < onupdate_minyeartick)
         return CR_OK;
 
     return plugin_eval_ruby(out, "DFHack.onupdate");
@@ -422,7 +427,7 @@ static VALUE rb_cDFHack;
 // DFHack module ruby methods, binds specific dfhack methods
 
 // enable/disable calls to DFHack.onupdate()
-static VALUE rb_dfonupdateactive(VALUE self)
+static VALUE rb_dfonupdate_active(VALUE self)
 {
     if (onupdate_active)
         return Qtrue;
@@ -430,9 +435,31 @@ static VALUE rb_dfonupdateactive(VALUE self)
         return Qfalse;
 }
 
-static VALUE rb_dfonupdateactiveset(VALUE self, VALUE val)
+static VALUE rb_dfonupdate_active_set(VALUE self, VALUE val)
 {
     onupdate_active = (BOOL_ISFALSE(val) ? 0 : 1);
+    return Qtrue;
+}
+
+static VALUE rb_dfonupdate_minyear(VALUE self)
+{
+    return rb_uint2inum(onupdate_minyear);
+}
+
+static VALUE rb_dfonupdate_minyear_set(VALUE self, VALUE val)
+{
+    onupdate_minyear = rb_num2ulong(val);
+    return Qtrue;
+}
+
+static VALUE rb_dfonupdate_minyeartick(VALUE self)
+{
+    return rb_uint2inum(onupdate_minyeartick);
+}
+
+static VALUE rb_dfonupdate_minyeartick_set(VALUE self, VALUE val)
+{
+    onupdate_minyeartick = rb_num2ulong(val);
     return Qtrue;
 }
 
@@ -777,8 +804,12 @@ static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE cppvoff, VALUE a0, VALUE
 static void ruby_bind_dfhack(void) {
     rb_cDFHack = rb_define_module("DFHack");
 
-    rb_define_singleton_method(rb_cDFHack, "onupdate_active", RUBY_METHOD_FUNC(rb_dfonupdateactive), 0);
-    rb_define_singleton_method(rb_cDFHack, "onupdate_active=", RUBY_METHOD_FUNC(rb_dfonupdateactiveset), 1);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_active", RUBY_METHOD_FUNC(rb_dfonupdate_active), 0);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_active=", RUBY_METHOD_FUNC(rb_dfonupdate_active_set), 1);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyear", RUBY_METHOD_FUNC(rb_dfonupdate_minyear), 0);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyear=", RUBY_METHOD_FUNC(rb_dfonupdate_minyear_set), 1);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyeartick", RUBY_METHOD_FUNC(rb_dfonupdate_minyeartick), 0);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyeartick=", RUBY_METHOD_FUNC(rb_dfonupdate_minyeartick_set), 1);
     rb_define_singleton_method(rb_cDFHack, "get_global_address", RUBY_METHOD_FUNC(rb_dfget_global_address), 1);
     rb_define_singleton_method(rb_cDFHack, "get_vtable", RUBY_METHOD_FUNC(rb_dfget_vtable), 1);
     rb_define_singleton_method(rb_cDFHack, "get_rtti_classname", RUBY_METHOD_FUNC(rb_dfget_rtti_classname), 1);

@@ -33,7 +33,7 @@ module DFHack
                 return world.items.all.binsearch(what) if not z
                 # search by position
                 x = what
-		world.items.all.find { |i| i.pos.x == x and i.pos.y == y and i.pos.z == z }
+                world.items.all.find { |i| i.pos.x == x and i.pos.y == y and i.pos.z == z }
             elsif what.respond_to?(:x) or what.respond_to?(:pos)
                 world.items.all.find { |i| same_pos?(what, i) }
             else

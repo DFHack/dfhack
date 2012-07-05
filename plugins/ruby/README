@@ -66,6 +66,9 @@ obj1 and 2 should respond to #pos and #x #y #z.
  df.map_block_at(pos) / map_block_at(x, y, z)
 Returns the MapBlock for the coordinates or nil.
 
+ df.map_tile_at(pos)
+Returns a MapTile, holds all information relative to the map tile.
+
  df.each_map_block { |b|  }
  df.each_map_block_z(zlevel) { |b|  }
 Iterates over every map block (opt. on a single z-level).

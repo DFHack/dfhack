@@ -66,7 +66,7 @@ module DFHack
             if onext = @onupdate_list.sort.first
                 DFHack.onupdate_minyear = onext.minyear
                 DFHack.onupdate_minyeartick = onext.minyeartick
-	    end
+            end
             @onupdate_list.last
         end
 

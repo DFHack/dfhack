@@ -752,6 +752,7 @@ Core::Core()
     misc_data_mutex=0;
     last_world_data_ptr = NULL;
     last_local_map_ptr = NULL;
+    last_pause_state = false;
     top_viewscreen = NULL;
     screen_window = NULL;
     server = NULL;
@@ -1113,6 +1114,15 @@ int Core::Update()
         {
             top_viewscreen = screen;
             onStateChange(out, SC_VIEWSCREEN_CHANGED);
+        }
+    }
+
+    if (df::global::pause_state)
+    {
+        if (*df::global::pause_state != last_pause_state)
+        {
+            onStateChange(out, last_pause_state ? SC_UNPAUSED : SC_PAUSED);
+            last_pause_state = *df::global::pause_state;
         }
     }
 

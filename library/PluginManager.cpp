@@ -188,6 +188,7 @@ bool Plugin::load(color_ostream &con)
     plugin_shutdown = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_shutdown");
     plugin_onstatechange = (command_result (*)(color_ostream &, state_change_event)) LookupPlugin(plug, "plugin_onstatechange");
     plugin_rpcconnect = (RPCService* (*)(color_ostream &)) LookupPlugin(plug, "plugin_rpcconnect");
+    plugin_eval_ruby = (command_result (*)(color_ostream &, const char*)) LookupPlugin(plug, "plugin_eval_ruby");
     index_lua(plug);
     this->name = *plug_name;
     plugin_lib = plug;
@@ -538,6 +539,7 @@ PluginManager::PluginManager(Core * core)
     const string searchstr = ".plug.dll";
 #endif
     cmdlist_mutex = new mutex();
+    eval_ruby = NULL;
     vector <string> filez;
     getdir(path, filez);
     for(size_t i = 0; i < filez.size();i++)
@@ -620,6 +622,8 @@ void PluginManager::registerCommands( Plugin * p )
     {
         belongs[cmds[i].name] = p;
     }
+    if (p->plugin_eval_ruby)
+        eval_ruby = p->plugin_eval_ruby;
     cmdlist_mutex->unlock();
 }
 
@@ -632,5 +636,7 @@ void PluginManager::unregisterCommands( Plugin * p )
     {
         belongs.erase(cmds[i].name);
     }
+    if (p->plugin_eval_ruby)
+        eval_ruby = NULL;
     cmdlist_mutex->unlock();
 }

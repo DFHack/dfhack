@@ -1,5 +1,5 @@
 OPTION(DL_RUBY "download libruby from the internet" ON)
-IF (DL_RUBY)
+IF (DL_RUBY AND NOT APPLE)
     IF (UNIX)
         FILE(DOWNLOAD http://cloud.github.com/downloads/jjyg/dfhack/libruby187.tar.gz ${CMAKE_CURRENT_SOURCE_DIR}/libruby187.tar.gz
             EXPECTED_MD5 eb2adea59911f68e6066966c1352f291)
@@ -15,7 +15,7 @@ IF (DL_RUBY)
         FILE(RENAME msvcrt-ruby18.dll libruby.dll)
         SET(RUBYLIB libruby.dll)
     ENDIF(UNIX)
-ENDIF(DL_RUBY)
+ENDIF(DL_RUBY AND NOT APPLE)
 
 ADD_CUSTOM_COMMAND(
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/ruby-autogen.rb
@@ -30,4 +30,8 @@ INCLUDE_DIRECTORIES("${dfhack_SOURCE_DIR}/depends/tthread")
 DFHACK_PLUGIN(ruby ruby.cpp LINK_LIBRARIES dfhack-tinythread)
 ADD_DEPENDENCIES(ruby ruby-autogen-rb)
 
-INSTALL(FILES ruby.rb ruby-autogen.rb ${RUBYLIB} DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+INSTALL(FILES ${RUBYLIB} DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+
+INSTALL(DIRECTORY .
+        DESTINATION hack/ruby
+        FILES_MATCHING PATTERN "*.rb")

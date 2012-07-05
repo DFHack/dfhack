@@ -8,11 +8,12 @@ use XML::LibXML;
 our @lines_rb;
 
 my $os;
-if ($^O =~ /linux/i) {
+if ($^O =~ /linux/i or $^O =~ /darwin/i) {
     $os = 'linux';
 } else {
     $os = 'windows';
 }
+$os = $ARGV[2] if ($ARGV[2]);
 
 sub indent_rb(&) {
     my ($sub) = @_;
@@ -260,10 +261,110 @@ sub render_struct_fields {
                     render_item($field);
                 };
                 push @lines_rb, "}";
+
+                render_struct_field_refs($type, $field, $name);
             }
         }
 
         $compound_off += sizeof($field) if (!$isunion);
+    }
+}
+
+# handle generating accessor for xml attributes ref-target, refers-to etc
+sub render_struct_field_refs {
+    my ($parent, $field, $name) = @_;
+
+    my $reftg = $field->getAttribute('ref-target');
+    render_field_reftarget($parent, $field, $name, $reftg) if ($reftg);
+
+    my $refto = $field->getAttribute('refers-to');
+    render_field_refto($parent, $name, $refto) if ($refto);
+
+    my $meta = $field->getAttribute('ld:meta');
+    my $item = $field->findnodes('child::ld:item')->[0];
+    if ($meta and $meta eq 'container' and $item) {
+        my $itemreftg = $item->getAttribute('ref-target');
+        render_container_reftarget($parent, $item, $name, $itemreftg) if $itemreftg;
+    }
+}
+
+sub render_field_reftarget {
+    my ($parent, $field, $name, $reftg) = @_;
+
+    my $aux = $field->getAttribute('aux-value');
+    return if ($aux); # TODO
+
+    my $tg = $global_types{$reftg};
+    return if (!$tg);
+    my $tgvec = $tg->getAttribute('instance-vector');
+    return if (!$tgvec);
+    my $idx = $tg->getAttribute('key-field');
+
+    $tgvec =~ s/^\$global/df/;
+    return if $tgvec !~ /^[\w\.]+$/;
+
+    my $tgname = "${name}_tg";
+    $tgname =~ s/_id(.?.?)_tg/_tg$1/;
+
+    for my $othername (map { $_->getAttribute('name') } $parent->findnodes('child::ld:field')) {
+        $tgname .= '_' if ($othername and $tgname eq $othername);
+    }
+
+    if ($idx) {
+        my $fidx = '';
+        $fidx = ', :' . $idx if ($idx ne 'id');
+        push @lines_rb, "def $tgname ; ${tgvec}.binsearch($name$fidx) ; end";
+    } else {
+        push @lines_rb, "def $tgname ; ${tgvec}[$name] ; end";
+    }
+
+}
+
+sub render_field_refto {
+    my ($parent, $name, $tgvec) = @_;
+
+    $tgvec =~ s/^\$global/df/;
+    $tgvec =~ s/\[\$\]$//;
+    return if $tgvec !~ /^[\w\.]+$/;
+
+    my $tgname = "${name}_tg";
+    $tgname =~ s/_id(.?.?)_tg/_tg$1/;
+
+    for my $othername (map { $_->getAttribute('name') } $parent->findnodes('child::ld:field')) {
+        $tgname .= '_' if ($othername and $tgname eq $othername);
+    }
+
+    push @lines_rb, "def $tgname ; ${tgvec}[$name] ; end";
+}
+
+sub render_container_reftarget {
+    my ($parent, $item, $name, $reftg) = @_;
+
+    my $aux = $item->getAttribute('aux-value');
+    return if ($aux); # TODO
+
+    my $tg = $global_types{$reftg};
+    return if (!$tg);
+    my $tgvec = $tg->getAttribute('instance-vector');
+    return if (!$tgvec);
+    my $idx = $tg->getAttribute('key-field');
+
+    $tgvec =~ s/^\$global/df/;
+    return if $tgvec !~ /^[\w\.]+$/;
+
+    my $tgname = "${name}_tg";
+    $tgname =~ s/_id(.?.?)_tg/_tg$1/;
+
+    for my $othername (map { $_->getAttribute('name') } $parent->findnodes('child::ld:field')) {
+        $tgname .= '_' if ($othername and $tgname eq $othername);
+    }
+
+    if ($idx) {
+        my $fidx = '';
+        $fidx = ', :' . $idx if ($idx ne 'id');
+        push @lines_rb, "def $tgname ; $name.map { |i| $tgvec.binsearch(i$fidx) } ; end";
+    } else {
+        push @lines_rb, "def $tgname ; $name.map { |i| ${tgvec}[i] } ; end";
     }
 }
 
@@ -439,7 +540,9 @@ sub get_field_align {
 
     if ($meta eq 'number') {
         $al = $field->getAttribute('ld:bits')/8;
-        $al = 4 if $al > 4;
+        # linux aligns int64_t to 4, windows to 8
+        # floats are 4 bytes so no pb
+        $al = 4 if ($al > 4 and ($os eq 'linux' or $al != 8));
     } elsif ($meta eq 'global') {
         $al = get_global_align($field);
     } elsif ($meta eq 'compound') {
@@ -696,7 +799,7 @@ sub render_item_number {
     $initvalue ||= 'nil' if $typename;
 
     $subtype = $item->getAttribute('base-type') if (!$subtype or $subtype eq 'bitfield' or $subtype eq 'enum');
-    $subtype = $g->getAttribute('base-type') if ($g);
+    $subtype ||= $g->getAttribute('base-type') if ($g);
     $subtype = 'int32_t' if (!$subtype);
 
          if ($subtype eq 'int64_t') {
@@ -715,7 +818,7 @@ sub render_item_number {
         push @lines_rb, 'number 8, false';
     } elsif ($subtype eq 'bool') {
         push @lines_rb, 'number 8, true';
-	$initvalue ||= 'nil';
+        $initvalue ||= 'nil';
         $typename ||= 'BooleanEnum';
     } elsif ($subtype eq 's-float') {
         push @lines_rb, 'float';

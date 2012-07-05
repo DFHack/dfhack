@@ -165,6 +165,8 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             out.print("not yet claimed a workshop but will want");
         out.print(" the following items:\n");
 
+        int count_got = job->items.size(), got;
+
         for (size_t i = 0; i < job->job_items.size(); i++)
         {
             df::job_item *item = job->job_items[i];
@@ -267,7 +269,11 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                 }
             }
 
-            out.print(", quantity %i\n", item->quantity);
+            got = count_got;
+            if (got > item->quantity)
+                got = item->quantity;
+            out.print(", quantity %i (got %i)\n", item->quantity, got);
+            count_got -= got;
         }
     }
     if (!found)

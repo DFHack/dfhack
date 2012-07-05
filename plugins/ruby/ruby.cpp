@@ -6,8 +6,7 @@
 #include "VersionInfo.h"
 
 #include "DataDefs.h"
-#include "df/world.h"
-#include "df/unit.h"
+#include "df/global_objects.h"
 
 #include "tinythread.h"
 
@@ -21,7 +20,6 @@ using namespace DFHack;
 static int df_loadruby(void);
 static void df_unloadruby(void);
 static void df_rubythread(void*);
-static command_result df_rubyload(color_ostream &out, std::vector <std::string> & parameters);
 static command_result df_rubyeval(color_ostream &out, std::vector <std::string> & parameters);
 static void ruby_bind_dfhack(void);
 
@@ -31,44 +29,55 @@ enum RB_command {
     RB_INIT,
     RB_DIE,
     RB_EVAL,
-    RB_CUSTOM,
 };
 tthread::mutex *m_irun;
 tthread::mutex *m_mutex;
-static RB_command r_type;
+static volatile RB_command r_type;
+static volatile command_result r_result;
+static color_ostream *r_console;       // color_ostream given as argument, if NULL resort to console_proxy
 static const char *r_command;
-static command_result r_result;
 static tthread::thread *r_thread;
 static int onupdate_active;
+static int onupdate_minyear, onupdate_minyeartick;
+static color_ostream_proxy *console_proxy;
+
 
 DFHACK_PLUGIN("ruby")
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    // fail silently instead of spamming the console with 'failed to initialize' if libruby is not present
-    // the error is still logged in stderr.log
+    onupdate_active = 0;
+
+    // fail silently instead of spamming the console with 'failed to initialize'
+    // if libruby is not present, the error is still logged in stderr.log
     if (!df_loadruby())
         return CR_OK;
 
+    // the ruby thread sleeps trying to lock this
+    // when it gets it, it runs according to r_type
+    // when finished, it sets r_type to IDLE and unlocks
     m_irun = new tthread::mutex();
+
+    // when any thread is going to request something to the ruby thread,
+    // lock this before anything, and release when everything is done
     m_mutex = new tthread::mutex();
+
     r_type = RB_INIT;
 
+    // create the dedicated ruby thread
+    // df_rubythread starts the ruby interpreter and goes to type=IDLE when done
     r_thread = new tthread::thread(df_rubythread, 0);
 
+    // wait until init phase 1 is done
     while (r_type != RB_IDLE)
         tthread::this_thread::yield();
 
+    // ensure the ruby thread sleeps until we have a command to handle
     m_irun->lock();
 
+    // check return value from rbinit
     if (r_result == CR_FAILURE)
         return CR_FAILURE;
-
-    onupdate_active = 0;
-
-    commands.push_back(PluginCommand("rb_load",
-                "Ruby interpreter. Loads the given ruby script.",
-                df_rubyload));
 
     commands.push_back(PluginCommand("rb_eval",
                 "Ruby interpreter. Eval() a ruby string.",
@@ -79,59 +88,74 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    // if dlopen failed
     if (!r_thread)
         return CR_OK;
 
+    // ensure ruby thread is idle
     m_mutex->lock();
 
     r_type = RB_DIE;
-    r_command = 0;
+    r_command = NULL;
+    // start ruby thread
     m_irun->unlock();
 
+    // wait until ruby thread ends after RB_DIE
     r_thread->join();
 
+    // cleanup everything
     delete r_thread;
     r_thread = 0;
     delete m_irun;
+    // we can release m_mutex, other users will check r_thread
     m_mutex->unlock();
     delete m_mutex;
 
+    // dlclose libruby
     df_unloadruby();
 
     return CR_OK;
 }
 
 // send a single ruby line to be evaluated by the ruby thread
-static command_result plugin_eval_rb(const char *command)
+DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *command)
 {
+    // if dlopen failed
+    if (!r_thread)
+        return CR_FAILURE;
+
+    // wrap all ruby code inside a suspend block
+    // if we dont do that and rely on ruby code doing it, we'll deadlock in
+    // onupdate
+    CoreSuspender suspend;
+
     command_result ret;
 
-    // serialize 'accesses' to the ruby thread
+    // ensure ruby thread is idle
     m_mutex->lock();
     if (!r_thread)
-        // raced with plugin_shutdown ?
+        // raced with plugin_shutdown
         return CR_OK;
 
     r_type = RB_EVAL;
     r_command = command;
+    r_console = &out;
+    // wake ruby thread up
     m_irun->unlock();
 
-    // could use a condition_variable or something...
+    // semi-active loop until ruby thread is done
     while (r_type != RB_IDLE)
         tthread::this_thread::yield();
 
-    // XXX non-atomic with previous r_type change check
     ret = r_result;
+    r_console = NULL;
 
+    // block ruby thread
     m_irun->lock();
+    // let other plugin_eval_ruby run
     m_mutex->unlock();
 
     return ret;
-}
-
-static command_result plugin_eval_rb(std::string &command)
-{
-    return plugin_eval_rb(command.c_str());
 }
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
@@ -139,10 +163,18 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     if (!r_thread)
         return CR_OK;
 
+    // ruby sets this flag when needed, to avoid lag running ruby code every
+    // frame if not necessary
     if (!onupdate_active)
         return CR_OK;
 
-    return plugin_eval_rb("DFHack.onupdate");
+    if (*df::global::cur_year < onupdate_minyear)
+        return CR_OK;
+    if (*df::global::cur_year == onupdate_minyear &&
+            *df::global::cur_year_tick < onupdate_minyeartick)
+        return CR_OK;
+
+    return plugin_eval_ruby(out, "DFHack.onupdate");
 }
 
 DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_change_event e)
@@ -159,26 +191,13 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
         SCASE(MAP_UNLOADED);
         SCASE(VIEWSCREEN_CHANGED);
         SCASE(CORE_INITIALIZED);
-        SCASE(BEGIN_UNLOAD);
+        // if we go through plugin_eval at BEGIN_UNLOAD, it'll
+        // try to get the suspend lock and deadlock at df exit
+        case SC_BEGIN_UNLOAD : return CR_OK;
 #undef SCASE
     }
 
-    return plugin_eval_rb(cmd);
-}
-
-static command_result df_rubyload(color_ostream &out, std::vector <std::string> & parameters)
-{
-    if (parameters.size() == 1 && (parameters[0] == "help" || parameters[0] == "?"))
-    {
-        out.print("This command loads the ruby script whose path is given as parameter, and run it.\n");
-        return CR_OK;
-    }
-
-    std::string cmd = "load '";
-    cmd += parameters[0];       // TODO escape singlequotes
-    cmd += "'";
-
-    return plugin_eval_rb(cmd);
+    return plugin_eval_ruby(out, cmd.c_str());
 }
 
 static command_result df_rubyeval(color_ostream &out, std::vector <std::string> & parameters)
@@ -191,6 +210,7 @@ static command_result df_rubyeval(color_ostream &out, std::vector <std::string> 
         return CR_OK;
     }
 
+    // reconstruct the text from dfhack console line
     std::string full = "";
 
     for (unsigned i=0 ; i<parameters.size() ; ++i) {
@@ -199,20 +219,21 @@ static command_result df_rubyeval(color_ostream &out, std::vector <std::string> 
             full += " ";
     }
 
-    return plugin_eval_rb(full);
+    return plugin_eval_ruby(out, full.c_str());
 }
 
 
 
 // ruby stuff
 
-// ruby-dev on windows is messy
-// ruby.h on linux 64 is broken
-// so we dynamically load libruby instead of linking it at compile time
-// lib path can be set in dfhack.ini to use the system libruby, but by
-// default we'll embed our own (downloaded by cmake)
+// - ruby-dev on windows is messy
+// - ruby.h with gcc -m32 on linux 64 is broken
+// so we dynamically load libruby with dlopen/LoadLibrary
+// lib path is hardcoded here, and by default downloaded by cmake
+// this code should work with ruby1.9, but ruby1.9 doesn't like running
+// in a dedicated non-main thread, so use ruby1.8 binaries only for now
 
-// these ruby definitions are invalid for windows 64bit
+// these ruby definitions are invalid for windows 64bit (need long long)
 typedef unsigned long VALUE;
 typedef unsigned long ID;
 
@@ -224,23 +245,17 @@ typedef unsigned long ID;
 #define FIX2INT(i) (((long)i) >> 1)
 #define RUBY_METHOD_FUNC(func) ((VALUE(*)(...))func)
 
-VALUE *rb_eRuntimeError;
-
 void (*ruby_sysinit)(int *, const char ***);
 void (*ruby_init)(void);
 void (*ruby_init_loadpath)(void);
 void (*ruby_script)(const char*);
 void (*ruby_finalize)(void);
 ID (*rb_intern)(const char*);
-VALUE (*rb_raise)(VALUE, const char*, ...);
 VALUE (*rb_funcall)(VALUE, ID, int, ...);
 VALUE (*rb_define_module)(const char*);
 void (*rb_define_singleton_method)(VALUE, const char*, VALUE(*)(...), int);
-void (*rb_define_const)(VALUE, const char*, VALUE);
-void (*rb_load_protect)(VALUE, int, int*);
 VALUE (*rb_gv_get)(const char*);
 VALUE (*rb_str_new)(const char*, long);
-VALUE (*rb_str_new2)(const char*);
 char* (*rb_string_value_ptr)(VALUE*);
 VALUE (*rb_eval_string_protect)(const char*, int*);
 VALUE (*rb_ary_shift)(VALUE);
@@ -257,8 +272,10 @@ DFHack::DFLibrary *libruby_handle;
 static int df_loadruby(void)
 {
     const char *libpath =
-#ifdef WIN32
+#if defined(WIN32)
         "./libruby.dll";
+#elif defined(__APPLE__)
+        "/System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/lib/libruby.1.dylib";
 #else
         "hack/libruby.so";
 #endif
@@ -269,11 +286,6 @@ static int df_loadruby(void)
         return 0;
     }
 
-    if (!(rb_eRuntimeError = (VALUE*)LookupPlugin(libruby_handle, "rb_eRuntimeError")))
-        return 0;
-
-    // XXX does msvc support decltype ? might need a #define decltype typeof
-    // or just assign to *(void**)(&s) = ...
     // ruby_sysinit is optional (ruby1.9 only)
     ruby_sysinit = (decltype(ruby_sysinit))LookupPlugin(libruby_handle, "ruby_sysinit");
 #define rbloadsym(s) if (!(s = (decltype(s))LookupPlugin(libruby_handle, #s))) return 0
@@ -282,15 +294,11 @@ static int df_loadruby(void)
     rbloadsym(ruby_script);
     rbloadsym(ruby_finalize);
     rbloadsym(rb_intern);
-    rbloadsym(rb_raise);
     rbloadsym(rb_funcall);
     rbloadsym(rb_define_module);
     rbloadsym(rb_define_singleton_method);
-    rbloadsym(rb_define_const);
-    rbloadsym(rb_load_protect);
     rbloadsym(rb_gv_get);
     rbloadsym(rb_str_new);
-    rbloadsym(rb_str_new2);
     rbloadsym(rb_string_value_ptr);
     rbloadsym(rb_eval_string_protect);
     rbloadsym(rb_ary_shift);
@@ -312,6 +320,13 @@ static void df_unloadruby(void)
     }
 }
 
+static void printerr(const char* fmt, const char *arg)
+{
+    if (r_console)
+        r_console->printerr(fmt, arg);
+    else
+        Core::printerr(fmt, arg);
+}
 
 // ruby thread code
 static void dump_rb_error(void)
@@ -322,18 +337,16 @@ static void dump_rb_error(void)
 
     s = rb_funcall(err, rb_intern("class"), 0);
     s = rb_funcall(s, rb_intern("name"), 0);
-    Core::printerr("E: %s: ", rb_string_value_ptr(&s));
+    printerr("E: %s: ", rb_string_value_ptr(&s));
 
     s = rb_funcall(err, rb_intern("message"), 0);
-    Core::printerr("%s\n", rb_string_value_ptr(&s));
+    printerr("%s\n", rb_string_value_ptr(&s));
 
     err = rb_funcall(err, rb_intern("backtrace"), 0);
     for (int i=0 ; i<8 ; ++i)
         if ((s = rb_ary_shift(err)) != Qnil)
-            Core::printerr(" %s\n", rb_string_value_ptr(&s));
+            printerr(" %s\n", rb_string_value_ptr(&s));
 }
-
-static color_ostream_proxy *console_proxy;
 
 // ruby thread main loop
 static void df_rubythread(void *p)
@@ -358,12 +371,25 @@ static void df_rubythread(void *p)
 
     console_proxy = new color_ostream_proxy(Core::getInstance().getConsole());
 
+    // ensure noone bothers us while we load data defs in the background
+    m_mutex->lock();
+
+    // tell the main thread our initialization is finished
     r_result = CR_OK;
     r_type = RB_IDLE;
 
+    // load the default ruby-level definitions in the background
+    state=0;
+    rb_eval_string_protect("require './hack/ruby/ruby'", &state);
+    if (state)
+        dump_rb_error();
+
+    // ready to go
+    m_mutex->unlock();
+
     running = 1;
     while (running) {
-        // wait for new command
+        // sleep waiting for new command
         m_irun->lock();
 
         switch (r_type) {
@@ -381,10 +407,6 @@ static void df_rubythread(void *p)
             rb_eval_string_protect(r_command, &state);
             if (state)
                 dump_rb_error();
-            break;
-
-        case RB_CUSTOM:
-            // TODO handle ruby custom commands
             break;
         }
 
@@ -405,7 +427,7 @@ static VALUE rb_cDFHack;
 // DFHack module ruby methods, binds specific dfhack methods
 
 // enable/disable calls to DFHack.onupdate()
-static VALUE rb_dfonupdateactive(VALUE self)
+static VALUE rb_dfonupdate_active(VALUE self)
 {
     if (onupdate_active)
         return Qtrue;
@@ -413,76 +435,46 @@ static VALUE rb_dfonupdateactive(VALUE self)
         return Qfalse;
 }
 
-static VALUE rb_dfonupdateactiveset(VALUE self, VALUE val)
+static VALUE rb_dfonupdate_active_set(VALUE self, VALUE val)
 {
     onupdate_active = (BOOL_ISFALSE(val) ? 0 : 1);
     return Qtrue;
 }
 
-static VALUE rb_dfresume(VALUE self)
+static VALUE rb_dfonupdate_minyear(VALUE self)
 {
-    Core::getInstance().Resume();
+    return rb_uint2inum(onupdate_minyear);
+}
+
+static VALUE rb_dfonupdate_minyear_set(VALUE self, VALUE val)
+{
+    onupdate_minyear = rb_num2ulong(val);
     return Qtrue;
 }
 
-static VALUE rb_dfsuspend(VALUE self)
+static VALUE rb_dfonupdate_minyeartick(VALUE self)
 {
-    Core::getInstance().Suspend();
-    return Qtrue;
+    return rb_uint2inum(onupdate_minyeartick);
 }
 
-// returns the delta to apply to dfhack xml addrs wrt actual memory addresses
-// usage: real_addr = addr_from_xml + this_delta;
-static VALUE rb_dfrebase_delta(void)
+static VALUE rb_dfonupdate_minyeartick_set(VALUE self, VALUE val)
 {
-    uint32_t expected_base_address;
-    uint32_t actual_base_address = 0;
-#ifdef WIN32
-    expected_base_address = 0x00400000;
-    actual_base_address = (uint32_t)GetModuleHandle(0);
-#else
-    expected_base_address = 0x08048000;
-    FILE *f = fopen("/proc/self/maps", "r");
-    char line[256];
-    while (fgets(line, sizeof(line), f)) {
-        if (strstr(line, "libs/Dwarf_Fortress")) {
-            actual_base_address = strtoul(line, 0, 16);
-            break;
-        }
-    }
-#endif
-
-    return rb_int2inum(actual_base_address - expected_base_address);
+    onupdate_minyeartick = rb_num2ulong(val);
+    return Qtrue;
 }
 
 static VALUE rb_dfprint_str(VALUE self, VALUE s)
 {
-    console_proxy->print("%s", rb_string_value_ptr(&s));
+    if (r_console)
+        r_console->print("%s", rb_string_value_ptr(&s));
+    else
+        console_proxy->print("%s", rb_string_value_ptr(&s));
     return Qnil;
 }
 
 static VALUE rb_dfprint_err(VALUE self, VALUE s)
 {
-    Core::printerr("%s", rb_string_value_ptr(&s));
-    return Qnil;
-}
-
-/* TODO needs main dfhack support
-   this needs a custom DFHack::Plugin subclass to pass the cmdname to invoke(), to match the ruby callback
-// register a ruby method as dfhack console command
-// usage: DFHack.register("moo", "this commands prints moo on the console") { DFHack.puts "moo !" }
-static VALUE rb_dfregister(VALUE self, VALUE name, VALUE descr)
-{
-    commands.push_back(PluginCommand(rb_string_value_ptr(&name),
-                rb_string_value_ptr(&descr),
-                df_rubycustom));
-
-    return Qtrue;
-}
-*/
-static VALUE rb_dfregister(VALUE self, VALUE name, VALUE descr)
-{
-    rb_raise(*rb_eRuntimeError, "not implemented");
+    printerr("%s", rb_string_value_ptr(&s));
     return Qnil;
 }
 
@@ -511,7 +503,7 @@ static VALUE rb_dfget_rtti_classname(VALUE self, VALUE vptr)
     char *typestring = *(char**)(typeinfo + 0x4);
     while (*typestring >= '0' && *typestring <= '9')
         typestring++;
-    return rb_str_new2(typestring);
+    return rb_str_new(typestring, strlen(typestring));
 #endif
 }
 
@@ -532,7 +524,7 @@ static VALUE rb_dfmalloc(VALUE self, VALUE len)
 {
     char *ptr = (char*)malloc(FIX2INT(len));
     if (!ptr)
-        rb_raise(*rb_eRuntimeError, "no memory");
+        return Qnil;
     memset(ptr, 0, FIX2INT(len));
     return rb_uint2inum((long)ptr);
 }
@@ -761,22 +753,49 @@ static VALUE rb_dfmemory_bitarray_set(VALUE self, VALUE addr, VALUE idx, VALUE v
 
 
 /* call an arbitrary object virtual method */
+#ifdef WIN32
+__declspec(naked) static int raw_vcall(char **that, unsigned long voff, unsigned long a0,
+        unsigned long a1, unsigned long a2, unsigned long a3)
+{
+    // __thiscall requires that the callee cleans up the stack
+    // here we dont know how many arguments it will take, so
+    // we simply fix esp across the funcall
+    __asm {
+        push ebp
+        mov ebp, esp
+
+        push a3
+        push a2
+        push a1
+        push a0
+
+        mov ecx, that
+
+        mov eax, [ecx]
+        add eax, voff
+        call [eax]
+
+        mov esp, ebp
+        pop ebp
+        ret
+    }
+}
+#else
+static int raw_vcall(char **that, unsigned long voff, unsigned long a0,
+        unsigned long a1, unsigned long a2, unsigned long a3)
+{
+    int (*fptr)(char **me, int, int, int, int);
+    fptr = (decltype(fptr))*(void**)(*that + voff);
+    return fptr(that, a0, a1, a2, a3);
+}
+#endif
+
+// call an arbitrary vmethod, convert args/ret to native values for raw_vcall
 static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE cppvoff, VALUE a0, VALUE a1, VALUE a2, VALUE a3)
 {
-#ifdef WIN32
-    int (__fastcall *fptr)(char **me, int dummy_edx, int, int, int, int);
-#else
-    int (*fptr)(char **me, int, int, int, int);
-#endif
-    char **that = (char**)rb_num2ulong(cppobj);
-    int ret;
-    fptr = (decltype(fptr))*(void**)(*that + rb_num2ulong(cppvoff));
-    ret = fptr(that,
-#ifdef WIN32
-            0,
-#endif
-            rb_num2ulong(a0), rb_num2ulong(a1), rb_num2ulong(a2), rb_num2ulong(a3));
-    return rb_int2inum(ret);
+    return rb_int2inum(raw_vcall((char**)rb_num2ulong(cppobj), rb_num2ulong(cppvoff),
+                rb_num2ulong(a0), rb_num2ulong(a1),
+                rb_num2ulong(a2), rb_num2ulong(a3)));
 }
 
 
@@ -785,22 +804,21 @@ static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE cppvoff, VALUE a0, VALUE
 static void ruby_bind_dfhack(void) {
     rb_cDFHack = rb_define_module("DFHack");
 
-    // global DFHack commands
-    rb_define_singleton_method(rb_cDFHack, "onupdate_active", RUBY_METHOD_FUNC(rb_dfonupdateactive), 0);
-    rb_define_singleton_method(rb_cDFHack, "onupdate_active=", RUBY_METHOD_FUNC(rb_dfonupdateactiveset), 1);
-    rb_define_singleton_method(rb_cDFHack, "resume", RUBY_METHOD_FUNC(rb_dfresume), 0);
-    rb_define_singleton_method(rb_cDFHack, "do_suspend", RUBY_METHOD_FUNC(rb_dfsuspend), 0);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_active", RUBY_METHOD_FUNC(rb_dfonupdate_active), 0);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_active=", RUBY_METHOD_FUNC(rb_dfonupdate_active_set), 1);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyear", RUBY_METHOD_FUNC(rb_dfonupdate_minyear), 0);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyear=", RUBY_METHOD_FUNC(rb_dfonupdate_minyear_set), 1);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyeartick", RUBY_METHOD_FUNC(rb_dfonupdate_minyeartick), 0);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyeartick=", RUBY_METHOD_FUNC(rb_dfonupdate_minyeartick_set), 1);
     rb_define_singleton_method(rb_cDFHack, "get_global_address", RUBY_METHOD_FUNC(rb_dfget_global_address), 1);
     rb_define_singleton_method(rb_cDFHack, "get_vtable", RUBY_METHOD_FUNC(rb_dfget_vtable), 1);
     rb_define_singleton_method(rb_cDFHack, "get_rtti_classname", RUBY_METHOD_FUNC(rb_dfget_rtti_classname), 1);
     rb_define_singleton_method(rb_cDFHack, "get_vtable_ptr", RUBY_METHOD_FUNC(rb_dfget_vtable_ptr), 1);
-    rb_define_singleton_method(rb_cDFHack, "register_dfcommand", RUBY_METHOD_FUNC(rb_dfregister), 2);
     rb_define_singleton_method(rb_cDFHack, "print_str", RUBY_METHOD_FUNC(rb_dfprint_str), 1);
     rb_define_singleton_method(rb_cDFHack, "print_err", RUBY_METHOD_FUNC(rb_dfprint_err), 1);
     rb_define_singleton_method(rb_cDFHack, "malloc", RUBY_METHOD_FUNC(rb_dfmalloc), 1);
     rb_define_singleton_method(rb_cDFHack, "free", RUBY_METHOD_FUNC(rb_dffree), 1);
     rb_define_singleton_method(rb_cDFHack, "vmethod_do_call", RUBY_METHOD_FUNC(rb_dfvcall), 6);
-    rb_define_const(rb_cDFHack, "REBASE_DELTA", rb_dfrebase_delta());
 
     rb_define_singleton_method(rb_cDFHack, "memory_read", RUBY_METHOD_FUNC(rb_dfmemory_read), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_read_int8",  RUBY_METHOD_FUNC(rb_dfmemory_read_int8),  1);
@@ -839,11 +857,4 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_resize", RUBY_METHOD_FUNC(rb_dfmemory_bitarray_resize), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_isset",  RUBY_METHOD_FUNC(rb_dfmemory_bitarray_isset), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_set",    RUBY_METHOD_FUNC(rb_dfmemory_bitarray_set), 3);
-
-    // load the default ruby-level definitions
-    int state=0;
-    // windows cmake installs files in df/, linux installs files in df/hack/
-    rb_eval_string_protect("File.exist?('hack/ruby.rb') ? load('hack/ruby.rb') : load('ruby.rb')", &state);
-    if (state)
-        dump_rb_error();
 }

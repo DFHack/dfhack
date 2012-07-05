@@ -33,7 +33,6 @@ distribution.
 #include <stdint.h>
 #include "Console.h"
 #include "modules/Graphic.h"
-#include "SDL_events.h"
 
 #include "RemoteClient.h"
 
@@ -170,7 +169,7 @@ namespace DFHack
         int Update (void);
         int TileUpdate (void);
         int Shutdown (void);
-        int SDL_Event(SDL::Event* event);
+        int DFH_SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);
 
         void onUpdate(color_ostream &out);
@@ -215,7 +214,6 @@ namespace DFHack
         tthread::mutex * HotkeyMutex;
         tthread::condition_variable * HotkeyCond;
 
-        int UnicodeAwareSym(const SDL::KeyboardEvent& ke);
         bool SelectHotkey(int key, int modifiers);
 
         // for state change tracking

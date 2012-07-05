@@ -220,7 +220,7 @@ void ServerConnection::threadFn()
         }
 
         if (memcmp(header.magic, RPCHandshakeHeader::REQUEST_MAGIC, sizeof(header.magic)) ||
-            header.version != 1)
+            header.version < 1 || header.version > 255)
         {
             out << "In RPC server: invalid handshake header." << endl;
             return;

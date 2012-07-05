@@ -49,6 +49,10 @@ function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
 end
 
+function qerror(msg, level)
+    dfhack.error(msg, (level or 1) + 1, false)
+end
+
 function dfhack.with_finalize(...)
     return dfhack.call_with_finalizer(0,true,...)
 end
@@ -63,6 +67,8 @@ end
 function dfhack.with_temp_object(obj,fn,...)
     return dfhack.call_with_finalizer(1,true,call_delete,obj,fn,obj,...)
 end
+
+dfhack.exception.__index = dfhack.exception
 
 -- Module loading
 
@@ -273,19 +279,24 @@ end
 
 -- Command scripts
 
-dfhack.scripts = dfhack.scripts or {}
+dfhack.internal.scripts = dfhack.internal.scripts or {}
 
-function dfhack.run_script(file,...)
-    local env = dfhack.scripts[file]
+local scripts = dfhack.internal.scripts
+local hack_path = dfhack.getHackPath()
+
+function dfhack.run_script(name,...)
+    local key = string.lower(name)
+    local file = hack_path..'scripts/'..name..'.lua'
+    local env = scripts[key]
     if env == nil then
         env = {}
         setmetatable(env, { __index = base_env })
-        dfhack.scripts[file] = env
     end
     local f,perr = loadfile(file, 't', env)
     if f == nil then
         error(perr)
     end
+    scripts[key] = env
     return f(...)
 end
 

@@ -152,9 +152,12 @@ Valid and useful build types include 'Release', 'Debug' and
 ================================
 Using the library as a developer
 ================================
-Currently, the only way to use the library is to write a plugin that can be loaded by it.
+
+Currently, the most direct way to use the library is to write a plugin that can be loaded by it.
 All the plugins can be found in the 'plugins' folder. There's no in-depth documentation
 on how to write one yet, but it should be easy enough to copy one and just follow the pattern.
+
+Other than through plugins, it is possible to use DFHack via remote access interface, or by writing Lua scripts.
 
 The most important parts of DFHack are the Core, Console, Modules and Plugins.
 
@@ -170,6 +173,24 @@ The main license is zlib/libpng, some bits are MIT licensed, and some are BSD li
 
 Feel free to add your own extensions and plugins. Contributing back to
 the dfhack repository is welcome and the right thing to do :)
+
+DF data structure definitions
+=============================
+
+DFHack uses information about the game data structures, represented via xml files in the library/xml/ submodule.
+
+Data structure layouts are described in files following the df.*.xml name pattern. This information is transformed by a perl script into C++ headers describing the structures, and associated metadata for the Lua wrapper. These headers and data are then compiled into the DFHack libraries, thus necessitating a compatibility break every time layouts change; in return it significantly boosts the efficiency and capabilities of DFHack code.
+
+Global object addresses are stored in symbols.xml, which is copied to the dfhack release package and loaded as data at runtime.
+
+Remote access interface
+=======================
+
+DFHack supports remote access by exchanging Google protobuf messages via a TCP socket. Both the core and plugins can define remotely accessible methods. The ``dfhack-run`` command uses this interface to invoke ordinary console commands.
+
+Currently the supported set of requests is limited, because the developers don't know what exactly is most useful.
+
+Protocol client implementations exist for Java and C#.
 
 Contributing to DFHack
 ======================

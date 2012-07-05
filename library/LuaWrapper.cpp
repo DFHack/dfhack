@@ -447,10 +447,21 @@ Lua::ObjectClass Lua::IsDFObject(lua_State *state, int val_index)
 }
 
 static const char *const primitive_types[] = {
-    "string", NULL
+    "string",
+    "int8_t", "uint8_t", "int16_t", "uint16_t",
+    "int32_t", "uint32_t", "int64_t", "uint64_t",
+    "bool", "float", "double",
+    NULL
 };
 static type_identity *const primitive_identities[] = {
-    df::identity_traits<std::string>::get(), NULL
+    df::identity_traits<std::string>::get(),
+    df::identity_traits<int8_t>::get(), df::identity_traits<uint8_t>::get(),
+    df::identity_traits<int16_t>::get(), df::identity_traits<uint16_t>::get(),
+    df::identity_traits<int32_t>::get(), df::identity_traits<uint32_t>::get(),
+    df::identity_traits<int64_t>::get(), df::identity_traits<uint64_t>::get(),
+    df::identity_traits<bool>::get(),
+    df::identity_traits<float>::get(), df::identity_traits<double>::get(),
+    NULL
 };
 
 /**
@@ -644,12 +655,32 @@ static int meta_new(lua_State *state)
 {
     int argc = lua_gettop(state);
 
-    if (argc != 1)
-        luaL_error(state, "Usage: object:new() or df.new(object)");
+    if (argc != 1 && argc != 2)
+        luaL_error(state, "Usage: object:new() or df.new(object) or df.new(ptype,count)");
 
     type_identity *id = get_object_identity(state, 1, "df.new()", true);
 
-    void *ptr = id->allocate();
+    void *ptr;
+
+    // Support arrays of primitive types
+    if (argc == 2)
+    {
+        int cnt = luaL_checkint(state, 2);
+        if (cnt <= 0)
+            luaL_error(state, "Invalid array size in df.new()");
+        if (id->type() != IDTYPE_PRIMITIVE)
+            luaL_error(state, "Cannot allocate arrays of non-primitive types.");
+
+        size_t sz = id->byte_size() * cnt;
+        ptr = malloc(sz);
+        if (ptr)
+            memset(ptr, 0, sz);
+    }
+    else
+    {
+        ptr = id->allocate();
+    }
+
     if (!ptr)
         luaL_error(state, "Cannot allocate %s", id->getFullName().c_str());
 
@@ -659,6 +690,48 @@ static int meta_new(lua_State *state)
         push_object_ref(state, ptr);
 
         id->copy(ptr, get_object_ref(state, 1));
+    }
+    else
+        push_object_internal(state, id, ptr);
+
+    return 1;
+}
+
+/**
+ * Method: type casting of pointers.
+ */
+static int meta_reinterpret_cast(lua_State *state)
+{
+    int argc = lua_gettop(state);
+
+    if (argc != 2)
+        luaL_error(state, "Usage: df.reinterpret_cast(type,ptr)");
+
+    type_identity *id = get_object_identity(state, 1, "df.reinterpret_cast()", true);
+
+    // Find the raw pointer value
+    void *ptr;
+
+    if (lua_isnil(state, 2))
+        ptr = NULL;
+    else if (lua_isnumber(state, 2))
+        ptr = (void*)lua_tounsigned(state, 2);
+    else
+    {
+        ptr = get_object_internal(state, NULL, 2, false, true);
+        if (!ptr)
+            luaL_error(state, "Invalid pointer argument in df.reinterpret_cast.\n");
+    }
+
+    // Convert it to the appropriate representation
+    if (ptr == NULL)
+    {
+        lua_pushnil(state);
+    }
+    else if (lua_isuserdata(state, 1))
+    {
+        lua_getmetatable(state, 1);
+        push_object_ref(state, ptr);
     }
     else
         push_object_internal(state, id, ptr);
@@ -1433,6 +1506,10 @@ static int DoAttach(lua_State *state)
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_NEW_NAME);
 
     lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPETABLE_TOKEN);
+    lua_pushcclosure(state, meta_reinterpret_cast, 1);
+    lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_CAST_NAME);
+
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPETABLE_TOKEN);
     lua_pushcclosure(state, meta_assign, 1);
     lua_setfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
 
@@ -1463,6 +1540,8 @@ static int DoAttach(lua_State *state)
         lua_setfield(state, -2, "assign");
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_IS_INSTANCE_NAME);
         lua_setfield(state, -2, "is_instance");
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_CAST_NAME);
+        lua_setfield(state, -2, "reinterpret_cast");
 
         lua_pushlightuserdata(state, NULL);
         lua_setfield(state, -2, "NULL");

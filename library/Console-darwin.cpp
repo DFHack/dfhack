@@ -264,7 +264,7 @@ namespace DFHack
         void color(Console::color_value index)
         {
             if(!rawmode)
-                fprintf(dfout_C, "%s", getANSIColor(index));
+                fprintf(dfout_C,getANSIColor(index));
             else
             {
                 const char * colstr = getANSIColor(index);
@@ -716,8 +716,6 @@ void Console::add_text(color_value color, const std::string &text)
     lock_guard <recursive_mutex> g(*wlock);
     if (inited)
         d->print_text(color, text);
-    else
-        fwrite(text.data(), 1, text.size(), stderr);
 }
 
 int Console::get_columns(void)

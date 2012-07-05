@@ -329,17 +329,19 @@ bool sendRemoteMessage(CSimpleSocket *socket, int16_t id, const MessageLite *msg
     int size = size_ready ? msg->GetCachedSize() : msg->ByteSize();
     int fullsz = size + sizeof(RPCMessageHeader);
 
-    std::auto_ptr<uint8_t> data(new uint8_t[fullsz]);
-    RPCMessageHeader *hdr = (RPCMessageHeader*)data.get();
+    uint8_t *data = new uint8_t[fullsz];
+    RPCMessageHeader *hdr = (RPCMessageHeader*)data;
 
     hdr->id = id;
     hdr->size = size;
 
-    uint8_t *pstart = data.get() + sizeof(RPCMessageHeader);
+    uint8_t *pstart = data + sizeof(RPCMessageHeader);
     uint8_t *pend = msg->SerializeWithCachedSizesToArray(pstart);
     assert((pend - pstart) == size);
 
-    return (socket->Send(data.get(), fullsz) == fullsz);
+    int got = socket->Send(data, fullsz);
+    delete[] data;
+    return (got == fullsz);
 }
 
 command_result RemoteFunctionBase::execute(color_ostream &out,
@@ -402,9 +404,9 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
             return CR_LINK_FAILURE;
         }
 
-        std::auto_ptr<uint8_t> buf(new uint8_t[header.size]);
+        uint8_t *buf = new uint8_t[header.size];
 
-        if (!readFullBuffer(p_client->socket, buf.get(), header.size))
+        if (!readFullBuffer(p_client->socket, buf, header.size))
         {
             out.printerr("In call to %s::%s: I/O error in receive %d bytes of data.\n",
                          this->proto.c_str(), this->name.c_str(), header.size);
@@ -413,18 +415,20 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
 
         switch (header.id) {
         case RPC_REPLY_RESULT:
-            if (!output->ParseFromArray(buf.get(), header.size))
+            if (!output->ParseFromArray(buf, header.size))
             {
                 out.printerr("In call to %s::%s: error parsing received result.\n",
                              this->proto.c_str(), this->name.c_str());
+                delete[] buf;
                 return CR_LINK_FAILURE;
             }
 
+            delete[] buf;
             return CR_OK;
 
         case RPC_REPLY_TEXT:
             text_data.Clear();
-            if (text_data.ParseFromArray(buf.get(), header.size))
+            if (text_data.ParseFromArray(buf, header.size))
                 text_decoder.decode(&text_data);
             else
                 out.printerr("In call to %s::%s: received invalid text data.\n",
@@ -434,5 +438,6 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
         default:
             break;
         }
+        delete[] buf;
     }
 }

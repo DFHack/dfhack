@@ -27,7 +27,7 @@ Compatibility
 DFHack works on Windows XP, Vista, 7 or any modern Linux distribution.
 OSX is not supported due to lack of developers with a Mac.
 
-Currently, only versions 0.34.06 and 0.34.07 are supported. If you need DFHack
+Currently, versions 0.34.08 - 0.34.11 are supported. If you need DFHack
 for older versions, look for older releases.
 
 On Windows, you have to use the SDL version of DF.
@@ -633,8 +633,14 @@ produce undesirable results. There are a few good ones though.
 
      You are in fort game mode, managing your fortress and paused.
      You switch to the arena game mode, *assume control of a creature* and then
-     switch to adventure game mode(1).
+     switch to adventure game mode(1). 
      You just lost a fortress and gained an adventurer.
+     You could also do this.
+     You are in fort game mode, managing your fortress and paused at the esc menu.
+     You switch to the adventure game mode, then use Dfusion to *assume control of a creature* and then
+     save or retire. 
+     You just created a returnable mountain home and gained an adventurer.
+
 
 I take no responsibility of anything that happens as a result of using this tool
 

@@ -68,6 +68,8 @@ using namespace DFHack;
 #include <fstream>
 #include "tinythread.h"
 
+#include "SDL_events.h"
+
 using namespace tthread;
 using namespace df::enums;
 using df::global::init;
@@ -204,7 +206,7 @@ struct sortable
 
 static std::string getLuaHelp(std::string path)
 {
-    ifstream script(path);
+    ifstream script(path.c_str());
 
     if (script.good())
     {
@@ -237,7 +239,7 @@ static std::map<string,string> listLuaScripts(std::string path)
 
 static bool fileExists(std::string path)
 {
-    ifstream script(path);
+    ifstream script(path.c_str());
     return script.good();
 }
 
@@ -262,15 +264,11 @@ static bool init_run_script(color_ostream &out, lua_State *state, void *info)
     return true;
 }
 
-static command_result runLuaScript(color_ostream &out, std::string filename, vector<string> &args)
+static command_result runLuaScript(color_ostream &out, std::string name, vector<string> &args)
 {
     ScriptArgs data;
-    data.pcmd = &filename;
+    data.pcmd = &name;
     data.pargs = &args;
-
-#ifndef LINUX_BUILD
-    filename = toLower(filename);
-#endif
 
     bool ok = Lua::RunCoreQueryLoop(out, Lua::Core::State, init_run_script, &data);
 
@@ -293,7 +291,6 @@ command_result Core::runCommand(color_ostream &out, const std::string &command)
             return CR_OK;
 
         cerr << "Invoking: " << command << endl;
-
         return runCommand(out, first, parts);
     }
     else
@@ -609,7 +606,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
             {
                 auto filename = getHackPath() + "scripts/" + first + ".lua";
                 if (fileExists(filename))
-                    res = runLuaScript(con, filename, parts);
+                    res = runLuaScript(con, first, parts);
                 else
                     con.printerr("%s is not a recognized command.\n", first.c_str());
             }
@@ -628,7 +625,7 @@ bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
 {
     if(!silent)
         out << "Loading script at " << fname << std::endl;
-    ifstream script(fname);
+    ifstream script(fname.c_str());
     if (script.good())
     {
         string command;
@@ -674,6 +671,7 @@ void fIOthread(void * iodata)
     {
         string command = "";
         int ret = con.lineedit("[DFHack]# ",command, main_history);
+        fprintf(stderr,"Command: [%s]\n",command.c_str());
         if(ret == -2)
         {
             cerr << "Console is shutting down properly." << endl;
@@ -687,9 +685,13 @@ void fIOthread(void * iodata)
         else if(ret)
         {
             // a proper, non-empty command was entered
+			fprintf(stderr,"Adding command to history\n");
             main_history.add(command);
+			fprintf(stderr,"Saving history\n");
             main_history.save("dfhack.history");
         }
+        
+		fprintf(stderr,"Running command\n");
 
         auto rv = core->runCommand(con, command);
 
@@ -800,14 +802,19 @@ bool Core::Init()
     }
     cerr << "Version: " << vinfo->getVersion() << endl;
 
+    // Init global object pointers
+    df::global::InitGlobals();
+
     cerr << "Initializing Console.\n";
     // init the console.
     bool is_text_mode = false;
     if(init && init->display.flag.is_set(init_display_flags::TEXT))
     {
         is_text_mode = true;
+        con.init(true);
+        cerr << "Console is not available. Use dfhack-run to send commands.\n";
     }
-    if(con.init(is_text_mode))
+    else if(con.init(false))
         cerr << "Console is running.\n";
     else
         fatal ("Console has failed to initialize!\n", false);
@@ -822,7 +829,6 @@ bool Core::Init()
     */
     // initialize data defs
     virtual_identity::Init(this);
-    df::global::InitGlobals();
 
     // initialize common lua context
     Lua::Core::Init(con);
@@ -832,12 +838,15 @@ bool Core::Init()
     cerr << "Initializing Plugins.\n";
     // create plugin manager
     plug_mgr = new PluginManager(this);
-    cerr << "Starting IO thread.\n";
-    // create IO thread
     IODATA *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
-    thread * IO = new thread(fIOthread, (void *) temp);
+    if (!is_text_mode)
+    {
+        cerr << "Starting IO thread.\n";
+        // create IO thread
+        thread * IO = new thread(fIOthread, (void *) temp);
+    }
     cerr << "Starting DF input capture thread.\n";
     // set up hotkey capture
     HotkeyMutex = new mutex();
@@ -1205,29 +1214,30 @@ bool Core::ncurses_wgetch(int in, int & out)
     return true;
 }
 
-int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
+int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
 {
     // Assume keyboard layouts don't change the order of numbers:
     if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
     if(SDL::K_F1 <= ke.ksym.sym && ke.ksym.sym <= SDL::K_F12) return ke.ksym.sym;
 
     // These keys are mapped to the same control codes as Ctrl-?
-    switch (ke.ksym.sym) {
-    case SDL::K_RETURN:
-    case SDL::K_KP_ENTER:
-    case SDL::K_TAB:
-    case SDL::K_ESCAPE:
-    case SDL::K_DELETE:
-        return ke.ksym.sym;
-    default:
-        break;
+    switch (ke.ksym.sym)
+    {
+        case SDL::K_RETURN:
+        case SDL::K_KP_ENTER:
+        case SDL::K_TAB:
+        case SDL::K_ESCAPE:
+        case SDL::K_DELETE:
+            return ke.ksym.sym;
+        default:
+            break;
     }
 
     int unicode = ke.ksym.unicode;
 
     // convert Ctrl characters to their 0x40-0x5F counterparts:
     if (unicode < ' ')
-    {        
+    {
         unicode += 'A' - 1;
     }
 
@@ -1235,7 +1245,7 @@ int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
     if('A' < unicode && unicode < 'Z')
     {
         unicode += 'a' - 'A';
-    }    
+    }
 
     // convert various other punctuation marks:
     if('\"' == unicode) unicode = '\'';
@@ -1252,8 +1262,9 @@ int Core::UnicodeAwareSym(const SDL::KeyboardEvent& ke)
     return unicode;
 }
 
+
 //MEMO: return false if event is consumed
-int Core::SDL_Event(SDL::Event* ev)
+int Core::DFH_SDL_Event(SDL::Event* ev)
 {
     // do NOT process events before we are ready.
     if(!started) return true;
@@ -1261,7 +1272,7 @@ int Core::SDL_Event(SDL::Event* ev)
         return true;
     if(ev && (ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP))
     {
-        SDL::KeyboardEvent * ke = (SDL::KeyboardEvent *)ev;
+        auto ke = (SDL::KeyboardEvent *)ev;
 
         if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
         {

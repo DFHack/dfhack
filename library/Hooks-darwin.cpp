@@ -38,10 +38,25 @@ distribution.
 #include <string>
 #include <map>
 
+/*typedef struct interpose_s
+{
+  void *new_func;
+  void *orig_func;
+} interpose_t;*/
+
 #include "DFHack.h"
 #include "Core.h"
 #include "Hooks.h"
 #include <iostream>
+
+/*static const interpose_t interposers[] __attribute__ ((section("__DATA, __interpose"))) = 
+{
+     { (void *)DFH_SDL_Init,  (void *)SDL_Init  },
+     { (void *)DFH_SDL_PollEvent, (void *)SDL_PollEvent },
+     { (void *)DFH_SDL_Quit, (void *)SDL_Quit },
+     { (void *)DFH_SDL_NumJoysticks, (void *)SDL_NumJoysticks },
+     
+};*/
 
 /*******************************************************************************
 *                           SDL part starts here                               *
@@ -59,15 +74,17 @@ DFhackCExport void SDL_Quit(void)
 {
     DFHack::Core & c = DFHack::Core::getInstance();
     c.Shutdown();
-    if(_SDL_Quit)
+    /*if(_SDL_Quit)
     {
         _SDL_Quit();
-    }
+    }*/
+    
+    _SDL_Quit();
 }
 
 // called by DF to check input events
-static int (*_SDL_PollEvent)(SDL::Event* event) = 0;
-DFhackCExport int SDL_PollEvent(SDL::Event* event)
+static int (*_SDL_PollEvent)(SDL_Event* event) = 0;
+DFhackCExport int SDL_PollEvent(SDL_Event* event)
 {
     pollevent_again:
     // if SDL returns 0 here, it means there are no more events. return 0
@@ -114,15 +131,18 @@ static int (*_SDL_Init)(uint32_t flags) = 0;
 DFhackCExport int SDL_Init(uint32_t flags)
 {
     // reroute stderr
+    fprintf(stderr,"dfhack: attempting to hook in\n");
     freopen("stderr.log", "w", stderr);
     // we don't reroute stdout until  we figure out if this should be done at all
     // See: Console-linux.cpp
 
     // find real functions
+    fprintf(stderr,"dfhack: saving real SDL functions\n");
     _SDL_Init = (int (*)( uint32_t )) dlsym(RTLD_NEXT, "SDL_Init");
     _SDL_Quit = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_Quit");
-    _SDL_PollEvent = (int (*)(SDL::Event*))dlsym(RTLD_NEXT,"SDL_PollEvent");
+    _SDL_PollEvent = (int (*)(SDL_Event*))dlsym(RTLD_NEXT,"SDL_PollEvent");
 
+    fprintf(stderr,"dfhack: saved real SDL functions\n");
     // check if we got them
     if(_SDL_Init && _SDL_Quit && _SDL_PollEvent)
     {
@@ -134,10 +154,10 @@ DFhackCExport int SDL_Init(uint32_t flags)
         fprintf(stderr,"dfhack: something went horribly wrong\n");
         exit(1);
     }
-    /*
+    
     DFHack::Core & c = DFHack::Core::getInstance();
-    c.Init();
-    */
+    //c.Init();
+    
     int ret = _SDL_Init(flags);
     return ret;
 }

@@ -383,6 +383,8 @@ struct labor_default
 	int active_dwarfs;
 };
 
+static int hauler_pct = 33;
+
 static std::vector<struct labor_info> labor_infos;
 
 static const struct labor_default default_labor_infos[] = {
@@ -543,6 +545,16 @@ static void init_state()
 
 	if (!enable_autolabor)
 		return;
+
+	auto cfg_haulpct = pworld->GetPersistentData("autolabor/haulpct");
+	if (cfg_haulpct.isValid()) 
+	{
+		hauler_pct = cfg_haulpct.ival(0);
+	}
+	else
+	{
+		hauler_pct = 33;
+	}
 
 	// Load labors from save
 	labor_infos.resize(ARRAY_COUNT(default_labor_infos));
@@ -956,6 +968,11 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 		for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
 		{
+			if (dwarf_info[dwarf].trader && trader_requested) 
+			{
+				dwarfs[dwarf]->status.labors[labor] = false;
+			}
+
 			if (dwarfs[dwarf]->status.labors[labor])
 			{
 				if (labor_infos[labor].is_exclusive)
@@ -1041,6 +1058,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 					value += 350;
 			}
 
+			// bias by happiness
+
+			value += dwarfs[dwarf]->status.happiness;
+
 			values[dwarf] = value;
 
 			candidates.push_back(dwarf);
@@ -1121,7 +1142,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			}
 
 			if (print_debug)
-				out.print("Dwarf %i \"%s\" assigned %s: value %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf]);
+				out.print("Dwarf %i \"%s\" assigned %s: value %i\n %s", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf], dwarf_info[dwarf].trader ? "(trader)" : "");
 
 			if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
 				labor_infos[labor].active_dwarfs++;
@@ -1134,7 +1155,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 	// Set about 1/3 of the dwarfs as haulers. The haulers have all HAULER labors enabled. Having a lot of haulers helps
 	// make sure that hauling jobs are handled quickly rather than building up.
 
-	int num_haulers = state_count[IDLE] + state_count[BUSY] / 3;
+	int num_haulers = state_count[IDLE] + state_count[BUSY] * hauler_pct / 100;
+
 	if (num_haulers < 1)
 		num_haulers = 1;
 
@@ -1261,7 +1283,13 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 		return CR_FAILURE;
 	}
 
-	if (parameters.size() == 2 || parameters.size() == 3) {
+	else if (parameters.size() == 2 && parameters[0] == "haulpct") 
+	{
+		int pct = atoi (parameters[1].c_str());
+		hauler_pct = pct;
+		return CR_OK;
+	}
+	else if (parameters.size() == 2 || parameters.size() == 3) {
 		df::enums::unit_labor::unit_labor labor = df::enums::unit_labor::NONE;
 
 		FOR_ENUM_ITEMS(unit_labor, test_labor)
@@ -1353,7 +1381,8 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
 		return CR_OK;
 	}
-	else if (parameters.size() == 1 && parameters[0] == "debug") {
+	else if (parameters.size() == 1 && parameters[0] == "debug") 
+	{
 		print_debug = 1;
 
 		return CR_OK;

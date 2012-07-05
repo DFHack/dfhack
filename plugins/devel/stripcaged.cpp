@@ -77,6 +77,13 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 command_result df_stripcaged(color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
+	bool keeparmor = false;
+
+	if (parameters.size() == 1 && parameters[0] == "keeparmor") 
+	{
+		out << "Not dumping armor" << endl;
+		keeparmor = true;
+	}
 
 	size_t count = 0;
     for (size_t i=0; i < world->units.all.size(); i++)
@@ -89,6 +96,13 @@ command_result df_stripcaged(color_ostream &out, vector <string> & parameters)
 				df::unit_inventory_item* uii = unit->inventory[j];
 				if (uii->item)
 				{
+					if (keeparmor && (uii->item->isArmorNotClothing() || uii->item->isClothing()))
+					{
+						std::string desc;
+						uii->item->getItemDescription(&desc,0);
+						out << "Armor item " << desc << " not dumped" << endl;
+						continue;
+					}
 					uii->item->flags.bits.forbid = 0;
 					uii->item->flags.bits.dump = 1;
 					count++;

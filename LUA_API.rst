@@ -17,7 +17,7 @@ are treated by DFHack command line prompt almost as
 native C++ commands, and invoked by plugins written in c++.
 
 This document describes native API available to Lua in detail.
-For the most part it does not describe utility functions
+It does not describe all of the utility functions
 implemented by Lua files located in hack/lua/...
 
 
@@ -1323,9 +1323,9 @@ Features:
   order using ``dfhack.safecall``.
 
 
-=======
-Modules
-=======
+===========
+Lua Modules
+===========
 
 DFHack sets up the lua interpreter so that the built-in ``require``
 function can be used to load shared lua code from hack/lua/.
@@ -1333,7 +1333,7 @@ The ``dfhack`` namespace reference itself may be obtained via
 ``require('dfhack')``, although it is initially created as a
 global by C++ bootstrap code.
 
-The following functions are provided:
+The following module management functions are provided:
 
 * ``mkmodule(name)``
 
@@ -1356,6 +1356,194 @@ The following functions are provided:
   used as a base for all module and script environments. Its contents
   should be kept limited to the standard Lua library and API described
   in this document.
+
+Global environment
+==================
+
+A number of variables and functions are provided in the base global
+environment by the mandatory init file dfhack.lua:
+
+* Color constants
+
+  These are applicable both for ``dfhack.color()`` and color fields
+  in DF functions or structures:
+
+  COLOR_RESET, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN,
+  COLOR_RED, COLOR_MAGENTA, COLOR_BROWN, COLOR_GREY, COLOR_DARKGREY,
+  COLOR_LIGHTBLUE, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN, COLOR_LIGHTRED,
+  COLOR_LIGHTMAGENTA, COLOR_YELLOW, COLOR_WHITE
+
+* ``dfhack.onStateChange`` event codes
+
+  Available only in the core context, as is the event itself:
+
+  SC_WORLD_LOADED, SC_WORLD_UNLOADED, SC_MAP_LOADED,
+  SC_MAP_UNLOADED, SC_VIEWSCREEN_CHANGED, SC_CORE_INITIALIZED
+
+* Functions already described above
+
+  safecall, qerror, mkmodule, reload
+
+* ``printall(obj)``
+
+  If the argument is a lua table or DF object reference, prints all fields.
+
+* ``copyall(obj)``
+
+  Returns a shallow copy of the table or reference as a lua table.
+
+* ``pos2xyz(obj)``
+
+  The object must have fields x, y and z. Returns them as 3 values.
+  If obj is *nil*, or x is -30000 (the usual marker for undefined
+  coordinates), returns *nil*.
+
+* ``xyz2pos(x,y,z)``
+
+  Returns a table with x, y and z as fields.
+
+* ``safe_index(obj,index...)``
+
+  Walks a sequence of dereferences, which may be represented by numbers or strings.
+  Returns *nil* if any of obj or indices is *nil*, or a numeric index is out of array bounds.
+
+utils
+=====
+
+* ``utils.compare(a,b)``
+
+  Comparator function; returns *-1* if a<b, *1* if a>b, *0* otherwise.
+
+* ``utils.compare_name(a,b)``
+
+  Comparator for names; compares empty string last.
+
+* ``utils.is_container(obj)``
+
+  Checks if obj is a container ref.
+
+* ``utils.make_index_sequence(start,end)``
+
+  Returns a lua sequence of numbers in start..end.
+
+* ``utils.make_sort_order(data, ordering)``
+
+  Computes a sorted permutation of objects in data, as a table of integer
+  indices into the data sequence. Uses ``data.n`` as input length
+  if present.
+
+  The ordering argument is a sequence of ordering specs, represented
+  as lua tables with following possible fields:
+
+  ord.key = *function(value)*
+    Computes comparison key from input data value. Not called on nil.
+    If omitted, the comparison key is the value itself.
+  ord.key_table = *function(data)*
+    Computes a key table from the data table in one go.
+  ord.compare = *function(a,b)*
+    Comparison function. Defaults to ``utils.compare`` above.
+    Called on non-nil keys; nil sorts last.
+  ord.nil_first = *true/false*
+    If true, nil keys are sorted first instead of last.
+  ord.reverse = *true/false*
+    If true, sort non-nil keys in descending order.
+
+  For every comparison during sorting the specs are applied in
+  order until an unambiguous decision is reached. Sorting is stable.
+
+  Example of sorting a sequence by field foo::
+
+    local spec = { key = function(v) return v.foo end }
+    local order = utils.make_sort_order(data, { spec })
+    local output = {}
+    for i = 1,#order do output[i] = data[order[i]] end
+
+  Separating the actual reordering of the sequence in this
+  way enables applying the same permutation to multiple arrays.
+  This function is used by the sort plugin.
+
+* ``utils.assign(tgt, src)``
+
+  Does a recursive assignment of src into tgt.
+  Uses ``df.assign`` if tgt is a native object ref; otherwise
+  recurses into lua tables.
+
+* ``utils.clone(obj, deep)``
+
+  Performs a shallow, or semi-deep copy of the object as a lua table tree.
+  The deep mode recurses into lua tables and subobjects, except pointers
+  to other heap objects.
+  Null pointers are represented as df.NULL. Zero-based native containers
+  are converted to 1-based lua sequences.
+
+* ``utils.clone_with_default(obj, default, force)``
+
+  Copies the object, using the ``default`` lua table tree
+  as a guide to which values should be skipped as uninteresting.
+  The ``force`` argument makes it always return a non-*nil* value.
+
+* ``utils.sort_vector(vector,field,cmpfun)``
+
+  Sorts a native vector or lua sequence using the comparator function.
+  If ``field`` is not *nil*, applies the comparator to the field instead
+  of the whole object.
+
+* ``utils.binsearch(vector,key,field,cmpfun,min,max)``
+
+  Does a binary search in a native vector or lua sequence for
+  ``key``, using ``cmpfun`` and ``field`` like sort_vector.
+  If ``min`` and ``max`` are specified, they are used as the
+  search subrange bounds.
+
+  If found, returns *item, true, idx*. Otherwise returns
+  *nil, false, insert_idx*, where *insert_idx* is the correct
+  insertion point.
+
+* ``utils.insert_sorted(vector,item,field,cmpfun)``
+
+  Does a binary search, and inserts item if not found.
+  Returns *did_insert, vector[idx], idx*.
+
+* ``utils.insert_or_update(vector,item,field,cmpfun)``
+
+  Like ``insert_sorted``, but also assigns the item into
+  the vector cell if insertion didn't happen.
+
+  As an example, you can use this to set skill values::
+
+    utils.insert_or_update(soul.skills, {new=true, id=..., rating=...}, 'id')
+
+  (For an explanation of ``new=true``, see table assignment in the wrapper section)
+
+* ``utils.prompt_yes_no(prompt, default)``
+
+  Presents a yes/no prompt to the user. If ``default`` is not *nil*,
+  allows just pressing Enter to submit the default choice.
+  If the user enters ``'abort'``, throws an error.
+
+* ``utils.prompt_input(prompt, checkfun, quit_str)``
+
+  Presents a prompt to input data, until a valid string is entered.
+  Once ``checkfun(input)`` returns *true, ...*, passes the values
+  through. If the user enters the quit_str (defaults to ``'~~~'``),
+  throws an error.
+
+* ``utils.check_number(text)``
+
+  A ``prompt_input`` ``checkfun`` that verifies a number input.
+
+dumper
+======
+
+A third-party lua table dumper module from
+http://lua-users.org/wiki/DataDumper. Defines one
+function:
+
+* ``dumper.DataDumper(value, varname, fastmode, ident, indent_step)``
+
+  Returns ``value`` converted to a string. The ``indent_step``
+  argument specifies the indentation step size in spaces. For
+  the other arguments see the original documentation link above.
 
 
 =======
@@ -1429,6 +1617,9 @@ Any files with the .lua extension placed into hack/scripts/*
 are automatically used by the DFHack core as commands. The
 matching command name consists of the name of the file sans
 the extension.
+
+If the first line of the script is a one-line comment, it is
+used by the built-in ``ls`` and ``help`` commands.
 
 **NOTE:** Scripts placed in subdirectories still can be accessed, but
 do not clutter the ``ls`` command list; thus it is preferred

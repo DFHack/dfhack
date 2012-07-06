@@ -35,6 +35,7 @@ build/library
 build/tools
 build/plugins
 build/depends
+build/install_manifest.txt
 
 #ignore Kdevelop stuff
 .kdev4

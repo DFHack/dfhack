@@ -380,12 +380,18 @@ module DFHack
             def [](i)
                 i = _indexenum.int(i) if _indexenum
                 i += @_length if i < 0
-                _tgat(i)._get
+                if t = _tgat(i)
+                    t._get
+                end
             end
             def []=(i, v)
                 i = _indexenum.int(i) if _indexenum
                 i += @_length if i < 0
-                _tgat(i)._set(v)
+                if t = _tgat(i)
+                    t._set(v)
+                else
+                    raise 'index out of bounds'
+                end
             end
 
             include Enumerable
@@ -444,7 +450,7 @@ module DFHack
                 if idx >= length
                     insert_at(idx, 0)
                 elsif idx < 0
-                    raise 'invalid idx'
+                    raise 'index out of bounds'
                 end
                 @_tg._at(valueptr_at(idx))._set(v)
             end
@@ -530,7 +536,7 @@ module DFHack
                 if idx >= length
                     insert_at(idx, v)
                 elsif idx < 0
-                    raise 'invalid idx'
+                    raise 'index out of bounds'
                 else
                     DFHack.memory_vectorbool_setat(@_memaddr, idx, v)
                 end
@@ -582,7 +588,7 @@ module DFHack
                 idx = _indexenum.int(idx) if _indexenum
                 idx += length if idx < 0
                 if idx >= length or idx < 0
-                    raise 'invalid idx'
+                    raise 'index out of bounds'
                 else
                     DFHack.memory_bitarray_set(@_memaddr, idx, v)
                 end
@@ -608,11 +614,17 @@ module DFHack
             end
             def [](i)
                 i += _length if i < 0
-                _tgat(i)._get
+                if t = _tgat(i)
+                    t._get
+                end
             end
             def []=(i, v)
                 i += _length if i < 0
-                _tgat(i)._set(v)
+                if t = _tgat(i)
+                    t._set(v)
+                else
+                    raise 'index out of bounds'
+                end
             end
             def _set(a)
                 a.each_with_index { |v, i| self[i] = v }

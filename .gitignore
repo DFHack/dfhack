@@ -49,6 +49,10 @@ dfhack/python/PyDFHack.egg-info
 dfhack/python/build
 dfhack/python/dist
 
+# Ruby binding binaries
+plugins/ruby/libruby*
+plugins/ruby/ruby-autogen.rb
+
 # CPack stuff
 build/CPack*Config.cmake
 

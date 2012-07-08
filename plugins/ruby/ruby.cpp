@@ -6,8 +6,7 @@
 #include "VersionInfo.h"
 
 #include "DataDefs.h"
-#include "df/world.h"
-#include "df/unit.h"
+#include "df/global_objects.h"
 
 #include "tinythread.h"
 
@@ -35,9 +34,13 @@ tthread::mutex *m_irun;
 tthread::mutex *m_mutex;
 static volatile RB_command r_type;
 static volatile command_result r_result;
+static color_ostream *r_console;       // color_ostream given as argument, if NULL resort to console_proxy
 static const char *r_command;
 static tthread::thread *r_thread;
 static int onupdate_active;
+static int onupdate_minyear, onupdate_minyeartick;
+static color_ostream_proxy *console_proxy;
+
 
 DFHACK_PLUGIN("ruby")
 
@@ -115,7 +118,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 }
 
 // send a single ruby line to be evaluated by the ruby thread
-DFhackCExport command_result plugin_eval_ruby(const char *command)
+DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *command)
 {
     // if dlopen failed
     if (!r_thread)
@@ -136,6 +139,7 @@ DFhackCExport command_result plugin_eval_ruby(const char *command)
 
     r_type = RB_EVAL;
     r_command = command;
+    r_console = &out;
     // wake ruby thread up
     m_irun->unlock();
 
@@ -144,6 +148,7 @@ DFhackCExport command_result plugin_eval_ruby(const char *command)
         tthread::this_thread::yield();
 
     ret = r_result;
+    r_console = NULL;
 
     // block ruby thread
     m_irun->lock();
@@ -160,11 +165,16 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
     // ruby sets this flag when needed, to avoid lag running ruby code every
     // frame if not necessary
-    // TODO dynamic check on df::cur_year{_tick}
     if (!onupdate_active)
         return CR_OK;
 
-    return plugin_eval_ruby("DFHack.onupdate");
+    if (*df::global::cur_year < onupdate_minyear)
+        return CR_OK;
+    if (*df::global::cur_year == onupdate_minyear &&
+            *df::global::cur_year_tick < onupdate_minyeartick)
+        return CR_OK;
+
+    return plugin_eval_ruby(out, "DFHack.onupdate");
 }
 
 DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_change_event e)
@@ -184,10 +194,12 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
         // if we go through plugin_eval at BEGIN_UNLOAD, it'll
         // try to get the suspend lock and deadlock at df exit
         case SC_BEGIN_UNLOAD : return CR_OK;
+        SCASE(PAUSED);
+        SCASE(UNPAUSED);
 #undef SCASE
     }
 
-    return plugin_eval_ruby(cmd.c_str());
+    return plugin_eval_ruby(out, cmd.c_str());
 }
 
 static command_result df_rubyeval(color_ostream &out, std::vector <std::string> & parameters)
@@ -209,7 +221,7 @@ static command_result df_rubyeval(color_ostream &out, std::vector <std::string> 
             full += " ";
     }
 
-    return plugin_eval_ruby(full.c_str());
+    return plugin_eval_ruby(out, full.c_str());
 }
 
 
@@ -265,7 +277,7 @@ static int df_loadruby(void)
 #if defined(WIN32)
         "./libruby.dll";
 #elif defined(__APPLE__)
-	"/System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/lib/libruby.1.dylib";
+        "/System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/lib/libruby.1.dylib";
 #else
         "hack/libruby.so";
 #endif
@@ -310,6 +322,13 @@ static void df_unloadruby(void)
     }
 }
 
+static void printerr(const char* fmt, const char *arg)
+{
+    if (r_console)
+        r_console->printerr(fmt, arg);
+    else
+        Core::printerr(fmt, arg);
+}
 
 // ruby thread code
 static void dump_rb_error(void)
@@ -320,18 +339,16 @@ static void dump_rb_error(void)
 
     s = rb_funcall(err, rb_intern("class"), 0);
     s = rb_funcall(s, rb_intern("name"), 0);
-    Core::printerr("E: %s: ", rb_string_value_ptr(&s));
+    printerr("E: %s: ", rb_string_value_ptr(&s));
 
     s = rb_funcall(err, rb_intern("message"), 0);
-    Core::printerr("%s\n", rb_string_value_ptr(&s));
+    printerr("%s\n", rb_string_value_ptr(&s));
 
     err = rb_funcall(err, rb_intern("backtrace"), 0);
     for (int i=0 ; i<8 ; ++i)
         if ((s = rb_ary_shift(err)) != Qnil)
-            Core::printerr(" %s\n", rb_string_value_ptr(&s));
+            printerr(" %s\n", rb_string_value_ptr(&s));
 }
-
-static color_ostream_proxy *console_proxy;
 
 // ruby thread main loop
 static void df_rubythread(void *p)
@@ -412,7 +429,7 @@ static VALUE rb_cDFHack;
 // DFHack module ruby methods, binds specific dfhack methods
 
 // enable/disable calls to DFHack.onupdate()
-static VALUE rb_dfonupdateactive(VALUE self)
+static VALUE rb_dfonupdate_active(VALUE self)
 {
     if (onupdate_active)
         return Qtrue;
@@ -420,21 +437,46 @@ static VALUE rb_dfonupdateactive(VALUE self)
         return Qfalse;
 }
 
-static VALUE rb_dfonupdateactiveset(VALUE self, VALUE val)
+static VALUE rb_dfonupdate_active_set(VALUE self, VALUE val)
 {
     onupdate_active = (BOOL_ISFALSE(val) ? 0 : 1);
     return Qtrue;
 }
 
+static VALUE rb_dfonupdate_minyear(VALUE self)
+{
+    return rb_uint2inum(onupdate_minyear);
+}
+
+static VALUE rb_dfonupdate_minyear_set(VALUE self, VALUE val)
+{
+    onupdate_minyear = rb_num2ulong(val);
+    return Qtrue;
+}
+
+static VALUE rb_dfonupdate_minyeartick(VALUE self)
+{
+    return rb_uint2inum(onupdate_minyeartick);
+}
+
+static VALUE rb_dfonupdate_minyeartick_set(VALUE self, VALUE val)
+{
+    onupdate_minyeartick = rb_num2ulong(val);
+    return Qtrue;
+}
+
 static VALUE rb_dfprint_str(VALUE self, VALUE s)
 {
-    console_proxy->print("%s", rb_string_value_ptr(&s));
+    if (r_console)
+        r_console->print("%s", rb_string_value_ptr(&s));
+    else
+        console_proxy->print("%s", rb_string_value_ptr(&s));
     return Qnil;
 }
 
 static VALUE rb_dfprint_err(VALUE self, VALUE s)
 {
-    Core::printerr("%s", rb_string_value_ptr(&s));
+    printerr("%s", rb_string_value_ptr(&s));
     return Qnil;
 }
 
@@ -764,8 +806,12 @@ static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE cppvoff, VALUE a0, VALUE
 static void ruby_bind_dfhack(void) {
     rb_cDFHack = rb_define_module("DFHack");
 
-    rb_define_singleton_method(rb_cDFHack, "onupdate_active", RUBY_METHOD_FUNC(rb_dfonupdateactive), 0);
-    rb_define_singleton_method(rb_cDFHack, "onupdate_active=", RUBY_METHOD_FUNC(rb_dfonupdateactiveset), 1);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_active", RUBY_METHOD_FUNC(rb_dfonupdate_active), 0);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_active=", RUBY_METHOD_FUNC(rb_dfonupdate_active_set), 1);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyear", RUBY_METHOD_FUNC(rb_dfonupdate_minyear), 0);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyear=", RUBY_METHOD_FUNC(rb_dfonupdate_minyear_set), 1);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyeartick", RUBY_METHOD_FUNC(rb_dfonupdate_minyeartick), 0);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyeartick=", RUBY_METHOD_FUNC(rb_dfonupdate_minyeartick_set), 1);
     rb_define_singleton_method(rb_cDFHack, "get_global_address", RUBY_METHOD_FUNC(rb_dfget_global_address), 1);
     rb_define_singleton_method(rb_cDFHack, "get_vtable", RUBY_METHOD_FUNC(rb_dfget_vtable), 1);
     rb_define_singleton_method(rb_cDFHack, "get_rtti_classname", RUBY_METHOD_FUNC(rb_dfget_rtti_classname), 1);

@@ -23,26 +23,78 @@ module Kernel
 end
 
 module DFHack
+    class OnupdateCallback
+        attr_accessor :callback, :timelimit, :minyear, :minyeartick
+        def initialize(cb, tl)
+            @callback = cb
+            @ticklimit = tl
+            @minyear = (tl ? df.cur_year : 0)
+            @minyeartick = (tl ? df.cur_year_tick : 0)
+        end
+
+        # run callback if timedout
+        def check_run(year, yeartick, yearlen)
+            if !@ticklimit
+                @callback.call
+            else
+                if year > @minyear or (year == @minyear and yeartick >= @minyeartick)
+                    @callback.call
+                    @minyear = year
+                    @minyeartick = yeartick + @ticklimit
+                    if @minyeartick > yearlen
+                        @minyear += 1
+                        @minyeartick -= yearlen
+                    end
+                end
+            end
+        end
+
+        def <=>(o)
+            [@minyear, @minyeartick] <=> [o.minyear, o.minyeartick]
+        end
+    end
+
     class << self
+        attr_accessor :onupdate_list, :onstatechange_list
+
         # register a callback to be called every gframe or more
         # ex: DFHack.onupdate_register { DFHack.world.units[0].counters.job_counter = 0 }
-        def onupdate_register(&b)
+        def onupdate_register(ticklimit=nil, &b)
             @onupdate_list ||= []
-            @onupdate_list << b
+            @onupdate_list << OnupdateCallback.new(b, ticklimit)
             DFHack.onupdate_active = true
+            if onext = @onupdate_list.sort.first
+                DFHack.onupdate_minyear = onext.minyear
+                DFHack.onupdate_minyeartick = onext.minyeartick
+            end
             @onupdate_list.last
         end
 
         # delete the callback for onupdate ; use the value returned by onupdate_register
         def onupdate_unregister(b)
             @onupdate_list.delete b
-            DFHack.onupdate_active = false if @onupdate_list.empty?
+            if @onupdate_list.empty?
+                DFHack.onupdate_active = false
+                DFHack.onupdate_minyear = DFHack.onupdate_minyeartick = 0
+            end
         end
 
+        TICKS_PER_YEAR = 1200*28*12
         # this method is called by dfhack every 'onupdate' if onupdate_active is true
         def onupdate
             @onupdate_list ||= []
-            @onupdate_list.each { |cb| cb.call }
+
+            ticks_per_year = TICKS_PER_YEAR
+            ticks_per_year *= 72 if gametype == :ADVENTURE_MAIN or gametype == :ADVENTURE_ARENA
+
+            @onupdate_list.each { |o|
+                o.check_run(cur_year, cur_year_tick, ticks_per_year)
+            }
+
+            if onext = @onupdate_list.sort.first
+                DFHack.onupdate_minyear = onext.minyear
+                DFHack.onupdate_minyeartick = onext.minyeartick
+            end
         end
 
         # register a callback to be called every gframe or more
@@ -84,6 +136,57 @@ module DFHack
             rawlist.each { |r| return r if name.downcase == r.downcase }
             may = rawlist.find_all { |r| r.downcase.index(name.downcase) }
             may.first if may.length == 1
+        end
+
+        def translate_name(name, english=true, onlylastpart=false)
+            out = []
+
+            if not onlylastpart
+                out << name.first_name if name.first_name != ''
+                if name.nickname != ''
+                    case respond_to?(:d_init) && d_init.nickname_dwarf
+                    when :REPLACE_ALL; return "`#{name.nickname}'"
+                    when :REPLACE_FIRST; out.pop
+                    end
+                    out << "`#{name.nickname}'"
+                end
+            end
+            return out.join(' ') unless name.words.find { |w| w >= 0 }
+
+            if not english
+                tsl = world.raws.language.translations[name.language]
+                if name.words[0] >= 0 or name.words[1] >= 0
+                    out << ''
+                    out.last << tsl.words[name.words[0]] if name.words[0] >= 0
+                    out.last << tsl.words[name.words[1]] if name.words[1] >= 0
+                end
+                if name.words[5] >= 0
+                    out << ''
+                    (2..5).each { |i| out.last << tsl.words[name.words[i]] if name.words[i] >= 0 }
+                end
+                if name.words[6] >= 0
+                    out << tsl.words[name.words[6]]
+                end
+            else
+                wl = world.raws.language
+                if name.words[0] >= 0 or name.words[1] >= 0
+                    out << ''
+                    out.last << wl.words[name.words[0]].forms[name.parts_of_speech[0]] if name.words[0] >= 0
+                    out.last << wl.words[name.words[1]].forms[name.parts_of_speech[1]] if name.words[1] >= 0
+                end
+                if name.words[5] >= 0
+                    out << 'the '
+                    out.last.capitalize! if out.length == 1
+                    (2..5).each { |i| out.last << wl.words[name.words[i]].forms[name.parts_of_speech[i]] if name.words[i] >= 0 }
+                end
+                if name.words[6] >= 0
+                    out << 'of'
+                    out.last.capitalize! if out.length == 1
+                    out << wl.words[name.words[6]].forms[name.parts_of_speech[6]]
+                end
+            end
+
+            out.join(' ')
         end
     end
 end

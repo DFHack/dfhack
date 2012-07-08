@@ -293,6 +293,12 @@ std::string MaterialInfo::getToken()
 
     switch (mode) {
     case Builtin:
+        if (material->id == "COAL") {
+            if (index == 0)
+                return "COAL:COKE";
+            else if (index == 1)
+                return "COAL:CHARCOAL";
+        }
         return material->id;
     case Inorganic:
         return "INORGANIC:" + inorganic->id;

@@ -188,7 +188,7 @@ bool Plugin::load(color_ostream &con)
     plugin_shutdown = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_shutdown");
     plugin_onstatechange = (command_result (*)(color_ostream &, state_change_event)) LookupPlugin(plug, "plugin_onstatechange");
     plugin_rpcconnect = (RPCService* (*)(color_ostream &)) LookupPlugin(plug, "plugin_rpcconnect");
-    plugin_eval_ruby = (command_result (*)(const char*)) LookupPlugin(plug, "plugin_eval_ruby");
+    plugin_eval_ruby = (command_result (*)(color_ostream &, const char*)) LookupPlugin(plug, "plugin_eval_ruby");
     index_lua(plug);
     this->name = *plug_name;
     plugin_lib = plug;

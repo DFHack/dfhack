@@ -4,19 +4,28 @@ module DFHack
         # with no arg, return currently selected unit in df UI ('v' or 'k' menu)
         # with numeric arg, search unit by unit.id
         # with an argument that respond to x/y/z (eg cursor), find first unit at this position
-        def unit_find(what=:selected)
+        def unit_find(what=:selected, y=nil, z=nil)
             if what == :selected
-                case ui.main.mode
-                when :ViewUnits
-                    # nobody selected => idx == 0
-                    v = world.units.active[ui_selected_unit]
-                    v if v and v.pos.z == cursor.z
-                when :LookAround
-                    k = ui_look_list.items[ui_look_cursor]
-                    k.unit if k.type == :Unit
+                if curview._rtti_classname == :viewscreen_itemst
+                    ref = curview.entry_ref[curview.cursor_pos]
+                    ref.unit_tg if ref.kind_of?(GeneralRefUnit)
+                else
+                    case ui.main.mode
+                    when :ViewUnits
+                        # nobody selected => idx == 0
+                        v = world.units.active[ui_selected_unit]
+                        v if v and v.pos.z == cursor.z
+                    when :LookAround
+                        k = ui_look_list.items[ui_look_cursor]
+                        k.unit if k.type == :Unit
+                    end
                 end
             elsif what.kind_of?(Integer)
-                world.units.all.binsearch(what)
+                # search by id
+                return world.units.all.binsearch(what) if not z
+                # search by coords
+                x = what
+                world.units.all.find { |u| u.pos.x == x and u.pos.y == y and u.pos.z == z }
             elsif what.respond_to?(:x) or what.respond_to?(:pos)
                 world.units.all.find { |u| same_pos?(what, u) }
             else
@@ -73,6 +82,12 @@ module DFHack
                 list << pos
             }
             list
+        end
+    end
+
+    class LanguageName
+        def to_s(english=true)
+            df.translate_name(self, english)
         end
     end
 end

@@ -75,7 +75,9 @@ namespace DFHack
         SC_MAP_UNLOADED = 3,
         SC_VIEWSCREEN_CHANGED = 4,
         SC_CORE_INITIALIZED = 5,
-        SC_BEGIN_UNLOAD = 6
+        SC_BEGIN_UNLOAD = 6,
+        SC_PAUSED = 7,
+        SC_UNPAUSED = 8
     };
 
     // Core is a singleton. Why? Because it is closely tied to SDL calls. It tracks the global state of DF.
@@ -228,6 +230,7 @@ namespace DFHack
         // for state change tracking
         void *last_local_map_ptr;
         df::viewscreen *top_viewscreen;
+        bool last_pause_state;
         // Very important!
         bool started;
 

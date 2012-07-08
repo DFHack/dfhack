@@ -66,6 +66,9 @@ obj1 and 2 should respond to #pos and #x #y #z.
  df.map_block_at(pos) / map_block_at(x, y, z)
 Returns the MapBlock for the coordinates or nil.
 
+ df.map_tile_at(pos)
+Returns a MapTile, holds all information relative to the map tile.
+
  df.each_map_block { |b|  }
  df.each_map_block_z(zlevel) { |b|  }
 Iterates over every map block (opt. on a single z-level).
@@ -106,6 +109,14 @@ See buildings.rb/buildbed for an exemple.
  df.each_tree(material) { |t|  }
 Iterates over every tree of the given material (eg 'maple').
 
+ df.translate_name(name, in_english=true, only_lastpart=false)
+Decode the LanguageName structure as a String as displayed in the game UI.
+A shortcut is available through name.to_s
+
+ df.decode_mat(obj)
+Returns a MaterialInfo definition for the given object, using its mat_type
+and mat_index fields. Also works with a token string argument ('STONE:DOLOMITE')
+
 
 DFHack callbacks
 ----------------
@@ -113,6 +124,10 @@ DFHack callbacks
 The plugin interfaces with dfhack 'onupdate' hook.
 To register ruby code to be run every graphic frame, use:
  handle = df.onupdate_register { puts 'i love flooding the console' }
+You can also rate-limit when your callback is called to a number of game ticks:
+ handle = df.onupdate_register(10) { puts '10 more in-game ticks elapsed' }
+In this case, the callback is called immediately, and then every X in-game
+ticks (advances only when the game is unpaused).
 To stop being called, use:
  df.onupdate_unregister handle
 

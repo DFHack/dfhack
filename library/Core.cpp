@@ -281,7 +281,7 @@ static command_result runLuaScript(color_ostream &out, std::string name, vector<
     return ok ? CR_OK : CR_FAILURE;
 }
 
-static command_result runRubyScript(PluginManager *plug_mgr, std::string name, vector<string> &args)
+static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr, std::string name, vector<string> &args)
 {
     std::string rbcmd = "$script_args = [";
     for (size_t i = 0; i < args.size(); i++)
@@ -290,7 +290,7 @@ static command_result runRubyScript(PluginManager *plug_mgr, std::string name, v
 
     rbcmd += "load './hack/scripts/" + name + ".rb'";
 
-    return plug_mgr->eval_ruby(rbcmd.c_str());
+    return plug_mgr->eval_ruby(out, rbcmd.c_str());
 }
 
 command_result Core::runCommand(color_ostream &out, const std::string &command)
@@ -632,7 +632,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 if (fileExists(filename + ".lua"))
                     res = runLuaScript(con, first, parts);
                 else if (plug_mgr->eval_ruby && fileExists(filename + ".rb"))
-                    res = runRubyScript(plug_mgr, first, parts);
+                    res = runRubyScript(con, plug_mgr, first, parts);
                 else
                     con.printerr("%s is not a recognized command.\n", first.c_str());
             }
@@ -752,6 +752,7 @@ Core::Core()
     misc_data_mutex=0;
     last_world_data_ptr = NULL;
     last_local_map_ptr = NULL;
+    last_pause_state = false;
     top_viewscreen = NULL;
     screen_window = NULL;
     server = NULL;
@@ -1113,6 +1114,15 @@ int Core::Update()
         {
             top_viewscreen = screen;
             onStateChange(out, SC_VIEWSCREEN_CHANGED);
+        }
+    }
+
+    if (df::global::pause_state)
+    {
+        if (*df::global::pause_state != last_pause_state)
+        {
+            onStateChange(out, last_pause_state ? SC_UNPAUSED : SC_PAUSED);
+            last_pause_state = *df::global::pause_state;
         }
     }
 

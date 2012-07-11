@@ -6,9 +6,15 @@ module DFHack
         # with an argument that respond to x/y/z (eg cursor), find first unit at this position
         def unit_find(what=:selected, y=nil, z=nil)
             if what == :selected
-                if curview._rtti_classname == :viewscreen_itemst
+                case curview._rtti_classname
+                when :viewscreen_itemst
                     ref = curview.entry_ref[curview.cursor_pos]
                     ref.unit_tg if ref.kind_of?(GeneralRefUnit)
+                when :viewscreen_unitlistst
+                    v = curview
+                    # TODO fix xml to use enums everywhere
+                    page = DFHack::ViewscreenUnitlistst_TPage.int(v.page)
+                    v.units[page][v.cursor_pos[page]]
                 else
                     case ui.main.mode
                     when :ViewUnits
@@ -67,7 +73,7 @@ module DFHack
                 # filter soldiers (TODO check schedule)
                 u.military.squad_index == -1 and
                 # filter 'on break'
-                !u.status.misc_traits.find { |t| id == :OnBreak }
+                not u.status.misc_traits.find { |t| t.id == :OnBreak }
             }
         end
 

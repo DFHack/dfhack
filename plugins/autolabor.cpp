@@ -754,7 +754,12 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
             trader_requested = depot->trade_flags.bits.trader_requested;
             if (print_debug)
-                out.print("Trade depot found and trader requested, trader will be excluded from all labors.\n");
+			{
+				if (trader_requested) 
+	                out.print("Trade depot found and trader requested, trader will be excluded from all labors.\n");
+				else
+					out.print("Trade depot found but trader is not requested.\n");
+			}
         }
 	}
 
@@ -1016,6 +1021,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 				continue;
 			if (dwarf_info[dwarf].state == MILITARY)
 				continue;
+			if (dwarf_info[dwarf].trader && trader_requested) 
+				continue;
 
 			if (labor_infos[labor].is_exclusive && dwarf_info[dwarf].has_exclusive_labor)
 				continue;
@@ -1142,7 +1149,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 			}
 
 			if (print_debug)
-				out.print("Dwarf %i \"%s\" assigned %s: value %i\n %s", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf], dwarf_info[dwarf].trader ? "(trader)" : "");
+				out.print("Dwarf %i \"%s\" assigned %s: value %i %s\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf], dwarf_info[dwarf].trader ? "(trader)" : "");
 
 			if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
 				labor_infos[labor].active_dwarfs++;
@@ -1164,7 +1171,18 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 	for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
 	{
         if (dwarf_info[dwarf].trader && trader_requested)
+		{
+			FOR_ENUM_ITEMS(unit_labor, labor)
+			{
+				if (labor == df::enums::unit_labor::NONE)
+					continue;
+				if (labor_infos[labor].mode() != HAULERS)
+					continue;
+				dwarfs[dwarf]->status.labors[labor] = false;
+			}
             continue;
+		}
+
 		if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
 			hauler_ids.push_back(dwarf);
 	}

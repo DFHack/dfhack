@@ -77,12 +77,12 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 command_result df_stripcaged(color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
-	bool keeparmor = false;
+	bool keeparmor = true;
 
-	if (parameters.size() == 1 && parameters[0] == "keeparmor") 
+	if (parameters.size() == 1 && parameters[0] == "dumparmor") 
 	{
-		out << "Not dumping armor" << endl;
-		keeparmor = true;
+		out << "Dumping armor too" << endl;
+		keeparmor = false;
 	}
 
 	size_t count = 0;
@@ -97,12 +97,10 @@ command_result df_stripcaged(color_ostream &out, vector <string> & parameters)
 				if (uii->item)
 				{
 					if (keeparmor && (uii->item->isArmorNotClothing() || uii->item->isClothing()))
-					{
-						std::string desc;
-						uii->item->getItemDescription(&desc,0);
-						out << "Armor item " << desc << " not dumped" << endl;
 						continue;
-					}
+					std::string desc;
+					uii->item->getItemDescription(&desc,0);
+					out << "Item " << desc << " dumped." << endl;
 					uii->item->flags.bits.forbid = 0;
 					uii->item->flags.bits.dump = 1;
 					count++;

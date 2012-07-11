@@ -63,7 +63,7 @@ module DFHack
                 # current_job includes eat/drink/sleep/pickupequip
                 !u.job.current_job and 
                 # filter 'attend meeting'
-                u.meetings.length == 0 and
+                not u.specific_refs.find { |s| s.type == :ACTIVITY } and
                 # filter soldiers (TODO check schedule)
                 u.military.squad_index == -1 and
                 # filter 'on break'

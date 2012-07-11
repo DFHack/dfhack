@@ -8,8 +8,8 @@ IF(UNIX)
     OPTION(CONSOLE_NO_CATCH "Make the console not catch 'CTRL+C' events for easier debugging." OFF)
 ENDIF()
 
-include_directories (include)
 include_directories (proto)
+include_directories (include)
 
 SET(PERL_EXECUTABLE "perl" CACHE FILEPATH "This is the perl executable to run in the codegen step. Tweak it if you need to run a specific one.")
 
@@ -267,8 +267,11 @@ SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
 IF(APPLE)
 	SET(SDL_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/SDL.framework)
+	SET(CXX_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/libstdc++.6.dylib)
+	SET(ZIP_LIBRARY /usr/lib/libz.dylib)
 	TARGET_LINK_LIBRARIES(dfhack ${SDL_LIBRARY})
-#	TARGET_LINK_LIBRARIES(dfhack /usr/lib/libc++.dylib)
+	TARGET_LINK_LIBRARIES(dfhack ${CXX_LIBRARY})
+	TARGET_LINK_LIBRARIES(dfhack ${ZIP_LIBRARY})
 	SET_TARGET_PROPERTIES(dfhack PROPERTIES VERSION 1.0.0)
 	SET_TARGET_PROPERTIES(dfhack PROPERTIES SOVERSION 1.0.0)
 ENDIF()

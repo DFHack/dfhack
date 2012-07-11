@@ -1,0 +1,15 @@
+#!/bin/sh
+PWD=`dirname "${0}"`
+#thanks to Iriel for figuring this out
+OSREV=`uname -r | cut -d. -f1`
+if [ "$OSREV" -ge 11 ] ; then
+	export DYLD_INSERT_LIBRARIES=./hack/libdfhack.dylib
+	export DYLD_LIBRARY_PATH=${PWD}/hack:${PWD}/libs
+	export DYLD_FRAMEWORK_PATH=${PWD}/hack:${PWD}/libs
+else
+	export DYLD_INSERT_LIBRARIES=./hack/libdfhack.dylib
+	export DYLD_FALLBACK_LIBRARY_PATH=${PWD}/hack:${PWD}/libs
+	export DYLD_FALLBACK_FRAMEWORK_PATH=${PWD}/hack:${PWD}/libs
+fi
+export DYLD_FORCE_FLAT_NAMESPACE=1
+cd "${PWD}"; ./dwarfort.exe

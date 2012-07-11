@@ -39,6 +39,8 @@ if dfhack.is_core_context then
     SC_MAP_UNLOADED = 3
     SC_VIEWSCREEN_CHANGED = 4
     SC_CORE_INITIALIZED = 5
+    SC_PAUSED = 7
+    SC_UNPAUSED = 8
 end
 
 -- Error handling

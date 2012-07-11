@@ -7,8 +7,8 @@ ENDIF()
 
 include_directories("${dfhack_SOURCE_DIR}/library/include")
 include_directories("${dfhack_SOURCE_DIR}/library/proto")
-include_directories("${dfhack_SOURCE_DIR}/library/depends/xgetopt")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/proto")
+include_directories("${dfhack_SOURCE_DIR}/library/depends/xgetopt")
 
 MACRO(CAR var)
   SET(${var} ${ARGV1})

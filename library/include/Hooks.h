@@ -44,6 +44,12 @@ namespace SDL
 
 // these functions are here because they call into DFHack::Core and therefore need to
 // be declared as friend functions/known
+#ifdef _DARWIN
+DFhackCExport int DFH_SDL_NumJoysticks(void);
+DFhackCExport void DFH_SDL_Quit(void);
+DFhackCExport int DFH_SDL_PollEvent(SDL::Event* event);
+DFhackCExport int DFH_SDL_Init(uint32_t flags);
+#endif
 DFhackCExport int SDL_NumJoysticks(void);
 DFhackCExport void SDL_Quit(void);
 DFhackCExport int SDL_PollEvent(SDL::Event* event);

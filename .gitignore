@@ -35,6 +35,7 @@ build/library
 build/tools
 build/plugins
 build/depends
+build/install_manifest.txt
 
 #ignore Kdevelop stuff
 .kdev4
@@ -48,6 +49,10 @@ dfhack/python/pydfhack/_pydfhack.so
 dfhack/python/PyDFHack.egg-info
 dfhack/python/build
 dfhack/python/dist
+
+# Ruby binding binaries
+plugins/ruby/libruby*
+plugins/ruby/ruby-autogen.rb
 
 # CPack stuff
 build/CPack*Config.cmake

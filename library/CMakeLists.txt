@@ -330,7 +330,10 @@ install(DIRECTORY lua/
         FILES_MATCHING PATTERN "*.lua")
 
 install(DIRECTORY ${dfhack_SOURCE_DIR}/scripts
-        DESTINATION ${DFHACK_DATA_DESTINATION})
+        DESTINATION ${DFHACK_DATA_DESTINATION}
+        FILES_MATCHING PATTERN "*.lua"
+                       PATTERN "*.rb"
+        )
 
 # Unused for so long that it's not even relevant now...
 if(BUILD_DEVEL)

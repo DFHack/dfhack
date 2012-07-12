@@ -31,6 +31,9 @@ if [ -r "./$RC" ]; then
     . "./$RC"
 fi
 
+# Save current terminal settings
+old_tty_settings=$(stty -g)
+
 # Now run
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./stonesense/deplibs":"./hack"
@@ -65,8 +68,9 @@ case "$1" in
     ;;
 esac
 
-# Reset terminal to sane state in case of a crash
-printf '\033[3g\033[0m\033[?25h\033(B\017\033%%G'
+# Restore previous terminal settings
+stty "$old_tty_settings"
+echo -e "\n"
 
 if [ -n "$DF_POST_CMD" ]; then
     eval $DF_POST_CMD

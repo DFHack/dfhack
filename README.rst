@@ -1377,8 +1377,6 @@ For exemple, to grow 40 plump helmet spawn:
 
     growcrops plump 40
 
-This is a ruby script and needs the ruby plugin.
-
 
 removebadthoughts
 =================
@@ -1395,8 +1393,6 @@ you unpause.
 
 With the optional ``-v`` parameter, the script will dump the negative thoughts
 it removed.
-
-This is a ruby script and needs the ruby plugin.
 
 
 slayrace
@@ -1417,4 +1413,24 @@ To kill a single creature in the same way, you can use the following line,
 after selecting the unit with the 'v' cursor:
 :: 
     rb_eval df.unit_find.body.blood_count = 0
+
+
+magmasource
+===========
+Create an infinite magma source on a tile.
+
+This script registers a map tile as a magma source, and every 12 game ticks
+that tile receives 1 new unit of flowing magma.
+
+Place the game cursor where you want to create the source (must be a
+flow-passable tile, and not too high in the sky) and call
+:: 
+    magmasource here
+
+To add more than 1 unit everytime, call the command again.
+
+To delete one source, place the cursor over its tile and use ``delete-here``.
+To remove all placed sources, call ``magmasource stop``.
+
+With no argument, this command shows an help message and list existing sources.
 

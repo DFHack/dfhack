@@ -1,11 +1,11 @@
 # create an infinite magma source at the cursor
 
 $magma_sources ||= []
-$magma_onupdate ||= nil
 
 case $script_args[0]
 when 'here'
     $magma_onupdate ||= df.onupdate_register(12) {
+        # called every 12 game ticks (100x a dwarf day)
         if $magma_sources.empty?
             df.onupdate_unregister($magma_onupdate)
             $magma_onupdate = nil
@@ -52,14 +52,15 @@ when 'stop'
 else
     puts <<EOS
 Creates a new infinite magma source at the cursor.
+
 Arguments:
  here - create a new source at the current cursor position
-        call multiple times for higher flow
+        (call multiple times for higher flow)
  delete-here - delete the source under the cursor
  stop - delete all created magma sources
 EOS
 
     if $magma_sources.first
-        puts "Current magma sources:", $magma_sources.map { |s| " #{s.inspect}" }
+        puts '', 'Current magma sources:', $magma_sources.map { |s| " #{s.inspect}" }
     end
 end

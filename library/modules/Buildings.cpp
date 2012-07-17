@@ -991,7 +991,7 @@ bool Buildings::deconstruct(df::building *bld)
     // Assume: no parties.
     unlinkRooms(bld);
     // Assume: not unit destroy target
-    vector_erase_at(ui->unk8.unk10, linear_index(ui->unk8.unk10, bld));
+    vector_erase_at(ui->tax_collection.rooms, linear_index(ui->tax_collection.rooms, bld));
     // Assume: not used in punishment
     // Assume: not used in non-own jobs
     // Assume: does not affect pathfinding

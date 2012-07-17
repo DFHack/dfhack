@@ -1856,14 +1856,18 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             // if followed by another parameter, check if it's numeric
             if(i < parameters.size()-1)
             {
-                stringstream ss(parameters[i+1]);
-                int new_building = -1;
-                ss >> new_building;
-                if(new_building != -1)
+                auto & str = parameters[i+1];
+                if(str.size() > 0 && str[0] >= '0' && str[0] <= '9')
                 {
-                    i++;
-                    target_building = new_building;
-                    out << "Assign selected unit(s) to building #" << target_building <<std::endl;
+                    stringstream ss(parameters[i+1]);
+                    int new_building = -1;
+                    ss >> new_building;
+                    if(new_building != -1)
+                    {
+                        i++;
+                        target_building = new_building;
+                        out << "Assign selected unit(s) to building #" << target_building <<std::endl;
+                    }
                 }
             }
             if(target_building == -1)

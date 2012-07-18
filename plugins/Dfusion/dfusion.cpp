@@ -1,5 +1,4 @@
 #include "Core.h"
-#include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
 #include "MemAccess.h"
@@ -12,7 +11,6 @@
 
 
 #include "luamain.h"
-#include "lua_Console.h"
 #include "lua_Process.h"
 #include "lua_Hexsearch.h"
 #include "lua_Misc.h"
@@ -50,7 +48,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 	//maybe remake it to run automaticaly
     Lua::Open(out, st);
 
-	lua::RegisterConsole(st);
 	lua::RegisterProcess(st);
 	lua::RegisterHexsearch(st);
 	lua::RegisterMisc(st);

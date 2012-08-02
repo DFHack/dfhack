@@ -420,6 +420,7 @@ bool isTame(df::unit* creature)
     {
         switch (creature->training_level)
         {
+        case df::animal_training_level::SemiWild: //??
         case df::animal_training_level::Trained:
         case df::animal_training_level::WellTrained:
         case df::animal_training_level::SkilfullyTrained:
@@ -429,7 +430,6 @@ bool isTame(df::unit* creature)
         case df::animal_training_level::Domesticated:
             tame=true;
             break;
-        case df::animal_training_level::SemiWild: //??
         case df::animal_training_level::Unk8:     //??
         case df::animal_training_level::WildUntamed:
         default:
@@ -1232,7 +1232,7 @@ bool isFreeEgglayer(df::unit * unit)
 {
     if( !isDead(unit) && !isUndead(unit)
         && isFemale(unit)
-        && isDomesticated(unit) // better strict than sorry (medium trained wild animals can revert into wild state)
+        && isTame(unit) 
         && isOwnCiv(unit)
         && isEggLayer(unit)
         && !isAssigned(unit)

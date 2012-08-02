@@ -38,15 +38,17 @@ module DFHack
                 @callback.call
             else
                 if year > @minyear or (year == @minyear and yeartick >= @minyeartick)
-                    @callback.call
                     @minyear = year
                     @minyeartick = yeartick + @ticklimit
                     if @minyeartick > yearlen
                         @minyear += 1
                         @minyeartick -= yearlen
                     end
+                    @callback.call
                 end
             end
+        rescue
+            puts_err "onupdate cb #$!", $!.backtrace
         end
 
         def <=>(o)

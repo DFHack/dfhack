@@ -52,7 +52,9 @@ dfhack/python/dist
 
 # Ruby binding binaries
 plugins/ruby/libruby*
+plugins/ruby/msvcrtruby*.tar.gz
 plugins/ruby/ruby-autogen.rb
+plugins/ruby/ruby-autogen.rb.rule
 
 # CPack stuff
 build/CPack*Config.cmake

@@ -1,7 +1,3 @@
-Console.print = dfhack.print
-Console.println = dfhack.println
-Console.printerr = dfhack.printerr
-
 function err(msg) --make local maybe...
 	print(msg)
 	print(debug.traceback())
@@ -30,13 +26,13 @@ function loadall(t1) --loads all non interactive plugin parts, so that later the
 	end
 end
 function mainmenu(t1)
-	--Console.clear()
+	
 	while true do
 		print("No.	Name           Desc")
 		for k,v in pairs(t1) do
 			print(string.format("%3d %15s %s",k,v[1],v[2]))
 		end
-		local q=Console.lineedit("Select plugin to run (q to quit):")
+		local q=dfhack.lineedit("Select plugin to run (q to quit):")
 		if q=='q' then return end
 		q=tonumber(q)
 		if q~=nil then
@@ -92,7 +88,7 @@ local f,err=load(table.concat(args,' '))
 if f then
 	f()
 else
-	Console.printerr(err)
+	dfhack.printerr(err)
 end
 
 if not INIT then

@@ -127,7 +127,7 @@ function EditDF()
 		tbl[i]={k,getTypename(v)}
 		i=i+1
 	end
-	number=Console.lineedit("select item to edit (q to quit):")
+	number=dfhack.lineedit("select item to edit (q to quit):")
 	if number and tonumber(number) then
 		local entry=tbl[tonumber(number)]
 		if entry==nil then

@@ -8,7 +8,7 @@ DOUBLE=5
 FLOAT=6
 
 getline=function (inp)
-return Console.lineedit(inp or "")
+return dfhack.lineedit(inp or "")
 end
 io.stdin=nil
 

@@ -96,7 +96,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 // The name string provided must correspond to the filename - autolabor.plug.so or autolabor.plug.dll in this case
 DFHACK_PLUGIN("autolabor");
 
-void generate_labor_to_skill_map();
+static void generate_labor_to_skill_map();
 
 enum labor_mode {
     DISABLE,

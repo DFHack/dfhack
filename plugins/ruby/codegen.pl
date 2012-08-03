@@ -175,10 +175,10 @@ sub render_bitfield_fields {
 
         if ($name)
         {
-            if ($count == 1) {
-                push @lines_rb, "field(:$name, 0) { bit $shift }";
-            } elsif ($enum) {
+            if ($enum) {
                 push @lines_rb, "field(:$name, 0) { bits $shift, $count, $enum }";
+            } elsif ($count == 1) {
+                push @lines_rb, "field(:$name, 0) { bit $shift }";
             } else {
                 push @lines_rb, "field(:$name, 0) { bits $shift, $count }";
             }

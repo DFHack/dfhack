@@ -34,8 +34,8 @@ module DFHack
                 def float
                     Float.new
                 end
-                def bit(shift)
-                    BitField.new(shift, 1)
+                def bit(shift, enum=nil)
+                    BitField.new(shift, 1, enum)
                 end
                 def bits(shift, len, enum=nil)
                     BitField.new(shift, len, enum)
@@ -147,7 +147,7 @@ module DFHack
                 out << '>'
             end
             def inspect_field(n, o, s)
-                if s.kind_of?(BitField) and s._len == 1
+                if s.kind_of?(BitField) and s._len == 1 and not s._enum
                     send(n) ? n.to_s : ''
                 elsif s.kind_of?(Pointer)
                     "#{n}=#{s._at(@_memaddr+o).inspect}"
@@ -242,7 +242,7 @@ module DFHack
 
             def _get
                 v = DFHack.memory_read_int32(@_memaddr) >> @_shift
-                if @_len == 1
+                if @_len == 1 and not @_enum
                     ((v & 1) == 0) ? false : true
                 else
                     v &= _mask
@@ -252,7 +252,7 @@ module DFHack
             end
 
             def _set(v)
-                if @_len == 1
+                if @_len == 1 and (not @_enum or v == false or v == true)
                     # allow 'bit = 0'
                     v = (v && v != 0 ? 1 : 0)
                 end

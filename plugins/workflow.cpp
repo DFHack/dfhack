@@ -20,6 +20,7 @@
 #include "df/job_list_link.h"
 #include "df/dfhack_material_category.h"
 #include "df/item.h"
+#include "df/item_quality.h"
 #include "df/items_other_id.h"
 #include "df/tool_uses.h"
 #include "df/general_ref.h"
@@ -42,6 +43,7 @@ using std::string;
 using std::endl;
 using namespace DFHack;
 using namespace df::enums;
+using namespace df::enums::item_quality;
 
 using df::global::world;
 using df::global::ui;
@@ -283,6 +285,8 @@ struct ItemConstraint {
     int weight;
     std::vector<ProtectedJob*> jobs;
 
+    enum item_quality min_quality;
+
     int item_amount, item_count, item_inuse;
     bool request_suspend, request_resume;
 
@@ -293,7 +297,7 @@ struct ItemConstraint {
 public:
     ItemConstraint()
         : is_craft(false), weight(0), item_amount(0), item_count(0), item_inuse(0)
-        , is_active(false), cant_resume_reported(false)
+        , is_active(false), cant_resume_reported(false), min_quality(Ordinary)
     {}
 
     int goalCount() { return config.ival(0); }
@@ -646,7 +650,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     std::vector<std::string> tokens;
     split_string(&tokens, str, "/");
 
-    if (tokens.size() > 3)
+    if (tokens.size() > 4)
         return NULL;
 
     int weight = 0;
@@ -670,15 +674,31 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         out.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
         return NULL;
     }
-
+    
     if (mat_mask.whole != 0)
         weight += 100;
-
+    
     MaterialInfo material;
     std::string matstr = vector_get(tokens,2);
     if (!matstr.empty() && (!material.find(matstr) || !material.isValid())) {
         out.printerr("Cannot find material: %s\n", matstr.c_str());
         return NULL;
+    }
+
+    enum item_quality minqual = Ordinary;
+    std::string qualstr = vector_get(tokens, 3);
+    if(!qualstr.empty()) {
+	    if(qualstr == "ordinary") minqual = Ordinary;
+	    else if(qualstr == "wellcrafted") minqual = WellCrafted;
+	    else if(qualstr == "finelycrafted") minqual = FinelyCrafted;
+	    else if(qualstr == "superior") minqual = Superior;
+	    else if(qualstr == "exceptional") minqual = Exceptional;
+	    else if(qualstr == "masterful") minqual = Masterful;
+	    else {
+		    out.printerr("Cannot find quality: %s\nKnown qualities: ordinary, wellcrafted, finelycrafted, superior, exceptional, masterful\n", qualstr.c_str());
+		    return NULL;
+	    }
+
     }
 
     if (material.type >= 0)
@@ -694,7 +714,8 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         ItemConstraint *ct = constraints[i];
         if (ct->is_craft == is_craft &&
             ct->item == item && ct->material == material &&
-            ct->mat_mask.whole == mat_mask.whole)
+            ct->mat_mask.whole == mat_mask.whole &&
+	    ct->min_quality == minqual)
             return ct;
     }
 
@@ -703,6 +724,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     nct->item = item;
     nct->material = material;
     nct->mat_mask = mat_mask;
+    nct->min_quality = minqual;
     nct->weight = weight;
 
     if (cfg)
@@ -1179,6 +1201,9 @@ static void map_job_items(color_ostream &out)
                     (cv->item.subtype != -1 && cv->item.subtype != isubtype))
                     continue;
             }
+	    if(item->getQuality() < cv->min_quality) {
+		    continue;
+	    }
 
             TMaterialCache::iterator it = cv->material_cache.find(matkey);
 

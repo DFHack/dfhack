@@ -698,7 +698,6 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
 		    out.printerr("Cannot find quality: %s\nKnown qualities: ordinary, wellcrafted, finelycrafted, superior, exceptional, masterful\n", qualstr.c_str());
 		    return NULL;
 	    }
-
     }
 
     if (material.type >= 0)

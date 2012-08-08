@@ -1348,16 +1348,12 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
         {
             enable_plugin(out);
         }
-        else if(!enable)
+        else if(!enable && enable_autolabor)
         {
-            if (enable_autolabor)
-            {
-                enable_autolabor = false;
-                setOptionEnabled(CF_ENABLED, false);
-            }
+            enable_autolabor = false;
+            setOptionEnabled(CF_ENABLED, false);
 
             out << "The plugin is disabled." << endl;
-            return CR_OK;
         }
 
         return CR_OK;

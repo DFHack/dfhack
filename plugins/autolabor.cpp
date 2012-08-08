@@ -1348,7 +1348,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
         {
             enable_plugin(out);
         }
-        else
+        else if(!enable)
         {
             if (enable_autolabor)
             {

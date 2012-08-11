@@ -361,6 +361,7 @@ module DFHack
             def empty? ; length == 0 ; end
             def flatten ; map { |e| e.respond_to?(:flatten) ? e.flatten : e }.flatten ; end
             def index(e=nil, &b) ; (0...length).find { |i| b ? b[self[i]] : self[i] == e } ; end
+            def map! ; (0...length).each { |i| self[i] = yield(self[i]) } ; end
             def first ; self[0] ; end
             def last ; self[length-1] ; end
         end

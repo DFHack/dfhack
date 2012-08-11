@@ -1,10 +1,11 @@
 # script to fix loyalty cascade, when you order your militia to kill friendly units
 
-def fixunit(u)
-	return if u.race != df.ui.race_id or u.civ_id != df.ui.civ_id
-	links = u.hist_figure_tg.entity_links
+def fixunit(unit)
+	return if unit.race != df.ui.race_id or unit.civ_id != df.ui.civ_id
+	links = unit.hist_figure_tg.entity_links
 	fixed = false
 
+	# check if the unit is a civ renegade
 	if i1 = links.index { |l|
 		l.kind_of?(DFHack::HistfigEntityLinkFormerMemberst) and
 		l.entity_id == df.ui.civ_id
@@ -17,9 +18,10 @@ def fixunit(u)
 		links.delete_at i2
 		links.delete_at i1
 		links << DFHack::HistfigEntityLinkMemberst.cpp_new(:entity_id => df.ui.civ_id, :link_strength => 100)
-		df.add_announcement "fixloyalty: #{u.name} is now a member of #{df.ui.civ_tg.name} again"
+		df.add_announcement "fixloyalty: #{unit.name} is now a member of #{df.ui.civ_tg.name} again"
 	end
 
+	# check if the unit is a group renegade
 	if i1 = links.index { |l|
 		l.kind_of?(DFHack::HistfigEntityLinkFormerMemberst) and
 		l.entity_id == df.ui.group_id
@@ -32,20 +34,29 @@ def fixunit(u)
 		links.delete_at i2
 		links.delete_at i1
 		links << DFHack::HistfigEntityLinkMemberst.cpp_new(:entity_id => df.ui.group_id, :link_strength => 100)
-		df.add_announcement "fixloyalty: #{u.name} is now a member of #{df.ui.group_tg.name} again"
+		df.add_announcement "fixloyalty: #{unit.name} is now a member of #{df.ui.group_tg.name} again"
 	end
 
+	# fix the 'is an enemy' cache matrix (mark to be recalculated by the game when needed)
+	if fixed and unit.unknown8.enemy_status_slot != -1
+		i = unit.unknown8.enemy_status_slot
+		unit.unknown8.enemy_status_slot = -1
+		df.world.enemy_status_cache.slot_used[i] = false
+		df.world.enemy_status_cache.rel_map[i].map! { -1 }
+		df.world.enemy_status_cache.rel_map.each { |a| a[i] = -1 }
+	end
+
+	# return true if we actually fixed the unit
 	fixed
 end
 
-fixed = 0
+count = 0
 df.unit_citizens.each { |u|
-	fixed += 1 if fixunit(u)
+	count += 1 if fixunit(u)
 }
 
-if fixed > 0
-	df.popup_announcement "Fixed a loyalty cascade, you should save and reload now"
-	puts "loyalty cascade fixed (#{fixed} dwarves), you should save and reload"
+if count > 0
+	puts "loyalty cascade fixed (#{count} dwarves)"
 else
 	puts "no loyalty cascade found"
 end

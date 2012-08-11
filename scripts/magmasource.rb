@@ -12,26 +12,16 @@ when 'here'
         end
 
         $magma_sources.each { |x, y, z|
-            if tile = df.map_tile_at(x, y, z) and DFHack::TiletypeShape::PassableFlow[tile.shape]
+            if tile = df.map_tile_at(x, y, z) and tile.shape_passableflow
                 des = tile.designation
-                des.flow_size += 1 if des.flow_size < 7
-                des.liquid_type = 1
-                des.flow_forbid = true
-
-                mf = tile.mapblock.flags
-                mf.update_liquid = true
-                mf.update_liquid_twice = true
-
-                zf = df.world.map.z_level_flags[z]
-                zf.update = true
-                zf.update_twice = true
+                tile.spawn_magma(des.flow_size + 1) if des.flow_size < 7
             end
         }
     }
 
     if df.cursor.x != -30000
         if tile = df.map_tile_at(df.cursor)
-            if DFHack::TiletypeShape::PassableFlow[tile.shape]
+            if tile.shape_passableflow
                 $magma_sources << [df.cursor.x, df.cursor.y, df.cursor.z]
             else
                 puts "Impassable tile: I'm afraid I can't do that, Dave"

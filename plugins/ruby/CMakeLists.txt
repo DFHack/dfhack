@@ -18,12 +18,12 @@ IF (DL_RUBY AND NOT APPLE)
 ENDIF(DL_RUBY AND NOT APPLE)
 
 ADD_CUSTOM_COMMAND(
-    OUTPUT ruby-autogen.rb
-    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen.pl ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml ruby-autogen.rb
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ruby-autogen.rb
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen.pl ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml ${CMAKE_CURRENT_BINARY_DIR}/ruby-autogen.rb
     DEPENDS ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml ${CMAKE_CURRENT_SOURCE_DIR}/codegen.pl
     COMMENT ruby-autogen.rb
 )
-ADD_CUSTOM_TARGET(ruby-autogen-rb DEPENDS ruby-autogen.rb)
+ADD_CUSTOM_TARGET(ruby-autogen-rb DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ruby-autogen.rb)
 
 INCLUDE_DIRECTORIES("${dfhack_SOURCE_DIR}/depends/tthread")
 

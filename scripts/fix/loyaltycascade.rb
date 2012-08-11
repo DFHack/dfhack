@@ -41,9 +41,11 @@ def fixunit(unit)
 	if fixed and unit.unknown8.enemy_status_slot != -1
 		i = unit.unknown8.enemy_status_slot
 		unit.unknown8.enemy_status_slot = -1
-		df.world.enemy_status_cache.slot_used[i] = false
-		df.world.enemy_status_cache.rel_map[i].map! { -1 }
-		df.world.enemy_status_cache.rel_map.each { |a| a[i] = -1 }
+		cache = df.world.enemy_status_cache
+		cache.slot_used[i] = false
+		cache.rel_map[i].map! { -1 }
+		cache.rel_map.each { |a| a[i] = -1 }
+		cache.next_slot = i if cache.next_slot > i
 	end
 
 	# return true if we actually fixed the unit

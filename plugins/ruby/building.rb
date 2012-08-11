@@ -286,14 +286,23 @@ module DFHack
             job
         end
 
+        # check item flags to see if it is suitable for use as a building material
+        def building_isitemfree(i)
+            !i.flags.in_job and
+            !i.flags.in_inventory and
+            !i.flags.removed and
+            !i.flags.in_building and
+            !i.flags.owned and
+            !i.flags.forbid
+        end
+        
         # exemple usage
         def buildbed(pos=cursor)
             raise 'where to ?' if pos.x < 0
 
             item = world.items.all.find { |i|
                 i.kind_of?(ItemBedst) and
-                i.itemrefs.empty? and
-                !i.flags.in_job
+                building_isitemfree(i)
             }
             raise 'no free bed, build more !' if not item
 

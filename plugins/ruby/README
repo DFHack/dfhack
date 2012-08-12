@@ -213,8 +213,7 @@ Find the raws name of the plant under cursor
  p df.world.raws.plants.all[plant.mat_index].id
 
 Dig a channel under the cursor
- df.map_designation_at(df.cursor).dig = :Channel
- df.map_block_at(df.cursor).flags.designated = true
+ df.map_tile_at(df.cursor).dig(:Channel)
 
 Spawn 2/7 magma on the tile of the dwarf nicknamed 'hotfeet'
  hot = df.unit_citizens.find { |u| u.name.nickname == 'hotfeet' }

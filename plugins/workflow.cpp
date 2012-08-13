@@ -43,7 +43,6 @@ using std::string;
 using std::endl;
 using namespace DFHack;
 using namespace df::enums;
-using namespace df::enums::item_quality;
 
 using df::global::world;
 using df::global::ui;
@@ -296,7 +295,8 @@ struct ItemConstraint {
 
 public:
     ItemConstraint()
-        : is_craft(false), weight(0), min_quality(Ordinary),item_amount(0), item_count(0), item_inuse(0), is_active(false), cant_resume_reported(false)
+        : is_craft(false), weight(0), min_quality(item_quality::Ordinary),item_amount(0),
+          item_count(0), item_inuse(0), is_active(false), cant_resume_reported(false)
     {}
 
     int goalCount() { return config.ival(0); }
@@ -684,15 +684,15 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         return NULL;
     }
 
-    item_quality::item_quality minqual = Ordinary;
+    item_quality::item_quality minqual = item_quality::Ordinary;
     std::string qualstr = vector_get(tokens, 3);
     if(!qualstr.empty()) {
-	    if(qualstr == "ordinary") minqual = Ordinary;
-	    else if(qualstr == "wellcrafted") minqual = WellCrafted;
-	    else if(qualstr == "finelycrafted") minqual = FinelyCrafted;
-	    else if(qualstr == "superior") minqual = Superior;
-	    else if(qualstr == "exceptional") minqual = Exceptional;
-	    else if(qualstr == "masterful") minqual = Masterful;
+	    if(qualstr == "ordinary") minqual = item_quality::Ordinary;
+	    else if(qualstr == "wellcrafted") minqual = item_quality::WellCrafted;
+	    else if(qualstr == "finelycrafted") minqual = item_quality::FinelyCrafted;
+	    else if(qualstr == "superior") minqual = item_quality::Superior;
+	    else if(qualstr == "exceptional") minqual = item_quality::Exceptional;
+	    else if(qualstr == "masterful") minqual = item_quality::Masterful;
 	    else {
 		    out.printerr("Cannot find quality: %s\nKnown qualities: ordinary, wellcrafted, finelycrafted, superior, exceptional, masterful\n", qualstr.c_str());
 		    return NULL;

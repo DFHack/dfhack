@@ -285,7 +285,7 @@ struct ItemConstraint {
     int weight;
     std::vector<ProtectedJob*> jobs;
 
-    enum item_quality min_quality;
+    item_quality::item_quality min_quality;
 
     int item_amount, item_count, item_inuse;
     bool request_suspend, request_resume;
@@ -296,8 +296,7 @@ struct ItemConstraint {
 
 public:
     ItemConstraint()
-        : is_craft(false), weight(0), item_amount(0), item_count(0), item_inuse(0)
-        , is_active(false), cant_resume_reported(false), min_quality(Ordinary)
+        : is_craft(false), weight(0), min_quality(Ordinary),item_amount(0), item_count(0), item_inuse(0), is_active(false), cant_resume_reported(false)
     {}
 
     int goalCount() { return config.ival(0); }
@@ -685,7 +684,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         return NULL;
     }
 
-    enum item_quality minqual = Ordinary;
+    item_quality::item_quality minqual = Ordinary;
     std::string qualstr = vector_get(tokens, 3);
     if(!qualstr.empty()) {
 	    if(qualstr == "ordinary") minqual = Ordinary;
@@ -1504,13 +1503,14 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
     }
 
     df::building *workshop = NULL;
-    df::job *job = NULL;
+    //FIXME: unused variable!
+    //df::job *job = NULL;
 
     if (Gui::dwarfmode_hotkey(Core::getTopViewscreen()) &&
         ui->main.mode == ui_sidebar_mode::QueryBuilding)
     {
         workshop = world->selected_building;
-        job = Gui::getSelectedWorkshopJob(out, true);
+        //job = Gui::getSelectedWorkshopJob(out, true);
     }
 
     std::string cmd = parameters.empty() ? "list" : parameters[0];

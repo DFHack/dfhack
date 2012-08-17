@@ -75,28 +75,31 @@ namespace df {
     cur_lua_ostream_argument name(state);
 
 #define INSTANTIATE_RETURN_TYPE(FArgs) \
-    template<FW_TARGSC class RT> struct return_type<RT (*) FArgs> { typedef RT type; }; \
-    template<FW_TARGSC class RT, class CT> struct return_type<RT (CT::*) FArgs> { typedef RT type; };
+    template<FW_TARGSC class RT> struct return_type<RT (*) FArgs> { \
+        typedef RT type; \
+        static const bool is_method = false; \
+    }; \
+    template<FW_TARGSC class RT, class CT> struct return_type<RT (CT::*) FArgs> { \
+        typedef RT type; \
+        typedef CT class_type; \
+        static const bool is_method = true; \
+    };
 
 #define INSTANTIATE_WRAPPERS(Count, FArgs, Args, Loads) \
     template<FW_TARGS> struct function_wrapper<void (*) FArgs, true> { \
-        static const bool is_method = false; \
         static const int num_args = Count; \
         static void execute(lua_State *state, int base, void (*cb) FArgs) { Loads; INVOKE_VOID(cb Args); } \
     }; \
     template<FW_TARGSC class RT> struct function_wrapper<RT (*) FArgs, false> { \
-        static const bool is_method = false; \
         static const int num_args = Count; \
         static void execute(lua_State *state, int base, RT (*cb) FArgs) { Loads; INVOKE_RV(cb Args); } \
     }; \
     template<FW_TARGSC class CT> struct function_wrapper<void (CT::*) FArgs, true> { \
-        static const bool is_method = true; \
         static const int num_args = Count+1; \
         static void execute(lua_State *state, int base, void (CT::*cb) FArgs) { \
             LOAD_CLASS() Loads; INVOKE_VOID((self->*cb) Args); } \
     }; \
     template<FW_TARGSC class RT, class CT> struct function_wrapper<RT (CT::*) FArgs, false> { \
-        static const bool is_method = true; \
         static const int num_args = Count+1; \
         static void execute(lua_State *state, int base, RT (CT::*cb) FArgs) { \
             LOAD_CLASS(); Loads; INVOKE_RV((self->*cb) Args); } \

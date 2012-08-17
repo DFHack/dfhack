@@ -1409,6 +1409,11 @@ global environment, persistent between calls to the script.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getMemRanges()</tt></p>
 <p>Returns a sequence of tables describing virtual memory ranges of the process.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.patchMemory(dest,src,count)</tt></p>
+<p>Like memmove below, but works even if dest is read-only memory, e.g. code.
+If destination overlaps a completely invalid memory region, or another error
+occurs, returns false.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.memmove(dest,src,count)</tt></p>
 <p>Wraps the standard memmove function. Accepts both numbers and refs as pointers.</p>
 </li>

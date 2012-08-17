@@ -1235,6 +1235,12 @@ and are only documented here for completeness:
 
   Returns a sequence of tables describing virtual memory ranges of the process.
 
+* ``dfhack.internal.patchMemory(dest,src,count)``
+
+  Like memmove below, but works even if dest is read-only memory, e.g. code.
+  If destination overlaps a completely invalid memory region, or another error
+  occurs, returns false.
+
 * ``dfhack.internal.memmove(dest,src,count)``
 
   Wraps the standard memmove function. Accepts both numbers and refs as pointers.

@@ -1548,6 +1548,56 @@ void ClassNameCheck::getKnownClassNames(std::vector<std::string> &names)
         names.push_back(*it);
 }
 
+bool Process::patchMemory(void *target, const void* src, size_t count)
+{
+    uint8_t *sptr = (uint8_t*)target;
+    uint8_t *eptr = sptr + count;
+
+    // Find the valid memory ranges
+    std::vector<t_memrange> ranges;
+    getMemRanges(ranges);
+
+    unsigned start = 0;
+    while (start < ranges.size() && ranges[start].end <= sptr)
+        start++;
+    if (start >= ranges.size() || ranges[start].start > sptr)
+        return false;
+
+    unsigned end = start+1;
+    while (end < ranges.size() && ranges[end].start < eptr)
+    {
+        if (ranges[end].start != ranges[end-1].end)
+            return false;
+        end++;
+    }
+    if (ranges[end-1].end < eptr)
+        return false;
+
+    // Verify current permissions
+    for (unsigned i = start; i < end; i++)
+        if (!ranges[i].valid || !(ranges[i].read || ranges[i].execute) || ranges[i].shared)
+            return false;
+
+    // Apply writable permissions & update
+    bool ok = true;
+
+    for (unsigned i = start; i < end && ok; i++)
+    {
+        t_memrange perms = ranges[i];
+        perms.write = perms.read = true;
+        if (!setPermisions(perms, perms))
+            ok = false;
+    }
+
+    if (ok)
+        memmove(target, src, count);
+
+    for (unsigned i = start; i < end && ok; i++)
+        setPermisions(ranges[i], ranges[i]);
+
+    return ok;
+}
+
 /*******************************************************************************
                                 M O D U L E S
 *******************************************************************************/

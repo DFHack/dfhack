@@ -1124,6 +1124,17 @@ static int internal_getMemRanges(lua_State *L)
     return 1;
 }
 
+static int internal_patchMemory(lua_State *L)
+{
+    void *dest = checkaddr(L, 1);
+    void *src = checkaddr(L, 2);
+    int size = luaL_checkint(L, 3);
+    if (size < 0) luaL_argerror(L, 1, "negative size");
+    bool ok = Core::getInstance().p->patchMemory(dest, src, size);
+    lua_pushboolean(L, ok);
+    return 1;
+}
+
 static int internal_memmove(lua_State *L)
 {
     void *dest = checkaddr(L, 1);
@@ -1214,6 +1225,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "setAddress", internal_setAddress },
     { "getVTable", internal_getVTable },
     { "getMemRanges", internal_getMemRanges },
+    { "patchMemory", internal_patchMemory },
     { "memmove", internal_memmove },
     { "memcmp", internal_memcmp },
     { "memscan", internal_memscan },

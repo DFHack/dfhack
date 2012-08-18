@@ -174,6 +174,10 @@ namespace DFHack
         struct Private;
         Private *d;
 
+        friend class CoreSuspendClaimer;
+        int ClaimSuspend(bool force_base);
+        void DisclaimSuspend(int level);
+
         bool Init();
         int Update (void);
         int TileUpdate (void);
@@ -181,6 +185,7 @@ namespace DFHack
         int DFH_SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);
 
+        void doUpdate(color_ostream &out, bool first_update);
         void onUpdate(color_ostream &out);
         void onStateChange(color_ostream &out, state_change_event event);
 
@@ -248,5 +253,21 @@ namespace DFHack
         CoreSuspender() : core(&Core::getInstance()) { core->Suspend(); }
         CoreSuspender(Core *core) : core(core) { core->Suspend(); }
         ~CoreSuspender() { core->Resume(); }
+    };
+
+    /** Claims the current thread already has the suspend lock.
+     *  Strictly for use in callbacks from DF.
+     */
+    class CoreSuspendClaimer {
+        Core *core;
+        int level;
+    public:
+        CoreSuspendClaimer(bool base = false) : core(&Core::getInstance()) {
+            level = core->ClaimSuspend(base);
+        }
+        CoreSuspendClaimer(Core *core, bool base = false) : core(core) {
+            level = core->ClaimSuspend(base);
+        }
+        ~CoreSuspendClaimer() { core->DisclaimSuspend(level); }
     };
 }

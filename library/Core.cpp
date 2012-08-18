@@ -1027,35 +1027,41 @@ int Core::TileUpdate()
     return true;
 }
 
-// should always be from simulation thread!
-int Core::Update()
+int Core::ClaimSuspend(bool force_base)
 {
-    if(errorstate)
-        return -1;
+    auto tid = this_thread::get_id();
+    lock_guard<mutex> lock(d->AccessMutex);
 
-    // Pretend this thread has suspended the core in the usual way
+    if (force_base || d->df_suspend_depth <= 0)
     {
-        lock_guard<mutex> lock(d->AccessMutex);
-
         assert(d->df_suspend_depth == 0);
-        d->df_suspend_thread = this_thread::get_id();
-        d->df_suspend_depth = 1000;
+
+        d->df_suspend_thread = tid;
+        d->df_suspend_depth = 1000000;
+        return 1000000;
     }
-
-    // Initialize the core
-    bool first_update = false;
-
-    if(!started)
+    else
     {
-        first_update = true;
-        Init();
-        if(errorstate)
-            return -1;
-        Lua::Core::Reset(con, "core init");
+        assert(d->df_suspend_thread == tid);
+        return ++d->df_suspend_depth;
     }
+}
 
-    color_ostream_proxy out(con);
+void Core::DisclaimSuspend(int level)
+{
+    auto tid = this_thread::get_id();
+    lock_guard<mutex> lock(d->AccessMutex);
 
+    assert(d->df_suspend_depth == level && d->df_suspend_thread == tid);
+
+    if (level == 1000000)
+        d->df_suspend_depth = 0;
+    else
+        --d->df_suspend_depth;
+}
+
+void Core::doUpdate(color_ostream &out, bool first_update)
+{
     Lua::Core::Reset(out, "DF code execution");
 
     if (first_update)
@@ -1129,15 +1135,36 @@ int Core::Update()
     // Execute per-frame handlers
     onUpdate(out);
 
-    // Release the fake suspend lock
-    {
-        lock_guard<mutex> lock(d->AccessMutex);
-
-        assert(d->df_suspend_depth == 1000);
-        d->df_suspend_depth = 0;
-    }
-
     out << std::flush;
+}
+
+// should always be from simulation thread!
+int Core::Update()
+{
+    if(errorstate)
+        return -1;
+
+    color_ostream_proxy out(con);
+
+    // Pretend this thread has suspended the core in the usual way,
+    // and run various processing hooks.
+    {
+        CoreSuspendClaimer suspend(true);
+
+        // Initialize the core
+        bool first_update = false;
+
+        if(!started)
+        {
+            first_update = true;
+            Init();
+            if(errorstate)
+                return -1;
+            Lua::Core::Reset(con, "core init");
+        }
+
+        doUpdate(out, first_update);
+    }
 
     // wake waiting tools
     // do not allow more tools to join in while we process stuff here
@@ -1158,7 +1185,7 @@ int Core::Update()
         // destroy condition
         delete nc;
         // check lua stack depth
-        Lua::Core::Reset(con, "suspend");
+        Lua::Core::Reset(out, "suspend");
     }
 
     return 0;

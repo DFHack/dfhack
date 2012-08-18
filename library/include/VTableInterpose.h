@@ -95,6 +95,9 @@ namespace DFHack
            typedef df::someclass interpose_base;
 
            DEFINE_VMETHOD_INTERPOSE(void, foo, (int arg)) {
+               // If needed by the code, claim the suspend lock.
+               // DO NOT USE THE USUAL CoreSuspender, OR IT WILL DEADLOCK!
+               // CoreSuspendClaimer suspend;
                ...
                INTERPOSE_NEXT(foo)(arg) // call the original
                ...

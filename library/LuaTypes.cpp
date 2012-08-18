@@ -285,6 +285,9 @@ void container_identity::lua_item_read(lua_State *state, int fname_idx, void *pt
 
 void container_identity::lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
 {
+    if (is_readonly())
+        field_error(state, fname_idx, "container is read-only", "write");
+
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
     void *pitem = item_pointer(id, ptr, idx);
     id->lua_write(state, fname_idx, pitem, val_index);

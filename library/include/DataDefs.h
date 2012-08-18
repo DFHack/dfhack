@@ -28,6 +28,7 @@ distribution.
 #include <sstream>
 #include <vector>
 #include <map>
+#include <set>
 
 #include "Core.h"
 #include "BitArray.h"

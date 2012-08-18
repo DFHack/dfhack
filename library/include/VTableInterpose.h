@@ -81,12 +81,18 @@ namespace DFHack
         return addr_to_method_pointer<P>(identity.get_vmethod_ptr(idx));
     }
 
-    /* VMethod interpose API
+    /* VMethod interpose API.
+
+       This API allows replacing an entry in the original vtable
+       with code defined by DFHack, while retaining ability to
+       call the original code. The API can be safely used from
+       plugins, and multiple hooks for the same vmethod are
+       automatically chained in undefined order.
 
        Usage:
 
-       struct my_hack : public someclass {
-           typedef someclass interpose_base;
+       struct my_hack : df::someclass {
+           typedef df::someclass interpose_base;
 
            DEFINE_VMETHOD_INTERPOSE(void, foo, (int arg)) {
                ...
@@ -98,7 +104,12 @@ namespace DFHack
        IMPLEMENT_VMETHOD_INTERPOSE(my_hack, foo);
 
        void init() {
-           my_hack::interpose_foo.apply()
+           if (!INTERPOSE_HOOK(my_hack, foo).apply())
+               error();
+       }
+
+       void shutdown() {
+           INTERPOSE_HOOK(my_hack, foo).remove();
        }
      */
 
@@ -112,6 +123,7 @@ namespace DFHack
         class::interpose_##name(&class::interpose_base::name, &class::interpose_fn_##name);
 
 #define INTERPOSE_NEXT(name) (this->*interpose_##name.chain)
+#define INTERPOSE_HOOK(class, name) (class::interpose_##name)
 
     class DFHACK_EXPORT VMethodInterposeLinkBase {
         /*

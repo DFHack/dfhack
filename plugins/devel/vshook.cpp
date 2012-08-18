@@ -33,9 +33,12 @@ struct title_hook : df::viewscreen_titlest {
             uint8_t *buf = gps->screen;
             int32_t *stp = gps->screentexpos;
 
-            for (const char *p = "DFHack " DFHACK_VERSION; *p; p++) {
-                *buf++ = *p; *buf++ = 7; *buf++ = 0; *buf++ = 1;
-                *stp++ = 0;
+            for (const char *p = "DFHack " DFHACK_VERSION;
+                 *p && buf < gps->screen_limit;
+                 p++, buf += gps->dimy*4, stp += gps->dimy)
+            {
+                buf[0] = *p; buf[1] = 7; buf[2] = 0; buf[3] = 1;
+                *stp = 0;
             }
         }
     }
@@ -47,7 +50,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     if (gps)
     {
-        if (!title_hook::interpose_render.apply())
+        if (!INTERPOSE_HOOK(title_hook, render).apply())
             out.printerr("Could not interpose viewscreen_titlest::render\n");
     }
 
@@ -56,6 +59,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    title_hook::interpose_render.remove();
+    INTERPOSE_HOOK(title_hook, render).remove();
     return CR_OK;
 }

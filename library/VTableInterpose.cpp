@@ -161,6 +161,7 @@ VMethodInterposeLinkBase::VMethodInterposeLinkBase(virtual_identity *host, int v
     : host(host), vmethod_idx(vmethod_idx), interpose_method(interpose_method), chain_mptr(chain_mptr),
       saved_chain(NULL), next(NULL), prev(NULL)
 {
+    assert(vmethod_idx >= 0 && interpose_method != NULL);
 }
 
 VMethodInterposeLinkBase::~VMethodInterposeLinkBase()
@@ -198,6 +199,7 @@ bool VMethodInterposeLinkBase::apply()
         return false;
 
     set_chain(old_ptr);
+    host->interpose_list.push_back(this);
 
     // Link into the chain if any
     if (old_link)

@@ -73,7 +73,7 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,color_ostream 
 					con.reset_color();
 
 					if(isAddr((uint32_t *)(buf+j+i),ranges))
-						con.color(Console::COLOR_LIGHTRED); //coloring in the middle does not work
+						con.color(COLOR_LIGHTRED); //coloring in the middle does not work
                     //TODO make something better?
 				}
 				if(lbuf[j+i]!=buf[j+i])

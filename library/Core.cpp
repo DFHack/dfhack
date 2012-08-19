@@ -358,7 +358,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                             continue;
 
                         if (pcmd.isHotkeyCommand())
-                            con.color(Console::COLOR_CYAN);
+                            con.color(COLOR_CYAN);
                         con.print("%s: %s\n",pcmd.name.c_str(), pcmd.description.c_str());
                         con.reset_color();
                         if (!pcmd.usage.empty())
@@ -481,7 +481,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 {
                     const PluginCommand & pcmd = (plug->operator[](j));
                     if (pcmd.isHotkeyCommand())
-                        con.color(Console::COLOR_CYAN);
+                        con.color(COLOR_CYAN);
                     con.print("  %-22s - %s\n",pcmd.name.c_str(), pcmd.description.c_str());
                     con.reset_color();
                 }
@@ -519,7 +519,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 for(auto iter = out.begin();iter != out.end();iter++)
                 {
                     if ((*iter).recolor)
-                        con.color(Console::COLOR_CYAN);
+                        con.color(COLOR_CYAN);
                     con.print("  %-22s- %s\n",(*iter).name.c_str(), (*iter).description.c_str());
                     con.reset_color();
                 }

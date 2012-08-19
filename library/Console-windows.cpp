@@ -179,7 +179,7 @@ namespace DFHack
         void color(int index)
         {
             HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-            SetConsoleTextAttribute(hConsole, index == color_ostream::COLOR_RESET ? default_attributes : index);
+            SetConsoleTextAttribute(hConsole, index == COLOR_RESET ? default_attributes : index);
         }
 
         void reset_color( void )

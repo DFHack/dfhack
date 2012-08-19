@@ -196,7 +196,15 @@ static bool get_int_field(lua_State *L, T *pf, int idx, const char *name, int de
 
 static void decode_pen(lua_State *L, Pen &pen, int idx)
 {
-    get_int_field(L, &pen.ch, idx, "ch", 0);
+    idx = lua_absindex(L, idx);
+
+    lua_getfield(L, idx, "ch");
+    if (lua_isstring(L, -1))
+        pen.ch = lua_tostring(L, -1)[0];
+    else
+        get_int_field(L, &pen.ch, idx, "ch", 0);
+    lua_pop(L, 1);
+
     get_int_field(L, &pen.fg, idx, "fg", 7);
     get_int_field(L, &pen.bg, idx, "bg", 0);
 

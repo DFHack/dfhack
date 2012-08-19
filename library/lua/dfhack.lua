@@ -102,6 +102,23 @@ function reload(module)
     dofile(path)
 end
 
+-- Trivial classes
+
+function defclass(class,parent)
+    class = class or {}
+    rawset(class, '__index', rawget(class, '__index') or class)
+    if parent then
+        setmetatable(class, parent)
+    end
+    return class
+end
+
+function mkinstance(class,table)
+    table = table or {}
+    setmetatable(table, class)
+    return table
+end
+
 -- Misc functions
 
 function printall(table)

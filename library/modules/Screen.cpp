@@ -318,6 +318,9 @@ int dfhack_lua_viewscreen::do_destroy(lua_State *L)
     lua_setfield(L, -2, "_native");
 
     lua_getfield(L, -1, "onDestroy");
+    if (lua_isnil(L, -1))
+        return 0;
+
     lua_pushvalue(L, -2);
     lua_call(L, 1, 0);
     return 0;

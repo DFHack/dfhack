@@ -86,6 +86,9 @@ namespace DFHack
         DFHACK_EXPORT df::coord2d getMousePos();
         DFHACK_EXPORT df::coord2d getWindowSize();
 
+        /// Returns the state of [GRAPHICS:YES/NO]
+        DFHACK_EXPORT bool inGraphicsMode();
+
         /// Paint one screen tile with the given pen
         DFHACK_EXPORT bool paintTile(const Pen &pen, int x, int y);
 

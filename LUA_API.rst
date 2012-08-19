@@ -1219,21 +1219,26 @@ be feasibly used in the core context.
 
   Returns *x,y* of the tile the mouse is over.
 
+* ``dfhack.screen.inGraphicsMode()``
+
+  Checks if [GRAPHICS:YES] was specified in init.
+
 * ``dfhack.screen.paintTile(pen,x,y[,char,tile])``
 
   Paints a tile using given parameters. Pen is a table with following possible fields:
 
   ``ch``
-    Provides the ordinary tile character. Can be overridden with the ``char`` function parameter.
+    Provides the ordinary tile character, as either a 1-character string or a number.
+    Can be overridden with the ``char`` function parameter.
   ``fg``
-    Foreground color for the ordinary tile. Defaults to 7.
+    Foreground color for the ordinary tile. Defaults to COLOR_GREY (7).
   ``bg``
-    Background color for the ordinary tile. Defaults to 0.
+    Background color for the ordinary tile. Defaults to COLOR_BLACK (0).
   ``bold``
-    Bright/bold text flag. If *nil*, computed based on (fg & 8); fg is reset to 7 bits.
+    Bright/bold text flag. If *nil*, computed based on (fg & 8); fg is masked to 3 bits.
     Otherwise should be *true/false*.
   ``tile``
-    Graphical tile id. Ignored unless [GRAPHICS:YES] in init.txt.
+    Graphical tile id. Ignored unless [GRAPHICS:YES] was in init.txt.
   ``tile_color = true``
     Specifies that the tile should be shaded with *fg/bg*.
   ``tile_fg, tile_bg``
@@ -1252,6 +1257,14 @@ be feasibly used in the core context.
 
   Fills the rectangle specified by the coordinates with the given pen.
   Returns *true* if painting at least one character succeeded.
+
+* ``dfhack.screen.findGraphicsTile(pagename,x,y)``
+
+  Finds a tile from a graphics set (i.e. the raws used for creatures),
+  if in graphics mode and loaded.
+
+  Returns: *tile, tile_grayscale*, or *nil* if not found.
+  The values can then be used for the *tile* field of *pen* structures.
 
 * ``dfhack.screen.clear()``
 
@@ -1318,6 +1331,14 @@ Supported callbacks and fields are:
   If any keys are pressed, the keys argument is a table mapping them to *true*.
   Note that this refers to logical keybingings computed from real keys via
   options; if multiple interpretations exist, the table will contain multiple keys.
+
+  The table also may contain special keys:
+
+  ``_STRING``
+    Maps to an integer in range 0-255. Duplicates a separate "STRING_A???" code for convenience.
+
+  ``_MOUSE_L, _MOUSE_R``
+    If the left or right mouse button is pressed.
 
   If this method is omitted, the screen is dismissed on receival of the ``LEAVESCREEN`` key.
 

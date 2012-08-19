@@ -66,16 +66,22 @@ using Screen::Pen;
 
 df::coord2d Screen::getMousePos()
 {
-    if (!gps) return df::coord2d();
+    if (!gps || (enabler && !enabler->tracking_on))
+        return df::coord2d(-1, -1);
 
     return df::coord2d(gps->mouse_x, gps->mouse_y);
 }
 
 df::coord2d Screen::getWindowSize()
 {
-    if (!gps) return df::coord2d();
+    if (!gps) return df::coord2d(80, 25);
 
     return df::coord2d(gps->dimx, gps->dimy);
+}
+
+bool Screen::inGraphicsMode()
+{
+    return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
 static void doSetTile(const Pen &pen, int index)
@@ -399,21 +405,37 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
 
     lua_pushvalue(L, -2);
 
-    if (keys->empty())
-        lua_pushnil(L);
-    else
+    lua_createtable(L, 0, keys->size()+3);
+
+    for (auto it = keys->begin(); it != keys->end(); ++it)
     {
-        lua_createtable(L, 0, keys->size());
+        auto key = *it;
 
-        for (auto it = keys->begin(); it != keys->end(); ++it)
+        if (auto name = enum_item_raw_key(key))
+            lua_pushstring(L, name);
+        else
+            lua_pushinteger(L, key);
+
+        lua_pushboolean(L, true);
+        lua_rawset(L, -3);
+
+        if (key >= interface_key::STRING_A000 &&
+            key <= interface_key::STRING_A255)
         {
-            if (auto name = enum_item_raw_key(*it))
-                lua_pushstring(L, name);
-            else
-                lua_pushinteger(L, *it);
+            lua_pushinteger(L, key - interface_key::STRING_A000);
+            lua_setfield(L, -2, "_STRING");
+        }
+    }
 
+    if (enabler && enabler->tracking_on)
+    {
+        if (enabler->mouse_lbut) {
             lua_pushboolean(L, true);
-            lua_rawset(L, -3);
+            lua_setfield(L, -2, "_MOUSE_L");
+        }
+        if (enabler->mouse_rbut) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_R");
         }
     }
 

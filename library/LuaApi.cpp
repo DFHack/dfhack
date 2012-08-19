@@ -1075,6 +1075,7 @@ static const luaL_Reg dfhack_constructions_funcs[] = {
 /***** Screen module *****/
 
 static const LuaWrapper::FunctionReg dfhack_screen_module[] = {
+    WRAPM(Screen, inGraphicsMode),
     WRAPM(Screen, clear),
     WRAPM(Screen, invalidate),
     { NULL, NULL }
@@ -1133,6 +1134,25 @@ static int screen_fillRect(lua_State *L)
     return 1;
 }
 
+static int screen_findGraphicsTile(lua_State *L)
+{
+    auto str = luaL_checkstring(L, 1);
+    int x = luaL_checkint(L, 2);
+    int y = luaL_checkint(L, 3);
+    int tile, tile_gs;
+    if (Screen::findGraphicsTile(str, x, y, &tile, &tile_gs))
+    {
+        lua_pushinteger(L, tile);
+        lua_pushinteger(L, tile_gs);
+        return 2;
+    }
+    else
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+}
+
 namespace {
 
 int screen_show(lua_State *L)
@@ -1168,6 +1188,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "paintTile", screen_paintTile },
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
+    { "findGraphicsTile", screen_findGraphicsTile },
     { "show", &Lua::CallWithCatchWrapper<screen_show> },
     { "dismiss", screen_dismiss },
     { "isDismissed", screen_isDismissed },

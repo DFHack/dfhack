@@ -1398,24 +1398,28 @@ be feasibly used in the core context.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.screen.getMousePos()</tt></p>
 <p>Returns <em>x,y</em> of the tile the mouse is over.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.inGraphicsMode()</tt></p>
+<p>Checks if [GRAPHICS:YES] was specified in init.</p>
+</li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.screen.paintTile(pen,x,y[,char,tile])</span></tt></p>
 <p>Paints a tile using given parameters. Pen is a table with following possible fields:</p>
 <dl class="docutils">
 <dt><tt class="docutils literal">ch</tt></dt>
-<dd><p class="first last">Provides the ordinary tile character. Can be overridden with the <tt class="docutils literal">char</tt> function parameter.</p>
+<dd><p class="first last">Provides the ordinary tile character, as either a 1-character string or a number.
+Can be overridden with the <tt class="docutils literal">char</tt> function parameter.</p>
 </dd>
 <dt><tt class="docutils literal">fg</tt></dt>
-<dd><p class="first last">Foreground color for the ordinary tile. Defaults to 7.</p>
+<dd><p class="first last">Foreground color for the ordinary tile. Defaults to COLOR_GREY (7).</p>
 </dd>
 <dt><tt class="docutils literal">bg</tt></dt>
-<dd><p class="first last">Background color for the ordinary tile. Defaults to 0.</p>
+<dd><p class="first last">Background color for the ordinary tile. Defaults to COLOR_BLACK (0).</p>
 </dd>
 <dt><tt class="docutils literal">bold</tt></dt>
-<dd><p class="first last">Bright/bold text flag. If <em>nil</em>, computed based on (fg &amp; 8); fg is reset to 7 bits.
+<dd><p class="first last">Bright/bold text flag. If <em>nil</em>, computed based on (fg &amp; 8); fg is masked to 3 bits.
 Otherwise should be <em>true/false</em>.</p>
 </dd>
 <dt><tt class="docutils literal">tile</tt></dt>
-<dd><p class="first last">Graphical tile id. Ignored unless [GRAPHICS:YES] in init.txt.</p>
+<dd><p class="first last">Graphical tile id. Ignored unless [GRAPHICS:YES] was in init.txt.</p>
 </dd>
 <dt><tt class="docutils literal">tile_color = true</tt></dt>
 <dd><p class="first last">Specifies that the tile should be shaded with <em>fg/bg</em>.</p>
@@ -1434,6 +1438,12 @@ in sequence to override the <tt class="docutils literal">ch</tt> field of pen.</
 <li><p class="first"><tt class="docutils literal">dfhack.screen.fillRect(pen,x1,y1,x2,y2)</tt></p>
 <p>Fills the rectangle specified by the coordinates with the given pen.
 Returns <em>true</em> if painting at least one character succeeded.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.findGraphicsTile(pagename,x,y)</tt></p>
+<p>Finds a tile from a graphics set (i.e. the raws used for creatures),
+if in graphics mode and loaded.</p>
+<p>Returns: <em>tile, tile_grayscale</em>, or <em>nil</em> if not found.
+The values can then be used for the <em>tile</em> field of <em>pen</em> structures.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.screen.clear()</tt></p>
 <p>Fills the screen with blank background.</p>
@@ -1488,6 +1498,15 @@ In order to make a see-through dialog, call <tt class="docutils literal">self._n
 If any keys are pressed, the keys argument is a table mapping them to <em>true</em>.
 Note that this refers to logical keybingings computed from real keys via
 options; if multiple interpretations exist, the table will contain multiple keys.</p>
+<p>The table also may contain special keys:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal">_STRING</tt></dt>
+<dd><p class="first last">Maps to an integer in range 0-255. Duplicates a separate &quot;STRING_A???&quot; code for convenience.</p>
+</dd>
+<dt><tt class="docutils literal">_MOUSE_L, _MOUSE_R</tt></dt>
+<dd><p class="first last">If the left or right mouse button is pressed.</p>
+</dd>
+</dl>
 <p>If this method is omitted, the screen is dismissed on receival of the <tt class="docutils literal">LEAVESCREEN</tt> key.</p>
 </li>
 </ul>

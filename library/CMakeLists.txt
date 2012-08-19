@@ -119,6 +119,7 @@ include/modules/Maps.h
 include/modules/MapCache.h
 include/modules/Materials.h
 include/modules/Notes.h
+include/modules/Screen.h
 include/modules/Translation.h
 include/modules/Vegetation.h
 include/modules/Vermin.h
@@ -139,6 +140,7 @@ modules/kitchen.cpp
 modules/Maps.cpp
 modules/Materials.cpp
 modules/Notes.cpp
+modules/Screen.cpp
 modules/Translation.cpp
 modules/Vegetation.cpp
 modules/Vermin.cpp

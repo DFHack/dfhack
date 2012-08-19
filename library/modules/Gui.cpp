@@ -42,6 +42,7 @@ using namespace std;
 using namespace DFHack;
 
 #include "modules/Job.h"
+#include "modules/Screen.h"
 
 #include "DataDefs.h"
 #include "df/world.h"
@@ -465,6 +466,11 @@ std::string Gui::getFocusString(df::viewscreen *top)
             handler(name, top);
 
         return name;
+    }
+    else if (dfhack_viewscreen::is_instance(top))
+    {
+        auto name = static_cast<dfhack_viewscreen*>(top)->getFocusString();
+        return name.empty() ? "dfhack" : "dfhack/"+name;
     }
     else
     {

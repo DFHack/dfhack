@@ -3,6 +3,7 @@
 #include <Export.h>
 #include <PluginManager.h>
 #include <modules/Gui.h>
+#include <modules/Screen.h>
 #include <vector>
 #include <cstdio>
 #include <stack>
@@ -29,18 +30,8 @@ struct title_hook : df::viewscreen_titlest {
     {
         INTERPOSE_NEXT(render)();
 
-        if (gps) {
-            uint8_t *buf = gps->screen;
-            int32_t *stp = gps->screentexpos;
-
-            for (const char *p = "DFHack " DFHACK_VERSION;
-                 *p && buf < gps->screen_limit;
-                 p++, buf += gps->dimy*4, stp += gps->dimy)
-            {
-                buf[0] = *p; buf[1] = 7; buf[2] = 0; buf[3] = 1;
-                *stp = 0;
-            }
-        }
+        Screen::Pen pen(' ',COLOR_WHITE,COLOR_BLACK);
+        Screen::paintString(pen,0,0,"DFHack " DFHACK_VERSION);
     }
 };
 

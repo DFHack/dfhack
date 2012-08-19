@@ -37,6 +37,7 @@ distribution.
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "LuaWrapper.h"
+#include "LuaTools.h"
 #include "DataFuncs.h"
 
 #include "MiscUtils.h"
@@ -1065,6 +1066,27 @@ int LuaWrapper::method_wrapper_core(lua_State *state, function_identity_base *id
     }
 
     return 1;
+}
+
+int Lua::CallWithCatch(lua_State *state, int (*fn)(lua_State*), const char *context)
+{
+    if (!context)
+        context = "native code";
+
+    try {
+        return fn(state);
+    }
+    catch (Error::NullPointer &e) {
+        const char *vn = e.varname();
+        return luaL_error(state, "%s: NULL pointer: %s", context, vn ? vn : "?");
+    }
+    catch (Error::InvalidArgument &e) {
+        const char *vn = e.expr();
+        return luaL_error(state, "%s: Invalid argument; expected: %s", context, vn ? vn : "?");
+    }
+    catch (std::exception &e) {
+        return luaL_error(state, "%s: C++ exception: %s", context, e.what());
+    }
 }
 
 /**

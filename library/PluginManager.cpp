@@ -467,7 +467,7 @@ int Plugin::lua_cmd_wrapper(lua_State *state)
         luaL_error(state, "plugin command %s() has been unloaded",
                    (cmd->owner->name+"."+cmd->name).c_str());
 
-    return cmd->command(state);
+    return Lua::CallWithCatch(state, cmd->command, cmd->name.c_str());
 }
 
 int Plugin::lua_fun_wrapper(lua_State *state)

@@ -95,6 +95,12 @@ namespace DFHack
         /// Fills a rectangle with one pen. Possibly more efficient than a loop over paintTile.
         DFHACK_EXPORT bool fillRect(const Pen &pen, int x1, int y1, int x2, int y2);
 
+        /// Wipes the screen to full black
+        DFHACK_EXPORT bool clear();
+
+        /// Requests repaint
+        DFHACK_EXPORT bool invalidate();
+
         /// Find a loaded graphics tile from graphics raws.
         DFHACK_EXPORT bool findGraphicsTile(const std::string &page, int x, int y, int *ptile, int *pgs = NULL);
 
@@ -111,6 +117,37 @@ namespace DFHack
 
         static bool is_instance(df::viewscreen *screen);
 
+        virtual bool is_lua_screen() { return false; }
         virtual std::string getFocusString() = 0;
+    };
+
+    class DFHACK_EXPORT dfhack_lua_viewscreen : public dfhack_viewscreen {
+        std::string focus;
+
+        void update_focus(lua_State *L, int idx);
+
+        bool safe_call_lua(int (*pf)(lua_State *), int args, int rvs);
+        static dfhack_lua_viewscreen *get_self(lua_State *L);
+
+        static int do_destroy(lua_State *L);
+        static int do_render(lua_State *L);
+        static int do_notify(lua_State *L);
+        static int do_input(lua_State *L);
+
+    public:
+        dfhack_lua_viewscreen(lua_State *L, int table_idx);
+        virtual ~dfhack_lua_viewscreen();
+
+        static df::viewscreen *get_pointer(lua_State *L, int idx, bool make);
+
+        virtual bool is_lua_screen() { return true; }
+        virtual std::string getFocusString() { return focus; }
+
+        virtual void render();
+        virtual void logic();
+        virtual void help();
+        virtual void resize(int w, int h);
+        virtual void feed(std::set<df::interface_key> *keys);
+        virtual bool key_conflict(df::interface_key key);
     };
 }

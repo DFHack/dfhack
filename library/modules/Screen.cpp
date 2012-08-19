@@ -38,7 +38,10 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 #include "PluginManager.h"
+#include "LuaTools.h"
+
 #include "MiscUtils.h"
+
 using namespace DFHack;
 
 #include "DataDefs.h"
@@ -46,14 +49,20 @@ using namespace DFHack;
 #include "df/texture_handler.h"
 #include "df/tile_page.h"
 #include "df/interfacest.h"
+#include "df/enabler.h"
 
 using namespace df::enums;
 using df::global::init;
 using df::global::gps;
 using df::global::texture;
 using df::global::gview;
+using df::global::enabler;
 
 using Screen::Pen;
+
+/*
+ * Screen painting API.
+ */
 
 df::coord2d Screen::getMousePos()
 {
@@ -136,6 +145,21 @@ bool Screen::fillRect(const Pen &pen, int x1, int y1, int x2, int y2)
     return true;
 }
 
+bool Screen::clear()
+{
+    if (!gps) return false;
+
+    return fillRect(Pen(' ',0,0,false), 0, 0, gps->dimx-1, gps->dimy-1);
+}
+
+bool Screen::invalidate()
+{
+    if (!enabler) return false;
+
+    enabler->flag.bits.render = true;
+    return true;
+}
+
 bool Screen::findGraphicsTile(const std::string &pagename, int x, int y, int *ptile, int *pgs)
 {
     if (!gps || !texture || x < 0 || y < 0) return false;
@@ -197,6 +221,10 @@ bool Screen::isDismissed(df::viewscreen *screen)
     return screen->breakdown_level != interface_breakdown_types::NONE;
 }
 
+/*
+ * Base DFHack viewscreen.
+ */
+
 static std::set<df::viewscreen*> dfhack_screens;
 
 dfhack_viewscreen::dfhack_viewscreen()
@@ -212,4 +240,238 @@ dfhack_viewscreen::~dfhack_viewscreen()
 bool dfhack_viewscreen::is_instance(df::viewscreen *screen)
 {
     return dfhack_screens.count(screen) != 0;
+}
+
+/*
+ * Lua-backed viewscreen.
+ */
+
+static int DFHACK_LUA_VS_TOKEN = 0;
+
+df::viewscreen *dfhack_lua_viewscreen::get_pointer(lua_State *L, int idx, bool make)
+{
+    df::viewscreen *screen;
+
+    if (lua_istable(L, idx))
+    {
+        if (!Lua::IsCoreContext(L))
+            luaL_error(L, "only the core context can create lua screens");
+
+        lua_rawgetp(L, idx, &DFHACK_LUA_VS_TOKEN);
+
+        if (!lua_isnil(L, -1))
+        {
+            if (make)
+                luaL_error(L, "this screen is already on display");
+
+            screen = (df::viewscreen*)lua_touserdata(L, -1);
+        }
+        else
+        {
+            if (!make)
+                luaL_error(L, "this screen is not on display");
+
+            screen = new dfhack_lua_viewscreen(L, idx);
+        }
+
+        lua_pop(L, 1);
+    }
+    else
+        screen = Lua::CheckDFObject<df::viewscreen>(L, idx);
+
+    return screen;
+}
+
+bool dfhack_lua_viewscreen::safe_call_lua(int (*pf)(lua_State *), int args, int rvs)
+{
+    CoreSuspendClaimer suspend;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+
+    auto L = Lua::Core::State;
+    lua_pushcfunction(L, pf);
+    if (args > 0) lua_insert(L, -args-1);
+    lua_pushlightuserdata(L, this);
+    if (args > 0) lua_insert(L, -args-1);
+
+    return Lua::Core::SafeCall(out, args+1, rvs);
+}
+
+dfhack_lua_viewscreen *dfhack_lua_viewscreen::get_self(lua_State *L)
+{
+    auto self = (dfhack_lua_viewscreen*)lua_touserdata(L, 1);
+    lua_rawgetp(L, LUA_REGISTRYINDEX, self);
+    if (!lua_istable(L, -1)) return NULL;
+    return self;
+}
+
+int dfhack_lua_viewscreen::do_destroy(lua_State *L)
+{
+    auto self = get_self(L);
+    if (!self) return 0;
+
+    lua_pushnil(L);
+    lua_rawsetp(L, LUA_REGISTRYINDEX, self);
+
+    lua_pushnil(L);
+    lua_rawsetp(L, -2, &DFHACK_LUA_VS_TOKEN);
+    lua_pushnil(L);
+    lua_setfield(L, -2, "_native");
+
+    lua_getfield(L, -1, "onDestroy");
+    lua_pushvalue(L, -2);
+    lua_call(L, 1, 0);
+    return 0;
+}
+
+void dfhack_lua_viewscreen::update_focus(lua_State *L, int idx)
+{
+    lua_getfield(L, idx, "focus_path");
+    auto str = lua_tostring(L, -1);
+    if (!str) str = "";
+    focus = str;
+    lua_pop(L, 1);
+
+    if (focus.empty())
+        focus = "lua";
+    else
+        focus = "lua/"+focus;
+}
+
+int dfhack_lua_viewscreen::do_render(lua_State *L)
+{
+    auto self = get_self(L);
+    if (!self) return 0;
+
+    lua_getfield(L, -1, "onRender");
+
+    if (lua_isnil(L, -1))
+    {
+        Screen::clear();
+        return 0;
+    }
+
+    lua_pushvalue(L, -2);
+    lua_call(L, 1, 0);
+    return 0;
+}
+
+int dfhack_lua_viewscreen::do_notify(lua_State *L)
+{
+    int args = lua_gettop(L);
+
+    auto self = get_self(L);
+    if (!self) return 0;
+
+    lua_pushvalue(L, 2);
+    lua_gettable(L, -2);
+    if (lua_isnil(L, -1))
+        return 0;
+
+    // self field args table fn -> table fn table args
+    lua_replace(L, 1);
+    lua_copy(L, -1, 2);
+    lua_insert(L, 1);
+    lua_call(L, args-1, 1);
+
+    self->update_focus(L, 1);
+    return 1;
+}
+
+int dfhack_lua_viewscreen::do_input(lua_State *L)
+{
+    auto self = get_self(L);
+    if (!self) return 0;
+
+    auto keys = (std::set<df::interface_key>*)lua_touserdata(L, 2);
+
+    lua_getfield(L, -1, "onInput");
+
+    if (lua_isnil(L, -1))
+    {
+        if (keys->count(interface_key::LEAVESCREEN))
+            Screen::dismiss(self);
+
+        return 0;
+    }
+
+    lua_pushvalue(L, -2);
+
+    if (keys->empty())
+        lua_pushnil(L);
+    else
+    {
+        lua_createtable(L, 0, keys->size());
+
+        for (auto it = keys->begin(); it != keys->end(); ++it)
+        {
+            if (auto name = enum_item_raw_key(*it))
+                lua_pushstring(L, name);
+            else
+                lua_pushinteger(L, *it);
+
+            lua_pushboolean(L, true);
+            lua_rawset(L, -3);
+        }
+    }
+
+    lua_call(L, 2, 0);
+    self->update_focus(L, -1);
+    return 0;
+}
+
+dfhack_lua_viewscreen::dfhack_lua_viewscreen(lua_State *L, int table_idx)
+{
+    assert(Lua::IsCoreContext(L));
+
+    Lua::PushDFObject(L, (df::viewscreen*)this);
+    lua_setfield(L, table_idx, "_native");
+    lua_pushlightuserdata(L, this);
+    lua_rawsetp(L, table_idx, &DFHACK_LUA_VS_TOKEN);
+
+    lua_pushvalue(L, table_idx);
+    lua_rawsetp(L, LUA_REGISTRYINDEX, this);
+
+    update_focus(L, table_idx);
+}
+
+dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
+{
+    safe_call_lua(do_destroy, 0, 0);
+}
+
+void dfhack_lua_viewscreen::render()
+{
+    safe_call_lua(do_render, 0, 0);
+}
+
+void dfhack_lua_viewscreen::logic()
+{
+    lua_pushstring(Lua::Core::State, "onIdle");
+    safe_call_lua(do_notify, 1, 0);
+}
+
+void dfhack_lua_viewscreen::help()
+{
+    lua_pushstring(Lua::Core::State, "onHelp");
+    safe_call_lua(do_notify, 1, 0);
+}
+
+void dfhack_lua_viewscreen::resize(int w, int h)
+{
+    auto L = Lua::Core::State;
+    lua_pushstring(L, "onResize");
+    lua_pushinteger(L, w);
+    lua_pushinteger(L, h);
+    safe_call_lua(do_notify, 3, 0);
+}
+
+void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
+{
+    lua_pushlightuserdata(Lua::Core::State, keys);
+    safe_call_lua(do_input, 1, 0);
+}
+
+bool dfhack_lua_viewscreen::key_conflict(df::interface_key key)
+{
+    return key == interface_key::MOVIES || key == interface_key::OPTIONS;
 }

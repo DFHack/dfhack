@@ -188,6 +188,12 @@ function dfhack.buildings.getSize(bld)
     return bld.x2+1-x, bld.y2+1-y, bld.centerx-x, bld.centery-y
 end
 
+dfhack.screen.__index = dfhack.screen
+
+function dfhack.screen:__tostring()
+    return "<lua viewscreen: "..tostring(self._native)..">"
+end
+
 -- Interactive
 
 local print_banner = true

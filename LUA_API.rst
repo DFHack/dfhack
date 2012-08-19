@@ -1204,6 +1204,124 @@ Constructions module
   Returns *true, was_only_planned* if removed; or *false* if none found.
 
 
+Screen API
+----------
+
+The screen module implements support for drawing to the tiled screen of the game.
+Note that drawing only has any effect when done from callbacks, so it can only
+be feasibly used in the core context.
+
+* ``dfhack.screen.getWindowSize()``
+
+  Returns *width, height* of the screen.
+
+* ``dfhack.screen.getMousePos()``
+
+  Returns *x,y* of the tile the mouse is over.
+
+* ``dfhack.screen.paintTile(pen,x,y[,char,tile])``
+
+  Paints a tile using given parameters. Pen is a table with following possible fields:
+
+  ``ch``
+    Provides the ordinary tile character. Can be overridden with the ``char`` function parameter.
+  ``fg``
+    Foreground color for the ordinary tile. Defaults to 7.
+  ``bg``
+    Background color for the ordinary tile. Defaults to 0.
+  ``bold``
+    Bright/bold text flag. If *nil*, computed based on (fg & 8); fg is reset to 7 bits.
+    Otherwise should be *true/false*.
+  ``tile``
+    Graphical tile id. Ignored unless [GRAPHICS:YES] in init.txt.
+  ``tile_color = true``
+    Specifies that the tile should be shaded with *fg/bg*.
+  ``tile_fg, tile_bg``
+    If specified, overrides *tile_color* and supplies shading colors directly.
+
+  Returns *false* if coordinates out of bounds, or other error.
+
+* ``dfhack.screen.paintString(pen,x,y,text)``
+
+  Paints the string starting at *x,y*. Uses the string characters
+  in sequence to override the ``ch`` field of pen.
+
+  Returns *true* if painting at least one character succeeded.
+
+* ``dfhack.screen.fillRect(pen,x1,y1,x2,y2)``
+
+  Fills the rectangle specified by the coordinates with the given pen.
+  Returns *true* if painting at least one character succeeded.
+
+* ``dfhack.screen.clear()``
+
+  Fills the screen with blank background.
+
+* ``dfhack.screen.invalidate()``
+
+  Requests repaint of the screen by setting a flag. Unlike other
+  functions in this section, this may be used at any time.
+
+In order to actually be able to paint to the screen, it is necessary
+to create and register a viewscreen (basically a modal dialog) with
+the game. Screens are managed with the following functions:
+
+* ``dfhack.screen.show(screen[,below])``
+
+  Displays the given screen, possibly placing it below a different one.
+  The screen must not be already shown. Returns *true* if success.
+
+* ``dfhack.screen.dismiss(screen)``
+
+  Marks the screen to be removed when the game enters its event loop.
+
+* ``dfhack.screen.isDismissed(screen)``
+
+  Checks if the screen is already marked for removal.
+
+Apart from a native viewscreen object, these functions accept a table
+as a screen. In this case, ``show`` creates a new native viewscreen
+that delegates all processing to methods stored in that table.
+
+**NOTE**: Lua-implemented screens are only supported in the core context.
+
+Supported callbacks and fields are:
+
+* ``screen._native``
+
+  Initialized by ``show`` with a reference to the backing viewscreen
+  object, and removed again when the object is deleted.
+
+* ``function screen:onDestroy()``
+
+  Called from the destructor when the viewscreen is deleted.
+
+* ``function screen:onRender()``
+
+  Called when the viewscreen should paint itself. This is the only context
+  where the above painting functions work correctly.
+
+  If omitted, the screen is cleared; otherwise it should do that itself.
+  In order to make a see-through dialog, call ``self._native.parent:render()``.
+
+* ``function screen:onIdle()``
+
+  Called every frame when the screen is on top of the stack.
+
+* ``function screen:onHelp()``
+
+  Called when the help keybinding is activated (usually '?').
+
+* ``function screen:onInput(keys)``
+
+  Called when keyboard or mouse events are available.
+  If any keys are pressed, the keys argument is a table mapping them to *true*.
+  Note that this refers to logical keybingings computed from real keys via
+  options; if multiple interpretations exist, the table will contain multiple keys.
+
+  If this method is omitted, the screen is dismissed on receival of the ``LEAVESCREEN`` key.
+
+
 Internal API
 ------------
 

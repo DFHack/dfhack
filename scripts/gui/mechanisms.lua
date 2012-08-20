@@ -95,6 +95,8 @@ function MechanismList:onRender()
 end
 
 function MechanismList:zoomToLink(link)
+    self:updateLayout()
+
     df.global.world.selected_building = link.obj
 
     local cursor = link.cursor
@@ -114,6 +116,7 @@ function MechanismList:zoomToLink(link)
 end
 
 function MechanismList:changeSelected(delta)
+    if #self.links <= 1 then return end
     self.selected = 1 + (self.selected + delta - 1) % #self.links
     self:zoomToLink(self.links[self.selected])
 end
@@ -140,4 +143,6 @@ if df.global.ui.main.mode ~= df.ui_sidebar_mode.QueryBuilding then
     qerror("This script requires the 'q' interface mode")
 end
 
-MechanismList.new(df.global.world.selected_building):show()
+local list = MechanismList.new(df.global.world.selected_building)
+list:show()
+list:changeSelected(1)

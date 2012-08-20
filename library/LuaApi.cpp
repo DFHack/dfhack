@@ -1180,6 +1180,28 @@ static int screen_isDismissed(lua_State *L)
     return 1;
 }
 
+static int screen_doSimulateInput(lua_State *L)
+{
+    auto screen = Lua::CheckDFObject<df::viewscreen>(L, 1);
+    luaL_checktype(L, 2, LUA_TTABLE);
+
+    if (!screen)
+        luaL_argerror(L, 1, "NULL screen");
+
+    int sz = lua_rawlen(L, 2);
+    std::set<df::interface_key> keys;
+
+    for (int j = 1; j <= sz; j++)
+    {
+        lua_rawgeti(L, 2, j);
+        keys.insert((df::interface_key)lua_tointeger(L, -1));
+        lua_pop(L, 1);
+    }
+
+    screen->feed(&keys);
+    return 0;
+}
+
 }
 
 static const luaL_Reg dfhack_screen_funcs[] = {
@@ -1192,6 +1214,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "show", &Lua::CallWithCatchWrapper<screen_show> },
     { "dismiss", screen_dismiss },
     { "isDismissed", screen_isDismissed },
+    { "_doSimulateInput", screen_doSimulateInput },
     { NULL, NULL }
 };
 

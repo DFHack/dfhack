@@ -19,6 +19,8 @@
 #include "df/unit.h"
 #include "df/unit_soul.h"
 #include "df/unit_skill.h"
+#include "df/creature_raw.h"
+#include "df/caste_raw.h"
 
 using std::set;
 using std::vector;
@@ -34,6 +36,40 @@ using df::global::enabler;
 
 typedef struct
 {
+	char *name;
+	int points;
+	char abbrev;
+} SkillLevel;
+
+#define    NUM_SKILL_LEVELS (sizeof(skill_levels) / sizeof(SkillLevel))
+
+// The various skill rankings. Zero skill is hardcoded to "Not" and '-'.
+const SkillLevel skill_levels[] = {
+	{"Dabbling",	500, '0'},
+	{"Novice",	600, '1'},
+	{"Adequate",	700, '2'},
+	{"Competent",	800, '3'},
+	{"Skilled",	900, '4'},
+	{"Proficient",	1000, '5'},
+	{"Talented",	1100, '6'},
+	{"Adept",	1200, '7'},
+	{"Expert",	1300, '8'},
+	{"Professional",1400, '9'},
+	{"Accomplished",1500, 'A'},
+	{"Great",	1600, 'B'},
+	{"Master",	1700, 'C'},
+	{"High Master",	1800, 'D'},
+	{"Grand Master",1900, 'E'},
+	{"Legendary",	2000, 'U'},
+	{"Legendary+1",	2100, 'V'},
+	{"Legendary+2",	2200, 'W'},
+	{"Legendary+3",	2300, 'X'},
+	{"Legendary+4",	2400, 'Y'},
+	{"Legendary+5",	0, 'Z'}
+};
+
+typedef struct
+{
     df::profession profession;
     df::unit_labor labor;
     df::job_skill skill;
@@ -41,12 +77,10 @@ typedef struct
     bool special; // specified labor is mutually exclusive with all other special labors
 } SkillColumn;
 
-// Types:
-// 0 - Normal skill toggle
-// 1 - Special skill toggle - turning on one of these turns off all others
+#define    NUM_COLUMNS (sizeof(columns) / sizeof(SkillColumn))
 
-// All of the skill/labor columns we want to display. Includes profession (for color), labor (-1 if none), skill (-1 if none), and 2 character label
-SkillColumn columns[] = {
+// All of the skill/labor columns we want to display. Includes profession (for color), labor, skill, and 2 character label
+const SkillColumn columns[] = {
 // Mining
     {profession::MINER, unit_labor::MINE, job_skill::MINING, "Mi", true},
 // Woodworking
@@ -197,8 +231,6 @@ SkillColumn columns[] = {
     {profession::ADMINISTRATOR, unit_labor::NONE, job_skill::TRACKING, "Tr"},
     {profession::ADMINISTRATOR, unit_labor::NONE, job_skill::MAGIC_NATURE, "Dr"},
 };
-
-#define    NUM_COLUMNS (sizeof(columns) / sizeof(SkillColumn))
 
 DFHACK_PLUGIN("manipulator");
 
@@ -394,7 +426,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::SELECT) && editable[sel_row] && (columns[sel_column].labor != unit_labor::NONE))
     {
         df::unit *cur = units[sel_row];
-        SkillColumn &col = columns[sel_column];
+        const SkillColumn &col = columns[sel_column];
         if (col.special)
         {
             if (!cur->status.labors[col.labor])
@@ -459,12 +491,12 @@ void viewscreen_unitlaborsst::render()
         Screen::paintString(Screen::Pen(' ', fg, bg), 1, 3 + row, name);
 
         string profession = unit->custom_profession;
-	if (!profession.length())
+        if (!profession.length())
             profession = ENUM_ATTR_STR(profession, caption, unit->profession);
         profession.resize(prof_width);
 
-        if (row_offset != sel_row)
-            fg = ENUM_ATTR(profession, color, unit->profession);
+        fg = ENUM_ATTR(profession, color, unit->profession);
+        bg = 0;
         Screen::paintString(Screen::Pen(' ', fg, bg), 1 + prof_width + 1, 3 + row, profession);
 
         // Print unit's skills and labor assignments
@@ -483,19 +515,86 @@ void viewscreen_unitlaborsst::render()
                 df::unit_skill *skill = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(unit->status.current_soul->skills, &df::unit_skill::id, columns[col_offset].skill);
                 if ((skill != NULL) && (skill->experience))
                 {
-                    if (skill->rating < 10)
-                        c = '0' + skill->rating;
-                    else if (skill->rating < 36)
-                        c = 'A' + skill->rating - 10;
-                    else
-                        c = 'Z';
+                    int level = skill->rating;
+                    if (level > NUM_SKILL_LEVELS - 1)
+                        level = NUM_SKILL_LEVELS - 1;
+                    c = skill_levels[level].abbrev;
                 }
             }
             Screen::paintTile(Screen::Pen(c, fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 3 + row);
         }
     }
 
-    // TODO - print unit summary, skill summary, and command info
+    df::unit *unit = units[sel_row];
+    if (unit != NULL)
+    {
+        string str = Translation::TranslateName(&unit->name, true);
+        if (str.length())
+        {
+            str += ", ";
+            if (unit->custom_profession.length())
+                str += unit->custom_profession;
+            else
+                str += ENUM_ATTR_STR(profession, caption, unit->profession);
+            str += ":";
+        }
+        else
+        {
+            if (unit->profession == profession::TRAINED_HUNTER)
+                str = "Hunting " + Translation::capitalize(world->raws.creatures.all[unit->race]->caste[unit->caste]->caste_name[0]);
+            else if (unit->profession == profession::TRAINED_WAR)
+                str = "War " + Translation::capitalize(world->raws.creatures.all[unit->race]->caste[unit->caste]->caste_name[0]);
+            else if (unit->profession == profession::STANDARD)
+                str = Translation::capitalize(world->raws.creatures.all[unit->race]->caste[unit->caste]->caste_name[0]);
+            else
+                str = Translation::capitalize(world->raws.creatures.all[unit->race]->caste[unit->caste]->caste_name[2]) + " " + ENUM_ATTR_STR(profession, caption, unit->profession);
+            str += ":";
+        }
+
+        Screen::paintString(Screen::Pen(' ', 15, 0), 1, 3 + height + 2, str);
+        int y = 1 + str.length() + 1;
+
+        if (columns[sel_column].skill == job_skill::NONE)
+        {
+            str = ENUM_ATTR_STR(unit_labor, caption, columns[sel_column].labor);
+            if (unit->status.labors[columns[sel_column].labor])
+                str += " Enabled";
+            else
+                str += " Not Enabled";
+            Screen::paintString(Screen::Pen(' ', 9, 0), y, 3 + height + 2, str);
+        }
+        else
+        {
+            df::unit_skill *skill = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(unit->status.current_soul->skills, &df::unit_skill::id, columns[sel_column].skill);
+            if (skill)
+            {
+                char buf[16];
+                int level = skill->rating;
+                if (level > NUM_SKILL_LEVELS - 1)
+                    level = NUM_SKILL_LEVELS - 1;
+                str = skill_levels[level].name;
+                str += " ";
+                str += ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill);
+                if (level != NUM_SKILL_LEVELS - 1)
+                {
+                    str += " (";
+                    str += itoa(skill->experience, buf, 10);
+                    str += "/";
+                    str += itoa(skill_levels[level].points, buf, 10);
+                    str += ")";
+                }
+            }
+            else
+            {
+                str = "Not ";
+                str += ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill);
+                str += " (0/500)";
+            }
+            Screen::paintString(Screen::Pen(' ', 9, 0), y, 3 + height + 2, str);
+        }
+    }
+
+    // TODO - print command info
 }
 
 struct unitlist_hook : df::viewscreen_unitlistst {

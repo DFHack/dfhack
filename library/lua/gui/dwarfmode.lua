@@ -138,13 +138,24 @@ function DwarfOverlay:onIdle()
     dscreen.invalidate()
 end
 
-function DwarfOverlay:onAboutToShow()
-    if not df.viewscreen_dwarfmodest:is_instance(dfhack.gui.getCurViewscreen()) then
+function DwarfOverlay:onAboutToShow(below)
+    local screen = dfhack.gui.getCurViewscreen()
+    if below then screen = below.parent end
+    if not df.viewscreen_dwarfmodest:is_instance(screen) then
         error("This screen requires the main dwarfmode view")
     end
 end
 
 MenuOverlay = defclass(MenuOverlay, DwarfOverlay)
+
+function MenuOverlay:onAboutToShow(below)
+    DwarfOverlay.onAboutToShow(self,below)
+
+    self:updateLayout()
+    if not self.df_layout.menu then
+        error("The menu panel of dwarfmode is not visible")
+    end
+end
 
 function MenuOverlay:onRender()
     self:renderParent()

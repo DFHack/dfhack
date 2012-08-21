@@ -151,6 +151,27 @@ bool Screen::fillRect(const Pen &pen, int x1, int y1, int x2, int y2)
     return true;
 }
 
+bool Screen::drawBorder(const std::string &title)
+{
+    if (!gps) return false;
+
+    int dimx = gps->dimx, dimy = gps->dimy;
+    Pen border(0xDB, 8);
+    Pen text(0, 0, 7);
+
+    for (int x = 0; x < dimx; x++)
+    {
+        doSetTile(border, x * dimy + 0);
+        doSetTile(border, x * dimy + dimy - 1);
+    }
+    for (int y = 0; y < dimy; y++)
+    {
+        doSetTile(border, 0 * dimy + y);
+        doSetTile(border, (dimx - 1) * dimy + y);
+    }
+    return paintString(text, (dimx - title.length()) / 2, 0, title);
+}
+
 bool Screen::clear()
 {
     if (!gps) return false;

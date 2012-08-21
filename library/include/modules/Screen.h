@@ -98,6 +98,9 @@ namespace DFHack
         /// Fills a rectangle with one pen. Possibly more efficient than a loop over paintTile.
         DFHACK_EXPORT bool fillRect(const Pen &pen, int x1, int y1, int x2, int y2);
 
+        /// Draws a standard dark gray window border with a title string
+        DFHACK_EXPORT bool drawBorder(const std::string &title);
+
         /// Wipes the screen to full black
         DFHACK_EXPORT bool clear();
 

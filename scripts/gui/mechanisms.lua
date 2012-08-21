@@ -1,16 +1,11 @@
 -- Shows mechanisms linked to the current building.
 
+local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'
 
 function getBuildingName(building)
-    return dfhack.with_temp_object(
-        df.new "string",
-        function(str)
-            building:getName(str)
-            return str.value
-        end
-    )
+    return utils.call_with_string(building, 'getName')
 end
 
 function listMechanismLinks(building)
@@ -45,53 +40,51 @@ function listMechanismLinks(building)
     return lst
 end
 
-MechanismList = defclass(MechanismList, guidm.DwarfOverlay)
+MechanismList = defclass(MechanismList, guidm.MenuOverlay)
 
 MechanismList.focus_path = 'mechanisms'
 
 function MechanismList.new(building)
+    local links = listMechanismLinks(building)
     local self = {
-        old_cursor = guidm.getCursorPos(),
-        links = listMechanismLinks(building),
+        links = links,
         selected = 1
     }
-    self.links[1].viewport = guidm.getViewportPos()
-    self.links[1].cursor = guidm.getCursorPos()
+    links[1].viewport = guidm.getViewportPos()
+    links[1].cursor = guidm.getCursorPos()
+    if #links <= 1 then
+        links[1].mode = 'none'
+    end
     return mkinstance(MechanismList, self)
 end
 
 local colors = {
-    self = COLOR_CYAN, trigger = COLOR_MAGENTA, target = COLOR_GREEN
+    self = COLOR_CYAN, none = COLOR_CYAN,
+    trigger = COLOR_GREEN, target = COLOR_GREEN
 }
 local icons = {
-    self = 128, trigger = 17, target = 16
+    self = 128, none = 63, trigger = 27, target = 26
 }
 
-function MechanismList:onRender()
-    self:renderParent()
-    self:updateLayout()
-    local x,y,w,h = self:clearMenu()
-
-    self.paintString({fg=COLOR_WHITE},x+1,y+1,"Mechanism Links")
+function MechanismList:onRenderBody(dc)
+    dc:clear()
+    dc:seek(1,1):string("Mechanism Links", COLOR_WHITE):newline()
 
     for i,v in ipairs(self.links) do
         local pen = { fg=colors[v.mode], bold = (i == self.selected) }
-        self.paintTile(pen, x+2, y+2+i, icons[v.mode])
-        self.paintString(pen, x+4, y+2+i, v.name)
+        dc:newline(1):pen(pen):char(icons[v.mode])
+        dc:advance(1):string(v.name)
     end
 
     local nlinks = #self.links
-    local line = y+4+nlinks
 
     if nlinks <= 1 then
-        self.paintString({fg=COLOR_LIGHTRED},x+1,line,"This building has no links")
-        line = line+2
+        dc:newline():newline(1):string("This building has no links", COLOR_LIGHTRED)
     end
 
-    self.paintString({fg=COLOR_LIGHTGREEN},x+1,line,"Esc")
-    self.paintString({fg=COLOR_WHITE},x+4,line,": Back,")
-    self.paintString({fg=COLOR_LIGHTGREEN},x+12,line,"Enter")
-    self.paintString({fg=COLOR_WHITE},x+17,line,": Switch")
+    dc:newline():newline(1):pen(COLOR_WHITE)
+    dc:string("Esc", COLOR_LIGHTGREEN):string(": Back, ")
+    dc:string("Enter", COLOR_LIGHTGREEN):string(": Switch")
 end
 
 function MechanismList:zoomToLink(link)
@@ -105,14 +98,7 @@ function MechanismList:zoomToLink(link)
     end
     guidm.setCursorPos(cursor)
 
-    if not guidm.isInViewport(self.df_layout, self.df_viewport, cursor, 5) then
-        local vp = link.viewport
-        if vp then
-            guidm.setViewportPos(self.df_layout,vp)
-        else
-            guidm.centerViewportOn(self.df_layout,cursor)
-        end
-    end
+    guidm.revealInViewport(cursor, 5, link.viewport, self.df_layout)
 end
 
 function MechanismList:changeSelected(delta)
@@ -127,10 +113,10 @@ function MechanismList:onInput(keys)
     elseif keys.STANDARDSCROLL_DOWN or keys.SECONDSCROLL_DOWN then
         self:changeSelected(1)
     elseif keys.LEAVESCREEN then
+        self:dismiss()
         if self.selected ~= 1 then
             self:zoomToLink(self.links[1])
         end
-        self:dismiss()
     elseif keys.SELECT then
         self:dismiss()
     end

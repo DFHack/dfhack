@@ -194,16 +194,28 @@ static bool get_int_field(lua_State *L, T *pf, int idx, const char *name, int de
     return !nil;
 }
 
+static bool get_char_field(lua_State *L, char *pf, int idx, const char *name, char defval)
+{
+    lua_getfield(L, idx, name);
+
+    if (lua_type(L, -1) == LUA_TSTRING)
+    {
+        *pf = lua_tostring(L, -1)[0];
+        lua_pop(L, 1);
+        return true;
+    }
+    else
+    {
+        lua_pop(L, 1);
+        return get_int_field(L, pf, idx, name, defval);
+    }
+}
+
 static void decode_pen(lua_State *L, Pen &pen, int idx)
 {
     idx = lua_absindex(L, idx);
 
-    lua_getfield(L, idx, "ch");
-    if (lua_isstring(L, -1))
-        pen.ch = lua_tostring(L, -1)[0];
-    else
-        get_int_field(L, &pen.ch, idx, "ch", 0);
-    lua_pop(L, 1);
+    get_char_field(L, &pen.ch, idx, "ch", 0);
 
     get_int_field(L, &pen.fg, idx, "fg", 7);
     get_int_field(L, &pen.bg, idx, "bg", 0);
@@ -1104,7 +1116,12 @@ static int screen_paintTile(lua_State *L)
     int x = luaL_checkint(L, 2);
     int y = luaL_checkint(L, 3);
     if (lua_gettop(L) >= 4 && !lua_isnil(L, 4))
-        pen.ch = luaL_checkint(L, 4);
+    {
+        if (lua_type(L, 4) == LUA_TSTRING)
+            pen.ch = lua_tostring(L, 4)[0];
+        else
+            pen.ch = luaL_checkint(L, 4);
+    }
     if (lua_gettop(L) >= 5 && !lua_isnil(L, 5))
         pen.tile = luaL_checkint(L, 5);
     lua_pushboolean(L, Screen::paintTile(pen, x, y));

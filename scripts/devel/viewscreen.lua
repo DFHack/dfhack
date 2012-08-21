@@ -2,11 +2,11 @@
 
 local gui = require 'gui'
 
-local screen = gui.Screen.new({
+local screen = mkinstance(gui.Screen, {
     onRender = function(self)
         local text = 'Woohoo, lua viewscreen :)'
-        local x,y,w,h = self:renderFrame(COLOR_GREY,'Hello World',#text+6,3)
-        self.paintString({fg=COLOR_LIGHTGREEN},x+3,y+1,text)
+        local dc = self:renderFrame(COLOR_GREY,'Hello World',#text+6,3)
+        dc:seek(3,1):string(text, {fg=COLOR_LIGHTGREEN})
     end,
     onInput = function(self,keys)
         if keys and (keys.LEAVESCREEN or keys.SELECT) then

@@ -39,14 +39,6 @@ function getPanelLayout()
     return rv
 end
 
-function getViewportPos()
-    return {
-        x = df.global.window_x,
-        y = df.global.window_y,
-        z = df.global.window_z
-    }
-end
-
 function getCursorPos()
     return copyall(df.global.cursor)
 end
@@ -55,29 +47,65 @@ function setCursorPos(cursor)
     df.global.cursor = cursor
 end
 
-function setViewportPos(layout,view)
-    local map = df.global.world.map
-    df.global.window_x = math.max(0, math.min(view.x, map.x_count-layout.map.width))
-    df.global.window_y = math.max(0, math.min(view.y, map.y_count-layout.map.height))
-    df.global.window_z = math.max(0, math.min(view.z, map.z_count-1))
-    return getViewportPos()
+function getViewportPos()
+    return {
+        x = df.global.window_x,
+        y = df.global.window_y,
+        z = df.global.window_z
+    }
 end
 
-function centerViewportOn(layout,target)
-    local mapsz = layout.map
+function clipViewport(view, layout)
+    local map = df.global.world.map
+    layout = layout or getPanelLayout()
+    return {
+        x = math.max(0, math.min(view.x, map.x_count-layout.map.width)),
+        y = math.max(0, math.min(view.y, map.y_count-layout.map.height)),
+        z = math.max(0, math.min(view.z, map.z_count-1))
+    }
+end
+
+function setViewportPos(view, layout)
+    local map = df.global.world.map
+    layout = layout or getPanelLayout()
+    local vp = clipViewport(view, layout)
+    df.global.window_x = vp.x
+    df.global.window_y = vp.y
+    df.global.window_z = vp.z
+    return vp
+end
+
+function centerViewportOn(target, layout)
+    layout = layout or getPanelLayout()
     local view = xyz2pos(
         target.x-math.floor(layout.map.width/2),
         target.y-math.floor(layout.map.height/2),
         target.z
     )
-    return setViewportPos(layout, view)
+    return setViewportPos(view, layout)
 end
 
 function isInViewport(layout,view,target,gap)
     gap = gap or 0
-    return target.x-gap >= view.x and target.x+gap < view.x+layout.map.width
-       and target.y-gap >= view.y and target.y+gap < view.y+layout.map.height
+
+    local map = df.global.world.map
+    return math.max(target.x-gap,0) >= view.x
+       and math.min(target.x+gap,map.x_count-1) < view.x+layout.map.width
+       and math.max(target.y-gap,0) >= view.y
+       and math.min(target.y+gap,map.y_count-1) < view.y+layout.map.height
        and target.z == view.z
+end
+
+function revealInViewport(target,gap,view,layout)
+    layout = layout or getPanelLayout()
+
+    if not isInViewport(layout, getViewportPos(), target, gap) then
+        if view and isInViewport(layout, view, target, gap) then
+            return setViewportPos(view, layout)
+        else
+            return centerViewportOn(target, layout)
+        end
+    end
 end
 
 DwarfOverlay = defclass(DwarfOverlay, gui.Screen)
@@ -106,14 +134,26 @@ function DwarfOverlay:propagateMoveKeys(keys)
 end
 
 function DwarfOverlay:onIdle()
+    -- Dwarfmode constantly needs repainting
     dscreen.invalidate()
 end
 
-function DwarfOverlay:clearMenu()
+function DwarfOverlay:onAboutToShow()
+    if not df.viewscreen_dwarfmodest:is_instance(dfhack.gui.getCurViewscreen()) then
+        error("This screen requires the main dwarfmode view")
+    end
+end
+
+MenuOverlay = defclass(MenuOverlay, DwarfOverlay)
+
+function MenuOverlay:onRender()
+    self:renderParent()
+    self:updateLayout()
+
     local menu = self.df_layout.menu
-    if not menu then return nil end
-    dscreen.fillRect(gui.CLEAR_PEN,menu.x1,menu.y1,menu.x2,menu.y2)
-    return menu.x1,menu.y1,menu.width,menu.height
+    if menu then
+        self:onRenderBody(gui.Painter.new(menu))
+    end
 end
 
 return _ENV

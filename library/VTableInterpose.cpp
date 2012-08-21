@@ -57,6 +57,7 @@ bool DFHack::is_vmethod_pointer_(void *pptr)
     // This expects that they all follow a very specific pattern.
     auto pval = (unsigned*)pobj->method;
     switch (pval[0]) {
+    case 0x20FF018BU: // mov eax, [ecx]; jmp [eax]
     case 0x60FF018BU: // mov eax, [ecx]; jmp [eax+0x??]
     case 0xA0FF018BU: // mov eax, [ecx]; jmp [eax+0x????????]
         return true;
@@ -72,6 +73,8 @@ int DFHack::vmethod_pointer_to_idx_(void *pptr)
 
     auto pval = (unsigned*)pobj->method;
     switch (pval[0]) {
+    case 0x20FF018BU: // mov eax, [ecx]; jmp [eax]
+        return 0;
     case 0x60FF018BU: // mov eax, [ecx]; jmp [eax+0x??]
         return ((int8_t)pval[1])/sizeof(void*);
     case 0xA0FF018BU: // mov eax, [ecx]; jmp [eax+0x????????]

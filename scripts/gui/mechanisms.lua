@@ -45,17 +45,25 @@ MechanismList = defclass(MechanismList, guidm.MenuOverlay)
 MechanismList.focus_path = 'mechanisms'
 
 function MechanismList.new(building)
-    local links = listMechanismLinks(building)
     local self = {
-        links = links,
+        links = {},
         selected = 1
     }
+    return mkinstance(MechanismList, self):init(building)
+end
+
+function MechanismList:init(building)
+    local links = listMechanismLinks(building)
+
     links[1].viewport = guidm.getViewportPos()
     links[1].cursor = guidm.getCursorPos()
     if #links <= 1 then
         links[1].mode = 'none'
     end
-    return mkinstance(MechanismList, self)
+
+    self.links = links
+    self.selected = 1
+    return self
 end
 
 local colors = {
@@ -116,6 +124,11 @@ function MechanismList:onInput(keys)
         self:dismiss()
         if self.selected ~= 1 then
             self:zoomToLink(self.links[1])
+        end
+    elseif keys.SELECT_ALL then
+        if self.selected > 1 then
+            self:init(self.links[self.selected].obj)
+            self.invalidate()
         end
     elseif keys.SELECT then
         self:dismiss()

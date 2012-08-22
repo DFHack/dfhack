@@ -5,6 +5,7 @@ local gui = require 'gui'
 local text = 'Woohoo, lua viewscreen :)'
 
 local screen = mkinstance(gui.FramedScreen, {
+    frame_style = gui.GREY_LINE_FRAME,
     frame_title = 'Hello World',
     frame_width = #text+6,
     frame_height = 3,

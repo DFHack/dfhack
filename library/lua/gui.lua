@@ -259,6 +259,18 @@ BOUNDARY_FRAME = {
     signature_pen = { fg = COLOR_BLACK, bg = COLOR_DARKGREY },
 }
 
+GREY_LINE_FRAME = {
+    frame_pen = { ch = 206, fg = COLOR_GREY, bg = COLOR_BLACK },
+    h_frame_pen = { ch = 205, fg = COLOR_GREY, bg = COLOR_BLACK },
+    v_frame_pen = { ch = 186, fg = COLOR_GREY, bg = COLOR_BLACK },
+    lt_frame_pen = { ch = 201, fg = COLOR_GREY, bg = COLOR_BLACK },
+    lb_frame_pen = { ch = 200, fg = COLOR_GREY, bg = COLOR_BLACK },
+    rt_frame_pen = { ch = 187, fg = COLOR_GREY, bg = COLOR_BLACK },
+    rb_frame_pen = { ch = 188, fg = COLOR_GREY, bg = COLOR_BLACK },
+    title_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
+    signature_pen = { fg = COLOR_DARKGREY, bg = COLOR_BLACK },
+}
+
 function paint_frame(x1,y1,x2,y2,style,title)
     local pen = style.frame_pen
     dscreen.paintTile(style.lt_frame_pen or pen, x1, y1)
@@ -283,7 +295,7 @@ end
 
 FramedScreen = defclass(FramedScreen, Screen)
 
-FramedScreen.frame_style = GREY_FRAME
+FramedScreen.frame_style = BOUNDARY_FRAME
 
 local function hint_coord(gap,hint)
     if hint and hint > 0 then

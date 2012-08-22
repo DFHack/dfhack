@@ -4,6 +4,7 @@ local _ENV = mkmodule('gui.dwarfmode')
 
 local gui = require('gui')
 local dscreen = dfhack.screen
+local world_map = df.global.world.map
 
 AREA_MAP_WIDTH = 23
 MENU_WIDTH = 30
@@ -40,71 +41,135 @@ function getPanelLayout()
 end
 
 function getCursorPos()
-    return copyall(df.global.cursor)
+    if df.global.cursor.x ~= -30000 then
+        return copyall(df.global.cursor)
+    end
 end
 
 function setCursorPos(cursor)
     df.global.cursor = cursor
 end
 
-function getViewportPos()
-    return {
-        x = df.global.window_x,
-        y = df.global.window_y,
-        z = df.global.window_z
-    }
+function clearCursorPos()
+    df.global.cursor = xyz2pos(nil)
 end
 
-function clipViewport(view, layout)
-    local map = df.global.world.map
-    layout = layout or getPanelLayout()
-    return {
-        x = math.max(0, math.min(view.x, map.x_count-layout.map.width)),
-        y = math.max(0, math.min(view.y, map.y_count-layout.map.height)),
-        z = math.max(0, math.min(view.z, map.z_count-1))
-    }
+Viewport = defclass(Viewport)
+
+function Viewport.make(map,x,y,z)
+    local self = gui.mkdims_wh(x,y,map.width,map.height)
+    self.z = z
+    return mkinstance(Viewport, self)
 end
 
-function setViewportPos(view, layout)
-    local map = df.global.world.map
-    layout = layout or getPanelLayout()
-    local vp = clipViewport(view, layout)
-    df.global.window_x = vp.x
-    df.global.window_y = vp.y
+function Viewport.get(layout)
+    return Viewport.make(
+        (layout or getPanelLayout()).map,
+        df.global.window_x,
+        df.global.window_y,
+        df.global.window_z
+    )
+end
+
+function Viewport:resize(layout)
+    return Viewport.make(
+        (layout or getPanelLayout()).map,
+        self.x1, self.y1, self.z
+    )
+end
+
+function Viewport:set()
+    local vp = self:clip()
+    df.global.window_x = vp.x1
+    df.global.window_y = vp.y1
     df.global.window_z = vp.z
     return vp
 end
 
-function centerViewportOn(target, layout)
-    layout = layout or getPanelLayout()
-    local view = xyz2pos(
-        target.x-math.floor(layout.map.width/2),
-        target.y-math.floor(layout.map.height/2),
-        target.z
+function Viewport:clip(x,y,z)
+    return self:make(
+        math.max(0, math.min(x or self.x1, world_map.x_count-self.width)),
+        math.max(0, math.min(y or self.y1, world_map.y_count-self.height)),
+        math.max(0, math.min(z or self.z, world_map.z_count-1))
     )
-    return setViewportPos(view, layout)
 end
 
-function isInViewport(layout,view,target,gap)
+function Viewport:isVisibleXY(target,gap)
     gap = gap or 0
 
-    local map = df.global.world.map
-    return math.max(target.x-gap,0) >= view.x
-       and math.min(target.x+gap,map.x_count-1) < view.x+layout.map.width
-       and math.max(target.y-gap,0) >= view.y
-       and math.min(target.y+gap,map.y_count-1) < view.y+layout.map.height
-       and target.z == view.z
+    return math.max(target.x-gap,0) >= self.x1
+       and math.min(target.x+gap,world_map.x_count-1) <= self.x2
+       and math.max(target.y-gap,0) >= self.y1
+       and math.min(target.y+gap,world_map.y_count-1) <= self.y2
 end
 
-function revealInViewport(target,gap,view,layout)
-    layout = layout or getPanelLayout()
+function Viewport:isVisible(target,gap)
+    gap = gap or 0
 
-    if not isInViewport(layout, getViewportPos(), target, gap) then
-        if view and isInViewport(layout, view, target, gap) then
-            return setViewportPos(view, layout)
-        else
-            return centerViewportOn(target, layout)
-        end
+    return self:isVisibleXY(target,gap) and target.z == self.z
+end
+
+function Viewport:centerOn(target)
+    return self:clip(
+        target.x - math.floor(self.width/2),
+        target.y - math.floor(self.height/2),
+        target.z
+    )
+end
+
+function Viewport:scrollTo(target,gap)
+    gap = math.max(0, gap or 5)
+    if gap*2 >= math.min(self.width, self.height) then
+        gap = math.floor(math.min(self.width, self.height)/2)
+    end
+    local x = math.min(self.x1, target.x-gap)
+    x = math.max(x, target.x+gap+1-self.width)
+    local y = math.min(self.y1, target.y-gap)
+    y = math.max(y, target.y+gap+1-self.height)
+    return self:clip(x, y, target.z)
+end
+
+function Viewport:reveal(target,gap,max_scroll,scroll_gap,scroll_z)
+    gap = math.max(0, gap or 5)
+    if self:isVisible(target, gap) then
+        return self
+    end
+
+    max_scroll = math.max(0, max_scroll or 5)
+    if self:isVisibleXY(target, -max_scroll)
+    and (scroll_z or target.z == self.z) then
+        return self:scrollTo(target, scroll_gap or gap)
+    else
+        return self:centerOn(target)
+    end
+end
+
+MOVEMENT_KEYS = {
+    CURSOR_UP = { 0, -1, 0 }, CURSOR_DOWN = { 0, 1, 0 },
+    CURSOR_LEFT = { -1, 0, 0 }, CURSOR_RIGHT = { 1, 0, 0 },
+    CURSOR_UPLEFT = { -1, -1, 0 }, CURSOR_UPRIGHT = { 1, -1, 0 },
+    CURSOR_DOWNLEFT = { -1, 1, 0 }, CURSOR_DOWNRIGHT = { 1, 1, 0 },
+    CURSOR_UP_FAST = { 0, -1, 0, true }, CURSOR_DOWN_FAST = { 0, 1, 0, true },
+    CURSOR_LEFT_FAST = { -1, 0, 0, true }, CURSOR_RIGHT_FAST = { 1, 0, 0, true },
+    CURSOR_UPLEFT_FAST = { -1, -1, 0, true }, CURSOR_UPRIGHT_FAST = { 1, -1, 0, true },
+    CURSOR_DOWNLEFT_FAST = { -1, 1, 0, true }, CURSOR_DOWNRIGHT_FAST = { 1, 1, 0, true },
+    CURSOR_UP_Z = { 0, 0, 1 }, CURSOR_DOWN_Z = { 0, 0, -1 },
+    CURSOR_UP_Z_AUX = { 0, 0, 1 }, CURSOR_DOWN_Z_AUX = { 0, 0, -1 },
+}
+
+function Viewport:scrollByKey(key)
+    local info = MOVEMENT_KEYS[key]
+    if info then
+        local delta = 10
+        if info[4] then delta = 20 end
+
+        return self:clip(
+            self.x1 + delta*info[1],
+            self.y1 + delta*info[2],
+            self.z + info[3]
+        )
+    else
+        return self
     end
 end
 
@@ -112,23 +177,53 @@ DwarfOverlay = defclass(DwarfOverlay, gui.Screen)
 
 function DwarfOverlay:updateLayout()
     self.df_layout = getPanelLayout()
-    self.df_viewport = getViewportPos()
-    self.df_cursor = getCursorPos()
 end
 
-local move_keys = {
-    'CURSOR_UP', 'CURSOR_DOWN', 'CURSOR_LEFT', 'CURSOR_RIGHT',
-    'CURSOR_UPLEFT', 'CURSOR_UPRIGHT', 'CURSOR_DOWNLEFT', 'CURSOR_DOWNRIGHT',
-    'CURSOR_UP_FAST', 'CURSOR_DOWN_FAST', 'CURSOR_LEFT_FAST', 'CURSOR_RIGHT_FAST',
-    'CURSOR_UPLEFT_FAST', 'CURSOR_UPRIGHT_FAST', 'CURSOR_DOWNLEFT_FAST', 'CURSOR_DOWNRIGHT_FAST',
-    'CURSOR_UP_Z', 'CURSOR_DOWN_Z', 'CURSOR_UP_Z_AUX', 'CURSOR_DOWN_Z_AUX'
-}
+function DwarfOverlay:onShown()
+    self:updateLayout()
+end
+
+function DwarfOverlay:onResize(w,h)
+    self:updateLayout()
+end
+
+function DwarfOverlay:getViewport(old_vp)
+    if old_vp then
+        return old_vp:resize(self.df_layout)
+    else
+        return Viewport.get(self.df_layout)
+    end
+end
 
 function DwarfOverlay:propagateMoveKeys(keys)
-    for _,v in ipairs(move_keys) do
-        if keys[v] then
-            self:sendInputToParent(v)
-            return v
+    for code,_ in pairs(MOVEMENT_KEYS) do
+        if keys[code] then
+            self:sendInputToParent(code)
+            return code
+        end
+    end
+end
+
+function DwarfOverlay:simulateViewScroll(keys, anchor, no_clip_cursor)
+    local layout = self.df_layout
+    local cursor = getCursorPos()
+
+    anchor = anchor or cursor
+
+    if anchor and keys.A_MOVE_SAME_SQUARE then
+        self:getViewport():centerOn(anchor):set()
+        return 'A_MOVE_SAME_SQUARE'
+    end
+
+    for code,_ in pairs(MOVEMENT_KEYS) do
+        if keys[code] then
+            local vp = self:getViewport():scrollByKey(code)
+            if (cursor and not no_clip_cursor) or no_clip_cursor == false then
+                vp = vp:reveal(anchor,4,20,4,true)
+            end
+            vp:set()
+
+            return code
         end
     end
 end

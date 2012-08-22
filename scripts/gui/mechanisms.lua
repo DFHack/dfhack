@@ -8,11 +8,19 @@ function getBuildingName(building)
     return utils.call_with_string(building, 'getName')
 end
 
+function getBuildingCenter(building)
+    return xyz2pos(building.centerx, building.centery, building.z)
+end
+
 function listMechanismLinks(building)
     local lst = {}
     local function push(item, mode)
         if item then
-            lst[#lst+1] = { obj = item, name = getBuildingName(item), mode = mode }
+            lst[#lst+1] = {
+                obj = item, mode = mode,
+                name = getBuildingName(item),
+                center = getBuildingCenter(item)
+            }
         end
     end
 
@@ -55,7 +63,7 @@ end
 function MechanismList:init(building)
     local links = listMechanismLinks(building)
 
-    links[1].viewport = guidm.getViewportPos()
+    links[1].viewport = self:getViewport()
     links[1].cursor = guidm.getCursorPos()
     if #links <= 1 then
         links[1].mode = 'none'
@@ -95,18 +103,16 @@ function MechanismList:onRenderBody(dc)
     dc:string("Enter", COLOR_LIGHTGREEN):string(": Switch")
 end
 
-function MechanismList:zoomToLink(link)
-    self:updateLayout()
-
+function MechanismList:zoomToLink(link,back)
     df.global.world.selected_building = link.obj
 
-    local cursor = link.cursor
-    if not cursor then
-        cursor = xyz2pos(link.obj.centerx, link.obj.centery, link.obj.z)
+    if back then
+        guidm.setCursorPos(link.cursor)
+        self:getViewport(link.viewport):set()
+    else
+        guidm.setCursorPos(link.center)
+        self:getViewport():reveal(link.center, 5, 0, 10):set()
     end
-    guidm.setCursorPos(cursor)
-
-    guidm.revealInViewport(cursor, 5, link.viewport, self.df_layout)
 end
 
 function MechanismList:changeSelected(delta)
@@ -116,22 +122,23 @@ function MechanismList:changeSelected(delta)
 end
 
 function MechanismList:onInput(keys)
-    if keys.STANDARDSCROLL_UP or keys.SECONDSCROLL_UP then
+    if keys.SECONDSCROLL_UP then
         self:changeSelected(-1)
-    elseif keys.STANDARDSCROLL_DOWN or keys.SECONDSCROLL_DOWN then
+    elseif keys.SECONDSCROLL_DOWN then
         self:changeSelected(1)
     elseif keys.LEAVESCREEN then
         self:dismiss()
         if self.selected ~= 1 then
-            self:zoomToLink(self.links[1])
+            self:zoomToLink(self.links[1], true)
         end
     elseif keys.SELECT_ALL then
         if self.selected > 1 then
             self:init(self.links[self.selected].obj)
-            self.invalidate()
         end
     elseif keys.SELECT then
         self:dismiss()
+    elseif self:simulateViewScroll(keys) then
+        return
     end
 end
 

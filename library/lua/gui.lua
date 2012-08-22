@@ -245,6 +245,16 @@ end
 function Screen:onShown()
 end
 
+function Screen:dismiss()
+    if self._native and not dscreen.isDismissed(self) then
+        dscreen.dismiss(self)
+        self:onDismissed()
+    end
+end
+
+function Screen:onDismissed()
+end
+
 ------------------------
 -- Framed screen object --
 ------------------------
@@ -311,8 +321,7 @@ local function hint_coord(gap,hint)
     end
 end
 
-function FramedScreen:updateLayout()
-    local sw, sh = dscreen.getWindowSize()
+function FramedScreen:updateFrameSize(sw,sh)
     local iw, ih = sw-2, sh-2
     local width = math.min(self.frame_width or iw, iw)
     local height = math.min(self.frame_height or ih, ih)
@@ -322,9 +331,11 @@ function FramedScreen:updateLayout()
     self.frame_opaque = (gw == 0 and gh == 0)
 end
 
-function FramedScreen:onRender()
-    self:updateLayout()
+function FramedScreen:onResize(w,h)
+    self:updateFrameSize(w,h)
+end
 
+function FramedScreen:onRender()
     local rect = self.frame_rect
     local x1,y1,x2,y2 = rect.x1-1, rect.y1-1, rect.x2+1, rect.y2+1
 

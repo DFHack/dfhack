@@ -245,9 +245,18 @@ end
 -- Framed screen object --
 ------------------------
 
+-- Plain grey-colored frame.
 GREY_FRAME = {
     frame_pen = { ch = ' ', fg = COLOR_BLACK, bg = COLOR_GREY },
     title_pen = { fg = COLOR_BLACK, bg = COLOR_WHITE },
+    signature_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
+}
+
+-- The usual boundary used by the DF screens. Often has fancy pattern in tilesets.
+BOUNDARY_FRAME = {
+    frame_pen = { ch = 0xDB, fg = COLOR_DARKGREY, bg = COLOR_BLACK },
+    title_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
+    signature_pen = { fg = COLOR_BLACK, bg = COLOR_DARKGREY },
 }
 
 function paint_frame(x1,y1,x2,y2,style,title)
@@ -260,6 +269,7 @@ function paint_frame(x1,y1,x2,y2,style,title)
     dscreen.fillRect(style.b_frame_pen or style.h_frame_pen or pen,x1+1,y2,x2-1,y2)
     dscreen.fillRect(style.l_frame_pen or style.v_frame_pen or pen,x1,y1+1,x1,y2-1)
     dscreen.fillRect(style.r_frame_pen or style.v_frame_pen or pen,x2,y1+1,x2,y2-1)
+    dscreen.paintString(style.signature_pen or style.title_pen or pen,x2-7,y2,"DFHack")
 
     if title then
         local x = math.max(0,math.floor((x2-x1-3-#title)/2)) + x1

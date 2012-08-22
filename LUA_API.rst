@@ -1211,6 +1211,8 @@ The screen module implements support for drawing to the tiled screen of the game
 Note that drawing only has any effect when done from callbacks, so it can only
 be feasibly used in the core context.
 
+Basic painting functions:
+
 * ``dfhack.screen.getWindowSize()``
 
   Returns *width, height* of the screen.
@@ -1277,7 +1279,12 @@ be feasibly used in the core context.
 
 In order to actually be able to paint to the screen, it is necessary
 to create and register a viewscreen (basically a modal dialog) with
-the game. Screens are managed with the following functions:
+the game.
+
+**NOTE**: As a matter of policy, in order to avoid user confusion, all
+interface screens added by dfhack should bear the "DFHack" signature.
+
+Screens are managed with the following functions:
 
 * ``dfhack.screen.show(screen[,below])``
 

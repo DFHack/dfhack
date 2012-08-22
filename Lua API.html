@@ -1391,6 +1391,7 @@ Returns <em>true, was_only_planned</em> if removed; or <em>false</em> if none fo
 <p>The screen module implements support for drawing to the tiled screen of the game.
 Note that drawing only has any effect when done from callbacks, so it can only
 be feasibly used in the core context.</p>
+<p>Basic painting functions:</p>
 <ul>
 <li><p class="first"><tt class="docutils literal">dfhack.screen.getWindowSize()</tt></p>
 <p>Returns <em>width, height</em> of the screen.</p>
@@ -1455,7 +1456,10 @@ functions in this section, this may be used at any time.</p>
 </ul>
 <p>In order to actually be able to paint to the screen, it is necessary
 to create and register a viewscreen (basically a modal dialog) with
-the game. Screens are managed with the following functions:</p>
+the game.</p>
+<p><strong>NOTE</strong>: As a matter of policy, in order to avoid user confusion, all
+interface screens added by dfhack should bear the &quot;DFHack&quot; signature.</p>
+<p>Screens are managed with the following functions:</p>
 <ul>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.screen.show(screen[,below])</span></tt></p>
 <p>Displays the given screen, possibly placing it below a different one.

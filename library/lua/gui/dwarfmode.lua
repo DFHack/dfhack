@@ -163,6 +163,12 @@ function MenuOverlay:onRender()
 
     local menu = self.df_layout.menu
     if menu then
+        -- Paint signature on the frame.
+        dscreen.paintString(
+            {fg=COLOR_BLACK,bg=COLOR_DARKGREY},
+            menu.x1+1, menu.y2+1, "DFHack"
+        )
+
         self:onRenderBody(gui.Painter.new(menu))
     end
 end

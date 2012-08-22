@@ -158,6 +158,7 @@ bool Screen::drawBorder(const std::string &title)
     int dimx = gps->dimx, dimy = gps->dimy;
     Pen border(0xDB, 8);
     Pen text(0, 0, 7);
+    Pen signature(0, 0, 8);
 
     for (int x = 0; x < dimx; x++)
     {
@@ -169,6 +170,9 @@ bool Screen::drawBorder(const std::string &title)
         doSetTile(border, 0 * dimy + y);
         doSetTile(border, (dimx - 1) * dimy + y);
     }
+
+    paintString(signature, dimx-8, dimy-1, "DFHack");
+
     return paintString(text, (dimx - title.length()) / 2, 0, title);
 }
 

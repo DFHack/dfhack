@@ -5,6 +5,7 @@
 #include <MiscUtils.h>
 #include <modules/Screen.h>
 #include <modules/Translation.h>
+#include <modules/Units.h>
 #include <vector>
 #include <string>
 #include <set>
@@ -522,11 +523,7 @@ void viewscreen_unitlaborsst::render()
         name.resize(name_width);
         Screen::paintString(Screen::Pen(' ', fg, bg), 1, 3 + row, name);
 
-        string profession = unit->custom_profession;
-        if (!profession.length())
-            profession = ENUM_ATTR_STR(profession, caption, unit->profession);
-        profession.resize(prof_width);
-
+        string profession = Units::getProfessionName(unit);
         fg = ENUM_ATTR(profession, color, unit->profession);
         if (fg == -1)
             fg = 3; // TODO: fetch from creature raws
@@ -565,26 +562,9 @@ void viewscreen_unitlaborsst::render()
     {
         string str = Translation::TranslateName(&unit->name, true);
         if (str.length())
-        {
             str += ", ";
-            if (unit->custom_profession.length())
-                str += unit->custom_profession;
-            else
-                str += ENUM_ATTR_STR(profession, caption, unit->profession);
-            str += ":";
-        }
-        else
-        {
-            if (unit->profession == profession::TRAINED_HUNTER)
-                str = "Hunting " + Translation::capitalize(world->raws.creatures.all[unit->race]->caste[unit->caste]->caste_name[0]);
-            else if (unit->profession == profession::TRAINED_WAR)
-                str = "War " + Translation::capitalize(world->raws.creatures.all[unit->race]->caste[unit->caste]->caste_name[0]);
-            else if (unit->profession == profession::STANDARD)
-                str = Translation::capitalize(world->raws.creatures.all[unit->race]->caste[unit->caste]->caste_name[0]);
-            else
-                str = Translation::capitalize(world->raws.creatures.all[unit->race]->caste[unit->caste]->caste_name[2]) + " " + ENUM_ATTR_STR(profession, caption, unit->profession);
-            str += ":";
-        }
+        str += Units::getProfessionName(unit);
+        str += ":";
 
         Screen::paintString(Screen::Pen(' ', 15, 0), 1, 3 + height + 2, str);
         int y = 1 + str.length() + 1;

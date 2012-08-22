@@ -117,11 +117,20 @@ namespace DFHack
     }
 
     class DFHACK_EXPORT dfhack_viewscreen : public df::viewscreen {
+        df::coord2d last_size;
+        void check_resize();
+
+    protected:
+        bool text_input_mode;
+
     public:
         dfhack_viewscreen();
         virtual ~dfhack_viewscreen();
 
         static bool is_instance(df::viewscreen *screen);
+
+        virtual void logic();
+        virtual void render();
 
         virtual int8_t movies_okay() { return 1; }
         virtual bool key_conflict(df::interface_key key);

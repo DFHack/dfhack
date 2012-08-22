@@ -246,7 +246,7 @@ public:
     static viewscreen_unitlaborsst *create (char pushtype, df::viewscreen *scr = NULL);
 
     void feed(set<df::interface_key> *events);
-    void logic();
+
     void render();
     void resize(int w, int h) { calcSize(); }
 
@@ -444,15 +444,12 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     // TODO: add sorting
 }
 
-void viewscreen_unitlaborsst::logic()
-{
-    enabler->flag.bits.render = true;
-}
-
 void viewscreen_unitlaborsst::render()
 {
     if (Screen::isDismissed(this))
         return;
+
+    dfhack_viewscreen::render();
 
     Screen::clear();
     Screen::drawBorder("  Manage Labors  ");

@@ -203,6 +203,8 @@ end
 
 Screen = defclass(Screen, dfhack.screen)
 
+Screen.text_input_mode = false
+
 function Screen:isShown()
     return self._native ~= nil
 end
@@ -219,7 +221,7 @@ function Screen:renderParent()
     end
 end
 
-function Screen:inputToParent(...)
+function Screen:sendInputToParent(...)
     if self._native and self._native.parent then
         simulateInput(self._native.parent, ...)
     end
@@ -232,6 +234,8 @@ function Screen:show(below)
     self:onAboutToShow(below)
     if dscreen.show(self, below) then
         self:onShown()
+    else
+        error('Could not show screen')
     end
 end
 

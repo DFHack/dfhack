@@ -127,15 +127,10 @@ local move_keys = {
 function DwarfOverlay:propagateMoveKeys(keys)
     for _,v in ipairs(move_keys) do
         if keys[v] then
-            self:inputToParent(v)
-            return
+            self:sendInputToParent(v)
+            return v
         end
     end
-end
-
-function DwarfOverlay:onIdle()
-    -- Dwarfmode constantly needs repainting
-    dscreen.invalidate()
 end
 
 function DwarfOverlay:onAboutToShow(below)

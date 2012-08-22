@@ -258,7 +258,7 @@ bool Screen::isDismissed(df::viewscreen *screen)
 
 static std::set<df::viewscreen*> dfhack_screens;
 
-dfhack_viewscreen::dfhack_viewscreen()
+dfhack_viewscreen::dfhack_viewscreen() : text_input_mode(false)
 {
     dfhack_screens.insert(this);
 }
@@ -273,9 +273,42 @@ bool dfhack_viewscreen::is_instance(df::viewscreen *screen)
     return dfhack_screens.count(screen) != 0;
 }
 
+void dfhack_viewscreen::check_resize()
+{
+    auto size = Screen::getWindowSize();
+
+    if (size != last_size)
+    {
+        last_size = size;
+        resize(size.x, size.y);
+    }
+}
+
+void dfhack_viewscreen::logic()
+{
+    check_resize();
+
+    // Various stuff works poorly unless always repainting
+    Screen::invalidate();
+}
+
+void dfhack_viewscreen::render()
+{
+    check_resize();
+}
+
 bool dfhack_viewscreen::key_conflict(df::interface_key key)
 {
-    return key == interface_key::OPTIONS;
+    if (key == interface_key::OPTIONS)
+        return true;
+
+    if (text_input_mode)
+    {
+        if (key == interface_key::HELP || key == interface_key::MOVIES)
+            return true;
+    }
+
+    return false;
 }
 
 /*
@@ -364,6 +397,10 @@ int dfhack_lua_viewscreen::do_destroy(lua_State *L)
 
 void dfhack_lua_viewscreen::update_focus(lua_State *L, int idx)
 {
+    lua_getfield(L, idx, "text_input_mode");
+    text_input_mode = lua_toboolean(L, -1);
+    lua_pop(L, 1);
+
     lua_getfield(L, idx, "focus_path");
     auto str = lua_tostring(L, -1);
     if (!str) str = "";
@@ -496,23 +533,35 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
 
 void dfhack_lua_viewscreen::render()
 {
+    if (Screen::isDismissed(this)) return;
+
+    dfhack_viewscreen::render();
+
     safe_call_lua(do_render, 0, 0);
 }
 
 void dfhack_lua_viewscreen::logic()
 {
+    if (Screen::isDismissed(this)) return;
+
+    dfhack_viewscreen::logic();
+
     lua_pushstring(Lua::Core::State, "onIdle");
     safe_call_lua(do_notify, 1, 0);
 }
 
 void dfhack_lua_viewscreen::help()
 {
+    if (Screen::isDismissed(this)) return;
+
     lua_pushstring(Lua::Core::State, "onHelp");
     safe_call_lua(do_notify, 1, 0);
 }
 
 void dfhack_lua_viewscreen::resize(int w, int h)
 {
+    if (Screen::isDismissed(this)) return;
+
     auto L = Lua::Core::State;
     lua_pushstring(L, "onResize");
     lua_pushinteger(L, w);
@@ -522,6 +571,8 @@ void dfhack_lua_viewscreen::resize(int w, int h)
 
 void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 {
+    if (Screen::isDismissed(this)) return;
+
     lua_pushlightuserdata(Lua::Core::State, keys);
     safe_call_lua(do_input, 1, 0);
 }

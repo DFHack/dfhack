@@ -164,7 +164,13 @@ VMethodInterposeLinkBase::VMethodInterposeLinkBase(virtual_identity *host, int v
     : host(host), vmethod_idx(vmethod_idx), interpose_method(interpose_method), chain_mptr(chain_mptr),
       saved_chain(NULL), next(NULL), prev(NULL)
 {
-    assert(vmethod_idx >= 0 && interpose_method != NULL);
+    if (vmethod_idx < 0 || interpose_method == NULL)
+    {
+        fprintf(stderr, "Bad VMethodInterposeLinkBase arguments: %d %08x\n",
+                vmethod_idx, unsigned(interpose_method));
+        fflush(stderr);
+        abort();
+    }
 }
 
 VMethodInterposeLinkBase::~VMethodInterposeLinkBase()

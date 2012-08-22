@@ -287,6 +287,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst()
 void viewscreen_unitlaborsst::readUnits ()
 {
     units.clear();
+    editable.clear();
     for (size_t i = 0; i < world->units.active.size(); i++)
     {
         df::unit *cur = world->units.active[i];
@@ -338,6 +339,9 @@ void viewscreen_unitlaborsst::readUnits ()
 void viewscreen_unitlaborsst::calcSize()
 {
     height = gps->dimy - 10;
+    if (height > units.size())
+        height = units.size();
+
     name_width = prof_width = labors_width = 0;
     for (int i = 4; i < gps->dimx; i++)
     {
@@ -364,11 +368,19 @@ void viewscreen_unitlaborsst::calcSize()
         labors_width--;
     }
 
-    // if the window grows vertically, shift rows downward
+    // if the window grows vertically, scroll upward to eliminate blank rows from the bottom
+    if (first_row > units.size() - height)
+        first_row = units.size() - height;
+
+    // if it shrinks vertically, scroll downward to keep the cursor visible
     if (first_row < sel_row - height + 1)
         first_row = sel_row - height + 1;
 
-    // if the window grows horizontally, shift columns to the right
+    // if the window grows horizontally, scroll to the left to eliminate blank columns from the right
+    if (first_column > NUM_COLUMNS - labors_width)
+        first_column = NUM_COLUMNS - labors_width;
+
+    // if it shrinks horizontally, scroll to the right to keep the cursor visible
     if (first_column < sel_column - labors_width + 1)
         first_column = sel_column - labors_width + 1;
 }
@@ -382,19 +394,19 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         return;
     }
 
-    // TODO - update filters
+    // TODO - allow modifying filters
 
     if (!units.size())
         return;
 
-    if (events->count(interface_key::STANDARDSCROLL_PAGEUP))
-        sel_row -= height - 1;
-    if (events->count(interface_key::STANDARDSCROLL_UP))
+    if (events->count(interface_key::CURSOR_UP) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_UPRIGHT))
         sel_row--;
-    if (events->count(interface_key::STANDARDSCROLL_PAGEDOWN))
-        sel_row += height - 1;
-    if (events->count(interface_key::STANDARDSCROLL_DOWN))
+    if (events->count(interface_key::CURSOR_UP_FAST) || events->count(interface_key::CURSOR_UPLEFT_FAST) || events->count(interface_key::CURSOR_UPRIGHT_FAST))
+        sel_row -= 10;
+    if (events->count(interface_key::CURSOR_DOWN) || events->count(interface_key::CURSOR_DOWNLEFT) || events->count(interface_key::CURSOR_DOWNRIGHT))
         sel_row++;
+    if (events->count(interface_key::CURSOR_DOWN_FAST) || events->count(interface_key::CURSOR_DOWNLEFT_FAST) || events->count(interface_key::CURSOR_DOWNRIGHT_FAST))
+        sel_row += 10;
 
     if (sel_row < 0)
         sel_row = 0;
@@ -407,10 +419,31 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         first_row = sel_row - height + 1;
 
 
-    if (events->count(interface_key::STANDARDSCROLL_LEFT))
+    if (events->count(interface_key::CURSOR_LEFT) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_DOWNLEFT))
         sel_column--;
-    if (events->count(interface_key::STANDARDSCROLL_RIGHT))
+    if (events->count(interface_key::CURSOR_LEFT_FAST) || events->count(interface_key::CURSOR_UPLEFT_FAST) || events->count(interface_key::CURSOR_DOWNLEFT_FAST))
+        sel_column -= 10;
+    if (events->count(interface_key::CURSOR_RIGHT) || events->count(interface_key::CURSOR_UPRIGHT) || events->count(interface_key::CURSOR_DOWNRIGHT))
         sel_column++;
+    if (events->count(interface_key::CURSOR_RIGHT_FAST) || events->count(interface_key::CURSOR_UPRIGHT_FAST) || events->count(interface_key::CURSOR_DOWNRIGHT_FAST))
+        sel_column += 10;
+
+    if ((sel_column != 0) && events->count(interface_key::CURSOR_UP_Z))
+    {
+        // go to beginning of current column group; if already at the beginning, go to the beginning of the previous one
+        sel_column--;
+        df::profession cur = columns[sel_column].profession;
+        while ((sel_column > 0) && columns[sel_column - 1].profession == cur)
+            sel_column--;
+    }
+    if ((sel_column != NUM_COLUMNS - 1) && events->count(interface_key::CURSOR_DOWN_Z))
+    {
+        // go to end of current column group; if already at the end, go to the end of the next one
+        sel_column++;
+        df::profession cur = columns[sel_column].profession;
+        while ((sel_column < NUM_COLUMNS - 1) && columns[sel_column + 1].profession == cur)
+            sel_column++;
+    }
 
     if (sel_column < 0)
         sel_column = 0;
@@ -457,6 +490,9 @@ void viewscreen_unitlaborsst::render()
     for (int col = 0; col < labors_width; col++)
     {
         int col_offset = col + first_column;
+        if (col_offset >= NUM_COLUMNS)
+            break;
+
         int8_t fg = ENUM_ATTR(profession, color, columns[col_offset].profession), bg = 0;
         if (fg == -1)
             fg = 3; // teal
@@ -492,6 +528,9 @@ void viewscreen_unitlaborsst::render()
         profession.resize(prof_width);
 
         fg = ENUM_ATTR(profession, color, unit->profession);
+        if (fg == -1)
+            fg = 3; // TODO: fetch from creature raws
+        // TODO: check for entity positions and alter profession/color accordingly
         bg = 0;
         Screen::paintString(Screen::Pen(' ', fg, bg), 1 + prof_width + 1, 3 + row, profession);
 
@@ -564,24 +603,15 @@ void viewscreen_unitlaborsst::render()
             df::unit_skill *skill = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(unit->status.current_soul->skills, &df::unit_skill::id, columns[sel_column].skill);
             if (skill)
             {
-                char buf[16];
                 int level = skill->rating;
                 if (level > NUM_SKILL_LEVELS - 1)
                     level = NUM_SKILL_LEVELS - 1;
-                str = skill_levels[level].name;
-                str += " ";
-                str += ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill);
+                str = stl_sprintf("%s %s", skill_levels[level].name, ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));
                 if (level != NUM_SKILL_LEVELS - 1)
-                {
                     str += stl_sprintf(" (%d/%d)", skill->experience, skill_levels[level].points);
-                }
             }
             else
-            {
-                str = "Not ";
-                str += ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill);
-                str += " (0/500)";
-            }
+                str = stl_sprintf("Not %s (0/500)", ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));
             Screen::paintString(Screen::Pen(' ', 9, 0), y, 3 + height + 2, str);
         }
     }

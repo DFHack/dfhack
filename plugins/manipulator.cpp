@@ -369,6 +369,10 @@ void viewscreen_unitlaborsst::calcSize()
         labors_width--;
     }
 
+    // don't adjust scroll position immediately after the window opened
+    if (units.size() == 0)
+        return;
+
     // if the window grows vertically, scroll upward to eliminate blank rows from the bottom
     if (first_row > units.size() - height)
         first_row = units.size() - height;
@@ -494,9 +498,9 @@ void viewscreen_unitlaborsst::render()
         if (col_offset >= NUM_COLUMNS)
             break;
 
-        int8_t fg = ENUM_ATTR(profession, color, columns[col_offset].profession), bg = 0;
-        if (fg == -1)
-            fg = 3; // teal
+        int8_t fg = Units::getCasteProfessionColor(ui->race_id, -1, columns[col_offset].profession);
+        int8_t bg = 0;
+
         if (col_offset == sel_column)
         {
             fg = 0;
@@ -524,10 +528,7 @@ void viewscreen_unitlaborsst::render()
         Screen::paintString(Screen::Pen(' ', fg, bg), 1, 3 + row, name);
 
         string profession = Units::getProfessionName(unit);
-        fg = ENUM_ATTR(profession, color, unit->profession);
-        if (fg == -1)
-            fg = 3; // TODO: fetch from creature raws
-        // TODO: check for entity positions and alter profession/color accordingly
+        fg = Units::getProfessionColor(unit);
         bg = 0;
         Screen::paintString(Screen::Pen(' ', fg, bg), 1 + prof_width + 1, 3 + row, profession);
 

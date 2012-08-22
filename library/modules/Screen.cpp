@@ -269,6 +269,11 @@ bool dfhack_viewscreen::is_instance(df::viewscreen *screen)
     return dfhack_screens.count(screen) != 0;
 }
 
+bool dfhack_viewscreen::key_conflict(df::interface_key key)
+{
+    return key == interface_key::OPTIONS;
+}
+
 /*
  * Lua-backed viewscreen.
  */
@@ -515,9 +520,4 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 {
     lua_pushlightuserdata(Lua::Core::State, keys);
     safe_call_lua(do_input, 1, 0);
-}
-
-bool dfhack_lua_viewscreen::key_conflict(df::interface_key key)
-{
-    return key == interface_key::MOVIES || key == interface_key::OPTIONS;
 }

@@ -123,6 +123,9 @@ namespace DFHack
 
         static bool is_instance(df::viewscreen *screen);
 
+        virtual int8_t movies_okay() { return 1; }
+        virtual bool key_conflict(df::interface_key key);
+
         virtual bool is_lua_screen() { return false; }
         virtual std::string getFocusString() = 0;
     };
@@ -154,6 +157,5 @@ namespace DFHack
         virtual void help();
         virtual void resize(int w, int h);
         virtual void feed(std::set<df::interface_key> *keys);
-        virtual bool key_conflict(df::interface_key key);
     };
 }

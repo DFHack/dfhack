@@ -36,7 +36,7 @@ using df::global::enabler;
 
 typedef struct
 {
-	char *name;
+	const char *name;
 	int points;
 	char abbrev;
 } SkillLevel;
@@ -241,7 +241,7 @@ DFHACK_PLUGIN("manipulator");
 #define    FILTER_LIVING        0x0010
 #define    FILTER_DEAD        0x0020
 
-class viewscreen_unitlaborsst : public df::viewscreen {
+class viewscreen_unitlaborsst : public dfhack_viewscreen {
 public:
     static viewscreen_unitlaborsst *create (char pushtype, df::viewscreen *scr = NULL);
 
@@ -251,12 +251,11 @@ public:
     void resize(int w, int h) { calcSize(); }
 
     void help() { }
-    int8_t movies_okay() { return 1; }
-    int8_t is_option_screen() { return 0; }
-    int8_t is_save_screen() { return 0; }
+
+    std::string getFocusString() { return "unitlabors"; }
+
     viewscreen_unitlaborsst();
     ~viewscreen_unitlaborsst() { };
-    bool key_conflict(df::interface_key test_key) { return test_key == interface_key::OPTIONS; }
 
 protected:
     vector<df::unit *> units;
@@ -577,11 +576,7 @@ void viewscreen_unitlaborsst::render()
                 str += ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill);
                 if (level != NUM_SKILL_LEVELS - 1)
                 {
-                    str += " (";
-                    str += itoa(skill->experience, buf, 10);
-                    str += "/";
-                    str += itoa(skill_levels[level].points, buf, 10);
-                    str += ")";
+                    str += stl_sprintf(" (%d/%d)", skill->experience, skill_levels[level].points);
                 }
             }
             else

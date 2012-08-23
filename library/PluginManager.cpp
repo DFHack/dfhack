@@ -108,6 +108,50 @@ struct Plugin::RefAutoinc
     ~RefAutoinc(){ lock->lock_sub(); };
 };
 
+struct Plugin::LuaCommand {
+    Plugin *owner;
+    std::string name;
+    int (*command)(lua_State *state);
+
+    LuaCommand(Plugin *owner, std::string name)
+      : owner(owner), name(name), command(NULL) {}
+};
+
+struct Plugin::LuaFunction {
+    Plugin *owner;
+    std::string name;
+    function_identity_base *identity;
+    bool silent;
+
+    LuaFunction(Plugin *owner, std::string name)
+      : owner(owner), name(name), identity(NULL), silent(false) {}
+};
+
+struct Plugin::LuaEvent : public Lua::Event::Owner {
+    LuaFunction handler;
+    Lua::Notification *event;
+    bool active;
+    int count;
+
+    LuaEvent(Plugin *owner, std::string name)
+      : handler(owner,name), event(NULL), active(false), count(0)
+    {
+        handler.silent = true;
+    }
+
+    void on_count_changed(int new_cnt, int delta) {
+        RefAutoinc lock(handler.owner->access);
+        count = new_cnt;
+        if (event)
+            event->on_count_changed(new_cnt, delta);
+    }
+    void on_invoked(lua_State *state, int nargs, bool from_c) {
+        RefAutoinc lock(handler.owner->access);
+        if (event)
+            event->on_invoked(state, nargs, from_c);
+    }
+};
+
 Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _filename, PluginManager * pm)
 {
     filename = filepath;
@@ -439,7 +483,11 @@ void Plugin::index_lua(DFLibrary *lib)
             cmd->handler.identity = evlist->event->get_handler();
             cmd->event = evlist->event;
             if (cmd->active)
+            {
                 cmd->event->bind(Lua::Core::State, cmd);
+                if (cmd->count > 0)
+                    cmd->event->on_count_changed(cmd->count, 0);
+            }
         }
     }
 }
@@ -477,8 +525,13 @@ int Plugin::lua_fun_wrapper(lua_State *state)
     RefAutoinc lock(cmd->owner->access);
 
     if (!cmd->identity)
+    {
+        if (cmd->silent)
+            return 0;
+
         luaL_error(state, "plugin function %s() has been unloaded",
                    (cmd->owner->name+"."+cmd->name).c_str());
+    }
 
     return LuaWrapper::method_wrapper_core(state, cmd->identity);
 }
@@ -506,14 +559,14 @@ void Plugin::open_lua(lua_State *state, int table)
     {
         for (auto it = lua_events.begin(); it != lua_events.end(); ++it)
         {
-            Lua::MakeEvent(state, it->second);
+            Lua::Event::Make(state, it->second, it->second);
 
             push_function(state, &it->second->handler);
-            lua_rawsetp(state, -2, NULL);
+            Lua::Event::SetPrivateCallback(state, -2);
 
             it->second->active = true;
             if (it->second->event)
-                it->second->event->bind(state, it->second);
+                it->second->event->bind(Lua::Core::State, it->second);
 
             lua_setfield(state, table, it->first.c_str());
         }

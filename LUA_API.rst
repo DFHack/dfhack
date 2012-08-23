@@ -1448,8 +1448,8 @@ Core context specific functions:
 Event type
 ----------
 
-An event is just a lua table with a predefined metatable that
-contains a __call metamethod. When it is invoked, it loops
+An event is a native object transparently wrapping a lua table,
+and implementing a __call metamethod. When it is invoked, it loops
 through the table with next and calls all contained values.
 This is intended as an extensible way to add listeners.
 
@@ -1464,10 +1464,18 @@ Features:
 
 * ``event[key] = function``
 
-  Sets the function as one of the listeners.
+  Sets the function as one of the listeners. Assign *nil* to remove it.
 
   **NOTE**: The ``df.NULL`` key is reserved for the use by
-  the C++ owner of the event, and has some special semantics.
+  the C++ owner of the event; it is an error to try setting it.
+
+* ``#event``
+
+  Returns the number of non-nil listeners.
+
+* ``pairs(event)``
+
+  Iterates over all listeners in the table.
 
 * ``event(args...)``
 

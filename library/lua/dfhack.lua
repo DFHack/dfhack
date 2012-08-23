@@ -122,8 +122,9 @@ end
 -- Misc functions
 
 function printall(table)
-    if type(table) == 'table' or df.isvalid(table) == 'ref' then
-        for k,v in pairs(table) do
+    local ok,f,t,k = pcall(pairs,table)
+    if ok then
+        for k,v in f,t,k do
             print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
         end
     end
@@ -176,10 +177,6 @@ function safe_index(obj,idx,...)
 end
 
 -- String conversions
-
-function dfhack.event:__tostring()
-    return "<event>"
-end
 
 function dfhack.persistent:__tostring()
     return "<persistent "..self.entry_id..":"..self.key.."=\""

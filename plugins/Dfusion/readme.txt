@@ -10,3 +10,5 @@ Similar to dfusion but not interactive. To be used with hotkeys (later will have
 
 Also dfuse/dfusion runs an init script located at 'save directory/dfusion/init.lua'. And 'initcustom.lua' if it exists
 More info http://dwarffortresswiki.org/index.php/Utility:DFusion
+
+a

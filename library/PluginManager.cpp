@@ -195,6 +195,9 @@ bool Plugin::load(color_ostream &con)
     {
         return true;
     }
+    // enter suspend
+    CoreSuspender suspend;
+    // open the library, etc
     DFLibrary * plug = OpenPlugin(filename.c_str());
     if(!plug)
     {
@@ -270,6 +273,8 @@ bool Plugin::unload(color_ostream &con)
         }
         // wait for all calls to finish
         access->wait();
+        // enter suspend
+        CoreSuspender suspend;
         // notify plugin about shutdown, if it has a shutdown function
         command_result cr = CR_OK;
         if(plugin_shutdown)

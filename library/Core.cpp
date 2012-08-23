@@ -1225,6 +1225,7 @@ int Core::Shutdown ( void )
     if(errorstate)
         return true;
     errorstate = 1;
+    CoreSuspendClaimer suspend;
     if(plug_mgr)
     {
         delete plug_mgr;

@@ -43,7 +43,6 @@ using std::string;
 using std::endl;
 using namespace DFHack;
 using namespace df::enums;
-using namespace df::enums::item_quality;
 
 using df::global::world;
 using df::global::ui;
@@ -285,7 +284,7 @@ struct ItemConstraint {
     int weight;
     std::vector<ProtectedJob*> jobs;
 
-    enum item_quality min_quality;
+    item_quality::item_quality min_quality;
 
     int item_amount, item_count, item_inuse;
     bool request_suspend, request_resume;
@@ -296,8 +295,8 @@ struct ItemConstraint {
 
 public:
     ItemConstraint()
-        : is_craft(false), weight(0), item_amount(0), item_count(0), item_inuse(0)
-        , is_active(false), cant_resume_reported(false), min_quality(Ordinary)
+        : is_craft(false), weight(0), min_quality(item_quality::Ordinary),item_amount(0),
+          item_count(0), item_inuse(0), is_active(false), cant_resume_reported(false)
     {}
 
     int goalCount() { return config.ival(0); }
@@ -685,15 +684,15 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         return NULL;
     }
 
-    enum item_quality minqual = Ordinary;
+    item_quality::item_quality minqual = item_quality::Ordinary;
     std::string qualstr = vector_get(tokens, 3);
     if(!qualstr.empty()) {
-	    if(qualstr == "ordinary") minqual = Ordinary;
-	    else if(qualstr == "wellcrafted") minqual = WellCrafted;
-	    else if(qualstr == "finelycrafted") minqual = FinelyCrafted;
-	    else if(qualstr == "superior") minqual = Superior;
-	    else if(qualstr == "exceptional") minqual = Exceptional;
-	    else if(qualstr == "masterful") minqual = Masterful;
+	    if(qualstr == "ordinary") minqual = item_quality::Ordinary;
+	    else if(qualstr == "wellcrafted") minqual = item_quality::WellCrafted;
+	    else if(qualstr == "finelycrafted") minqual = item_quality::FinelyCrafted;
+	    else if(qualstr == "superior") minqual = item_quality::Superior;
+	    else if(qualstr == "exceptional") minqual = item_quality::Exceptional;
+	    else if(qualstr == "masterful") minqual = item_quality::Masterful;
 	    else {
 		    out.printerr("Cannot find quality: %s\nKnown qualities: ordinary, wellcrafted, finelycrafted, superior, exceptional, masterful\n", qualstr.c_str());
 		    return NULL;
@@ -1381,15 +1380,15 @@ static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job
 {
     Console::color_value color;
     if (cv->request_resume)
-        color = Console::COLOR_GREEN;
+        color = COLOR_GREEN;
     else if (cv->request_suspend)
-        color = Console::COLOR_CYAN;
+        color = COLOR_CYAN;
     else
-        color = Console::COLOR_DARKGREY;
+        color = COLOR_DARKGREY;
 
     out.color(color);
     out << prefix << "Constraint " << flush;
-    out.color(Console::COLOR_GREY);
+    out.color(COLOR_GREY);
     out << cv->config.val() << " " << flush;
     out.color(color);
     out << (cv->goalByCount() ? "count " : "amount ")
@@ -1438,18 +1437,18 @@ static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job
         {
             if (pj->want_resumed)
             {
-                out.color(Console::COLOR_YELLOW);
+                out.color(COLOR_YELLOW);
                 out << start << " (delayed)" << endl;
             }
             else
             {
-                out.color(Console::COLOR_BLUE);
+                out.color(COLOR_BLUE);
                 out << start << " (suspended)" << endl;
             }
         }
         else
         {
-            out.color(Console::COLOR_GREEN);
+            out.color(COLOR_GREEN);
             out << start << endl;
         }
 
@@ -1473,11 +1472,11 @@ static void print_job(color_ostream &out, ProtectedJob *pj)
         isOptionEnabled(CF_AUTOMELT))
     {
         if (meltable_count <= 0)
-            out.color(Console::COLOR_CYAN);
+            out.color(COLOR_CYAN);
         else if (pj->want_resumed && !pj->isActuallyResumed())
-            out.color(Console::COLOR_YELLOW);
+            out.color(COLOR_YELLOW);
         else
-            out.color(Console::COLOR_GREEN);
+            out.color(COLOR_GREEN);
         out << "  Meltable: " << meltable_count << " objects." << endl;
         out.reset_color();
     }
@@ -1504,13 +1503,14 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
     }
 
     df::building *workshop = NULL;
-    df::job *job = NULL;
+    //FIXME: unused variable!
+    //df::job *job = NULL;
 
     if (Gui::dwarfmode_hotkey(Core::getTopViewscreen()) &&
         ui->main.mode == ui_sidebar_mode::QueryBuilding)
     {
         workshop = world->selected_building;
-        job = Gui::getSelectedWorkshopJob(out, true);
+        //job = Gui::getSelectedWorkshopJob(out, true);
     }
 
     std::string cmd = parameters.empty() ? "list" : parameters[0];

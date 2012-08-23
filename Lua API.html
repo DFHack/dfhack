@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Docutils 0.9: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.8.1: http://docutils.sourceforge.net/" />
 <title>DFHack Lua API</title>
 <style type="text/css">
 
@@ -351,27 +351,28 @@ ul.auto-toc {
 <li><a class="reference internal" href="#burrows-module" id="id23">Burrows module</a></li>
 <li><a class="reference internal" href="#buildings-module" id="id24">Buildings module</a></li>
 <li><a class="reference internal" href="#constructions-module" id="id25">Constructions module</a></li>
-<li><a class="reference internal" href="#internal-api" id="id26">Internal API</a></li>
+<li><a class="reference internal" href="#screen-api" id="id26">Screen API</a></li>
+<li><a class="reference internal" href="#internal-api" id="id27">Internal API</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#core-interpreter-context" id="id27">Core interpreter context</a><ul>
-<li><a class="reference internal" href="#event-type" id="id28">Event type</a></li>
+<li><a class="reference internal" href="#core-interpreter-context" id="id28">Core interpreter context</a><ul>
+<li><a class="reference internal" href="#event-type" id="id29">Event type</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#lua-modules" id="id29">Lua Modules</a><ul>
-<li><a class="reference internal" href="#global-environment" id="id30">Global environment</a></li>
-<li><a class="reference internal" href="#utils" id="id31">utils</a></li>
-<li><a class="reference internal" href="#dumper" id="id32">dumper</a></li>
+<li><a class="reference internal" href="#lua-modules" id="id30">Lua Modules</a><ul>
+<li><a class="reference internal" href="#global-environment" id="id31">Global environment</a></li>
+<li><a class="reference internal" href="#utils" id="id32">utils</a></li>
+<li><a class="reference internal" href="#dumper" id="id33">dumper</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#plugins" id="id33">Plugins</a><ul>
-<li><a class="reference internal" href="#burrows" id="id34">burrows</a></li>
-<li><a class="reference internal" href="#sort" id="id35">sort</a></li>
+<li><a class="reference internal" href="#plugins" id="id34">Plugins</a><ul>
+<li><a class="reference internal" href="#burrows" id="id35">burrows</a></li>
+<li><a class="reference internal" href="#sort" id="id36">sort</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#scripts" id="id36">Scripts</a></li>
+<li><a class="reference internal" href="#scripts" id="id37">Scripts</a></li>
 </ul>
 </div>
 <p>The current version of DFHack has extensive support for
@@ -1385,8 +1386,137 @@ Returns <em>true, was_only_planned</em> if removed; or <em>false</em> if none fo
 </li>
 </ul>
 </div>
+<div class="section" id="screen-api">
+<h3><a class="toc-backref" href="#id26">Screen API</a></h3>
+<p>The screen module implements support for drawing to the tiled screen of the game.
+Note that drawing only has any effect when done from callbacks, so it can only
+be feasibly used in the core context.</p>
+<p>Basic painting functions:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.getWindowSize()</tt></p>
+<p>Returns <em>width, height</em> of the screen.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.getMousePos()</tt></p>
+<p>Returns <em>x,y</em> of the tile the mouse is over.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.inGraphicsMode()</tt></p>
+<p>Checks if [GRAPHICS:YES] was specified in init.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.screen.paintTile(pen,x,y[,char,tile])</span></tt></p>
+<p>Paints a tile using given parameters. Pen is a table with following possible fields:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal">ch</tt></dt>
+<dd><p class="first last">Provides the ordinary tile character, as either a 1-character string or a number.
+Can be overridden with the <tt class="docutils literal">char</tt> function parameter.</p>
+</dd>
+<dt><tt class="docutils literal">fg</tt></dt>
+<dd><p class="first last">Foreground color for the ordinary tile. Defaults to COLOR_GREY (7).</p>
+</dd>
+<dt><tt class="docutils literal">bg</tt></dt>
+<dd><p class="first last">Background color for the ordinary tile. Defaults to COLOR_BLACK (0).</p>
+</dd>
+<dt><tt class="docutils literal">bold</tt></dt>
+<dd><p class="first last">Bright/bold text flag. If <em>nil</em>, computed based on (fg &amp; 8); fg is masked to 3 bits.
+Otherwise should be <em>true/false</em>.</p>
+</dd>
+<dt><tt class="docutils literal">tile</tt></dt>
+<dd><p class="first last">Graphical tile id. Ignored unless [GRAPHICS:YES] was in init.txt.</p>
+</dd>
+<dt><tt class="docutils literal">tile_color = true</tt></dt>
+<dd><p class="first last">Specifies that the tile should be shaded with <em>fg/bg</em>.</p>
+</dd>
+<dt><tt class="docutils literal">tile_fg, tile_bg</tt></dt>
+<dd><p class="first last">If specified, overrides <em>tile_color</em> and supplies shading colors directly.</p>
+</dd>
+</dl>
+<p>Returns <em>false</em> if coordinates out of bounds, or other error.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.paintString(pen,x,y,text)</tt></p>
+<p>Paints the string starting at <em>x,y</em>. Uses the string characters
+in sequence to override the <tt class="docutils literal">ch</tt> field of pen.</p>
+<p>Returns <em>true</em> if painting at least one character succeeded.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.fillRect(pen,x1,y1,x2,y2)</tt></p>
+<p>Fills the rectangle specified by the coordinates with the given pen.
+Returns <em>true</em> if painting at least one character succeeded.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.findGraphicsTile(pagename,x,y)</tt></p>
+<p>Finds a tile from a graphics set (i.e. the raws used for creatures),
+if in graphics mode and loaded.</p>
+<p>Returns: <em>tile, tile_grayscale</em>, or <em>nil</em> if not found.
+The values can then be used for the <em>tile</em> field of <em>pen</em> structures.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.clear()</tt></p>
+<p>Fills the screen with blank background.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.invalidate()</tt></p>
+<p>Requests repaint of the screen by setting a flag. Unlike other
+functions in this section, this may be used at any time.</p>
+</li>
+</ul>
+<p>In order to actually be able to paint to the screen, it is necessary
+to create and register a viewscreen (basically a modal dialog) with
+the game.</p>
+<p><strong>NOTE</strong>: As a matter of policy, in order to avoid user confusion, all
+interface screens added by dfhack should bear the &quot;DFHack&quot; signature.</p>
+<p>Screens are managed with the following functions:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.screen.show(screen[,below])</span></tt></p>
+<p>Displays the given screen, possibly placing it below a different one.
+The screen must not be already shown. Returns <em>true</em> if success.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.dismiss(screen)</tt></p>
+<p>Marks the screen to be removed when the game enters its event loop.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.isDismissed(screen)</tt></p>
+<p>Checks if the screen is already marked for removal.</p>
+</li>
+</ul>
+<p>Apart from a native viewscreen object, these functions accept a table
+as a screen. In this case, <tt class="docutils literal">show</tt> creates a new native viewscreen
+that delegates all processing to methods stored in that table.</p>
+<p><strong>NOTE</strong>: Lua-implemented screens are only supported in the core context.</p>
+<p>Supported callbacks and fields are:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">screen._native</tt></p>
+<p>Initialized by <tt class="docutils literal">show</tt> with a reference to the backing viewscreen
+object, and removed again when the object is deleted.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">function screen:onDestroy()</tt></p>
+<p>Called from the destructor when the viewscreen is deleted.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">function screen:onRender()</tt></p>
+<p>Called when the viewscreen should paint itself. This is the only context
+where the above painting functions work correctly.</p>
+<p>If omitted, the screen is cleared; otherwise it should do that itself.
+In order to make a see-through dialog, call <tt class="docutils literal">self._native.parent:render()</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">function screen:onIdle()</tt></p>
+<p>Called every frame when the screen is on top of the stack.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">function screen:onHelp()</tt></p>
+<p>Called when the help keybinding is activated (usually '?').</p>
+</li>
+<li><p class="first"><tt class="docutils literal">function screen:onInput(keys)</tt></p>
+<p>Called when keyboard or mouse events are available.
+If any keys are pressed, the keys argument is a table mapping them to <em>true</em>.
+Note that this refers to logical keybingings computed from real keys via
+options; if multiple interpretations exist, the table will contain multiple keys.</p>
+<p>The table also may contain special keys:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal">_STRING</tt></dt>
+<dd><p class="first last">Maps to an integer in range 0-255. Duplicates a separate &quot;STRING_A???&quot; code for convenience.</p>
+</dd>
+<dt><tt class="docutils literal">_MOUSE_L, _MOUSE_R</tt></dt>
+<dd><p class="first last">If the left or right mouse button is pressed.</p>
+</dd>
+</dl>
+<p>If this method is omitted, the screen is dismissed on receival of the <tt class="docutils literal">LEAVESCREEN</tt> key.</p>
+</li>
+</ul>
+</div>
 <div class="section" id="internal-api">
-<h3><a class="toc-backref" href="#id26">Internal API</a></h3>
+<h3><a class="toc-backref" href="#id27">Internal API</a></h3>
 <p>These functions are intended for the use by dfhack developers,
 and are only documented here for completeness:</p>
 <ul>
@@ -1409,6 +1539,11 @@ global environment, persistent between calls to the script.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getMemRanges()</tt></p>
 <p>Returns a sequence of tables describing virtual memory ranges of the process.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.patchMemory(dest,src,count)</tt></p>
+<p>Like memmove below, but works even if dest is read-only memory, e.g. code.
+If destination overlaps a completely invalid memory region, or another error
+occurs, returns false.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.memmove(dest,src,count)</tt></p>
 <p>Wraps the standard memmove function. Accepts both numbers and refs as pointers.</p>
 </li>
@@ -1429,7 +1564,7 @@ Returns: <em>found_index</em>, or <em>nil</em> if end reached.</p>
 </div>
 </div>
 <div class="section" id="core-interpreter-context">
-<h2><a class="toc-backref" href="#id27">Core interpreter context</a></h2>
+<h2><a class="toc-backref" href="#id28">Core interpreter context</a></h2>
 <p>While plugins can create any number of interpreter instances,
 there is one special context managed by dfhack core. It is the
 only context that can receive events from DF and plugins.</p>
@@ -1460,7 +1595,7 @@ Using <tt class="docutils literal">timeout_active(id,nil)</tt> cancels the timer
 </li>
 </ul>
 <div class="section" id="event-type">
-<h3><a class="toc-backref" href="#id28">Event type</a></h3>
+<h3><a class="toc-backref" href="#id29">Event type</a></h3>
 <p>An event is just a lua table with a predefined metatable that
 contains a __call metamethod. When it is invoked, it loops
 through the table with next and calls all contained values.
@@ -1486,7 +1621,7 @@ order using <tt class="docutils literal">dfhack.safecall</tt>.</p>
 </div>
 </div>
 <div class="section" id="lua-modules">
-<h1><a class="toc-backref" href="#id29">Lua Modules</a></h1>
+<h1><a class="toc-backref" href="#id30">Lua Modules</a></h1>
 <p>DFHack sets up the lua interpreter so that the built-in <tt class="docutils literal">require</tt>
 function can be used to load shared lua code from hack/lua/.
 The <tt class="docutils literal">dfhack</tt> namespace reference itself may be obtained via
@@ -1515,7 +1650,7 @@ in this document.</p>
 </li>
 </ul>
 <div class="section" id="global-environment">
-<h2><a class="toc-backref" href="#id30">Global environment</a></h2>
+<h2><a class="toc-backref" href="#id31">Global environment</a></h2>
 <p>A number of variables and functions are provided in the base global
 environment by the mandatory init file dfhack.lua:</p>
 <ul>
@@ -1556,7 +1691,7 @@ Returns <em>nil</em> if any of obj or indices is <em>nil</em>, or a numeric inde
 </ul>
 </div>
 <div class="section" id="utils">
-<h2><a class="toc-backref" href="#id31">utils</a></h2>
+<h2><a class="toc-backref" href="#id32">utils</a></h2>
 <ul>
 <li><p class="first"><tt class="docutils literal">utils.compare(a,b)</tt></p>
 <p>Comparator function; returns <em>-1</em> if a&lt;b, <em>1</em> if a&gt;b, <em>0</em> otherwise.</p>
@@ -1669,7 +1804,7 @@ throws an error.</p>
 </ul>
 </div>
 <div class="section" id="dumper">
-<h2><a class="toc-backref" href="#id32">dumper</a></h2>
+<h2><a class="toc-backref" href="#id33">dumper</a></h2>
 <p>A third-party lua table dumper module from
 <a class="reference external" href="http://lua-users.org/wiki/DataDumper">http://lua-users.org/wiki/DataDumper</a>. Defines one
 function:</p>
@@ -1683,14 +1818,14 @@ the other arguments see the original documentation link above.</p>
 </div>
 </div>
 <div class="section" id="plugins">
-<h1><a class="toc-backref" href="#id33">Plugins</a></h1>
+<h1><a class="toc-backref" href="#id34">Plugins</a></h1>
 <p>DFHack plugins may export native functions and events
 to lua contexts. They are automatically imported by
 <tt class="docutils literal"><span class="pre">mkmodule('plugins.&lt;name&gt;')</span></tt>; this means that a lua
 module file is still necessary for <tt class="docutils literal">require</tt> to read.</p>
 <p>The following plugins have lua support.</p>
 <div class="section" id="burrows">
-<h2><a class="toc-backref" href="#id34">burrows</a></h2>
+<h2><a class="toc-backref" href="#id35">burrows</a></h2>
 <p>Implements extended burrow manipulations.</p>
 <p>Events:</p>
 <ul>
@@ -1728,13 +1863,13 @@ set is the same as used by the command line.</p>
 <p>The lua module file also re-exports functions from <tt class="docutils literal">dfhack.burrows</tt>.</p>
 </div>
 <div class="section" id="sort">
-<h2><a class="toc-backref" href="#id35">sort</a></h2>
+<h2><a class="toc-backref" href="#id36">sort</a></h2>
 <p>Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.</p>
 </div>
 </div>
 <div class="section" id="scripts">
-<h1><a class="toc-backref" href="#id36">Scripts</a></h1>
+<h1><a class="toc-backref" href="#id37">Scripts</a></h1>
 <p>Any files with the .lua extension placed into hack/scripts/*
 are automatically used by the DFHack core as commands. The
 matching command name consists of the name of the file sans

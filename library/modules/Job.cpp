@@ -189,7 +189,7 @@ void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
 {
     CHECK_NULL_POINTER(job);
 
-    out.color(job->flags.bits.suspend ? Console::COLOR_DARKGREY : Console::COLOR_GREY);
+    out.color(job->flags.bits.suspend ? COLOR_DARKGREY : COLOR_GREY);
     out << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_type);
     if (job->flags.whole)
            out << " (" << bitfield_to_string(job->flags) << ")";

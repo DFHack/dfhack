@@ -192,6 +192,16 @@ namespace DFHack {namespace Lua {
     }
 
     /**
+     * Call through to the function with try/catch for C++ exceptions.
+     */
+    DFHACK_EXPORT int CallWithCatch(lua_State *, int (*fn)(lua_State*), const char *context = NULL);
+
+    template<int (*cb)(lua_State*)>
+    int CallWithCatchWrapper(lua_State *state) {
+        return CallWithCatch(state, cb);
+    }
+
+    /**
      * Invoke lua function via pcall. Returns true if success.
      * If an error is signalled, and perr is true, it is printed and popped from the stack.
      */

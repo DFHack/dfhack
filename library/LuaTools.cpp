@@ -252,7 +252,7 @@ static int lua_dfhack_color(lua_State *S)
 {
     int cv = luaL_optint(S, 1, -1);
 
-    if (cv < -1 || cv > color_ostream::COLOR_MAX)
+    if (cv < -1 || cv > COLOR_MAX)
         luaL_argerror(S, 1, "invalid color value");
 
     color_ostream *out = Lua::GetOutput(S);

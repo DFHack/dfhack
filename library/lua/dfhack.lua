@@ -102,6 +102,23 @@ function reload(module)
     dofile(path)
 end
 
+-- Trivial classes
+
+function defclass(class,parent)
+    class = class or {}
+    rawset(class, '__index', rawget(class, '__index') or class)
+    if parent then
+        setmetatable(class, parent)
+    end
+    return class
+end
+
+function mkinstance(class,table)
+    table = table or {}
+    setmetatable(table, class)
+    return table
+end
+
 -- Misc functions
 
 function printall(table)
@@ -186,6 +203,12 @@ end
 function dfhack.buildings.getSize(bld)
     local x, y = bld.x1, bld.y1
     return bld.x2+1-x, bld.y2+1-y, bld.centerx-x, bld.centery-y
+end
+
+dfhack.screen.__index = dfhack.screen
+
+function dfhack.screen:__tostring()
+    return "<lua viewscreen: "..tostring(self._native)..">"
 end
 
 -- Interactive

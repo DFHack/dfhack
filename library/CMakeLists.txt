@@ -27,6 +27,7 @@ include/Core.h
 include/ColorText.h
 include/DataDefs.h
 include/DataIdentity.h
+include/VTableInterpose.h
 include/LuaWrapper.h
 include/LuaTools.h
 include/Error.h
@@ -53,6 +54,7 @@ SET(MAIN_SOURCES
 Core.cpp
 ColorText.cpp
 DataDefs.cpp
+VTableInterpose.cpp
 LuaWrapper.cpp
 LuaTypes.cpp
 LuaTools.cpp
@@ -117,6 +119,7 @@ include/modules/Maps.h
 include/modules/MapCache.h
 include/modules/Materials.h
 include/modules/Notes.h
+include/modules/Screen.h
 include/modules/Translation.h
 include/modules/Vegetation.h
 include/modules/Vermin.h
@@ -137,6 +140,7 @@ modules/kitchen.cpp
 modules/Maps.cpp
 modules/Materials.cpp
 modules/Notes.cpp
+modules/Screen.cpp
 modules/Translation.cpp
 modules/Vegetation.cpp
 modules/Vermin.cpp

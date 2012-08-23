@@ -1,3 +1,5 @@
+// Dwarf Manipulator - a Therapist-style labor editor
+
 #include "Core.h"
 #include <Console.h>
 #include <Export.h>
@@ -35,12 +37,14 @@ using df::global::ui;
 using df::global::gps;
 using df::global::enabler;
 
-typedef struct
+DFHACK_PLUGIN("manipulator");
+
+struct SkillLevel
 {
 	const char *name;
 	int points;
 	char abbrev;
-} SkillLevel;
+};
 
 #define    NUM_SKILL_LEVELS (sizeof(skill_levels) / sizeof(SkillLevel))
 
@@ -69,14 +73,14 @@ const SkillLevel skill_levels[] = {
 	{"Legendary+5",	0, 'Z'}
 };
 
-typedef struct
+struct SkillColumn
 {
     df::profession profession;
     df::unit_labor labor;
     df::job_skill skill;
     char label[3];
     bool special; // specified labor is mutually exclusive with all other special labors
-} SkillColumn;
+};
 
 #define    NUM_COLUMNS (sizeof(columns) / sizeof(SkillColumn))
 
@@ -233,7 +237,15 @@ const SkillColumn columns[] = {
     {profession::ADMINISTRATOR, unit_labor::NONE, job_skill::MAGIC_NATURE, "Dr"},
 };
 
-DFHACK_PLUGIN("manipulator");
+struct UnitInfo
+{
+    df::unit *unit;
+    bool allowEdit;
+    string name;
+    string transname;
+    string profession;
+    int8_t color;
+};
 
 #define    FILTER_NONWORKERS    0x0001
 #define    FILTER_NONDWARVES    0x0002
@@ -259,8 +271,7 @@ public:
     ~viewscreen_unitlaborsst() { };
 
 protected:
-    vector<df::unit *> units;
-    vector<char> editable;
+    vector<UnitInfo *> units;
     int filter;
 
     int first_row, sel_row;
@@ -287,30 +298,34 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst()
 
 void viewscreen_unitlaborsst::readUnits ()
 {
+    for (size_t i = 0; i < units.size(); i++)
+        delete units[i];
     units.clear();
-    editable.clear();
+
+    UnitInfo *cur = new UnitInfo;
     for (size_t i = 0; i < world->units.active.size(); i++)
     {
-        df::unit *cur = world->units.active[i];
-        bool can_edit = true;
+        df::unit *unit = world->units.active[i];
+        cur->unit = unit;
+        cur->allowEdit = true;
 
-        if (cur->race != ui->race_id)
+        if (unit->race != ui->race_id)
         {
-            can_edit = false;
+            cur->allowEdit = false;
             if (!(filter & FILTER_NONDWARVES))
                 continue;
         }
 
-        if (cur->civ_id != ui->civ_id)
+        if (unit->civ_id != ui->civ_id)
         {
-            can_edit = false;
+            cur->allowEdit = false;
             if (!(filter & FILTER_NONCIV))
                 continue;
         }
 
-        if (cur->flags1.bits.dead)
+        if (unit->flags1.bits.dead)
         {
-            can_edit = false;
+            cur->allowEdit = false;
             if (!(filter & FILTER_DEAD))
                 continue;
         }
@@ -320,21 +335,28 @@ void viewscreen_unitlaborsst::readUnits ()
                 continue;
         }
 
-        if (!ENUM_ATTR(profession, can_assign_labor, cur->profession))
+        if (!ENUM_ATTR(profession, can_assign_labor, unit->profession))
         {
-            can_edit = false;
+            cur->allowEdit = false;
             if (!(filter & FILTER_NONWORKERS))
                 continue;
         }
 
-        if (!cur->name.first_name.length())
+        if (!unit->name.first_name.length())
         {
             if (!(filter & FILTER_ANIMALS))
                 continue;
         }
+
+        cur->name = Translation::TranslateName(&unit->name, false);
+        cur->transname = Translation::TranslateName(&unit->name, true);
+        cur->profession = Units::getProfessionName(unit);
+        cur->color = Units::getProfessionColor(unit);
+
         units.push_back(cur);
-        editable.push_back(can_edit);
+        cur = new UnitInfo;
     }
+    delete cur;
 }
 
 void viewscreen_unitlaborsst::calcSize()
@@ -423,7 +445,6 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (first_row < sel_row - height + 1)
         first_row = sel_row - height + 1;
 
-
     if (events->count(interface_key::CURSOR_LEFT) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_DOWNLEFT))
         sel_column--;
     if (events->count(interface_key::CURSOR_LEFT_FAST) || events->count(interface_key::CURSOR_UPLEFT_FAST) || events->count(interface_key::CURSOR_DOWNLEFT_FAST))
@@ -460,23 +481,24 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (first_column < sel_column - labors_width + 1)
         first_column = sel_column - labors_width + 1;
 
-    if (events->count(interface_key::SELECT) && editable[sel_row] && (columns[sel_column].labor != unit_labor::NONE))
+    UnitInfo *cur = units[sel_row];
+    if (events->count(interface_key::SELECT) && (cur->allowEdit) && (columns[sel_column].labor != unit_labor::NONE))
     {
-        df::unit *cur = units[sel_row];
+        df::unit *unit = cur->unit;
         const SkillColumn &col = columns[sel_column];
         if (col.special)
         {
-            if (!cur->status.labors[col.labor])
+            if (!unit->status.labors[col.labor])
             {
                 for (int i = 0; i < NUM_COLUMNS; i++)
                 {
                     if ((columns[i].labor != unit_labor::NONE) && columns[i].special)
-                        cur->status.labors[columns[i].labor] = false;
+                        unit->status.labors[columns[i].labor] = false;
                 }
             }
-            cur->military.pickup_flags.bits.update = true;
+            unit->military.pickup_flags.bits.update = true;
         }
-        cur->status.labors[col.labor] = !cur->status.labors[col.labor];
+        unit->status.labors[col.labor] = !unit->status.labors[col.labor];
     }
 
     // TODO: add sorting
@@ -515,7 +537,8 @@ void viewscreen_unitlaborsst::render()
         int row_offset = row + first_row;
         if (row_offset >= units.size())
             break;
-        df::unit *unit = units[row_offset];
+        UnitInfo *cur = units[row_offset];
+        df::unit *unit = cur->unit;
         int8_t fg = 15, bg = 0;
         if (row_offset == sel_row)
         {
@@ -523,12 +546,13 @@ void viewscreen_unitlaborsst::render()
             bg = 7;
         }
 
-        string name = Translation::TranslateName(&unit->name, false);
+        string name = cur->name;
         name.resize(name_width);
         Screen::paintString(Screen::Pen(' ', fg, bg), 1, 3 + row, name);
 
-        string profession = Units::getProfessionName(unit);
-        fg = Units::getProfessionColor(unit);
+        string profession = cur->profession;
+        profession.resize(prof_width);
+        fg = cur->color;
         bg = 0;
         Screen::paintString(Screen::Pen(' ', fg, bg), 1 + prof_width + 1, 3 + row, profession);
 
@@ -546,7 +570,7 @@ void viewscreen_unitlaborsst::render()
             if (columns[col_offset].skill != job_skill::NONE)
             {
                 df::unit_skill *skill = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(unit->status.current_soul->skills, &df::unit_skill::id, columns[col_offset].skill);
-                if ((skill != NULL) && (skill->experience))
+                if ((skill != NULL) && (skill->rating || skill->experience))
                 {
                     int level = skill->rating;
                     if (level > NUM_SKILL_LEVELS - 1)
@@ -558,13 +582,14 @@ void viewscreen_unitlaborsst::render()
         }
     }
 
-    df::unit *unit = units[sel_row];
-    if (unit != NULL)
+    UnitInfo *cur = units[sel_row];
+    if (cur != NULL)
     {
-        string str = Translation::TranslateName(&unit->name, true);
+        df::unit *unit = cur->unit;
+        string str = cur->transname;
         if (str.length())
             str += ", ";
-        str += Units::getProfessionName(unit);
+        str += cur->profession;
         str += ":";
 
         Screen::paintString(Screen::Pen(' ', 15, 0), 1, 3 + height + 2, str);
@@ -597,10 +622,11 @@ void viewscreen_unitlaborsst::render()
         }
     }
 
-    // TODO - print command info
+    // TODO - print command help info
 }
 
-struct unitlist_hook : df::viewscreen_unitlistst {
+struct unitlist_hook : df::viewscreen_unitlistst
+{
     typedef df::viewscreen_unitlistst interpose_base;
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))

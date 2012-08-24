@@ -62,6 +62,8 @@ ADD_CUSTOM_COMMAND(
 
 SET_SOURCE_FILES_PROPERTIES( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 
+add_subdirectory(diggingInvaders)
+
 # Plugins
 OPTION(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if (BUILD_SUPPORTED)
@@ -116,7 +118,6 @@ if (BUILD_SUPPORTED)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
 endif()
-
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it
 OPTION(BUILD_SKELETON "Build the skeleton plugin." OFF)

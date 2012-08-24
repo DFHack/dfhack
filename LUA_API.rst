@@ -880,6 +880,15 @@ Units module
 
   Retrieves the profession name for the given race/caste using raws.
 
+* ``dfhack.units.getProfessionColor(unit[,ignore_noble])``
+
+  Retrieves the color associated with the profession, using noble assignments
+  or raws. The ``ignore_noble`` boolean disables the use of noble positions.
+
+* ``dfhack.units.getCasteProfessionColor(race,caste,prof_id)``
+
+  Retrieves the profession color for the given race/caste using raws.
+
 
 Items module
 ------------
@@ -1031,6 +1040,11 @@ Burrows module
 
 Buildings module
 ----------------
+
+* ``dfhack.buildings.setOwner(item,unit)``
+
+  Replaces the owner of the building. If unit is *nil*, removes ownership.
+  Returns *false* in case of error.
 
 * ``dfhack.buildings.getSize(building)``
 

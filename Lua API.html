@@ -1113,6 +1113,13 @@ or raws. The <tt class="docutils literal">ignore_noble</tt> boolean disables the
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.units.getCasteProfessionName(race,caste,prof_id[,plural])</span></tt></p>
 <p>Retrieves the profession name for the given race/caste using raws.</p>
 </li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.units.getProfessionColor(unit[,ignore_noble])</span></tt></p>
+<p>Retrieves the color associated with the profession, using noble assignments
+or raws. The <tt class="docutils literal">ignore_noble</tt> boolean disables the use of noble positions.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getCasteProfessionColor(race,caste,prof_id)</tt></p>
+<p>Retrieves the profession color for the given race/caste using raws.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="items-module">
@@ -1237,6 +1244,10 @@ burrows, or the presence of invaders.</p>
 <div class="section" id="buildings-module">
 <h3><a class="toc-backref" href="#id24">Buildings module</a></h3>
 <ul>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.setOwner(item,unit)</tt></p>
+<p>Replaces the owner of the building. If unit is <em>nil</em>, removes ownership.
+Returns <em>false</em> in case of error.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.buildings.getSize(building)</tt></p>
 <p>Returns <em>width, height, centerx, centery</em>.</p>
 </li>

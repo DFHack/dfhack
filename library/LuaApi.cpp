@@ -815,6 +815,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getAge),
     WRAPM(Units, getProfessionName),
     WRAPM(Units, getCasteProfessionName),
+    WRAPM(Units, getProfessionColor),
+    WRAPM(Units, getCasteProfessionColor),
     { NULL, NULL }
 };
 
@@ -985,6 +987,7 @@ static bool buildings_containsTile(df::building *bld, int x, int y, bool room) {
 }
 
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
+    WRAPM(Buildings, setOwner),
     WRAPM(Buildings, allocInstance),
     WRAPM(Buildings, checkFreeTiles),
     WRAPM(Buildings, countExtentTiles),

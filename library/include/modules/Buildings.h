@@ -173,5 +173,10 @@ DFHACK_EXPORT bool constructWithFilters(df::building *bld, std::vector<df::job_i
  */
 DFHACK_EXPORT bool deconstruct(df::building *bld);
 
+/**
+ * Immediately deconstructs a building.
+ */
+DFHACK_EXPORT bool deconstructImmediately(df::building *bld);
+
 }
 }

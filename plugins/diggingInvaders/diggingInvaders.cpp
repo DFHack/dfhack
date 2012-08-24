@@ -10,8 +10,12 @@
 #include "df/ui.h"
 #include "df/unit.h"
 #include "df/world.h"
-#include "modules/World.h"
+
+#include "Types.h"
+#include "modules/Buildings.h"
+	//crashes without Types.h
 #include "modules/MapCache.h"
+#include "modules/World.h"
 
 #include <vector>
 #include <algorithm>
@@ -293,7 +297,11 @@ command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string>
                     //found it!
                     foundIt = true;
                     //destroy it
-                    building->deconstructItems(false, false);
+					out.print("deconstructImmediately...\n");
+					DFHack::Buildings::deconstructImmediately(building);
+					out.print("done\n");
+					building = NULL;
+                    //building->deconstructItems(false, false);
                     //building->removeUses(false, false);
                     break;
                 }

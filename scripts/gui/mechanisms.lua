@@ -142,11 +142,8 @@ function MechanismList:onInput(keys)
     end
 end
 
-if not df.viewscreen_dwarfmodest:is_instance(dfhack.gui.getCurViewscreen()) then
-    qerror("This script requires the main dwarfmode view")
-end
-if df.global.ui.main.mode ~= df.ui_sidebar_mode.QueryBuilding then
-    qerror("This script requires the 'q' interface mode")
+if dfhack.gui.getCurFocus() ~= 'dwarfmode/QueryBuilding/Some' then
+    qerror("This script requires the main dwarfmode view in 'q' mode")
 end
 
 local list = MechanismList.new(df.global.world.selected_building)

@@ -983,17 +983,19 @@ void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
     world->status.popups.push_back(popup);
 }
 
-df::viewscreen * Gui::GetCurrentScreen()
+df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
 {
     df::viewscreen * ws = &gview->view;
-    while(ws)
+    while (ws && ws->child)
+        ws = ws->child;
+
+    if (skip_dismissed)
     {
-        if(ws->child)
-            ws = ws->child;
-        else
-            return ws;
+        while (ws && Screen::isDismissed(ws) && ws->parent)
+            ws = ws->parent;
     }
-    return 0;
+
+    return ws;
 }
 
 bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)

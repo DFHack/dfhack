@@ -55,8 +55,6 @@ namespace DFHack
      */
     namespace Gui
     {
-        inline df::viewscreen *getCurViewscreen() { return Core::getTopViewscreen(); }
-
         DFHACK_EXPORT std::string getFocusString(df::viewscreen *top);
 
         // Full-screen item details view
@@ -113,7 +111,11 @@ namespace DFHack
          * Gui screens
          */
         /// Get the current top-level view-screen
-        DFHACK_EXPORT df::viewscreen * GetCurrentScreen();
+        DFHACK_EXPORT df::viewscreen *getCurViewscreen(bool skip_dismissed = false);
+
+        inline std::string getCurFocus(bool skip_dismissed = false) {
+            return getFocusString(getCurViewscreen(skip_dismissed));
+        }
 
         /// get the size of the window buffer
         DFHACK_EXPORT bool getWindowSize(int32_t & width, int32_t & height);

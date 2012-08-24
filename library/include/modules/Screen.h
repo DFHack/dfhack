@@ -112,7 +112,7 @@ namespace DFHack
 
         // Push and remove viewscreens
         DFHACK_EXPORT bool show(df::viewscreen *screen, df::viewscreen *before = NULL);
-        DFHACK_EXPORT void dismiss(df::viewscreen *screen);
+        DFHACK_EXPORT void dismiss(df::viewscreen *screen, bool to_first = false);
         DFHACK_EXPORT bool isDismissed(df::viewscreen *screen);
     }
 
@@ -136,7 +136,10 @@ namespace DFHack
         virtual bool key_conflict(df::interface_key key);
 
         virtual bool is_lua_screen() { return false; }
+
         virtual std::string getFocusString() = 0;
+        virtual void onShow() {};
+        virtual void onDismiss() {};
     };
 
     class DFHACK_EXPORT dfhack_lua_viewscreen : public dfhack_viewscreen {
@@ -166,5 +169,8 @@ namespace DFHack
         virtual void help();
         virtual void resize(int w, int h);
         virtual void feed(std::set<df::interface_key> *keys);
+
+        virtual void onShow();
+        virtual void onDismiss();
     };
 }

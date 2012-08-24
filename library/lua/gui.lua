@@ -232,9 +232,7 @@ function Screen:show(below)
         error("This screen is already on display")
     end
     self:onAboutToShow(below)
-    if dscreen.show(self, below) then
-        self:onShown()
-    else
+    if not dscreen.show(self, below) then
         error('Could not show screen')
     end
 end
@@ -242,17 +240,16 @@ end
 function Screen:onAboutToShow()
 end
 
-function Screen:onShown()
+function Screen:onShow()
 end
 
 function Screen:dismiss()
-    if self._native and not dscreen.isDismissed(self) then
+    if self._native then
         dscreen.dismiss(self)
-        self:onDismissed()
     end
 end
 
-function Screen:onDismissed()
+function Screen:onDismiss()
 end
 
 ------------------------

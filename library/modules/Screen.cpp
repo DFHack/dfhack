@@ -235,14 +235,26 @@ bool Screen::show(df::viewscreen *screen, df::viewscreen *before)
     if (screen->child)
         screen->child->parent = screen;
 
+    if (dfhack_viewscreen::is_instance(screen))
+        static_cast<dfhack_viewscreen*>(screen)->onShow();
+
     return true;
 }
 
-void Screen::dismiss(df::viewscreen *screen)
+void Screen::dismiss(df::viewscreen *screen, bool to_first)
 {
     CHECK_NULL_POINTER(screen);
 
-    screen->breakdown_level = interface_breakdown_types::STOPSCREEN;
+    if (screen->breakdown_level != interface_breakdown_types::NONE)
+        return;
+
+    if (to_first)
+        screen->breakdown_level = interface_breakdown_types::TOFIRST;
+    else
+        screen->breakdown_level = interface_breakdown_types::STOPSCREEN;
+
+    if (dfhack_viewscreen::is_instance(screen))
+        static_cast<dfhack_viewscreen*>(screen)->onDismiss();
 }
 
 bool Screen::isDismissed(df::viewscreen *screen)
@@ -261,6 +273,8 @@ static std::set<df::viewscreen*> dfhack_screens;
 dfhack_viewscreen::dfhack_viewscreen() : text_input_mode(false)
 {
     dfhack_screens.insert(this);
+
+    last_size = Screen::getWindowSize();
 }
 
 dfhack_viewscreen::~dfhack_viewscreen()
@@ -575,4 +589,16 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 
     lua_pushlightuserdata(Lua::Core::State, keys);
     safe_call_lua(do_input, 1, 0);
+}
+
+void dfhack_lua_viewscreen::onShow()
+{
+    lua_pushstring(Lua::Core::State, "onShow");
+    safe_call_lua(do_notify, 1, 0);
+}
+
+void dfhack_lua_viewscreen::onDismiss()
+{
+    lua_pushstring(Lua::Core::State, "onDismiss");
+    safe_call_lua(do_notify, 1, 0);
 }

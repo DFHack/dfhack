@@ -179,14 +179,6 @@ function DwarfOverlay:updateLayout()
     self.df_layout = getPanelLayout()
 end
 
-function DwarfOverlay:onShown()
-    self:updateLayout()
-end
-
-function DwarfOverlay:onResize(w,h)
-    self:updateLayout()
-end
-
 function DwarfOverlay:getViewport(old_vp)
     if old_vp then
         return old_vp:resize(self.df_layout)
@@ -238,6 +230,14 @@ end
 
 MenuOverlay = defclass(MenuOverlay, DwarfOverlay)
 
+function MenuOverlay:updateLayout()
+    DwarfOverlay.updateLayout(self)
+    self.frame_rect = self.df_layout.menu
+end
+
+MenuOverlay.getWindowSize = gui.FramedScreen.getWindowSize
+MenuOverlay.getMousePos = gui.FramedScreen.getMousePos
+
 function MenuOverlay:onAboutToShow(below)
     DwarfOverlay.onAboutToShow(self,below)
 
@@ -249,7 +249,6 @@ end
 
 function MenuOverlay:onRender()
     self:renderParent()
-    self:updateLayout()
 
     local menu = self.df_layout.menu
     if menu then

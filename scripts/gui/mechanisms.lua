@@ -52,15 +52,16 @@ MechanismList = defclass(MechanismList, guidm.MenuOverlay)
 
 MechanismList.focus_path = 'mechanisms'
 
-function MechanismList.new(building)
-    local self = {
-        links = {},
-        selected = 1
+function MechanismList:init(building)
+    self:init_fields{
+        links = {}, selected = 1
     }
-    return mkinstance(MechanismList, self):init(building)
+    guidm.MenuOverlay.init(self)
+    self:fillList(building)
+    return self
 end
 
-function MechanismList:init(building)
+function MechanismList:fillList(building)
     local links = listMechanismLinks(building)
 
     links[1].viewport = self:getViewport()
@@ -71,7 +72,6 @@ function MechanismList:init(building)
 
     self.links = links
     self.selected = 1
-    return self
 end
 
 local colors = {
@@ -133,7 +133,7 @@ function MechanismList:onInput(keys)
         end
     elseif keys.SELECT_ALL then
         if self.selected > 1 then
-            self:init(self.links[self.selected].obj)
+            self:fillList(self.links[self.selected].obj)
         end
     elseif keys.SELECT then
         self:dismiss()
@@ -146,6 +146,6 @@ if dfhack.gui.getCurFocus() ~= 'dwarfmode/QueryBuilding/Some' then
     qerror("This script requires the main dwarfmode view in 'q' mode")
 end
 
-local list = MechanismList.new(df.global.world.selected_building)
+local list = mkinstance(MechanismList):init(df.global.world.selected_building)
 list:show()
 list:changeSelected(1)

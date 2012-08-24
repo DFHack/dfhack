@@ -4,6 +4,8 @@ local _ENV = mkmodule('gui')
 
 local dscreen = dfhack.screen
 
+USE_GRAPHICS = dscreen.inGraphicsMode()
+
 CLEAR_PEN = {ch=32,fg=0,bg=0}
 
 function simulateInput(screen,...)
@@ -51,6 +53,9 @@ function inset(rect,dx1,dy1,dx2,dy2)
         rect.x1+dx1, rect.y1+dy1,
         rect.x2-(dx2 or dx1), rect.y2-(dy2 or dy1)
     )
+end
+function is_in_rect(rect,x,y)
+    return x and y and x >= rect.x1 and x <= rect.x2 and y >= rect.y1 and y <= rect.y2
 end
 
 local function to_pen(default, pen, bg, bold)
@@ -201,9 +206,16 @@ end
 -- Base screen object --
 ------------------------
 
-Screen = defclass(Screen, dfhack.screen)
+Screen = defclass(Screen)
 
 Screen.text_input_mode = false
+
+function Screen:init()
+    self:updateLayout()
+    return self
+end
+
+Screen.isDismissed = dscreen.isDismissed
 
 function Screen:isShown()
     return self._native ~= nil
@@ -211,6 +223,18 @@ end
 
 function Screen:isActive()
     return self:isShown() and not self:isDismissed()
+end
+
+function Screen:invalidate()
+    dscreen.invalidate()
+end
+
+function Screen:getWindowSize()
+    return dscreen.getWindowSize()
+end
+
+function Screen:getMousePos()
+    return dscreen.getMousePos()
 end
 
 function Screen:renderParent()
@@ -241,6 +265,7 @@ function Screen:onAboutToShow()
 end
 
 function Screen:onShow()
+    self:updateLayout()
 end
 
 function Screen:dismiss()
@@ -250,6 +275,13 @@ function Screen:dismiss()
 end
 
 function Screen:onDismiss()
+end
+
+function Screen:onResize(w,h)
+    self:updateLayout()
+end
+
+function Screen:updateLayout()
 end
 
 ------------------------
@@ -318,7 +350,8 @@ local function hint_coord(gap,hint)
     end
 end
 
-function FramedScreen:updateFrameSize(sw,sh)
+function FramedScreen:updateFrameSize()
+    local sw, sh = dscreen.getWindowSize()
     local iw, ih = sw-2, sh-2
     local width = math.min(self.frame_width or iw, iw)
     local height = math.min(self.frame_height or ih, ih)
@@ -328,8 +361,21 @@ function FramedScreen:updateFrameSize(sw,sh)
     self.frame_opaque = (gw == 0 and gh == 0)
 end
 
-function FramedScreen:onResize(w,h)
-    self:updateFrameSize(w,h)
+function FramedScreen:updateLayout()
+    self:updateFrameSize()
+end
+
+function FramedScreen:getWindowSize()
+    local rect = self.frame_rect
+    return rect.width, rect.height
+end
+
+function FramedScreen:getMousePos()
+    local rect = self.frame_rect
+    local x,y = dscreen.getMousePos()
+    if is_in_rect(rect,x,y) then
+        return x-rect.x1, y-rect.y1
+    end
 end
 
 function FramedScreen:onRender()
@@ -346,6 +392,9 @@ function FramedScreen:onRender()
     paint_frame(x1,y1,x2,y2,self.frame_style,self.frame_title)
 
     self:onRenderBody(Painter.new(rect))
+end
+
+function FramedScreen:onRenderBody(dc)
 end
 
 return _ENV

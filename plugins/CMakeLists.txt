@@ -115,7 +115,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(sort sort.cpp LINK_LIBRARIES lua)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
-	DFHACK_PLUGIN(misery misery.cpp)
+    DFHACK_PLUGIN(misery misery.cpp)
 endif()
 
 

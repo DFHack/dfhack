@@ -4,22 +4,13 @@ local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'
 
-function getBuildingName(building)
-    return utils.call_with_string(building, 'getName')
-end
-
-function getBuildingCenter(building)
-    return xyz2pos(building.centerx, building.centery, building.z)
-end
-
 function listMechanismLinks(building)
     local lst = {}
     local function push(item, mode)
         if item then
             lst[#lst+1] = {
                 obj = item, mode = mode,
-                name = getBuildingName(item),
-                center = getBuildingCenter(item)
+                name = utils.getBuildingName(item)
             }
         end
     end
@@ -64,8 +55,9 @@ end
 function MechanismList:fillList(building)
     local links = listMechanismLinks(building)
 
-    links[1].viewport = self:getViewport()
-    links[1].cursor = guidm.getCursorPos()
+    self.old_viewport = self:getViewport()
+    self.old_cursor = guidm.getCursorPos()
+
     if #links <= 1 then
         links[1].mode = 'none'
     end
@@ -103,22 +95,10 @@ function MechanismList:onRenderBody(dc)
     dc:string("Enter", COLOR_LIGHTGREEN):string(": Switch")
 end
 
-function MechanismList:zoomToLink(link,back)
-    df.global.world.selected_building = link.obj
-
-    if back then
-        guidm.setCursorPos(link.cursor)
-        self:getViewport(link.viewport):set()
-    else
-        guidm.setCursorPos(link.center)
-        self:getViewport():reveal(link.center, 5, 0, 10):set()
-    end
-end
-
 function MechanismList:changeSelected(delta)
     if #self.links <= 1 then return end
     self.selected = 1 + (self.selected + delta - 1) % #self.links
-    self:zoomToLink(self.links[self.selected])
+    self:selectBuilding(self.links[self.selected].obj)
 end
 
 function MechanismList:onInput(keys)
@@ -129,7 +109,7 @@ function MechanismList:onInput(keys)
     elseif keys.LEAVESCREEN then
         self:dismiss()
         if self.selected ~= 1 then
-            self:zoomToLink(self.links[1], true)
+            self:selectBuilding(self.links[1].obj, self.old_cursor, self.old_view)
         end
     elseif keys.SELECT_ALL then
         if self.selected > 1 then

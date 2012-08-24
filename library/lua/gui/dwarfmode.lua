@@ -3,6 +3,8 @@
 local _ENV = mkmodule('gui.dwarfmode')
 
 local gui = require('gui')
+local utils = require('utils')
+
 local dscreen = dfhack.screen
 local world_map = df.global.world.map
 
@@ -185,6 +187,18 @@ function DwarfOverlay:getViewport(old_vp)
     else
         return Viewport.get(self.df_layout)
     end
+end
+
+function DwarfOverlay:moveCursorTo(cursor,viewport)
+    setCursorPos(cursor)
+    self:getViewport(viewport):reveal(cursor, 5, 0, 10):set()
+end
+
+function DwarfOverlay:selectBuilding(building,cursor,viewport)
+    cursor = cursor or utils.getBuildingCenter(building)
+
+    df.global.world.selected_building = building
+    self:moveCursorTo(cursor, viewport)
 end
 
 function DwarfOverlay:propagateMoveKeys(keys)

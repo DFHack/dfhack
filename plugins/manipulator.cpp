@@ -678,23 +678,23 @@ void viewscreen_unitlaborsst::render()
     }
 
     int x = 1;
-    OutputString( 2, x, gps->dimy - 3, "Enter"); // SELECT key
+    OutputString(10, x, gps->dimy - 3, "Enter"); // SELECT key
     OutputString(15, x, gps->dimy - 3, ": Toggle labor");
     x += 2;
 
-    OutputString( 2, x, gps->dimy - 3, "Esc"); // LEAVESCREEN key
+    OutputString(10, x, gps->dimy - 3, "Esc"); // LEAVESCREEN key
     OutputString(15, x, gps->dimy - 3, ": Done");
 
     x = 1;
-    OutputString( 2, x, gps->dimy - 2, "+"); // SECONDSCROLL_DOWN key
-    OutputString( 2, x, gps->dimy - 2, "-"); // SECONDSCROLL_UP key
+    OutputString(10, x, gps->dimy - 2, "+"); // SECONDSCROLL_DOWN key
+    OutputString(10, x, gps->dimy - 2, "-"); // SECONDSCROLL_UP key
     OutputString(15, x, gps->dimy - 2, ": Sort by Skill");
     x += 2;
 
-    OutputString( 2, x, gps->dimy - 2, "*"); // SECONDSCROLL_PAGEDOWN key
-    OutputString( 2, x, gps->dimy - 2, "/"); // SECONDSCROLL_PAGEUP key
+    OutputString(10, x, gps->dimy - 2, "*"); // SECONDSCROLL_PAGEDOWN key
+    OutputString(10, x, gps->dimy - 2, "/"); // SECONDSCROLL_PAGEUP key
     OutputString(15, x, gps->dimy - 2, ": Sort by (");
-    OutputString( 2, x, gps->dimy - 2, "Tab"); // CHANGETAB key
+    OutputString(10, x, gps->dimy - 2, "Tab"); // CHANGETAB key
     OutputString(15, x, gps->dimy - 2, ") ");
     switch (altsort)
     {

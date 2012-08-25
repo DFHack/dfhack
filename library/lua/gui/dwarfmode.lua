@@ -6,6 +6,9 @@ local gui = require('gui')
 local utils = require('utils')
 
 local dscreen = dfhack.screen
+
+local g_cursor = df.global.cursor
+local g_sel_rect = df.global.selection_rect
 local world_map = df.global.world.map
 
 AREA_MAP_WIDTH = 23
@@ -43,8 +46,8 @@ function getPanelLayout()
 end
 
 function getCursorPos()
-    if df.global.cursor.x ~= -30000 then
-        return copyall(df.global.cursor)
+    if g_cursor ~= -30000 then
+        return copyall(g_cursor)
     end
 end
 
@@ -54,6 +57,51 @@ end
 
 function clearCursorPos()
     df.global.cursor = xyz2pos(nil)
+end
+
+function getSelection()
+    local p1, p2
+    if g_sel_rect.start_x ~= -30000 then
+        p1 = xyz2pos(g_sel_rect.start_x, g_sel_rect.start_y, g_sel_rect.start_z)
+    end
+    if g_sel_rect.end_x ~= -30000 then
+        p2 = xyz2pos(g_sel_rect.end_x, g_sel_rect.end_y, g_sel_rect.end_z)
+    end
+    return p1, p2
+end
+
+function setSelectionStart(pos)
+    g_sel_rect.start_x = pos.x
+    g_sel_rect.start_y = pos.y
+    g_sel_rect.start_z = pos.z
+end
+
+function setSelectionEnd(pos)
+    g_sel_rect.end_x = pos.x
+    g_sel_rect.end_y = pos.y
+    g_sel_rect.end_z = pos.z
+end
+
+function clearSelection()
+    g_sel_rect.start_x = -30000
+    g_sel_rect.start_y = -30000
+    g_sel_rect.start_z = -30000
+    g_sel_rect.end_x = -30000
+    g_sel_rect.end_y = -30000
+    g_sel_rect.end_z = -30000
+end
+
+function getSelectionRange(p1, p2)
+    local r1 = xyz2pos(
+        math.min(p1.x, p2.x), math.min(p1.y, p2.y), math.min(p1.z, p2.z)
+    )
+    local r2 = xyz2pos(
+        math.max(p1.x, p2.x), math.max(p1.y, p2.y), math.max(p1.z, p2.z)
+    )
+    local sz = xyz2pos(
+        r2.x - r1.x + 1, r2.y - r1.y + 1, r2.z - r1.z + 1
+    )
+    return r1, sz, r2
 end
 
 Viewport = defclass(Viewport)

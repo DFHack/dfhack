@@ -18,7 +18,7 @@ function simulateInput(screen,...)
                 error('Invalid keycode: '..arg)
             end
         end
-        if type(arg) == 'number' then
+        if type(kv) == 'number' then
             keys[#keys+1] = kv
         end
     end
@@ -275,6 +275,9 @@ function Screen:dismiss()
 end
 
 function Screen:onDismiss()
+end
+
+function Screen:onDestroy()
 end
 
 function Screen:onResize(w,h)

@@ -998,6 +998,23 @@ df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
     return ws;
 }
 
+df::coord Gui::getViewportPos()
+{
+    if (!df::global::window_x || !df::global::window_y || !df::global::window_z)
+        return df::coord(0,0,0);
+
+    return df::coord(*df::global::window_x, *df::global::window_y, *df::global::window_z);
+}
+
+df::coord Gui::getCursorPos()
+{
+    using df::global::cursor;
+    if (!cursor)
+        return df::coord();
+
+    return df::coord(cursor->x, cursor->y, cursor->z);
+}
+
 bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
 {
     x = *df::global::window_x;

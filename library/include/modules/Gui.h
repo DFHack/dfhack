@@ -97,6 +97,9 @@ namespace DFHack
         /*
          * Cursor and window coords
          */
+        DFHACK_EXPORT df::coord getViewportPos();
+        DFHACK_EXPORT df::coord getCursorPos();
+
         DFHACK_EXPORT bool getViewCoords (int32_t &x, int32_t &y, int32_t &z);
         DFHACK_EXPORT bool setViewCoords (const int32_t x, const int32_t y, const int32_t z);
 

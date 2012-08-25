@@ -48,3 +48,6 @@ keybinding add Ctrl-M@dwarfmode/QueryBuilding/Some gui/mechanisms
 
 # browse rooms of same owner
 keybinding add Alt-R@dwarfmode/QueryBuilding/Some gui/room-list.work
+
+# interface for the liquids plugin
+keybinding add Alt-L@dwarfmode/LookAround gui/liquids

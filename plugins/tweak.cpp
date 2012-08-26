@@ -13,6 +13,7 @@
 #include "MiscUtils.h"
 
 #include "DataDefs.h"
+#include <VTableInterpose.h>
 #include "df/ui.h"
 #include "df/world.h"
 #include "df/squad.h"
@@ -26,6 +27,7 @@
 #include "df/death_info.h"
 #include "df/criminal_case.h"
 #include "df/unit_inventory_item.h"
+#include "df/viewscreen_dwarfmodest.h"
 
 #include <stdlib.h>
 
@@ -67,6 +69,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    (humans, elves) can be put to work, but you can't assign rooms\n"
         "    to them and they don't show up in DwarfTherapist because the\n"
         "    game treats them like pets.\n"
+        "  tweak stable-cursor [disable]\n"
+        "    Keeps exact position of dwarfmode cursor during exits to main menu.\n"
+        "    E.g. allows switching between t/q/k/d without losing position.\n"
     ));
     return CR_OK;
 }
@@ -75,9 +80,6 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
     return CR_OK;
 }
-
-static command_result lair(color_ostream &out, std::vector<std::string> & params);
-
 
 // to be called by tweak-fixmigrant
 // units forced into the fort by removing the flags do not own their clothes
@@ -135,6 +137,54 @@ command_result fix_clothing_ownership(color_ostream &out, df::unit* unit)
     out << "ownership for " << fixcount << " clothes fixed" << endl;
     return CR_OK;
 }
+
+/*
+ * Save or restore cursor position on change to/from main dwarfmode menu.
+ */
+
+static df::coord last_view, last_cursor;
+
+struct stable_cursor_hook : df::viewscreen_dwarfmodest
+{
+    typedef df::viewscreen_dwarfmodest interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        bool was_default = (ui->main.mode == df::ui_sidebar_mode::Default);
+        df::coord view = Gui::getViewportPos();
+        df::coord cursor = Gui::getCursorPos();
+
+        INTERPOSE_NEXT(feed)(input);
+
+        bool is_default = (ui->main.mode == df::ui_sidebar_mode::Default);
+        df::coord cur_cursor = Gui::getCursorPos();
+
+        if (is_default && !was_default)
+        {
+            last_view = view; last_cursor = cursor;
+        }
+        else if (!is_default && was_default &&
+                 Gui::getViewportPos() == last_view &&
+                 last_cursor.isValid() && cur_cursor.isValid())
+        {
+            Gui::setCursorCoords(last_cursor.x, last_cursor.y, last_cursor.z);
+
+            // Force update of ui state
+            set<df::interface_key> tmp;
+            tmp.insert(interface_key::CURSOR_DOWN_Z);
+            INTERPOSE_NEXT(feed)(&tmp);
+            tmp.clear();
+            tmp.insert(interface_key::CURSOR_UP_Z);
+            INTERPOSE_NEXT(feed)(&tmp);
+        }
+        else if (cur_cursor.isValid())
+        {
+            last_cursor = df::coord();
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(stable_cursor_hook, feed);
 
 static command_result tweak(color_ostream &out, vector <string> &parameters)
 {
@@ -233,6 +283,14 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         if(unit->profession2 == df::profession::MERCHANT)
             unit->profession2 = df::profession::TRADER;
         return fix_clothing_ownership(out, unit);
+    }
+    else if (cmd == "stable-cursor")
+    {
+        auto &hook = INTERPOSE_HOOK(stable_cursor_hook, feed);
+        if (vector_get(parameters, 1) == "disable")
+            hook.remove();
+        else
+            hook.apply();
     }
     else 
         return CR_WRONG_USAGE;

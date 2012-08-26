@@ -16,12 +16,12 @@ local brushes = {
 }
 
 local paints = {
-    { tag = 'water', caption = 'Water', liquid = true, key = 'w' },
-    { tag = 'magma', caption = 'Magma', liquid = true, key = 'l' },
+    { tag = 'water', caption = 'Water', liquid = true, flow = true, key = 'w' },
+    { tag = 'magma', caption = 'Magma', liquid = true, flow = true, key = 'l' },
     { tag = 'obsidian', caption = 'Obsidian Wall' },
     { tag = 'obsidian_floor', caption = 'Obsidian Floor' },
     { tag = 'riversource', caption = 'River Source' },
-    { tag = 'flowbits', caption = 'Flow Updates' },
+    { tag = 'flowbits', caption = 'Flow Updates', flow = true },
     { tag = 'wclean', caption = 'Clean Salt/Stagnant' },
 }
 
@@ -35,6 +35,19 @@ local setmode = {
     { tag = '.', caption = 'Set Exactly' },
     { tag = '+', caption = 'Only Increase' },
     { tag = '-', caption = 'Only Decrease' },
+}
+
+local permaflows = {
+    { tag = '.', caption = "Keep Permaflow" },
+    { tag = '-', caption = 'Remove Permaflow' },
+    { tag = 'N', caption = 'Set Permaflow N' },
+    { tag = 'S', caption = 'Set Permaflow S' },
+    { tag = 'E', caption = 'Set Permaflow E' },
+    { tag = 'W', caption = 'Set Permaflow W' },
+    { tag = 'NE', caption = 'Set Permaflow NE' },
+    { tag = 'NW', caption = 'Set Permaflow NW' },
+    { tag = 'SE', caption = 'Set Permaflow SE' },
+    { tag = 'SW', caption = 'Set Permaflow SW' },
 }
 
 Toggle = defclass(Toggle)
@@ -80,6 +93,7 @@ function LiquidsUI:init()
         paint = mkinstance(Toggle):init(paints),
         flow = mkinstance(Toggle):init(flowbits),
         set = mkinstance(Toggle):init(setmode),
+        permaflow = mkinstance(Toggle):init(permaflows),
         amount = 7,
     }
     guidm.MenuOverlay.init(self)
@@ -90,15 +104,8 @@ function LiquidsUI:onDestroy()
     guidm.clearSelection()
 end
 
-function LiquidsUI:onRenderBody(dc)
-    dc:clear():seek(1,1):string("Paint Liquids Cheat", COLOR_WHITE)
-
-    local cursor = guidm.getCursorPos()
-    local block = dfhack.maps.getTileBlock(cursor)
-    local tile = block.tiletype[cursor.x%16][cursor.y%16]
-    local dsgn = block.designation[cursor.x%16][cursor.y%16]
-
-    dc:seek(2,3):string(df.tiletype.attrs[tile].caption, COLOR_CYAN):newline(2)
+function render_liquid(dc, block, x, y)
+    local dsgn = block.designation[x%16][y%16]
 
     if dsgn.flow_size > 0 then
         if dsgn.liquid_type == df.tile_liquid.Magma then
@@ -111,7 +118,51 @@ function LiquidsUI:onRenderBody(dc)
         end
         dc:string(" ["..dsgn.flow_size.."/7]")
     else
-        dc:string('No Liquid', COLOR_DARKGREY)
+        dc:string('No Liquid')
+    end
+end
+
+local permaflow_abbr = {
+    north = 'N', south = 'S', east = 'E', west = 'W',
+    northeast = 'NE', northwest = 'NW', southeast = 'SE', southwest = 'SW'
+}
+
+function render_flow_state(dc, block, x, y)
+    local flow = block.liquid_flow[x%16][y%16]
+
+    if block.flags.update_liquid then
+        dc:string("Updating", COLOR_GREEN)
+    else
+        dc:string("Static")
+    end
+    dc:string(", ")
+    if flow.perm_flow_dir ~= 0 then
+        local tag = df.tile_liquid_flow_dir[flow.perm_flow_dir]
+        dc:string("Permaflow "..(permaflow_abbr[tag] or tag), COLOR_CYAN)
+    elseif flow.temp_flow_timer > 0 then
+        dc:string("Flowing "..flow.temp_flow_timer, COLOR_GREEN)
+    else
+        dc:string("No Flow")
+    end
+end
+
+function LiquidsUI:onRenderBody(dc)
+    dc:clear():seek(1,1):string("Paint Liquids Cheat", COLOR_WHITE)
+
+    local cursor = guidm.getCursorPos()
+    local block = dfhack.maps.getTileBlock(cursor)
+
+    if block then
+        local x, y = pos2xyz(cursor)
+        local tile = block.tiletype[x%16][y%16]
+
+        dc:seek(2,3):string(df.tiletype.attrs[tile].caption, COLOR_CYAN)
+        dc:newline(2):pen(COLOR_DARKGREY)
+        render_liquid(dc, block, x, y)
+        dc:newline(2):pen(COLOR_DARKGREY)
+        render_flow_state(dc, block, x, y)
+    else
+        dc:seek(2,3):string("No map data", COLOR_RED):advance(0,2)
     end
 
     dc:newline():pen(COLOR_GREY)
@@ -121,10 +172,10 @@ function LiquidsUI:onRenderBody(dc)
     dc:newline(1):string("p", COLOR_LIGHTGREEN):string(": ")
     self.paint:render(dc)
 
-    local liquid = self.paint:get().liquid
+    local paint = self.paint:get()
 
     dc:newline()
-    if liquid then
+    if paint.liquid then
         dc:newline(1):string("Amount: "..self.amount)
         dc:advance(1):string("("):string("-+", COLOR_LIGHTGREEN):string(")")
         dc:newline(3):string("s", COLOR_LIGHTGREEN):string(": ")
@@ -133,8 +184,15 @@ function LiquidsUI:onRenderBody(dc)
         dc:advance(0,2)
     end
 
-    dc:newline():newline(1):string("f", COLOR_LIGHTGREEN):string(": ")
-    self.flow:render(dc)
+    dc:newline()
+    if paint.flow then
+        dc:newline(1):string("f", COLOR_LIGHTGREEN):string(": ")
+        self.flow:render(dc)
+        dc:newline(1):string("r", COLOR_LIGHTGREEN):string(": ")
+        self.permaflow:render(dc)
+    else
+        dc:advance(0,2)
+    end
 
     dc:newline():newline(1):pen(COLOR_WHITE)
     dc:string("Esc", COLOR_LIGHTGREEN):string(": Back, ")
@@ -142,7 +200,8 @@ function LiquidsUI:onRenderBody(dc)
 end
 
 function LiquidsUI:onInput(keys)
-    local liquid = self.paint:get().liquid
+    local paint = self.paint:get()
+    local liquid = paint.liquid
     if keys.CUSTOM_B then
         self.brush:step()
     elseif keys.CUSTOM_P then
@@ -153,8 +212,10 @@ function LiquidsUI:onInput(keys)
         self.amount = math.min(7, self.amount+1)
     elseif liquid and keys.CUSTOM_S then
         self.set:step()
-    elseif keys.CUSTOM_F then
+    elseif paint.flow and keys.CUSTOM_F then
         self.flow:step()
+    elseif paint.flow and keys.CUSTOM_R then
+        self.permaflow:step()
     elseif keys.LEAVESCREEN then
         if guidm.getSelection() then
             guidm.clearSelection()
@@ -182,7 +243,8 @@ function LiquidsUI:onInput(keys)
             cursor,
             self.brush:get().tag, self.paint:get().tag,
             self.amount, size,
-            self.set:get().tag, self.flow:get().tag
+            self.set:get().tag, self.flow:get().tag,
+            self.permaflow:get().tag
         )
     elseif self:propagateMoveKeys(keys) then
         return

@@ -101,23 +101,53 @@ static const char *modify_mode_name[] = {
     "+", ".", "-", NULL
 };
 
+enum PermaflowMode {
+    PF_KEEP, PF_NONE,
+    PF_NORTH, PF_SOUTH, PF_EAST, PF_WEST,
+    PF_NORTHEAST, PF_NORTHWEST, PF_SOUTHEAST, PF_SOUTHWEST
+};
+
+static const char *permaflow_name[] = {
+    ".", "-", "N", "S", "E", "W",
+    "NE", "NW", "SE", "SW", NULL
+};
+
+#define X(name) tile_liquid_flow_dir::name
+static const df::tile_liquid_flow_dir permaflow_id[] = {
+    X(none), X(none), X(north), X(south), X(east), X(west),
+    X(northeast), X(northwest), X(southeast), X(southwest)
+};
+#undef X
+
 struct OperationMode {
     BrushType brush;
     PaintMode paint;
     ModifyMode flowmode;
     ModifyMode setmode;
+    PermaflowMode permaflow;
     unsigned int amount;
     df::coord size;
 
     OperationMode() :
         brush(B_POINT), paint(P_MAGMA),
-        flowmode(M_INC), setmode(M_KEEP), amount(7),
+        flowmode(M_INC), setmode(M_KEEP), permaflow(PF_KEEP), amount(7),
         size(1,1,1)
     {}
 } cur_mode;
 
 command_result df_liquids_execute(color_ostream &out);
 command_result df_liquids_execute(color_ostream &out, OperationMode &mode, df::coord pos);
+
+static void print_prompt(std::ostream &str, OperationMode &cur_mode)
+{
+    str <<"[" << paint_mode_name[cur_mode.paint] << ":" << brush_name[cur_mode.brush];
+    if (cur_mode.brush == B_RANGE)
+        str << "(w" << cur_mode.size.x << ":h" << cur_mode.size.y << ":z" << cur_mode.size.z << ")";
+    str << ":" << cur_mode.amount << ":f" << modify_mode_name[cur_mode.flowmode]
+        << ":s" << modify_mode_name[cur_mode.setmode]
+        << ":pf" << permaflow_name[cur_mode.permaflow]
+        << "]";
+}
 
 command_result df_liquids (color_ostream &out_, vector <string> & parameters)
 {
@@ -154,11 +184,8 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         string input = "";
 
         std::stringstream str;
-        str <<"[" << paint_mode_name[cur_mode.paint] << ":" << brush_name[cur_mode.brush];
-        if (cur_mode.brush == B_RANGE)
-            str << "(w" << cur_mode.size.x << ":h" << cur_mode.size.y << ":z" << cur_mode.size.z << ")";
-        str << ":" << cur_mode.amount << ":f" << modify_mode_name[cur_mode.flowmode]
-            << ":s" << modify_mode_name[cur_mode.setmode] << "]#";
+        print_prompt(str, cur_mode);
+        str << "# ";
         if(out.lineedit(str.str(),input,liquids_hist) == -1)
             return CR_FAILURE;
         liquids_hist.add(input);
@@ -185,6 +212,10 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
                  << "f+            - make the spawned liquid flow" << endl
                  << "f.            - don't change flow state (read state in flow mode)" << endl
                  << "f-            - make the spawned liquid static" << endl
+                 << "Permaflow (only for water):" << endl
+                 << "pf.           - don't change permaflow state" << endl
+                 << "pf-           - make the spawned liquid static" << endl
+                 << "pf[NS][EW]    - make the spawned liquid permanently flow" << endl
                  << "0-7           - set liquid amount" << endl
                  << "Brush:" << endl
                  << "point         - single tile [p]" << endl
@@ -297,6 +328,20 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         {
             cur_mode.setmode = M_KEEP;
         }
+        else if (command.size() > 2 && memcmp(command.c_str(), "pf", 2) == 0)
+        {
+            auto *tail = command.c_str()+2;
+            for (int pm = PF_KEEP; pm <= PF_SOUTHWEST; pm++)
+            {
+                if (strcmp(tail, permaflow_name[pm]) != 0)
+                    continue;
+                cur_mode.permaflow = PermaflowMode(pm);
+                tail = NULL;
+                break;
+            }
+            if (tail)
+                out << command << " : invalid permaflow mode" << endl;
+        }
         // blah blah, bad code, bite me.
         else if(command == "0")
             cur_mode.amount = 0;
@@ -339,11 +384,8 @@ command_result df_liquids_here (color_ostream &out, vector <string> & parameters
     }
 
     out.print("Run liquids-here with these parameters: ");
-    out << "[" << paint_mode_name[cur_mode.paint] << ":" << brush_name[cur_mode.brush];
-    if (cur_mode.brush == B_RANGE)
-        out << "(w" << cur_mode.size.x << ":h" << cur_mode.size.y << ":z" << cur_mode.size.z << ")";
-    out << ":" << cur_mode.amount << ":f" << modify_mode_name[cur_mode.flowmode]
-        << ":" << modify_mode_name[cur_mode.setmode] << "]\n";
+    print_prompt(out, cur_mode);
+    out << endl;
 
     return df_liquids_execute(out);
 }
@@ -489,6 +531,7 @@ command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, d
                     iter ++;
                     continue;
                 }
+                auto raw_block = block->getRaw();
                 df::tile_designation des = mcache.designationAt(current);
                 df::tiletype tt = mcache.tiletypeAt(current);
                 // don't put liquids into places where they don't belong...
@@ -548,6 +591,12 @@ command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, d
                     // request flow engine updates
                     block->enableBlockUpdates(new_amount != old_amount, new_liquid != old_liquid);
                 }
+                if (cur_mode.permaflow != PF_KEEP && raw_block)
+                {
+                    auto &flow = raw_block->liquid_flow[current.x&15][current.y&15];
+                    flow.bits.perm_flow_dir = permaflow_id[cur_mode.permaflow];
+                    flow.bits.temp_flow_timer = 0;
+                }
                 seen_blocks.insert(block);
                 iter++;
             }
@@ -593,7 +642,7 @@ static int paint(lua_State *L)
     df::coord pos;
     OperationMode mode;
 
-    lua_settop(L, 7);
+    lua_settop(L, 8);
     Lua::CheckDFAssign(L, &pos, 1);
     if (!pos.isValid())
         luaL_argerror(L, 1, "invalid cursor position");
@@ -606,6 +655,7 @@ static int paint(lua_State *L)
         Lua::CheckDFAssign(L, &mode.size, 5);
     mode.setmode = (ModifyMode)luaL_checkoption(L, 6, ".", modify_mode_name);
     mode.flowmode = (ModifyMode)luaL_checkoption(L, 7, "+", modify_mode_name);
+    mode.permaflow = (PermaflowMode)luaL_checkoption(L, 8, ".", permaflow_name);
 
     lua_pushboolean(L, df_liquids_execute(*Lua::GetOutput(L), mode, pos));
     return 1;

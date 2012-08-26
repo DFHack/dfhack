@@ -544,6 +544,24 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             break;
         }
     }
+
+    if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
+    {
+        if (events->count(interface_key::UNITJOB_VIEW) || events->count(interface_key::UNITJOB_ZOOM_CRE))
+        {
+            for (int i = 0; i < unitlist->units[unitlist->page].size(); i++)
+            {
+                if (unitlist->units[unitlist->page][i] == units[sel_row]->unit)
+                {
+                    unitlist->cursor_pos[unitlist->page] = i;
+                    unitlist->feed(events);
+                    if (Screen::isDismissed(unitlist))
+                        Screen::dismiss(this);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void OutputString(int8_t color, int &x, int y, const std::string &text)
@@ -679,8 +697,13 @@ void viewscreen_unitlaborsst::render()
 
     int x = 1;
     OutputString(10, x, gps->dimy - 3, "Enter"); // SELECT key
-    OutputString(15, x, gps->dimy - 3, ": Toggle labor");
-    x += 2;
+    OutputString(15, x, gps->dimy - 3, ": Toggle labor, ");
+
+    OutputString(10, x, gps->dimy - 3, "v"); // UNITJOB_VIEW key
+    OutputString(15, x, gps->dimy - 3, ": ViewCre, ");
+
+    OutputString(10, x, gps->dimy - 3, "c"); // UNITJOB_ZOOM_CRE key
+    OutputString(15, x, gps->dimy - 3, ": Zoom-Cre, ");
 
     OutputString(10, x, gps->dimy - 3, "Esc"); // LEAVESCREEN key
     OutputString(15, x, gps->dimy - 3, ": Done");
@@ -688,8 +711,7 @@ void viewscreen_unitlaborsst::render()
     x = 1;
     OutputString(10, x, gps->dimy - 2, "+"); // SECONDSCROLL_DOWN key
     OutputString(10, x, gps->dimy - 2, "-"); // SECONDSCROLL_UP key
-    OutputString(15, x, gps->dimy - 2, ": Sort by Skill");
-    x += 2;
+    OutputString(15, x, gps->dimy - 2, ": Sort by Skill, ");
 
     OutputString(10, x, gps->dimy - 2, "*"); // SECONDSCROLL_PAGEDOWN key
     OutputString(10, x, gps->dimy - 2, "/"); // SECONDSCROLL_PAGEUP key

@@ -311,7 +311,7 @@ void VMethodInterposeLinkBase::on_host_delete(virtual_identity *from)
 
         // Unlink the chains
         child_hosts.erase(from);
-        from->interpose_list.erase(vmethod_idx);
+        from->interpose_list[vmethod_idx] = NULL;
     }
 }
 

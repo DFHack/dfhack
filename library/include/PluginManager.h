@@ -128,7 +128,9 @@ namespace DFHack
         {
             PS_UNLOADED,
             PS_LOADED,
-            PS_BROKEN
+            PS_BROKEN,
+            PS_LOADING,
+            PS_UNLOADING
         };
         friend class PluginManager;
         friend class RPCService;

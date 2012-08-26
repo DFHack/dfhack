@@ -303,7 +303,7 @@ namespace DFHack
         void *vtable_ptr;
 
         friend class VMethodInterposeLinkBase;
-        std::vector<VMethodInterposeLinkBase*> interpose_list;
+        std::map<int,VMethodInterposeLinkBase*> interpose_list;
 
     protected:
         virtual void doInit(Core *core);

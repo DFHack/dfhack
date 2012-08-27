@@ -27,6 +27,7 @@ using namespace std;
 #include "df/world_region_details.h"
 #include "df/world_geo_biome.h"
 #include "df/world_geo_layer.h"
+#include "df/region_map_entry.h"
 #include "df/inclusion_type.h"
 #include "df/viewscreen_choose_start_sitest.h"
 
@@ -113,7 +114,7 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
     {
         coord2d rg = screen->biome_rgn[i];
 
-        df::world_data::T_region_map* rd = &data->region_map[rg.x][rg.y];
+        auto rd = &data->region_map[rg.x][rg.y];
 
         if (set && i == to_set) {
             if (set_field == 0)

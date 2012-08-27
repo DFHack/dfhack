@@ -77,6 +77,7 @@ distribution.
 #include "df/job_material_category.h"
 #include "df/burrow.h"
 #include "df/building_civzonest.h"
+#include "df/region_map_entry.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -931,8 +932,7 @@ static int maps_getRegionBiome(lua_State *L)
 static int maps_getTileBiomeRgn(lua_State *L)
 {
     auto pos = CheckCoordXYZ(L, 1, true);
-    Lua::PushPosXY(L, Maps::getTileBiomeRgn(pos));
-    return 1;
+    return Lua::PushPosXY(L, Maps::getTileBiomeRgn(pos));
 }
 
 static const luaL_Reg dfhack_maps_funcs[] = {

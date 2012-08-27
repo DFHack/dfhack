@@ -57,6 +57,7 @@ using namespace std;
 #include "df/builtin_mats.h"
 #include "df/block_square_event_grassst.h"
 #include "df/z_level_flags.h"
+#include "df/region_map_entry.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -166,7 +167,7 @@ df::tile_occupancy *Maps::getTileOccupancy(int32_t x, int32_t y, int32_t z)
     return block ? &block->occupancy[x&15][y&15] : NULL;
 }
 
-df::world_data::T_region_map *Maps::getRegionBiome(df::coord2d rgn_pos)
+df::region_map_entry *Maps::getRegionBiome(df::coord2d rgn_pos)
 {
     auto data = world->world_data;
     if (!data)

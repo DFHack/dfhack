@@ -27,6 +27,7 @@ using namespace std;
 #include "df/world_region_details.h"
 #include "df/world_geo_biome.h"
 #include "df/world_geo_layer.h"
+#include "df/region_map_entry.h"
 #include "df/inclusion_type.h"
 #include "df/viewscreen_choose_start_sitest.h"
 
@@ -535,6 +536,8 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                             break;
                         case tiletype_material::LAVA_STONE:
                             // TODO ?
+                            break;
+                        default:
                             break;
                         }
                     }

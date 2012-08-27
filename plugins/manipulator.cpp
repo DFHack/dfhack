@@ -630,11 +630,9 @@ void viewscreen_unitlaborsst::render()
             int col_offset = col + first_column;
             fg = 15;
             bg = 0;
+            char c = 0xFA;
             if ((col_offset == sel_column) && (row_offset == sel_row))
                 fg = 9;
-            if ((columns[col_offset].labor != unit_labor::NONE) && (unit->status.labors[columns[col_offset].labor]))
-                bg = 7;
-            char c = '-';
             if (columns[col_offset].skill != job_skill::NONE)
             {
                 df::unit_skill *skill = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(unit->status.current_soul->skills, &df::unit_skill::id, columns[col_offset].skill);
@@ -645,7 +643,20 @@ void viewscreen_unitlaborsst::render()
                         level = NUM_SKILL_LEVELS - 1;
                     c = skill_levels[level].abbrev;
                 }
+                else
+                    c = '-';
             }
+            if (columns[col_offset].labor != unit_labor::NONE)
+            {
+                if (unit->status.labors[columns[col_offset].labor])
+                {
+                    bg = 7;
+                    if (columns[col_offset].skill == job_skill::NONE)
+                        c = 0xF9;
+                }
+            }
+            else
+                bg = 4;
             Screen::paintTile(Screen::Pen(c, fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 3 + row);
         }
     }

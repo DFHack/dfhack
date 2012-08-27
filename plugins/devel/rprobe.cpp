@@ -79,7 +79,7 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
 
     if (parameters.size() == 2) 
     {
-        if (parameters[0] == "wet") 
+        if (parameters[0] == "rai") 
             set_field = 0;
         else if (parameters[0] == "veg")
             set_field = 1;
@@ -87,7 +87,7 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
             set_field = 2;
         else if (parameters[0] == "evi")
             set_field = 3;
-        else if (parameters[0] == "hil")
+        else if (parameters[0] == "dra")
             set_field = 4;
         else if (parameters[0] == "sav")
             set_field = 5;
@@ -117,7 +117,7 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
 
         if (set && i == to_set) {
             if (set_field == 0)
-                rd->wetness = set_val;
+                rd->rainfall = set_val;
             else if (set_field == 1)
                 rd->vegetation = set_val;
             else if (set_field == 2)
@@ -125,11 +125,11 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
             else if (set_field == 3)
                 rd->evilness = set_val;
             else if (set_field == 4)
-                rd->hilliness = set_val;
+                rd->drainage = set_val;
             else if (set_field == 5)
                 rd->savagery = set_val;
             else if (set_field == 6)
-                rd->saltiness = set_val;
+                rd->salinity = set_val;
         }
 
         out << i << ": x = " << rg.x << ", y = " << rg.y;
@@ -140,13 +140,13 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
             " landmass_id: " << rd->landmass_id <<
             " flags: " << hex << rd->flags.as_int() << dec << endl;
         out << 
-            "wet: " << rd->wetness << " " <<
+            "rai: " << rd->rainfall << " " <<
             "veg: " << rd->vegetation << " " <<
             "tem: " << rd->temperature << " " <<
             "evi: " << rd->evilness << " " <<
-            "hil: " << rd->hilliness << " " <<
+            "dra: " << rd->drainage << " " <<
             "sav: " << rd->savagery << " " <<
-            "sal: " << rd->saltiness;
+            "sal: " << rd->salinity;
             
         int32_t *p = (int32_t *)rd;
         int c = sizeof(*rd) / sizeof(int32_t);

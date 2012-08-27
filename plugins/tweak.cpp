@@ -28,6 +28,7 @@
 #include "df/criminal_case.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/squad_order_trainst.h"
 
 #include <stdlib.h>
 
@@ -72,6 +73,10 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak stable-cursor [disable]\n"
         "    Keeps exact position of dwarfmode cursor during exits to main menu.\n"
         "    E.g. allows switching between t/q/k/d without losing position.\n"
+        "  tweak patrol-duty [disable]\n"
+        "    Causes 'Train' orders to no longer be considered 'patrol duty' so\n"
+        "    soldiers will stop getting unhappy thoughts. Does NOT fix the problem\n"
+        "    when soldiers go off-duty (i.e. civilian).\n"
     ));
     return CR_OK;
 }
@@ -184,7 +189,18 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
     }
 };
 
+struct patrol_duty_hook : df::squad_order_trainst
+{
+    typedef df::squad_order_trainst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, isPatrol, ())
+    {
+        return false;
+    }
+};
+
 IMPLEMENT_VMETHOD_INTERPOSE(stable_cursor_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(patrol_duty_hook, isPatrol);
 
 static command_result tweak(color_ostream &out, vector <string> &parameters)
 {
@@ -287,6 +303,14 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     else if (cmd == "stable-cursor")
     {
         auto &hook = INTERPOSE_HOOK(stable_cursor_hook, feed);
+        if (vector_get(parameters, 1) == "disable")
+            hook.remove();
+        else
+            hook.apply();
+    }
+    else if (cmd == "patrol-duty")
+    {
+        auto &hook = INTERPOSE_HOOK(patrol_duty_hook, isPatrol);
         if (vector_get(parameters, 1) == "disable")
             hook.remove();
         else

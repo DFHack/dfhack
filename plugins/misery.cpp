@@ -50,8 +50,8 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out) {
     }
 
     if ( count < maxCount ) {
-	    count++;
-	    return CR_OK;
+        count++;
+        return CR_OK;
     }
     count = 0;
     

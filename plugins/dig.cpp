@@ -963,7 +963,7 @@ command_result digexp (color_ostream &out, vector <string> & parameters)
                     mx.setDesignationAt(pos,des);
                 }
             }
-            mx.WriteAll();
+        mx.WriteAll();
     }
     else for(uint32_t x = 0; x < x_max; x++)
     {
@@ -1141,6 +1141,7 @@ command_result digv (color_ostream &out, vector <string> & parameters)
         }
     }
     MCache->WriteAll();
+    delete MCache;
     return CR_OK;
 }
 
@@ -1354,6 +1355,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
         }
     }
     MCache->WriteAll();
+    delete MCache;
     return CR_OK;
 }
 

@@ -25,8 +25,11 @@ using namespace std;
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/world_region_details.h"
+#include "df/world_region_feature.h"
 #include "df/world_geo_biome.h"
 #include "df/world_geo_layer.h"
+#include "df/world_underground_region.h"
+#include "df/feature_init.h"
 #include "df/region_map_entry.h"
 #include "df/inclusion_type.h"
 #include "df/viewscreen_choose_start_sitest.h"
@@ -109,9 +112,10 @@ struct compare_pair_second
     }
 };
 
-static void printMatdata(color_ostream &con, const matdata &data)
+static void printMatdata(color_ostream &con, const matdata &data, bool only_z = false)
 {
-    con << std::setw(9) << data.count;
+    if (!only_z)
+        con << std::setw(9) << data.count;
 
     if(data.lower_z != data.upper_z)
         con <<" Z:" << std::setw(4) << data.lower_z << ".." <<  data.upper_z << std::endl;
@@ -226,6 +230,191 @@ static coord2d biome_delta[] = {
     coord2d(-1,-1), coord2d(0,-1), coord2d(1,-1)
 };
 
+struct EmbarkTileLayout {
+    int elevation;
+    int min_z, base_z;
+    std::map<int, float> penalty;
+};
+
+bool estimate_underground(color_ostream &out, EmbarkTileLayout &tile, df::world_region_details *details, int x, int y)
+{
+    tile.elevation = (
+            details->elevation[x][y] + details->elevation[x][y+1] +
+            details->elevation[x+1][y] + details->elevation[x+1][y+1]
+        ) / 4;
+    tile.base_z = tile.elevation;
+    tile.penalty.clear();
+
+    auto &features = details->features[x][y];
+
+    // Collect global feature layer depths and apply penalties
+    std::map<int, int> layer_bottom, layer_top;
+    bool sea_found = false;
+
+    for (size_t i = 0; i < features.size(); i++)
+    {
+        auto feature = features[i];
+        auto layer = df::world_underground_region::find(feature->layer);
+        if (!layer || feature->min_z == -30000) continue;
+
+        layer_bottom[layer->layer_depth] = feature->min_z;
+        layer_top[layer->layer_depth] = feature->max_z;
+        tile.base_z = std::min(tile.base_z, (int)feature->min_z);
+
+        float penalty = 1.0f;
+        switch (layer->type) {
+        case df::world_underground_region::Cavern:
+            penalty = 0.75f;
+            break;
+        case df::world_underground_region::MagmaSea:
+            sea_found = true;
+            tile.min_z = feature->min_z;
+            for (int i = feature->min_z; i <= feature->max_z; i++)
+                tile.penalty[i] = 0.2 + 0.6f*(i-feature->min_z)/(feature->max_z-feature->min_z+1);
+            break;
+        case df::world_underground_region::Underworld:
+            penalty = 0.0f;
+            break;
+        }
+
+        if (penalty != 1.0f)
+        {
+            for (int i = feature->min_z; i <= feature->max_z; i++)
+                tile.penalty[i] = penalty;
+        }
+    }
+
+    if (!sea_found)
+    {
+        out.printerr("Could not find magma sea.\n");
+        return false;
+    }
+
+    // Scan for big local features and apply their penalties
+    for (size_t i = 0; i < features.size(); i++)
+    {
+        auto feature = features[i];
+        auto lfeature = Maps::getLocalInitFeature(details->pos, feature->feature_idx);
+        if (!lfeature)
+            continue;
+
+        switch (lfeature->getType())
+        {
+        case feature_type::pit:
+        case feature_type::magma_pool:
+        case feature_type::volcano:
+            for (int i = layer_bottom[lfeature->end_depth];
+                 i <= layer_top[lfeature->start_depth]; i++)
+                tile.penalty[i] = std::min(0.4f, map_find(tile.penalty, i, 1.0f));
+            break;
+        default:
+            break;
+        }
+    }
+
+    return true;
+}
+
+void add_materials(EmbarkTileLayout &tile, matdata &data, float amount, int min_z, int max_z)
+{
+    for (int z = min_z; z <= max_z; z++)
+        data.add(z, int(map_find(tile.penalty, z, 1)*amount));
+}
+
+bool estimate_materials(color_ostream &out, EmbarkTileLayout &tile, MatMap &layerMats, MatMap &veinMats, df::coord2d biome)
+{
+    using namespace geo_layer_type;
+
+    df::world_data *data = world->world_data;
+    int bx = clip_range(biome.x, 0, data->world_width-1);
+    int by = clip_range(biome.y, 0, data->world_height-1);
+    auto &region = data->region_map[bx][by];
+    df::world_geo_biome *geo_biome = df::world_geo_biome::find(region.geo_index);
+
+    if (!geo_biome)
+    {
+        out.printerr("Region geo-biome not found: (%d,%d)\n", bx, by);
+        return false;
+    }
+
+    // soil depth increases by 1 every 5 levels below 150
+    int top_z_level = tile.elevation - std::max((154-tile.elevation)/5,0);
+
+    for (unsigned i = 0; i < geo_biome->layers.size(); i++)
+    {
+        auto layer = geo_biome->layers[i];
+        switch (layer->type)
+        {
+            case SOIL:
+            case SOIL_OCEAN:
+            case SOIL_SAND:
+                top_z_level += layer->top_height - layer->bottom_height + 1;
+                break;
+            default:;
+        }
+    }
+
+    top_z_level = std::max(top_z_level, tile.elevation)-1;
+
+    for (unsigned i = 0; i < geo_biome->layers.size(); i++)
+    {
+        auto layer = geo_biome->layers[i];
+
+        int top_z = std::min(layer->top_height + top_z_level, tile.elevation-1);
+        int bottom_z = std::max(layer->bottom_height + top_z_level, tile.min_z);
+        if (i+1 == geo_biome->layers.size()) // stretch layer if needed
+            bottom_z = tile.min_z;
+        if (top_z < bottom_z)
+            continue;
+
+        float layer_size = 48*48;
+
+        int sums[ENUM_LAST_ITEM(inclusion_type)+1] = { 0 };
+
+        for (unsigned j = 0; j < layer->vein_mat.size(); j++)
+            if (is_valid_enum_item<df::inclusion_type>(layer->vein_type[j]))
+                sums[layer->vein_type[j]] += layer->vein_unk_38[j];
+
+        for (unsigned j = 0; j < layer->vein_mat.size(); j++)
+        {
+            // TODO: find out how to estimate the real density
+            // this code assumes that vein_unk_38 is the weight
+            // used when choosing the vein material
+            float size = float(layer->vein_unk_38[j]);
+            df::inclusion_type type = layer->vein_type[j];
+
+            switch (type)
+            {
+            case inclusion_type::VEIN:
+                // 3 veins of 80 tiles avg
+                size = size * 80 * 3 / sums[type];
+                break;
+            case inclusion_type::CLUSTER:
+                // 1 cluster of 700 tiles avg
+                size = size * 700 * 1 / sums[type];
+                break;
+            case inclusion_type::CLUSTER_SMALL:
+                size = size * 6 * 7 / sums[type];
+                break;
+            case inclusion_type::CLUSTER_ONE:
+                size = size * 1 * 5 / sums[type];
+                break;
+            default:
+                // shouldn't actually happen
+                size = 1;
+            }
+
+            layer_size -= size;
+
+            add_materials(tile, veinMats[layer->vein_mat[j]], size, bottom_z, top_z);
+        }
+
+        add_materials(tile, layerMats[layer->mat_index], layer_size, bottom_z, top_z);
+    }
+
+    return true;
+}
+
 static command_result embark_prospector(color_ostream &out, df::viewscreen_choose_start_sitest *screen,
                                         bool showHidden, bool showValue)
 {
@@ -246,96 +435,34 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
         return CR_FAILURE;
     }
 
-    // Compute biomes
-    std::map<coord2d, int> biomes;
-
-    if (screen->biome_highlighted)
-    {
-        out.print("Processing one embark tile of biome F%d.\n\n", screen->biome_idx+1);
-        biomes[screen->biome_rgn[screen->biome_idx]]++;
-    }
-    else
-    {
-        for (int x = screen->embark_pos_min.x; x <= screen->embark_pos_max.x; x++)
-        {
-            for (int y = screen->embark_pos_min.y; y <= screen->embark_pos_max.y; y++)
-            {
-                int bv = clip_range(cur_details->biome[x][y], 1, 9);
-                biomes[cur_region + biome_delta[bv-1]]++;
-            }
-        }
-    }
-
     // Compute material maps
     MatMap layerMats;
     MatMap veinMats;
+    matdata world_bottom;
 
-    for (auto biome_it = biomes.begin(); biome_it != biomes.end(); ++biome_it)
+    // Compute biomes
+    std::map<coord2d, int> biomes;
+
+    /*if (screen->biome_highlighted)
     {
-        int bx = clip_range(biome_it->first.x, 0, data->world_width-1);
-        int by = clip_range(biome_it->first.y, 0, data->world_height-1);
-        auto &region = data->region_map[bx][by];
-        df::world_geo_biome *geo_biome = df::world_geo_biome::find(region.geo_index);
+        out.print("Processing one embark tile of biome F%d.\n\n", screen->biome_idx+1);
+        biomes[screen->biome_rgn[screen->biome_idx]]++;
+    }*/
 
-        if (!geo_biome)
+    for (int x = screen->embark_pos_min.x; x <= screen->embark_pos_max.x; x++)
+    {
+        for (int y = screen->embark_pos_min.y; y <= screen->embark_pos_max.y; y++)
         {
-            out.printerr("Region geo-biome not found: (%d,%d)\n", bx, by);
-            return CR_FAILURE;
-        }
+            int bv = clip_range(cur_details->biome[x][y] & 15, 1, 9);
+            df::coord2d rgn = cur_region + biome_delta[bv-1];
 
-        int cnt = biome_it->second;
+            EmbarkTileLayout tile;
+            if (!estimate_underground(out, tile, cur_details, x, y) ||
+                !estimate_materials(out, tile, layerMats, veinMats, rgn))
+                return CR_FAILURE;
 
-        for (unsigned i = 0; i < geo_biome->layers.size(); i++)
-        {
-            auto layer = geo_biome->layers[i];
-
-            layerMats[layer->mat_index].add(layer->bottom_height, 0);
-
-            int level_cnt = layer->top_height - layer->bottom_height + 1;
-            int layer_size = 48*48*cnt*level_cnt;
-
-            int sums[ENUM_LAST_ITEM(inclusion_type)+1] = { 0 };
-
-            for (unsigned j = 0; j < layer->vein_mat.size(); j++)
-                if (is_valid_enum_item<df::inclusion_type>(layer->vein_type[j]))
-                    sums[layer->vein_type[j]] += layer->vein_unk_38[j];
-
-            for (unsigned j = 0; j < layer->vein_mat.size(); j++)
-            {
-                // TODO: find out how to estimate the real density
-                // this code assumes that vein_unk_38 is the weight
-                // used when choosing the vein material
-                int size = layer->vein_unk_38[j]*cnt*level_cnt;
-                df::inclusion_type type = layer->vein_type[j];
-
-                switch (type)
-                {
-                case inclusion_type::VEIN:
-                    // 3 veins of 80 tiles avg
-                    size = size * 80 * 3 / sums[type];
-                    break;
-                case inclusion_type::CLUSTER:
-                    // 1 cluster of 700 tiles avg
-                    size = size * 700 * 1 / sums[type];
-                    break;
-                case inclusion_type::CLUSTER_SMALL:
-                    size = size * 6 * 7 / sums[type];
-                    break;
-                case inclusion_type::CLUSTER_ONE:
-                    size = size * 1 * 5 / sums[type];
-                    break;
-                default:
-                    // shouldn't actually happen
-                    size = cnt*level_cnt;
-                }
-
-                veinMats[layer->vein_mat[j]].add(layer->bottom_height, 0);
-                veinMats[layer->vein_mat[j]].add(layer->top_height, size);
-
-                layer_size -= size;
-            }
-
-            layerMats[layer->mat_index].add(layer->top_height, std::max(0,layer_size));
+            world_bottom.add(tile.base_z, 0);
+            world_bottom.add(tile.elevation-1, 0);
         }
     }
 
@@ -349,7 +476,10 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
         mats->Finish();
     }
 
-    out << "Warning: the above data is only a very rough estimate." << std::endl;
+    out << "Embark depth: " << (world_bottom.upper_z-world_bottom.lower_z+1) << " ";
+    printMatdata(out, world_bottom, true);
+
+    out << std::endl << "Warning: the above data is only a very rough estimate." << std::endl;
 
     return CR_OK;
 }

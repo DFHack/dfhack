@@ -20,6 +20,8 @@ static map<int, int> processedThoughtCountTable;
 
 //keep track of fake thoughts so you can remove them if requested
 static vector<std::pair<int,int> > fakeThoughts;
+static int count;
+const int maxCount = 1000;
 
 DFHACK_PLUGIN("misery");
 
@@ -46,6 +48,12 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out) {
     if ( !wasLoaded ) {
         wasLoaded = true;
     }
+
+    if ( count < maxCount ) {
+	    count++;
+	    return CR_OK;
+    }
+    count = 0;
     
     int32_t race_id = df::global::ui->race_id;
     int32_t civ_id = df::global::ui->civ_id;
@@ -172,3 +180,4 @@ command_result misery(color_ostream &out, vector<string>& parameters) {
     
     return CR_OK;
 }
+

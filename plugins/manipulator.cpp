@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <set>
+#include <algorithm>
 
 #include <VTableInterpose.h>
 #include "df/world.h"
@@ -41,36 +42,36 @@ DFHACK_PLUGIN("manipulator");
 
 struct SkillLevel
 {
-	const char *name;
-	int points;
-	char abbrev;
+    const char *name;
+    int points;
+    char abbrev;
 };
 
-#define    NUM_SKILL_LEVELS (sizeof(skill_levels) / sizeof(SkillLevel))
+#define NUM_SKILL_LEVELS (sizeof(skill_levels) / sizeof(SkillLevel))
 
 // The various skill rankings. Zero skill is hardcoded to "Not" and '-'.
 const SkillLevel skill_levels[] = {
-	{"Dabbling",	500, '0'},
-	{"Novice",	600, '1'},
-	{"Adequate",	700, '2'},
-	{"Competent",	800, '3'},
-	{"Skilled",	900, '4'},
-	{"Proficient",	1000, '5'},
-	{"Talented",	1100, '6'},
-	{"Adept",	1200, '7'},
-	{"Expert",	1300, '8'},
-	{"Professional",1400, '9'},
-	{"Accomplished",1500, 'A'},
-	{"Great",	1600, 'B'},
-	{"Master",	1700, 'C'},
-	{"High Master",	1800, 'D'},
-	{"Grand Master",1900, 'E'},
-	{"Legendary",	2000, 'U'},
-	{"Legendary+1",	2100, 'V'},
-	{"Legendary+2",	2200, 'W'},
-	{"Legendary+3",	2300, 'X'},
-	{"Legendary+4",	2400, 'Y'},
-	{"Legendary+5",	0, 'Z'}
+    {"Dabbling",     500, '0'},
+    {"Novice",       600, '1'},
+    {"Adequate",     700, '2'},
+    {"Competent",    800, '3'},
+    {"Skilled",      900, '4'},
+    {"Proficient",  1000, '5'},
+    {"Talented",    1100, '6'},
+    {"Adept",       1200, '7'},
+    {"Expert",      1300, '8'},
+    {"Professional",1400, '9'},
+    {"Accomplished",1500, 'A'},
+    {"Great",       1600, 'B'},
+    {"Master",      1700, 'C'},
+    {"High Master", 1800, 'D'},
+    {"Grand Master",1900, 'E'},
+    {"Legendary",   2000, 'U'},
+    {"Legendary+1", 2100, 'V'},
+    {"Legendary+2", 2200, 'W'},
+    {"Legendary+3", 2300, 'X'},
+    {"Legendary+4", 2400, 'Y'},
+    {"Legendary+5",    0, 'Z'}
 };
 
 struct SkillColumn
@@ -82,7 +83,7 @@ struct SkillColumn
     bool special; // specified labor is mutually exclusive with all other special labors
 };
 
-#define    NUM_COLUMNS (sizeof(columns) / sizeof(SkillColumn))
+#define NUM_COLUMNS (sizeof(columns) / sizeof(SkillColumn))
 
 // All of the skill/labor columns we want to display. Includes profession (for color), labor, skill, and 2 character label
 const SkillColumn columns[] = {
@@ -247,17 +248,69 @@ struct UnitInfo
     int8_t color;
 };
 
-#define    FILTER_NONWORKERS    0x0001
-#define    FILTER_NONDWARVES    0x0002
-#define    FILTER_NONCIV        0x0004
-#define    FILTER_ANIMALS        0x0008
-#define    FILTER_LIVING        0x0010
-#define    FILTER_DEAD        0x0020
+enum altsort_mode {
+    ALTSORT_NAME,
+    ALTSORT_PROFESSION,
+    ALTSORT_MAX
+};
+
+bool descending;
+df::job_skill sort_skill;
+df::unit_labor sort_labor;
+
+bool sortByName (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (descending)
+        return (d1->name > d2->name);
+    else
+        return (d1->name < d2->name);
+}
+
+bool sortByProfession (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (descending)
+        return (d1->profession > d2->profession);
+    else
+        return (d1->profession < d2->profession);
+}
+
+bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (sort_skill != job_skill::NONE)
+    {
+        df::unit_skill *s1 = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(d1->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
+        df::unit_skill *s2 = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(d1->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
+        int l1 = s1 ? s1->rating : 0;
+        int l2 = s2 ? s2->rating : 0;
+        int e1 = s1 ? s1->experience : 0;
+        int e2 = s2 ? s2->experience : 0;
+        if (descending)
+        {
+            if (l1 != l2)
+                return l1 > l2;
+            if (e1 != e2)
+                return e1 > e2;
+        }
+        else
+        {
+            if (l1 != l2)
+                return l1 < l2;
+            if (e1 != e2)
+                return e1 < e2;
+        }
+    }
+    if (sort_labor != unit_labor::NONE)
+    {
+        if (descending)
+            return d1->unit->status.labors[sort_labor] > d2->unit->status.labors[sort_labor];
+        else
+            return d1->unit->status.labors[sort_labor] < d2->unit->status.labors[sort_labor];
+    }
+    return sortByName(d1, d2);
+}
 
 class viewscreen_unitlaborsst : public dfhack_viewscreen {
 public:
-    static viewscreen_unitlaborsst *create (char pushtype, df::viewscreen *scr = NULL);
-
     void feed(set<df::interface_key> *events);
 
     void render();
@@ -267,86 +320,41 @@ public:
 
     std::string getFocusString() { return "unitlabors"; }
 
-    viewscreen_unitlaborsst();
+    viewscreen_unitlaborsst(vector<df::unit*> &src);
     ~viewscreen_unitlaborsst() { };
 
 protected:
     vector<UnitInfo *> units;
-    int filter;
+    altsort_mode altsort;
 
     int first_row, sel_row;
     int first_column, sel_column;
 
     int height, name_width, prof_width, labors_width;
 
-//    bool descending;
-//    int sort_skill;
-//    int sort_labor;
-
-    void readUnits ();
     void calcSize ();
 };
 
-viewscreen_unitlaborsst::viewscreen_unitlaborsst()
+viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src)
 {
-    filter = FILTER_LIVING;
-    first_row = sel_row = 0;
-    first_column = sel_column = 0;
-    calcSize();
-    readUnits();
-}
-
-void viewscreen_unitlaborsst::readUnits ()
-{
-    for (size_t i = 0; i < units.size(); i++)
-        delete units[i];
-    units.clear();
-
-    UnitInfo *cur = new UnitInfo;
-    for (size_t i = 0; i < world->units.active.size(); i++)
+    for (size_t i = 0; i < src.size(); i++)
     {
-        df::unit *unit = world->units.active[i];
+        UnitInfo *cur = new UnitInfo;
+        df::unit *unit = src[i];
         cur->unit = unit;
         cur->allowEdit = true;
 
         if (unit->race != ui->race_id)
-        {
             cur->allowEdit = false;
-            if (!(filter & FILTER_NONDWARVES))
-                continue;
-        }
 
         if (unit->civ_id != ui->civ_id)
-        {
             cur->allowEdit = false;
-            if (!(filter & FILTER_NONCIV))
-                continue;
-        }
 
         if (unit->flags1.bits.dead)
-        {
             cur->allowEdit = false;
-            if (!(filter & FILTER_DEAD))
-                continue;
-        }
-        else
-        {
-            if (!(filter & FILTER_LIVING))
-                continue;
-        }
 
         if (!ENUM_ATTR(profession, can_assign_labor, unit->profession))
-        {
             cur->allowEdit = false;
-            if (!(filter & FILTER_NONWORKERS))
-                continue;
-        }
-
-        if (!unit->name.first_name.length())
-        {
-            if (!(filter & FILTER_ANIMALS))
-                continue;
-        }
 
         cur->name = Translation::TranslateName(&unit->name, false);
         cur->transname = Translation::TranslateName(&unit->name, true);
@@ -354,9 +362,13 @@ void viewscreen_unitlaborsst::readUnits ()
         cur->color = Units::getProfessionColor(unit);
 
         units.push_back(cur);
-        cur = new UnitInfo;
     }
-    delete cur;
+    std::sort(units.begin(), units.end(), sortByName);
+
+    altsort = ALTSORT_NAME;
+    first_row = sel_row = 0;
+    first_column = sel_column = 0;
+    calcSize();
 }
 
 void viewscreen_unitlaborsst::calcSize()
@@ -420,8 +432,6 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         Screen::dismiss(this);
         return;
     }
-
-    // TODO - allow modifying filters
 
     if (!units.size())
         return;
@@ -501,9 +511,64 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         unit->status.labors[col.labor] = !unit->status.labors[col.labor];
     }
 
-    // TODO: add sorting
+    if (events->count(interface_key::SECONDSCROLL_UP) || events->count(interface_key::SECONDSCROLL_DOWN))
+    {
+        descending = events->count(interface_key::SECONDSCROLL_UP);
+        sort_skill = columns[sel_column].skill;
+        sort_labor = columns[sel_column].labor;
+        std::sort(units.begin(), units.end(), sortBySkill);
+    }
+
+    if (events->count(interface_key::SECONDSCROLL_PAGEUP) || events->count(interface_key::SECONDSCROLL_PAGEDOWN))
+    {
+        descending = events->count(interface_key::SECONDSCROLL_PAGEUP);
+        switch (altsort)
+        {
+        case ALTSORT_NAME:
+            std::sort(units.begin(), units.end(), sortByName);
+            break;
+        case ALTSORT_PROFESSION:
+            std::sort(units.begin(), units.end(), sortByProfession);
+            break;
+        }
+    }
+    if (events->count(interface_key::CHANGETAB))
+    {
+        switch (altsort)
+        {
+        case ALTSORT_NAME:
+            altsort = ALTSORT_PROFESSION;
+            break;
+        case ALTSORT_PROFESSION:
+            altsort = ALTSORT_NAME;
+            break;
+        }
+    }
+
+    if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
+    {
+        if (events->count(interface_key::UNITJOB_VIEW) || events->count(interface_key::UNITJOB_ZOOM_CRE))
+        {
+            for (int i = 0; i < unitlist->units[unitlist->page].size(); i++)
+            {
+                if (unitlist->units[unitlist->page][i] == units[sel_row]->unit)
+                {
+                    unitlist->cursor_pos[unitlist->page] = i;
+                    unitlist->feed(events);
+                    if (Screen::isDismissed(unitlist))
+                        Screen::dismiss(this);
+                    break;
+                }
+            }
+        }
+    }
 }
 
+void OutputString(int8_t color, int &x, int y, const std::string &text)
+{
+    Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
+    x += text.length();
+}
 void viewscreen_unitlaborsst::render()
 {
     if (Screen::isDismissed(this))
@@ -528,6 +593,7 @@ void viewscreen_unitlaborsst::render()
             fg = 0;
             bg = 7;
         }
+
         Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 1);
         Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 2);
     }
@@ -537,6 +603,7 @@ void viewscreen_unitlaborsst::render()
         int row_offset = row + first_row;
         if (row_offset >= units.size())
             break;
+
         UnitInfo *cur = units[row_offset];
         df::unit *unit = cur->unit;
         int8_t fg = 15, bg = 0;
@@ -554,7 +621,8 @@ void viewscreen_unitlaborsst::render()
         profession.resize(prof_width);
         fg = cur->color;
         bg = 0;
-        Screen::paintString(Screen::Pen(' ', fg, bg), 1 + prof_width + 1, 3 + row, profession);
+
+        Screen::paintString(Screen::Pen(' ', fg, bg), 1 + name_width + 1, 3 + row, profession);
 
         // Print unit's skills and labor assignments
         for (int col = 0; col < labors_width; col++)
@@ -562,11 +630,9 @@ void viewscreen_unitlaborsst::render()
             int col_offset = col + first_column;
             fg = 15;
             bg = 0;
+            char c = 0xFA;
             if ((col_offset == sel_column) && (row_offset == sel_row))
                 fg = 9;
-            if ((columns[col_offset].labor != unit_labor::NONE) && (unit->status.labors[columns[col_offset].labor]))
-                bg = 7;
-            char c = '-';
             if (columns[col_offset].skill != job_skill::NONE)
             {
                 df::unit_skill *skill = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(unit->status.current_soul->skills, &df::unit_skill::id, columns[col_offset].skill);
@@ -577,7 +643,20 @@ void viewscreen_unitlaborsst::render()
                         level = NUM_SKILL_LEVELS - 1;
                     c = skill_levels[level].abbrev;
                 }
+                else
+                    c = '-';
             }
+            if (columns[col_offset].labor != unit_labor::NONE)
+            {
+                if (unit->status.labors[columns[col_offset].labor])
+                {
+                    bg = 7;
+                    if (columns[col_offset].skill == job_skill::NONE)
+                        c = 0xF9;
+                }
+            }
+            else
+                bg = 4;
             Screen::paintTile(Screen::Pen(c, fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 3 + row);
         }
     }
@@ -586,15 +665,21 @@ void viewscreen_unitlaborsst::render()
     if (cur != NULL)
     {
         df::unit *unit = cur->unit;
-        string str = cur->transname;
-        if (str.length())
-            str += ", ";
-        str += cur->profession;
-        str += ":";
+        int x = 1;
+        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + height + 2, cur->transname);
+        x += cur->transname.length();
 
-        Screen::paintString(Screen::Pen(' ', 15, 0), 1, 3 + height + 2, str);
-        int y = 1 + str.length() + 1;
+        if (cur->transname.length())
+        {
+            Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + height + 2, ", ");
+            x += 2;
+        }
+        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + height + 2, cur->profession);
+        x += cur->profession.length();
+        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + height + 2, ": ");
+        x += 2;
 
+        string str;
         if (columns[sel_column].skill == job_skill::NONE)
         {
             str = ENUM_ATTR_STR(unit_labor, caption, columns[sel_column].labor);
@@ -602,7 +687,6 @@ void viewscreen_unitlaborsst::render()
                 str += " Enabled";
             else
                 str += " Not Enabled";
-            Screen::paintString(Screen::Pen(' ', 9, 0), y, 3 + height + 2, str);
         }
         else
         {
@@ -618,11 +702,45 @@ void viewscreen_unitlaborsst::render()
             }
             else
                 str = stl_sprintf("Not %s (0/500)", ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));
-            Screen::paintString(Screen::Pen(' ', 9, 0), y, 3 + height + 2, str);
         }
+        Screen::paintString(Screen::Pen(' ', 9, 0), x, 3 + height + 2, str);
     }
 
-    // TODO - print command help info
+    int x = 1;
+    OutputString(10, x, gps->dimy - 3, "Enter"); // SELECT key
+    OutputString(15, x, gps->dimy - 3, ": Toggle labor, ");
+
+    OutputString(10, x, gps->dimy - 3, "v"); // UNITJOB_VIEW key
+    OutputString(15, x, gps->dimy - 3, ": ViewCre, ");
+
+    OutputString(10, x, gps->dimy - 3, "c"); // UNITJOB_ZOOM_CRE key
+    OutputString(15, x, gps->dimy - 3, ": Zoom-Cre, ");
+
+    OutputString(10, x, gps->dimy - 3, "Esc"); // LEAVESCREEN key
+    OutputString(15, x, gps->dimy - 3, ": Done");
+
+    x = 1;
+    OutputString(10, x, gps->dimy - 2, "+"); // SECONDSCROLL_DOWN key
+    OutputString(10, x, gps->dimy - 2, "-"); // SECONDSCROLL_UP key
+    OutputString(15, x, gps->dimy - 2, ": Sort by Skill, ");
+
+    OutputString(10, x, gps->dimy - 2, "*"); // SECONDSCROLL_PAGEDOWN key
+    OutputString(10, x, gps->dimy - 2, "/"); // SECONDSCROLL_PAGEUP key
+    OutputString(15, x, gps->dimy - 2, ": Sort by (");
+    OutputString(10, x, gps->dimy - 2, "Tab"); // CHANGETAB key
+    OutputString(15, x, gps->dimy - 2, ") ");
+    switch (altsort)
+    {
+    case ALTSORT_NAME:
+        OutputString(15, x, gps->dimy - 2, "Name");
+        break;
+    case ALTSORT_PROFESSION:
+        OutputString(15, x, gps->dimy - 2, "Profession");
+        break;
+    default:
+        OutputString(15, x, gps->dimy - 2, "Unknown");
+        break;
+    }
 }
 
 struct unitlist_hook : df::viewscreen_unitlistst
@@ -633,9 +751,11 @@ struct unitlist_hook : df::viewscreen_unitlistst
     {
         if (input->count(interface_key::UNITVIEW_PRF_PROF))
         {
-            Screen::dismiss(this);
-            Screen::show(new viewscreen_unitlaborsst());
-            return;
+            if (units[page].size())
+            {
+                Screen::show(new viewscreen_unitlaborsst(units[page]));
+                return;
+            }
         }
         INTERPOSE_NEXT(feed)(input);
     }

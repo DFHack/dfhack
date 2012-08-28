@@ -17,6 +17,6 @@ local screen = mkinstance(gui.FramedScreen, {
             self:dismiss()
         end
     end
-})
+}):init()
 
 screen:show()

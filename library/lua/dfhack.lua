@@ -104,11 +104,21 @@ end
 
 -- Trivial classes
 
+function rawset_default(target,source)
+    for k,v in pairs(source) do
+        if rawget(target,k) == nil then
+            rawset(target,k,v)
+        end
+    end
+end
+
 function defclass(class,parent)
     class = class or {}
-    rawset(class, '__index', rawget(class, '__index') or class)
+    rawset_default(class, { __index = class })
     if parent then
         setmetatable(class, parent)
+    else
+        rawset_default(class, { init_fields = rawset_default })
     end
     return class
 end
@@ -153,14 +163,6 @@ function xyz2pos(x,y,z)
     end
 end
 
-function rawset_default(target,source)
-    for k,v in pairs(source) do
-        if rawget(target,k) == nil then
-            rawset(target,k,v)
-        end
-    end
-end
-
 function safe_index(obj,idx,...)
     if obj == nil or idx == nil then
         return nil
@@ -200,12 +202,6 @@ end
 function dfhack.buildings.getSize(bld)
     local x, y = bld.x1, bld.y1
     return bld.x2+1-x, bld.y2+1-y, bld.centerx-x, bld.centery-y
-end
-
-dfhack.screen.__index = dfhack.screen
-
-function dfhack.screen:__tostring()
-    return "<lua viewscreen: "..tostring(self._native)..">"
 end
 
 -- Interactive

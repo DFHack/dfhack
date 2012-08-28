@@ -188,6 +188,11 @@ module DFHack
             "#<MapTile pos=[#@x, #@y, #@z] shape=#{shape} tilemat=#{tilemat} material=#{mat_info.token}>"
         end
 
+        def dig(mode=:Default)
+            designation.dig = mode
+            mapblock.flags.designated = true
+        end
+
         def spawn_liquid(quantity, is_magma=false, flowing=true)
             designation.flow_size = quantity
             designation.liquid_type = (is_magma ? :Magma : :Water)

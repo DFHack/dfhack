@@ -373,6 +373,14 @@ function call_with_string(obj,methodname,...)
     )
 end
 
+function getBuildingName(building)
+    return call_with_string(building, 'getName')
+end
+
+function getBuildingCenter(building)
+    return xyz2pos(building.centerx, building.centery, building.z)
+end
+
 -- Ask a yes-no question
 function prompt_yes_no(msg,default)
     local prompt = msg

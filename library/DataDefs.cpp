@@ -218,8 +218,10 @@ virtual_identity::virtual_identity(size_t size, TAllocateFn alloc,
 virtual_identity::~virtual_identity()
 {
     // Remove interpose entries, so that they don't try accessing this object later
-    for (int i = interpose_list.size()-1; i >= 0; i--)
-        interpose_list[i]->remove();
+    for (auto it = interpose_list.begin(); it != interpose_list.end(); ++it)
+        if (it->second)
+            it->second->on_host_delete(this);
+    interpose_list.clear();
 }
 
 /* Vtable name to identity lookup. */

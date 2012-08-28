@@ -666,9 +666,9 @@ module DFHack
                 @_tg = tg
             end
 
-            field(:_ptr, 0) { number 32, false }
-            field(:_prev, 4) { number 32, false }
-            field(:_next, 8) { number 32, false }
+            field(:_ptr, 0) { pointer }
+            field(:_prev, 4) { pointer }
+            field(:_next, 8) { pointer }
 
             def item
                 # With the current xml structure, currently _tg designate
@@ -682,22 +682,24 @@ module DFHack
 
             def item=(v)
                 #addr = _ptr
-                #raise 'null pointer' if addr == 0
+                #raise 'null pointer' if not addr
                 #@_tg.at(addr)._set(v)
                 raise 'null pointer'
             end
 
             def prev
                 addr = _prev
-                return if addr == 0
+                return if not addr
                 @_tg._at(addr)._get
             end
 
             def next
                 addr = _next
-                return if addr == 0
+                return if not addr
                 @_tg._at(addr)._get
             end
+	    alias next= _next=
+	    alias prev= _prev=
 
             include Enumerable
             def each

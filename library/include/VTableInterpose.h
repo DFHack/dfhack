@@ -134,21 +134,31 @@ namespace DFHack
           1) Allow multiple hooks into the same vmethod
           2) Auto-remove hooks when a plugin is unloaded.
         */
+        friend class virtual_identity;
 
         virtual_identity *host; // Class with the vtable
         int vmethod_idx;
         void *interpose_method; // Pointer to the code of the interposing method
         void *chain_mptr;       // Pointer to the chain field below
 
+        bool applied;
         void *saved_chain;      // Previous pointer to the code
         VMethodInterposeLinkBase *next, *prev; // Other hooks for the same method
 
+        // inherited vtable members
+        std::set<virtual_identity*> child_hosts;
+        std::set<VMethodInterposeLinkBase*> child_next;
+
         void set_chain(void *chain);
+        void on_host_delete(virtual_identity *host);
+
+        VMethodInterposeLinkBase *get_first_interpose(virtual_identity *id);
+        void find_child_hosts(virtual_identity *cur, void *vmptr);
     public:
         VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr);
         ~VMethodInterposeLinkBase();
 
-        bool is_applied() { return saved_chain != NULL; }
+        bool is_applied() { return applied; }
         bool apply();
         void remove();
     };

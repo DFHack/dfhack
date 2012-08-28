@@ -77,6 +77,7 @@ distribution.
 #include "df/job_material_category.h"
 #include "df/burrow.h"
 #include "df/building_civzonest.h"
+#include "df/region_map_entry.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -749,6 +750,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getCurViewscreen),
     WRAPM(Gui, getFocusString),
+    WRAPM(Gui, getCurFocus),
     WRAPM(Gui, getSelectedWorkshopJob),
     WRAPM(Gui, getSelectedJob),
     WRAPM(Gui, getSelectedUnit),
@@ -814,6 +816,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getAge),
     WRAPM(Units, getProfessionName),
     WRAPM(Units, getCasteProfessionName),
+    WRAPM(Units, getProfessionColor),
+    WRAPM(Units, getCasteProfessionColor),
     { NULL, NULL }
 };
 
@@ -928,8 +932,7 @@ static int maps_getRegionBiome(lua_State *L)
 static int maps_getTileBiomeRgn(lua_State *L)
 {
     auto pos = CheckCoordXYZ(L, 1, true);
-    Lua::PushPosXY(L, Maps::getTileBiomeRgn(pos));
-    return 1;
+    return Lua::PushPosXY(L, Maps::getTileBiomeRgn(pos));
 }
 
 static const luaL_Reg dfhack_maps_funcs[] = {
@@ -984,6 +987,7 @@ static bool buildings_containsTile(df::building *bld, int x, int y, bool room) {
 }
 
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
+    WRAPM(Buildings, setOwner),
     WRAPM(Buildings, allocInstance),
     WRAPM(Buildings, checkFreeTiles),
     WRAPM(Buildings, countExtentTiles),

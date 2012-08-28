@@ -1260,7 +1260,7 @@ bool Core::ncurses_wgetch(int in, int & out)
         // FIXME: copypasta, push into a method!
         if(df::global::ui && df::global::gview)
         {
-            df::viewscreen * ws = Gui::GetCurrentScreen();
+            df::viewscreen * ws = Gui::getCurViewscreen();
             if (strict_virtual_cast<df::viewscreen_dwarfmodest>(ws) &&
                 df::global::ui->main.mode != ui_sidebar_mode::Hotkeys &&
                 df::global::ui->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)

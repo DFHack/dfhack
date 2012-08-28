@@ -4,6 +4,7 @@
 #include "Export.h"
 #include "PluginManager.h"
 #include "VersionInfo.h"
+#include "MemAccess.h"
 
 #include "DataDefs.h"
 #include "df/global_objects.h"
@@ -597,6 +598,45 @@ static VALUE rb_dfmemory_write_float(VALUE self, VALUE addr, VALUE val)
     return Qtrue;
 }
 
+// return memory permissions at address (eg "rx", nil if unmapped)
+static VALUE rb_dfmemory_check(VALUE self, VALUE addr)
+{
+    void *ptr = (void*)rb_num2ulong(addr);
+    std::vector<t_memrange> ranges;
+    Core::getInstance().p->getMemRanges(ranges);
+
+    unsigned i = 0;
+    while (i < ranges.size() && ranges[i].end <= ptr)
+        i++;
+
+    if (i >= ranges.size() || ranges[i].start > ptr || !ranges[i].valid)
+        return Qnil;
+
+    std::string perm = "";
+    if (ranges[i].read)
+        perm += "r";
+    if (ranges[i].write)
+        perm += "w";
+    if (ranges[i].execute)
+        perm += "x";
+    if (ranges[i].shared)
+        perm += "s";
+
+    return rb_str_new(perm.c_str(), perm.length());
+}
+
+// memory write (tmp override page permissions, eg patch code)
+static VALUE rb_dfmemory_patch(VALUE self, VALUE addr, VALUE raw)
+{
+    int strlen = FIX2INT(rb_funcall(raw, rb_intern("length"), 0));
+    bool ret;
+
+    ret = Core::getInstance().p->patchMemory((void*)rb_num2ulong(addr),
+		    rb_string_value_ptr(&raw), strlen);
+
+    return ret ? Qtrue : Qfalse;
+}
+
 
 // stl::string
 static VALUE rb_dfmemory_stlstring_new(VALUE self)
@@ -875,6 +915,8 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "memory_write_int16", RUBY_METHOD_FUNC(rb_dfmemory_write_int16), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_int32", RUBY_METHOD_FUNC(rb_dfmemory_write_int32), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_float", RUBY_METHOD_FUNC(rb_dfmemory_write_float), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_check", RUBY_METHOD_FUNC(rb_dfmemory_check), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_patch", RUBY_METHOD_FUNC(rb_dfmemory_patch), 2);
 
     rb_define_singleton_method(rb_cDFHack, "memory_stlstring_new",  RUBY_METHOD_FUNC(rb_dfmemory_stlstring_new), 0);
     rb_define_singleton_method(rb_cDFHack, "memory_stlstring_delete",  RUBY_METHOD_FUNC(rb_dfmemory_stlstring_delete), 1);

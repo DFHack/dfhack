@@ -279,9 +279,9 @@ module DFHack
             job = Job.cpp_new
             refbuildingholder = GeneralRefBuildingHolderst.cpp_new
             job.job_type = :DestroyBuilding
-            refbuildingholder.building_id = building.id
+            refbuildingholder.building_id = bld.id
             job.references << refbuildingholder
-            building.jobs << job
+            bld.jobs << job
             job_link job
             job
         end

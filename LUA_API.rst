@@ -724,14 +724,19 @@ can be omitted.
 Gui module
 ----------
 
-* ``dfhack.gui.getCurViewscreen()``
+* ``dfhack.gui.getCurViewscreen([skip_dismissed])``
 
-  Returns the viewscreen that is current in the core.
+  Returns the topmost viewscreen. If ``skip_dismissed`` is *true*,
+  ignores screens already marked to be removed.
 
 * ``dfhack.gui.getFocusString(viewscreen)``
 
   Returns a string representation of the current focus position
   in the ui. The string has a "screen/foo/bar/baz..." format.
+
+* ``dfhack.gui.getCurFocus([skip_dismissed])``
+
+  Returns the focus string of the current viewscreen.
 
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
 
@@ -874,6 +879,15 @@ Units module
 * ``dfhack.units.getCasteProfessionName(race,caste,prof_id[,plural])``
 
   Retrieves the profession name for the given race/caste using raws.
+
+* ``dfhack.units.getProfessionColor(unit[,ignore_noble])``
+
+  Retrieves the color associated with the profession, using noble assignments
+  or raws. The ``ignore_noble`` boolean disables the use of noble positions.
+
+* ``dfhack.units.getCasteProfessionColor(race,caste,prof_id)``
+
+  Retrieves the profession color for the given race/caste using raws.
 
 
 Items module
@@ -1026,6 +1040,11 @@ Burrows module
 
 Buildings module
 ----------------
+
+* ``dfhack.buildings.setOwner(item,unit)``
+
+  Replaces the owner of the building. If unit is *nil*, removes ownership.
+  Returns *false* in case of error.
 
 * ``dfhack.buildings.getSize(building)``
 
@@ -1291,9 +1310,10 @@ Screens are managed with the following functions:
   Displays the given screen, possibly placing it below a different one.
   The screen must not be already shown. Returns *true* if success.
 
-* ``dfhack.screen.dismiss(screen)``
+* ``dfhack.screen.dismiss(screen[,to_first])``
 
   Marks the screen to be removed when the game enters its event loop.
+  If ``to_first`` is *true*, all screens up to the first one will be deleted.
 
 * ``dfhack.screen.isDismissed(screen)``
 
@@ -1312,9 +1332,21 @@ Supported callbacks and fields are:
   Initialized by ``show`` with a reference to the backing viewscreen
   object, and removed again when the object is deleted.
 
+* ``function screen:onShow()``
+
+  Called by ``dfhack.screen.show`` if successful.
+
+* ``function screen:onDismiss()``
+
+  Called by ``dfhack.screen.dismiss`` if successful.
+
 * ``function screen:onDestroy()``
 
   Called from the destructor when the viewscreen is deleted.
+
+* ``function screen:onResize(w, h)``
+
+  Called before ``onRender`` or ``onIdle`` when the window size has changed.
 
 * ``function screen:onRender()``
 

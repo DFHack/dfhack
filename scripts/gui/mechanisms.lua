@@ -4,22 +4,13 @@ local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'
 
-function getBuildingName(building)
-    return utils.call_with_string(building, 'getName')
-end
-
-function getBuildingCenter(building)
-    return xyz2pos(building.centerx, building.centery, building.z)
-end
-
 function listMechanismLinks(building)
     local lst = {}
     local function push(item, mode)
         if item then
             lst[#lst+1] = {
                 obj = item, mode = mode,
-                name = getBuildingName(item),
-                center = getBuildingCenter(item)
+                name = utils.getBuildingName(item)
             }
         end
     end
@@ -52,26 +43,27 @@ MechanismList = defclass(MechanismList, guidm.MenuOverlay)
 
 MechanismList.focus_path = 'mechanisms'
 
-function MechanismList.new(building)
-    local self = {
-        links = {},
-        selected = 1
+function MechanismList:init(building)
+    self:init_fields{
+        links = {}, selected = 1
     }
-    return mkinstance(MechanismList, self):init(building)
+    guidm.MenuOverlay.init(self)
+    self:fillList(building)
+    return self
 end
 
-function MechanismList:init(building)
+function MechanismList:fillList(building)
     local links = listMechanismLinks(building)
 
-    links[1].viewport = self:getViewport()
-    links[1].cursor = guidm.getCursorPos()
+    self.old_viewport = self:getViewport()
+    self.old_cursor = guidm.getCursorPos()
+
     if #links <= 1 then
         links[1].mode = 'none'
     end
 
     self.links = links
     self.selected = 1
-    return self
 end
 
 local colors = {
@@ -103,22 +95,10 @@ function MechanismList:onRenderBody(dc)
     dc:string("Enter", COLOR_LIGHTGREEN):string(": Switch")
 end
 
-function MechanismList:zoomToLink(link,back)
-    df.global.world.selected_building = link.obj
-
-    if back then
-        guidm.setCursorPos(link.cursor)
-        self:getViewport(link.viewport):set()
-    else
-        guidm.setCursorPos(link.center)
-        self:getViewport():reveal(link.center, 5, 0, 10):set()
-    end
-end
-
 function MechanismList:changeSelected(delta)
     if #self.links <= 1 then return end
     self.selected = 1 + (self.selected + delta - 1) % #self.links
-    self:zoomToLink(self.links[self.selected])
+    self:selectBuilding(self.links[self.selected].obj)
 end
 
 function MechanismList:onInput(keys)
@@ -129,11 +109,11 @@ function MechanismList:onInput(keys)
     elseif keys.LEAVESCREEN then
         self:dismiss()
         if self.selected ~= 1 then
-            self:zoomToLink(self.links[1], true)
+            self:selectBuilding(self.links[1].obj, self.old_cursor, self.old_view)
         end
     elseif keys.SELECT_ALL then
         if self.selected > 1 then
-            self:init(self.links[self.selected].obj)
+            self:fillList(self.links[self.selected].obj)
         end
     elseif keys.SELECT then
         self:dismiss()
@@ -142,13 +122,10 @@ function MechanismList:onInput(keys)
     end
 end
 
-if not df.viewscreen_dwarfmodest:is_instance(dfhack.gui.getCurViewscreen()) then
-    qerror("This script requires the main dwarfmode view")
-end
-if df.global.ui.main.mode ~= df.ui_sidebar_mode.QueryBuilding then
-    qerror("This script requires the 'q' interface mode")
+if dfhack.gui.getCurFocus() ~= 'dwarfmode/QueryBuilding/Some' then
+    qerror("This script requires the main dwarfmode view in 'q' mode")
 end
 
-local list = MechanismList.new(df.global.world.selected_building)
+local list = mkinstance(MechanismList):init(df.global.world.selected_building)
 list:show()
 list:changeSelected(1)

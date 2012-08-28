@@ -279,7 +279,7 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
     if (sort_skill != job_skill::NONE)
     {
         df::unit_skill *s1 = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(d1->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
-        df::unit_skill *s2 = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(d1->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
+        df::unit_skill *s2 = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(d2->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
         int l1 = s1 ? s1->rating : 0;
         int l2 = s2 ? s2->rating : 0;
         int e1 = s1 ? s1->experience : 0;

@@ -231,17 +231,31 @@ static coord2d biome_delta[] = {
 };
 
 struct EmbarkTileLayout {
-    int elevation;
+    coord2d biome_off, biome_pos;
+    df::region_map_entry *biome;
+    int elevation, max_soil_depth;
     int min_z, base_z;
     std::map<int, float> penalty;
 };
 
 bool estimate_underground(color_ostream &out, EmbarkTileLayout &tile, df::world_region_details *details, int x, int y)
 {
+    // Find actual biome
+    int bv = clip_range(details->biome[x][y] & 15, 1, 9);
+    tile.biome_off = biome_delta[bv-1];
+
+    df::world_data *data = world->world_data;
+    int bx = clip_range(details->pos.x + tile.biome_off.x, 0, data->world_width-1);
+    int by = clip_range(details->pos.y + tile.biome_off.y, 0, data->world_height-1);
+    tile.biome_pos = coord2d(bx, by);
+    tile.biome = &data->region_map[bx][by];
+
+    // Compute surface elevation
     tile.elevation = (
             details->elevation[x][y] + details->elevation[x][y+1] +
             details->elevation[x+1][y] + details->elevation[x+1][y+1]
         ) / 4;
+    tile.max_soil_depth = std::max((154-tile.biome->elevation)/5,0);
     tile.base_z = tile.elevation;
     tile.penalty.clear();
 
@@ -321,24 +335,21 @@ void add_materials(EmbarkTileLayout &tile, matdata &data, float amount, int min_
         data.add(z, int(map_find(tile.penalty, z, 1)*amount));
 }
 
-bool estimate_materials(color_ostream &out, EmbarkTileLayout &tile, MatMap &layerMats, MatMap &veinMats, df::coord2d biome)
+bool estimate_materials(color_ostream &out, EmbarkTileLayout &tile, MatMap &layerMats, MatMap &veinMats)
 {
     using namespace geo_layer_type;
 
-    df::world_data *data = world->world_data;
-    int bx = clip_range(biome.x, 0, data->world_width-1);
-    int by = clip_range(biome.y, 0, data->world_height-1);
-    auto &region = data->region_map[bx][by];
-    df::world_geo_biome *geo_biome = df::world_geo_biome::find(region.geo_index);
+    df::world_geo_biome *geo_biome = df::world_geo_biome::find(tile.biome->geo_index);
 
     if (!geo_biome)
     {
-        out.printerr("Region geo-biome not found: (%d,%d)\n", bx, by);
+        out.printerr("Region geo-biome not found: (%d,%d)\n",
+                     tile.biome_pos.x, tile.biome_pos.y);
         return false;
     }
 
     // soil depth increases by 1 every 5 levels below 150
-    int top_z_level = tile.elevation - std::max((154-tile.elevation)/5,0);
+    int top_z_level = tile.elevation - tile.max_soil_depth;
 
     for (unsigned i = 0; i < geo_biome->layers.size(); i++)
     {
@@ -453,12 +464,9 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
     {
         for (int y = screen->embark_pos_min.y; y <= screen->embark_pos_max.y; y++)
         {
-            int bv = clip_range(cur_details->biome[x][y] & 15, 1, 9);
-            df::coord2d rgn = cur_region + biome_delta[bv-1];
-
             EmbarkTileLayout tile;
             if (!estimate_underground(out, tile, cur_details, x, y) ||
-                !estimate_materials(out, tile, layerMats, veinMats, rgn))
+                !estimate_materials(out, tile, layerMats, veinMats))
                 return CR_FAILURE;
 
             world_bottom.add(tile.base_z, 0);

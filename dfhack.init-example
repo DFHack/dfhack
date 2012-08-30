@@ -58,3 +58,6 @@ keybinding add Alt-L@dwarfmode/LookAround gui/liquids
 
 # stabilize the cursor of dwarfmode when switching menus
 tweak stable-cursor
+
+# stop military from considering training as 'patrol duty'
+tweak patrol-duty

@@ -226,6 +226,9 @@ DFHACK_EXPORT bool getNoblePositions(std::vector<NoblePosition> *pvec, df::unit 
 
 DFHACK_EXPORT std::string getProfessionName(df::unit *unit, bool ignore_noble = false, bool plural = false);
 DFHACK_EXPORT std::string getCasteProfessionName(int race, int caste, df::profession pid, bool plural = false);
+
+DFHACK_EXPORT int8_t getProfessionColor(df::unit *unit, bool ignore_noble = false);
+DFHACK_EXPORT int8_t getCasteProfessionColor(int race, int caste, df::profession pid);
 }
 }
 #endif

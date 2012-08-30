@@ -107,6 +107,31 @@ module DFHack
             Tiletype::Direction[tiletype]
         end
 
+        def shape_caption
+            TiletypeShape::Caption[shape]
+        end
+
+        def shape_basic
+            TiletypeShape::BasicShape[shape]
+        end
+
+        def shape_passablelow
+            TiletypeShape::PassableLow[shape]
+        end
+
+        def shape_passablehigh
+            TiletypeShape::PassableHigh[shape]
+        end
+
+        def shape_passableflow
+            TiletypeShape::PassableFlow[shape]
+        end
+
+        def shape_walkable
+            TiletypeShape::Walkable[shape]
+        end
+
+
         # return all veins for current mapblock
         def all_veins
             mapblock.block_events.grep(BlockSquareEventMineralst)
@@ -161,6 +186,34 @@ module DFHack
 
         def inspect
             "#<MapTile pos=[#@x, #@y, #@z] shape=#{shape} tilemat=#{tilemat} material=#{mat_info.token}>"
+        end
+
+        def dig(mode=:Default)
+            designation.dig = mode
+            mapblock.flags.designated = true
+        end
+
+        def spawn_liquid(quantity, is_magma=false, flowing=true)
+            designation.flow_size = quantity
+            designation.liquid_type = (is_magma ? :Magma : :Water)
+            designation.flow_forbid = true if is_magma or quantity >= 4
+
+            if flowing
+                mapblock.flags.update_liquid = true
+                mapblock.flags.update_liquid_twice = true
+
+                zf = df.world.map.z_level_flags[z]
+                zf.update = true
+                zf.update_twice = true
+            end
+        end
+
+        def spawn_water(quantity=7)
+            spawn_liquid(quantity)
+        end
+
+        def spawn_magma(quantity=7)
+            spawn_liquid(quantity, true)
         end
     end
 end

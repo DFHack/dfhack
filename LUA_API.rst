@@ -724,14 +724,19 @@ can be omitted.
 Gui module
 ----------
 
-* ``dfhack.gui.getCurViewscreen()``
+* ``dfhack.gui.getCurViewscreen([skip_dismissed])``
 
-  Returns the viewscreen that is current in the core.
+  Returns the topmost viewscreen. If ``skip_dismissed`` is *true*,
+  ignores screens already marked to be removed.
 
 * ``dfhack.gui.getFocusString(viewscreen)``
 
   Returns a string representation of the current focus position
   in the ui. The string has a "screen/foo/bar/baz..." format.
+
+* ``dfhack.gui.getCurFocus([skip_dismissed])``
+
+  Returns the focus string of the current viewscreen.
 
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
 
@@ -874,6 +879,15 @@ Units module
 * ``dfhack.units.getCasteProfessionName(race,caste,prof_id[,plural])``
 
   Retrieves the profession name for the given race/caste using raws.
+
+* ``dfhack.units.getProfessionColor(unit[,ignore_noble])``
+
+  Retrieves the color associated with the profession, using noble assignments
+  or raws. The ``ignore_noble`` boolean disables the use of noble positions.
+
+* ``dfhack.units.getCasteProfessionColor(race,caste,prof_id)``
+
+  Retrieves the profession color for the given race/caste using raws.
 
 
 Items module
@@ -1026,6 +1040,11 @@ Burrows module
 
 Buildings module
 ----------------
+
+* ``dfhack.buildings.setOwner(item,unit)``
+
+  Replaces the owner of the building. If unit is *nil*, removes ownership.
+  Returns *false* in case of error.
 
 * ``dfhack.buildings.getSize(building)``
 
@@ -1204,6 +1223,165 @@ Constructions module
   Returns *true, was_only_planned* if removed; or *false* if none found.
 
 
+Screen API
+----------
+
+The screen module implements support for drawing to the tiled screen of the game.
+Note that drawing only has any effect when done from callbacks, so it can only
+be feasibly used in the core context.
+
+Basic painting functions:
+
+* ``dfhack.screen.getWindowSize()``
+
+  Returns *width, height* of the screen.
+
+* ``dfhack.screen.getMousePos()``
+
+  Returns *x,y* of the tile the mouse is over.
+
+* ``dfhack.screen.inGraphicsMode()``
+
+  Checks if [GRAPHICS:YES] was specified in init.
+
+* ``dfhack.screen.paintTile(pen,x,y[,char,tile])``
+
+  Paints a tile using given parameters. Pen is a table with following possible fields:
+
+  ``ch``
+    Provides the ordinary tile character, as either a 1-character string or a number.
+    Can be overridden with the ``char`` function parameter.
+  ``fg``
+    Foreground color for the ordinary tile. Defaults to COLOR_GREY (7).
+  ``bg``
+    Background color for the ordinary tile. Defaults to COLOR_BLACK (0).
+  ``bold``
+    Bright/bold text flag. If *nil*, computed based on (fg & 8); fg is masked to 3 bits.
+    Otherwise should be *true/false*.
+  ``tile``
+    Graphical tile id. Ignored unless [GRAPHICS:YES] was in init.txt.
+  ``tile_color = true``
+    Specifies that the tile should be shaded with *fg/bg*.
+  ``tile_fg, tile_bg``
+    If specified, overrides *tile_color* and supplies shading colors directly.
+
+  Returns *false* if coordinates out of bounds, or other error.
+
+* ``dfhack.screen.paintString(pen,x,y,text)``
+
+  Paints the string starting at *x,y*. Uses the string characters
+  in sequence to override the ``ch`` field of pen.
+
+  Returns *true* if painting at least one character succeeded.
+
+* ``dfhack.screen.fillRect(pen,x1,y1,x2,y2)``
+
+  Fills the rectangle specified by the coordinates with the given pen.
+  Returns *true* if painting at least one character succeeded.
+
+* ``dfhack.screen.findGraphicsTile(pagename,x,y)``
+
+  Finds a tile from a graphics set (i.e. the raws used for creatures),
+  if in graphics mode and loaded.
+
+  Returns: *tile, tile_grayscale*, or *nil* if not found.
+  The values can then be used for the *tile* field of *pen* structures.
+
+* ``dfhack.screen.clear()``
+
+  Fills the screen with blank background.
+
+* ``dfhack.screen.invalidate()``
+
+  Requests repaint of the screen by setting a flag. Unlike other
+  functions in this section, this may be used at any time.
+
+In order to actually be able to paint to the screen, it is necessary
+to create and register a viewscreen (basically a modal dialog) with
+the game.
+
+**NOTE**: As a matter of policy, in order to avoid user confusion, all
+interface screens added by dfhack should bear the "DFHack" signature.
+
+Screens are managed with the following functions:
+
+* ``dfhack.screen.show(screen[,below])``
+
+  Displays the given screen, possibly placing it below a different one.
+  The screen must not be already shown. Returns *true* if success.
+
+* ``dfhack.screen.dismiss(screen[,to_first])``
+
+  Marks the screen to be removed when the game enters its event loop.
+  If ``to_first`` is *true*, all screens up to the first one will be deleted.
+
+* ``dfhack.screen.isDismissed(screen)``
+
+  Checks if the screen is already marked for removal.
+
+Apart from a native viewscreen object, these functions accept a table
+as a screen. In this case, ``show`` creates a new native viewscreen
+that delegates all processing to methods stored in that table.
+
+**NOTE**: Lua-implemented screens are only supported in the core context.
+
+Supported callbacks and fields are:
+
+* ``screen._native``
+
+  Initialized by ``show`` with a reference to the backing viewscreen
+  object, and removed again when the object is deleted.
+
+* ``function screen:onShow()``
+
+  Called by ``dfhack.screen.show`` if successful.
+
+* ``function screen:onDismiss()``
+
+  Called by ``dfhack.screen.dismiss`` if successful.
+
+* ``function screen:onDestroy()``
+
+  Called from the destructor when the viewscreen is deleted.
+
+* ``function screen:onResize(w, h)``
+
+  Called before ``onRender`` or ``onIdle`` when the window size has changed.
+
+* ``function screen:onRender()``
+
+  Called when the viewscreen should paint itself. This is the only context
+  where the above painting functions work correctly.
+
+  If omitted, the screen is cleared; otherwise it should do that itself.
+  In order to make a see-through dialog, call ``self._native.parent:render()``.
+
+* ``function screen:onIdle()``
+
+  Called every frame when the screen is on top of the stack.
+
+* ``function screen:onHelp()``
+
+  Called when the help keybinding is activated (usually '?').
+
+* ``function screen:onInput(keys)``
+
+  Called when keyboard or mouse events are available.
+  If any keys are pressed, the keys argument is a table mapping them to *true*.
+  Note that this refers to logical keybingings computed from real keys via
+  options; if multiple interpretations exist, the table will contain multiple keys.
+
+  The table also may contain special keys:
+
+  ``_STRING``
+    Maps to an integer in range 0-255. Duplicates a separate "STRING_A???" code for convenience.
+
+  ``_MOUSE_L, _MOUSE_R``
+    If the left or right mouse button is pressed.
+
+  If this method is omitted, the screen is dismissed on receival of the ``LEAVESCREEN`` key.
+
+
 Internal API
 ------------
 
@@ -1234,6 +1412,12 @@ and are only documented here for completeness:
 * ``dfhack.internal.getMemRanges()``
 
   Returns a sequence of tables describing virtual memory ranges of the process.
+
+* ``dfhack.internal.patchMemory(dest,src,count)``
+
+  Like memmove below, but works even if dest is read-only memory, e.g. code.
+  If destination overlaps a completely invalid memory region, or another error
+  occurs, returns false.
 
 * ``dfhack.internal.memmove(dest,src,count)``
 
@@ -1296,8 +1480,8 @@ Core context specific functions:
 Event type
 ----------
 
-An event is just a lua table with a predefined metatable that
-contains a __call metamethod. When it is invoked, it loops
+An event is a native object transparently wrapping a lua table,
+and implementing a __call metamethod. When it is invoked, it loops
 through the table with next and calls all contained values.
 This is intended as an extensible way to add listeners.
 
@@ -1312,10 +1496,18 @@ Features:
 
 * ``event[key] = function``
 
-  Sets the function as one of the listeners.
+  Sets the function as one of the listeners. Assign *nil* to remove it.
 
   **NOTE**: The ``df.NULL`` key is reserved for the use by
-  the C++ owner of the event, and has some special semantics.
+  the C++ owner of the event; it is an error to try setting it.
+
+* ``#event``
+
+  Returns the number of non-nil listeners.
+
+* ``pairs(event)``
+
+  Iterates over all listeners in the table.
 
 * ``event(args...)``
 

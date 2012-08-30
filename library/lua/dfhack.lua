@@ -102,11 +102,39 @@ function reload(module)
     dofile(path)
 end
 
+-- Trivial classes
+
+function rawset_default(target,source)
+    for k,v in pairs(source) do
+        if rawget(target,k) == nil then
+            rawset(target,k,v)
+        end
+    end
+end
+
+function defclass(class,parent)
+    class = class or {}
+    rawset_default(class, { __index = class })
+    if parent then
+        setmetatable(class, parent)
+    else
+        rawset_default(class, { init_fields = rawset_default })
+    end
+    return class
+end
+
+function mkinstance(class,table)
+    table = table or {}
+    setmetatable(table, class)
+    return table
+end
+
 -- Misc functions
 
 function printall(table)
-    if type(table) == 'table' or df.isvalid(table) == 'ref' then
-        for k,v in pairs(table) do
+    local ok,f,t,k = pcall(pairs,table)
+    if ok then
+        for k,v in f,t,k do
             print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
         end
     end
@@ -135,14 +163,6 @@ function xyz2pos(x,y,z)
     end
 end
 
-function rawset_default(target,source)
-    for k,v in pairs(source) do
-        if rawget(target,k) == nil then
-            rawset(target,k,v)
-        end
-    end
-end
-
 function safe_index(obj,idx,...)
     if obj == nil or idx == nil then
         return nil
@@ -159,10 +179,6 @@ function safe_index(obj,idx,...)
 end
 
 -- String conversions
-
-function dfhack.event:__tostring()
-    return "<event>"
-end
 
 function dfhack.persistent:__tostring()
     return "<persistent "..self.entry_id..":"..self.key.."=\""

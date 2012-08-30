@@ -361,6 +361,26 @@ function insert_or_update(vector,item,field,cmp)
     return added,cur,pos
 end
 
+-- Calls a method with a string temporary
+function call_with_string(obj,methodname,...)
+    return dfhack.with_temp_object(
+        df.new "string",
+        function(str,obj,methodname,...)
+            obj[methodname](obj,str,...)
+            return str.value
+        end,
+        obj,methodname,...
+    )
+end
+
+function getBuildingName(building)
+    return call_with_string(building, 'getName')
+end
+
+function getBuildingCenter(building)
+    return xyz2pos(building.centerx, building.centery, building.z)
+end
+
 -- Ask a yes-no question
 function prompt_yes_no(msg,default)
     local prompt = msg

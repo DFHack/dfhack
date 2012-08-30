@@ -192,6 +192,16 @@ namespace DFHack {namespace Lua {
     }
 
     /**
+     * Call through to the function with try/catch for C++ exceptions.
+     */
+    DFHACK_EXPORT int CallWithCatch(lua_State *, int (*fn)(lua_State*), const char *context = NULL);
+
+    template<int (*cb)(lua_State*)>
+    int CallWithCatchWrapper(lua_State *state) {
+        return CallWithCatch(state, cb);
+    }
+
+    /**
      * Invoke lua function via pcall. Returns true if success.
      * If an error is signalled, and perr is true, it is printed and popped from the stack.
      */
@@ -300,9 +310,18 @@ namespace DFHack {namespace Lua {
 
     DFHACK_EXPORT bool IsCoreContext(lua_State *state);
 
-    DFHACK_EXPORT int NewEvent(lua_State *state);
-    DFHACK_EXPORT void MakeEvent(lua_State *state, void *key);
-    DFHACK_EXPORT void InvokeEvent(color_ostream &out, lua_State *state, void *key, int num_args);
+    namespace Event {
+        struct DFHACK_EXPORT Owner {
+            virtual ~Owner() {}
+            virtual void on_count_changed(int new_cnt, int delta) {}
+            virtual void on_invoked(lua_State *state, int nargs, bool from_c) {}
+        };
+
+        DFHACK_EXPORT void New(lua_State *state, Owner *owner = NULL);
+        DFHACK_EXPORT void Make(lua_State *state, void *key, Owner *owner = NULL);
+        DFHACK_EXPORT void SetPrivateCallback(lua_State *state, int ev_idx);
+        DFHACK_EXPORT void Invoke(color_ostream &out, lua_State *state, void *key, int num_args);
+    }
 
     class StackUnwinder {
         lua_State *state;
@@ -355,17 +374,23 @@ namespace DFHack {namespace Lua {
         }
     }
 
-    class DFHACK_EXPORT Notification {
+    class DFHACK_EXPORT Notification : public Event::Owner {
         lua_State *state;
         void *key;
         function_identity_base *handler;
+        int count;
 
     public:
         Notification(function_identity_base *handler = NULL)
-            : state(NULL), key(NULL), handler(handler) {}
+            : state(NULL), key(NULL), handler(handler), count(0) {}
 
+        int get_listener_count() { return count; }
         lua_State *get_state() { return state; }
         function_identity_base *get_handler() { return handler; }
+
+        lua_State *state_if_count() { return (count > 0) ? state : NULL; }
+
+        void on_count_changed(int new_cnt, int) { count = new_cnt; }
 
         void invoke(color_ostream &out, int nargs);
 
@@ -378,7 +403,7 @@ namespace DFHack {namespace Lua {
     static DFHack::Lua::Notification name##_event(df::wrap_function(handler, true)); \
     void name(color_ostream &out) { \
         handler(out); \
-        if (name##_event.get_state()) { \
+        if (name##_event.state_if_count()) { \
             name##_event.invoke(out, 0); \
         } \
     }
@@ -387,7 +412,7 @@ namespace DFHack {namespace Lua {
     static DFHack::Lua::Notification name##_event(df::wrap_function(handler, true)); \
     void name(color_ostream &out, arg_type1 arg1) { \
         handler(out, arg1); \
-        if (auto state = name##_event.get_state()) { \
+        if (auto state = name##_event.state_if_count()) { \
             DFHack::Lua::Push(state, arg1); \
             name##_event.invoke(out, 1); \
         } \
@@ -397,7 +422,7 @@ namespace DFHack {namespace Lua {
     static DFHack::Lua::Notification name##_event(df::wrap_function(handler, true)); \
     void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2) { \
         handler(out, arg1, arg2); \
-        if (auto state = name##_event.get_state()) { \
+        if (auto state = name##_event.state_if_count()) { \
             DFHack::Lua::Push(state, arg1); \
             DFHack::Lua::Push(state, arg2); \
             name##_event.invoke(out, 2); \
@@ -408,7 +433,7 @@ namespace DFHack {namespace Lua {
     static DFHack::Lua::Notification name##_event(df::wrap_function(handler, true)); \
     void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3) { \
         handler(out, arg1, arg2, arg3); \
-        if (auto state = name##_event.get_state()) { \
+        if (auto state = name##_event.state_if_count()) { \
             DFHack::Lua::Push(state, arg1); \
             DFHack::Lua::Push(state, arg2); \
             DFHack::Lua::Push(state, arg3); \
@@ -420,7 +445,7 @@ namespace DFHack {namespace Lua {
     static DFHack::Lua::Notification name##_event(df::wrap_function(handler, true)); \
     void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4) { \
         handler(out, arg1, arg2, arg3, arg4); \
-        if (auto state = name##_event.get_state()) { \
+        if (auto state = name##_event.state_if_count()) { \
             DFHack::Lua::Push(state, arg1); \
             DFHack::Lua::Push(state, arg2); \
             DFHack::Lua::Push(state, arg3); \
@@ -433,7 +458,7 @@ namespace DFHack {namespace Lua {
     static DFHack::Lua::Notification name##_event(df::wrap_function(handler, true)); \
     void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4, arg_type5 arg5) { \
         handler(out, arg1, arg2, arg3, arg4, arg5); \
-        if (auto state = name##_event.get_state()) { \
+        if (auto state = name##_event.state_if_count()) { \
             DFHack::Lua::Push(state, arg1); \
             DFHack::Lua::Push(state, arg2); \
             DFHack::Lua::Push(state, arg3); \

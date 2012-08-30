@@ -462,7 +462,7 @@ void joinCounts(std::map<df::coord, int> &counts)
 
 static void printCompanionHeader(color_ostream &out, size_t i, df::unit *unit)
 {
-    out.color(Console::COLOR_GREY);
+    out.color(COLOR_GREY);
 
     if (i < 28)
         out << char('a'+i);

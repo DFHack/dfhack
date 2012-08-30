@@ -4,6 +4,7 @@
 #include "Export.h"
 #include "PluginManager.h"
 #include "VersionInfo.h"
+#include "MemAccess.h"
 
 #include "DataDefs.h"
 #include "df/global_objects.h"
@@ -528,7 +529,7 @@ static VALUE rb_dfmalloc(VALUE self, VALUE len)
     if (!ptr)
         return Qnil;
     memset(ptr, 0, FIX2INT(len));
-    return rb_uint2inum((long)ptr);
+    return rb_uint2inum((uint32_t)ptr);
 }
 
 static VALUE rb_dffree(VALUE self, VALUE ptr)
@@ -597,8 +598,59 @@ static VALUE rb_dfmemory_write_float(VALUE self, VALUE addr, VALUE val)
     return Qtrue;
 }
 
+// return memory permissions at address (eg "rx", nil if unmapped)
+static VALUE rb_dfmemory_check(VALUE self, VALUE addr)
+{
+    void *ptr = (void*)rb_num2ulong(addr);
+    std::vector<t_memrange> ranges;
+    Core::getInstance().p->getMemRanges(ranges);
+
+    unsigned i = 0;
+    while (i < ranges.size() && ranges[i].end <= ptr)
+        i++;
+
+    if (i >= ranges.size() || ranges[i].start > ptr || !ranges[i].valid)
+        return Qnil;
+
+    std::string perm = "";
+    if (ranges[i].read)
+        perm += "r";
+    if (ranges[i].write)
+        perm += "w";
+    if (ranges[i].execute)
+        perm += "x";
+    if (ranges[i].shared)
+        perm += "s";
+
+    return rb_str_new(perm.c_str(), perm.length());
+}
+
+// memory write (tmp override page permissions, eg patch code)
+static VALUE rb_dfmemory_patch(VALUE self, VALUE addr, VALUE raw)
+{
+    int strlen = FIX2INT(rb_funcall(raw, rb_intern("length"), 0));
+    bool ret;
+
+    ret = Core::getInstance().p->patchMemory((void*)rb_num2ulong(addr),
+		    rb_string_value_ptr(&raw), strlen);
+
+    return ret ? Qtrue : Qfalse;
+}
+
 
 // stl::string
+static VALUE rb_dfmemory_stlstring_new(VALUE self)
+{
+    std::string *ptr = new std::string;
+    return rb_uint2inum((uint32_t)ptr);
+}
+static VALUE rb_dfmemory_stlstring_delete(VALUE self, VALUE addr)
+{
+    std::string *ptr = (std::string*)rb_num2ulong(addr);
+    if (ptr)
+        delete ptr;
+    return Qtrue;
+}
 static VALUE rb_dfmemory_stlstring_init(VALUE self, VALUE addr)
 {
     // XXX THIS IS TERRIBLE
@@ -621,6 +673,18 @@ static VALUE rb_dfmemory_write_stlstring(VALUE self, VALUE addr, VALUE val)
 
 
 // vector access
+static VALUE rb_dfmemory_vec_new(VALUE self)
+{
+    std::vector<uint8_t> *ptr = new std::vector<uint8_t>;
+    return rb_uint2inum((uint32_t)ptr);
+}
+static VALUE rb_dfmemory_vec_delete(VALUE self, VALUE addr)
+{
+    std::vector<uint8_t> *ptr = (std::vector<uint8_t>*)rb_num2ulong(addr);
+    if (ptr)
+        delete ptr;
+    return Qtrue;
+}
 static VALUE rb_dfmemory_vec_init(VALUE self, VALUE addr)
 {
     std::vector<uint8_t> *ptr = new std::vector<uint8_t>;
@@ -638,13 +702,13 @@ static VALUE rb_dfmemory_vec8_ptrat(VALUE self, VALUE addr, VALUE idx)
     std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
     return rb_uint2inum((uint32_t)&v->at(FIX2INT(idx)));
 }
-static VALUE rb_dfmemory_vec8_insert(VALUE self, VALUE addr, VALUE idx, VALUE val)
+static VALUE rb_dfmemory_vec8_insertat(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
     std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
     v->insert(v->begin()+FIX2INT(idx), rb_num2ulong(val));
     return Qtrue;
 }
-static VALUE rb_dfmemory_vec8_delete(VALUE self, VALUE addr, VALUE idx)
+static VALUE rb_dfmemory_vec8_deleteat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
     v->erase(v->begin()+FIX2INT(idx));
@@ -662,13 +726,13 @@ static VALUE rb_dfmemory_vec16_ptrat(VALUE self, VALUE addr, VALUE idx)
     std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
     return rb_uint2inum((uint32_t)&v->at(FIX2INT(idx)));
 }
-static VALUE rb_dfmemory_vec16_insert(VALUE self, VALUE addr, VALUE idx, VALUE val)
+static VALUE rb_dfmemory_vec16_insertat(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
     std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
     v->insert(v->begin()+FIX2INT(idx), rb_num2ulong(val));
     return Qtrue;
 }
-static VALUE rb_dfmemory_vec16_delete(VALUE self, VALUE addr, VALUE idx)
+static VALUE rb_dfmemory_vec16_deleteat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
     v->erase(v->begin()+FIX2INT(idx));
@@ -686,13 +750,13 @@ static VALUE rb_dfmemory_vec32_ptrat(VALUE self, VALUE addr, VALUE idx)
     std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
     return rb_uint2inum((uint32_t)&v->at(FIX2INT(idx)));
 }
-static VALUE rb_dfmemory_vec32_insert(VALUE self, VALUE addr, VALUE idx, VALUE val)
+static VALUE rb_dfmemory_vec32_insertat(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
     std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
     v->insert(v->begin()+FIX2INT(idx), rb_num2ulong(val));
     return Qtrue;
 }
-static VALUE rb_dfmemory_vec32_delete(VALUE self, VALUE addr, VALUE idx)
+static VALUE rb_dfmemory_vec32_deleteat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
     v->erase(v->begin()+FIX2INT(idx));
@@ -700,6 +764,24 @@ static VALUE rb_dfmemory_vec32_delete(VALUE self, VALUE addr, VALUE idx)
 }
 
 // vector<bool>
+static VALUE rb_dfmemory_vecbool_new(VALUE self)
+{
+    std::vector<bool> *ptr = new std::vector<bool>;
+    return rb_uint2inum((uint32_t)ptr);
+}
+static VALUE rb_dfmemory_vecbool_delete(VALUE self, VALUE addr)
+{
+    std::vector<bool> *ptr = (std::vector<bool>*)rb_num2ulong(addr);
+    if (ptr)
+        delete ptr;
+    return Qtrue;
+}
+static VALUE rb_dfmemory_vecbool_init(VALUE self, VALUE addr)
+{
+    std::vector<bool> *ptr = new std::vector<bool>;
+    memcpy((void*)rb_num2ulong(addr), (void*)ptr, sizeof(*ptr));
+    return Qtrue;
+}
 static VALUE rb_dfmemory_vecbool_length(VALUE self, VALUE addr)
 {
     std::vector<bool> *v = (std::vector<bool>*)rb_num2ulong(addr);
@@ -716,13 +798,13 @@ static VALUE rb_dfmemory_vecbool_setat(VALUE self, VALUE addr, VALUE idx, VALUE 
     v->at(FIX2INT(idx)) = (BOOL_ISFALSE(val) ? 0 : 1);
     return Qtrue;
 }
-static VALUE rb_dfmemory_vecbool_insert(VALUE self, VALUE addr, VALUE idx, VALUE val)
+static VALUE rb_dfmemory_vecbool_insertat(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
     std::vector<bool> *v = (std::vector<bool>*)rb_num2ulong(addr);
     v->insert(v->begin()+FIX2INT(idx), (BOOL_ISFALSE(val) ? 0 : 1));
     return Qtrue;
 }
-static VALUE rb_dfmemory_vecbool_delete(VALUE self, VALUE addr, VALUE idx)
+static VALUE rb_dfmemory_vecbool_deleteat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<bool> *v = (std::vector<bool>*)rb_num2ulong(addr);
     v->erase(v->begin()+FIX2INT(idx));
@@ -833,28 +915,37 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "memory_write_int16", RUBY_METHOD_FUNC(rb_dfmemory_write_int16), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_int32", RUBY_METHOD_FUNC(rb_dfmemory_write_int32), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_float", RUBY_METHOD_FUNC(rb_dfmemory_write_float), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_check", RUBY_METHOD_FUNC(rb_dfmemory_check), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_patch", RUBY_METHOD_FUNC(rb_dfmemory_patch), 2);
 
+    rb_define_singleton_method(rb_cDFHack, "memory_stlstring_new",  RUBY_METHOD_FUNC(rb_dfmemory_stlstring_new), 0);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlstring_delete",  RUBY_METHOD_FUNC(rb_dfmemory_stlstring_delete), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_stlstring_init",  RUBY_METHOD_FUNC(rb_dfmemory_stlstring_init), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_read_stlstring", RUBY_METHOD_FUNC(rb_dfmemory_read_stlstring), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_write_stlstring", RUBY_METHOD_FUNC(rb_dfmemory_write_stlstring), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector_new",  RUBY_METHOD_FUNC(rb_dfmemory_vec_new), 0);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector_delete",  RUBY_METHOD_FUNC(rb_dfmemory_vec_delete), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_vector_init",  RUBY_METHOD_FUNC(rb_dfmemory_vec_init), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_vector8_length",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_length), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_vector8_ptrat",   RUBY_METHOD_FUNC(rb_dfmemory_vec8_ptrat), 2);
-    rb_define_singleton_method(rb_cDFHack, "memory_vector8_insert",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_insert), 3);
-    rb_define_singleton_method(rb_cDFHack, "memory_vector8_delete",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_delete), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector8_insertat",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_insertat), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector8_deleteat",  RUBY_METHOD_FUNC(rb_dfmemory_vec8_deleteat), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vector16_length", RUBY_METHOD_FUNC(rb_dfmemory_vec16_length), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_vector16_ptrat",  RUBY_METHOD_FUNC(rb_dfmemory_vec16_ptrat), 2);
-    rb_define_singleton_method(rb_cDFHack, "memory_vector16_insert", RUBY_METHOD_FUNC(rb_dfmemory_vec16_insert), 3);
-    rb_define_singleton_method(rb_cDFHack, "memory_vector16_delete", RUBY_METHOD_FUNC(rb_dfmemory_vec16_delete), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector16_insertat", RUBY_METHOD_FUNC(rb_dfmemory_vec16_insertat), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector16_deleteat", RUBY_METHOD_FUNC(rb_dfmemory_vec16_deleteat), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vector32_length", RUBY_METHOD_FUNC(rb_dfmemory_vec32_length), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_vector32_ptrat",  RUBY_METHOD_FUNC(rb_dfmemory_vec32_ptrat), 2);
-    rb_define_singleton_method(rb_cDFHack, "memory_vector32_insert", RUBY_METHOD_FUNC(rb_dfmemory_vec32_insert), 3);
-    rb_define_singleton_method(rb_cDFHack, "memory_vector32_delete", RUBY_METHOD_FUNC(rb_dfmemory_vec32_delete), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector32_insertat", RUBY_METHOD_FUNC(rb_dfmemory_vec32_insertat), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector32_deleteat", RUBY_METHOD_FUNC(rb_dfmemory_vec32_deleteat), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_new",  RUBY_METHOD_FUNC(rb_dfmemory_vecbool_new), 0);
+    rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_delete",  RUBY_METHOD_FUNC(rb_dfmemory_vecbool_delete), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_init",  RUBY_METHOD_FUNC(rb_dfmemory_vecbool_init), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_length", RUBY_METHOD_FUNC(rb_dfmemory_vecbool_length), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_at",     RUBY_METHOD_FUNC(rb_dfmemory_vecbool_at), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_setat",  RUBY_METHOD_FUNC(rb_dfmemory_vecbool_setat), 3);
-    rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_insert", RUBY_METHOD_FUNC(rb_dfmemory_vecbool_insert), 3);
-    rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_delete", RUBY_METHOD_FUNC(rb_dfmemory_vecbool_delete), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_insertat", RUBY_METHOD_FUNC(rb_dfmemory_vecbool_insertat), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_deleteat", RUBY_METHOD_FUNC(rb_dfmemory_vecbool_deleteat), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_length", RUBY_METHOD_FUNC(rb_dfmemory_bitarray_length), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_resize", RUBY_METHOD_FUNC(rb_dfmemory_bitarray_resize), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_isset",  RUBY_METHOD_FUNC(rb_dfmemory_bitarray_isset), 2);

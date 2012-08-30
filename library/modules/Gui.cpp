@@ -42,6 +42,7 @@ using namespace std;
 using namespace DFHack;
 
 #include "modules/Job.h"
+#include "modules/Screen.h"
 
 #include "DataDefs.h"
 #include "df/world.h"
@@ -465,6 +466,11 @@ std::string Gui::getFocusString(df::viewscreen *top)
             handler(name, top);
 
         return name;
+    }
+    else if (dfhack_viewscreen::is_instance(top))
+    {
+        auto name = static_cast<dfhack_viewscreen*>(top)->getFocusString();
+        return name.empty() ? "dfhack" : "dfhack/"+name;
     }
     else
     {
@@ -977,17 +983,36 @@ void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
     world->status.popups.push_back(popup);
 }
 
-df::viewscreen * Gui::GetCurrentScreen()
+df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
 {
     df::viewscreen * ws = &gview->view;
-    while(ws)
+    while (ws && ws->child)
+        ws = ws->child;
+
+    if (skip_dismissed)
     {
-        if(ws->child)
-            ws = ws->child;
-        else
-            return ws;
+        while (ws && Screen::isDismissed(ws) && ws->parent)
+            ws = ws->parent;
     }
-    return 0;
+
+    return ws;
+}
+
+df::coord Gui::getViewportPos()
+{
+    if (!df::global::window_x || !df::global::window_y || !df::global::window_z)
+        return df::coord(0,0,0);
+
+    return df::coord(*df::global::window_x, *df::global::window_y, *df::global::window_z);
+}
+
+df::coord Gui::getCursorPos()
+{
+    using df::global::cursor;
+    if (!cursor)
+        return df::coord();
+
+    return df::coord(cursor->x, cursor->y, cursor->z);
 }
 
 bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)

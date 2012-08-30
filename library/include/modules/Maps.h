@@ -258,7 +258,7 @@ inline df::tile_occupancy *getTileOccupancy(df::coord pos) {
 /**
  * Returns biome info about the specified world region.
  */
-DFHACK_EXPORT df::world_data::T_region_map *getRegionBiome(df::coord2d rgn_pos);
+DFHACK_EXPORT df::region_map_entry *getRegionBiome(df::coord2d rgn_pos);
 
 /**
  * Returns biome world region coordinates for the given tile within given block.

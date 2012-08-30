@@ -115,6 +115,8 @@ namespace DFHack
         virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
 
+        virtual bool is_readonly() { return false; }
+
         virtual bool resize(void *ptr, int size) { return false; }
         virtual bool erase(void *ptr, int index) { return false; }
         virtual bool insert(void *ptr, int index, void *pitem) { return false; }
@@ -343,6 +345,33 @@ namespace df
         }
     };
 
+    template<class T>
+    class ro_stl_container_identity : public container_identity {
+        const char *name;
+
+    public:
+        ro_stl_container_identity(const char *name, type_identity *item, enum_identity *ienum = NULL)
+            : container_identity(sizeof(T), &allocator_fn<T>, item, ienum), name(name)
+        {}
+
+        std::string getFullName(type_identity *item) {
+            return name + container_identity::getFullName(item);
+        }
+
+        virtual bool is_readonly() { return true; }
+        virtual bool resize(void *ptr, int size) { return false; }
+        virtual bool erase(void *ptr, int size) { return false; }
+        virtual bool insert(void *ptr, int idx, void *item) { return false; }
+
+    protected:
+        virtual int item_count(void *ptr, CountMode) { return ((T*)ptr)->size(); }
+        virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
+            auto iter = (*(T*)ptr).begin();
+            for (; idx > 0; idx--) ++iter;
+            return (void*)&*iter;
+        }
+    };
+
     class bit_array_identity : public bit_container_identity {
     public:
         /*
@@ -517,6 +546,10 @@ namespace df
         static container_identity *get();
     };
 
+    template<class T> struct identity_traits<std::set<T> > {
+        static container_identity *get();
+    };
+
     template<> struct identity_traits<BitArray<int> > {
         static bit_array_identity identity;
         static bit_container_identity *get() { return &identity; }
@@ -576,6 +609,13 @@ namespace df
     inline container_identity *identity_traits<std::deque<T> >::get() {
         typedef std::deque<T> container;
         static stl_container_identity<container> identity("deque", identity_traits<T>::get());
+        return &identity;
+    }
+
+    template<class T>
+    inline container_identity *identity_traits<std::set<T> >::get() {
+        typedef std::set<T> container;
+        static ro_stl_container_identity<container> identity("set", identity_traits<T>::get());
         return &identity;
     }
 

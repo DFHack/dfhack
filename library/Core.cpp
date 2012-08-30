@@ -219,28 +219,30 @@ static std::string getScriptHelp(std::string path, std::string helpprefix)
     return "No help available.";
 }
 
-static std::map<string,string> listScripts(PluginManager *plug_mgr, std::string path)
+static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, std::string path, bool all, std::string prefix = "")
 {
     std::vector<string> files;
     getdir(path, files);
 
-    std::map<string,string> pset;
     for (size_t i = 0; i < files.size(); i++)
     {
         if (hasEnding(files[i], ".lua"))
         {
             std::string help = getScriptHelp(path + files[i], "-- ");
 
-            pset[files[i].substr(0, files[i].size()-4)] = help;
+            pset[prefix + files[i].substr(0, files[i].size()-4)] = help;
         }
         else if (plug_mgr->eval_ruby && hasEnding(files[i], ".rb"))
         {
             std::string help = getScriptHelp(path + files[i], "# ");
 
-            pset[files[i].substr(0, files[i].size()-3)] = help;
+            pset[prefix + files[i].substr(0, files[i].size()-3)] = help;
+        }
+        else if (all && !files[i].empty() && files[i][0] != '.')
+        {
+            listScripts(plug_mgr, pset, path+files[i]+"/", all, prefix+files[i]+"/");
         }
     }
-    return pset;
 }
 
 static bool fileExists(std::string path)
@@ -335,7 +337,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 con.print("Basic commands:\n"
                           "  help|?|man            - This text.\n"
                           "  help COMMAND          - Usage help for the given command.\n"
-                          "  ls|dir [PLUGIN]       - List available commands. Optionally for single plugin.\n"
+                          "  ls|dir [-a] [PLUGIN]  - List available commands. Optionally for single plugin.\n"
                           "  cls                   - Clear the console.\n"
                           "  fpause                - Force DF to pause.\n"
                           "  die                   - Force DF to close immediately\n"
@@ -358,7 +360,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                             continue;
 
                         if (pcmd.isHotkeyCommand())
-                            con.color(Console::COLOR_CYAN);
+                            con.color(COLOR_CYAN);
                         con.print("%s: %s\n",pcmd.name.c_str(), pcmd.description.c_str());
                         con.reset_color();
                         if (!pcmd.usage.empty())
@@ -469,6 +471,12 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
         }
         else if(first == "ls" || first == "dir")
         {
+            bool all = false;
+            if (parts.size() && parts[0] == "-a")
+            {
+                all = true;
+                vector_erase_at(parts, 0);
+            }
             if(parts.size())
             {
                 string & plugname = parts[0];
@@ -481,7 +489,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 {
                     const PluginCommand & pcmd = (plug->operator[](j));
                     if (pcmd.isHotkeyCommand())
-                        con.color(Console::COLOR_CYAN);
+                        con.color(COLOR_CYAN);
                     con.print("  %-22s - %s\n",pcmd.name.c_str(), pcmd.description.c_str());
                     con.reset_color();
                 }
@@ -491,7 +499,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 con.print(
                 "builtin:\n"
                 "  help|?|man            - This text or help specific to a plugin.\n"
-                "  ls [PLUGIN]           - List available commands. Optionally for single plugin.\n"
+                "  ls [-a] [PLUGIN]      - List available commands. Optionally for single plugin.\n"
                 "  cls                   - Clear the console.\n"
                 "  fpause                - Force DF to pause.\n"
                 "  die                   - Force DF to close immediately\n"
@@ -519,11 +527,12 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 for(auto iter = out.begin();iter != out.end();iter++)
                 {
                     if ((*iter).recolor)
-                        con.color(Console::COLOR_CYAN);
+                        con.color(COLOR_CYAN);
                     con.print("  %-22s- %s\n",(*iter).name.c_str(), (*iter).description.c_str());
                     con.reset_color();
                 }
-                auto scripts = listScripts(plug_mgr, getHackPath() + "scripts/");
+                std::map<string, string> scripts;
+                listScripts(plug_mgr, scripts, getHackPath() + "scripts/", all);
                 if (!scripts.empty())
                 {
                     con.print("\nscripts:\n");
@@ -1027,35 +1036,41 @@ int Core::TileUpdate()
     return true;
 }
 
-// should always be from simulation thread!
-int Core::Update()
+int Core::ClaimSuspend(bool force_base)
 {
-    if(errorstate)
-        return -1;
+    auto tid = this_thread::get_id();
+    lock_guard<mutex> lock(d->AccessMutex);
 
-    // Pretend this thread has suspended the core in the usual way
+    if (force_base || d->df_suspend_depth <= 0)
     {
-        lock_guard<mutex> lock(d->AccessMutex);
-
         assert(d->df_suspend_depth == 0);
-        d->df_suspend_thread = this_thread::get_id();
-        d->df_suspend_depth = 1000;
+
+        d->df_suspend_thread = tid;
+        d->df_suspend_depth = 1000000;
+        return 1000000;
     }
-
-    // Initialize the core
-    bool first_update = false;
-
-    if(!started)
+    else
     {
-        first_update = true;
-        Init();
-        if(errorstate)
-            return -1;
-        Lua::Core::Reset(con, "core init");
+        assert(d->df_suspend_thread == tid);
+        return ++d->df_suspend_depth;
     }
+}
 
-    color_ostream_proxy out(con);
+void Core::DisclaimSuspend(int level)
+{
+    auto tid = this_thread::get_id();
+    lock_guard<mutex> lock(d->AccessMutex);
 
+    assert(d->df_suspend_depth == level && d->df_suspend_thread == tid);
+
+    if (level == 1000000)
+        d->df_suspend_depth = 0;
+    else
+        --d->df_suspend_depth;
+}
+
+void Core::doUpdate(color_ostream &out, bool first_update)
+{
     Lua::Core::Reset(out, "DF code execution");
 
     if (first_update)
@@ -1129,15 +1144,36 @@ int Core::Update()
     // Execute per-frame handlers
     onUpdate(out);
 
-    // Release the fake suspend lock
-    {
-        lock_guard<mutex> lock(d->AccessMutex);
-
-        assert(d->df_suspend_depth == 1000);
-        d->df_suspend_depth = 0;
-    }
-
     out << std::flush;
+}
+
+// should always be from simulation thread!
+int Core::Update()
+{
+    if(errorstate)
+        return -1;
+
+    color_ostream_proxy out(con);
+
+    // Pretend this thread has suspended the core in the usual way,
+    // and run various processing hooks.
+    {
+        CoreSuspendClaimer suspend(true);
+
+        // Initialize the core
+        bool first_update = false;
+
+        if(!started)
+        {
+            first_update = true;
+            Init();
+            if(errorstate)
+                return -1;
+            Lua::Core::Reset(con, "core init");
+        }
+
+        doUpdate(out, first_update);
+    }
 
     // wake waiting tools
     // do not allow more tools to join in while we process stuff here
@@ -1158,7 +1194,7 @@ int Core::Update()
         // destroy condition
         delete nc;
         // check lua stack depth
-        Lua::Core::Reset(con, "suspend");
+        Lua::Core::Reset(out, "suspend");
     }
 
     return 0;
@@ -1198,6 +1234,7 @@ int Core::Shutdown ( void )
     if(errorstate)
         return true;
     errorstate = 1;
+    CoreSuspendClaimer suspend;
     if(plug_mgr)
     {
         delete plug_mgr;
@@ -1232,7 +1269,7 @@ bool Core::ncurses_wgetch(int in, int & out)
         // FIXME: copypasta, push into a method!
         if(df::global::ui && df::global::gview)
         {
-            df::viewscreen * ws = Gui::GetCurrentScreen();
+            df::viewscreen * ws = Gui::getCurViewscreen();
             if (strict_virtual_cast<df::viewscreen_dwarfmodest>(ws) &&
                 df::global::ui->main.mode != ui_sidebar_mode::Hotkeys &&
                 df::global::ui->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
@@ -1546,6 +1583,56 @@ void ClassNameCheck::getKnownClassNames(std::vector<std::string> &names)
 
     for (; it != known_class_names.end(); it++)
         names.push_back(*it);
+}
+
+bool Process::patchMemory(void *target, const void* src, size_t count)
+{
+    uint8_t *sptr = (uint8_t*)target;
+    uint8_t *eptr = sptr + count;
+
+    // Find the valid memory ranges
+    std::vector<t_memrange> ranges;
+    getMemRanges(ranges);
+
+    unsigned start = 0;
+    while (start < ranges.size() && ranges[start].end <= sptr)
+        start++;
+    if (start >= ranges.size() || ranges[start].start > sptr)
+        return false;
+
+    unsigned end = start+1;
+    while (end < ranges.size() && ranges[end].start < eptr)
+    {
+        if (ranges[end].start != ranges[end-1].end)
+            return false;
+        end++;
+    }
+    if (ranges[end-1].end < eptr)
+        return false;
+
+    // Verify current permissions
+    for (unsigned i = start; i < end; i++)
+        if (!ranges[i].valid || !(ranges[i].read || ranges[i].execute) || ranges[i].shared)
+            return false;
+
+    // Apply writable permissions & update
+    bool ok = true;
+
+    for (unsigned i = start; i < end && ok; i++)
+    {
+        t_memrange perms = ranges[i];
+        perms.write = perms.read = true;
+        if (!setPermisions(perms, perms))
+            ok = false;
+    }
+
+    if (ok)
+        memmove(target, src, count);
+
+    for (unsigned i = start; i < end && ok; i++)
+        setPermisions(ranges[i], ranges[i]);
+
+    return ok;
 }
 
 /*******************************************************************************

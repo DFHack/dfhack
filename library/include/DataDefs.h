@@ -28,6 +28,7 @@ distribution.
 #include <sstream>
 #include <vector>
 #include <map>
+#include <set>
 
 #include "Core.h"
 #include "BitArray.h"
@@ -292,12 +293,17 @@ namespace DFHack
     typedef virtual_class *virtual_ptr;
 #endif
 
+    class DFHACK_EXPORT VMethodInterposeLinkBase;
+
     class DFHACK_EXPORT virtual_identity : public struct_identity {
         static std::map<void*, virtual_identity*> known;
 
         const char *original_name;
 
         void *vtable_ptr;
+
+        friend class VMethodInterposeLinkBase;
+        std::map<int,VMethodInterposeLinkBase*> interpose_list;
 
     protected:
         virtual void doInit(Core *core);
@@ -306,10 +312,14 @@ namespace DFHack
 
         bool can_allocate() { return struct_identity::can_allocate() && (vtable_ptr != NULL); }
 
+        void *get_vmethod_ptr(int index);
+        bool set_vmethod_ptr(int index, void *ptr);
+
     public:
         virtual_identity(size_t size, TAllocateFn alloc,
                          const char *dfhack_name, const char *original_name,
                          virtual_identity *parent, const struct_field_info *fields);
+        ~virtual_identity();
 
         virtual identity_type type() { return IDTYPE_CLASS; }
 
@@ -336,6 +346,8 @@ namespace DFHack
             return vtable_ptr ? (vtable_ptr == get_vtable(instance_ptr)) 
                               : (this == get(instance_ptr));
         }
+
+        template<class P> static P get_vmethod_ptr(P selector);
 
     public:
         bool can_instantiate() { return can_allocate(); }

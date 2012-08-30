@@ -68,5 +68,14 @@ module DFHack
                 world.status.display_timer = 2000
             end
         end
+
+	# add an announcement to display in a game popup message
+	# (eg "the megabeast foobar arrived")
+        def popup_announcement(str, color=nil, bright=nil)
+            pop = PopupMessage.cpp_new(:text => str)
+            pop.color = color if color
+            pop.bright = bright if bright
+            world.status.popups << pop
+        end
     end
 end

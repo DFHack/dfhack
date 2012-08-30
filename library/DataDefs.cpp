@@ -35,6 +35,7 @@ distribution.
 // must be last due to MS stupidity
 #include "DataDefs.h"
 #include "DataIdentity.h"
+#include "VTableInterpose.h"
 
 #include "MiscUtils.h"
 
@@ -212,6 +213,15 @@ virtual_identity::virtual_identity(size_t size, TAllocateFn alloc,
     : struct_identity(size, alloc, NULL, dfhack_name, parent, fields), original_name(original_name),
       vtable_ptr(NULL)
 {
+}
+
+virtual_identity::~virtual_identity()
+{
+    // Remove interpose entries, so that they don't try accessing this object later
+    for (auto it = interpose_list.begin(); it != interpose_list.end(); ++it)
+        if (it->second)
+            it->second->on_host_delete(this);
+    interpose_list.clear();
 }
 
 /* Vtable name to identity lookup. */

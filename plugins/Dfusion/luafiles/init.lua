@@ -1,11 +1,7 @@
-function err(msg) --make local maybe...
-	print(msg)
-	print(debug.traceback())
-end
 function dofile(filename) --safer dofile, with traceback (very usefull)
 	f,perr=loadfile(filename)
 	if f~=nil then
-		return xpcall(f,err)
+		return safecall(f)
 	else
 		print(perr)
 	end
@@ -13,7 +9,7 @@ end
 function dofile_silent(filename) --safer dofile, with traceback, no file not found error
 	f,perr=loadfile(filename)
 	if f~=nil then
-		return xpcall(f,err)
+		return safecall(f)
 	else
 		if(string.sub(perr,1,11)~="cannot open") then --ugly hack
 			print(perr)	
@@ -26,7 +22,6 @@ function loadall(t1) --loads all non interactive plugin parts, so that later the
 	end
 end
 function mainmenu(t1)
-	
 	while true do
 		print("No.	Name           Desc")
 		for k,v in pairs(t1) do
@@ -58,7 +53,7 @@ dofile("dfusion/common.lua")
 dofile("dfusion/utils.lua")
 dofile("dfusion/offsets_misc.lua")
 dofile("dfusion/editor.lua")
---dofile("dfusion/xml_struct.lua")
+
 unlockDF()
 plugins={}
 table.insert(plugins,{"simple_embark","A simple embark dwarf count editor"})

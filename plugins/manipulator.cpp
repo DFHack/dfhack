@@ -110,7 +110,7 @@ const SkillColumn columns[] = {
     {4, 5, profession::SURGEON, unit_labor::SURGERY, job_skill::SURGERY, "Su"},
     {4, 5, profession::BONE_SETTER, unit_labor::BONE_SETTING, job_skill::SET_BONE, "Bo"},
     {4, 5, profession::SUTURER, unit_labor::SUTURING, job_skill::SUTURE, "St"},
-    {4, 5, profession::NONE, unit_labor::DRESSING_WOUNDS, job_skill::DRESS_WOUNDS, "Dr"},
+    {4, 5, profession::DOCTOR, unit_labor::DRESSING_WOUNDS, job_skill::DRESS_WOUNDS, "Dr"},
     {4, 5, profession::NONE, unit_labor::FEED_WATER_CIVILIANS, job_skill::NONE, "Fd"},
     {4, 5, profession::NONE, unit_labor::RECOVER_WOUNDED, job_skill::NONE, "Re"},
 // Farming/Related

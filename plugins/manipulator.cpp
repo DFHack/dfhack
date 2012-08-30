@@ -499,9 +499,10 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         df::unit *unit = cur->unit;
         const SkillColumn &col = columns[sel_column];
+        bool newstatus = !unit->status.labors[col.labor];
         if (col.special)
         {
-            if (!unit->status.labors[col.labor])
+            if (newstatus)
             {
                 for (int i = 0; i < NUM_COLUMNS; i++)
                 {
@@ -511,7 +512,31 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             }
             unit->military.pickup_flags.bits.update = true;
         }
-        unit->status.labors[col.labor] = !unit->status.labors[col.labor];
+        unit->status.labors[col.labor] = newstatus;
+    }
+    if (events->count(interface_key::SELECT_ALL) && (cur->allowEdit))
+    {
+        df::unit *unit = cur->unit;
+        const SkillColumn &col = columns[sel_column];
+        bool newstatus = !unit->status.labors[col.labor];
+        for (int i = 0; i < NUM_COLUMNS; i++)
+        {
+            if (columns[i].group != col.group)
+                continue;
+            if (columns[i].special)
+            {
+                if (newstatus)
+                {
+                    for (int j = 0; j < NUM_COLUMNS; j++)
+                    {
+                        if ((columns[j].labor != unit_labor::NONE) && columns[j].special)
+                            unit->status.labors[columns[j].labor] = false;
+                    }
+                }
+                unit->military.pickup_flags.bits.update = true;
+            }
+            unit->status.labors[columns[i].labor] = newstatus;
+        }
     }
 
     if (events->count(interface_key::SECONDSCROLL_UP) || events->count(interface_key::SECONDSCROLL_DOWN))
@@ -675,6 +700,7 @@ void viewscreen_unitlaborsst::render()
     }
 
     UnitInfo *cur = units[sel_row];
+    bool canToggle = false;
     if (cur != NULL)
     {
         df::unit *unit = cur->unit;
@@ -717,22 +743,27 @@ void viewscreen_unitlaborsst::render()
                 str = stl_sprintf("Not %s (0/500)", ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));
         }
         Screen::paintString(Screen::Pen(' ', 9, 0), x, 3 + height + 2, str);
+
+        canToggle = (cur->allowEdit) && (columns[sel_column].labor != unit_labor::NONE);
     }
 
     int x = 1;
     OutputString(10, x, gps->dimy - 3, "Enter"); // SELECT key
-    OutputString(15, x, gps->dimy - 3, ": Toggle labor, ");
+    OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle labor, ");
+
+    OutputString(10, x, gps->dimy - 3, "Shift+Enter"); // SELECT_ALL key
+    OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle Group, ");
 
     OutputString(10, x, gps->dimy - 3, "v"); // UNITJOB_VIEW key
     OutputString(15, x, gps->dimy - 3, ": ViewCre, ");
 
     OutputString(10, x, gps->dimy - 3, "c"); // UNITJOB_ZOOM_CRE key
-    OutputString(15, x, gps->dimy - 3, ": Zoom-Cre, ");
-
-    OutputString(10, x, gps->dimy - 3, "Esc"); // LEAVESCREEN key
-    OutputString(15, x, gps->dimy - 3, ": Done");
+    OutputString(15, x, gps->dimy - 3, ": Zoom-Cre");
 
     x = 1;
+    OutputString(10, x, gps->dimy - 2, "Esc"); // LEAVESCREEN key
+    OutputString(15, x, gps->dimy - 2, ": Done, ");
+
     OutputString(10, x, gps->dimy - 2, "+"); // SECONDSCROLL_DOWN key
     OutputString(10, x, gps->dimy - 2, "-"); // SECONDSCROLL_UP key
     OutputString(15, x, gps->dimy - 2, ": Sort by Skill, ");

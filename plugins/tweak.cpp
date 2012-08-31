@@ -7,6 +7,7 @@
 #include "PluginManager.h"
 
 #include "modules/Gui.h"
+#include "modules/Screen.h"
 #include "modules/Units.h"
 #include "modules/Items.h"
 
@@ -29,6 +30,8 @@
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/squad_order_trainst.h"
+#include "df/ui_build_selector.h"
+#include "df/building_trapst.h"
 
 #include <stdlib.h>
 
@@ -40,6 +43,9 @@ using namespace df::enums;
 
 using df::global::ui;
 using df::global::world;
+using df::global::ui_build_selector;
+using df::global::ui_menu_width;
+using df::global::ui_area_map_width;
 
 using namespace DFHack::Gui;
 
@@ -77,6 +83,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Causes 'Train' orders to no longer be considered 'patrol duty' so\n"
         "    soldiers will stop getting unhappy thoughts. Does NOT fix the problem\n"
         "    when soldiers go off-duty (i.e. civilian).\n"
+        "  tweak readable-build-plate [disable]\n"
+        "    Fixes rendering of creature weight limits in pressure plate build menu.\n"
     ));
     return CR_OK;
 }
@@ -189,6 +197,8 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
     }
 };
 
+IMPLEMENT_VMETHOD_INTERPOSE(stable_cursor_hook, feed);
+
 struct patrol_duty_hook : df::squad_order_trainst
 {
     typedef df::squad_order_trainst interpose_base;
@@ -199,8 +209,60 @@ struct patrol_duty_hook : df::squad_order_trainst
     }
 };
 
-IMPLEMENT_VMETHOD_INTERPOSE(stable_cursor_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(patrol_duty_hook, isPatrol);
+
+static const int AREA_MAP_WIDTH = 23;
+static const int MENU_WIDTH = 30;
+
+struct readable_build_plate_hook : df::viewscreen_dwarfmodest
+{
+    typedef df::viewscreen_dwarfmodest interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+
+        if (ui->main.mode == ui_sidebar_mode::Build &&
+            ui_build_selector->stage == 1 &&
+            ui_build_selector->building_type == building_type::Trap &&
+            ui_build_selector->building_subtype == trap_type::PressurePlate &&
+            ui_build_selector->plate_info.flags.bits.units)
+        {
+            auto wsize = Screen::getWindowSize();
+            int x = wsize.x - MENU_WIDTH - 1;
+            if (*ui_menu_width == 1 || *ui_area_map_width == 2)
+                x -= AREA_MAP_WIDTH + 1;
+
+            Screen::Pen pen(' ',COLOR_WHITE);
+
+            int minv = ui_build_selector->plate_info.unit_min;
+            if ((minv % 1000) == 0)
+                Screen::paintString(pen, x+11, 14, stl_sprintf("%3dK ", minv/1000));
+
+            int maxv = ui_build_selector->plate_info.unit_max;
+            if (maxv < 200000 && (maxv % 1000) == 0)
+                Screen::paintString(pen, x+24, 14, stl_sprintf("%3dK ", maxv/1000));
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(readable_build_plate_hook, render);
+
+static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
+{
+    if (vector_get(parameters, 1) == "disable")
+    {
+        hook.remove();
+        out.print("Disabled tweak %s\n", parameters[0].c_str());
+    }
+    else
+    {
+        if (hook.apply())
+            out.print("Enabled tweak %s\n", parameters[0].c_str());
+        else
+            out.printerr("Could not activate tweak %s\n", parameters[0].c_str());
+    }
+}
 
 static command_result tweak(color_ostream &out, vector <string> &parameters)
 {
@@ -302,19 +364,21 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     }
     else if (cmd == "stable-cursor")
     {
-        auto &hook = INTERPOSE_HOOK(stable_cursor_hook, feed);
-        if (vector_get(parameters, 1) == "disable")
-            hook.remove();
-        else
-            hook.apply();
+        enable_hook(out, INTERPOSE_HOOK(stable_cursor_hook, feed), parameters);
     }
     else if (cmd == "patrol-duty")
     {
-        auto &hook = INTERPOSE_HOOK(patrol_duty_hook, isPatrol);
-        if (vector_get(parameters, 1) == "disable")
-            hook.remove();
-        else
-            hook.apply();
+        enable_hook(out, INTERPOSE_HOOK(patrol_duty_hook, isPatrol), parameters);
+    }
+    else if (cmd == "readable-build-plate")
+    {
+        if (!ui_build_selector || !ui_menu_width || !ui_area_map_width)
+        {
+            out.printerr("Necessary globals not known.\n");
+            return CR_FAILURE;
+        }
+
+        enable_hook(out, INTERPOSE_HOOK(readable_build_plate_hook, render), parameters);
     }
     else 
         return CR_WRONG_USAGE;

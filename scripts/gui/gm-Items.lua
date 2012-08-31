@@ -78,6 +78,8 @@ local item_screen={
 			if trg_type=='number' or trg_type=='string' then --ugly TODO: add metatable get selected
 				self.mode=MODE_EDIT
 				self.input=tostring(trg.target[trg.keys[trg.selected]])
+			elseif trg_type=='boolean' then
+				trg.target[trg.keys[trg.selected]]= not trg.target[trg.keys[trg.selected]]
 			elseif trg_type=='userdata' then
 				self:pushTarget(trg.target[trg.keys[trg.selected]])
 				--local screen = mkinstance(gui.FramedScreen,item_screen):init(trg.target[trg.keys[trg.selected]]) -- does not work

@@ -177,7 +177,7 @@ Symbol. This works for array indexes too.
  ex: df.unit_find(:selected).status.labors[:HAUL_FOOD] = true
      df.map_tile_at(df.cursor).designation.liquid_type = :Water
 
-Virtual method calls are supported for C++ objects, with a maximum of 4
+Virtual method calls are supported for C++ objects, with a maximum of 6
 arguments. Arguments / return value are interpreted as Compound/Enums as
 specified in the vmethod definition in the xmls.
 

@@ -698,8 +698,8 @@ module DFHack
                 return if not addr
                 @_tg._at(addr)._get
             end
-	    alias next= _next=
-	    alias prev= _prev=
+            alias next= _next=
+            alias prev= _prev=
 
             include Enumerable
             def each
@@ -795,8 +795,12 @@ module DFHack
         v if v != 0
     end
 
-    def self.vmethod_call(obj, voff, a0=0, a1=0, a2=0, a3=0, a4=0)
-        vmethod_do_call(obj._memaddr, voff, vmethod_arg(a0), vmethod_arg(a1), vmethod_arg(a2), vmethod_arg(a3))
+    def self.vmethod_call(obj, voff, a0=0, a1=0, a2=0, a3=0, a4=0, a5=0)
+        this = obj._memaddr
+        vt = df.get_vtable_ptr(this)
+        fptr = df.memory_read_int32(vt + voff) & 0xffffffff
+        vmethod_do_call(this, fptr, vmethod_arg(a0), vmethod_arg(a1), vmethod_arg(a2),
+                        vmethod_arg(a3), vmethod_arg(a4), vmethod_arg(a5))
     end
 
     def self.vmethod_arg(arg)

@@ -632,7 +632,7 @@ static VALUE rb_dfmemory_patch(VALUE self, VALUE addr, VALUE raw)
     bool ret;
 
     ret = Core::getInstance().p->patchMemory((void*)rb_num2ulong(addr),
-		    rb_string_value_ptr(&raw), strlen);
+            rb_string_value_ptr(&raw), strlen);
 
     return ret ? Qtrue : Qfalse;
 }
@@ -838,8 +838,8 @@ static VALUE rb_dfmemory_bitarray_set(VALUE self, VALUE addr, VALUE idx, VALUE v
 
 /* call an arbitrary object virtual method */
 #ifdef WIN32
-__declspec(naked) static int raw_vcall(char **that, unsigned long voff, unsigned long a0,
-        unsigned long a1, unsigned long a2, unsigned long a3)
+__declspec(naked) static int raw_vcall(void *that, void *fptr, unsigned long a0,
+        unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5)
 {
     // __thiscall requires that the callee cleans up the stack
     // here we dont know how many arguments it will take, so
@@ -848,6 +848,8 @@ __declspec(naked) static int raw_vcall(char **that, unsigned long voff, unsigned
         push ebp
         mov ebp, esp
 
+        push a5
+        push a4
         push a3
         push a2
         push a1
@@ -855,9 +857,7 @@ __declspec(naked) static int raw_vcall(char **that, unsigned long voff, unsigned
 
         mov ecx, that
 
-        mov eax, [ecx]
-        add eax, voff
-        call [eax]
+        call fptr
 
         mov esp, ebp
         pop ebp
@@ -865,23 +865,23 @@ __declspec(naked) static int raw_vcall(char **that, unsigned long voff, unsigned
     }
 }
 #else
-static int raw_vcall(char **that, unsigned long voff, unsigned long a0,
-        unsigned long a1, unsigned long a2, unsigned long a3)
+static int raw_vcall(void *that, void *fptr, unsigned long a0,
+        unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5)
 {
-    int (*fptr)(char **me, int, int, int, int);
-    fptr = (decltype(fptr))*(void**)(*that + voff);
-    return fptr(that, a0, a1, a2, a3);
+    int (*t_fptr)(void *me, int, int, int, int, int, int);
+    t_fptr = (decltype(t_fptr))fptr;
+    return t_fptr(that, a0, a1, a2, a3, a4, a5);
 }
 #endif
 
 // call an arbitrary vmethod, convert args/ret to native values for raw_vcall
-static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE cppvoff, VALUE a0, VALUE a1, VALUE a2, VALUE a3)
+static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE fptr, VALUE a0, VALUE a1, VALUE a2, VALUE a3, VALUE a4, VALUE a5)
 {
-    return rb_int2inum(raw_vcall((char**)rb_num2ulong(cppobj), rb_num2ulong(cppvoff),
+    return rb_int2inum(raw_vcall((void*)rb_num2ulong(cppobj), (void*)rb_num2ulong(fptr),
                 rb_num2ulong(a0), rb_num2ulong(a1),
-                rb_num2ulong(a2), rb_num2ulong(a3)));
+                rb_num2ulong(a2), rb_num2ulong(a3),
+                rb_num2ulong(a4), rb_num2ulong(a5)));
 }
-
 
 
 // define module DFHack and its methods
@@ -902,7 +902,7 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "print_err", RUBY_METHOD_FUNC(rb_dfprint_err), 1);
     rb_define_singleton_method(rb_cDFHack, "malloc", RUBY_METHOD_FUNC(rb_dfmalloc), 1);
     rb_define_singleton_method(rb_cDFHack, "free", RUBY_METHOD_FUNC(rb_dffree), 1);
-    rb_define_singleton_method(rb_cDFHack, "vmethod_do_call", RUBY_METHOD_FUNC(rb_dfvcall), 6);
+    rb_define_singleton_method(rb_cDFHack, "vmethod_do_call", RUBY_METHOD_FUNC(rb_dfvcall), 8);
 
     rb_define_singleton_method(rb_cDFHack, "memory_read", RUBY_METHOD_FUNC(rb_dfmemory_read), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_read_int8",  RUBY_METHOD_FUNC(rb_dfmemory_read_int8),  1);

@@ -894,7 +894,7 @@ static int meta_bitfield_len(lua_State *state)
 
 static void read_bitfield(lua_State *state, uint8_t *ptr, bitfield_identity *id, int idx)
 {
-    int size = id->getBits()[idx].size;
+    int size = std::max(1, id->getBits()[idx].size);
 
     int value = getBitfieldField(ptr, idx, size);
     if (size <= 1)
@@ -951,7 +951,7 @@ static int meta_bitfield_newindex(lua_State *state)
     }
 
     int idx = check_container_index(state, id->getNumBits(), 2, iidx, "write");
-    int size = id->getBits()[idx].size;
+    int size = std::max(1, id->getBits()[idx].size);
 
     if (lua_isboolean(state, 3) || lua_isnil(state, 3))
         setBitfieldField(ptr, idx, size, lua_toboolean(state, 3));

@@ -39,8 +39,6 @@ using df::global::ui;
 using df::global::gps;
 using df::global::enabler;
 
-DFHACK_PLUGIN("manipulator");
-
 struct SkillLevel
 {
     const char *name;
@@ -668,7 +666,7 @@ void viewscreen_unitlaborsst::render()
             int col_offset = col + first_column;
             fg = 15;
             bg = 0;
-            char c = 0xFA;
+            uint8_t c = 0xFA;
             if ((col_offset == sel_column) && (row_offset == sel_row))
                 fg = 9;
             if (columns[col_offset].skill != job_skill::NONE)
@@ -747,7 +745,7 @@ void viewscreen_unitlaborsst::render()
         canToggle = (cur->allowEdit) && (columns[sel_column].labor != unit_labor::NONE);
     }
 
-    int x = 1;
+    int x = 2;
     OutputString(10, x, gps->dimy - 3, "Enter"); // SELECT key
     OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle labor, ");
 
@@ -760,7 +758,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10, x, gps->dimy - 3, "c"); // UNITJOB_ZOOM_CRE key
     OutputString(15, x, gps->dimy - 3, ": Zoom-Cre");
 
-    x = 1;
+    x = 2;
     OutputString(10, x, gps->dimy - 2, "Esc"); // LEAVESCREEN key
     OutputString(15, x, gps->dimy - 2, ": Done, ");
 
@@ -803,23 +801,35 @@ struct unitlist_hook : df::viewscreen_unitlistst
         }
         INTERPOSE_NEXT(feed)(input);
     }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+
+        if (units[page].size())
+        {
+            int x = 2;
+            OutputString(12, x, gps->dimy - 2, "l"); // UNITVIEW_PRF_PROF key
+            OutputString(15, x, gps->dimy - 2, ": Manage labors");
+        }
+    }
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, render);
+
+DFHACK_PLUGIN("manipulator");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (gps)
-    {
-        if (!INTERPOSE_HOOK(unitlist_hook, feed).apply())
-            out.printerr("Could not interpose viewscreen_unitlistst::feed\n");
-    }
-
+    if (!gps || !INTERPOSE_HOOK(unitlist_hook, feed).apply() || !INTERPOSE_HOOK(unitlist_hook, render).apply())
+        out.printerr("Could not insert Dwarf Manipulator hooks!\n");
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     INTERPOSE_HOOK(unitlist_hook, feed).remove();
+    INTERPOSE_HOOK(unitlist_hook, render).remove();
     return CR_OK;
 }

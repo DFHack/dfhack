@@ -122,7 +122,7 @@ function MechanismList:onInput(keys)
     end
 end
 
-if dfhack.gui.getCurFocus() ~= 'dwarfmode/QueryBuilding/Some' then
+if not string.find(dfhack.gui.getCurFocus(), 'dwarfmode/QueryBuilding/Some') then
     qerror("This script requires the main dwarfmode view in 'q' mode")
 end
 

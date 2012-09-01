@@ -225,6 +225,19 @@ function get_code_segment()
         return MemoryArea.new(s, e)
     end
 end
+function get_code_segments()
+	local ret={}
+	 for i,mem in ipairs(dfhack.internal.getMemRanges()) do
+        if mem.read and not mem.write
+           and (string.match(mem.name,'/dwarfort%.exe$')
+             or string.match(mem.name,'/Dwarf_Fortress$')
+             or string.match(mem.name,'Dwarf Fortress%.exe'))
+        then
+			table.insert(ret,MemoryArea.new(mem.start_addr,mem.end_addr))
+        end
+    end
+	return ret
+end
 -- Static data segment search
 
 local function find_data_segment()

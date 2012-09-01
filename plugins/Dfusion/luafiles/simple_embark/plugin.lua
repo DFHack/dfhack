@@ -12,7 +12,7 @@ function simple_embark(num)
 	end
 end
 if not(FILE) then
-print("Type in new ammount (more than 6, less than 15000):")
+print("Type in new amount (more than 6, less than 15000):")
 	repeat
 		ans=tonumber(io.read())
 		if ans==nil or not(ans<=15000 and ans>0) then

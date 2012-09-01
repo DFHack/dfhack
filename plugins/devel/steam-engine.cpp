@@ -29,6 +29,8 @@
 #include "df/ui.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/ui_build_selector.h"
+#include "df/flow_info.h"
+#include "df/report.h"
 
 #include "MiscUtils.h"
 
@@ -50,6 +52,7 @@ struct steam_engine_workshop {
     df::building_def_workshopst *def;
     bool is_magma;
     int max_power, max_capacity;
+    int wear_temp;
     std::vector<df::coord2d> gear_tiles;
     df::coord2d hearth_tile;
     df::coord2d water_tile;
@@ -97,6 +100,26 @@ void decrement_flow(df::coord pos, int amount)
     pldes->bits.flow_forbid = (nsize > 3 || pldes->bits.liquid_type == tile_liquid::Magma);
 
     enable_updates_at(pos, true, false);
+}
+
+bool make_explosion(df::coord pos, int mat_type, int mat_index, int density)
+{
+    using df::global::flows;
+
+    auto block = Maps::getTileBlock(pos);
+    if (!flows || !block)
+        return false;
+
+    auto flow = new df::flow_info();
+    flow->type = flow_type::MaterialDust;
+    flow->mat_type = mat_type;
+    flow->mat_index = mat_index;
+    flow->density = std::min(100, density);
+    flow->pos = pos;
+
+    block->flows.push_back(flow);
+    flows->push_back(flow);
+    return true;
 }
 
 struct liquid_hook : df::item_liquid_miscst {
@@ -308,6 +331,60 @@ struct workshop_hook : df::building_workshopst {
         }
     }
 
+    void explode()
+    {
+        int mat_type = builtin_mats::ASH, mat_index = -1;
+        int cx = (x1+x2)/2, cy = (y1+y2)/2;
+        int power = std::min(240, get_steam_amount()*80);
+
+        make_explosion(df::coord(cx, cy, z), mat_type, mat_index, power);
+        make_explosion(df::coord(cx-1, cy, z), mat_type, mat_index, power/3);
+        make_explosion(df::coord(cx, cy-1, z), mat_type, mat_index, power/3);
+        make_explosion(df::coord(cx+1, cy, z), mat_type, mat_index, power/3);
+        make_explosion(df::coord(cx, cy+1, z), mat_type, mat_index, power/3);
+
+        *df::global::pause_state = true;
+
+        Gui::showAnnouncement("A boiler has exploded!", COLOR_RED, true);
+        auto ann = world->status.announcements.back();
+        ann->type = announcement_type::CAVE_COLLAPSE;
+        ann->pos = df::coord(cx, cy, z);
+    }
+
+    bool check_component_wear(steam_engine_workshop *engine, int count, int power)
+    {
+        for (int i = contained_items.size()-1; i >= 0; i--)
+        {
+            auto item = contained_items[i];
+            if (item->use_mode != 2)
+                continue;
+
+            int melt_temp = item->item->getMeltingPoint();
+            if (melt_temp >= engine->wear_temp)
+                continue;
+            if (item->item->isBuildMat())
+                continue;
+
+            auto type = item->item->getType();
+            if (type == item_type::TRAPPARTS || item_type::CHAIN)
+                continue;
+
+            int coeff = power;
+            if (type == item_type::BARREL)
+                coeff = count;
+
+            int ticks = coeff*(engine->wear_temp - melt_temp);
+
+            if (item->item->addWear(ticks, true, true))
+            {
+                explode();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     static const int WEAR_TICKS = 806400;
 
     int get_steam_use_rate(steam_engine_workshop *engine, int dimension, int power_level)
@@ -458,6 +535,9 @@ struct workshop_hook : df::building_workshopst {
                         cur_count--;
                     }
                 }
+
+                if (check_component_wear(engine, old_count, old_power))
+                    return;
             }
 
             if (old_count < engine->max_capacity && cur_count == engine->max_capacity)
@@ -523,6 +603,9 @@ struct workshop_hook : df::building_workshopst {
     {
         if (get_steam_engine())
             random_boil();
+
+        if (lost)
+            explode();
 
         INTERPOSE_NEXT(deconstructItems)(noscatter, lost);
     }
@@ -659,6 +742,7 @@ static bool find_engines()
         ws.is_magma = ws.def->needs_magma;
         ws.max_power = ws.is_magma ? 5 : 3;
         ws.max_capacity = ws.is_magma ? 10 : 6;
+        ws.wear_temp = ws.is_magma ? 12000 : 11000;
 
         if (!ws.gear_tiles.empty())
             engines.push_back(ws);

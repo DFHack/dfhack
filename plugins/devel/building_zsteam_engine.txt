@@ -30,9 +30,11 @@ building_zsteam_engine
 	[COLOR:2:1:6:0:0:0:0:0:7:0:0]
 	[COLOR:2:2:7:0:0:0:0:0:6:0:0]
 	[COLOR:2:3:7:0:0:MAT:7:0:0]
+	Tile 15 marks places where machines can connect:
 	[TILE:3:1:15:246:15]
 	[TILE:3:2:'\':19:'/']
 	[TILE:3:3:7:' ':7]
+	Color 0:?:1 marks hearth, 1:?:1 water indicator, 4:?:1 magma indicator:
 	[COLOR:3:1:6:0:0:6:0:0:6:0:0]
 	[COLOR:3:2:6:7:0:0:0:1:6:7:0]
 	[COLOR:3:3:1:7:1:0:0:0:4:7:1]

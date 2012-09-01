@@ -133,6 +133,8 @@ module DFHack
             def _field_names ; _fields_ancestors.map { |n, o, s| n } ; end
             def _rtti_classname ; self.class._rtti_classname ; end
             def _sizeof ; self.class._sizeof ; end
+            def ==(o) ; o.kind_of?(Compound) and o._memaddr == _memaddr ; end
+
             @@inspecting = {} # avoid infinite recursion on mutually-referenced objects
             def inspect
                 cn = self.class.name.sub(/^DFHack::/, '')
@@ -289,12 +291,12 @@ module DFHack
 
             # XXX shaky...
             def _set(v)
-                if v.kind_of?(Pointer)
-                    DFHack.memory_write_int32(@_memaddr, v._getp)
-                elsif v.kind_of?(MemStruct)
-                    DFHack.memory_write_int32(@_memaddr, v._memaddr)
-                else
-                    _get._set(v)
+                case v
+                when Pointer;   DFHack.memory_write_int32(@_memaddr, v._getp)
+                when MemStruct; DFHack.memory_write_int32(@_memaddr, v._memaddr)
+                when Integer;   DFHack.memory_write_int32(@_memaddr, v)
+                when nil;       DFHack.memory_write_int32(@_memaddr, 0)
+                else _get._set(v)
                 end
             end
 
@@ -326,6 +328,16 @@ module DFHack
                 addr = _getp
                 return if addr == 0
                 self
+            end
+
+            def _set(v)
+                case v
+                when Pointer;   DFHack.memory_write_int32(@_memaddr, v._getp)
+                when MemStruct; DFHack.memory_write_int32(@_memaddr, v._memaddr)
+                when Integer;   DFHack.memory_write_int32(@_memaddr, v)
+                when nil;       DFHack.memory_write_int32(@_memaddr, 0)
+                else raise "cannot PointerAry._set(#{v.inspect})"
+                end
             end
 
             def [](i)

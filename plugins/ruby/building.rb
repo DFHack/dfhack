@@ -211,15 +211,13 @@ module DFHack
 
         # link bld into other rooms if it is inside their extents
         def building_linkrooms(bld)
-            didstuff = false
             world.buildings.other[:ANY_FREE].each { |ob|
                 next if !ob.is_room or ob.z != bld.z
                 next if !ob.room.extents or !ob.isExtentShaped or ob.room.extents[ob.room.width*(bld.y1-ob.room.y)+(bld.x1-ob.room.x)] == 0
-                didstuff = true
+                ui.equipment.update.buildings = true
                 ob.children << bld
                 bld.parents << ob
             }
-            ui.equipment.update.buildings = true if didstuff
         end
 
         # link the building into the world, set map data, link rooms, bld.id
@@ -274,6 +272,43 @@ module DFHack
                 bld.mat_index = item.getMaterialIndex if bld.mat_index == -1
             }
             building_createdesign(bld, rough)
+        end
+
+        # construct an abstract building (stockpile, farmplot, ...)
+        def building_construct_abstract(bld)
+            if bld.getType == :Stockpile
+                max = df.world.buildings.other[:STOCKPILE].map { |s| s.stockpile_number }.max
+                bld.stockpile_number = max.to_i + 1
+            end
+            building_link bld
+            if !bld.flags.exists
+                bld.flags.exists = true
+                bld.initFarmSeasons
+            end
+        end
+
+        def building_setowner(bld, unit)
+            return unless bld.is_room
+            return if bld.owner == unit
+            
+            if bld.owner
+                if idx = bld.owner.owned_buildings.index { |ob| ob.id == bld.id }
+                    bld.owner.owned_buildings.delete_at(idx)
+                end
+                if spouse = bld.owner.relations.spouse_tg and
+                        idx = spouse.owned_buildings.index { |ob| ob.id == bld.id }
+                    spouse.owned_buildings.delete_at(idx)
+                end
+            end
+            bld.owner = unit
+            if unit
+                unit.owned_buildings << bld
+                if spouse = bld.owner.relations.spouse_tg and
+                        !spouse.owned_buildings.index { |ob| ob.id == bld.id } and
+                        bld.canUseSpouseRoom
+                    spouse.owned_buildings << bld
+                end
+            end
         end
 
         # creates a job to deconstruct the building

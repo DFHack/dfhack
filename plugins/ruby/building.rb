@@ -195,7 +195,7 @@ module DFHack
             z = bld.z
             (bld.x1..bld.x2).each { |x|
                 (bld.y1..bld.y2).each { |y|
-                    next if !extents or bld.room.extents[bld.room.width*(y-bld.room.y)+(x-bld.room.x)] == 0
+                    next if extents and bld.room.extents[bld.room.width*(y-bld.room.y)+(x-bld.room.x)] == 0
                     next if not mb = map_block_at(x, y, z)
                     des = mb.designation[x%16][y%16]
                     des.pile = stockpile

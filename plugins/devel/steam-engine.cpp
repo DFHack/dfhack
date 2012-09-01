@@ -82,9 +82,27 @@ struct liquid_hook : df::item_liquid_miscst {
 
         INTERPOSE_NEXT(getItemDescription)(buf, mode);
     }
+
+    DEFINE_VMETHOD_INTERPOSE(bool, adjustTemperature, (uint16_t temp, int32_t unk))
+    {
+        if (mat_state.whole & BOILING_FLAG)
+            temp = std::max(int(temp), getBoilingPoint()-1);
+
+        return INTERPOSE_NEXT(adjustTemperature)(temp, unk);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(bool, checkTemperatureDamage, ())
+    {
+        if (mat_state.whole & BOILING_FLAG)
+            temperature = std::max(int(temperature), getBoilingPoint()-1);
+
+        return INTERPOSE_NEXT(checkTemperatureDamage)();
+    }
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(liquid_hook, getItemDescription);
+IMPLEMENT_VMETHOD_INTERPOSE(liquid_hook, adjustTemperature);
+IMPLEMENT_VMETHOD_INTERPOSE(liquid_hook, checkTemperatureDamage);
 
 struct workshop_hook : df::building_workshopst {
     typedef df::building_workshopst interpose_base;
@@ -114,6 +132,8 @@ struct workshop_hook : df::building_workshopst {
     {
         liquid->flags.bits.in_building = true;
         liquid->mat_state.whole |= liquid_hook::BOILING_FLAG;
+        liquid->temperature = liquid->getBoilingPoint()-1;
+        liquid->temperature_fraction = 0;
 
         // This affects where the steam appears to come from
         if (engine->hearth_tile.isValid())
@@ -174,6 +194,28 @@ struct workshop_hook : df::building_workshopst {
         }
 
         return first;
+    }
+
+    void random_boil()
+    {
+        int cnt = 0;
+
+        for (int i = contained_items.size()-1; i >= 0; i--)
+        {
+            auto item = contained_items[i];
+            if (item->use_mode != 0 || !item->item->flags.bits.in_building)
+                continue;
+
+            auto liquid = strict_virtual_cast<df::item_liquid_miscst>(item->item);
+            if (!liquid)
+                continue;
+
+            if (cnt == 0 || random() < RAND_MAX/2)
+            {
+                cnt++;
+                boil_unit(liquid);
+            }
+        }
     }
 
     static const int WEAR_TICKS = 806400;
@@ -362,6 +404,14 @@ struct workshop_hook : df::building_workshopst {
             }
         }
     }
+
+    DEFINE_VMETHOD_INTERPOSE(void, deconstructItems, (bool noscatter, bool lost))
+    {
+        if (get_steam_engine())
+            random_boil();
+
+        INTERPOSE_NEXT(deconstructItems)(noscatter, lost);
+    }
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, needsDesign);
@@ -373,6 +423,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, uncategorize);
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, canConnectToMachine);
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, updateAction);
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, drawBuilding);
+IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, deconstructItems);
 
 static bool find_engines()
 {
@@ -431,6 +482,8 @@ static bool find_engines()
 static void enable_hooks(bool enable)
 {
     INTERPOSE_HOOK(liquid_hook, getItemDescription).apply(enable);
+    INTERPOSE_HOOK(liquid_hook, adjustTemperature).apply(enable);
+    INTERPOSE_HOOK(liquid_hook, checkTemperatureDamage).apply(enable);
 
     INTERPOSE_HOOK(workshop_hook, needsDesign).apply(enable);
     INTERPOSE_HOOK(workshop_hook, getPowerInfo).apply(enable);
@@ -441,6 +494,7 @@ static void enable_hooks(bool enable)
     INTERPOSE_HOOK(workshop_hook, canConnectToMachine).apply(enable);
     INTERPOSE_HOOK(workshop_hook, updateAction).apply(enable);
     INTERPOSE_HOOK(workshop_hook, drawBuilding).apply(enable);
+    INTERPOSE_HOOK(workshop_hook, deconstructItems).apply(enable);
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)

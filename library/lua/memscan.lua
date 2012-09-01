@@ -222,7 +222,7 @@ end
 function get_code_segment()
     local s, e = find_code_segment()
     if s and e then
-        return ms.MemoryArea.new(s, e)
+        return MemoryArea.new(s, e)
     end
 end
 -- Static data segment search

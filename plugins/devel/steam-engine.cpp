@@ -4,6 +4,8 @@
 #include <PluginManager.h>
 #include <modules/Gui.h>
 #include <modules/Screen.h>
+#include <modules/Maps.h>
+#include <TileTypes.h>
 #include <vector>
 #include <cstdio>
 #include <stack>
@@ -24,6 +26,9 @@
 #include "df/machine.h"
 #include "df/job.h"
 #include "df/building_drawbuffer.h"
+#include "df/ui.h"
+#include "df/viewscreen_dwarfmodest.h"
+#include "df/ui_build_selector.h"
 
 #include "MiscUtils.h"
 
@@ -35,6 +40,7 @@ using namespace df::enums;
 
 using df::global::gps;
 using df::global::world;
+using df::global::ui;
 using df::global::ui_build_selector;
 
 DFHACK_PLUGIN("steam-engine");
@@ -69,6 +75,29 @@ static const int hearth_colors[6][2] = {
     { COLOR_BROWN, 1 },
     { COLOR_GREY, 1 }
 };
+
+void enable_updates_at(df::coord pos, bool flow, bool temp)
+{
+    static const int delta[4][2] = { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } };
+
+    for (int i = 0; i < 4; i++)
+    {
+        auto blk = Maps::getTileBlock(pos.x+delta[i][0], pos.y+delta[i][1], pos.z);
+        Maps::enableBlockUpdates(blk, flow, temp);
+    }
+}
+
+void decrement_flow(df::coord pos, int amount)
+{
+    auto pldes = Maps::getTileDesignation(pos);
+    if (!pldes) return;
+
+    int nsize = std::max(0, pldes->bits.flow_size - amount);
+    pldes->bits.flow_size = nsize;
+    pldes->bits.flow_forbid = (nsize > 3 || pldes->bits.liquid_type == tile_liquid::Magma);
+
+    enable_updates_at(pos, true, false);
+}
 
 struct liquid_hook : df::item_liquid_miscst {
     typedef df::item_liquid_miscst interpose_base;
@@ -128,8 +157,65 @@ struct workshop_hook : df::building_workshopst {
         flags.whole = (flags.whole & 0x0FFFFFFFU) | uint32_t((count & 15) << 28);
     }
 
-    void absorb_unit(steam_engine_workshop *engine, df::item_liquid_miscst *liquid)
+    bool find_liquids(df::coord *pwater, df::coord *pmagma, bool is_magma, bool any_level)
     {
+        if (!is_magma)
+            pmagma = NULL;
+
+        for (int x = x1; x <= x2; x++)
+        {
+            for (int y = y1; y <= y2; y++)
+            {
+                auto ptile = Maps::getTileType(x,y,z);
+                if (!ptile || !LowPassable(*ptile))
+                    continue;
+
+                auto pltile = Maps::getTileType(x,y,z-1);
+                if (!pltile || !FlowPassable(*pltile))
+                    continue;
+
+                auto pldes = Maps::getTileDesignation(x,y,z-1);
+                if (!pldes || pldes->bits.flow_size == 0)
+                    continue;
+
+                if (pldes->bits.liquid_type == tile_liquid::Magma)
+                {
+                    if (!pmagma || (!any_level && pldes->bits.flow_size < 4))
+                        continue;
+
+                    *pmagma = df::coord(x,y,z-1);
+                    if (pwater->isValid())
+                        return true;
+                }
+                else
+                {
+                    if (!any_level && pldes->bits.flow_size < 3)
+                        continue;
+
+                    *pwater = df::coord(x,y,z-1);
+                    if (!pmagma || pmagma->isValid())
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    bool absorb_unit(steam_engine_workshop *engine, df::item_liquid_miscst *liquid)
+    {
+        df::coord water, magma;
+
+        if (!find_liquids(&water, &magma, engine->is_magma, true))
+        {
+            liquid->addWear(WEAR_TICKS*4+1, true, false);
+            return false;
+        }
+
+        decrement_flow(water, 1);
+        if (engine->is_magma)
+            decrement_flow(magma, 1);
+
         liquid->flags.bits.in_building = true;
         liquid->mat_state.whole |= liquid_hook::BOILING_FLAG;
         liquid->temperature = liquid->getBoilingPoint()-1;
@@ -138,6 +224,9 @@ struct workshop_hook : df::building_workshopst {
         // This affects where the steam appears to come from
         if (engine->hearth_tile.isValid())
             liquid->pos = df::coord(x1+engine->hearth_tile.x, y1+engine->hearth_tile.y, z);
+
+        enable_updates_at(liquid->pos, false, true);
+        return true;
     }
 
     bool boil_unit(df::item_liquid_miscst *liquid)
@@ -178,7 +267,8 @@ struct workshop_hook : df::building_workshopst {
                     liquid->wear != 0)
                     continue;
 
-                absorb_unit(engine, liquid);
+                if (!absorb_unit(engine, liquid))
+                    continue;
             }
 
             if (*count < engine->max_capacity)
@@ -330,6 +420,18 @@ struct workshop_hook : df::building_workshopst {
             return INTERPOSE_NEXT(canConnectToMachine)(info);
     }
 
+    // Operation logic
+    DEFINE_VMETHOD_INTERPOSE(bool, isUnpowered, ())
+    {
+        if (auto engine = get_steam_engine())
+        {
+            df::coord water, magma;
+            return !find_liquids(&water, &magma, engine->is_magma, false);
+        }
+
+        return INTERPOSE_NEXT(isUnpowered)();
+    }
+
     DEFINE_VMETHOD_INTERPOSE(void, updateAction, ())
     {
         if (auto engine = get_steam_engine())
@@ -402,6 +504,18 @@ struct workshop_hook : df::building_workshopst {
                 db->fore[pos.x][pos.y] = hearth_colors[power][0];
                 db->bright[pos.x][pos.y] = hearth_colors[power][1];
             }
+
+            // Set liquid indicator state
+            if (engine->water_tile.isValid() || engine->magma_tile.isValid())
+            {
+                df::coord water, magma;
+                find_liquids(&water, &magma, engine->is_magma, false);
+
+                if (engine->water_tile.isValid() && !water.isValid())
+                    db->fore[engine->water_tile.x][engine->water_tile.y] = 0;
+                if (engine->magma_tile.isValid() && engine->is_magma && !magma.isValid())
+                    db->fore[engine->magma_tile.x][engine->magma_tile.y] = 0;
+            }
         }
     }
 
@@ -421,9 +535,83 @@ IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, isPowerSource);
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, categorize);
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, uncategorize);
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, canConnectToMachine);
+IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, isUnpowered);
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, updateAction);
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, drawBuilding);
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, deconstructItems);
+
+struct dwarfmode_hook : df::viewscreen_dwarfmodest
+{
+    typedef df::viewscreen_dwarfmodest interpose_base;
+
+    steam_engine_workshop *get_steam_engine()
+    {
+        if (ui->main.mode == ui_sidebar_mode::Build &&
+            ui_build_selector->stage == 1 &&
+            ui_build_selector->building_type == building_type::Workshop &&
+            ui_build_selector->building_subtype == workshop_type::Custom)
+        {
+            return find_steam_engine(ui_build_selector->custom_type);
+        }
+
+        return NULL;
+    }
+
+    void check_hanging_tiles(steam_engine_workshop *engine)
+    {
+        using df::global::cursor;
+
+        if (!engine) return;
+
+        bool error = false;
+
+        int x1 = cursor->x - engine->def->workloc_x;
+        int y1 = cursor->y - engine->def->workloc_y;
+
+        for (int x = 0; x < engine->def->dim_x; x++)
+        {
+            for (int y = 0; y < engine->def->dim_y; y++)
+            {
+                if (ui_build_selector->tiles[x][y] >= 5)
+                    continue;
+
+                auto ptile = Maps::getTileType(x1+x,y1+y,cursor->z);
+                if (ptile && !isOpenTerrain(*ptile))
+                    continue;
+
+                ui_build_selector->tiles[x][y] = 6;
+                error = true;
+            }
+        }
+
+        if (error)
+        {
+            const char *msg = "Hanging - use down stair.";
+            ui_build_selector->errors.push_back(new std::string(msg));
+        }
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        steam_engine_workshop *engine = get_steam_engine();
+
+        // Selector insists that workshops cannot be placed hanging
+        // unless they require magma, so pretend we always do.
+        if (engine)
+            engine->def->needs_magma = true;
+
+        INTERPOSE_NEXT(feed)(input);
+
+        // Restore the flag
+        if (engine)
+            engine->def->needs_magma = engine->is_magma;
+
+        // And now, check for open space
+        check_hanging_tiles(get_steam_engine());
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(dwarfmode_hook, feed);
 
 static bool find_engines()
 {
@@ -492,9 +680,12 @@ static void enable_hooks(bool enable)
     INTERPOSE_HOOK(workshop_hook, categorize).apply(enable);
     INTERPOSE_HOOK(workshop_hook, uncategorize).apply(enable);
     INTERPOSE_HOOK(workshop_hook, canConnectToMachine).apply(enable);
+    INTERPOSE_HOOK(workshop_hook, isUnpowered).apply(enable);
     INTERPOSE_HOOK(workshop_hook, updateAction).apply(enable);
     INTERPOSE_HOOK(workshop_hook, drawBuilding).apply(enable);
     INTERPOSE_HOOK(workshop_hook, deconstructItems).apply(enable);
+
+    INTERPOSE_HOOK(dwarfmode_hook, feed).apply(enable);
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)

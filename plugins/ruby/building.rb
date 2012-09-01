@@ -46,6 +46,7 @@ module DFHack
             raise "invalid building type #{type.inspect}" if not cls
             bld = cls.cpp_new
             bld.race = ui.race_id
+            subtype = WorkshopType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Workshop
             bld.setSubtype(subtype) if subtype != -1
             bld.setCustomType(custom) if custom != -1
             case type
@@ -176,9 +177,10 @@ module DFHack
 
         # set building at position, with optional width/height
         def building_position(bld, pos, w=nil, h=nil)
-            bld.x1 = pos.x
-            bld.y1 = pos.y
-            bld.z  = pos.z
+            x, y, z = (pos.respond_to?(:x) ? [pos.x, pos.y, pos.z] : pos)
+            bld.x1 = x
+            bld.y1 = y
+            bld.z  = z
             bld.x2 = bld.x1+w-1 if w
             bld.y2 = bld.y1+h-1 if h
             building_setsize(bld)

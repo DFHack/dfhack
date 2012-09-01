@@ -1,3 +1,4 @@
+local ms=require "memscan"
 tools={}
 tools.menu=MakeMenu()
 function tools.setrace(name)
@@ -60,14 +61,31 @@ function tools.GiveSentience(names)
 	end
 end
 tools.menu:add("Give Sentience",tools.GiveSentience)
-function tools.embark()
-	off=offsets.find(0,0x66, 0x83, 0x7F ,0x1A ,0xFF,0x74,0x04)
-	if off~=0 then
-		engine.pokeb(off+5,0x90)
-		engine.pokeb(off+6,0x90)
-		print("Found and patched")
+function embark() --windows only?
+	local seg=ms.get_code_segments()
+	printall(seg)
+	local idx,off
+	for k,v in ipairs(seg) do
+		idx,off=v.uint8_t:find_one{0x66, 0x83, 0x7F ,0x1A ,0xFF,0x74,0x04}
+		if idx then 
+			break 
+		end
+	end
+	
+	if idx then
+		local tmp_val=df.new('uint8_t',2)
+		tmp_val[0]=0x90
+		tmp_val[1]=0x90
+		local size,pos=tmp_val:sizeof()
+		local ret=dfhack.internal.patchMemory(off+5,pos,size*2)
+		if ret then
+			print("Found and patched:",off+5)
+		else
+			print("Patching failed at:",off+5)
+		end
+		tmp_val:delete()
 	else
-		print("not found")
+		qerror("Offset for embark patch not found!")
 	end
 end
 tools.menu:add("Embark anywhere",tools.embark)

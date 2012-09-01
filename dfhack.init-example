@@ -52,6 +52,9 @@ keybinding add Alt-R@dwarfmode/QueryBuilding/Some gui/room-list.work
 # interface for the liquids plugin
 keybinding add Alt-L@dwarfmode/LookAround gui/liquids
 
+# interface for universal game master's editor
+keybinding add Alt-Shift-E gui/gm-editor
+
 ###################
 # UI logic tweaks #
 ###################

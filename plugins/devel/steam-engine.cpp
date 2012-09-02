@@ -436,6 +436,23 @@ struct workshop_hook : df::building_workshopst {
         return false;
     }
 
+    float get_component_quality(int use_type)
+    {
+        float sum = 0, cnt = 0;
+
+        for (size_t i = 0; i < contained_items.size(); i++)
+        {
+            int type = classify_component(contained_items[i]);
+            if (type != use_type)
+                continue;
+
+            sum += contained_items[i]->item->getQuality();
+            cnt += 1;
+        }
+
+        return (cnt > 0 ? sum/cnt : 0);
+    }
+
     int get_steam_use_rate(steam_engine_workshop *engine, int dimension, int power_level)
     {
         // total ticks to wear off completely
@@ -452,8 +469,10 @@ struct workshop_hook : df::building_workshopst {
             else
                 power_rate = 0.0f;
         }
-        // apply rate; 10% steam is wasted anyway
-        ticks *= (0.1f + 0.9f*power_rate)*power_level;
+        // waste rate: 1-10% depending on piston assembly quality
+        float waste = 0.1f - 0.015f * get_component_quality(1);
+        // apply rate and waste factor
+        ticks *= (waste + 0.9f*power_rate)*power_level;
         // end result
         return std::max(1, int(ticks));
     }
@@ -529,7 +548,7 @@ struct workshop_hook : df::building_workshopst {
         if (auto engine = get_steam_engine())
         {
             info->produced = std::min(engine->max_power, get_steam_amount())*100;
-            info->consumed = 10;
+            info->consumed = 10 - int(get_component_quality(0));
             return;
         }
 

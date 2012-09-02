@@ -61,3 +61,6 @@ tweak stable-cursor
 
 # stop military from considering training as 'patrol duty'
 tweak patrol-duty
+
+# display creature weight in build plate menu as ??K, instead of (???df: Max
+tweak readable-build-plate

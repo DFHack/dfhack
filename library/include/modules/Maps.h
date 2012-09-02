@@ -50,6 +50,7 @@ distribution.
 #include "df/tile_dig_designation.h"
 #include "df/tile_traffic.h"
 #include "df/feature_init.h"
+#include "df/flow_type.h"
 
 /**
  * \defgroup grp_maps Maps module and its types
@@ -232,6 +233,9 @@ extern DFHACK_EXPORT void getSize(uint32_t& x, uint32_t& y, uint32_t& z);
 /// get the position of the map on world map
 extern DFHACK_EXPORT void getPosition(int32_t& x, int32_t& y, int32_t& z);
 
+extern DFHACK_EXPORT bool isValidTilePos(int32_t x, int32_t y, int32_t z);
+inline bool isValidTilePos(df::coord pos) { return isValidTilePos(pos.x, pos.y, pos.z); }
+
 /**
  * Get the map block or NULL if block is not valid
  */
@@ -271,6 +275,8 @@ inline df::coord2d getTileBiomeRgn(df::coord pos) {
 
 // Enables per-frame updates for liquid flow and/or temperature.
 DFHACK_EXPORT void enableBlockUpdates(df::map_block *blk, bool flow = false, bool temperature = false);
+
+DFHACK_EXPORT df::flow_info *spawnFlow(df::coord pos, df::flow_type type, int mat_type = 0, int mat_index = -1, int density = 100);
 
 /// sorts the block event vector into multiple vectors by type
 /// mineral veins, what's under ice, blood smears and mud

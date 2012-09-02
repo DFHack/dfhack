@@ -78,6 +78,7 @@ distribution.
 #include "df/burrow.h"
 #include "df/building_civzonest.h"
 #include "df/region_map_entry.h"
+#include "df/flow_info.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -756,7 +757,9 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getSelectedUnit),
     WRAPM(Gui, getSelectedItem),
     WRAPM(Gui, showAnnouncement),
+    WRAPM(Gui, showZoomAnnouncement),
     WRAPM(Gui, showPopupAnnouncement),
+    WRAPM(Gui, showAutoAnnouncement),
     { NULL, NULL }
 };
 
@@ -912,8 +915,16 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
     WRAPM(Maps, canWalkBetween),
+    WRAPM(Maps, spawnFlow),
     { NULL, NULL }
 };
+
+static int maps_isValidTilePos(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    lua_pushboolean(L, Maps::isValidTilePos(pos));
+    return 1;
+}
 
 static int maps_getTileBlock(lua_State *L)
 {
@@ -936,6 +947,7 @@ static int maps_getTileBiomeRgn(lua_State *L)
 }
 
 static const luaL_Reg dfhack_maps_funcs[] = {
+    { "isValidTilePos", maps_isValidTilePos },
     { "getTileBlock", maps_getTileBlock },
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },

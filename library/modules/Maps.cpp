@@ -58,6 +58,7 @@ using namespace std;
 #include "df/block_square_event_grassst.h"
 #include "df/z_level_flags.h"
 #include "df/region_map_entry.h"
+#include "df/flow_info.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -138,13 +139,20 @@ df::map_block *Maps::getBlock (int32_t blockx, int32_t blocky, int32_t blockz)
     return world->map.block_index[blockx][blocky][blockz];
 }
 
-df::map_block *Maps::getTileBlock (int32_t x, int32_t y, int32_t z)
+bool Maps::isValidTilePos(int32_t x, int32_t y, int32_t z)
 {
     if (!IsValid())
-        return NULL;
+        return false;
     if ((x < 0) || (y < 0) || (z < 0))
-        return NULL;
+        return false;
     if ((x >= world->map.x_count) || (y >= world->map.y_count) || (z >= world->map.z_count))
+        return false;
+    return true;
+}
+
+df::map_block *Maps::getTileBlock (int32_t x, int32_t y, int32_t z)
+{
+    if (!isValidTilePos(x,y,z))
         return NULL;
     return world->map.block_index[x >> 4][y >> 4][z];
 }
@@ -202,6 +210,26 @@ void Maps::enableBlockUpdates(df::map_block *blk, bool flow, bool temperature)
         z_flags->bits.update = true;
         z_flags->bits.update_twice = true;
     }
+}
+
+df::flow_info *Maps::spawnFlow(df::coord pos, df::flow_type type, int mat_type, int mat_index, int density)
+{
+    using df::global::flows;
+
+    auto block = getTileBlock(pos);
+    if (!flows || !block)
+        return NULL;
+
+    auto flow = new df::flow_info();
+    flow->type = type;
+    flow->mat_type = mat_type;
+    flow->mat_index = mat_index;
+    flow->density = std::min(100, density);
+    flow->pos = pos;
+
+    block->flows.push_back(flow);
+    flows->push_back(flow);
+    return flow;
 }
 
 df::feature_init *Maps::getGlobalInitFeature(int32_t index)

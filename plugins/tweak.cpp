@@ -211,9 +211,6 @@ struct patrol_duty_hook : df::squad_order_trainst
 
 IMPLEMENT_VMETHOD_INTERPOSE(patrol_duty_hook, isPatrol);
 
-static const int AREA_MAP_WIDTH = 23;
-static const int MENU_WIDTH = 30;
-
 struct readable_build_plate_hook : df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
@@ -228,10 +225,8 @@ struct readable_build_plate_hook : df::viewscreen_dwarfmodest
             ui_build_selector->building_subtype == trap_type::PressurePlate &&
             ui_build_selector->plate_info.flags.bits.units)
         {
-            auto wsize = Screen::getWindowSize();
-            int x = wsize.x - MENU_WIDTH - 1;
-            if (*ui_menu_width == 1 || *ui_area_map_width == 2)
-                x -= AREA_MAP_WIDTH + 1;
+            auto dims = Gui::getDwarfmodeViewDims();
+            int x = dims.menu_x1;
 
             Screen::Pen pen(' ',COLOR_WHITE);
 

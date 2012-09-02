@@ -1,4 +1,4 @@
-reaction_other
+reaction_steam_engine
 
 [OBJECT:REACTION]
 
@@ -9,5 +9,6 @@ reaction_other
 	[FUEL]
 	[SKILL:SMELT]
 	Dimension is the number of days it can produce 100 power * 100.
-	[PRODUCT:100:1:LIQUID_MISC:NONE:WATER][PRODUCT_DIMENSION:1500]
+	I.e. with 2000 it means energy of 1 job = 1 water wheel for 20 days.
+	[PRODUCT:100:1:LIQUID_MISC:NONE:WATER][PRODUCT_DIMENSION:2000]
 

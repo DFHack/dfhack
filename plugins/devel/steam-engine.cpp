@@ -807,23 +807,25 @@ static bool find_engines()
         {
             for (int y = 0; y < ws.def->dim_y; y++)
             {
-                if (ws.def->tile[bs][x][y] == 15)
+                switch (ws.def->tile[bs][x][y])
+                {
+                case 15:
                     ws.gear_tiles.push_back(df::coord2d(x,y));
+                    break;
+                case 19:
+                    ws.hearth_tile = df::coord2d(x,y);
+                    break;
+                }
 
                 if (ws.def->tile_color[2][bs][x][y])
                 {
                     switch (ws.def->tile_color[0][bs][x][y])
                     {
-                    case 0:
-                        ws.hearth_tile = df::coord2d(x,y);
-                        break;
                     case 1:
                         ws.water_tile = df::coord2d(x,y);
                         break;
                     case 4:
                         ws.magma_tile = df::coord2d(x,y);
-                        break;
-                    default:
                         break;
                     }
                 }

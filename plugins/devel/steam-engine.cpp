@@ -47,12 +47,18 @@ using df::global::ui_build_selector;
 
 DFHACK_PLUGIN("steam-engine");
 
+/*
+ * List of known steam engine workshop raws.
+ */
+
 struct steam_engine_workshop {
     int id;
     df::building_def_workshopst *def;
+    // Cached properties
     bool is_magma;
     int max_power, max_capacity;
     int wear_temp;
+    // Special tiles (relative position)
     std::vector<df::coord2d> gear_tiles;
     df::coord2d hearth_tile;
     df::coord2d water_tile;
@@ -69,6 +75,10 @@ steam_engine_workshop *find_steam_engine(int id)
 
     return NULL;
 }
+
+/*
+ * Misc utilities.
+ */
 
 static const int hearth_colors[6][2] = {
     { COLOR_BLACK, 1 },
@@ -102,25 +112,56 @@ void decrement_flow(df::coord pos, int amount)
     enable_updates_at(pos, true, false);
 }
 
-bool make_explosion(df::coord pos, int mat_type, int mat_index, int density)
+void make_explosion(df::coord center, int power)
 {
-    using df::global::flows;
+    static const int bias[9] = {
+        60, 30, 60,
+        30, 0, 30,
+        60, 30, 60
+    };
 
-    auto block = Maps::getTileBlock(pos);
-    if (!flows || !block)
-        return false;
+    int mat_type = builtin_mats::WATER, mat_index = -1;
+    int i = 0;
 
-    auto flow = new df::flow_info();
-    flow->type = flow_type::MaterialDust;
-    flow->mat_type = mat_type;
-    flow->mat_index = mat_index;
-    flow->density = std::min(100, density);
-    flow->pos = pos;
+    for (int dx = -1; dx <= 1; dx++)
+    {
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            int size = power - bias[i++];
+            auto pos = center + df::coord(dx,dy,0);
 
-    block->flows.push_back(flow);
-    flows->push_back(flow);
-    return true;
+            if (size > 0)
+                Maps::spawnFlow(pos, flow_type::MaterialDust, mat_type, mat_index, size);
+        }
+    }
+
+    Gui::showAutoAnnouncement(
+        announcement_type::CAVE_COLLAPSE, center,
+        "A boiler has exploded!", COLOR_RED, true
+    );
 }
+
+static const int WEAR_TICKS = 806400;
+
+bool add_wear_nodestroy(df::item_actual *item, int rate)
+{
+    if (item->incWearTimer(rate))
+    {
+        while (item->wear_timer >= WEAR_TICKS)
+        {
+            item->wear_timer -= WEAR_TICKS;
+            item->wear++;
+        }
+    }
+
+    return item->wear > 3;
+}
+
+/*
+ * Hook for the liquid item. Implements a special 'boiling'
+ * matter state with a modified description and temperature
+ * locked at boiling-1.
+ */
 
 struct liquid_hook : df::item_liquid_miscst {
     typedef df::item_liquid_miscst interpose_base;
@@ -156,8 +197,14 @@ IMPLEMENT_VMETHOD_INTERPOSE(liquid_hook, getItemDescription);
 IMPLEMENT_VMETHOD_INTERPOSE(liquid_hook, adjustTemperature);
 IMPLEMENT_VMETHOD_INTERPOSE(liquid_hook, checkTemperatureDamage);
 
+/*
+ * Hook for the workshop itself. Implements core logic.
+ */
+
 struct workshop_hook : df::building_workshopst {
     typedef df::building_workshopst interpose_base;
+
+    // Engine detection
 
     steam_engine_workshop *get_steam_engine()
     {
@@ -165,6 +212,11 @@ struct workshop_hook : df::building_workshopst {
             return find_steam_engine(custom_type);
 
         return NULL;
+    }
+
+    inline bool is_fully_built()
+    {
+        return getBuildStage() >= getMaxBuildStage();
     }
 
     // Use high bits of flags to store current steam amount.
@@ -179,6 +231,8 @@ struct workshop_hook : df::building_workshopst {
     {
         flags.whole = (flags.whole & 0x0FFFFFFFU) | uint32_t((count & 15) << 28);
     }
+
+    // Find liquids to consume below the engine.
 
     bool find_liquids(df::coord *pwater, df::coord *pmagma, bool is_magma, bool any_level)
     {
@@ -225,13 +279,17 @@ struct workshop_hook : df::building_workshopst {
         return false;
     }
 
+    // Absorbs a water item produced by stoke reaction into the engine.
+
     bool absorb_unit(steam_engine_workshop *engine, df::item_liquid_miscst *liquid)
     {
+        // Consume liquid inputs
         df::coord water, magma;
 
         if (!find_liquids(&water, &magma, engine->is_magma, true))
         {
-            liquid->addWear(WEAR_TICKS*4+1, true, false);
+            // Destroy the item with enormous wear amount.
+            liquid->addWear(WEAR_TICKS*5, true, false);
             return false;
         }
 
@@ -239,6 +297,7 @@ struct workshop_hook : df::building_workshopst {
         if (engine->is_magma)
             decrement_flow(magma, 1);
 
+        // Update flags
         liquid->flags.bits.in_building = true;
         liquid->mat_state.whole |= liquid_hook::BOILING_FLAG;
         liquid->temperature = liquid->getBoilingPoint()-1;
@@ -248,6 +307,7 @@ struct workshop_hook : df::building_workshopst {
         if (engine->hearth_tile.isValid())
             liquid->pos = df::coord(x1+engine->hearth_tile.x, y1+engine->hearth_tile.y, z);
 
+        // Enable block temperature updates
         enable_updates_at(liquid->pos, false, true);
         return true;
     }
@@ -267,6 +327,8 @@ struct workshop_hook : df::building_workshopst {
             if (jobs[i]->job_type == job_type::CustomReaction)
                 jobs[i]->flags.bits.suspend = suspend;
     }
+
+    // Scan contained items for boiled steam to absorb.
 
     df::item_liquid_miscst *collect_steam(steam_engine_workshop *engine, int *count)
     {
@@ -290,6 +352,7 @@ struct workshop_hook : df::building_workshopst {
                     liquid->wear != 0)
                     continue;
 
+                // This may destroy the item
                 if (!absorb_unit(engine, liquid))
                     continue;
             }
@@ -303,6 +366,7 @@ struct workshop_hook : df::building_workshopst {
             {
                 // Overpressure valve
                 boil_unit(liquid);
+                suspend_jobs(true);
             }
         }
 
@@ -331,61 +395,46 @@ struct workshop_hook : df::building_workshopst {
         }
     }
 
-    void explode()
+    int classify_component(df::building_actual::T_contained_items *item)
     {
-        int mat_type = builtin_mats::ASH, mat_index = -1;
-        int cx = (x1+x2)/2, cy = (y1+y2)/2;
-        int power = std::min(240, get_steam_amount()*80);
+        if (item->use_mode != 2 || item->item->isBuildMat())
+            return -1;
 
-        make_explosion(df::coord(cx, cy, z), mat_type, mat_index, power);
-        make_explosion(df::coord(cx-1, cy, z), mat_type, mat_index, power/3);
-        make_explosion(df::coord(cx, cy-1, z), mat_type, mat_index, power/3);
-        make_explosion(df::coord(cx+1, cy, z), mat_type, mat_index, power/3);
-        make_explosion(df::coord(cx, cy+1, z), mat_type, mat_index, power/3);
-
-        *df::global::pause_state = true;
-
-        Gui::showAnnouncement("A boiler has exploded!", COLOR_RED, true);
-        auto ann = world->status.announcements.back();
-        ann->type = announcement_type::CAVE_COLLAPSE;
-        ann->pos = df::coord(cx, cy, z);
+        switch (item->item->getType())
+        {
+        case item_type::TRAPPARTS:
+        case item_type::CHAIN:
+            return 0;
+        case item_type::BARREL:
+            return 2;
+        default:
+            return 1;
+        }
     }
 
     bool check_component_wear(steam_engine_workshop *engine, int count, int power)
     {
+        int coeffs[3] = { 0, power, count };
+
         for (int i = contained_items.size()-1; i >= 0; i--)
         {
-            auto item = contained_items[i];
-            if (item->use_mode != 2)
+            int type = classify_component(contained_items[i]);
+            if (type < 0)
                 continue;
 
-            int melt_temp = item->item->getMeltingPoint();
-            if (melt_temp >= engine->wear_temp)
-                continue;
-            if (item->item->isBuildMat())
-                continue;
-
-            auto type = item->item->getType();
-            if (type == item_type::TRAPPARTS || item_type::CHAIN)
+            df::item *item = contained_items[i]->item;
+            int melt_temp = item->getMeltingPoint();
+            if (coeffs[type] == 0 || melt_temp >= engine->wear_temp)
                 continue;
 
-            int coeff = power;
-            if (type == item_type::BARREL)
-                coeff = count;
-
-            int ticks = coeff*(engine->wear_temp - melt_temp);
-
-            if (item->item->addWear(ticks, true, true))
-            {
-                explode();
+            // let 500 degree delta at 4 pressure work 1 season
+            float ticks = coeffs[type]*(engine->wear_temp - melt_temp)*3.0f/500.0f/4.0f;
+            if (item->addWear(int(8*(1 + ticks)), true, true))
                 return true;
-            }
         }
 
         return false;
     }
-
-    static const int WEAR_TICKS = 806400;
 
     int get_steam_use_rate(steam_engine_workshop *engine, int dimension, int power_level)
     {
@@ -407,6 +456,61 @@ struct workshop_hook : df::building_workshopst {
         ticks *= (0.1f + 0.9f*power_rate)*power_level;
         // end result
         return std::max(1, int(ticks));
+    }
+
+    void update_under_construction(steam_engine_workshop *engine)
+    {
+        if (machine.machine_id != -1)
+            return;
+
+        int cur_count = 0;
+
+        if (auto first = collect_steam(engine, &cur_count))
+        {
+            if (add_wear_nodestroy(first, WEAR_TICKS*4/10))
+            {
+                boil_unit(first);
+                cur_count--;
+            }
+        }
+
+        set_steam_amount(cur_count);
+    }
+
+    void update_working(steam_engine_workshop *engine)
+    {
+        int old_count = get_steam_amount();
+        int old_power = std::min(engine->max_power, old_count);
+        int cur_count = 0;
+
+        if (auto first = collect_steam(engine, &cur_count))
+        {
+            int rate = get_steam_use_rate(engine, first->dimension, old_power);
+
+            if (add_wear_nodestroy(first, rate))
+            {
+                boil_unit(first);
+                cur_count--;
+            }
+
+            if (check_component_wear(engine, old_count, old_power))
+                return;
+        }
+
+        if (old_count < engine->max_capacity && cur_count == engine->max_capacity)
+            suspend_jobs(true);
+        else if (cur_count <= engine->max_power+1 && old_count > engine->max_power+1)
+            suspend_jobs(false);
+
+        set_steam_amount(cur_count);
+
+        int cur_power = std::min(engine->max_power, cur_count);
+        if (cur_power != old_power)
+        {
+            auto mptr = df::machine::find(machine.machine_id);
+            if (mptr)
+                mptr->cur_power += (cur_power - old_power)*100;
+        }
     }
 
     // Furnaces need architecture, and this is a workshop
@@ -513,47 +617,13 @@ struct workshop_hook : df::building_workshopst {
     {
         if (auto engine = get_steam_engine())
         {
-            int old_count = get_steam_amount();
-            int old_power = std::min(engine->max_power, old_count);
-            int cur_count = 0;
+            if (is_fully_built())
+                update_working(engine);
+            else
+                update_under_construction(engine);
 
-            if (auto first = collect_steam(engine, &cur_count))
-            {
-                int rate = get_steam_use_rate(engine, first->dimension, old_power);
-
-                if (first->incWearTimer(rate))
-                {
-                    while (first->wear_timer >= WEAR_TICKS)
-                    {
-                        first->wear_timer -= WEAR_TICKS;
-                        first->wear++;
-                    }
-
-                    if (first->wear > 3)
-                    {
-                        boil_unit(first);
-                        cur_count--;
-                    }
-                }
-
-                if (check_component_wear(engine, old_count, old_power))
-                    return;
-            }
-
-            if (old_count < engine->max_capacity && cur_count == engine->max_capacity)
-                suspend_jobs(true);
-            else if (cur_count <= engine->max_power+1 && old_count > engine->max_power+1)
-                suspend_jobs(false);
-
-            set_steam_amount(cur_count);
-
-            int cur_power = std::min(engine->max_power, cur_count);
-            if (cur_power != old_power)
-            {
-                auto mptr = df::machine::find(machine.machine_id);
-                if (mptr)
-                    mptr->cur_power += (cur_power - old_power)*100;
-            }
+            if (flags.bits.almost_deleted)
+                return;
         }
 
         INTERPOSE_NEXT(updateAction)();
@@ -565,6 +635,9 @@ struct workshop_hook : df::building_workshopst {
 
         if (auto engine = get_steam_engine())
         {
+            if (!is_fully_built())
+                return;
+
             // If machine is running, tweak gear assemblies
             auto mptr = df::machine::find(machine.machine_id);
             if (mptr && (mptr->visual_phase & 1) != 0)
@@ -602,10 +675,18 @@ struct workshop_hook : df::building_workshopst {
     DEFINE_VMETHOD_INTERPOSE(void, deconstructItems, (bool noscatter, bool lost))
     {
         if (get_steam_engine())
-            random_boil();
+        {
+            // Explode if any steam left
+            if (int amount = get_steam_amount())
+            {
+                make_explosion(
+                    df::coord((x1+x2)/2, (y1+y2)/2, z),
+                    40 + amount * 20
+                );
 
-        if (lost)
-            explode();
+                random_boil();
+            }
+        }
 
         INTERPOSE_NEXT(deconstructItems)(noscatter, lost);
     }
@@ -622,6 +703,11 @@ IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, isUnpowered);
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, updateAction);
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, drawBuilding);
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, deconstructItems);
+
+/*
+ * Hook for the dwarfmode screen. Tweaks the build menu
+ * behavior to suit the steam engine building more.
+ */
 
 struct dwarfmode_hook : df::viewscreen_dwarfmodest
 {
@@ -669,7 +755,7 @@ struct dwarfmode_hook : df::viewscreen_dwarfmodest
 
         if (error)
         {
-            const char *msg = "Hanging - use down stair.";
+            const char *msg = "Hanging - cover channels with down stairs.";
             ui_build_selector->errors.push_back(new std::string(msg));
         }
     }
@@ -689,12 +775,17 @@ struct dwarfmode_hook : df::viewscreen_dwarfmodest
         if (engine)
             engine->def->needs_magma = engine->is_magma;
 
-        // And now, check for open space
+        // And now, check for open space. Since these workshops
+        // are machines, they will collapse over true open space.
         check_hanging_tiles(get_steam_engine());
     }
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(dwarfmode_hook, feed);
+
+/*
+ * Scan raws for matching workshop buildings.
+ */
 
 static bool find_engines()
 {

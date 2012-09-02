@@ -234,7 +234,7 @@ struct workshop_hook : df::building_workshopst {
 
     // Find liquids to consume below the engine.
 
-    bool find_liquids(df::coord *pwater, df::coord *pmagma, bool is_magma, bool any_level)
+    bool find_liquids(df::coord *pwater, df::coord *pmagma, bool is_magma, int min_level)
     {
         if (!is_magma)
             pmagma = NULL;
@@ -252,23 +252,18 @@ struct workshop_hook : df::building_workshopst {
                     continue;
 
                 auto pldes = Maps::getTileDesignation(x,y,z-1);
-                if (!pldes || pldes->bits.flow_size == 0)
+                if (!pldes || pldes->bits.flow_size < min_level)
                     continue;
 
                 if (pldes->bits.liquid_type == tile_liquid::Magma)
                 {
-                    if (!pmagma || (!any_level && pldes->bits.flow_size < 4))
-                        continue;
-
-                    *pmagma = df::coord(x,y,z-1);
+                    if (pmagma)
+                        *pmagma = df::coord(x,y,z-1);
                     if (pwater->isValid())
                         return true;
                 }
                 else
                 {
-                    if (!any_level && pldes->bits.flow_size < 3)
-                        continue;
-
                     *pwater = df::coord(x,y,z-1);
                     if (!pmagma || pmagma->isValid())
                         return true;
@@ -286,7 +281,7 @@ struct workshop_hook : df::building_workshopst {
         // Consume liquid inputs
         df::coord water, magma;
 
-        if (!find_liquids(&water, &magma, engine->is_magma, true))
+        if (!find_liquids(&water, &magma, engine->is_magma, 1))
         {
             // Destroy the item with enormous wear amount.
             liquid->addWear(WEAR_TICKS*5, true, false);
@@ -626,7 +621,7 @@ struct workshop_hook : df::building_workshopst {
         if (auto engine = get_steam_engine())
         {
             df::coord water, magma;
-            return !find_liquids(&water, &magma, engine->is_magma, false);
+            return !find_liquids(&water, &magma, engine->is_magma, 3);
         }
 
         return INTERPOSE_NEXT(isUnpowered)();
@@ -681,12 +676,24 @@ struct workshop_hook : df::building_workshopst {
             if (engine->water_tile.isValid() || engine->magma_tile.isValid())
             {
                 df::coord water, magma;
-                find_liquids(&water, &magma, engine->is_magma, false);
+                find_liquids(&water, &magma, engine->is_magma, 3);
+                df::coord dwater, dmagma;
+                find_liquids(&dwater, &dmagma, engine->is_magma, 5);
 
-                if (engine->water_tile.isValid() && !water.isValid())
-                    db->fore[engine->water_tile.x][engine->water_tile.y] = 0;
-                if (engine->magma_tile.isValid() && engine->is_magma && !magma.isValid())
-                    db->fore[engine->magma_tile.x][engine->magma_tile.y] = 0;
+                if (engine->water_tile.isValid())
+                {
+                    if (!water.isValid())
+                        db->fore[engine->water_tile.x][engine->water_tile.y] = 0;
+                    else if (!dwater.isValid())
+                        db->bright[engine->water_tile.x][engine->water_tile.y] = 0;
+                }
+                if (engine->magma_tile.isValid() && engine->is_magma)
+                {
+                    if (!magma.isValid())
+                        db->fore[engine->magma_tile.x][engine->magma_tile.y] = 0;
+                    else if (!dmagma.isValid())
+                        db->bright[engine->magma_tile.x][engine->magma_tile.y] = 0;
+                }
             }
         }
     }

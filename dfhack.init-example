@@ -64,3 +64,6 @@ tweak patrol-duty
 
 # display creature weight in build plate menu as ??K, instead of (???df: Max
 tweak readable-build-plate
+
+# improve FPS by squashing endless item temperature update loops
+tweak stable-temp

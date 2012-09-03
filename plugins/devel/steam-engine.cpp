@@ -105,7 +105,7 @@ void decrement_flow(df::coord pos, int amount)
     auto pldes = Maps::getTileDesignation(pos);
     if (!pldes) return;
 
-    int nsize = std::max(0, pldes->bits.flow_size - amount);
+    int nsize = std::max(0, int(pldes->bits.flow_size - amount));
     pldes->bits.flow_size = nsize;
     pldes->bits.flow_forbid = (nsize > 3 || pldes->bits.liquid_type == tile_liquid::Magma);
 
@@ -382,7 +382,7 @@ struct workshop_hook : df::building_workshopst {
             if (!liquid)
                 continue;
 
-            if (cnt == 0 || random() < RAND_MAX/2)
+            if (cnt == 0 || rand() < RAND_MAX/2)
             {
                 cnt++;
                 boil_unit(liquid);

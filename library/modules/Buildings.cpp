@@ -324,7 +324,7 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
         {
             auto obj = (df::building_trapst*)bld;
             if (obj->trap_type == trap_type::PressurePlate)
-                obj->unk_cc = 500;
+                obj->ready_timeout = 500;
             break;
         }
     default:

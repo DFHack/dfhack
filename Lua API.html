@@ -1019,8 +1019,15 @@ the container itself.</p>
 <p>Adds a regular announcement with given text, color, and brightness.
 The is_bright boolean actually seems to invert the brightness.</p>
 </li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.showZoomAnnouncement(type,pos,text,color[,is_bright])</span></tt></p>
+<p>Like above, but also specifies a position you can zoom to from the announcement menu.</p>
+</li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.showPopupAnnouncement(text,color[,is_bright])</span></tt></p>
 <p>Pops up a titan-style modal announcement window.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.showAutoAnnouncement(type,pos,text,color[,is_bright])</span></tt></p>
+<p>Uses the type to look up options from announcements.txt, and calls the
+above operations accordingly. If enabled, pauses and zooms to position.</p>
 </li>
 </ul>
 </div>
@@ -1177,6 +1184,9 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getBlock(x,y,z)</tt></p>
 <p>Returns a map block object for given x,y,z in local block coordinates.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.isValidTilePos(coords)</tt>, or isValidTilePos(x,y,z)``</p>
+<p>Checks if the given df::coord or x,y,z in local tile coordinates are valid.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getTileBlock(coords)</tt>, or <tt class="docutils literal">getTileBlock(x,y,z)</tt></p>
 <p>Returns a map block object for given df::coord or x,y,z in local tile coordinates.</p>
 </li>
@@ -1185,6 +1195,10 @@ Returns <em>false</em> in case of error.</p>
 </li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.maps.enableBlockUpdates(block[,flow,temperature])</span></tt></p>
 <p>Enables updates for liquid flow or temperature, unless already active.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.spawnFlow(pos,type,mat_type,mat_index,dimension)</tt></p>
+<p>Spawns a new flow (i.e. steam/mist/dust/etc) at the given pos, and with
+the given parameters. Returns it, or <em>nil</em> if unsuccessful.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getGlobalInitFeature(index)</tt></p>
 <p>Returns the global feature object with the given index.</p>

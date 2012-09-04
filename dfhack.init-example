@@ -58,3 +58,12 @@ keybinding add Alt-L@dwarfmode/LookAround gui/liquids
 
 # stabilize the cursor of dwarfmode when switching menus
 tweak stable-cursor
+
+# stop military from considering training as 'patrol duty'
+tweak patrol-duty
+
+# display creature weight in build plate menu as ??K, instead of (???df: Max
+tweak readable-build-plate
+
+# improve FPS by squashing endless item temperature update loops
+tweak stable-temp

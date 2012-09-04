@@ -48,6 +48,26 @@ struct MSVC_MPTR {
     intptr_t this_shift;
 };
 
+static uint32_t *follow_jmp(void *ptr)
+{
+    uint8_t *p = (uint8_t*)ptr;
+
+    for (;;)
+    {
+        switch (*p)
+        {
+        case 0xE9:
+            p += 5 + *(int32_t*)(p+1);
+            break;
+        case 0xEB:
+            p += 2 + *(int8_t*)(p+1);
+            break;
+        default:
+            return (uint32_t*)p;
+        }
+    }
+}
+
 bool DFHack::is_vmethod_pointer_(void *pptr)
 {
     auto pobj = (MSVC_MPTR*)pptr;
@@ -55,7 +75,7 @@ bool DFHack::is_vmethod_pointer_(void *pptr)
 
     // MSVC implements pointers to vmethods via thunks.
     // This expects that they all follow a very specific pattern.
-    auto pval = (unsigned*)pobj->method;
+    auto pval = follow_jmp(pobj->method);
     switch (pval[0]) {
     case 0x20FF018BU: // mov eax, [ecx]; jmp [eax]
     case 0x60FF018BU: // mov eax, [ecx]; jmp [eax+0x??]
@@ -71,7 +91,7 @@ int DFHack::vmethod_pointer_to_idx_(void *pptr)
     auto pobj = (MSVC_MPTR*)pptr;
     if (!pobj->method || pobj->this_shift != 0) return -1;
 
-    auto pval = (unsigned*)pobj->method;
+    auto pval = follow_jmp(pobj->method);
     switch (pval[0]) {
     case 0x20FF018BU: // mov eax, [ecx]; jmp [eax]
         return 0;
@@ -315,8 +335,14 @@ void VMethodInterposeLinkBase::on_host_delete(virtual_identity *from)
     }
 }
 
-bool VMethodInterposeLinkBase::apply()
+bool VMethodInterposeLinkBase::apply(bool enable)
 {
+    if (!enable)
+    {
+        remove();
+        return true;
+    }
+
     if (is_applied())
         return true;
     if (!host->vtable_ptr)

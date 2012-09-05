@@ -61,17 +61,11 @@ function tools.GiveSentience(names)
 	end
 end
 tools.menu:add("Give Sentience",tools.GiveSentience)
-function embark() --windows only?
-	local seg=ms.get_code_segments()
-	printall(seg)
+function tools.embark() --windows only?
+	local seg=ms.get_code_segment()
 	local idx,off
-	for k,v in ipairs(seg) do
-		idx,off=v.uint8_t:find_one{0x66, 0x83, 0x7F ,0x1A ,0xFF,0x74,0x04}
-		if idx then 
-			break 
-		end
-	end
 	
+	idx,off=seg.uint8_t:find_one{0x66, 0x83, 0x7F ,0x1A ,0xFF,0x74,0x04}
 	if idx then
 		local tmp_val=df.new('uint8_t',2)
 		tmp_val[0]=0x90

@@ -196,48 +196,25 @@ function MemoryArea:delete()
 end
 
 -- Static code segment search
-local function find_code_segment()
-    local code_start, code_end
-
-    for i,mem in ipairs(dfhack.internal.getMemRanges()) do
-        if code_end then
-            if mem.start_addr == code_end and mem.read and not mem.write then
-                code_end = mem.end_addr
-            else
-                break
-            end
-        elseif mem.read and not mem.write
-           and (string.match(mem.name,'/dwarfort%.exe$')
-             or string.match(mem.name,'/Dwarf_Fortress$')
-             or string.match(mem.name,'Dwarf Fortress%.exe'))
-        then
-            code_start = mem.start_addr
-            code_end = mem.end_addr
-        end
-    end
-
-    return code_start,code_end
-end
 
 function get_code_segment()
-    local s, e = find_code_segment()
-    if s and e then
-        return MemoryArea.new(s, e)
-    end
-end
-function get_code_segments()
-	local ret={}
-	 for i,mem in ipairs(dfhack.internal.getMemRanges()) do
-        if mem.read and not mem.write
+    local cstart, cend
+
+    for i,mem in ipairs(dfhack.internal.getMemRanges()) do
+        if mem.read and mem.execute
            and (string.match(mem.name,'/dwarfort%.exe$')
              or string.match(mem.name,'/Dwarf_Fortress$')
              or string.match(mem.name,'Dwarf Fortress%.exe'))
         then
-			table.insert(ret,MemoryArea.new(mem.start_addr,mem.end_addr))
+            cstart = mem.start_addr
+            cend = mem.end_addr
         end
     end
-	return ret
+    if cstart and cend then
+        return MemoryArea.new(cstart, cend)
+    end
 end
+
 -- Static data segment search
 
 local function find_data_segment()

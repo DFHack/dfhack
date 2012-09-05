@@ -1211,6 +1211,39 @@ static int dfhack_open_plugin(lua_State *L)
     return 0;
 }
 
+static int dfhack_curry_wrap(lua_State *L)
+{
+    int nargs = lua_gettop(L);
+    int ncurry = lua_tointeger(L, lua_upvalueindex(1));
+    int scount = nargs + ncurry;
+
+    luaL_checkstack(L, ncurry, "stack overflow in curry");
+
+    // Insert values in O(N+M) by first shifting the existing data
+    lua_settop(L, scount);
+    for (int i = 0; i < nargs; i++)
+        lua_copy(L, nargs-i, scount-i);
+    for (int i = 1; i <= ncurry; i++)
+        lua_copy(L, lua_upvalueindex(i+1), i);
+
+    lua_callk(L, scount-1, LUA_MULTRET, 0, lua_gettop);
+
+    return lua_gettop(L);
+}
+
+static int dfhack_curry(lua_State *L)
+{
+    luaL_checkany(L, 1);
+    if (lua_isnil(L, 1))
+        luaL_argerror(L, 1, "nil function in curry");
+    if (lua_gettop(L) == 1)
+        return 1;
+    lua_pushinteger(L, lua_gettop(L));
+    lua_insert(L, 1);
+    lua_pushcclosure(L, dfhack_curry_wrap, lua_gettop(L));
+    return 1;
+}
+
 bool Lua::IsCoreContext(lua_State *state)
 {
     // This uses a private field of the lua state to
@@ -1234,6 +1267,7 @@ static const luaL_Reg dfhack_funcs[] = {
     { "call_with_finalizer", dfhack_call_with_finalizer },
     { "with_suspend", lua_dfhack_with_suspend },
     { "open_plugin", dfhack_open_plugin },
+    { "curry", dfhack_curry },
     { NULL, NULL }
 };
 

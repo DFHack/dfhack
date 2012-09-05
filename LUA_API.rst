@@ -550,6 +550,16 @@ Exception handling
   The default value of the ``verbose`` argument of ``err:tostring()``.
 
 
+Miscellaneous
+-------------
+
+* ``dfhack.curry(func,args...)``, or ``curry(func,args...)``
+
+  Returns a closure that invokes the function with args combined
+  both from the curry call and the closure call itself. I.e.
+  ``curry(func,a,b)(c,d)`` equals ``func(a,b,c,d)``.
+
+
 Locking and finalization
 ------------------------
 

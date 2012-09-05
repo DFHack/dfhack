@@ -46,6 +46,7 @@ end
 -- Error handling
 
 safecall = dfhack.safecall
+curry = dfhack.curry
 
 function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
@@ -118,7 +119,12 @@ function defclass(class,parent)
     if parent then
         setmetatable(class, parent)
     else
-        rawset_default(class, { init_fields = rawset_default })
+        rawset_default(class, {
+            init_fields = rawset_default,
+            callback = function(self, name, ...)
+                return dfhack.curry(self[name], self, ...)
+            end
+        })
     end
     return class
 end

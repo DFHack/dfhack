@@ -476,7 +476,7 @@ module DFHack
             def []=(idx, v)
                 idx += length if idx < 0
                 if idx >= length
-                    insert_at(idx, 0)
+                    insert_at(length, 0) while idx >= length
                 elsif idx < 0
                     raise 'index out of bounds'
                 end

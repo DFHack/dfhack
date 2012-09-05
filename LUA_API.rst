@@ -553,6 +553,10 @@ Exception handling
 Miscellaneous
 -------------
 
+* ``dfhack.VERSION``
+
+  DFHack version string constant.
+
 * ``dfhack.curry(func,args...)``, or ``curry(func,args...)``
 
   Returns a closure that invokes the function with args combined
@@ -718,6 +722,10 @@ can be omitted.
 * ``dfhack.getHackPath()``
 
   Returns the dfhack directory path, i.e. ``".../df/hack/"``.
+
+* ``dfhack.getTickCount()``
+
+  Returns the tick count in ms, exactly as DF ui uses.
 
 * ``dfhack.isWorldLoaded()``
 

@@ -728,6 +728,7 @@ static std::string getOSType()
 }
 
 static std::string getDFVersion() { return Core::getInstance().vinfo->getVersion(); }
+static uint32_t getTickCount() { return Core::getInstance().p->getTickCount(); }
 
 static std::string getDFPath() { return Core::getInstance().p->getPath(); }
 static std::string getHackPath() { return Core::getInstance().getHackPath(); }
@@ -739,6 +740,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getOSType),
     WRAP(getDFVersion),
     WRAP(getDFPath),
+    WRAP(getTickCount),
     WRAP(getHackPath),
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),

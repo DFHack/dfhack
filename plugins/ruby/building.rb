@@ -47,6 +47,7 @@ module DFHack
             bld = cls.cpp_new
             bld.race = ui.race_id
             subtype = WorkshopType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Workshop
+            subtype = FurnaceType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Furnace
             bld.setSubtype(subtype) if subtype != -1
             bld.setCustomType(custom) if custom != -1
             case type

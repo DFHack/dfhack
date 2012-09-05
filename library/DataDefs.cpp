@@ -374,7 +374,7 @@ void DFHack::bitfieldToString(std::vector<std::string> *pvec, const void *p,
                               unsigned size, const bitfield_item_info *items)
 {
     for (unsigned i = 0; i < size; i++) {
-        int value = getBitfieldField(p, i, std::min(1,items[i].size));
+        int value = getBitfieldField(p, i, std::max(1,items[i].size));
 
         if (value) {
             std::string name = format_key(items[i].name, i);

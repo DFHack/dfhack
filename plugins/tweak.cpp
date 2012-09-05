@@ -32,6 +32,8 @@
 #include "df/squad_order_trainst.h"
 #include "df/ui_build_selector.h"
 #include "df/building_trapst.h"
+#include "df/item_actual.h"
+#include "df/contaminant.h"
 
 #include <stdlib.h>
 
@@ -85,6 +87,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    when soldiers go off-duty (i.e. civilian).\n"
         "  tweak readable-build-plate [disable]\n"
         "    Fixes rendering of creature weight limits in pressure plate build menu.\n"
+        "  tweak stable-temp [disable]\n"
+        "    Fixes performance bug 6012 by squashing jitter in temperature updates.\n"
     ));
     return CR_OK;
 }
@@ -211,9 +215,6 @@ struct patrol_duty_hook : df::squad_order_trainst
 
 IMPLEMENT_VMETHOD_INTERPOSE(patrol_duty_hook, isPatrol);
 
-static const int AREA_MAP_WIDTH = 23;
-static const int MENU_WIDTH = 30;
-
 struct readable_build_plate_hook : df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
@@ -228,10 +229,8 @@ struct readable_build_plate_hook : df::viewscreen_dwarfmodest
             ui_build_selector->building_subtype == trap_type::PressurePlate &&
             ui_build_selector->plate_info.flags.bits.units)
         {
-            auto wsize = Screen::getWindowSize();
-            int x = wsize.x - MENU_WIDTH - 1;
-            if (*ui_menu_width == 1 || *ui_area_map_width == 2)
-                x -= AREA_MAP_WIDTH + 1;
+            auto dims = Gui::getDwarfmodeViewDims();
+            int x = dims.menu_x1;
 
             Screen::Pen pen(' ',COLOR_WHITE);
 
@@ -247,6 +246,52 @@ struct readable_build_plate_hook : df::viewscreen_dwarfmodest
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(readable_build_plate_hook, render);
+
+struct stable_temp_hook : df::item_actual {
+    typedef df::item_actual interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, adjustTemperature, (uint16_t temp, int32_t rate_mult))
+    {
+        if (temperature != temp)
+        {
+            // Bug 6012 is caused by fixed-point precision mismatch jitter
+            // when an item is being pushed by two sources at N and N+1.
+            // This check suppresses it altogether.
+            if (temp == temperature+1 ||
+                (temp == temperature-1 && temperature_fraction == 0))
+                temp = temperature;
+            // When SPEC_HEAT is NONE, the original function seems to not
+            // change the temperature, yet return true, which is silly.
+            else if (getSpecHeat() == 60001)
+                temp = temperature;
+        }
+
+        return INTERPOSE_NEXT(adjustTemperature)(temp, rate_mult);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(bool, updateContaminants, ())
+    {
+        if (contaminants)
+        {
+            // Force 1-degree difference in contaminant temperature to 0
+            for (size_t i = 0; i < contaminants->size(); i++)
+            {
+                auto obj = (*contaminants)[i];
+
+                if (abs(obj->temperature - temperature) == 1)
+                {
+                    obj->temperature = temperature;
+                    obj->temperature_fraction = temperature_fraction;
+                }
+            }
+        }
+
+        return INTERPOSE_NEXT(updateContaminants)();
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(stable_temp_hook, adjustTemperature);
+IMPLEMENT_VMETHOD_INTERPOSE(stable_temp_hook, updateContaminants);
 
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
@@ -379,6 +424,11 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         }
 
         enable_hook(out, INTERPOSE_HOOK(readable_build_plate_hook, render), parameters);
+    }
+    else if (cmd == "stable-temp")
+    {
+        enable_hook(out, INTERPOSE_HOOK(stable_temp_hook, adjustTemperature), parameters);
+        enable_hook(out, INTERPOSE_HOOK(stable_temp_hook, updateContaminants), parameters);
     }
     else 
         return CR_WRONG_USAGE;

@@ -335,8 +335,14 @@ void VMethodInterposeLinkBase::on_host_delete(virtual_identity *from)
     }
 }
 
-bool VMethodInterposeLinkBase::apply()
+bool VMethodInterposeLinkBase::apply(bool enable)
 {
+    if (!enable)
+    {
+        remove();
+        return true;
+    }
+
     if (is_applied())
         return true;
     if (!host->vtable_ptr)

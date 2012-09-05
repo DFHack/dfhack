@@ -285,13 +285,13 @@ PersistentDataItem World::GetPersistentData(int entry_id)
 
 PersistentDataItem World::GetPersistentData(const std::string &key, bool *added)
 {
-    *added = false;
+    if (added) *added = false;
 
     PersistentDataItem rv = GetPersistentData(key);
 
     if (!rv.isValid())
     {
-        *added = true;
+        if (added) *added = true;
         rv = AddPersistentData(key);
     }
 

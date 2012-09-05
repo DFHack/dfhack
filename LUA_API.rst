@@ -550,6 +550,20 @@ Exception handling
   The default value of the ``verbose`` argument of ``err:tostring()``.
 
 
+Miscellaneous
+-------------
+
+* ``dfhack.VERSION``
+
+  DFHack version string constant.
+
+* ``dfhack.curry(func,args...)``, or ``curry(func,args...)``
+
+  Returns a closure that invokes the function with args combined
+  both from the curry call and the closure call itself. I.e.
+  ``curry(func,a,b)(c,d)`` equals ``func(a,b,c,d)``.
+
+
 Locking and finalization
 ------------------------
 
@@ -709,6 +723,10 @@ can be omitted.
 
   Returns the dfhack directory path, i.e. ``".../df/hack/"``.
 
+* ``dfhack.getTickCount()``
+
+  Returns the tick count in ms, exactly as DF ui uses.
+
 * ``dfhack.isWorldLoaded()``
 
   Checks if the world is loaded.
@@ -764,9 +782,19 @@ Gui module
   Adds a regular announcement with given text, color, and brightness.
   The is_bright boolean actually seems to invert the brightness.
 
+* ``dfhack.gui.showZoomAnnouncement(type,pos,text,color[,is_bright])``
+
+  Like above, but also specifies a position you can zoom to from the announcement menu.
+
 * ``dfhack.gui.showPopupAnnouncement(text,color[,is_bright])``
 
   Pops up a titan-style modal announcement window.
+
+* ``dfhack.gui.showAutoAnnouncement(type,pos,text,color[,is_bright])``
+
+  Uses the type to look up options from announcements.txt, and calls the
+  above operations accordingly. If enabled, pauses and zooms to position.
+
 
 Job module
 ----------
@@ -959,6 +987,10 @@ Maps module
 
   Returns a map block object for given x,y,z in local block coordinates.
 
+* ``dfhack.maps.isValidTilePos(coords)``, or isValidTilePos(x,y,z)``
+
+  Checks if the given df::coord or x,y,z in local tile coordinates are valid.
+
 * ``dfhack.maps.getTileBlock(coords)``, or ``getTileBlock(x,y,z)``
 
   Returns a map block object for given df::coord or x,y,z in local tile coordinates.
@@ -970,6 +1002,11 @@ Maps module
 * ``dfhack.maps.enableBlockUpdates(block[,flow,temperature])``
 
   Enables updates for liquid flow or temperature, unless already active.
+
+* ``dfhack.maps.spawnFlow(pos,type,mat_type,mat_index,dimension)``
+
+  Spawns a new flow (i.e. steam/mist/dust/etc) at the given pos, and with
+  the given parameters. Returns it, or *nil* if unsuccessful.
 
 * ``dfhack.maps.getGlobalInitFeature(index)``
 

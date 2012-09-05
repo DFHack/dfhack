@@ -159,7 +159,7 @@ namespace DFHack
         ~VMethodInterposeLinkBase();
 
         bool is_applied() { return applied; }
-        bool apply();
+        bool apply(bool enable = true);
         void remove();
     };
 

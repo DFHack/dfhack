@@ -9,6 +9,7 @@ local dscreen = dfhack.screen
 
 MessageBox = defclass(MessageBox, gui.FramedScreen)
 
+MessageBox.focus_path = 'MessageBox'
 MessageBox.frame_style = gui.GREY_LINE_FRAME
 
 function MessageBox:init(info)
@@ -31,7 +32,7 @@ end
 
 function MessageBox:getWantedFrameSize()
     local text = self.text
-    local w = #(self.frame_title or '') + 2
+    local w = #(self.frame_title or '') + 4
     w = math.max(w, 20)
     w = math.max(self.frame_width or w, w)
     for _, l in ipairs(text) do
@@ -41,7 +42,7 @@ function MessageBox:getWantedFrameSize()
     if h > 1 then
         h = h+1
     end
-    return w, #text+2
+    return w+2, #text+2
 end
 
 function MessageBox:onRenderBody(dc)
@@ -102,6 +103,8 @@ end
 
 InputBox = defclass(InputBox, MessageBox)
 
+InputBox.focus_path = 'InputBox'
+
 function InputBox:init(info)
     info = info or {}
     self:init_fields{
@@ -127,7 +130,7 @@ function InputBox:onRenderBody(dc)
     dc:fill(dc.x1+1,dc.y,dc.x2-1,dc.y)
 
     local cursor = '_'
-    if math.floor(dfhack.getTickCount()/500) % 2 == 0 then
+    if math.floor(dfhack.getTickCount()/300) % 2 == 0 then
         cursor = ' '
     end
     local txt = self.input .. cursor

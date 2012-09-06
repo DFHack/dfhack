@@ -3,6 +3,7 @@
 local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'
+local dlg = require 'gui.dialogs'
 
 local liquids = require('plugins.liquids')
 
@@ -199,6 +200,42 @@ function LiquidsUI:onRenderBody(dc)
     dc:string("Enter", COLOR_LIGHTGREEN):string(": Paint")
 end
 
+function ensure_blocks(cursor, size, cb)
+    local cx,cy,cz = pos2xyz(cursor)
+    local all = true
+    for x=1,size.x or 1,16 do
+        for y=1,size.y or 1,16 do
+            for z=1,size.z do
+                if not dfhack.maps.getTileBlock(cx+x-1, cy+y-1, cz+z-1) then
+                    all = false
+                end
+            end
+        end
+    end
+    if all then
+        cb()
+        return
+    end
+    dlg.showYesNoPrompt(
+        'Instantiate Blocks',
+        'Not all map blocks are allocated - instantiate?\n\nWarning: new untested feature.',
+        COLOR_YELLOW,
+        function()
+            for x=1,size.x or 1,16 do
+                for y=1,size.y or 1,16 do
+                    for z=1,size.z do
+                        dfhack.maps.ensureTileBlock(cx+x-1, cy+y-1, cz+z-1)
+                    end
+                end
+            end
+            cb()
+        end,
+        function()
+            cb()
+        end
+    )
+end
+
 function LiquidsUI:onInput(keys)
     local paint = self.paint:get()
     local liquid = paint.liquid
@@ -239,13 +276,15 @@ function LiquidsUI:onInput(keys)
         else
             guidm.clearSelection()
         end
-        liquids.paint(
+        local cb = curry(
+            liquids.paint,
             cursor,
             self.brush:get().tag, self.paint:get().tag,
             self.amount, size,
             self.set:get().tag, self.flow:get().tag,
             self.permaflow:get().tag
         )
+        ensure_blocks(cursor, size, cb)
     elseif self:propagateMoveKeys(keys) then
         return
     elseif keys.D_LOOK_ARENA_WATER then

@@ -1207,6 +1207,9 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getTileBlock(coords)</tt>, or <tt class="docutils literal">getTileBlock(x,y,z)</tt></p>
 <p>Returns a map block object for given df::coord or x,y,z in local tile coordinates.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.ensureTileBlock(coords)</tt>, or <tt class="docutils literal">ensureTileBlock(x,y,z)</tt></p>
+<p>Like <tt class="docutils literal">getTileBlock</tt>, but if the block is not allocated, try creating it.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getRegionBiome(region_coord2d)</tt>, or <tt class="docutils literal">getRegionBiome(x,y)</tt></p>
 <p>Returns the biome info struct for the given global map region.</p>
 </li>

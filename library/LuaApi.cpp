@@ -935,6 +935,13 @@ static int maps_getTileBlock(lua_State *L)
     return 1;
 }
 
+static int maps_ensureTileBlock(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Maps::ensureTileBlock(pos));
+    return 1;
+}
+
 static int maps_getRegionBiome(lua_State *L)
 {
     auto pos = CheckCoordXY(L, 1, true);
@@ -951,6 +958,7 @@ static int maps_getTileBiomeRgn(lua_State *L)
 static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
     { "getTileBlock", maps_getTileBlock },
+    { "ensureTileBlock", maps_ensureTileBlock },
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
     { NULL, NULL }

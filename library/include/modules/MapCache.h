@@ -253,6 +253,8 @@ public:
     bool is_valid() { return valid; }
     df::map_block *getRaw() { return block; }
 
+    bool Allocate();
+
     MapCache *getParent() { return parent; }
 
 private:
@@ -261,6 +263,8 @@ private:
 
     MapCache *parent;
     df::map_block *block;
+
+    void init();
 
     int biomeIndexAt(df::coord2d p);
 
@@ -345,6 +349,12 @@ class DFHACK_EXPORT MapCache
     /// get the map block at a tile coord.
     Block *BlockAtTile(DFCoord coord) {
         return BlockAt(df::coord(coord.x>>4,coord.y>>4,coord.z));
+    }
+
+    bool ensureBlockAt(df::coord coord)
+    {
+        Block *b = BlockAtTile(coord);
+        return b ? b->Allocate() : false;
     }
 
     df::tiletype baseTiletypeAt (DFCoord tilecoord)

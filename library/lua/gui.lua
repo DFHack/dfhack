@@ -162,10 +162,10 @@ function Painter:fill(x1,y1,x2,y2,pen,bg,bold)
     if type(x1) == 'table' then
         x1, y1, x2, y2, pen, bg, bold = x1.x1, x1.y1, x1.x2, x1.y2, y1, x2, y2
     end
-    x1 = math.max(x1,self.clip_x1)
-    y1 = math.max(y1,self.clip_y1)
-    x2 = math.min(x2,self.clip_x2)
-    y2 = math.min(y2,self.clip_y2)
+    x1 = math.max(x1+self.x1,self.clip_x1)
+    y1 = math.max(y1+self.y1,self.clip_y1)
+    x2 = math.min(x2+self.x1,self.clip_x2)
+    y2 = math.min(y2+self.y1,self.clip_y2)
     dscreen.fillRect(to_pen(self.cur_pen,pen,bg,bold),x1,y1,x2,y2)
     return self
 end

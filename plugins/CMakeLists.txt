@@ -114,6 +114,7 @@ if (BUILD_SUPPORTED)
     # this one exports functions to lua
     DFHACK_PLUGIN(burrows burrows.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(sort sort.cpp LINK_LIBRARIES lua)
+    DFHACK_PLUGIN(power-meter power-meter.cpp LINK_LIBRARIES lua)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
 endif()

@@ -127,7 +127,7 @@ function InputBox:onRenderBody(dc)
 
     dc:newline(1)
     dc:pen(self.input_pen or COLOR_LIGHTCYAN)
-    dc:fill(dc.x1+1,dc.y,dc.x2-1,dc.y)
+    dc:fill(1,dc:localY(),dc.width-2,dc:localY())
 
     local cursor = '_'
     if math.floor(dfhack.getTickCount()/300) % 2 == 0 then
@@ -135,9 +135,7 @@ function InputBox:onRenderBody(dc)
     end
     local txt = self.input .. cursor
     if #txt > dc.width-2 then
-        txt = string.sub(txt, #txt-dc.width+3)
-        -- Add prefix arrow
-        dc:advance(-1):char(27)
+        txt = string.char(27)..string.sub(txt, #txt-dc.width+4)
     end
     dc:string(txt)
 end

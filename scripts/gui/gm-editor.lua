@@ -1,6 +1,7 @@
 -- Interface powered item editor.
 -- TODO use this:  MechanismList = defclass(MechanismList, guidm.MenuOverlay)
 local gui = require 'gui'
+local dialog = require 'gui.dialogs'
 
 local my_trg
 if dfhack.gui.getCurFocus() == 'item' then
@@ -47,12 +48,25 @@ local item_screen={
 	mode=MODE_BROWSE,
 	
 	keys={},
-	insertNew=function(self)
-		--[=[local trg=self:currentTarget() -- not sure if possible...
+	
+	insertNew=function(self,typename)
+		local tp=typename
+		if typename== nil then
+			dialog.showInputPrompt("Class type","Input class type\n:",COLOR_WHITE,"",dfhack.curry(self.insertNew,self))
+			return
+		end
+		local ntype=df[tp]
+		if ntype== nil then
+			dialog.showMessage("Error!","Type '"..tp.." not found",COLOR_RED)
+			return
+		end
+		
+		local trg=self:currentTarget() 
 		if trg.target and trg.target._kind and trg.target._kind=="container" then
-			local thing=df.new('general_ref_contained_itemst')
-			trg.target:insert('#',trg.keys[trg.selected])
-		end]=]
+			local thing=ntype:new()
+			dfhack.call_with_finalizer(1,false,df.delete,thing,trg.target.insert,trg.target,'#',thing)
+			
+		end
 	end,
 	deleteSelected=function(self)
 		local trg=self:currentTarget()

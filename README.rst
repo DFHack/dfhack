@@ -1446,3 +1446,25 @@ To remove all placed sources, call ``magmasource stop``.
 
 With no argument, this command shows an help message and list existing sources.
 
+
+digfort
+=========
+A script to designate an area for digging according to a plan in csv format.
+
+This script, inspired from quickfort, can designate an area for digging.
+Your plan should be stored in a .csv file like this:
+:: 
+    # this is a comment 
+    d;d;u;d;d;skip this tile;d
+    d;d;d;i
+
+Available tile shapes are named after the 'dig' menu shortcuts:
+``d`` for dig, ``u`` for upstairs, ``d`` downstairs, ``i`` updown,
+``h`` channel, ``r`` upward ramp, ``x`` remove designation.
+Unrecognized characters are ignored (eg the 'skip this tile' in the sample).
+
+Empty lines and data after a ``#`` are ignored as comments.
+To skip a row in your design, use a single ``;``.
+
+The script takes the plan filename, starting from the root df folder.
+

@@ -100,13 +100,48 @@ static void doSetTile(const Pen &pen, int index)
 
 bool Screen::paintTile(const Pen &pen, int x, int y)
 {
-    if (!gps) return false;
+    if (!gps || !pen.valid()) return false;
 
     int dimx = gps->dimx, dimy = gps->dimy;
     if (x < 0 || x >= dimx || y < 0 || y >= dimy) return false;
 
     doSetTile(pen, x*dimy + y);
     return true;
+}
+
+Pen Screen::readTile(int x, int y)
+{
+    if (!gps) return Pen(0,0,0,-1);
+
+    int dimx = gps->dimx, dimy = gps->dimy;
+    if (x < 0 || x >= dimx || y < 0 || y >= dimy)
+        return Pen(0,0,0,-1);
+
+    int index = x*dimy + y;
+    auto screen = gps->screen + index*4;
+    if (screen[3] & 0x80)
+        return Pen(0,0,0,-1);
+
+    Pen pen(
+        screen[0], screen[1], screen[2], screen[3]?true:false,
+        gps->screentexpos[index]
+    );
+
+    if (pen.tile)
+    {
+        if (gps->screentexpos_grayscale[index])
+        {
+            pen.tile_mode = Screen::Pen::TileColor;
+            pen.tile_fg = gps->screentexpos_cf[index];
+            pen.tile_bg = gps->screentexpos_cbr[index];
+        }
+        else if (gps->screentexpos_addcolor[index])
+        {
+            pen.tile_mode = Screen::Pen::CharColor;
+        }
+    }
+
+    return pen;
 }
 
 bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text)
@@ -132,7 +167,7 @@ bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text)
 
 bool Screen::fillRect(const Pen &pen, int x1, int y1, int x2, int y2)
 {
-    if (!gps) return false;
+    if (!gps || !pen.valid()) return false;
 
     if (x1 < 0) x1 = 0;
     if (y1 < 0) y1 = 0;

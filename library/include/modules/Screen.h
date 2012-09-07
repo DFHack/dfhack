@@ -65,6 +65,9 @@ namespace DFHack
             } tile_mode;
             int8_t tile_fg, tile_bg;
 
+            bool valid() const { return tile >= 0; }
+            bool empty() const { return ch == 0 && tile == 0; }
+
             Pen(char ch = 0, int8_t fg = 7, int8_t bg = 0, int tile = 0, bool color_tile = false)
               : ch(ch), fg(fg&7), bg(bg), bold(!!(fg&8)),
                 tile(tile), tile_mode(color_tile ? CharColor : AsIs), tile_fg(0), tile_bg(0)
@@ -91,6 +94,9 @@ namespace DFHack
 
         /// Paint one screen tile with the given pen
         DFHACK_EXPORT bool paintTile(const Pen &pen, int x, int y);
+
+        /// Retrieves one screen tile from the buffer
+        DFHACK_EXPORT Pen readTile(int x, int y);
 
         /// Paint a string onto the screen. Ignores ch and tile of pen.
         DFHACK_EXPORT bool paintString(const Pen &pen, int x, int y, const std::string &text);

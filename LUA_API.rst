@@ -995,6 +995,10 @@ Maps module
 
   Returns a map block object for given df::coord or x,y,z in local tile coordinates.
 
+* ``dfhack.maps.ensureTileBlock(coords)``, or ``ensureTileBlock(x,y,z)``
+
+  Like ``getTileBlock``, but if the block is not allocated, try creating it.
+
 * ``dfhack.maps.getRegionBiome(region_coord2d)``, or ``getRegionBiome(x,y)``
 
   Returns the biome info struct for the given global map region.
@@ -1303,6 +1307,11 @@ Basic painting functions:
     If specified, overrides *tile_color* and supplies shading colors directly.
 
   Returns *false* if coordinates out of bounds, or other error.
+
+* ``dfhack.screen.readTile(x,y)``
+
+  Retrieves the contents of the specified tile from the screen buffers.
+  Returns a pen, or *nil* if invalid or TrueType.
 
 * ``dfhack.screen.paintString(pen,x,y,text)``
 

@@ -211,7 +211,14 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             if (ui_build_selector->building_type < 0)
                 focus += "/Type";
             else if (ui_build_selector->stage != 2)
-                focus += "/Position";
+            {
+                if (ui_build_selector->stage != 1)
+                    focus += "/NoMaterials";
+                else
+                    focus += "/Position";
+
+                focus += "/" + enum_item_key(ui_build_selector->building_type);
+            }
             else
             {
                 focus += "/Material";

@@ -935,6 +935,13 @@ static int maps_getTileBlock(lua_State *L)
     return 1;
 }
 
+static int maps_ensureTileBlock(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Maps::ensureTileBlock(pos));
+    return 1;
+}
+
 static int maps_getRegionBiome(lua_State *L)
 {
     auto pos = CheckCoordXY(L, 1, true);
@@ -951,6 +958,7 @@ static int maps_getTileBiomeRgn(lua_State *L)
 static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
     { "getTileBlock", maps_getTileBlock },
+    { "ensureTileBlock", maps_ensureTileBlock },
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
     { NULL, NULL }
@@ -1146,6 +1154,45 @@ static int screen_paintTile(lua_State *L)
     return 1;
 }
 
+static int screen_readTile(lua_State *L)
+{
+    int x = luaL_checkint(L, 1);
+    int y = luaL_checkint(L, 2);
+    Pen pen = Screen::readTile(x, y);
+
+    if (!pen.valid())
+    {
+        lua_pushnil(L);
+    }
+    else
+    {
+        lua_newtable(L);
+        lua_pushinteger(L, pen.ch); lua_setfield(L, -2, "ch");
+        lua_pushinteger(L, pen.fg); lua_setfield(L, -2, "fg");
+        lua_pushinteger(L, pen.bg); lua_setfield(L, -2, "bg");
+        lua_pushboolean(L, pen.bold); lua_setfield(L, -2, "bold");
+
+        if (pen.tile)
+        {
+            lua_pushinteger(L, pen.tile); lua_setfield(L, -2, "tile");
+
+            switch (pen.tile_mode) {
+                case Pen::CharColor:
+                    lua_pushboolean(L, true); lua_setfield(L, -2, "tile_color");
+                    break;
+                case Pen::TileColor:
+                    lua_pushinteger(L, pen.tile_fg); lua_setfield(L, -2, "tile_fg");
+                    lua_pushinteger(L, pen.tile_bg); lua_setfield(L, -2, "tile_bg");
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    return 1;
+}
+
 static int screen_paintString(lua_State *L)
 {
     Pen pen;
@@ -1250,6 +1297,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "getMousePos", screen_getMousePos },
     { "getWindowSize", screen_getWindowSize },
     { "paintTile", screen_paintTile },
+    { "readTile", screen_readTile },
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
     { "findGraphicsTile", screen_findGraphicsTile },

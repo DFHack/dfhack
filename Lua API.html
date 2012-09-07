@@ -1207,6 +1207,9 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getTileBlock(coords)</tt>, or <tt class="docutils literal">getTileBlock(x,y,z)</tt></p>
 <p>Returns a map block object for given df::coord or x,y,z in local tile coordinates.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.ensureTileBlock(coords)</tt>, or <tt class="docutils literal">ensureTileBlock(x,y,z)</tt></p>
+<p>Like <tt class="docutils literal">getTileBlock</tt>, but if the block is not allocated, try creating it.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getRegionBiome(region_coord2d)</tt>, or <tt class="docutils literal">getRegionBiome(x,y)</tt></p>
 <p>Returns the biome info struct for the given global map region.</p>
 </li>
@@ -1476,6 +1479,10 @@ Otherwise should be <em>true/false</em>.</p>
 </dd>
 </dl>
 <p>Returns <em>false</em> if coordinates out of bounds, or other error.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.readTile(x,y)</tt></p>
+<p>Retrieves the contents of the specified tile from the screen buffers.
+Returns a pen, or <em>nil</em> if invalid or TrueType.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.screen.paintString(pen,x,y,text)</tt></p>
 <p>Paints the string starting at <em>x,y</em>. Uses the string characters

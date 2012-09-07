@@ -136,6 +136,14 @@ function Viewport:set()
     return vp
 end
 
+function Viewport:getPos()
+    return xyz2pos(self.x1, self.y1, self.z)
+end
+
+function Viewport:getSize()
+    return xy2pos(self.width, self.height)
+end
+
 function Viewport:clip(x,y,z)
     return self:make(
         math.max(0, math.min(x or self.x1, world_map.x_count-self.width)),
@@ -207,16 +215,24 @@ MOVEMENT_KEYS = {
     CURSOR_UP_Z_AUX = { 0, 0, 1 }, CURSOR_DOWN_Z_AUX = { 0, 0, -1 },
 }
 
-function Viewport:scrollByKey(key)
+local function get_movement_delta(key, delta, big_step)
     local info = MOVEMENT_KEYS[key]
     if info then
-        local delta = 10
-        if info[4] then delta = 20 end
+        if info[4] then
+            delta = big_step
+        end
 
+        return delta*info[1], delta*info[2], info[3]
+    end
+end
+
+function Viewport:scrollByKey(key)
+    local dx, dy, dz = get_movement_delta(key, 10, 20)
+    if dx then
         return self:clip(
-            self.x1 + delta*info[1],
-            self.y1 + delta*info[2],
-            self.z + info[3]
+            self.x1 + dx,
+            self.y1 + dy,
+            self.z + dz
         )
     else
         return self
@@ -278,6 +294,31 @@ function DwarfOverlay:simulateViewScroll(keys, anchor, no_clip_cursor)
             vp:set()
 
             return code
+        end
+    end
+end
+
+function DwarfOverlay:simulateCursorMovement(keys, anchor)
+    local layout = self.df_layout
+    local cursor = getCursorPos()
+    local cx, cy, cz = pos2xyz(cursor)
+
+    if anchor and keys.A_MOVE_SAME_SQUARE then
+        setCursorPos(anchor)
+        self:getViewport():centerOn(anchor):set()
+        return 'A_MOVE_SAME_SQUARE'
+    end
+
+    for code,_ in pairs(MOVEMENT_KEYS) do
+        if keys[code] then
+            local dx, dy, dz = get_movement_delta(code, 1, 10)
+            local ncur = xyz2pos(cx+dx, cy+dy, cz+dz)
+
+            if dfhack.maps.isValidTilePos(ncur) then
+                setCursorPos(ncur)
+                self:getViewport():reveal(ncur,4,10,6,true):set()
+                return code
+            end
         end
     end
 end

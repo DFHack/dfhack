@@ -1480,6 +1480,10 @@ Otherwise should be <em>true/false</em>.</p>
 </dl>
 <p>Returns <em>false</em> if coordinates out of bounds, or other error.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.readTile(x,y)</tt></p>
+<p>Retrieves the contents of the specified tile from the screen buffers.
+Returns a pen, or <em>nil</em> if invalid or TrueType.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.screen.paintString(pen,x,y,text)</tt></p>
 <p>Paints the string starting at <em>x,y</em>. Uses the string characters
 in sequence to override the <tt class="docutils literal">ch</tt> field of pen.</p>

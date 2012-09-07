@@ -1308,6 +1308,11 @@ Basic painting functions:
 
   Returns *false* if coordinates out of bounds, or other error.
 
+* ``dfhack.screen.readTile(x,y)``
+
+  Retrieves the contents of the specified tile from the screen buffers.
+  Returns a pen, or *nil* if invalid or TrueType.
+
 * ``dfhack.screen.paintString(pen,x,y,text)``
 
   Paints the string starting at *x,y*. Uses the string characters

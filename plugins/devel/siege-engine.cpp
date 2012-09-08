@@ -29,6 +29,7 @@
 #include "df/ui_build_selector.h"
 #include "df/flow_info.h"
 #include "df/report.h"
+#include "df/proj_itemst.h"
 
 #include "MiscUtils.h"
 
@@ -106,6 +107,11 @@ static void orient_engine(df::building_siegeenginest *bld, df::coord target)
             df::building_siegeenginest::Up;
 }
 
+static int random_int(int val)
+{
+    return int(int64_t(rand())*val/RAND_MAX);
+}
+
 /*
  * Configuration management
  */
@@ -115,12 +121,15 @@ static bool enable_plugin();
 struct EngineInfo {
     int id;
     coord_range target;
+    df::coord center;
 
     bool hasTarget() { return is_range_valid(target); }
     bool onTarget(df::coord pos) { return is_in_range(target, pos); }
+    df::coord getTargetSize() { return target.second - target.first; }
 };
 
 static std::map<df::building*, EngineInfo> engines;
+static std::map<df::coord, df::building*> coord_engines;
 
 static EngineInfo *find_engine(df::building *bld, bool create = false)
 {
@@ -135,12 +144,26 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
 
     auto *obj = &engines[bld];
     obj->id = bld->id;
+    obj->center = df::coord(bld->centerx, bld->centery, bld->z);
+
+    coord_engines[obj->center] = bld;
     return obj;
+}
+
+static EngineInfo *find_engine(df::coord pos)
+{
+    return find_engine(coord_engines[pos]);
+}
+
+static void clear_engines()
+{
+    engines.clear();
+    coord_engines.clear();
 }
 
 static void load_engines()
 {
-    engines.clear();
+    clear_engines();
 
     auto pworld = Core::getInstance().getWorld();
     std::vector<PersistentDataItem> vec;
@@ -224,12 +247,30 @@ static bool setTargetArea(df::building_siegeenginest *bld, df::coord target_min,
  */
 
 struct ProjectilePath {
-    df::coord origin, target;
-    int divisor;
+    df::coord origin, goal, target, fudge_delta;
+    int divisor, fudge_factor;
     df::coord speed, direction;
 
-    ProjectilePath(df::coord origin, df::coord target) :
-        origin(origin), target(target)
+    ProjectilePath(df::coord origin, df::coord goal) :
+        origin(origin), goal(goal), target(goal), fudge_factor(1)
+    {
+        fudge_delta = df::coord(0,0,0);
+        calc_line();
+    }
+
+    void fudge(int factor, df::coord delta)
+    {
+        fudge_factor = factor;
+        fudge_delta = delta;
+        auto diff = goal - origin;
+        diff.x *= fudge_factor;
+        diff.y *= fudge_factor;
+        diff.z *= fudge_factor;
+        target = origin + diff + fudge_delta;
+        calc_line();
+    }
+
+    void calc_line()
     {
         speed = target - origin;
         divisor = std::max(abs(speed.x), std::max(abs(speed.y), abs(speed.z)));
@@ -237,7 +278,8 @@ struct ProjectilePath {
         direction = df::coord(speed.x>=0?1:-1,speed.y>=0?1:-1,speed.z>=0?1:-1);
     }
 
-    df::coord operator[] (int i) const {
+    df::coord operator[] (int i) const
+    {
         int div2 = divisor * 2;
         int bias = divisor-1;
         return origin + df::coord(
@@ -266,12 +308,12 @@ struct PathMetrics {
     int goal_step, goal_z_step;
     std::vector<df::coord> coords;
 
-    bool hits() { return goal_step != -1 && collision_step > goal_step; }
+    bool hits() { return collision_step > goal_step; }
 
-    PathMetrics(const ProjectilePath &path, df::coord goal, bool list_coords = false)
+    PathMetrics(const ProjectilePath &path, bool list_coords = false)
     {
         coords.clear();
-        collision_step = goal_step = goal_z_step = -1;
+        collision_step = goal_step = goal_z_step = 1000000;
 
         int step = 0;
         df::coord prev_pos = path.origin;
@@ -285,11 +327,10 @@ struct PathMetrics {
             if (list_coords)
                 coords.push_back(cur_pos);
 
-            if (cur_pos.z == goal.z)
+            if (cur_pos.z == path.goal.z)
             {
-                if (goal_z_step == -1)
-                    goal_z_step = step;
-                if (cur_pos == goal)
+                goal_z_step = std::min(step, goal_z_step);
+                if (cur_pos == path.goal)
                     goal_step = step;
             }
 
@@ -324,18 +365,68 @@ struct PathMetrics {
     }
 };
 
+struct AimContext {
+    df::building_siegeenginest *bld;
+    df::coord origin;
+    coord_range building_rect;
+    EngineInfo *engine;
+    std::pair<int, int> fire_range;
+
+    AimContext(df::building_siegeenginest *bld, EngineInfo *engine)
+        : bld(bld), engine(engine)
+    {
+        origin = df::coord(bld->centerx, bld->centery, bld->z);
+        building_rect = coord_range(
+            df::coord(bld->x1, bld->y1, bld->z),
+            df::coord(bld->x2, bld->y2, bld->z)
+        );
+        fire_range = get_engine_range(bld);
+    }
+
+    bool isInRange(const PathMetrics &raytrace)
+    {
+        return raytrace.goal_step >= fire_range.first &&
+               raytrace.goal_step <= fire_range.second;
+    }
+
+    bool adjustToPassable(df::coord *pos)
+    {
+        if (isPassableTile(*pos))
+            return true;
+
+        for (df::coord fudge = *pos;
+             fudge.z < engine->target.second.z; fudge.z++)
+        {
+            if (!isPassableTile(fudge))
+                continue;
+            *pos = fudge;
+            return true;
+        }
+
+        for (df::coord fudge = *pos;
+             fudge.z > engine->target.first.z; fudge.z--)
+        {
+            if (!isPassableTile(fudge))
+                continue;
+            *pos = fudge;
+            return true;
+        }
+
+        return false;
+    }
+
+};
+
 static std::string getTileStatus(df::building_siegeenginest *bld, df::coord tile_pos)
 {
-    df::coord origin(bld->centerx, bld->centery, bld->z);
-    auto fire_range = get_engine_range(bld);
+    AimContext context(bld, NULL);
 
-    ProjectilePath path(origin, tile_pos);
-    PathMetrics raytrace(path, tile_pos);
+    ProjectilePath path(context.origin, tile_pos);
+    PathMetrics raytrace(path);
 
      if (raytrace.hits())
     {
-        if (raytrace.goal_step >= fire_range.first &&
-            raytrace.goal_step <= fire_range.second)
+        if (context.isInRange(raytrace))
             return "ok";
         else
             return "out_of_range";
@@ -348,35 +439,27 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
 {
     CHECK_NULL_POINTER(bld);
 
-    df::coord origin(bld->centerx, bld->centery, bld->z);
-    coord_range building_rect(
-        df::coord(bld->x1, bld->y1, bld->z),
-        df::coord(bld->x2, bld->y2, bld->z)
-    );
-
-    auto engine = find_engine(bld);
-    auto fire_range = get_engine_range(bld);
+    AimContext context(bld, find_engine(bld));
 
     for (int x = 0; x < size.x; x++)
     {
         for (int y = 0; y < size.y; y++)
         {
             df::coord tile_pos = view + df::coord(x,y,0);
-            if (is_in_range(building_rect, tile_pos))
+            if (is_in_range(context.building_rect, tile_pos))
                 continue;
 
             Pen cur_tile = Screen::readTile(ltop.x+x, ltop.y+y);
             if (!cur_tile.valid())
                 continue;
 
-            ProjectilePath path(origin, tile_pos);
-            PathMetrics raytrace(path, tile_pos);
+            ProjectilePath path(context.origin, tile_pos);
+            PathMetrics raytrace(path);
 
             int color;
             if (raytrace.hits())
             {
-                if (raytrace.goal_step >= fire_range.first &&
-                    raytrace.goal_step <= fire_range.second)
+                if (context.isInRange(raytrace))
                     color = COLOR_GREEN;
                 else
                     color = COLOR_CYAN;
@@ -395,7 +478,7 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
                 cur_tile.bg = color;
             }
 
-            cur_tile.bold = (engine && engine->onTarget(tile_pos));
+            cur_tile.bold = (context.engine && context.engine->onTarget(tile_pos));
 
             if (cur_tile.tile)
                 cur_tile.tile_mode = Pen::CharColor;
@@ -404,6 +487,105 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
         }
     }
 }
+
+/*
+ * Projectile hook
+ */
+
+struct projectile_hook : df::proj_itemst {
+    typedef df::proj_itemst interpose_base;
+
+    void aimAtPoint(AimContext &context, ProjectilePath &path, bool bad_shot = false)
+    {
+        target_pos = path.target;
+
+        PathMetrics raytrace(path);
+
+        // Materialize map blocks, or the projectile will crash into them
+        for (int i = 0; i < raytrace.collision_step; i++)
+            Maps::ensureTileBlock(path[i]);
+
+        if (flags.bits.piercing)
+        {
+            if (bad_shot)
+                fall_threshold = std::min(raytrace.goal_z_step, raytrace.collision_step);
+        }
+        else
+        {
+            if (bad_shot)
+                fall_threshold = context.fire_range.second;
+            else
+                fall_threshold = raytrace.goal_step;
+        }
+
+        fall_threshold = std::max(fall_threshold, context.fire_range.first);
+        fall_threshold = std::min(fall_threshold, context.fire_range.second);
+    }
+
+    void aimAtArea(AimContext &context)
+    {
+        df::coord target, last_passable;
+        df::coord tbase = context.engine->target.first;
+        df::coord tsize = context.engine->getTargetSize();
+        bool success = false;
+
+        for (int i = 0; i < 50; i++)
+        {
+            target = tbase + df::coord(
+                random_int(tsize.x), random_int(tsize.y), random_int(tsize.z)
+            );
+
+            if (context.adjustToPassable(&target))
+                last_passable = target;
+            else
+                continue;
+
+            ProjectilePath path(context.origin, target);
+            PathMetrics raytrace(path);
+
+            if (raytrace.hits() && context.isInRange(raytrace))
+            {
+                aimAtPoint(context, path);
+                return;
+            }
+        }
+
+        if (!last_passable.isValid())
+            last_passable = target;
+
+        ProjectilePath path(context.origin, last_passable);
+        aimAtPoint(context, path, true);
+    }
+
+    void doCheckMovement()
+    {
+        if (distance_flown != 0 || fall_counter != fall_delay)
+            return;
+
+        auto engine = find_engine(origin_pos);
+        if (!engine || !engine->hasTarget())
+            return;
+
+        auto bld0 = df::building::find(engine->id);
+        auto bld = strict_virtual_cast<df::building_siegeenginest>(bld0);
+        if (!bld)
+            return;
+
+        AimContext context(bld, engine);
+
+        aimAtArea(context);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(bool, checkMovement, ())
+    {
+        if (flags.bits.high_flying || flags.bits.piercing)
+            doCheckMovement();
+
+        return INTERPOSE_NEXT(checkMovement)();
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(projectile_hook, checkMovement);
 
 /*
  * Initialization
@@ -428,8 +610,12 @@ static void enable_hooks(bool enable)
 {
     is_enabled = enable;
 
+    INTERPOSE_HOOK(projectile_hook, checkMovement).apply(enable);
+
     if (enable)
         load_engines();
+    else
+        clear_engines();
 }
 
 static bool enable_plugin()

@@ -48,6 +48,65 @@ using Screen::Pen;
 DFHACK_PLUGIN("siege-engine");
 
 /*
+ * Misc. utils
+ */
+
+typedef std::pair<df::coord, df::coord> coord_range;
+
+static void set_range(coord_range *target, df::coord p1, df::coord p2)
+{
+    if (!p1.isValid() || !p2.isValid())
+    {
+        *target = coord_range();
+    }
+    else
+    {
+        target->first.x = std::min(p1.x, p2.x);
+        target->first.y = std::min(p1.y, p2.y);
+        target->first.z = std::min(p1.z, p2.z);
+        target->second.x = std::max(p1.x, p2.x);
+        target->second.y = std::max(p1.y, p2.y);
+        target->second.z = std::max(p1.z, p2.z);
+    }
+}
+
+static bool is_range_valid(const coord_range &target)
+{
+    return target.first.isValid() && target.second.isValid();
+}
+
+static bool is_in_range(const coord_range &target, df::coord pos)
+{
+    return target.first.isValid() && target.second.isValid() &&
+           target.first.x <= pos.x && pos.x <= target.second.x &&
+           target.first.y <= pos.y && pos.y <= target.second.y &&
+           target.first.z <= pos.z && pos.z <= target.second.z;
+}
+
+static std::pair<int, int> get_engine_range(df::building_siegeenginest *bld)
+{
+    if (bld->type == siegeengine_type::Ballista)
+        return std::make_pair(0, 200);
+    else
+        return std::make_pair(30, 100);
+}
+
+static void orient_engine(df::building_siegeenginest *bld, df::coord target)
+{
+    int dx = target.x - bld->centerx;
+    int dy = target.y - bld->centery;
+
+    if (abs(dx) > abs(dy))
+        bld->facing = (dx > 0) ?
+            df::building_siegeenginest::Right :
+            df::building_siegeenginest::Left;
+    else
+        bld->facing = (dy > 0) ?
+            df::building_siegeenginest::Down :
+            df::building_siegeenginest::Up;
+}
+
+/*
  * Configuration management
  */
 
@@ -55,17 +114,10 @@ static bool enable_plugin();
 
 struct EngineInfo {
     int id;
-    df::coord target_min, target_max;
+    coord_range target;
 
-    bool hasTarget() {
-        return target_min.isValid() && target_max.isValid();
-    }
-    bool onTarget(df::coord pos) {
-        return hasTarget() &&
-               target_min.x <= pos.x && pos.x <= target_max.x &&
-               target_min.y <= pos.y && pos.y <= target_max.y &&
-               target_min.z <= pos.z && pos.z <= target_max.z;
-    }
+    bool hasTarget() { return is_range_valid(target); }
+    bool onTarget(df::coord pos) { return is_in_range(target, pos); }
 };
 
 static std::map<df::building*, EngineInfo> engines;
@@ -98,8 +150,8 @@ static void load_engines()
     {
         auto engine = find_engine(df::building::find(it->ival(0)), true);
         if (!engine) continue;
-        engine->target_min = df::coord(it->ival(1), it->ival(2), it->ival(3));
-        engine->target_max = df::coord(it->ival(4), it->ival(5), it->ival(6));
+        engine->target.first = df::coord(it->ival(1), it->ival(2), it->ival(3));
+        engine->target.second = df::coord(it->ival(4), it->ival(5), it->ival(6));
     }
 }
 
@@ -109,10 +161,10 @@ static int getTargetArea(lua_State *L)
     if (!bld) luaL_argerror(L, 1, "null building");
     auto engine = find_engine(bld);
 
-    if (engine && engine->target_min.isValid())
+    if (engine && engine->hasTarget())
     {
-        Lua::Push(L, engine->target_min);
-        Lua::Push(L, engine->target_max);
+        Lua::Push(L, engine->target.first);
+        Lua::Push(L, engine->target.second);
     }
     else
     {
@@ -128,7 +180,7 @@ static void clearTargetArea(df::building_siegeenginest *bld)
     CHECK_NULL_POINTER(bld);
 
     if (auto engine = find_engine(bld))
-        engine->target_min = engine->target_max = df::coord();
+        engine->target = coord_range();
 
     auto pworld = Core::getInstance().getWorld();
     auto key = stl_sprintf("siege-engine/target/%d", bld->id);
@@ -151,13 +203,18 @@ static bool setTargetArea(df::building_siegeenginest *bld, df::coord target_min,
 
     auto engine = find_engine(bld, true);
 
+    set_range(&engine->target, target_min, target_max);
+
     entry.ival(0) = bld->id;
-    entry.ival(1) = engine->target_min.x = std::min(target_min.x, target_max.x);
-    entry.ival(2) = engine->target_min.y = std::min(target_min.y, target_max.y);
-    entry.ival(3) = engine->target_min.z = std::min(target_min.z, target_max.z);
-    entry.ival(4) = engine->target_max.x = std::max(target_min.x, target_max.x);
-    entry.ival(5) = engine->target_max.y = std::max(target_min.y, target_max.y);
-    entry.ival(6) = engine->target_max.z = std::max(target_min.z, target_max.z);
+    entry.ival(1) = engine->target.first.x;
+    entry.ival(2) = engine->target.first.y;
+    entry.ival(3) = engine->target.first.z;
+    entry.ival(4) = engine->target.second.x;
+    entry.ival(5) = engine->target.second.y;
+    entry.ival(6) = engine->target.second.z;
+
+    df::coord sum = target_min + target_max;
+    orient_engine(bld, df::coord(sum.x/2, sum.y/2, sum.z/2));
 
     return true;
 }
@@ -267,38 +324,45 @@ struct PathMetrics {
     }
 };
 
-void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::coord2d ltop, df::coord2d size)
+static std::string getTileStatus(df::building_siegeenginest *bld, df::coord tile_pos)
+{
+    df::coord origin(bld->centerx, bld->centery, bld->z);
+    auto fire_range = get_engine_range(bld);
+
+    ProjectilePath path(origin, tile_pos);
+    PathMetrics raytrace(path, tile_pos);
+
+     if (raytrace.hits())
+    {
+        if (raytrace.goal_step >= fire_range.first &&
+            raytrace.goal_step <= fire_range.second)
+            return "ok";
+        else
+            return "out_of_range";
+    }
+    else
+        return "blocked";
+}
+
+static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::coord2d ltop, df::coord2d size)
 {
     CHECK_NULL_POINTER(bld);
 
-    df::coord origin = df::coord(bld->centerx, bld->centery, bld->z);
+    df::coord origin(bld->centerx, bld->centery, bld->z);
+    coord_range building_rect(
+        df::coord(bld->x1, bld->y1, bld->z),
+        df::coord(bld->x2, bld->y2, bld->z)
+    );
 
     auto engine = find_engine(bld);
-    int min_distance, max_distance;
-
-    if (bld->type == siegeengine_type::Ballista)
-    {
-        min_distance = 0;
-        max_distance = 200;
-    }
-    else
-    {
-        min_distance = 30;
-        max_distance = 100;
-    }
-
-    df::coord cursor = Gui::getCursorPos();
+    auto fire_range = get_engine_range(bld);
 
     for (int x = 0; x < size.x; x++)
     {
         for (int y = 0; y < size.y; y++)
         {
             df::coord tile_pos = view + df::coord(x,y,0);
-            if (tile_pos == cursor)
-                continue;
-            if (tile_pos.z == bld->z &&
-                tile_pos.x >= bld->x1 && tile_pos.x <= bld->x2 &&
-                tile_pos.y >= bld->y1 && tile_pos.y <= bld->y2)
+            if (is_in_range(building_rect, tile_pos))
                 continue;
 
             Pen cur_tile = Screen::readTile(ltop.x+x, ltop.y+y);
@@ -306,22 +370,13 @@ void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::coord2d
                 continue;
 
             ProjectilePath path(origin, tile_pos);
-
-            if (path.speed.z != 0 && abs(path.speed.z) != path.divisor) {
-                path.divisor *= 20;
-                path.speed.x *= 20;
-                path.speed.y *= 20;
-                path.speed.z *= 20;
-                path.speed.z += 9;
-            }
-
             PathMetrics raytrace(path, tile_pos);
 
             int color;
             if (raytrace.hits())
             {
-                if (raytrace.goal_step >= min_distance &&
-                    raytrace.goal_step <= max_distance)
+                if (raytrace.goal_step >= fire_range.first &&
+                    raytrace.goal_step <= fire_range.second)
                     color = COLOR_GREEN;
                 else
                     color = COLOR_CYAN;
@@ -357,6 +412,7 @@ void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::coord2d
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(clearTargetArea),
     DFHACK_LUA_FUNCTION(setTargetArea),
+    DFHACK_LUA_FUNCTION(getTileStatus),
     DFHACK_LUA_FUNCTION(paintAimScreen),
     DFHACK_LUA_END
 };

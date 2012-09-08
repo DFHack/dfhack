@@ -46,7 +46,7 @@ function getPanelLayout()
 end
 
 function getCursorPos()
-    if g_cursor ~= -30000 then
+    if g_cursor.x ~= -30000 then
         return copyall(g_cursor)
     end
 end
@@ -167,6 +167,18 @@ function Viewport:isVisible(target,gap)
     return self:isVisibleXY(target,gap) and target.z == self.z
 end
 
+function Viewport:tileToScreen(coord)
+    return xyz2pos(coord.x - self.x1, coord.y - self.y1, coord.z - self.z)
+end
+
+function Viewport:getCenter()
+    return xyz2pos(
+        math.floor((self.x2+self.x1)/2),
+        math.floor((self.y2+self.y1)/2),
+        self.z
+    )
+end
+
 function Viewport:centerOn(target)
     return self:clip(
         target.x - math.floor(self.width/2),
@@ -253,16 +265,23 @@ function DwarfOverlay:getViewport(old_vp)
     end
 end
 
-function DwarfOverlay:moveCursorTo(cursor,viewport)
+function DwarfOverlay:moveCursorTo(cursor,viewport,gap)
     setCursorPos(cursor)
-    self:getViewport(viewport):reveal(cursor, 5, 0, 10):set()
+    self:zoomViewportTo(cursor,viewport,gap)
 end
 
-function DwarfOverlay:selectBuilding(building,cursor,viewport)
+function DwarfOverlay:zoomViewportTo(target, viewport, gap)
+    if gap and self:getViewport():isVisible(target, gap) then
+        return
+    end
+    self:getViewport(viewport):reveal(target, 5, 0, 10):set()
+end
+
+function DwarfOverlay:selectBuilding(building,cursor,viewport,gap)
     cursor = cursor or utils.getBuildingCenter(building)
 
     df.global.world.selected_building = building
-    self:moveCursorTo(cursor, viewport)
+    self:moveCursorTo(cursor, viewport, gap)
 end
 
 function DwarfOverlay:propagateMoveKeys(keys)

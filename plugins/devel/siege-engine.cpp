@@ -124,6 +124,11 @@ static int random_int(int val)
     return int(int64_t(rand())*val/RAND_MAX);
 }
 
+static int point_distance(df::coord speed)
+{
+    return std::max(abs(speed.x), std::max(abs(speed.y), abs(speed.z)));
+}
+
 /*
  * Configuration management
  */
@@ -134,6 +139,7 @@ struct EngineInfo {
     int id;
     coord_range target;
     df::coord center;
+    int proj_speed, hit_delay;
 
     bool hasTarget() { return is_range_valid(target); }
     bool onTarget(df::coord pos) { return is_in_range(target, pos); }
@@ -155,8 +161,11 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
         return NULL;
 
     auto *obj = &engines[bld];
+
     obj->id = bld->id;
     obj->center = df::coord(bld->centerx, bld->centery, bld->z);
+    obj->proj_speed = 2;
+    obj->hit_delay = 3;
 
     coord_engines[obj->center] = bld;
     return obj;
@@ -285,7 +294,7 @@ struct ProjectilePath {
     void calc_line()
     {
         speed = target - origin;
-        divisor = std::max(abs(speed.x), std::max(abs(speed.y), abs(speed.z)));
+        divisor = point_distance(speed);
         if (divisor <= 0) divisor = 1;
         direction = df::coord(speed.x>=0?1:-1,speed.y>=0?1:-1,speed.z>=0?1:-1);
     }
@@ -504,6 +513,292 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
  * Unit tracking
  */
 
+static const float MAX_TIME = 1000000.0f;
+
+struct UnitPath {
+    df::unit *unit;
+    std::map<float, df::coord> path;
+
+    struct Hit {
+        UnitPath *path;
+        df::coord pos;
+        int dist;
+        float time, lmargin, rmargin;
+    };
+
+    static std::map<df::unit*, UnitPath*> cache;
+
+    static UnitPath *get(df::unit *unit)
+    {
+        auto &cv = cache[unit];
+        if (!cv) cv = new UnitPath(unit);
+        return cv;
+    };
+
+    UnitPath(df::unit *unit) : unit(unit)
+    {
+        df::coord pos = unit->pos;
+        df::coord dest = unit->path.dest;
+        auto &upath = unit->path.path;
+
+        if (dest.isValid() && !upath.x.empty())
+        {
+            float time = unit->counters.job_counter+0.5f;
+            float speed = Units::computeMovementSpeed(unit)/100.0f;
+
+            for (size_t i = 0; i < upath.size(); i++)
+            {
+                df::coord new_pos = upath[i];
+                if (new_pos == pos)
+                    continue;
+
+                float delay = speed;
+                if (new_pos.x != pos.x && new_pos.y != pos.y)
+                    delay *= 362.0/256.0;
+
+                path[time] = pos;
+                pos = new_pos;
+                time += delay + 1;
+            }
+        }
+
+        path[MAX_TIME] = pos;
+    }
+
+    void get_margin(std::map<float,df::coord>::iterator &it, float time, float *lmargin, float *rmargin)
+    {
+        auto it2 = it;
+        *lmargin = (it == path.begin()) ? MAX_TIME : time - (--it2)->first;
+        *rmargin = (it->first == MAX_TIME) ? MAX_TIME : it->first - time;
+    }
+
+    df::coord posAtTime(float time, float *lmargin = NULL, float *rmargin = NULL)
+    {
+        CHECK_INVALID_ARGUMENT(time < MAX_TIME);
+
+        auto it = path.upper_bound(time);
+        if (lmargin)
+            get_margin(it, time, lmargin, rmargin);
+        return it->second;
+    }
+
+    bool findHits(EngineInfo *engine, std::vector<Hit> *hit_points, float bias)
+    {
+        df::coord origin = engine->center;
+
+        Hit info;
+        info.path = this;
+
+        for (auto it = path.begin(); it != path.end(); ++it)
+        {
+            info.pos = it->second;
+            info.dist = point_distance(origin - info.pos);
+            info.time = float(info.dist)*(engine->proj_speed+1) + engine->hit_delay + bias;
+            get_margin(it, info.time, &info.lmargin, &info.rmargin);
+
+            if (info.lmargin > 0 && info.rmargin > 0)
+            {
+                if (engine->onTarget(info.pos))
+                    hit_points->push_back(info);
+            }
+        }
+
+        return !hit_points->empty();
+    }
+};
+
+std::map<df::unit*, UnitPath*> UnitPath::cache;
+
+static void push_margin(lua_State *L, float margin)
+{
+    if (margin == MAX_TIME)
+        lua_pushnil(L);
+    else
+        lua_pushnumber(L, margin);
+}
+
+static int traceUnitPath(lua_State *L)
+{
+    auto unit = Lua::CheckDFObject<df::unit>(L, 1);
+
+    CHECK_NULL_POINTER(unit);
+
+    size_t idx = 1;
+    auto info = UnitPath::get(unit);
+    lua_createtable(L, info->path.size(), 0);
+
+    float last_time = 0.0f;
+    for (auto it = info->path.begin(); it != info->path.end(); ++it)
+    {
+        Lua::Push(L, it->second);
+        if (idx > 1)
+        {
+            lua_pushnumber(L, last_time);
+            lua_setfield(L, -2, "from");
+        }
+        if (idx < info->path.size())
+        {
+            lua_pushnumber(L, it->first);
+            lua_setfield(L, -2, "to");
+        }
+        lua_rawseti(L, -2, idx++);
+        last_time = it->first;
+    }
+
+    return 1;
+}
+
+static int unitPosAtTime(lua_State *L)
+{
+    auto unit = Lua::CheckDFObject<df::unit>(L, 1);
+    float time = luaL_checknumber(L, 2);
+
+    CHECK_NULL_POINTER(unit);
+
+    float lmargin, rmargin;
+    auto info = UnitPath::get(unit);
+
+    Lua::Push(L, info->posAtTime(time, &lmargin, &rmargin));
+    push_margin(L, lmargin);
+    push_margin(L, rmargin);
+    return 3;
+}
+
+static void proposeUnitHits(EngineInfo *engine, std::vector<UnitPath::Hit> *hits, float bias)
+{
+    auto &active = world->units.active;
+
+    for (size_t i = 0; i < active.size(); i++)
+    {
+        auto unit = active[i];
+
+        if (unit->flags1.bits.dead ||
+            unit->flags3.bits.ghostly ||
+            unit->flags1.bits.caged ||
+            unit->flags1.bits.chained ||
+            unit->flags1.bits.rider ||
+            unit->flags1.bits.hidden_in_ambush)
+            continue;
+
+        UnitPath::get(unit)->findHits(engine, hits, bias);
+    }
+}
+
+static int proposeUnitHits(lua_State *L)
+{
+    auto bld = Lua::CheckDFObject<df::building_siegeenginest>(L, 1);
+    float bias = luaL_optnumber(L, 2, 0);
+
+    auto engine = find_engine(bld);
+    if (!engine)
+        luaL_error(L, "no such engine");
+    if (!engine->hasTarget())
+        luaL_error(L, "target not set");
+
+    std::vector<UnitPath::Hit> hits;
+    proposeUnitHits(engine, &hits, bias);
+
+    lua_createtable(L, hits.size(), 0);
+
+    for (size_t i = 0; i < hits.size(); i++)
+    {
+        auto &hit = hits[i];
+        lua_createtable(L, 0, 6);
+        Lua::PushDFObject(L, hit.path->unit); lua_setfield(L, -2, "unit");
+        Lua::Push(L, hit.pos);                lua_setfield(L, -2, "pos");
+        lua_pushnumber(L, hit.dist);          lua_setfield(L, -2, "dist");
+        lua_pushnumber(L, hit.time);          lua_setfield(L, -2, "time");
+        push_margin(L, hit.lmargin);          lua_setfield(L, -2, "lmargin");
+        push_margin(L, hit.rmargin);          lua_setfield(L, -2, "rmargin");
+        lua_rawseti(L, -2, i+1);
+    }
+
+    return 1;
+}
+
+#if 0
+struct UnitContext {
+    AimContext &ctx;
+
+    struct UnitInfo {
+        df::unit *unit;
+
+        UnitPath path;
+        float score;
+
+        UnitInfo(df::unit *unit) : unit(unit), path(unit) {}
+    };
+
+    std::map<df::unit*, UnitInfo*> units;
+
+    UnitContext(AimContext &ctx) : ctx(ctx) {}
+
+    ~UnitContext()
+    {
+        for (auto it = units.begin(); it != units.end(); ++it)
+            delete it->second;
+    }
+
+    float unit_score(df::unit *unit)
+    {
+        float score = 1.0f;
+
+        if (unit->flags1.bits.tame && unit->civ_id == ui->civ_id)
+            score = -1.0f;
+        if (unit->flags1.bits.diplomat || unit->flags1.bits.merchant)
+            score = -2.0f;
+        else if (Units::isCitizen(unit))
+            score = -10.0f;
+        else
+        {
+            if (unit->flags1.bits.marauder)
+                score += 0.5f;
+            if (unit->flags1.bits.active_invader)
+                score += 1.0f;
+            if (unit->flags1.bits.invader_origin)
+                score += 1.0f;
+            if (unit->flags1.bits.invades)
+                score += 1.0f;
+            if (unit->flags1.bits.hidden_ambusher)
+                score += 1.0f;
+        }
+
+        if (unit->flags1.bits.ridden)
+        {
+            for (size_t i = 0; i < unit->refs.size(); i++)
+            {
+                if (!unit->refs[i]->getType() == general_ref_type::UNIT_RIDER)
+                    continue;
+                if (auto rider = unit->refs[i]->getUnit())
+                    score += unit_score(rider);
+            }
+        }
+    }
+
+    void select_units()
+    {
+        auto &active = world->units.active;
+
+        for (size_t i = 0; i < active.size(); i++)
+        {
+            auto unit = active[i];
+            if (unit->flags1.bits.dead ||
+                unit->flags3.bits.ghostly ||
+                unit->flags1.bits.caged ||
+                unit->flags1.bits.chained ||
+                unit->flags1.bits.rider ||
+                unit->flags1.bits.hidden_in_ambush)
+                continue;
+
+            auto info = units[unit] = new UnitInfo(unit);
+
+            info->findHits(ctx, ctx.proj_hit_delay);
+            info->score = unit_score(unit);
+        }
+    }
+};
+#endif
+
 /*
  * Projectile hook
  */
@@ -617,6 +912,9 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
 
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(getTargetArea),
+    DFHACK_LUA_COMMAND(traceUnitPath),
+    DFHACK_LUA_COMMAND(unitPosAtTime),
+    DFHACK_LUA_COMMAND(proposeUnitHits),
     DFHACK_LUA_END
 };
 
@@ -646,6 +944,17 @@ static bool enable_plugin()
 
     enable_hooks(true);
     return true;
+}
+
+static void clear_caches()
+{
+    if (!UnitPath::cache.empty())
+    {
+        for (auto it = UnitPath::cache.begin(); it != UnitPath::cache.end(); ++it)
+            delete it->second;
+
+        UnitPath::cache.clear();
+    }
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
@@ -686,5 +995,11 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     enable_hooks(false);
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate ( color_ostream &out )
+{
+    clear_caches();
     return CR_OK;
 }

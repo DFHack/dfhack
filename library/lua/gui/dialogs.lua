@@ -180,10 +180,10 @@ function ListBox:init(info)
     info = info or {}
     self:init_fields{
         selection = info.selection or 0,
-    	choices = info.choices or {},
+        choices = info.choices or {},
         select_pen = info.select_pen,
         on_input = info.on_input,
-		page_top = 0
+        page_top = 0
     }
     MessageBox.init(self, info)
     self.on_accept = nil
@@ -197,62 +197,62 @@ end
 
 function ListBox:onRenderBody(dc)
     MessageBox.onRenderBody(self, dc)
-	
+
     dc:newline(1)
-	
-	if self.selection>dc.height-3 then
-		self.page_top=self.selection-(dc.height-3)
-	elseif self.selection<self.page_top and self.selection >0  then
-		self.page_top=self.selection-1
-	end
-	for i,entry in ipairs(self.choices) do
-		if type(entry)=="table" then
-			entry=entry[1]
-		end
-		if i>self.page_top then
-			if i == self.selection then
-				dc:pen(self.select_pen or COLOR_LIGHTCYAN)
-			else
-				dc:pen(self.text_pen or COLOR_GREY)
-			end
-			dc:string(entry)
-			dc:newline(1)
-		end
-	end
+
+    if self.selection>dc.height-3 then
+        self.page_top=self.selection-(dc.height-3)
+    elseif self.selection<self.page_top and self.selection >0  then
+        self.page_top=self.selection-1
+    end
+    for i,entry in ipairs(self.choices) do
+        if type(entry)=="table" then
+            entry=entry[1]
+        end
+        if i>self.page_top then
+            if i == self.selection then
+                dc:pen(self.select_pen or COLOR_LIGHTCYAN)
+            else
+                dc:pen(self.text_pen or COLOR_GREY)
+            end
+            dc:string(entry)
+            dc:newline(1)
+        end
+    end
 end
 function ListBox:moveCursor(delta)
-	local newsel=self.selection+delta
-	if #self.choices ~=0 then
-		if newsel<1 or newsel>#self.choices then 
-			newsel=newsel % #self.choices
-		end
-	end
-	self.selection=newsel
+    local newsel=self.selection+delta
+    if #self.choices ~=0 then
+        if newsel<1 or newsel>#self.choices then 
+            newsel=newsel % #self.choices
+        end
+    end
+    self.selection=newsel
 end
 function ListBox:onInput(keys)
     if keys.SELECT then
         self:dismiss()
-		local choice=self.choices[self.selection]
+        local choice=self.choices[self.selection]
         if self.on_input then
             self.on_input(self.selection,choice)
         end
-		
-		if choice and choice[2] then
-			choice[2](choice,self.selection) -- maybe reverse the arguments?
-		end
+
+        if choice and choice[2] then
+            choice[2](choice,self.selection) -- maybe reverse the arguments?
+        end
     elseif keys.LEAVESCREEN then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
-	elseif keys.CURSOR_UP then
-		self:moveCursor(-1)
-	elseif keys.CURSOR_DOWN then
-		self:moveCursor(1)
-	elseif keys.CURSOR_UP_FAST then
-		self:moveCursor(-10)
-	elseif keys.CURSOR_DOWN_FAST then
-		self:moveCursor(10)
+    elseif keys.CURSOR_UP then
+        self:moveCursor(-1)
+    elseif keys.CURSOR_DOWN then
+        self:moveCursor(1)
+    elseif keys.CURSOR_UP_FAST then
+        self:moveCursor(-10)
+    elseif keys.CURSOR_DOWN_FAST then
+        self:moveCursor(10)
     end
 end
 

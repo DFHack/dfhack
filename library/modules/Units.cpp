@@ -617,6 +617,58 @@ df::nemesis_record *Units::getNemesis(df::unit *unit)
     return NULL;
 }
 
+
+bool Units::isHidingCurse(df::unit *unit)
+{
+    if (!unit->job.hunt_target)
+    {
+        auto identity = Units::getIdentity(unit);
+        if (identity && identity->unk_4c == 0)
+            return true;
+    }
+
+    return false;
+}
+
+int Units::getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr)
+{
+    auto &aobj = unit->body.physical_attrs[attr];
+    int value = std::max(0, aobj.value - aobj.soft_demotion);
+
+    if (auto mod = unit->curse.attr_change)
+    {
+        int mvalue = (value * mod->phys_att_perc[attr]) + mod->phys_att_add[attr];
+
+        if (isHidingCurse(unit))
+            value = std::min(value, mvalue);
+        else
+            value = mvalue;
+    }
+
+    return value;
+}
+
+int Units::getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr)
+{
+    auto soul = unit->status.current_soul;
+    if (!soul) return 0;
+
+    auto &aobj = soul->mental_attrs[attr];
+    int value = std::max(0, aobj.value - aobj.soft_demotion);
+
+    if (auto mod = unit->curse.attr_change)
+    {
+        int mvalue = (value * mod->ment_att_perc[attr]) + mod->ment_att_add[attr];
+
+        if (isHidingCurse(unit))
+            value = std::min(value, mvalue);
+        else
+            value = mvalue;
+    }
+
+    return value;
+}
+
 static bool casteFlagSet(int race, int caste, df::caste_raw_flags flag)
 {
     auto creature = df::creature_raw::find(race);

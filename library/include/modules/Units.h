@@ -33,6 +33,8 @@ distribution.
 #include "DataDefs.h"
 #include "df/unit.h"
 #include "df/misc_trait_type.h"
+#include "df/physical_attribute_type.h"
+#include "df/mental_attribute_type.h"
 #include "df/job_skill.h"
 
 namespace df
@@ -210,6 +212,10 @@ DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
 
 DFHACK_EXPORT df::assumed_identity *getIdentity(df::unit *unit);
 DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
+
+DFHACK_EXPORT bool isHidingCurse(df::unit *unit);
+DFHACK_EXPORT int getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr);
+DFHACK_EXPORT int getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr);
 
 DFHACK_EXPORT bool isCrazed(df::unit *unit);
 DFHACK_EXPORT bool isOpposedToLife(df::unit *unit);

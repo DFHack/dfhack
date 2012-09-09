@@ -868,6 +868,15 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
+* ``dfhack.units.isHidingCurse(unit)``
+
+  Checks if the unit hides improved attributes from its curse.
+
+* ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
+* ``dfhack.units.getMentalAttrValue(unit, attr_type)``
+
+  Computes the effective attribute value, including curse effect.
+
 * ``dfhack.units.isCrazed(unit)``
 * ``dfhack.units.isOpposedToLife(unit)``
 * ``dfhack.units.hasExtravision(unit)``

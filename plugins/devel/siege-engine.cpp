@@ -501,28 +501,6 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
  * Unit tracking
  */
 
-static int getAttrValue(const df::unit_attribute &attr)
-{
-    return std::max(0, attr.value - attr.soft_demotion);
-}
-
-static int getPhysAttrValue(df::unit *unit, df::physical_attribute_type attr, bool hide_curse)
-{
-    int value = getAttrValue(unit->body.physical_attrs[attr]);
-
-    if (auto mod = unit->curse.attr_change)
-    {
-        int mvalue = (value * mod->phys_att_perc[attr]) + mod->phys_att_add[attr];
-
-        if (hide_curse)
-            value = std::min(value, mvalue);
-        else
-            value = mvalue;
-    }
-
-    return value;
-}
-
 int getSpeedRating(df::unit *unit)
 {
     using namespace df::enums::physical_attribute_type;
@@ -635,18 +613,10 @@ int getSpeedRating(df::unit *unit)
     speed = std::max(speed*3/4, std::min(speed*3/2, int(int64_t(speed)*strength/agility)));
 
     // Attributes
-    bool hide_curse = false;
-    if (!unit->job.hunt_target)
-    {
-        auto identity = Units::getIdentity(unit);
-        if (identity && identity->unk_4c == 0)
-            hide_curse = true;
-    }
+    int strength_attr = Units::getPhysicalAttrValue(unit, STRENGTH);
+    int agility_attr = Units::getPhysicalAttrValue(unit, AGILITY);
 
-    int strength_attr = getPhysAttrValue(unit, STRENGTH, hide_curse);
-    int agility_attr = getPhysAttrValue(unit, AGILITY, hide_curse);
     int total_attr = std::max(200, std::min(3800, strength_attr + agility_attr));
-
     speed = ((total_attr-200)*(speed*3/2) + (3800-total_attr)*(speed/2))/4800; // ??
 
     if (!unit->flags1.bits.on_ground && unit->status2.able_stand > 2)

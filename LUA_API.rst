@@ -918,6 +918,10 @@ Units module
 
   Computes the effective rating for the given skill, taking into account exhaustion, pain etc.
 
+* ``dfhack.units.computeMovementSpeed(unit)``
+
+  Computes number of frames * 100 it takes the unit to move in its current state of mind and body.
+
 * ``dfhack.units.getNoblePositions(unit)``
 
   Returns a list of tables describing noble position assignments, or *nil*.

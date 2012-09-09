@@ -39,6 +39,8 @@
 #include "df/caste_raw.h"
 #include "df/caste_raw_flags.h"
 #include "df/assumed_identity.h"
+#include "df/game_mode.h"
+#include "df/unit_misc_trait.h"
 
 #include "MiscUtils.h"
 
@@ -48,6 +50,7 @@ using std::stack;
 using namespace DFHack;
 using namespace df::enums;
 
+using df::global::gamemode;
 using df::global::gps;
 using df::global::world;
 using df::global::ui;
@@ -500,180 +503,6 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
 /*
  * Unit tracking
  */
-
-int getSpeedRating(df::unit *unit)
-{
-    using namespace df::enums::physical_attribute_type;
-
-    // Base speed
-    auto creature = df::creature_raw::find(unit->race);
-    if (!creature)
-        return 0;
-
-    auto craw = vector_get(creature->caste, unit->caste);
-    if (!craw)
-        return 0;
-
-    int speed = craw->misc.speed;
-
-    if (unit->flags3.bits.ghostly)
-        return speed;
-
-    // Curse multiplier
-    if (unit->curse.speed_mul_percent != 100)
-    {
-        speed *= 100;
-        if (unit->curse.speed_mul_percent != 0)
-            speed /= unit->curse.speed_mul_percent;
-    }
-
-    speed += unit->curse.speed_add;
-
-    // Swimming
-    if (unit->flags2.bits.swimming)
-    {
-        speed = craw->misc.swim_speed;
-        if (unit->status2.liquid_type.bits.liquid_type == tile_liquid::Magma)
-            speed *= 2;
-        if (craw->flags.is_set(caste_raw_flags::SWIMS_LEARNED))
-        {
-            int skill = Units::getEffectiveSkill(unit, job_skill::SWIMMING);
-            if (skill > 1)
-                skill = skill * std::max(6, 21-skill) / 20;
-        }
-    }
-    else
-    {
-        if (unit->status2.liquid_type.bits.liquid_type == tile_liquid::Water)
-            speed += 150*unit->status2.liquid_depth;
-        else if (unit->status2.liquid_type.bits.liquid_type == tile_liquid::Magma)
-            speed += 300*unit->status2.liquid_depth;
-    }
-
-    // General counters
-    if (unit->profession == profession::BABY)
-        speed += 3000;
-
-    if (unit->counters2.exhaustion >= 2000)
-    {
-        speed += 200;
-        if (unit->counters2.exhaustion >= 4000)
-        {
-            speed += 200;
-            if (unit->counters2.exhaustion >= 6000)
-                speed += 200;
-        }
-    }
-
-    if (unit->flags2.bits.gutted) speed += 2000;
-
-    if (unit->counters.soldier_mood == df::unit::T_counters::None)
-    {
-        if (unit->counters.nausea > 0) speed += 1000;
-        if (unit->counters.winded > 0) speed += 1000;
-        if (unit->counters.stunned > 0) speed += 1000;
-        if (unit->counters.dizziness > 0) speed += 1000;
-        if (unit->counters2.fever > 0) speed += 1000;
-    }
-
-    if (unit->counters.soldier_mood != df::unit::T_counters::MartialTrance)
-    {
-        if (unit->counters.pain >= 100 && unit->mood < 0)
-            speed += 1000;
-    }
-
-    // TODO: bloodsucker
-
-    if (unit->counters2.thirst_timer >= 50000) speed += 100;
-    if (unit->counters2.hunger_timer >= 75000) speed += 100;
-    if (unit->counters2.sleepiness_timer >= 150000) speed += 200;
-    else if (unit->counters2.sleepiness_timer >= 57600) speed += 100;
-
-    if (unit->relations.draggee_id != -1) speed += 1000;
-
-    if (unit->flags1.bits.on_ground)
-        speed += 2000;
-    else if (unit->flags3.bits.on_crutch)
-    {
-        int skill = Units::getEffectiveSkill(unit, job_skill::CRUTCH_WALK);
-        speed += 2000 - 100*std::min(20, skill);
-    }
-
-    // TODO: hidden_in_ambush
-
-    if (unsigned(unit->counters2.paralysis-1) <= 98)
-        speed += unit->counters2.paralysis*10;
-    if (unsigned(unit->counters.webbed-1) <= 8)
-        speed += unit->counters.webbed*100;
-
-    // Muscle weight vs agility
-    auto &attr_unk3 = unit->body.physical_attr_unk3;
-    int strength = attr_unk3[STRENGTH];
-    int agility = attr_unk3[AGILITY];
-    speed = std::max(speed*3/4, std::min(speed*3/2, int(int64_t(speed)*strength/agility)));
-
-    // Attributes
-    int strength_attr = Units::getPhysicalAttrValue(unit, STRENGTH);
-    int agility_attr = Units::getPhysicalAttrValue(unit, AGILITY);
-
-    int total_attr = std::max(200, std::min(3800, strength_attr + agility_attr));
-    speed = ((total_attr-200)*(speed*3/2) + (3800-total_attr)*(speed/2))/4800; // ??
-
-    if (!unit->flags1.bits.on_ground && unit->status2.able_stand > 2)
-    {
-        // WTF
-        int as = unit->status2.able_stand;
-        int x = (as-1) - (as>>1);
-        int y = as - unit->status2.able_stand_impair;
-        if (unit->flags3.bits.on_crutch) y--;
-        y = y * 500 / x;
-        if (y > 0) speed += y;
-    }
-
-    if (unit->mood == mood_type::Melancholy) speed += 8000;
-
-    // Inventory encumberance
-    int armor_skill = Units::getEffectiveSkill(unit, job_skill::ARMOR);
-    armor_skill = std::min(15, armor_skill);
-
-    int inv_weight = 0, inv_weight_fraction = 0;
-
-    for (size_t i = 0; i < unit->inventory.size(); i++)
-    {
-        auto item = unit->inventory[i]->item;
-        if (!item->flags.bits.weight_computed)
-            continue;
-
-        int wval = item->weight;
-        int wfval = item->weight_fraction;
-
-        auto mode = unit->inventory[i]->mode;
-        if ((mode == df::unit_inventory_item::Worn ||
-             mode == df::unit_inventory_item::WrappedAround) &&
-             item->isArmor() && armor_skill > 1)
-        {
-            wval = wval * (15 - armor_skill) / 16;
-            wfval = wfval * (15 - armor_skill) / 16;
-        }
-
-        inv_weight += wval;
-        inv_weight_fraction += wfval;
-    }
-
-    int total_weight = inv_weight*100 + inv_weight_fraction/10000;
-    int free_weight = std::max(1, attr_unk3[STRENGTH]/10 + strength_attr*3);
-
-    if (free_weight < total_weight)
-    {
-        int delta = (total_weight - free_weight)/10;
-        delta = std::min(5000, delta); // dwarfmode only
-        speed += delta;
-    }
-
-    // skipped: unknown loop on inventory items that amounts to 0 change
-
-    return std::min(10000, std::max(0, speed));
-}
 
 /*
  * Projectile hook

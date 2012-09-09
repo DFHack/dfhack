@@ -637,7 +637,7 @@ int Units::getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr
 
     if (auto mod = unit->curse.attr_change)
     {
-        int mvalue = (value * mod->phys_att_perc[attr]) + mod->phys_att_add[attr];
+        int mvalue = (value * mod->phys_att_perc[attr] / 100) + mod->phys_att_add[attr];
 
         if (isHidingCurse(unit))
             value = std::min(value, mvalue);
@@ -645,7 +645,7 @@ int Units::getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr
             value = mvalue;
     }
 
-    return value;
+    return std::max(0, value);
 }
 
 int Units::getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr)
@@ -658,7 +658,7 @@ int Units::getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr)
 
     if (auto mod = unit->curse.attr_change)
     {
-        int mvalue = (value * mod->ment_att_perc[attr]) + mod->ment_att_add[attr];
+        int mvalue = (value * mod->ment_att_perc[attr] / 100) + mod->ment_att_add[attr];
 
         if (isHidingCurse(unit))
             value = std::min(value, mvalue);
@@ -666,7 +666,7 @@ int Units::getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr)
             value = mvalue;
     }
 
-    return value;
+    return std::max(0, value);
 }
 
 static bool casteFlagSet(int race, int caste, df::caste_raw_flags flag)
@@ -722,6 +722,16 @@ bool Units::isBloodsucker(df::unit *unit)
     if (unit->curse.add_tags1.bits.BLOODSUCKER)
         return true;
     return casteFlagSet(unit->race, unit->caste, caste_raw_flags::BLOODSUCKER);
+}
+
+bool Units::isMischievous(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+    if (unit->curse.rem_tags1.bits.MISCHIEVOUS)
+        return false;
+    if (unit->curse.add_tags1.bits.MISCHIEVOUS)
+        return true;
+    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::MISCHIEVOUS);
 }
 
 df::unit_misc_trait *Units::getMiscTrait(df::unit *unit, df::misc_trait_type type, bool create)
@@ -851,7 +861,7 @@ double DFHack::Units::getAge(df::unit *unit, bool true_age)
     return cur_time - birth_time;
 }
 
-inline int adjust_skill_rating(int &rating, bool is_adventure, int value, int dwarf3_4, int dwarf1_2, int adv9_10, int adv3_4, int adv1_2)
+inline void adjust_skill_rating(int &rating, bool is_adventure, int value, int dwarf3_4, int dwarf1_2, int adv9_10, int adv3_4, int adv1_2)
 {
     if  (is_adventure)
     {
@@ -862,7 +872,7 @@ inline int adjust_skill_rating(int &rating, bool is_adventure, int value, int dw
     else
     {
         if (value >= dwarf1_2) rating >>= 1;
-        else if (value >= dwarf3_4) return rating*3/4;
+        else if (value >= dwarf3_4) rating = rating*3/4;
     }
 }
 
@@ -956,6 +966,264 @@ int Units::getEffectiveSkill(df::unit *unit, df::job_skill skill_id)
         );
 
     return rating;
+}
+
+inline void adjust_speed_rating(int &rating, bool is_adventure, int value, int dwarf100, int dwarf200, int adv50, int adv75, int adv100, int adv200)
+{
+    if  (is_adventure)
+    {
+        if (value >= adv200) rating += 200;
+        else if (value >= adv100) rating += 100;
+        else if (value >= adv75) rating += 75;
+        else if (value >= adv50) rating += 50;
+    }
+    else
+    {
+        if (value >= dwarf200) rating += 200;
+        else if (value >= dwarf100) rating += 100;
+    }
+}
+
+static int calcInventoryWeight(df::unit *unit)
+{
+    int armor_skill = Units::getEffectiveSkill(unit, job_skill::ARMOR);
+    int armor_mul = 15 - std::min(15, armor_skill);
+
+    int inv_weight = 0, inv_weight_fraction = 0;
+
+    for (size_t i = 0; i < unit->inventory.size(); i++)
+    {
+        auto item = unit->inventory[i]->item;
+        if (!item->flags.bits.weight_computed)
+            continue;
+
+        int wval = item->weight;
+        int wfval = item->weight_fraction;
+        auto mode = unit->inventory[i]->mode;
+
+        if ((mode == df::unit_inventory_item::Worn ||
+             mode == df::unit_inventory_item::WrappedAround) &&
+             item->isArmor() && armor_skill > 1)
+        {
+            wval = wval * armor_mul / 16;
+            wfval = wfval * armor_mul / 16;
+        }
+
+        inv_weight += wval;
+        inv_weight_fraction += wfval;
+    }
+
+    return inv_weight*100 + inv_weight_fraction/10000;
+}
+
+int Units::computeMovementSpeed(df::unit *unit)
+{
+    using namespace df::enums::physical_attribute_type;
+
+    /*
+     * Pure reverse-engineered computation of unit _slowness_,
+     * i.e. number of ticks to move * 100.
+     */
+
+    // Base speed
+
+    auto creature = df::creature_raw::find(unit->race);
+    if (!creature)
+        return 0;
+
+    auto craw = vector_get(creature->caste, unit->caste);
+    if (!craw)
+        return 0;
+
+    int speed = craw->misc.speed;
+
+    if (unit->flags3.bits.ghostly)
+        return speed;
+
+    // Curse multiplier
+
+    if (unit->curse.speed_mul_percent != 100)
+    {
+        speed *= 100;
+        if (unit->curse.speed_mul_percent != 0)
+            speed /= unit->curse.speed_mul_percent;
+    }
+
+    speed += unit->curse.speed_add;
+
+    // Swimming
+
+    auto cur_liquid = unit->status2.liquid_type.bits.liquid_type;
+    bool in_magma = (cur_liquid == tile_liquid::Magma);
+
+    if (unit->flags2.bits.swimming)
+    {
+        speed = craw->misc.swim_speed;
+        if (in_magma)
+            speed *= 2;
+
+        if (craw->flags.is_set(caste_raw_flags::SWIMS_LEARNED))
+        {
+            int skill = Units::getEffectiveSkill(unit, job_skill::SWIMMING);
+
+            // Originally a switch:
+            if (skill > 1)
+                speed = speed * std::max(6, 21-skill) / 20;
+        }
+    }
+    else
+    {
+        int delta = 150*unit->status2.liquid_depth;
+        if (in_magma)
+            delta *= 2;
+        speed += delta;
+    }
+
+    // General counters and flags
+
+    if (unit->profession == profession::BABY)
+        speed += 3000;
+
+    if (unit->flags3.bits.unk15)
+        speed /= 20;
+
+    if (unit->counters2.exhaustion >= 2000)
+    {
+        speed += 200;
+        if (unit->counters2.exhaustion >= 4000)
+        {
+            speed += 200;
+            if (unit->counters2.exhaustion >= 6000)
+                speed += 200;
+        }
+    }
+
+    if (unit->flags2.bits.gutted) speed += 2000;
+
+    if (unit->counters.soldier_mood == df::unit::T_counters::None)
+    {
+        if (unit->counters.nausea > 0) speed += 1000;
+        if (unit->counters.winded > 0) speed += 1000;
+        if (unit->counters.stunned > 0) speed += 1000;
+        if (unit->counters.dizziness > 0) speed += 1000;
+        if (unit->counters2.fever > 0) speed += 1000;
+    }
+
+    if (unit->counters.soldier_mood != df::unit::T_counters::MartialTrance)
+    {
+        if (unit->counters.pain >= 100 && unit->mood == -1)
+            speed += 1000;
+    }
+
+    // Hunger etc timers
+
+    bool is_adventure = (gamemode && *gamemode == game_mode::ADVENTURE);
+
+    if (!unit->flags3.bits.scuttle && Units::isBloodsucker(unit))
+    {
+        using namespace df::enums::misc_trait_type;
+
+        if (auto trait = Units::getMiscTrait(unit, TimeSinceSuckedBlood))
+        {
+            adjust_speed_rating(
+                speed, is_adventure, trait->value,
+                302400, 403200,                    // dwf 100; 200
+                1209600, 1209600, 1209600, 2419200 // adv 50; 75; 100; 200
+            );
+        }
+    }
+
+    adjust_speed_rating(
+        speed, is_adventure, unit->counters2.thirst_timer,
+        50000, 0x7fffffff, 172800, 172800, 172800, 345600
+    );
+    adjust_speed_rating(
+        speed, is_adventure, unit->counters2.hunger_timer,
+        75000, 0x7fffffff, 1209600, 1209600, 1209600, 2592000
+    );
+    adjust_speed_rating(
+        speed, is_adventure, unit->counters2.sleepiness_timer,
+        57600, 150000, 172800, 259200, 345600, 864000
+    );
+
+    // Activity state
+
+    if (unit->relations.draggee_id != -1) speed += 1000;
+
+    if (unit->flags1.bits.on_ground)
+        speed += 2000;
+    else if (unit->flags3.bits.on_crutch)
+    {
+        int skill = Units::getEffectiveSkill(unit, job_skill::CRUTCH_WALK);
+        speed += 2000 - 100*std::min(20, skill);
+    }
+
+    if (unit->flags1.bits.hidden_in_ambush && !Units::isMischievous(unit))
+    {
+        int skill = Units::getEffectiveSkill(unit, job_skill::SNEAK);
+        speed += 2000 - 100*std::min(20, skill);
+    }
+
+    if (unsigned(unit->counters2.paralysis-1) <= 98)
+        speed += unit->counters2.paralysis*10;
+    if (unsigned(unit->counters.webbed-1) <= 8)
+        speed += unit->counters.webbed*100;
+
+    // Muscle weight vs vascular tissue (?)
+
+    auto &attr_tissue = unit->body.physical_attr_tissues;
+    int muscle = attr_tissue[STRENGTH];
+    int blood = attr_tissue[AGILITY];
+    speed = std::max(speed*3/4, std::min(speed*3/2, int(int64_t(speed)*muscle/blood)));
+
+    // Attributes
+
+    int strength_attr = Units::getPhysicalAttrValue(unit, STRENGTH);
+    int agility_attr = Units::getPhysicalAttrValue(unit, AGILITY);
+
+    int total_attr = std::max(200, std::min(3800, strength_attr + agility_attr));
+    speed = ((total_attr-200)*(speed/2) + (3800-total_attr)*(speed*3/2))/3600;
+
+    // Stance
+
+    if (!unit->flags1.bits.on_ground && unit->status2.able_stand > 2)
+    {
+        // WTF
+        int as = unit->status2.able_stand;
+        int x = (as-1) - (as>>1);
+        int y = as - unit->status2.able_stand_impair;
+        if (unit->flags3.bits.on_crutch) y--;
+        y = y * 500 / x;
+        if (y > 0) speed += y;
+    }
+
+    // Mood
+
+    if (unit->mood == mood_type::Melancholy) speed += 8000;
+
+    // Inventory encumberance
+
+    int total_weight = calcInventoryWeight(unit);
+    int free_weight = std::max(1, muscle/10 + strength_attr*3);
+
+    if (free_weight < total_weight)
+    {
+        int delta = (total_weight - free_weight)/10 + 1;
+        if (!is_adventure)
+            delta = std::min(5000, delta);
+        speed += delta;
+    }
+
+    // skipped: unknown loop on inventory items that amounts to 0 change
+
+    if (is_adventure)
+    {
+        auto player = vector_get(world->units.active, 0);
+        if (player && player->id == unit->relations.group_leader_id)
+            speed = std::min(speed, computeMovementSpeed(player));
+    }
+
+    return std::min(10000, std::max(0, speed));
 }
 
 static bool noble_pos_compare(const Units::NoblePosition &a, const Units::NoblePosition &b)

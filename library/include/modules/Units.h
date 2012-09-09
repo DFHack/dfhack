@@ -221,6 +221,7 @@ DFHACK_EXPORT bool isCrazed(df::unit *unit);
 DFHACK_EXPORT bool isOpposedToLife(df::unit *unit);
 DFHACK_EXPORT bool hasExtravision(df::unit *unit);
 DFHACK_EXPORT bool isBloodsucker(df::unit *unit);
+DFHACK_EXPORT bool isMischievous(df::unit *unit);
 
 DFHACK_EXPORT df::unit_misc_trait *getMiscTrait(df::unit *unit, df::misc_trait_type type, bool create = false);
 
@@ -233,6 +234,7 @@ DFHACK_EXPORT bool isDwarf(df::unit *unit);
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 
 DFHACK_EXPORT int getEffectiveSkill(df::unit *unit, df::job_skill skill_id);
+DFHACK_EXPORT int computeMovementSpeed(df::unit *unit);
 
 struct NoblePosition {
     df::historical_entity *entity;

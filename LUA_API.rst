@@ -868,6 +868,17 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
+* ``dfhack.units.isCrazed(unit)``
+* ``dfhack.units.isOpposedToLife(unit)``
+* ``dfhack.units.hasExtravision(unit)``
+* ``dfhack.units.isBloodsucker(unit)``
+
+  Simple checks of caste attributes that can be modified by curses.
+
+* ``dfhack.units.getMiscTrait(unit, type[, create])``
+
+  Finds (or creates if requested) a misc trait object with the given id.
+
 * ``dfhack.units.isDead(unit)``
 
   The unit is completely dead and passive, or a ghost.
@@ -893,6 +904,10 @@ Units module
 
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
+
+* ``dfhack.units.getEffectiveSkill(unit, skill)``
+
+  Computes the effective rating for the given skill, taking into account exhaustion, pain etc.
 
 * ``dfhack.units.getNoblePositions(unit)``
 

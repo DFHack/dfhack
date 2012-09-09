@@ -501,82 +501,6 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
  * Unit tracking
  */
 
-static bool casteFlagSet(int race, int caste, df::caste_raw_flags flag)
-{
-    auto creature = df::creature_raw::find(race);
-    if (!creature)
-        return false;
-
-    auto craw = vector_get(creature->caste, caste);
-    if (!craw)
-        return false;
-
-    return craw->flags.is_set(flag);
-}
-
-static bool hasExtravision(df::unit *unit)
-{
-    if (unit->curse.rem_tags1.bits.EXTRAVISION)
-        return false;
-    if (unit->curse.add_tags1.bits.EXTRAVISION)
-        return true;
-    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::EXTRAVISION);
-}
-
-int getEffectiveSkill(df::unit *unit, df::job_skill skill_id)
-{
-    CHECK_NULL_POINTER(unit);
-
-    if (!unit->status.current_soul)
-        return 0;
-
-    int rating = 0;
-
-    df::enum_field<df::job_skill,int16_t> key(skill_id);
-    auto skill = binsearch_in_vector(unit->status.current_soul->skills, &df::unit_skill::id, key);
-    if (skill)
-        rating = std::max(0, int(skill->rating) - skill->rusty);
-
-    if (unit->counters.soldier_mood == df::unit::T_counters::None)
-    {
-        if (unit->counters.nausea > 0) rating >>= 1;
-        if (unit->counters.winded > 0) rating >>= 1;
-        if (unit->counters.stunned > 0) rating >>= 1;
-        if (unit->counters.dizziness > 0) rating >>= 1;
-        if (unit->counters2.fever > 0) rating >>= 1;
-    }
-
-    if (unit->counters.soldier_mood != df::unit::T_counters::MartialTrance)
-    {
-        if (unit->counters.pain >= 100 && unit->mood == -1) rating >>= 1;
-
-        if (!unit->flags3.bits.ghostly && !unit->flags3.bits.scuttle &&
-            !unit->flags2.bits.vision_good && !unit->flags2.bits.vision_damaged &&
-            !hasExtravision(unit))
-        {
-            rating >>= 2;
-        }
-        if (unit->counters2.exhaustion >= 2000)
-        {
-            rating = rating*3/4;
-            if (unit->counters2.exhaustion >= 4000)
-            {
-                rating = rating*3/4;
-                if (unit->counters2.exhaustion >= 6000)
-                    rating = rating*3/4;
-            }
-        }
-    }
-
-    // TODO: bloodsucker; advmode
-
-    if (unit->counters2.thirst_timer >= 50000) rating >>= 1;
-    if (unit->counters2.hunger_timer >= 75000) rating >>= 1;
-    if (unit->counters2.sleepiness_timer >= 150000) rating >>= 1;
-
-    return rating;
-}
-
 static int getAttrValue(const df::unit_attribute &attr)
 {
     return std::max(0, attr.value - attr.soft_demotion);
@@ -635,7 +559,7 @@ int getSpeedRating(df::unit *unit)
             speed *= 2;
         if (craw->flags.is_set(caste_raw_flags::SWIMS_LEARNED))
         {
-            int skill = getEffectiveSkill(unit, job_skill::SWIMMING);
+            int skill = Units::getEffectiveSkill(unit, job_skill::SWIMMING);
             if (skill > 1)
                 skill = skill * std::max(6, 21-skill) / 20;
         }
@@ -693,7 +617,7 @@ int getSpeedRating(df::unit *unit)
         speed += 2000;
     else if (unit->flags3.bits.on_crutch)
     {
-        int skill = getEffectiveSkill(unit, job_skill::CRUTCH_WALK);
+        int skill = Units::getEffectiveSkill(unit, job_skill::CRUTCH_WALK);
         speed += 2000 - 100*std::min(20, skill);
     }
 
@@ -739,7 +663,7 @@ int getSpeedRating(df::unit *unit)
     if (unit->mood == mood_type::Melancholy) speed += 8000;
 
     // Inventory encumberance
-    int armor_skill = getEffectiveSkill(unit, job_skill::ARMOR);
+    int armor_skill = Units::getEffectiveSkill(unit, job_skill::ARMOR);
     armor_skill = std::min(15, armor_skill);
 
     int inv_weight = 0, inv_weight_fraction = 0;

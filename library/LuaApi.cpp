@@ -79,6 +79,7 @@ distribution.
 #include "df/building_civzonest.h"
 #include "df/region_map_entry.h"
 #include "df/flow_info.h"
+#include "df/unit_misc_trait.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -813,12 +814,18 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getVisibleName),
     WRAPM(Units, getIdentity),
     WRAPM(Units, getNemesis),
+    WRAPM(Units, isCrazed),
+    WRAPM(Units, isOpposedToLife),
+    WRAPM(Units, hasExtravision),
+    WRAPM(Units, isBloodsucker),
+    WRAPM(Units, getMiscTrait),
     WRAPM(Units, isDead),
     WRAPM(Units, isAlive),
     WRAPM(Units, isSane),
     WRAPM(Units, isDwarf),
     WRAPM(Units, isCitizen),
     WRAPM(Units, getAge),
+    WRAPM(Units, getEffectiveSkill),
     WRAPM(Units, getProfessionName),
     WRAPM(Units, getCasteProfessionName),
     WRAPM(Units, getProfessionColor),

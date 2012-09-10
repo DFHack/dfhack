@@ -431,12 +431,17 @@ DEFINE_SORT_HANDLER(unit_sorters, dwarfmode, "/QueryBuilding/Some/Assign", scree
     sort_null_first(parameters);
 
     PARSE_SPEC("units", parameters);
-
     if (compute_order(*pout, L, top, &order, *ui_building_assign_units))
     {
         reorder_cursor(ui_building_item_cursor, order);
         reorder_vector(ui_building_assign_type, order);
         reorder_vector(ui_building_assign_units, order);
+        // this is for cages. cages need some extra sorting
+        if(ui_building_assign_items->size() == ui_building_assign_units->size())
+        {
+            reorder_vector(ui_building_assign_items, order);
+            reorder_vector(ui_building_assign_is_marked, order);
+        }
     }
 }
 

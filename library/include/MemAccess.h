@@ -283,6 +283,9 @@ namespace DFHack
 
             /// modify permisions of memory range
             bool setPermisions(const t_memrange & range,const t_memrange &trgrange);
+
+            /// write a possibly read-only memory area
+            bool patchMemory(void *target, const void* src, size_t count);
     private:
         VersionInfo * my_descriptor;
         PlatformSpecific *d;

@@ -14,8 +14,6 @@
 #     DF_GDB_OPTS: Options to pass to gdb, if it's being run
 #     DF_VALGRIND_OPTS: Options to pass to valgrind, if it's being run
 #     DF_HELGRIND_OPTS: Options to pass to helgrind, if it's being run
-#     DF_RESET_OPTS: Options to pass the reset command at the end of
-#       this script
 #     DF_POST_CMD: Shell command to be run at very end of script
 
 DF_DIR=$(dirname "$0")
@@ -32,6 +30,9 @@ fi
 if [ -r "./$RC" ]; then
     . "./$RC"
 fi
+
+# Save current terminal settings
+old_tty_settings=$(stty -g)
 
 # Now run
 
@@ -67,8 +68,9 @@ case "$1" in
     ;;
 esac
 
-# Reset terminal to sane state in case of a crash
-# reset $DF_RESET_OPTS
+# Restore previous terminal settings
+stty "$old_tty_settings"
+echo -e "\n"
 
 if [ -n "$DF_POST_CMD" ]; then
     eval $DF_POST_CMD

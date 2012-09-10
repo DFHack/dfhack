@@ -62,7 +62,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // George Vulov for MacOSX
 #ifndef __LINUX__
-#define TEMP_FAILURE_RETRY(expr) \
+#define TMP_FAILURE_RETRY(expr) \
     ({ long int _res; \
         do _res = (long int) (expr); \
         while (_res == -1L && errno == EINTR); \
@@ -155,7 +155,7 @@ namespace DFHack
             FD_ZERO(&descriptor_set);
             FD_SET(STDIN_FILENO, &descriptor_set);
             FD_SET(exit_pipe[0], &descriptor_set);
-            int ret = TEMP_FAILURE_RETRY(
+            int ret = TMP_FAILURE_RETRY(
                 select (FD_SETSIZE,&descriptor_set, NULL, NULL, NULL)
             );
             if(ret == -1)
@@ -165,7 +165,7 @@ namespace DFHack
             if (FD_ISSET(STDIN_FILENO, &descriptor_set))
             {
                 // read byte from stdin
-                ret = TEMP_FAILURE_RETRY(
+                ret = TMP_FAILURE_RETRY(
                     read(STDIN_FILENO, &out, 1)
                 );
                 if(ret == -1)
@@ -245,7 +245,8 @@ namespace DFHack
             if(rawmode)
             {
                 const char * clr = "\033c\033[3J\033[H";
-                ::write(STDIN_FILENO,clr,strlen(clr));
+                if (::write(STDIN_FILENO,clr,strlen(clr)) == -1)
+                    ;
             }
             else
             {
@@ -269,13 +270,14 @@ namespace DFHack
             {
                 const char * colstr = getANSIColor(index);
                 int lstr = strlen(colstr);
-                ::write(STDIN_FILENO,colstr,lstr);
+                if (::write(STDIN_FILENO,colstr,lstr) == -1)
+                    ;
             }
         }
         /// Reset color to default
         void reset_color(void)
         {
-            color(Console::COLOR_RESET);
+            color(COLOR_RESET);
             if(!rawmode)
                 fflush(dfout_C);
         }
@@ -656,7 +658,8 @@ bool Console::init(bool sharing)
         inited = false;
         return false;
     }
-    freopen("stdout.log", "w", stdout);
+    if (!freopen("stdout.log", "w", stdout))
+        ;
     d = new Private();
     // make our own weird streams so our IO isn't redirected
     d->dfout_C = fopen("/dev/tty", "w");
@@ -664,7 +667,8 @@ bool Console::init(bool sharing)
     clear();
     d->supported_terminal = !isUnsupportedTerm() &&  isatty(STDIN_FILENO);
     // init the exit mechanism
-    pipe(d->exit_pipe);
+    if (pipe(d->exit_pipe) == -1)
+        ;
     FD_ZERO(&d->descriptor_set);
     FD_SET(STDIN_FILENO, &d->descriptor_set);
     FD_SET(d->exit_pipe[0], &d->descriptor_set);

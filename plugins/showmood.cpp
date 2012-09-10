@@ -12,6 +12,7 @@
 #include "df/world.h"
 #include "df/job.h"
 #include "df/job_item.h"
+#include "df/job_item_ref.h"
 #include "df/general_ref.h"
 #include "df/builtin_mats.h"
 #include "df/inorganic_raw.h"
@@ -165,6 +166,11 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             out.print("not yet claimed a workshop but will want");
         out.print(" the following items:\n");
 
+        // total amount of stuff fetched so far
+        int count_got = 0;
+        for (size_t i = 0; i < job->items.size(); i++)
+            count_got += job->items[i]->item->getTotalDimension();
+
         for (size_t i = 0; i < job->job_items.size(); i++)
         {
             df::job_item *item = job->job_items[i];
@@ -267,7 +273,13 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                 }
             }
 
-            out.print(", quantity %i\n", item->quantity);
+            // total amount of stuff fetched for this requirement
+            // XXX may fail with cloth/thread/bars if need 1 and fetch 2
+            int got = count_got;
+            if (got > item->quantity)
+                got = item->quantity;
+            out.print(", quantity %i (got %i)\n", item->quantity, got);
+            count_got -= got;
         }
     }
     if (!found)

@@ -93,6 +93,11 @@ DFHACK_EXPORT bool Read (const uint32_t index, t_building & building);
 DFHACK_EXPORT bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
 
 /**
+ * Sets the owner unit for the building.
+ */
+DFHACK_EXPORT bool setOwner(df::building *building, df::unit *owner);
+
+/**
  * Find the building located at the specified tile.
  * Does not work on civzones.
  */

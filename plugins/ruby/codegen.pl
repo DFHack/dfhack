@@ -8,7 +8,7 @@ use XML::LibXML;
 our @lines_rb;
 
 my $os;
-if ($^O =~ /linux/i) {
+if ($^O =~ /linux/i or $^O =~ /darwin/i) {
     $os = 'linux';
 } else {
     $os = 'windows';
@@ -175,10 +175,10 @@ sub render_bitfield_fields {
 
         if ($name)
         {
-            if ($count == 1) {
-                push @lines_rb, "field(:$name, 0) { bit $shift }";
-            } elsif ($enum) {
+            if ($enum) {
                 push @lines_rb, "field(:$name, 0) { bits $shift, $count, $enum }";
+            } elsif ($count == 1) {
+                push @lines_rb, "field(:$name, 0) { bit $shift }";
             } else {
                 push @lines_rb, "field(:$name, 0) { bits $shift, $count }";
             }
@@ -298,8 +298,26 @@ sub render_field_reftarget {
     return if (!$tg);
     my $tgvec = $tg->getAttribute('instance-vector');
     return if (!$tgvec);
+    my $idx = $tg->getAttribute('key-field');
 
-    render_field_refto($parent, $name, $tgvec);
+    $tgvec =~ s/^\$global/df/;
+    return if $tgvec !~ /^[\w\.]+$/;
+
+    my $tgname = "${name}_tg";
+    $tgname =~ s/_id(.?.?)_tg/_tg$1/;
+
+    for my $othername (map { $_->getAttribute('name') } $parent->findnodes('child::ld:field')) {
+        $tgname .= '_' if ($othername and $tgname eq $othername);
+    }
+
+    if ($idx) {
+        my $fidx = '';
+        $fidx = ', :' . $idx if ($idx ne 'id');
+        push @lines_rb, "def $tgname ; ${tgvec}.binsearch($name$fidx) ; end";
+    } else {
+        push @lines_rb, "def $tgname ; ${tgvec}[$name] ; end";
+    }
+
 }
 
 sub render_field_refto {
@@ -329,9 +347,9 @@ sub render_container_reftarget {
     return if (!$tg);
     my $tgvec = $tg->getAttribute('instance-vector');
     return if (!$tgvec);
+    my $idx = $tg->getAttribute('key-field');
 
     $tgvec =~ s/^\$global/df/;
-    $tgvec =~ s/\[\$\]$//;
     return if $tgvec !~ /^[\w\.]+$/;
 
     my $tgname = "${name}_tg";
@@ -341,7 +359,13 @@ sub render_container_reftarget {
         $tgname .= '_' if ($othername and $tgname eq $othername);
     }
 
-    push @lines_rb, "def $tgname ; $name.map { |i| ${tgvec}[i] } ; end";
+    if ($idx) {
+        my $fidx = '';
+        $fidx = ', :' . $idx if ($idx ne 'id');
+        push @lines_rb, "def $tgname ; $name.map { |i| $tgvec.binsearch(i$fidx) } ; end";
+    } else {
+        push @lines_rb, "def $tgname ; $name.map { |i| ${tgvec}[i] } ; end";
+    }
 }
 
 sub render_class_vmethods {
@@ -516,7 +540,9 @@ sub get_field_align {
 
     if ($meta eq 'number') {
         $al = $field->getAttribute('ld:bits')/8;
-        $al = 4 if $al > 4;
+        # linux aligns int64_t to 4, windows to 8
+        # floats are 4 bytes so no pb
+        $al = 4 if ($al > 4 and ($os eq 'linux' or $al != 8));
     } elsif ($meta eq 'global') {
         $al = get_global_align($field);
     } elsif ($meta eq 'compound') {

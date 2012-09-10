@@ -114,6 +114,28 @@ command_result cleanunits (color_ostream &out)
     return CR_OK;
 }
 
+command_result cleanplants (color_ostream &out)
+{
+    // Invoked from clean(), already suspended
+    int cleaned_plants = 0, cleaned_total = 0;
+    for (size_t i = 0; i < world->plants.all.size(); i++)
+    {
+        df::plant *plant = world->plants.all[i];
+
+        if (plant->contaminants.size())
+        {
+            for (size_t j = 0; j < plant->contaminants.size(); j++)
+                delete plant->contaminants[j];
+            cleaned_plants++;
+            cleaned_total += plant->contaminants.size();
+            plant->contaminants.clear();
+        }
+    }
+    if (cleaned_total)
+        out.print("Removed %d contaminants from %d plants.\n", cleaned_total, cleaned_plants);
+    return CR_OK;
+}
+
 command_result spotclean (color_ostream &out, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
@@ -153,6 +175,7 @@ command_result clean (color_ostream &out, vector <string> & parameters)
     bool mud = false;
     bool units = false;
     bool items = false;
+    bool plants = false;
     for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "map")
@@ -161,11 +184,14 @@ command_result clean (color_ostream &out, vector <string> & parameters)
             units = true;
         else if(parameters[i] == "items")
             items = true;
+        else if(parameters[i] == "plants")
+            plants = true;
         else if(parameters[i] == "all")
         {
             map = true;
             items = true;
             units = true;
+            plants = true;
         }
         else if(parameters[i] == "snow")
             snow = true;
@@ -174,7 +200,7 @@ command_result clean (color_ostream &out, vector <string> & parameters)
         else
             return CR_WRONG_USAGE;
     }
-    if(!map && !units && !items)
+    if(!map && !units && !items && !plants)
         return CR_WRONG_USAGE;
 
     CoreSuspender suspend;
@@ -185,6 +211,8 @@ command_result clean (color_ostream &out, vector <string> & parameters)
         cleanunits(out);
     if(items)
         cleanitems(out);
+    if(plants)
+        cleanplants(out);
     return CR_OK;
 }
 
@@ -198,6 +226,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  map        - clean the map tiles\n"
         "  items      - clean all items\n"
         "  units      - clean all creatures\n"
+        "  plants     - clean all plants\n"
         "  all        - clean everything.\n"
         "More options for 'map':\n"
         "  snow       - also remove snow\n"

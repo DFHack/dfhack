@@ -1377,8 +1377,6 @@ For exemple, to grow 40 plump helmet spawn:
 
     growcrops plump 40
 
-This is a ruby script and needs the ruby plugin.
-
 
 removebadthoughts
 =================
@@ -1396,8 +1394,6 @@ you unpause.
 With the optional ``-v`` parameter, the script will dump the negative thoughts
 it removed.
 
-This is a ruby script and needs the ruby plugin.
-
 
 slayrace
 ========
@@ -1405,16 +1401,48 @@ Kills any unit of a given race.
 
 With no argument, lists the available races.
 
-Any non-dead non-caged unit of the specified race gets its ``blood_count``
-set to 0, which means immediate death at the next game tick. May not work
-on vampires and other weird creatures.
+With the special argument 'him', targets only the selected creature.
 
-Targets any unit on a revealed tile of the map, including ambushers. Ex:
+Any non-dead non-caged unit of the specified race gets its ``blood_count``
+set to 0, which means immediate death at the next game tick. For creatures
+such as vampires, also set animal.vanish_countdown to 2.
+
+An alternate mode is selected by adding a 2nd argument to the command,
+``magma``. In this case, a column of 7/7 magma is generated on top of the
+targets until they die (Warning: do not call on magma-safe creatures. Also,
+using this mode for birds is not recommanded.)
+
+Will target any unit on a revealed tile of the map, including ambushers.
+
+Ex:
 :: 
     slayrace gob
 
-To kill a single creature in the same way, you can use the following line,
-after selecting the unit with the 'v' cursor:
+To kill a single creature, select the unit with the 'v' cursor and:
 :: 
-    rb_eval df.unit_find.body.blood_count = 0
+    slayrace him
+
+To purify all elves on the map with fire (may have side-effects):
+:: 
+    slayrace elve magma
+
+
+magmasource
+===========
+Create an infinite magma source on a tile.
+
+This script registers a map tile as a magma source, and every 12 game ticks
+that tile receives 1 new unit of flowing magma.
+
+Place the game cursor where you want to create the source (must be a
+flow-passable tile, and not too high in the sky) and call
+:: 
+    magmasource here
+
+To add more than 1 unit everytime, call the command again.
+
+To delete one source, place the cursor over its tile and use ``delete-here``.
+To remove all placed sources, call ``magmasource stop``.
+
+With no argument, this command shows an help message and list existing sources.
 

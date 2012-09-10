@@ -57,10 +57,10 @@ function is_container(obj)
 end
 
 -- Make a sequence of numbers in 1..size
-function make_index_sequence(size)
+function make_index_sequence(istart,iend)
     local index = {}
-    for i=1,size do
-        index[i] = i
+    for i=istart,iend do
+        index[i-istart+1] = i
     end
     return index
 end
@@ -114,7 +114,7 @@ function make_sort_order(data,ordering)
     end
 
     -- Make an order table
-    local index = make_index_sequence(size)
+    local index = make_index_sequence(1,size)
 
     -- Sort the ordering table
     table.sort(index, function(ia,ib)
@@ -361,6 +361,26 @@ function insert_or_update(vector,item,field,cmp)
     return added,cur,pos
 end
 
+-- Calls a method with a string temporary
+function call_with_string(obj,methodname,...)
+    return dfhack.with_temp_object(
+        df.new "string",
+        function(str,obj,methodname,...)
+            obj[methodname](obj,str,...)
+            return str.value
+        end,
+        obj,methodname,...
+    )
+end
+
+function getBuildingName(building)
+    return call_with_string(building, 'getName')
+end
+
+function getBuildingCenter(building)
+    return xyz2pos(building.centerx, building.centery, building.z)
+end
+
 -- Ask a yes-no question
 function prompt_yes_no(msg,default)
     local prompt = msg
@@ -379,7 +399,7 @@ function prompt_yes_no(msg,default)
             elseif string.match(rv,'^[Nn]') then
                 return false
             elseif rv == 'abort' then
-                qerror('User abort in utils.prompt_yes_no()')
+                qerror('User abort')
             elseif rv == '' and default ~= nil then
                 return default
             end
@@ -393,7 +413,7 @@ function prompt_input(prompt,check,quit_str)
     while true do
         local rv = dfhack.lineedit(prompt)
         if rv == quit_str then
-            return nil
+            qerror('User abort')
         end
         local rtbl = table.pack(check(rv))
         if rtbl[1] then

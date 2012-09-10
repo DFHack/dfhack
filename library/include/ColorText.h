@@ -41,30 +41,32 @@ namespace dfproto
 
 namespace  DFHack
 {
+    enum color_value
+    {
+        COLOR_RESET = -1,
+        COLOR_BLACK = 0,
+        COLOR_BLUE,
+        COLOR_GREEN,
+        COLOR_CYAN,
+        COLOR_RED,
+        COLOR_MAGENTA,
+        COLOR_BROWN,
+        COLOR_GREY,
+        COLOR_DARKGREY,
+        COLOR_LIGHTBLUE,
+        COLOR_LIGHTGREEN,
+        COLOR_LIGHTCYAN,
+        COLOR_LIGHTRED,
+        COLOR_LIGHTMAGENTA,
+        COLOR_YELLOW,
+        COLOR_WHITE,
+        COLOR_MAX = COLOR_WHITE
+    };
+
     class DFHACK_EXPORT color_ostream : public std::ostream
     {
     public:
-        enum color_value
-        {
-            COLOR_RESET = -1,
-            COLOR_BLACK = 0,
-            COLOR_BLUE,
-            COLOR_GREEN,
-            COLOR_CYAN,
-            COLOR_RED,
-            COLOR_MAGENTA,
-            COLOR_BROWN,
-            COLOR_GREY,
-            COLOR_DARKGREY,
-            COLOR_LIGHTBLUE,
-            COLOR_LIGHTGREEN,
-            COLOR_LIGHTCYAN,
-            COLOR_LIGHTRED,
-            COLOR_LIGHTMAGENTA,
-            COLOR_YELLOW,
-            COLOR_WHITE,
-            COLOR_MAX = COLOR_WHITE
-        };
+        typedef DFHack::color_value color_value;
 
     private:
         color_value cur_color;

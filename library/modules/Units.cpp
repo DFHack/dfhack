@@ -948,3 +948,40 @@ std::string DFHack::Units::getCasteProfessionName(int race, int casteid, df::pro
 
     return Translation::capitalize(prof, true);
 }
+
+int8_t DFHack::Units::getProfessionColor(df::unit *unit, bool ignore_noble)
+{
+    std::vector<NoblePosition> np;
+
+    if (!ignore_noble && getNoblePositions(&np, unit))
+    {
+        if (np[0].position->flags.is_set(entity_position_flags::COLOR))
+            return np[0].position->color[0] + np[0].position->color[2] * 8;
+    }
+
+    return getCasteProfessionColor(unit->race, unit->caste, unit->profession);
+}
+
+int8_t DFHack::Units::getCasteProfessionColor(int race, int casteid, df::profession pid)
+{
+    // make sure it's an actual profession
+    if (pid < 0 || !is_valid_enum_item(pid))
+        return 3;
+
+    // If it's not a Peasant, it's hardcoded
+    if (pid != profession::STANDARD)
+        return ENUM_ATTR(profession, color, pid);
+
+    if (auto creature = df::creature_raw::find(race))
+    {
+        if (auto caste = vector_get(creature->caste, casteid))
+        {
+            if (caste->flags.is_set(caste_raw_flags::CASTE_COLOR))
+                return caste->caste_color[0] + caste->caste_color[2] * 8;
+        }
+        return creature->color[0] + creature->color[2] * 8;
+    }
+
+    // default to dwarven peasant color
+    return 3;
+}

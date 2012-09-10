@@ -420,6 +420,7 @@ bool isTame(df::unit* creature)
     {
         switch (creature->training_level)
         {
+        case df::animal_training_level::SemiWild: //??
         case df::animal_training_level::Trained:
         case df::animal_training_level::WellTrained:
         case df::animal_training_level::SkilfullyTrained:
@@ -429,7 +430,6 @@ bool isTame(df::unit* creature)
         case df::animal_training_level::Domesticated:
             tame=true;
             break;
-        case df::animal_training_level::SemiWild: //??
         case df::animal_training_level::Unk8:     //??
         case df::animal_training_level::WildUntamed:
         default:
@@ -1232,7 +1232,7 @@ bool isFreeEgglayer(df::unit * unit)
 {
     if( !isDead(unit) && !isUndead(unit)
         && isFemale(unit)
-        && isDomesticated(unit) // better strict than sorry (medium trained wild animals can revert into wild state)
+        && isTame(unit) 
         && isOwnCiv(unit)
         && isEggLayer(unit)
         && !isAssigned(unit)
@@ -1856,14 +1856,18 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             // if followed by another parameter, check if it's numeric
             if(i < parameters.size()-1)
             {
-                stringstream ss(parameters[i+1]);
-                int new_building = -1;
-                ss >> new_building;
-                if(new_building != -1)
+                auto & str = parameters[i+1];
+                if(str.size() > 0 && str[0] >= '0' && str[0] <= '9')
                 {
-                    i++;
-                    target_building = new_building;
-                    out << "Assign selected unit(s) to building #" << target_building <<std::endl;
+                    stringstream ss(parameters[i+1]);
+                    int new_building = -1;
+                    ss >> new_building;
+                    if(new_building != -1)
+                    {
+                        i++;
+                        target_building = new_building;
+                        out << "Assign selected unit(s) to building #" << target_building <<std::endl;
+                    }
                 }
             }
             if(target_building == -1)

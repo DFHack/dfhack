@@ -39,6 +39,7 @@ distribution.
 
 #include "modules/World.h"
 #include "modules/Gui.h"
+#include "modules/Screen.h"
 #include "modules/Job.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
@@ -83,6 +84,8 @@ distribution.
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
+
+using Screen::Pen;
 
 void dfhack_printerr(lua_State *S, const std::string &str);
 
@@ -177,6 +180,68 @@ static df::coord CheckCoordXYZ(lua_State *state, int base, bool vararg = false)
         );
     }
     return p;
+}
+
+template<class T>
+static bool get_int_field(lua_State *L, T *pf, int idx, const char *name, int defval)
+{
+    lua_getfield(L, idx, name);
+    bool nil = lua_isnil(L, -1);
+    if (nil) *pf = T(defval);
+    else if (lua_isnumber(L, -1)) *pf = T(lua_tointeger(L, -1));
+    else luaL_error(L, "Field %s is not a number.", name);
+    lua_pop(L, 1);
+    return !nil;
+}
+
+static bool get_char_field(lua_State *L, char *pf, int idx, const char *name, char defval)
+{
+    lua_getfield(L, idx, name);
+
+    if (lua_type(L, -1) == LUA_TSTRING)
+    {
+        *pf = lua_tostring(L, -1)[0];
+        lua_pop(L, 1);
+        return true;
+    }
+    else
+    {
+        lua_pop(L, 1);
+        return get_int_field(L, pf, idx, name, defval);
+    }
+}
+
+static void decode_pen(lua_State *L, Pen &pen, int idx)
+{
+    idx = lua_absindex(L, idx);
+
+    get_char_field(L, &pen.ch, idx, "ch", 0);
+
+    get_int_field(L, &pen.fg, idx, "fg", 7);
+    get_int_field(L, &pen.bg, idx, "bg", 0);
+
+    lua_getfield(L, idx, "bold");
+    if (lua_isnil(L, -1))
+    {
+        pen.bold = (pen.fg & 8) != 0;
+        pen.fg &= 7;
+    }
+    else pen.bold = lua_toboolean(L, -1);
+    lua_pop(L, 1);
+
+    get_int_field(L, &pen.tile, idx, "tile", 0);
+
+    bool tcolor = get_int_field(L, &pen.tile_fg, idx, "tile_fg", 7);
+    tcolor = get_int_field(L, &pen.tile_bg, idx, "tile_bg", 0) || tcolor;
+
+    if (tcolor)
+        pen.tile_mode = Pen::TileColor;
+    else
+    {
+        lua_getfield(L, idx, "tile_color");
+        pen.tile_mode = (lua_toboolean(L, -1) ? Pen::CharColor : Pen::AsIs);
+        lua_pop(L, 1);
+    }
 }
 
 /**************************************************
@@ -684,6 +749,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getCurViewscreen),
     WRAPM(Gui, getFocusString),
+    WRAPM(Gui, getCurFocus),
     WRAPM(Gui, getSelectedWorkshopJob),
     WRAPM(Gui, getSelectedJob),
     WRAPM(Gui, getSelectedUnit),
@@ -749,6 +815,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getAge),
     WRAPM(Units, getProfessionName),
     WRAPM(Units, getCasteProfessionName),
+    WRAPM(Units, getProfessionColor),
+    WRAPM(Units, getCasteProfessionColor),
     { NULL, NULL }
 };
 
@@ -919,6 +987,7 @@ static bool buildings_containsTile(df::building *bld, int x, int y, bool room) {
 }
 
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
+    WRAPM(Buildings, setOwner),
     WRAPM(Buildings, allocInstance),
     WRAPM(Buildings, checkFreeTiles),
     WRAPM(Buildings, countExtentTiles),
@@ -1016,6 +1085,164 @@ static int constructions_designateRemove(lua_State *L)
 
 static const luaL_Reg dfhack_constructions_funcs[] = {
     { "designateRemove", constructions_designateRemove },
+    { NULL, NULL }
+};
+
+/***** Screen module *****/
+
+static const LuaWrapper::FunctionReg dfhack_screen_module[] = {
+    WRAPM(Screen, inGraphicsMode),
+    WRAPM(Screen, clear),
+    WRAPM(Screen, invalidate),
+    { NULL, NULL }
+};
+
+static int screen_getMousePos(lua_State *L)
+{
+    auto pos = Screen::getMousePos();
+    lua_pushinteger(L, pos.x);
+    lua_pushinteger(L, pos.y);
+    return 2;
+}
+
+static int screen_getWindowSize(lua_State *L)
+{
+    auto pos = Screen::getWindowSize();
+    lua_pushinteger(L, pos.x);
+    lua_pushinteger(L, pos.y);
+    return 2;
+}
+
+static int screen_paintTile(lua_State *L)
+{
+    Pen pen;
+    decode_pen(L, pen, 1);
+    int x = luaL_checkint(L, 2);
+    int y = luaL_checkint(L, 3);
+    if (lua_gettop(L) >= 4 && !lua_isnil(L, 4))
+    {
+        if (lua_type(L, 4) == LUA_TSTRING)
+            pen.ch = lua_tostring(L, 4)[0];
+        else
+            pen.ch = luaL_checkint(L, 4);
+    }
+    if (lua_gettop(L) >= 5 && !lua_isnil(L, 5))
+        pen.tile = luaL_checkint(L, 5);
+    lua_pushboolean(L, Screen::paintTile(pen, x, y));
+    return 1;
+}
+
+static int screen_paintString(lua_State *L)
+{
+    Pen pen;
+    decode_pen(L, pen, 1);
+    int x = luaL_checkint(L, 2);
+    int y = luaL_checkint(L, 3);
+    const char *text = luaL_checkstring(L, 4);
+    lua_pushboolean(L, Screen::paintString(pen, x, y, text));
+    return 1;
+}
+
+static int screen_fillRect(lua_State *L)
+{
+    Pen pen;
+    decode_pen(L, pen, 1);
+    int x1 = luaL_checkint(L, 2);
+    int y1 = luaL_checkint(L, 3);
+    int x2 = luaL_checkint(L, 4);
+    int y2 = luaL_checkint(L, 5);
+    lua_pushboolean(L, Screen::fillRect(pen, x1, y1, x2, y2));
+    return 1;
+}
+
+static int screen_findGraphicsTile(lua_State *L)
+{
+    auto str = luaL_checkstring(L, 1);
+    int x = luaL_checkint(L, 2);
+    int y = luaL_checkint(L, 3);
+    int tile, tile_gs;
+    if (Screen::findGraphicsTile(str, x, y, &tile, &tile_gs))
+    {
+        lua_pushinteger(L, tile);
+        lua_pushinteger(L, tile_gs);
+        return 2;
+    }
+    else
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+}
+
+namespace {
+
+int screen_show(lua_State *L)
+{
+    df::viewscreen *before = NULL;
+    if (lua_gettop(L) >= 2)
+        before = Lua::CheckDFObject<df::viewscreen>(L, 2);
+
+    df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, true);
+
+    bool ok = Screen::show(screen, before);
+
+    // If it is a table, get_pointer created a new object. Don't leak it.
+    if (!ok && lua_istable(L, 1))
+        delete screen;
+
+    lua_pushboolean(L, ok);
+    return 1;
+}
+
+static int screen_dismiss(lua_State *L)
+{
+    df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, false);
+    Screen::dismiss(screen);
+    return 0;
+}
+
+static int screen_isDismissed(lua_State *L)
+{
+    df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, false);
+    lua_pushboolean(L, Screen::isDismissed(screen));
+    return 1;
+}
+
+static int screen_doSimulateInput(lua_State *L)
+{
+    auto screen = Lua::CheckDFObject<df::viewscreen>(L, 1);
+    luaL_checktype(L, 2, LUA_TTABLE);
+
+    if (!screen)
+        luaL_argerror(L, 1, "NULL screen");
+
+    int sz = lua_rawlen(L, 2);
+    std::set<df::interface_key> keys;
+
+    for (int j = 1; j <= sz; j++)
+    {
+        lua_rawgeti(L, 2, j);
+        keys.insert((df::interface_key)lua_tointeger(L, -1));
+        lua_pop(L, 1);
+    }
+
+    screen->feed(&keys);
+    return 0;
+}
+
+}
+
+static const luaL_Reg dfhack_screen_funcs[] = {
+    { "getMousePos", screen_getMousePos },
+    { "getWindowSize", screen_getWindowSize },
+    { "paintTile", screen_paintTile },
+    { "paintString", screen_paintString },
+    { "fillRect", screen_fillRect },
+    { "findGraphicsTile", screen_findGraphicsTile },
+    { "show", &Lua::CallWithCatchWrapper<screen_show> },
+    { "dismiss", screen_dismiss },
+    { "isDismissed", screen_isDismissed },
+    { "_doSimulateInput", screen_doSimulateInput },
     { NULL, NULL }
 };
 
@@ -1124,6 +1351,17 @@ static int internal_getMemRanges(lua_State *L)
     return 1;
 }
 
+static int internal_patchMemory(lua_State *L)
+{
+    void *dest = checkaddr(L, 1);
+    void *src = checkaddr(L, 2);
+    int size = luaL_checkint(L, 3);
+    if (size < 0) luaL_argerror(L, 1, "negative size");
+    bool ok = Core::getInstance().p->patchMemory(dest, src, size);
+    lua_pushboolean(L, ok);
+    return 1;
+}
+
 static int internal_memmove(lua_State *L)
 {
     void *dest = checkaddr(L, 1);
@@ -1214,6 +1452,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "setAddress", internal_setAddress },
     { "getVTable", internal_getVTable },
     { "getMemRanges", internal_getMemRanges },
+    { "patchMemory", internal_patchMemory },
     { "memmove", internal_memmove },
     { "memcmp", internal_memcmp },
     { "memscan", internal_memscan },
@@ -1240,5 +1479,6 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "burrows", dfhack_burrows_module, dfhack_burrows_funcs);
     OpenModule(state, "buildings", dfhack_buildings_module, dfhack_buildings_funcs);
     OpenModule(state, "constructions", dfhack_constructions_module);
+    OpenModule(state, "screen", dfhack_screen_module, dfhack_screen_funcs);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

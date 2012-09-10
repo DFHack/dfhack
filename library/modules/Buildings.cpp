@@ -49,6 +49,7 @@ using namespace DFHack;
 #include "df/ui_look_list.h"
 #include "df/d_init.h"
 #include "df/item.h"
+#include "df/unit.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/general_ref_building_holderst.h"
@@ -174,6 +175,44 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
         building_def * temp = *iter;
         btypes[temp->id] = temp->code;
     }
+    return true;
+}
+
+bool Buildings::setOwner(df::building *bld, df::unit *unit)
+{
+    CHECK_NULL_POINTER(bld);
+
+    if (!bld->is_room)
+        return false;
+    if (bld->owner == unit)
+        return true;
+
+    if (bld->owner)
+    {
+        auto &blist = bld->owner->owned_buildings;
+        vector_erase_at(blist, linear_index(blist, bld));
+
+        if (auto spouse = df::unit::find(bld->owner->relations.spouse_id))
+        {
+            auto &blist = spouse->owned_buildings;
+            vector_erase_at(blist, linear_index(blist, bld));
+        }
+    }
+
+    bld->owner = unit;
+
+    if (unit)
+    {
+        unit->owned_buildings.push_back(bld);
+
+        if (auto spouse = df::unit::find(unit->relations.spouse_id))
+        {
+            auto &blist = spouse->owned_buildings;
+            if (bld->canUseSpouseRoom() && linear_index(blist, bld) < 0)
+                blist.push_back(bld);
+        }
+    }
+
     return true;
 }
 
@@ -991,7 +1030,7 @@ bool Buildings::deconstruct(df::building *bld)
     // Assume: no parties.
     unlinkRooms(bld);
     // Assume: not unit destroy target
-    vector_erase_at(ui->unk8.unk10, linear_index(ui->unk8.unk10, bld));
+    vector_erase_at(ui->tax_collection.rooms, linear_index(ui->tax_collection.rooms, bld));
     // Assume: not used in punishment
     // Assume: not used in non-own jobs
     // Assume: does not affect pathfinding

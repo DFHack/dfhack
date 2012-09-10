@@ -275,7 +275,7 @@ namespace DFHack
         /// Reset color to default
         void reset_color(void)
         {
-            color(Console::COLOR_RESET);
+            color(COLOR_RESET);
             if(!rawmode)
                 fflush(dfout_C);
         }

@@ -7,6 +7,7 @@ module DFHack
             def _at(addr) ; d = dup ; d._memaddr = addr ; d ; end
             def _get ; self ; end
             def _cpp_init ; end
+            def _cpp_delete ; end
         end
 
         class Compound < MemStruct
@@ -34,8 +35,8 @@ module DFHack
                 def float
                     Float.new
                 end
-                def bit(shift)
-                    BitField.new(shift, 1)
+                def bit(shift, enum=nil)
+                    BitField.new(shift, 1, enum)
                 end
                 def bits(shift, len, enum=nil)
                     BitField.new(shift, len, enum)
@@ -87,7 +88,7 @@ module DFHack
                 def compound(name=nil, &b)
                     m = Class.new(Compound)
                     DFHack.const_set(name, m) if name
-                    m.instance_eval(&b)
+                    m.class_eval(&b)
                     m.new
                 end
                 def rtti_classname(n)
@@ -113,6 +114,11 @@ module DFHack
             end
             def _cpp_init
                 _fields_ancestors.each { |n, o, s| s._at(@_memaddr+o)._cpp_init }
+            end
+            def _cpp_delete
+                _fields_ancestors.each { |n, o, s| s._at(@_memaddr+o)._cpp_delete }
+                DFHack.free(@_memaddr)
+                @_memaddr = nil     # turn future segfaults in harmless ruby exceptions
             end
             def _set(h)
                 case h
@@ -147,7 +153,7 @@ module DFHack
                 out << '>'
             end
             def inspect_field(n, o, s)
-                if s.kind_of?(BitField) and s._len == 1
+                if s.kind_of?(BitField) and s._len == 1 and not s._enum
                     send(n) ? n.to_s : ''
                 elsif s.kind_of?(Pointer)
                     "#{n}=#{s._at(@_memaddr+o).inspect}"
@@ -242,7 +248,7 @@ module DFHack
 
             def _get
                 v = DFHack.memory_read_int32(@_memaddr) >> @_shift
-                if @_len == 1
+                if @_len == 1 and not @_enum
                     ((v & 1) == 0) ? false : true
                 else
                     v &= _mask
@@ -252,7 +258,7 @@ module DFHack
             end
 
             def _set(v)
-                if @_len == 1
+                if @_len == 1 and (not @_enum or v == false or v == true)
                     # allow 'bit = 0'
                     v = (v && v != 0 ? 1 : 0)
                 end
@@ -277,6 +283,7 @@ module DFHack
             def _get
                 addr = _getp
                 return if addr == 0
+                return addr if not @_tg
                 @_tg._at(addr)._get
             end
 
@@ -353,7 +360,10 @@ module DFHack
             end
             def empty? ; length == 0 ; end
             def flatten ; map { |e| e.respond_to?(:flatten) ? e.flatten : e }.flatten ; end
-            def index(elem=nil, &b) ; (0...length).find { |i| b ? b[self[i]] : self[i] == elem } ; end
+            def index(e=nil, &b) ; (0...length).find { |i| b ? b[self[i]] : self[i] == e } ; end
+            def map! ; (0...length).each { |i| self[i] = yield(self[i]) } ; end
+            def first ; self[0] ; end
+            def last ; self[length-1] ; end
         end
         class StaticArray < MemStruct
             attr_accessor :_tglen, :_length, :_indexenum, :_tg
@@ -369,6 +379,9 @@ module DFHack
             def _cpp_init
                 _length.times { |i| _tgat(i)._cpp_init }
             end
+            def _cpp_delete
+                _length.times { |i| _tgat(i)._cpp_delete }
+            end
             alias length _length
             alias size _length
             def _tgat(i)
@@ -377,12 +390,18 @@ module DFHack
             def [](i)
                 i = _indexenum.int(i) if _indexenum
                 i += @_length if i < 0
-                _tgat(i)._get
+                if t = _tgat(i)
+                    t._get
+                end
             end
             def []=(i, v)
                 i = _indexenum.int(i) if _indexenum
                 i += @_length if i < 0
-                _tgat(i)._set(v)
+                if t = _tgat(i)
+                    t._set(v)
+                else
+                    raise 'index out of bounds'
+                end
             end
 
             include Enumerable
@@ -414,10 +433,10 @@ module DFHack
                 DFHack.memory_vector32_ptrat(@_memaddr, idx)
             end
             def insert_at(idx, val)
-                DFHack.memory_vector32_insert(@_memaddr, idx, val)
+                DFHack.memory_vector32_insertat(@_memaddr, idx, val)
             end
             def delete_at(idx)
-                DFHack.memory_vector32_delete(@_memaddr, idx)
+                DFHack.memory_vector32_deleteat(@_memaddr, idx)
             end
 
             def _set(v)
@@ -425,6 +444,12 @@ module DFHack
                 v.each_with_index { |e, i| self[i] = e }    # patch entries
             end
 
+            def self._cpp_new
+                new._at DFHack.memory_vector_new
+            end
+            def _cpp_delete
+                DFHack.memory_vector_delete(@_memaddr)
+            end
             def _cpp_init
                 DFHack.memory_vector_init(@_memaddr)
             end
@@ -441,7 +466,7 @@ module DFHack
                 if idx >= length
                     insert_at(idx, 0)
                 elsif idx < 0
-                    raise 'invalid idx'
+                    raise 'index out of bounds'
                 end
                 @_tg._at(valueptr_at(idx))._set(v)
             end
@@ -487,10 +512,10 @@ module DFHack
                 DFHack.memory_vector16_ptrat(@_memaddr, idx)
             end
             def insert_at(idx, val)
-                DFHack.memory_vector16_insert(@_memaddr, idx, val)
+                DFHack.memory_vector16_insertat(@_memaddr, idx, val)
             end
             def delete_at(idx)
-                DFHack.memory_vector16_delete(@_memaddr, idx)
+                DFHack.memory_vector16_deleteat(@_memaddr, idx)
             end
         end
         class StlVector8 < StlVector32
@@ -501,10 +526,10 @@ module DFHack
                 DFHack.memory_vector8_ptrat(@_memaddr, idx)
             end
             def insert_at(idx, val)
-                DFHack.memory_vector8_insert(@_memaddr, idx, val)
+                DFHack.memory_vector8_insertat(@_memaddr, idx, val)
             end
             def delete_at(idx)
-                DFHack.memory_vector8_delete(@_memaddr, idx)
+                DFHack.memory_vector8_deleteat(@_memaddr, idx)
             end
         end
         class StlBitVector < StlVector32
@@ -513,10 +538,10 @@ module DFHack
                 DFHack.memory_vectorbool_length(@_memaddr)
             end
             def insert_at(idx, val)
-                DFHack.memory_vectorbool_insert(@_memaddr, idx, val)
+                DFHack.memory_vectorbool_insertat(@_memaddr, idx, val)
             end
             def delete_at(idx)
-                DFHack.memory_vectorbool_delete(@_memaddr, idx)
+                DFHack.memory_vectorbool_deleteat(@_memaddr, idx)
             end
             def [](idx)
                 idx += length if idx < 0
@@ -527,10 +552,16 @@ module DFHack
                 if idx >= length
                     insert_at(idx, v)
                 elsif idx < 0
-                    raise 'invalid idx'
+                    raise 'index out of bounds'
                 else
                     DFHack.memory_vectorbool_setat(@_memaddr, idx, v)
                 end
+            end
+            def self._cpp_new
+                new._at DFHack.memory_vectorbool_new
+            end
+            def _cpp_delete
+                DFHack.memory_vectorbool_delete(@_memaddr)
             end
         end
         class StlString < MemStruct
@@ -542,6 +573,12 @@ module DFHack
                 DFHack.memory_write_stlstring(@_memaddr, v)
             end
 
+            def self._cpp_new
+                new._at DFHack.memory_stlstring_new
+            end
+            def _cpp_delete
+                DFHack.memory_stlstring_delete(@_memaddr)
+            end
             def _cpp_init
                 DFHack.memory_stlstring_init(@_memaddr)
             end
@@ -565,7 +602,7 @@ module DFHack
             def length
                 DFHack.memory_bitarray_length(@_memaddr)
             end
-            # TODO _cpp_init
+            # TODO _cpp_init, _cpp_delete
             def size ; length ; end
             def resize(len)
                 DFHack.memory_bitarray_resize(@_memaddr, len)
@@ -579,7 +616,7 @@ module DFHack
                 idx = _indexenum.int(idx) if _indexenum
                 idx += length if idx < 0
                 if idx >= length or idx < 0
-                    raise 'invalid idx'
+                    raise 'index out of bounds'
                 else
                     DFHack.memory_bitarray_set(@_memaddr, idx, v)
                 end
@@ -599,17 +636,23 @@ module DFHack
 
             def length ; _length ; end
             def size ; _length ; end
-            # TODO _cpp_init
+            # TODO _cpp_init, _cpp_delete
             def _tgat(i)
                 @_tg._at(_ptr + i*@_tglen) if i >= 0 and i < _length
             end
             def [](i)
                 i += _length if i < 0
-                _tgat(i)._get
+                if t = _tgat(i)
+                    t._get
+                end
             end
             def []=(i, v)
                 i += _length if i < 0
-                _tgat(i)._set(v)
+                if t = _tgat(i)
+                    t._set(v)
+                else
+                    raise 'index out of bounds'
+                end
             end
             def _set(a)
                 a.each_with_index { |v, i| self[i] = v }
@@ -623,9 +666,9 @@ module DFHack
                 @_tg = tg
             end
 
-            field(:_ptr, 0) { number 32, false }
-            field(:_prev, 4) { number 32, false }
-            field(:_next, 8) { number 32, false }
+            field(:_ptr, 0) { pointer }
+            field(:_prev, 4) { pointer }
+            field(:_next, 8) { pointer }
 
             def item
                 # With the current xml structure, currently _tg designate
@@ -639,22 +682,24 @@ module DFHack
 
             def item=(v)
                 #addr = _ptr
-                #raise 'null pointer' if addr == 0
+                #raise 'null pointer' if not addr
                 #@_tg.at(addr)._set(v)
                 raise 'null pointer'
             end
 
             def prev
                 addr = _prev
-                return if addr == 0
+                return if not addr
                 @_tg._at(addr)._get
             end
 
             def next
                 addr = _next
-                return if addr == 0
+                return if not addr
                 @_tg._at(addr)._get
             end
+	    alias next= _next=
+	    alias prev= _prev=
 
             include Enumerable
             def each
@@ -685,6 +730,21 @@ module DFHack
     class BooleanEnum
         def self.int(v) ; ((v == true) || (v == 1)) ? 1 : 0 ; end
         def self.sym(v) ; (!v || (v == 0)) ? false : true ; end
+    end
+
+    class StlString < MemHack::Compound
+        field(:str, 0) { stl_string }
+
+        def self.cpp_new(init=nil)
+            s = MemHack::StlString._cpp_new
+            s._set(init) if init
+            new._at(s._memaddr)
+        end
+
+        def _cpp_delete
+            MemHack::StlString.new._at(@_memaddr+0)._cpp_delete
+            @_memaddr = nil
+        end
     end
 
     # cpp rtti name -> rb class

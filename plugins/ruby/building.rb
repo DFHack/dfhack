@@ -1,5 +1,45 @@
 module DFHack
     class << self
+        def building_find(what=:selected, y=nil, z=nil)
+            if what == :selected
+                case ui.main.mode
+                when :LookAround
+                    k = ui_look_list.items[ui_look_cursor]
+                    k.building if k.type == :Building
+                when :BuildingItems, :QueryBuilding
+                    world.selected_building
+                end
+
+            elsif what.kind_of?(Integer)
+                # search by building.id
+                return world.buildings.all.binsearch(what) if not z
+
+                # search by coordinates
+                x = what
+                world.buildings.all.find { |b|
+                    b.z == z and
+                    if b.room.extents
+                        dx = x - b.room.x
+                        dy = y - b.room.y
+                        dx >= 0 and dx <= b.room.width and
+                        dy >= 0 and dy <= b.room.height and
+                        b.room.extents[ dy*b.room.width + dx ] > 0
+                    else
+                        b.x1 <= x and b.x2 >= x and
+                        b.y1 <= y and b.y2 >= y
+                    end
+                }
+
+            elsif what.respond_to?(:x) or what.respond_to?(:pos)
+                # find the building at the same position
+                what = what.pos if what.respond_to?(:pos)
+                building_find(what.x, what.y, what.z)
+
+            else
+                raise "what what?"
+            end
+        end
+
         # allocate a new building object
         def building_alloc(type, subtype=-1, custom=-1)
             cls = rtti_n2c[BuildingType::Classname[type].to_sym]
@@ -239,21 +279,30 @@ module DFHack
             job = Job.cpp_new
             refbuildingholder = GeneralRefBuildingHolderst.cpp_new
             job.job_type = :DestroyBuilding
-            refbuildingholder.building_id = building.id
+            refbuildingholder.building_id = bld.id
             job.references << refbuildingholder
-            building.jobs << job
+            bld.jobs << job
             job_link job
             job
         end
 
+        # check item flags to see if it is suitable for use as a building material
+        def building_isitemfree(i)
+            !i.flags.in_job and
+            !i.flags.in_inventory and
+            !i.flags.removed and
+            !i.flags.in_building and
+            !i.flags.owned and
+            !i.flags.forbid
+        end
+        
         # exemple usage
         def buildbed(pos=cursor)
             raise 'where to ?' if pos.x < 0
 
             item = world.items.all.find { |i|
                 i.kind_of?(ItemBedst) and
-                i.itemrefs.empty? and
-                !i.flags.in_job
+                building_isitemfree(i)
             }
             raise 'no free bed, build more !' if not item
 

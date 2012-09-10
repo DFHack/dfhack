@@ -173,31 +173,16 @@ namespace DFHack
         PluginManager * parent;
         plugin_state state;
 
-        struct LuaCommand {
-            Plugin *owner;
-            std::string name;
-            int (*command)(lua_State *state);
-            LuaCommand(Plugin *owner, std::string name) : owner(owner), name(name) {}
-        };
+        struct LuaCommand;
         std::map<std::string, LuaCommand*> lua_commands;
         static int lua_cmd_wrapper(lua_State *state);
 
-        struct LuaFunction {
-            Plugin *owner;
-            std::string name;
-            function_identity_base *identity;
-            LuaFunction(Plugin *owner, std::string name) : owner(owner), name(name) {}
-        };
+        struct LuaFunction;
         std::map<std::string, LuaFunction*> lua_functions;
         static int lua_fun_wrapper(lua_State *state);
         void push_function(lua_State *state, LuaFunction *fn);
 
-        struct LuaEvent {
-            LuaFunction handler;
-            Lua::Notification *event;
-            bool active;
-            LuaEvent(Plugin *owner, std::string name) : handler(owner,name), active(false) {}
-        };
+        struct LuaEvent;
         std::map<std::string, LuaEvent*> lua_events;
 
         void index_lua(DFLibrary *lib);
@@ -209,7 +194,7 @@ namespace DFHack
         command_result (*plugin_onupdate)(color_ostream &);
         command_result (*plugin_onstatechange)(color_ostream &, state_change_event);
         RPCService* (*plugin_rpcconnect)(color_ostream &);
-        command_result (*plugin_eval_ruby)(const char*);
+        command_result (*plugin_eval_ruby)(color_ostream &, const char*);
     };
     class DFHACK_EXPORT PluginManager
     {
@@ -238,7 +223,7 @@ namespace DFHack
         {
             return all_plugins.size();
         }
-        command_result (*eval_ruby)(const char*);
+        command_result (*eval_ruby)(color_ostream &, const char*);
     // DATA
     private:
         tthread::mutex * cmdlist_mutex;

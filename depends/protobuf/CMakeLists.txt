@@ -72,13 +72,13 @@ ELSE()
     SET(HASH_SET_CLASS hash_set)
 ENDIF()
 
-CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/config.h")
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h")
 
 SET(LIBPROTOBUF_LITE_HDRS
 google/protobuf/io/coded_stream.h
 google/protobuf/io/coded_stream_inl.h
 google/protobuf/stubs/common.h
-config.h
+${CMAKE_CURRENT_BINARY_DIR}/config.h
 google/protobuf/extension_set.h
 google/protobuf/generated_message_util.h
 google/protobuf/stubs/hash.h
@@ -207,6 +207,7 @@ ENDIF()
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 SET(PROTOBUF_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Protobuf shared libraries
 

@@ -8,7 +8,7 @@ DOUBLE=5
 FLOAT=6
 
 getline=function (inp)
-return Console.lineedit(inp or "")
+return dfhack.lineedit(inp or "")
 end
 io.stdin=nil
 
@@ -36,7 +36,7 @@ function GetTextRegion()
 		--if num>=100 then
 		--print(string.format("%d %x->%x %s %s",k,v["start"],v["end"],v.name or "",flgs))
 		--end
-		local pos=string.find(v.name,".text") or string.find(v.name,"libs/Dwarf_Fortress")
+		local pos=string.find(v.name,"Dwarf Fortress.exe") or string.find(v.name,"libs/Dwarf_Fortress")
 		if(pos~=nil) and v["execute"] then
 			__TEXT=v;
 			return v;
@@ -99,6 +99,7 @@ function SetExecute(pos)
 	UpdateRanges()
 	local reg=GetRegionIn(pos)
 	reg.execute=true
+	reg["write"]=true
 	Process.setPermisions(reg,reg) -- TODO maybe make a page with only execute permisions or sth
 end
 -- engine bindings
@@ -223,6 +224,11 @@ function engine.LoadModData(file)
 		end
 	end
 	return T2
+end
+function engine.FindMarkerCall(moddata,name)
+	if moddata.symbols[name] ~=nil then
+		return moddata.symbols[name]+1
+	end
 end
 function engine.FindMarker(moddata,name)
 	if moddata.symbols[name] ~=nil then

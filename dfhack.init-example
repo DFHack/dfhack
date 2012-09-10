@@ -42,3 +42,9 @@ keybinding add Shift-I "job-material CINNABAR"
 keybinding add Shift-B "job-material COBALTITE"
 keybinding add Shift-O "job-material OBSIDIAN"
 keybinding add Shift-G "job-material GLASS_GREEN"
+
+# browse linked mechanisms
+keybinding add Ctrl-M@dwarfmode/QueryBuilding/Some gui/mechanisms
+
+# browse rooms of same owner
+keybinding add Alt-R@dwarfmode/QueryBuilding/Some gui/room-list.work

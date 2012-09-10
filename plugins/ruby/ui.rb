@@ -1,6 +1,13 @@
 # df user-interface related methods
 module DFHack
     class << self
+        # returns the current active viewscreen
+        def curview
+            ret = gview.view
+            ret = ret.child while ret.child
+            ret
+        end
+
         # center the DF screen on something
         # updates the cursor position if visible
         def center_viewscreen(x, y=nil, z=nil)
@@ -60,6 +67,15 @@ module DFHack
                 world.status.announcements << rep
                 world.status.display_timer = 2000
             end
+        end
+
+	# add an announcement to display in a game popup message
+	# (eg "the megabeast foobar arrived")
+        def popup_announcement(str, color=nil, bright=nil)
+            pop = PopupMessage.cpp_new(:text => str)
+            pop.color = color if color
+            pop.bright = bright if bright
+            world.status.popups << pop
         end
     end
 end

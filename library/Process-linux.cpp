@@ -27,6 +27,7 @@ distribution.
 #include <errno.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 
 #include <string>
 #include <vector>
@@ -190,6 +191,13 @@ bool Process::getThreadIDs(vector<uint32_t> & threads )
         }
     }
     return true;
+}
+
+uint32_t Process::getTickCount()
+{
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    return (tp.tv_sec * 1000) + (tp.tv_usec / 1000);
 }
 
 string Process::getPath()

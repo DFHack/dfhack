@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <set>
+#include <algorithm>
 
 #include <VTableInterpose.h>
 #include "df/world.h"
@@ -22,6 +23,7 @@
 #include "df/unit.h"
 #include "df/unit_soul.h"
 #include "df/unit_skill.h"
+#include "df/creature_graphics_role.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
 
@@ -37,204 +39,204 @@ using df::global::ui;
 using df::global::gps;
 using df::global::enabler;
 
-DFHACK_PLUGIN("manipulator");
-
 struct SkillLevel
 {
-	const char *name;
-	int points;
-	char abbrev;
+    const char *name;
+    int points;
+    char abbrev;
 };
 
-#define    NUM_SKILL_LEVELS (sizeof(skill_levels) / sizeof(SkillLevel))
+#define NUM_SKILL_LEVELS (sizeof(skill_levels) / sizeof(SkillLevel))
 
 // The various skill rankings. Zero skill is hardcoded to "Not" and '-'.
 const SkillLevel skill_levels[] = {
-	{"Dabbling",	500, '0'},
-	{"Novice",	600, '1'},
-	{"Adequate",	700, '2'},
-	{"Competent",	800, '3'},
-	{"Skilled",	900, '4'},
-	{"Proficient",	1000, '5'},
-	{"Talented",	1100, '6'},
-	{"Adept",	1200, '7'},
-	{"Expert",	1300, '8'},
-	{"Professional",1400, '9'},
-	{"Accomplished",1500, 'A'},
-	{"Great",	1600, 'B'},
-	{"Master",	1700, 'C'},
-	{"High Master",	1800, 'D'},
-	{"Grand Master",1900, 'E'},
-	{"Legendary",	2000, 'U'},
-	{"Legendary+1",	2100, 'V'},
-	{"Legendary+2",	2200, 'W'},
-	{"Legendary+3",	2300, 'X'},
-	{"Legendary+4",	2400, 'Y'},
-	{"Legendary+5",	0, 'Z'}
+    {"Dabbling",     500, '0'},
+    {"Novice",       600, '1'},
+    {"Adequate",     700, '2'},
+    {"Competent",    800, '3'},
+    {"Skilled",      900, '4'},
+    {"Proficient",  1000, '5'},
+    {"Talented",    1100, '6'},
+    {"Adept",       1200, '7'},
+    {"Expert",      1300, '8'},
+    {"Professional",1400, '9'},
+    {"Accomplished",1500, 'A'},
+    {"Great",       1600, 'B'},
+    {"Master",      1700, 'C'},
+    {"High Master", 1800, 'D'},
+    {"Grand Master",1900, 'E'},
+    {"Legendary",   2000, 'U'},
+    {"Legendary+1", 2100, 'V'},
+    {"Legendary+2", 2200, 'W'},
+    {"Legendary+3", 2300, 'X'},
+    {"Legendary+4", 2400, 'Y'},
+    {"Legendary+5",    0, 'Z'}
 };
 
 struct SkillColumn
 {
-    df::profession profession;
-    df::unit_labor labor;
-    df::job_skill skill;
-    char label[3];
+    int group; // for navigation and mass toggling
+    int8_t color; // for column headers
+    df::profession profession; // to display graphical tiles
+    df::unit_labor labor; // toggled when pressing Enter
+    df::job_skill skill; // displayed rating
+    char label[3]; // column header
     bool special; // specified labor is mutually exclusive with all other special labors
 };
 
-#define    NUM_COLUMNS (sizeof(columns) / sizeof(SkillColumn))
+#define NUM_COLUMNS (sizeof(columns) / sizeof(SkillColumn))
 
-// All of the skill/labor columns we want to display. Includes profession (for color), labor, skill, and 2 character label
+// All of the skill/labor columns we want to display.
 const SkillColumn columns[] = {
 // Mining
-    {profession::MINER, unit_labor::MINE, job_skill::MINING, "Mi", true},
+    {0, 7, profession::MINER, unit_labor::MINE, job_skill::MINING, "Mi", true},
 // Woodworking
-    {profession::WOODWORKER, unit_labor::CARPENTER, job_skill::CARPENTRY, "Ca"},
-    {profession::WOODWORKER, unit_labor::BOWYER, job_skill::BOWYER, "Bw"},
-    {profession::WOODWORKER, unit_labor::CUTWOOD, job_skill::WOODCUTTING, "WC", true},
+    {1, 14, profession::CARPENTER, unit_labor::CARPENTER, job_skill::CARPENTRY, "Ca"},
+    {1, 14, profession::BOWYER, unit_labor::BOWYER, job_skill::BOWYER, "Bw"},
+    {1, 14, profession::WOODCUTTER, unit_labor::CUTWOOD, job_skill::WOODCUTTING, "WC", true},
 // Stoneworking
-    {profession::STONEWORKER, unit_labor::MASON, job_skill::MASONRY, "Ma"},
-    {profession::STONEWORKER, unit_labor::DETAIL, job_skill::DETAILSTONE, "En"},
+    {2, 15, profession::MASON, unit_labor::MASON, job_skill::MASONRY, "Ma"},
+    {2, 15, profession::ENGRAVER, unit_labor::DETAIL, job_skill::DETAILSTONE, "En"},
 // Hunting/Related
-    {profession::RANGER, unit_labor::ANIMALTRAIN, job_skill::ANIMALTRAIN, "Tr"},
-    {profession::RANGER, unit_labor::ANIMALCARE, job_skill::ANIMALCARE, "Ca"},
-    {profession::RANGER, unit_labor::HUNT, job_skill::SNEAK, "Hu", true},
-    {profession::RANGER, unit_labor::TRAPPER, job_skill::TRAPPING, "Tr"},
-    {profession::RANGER, unit_labor::DISSECT_VERMIN, job_skill::DISSECT_VERMIN, "Di"},
+    {3, 2, profession::ANIMAL_TRAINER, unit_labor::ANIMALTRAIN, job_skill::ANIMALTRAIN, "Tn"},
+    {3, 2, profession::ANIMAL_CARETAKER, unit_labor::ANIMALCARE, job_skill::ANIMALCARE, "Ca"},
+    {3, 2, profession::HUNTER, unit_labor::HUNT, job_skill::SNEAK, "Hu", true},
+    {3, 2, profession::TRAPPER, unit_labor::TRAPPER, job_skill::TRAPPING, "Tr"},
+    {3, 2, profession::ANIMAL_DISSECTOR, unit_labor::DISSECT_VERMIN, job_skill::DISSECT_VERMIN, "Di"},
 // Healthcare
-    {profession::DOCTOR, unit_labor::DIAGNOSE, job_skill::DIAGNOSE, "Di"},
-    {profession::DOCTOR, unit_labor::SURGERY, job_skill::SURGERY, "Su"},
-    {profession::DOCTOR, unit_labor::BONE_SETTING, job_skill::SET_BONE, "Bo"},
-    {profession::DOCTOR, unit_labor::SUTURING, job_skill::SUTURE, "St"},
-    {profession::DOCTOR, unit_labor::DRESSING_WOUNDS, job_skill::DRESS_WOUNDS, "Dr"},
-    {profession::DOCTOR, unit_labor::FEED_WATER_CIVILIANS, job_skill::NONE, "Fd"},
-    {profession::DOCTOR, unit_labor::RECOVER_WOUNDED, job_skill::NONE, "Re"},
+    {4, 5, profession::DIAGNOSER, unit_labor::DIAGNOSE, job_skill::DIAGNOSE, "Di"},
+    {4, 5, profession::SURGEON, unit_labor::SURGERY, job_skill::SURGERY, "Su"},
+    {4, 5, profession::BONE_SETTER, unit_labor::BONE_SETTING, job_skill::SET_BONE, "Bo"},
+    {4, 5, profession::SUTURER, unit_labor::SUTURING, job_skill::SUTURE, "St"},
+    {4, 5, profession::DOCTOR, unit_labor::DRESSING_WOUNDS, job_skill::DRESS_WOUNDS, "Dr"},
+    {4, 5, profession::NONE, unit_labor::FEED_WATER_CIVILIANS, job_skill::NONE, "Fd"},
+    {4, 5, profession::NONE, unit_labor::RECOVER_WOUNDED, job_skill::NONE, "Re"},
 // Farming/Related
-    {profession::FARMER, unit_labor::BUTCHER, job_skill::BUTCHER, "Bu"},
-    {profession::FARMER, unit_labor::TANNER, job_skill::TANNER, "Ta"},
-    {profession::FARMER, unit_labor::PLANT, job_skill::PLANT, "Gr"},
-    {profession::FARMER, unit_labor::DYER, job_skill::DYER, "Dy"},
-    {profession::FARMER, unit_labor::SOAP_MAKER, job_skill::SOAP_MAKING, "So"},
-    {profession::FARMER, unit_labor::BURN_WOOD, job_skill::WOOD_BURNING, "WB"},
-    {profession::FARMER, unit_labor::POTASH_MAKING, job_skill::POTASH_MAKING, "Po"},
-    {profession::FARMER, unit_labor::LYE_MAKING, job_skill::LYE_MAKING, "Ly"},
-    {profession::FARMER, unit_labor::MILLER, job_skill::MILLING, "Ml"},
-    {profession::FARMER, unit_labor::BREWER, job_skill::BREWING, "Br"},
-    {profession::FARMER, unit_labor::HERBALIST, job_skill::HERBALISM, "He"},
-    {profession::FARMER, unit_labor::PROCESS_PLANT, job_skill::PROCESSPLANTS, "Th"},
-    {profession::FARMER, unit_labor::MAKE_CHEESE, job_skill::CHEESEMAKING, "Ch"},
-    {profession::FARMER, unit_labor::MILK, job_skill::MILK, "Mk"},
-    {profession::FARMER, unit_labor::SHEARER, job_skill::SHEARING, "Sh"},
-    {profession::FARMER, unit_labor::SPINNER, job_skill::SPINNING, "Sp"},
-    {profession::FARMER, unit_labor::COOK, job_skill::COOK, "Co"},
-    {profession::FARMER, unit_labor::PRESSING, job_skill::PRESSING, "Pr"},
-    {profession::FARMER, unit_labor::BEEKEEPING, job_skill::BEEKEEPING, "Be"},
+    {5, 6, profession::BUTCHER, unit_labor::BUTCHER, job_skill::BUTCHER, "Bu"},
+    {5, 6, profession::TANNER, unit_labor::TANNER, job_skill::TANNER, "Ta"},
+    {5, 6, profession::PLANTER, unit_labor::PLANT, job_skill::PLANT, "Gr"},
+    {5, 6, profession::DYER, unit_labor::DYER, job_skill::DYER, "Dy"},
+    {5, 6, profession::SOAP_MAKER, unit_labor::SOAP_MAKER, job_skill::SOAP_MAKING, "So"},
+    {5, 6, profession::WOOD_BURNER, unit_labor::BURN_WOOD, job_skill::WOOD_BURNING, "WB"},
+    {5, 6, profession::POTASH_MAKER, unit_labor::POTASH_MAKING, job_skill::POTASH_MAKING, "Po"},
+    {5, 6, profession::LYE_MAKER, unit_labor::LYE_MAKING, job_skill::LYE_MAKING, "Ly"},
+    {5, 6, profession::MILLER, unit_labor::MILLER, job_skill::MILLING, "Ml"},
+    {5, 6, profession::BREWER, unit_labor::BREWER, job_skill::BREWING, "Br"},
+    {5, 6, profession::HERBALIST, unit_labor::HERBALIST, job_skill::HERBALISM, "He"},
+    {5, 6, profession::THRESHER, unit_labor::PROCESS_PLANT, job_skill::PROCESSPLANTS, "Th"},
+    {5, 6, profession::CHEESE_MAKER, unit_labor::MAKE_CHEESE, job_skill::CHEESEMAKING, "Ch"},
+    {5, 6, profession::MILKER, unit_labor::MILK, job_skill::MILK, "Mk"},
+    {5, 6, profession::SHEARER, unit_labor::SHEARER, job_skill::SHEARING, "Sh"},
+    {5, 6, profession::SPINNER, unit_labor::SPINNER, job_skill::SPINNING, "Sp"},
+    {5, 6, profession::COOK, unit_labor::COOK, job_skill::COOK, "Co"},
+    {5, 6, profession::PRESSER, unit_labor::PRESSING, job_skill::PRESSING, "Pr"},
+    {5, 6, profession::BEEKEEPER, unit_labor::BEEKEEPING, job_skill::BEEKEEPING, "Be"},
 // Fishing/Related
-    {profession::FISHERMAN, unit_labor::FISH, job_skill::FISH, "Fi"},
-    {profession::FISHERMAN, unit_labor::CLEAN_FISH, job_skill::PROCESSFISH, "Cl"},
-    {profession::FISHERMAN, unit_labor::DISSECT_FISH, job_skill::DISSECT_FISH, "Di"},
+    {6, 1, profession::FISHERMAN, unit_labor::FISH, job_skill::FISH, "Fi"},
+    {6, 1, profession::FISH_CLEANER, unit_labor::CLEAN_FISH, job_skill::PROCESSFISH, "Cl"},
+    {6, 1, profession::FISH_DISSECTOR, unit_labor::DISSECT_FISH, job_skill::DISSECT_FISH, "Di"},
 // Metalsmithing
-    {profession::METALSMITH, unit_labor::SMELT, job_skill::SMELT, "Fu"},
-    {profession::METALSMITH, unit_labor::FORGE_WEAPON, job_skill::FORGE_WEAPON, "We"},
-    {profession::METALSMITH, unit_labor::FORGE_ARMOR, job_skill::FORGE_ARMOR, "Ar"},
-    {profession::METALSMITH, unit_labor::FORGE_FURNITURE, job_skill::FORGE_FURNITURE, "Bl"},
-    {profession::METALSMITH, unit_labor::METAL_CRAFT, job_skill::METALCRAFT, "Cr"},
+    {7, 8, profession::FURNACE_OPERATOR, unit_labor::SMELT, job_skill::SMELT, "Fu"},
+    {7, 8, profession::WEAPONSMITH, unit_labor::FORGE_WEAPON, job_skill::FORGE_WEAPON, "We"},
+    {7, 8, profession::ARMORER, unit_labor::FORGE_ARMOR, job_skill::FORGE_ARMOR, "Ar"},
+    {7, 8, profession::BLACKSMITH, unit_labor::FORGE_FURNITURE, job_skill::FORGE_FURNITURE, "Bl"},
+    {7, 8, profession::METALCRAFTER, unit_labor::METAL_CRAFT, job_skill::METALCRAFT, "Cr"},
 // Jewelry
-    {profession::JEWELER, unit_labor::CUT_GEM, job_skill::CUTGEM, "Cu"},
-    {profession::JEWELER, unit_labor::ENCRUST_GEM, job_skill::ENCRUSTGEM, "Se"},
+    {8, 10, profession::GEM_CUTTER, unit_labor::CUT_GEM, job_skill::CUTGEM, "Cu"},
+    {8, 10, profession::GEM_SETTER, unit_labor::ENCRUST_GEM, job_skill::ENCRUSTGEM, "Se"},
 // Crafts
-    {profession::CRAFTSMAN, unit_labor::LEATHER, job_skill::LEATHERWORK, "Le"},
-    {profession::CRAFTSMAN, unit_labor::WOOD_CRAFT, job_skill::WOODCRAFT, "Wo"},
-    {profession::CRAFTSMAN, unit_labor::STONE_CRAFT, job_skill::STONECRAFT, "St"},
-    {profession::CRAFTSMAN, unit_labor::BONE_CARVE, job_skill::BONECARVE, "Bo"},
-    {profession::CRAFTSMAN, unit_labor::GLASSMAKER, job_skill::GLASSMAKER, "Gl"},
-    {profession::CRAFTSMAN, unit_labor::WEAVER, job_skill::WEAVING, "We"},
-    {profession::CRAFTSMAN, unit_labor::CLOTHESMAKER, job_skill::CLOTHESMAKING, "Cl"},
-    {profession::CRAFTSMAN, unit_labor::EXTRACT_STRAND, job_skill::EXTRACT_STRAND, "Ad"},
-    {profession::CRAFTSMAN, unit_labor::POTTERY, job_skill::POTTERY, "Po"},
-    {profession::CRAFTSMAN, unit_labor::GLAZING, job_skill::GLAZING, "Gl"},
-    {profession::CRAFTSMAN, unit_labor::WAX_WORKING, job_skill::WAX_WORKING, "Wx"},
+    {9, 9, profession::LEATHERWORKER, unit_labor::LEATHER, job_skill::LEATHERWORK, "Le"},
+    {9, 9, profession::WOODCRAFTER, unit_labor::WOOD_CRAFT, job_skill::WOODCRAFT, "Wo"},
+    {9, 9, profession::STONECRAFTER, unit_labor::STONE_CRAFT, job_skill::STONECRAFT, "St"},
+    {9, 9, profession::BONE_CARVER, unit_labor::BONE_CARVE, job_skill::BONECARVE, "Bo"},
+    {9, 9, profession::GLASSMAKER, unit_labor::GLASSMAKER, job_skill::GLASSMAKER, "Gl"},
+    {9, 9, profession::WEAVER, unit_labor::WEAVER, job_skill::WEAVING, "We"},
+    {9, 9, profession::CLOTHIER, unit_labor::CLOTHESMAKER, job_skill::CLOTHESMAKING, "Cl"},
+    {9, 9, profession::STRAND_EXTRACTOR, unit_labor::EXTRACT_STRAND, job_skill::EXTRACT_STRAND, "Ad"},
+    {9, 9, profession::POTTER, unit_labor::POTTERY, job_skill::POTTERY, "Po"},
+    {9, 9, profession::GLAZER, unit_labor::GLAZING, job_skill::GLAZING, "Gl"},
+    {9, 9, profession::WAX_WORKER, unit_labor::WAX_WORKING, job_skill::WAX_WORKING, "Wx"},
 // Engineering
-    {profession::ENGINEER, unit_labor::SIEGECRAFT, job_skill::SIEGECRAFT, "En"},
-    {profession::ENGINEER, unit_labor::SIEGEOPERATE, job_skill::SIEGEOPERATE, "Op"},
-    {profession::ENGINEER, unit_labor::MECHANIC, job_skill::MECHANICS, "Me"},
-    {profession::ENGINEER, unit_labor::OPERATE_PUMP, job_skill::OPERATE_PUMP, "Pu"},
+    {10, 12, profession::SIEGE_ENGINEER, unit_labor::SIEGECRAFT, job_skill::SIEGECRAFT, "En"},
+    {10, 12, profession::SIEGE_OPERATOR, unit_labor::SIEGEOPERATE, job_skill::SIEGEOPERATE, "Op"},
+    {10, 12, profession::MECHANIC, unit_labor::MECHANIC, job_skill::MECHANICS, "Me"},
+    {10, 12, profession::PUMP_OPERATOR, unit_labor::OPERATE_PUMP, job_skill::OPERATE_PUMP, "Pu"},
 // Hauling
-    {profession::STANDARD, unit_labor::HAUL_STONE, job_skill::NONE, "St"},
-    {profession::STANDARD, unit_labor::HAUL_WOOD, job_skill::NONE, "Wo"},
-    {profession::STANDARD, unit_labor::HAUL_ITEM, job_skill::NONE, "It"},
-    {profession::STANDARD, unit_labor::HAUL_BODY, job_skill::NONE, "Bu"},
-    {profession::STANDARD, unit_labor::HAUL_FOOD, job_skill::NONE, "Fo"},
-    {profession::STANDARD, unit_labor::HAUL_REFUSE, job_skill::NONE, "Re"},
-    {profession::STANDARD, unit_labor::HAUL_FURNITURE, job_skill::NONE, "Fu"},
-    {profession::STANDARD, unit_labor::HAUL_ANIMAL, job_skill::NONE, "An"},
-    {profession::STANDARD, unit_labor::PUSH_HAUL_VEHICLE, job_skill::NONE, "Ve"},
+    {11, 3, profession::NONE, unit_labor::HAUL_STONE, job_skill::NONE, "St"},
+    {11, 3, profession::NONE, unit_labor::HAUL_WOOD, job_skill::NONE, "Wo"},
+    {11, 3, profession::NONE, unit_labor::HAUL_ITEM, job_skill::NONE, "It"},
+    {11, 3, profession::NONE, unit_labor::HAUL_BODY, job_skill::NONE, "Bu"},
+    {11, 3, profession::NONE, unit_labor::HAUL_FOOD, job_skill::NONE, "Fo"},
+    {11, 3, profession::NONE, unit_labor::HAUL_REFUSE, job_skill::NONE, "Re"},
+    {11, 3, profession::NONE, unit_labor::HAUL_FURNITURE, job_skill::NONE, "Fu"},
+    {11, 3, profession::NONE, unit_labor::HAUL_ANIMAL, job_skill::NONE, "An"},
+    {11, 3, profession::NONE, unit_labor::PUSH_HAUL_VEHICLE, job_skill::NONE, "Ve"},
 // Other Jobs
-    {profession::CHILD, unit_labor::ARCHITECT, job_skill::DESIGNBUILDING, "Ar"},
-    {profession::CHILD, unit_labor::ALCHEMIST, job_skill::ALCHEMY, "Al"},
-    {profession::CHILD, unit_labor::CLEAN, job_skill::NONE, "Cl"},
-// Military
-    {profession::WRESTLER, unit_labor::NONE, job_skill::WRESTLING, "Wr"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::AXE, "Ax"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::SWORD, "Sw"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::MACE, "Mc"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::HAMMER, "Ha"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::SPEAR, "Sp"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::DAGGER, "Kn"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::CROSSBOW, "Cb"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::BOW, "Bo"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::BLOWGUN, "Bl"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::PIKE, "Pk"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::WHIP, "La"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::ARMOR, "Ar"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::SHIELD, "Sh"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::BITE, "Bi"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::GRASP_STRIKE, "Pu"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::STANCE_STRIKE, "Ki"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::DODGING, "Do"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::MISC_WEAPON, "Mi"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::MELEE_COMBAT, "Fi"},
-    {profession::WRESTLER, unit_labor::NONE, job_skill::RANGED_COMBAT, "Ar"},
-
-    {profession::RECRUIT, unit_labor::NONE, job_skill::LEADERSHIP, "Le"},
-    {profession::RECRUIT, unit_labor::NONE, job_skill::TEACHING, "Te"},
-    {profession::RECRUIT, unit_labor::NONE, job_skill::KNOWLEDGE_ACQUISITION, "Lr"},
-    {profession::RECRUIT, unit_labor::NONE, job_skill::DISCIPLINE, "Di"},
-    {profession::RECRUIT, unit_labor::NONE, job_skill::CONCENTRATION, "Co"},
-    {profession::RECRUIT, unit_labor::NONE, job_skill::SITUATIONAL_AWARENESS, "Aw"},
-    {profession::RECRUIT, unit_labor::NONE, job_skill::COORDINATION, "Cr"},
-    {profession::RECRUIT, unit_labor::NONE, job_skill::BALANCE, "Ba"},
-
+    {12, 4, profession::ARCHITECT, unit_labor::ARCHITECT, job_skill::DESIGNBUILDING, "Ar"},
+    {12, 4, profession::ALCHEMIST, unit_labor::ALCHEMIST, job_skill::ALCHEMY, "Al"},
+    {12, 4, profession::NONE, unit_labor::CLEAN, job_skill::NONE, "Cl"},
+// Military - Weapons
+    {13, 7, profession::WRESTLER, unit_labor::NONE, job_skill::WRESTLING, "Wr"},
+    {13, 7, profession::AXEMAN, unit_labor::NONE, job_skill::AXE, "Ax"},
+    {13, 7, profession::SWORDSMAN, unit_labor::NONE, job_skill::SWORD, "Sw"},
+    {13, 7, profession::MACEMAN, unit_labor::NONE, job_skill::MACE, "Mc"},
+    {13, 7, profession::HAMMERMAN, unit_labor::NONE, job_skill::HAMMER, "Ha"},
+    {13, 7, profession::SPEARMAN, unit_labor::NONE, job_skill::SPEAR, "Sp"},
+    {13, 7, profession::CROSSBOWMAN, unit_labor::NONE, job_skill::CROSSBOW, "Cb"},
+    {13, 7, profession::THIEF, unit_labor::NONE, job_skill::DAGGER, "Kn"},
+    {13, 7, profession::BOWMAN, unit_labor::NONE, job_skill::BOW, "Bo"},
+    {13, 7, profession::BLOWGUNMAN, unit_labor::NONE, job_skill::BLOWGUN, "Bl"},
+    {13, 7, profession::PIKEMAN, unit_labor::NONE, job_skill::PIKE, "Pk"},
+    {13, 7, profession::LASHER, unit_labor::NONE, job_skill::WHIP, "La"},
+// Military - Other Combat
+    {14, 15, profession::NONE, unit_labor::NONE, job_skill::BITE, "Bi"},
+    {14, 15, profession::NONE, unit_labor::NONE, job_skill::GRASP_STRIKE, "St"},
+    {14, 15, profession::NONE, unit_labor::NONE, job_skill::STANCE_STRIKE, "Ki"},
+    {14, 15, profession::NONE, unit_labor::NONE, job_skill::MISC_WEAPON, "Mi"},
+    {14, 15, profession::NONE, unit_labor::NONE, job_skill::MELEE_COMBAT, "Fg"},
+    {14, 15, profession::NONE, unit_labor::NONE, job_skill::RANGED_COMBAT, "Ac"},
+    {14, 15, profession::NONE, unit_labor::NONE, job_skill::ARMOR, "Ar"},
+    {14, 15, profession::NONE, unit_labor::NONE, job_skill::SHIELD, "Sh"},
+    {14, 15, profession::NONE, unit_labor::NONE, job_skill::DODGING, "Do"},
+// Military - Misc
+    {15, 8, profession::NONE, unit_labor::NONE, job_skill::LEADERSHIP, "Ld"},
+    {15, 8, profession::NONE, unit_labor::NONE, job_skill::TEACHING, "Te"},
+    {15, 8, profession::NONE, unit_labor::NONE, job_skill::KNOWLEDGE_ACQUISITION, "St"},
+    {15, 8, profession::NONE, unit_labor::NONE, job_skill::DISCIPLINE, "Di"},
+    {15, 8, profession::NONE, unit_labor::NONE, job_skill::CONCENTRATION, "Co"},
+    {15, 8, profession::NONE, unit_labor::NONE, job_skill::SITUATIONAL_AWARENESS, "Ob"},
+    {15, 8, profession::NONE, unit_labor::NONE, job_skill::COORDINATION, "Cr"},
+    {15, 8, profession::NONE, unit_labor::NONE, job_skill::BALANCE, "Ba"},
 // Social
-    {profession::STANDARD, unit_labor::NONE, job_skill::PERSUASION, "Pe"},
-    {profession::STANDARD, unit_labor::NONE, job_skill::NEGOTIATION, "Ne"},
-    {profession::STANDARD, unit_labor::NONE, job_skill::JUDGING_INTENT, "Ju"},
-    {profession::STANDARD, unit_labor::NONE, job_skill::LYING, "Ly"},
-    {profession::STANDARD, unit_labor::NONE, job_skill::INTIMIDATION, "In"},
-    {profession::STANDARD, unit_labor::NONE, job_skill::CONVERSATION, "Cn"},
-    {profession::STANDARD, unit_labor::NONE, job_skill::COMEDY, "Cm"},
-    {profession::STANDARD, unit_labor::NONE, job_skill::FLATTERY, "Fl"},
-    {profession::STANDARD, unit_labor::NONE, job_skill::CONSOLE, "Cs"},
-    {profession::STANDARD, unit_labor::NONE, job_skill::PACIFY, "Pc"},
-    {profession::ADMINISTRATOR, unit_labor::NONE, job_skill::APPRAISAL, "Ap"},
-    {profession::ADMINISTRATOR, unit_labor::NONE, job_skill::ORGANIZATION, "Or"},
-    {profession::ADMINISTRATOR, unit_labor::NONE, job_skill::RECORD_KEEPING, "RK"},
-
+    {16, 3, profession::NONE, unit_labor::NONE, job_skill::PERSUASION, "Pe"},
+    {16, 3, profession::NONE, unit_labor::NONE, job_skill::NEGOTIATION, "Ne"},
+    {16, 3, profession::NONE, unit_labor::NONE, job_skill::JUDGING_INTENT, "Ju"},
+    {16, 3, profession::NONE, unit_labor::NONE, job_skill::LYING, "Li"},
+    {16, 3, profession::NONE, unit_labor::NONE, job_skill::INTIMIDATION, "In"},
+    {16, 3, profession::NONE, unit_labor::NONE, job_skill::CONVERSATION, "Cn"},
+    {16, 3, profession::NONE, unit_labor::NONE, job_skill::COMEDY, "Cm"},
+    {16, 3, profession::NONE, unit_labor::NONE, job_skill::FLATTERY, "Fl"},
+    {16, 3, profession::NONE, unit_labor::NONE, job_skill::CONSOLE, "Cs"},
+    {16, 3, profession::NONE, unit_labor::NONE, job_skill::PACIFY, "Pc"},
+// Noble
+    {17, 5, profession::TRADER, unit_labor::NONE, job_skill::APPRAISAL, "Ap"},
+    {17, 5, profession::ADMINISTRATOR, unit_labor::NONE, job_skill::ORGANIZATION, "Or"},
+    {17, 5, profession::CLERK, unit_labor::NONE, job_skill::RECORD_KEEPING, "RK"},
 // Miscellaneous
-    {profession::STANDARD, unit_labor::NONE, job_skill::THROW, "Th"},
-    {profession::STANDARD, unit_labor::NONE, job_skill::CRUTCH_WALK, "CW"},
-    {profession::STANDARD, unit_labor::NONE, job_skill::SWIMMING, "Sw"},
-    {profession::STANDARD, unit_labor::NONE, job_skill::KNAPPING, "Kn"},
+    {18, 3, profession::NONE, unit_labor::NONE, job_skill::THROW, "Th"},
+    {18, 3, profession::NONE, unit_labor::NONE, job_skill::CRUTCH_WALK, "CW"},
+    {18, 3, profession::NONE, unit_labor::NONE, job_skill::SWIMMING, "Sw"},
+    {18, 3, profession::NONE, unit_labor::NONE, job_skill::KNAPPING, "Kn"},
 
-    {profession::DRUNK, unit_labor::NONE, job_skill::WRITING, "Wr"},
-    {profession::DRUNK, unit_labor::NONE, job_skill::PROSE, "Pr"},
-    {profession::DRUNK, unit_labor::NONE, job_skill::POETRY, "Po"},
-    {profession::DRUNK, unit_labor::NONE, job_skill::READING, "Rd"},
-    {profession::DRUNK, unit_labor::NONE, job_skill::SPEAKING, "Sp"},
+    {19, 6, profession::NONE, unit_labor::NONE, job_skill::WRITING, "Wr"},
+    {19, 6, profession::NONE, unit_labor::NONE, job_skill::PROSE, "Pr"},
+    {19, 6, profession::NONE, unit_labor::NONE, job_skill::POETRY, "Po"},
+    {19, 6, profession::NONE, unit_labor::NONE, job_skill::READING, "Rd"},
+    {19, 6, profession::NONE, unit_labor::NONE, job_skill::SPEAKING, "Sp"},
 
-    {profession::ADMINISTRATOR, unit_labor::NONE, job_skill::MILITARY_TACTICS, "MT"},
-    {profession::ADMINISTRATOR, unit_labor::NONE, job_skill::TRACKING, "Tr"},
-    {profession::ADMINISTRATOR, unit_labor::NONE, job_skill::MAGIC_NATURE, "Dr"},
+    {20, 5, profession::NONE, unit_labor::NONE, job_skill::MILITARY_TACTICS, "MT"},
+    {20, 5, profession::NONE, unit_labor::NONE, job_skill::TRACKING, "Tr"},
+    {20, 5, profession::NONE, unit_labor::NONE, job_skill::MAGIC_NATURE, "Dr"},
 };
 
 struct UnitInfo
@@ -247,17 +249,69 @@ struct UnitInfo
     int8_t color;
 };
 
-#define    FILTER_NONWORKERS    0x0001
-#define    FILTER_NONDWARVES    0x0002
-#define    FILTER_NONCIV        0x0004
-#define    FILTER_ANIMALS        0x0008
-#define    FILTER_LIVING        0x0010
-#define    FILTER_DEAD        0x0020
+enum altsort_mode {
+    ALTSORT_NAME,
+    ALTSORT_PROFESSION,
+    ALTSORT_MAX
+};
+
+bool descending;
+df::job_skill sort_skill;
+df::unit_labor sort_labor;
+
+bool sortByName (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (descending)
+        return (d1->name > d2->name);
+    else
+        return (d1->name < d2->name);
+}
+
+bool sortByProfession (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (descending)
+        return (d1->profession > d2->profession);
+    else
+        return (d1->profession < d2->profession);
+}
+
+bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (sort_skill != job_skill::NONE)
+    {
+        df::unit_skill *s1 = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(d1->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
+        df::unit_skill *s2 = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(d2->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
+        int l1 = s1 ? s1->rating : 0;
+        int l2 = s2 ? s2->rating : 0;
+        int e1 = s1 ? s1->experience : 0;
+        int e2 = s2 ? s2->experience : 0;
+        if (descending)
+        {
+            if (l1 != l2)
+                return l1 > l2;
+            if (e1 != e2)
+                return e1 > e2;
+        }
+        else
+        {
+            if (l1 != l2)
+                return l1 < l2;
+            if (e1 != e2)
+                return e1 < e2;
+        }
+    }
+    if (sort_labor != unit_labor::NONE)
+    {
+        if (descending)
+            return d1->unit->status.labors[sort_labor] > d2->unit->status.labors[sort_labor];
+        else
+            return d1->unit->status.labors[sort_labor] < d2->unit->status.labors[sort_labor];
+    }
+    return sortByName(d1, d2);
+}
 
 class viewscreen_unitlaborsst : public dfhack_viewscreen {
 public:
-    static viewscreen_unitlaborsst *create (char pushtype, df::viewscreen *scr = NULL);
-
     void feed(set<df::interface_key> *events);
 
     void render();
@@ -267,86 +321,41 @@ public:
 
     std::string getFocusString() { return "unitlabors"; }
 
-    viewscreen_unitlaborsst();
+    viewscreen_unitlaborsst(vector<df::unit*> &src);
     ~viewscreen_unitlaborsst() { };
 
 protected:
     vector<UnitInfo *> units;
-    int filter;
+    altsort_mode altsort;
 
     int first_row, sel_row;
     int first_column, sel_column;
 
     int height, name_width, prof_width, labors_width;
 
-//    bool descending;
-//    int sort_skill;
-//    int sort_labor;
-
-    void readUnits ();
     void calcSize ();
 };
 
-viewscreen_unitlaborsst::viewscreen_unitlaborsst()
+viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src)
 {
-    filter = FILTER_LIVING;
-    first_row = sel_row = 0;
-    first_column = sel_column = 0;
-    calcSize();
-    readUnits();
-}
-
-void viewscreen_unitlaborsst::readUnits ()
-{
-    for (size_t i = 0; i < units.size(); i++)
-        delete units[i];
-    units.clear();
-
-    UnitInfo *cur = new UnitInfo;
-    for (size_t i = 0; i < world->units.active.size(); i++)
+    for (size_t i = 0; i < src.size(); i++)
     {
-        df::unit *unit = world->units.active[i];
+        UnitInfo *cur = new UnitInfo;
+        df::unit *unit = src[i];
         cur->unit = unit;
         cur->allowEdit = true;
 
         if (unit->race != ui->race_id)
-        {
             cur->allowEdit = false;
-            if (!(filter & FILTER_NONDWARVES))
-                continue;
-        }
 
         if (unit->civ_id != ui->civ_id)
-        {
             cur->allowEdit = false;
-            if (!(filter & FILTER_NONCIV))
-                continue;
-        }
 
         if (unit->flags1.bits.dead)
-        {
             cur->allowEdit = false;
-            if (!(filter & FILTER_DEAD))
-                continue;
-        }
-        else
-        {
-            if (!(filter & FILTER_LIVING))
-                continue;
-        }
 
         if (!ENUM_ATTR(profession, can_assign_labor, unit->profession))
-        {
             cur->allowEdit = false;
-            if (!(filter & FILTER_NONWORKERS))
-                continue;
-        }
-
-        if (!unit->name.first_name.length())
-        {
-            if (!(filter & FILTER_ANIMALS))
-                continue;
-        }
 
         cur->name = Translation::TranslateName(&unit->name, false);
         cur->transname = Translation::TranslateName(&unit->name, true);
@@ -354,9 +363,13 @@ void viewscreen_unitlaborsst::readUnits ()
         cur->color = Units::getProfessionColor(unit);
 
         units.push_back(cur);
-        cur = new UnitInfo;
     }
-    delete cur;
+    std::sort(units.begin(), units.end(), sortByName);
+
+    altsort = ALTSORT_NAME;
+    first_row = sel_row = 0;
+    first_column = sel_column = 0;
+    calcSize();
 }
 
 void viewscreen_unitlaborsst::calcSize()
@@ -421,8 +434,6 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         return;
     }
 
-    // TODO - allow modifying filters
-
     if (!units.size())
         return;
 
@@ -458,16 +469,16 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         // go to beginning of current column group; if already at the beginning, go to the beginning of the previous one
         sel_column--;
-        df::profession cur = columns[sel_column].profession;
-        while ((sel_column > 0) && columns[sel_column - 1].profession == cur)
+        int cur = columns[sel_column].group;
+        while ((sel_column > 0) && columns[sel_column - 1].group == cur)
             sel_column--;
     }
     if ((sel_column != NUM_COLUMNS - 1) && events->count(interface_key::CURSOR_DOWN_Z))
     {
         // go to end of current column group; if already at the end, go to the end of the next one
         sel_column++;
-        df::profession cur = columns[sel_column].profession;
-        while ((sel_column < NUM_COLUMNS - 1) && columns[sel_column + 1].profession == cur)
+        int cur = columns[sel_column].group;
+        while ((sel_column < NUM_COLUMNS - 1) && columns[sel_column + 1].group == cur)
             sel_column++;
     }
 
@@ -486,9 +497,10 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         df::unit *unit = cur->unit;
         const SkillColumn &col = columns[sel_column];
+        bool newstatus = !unit->status.labors[col.labor];
         if (col.special)
         {
-            if (!unit->status.labors[col.labor])
+            if (newstatus)
             {
                 for (int i = 0; i < NUM_COLUMNS; i++)
                 {
@@ -498,12 +510,91 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             }
             unit->military.pickup_flags.bits.update = true;
         }
-        unit->status.labors[col.labor] = !unit->status.labors[col.labor];
+        unit->status.labors[col.labor] = newstatus;
+    }
+    if (events->count(interface_key::SELECT_ALL) && (cur->allowEdit))
+    {
+        df::unit *unit = cur->unit;
+        const SkillColumn &col = columns[sel_column];
+        bool newstatus = !unit->status.labors[col.labor];
+        for (int i = 0; i < NUM_COLUMNS; i++)
+        {
+            if (columns[i].group != col.group)
+                continue;
+            if (columns[i].special)
+            {
+                if (newstatus)
+                {
+                    for (int j = 0; j < NUM_COLUMNS; j++)
+                    {
+                        if ((columns[j].labor != unit_labor::NONE) && columns[j].special)
+                            unit->status.labors[columns[j].labor] = false;
+                    }
+                }
+                unit->military.pickup_flags.bits.update = true;
+            }
+            unit->status.labors[columns[i].labor] = newstatus;
+        }
     }
 
-    // TODO: add sorting
+    if (events->count(interface_key::SECONDSCROLL_UP) || events->count(interface_key::SECONDSCROLL_DOWN))
+    {
+        descending = events->count(interface_key::SECONDSCROLL_UP);
+        sort_skill = columns[sel_column].skill;
+        sort_labor = columns[sel_column].labor;
+        std::sort(units.begin(), units.end(), sortBySkill);
+    }
+
+    if (events->count(interface_key::SECONDSCROLL_PAGEUP) || events->count(interface_key::SECONDSCROLL_PAGEDOWN))
+    {
+        descending = events->count(interface_key::SECONDSCROLL_PAGEUP);
+        switch (altsort)
+        {
+        case ALTSORT_NAME:
+            std::sort(units.begin(), units.end(), sortByName);
+            break;
+        case ALTSORT_PROFESSION:
+            std::sort(units.begin(), units.end(), sortByProfession);
+            break;
+        }
+    }
+    if (events->count(interface_key::CHANGETAB))
+    {
+        switch (altsort)
+        {
+        case ALTSORT_NAME:
+            altsort = ALTSORT_PROFESSION;
+            break;
+        case ALTSORT_PROFESSION:
+            altsort = ALTSORT_NAME;
+            break;
+        }
+    }
+
+    if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
+    {
+        if (events->count(interface_key::UNITJOB_VIEW) || events->count(interface_key::UNITJOB_ZOOM_CRE))
+        {
+            for (int i = 0; i < unitlist->units[unitlist->page].size(); i++)
+            {
+                if (unitlist->units[unitlist->page][i] == units[sel_row]->unit)
+                {
+                    unitlist->cursor_pos[unitlist->page] = i;
+                    unitlist->feed(events);
+                    if (Screen::isDismissed(unitlist))
+                        Screen::dismiss(this);
+                    break;
+                }
+            }
+        }
+    }
 }
 
+void OutputString(int8_t color, int &x, int y, const std::string &text)
+{
+    Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
+    x += text.length();
+}
 void viewscreen_unitlaborsst::render()
 {
     if (Screen::isDismissed(this))
@@ -520,7 +611,7 @@ void viewscreen_unitlaborsst::render()
         if (col_offset >= NUM_COLUMNS)
             break;
 
-        int8_t fg = Units::getCasteProfessionColor(ui->race_id, -1, columns[col_offset].profession);
+        int8_t fg = columns[col_offset].color;
         int8_t bg = 0;
 
         if (col_offset == sel_column)
@@ -528,8 +619,19 @@ void viewscreen_unitlaborsst::render()
             fg = 0;
             bg = 7;
         }
+
         Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 1);
         Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 2);
+        df::profession profession = columns[col_offset].profession;
+        if (profession != profession::NONE)
+        {
+            auto graphics = world->raws.creatures.all[ui->race_id]->graphics;
+            Screen::paintTile(
+                Screen::Pen(' ', fg, 0,
+                    graphics.profession_add_color[creature_graphics_role::DEFAULT][profession],
+                    graphics.profession_texpos[creature_graphics_role::DEFAULT][profession]),
+                1 + name_width + 1 + prof_width + 1 + col, 3);
+        }
     }
 
     for (int row = 0; row < height; row++)
@@ -537,6 +639,7 @@ void viewscreen_unitlaborsst::render()
         int row_offset = row + first_row;
         if (row_offset >= units.size())
             break;
+
         UnitInfo *cur = units[row_offset];
         df::unit *unit = cur->unit;
         int8_t fg = 15, bg = 0;
@@ -548,13 +651,14 @@ void viewscreen_unitlaborsst::render()
 
         string name = cur->name;
         name.resize(name_width);
-        Screen::paintString(Screen::Pen(' ', fg, bg), 1, 3 + row, name);
+        Screen::paintString(Screen::Pen(' ', fg, bg), 1, 4 + row, name);
 
         string profession = cur->profession;
         profession.resize(prof_width);
         fg = cur->color;
         bg = 0;
-        Screen::paintString(Screen::Pen(' ', fg, bg), 1 + prof_width + 1, 3 + row, profession);
+
+        Screen::paintString(Screen::Pen(' ', fg, bg), 1 + name_width + 1, 4 + row, profession);
 
         // Print unit's skills and labor assignments
         for (int col = 0; col < labors_width; col++)
@@ -562,11 +666,9 @@ void viewscreen_unitlaborsst::render()
             int col_offset = col + first_column;
             fg = 15;
             bg = 0;
+            uint8_t c = 0xFA;
             if ((col_offset == sel_column) && (row_offset == sel_row))
                 fg = 9;
-            if ((columns[col_offset].labor != unit_labor::NONE) && (unit->status.labors[columns[col_offset].labor]))
-                bg = 7;
-            char c = '-';
             if (columns[col_offset].skill != job_skill::NONE)
             {
                 df::unit_skill *skill = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(unit->status.current_soul->skills, &df::unit_skill::id, columns[col_offset].skill);
@@ -577,24 +679,44 @@ void viewscreen_unitlaborsst::render()
                         level = NUM_SKILL_LEVELS - 1;
                     c = skill_levels[level].abbrev;
                 }
+                else
+                    c = '-';
             }
-            Screen::paintTile(Screen::Pen(c, fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 3 + row);
+            if (columns[col_offset].labor != unit_labor::NONE)
+            {
+                if (unit->status.labors[columns[col_offset].labor])
+                {
+                    bg = 7;
+                    if (columns[col_offset].skill == job_skill::NONE)
+                        c = 0xF9;
+                }
+            }
+            else
+                bg = 4;
+            Screen::paintTile(Screen::Pen(c, fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 4 + row);
         }
     }
 
     UnitInfo *cur = units[sel_row];
+    bool canToggle = false;
     if (cur != NULL)
     {
         df::unit *unit = cur->unit;
-        string str = cur->transname;
-        if (str.length())
-            str += ", ";
-        str += cur->profession;
-        str += ":";
+        int x = 1;
+        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + height + 2, cur->transname);
+        x += cur->transname.length();
 
-        Screen::paintString(Screen::Pen(' ', 15, 0), 1, 3 + height + 2, str);
-        int y = 1 + str.length() + 1;
+        if (cur->transname.length())
+        {
+            Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + height + 2, ", ");
+            x += 2;
+        }
+        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + height + 2, cur->profession);
+        x += cur->profession.length();
+        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + height + 2, ": ");
+        x += 2;
 
+        string str;
         if (columns[sel_column].skill == job_skill::NONE)
         {
             str = ENUM_ATTR_STR(unit_labor, caption, columns[sel_column].labor);
@@ -602,7 +724,6 @@ void viewscreen_unitlaborsst::render()
                 str += " Enabled";
             else
                 str += " Not Enabled";
-            Screen::paintString(Screen::Pen(' ', 9, 0), y, 3 + height + 2, str);
         }
         else
         {
@@ -618,11 +739,50 @@ void viewscreen_unitlaborsst::render()
             }
             else
                 str = stl_sprintf("Not %s (0/500)", ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));
-            Screen::paintString(Screen::Pen(' ', 9, 0), y, 3 + height + 2, str);
         }
+        Screen::paintString(Screen::Pen(' ', 9, 0), x, 3 + height + 2, str);
+
+        canToggle = (cur->allowEdit) && (columns[sel_column].labor != unit_labor::NONE);
     }
 
-    // TODO - print command help info
+    int x = 2;
+    OutputString(10, x, gps->dimy - 3, "Enter"); // SELECT key
+    OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle labor, ");
+
+    OutputString(10, x, gps->dimy - 3, "Shift+Enter"); // SELECT_ALL key
+    OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle Group, ");
+
+    OutputString(10, x, gps->dimy - 3, "v"); // UNITJOB_VIEW key
+    OutputString(15, x, gps->dimy - 3, ": ViewCre, ");
+
+    OutputString(10, x, gps->dimy - 3, "c"); // UNITJOB_ZOOM_CRE key
+    OutputString(15, x, gps->dimy - 3, ": Zoom-Cre");
+
+    x = 2;
+    OutputString(10, x, gps->dimy - 2, "Esc"); // LEAVESCREEN key
+    OutputString(15, x, gps->dimy - 2, ": Done, ");
+
+    OutputString(10, x, gps->dimy - 2, "+"); // SECONDSCROLL_DOWN key
+    OutputString(10, x, gps->dimy - 2, "-"); // SECONDSCROLL_UP key
+    OutputString(15, x, gps->dimy - 2, ": Sort by Skill, ");
+
+    OutputString(10, x, gps->dimy - 2, "*"); // SECONDSCROLL_PAGEDOWN key
+    OutputString(10, x, gps->dimy - 2, "/"); // SECONDSCROLL_PAGEUP key
+    OutputString(15, x, gps->dimy - 2, ": Sort by (");
+    OutputString(10, x, gps->dimy - 2, "Tab"); // CHANGETAB key
+    OutputString(15, x, gps->dimy - 2, ") ");
+    switch (altsort)
+    {
+    case ALTSORT_NAME:
+        OutputString(15, x, gps->dimy - 2, "Name");
+        break;
+    case ALTSORT_PROFESSION:
+        OutputString(15, x, gps->dimy - 2, "Profession");
+        break;
+    default:
+        OutputString(15, x, gps->dimy - 2, "Unknown");
+        break;
+    }
 }
 
 struct unitlist_hook : df::viewscreen_unitlistst
@@ -633,29 +793,43 @@ struct unitlist_hook : df::viewscreen_unitlistst
     {
         if (input->count(interface_key::UNITVIEW_PRF_PROF))
         {
-            Screen::dismiss(this);
-            Screen::show(new viewscreen_unitlaborsst());
-            return;
+            if (units[page].size())
+            {
+                Screen::show(new viewscreen_unitlaborsst(units[page]));
+                return;
+            }
         }
         INTERPOSE_NEXT(feed)(input);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+
+        if (units[page].size())
+        {
+            int x = 2;
+            OutputString(12, x, gps->dimy - 2, "l"); // UNITVIEW_PRF_PROF key
+            OutputString(15, x, gps->dimy - 2, ": Manage labors");
+        }
     }
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, render);
+
+DFHACK_PLUGIN("manipulator");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (gps)
-    {
-        if (!INTERPOSE_HOOK(unitlist_hook, feed).apply())
-            out.printerr("Could not interpose viewscreen_unitlistst::feed\n");
-    }
-
+    if (!gps || !INTERPOSE_HOOK(unitlist_hook, feed).apply() || !INTERPOSE_HOOK(unitlist_hook, render).apply())
+        out.printerr("Could not insert Dwarf Manipulator hooks!\n");
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     INTERPOSE_HOOK(unitlist_hook, feed).remove();
+    INTERPOSE_HOOK(unitlist_hook, render).remove();
     return CR_OK;
 }

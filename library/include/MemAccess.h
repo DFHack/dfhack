@@ -281,6 +281,9 @@ namespace DFHack
             /// get the DF Process FilePath
             std::string getPath();
 
+            /// millisecond tick count, exactly as DF uses
+            uint32_t getTickCount();
+
             /// modify permisions of memory range
             bool setPermisions(const t_memrange & range,const t_memrange &trgrange);
 

@@ -27,6 +27,7 @@ using namespace std;
 #include "df/world.h"
 #include "df/world_raws.h"
 #include "df/building_def.h"
+#include "df/region_map_entry.h"
 
 using std::vector;
 using std::string;
@@ -224,8 +225,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     int bx = clip_range(block.region_pos.x + (offset % 3) - 1, 0, world->world_data->world_width-1);
     int by = clip_range(block.region_pos.y + (offset / 3) - 1, 0, world->world_data->world_height-1);
 
-    df::world_data::T_region_map* biome = 
-        &world->world_data->region_map[bx][by];
+    auto biome = &world->world_data->region_map[bx][by];
 
     int sav = biome->savagery;
     int evi = biome->evilness;

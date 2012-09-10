@@ -16,6 +16,10 @@ keybinding add Ctrl-K autodump-destroy-item
 # quicksave, only in main dwarfmode screen and menu page
 keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 
+# gui/rename script
+keybinding add Ctrl-Shift-N gui/rename
+keybinding add Ctrl-Shift-P "gui/rename unit-profession"
+
 ##############################
 # Generic adv mode bindings  #
 ##############################
@@ -48,3 +52,25 @@ keybinding add Ctrl-M@dwarfmode/QueryBuilding/Some gui/mechanisms
 
 # browse rooms of same owner
 keybinding add Alt-R@dwarfmode/QueryBuilding/Some gui/room-list.work
+
+# interface for the liquids plugin
+keybinding add Alt-L@dwarfmode/LookAround gui/liquids
+
+# machine power sensitive pressure plate construction
+keybinding add Ctrl-Shift-M@dwarfmode/Build/Position/Trap gui/power-meter
+
+###################
+# UI logic tweaks #
+###################
+
+# stabilize the cursor of dwarfmode when switching menus
+tweak stable-cursor
+
+# stop military from considering training as 'patrol duty'
+tweak patrol-duty
+
+# display creature weight in build plate menu as ??K, instead of (???df: Max
+tweak readable-build-plate
+
+# improve FPS by squashing endless item temperature update loops
+tweak stable-temp

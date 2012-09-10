@@ -218,8 +218,10 @@ virtual_identity::virtual_identity(size_t size, TAllocateFn alloc,
 virtual_identity::~virtual_identity()
 {
     // Remove interpose entries, so that they don't try accessing this object later
-    for (int i = interpose_list.size()-1; i >= 0; i--)
-        interpose_list[i]->remove();
+    for (auto it = interpose_list.begin(); it != interpose_list.end(); ++it)
+        if (it->second)
+            it->second->on_host_delete(this);
+    interpose_list.clear();
 }
 
 /* Vtable name to identity lookup. */
@@ -372,7 +374,7 @@ void DFHack::bitfieldToString(std::vector<std::string> *pvec, const void *p,
                               unsigned size, const bitfield_item_info *items)
 {
     for (unsigned i = 0; i < size; i++) {
-        int value = getBitfieldField(p, i, std::min(1,items[i].size));
+        int value = getBitfieldField(p, i, std::max(1,items[i].size));
 
         if (value) {
             std::string name = format_key(items[i].name, i);

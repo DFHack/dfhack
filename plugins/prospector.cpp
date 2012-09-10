@@ -293,7 +293,7 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
             int level_cnt = layer->top_height - layer->bottom_height + 1;
             int layer_size = 48*48*cnt*level_cnt;
 
-            int sums[ENUM_LAST_ITEM(inclusion_type)+1] = { 0 };
+            int sums[(int)ENUM_LAST_ITEM(inclusion_type)+1] = { 0 };
 
             for (unsigned j = 0; j < layer->vein_mat.size(); j++)
                 if (is_valid_enum_item<df::inclusion_type>(layer->vein_type[j]))

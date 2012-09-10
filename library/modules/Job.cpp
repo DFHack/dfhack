@@ -181,7 +181,7 @@ void DFHack::Job::printItemDetails(color_ostream &out, df::job_item *item, int i
         out << "    reaction class: " << item->reaction_class << endl;
     if (!item->has_material_reaction_product.empty())
         out << "    reaction product: " << item->has_material_reaction_product << endl;
-    if (item->has_tool_use >= 0)
+    if (item->has_tool_use >= (df::tool_uses)0)
         out << "    tool use: " << ENUM_KEY_STR(tool_uses, item->has_tool_use) << endl;
 }
 

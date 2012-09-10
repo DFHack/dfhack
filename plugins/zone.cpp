@@ -792,7 +792,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
 bool isActivityZone(df::building * building)
 {
     if(    building->getType() == building_type::Civzone
-        && building->getSubtype() == civzone_type::ActivityZone)
+        && building->getSubtype() == (short)civzone_type::ActivityZone)
         return true;
     else
         return false;
@@ -1603,7 +1603,7 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
     if(building->getType()!= building_type::Civzone)
         return;
 
-    if(building->getSubtype() != civzone_type::ActivityZone)
+    if(building->getSubtype() != (short)civzone_type::ActivityZone)
         return;
 
     string name;

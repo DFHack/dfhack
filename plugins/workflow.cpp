@@ -808,7 +808,7 @@ static void compute_custom_job(ProtectedJob *pj, df::job *job)
         using namespace df::enums::reaction_product_item_flags;
 
         VIRTUAL_CAST_VAR(prod, df::reaction_product_itemst, r->products[i]);
-        if (!prod || (prod->item_type < 0 && !prod->flags.is_set(CRAFTS)))
+        if (!prod || (prod->item_type < (df::item_type)0 && !prod->flags.is_set(CRAFTS)))
             continue;
 
         MaterialInfo mat(prod);

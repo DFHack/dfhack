@@ -287,7 +287,7 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
 
     if (mask && mask->profession())
     {
-        if (unit->profession >= 0)
+        if (unit->profession >= (df::profession)0)
             info->set_profession(unit->profession);
         if (!unit->custom_profession.empty())
             info->set_custom_profession(unit->custom_profession);

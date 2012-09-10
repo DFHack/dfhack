@@ -50,12 +50,12 @@ command_result cleanmap (color_ostream &out, bool snow, bool mud)
             // filter snow
             if(!snow
                 && spatter->mat_type == builtin_mats::WATER
-                && spatter->mat_state == matter_state::Powder)
+                && spatter->mat_state == (short)matter_state::Powder)
                 continue;
             // filter mud
             if(!mud
                 && spatter->mat_type == builtin_mats::MUD
-                && spatter->mat_state == matter_state::Solid)
+                && spatter->mat_state == (short)matter_state::Solid)
                 continue;
 
             delete evt;

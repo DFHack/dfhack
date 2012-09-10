@@ -732,9 +732,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		if (df::enums::building_type::Workshop == type)
 		{
 			auto subType = build->getSubtype();
-			if (df::enums::workshop_type::Butchers == subType)
+			if ((short)df::enums::workshop_type::Butchers == subType)
 				has_butchers = true;
-			if (df::enums::workshop_type::Fishery == subType)
+			if ((short)df::enums::workshop_type::Fishery == subType)
 				has_fishery = true;
         } 
         else if (df::enums::building_type::TradeDepot == type)
@@ -863,7 +863,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 		{
 			// 7 / 0x7 = Newly arrived migrant, will not work yet
 			// 17 / 0x11 = On break
-			if ((*p)->id == 0x07 || (*p)->id == 0x11)
+			if ((*p)->id == (df::misc_trait_type)0x07 || (*p)->id == (df::misc_trait_type)0x11)
 				is_on_break = true;
 		}
 

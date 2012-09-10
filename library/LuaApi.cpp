@@ -1036,10 +1036,10 @@ static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
     return rv;
 }
 
-static uint32_t getBase() { return Core::getInstance().p->getBase(); }
+static int getRebaseDelta() { return Core::getInstance().vinfo->getRebaseDelta(); }
 
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
-    WRAP(getBase),
+    WRAP(getRebaseDelta),
     { NULL, NULL }
 };
 
@@ -1074,8 +1074,9 @@ static int internal_setAddress(lua_State *L)
     }
 
     // Print via printerr, so that it is definitely logged to stderr.log.
-    std::string msg = stl_sprintf("<global-address name='%s' value='0x%x'/>", name.c_str(), addr);
-    dfhack_printerr(L, msg);
+    uint32_t iaddr = addr - Core::getInstance().vinfo->getRebaseDelta();
+    fprintf(stderr, "Setting global '%s' to %x (%x)\n", name.c_str(), addr, iaddr);
+    fflush(stderr);
 
     return 1;
 }

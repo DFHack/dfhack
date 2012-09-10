@@ -379,7 +379,7 @@ function prompt_yes_no(msg,default)
             elseif string.match(rv,'^[Nn]') then
                 return false
             elseif rv == 'abort' then
-                error('User abort in utils.prompt_yes_no()')
+                qerror('User abort in utils.prompt_yes_no()')
             elseif rv == '' and default ~= nil then
                 return default
             end

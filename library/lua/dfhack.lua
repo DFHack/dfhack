@@ -49,6 +49,10 @@ function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
 end
 
+function qerror(msg, level)
+    dfhack.error(msg, (level or 1) + 1, false)
+end
+
 function dfhack.with_finalize(...)
     return dfhack.call_with_finalizer(0,true,...)
 end
@@ -63,6 +67,8 @@ end
 function dfhack.with_temp_object(obj,fn,...)
     return dfhack.call_with_finalizer(1,true,call_delete,obj,fn,obj,...)
 end
+
+dfhack.exception.__index = dfhack.exception
 
 -- Module loading
 

@@ -137,13 +137,24 @@ static bool enable_plugin();
 
 struct EngineInfo {
     int id;
-    coord_range target;
+    df::building_siegeenginest *bld;
+
     df::coord center;
+    coord_range building_rect;
+
+    bool is_catapult;
     int proj_speed, hit_delay;
+    std::pair<int, int> fire_range;
+
+    coord_range target;
 
     bool hasTarget() { return is_range_valid(target); }
     bool onTarget(df::coord pos) { return is_in_range(target, pos); }
     df::coord getTargetSize() { return target.second - target.first; }
+
+    bool isInRange(int dist) {
+        return dist >= fire_range.first && dist <= fire_range.second;
+    }
 };
 
 static std::map<df::building*, EngineInfo> engines;
@@ -151,29 +162,64 @@ static std::map<df::coord, df::building*> coord_engines;
 
 static EngineInfo *find_engine(df::building *bld, bool create = false)
 {
-    if (!bld)
+    auto ebld = strict_virtual_cast<df::building_siegeenginest>(bld);
+    if (!ebld)
         return NULL;
 
     auto it = engines.find(bld);
     if (it != engines.end())
+    {
+        it->second.bld = ebld;
         return &it->second;
+    }
+
     if (!create)
         return NULL;
 
     auto *obj = &engines[bld];
 
     obj->id = bld->id;
+    obj->bld = ebld;
     obj->center = df::coord(bld->centerx, bld->centery, bld->z);
+    obj->building_rect = coord_range(
+        df::coord(bld->x1, bld->y1, bld->z),
+        df::coord(bld->x2, bld->y2, bld->z)
+    );
+    obj->is_catapult = (ebld->type == siegeengine_type::Catapult);
     obj->proj_speed = 2;
     obj->hit_delay = 3;
+    obj->fire_range = get_engine_range(ebld);
 
     coord_engines[obj->center] = bld;
     return obj;
 }
 
+static EngineInfo *find_engine(lua_State *L, int idx, bool create = false)
+{
+    auto bld = Lua::CheckDFObject<df::building_siegeenginest>(L, idx);
+
+    auto engine = find_engine(bld);
+    if (!engine)
+        luaL_error(L, "no such engine");
+
+    return engine;
+}
+
 static EngineInfo *find_engine(df::coord pos)
 {
-    return find_engine(coord_engines[pos]);
+    auto engine = find_engine(coord_engines[pos]);
+
+    if (engine)
+    {
+        auto bld0 = df::building::find(engine->id);
+        auto bld = strict_virtual_cast<df::building_siegeenginest>(bld0);
+        if (!bld)
+            return NULL;
+
+        engine->bld = bld;
+    }
+
+    return engine;
 }
 
 static void clear_engines()
@@ -263,37 +309,61 @@ static bool setTargetArea(df::building_siegeenginest *bld, df::coord target_min,
     return true;
 }
 
+static int getShotSkill(df::building_siegeenginest *bld)
+{
+    CHECK_NULL_POINTER(bld);
+
+    auto engine = find_engine(bld);
+    if (!engine)
+        return 0;
+
+    auto &active = world->units.active;
+    for (size_t i = 0; i < active.size(); i++)
+        if (active[i]->pos == engine->center && Units::isCitizen(active[i]))
+            return Units::getEffectiveSkill(active[i], job_skill::SIEGEOPERATE);
+
+    return 0;
+}
+
 /*
  * Trajectory
  */
 
 struct ProjectilePath {
+    static const int DEFAULT_FUDGE = 31;
+
     df::coord origin, goal, target, fudge_delta;
     int divisor, fudge_factor;
     df::coord speed, direction;
 
     ProjectilePath(df::coord origin, df::coord goal) :
-        origin(origin), goal(goal), target(goal), fudge_factor(1)
+        origin(origin), goal(goal), fudge_factor(1)
     {
         fudge_delta = df::coord(0,0,0);
         calc_line();
     }
 
-    void fudge(int factor, df::coord delta)
+    ProjectilePath(df::coord origin, df::coord goal, df::coord delta, int factor) :
+        origin(origin), goal(goal), fudge_delta(delta), fudge_factor(factor)
     {
-        fudge_factor = factor;
-        fudge_delta = delta;
-        auto diff = goal - origin;
-        diff.x *= fudge_factor;
-        diff.y *= fudge_factor;
-        diff.z *= fudge_factor;
-        target = origin + diff + fudge_delta;
+        calc_line();
+    }
+
+    ProjectilePath(df::coord origin, df::coord goal, float zdelta, int factor = DEFAULT_FUDGE) :
+        origin(origin), goal(goal), fudge_factor(factor)
+    {
+        fudge_delta = df::coord(0,0,int(factor * zdelta));
         calc_line();
     }
 
     void calc_line()
     {
-        speed = target - origin;
+        speed = goal - origin;
+        speed.x *= fudge_factor;
+        speed.y *= fudge_factor;
+        speed.z *= fudge_factor;
+        speed = speed + fudge_delta;
+        target = origin + speed;
         divisor = point_distance(speed);
         if (divisor <= 0) divisor = 1;
         direction = df::coord(speed.x>=0?1:-1,speed.y>=0?1:-1,speed.z>=0?1:-1);
@@ -311,42 +381,139 @@ struct ProjectilePath {
     }
 };
 
+static ProjectilePath decode_path(lua_State *L, int idx, df::coord origin)
+{
+    idx = lua_absindex(L, idx);
+
+    Lua::StackUnwinder frame(L);
+    df::coord goal;
+
+    lua_getfield(L, idx, "target");
+    Lua::CheckDFAssign(L, &goal, frame[1]);
+
+    lua_getfield(L, idx, "delta");
+
+    if (!lua_isnil(L, frame[2]))
+    {
+        lua_getfield(L, idx, "factor");
+        int factor = luaL_optnumber(L, frame[3], ProjectilePath::DEFAULT_FUDGE);
+
+        if (lua_isnumber(L, frame[2]))
+            return ProjectilePath(origin, goal, lua_tonumber(L, frame[2]), factor);
+
+        df::coord delta;
+        Lua::CheckDFAssign(L, &delta, frame[2]);
+
+        return ProjectilePath(origin, goal, delta, factor);
+    }
+
+    return ProjectilePath(origin, goal);
+}
+
+static int projPosAtStep(lua_State *L)
+{
+    auto engine = find_engine(L, 1);
+    auto path = decode_path(L, 2, engine->center);
+    int step = luaL_checkint(L, 3);
+    Lua::Push(L, path[step]);
+    return 1;
+}
+
 static bool isPassableTile(df::coord pos)
 {
     auto ptile = Maps::getTileType(pos);
+
     return !ptile || FlowPassable(*ptile);
 }
+
+static bool isTargetableTile(df::coord pos)
+{
+    auto ptile = Maps::getTileType(pos);
+
+    return ptile && FlowPassable(*ptile) && !isOpenTerrain(*ptile);
+}
+
+static bool isTreeTile(df::coord pos)
+{
+    auto ptile = Maps::getTileType(pos);
+
+    return ptile && tileShape(*ptile) == tiletype_shape::TREE;
+}
+
+static bool adjustToTarget(EngineInfo *engine, df::coord *pos)
+{
+    if (isTargetableTile(*pos))
+        return true;
+
+    for (df::coord fudge = *pos;
+         fudge.z < engine->target.second.z; fudge.z++)
+    {
+        if (!isTargetableTile(fudge))
+            continue;
+        *pos = fudge;
+        return true;
+    }
+
+    for (df::coord fudge = *pos;
+            fudge.z > engine->target.first.z; fudge.z--)
+    {
+        if (!isTargetableTile(fudge))
+            continue;
+        *pos = fudge;
+        return true;
+    }
+
+    return false;
+}
+
+static int adjustToTarget(lua_State *L)
+{
+    auto engine = find_engine(L, 1, true);
+    df::coord pos;
+    Lua::CheckDFAssign(L, &pos, 2);
+    bool ok = adjustToTarget(engine, &pos);
+    Lua::Push(L, pos);
+    Lua::Push(L, ok);
+    return 2;
+}
+
+static const char* const hit_type_names[] = {
+    "wall", "floor", "ceiling", "map_edge", "tree"
+};
 
 struct PathMetrics {
     enum CollisionType {
         Impassable,
         Floor,
         Ceiling,
-        MapEdge
+        MapEdge,
+        Tree
     } hit_type;
 
-    int collision_step;
-    int goal_step, goal_z_step;
-    std::vector<df::coord> coords;
+    int collision_step, collision_z_step;
+    int goal_step, goal_z_step, goal_distance;
 
-    bool hits() { return collision_step > goal_step; }
+    bool hits() const { return collision_step > goal_step; }
 
-    PathMetrics(const ProjectilePath &path, bool list_coords = false)
+    PathMetrics(const ProjectilePath &path)
     {
-        coords.clear();
+        compute(path);
+    }
+
+    void compute(const ProjectilePath &path)
+    {
         collision_step = goal_step = goal_z_step = 1000000;
+        collision_z_step = 0;
+
+        goal_distance = point_distance(path.origin - path.goal);
 
         int step = 0;
         df::coord prev_pos = path.origin;
-        if (list_coords)
-            coords.push_back(prev_pos);
 
         for (;;) {
             df::coord cur_pos = path[++step];
             if (cur_pos == prev_pos)
                 break;
-            if (list_coords)
-                coords.push_back(cur_pos);
 
             if (cur_pos.z == path.goal.z)
             {
@@ -363,8 +530,21 @@ struct PathMetrics {
 
             if (!isPassableTile(cur_pos))
             {
-                hit_type = Impassable;
-                break;
+                if (isTreeTile(cur_pos))
+                {
+                    // The projectile code has a bug where it will
+                    // hit a tree on the same tick as a Z level change.
+                    if (cur_pos.z != prev_pos.z)
+                    {
+                        hit_type = Tree;
+                        break;
+                    }
+                }
+                else
+                {
+                    hit_type = Impassable;
+                    break;
+                }
             }
 
             if (cur_pos.z != prev_pos.z)
@@ -377,6 +557,8 @@ struct PathMetrics {
                     hit_type = (cur_pos.z > prev_pos.z ? Ceiling : Floor);
                     break;
                 }
+
+                collision_z_step = step;
             }
 
             prev_pos = cur_pos;
@@ -386,107 +568,112 @@ struct PathMetrics {
     }
 };
 
-struct AimContext {
-    df::building_siegeenginest *bld;
-    df::coord origin;
-    coord_range building_rect;
-    EngineInfo *engine;
-    std::pair<int, int> fire_range;
-
-    AimContext(df::building_siegeenginest *bld, EngineInfo *engine)
-        : bld(bld), engine(engine)
-    {
-        origin = df::coord(bld->centerx, bld->centery, bld->z);
-        building_rect = coord_range(
-            df::coord(bld->x1, bld->y1, bld->z),
-            df::coord(bld->x2, bld->y2, bld->z)
-        );
-        fire_range = get_engine_range(bld);
-    }
-
-    bool isInRange(const PathMetrics &raytrace)
-    {
-        return raytrace.goal_step >= fire_range.first &&
-               raytrace.goal_step <= fire_range.second;
-    }
-
-    bool adjustToPassable(df::coord *pos)
-    {
-        if (isPassableTile(*pos))
-            return true;
-
-        for (df::coord fudge = *pos;
-             fudge.z < engine->target.second.z; fudge.z++)
-        {
-            if (!isPassableTile(fudge))
-                continue;
-            *pos = fudge;
-            return true;
-        }
-
-        for (df::coord fudge = *pos;
-             fudge.z > engine->target.first.z; fudge.z--)
-        {
-            if (!isPassableTile(fudge))
-                continue;
-            *pos = fudge;
-            return true;
-        }
-
-        return false;
-    }
-
+enum TargetTileStatus {
+    TARGET_OK, TARGET_RANGE, TARGET_BLOCKED, TARGET_SEMIBLOCKED
 };
+static const char* const target_tile_type_names[] = {
+    "ok", "out_of_range", "blocked", "semi_blocked"
+};
+
+static TargetTileStatus calcTileStatus(EngineInfo *engine, const PathMetrics &raytrace)
+{
+    if (raytrace.hits())
+    {
+        if (engine->isInRange(raytrace.goal_step))
+            return TARGET_OK;
+        else
+            return TARGET_RANGE;
+    }
+    else
+        return TARGET_BLOCKED;
+}
+
+static int projPathMetrics(lua_State *L)
+{
+    auto engine = find_engine(L, 1);
+    auto path = decode_path(L, 2, engine->center);
+
+    PathMetrics info(path);
+
+    lua_createtable(L, 0, 7);
+    Lua::SetField(L, hit_type_names[info.hit_type], -1, "hit_type");
+    Lua::SetField(L, info.collision_step, -1, "collision_step");
+    Lua::SetField(L, info.collision_z_step, -1, "collision_z_step");
+    Lua::SetField(L, info.goal_distance, -1, "goal_distance");
+    if (info.goal_step < info.collision_step)
+        Lua::SetField(L, info.goal_step, -1, "goal_step");
+    if (info.goal_z_step < info.collision_step)
+        Lua::SetField(L, info.goal_z_step, -1, "goal_z_step");
+    Lua::SetField(L, target_tile_type_names[calcTileStatus(engine, info)], -1, "status");
+    return 1;
+}
+
+static TargetTileStatus calcTileStatus(EngineInfo *engine, df::coord target, float zdelta)
+{
+    ProjectilePath path(engine->center, target, zdelta);
+    PathMetrics raytrace(path);
+    return calcTileStatus(engine, raytrace);
+}
+
+static TargetTileStatus calcTileStatus(EngineInfo *engine, df::coord target)
+{
+    auto status = calcTileStatus(engine, target, 0.0f);
+
+    if (status == TARGET_BLOCKED)
+    {
+        if (calcTileStatus(engine, target, 0.5f) < TARGET_BLOCKED)
+            return TARGET_SEMIBLOCKED;
+
+        if (calcTileStatus(engine, target, -0.5f) < TARGET_BLOCKED)
+            return TARGET_SEMIBLOCKED;
+    }
+
+    return status;
+}
 
 static std::string getTileStatus(df::building_siegeenginest *bld, df::coord tile_pos)
 {
-    AimContext context(bld, NULL);
+    auto engine = find_engine(bld, true);
+    if (!engine)
+        return "invalid";
 
-    ProjectilePath path(context.origin, tile_pos);
-    PathMetrics raytrace(path);
-
-     if (raytrace.hits())
-    {
-        if (context.isInRange(raytrace))
-            return "ok";
-        else
-            return "out_of_range";
-    }
-    else
-        return "blocked";
+    return target_tile_type_names[calcTileStatus(engine, tile_pos)];
 }
 
 static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::coord2d ltop, df::coord2d size)
 {
-    CHECK_NULL_POINTER(bld);
-
-    AimContext context(bld, find_engine(bld));
+    auto engine = find_engine(bld, true);
+    CHECK_NULL_POINTER(engine);
 
     for (int x = 0; x < size.x; x++)
     {
         for (int y = 0; y < size.y; y++)
         {
             df::coord tile_pos = view + df::coord(x,y,0);
-            if (is_in_range(context.building_rect, tile_pos))
+            if (is_in_range(engine->building_rect, tile_pos))
                 continue;
 
             Pen cur_tile = Screen::readTile(ltop.x+x, ltop.y+y);
             if (!cur_tile.valid())
                 continue;
 
-            ProjectilePath path(context.origin, tile_pos);
-            PathMetrics raytrace(path);
-
             int color;
-            if (raytrace.hits())
+
+            switch (calcTileStatus(engine, tile_pos))
             {
-                if (context.isInRange(raytrace))
+                case TARGET_OK:
                     color = COLOR_GREEN;
-                else
+                    break;
+                case TARGET_RANGE:
                     color = COLOR_CYAN;
+                    break;
+                case TARGET_BLOCKED:
+                    color = COLOR_RED;
+                    break;
+                case TARGET_SEMIBLOCKED:
+                    color = COLOR_BROWN;
+                    break;
             }
-            else
-                color = COLOR_RED;
 
             if (cur_tile.fg && cur_tile.ch != ' ')
             {
@@ -499,7 +686,7 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
                 cur_tile.bg = color;
             }
 
-            cur_tile.bold = (context.engine && context.engine->onTarget(tile_pos));
+            cur_tile.bold = engine->onTarget(tile_pos);
 
             if (cur_tile.tile)
                 cur_tile.tile_mode = Pen::CharColor;
@@ -537,6 +724,17 @@ struct UnitPath {
 
     UnitPath(df::unit *unit) : unit(unit)
     {
+        if (unit->flags1.bits.rider)
+        {
+            auto mount = df::unit::find(unit->relations.rider_mount_id);
+
+            if (mount)
+            {
+                path = get(mount)->path;
+                return;
+            }
+        }
+
         df::coord pos = unit->pos;
         df::coord dest = unit->path.dest;
         auto &upath = unit->path.path;
@@ -598,7 +796,7 @@ struct UnitPath {
 
             if (info.lmargin > 0 && info.rmargin > 0)
             {
-                if (engine->onTarget(info.pos))
+                if (engine->onTarget(info.pos) && engine->isInRange(info.dist))
                     hit_points->push_back(info);
             }
         }
@@ -664,6 +862,19 @@ static int unitPosAtTime(lua_State *L)
     return 3;
 }
 
+static bool canTargetUnit(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if (unit->flags1.bits.dead ||
+        unit->flags3.bits.ghostly ||
+        unit->flags1.bits.caged ||
+        unit->flags1.bits.hidden_in_ambush)
+        return false;
+
+    return true;
+}
+
 static void proposeUnitHits(EngineInfo *engine, std::vector<UnitPath::Hit> *hits, float bias)
 {
     auto &active = world->units.active;
@@ -672,12 +883,7 @@ static void proposeUnitHits(EngineInfo *engine, std::vector<UnitPath::Hit> *hits
     {
         auto unit = active[i];
 
-        if (unit->flags1.bits.dead ||
-            unit->flags3.bits.ghostly ||
-            unit->flags1.bits.caged ||
-            unit->flags1.bits.chained ||
-            unit->flags1.bits.rider ||
-            unit->flags1.bits.hidden_in_ambush)
+        if (!canTargetUnit(unit))
             continue;
 
         UnitPath::get(unit)->findHits(engine, hits, bias);
@@ -686,12 +892,9 @@ static void proposeUnitHits(EngineInfo *engine, std::vector<UnitPath::Hit> *hits
 
 static int proposeUnitHits(lua_State *L)
 {
-    auto bld = Lua::CheckDFObject<df::building_siegeenginest>(L, 1);
+    auto engine = find_engine(L, 1);
     float bias = luaL_optnumber(L, 2, 0);
 
-    auto engine = find_engine(bld);
-    if (!engine)
-        luaL_error(L, "no such engine");
     if (!engine->hasTarget())
         luaL_error(L, "target not set");
 
@@ -704,10 +907,10 @@ static int proposeUnitHits(lua_State *L)
     {
         auto &hit = hits[i];
         lua_createtable(L, 0, 6);
-        Lua::PushDFObject(L, hit.path->unit); lua_setfield(L, -2, "unit");
-        Lua::Push(L, hit.pos);                lua_setfield(L, -2, "pos");
-        lua_pushnumber(L, hit.dist);          lua_setfield(L, -2, "dist");
-        lua_pushnumber(L, hit.time);          lua_setfield(L, -2, "time");
+        Lua::SetField(L, hit.path->unit, -1, "unit");
+        Lua::SetField(L, hit.pos, -1, "pos");
+        Lua::SetField(L, hit.dist, -1, "dist");
+        Lua::SetField(L, hit.time, -1, "time");
         push_margin(L, hit.lmargin);          lua_setfield(L, -2, "lmargin");
         push_margin(L, hit.rmargin);          lua_setfield(L, -2, "rmargin");
         lua_rawseti(L, -2, i+1);
@@ -716,89 +919,6 @@ static int proposeUnitHits(lua_State *L)
     return 1;
 }
 
-#if 0
-struct UnitContext {
-    AimContext &ctx;
-
-    struct UnitInfo {
-        df::unit *unit;
-
-        UnitPath path;
-        float score;
-
-        UnitInfo(df::unit *unit) : unit(unit), path(unit) {}
-    };
-
-    std::map<df::unit*, UnitInfo*> units;
-
-    UnitContext(AimContext &ctx) : ctx(ctx) {}
-
-    ~UnitContext()
-    {
-        for (auto it = units.begin(); it != units.end(); ++it)
-            delete it->second;
-    }
-
-    float unit_score(df::unit *unit)
-    {
-        float score = 1.0f;
-
-        if (unit->flags1.bits.tame && unit->civ_id == ui->civ_id)
-            score = -1.0f;
-        if (unit->flags1.bits.diplomat || unit->flags1.bits.merchant)
-            score = -2.0f;
-        else if (Units::isCitizen(unit))
-            score = -10.0f;
-        else
-        {
-            if (unit->flags1.bits.marauder)
-                score += 0.5f;
-            if (unit->flags1.bits.active_invader)
-                score += 1.0f;
-            if (unit->flags1.bits.invader_origin)
-                score += 1.0f;
-            if (unit->flags1.bits.invades)
-                score += 1.0f;
-            if (unit->flags1.bits.hidden_ambusher)
-                score += 1.0f;
-        }
-
-        if (unit->flags1.bits.ridden)
-        {
-            for (size_t i = 0; i < unit->refs.size(); i++)
-            {
-                if (!unit->refs[i]->getType() == general_ref_type::UNIT_RIDER)
-                    continue;
-                if (auto rider = unit->refs[i]->getUnit())
-                    score += unit_score(rider);
-            }
-        }
-    }
-
-    void select_units()
-    {
-        auto &active = world->units.active;
-
-        for (size_t i = 0; i < active.size(); i++)
-        {
-            auto unit = active[i];
-            if (unit->flags1.bits.dead ||
-                unit->flags3.bits.ghostly ||
-                unit->flags1.bits.caged ||
-                unit->flags1.bits.chained ||
-                unit->flags1.bits.rider ||
-                unit->flags1.bits.hidden_in_ambush)
-                continue;
-
-            auto info = units[unit] = new UnitInfo(unit);
-
-            info->findHits(ctx, ctx.proj_hit_delay);
-            info->score = unit_score(unit);
-        }
-    }
-};
-#endif
-
 /*
  * Projectile hook
  */
@@ -806,7 +926,7 @@ struct UnitContext {
 struct projectile_hook : df::proj_itemst {
     typedef df::proj_itemst interpose_base;
 
-    void aimAtPoint(AimContext &context, ProjectilePath &path, bool bad_shot = false)
+    void aimAtPoint(EngineInfo *engine, const ProjectilePath &path)
     {
         target_pos = path.target;
 
@@ -816,28 +936,32 @@ struct projectile_hook : df::proj_itemst {
         for (int i = 0; i < raytrace.collision_step; i++)
             Maps::ensureTileBlock(path[i]);
 
-        if (flags.bits.piercing)
+        // Find valid hit point for catapult stones
+        if (flags.bits.high_flying)
         {
-            if (bad_shot)
-                fall_threshold = std::min(raytrace.goal_z_step, raytrace.collision_step);
-        }
-        else
-        {
-            if (bad_shot)
-                fall_threshold = context.fire_range.second;
-            else
+            if (raytrace.hits())
                 fall_threshold = raytrace.goal_step;
+            else
+                fall_threshold = (raytrace.collision_z_step+raytrace.collision_step-1)/2;
+
+            while (fall_threshold < raytrace.collision_step-1)
+            {
+                if (isTargetableTile(path[fall_threshold]))
+                    break;
+
+                fall_threshold++;
+            }
         }
 
-        fall_threshold = std::max(fall_threshold, context.fire_range.first);
-        fall_threshold = std::min(fall_threshold, context.fire_range.second);
+        fall_threshold = std::max(fall_threshold, engine->fire_range.first);
+        fall_threshold = std::min(fall_threshold, engine->fire_range.second);
     }
 
-    void aimAtArea(AimContext &context)
+    void aimAtArea(EngineInfo *engine)
     {
         df::coord target, last_passable;
-        df::coord tbase = context.engine->target.first;
-        df::coord tsize = context.engine->getTargetSize();
+        df::coord tbase = engine->target.first;
+        df::coord tsize = engine->getTargetSize();
         bool success = false;
 
         for (int i = 0; i < 50; i++)
@@ -846,17 +970,17 @@ struct projectile_hook : df::proj_itemst {
                 random_int(tsize.x), random_int(tsize.y), random_int(tsize.z)
             );
 
-            if (context.adjustToPassable(&target))
+            if (adjustToTarget(engine, &target))
                 last_passable = target;
             else
                 continue;
 
-            ProjectilePath path(context.origin, target);
+            ProjectilePath path(engine->center, target, engine->is_catapult ? 0.5f : 0.0f);
             PathMetrics raytrace(path);
 
-            if (raytrace.hits() && context.isInRange(raytrace))
+            if (raytrace.hits() && engine->isInRange(raytrace.goal_step))
             {
-                aimAtPoint(context, path);
+                aimAtPoint(engine, path);
                 return;
             }
         }
@@ -864,8 +988,30 @@ struct projectile_hook : df::proj_itemst {
         if (!last_passable.isValid())
             last_passable = target;
 
-        ProjectilePath path(context.origin, last_passable);
-        aimAtPoint(context, path, true);
+        aimAtPoint(engine, ProjectilePath(engine->center, last_passable));
+    }
+
+    static int safeAimProjectile(lua_State *L)
+    {
+        color_ostream &out = *Lua::GetOutput(L);
+        auto proj = (projectile_hook*)lua_touserdata(L, 1);
+        auto engine = (EngineInfo*)lua_touserdata(L, 2);
+
+        if (!Lua::PushModulePublic(out, L, "plugins.siege-engine", "doAimProjectile"))
+            luaL_error(L, "Projectile aiming AI not available");
+
+        Lua::PushDFObject(L, engine->bld);
+        Lua::Push(L, engine->target.first);
+        Lua::Push(L, engine->target.second);
+
+        lua_call(L, 3, 1);
+
+        if (lua_isnil(L, -1))
+            proj->aimAtArea(engine);
+        else
+            proj->aimAtPoint(engine, decode_path(L, -1, engine->center));
+
+        return 0;
     }
 
     void doCheckMovement()
@@ -877,14 +1023,16 @@ struct projectile_hook : df::proj_itemst {
         if (!engine || !engine->hasTarget())
             return;
 
-        auto bld0 = df::building::find(engine->id);
-        auto bld = strict_virtual_cast<df::building_siegeenginest>(bld0);
-        if (!bld)
-            return;
+        auto L = Lua::Core::State;
+        CoreSuspendClaimer suspend;
+        color_ostream_proxy out(Core::getInstance().getConsole());
 
-        AimContext context(bld, engine);
+        lua_pushcfunction(L, safeAimProjectile);
+        lua_pushlightuserdata(L, this);
+        lua_pushlightuserdata(L, engine);
 
-        aimAtArea(context);
+        if (!Lua::Core::SafeCall(out, 2, 0))
+            aimAtArea(engine);
     }
 
     DEFINE_VMETHOD_INTERPOSE(bool, checkMovement, ())
@@ -907,11 +1055,18 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(setTargetArea),
     DFHACK_LUA_FUNCTION(getTileStatus),
     DFHACK_LUA_FUNCTION(paintAimScreen),
+    DFHACK_LUA_FUNCTION(canTargetUnit),
+    DFHACK_LUA_FUNCTION(isPassableTile),
+    DFHACK_LUA_FUNCTION(isTreeTile),
+    DFHACK_LUA_FUNCTION(isTargetableTile),
     DFHACK_LUA_END
 };
 
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(getTargetArea),
+    DFHACK_LUA_COMMAND(projPosAtStep),
+    DFHACK_LUA_COMMAND(projPathMetrics),
+    DFHACK_LUA_COMMAND(adjustToTarget),
     DFHACK_LUA_COMMAND(traceUnitPath),
     DFHACK_LUA_COMMAND(unitPosAtTime),
     DFHACK_LUA_COMMAND(proposeUnitHits),

@@ -45,7 +45,9 @@ function SiegeEngine:onShow()
 end
 
 function SiegeEngine:onDestroy()
-    self:selectBuilding(self.building, self.old_cursor, self.old_viewport, 10)
+    if self.building then
+        self:selectBuilding(self.building, self.old_cursor, self.old_viewport, 10)
+    end
 end
 
 function SiegeEngine:showCursor(enable)
@@ -213,6 +215,7 @@ local status_table = {
     ok = { pen = COLOR_GREEN, msg = "Target accessible" },
     out_of_range = { pen = COLOR_CYAN, msg = "Target out of range" },
     blocked = { pen = COLOR_RED, msg = "Target obstructed" },
+    semi_blocked = { pen = COLOR_BROWN, msg = "Partially obstructed" },
 }
 
 function SiegeEngine:onRenderBody_aim(dc)
@@ -291,6 +294,12 @@ function SiegeEngine:onInput(keys)
         self:centerViewOn(self.center)
     elseif keys.LEAVESCREEN then
         self:dismiss()
+    elseif keys.LEAVESCREEN_ALL then
+        self:dismiss()
+        self.building = nil
+        guidm.clearCursorPos()
+        df.global.ui.main.mode = df.ui_sidebar_mode.Default
+        df.global.world.selected_building = nil
     end
 end
 

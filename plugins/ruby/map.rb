@@ -189,8 +189,17 @@ module DFHack
         end
 
         def dig(mode=:Default)
-            designation.dig = mode
-            mapblock.flags.designated = true
+            if mode == :Smooth
+                if tilemat != :SOIL and caption !~ /smooth|pillar/i  # XXX
+                    # need to check if already smooth, otherwise re-setting
+                    # des.smooth will carve a fortification
+                    designation.dig = :No
+                    designation.smooth = 1
+                end
+            else
+                designation.dig = mode
+            end
+            mapblock.flags.designated = true if mode != :No
         end
 
         def spawn_liquid(quantity, is_magma=false, flowing=true)

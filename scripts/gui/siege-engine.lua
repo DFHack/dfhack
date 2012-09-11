@@ -12,6 +12,21 @@ local wmap = df.global.world.map
 last_target_min = last_target_min or nil
 last_target_max = last_target_max or nil
 
+local item_choices = {
+    { caption = 'boulders (default)', item_type = df.item_type.BOULDER },
+    { caption = 'blocks', item_type = df.item_type.BLOCKS },
+    { caption = 'weapons', item_type = df.item_type.WEAPON },
+    { caption = 'trap components', item_type = df.item_type.TRAPCOMP },
+    { caption = 'bins', item_type = df.item_type.BIN },
+    { caption = 'barrels', item_type = df.item_type.BARREL },
+    { caption = 'anything', item_type = -1 },
+}
+
+local item_choice_idx = {}
+for i,v in ipairs(item_choices) do
+    item_choice_idx[v.item_type] = i
+end
+
 SiegeEngine = defclass(SiegeEngine, guidm.MenuOverlay)
 
 SiegeEngine.focus_path = 'siege-engine'
@@ -83,13 +98,8 @@ function SiegeEngine:zoomToTarget()
         local cx = math.floor((target_min.x + target_max.x)/2)
         local cy = math.floor((target_min.y + target_max.y)/2)
         local cz = math.floor((target_min.z + target_max.z)/2)
-        for z = cz,target_max.z do
-            if plugin.getTileStatus(self.building, xyz2pos(cx,cy,z)) ~= 'blocked' then
-                cz = z
-                break
-            end
-        end
-        self:centerViewOn(xyz2pos(cx,cy,cz))
+        local pos = plugin.adjustToTarget(self.building, xyz2pos(cx,cy,cz))
+        self:centerViewOn(pos)
     end
 end
 
@@ -171,6 +181,19 @@ function SiegeEngine:onRenderBody_main(dc)
         dc:string("z",COLOR_LIGHTGREEN):string(": Zoom")
     end
 
+    dc:newline():newline(1)
+    if self.building.type == df.siegeengine_type.Ballista then
+        dc:string("Uses ballista arrows")
+    else
+        local item = plugin.getAmmoItem(self.building)
+        dc:string("u",COLOR_LIGHTGREEN):string(": Use ")
+        if item_choice_idx[item] then
+            dc:string(item_choices[item_choice_idx[item]].caption)
+        else
+            dc:string(df.item_type[item])
+        end
+    end
+
     if self.target_select_first then
         self:renderTargetView(self.target_select_first, guidm.getCursorPos())
     else
@@ -192,6 +215,19 @@ function SiegeEngine:setTargetArea(p1, p2)
     end
 end
 
+function SiegeEngine:setAmmoItem(choice)
+    if self.building.type == df.siegeengine_type.Ballista then
+        return
+    end
+
+    if not plugin.setAmmoItem(self.building, choice.item_type) then
+        dlg.showMessage(
+            'Set Ammo Item',
+            'Could not set the ammo item', COLOR_LIGHTRED
+        )
+    end
+end
+
 function SiegeEngine:onInput_main(keys)
     if keys.CUSTOM_R then
         self:showCursor(true)
@@ -199,6 +235,10 @@ function SiegeEngine:onInput_main(keys)
         self.mode = self.mode_aim
     elseif keys.CUSTOM_P and last_target_min then
         self:setTargetArea(last_target_min, last_target_max)
+    elseif keys.CUSTOM_U then
+        local item = plugin.getAmmoItem(self.building)
+        local idx = 1 + (item_choice_idx[item] or 0) % #item_choices
+        self:setAmmoItem(item_choices[idx])
     elseif keys.CUSTOM_Z then
         self:zoomToTarget()
     elseif keys.CUSTOM_X then

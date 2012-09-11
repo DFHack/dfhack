@@ -8,6 +8,7 @@
 #include <modules/Maps.h>
 #include <modules/World.h>
 #include <modules/Units.h>
+#include <modules/Job.h>
 #include <LuaTools.h>
 #include <TileTypes.h>
 #include <vector>
@@ -41,6 +42,10 @@
 #include "df/assumed_identity.h"
 #include "df/game_mode.h"
 #include "df/unit_misc_trait.h"
+#include "df/job.h"
+#include "df/job_item.h"
+#include "df/item.h"
+#include "df/items_other_id.h"
 
 #include "MiscUtils.h"
 
@@ -148,6 +153,11 @@ struct EngineInfo {
 
     coord_range target;
 
+    df::job_item_vector_id ammo_vector_id;
+    df::item_type ammo_item_type;
+
+    int operator_id, operator_frame;
+
     bool hasTarget() { return is_range_valid(target); }
     bool onTarget(df::coord pos) { return is_in_range(target, pos); }
     df::coord getTargetSize() { return target.second - target.first; }
@@ -190,6 +200,11 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
     obj->hit_delay = 3;
     obj->fire_range = get_engine_range(ebld);
 
+    obj->ammo_vector_id = job_item_vector_id::BOULDER;
+    obj->ammo_item_type = item_type::BOULDER;
+
+    obj->operator_id = obj->operator_frame = -1;
+
     coord_engines[obj->center] = bld;
     return obj;
 }
@@ -198,7 +213,7 @@ static EngineInfo *find_engine(lua_State *L, int idx, bool create = false)
 {
     auto bld = Lua::CheckDFObject<df::building_siegeenginest>(L, idx);
 
-    auto engine = find_engine(bld);
+    auto engine = find_engine(bld, create);
     if (!engine)
         luaL_error(L, "no such engine");
 
@@ -242,6 +257,15 @@ static void load_engines()
         if (!engine) continue;
         engine->target.first = df::coord(it->ival(1), it->ival(2), it->ival(3));
         engine->target.second = df::coord(it->ival(4), it->ival(5), it->ival(6));
+    }
+
+    pworld->GetPersistentData(&vec, "siege-engine/ammo/", true);
+    for (auto it = vec.begin(); it != vec.end(); ++it)
+    {
+        auto engine = find_engine(df::building::find(it->ival(0)), true);
+        if (!engine) continue;
+        engine->ammo_vector_id = (df::job_item_vector_id)it->ival(1);
+        engine->ammo_item_type = (df::item_type)it->ival(2);
     }
 }
 
@@ -307,6 +331,51 @@ static bool setTargetArea(df::building_siegeenginest *bld, df::coord target_min,
     orient_engine(bld, df::coord(sum.x/2, sum.y/2, sum.z/2));
 
     return true;
+}
+
+static int getAmmoItem(lua_State *L)
+{
+    auto engine = find_engine(L, 1, true);
+    Lua::Push(L, engine->ammo_item_type);
+    return 1;
+}
+
+static int setAmmoItem(lua_State *L)
+{
+    auto engine = find_engine(L, 1, true);
+    auto item_type = (df::item_type)luaL_optint(L, 2, item_type::BOULDER);
+    if (!is_valid_enum_item(item_type))
+        luaL_argerror(L, 2, "invalid item type");
+
+    if (!enable_plugin())
+        return 0;
+
+    auto pworld = Core::getInstance().getWorld();
+    auto key = stl_sprintf("siege-engine/ammo/%d", engine->id);
+    auto entry = pworld->GetPersistentData(key, NULL);
+    if (!entry.isValid())
+        return 0;
+
+    engine->ammo_vector_id = job_item_vector_id::ANY_FREE;
+    engine->ammo_item_type = item_type;
+
+    FOR_ENUM_ITEMS(job_item_vector_id, id)
+    {
+        auto other = ENUM_ATTR(job_item_vector_id, other, id);
+        auto type = ENUM_ATTR(items_other_id, item, other);
+        if (type == item_type)
+        {
+            engine->ammo_vector_id = id;
+            break;
+        }
+    }
+
+    entry.ival(0) = engine->id;
+    entry.ival(1) = engine->ammo_vector_id;
+    entry.ival(2) = engine->ammo_item_type;
+
+    lua_pushboolean(L, true);
+    return 1;
 }
 
 static int getShotSkill(df::building_siegeenginest *bld)
@@ -446,7 +515,7 @@ static bool adjustToTarget(EngineInfo *engine, df::coord *pos)
         return true;
 
     for (df::coord fudge = *pos;
-         fudge.z < engine->target.second.z; fudge.z++)
+         fudge.z <= engine->target.second.z; fudge.z++)
     {
         if (!isTargetableTile(fudge))
             continue;
@@ -455,7 +524,7 @@ static bool adjustToTarget(EngineInfo *engine, df::coord *pos)
     }
 
     for (df::coord fudge = *pos;
-            fudge.z > engine->target.first.z; fudge.z--)
+            fudge.z >= engine->target.first.z; fudge.z--)
     {
         if (!isTargetableTile(fudge))
             continue;
@@ -1047,6 +1116,79 @@ struct projectile_hook : df::proj_itemst {
 IMPLEMENT_VMETHOD_INTERPOSE(projectile_hook, checkMovement);
 
 /*
+ * Building hook
+ */
+
+struct building_hook : df::building_siegeenginest {
+    typedef df::building_siegeenginest interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, updateAction, ())
+    {
+        INTERPOSE_NEXT(updateAction)();
+
+        if (jobs.empty())
+            return;
+
+        if (auto engine = find_engine(this))
+        {
+            auto job = jobs[0];
+
+            switch (job->job_type)
+            {
+                case job_type::LoadCatapult:
+                    if (!job->job_items.empty())
+                    {
+                        auto item = job->job_items[0];
+                        item->item_type = engine->ammo_item_type;
+                        item->vector_id = engine->ammo_vector_id;
+
+                        switch (item->item_type)
+                        {
+                            case item_type::NONE:
+                            case item_type::BOULDER:
+                            case item_type::BLOCKS:
+                                item->mat_type = 0;
+                                break;
+
+                            case item_type::BIN:
+                            case item_type::BARREL:
+                                item->mat_type = -1;
+                                // A hack to make it take objects assigned to stockpiles.
+                                // Since reaction_id is not set, the actual value is not used.
+                                item->contains.resize(1);
+                                break;
+
+                            default:
+                                item->mat_type = -1;
+                                break;
+                        }
+                    }
+                    break;
+
+                case job_type::FireCatapult:
+                case job_type::FireBallista:
+                    if (auto worker = Job::getWorker(job))
+                    {
+                        color_ostream_proxy out(Core::getInstance().getConsole());
+                        out.print("operator %d\n", worker->id);
+
+                        engine->operator_id = worker->id;
+                        engine->operator_frame = world->frame_counter;
+                    }
+                    else
+                        engine->operator_id = -1;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(building_hook, updateAction);
+
+/*
  * Initialization
  */
 
@@ -1064,6 +1206,8 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
 
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(getTargetArea),
+    DFHACK_LUA_COMMAND(getAmmoItem),
+    DFHACK_LUA_COMMAND(setAmmoItem),
     DFHACK_LUA_COMMAND(projPosAtStep),
     DFHACK_LUA_COMMAND(projPathMetrics),
     DFHACK_LUA_COMMAND(adjustToTarget),
@@ -1080,6 +1224,7 @@ static void enable_hooks(bool enable)
     is_enabled = enable;
 
     INTERPOSE_HOOK(projectile_hook, checkMovement).apply(enable);
+    INTERPOSE_HOOK(building_hook, updateAction).apply(enable);
 
     if (enable)
         load_engines();

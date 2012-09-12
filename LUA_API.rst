@@ -999,6 +999,10 @@ Items module
 
   Move the item to the unit inventory. Returns *false* if impossible.
 
+* ``dfhack.items.makeProjectile(item)``
+
+  Turns the item into a projectile, and returns the new object, or *nil* if impossible.
+
 
 Maps module
 -----------

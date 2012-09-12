@@ -80,6 +80,7 @@ distribution.
 #include "df/region_map_entry.h"
 #include "df/flow_info.h"
 #include "df/unit_misc_trait.h"
+#include "df/proj_itemst.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -885,6 +886,12 @@ static bool items_moveToInventory
     return Items::moveToInventory(mc, item, unit, mode, body_part);
 }
 
+static df::proj_itemst *items_makeProjectile(df::item *item)
+{
+    MapExtras::MapCache mc;
+    return Items::makeProjectile(mc, item);
+}
+
 static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getGeneralRef),
     WRAPM(Items, getSpecificRef),
@@ -896,6 +903,7 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPN(moveToContainer, items_moveToContainer),
     WRAPN(moveToBuilding, items_moveToBuilding),
     WRAPN(moveToInventory, items_moveToInventory),
+    WRAPN(makeProjectile, items_makeProjectile),
     { NULL, NULL }
 };
 

@@ -190,16 +190,20 @@ module DFHack
 
         def dig(mode=:Default)
             if mode == :Smooth
-                if tilemat != :SOIL and caption !~ /smooth|pillar/i  # XXX
-                    # need to check if already smooth, otherwise re-setting
-                    # des.smooth will carve a fortification
+                if tilemat != :SOIL and caption !~ /smooth|pillar|fortification/i and   # XXX caption..
+                    designation.smooth == 0 and not df.world.job_list.find { |j|
+                        # the game removes 'smooth' designation as soon as it assigns a job, if we
+                        # re-set it the game may queue another :DetailWall that will carve a fortification
+                        (j.job_type == :DetailWall or j.job_type == :DetailFloor) and df.same_pos?(j, self)
+                    }
                     designation.dig = :No
                     designation.smooth = 1
+                    mapblock.flags.designated = true
                 end
             else
                 designation.dig = mode
+                mapblock.flags.designated = true if mode != :No
             end
-            mapblock.flags.designated = true if mode != :No
         end
 
         def spawn_liquid(quantity, is_magma=false, flowing=true)

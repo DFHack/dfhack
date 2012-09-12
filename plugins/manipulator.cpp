@@ -623,7 +623,7 @@ void viewscreen_unitlaborsst::render()
         Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 1);
         Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 2);
         df::profession profession = columns[col_offset].profession;
-        if (profession != profession::NONE)
+        if ((profession != profession::NONE) && (ui->race_id != -1))
         {
             auto graphics = world->raws.creatures.all[ui->race_id]->graphics;
             Screen::paintTile(

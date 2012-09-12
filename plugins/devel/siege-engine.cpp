@@ -46,6 +46,8 @@
 #include "df/job_item.h"
 #include "df/item.h"
 #include "df/items_other_id.h"
+#include "df/building_stockpilest.h"
+#include "df/stockpile_links.h"
 
 #include "MiscUtils.h"
 
@@ -158,6 +160,9 @@ struct EngineInfo {
 
     int operator_id, operator_frame;
 
+    std::set<int> stockpiles;
+    df::stockpile_links links;
+
     bool hasTarget() { return is_range_valid(target); }
     bool onTarget(df::coord pos) { return is_in_range(target, pos); }
     df::coord getTargetSize() { return target.second - target.first; }
@@ -169,6 +174,8 @@ struct EngineInfo {
 
 static std::map<df::building*, EngineInfo> engines;
 static std::map<df::coord, df::building*> coord_engines;
+
+static std::set<df::building*> recheck_piles;
 
 static EngineInfo *find_engine(df::building *bld, bool create = false)
 {
@@ -209,12 +216,12 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
     return obj;
 }
 
-static EngineInfo *find_engine(lua_State *L, int idx, bool create = false)
+static EngineInfo *find_engine(lua_State *L, int idx, bool create = false, bool silent = false)
 {
     auto bld = Lua::CheckDFObject<df::building_siegeenginest>(L, idx);
 
     auto engine = find_engine(bld, create);
-    if (!engine)
+    if (!engine && !silent)
         luaL_error(L, "no such engine");
 
     return engine;
@@ -241,6 +248,7 @@ static void clear_engines()
 {
     engines.clear();
     coord_engines.clear();
+    recheck_piles.clear();
 }
 
 static void load_engines()
@@ -267,13 +275,33 @@ static void load_engines()
         engine->ammo_vector_id = (df::job_item_vector_id)it->ival(1);
         engine->ammo_item_type = (df::item_type)it->ival(2);
     }
+
+    pworld->GetPersistentData(&vec, "siege-engine/stockpiles/", true);
+    for (auto it = vec.begin(); it != vec.end(); ++it)
+    {
+        auto engine = find_engine(df::building::find(it->ival(0)), true);
+        if (!engine)
+            continue;
+        auto pile = df::building::find(it->ival(1));
+        if (!pile || pile->getType() != building_type::Stockpile)
+        {
+            pworld->DeletePersistentData(*it);
+            continue;;
+        }
+        auto plinks = pile->getStockpileLinks();
+        if (!plinks)
+            continue;
+
+        engine->stockpiles.insert(it->ival(1));
+
+        insert_into_vector(engine->links.take_from_pile, &df::building::id, pile);
+        insert_into_vector(plinks->give_to_workshop, &df::building::id, (df::building*)engine->bld);
+    }
 }
 
 static int getTargetArea(lua_State *L)
 {
-    auto bld = Lua::CheckDFObject<df::building>(L, 1);
-    if (!bld) luaL_argerror(L, 1, "null building");
-    auto engine = find_engine(bld);
+    auto engine = find_engine(L, 1, false, true);
 
     if (engine && engine->hasTarget())
     {
@@ -335,8 +363,11 @@ static bool setTargetArea(df::building_siegeenginest *bld, df::coord target_min,
 
 static int getAmmoItem(lua_State *L)
 {
-    auto engine = find_engine(L, 1, true);
-    Lua::Push(L, engine->ammo_item_type);
+    auto engine = find_engine(L, 1, false, true);
+    if (!engine)
+        Lua::Push(L, item_type::BOULDER);
+    else
+        Lua::Push(L, engine->ammo_item_type);
     return 1;
 }
 
@@ -376,6 +407,123 @@ static int setAmmoItem(lua_State *L)
 
     lua_pushboolean(L, true);
     return 1;
+}
+
+static int getStockpileLinks(lua_State *L)
+{
+    auto engine = find_engine(L, 1, false, true);
+    if (!engine || engine->stockpiles.empty())
+        return 0;
+
+    int idx = 1;
+    lua_createtable(L, engine->stockpiles.size(), 0);
+
+    for (auto it = engine->stockpiles.begin(); it != engine->stockpiles.end(); ++it)
+    {
+        auto pile = df::building::find(*it);
+        if (!pile) continue;
+        Lua::Push(L, pile);
+        lua_rawseti(L, -2, idx++);
+    }
+
+    return 1;
+}
+
+static bool isLinkedToPile(df::building_siegeenginest *bld, df::building_stockpilest *pile)
+{
+    CHECK_NULL_POINTER(bld);
+    CHECK_NULL_POINTER(pile);
+
+    auto engine = find_engine(bld);
+
+    return engine && engine->stockpiles.count(pile->id);
+}
+
+static bool addStockpileLink(df::building_siegeenginest *bld, df::building_stockpilest *pile)
+{
+    CHECK_NULL_POINTER(bld);
+    CHECK_NULL_POINTER(pile);
+
+    auto plinks = pile->getStockpileLinks();
+    CHECK_NULL_POINTER(plinks);
+
+    if (!enable_plugin())
+        return false;
+
+    auto pworld = Core::getInstance().getWorld();
+    auto key = stl_sprintf("siege-engine/stockpiles/%d/%d", bld->id, pile->id);
+    auto entry = pworld->GetPersistentData(key, NULL);
+    if (!entry.isValid())
+        return false;
+
+    auto engine = find_engine(bld, true);
+
+    entry.ival(0) = bld->id;
+    entry.ival(1) = pile->id;
+
+    engine->stockpiles.insert(pile->id);
+
+    insert_into_vector(engine->links.take_from_pile, &df::building::id, (df::building*)pile);
+    insert_into_vector(plinks->give_to_workshop, &df::building::id, (df::building*)engine->bld);
+    return true;
+}
+
+static void forgetStockpileLink(EngineInfo *engine, int pile_id)
+{
+    engine->stockpiles.erase(pile_id);
+
+    auto pworld = Core::getInstance().getWorld();
+    auto key = stl_sprintf("siege-engine/stockpiles/%d/%d", engine->id, pile_id);
+    pworld->DeletePersistentData(pworld->GetPersistentData(key));
+}
+
+static bool removeStockpileLink(df::building_siegeenginest *bld, df::building_stockpilest *pile)
+{
+    CHECK_NULL_POINTER(bld);
+    CHECK_NULL_POINTER(pile);
+
+    if (auto engine = find_engine(bld))
+    {
+        forgetStockpileLink(engine, pile->id);
+
+        auto plinks = pile->getStockpileLinks();
+        erase_from_vector(engine->links.take_from_pile, &df::building::id, pile->id);
+        erase_from_vector(plinks->give_to_workshop, &df::building::id, bld->id);
+        return true;
+    }
+
+    return false;
+}
+
+static void recheck_pile_links(color_ostream &out, EngineInfo *engine)
+{
+    auto removed = engine->stockpiles;
+
+    out.print("rechecking piles in %d\n", engine->id);
+
+    // Detect and save changes in take links
+    for (size_t i = 0; i < engine->links.take_from_pile.size(); i++)
+    {
+        auto pile = engine->links.take_from_pile[i];
+
+        removed.erase(pile->id);
+
+        if (!engine->stockpiles.count(pile->id))
+            addStockpileLink(engine->bld, (df::building_stockpilest*)pile);
+    }
+
+    for (auto it = removed.begin(); it != removed.end(); it++)
+        forgetStockpileLink(engine, *it);
+
+    // Remove give links
+    for (size_t i = 0; i < engine->links.give_to_pile.size(); i++)
+    {
+        auto pile = engine->links.give_to_pile[i];
+        auto plinks = pile->getStockpileLinks();
+        erase_from_vector(plinks->take_from_workshop, &df::building::id, engine->id);
+    }
+
+    engine->links.give_to_pile.clear();
 }
 
 static int getShotSkill(df::building_siegeenginest *bld)
@@ -1122,6 +1270,25 @@ IMPLEMENT_VMETHOD_INTERPOSE(projectile_hook, checkMovement);
 struct building_hook : df::building_siegeenginest {
     typedef df::building_siegeenginest interpose_base;
 
+    DEFINE_VMETHOD_INTERPOSE(bool, canLinkToStockpile, ())
+    {
+        if (find_engine(this, true))
+            return true;
+
+        return INTERPOSE_NEXT(canLinkToStockpile)();
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(df::stockpile_links*, getStockpileLinks, ())
+    {
+        if (auto engine = find_engine(this))
+        {
+            recheck_piles.insert(this);
+            return &engine->links;
+        }
+
+        return INTERPOSE_NEXT(getStockpileLinks)();
+    }
+
     DEFINE_VMETHOD_INTERPOSE(void, updateAction, ())
     {
         INTERPOSE_NEXT(updateAction)();
@@ -1186,6 +1353,8 @@ struct building_hook : df::building_siegeenginest {
     }
 };
 
+IMPLEMENT_VMETHOD_INTERPOSE(building_hook, canLinkToStockpile);
+IMPLEMENT_VMETHOD_INTERPOSE(building_hook, getStockpileLinks);
 IMPLEMENT_VMETHOD_INTERPOSE(building_hook, updateAction);
 
 /*
@@ -1195,6 +1364,9 @@ IMPLEMENT_VMETHOD_INTERPOSE(building_hook, updateAction);
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(clearTargetArea),
     DFHACK_LUA_FUNCTION(setTargetArea),
+    DFHACK_LUA_FUNCTION(isLinkedToPile),
+    DFHACK_LUA_FUNCTION(addStockpileLink),
+    DFHACK_LUA_FUNCTION(removeStockpileLink),
     DFHACK_LUA_FUNCTION(getTileStatus),
     DFHACK_LUA_FUNCTION(paintAimScreen),
     DFHACK_LUA_FUNCTION(canTargetUnit),
@@ -1208,6 +1380,7 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(getTargetArea),
     DFHACK_LUA_COMMAND(getAmmoItem),
     DFHACK_LUA_COMMAND(setAmmoItem),
+    DFHACK_LUA_COMMAND(getStockpileLinks),
     DFHACK_LUA_COMMAND(projPosAtStep),
     DFHACK_LUA_COMMAND(projPathMetrics),
     DFHACK_LUA_COMMAND(adjustToTarget),
@@ -1224,6 +1397,9 @@ static void enable_hooks(bool enable)
     is_enabled = enable;
 
     INTERPOSE_HOOK(projectile_hook, checkMovement).apply(enable);
+
+    INTERPOSE_HOOK(building_hook, canLinkToStockpile).apply(enable);
+    INTERPOSE_HOOK(building_hook, getStockpileLinks).apply(enable);
     INTERPOSE_HOOK(building_hook, updateAction).apply(enable);
 
     if (enable)
@@ -1246,7 +1422,7 @@ static bool enable_plugin()
     return true;
 }
 
-static void clear_caches()
+static void clear_caches(color_ostream &out)
 {
     if (!UnitPath::cache.empty())
     {
@@ -1254,6 +1430,15 @@ static void clear_caches()
             delete it->second;
 
         UnitPath::cache.clear();
+    }
+
+    if (!recheck_piles.empty())
+    {
+        for (auto it = recheck_piles.begin(); it != recheck_piles.end(); ++it)
+            if (auto engine = find_engine(*it))
+                recheck_pile_links(out, engine);
+
+        recheck_piles.clear();
     }
 }
 
@@ -1300,6 +1485,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    clear_caches();
+    clear_caches(out);
     return CR_OK;
 }

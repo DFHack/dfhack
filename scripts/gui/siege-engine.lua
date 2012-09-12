@@ -35,7 +35,7 @@ function SiegeEngine:init(building)
     self:init_fields{
         building = building,
         center = utils.getBuildingCenter(building),
-        links = {}, selected = 1,
+        selected_pile = 1,
     }
     guidm.MenuOverlay.init(self)
     self.mode_main = {
@@ -45,6 +45,10 @@ function SiegeEngine:init(building)
     self.mode_aim = {
         render = self:callback 'onRenderBody_aim',
         input = self:callback 'onInput_aim',
+    }
+    self.mode_pile = {
+        render = self:callback 'onRenderBody_pile',
+        input = self:callback 'onInput_pile',
     }
     return self
 end
@@ -157,6 +161,26 @@ function SiegeEngine:renderTargetView(target_min, target_max)
     end
 end
 
+function SiegeEngine:scrollPiles(delta)
+    local links = plugin.getStockpileLinks(self.building)
+    if links then
+        self.selected_pile = 1+(self.selected_pile+delta-1) % #links
+        return links[self.selected_pile]
+    end
+end
+
+function SiegeEngine:renderStockpiles(dc, links, nlines)
+    local idx = (self.selected_pile-1) % #links
+    local page = math.floor(idx/nlines)
+    for i = page*nlines,math.min(#links,(page+1)*nlines)-1 do
+        local color = COLOR_BROWN
+        if i == idx then
+            color = COLOR_YELLOW
+        end
+        dc:newline(2):string(utils.getBuildingName(links[i+1]), color)
+    end
+end
+
 function SiegeEngine:onRenderBody_main(dc)
     dc:newline(1):pen(COLOR_WHITE):string("Target: ")
 
@@ -192,6 +216,15 @@ function SiegeEngine:onRenderBody_main(dc)
         else
             dc:string(df.item_type[item])
         end
+    end
+
+    dc:newline():newline(1)
+    dc:string("t",COLOR_LIGHTGREEN):string(": Take from stockpile"):newline(3)
+    local links = plugin.getStockpileLinks(self.building)
+    if links then
+        dc:string("d",COLOR_LIGHTGREEN):string(": Delete, ")
+        dc:string("o",COLOR_LIGHTGREEN):string(": Zoom"):newline()
+        self:renderStockpiles(dc, links, 19-dc:localY())
     end
 
     if self.target_select_first then
@@ -243,6 +276,25 @@ function SiegeEngine:onInput_main(keys)
         self:zoomToTarget()
     elseif keys.CUSTOM_X then
         plugin.clearTargetArea(self.building)
+    elseif keys.SECONDSCROLL_UP then
+        self:scrollPiles(-1)
+    elseif keys.SECONDSCROLL_DOWN then
+        self:scrollPiles(1)
+    elseif keys.CUSTOM_D then
+        local pile = self:scrollPiles(0)
+        if pile then
+            plugin.removeStockpileLink(self.building, pile)
+        end
+    elseif keys.CUSTOM_O then
+        local pile = self:scrollPiles(0)
+        if pile then
+            self:centerViewOn(utils.getBuildingCenter(pile))
+        end
+    elseif keys.CUSTOM_T then
+        self:showCursor(true)
+        self.mode = self.mode_pile
+        self:sendInputToParent('CURSOR_DOWN_Z')
+        self:sendInputToParent('CURSOR_UP_Z')
     elseif self:simulateViewScroll(keys) then
         self.cursor = nil
     else
@@ -310,6 +362,57 @@ function SiegeEngine:onInput_aim(keys)
         self:showCursor(false)
     elseif self:simulateCursorMovement(keys) then
         self.cursor = nil
+    else
+        return false
+    end
+    return true
+end
+
+function SiegeEngine:onRenderBody_pile(dc)
+    dc:newline(1):string('Select pile to take from'):newline():newline(2)
+
+    local sel = df.global.world.selected_building
+
+    if df.building_stockpilest:is_instance(sel) then
+        dc:string(utils.getBuildingName(sel), COLOR_GREEN):newline():newline(1)
+
+        if plugin.isLinkedToPile(self.building, sel) then
+            dc:string("Already taking from here"):newline():newline(2)
+            dc:string("d", COLOR_LIGHTGREEN):string(": Delete link")
+        else
+            dc:string("Enter",COLOR_LIGHTGREEN):string(": Take from this pile")
+        end
+    elseif sel then
+        dc:string(utils.getBuildingName(sel), COLOR_DARKGREY)
+        dc:newline():newline(1)
+        dc:string("Not a stockpile",COLOR_LIGHTRED)
+    else
+        dc:string("No building selected", COLOR_DARKGREY)
+    end
+end
+
+function SiegeEngine:onInput_pile(keys)
+    if keys.SELECT then
+        local sel = df.global.world.selected_building
+        if df.building_stockpilest:is_instance(sel)
+        and not plugin.isLinkedToPile(self.building, sel) then
+            plugin.addStockpileLink(self.building, sel)
+
+            df.global.world.selected_building = self.building
+            self.mode = self.mode_main
+            self:showCursor(false)
+        end
+    elseif keys.CUSTOM_D then
+        local sel = df.global.world.selected_building
+        if df.building_stockpilest:is_instance(sel) then
+            plugin.removeStockpileLink(self.building, sel)
+        end
+    elseif keys.LEAVESCREEN then
+        df.global.world.selected_building = self.building
+        self.mode = self.mode_main
+        self:showCursor(false)
+    elseif self:propagateMoveKeys(keys) then
+        --
     else
         return false
     end

@@ -33,7 +33,8 @@ function findShotHeight(engine, target)
     end
 end
 
-function doAimProjectile(engine, target_min, target_max)
+function doAimProjectile(engine, item, target_min, target_max, skill)
+    print(item, df.skill_rating[skill])
     local targets = proposeUnitHits(engine)
     if #targets > 0 then
         local rnd = math.random(#targets)

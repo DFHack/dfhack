@@ -6,6 +6,7 @@
 #include <modules/Gui.h>
 #include <modules/Screen.h>
 #include <modules/Maps.h>
+#include <modules/MapCache.h>
 #include <modules/World.h>
 #include <modules/Units.h>
 #include <modules/Job.h>
@@ -136,6 +137,30 @@ static int point_distance(df::coord speed)
     return std::max(abs(speed.x), std::max(abs(speed.y), abs(speed.z)));
 }
 
+inline void normalize(float &x, float &y, float &z)
+{
+    float dist = sqrtf(x*x + y*y + z*z);
+    if (dist == 0.0f) return;
+    x /= dist; y /= dist; z /= dist;
+}
+
+static void random_direction(float &x, float &y, float &z)
+{
+    float a, b, d;
+    for (;;) {
+        a = (rand() + 0.5f)*2.0f/RAND_MAX - 1.0f;
+        b = (rand() + 0.5f)*2.0f/RAND_MAX - 1.0f;
+        d = a*a + b*b;
+        if (d < 1.0f)
+            break;
+    }
+
+    float sq = sqrtf(1-d);
+    x = 2.0f*a*sq;
+    y = 2.0f*b*sq;
+    z = 1.0f - 2.0f*d;
+}
+
 /*
  * Configuration management
  */
@@ -172,7 +197,7 @@ struct EngineInfo {
     }
 };
 
-static std::map<df::building*, EngineInfo> engines;
+static std::map<df::building*, EngineInfo*> engines;
 static std::map<df::coord, df::building*> coord_engines;
 
 static std::set<df::building*> recheck_piles;
@@ -183,17 +208,18 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
     if (!ebld)
         return NULL;
 
-    auto it = engines.find(bld);
-    if (it != engines.end())
+    auto &obj = engines[bld];
+
+    if (obj)
     {
-        it->second.bld = ebld;
-        return &it->second;
+        obj->bld = ebld;
+        return obj;
     }
 
     if (!create)
         return NULL;
 
-    auto *obj = &engines[bld];
+    obj = new EngineInfo();
 
     obj->id = bld->id;
     obj->bld = ebld;
@@ -246,6 +272,8 @@ static EngineInfo *find_engine(df::coord pos)
 
 static void clear_engines()
 {
+    for (auto it = engines.begin(); it != engines.end(); ++it)
+        delete it->second;
     engines.clear();
     coord_engines.clear();
     recheck_piles.clear();
@@ -373,13 +401,13 @@ static int getAmmoItem(lua_State *L)
 
 static int setAmmoItem(lua_State *L)
 {
+    if (!enable_plugin())
+        return 0;
+
     auto engine = find_engine(L, 1, true);
     auto item_type = (df::item_type)luaL_optint(L, 2, item_type::BOULDER);
     if (!is_valid_enum_item(item_type))
         luaL_argerror(L, 2, "invalid item type");
-
-    if (!enable_plugin())
-        return 0;
 
     auto pworld = Core::getInstance().getWorld();
     auto key = stl_sprintf("siege-engine/ammo/%d", engine->id);
@@ -526,7 +554,7 @@ static void recheck_pile_links(color_ostream &out, EngineInfo *engine)
     engine->links.give_to_pile.clear();
 }
 
-static int getShotSkill(df::building_siegeenginest *bld)
+static int getOperatorSkill(df::building_siegeenginest *bld, bool force = false)
 {
     CHECK_NULL_POINTER(bld);
 
@@ -534,10 +562,24 @@ static int getShotSkill(df::building_siegeenginest *bld)
     if (!engine)
         return 0;
 
-    auto &active = world->units.active;
-    for (size_t i = 0; i < active.size(); i++)
-        if (active[i]->pos == engine->center && Units::isCitizen(active[i]))
-            return Units::getEffectiveSkill(active[i], job_skill::SIEGEOPERATE);
+    if (engine->operator_id != -1 &&
+        (world->frame_counter - engine->operator_frame) <= 5)
+    {
+        auto op_unit = df::unit::find(engine->operator_id);
+        if (op_unit)
+            return Units::getEffectiveSkill(op_unit, job_skill::SIEGEOPERATE);
+    }
+
+    if (force)
+    {
+        color_ostream_proxy out(Core::getInstance().getConsole());
+        out.print("Forced siege operator search\n");
+
+        auto &active = world->units.active;
+        for (size_t i = 0; i < active.size(); i++)
+            if (active[i]->pos == engine->center && Units::isCitizen(active[i]))
+                return Units::getEffectiveSkill(active[i], job_skill::SIEGEOPERATE);
+    }
 
     return 0;
 }
@@ -1213,15 +1255,18 @@ struct projectile_hook : df::proj_itemst {
         color_ostream &out = *Lua::GetOutput(L);
         auto proj = (projectile_hook*)lua_touserdata(L, 1);
         auto engine = (EngineInfo*)lua_touserdata(L, 2);
+        int skill = lua_tointeger(L, 3);
 
         if (!Lua::PushModulePublic(out, L, "plugins.siege-engine", "doAimProjectile"))
             luaL_error(L, "Projectile aiming AI not available");
 
         Lua::PushDFObject(L, engine->bld);
+        Lua::Push(L, proj->item);
         Lua::Push(L, engine->target.first);
         Lua::Push(L, engine->target.second);
+        Lua::Push(L, skill);
 
-        lua_call(L, 3, 1);
+        lua_call(L, 5, 1);
 
         if (lua_isnil(L, -1))
             proj->aimAtArea(engine);
@@ -1233,7 +1278,8 @@ struct projectile_hook : df::proj_itemst {
 
     void doCheckMovement()
     {
-        if (distance_flown != 0 || fall_counter != fall_delay)
+        if (flags.bits.parabolic || distance_flown != 0 ||
+            fall_counter != fall_delay || item == NULL)
             return;
 
         auto engine = find_engine(origin_pos);
@@ -1244,12 +1290,78 @@ struct projectile_hook : df::proj_itemst {
         CoreSuspendClaimer suspend;
         color_ostream_proxy out(Core::getInstance().getConsole());
 
+        int skill = getOperatorSkill(engine->bld, true);
+
         lua_pushcfunction(L, safeAimProjectile);
         lua_pushlightuserdata(L, this);
         lua_pushlightuserdata(L, engine);
+        lua_pushinteger(L, skill);
 
-        if (!Lua::Core::SafeCall(out, 2, 0))
+        if (!Lua::Core::SafeCall(out, 3, 0))
             aimAtArea(engine);
+
+        switch (item->getType())
+        {
+            case item_type::CAGE:
+                flags.bits.bouncing = false;
+                break;
+            case item_type::BIN:
+            case item_type::BARREL:
+                flags.bits.bouncing = false;
+                break;
+            default:
+                break;
+        }
+    }
+
+    void doLaunchContents()
+    {
+        // Translate cartoon flight speed to parabolic
+        float speed = 100000.0f / (fall_delay + 1);
+        int min_zspeed = (fall_delay+1)*4900;
+
+        // Flight direction vector
+        df::coord dist = target_pos - origin_pos;
+        float vx = dist.x, vy = dist.y, vz = fabs(dist.z);
+        normalize(vx, vy, vz);
+
+        int start_z = 0;
+
+        // Start at tile top, if hit a wall
+        ProjectilePath path(origin_pos, target_pos);
+        auto next_pos = path[distance_flown+1];
+        if (next_pos.z == cur_pos.z && !isPassableTile(next_pos))
+            start_z = 49000;
+
+        MapExtras::MapCache mc;
+        std::vector<df::item*> contents;
+        Items::getContainedItems(item, &contents);
+
+        for (size_t i = 0; i < contents.size(); i++)
+        {
+            auto child = contents[i];
+            auto proj = Items::makeProjectile(mc, child);
+            if (!proj) continue;
+
+            proj->flags.bits.no_impact_destroy = true;
+            //proj->flags.bits.bouncing = true;
+            proj->flags.bits.piercing = true;
+            proj->flags.bits.parabolic = true;
+            proj->flags.bits.unk9 = true;
+            proj->flags.bits.no_collide = true;
+
+            proj->pos_z = start_z;
+
+            float sx, sy, sz;
+            random_direction(sx, sy, sz);
+            sx += vx*0.7; sy += vy*0.7; sz += vz*0.7;
+            if (sz < 0) sz = -sz;
+            normalize(sx, sy, sz);
+
+            proj->speed_x = int(speed * sx);
+            proj->speed_y = int(speed * sy);
+            proj->speed_z = int(speed * sz);
+        }
     }
 
     DEFINE_VMETHOD_INTERPOSE(bool, checkMovement, ())
@@ -1259,9 +1371,23 @@ struct projectile_hook : df::proj_itemst {
 
         return INTERPOSE_NEXT(checkMovement)();
     }
+
+    DEFINE_VMETHOD_INTERPOSE(bool, checkImpact, (bool no_damage_floor))
+    {
+        if (!flags.bits.has_hit_ground && !flags.bits.parabolic &&
+            flags.bits.high_flying && !flags.bits.bouncing &&
+            !flags.bits.no_impact_destroy && target_pos != origin_pos &&
+            item && item->flags.bits.container)
+        {
+            doLaunchContents();
+        }
+
+        return INTERPOSE_NEXT(checkImpact)(no_damage_floor);
+    }
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(projectile_hook, checkMovement);
+IMPLEMENT_VMETHOD_INTERPOSE(projectile_hook, checkImpact);
 
 /*
  * Building hook
@@ -1299,6 +1425,7 @@ struct building_hook : df::building_siegeenginest {
         if (auto engine = find_engine(this))
         {
             auto job = jobs[0];
+            bool save_op = false;
 
             switch (job->job_type)
             {
@@ -1330,20 +1457,16 @@ struct building_hook : df::building_siegeenginest {
                                 break;
                         }
                     }
-                    break;
+                    // fallthrough
 
+                case job_type::LoadBallista:
                 case job_type::FireCatapult:
                 case job_type::FireBallista:
                     if (auto worker = Job::getWorker(job))
                     {
-                        color_ostream_proxy out(Core::getInstance().getConsole());
-                        out.print("operator %d\n", worker->id);
-
                         engine->operator_id = worker->id;
                         engine->operator_frame = world->frame_counter;
                     }
-                    else
-                        engine->operator_id = -1;
                     break;
 
                 default:
@@ -1397,6 +1520,7 @@ static void enable_hooks(bool enable)
     is_enabled = enable;
 
     INTERPOSE_HOOK(projectile_hook, checkMovement).apply(enable);
+    INTERPOSE_HOOK(projectile_hook, checkImpact).apply(enable);
 
     INTERPOSE_HOOK(building_hook, canLinkToStockpile).apply(enable);
     INTERPOSE_HOOK(building_hook, getStockpileLinks).apply(enable);

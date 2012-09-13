@@ -49,6 +49,7 @@
 #include "df/items_other_id.h"
 #include "df/building_stockpilest.h"
 #include "df/stockpile_links.h"
+#include "df/workshop_profile.h"
 
 #include "MiscUtils.h"
 
@@ -162,7 +163,7 @@ static void random_direction(float &x, float &y, float &z)
 }
 
 /*
- * Configuration management
+ * Configuration object
  */
 
 static bool enable_plugin();
@@ -187,6 +188,7 @@ struct EngineInfo {
 
     std::set<int> stockpiles;
     df::stockpile_links links;
+    df::workshop_profile profile;
 
     bool hasTarget() { return is_range_valid(target); }
     bool onTarget(df::coord pos) { return is_in_range(target, pos); }
@@ -268,6 +270,10 @@ static EngineInfo *find_engine(df::coord pos)
     return engine;
 }
 
+/*
+ * Configuration management
+ */
+
 static void clear_engines()
 {
     for (auto it = engines.begin(); it != engines.end(); ++it)
@@ -315,6 +321,30 @@ static void load_engines()
         }
 
         engine->stockpiles.insert(it->ival(1));
+    }
+
+    pworld->GetPersistentData(&vec, "siege-engine/profiles/", true);
+    for (auto it = vec.begin(); it != vec.end(); ++it)
+    {
+        auto engine = find_engine(df::building::find(it->ival(0)), true);
+        if (!engine) continue;
+        engine->profile.min_level = it->ival(1);
+        engine->profile.max_level = it->ival(2);
+    }
+
+    pworld->GetPersistentData(&vec, "siege-engine/profile-workers/", true);
+    for (auto it = vec.begin(); it != vec.end(); ++it)
+    {
+        auto engine = find_engine(df::building::find(it->ival(0)), true);
+        if (!engine)
+            continue;
+        auto unit = df::unit::find(it->ival(1));
+        if (!unit || !Units::isCitizen(unit))
+        {
+            pworld->DeletePersistentData(*it);
+            continue;
+        }
+        engine->profile.permitted_workers.push_back(it->ival(1));
     }
 }
 
@@ -521,6 +551,52 @@ static bool removeStockpileLink(df::building_siegeenginest *bld, df::building_st
     return false;
 }
 
+static df::workshop_profile *saveWorkshopProfile(df::building_siegeenginest *bld)
+{
+    CHECK_NULL_POINTER(bld);
+
+    if (!enable_plugin())
+        return NULL;
+
+    // Save skill limits
+    auto pworld = Core::getInstance().getWorld();
+    auto key = stl_sprintf("siege-engine/profiles/%d", bld->id);
+    auto entry = pworld->GetPersistentData(key, NULL);
+    if (!entry.isValid())
+        return NULL;
+
+    auto engine = find_engine(bld, true);
+
+    entry.ival(0) = engine->id;
+    entry.ival(1) = engine->profile.min_level;
+    entry.ival(2) = engine->profile.max_level;
+
+    // Save worker list
+    std::vector<PersistentDataItem> vec;
+    auto &workers = engine->profile.permitted_workers;
+
+    key = stl_sprintf("siege-engine/profile-workers/%d", bld->id);
+    pworld->GetPersistentData(&vec, key, true);
+
+    for (auto it = vec.begin(); it != vec.end(); ++it)
+    {
+        if (linear_index(workers, it->ival(1)) < 0)
+            pworld->DeletePersistentData(*it);
+    }
+
+    for (size_t i = 0; i < workers.size(); i++)
+    {
+        key = stl_sprintf("siege-engine/profile-workers/%d/%d", bld->id, workers[i]);
+        entry = pworld->GetPersistentData(key, NULL);
+        if (!entry.isValid())
+            continue;
+        entry.ival(0) = engine->id;
+        entry.ival(1) = workers[i];
+    }
+
+    return &engine->profile;
+}
+
 static int getOperatorSkill(df::building_siegeenginest *bld, bool force = false)
 {
     CHECK_NULL_POINTER(bld);
@@ -552,7 +628,7 @@ static int getOperatorSkill(df::building_siegeenginest *bld, bool force = false)
 }
 
 /*
- * Trajectory
+ * Trajectory raytracing
  */
 
 struct ProjectilePath {
@@ -1363,6 +1439,14 @@ IMPLEMENT_VMETHOD_INTERPOSE(projectile_hook, checkImpact);
 struct building_hook : df::building_siegeenginest {
     typedef df::building_siegeenginest interpose_base;
 
+    DEFINE_VMETHOD_INTERPOSE(df::workshop_profile*, getWorkshopProfile, ())
+    {
+        if (auto engine = find_engine(this))
+            return &engine->profile;
+
+        return INTERPOSE_NEXT(getWorkshopProfile)();
+    }
+
     DEFINE_VMETHOD_INTERPOSE(df::stockpile_links*, getStockpileLinks, ())
     {
         if (auto engine = find_engine(this))
@@ -1435,6 +1519,7 @@ struct building_hook : df::building_siegeenginest {
     }
 };
 
+IMPLEMENT_VMETHOD_INTERPOSE(building_hook, getWorkshopProfile);
 IMPLEMENT_VMETHOD_INTERPOSE(building_hook, getStockpileLinks);
 IMPLEMENT_VMETHOD_INTERPOSE(building_hook, updateAction);
 
@@ -1448,6 +1533,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(isLinkedToPile),
     DFHACK_LUA_FUNCTION(addStockpileLink),
     DFHACK_LUA_FUNCTION(removeStockpileLink),
+    DFHACK_LUA_FUNCTION(saveWorkshopProfile),
     DFHACK_LUA_FUNCTION(getTileStatus),
     DFHACK_LUA_FUNCTION(paintAimScreen),
     DFHACK_LUA_FUNCTION(canTargetUnit),
@@ -1480,6 +1566,7 @@ static void enable_hooks(bool enable)
     INTERPOSE_HOOK(projectile_hook, checkMovement).apply(enable);
     INTERPOSE_HOOK(projectile_hook, checkImpact).apply(enable);
 
+    INTERPOSE_HOOK(building_hook, getWorkshopProfile).apply(enable);
     INTERPOSE_HOOK(building_hook, getStockpileLinks).apply(enable);
     INTERPOSE_HOOK(building_hook, updateAction).apply(enable);
 

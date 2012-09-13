@@ -8,6 +8,8 @@ local dlg = require 'gui.dialogs'
 local plugin = require 'plugins.siege-engine'
 local wmap = df.global.world.map
 
+local LEGENDARY = df.skill_rating.Legendary
+
 -- Globals kept between script calls
 last_target_min = last_target_min or nil
 last_target_max = last_target_max or nil
@@ -64,7 +66,10 @@ function SiegeEngine:onShow()
 end
 
 function SiegeEngine:onDestroy()
-    if self.building then
+    if self.save_profile then
+        plugin.saveWorkshopProfile(self.building)
+    end
+    if not self.no_select_building then
         self:selectBuilding(self.building, self.old_cursor, self.old_viewport, 10)
     end
 end
@@ -221,11 +226,19 @@ function SiegeEngine:onRenderBody_main(dc)
     dc:newline():newline(1)
     dc:string("t",COLOR_LIGHTGREEN):string(": Take from stockpile"):newline(3)
     local links = plugin.getStockpileLinks(self.building)
+    local bottom = dc.height - 5
     if links then
         dc:string("d",COLOR_LIGHTGREEN):string(": Delete, ")
         dc:string("o",COLOR_LIGHTGREEN):string(": Zoom"):newline()
-        self:renderStockpiles(dc, links, 19-dc:localY())
+        self:renderStockpiles(dc, links, bottom-2-dc:localY())
+        dc:newline():newline()
     end
+
+    local prof = self.building:getWorkshopProfile() or {}
+    dc:seek(1,math.max(dc:localY(),19)):string('ghjk',COLOR_LIGHTGREEN)dc:string(': ')
+    dc:string(df.skill_rating.attrs[prof.min_level or 0].caption):string('-')
+    dc:string(df.skill_rating.attrs[math.min(LEGENDARY,prof.max_level or 3000)].caption)
+    dc:newline():newline()
 
     if self.target_select_first then
         self:renderTargetView(self.target_select_first, guidm.getCursorPos())
@@ -295,6 +308,23 @@ function SiegeEngine:onInput_main(keys)
         self.mode = self.mode_pile
         self:sendInputToParent('CURSOR_DOWN_Z')
         self:sendInputToParent('CURSOR_UP_Z')
+    elseif keys.CUSTOM_G then
+        local prof = plugin.saveWorkshopProfile(self.building)
+        prof.min_level = math.max(0, prof.min_level-1)
+        plugin.saveWorkshopProfile(self.building)
+    elseif keys.CUSTOM_H then
+        local prof = plugin.saveWorkshopProfile(self.building)
+        prof.min_level = math.min(LEGENDARY, prof.min_level+1)
+        plugin.saveWorkshopProfile(self.building)
+    elseif keys.CUSTOM_J then
+        local prof = plugin.saveWorkshopProfile(self.building)
+        prof.max_level = math.max(0, math.min(LEGENDARY,prof.max_level)-1)
+        plugin.saveWorkshopProfile(self.building)
+    elseif keys.CUSTOM_K then
+        local prof = plugin.saveWorkshopProfile(self.building)
+        prof.max_level = math.min(LEGENDARY, prof.max_level+1)
+        if prof.max_level >= LEGENDARY then prof.max_level = 3000 end
+        plugin.saveWorkshopProfile(self.building)
     elseif self:simulateViewScroll(keys) then
         self.cursor = nil
     else
@@ -439,7 +469,7 @@ function SiegeEngine:onInput(keys)
         self:dismiss()
     elseif keys.LEAVESCREEN_ALL then
         self:dismiss()
-        self.building = nil
+        self.no_select_building = true
         guidm.clearCursorPos()
         df.global.ui.main.mode = df.ui_sidebar_mode.Default
         df.global.world.selected_building = nil

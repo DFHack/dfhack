@@ -286,6 +286,10 @@ SET_TARGET_PROPERTIES(dfhack PROPERTIES LINK_INTERFACE_LIBRARIES "")
 TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket)
 TARGET_LINK_LIBRARIES(dfhack-run dfhack-client)
 
+if(APPLE)
+	add_custom_command(TARGET dfhack-run COMMAND ${dfhack_SOURCE_DIR}/package/darwin/fix-libs.sh WORKING_DIRECTORY ../ COMMENT "Fixing library dependencies...")
+endif()
+
 IF(UNIX)
 	if (APPLE)
 		install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack

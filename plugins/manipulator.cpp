@@ -603,7 +603,7 @@ void viewscreen_unitlaborsst::render()
     dfhack_viewscreen::render();
 
     Screen::clear();
-    Screen::drawBorder("  Manage Labors  ");
+    Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
 
     for (int col = 0; col < labors_width; col++)
     {
@@ -810,7 +810,7 @@ struct unitlist_hook : df::viewscreen_unitlistst
         {
             int x = 2;
             OutputString(12, x, gps->dimy - 2, "l"); // UNITVIEW_PRF_PROF key
-            OutputString(15, x, gps->dimy - 2, ": Manage labors");
+            OutputString(15, x, gps->dimy - 2, ": Manage labors (DFHack)");
         }
     }
 };

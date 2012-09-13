@@ -200,8 +200,6 @@ struct EngineInfo {
 static std::map<df::building*, EngineInfo*> engines;
 static std::map<df::coord, df::building*> coord_engines;
 
-static std::set<df::building*> recheck_piles;
-
 static EngineInfo *find_engine(df::building *bld, bool create = false)
 {
     auto ebld = strict_virtual_cast<df::building_siegeenginest>(bld);
@@ -276,7 +274,6 @@ static void clear_engines()
         delete it->second;
     engines.clear();
     coord_engines.clear();
-    recheck_piles.clear();
 }
 
 static void load_engines()
@@ -316,14 +313,8 @@ static void load_engines()
             pworld->DeletePersistentData(*it);
             continue;;
         }
-        auto plinks = pile->getStockpileLinks();
-        if (!plinks)
-            continue;
 
         engine->stockpiles.insert(it->ival(1));
-
-        insert_into_vector(engine->links.take_from_pile, &df::building::id, pile);
-        insert_into_vector(plinks->give_to_workshop, &df::building::id, (df::building*)engine->bld);
     }
 }
 
@@ -437,21 +428,47 @@ static int setAmmoItem(lua_State *L)
     return 1;
 }
 
+static void forgetStockpileLink(EngineInfo *engine, int pile_id)
+{
+    engine->stockpiles.erase(pile_id);
+
+    auto pworld = Core::getInstance().getWorld();
+    auto key = stl_sprintf("siege-engine/stockpiles/%d/%d", engine->id, pile_id);
+    pworld->DeletePersistentData(pworld->GetPersistentData(key));
+}
+
+static void update_stockpile_links(EngineInfo *engine)
+{
+    engine->links.take_from_pile.clear();
+
+    for (auto it = engine->stockpiles.begin(); it != engine->stockpiles.end(); )
+    {
+        int id = *it; ++it;
+        auto pile = df::building::find(id);
+
+        if (!pile || pile->getType() != building_type::Stockpile)
+            forgetStockpileLink(engine, id);
+        else
+            // The vector is sorted, but we are iterating through a sorted set
+            engine->links.take_from_pile.push_back(pile);
+    }
+}
+
 static int getStockpileLinks(lua_State *L)
 {
     auto engine = find_engine(L, 1, false, true);
     if (!engine || engine->stockpiles.empty())
         return 0;
 
-    int idx = 1;
-    lua_createtable(L, engine->stockpiles.size(), 0);
+    update_stockpile_links(engine);
 
-    for (auto it = engine->stockpiles.begin(); it != engine->stockpiles.end(); ++it)
+    auto &links = engine->links.take_from_pile;
+    lua_createtable(L, links.size(), 0);
+
+    for (size_t i = 0; i < links.size(); i++)
     {
-        auto pile = df::building::find(*it);
-        if (!pile) continue;
-        Lua::Push(L, pile);
-        lua_rawseti(L, -2, idx++);
+        Lua::Push(L, links[i]);
+        lua_rawseti(L, -2, i+1);
     }
 
     return 1;
@@ -472,9 +489,6 @@ static bool addStockpileLink(df::building_siegeenginest *bld, df::building_stock
     CHECK_NULL_POINTER(bld);
     CHECK_NULL_POINTER(pile);
 
-    auto plinks = pile->getStockpileLinks();
-    CHECK_NULL_POINTER(plinks);
-
     if (!enable_plugin())
         return false;
 
@@ -490,19 +504,7 @@ static bool addStockpileLink(df::building_siegeenginest *bld, df::building_stock
     entry.ival(1) = pile->id;
 
     engine->stockpiles.insert(pile->id);
-
-    insert_into_vector(engine->links.take_from_pile, &df::building::id, (df::building*)pile);
-    insert_into_vector(plinks->give_to_workshop, &df::building::id, (df::building*)engine->bld);
     return true;
-}
-
-static void forgetStockpileLink(EngineInfo *engine, int pile_id)
-{
-    engine->stockpiles.erase(pile_id);
-
-    auto pworld = Core::getInstance().getWorld();
-    auto key = stl_sprintf("siege-engine/stockpiles/%d/%d", engine->id, pile_id);
-    pworld->DeletePersistentData(pworld->GetPersistentData(key));
 }
 
 static bool removeStockpileLink(df::building_siegeenginest *bld, df::building_stockpilest *pile)
@@ -513,45 +515,10 @@ static bool removeStockpileLink(df::building_siegeenginest *bld, df::building_st
     if (auto engine = find_engine(bld))
     {
         forgetStockpileLink(engine, pile->id);
-
-        auto plinks = pile->getStockpileLinks();
-        erase_from_vector(engine->links.take_from_pile, &df::building::id, pile->id);
-        erase_from_vector(plinks->give_to_workshop, &df::building::id, bld->id);
         return true;
     }
 
     return false;
-}
-
-static void recheck_pile_links(color_ostream &out, EngineInfo *engine)
-{
-    auto removed = engine->stockpiles;
-
-    out.print("rechecking piles in %d\n", engine->id);
-
-    // Detect and save changes in take links
-    for (size_t i = 0; i < engine->links.take_from_pile.size(); i++)
-    {
-        auto pile = engine->links.take_from_pile[i];
-
-        removed.erase(pile->id);
-
-        if (!engine->stockpiles.count(pile->id))
-            addStockpileLink(engine->bld, (df::building_stockpilest*)pile);
-    }
-
-    for (auto it = removed.begin(); it != removed.end(); it++)
-        forgetStockpileLink(engine, *it);
-
-    // Remove give links
-    for (size_t i = 0; i < engine->links.give_to_pile.size(); i++)
-    {
-        auto pile = engine->links.give_to_pile[i];
-        auto plinks = pile->getStockpileLinks();
-        erase_from_vector(plinks->take_from_workshop, &df::building::id, engine->id);
-    }
-
-    engine->links.give_to_pile.clear();
 }
 
 static int getOperatorSkill(df::building_siegeenginest *bld, bool force = false)
@@ -1396,19 +1363,11 @@ IMPLEMENT_VMETHOD_INTERPOSE(projectile_hook, checkImpact);
 struct building_hook : df::building_siegeenginest {
     typedef df::building_siegeenginest interpose_base;
 
-    DEFINE_VMETHOD_INTERPOSE(bool, canLinkToStockpile, ())
-    {
-        if (find_engine(this, true))
-            return true;
-
-        return INTERPOSE_NEXT(canLinkToStockpile)();
-    }
-
     DEFINE_VMETHOD_INTERPOSE(df::stockpile_links*, getStockpileLinks, ())
     {
         if (auto engine = find_engine(this))
         {
-            recheck_piles.insert(this);
+            update_stockpile_links(engine);
             return &engine->links;
         }
 
@@ -1476,7 +1435,6 @@ struct building_hook : df::building_siegeenginest {
     }
 };
 
-IMPLEMENT_VMETHOD_INTERPOSE(building_hook, canLinkToStockpile);
 IMPLEMENT_VMETHOD_INTERPOSE(building_hook, getStockpileLinks);
 IMPLEMENT_VMETHOD_INTERPOSE(building_hook, updateAction);
 
@@ -1522,7 +1480,6 @@ static void enable_hooks(bool enable)
     INTERPOSE_HOOK(projectile_hook, checkMovement).apply(enable);
     INTERPOSE_HOOK(projectile_hook, checkImpact).apply(enable);
 
-    INTERPOSE_HOOK(building_hook, canLinkToStockpile).apply(enable);
     INTERPOSE_HOOK(building_hook, getStockpileLinks).apply(enable);
     INTERPOSE_HOOK(building_hook, updateAction).apply(enable);
 
@@ -1554,15 +1511,6 @@ static void clear_caches(color_ostream &out)
             delete it->second;
 
         UnitPath::cache.clear();
-    }
-
-    if (!recheck_piles.empty())
-    {
-        for (auto it = recheck_piles.begin(); it != recheck_piles.end(); ++it)
-            if (auto engine = find_engine(*it))
-                recheck_pile_links(out, engine);
-
-        recheck_piles.clear();
     }
 }
 

@@ -132,6 +132,7 @@ module DFHack
             def _fields_ancestors ; self.class._fields_ancestors.to_a ; end
             def _field_names ; _fields_ancestors.map { |n, o, s| n } ; end
             def _rtti_classname ; self.class._rtti_classname ; end
+            def _raw_rtti_classname ; df.get_rtti_classname(df.get_vtable_ptr(@_memaddr)) if self.class._rtti_classname ; end
             def _sizeof ; self.class._sizeof ; end
             def ==(o) ; o.kind_of?(Compound) and o._memaddr == _memaddr ; end
 

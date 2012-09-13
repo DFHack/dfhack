@@ -117,13 +117,13 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
         else if (item->flags.bits.on_ground)
         {
             int32_t type = item->getType();
-	    if(type == item_type::MEAT ||
-               type == item_type::FISH ||
-               type == item_type::VERMIN ||
-               type == item_type::PET ||
-               type == item_type::PLANT ||
-               type == item_type::CHEESE ||
-               type == item_type::FOOD
+	    if((df::enums::item_type::item_type)type == item_type::MEAT ||
+               (df::enums::item_type::item_type)type == item_type::FISH ||
+               (df::enums::item_type::item_type)type == item_type::VERMIN ||
+               (df::enums::item_type::item_type)type == item_type::PET ||
+               (df::enums::item_type::item_type)type == item_type::PLANT ||
+               (df::enums::item_type::item_type)type == item_type::CHEESE ||
+               (df::enums::item_type::item_type)type == item_type::FOOD
             )
             {
                 confiscate = true;

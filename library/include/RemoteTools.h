@@ -88,7 +88,7 @@ namespace DFHack
     {
         typedef df::enum_traits<T> traits;
         int base = traits::first_item;
-        int size = traits::last_item - base + 1;
+        int size = (int)traits::last_item - base + 1;
         describeEnum(pf, base, size, traits::key_table);
     }
 

@@ -250,7 +250,7 @@ void ServerConnection::threadFn()
             break;
         }
 
-        if (header.id == RPC_REQUEST_QUIT)
+        if ((DFHack::DFHackReplyCode)header.id == RPC_REQUEST_QUIT)
             break;
 
         if (header.size < 0 || header.size > RPCMessageHeader::MAX_MESSAGE_SIZE)

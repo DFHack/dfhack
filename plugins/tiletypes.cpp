@@ -767,7 +767,7 @@ command_result executePaintJob(color_ostream &out)
         }
 
         // Remove liquid from walls, etc
-        if (type != -1 && !DFHack::FlowPassable(type))
+        if (type != (df::tiletype)-1 && !DFHack::FlowPassable(type))
         {
             des.bits.flow_size = 0;
             //des.bits.liquid_type = DFHack::liquid_water;

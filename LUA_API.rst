@@ -999,6 +999,10 @@ Items module
 
   Move the item to the unit inventory. Returns *false* if impossible.
 
+* ``dfhack.items.remove(item[, no_uncat])``
+
+  Removes the item, and marks it for garbage collection unless ``no_uncat`` is true.
+
 * ``dfhack.items.makeProjectile(item)``
 
   Turns the item into a projectile, and returns the new object, or *nil* if impossible.

@@ -157,6 +157,9 @@ DFHACK_EXPORT bool moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::b
 DFHACK_EXPORT bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit,
     df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Carried, int body_part = -1);
 
+/// Makes the item removed and marked for garbage collection
+DFHACK_EXPORT bool remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat = false);
+
 /// Detaches the items from its current location and turns it into a projectile
 DFHACK_EXPORT df::proj_itemst *makeProjectile(MapExtras::MapCache &mc, df::item *item);
 }

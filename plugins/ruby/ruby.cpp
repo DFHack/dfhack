@@ -835,6 +835,49 @@ static VALUE rb_dfmemory_bitarray_set(VALUE self, VALUE addr, VALUE idx, VALUE v
     return Qtrue;
 }
 
+// add basic support for std::set<uint32> used for passing keyboard keys to viewscreens
+#include <set>
+static VALUE rb_dfmemory_set_new(VALUE self)
+{
+    std::set<unsigned long> *ptr = new std::set<unsigned long>;
+    return rb_uint2inum((uint32_t)ptr);
+}
+
+static VALUE rb_dfmemory_set_delete(VALUE self, VALUE set)
+{
+    std::set<unsigned long> *ptr = (std::set<unsigned long>*)rb_num2ulong(set);
+    if (ptr)
+        delete ptr;
+    return Qtrue;
+}
+
+static VALUE rb_dfmemory_set_set(VALUE self, VALUE set, VALUE key)
+{
+    std::set<unsigned long> *ptr = (std::set<unsigned long>*)rb_num2ulong(set);
+    ptr->insert(rb_num2ulong(key));
+    return Qtrue;
+}
+
+static VALUE rb_dfmemory_set_isset(VALUE self, VALUE set, VALUE key)
+{
+    std::set<unsigned long> *ptr = (std::set<unsigned long>*)rb_num2ulong(set);
+    return ptr->count(rb_num2ulong(key)) ? Qtrue : Qfalse;
+}
+
+static VALUE rb_dfmemory_set_deletekey(VALUE self, VALUE set, VALUE key)
+{
+    std::set<unsigned long> *ptr = (std::set<unsigned long>*)rb_num2ulong(set);
+    ptr->erase(rb_num2ulong(key));
+    return Qtrue;
+}
+
+static VALUE rb_dfmemory_set_clear(VALUE self, VALUE set)
+{
+    std::set<unsigned long> *ptr = (std::set<unsigned long>*)rb_num2ulong(set);
+    ptr->clear();
+    return Qtrue;
+}
+
 
 /* call an arbitrary object virtual method */
 #ifdef WIN32
@@ -950,4 +993,10 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_resize", RUBY_METHOD_FUNC(rb_dfmemory_bitarray_resize), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_isset",  RUBY_METHOD_FUNC(rb_dfmemory_bitarray_isset), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_set",    RUBY_METHOD_FUNC(rb_dfmemory_bitarray_set), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlset_new",       RUBY_METHOD_FUNC(rb_dfmemory_set_new), 0);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlset_delete",    RUBY_METHOD_FUNC(rb_dfmemory_set_delete), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlset_set",       RUBY_METHOD_FUNC(rb_dfmemory_set_set), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlset_isset",     RUBY_METHOD_FUNC(rb_dfmemory_set_isset), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlset_deletekey", RUBY_METHOD_FUNC(rb_dfmemory_set_deletekey), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlset_clear",     RUBY_METHOD_FUNC(rb_dfmemory_set_clear), 1);
 }

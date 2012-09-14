@@ -79,4 +79,13 @@ module DFHack
             world.status.popups << pop
         end
     end
+
+    class Viewscreen
+        def feed_keys(*keys)
+            keyset = StlSet.cpp_new(keys, InterfaceKey)
+            ret = feed(keyset)
+            keyset._cpp_delete
+            ret
+        end
+    end
 end

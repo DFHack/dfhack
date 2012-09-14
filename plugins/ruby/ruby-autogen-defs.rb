@@ -760,6 +760,52 @@ module DFHack
         end
     end
 
+    class StlSet
+        attr_accessor :_memaddr, :_enum
+        def self.cpp_new(init=nil, enum=nil)
+            ret = new DFHack.memory_stlset_new, enum
+            init.each { |k| ret.set(k) } if init
+            ret
+        end
+
+        def initialize(addr, enum=nil)
+            addr = nil if addr == 0
+            @_memaddr = addr
+            @_enum = enum
+        end
+
+        def isset(key)
+            raise unless @_memaddr
+            key = @_enum.int(key) if _enum
+            DFHack.memory_stlset_isset(@_memaddr, key)
+        end
+        alias is_set? isset
+
+        def set(key)
+            raise unless @_memaddr
+            key = @_enum.int(key) if _enum
+            DFHack.memory_stlset_set(@_memaddr, key)
+        end
+
+        def delete(key)
+            raise unless @_memaddr
+            key = @_enum.int(key) if _enum
+            DFHack.memory_stlset_deletekey(@_memaddr, key)
+        end
+
+        def clear
+            raise unless @_memaddr
+            DFHack.memory_stlset_clear(@_memaddr)
+        end
+
+        def _cpp_delete
+            raise unless @_memaddr
+            DFHack.memory_stlset_delete(@_memaddr)
+            @_memaddr = nil
+        end
+    end
+
+
     # cpp rtti name -> rb class
     @rtti_n2c = {}
     @rtti_c2n = {}
@@ -822,7 +868,7 @@ module DFHack
         when true; 1
         when Integer; arg
         #when String; [arg].pack('p').unpack('L')[0] # raw pointer to buffer
-        when MemHack::Compound; arg._memaddr
+        when MemHack::Compound, StlSet; arg._memaddr
         else raise "bad vmethod arg #{arg.class}"
         end
     end

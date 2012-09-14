@@ -10,6 +10,7 @@
 #include <modules/World.h>
 #include <modules/Units.h>
 #include <modules/Job.h>
+#include <modules/Materials.h>
 #include <LuaTools.h>
 #include <TileTypes.h>
 #include <vector>
@@ -45,11 +46,14 @@
 #include "df/unit_misc_trait.h"
 #include "df/job.h"
 #include "df/job_item.h"
-#include "df/item.h"
+#include "df/item_actual.h"
 #include "df/items_other_id.h"
 #include "df/building_stockpilest.h"
 #include "df/stockpile_links.h"
 #include "df/workshop_profile.h"
+#include "df/strain_type.h"
+#include "df/material.h"
+#include "df/flow_type.h"
 
 #include "MiscUtils.h"
 
@@ -160,6 +164,63 @@ static void random_direction(float &x, float &y, float &z)
     x = 2.0f*a*sq;
     y = 2.0f*b*sq;
     z = 1.0f - 2.0f*d;
+}
+
+static const int WEAR_TICKS = 806400;
+
+static bool apply_impact_damage(df::item *item, int minv, int maxv)
+{
+    MaterialInfo info(item);
+    if (!info.isValid())
+    {
+        item->setWear(3);
+        return false;
+    }
+
+    auto &strength = info.material->strength;
+
+    // Use random strain type excluding COMPRESSIVE (conveniently last)
+    int type = random_int(strain_type::COMPRESSIVE);
+    int power = minv + random_int(maxv-minv+1);
+
+    // High elasticity materials just bend
+    if (strength.strain_at_yield[type] >= 5000)
+        return true;
+
+    // Instant fracture?
+    int fracture = strength.fracture[type];
+    if (fracture <= power)
+    {
+        item->setWear(3);
+        return false;
+    }
+
+    // Impact within elastic strain range?
+    int yield = strength.yield[type];
+    if (yield > power)
+        return true;
+
+    // Can wear?
+    auto actual = virtual_cast<df::item_actual>(item);
+    if (!actual)
+        return false;
+
+    // Transform plastic deformation to wear
+    int max_wear = WEAR_TICKS * 4;
+    int cur_wear = WEAR_TICKS * actual->wear + actual->wear_timer;
+    cur_wear += int64_t(power - yield)*max_wear/(fracture - yield);
+
+    if (cur_wear >= max_wear)
+    {
+        actual->wear = 3;
+        return false;
+    }
+    else
+    {
+        actual->wear = cur_wear / WEAR_TICKS;
+        actual->wear_timer = cur_wear % WEAR_TICKS;
+        return true;
+    }
 }
 
 /*
@@ -1363,6 +1424,10 @@ struct projectile_hook : df::proj_itemst {
         float speed = 100000.0f / (fall_delay + 1);
         int min_zspeed = (fall_delay+1)*4900;
 
+        float bonus = 1.0f + 0.1f*(origin_pos.z -cur_pos.z);
+        bonus *= 1.0f + (distance_flown - 60) / 200.0f;
+        speed *= bonus;
+
         // Flight direction vector
         df::coord dist = target_pos - origin_pos;
         float vx = dist.x, vy = dist.y, vz = fabs(dist.z);
@@ -1383,10 +1448,28 @@ struct projectile_hook : df::proj_itemst {
         for (size_t i = 0; i < contents.size(); i++)
         {
             auto child = contents[i];
+
+            // Liquids are vaporized so that they cover nearby units
+            if (child->isLiquid())
+            {
+                auto flow = Maps::spawnFlow(
+                    cur_pos,
+                    flow_type::MaterialVapor,
+                    child->getMaterial(), child->getMaterialIndex(),
+                    100
+                );
+
+                // should it leave a puddle too?..
+                if (flow && Items::remove(mc, child))
+                    continue;
+            }
+
             auto proj = Items::makeProjectile(mc, child);
             if (!proj) continue;
 
-            proj->flags.bits.no_impact_destroy = true;
+            bool keep = apply_impact_damage(child, 50000, int(250000*bonus));
+
+            proj->flags.bits.no_impact_destroy = keep;
             //proj->flags.bits.bouncing = true;
             proj->flags.bits.piercing = true;
             proj->flags.bits.parabolic = true;
@@ -1403,7 +1486,7 @@ struct projectile_hook : df::proj_itemst {
 
             proj->speed_x = int(speed * sx);
             proj->speed_y = int(speed * sy);
-            proj->speed_z = int(speed * sz);
+            proj->speed_z = std::max(min_zspeed, int(speed * sz));
         }
     }
 

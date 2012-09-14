@@ -46,6 +46,7 @@ end
 -- Error handling
 
 safecall = dfhack.safecall
+curry = dfhack.curry
 
 function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
@@ -83,7 +84,7 @@ function mkmodule(module,env)
             error("Not a table in package.loaded["..module.."]")
         end
     end
-    local plugname = string.match(module,'^plugins%.(%w+)$')
+    local plugname = string.match(module,'^plugins%.([%w%-]+)$')
     if plugname then
         dfhack.open_plugin(pkg,plugname)
     end
@@ -118,7 +119,12 @@ function defclass(class,parent)
     if parent then
         setmetatable(class, parent)
     else
-        rawset_default(class, { init_fields = rawset_default })
+        rawset_default(class, {
+            init_fields = rawset_default,
+            callback = function(self, name, ...)
+                return dfhack.curry(self[name], self, ...)
+            end
+        })
     end
     return class
 end
@@ -160,6 +166,23 @@ function xyz2pos(x,y,z)
         return {x=x,y=y,z=z}
     else
         return {x=-30000,y=-30000,z=-30000}
+    end
+end
+
+function pos2xy(pos)
+    if pos then
+        local x = pos.x
+        if x and x ~= -30000 then
+            return x, pos.y
+        end
+    end
+end
+
+function xy2pos(x,y)
+    if x then
+        return {x=x,y=y}
+    else
+        return {x=-30000,y=-30000}
     end
 end
 

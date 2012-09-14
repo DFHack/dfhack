@@ -94,6 +94,9 @@ function Painter:isValidPos()
 end
 
 function Painter:viewport(x,y,w,h)
+    if type(x) == 'table' then
+        x,y,w,h = x.x1, x.y1, x.width, x.height
+    end
     local x1,y1 = self.x1+x, self.y1+y
     local x2,y2 = x1+w-1, y1+h-1
     local vp = {
@@ -159,10 +162,10 @@ function Painter:fill(x1,y1,x2,y2,pen,bg,bold)
     if type(x1) == 'table' then
         x1, y1, x2, y2, pen, bg, bold = x1.x1, x1.y1, x1.x2, x1.y2, y1, x2, y2
     end
-    x1 = math.max(x1,self.clip_x1)
-    y1 = math.max(y1,self.clip_y1)
-    x2 = math.min(x2,self.clip_x2)
-    y2 = math.min(y2,self.clip_y2)
+    x1 = math.max(x1+self.x1,self.clip_x1)
+    y1 = math.max(y1+self.y1,self.clip_y1)
+    x2 = math.min(x2+self.x1,self.clip_x2)
+    y2 = math.min(y2+self.y1,self.clip_y2)
     dscreen.fillRect(to_pen(self.cur_pen,pen,bg,bold),x1,y1,x2,y2)
     return self
 end
@@ -353,11 +356,16 @@ local function hint_coord(gap,hint)
     end
 end
 
+function FramedScreen:getWantedFrameSize()
+    return self.frame_width, self.frame_height
+end
+
 function FramedScreen:updateFrameSize()
     local sw, sh = dscreen.getWindowSize()
     local iw, ih = sw-2, sh-2
-    local width = math.min(self.frame_width or iw, iw)
-    local height = math.min(self.frame_height or ih, ih)
+    local fw, fh = self:getWantedFrameSize()
+    local width = math.min(fw or iw, iw)
+    local height = math.min(fh or ih, ih)
     local gw, gh = iw-width, ih-height
     local x1, y1 = hint_coord(gw,self.frame_xhint), hint_coord(gh,self.frame_yhint)
     self.frame_rect = mkdims_wh(x1+1,y1+1,width,height)

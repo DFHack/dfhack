@@ -32,6 +32,10 @@ distribution.
 #include "modules/Items.h"
 #include "DataDefs.h"
 #include "df/unit.h"
+#include "df/misc_trait_type.h"
+#include "df/physical_attribute_type.h"
+#include "df/mental_attribute_type.h"
+#include "df/job_skill.h"
 
 namespace df
 {
@@ -41,6 +45,7 @@ namespace df
     struct historical_entity;
     struct entity_position_assignment;
     struct entity_position;
+    struct unit_misc_trait;
 }
 
 /**
@@ -208,6 +213,18 @@ DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
 DFHACK_EXPORT df::assumed_identity *getIdentity(df::unit *unit);
 DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
 
+DFHACK_EXPORT bool isHidingCurse(df::unit *unit);
+DFHACK_EXPORT int getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr);
+DFHACK_EXPORT int getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr);
+
+DFHACK_EXPORT bool isCrazed(df::unit *unit);
+DFHACK_EXPORT bool isOpposedToLife(df::unit *unit);
+DFHACK_EXPORT bool hasExtravision(df::unit *unit);
+DFHACK_EXPORT bool isBloodsucker(df::unit *unit);
+DFHACK_EXPORT bool isMischievous(df::unit *unit);
+
+DFHACK_EXPORT df::unit_misc_trait *getMiscTrait(df::unit *unit, df::misc_trait_type type, bool create = false);
+
 DFHACK_EXPORT bool isDead(df::unit *unit);
 DFHACK_EXPORT bool isAlive(df::unit *unit);
 DFHACK_EXPORT bool isSane(df::unit *unit);
@@ -215,6 +232,9 @@ DFHACK_EXPORT bool isCitizen(df::unit *unit);
 DFHACK_EXPORT bool isDwarf(df::unit *unit);
 
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
+
+DFHACK_EXPORT int getEffectiveSkill(df::unit *unit, df::job_skill skill_id);
+DFHACK_EXPORT int computeMovementSpeed(df::unit *unit);
 
 struct NoblePosition {
     df::historical_entity *entity;

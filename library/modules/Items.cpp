@@ -72,8 +72,11 @@ using namespace std;
 #include "df/general_ref_contains_itemst.h"
 #include "df/general_ref_contained_in_itemst.h"
 #include "df/general_ref_building_holderst.h"
+#include "df/general_ref_projectile.h"
 #include "df/viewscreen_itemst.h"
 #include "df/vermin.h"
+#include "df/proj_itemst.h"
+#include "df/proj_list_link.h"
 
 #include "df/unit_inventory_item.h"
 #include "df/body_part_raw.h"
@@ -88,6 +91,7 @@ using namespace df::enums;
 using df::global::world;
 using df::global::ui;
 using df::global::ui_selected_unit;
+using df::global::proj_next_id;
 
 #define ITEMDEF_VECTORS \
     ITEM(WEAPON, weapons, itemdef_weaponst) \
@@ -865,4 +869,45 @@ bool DFHack::Items::moveToInventory(
     resetUnitInvFlags(unit, newInventoryItem);
 
     return true;
+}
+
+df::proj_itemst *Items::makeProjectile(MapExtras::MapCache &mc, df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+
+    if (!world || !proj_next_id)
+        return NULL;
+
+    auto pos = getPosition(item);
+    if (!pos.isValid())
+        return NULL;
+
+    auto ref = df::allocate<df::general_ref_projectile>();
+    if (!ref)
+        return NULL;
+
+    if (!detachItem(mc, item))
+    {
+        delete ref;
+        return NULL;
+    }
+
+    item->pos = pos;
+    item->flags.bits.in_job = true;
+
+    auto proj = new df::proj_itemst();
+    proj->link = new df::proj_list_link();
+    proj->link->item = proj;
+    proj->id = (*proj_next_id)++;
+
+    proj->origin_pos = proj->target_pos = pos;
+    proj->cur_pos = proj->prev_pos = pos;
+    proj->item = item;
+
+    ref->projectile_id = proj->id;
+    item->itemrefs.push_back(ref);
+
+    linked_list_append(&world->proj_list, proj->link);
+
+    return proj;
 }

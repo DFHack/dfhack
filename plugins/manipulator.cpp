@@ -39,8 +39,6 @@ using df::global::ui;
 using df::global::gps;
 using df::global::enabler;
 
-DFHACK_PLUGIN("manipulator");
-
 struct SkillLevel
 {
     const char *name;
@@ -254,6 +252,7 @@ struct UnitInfo
 enum altsort_mode {
     ALTSORT_NAME,
     ALTSORT_PROFESSION,
+    ALTSORT_HAPPINESS,
     ALTSORT_MAX
 };
 
@@ -275,6 +274,14 @@ bool sortByProfession (const UnitInfo *d1, const UnitInfo *d2)
         return (d1->profession > d2->profession);
     else
         return (d1->profession < d2->profession);
+}
+
+bool sortByHappiness (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (descending)
+        return (d1->unit->status.happiness > d2->unit->status.happiness);
+    else
+        return (d1->unit->status.happiness < d2->unit->status.happiness);
 }
 
 bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
@@ -312,6 +319,14 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
     return sortByName(d1, d2);
 }
 
+enum display_columns {
+    DISP_COLUMN_HAPPINESS,
+    DISP_COLUMN_NAME,
+    DISP_COLUMN_PROFESSION,
+    DISP_COLUMN_LABORS,
+    DISP_COLUMN_MAX,
+};
+
 class viewscreen_unitlaborsst : public dfhack_viewscreen {
 public:
     void feed(set<df::interface_key> *events);
@@ -330,10 +345,11 @@ protected:
     vector<UnitInfo *> units;
     altsort_mode altsort;
 
-    int first_row, sel_row;
+    int first_row, sel_row, num_rows;
     int first_column, sel_column;
 
-    int height, name_width, prof_width, labors_width;
+    int col_widths[DISP_COLUMN_MAX];
+    int col_offsets[DISP_COLUMN_MAX];
 
     void calcSize ();
 };
@@ -376,34 +392,52 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src)
 
 void viewscreen_unitlaborsst::calcSize()
 {
-    height = gps->dimy - 10;
-    if (height > units.size())
-        height = units.size();
+    num_rows = gps->dimy - 10;
+    if (num_rows > units.size())
+        num_rows = units.size();
 
-    name_width = prof_width = labors_width = 0;
-    for (int i = 4; i < gps->dimx; i++)
+    int num_columns = gps->dimx - DISP_COLUMN_MAX - 1;
+    for (int i = 0; i < DISP_COLUMN_MAX; i++)
+        col_widths[i] = 0;
+    while (num_columns > 0)
     {
-        // 20% for Name, 20% for Profession, 60% for Labors
-        switch ((i - 4) % 5)
+        num_columns--;
+        // need at least 4 digits for happiness
+        if (col_widths[DISP_COLUMN_HAPPINESS] < 4)
+        {
+            col_widths[DISP_COLUMN_HAPPINESS]++;
+            continue;
+        }
+        // of remaining, 20% for Name, 20% for Profession, 60% for Labors
+        switch (num_columns % 5)
         {
         case 0: case 2: case 4:
-            labors_width++;
+            col_widths[DISP_COLUMN_LABORS]++;
             break;
         case 1:
-            name_width++;
+            col_widths[DISP_COLUMN_NAME]++;
             break;
         case 3:
-            prof_width++;
+            col_widths[DISP_COLUMN_PROFESSION]++;
             break;
         }
     }
-    while (labors_width > NUM_COLUMNS)
+
+    while (col_widths[DISP_COLUMN_LABORS] > NUM_COLUMNS)
     {
-        if (labors_width & 1)
-            name_width++;
+        col_widths[DISP_COLUMN_LABORS]--;
+        if (col_widths[DISP_COLUMN_LABORS] & 1)
+            col_widths[DISP_COLUMN_NAME]++;
         else
-            prof_width++;
-        labors_width--;
+            col_widths[DISP_COLUMN_PROFESSION]++;
+    }
+
+    for (int i = 0; i < DISP_COLUMN_MAX; i++)
+    {
+        if (i == 0)
+            col_offsets[i] = 1;
+        else
+            col_offsets[i] = col_offsets[i - 1] + col_widths[i - 1] + 1;
     }
 
     // don't adjust scroll position immediately after the window opened
@@ -411,20 +445,20 @@ void viewscreen_unitlaborsst::calcSize()
         return;
 
     // if the window grows vertically, scroll upward to eliminate blank rows from the bottom
-    if (first_row > units.size() - height)
-        first_row = units.size() - height;
+    if (first_row > units.size() - num_rows)
+        first_row = units.size() - num_rows;
 
     // if it shrinks vertically, scroll downward to keep the cursor visible
-    if (first_row < sel_row - height + 1)
-        first_row = sel_row - height + 1;
+    if (first_row < sel_row - num_rows + 1)
+        first_row = sel_row - num_rows + 1;
 
     // if the window grows horizontally, scroll to the left to eliminate blank columns from the right
-    if (first_column > NUM_COLUMNS - labors_width)
-        first_column = NUM_COLUMNS - labors_width;
+    if (first_column > NUM_COLUMNS - col_widths[DISP_COLUMN_LABORS])
+        first_column = NUM_COLUMNS - col_widths[DISP_COLUMN_LABORS];
 
     // if it shrinks horizontally, scroll to the right to keep the cursor visible
-    if (first_column < sel_column - labors_width + 1)
-        first_column = sel_column - labors_width + 1;
+    if (first_column < sel_column - col_widths[DISP_COLUMN_LABORS] + 1)
+        first_column = sel_column - col_widths[DISP_COLUMN_LABORS] + 1;
 }
 
 void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
@@ -455,8 +489,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (sel_row < first_row)
         first_row = sel_row;
-    if (first_row < sel_row - height + 1)
-        first_row = sel_row - height + 1;
+    if (first_row < sel_row - num_rows + 1)
+        first_row = sel_row - num_rows + 1;
 
     if (events->count(interface_key::CURSOR_LEFT) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_DOWNLEFT))
         sel_column--;
@@ -491,8 +525,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (sel_column < first_column)
         first_column = sel_column;
-    if (first_column < sel_column - labors_width + 1)
-        first_column = sel_column - labors_width + 1;
+    if (first_column < sel_column - col_widths[DISP_COLUMN_LABORS] + 1)
+        first_column = sel_column - col_widths[DISP_COLUMN_LABORS] + 1;
 
     UnitInfo *cur = units[sel_row];
     if (events->count(interface_key::SELECT) && (cur->allowEdit) && (columns[sel_column].labor != unit_labor::NONE))
@@ -558,6 +592,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         case ALTSORT_PROFESSION:
             std::sort(units.begin(), units.end(), sortByProfession);
             break;
+        case ALTSORT_HAPPINESS:
+            std::sort(units.begin(), units.end(), sortByHappiness);
+            break;
         }
     }
     if (events->count(interface_key::CHANGETAB))
@@ -568,6 +605,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             altsort = ALTSORT_PROFESSION;
             break;
         case ALTSORT_PROFESSION:
+            altsort = ALTSORT_HAPPINESS;
+            break;
+        case ALTSORT_HAPPINESS:
             altsort = ALTSORT_NAME;
             break;
         }
@@ -605,9 +645,9 @@ void viewscreen_unitlaborsst::render()
     dfhack_viewscreen::render();
 
     Screen::clear();
-    Screen::drawBorder("  Manage Labors  ");
+    Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
 
-    for (int col = 0; col < labors_width; col++)
+    for (int col = 0; col < col_widths[DISP_COLUMN_LABORS]; col++)
     {
         int col_offset = col + first_column;
         if (col_offset >= NUM_COLUMNS)
@@ -622,21 +662,21 @@ void viewscreen_unitlaborsst::render()
             bg = 7;
         }
 
-        Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 1);
-        Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 2);
+        Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 1);
+        Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 2);
         df::profession profession = columns[col_offset].profession;
-        if (profession != profession::NONE)
+        if ((profession != profession::NONE) && (ui->race_id != -1))
         {
             auto graphics = world->raws.creatures.all[ui->race_id]->graphics;
             Screen::paintTile(
                 Screen::Pen(' ', fg, 0,
                     graphics.profession_add_color[creature_graphics_role::DEFAULT][profession],
                     graphics.profession_texpos[creature_graphics_role::DEFAULT][profession]),
-                1 + name_width + 1 + prof_width + 1 + col, 3);
+                col_offsets[DISP_COLUMN_LABORS] + col, 3);
         }
     }
 
-    for (int row = 0; row < height; row++)
+    for (int row = 0; row < num_rows; row++)
     {
         int row_offset = row + first_row;
         if (row_offset >= units.size())
@@ -645,6 +685,26 @@ void viewscreen_unitlaborsst::render()
         UnitInfo *cur = units[row_offset];
         df::unit *unit = cur->unit;
         int8_t fg = 15, bg = 0;
+
+        int happy = cur->unit->status.happiness;
+        string happiness = stl_sprintf("%4i", happy);
+        if (happy == 0)         // miserable
+            fg = 13;    // 5:1
+        else if (happy <= 25)   // very unhappy
+            fg = 12;    // 4:1
+        else if (happy <= 50)   // unhappy
+            fg = 4;     // 4:0
+        else if (happy < 75)    // fine
+            fg = 14;    // 6:1
+        else if (happy < 125)   // quite content
+            fg = 6;     // 6:0
+        else if (happy < 150)   // happy
+            fg = 2;     // 2:0
+        else                    // ecstatic
+            fg = 10;    // 2:1
+        Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_HAPPINESS], 4 + row, happiness);
+
+        fg = 15;
         if (row_offset == sel_row)
         {
             fg = 0;
@@ -652,23 +712,23 @@ void viewscreen_unitlaborsst::render()
         }
 
         string name = cur->name;
-        name.resize(name_width);
-        Screen::paintString(Screen::Pen(' ', fg, bg), 1, 4 + row, name);
+        name.resize(col_widths[DISP_COLUMN_NAME]);
+        Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_NAME], 4 + row, name);
 
         string profession = cur->profession;
-        profession.resize(prof_width);
+        profession.resize(col_widths[DISP_COLUMN_PROFESSION]);
         fg = cur->color;
         bg = 0;
 
-        Screen::paintString(Screen::Pen(' ', fg, bg), 1 + name_width + 1, 4 + row, profession);
+        Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_PROFESSION], 4 + row, profession);
 
         // Print unit's skills and labor assignments
-        for (int col = 0; col < labors_width; col++)
+        for (int col = 0; col < col_widths[DISP_COLUMN_LABORS]; col++)
         {
             int col_offset = col + first_column;
             fg = 15;
             bg = 0;
-            char c = 0xFA;
+            uint8_t c = 0xFA;
             if ((col_offset == sel_column) && (row_offset == sel_row))
                 fg = 9;
             if (columns[col_offset].skill != job_skill::NONE)
@@ -695,7 +755,7 @@ void viewscreen_unitlaborsst::render()
             }
             else
                 bg = 4;
-            Screen::paintTile(Screen::Pen(c, fg, bg), 1 + name_width + 1 + prof_width + 1 + col, 4 + row);
+            Screen::paintTile(Screen::Pen(c, fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 4 + row);
         }
     }
 
@@ -705,17 +765,17 @@ void viewscreen_unitlaborsst::render()
     {
         df::unit *unit = cur->unit;
         int x = 1;
-        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + height + 2, cur->transname);
+        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, cur->transname);
         x += cur->transname.length();
 
         if (cur->transname.length())
         {
-            Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + height + 2, ", ");
+            Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, ", ");
             x += 2;
         }
-        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + height + 2, cur->profession);
+        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, cur->profession);
         x += cur->profession.length();
-        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + height + 2, ": ");
+        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, ": ");
         x += 2;
 
         string str;
@@ -742,12 +802,12 @@ void viewscreen_unitlaborsst::render()
             else
                 str = stl_sprintf("Not %s (0/500)", ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));
         }
-        Screen::paintString(Screen::Pen(' ', 9, 0), x, 3 + height + 2, str);
+        Screen::paintString(Screen::Pen(' ', 9, 0), x, 3 + num_rows + 2, str);
 
         canToggle = (cur->allowEdit) && (columns[sel_column].labor != unit_labor::NONE);
     }
 
-    int x = 1;
+    int x = 2;
     OutputString(10, x, gps->dimy - 3, "Enter"); // SELECT key
     OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle labor, ");
 
@@ -760,7 +820,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10, x, gps->dimy - 3, "c"); // UNITJOB_ZOOM_CRE key
     OutputString(15, x, gps->dimy - 3, ": Zoom-Cre");
 
-    x = 1;
+    x = 2;
     OutputString(10, x, gps->dimy - 2, "Esc"); // LEAVESCREEN key
     OutputString(15, x, gps->dimy - 2, ": Done, ");
 
@@ -780,6 +840,9 @@ void viewscreen_unitlaborsst::render()
         break;
     case ALTSORT_PROFESSION:
         OutputString(15, x, gps->dimy - 2, "Profession");
+        break;
+    case ALTSORT_HAPPINESS:
+        OutputString(15, x, gps->dimy - 2, "Happiness");
         break;
     default:
         OutputString(15, x, gps->dimy - 2, "Unknown");
@@ -803,23 +866,35 @@ struct unitlist_hook : df::viewscreen_unitlistst
         }
         INTERPOSE_NEXT(feed)(input);
     }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+
+        if (units[page].size())
+        {
+            int x = 2;
+            OutputString(12, x, gps->dimy - 2, "l"); // UNITVIEW_PRF_PROF key
+            OutputString(15, x, gps->dimy - 2, ": Manage labors (DFHack)");
+        }
+    }
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, render);
+
+DFHACK_PLUGIN("manipulator");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (gps)
-    {
-        if (!INTERPOSE_HOOK(unitlist_hook, feed).apply())
-            out.printerr("Could not interpose viewscreen_unitlistst::feed\n");
-    }
-
+    if (!gps || !INTERPOSE_HOOK(unitlist_hook, feed).apply() || !INTERPOSE_HOOK(unitlist_hook, render).apply())
+        out.printerr("Could not insert Dwarf Manipulator hooks!\n");
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     INTERPOSE_HOOK(unitlist_hook, feed).remove();
+    INTERPOSE_HOOK(unitlist_hook, render).remove();
     return CR_OK;
 }

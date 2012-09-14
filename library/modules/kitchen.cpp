@@ -114,7 +114,7 @@ void Kitchen::fillWatchMap(std::map<t_materialIndex, unsigned int>& watchMap)
     watchMap.clear();
     for(std::size_t i = 0; i < size(); ++i)
     {
-        if(ui->kitchen.item_subtypes[i] == limitType && ui->kitchen.item_subtypes[i] == limitSubtype && ui->kitchen.exc_types[i] == limitExclusion)
+        if(ui->kitchen.item_subtypes[i] == (short)limitType && ui->kitchen.item_subtypes[i] == (short)limitSubtype && ui->kitchen.exc_types[i] == limitExclusion)
         {
             watchMap[ui->kitchen.mat_indices[i]] = (unsigned int) ui->kitchen.mat_types[i];
         }

@@ -1,5 +1,9 @@
 -- Reset item temperature to the value of their tile.
 
+local args = {...}
+
+local apply = (args[1] == 'apply')
+
 local count = 0
 local types = {}
 
@@ -9,13 +13,16 @@ local function update_temp(item,btemp)
         local tid = item:getType()
         types[tid] = (types[tid] or 0) + 1
     end
-    item.temperature = btemp
-    item.temperature_fraction = 0
 
-    if item.contaminants then
-        for _,c in ipairs(item.contaminants) do
-            c.temperature = btemp
-            c.temperature_fraction = 0
+    if apply then
+        item.temperature = btemp
+        item.temperature_fraction = 0
+
+        if item.contaminants then
+            for _,c in ipairs(item.contaminants) do
+                c.temperature = btemp
+                c.temperature_fraction = 0
+            end
         end
     end
 
@@ -23,7 +30,9 @@ local function update_temp(item,btemp)
         update_temp(sub,btemp)
     end
 
-    item:checkTemperatureDamage()
+    if apply then
+        item:checkTemperatureDamage()
+    end
 end
 
 local last_frame = df.global.world.frame_counter-1
@@ -39,11 +48,19 @@ for _,item in ipairs(df.global.world.items.all) do
     end
 end
 
-print('Items updated: '..count)
+if apply then
+    print('Items updated: '..count)
+else
+    print('Items not in equilibrium: '..count)
+end
 
 local tlist = {}
 for k,_ in pairs(types) do tlist[#tlist+1] = k end
 table.sort(tlist, function(a,b) return types[a] > types[b] end)
 for _,k in ipairs(tlist) do
     print('    '..df.item_type[k]..':', types[k])
+end
+
+if not apply then
+    print("Use 'fix/stable-temp apply' to force-change temperature.")
 end

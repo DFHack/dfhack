@@ -550,6 +550,20 @@ Exception handling
   The default value of the ``verbose`` argument of ``err:tostring()``.
 
 
+Miscellaneous
+-------------
+
+* ``dfhack.VERSION``
+
+  DFHack version string constant.
+
+* ``dfhack.curry(func,args...)``, or ``curry(func,args...)``
+
+  Returns a closure that invokes the function with args combined
+  both from the curry call and the closure call itself. I.e.
+  ``curry(func,a,b)(c,d)`` equals ``func(a,b,c,d)``.
+
+
 Locking and finalization
 ------------------------
 
@@ -709,6 +723,10 @@ can be omitted.
 
   Returns the dfhack directory path, i.e. ``".../df/hack/"``.
 
+* ``dfhack.getTickCount()``
+
+  Returns the tick count in ms, exactly as DF ui uses.
+
 * ``dfhack.isWorldLoaded()``
 
   Checks if the world is loaded.
@@ -764,9 +782,19 @@ Gui module
   Adds a regular announcement with given text, color, and brightness.
   The is_bright boolean actually seems to invert the brightness.
 
+* ``dfhack.gui.showZoomAnnouncement(type,pos,text,color[,is_bright])``
+
+  Like above, but also specifies a position you can zoom to from the announcement menu.
+
 * ``dfhack.gui.showPopupAnnouncement(text,color[,is_bright])``
 
   Pops up a titan-style modal announcement window.
+
+* ``dfhack.gui.showAutoAnnouncement(type,pos,text,color[,is_bright])``
+
+  Uses the type to look up options from announcements.txt, and calls the
+  above operations accordingly. If enabled, pauses and zooms to position.
+
 
 Job module
 ----------
@@ -840,6 +868,26 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
+* ``dfhack.units.isHidingCurse(unit)``
+
+  Checks if the unit hides improved attributes from its curse.
+
+* ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
+* ``dfhack.units.getMentalAttrValue(unit, attr_type)``
+
+  Computes the effective attribute value, including curse effect.
+
+* ``dfhack.units.isCrazed(unit)``
+* ``dfhack.units.isOpposedToLife(unit)``
+* ``dfhack.units.hasExtravision(unit)``
+* ``dfhack.units.isBloodsucker(unit)``
+
+  Simple checks of caste attributes that can be modified by curses.
+
+* ``dfhack.units.getMiscTrait(unit, type[, create])``
+
+  Finds (or creates if requested) a misc trait object with the given id.
+
 * ``dfhack.units.isDead(unit)``
 
   The unit is completely dead and passive, or a ghost.
@@ -865,6 +913,14 @@ Units module
 
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
+
+* ``dfhack.units.getEffectiveSkill(unit, skill)``
+
+  Computes the effective rating for the given skill, taking into account exhaustion, pain etc.
+
+* ``dfhack.units.computeMovementSpeed(unit)``
+
+  Computes number of frames * 100 it takes the unit to move in its current state of mind and body.
 
 * ``dfhack.units.getNoblePositions(unit)``
 
@@ -943,6 +999,10 @@ Items module
 
   Move the item to the unit inventory. Returns *false* if impossible.
 
+* ``dfhack.items.makeProjectile(item)``
+
+  Turns the item into a projectile, and returns the new object, or *nil* if impossible.
+
 
 Maps module
 -----------
@@ -959,9 +1019,17 @@ Maps module
 
   Returns a map block object for given x,y,z in local block coordinates.
 
+* ``dfhack.maps.isValidTilePos(coords)``, or isValidTilePos(x,y,z)``
+
+  Checks if the given df::coord or x,y,z in local tile coordinates are valid.
+
 * ``dfhack.maps.getTileBlock(coords)``, or ``getTileBlock(x,y,z)``
 
   Returns a map block object for given df::coord or x,y,z in local tile coordinates.
+
+* ``dfhack.maps.ensureTileBlock(coords)``, or ``ensureTileBlock(x,y,z)``
+
+  Like ``getTileBlock``, but if the block is not allocated, try creating it.
 
 * ``dfhack.maps.getRegionBiome(region_coord2d)``, or ``getRegionBiome(x,y)``
 
@@ -970,6 +1038,11 @@ Maps module
 * ``dfhack.maps.enableBlockUpdates(block[,flow,temperature])``
 
   Enables updates for liquid flow or temperature, unless already active.
+
+* ``dfhack.maps.spawnFlow(pos,type,mat_type,mat_index,dimension)``
+
+  Spawns a new flow (i.e. steam/mist/dust/etc) at the given pos, and with
+  the given parameters. Returns it, or *nil* if unsuccessful.
 
 * ``dfhack.maps.getGlobalInitFeature(index)``
 
@@ -1266,6 +1339,11 @@ Basic painting functions:
     If specified, overrides *tile_color* and supplies shading colors directly.
 
   Returns *false* if coordinates out of bounds, or other error.
+
+* ``dfhack.screen.readTile(x,y)``
+
+  Retrieves the contents of the specified tile from the screen buffers.
+  Returns a pen, or *nil* if invalid or TrueType.
 
 * ``dfhack.screen.paintString(pen,x,y,text)``
 

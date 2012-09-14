@@ -127,6 +127,9 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     char permissions[5]; // r/-, w/-, x/-, p/s, 0
 
     FILE *mapFile = ::fopen("/proc/self/maps", "r");
+    if (!mapFile)
+        return;
+
     size_t start, end, offset, device1, device2, node;
 
     while (fgets(buffer, 1024, mapFile))
@@ -148,6 +151,8 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
         temp.valid = true;
         ranges.push_back(temp);
     }
+
+    fclose(mapFile);
 }
 
 uint32_t Process::getBase()

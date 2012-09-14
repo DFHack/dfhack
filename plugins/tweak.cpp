@@ -89,10 +89,10 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Fixes rendering of creature weight limits in pressure plate build menu.\n"
         "  tweak stable-temp [disable]\n"
         "    Fixes performance bug 6012 by squashing jitter in temperature updates.\n"
-        "  tweak fast-heat [max-ticks]\n"
+        "  tweak fast-heat <max-ticks>\n"
         "    Further improves temperature updates by ensuring that 1 degree of\n"
         "    item temperature is crossed in no more than specified number of frames\n"
-        "    when updating from the environment temperature.\n"
+        "    when updating from the environment temperature. Use 0 to disable.\n"
     ));
     return CR_OK;
 }

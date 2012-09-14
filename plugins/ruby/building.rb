@@ -48,8 +48,8 @@ module DFHack
             bld.race = ui.race_id
             subtype = WorkshopType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Workshop
             subtype = FurnaceType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Furnace
-            bld.setSubtype(subtype) if subtype != -1
-            bld.setCustomType(custom) if custom != -1
+            bld.setSubtype(subtype)
+            bld.setCustomType(custom)
             case type
             when :Furnace; bld.melt_remainder[world.raws.inorganics.length] = 0
             when :Coffin; bld.initBurialFlags

@@ -18,7 +18,7 @@ function adv_tools.reincarnate(swap_soul) --only for adventurer i guess
 	for i=#events-1,0,-1 do -- reverse search because almost always it will be last entry
 		if df.history_event_hist_figure_diedst:is_instance(events[i]) then
 			--print("is instance:"..i)
-			if events[i].hfid==hist_fig.id then
+			if events[i].victim==hist_fig.id then
 				--print("Is same id:"..i)
 				trg_hist_fig=events[i].slayer
 				if trg_hist_fig then
@@ -29,12 +29,12 @@ function adv_tools.reincarnate(swap_soul) --only for adventurer i guess
 		end
 	end
 	if trg_hist_fig ==nil then
-		error("Slayer not found")
+		qerror("Slayer not found")
 	end
 	
 	local trg_unit=trg_hist_fig.unit_id
 	if trg_unit==nil then
-		error("Unit id not found!")
+		qerror("Unit id not found!")
 	end
 	local trg_unit_final=df.unit.find(trg_unit)
 	

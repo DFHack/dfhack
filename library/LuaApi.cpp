@@ -886,6 +886,12 @@ static bool items_moveToInventory
     return Items::moveToInventory(mc, item, unit, mode, body_part);
 }
 
+static bool items_remove(df::item *item, bool no_uncat)
+{
+    MapExtras::MapCache mc;
+    return Items::remove(mc, item, no_uncat);
+}
+
 static df::proj_itemst *items_makeProjectile(df::item *item)
 {
     MapExtras::MapCache mc;
@@ -904,6 +910,7 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPN(moveToBuilding, items_moveToBuilding),
     WRAPN(moveToInventory, items_moveToInventory),
     WRAPN(makeProjectile, items_makeProjectile),
+    WRAPN(remove, items_remove),
     { NULL, NULL }
 };
 

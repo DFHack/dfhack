@@ -89,6 +89,10 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Fixes rendering of creature weight limits in pressure plate build menu.\n"
         "  tweak stable-temp [disable]\n"
         "    Fixes performance bug 6012 by squashing jitter in temperature updates.\n"
+        "  tweak fast-heat <max-ticks>\n"
+        "    Further improves temperature updates by ensuring that 1 degree of\n"
+        "    item temperature is crossed in no more than specified number of frames\n"
+        "    when updating from the environment temperature. Use 0 to disable.\n"
     ));
     return CR_OK;
 }
@@ -293,6 +297,52 @@ struct stable_temp_hook : df::item_actual {
 IMPLEMENT_VMETHOD_INTERPOSE(stable_temp_hook, adjustTemperature);
 IMPLEMENT_VMETHOD_INTERPOSE(stable_temp_hook, updateContaminants);
 
+static int map_temp_mult = -1;
+static int max_heat_ticks = 0;
+
+struct fast_heat_hook : df::item_actual {
+    typedef df::item_actual interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(
+        bool, updateTempFromMap,
+        (bool local, bool contained, bool adjust, int32_t rate_mult)
+    ) {
+        int cmult = map_temp_mult;
+        map_temp_mult = rate_mult;
+
+        bool rv = INTERPOSE_NEXT(updateTempFromMap)(local, contained, adjust, rate_mult);
+        map_temp_mult = cmult;
+        return rv;
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(
+        bool, updateTemperature,
+        (uint16_t temp, bool local, bool contained, bool adjust, int32_t rate_mult)
+    ) {
+        // Some items take ages to cross the last degree, so speed them up
+        if (map_temp_mult > 0 && temp != temperature && max_heat_ticks > 0)
+        {
+            int spec = getSpecHeat();
+            if (spec != 60001)
+                rate_mult = std::max(map_temp_mult, spec/max_heat_ticks/abs(temp - temperature));
+        }
+
+        return INTERPOSE_NEXT(updateTemperature)(temp, local, contained, adjust, rate_mult);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(bool, adjustTemperature, (uint16_t temp, int32_t rate_mult))
+    {
+        if (map_temp_mult > 0)
+            rate_mult = map_temp_mult;
+
+        return INTERPOSE_NEXT(adjustTemperature)(temp, rate_mult);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(fast_heat_hook, updateTempFromMap);
+IMPLEMENT_VMETHOD_INTERPOSE(fast_heat_hook, updateTemperature);
+IMPLEMENT_VMETHOD_INTERPOSE(fast_heat_hook, adjustTemperature);
+
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
     if (vector_get(parameters, 1) == "disable")
@@ -429,6 +479,17 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     {
         enable_hook(out, INTERPOSE_HOOK(stable_temp_hook, adjustTemperature), parameters);
         enable_hook(out, INTERPOSE_HOOK(stable_temp_hook, updateContaminants), parameters);
+    }
+    else if (cmd == "fast-heat")
+    {
+        if (parameters.size() < 2)
+            return CR_WRONG_USAGE;
+        max_heat_ticks = atoi(parameters[1].c_str());
+        if (max_heat_ticks <= 0)
+            parameters[1] = "disable";
+        enable_hook(out, INTERPOSE_HOOK(fast_heat_hook, updateTempFromMap), parameters);
+        enable_hook(out, INTERPOSE_HOOK(fast_heat_hook, updateTemperature), parameters);
+        enable_hook(out, INTERPOSE_HOOK(fast_heat_hook, adjustTemperature), parameters);
     }
     else 
         return CR_WRONG_USAGE;

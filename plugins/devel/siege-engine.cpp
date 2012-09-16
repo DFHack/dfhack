@@ -1491,7 +1491,7 @@ struct projectile_hook : df::proj_itemst {
 
         // Flight direction vector
         df::coord dist = target_pos - origin_pos;
-        float vx = dist.x, vy = dist.y, vz = fabs(dist.z);
+        float vx = dist.x, vy = dist.y, vz = fabs((float)dist.z);
         normalize(vx, vy, vz);
 
         int start_z = 0;

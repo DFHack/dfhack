@@ -82,7 +82,9 @@ function tools.embark() --windows only?
 		qerror("Offset for embark patch not found!")
 	end
 end
+if WINDOWS then
 tools.menu:add("Embark anywhere",tools.embark)
+end
 function tools.getCreatureId(vector) --redo it to getcreature by name/id or something
 	tnames={}
 	rnames={}

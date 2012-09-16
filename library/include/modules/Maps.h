@@ -241,9 +241,11 @@ inline bool isValidTilePos(df::coord pos) { return isValidTilePos(pos.x, pos.y, 
  */
 extern DFHACK_EXPORT df::map_block * getBlock (int32_t blockx, int32_t blocky, int32_t blockz);
 extern DFHACK_EXPORT df::map_block * getTileBlock (int32_t x, int32_t y, int32_t z);
+extern DFHACK_EXPORT df::map_block * ensureTileBlock (int32_t x, int32_t y, int32_t z);
 
 inline df::map_block * getBlock (df::coord pos) { return getBlock(pos.x, pos.y, pos.z); }
 inline df::map_block * getTileBlock (df::coord pos) { return getTileBlock(pos.x, pos.y, pos.z); }
+inline df::map_block * ensureTileBlock (df::coord pos) { return ensureTileBlock(pos.x, pos.y, pos.z); }
 
 extern DFHACK_EXPORT df::tiletype *getTileType(int32_t x, int32_t y, int32_t z);
 extern DFHACK_EXPORT df::tile_designation *getTileDesignation(int32_t x, int32_t y, int32_t z);

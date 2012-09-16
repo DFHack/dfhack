@@ -550,6 +550,20 @@ Exception handling
   The default value of the ``verbose`` argument of ``err:tostring()``.
 
 
+Miscellaneous
+-------------
+
+* ``dfhack.VERSION``
+
+  DFHack version string constant.
+
+* ``dfhack.curry(func,args...)``, or ``curry(func,args...)``
+
+  Returns a closure that invokes the function with args combined
+  both from the curry call and the closure call itself. I.e.
+  ``curry(func,a,b)(c,d)`` equals ``func(a,b,c,d)``.
+
+
 Locking and finalization
 ------------------------
 
@@ -709,6 +723,10 @@ can be omitted.
 
   Returns the dfhack directory path, i.e. ``".../df/hack/"``.
 
+* ``dfhack.getTickCount()``
+
+  Returns the tick count in ms, exactly as DF ui uses.
+
 * ``dfhack.isWorldLoaded()``
 
   Checks if the world is loaded.
@@ -850,6 +868,26 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
+* ``dfhack.units.isHidingCurse(unit)``
+
+  Checks if the unit hides improved attributes from its curse.
+
+* ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
+* ``dfhack.units.getMentalAttrValue(unit, attr_type)``
+
+  Computes the effective attribute value, including curse effect.
+
+* ``dfhack.units.isCrazed(unit)``
+* ``dfhack.units.isOpposedToLife(unit)``
+* ``dfhack.units.hasExtravision(unit)``
+* ``dfhack.units.isBloodsucker(unit)``
+
+  Simple checks of caste attributes that can be modified by curses.
+
+* ``dfhack.units.getMiscTrait(unit, type[, create])``
+
+  Finds (or creates if requested) a misc trait object with the given id.
+
 * ``dfhack.units.isDead(unit)``
 
   The unit is completely dead and passive, or a ghost.
@@ -875,6 +913,14 @@ Units module
 
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
+
+* ``dfhack.units.getEffectiveSkill(unit, skill)``
+
+  Computes the effective rating for the given skill, taking into account exhaustion, pain etc.
+
+* ``dfhack.units.computeMovementSpeed(unit)``
+
+  Computes number of frames * 100 it takes the unit to move in its current state of mind and body.
 
 * ``dfhack.units.getNoblePositions(unit)``
 
@@ -953,6 +999,10 @@ Items module
 
   Move the item to the unit inventory. Returns *false* if impossible.
 
+* ``dfhack.items.makeProjectile(item)``
+
+  Turns the item into a projectile, and returns the new object, or *nil* if impossible.
+
 
 Maps module
 -----------
@@ -976,6 +1026,10 @@ Maps module
 * ``dfhack.maps.getTileBlock(coords)``, or ``getTileBlock(x,y,z)``
 
   Returns a map block object for given df::coord or x,y,z in local tile coordinates.
+
+* ``dfhack.maps.ensureTileBlock(coords)``, or ``ensureTileBlock(x,y,z)``
+
+  Like ``getTileBlock``, but if the block is not allocated, try creating it.
 
 * ``dfhack.maps.getRegionBiome(region_coord2d)``, or ``getRegionBiome(x,y)``
 
@@ -1285,6 +1339,11 @@ Basic painting functions:
     If specified, overrides *tile_color* and supplies shading colors directly.
 
   Returns *false* if coordinates out of bounds, or other error.
+
+* ``dfhack.screen.readTile(x,y)``
+
+  Retrieves the contents of the specified tile from the screen buffers.
+  Returns a pen, or *nil* if invalid or TrueType.
 
 * ``dfhack.screen.paintString(pen,x,y,text)``
 

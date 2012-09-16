@@ -410,6 +410,11 @@ string Process::doReadClassName (void * vptr)
     return raw;
 }
 
+uint32_t Process::getTickCount()
+{
+    return GetTickCount();
+}
+
 string Process::getPath()
 {
     HMODULE hmod;

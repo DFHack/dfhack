@@ -34,6 +34,82 @@
 
 #include "MiscUtils.h"
 
+/*
+ * This plugin implements a steam engine workshop. It activates
+ * if there are any workshops in the raws with STEAM_ENGINE in
+ * their token, and provides the necessary behavior.
+ *
+ * Construction:
+ *
+ * The workshop needs water as its input, which it takes via a
+ * passable floor tile below it, like usual magma workshops do.
+ * The magma version also needs magma.
+ *
+ * ISSUE: Since this building is a machine, and machine collapse
+ * code cannot be modified, it would collapse over true open space.
+ * As a loophole, down stair provides support to machines, while
+ * being passable, so use them.
+ *
+ * After constructing the building itself, machines can be connected
+ * to the edge tiles that look like gear boxes. Their exact position
+ * is extracted from the workshop raws.
+ *
+ * ISSUE: Like with collapse above, part of the code involved in
+ * machine connection cannot be modified. As a result, the workshop
+ * can only immediately connect to machine components built AFTER it.
+ * This also means that engines cannot be chained without intermediate
+ * short axles that can be built later.
+ *
+ * Operation:
+ *
+ * In order to operate the engine, queue the Stoke Boiler job.
+ * A furnace operator will come, possibly bringing a bar of fuel,
+ * and perform it. As a result, a "boiling water" item will appear
+ * in the 't' view of the workshop.
+ *
+ * Note: The completion of the job will actually consume one unit
+ * of appropriate liquids from below the workshop.
+ *
+ * Every such item gives 100 power, up to a limit of 300 for coal,
+ * and 500 for a magma engine. The building can host twice that
+ * amount of items to provide longer autonomous running. When the
+ * boiler gets filled to capacity, all queued jobs are suspended;
+ * once it drops back to 3+1 or 5+1 items, they are re-enabled.
+ *
+ * While the engine is providing power, steam is being consumed.
+ * The consumption speed includes a fixed 10% waste rate, and
+ * the remaining 90% are applied proportionally to the actual
+ * load in the machine. With the engine at nominal 300 power with
+ * 150 load in the system, it will consume steam for actual
+ * 300*(10% + 90%*150/300) = 165 power.
+ *
+ * Masterpiece mechanism and chain will decrease the mechanical
+ * power drawn by the engine itself from 10 to 5. Masterpiece
+ * barrel decreases waste rate by 4%. Masterpiece piston and pipe
+ * decrease it by further 4%, and also decrease the whole steam
+ * use rate by 10%.
+ *
+ * Explosions:
+ *
+ * The engine must be constructed using barrel, pipe and piston
+ * from fire-safe, or in the magma version magma-safe metals.
+ *
+ * During operation weak parts get gradually worn out, and
+ * eventually the engine explodes. It should also explode if
+ * toppled during operation by a building destroyer, or a
+ * tantruming dwarf.
+ *
+ * Save files:
+ *
+ * It should be safe to load and view fortresses using engines
+ * from a DF version without DFHack installed, except that in such
+ * case the engines won't work. However actually making modifications
+ * to them, or machines they connect to (including by pulling levers),
+ * can easily result in inconsistent state once this plugin is
+ * available again. The effects may be as weird as negative power
+ * being generated.
+ */
+
 using std::vector;
 using std::string;
 using std::stack;
@@ -465,9 +541,11 @@ struct workshop_hook : df::building_workshopst {
                 power_rate = 0.0f;
         }
         // waste rate: 1-10% depending on piston assembly quality
-        float waste = 0.1f - 0.015f * get_component_quality(1);
+        float piston_qual = get_component_quality(1);
+        float waste = 0.1f - 0.016f * 0.5f * (piston_qual + get_component_quality(2));
+        float efficiency_coeff = 1.0f - 0.02f * piston_qual;
         // apply rate and waste factor
-        ticks *= (waste + 0.9f*power_rate)*power_level;
+        ticks *= (waste + 0.9f*power_rate)*power_level*efficiency_coeff;
         // end result
         return std::max(1, int(ticks));
     }

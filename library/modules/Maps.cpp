@@ -157,6 +157,39 @@ df::map_block *Maps::getTileBlock (int32_t x, int32_t y, int32_t z)
     return world->map.block_index[x >> 4][y >> 4][z];
 }
 
+df::map_block *Maps::ensureTileBlock (int32_t x, int32_t y, int32_t z)
+{
+    if (!isValidTilePos(x,y,z))
+        return NULL;
+
+    auto column = world->map.block_index[x >> 4][y >> 4];
+    auto &slot = column[z];
+    if (slot)
+        return slot;
+
+    // Find another block below
+    int z2 = z;
+    while (z2 >= 0 && !column[z2]) z2--;
+    if (z2 < 0)
+        return NULL;
+
+    slot = new df::map_block();
+    slot->region_pos = column[z2]->region_pos;
+    slot->map_pos = column[z2]->map_pos;
+    slot->map_pos.z = z;
+
+    // Assume sky
+    df::tile_designation dsgn(0);
+    dsgn.bits.light = true;
+    dsgn.bits.outside = true;
+
+    for (int tx = 0; tx < 16; tx++)
+        for (int ty = 0; ty < 16; ty++)
+            slot->designation[tx][ty] = dsgn;
+
+    return slot;
+}
+
 df::tiletype *Maps::getTileType(int32_t x, int32_t y, int32_t z)
 {
     df::map_block *block = getTileBlock(x,y,z);
@@ -274,7 +307,7 @@ df::feature_init *Maps::getLocalInitFeature(df::coord2d rgn_pos, int32_t index)
     df::coord2d bigregion = rgn_pos / 16;
 
     // bigregion is 16x16 regions. for each bigregion in X dimension:
-    auto fptr = data->unk_204[bigregion.x][bigregion.y].features;
+    auto fptr = data->feature_map[bigregion.x][bigregion.y].features;
     if (!fptr)
         return NULL;
 
@@ -513,8 +546,14 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
     valid = false;
     bcoord = _bcoord;
     block = Maps::getBlock(bcoord);
-    item_counts = NULL;
     tags = NULL;
+
+    init();
+}
+
+void MapExtras::Block::init()
+{
+    item_counts = NULL;
     tiles = NULL;
     basemats = NULL;
 
@@ -535,6 +574,23 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
         memset(temp1,0,sizeof(temp1));
         memset(temp2,0,sizeof(temp2));
     }
+}
+
+bool MapExtras::Block::Allocate()
+{
+    if (block)
+        return true;
+
+    block = Maps::ensureTileBlock(bcoord.x*16, bcoord.y*16, bcoord.z);
+    if (!block)
+        return false;
+
+    delete item_counts;
+    delete tiles;
+    delete basemats;
+    init();
+
+    return true;
 }
 
 MapExtras::Block::~Block()

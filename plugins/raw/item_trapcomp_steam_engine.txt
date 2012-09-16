@@ -4,8 +4,8 @@ item_trapcomp_steam_engine
 
 [ITEM_TRAPCOMP:ITEM_TRAPCOMP_STEAM_PISTON]
 [NAME:piston:pistons]
-[ADJECTIVE:huge]
-[SIZE:1600]
+[ADJECTIVE:heavy]
+[SIZE:1800]
 [HITS:1]
 [MATERIAL_SIZE:6]
 [METAL]

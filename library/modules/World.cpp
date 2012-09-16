@@ -285,13 +285,13 @@ PersistentDataItem World::GetPersistentData(int entry_id)
 
 PersistentDataItem World::GetPersistentData(const std::string &key, bool *added)
 {
-    *added = false;
+    if (added) *added = false;
 
     PersistentDataItem rv = GetPersistentData(key);
 
     if (!rv.isValid())
     {
-        *added = true;
+        if (added) *added = true;
         rv = AddPersistentData(key);
     }
 
@@ -300,6 +300,8 @@ PersistentDataItem World::GetPersistentData(const std::string &key, bool *added)
 
 void World::GetPersistentData(std::vector<PersistentDataItem> *vec, const std::string &key, bool prefix)
 {
+    vec->clear();
+
     if (!BuildPersistentCache())
         return;
 
@@ -343,8 +345,10 @@ bool World::DeletePersistentData(const PersistentDataItem &item)
 
     auto eqrange = d->persistent_index.equal_range(item.key_value);
 
-    for (auto it = eqrange.first; it != eqrange.second; ++it)
+    for (auto it2 = eqrange.first; it2 != eqrange.second; )
     {
+        auto it = it2; ++it2;
+
         if (it->second != -item.id)
             continue;
 

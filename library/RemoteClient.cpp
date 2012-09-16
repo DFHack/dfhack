@@ -394,7 +394,7 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
 
         //out.print("Received %d:%d\n", header.id, header.size);
 
-        if (header.id == RPC_REPLY_FAIL)
+        if ((DFHack::DFHackReplyCode)header.id == RPC_REPLY_FAIL)
             return header.size == CR_OK ? CR_FAILURE : command_result(header.size);
 
         if (header.size < 0 || header.size > RPCMessageHeader::MAX_MESSAGE_SIZE)

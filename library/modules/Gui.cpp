@@ -173,10 +173,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             else if (id == &df::building_trapst::_identity)
             {
                 auto trap = (df::building_trapst*)selected;
-                if (trap->trap_type == trap_type::Lever) {
-                    focus += "/Lever";
+                focus += "/" + enum_item_key(trap->trap_type);
+                if (trap->trap_type == trap_type::Lever)
                     jobs = true;
-                }
             }
             else if (ui_building_in_assign && *ui_building_in_assign &&
                      ui_building_assign_type && ui_building_assign_units &&
@@ -189,6 +188,8 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
                     focus += unit ? "/Unit" : "/None";
                 }
             }
+            else
+                focus += "/" + enum_item_key(selected->getType());
 
             if (jobs)
             {
@@ -211,7 +212,14 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             if (ui_build_selector->building_type < 0)
                 focus += "/Type";
             else if (ui_build_selector->stage != 2)
-                focus += "/Position";
+            {
+                if (ui_build_selector->stage != 1)
+                    focus += "/NoMaterials";
+                else
+                    focus += "/Position";
+
+                focus += "/" + enum_item_key(ui_build_selector->building_type);
+            }
             else
             {
                 focus += "/Material";

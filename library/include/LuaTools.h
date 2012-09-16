@@ -287,6 +287,11 @@ namespace DFHack {namespace Lua {
         PushDFObject(state, ptr);
     }
 
+    template<class T> inline void SetField(lua_State *L, T val, int idx, const char *name) {
+        if (idx < 0) idx = lua_absindex(L, idx);
+        Push(L, val); lua_setfield(L, idx, name);
+    }
+
     template<class T>
     void PushVector(lua_State *state, const T &pvec, bool addn = false)
     {

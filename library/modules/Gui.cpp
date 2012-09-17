@@ -54,7 +54,7 @@ using namespace DFHack;
 #include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_itemst.h"
-#include "df/viewscreen_layerst.h"
+#include "df/viewscreen_layer.h"
 #include "df/viewscreen_layer_workshop_profilest.h"
 #include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_layer_overall_healthst.h"
@@ -95,7 +95,7 @@ using df::global::selection_rect;
 using df::global::ui_menu_width;
 using df::global::ui_area_map_width;
 
-static df::layer_object_listst *getLayerList(df::viewscreen_layerst *layer, int idx)
+static df::layer_object_listst *getLayerList(df::viewscreen_layer *layer, int idx)
 {
     return virtual_cast<df::layer_object_listst>(vector_get(layer->layer_objects,idx));
 }

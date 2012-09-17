@@ -21,6 +21,7 @@ local item_choices = {
     { caption = 'trap components', item_type = df.item_type.TRAPCOMP },
     { caption = 'bins', item_type = df.item_type.BIN },
     { caption = 'barrels', item_type = df.item_type.BARREL },
+    { caption = 'cages', item_type = df.item_type.CAGE },
     { caption = 'anything', item_type = -1 },
 }
 

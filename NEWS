@@ -53,9 +53,11 @@ DFHack v0.34.11-r2 (UNRELEASED)
     When activated, implements a pressure plate modification that detects power in gear
     boxes built on the four adjacent N/S/W/E tiles. The gui/power-meter script implements
     the build configuration UI.
-  New Siege Engine plugin (INCOMPLETE):
+  New Siege Engine plugin:
     When enabled and configured via gui/siege-engine, allows aiming siege engines
-    at a designated rectangular area across Z levels. Also supports loading catapults
-    with non-boulder projectiles, taking from a stockpile, and restricting operator
-    skill range, like with ordinary workshops.
+    at a designated rectangular area with 360 degree fire range and across Z levels.
+    Also supports loading catapults with non-boulder projectiles, taking from a stockpile,
+    and restricting operator skill range like with ordinary workshops.
+    Disclaimer: not in any way to undermine the future siege update from Toady, but the aiming
+    logic of existing engines hasn't been updated since 2D, and is almost useless as/is.
 

@@ -33,6 +33,10 @@
 #include "df/ui_build_selector.h"
 #include "df/building_trapst.h"
 #include "df/item_actual.h"
+#include "df/item_liquipowder.h"
+#include "df/item_barst.h"
+#include "df/item_threadst.h"
+#include "df/item_clothst.h"
 #include "df/contaminant.h"
 
 #include <stdlib.h>
@@ -93,6 +97,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Further improves temperature updates by ensuring that 1 degree of\n"
         "    item temperature is crossed in no more than specified number of frames\n"
         "    when updating from the environment temperature. Use 0 to disable.\n"
+        "  tweak fix-dimensions [disable]\n"
+        "    Fixes subtracting small amount of thread/cloth/liquid from a stack\n"
+        "    by splitting the stack and subtracting from the remaining single item.\n"
     ));
     return CR_OK;
 }
@@ -343,6 +350,83 @@ IMPLEMENT_VMETHOD_INTERPOSE(fast_heat_hook, updateTempFromMap);
 IMPLEMENT_VMETHOD_INTERPOSE(fast_heat_hook, updateTemperature);
 IMPLEMENT_VMETHOD_INTERPOSE(fast_heat_hook, adjustTemperature);
 
+static void correct_dimension(df::item_actual *self, int32_t &delta, int32_t dim)
+{
+    // Zero dimension or remainder?
+    if (dim <= 0 || self->stack_size <= 1) return;
+    int rem = delta % dim;
+    if (rem == 0) return;
+    // If destroys, pass through
+    int intv = delta / dim;
+    if (intv >= self->stack_size) return;
+    // Subtract int part
+    delta = rem;
+    self->stack_size -= intv;
+    if (self->stack_size <= 1) return;
+
+    // If kills the item or cannot split, round up.
+    if (!self->flags.bits.in_inventory || !Items::getContainer(self))
+    {
+        delta = dim;
+        return;
+    }
+
+    // Otherwise split the stack
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    out.print("fix-dimensions: splitting stack #%d for delta %d.\n", self->id, delta);
+
+    auto copy = self->splitStack(self->stack_size-1, true);
+    if (copy) copy->categorize(true);
+}
+
+struct dimension_lqp_hook : df::item_liquipowder {
+    typedef df::item_liquipowder interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
+    {
+        correct_dimension(this, delta, dimension);
+        return INTERPOSE_NEXT(subtractDimension)(delta);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(dimension_lqp_hook, subtractDimension);
+
+struct dimension_bar_hook : df::item_barst {
+    typedef df::item_barst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
+    {
+        correct_dimension(this, delta, dimension);
+        return INTERPOSE_NEXT(subtractDimension)(delta);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(dimension_bar_hook, subtractDimension);
+
+struct dimension_thread_hook : df::item_threadst {
+    typedef df::item_threadst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
+    {
+        correct_dimension(this, delta, dimension);
+        return INTERPOSE_NEXT(subtractDimension)(delta);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(dimension_thread_hook, subtractDimension);
+
+struct dimension_cloth_hook : df::item_clothst {
+    typedef df::item_clothst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
+    {
+        correct_dimension(this, delta, dimension);
+        return INTERPOSE_NEXT(subtractDimension)(delta);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(dimension_cloth_hook, subtractDimension);
+
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
     if (vector_get(parameters, 1) == "disable")
@@ -490,6 +574,13 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         enable_hook(out, INTERPOSE_HOOK(fast_heat_hook, updateTempFromMap), parameters);
         enable_hook(out, INTERPOSE_HOOK(fast_heat_hook, updateTemperature), parameters);
         enable_hook(out, INTERPOSE_HOOK(fast_heat_hook, adjustTemperature), parameters);
+    }
+    else if (cmd == "fix-dimensions")
+    {
+        enable_hook(out, INTERPOSE_HOOK(dimension_lqp_hook, subtractDimension), parameters);
+        enable_hook(out, INTERPOSE_HOOK(dimension_bar_hook, subtractDimension), parameters);
+        enable_hook(out, INTERPOSE_HOOK(dimension_thread_hook, subtractDimension), parameters);
+        enable_hook(out, INTERPOSE_HOOK(dimension_cloth_hook, subtractDimension), parameters);
     }
     else 
         return CR_WRONG_USAGE;

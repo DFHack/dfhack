@@ -60,4 +60,7 @@ DFHack v0.34.11-r2 (UNRELEASED)
     and restricting operator skill range like with ordinary workshops.
     Disclaimer: not in any way to undermine the future siege update from Toady, but the aiming
     logic of existing engines hasn't been updated since 2D, and is almost useless as/is.
-
+  New Add Spatter plugin:
+    Detects reactions with certain names in the raws, and changes them from adding
+    improvements to adding item contaminants. This allows directly covering items
+    with poisons. The added spatters are immune both to water and 'clean items'.

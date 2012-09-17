@@ -81,11 +81,18 @@ command_result cleanitems (color_ostream &out)
         df::item_actual *item = (df::item_actual *)world->items.all[i];
         if (item->contaminants && item->contaminants->size())
         {
+            std::vector<df::contaminant*> saved;
             for (size_t j = 0; j < item->contaminants->size(); j++)
-                delete item->contaminants->at(j);
+            {
+                auto obj = (*item->contaminants)[j];
+                if (obj->flags.whole & 0x8000) // DFHack-generated contaminant
+                    saved.push_back(obj);
+                else
+                    delete obj;
+            }
             cleaned_items++;
-            cleaned_total += item->contaminants->size();
-            item->contaminants->clear();
+            cleaned_total += item->contaminants->size() - saved.size();
+            item->contaminants->swap(saved);
         }
     }
     if (cleaned_total)

@@ -1,0 +1,41 @@
+reaction_spatter
+
+[OBJECT:REACTION]
+
+Reaction name must start with 'SPATTER_ADD_':
+
+[REACTION:SPATTER_ADD_EXTRACT_WEAPON]
+	[NAME:cover weapon with extract]
+	[BUILDING:CRAFTSMAN:CUSTOM_ALT_V]
+	[SKILL:DYER]
+	[ADVENTURE_MODE_ENABLED]
+	[REAGENT:extract:10:LIQUID_MISC:NONE:NONE:NONE]
+		[MIN_DIMENSION:10]
+		[REACTION_CLASS:CREATURE_EXTRACT]
+	[REAGENT:extract container:1:NONE:NONE:NONE:NONE]
+		[CONTAINS:extract]
+		[PRESERVE_REAGENT]
+		[DOES_NOT_DETERMINE_PRODUCT_AMOUNT]
+	The object to improve must be the last reagent:
+	[REAGENT:object:1:WEAPON:NONE:NONE:NONE]
+		[PRESERVE_REAGENT]
+	The probability is used as spatter size instead:
+	[IMPROVEMENT:100:object:COVERED:GET_MATERIAL_FROM_REAGENT:extract:NONE]
+
+[REACTION:SPATTER_ADD_EXTRACT_AMMO]
+	[NAME:cover ammo with extract]
+	[BUILDING:CRAFTSMAN:CUSTOM_ALT_M]
+	[SKILL:DYER]
+	[ADVENTURE_MODE_ENABLED]
+	[REAGENT:extract:10:LIQUID_MISC:NONE:NONE:NONE]
+		[MIN_DIMENSION:10]
+		[REACTION_CLASS:CREATURE_EXTRACT]
+	[REAGENT:extract container:1:NONE:NONE:NONE:NONE]
+		[CONTAINS:extract]
+		[PRESERVE_REAGENT]
+		[DOES_NOT_DETERMINE_PRODUCT_AMOUNT]
+	The object to improve must be the last reagent:
+	[REAGENT:object:1:AMMO:NONE:NONE:NONE]
+		[PRESERVE_REAGENT]
+	The probability is used as spatter size instead:
+	[IMPROVEMENT:100:object:COVERED:GET_MATERIAL_FROM_REAGENT:extract:NONE]

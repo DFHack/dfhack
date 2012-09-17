@@ -26,6 +26,8 @@ module DFHack
                         u = world.units.active[ui_selected_unit]
                         u.inventory[ui_look_cursor].item if u and u.pos.z == cursor.z and
                                 ui_unit_view_mode.value == :Inventory and u.inventory[ui_look_cursor]
+                    else
+                        ui.follow_item_tg if ui.follow_item != -1
                     end
                 end
             elsif what.kind_of?(Integer)

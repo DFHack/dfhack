@@ -24,6 +24,8 @@ module DFHack
                     when :LookAround
                         k = ui_look_list.items[ui_look_cursor]
                         k.unit if k.type == :Unit
+                    else
+                        ui.follow_unit_tg if ui.follow_unit != -1
                     end
                 end
             elsif what.kind_of?(Integer)
@@ -104,7 +106,7 @@ module DFHack
     end
 
     class LanguageName
-        def to_s(english=true)
+        def to_s(english=false)
             df.translate_name(self, english)
         end
     end

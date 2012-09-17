@@ -112,7 +112,7 @@ static bool is_in_range(const coord_range &target, df::coord pos)
 static std::pair<int, int> get_engine_range(df::building_siegeenginest *bld)
 {
     if (bld->type == siegeengine_type::Ballista)
-        return std::make_pair(0, 200);
+        return std::make_pair(1, 200);
     else
         return std::make_pair(30, 100);
 }
@@ -291,7 +291,7 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
     );
     obj->is_catapult = (ebld->type == siegeengine_type::Catapult);
     obj->proj_speed = 2;
-    obj->hit_delay = 3;
+    obj->hit_delay = obj->is_catapult ? 2 : -1;
     obj->fire_range = get_engine_range(ebld);
 
     obj->ammo_vector_id = job_item_vector_id::BOULDER;
@@ -1107,6 +1107,9 @@ struct UnitPath {
             float time = unit->counters.job_counter+0.5f;
             float speed = Units::computeMovementSpeed(unit)/100.0f;
 
+            if (unit->counters.unconscious > 0)
+                time += unit->counters.unconscious;
+
             for (size_t i = 0; i < upath.size(); i++)
             {
                 df::coord new_pos = upath[i];
@@ -1280,6 +1283,74 @@ static int proposeUnitHits(lua_State *L)
     }
 
     return 1;
+}
+
+static int computeNearbyWeight(lua_State *L)
+{
+    auto engine = find_engine(L, 1);
+    luaL_checktype(L, 2, LUA_TTABLE);
+    luaL_checktype(L, 3, LUA_TTABLE);
+    const char *fname = luaL_optstring(L, 4, "nearby_weight");
+
+    std::vector<UnitPath*> units;
+    std::vector<float> weights;
+
+    lua_pushnil(L);
+
+    while (lua_next(L, 3))
+    {
+        df::unit *unit;
+        if (lua_isnumber(L, -2))
+            unit = df::unit::find(lua_tointeger(L, -2));
+        else
+            unit = Lua::CheckDFObject<df::unit>(L, -2);
+        if (!unit)
+            continue;
+        units.push_back(UnitPath::get(unit));
+        weights.push_back(lua_tonumber(L, -1));
+        lua_pop(L, 1);
+    }
+
+    lua_pushnil(L);
+
+    while (lua_next(L, 2))
+    {
+        Lua::StackUnwinder frame(L, 1);
+
+        lua_getfield(L, frame[1], "unit");
+        df::unit *unit = Lua::CheckDFObject<df::unit>(L, -1);
+
+        lua_getfield(L, frame[1], "time");
+        float time = luaL_checknumber(L, lua_gettop(L));
+
+        df::coord pos;
+
+        lua_getfield(L, frame[1], "pos");
+        if (lua_isnil(L, -1))
+        {
+            if (!unit) luaL_error(L, "either unit or pos is required");
+            pos = UnitPath::get(unit)->posAtTime(time);
+        }
+        else
+            Lua::CheckDFAssign(L, &pos, -1);
+
+        float sum = 0.0f;
+
+        for (size_t i = 0; i < units.size(); i++)
+        {
+            if (units[i]->unit == unit)
+                continue;
+
+            auto diff = units[i]->posAtTime(time) - pos;
+            float dist = 1 + sqrtf(diff.x*diff.x + diff.y*diff.y + diff.z*diff.z);
+            sum += weights[i]/(dist*dist);
+        }
+
+        lua_pushnumber(L, sum);
+        lua_setfield(L, frame[1], fname);
+    }
+
+    return 0;
 }
 
 /*
@@ -1698,6 +1769,7 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(traceUnitPath),
     DFHACK_LUA_COMMAND(unitPosAtTime),
     DFHACK_LUA_COMMAND(proposeUnitHits),
+    DFHACK_LUA_COMMAND(computeNearbyWeight),
     DFHACK_LUA_END
 };
 

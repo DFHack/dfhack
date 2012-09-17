@@ -44,23 +44,30 @@ DFHack v0.34.11-r2 (UNRELEASED)
   New Dwarf Manipulator plugin:
     Open the unit list, and press 'l' to access a Dwarf Therapist like UI in the game.
   New Steam Engine plugin:
-    Dwarven Water Reactors don't make any sense whatsoever, so this is a potential
-    replacement for those concerned by it. The plugin detects if a workshop with a
+    Dwarven Water Reactors don't make any sense whatsoever and cause lag, so this may be
+    a replacement for those concerned by it. The plugin detects if a workshop with a
     certain name is in the raws used by the current world, and provides the necessary
     behavior. See hack/raw/*_steam_engine.txt for the necessary raw definitions.
-    Note: Stuff like animal treadmills might be more period, but can't be done with dfhack.
+    Note: Stuff like animal treadmills might be more period, but absolutely can't be
+    done with tools dfhack has access to.
   New Power Meter plugin:
     When activated, implements a pressure plate modification that detects power in gear
     boxes built on the four adjacent N/S/W/E tiles. The gui/power-meter script implements
-    the build configuration UI.
+    the necessary build configuration UI.
   New Siege Engine plugin:
     When enabled and configured via gui/siege-engine, allows aiming siege engines
-    at a designated rectangular area with 360 degree fire range and across Z levels.
+    at a designated rectangular area with 360 degree fire range and across Z levels;
+    this works by rewriting the projectile trajectory immediately after it appears.
     Also supports loading catapults with non-boulder projectiles, taking from a stockpile,
     and restricting operator skill range like with ordinary workshops.
-    Disclaimer: not in any way to undermine the future siege update from Toady, but the aiming
-    logic of existing engines hasn't been updated since 2D, and is almost useless as/is.
+    Disclaimer: not in any way to undermine the future siege update from Toady, but
+    the aiming logic of existing engines hasn't been updated since 2D, and is almost
+    useless above ground :(. Again, things like making siegers bring their own engines
+    is totally out of the scope of dfhack and can only be done by Toady.
   New Add Spatter plugin:
     Detects reactions with certain names in the raws, and changes them from adding
     improvements to adding item contaminants. This allows directly covering items
     with poisons. The added spatters are immune both to water and 'clean items'.
+    Intended to give some use to all those giant cave spider poison barrels brought
+    by the caravans.
+

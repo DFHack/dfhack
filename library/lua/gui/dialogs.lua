@@ -10,24 +10,21 @@ local dscreen = dfhack.screen
 MessageBox = defclass(MessageBox, gui.FramedScreen)
 
 MessageBox.focus_path = 'MessageBox'
-MessageBox.frame_style = gui.GREY_LINE_FRAME
 
-function MessageBox:init(info)
-    info = info or {}
-    self:init_fields{
-        text = info.text or {},
-        frame_title = info.title,
-        frame_width = info.frame_width,
-        on_accept = info.on_accept,
-        on_cancel = info.on_cancel,
-        on_close = info.on_close,
-        text_pen = info.text_pen
-    }
-    if type(self.text) == 'string' then
-        self.text = utils.split_string(self.text, "\n")
+MessageBox.ATTRS{
+    frame_style = gui.GREY_LINE_FRAME,
+    -- new attrs
+    text = {},
+    on_accept = DEFAULT_NIL,
+    on_cancel = DEFAULT_NIL,
+    on_close = DEFAULT_NIL,
+    text_pen = DEFAULT_NIL,
+}
+
+function MessageBox:preinit(info)
+    if type(info.text) == 'string' then
+        info.text = utils.split_string(info.text, "\n")
     end
-    gui.FramedScreen.init(self, info)
-    return self
 end
 
 function MessageBox:getWantedFrameSize()
@@ -82,9 +79,8 @@ function MessageBox:onInput(keys)
 end
 
 function showMessage(title, text, tcolor, on_close)
-    mkinstance(MessageBox):init{
-        text = text,
-        title = title,
+    MessageBox{
+        frame_title = title,
         text = text,
         text_pen = tcolor,
         on_close = on_close
@@ -92,8 +88,8 @@ function showMessage(title, text, tcolor, on_close)
 end
 
 function showYesNoPrompt(title, text, tcolor, on_accept, on_cancel)
-    mkinstance(MessageBox):init{
-        title = title,
+    MessageBox{
+        frame_title = title,
         text = text,
         text_pen = tcolor,
         on_accept = on_accept,
@@ -105,25 +101,23 @@ InputBox = defclass(InputBox, MessageBox)
 
 InputBox.focus_path = 'InputBox'
 
-function InputBox:init(info)
-    info = info or {}
-    self:init_fields{
-        input = info.input or '',
-        input_pen = info.input_pen,
-        on_input = info.on_input,
-    }
-    MessageBox.init(self, info)
-    self.on_accept = nil
-    return self
+InputBox.ATTRS{
+    input = '',
+    input_pen = DEFAULT_NIL,
+    on_input = DEFAULT_NIL,
+}
+
+function InputBox:preinit(info)
+    info.on_accept = nil
 end
 
 function InputBox:getWantedFrameSize()
-    local mw, mh = MessageBox.getWantedFrameSize(self)
+    local mw, mh = InputBox.super.getWantedFrameSize(self)
     return mw, mh+2
 end
 
 function InputBox:onRenderBody(dc)
-    MessageBox.onRenderBody(self, dc)
+    InputBox.super.onRenderBody(self, dc)
 
     dc:newline(1)
     dc:pen(self.input_pen or COLOR_LIGHTCYAN)
@@ -161,8 +155,8 @@ function InputBox:onInput(keys)
 end
 
 function showInputPrompt(title, text, tcolor, input, on_input, on_cancel, min_width)
-    mkinstance(InputBox):init{
-        title = title,
+    InputBox{
+        frame_title = title,
         text = text,
         text_pen = tcolor,
         input = input,
@@ -176,27 +170,28 @@ ListBox = defclass(ListBox, MessageBox)
 
 ListBox.focus_path = 'ListBox'
 
+ListBox.ATTRS{
+    selection = 0,
+    choices = {},
+    select_pen = DEFAULT_NIL,
+    on_input = DEFAULT_NIL
+}
+
+function InputBox:preinit(info)
+    info.on_accept = nil
+end
+
 function ListBox:init(info)
-    info = info or {}
-    self:init_fields{
-        selection = info.selection or 0,
-        choices = info.choices or {},
-        select_pen = info.select_pen,
-        on_input = info.on_input,
-        page_top = 0
-    }
-    MessageBox.init(self, info)
-    self.on_accept = nil
-    return self
+    self.page_top = 0
 end
 
 function ListBox:getWantedFrameSize()
-    local mw, mh = MessageBox.getWantedFrameSize(self)
+    local mw, mh = ListBox.super.getWantedFrameSize(self)
     return mw, mh+#self.choices
 end
 
 function ListBox:onRenderBody(dc)
-    MessageBox.onRenderBody(self, dc)
+    ListBox.super.onRenderBody(self, dc)
 
     dc:newline(1)
 
@@ -220,6 +215,7 @@ function ListBox:onRenderBody(dc)
         end
     end
 end
+
 function ListBox:moveCursor(delta)
     local newsel=self.selection+delta
     if #self.choices ~=0 then
@@ -229,6 +225,7 @@ function ListBox:moveCursor(delta)
     end
     self.selection=newsel
 end
+
 function ListBox:onInput(keys)
     if keys.SELECT then
         self:dismiss()
@@ -257,8 +254,8 @@ function ListBox:onInput(keys)
 end
 
 function showListPrompt(title, text, tcolor, choices, on_input, on_cancel, min_width)
-    mkinstance(ListBox):init{
-        title = title,
+    ListBox{
+        frame_title = title,
         text = text,
         text_pen = tcolor,
         choices = choices,

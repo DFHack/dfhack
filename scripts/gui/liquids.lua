@@ -53,13 +53,7 @@ local permaflows = {
 
 Toggle = defclass(Toggle)
 
-function Toggle:init(items)
-    self:init_fields{
-        items = items,
-        selected = 1
-    }
-    return self
-end
+Toggle.ATTRS{ items = {}, selected = 1 }
 
 function Toggle:get()
     return self.items[self.selected]
@@ -89,16 +83,14 @@ LiquidsUI = defclass(LiquidsUI, guidm.MenuOverlay)
 LiquidsUI.focus_path = 'liquids'
 
 function LiquidsUI:init()
-    self:init_fields{
-        brush = mkinstance(Toggle):init(brushes),
-        paint = mkinstance(Toggle):init(paints),
-        flow = mkinstance(Toggle):init(flowbits),
-        set = mkinstance(Toggle):init(setmode),
-        permaflow = mkinstance(Toggle):init(permaflows),
+    self:assign{
+        brush = Toggle{ items = brushes },
+        paint = Toggle{ items = paints },
+        flow = Toggle{ items = flowbits },
+        set = Toggle{ items = setmode },
+        permaflow = Toggle{ items = permaflows },
         amount = 7,
     }
-    guidm.MenuOverlay.init(self)
-    return self
 end
 
 function LiquidsUI:onDestroy()
@@ -201,6 +193,7 @@ function LiquidsUI:onRenderBody(dc)
 end
 
 function ensure_blocks(cursor, size, cb)
+    size = size or xyz2pos(1,1,1)
     local cx,cy,cz = pos2xyz(cursor)
     local all = true
     for x=1,size.x or 1,16 do
@@ -298,5 +291,5 @@ if not string.match(dfhack.gui.getCurFocus(), '^dwarfmode/LookAround') then
     qerror("This script requires the main dwarfmode view in 'k' mode")
 end
 
-local list = mkinstance(LiquidsUI):init()
+local list = LiquidsUI()
 list:show()

@@ -34,30 +34,29 @@ SiegeEngine = defclass(SiegeEngine, guidm.MenuOverlay)
 
 SiegeEngine.focus_path = 'siege-engine'
 
-function SiegeEngine:init(building)
-    self:init_fields{
-        building = building,
-        center = utils.getBuildingCenter(building),
+SiegeEngine.ATTRS{ building = DEFAULT_NIL }
+
+function SiegeEngine:init()
+    self:assign{
+        center = utils.getBuildingCenter(self.building),
         selected_pile = 1,
+        mode_main = {
+            render = self:callback 'onRenderBody_main',
+            input = self:callback 'onInput_main',
+        },
+        mode_aim = {
+            render = self:callback 'onRenderBody_aim',
+            input = self:callback 'onInput_aim',
+        },
+        mode_pile = {
+            render = self:callback 'onRenderBody_pile',
+            input = self:callback 'onInput_pile',
+        }
     }
-    guidm.MenuOverlay.init(self)
-    self.mode_main = {
-        render = self:callback 'onRenderBody_main',
-        input = self:callback 'onInput_main',
-    }
-    self.mode_aim = {
-        render = self:callback 'onRenderBody_aim',
-        input = self:callback 'onInput_aim',
-    }
-    self.mode_pile = {
-        render = self:callback 'onRenderBody_pile',
-        input = self:callback 'onInput_pile',
-    }
-    return self
 end
 
 function SiegeEngine:onShow()
-    guidm.MenuOverlay.onShow(self)
+    SiegeEngine.super.onShow(self)
 
     self.old_cursor = guidm.getCursorPos()
     self.old_viewport = self:getViewport()
@@ -487,5 +486,5 @@ if not df.building_siegeenginest:is_instance(building) then
     qerror("A siege engine must be selected")
 end
 
-local list = mkinstance(SiegeEngine):init(df.global.world.selected_building)
+local list = SiegeEngine{ building = building }
 list:show()

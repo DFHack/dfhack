@@ -74,18 +74,23 @@ end
 
 Painter = defclass(Painter, nil)
 
-function Painter.new(rect, pen)
-    rect = rect or mkdims_wh(0,0,dscreen.getWindowSize())
-    local self = {
-        x1 = rect.x1, clip_x1 = rect.x1,
-        y1 = rect.y1, clip_y1 = rect.y1,
-        x2 = rect.x2, clip_x2 = rect.x2,
-        y2 = rect.y2, clip_y2 = rect.y2,
+function Painter:init(args)
+    local rect = args.rect or mkdims_wh(0,0,dscreen.getWindowSize())
+    local crect = args.clip_rect or rect
+    self:assign{
+        x = rect.x1, y = rect.y1,
+        x1 = rect.x1, clip_x1 = crect.x1,
+        y1 = rect.y1, clip_y1 = crect.y1,
+        x2 = rect.x2, clip_x2 = crect.x2,
+        y2 = rect.y2, clip_y2 = crect.y2,
         width = rect.x2-rect.x1+1,
         height = rect.y2-rect.y1+1,
-        cur_pen = to_pen(nil, pen or COLOR_GREY)
+        cur_pen = to_pen(nil, args.pen or COLOR_GREY)
     }
-    return mkinstance(Painter, self):seek(0,0)
+end
+
+function Painter.new(rect, pen)
+    return Painter{ rect = rect, pen = pen }
 end
 
 function Painter:isValidPos()
@@ -213,9 +218,8 @@ Screen = defclass(Screen)
 
 Screen.text_input_mode = false
 
-function Screen:init()
+function Screen:postinit()
     self:updateLayout()
-    return self
 end
 
 Screen.isDismissed = dscreen.isDismissed
@@ -344,7 +348,12 @@ end
 
 FramedScreen = defclass(FramedScreen, Screen)
 
-FramedScreen.frame_style = BOUNDARY_FRAME
+FramedScreen.ATTRS{
+    frame_style = BOUNDARY_FRAME,
+    frame_title = DEFAULT_NIL,
+    frame_width = DEFAULT_NIL,
+    frame_height = DEFAULT_NIL,
+}
 
 local function hint_coord(gap,hint)
     if hint and hint > 0 then

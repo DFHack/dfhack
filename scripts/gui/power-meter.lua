@@ -13,15 +13,13 @@ PowerMeter = defclass(PowerMeter, guidm.MenuOverlay)
 PowerMeter.focus_path = 'power-meter'
 
 function PowerMeter:init()
-    self:init_fields{
+    self:assign{
         min_power = 0, max_power = -1, invert = false,
     }
-    guidm.MenuOverlay.init(self)
-    return self
 end
 
 function PowerMeter:onShow()
-    guidm.MenuOverlay.onShow(self)
+    PowerMeter.super.onShow(self)
 
     -- Send an event to update the errors
     bselector.plate_info.flags.whole = 0
@@ -112,5 +110,5 @@ then
     qerror("This script requires the main dwarfmode view in build pressure plate mode")
 end
 
-local list = mkinstance(PowerMeter):init()
+local list = PowerMeter()
 list:show()

@@ -1084,7 +1084,9 @@ static int buildings_getCorrectSize(lua_State *state)
     return 5;
 }
 
-static int buildings_setSize(lua_State *state)
+namespace {
+
+int buildings_setSize(lua_State *state)
 {
     auto bld = Lua::CheckDFObject<df::building>(state, 1);
     df::coord2d size(luaL_optint(state, 2, 1), luaL_optint(state, 3, 1));
@@ -1105,11 +1107,13 @@ static int buildings_setSize(lua_State *state)
         return 1;
 }
 
+}
+
 static const luaL_Reg dfhack_buildings_funcs[] = {
     { "findAtTile", buildings_findAtTile },
     { "findCivzonesAt", buildings_findCivzonesAt },
     { "getCorrectSize", buildings_getCorrectSize },
-    { "setSize", buildings_setSize },
+    { "setSize", &Lua::CallWithCatchWrapper<buildings_setSize> },
     { NULL, NULL }
 };
 

@@ -7,6 +7,7 @@
 #include <modules/Maps.h>
 #include <modules/Job.h>
 #include <modules/Items.h>
+#include <modules/Units.h>
 #include <TileTypes.h>
 #include <vector>
 #include <cstdio>
@@ -121,20 +122,22 @@ static void find_material(int *type, int *index, df::item *input, MaterialSource
     }
 }
 
-static bool has_contaminant(df::item_actual *item, int type, int index)
+static int has_contaminant(df::item_actual *item, int type, int index)
 {
     auto cont = item->contaminants;
     if (!cont)
-        return false;
+        return 0;
+
+    int size = 0;
 
     for (size_t i = 0; i < cont->size(); i++)
     {
         auto cur = (*cont)[i];
         if (cur->mat_type == type && cur->mat_index == index)
-            return true;
+            size += cur->size;
     }
 
-    return false;
+    return size;
 }
 
 /*
@@ -209,7 +212,7 @@ struct item_hook : df::item_constructed {
 
                 find_material(&mattype, &matindex, material, product.material);
 
-                if (mattype < 0 || has_contaminant(this, mattype, matindex))
+                if (mattype < 0 || has_contaminant(this, mattype, matindex) >= 50)
                     return false;
             }
 
@@ -253,15 +256,36 @@ struct product_hook : improvement_product {
 
             if (object && (material || !product->material.reagent))
             {
+                using namespace df::enums::improvement_type;
+
                 int mattype, matindex;
                 find_material(&mattype, &matindex, material, product->material);
 
+                df::matter_state state = matter_state::Liquid;
+
+                switch (improvement_type)
+                {
+                case COVERED:
+                    if (flags.is_set(reaction_product_improvement_flags::GLAZED))
+                        state = matter_state::Solid;
+                    break;
+                case BANDS:
+                    state = matter_state::Paste;
+                    break;
+                case SPIKES:
+                    state = matter_state::Powder;
+                    break;
+                default:
+                    break;
+                }
+
+                int rating = unit ? Units::getEffectiveSkill(unit, df::job_skill(skill)) : 0;
+                int size = int(probability*(1.0f + 0.06f*rating)); // +90% at legendary
+
                 object->addContaminant(
-                    mattype, matindex,
-                    matter_state::Liquid, // TODO: heuristics or by reagent name
+                    mattype, matindex, state,
                     object->getTemperature(),
-                    probability, // used as size
-                    -1,
+                    size, -1,
                     0x8000 // not washed by water, and 'clean items' safe.
                 );
             }

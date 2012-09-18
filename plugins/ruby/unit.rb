@@ -49,7 +49,7 @@ module DFHack
         end
 
 	def unit_iscitizen(u)
-            u.race == ui.race_id and u.civ_id == ui.civ_id and !u.flags1.dead and !u.flags1.merchant and
+            u.race == ui.race_id and u.civ_id == ui.civ_id and !u.flags1.dead and !u.flags1.merchant and !u.flags1.forest and
             !u.flags1.diplomat and !u.flags2.resident and !u.flags3.ghostly and
             !u.curse.add_tags1.OPPOSED_TO_LIFE and !u.curse.add_tags1.CRAZED and
             u.mood != :Berserk

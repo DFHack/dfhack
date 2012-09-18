@@ -178,7 +178,17 @@ module DFHack
 
         # set building at position, with optional width/height
         def building_position(bld, pos, w=nil, h=nil)
-            x, y, z = (pos.respond_to?(:x) ? [pos.x, pos.y, pos.z] : pos)
+            if pos.respond_to?(:x1)
+                x, y, z = pos.x1, pos.y1, pos.z
+                w ||= pos.x2-pos.x1+1 if pos.respond_to?(:x2)
+                h ||= pos.y2-pos.y1+1 if pos.respond_to?(:y2)
+            elsif pos.respond_to?(:x)
+                x, y, z = pos.x, pos.y, pos.z
+            else
+                x, y, z = pos
+            end
+            w ||= pos.w if pos.respond_to?(:w)
+            h ||= pos.h if pos.respond_to?(:h)
             bld.x1 = x
             bld.y1 = y
             bld.z  = z

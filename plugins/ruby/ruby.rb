@@ -25,11 +25,11 @@ end
 module DFHack
     class OnupdateCallback
         attr_accessor :callback, :timelimit, :minyear, :minyeartick
-        def initialize(cb, tl)
+        def initialize(cb, tl, initdelay=0)
             @callback = cb
             @ticklimit = tl
             @minyear = (tl ? df.cur_year : 0)
-            @minyeartick = (tl ? df.cur_year_tick : 0)
+            @minyeartick = (tl ? df.cur_year_tick+initdelay : 0)
         end
 
         # run callback if timedout
@@ -61,9 +61,9 @@ module DFHack
 
         # register a callback to be called every gframe or more
         # ex: DFHack.onupdate_register { DFHack.world.units[0].counters.job_counter = 0 }
-        def onupdate_register(ticklimit=nil, &b)
+        def onupdate_register(ticklimit=nil, initialtickdelay=0, &b)
             @onupdate_list ||= []
-            @onupdate_list << OnupdateCallback.new(b, ticklimit)
+            @onupdate_list << OnupdateCallback.new(b, ticklimit, initialtickdelay)
             DFHack.onupdate_active = true
             if onext = @onupdate_list.sort.first
                 DFHack.onupdate_minyear = onext.minyear

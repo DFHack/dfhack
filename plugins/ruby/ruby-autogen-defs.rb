@@ -124,8 +124,7 @@ module DFHack
                 case h
                 when Hash; h.each { |k, v| send("#{k}=", v) }
                 when Array; names = _field_names ; raise 'bad size' if names.length != h.length ; names.zip(h).each { |n, a| send("#{n}=", a) }
-                when Compound; _field_names.each { |n| send("#{n}=", h.send(n)) }
-                else raise 'wut?'
+                else _field_names.each { |n| send("#{n}=", h.send(n)) }
                 end
             end
             def _fields ; self.class._fields.to_a ; end

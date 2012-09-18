@@ -32,10 +32,12 @@ DFHack v0.34.11-r2 (UNRELEASED)
     - fix/stable-temp: counts items with temperature updates; does instant one-shot stable-temp.
     - fix/loyaltycascade: fix units allegiance, eg after ordering a dwarf merchant kill.
     - digfort: designate areas to dig from a csv file.
+    - drainaquifer: remove aquifers from the map.
     - growcrops: cheat to make farm crops instantly grow.
     - magmasource: continuously spawn magma from any map tile.
     - removebadthoughts: delete all negative thoughts from your dwarves.
     - slayrace: instakill all units of a given race, optionally with magma.
+    - superdwarf: per-creature fastdwarf.
   New GUI scripts:
     - gui/mechanisms: browse mechanism links of the current building.
     - gui/room-list: browse other rooms owned by the unit when assigning one.

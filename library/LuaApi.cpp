@@ -79,6 +79,8 @@ distribution.
 #include "df/building_civzonest.h"
 #include "df/region_map_entry.h"
 #include "df/flow_info.h"
+#include "df/unit_misc_trait.h"
+#include "df/proj_itemst.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -813,12 +815,20 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getVisibleName),
     WRAPM(Units, getIdentity),
     WRAPM(Units, getNemesis),
+    WRAPM(Units, isCrazed),
+    WRAPM(Units, isOpposedToLife),
+    WRAPM(Units, hasExtravision),
+    WRAPM(Units, isBloodsucker),
+    WRAPM(Units, isMischievous),
+    WRAPM(Units, getMiscTrait),
     WRAPM(Units, isDead),
     WRAPM(Units, isAlive),
     WRAPM(Units, isSane),
     WRAPM(Units, isDwarf),
     WRAPM(Units, isCitizen),
     WRAPM(Units, getAge),
+    WRAPM(Units, getEffectiveSkill),
+    WRAPM(Units, computeMovementSpeed),
     WRAPM(Units, getProfessionName),
     WRAPM(Units, getCasteProfessionName),
     WRAPM(Units, getProfessionColor),
@@ -876,6 +886,18 @@ static bool items_moveToInventory
     return Items::moveToInventory(mc, item, unit, mode, body_part);
 }
 
+static bool items_remove(df::item *item, bool no_uncat)
+{
+    MapExtras::MapCache mc;
+    return Items::remove(mc, item, no_uncat);
+}
+
+static df::proj_itemst *items_makeProjectile(df::item *item)
+{
+    MapExtras::MapCache mc;
+    return Items::makeProjectile(mc, item);
+}
+
 static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getGeneralRef),
     WRAPM(Items, getSpecificRef),
@@ -887,6 +909,8 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPN(moveToContainer, items_moveToContainer),
     WRAPN(moveToBuilding, items_moveToBuilding),
     WRAPN(moveToInventory, items_moveToInventory),
+    WRAPN(makeProjectile, items_makeProjectile),
+    WRAPN(remove, items_remove),
     { NULL, NULL }
 };
 
@@ -1060,7 +1084,9 @@ static int buildings_getCorrectSize(lua_State *state)
     return 5;
 }
 
-static int buildings_setSize(lua_State *state)
+namespace {
+
+int buildings_setSize(lua_State *state)
 {
     auto bld = Lua::CheckDFObject<df::building>(state, 1);
     df::coord2d size(luaL_optint(state, 2, 1), luaL_optint(state, 3, 1));
@@ -1081,11 +1107,13 @@ static int buildings_setSize(lua_State *state)
         return 1;
 }
 
+}
+
 static const luaL_Reg dfhack_buildings_funcs[] = {
     { "findAtTile", buildings_findAtTile },
     { "findCivzonesAt", buildings_findCivzonesAt },
     { "getCorrectSize", buildings_getCorrectSize },
-    { "setSize", buildings_setSize },
+    { "setSize", &Lua::CallWithCatchWrapper<buildings_setSize> },
     { NULL, NULL }
 };
 

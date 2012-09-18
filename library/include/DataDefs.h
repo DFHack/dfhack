@@ -518,7 +518,7 @@ namespace DFHack {
     template<class T>
     inline const char *enum_item_raw_key(T val) {
         typedef df::enum_traits<T> traits;
-        return traits::is_valid(val) ? traits::key_table[val - traits::first_item_value] : NULL;
+        return traits::is_valid(val) ? traits::key_table[(short)val - traits::first_item_value] : NULL;
     }
 
     /**

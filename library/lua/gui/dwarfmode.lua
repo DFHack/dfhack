@@ -46,7 +46,7 @@ function getPanelLayout()
 end
 
 function getCursorPos()
-    if g_cursor ~= -30000 then
+    if g_cursor.x ~= -30000 then
         return copyall(g_cursor)
     end
 end
@@ -136,6 +136,14 @@ function Viewport:set()
     return vp
 end
 
+function Viewport:getPos()
+    return xyz2pos(self.x1, self.y1, self.z)
+end
+
+function Viewport:getSize()
+    return xy2pos(self.width, self.height)
+end
+
 function Viewport:clip(x,y,z)
     return self:make(
         math.max(0, math.min(x or self.x1, world_map.x_count-self.width)),
@@ -157,6 +165,18 @@ function Viewport:isVisible(target,gap)
     gap = gap or 0
 
     return self:isVisibleXY(target,gap) and target.z == self.z
+end
+
+function Viewport:tileToScreen(coord)
+    return xyz2pos(coord.x - self.x1, coord.y - self.y1, coord.z - self.z)
+end
+
+function Viewport:getCenter()
+    return xyz2pos(
+        math.floor((self.x2+self.x1)/2),
+        math.floor((self.y2+self.y1)/2),
+        self.z
+    )
 end
 
 function Viewport:centerOn(target)
@@ -207,16 +227,24 @@ MOVEMENT_KEYS = {
     CURSOR_UP_Z_AUX = { 0, 0, 1 }, CURSOR_DOWN_Z_AUX = { 0, 0, -1 },
 }
 
-function Viewport:scrollByKey(key)
+local function get_movement_delta(key, delta, big_step)
     local info = MOVEMENT_KEYS[key]
     if info then
-        local delta = 10
-        if info[4] then delta = 20 end
+        if info[4] then
+            delta = big_step
+        end
 
+        return delta*info[1], delta*info[2], info[3]
+    end
+end
+
+function Viewport:scrollByKey(key)
+    local dx, dy, dz = get_movement_delta(key, 10, 20)
+    if dx then
         return self:clip(
-            self.x1 + delta*info[1],
-            self.y1 + delta*info[2],
-            self.z + info[3]
+            self.x1 + dx,
+            self.y1 + dy,
+            self.z + dz
         )
     else
         return self
@@ -237,16 +265,23 @@ function DwarfOverlay:getViewport(old_vp)
     end
 end
 
-function DwarfOverlay:moveCursorTo(cursor,viewport)
+function DwarfOverlay:moveCursorTo(cursor,viewport,gap)
     setCursorPos(cursor)
-    self:getViewport(viewport):reveal(cursor, 5, 0, 10):set()
+    self:zoomViewportTo(cursor,viewport,gap)
 end
 
-function DwarfOverlay:selectBuilding(building,cursor,viewport)
+function DwarfOverlay:zoomViewportTo(target, viewport, gap)
+    if gap and self:getViewport():isVisible(target, gap) then
+        return
+    end
+    self:getViewport(viewport):reveal(target, 5, 0, 10):set()
+end
+
+function DwarfOverlay:selectBuilding(building,cursor,viewport,gap)
     cursor = cursor or utils.getBuildingCenter(building)
 
     df.global.world.selected_building = building
-    self:moveCursorTo(cursor, viewport)
+    self:moveCursorTo(cursor, viewport, gap)
 end
 
 function DwarfOverlay:propagateMoveKeys(keys)
@@ -282,6 +317,31 @@ function DwarfOverlay:simulateViewScroll(keys, anchor, no_clip_cursor)
     end
 end
 
+function DwarfOverlay:simulateCursorMovement(keys, anchor)
+    local layout = self.df_layout
+    local cursor = getCursorPos()
+    local cx, cy, cz = pos2xyz(cursor)
+
+    if anchor and keys.A_MOVE_SAME_SQUARE then
+        setCursorPos(anchor)
+        self:getViewport():centerOn(anchor):set()
+        return 'A_MOVE_SAME_SQUARE'
+    end
+
+    for code,_ in pairs(MOVEMENT_KEYS) do
+        if keys[code] then
+            local dx, dy, dz = get_movement_delta(code, 1, 10)
+            local ncur = xyz2pos(cx+dx, cy+dy, cz+dz)
+
+            if dfhack.maps.isValidTilePos(ncur) then
+                setCursorPos(ncur)
+                self:getViewport():reveal(ncur,4,10,6,true):set()
+                return code
+            end
+        end
+    end
+end
+
 function DwarfOverlay:onAboutToShow(below)
     local screen = dfhack.gui.getCurViewscreen()
     if below then screen = below.parent end
@@ -293,7 +353,7 @@ end
 MenuOverlay = defclass(MenuOverlay, DwarfOverlay)
 
 function MenuOverlay:updateLayout()
-    DwarfOverlay.updateLayout(self)
+    MenuOverlay.super.updateLayout(self)
     self.frame_rect = self.df_layout.menu
 end
 
@@ -301,7 +361,7 @@ MenuOverlay.getWindowSize = gui.FramedScreen.getWindowSize
 MenuOverlay.getMousePos = gui.FramedScreen.getMousePos
 
 function MenuOverlay:onAboutToShow(below)
-    DwarfOverlay.onAboutToShow(self,below)
+    MenuOverlay.super.onAboutToShow(self,below)
 
     self:updateLayout()
     if not self.df_layout.menu then

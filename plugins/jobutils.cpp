@@ -372,7 +372,7 @@ static command_result job_cmd(color_ostream &out, vector <string> & parameters)
 
         out << "Job item updated." << endl;
 
-        if (item->item_type < 0 && minfo.isValid())
+        if (item->item_type < (df::item_type)0 && minfo.isValid())
             out.printerr("WARNING: Due to a probable bug, creature & plant material subtype\n"
                             "         is ignored unless the item type is also specified.\n");
 

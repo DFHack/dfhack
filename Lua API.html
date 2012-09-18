@@ -1106,6 +1106,26 @@ a lua list containing them.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.units.getNemesis(unit)</tt></p>
 <p>Returns the nemesis record of the unit if it has one, or <em>nil</em>.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.isHidingCurse(unit)</tt></p>
+<p>Checks if the unit hides improved attributes from its curse.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getPhysicalAttrValue(unit, attr_type)</tt></p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getMentalAttrValue(unit, attr_type)</tt></p>
+<p>Computes the effective attribute value, including curse effect.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.isCrazed(unit)</tt></p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.isOpposedToLife(unit)</tt></p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.hasExtravision(unit)</tt></p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.isBloodsucker(unit)</tt></p>
+<p>Simple checks of caste attributes that can be modified by curses.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getMiscTrait(unit, type[, create])</tt></p>
+<p>Finds (or creates if requested) a misc trait object with the given id.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.isDead(unit)</tt></p>
 <p>The unit is completely dead and passive, or a ghost.</p>
 </li>
@@ -1125,6 +1145,12 @@ same checks the game uses to decide game-over by extinction.</p>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.units.getAge(unit[,true_age])</span></tt></p>
 <p>Returns the age of the unit in years as a floating-point value.
 If <tt class="docutils literal">true_age</tt> is true, ignores false identities.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getEffectiveSkill(unit, skill)</tt></p>
+<p>Computes the effective rating for the given skill, taking into account exhaustion, pain etc.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.computeMovementSpeed(unit)</tt></p>
+<p>Computes number of frames * 100 it takes the unit to move in its current state of mind and body.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.getNoblePositions(unit)</tt></p>
 <p>Returns a list of tables describing noble position assignments, or <em>nil</em>.
@@ -1186,6 +1212,12 @@ Returns <em>false</em> in case of error.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.items.moveToInventory(item,unit,use_mode,body_part)</tt></p>
 <p>Move the item to the unit inventory. Returns <em>false</em> if impossible.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.remove(item[, no_uncat])</tt></p>
+<p>Removes the item, and marks it for garbage collection unless <tt class="docutils literal">no_uncat</tt> is true.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.makeProjectile(item)</tt></p>
+<p>Turns the item into a projectile, and returns the new object, or <em>nil</em> if impossible.</p>
 </li>
 </ul>
 </div>

@@ -307,7 +307,7 @@ df::feature_init *Maps::getLocalInitFeature(df::coord2d rgn_pos, int32_t index)
     df::coord2d bigregion = rgn_pos / 16;
 
     // bigregion is 16x16 regions. for each bigregion in X dimension:
-    auto fptr = data->unk_204[bigregion.x][bigregion.y].features;
+    auto fptr = data->feature_map[bigregion.x][bigregion.y].features;
     if (!fptr)
         return NULL;
 

@@ -44,6 +44,12 @@ endif()
 install(DIRECTORY lua/
         DESTINATION ${DFHACK_LUA_DESTINATION}/plugins
         FILES_MATCHING PATTERN "*.lua")
+install(DIRECTORY raw/
+        DESTINATION ${DFHACK_DATA_DESTINATION}/raw
+        FILES_MATCHING PATTERN "*.txt")
+install(DIRECTORY raw/
+        DESTINATION ${DFHACK_DATA_DESTINATION}/raw
+        FILES_MATCHING PATTERN "*.diff")
 
 # Protobuf
 FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
@@ -114,6 +120,10 @@ if (BUILD_SUPPORTED)
     # this one exports functions to lua
     DFHACK_PLUGIN(burrows burrows.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(sort sort.cpp LINK_LIBRARIES lua)
+    DFHACK_PLUGIN(steam-engine steam-engine.cpp)
+    DFHACK_PLUGIN(power-meter power-meter.cpp LINK_LIBRARIES lua)
+    DFHACK_PLUGIN(siege-engine siege-engine.cpp LINK_LIBRARIES lua)
+    DFHACK_PLUGIN(add-spatter add-spatter.cpp)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
 endif()

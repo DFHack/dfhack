@@ -868,6 +868,26 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
+* ``dfhack.units.isHidingCurse(unit)``
+
+  Checks if the unit hides improved attributes from its curse.
+
+* ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
+* ``dfhack.units.getMentalAttrValue(unit, attr_type)``
+
+  Computes the effective attribute value, including curse effect.
+
+* ``dfhack.units.isCrazed(unit)``
+* ``dfhack.units.isOpposedToLife(unit)``
+* ``dfhack.units.hasExtravision(unit)``
+* ``dfhack.units.isBloodsucker(unit)``
+
+  Simple checks of caste attributes that can be modified by curses.
+
+* ``dfhack.units.getMiscTrait(unit, type[, create])``
+
+  Finds (or creates if requested) a misc trait object with the given id.
+
 * ``dfhack.units.isDead(unit)``
 
   The unit is completely dead and passive, or a ghost.
@@ -893,6 +913,14 @@ Units module
 
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
+
+* ``dfhack.units.getEffectiveSkill(unit, skill)``
+
+  Computes the effective rating for the given skill, taking into account exhaustion, pain etc.
+
+* ``dfhack.units.computeMovementSpeed(unit)``
+
+  Computes number of frames * 100 it takes the unit to move in its current state of mind and body.
 
 * ``dfhack.units.getNoblePositions(unit)``
 
@@ -970,6 +998,14 @@ Items module
 * ``dfhack.items.moveToInventory(item,unit,use_mode,body_part)``
 
   Move the item to the unit inventory. Returns *false* if impossible.
+
+* ``dfhack.items.remove(item[, no_uncat])``
+
+  Removes the item, and marks it for garbage collection unless ``no_uncat`` is true.
+
+* ``dfhack.items.makeProjectile(item)``
+
+  Turns the item into a projectile, and returns the new object, or *nil* if impossible.
 
 
 Maps module

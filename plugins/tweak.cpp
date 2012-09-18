@@ -29,6 +29,7 @@
 #include "df/criminal_case.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_layer_unit_actionst.h"
 #include "df/squad_order_trainst.h"
 #include "df/ui_build_selector.h"
 #include "df/building_trapst.h"
@@ -38,6 +39,10 @@
 #include "df/item_threadst.h"
 #include "df/item_clothst.h"
 #include "df/contaminant.h"
+#include "df/layer_object.h"
+#include "df/reaction.h"
+#include "df/reaction_reagent_itemst.h"
+#include "df/reaction_reagent_flags.h"
 
 #include <stdlib.h>
 
@@ -100,6 +105,10 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak fix-dimensions [disable]\n"
         "    Fixes subtracting small amount of thread/cloth/liquid from a stack\n"
         "    by splitting the stack and subtracting from the remaining single item.\n"
+        "  tweak advmode-contained [disable]\n"
+        "    Fixes custom reactions with container inputs in advmode. The issue is\n"
+        "    that the screen tries to force you to select the contents separately\n"
+        "    from the container. This forcefully skips child reagents.\n"
     ));
     return CR_OK;
 }
@@ -427,6 +436,64 @@ struct dimension_cloth_hook : df::item_clothst {
 
 IMPLEMENT_VMETHOD_INTERPOSE(dimension_cloth_hook, subtractDimension);
 
+struct advmode_contained_hook : df::viewscreen_layer_unit_actionst {
+    typedef df::viewscreen_layer_unit_actionst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        auto old_reaction = cur_reaction;
+        auto old_reagent = reagent;
+
+        INTERPOSE_NEXT(feed)(input);
+
+        if (cur_reaction && (cur_reaction != old_reaction || reagent != old_reagent))
+        {
+            old_reagent = reagent;
+
+            // Skip reagents already contained by others
+            while (reagent < (int)cur_reaction->reagents.size()-1)
+            {
+                if (!cur_reaction->reagents[reagent]->flags.bits.IN_CONTAINER)
+                    break;
+                reagent++;
+            }
+
+            if (old_reagent != reagent)
+            {
+                // Reproduces a tiny part of the orginal screen code
+                choice_items.clear();
+
+                auto preagent = cur_reaction->reagents[reagent];
+                reagent_amnt_left = preagent->quantity;
+
+                for (int i = held_items.size()-1; i >= 0; i--)
+                {
+                    if (!preagent->matchesRoot(held_items[i], cur_reaction->index))
+                        continue;
+                    if (linear_index(sel_items, held_items[i]) >= 0)
+                        continue;
+                    choice_items.push_back(held_items[i]);
+                }
+
+                layer_objects[6]->setListLength(choice_items.size());
+
+                if (!choice_items.empty())
+                {
+                    layer_objects[4]->active = layer_objects[5]->active = false;
+                    layer_objects[6]->active = true;
+                }
+                else if (layer_objects[6]->active)
+                {
+                    layer_objects[6]->active = false;
+                    layer_objects[5]->active = true;
+                }
+            }
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(advmode_contained_hook, feed);
+
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
     if (vector_get(parameters, 1) == "disable")
@@ -581,6 +648,10 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         enable_hook(out, INTERPOSE_HOOK(dimension_bar_hook, subtractDimension), parameters);
         enable_hook(out, INTERPOSE_HOOK(dimension_thread_hook, subtractDimension), parameters);
         enable_hook(out, INTERPOSE_HOOK(dimension_cloth_hook, subtractDimension), parameters);
+    }
+    else if (cmd == "advmode-contained")
+    {
+        enable_hook(out, INTERPOSE_HOOK(advmode_contained_hook, feed), parameters);
     }
     else 
         return CR_WRONG_USAGE;

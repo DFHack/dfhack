@@ -25,6 +25,8 @@ DFHack v0.34.11-r2 (UNRELEASED)
     - tweak readable-build-plate: fix unreadable truncation in unit pressure plate build ui.
     - tweak stable-temp: fixes bug 6012; may improve FPS by 50-100% on a slow item-heavy fort.
     - tweak fast-heat: speeds up item heating & cooling, thus making stable-temp act faster.
+    - tweak fix-dimensions: fixes subtracting small amounts from stacked liquids etc.
+    - tweak advmode-contained: fixes UI bug in custom reactions with container inputs in advmode.
   New scripts:
     - fixnaked: removes thoughts about nakedness.
     - setfps: set FPS cap at runtime, in case you want slow motion or speed-up.

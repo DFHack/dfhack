@@ -86,3 +86,7 @@ tweak fast-heat 500
 # stop stacked liquid/bar/thread/cloth items from lasting forever
 # if used in reactions that use only a fraction of the dimension.
 tweak fix-dimensions
+
+# make reactions requiring containers usable in advmode - the issue is
+# that the screen asks for those reagents to be selected directly
+tweak advmode-contained

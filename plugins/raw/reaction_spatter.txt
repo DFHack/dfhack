@@ -21,7 +21,7 @@ Reaction name must start with 'SPATTER_ADD_':
 	[REAGENT:grease:1:GLOB:NONE:NONE:NONE][REACTION_CLASS:FAT][UNROTTEN]
 	The probability is used as spatter size; Legendary gives +90%:
 	COVERED = liquid, GLAZED = solid, BANDS = paste, SPIKES = powder
-	[IMPROVEMENT:800:object:BANDS:GET_MATERIAL_FROM_REAGENT:extract:NONE]
+	[IMPROVEMENT:800:object:COVERED:GET_MATERIAL_FROM_REAGENT:extract:NONE]
 
 [REACTION:SPATTER_ADD_WEAPON_EXTRACT]
 	[NAME:coat weapon with extract]

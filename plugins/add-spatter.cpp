@@ -167,7 +167,7 @@ static void index_items(item_table &table, df::job *job, ReactionInfo *info)
                     int ridx = iitem->contains[k];
                     auto reag = info->react->reagents[ridx];
 
-                    if (reag->matches(contents[j], info->react, iitem->reaction_id))
+                    if (reag->matchesChild(contents[j], info->react, iitem->reaction_id))
                         table[ridx].push_back(contents[j]);
                 }
             }

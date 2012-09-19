@@ -707,6 +707,8 @@ Options
                          interface.
 :rename unit-profession "custom profession": Change proffession name of the
                                              highlighted unit/creature.
+:rename building "name": Set a custom name for the selected building.
+                         The building must be one of stockpile, workshop, furnace, trap or siege engine.
 
 reveal
 ======
@@ -907,6 +909,23 @@ Options
                  and are not flagged as tame), but you are allowed to mark them
                  for slaughter. Grabbing wagons results in some funny spam, then
                  they are scuttled.
+:stable-cursor:  Saves the exact cursor position between t/q/k/d/etc menus of dwarfmode.
+:patrol-duty:    Makes Train orders not count as patrol duty to stop unhappy thoughts.
+                 Does NOT fix the problem when soldiers go off-duty (i.e. civilian).
+:readable-build-plate: Fixes rendering of creature weight limits in pressure plate build menu.
+:stable-temp:    Fixes performance bug 6012 by squashing jitter in temperature updates.
+                 In very item-heavy forts with big stockpiles this can improve FPS by 50-100%
+:fast-heat:      Further improves temperature update performance by ensuring that 1 degree
+                 of item temperature is crossed in no more than specified number of frames
+                 when updating from the environment temperature. This reduces the time it
+                 takes for stable-temp to stop updates again when equilibrium is disturbed.
+:fix-dimensions: Fixes subtracting small amount of thread/cloth/liquid from a stack
+                 by splitting the stack and subtracting from the remaining single item.
+                 This is a necessary addition to the binary patch in bug 808.
+:advmode-contained: Works around bug 6202, i.e. custom reactions with container inputs
+                    in advmode. The issue is that the screen tries to force you to select
+                    the contents separately from the container. This forcefully skips child
+                    reagents.
 
 tubefill
 ========
@@ -1414,16 +1433,16 @@ using this mode for birds is not recommanded.)
 
 Will target any unit on a revealed tile of the map, including ambushers.
 
-Ex:
-:: 
+Ex::
+
     slayrace gob
 
-To kill a single creature, select the unit with the 'v' cursor and:
-:: 
+To kill a single creature, select the unit with the 'v' cursor and::
+
     slayrace him
 
-To purify all elves on the map with fire (may have side-effects):
-:: 
+To purify all elves on the map with fire (may have side-effects)::
+
     slayrace elve magma
 
 
@@ -1435,8 +1454,8 @@ This script registers a map tile as a magma source, and every 12 game ticks
 that tile receives 1 new unit of flowing magma.
 
 Place the game cursor where you want to create the source (must be a
-flow-passable tile, and not too high in the sky) and call
-:: 
+flow-passable tile, and not too high in the sky) and call::
+
     magmasource here
 
 To add more than 1 unit everytime, call the command again.
@@ -1446,3 +1465,215 @@ To remove all placed sources, call ``magmasource stop``.
 
 With no argument, this command shows an help message and list existing sources.
 
+
+=======================
+In-game interface tools
+=======================
+
+These tools work by displaying dialogs or overlays in the game window, and
+are mostly implemented by lua scripts.
+
+
+Dwarf Manipulator
+=================
+
+Implemented by the manipulator plugin. To activate, open the unit screen and press 'l'.
+
+This tool implements a Dwarf Therapist-like interface within the game ui.
+
+
+Liquids
+=======
+
+Implemented by the gui/liquids script. To use, bind to a key and activate in the 'k' mode.
+
+While active, use the suggested keys to switch the usual liquids parameters, and Enter
+to select the target area and apply changes.
+
+
+Mechanisms
+==========
+
+Implemented by the gui/mechanims script. To use, bind to a key and activate in the 'q' mode.
+
+Lists mechanisms connected to the building, and their links. Navigating the list centers
+the view on the relevant linked buildings.
+
+To exit, press ESC or Enter; ESC recenters on the original building, while Enter leaves
+focus on the current one. Shift-Enter has an effect equivalent to pressing Enter, and then
+re-entering the mechanisms ui.
+
+
+Power Meter
+===========
+
+Front-end to the power-meter plugin implemented by the gui/power-meter script. Bind to a
+key and activate after selecting Pressure Plate in the build menu.
+
+The script follows the general look and feel of the regular pressure plate build
+configuration page, but configures parameters relevant to the modded power meter building.
+
+
+Rename
+======
+
+Backed by the rename plugin, the gui/rename script allows entering the desired name
+via a simple dialog in the game ui.
+
+* ``gui/rename [building]`` in 'q' mode changes the name of a building.
+
+  The selected building must be one of stockpile, workshop, furnace, trap or siege engine.
+
+* ``gui/rename [unit]`` with a unit selected changes the nickname.
+
+* ``gui/rename unit-profession`` changes the selected unit's custom profession name.
+
+The ``building`` or ``unit`` are automatically assumed when in relevant ui state.
+
+
+Room List
+=========
+
+Implemented by the gui/room-list script. To use, bind to a key and activate in the 'q' mode,
+either immediately or after opening the assign owner page.
+
+The script lists other rooms owned by the same owner, or by the unit selected in the assign
+list, and allows unassigning them.
+
+
+Siege Engine
+============
+
+Front-end to the siege-engine plugin implemented by the gui/siege-engine script. Bind to a
+key and activate after selecting a siege engine in 'q' mode.
+
+The main mode displays the current target, selected ammo item type, linked stockpiles and
+the allowed operator skill range. The map tile color is changed to reflect if it can be
+hit by the selected engine.
+
+Pressing 'r' changes into the target selection mode, which works by highlighting two points
+with Enter like all designations. When a target area is set, the engine projectiles are
+aimed at that area, or units within it, instead of the vanilla four directions.
+
+Pressing 't' switches to stockpile selection.
+
+Exiting from the siege engine script via ESC reverts the view to the state prior to starting
+the script. Shift-ESC retains the current viewport, and also exits from the 'q' mode to main
+menu.
+
+**DISCLAIMER**: Siege engines are a very interesting feature, but currently nearly useless
+because they haven't been updated since 2D and can only aim in four directions. This is an
+attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
+e.g. like making siegers bring their own, are something only Toady can do.
+
+
+=========
+RAW hacks
+=========
+
+These plugins detect certain structures in RAWs, and enhance them in various ways.
+
+
+Steam Engine
+============
+
+The steam-engine plugin detects custom workshops with STEAM_ENGINE in
+their token, and turns them into real steam engines.
+
+Rationale
+---------
+
+The vanilla game contains only water wheels and windmills as sources of
+power, but windmills give relatively little power, and water wheels require
+flowing water, which must either be a real river and thus immovable and
+limited in supply, or actually flowing and thus laggy.
+
+Steam engines are an alternative to water reactors that actually makes
+sense, and hopefully doesn't lag. Also, unlike e.g. animal treadmills,
+it can be done just by combining existing features of the game engine
+in a new way with some glue code and a bit of custom logic.
+
+Construction
+------------
+
+The workshop needs water as its input, which it takes via a
+passable floor tile below it, like usual magma workshops do.
+The magma version also needs magma.
+
+**ISSUE**: Since this building is a machine, and machine collapse
+code cannot be modified, it would collapse over true open space.
+As a loophole, down stair provides support to machines, while
+being passable, so use them.
+
+After constructing the building itself, machines can be connected
+to the edge tiles that look like gear boxes. Their exact position
+is extracted from the workshop raws.
+
+**ISSUE**: Like with collapse above, part of the code involved in
+machine connection cannot be modified. As a result, the workshop
+can only immediately connect to machine components built AFTER it.
+This also means that engines cannot be chained without intermediate
+short axles that can be built later.
+
+Operation
+---------
+
+In order to operate the engine, queue the Stoke Boiler job (optionally
+on repeat). A furnace operator will come, possibly bringing a bar of fuel,
+and perform it. As a result, a "boiling water" item will appear
+in the 't' view of the workshop.
+
+**NOTE**: The completion of the job will actually consume one unit
+of the appropriate liquids from below the workshop.
+
+Every such item gives 100 power, up to a limit of 300 for coal,
+and 500 for a magma engine. The building can host twice that
+amount of items to provide longer autonomous running. When the
+boiler gets filled to capacity, all queued jobs are suspended;
+once it drops back to 3+1 or 5+1 items, they are re-enabled.
+
+While the engine is providing power, steam is being consumed.
+The consumption speed includes a fixed 10% waste rate, and
+the remaining 90% are applied proportionally to the actual
+load in the machine. With the engine at nominal 300 power with
+150 load in the system, it will consume steam for actual
+300*(10% + 90%*150/300) = 165 power.
+
+Masterpiece mechanism and chain will decrease the mechanical
+power drawn by the engine itself from 10 to 5. Masterpiece
+barrel decreases waste rate by 4%. Masterpiece piston and pipe
+decrease it by further 4%, and also decrease the whole steam
+use rate by 10%.
+
+Explosions
+----------
+
+The engine must be constructed using barrel, pipe and piston
+from fire-safe, or in the magma version magma-safe metals.
+
+During operation weak parts get gradually worn out, and
+eventually the engine explodes. It should also explode if
+toppled during operation by a building destroyer, or a
+tantruming dwarf.
+
+Save files
+----------
+
+It should be safe to load and view engine-using fortresses
+from a DF version without DFHack installed, except that in such
+case the engines won't work. However actually making modifications
+to them, or machines they connect to (including by pulling levers),
+can easily result in inconsistent state once this plugin is
+available again. The effects may be as weird as negative power
+being generated.
+
+
+Add Spatter
+===========
+
+This plugin makes reactions with names starting with ``SPATTER_ADD_``
+produce contaminants on the items instead of improvements.
+
+Intended to give some use to all those poisons that can be bought from caravans.
+
+To be really useful this needs patches from bug 808 and ``tweak fix-dimensions``.

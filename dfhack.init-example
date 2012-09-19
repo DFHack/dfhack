@@ -59,6 +59,9 @@ keybinding add Alt-L@dwarfmode/LookAround gui/liquids
 # machine power sensitive pressure plate construction
 keybinding add Ctrl-Shift-M@dwarfmode/Build/Position/Trap gui/power-meter
 
+# siege engine control
+keybinding add Alt-A@dwarfmode/QueryBuilding/Some/SiegeEngine gui/siege-engine
+
 ############################
 # UI and game logic tweaks #
 ############################
@@ -79,3 +82,11 @@ tweak stable-temp
 # capping the rate to no less than 1 degree change per 500 frames
 # Note: will also cause stuff to melt faster in magma etc
 tweak fast-heat 500
+
+# stop stacked liquid/bar/thread/cloth items from lasting forever
+# if used in reactions that use only a fraction of the dimension.
+tweak fix-dimensions
+
+# make reactions requiring containers usable in advmode - the issue is
+# that the screen asks for those reagents to be selected directly
+tweak advmode-contained

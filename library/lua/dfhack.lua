@@ -113,26 +113,14 @@ function rawset_default(target,source)
     end
 end
 
-function defclass(class,parent)
-    class = class or {}
-    rawset_default(class, { __index = class })
-    if parent then
-        setmetatable(class, parent)
-    else
-        rawset_default(class, {
-            init_fields = rawset_default,
-            callback = function(self, name, ...)
-                return dfhack.curry(self[name], self, ...)
-            end
-        })
-    end
-    return class
+DEFAULT_NIL = DEFAULT_NIL or {} -- Unique token
+
+function defclass(...)
+    return require('class').defclass(...)
 end
 
-function mkinstance(class,table)
-    table = table or {}
-    setmetatable(table, class)
-    return table
+function mkinstance(...)
+    return require('class').mkinstance(...)
 end
 
 -- Misc functions

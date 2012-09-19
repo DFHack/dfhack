@@ -10,6 +10,7 @@
 #include <modules/World.h>
 #include <modules/Units.h>
 #include <modules/Job.h>
+#include <modules/Materials.h>
 #include <LuaTools.h>
 #include <TileTypes.h>
 #include <vector>
@@ -45,11 +46,14 @@
 #include "df/unit_misc_trait.h"
 #include "df/job.h"
 #include "df/job_item.h"
-#include "df/item.h"
+#include "df/item_actual.h"
 #include "df/items_other_id.h"
 #include "df/building_stockpilest.h"
 #include "df/stockpile_links.h"
 #include "df/workshop_profile.h"
+#include "df/strain_type.h"
+#include "df/material.h"
+#include "df/flow_type.h"
 
 #include "MiscUtils.h"
 
@@ -108,7 +112,7 @@ static bool is_in_range(const coord_range &target, df::coord pos)
 static std::pair<int, int> get_engine_range(df::building_siegeenginest *bld)
 {
     if (bld->type == siegeengine_type::Ballista)
-        return std::make_pair(0, 200);
+        return std::make_pair(1, 200);
     else
         return std::make_pair(30, 100);
 }
@@ -160,6 +164,63 @@ static void random_direction(float &x, float &y, float &z)
     x = 2.0f*a*sq;
     y = 2.0f*b*sq;
     z = 1.0f - 2.0f*d;
+}
+
+static const int WEAR_TICKS = 806400;
+
+static bool apply_impact_damage(df::item *item, int minv, int maxv)
+{
+    MaterialInfo info(item);
+    if (!info.isValid())
+    {
+        item->setWear(3);
+        return false;
+    }
+
+    auto &strength = info.material->strength;
+
+    // Use random strain type excluding COMPRESSIVE (conveniently last)
+    int type = random_int(strain_type::COMPRESSIVE);
+    int power = minv + random_int(maxv-minv+1);
+
+    // High elasticity materials just bend
+    if (strength.strain_at_yield[type] >= 5000)
+        return true;
+
+    // Instant fracture?
+    int fracture = strength.fracture[type];
+    if (fracture <= power)
+    {
+        item->setWear(3);
+        return false;
+    }
+
+    // Impact within elastic strain range?
+    int yield = strength.yield[type];
+    if (yield > power)
+        return true;
+
+    // Can wear?
+    auto actual = virtual_cast<df::item_actual>(item);
+    if (!actual)
+        return false;
+
+    // Transform plastic deformation to wear
+    int max_wear = WEAR_TICKS * 4;
+    int cur_wear = WEAR_TICKS * actual->wear + actual->wear_timer;
+    cur_wear += int64_t(power - yield)*max_wear/(fracture - yield);
+
+    if (cur_wear >= max_wear)
+    {
+        actual->wear = 3;
+        return false;
+    }
+    else
+    {
+        actual->wear = cur_wear / WEAR_TICKS;
+        actual->wear_timer = cur_wear % WEAR_TICKS;
+        return true;
+    }
 }
 
 /*
@@ -230,7 +291,7 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
     );
     obj->is_catapult = (ebld->type == siegeengine_type::Catapult);
     obj->proj_speed = 2;
-    obj->hit_delay = 3;
+    obj->hit_delay = obj->is_catapult ? 2 : -1;
     obj->fire_range = get_engine_range(ebld);
 
     obj->ammo_vector_id = job_item_vector_id::BOULDER;
@@ -1046,6 +1107,9 @@ struct UnitPath {
             float time = unit->counters.job_counter+0.5f;
             float speed = Units::computeMovementSpeed(unit)/100.0f;
 
+            if (unit->counters.unconscious > 0)
+                time += unit->counters.unconscious;
+
             for (size_t i = 0; i < upath.size(); i++)
             {
                 df::coord new_pos = upath[i];
@@ -1221,9 +1285,83 @@ static int proposeUnitHits(lua_State *L)
     return 1;
 }
 
+static int computeNearbyWeight(lua_State *L)
+{
+    auto engine = find_engine(L, 1);
+    luaL_checktype(L, 2, LUA_TTABLE);
+    luaL_checktype(L, 3, LUA_TTABLE);
+    const char *fname = luaL_optstring(L, 4, "nearby_weight");
+
+    std::vector<UnitPath*> units;
+    std::vector<float> weights;
+
+    lua_pushnil(L);
+
+    while (lua_next(L, 3))
+    {
+        df::unit *unit;
+        if (lua_isnumber(L, -2))
+            unit = df::unit::find(lua_tointeger(L, -2));
+        else
+            unit = Lua::CheckDFObject<df::unit>(L, -2);
+        if (!unit)
+            continue;
+        units.push_back(UnitPath::get(unit));
+        weights.push_back(lua_tonumber(L, -1));
+        lua_pop(L, 1);
+    }
+
+    lua_pushnil(L);
+
+    while (lua_next(L, 2))
+    {
+        Lua::StackUnwinder frame(L, 1);
+
+        lua_getfield(L, frame[1], "unit");
+        df::unit *unit = Lua::CheckDFObject<df::unit>(L, -1);
+
+        lua_getfield(L, frame[1], "time");
+        float time = luaL_checknumber(L, lua_gettop(L));
+
+        df::coord pos;
+
+        lua_getfield(L, frame[1], "pos");
+        if (lua_isnil(L, -1))
+        {
+            if (!unit) luaL_error(L, "either unit or pos is required");
+            pos = UnitPath::get(unit)->posAtTime(time);
+        }
+        else
+            Lua::CheckDFAssign(L, &pos, -1);
+
+        float sum = 0.0f;
+
+        for (size_t i = 0; i < units.size(); i++)
+        {
+            if (units[i]->unit == unit)
+                continue;
+
+            auto diff = units[i]->posAtTime(time) - pos;
+            float dist = 1 + sqrtf(diff.x*diff.x + diff.y*diff.y + diff.z*diff.z);
+            sum += weights[i]/(dist*dist);
+        }
+
+        lua_pushnumber(L, sum);
+        lua_setfield(L, frame[1], fname);
+    }
+
+    return 0;
+}
+
 /*
  * Projectile hook
  */
+
+static const int offsets[8][2] = {
+    { -1, -1 }, { 0, -1 }, { 1, -1 },
+    { -1,  0 },            { 1, 0 },
+    { -1,  1 }, { 0,  1 }, { 1, 1 }
+};
 
 struct projectile_hook : df::proj_itemst {
     typedef df::proj_itemst interpose_base;
@@ -1231,6 +1369,9 @@ struct projectile_hook : df::proj_itemst {
     void aimAtPoint(EngineInfo *engine, const ProjectilePath &path)
     {
         target_pos = path.target;
+
+        // Debug
+        Maps::getTileOccupancy(path.goal)->bits.arrow_color = COLOR_LIGHTMAGENTA;
 
         PathMetrics raytrace(path);
 
@@ -1259,7 +1400,53 @@ struct projectile_hook : df::proj_itemst {
         fall_threshold = std::min(fall_threshold, engine->fire_range.second);
     }
 
-    void aimAtArea(EngineInfo *engine)
+    void aimAtPoint(EngineInfo *engine, int skill, const ProjectilePath &path)
+    {
+        df::coord fail_target = path.goal;
+
+        orient_engine(engine->bld, path.goal);
+
+        // Debug
+        Maps::getTileOccupancy(path.goal)->bits.arrow_color = COLOR_LIGHTRED;
+
+        // Dabbling always hit in 7x7 area
+        if (skill < skill_rating::Novice)
+        {
+            fail_target.x += random_int(7)-3;
+            fail_target.y += random_int(7)-3;
+            aimAtPoint(engine, ProjectilePath(path.origin, fail_target));
+            return;
+        }
+
+        // Exact hit chance
+        float hit_chance = 1.04f - powf(0.8f, skill);
+
+        if (float(rand())/RAND_MAX < hit_chance)
+        {
+            aimAtPoint(engine, path);
+            return;
+        }
+
+        // Otherwise perturb
+        if (skill <= skill_rating::Proficient)
+        {
+            // 5x5
+            fail_target.x += random_int(5)-2;
+            fail_target.y += random_int(5)-2;
+        }
+        else
+        {
+            // 3x3
+            int idx = random_int(8);
+            fail_target.x += offsets[idx][0];
+            fail_target.y += offsets[idx][1];
+        }
+
+        ProjectilePath fail(path.origin, fail_target, path.fudge_delta, path.fudge_factor);
+        aimAtPoint(engine, fail);
+    }
+
+    void aimAtArea(EngineInfo *engine, int skill)
     {
         df::coord target, last_passable;
         df::coord tbase = engine->target.first;
@@ -1282,7 +1469,7 @@ struct projectile_hook : df::proj_itemst {
 
             if (raytrace.hits() && engine->isInRange(raytrace.goal_step))
             {
-                aimAtPoint(engine, path);
+                aimAtPoint(engine, skill, path);
                 return;
             }
         }
@@ -1290,7 +1477,7 @@ struct projectile_hook : df::proj_itemst {
         if (!last_passable.isValid())
             last_passable = target;
 
-        aimAtPoint(engine, ProjectilePath(engine->center, last_passable));
+        aimAtPoint(engine, skill, ProjectilePath(engine->center, last_passable));
     }
 
     static int safeAimProjectile(lua_State *L)
@@ -1312,9 +1499,9 @@ struct projectile_hook : df::proj_itemst {
         lua_call(L, 5, 1);
 
         if (lua_isnil(L, -1))
-            proj->aimAtArea(engine);
+            proj->aimAtArea(engine, skill);
         else
-            proj->aimAtPoint(engine, decode_path(L, -1, engine->center));
+            proj->aimAtPoint(engine, skill, decode_path(L, -1, engine->center));
 
         return 0;
     }
@@ -1335,13 +1522,19 @@ struct projectile_hook : df::proj_itemst {
 
         int skill = getOperatorSkill(engine->bld, true);
 
-        lua_pushcfunction(L, safeAimProjectile);
-        lua_pushlightuserdata(L, this);
-        lua_pushlightuserdata(L, engine);
-        lua_pushinteger(L, skill);
+        // Dabbling can't aim
+        if (skill < skill_rating::Novice)
+            aimAtArea(engine, skill);
+        else
+        {
+            lua_pushcfunction(L, safeAimProjectile);
+            lua_pushlightuserdata(L, this);
+            lua_pushlightuserdata(L, engine);
+            lua_pushinteger(L, skill);
 
-        if (!Lua::Core::SafeCall(out, 3, 0))
-            aimAtArea(engine);
+            if (!Lua::Core::SafeCall(out, 3, 0))
+                aimAtArea(engine, skill);
+        }
 
         switch (item->getType())
         {
@@ -1363,9 +1556,13 @@ struct projectile_hook : df::proj_itemst {
         float speed = 100000.0f / (fall_delay + 1);
         int min_zspeed = (fall_delay+1)*4900;
 
+        float bonus = 1.0f + 0.1f*(origin_pos.z -cur_pos.z);
+        bonus *= 1.0f + (distance_flown - 60) / 200.0f;
+        speed *= bonus;
+
         // Flight direction vector
         df::coord dist = target_pos - origin_pos;
-        float vx = dist.x, vy = dist.y, vz = fabs(dist.z);
+        float vx = dist.x, vy = dist.y, vz = fabs((float)dist.z);
         normalize(vx, vy, vz);
 
         int start_z = 0;
@@ -1383,10 +1580,28 @@ struct projectile_hook : df::proj_itemst {
         for (size_t i = 0; i < contents.size(); i++)
         {
             auto child = contents[i];
+
+            // Liquids are vaporized so that they cover nearby units
+            if (child->isLiquid())
+            {
+                auto flow = Maps::spawnFlow(
+                    cur_pos,
+                    flow_type::MaterialVapor,
+                    child->getMaterial(), child->getMaterialIndex(),
+                    100
+                );
+
+                // should it leave a puddle too?..
+                if (flow && Items::remove(mc, child))
+                    continue;
+            }
+
             auto proj = Items::makeProjectile(mc, child);
             if (!proj) continue;
 
-            proj->flags.bits.no_impact_destroy = true;
+            bool keep = apply_impact_damage(child, 50000, int(250000*bonus));
+
+            proj->flags.bits.no_impact_destroy = keep;
             //proj->flags.bits.bouncing = true;
             proj->flags.bits.piercing = true;
             proj->flags.bits.parabolic = true;
@@ -1403,7 +1618,7 @@ struct projectile_hook : df::proj_itemst {
 
             proj->speed_x = int(speed * sx);
             proj->speed_y = int(speed * sy);
-            proj->speed_z = int(speed * sz);
+            proj->speed_z = std::max(min_zspeed, int(speed * sz));
         }
     }
 
@@ -1554,6 +1769,7 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(traceUnitPath),
     DFHACK_LUA_COMMAND(unitPosAtTime),
     DFHACK_LUA_COMMAND(proposeUnitHits),
+    DFHACK_LUA_COMMAND(computeNearbyWeight),
     DFHACK_LUA_END
 };
 

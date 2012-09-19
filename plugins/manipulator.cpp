@@ -528,6 +528,105 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (first_column < sel_column - col_widths[DISP_COLUMN_LABORS] + 1)
         first_column = sel_column - col_widths[DISP_COLUMN_LABORS] + 1;
 
+    // handle mouse input
+    if (enabler->tracking_on && gps->mouse_x != -1 && gps->mouse_y != -1)
+    {
+        int click_header = DISP_COLUMN_MAX; // group ID of the column header clicked
+        int click_body = DISP_COLUMN_MAX; // group ID of the column body clicked
+
+        int click_unit = -1; // Index into units[] (-1 if out of range)
+        int click_labor = -1; // Index into columns[] (-1 if out of range)
+
+        for (int i = 0; i < DISP_COLUMN_MAX; i++)
+        {
+            if ((gps->mouse_x >= col_offsets[i]) &&
+                (gps->mouse_x < col_offsets[i] + col_widths[i]))
+            {
+                if ((gps->mouse_y >= 1) && (gps->mouse_y <= 2))
+                    click_header = i;
+                if ((gps->mouse_y >= 4) && (gps->mouse_y <= 4 + num_rows))
+                    click_body = i;
+            }
+        }
+
+        if ((gps->mouse_x >= col_offsets[DISP_COLUMN_LABORS]) &&
+            (gps->mouse_x < col_offsets[DISP_COLUMN_LABORS] + col_widths[DISP_COLUMN_LABORS]))
+            click_labor = gps->mouse_x - col_offsets[DISP_COLUMN_LABORS] + first_column;
+        if ((gps->mouse_y >= 4) && (gps->mouse_y <= 4 + num_rows))
+            click_unit = gps->mouse_y - 4 + first_row;
+
+        switch (click_header)
+        {
+        case DISP_COLUMN_HAPPINESS:
+            if (enabler->mouse_lbut || enabler->mouse_rbut)
+            {
+                descending = enabler->mouse_lbut;
+                std::sort(units.begin(), units.end(), sortByHappiness);
+            }
+            break;
+
+        case DISP_COLUMN_NAME:
+            if (enabler->mouse_lbut || enabler->mouse_rbut)
+            {
+                descending = enabler->mouse_rbut;
+                std::sort(units.begin(), units.end(), sortByName);
+            }
+            break;
+
+        case DISP_COLUMN_PROFESSION:
+            if (enabler->mouse_lbut || enabler->mouse_rbut)
+            {
+                descending = enabler->mouse_rbut;
+                std::sort(units.begin(), units.end(), sortByProfession);
+            }
+            break;
+
+        case DISP_COLUMN_LABORS:
+            if (enabler->mouse_lbut || enabler->mouse_rbut)
+            {
+                descending = enabler->mouse_lbut;
+                sort_skill = columns[click_labor].skill;
+                sort_labor = columns[click_labor].labor;
+                std::sort(units.begin(), units.end(), sortBySkill);
+            }
+            break;
+        }
+
+        switch (click_body)
+        {
+        case DISP_COLUMN_HAPPINESS:
+            // do nothing
+            break;
+
+        case DISP_COLUMN_NAME:
+        case DISP_COLUMN_PROFESSION:
+            // left-click to view, right-click to zoom
+            if (enabler->mouse_lbut)
+            {
+                sel_row = click_unit;
+                events->insert(interface_key::UNITJOB_VIEW);
+            }
+            if (enabler->mouse_rbut)
+            {
+                sel_row = click_unit;
+                events->insert(interface_key::UNITJOB_ZOOM_CRE);
+            }
+            break;
+
+        case DISP_COLUMN_LABORS:
+            // left-click to toggle, right-click to just highlight
+            if (enabler->mouse_lbut || enabler->mouse_rbut)
+            {
+                sel_row = click_unit;
+                sel_column = click_labor;
+                if (enabler->mouse_lbut)
+                    events->insert(interface_key::SELECT);
+            }
+            break;
+        }
+        enabler->mouse_lbut = enabler->mouse_rbut = 0;
+    }
+
     UnitInfo *cur = units[sel_row];
     if (events->count(interface_key::SELECT) && (cur->allowEdit) && (columns[sel_column].labor != unit_labor::NONE))
     {
@@ -646,6 +745,11 @@ void viewscreen_unitlaborsst::render()
 
     Screen::clear();
     Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
+
+
+    Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_HAPPINESS], 2, "Hap.");
+    Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_NAME], 2, "Name");
+    Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_PROFESSION], 2, "Profession");
 
     for (int col = 0; col < col_widths[DISP_COLUMN_LABORS]; col++)
     {

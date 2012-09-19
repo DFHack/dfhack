@@ -54,7 +54,7 @@ using namespace DFHack;
 #include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_itemst.h"
-#include "df/viewscreen_layerst.h"
+#include "df/viewscreen_layer.h"
 #include "df/viewscreen_layer_workshop_profilest.h"
 #include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_layer_overall_healthst.h"
@@ -95,7 +95,7 @@ using df::global::selection_rect;
 using df::global::ui_menu_width;
 using df::global::ui_area_map_width;
 
-static df::layer_object_listst *getLayerList(df::viewscreen_layerst *layer, int idx)
+static df::layer_object_listst *getLayerList(df::viewscreen_layer *layer, int idx)
 {
     return virtual_cast<df::layer_object_listst>(vector_get(layer->layer_objects,idx));
 }
@@ -332,9 +332,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_military)
     focus += "/" + enum_item_key(screen->page);
 
     int cur_list;
-    if (list1->bright) cur_list = 0;
-    else if (list2->bright) cur_list = 1;
-    else if (list3->bright) cur_list = 2;
+    if (list1->active) cur_list = 0;
+    else if (list2->active) cur_list = 1;
+    else if (list3->active) cur_list = 2;
     else return;
 
     switch (screen->page)
@@ -420,7 +420,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_assigntrade)
     if (unsigned(list_idx) >= num_lists)
         return;
 
-    if (list1->bright)
+    if (list1->active)
         focus += "/Groups";
     else
         focus += "/Items";
@@ -458,10 +458,10 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_stockpile)
 
     focus += "/On";
 
-    if (list2->bright || list3->bright || screen->list_ids.empty()) {
+    if (list2->active || list3->active || screen->list_ids.empty()) {
         focus += "/" + enum_item_key(screen->cur_list);
 
-        if (list3->bright)
+        if (list3->active)
             focus += (screen->item_names.empty() ? "/None" : "/Item");
     }
 }
@@ -844,7 +844,7 @@ static df::item *getAnyItem(df::viewscreen *top)
     {
         auto list1 = getLayerList(screen, 0);
         auto list2 = getLayerList(screen, 1);
-        if (!list1 || !list2 || !list2->bright)
+        if (!list1 || !list2 || !list2->active)
             return NULL;
 
         int list_idx = vector_get(screen->visible_lists, list1->cursor, (int16_t)-1);

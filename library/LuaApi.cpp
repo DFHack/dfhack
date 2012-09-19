@@ -886,6 +886,12 @@ static bool items_moveToInventory
     return Items::moveToInventory(mc, item, unit, mode, body_part);
 }
 
+static bool items_remove(df::item *item, bool no_uncat)
+{
+    MapExtras::MapCache mc;
+    return Items::remove(mc, item, no_uncat);
+}
+
 static df::proj_itemst *items_makeProjectile(df::item *item)
 {
     MapExtras::MapCache mc;
@@ -904,6 +910,7 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPN(moveToBuilding, items_moveToBuilding),
     WRAPN(moveToInventory, items_moveToInventory),
     WRAPN(makeProjectile, items_makeProjectile),
+    WRAPN(remove, items_remove),
     { NULL, NULL }
 };
 
@@ -1077,7 +1084,9 @@ static int buildings_getCorrectSize(lua_State *state)
     return 5;
 }
 
-static int buildings_setSize(lua_State *state)
+namespace {
+
+int buildings_setSize(lua_State *state)
 {
     auto bld = Lua::CheckDFObject<df::building>(state, 1);
     df::coord2d size(luaL_optint(state, 2, 1), luaL_optint(state, 3, 1));
@@ -1098,11 +1107,13 @@ static int buildings_setSize(lua_State *state)
         return 1;
 }
 
+}
+
 static const luaL_Reg dfhack_buildings_funcs[] = {
     { "findAtTile", buildings_findAtTile },
     { "findCivzonesAt", buildings_findCivzonesAt },
     { "getCorrectSize", buildings_getCorrectSize },
-    { "setSize", buildings_setSize },
+    { "setSize", &Lua::CallWithCatchWrapper<buildings_setSize> },
     { NULL, NULL }
 };
 

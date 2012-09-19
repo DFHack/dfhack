@@ -353,7 +353,7 @@ end
 MenuOverlay = defclass(MenuOverlay, DwarfOverlay)
 
 function MenuOverlay:updateLayout()
-    DwarfOverlay.updateLayout(self)
+    MenuOverlay.super.updateLayout(self)
     self.frame_rect = self.df_layout.menu
 end
 
@@ -361,7 +361,7 @@ MenuOverlay.getWindowSize = gui.FramedScreen.getWindowSize
 MenuOverlay.getMousePos = gui.FramedScreen.getMousePos
 
 function MenuOverlay:onAboutToShow(below)
-    DwarfOverlay.onAboutToShow(self,below)
+    MenuOverlay.super.onAboutToShow(self,below)
 
     self:updateLayout()
     if not self.df_layout.menu then

@@ -730,6 +730,18 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
         item->flags.bits.in_inventory = false;
         return true;
     }
+    else if (item->flags.bits.removed)
+    {
+        item->flags.bits.removed = false;
+
+        if (item->flags.bits.garbage_collect)
+        {
+            item->flags.bits.garbage_collect = false;
+            item->categorize(true);
+        }
+
+        return true;
+    }
     else
         return false;
 }
@@ -868,6 +880,26 @@ bool DFHack::Items::moveToInventory(
 
     resetUnitInvFlags(unit, newInventoryItem);
 
+    return true;
+}
+
+bool Items::remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat)
+{
+    CHECK_NULL_POINTER(item);
+
+    auto pos = getPosition(item);
+
+    if (!detachItem(mc, item))
+        return false;
+
+    if (pos.isValid())
+        item->pos = pos;
+
+    if (!no_uncat)
+        item->uncategorize();
+
+    item->flags.bits.removed = true;
+    item->flags.bits.garbage_collect = !no_uncat;
     return true;
 }
 

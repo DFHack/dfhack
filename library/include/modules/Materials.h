@@ -131,6 +131,11 @@ namespace DFHack
         bool findPlant(const std::string &token, const std::string &subtoken);
         bool findCreature(const std::string &token, const std::string &subtoken);
 
+        bool findProduct(df::material *material, const std::string &name);
+        bool findProduct(const MaterialInfo &info, const std::string &name) {
+            return findProduct(info.material, name);
+        }
+
         std::string getToken();
         std::string toString(uint16_t temp = 10015, bool named = true);
 

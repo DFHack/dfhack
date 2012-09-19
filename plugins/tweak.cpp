@@ -29,11 +29,20 @@
 #include "df/criminal_case.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_layer_unit_actionst.h"
 #include "df/squad_order_trainst.h"
 #include "df/ui_build_selector.h"
 #include "df/building_trapst.h"
 #include "df/item_actual.h"
+#include "df/item_liquipowder.h"
+#include "df/item_barst.h"
+#include "df/item_threadst.h"
+#include "df/item_clothst.h"
 #include "df/contaminant.h"
+#include "df/layer_object.h"
+#include "df/reaction.h"
+#include "df/reaction_reagent_itemst.h"
+#include "df/reaction_reagent_flags.h"
 
 #include <stdlib.h>
 
@@ -93,6 +102,13 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Further improves temperature updates by ensuring that 1 degree of\n"
         "    item temperature is crossed in no more than specified number of frames\n"
         "    when updating from the environment temperature. Use 0 to disable.\n"
+        "  tweak fix-dimensions [disable]\n"
+        "    Fixes subtracting small amount of thread/cloth/liquid from a stack\n"
+        "    by splitting the stack and subtracting from the remaining single item.\n"
+        "  tweak advmode-contained [disable]\n"
+        "    Fixes custom reactions with container inputs in advmode. The issue is\n"
+        "    that the screen tries to force you to select the contents separately\n"
+        "    from the container. This forcefully skips child reagents.\n"
     ));
     return CR_OK;
 }
@@ -343,6 +359,141 @@ IMPLEMENT_VMETHOD_INTERPOSE(fast_heat_hook, updateTempFromMap);
 IMPLEMENT_VMETHOD_INTERPOSE(fast_heat_hook, updateTemperature);
 IMPLEMENT_VMETHOD_INTERPOSE(fast_heat_hook, adjustTemperature);
 
+static void correct_dimension(df::item_actual *self, int32_t &delta, int32_t dim)
+{
+    // Zero dimension or remainder?
+    if (dim <= 0 || self->stack_size <= 1) return;
+    int rem = delta % dim;
+    if (rem == 0) return;
+    // If destroys, pass through
+    int intv = delta / dim;
+    if (intv >= self->stack_size) return;
+    // Subtract int part
+    delta = rem;
+    self->stack_size -= intv;
+    if (self->stack_size <= 1) return;
+
+    // If kills the item or cannot split, round up.
+    if (!self->flags.bits.in_inventory || !Items::getContainer(self))
+    {
+        delta = dim;
+        return;
+    }
+
+    // Otherwise split the stack
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    out.print("fix-dimensions: splitting stack #%d for delta %d.\n", self->id, delta);
+
+    auto copy = self->splitStack(self->stack_size-1, true);
+    if (copy) copy->categorize(true);
+}
+
+struct dimension_lqp_hook : df::item_liquipowder {
+    typedef df::item_liquipowder interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
+    {
+        correct_dimension(this, delta, dimension);
+        return INTERPOSE_NEXT(subtractDimension)(delta);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(dimension_lqp_hook, subtractDimension);
+
+struct dimension_bar_hook : df::item_barst {
+    typedef df::item_barst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
+    {
+        correct_dimension(this, delta, dimension);
+        return INTERPOSE_NEXT(subtractDimension)(delta);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(dimension_bar_hook, subtractDimension);
+
+struct dimension_thread_hook : df::item_threadst {
+    typedef df::item_threadst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
+    {
+        correct_dimension(this, delta, dimension);
+        return INTERPOSE_NEXT(subtractDimension)(delta);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(dimension_thread_hook, subtractDimension);
+
+struct dimension_cloth_hook : df::item_clothst {
+    typedef df::item_clothst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
+    {
+        correct_dimension(this, delta, dimension);
+        return INTERPOSE_NEXT(subtractDimension)(delta);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(dimension_cloth_hook, subtractDimension);
+
+struct advmode_contained_hook : df::viewscreen_layer_unit_actionst {
+    typedef df::viewscreen_layer_unit_actionst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        auto old_reaction = cur_reaction;
+        auto old_reagent = reagent;
+
+        INTERPOSE_NEXT(feed)(input);
+
+        if (cur_reaction && (cur_reaction != old_reaction || reagent != old_reagent))
+        {
+            old_reagent = reagent;
+
+            // Skip reagents already contained by others
+            while (reagent < (int)cur_reaction->reagents.size()-1)
+            {
+                if (!cur_reaction->reagents[reagent]->flags.bits.IN_CONTAINER)
+                    break;
+                reagent++;
+            }
+
+            if (old_reagent != reagent)
+            {
+                // Reproduces a tiny part of the orginal screen code
+                choice_items.clear();
+
+                auto preagent = cur_reaction->reagents[reagent];
+                reagent_amnt_left = preagent->quantity;
+
+                for (int i = held_items.size()-1; i >= 0; i--)
+                {
+                    if (!preagent->matchesRoot(held_items[i], cur_reaction->index))
+                        continue;
+                    if (linear_index(sel_items, held_items[i]) >= 0)
+                        continue;
+                    choice_items.push_back(held_items[i]);
+                }
+
+                layer_objects[6]->setListLength(choice_items.size());
+
+                if (!choice_items.empty())
+                {
+                    layer_objects[4]->active = layer_objects[5]->active = false;
+                    layer_objects[6]->active = true;
+                }
+                else if (layer_objects[6]->active)
+                {
+                    layer_objects[6]->active = false;
+                    layer_objects[5]->active = true;
+                }
+            }
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(advmode_contained_hook, feed);
+
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
     if (vector_get(parameters, 1) == "disable")
@@ -490,6 +641,17 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         enable_hook(out, INTERPOSE_HOOK(fast_heat_hook, updateTempFromMap), parameters);
         enable_hook(out, INTERPOSE_HOOK(fast_heat_hook, updateTemperature), parameters);
         enable_hook(out, INTERPOSE_HOOK(fast_heat_hook, adjustTemperature), parameters);
+    }
+    else if (cmd == "fix-dimensions")
+    {
+        enable_hook(out, INTERPOSE_HOOK(dimension_lqp_hook, subtractDimension), parameters);
+        enable_hook(out, INTERPOSE_HOOK(dimension_bar_hook, subtractDimension), parameters);
+        enable_hook(out, INTERPOSE_HOOK(dimension_thread_hook, subtractDimension), parameters);
+        enable_hook(out, INTERPOSE_HOOK(dimension_cloth_hook, subtractDimension), parameters);
+    }
+    else if (cmd == "advmode-contained")
+    {
+        enable_hook(out, INTERPOSE_HOOK(advmode_contained_hook, feed), parameters);
     }
     else 
         return CR_WRONG_USAGE;

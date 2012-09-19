@@ -283,6 +283,19 @@ bool MaterialInfo::findCreature(const std::string &token, const std::string &sub
     return decode(-1);
 }
 
+bool MaterialInfo::findProduct(df::material *material, const std::string &name)
+{
+    if (!material || name.empty())
+        return decode(-1);
+
+    auto &pids = material->reaction_product.id;
+    for (size_t i = 0; i < pids.size(); i++)
+        if ((*pids[i]) == name)
+            return decode(material->reaction_product.material, i);
+
+    return decode(-1);
+}
+
 std::string MaterialInfo::getToken()
 {
     if (isNone())

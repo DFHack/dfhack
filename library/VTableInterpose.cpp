@@ -438,6 +438,8 @@ void VMethodInterposeLinkBase::remove()
 
             if (next)
                 prev->child_next.insert(next);
+            else
+                prev->child_hosts.insert(host);
         }
     }
 

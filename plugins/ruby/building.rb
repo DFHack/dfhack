@@ -21,8 +21,8 @@ module DFHack
                     if b.room.extents
                         dx = x - b.room.x
                         dy = y - b.room.y
-                        dx >= 0 and dx <= b.room.width and
-                        dy >= 0 and dy <= b.room.height and
+                        dx >= 0 and dx < b.room.width and
+                        dy >= 0 and dy < b.room.height and
                         b.room.extents[ dy*b.room.width + dx ] > 0
                     else
                         b.x1 <= x and b.x2 >= x and
@@ -221,14 +221,23 @@ module DFHack
             }
         end
 
-        # link bld into other rooms if it is inside their extents
+        # link bld into other rooms if it is inside their extents or vice versa
         def building_linkrooms(bld)
             world.buildings.other[:ANY_FREE].each { |ob|
-                next if !ob.is_room or ob.z != bld.z
-                next if !ob.room.extents or ob.room.extents[ob.room.width*(bld.y1-ob.room.y)+(bld.x1-ob.room.x)] == 0
-                ui.equipment.update.buildings = true
-                ob.children << bld
-                bld.parents << ob
+                next if ob.z != bld.z
+                if bld.is_room and bld.room.extents
+                    next if ob.is_room or ob.x1 < bld.room.x or ob.x1 >= bld.room.x+bld.room.width or ob.y1 < bld.room.y or ob.y1 >= bld.room.y+bld.room.height
+                    next if bld.room.extents[bld.room.width*(ob.y1-bld.room.y)+(ob.x1-bld.room.x)] == 0
+                    ui.equipment.update.buildings = true
+                    bld.children << ob
+                    ob.parents << bld
+                elsif ob.is_room and ob.room.extents
+                    next if bld.is_room or bld.x1 < ob.room.x or bld.x1 >= ob.room.x+ob.room.width or bld.y1 < ob.room.y or bld.y1 >= ob.room.y+ob.room.height
+                    next if ob.room.extents[ob.room.width*(bld.y1-ob.room.y)+(bld.x1-ob.room.x)].to_i == 0
+                    ui.equipment.update.buildings = true
+                    ob.children << bld
+                    bld.parents << ob
+                end
             }
         end
 

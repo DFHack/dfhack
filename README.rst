@@ -1491,8 +1491,8 @@ categories.
 Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
 to toggle all labors within the selected category.
 
-Press the +- keys to sort the unit list according to the currently selected
-skill/labor, and press the */ keys to sort the unit list by Name, Profession,
+Press the ``+-`` keys to sort the unit list according to the currently selected
+skill/labor, and press the ``*/`` keys to sort the unit list by Name, Profession,
 or Happiness (using Tab to select which sort method to use here).
 
 With a unit selected, you can press the "v" key to view its properties (and
@@ -1500,6 +1500,7 @@ possibly set a custom nickname or profession) or the "c" key to exit
 Manipulator and zoom to its position within your fortress.
 
 The following mouse shortcuts are also available:
+
 * Click on a column header to sort the unit list. Left-click to sort it in one
   direction (descending for happiness or labors/skills, ascending for name or
   profession) and right-click to sort it in the opposite direction.
@@ -1574,14 +1575,19 @@ Front-end to the siege-engine plugin implemented by the gui/siege-engine script.
 key and activate after selecting a siege engine in 'q' mode.
 
 The main mode displays the current target, selected ammo item type, linked stockpiles and
-the allowed operator skill range. The map tile color is changed to reflect if it can be
-hit by the selected engine.
+the allowed operator skill range. The map tile color is changed to signify if it can be
+hit by the selected engine: green for fully reachable, blue for out of range, red for blocked,
+yellow for partially blocked.
 
 Pressing 'r' changes into the target selection mode, which works by highlighting two points
 with Enter like all designations. When a target area is set, the engine projectiles are
 aimed at that area, or units within it, instead of the vanilla four directions.
 
-Pressing 't' switches to stockpile selection.
+After setting the target in this way for one engine, you can 'paste' the same area into others
+just by pressing 'p' in the main page of this script. The area to paste is kept until you quit
+DF, or select another area manually.
+
+Pressing 't' switches to a mode for selecting a stockpile to take ammo from.
 
 Exiting from the siege engine script via ESC reverts the view to the state prior to starting
 the script. Shift-ESC retains the current viewport, and also exits from the 'q' mode to main
@@ -1702,4 +1708,5 @@ produce contaminants on the items instead of improvements.
 
 Intended to give some use to all those poisons that can be bought from caravans.
 
-To be really useful this needs patches from bug 808 and ``tweak fix-dimensions``.
+To be really useful this needs patches from bug 808, ``tweak fix-dimensions``
+and ``tweak advmode-contained``.

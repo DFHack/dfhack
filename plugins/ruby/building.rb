@@ -225,7 +225,7 @@ module DFHack
         def building_linkrooms(bld)
             world.buildings.other[:ANY_FREE].each { |ob|
                 next if !ob.is_room or ob.z != bld.z
-                next if !ob.room.extents or !ob.isExtentShaped or ob.room.extents[ob.room.width*(bld.y1-ob.room.y)+(bld.x1-ob.room.x)] == 0
+                next if !ob.room.extents or ob.room.extents[ob.room.width*(bld.y1-ob.room.y)+(bld.x1-ob.room.x)] == 0
                 ui.equipment.update.buildings = true
                 ob.children << bld
                 bld.parents << ob

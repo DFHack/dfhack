@@ -338,7 +338,7 @@ public:
 
     std::string getFocusString() { return "unitlabors"; }
 
-    viewscreen_unitlaborsst(vector<df::unit*> &src);
+    viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos);
     ~viewscreen_unitlaborsst() { };
 
 protected:
@@ -354,7 +354,7 @@ protected:
     void calcSize ();
 };
 
-viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src)
+viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos)
 {
     for (size_t i = 0; i < src.size(); i++)
     {
@@ -382,12 +382,23 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src)
 
         units.push_back(cur);
     }
-    std::sort(units.begin(), units.end(), sortByName);
-
     altsort = ALTSORT_NAME;
-    first_row = sel_row = 0;
     first_column = sel_column = 0;
+
+    first_row = 0;
+    sel_row = cursor_pos;
     calcSize();
+
+    // recalculate first_row to roughly match the original layout
+    first_row = 0;
+    while (first_row < sel_row - num_rows + 1)
+        first_row += num_rows + 2;
+    // make sure the selection stays visible
+    if (first_row > sel_row)
+        first_row = sel_row - num_rows + 1;
+    // don't scroll beyond the end
+    if (first_row > units.size() - num_rows)
+        first_row = units.size() - num_rows;
 }
 
 void viewscreen_unitlaborsst::calcSize()
@@ -528,7 +539,11 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (first_column < sel_column - col_widths[DISP_COLUMN_LABORS] + 1)
         first_column = sel_column - col_widths[DISP_COLUMN_LABORS] + 1;
 
-    // handle mouse input
+    int input_row = sel_row;
+    int input_column = sel_column;
+    int input_sort = altsort;
+
+    // Translate mouse input to appropriate keyboard input
     if (enabler->tracking_on && gps->mouse_x != -1 && gps->mouse_y != -1)
     {
         int click_header = DISP_COLUMN_MAX; // group ID of the column header clicked
@@ -560,34 +575,44 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         case DISP_COLUMN_HAPPINESS:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                descending = enabler->mouse_lbut;
-                std::sort(units.begin(), units.end(), sortByHappiness);
+                input_sort = ALTSORT_HAPPINESS;
+                if (enabler->mouse_lbut)
+                    events->insert(interface_key::SECONDSCROLL_PAGEUP);
+                if (enabler->mouse_rbut)
+                    events->insert(interface_key::SECONDSCROLL_PAGEDOWN);
             }
             break;
 
         case DISP_COLUMN_NAME:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                descending = enabler->mouse_rbut;
-                std::sort(units.begin(), units.end(), sortByName);
+                input_sort = ALTSORT_NAME;
+                if (enabler->mouse_lbut)
+                    events->insert(interface_key::SECONDSCROLL_PAGEDOWN);
+                if (enabler->mouse_rbut)
+                    events->insert(interface_key::SECONDSCROLL_PAGEUP);
             }
             break;
 
         case DISP_COLUMN_PROFESSION:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                descending = enabler->mouse_rbut;
-                std::sort(units.begin(), units.end(), sortByProfession);
+                input_sort = ALTSORT_PROFESSION;
+                if (enabler->mouse_lbut)
+                    events->insert(interface_key::SECONDSCROLL_PAGEDOWN);
+                if (enabler->mouse_rbut)
+                    events->insert(interface_key::SECONDSCROLL_PAGEUP);
             }
             break;
 
         case DISP_COLUMN_LABORS:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                descending = enabler->mouse_lbut;
-                sort_skill = columns[click_labor].skill;
-                sort_labor = columns[click_labor].labor;
-                std::sort(units.begin(), units.end(), sortBySkill);
+                input_column = click_labor;
+                if (enabler->mouse_lbut)
+                    events->insert(interface_key::SECONDSCROLL_UP);
+                if (enabler->mouse_rbut)
+                    events->insert(interface_key::SECONDSCROLL_DOWN);
             }
             break;
         }
@@ -603,12 +628,12 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             // left-click to view, right-click to zoom
             if (enabler->mouse_lbut)
             {
-                sel_row = click_unit;
+                input_row = click_unit;
                 events->insert(interface_key::UNITJOB_VIEW);
             }
             if (enabler->mouse_rbut)
             {
-                sel_row = click_unit;
+                input_row = click_unit;
                 events->insert(interface_key::UNITJOB_ZOOM_CRE);
             }
             break;
@@ -617,21 +642,28 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             // left-click to toggle, right-click to just highlight
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                sel_row = click_unit;
-                sel_column = click_labor;
                 if (enabler->mouse_lbut)
+                {
+                    input_row = click_unit;
+                    input_column = click_labor;
                     events->insert(interface_key::SELECT);
+                }
+                if (enabler->mouse_rbut)
+                {
+                    sel_row = click_unit;
+                    sel_column = click_labor;
+                }
             }
             break;
         }
         enabler->mouse_lbut = enabler->mouse_rbut = 0;
     }
 
-    UnitInfo *cur = units[sel_row];
-    if (events->count(interface_key::SELECT) && (cur->allowEdit) && (columns[sel_column].labor != unit_labor::NONE))
+    UnitInfo *cur = units[input_row];
+    if (events->count(interface_key::SELECT) && (cur->allowEdit) && (columns[input_column].labor != unit_labor::NONE))
     {
         df::unit *unit = cur->unit;
-        const SkillColumn &col = columns[sel_column];
+        const SkillColumn &col = columns[input_column];
         bool newstatus = !unit->status.labors[col.labor];
         if (col.special)
         {
@@ -650,7 +682,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::SELECT_ALL) && (cur->allowEdit))
     {
         df::unit *unit = cur->unit;
-        const SkillColumn &col = columns[sel_column];
+        const SkillColumn &col = columns[input_column];
         bool newstatus = !unit->status.labors[col.labor];
         for (int i = 0; i < NUM_COLUMNS; i++)
         {
@@ -675,15 +707,15 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::SECONDSCROLL_UP) || events->count(interface_key::SECONDSCROLL_DOWN))
     {
         descending = events->count(interface_key::SECONDSCROLL_UP);
-        sort_skill = columns[sel_column].skill;
-        sort_labor = columns[sel_column].labor;
+        sort_skill = columns[input_column].skill;
+        sort_labor = columns[input_column].labor;
         std::sort(units.begin(), units.end(), sortBySkill);
     }
 
     if (events->count(interface_key::SECONDSCROLL_PAGEUP) || events->count(interface_key::SECONDSCROLL_PAGEDOWN))
     {
         descending = events->count(interface_key::SECONDSCROLL_PAGEUP);
-        switch (altsort)
+        switch (input_sort)
         {
         case ALTSORT_NAME:
             std::sort(units.begin(), units.end(), sortByName);
@@ -718,7 +750,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         {
             for (int i = 0; i < unitlist->units[unitlist->page].size(); i++)
             {
-                if (unitlist->units[unitlist->page][i] == units[sel_row]->unit)
+                if (unitlist->units[unitlist->page][i] == units[input_row]->unit)
                 {
                     unitlist->cursor_pos[unitlist->page] = i;
                     unitlist->feed(events);
@@ -964,7 +996,7 @@ struct unitlist_hook : df::viewscreen_unitlistst
         {
             if (units[page].size())
             {
-                Screen::show(new viewscreen_unitlaborsst(units[page]));
+                Screen::show(new viewscreen_unitlaborsst(units[page], cursor_pos[page]));
                 return;
             }
         }

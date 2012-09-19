@@ -199,7 +199,8 @@ Examples:
 changevein
 ==========
 Changes material of the vein under cursor to the specified inorganic RAW
-material.
+material. Only affects tiles within the current 16x16 block - for veins and
+large clusters, you will need to use this command multiple times.
 
 Example:
 --------
@@ -511,12 +512,6 @@ fixveins
 Removes invalid references to mineral inclusions and restores missing ones.
 Use this if you broke your embark with tools like tiletypes, or if you
 accidentally placed a construction on top of a valuable mineral floor.
-
-fixwagons
-=========
-Due to a bug in all releases of version 0.31, merchants no longer bring wagons
-with their caravans. This command re-enables them for all appropriate
-civilizations.
 
 flows
 =====
@@ -1477,10 +1472,41 @@ are mostly implemented by lua scripts.
 Dwarf Manipulator
 =================
 
-Implemented by the manipulator plugin. To activate, open the unit screen and press 'l'.
+Implemented by the manipulator plugin. To activate, open the unit screen and
+press 'l'.
 
-This tool implements a Dwarf Therapist-like interface within the game ui.
+This tool implements a Dwarf Therapist-like interface within the game UI. The
+far left column displays the unit's Happiness (color-coded based on its
+value), and the right half of the screen displays each dwarf's labor settings
+and skill levels (0-9 for Dabbling thru Professional, A-E for Great thru Grand
+Master, and U-Z for Legendary thru Legendary+5). Cells with red backgrounds
+denote skills not controlled by labors.
 
+Use the arrow keys or number pad to move the cursor around, holding Shift to
+move 10 tiles at a time.
+
+Press the Z-Up (<) and Z-Down (>) keys to move quickly between labor/skill
+categories.
+
+Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
+to toggle all labors within the selected category.
+
+Press the +- keys to sort the unit list according to the currently selected
+skill/labor, and press the */ keys to sort the unit list by Name, Profession,
+or Happiness (using Tab to select which sort method to use here).
+
+With a unit selected, you can press the "v" key to view its properties (and
+possibly set a custom nickname or profession) or the "c" key to exit
+Manipulator and zoom to its position within your fortress.
+
+The following mouse shortcuts are also available:
+* Click on a column header to sort the unit list. Left-click to sort it in one
+  direction (descending for happiness or labors/skills, ascending for name or
+  profession) and right-click to sort it in the opposite direction.
+* Left-click on a labor cell to toggle that labor. Right-click to move the
+  cursor onto that cell instead of toggling it.
+* Left-click on a unit's name or profession to view its properties.
+* Right-click on a unit's name or profession to zoom to it.
 
 Liquids
 =======

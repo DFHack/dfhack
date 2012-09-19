@@ -423,11 +423,20 @@ module DFHack
             def initialize(length)
                 @_length = length
             end
+            def length
+                if @_length == -1
+                    maxlen = 4096 - (@_memaddr & 0xfff)
+                    maxlen += 4096 until len = DFHack.memory_read(@_memaddr, maxlen).index(?\0)
+                    len
+                else
+                    @_length
+                end
+            end
             def _get
-                DFHack.memory_read(@_memaddr, @_length)
+                DFHack.memory_read(@_memaddr, length)
             end
             def _set(v)
-                DFHack.memory_write(@_memaddr, v[0, @_length])
+                DFHack.memory_write(@_memaddr, v[0, length])
             end
         end
 

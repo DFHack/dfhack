@@ -1821,6 +1821,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_MAP_LOADED:
+        if (!gamemode || *gamemode == game_mode::DWARF)
         {
             auto pworld = Core::getInstance().getWorld();
             bool enable = pworld->GetPersistentData("siege-engine/enabled").isValid();

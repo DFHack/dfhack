@@ -777,6 +777,10 @@ Gui module
   last case, the highlighted *contained item* is returned, not
   the container itself.
 
+* ``dfhack.gui.getSelectedBuilding([silent])``
+
+  Returns the building selected via *'q'*, *'t'*, *'k'* or *'i'*.
+
 * ``dfhack.gui.showAnnouncement(text,color[,is_bright])``
 
   Adds a regular announcement with given text, color, and brightness.

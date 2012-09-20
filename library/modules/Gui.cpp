@@ -933,6 +933,64 @@ df::item *Gui::getSelectedItem(color_ostream &out, bool quiet)
     return item;
 }
 
+static df::building *getAnyBuilding(df::viewscreen *top)
+{
+    using namespace ui_sidebar_mode;
+    using df::global::ui;
+    using df::global::ui_look_list;
+    using df::global::ui_look_cursor;
+    using df::global::world;
+    using df::global::ui_sidebar_menus;
+
+    if (!Gui::dwarfmode_hotkey(top))
+        return NULL;
+
+    switch (ui->main.mode) {
+    case LookAround:
+    {
+        if (!ui_look_list || !ui_look_cursor)
+            return NULL;
+
+        auto item = vector_get(ui_look_list->items, *ui_look_cursor);
+        if (item && item->type == df::ui_look_list::T_items::Building)
+            return item->building;
+        else
+            return NULL;
+    }
+    case QueryBuilding:
+    case BuildingItems:
+    {
+        return world->selected_building;
+    }
+    case Zones:
+    case ZonesPenInfo:
+    case ZonesPitInfo:
+    case ZonesHospitalInfo:
+    {
+        if (ui_sidebar_menus)
+            return ui_sidebar_menus->zone.selected;
+        return NULL;
+    }
+    default:
+        return NULL;
+    }
+}
+
+bool Gui::any_building_hotkey(df::viewscreen *top)
+{
+    return getAnyBuilding(top) != NULL;
+}
+
+df::building *Gui::getSelectedBuilding(color_ostream &out, bool quiet)
+{
+    df::building *building = getAnyBuilding(Core::getTopViewscreen());
+
+    if (!building && !quiet)
+        out.printerr("No building is selected in the UI.\n");
+
+    return building;
+}
+
 //
 
 static void doShowAnnouncement(

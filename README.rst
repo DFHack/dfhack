@@ -1510,6 +1510,10 @@ The following mouse shortcuts are also available:
 * Left-click on a unit's name or profession to view its properties.
 * Right-click on a unit's name or profession to zoom to it.
 
+Pressing ESC normally returns to the unit screen, but Shift-ESC would exit
+directly to the main dwarf mode screen.
+
+
 Liquids
 =======
 

@@ -331,6 +331,12 @@ class viewscreen_unitlaborsst : public dfhack_viewscreen {
 public:
     void feed(set<df::interface_key> *events);
 
+    void logic() {
+        dfhack_viewscreen::logic();
+        if (do_refresh_names)
+            refreshNames();
+    }
+
     void render();
     void resize(int w, int h) { calcSize(); }
 
@@ -347,12 +353,14 @@ protected:
     vector<UnitInfo *> units;
     altsort_mode altsort;
 
+    bool do_refresh_names;
     int first_row, sel_row, num_rows;
     int first_column, sel_column;
 
     int col_widths[DISP_COLUMN_MAX];
     int col_offsets[DISP_COLUMN_MAX];
 
+    void refreshNames();
     void calcSize ();
 };
 
@@ -377,15 +385,14 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         if (!ENUM_ATTR(profession, can_assign_labor, unit->profession))
             cur->allowEdit = false;
 
-        cur->name = Translation::TranslateName(&unit->name, false);
-        cur->transname = Translation::TranslateName(&unit->name, true);
-        cur->profession = Units::getProfessionName(unit);
         cur->color = Units::getProfessionColor(unit);
 
         units.push_back(cur);
     }
     altsort = ALTSORT_NAME;
     first_column = sel_column = 0;
+
+    refreshNames();
 
     first_row = 0;
     sel_row = cursor_pos;
@@ -401,6 +408,21 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     // don't scroll beyond the end
     if (first_row > units.size() - num_rows)
         first_row = units.size() - num_rows;
+}
+
+void viewscreen_unitlaborsst::refreshNames()
+{
+    do_refresh_names = false;
+
+    for (size_t i = 0; i < units.size(); i++)
+    {
+        UnitInfo *cur = units[i];
+        df::unit *unit = cur->unit;
+
+        cur->name = Translation::TranslateName(&unit->name, false);
+        cur->transname = Translation::TranslateName(&unit->name, true);
+        cur->profession = Units::getProfessionName(unit);
+    }
 }
 
 void viewscreen_unitlaborsst::calcSize()
@@ -476,15 +498,24 @@ void viewscreen_unitlaborsst::calcSize()
 
 void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 {
-    if (events->count(interface_key::LEAVESCREEN))
+    bool leave_all = events->count(interface_key::LEAVESCREEN_ALL);
+    if (leave_all || events->count(interface_key::LEAVESCREEN))
     {
         events->clear();
         Screen::dismiss(this);
+        if (leave_all)
+        {
+            events->insert(interface_key::LEAVESCREEN);
+            parent->feed(events);
+        }
         return;
     }
 
     if (!units.size())
         return;
+
+    if (do_refresh_names)
+        refreshNames();
 
     if (events->count(interface_key::CURSOR_UP) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_UPRIGHT))
         sel_row--;
@@ -758,6 +789,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                     unitlist->feed(events);
                     if (Screen::isDismissed(unitlist))
                         Screen::dismiss(this);
+                    else
+                        do_refresh_names = true;
                     break;
                 }
             }
@@ -990,6 +1023,9 @@ void viewscreen_unitlaborsst::render()
 
 df::unit *viewscreen_unitlaborsst::getSelectedUnit()
 {
+    // This query might be from the rename plugin
+    do_refresh_names = true;
+
     return units[sel_row]->unit;
 }
 

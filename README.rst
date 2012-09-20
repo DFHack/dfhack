@@ -1,3 +1,7 @@
+#############
+DFHack Readme
+#############
+
 ============
 Introduction
 ============
@@ -97,10 +101,48 @@ the issues tracker on github, contact me (peterix@gmail.com) or visit the
 =============
 The init file
 =============
-If your DF folder contains a file named dfhack.init, its contents will be run
+If your DF folder contains a file named ``dfhack.init``, its contents will be run
 every time you start DF. This allows setting up keybindings. An example file
-is provided as dfhack.init-example - you can tweak it and rename to dfhack.init
+is provided as ``dfhack.init-example`` - you can tweak it and rename to dfhack.init
 if you want to use this functionality.
+
+Setting keybindings
+===================
+
+To set keybindings, use the built-in ``keybinding`` command. Like any other
+command it can be used at any time from the console, but it is also meaningful
+in the DFHack init file.
+
+Currently it supports any combination of Ctrl/Alt/Shift with F1-F9, or A-Z.
+
+Possible ways to call the command:
+
+:keybinding list <key>: List bindings active for the key combination.
+:keybinding clear <key> <key>...: Remove bindings for the specified keys.
+:keybinding add <key> "cmdline" "cmdline"...: Add bindings for the specified
+                                              key.
+:keybinding set <key> "cmdline" "cmdline"...: Clear, and then add bindings for
+                                              the specified key.
+
+The *<key>* parameter above has the following *case-sensitive* syntax::
+
+    [Ctrl-][Alt-][Shift-]KEY[@context]
+
+where the *KEY* part can be F1-F9 or A-Z, and [] denote optional parts.
+
+When multiple commands are bound to the same key combination, DFHack selects
+the first applicable one. Later 'add' commands, and earlier entries within one
+'add' command have priority. Commands that are not specifically intended for use
+as a hotkey are always considered applicable.
+
+The *context* part in the key specifier above can be used to explicitly restrict
+the UI state where the binding would be applicable. If called without parameters,
+the ``keybinding`` command among other things prints the current context string.
+Only bindings with a *context* tag that either matches the current context fully,
+or is a prefix ending at a '/' boundary would be considered for execution, i.e.
+for context ``foo/bar/baz``, possible matches are any of ``@foo/bar/baz``, ``@foo/bar``,
+``@foo`` or none.
+
 
 ========
 Commands
@@ -575,27 +617,6 @@ job-duplicate
 Duplicate the selected job in a workshop:
  * In 'q' mode, when a job is highlighted within a workshop or furnace building,
    instantly duplicates the job.
-
-keybinding
-==========
-
-Manages DFHack keybindings.
-
-Currently it supports any combination of Ctrl/Alt/Shift with F1-F9, or A-Z.
-
-Options
--------
-:keybinding list <key>: List bindings active for the key combination.
-:keybinding clear <key> <key>...: Remove bindings for the specified keys.
-:keybinding add <key> "cmdline" "cmdline"...: Add bindings for the specified
-                                              key.
-:keybinding set <key> "cmdline" "cmdline"...: Clear, and then add bindings for
-                                              the specified key.
-
-When multiple commands are bound to the same key combination, DFHack selects
-the first applicable one. Later 'add' commands, and earlier entries within one
-'add' command have priority. Commands that are not specifically intended for use
-as a hotkey are always considered applicable.
 
 liquids
 =======
@@ -1376,6 +1397,70 @@ also tries to have dwarves specialize in specific skills.
     while it is enabled.
 
 For detailed usage information, see 'help autolabor'.
+
+
+=======
+Scripts
+=======
+
+Lua or ruby scripts placed in the hack/scripts/ directory are considered for
+execution as if they were native DFHack commands. They are listed at the end
+of the 'ls' command output.
+
+Note: scripts in subdirectories of hack/scripts/ can still be called, but will
+only be listed by ls if called as 'ls -a'. This is intended as a way to hide
+scripts that are obscure, developer-oriented, or should be used as keybindings.
+
+Some notable scripts:
+
+quicksave
+=========
+
+If called in dwarf mode, makes DF immediately auto-save the game by setting a flag
+normally used in seasonal auto-save.
+
+setfps
+======
+
+Run ``setfps <number>`` to set the FPS cap at runtime, in case you want to watch
+combat in slow motion or something :)
+
+
+fix/*
+=====
+
+Scripts in this subdirectory fix various bugs and issues, some of them obscure.
+
+* fix/dead-units
+
+  Removes uninteresting dead units from the unit list. Doesn't seem to give any
+  noticeable performance gain, but migrants normally stop if the unit list grows
+  to around 3000 units, and this script reduces it back.
+
+* fix/population-cap
+
+  Run this after every migrant wave to ensure your population cap is not exceeded.
+  The issue with the cap is that it is compared to the population number reported
+  by the last caravan, so once it drops below the cap, migrants continue to come
+  until that number is updated again.
+
+* fix/stable-temp
+
+  Instantly sets the temperature of all free-lying items to be in equilibrium with
+  the environment and stops temperature updates. In order to maintain this efficient
+  state however, use ``tweak stable-temp`` and ``tweak fast-heat``.
+
+* fix/item-occupancy
+
+  Diagnoses and fixes issues with nonexistant 'items occupying site', usually
+  caused by autodump bugs or other hacking mishaps.
+
+
+gui/*
+=====
+
+Scripts that implement dialogs inserted into the main game window are put in this
+directory.
 
 
 growcrops

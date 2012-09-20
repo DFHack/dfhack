@@ -10,9 +10,11 @@
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
+#include "modules/Screen.h"
 
 #include <VTableInterpose.h>
 #include "df/ui.h"
+#include "df/ui_sidebar_menus.h"
 #include "df/world.h"
 #include "df/squad.h"
 #include "df/unit.h"
@@ -27,6 +29,8 @@
 #include "df/building_furnacest.h"
 #include "df/building_trapst.h"
 #include "df/building_siegeenginest.h"
+#include "df/building_civzonest.h"
+#include "df/viewscreen_dwarfmodest.h"
 
 #include "RemoteServer.h"
 #include "rename.pb.h"
@@ -43,6 +47,7 @@ using namespace df::enums;
 using namespace dfproto;
 
 using df::global::ui;
+using df::global::ui_sidebar_menus;
 using df::global::world;
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event);
@@ -66,8 +71,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
             "    (a building must be highlighted via 'q')\n"
         ));
 
-        if (Core::getInstance().isMapLoaded())
-            plugin_onstatechange(out, SC_MAP_LOADED);
+        if (Core::getInstance().isWorldLoaded())
+            plugin_onstatechange(out, SC_WORLD_LOADED);
     }
 
     return CR_OK;
@@ -78,10 +83,10 @@ static void init_buildings(bool enable);
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
-    case SC_MAP_LOADED:
+    case SC_WORLD_LOADED:
         init_buildings(true);
         break;
-    case SC_MAP_UNLOADED:
+    case SC_WORLD_UNLOADED:
         init_buildings(false);
         break;
     default:
@@ -105,7 +110,8 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     BUILDING('w', building_workshopst, NULL) \
     BUILDING('e', building_furnacest, NULL) \
     BUILDING('T', building_trapst, NULL) \
-    BUILDING('i', building_siegeenginest, NULL)
+    BUILDING('i', building_siegeenginest, NULL) \
+    BUILDING('Z', building_civzonest, "Zone")
 
 #define BUILDING(code, cname, tag) \
     struct cname##_hook : df::cname { \
@@ -128,6 +134,32 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 KNOWN_BUILDINGS
 #undef BUILDING
 
+struct dwarf_render_zone_hook : df::viewscreen_dwarfmodest {
+    typedef df::viewscreen_dwarfmodest interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+
+        if (ui->main.mode == ui_sidebar_mode::Zones &&
+            ui_sidebar_menus && ui_sidebar_menus->zone.selected &&
+            !ui_sidebar_menus->zone.selected->name.empty())
+        {
+            auto dims = Gui::getDwarfmodeViewDims();
+            int width = dims.menu_x2 - dims.menu_x1 - 1;
+
+            Screen::Pen pen(' ',COLOR_WHITE);
+            Screen::fillRect(pen, dims.menu_x1, dims.y1+1, dims.menu_x2, dims.y1+1);
+
+            std::string name;
+            ui_sidebar_menus->zone.selected->getName(&name);
+            Screen::paintString(pen, dims.menu_x1+1, dims.y1+1, name.substr(0, width));
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(dwarf_render_zone_hook, render);
+
 static char getBuildingCode(df::building *bld)
 {
     CHECK_NULL_POINTER(bld);
@@ -142,6 +174,9 @@ KNOWN_BUILDINGS
 
 static bool enable_building_rename(char code, bool enable)
 {
+    if (code == 'Z')
+        INTERPOSE_HOOK(dwarf_render_zone_hook, render).apply(enable);
+
     switch (code) {
 #define BUILDING(code, cname, tag) \
     case code: return INTERPOSE_HOOK(cname##_hook, getName).apply(enable);
@@ -154,6 +189,8 @@ KNOWN_BUILDINGS
 
 static void disable_building_rename()
 {
+    INTERPOSE_HOOK(dwarf_render_zone_hook, render).remove();
+
 #define BUILDING(code, cname, tag) \
     INTERPOSE_HOOK(cname##_hook, getName).remove();
 KNOWN_BUILDINGS

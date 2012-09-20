@@ -703,7 +703,8 @@ Options
 :rename unit-profession "custom profession": Change proffession name of the
                                              highlighted unit/creature.
 :rename building "name": Set a custom name for the selected building.
-                         The building must be one of stockpile, workshop, furnace, trap or siege engine.
+                         The building must be one of stockpile, workshop, furnace, trap,
+                         siege engine or an activity zone.
 
 reveal
 ======
@@ -1549,7 +1550,8 @@ via a simple dialog in the game ui.
 
 * ``gui/rename [building]`` in 'q' mode changes the name of a building.
 
-  The selected building must be one of stockpile, workshop, furnace, trap or siege engine.
+  The selected building must be one of stockpile, workshop, furnace, trap, or siege engine.
+  It is also possible to rename zones from the 'i' menu.
 
 * ``gui/rename [unit]`` with a unit selected changes the nickname.
 
@@ -1645,7 +1647,7 @@ is extracted from the workshop raws.
 machine connection cannot be modified. As a result, the workshop
 can only immediately connect to machine components built AFTER it.
 This also means that engines cannot be chained without intermediate
-short axles that can be built later.
+short axles that can be built later than both of the engines.
 
 Operation
 ---------

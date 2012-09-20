@@ -53,6 +53,7 @@ using namespace DFHack;
 #include "df/viewscreen_dungeon_monsterstatusst.h"
 #include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_unitlistst.h"
+#include "df/viewscreen_buildinglistst.h"
 #include "df/viewscreen_itemst.h"
 #include "df/viewscreen_layer.h"
 #include "df/viewscreen_layer_workshop_profilest.h"
@@ -949,6 +950,9 @@ static df::building *getAnyBuilding(df::viewscreen *top)
     using df::global::ui_look_cursor;
     using df::global::world;
     using df::global::ui_sidebar_menus;
+
+    if (auto screen = strict_virtual_cast<df::viewscreen_buildinglistst>(top))
+        return vector_get(screen->buildings, screen->cursor);
 
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedBuilding();

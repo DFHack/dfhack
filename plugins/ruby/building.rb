@@ -8,6 +8,8 @@ module DFHack
                     k.building if k.type == :Building
                 when :BuildingItems, :QueryBuilding
                     world.selected_building
+                when :Zones, :ZonesPenInfo, :ZonesPitInfo, :ZonesHospitalInfo
+                    ui_sidebar_menus.zone.selected
                 end
 
             elsif what.kind_of?(Integer)

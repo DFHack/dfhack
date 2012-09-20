@@ -691,6 +691,8 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 
         return job;
     }
+    else if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedJob();
     else
         return getSelectedWorkshopJob(out, quiet);
 }
@@ -780,6 +782,9 @@ static df::unit *getAnyUnit(df::viewscreen *top)
             return vector_get(screen->unit, list1->cursor);
         return NULL;
     }
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedUnit();
 
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
@@ -875,6 +880,9 @@ static df::item *getAnyItem(df::viewscreen *top)
         return NULL;
     }
 
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedItem();
+
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
 
@@ -941,6 +949,9 @@ static df::building *getAnyBuilding(df::viewscreen *top)
     using df::global::ui_look_cursor;
     using df::global::world;
     using df::global::ui_sidebar_menus;
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedBuilding();
 
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;

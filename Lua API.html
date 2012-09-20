@@ -1611,6 +1611,16 @@ options; if multiple interpretations exist, the table will contain multiple keys
 </dl>
 <p>If this method is omitted, the screen is dismissed on receival of the <tt class="docutils literal">LEAVESCREEN</tt> key.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">function screen:onGetSelectedUnit()</tt></p>
+</li>
+<li><p class="first"><tt class="docutils literal">function screen:onGetSelectedItem()</tt></p>
+</li>
+<li><p class="first"><tt class="docutils literal">function screen:onGetSelectedJob()</tt></p>
+</li>
+<li><p class="first"><tt class="docutils literal">function screen:onGetSelectedBuilding()</tt></p>
+<p>Implement these to provide a return value for the matching
+<tt class="docutils literal"><span class="pre">dfhack.gui.getSelected...</span></tt> function.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="internal-api">

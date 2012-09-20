@@ -50,6 +50,10 @@ using namespace DFHack;
 #include "df/tile_page.h"
 #include "df/interfacest.h"
 #include "df/enabler.h"
+#include "df/unit.h"
+#include "df/item.h"
+#include "df/job.h"
+#include "df/building.h"
 
 using namespace df::enums;
 using df::global::init;
@@ -320,6 +324,11 @@ dfhack_viewscreen::~dfhack_viewscreen()
 bool dfhack_viewscreen::is_instance(df::viewscreen *screen)
 {
     return dfhack_screens.count(screen) != 0;
+}
+
+dfhack_viewscreen *dfhack_viewscreen::try_cast(df::viewscreen *screen)
+{
+    return is_instance(screen) ? static_cast<dfhack_viewscreen*>(screen) : NULL;
 }
 
 void dfhack_viewscreen::check_resize()
@@ -636,4 +645,36 @@ void dfhack_lua_viewscreen::onDismiss()
 {
     lua_pushstring(Lua::Core::State, "onDismiss");
     safe_call_lua(do_notify, 1, 0);
+}
+
+df::unit *dfhack_lua_viewscreen::getSelectedUnit()
+{
+    Lua::StackUnwinder frame(Lua::Core::State);
+    lua_pushstring(Lua::Core::State, "onGetSelectedUnit");
+    safe_call_lua(do_notify, 1, 1);
+    return Lua::GetDFObject<df::unit>(Lua::Core::State, -1);
+}
+
+df::item *dfhack_lua_viewscreen::getSelectedItem()
+{
+    Lua::StackUnwinder frame(Lua::Core::State);
+    lua_pushstring(Lua::Core::State, "onGetSelectedItem");
+    safe_call_lua(do_notify, 1, 1);
+    return Lua::GetDFObject<df::item>(Lua::Core::State, -1);
+}
+
+df::job *dfhack_lua_viewscreen::getSelectedJob()
+{
+    Lua::StackUnwinder frame(Lua::Core::State);
+    lua_pushstring(Lua::Core::State, "onGetSelectedJob");
+    safe_call_lua(do_notify, 1, 1);
+    return Lua::GetDFObject<df::job>(Lua::Core::State, -1);
+}
+
+df::building *dfhack_lua_viewscreen::getSelectedBuilding()
+{
+    Lua::StackUnwinder frame(Lua::Core::State);
+    lua_pushstring(Lua::Core::State, "onGetSelectedBuilding");
+    safe_call_lua(do_notify, 1, 1);
+    return Lua::GetDFObject<df::building>(Lua::Core::State, -1);
 }

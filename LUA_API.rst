@@ -1467,6 +1467,14 @@ Supported callbacks and fields are:
 
   If this method is omitted, the screen is dismissed on receival of the ``LEAVESCREEN`` key.
 
+* ``function screen:onGetSelectedUnit()``
+* ``function screen:onGetSelectedItem()``
+* ``function screen:onGetSelectedJob()``
+* ``function screen:onGetSelectedBuilding()``
+
+  Implement these to provide a return value for the matching
+  ``dfhack.gui.getSelected...`` function.
+
 
 Internal API
 ------------

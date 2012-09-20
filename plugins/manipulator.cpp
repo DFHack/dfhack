@@ -338,6 +338,8 @@ public:
 
     std::string getFocusString() { return "unitlabors"; }
 
+    df::unit *getSelectedUnit();
+
     viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos);
     ~viewscreen_unitlaborsst() { };
 
@@ -984,6 +986,11 @@ void viewscreen_unitlaborsst::render()
         OutputString(15, x, gps->dimy - 2, "Unknown");
         break;
     }
+}
+
+df::unit *viewscreen_unitlaborsst::getSelectedUnit()
+{
+    return units[sel_row]->unit;
 }
 
 struct unitlist_hook : df::viewscreen_unitlistst

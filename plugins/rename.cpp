@@ -357,10 +357,11 @@ static command_result rename(color_ostream &out, vector <string> &parameters)
         if (parameters.size() != 2)
             return CR_WRONG_USAGE;
 
-        if (ui->main.mode != ui_sidebar_mode::QueryBuilding)
+        df::building *bld = Gui::getSelectedBuilding(out, true);
+        if (!bld)
             return CR_WRONG_USAGE;
 
-        if (!renameBuilding(world->selected_building, parameters[1]))
+        if (!renameBuilding(bld, parameters[1]))
         {
             out.printerr("This type of building is not supported.\n");
             return CR_FAILURE;

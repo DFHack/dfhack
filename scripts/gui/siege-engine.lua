@@ -74,6 +74,10 @@ function SiegeEngine:onDestroy()
     end
 end
 
+function SiegeEngine:onGetSelectedBuilding()
+    return df.global.world.selected_building
+end
+
 function SiegeEngine:showCursor(enable)
     local cursor = guidm.getCursorPos()
     if cursor and not enable then

@@ -33,6 +33,7 @@ DFHack v0.34.11-r2 (UNRELEASED)
     - fix/population-cap: run after every migrant wave to prevent exceeding the cap.
     - fix/stable-temp: counts items with temperature updates; does instant one-shot stable-temp.
     - fix/loyaltycascade: fix units allegiance, eg after ordering a dwarf merchant kill.
+    - deathcause: shows the circumstances of death for a given body.
     - digfort: designate areas to dig from a csv file.
     - drainaquifer: remove aquifers from the map.
     - growcrops: cheat to make farm crops instantly grow.

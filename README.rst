@@ -152,33 +152,109 @@ Almost all the commands support using the 'help <command-name>' built-in command
 to retrieve further help without having to look at this document. Alternatively,
 some accept a 'help'/'?' option on their command line.
 
+
+Game progress
+=============
+
+die
+---
+Instantly kills DF without saving.
+
+forcepause
+----------
+Forces DF to pause. This is useful when your FPS drops below 1 and you lose
+control of the game.
+
+ * Activate with 'forcepause 1'
+ * Deactivate with 'forcepause 0'
+
+nopause
+-------
+Disables pausing (both manual and automatic) with the exception of pause forced
+by 'reveal hell'. This is nice for digging under rivers.
+
+fastdwarf
+---------
+Makes your minions move at ludicrous speeds.
+
+ * Activate with 'fastdwarf 1'
+ * Deactivate with 'fastdwarf 0'
+
+
+Game interface
+==============
+
+follow
+------
+Makes the game view follow the currently highlighted unit after you exit from
+current menu/cursor mode. Handy for watching dwarves running around. Deactivated
+by moving the view manually.
+
+tidlers
+-------
+Toggle between all possible positions where the idlers count can be placed.
+
+twaterlvl
+---------
+Toggle between displaying/not displaying liquid depth as numbers.
+
+copystock
+----------
+Copies the parameters of the currently highlighted stockpile to the custom
+stockpile settings and switches to custom stockpile placement mode, effectively
+allowing you to copy/paste stockpiles easily.
+
+rename
+------
+Allows renaming various things.
+
+Options:
+
+ :rename squad <index> "name": Rename squad by index to 'name'.
+ :rename hotkey <index> \"name\": Rename hotkey by index. This allows assigning
+                                  longer commands to the DF hotkeys.
+ :rename unit "nickname": Rename a unit/creature highlighted in the DF user
+                          interface.
+ :rename unit-profession "custom profession": Change proffession name of the
+                                              highlighted unit/creature.
+ :rename building "name": Set a custom name for the selected building.
+                          The building must be one of stockpile, workshop, furnace, trap,
+                          siege engine or an activity zone.
+
+
+Adventure mode
+==============
+
 adv-bodyswap
-============
+------------
 This allows taking control over your followers and other creatures in adventure
 mode. For example, you can make them pick up new arms and armor and equip them
 properly.
 
-Usage
------
+Usage:
+
  * When viewing unit details, body-swaps into that unit.
  * In the main adventure mode screen, reverts transient swap.
 
 advtools
-========
+--------
 A package of different adventure mode tools (currently just one)
-  
 
 
-Usage
------
-:list-equipped [all]: List armor and weapons equipped by your companions.
-                      If all is specified, also lists non-metal clothing.
-:metal-detector [all-types] [non-trader]: Reveal metal armor and weapons in
-                                          shops. The options disable the checks
-                                          on item type and being in shop.
+Usage:
+
+ :list-equipped [all]: List armor and weapons equipped by your companions.
+                       If all is specified, also lists non-metal clothing.
+ :metal-detector [all-types] [non-trader]: Reveal metal armor and weapons in
+                                           shops. The options disable the checks
+                                           on item type and being in shop.
+
+
+Map modification
+================
 
 changelayer
-===========
+-----------
 Changes material of the geology layer under cursor to the specified inorganic
 RAW material. Can have impact on all surrounding regions, not only your embark!
 By default changing stone to soil and vice versa is not allowed. By default
@@ -191,18 +267,18 @@ as well, though. Mineral veins and gem clusters will stay on the map. Use
 tl;dr: You will end up with changing quite big areas in one go, especially if
 you use it in lower z levels. Use with care.
 
-Options
--------
-:all_biomes:        Change selected layer for all biomes on your map.
+Options:
+
+ :all_biomes:       Change selected layer for all biomes on your map.
                     Result may be undesirable since the same layer can AND WILL
                     be on different z-levels for different biomes. Use the tool
                     'probe' to get an idea how layers and biomes are distributed
                     on your map.
-:all_layers:        Change all layers on your map (only for the selected biome
+ :all_layers:       Change all layers on your map (only for the selected biome
                     unless 'all_biomes' is added). 
                     Candy mountain, anyone? Will make your map quite boring,
                     but tidy. 
-:force:             Allow changing stone to soil and vice versa. !!THIS CAN HAVE
+ :force:            Allow changing stone to soil and vice versa. !!THIS CAN HAVE
                     WEIRD EFFECTS, USE WITH CARE!!
                     Note that soil will not be magically replaced with stone.
                     You will, however, get a stone floor after digging so it
@@ -211,16 +287,16 @@ Options
                     You will, however, get a soil floor after digging so it
                     could be helpful for creating farm plots on maps with no
                     soil.
-:verbose:           Give some details about what is being changed.
-:trouble:           Give some advice about known problems.
+ :verbose:          Give some details about what is being changed.
+ :trouble:          Give some advice about known problems.
 
 Examples:
----------
-``changelayer GRANITE``
+
+ ``changelayer GRANITE``
    Convert layer at cursor position into granite.
-``changelayer SILTY_CLAY force``
+ ``changelayer SILTY_CLAY force``
    Convert layer at cursor position into clay even if it's stone.
-``changelayer MARBLE all_biomes all_layers``
+ ``changelayer MARBLE all_biomes all_layers``
    Convert all layers of all biomes which are not soil into marble.
 
 .. note::
@@ -239,18 +315,18 @@ Examples:
       You did save your game, right?
 
 changevein
-==========
+----------
 Changes material of the vein under cursor to the specified inorganic RAW
 material. Only affects tiles within the current 16x16 block - for veins and
 large clusters, you will need to use this command multiple times.
 
 Example:
---------
-``changevein NATIVE_PLATINUM``
+
+ ``changevein NATIVE_PLATINUM``
    Convert vein at cursor position into platinum ore.
 
 changeitem
-==========
+----------
 Allows changing item material and base quality. By default the item currently
 selected in the UI will be changed (you can select items in the 'k' list
 or inside containers/inventory). By default change is only allowed if materials
@@ -261,230 +337,36 @@ in weirdness. To get an idea how the RAW id should look like, check some items
 with 'info'. Using 'force' might create items which are not touched by
 crafters/haulers.
 
-Options
--------
-:info:         Don't change anything, print some info instead.
-:here:         Change all items at the cursor position. Requires in-game cursor.
-:material, m:  Change material. Must be followed by valid material RAW id.
-:quality, q:   Change base quality. Must be followed by number (0-5).
-:force:        Ignore subtypes, force change to new material.
+Options:
+
+ :info:         Don't change anything, print some info instead.
+ :here:         Change all items at the cursor position. Requires in-game cursor.
+ :material, m:  Change material. Must be followed by valid material RAW id.
+ :quality, q:   Change base quality. Must be followed by number (0-5).
+ :force:        Ignore subtypes, force change to new material.
 
 Examples:
----------
-``changeitem m INORGANIC:GRANITE here``
+
+ ``changeitem m INORGANIC:GRANITE here``
    Change material of all items under the cursor to granite.
-``changeitem q 5``
+ ``changeitem q 5``
    Change currently selected item to masterpiece quality.
 
-cursecheck
-==========
-Checks a single map tile or the whole map/world for cursed creatures (ghosts,
-vampires, necromancers, werebeasts, zombies).
-
-With an active in-game cursor only the selected tile will be observed.
-Without a cursor the whole map will be checked.
-
-By default cursed creatures will be only counted in case you just want to find
-out if you have any of them running around in your fort. Dead and passive
-creatures (ghosts who were put to rest, killed vampires, ...) are ignored.
-Undead skeletons, corpses, bodyparts and the like are all thrown into the curse
-category "zombie". Anonymous zombies and resurrected body parts will show
-as "unnamed creature". 
-
-Options
--------
-:detail:       Print full name, date of birth, date of curse and some status
-               info (some vampires might use fake identities in-game, though).
-:nick:         Set the type of curse as nickname (does not always show up
-               in-game, some vamps don't like nicknames).
-:all:          Include dead and passive cursed creatures (can result in a quite
-               long list after having FUN with necromancers).
-:verbose:      Print all curse tags (if you really want to know it all).
-
-Examples:
----------
-``cursecheck detail all``
-   Give detailed info about all cursed creatures including deceased ones (no
-   in-game cursor).
-``cursecheck nick``
-  Give a nickname all living/active cursed creatures on the map(no in-game
-  cursor).
-
-.. note::
-
-    * If you do a full search (with the option "all") former ghosts will show up
-      with the cursetype "unknown" because their ghostly flag is not set
-      anymore. But if you happen to find a living/active creature with cursetype
-      "unknown" please report that in the dfhack thread on the modding forum or
-      per irc. This is likely to happen with mods which introduce new types
-      of curses, for example.
-
-follow
-======
-Makes the game view follow the currently highlighted unit after you exit from
-current menu/cursor mode. Handy for watching dwarves running around. Deactivated
-by moving the view manually.
-
-forcepause
-==========
-Forces DF to pause. This is useful when your FPS drops below 1 and you lose
-control of the game.
-
- * Activate with 'forcepause 1'
- * Deactivate with 'forcepause 0'
-
-nopause
-=======
-Disables pausing (both manual and automatic) with the exception of pause forced
-by 'reveal hell'. This is nice for digging under rivers.
-
-die
-===
-Instantly kills DF without saving.
-
-autodump
-========
-This utility lets you quickly move all items designated to be dumped.
-Items are instantly moved to the cursor position, the dump flag is unset,
-and the forbid flag is set, as if it had been dumped normally.
-Be aware that any active dump item tasks still point at the item.
-
-Cursor must be placed on a floor tile so the items can be dumped there.
-
-Options
--------
-:destroy:            Destroy instead of dumping. Doesn't require a cursor.
-:destroy-here:       Destroy items only under the cursor.
-:visible:            Only process items that are not hidden.
-:hidden:             Only process hidden items.
-:forbidden:          Only process forbidden items (default: only unforbidden).
-
-autodump-destroy-here
-=====================
-Destroy items marked for dumping under cursor. Identical to autodump
-destroy-here, but intended for use as keybinding.
-
-autodump-destroy-item
-=====================
-Destroy the selected item. The item may be selected in the 'k' list, or inside
-a container. If called again before the game is resumed, cancels destroy.
-
-burrow
-======
-Miscellaneous burrow control. Allows manipulating burrows and automated burrow
-expansion while digging.
-
-Options
--------
-:enable feature ...:
-:disable feature ...:    Enable or Disable features of the plugin.
-:clear-unit burrow burrow ...:
-:clear-tiles burrow burrow ...: Removes all units or tiles from the burrows.
-:set-units target-burrow src-burrow ...:
-:add-units target-burrow src-burrow ...:
-:remove-units target-burrow src-burrow ...: Adds or removes units in source
-       burrows to/from the target burrow. Set is equivalent to clear and add.
-:set-tiles target-burrow src-burrow ...:
-:add-tiles target-burrow src-burrow ...:
-:remove-tiles target-burrow src-burrow ...: Adds or removes tiles in source
-       burrows to/from the target burrow. In place of a source burrow it is
-       possible to use one of the following keywords: ABOVE_GROUND,
-       SUBTERRANEAN, INSIDE, OUTSIDE, LIGHT, DARK, HIDDEN, REVEALED
-
-Features
---------
-:auto-grow: When a wall inside a burrow with a name ending in '+' is dug
-            out, the burrow is extended to newly-revealed adjacent walls.
-            This final '+' may be omitted in burrow name args of commands above.
-            Digging 1-wide corridors with the miner inside the burrow is SLOW.
-
-catsplosion
-===========
-Makes cats just *multiply*. It is not a good idea to run this more than once or
-twice.
-
-clean
-=====
-Cleans all the splatter that get scattered all over the map, items and
-creatures. In an old fortress, this can significantly reduce FPS lag. It can
-also spoil your !!FUN!!, so think before you use it.
-
-Options
--------
-:map:          Clean the map tiles. By default, it leaves mud and snow alone.
-:units:        Clean the creatures. Will also clean hostiles.
-:items:        Clean all the items. Even a poisoned blade.
-
-Extra options for 'map'
------------------------
-:mud:          Remove mud in addition to the normal stuff.
-:snow:         Also remove snow coverings.
-
-spotclean
-=========
-Works like 'clean map snow mud', but only for the tile under the cursor. Ideal
-if you want to keep that bloody entrance 'clean map' would clean up.
-
-cleanowned
-==========
-Confiscates items owned by dwarfs. By default, owned food on the floor
-and rotten items are confistacted and dumped.
-
-Options
--------
-:all:          confiscate all owned items
-:scattered:    confiscated and dump all items scattered on the floor
-:x:            confiscate/dump items with wear level 'x' and more
-:X:            confiscate/dump items with wear level 'X' and more
-:dryrun:       a dry run. combine with other options to see what will happen
-               without it actually happening.
-
-Example:
---------
-``cleanowned scattered X`` : This will confiscate rotten and dropped food, garbage on the floors and any worn items with 'X' damage and above.
-
 colonies
-========
+--------
 Allows listing all the vermin colonies on the map and optionally turning them into honey bee colonies.
 
-Options
--------
-:bees: turn colonies into honey bee colonies
+Options:
+
+ :bees: turn colonies into honey bee colonies
 
 deramp (by zilpin)
-==================
+------------------
 Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.
 It also removes any and all 'down ramps' that can remain after a cave-in (you don't have to designate anything for that to happen).
 
-dfusion
-=======
-This is the DFusion lua plugin system by warmist/darius, running as a DFHack plugin.
-
-See the bay12 thread for details: http://www.bay12forums.com/smf/index.php?topic=69682.15
-
-Confirmed working DFusion plugins:
-----------------------------------
-:simple_embark:   allows changing the number of dwarves available on embark.
-
-.. note::
-
-    * Some of the DFusion plugins aren't completely ported yet. This can lead to crashes.
-    * This is currently working only on Windows.
-    * The game will be suspended while you're using dfusion. Don't panic when it doen't respond.
-
-drybuckets
-==========
-This utility removes water from all buckets in your fortress, allowing them to be safely used for making lye.
-
-fastdwarf
-=========
-Makes your minions move at ludicrous speeds.
-
- * Activate with 'fastdwarf 1'
- * Deactivate with 'fastdwarf 0'
-
 feature
-=======
+-------
 Enables management of map features.
 
 * Discovering a magma feature (magma pool, volcano, magma sea, or curious
@@ -492,134 +374,14 @@ Enables management of map features.
 * Discovering a cavern layer causes plants (trees, shrubs, and grass) from
   that cavern to grow within your fortress.
 
-Options
--------
-:list:         Lists all map features in your current embark by index.
-:show X:       Marks the selected map feature as discovered.
-:hide X:       Marks the selected map feature as undiscovered.
-
-filltraffic
-===========
-Set traffic designations using flood-fill starting at the cursor.
-
-Traffic Type Codes:
--------------------
-:H:     High Traffic
-:N:     Normal Traffic
-:L:     Low Traffic
-:R:     Restricted Traffic
-
-Other Options:
---------------
-:X: Fill accross z-levels.
-:B: Include buildings and stockpiles.
-:P: Include empty space.
-
-Example:
---------
-'filltraffic H' - When used in a room with doors, it will set traffic to HIGH in just that room.
-
-alltraffic
-==========
-Set traffic designations for every single tile of the map (useful for resetting traffic designations).
-
-Traffic Type Codes:
--------------------
-:H:     High Traffic
-:N:     Normal Traffic
-:L:     Low Traffic
-:R:     Restricted Traffic
-
-Example:
---------
-'alltraffic N' - Set traffic to 'normal' for all tiles.
-
-fixdiplomats
-============
-Up to version 0.31.12, Elves only sent Diplomats to your fortress to propose
-tree cutting quotas due to a bug; once that bug was fixed, Elves stopped caring
-about excess tree cutting. This command adds a Diplomat position to all Elven
-civilizations, allowing them to negotiate tree cutting quotas (and allowing you
-to violate them and potentially start wars) in case you haven't already modified
-your raws accordingly.
-
-fixmerchants
-============
-This command adds the Guild Representative position to all Human civilizations,
-allowing them to make trade agreements (just as they did back in 0.28.181.40d
-and earlier) in case you haven't already modified your raws accordingly.
-
-fixveins
-========
-Removes invalid references to mineral inclusions and restores missing ones.
-Use this if you broke your embark with tools like tiletypes, or if you
-accidentally placed a construction on top of a valuable mineral floor.
-
-flows
-=====
-A tool for checking how many tiles contain flowing liquids. If you suspect that
-your magma sea leaks into HFS, you can use this tool to be sure without
-revealing the map.
-
-getplants
-=========
-This tool allows plant gathering and tree cutting by RAW ID. Specify the types
-of trees to cut down and/or shrubs to gather by their plant names, separated
-by spaces.
-
-Options
--------
-:-t: Select trees only (exclude shrubs)
-:-s: Select shrubs only (exclude trees)
-:-c: Clear designations instead of setting them
-:-x: Apply selected action to all plants except those specified (invert
-     selection)
-
-Specifying both -t and -s will have no effect. If no plant IDs are specified,
-all valid plant IDs will be listed.
-
-tidlers
-=======
-Toggle between all possible positions where the idlers count can be placed.
-
-twaterlvl
-=========
-Toggle between displaying/not displaying liquid depth as numbers.
-
-job
-===
-Command for general job query and manipulation.
-
 Options:
- * no extra options - Print details of the current job. The job can be selected
-   in a workshop, or the unit/jobs screen.
- * list - Print details of all jobs in the selected workshop.
- * item-material <item-idx> <material[:subtoken]> - Replace the exact material
-   id in the job item.
- * item-type <item-idx> <type[:subtype]> - Replace the exact item type id in
-   the job item.
 
-job-material
-============
-Alter the material of the selected job.
-
-Invoked as: job-material <inorganic-token>
-
-Intended to be used as a keybinding:
- * In 'q' mode, when a job is highlighted within a workshop or furnace,
-   changes the material of the job. Only inorganic materials can be used
-   in this mode.
- * In 'b' mode, during selection of building components positions the cursor
-   over the first available choice with the matching material.
-
-job-duplicate
-=============
-Duplicate the selected job in a workshop:
- * In 'q' mode, when a job is highlighted within a workshop or furnace building,
-   instantly duplicates the job.
+ :list:         Lists all map features in your current embark by index.
+ :show X:       Marks the selected map feature as discovered.
+ :hide X:       Marks the selected map feature as undiscovered.
 
 liquids
-=======
+-------
 Allows adding magma, water and obsidian to the game. It replaces the normal
 dfhack command line and can't be used from a hotkey. Settings will be remembered
 as long as dfhack runs. Intended for use in combination with the command
@@ -633,179 +395,15 @@ For more information, refer to the command's internal help.
     temperatures (creating heat traps). You've been warned.
 
 liquids-here
-============
+------------
 Run the liquid spawner with the current/last settings made in liquids (if no
 settings in liquids were made it paints a point of 7/7 magma by default).
 
 Intended to be used as keybinding. Requires an active in-game cursor.
 
-mode
-====
-This command lets you see and change the game mode directly.
-Not all combinations are good for every situation and most of them will
-produce undesirable results. There are a few good ones though.
-
-.. admonition:: Example
-
-     You are in fort game mode, managing your fortress and paused.
-     You switch to the arena game mode, *assume control of a creature* and then
-     switch to adventure game mode(1). 
-     You just lost a fortress and gained an adventurer.
-     You could also do this.
-     You are in fort game mode, managing your fortress and paused at the esc menu.
-     You switch to the adventure game mode, then use Dfusion to *assume control of a creature* and then
-     save or retire. 
-     You just created a returnable mountain home and gained an adventurer.
-
-
-I take no responsibility of anything that happens as a result of using this tool
-
-extirpate
-=========
-A tool for getting rid of trees and shrubs. By default, it only kills
-a tree/shrub under the cursor. The plants are turned into ashes instantly.
-
-Options
--------
-:shrubs:            affect all shrubs on the map
-:trees:             affect all trees on the map
-:all:               affect every plant!
-
-grow
-====
-Makes all saplings present on the map grow into trees (almost) instantly.
-
-immolate
-========
-Very similar to extirpate, but additionally sets the plants on fire. The fires
-can and *will* spread ;)
-
-probe
-=====
-Can be used to determine tile properties like temperature.
-
-prospect
-========
-Prints a big list of all the present minerals and plants. By default, only
-the visible part of the map is scanned.
-
-Options
--------
-:all:   Scan the whole map, as if it was revealed.
-:value: Show material value in the output. Most useful for gems.
-:hell:  Show the Z range of HFS tubes. Implies 'all'.
-
-Pre-embark estimate
--------------------
-If called during the embark selection screen, displays an estimate of layer
-stone availability. If the 'all' option is specified, also estimates veins.
-The estimate is computed either for 1 embark tile of the blinking biome, or
-for all tiles of the embark rectangle.
-
-Options
--------
-:all:            processes all tiles, even hidden ones.
-
-regrass
-=======
-Regrows grass. Not much to it ;)
-
-rename
-======
-Allows renaming various things.
-
-Options
--------
-:rename squad <index> "name": Rename squad by index to 'name'.
-:rename hotkey <index> \"name\": Rename hotkey by index. This allows assigning
-                                 longer commands to the DF hotkeys.
-:rename unit "nickname": Rename a unit/creature highlighted in the DF user
-                         interface.
-:rename unit-profession "custom profession": Change proffession name of the
-                                             highlighted unit/creature.
-:rename building "name": Set a custom name for the selected building.
-                         The building must be one of stockpile, workshop, furnace, trap,
-                         siege engine or an activity zone.
-
-reveal
-======
-This reveals the map. By default, HFS will remain hidden so that the demons
-don't spawn. You can use 'reveal hell' to reveal everything. With hell revealed,
-you won't be able to unpause until you hide the map again. If you really want
-to unpause with hell revealed, use 'reveal demons'.
-
-Reveal also works in adventure mode, but any of its effects are negated once
-you move. When you use it this way, you don't need to run 'unreveal'.
-
-unreveal
-========
-Reverts the effects of 'reveal'.
-
-revtoggle
-=========
-Switches between 'reveal' and 'unreveal'.
-
-revflood
-========
-This command will hide the whole map and then reveal all the tiles that have
-a path to the in-game cursor.
-
-revforget
-=========
-When you use reveal, it saves information about what was/wasn't visible before
-revealing everything. Unreveal uses this information to hide things again.
-This command throws away the information. For example, use in cases where
-you abandoned with the fort revealed and no longer want the data.
-
-lair
-====
-This command allows you to mark the map as 'monster lair', preventing item
-scatter on abandon. When invoked as 'lair reset', it does the opposite.
-
-Unlike reveal, this command doesn't save the information about tiles - you
-won't be able to restore state of real monster lairs using 'lair reset'.
-
-Options
--------
-:lair: Mark the map as monster lair
-:lair reset: Mark the map as ordinary (not lair)
-
-seedwatch
-=========
-Tool for turning cooking of seeds and plants on/off depending on how much you
-have of them.
-
-See 'seedwatch help' for detailed description.
-
-showmood
-========
-Shows all items needed for the currently active strange mood.
-
-copystock
-==========
-Copies the parameters of the currently highlighted stockpile to the custom
-stockpile settings and switches to custom stockpile placement mode, effectively
-allowing you to copy/paste stockpiles easily.
-
-ssense / stonesense
-===================
-An isometric visualizer that runs in a second window. This requires working
-graphics acceleration and at least a dual core CPU (otherwise it will slow
-down DF).
-
-All the data resides in the 'stonesense' directory. For detailed instructions,
-see stonesense/README.txt
-
-Compatible with Windows > XP SP3 and most modern Linux distributions.
-
-Older versions, support and extra graphics can be found in the bay12 forum
-thread: http://www.bay12forums.com/smf/index.php?topic=43260.0
-
-Some additional resources:
-http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository
 
 tiletypes
-=========
+---------
 Can be used for painting map tiles and is an interactive command, much like
 liquids.
 
@@ -879,26 +477,471 @@ up.
 For more details, see the 'help' command while using this.
 
 tiletypes-commands
-==================
+------------------
 Runs tiletypes commands, separated by ;. This makes it possible to change
 tiletypes modes from a hotkey.
 
 tiletypes-here
-==============
+--------------
 Apply the current tiletypes options at the in-game cursor position, including
 the brush. Can be used from a hotkey.
 
 tiletypes-here-point
-====================
+--------------------
 Apply the current tiletypes options at the in-game cursor position to a single
 tile. Can be used from a hotkey.
 
+tubefill
+--------
+Fills all the adamantine veins again. Veins that were empty will be filled in
+too, but might still trigger a demon invasion (this is a known bug).
+
+extirpate
+---------
+A tool for getting rid of trees and shrubs. By default, it only kills
+a tree/shrub under the cursor. The plants are turned into ashes instantly.
+
+Options:
+
+ :shrubs:            affect all shrubs on the map
+ :trees:             affect all trees on the map
+ :all:               affect every plant!
+
+grow
+----
+Makes all saplings present on the map grow into trees (almost) instantly.
+
+immolate
+--------
+Very similar to extirpate, but additionally sets the plants on fire. The fires
+can and *will* spread ;)
+
+regrass
+-------
+Regrows grass. Not much to it ;)
+
+weather
+-------
+Prints the current weather map by default.
+
+Also lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.
+
+Options:
+
+ :snow:   make it snow everywhere.
+ :rain:   make it rain.
+ :clear:  clear the sky.
+
+
+Map inspection
+==============
+
+cursecheck
+----------
+Checks a single map tile or the whole map/world for cursed creatures (ghosts,
+vampires, necromancers, werebeasts, zombies).
+
+With an active in-game cursor only the selected tile will be observed.
+Without a cursor the whole map will be checked.
+
+By default cursed creatures will be only counted in case you just want to find
+out if you have any of them running around in your fort. Dead and passive
+creatures (ghosts who were put to rest, killed vampires, ...) are ignored.
+Undead skeletons, corpses, bodyparts and the like are all thrown into the curse
+category "zombie". Anonymous zombies and resurrected body parts will show
+as "unnamed creature". 
+
+Options:
+
+ :detail:      Print full name, date of birth, date of curse and some status
+               info (some vampires might use fake identities in-game, though).
+ :nick:        Set the type of curse as nickname (does not always show up
+               in-game, some vamps don't like nicknames).
+ :all:         Include dead and passive cursed creatures (can result in a quite
+               long list after having FUN with necromancers).
+ :verbose:     Print all curse tags (if you really want to know it all).
+
+Examples:
+
+ ``cursecheck detail all``
+   Give detailed info about all cursed creatures including deceased ones (no
+   in-game cursor).
+ ``cursecheck nick``
+   Give a nickname all living/active cursed creatures on the map(no in-game
+   cursor).
+
+.. note::
+
+    * If you do a full search (with the option "all") former ghosts will show up
+      with the cursetype "unknown" because their ghostly flag is not set
+      anymore. But if you happen to find a living/active creature with cursetype
+      "unknown" please report that in the dfhack thread on the modding forum or
+      per irc. This is likely to happen with mods which introduce new types
+      of curses, for example.
+
+flows
+-----
+A tool for checking how many tiles contain flowing liquids. If you suspect that
+your magma sea leaks into HFS, you can use this tool to be sure without
+revealing the map.
+
+probe
+-----
+Can be used to determine tile properties like temperature.
+
+prospect
+--------
+Prints a big list of all the present minerals and plants. By default, only
+the visible part of the map is scanned.
+
+Options:
+
+ :all:   Scan the whole map, as if it was revealed.
+ :value: Show material value in the output. Most useful for gems.
+ :hell:  Show the Z range of HFS tubes. Implies 'all'.
+
+Pre-embark estimate
+...................
+
+If called during the embark selection screen, displays an estimate of layer
+stone availability. If the 'all' option is specified, also estimates veins.
+The estimate is computed either for 1 embark tile of the blinking biome, or
+for all tiles of the embark rectangle.
+
+Options:
+
+ :all:            processes all tiles, even hidden ones.
+
+reveal
+------
+This reveals the map. By default, HFS will remain hidden so that the demons
+don't spawn. You can use 'reveal hell' to reveal everything. With hell revealed,
+you won't be able to unpause until you hide the map again. If you really want
+to unpause with hell revealed, use 'reveal demons'.
+
+Reveal also works in adventure mode, but any of its effects are negated once
+you move. When you use it this way, you don't need to run 'unreveal'.
+
+unreveal
+--------
+Reverts the effects of 'reveal'.
+
+revtoggle
+---------
+Switches between 'reveal' and 'unreveal'.
+
+revflood
+--------
+This command will hide the whole map and then reveal all the tiles that have
+a path to the in-game cursor.
+
+revforget
+---------
+When you use reveal, it saves information about what was/wasn't visible before
+revealing everything. Unreveal uses this information to hide things again.
+This command throws away the information. For example, use in cases where
+you abandoned with the fort revealed and no longer want the data.
+
+showmood
+--------
+Shows all items needed for the currently active strange mood.
+
+
+Designations
+============
+
+burrow
+------
+Miscellaneous burrow control. Allows manipulating burrows and automated burrow
+expansion while digging.
+
+Options:
+
+ **enable feature ...**
+    Enable features of the plugin.
+ **disable feature ...**
+    Disable features of the plugin.
+ **clear-unit burrow burrow ...**
+    Remove all units from the burrows.
+ **clear-tiles burrow burrow ...**
+    Remove all tiles from the burrows.
+ **set-units target-burrow src-burrow ...**
+    Clear target, and adds units from source burrows.
+ **add-units target-burrow src-burrow ...**
+    Add units from the source burrows to the target.
+ **remove-units target-burrow src-burrow ...**
+    Remove units in source burrows from the target.
+ **set-tiles target-burrow src-burrow ...**
+    Clear target and adds tiles from the source burrows.
+ **add-tiles target-burrow src-burrow ...**
+    Add tiles from the source burrows to the target.
+ **remove-tiles target-burrow src-burrow ...**
+    Remove tiles in source burrows from the target.
+
+    For these three options, in place of a source burrow it is
+    possible to use one of the following keywords: ABOVE_GROUND,
+    SUBTERRANEAN, INSIDE, OUTSIDE, LIGHT, DARK, HIDDEN, REVEALED
+
+Features:
+
+ :auto-grow: When a wall inside a burrow with a name ending in '+' is dug
+             out, the burrow is extended to newly-revealed adjacent walls.
+             This final '+' may be omitted in burrow name args of commands above.
+             Digging 1-wide corridors with the miner inside the burrow is SLOW.
+
+digv
+----
+Designates a whole vein for digging. Requires an active in-game cursor placed
+over a vein tile. With the 'x' option, it will traverse z-levels (putting stairs
+between the same-material tiles).
+
+digvx
+-----
+A permanent alias for 'digv x'.
+
+digl
+----
+Designates layer stone for digging. Requires an active in-game cursor placed
+over a layer stone tile. With the 'x' option, it will traverse z-levels
+(putting stairs between the same-material tiles). With the 'undo' option it
+will remove the dig designation instead (if you realize that digging out a 50
+z-level deep layer was not such a good idea after all).
+
+diglx
+-----
+A permanent alias for 'digl x'.
+
+digexp
+------
+This command can be used for exploratory mining.
+
+See: http://df.magmawiki.com/index.php/DF2010:Exploratory_mining
+
+There are two variables that can be set: pattern and filter.
+
+Patterns:
+
+ :diag5:            diagonals separated by 5 tiles
+ :diag5r:           diag5 rotated 90 degrees
+ :ladder:           A 'ladder' pattern
+ :ladderr:          ladder rotated 90 degrees
+ :clear:            Just remove all dig designations
+ :cross:            A cross, exactly in the middle of the map.
+
+Filters:
+
+ :all:              designate whole z-level
+ :hidden:           designate only hidden tiles of z-level (default)
+ :designated:       Take current designation and apply pattern to it.
+
+After you have a pattern set, you can use 'expdig' to apply it again.
+
+Examples:
+
+ designate the diagonal 5 patter over all hidden tiles:
+  * expdig diag5 hidden
+ apply last used pattern and filter:
+  * expdig
+ Take current designations and replace them with the ladder pattern:
+  * expdig ladder designated
+
+digcircle
+---------
+A command for easy designation of filled and hollow circles.
+It has several types of options.
+
+Shape:
+
+ :hollow:   Set the circle to hollow (default)
+ :filled:   Set the circle to filled
+ :#:        Diameter in tiles (default = 0, does nothing)
+
+Action:
+
+ :set:      Set designation (default)
+ :unset:    Unset current designation
+ :invert:   Invert designations already present
+
+Designation types:
+
+ :dig:      Normal digging designation (default)
+ :ramp:     Ramp digging
+ :ustair:   Staircase up
+ :dstair:   Staircase down
+ :xstair:   Staircase up/down
+ :chan:     Dig channel
+
+After you have set the options, the command called with no options
+repeats with the last selected parameters.
+
+Examples:
+
+* 'digcircle filled 3' = Dig a filled circle with radius = 3.
+* 'digcircle' = Do it again.
+
+
+filltraffic
+-----------
+Set traffic designations using flood-fill starting at the cursor.
+
+Traffic Type Codes:
+
+ :H:     High Traffic
+ :N:     Normal Traffic
+ :L:     Low Traffic
+ :R:     Restricted Traffic
+
+Other Options:
+
+ :X: Fill accross z-levels.
+ :B: Include buildings and stockpiles.
+ :P: Include empty space.
+
+Example:
+
+ 'filltraffic H' - When used in a room with doors, it will set traffic to HIGH in just that room.
+
+alltraffic
+----------
+Set traffic designations for every single tile of the map (useful for resetting traffic designations).
+
+Traffic Type Codes:
+
+ :H:     High Traffic
+ :N:     Normal Traffic
+ :L:     Low Traffic
+ :R:     Restricted Traffic
+
+Example:
+
+ 'alltraffic N' - Set traffic to 'normal' for all tiles.
+
+getplants
+---------
+This tool allows plant gathering and tree cutting by RAW ID. Specify the types
+of trees to cut down and/or shrubs to gather by their plant names, separated
+by spaces.
+
+Options:
+
+ :-t: Select trees only (exclude shrubs)
+ :-s: Select shrubs only (exclude trees)
+ :-c: Clear designations instead of setting them
+ :-x: Apply selected action to all plants except those specified (invert
+      selection)
+
+Specifying both -t and -s will have no effect. If no plant IDs are specified,
+all valid plant IDs will be listed.
+
+
+Cleanup and garbage disposal
+============================
+
+clean
+-----
+Cleans all the splatter that get scattered all over the map, items and
+creatures. In an old fortress, this can significantly reduce FPS lag. It can
+also spoil your !!FUN!!, so think before you use it.
+
+Options:
+
+ :map:          Clean the map tiles. By default, it leaves mud and snow alone.
+ :units:        Clean the creatures. Will also clean hostiles.
+ :items:        Clean all the items. Even a poisoned blade.
+
+Extra options for 'map':
+
+ :mud:          Remove mud in addition to the normal stuff.
+ :snow:         Also remove snow coverings.
+
+spotclean
+---------
+Works like 'clean map snow mud', but only for the tile under the cursor. Ideal
+if you want to keep that bloody entrance 'clean map' would clean up.
+
+autodump
+--------
+This utility lets you quickly move all items designated to be dumped.
+Items are instantly moved to the cursor position, the dump flag is unset,
+and the forbid flag is set, as if it had been dumped normally.
+Be aware that any active dump item tasks still point at the item.
+
+Cursor must be placed on a floor tile so the items can be dumped there.
+
+Options:
+
+ :destroy:            Destroy instead of dumping. Doesn't require a cursor.
+ :destroy-here:       Destroy items only under the cursor.
+ :visible:            Only process items that are not hidden.
+ :hidden:             Only process hidden items.
+ :forbidden:          Only process forbidden items (default: only unforbidden).
+
+autodump-destroy-here
+---------------------
+Destroy items marked for dumping under cursor. Identical to autodump
+destroy-here, but intended for use as keybinding.
+
+autodump-destroy-item
+---------------------
+Destroy the selected item. The item may be selected in the 'k' list, or inside
+a container. If called again before the game is resumed, cancels destroy.
+
+cleanowned
+----------
+Confiscates items owned by dwarfs. By default, owned food on the floor
+and rotten items are confistacted and dumped.
+
+Options:
+
+ :all:          confiscate all owned items
+ :scattered:    confiscated and dump all items scattered on the floor
+ :x:            confiscate/dump items with wear level 'x' and more
+ :X:            confiscate/dump items with wear level 'X' and more
+ :dryrun:       a dry run. combine with other options to see what will happen
+               without it actually happening.
+
+Example:
+
+ ``cleanowned scattered X``
+    This will confiscate rotten and dropped food, garbage on the floors and any
+    worn items with 'X' damage and above.
+
+
+
+Bugfixes
+========
+
+drybuckets
+----------
+This utility removes water from all buckets in your fortress, allowing them to be safely used for making lye.
+
+fixdiplomats
+------------
+Up to version 0.31.12, Elves only sent Diplomats to your fortress to propose
+tree cutting quotas due to a bug; once that bug was fixed, Elves stopped caring
+about excess tree cutting. This command adds a Diplomat position to all Elven
+civilizations, allowing them to negotiate tree cutting quotas (and allowing you
+to violate them and potentially start wars) in case you haven't already modified
+your raws accordingly.
+
+fixmerchants
+------------
+This command adds the Guild Representative position to all Human civilizations,
+allowing them to make trade agreements (just as they did back in 0.28.181.40d
+and earlier) in case you haven't already modified your raws accordingly.
+
+fixveins
+--------
+Removes invalid references to mineral inclusions and restores missing ones.
+Use this if you broke your embark with tools like tiletypes, or if you
+accidentally placed a construction on top of a valuable mineral floor.
+
 tweak
-=====
+-----
 Contains various tweaks for minor bugs (currently just one).
 
-Options
--------
+Options:
+
 :clear-missing:  Remove the missing status from the selected unit.
                  This allows engraving slabs for ghostly, but not yet
                  found, creatures.
@@ -944,136 +987,139 @@ Options
                     the contents separately from the container. This forcefully skips child
                     reagents.
 
-tubefill
-========
-Fills all the adamantine veins again. Veins that were empty will be filled in
-too, but might still trigger a demon invasion (this is a known bug).
 
-digv
-====
-Designates a whole vein for digging. Requires an active in-game cursor placed
-over a vein tile. With the 'x' option, it will traverse z-levels (putting stairs
-between the same-material tiles).
+Mode switch and reclaim
+=======================
 
-digvx
-=====
-A permanent alias for 'digv x'.
+lair
+----
+This command allows you to mark the map as 'monster lair', preventing item
+scatter on abandon. When invoked as 'lair reset', it does the opposite.
 
-digl
-====
-Designates layer stone for digging. Requires an active in-game cursor placed
-over a layer stone tile. With the 'x' option, it will traverse z-levels
-(putting stairs between the same-material tiles). With the 'undo' option it
-will remove the dig designation instead (if you realize that digging out a 50
-z-level deep layer was not such a good idea after all).
-
-diglx
-=====
-A permanent alias for 'digl x'.
-
-digexp
-======
-This command can be used for exploratory mining.
-
-See: http://df.magmawiki.com/index.php/DF2010:Exploratory_mining
-
-There are two variables that can be set: pattern and filter.
-
-Patterns:
----------
-:diag5:            diagonals separated by 5 tiles
-:diag5r:           diag5 rotated 90 degrees
-:ladder:           A 'ladder' pattern
-:ladderr:          ladder rotated 90 degrees
-:clear:            Just remove all dig designations
-:cross:            A cross, exactly in the middle of the map.
-
-Filters:
---------
-:all:              designate whole z-level
-:hidden:           designate only hidden tiles of z-level (default)
-:designated:       Take current designation and apply pattern to it.
-
-After you have a pattern set, you can use 'expdig' to apply it again.
-
-Examples:
----------
-designate the diagonal 5 patter over all hidden tiles:
-  * expdig diag5 hidden
-apply last used pattern and filter:
-  * expdig
-Take current designations and replace them with the ladder pattern:
-  * expdig ladder designated
-
-digcircle
-=========
-A command for easy designation of filled and hollow circles.
-It has several types of options.
-
-Shape:
---------
-:hollow:   Set the circle to hollow (default)
-:filled:   Set the circle to filled
-:#:        Diameter in tiles (default = 0, does nothing)
-
-Action:
--------
-:set:      Set designation (default)
-:unset:    Unset current designation
-:invert:   Invert designations already present
-
-Designation types:
-------------------
-:dig:      Normal digging designation (default)
-:ramp:     Ramp digging
-:ustair:   Staircase up
-:dstair:   Staircase down
-:xstair:   Staircase up/down
-:chan:     Dig channel
-
-After you have set the options, the command called with no options
-repeats with the last selected parameters.
-
-Examples:
----------
-* 'digcircle filled 3' = Dig a filled circle with radius = 3.
-* 'digcircle' = Do it again.
-
-weather
-=======
-Prints the current weather map by default.
-
-Also lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.
+Unlike reveal, this command doesn't save the information about tiles - you
+won't be able to restore state of real monster lairs using 'lair reset'.
 
 Options:
---------
-:snow:   make it snow everywhere.
-:rain:   make it rain.
-:clear:  clear the sky.
+
+ :lair: Mark the map as monster lair
+ :lair reset: Mark the map as ordinary (not lair)
+
+mode
+----
+This command lets you see and change the game mode directly.
+Not all combinations are good for every situation and most of them will
+produce undesirable results. There are a few good ones though.
+
+.. admonition:: Example
+
+     You are in fort game mode, managing your fortress and paused.
+     You switch to the arena game mode, *assume control of a creature* and then
+     switch to adventure game mode(1). 
+     You just lost a fortress and gained an adventurer.
+     You could also do this.
+     You are in fort game mode, managing your fortress and paused at the esc menu.
+     You switch to the adventure game mode, then use Dfusion to *assume control of a creature* and then
+     save or retire. 
+     You just created a returnable mountain home and gained an adventurer.
+
+
+I take no responsibility of anything that happens as a result of using this tool
+
+
+Visualizer and data export
+==========================
+
+ssense / stonesense
+-------------------
+An isometric visualizer that runs in a second window. This requires working
+graphics acceleration and at least a dual core CPU (otherwise it will slow
+down DF).
+
+All the data resides in the 'stonesense' directory. For detailed instructions,
+see stonesense/README.txt
+
+Compatible with Windows > XP SP3 and most modern Linux distributions.
+
+Older versions, support and extra graphics can be found in the bay12 forum
+thread: http://www.bay12forums.com/smf/index.php?topic=43260.0
+
+Some additional resources:
+http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository
+
+mapexport
+---------
+Export the current loaded map as a file. This will be eventually usable
+with visualizers.
+
+dwarfexport
+----------=
+Export dwarves to RuneSmith-compatible XML.
+
+
+Job management
+==============
+
+job
+---
+Command for general job query and manipulation.
+
+Options:
+ *no extra options*
+    Print details of the current job. The job can be selected
+    in a workshop, or the unit/jobs screen.
+ **list**
+    Print details of all jobs in the selected workshop.
+ **item-material <item-idx> <material[:subtoken]>**
+    Replace the exact material id in the job item.
+ **item-type <item-idx> <type[:subtype]>**
+    Replace the exact item type id in the job item.
+
+job-material
+------------
+Alter the material of the selected job.
+
+Invoked as::
+
+    job-material <inorganic-token>
+
+Intended to be used as a keybinding:
+
+ * In 'q' mode, when a job is highlighted within a workshop or furnace,
+   changes the material of the job. Only inorganic materials can be used
+   in this mode.
+ * In 'b' mode, during selection of building components positions the cursor
+   over the first available choice with the matching material.
+
+job-duplicate
+-------------
+Duplicate the selected job in a workshop:
+ * In 'q' mode, when a job is highlighted within a workshop or furnace building,
+   instantly duplicates the job.
 
 workflow
-========
+--------
 Manage control of repeat jobs.
 
-Usage
------
-``workflow enable [option...], workflow disable [option...]``
+Usage:
+
+ ``workflow enable [option...], workflow disable [option...]``
    If no options are specified, enables or disables the plugin.
    Otherwise, enables or disables any of the following options:
 
    - drybuckets: Automatically empty abandoned water buckets.
    - auto-melt: Resume melt jobs when there are objects to melt.
-``workflow jobs``
+ ``workflow jobs``
    List workflow-controlled jobs (if in a workshop, filtered by it).
-``workflow list``
+ ``workflow list``
    List active constraints, and their job counts.
-``workflow count <constraint-spec> <cnt-limit> [cnt-gap], workflow amount <constraint-spec> <cnt-limit> [cnt-gap]``
+ ``workflow count <constraint-spec> <cnt-limit> [cnt-gap], workflow amount <constraint-spec> <cnt-limit> [cnt-gap]``
    Set a constraint. The first form counts each stack as only 1 item.
-``workflow unlimit <constraint-spec>``
+ ``workflow unlimit <constraint-spec>``
    Delete a constraint.
 
 Function
---------
+........
+
 When the plugin is enabled, it protects all repeat jobs from removal.
 If they do disappear due to any cause, they are immediately re-added to their
 workshop and suspended.
@@ -1086,7 +1132,8 @@ the frequency of jobs being toggled.
 
 
 Constraint examples
--------------------
+...................
+
 Keep metal bolts within 900-1000, and wood/bone within 150-200.
 ::
     
@@ -1127,73 +1174,76 @@ Make sure there are always 80-100 units of dimple dye.
   on the Mill Plants job to MUSHROOM_CUP_DIMPLE using the 'job item-material'
   command.
 
-mapexport
-=========
-Export the current loaded map as a file. This will be eventually usable
-with visualizers.
 
-dwarfexport
-===========
-Export dwarves to RuneSmith-compatible XML.
+Fortress activity management
+============================
+
+seedwatch
+---------
+Tool for turning cooking of seeds and plants on/off depending on how much you
+have of them.
+
+See 'seedwatch help' for detailed description.
 
 zone
-====
+----
 Helps a bit with managing activity zones (pens, pastures and pits) and cages.
 
 Options:
---------
-:set:          Set zone or cage under cursor as default for future assigns.
-:assign:       Assign unit(s) to the pen or pit marked with the 'set' command.
+
+ :set:         Set zone or cage under cursor as default for future assigns.
+ :assign:      Assign unit(s) to the pen or pit marked with the 'set' command.
                If no filters are set a unit must be selected in the in-game ui.
                Can also be followed by a valid zone id which will be set
                instead.
-:unassign:     Unassign selected creature from it's zone.
-:nick:         Mass-assign nicknames, must be followed by the name you want
+ :unassign:    Unassign selected creature from it's zone.
+ :nick:        Mass-assign nicknames, must be followed by the name you want
                to set.
-:remnick:      Mass-remove nicknames.
-:tocages:      Assign unit(s) to cages inside a pasture.
-:uinfo:        Print info about unit(s). If no filters are set a unit must
+ :remnick:     Mass-remove nicknames.
+ :tocages:     Assign unit(s) to cages inside a pasture.
+ :uinfo:       Print info about unit(s). If no filters are set a unit must
                be selected in the in-game ui.
-:zinfo:        Print info about zone(s). If no filters are set zones under
+ :zinfo:       Print info about zone(s). If no filters are set zones under
                the cursor are listed.
-:verbose:      Print some more info.
-:filters:      Print list of valid filter options.
-:examples:     Print some usage examples.
-:not:          Negates the next filter keyword.
+ :verbose:     Print some more info.
+ :filters:     Print list of valid filter options.
+ :examples:    Print some usage examples.
+ :not:         Negates the next filter keyword.
 
 Filters:
---------
-:all:           Process all units (to be used with additional filters).
-:count:         Must be followed by a number. Process only n units (to be used
-                with additional filters). 
-:unassigned:    Not assigned to zone, chain or built cage.
-:minage:        Minimum age. Must be followed by number.
-:maxage:        Maximum age. Must be followed by number.
-:race:          Must be followed by a race RAW ID (e.g. BIRD_TURKEY, ALPACA,
-                etc). Negatable.
-:caged:         In a built cage. Negatable.
-:own:           From own civilization. Negatable.
-:merchant:      Is a merchant / belongs to a merchant. Should only be used for
-                pitting, not for stealing animals (slaughter should work).
-:war:           Trained war creature. Negatable.
-:hunting:       Trained hunting creature. Negatable.
-:tamed:         Creature is tame. Negatable.
-:trained:       Creature is trained. Finds war/hunting creatures as well as
-                creatures who have a training level greater than 'domesticated'.
-                If you want to specifically search for war/hunting creatures use
-                'war' or 'hunting' Negatable.
-:trainablewar:  Creature can be trained for war (and is not already trained for
-                war/hunt). Negatable.
-:trainablehunt: Creature can be trained for hunting (and is not already trained
-                for war/hunt). Negatable.
-:male:          Creature is male. Negatable.
-:female:        Creature is female. Negatable.
-:egglayer:      Race lays eggs. Negatable.
-:grazer:        Race is a grazer. Negatable.
-:milkable:      Race is milkable. Negatable.
+
+ :all:           Process all units (to be used with additional filters).
+ :count:         Must be followed by a number. Process only n units (to be used
+                 with additional filters). 
+ :unassigned:    Not assigned to zone, chain or built cage.
+ :minage:        Minimum age. Must be followed by number.
+ :maxage:        Maximum age. Must be followed by number.
+ :race:          Must be followed by a race RAW ID (e.g. BIRD_TURKEY, ALPACA,
+                 etc). Negatable.
+ :caged:         In a built cage. Negatable.
+ :own:           From own civilization. Negatable.
+ :merchant:      Is a merchant / belongs to a merchant. Should only be used for
+                 pitting, not for stealing animals (slaughter should work).
+ :war:           Trained war creature. Negatable.
+ :hunting:       Trained hunting creature. Negatable.
+ :tamed:         Creature is tame. Negatable.
+ :trained:       Creature is trained. Finds war/hunting creatures as well as
+                 creatures who have a training level greater than 'domesticated'.
+                 If you want to specifically search for war/hunting creatures use
+                 'war' or 'hunting' Negatable.
+ :trainablewar:  Creature can be trained for war (and is not already trained for
+                 war/hunt). Negatable.
+ :trainablehunt: Creature can be trained for hunting (and is not already trained
+                 for war/hunt). Negatable.
+ :male:          Creature is male. Negatable.
+ :female:        Creature is female. Negatable.
+ :egglayer:      Race lays eggs. Negatable.
+ :grazer:        Race is a grazer. Negatable.
+ :milkable:      Race is milkable. Negatable.
 
 Usage with single units
------------------------
+.......................
+
 One convenient way to use the zone tool is to bind the command 'zone assign' to
 a hotkey, maybe also the command 'zone set'. Place the in-game cursor over
 a pen/pasture or pit, use 'zone set' to mark it. Then you can select units
@@ -1202,7 +1252,8 @@ and use 'zone assign' to assign them to their new home. Allows pitting your
 own dwarves, by the way.
 
 Usage with filters
-------------------
+..................
+
 All filters can be used together with the 'assign' command.
 
 Restrictions: It's not possible to assign units who are inside built cages
@@ -1223,14 +1274,16 @@ are not properly added to your own stocks; slaughtering them should work).
 Most filters can be negated (e.g. 'not grazer' -> race is not a grazer).
 
 Mass-renaming
--------------
+.............
+
 Using the 'nick' command you can set the same nickname for multiple units.
 If used without 'assign', 'all' or 'count' it will rename all units in the
 current default target zone. Combined with 'assign', 'all' or 'count' (and
 further optional filters) it will rename units matching the filter conditions. 
 
 Cage zones
-----------
+..........
+
 Using the 'tocages' command you can assign units to a set of cages, for example
 a room next to your butcher shop(s). They will be spread evenly among available
 cages to optimize hauling to and butchering from them. For this to work you need
@@ -1241,7 +1294,8 @@ would make no sense, but can be used together with 'nick' or 'remnick' and all
 the usual filters.
 
 Examples
---------
+........
+
 ``zone assign all own ALPACA minage 3 maxage 10``
    Assign all own alpacas who are between 3 and 10 years old to the selected
    pasture.
@@ -1264,7 +1318,7 @@ Examples
    on the current default zone.
    
 autonestbox
-===========
+-----------
 Assigns unpastured female egg-layers to nestbox zones. Requires that you create
 pen/pasture zones above nestboxes. If the pen is bigger than 1x1 the nestbox
 must be in the top left corner. Only 1 unit will be assigned per pen, regardless
@@ -1276,15 +1330,15 @@ nestbox zones when they revert to wild. When called without options autonestbox
 will instantly run once.
 
 Options:
---------
-:start:        Start running every X frames (df simulation ticks).
-               Default: X=6000, which would be every 60 seconds at 100fps.
-:stop:         Stop running automatically.
-:sleep:        Must be followed by number X. Changes the timer to sleep X
-               frames between runs.
+
+ :start:        Start running every X frames (df simulation ticks).
+                Default: X=6000, which would be every 60 seconds at 100fps.
+ :stop:         Stop running automatically.
+ :sleep:        Must be followed by number X. Changes the timer to sleep X
+                frames between runs.
 
 autobutcher
-===========
+-----------
 Assigns lifestock for slaughter once it reaches a specific count. Requires that
 you add the target race(s) to a watch list. Only tame units will be processed.
 
@@ -1303,41 +1357,41 @@ If you don't set any target count the following default will be used:
 1 male kid, 5 female kids, 1 male adult, 5 female adults.
 
 Options:
---------
-:start:        Start running every X frames (df simulation ticks).
-               Default: X=6000, which would be every 60 seconds at 100fps.
-:stop:         Stop running automatically.
-:sleep:        Must be followed by number X. Changes the timer to sleep
-               X frames between runs.
-:watch R:      Start watching a race. R can be a valid race RAW id (ALPACA,
-               BIRD_TURKEY, etc) or a list of ids seperated by spaces or
-               the keyword 'all' which affects all races on your current
-               watchlist.
-:unwatch R:    Stop watching race(s). The current target settings will be
-               remembered. R can be a list of ids or the keyword 'all'.
-:forget R:     Stop watching race(s) and forget it's/their target settings.
-               R can be a list of ids or the keyword 'all'.
-:autowatch:    Automatically adds all new races (animals you buy from merchants,
-               tame yourself or get from migrants) to the watch list using
-               default target count. 
-:noautowatch:  Stop auto-adding new races to the watchlist.
-:list:         Print the current status and watchlist.
-:list_export:  Print status and watchlist in a format which can be used
-               to import them to another savegame (see notes).
-:target fk mk fa ma R: Set target count for specified race(s).
-                 fk = number of female kids,
-                 mk = number of male kids,
-                 fa = number of female adults,
-                 ma = number of female adults.
-                 R can be a list of ids or the keyword 'all' or 'new'.
-                 R = 'all': change target count for all races on watchlist
-                 and set the new default for the future. R = 'new': don't touch
-                 current settings on the watchlist, only set the new default
-                 for future entries.
-:example:      Print some usage examples.
+
+ :start:        Start running every X frames (df simulation ticks).
+                Default: X=6000, which would be every 60 seconds at 100fps.
+ :stop:         Stop running automatically.
+ :sleep:        Must be followed by number X. Changes the timer to sleep
+                X frames between runs.
+ :watch R:      Start watching a race. R can be a valid race RAW id (ALPACA,
+                BIRD_TURKEY, etc) or a list of ids seperated by spaces or
+                the keyword 'all' which affects all races on your current
+                watchlist.
+ :unwatch R:    Stop watching race(s). The current target settings will be
+                remembered. R can be a list of ids or the keyword 'all'.
+ :forget R:     Stop watching race(s) and forget it's/their target settings.
+                R can be a list of ids or the keyword 'all'.
+ :autowatch:    Automatically adds all new races (animals you buy from merchants,
+                tame yourself or get from migrants) to the watch list using
+                default target count. 
+ :noautowatch:  Stop auto-adding new races to the watchlist.
+ :list:         Print the current status and watchlist.
+ :list_export:  Print status and watchlist in a format which can be used
+                to import them to another savegame (see notes).
+ :target fk mk fa ma R: Set target count for specified race(s).
+                  fk = number of female kids,
+                  mk = number of male kids,
+                  fa = number of female adults,
+                  ma = number of female adults.
+                  R can be a list of ids or the keyword 'all' or 'new'.
+                  R = 'all': change target count for all races on watchlist
+                  and set the new default for the future. R = 'new': don't touch
+                  current settings on the watchlist, only set the new default
+                  for future entries.
+ :example:      Print some usage examples.
 
 Examples:
----------
+
 You want to keep max 7 kids (4 female, 3 male) and max 3 adults (2 female,
 1 male) of the race alpaca. Once the kids grow up the oldest adults will get
 slaughtered. Excess kids will get slaughtered starting with the youngest
@@ -1369,8 +1423,8 @@ add some new races with 'watch'. If you simply want to stop it completely use
 
      autobutcher unwatch ALPACA CAT
     
-Note:
------
+**Note:**
+
 Settings and watchlist are stored in the savegame, so that you can have
 different settings for each world. If you want to copy your watchlist to
 another savegame you can use the command list_export:
@@ -1384,7 +1438,7 @@ another savegame you can use the command list_export:
 
 
 autolabor
-=========
+---------
 Automatically manage dwarf labors.
 
 When enabled, autolabor periodically checks your dwarves and enables or
@@ -1397,6 +1451,30 @@ also tries to have dwarves specialize in specific skills.
     while it is enabled.
 
 For detailed usage information, see 'help autolabor'.
+
+Other
+=====
+
+catsplosion
+-----------
+Makes cats just *multiply*. It is not a good idea to run this more than once or
+twice.
+
+dfusion
+-------
+This is the DFusion lua plugin system by warmist/darius, running as a DFHack plugin.
+
+See the bay12 thread for details: http://www.bay12forums.com/smf/index.php?topic=69682.15
+
+Confirmed working DFusion plugins:
+
+:simple_embark:   allows changing the number of dwarves available on embark.
+
+.. note::
+
+    * Some of the DFusion plugins aren't completely ported yet. This can lead to crashes.
+    * This is currently working only on Windows.
+    * The game will be suspended while you're using dfusion. Don't panic when it doen't respond.
 
 
 =======
@@ -1412,19 +1490,6 @@ only be listed by ls if called as 'ls -a'. This is intended as a way to hide
 scripts that are obscure, developer-oriented, or should be used as keybindings.
 
 Some notable scripts:
-
-quicksave
-=========
-
-If called in dwarf mode, makes DF immediately auto-save the game by setting a flag
-normally used in seasonal auto-save.
-
-setfps
-======
-
-Run ``setfps <number>`` to set the FPS cap at runtime, in case you want to watch
-combat in slow motion or something :)
-
 
 fix/*
 =====
@@ -1462,6 +1527,17 @@ gui/*
 Scripts that implement dialogs inserted into the main game window are put in this
 directory.
 
+quicksave
+=========
+
+If called in dwarf mode, makes DF immediately auto-save the game by setting a flag
+normally used in seasonal auto-save.
+
+setfps
+======
+
+Run ``setfps <number>`` to set the FPS cap at runtime, in case you want to watch
+combat in slow motion or something :)
 
 growcrops
 =========
@@ -1684,10 +1760,12 @@ Exiting from the siege engine script via ESC reverts the view to the state prior
 the script. Shift-ESC retains the current viewport, and also exits from the 'q' mode to main
 menu.
 
-**DISCLAIMER**: Siege engines are a very interesting feature, but currently nearly useless
-because they haven't been updated since 2D and can only aim in four directions. This is an
-attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
-e.g. like making siegers bring their own, are something only Toady can do.
+.. admonition:: DISCLAIMER
+
+    Siege engines are a very interesting feature, but currently nearly useless
+    because they haven't been updated since 2D and can only aim in four directions. This is an
+    attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
+    e.g. like making siegers bring their own, are something only Toady can do.
 
 
 =========
@@ -1723,20 +1801,24 @@ The workshop needs water as its input, which it takes via a
 passable floor tile below it, like usual magma workshops do.
 The magma version also needs magma.
 
-**ISSUE**: Since this building is a machine, and machine collapse
-code cannot be modified, it would collapse over true open space.
-As a loophole, down stair provides support to machines, while
-being passable, so use them.
+.. admonition:: ISSUE
+
+    Since this building is a machine, and machine collapse
+    code cannot be modified, it would collapse over true open space.
+    As a loophole, down stair provides support to machines, while
+    being passable, so use them.
 
 After constructing the building itself, machines can be connected
 to the edge tiles that look like gear boxes. Their exact position
 is extracted from the workshop raws.
 
-**ISSUE**: Like with collapse above, part of the code involved in
-machine connection cannot be modified. As a result, the workshop
-can only immediately connect to machine components built AFTER it.
-This also means that engines cannot be chained without intermediate
-short axles that can be built later than both of the engines.
+.. admonition:: ISSUE
+
+    Like with collapse above, part of the code involved in
+    machine connection cannot be modified. As a result, the workshop
+    can only immediately connect to machine components built AFTER it.
+    This also means that engines cannot be chained without intermediate
+    short axles that can be built later than both of the engines.
 
 Operation
 ---------

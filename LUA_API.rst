@@ -1831,6 +1831,86 @@ function:
   argument specifies the indentation step size in spaces. For
   the other arguments see the original documentation link above.
 
+class
+=====
+
+Implements a trivial single-inheritance class system.
+
+* ``Foo = defclass(Foo[, ParentClass])``
+
+  Defines or updates class Foo. The ``Foo = defclass(Foo)`` syntax
+  is needed so that when the module or script is reloaded, the
+  class identity will be preserved through the preservation of
+  global variable values.
+
+  The ``defclass`` function is defined as a stub in the global
+  namespace, and using it will auto-load the class module.
+
+* ``Class.super``
+
+  This class field is set by defclass to the parent class, and
+  allows a readable ``Class.super.method(self, ...)`` syntax for
+  calling superclass methods.
+
+* ``Class.ATTRS { foo = xxx, bar = yyy }``
+
+  Declares certain instance fields to be attributes, i.e. auto-initialized
+  from fields in the table used as the constructor argument. If omitted,
+  they are initialized with the default values specified in this declaration.
+
+  If the default value should be *nil*, use ``ATTRS { foo = DEFAULT_NIL }``.
+
+* ``new_obj = Class{ foo = arg, bar = arg, ... }``
+
+  Calling the class as a function creates and initializes a new instance.
+  Initialization happens in this order:
+
+  1. An empty instance table is created, and its metatable set.
+  2. The ``preinit`` method is called via ``invoke_before`` (see below)
+     with the table used as argument to the class. This method is intended
+     for validating and tweaking that argument table.
+  3. Declared ATTRS are initialized from the argument table or their default values.
+  4. The ``init`` method is called via ``invoke_after`` with the argument table.
+     This is the main constructor method.
+  5. The ``postinit`` method is called via ``invoke_after`` with the argument table.
+     Place code that should be called after the object is fully constructed here.
+
+Predefined instance methods:
+
+* ``instance:assign{ foo = xxx }``
+
+  Assigns all values in the input table to the matching instance fields.
+
+* ``instance:callback(method_name, [args...])``
+
+  Returns a closure that invokes the specified method of the class,
+  properly passing in self, and optionally a number of initial arguments too.
+  The arguments given to the closure are appended to these.
+
+* ``instance:invoke_before(method_name, args...)``
+
+  Navigates the inheritance chain of the instance starting from the most specific
+  class, and invokes the specified method with the arguments if it is defined in
+  that specific class. Equivalent to the following definition in every class::
+
+    function Class:invoke_before(method, ...)
+      if rawget(Class, method) then
+        rawget(Class, method)(self, ...)
+      end
+      Class.super.invoke_before(method, ...)
+    end
+
+* ``instance:invoke_after(method_name, args...)``
+
+  Like invoke_before, only the method is called after the recursive call to super,
+  i.e. invocations happen in the parent to child order.
+
+  These two methods are inspired by the Common Lisp before and after methods, and
+  are intended for implementing similar protocols for certain things. The class
+  library itself uses them for constructors.
+
+To avoid confusion, these methods cannot be redefined.
+
 
 =======
 Plugins

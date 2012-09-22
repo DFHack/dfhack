@@ -247,8 +247,9 @@ void VMethodInterposeLinkBase::set_chain(void *chain)
     addr_to_method_pointer_(chain_mptr, chain);
 }
 
-VMethodInterposeLinkBase::VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr)
-    : host(host), vmethod_idx(vmethod_idx), interpose_method(interpose_method), chain_mptr(chain_mptr),
+VMethodInterposeLinkBase::VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr, int priority)
+    : host(host), vmethod_idx(vmethod_idx), interpose_method(interpose_method),
+      chain_mptr(chain_mptr), priority(priority),
       applied(false), saved_chain(NULL), next(NULL), prev(NULL)
 {
     if (vmethod_idx < 0 || interpose_method == NULL)
@@ -349,15 +350,26 @@ bool VMethodInterposeLinkBase::apply(bool enable)
         return false;
 
     // Retrieve the current vtable entry
-    void *old_ptr = host->get_vmethod_ptr(vmethod_idx);
     VMethodInterposeLinkBase *old_link = host->interpose_list[vmethod_idx];
+    VMethodInterposeLinkBase *next_link = NULL;
 
+    while (old_link && old_link->host == host && old_link->priority > priority)
+    {
+        next_link = old_link;
+        old_link = old_link->prev;
+    }
+
+    void *old_ptr = next_link ? next_link->saved_chain : host->get_vmethod_ptr(vmethod_idx);
     assert(old_ptr != NULL && (!old_link || old_link->interpose_method == old_ptr));
 
     // Apply the new method ptr
     set_chain(old_ptr);
 
-    if (!host->set_vmethod_ptr(vmethod_idx, interpose_method))
+    if (next_link)
+    {
+        next_link->set_chain(interpose_method);
+    }
+    else if (!host->set_vmethod_ptr(vmethod_idx, interpose_method))
     {
         set_chain(NULL);
         return false;
@@ -365,8 +377,13 @@ bool VMethodInterposeLinkBase::apply(bool enable)
 
     // Push the current link into the home host
     applied = true;
-    host->interpose_list[vmethod_idx] = this;
     prev = old_link;
+    next = next_link;
+
+    if (next_link)
+        next_link->prev = this;
+    else
+        host->interpose_list[vmethod_idx] = this;
 
     child_hosts.clear();
     child_next.clear();
@@ -374,12 +391,21 @@ bool VMethodInterposeLinkBase::apply(bool enable)
     if (old_link && old_link->host == host)
     {
         // If the old link is home, just push into the plain chain
-        assert(old_link->next == NULL);
+        assert(old_link->next == next_link);
         old_link->next = this;
 
         // Child links belong to the topmost local entry
         child_hosts.swap(old_link->child_hosts);
         child_next.swap(old_link->child_next);
+    }
+    else if (next_link)
+    {
+        if (old_link)
+        {
+            assert(old_link->child_next.count(next_link));
+            old_link->child_next.erase(next_link);
+            old_link->child_next.insert(this);
+        }
     }
     else
     {
@@ -400,6 +426,8 @@ bool VMethodInterposeLinkBase::apply(bool enable)
                 old_link->child_hosts.erase(*it);
         }
     }
+
+    assert (!next_link || (child_next.empty() && child_hosts.empty()));
 
     // Chain subclass hooks
     for (auto it = child_next.begin(); it != child_next.end(); ++it)

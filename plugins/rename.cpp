@@ -130,7 +130,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
                 INTERPOSE_NEXT(getName)(buf); \
         } \
     }; \
-    IMPLEMENT_VMETHOD_INTERPOSE(cname##_hook, getName);
+    IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cname##_hook, getName, 100);
 KNOWN_BUILDINGS
 #undef BUILDING
 

@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Docutils 0.8.1: http://docutils.sourceforge.net/" />
-<title></title>
+<title>DFHack Readme</title>
 <style type="text/css">
 
 /*
@@ -314,11 +314,11 @@ ul.auto-toc {
 </style>
 </head>
 <body>
-<div class="document">
-
+<div class="document" id="dfhack-readme">
+<h1 class="title">DFHack Readme</h1>
 
 <div class="section" id="introduction">
-<h1><a class="toc-backref" href="#id36">Introduction</a></h1>
+<h1><a class="toc-backref" href="#id3">Introduction</a></h1>
 <p>DFHack is a Dwarf Fortress memory access library and a set of basic
 tools that use it. Tools come in the form of plugins or (not yet)
 external tools. It is an attempt to unite the various ways tools
@@ -326,245 +326,192 @@ access DF memory and allow for easier development of new tools.</p>
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#introduction" id="id36">Introduction</a></li>
-<li><a class="reference internal" href="#getting-dfhack" id="id37">Getting DFHack</a></li>
-<li><a class="reference internal" href="#compatibility" id="id38">Compatibility</a></li>
-<li><a class="reference internal" href="#installation-removal" id="id39">Installation/Removal</a></li>
-<li><a class="reference internal" href="#using-dfhack" id="id40">Using DFHack</a></li>
-<li><a class="reference internal" href="#something-doesn-t-work-help" id="id41">Something doesn't work, help!</a></li>
-<li><a class="reference internal" href="#the-init-file" id="id42">The init file</a></li>
-<li><a class="reference internal" href="#commands" id="id43">Commands</a><ul>
-<li><a class="reference internal" href="#adv-bodyswap" id="id44">adv-bodyswap</a><ul>
-<li><a class="reference internal" href="#usage" id="id45">Usage</a></li>
+<li><a class="reference internal" href="#introduction" id="id3">Introduction</a></li>
+<li><a class="reference internal" href="#getting-dfhack" id="id4">Getting DFHack</a></li>
+<li><a class="reference internal" href="#compatibility" id="id5">Compatibility</a></li>
+<li><a class="reference internal" href="#installation-removal" id="id6">Installation/Removal</a></li>
+<li><a class="reference internal" href="#using-dfhack" id="id7">Using DFHack</a></li>
+<li><a class="reference internal" href="#something-doesn-t-work-help" id="id8">Something doesn't work, help!</a></li>
+<li><a class="reference internal" href="#the-init-file" id="id9">The init file</a><ul>
+<li><a class="reference internal" href="#setting-keybindings" id="id10">Setting keybindings</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#advtools" id="id46">advtools</a><ul>
-<li><a class="reference internal" href="#id1" id="id47">Usage</a></li>
+<li><a class="reference internal" href="#commands" id="id11">Commands</a><ul>
+<li><a class="reference internal" href="#game-progress" id="id12">Game progress</a><ul>
+<li><a class="reference internal" href="#die" id="id13">die</a></li>
+<li><a class="reference internal" href="#forcepause" id="id14">forcepause</a></li>
+<li><a class="reference internal" href="#nopause" id="id15">nopause</a></li>
+<li><a class="reference internal" href="#fastdwarf" id="id16">fastdwarf</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#changelayer" id="id48">changelayer</a><ul>
-<li><a class="reference internal" href="#options" id="id49">Options</a></li>
-<li><a class="reference internal" href="#examples" id="id50">Examples:</a></li>
+<li><a class="reference internal" href="#game-interface" id="id17">Game interface</a><ul>
+<li><a class="reference internal" href="#follow" id="id18">follow</a></li>
+<li><a class="reference internal" href="#tidlers" id="id19">tidlers</a></li>
+<li><a class="reference internal" href="#twaterlvl" id="id20">twaterlvl</a></li>
+<li><a class="reference internal" href="#copystock" id="id21">copystock</a></li>
+<li><a class="reference internal" href="#rename" id="id22">rename</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#changevein" id="id51">changevein</a><ul>
-<li><a class="reference internal" href="#example" id="id52">Example:</a></li>
+<li><a class="reference internal" href="#adventure-mode" id="id23">Adventure mode</a><ul>
+<li><a class="reference internal" href="#adv-bodyswap" id="id24">adv-bodyswap</a></li>
+<li><a class="reference internal" href="#advtools" id="id25">advtools</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#changeitem" id="id53">changeitem</a><ul>
-<li><a class="reference internal" href="#id2" id="id54">Options</a></li>
-<li><a class="reference internal" href="#id3" id="id55">Examples:</a></li>
+<li><a class="reference internal" href="#map-modification" id="id26">Map modification</a><ul>
+<li><a class="reference internal" href="#changelayer" id="id27">changelayer</a></li>
+<li><a class="reference internal" href="#changevein" id="id28">changevein</a></li>
+<li><a class="reference internal" href="#changeitem" id="id29">changeitem</a></li>
+<li><a class="reference internal" href="#colonies" id="id30">colonies</a></li>
+<li><a class="reference internal" href="#deramp-by-zilpin" id="id31">deramp (by zilpin)</a></li>
+<li><a class="reference internal" href="#feature" id="id32">feature</a></li>
+<li><a class="reference internal" href="#liquids" id="id33">liquids</a></li>
+<li><a class="reference internal" href="#liquids-here" id="id34">liquids-here</a></li>
+<li><a class="reference internal" href="#tiletypes" id="id35">tiletypes</a></li>
+<li><a class="reference internal" href="#tiletypes-commands" id="id36">tiletypes-commands</a></li>
+<li><a class="reference internal" href="#tiletypes-here" id="id37">tiletypes-here</a></li>
+<li><a class="reference internal" href="#tiletypes-here-point" id="id38">tiletypes-here-point</a></li>
+<li><a class="reference internal" href="#tubefill" id="id39">tubefill</a></li>
+<li><a class="reference internal" href="#extirpate" id="id40">extirpate</a></li>
+<li><a class="reference internal" href="#grow" id="id41">grow</a></li>
+<li><a class="reference internal" href="#immolate" id="id42">immolate</a></li>
+<li><a class="reference internal" href="#regrass" id="id43">regrass</a></li>
+<li><a class="reference internal" href="#weather" id="id44">weather</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#cursecheck" id="id56">cursecheck</a><ul>
-<li><a class="reference internal" href="#id4" id="id57">Options</a></li>
-<li><a class="reference internal" href="#id5" id="id58">Examples:</a></li>
+<li><a class="reference internal" href="#map-inspection" id="id45">Map inspection</a><ul>
+<li><a class="reference internal" href="#cursecheck" id="id46">cursecheck</a></li>
+<li><a class="reference internal" href="#flows" id="id47">flows</a></li>
+<li><a class="reference internal" href="#probe" id="id48">probe</a></li>
+<li><a class="reference internal" href="#prospect" id="id49">prospect</a><ul>
+<li><a class="reference internal" href="#pre-embark-estimate" id="id50">Pre-embark estimate</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#follow" id="id59">follow</a></li>
-<li><a class="reference internal" href="#forcepause" id="id60">forcepause</a></li>
-<li><a class="reference internal" href="#nopause" id="id61">nopause</a></li>
-<li><a class="reference internal" href="#die" id="id62">die</a></li>
-<li><a class="reference internal" href="#autodump" id="id63">autodump</a><ul>
-<li><a class="reference internal" href="#id6" id="id64">Options</a></li>
+<li><a class="reference internal" href="#reveal" id="id51">reveal</a></li>
+<li><a class="reference internal" href="#unreveal" id="id52">unreveal</a></li>
+<li><a class="reference internal" href="#revtoggle" id="id53">revtoggle</a></li>
+<li><a class="reference internal" href="#revflood" id="id54">revflood</a></li>
+<li><a class="reference internal" href="#revforget" id="id55">revforget</a></li>
+<li><a class="reference internal" href="#showmood" id="id56">showmood</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#autodump-destroy-here" id="id65">autodump-destroy-here</a></li>
-<li><a class="reference internal" href="#autodump-destroy-item" id="id66">autodump-destroy-item</a></li>
-<li><a class="reference internal" href="#burrow" id="id67">burrow</a><ul>
-<li><a class="reference internal" href="#id7" id="id68">Options</a></li>
-<li><a class="reference internal" href="#features" id="id69">Features</a></li>
+<li><a class="reference internal" href="#designations" id="id57">Designations</a><ul>
+<li><a class="reference internal" href="#burrow" id="id58">burrow</a></li>
+<li><a class="reference internal" href="#digv" id="id59">digv</a></li>
+<li><a class="reference internal" href="#digvx" id="id60">digvx</a></li>
+<li><a class="reference internal" href="#digl" id="id61">digl</a></li>
+<li><a class="reference internal" href="#diglx" id="id62">diglx</a></li>
+<li><a class="reference internal" href="#digexp" id="id63">digexp</a></li>
+<li><a class="reference internal" href="#digcircle" id="id64">digcircle</a></li>
+<li><a class="reference internal" href="#filltraffic" id="id65">filltraffic</a></li>
+<li><a class="reference internal" href="#alltraffic" id="id66">alltraffic</a></li>
+<li><a class="reference internal" href="#getplants" id="id67">getplants</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#catsplosion" id="id70">catsplosion</a></li>
-<li><a class="reference internal" href="#clean" id="id71">clean</a><ul>
-<li><a class="reference internal" href="#id8" id="id72">Options</a></li>
-<li><a class="reference internal" href="#extra-options-for-map" id="id73">Extra options for 'map'</a></li>
+<li><a class="reference internal" href="#cleanup-and-garbage-disposal" id="id68">Cleanup and garbage disposal</a><ul>
+<li><a class="reference internal" href="#clean" id="id69">clean</a></li>
+<li><a class="reference internal" href="#spotclean" id="id70">spotclean</a></li>
+<li><a class="reference internal" href="#autodump" id="id71">autodump</a></li>
+<li><a class="reference internal" href="#autodump-destroy-here" id="id72">autodump-destroy-here</a></li>
+<li><a class="reference internal" href="#autodump-destroy-item" id="id73">autodump-destroy-item</a></li>
+<li><a class="reference internal" href="#cleanowned" id="id74">cleanowned</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#spotclean" id="id74">spotclean</a></li>
-<li><a class="reference internal" href="#cleanowned" id="id75">cleanowned</a><ul>
-<li><a class="reference internal" href="#id9" id="id76">Options</a></li>
-<li><a class="reference internal" href="#id10" id="id77">Example:</a></li>
+<li><a class="reference internal" href="#bugfixes" id="id75">Bugfixes</a><ul>
+<li><a class="reference internal" href="#drybuckets" id="id76">drybuckets</a></li>
+<li><a class="reference internal" href="#fixdiplomats" id="id77">fixdiplomats</a></li>
+<li><a class="reference internal" href="#fixmerchants" id="id78">fixmerchants</a></li>
+<li><a class="reference internal" href="#fixveins" id="id79">fixveins</a></li>
+<li><a class="reference internal" href="#tweak" id="id80">tweak</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#colonies" id="id78">colonies</a><ul>
-<li><a class="reference internal" href="#id11" id="id79">Options</a></li>
+<li><a class="reference internal" href="#mode-switch-and-reclaim" id="id81">Mode switch and reclaim</a><ul>
+<li><a class="reference internal" href="#lair" id="id82">lair</a></li>
+<li><a class="reference internal" href="#mode" id="id83">mode</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#deramp-by-zilpin" id="id80">deramp (by zilpin)</a></li>
-<li><a class="reference internal" href="#dfusion" id="id81">dfusion</a><ul>
-<li><a class="reference internal" href="#confirmed-working-dfusion-plugins" id="id82">Confirmed working DFusion plugins:</a></li>
+<li><a class="reference internal" href="#visualizer-and-data-export" id="id84">Visualizer and data export</a><ul>
+<li><a class="reference internal" href="#ssense-stonesense" id="id85">ssense / stonesense</a></li>
+<li><a class="reference internal" href="#mapexport" id="id86">mapexport</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#drybuckets" id="id83">drybuckets</a></li>
-<li><a class="reference internal" href="#fastdwarf" id="id84">fastdwarf</a></li>
-<li><a class="reference internal" href="#feature" id="id85">feature</a><ul>
-<li><a class="reference internal" href="#id12" id="id86">Options</a></li>
+<li><a class="reference internal" href="#job-management" id="id87">Job management</a><ul>
+<li><a class="reference internal" href="#job" id="id88">job</a></li>
+<li><a class="reference internal" href="#job-material" id="id89">job-material</a></li>
+<li><a class="reference internal" href="#job-duplicate" id="id90">job-duplicate</a></li>
+<li><a class="reference internal" href="#workflow" id="id91">workflow</a><ul>
+<li><a class="reference internal" href="#function" id="id92">Function</a></li>
+<li><a class="reference internal" href="#constraint-examples" id="id93">Constraint examples</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#filltraffic" id="id87">filltraffic</a><ul>
-<li><a class="reference internal" href="#traffic-type-codes" id="id88">Traffic Type Codes:</a></li>
-<li><a class="reference internal" href="#other-options" id="id89">Other Options:</a></li>
-<li><a class="reference internal" href="#id13" id="id90">Example:</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#alltraffic" id="id91">alltraffic</a><ul>
-<li><a class="reference internal" href="#id14" id="id92">Traffic Type Codes:</a></li>
-<li><a class="reference internal" href="#id15" id="id93">Example:</a></li>
+<li><a class="reference internal" href="#fortress-activity-management" id="id94">Fortress activity management</a><ul>
+<li><a class="reference internal" href="#seedwatch" id="id95">seedwatch</a></li>
+<li><a class="reference internal" href="#zone" id="id96">zone</a><ul>
+<li><a class="reference internal" href="#usage-with-single-units" id="id97">Usage with single units</a></li>
+<li><a class="reference internal" href="#usage-with-filters" id="id98">Usage with filters</a></li>
+<li><a class="reference internal" href="#mass-renaming" id="id99">Mass-renaming</a></li>
+<li><a class="reference internal" href="#cage-zones" id="id100">Cage zones</a></li>
+<li><a class="reference internal" href="#examples" id="id101">Examples</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#fixdiplomats" id="id94">fixdiplomats</a></li>
-<li><a class="reference internal" href="#fixmerchants" id="id95">fixmerchants</a></li>
-<li><a class="reference internal" href="#fixveins" id="id96">fixveins</a></li>
-<li><a class="reference internal" href="#fixwagons" id="id97">fixwagons</a></li>
-<li><a class="reference internal" href="#flows" id="id98">flows</a></li>
-<li><a class="reference internal" href="#getplants" id="id99">getplants</a><ul>
-<li><a class="reference internal" href="#id16" id="id100">Options</a></li>
+<li><a class="reference internal" href="#autonestbox" id="id102">autonestbox</a></li>
+<li><a class="reference internal" href="#autobutcher" id="id103">autobutcher</a></li>
+<li><a class="reference internal" href="#autolabor" id="id104">autolabor</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#tidlers" id="id101">tidlers</a></li>
-<li><a class="reference internal" href="#twaterlvl" id="id102">twaterlvl</a></li>
-<li><a class="reference internal" href="#job" id="id103">job</a></li>
-<li><a class="reference internal" href="#job-material" id="id104">job-material</a></li>
-<li><a class="reference internal" href="#job-duplicate" id="id105">job-duplicate</a></li>
-<li><a class="reference internal" href="#keybinding" id="id106">keybinding</a><ul>
-<li><a class="reference internal" href="#id17" id="id107">Options</a></li>
+<li><a class="reference internal" href="#other" id="id105">Other</a><ul>
+<li><a class="reference internal" href="#catsplosion" id="id106">catsplosion</a></li>
+<li><a class="reference internal" href="#dfusion" id="id107">dfusion</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#liquids" id="id108">liquids</a></li>
-<li><a class="reference internal" href="#liquids-here" id="id109">liquids-here</a></li>
-<li><a class="reference internal" href="#mode" id="id110">mode</a></li>
-<li><a class="reference internal" href="#extirpate" id="id111">extirpate</a><ul>
-<li><a class="reference internal" href="#id18" id="id112">Options</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#grow" id="id113">grow</a></li>
-<li><a class="reference internal" href="#immolate" id="id114">immolate</a></li>
-<li><a class="reference internal" href="#probe" id="id115">probe</a></li>
-<li><a class="reference internal" href="#prospect" id="id116">prospect</a><ul>
-<li><a class="reference internal" href="#id19" id="id117">Options</a></li>
-<li><a class="reference internal" href="#pre-embark-estimate" id="id118">Pre-embark estimate</a></li>
-<li><a class="reference internal" href="#id20" id="id119">Options</a></li>
+<li><a class="reference internal" href="#scripts" id="id108">Scripts</a><ul>
+<li><a class="reference internal" href="#fix" id="id109">fix/*</a></li>
+<li><a class="reference internal" href="#gui" id="id110">gui/*</a></li>
+<li><a class="reference internal" href="#quicksave" id="id111">quicksave</a></li>
+<li><a class="reference internal" href="#setfps" id="id112">setfps</a></li>
+<li><a class="reference internal" href="#growcrops" id="id113">growcrops</a></li>
+<li><a class="reference internal" href="#removebadthoughts" id="id114">removebadthoughts</a></li>
+<li><a class="reference internal" href="#slayrace" id="id115">slayrace</a></li>
+<li><a class="reference internal" href="#magmasource" id="id116">magmasource</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#regrass" id="id120">regrass</a></li>
-<li><a class="reference internal" href="#rename" id="id121">rename</a><ul>
-<li><a class="reference internal" href="#id21" id="id122">Options</a></li>
+<li><a class="reference internal" href="#in-game-interface-tools" id="id117">In-game interface tools</a><ul>
+<li><a class="reference internal" href="#dwarf-manipulator" id="id118">Dwarf Manipulator</a></li>
+<li><a class="reference internal" href="#id1" id="id119">Liquids</a></li>
+<li><a class="reference internal" href="#mechanisms" id="id120">Mechanisms</a></li>
+<li><a class="reference internal" href="#power-meter" id="id121">Power Meter</a></li>
+<li><a class="reference internal" href="#id2" id="id122">Rename</a></li>
+<li><a class="reference internal" href="#room-list" id="id123">Room List</a></li>
+<li><a class="reference internal" href="#siege-engine" id="id124">Siege Engine</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#reveal" id="id123">reveal</a></li>
-<li><a class="reference internal" href="#unreveal" id="id124">unreveal</a></li>
-<li><a class="reference internal" href="#revtoggle" id="id125">revtoggle</a></li>
-<li><a class="reference internal" href="#revflood" id="id126">revflood</a></li>
-<li><a class="reference internal" href="#revforget" id="id127">revforget</a></li>
-<li><a class="reference internal" href="#lair" id="id128">lair</a><ul>
-<li><a class="reference internal" href="#id22" id="id129">Options</a></li>
+<li><a class="reference internal" href="#raw-hacks" id="id125">RAW hacks</a><ul>
+<li><a class="reference internal" href="#steam-engine" id="id126">Steam Engine</a><ul>
+<li><a class="reference internal" href="#rationale" id="id127">Rationale</a></li>
+<li><a class="reference internal" href="#construction" id="id128">Construction</a></li>
+<li><a class="reference internal" href="#operation" id="id129">Operation</a></li>
+<li><a class="reference internal" href="#explosions" id="id130">Explosions</a></li>
+<li><a class="reference internal" href="#save-files" id="id131">Save files</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#seedwatch" id="id130">seedwatch</a></li>
-<li><a class="reference internal" href="#showmood" id="id131">showmood</a></li>
-<li><a class="reference internal" href="#copystock" id="id132">copystock</a></li>
-<li><a class="reference internal" href="#ssense-stonesense" id="id133">ssense / stonesense</a></li>
-<li><a class="reference internal" href="#tiletypes" id="id134">tiletypes</a></li>
-<li><a class="reference internal" href="#tiletypes-commands" id="id135">tiletypes-commands</a></li>
-<li><a class="reference internal" href="#tiletypes-here" id="id136">tiletypes-here</a></li>
-<li><a class="reference internal" href="#tiletypes-here-point" id="id137">tiletypes-here-point</a></li>
-<li><a class="reference internal" href="#tweak" id="id138">tweak</a><ul>
-<li><a class="reference internal" href="#id23" id="id139">Options</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#tubefill" id="id140">tubefill</a></li>
-<li><a class="reference internal" href="#digv" id="id141">digv</a></li>
-<li><a class="reference internal" href="#digvx" id="id142">digvx</a></li>
-<li><a class="reference internal" href="#digl" id="id143">digl</a></li>
-<li><a class="reference internal" href="#diglx" id="id144">diglx</a></li>
-<li><a class="reference internal" href="#digexp" id="id145">digexp</a><ul>
-<li><a class="reference internal" href="#patterns" id="id146">Patterns:</a></li>
-<li><a class="reference internal" href="#filters" id="id147">Filters:</a></li>
-<li><a class="reference internal" href="#id24" id="id148">Examples:</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#digcircle" id="id149">digcircle</a><ul>
-<li><a class="reference internal" href="#shape" id="id150">Shape:</a></li>
-<li><a class="reference internal" href="#action" id="id151">Action:</a></li>
-<li><a class="reference internal" href="#designation-types" id="id152">Designation types:</a></li>
-<li><a class="reference internal" href="#id25" id="id153">Examples:</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#weather" id="id154">weather</a><ul>
-<li><a class="reference internal" href="#id26" id="id155">Options:</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#workflow" id="id156">workflow</a><ul>
-<li><a class="reference internal" href="#id27" id="id157">Usage</a></li>
-<li><a class="reference internal" href="#function" id="id158">Function</a></li>
-<li><a class="reference internal" href="#constraint-examples" id="id159">Constraint examples</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#mapexport" id="id160">mapexport</a></li>
-<li><a class="reference internal" href="#dwarfexport" id="id161">dwarfexport</a></li>
-<li><a class="reference internal" href="#zone" id="id162">zone</a><ul>
-<li><a class="reference internal" href="#id28" id="id163">Options:</a></li>
-<li><a class="reference internal" href="#id29" id="id164">Filters:</a></li>
-<li><a class="reference internal" href="#usage-with-single-units" id="id165">Usage with single units</a></li>
-<li><a class="reference internal" href="#usage-with-filters" id="id166">Usage with filters</a></li>
-<li><a class="reference internal" href="#mass-renaming" id="id167">Mass-renaming</a></li>
-<li><a class="reference internal" href="#cage-zones" id="id168">Cage zones</a></li>
-<li><a class="reference internal" href="#id30" id="id169">Examples</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#autonestbox" id="id170">autonestbox</a><ul>
-<li><a class="reference internal" href="#id31" id="id171">Options:</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#autobutcher" id="id172">autobutcher</a><ul>
-<li><a class="reference internal" href="#id32" id="id173">Options:</a></li>
-<li><a class="reference internal" href="#id33" id="id174">Examples:</a></li>
-<li><a class="reference internal" href="#note" id="id175">Note:</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#autolabor" id="id176">autolabor</a></li>
-<li><a class="reference internal" href="#growcrops" id="id177">growcrops</a></li>
-<li><a class="reference internal" href="#removebadthoughts" id="id178">removebadthoughts</a></li>
-<li><a class="reference internal" href="#slayrace" id="id179">slayrace</a></li>
-<li><a class="reference internal" href="#magmasource" id="id180">magmasource</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#in-game-interface-tools" id="id181">In-game interface tools</a><ul>
-<li><a class="reference internal" href="#dwarf-manipulator" id="id182">Dwarf Manipulator</a></li>
-<li><a class="reference internal" href="#id34" id="id183">Liquids</a></li>
-<li><a class="reference internal" href="#mechanisms" id="id184">Mechanisms</a></li>
-<li><a class="reference internal" href="#power-meter" id="id185">Power Meter</a></li>
-<li><a class="reference internal" href="#id35" id="id186">Rename</a></li>
-<li><a class="reference internal" href="#room-list" id="id187">Room List</a></li>
-<li><a class="reference internal" href="#siege-engine" id="id188">Siege Engine</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#raw-hacks" id="id189">RAW hacks</a><ul>
-<li><a class="reference internal" href="#steam-engine" id="id190">Steam Engine</a><ul>
-<li><a class="reference internal" href="#rationale" id="id191">Rationale</a></li>
-<li><a class="reference internal" href="#construction" id="id192">Construction</a></li>
-<li><a class="reference internal" href="#operation" id="id193">Operation</a></li>
-<li><a class="reference internal" href="#explosions" id="id194">Explosions</a></li>
-<li><a class="reference internal" href="#save-files" id="id195">Save files</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#add-spatter" id="id196">Add Spatter</a></li>
+<li><a class="reference internal" href="#add-spatter" id="id132">Add Spatter</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 <div class="section" id="getting-dfhack">
-<h1><a class="toc-backref" href="#id37">Getting DFHack</a></h1>
+<h1><a class="toc-backref" href="#id4">Getting DFHack</a></h1>
 <p>The project is currently hosted on <a class="reference external" href="http://www.github.com/">github</a>, for both source and
 binaries at  <a class="reference external" href="http://github.com/peterix/dfhack">http://github.com/peterix/dfhack</a></p>
 <p>Releases can be downloaded from here: <a class="reference external" href="https://github.com/peterix/dfhack/downloads">https://github.com/peterix/dfhack/downloads</a></p>
 <p>All new releases are announced in the bay12 thread: <a class="reference external" href="http://tinyurl.com/dfhack-ng">http://tinyurl.com/dfhack-ng</a></p>
 </div>
 <div class="section" id="compatibility">
-<h1><a class="toc-backref" href="#id38">Compatibility</a></h1>
+<h1><a class="toc-backref" href="#id5">Compatibility</a></h1>
 <p>DFHack works on Windows XP, Vista, 7 or any modern Linux distribution.
 OSX is not supported due to lack of developers with a Mac.</p>
 <p>Currently, versions 0.34.08 - 0.34.11 are supported. If you need DFHack
@@ -573,7 +520,7 @@ for older versions, look for older releases.</p>
 <p>It is possible to use the Windows DFHack under wine/OSX.</p>
 </div>
 <div class="section" id="installation-removal">
-<h1><a class="toc-backref" href="#id39">Installation/Removal</a></h1>
+<h1><a class="toc-backref" href="#id6">Installation/Removal</a></h1>
 <p>Installing DFhack involves copying files into your DF folder.
 Copy the files from a release archive so that:</p>
 <blockquote>
@@ -595,7 +542,7 @@ remove the other DFHack files</li>
 file created in your DF folder.</p>
 </div>
 <div class="section" id="using-dfhack">
-<h1><a class="toc-backref" href="#id40">Using DFHack</a></h1>
+<h1><a class="toc-backref" href="#id7">Using DFHack</a></h1>
 <p>DFHack basically extends what DF can do with something similar to the drop-down
 console found in Quake engine games. On Windows, this is a separate command line
 window. On linux, the terminal used to launch the dfhack script is taken over
@@ -619,7 +566,7 @@ they are re-created every time it is loaded.</p>
 <p>Most of the commands come from plugins. Those reside in 'hack/plugins/'.</p>
 </div>
 <div class="section" id="something-doesn-t-work-help">
-<h1><a class="toc-backref" href="#id41">Something doesn't work, help!</a></h1>
+<h1><a class="toc-backref" href="#id8">Something doesn't work, help!</a></h1>
 <p>First, don't panic :) Second, dfhack keeps a few log files in DF's folder
 - stderr.log and stdout.log. You can look at those and possibly find out what's
 happening.
@@ -628,24 +575,158 @@ the issues tracker on github, contact me (<a class="reference external" href="ma
 #dfhack IRC channel on freenode.</p>
 </div>
 <div class="section" id="the-init-file">
-<h1><a class="toc-backref" href="#id42">The init file</a></h1>
-<p>If your DF folder contains a file named dfhack.init, its contents will be run
+<h1><a class="toc-backref" href="#id9">The init file</a></h1>
+<p>If your DF folder contains a file named <tt class="docutils literal">dfhack.init</tt>, its contents will be run
 every time you start DF. This allows setting up keybindings. An example file
-is provided as dfhack.init-example - you can tweak it and rename to dfhack.init
+is provided as <tt class="docutils literal"><span class="pre">dfhack.init-example</span></tt> - you can tweak it and rename to dfhack.init
 if you want to use this functionality.</p>
+<div class="section" id="setting-keybindings">
+<h2><a class="toc-backref" href="#id10">Setting keybindings</a></h2>
+<p>To set keybindings, use the built-in <tt class="docutils literal">keybinding</tt> command. Like any other
+command it can be used at any time from the console, but it is also meaningful
+in the DFHack init file.</p>
+<p>Currently it supports any combination of Ctrl/Alt/Shift with F1-F9, or A-Z.</p>
+<p>Possible ways to call the command:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name" colspan="2">keybinding list &lt;key&gt;:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">List bindings active for the key combination.</td>
+</tr>
+<tr class="field"><th class="field-name" colspan="2">keybinding clear &lt;key&gt; &lt;key&gt;...:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Remove bindings for the specified keys.</td>
+</tr>
+<tr class="field"><th class="field-name" colspan="2">keybinding add &lt;key&gt; &quot;cmdline&quot; &quot;cmdline&quot;...:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Add bindings for the specified
+key.</td>
+</tr>
+<tr class="field"><th class="field-name" colspan="2">keybinding set &lt;key&gt; &quot;cmdline&quot; &quot;cmdline&quot;...:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Clear, and then add bindings for
+the specified key.</td>
+</tr>
+</tbody>
+</table>
+<p>The <em>&lt;key&gt;</em> parameter above has the following <em>case-sensitive</em> syntax:</p>
+<pre class="literal-block">
+[Ctrl-][Alt-][Shift-]KEY[&#64;context]
+</pre>
+<p>where the <em>KEY</em> part can be F1-F9 or A-Z, and [] denote optional parts.</p>
+<p>When multiple commands are bound to the same key combination, DFHack selects
+the first applicable one. Later 'add' commands, and earlier entries within one
+'add' command have priority. Commands that are not specifically intended for use
+as a hotkey are always considered applicable.</p>
+<p>The <em>context</em> part in the key specifier above can be used to explicitly restrict
+the UI state where the binding would be applicable. If called without parameters,
+the <tt class="docutils literal">keybinding</tt> command among other things prints the current context string.
+Only bindings with a <em>context</em> tag that either matches the current context fully,
+or is a prefix ending at a '/' boundary would be considered for execution, i.e.
+for context <tt class="docutils literal">foo/bar/baz</tt>, possible matches are any of <tt class="docutils literal">&#64;foo/bar/baz</tt>, <tt class="docutils literal">&#64;foo/bar</tt>,
+<tt class="docutils literal">&#64;foo</tt> or none.</p>
+</div>
 </div>
 <div class="section" id="commands">
-<h1><a class="toc-backref" href="#id43">Commands</a></h1>
+<h1><a class="toc-backref" href="#id11">Commands</a></h1>
 <p>Almost all the commands support using the 'help &lt;command-name&gt;' built-in command
 to retrieve further help without having to look at this document. Alternatively,
 some accept a 'help'/'?' option on their command line.</p>
+<div class="section" id="game-progress">
+<h2><a class="toc-backref" href="#id12">Game progress</a></h2>
+<div class="section" id="die">
+<h3><a class="toc-backref" href="#id13">die</a></h3>
+<p>Instantly kills DF without saving.</p>
+</div>
+<div class="section" id="forcepause">
+<h3><a class="toc-backref" href="#id14">forcepause</a></h3>
+<p>Forces DF to pause. This is useful when your FPS drops below 1 and you lose
+control of the game.</p>
+<blockquote>
+<ul class="simple">
+<li>Activate with 'forcepause 1'</li>
+<li>Deactivate with 'forcepause 0'</li>
+</ul>
+</blockquote>
+</div>
+<div class="section" id="nopause">
+<h3><a class="toc-backref" href="#id15">nopause</a></h3>
+<p>Disables pausing (both manual and automatic) with the exception of pause forced
+by 'reveal hell'. This is nice for digging under rivers.</p>
+</div>
+<div class="section" id="fastdwarf">
+<h3><a class="toc-backref" href="#id16">fastdwarf</a></h3>
+<p>Makes your minions move at ludicrous speeds.</p>
+<blockquote>
+<ul class="simple">
+<li>Activate with 'fastdwarf 1'</li>
+<li>Deactivate with 'fastdwarf 0'</li>
+</ul>
+</blockquote>
+</div>
+</div>
+<div class="section" id="game-interface">
+<h2><a class="toc-backref" href="#id17">Game interface</a></h2>
+<div class="section" id="follow">
+<h3><a class="toc-backref" href="#id18">follow</a></h3>
+<p>Makes the game view follow the currently highlighted unit after you exit from
+current menu/cursor mode. Handy for watching dwarves running around. Deactivated
+by moving the view manually.</p>
+</div>
+<div class="section" id="tidlers">
+<h3><a class="toc-backref" href="#id19">tidlers</a></h3>
+<p>Toggle between all possible positions where the idlers count can be placed.</p>
+</div>
+<div class="section" id="twaterlvl">
+<h3><a class="toc-backref" href="#id20">twaterlvl</a></h3>
+<p>Toggle between displaying/not displaying liquid depth as numbers.</p>
+</div>
+<div class="section" id="copystock">
+<h3><a class="toc-backref" href="#id21">copystock</a></h3>
+<p>Copies the parameters of the currently highlighted stockpile to the custom
+stockpile settings and switches to custom stockpile placement mode, effectively
+allowing you to copy/paste stockpiles easily.</p>
+</div>
+<div class="section" id="rename">
+<h3><a class="toc-backref" href="#id22">rename</a></h3>
+<p>Allows renaming various things.</p>
+<p>Options:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name" colspan="2">rename squad &lt;index&gt; &quot;name&quot;:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Rename squad by index to 'name'.</td>
+</tr>
+<tr class="field"><th class="field-name" colspan="2">rename hotkey &lt;index&gt; &quot;name&quot;:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Rename hotkey by index. This allows assigning
+longer commands to the DF hotkeys.</td>
+</tr>
+<tr class="field"><th class="field-name" colspan="2">rename unit &quot;nickname&quot;:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Rename a unit/creature highlighted in the DF user
+interface.</td>
+</tr>
+<tr class="field"><th class="field-name" colspan="2">rename unit-profession &quot;custom profession&quot;:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Change proffession name of the
+highlighted unit/creature.</td>
+</tr>
+<tr class="field"><th class="field-name" colspan="2">rename building &quot;name&quot;:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Set a custom name for the selected building.
+The building must be one of stockpile, workshop, furnace, trap,
+siege engine or an activity zone.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+</div>
+</div>
+<div class="section" id="adventure-mode">
+<h2><a class="toc-backref" href="#id23">Adventure mode</a></h2>
 <div class="section" id="adv-bodyswap">
-<h2><a class="toc-backref" href="#id44">adv-bodyswap</a></h2>
+<h3><a class="toc-backref" href="#id24">adv-bodyswap</a></h3>
 <p>This allows taking control over your followers and other creatures in adventure
 mode. For example, you can make them pick up new arms and armor and equip them
 properly.</p>
-<div class="section" id="usage">
-<h3><a class="toc-backref" href="#id45">Usage</a></h3>
+<p>Usage:</p>
 <blockquote>
 <ul class="simple">
 <li>When viewing unit details, body-swaps into that unit.</li>
@@ -653,12 +734,11 @@ properly.</p>
 </ul>
 </blockquote>
 </div>
-</div>
 <div class="section" id="advtools">
-<h2><a class="toc-backref" href="#id46">advtools</a></h2>
+<h3><a class="toc-backref" href="#id25">advtools</a></h3>
 <p>A package of different adventure mode tools (currently just one)</p>
-<div class="section" id="id1">
-<h3><a class="toc-backref" href="#id47">Usage</a></h3>
+<p>Usage:</p>
+<blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -674,10 +754,13 @@ on item type and being in shop.</td>
 </tr>
 </tbody>
 </table>
+</blockquote>
 </div>
 </div>
+<div class="section" id="map-modification">
+<h2><a class="toc-backref" href="#id26">Map modification</a></h2>
 <div class="section" id="changelayer">
-<h2><a class="toc-backref" href="#id48">changelayer</a></h2>
+<h3><a class="toc-backref" href="#id27">changelayer</a></h3>
 <p>Changes material of the geology layer under cursor to the specified inorganic
 RAW material. Can have impact on all surrounding regions, not only your embark!
 By default changing stone to soil and vice versa is not allowed. By default
@@ -688,8 +771,8 @@ as well, though. Mineral veins and gem clusters will stay on the map. Use
 'changevein' for them.</p>
 <p>tl;dr: You will end up with changing quite big areas in one go, especially if
 you use it in lower z levels. Use with care.</p>
-<div class="section" id="options">
-<h3><a class="toc-backref" href="#id49">Options</a></h3>
+<p>Options:</p>
+<blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -721,9 +804,9 @@ soil.</td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="examples">
-<h3><a class="toc-backref" href="#id50">Examples:</a></h3>
+</blockquote>
+<p>Examples:</p>
+<blockquote>
 <dl class="docutils">
 <dt><tt class="docutils literal">changelayer GRANITE</tt></dt>
 <dd>Convert layer at cursor position into granite.</dd>
@@ -732,6 +815,7 @@ soil.</td>
 <dt><tt class="docutils literal">changelayer MARBLE all_biomes all_layers</tt></dt>
 <dd>Convert all layers of all biomes which are not soil into marble.</dd>
 </dl>
+</blockquote>
 <div class="note">
 <p class="first admonition-title">Note</p>
 <ul class="last simple">
@@ -750,21 +834,21 @@ You did save your game, right?</li>
 </ul>
 </div>
 </div>
-</div>
 <div class="section" id="changevein">
-<h2><a class="toc-backref" href="#id51">changevein</a></h2>
+<h3><a class="toc-backref" href="#id28">changevein</a></h3>
 <p>Changes material of the vein under cursor to the specified inorganic RAW
-material.</p>
-<div class="section" id="example">
-<h3><a class="toc-backref" href="#id52">Example:</a></h3>
+material. Only affects tiles within the current 16x16 block - for veins and
+large clusters, you will need to use this command multiple times.</p>
+<p>Example:</p>
+<blockquote>
 <dl class="docutils">
 <dt><tt class="docutils literal">changevein NATIVE_PLATINUM</tt></dt>
 <dd>Convert vein at cursor position into platinum ore.</dd>
 </dl>
-</div>
+</blockquote>
 </div>
 <div class="section" id="changeitem">
-<h2><a class="toc-backref" href="#id53">changeitem</a></h2>
+<h3><a class="toc-backref" href="#id29">changeitem</a></h3>
 <p>Allows changing item material and base quality. By default the item currently
 selected in the UI will be changed (you can select items in the 'k' list
 or inside containers/inventory). By default change is only allowed if materials
@@ -774,8 +858,8 @@ with 'force'. Note that some attributes will not be touched, possibly resulting
 in weirdness. To get an idea how the RAW id should look like, check some items
 with 'info'. Using 'force' might create items which are not touched by
 crafters/haulers.</p>
-<div class="section" id="id2">
-<h3><a class="toc-backref" href="#id54">Options</a></h3>
+<p>Options:</p>
+<blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -792,275 +876,22 @@ crafters/haulers.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="id3">
-<h3><a class="toc-backref" href="#id55">Examples:</a></h3>
+</blockquote>
+<p>Examples:</p>
+<blockquote>
 <dl class="docutils">
 <dt><tt class="docutils literal">changeitem m INORGANIC:GRANITE here</tt></dt>
 <dd>Change material of all items under the cursor to granite.</dd>
 <dt><tt class="docutils literal">changeitem q 5</tt></dt>
 <dd>Change currently selected item to masterpiece quality.</dd>
 </dl>
-</div>
-</div>
-<div class="section" id="cursecheck">
-<h2><a class="toc-backref" href="#id56">cursecheck</a></h2>
-<p>Checks a single map tile or the whole map/world for cursed creatures (ghosts,
-vampires, necromancers, werebeasts, zombies).</p>
-<p>With an active in-game cursor only the selected tile will be observed.
-Without a cursor the whole map will be checked.</p>
-<p>By default cursed creatures will be only counted in case you just want to find
-out if you have any of them running around in your fort. Dead and passive
-creatures (ghosts who were put to rest, killed vampires, ...) are ignored.
-Undead skeletons, corpses, bodyparts and the like are all thrown into the curse
-category &quot;zombie&quot;. Anonymous zombies and resurrected body parts will show
-as &quot;unnamed creature&quot;.</p>
-<div class="section" id="id4">
-<h3><a class="toc-backref" href="#id57">Options</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">detail:</th><td class="field-body">Print full name, date of birth, date of curse and some status
-info (some vampires might use fake identities in-game, though).</td>
-</tr>
-<tr class="field"><th class="field-name">nick:</th><td class="field-body">Set the type of curse as nickname (does not always show up
-in-game, some vamps don't like nicknames).</td>
-</tr>
-<tr class="field"><th class="field-name">all:</th><td class="field-body">Include dead and passive cursed creatures (can result in a quite
-long list after having FUN with necromancers).</td>
-</tr>
-<tr class="field"><th class="field-name">verbose:</th><td class="field-body">Print all curse tags (if you really want to know it all).</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="id5">
-<h3><a class="toc-backref" href="#id58">Examples:</a></h3>
-<dl class="docutils">
-<dt><tt class="docutils literal">cursecheck detail all</tt></dt>
-<dd>Give detailed info about all cursed creatures including deceased ones (no
-in-game cursor).</dd>
-<dt><tt class="docutils literal">cursecheck nick</tt></dt>
-<dd>Give a nickname all living/active cursed creatures on the map(no in-game
-cursor).</dd>
-</dl>
-<div class="note">
-<p class="first admonition-title">Note</p>
-<ul class="last simple">
-<li>If you do a full search (with the option &quot;all&quot;) former ghosts will show up
-with the cursetype &quot;unknown&quot; because their ghostly flag is not set
-anymore. But if you happen to find a living/active creature with cursetype
-&quot;unknown&quot; please report that in the dfhack thread on the modding forum or
-per irc. This is likely to happen with mods which introduce new types
-of curses, for example.</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="section" id="follow">
-<h2><a class="toc-backref" href="#id59">follow</a></h2>
-<p>Makes the game view follow the currently highlighted unit after you exit from
-current menu/cursor mode. Handy for watching dwarves running around. Deactivated
-by moving the view manually.</p>
-</div>
-<div class="section" id="forcepause">
-<h2><a class="toc-backref" href="#id60">forcepause</a></h2>
-<p>Forces DF to pause. This is useful when your FPS drops below 1 and you lose
-control of the game.</p>
-<blockquote>
-<ul class="simple">
-<li>Activate with 'forcepause 1'</li>
-<li>Deactivate with 'forcepause 0'</li>
-</ul>
 </blockquote>
 </div>
-<div class="section" id="nopause">
-<h2><a class="toc-backref" href="#id61">nopause</a></h2>
-<p>Disables pausing (both manual and automatic) with the exception of pause forced
-by 'reveal hell'. This is nice for digging under rivers.</p>
-</div>
-<div class="section" id="die">
-<h2><a class="toc-backref" href="#id62">die</a></h2>
-<p>Instantly kills DF without saving.</p>
-</div>
-<div class="section" id="autodump">
-<h2><a class="toc-backref" href="#id63">autodump</a></h2>
-<p>This utility lets you quickly move all items designated to be dumped.
-Items are instantly moved to the cursor position, the dump flag is unset,
-and the forbid flag is set, as if it had been dumped normally.
-Be aware that any active dump item tasks still point at the item.</p>
-<p>Cursor must be placed on a floor tile so the items can be dumped there.</p>
-<div class="section" id="id6">
-<h3><a class="toc-backref" href="#id64">Options</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">destroy:</th><td class="field-body">Destroy instead of dumping. Doesn't require a cursor.</td>
-</tr>
-<tr class="field"><th class="field-name">destroy-here:</th><td class="field-body">Destroy items only under the cursor.</td>
-</tr>
-<tr class="field"><th class="field-name">visible:</th><td class="field-body">Only process items that are not hidden.</td>
-</tr>
-<tr class="field"><th class="field-name">hidden:</th><td class="field-body">Only process hidden items.</td>
-</tr>
-<tr class="field"><th class="field-name">forbidden:</th><td class="field-body">Only process forbidden items (default: only unforbidden).</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="section" id="autodump-destroy-here">
-<h2><a class="toc-backref" href="#id65">autodump-destroy-here</a></h2>
-<p>Destroy items marked for dumping under cursor. Identical to autodump
-destroy-here, but intended for use as keybinding.</p>
-</div>
-<div class="section" id="autodump-destroy-item">
-<h2><a class="toc-backref" href="#id66">autodump-destroy-item</a></h2>
-<p>Destroy the selected item. The item may be selected in the 'k' list, or inside
-a container. If called again before the game is resumed, cancels destroy.</p>
-</div>
-<div class="section" id="burrow">
-<h2><a class="toc-backref" href="#id67">burrow</a></h2>
-<p>Miscellaneous burrow control. Allows manipulating burrows and automated burrow
-expansion while digging.</p>
-<div class="section" id="id7">
-<h3><a class="toc-backref" href="#id68">Options</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name" colspan="2">enable feature ...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body"></td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">disable feature ...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">Enable or Disable features of the plugin.</td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">clear-unit burrow burrow ...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body"></td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">clear-tiles burrow burrow ...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">Removes all units or tiles from the burrows.</td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">set-units target-burrow src-burrow ...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body"></td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">add-units target-burrow src-burrow ...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body"></td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">remove-units target-burrow src-burrow ...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">Adds or removes units in source
-burrows to/from the target burrow. Set is equivalent to clear and add.</td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">set-tiles target-burrow src-burrow ...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body"></td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">add-tiles target-burrow src-burrow ...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body"></td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">remove-tiles target-burrow src-burrow ...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">Adds or removes tiles in source
-burrows to/from the target burrow. In place of a source burrow it is
-possible to use one of the following keywords: ABOVE_GROUND,
-SUBTERRANEAN, INSIDE, OUTSIDE, LIGHT, DARK, HIDDEN, REVEALED</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="features">
-<h3><a class="toc-backref" href="#id69">Features</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">auto-grow:</th><td class="field-body">When a wall inside a burrow with a name ending in '+' is dug
-out, the burrow is extended to newly-revealed adjacent walls.
-This final '+' may be omitted in burrow name args of commands above.
-Digging 1-wide corridors with the miner inside the burrow is SLOW.</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="section" id="catsplosion">
-<h2><a class="toc-backref" href="#id70">catsplosion</a></h2>
-<p>Makes cats just <em>multiply</em>. It is not a good idea to run this more than once or
-twice.</p>
-</div>
-<div class="section" id="clean">
-<h2><a class="toc-backref" href="#id71">clean</a></h2>
-<p>Cleans all the splatter that get scattered all over the map, items and
-creatures. In an old fortress, this can significantly reduce FPS lag. It can
-also spoil your !!FUN!!, so think before you use it.</p>
-<div class="section" id="id8">
-<h3><a class="toc-backref" href="#id72">Options</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">map:</th><td class="field-body">Clean the map tiles. By default, it leaves mud and snow alone.</td>
-</tr>
-<tr class="field"><th class="field-name">units:</th><td class="field-body">Clean the creatures. Will also clean hostiles.</td>
-</tr>
-<tr class="field"><th class="field-name">items:</th><td class="field-body">Clean all the items. Even a poisoned blade.</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="extra-options-for-map">
-<h3><a class="toc-backref" href="#id73">Extra options for 'map'</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">mud:</th><td class="field-body">Remove mud in addition to the normal stuff.</td>
-</tr>
-<tr class="field"><th class="field-name">snow:</th><td class="field-body">Also remove snow coverings.</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="section" id="spotclean">
-<h2><a class="toc-backref" href="#id74">spotclean</a></h2>
-<p>Works like 'clean map snow mud', but only for the tile under the cursor. Ideal
-if you want to keep that bloody entrance 'clean map' would clean up.</p>
-</div>
-<div class="section" id="cleanowned">
-<h2><a class="toc-backref" href="#id75">cleanowned</a></h2>
-<p>Confiscates items owned by dwarfs. By default, owned food on the floor
-and rotten items are confistacted and dumped.</p>
-<div class="section" id="id9">
-<h3><a class="toc-backref" href="#id76">Options</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">all:</th><td class="field-body">confiscate all owned items</td>
-</tr>
-<tr class="field"><th class="field-name">scattered:</th><td class="field-body">confiscated and dump all items scattered on the floor</td>
-</tr>
-<tr class="field"><th class="field-name">x:</th><td class="field-body">confiscate/dump items with wear level 'x' and more</td>
-</tr>
-<tr class="field"><th class="field-name">X:</th><td class="field-body">confiscate/dump items with wear level 'X' and more</td>
-</tr>
-<tr class="field"><th class="field-name">dryrun:</th><td class="field-body">a dry run. combine with other options to see what will happen
-without it actually happening.</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="id10">
-<h3><a class="toc-backref" href="#id77">Example:</a></h3>
-<p><tt class="docutils literal">cleanowned scattered X</tt> : This will confiscate rotten and dropped food, garbage on the floors and any worn items with 'X' damage and above.</p>
-</div>
-</div>
 <div class="section" id="colonies">
-<h2><a class="toc-backref" href="#id78">colonies</a></h2>
+<h3><a class="toc-backref" href="#id30">colonies</a></h3>
 <p>Allows listing all the vermin colonies on the map and optionally turning them into honey bee colonies.</p>
-<div class="section" id="id11">
-<h3><a class="toc-backref" href="#id79">Options</a></h3>
+<p>Options:</p>
+<blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1069,53 +900,15 @@ without it actually happening.</td>
 </tr>
 </tbody>
 </table>
-</div>
+</blockquote>
 </div>
 <div class="section" id="deramp-by-zilpin">
-<h2><a class="toc-backref" href="#id80">deramp (by zilpin)</a></h2>
+<h3><a class="toc-backref" href="#id31">deramp (by zilpin)</a></h3>
 <p>Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.
 It also removes any and all 'down ramps' that can remain after a cave-in (you don't have to designate anything for that to happen).</p>
 </div>
-<div class="section" id="dfusion">
-<h2><a class="toc-backref" href="#id81">dfusion</a></h2>
-<p>This is the DFusion lua plugin system by warmist/darius, running as a DFHack plugin.</p>
-<p>See the bay12 thread for details: <a class="reference external" href="http://www.bay12forums.com/smf/index.php?topic=69682.15">http://www.bay12forums.com/smf/index.php?topic=69682.15</a></p>
-<div class="section" id="confirmed-working-dfusion-plugins">
-<h3><a class="toc-backref" href="#id82">Confirmed working DFusion plugins:</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">simple_embark:</th><td class="field-body">allows changing the number of dwarves available on embark.</td>
-</tr>
-</tbody>
-</table>
-<div class="note">
-<p class="first admonition-title">Note</p>
-<ul class="last simple">
-<li>Some of the DFusion plugins aren't completely ported yet. This can lead to crashes.</li>
-<li>This is currently working only on Windows.</li>
-<li>The game will be suspended while you're using dfusion. Don't panic when it doen't respond.</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="section" id="drybuckets">
-<h2><a class="toc-backref" href="#id83">drybuckets</a></h2>
-<p>This utility removes water from all buckets in your fortress, allowing them to be safely used for making lye.</p>
-</div>
-<div class="section" id="fastdwarf">
-<h2><a class="toc-backref" href="#id84">fastdwarf</a></h2>
-<p>Makes your minions move at ludicrous speeds.</p>
-<blockquote>
-<ul class="simple">
-<li>Activate with 'fastdwarf 1'</li>
-<li>Deactivate with 'fastdwarf 0'</li>
-</ul>
-</blockquote>
-</div>
 <div class="section" id="feature">
-<h2><a class="toc-backref" href="#id85">feature</a></h2>
+<h3><a class="toc-backref" href="#id32">feature</a></h3>
 <p>Enables management of map features.</p>
 <ul class="simple">
 <li>Discovering a magma feature (magma pool, volcano, magma sea, or curious
@@ -1123,8 +916,8 @@ underground structure) permits magma workshops and furnaces to be built.</li>
 <li>Discovering a cavern layer causes plants (trees, shrubs, and grass) from
 that cavern to grow within your fortress.</li>
 </ul>
-<div class="section" id="id12">
-<h3><a class="toc-backref" href="#id86">Options</a></h3>
+<p>Options:</p>
+<blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1137,218 +930,10 @@ that cavern to grow within your fortress.</li>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
-<div class="section" id="filltraffic">
-<h2><a class="toc-backref" href="#id87">filltraffic</a></h2>
-<p>Set traffic designations using flood-fill starting at the cursor.</p>
-<div class="section" id="traffic-type-codes">
-<h3><a class="toc-backref" href="#id88">Traffic Type Codes:</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">H:</th><td class="field-body">High Traffic</td>
-</tr>
-<tr class="field"><th class="field-name">N:</th><td class="field-body">Normal Traffic</td>
-</tr>
-<tr class="field"><th class="field-name">L:</th><td class="field-body">Low Traffic</td>
-</tr>
-<tr class="field"><th class="field-name">R:</th><td class="field-body">Restricted Traffic</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="other-options">
-<h3><a class="toc-backref" href="#id89">Other Options:</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">X:</th><td class="field-body">Fill accross z-levels.</td>
-</tr>
-<tr class="field"><th class="field-name">B:</th><td class="field-body">Include buildings and stockpiles.</td>
-</tr>
-<tr class="field"><th class="field-name">P:</th><td class="field-body">Include empty space.</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="id13">
-<h3><a class="toc-backref" href="#id90">Example:</a></h3>
-<p>'filltraffic H' - When used in a room with doors, it will set traffic to HIGH in just that room.</p>
-</div>
-</div>
-<div class="section" id="alltraffic">
-<h2><a class="toc-backref" href="#id91">alltraffic</a></h2>
-<p>Set traffic designations for every single tile of the map (useful for resetting traffic designations).</p>
-<div class="section" id="id14">
-<h3><a class="toc-backref" href="#id92">Traffic Type Codes:</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">H:</th><td class="field-body">High Traffic</td>
-</tr>
-<tr class="field"><th class="field-name">N:</th><td class="field-body">Normal Traffic</td>
-</tr>
-<tr class="field"><th class="field-name">L:</th><td class="field-body">Low Traffic</td>
-</tr>
-<tr class="field"><th class="field-name">R:</th><td class="field-body">Restricted Traffic</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="id15">
-<h3><a class="toc-backref" href="#id93">Example:</a></h3>
-<p>'alltraffic N' - Set traffic to 'normal' for all tiles.</p>
-</div>
-</div>
-<div class="section" id="fixdiplomats">
-<h2><a class="toc-backref" href="#id94">fixdiplomats</a></h2>
-<p>Up to version 0.31.12, Elves only sent Diplomats to your fortress to propose
-tree cutting quotas due to a bug; once that bug was fixed, Elves stopped caring
-about excess tree cutting. This command adds a Diplomat position to all Elven
-civilizations, allowing them to negotiate tree cutting quotas (and allowing you
-to violate them and potentially start wars) in case you haven't already modified
-your raws accordingly.</p>
-</div>
-<div class="section" id="fixmerchants">
-<h2><a class="toc-backref" href="#id95">fixmerchants</a></h2>
-<p>This command adds the Guild Representative position to all Human civilizations,
-allowing them to make trade agreements (just as they did back in 0.28.181.40d
-and earlier) in case you haven't already modified your raws accordingly.</p>
-</div>
-<div class="section" id="fixveins">
-<h2><a class="toc-backref" href="#id96">fixveins</a></h2>
-<p>Removes invalid references to mineral inclusions and restores missing ones.
-Use this if you broke your embark with tools like tiletypes, or if you
-accidentally placed a construction on top of a valuable mineral floor.</p>
-</div>
-<div class="section" id="fixwagons">
-<h2><a class="toc-backref" href="#id97">fixwagons</a></h2>
-<p>Due to a bug in all releases of version 0.31, merchants no longer bring wagons
-with their caravans. This command re-enables them for all appropriate
-civilizations.</p>
-</div>
-<div class="section" id="flows">
-<h2><a class="toc-backref" href="#id98">flows</a></h2>
-<p>A tool for checking how many tiles contain flowing liquids. If you suspect that
-your magma sea leaks into HFS, you can use this tool to be sure without
-revealing the map.</p>
-</div>
-<div class="section" id="getplants">
-<h2><a class="toc-backref" href="#id99">getplants</a></h2>
-<p>This tool allows plant gathering and tree cutting by RAW ID. Specify the types
-of trees to cut down and/or shrubs to gather by their plant names, separated
-by spaces.</p>
-<div class="section" id="id16">
-<h3><a class="toc-backref" href="#id100">Options</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">-t:</th><td class="field-body">Select trees only (exclude shrubs)</td>
-</tr>
-<tr class="field"><th class="field-name">-s:</th><td class="field-body">Select shrubs only (exclude trees)</td>
-</tr>
-<tr class="field"><th class="field-name">-c:</th><td class="field-body">Clear designations instead of setting them</td>
-</tr>
-<tr class="field"><th class="field-name">-x:</th><td class="field-body">Apply selected action to all plants except those specified (invert
-selection)</td>
-</tr>
-</tbody>
-</table>
-<p>Specifying both -t and -s will have no effect. If no plant IDs are specified,
-all valid plant IDs will be listed.</p>
-</div>
-</div>
-<div class="section" id="tidlers">
-<h2><a class="toc-backref" href="#id101">tidlers</a></h2>
-<p>Toggle between all possible positions where the idlers count can be placed.</p>
-</div>
-<div class="section" id="twaterlvl">
-<h2><a class="toc-backref" href="#id102">twaterlvl</a></h2>
-<p>Toggle between displaying/not displaying liquid depth as numbers.</p>
-</div>
-<div class="section" id="job">
-<h2><a class="toc-backref" href="#id103">job</a></h2>
-<p>Command for general job query and manipulation.</p>
-<dl class="docutils">
-<dt>Options:</dt>
-<dd><ul class="first last simple">
-<li>no extra options - Print details of the current job. The job can be selected
-in a workshop, or the unit/jobs screen.</li>
-<li>list - Print details of all jobs in the selected workshop.</li>
-<li>item-material &lt;item-idx&gt; &lt;material[:subtoken]&gt; - Replace the exact material
-id in the job item.</li>
-<li>item-type &lt;item-idx&gt; &lt;type[:subtype]&gt; - Replace the exact item type id in
-the job item.</li>
-</ul>
-</dd>
-</dl>
-</div>
-<div class="section" id="job-material">
-<h2><a class="toc-backref" href="#id104">job-material</a></h2>
-<p>Alter the material of the selected job.</p>
-<p>Invoked as: job-material &lt;inorganic-token&gt;</p>
-<dl class="docutils">
-<dt>Intended to be used as a keybinding:</dt>
-<dd><ul class="first last simple">
-<li>In 'q' mode, when a job is highlighted within a workshop or furnace,
-changes the material of the job. Only inorganic materials can be used
-in this mode.</li>
-<li>In 'b' mode, during selection of building components positions the cursor
-over the first available choice with the matching material.</li>
-</ul>
-</dd>
-</dl>
-</div>
-<div class="section" id="job-duplicate">
-<h2><a class="toc-backref" href="#id105">job-duplicate</a></h2>
-<dl class="docutils">
-<dt>Duplicate the selected job in a workshop:</dt>
-<dd><ul class="first last simple">
-<li>In 'q' mode, when a job is highlighted within a workshop or furnace building,
-instantly duplicates the job.</li>
-</ul>
-</dd>
-</dl>
-</div>
-<div class="section" id="keybinding">
-<h2><a class="toc-backref" href="#id106">keybinding</a></h2>
-<p>Manages DFHack keybindings.</p>
-<p>Currently it supports any combination of Ctrl/Alt/Shift with F1-F9, or A-Z.</p>
-<div class="section" id="id17">
-<h3><a class="toc-backref" href="#id107">Options</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name" colspan="2">keybinding list &lt;key&gt;:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">List bindings active for the key combination.</td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">keybinding clear &lt;key&gt; &lt;key&gt;...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">Remove bindings for the specified keys.</td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">keybinding add &lt;key&gt; &quot;cmdline&quot; &quot;cmdline&quot;...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">Add bindings for the specified
-key.</td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">keybinding set &lt;key&gt; &quot;cmdline&quot; &quot;cmdline&quot;...:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">Clear, and then add bindings for
-the specified key.</td>
-</tr>
-</tbody>
-</table>
-<p>When multiple commands are bound to the same key combination, DFHack selects
-the first applicable one. Later 'add' commands, and earlier entries within one
-'add' command have priority. Commands that are not specifically intended for use
-as a hotkey are always considered applicable.</p>
-</div>
+</blockquote>
 </div>
 <div class="section" id="liquids">
-<h2><a class="toc-backref" href="#id108">liquids</a></h2>
+<h3><a class="toc-backref" href="#id33">liquids</a></h3>
 <p>Allows adding magma, water and obsidian to the game. It replaces the normal
 dfhack command line and can't be used from a hotkey. Settings will be remembered
 as long as dfhack runs. Intended for use in combination with the command
@@ -1361,217 +946,13 @@ temperatures (creating heat traps). You've been warned.</p>
 </div>
 </div>
 <div class="section" id="liquids-here">
-<h2><a class="toc-backref" href="#id109">liquids-here</a></h2>
+<h3><a class="toc-backref" href="#id34">liquids-here</a></h3>
 <p>Run the liquid spawner with the current/last settings made in liquids (if no
 settings in liquids were made it paints a point of 7/7 magma by default).</p>
 <p>Intended to be used as keybinding. Requires an active in-game cursor.</p>
 </div>
-<div class="section" id="mode">
-<h2><a class="toc-backref" href="#id110">mode</a></h2>
-<p>This command lets you see and change the game mode directly.
-Not all combinations are good for every situation and most of them will
-produce undesirable results. There are a few good ones though.</p>
-<div class="admonition-example admonition">
-<p class="first admonition-title">Example</p>
-<p class="last">You are in fort game mode, managing your fortress and paused.
-You switch to the arena game mode, <em>assume control of a creature</em> and then
-switch to adventure game mode(1).
-You just lost a fortress and gained an adventurer.
-You could also do this.
-You are in fort game mode, managing your fortress and paused at the esc menu.
-You switch to the adventure game mode, then use Dfusion to <em>assume control of a creature</em> and then
-save or retire.
-You just created a returnable mountain home and gained an adventurer.</p>
-</div>
-<p>I take no responsibility of anything that happens as a result of using this tool</p>
-</div>
-<div class="section" id="extirpate">
-<h2><a class="toc-backref" href="#id111">extirpate</a></h2>
-<p>A tool for getting rid of trees and shrubs. By default, it only kills
-a tree/shrub under the cursor. The plants are turned into ashes instantly.</p>
-<div class="section" id="id18">
-<h3><a class="toc-backref" href="#id112">Options</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">shrubs:</th><td class="field-body">affect all shrubs on the map</td>
-</tr>
-<tr class="field"><th class="field-name">trees:</th><td class="field-body">affect all trees on the map</td>
-</tr>
-<tr class="field"><th class="field-name">all:</th><td class="field-body">affect every plant!</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="section" id="grow">
-<h2><a class="toc-backref" href="#id113">grow</a></h2>
-<p>Makes all saplings present on the map grow into trees (almost) instantly.</p>
-</div>
-<div class="section" id="immolate">
-<h2><a class="toc-backref" href="#id114">immolate</a></h2>
-<p>Very similar to extirpate, but additionally sets the plants on fire. The fires
-can and <em>will</em> spread ;)</p>
-</div>
-<div class="section" id="probe">
-<h2><a class="toc-backref" href="#id115">probe</a></h2>
-<p>Can be used to determine tile properties like temperature.</p>
-</div>
-<div class="section" id="prospect">
-<h2><a class="toc-backref" href="#id116">prospect</a></h2>
-<p>Prints a big list of all the present minerals and plants. By default, only
-the visible part of the map is scanned.</p>
-<div class="section" id="id19">
-<h3><a class="toc-backref" href="#id117">Options</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">all:</th><td class="field-body">Scan the whole map, as if it was revealed.</td>
-</tr>
-<tr class="field"><th class="field-name">value:</th><td class="field-body">Show material value in the output. Most useful for gems.</td>
-</tr>
-<tr class="field"><th class="field-name">hell:</th><td class="field-body">Show the Z range of HFS tubes. Implies 'all'.</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="pre-embark-estimate">
-<h3><a class="toc-backref" href="#id118">Pre-embark estimate</a></h3>
-<p>If called during the embark selection screen, displays an estimate of layer
-stone availability. If the 'all' option is specified, also estimates veins.
-The estimate is computed either for 1 embark tile of the blinking biome, or
-for all tiles of the embark rectangle.</p>
-</div>
-<div class="section" id="id20">
-<h3><a class="toc-backref" href="#id119">Options</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">all:</th><td class="field-body">processes all tiles, even hidden ones.</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="section" id="regrass">
-<h2><a class="toc-backref" href="#id120">regrass</a></h2>
-<p>Regrows grass. Not much to it ;)</p>
-</div>
-<div class="section" id="rename">
-<h2><a class="toc-backref" href="#id121">rename</a></h2>
-<p>Allows renaming various things.</p>
-<div class="section" id="id21">
-<h3><a class="toc-backref" href="#id122">Options</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name" colspan="2">rename squad &lt;index&gt; &quot;name&quot;:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">Rename squad by index to 'name'.</td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">rename hotkey &lt;index&gt; &quot;name&quot;:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">Rename hotkey by index. This allows assigning
-longer commands to the DF hotkeys.</td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">rename unit &quot;nickname&quot;:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">Rename a unit/creature highlighted in the DF user
-interface.</td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">rename unit-profession &quot;custom profession&quot;:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">Change proffession name of the
-highlighted unit/creature.</td>
-</tr>
-<tr class="field"><th class="field-name" colspan="2">rename building &quot;name&quot;:</th></tr>
-<tr class="field"><td>&nbsp;</td><td class="field-body">Set a custom name for the selected building.
-The building must be one of stockpile, workshop, furnace, trap or siege engine.</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="section" id="reveal">
-<h2><a class="toc-backref" href="#id123">reveal</a></h2>
-<p>This reveals the map. By default, HFS will remain hidden so that the demons
-don't spawn. You can use 'reveal hell' to reveal everything. With hell revealed,
-you won't be able to unpause until you hide the map again. If you really want
-to unpause with hell revealed, use 'reveal demons'.</p>
-<p>Reveal also works in adventure mode, but any of its effects are negated once
-you move. When you use it this way, you don't need to run 'unreveal'.</p>
-</div>
-<div class="section" id="unreveal">
-<h2><a class="toc-backref" href="#id124">unreveal</a></h2>
-<p>Reverts the effects of 'reveal'.</p>
-</div>
-<div class="section" id="revtoggle">
-<h2><a class="toc-backref" href="#id125">revtoggle</a></h2>
-<p>Switches between 'reveal' and 'unreveal'.</p>
-</div>
-<div class="section" id="revflood">
-<h2><a class="toc-backref" href="#id126">revflood</a></h2>
-<p>This command will hide the whole map and then reveal all the tiles that have
-a path to the in-game cursor.</p>
-</div>
-<div class="section" id="revforget">
-<h2><a class="toc-backref" href="#id127">revforget</a></h2>
-<p>When you use reveal, it saves information about what was/wasn't visible before
-revealing everything. Unreveal uses this information to hide things again.
-This command throws away the information. For example, use in cases where
-you abandoned with the fort revealed and no longer want the data.</p>
-</div>
-<div class="section" id="lair">
-<h2><a class="toc-backref" href="#id128">lair</a></h2>
-<p>This command allows you to mark the map as 'monster lair', preventing item
-scatter on abandon. When invoked as 'lair reset', it does the opposite.</p>
-<p>Unlike reveal, this command doesn't save the information about tiles - you
-won't be able to restore state of real monster lairs using 'lair reset'.</p>
-<div class="section" id="id22">
-<h3><a class="toc-backref" href="#id129">Options</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">lair:</th><td class="field-body">Mark the map as monster lair</td>
-</tr>
-<tr class="field"><th class="field-name">lair reset:</th><td class="field-body">Mark the map as ordinary (not lair)</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="section" id="seedwatch">
-<h2><a class="toc-backref" href="#id130">seedwatch</a></h2>
-<p>Tool for turning cooking of seeds and plants on/off depending on how much you
-have of them.</p>
-<p>See 'seedwatch help' for detailed description.</p>
-</div>
-<div class="section" id="showmood">
-<h2><a class="toc-backref" href="#id131">showmood</a></h2>
-<p>Shows all items needed for the currently active strange mood.</p>
-</div>
-<div class="section" id="copystock">
-<h2><a class="toc-backref" href="#id132">copystock</a></h2>
-<p>Copies the parameters of the currently highlighted stockpile to the custom
-stockpile settings and switches to custom stockpile placement mode, effectively
-allowing you to copy/paste stockpiles easily.</p>
-</div>
-<div class="section" id="ssense-stonesense">
-<h2><a class="toc-backref" href="#id133">ssense / stonesense</a></h2>
-<p>An isometric visualizer that runs in a second window. This requires working
-graphics acceleration and at least a dual core CPU (otherwise it will slow
-down DF).</p>
-<p>All the data resides in the 'stonesense' directory. For detailed instructions,
-see stonesense/README.txt</p>
-<p>Compatible with Windows &gt; XP SP3 and most modern Linux distributions.</p>
-<p>Older versions, support and extra graphics can be found in the bay12 forum
-thread: <a class="reference external" href="http://www.bay12forums.com/smf/index.php?topic=43260.0">http://www.bay12forums.com/smf/index.php?topic=43260.0</a></p>
-<p>Some additional resources:
-<a class="reference external" href="http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository">http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository</a></p>
-</div>
 <div class="section" id="tiletypes">
-<h2><a class="toc-backref" href="#id134">tiletypes</a></h2>
+<h3><a class="toc-backref" href="#id35">tiletypes</a></h3>
 <p>Can be used for painting map tiles and is an interactive command, much like
 liquids.</p>
 <p>The tool works with two set of options and a brush. The brush determines which
@@ -1632,25 +1013,649 @@ up.</p>
 <p>For more details, see the 'help' command while using this.</p>
 </div>
 <div class="section" id="tiletypes-commands">
-<h2><a class="toc-backref" href="#id135">tiletypes-commands</a></h2>
+<h3><a class="toc-backref" href="#id36">tiletypes-commands</a></h3>
 <p>Runs tiletypes commands, separated by ;. This makes it possible to change
 tiletypes modes from a hotkey.</p>
 </div>
 <div class="section" id="tiletypes-here">
-<h2><a class="toc-backref" href="#id136">tiletypes-here</a></h2>
+<h3><a class="toc-backref" href="#id37">tiletypes-here</a></h3>
 <p>Apply the current tiletypes options at the in-game cursor position, including
 the brush. Can be used from a hotkey.</p>
 </div>
 <div class="section" id="tiletypes-here-point">
-<h2><a class="toc-backref" href="#id137">tiletypes-here-point</a></h2>
+<h3><a class="toc-backref" href="#id38">tiletypes-here-point</a></h3>
 <p>Apply the current tiletypes options at the in-game cursor position to a single
 tile. Can be used from a hotkey.</p>
 </div>
+<div class="section" id="tubefill">
+<h3><a class="toc-backref" href="#id39">tubefill</a></h3>
+<p>Fills all the adamantine veins again. Veins that were empty will be filled in
+too, but might still trigger a demon invasion (this is a known bug).</p>
+</div>
+<div class="section" id="extirpate">
+<h3><a class="toc-backref" href="#id40">extirpate</a></h3>
+<p>A tool for getting rid of trees and shrubs. By default, it only kills
+a tree/shrub under the cursor. The plants are turned into ashes instantly.</p>
+<p>Options:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">shrubs:</th><td class="field-body">affect all shrubs on the map</td>
+</tr>
+<tr class="field"><th class="field-name">trees:</th><td class="field-body">affect all trees on the map</td>
+</tr>
+<tr class="field"><th class="field-name">all:</th><td class="field-body">affect every plant!</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+</div>
+<div class="section" id="grow">
+<h3><a class="toc-backref" href="#id41">grow</a></h3>
+<p>Makes all saplings present on the map grow into trees (almost) instantly.</p>
+</div>
+<div class="section" id="immolate">
+<h3><a class="toc-backref" href="#id42">immolate</a></h3>
+<p>Very similar to extirpate, but additionally sets the plants on fire. The fires
+can and <em>will</em> spread ;)</p>
+</div>
+<div class="section" id="regrass">
+<h3><a class="toc-backref" href="#id43">regrass</a></h3>
+<p>Regrows grass. Not much to it ;)</p>
+</div>
+<div class="section" id="weather">
+<h3><a class="toc-backref" href="#id44">weather</a></h3>
+<p>Prints the current weather map by default.</p>
+<p>Also lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.</p>
+<p>Options:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">snow:</th><td class="field-body">make it snow everywhere.</td>
+</tr>
+<tr class="field"><th class="field-name">rain:</th><td class="field-body">make it rain.</td>
+</tr>
+<tr class="field"><th class="field-name">clear:</th><td class="field-body">clear the sky.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+</div>
+</div>
+<div class="section" id="map-inspection">
+<h2><a class="toc-backref" href="#id45">Map inspection</a></h2>
+<div class="section" id="cursecheck">
+<h3><a class="toc-backref" href="#id46">cursecheck</a></h3>
+<p>Checks a single map tile or the whole map/world for cursed creatures (ghosts,
+vampires, necromancers, werebeasts, zombies).</p>
+<p>With an active in-game cursor only the selected tile will be observed.
+Without a cursor the whole map will be checked.</p>
+<p>By default cursed creatures will be only counted in case you just want to find
+out if you have any of them running around in your fort. Dead and passive
+creatures (ghosts who were put to rest, killed vampires, ...) are ignored.
+Undead skeletons, corpses, bodyparts and the like are all thrown into the curse
+category &quot;zombie&quot;. Anonymous zombies and resurrected body parts will show
+as &quot;unnamed creature&quot;.</p>
+<p>Options:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">detail:</th><td class="field-body">Print full name, date of birth, date of curse and some status
+info (some vampires might use fake identities in-game, though).</td>
+</tr>
+<tr class="field"><th class="field-name">nick:</th><td class="field-body">Set the type of curse as nickname (does not always show up
+in-game, some vamps don't like nicknames).</td>
+</tr>
+<tr class="field"><th class="field-name">all:</th><td class="field-body">Include dead and passive cursed creatures (can result in a quite
+long list after having FUN with necromancers).</td>
+</tr>
+<tr class="field"><th class="field-name">verbose:</th><td class="field-body">Print all curse tags (if you really want to know it all).</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>Examples:</p>
+<blockquote>
+<dl class="docutils">
+<dt><tt class="docutils literal">cursecheck detail all</tt></dt>
+<dd>Give detailed info about all cursed creatures including deceased ones (no
+in-game cursor).</dd>
+<dt><tt class="docutils literal">cursecheck nick</tt></dt>
+<dd>Give a nickname all living/active cursed creatures on the map(no in-game
+cursor).</dd>
+</dl>
+</blockquote>
+<div class="note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li>If you do a full search (with the option &quot;all&quot;) former ghosts will show up
+with the cursetype &quot;unknown&quot; because their ghostly flag is not set
+anymore. But if you happen to find a living/active creature with cursetype
+&quot;unknown&quot; please report that in the dfhack thread on the modding forum or
+per irc. This is likely to happen with mods which introduce new types
+of curses, for example.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="flows">
+<h3><a class="toc-backref" href="#id47">flows</a></h3>
+<p>A tool for checking how many tiles contain flowing liquids. If you suspect that
+your magma sea leaks into HFS, you can use this tool to be sure without
+revealing the map.</p>
+</div>
+<div class="section" id="probe">
+<h3><a class="toc-backref" href="#id48">probe</a></h3>
+<p>Can be used to determine tile properties like temperature.</p>
+</div>
+<div class="section" id="prospect">
+<h3><a class="toc-backref" href="#id49">prospect</a></h3>
+<p>Prints a big list of all the present minerals and plants. By default, only
+the visible part of the map is scanned.</p>
+<p>Options:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">all:</th><td class="field-body">Scan the whole map, as if it was revealed.</td>
+</tr>
+<tr class="field"><th class="field-name">value:</th><td class="field-body">Show material value in the output. Most useful for gems.</td>
+</tr>
+<tr class="field"><th class="field-name">hell:</th><td class="field-body">Show the Z range of HFS tubes. Implies 'all'.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<div class="section" id="pre-embark-estimate">
+<h4><a class="toc-backref" href="#id50">Pre-embark estimate</a></h4>
+<p>If called during the embark selection screen, displays an estimate of layer
+stone availability. If the 'all' option is specified, also estimates veins.
+The estimate is computed either for 1 embark tile of the blinking biome, or
+for all tiles of the embark rectangle.</p>
+<p>Options:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">all:</th><td class="field-body">processes all tiles, even hidden ones.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+</div>
+</div>
+<div class="section" id="reveal">
+<h3><a class="toc-backref" href="#id51">reveal</a></h3>
+<p>This reveals the map. By default, HFS will remain hidden so that the demons
+don't spawn. You can use 'reveal hell' to reveal everything. With hell revealed,
+you won't be able to unpause until you hide the map again. If you really want
+to unpause with hell revealed, use 'reveal demons'.</p>
+<p>Reveal also works in adventure mode, but any of its effects are negated once
+you move. When you use it this way, you don't need to run 'unreveal'.</p>
+</div>
+<div class="section" id="unreveal">
+<h3><a class="toc-backref" href="#id52">unreveal</a></h3>
+<p>Reverts the effects of 'reveal'.</p>
+</div>
+<div class="section" id="revtoggle">
+<h3><a class="toc-backref" href="#id53">revtoggle</a></h3>
+<p>Switches between 'reveal' and 'unreveal'.</p>
+</div>
+<div class="section" id="revflood">
+<h3><a class="toc-backref" href="#id54">revflood</a></h3>
+<p>This command will hide the whole map and then reveal all the tiles that have
+a path to the in-game cursor.</p>
+</div>
+<div class="section" id="revforget">
+<h3><a class="toc-backref" href="#id55">revforget</a></h3>
+<p>When you use reveal, it saves information about what was/wasn't visible before
+revealing everything. Unreveal uses this information to hide things again.
+This command throws away the information. For example, use in cases where
+you abandoned with the fort revealed and no longer want the data.</p>
+</div>
+<div class="section" id="showmood">
+<h3><a class="toc-backref" href="#id56">showmood</a></h3>
+<p>Shows all items needed for the currently active strange mood.</p>
+</div>
+</div>
+<div class="section" id="designations">
+<h2><a class="toc-backref" href="#id57">Designations</a></h2>
+<div class="section" id="burrow">
+<h3><a class="toc-backref" href="#id58">burrow</a></h3>
+<p>Miscellaneous burrow control. Allows manipulating burrows and automated burrow
+expansion while digging.</p>
+<p>Options:</p>
+<blockquote>
+<dl class="docutils">
+<dt><strong>enable feature ...</strong></dt>
+<dd>Enable features of the plugin.</dd>
+<dt><strong>disable feature ...</strong></dt>
+<dd>Disable features of the plugin.</dd>
+<dt><strong>clear-unit burrow burrow ...</strong></dt>
+<dd>Remove all units from the burrows.</dd>
+<dt><strong>clear-tiles burrow burrow ...</strong></dt>
+<dd>Remove all tiles from the burrows.</dd>
+<dt><strong>set-units target-burrow src-burrow ...</strong></dt>
+<dd>Clear target, and adds units from source burrows.</dd>
+<dt><strong>add-units target-burrow src-burrow ...</strong></dt>
+<dd>Add units from the source burrows to the target.</dd>
+<dt><strong>remove-units target-burrow src-burrow ...</strong></dt>
+<dd>Remove units in source burrows from the target.</dd>
+<dt><strong>set-tiles target-burrow src-burrow ...</strong></dt>
+<dd>Clear target and adds tiles from the source burrows.</dd>
+<dt><strong>add-tiles target-burrow src-burrow ...</strong></dt>
+<dd>Add tiles from the source burrows to the target.</dd>
+<dt><strong>remove-tiles target-burrow src-burrow ...</strong></dt>
+<dd><p class="first">Remove tiles in source burrows from the target.</p>
+<p class="last">For these three options, in place of a source burrow it is
+possible to use one of the following keywords: ABOVE_GROUND,
+SUBTERRANEAN, INSIDE, OUTSIDE, LIGHT, DARK, HIDDEN, REVEALED</p>
+</dd>
+</dl>
+</blockquote>
+<p>Features:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">auto-grow:</th><td class="field-body">When a wall inside a burrow with a name ending in '+' is dug
+out, the burrow is extended to newly-revealed adjacent walls.
+This final '+' may be omitted in burrow name args of commands above.
+Digging 1-wide corridors with the miner inside the burrow is SLOW.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+</div>
+<div class="section" id="digv">
+<h3><a class="toc-backref" href="#id59">digv</a></h3>
+<p>Designates a whole vein for digging. Requires an active in-game cursor placed
+over a vein tile. With the 'x' option, it will traverse z-levels (putting stairs
+between the same-material tiles).</p>
+</div>
+<div class="section" id="digvx">
+<h3><a class="toc-backref" href="#id60">digvx</a></h3>
+<p>A permanent alias for 'digv x'.</p>
+</div>
+<div class="section" id="digl">
+<h3><a class="toc-backref" href="#id61">digl</a></h3>
+<p>Designates layer stone for digging. Requires an active in-game cursor placed
+over a layer stone tile. With the 'x' option, it will traverse z-levels
+(putting stairs between the same-material tiles). With the 'undo' option it
+will remove the dig designation instead (if you realize that digging out a 50
+z-level deep layer was not such a good idea after all).</p>
+</div>
+<div class="section" id="diglx">
+<h3><a class="toc-backref" href="#id62">diglx</a></h3>
+<p>A permanent alias for 'digl x'.</p>
+</div>
+<div class="section" id="digexp">
+<h3><a class="toc-backref" href="#id63">digexp</a></h3>
+<p>This command can be used for exploratory mining.</p>
+<p>See: <a class="reference external" href="http://df.magmawiki.com/index.php/DF2010:Exploratory_mining">http://df.magmawiki.com/index.php/DF2010:Exploratory_mining</a></p>
+<p>There are two variables that can be set: pattern and filter.</p>
+<p>Patterns:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">diag5:</th><td class="field-body">diagonals separated by 5 tiles</td>
+</tr>
+<tr class="field"><th class="field-name">diag5r:</th><td class="field-body">diag5 rotated 90 degrees</td>
+</tr>
+<tr class="field"><th class="field-name">ladder:</th><td class="field-body">A 'ladder' pattern</td>
+</tr>
+<tr class="field"><th class="field-name">ladderr:</th><td class="field-body">ladder rotated 90 degrees</td>
+</tr>
+<tr class="field"><th class="field-name">clear:</th><td class="field-body">Just remove all dig designations</td>
+</tr>
+<tr class="field"><th class="field-name">cross:</th><td class="field-body">A cross, exactly in the middle of the map.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>Filters:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">all:</th><td class="field-body">designate whole z-level</td>
+</tr>
+<tr class="field"><th class="field-name">hidden:</th><td class="field-body">designate only hidden tiles of z-level (default)</td>
+</tr>
+<tr class="field"><th class="field-name">designated:</th><td class="field-body">Take current designation and apply pattern to it.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>After you have a pattern set, you can use 'expdig' to apply it again.</p>
+<p>Examples:</p>
+<blockquote>
+<dl class="docutils">
+<dt>designate the diagonal 5 patter over all hidden tiles:</dt>
+<dd><ul class="first last simple">
+<li>expdig diag5 hidden</li>
+</ul>
+</dd>
+<dt>apply last used pattern and filter:</dt>
+<dd><ul class="first last simple">
+<li>expdig</li>
+</ul>
+</dd>
+<dt>Take current designations and replace them with the ladder pattern:</dt>
+<dd><ul class="first last simple">
+<li>expdig ladder designated</li>
+</ul>
+</dd>
+</dl>
+</blockquote>
+</div>
+<div class="section" id="digcircle">
+<h3><a class="toc-backref" href="#id64">digcircle</a></h3>
+<p>A command for easy designation of filled and hollow circles.
+It has several types of options.</p>
+<p>Shape:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">hollow:</th><td class="field-body">Set the circle to hollow (default)</td>
+</tr>
+<tr class="field"><th class="field-name">filled:</th><td class="field-body">Set the circle to filled</td>
+</tr>
+<tr class="field"><th class="field-name">#:</th><td class="field-body">Diameter in tiles (default = 0, does nothing)</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>Action:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">set:</th><td class="field-body">Set designation (default)</td>
+</tr>
+<tr class="field"><th class="field-name">unset:</th><td class="field-body">Unset current designation</td>
+</tr>
+<tr class="field"><th class="field-name">invert:</th><td class="field-body">Invert designations already present</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>Designation types:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">dig:</th><td class="field-body">Normal digging designation (default)</td>
+</tr>
+<tr class="field"><th class="field-name">ramp:</th><td class="field-body">Ramp digging</td>
+</tr>
+<tr class="field"><th class="field-name">ustair:</th><td class="field-body">Staircase up</td>
+</tr>
+<tr class="field"><th class="field-name">dstair:</th><td class="field-body">Staircase down</td>
+</tr>
+<tr class="field"><th class="field-name">xstair:</th><td class="field-body">Staircase up/down</td>
+</tr>
+<tr class="field"><th class="field-name">chan:</th><td class="field-body">Dig channel</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>After you have set the options, the command called with no options
+repeats with the last selected parameters.</p>
+<p>Examples:</p>
+<ul class="simple">
+<li>'digcircle filled 3' = Dig a filled circle with radius = 3.</li>
+<li>'digcircle' = Do it again.</li>
+</ul>
+</div>
+<div class="section" id="filltraffic">
+<h3><a class="toc-backref" href="#id65">filltraffic</a></h3>
+<p>Set traffic designations using flood-fill starting at the cursor.</p>
+<p>Traffic Type Codes:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">H:</th><td class="field-body">High Traffic</td>
+</tr>
+<tr class="field"><th class="field-name">N:</th><td class="field-body">Normal Traffic</td>
+</tr>
+<tr class="field"><th class="field-name">L:</th><td class="field-body">Low Traffic</td>
+</tr>
+<tr class="field"><th class="field-name">R:</th><td class="field-body">Restricted Traffic</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>Other Options:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">X:</th><td class="field-body">Fill accross z-levels.</td>
+</tr>
+<tr class="field"><th class="field-name">B:</th><td class="field-body">Include buildings and stockpiles.</td>
+</tr>
+<tr class="field"><th class="field-name">P:</th><td class="field-body">Include empty space.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>Example:</p>
+<blockquote>
+'filltraffic H' - When used in a room with doors, it will set traffic to HIGH in just that room.</blockquote>
+</div>
+<div class="section" id="alltraffic">
+<h3><a class="toc-backref" href="#id66">alltraffic</a></h3>
+<p>Set traffic designations for every single tile of the map (useful for resetting traffic designations).</p>
+<p>Traffic Type Codes:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">H:</th><td class="field-body">High Traffic</td>
+</tr>
+<tr class="field"><th class="field-name">N:</th><td class="field-body">Normal Traffic</td>
+</tr>
+<tr class="field"><th class="field-name">L:</th><td class="field-body">Low Traffic</td>
+</tr>
+<tr class="field"><th class="field-name">R:</th><td class="field-body">Restricted Traffic</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>Example:</p>
+<blockquote>
+'alltraffic N' - Set traffic to 'normal' for all tiles.</blockquote>
+</div>
+<div class="section" id="getplants">
+<h3><a class="toc-backref" href="#id67">getplants</a></h3>
+<p>This tool allows plant gathering and tree cutting by RAW ID. Specify the types
+of trees to cut down and/or shrubs to gather by their plant names, separated
+by spaces.</p>
+<p>Options:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">-t:</th><td class="field-body">Select trees only (exclude shrubs)</td>
+</tr>
+<tr class="field"><th class="field-name">-s:</th><td class="field-body">Select shrubs only (exclude trees)</td>
+</tr>
+<tr class="field"><th class="field-name">-c:</th><td class="field-body">Clear designations instead of setting them</td>
+</tr>
+<tr class="field"><th class="field-name">-x:</th><td class="field-body">Apply selected action to all plants except those specified (invert
+selection)</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>Specifying both -t and -s will have no effect. If no plant IDs are specified,
+all valid plant IDs will be listed.</p>
+</div>
+</div>
+<div class="section" id="cleanup-and-garbage-disposal">
+<h2><a class="toc-backref" href="#id68">Cleanup and garbage disposal</a></h2>
+<div class="section" id="clean">
+<h3><a class="toc-backref" href="#id69">clean</a></h3>
+<p>Cleans all the splatter that get scattered all over the map, items and
+creatures. In an old fortress, this can significantly reduce FPS lag. It can
+also spoil your !!FUN!!, so think before you use it.</p>
+<p>Options:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">map:</th><td class="field-body">Clean the map tiles. By default, it leaves mud and snow alone.</td>
+</tr>
+<tr class="field"><th class="field-name">units:</th><td class="field-body">Clean the creatures. Will also clean hostiles.</td>
+</tr>
+<tr class="field"><th class="field-name">items:</th><td class="field-body">Clean all the items. Even a poisoned blade.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>Extra options for 'map':</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">mud:</th><td class="field-body">Remove mud in addition to the normal stuff.</td>
+</tr>
+<tr class="field"><th class="field-name">snow:</th><td class="field-body">Also remove snow coverings.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+</div>
+<div class="section" id="spotclean">
+<h3><a class="toc-backref" href="#id70">spotclean</a></h3>
+<p>Works like 'clean map snow mud', but only for the tile under the cursor. Ideal
+if you want to keep that bloody entrance 'clean map' would clean up.</p>
+</div>
+<div class="section" id="autodump">
+<h3><a class="toc-backref" href="#id71">autodump</a></h3>
+<p>This utility lets you quickly move all items designated to be dumped.
+Items are instantly moved to the cursor position, the dump flag is unset,
+and the forbid flag is set, as if it had been dumped normally.
+Be aware that any active dump item tasks still point at the item.</p>
+<p>Cursor must be placed on a floor tile so the items can be dumped there.</p>
+<p>Options:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">destroy:</th><td class="field-body">Destroy instead of dumping. Doesn't require a cursor.</td>
+</tr>
+<tr class="field"><th class="field-name">destroy-here:</th><td class="field-body">Destroy items only under the cursor.</td>
+</tr>
+<tr class="field"><th class="field-name">visible:</th><td class="field-body">Only process items that are not hidden.</td>
+</tr>
+<tr class="field"><th class="field-name">hidden:</th><td class="field-body">Only process hidden items.</td>
+</tr>
+<tr class="field"><th class="field-name">forbidden:</th><td class="field-body">Only process forbidden items (default: only unforbidden).</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+</div>
+<div class="section" id="autodump-destroy-here">
+<h3><a class="toc-backref" href="#id72">autodump-destroy-here</a></h3>
+<p>Destroy items marked for dumping under cursor. Identical to autodump
+destroy-here, but intended for use as keybinding.</p>
+</div>
+<div class="section" id="autodump-destroy-item">
+<h3><a class="toc-backref" href="#id73">autodump-destroy-item</a></h3>
+<p>Destroy the selected item. The item may be selected in the 'k' list, or inside
+a container. If called again before the game is resumed, cancels destroy.</p>
+</div>
+<div class="section" id="cleanowned">
+<h3><a class="toc-backref" href="#id74">cleanowned</a></h3>
+<p>Confiscates items owned by dwarfs. By default, owned food on the floor
+and rotten items are confistacted and dumped.</p>
+<p>Options:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">all:</th><td class="field-body">confiscate all owned items</td>
+</tr>
+<tr class="field"><th class="field-name">scattered:</th><td class="field-body">confiscated and dump all items scattered on the floor</td>
+</tr>
+<tr class="field"><th class="field-name">x:</th><td class="field-body">confiscate/dump items with wear level 'x' and more</td>
+</tr>
+<tr class="field"><th class="field-name">X:</th><td class="field-body">confiscate/dump items with wear level 'X' and more</td>
+</tr>
+<tr class="field"><th class="field-name">dryrun:</th><td class="field-body">a dry run. combine with other options to see what will happen
+without it actually happening.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>Example:</p>
+<blockquote>
+<dl class="docutils">
+<dt><tt class="docutils literal">cleanowned scattered X</tt></dt>
+<dd>This will confiscate rotten and dropped food, garbage on the floors and any
+worn items with 'X' damage and above.</dd>
+</dl>
+</blockquote>
+</div>
+</div>
+<div class="section" id="bugfixes">
+<h2><a class="toc-backref" href="#id75">Bugfixes</a></h2>
+<div class="section" id="drybuckets">
+<h3><a class="toc-backref" href="#id76">drybuckets</a></h3>
+<p>This utility removes water from all buckets in your fortress, allowing them to be safely used for making lye.</p>
+</div>
+<div class="section" id="fixdiplomats">
+<h3><a class="toc-backref" href="#id77">fixdiplomats</a></h3>
+<p>Up to version 0.31.12, Elves only sent Diplomats to your fortress to propose
+tree cutting quotas due to a bug; once that bug was fixed, Elves stopped caring
+about excess tree cutting. This command adds a Diplomat position to all Elven
+civilizations, allowing them to negotiate tree cutting quotas (and allowing you
+to violate them and potentially start wars) in case you haven't already modified
+your raws accordingly.</p>
+</div>
+<div class="section" id="fixmerchants">
+<h3><a class="toc-backref" href="#id78">fixmerchants</a></h3>
+<p>This command adds the Guild Representative position to all Human civilizations,
+allowing them to make trade agreements (just as they did back in 0.28.181.40d
+and earlier) in case you haven't already modified your raws accordingly.</p>
+</div>
+<div class="section" id="fixveins">
+<h3><a class="toc-backref" href="#id79">fixveins</a></h3>
+<p>Removes invalid references to mineral inclusions and restores missing ones.
+Use this if you broke your embark with tools like tiletypes, or if you
+accidentally placed a construction on top of a valuable mineral floor.</p>
+</div>
 <div class="section" id="tweak">
-<h2><a class="toc-backref" href="#id138">tweak</a></h2>
+<h3><a class="toc-backref" href="#id80">tweak</a></h3>
 <p>Contains various tweaks for minor bugs (currently just one).</p>
-<div class="section" id="id23">
-<h3><a class="toc-backref" href="#id139">Options</a></h3>
+<p>Options:</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1716,186 +1721,127 @@ reagents.</td>
 </table>
 </div>
 </div>
-<div class="section" id="tubefill">
-<h2><a class="toc-backref" href="#id140">tubefill</a></h2>
-<p>Fills all the adamantine veins again. Veins that were empty will be filled in
-too, but might still trigger a demon invasion (this is a known bug).</p>
-</div>
-<div class="section" id="digv">
-<h2><a class="toc-backref" href="#id141">digv</a></h2>
-<p>Designates a whole vein for digging. Requires an active in-game cursor placed
-over a vein tile. With the 'x' option, it will traverse z-levels (putting stairs
-between the same-material tiles).</p>
-</div>
-<div class="section" id="digvx">
-<h2><a class="toc-backref" href="#id142">digvx</a></h2>
-<p>A permanent alias for 'digv x'.</p>
-</div>
-<div class="section" id="digl">
-<h2><a class="toc-backref" href="#id143">digl</a></h2>
-<p>Designates layer stone for digging. Requires an active in-game cursor placed
-over a layer stone tile. With the 'x' option, it will traverse z-levels
-(putting stairs between the same-material tiles). With the 'undo' option it
-will remove the dig designation instead (if you realize that digging out a 50
-z-level deep layer was not such a good idea after all).</p>
-</div>
-<div class="section" id="diglx">
-<h2><a class="toc-backref" href="#id144">diglx</a></h2>
-<p>A permanent alias for 'digl x'.</p>
-</div>
-<div class="section" id="digexp">
-<h2><a class="toc-backref" href="#id145">digexp</a></h2>
-<p>This command can be used for exploratory mining.</p>
-<p>See: <a class="reference external" href="http://df.magmawiki.com/index.php/DF2010:Exploratory_mining">http://df.magmawiki.com/index.php/DF2010:Exploratory_mining</a></p>
-<p>There are two variables that can be set: pattern and filter.</p>
-<div class="section" id="patterns">
-<h3><a class="toc-backref" href="#id146">Patterns:</a></h3>
+<div class="section" id="mode-switch-and-reclaim">
+<h2><a class="toc-backref" href="#id81">Mode switch and reclaim</a></h2>
+<div class="section" id="lair">
+<h3><a class="toc-backref" href="#id82">lair</a></h3>
+<p>This command allows you to mark the map as 'monster lair', preventing item
+scatter on abandon. When invoked as 'lair reset', it does the opposite.</p>
+<p>Unlike reveal, this command doesn't save the information about tiles - you
+won't be able to restore state of real monster lairs using 'lair reset'.</p>
+<p>Options:</p>
+<blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">diag5:</th><td class="field-body">diagonals separated by 5 tiles</td>
+<tr class="field"><th class="field-name">lair:</th><td class="field-body">Mark the map as monster lair</td>
 </tr>
-<tr class="field"><th class="field-name">diag5r:</th><td class="field-body">diag5 rotated 90 degrees</td>
-</tr>
-<tr class="field"><th class="field-name">ladder:</th><td class="field-body">A 'ladder' pattern</td>
-</tr>
-<tr class="field"><th class="field-name">ladderr:</th><td class="field-body">ladder rotated 90 degrees</td>
-</tr>
-<tr class="field"><th class="field-name">clear:</th><td class="field-body">Just remove all dig designations</td>
-</tr>
-<tr class="field"><th class="field-name">cross:</th><td class="field-body">A cross, exactly in the middle of the map.</td>
+<tr class="field"><th class="field-name">lair reset:</th><td class="field-body">Mark the map as ordinary (not lair)</td>
 </tr>
 </tbody>
 </table>
+</blockquote>
 </div>
-<div class="section" id="filters">
-<h3><a class="toc-backref" href="#id147">Filters:</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">all:</th><td class="field-body">designate whole z-level</td>
-</tr>
-<tr class="field"><th class="field-name">hidden:</th><td class="field-body">designate only hidden tiles of z-level (default)</td>
-</tr>
-<tr class="field"><th class="field-name">designated:</th><td class="field-body">Take current designation and apply pattern to it.</td>
-</tr>
-</tbody>
-</table>
-<p>After you have a pattern set, you can use 'expdig' to apply it again.</p>
+<div class="section" id="mode">
+<h3><a class="toc-backref" href="#id83">mode</a></h3>
+<p>This command lets you see and change the game mode directly.
+Not all combinations are good for every situation and most of them will
+produce undesirable results. There are a few good ones though.</p>
+<div class="admonition-example admonition">
+<p class="first admonition-title">Example</p>
+<p class="last">You are in fort game mode, managing your fortress and paused.
+You switch to the arena game mode, <em>assume control of a creature</em> and then
+switch to adventure game mode(1).
+You just lost a fortress and gained an adventurer.
+You could also do this.
+You are in fort game mode, managing your fortress and paused at the esc menu.
+You switch to the adventure game mode, then use Dfusion to <em>assume control of a creature</em> and then
+save or retire.
+You just created a returnable mountain home and gained an adventurer.</p>
 </div>
-<div class="section" id="id24">
-<h3><a class="toc-backref" href="#id148">Examples:</a></h3>
+<p>I take no responsibility of anything that happens as a result of using this tool</p>
+</div>
+</div>
+<div class="section" id="visualizer-and-data-export">
+<h2><a class="toc-backref" href="#id84">Visualizer and data export</a></h2>
+<div class="section" id="ssense-stonesense">
+<h3><a class="toc-backref" href="#id85">ssense / stonesense</a></h3>
+<p>An isometric visualizer that runs in a second window. This requires working
+graphics acceleration and at least a dual core CPU (otherwise it will slow
+down DF).</p>
+<p>All the data resides in the 'stonesense' directory. For detailed instructions,
+see stonesense/README.txt</p>
+<p>Compatible with Windows &gt; XP SP3 and most modern Linux distributions.</p>
+<p>Older versions, support and extra graphics can be found in the bay12 forum
+thread: <a class="reference external" href="http://www.bay12forums.com/smf/index.php?topic=43260.0">http://www.bay12forums.com/smf/index.php?topic=43260.0</a></p>
+<p>Some additional resources:
+<a class="reference external" href="http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository">http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository</a></p>
+</div>
+<div class="section" id="mapexport">
+<h3><a class="toc-backref" href="#id86">mapexport</a></h3>
+<p>Export the current loaded map as a file. This will be eventually usable
+with visualizers.</p>
+<p>dwarfexport
+----------=
+Export dwarves to RuneSmith-compatible XML.</p>
+</div>
+</div>
+<div class="section" id="job-management">
+<h2><a class="toc-backref" href="#id87">Job management</a></h2>
+<div class="section" id="job">
+<h3><a class="toc-backref" href="#id88">job</a></h3>
+<p>Command for general job query and manipulation.</p>
 <dl class="docutils">
-<dt>designate the diagonal 5 patter over all hidden tiles:</dt>
-<dd><ul class="first last simple">
-<li>expdig diag5 hidden</li>
-</ul>
+<dt>Options:</dt>
+<dd><dl class="first last docutils">
+<dt><em>no extra options</em></dt>
+<dd>Print details of the current job. The job can be selected
+in a workshop, or the unit/jobs screen.</dd>
+<dt><strong>list</strong></dt>
+<dd>Print details of all jobs in the selected workshop.</dd>
+<dt><strong>item-material &lt;item-idx&gt; &lt;material[:subtoken]&gt;</strong></dt>
+<dd>Replace the exact material id in the job item.</dd>
+<dt><strong>item-type &lt;item-idx&gt; &lt;type[:subtype]&gt;</strong></dt>
+<dd>Replace the exact item type id in the job item.</dd>
+</dl>
 </dd>
-<dt>apply last used pattern and filter:</dt>
-<dd><ul class="first last simple">
-<li>expdig</li>
+</dl>
+</div>
+<div class="section" id="job-material">
+<h3><a class="toc-backref" href="#id89">job-material</a></h3>
+<p>Alter the material of the selected job.</p>
+<p>Invoked as:</p>
+<pre class="literal-block">
+job-material &lt;inorganic-token&gt;
+</pre>
+<p>Intended to be used as a keybinding:</p>
+<blockquote>
+<ul class="simple">
+<li>In 'q' mode, when a job is highlighted within a workshop or furnace,
+changes the material of the job. Only inorganic materials can be used
+in this mode.</li>
+<li>In 'b' mode, during selection of building components positions the cursor
+over the first available choice with the matching material.</li>
 </ul>
-</dd>
-<dt>Take current designations and replace them with the ladder pattern:</dt>
+</blockquote>
+</div>
+<div class="section" id="job-duplicate">
+<h3><a class="toc-backref" href="#id90">job-duplicate</a></h3>
+<dl class="docutils">
+<dt>Duplicate the selected job in a workshop:</dt>
 <dd><ul class="first last simple">
-<li>expdig ladder designated</li>
+<li>In 'q' mode, when a job is highlighted within a workshop or furnace building,
+instantly duplicates the job.</li>
 </ul>
 </dd>
 </dl>
 </div>
-</div>
-<div class="section" id="digcircle">
-<h2><a class="toc-backref" href="#id149">digcircle</a></h2>
-<p>A command for easy designation of filled and hollow circles.
-It has several types of options.</p>
-<div class="section" id="shape">
-<h3><a class="toc-backref" href="#id150">Shape:</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">hollow:</th><td class="field-body">Set the circle to hollow (default)</td>
-</tr>
-<tr class="field"><th class="field-name">filled:</th><td class="field-body">Set the circle to filled</td>
-</tr>
-<tr class="field"><th class="field-name">#:</th><td class="field-body">Diameter in tiles (default = 0, does nothing)</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="action">
-<h3><a class="toc-backref" href="#id151">Action:</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">set:</th><td class="field-body">Set designation (default)</td>
-</tr>
-<tr class="field"><th class="field-name">unset:</th><td class="field-body">Unset current designation</td>
-</tr>
-<tr class="field"><th class="field-name">invert:</th><td class="field-body">Invert designations already present</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="designation-types">
-<h3><a class="toc-backref" href="#id152">Designation types:</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">dig:</th><td class="field-body">Normal digging designation (default)</td>
-</tr>
-<tr class="field"><th class="field-name">ramp:</th><td class="field-body">Ramp digging</td>
-</tr>
-<tr class="field"><th class="field-name">ustair:</th><td class="field-body">Staircase up</td>
-</tr>
-<tr class="field"><th class="field-name">dstair:</th><td class="field-body">Staircase down</td>
-</tr>
-<tr class="field"><th class="field-name">xstair:</th><td class="field-body">Staircase up/down</td>
-</tr>
-<tr class="field"><th class="field-name">chan:</th><td class="field-body">Dig channel</td>
-</tr>
-</tbody>
-</table>
-<p>After you have set the options, the command called with no options
-repeats with the last selected parameters.</p>
-</div>
-<div class="section" id="id25">
-<h3><a class="toc-backref" href="#id153">Examples:</a></h3>
-<ul class="simple">
-<li>'digcircle filled 3' = Dig a filled circle with radius = 3.</li>
-<li>'digcircle' = Do it again.</li>
-</ul>
-</div>
-</div>
-<div class="section" id="weather">
-<h2><a class="toc-backref" href="#id154">weather</a></h2>
-<p>Prints the current weather map by default.</p>
-<p>Also lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.</p>
-<div class="section" id="id26">
-<h3><a class="toc-backref" href="#id155">Options:</a></h3>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">snow:</th><td class="field-body">make it snow everywhere.</td>
-</tr>
-<tr class="field"><th class="field-name">rain:</th><td class="field-body">make it rain.</td>
-</tr>
-<tr class="field"><th class="field-name">clear:</th><td class="field-body">clear the sky.</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
 <div class="section" id="workflow">
-<h2><a class="toc-backref" href="#id156">workflow</a></h2>
+<h3><a class="toc-backref" href="#id91">workflow</a></h3>
 <p>Manage control of repeat jobs.</p>
-<div class="section" id="id27">
-<h3><a class="toc-backref" href="#id157">Usage</a></h3>
+<p>Usage:</p>
+<blockquote>
 <dl class="docutils">
 <dt><tt class="docutils literal">workflow enable <span class="pre">[option...],</span> workflow disable <span class="pre">[option...]</span></tt></dt>
 <dd><p class="first">If no options are specified, enables or disables the plugin.
@@ -1914,9 +1860,9 @@ Otherwise, enables or disables any of the following options:</p>
 <dt><tt class="docutils literal">workflow unlimit <span class="pre">&lt;constraint-spec&gt;</span></tt></dt>
 <dd>Delete a constraint.</dd>
 </dl>
-</div>
+</blockquote>
 <div class="section" id="function">
-<h3><a class="toc-backref" href="#id158">Function</a></h3>
+<h4><a class="toc-backref" href="#id92">Function</a></h4>
 <p>When the plugin is enabled, it protects all repeat jobs from removal.
 If they do disappear due to any cause, they are immediately re-added to their
 workshop and suspended.</p>
@@ -1927,7 +1873,7 @@ the amount has to drop before jobs are resumed; this is intended to reduce
 the frequency of jobs being toggled.</p>
 </div>
 <div class="section" id="constraint-examples">
-<h3><a class="toc-backref" href="#id159">Constraint examples</a></h3>
+<h4><a class="toc-backref" href="#id93">Constraint examples</a></h4>
 <p>Keep metal bolts within 900-1000, and wood/bone within 150-200.</p>
 <pre class="literal-block">
 workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
@@ -1964,20 +1910,20 @@ command.
 </pre>
 </div>
 </div>
-<div class="section" id="mapexport">
-<h2><a class="toc-backref" href="#id160">mapexport</a></h2>
-<p>Export the current loaded map as a file. This will be eventually usable
-with visualizers.</p>
 </div>
-<div class="section" id="dwarfexport">
-<h2><a class="toc-backref" href="#id161">dwarfexport</a></h2>
-<p>Export dwarves to RuneSmith-compatible XML.</p>
+<div class="section" id="fortress-activity-management">
+<h2><a class="toc-backref" href="#id94">Fortress activity management</a></h2>
+<div class="section" id="seedwatch">
+<h3><a class="toc-backref" href="#id95">seedwatch</a></h3>
+<p>Tool for turning cooking of seeds and plants on/off depending on how much you
+have of them.</p>
+<p>See 'seedwatch help' for detailed description.</p>
 </div>
 <div class="section" id="zone">
-<h2><a class="toc-backref" href="#id162">zone</a></h2>
+<h3><a class="toc-backref" href="#id96">zone</a></h3>
 <p>Helps a bit with managing activity zones (pens, pastures and pits) and cages.</p>
-<div class="section" id="id28">
-<h3><a class="toc-backref" href="#id163">Options:</a></h3>
+<p>Options:</p>
+<blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -2014,9 +1960,9 @@ the cursor are listed.</td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="id29">
-<h3><a class="toc-backref" href="#id164">Filters:</a></h3>
+</blockquote>
+<p>Filters:</p>
+<blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -2071,9 +2017,9 @@ for war/hunt). Negatable.</td>
 </tr>
 </tbody>
 </table>
-</div>
+</blockquote>
 <div class="section" id="usage-with-single-units">
-<h3><a class="toc-backref" href="#id165">Usage with single units</a></h3>
+<h4><a class="toc-backref" href="#id97">Usage with single units</a></h4>
 <p>One convenient way to use the zone tool is to bind the command 'zone assign' to
 a hotkey, maybe also the command 'zone set'. Place the in-game cursor over
 a pen/pasture or pit, use 'zone set' to mark it. Then you can select units
@@ -2082,7 +2028,7 @@ and use 'zone assign' to assign them to their new home. Allows pitting your
 own dwarves, by the way.</p>
 </div>
 <div class="section" id="usage-with-filters">
-<h3><a class="toc-backref" href="#id166">Usage with filters</a></h3>
+<h4><a class="toc-backref" href="#id98">Usage with filters</a></h4>
 <p>All filters can be used together with the 'assign' command.</p>
 <p>Restrictions: It's not possible to assign units who are inside built cages
 or chained because in most cases that won't be desirable anyways.
@@ -2100,14 +2046,14 @@ are not properly added to your own stocks; slaughtering them should work).</p>
 <p>Most filters can be negated (e.g. 'not grazer' -&gt; race is not a grazer).</p>
 </div>
 <div class="section" id="mass-renaming">
-<h3><a class="toc-backref" href="#id167">Mass-renaming</a></h3>
+<h4><a class="toc-backref" href="#id99">Mass-renaming</a></h4>
 <p>Using the 'nick' command you can set the same nickname for multiple units.
 If used without 'assign', 'all' or 'count' it will rename all units in the
 current default target zone. Combined with 'assign', 'all' or 'count' (and
 further optional filters) it will rename units matching the filter conditions.</p>
 </div>
 <div class="section" id="cage-zones">
-<h3><a class="toc-backref" href="#id168">Cage zones</a></h3>
+<h4><a class="toc-backref" href="#id100">Cage zones</a></h4>
 <p>Using the 'tocages' command you can assign units to a set of cages, for example
 a room next to your butcher shop(s). They will be spread evenly among available
 cages to optimize hauling to and butchering from them. For this to work you need
@@ -2117,8 +2063,8 @@ all cages you want to use. Then use 'zone set' (like with 'assign') and use
 would make no sense, but can be used together with 'nick' or 'remnick' and all
 the usual filters.</p>
 </div>
-<div class="section" id="id30">
-<h3><a class="toc-backref" href="#id169">Examples</a></h3>
+<div class="section" id="examples">
+<h4><a class="toc-backref" href="#id101">Examples</a></h4>
 <dl class="docutils">
 <dt><tt class="docutils literal">zone assign all own ALPACA minage 3 maxage 10</tt></dt>
 <dd>Assign all own alpacas who are between 3 and 10 years old to the selected
@@ -2144,7 +2090,7 @@ on the current default zone.</dd>
 </div>
 </div>
 <div class="section" id="autonestbox">
-<h2><a class="toc-backref" href="#id170">autonestbox</a></h2>
+<h3><a class="toc-backref" href="#id102">autonestbox</a></h3>
 <p>Assigns unpastured female egg-layers to nestbox zones. Requires that you create
 pen/pasture zones above nestboxes. If the pen is bigger than 1x1 the nestbox
 must be in the top left corner. Only 1 unit will be assigned per pen, regardless
@@ -2154,8 +2100,8 @@ to a 1x1 pasture is not a good idea. Only tame and domesticated own units are
 processed since pasturing half-trained wild egglayers could destroy your neat
 nestbox zones when they revert to wild. When called without options autonestbox
 will instantly run once.</p>
-<div class="section" id="id31">
-<h3><a class="toc-backref" href="#id171">Options:</a></h3>
+<p>Options:</p>
+<blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -2170,10 +2116,10 @@ frames between runs.</td>
 </tr>
 </tbody>
 </table>
-</div>
+</blockquote>
 </div>
 <div class="section" id="autobutcher">
-<h2><a class="toc-backref" href="#id172">autobutcher</a></h2>
+<h3><a class="toc-backref" href="#id103">autobutcher</a></h3>
 <p>Assigns lifestock for slaughter once it reaches a specific count. Requires that
 you add the target race(s) to a watch list. Only tame units will be processed.</p>
 <p>Named units will be completely ignored (to protect specific animals from
@@ -2186,8 +2132,8 @@ units or with 'zone nick' to mass-rename units in pastures and cages).</p>
 Once you have too much kids, the youngest will be butchered first.
 If you don't set any target count the following default will be used:
 1 male kid, 5 female kids, 1 male adult, 5 female adults.</p>
-<div class="section" id="id32">
-<h3><a class="toc-backref" href="#id173">Options:</a></h3>
+<p>Options:</p>
+<blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -2238,9 +2184,8 @@ for future entries.</td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="id33">
-<h3><a class="toc-backref" href="#id174">Examples:</a></h3>
+</blockquote>
+<p>Examples:</p>
 <p>You want to keep max 7 kids (4 female, 3 male) and max 3 adults (2 female,
 1 male) of the race alpaca. Once the kids grow up the oldest adults will get
 slaughtered. Excess kids will get slaughtered starting with the youngest
@@ -2269,9 +2214,7 @@ add some new races with 'watch'. If you simply want to stop it completely use
 <pre class="literal-block">
 autobutcher unwatch ALPACA CAT
 </pre>
-</div>
-<div class="section" id="note">
-<h3><a class="toc-backref" href="#id175">Note:</a></h3>
+<p><strong>Note:</strong></p>
 <p>Settings and watchlist are stored in the savegame, so that you can have
 different settings for each world. If you want to copy your watchlist to
 another savegame you can use the command list_export:</p>
@@ -2283,9 +2226,8 @@ Load the savegame where you want to copy the settings to, run the batch file (fr
 autobutcher.bat
 </pre>
 </div>
-</div>
 <div class="section" id="autolabor">
-<h2><a class="toc-backref" href="#id176">autolabor</a></h2>
+<h3><a class="toc-backref" href="#id104">autolabor</a></h3>
 <p>Automatically manage dwarf labors.</p>
 <p>When enabled, autolabor periodically checks your dwarves and enables or
 disables labors. It tries to keep as many dwarves as possible busy but
@@ -2297,8 +2239,90 @@ while it is enabled.</p>
 </div>
 <p>For detailed usage information, see 'help autolabor'.</p>
 </div>
+</div>
+<div class="section" id="other">
+<h2><a class="toc-backref" href="#id105">Other</a></h2>
+<div class="section" id="catsplosion">
+<h3><a class="toc-backref" href="#id106">catsplosion</a></h3>
+<p>Makes cats just <em>multiply</em>. It is not a good idea to run this more than once or
+twice.</p>
+</div>
+<div class="section" id="dfusion">
+<h3><a class="toc-backref" href="#id107">dfusion</a></h3>
+<p>This is the DFusion lua plugin system by warmist/darius, running as a DFHack plugin.</p>
+<p>See the bay12 thread for details: <a class="reference external" href="http://www.bay12forums.com/smf/index.php?topic=69682.15">http://www.bay12forums.com/smf/index.php?topic=69682.15</a></p>
+<p>Confirmed working DFusion plugins:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">simple_embark:</th><td class="field-body">allows changing the number of dwarves available on embark.</td>
+</tr>
+</tbody>
+</table>
+<div class="note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li>Some of the DFusion plugins aren't completely ported yet. This can lead to crashes.</li>
+<li>This is currently working only on Windows.</li>
+<li>The game will be suspended while you're using dfusion. Don't panic when it doen't respond.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="scripts">
+<h1><a class="toc-backref" href="#id108">Scripts</a></h1>
+<p>Lua or ruby scripts placed in the hack/scripts/ directory are considered for
+execution as if they were native DFHack commands. They are listed at the end
+of the 'ls' command output.</p>
+<p>Note: scripts in subdirectories of hack/scripts/ can still be called, but will
+only be listed by ls if called as 'ls -a'. This is intended as a way to hide
+scripts that are obscure, developer-oriented, or should be used as keybindings.</p>
+<p>Some notable scripts:</p>
+<div class="section" id="fix">
+<h2><a class="toc-backref" href="#id109">fix/*</a></h2>
+<p>Scripts in this subdirectory fix various bugs and issues, some of them obscure.</p>
+<ul>
+<li><p class="first">fix/dead-units</p>
+<p>Removes uninteresting dead units from the unit list. Doesn't seem to give any
+noticeable performance gain, but migrants normally stop if the unit list grows
+to around 3000 units, and this script reduces it back.</p>
+</li>
+<li><p class="first">fix/population-cap</p>
+<p>Run this after every migrant wave to ensure your population cap is not exceeded.
+The issue with the cap is that it is compared to the population number reported
+by the last caravan, so once it drops below the cap, migrants continue to come
+until that number is updated again.</p>
+</li>
+<li><p class="first">fix/stable-temp</p>
+<p>Instantly sets the temperature of all free-lying items to be in equilibrium with
+the environment and stops temperature updates. In order to maintain this efficient
+state however, use <tt class="docutils literal">tweak <span class="pre">stable-temp</span></tt> and <tt class="docutils literal">tweak <span class="pre">fast-heat</span></tt>.</p>
+</li>
+<li><p class="first">fix/item-occupancy</p>
+<p>Diagnoses and fixes issues with nonexistant 'items occupying site', usually
+caused by autodump bugs or other hacking mishaps.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="gui">
+<h2><a class="toc-backref" href="#id110">gui/*</a></h2>
+<p>Scripts that implement dialogs inserted into the main game window are put in this
+directory.</p>
+</div>
+<div class="section" id="quicksave">
+<h2><a class="toc-backref" href="#id111">quicksave</a></h2>
+<p>If called in dwarf mode, makes DF immediately auto-save the game by setting a flag
+normally used in seasonal auto-save.</p>
+</div>
+<div class="section" id="setfps">
+<h2><a class="toc-backref" href="#id112">setfps</a></h2>
+<p>Run <tt class="docutils literal">setfps &lt;number&gt;</tt> to set the FPS cap at runtime, in case you want to watch
+combat in slow motion or something :)</p>
+</div>
 <div class="section" id="growcrops">
-<h2><a class="toc-backref" href="#id177">growcrops</a></h2>
+<h2><a class="toc-backref" href="#id113">growcrops</a></h2>
 <p>Instantly grow seeds inside farming plots.</p>
 <p>With no argument, this command list the various seed types currently in
 use in your farming plots.
@@ -2310,7 +2334,7 @@ growcrops plump 40
 </pre>
 </div>
 <div class="section" id="removebadthoughts">
-<h2><a class="toc-backref" href="#id178">removebadthoughts</a></h2>
+<h2><a class="toc-backref" href="#id114">removebadthoughts</a></h2>
 <p>This script remove negative thoughts from your dwarves. Very useful against
 tantrum spirals.</p>
 <p>With a selected unit in 'v' mode, will clear this unit's mind, otherwise
@@ -2323,7 +2347,7 @@ you unpause.</p>
 it removed.</p>
 </div>
 <div class="section" id="slayrace">
-<h2><a class="toc-backref" href="#id179">slayrace</a></h2>
+<h2><a class="toc-backref" href="#id115">slayrace</a></h2>
 <p>Kills any unit of a given race.</p>
 <p>With no argument, lists the available races.</p>
 <p>With the special argument 'him', targets only the selected creature.</p>
@@ -2349,7 +2373,7 @@ slayrace elve magma
 </pre>
 </div>
 <div class="section" id="magmasource">
-<h2><a class="toc-backref" href="#id180">magmasource</a></h2>
+<h2><a class="toc-backref" href="#id116">magmasource</a></h2>
 <p>Create an infinite magma source on a tile.</p>
 <p>This script registers a map tile as a magma source, and every 12 game ticks
 that tile receives 1 new unit of flowing magma.</p>
@@ -2365,22 +2389,52 @@ To remove all placed sources, call <tt class="docutils literal">magmasource stop
 </div>
 </div>
 <div class="section" id="in-game-interface-tools">
-<h1><a class="toc-backref" href="#id181">In-game interface tools</a></h1>
+<h1><a class="toc-backref" href="#id117">In-game interface tools</a></h1>
 <p>These tools work by displaying dialogs or overlays in the game window, and
 are mostly implemented by lua scripts.</p>
 <div class="section" id="dwarf-manipulator">
-<h2><a class="toc-backref" href="#id182">Dwarf Manipulator</a></h2>
-<p>Implemented by the manipulator plugin. To activate, open the unit screen and press 'l'.</p>
-<p>This tool implements a Dwarf Therapist-like interface within the game ui.</p>
+<h2><a class="toc-backref" href="#id118">Dwarf Manipulator</a></h2>
+<p>Implemented by the manipulator plugin. To activate, open the unit screen and
+press 'l'.</p>
+<p>This tool implements a Dwarf Therapist-like interface within the game UI. The
+far left column displays the unit's Happiness (color-coded based on its
+value), and the right half of the screen displays each dwarf's labor settings
+and skill levels (0-9 for Dabbling thru Professional, A-E for Great thru Grand
+Master, and U-Z for Legendary thru Legendary+5). Cells with red backgrounds
+denote skills not controlled by labors.</p>
+<p>Use the arrow keys or number pad to move the cursor around, holding Shift to
+move 10 tiles at a time.</p>
+<p>Press the Z-Up (&lt;) and Z-Down (&gt;) keys to move quickly between labor/skill
+categories.</p>
+<p>Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
+to toggle all labors within the selected category.</p>
+<p>Press the <tt class="docutils literal">+-</tt> keys to sort the unit list according to the currently selected
+skill/labor, and press the <tt class="docutils literal">*/</tt> keys to sort the unit list by Name, Profession,
+or Happiness (using Tab to select which sort method to use here).</p>
+<p>With a unit selected, you can press the &quot;v&quot; key to view its properties (and
+possibly set a custom nickname or profession) or the &quot;c&quot; key to exit
+Manipulator and zoom to its position within your fortress.</p>
+<p>The following mouse shortcuts are also available:</p>
+<ul class="simple">
+<li>Click on a column header to sort the unit list. Left-click to sort it in one
+direction (descending for happiness or labors/skills, ascending for name or
+profession) and right-click to sort it in the opposite direction.</li>
+<li>Left-click on a labor cell to toggle that labor. Right-click to move the
+cursor onto that cell instead of toggling it.</li>
+<li>Left-click on a unit's name or profession to view its properties.</li>
+<li>Right-click on a unit's name or profession to zoom to it.</li>
+</ul>
+<p>Pressing ESC normally returns to the unit screen, but Shift-ESC would exit
+directly to the main dwarf mode screen.</p>
 </div>
-<div class="section" id="id34">
-<h2><a class="toc-backref" href="#id183">Liquids</a></h2>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id119">Liquids</a></h2>
 <p>Implemented by the gui/liquids script. To use, bind to a key and activate in the 'k' mode.</p>
 <p>While active, use the suggested keys to switch the usual liquids parameters, and Enter
 to select the target area and apply changes.</p>
 </div>
 <div class="section" id="mechanisms">
-<h2><a class="toc-backref" href="#id184">Mechanisms</a></h2>
+<h2><a class="toc-backref" href="#id120">Mechanisms</a></h2>
 <p>Implemented by the gui/mechanims script. To use, bind to a key and activate in the 'q' mode.</p>
 <p>Lists mechanisms connected to the building, and their links. Navigating the list centers
 the view on the relevant linked buildings.</p>
@@ -2389,19 +2443,20 @@ focus on the current one. Shift-Enter has an effect equivalent to pressing Enter
 re-entering the mechanisms ui.</p>
 </div>
 <div class="section" id="power-meter">
-<h2><a class="toc-backref" href="#id185">Power Meter</a></h2>
+<h2><a class="toc-backref" href="#id121">Power Meter</a></h2>
 <p>Front-end to the power-meter plugin implemented by the gui/power-meter script. Bind to a
 key and activate after selecting Pressure Plate in the build menu.</p>
 <p>The script follows the general look and feel of the regular pressure plate build
 configuration page, but configures parameters relevant to the modded power meter building.</p>
 </div>
-<div class="section" id="id35">
-<h2><a class="toc-backref" href="#id186">Rename</a></h2>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id122">Rename</a></h2>
 <p>Backed by the rename plugin, the gui/rename script allows entering the desired name
 via a simple dialog in the game ui.</p>
 <ul>
 <li><p class="first"><tt class="docutils literal">gui/rename [building]</tt> in 'q' mode changes the name of a building.</p>
-<p>The selected building must be one of stockpile, workshop, furnace, trap or siege engine.</p>
+<p>The selected building must be one of stockpile, workshop, furnace, trap, or siege engine.
+It is also possible to rename zones from the 'i' menu.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">gui/rename [unit]</tt> with a unit selected changes the nickname.</p>
 </li>
@@ -2411,41 +2466,48 @@ via a simple dialog in the game ui.</p>
 <p>The <tt class="docutils literal">building</tt> or <tt class="docutils literal">unit</tt> are automatically assumed when in relevant ui state.</p>
 </div>
 <div class="section" id="room-list">
-<h2><a class="toc-backref" href="#id187">Room List</a></h2>
+<h2><a class="toc-backref" href="#id123">Room List</a></h2>
 <p>Implemented by the gui/room-list script. To use, bind to a key and activate in the 'q' mode,
 either immediately or after opening the assign owner page.</p>
 <p>The script lists other rooms owned by the same owner, or by the unit selected in the assign
 list, and allows unassigning them.</p>
 </div>
 <div class="section" id="siege-engine">
-<h2><a class="toc-backref" href="#id188">Siege Engine</a></h2>
+<h2><a class="toc-backref" href="#id124">Siege Engine</a></h2>
 <p>Front-end to the siege-engine plugin implemented by the gui/siege-engine script. Bind to a
 key and activate after selecting a siege engine in 'q' mode.</p>
 <p>The main mode displays the current target, selected ammo item type, linked stockpiles and
-the allowed operator skill range. The map tile color is changed to reflect if it can be
-hit by the selected engine.</p>
+the allowed operator skill range. The map tile color is changed to signify if it can be
+hit by the selected engine: green for fully reachable, blue for out of range, red for blocked,
+yellow for partially blocked.</p>
 <p>Pressing 'r' changes into the target selection mode, which works by highlighting two points
 with Enter like all designations. When a target area is set, the engine projectiles are
 aimed at that area, or units within it, instead of the vanilla four directions.</p>
-<p>Pressing 't' switches to stockpile selection.</p>
+<p>After setting the target in this way for one engine, you can 'paste' the same area into others
+just by pressing 'p' in the main page of this script. The area to paste is kept until you quit
+DF, or select another area manually.</p>
+<p>Pressing 't' switches to a mode for selecting a stockpile to take ammo from.</p>
 <p>Exiting from the siege engine script via ESC reverts the view to the state prior to starting
 the script. Shift-ESC retains the current viewport, and also exits from the 'q' mode to main
 menu.</p>
-<p><strong>DISCLAIMER</strong>: Siege engines are a very interesting feature, but currently nearly useless
+<div class="admonition-disclaimer admonition">
+<p class="first admonition-title">DISCLAIMER</p>
+<p class="last">Siege engines are a very interesting feature, but currently nearly useless
 because they haven't been updated since 2D and can only aim in four directions. This is an
 attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
 e.g. like making siegers bring their own, are something only Toady can do.</p>
 </div>
 </div>
+</div>
 <div class="section" id="raw-hacks">
-<h1><a class="toc-backref" href="#id189">RAW hacks</a></h1>
+<h1><a class="toc-backref" href="#id125">RAW hacks</a></h1>
 <p>These plugins detect certain structures in RAWs, and enhance them in various ways.</p>
 <div class="section" id="steam-engine">
-<h2><a class="toc-backref" href="#id190">Steam Engine</a></h2>
+<h2><a class="toc-backref" href="#id126">Steam Engine</a></h2>
 <p>The steam-engine plugin detects custom workshops with STEAM_ENGINE in
 their token, and turns them into real steam engines.</p>
 <div class="section" id="rationale">
-<h3><a class="toc-backref" href="#id191">Rationale</a></h3>
+<h3><a class="toc-backref" href="#id127">Rationale</a></h3>
 <p>The vanilla game contains only water wheels and windmills as sources of
 power, but windmills give relatively little power, and water wheels require
 flowing water, which must either be a real river and thus immovable and
@@ -2456,25 +2518,31 @@ it can be done just by combining existing features of the game engine
 in a new way with some glue code and a bit of custom logic.</p>
 </div>
 <div class="section" id="construction">
-<h3><a class="toc-backref" href="#id192">Construction</a></h3>
+<h3><a class="toc-backref" href="#id128">Construction</a></h3>
 <p>The workshop needs water as its input, which it takes via a
 passable floor tile below it, like usual magma workshops do.
 The magma version also needs magma.</p>
-<p><strong>ISSUE</strong>: Since this building is a machine, and machine collapse
+<div class="admonition-issue admonition">
+<p class="first admonition-title">ISSUE</p>
+<p class="last">Since this building is a machine, and machine collapse
 code cannot be modified, it would collapse over true open space.
 As a loophole, down stair provides support to machines, while
 being passable, so use them.</p>
+</div>
 <p>After constructing the building itself, machines can be connected
 to the edge tiles that look like gear boxes. Their exact position
 is extracted from the workshop raws.</p>
-<p><strong>ISSUE</strong>: Like with collapse above, part of the code involved in
+<div class="admonition-issue admonition">
+<p class="first admonition-title">ISSUE</p>
+<p class="last">Like with collapse above, part of the code involved in
 machine connection cannot be modified. As a result, the workshop
 can only immediately connect to machine components built AFTER it.
 This also means that engines cannot be chained without intermediate
-short axles that can be built later.</p>
+short axles that can be built later than both of the engines.</p>
+</div>
 </div>
 <div class="section" id="operation">
-<h3><a class="toc-backref" href="#id193">Operation</a></h3>
+<h3><a class="toc-backref" href="#id129">Operation</a></h3>
 <p>In order to operate the engine, queue the Stoke Boiler job (optionally
 on repeat). A furnace operator will come, possibly bringing a bar of fuel,
 and perform it. As a result, a &quot;boiling water&quot; item will appear
@@ -2499,7 +2567,7 @@ decrease it by further 4%, and also decrease the whole steam
 use rate by 10%.</p>
 </div>
 <div class="section" id="explosions">
-<h3><a class="toc-backref" href="#id194">Explosions</a></h3>
+<h3><a class="toc-backref" href="#id130">Explosions</a></h3>
 <p>The engine must be constructed using barrel, pipe and piston
 from fire-safe, or in the magma version magma-safe metals.</p>
 <p>During operation weak parts get gradually worn out, and
@@ -2508,7 +2576,7 @@ toppled during operation by a building destroyer, or a
 tantruming dwarf.</p>
 </div>
 <div class="section" id="save-files">
-<h3><a class="toc-backref" href="#id195">Save files</a></h3>
+<h3><a class="toc-backref" href="#id131">Save files</a></h3>
 <p>It should be safe to load and view engine-using fortresses
 from a DF version without DFHack installed, except that in such
 case the engines won't work. However actually making modifications
@@ -2519,11 +2587,12 @@ being generated.</p>
 </div>
 </div>
 <div class="section" id="add-spatter">
-<h2><a class="toc-backref" href="#id196">Add Spatter</a></h2>
+<h2><a class="toc-backref" href="#id132">Add Spatter</a></h2>
 <p>This plugin makes reactions with names starting with <tt class="docutils literal">SPATTER_ADD_</tt>
 produce contaminants on the items instead of improvements.</p>
 <p>Intended to give some use to all those poisons that can be bought from caravans.</p>
-<p>To be really useful this needs patches from bug 808 and <tt class="docutils literal">tweak <span class="pre">fix-dimensions</span></tt>.</p>
+<p>To be really useful this needs patches from bug 808, <tt class="docutils literal">tweak <span class="pre">fix-dimensions</span></tt>
+and <tt class="docutils literal">tweak <span class="pre">advmode-contained</span></tt>.</p>
 </div>
 </div>
 </div>

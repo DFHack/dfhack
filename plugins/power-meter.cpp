@@ -200,7 +200,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
-    case SC_MAP_LOADED:
+    case SC_WORLD_LOADED:
         {
             auto pworld = Core::getInstance().getWorld();
             bool enable = pworld->GetPersistentData("power-meter/enabled").isValid();
@@ -212,7 +212,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             }
         }
         break;
-    case SC_MAP_UNLOADED:
+    case SC_WORLD_UNLOADED:
         enable_hooks(false);
         break;
     default:
@@ -224,8 +224,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (Core::getInstance().isMapLoaded())
-        plugin_onstatechange(out, SC_MAP_LOADED);
+    if (Core::getInstance().isWorldLoaded())
+        plugin_onstatechange(out, SC_WORLD_LOADED);
 
     return CR_OK;
 }

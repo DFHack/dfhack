@@ -33,6 +33,14 @@ distribution.
 #include "df/graphic.h"
 #include "df/viewscreen.h"
 
+namespace df
+{
+    struct job;
+    struct item;
+    struct unit;
+    struct building;
+}
+
 /**
  * \defgroup grp_screen utilities for painting to the screen
  * @ingroup grp_screen
@@ -134,6 +142,7 @@ namespace DFHack
         virtual ~dfhack_viewscreen();
 
         static bool is_instance(df::viewscreen *screen);
+        static dfhack_viewscreen *try_cast(df::viewscreen *screen);
 
         virtual void logic();
         virtual void render();
@@ -146,6 +155,10 @@ namespace DFHack
         virtual std::string getFocusString() = 0;
         virtual void onShow() {};
         virtual void onDismiss() {};
+        virtual df::unit *getSelectedUnit() { return NULL; }
+        virtual df::item *getSelectedItem() { return NULL; }
+        virtual df::job *getSelectedJob() { return NULL; }
+        virtual df::building *getSelectedBuilding() { return NULL; }
     };
 
     class DFHACK_EXPORT dfhack_lua_viewscreen : public dfhack_viewscreen {
@@ -178,5 +191,10 @@ namespace DFHack
 
         virtual void onShow();
         virtual void onDismiss();
+
+        virtual df::unit *getSelectedUnit();
+        virtual df::item *getSelectedItem();
+        virtual df::job *getSelectedJob();
+        virtual df::building *getSelectedBuilding();
     };
 }

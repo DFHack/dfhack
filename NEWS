@@ -30,6 +30,7 @@ DFHack v0.34.11-r2 (UNRELEASED)
   New scripts:
     - fixnaked: removes thoughts about nakedness.
     - setfps: set FPS cap at runtime, in case you want slow motion or speed-up.
+    - siren: wakes up units, stops breaks and parties - but causes bad thoughts.
     - fix/population-cap: run after every migrant wave to prevent exceeding the cap.
     - fix/stable-temp: counts items with temperature updates; does instant one-shot stable-temp.
     - fix/loyaltycascade: fix units allegiance, eg after ordering a dwarf merchant kill.

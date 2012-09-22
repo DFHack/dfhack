@@ -366,14 +366,15 @@ ul.auto-toc {
 <li><a class="reference internal" href="#global-environment" id="id32">Global environment</a></li>
 <li><a class="reference internal" href="#utils" id="id33">utils</a></li>
 <li><a class="reference internal" href="#dumper" id="id34">dumper</a></li>
+<li><a class="reference internal" href="#class" id="id35">class</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#plugins" id="id35">Plugins</a><ul>
-<li><a class="reference internal" href="#burrows" id="id36">burrows</a></li>
-<li><a class="reference internal" href="#sort" id="id37">sort</a></li>
+<li><a class="reference internal" href="#plugins" id="id36">Plugins</a><ul>
+<li><a class="reference internal" href="#burrows" id="id37">burrows</a></li>
+<li><a class="reference internal" href="#sort" id="id38">sort</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#scripts" id="id38">Scripts</a></li>
+<li><a class="reference internal" href="#scripts" id="id39">Scripts</a></li>
 </ul>
 </div>
 <p>The current version of DFHack has extensive support for
@@ -1032,6 +1033,9 @@ a full-screen item view of a container. Note that in the
 last case, the highlighted <em>contained item</em> is returned, not
 the container itself.</p>
 </li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.getSelectedBuilding([silent])</span></tt></p>
+<p>Returns the building selected via <em>'q'</em>, <em>'t'</em>, <em>'k'</em> or <em>'i'</em>.</p>
+</li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.showAnnouncement(text,color[,is_bright])</span></tt></p>
 <p>Adds a regular announcement with given text, color, and brightness.
 The is_bright boolean actually seems to invert the brightness.</p>
@@ -1608,6 +1612,16 @@ options; if multiple interpretations exist, the table will contain multiple keys
 </dl>
 <p>If this method is omitted, the screen is dismissed on receival of the <tt class="docutils literal">LEAVESCREEN</tt> key.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">function screen:onGetSelectedUnit()</tt></p>
+</li>
+<li><p class="first"><tt class="docutils literal">function screen:onGetSelectedItem()</tt></p>
+</li>
+<li><p class="first"><tt class="docutils literal">function screen:onGetSelectedJob()</tt></p>
+</li>
+<li><p class="first"><tt class="docutils literal">function screen:onGetSelectedBuilding()</tt></p>
+<p>Implement these to provide a return value for the matching
+<tt class="docutils literal"><span class="pre">dfhack.gui.getSelected...</span></tt> function.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="internal-api">
@@ -1917,16 +1931,88 @@ the other arguments see the original documentation link above.</p>
 </li>
 </ul>
 </div>
+<div class="section" id="class">
+<h2><a class="toc-backref" href="#id35">class</a></h2>
+<p>Implements a trivial single-inheritance class system.</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">Foo = defclass(Foo[, ParentClass])</tt></p>
+<p>Defines or updates class Foo. The <tt class="docutils literal">Foo = defclass(Foo)</tt> syntax
+is needed so that when the module or script is reloaded, the
+class identity will be preserved through the preservation of
+global variable values.</p>
+<p>The <tt class="docutils literal">defclass</tt> function is defined as a stub in the global
+namespace, and using it will auto-load the class module.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">Class.super</tt></p>
+<p>This class field is set by defclass to the parent class, and
+allows a readable <tt class="docutils literal">Class.super.method(self, <span class="pre">...)</span></tt> syntax for
+calling superclass methods.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">Class.ATTRS { foo = xxx, bar = yyy }</tt></p>
+<p>Declares certain instance fields to be attributes, i.e. auto-initialized
+from fields in the table used as the constructor argument. If omitted,
+they are initialized with the default values specified in this declaration.</p>
+<p>If the default value should be <em>nil</em>, use <tt class="docutils literal">ATTRS { foo = DEFAULT_NIL }</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">new_obj = Class{ foo = arg, bar = arg, ... }</tt></p>
+<p>Calling the class as a function creates and initializes a new instance.
+Initialization happens in this order:</p>
+<ol class="arabic simple">
+<li>An empty instance table is created, and its metatable set.</li>
+<li>The <tt class="docutils literal">preinit</tt> method is called via <tt class="docutils literal">invoke_before</tt> (see below)
+with the table used as argument to the class. This method is intended
+for validating and tweaking that argument table.</li>
+<li>Declared ATTRS are initialized from the argument table or their default values.</li>
+<li>The <tt class="docutils literal">init</tt> method is called via <tt class="docutils literal">invoke_after</tt> with the argument table.
+This is the main constructor method.</li>
+<li>The <tt class="docutils literal">postinit</tt> method is called via <tt class="docutils literal">invoke_after</tt> with the argument table.
+Place code that should be called after the object is fully constructed here.</li>
+</ol>
+</li>
+</ul>
+<p>Predefined instance methods:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">instance:assign{ foo = xxx }</tt></p>
+<p>Assigns all values in the input table to the matching instance fields.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">instance:callback(method_name, <span class="pre">[args...])</span></tt></p>
+<p>Returns a closure that invokes the specified method of the class,
+properly passing in self, and optionally a number of initial arguments too.
+The arguments given to the closure are appended to these.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">instance:invoke_before(method_name, <span class="pre">args...)</span></tt></p>
+<p>Navigates the inheritance chain of the instance starting from the most specific
+class, and invokes the specified method with the arguments if it is defined in
+that specific class. Equivalent to the following definition in every class:</p>
+<pre class="literal-block">
+function Class:invoke_before(method, ...)
+  if rawget(Class, method) then
+    rawget(Class, method)(self, ...)
+  end
+  Class.super.invoke_before(method, ...)
+end
+</pre>
+</li>
+<li><p class="first"><tt class="docutils literal">instance:invoke_after(method_name, <span class="pre">args...)</span></tt></p>
+<p>Like invoke_before, only the method is called after the recursive call to super,
+i.e. invocations happen in the parent to child order.</p>
+<p>These two methods are inspired by the Common Lisp before and after methods, and
+are intended for implementing similar protocols for certain things. The class
+library itself uses them for constructors.</p>
+</li>
+</ul>
+<p>To avoid confusion, these methods cannot be redefined.</p>
+</div>
 </div>
 <div class="section" id="plugins">
-<h1><a class="toc-backref" href="#id35">Plugins</a></h1>
+<h1><a class="toc-backref" href="#id36">Plugins</a></h1>
 <p>DFHack plugins may export native functions and events
 to lua contexts. They are automatically imported by
 <tt class="docutils literal"><span class="pre">mkmodule('plugins.&lt;name&gt;')</span></tt>; this means that a lua
 module file is still necessary for <tt class="docutils literal">require</tt> to read.</p>
 <p>The following plugins have lua support.</p>
 <div class="section" id="burrows">
-<h2><a class="toc-backref" href="#id36">burrows</a></h2>
+<h2><a class="toc-backref" href="#id37">burrows</a></h2>
 <p>Implements extended burrow manipulations.</p>
 <p>Events:</p>
 <ul>
@@ -1964,13 +2050,13 @@ set is the same as used by the command line.</p>
 <p>The lua module file also re-exports functions from <tt class="docutils literal">dfhack.burrows</tt>.</p>
 </div>
 <div class="section" id="sort">
-<h2><a class="toc-backref" href="#id37">sort</a></h2>
+<h2><a class="toc-backref" href="#id38">sort</a></h2>
 <p>Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.</p>
 </div>
 </div>
 <div class="section" id="scripts">
-<h1><a class="toc-backref" href="#id38">Scripts</a></h1>
+<h1><a class="toc-backref" href="#id39">Scripts</a></h1>
 <p>Any files with the .lua extension placed into hack/scripts/*
 are automatically used by the DFHack core as commands. The
 matching command name consists of the name of the file sans

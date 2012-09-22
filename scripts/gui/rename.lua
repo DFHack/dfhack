@@ -13,10 +13,12 @@ local function verify_mode(expected)
     end
 end
 
-if string.match(focus, '^dwarfmode/QueryBuilding/Some') then
+local unit = dfhack.gui.getSelectedUnit(true)
+local building = dfhack.gui.getSelectedBuilding(true)
+
+if building and (not unit or mode == 'building') then
     verify_mode('building')
 
-    local building = df.global.world.selected_building
     if plugin.canRenameBuilding(building) then
         dlg.showInputPrompt(
             'Rename Building',
@@ -30,9 +32,7 @@ if string.match(focus, '^dwarfmode/QueryBuilding/Some') then
             'Cannot rename this type of building.', COLOR_LIGHTRED
         )
     end
-elseif dfhack.gui.getSelectedUnit(true) then
-    local unit = dfhack.gui.getSelectedUnit(true)
-
+elseif unit then
     if mode == 'unit-profession' then
         dlg.showInputPrompt(
             'Rename Unit',

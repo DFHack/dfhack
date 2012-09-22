@@ -53,6 +53,7 @@ using namespace DFHack;
 #include "df/viewscreen_dungeon_monsterstatusst.h"
 #include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_unitlistst.h"
+#include "df/viewscreen_buildinglistst.h"
 #include "df/viewscreen_itemst.h"
 #include "df/viewscreen_layer.h"
 #include "df/viewscreen_layer_workshop_profilest.h"
@@ -691,6 +692,8 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 
         return job;
     }
+    else if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedJob();
     else
         return getSelectedWorkshopJob(out, quiet);
 }
@@ -780,6 +783,9 @@ static df::unit *getAnyUnit(df::viewscreen *top)
             return vector_get(screen->unit, list1->cursor);
         return NULL;
     }
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedUnit();
 
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
@@ -875,6 +881,9 @@ static df::item *getAnyItem(df::viewscreen *top)
         return NULL;
     }
 
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedItem();
+
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
 
@@ -931,6 +940,70 @@ df::item *Gui::getSelectedItem(color_ostream &out, bool quiet)
         out.printerr("No item is selected in the UI.\n");
 
     return item;
+}
+
+static df::building *getAnyBuilding(df::viewscreen *top)
+{
+    using namespace ui_sidebar_mode;
+    using df::global::ui;
+    using df::global::ui_look_list;
+    using df::global::ui_look_cursor;
+    using df::global::world;
+    using df::global::ui_sidebar_menus;
+
+    if (auto screen = strict_virtual_cast<df::viewscreen_buildinglistst>(top))
+        return vector_get(screen->buildings, screen->cursor);
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedBuilding();
+
+    if (!Gui::dwarfmode_hotkey(top))
+        return NULL;
+
+    switch (ui->main.mode) {
+    case LookAround:
+    {
+        if (!ui_look_list || !ui_look_cursor)
+            return NULL;
+
+        auto item = vector_get(ui_look_list->items, *ui_look_cursor);
+        if (item && item->type == df::ui_look_list::T_items::Building)
+            return item->building;
+        else
+            return NULL;
+    }
+    case QueryBuilding:
+    case BuildingItems:
+    {
+        return world->selected_building;
+    }
+    case Zones:
+    case ZonesPenInfo:
+    case ZonesPitInfo:
+    case ZonesHospitalInfo:
+    {
+        if (ui_sidebar_menus)
+            return ui_sidebar_menus->zone.selected;
+        return NULL;
+    }
+    default:
+        return NULL;
+    }
+}
+
+bool Gui::any_building_hotkey(df::viewscreen *top)
+{
+    return getAnyBuilding(top) != NULL;
+}
+
+df::building *Gui::getSelectedBuilding(color_ostream &out, bool quiet)
+{
+    df::building *building = getAnyBuilding(Core::getTopViewscreen());
+
+    if (!building && !quiet)
+        out.printerr("No building is selected in the UI.\n");
+
+    return building;
 }
 
 //

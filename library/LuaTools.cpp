@@ -1814,7 +1814,9 @@ void DFHack::Lua::Core::onUpdate(color_ostream &out)
     lua_rawgetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
 
     run_timers(out, State, frame_timers, frame[1], ++frame_idx);
-    run_timers(out, State, tick_timers, frame[1], world->frame_counter);
+
+    if (world)
+        run_timers(out, State, tick_timers, frame[1], world->frame_counter);
 }
 
 void DFHack::Lua::Core::Init(color_ostream &out)

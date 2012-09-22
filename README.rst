@@ -1539,6 +1539,14 @@ setfps
 Run ``setfps <number>`` to set the FPS cap at runtime, in case you want to watch
 combat in slow motion or something :)
 
+siren
+=====
+
+Wakes up sleeping units, cancels breaks and stops parties either everywhere,
+or in the burrows given as arguments. In return, adds bad thoughts about
+noise and tiredness. Also, the units with interrupted breaks will go on
+break again a lot sooner.
+
 growcrops
 =========
 Instantly grow seeds inside farming plots.

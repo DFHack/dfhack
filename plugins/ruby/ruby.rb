@@ -81,6 +81,13 @@ module DFHack
             end
         end
 
+        # same as onupdate_register, but remove the callback once it returns true
+        def onupdate_register_once(*a)
+            handle = onupdate_register(*a) {
+                onupdate_unregister(handle) if yield
+            }
+        end
+
         TICKS_PER_YEAR = 1200*28*12
         # this method is called by dfhack every 'onupdate' if onupdate_active is true
         def onupdate

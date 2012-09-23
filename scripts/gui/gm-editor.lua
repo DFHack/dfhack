@@ -1,29 +1,33 @@
 -- Interface powered item editor.
 local gui = require 'gui'
 local dialog = require 'gui.dialogs'
+local args={...}
+function getTargetFromScreens()
+    local my_trg
+    if dfhack.gui.getCurFocus() == 'item' then
+        my_trg=dfhack.gui.getCurViewscreen().item
+    elseif dfhack.gui.getCurFocus() == 'joblist' then
+        local t_screen=dfhack.gui.getCurViewscreen()
+        my_trg=t_screen.jobs[t_screen.cursor_pos]
+    elseif dfhack.gui.getCurFocus() == 'createquota' then
+        local t_screen=dfhack.gui.getCurViewscreen()
+        my_trg=t_screen.orders[t_screen.sel_idx]
+    elseif dfhack.gui.getCurFocus() == 'dwarfmode/LookAround/Flow' then
+        local t_look=df.global.ui_look_list.items[df.global.ui_look_cursor]
+        my_trg=t_look.flow
 
-local my_trg
-if dfhack.gui.getCurFocus() == 'item' then
-	my_trg=dfhack.gui.getCurViewscreen().item
-elseif dfhack.gui.getCurFocus() == 'joblist' then
-	local t_screen=dfhack.gui.getCurViewscreen()
-	my_trg=t_screen.jobs[t_screen.cursor_pos]
-elseif dfhack.gui.getCurFocus() == 'createquota' then
-	local t_screen=dfhack.gui.getCurViewscreen()
-	my_trg=t_screen.orders[t_screen.sel_idx]
-elseif dfhack.gui.getCurFocus() == 'dwarfmode/LookAround/Flow' then
-	local t_look=df.global.ui_look_list.items[df.global.ui_look_cursor]
-	my_trg=t_look.flow
-
-elseif dfhack.gui.getSelectedUnit(true) then
-	my_trg=dfhack.gui.getSelectedUnit(true)
-elseif dfhack.gui.getSelectedItem(true) then
-	my_trg=dfhack.gui.getSelectedItem(true)
-elseif dfhack.gui.getSelectedJob(true) then
-	my_trg=dfhack.gui.getSelectedJob(true)
-else
-	qerror("No valid target found")
+    elseif dfhack.gui.getSelectedUnit(true) then
+        my_trg=dfhack.gui.getSelectedUnit(true)
+    elseif dfhack.gui.getSelectedItem(true) then
+        my_trg=dfhack.gui.getSelectedItem(true)
+    elseif dfhack.gui.getSelectedJob(true) then
+        my_trg=dfhack.gui.getSelectedJob(true)
+    else
+        qerror("No valid target found")
+    end
+    return my_trg
 end
+
 
 local MODE_BROWSE=0
 local MODE_EDIT=1
@@ -199,7 +203,22 @@ function GmEditorUi:popTarget()
         self:dismiss()
     end
 end
+function show_editor(trg)
+    local screen = GmEditorUi{target=trg}
+    screen:show()
+end
+if #args~=0 then
+    if args[1]=="dialog" then
+        function thunk(entry)
+            local t=load("return "..entry)()
+            show_editor(t)
+        end
+        dialog.showInputPrompt("Gm Editor", "Object to edit:", COLOR_GRAY, "",thunk)
+    else
+        local t=load("return "..args[1])()
+        show_editor(t)
+    end
+else
+    show_editor(getTargetFromScreens())
+end
 
-local screen = GmEditorUi{target=my_trg}
-
-screen:show()

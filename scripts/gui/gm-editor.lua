@@ -25,18 +25,6 @@ else
 	qerror("No valid target found")
 end
 
-TextInputDialog = defclass(TextInputDialog, gui.FramedScreen)
-
-function TextInputDialog:init(prompt)
-    self.frame_style=GREY_LINE_FRAME
-    self.frame_title=prompt
-	self.input=""
-    return self
-end
-function TextInputDialog:onRenderBody(dc)
-    dc:seek(1,1):string(self.input, COLOR_WHITE):newline()
-end
-
 local MODE_BROWSE=0
 local MODE_EDIT=1
 GmEditorUi = defclass(GmEditorUi, gui.FramedScreen)
@@ -175,8 +163,6 @@ end
             self:editSelected()
         elseif keys.CUSTOM_ALT_E then
             --self:specialEditor()
-            local screen = mkinstance(TextInputDialog):init("Input new coordinates")
-            screen:show()
         elseif keys.CUSTOM_ALT_I then --insert
             self:insertNew()
         elseif keys.CUSTOM_ALT_D then --delete

@@ -1052,7 +1052,7 @@ Export the current loaded map as a file. This will be eventually usable
 with visualizers.
 
 dwarfexport
-----------=
+-----------
 Export dwarves to RuneSmith-compatible XML.
 
 
@@ -1632,7 +1632,7 @@ With no argument, this command shows an help message and list existing sources.
 
 
 digfort
-=========
+=======
 A script to designate an area for digging according to a plan in csv format.
 
 This script, inspired from quickfort, can designate an area for digging.
@@ -1667,6 +1667,12 @@ This plugin also shortens the 'sleeping' and 'on break' periods of targets.
 drainaquifer
 ============
 Remove all 'aquifer' tag from the map blocks. Irreversible.
+
+deathcause
+==========
+Focus a body part ingame, and this script will display the cause of death of
+the creature.
+
 
 =======================
 In-game interface tools

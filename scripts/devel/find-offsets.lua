@@ -803,6 +803,19 @@ end
 -- cur_year_tick
 --
 
+function stop_autosave()
+    if is_known 'd_init' then
+        local f = df.global.d_init.flags4
+        if f.AUTOSAVE_SEASONAL or f.AUTOSAVE_YEARLY then
+            f.AUTOSAVE_SEASONAL = false
+            f.AUTOSAVE_YEARLY = false
+            print('Disabled seasonal and yearly autosave.')
+        end
+    else
+        dfhack.printerr('Could not disable autosave!')
+    end
+end
+
 local function find_cur_year_tick()
     local zone
     if os_type == 'windows' then
@@ -815,6 +828,8 @@ local function find_cur_year_tick()
         return
     end
 
+    stop_autosave()
+
     local addr = zone:find_counter([[
 Searching for cur_year_tick. Please exit to main dwarfmode
 menu, then do as instructed below:]],
@@ -822,6 +837,79 @@ menu, then do as instructed below:]],
         "Please press '.' to step the game one frame."
     )
     ms.found_offset('cur_year_tick', addr)
+end
+
+--
+-- cur_season_tick
+--
+
+function step_n_frames(cnt)
+    local world = df.global.world
+    local ctick = world.frame_counter
+    local more = ''
+    while world.frame_counter-ctick < cnt do
+        print("  Please step the game "..(cnt-world.frame_counter+ctick)..more.." frames.")
+        more = ' more'
+        if not utils.prompt_yes_no('  Done?', true) then
+            return nil
+        end
+    end
+    return world.frame_counter-ctick
+end
+
+local function find_cur_season_tick()
+    if not (is_known 'cur_year_tick') then
+        dfhack.printerr('Cannot search for cur_season_tick - prerequisites missing.')
+        return
+    end
+
+    stop_autosave()
+
+    local addr = searcher:find_interactive([[
+Searching for cur_season_tick. Please exit to main dwarfmode
+menu, then do as instructed below:]],
+        'int32_t',
+        function(ccursor)
+            if ccursor > 0 then
+                if not step_n_frames(10) then
+                    return false
+                end
+            end
+            return true, math.floor(((df.global.cur_year_tick+10)%100800)/10)
+        end
+    )
+    ms.found_offset('cur_season_tick', addr)
+end
+
+--
+-- cur_season
+--
+
+local function find_cur_season()
+    if not (is_known 'cur_year_tick' and is_known 'cur_season_tick') then
+        dfhack.printerr('Cannot search for cur_season - prerequisites missing.')
+        return
+    end
+
+    stop_autosave()
+
+    local addr = searcher:find_interactive([[
+Searching for cur_season. Please exit to main dwarfmode
+menu, then do as instructed below:]],
+        'int8_t',
+        function(ccursor)
+            if ccursor > 0 then
+                local cst = df.global.cur_season_tick
+                df.global.cur_season_tick = 10079
+                df.global.cur_year_tick = df.global.cur_year_tick + (10079-cst)*10
+                if not step_n_frames(10) then
+                    return false
+                end
+            end
+            return true, math.floor((df.global.cur_year_tick+10)/100800)%4
+        end
+    )
+    ms.found_offset('cur_season', addr)
 end
 
 --
@@ -839,6 +927,8 @@ end
 local function find_process_jobs()
     local zone = get_process_zone() or searcher
 
+    stop_autosave()
+
     local addr = zone:find_menu_cursor([[
 Searching for process_jobs. Please do as instructed below:]],
         'int8_t',
@@ -855,6 +945,8 @@ end
 
 local function find_process_dig()
     local zone = get_process_zone() or searcher
+
+    stop_autosave()
 
     local addr = zone:find_menu_cursor([[
 Searching for process_dig. Please do as instructed below:]],
@@ -878,6 +970,8 @@ local function find_pause_state()
         zone = zoomed_searcher('ui_workshop_job_cursor', 80)
     end
     zone = zone or searcher
+
+    stop_autosave()
 
     local addr = zone:find_menu_cursor([[
 Searching for pause_state. Please do as instructed below:]],
@@ -930,6 +1024,8 @@ print('\nUnpausing globals:\n')
 
 exec_finder(find_cur_year, 'cur_year')
 exec_finder(find_cur_year_tick, 'cur_year_tick')
+exec_finder(find_cur_season_tick, 'cur_season_tick')
+exec_finder(find_cur_season, 'cur_season')
 exec_finder(find_process_jobs, 'process_jobs')
 exec_finder(find_process_dig, 'process_dig')
 exec_finder(find_pause_state, 'pause_state')

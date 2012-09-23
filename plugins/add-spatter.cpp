@@ -397,7 +397,7 @@ static void enable_hooks(bool enable)
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
-    case SC_MAP_LOADED:
+    case SC_WORLD_LOADED:
         if (find_reactions(out))
         {
             out.print("Detected spatter add reactions - enabling plugin.\n");
@@ -406,7 +406,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         else
             enable_hooks(false);
         break;
-    case SC_MAP_UNLOADED:
+    case SC_WORLD_UNLOADED:
         enable_hooks(false);
         reactions.clear();
         products.clear();
@@ -420,8 +420,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (Core::getInstance().isMapLoaded())
-        plugin_onstatechange(out, SC_MAP_LOADED);
+    if (Core::getInstance().isWorldLoaded())
+        plugin_onstatechange(out, SC_WORLD_LOADED);
 
     return CR_OK;
 }

@@ -67,6 +67,14 @@ module DFHack
             @mapblock = b
         end
 
+        def offset(dx, dy=nil, dz=0)
+            if dx.respond_to?(:x)
+                dz = dx.z if dx.respond_to?(:z)
+                dx, dy = dx.x, dx.y
+            end
+            df.map_tile_at(@x+dx, @y+dy, @z+dz)
+        end
+
         def designation
             @mapblock.designation[@dx][@dy]
         end
@@ -191,16 +199,20 @@ module DFHack
         def dig(mode=:Default)
             if mode == :Smooth
                 if tilemat != :SOIL and caption !~ /smooth|pillar|fortification/i and   # XXX caption..
-                    designation.smooth == 0 and not df.world.job_list.find { |j|
+                    designation.smooth == 0 and (designation.hidden or not df.world.job_list.find { |j|
                         # the game removes 'smooth' designation as soon as it assigns a job, if we
                         # re-set it the game may queue another :DetailWall that will carve a fortification
                         (j.job_type == :DetailWall or j.job_type == :DetailFloor) and df.same_pos?(j, self)
-                    }
+                    })
                     designation.dig = :No
                     designation.smooth = 1
                     mapblock.flags.designated = true
                 end
             else
+                return if mode != :No and designation.dig == :No and not designation.hidden and df.world.job_list.find { |j|
+                    # someone already enroute to dig here, avoid 'Inappropriate dig square' spam
+                    JobType::Type[j.job_type] == :Digging and df.same_pos?(j, self)
+                }
                 designation.dig = mode
                 mapblock.flags.designated = true if mode != :No
             end

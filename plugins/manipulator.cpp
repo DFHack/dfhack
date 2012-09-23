@@ -247,12 +247,14 @@ struct UnitInfo
     string transname;
     string profession;
     int8_t color;
+    int active_index;
 };
 
 enum altsort_mode {
     ALTSORT_NAME,
     ALTSORT_PROFESSION,
     ALTSORT_HAPPINESS,
+    ALTSORT_ARRIVAL,
     ALTSORT_MAX
 };
 
@@ -282,6 +284,14 @@ bool sortByHappiness (const UnitInfo *d1, const UnitInfo *d2)
         return (d1->unit->status.happiness > d2->unit->status.happiness);
     else
         return (d1->unit->status.happiness < d2->unit->status.happiness);
+}
+
+bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (descending)
+        return (d1->active_index > d2->active_index);
+    else
+        return (d1->active_index < d2->active_index);
 }
 
 bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
@@ -366,12 +376,18 @@ protected:
 
 viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos)
 {
+    std::map<df::unit*,int> active_idx;
+    auto &active = world->units.active;
+    for (size_t i = 0; i < active.size(); i++)
+        active_idx[active[i]] = i;
+
     for (size_t i = 0; i < src.size(); i++)
     {
         UnitInfo *cur = new UnitInfo;
         df::unit *unit = src[i];
         cur->unit = unit;
         cur->allowEdit = true;
+        cur->active_index = active_idx[unit];
 
         if (unit->race != ui->race_id)
             cur->allowEdit = false;
@@ -525,6 +541,15 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         sel_row++;
     if (events->count(interface_key::CURSOR_DOWN_FAST) || events->count(interface_key::CURSOR_DOWNLEFT_FAST) || events->count(interface_key::CURSOR_DOWNRIGHT_FAST))
         sel_row += 10;
+
+    if ((sel_row > 0) && events->count(interface_key::CURSOR_UP_Z_AUX))
+    {
+        sel_row = 0;
+    }
+    if ((sel_row < units.size()-1) && events->count(interface_key::CURSOR_DOWN_Z_AUX))
+    {
+        sel_row = units.size()-1;
+    }
 
     if (sel_row < 0)
         sel_row = 0;
@@ -759,6 +784,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         case ALTSORT_HAPPINESS:
             std::sort(units.begin(), units.end(), sortByHappiness);
             break;
+        case ALTSORT_ARRIVAL:
+            std::sort(units.begin(), units.end(), sortByArrival);
+            break;
         }
     }
     if (events->count(interface_key::CHANGETAB))
@@ -772,6 +800,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             altsort = ALTSORT_HAPPINESS;
             break;
         case ALTSORT_HAPPINESS:
+            altsort = ALTSORT_ARRIVAL;
+            break;
+        case ALTSORT_ARRIVAL:
             altsort = ALTSORT_NAME;
             break;
         }
@@ -1014,6 +1045,9 @@ void viewscreen_unitlaborsst::render()
         break;
     case ALTSORT_HAPPINESS:
         OutputString(15, x, gps->dimy - 2, "Happiness");
+        break;
+    case ALTSORT_ARRIVAL:
+        OutputString(15, x, gps->dimy - 2, "Arrival");
         break;
     default:
         OutputString(15, x, gps->dimy - 2, "Unknown");

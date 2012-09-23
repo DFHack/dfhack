@@ -26,7 +26,7 @@ module DFHack
             end
         end
 
-        def map_tile_at(x, y=nil, z=nil)
+        def map_tile_at(x=df.cursor, y=nil, z=nil)
             x = x.pos if x.respond_to?(:pos)
             x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
             b = map_block_at(x, y, z)

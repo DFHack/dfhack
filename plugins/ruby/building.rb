@@ -299,9 +299,13 @@ module DFHack
 
         # construct an abstract building (stockpile, farmplot, ...)
         def building_construct_abstract(bld)
-            if bld.getType == :Stockpile
+            case bld.getType
+            when :Stockpile
                 max = df.world.buildings.other[:STOCKPILE].map { |s| s.stockpile_number }.max
                 bld.stockpile_number = max.to_i + 1
+            when :Civzone
+                max = df.world.buildings.other[:ANY_ZONE].map { |z| z.zone_num }.max
+                bld.zone_num = max.to_i + 1
             end
             building_link bld
             if !bld.flags.exists

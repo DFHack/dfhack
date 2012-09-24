@@ -126,8 +126,34 @@ struct Core::Private
 void Core::cheap_tokenise(string const& input, vector<string> &output)
 {
     string *cur = NULL;
+    size_t i = 0;
 
-    for (size_t i = 0; i < input.size(); i++) {
+    // Check the first non-space character
+    while (i < input.size() && isspace(input[i])) i++;
+
+    // Special verbatim argument mode?
+    if (i < input.size() && input[i] == ':')
+    {
+        // Read the command
+        std::string cmd;
+        i++;
+        while (i < input.size() && !isspace(input[i]))
+            cmd.push_back(input[i++]);
+        if (!cmd.empty())
+            output.push_back(cmd);
+
+        // Find the argument
+        while (i < input.size() && isspace(input[i])) i++;
+
+        if (i < input.size())
+            output.push_back(input.substr(i));
+
+        return;
+    }
+
+    // Otherwise, parse in the regular quoted mode
+    for (; i < input.size(); i++)
+    {
         unsigned char c = input[i];
         if (isspace(c)) {
             cur = NULL;

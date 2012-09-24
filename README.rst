@@ -148,6 +148,19 @@ for context ``foo/bar/baz``, possible matches are any of ``@foo/bar/baz``, ``@fo
 Commands
 ========
 
+DFHack command syntax consists of a command name, followed by arguments separated
+by whitespace. To include whitespace in an argument, quote it in double quotes.
+To include a double quote character, use ``\"`` inside double quotes.
+
+If the first non-whitespace character of a line is ``#``, the line is treated
+as a comment, i.e. a silent no-op command.
+
+If the first non-whitespace character is ``:``, the command is parsed in a special
+alternative mode: first, non-whitespace characters immediately following the ``:``
+are used as the command name; the remaining part of the line, starting with the first
+non-whitespace character *after* the command name, is used verbatim as the first argument.
+This is intended for commands like ``rb_eval`` that evaluate script language statements.
+
 Almost all the commands support using the 'help <command-name>' built-in command
 to retrieve further help without having to look at this document. Alternatively,
 some accept a 'help'/'?' option on their command line.
@@ -1636,8 +1649,8 @@ digfort
 A script to designate an area for digging according to a plan in csv format.
 
 This script, inspired from quickfort, can designate an area for digging.
-Your plan should be stored in a .csv file like this:
-:: 
+Your plan should be stored in a .csv file like this::
+
     # this is a comment 
     d;d;u;d;d;skip this tile;d
     d;d;d;i
@@ -1656,8 +1669,8 @@ superdwarf
 ==========
 Similar to fastdwarf, per-creature.
 
-To make any creature superfast, target it ingame using 'v' and:
-::  
+To make any creature superfast, target it ingame using 'v' and::
+
     superdwarf add
 
 Other options available: ``del``, ``clear``, ``list``.
@@ -1748,16 +1761,6 @@ focus on the current one. Shift-Enter has an effect equivalent to pressing Enter
 re-entering the mechanisms ui.
 
 
-Power Meter
-===========
-
-Front-end to the power-meter plugin implemented by the gui/power-meter script. Bind to a
-key and activate after selecting Pressure Plate in the build menu.
-
-The script follows the general look and feel of the regular pressure plate build
-configuration page, but configures parameters relevant to the modded power meter building.
-
-
 Rename
 ======
 
@@ -1786,11 +1789,25 @@ The script lists other rooms owned by the same owner, or by the unit selected in
 list, and allows unassigning them.
 
 
+=============
+Behavior Mods
+=============
+
+These plugins, when activated via configuration UI or by detecting certain
+structures in RAWs, modify the game engine behavior concerning the target
+objects to add features not otherwise present.
+
+
 Siege Engine
 ============
 
-Front-end to the siege-engine plugin implemented by the gui/siege-engine script. Bind to a
-key and activate after selecting a siege engine in 'q' mode.
+The siege-engine plugin enables siege engines to be linked to stockpiles, and
+aimed at an arbitrary rectangular area across Z levels, instead of the original
+four directions. Also, catapults can be ordered to load arbitrary objects, not
+just stones.
+
+The configuration front-end to the plugin is implemented by the gui/siege-engine
+script. Bind it to a key and activate after selecting a siege engine in 'q' mode.
 
 The main mode displays the current target, selected ammo item type, linked stockpiles and
 the allowed operator skill range. The map tile color is changed to signify if it can be
@@ -1799,7 +1816,7 @@ yellow for partially blocked.
 
 Pressing 'r' changes into the target selection mode, which works by highlighting two points
 with Enter like all designations. When a target area is set, the engine projectiles are
-aimed at that area, or units within it, instead of the vanilla four directions.
+aimed at that area, or units within it.
 
 After setting the target in this way for one engine, you can 'paste' the same area into others
 just by pressing 'p' in the main page of this script. The area to paste is kept until you quit
@@ -1813,17 +1830,23 @@ menu.
 
 .. admonition:: DISCLAIMER
 
-    Siege engines are a very interesting feature, but currently nearly useless
+    Siege engines are a very interesting feature, but sadly almost useless in the current state
     because they haven't been updated since 2D and can only aim in four directions. This is an
     attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
     e.g. like making siegers bring their own, are something only Toady can do.
 
 
-=========
-RAW hacks
-=========
+Power Meter
+===========
 
-These plugins detect certain structures in RAWs, and enhance them in various ways.
+The power-meter plugin implements a modified pressure plate that detects power being
+supplied to gear boxes built in the four adjacent N/S/W/E tiles.
+
+The configuration front-end is implemented by the gui/power-meter script. Bind it to a
+key and activate after selecting Pressure Plate in the build menu.
+
+The script follows the general look and feel of the regular pressure plate build
+configuration page, but configures parameters relevant to the modded power meter building.
 
 
 Steam Engine
@@ -1855,7 +1878,7 @@ The magma version also needs magma.
 .. admonition:: ISSUE
 
     Since this building is a machine, and machine collapse
-    code cannot be modified, it would collapse over true open space.
+    code cannot be hooked, it would collapse over true open space.
     As a loophole, down stair provides support to machines, while
     being passable, so use them.
 
@@ -1866,7 +1889,7 @@ is extracted from the workshop raws.
 .. admonition:: ISSUE
 
     Like with collapse above, part of the code involved in
-    machine connection cannot be modified. As a result, the workshop
+    machine connection cannot be hooked. As a result, the workshop
     can only immediately connect to machine components built AFTER it.
     This also means that engines cannot be chained without intermediate
     short axles that can be built later than both of the engines.
@@ -1879,8 +1902,13 @@ on repeat). A furnace operator will come, possibly bringing a bar of fuel,
 and perform it. As a result, a "boiling water" item will appear
 in the 't' view of the workshop.
 
-**NOTE**: The completion of the job will actually consume one unit
-of the appropriate liquids from below the workshop.
+.. note::
+
+    The completion of the job will actually consume one unit
+    of the appropriate liquids from below the workshop. This means
+    that you cannot just raise 7 units of magma with a piston and
+    have infinite power. However, liquid consumption should be slow
+    enough that water can be supplied by a pond zone bucket chain.
 
 Every such item gives 100 power, up to a limit of 300 for coal,
 and 500 for a magma engine. The building can host twice that
@@ -1928,9 +1956,12 @@ Add Spatter
 ===========
 
 This plugin makes reactions with names starting with ``SPATTER_ADD_``
-produce contaminants on the items instead of improvements.
+produce contaminants on the items instead of improvements. The produced
+contaminants are immune to being washed away by water or destroyed by
+the ``clean items`` command.
 
-Intended to give some use to all those poisons that can be bought from caravans.
+The plugin is intended to give some use to all those poisons that can
+be bought from caravans. :)
 
 To be really useful this needs patches from bug 808, ``tweak fix-dimensions``
 and ``tweak advmode-contained``.

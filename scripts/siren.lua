@@ -19,6 +19,8 @@ for _,v in ipairs(args) do
     table.insert(burrows, b)
 end
 
+local in_siege = false
+
 function is_in_burrows(pos)
     if #burrows == 0 then
         return true
@@ -75,10 +77,21 @@ function stop_break(unit)
     end
 end
 
+-- Check siege for thought purpose
+for _,v in ipairs(df.global.ui.invasions.list) do
+    if v.flags.siege and v.flags.active then
+        in_siege = true
+        break
+    end
+end
+
 -- Stop rest
 for _,v in ipairs(df.global.world.units.active) do
     local x,y,z = dfhack.units.getPosition(v)
-    if x and not dfhack.units.isDead(v) and is_in_burrows(xyz2pos(x,y,z)) then
+    if x and dfhack.units.isCitizen(v) and is_in_burrows(xyz2pos(x,y,z)) then
+        if not in_siege and v.military.squad_index < 0 then
+            add_thought(v, df.unit_thought_type.LackProtection)
+        end
         wake_unit(v)
         stop_break(v)
     end

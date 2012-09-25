@@ -14,10 +14,8 @@
 #include "lua_Process.h"
 #include "lua_Hexsearch.h"
 #include "lua_Misc.h"
-#include "lua_VersionInfo.h"
-#include "functioncall.h"
-#include "lua_FunctionCall.h"
-#include "lua_Offsets.h"
+
+
 #include "DataDefs.h"
 #include "LuaTools.h"
 
@@ -43,15 +41,12 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 {
 	lua::state st=lua::glua::Get();
 
-	//maybe remake it to run automaticaly
+	//maybe remake it to run automatically
     Lua::Open(out, st);
 
 	lua::RegisterProcess(st);
 	lua::RegisterHexsearch(st);
 	lua::RegisterMisc(st);
-	lua::RegisterVersionInfo(st);
-	lua::RegisterFunctionCall(st);
-	lua::RegisterEngine(st);
 
 	#ifdef LINUX_BUILD
 		st.push(1);

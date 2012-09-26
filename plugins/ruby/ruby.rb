@@ -119,6 +119,14 @@ module DFHack
             @onstatechange_list.delete b
         end
 
+        # same as onstatechange_register, but auto-unregisters if the block returns true
+        def onstatechange_register_once
+            handle = onstatechange_register { |st|
+                onstatechange_unregister(handle) if yield(st)
+            }
+        end
+
+
         # this method is called by dfhack every 'onstatechange'
         def onstatechange(newstate)
             @onstatechange_list ||= []

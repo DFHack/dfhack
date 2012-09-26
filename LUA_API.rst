@@ -488,7 +488,7 @@ Input & Output
   lock. Using an explicit ``dfhack.with_suspend`` will prevent
   this, forcing the function to block on input with lock held.
 
-* ``dfhack.interpreter([prompt[,env[,history_filename]]])``
+* ``dfhack.interpreter([prompt[,history_filename[,env]]])``
 
   Starts an interactive lua interpreter, using the specified prompt
   string, global environment and command-line history file.

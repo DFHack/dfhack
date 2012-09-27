@@ -707,6 +707,9 @@ namespace DFHack {
 // Global object pointers
 #include "df/global_objects.h"
 
+#define DF_GLOBAL_VALUE(name,defval) (df::global::name ? *df::global::name : defval)
+#define DF_GLOBAL_FIELD(name,fname,defval) (df::global::name ? df::global::name->fname : defval)
+
 // A couple of headers that have to be included at once
 #include "df/coord2d.h"
 #include "df/coord.h"

@@ -1573,6 +1573,8 @@ struct projectile_hook : df::proj_itemst {
         if (next_pos.z == cur_pos.z && !isPassableTile(next_pos))
             start_z = 49000;
 
+        bool forbid_ammo = DF_GLOBAL_VALUE(standing_orders_forbid_used_ammo, false);
+
         MapExtras::MapCache mc;
         std::vector<df::item*> contents;
         Items::getContainedItems(item, &contents);
@@ -1580,6 +1582,9 @@ struct projectile_hook : df::proj_itemst {
         for (size_t i = 0; i < contents.size(); i++)
         {
             auto child = contents[i];
+
+            if (forbid_ammo)
+                child->flags.bits.forbid = true;
 
             // Liquids are vaporized so that they cover nearby units
             if (child->isLiquid())

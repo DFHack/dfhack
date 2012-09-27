@@ -19,6 +19,7 @@ repairhim = lambda { |u|
     # maybe dirty
     if u.job.current_job.job_type == :Rest then
       u.job.current_job.job_type = :CleanSelf
+      u.counters.unconscious = 0
       puts "supermedic: released from 'Rest' job."
     end
 }

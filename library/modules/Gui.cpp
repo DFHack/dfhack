@@ -766,7 +766,7 @@ static df::unit *getAnyUnit(df::viewscreen *top)
         {
         case df::viewscreen_petst::List:
             if (!vector_get(screen->is_vermin, screen->cursor))
-                return (df::unit*)vector_get(screen->animal, screen->cursor);
+                return vector_get(screen->animal, screen->cursor).unit;
             return NULL;
 
         case df::viewscreen_petst::SelectTrainer:

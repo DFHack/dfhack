@@ -4,9 +4,14 @@ module DFHack
         # arg similar to unit.rb/unit_find; no arg = 'k' menu
         def item_find(what=:selected, y=nil, z=nil)
             if what == :selected
-                if curview._rtti_classname == :viewscreen_itemst
+                case curview._rtti_classname
+                when :viewscreen_itemst
                     ref = curview.entry_ref[curview.cursor_pos]
                     ref.item_tg if ref.kind_of?(GeneralRefItem)
+                when :viewscreen_storesst   # z/stocks
+                    if curview.in_group_mode == 0 and curview.in_right_list == 1
+                        curview.items[curview.item_cursor]
+                    end
                 else
                     case ui.main.mode
                     when :LookAround

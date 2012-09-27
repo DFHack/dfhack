@@ -198,7 +198,7 @@ module DFHack
 
         def dig(mode=:Default)
             if mode == :Smooth
-                if tilemat != :SOIL and caption !~ /smooth|pillar|fortification/i and   # XXX caption..
+                if (tilemat == :STONE or tilemat == :MINERAL) and caption !~ /smooth|pillar|fortification/i and   # XXX caption..
                     designation.smooth == 0 and (designation.hidden or not df.world.job_list.find { |j|
                         # the game removes 'smooth' designation as soon as it assigns a job, if we
                         # re-set it the game may queue another :DetailWall that will carve a fortification

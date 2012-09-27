@@ -642,7 +642,14 @@ as a comment, i.e. a silent no-op command.</p>
 alternative mode: first, non-whitespace characters immediately following the <tt class="docutils literal">:</tt>
 are used as the command name; the remaining part of the line, starting with the first
 non-whitespace character <em>after</em> the command name, is used verbatim as the first argument.
-This is intended for commands like <tt class="docutils literal">rb_eval</tt> that evaluate script language statements.</p>
+The following two command lines are exactly equivalent:</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal">:foo a b &quot;c d&quot; e f</tt></li>
+<li><tt class="docutils literal">foo &quot;a b \&quot;c d\&quot; e f&quot;</tt></li>
+</ul>
+</blockquote>
+<p>This is intended for commands like <tt class="docutils literal">rb_eval</tt> that evaluate script language statements.</p>
 <p>Almost all the commands support using the 'help &lt;command-name&gt;' built-in command
 to retrieve further help without having to look at this document. Alternatively,
 some accept a 'help'/'?' option on their command line.</p>
@@ -1190,17 +1197,23 @@ the visible part of the map is scanned.</p>
 </blockquote>
 <div class="section" id="pre-embark-estimate">
 <h4><a class="toc-backref" href="#id50">Pre-embark estimate</a></h4>
-<p>If called during the embark selection screen, displays an estimate of layer
-stone availability. If the 'all' option is specified, also estimates veins.
-The estimate is computed either for 1 embark tile of the blinking biome, or
-for all tiles of the embark rectangle.</p>
+<p>If prospect is called during the embark selection screen, it displays an estimate of
+layer stone availability.</p>
+<div class="note">
+<p class="first admonition-title">Note</p>
+<p class="last">The results of pre-embark prospect are an <em>estimate</em>, and can at best be expected
+to be somewhere within +/- 30% of the true amount; sometimes it does a lot worse.
+Especially, it is not clear how to precisely compute how many soil layers there
+will be in a given embark tile, so it can report a whole extra layer, or omit one
+that is actually present.</p>
+</div>
 <p>Options:</p>
 <blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">all:</th><td class="field-body">processes all tiles, even hidden ones.</td>
+<tr class="field"><th class="field-name">all:</th><td class="field-body">Also estimate vein mineral amounts.</td>
 </tr>
 </tbody>
 </table>
@@ -1670,8 +1683,8 @@ accidentally placed a construction on top of a valuable mineral floor.</p>
 </div>
 <div class="section" id="tweak">
 <h3><a class="toc-backref" href="#id80">tweak</a></h3>
-<p>Contains various tweaks for minor bugs (currently just one).</p>
-<p>Options:</p>
+<p>Contains various tweaks for minor bugs.</p>
+<p>One-shot subcommands:</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1707,6 +1720,13 @@ and are not flagged as tame), but you are allowed to mark them
 for slaughter. Grabbing wagons results in some funny spam, then
 they are scuttled.</td>
 </tr>
+</tbody>
+</table>
+<p>Subcommands that persist until disabled or DF quit:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
 <tr class="field"><th class="field-name">stable-cursor:</th><td class="field-body">Saves the exact cursor position between t/q/k/d/etc menus of dwarfmode.</td>
 </tr>
 <tr class="field"><th class="field-name">patrol-duty:</th><td class="field-body">Makes Train orders not count as patrol duty to stop unhappy thoughts.
@@ -2342,8 +2362,9 @@ combat in slow motion or something :)</p>
 <h2><a class="toc-backref" href="#id114">siren</a></h2>
 <p>Wakes up sleeping units, cancels breaks and stops parties either everywhere,
 or in the burrows given as arguments. In return, adds bad thoughts about
-noise and tiredness. Also, the units with interrupted breaks will go on
-break again a lot sooner.</p>
+noise, tiredness and lack of protection. Also, the units with interrupted
+breaks will go on break again a lot sooner. The script is intended for
+emergencies, e.g. when a siege appears, and all your military is partying.</p>
 </div>
 <div class="section" id="growcrops">
 <h2><a class="toc-backref" href="#id115">growcrops</a></h2>
@@ -2466,12 +2487,13 @@ denote skills not controlled by labors.</p>
 <p>Use the arrow keys or number pad to move the cursor around, holding Shift to
 move 10 tiles at a time.</p>
 <p>Press the Z-Up (&lt;) and Z-Down (&gt;) keys to move quickly between labor/skill
-categories.</p>
+categories. The numpad Z-Up and Z-Down keys seek to the first or last unit
+in the list.</p>
 <p>Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
 to toggle all labors within the selected category.</p>
 <p>Press the <tt class="docutils literal">+-</tt> keys to sort the unit list according to the currently selected
 skill/labor, and press the <tt class="docutils literal">*/</tt> keys to sort the unit list by Name, Profession,
-or Happiness (using Tab to select which sort method to use here).</p>
+Happiness, or Arrival order (using Tab to select which sort method to use here).</p>
 <p>With a unit selected, you can press the &quot;v&quot; key to view its properties (and
 possibly set a custom nickname or profession) or the &quot;c&quot; key to exit
 Manipulator and zoom to its position within your fortress.</p>
@@ -2517,7 +2539,7 @@ It is also possible to rename zones from the 'i' menu.</p>
 <li><p class="first"><tt class="docutils literal">gui/rename <span class="pre">unit-profession</span></tt> changes the selected unit's custom profession name.</p>
 </li>
 </ul>
-<p>The <tt class="docutils literal">building</tt> or <tt class="docutils literal">unit</tt> are automatically assumed when in relevant ui state.</p>
+<p>The <tt class="docutils literal">building</tt> or <tt class="docutils literal">unit</tt> options are automatically assumed when in relevant ui state.</p>
 </div>
 <div class="section" id="room-list">
 <h2><a class="toc-backref" href="#id128">Room List</a></h2>
@@ -2546,7 +2568,8 @@ hit by the selected engine: green for fully reachable, blue for out of range, re
 yellow for partially blocked.</p>
 <p>Pressing 'r' changes into the target selection mode, which works by highlighting two points
 with Enter like all designations. When a target area is set, the engine projectiles are
-aimed at that area, or units within it.</p>
+aimed at that area, or units within it (this doesn't actually change the original aiming
+code, instead the projectile trajectory parameters are rewritten as soon as it appears).</p>
 <p>After setting the target in this way for one engine, you can 'paste' the same area into others
 just by pressing 'p' in the main page of this script. The area to paste is kept until you quit
 DF, or select another area manually.</p>

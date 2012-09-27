@@ -781,7 +781,7 @@ running coroutine and let the C++ code release the core suspend
 lock. Using an explicit <tt class="docutils literal">dfhack.with_suspend</tt> will prevent
 this, forcing the function to block on input with lock held.</p>
 </li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.interpreter([prompt[,env[,history_filename]]])</span></tt></p>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.interpreter([prompt[,history_filename[,env]]])</span></tt></p>
 <p>Starts an interactive lua interpreter, using the specified prompt
 string, global environment and command-line history file.</p>
 <p>If the interactive console is not accessible, returns <em>nil, error</em>.</p>

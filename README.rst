@@ -159,6 +159,11 @@ If the first non-whitespace character is ``:``, the command is parsed in a speci
 alternative mode: first, non-whitespace characters immediately following the ``:``
 are used as the command name; the remaining part of the line, starting with the first
 non-whitespace character *after* the command name, is used verbatim as the first argument.
+The following two command lines are exactly equivalent:
+
+ * ``:foo a b "c d" e f``
+ * ``foo "a b \"c d\" e f"``
+
 This is intended for commands like ``rb_eval`` that evaluate script language statements.
 
 Almost all the commands support using the 'help <command-name>' built-in command
@@ -616,14 +621,20 @@ Options:
 Pre-embark estimate
 ...................
 
-If called during the embark selection screen, displays an estimate of layer
-stone availability. If the 'all' option is specified, also estimates veins.
-The estimate is computed either for 1 embark tile of the blinking biome, or
-for all tiles of the embark rectangle.
+If prospect is called during the embark selection screen, it displays an estimate of
+layer stone availability.
+
+.. note::
+
+    The results of pre-embark prospect are an *estimate*, and can at best be expected
+    to be somewhere within +/- 30% of the true amount; sometimes it does a lot worse.
+    Especially, it is not clear how to precisely compute how many soil layers there
+    will be in a given embark tile, so it can report a whole extra layer, or omit one
+    that is actually present.
 
 Options:
 
- :all:            processes all tiles, even hidden ones.
+ :all:    Also estimate vein mineral amounts.
 
 reveal
 ------
@@ -951,9 +962,9 @@ accidentally placed a construction on top of a valuable mineral floor.
 
 tweak
 -----
-Contains various tweaks for minor bugs (currently just one).
+Contains various tweaks for minor bugs.
 
-Options:
+One-shot subcommands:
 
 :clear-missing:  Remove the missing status from the selected unit.
                  This allows engraving slabs for ghostly, but not yet
@@ -982,6 +993,9 @@ Options:
                  and are not flagged as tame), but you are allowed to mark them
                  for slaughter. Grabbing wagons results in some funny spam, then
                  they are scuttled.
+
+Subcommands that persist until disabled or DF quit:
+
 :stable-cursor:  Saves the exact cursor position between t/q/k/d/etc menus of dwarfmode.
 :patrol-duty:    Makes Train orders not count as patrol duty to stop unhappy thoughts.
                  Does NOT fix the problem when soldiers go off-duty (i.e. civilian).
@@ -1557,8 +1571,9 @@ siren
 
 Wakes up sleeping units, cancels breaks and stops parties either everywhere,
 or in the burrows given as arguments. In return, adds bad thoughts about
-noise and tiredness. Also, the units with interrupted breaks will go on
-break again a lot sooner.
+noise, tiredness and lack of protection. Also, the units with interrupted
+breaks will go on break again a lot sooner. The script is intended for
+emergencies, e.g. when a siege appears, and all your military is partying.
 
 growcrops
 =========
@@ -1712,14 +1727,15 @@ Use the arrow keys or number pad to move the cursor around, holding Shift to
 move 10 tiles at a time.
 
 Press the Z-Up (<) and Z-Down (>) keys to move quickly between labor/skill
-categories.
+categories. The numpad Z-Up and Z-Down keys seek to the first or last unit
+in the list.
 
 Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
 to toggle all labors within the selected category.
 
 Press the ``+-`` keys to sort the unit list according to the currently selected
 skill/labor, and press the ``*/`` keys to sort the unit list by Name, Profession,
-or Happiness (using Tab to select which sort method to use here).
+Happiness, or Arrival order (using Tab to select which sort method to use here).
 
 With a unit selected, you can press the "v" key to view its properties (and
 possibly set a custom nickname or profession) or the "c" key to exit
@@ -1776,7 +1792,7 @@ via a simple dialog in the game ui.
 
 * ``gui/rename unit-profession`` changes the selected unit's custom profession name.
 
-The ``building`` or ``unit`` are automatically assumed when in relevant ui state.
+The ``building`` or ``unit`` options are automatically assumed when in relevant ui state.
 
 
 Room List
@@ -1816,7 +1832,8 @@ yellow for partially blocked.
 
 Pressing 'r' changes into the target selection mode, which works by highlighting two points
 with Enter like all designations. When a target area is set, the engine projectiles are
-aimed at that area, or units within it.
+aimed at that area, or units within it (this doesn't actually change the original aiming
+code, instead the projectile trajectory parameters are rewritten as soon as it appears).
 
 After setting the target in this way for one engine, you can 'paste' the same area into others
 just by pressing 'p' in the main page of this script. The area to paste is kept until you quit

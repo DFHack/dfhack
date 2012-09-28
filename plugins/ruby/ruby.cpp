@@ -205,8 +205,6 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
 
 static command_result df_rubyeval(color_ostream &out, std::vector <std::string> & parameters)
 {
-    command_result ret;
-
     if (parameters.size() == 1 && (parameters[0] == "help" || parameters[0] == "?"))
     {
         out.print("This command executes an arbitrary ruby statement.\n");

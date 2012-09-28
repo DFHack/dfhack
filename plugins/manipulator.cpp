@@ -534,6 +534,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (do_refresh_names)
         refreshNames();
 
+    int old_sel_row = sel_row;
+
     if (events->count(interface_key::CURSOR_UP) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_UPRIGHT))
         sel_row--;
     if (events->count(interface_key::CURSOR_UP_FAST) || events->count(interface_key::CURSOR_UPLEFT_FAST) || events->count(interface_key::CURSOR_UPRIGHT_FAST))
@@ -553,9 +555,20 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
 
     if (sel_row < 0)
-        sel_row = 0;
+    {
+        if (old_sel_row == 0 && events->count(interface_key::CURSOR_UP))
+            sel_row = units.size() - 1;
+        else
+            sel_row = 0;
+    }
+
     if (sel_row > units.size() - 1)
-        sel_row = units.size() - 1;
+    {
+        if (old_sel_row == units.size()-1 && events->count(interface_key::CURSOR_DOWN))
+            sel_row = 0;
+        else
+            sel_row = units.size() - 1;
+    }
 
     if (sel_row < first_row)
         first_row = sel_row;

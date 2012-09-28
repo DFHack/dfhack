@@ -648,11 +648,13 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
     if ((sel_column != NUM_COLUMNS - 1) && events->count(interface_key::CURSOR_DOWN_Z))
     {
-        // go to end of current column group; if already at the end, go to the end of the next one
-        sel_column++;
+        // go to beginning of next group
         int cur = columns[sel_column].group;
-        while ((sel_column < NUM_COLUMNS - 1) && columns[sel_column + 1].group == cur)
-            sel_column++;
+        int next = sel_column+1;
+        while ((next < NUM_COLUMNS) && (columns[next].group == cur))
+            next++;
+        if ((next < NUM_COLUMNS) && (columns[next].group != cur))
+            sel_column = next;
     }
 
     if (sel_column < 0)

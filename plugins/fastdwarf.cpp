@@ -2,6 +2,7 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
+#include "modules/MapCache.h"
 
 #include "DataDefs.h"
 #include "df/ui.h"
@@ -48,6 +49,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         }
     }
     if ( enable_teledwarf ) {
+        MapExtras::MapCache *MCache = new MapExtras::MapCache();
         for (size_t i = 0; i < world->units.all.size(); i++)
         {
             df::unit *unit = world->units.all[i];
@@ -59,11 +61,19 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             if (unit->relations.following != 0)
                 continue;
             
+            MapExtras::Block* block = MCache->BlockAtTile(unit->pos);
+            df::coord2d pos(unit->pos.x % 16, unit->pos.y % 16);
+            df::tile_occupancy occ = block->OccupancyAt(pos);
+            occ.bits.unit = 0;
+            block->setOccupancyAt(pos, occ);
+            
             //move immediately to destination
             unit->pos.x = unit->path.dest.x;
             unit->pos.y = unit->path.dest.y;
             unit->pos.z = unit->path.dest.z;
         }
+        MCache->WriteAll();
+        delete MCache;
     }
     return CR_OK;
 }

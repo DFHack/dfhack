@@ -65,6 +65,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             df::coord2d pos(unit->pos.x % 16, unit->pos.y % 16);
             df::tile_occupancy occ = block->OccupancyAt(pos);
             occ.bits.unit = 0;
+            occ.bits.unit_grounded = 0;
             block->setOccupancyAt(pos, occ);
             
             //move immediately to destination

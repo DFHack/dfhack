@@ -622,6 +622,7 @@ struct military_assign_hook : df::viewscreen_layer_militaryst {
             int x1 = plist->getX1(), y1 = plist->getY1();
             int x2 = plist->getX2(), y2 = plist->getY2();
             int i1 = plist->getFirstVisible(), i2 = plist->getLastVisible();
+            int si = plist->getListCursor();
 
             for (int y = y1, i = i1; i <= i2; i++, y++)
             {
@@ -633,7 +634,7 @@ struct military_assign_hook : df::viewscreen_layer_militaryst {
                 {
                     Pen cur_tile = Screen::readTile(x, y);
                     if (!cur_tile.valid()) continue;
-                    cur_tile.fg = (cur_tile.fg == COLOR_GREY ? COLOR_BROWN : COLOR_GREEN);
+                    cur_tile.fg = (i == si) ? COLOR_BROWN : COLOR_GREEN;
                     Screen::paintTile(cur_tile, x, y);
                 }
             }

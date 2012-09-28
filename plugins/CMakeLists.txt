@@ -126,6 +126,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(add-spatter add-spatter.cpp)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
+    DFHACK_PLUGIN(misery misery.cpp)
 endif()
 
 

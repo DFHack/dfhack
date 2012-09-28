@@ -43,6 +43,8 @@
 #include "df/reaction.h"
 #include "df/reaction_reagent_itemst.h"
 #include "df/reaction_reagent_flags.h"
+#include "df/viewscreen_layer_assigntradest.h"
+#include "df/viewscreen_tradegoodsst.h"
 
 #include <stdlib.h>
 
@@ -109,6 +111,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Fixes custom reactions with container inputs in advmode. The issue is\n"
         "    that the screen tries to force you to select the contents separately\n"
         "    from the container. This forcefully skips child reagents.\n"
+        "  tweak fast-trade [disable]\n"
+        "    Makes Shift-Enter in the Move Goods to Depot and Trade screens select\n"
+        "    the current item (fully, in case of a stack), and scroll down one line.\n"
     ));
     return CR_OK;
 }
@@ -494,6 +499,47 @@ struct advmode_contained_hook : df::viewscreen_layer_unit_actionst {
 
 IMPLEMENT_VMETHOD_INTERPOSE(advmode_contained_hook, feed);
 
+struct fast_trade_assign_hook : df::viewscreen_layer_assigntradest {
+    typedef df::viewscreen_layer_assigntradest interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        if (layer_objects[1]->active && input->count(interface_key::SELECT_ALL))
+        {
+            set<df::interface_key> tmp; tmp.insert(interface_key::SELECT);
+            INTERPOSE_NEXT(feed)(&tmp);
+            tmp.clear(); tmp.insert(interface_key::STANDARDSCROLL_DOWN);
+            INTERPOSE_NEXT(feed)(&tmp);
+        }
+        else
+            INTERPOSE_NEXT(feed)(input);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(fast_trade_assign_hook, feed);
+
+struct fast_trade_select_hook : df::viewscreen_tradegoodsst {
+    typedef df::viewscreen_tradegoodsst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        if (!(is_unloading || !has_traders || in_edit_count)
+            && input->count(interface_key::SELECT_ALL))
+        {
+            set<df::interface_key> tmp; tmp.insert(interface_key::SELECT);
+            INTERPOSE_NEXT(feed)(&tmp);
+            if (in_edit_count)
+                INTERPOSE_NEXT(feed)(&tmp);
+            tmp.clear(); tmp.insert(interface_key::STANDARDSCROLL_DOWN);
+            INTERPOSE_NEXT(feed)(&tmp);
+        }
+        else
+            INTERPOSE_NEXT(feed)(input);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(fast_trade_select_hook, feed);
+
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
     if (vector_get(parameters, 1) == "disable")
@@ -652,6 +698,11 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     else if (cmd == "advmode-contained")
     {
         enable_hook(out, INTERPOSE_HOOK(advmode_contained_hook, feed), parameters);
+    }
+    else if (cmd == "fast-trade")
+    {
+        enable_hook(out, INTERPOSE_HOOK(fast_trade_assign_hook, feed), parameters);
+        enable_hook(out, INTERPOSE_HOOK(fast_trade_select_hook, feed), parameters);
     }
     else 
         return CR_WRONG_USAGE;

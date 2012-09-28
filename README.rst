@@ -1013,7 +1013,8 @@ Subcommands that persist until disabled or DF quit:
                     in advmode. The issue is that the screen tries to force you to select
                     the contents separately from the container. This forcefully skips child
                     reagents.
-
+:fast-trade:     Makes Shift-Enter in the Move Goods to Depot and Trade screens select
+                 the current item (fully, in case of a stack), and scroll down one line.
 
 Mode switch and reclaim
 =======================

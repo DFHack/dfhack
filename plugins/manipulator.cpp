@@ -523,6 +523,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         {
             events->insert(interface_key::LEAVESCREEN);
             parent->feed(events);
+            events->clear();
         }
         return;
     }

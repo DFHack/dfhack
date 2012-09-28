@@ -45,6 +45,7 @@ keybinding add Shift-R "job-material RHYOLITE"
 keybinding add Shift-I "job-material CINNABAR"
 keybinding add Shift-B "job-material COBALTITE"
 keybinding add Shift-O "job-material OBSIDIAN"
+keybinding add Shift-T "job-material ORTHOCLASE"
 keybinding add Shift-G "job-material GLASS_GREEN"
 
 # browse linked mechanisms
@@ -90,3 +91,7 @@ tweak fix-dimensions
 # make reactions requiring containers usable in advmode - the issue is
 # that the screen asks for those reagents to be selected directly
 tweak advmode-contained
+
+# support Shift-Enter in Trade and Move Goods to Depot screens for faster
+# selection; it selects the current item or stack and scrolls down one line
+tweak fast-trade

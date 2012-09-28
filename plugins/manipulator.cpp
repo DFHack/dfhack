@@ -439,6 +439,7 @@ void viewscreen_unitlaborsst::refreshNames()
         cur->transname = Translation::TranslateName(&unit->name, true);
         cur->profession = Units::getProfessionName(unit);
     }
+    calcSize();
 }
 
 void viewscreen_unitlaborsst::calcSize()
@@ -448,39 +449,92 @@ void viewscreen_unitlaborsst::calcSize()
         num_rows = units.size();
 
     int num_columns = gps->dimx - DISP_COLUMN_MAX - 1;
-    for (int i = 0; i < DISP_COLUMN_MAX; i++)
-        col_widths[i] = 0;
-    while (num_columns > 0)
+
+    // min/max width of columns
+    int col_minwidth[DISP_COLUMN_MAX];
+    int col_maxwidth[DISP_COLUMN_MAX];
+    col_minwidth[DISP_COLUMN_HAPPINESS] = 4;
+    col_maxwidth[DISP_COLUMN_HAPPINESS] = 4;
+    col_minwidth[DISP_COLUMN_NAME] = 0;
+    col_maxwidth[DISP_COLUMN_NAME] = 0;
+    col_minwidth[DISP_COLUMN_PROFESSION] = 0;
+    col_maxwidth[DISP_COLUMN_PROFESSION] = 0;
+    col_minwidth[DISP_COLUMN_LABORS] = num_columns*3/5;     // 60%
+    col_maxwidth[DISP_COLUMN_LABORS] = NUM_COLUMNS;
+
+    // get max_name/max_prof from strings length
+    for (size_t i = 0; i < units.size(); i++)
     {
-        num_columns--;
-        // need at least 4 digits for happiness
-        if (col_widths[DISP_COLUMN_HAPPINESS] < 4)
-        {
-            col_widths[DISP_COLUMN_HAPPINESS]++;
-            continue;
-        }
-        // of remaining, 20% for Name, 20% for Profession, 60% for Labors
-        switch (num_columns % 5)
-        {
-        case 0: case 2: case 4:
-            col_widths[DISP_COLUMN_LABORS]++;
-            break;
-        case 1:
-            col_widths[DISP_COLUMN_NAME]++;
-            break;
-        case 3:
-            col_widths[DISP_COLUMN_PROFESSION]++;
-            break;
-        }
+        if (col_maxwidth[DISP_COLUMN_NAME] < units[i]->name.size())
+            col_maxwidth[DISP_COLUMN_NAME] = units[i]->name.size();
+        if (col_maxwidth[DISP_COLUMN_PROFESSION] < units[i]->profession.size())
+            col_maxwidth[DISP_COLUMN_PROFESSION] = units[i]->profession.size();
     }
 
-    while (col_widths[DISP_COLUMN_LABORS] > NUM_COLUMNS)
+    // check how much room we have
+    int width_min = 0, width_max = 0;
+    for (int i = 0; i < DISP_COLUMN_MAX; i++)
     {
-        col_widths[DISP_COLUMN_LABORS]--;
-        if (col_widths[DISP_COLUMN_LABORS] & 1)
-            col_widths[DISP_COLUMN_NAME]++;
-        else
-            col_widths[DISP_COLUMN_PROFESSION]++;
+        width_min += col_minwidth[i];
+        width_max += col_maxwidth[i];
+    }
+
+    if (width_max <= num_columns)
+    {
+        // lots of space, distribute leftover (except last column)
+        int col_margin   = (num_columns - width_max) / (DISP_COLUMN_MAX-1);
+        int col_margin_r = (num_columns - width_max) % (DISP_COLUMN_MAX-1);
+        for (int i = DISP_COLUMN_MAX-1; i>=0; i--)
+        {
+            col_widths[i] = col_maxwidth[i];
+
+            if (i < DISP_COLUMN_MAX-1)
+            {
+                col_widths[i] += col_margin;
+
+                if (col_margin_r)
+                {
+                    col_margin_r--;
+                    col_widths[i]++;
+                }
+            }
+        }
+    }
+    else if (width_min <= num_columns)
+    {
+        // constrained, give between min and max to every column
+        int space = num_columns - width_min;
+        // max size columns not yet seen may consume
+        int next_consume_max = width_max - width_min;
+
+        for (int i = 0; i < DISP_COLUMN_MAX; i++)
+        {
+            // divide evenly remaining space
+            int col_margin = space / (DISP_COLUMN_MAX-i);
+
+            // take more if the columns after us cannot
+            next_consume_max -= (col_maxwidth[i]-col_minwidth[i]);
+            if (col_margin < space-next_consume_max)
+                col_margin = space - next_consume_max;
+
+            // no more than maxwidth
+            if (col_margin > col_maxwidth[i] - col_minwidth[i])
+                col_margin = col_maxwidth[i] - col_minwidth[i];
+
+            col_widths[i] = col_minwidth[i] + col_margin;
+
+            space -= col_margin;
+        }
+    }
+    else
+    {
+        // should not happen, min screen is 80x25
+        int space = num_columns;
+        for (int i = 0; i < DISP_COLUMN_MAX; i++)
+        {
+            col_widths[i] = space / (DISP_COLUMN_MAX-i);
+            space -= col_widths[i];
+        }
     }
 
     for (int i = 0; i < DISP_COLUMN_MAX; i++)

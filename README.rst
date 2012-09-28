@@ -1015,6 +1015,12 @@ Subcommands that persist until disabled or DF quit:
                     reagents.
 :fast-trade:     Makes Shift-Enter in the Move Goods to Depot and Trade screens select
                  the current item (fully, in case of a stack), and scroll down one line.
+:military-stable-assign: Preserve list order and cursor position when assigning to squad,
+                         i.e. stop the rightmost list of the Positions page of the military
+                         screen from constantly resetting to the top.
+:military-color-assigned: Color squad candidates already assigned to other squads in brown/green
+                          to make them stand out more in the list.
+
 
 Mode switch and reclaim
 =======================

@@ -28,6 +28,8 @@ DFHack v0.34.11-r2 (UNRELEASED)
     - tweak fix-dimensions: fixes subtracting small amounts from stacked liquids etc.
     - tweak advmode-contained: fixes UI bug in custom reactions with container inputs in advmode.
     - tweak fast-trade: Shift-Enter for selecting items quckly in Trade and Move to Depot screens.
+    - tweak military-stable-assign: Stop rightmost list of military->Positions from jumping to top.
+    - tweak military-color-assigned: In same list, color already assigned units in brown & green.
   New scripts:
     - fixnaked: removes thoughts about nakedness.
     - setfps: set FPS cap at runtime, in case you want slow motion or speed-up.

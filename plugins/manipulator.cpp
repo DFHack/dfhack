@@ -383,8 +383,12 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
 
     for (size_t i = 0; i < src.size(); i++)
     {
-        UnitInfo *cur = new UnitInfo;
         df::unit *unit = src[i];
+        if (!unit)
+            continue;
+
+        UnitInfo *cur = new UnitInfo;
+
         cur->unit = unit;
         cur->allowEdit = true;
         cur->active_index = active_idx[unit];

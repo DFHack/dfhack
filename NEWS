@@ -27,6 +27,7 @@ DFHack v0.34.11-r2 (UNRELEASED)
     - tweak fast-heat: speeds up item heating & cooling, thus making stable-temp act faster.
     - tweak fix-dimensions: fixes subtracting small amounts from stacked liquids etc.
     - tweak advmode-contained: fixes UI bug in custom reactions with container inputs in advmode.
+    - tweak fast-trade: Shift-Enter for selecting items quckly in Trade and Move to Depot screens.
   New scripts:
     - fixnaked: removes thoughts about nakedness.
     - setfps: set FPS cap at runtime, in case you want slow motion or speed-up.

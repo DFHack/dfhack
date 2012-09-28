@@ -662,6 +662,17 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (sel_column > NUM_COLUMNS - 1)
         sel_column = NUM_COLUMNS - 1;
 
+    if (events->count(interface_key::CURSOR_DOWN_Z) || events->count(interface_key::CURSOR_UP_Z))
+    {
+        // when moving by group, ensure the whole group is shown onscreen
+        int endgroup_column = sel_column;
+        while ((endgroup_column < NUM_COLUMNS-1) && columns[endgroup_column+1].group == columns[sel_column].group)
+            endgroup_column++;
+
+        if (first_column < endgroup_column - col_widths[DISP_COLUMN_LABORS] + 1)
+            first_column = endgroup_column - col_widths[DISP_COLUMN_LABORS] + 1;
+    }
+
     if (sel_column < first_column)
         first_column = sel_column;
     if (first_column < sel_column - col_widths[DISP_COLUMN_LABORS] + 1)

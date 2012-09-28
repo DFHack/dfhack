@@ -72,10 +72,10 @@ static command_result fastdwarf (color_ostream &out, vector <string> & parameter
 {
     if (parameters.size() == 1) {
         if ( parameters[0] == "0" ) {
-            enable_fastdwarf = true;
+            enable_fastdwarf = false;
             enable_teledwarf = false;
         } else if ( parameters[0] == "1" ) {
-            enable_fastdwarf = false;
+            enable_fastdwarf = true;
             enable_teledwarf = false;
         } else {
             out.print("Incorrect usage.\n");
@@ -100,6 +100,7 @@ static command_result fastdwarf (color_ostream &out, vector <string> & parameter
         }
     } else if (parameters.size() == 0) {
         //print status
+        out.print("Current state: fast = %d, teleport = %d.\n", enable_fastdwarf, enable_teledwarf);
     } else {
         out.print("Incorrect usage.\n");
         return CR_OK;

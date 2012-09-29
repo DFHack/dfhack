@@ -193,11 +193,14 @@ by 'reveal hell'. This is nice for digging under rivers.
 
 fastdwarf
 ---------
-Makes your minions move at ludicrous speeds.
+Controls speedydwarf and teledwarf. Speedydwarf makes dwarves move quickly and perform tasks quickly. Teledwarf makes dwarves move instantaneously, but do jobs at the same speed.
 
- * Activate with 'fastdwarf 1'
- * Deactivate with 'fastdwarf 0'
-
+ * 'fastdwarf 0 0' disables both
+ * 'fastdwarf 0 1' disables speedydwarf and enables teledwarf
+ * 'fastdwarf 1 0' enables speedydwarf and disables teledwarf
+ * 'fastdwarf 1 1' enables both
+ * 'fastdwarf 0' disables both
+ * 'fastdwarf 1' enables speedydwarf and disables teledwarf
 
 Game interface
 ==============
@@ -802,6 +805,22 @@ Examples:
 
 * 'digcircle filled 3' = Dig a filled circle with radius = 3.
 * 'digcircle' = Do it again.
+
+
+digtype
+-------
+For every tile on the map of the same vein type as the selected tile, this command designates it to have the same designation as the selected tile. If the selected tile has no designation, they will be dig designated.
+If an argument is given, the designation of the selected tile is ignored, and all appropriate tiles are set to the specified designation.
+
+Options:
+
+ :dig:
+ :channel:
+ :ramp:
+ :updown: up/down stairs
+ :up:     up stairs
+ :down:   down stairs
+ :clear:  clear designation
 
 
 filltraffic
@@ -1510,6 +1529,17 @@ Confirmed working DFusion plugins:
     * This is currently working only on Windows.
     * The game will be suspended while you're using dfusion. Don't panic when it doen't respond.
 
+misery
+------
+When enabled, every new negative dwarven thought will be multiplied by a factor (2 by default).
+
+Usage:
+
+:misery enable n:  enable misery with optional magnitude n. If specified, n must be positive.
+:misery n:         same as "misery enable n"
+:misery enable:    same as "misery enable 2"
+:misery disable:   stop adding new negative thoughts. This will not remove existing duplicated thoughts. Equivalent to "misery 1"
+:misery clear:     remove fake thoughts added in this session of DF. Saving makes them permanent! Does not change factor.
 
 =======
 Scripts

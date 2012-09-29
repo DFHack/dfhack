@@ -1800,19 +1800,19 @@ Pressing ESC normally returns to the unit screen, but Shift-ESC would exit
 directly to the main dwarf mode screen.
 
 
-Liquids
-=======
+gui/liquids
+===========
 
-Implemented by the gui/liquids script. To use, bind to a key and activate in the 'k' mode.
+To use, bind to a key and activate in the 'k' mode.
 
 While active, use the suggested keys to switch the usual liquids parameters, and Enter
 to select the target area and apply changes.
 
 
-Mechanisms
-==========
+gui/mechanisms
+==============
 
-Implemented by the gui/mechanims script. To use, bind to a key and activate in the 'q' mode.
+To use, bind to a key and activate in the 'q' mode.
 
 Lists mechanisms connected to the building, and their links. Navigating the list centers
 the view on the relevant linked buildings.
@@ -1822,10 +1822,10 @@ focus on the current one. Shift-Enter has an effect equivalent to pressing Enter
 re-entering the mechanisms ui.
 
 
-Rename
-======
+gui/rename
+==========
 
-Backed by the rename plugin, the gui/rename script allows entering the desired name
+Backed by the rename plugin, this script allows entering the desired name
 via a simple dialog in the game ui.
 
 * ``gui/rename [building]`` in 'q' mode changes the name of a building.
@@ -1840,14 +1840,28 @@ via a simple dialog in the game ui.
 The ``building`` or ``unit`` options are automatically assumed when in relevant ui state.
 
 
-Room List
-=========
+gui/room-list
+=============
 
-Implemented by the gui/room-list script. To use, bind to a key and activate in the 'q' mode,
-either immediately or after opening the assign owner page.
+To use, bind to a key and activate in the 'q' mode, either immediately or after opening
+the assign owner page.
 
 The script lists other rooms owned by the same owner, or by the unit selected in the assign
 list, and allows unassigning them.
+
+
+gui/choose-weapons
+==================
+
+Bind to a key, and activate in the Equip->View/Customize page of the military screen.
+
+Depending on the cursor location, it rewrites all 'individual choice weapon' entries
+in the selected squad or position to use a specific weapon type matching the assigned
+unit's top skill. If the cursor is in the rightmost list over a weapon entry, it rewrites
+only that entry, and does it even if it is not 'individual choice'.
+
+Rationale: individual choice seems to be unreliable when there is a weapon shortage,
+and may lead to inappropriate weapons being selected.
 
 
 =============

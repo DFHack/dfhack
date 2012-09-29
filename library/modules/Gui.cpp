@@ -347,6 +347,37 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_military)
             break;
         }
 
+    case df::viewscreen_layer_militaryst::Equip:
+        {
+            focus += "/" + enum_item_key(screen->equip.mode);
+
+            switch (screen->equip.mode)
+            {
+            case df::viewscreen_layer_militaryst::T_equip::Customize:
+                {
+                    if (screen->equip.edit_mode < 0)
+                        focus += "/View";
+                    else
+                        focus += "/" + enum_item_key(screen->equip.edit_mode);
+                    break;
+                }
+            case df::viewscreen_layer_militaryst::T_equip::Uniform:
+                break;
+            case df::viewscreen_layer_militaryst::T_equip::Priority:
+                {
+                    if (screen->equip.prio_in_move >= 0)
+                        focus += "/Move";
+                    else
+                        focus += "/View";
+                    break;
+                }
+            }
+
+            static const char *lists[] = { "/Squads", "/Positions", "/Choices" };
+            focus += lists[cur_list];
+            break;
+        }
+
     default:
         break;
     }

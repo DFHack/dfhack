@@ -56,6 +56,7 @@ DFHack v0.34.11-r2 (UNRELEASED)
     - gui/rename: renaming stockpiles, workshops and units via an in-game dialog.
     - gui/power-meter: front-end for the Power Meter plugin.
     - gui/siege-engine: front-end for the Siege Engine plugin.
+    - gui/choose-weapons: auto-choose matching weapons in the military equip screen.
   Autolabor plugin:
     - can set nonidle hauler percentage.
     - broker excluded from all labors when needed at depot.

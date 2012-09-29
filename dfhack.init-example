@@ -69,6 +69,9 @@ keybinding add Ctrl-Shift-M@dwarfmode/Build/Position/Trap gui/power-meter
 # siege engine control
 keybinding add Alt-A@dwarfmode/QueryBuilding/Some/SiegeEngine gui/siege-engine
 
+# military weapon auto-select
+keybinding add Ctrl-W@layer_military/Equip/Customize/View gui/choose-weapons
+
 ############################
 # UI and game logic tweaks #
 ############################

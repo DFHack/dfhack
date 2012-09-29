@@ -145,6 +145,7 @@ include_directories(depends/clsocket/src)
 add_subdirectory(depends)
 
 
+find_package(Docutils)
 
 # build the lib itself
 IF(BUILD_LIBRARY)

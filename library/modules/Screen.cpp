@@ -195,7 +195,7 @@ bool Screen::drawBorder(const std::string &title)
     if (!gps) return false;
 
     int dimx = gps->dimx, dimy = gps->dimy;
-    Pen border(0xDB, 8);
+    Pen border('\xDB', 8);
     Pen text(0, 0, 7);
     Pen signature(0, 0, 8);
 

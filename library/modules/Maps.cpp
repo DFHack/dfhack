@@ -585,7 +585,7 @@ bool MapExtras::Block::Allocate()
     if (!block)
         return false;
 
-    delete item_counts;
+    delete[] item_counts;
     delete tiles;
     delete basemats;
     init();

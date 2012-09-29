@@ -65,6 +65,7 @@ namespace  DFHack
                            RPCService *owner, const char *name, int flags)
             : RPCFunctionBase(in, out), name(name), flags(flags), owner(owner), id(-1)
         {}
+        virtual ~ServerFunctionBase() {}
 
         RPCService *owner;
         int16_t id;

@@ -385,7 +385,11 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     {
         df::unit *unit = src[i];
         if (!unit)
+        {
+            if (cursor_pos > i)
+                cursor_pos--;
             continue;
+        }
 
         UnitInfo *cur = new UnitInfo;
 
@@ -628,6 +632,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             sel_row = units.size() - 1;
     }
 
+    if (events->count(interface_key::STRING_A000))
+        sel_row = 0;
+
     if (sel_row < first_row)
         first_row = sel_row;
     if (first_row < sel_row - num_rows + 1)
@@ -660,6 +667,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         if ((next < NUM_COLUMNS) && (columns[next].group != cur))
             sel_column = next;
     }
+
+    if (events->count(interface_key::STRING_A000))
+        sel_column = 0;
 
     if (sel_column < 0)
         sel_column = 0;

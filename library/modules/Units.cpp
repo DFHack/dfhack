@@ -876,7 +876,7 @@ inline void adjust_skill_rating(int &rating, bool is_adventure, int value, int d
     }
 }
 
-int Units::getEffectiveSkill(df::unit *unit, df::job_skill skill_id)
+int Units::getNominalSkill(df::unit *unit, df::job_skill skill_id, bool use_rust)
 {
     CHECK_NULL_POINTER(unit);
 
@@ -892,9 +892,24 @@ int Units::getEffectiveSkill(df::unit *unit, df::job_skill skill_id)
     df::enum_field<df::job_skill,int16_t> key(skill_id);
     auto skill = binsearch_in_vector(unit->status.current_soul->skills, &df::unit_skill::id, key);
 
-    int rating = 0;
     if (skill)
-        rating = std::max(0, int(skill->rating) - skill->rusty);
+    {
+        int rating = int(skill->rating);
+        if (use_rust)
+            rating -= skill->rusty;
+        return std::max(0, rating);
+    }
+
+    return 0;
+}
+
+int Units::getEffectiveSkill(df::unit *unit, df::job_skill skill_id)
+{
+    /*
+     * This is 100% reverse-engineered from DF code.
+     */
+
+    int rating = getNominalSkill(unit, skill_id, true);
 
     // Apply special states
 

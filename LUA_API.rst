@@ -918,6 +918,11 @@ Units module
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
 
+* ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
+
+  Retrieves the nominal skill level for the given unit. If ``use_rust``
+  is *true*, subtracts the rust penalty.
+
 * ``dfhack.units.getEffectiveSkill(unit, skill)``
 
   Computes the effective rating for the given skill, taking into account exhaustion, pain etc.

@@ -20,6 +20,7 @@ DFHack v0.34.11-r2 (UNRELEASED)
     - prospect: pre-embark prospector accounts for caves & magma sea in its estimate.
     - rename: supports renaming stockpiles, workshops, traps, siege engines.
     - fastdwarf: now has an additional option to make dwarves teleport to their destination.
+  New commands:
     - misery: multiplies every negative thought gained (2x by default).
     - digtype: designates every tile of the same type of vein on the map for 'digging' (any dig designation).
   New tweaks:

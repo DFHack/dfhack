@@ -1746,6 +1746,14 @@ In-game interface tools
 These tools work by displaying dialogs or overlays in the game window, and
 are mostly implemented by lua scripts.
 
+.. note::
+
+    In order to avoid user confusion, as a matter of policy all these tools
+    display the word "DFHack" on the screen somewhere while active.
+
+    As an exception, the tweak plugin described above does not follow this
+    guideline because it arguably just fixes small usability bugs in the game UI.
+
 
 Dwarf Manipulator
 =================
@@ -1765,7 +1773,7 @@ move 10 tiles at a time.
 
 Press the Z-Up (<) and Z-Down (>) keys to move quickly between labor/skill
 categories. The numpad Z-Up and Z-Down keys seek to the first or last unit
-in the list.
+in the list. Backspace seeks to the top left corner.
 
 Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
 to toggle all labors within the selected category.
@@ -1850,6 +1858,12 @@ These plugins, when activated via configuration UI or by detecting certain
 structures in RAWs, modify the game engine behavior concerning the target
 objects to add features not otherwise present.
 
+.. admonition:: DISCLAIMER
+
+    The plugins in this section have mostly been created for fun as an interesting
+    technical challenge, and do not represent any long-term plans to produce more
+    similar modifications of the game.
+
 
 Siege Engine
 ============
@@ -1858,6 +1872,17 @@ The siege-engine plugin enables siege engines to be linked to stockpiles, and
 aimed at an arbitrary rectangular area across Z levels, instead of the original
 four directions. Also, catapults can be ordered to load arbitrary objects, not
 just stones.
+
+Rationale
+---------
+
+Siege engines are a very interesting feature, but sadly almost useless in the current state
+because they haven't been updated since 2D and can only aim in four directions. This is an
+attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
+e.g. like making siegers bring their own, are something only Toady can do.
+
+Configuration UI
+----------------
 
 The configuration front-end to the plugin is implemented by the gui/siege-engine
 script. Bind it to a key and activate after selecting a siege engine in 'q' mode.
@@ -1881,13 +1906,6 @@ Pressing 't' switches to a mode for selecting a stockpile to take ammo from.
 Exiting from the siege engine script via ESC reverts the view to the state prior to starting
 the script. Shift-ESC retains the current viewport, and also exits from the 'q' mode to main
 menu.
-
-.. admonition:: DISCLAIMER
-
-    Siege engines are a very interesting feature, but sadly almost useless in the current state
-    because they haven't been updated since 2D and can only aim in four directions. This is an
-    attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
-    e.g. like making siegers bring their own, are something only Toady can do.
 
 
 Power Meter

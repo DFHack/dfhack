@@ -147,31 +147,31 @@ add_subdirectory(depends)
 
 find_package(Docutils)
 
-set (RST_FILES
-"Readme"
-"Compile"
-"LUA Api"
-"Contributors"
-)
+#set (RST_FILES
+#"Readme"
+#"Compile"
+#"LUA Api"
+#"Contributors"
+#)
 
-set (RST_PROCESSED_FILES "")
-IF(RST2HTML_EXECUTABLE)
-    foreach(F ${RST_FILES})
-        add_custom_command(
-            OUTPUT "${dfhack_BINARY_DIR}/${F}.html"
-            COMMAND ${RST2HTML_EXECUTABLE} "${dfhack_SOURCE_DIR}/${F}.rst" > "${dfhack_BINARY_DIR}/${F}.html"
-            COMMENT "Translating ${F} to html"
-            DEPENDS "${dfhack_SOURCE_DIR}/${F}.rst")
-        list (APPEND RST_PROCESSED_FILES "${dfhack_BINARY_DIR}/${F}.html")
-    endforeach()
-    add_custom_target(HTML_DOCS ALL DEPENDS ${RST_PROCESSED_FILES})
-ENDIF()
+#set (RST_PROCESSED_FILES "")
+#IF(RST2HTML_EXECUTABLE)
+#    foreach(F ${RST_FILES})
+#        add_custom_command(
+#            OUTPUT "${dfhack_BINARY_DIR}/${F}.html"
+#            COMMAND ${RST2HTML_EXECUTABLE} "${dfhack_SOURCE_DIR}/${F}.rst" "${dfhack_BINARY_DIR}/${F}.html"
+#            COMMENT "Translating ${F} to html"
+#            DEPENDS "${dfhack_SOURCE_DIR}/${F}.rst")
+#        list (APPEND RST_PROCESSED_FILES "${dfhack_BINARY_DIR}/${F}.html")
+#    endforeach()
+#    add_custom_target(HTML_DOCS ALL DEPENDS ${RST_PROCESSED_FILES})
+#ENDIF()
 
 # build the lib itself
 IF(BUILD_LIBRARY)
     add_subdirectory (library)
     ## install the default documentation files
-    install(FILES LICENSE ${RST_PROCESSED_FILES} DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES LICENSE "LUA Api.html" Readme.html Compile.html Contributors.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
 #build the plugins

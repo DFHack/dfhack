@@ -61,9 +61,9 @@ repair_grasp = lambda { |u|
 
 wakeup = lambda { |u|
     return unless u.job.current_job and u.job.current_job.job_type == :Rest
-        u.job.current_job.job_type = :Sleep
-        u.counters.unconscious = 0
-        puts "released from 'Rest' job."
+    u.job.current_job.job_type = :Sleep
+    u.counters.unconscious = 0
+    puts "released from 'Rest' job."
 }
 
 repair_him = lambda { |u|
@@ -92,19 +92,25 @@ repair_him = lambda { |u|
 }
 
 if args.include?("man"||"help"||"?")
-    puts "Repair him/her. Use this when you see 'unmovable dwarves' hospital bugs."
+    puts "Repair him/her. Use this when you see the 'unmovable dwarves' hospital bugs."
     puts "Please select by v or k or following target option."
     puts "Options(target):"
-    puts "nick:x - execute repair function(s) to that nicknamed creature(s)."
-    puts "         i.e. nick:foo means select all creature(s) nicknamed 'foo'."
-    puts "         e.g. nick:patient , nick:'Urist McIgnored'"
+    puts "  nick:x - execute repair function(s) to that nicknamed creature(s)."
+    puts "           i.e. nick:foo means select all creature(s) nicknamed as 'foo'."
+    puts "           you can use spaces by using quotes."
     puts "Options(repair):"
-    puts "all    - execute all bottom repair functions to the patient."
-    puts "         no options is the same as execute all."
-    puts "wounds - clear all wounds"
-    puts "stand  - force walkable (also impair)"
-    puts "grasp  - force graspable (also impair)"
-    puts "wake   - release from 'Rest' job"
+    puts "  all    - execute all following repair functions to the patient."
+    puts "           no options is the same as execute all."
+    puts "  wounds - clear all wounds"
+    puts "  reqs   - clear all treatment requests"
+    puts "  stand  - force walkable (also impair)"
+    puts "  grasp  - force graspable (also impair)"
+    puts "  wake   - release from 'Rest' job"
+    puts "Usage:"
+    puts "  supermedic wounds reqs stand wake"
+    puts "    - repair the selecting patient without grasp"
+    puts "  supermedic nick:""Ignored Dwarf"""
+    puts "    - do all repairs to nicknamed as ""Ignored Dwarf"""
 
 else
     nick = ""

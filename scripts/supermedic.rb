@@ -1,29 +1,131 @@
-# repair him/her. use this when you see "unmovable dwarves" hospital bugs.
+# repair him/her. type 'supermedic help' to show the descriptions.
 
-# I feel need to implement code of clearing treatment requests.
+args = $script_args.uniq
 
-repairhim = lambda { |u|
-    # dirty
-    if u.body.wounds.count > 0 then
-      u.body.wounds = []
-      puts "supermedic: cleared all wounds."
-    end
-    if u.status2.able_stand < 2 then
-      u.status2.able_stand = 2
-      puts "supermedic: repaired lost stand ability."
-    end
-    if u.status2.able_stand_impair < 2 then
-      u.status2.able_stand_impair = 2
-      puts "supermedic: repaired impaired stand ability."
-    end
-    # maybe dirty
-    if u.job.current_job.job_type == :Rest then
-      u.job.current_job.job_type = :CleanSelf
-      u.counters.unconscious = 0
-      puts "supermedic: released from 'Rest' job."
+checkunit = lambda { |u|
+    u.body.blood_count != 0 and
+    not u.flags1.dead and
+    not df.map_designation_at(u).hidden
+}
+
+
+find_nicknamed = lambda { |s|
+    patients = []
+    df.world.units.all.each { |u|
+        if u.name.nickname == s
+            next unless checkunit[u]
+            patients << u
+        end
+    }
+    puts "found #{patients.count} '#{s}'."
+    return patients
+}
+
+clear_wounds = lambda { |u|
+    if u.body.wounds.count > 0
+    u.body.wounds = []
+    u.body.wound_next_id = 1 #?
+    puts "cleared all wounds."
     end
 }
 
-if him = df.unit_find then
-  repairhim[him]
+clear_requests = lambda { |u|
+    return unless u.health
+    u.health.body_part_8 = Array.new(u.health.body_part_8.count) {0}
+    puts "cleared treatment requests."
+}
+
+repair_stand = lambda { |u|
+    return unless u.status2
+    if u.status2.able_stand < 2
+        u.status2.able_stand = 2
+        puts "repaired lost stand ability."
+    end
+    if u.status2.able_stand_impair < 2
+        u.status2.able_stand_impair = 2
+        puts "repaired impaired stand ability."
+    end
+}
+
+repair_grasp = lambda { |u|
+    return unless u.status2
+    if u.status2.able_grasp < 2
+        u.status2.able_grasp = 2
+        puts "repaired lost grasp ability."
+    end
+    if u.status2.able_grasp_impair < 2
+        u.status2.able_grasp_impair = 2
+        puts "repaired impaired grasp ability."
+    end
+}
+
+wakeup = lambda { |u|
+    return unless u.job.current_job and u.job.current_job.job_type == :Rest
+        u.job.current_job.job_type = :Sleep
+        u.counters.unconscious = 0
+        puts "released from 'Rest' job."
+}
+
+repair_him = lambda { |u|
+    if args.include?("all") or args.empty?
+        clear_wounds[u]
+        clear_requests[u]
+        repair_stand[u]
+        repair_grasp[u]
+        wakeup[u]
+    else
+        args.each { |arg|
+            case arg
+            when "wounds"
+                clear_wounds[u]
+            when "reqs"
+                clear_requests[u]
+            when "stand"
+                repair_stand[u]
+            when "grasp"
+                repair_grasp[u]
+            when "wake"
+                wakeup[u]
+            end
+        }
+    end
+}
+
+if args.include?("man"||"help"||"?")
+    puts "Repair him/her. Use this when you see 'unmovable dwarves' hospital bugs."
+    puts "Please select by v or k or following target option."
+    puts "Options(target):"
+    puts "nick:x - execute repair function(s) to that nicknamed creature(s)."
+    puts "         i.e. nick:foo means select all creature(s) nicknamed 'foo'."
+    puts "         e.g. nick:patient , nick:'Urist McIgnored'"
+    puts "Options(repair):"
+    puts "all    - execute all bottom repair functions to the patient."
+    puts "         no options is the same as execute all."
+    puts "wounds - clear all wounds"
+    puts "stand  - force walkable (also impair)"
+    puts "grasp  - force graspable (also impair)"
+    puts "wake   - release from 'Rest' job"
+
+else
+    nick = ""
+    patients = []
+    args = args.delete_if { |x|
+        if /nick:(.+)/ =~ x
+            nick = Regexp.last_match[1]
+        end
+    }
+    if /(['"])[^\1](.+)\1/ =~ nick # remove quotation chars
+        nick = Regexp.last_match[2]
+    end
+    if nick.length > 0
+        patients = find_nicknamed[nick]
+    else
+        patients << df.unit_find
+    end
+    if not patients.empty? and patients[0]
+        patients.each { |u|
+            puts "+ #{u.name} +"
+            repair_him[u]
+        }
+    end
 end

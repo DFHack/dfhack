@@ -1,6 +1,17 @@
 #!/bin/bash
+
+cd `dirname $0`
+
+function process() {
+    if [ "$1" -nt "$2" ]; then
+        rst2html "$1" "$2"
+    else
+        echo "$2 - up to date."
+    fi
+}
+
 # this script is used for easy testing of the rst documentation files.
-rst2html  Readme.rst Readme.html
-rst2html  Compile.rst Compile.html
-rst2html  Lua\ API.rst Lua\ API.html
-rst2html  Contributors.rst > Contributors.html
+process Readme.rst Readme.html
+process Compile.rst Compile.html
+process Lua\ API.rst Lua\ API.html
+process Contributors.rst Contributors.html

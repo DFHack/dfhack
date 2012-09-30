@@ -63,7 +63,7 @@ set(DF_VERSION_MINOR "34")
 set(DF_VERSION_PATCH "11")
 set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
 
-SET(DFHACK_RELEASE "r1" CACHE STRING "Current release revision.")
+SET(DFHACK_RELEASE "r2" CACHE STRING "Current release revision.")
 
 set(DFHACK_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}-${DFHACK_RELEASE}")
 add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")
@@ -148,11 +148,12 @@ add_subdirectory(depends)
 find_package(Docutils)
 
 set (RST_FILES
-README
-COMPILE
-LUA_API
+"Readme"
+"Compile"
+"LUA Api"
+"Contributors"
 )
-
+ 
 set (RST_PROCESSED_FILES "")
 IF(RST2HTML_EXECUTABLE)
     foreach(F ${RST_FILES})

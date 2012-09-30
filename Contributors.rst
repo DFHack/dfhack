@@ -1,7 +1,8 @@
 Contributors
 ============
+If you belong here and are missing, please add yourself and send me (peterix) a pull request :-)
+
 The following is a list of people who have contributed to **DFHack**.
-If you belong here and are missing please add yourself and send me (peterix) a pull request :-)
 
 - Petr Mrázek <peterix@gmail.com>
 - Alexander Gavrilov <angavrilov@gmail.com>
@@ -60,3 +61,14 @@ If you belong here and are missing please add yourself and send me (peterix) a p
 - Caldfir <caldfir@hotmail.com>
 - Antalia <tamarakorr@gmail.com>
 - Angus Mezick <amezick@gmail.com>
+
+And those are the cool people who made **stonesense**.
+
+- Kris Parker <kaypy>
+- Japa <japa.mala.illo@gmail.com>
+- Jonas Ask <jonask84@gmail.com>
+- Petr Mrázek <peterix@gmail.com>
+- Caldfir <aitken.tim@gmail.com>
+- 8Z <git8z@ya.ru>
+- Alexander Gavrilov <angavrilov@gmail.com>
+- Timothy Collett <tcollett+github@topazgryphon.org>

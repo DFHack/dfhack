@@ -47,5 +47,17 @@ module DFHack
                 raise "what what?"
             end
         end
+
+        # check item flags to see if it is suitable for use as a job input material
+        def item_isfree(i)
+            !i.flags.trader and
+            !i.flags.in_job and
+            !i.flags.in_inventory and
+            !i.flags.removed and
+            !i.flags.in_building and
+            !i.flags.owned and
+            !i.flags.forbid
+        end
+        
     end
 end

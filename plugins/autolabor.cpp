@@ -36,6 +36,14 @@
 #include <df/items_other_id.h>
 #include <df/ui.h>
 #include <df/activity_info.h>
+#include <df/tile_dig_designation.h>
+#include <df/item_weaponst.h>
+#include <df/itemdef_weaponst.h>
+#include <df/general_ref_unit_workerst.h>
+#include <df/general_ref_building_holderst.h>
+#include <df/building_workshopst.h>
+#include <df/reaction.h>
+
 
 #include <MiscUtils.h>
 
@@ -504,17 +512,25 @@ static const int responsibility_penalties[] = {
 
 struct dwarf_info_t
 {
-    int highest_skill;
-    int total_skill;
-    int mastery_penalty;
-    int assigned_jobs;
+	df::unit* dwarf;
     dwarf_state state;
-    bool has_exclusive_labor;
-    int noble_penalty; // penalty for assignment due to noble status
-    bool medical; // this dwarf has medical responsibility
-    bool trader;  // this dwarf has trade responsibility
-    bool diplomacy; // this dwarf meets with diplomats
-    int single_labor; // this dwarf will be exclusively assigned to one labor (-1/NONE for none)
+
+	bool clear_all;
+
+	bool has_axe;
+	bool has_pick;
+	bool has_crossbow;
+
+	dwarf_info_t(df::unit* dw) : dwarf(dw), clear_all(0), has_axe(0), has_pick(0), has_crossbow(0), state(OTHER) {}
+
+	void set_labor(df::unit_labor labor) 
+	{
+		dwarf->status.labors[labor] = true;
+		if ((labor == df::unit_labor::MINE    && !has_pick) ||
+			(labor == df::unit_labor::CUTWOOD && !has_axe) ||
+			(labor == df::unit_labor::HUNT    && !has_crossbow))
+			dwarf->military.pickup_flags.bits.update = 1;
+	}
 };
 
 static bool isOptionEnabled(unsigned flag)
@@ -706,211 +722,570 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-// sorting objects
-struct dwarfinfo_sorter
+
+static df::building* get_building_from_job(df::job* j)
 {
-    dwarfinfo_sorter(std::vector <dwarf_info_t> & info):dwarf_info(info){};
-    bool operator() (int i,int j)
-    {
-        if (dwarf_info[i].state == IDLE && dwarf_info[j].state != IDLE)
-            return true;
-        if (dwarf_info[i].state != IDLE && dwarf_info[j].state == IDLE)
-            return false;
-        return dwarf_info[i].mastery_penalty > dwarf_info[j].mastery_penalty;
-    };
-    std::vector <dwarf_info_t> & dwarf_info;
-};
-struct laborinfo_sorter
-{
-    bool operator() (int i,int j)
-    {
-        return labor_infos[i].mode() < labor_infos[j].mode();
-    };
-};
-
-struct values_sorter
-{
-    values_sorter(std::vector <int> & values):values(values){};
-    bool operator() (int i,int j)
-    {
-        return values[i] > values[j];
-    };
-    std::vector<int> & values;
-};
-
-
-static void assign_labor(unit_labor::unit_labor labor,
-    int n_dwarfs,
-    std::vector<dwarf_info_t>& dwarf_info,
-    bool trader_requested,
-    std::vector<df::unit *>& dwarfs,
-    bool has_butchers,
-    bool has_fishery,
-    color_ostream& out)
-{
-    df::job_skill skill = labor_to_skill[labor];
-
-        if (labor_infos[labor].mode() != AUTOMATIC)
-            return;
-
-        int best_dwarf = 0;
-        int best_value = -10000;
-
-        std::vector<int> values(n_dwarfs);
-        std::vector<int> candidates;
-        std::map<int, int> dwarf_skill;
-        std::vector<bool> previously_enabled(n_dwarfs);
-
-        auto mode = labor_infos[labor].mode();
-
-        // Find candidate dwarfs, and calculate a preference value for each dwarf
-        for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
-        {
-            if (dwarf_info[dwarf].state == CHILD)
-                continue;
-            if (dwarf_info[dwarf].state == MILITARY)
-                continue;
-            if (dwarf_info[dwarf].trader && trader_requested)
-                continue;
-            if (dwarf_info[dwarf].diplomacy)
-                continue;
-
-            if (labor_infos[labor].is_exclusive && dwarf_info[dwarf].has_exclusive_labor)
-                continue;
-
-            int value = dwarf_info[dwarf].mastery_penalty;
-
-            if (skill != job_skill::NONE)
-            {
-                int skill_level = 0;
-                int skill_experience = 0;
-
-                for (auto s = dwarfs[dwarf]->status.souls[0]->skills.begin(); s < dwarfs[dwarf]->status.souls[0]->skills.end(); s++)
-                {
-                    if ((*s)->id == skill)
-                    {
-                        skill_level = (*s)->rating;
-                        skill_experience = (*s)->experience;
-                        break;
-                    }
-                }
-
-                dwarf_skill[dwarf] = skill_level;
-
-                value += skill_level * 100;
-                value += skill_experience / 20;
-                if (skill_level > 0 || skill_experience > 0)
-                    value += 200;
-                if (skill_level >= 15)
-                    value += 1000 * (skill_level - 14);
-            }
-            else
-            {
-                dwarf_skill[dwarf] = 0;
-            }
-
-            if (dwarfs[dwarf]->status.labors[labor])
-            {
-                value += 5;
-                if (labor_infos[labor].is_exclusive)
-                    value += 350;
-            }
-
-            // bias by happiness
-
-            value += dwarfs[dwarf]->status.happiness;
-
-            values[dwarf] = value;
-
-            candidates.push_back(dwarf);
-
-        }
-
-        // Sort candidates by preference value
-        values_sorter ivs(values);
-        std::sort(candidates.begin(), candidates.end(), ivs);
-
-        // Disable the labor on everyone
-        for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
-        {
-            if (dwarf_info[dwarf].state == CHILD)
-                continue;
-
-            previously_enabled[dwarf] = dwarfs[dwarf]->status.labors[labor];
-            dwarfs[dwarf]->status.labors[labor] = false;
-        }
-
-        int min_dwarfs = labor_infos[labor].minimum_dwarfs();
-        int max_dwarfs = labor_infos[labor].maximum_dwarfs();
-
-        // Special - don't assign hunt without a butchers, or fish without a fishery
-        if (unit_labor::HUNT == labor && !has_butchers)
-            min_dwarfs = max_dwarfs = 0;
-        if (unit_labor::FISH == labor && !has_fishery)
-            min_dwarfs = max_dwarfs = 0;
-
-        bool want_idle_dwarf = true;
-        if (state_count[IDLE] < 2)
-            want_idle_dwarf = false;
-
-        /*
-         * Assign dwarfs to this labor. We assign at least the minimum number of dwarfs, in
-         * order of preference, and then assign additional dwarfs that meet any of these conditions:
-         * - The dwarf is idle and there are no idle dwarves assigned to this labor
-         * - The dwarf has nonzero skill associated with the labor
-         * - The labor is mining, hunting, or woodcutting and the dwarf currently has it enabled.
-         * We stop assigning dwarfs when we reach the maximum allowed.
-         * Note that only idle and busy dwarfs count towards the number of dwarfs. "Other" dwarfs
-         * (sleeping, eating, on break, etc.) will have labors assigned, but will not be counted.
-         * Military and children/nobles will not have labors assigned.
-         * Dwarfs with the "health management" responsibility are always assigned DIAGNOSIS.
-         */
-        for (int i = 0; i < candidates.size() && labor_infos[labor].active_dwarfs < max_dwarfs; i++)
-        {
-            int dwarf = candidates[i];
-
-            assert(dwarf >= 0);
-            assert(dwarf < n_dwarfs);
-
-            bool preferred_dwarf = false;
-            if (want_idle_dwarf && dwarf_info[dwarf].state == IDLE)
-                preferred_dwarf = true;
-            if (dwarf_skill[dwarf] > 0)
-                preferred_dwarf = true;
-            if (previously_enabled[dwarf] && labor_infos[labor].is_exclusive)
-                preferred_dwarf = true;
-            if (dwarf_info[dwarf].medical && labor == df::unit_labor::DIAGNOSE)
-                preferred_dwarf = true;
-            if (dwarf_info[dwarf].trader && trader_requested)
-                continue;
-            if (dwarf_info[dwarf].diplomacy)
-                continue;
-
-            if (labor_infos[labor].active_dwarfs >= min_dwarfs && !preferred_dwarf)
-                continue;
-
-            if (!dwarfs[dwarf]->status.labors[labor])
-                dwarf_info[dwarf].assigned_jobs++;
-
-            dwarfs[dwarf]->status.labors[labor] = true;
-
-            if (labor_infos[labor].is_exclusive)
-            {
-                dwarf_info[dwarf].has_exclusive_labor = true;
-                // all the exclusive labors require equipment so this should force the dorf to reequip if needed
-                dwarfs[dwarf]->military.pickup_flags.bits.update = 1;
-            }
-
-            if (print_debug)
-                out.print("Dwarf %i \"%s\" assigned %s: value %i %s %s\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf], dwarf_info[dwarf].trader ? "(trader)" : "", dwarf_info[dwarf].diplomacy ? "(diplomacy)" : "");
-
-            if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
-                labor_infos[labor].active_dwarfs++;
-
-            if (dwarf_info[dwarf].state == IDLE)
-                want_idle_dwarf = false;
-        }
+	for (auto r = j->references.begin(); r != j->references.end(); r++)
+	{
+		if ((*r)->getType() == df::general_ref_type::BUILDING_HOLDER)
+		{
+			int32_t id = ((df::general_ref_building_holderst*)(*r))->building_id;
+			df::building* bld = binsearch_in_vector(world->buildings.all, id);
+			return bld;
+		}
+	}
+	return 0;
 }
+
+static df::job_skill workshop_build_labor[] = 
+{
+	/* Carpenters */		df::job_skill::CARPENTRY,
+	/* Farmers */			df::job_skill::PROCESSPLANTS,
+    /* Masons */			df::job_skill::MASONRY,
+	/* Craftsdwarfs */		df::job_skill::STONECRAFT,
+	/* Jewelers */			df::job_skill::CUTGEM,
+	/* MetalsmithsForge */	df::job_skill::METALCRAFT,
+	/* MagmaForge */		df::job_skill::METALCRAFT,
+	/* Bowyers */			df::job_skill::BOWYER,
+	/* Mechanics */			df::job_skill::MECHANICS,
+	/* Siege */				df::job_skill::SIEGECRAFT,
+	/* Butchers */			df::job_skill::BUTCHER,
+	/* Leatherworks */		df::job_skill::LEATHERWORK,
+	/* Tanners */			df::job_skill::TANNER,
+	/* Clothiers */			df::job_skill::CLOTHESMAKING,
+	/* Fishery */			df::job_skill::FISH,
+	/* Still */				df::job_skill::BREWING,
+	/* Loom */				df::job_skill::WEAVING,
+	/* Quern */				df::job_skill::MILLING,
+	/* Kennels */			df::job_skill::ANIMALTRAIN,
+	/* Kitchen */			df::job_skill::COOK,
+	/* Ashery */			df::job_skill::LYE_MAKING,
+	/* Dyers */				df::job_skill::DYER,
+	/* Millstone */			df::job_skill::MILLING,
+	/* Custom */			(df::job_skill) -1,
+	/* Tool */				(df::job_skill) -1
+};
+
+static void find_job_skill_labor(df::job* j, df::job_skill &skill, df::unit_labor &labor)
+{
+
+	switch (j->job_type) 
+	{
+	case df::job_type::ConstructBuilding:
+		{
+			df::building* bld = get_building_from_job (j);
+			switch (bld->getType()) 
+			{
+			case df::building_type::Workshop:
+				df::building_workshopst* ws = (df::building_workshopst*) bld;
+				skill = workshop_build_labor[ws->type];
+				break;
+			}
+		}
+		break;
+	case df::job_type::CustomReaction:
+		for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
+		{
+			if ((*r)->code == j->reaction_name)
+			{
+				skill = (*r)->skill;
+				break;
+			}
+		}
+		break;
+	default:
+		skill = ENUM_ATTR(job_type, skill, j->job_type);
+	} 
+
+	if (skill != df::job_skill::NONE)
+		labor = ENUM_ATTR(job_skill, labor, skill);
+
+	if (labor == df::unit_labor::NONE)
+		labor = ENUM_ATTR(job_type, labor, j->job_type);
+
+	if (labor == -1) 
+	{
+	}
+
+}
+
+class AutoLaborManager {
+	color_ostream& out;
+
+public: 
+	AutoLaborManager(color_ostream& o) : out(o)
+	{
+	}
+
+	~AutoLaborManager()
+	{
+		for (std::vector<dwarf_info_t*>::iterator i = dwarf_info.begin(); 
+			i != dwarf_info.end(); i++)
+			delete (*i);
+	}
+
+	dwarf_info_t* add_dwarf(df::unit* u)
+	{
+		dwarf_info_t* dwarf = new dwarf_info_t(u);
+		dwarf_info.push_back(dwarf);
+		return dwarf;
+	}
+
+
+private:
+	bool has_butchers;
+	bool has_fishery;
+	bool trader_requested;
+
+	int dig_count;
+	int tree_count;
+	int plant_count;
+	int detail_count;
+	int pick_count;
+	int axe_count;
+
+	std::vector<df::job*> jobs;
+	std::vector<dwarf_info_t*> dwarf_info;
+	std::deque<dwarf_info_t*> idle_dwarfs;
+
+private:
+	void scan_buildings()
+	{
+		for (auto b = world->buildings.all.begin(); b != world->buildings.all.end(); b++)
+		{
+			df::building *build = *b;
+			auto type = build->getType();
+			if (building_type::Workshop == type)
+			{
+				df::workshop_type subType = (df::workshop_type)build->getSubtype();
+				if (workshop_type::Butchers == subType)
+					has_butchers = true;
+				if (workshop_type::Fishery == subType)
+					has_fishery = true;
+			}
+			else if (building_type::TradeDepot == type)
+			{
+				df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
+				trader_requested = depot->trade_flags.bits.trader_requested;
+				if (print_debug)
+				{
+					if (trader_requested)
+						out.print("Trade depot found and trader requested, trader will be excluded from all labors.\n");
+					else
+						out.print("Trade depot found but trader is not requested.\n");
+				}
+			}
+		}
+	}
+
+	void count_map_designations()
+	{
+		dig_count = 0;
+		tree_count = 0; 
+		plant_count = 0;
+		detail_count = 0;
+
+		for (int i = 0; i < world->map.map_blocks.size(); ++i)
+		{
+			df::map_block* bl = world->map.map_blocks[i];
+
+			if (!bl->flags.bits.designated)
+				continue;
+
+			if (print_debug)
+				out.print ("block with designations found: %d, %d, %d\n", bl->map_pos.x, bl->map_pos.y, bl->map_pos.z);
+
+			for (int x = 0; x < 16; x++)
+				for (int y = 0; y < 16; y++)
+				{
+					df::tile_dig_designation dig = bl->designation[x][y].bits.dig;
+					if (dig != df::enums::tile_dig_designation::No) 
+					{
+						df::tiletype tt = bl->tiletype[x][y];
+						df::tiletype_shape tts = ENUM_ATTR(tiletype, shape, tt);
+						switch (tts) 
+						{
+						case df::enums::tiletype_shape::TREE:
+							tree_count++; break;
+						case df::enums::tiletype_shape::SHRUB:
+							plant_count++; break;
+						default:
+							dig_count++; break;
+						}
+					}
+					if (bl->designation[x][y].bits.smooth != 0)
+						detail_count++;
+				}
+		}
+
+		if (print_debug)
+			out.print("Dig count = %d, Cut tree count = %d, gather plant count = %d, detail count = %d\n", dig_count, tree_count, plant_count, detail_count);
+
+	}
+
+	void count_tools()
+	{
+		pick_count = 0;
+		axe_count = 0;
+
+		df::item_flags bad_flags;
+		bad_flags.whole = 0;
+
+#define F(x) bad_flags.bits.x = true;
+		F(dump); F(forbid); F(garbage_collect);
+		F(hostile); F(on_fire); F(rotten); F(trader);
+		F(in_building); F(construction); F(artifact1);
+#undef F
+
+		for (int i = 0; i < world->items.all.size(); ++i)
+		{
+			df::item* item = world->items.all[i];
+			if (item->flags.whole & bad_flags.whole)
+				continue;
+	
+			if (!item->isWeapon()) 
+				continue;
+
+			df::itemdef_weaponst* weapondef = ((df::item_weaponst*)item)->subtype;
+			df::job_skill weaponsk = (df::job_skill) weapondef->skill_melee;
+			if (weaponsk == df::job_skill::AXE)
+				axe_count++;
+			else if (weaponsk == df::job_skill::MINING)
+				pick_count++;
+		}
+
+		if (print_debug)
+			out.print("Axes = %d, picks = %d\n", axe_count, pick_count);
+
+	}
+
+	void collect_job_list()
+	{
+		std::vector<df::job*> repeating_jobs;
+		
+
+		for (df::job_list_link* jll = world->job_list.next; jll; jll = jll->next)
+		{
+			df::job* j = jll->item;
+			if (!j) 
+				continue;
+
+			if (j->flags.bits.suspend)
+				continue;
+
+			int worker = -1;
+
+			for (int r = 0; r < j->references.size(); ++r)
+				if (j->references[r]->getType() == df::general_ref_type::UNIT_WORKER)
+					worker = ((df::general_ref_unit_workerst *)(j->references[r]))->unit_id;
+
+			if (worker != -1)
+				continue;
+
+			if (j->flags.bits.repeat)
+				repeating_jobs.push_back(j);
+			else
+				jobs.push_back(j);
+		}
+
+		if (print_debug)
+			out.print("%d repeating jobs, %d nonrepeating jobs\n", repeating_jobs.size(), jobs.size());
+
+		for (int i = 0; i < repeating_jobs.size(); i++) 
+			jobs.push_back(repeating_jobs[i]);
+
+	}
+
+	void collect_dwarf_list()
+	{
+
+		for (auto u = world->units.active.begin(); u != world->units.active.end(); ++u)
+		{
+			df::unit* cre = *u;
+
+			if (Units::isCitizen(cre))
+			{
+				if (cre->burrows.size() > 0)
+					continue;        // dwarfs assigned to burrows are skipped entirely
+
+				dwarf_info_t* dwarf = add_dwarf(cre);
+
+				df::historical_figure* hf = df::historical_figure::find(dwarf->dwarf->hist_figure_id);
+				for (int i = 0; i < hf->entity_links.size(); i++)
+				{
+					df::histfig_entity_link* hfelink = hf->entity_links.at(i);
+					if (hfelink->getType() == df::histfig_entity_link_type::POSITION)
+					{
+						df::histfig_entity_link_positionst *epos =
+							(df::histfig_entity_link_positionst*) hfelink;
+						df::historical_entity* entity = df::historical_entity::find(epos->entity_id);
+						if (!entity)
+							continue;
+						df::entity_position_assignment* assignment = binsearch_in_vector(entity->positions.assignments, epos->assignment_id);
+						if (!assignment)
+							continue;
+						df::entity_position* position = binsearch_in_vector(entity->positions.own, assignment->position_id);
+						if (!position)
+							continue;
+
+						if (position->responsibilities[df::entity_position_responsibility::TRADE])
+							if (trader_requested)
+								dwarf->clear_all = true;
+					}
+
+				}
+
+				// identify dwarfs who are needed for meetings and mark them for exclusion
+
+				for (int i = 0; i < ui->activities.size(); ++i)
+				{
+					df::activity_info *act = ui->activities[i];
+					if (!act) continue;
+					bool p1 = act->person1 == dwarf->dwarf;
+					bool p2 = act->person2 == dwarf->dwarf;
+
+					if (p1 || p2)
+					{
+						dwarf->clear_all = true;
+						if (print_debug)
+							out.print("Dwarf \"%s\" has a meeting, will be cleared of all labors\n", dwarf->dwarf->name.first_name.c_str());
+						break;
+					}
+				}
+
+				// Find the activity state for each dwarf-> 
+
+				bool is_on_break = false;
+				dwarf_state state = OTHER;
+
+				for (auto p = dwarf->dwarf->status.misc_traits.begin(); p < dwarf->dwarf->status.misc_traits.end(); p++)
+				{
+					if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
+						is_on_break = true;
+				}
+
+				if (dwarf->dwarf->profession == profession::BABY ||
+					dwarf->dwarf->profession == profession::CHILD ||
+					dwarf->dwarf->profession == profession::DRUNK)
+				{
+					state = CHILD;
+				}
+				else if (ENUM_ATTR(profession, military, dwarf->dwarf->profession))
+					state = MILITARY;
+				else if (dwarf->dwarf->job.current_job == NULL)
+				{
+					if (is_on_break)
+						state = OTHER;
+					else if (dwarf->dwarf->specific_refs.size() > 0)
+						state = OTHER;
+					else
+						state = IDLE;
+				}
+				else
+				{
+					int job = dwarf->dwarf->job.current_job->job_type;
+					if (job >= 0 && job < ARRAY_COUNT(dwarf_states))
+						state = dwarf_states[job];
+					else
+					{
+						out.print("Dwarf \"%s\" has unknown job %i\n", dwarf->dwarf->name.first_name.c_str(), job);
+						state = OTHER;
+					}
+				}
+
+				dwarf->state = state;
+
+				if (print_debug)
+					out.print("Dwarf \"%s\": state %s\n", dwarf->dwarf->name.first_name.c_str(), state_names[dwarf->state]);
+
+				// check if dwarf has an axe, pick, or crossbow
+
+				for (int j = 0; j < dwarf->dwarf->inventory.size(); j++)
+				{
+					df::unit_inventory_item* ui = dwarf->dwarf->inventory[j];
+					if (ui->mode == df::unit_inventory_item::Weapon && ui->item->isWeapon())
+					{
+						df::itemdef_weaponst* weapondef = ((df::item_weaponst*)(ui->item))->subtype;
+						df::job_skill weaponsk = (df::job_skill) weapondef->skill_melee;
+						df::job_skill rangesk = (df::job_skill) weapondef->skill_ranged;
+						if (weaponsk == df::job_skill::AXE)
+						{
+							dwarf->has_axe = 1;
+							if (state != IDLE) 
+								axe_count--;
+							if (print_debug)
+								out.print("Dwarf \"%s\" has an axe\n", dwarf->dwarf->name.first_name.c_str());
+						}
+						else if (weaponsk == df::job_skill::MINING)
+						{
+							dwarf->has_pick = 1;
+							if (state != IDLE) 
+								pick_count--;
+							if (print_debug)
+								out.print("Dwarf \"%s\" has an pick\n", dwarf->dwarf->name.first_name.c_str());
+						}
+						else if (rangesk == df::job_skill::CROSSBOW)
+						{
+							dwarf->has_crossbow = 1;
+							if (print_debug)
+								out.print("Dwarf \"%s\" has a crossbow\n", dwarf->dwarf->name.first_name.c_str());
+						}
+					}
+				}
+
+				// clear labors if currently idle
+
+				if (state == IDLE || dwarf->clear_all) 
+				{
+					FOR_ENUM_ITEMS(unit_labor, labor)
+					{
+						if (labor == unit_labor::NONE) 
+							continue;
+
+						dwarf->dwarf->status.labors[labor] = false;
+					}
+				}
+
+				if (state == IDLE && !dwarf->clear_all)
+					idle_dwarfs.push_back(dwarf);
+
+			}
+
+		}
+	}
+
+	void assign_one_dwarf (df::job_skill skill, df::unit_labor labor)
+	{
+		if (labor == df::unit_labor::NONE)
+			return;
+
+		std::deque<dwarf_info_t*>::iterator bestdwarf = idle_dwarfs.begin();
+
+		if (skill != df::job_skill::NONE) 
+		{
+			int best_skill_level = -1;
+
+			for (std::deque<dwarf_info_t*>::iterator k = idle_dwarfs.begin(); k != idle_dwarfs.end(); k++)
+			{
+				dwarf_info_t* d = (*k);
+				int	skill_level = Units::getEffectiveSkill(d->dwarf, skill);
+
+				if (skill_level > best_skill_level) 
+				{
+					bestdwarf = k;
+					best_skill_level = skill_level;
+				}
+			}
+		}
+
+		if (print_debug)
+			out.print("assign \"%s\" labor %d\n", (*bestdwarf)->dwarf->name.first_name.c_str(), labor);
+		(*bestdwarf)->set_labor(labor);
+
+		idle_dwarfs.erase(bestdwarf);
+	}
+
+public:
+	void process()
+	{
+		// scan for specific buildings of interest
+
+		scan_buildings();
+
+		// count number of squares designated for dig, wood cutting, detailing, and plant harvesting
+
+		count_map_designations();
+
+		// count number of picks and axes available for use
+
+		count_tools();
+
+		// collect current job list 
+
+		collect_job_list();
+
+		// collect list of dwarfs
+
+		collect_dwarf_list();
+
+		// assign jobs requiring skill to idle dwarfs
+
+		int jobs_to_assign = jobs.size();
+		if (jobs_to_assign > idle_dwarfs.size()) 
+			jobs_to_assign = idle_dwarfs.size();
+
+		if (print_debug)
+			out.print ("Assign idle (skilled): %d\n", jobs_to_assign);
+
+		std::vector<df::job*> jobs2;
+
+		for (int i = 0; i < jobs_to_assign; ++i)
+		{
+			df::job* j = jobs[i];
+
+			df::job_skill skill;
+			df::unit_labor labor;
+
+			find_job_skill_labor(j, skill, labor);
+
+			if(print_debug)
+				out.print("Job skill = %d labor = %d\n", skill, labor);
+
+			if (labor == -1)
+				out.print("Invalid labor for job (%d)\n", j->job_type);
+
+			if (skill == df::job_skill::NONE)
+				jobs2.push_back(j);
+			else 
+				assign_one_dwarf(skill, labor);
+		}
+
+		// assign mining jobs to idle dwarfs
+
+		int dig_max = dig_count;
+		if (dig_max > pick_count) 
+			dig_max = pick_count; 
+
+		jobs_to_assign = dig_max - jobs2.size();
+		if (jobs_to_assign > idle_dwarfs.size()) 
+			jobs_to_assign = idle_dwarfs.size();
+
+		if (print_debug)
+			out.print ("Assign idle (mining): %d\n", jobs_to_assign);
+
+		for (int i = 0; i < jobs_to_assign; ++i)
+		{
+			df::job_skill skill = df::job_skill::MINING;
+			df::unit_labor labor = df::unit_labor::MINE;
+
+			assign_one_dwarf(skill, labor);
+		}
+
+		// now assign unskilled jobs to idle dwarfs
+
+		jobs_to_assign = jobs2.size();
+		if (jobs_to_assign > idle_dwarfs.size()) 
+			jobs_to_assign = idle_dwarfs.size();
+
+		if (print_debug)
+			out.print ("Assign idle (unskilled): %d\n", jobs_to_assign);
+
+		for (int i = 0; i < jobs_to_assign; ++i)
+		{
+			df::job* j = jobs2[i];
+
+			df::job_skill skill;
+			df::unit_labor labor;
+
+			find_job_skill_labor(j, skill, labor);
+			assign_one_dwarf(skill, labor);
+		}
+
+		print_debug = 0;
+
+		}
+
+};
 
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
@@ -944,339 +1319,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         return CR_OK;
     step_count = 0;
 
-    uint32_t race = ui->race_id;
-    uint32_t civ = ui->civ_id;
+	AutoLaborManager alm(out);
 
-    std::vector<df::unit *> dwarfs;
+	alm.process();
 
-    bool has_butchers = false;
-    bool has_fishery = false;
-    bool trader_requested = false;
-
-    for (int i = 0; i < world->buildings.all.size(); ++i)
-    {
-        df::building *build = world->buildings.all[i];
-        auto type = build->getType();
-        if (building_type::Workshop == type)
-        {
-            df::workshop_type subType = (df::workshop_type)build->getSubtype();
-            if (workshop_type::Butchers == subType)
-                has_butchers = true;
-            if (workshop_type::Fishery == subType)
-                has_fishery = true;
-        }
-        else if (building_type::TradeDepot == type)
-        {
-            df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
-            trader_requested = depot->trade_flags.bits.trader_requested;
-            if (print_debug)
-            {
-                if (trader_requested)
-                    out.print("Trade depot found and trader requested, trader will be excluded from all labors.\n");
-                else
-                    out.print("Trade depot found but trader is not requested.\n");
-            }
-        }
-    }
-
-    for (int i = 0; i < world->units.active.size(); ++i)
-    {
-        df::unit* cre = world->units.active[i];
-        if (Units::isCitizen(cre))
-        {
-            if (cre->burrows.size() > 0)
-                continue;        // dwarfs assigned to burrows are skipped entirely
-            dwarfs.push_back(cre);
-        }
-    }
-
-    int n_dwarfs = dwarfs.size();
-
-    if (n_dwarfs == 0)
-        return CR_OK;
-
-    std::vector<dwarf_info_t> dwarf_info(n_dwarfs);
-
-    // Find total skill and highest skill for each dwarf. More skilled dwarves shouldn't be used for minor tasks.
-
-    for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
-    {
-        dwarf_info[dwarf].single_labor = -1;
-
-        if (dwarfs[dwarf]->status.souls.size() <= 0)
-            continue;
-
-        // compute noble penalty
-
-        int noble_penalty = 0;
-
-        df::historical_figure* hf = df::historical_figure::find(dwarfs[dwarf]->hist_figure_id);
-        for (int i = 0; i < hf->entity_links.size(); i++)
-        {
-            df::histfig_entity_link* hfelink = hf->entity_links.at(i);
-            if (hfelink->getType() == df::histfig_entity_link_type::POSITION)
-            {
-                df::histfig_entity_link_positionst *epos =
-                    (df::histfig_entity_link_positionst*) hfelink;
-                df::historical_entity* entity = df::historical_entity::find(epos->entity_id);
-                if (!entity)
-                    continue;
-                df::entity_position_assignment* assignment = binsearch_in_vector(entity->positions.assignments, epos->assignment_id);
-                if (!assignment)
-                    continue;
-                df::entity_position* position = binsearch_in_vector(entity->positions.own, assignment->position_id);
-                if (!position)
-                    continue;
-
-                for (int n = 0; n < 25; n++)
-                    if (position->responsibilities[n])
-                        noble_penalty += responsibility_penalties[n];
-
-                if (position->responsibilities[df::entity_position_responsibility::HEALTH_MANAGEMENT])
-                    dwarf_info[dwarf].medical = true;
-
-                if (position->responsibilities[df::entity_position_responsibility::TRADE])
-                    dwarf_info[dwarf].trader = true;
-
-            }
-
-        }
-
-        dwarf_info[dwarf].noble_penalty = noble_penalty;
-
-        // identify dwarfs who are needed for meetings and mark them for exclusion
-
-        for (int i = 0; i < ui->activities.size(); ++i)
-        {
-            df::activity_info *act = ui->activities[i];
-            if (!act) continue;
-            bool p1 = act->person1 == dwarfs[dwarf];
-            bool p2 = act->person2 == dwarfs[dwarf];
-
-            if (p1 || p2)
-            {
-                dwarf_info[dwarf].diplomacy = true;
-                if (print_debug)
-                    out.print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n", dwarf, dwarfs[dwarf]->name.first_name.c_str());
-                break;
-            }
-        }
-
-        for (auto s = dwarfs[dwarf]->status.souls[0]->skills.begin(); s != dwarfs[dwarf]->status.souls[0]->skills.end(); s++)
-        {
-            df::job_skill skill = (*s)->id;
-
-            df::job_skill_class skill_class = ENUM_ATTR(job_skill, type, skill);
-
-            int skill_level = (*s)->rating;
-            int skill_experience = (*s)->experience;
-
-            // Track total & highest skill among normal/medical skills. (We don't care about personal or social skills.)
-
-            if (skill_class != job_skill_class::Normal && skill_class != job_skill_class::Medical)
-                continue;
-
-            if (dwarf_info[dwarf].highest_skill < skill_level)
-                dwarf_info[dwarf].highest_skill = skill_level;
-            dwarf_info[dwarf].total_skill += skill_level;
-        }
-    }
-
-    // Calculate a base penalty for using each dwarf for a task he isn't good at.
-
-    for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
-    {
-        dwarf_info[dwarf].mastery_penalty -= 40 * dwarf_info[dwarf].highest_skill;
-        dwarf_info[dwarf].mastery_penalty -= 10 * dwarf_info[dwarf].total_skill;
-        dwarf_info[dwarf].mastery_penalty -= dwarf_info[dwarf].noble_penalty;
-
-        FOR_ENUM_ITEMS(unit_labor, labor)
-        {
-            if (labor == unit_labor::NONE)
-                continue;
-
-            if (labor_infos[labor].is_exclusive && dwarfs[dwarf]->status.labors[labor])
-                dwarf_info[dwarf].mastery_penalty -= 100;
-        }
-    }
-
-    // Find the activity state for each dwarf. It's important to get this right - a dwarf who we think is IDLE but
-    // can't work will gum everything up. In the future I might add code to auto-detect slacker dwarves.
-
-    state_count.clear();
-    state_count.resize(NUM_STATE);
-
-    for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
-    {
-        bool is_on_break = false;
-
-        for (auto p = dwarfs[dwarf]->status.misc_traits.begin(); p < dwarfs[dwarf]->status.misc_traits.end(); p++)
-        {
-            if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
-                is_on_break = true;
-        }
-
-        if (dwarfs[dwarf]->profession == profession::BABY ||
-            dwarfs[dwarf]->profession == profession::CHILD ||
-            dwarfs[dwarf]->profession == profession::DRUNK)
-        {
-            dwarf_info[dwarf].state = CHILD;
-        }
-        else if (ENUM_ATTR(profession, military, dwarfs[dwarf]->profession))
-            dwarf_info[dwarf].state = MILITARY;
-        else if (dwarfs[dwarf]->job.current_job == NULL)
-        {
-            if (is_on_break)
-                dwarf_info[dwarf].state = OTHER;
-            else if (dwarfs[dwarf]->specific_refs.size() > 0)
-                dwarf_info[dwarf].state = OTHER;
-            else
-                dwarf_info[dwarf].state = IDLE;
-        }
-        else
-        {
-            int job = dwarfs[dwarf]->job.current_job->job_type;
-            if (job >= 0 && job < ARRAY_COUNT(dwarf_states))
-                dwarf_info[dwarf].state = dwarf_states[job];
-            else
-            {
-                out.print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
-                dwarf_info[dwarf].state = OTHER;
-            }
-        }
-
-        state_count[dwarf_info[dwarf].state]++;
-
-        if (print_debug)
-            out.print("Dwarf %i \"%s\": penalty %i, state %s\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), dwarf_info[dwarf].mastery_penalty, state_names[dwarf_info[dwarf].state]);
-    }
-
-    std::vector<df::unit_labor> labors;
-
-    FOR_ENUM_ITEMS(unit_labor, labor)
-    {
-        if (labor == unit_labor::NONE)
-            continue;
-
-        labor_infos[labor].active_dwarfs = 0;
-
-        labors.push_back(labor);
-    }
-    laborinfo_sorter lasorter;
-    std::sort(labors.begin(), labors.end(), lasorter);
-
-    // Handle DISABLED skills (just bookkeeping)
-    for (auto lp = labors.begin(); lp != labors.end(); ++lp)
-    {
-        auto labor = *lp;
-
-        if (labor_infos[labor].mode() != DISABLE)
-            continue;
-
-        for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
-        {
-            if ((dwarf_info[dwarf].trader && trader_requested) ||
-                dwarf_info[dwarf].diplomacy)
-            {
-                dwarfs[dwarf]->status.labors[labor] = false;
-            }
-
-            if (dwarfs[dwarf]->status.labors[labor])
-            {
-                if (labor_infos[labor].is_exclusive)
-                    dwarf_info[dwarf].has_exclusive_labor = true;
-
-                dwarf_info[dwarf].assigned_jobs++;
-            }
-        }
-    }
-
-    // Handle all skills except those marked HAULERS
-
-    for (auto lp = labors.begin(); lp != labors.end(); ++lp)
-    {
-        auto labor = *lp;
-
-        assign_labor(labor, n_dwarfs, dwarf_info, trader_requested, dwarfs, has_butchers, has_fishery, out);
-    }
-
-    // Set about 1/3 of the dwarfs as haulers. The haulers have all HAULER labors enabled. Having a lot of haulers helps
-    // make sure that hauling jobs are handled quickly rather than building up.
-
-    int num_haulers = state_count[IDLE] + state_count[BUSY] * hauler_pct / 100;
-
-    if (num_haulers < 1)
-        num_haulers = 1;
-
-    std::vector<int> hauler_ids;
-    for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
-    {
-        if ((dwarf_info[dwarf].trader && trader_requested) ||
-            dwarf_info[dwarf].diplomacy)
-        {
-            FOR_ENUM_ITEMS(unit_labor, labor)
-            {
-                if (labor == unit_labor::NONE)
-                    continue;
-                if (labor_infos[labor].mode() != HAULERS)
-                    continue;
-                dwarfs[dwarf]->status.labors[labor] = false;
-            }
-            continue;
-        }
-
-        if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
-            hauler_ids.push_back(dwarf);
-    }
-    dwarfinfo_sorter sorter(dwarf_info);
-    // Idle dwarves come first, then we sort from least-skilled to most-skilled.
-    std::sort(hauler_ids.begin(), hauler_ids.end(), sorter);
-
-    // don't set any haulers if everyone is off drinking or something
-    if (hauler_ids.size() == 0) {
-        num_haulers = 0;
-    }
-
-    FOR_ENUM_ITEMS(unit_labor, labor)
-    {
-        if (labor == unit_labor::NONE)
-            continue;
-
-        if (labor_infos[labor].mode() != HAULERS)
-            continue;
-
-        for (int i = 0; i < num_haulers; i++)
-        {
-            assert(i < hauler_ids.size());
-
-            int dwarf = hauler_ids[i];
-
-            assert(dwarf >= 0);
-            assert(dwarf < n_dwarfs);
-            dwarfs[dwarf]->status.labors[labor] = true;
-            dwarf_info[dwarf].assigned_jobs++;
-
-            if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
-                labor_infos[labor].active_dwarfs++;
-
-            if (print_debug)
-                out.print("Dwarf %i \"%s\" assigned %s: hauler\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str());
-        }
-
-        for (int i = num_haulers; i < hauler_ids.size(); i++)
-        {
-            assert(i < hauler_ids.size());
-
-            int dwarf = hauler_ids[i];
-
-            assert(dwarf >= 0);
-            assert(dwarf < n_dwarfs);
-
-            dwarfs[dwarf]->status.labors[labor] = false;
-        }
-    }
-
-    print_debug = 0;
 
     return CR_OK;
 }
@@ -1469,205 +1515,3 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     }
 }
 
-struct StockpileInfo {
-    df::building_stockpilest* sp;
-    int size;
-    int free;
-    int x1, x2, y1, y2, z;
-
-public:
-    StockpileInfo(df::building_stockpilest *sp_) : sp(sp_)
-    {
-        MapExtras::MapCache mc;
-
-        z = sp_->z;
-        x1 = sp_->room.x;
-        x2 = sp_->room.x + sp_->room.width;
-        y1 = sp_->room.y;
-        y2 = sp_->room.y + sp_->room.height;
-        int e = 0;
-        size = 0;
-        free = 0;
-        for (int y = y1; y < y2; y++)
-            for (int x = x1; x < x2; x++)
-                if (sp_->room.extents[e++] == 1)
-                {
-                    size++;
-                    DFCoord cursor (x,y,z);
-                    uint32_t blockX = x / 16;
-                    uint32_t tileX = x % 16;
-                    uint32_t blockY = y / 16;
-                    uint32_t tileY = y % 16;
-                    MapExtras::Block * b = mc.BlockAt(cursor/16);
-                    if(b && b->is_valid())
-                    {
-                        auto &block = *b->getRaw();
-                        df::tile_occupancy &occ = block.occupancy[tileX][tileY];
-                        if (!occ.bits.item)
-                            free++;
-                    }
-                }
-    }
-
-    bool isFull() { return free == 0; }
-
-    bool canHold(df::item *i)
-    {
-        return false;
-    }
-
-    bool inStockpile(df::item *i)
-    {
-        df::item *container = Items::getContainer(i);
-        if (container)
-            return inStockpile(container);
-
-        if (i->pos.z != z) return false;
-        if (i->pos.x < x1 || i->pos.x >= x2 ||
-            i->pos.y < y1 || i->pos.y >= y2) return false;
-        int e = (i->pos.x - x1) + (i->pos.y - y1) * sp->room.width;
-        return sp->room.extents[e] == 1;
-    }
-
-    int getId() { return sp->id; }
-};
-
-static int stockcheck(color_ostream &out, vector <string> & parameters)
-{
-    int count = 0;
-
-    std::vector<StockpileInfo*> stockpiles;
-
-    for (int i = 0; i < world->buildings.all.size(); ++i)
-    {
-        df::building *build = world->buildings.all[i];
-        auto type = build->getType();
-        if (building_type::Stockpile == type)
-        {
-            df::building_stockpilest *sp = virtual_cast<df::building_stockpilest>(build);
-            StockpileInfo *spi = new StockpileInfo(sp);
-            stockpiles.push_back(spi);
-        }
-
-    }
-
-    std::vector<df::item*> &items = world->items.other[items_other_id::ANY_FREE];
-
-    // Precompute a bitmask with the bad flags
-    df::item_flags bad_flags;
-    bad_flags.whole = 0;
-
-#define F(x) bad_flags.bits.x = true;
-    F(dump); F(forbid); F(garbage_collect);
-    F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(construction); F(artifact1);
-    F(spider_web); F(owned); F(in_job);
-#undef F
-
-    for (size_t i = 0; i < items.size(); i++)
-    {
-        df::item *item = items[i];
-        if (item->flags.whole & bad_flags.whole)
-            continue;
-
-        // we really only care about MEAT, FISH, FISH_RAW, PLANT, CHEESE, FOOD, and EGG
-
-        df::item_type typ = item->getType();
-        if (typ != item_type::MEAT &&
-            typ != item_type::FISH &&
-            typ != item_type::FISH_RAW &&
-            typ != item_type::PLANT &&
-            typ != item_type::CHEESE &&
-            typ != item_type::FOOD &&
-            typ != item_type::EGG)
-            continue;
-
-        df::item *container = 0;
-        df::unit *holder = 0;
-        df::building *building = 0;
-
-        for (size_t i = 0; i < item->itemrefs.size(); i++)
-        {
-            df::general_ref *ref = item->itemrefs[i];
-
-            switch (ref->getType())
-            {
-            case general_ref_type::CONTAINED_IN_ITEM:
-                container = ref->getItem();
-                break;
-
-            case general_ref_type::UNIT_HOLDER:
-                holder = ref->getUnit();
-                break;
-
-            case general_ref_type::BUILDING_HOLDER:
-                building = ref->getBuilding();
-                break;
-
-            default:
-                break;
-            }
-        }
-
-        df::item *nextcontainer = container;
-        df::item *lastcontainer = 0;
-
-        while(nextcontainer) {
-            df::item *thiscontainer = nextcontainer;
-            nextcontainer = 0;
-            for (size_t i = 0; i < thiscontainer->itemrefs.size(); i++)
-            {
-                df::general_ref *ref = thiscontainer->itemrefs[i];
-
-                switch (ref->getType())
-                {
-                case general_ref_type::CONTAINED_IN_ITEM:
-                    lastcontainer = nextcontainer = ref->getItem();
-                    break;
-
-                case general_ref_type::UNIT_HOLDER:
-                    holder = ref->getUnit();
-                    break;
-
-                case general_ref_type::BUILDING_HOLDER:
-                    building = ref->getBuilding();
-                    break;
-
-                default:
-                    break;
-                }
-            }
-        }
-
-        if (holder)
-            continue; // carried items do not rot as far as i know
-
-        if (building) {
-            df::building_type btype = building->getType();
-            if (btype == building_type::TradeDepot ||
-                btype == building_type::Wagon)
-                continue; // items in trade depot or the embark wagon do not rot
-
-            if (typ == item_type::EGG && btype ==building_type::NestBox)
-                continue; // eggs in nest box do not rot
-        }
-
-        int canHoldCount = 0;
-        StockpileInfo *current = 0;
-
-        for (int idx = 0; idx < stockpiles.size(); idx++)
-        {
-            StockpileInfo *spi = stockpiles[idx];
-            if (spi->canHold(item)) canHoldCount++;
-            if (spi->inStockpile(item)) current=spi;
-        }
-
-        if (current)
-            continue;
-
-        count++;
-
-    }
-
-    return count;
-}

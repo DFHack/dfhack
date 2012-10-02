@@ -2,6 +2,7 @@
 
 local utils = require 'utils'
 local ms = require 'memscan'
+local gui = require 'gui'
 
 local is_known = dfhack.internal.getAddress
 
@@ -52,6 +53,35 @@ if data.size < 5000000 then
 end
 
 local searcher = ms.DiffSearcher.new(data)
+
+local function get_screen(class, prompt)
+    if not is_known('gview') then
+        print('Please navigate to '..prompt)
+        if not utils.prompt_yes_no('Proceed?', true) then
+            return nil
+        end
+        return true
+    end
+
+    while true do
+        local cs = dfhack.gui.getCurViewscreen(true)
+        if not df.is_instance(class, cs) then
+            print('Please navigate to '..prompt)
+            if not utils.prompt_yes_no('Proceed?', true) then
+                return nil
+            end
+        else
+            return cs
+        end
+    end
+end
+
+local function screen_title()
+    return get_screen(df.viewscreen_titlest, 'the title screen')
+end
+local function screen_dwarfmode()
+    return get_screen(df.viewscreen_dwarfmodest, 'the main dwarf mode screen')
+end
 
 local function validate_offset(name,validator,addr,tname,...)
     local obj = data:object_by_field(addr,tname,...)
@@ -136,13 +166,95 @@ local function list_index_choices(length_func)
     end
 end
 
+local function can_feed()
+    return not force_scan['nofeed'] and is_known 'gview'
+end
+
+local function dwarfmode_feed_input(...)
+    local screen = screen_dwarfmode()
+    if not df.isvalid(screen) then
+        qerror('could not retrieve dwarfmode screen')
+    end
+    for _,v in ipairs({...}) do
+        gui.simulateInput(screen, v)
+    end
+end
+
+local function dwarfmode_to_top()
+    if not can_feed() then
+        return false
+    end
+
+    local screen = screen_dwarfmode()
+    if not df.isvalid(screen) then
+        return false
+    end
+
+    for i=0,10 do
+        if is_known 'ui' and df.global.ui.main.mode == df.ui_sidebar_mode.Default then
+            break
+        end
+        gui.simulateInput(screen, 'LEAVESCREEN')
+    end
+
+    -- force pause just in case
+    screen.keyRepeat = 1
+    return true
+end
+
+local function feed_menu_choice(catnames,catkeys,enum)
+    return function (idx)
+        idx = idx % #catnames + 1
+        dwarfmode_feed_input(catkeys[idx])
+        if enum then
+            return true, enum[catnames[idx]]
+        else
+            return true, catnames[idx]
+        end
+    end
+end
+
+local function feed_list_choice(count,upkey,downkey)
+    return function(idx)
+        if idx > 0 then
+            local ok, len
+            if type(count) == 'number' then
+                ok, len = true, count
+            else
+                ok, len = pcall(count)
+            end
+            if not ok then
+                len = 5
+            elseif len > 10 then
+                len = 10
+            end
+
+            local hcnt = len-1
+            local rix = 1 + (idx-1) % (hcnt*2)
+
+            if rix >= hcnt then
+                dwarfmode_feed_input(upkey or 'SECONDSCROLL_UP')
+                return true, hcnt*2 - rix
+            else
+                dwarfmode_feed_input(donwkey or 'SECONDSCROLL_DOWN')
+                return true, rix
+            end
+        else
+            print('  Please select the first list item.')
+            if not utils.prompt_yes_no('  Proceed?') then
+                return false
+            end
+            return true, 0
+        end
+    end
+end
+
 --
 -- Cursor group
 --
 
 local function find_cursor()
-    print('\nPlease navigate to the title screen to find cursor.')
-    if not utils.prompt_yes_no('Proceed?', true) then
+    if not screen_title() then
         return false
     end
 
@@ -354,13 +466,35 @@ local function is_valid_world(world)
 end
 
 local function find_world()
-    local addr = searcher:find_menu_cursor([[
+    local catnames = {
+        'Corpses', 'Refuse', 'Stone', 'Wood', 'Gems', 'Bars', 'Cloth', 'Leather', 'Ammo', 'Coins'
+    }
+    local catkeys = {
+        'STOCKPILE_GRAVEYARD', 'STOCKPILE_REFUSE', 'STOCKPILE_STONE', 'STOCKPILE_WOOD',
+        'STOCKPILE_GEM', 'STOCKPILE_BARBLOCK', 'STOCKPILE_CLOTH', 'STOCKPILE_LEATHER',
+        'STOCKPILE_AMMO', 'STOCKPILE_COINS'
+    }
+    local addr
+
+    if dwarfmode_to_top() then
+        dwarfmode_feed_input('D_STOCKPILES')
+
+        addr = searcher:find_interactive(
+            'Auto-searching for world.',
+            'int32_t',
+            feed_menu_choice(catnames, catkeys, df.stockpile_category),
+            20
+        )
+    end
+
+    if not addr then
+        addr = searcher:find_menu_cursor([[
 Searching for world. Please open the stockpile creation
 menu, and select different types as instructed below:]],
-        'int32_t',
-        { 'Corpses', 'Refuse', 'Stone', 'Wood', 'Gems', 'Bars', 'Cloth', 'Leather', 'Ammo', 'Coins' },
-        df.stockpile_category
-    )
+            'int32_t', catnames, df.stockpile_category
+        )
+    end
+
     validate_offset('world', is_valid_world, addr, df.world, 'selected_stockpile_type')
 end
 
@@ -385,14 +519,37 @@ local function is_valid_ui(ui)
 end
 
 local function find_ui()
-    local addr = searcher:find_menu_cursor([[
+    local catnames = {
+        'DesignateMine', 'DesignateChannel', 'DesignateRemoveRamps',
+        'DesignateUpStair', 'DesignateDownStair', 'DesignateUpDownStair',
+        'DesignateUpRamp', 'DesignateChopTrees'
+    }
+    local catkeys = {
+        'DESIGNATE_DIG', 'DESIGNATE_CHANNEL', 'DESIGNATE_DIG_REMOVE_STAIRS_RAMPS',
+        'DESIGNATE_STAIR_UP', 'DESIGNATE_STAIR_DOWN', 'DESIGNATE_STAIR_UPDOWN',
+        'DESIGNATE_RAMP', 'DESIGNATE_CHOP'
+    }
+    local addr
+
+    if dwarfmode_to_top() then
+        dwarfmode_feed_input('D_DESIGNATE')
+
+        addr = searcher:find_interactive(
+            'Auto-searching for ui.',
+            'int16_t',
+            feed_menu_choice(catnames, catkeys, df.ui_sidebar_mode),
+            20
+        )
+    end
+
+    if not addr then
+        addr = searcher:find_menu_cursor([[
 Searching for ui. Please open the designation
 menu, and switch modes as instructed below:]],
-        'int16_t',
-        { 'DesignateMine', 'DesignateChannel', 'DesignateRemoveRamps', 'DesignateUpStair',
-          'DesignateDownStair', 'DesignateUpDownStair', 'DesignateUpRamp', 'DesignateChopTrees' },
-        df.ui_sidebar_mode
-    )
+            'int16_t', catnames, df.ui_sidebar_mode
+        )
+    end
+
     validate_offset('ui', is_valid_ui, addr, df.ui, 'main', 'mode')
 end
 
@@ -421,14 +578,32 @@ local function is_valid_ui_sidebar_menus(usm)
 end
 
 local function find_ui_sidebar_menus()
-    local addr = searcher:find_menu_cursor([[
+    local addr
+
+    if dwarfmode_to_top() then
+        dwarfmode_feed_input('D_BUILDJOB')
+
+        addr = searcher:find_interactive([[
+Auto-searching for ui_sidebar_menus. Please select a Mason,
+Craftsdwarfs, or Carpenters workshop, open the Add Job
+menu, and move the cursor within:]],
+            'int32_t',
+            feed_list_choice(7),
+            20
+        )
+    end
+
+    if not addr then
+        addr = searcher:find_menu_cursor([[
 Searching for ui_sidebar_menus. Please switch to 'q' mode,
 select a Mason, Craftsdwarfs, or Carpenters workshop, open
 the Add Job menu, and move the cursor within:]],
-        'int32_t',
-        { 0, 1, 2, 3, 4, 5, 6 },
-        ordinal_names
-    )
+            'int32_t',
+            { 0, 1, 2, 3, 4, 5, 6 },
+            ordinal_names
+        )
+    end
+
     validate_offset('ui_sidebar_menus', is_valid_ui_sidebar_menus,
                     addr, df.ui_sidebar_menus, 'workshop_job', 'cursor')
 end
@@ -455,14 +630,41 @@ local function is_valid_ui_build_selector(ubs)
 end
 
 local function find_ui_build_selector()
-    local addr = searcher:find_menu_cursor([[
+    local addr
+
+    if dwarfmode_to_top() then
+        addr = searcher:find_interactive([[
+Auto-searching for ui_build_selector. This requires mechanisms.]],
+            'int32_t',
+            function(idx)
+                if idx == 0 then
+                    dwarfmode_to_top()
+                    dwarfmode_feed_input(
+                        'D_BUILDING',
+                        'HOTKEY_BUILDING_TRAP',
+                        'HOTKEY_BUILDING_TRAP_TRIGGER',
+                        'BUILDING_TRIGGER_ENABLE_CREATURE'
+                    )
+                else
+                    dwarfmode_feed_input('BUILDING_TRIGGER_MIN_SIZE_DOWN')
+                end
+                return true, 50000 - 1000*idx
+            end,
+            20
+        )
+    end
+
+    if not addr then
+        addr = searcher:find_menu_cursor([[
 Searching for ui_build_selector. Please start constructing
 a pressure plate, and enable creatures. Then change the min
 weight as requested, remembering that the ui truncates the
 number, so when it shows "Min (5000df", it means 50000:]],
-        'int32_t',
-        { 50000, 49000, 48000, 47000, 46000, 45000, 44000 }
-    )
+            'int32_t',
+            { 50000, 49000, 48000, 47000, 46000, 45000, 44000 }
+        )
+    end
+
     validate_offset('ui_build_selector', is_valid_ui_build_selector,
                     addr, df.ui_build_selector, 'plate_info', 'unit_min')
 end
@@ -601,13 +803,33 @@ end
 --
 
 local function find_ui_unit_view_mode()
-    local addr = searcher:find_menu_cursor([[
+    local catnames = { 'General', 'Inventory', 'Preferences', 'Wounds' }
+    local catkeys = { 'UNITVIEW_GEN', 'UNITVIEW_INV', 'UNITVIEW_PRF', 'UNITVIEW_WND' }
+    local addr
+
+    if dwarfmode_to_top() and is_known('ui_selected_unit') then
+        dwarfmode_feed_input('D_VIEWUNIT')
+
+        if df.global.ui_selected_unit < 0 then
+            df.global.ui_selected_unit = 0
+        end
+
+        addr = searcher:find_interactive(
+            'Auto-searching for ui_unit_view_mode.',
+            'int32_t',
+            feed_menu_choice(catnames, catkeys, df.ui_unit_view_mode.T_value),
+            10
+        )
+    end
+
+    if not addr then
+        addr = searcher:find_menu_cursor([[
 Searching for ui_unit_view_mode. Having selected a unit
 with 'v', switch the pages as requested:]],
-        'int32_t',
-        { 'General', 'Inventory', 'Preferences', 'Wounds' },
-        df.ui_unit_view_mode.T_value
-    )
+            'int32_t', catnames, df.ui_unit_view_mode.T_value
+        )
+    end
+
     ms.found_offset('ui_unit_view_mode', addr)
 end
 
@@ -620,14 +842,32 @@ local function look_item_list_count()
 end
 
 local function find_ui_look_cursor()
-    local addr = searcher:find_menu_cursor([[
+    local addr
+
+    if dwarfmode_to_top() then
+        dwarfmode_feed_input('D_LOOK')
+
+        addr = searcher:find_interactive([[
+Auto-searching for ui_look_cursor. Please select a tile
+with at least 5 items or units on the ground, and move
+the cursor as instructed:]],
+            'int32_t',
+            feed_list_choice(look_item_list_count),
+            20
+        )
+    end
+
+    if not addr then
+        addr = searcher:find_menu_cursor([[
 Searching for ui_look_cursor. Please activate the 'k'
 mode, find a tile with many items or units on the ground,
 and select list entries as instructed:]],
-        'int32_t',
-        list_index_choices(look_item_list_count),
-        ordinal_names
-    )
+            'int32_t',
+            list_index_choices(look_item_list_count),
+            ordinal_names
+        )
+    end
+
     ms.found_offset('ui_look_cursor', addr)
 end
 
@@ -989,10 +1229,10 @@ end
 
 print('\nInitial globals (need title screen):\n')
 
+exec_finder(find_gview, 'gview')
 exec_finder(find_cursor, { 'cursor', 'selection_rect', 'gamemode', 'gametype' })
 exec_finder(find_announcements, 'announcements')
 exec_finder(find_d_init, 'd_init')
-exec_finder(find_gview, 'gview')
 exec_finder(find_enabler, 'enabler')
 exec_finder(find_gps, 'gps')
 

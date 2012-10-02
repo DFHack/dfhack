@@ -93,6 +93,14 @@ function Painter.new(rect, pen)
     return Painter{ rect = rect, pen = pen }
 end
 
+function Painter.new_xy(x1,y1,x2,y2,pen)
+    return Painter{ rect = mkdims_xy(x1,y1,x2,y2), pen = pen }
+end
+
+function Painter.new_wh(x,y,w,h,pen)
+    return Painter{ rect = mkdims_wh(x,y,w,h), pen = pen }
+end
+
 function Painter:isValidPos()
     return self.x >= self.clip_x1 and self.x <= self.clip_x2
        and self.y >= self.clip_y1 and self.y <= self.clip_y2
@@ -208,6 +216,16 @@ function Painter:string(text,pen,...)
         end
     end
     return self:advance(#text, nil)
+end
+
+function Painter:key(code,pen,bg,...)
+    if type(code) == 'string' then
+        code = df.interface_key[code]
+    end
+    return self:string(
+        dscreen.getKeyDisplay(code),
+        pen or COLOR_LIGHTGREEN, bg or self.cur_pen.bg, ...
+    )
 end
 
 ------------------------

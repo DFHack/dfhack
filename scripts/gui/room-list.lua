@@ -185,10 +185,10 @@ function RoomList:onRenderBody(dc)
     end
 
     dc:newline():newline(1):pen(COLOR_WHITE)
-    dc:string("Esc", COLOR_LIGHTGREEN):string(": Back")
+    dc:key('LEAVESCREEN'):string(": Back")
 
     if can_modify(sel_item) then
-        dc:string(", "):string("Enter", COLOR_LIGHTGREEN)
+        dc:string(", "):key('SELECT')
         if sel_item.obj.owner == sel_item.owner then
             dc:string(": Unassign")
         else

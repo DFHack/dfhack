@@ -51,10 +51,9 @@ function MessageBox:onRenderBody(dc)
     end
 
     if self.on_accept then
-        local x,y = self.frame_rect.x1+1, self.frame_rect.y2+1
-        dscreen.paintString({fg=COLOR_LIGHTGREEN},x,y,'ESC')
-        dscreen.paintString({fg=COLOR_GREY},x+3,y,'/')
-        dscreen.paintString({fg=COLOR_LIGHTGREEN},x+4,y,'y')
+        local fr = self.frame_rect
+        local dc2 = gui.Painter.new_xy(fr.x1+1,fr.y2+1,fr.x2-8,fr.y2+1)
+        dc2:key('LEAVESCREEN'):string('/'):key('MENU_CONFIRM')
     end
 end
 

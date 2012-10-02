@@ -1105,30 +1105,30 @@ void viewscreen_unitlaborsst::render()
     }
 
     int x = 2;
-    OutputString(10, x, gps->dimy - 3, "Enter"); // SELECT key
+    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::SELECT));
     OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle labor, ");
 
-    OutputString(10, x, gps->dimy - 3, "Shift+Enter"); // SELECT_ALL key
+    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::SELECT_ALL));
     OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle Group, ");
 
-    OutputString(10, x, gps->dimy - 3, "v"); // UNITJOB_VIEW key
+    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW));
     OutputString(15, x, gps->dimy - 3, ": ViewCre, ");
 
-    OutputString(10, x, gps->dimy - 3, "c"); // UNITJOB_ZOOM_CRE key
+    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));
     OutputString(15, x, gps->dimy - 3, ": Zoom-Cre");
 
     x = 2;
-    OutputString(10, x, gps->dimy - 2, "Esc"); // LEAVESCREEN key
+    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
     OutputString(15, x, gps->dimy - 2, ": Done, ");
 
-    OutputString(10, x, gps->dimy - 2, "+"); // SECONDSCROLL_DOWN key
-    OutputString(10, x, gps->dimy - 2, "-"); // SECONDSCROLL_UP key
+    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
+    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
     OutputString(15, x, gps->dimy - 2, ": Sort by Skill, ");
 
-    OutputString(10, x, gps->dimy - 2, "*"); // SECONDSCROLL_PAGEDOWN key
-    OutputString(10, x, gps->dimy - 2, "/"); // SECONDSCROLL_PAGEUP key
+    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
+    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
     OutputString(15, x, gps->dimy - 2, ": Sort by (");
-    OutputString(10, x, gps->dimy - 2, "Tab"); // CHANGETAB key
+    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::CHANGETAB));
     OutputString(15, x, gps->dimy - 2, ") ");
     switch (altsort)
     {
@@ -1182,7 +1182,7 @@ struct unitlist_hook : df::viewscreen_unitlistst
         if (units[page].size())
         {
             int x = 2;
-            OutputString(12, x, gps->dimy - 2, "l"); // UNITVIEW_PRF_PROF key
+            OutputString(12, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::UNITVIEW_PRF_PROF));
             OutputString(15, x, gps->dimy - 2, ": Manage labors (DFHack)");
         }
     }

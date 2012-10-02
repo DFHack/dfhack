@@ -253,7 +253,7 @@ end
 
 DwarfOverlay = defclass(DwarfOverlay, gui.Screen)
 
-function DwarfOverlay:updateLayout()
+function DwarfOverlay:postUpdateLayout()
     self.df_layout = getPanelLayout()
 end
 
@@ -352,8 +352,7 @@ end
 
 MenuOverlay = defclass(MenuOverlay, DwarfOverlay)
 
-function MenuOverlay:updateLayout()
-    MenuOverlay.super.updateLayout(self)
+function MenuOverlay:postUpdateLayout()
     self.frame_rect = self.df_layout.menu
 end
 

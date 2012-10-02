@@ -310,6 +310,7 @@ function Screen:onResize(w,h)
 end
 
 function Screen:updateLayout()
+    self:invoke_after('postUpdateLayout')
 end
 
 ------------------------
@@ -399,7 +400,7 @@ function FramedScreen:updateFrameSize()
     self.frame_opaque = (gw == 0 and gh == 0)
 end
 
-function FramedScreen:updateLayout()
+function FramedScreen:postUpdateLayout()
     self:updateFrameSize()
 end
 

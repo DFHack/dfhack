@@ -821,6 +821,8 @@ std::string Core::getHackPath()
 #endif
 }
 
+void init_screen_module(Core *);
+
 bool Core::Init()
 {
     if(started)
@@ -866,6 +868,7 @@ bool Core::Init()
 
     // Init global object pointers
     df::global::InitGlobals();
+    init_screen_module(this);
 
     cerr << "Initializing Console.\n";
     // init the console.

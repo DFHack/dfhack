@@ -1146,6 +1146,7 @@ static const LuaWrapper::FunctionReg dfhack_screen_module[] = {
     WRAPM(Screen, inGraphicsMode),
     WRAPM(Screen, clear),
     WRAPM(Screen, invalidate),
+    WRAPM(Screen, getKeyDisplay),
     { NULL, NULL }
 };
 

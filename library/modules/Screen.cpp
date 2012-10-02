@@ -28,6 +28,7 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 using namespace std;
 
 #include "modules/Screen.h"
@@ -63,6 +64,8 @@ using df::global::gview;
 using df::global::enabler;
 
 using Screen::Pen;
+
+using std::string;
 
 /*
  * Screen painting API.
@@ -301,6 +304,51 @@ bool Screen::isDismissed(df::viewscreen *screen)
     CHECK_NULL_POINTER(screen);
 
     return screen->breakdown_level != interface_breakdown_types::NONE;
+}
+
+#ifdef _LINUX
+// Link to the libgraphics class directly:
+class DFHACK_EXPORT enabler_inputst {
+ public:
+  std::string GetKeyDisplay(int binding);
+};
+#else
+struct less_sz {
+  bool operator() (const string &a, const string &b) const {
+    if (a.size() < b.size()) return true;
+    if (a.size() > b.size()) return false;
+    return a < b;
+  }
+};
+static std::map<df::interface_key,std::set<string,less_sz> > *keydisplay = NULL;
+#endif
+
+void init_screen_module(Core *core)
+{
+#ifdef _LINUX
+    core = core;
+#else
+    if (!core->vinfo->getAddress("keydisplay", keydisplay))
+        keydisplay = NULL;
+#endif
+}
+
+string Screen::getKeyDisplay(df::interface_key key)
+{
+#ifdef _LINUX
+    auto enabler = (enabler_inputst*)df::global::enabler;
+    if (enabler)
+        return enabler->GetKeyDisplay(key);
+#else
+    if (keydisplay)
+    {
+        auto it = keydisplay->find(key);
+        if (it != keydisplay->end() && !it->second.empty())
+            return *it->second.begin();
+    }
+#endif
+
+    return "?";
 }
 
 /*

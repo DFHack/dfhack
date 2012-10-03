@@ -30,6 +30,7 @@
 #include "df/viewscreen_optionst.h"
 #include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dungeon_monsterstatusst.h"
+#include "df/nemesis_flags.h"
 
 #include <math.h>
 
@@ -683,17 +684,19 @@ command_result adv_bodyswap (color_ostream &out, std::vector <std::string> & par
     // Permanently re-link everything
     if (permanent)
     {
+        using namespace df::enums::nemesis_flags;
+
         ui_advmode->player_id = linear_index(world->nemesis.all, new_nemesis);
 
         // Flag 0 appears to be the 'active adventurer' flag, and
         // the player_id field above seems to be computed using it
         // when a savegame is loaded.
         // Also, unless this is set, it is impossible to retire.
-        real_nemesis->flags.set(0, false);
-        new_nemesis->flags.set(0, true);
+        real_nemesis->flags.set(ACTIVE_ADVENTURER, false);
+        new_nemesis->flags.set(ACTIVE_ADVENTURER, true);
 
-        real_nemesis->flags.set(1, true); // former retired adventurer
-        new_nemesis->flags.set(2, true); // blue color in legends
+        real_nemesis->flags.set(RETIRED_ADVENTURER, true); // former retired adventurer
+        new_nemesis->flags.set(ADVENTURER, true); // blue color in legends
 
         // Reassign companions and acquaintances
         if (!no_make_leader)

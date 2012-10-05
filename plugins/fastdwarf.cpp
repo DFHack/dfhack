@@ -52,12 +52,12 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         if (enable_fastdwarf)
         {
-
             if (unit->counters.job_counter > 0)
                 unit->counters.job_counter = 0;
             // could also patch the unit->job.current_job->completion_timer
         }
-        if (enable_teledwarf)
+
+        if (enable_teledwarf) do
         {
             // don't do anything if the dwarf isn't going anywhere
             if (unit->path.dest.x == -30000)
@@ -73,7 +73,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
             old_block = Maps::getTileBlock(unit->pos.x, unit->pos.y, unit->pos.z);
             new_block = Maps::getTileBlock(unit->path.dest.x, unit->path.dest.y, unit->path.dest.z);
-            // just to be safe, prevent the dwarf from being moved to an unallocated map block!
+            // make sure source and dest map blocks are valid
             if (!old_block || !new_block)
                 continue;
 
@@ -98,7 +98,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             unit->pos.x = unit->path.dest.x;
             unit->pos.y = unit->path.dest.y;
             unit->pos.z = unit->path.dest.z;
-        }
+        } while (0);
     }
     return CR_OK;
 }

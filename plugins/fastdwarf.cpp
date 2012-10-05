@@ -2,134 +2,165 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include "modules/MapCache.h"
+#include "modules/Units.h"
+#include "modules/Maps.h"
 
 #include "DataDefs.h"
-#include "df/ui.h"
 #include "df/world.h"
 #include "df/unit.h"
+#include "df/map_block.h"
 
 using std::string;
 using std::vector;
 using namespace DFHack;
 
 using df::global::world;
-using df::global::ui;
 
 // dfhack interface
 DFHACK_PLUGIN("fastdwarf");
 
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
-    return CR_OK;
-}
-
 static bool enable_fastdwarf = false;
 static bool enable_teledwarf = false;
 
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
+{
+    if (df::global::debug_turbospeed)
+        *df::global::debug_turbospeed = false;
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    // check run conditions
-    if(!world || !world->map.block_index)
+    // do we even need to do anything at all?
+    if (!enable_fastdwarf && !enable_teledwarf)
+        return CR_OK;
+
+    // make sure the world is actually loaded
+    if (!world || !world->map.block_index)
     {
         enable_fastdwarf = enable_teledwarf = false;
         return CR_OK;
     }
-    int32_t race = ui->race_id;
-    int32_t civ = ui->civ_id;
-    
-    if ( enable_fastdwarf ) {
-        for (size_t i = 0; i < world->units.all.size(); i++)
+
+    df::map_block *old_block, *new_block;
+    for (size_t i = 0; i < world->units.active.size(); i++)
+    {
+        df::unit *unit = world->units.active[i];
+        // citizens only
+        if (!Units::isCitizen(unit))
+            continue;
+
+        if (enable_fastdwarf)
         {
-            df::unit *unit = world->units.all[i];
-            
-            if (unit->race == race && unit->civ_id == civ && unit->counters.job_counter > 0)
+
+            if (unit->counters.job_counter > 0)
                 unit->counters.job_counter = 0;
             // could also patch the unit->job.current_job->completion_timer
         }
-    }
-    if ( enable_teledwarf ) {
-        MapExtras::MapCache *MCache = new MapExtras::MapCache();
-        for (size_t i = 0; i < world->units.all.size(); i++)
+        if (enable_teledwarf)
         {
-            df::unit *unit = world->units.all[i];
-            
-            if (unit->race != race || unit->civ_id != civ || unit->path.dest.x == -30000)
+            // don't do anything if the dwarf isn't going anywhere
+            if (unit->path.dest.x == -30000)
                 continue;
-            if (unit->relations.draggee_id != -1 || unit->relations.dragger_id != -1)
+
+            // skip dwarves that are dragging creatures or being dragged
+            if ((unit->relations.draggee_id != -1) || (unit->relations.dragger_id != -1))
                 continue;
+
+            // skip dwarves that are following other units
             if (unit->relations.following != 0)
                 continue;
-            
-            MapExtras::Block* block = MCache->BlockAtTile(unit->pos);
-            df::coord2d pos(unit->pos.x % 16, unit->pos.y % 16);
-            df::tile_occupancy occ = block->OccupancyAt(pos);
-            occ.bits.unit = 0;
-            occ.bits.unit_grounded = 0;
-            block->setOccupancyAt(pos, occ);
-            
-            //move immediately to destination
+
+            old_block = Maps::getTileBlock(unit->pos.x, unit->pos.y, unit->pos.z);
+            new_block = Maps::getTileBlock(unit->path.dest.x, unit->path.dest.y, unit->path.dest.z);
+            // just to be safe, prevent the dwarf from being moved to an unallocated map block!
+            if (!old_block || !new_block)
+                continue;
+
+            // clear appropriate occupancy flags at old tile
+            if (unit->flags1.bits.on_ground)
+                // this is technically wrong, but the game will recompute this as needed
+                old_block->occupancy[unit->pos.x & 0xF][unit->pos.y & 0xF].bits.unit_grounded = 0;
+            else
+                old_block->occupancy[unit->pos.x & 0xF][unit->pos.y & 0xF].bits.unit = 0;
+
+            // if there's already somebody standing at the destination, then force the unit to lay down
+            if (new_block->occupancy[unit->path.dest.x & 0xF][unit->path.dest.y & 0xF].bits.unit)
+                unit->flags1.bits.on_ground = 1;
+
+            // set appropriate occupancy flags at new tile
+            if (unit->flags1.bits.on_ground)
+                new_block->occupancy[unit->path.dest.x & 0xF][unit->path.dest.y & 0xF].bits.unit_grounded = 1;
+            else
+                new_block->occupancy[unit->path.dest.x & 0xF][unit->path.dest.y & 0xF].bits.unit = 1;
+
+            // move unit to destination
             unit->pos.x = unit->path.dest.x;
             unit->pos.y = unit->path.dest.y;
             unit->pos.z = unit->path.dest.z;
         }
-        MCache->WriteAll();
-        delete MCache;
     }
     return CR_OK;
 }
 
 static command_result fastdwarf (color_ostream &out, vector <string> & parameters)
 {
-    if (parameters.size() == 1) {
-        if ( parameters[0] == "0" ) {
-            enable_fastdwarf = false;
-            enable_teledwarf = false;
-        } else if ( parameters[0] == "1" ) {
-            enable_fastdwarf = true;
-            enable_teledwarf = false;
-        } else {
-            out.print("Incorrect usage.\n");
-            return CR_OK;
-        }
-    } else if (parameters.size() == 2) {
-        if ( parameters[0] == "0" ) {
-            enable_fastdwarf = false;
-        } else if ( parameters[0] == "1" ) {
-            enable_fastdwarf = true;
-        } else {
-            out.print("Incorrect usage.\n");
-            return CR_OK;
-        }
-        if ( parameters[1] == "0" ) {
-            enable_teledwarf = false;
-        } else if ( parameters[1] == "1" ) {
-            enable_teledwarf = true;
-        } else {
-            out.print("Incorrect usage.\n");
-            return CR_OK;
-        }
-    } else if (parameters.size() == 0) {
-        //print status
-        out.print("Current state: fast = %d, teleport = %d.\n", enable_fastdwarf, enable_teledwarf);
-    } else {
+    if (parameters.size() > 2) {
         out.print("Incorrect usage.\n");
-        return CR_OK;
+        return CR_FAILURE;
     }
-    /*if (parameters.size() == 1 && (parameters[0] == "0" || parameters[0] == "1"))
+
+    if (parameters.size() <= 2)
     {
-        if (parameters[0] == "0")
-            enable_fastdwarf = 0;
+        if (parameters.size() == 2)
+        {
+            if (parameters[1] == "0")
+                enable_teledwarf = false;
+            else if (parameters[1] == "1")
+                enable_teledwarf = true;
+            else
+            {
+                out.print("Incorrect usage.\n");
+                return CR_FAILURE;
+            }
+        }
         else
-            enable_fastdwarf = 1;
-        out.print("fastdwarf %sactivated.\n", (enable_fastdwarf ? "" : "de"));
+            enable_teledwarf = false;
+        if (parameters[0] == "0")
+        {
+            enable_fastdwarf = false;
+            if (df::global::debug_turbospeed)
+                *df::global::debug_turbospeed = false;
+        }
+        else if (parameters[0] == "1")
+        {
+            enable_fastdwarf = true;
+            if (df::global::debug_turbospeed)
+                *df::global::debug_turbospeed = false;
+        }
+        else if (parameters[0] == "2")
+        {
+            if (df::global::debug_turbospeed)
+            {
+                enable_fastdwarf = false;
+                *df::global::debug_turbospeed = true;
+            }
+            else
+            {
+                out.print("Speed level 2 not available.\n");
+                return CR_FAILURE;
+            }
+        }
+        else
+        {
+            out.print("Incorrect usage.\n");
+            return CR_FAILURE;
+        }
     }
-    else
-    {
-        out.print("Makes your minions move at ludicrous speeds.\n"
-            "Activate with 'fastdwarf 1', deactivate with 'fastdwarf 0'.\n"
-            "Current state: %d.\n", enable_fastdwarf);
-    }*/
+
+    out.print("Current state: fast = %d, teleport = %d.\n",
+        (df::global::debug_turbospeed && *df::global::debug_turbospeed) ? 2 : (enable_fastdwarf ? 1 : 0),
+        enable_teledwarf ? 1 : 0);
 
     return CR_OK;
 }
@@ -139,14 +170,16 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(PluginCommand("fastdwarf",
         "enable/disable fastdwarf and teledwarf (parameters=0/1)",
         fastdwarf, false,
-        "fastdwarf: controls speedydwarf and teledwarf. Speedydwarf makes dwarves move quickly and perform tasks quickly. Teledwarf makes dwarves move instantaneously, but do jobs at the same speed.\n"
+        "fastdwarf: make dwarves faster.\n"
         "Usage:\n"
-        "  fastdwarf 0 0: disable both speedydwarf and teledwarf\n"
-        "  fastdwarf 0 1: disable speedydwarf, enable teledwarf\n"
-        "  fastdwarf 1 0: enable speedydwarf, disable teledwarf\n"
-        "  fastdwarf 1 1: enable speedydwarf, enable teledwarf\n"
-        "  fastdwarf 0: disable speedydwarf, disable teledwarf\n"
-        "  fastdwarf 1: enable speedydwarf, disable teledwarf\n"
+        "  fastdwarf <speed> (tele)\n"
+        "Valid values for speed:\n"
+        " * 0 - Make dwarves move and work at standard speed.\n"
+        " * 1 - Make dwarves move and work at maximum speed.\n"
+        " * 2 - Make ALL creatures move and work at maximum speed.\n"
+        "Valid values for (tele):\n"
+        " * 0 - Disable dwarf teleportation (default)\n"
+        " * 1 - Make dwarves teleport to their destinations instantly.\n"
         ));
     
     return CR_OK;

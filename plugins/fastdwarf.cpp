@@ -61,21 +61,21 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         {
             // don't do anything if the dwarf isn't going anywhere
             if (unit->path.dest.x == -30000)
-                continue;
+                break;
 
             // skip dwarves that are dragging creatures or being dragged
             if ((unit->relations.draggee_id != -1) || (unit->relations.dragger_id != -1))
-                continue;
+                break;
 
             // skip dwarves that are following other units
             if (unit->relations.following != 0)
-                continue;
+                break;
 
             old_block = Maps::getTileBlock(unit->pos.x, unit->pos.y, unit->pos.z);
             new_block = Maps::getTileBlock(unit->path.dest.x, unit->path.dest.y, unit->path.dest.z);
             // make sure source and dest map blocks are valid
             if (!old_block || !new_block)
-                continue;
+                break;
 
             // clear appropriate occupancy flags at old tile
             if (unit->flags1.bits.on_ground)

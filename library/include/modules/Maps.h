@@ -152,6 +152,21 @@ typedef uint8_t biome_indices40d [9];
 typedef uint16_t t_temperatures [16][16];
 
 /**
+ * Index a tile array by a 2D coordinate, clipping it to mod 16
+ */
+template<class R, class T> inline R index_tile(T &v, df::coord2d p) {
+    return v[p.x&15][p.y&15];
+}
+
+/**
+ * Check if a 2D coordinate is in the 0-15 range.
+ */
+inline bool is_valid_tile_coord(df::coord2d p) {
+    return (p.x & ~15) == 0 && (p.y & ~15) == 0;
+}
+
+
+/**
  * The Maps module
  * \ingroup grp_modules
  * \ingroup grp_maps

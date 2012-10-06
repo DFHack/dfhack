@@ -60,7 +60,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         if (enable_teledwarf) do
         {
             // don't do anything if the dwarf isn't going anywhere
-            if (unit->path.dest.x == -30000)
+            if (!unit->path.dest.isValid())
                 break;
 
             // skip dwarves that are dragging creatures or being dragged
@@ -71,33 +71,36 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             if (unit->relations.following != 0)
                 break;
 
-            old_block = Maps::getTileBlock(unit->pos.x, unit->pos.y, unit->pos.z);
-            new_block = Maps::getTileBlock(unit->path.dest.x, unit->path.dest.y, unit->path.dest.z);
+            // skip unconscious units
+            if (unit->counters.unconscious > 0)
+                break;
+
             // make sure source and dest map blocks are valid
-            if (!old_block || !new_block)
+            auto old_occ = Maps::getTileOccupancy(unit->pos);
+            auto new_occ = Maps::getTileOccupancy(unit->path.dest);
+            if (!old_occ || !new_occ)
                 break;
 
             // clear appropriate occupancy flags at old tile
             if (unit->flags1.bits.on_ground)
                 // this is technically wrong, but the game will recompute this as needed
-                old_block->occupancy[unit->pos.x & 0xF][unit->pos.y & 0xF].bits.unit_grounded = 0;
+                old_occ->bits.unit_grounded = 0;
             else
-                old_block->occupancy[unit->pos.x & 0xF][unit->pos.y & 0xF].bits.unit = 0;
+                old_occ->bits.unit = 0;
 
             // if there's already somebody standing at the destination, then force the unit to lay down
-            if (new_block->occupancy[unit->path.dest.x & 0xF][unit->path.dest.y & 0xF].bits.unit)
+            if (new_occ->bits.unit)
                 unit->flags1.bits.on_ground = 1;
 
             // set appropriate occupancy flags at new tile
             if (unit->flags1.bits.on_ground)
-                new_block->occupancy[unit->path.dest.x & 0xF][unit->path.dest.y & 0xF].bits.unit_grounded = 1;
+                new_occ->bits.unit_grounded = 1;
             else
-                new_block->occupancy[unit->path.dest.x & 0xF][unit->path.dest.y & 0xF].bits.unit = 1;
+                new_occ->bits.unit = 1;
 
             // move unit to destination
-            unit->pos.x = unit->path.dest.x;
-            unit->pos.y = unit->path.dest.y;
-            unit->pos.z = unit->path.dest.z;
+            unit->pos = unit->path.dest;
+            unit->path.path.clear();
         } while (0);
     }
     return CR_OK;

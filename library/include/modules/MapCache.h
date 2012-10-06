@@ -47,14 +47,6 @@ namespace MapExtras
 
 class DFHACK_EXPORT MapCache;
 
-template<class R, class T> inline R index_tile(T &v, df::coord2d p) {
-    return v[p.x&15][p.y&15];
-}
-
-inline bool is_valid_tile_coord(df::coord2d p) {
-    return (p.x & ~15) == 0 && (p.y & ~15) == 0;
-}
-
 class Block;
 
 class BlockInfo

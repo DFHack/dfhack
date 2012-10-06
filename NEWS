@@ -1,6 +1,9 @@
 DFHack future
 
-  Nothing yet!
+  Internals:
+    - support for displaying active keybindings properly.
+  Misc improvements:
+    - fastdwarf: new mode using debug flags, and some internal consistency fixes.
 
 DFHack v0.34.11-r2
 

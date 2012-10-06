@@ -2,6 +2,8 @@ DFHack future
 
   Internals:
     - support for displaying active keybindings properly.
+  Notable bugfixes:
+    - autobutcher can be re-enabled again after being stopped.
   Misc improvements:
     - fastdwarf: new mode using debug flags, and some internal consistency fixes.
 

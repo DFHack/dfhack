@@ -3412,6 +3412,13 @@ command_result start_autobutcher(color_ostream &out)
     if (!config_autobutcher.isValid())
     {
         config_autobutcher = pworld->AddPersistentData("autobutcher/config");
+
+        if (!config_autobutcher.isValid())
+        {
+            out << "Cannot enable autobutcher without a world!" << endl;
+            return CR_OK;
+        }
+
         config_autobutcher.ival(1) = sleep_autobutcher;
         config_autobutcher.ival(2) = enable_autobutcher_autowatch;
         config_autobutcher.ival(3) = default_fk;
@@ -3431,11 +3438,6 @@ command_result init_autobutcher(color_ostream &out)
 {
 	cleanup_autobutcher(out);
     auto pworld = Core::getInstance().getWorld();
-    if(!pworld)
-    {
-        out << "Autobutcher has no world to read from!" << endl;
-        return CR_OK;
-    }
 
     config_autobutcher = pworld->GetPersistentData("autobutcher/config");
     if(config_autobutcher.isValid())
@@ -3502,12 +3504,22 @@ command_result start_autonestbox(color_ostream &out)
 {
     auto pworld = Core::getInstance().getWorld();
     enable_autonestbox = true;
+
     if (!config_autobutcher.isValid())
     {
         config_autonestbox = pworld->AddPersistentData("autonestbox/config");
-        config_autonestbox.ival(0) = enable_autonestbox;
+
+        if (!config_autobutcher.isValid())
+        {
+            out << "Cannot enable autonestbox without a world!" << endl;
+            return CR_OK;
+        }
+
         config_autonestbox.ival(1) = sleep_autonestbox;
     }
+
+    config_autonestbox.ival(0) = enable_autonestbox;
+
     out << "Starting autonestbox." << endl;
 	init_autonestbox(out);
     return CR_OK;
@@ -3517,11 +3529,6 @@ command_result init_autonestbox(color_ostream &out)
 {
 	cleanup_autonestbox(out);
     auto pworld = Core::getInstance().getWorld();
-    if(!pworld)
-    {
-        out << "Autonestbox has no world to read from!" << endl;
-        return CR_OK;
-    }
 
     config_autonestbox = pworld->GetPersistentData("autonestbox/config");
     if(config_autonestbox.isValid())

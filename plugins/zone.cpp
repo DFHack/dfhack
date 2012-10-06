@@ -2769,10 +2769,7 @@ public:
         if(!rconfig.isValid())
         {
             string keyname = "autobutcher/watchlist/" + getRaceName(raceId);
-            auto pworld = Core::getInstance().getWorld();
-            rconfig = pworld->GetPersistentData(keyname);
-            if(!rconfig.isValid())
-                rconfig = pworld->AddPersistentData(keyname);
+            rconfig = World::GetPersistentData(keyname, NULL);
         }
         if(rconfig.isValid())
         {
@@ -2795,7 +2792,7 @@ public:
     {
         if(!rconfig.isValid())
             return;
-        Core::getInstance().getWorld()->DeletePersistentData(rconfig);
+        World::DeletePersistentData(rconfig);
     }
 
     void SortUnitsByAge()
@@ -3405,13 +3402,11 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
 
 command_result start_autobutcher(color_ostream &out)
 {
-    auto pworld = Core::getInstance().getWorld();
-
     enable_autobutcher = true;
 
     if (!config_autobutcher.isValid())
     {
-        config_autobutcher = pworld->AddPersistentData("autobutcher/config");
+        config_autobutcher = World::AddPersistentData("autobutcher/config");
 
         if (!config_autobutcher.isValid())
         {
@@ -3437,9 +3432,8 @@ command_result start_autobutcher(color_ostream &out)
 command_result init_autobutcher(color_ostream &out)
 {
 	cleanup_autobutcher(out);
-    auto pworld = Core::getInstance().getWorld();
 
-    config_autobutcher = pworld->GetPersistentData("autobutcher/config");
+    config_autobutcher = World::GetPersistentData("autobutcher/config");
     if(config_autobutcher.isValid())
     {
         if (config_autobutcher.ival(0) == -1)
@@ -3471,7 +3465,7 @@ command_result init_autobutcher(color_ostream &out)
     // read watchlist from save
 
     std::vector<PersistentDataItem> items;
-    pworld->GetPersistentData(&items, "autobutcher/watchlist/", true);
+    World::GetPersistentData(&items, "autobutcher/watchlist/", true);
 	for (auto p = items.begin(); p != items.end(); p++)
 	{
 		string key = p->key();
@@ -3502,12 +3496,11 @@ command_result cleanup_autobutcher(color_ostream &out)
 
 command_result start_autonestbox(color_ostream &out)
 {
-    auto pworld = Core::getInstance().getWorld();
     enable_autonestbox = true;
 
     if (!config_autobutcher.isValid())
     {
-        config_autonestbox = pworld->AddPersistentData("autonestbox/config");
+        config_autonestbox = World::AddPersistentData("autonestbox/config");
 
         if (!config_autobutcher.isValid())
         {
@@ -3528,9 +3521,8 @@ command_result start_autonestbox(color_ostream &out)
 command_result init_autonestbox(color_ostream &out)
 {
 	cleanup_autonestbox(out);
-    auto pworld = Core::getInstance().getWorld();
 
-    config_autonestbox = pworld->GetPersistentData("autonestbox/config");
+    config_autonestbox = World::GetPersistentData("autonestbox/config");
     if(config_autonestbox.isValid())
     {
         if (config_autonestbox.ival(0) == -1)

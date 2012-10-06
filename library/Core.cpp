@@ -627,8 +627,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
         }
         else if(first == "fpause")
         {
-            World * w = getWorld();
-            w->SetPauseState(true);
+            World::SetPauseState(true);
             con.print("The game was forced to pause!\n");
         }
         else if(first == "cls")
@@ -1125,7 +1124,7 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         last_world_data_ptr = new_wdata;
         last_local_map_ptr = new_mapdata;
 
-        getWorld()->ClearPersistentCache();
+        World::ClearPersistentCache();
 
         // and if the world is going away, we report the map change first
         if(had_map)
@@ -1143,7 +1142,7 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
         if (isMapLoaded() != had_map)
         {
-            getWorld()->ClearPersistentCache();
+            World::ClearPersistentCache();
             onStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
         }
     }
@@ -1681,7 +1680,6 @@ TYPE * Core::get##TYPE() \
     return s_mods.p##TYPE;\
 }
 
-MODULE_GETTER(World);
 MODULE_GETTER(Materials);
 MODULE_GETTER(Notes);
 MODULE_GETTER(Graphic);

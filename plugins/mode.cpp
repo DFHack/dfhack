@@ -117,13 +117,9 @@ command_result mode (color_ostream &out_, vector <string> & parameters)
             return CR_WRONG_USAGE;
     }
 
-    World *world;
-
     {
         CoreSuspender suspend;
-        world = Core::getInstance().getWorld();
-        world->Start();
-        world->ReadGameMode(gm);
+        World::ReadGameMode(gm);
     }
 
     printCurrentModes(gm, out);
@@ -202,7 +198,7 @@ command_result mode (color_ostream &out_, vector <string> & parameters)
 
         {
             CoreSuspender suspend;
-            world->WriteGameMode(gm);
+            World::WriteGameMode(gm);
         }
 
         out << endl;

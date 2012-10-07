@@ -443,8 +443,8 @@ void viewscreen_unitlaborsst::refreshNames()
         UnitInfo *cur = units[i];
         df::unit *unit = cur->unit;
 
-        cur->name = Translation::TranslateName(&unit->name, false);
-        cur->transname = Translation::TranslateName(&unit->name, true);
+        cur->name = Translation::TranslateName(Units::getVisibleName(unit), false);
+        cur->transname = Translation::TranslateName(Units::getVisibleName(unit), true);
         cur->profession = Units::getProfessionName(unit);
     }
     calcSize();

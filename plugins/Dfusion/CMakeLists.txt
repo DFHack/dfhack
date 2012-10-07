@@ -1,5 +1,5 @@
 include_directories(include)
-include_directories("${dfhack_SOURCE_DIR}/library/depends/tthread")
+
 FILE(GLOB DFUSION_CPPS src/*.c*)
 set(
     DFUSION_CPPS_ALL

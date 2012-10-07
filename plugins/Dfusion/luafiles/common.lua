@@ -542,7 +542,3 @@ function Allocate(size)
 	engine.poked(ptr,curptr)
 	return curptr-size+ptr
 end
-dofile("dfusion/patterns.lua")
-dofile("dfusion/patterns2.lua")
-dofile("dfusion/itempatterns.lua")
-dofile("dfusion/buildingpatterns.lua")

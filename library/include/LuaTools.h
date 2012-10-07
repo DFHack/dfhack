@@ -472,3 +472,18 @@ namespace DFHack {namespace Lua {
             name##_event.invoke(out, 5); \
         } \
     }
+
+#define DEFINE_LUA_EVENT_6(name, handler, arg_type1, arg_type2, arg_type3, arg_type4, arg_type5,arg_type6) \
+    static DFHack::Lua::Notification name##_event(df::wrap_function(handler, true)); \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4,arg_type5 arg5, arg_type6 arg6) { \
+    handler(out, arg1, arg2, arg3, arg4, arg5, arg6); \
+    if (auto state = name##_event.state_if_count()) { \
+    DFHack::Lua::Push(state, arg1); \
+    DFHack::Lua::Push(state, arg2); \
+    DFHack::Lua::Push(state, arg3); \
+    DFHack::Lua::Push(state, arg4); \
+    DFHack::Lua::Push(state, arg5); \
+    DFHack::Lua::Push(state, arg6); \
+    name##_event.invoke(out, 6); \
+    } \
+}

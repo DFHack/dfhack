@@ -45,6 +45,25 @@ function GmEditorUi:init(args)
     
     return self
 end
+function GmEditorUi:find(test)
+    local trg=self:currentTarget() 
+    if trg.target and trg.target._kind and trg.target._kind=="container" then
+        if test== nil then
+            dialog.showInputPrompt("Test function","Input function that tests(k,v as argument):",COLOR_WHITE,"",dfhack.curry(self.find,self))
+            return
+        end
+        local e,what=load("return function(k,v) return "..test.." end")
+        if e==nil then
+            dialog.showMessage("Error!","function failed to compile\n"..what,COLOR_RED)
+        end
+        for k,v in pairs(trg.target) do
+            if e()(k,v)==true then
+                self:pushTarget(v)
+                return
+            end
+        end
+    end
+end
 function GmEditorUi:insertNew(typename)
     local tp=typename
     if typename== nil then
@@ -165,6 +184,8 @@ end
             self:changeSelected(10)
         elseif keys.SELECT then
             self:editSelected()
+        elseif keys.CUSTOM_ALT_F then
+            self:find()
         elseif keys.CUSTOM_ALT_E then
             --self:specialEditor()
         elseif keys.CUSTOM_ALT_I then --insert

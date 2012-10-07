@@ -184,9 +184,10 @@ df::item* find_item(
     return NULL;
 }
 
-static void handle_reaction_done(color_ostream &out, df::unit *unit, std::vector<df::item*> *in_items, std::vector<df::item*> *out_items,bool *call_native){};
+static void handle_reaction_done(color_ostream &out,df::reaction*, df::unit *unit, std::vector<df::item*> *in_items,std::vector<df::reaction_reagent*> *in_reag
+	, std::vector<df::item*> *out_items,bool *call_native){};
 
-DEFINE_LUA_EVENT_4(onReactionComplete, handle_reaction_done, df::unit *, std::vector<df::item*> *,std::vector<df::item*> *,bool *);
+DEFINE_LUA_EVENT_6(onReactionComplete, handle_reaction_done,df::reaction*, df::unit *, std::vector<df::item*> *,std::vector<df::reaction_reagent*> *,std::vector<df::item*> *,bool *);
 
 
 DFHACK_PLUGIN_LUA_EVENTS {
@@ -207,9 +208,11 @@ struct product_hook : item_product {
     ) {
         if (auto product = products[this])
         {
+			df::reaction* this_reaction=product->react;
+			CoreSuspendClaimer suspend;
 			color_ostream_proxy out(Core::getInstance().getConsole());
 			bool call_native=true;
-            onReactionComplete(out,unit,in_items,out_items,&call_native);
+            onReactionComplete(out,this_reaction,unit,in_items,in_reag,out_items,&call_native);
 			if(!call_native)
 				return;
         }

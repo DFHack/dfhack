@@ -88,6 +88,36 @@ Interactive commands like 'liquids' cannot be used as hotkeys.
 
 Most of the commands come from plugins. Those reside in 'hack/plugins/'.
 
+Patched binaries
+================
+
+On linux and OSX, users of patched binaries may have to find the relevant
+section in symbols.xml, and add a new line with the checksum of their
+executable::
+
+    <md5-hash value='????????????????????????????????'/>
+
+In order to find the correct value of the hash, look into stderr.log;
+DFHack prints an error there if it does not recognize the hash.
+
+DFHack includes a small stand-alone utility for applying and removing
+binary patches from the game executable. Use it from the regular operating
+system console:
+
+ * ``binpatch check "Dwarf Fortress.exe" patch.dif``
+
+   Checks and prints if the patch is currently applied.
+
+ * ``binpatch apply "Dwarf Fortress.exe" patch.dif``
+
+   Applies the patch, unless it is already applied or in conflict.
+
+ * ``binpatch remove "Dwarf Fortress.exe" patch.dif``
+
+   Removes the patch, unless it is already removed.
+
+The patches are expected to be encoded in text format used by IDA.
+
 =============================
 Something doesn't work, help!
 =============================

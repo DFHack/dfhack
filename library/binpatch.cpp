@@ -291,10 +291,7 @@ int main (int argc, char *argv[])
         patch.apply(bindata.data(), bindata.size(), false);
     }
 
-    std::string bak_file = exe_file + ".bak";
-    remove(bak_file.c_str());
-
-    if (rename(exe_file.c_str(), bak_file.c_str()) != 0)
+    if (!save_file(bindata, exe_file + ".bak"))
     {
         cerr << "Could not create backup." << endl;
         return 1;

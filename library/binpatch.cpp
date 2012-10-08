@@ -53,6 +53,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
+#include <md5wrapper.h>
+
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -222,6 +224,12 @@ bool save_file(const std::vector<patch_byte> &pvec, std::string fname)
     return cnt == pvec.size();
 }
 
+std::string compute_hash(const std::vector<patch_byte> &pvec)
+{
+    md5wrapper md5;
+    return md5.getHashFromBytes(pvec.data(), pvec.size());
+}
+
 int main (int argc, char *argv[])
 {
     if (argc <= 3)
@@ -300,6 +308,7 @@ int main (int argc, char *argv[])
     if (!save_file(bindata, exe_file))
         return 1;
 
-    cout << "Patched " << patch.entries.size() << " bytes." << endl;
+    cout << "Patched " << patch.entries.size()
+         << " bytes, new hash: " << compute_hash(bindata) << endl;
     return 0;
 }

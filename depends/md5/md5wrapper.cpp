@@ -36,16 +36,14 @@
  * internal hash function, calling
  * the basic methods from md5.h
  */
-std::string md5wrapper::hashit(std::string text)
+std::string md5wrapper::hashit(unsigned char *data, size_t length)
 {
 	MD5Context ctx;
 
 	//init md5
 	MD5Init(&ctx);
 	//update with our string
-	MD5Update(&ctx,
-		 (unsigned char*)text.c_str(),
-		 text.length());
+	MD5Update(&ctx, data, length);
 
 	//create the hash
 	unsigned char buff[16] = "";
@@ -95,9 +93,8 @@ md5wrapper::~md5wrapper()
  */
 std::string md5wrapper::getHashFromString(std::string text)
 {
-	return this->hashit(text);
+	return this->hashit((unsigned char*)text.data(), text.length());
 }
-
 
 /*
  * creates a MD5 hash from

@@ -91,7 +91,7 @@ repair_him = lambda { |u|
     end
 }
 
-if args.include?("man"||"help"||"?")
+if args.include?('man') or args.include?('help') or args.include?('?')
     puts "Repair him/her. Use this when you see the 'unmovable dwarves' hospital bugs."
     puts "Please select by v or k or following target option."
     puts "Options(target):"
@@ -111,7 +111,6 @@ if args.include?("man"||"help"||"?")
     puts "    - repair the selecting patient without grasp"
     puts "  supermedic nick:""Ignored Dwarf"""
     puts "    - do all repairs to nicknamed as ""Ignored Dwarf"""
-
 else
     nick = ""
     patients = []

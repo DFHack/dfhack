@@ -6,8 +6,12 @@ module DFHack
             if what == :selected
                 case curview._rtti_classname
                 when :viewscreen_itemst
-                    ref = curview.entry_ref[curview.cursor_pos]
-                    ref.item_tg if ref.kind_of?(GeneralRefItem)
+                    if ref = curview.entry_ref[curview.cursor_pos]
+                        ref.item_tg if ref.kind_of?(GeneralRefItem)
+                    else
+                        # not a container
+                        curview.item
+                    end
                 when :viewscreen_storesst   # z/stocks
                     if curview.in_group_mode == 0 and curview.in_right_list == 1
                         curview.items[curview.item_cursor]

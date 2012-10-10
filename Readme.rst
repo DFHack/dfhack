@@ -1632,16 +1632,18 @@ removebadthoughts
 This script remove negative thoughts from your dwarves. Very useful against
 tantrum spirals.
 
-With a selected unit in 'v' mode, will clear this unit's mind, otherwise
-clear all your fort's units minds.
+The script can target a single creature, when used with the ``him`` argument,
+or the whole fort population, with ``all``.
+
+To show every bad thought present without actually removing them, run the
+script with the ``-n`` or ``--dry-run`` argument. This can give a quick
+hint on what bothers your dwarves the most.
 
 Individual dwarf happiness may not increase right after this command is run,
 but in the short term your dwarves will get much more joyful.
-The thoughts are set to be very old, and the game will remove them soon when
-you unpause.
 
-With the optional ``-v`` parameter, the script will dump the negative thoughts
-it removed.
+Internals: the thoughts are set to be very old, so that the game remove them
+quickly after you unpause.
 
 
 slayrace
@@ -1650,7 +1652,7 @@ Kills any unit of a given race.
 
 With no argument, lists the available races.
 
-With the special argument 'him', targets only the selected creature.
+With the special argument ``him``, targets only the selected creature.
 
 Any non-dead non-caged unit of the specified race gets its ``blood_count``
 set to 0, which means immediate death at the next game tick. For creatures

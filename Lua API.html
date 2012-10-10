@@ -1914,6 +1914,12 @@ utils.insert_or_update(soul.skills, {new=true, id=..., rating=...}, 'id')
 </pre>
 <p>(For an explanation of <tt class="docutils literal">new=true</tt>, see table assignment in the wrapper section)</p>
 </li>
+<li><p class="first"><tt class="docutils literal">utils.erase_sorted_key(vector,key,field,cmpfun)</tt></p>
+<p>Removes the item with the given key from the list. Returns: <em>did_erase, vector[idx], idx</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.erase_sorted(vector,item,field,cmpfun)</tt></p>
+<p>Exactly like <tt class="docutils literal">erase_sorted_key</tt>, but if field is specified, takes the key from <tt class="docutils literal">item[field]</tt>.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">utils.prompt_yes_no(prompt, default)</tt></p>
 <p>Presents a yes/no prompt to the user. If <tt class="docutils literal">default</tt> is not <em>nil</em>,
 allows just pressing Enter to submit the default choice.

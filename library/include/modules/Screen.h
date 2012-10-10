@@ -128,6 +128,9 @@ namespace DFHack
         DFHACK_EXPORT bool show(df::viewscreen *screen, df::viewscreen *before = NULL);
         DFHACK_EXPORT void dismiss(df::viewscreen *screen, bool to_first = false);
         DFHACK_EXPORT bool isDismissed(df::viewscreen *screen);
+
+        /// Retrieve the string representation of the bound key.
+        DFHACK_EXPORT std::string getKeyDisplay(df::interface_key key);
     }
 
     class DFHACK_EXPORT dfhack_viewscreen : public df::viewscreen {

@@ -89,8 +89,8 @@ function MechanismList:onRenderBody(dc)
     end
 
     dc:newline():newline(1):pen(COLOR_WHITE)
-    dc:string("Esc", COLOR_LIGHTGREEN):string(": Back, ")
-    dc:string("Enter", COLOR_LIGHTGREEN):string(": Switch")
+    dc:key('LEAVESCREEN'):string(": Back, ")
+    dc:key('SELECT'):string(": Switch")
 end
 
 function MechanismList:changeSelected(delta)

@@ -215,8 +215,7 @@ static void init_buildings(bool enable)
 
     if (enable)
     {
-        auto pworld = Core::getInstance().getWorld();
-        auto entry = pworld->GetPersistentData("rename/building_types");
+        auto entry = World::GetPersistentData("rename/building_types");
 
         if (entry.isValid())
         {
@@ -245,8 +244,7 @@ static bool renameBuilding(df::building *bld, std::string name)
 
     if (!name.empty() && !is_enabled_building(code))
     {
-        auto pworld = Core::getInstance().getWorld();
-        auto entry = pworld->GetPersistentData("rename/building_types", NULL);
+        auto entry = World::GetPersistentData("rename/building_types", NULL);
         if (!entry.isValid())
             return false;
 

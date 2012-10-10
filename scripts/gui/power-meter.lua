@@ -34,7 +34,8 @@ function PowerMeter:onRenderBody(dc)
 
     dc:string("Excess power range:")
 
-    dc:newline(3):string("as", COLOR_LIGHTGREEN)
+    dc:newline(3):key('BUILDING_TRIGGER_MIN_WATER_DOWN')
+    dc:key('BUILDING_TRIGGER_MIN_WATER_UP')
     dc:string(": Min ")
     if self.min_power <= 0 then
         dc:string("(any)")
@@ -42,7 +43,8 @@ function PowerMeter:onRenderBody(dc)
         dc:string(''..self.min_power)
     end
 
-    dc:newline(3):string("zx", COLOR_LIGHTGREEN)
+    dc:newline(3):key('BUILDING_TRIGGER_MAX_WATER_DOWN')
+    dc:key('BUILDING_TRIGGER_MAX_WATER_UP')
     dc:string(": Max ")
     if self.max_power < 0 then
         dc:string("(any)")
@@ -51,7 +53,7 @@ function PowerMeter:onRenderBody(dc)
     end
     dc:newline():newline(1)
 
-    dc:string("i",COLOR_LIGHTGREEN):string(": ")
+    dc:key('CUSTOM_I'):string(": ")
     if self.invert then
         dc:string("Inverted")
     else

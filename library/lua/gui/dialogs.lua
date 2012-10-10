@@ -51,10 +51,9 @@ function MessageBox:onRenderBody(dc)
     end
 
     if self.on_accept then
-        local x,y = self.frame_rect.x1+1, self.frame_rect.y2+1
-        dscreen.paintString({fg=COLOR_LIGHTGREEN},x,y,'ESC')
-        dscreen.paintString({fg=COLOR_GREY},x+3,y,'/')
-        dscreen.paintString({fg=COLOR_LIGHTGREEN},x+4,y,'y')
+        local fr = self.frame_rect
+        local dc2 = gui.Painter.new_xy(fr.x1+1,fr.y2+1,fr.x2-8,fr.y2+1)
+        dc2:key('LEAVESCREEN'):string('/'):key('MENU_CONFIRM')
     end
 end
 
@@ -171,10 +170,10 @@ ListBox = defclass(ListBox, MessageBox)
 ListBox.focus_path = 'ListBox'
 
 ListBox.ATTRS{
-    selection = 0,
+    selection = 1,
     choices = {},
     select_pen = DEFAULT_NIL,
-    on_input = DEFAULT_NIL
+    on_select = DEFAULT_NIL
 }
 
 function InputBox:preinit(info)
@@ -182,84 +181,112 @@ function InputBox:preinit(info)
 end
 
 function ListBox:init(info)
-    self.page_top = 0
+    self.page_top = 1
+end
+
+local function choice_text(entry)
+    if type(entry)=="table" then
+        return entry.caption or entry[1]
+    else
+        return entry
+    end
 end
 
 function ListBox:getWantedFrameSize()
     local mw, mh = ListBox.super.getWantedFrameSize(self)
-    return mw, mh+#self.choices
+    for _,v in ipairs(self.choices) do
+        local text = choice_text(v)
+        mw = math.max(mw, #text+2)
+    end
+    return mw, mh+#self.choices+1
+end
+
+function ListBox:postUpdateLayout()
+    self.page_size = self.frame_rect.height - #self.text - 3
+    self:moveCursor(0)
+end
+
+function ListBox:moveCursor(delta)
+    local page = math.max(1, self.page_size)
+    local cnt = #self.choices
+    local off = self.selection+delta-1
+    local ds = math.abs(delta)
+
+    if ds > 1 then
+        if off >= cnt+ds-1 then
+            off = 0
+        else
+            off = math.min(cnt-1, off)
+        end
+        if off <= -ds then
+            off = cnt-1
+        else
+            off = math.max(0, off)
+        end
+    end
+
+    self.selection = 1 + off % cnt
+    self.page_top = 1 + page * math.floor((self.selection-1) / page)
 end
 
 function ListBox:onRenderBody(dc)
     ListBox.super.onRenderBody(self, dc)
 
-    dc:newline(1)
+    dc:newline(1):pen(self.select_pen or COLOR_CYAN)
 
-    if self.selection>dc.height-3 then
-        self.page_top=self.selection-(dc.height-3)
-    elseif self.selection<self.page_top and self.selection >0  then
-        self.page_top=self.selection-1
-    end
-    for i,entry in ipairs(self.choices) do
-        if type(entry)=="table" then
-            entry=entry[1]
-        end
-        if i>self.page_top then
-            if i == self.selection then
-                dc:pen(self.select_pen or COLOR_LIGHTCYAN)
-            else
-                dc:pen(self.text_pen or COLOR_GREY)
-            end
-            dc:string(entry)
-            dc:newline(1)
-        end
-    end
-end
+    local choices = self.choices
+    local iend = math.min(#choices, self.page_top+self.page_size-1)
 
-function ListBox:moveCursor(delta)
-    local newsel=self.selection+delta
-    if #self.choices ~=0 then
-        if newsel<1 or newsel>#self.choices then 
-            newsel=newsel % #self.choices
+    for i = self.page_top,iend do
+        local text = choice_text(choices[i])
+        if text then
+            dc.cur_pen.bold = (i == self.selection);
+            dc:string(text)
+        else
+            dc:string('?ERROR?', COLOR_LIGHTRED)
         end
+        dc:newline(1)
     end
-    self.selection=newsel
 end
 
 function ListBox:onInput(keys)
     if keys.SELECT then
         self:dismiss()
+
         local choice=self.choices[self.selection]
-        if self.on_input then
-            self.on_input(self.selection,choice)
+        if self.on_select then
+            self.on_select(self.selection, choice)
         end
 
-        if choice and choice[2] then
-            choice[2](choice,self.selection) -- maybe reverse the arguments?
+        if choice then
+            local callback = choice.on_select or choice[2]
+            if callback then
+                callback(choice, self.selection)
+            end
         end
     elseif keys.LEAVESCREEN then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
-    elseif keys.CURSOR_UP then
+    elseif keys.STANDARDSCROLL_UP then
         self:moveCursor(-1)
-    elseif keys.CURSOR_DOWN then
+    elseif keys.STANDARDSCROLL_DOWN then
         self:moveCursor(1)
-    elseif keys.CURSOR_UP_FAST then
-        self:moveCursor(-10)
-    elseif keys.CURSOR_DOWN_FAST then
-        self:moveCursor(10)
+    elseif keys.STANDARDSCROLL_PAGEUP then
+        self:moveCursor(-self.page_size)
+    elseif keys.STANDARDSCROLL_PAGEDOWN then
+        self:moveCursor(self.page_size)
     end
 end
 
-function showListPrompt(title, text, tcolor, choices, on_input, on_cancel, min_width)
+function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_width)
     ListBox{
         frame_title = title,
         text = text,
         text_pen = tcolor,
         choices = choices,
-        on_input = on_input,
+        on_select = on_select,
         on_cancel = on_cancel,
         frame_width = min_width,
     }:show()

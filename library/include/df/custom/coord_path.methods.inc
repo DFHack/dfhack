@@ -1,4 +1,11 @@
+bool empty() const { return x.empty(); }
 unsigned size() const { return x.size(); }
+
+void clear() {
+    x.clear();
+    y.clear();
+    z.clear();
+}
 
 coord operator[] (unsigned idx) const {
     if (idx >= x.size())

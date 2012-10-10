@@ -347,10 +347,9 @@ static void load_engines()
 {
     clear_engines();
 
-    auto pworld = Core::getInstance().getWorld();
     std::vector<PersistentDataItem> vec;
 
-    pworld->GetPersistentData(&vec, "siege-engine/target/", true);
+    World::GetPersistentData(&vec, "siege-engine/target/", true);
     for (auto it = vec.begin(); it != vec.end(); ++it)
     {
         auto engine = find_engine(df::building::find(it->ival(0)), true);
@@ -359,7 +358,7 @@ static void load_engines()
         engine->target.second = df::coord(it->ival(4), it->ival(5), it->ival(6));
     }
 
-    pworld->GetPersistentData(&vec, "siege-engine/ammo/", true);
+    World::GetPersistentData(&vec, "siege-engine/ammo/", true);
     for (auto it = vec.begin(); it != vec.end(); ++it)
     {
         auto engine = find_engine(df::building::find(it->ival(0)), true);
@@ -368,7 +367,7 @@ static void load_engines()
         engine->ammo_item_type = (df::item_type)it->ival(2);
     }
 
-    pworld->GetPersistentData(&vec, "siege-engine/stockpiles/", true);
+    World::GetPersistentData(&vec, "siege-engine/stockpiles/", true);
     for (auto it = vec.begin(); it != vec.end(); ++it)
     {
         auto engine = find_engine(df::building::find(it->ival(0)), true);
@@ -377,14 +376,14 @@ static void load_engines()
         auto pile = df::building::find(it->ival(1));
         if (!pile || pile->getType() != building_type::Stockpile)
         {
-            pworld->DeletePersistentData(*it);
+            World::DeletePersistentData(*it);
             continue;;
         }
 
         engine->stockpiles.insert(it->ival(1));
     }
 
-    pworld->GetPersistentData(&vec, "siege-engine/profiles/", true);
+    World::GetPersistentData(&vec, "siege-engine/profiles/", true);
     for (auto it = vec.begin(); it != vec.end(); ++it)
     {
         auto engine = find_engine(df::building::find(it->ival(0)), true);
@@ -393,7 +392,7 @@ static void load_engines()
         engine->profile.max_level = it->ival(2);
     }
 
-    pworld->GetPersistentData(&vec, "siege-engine/profile-workers/", true);
+    World::GetPersistentData(&vec, "siege-engine/profile-workers/", true);
     for (auto it = vec.begin(); it != vec.end(); ++it)
     {
         auto engine = find_engine(df::building::find(it->ival(0)), true);
@@ -402,7 +401,7 @@ static void load_engines()
         auto unit = df::unit::find(it->ival(1));
         if (!unit || !Units::isCitizen(unit))
         {
-            pworld->DeletePersistentData(*it);
+            World::DeletePersistentData(*it);
             continue;
         }
         engine->profile.permitted_workers.push_back(it->ival(1));
@@ -434,9 +433,8 @@ static void clearTargetArea(df::building_siegeenginest *bld)
     if (auto engine = find_engine(bld))
         engine->target = coord_range();
 
-    auto pworld = Core::getInstance().getWorld();
     auto key = stl_sprintf("siege-engine/target/%d", bld->id);
-    pworld->DeletePersistentData(pworld->GetPersistentData(key));
+    World::DeletePersistentData(World::GetPersistentData(key));
 }
 
 static bool setTargetArea(df::building_siegeenginest *bld, df::coord target_min, df::coord target_max)
@@ -447,9 +445,8 @@ static bool setTargetArea(df::building_siegeenginest *bld, df::coord target_min,
     if (!enable_plugin())
         return false;
 
-    auto pworld = Core::getInstance().getWorld();
     auto key = stl_sprintf("siege-engine/target/%d", bld->id);
-    auto entry = pworld->GetPersistentData(key, NULL);
+    auto entry = World::GetPersistentData(key, NULL);
     if (!entry.isValid())
         return false;
 
@@ -491,9 +488,8 @@ static int setAmmoItem(lua_State *L)
     if (!is_valid_enum_item(item_type))
         luaL_argerror(L, 2, "invalid item type");
 
-    auto pworld = Core::getInstance().getWorld();
     auto key = stl_sprintf("siege-engine/ammo/%d", engine->id);
-    auto entry = pworld->GetPersistentData(key, NULL);
+    auto entry = World::GetPersistentData(key, NULL);
     if (!entry.isValid())
         return 0;
 
@@ -523,9 +519,8 @@ static void forgetStockpileLink(EngineInfo *engine, int pile_id)
 {
     engine->stockpiles.erase(pile_id);
 
-    auto pworld = Core::getInstance().getWorld();
     auto key = stl_sprintf("siege-engine/stockpiles/%d/%d", engine->id, pile_id);
-    pworld->DeletePersistentData(pworld->GetPersistentData(key));
+    World::DeletePersistentData(World::GetPersistentData(key));
 }
 
 static void update_stockpile_links(EngineInfo *engine)
@@ -583,9 +578,8 @@ static bool addStockpileLink(df::building_siegeenginest *bld, df::building_stock
     if (!enable_plugin())
         return false;
 
-    auto pworld = Core::getInstance().getWorld();
     auto key = stl_sprintf("siege-engine/stockpiles/%d/%d", bld->id, pile->id);
-    auto entry = pworld->GetPersistentData(key, NULL);
+    auto entry = World::GetPersistentData(key, NULL);
     if (!entry.isValid())
         return false;
 
@@ -620,9 +614,8 @@ static df::workshop_profile *saveWorkshopProfile(df::building_siegeenginest *bld
         return NULL;
 
     // Save skill limits
-    auto pworld = Core::getInstance().getWorld();
     auto key = stl_sprintf("siege-engine/profiles/%d", bld->id);
-    auto entry = pworld->GetPersistentData(key, NULL);
+    auto entry = World::GetPersistentData(key, NULL);
     if (!entry.isValid())
         return NULL;
 
@@ -637,18 +630,18 @@ static df::workshop_profile *saveWorkshopProfile(df::building_siegeenginest *bld
     auto &workers = engine->profile.permitted_workers;
 
     key = stl_sprintf("siege-engine/profile-workers/%d", bld->id);
-    pworld->GetPersistentData(&vec, key, true);
+    World::GetPersistentData(&vec, key, true);
 
     for (auto it = vec.begin(); it != vec.end(); ++it)
     {
         if (linear_index(workers, it->ival(1)) < 0)
-            pworld->DeletePersistentData(*it);
+            World::DeletePersistentData(*it);
     }
 
     for (size_t i = 0; i < workers.size(); i++)
     {
         key = stl_sprintf("siege-engine/profile-workers/%d/%d", bld->id, workers[i]);
-        entry = pworld->GetPersistentData(key, NULL);
+        entry = World::GetPersistentData(key, NULL);
         if (!entry.isValid())
             continue;
         entry.ival(0) = engine->id;
@@ -1802,8 +1795,7 @@ static bool enable_plugin()
     if (is_enabled)
         return true;
 
-    auto pworld = Core::getInstance().getWorld();
-    auto entry = pworld->GetPersistentData("siege-engine/enabled", NULL);
+    auto entry = World::GetPersistentData("siege-engine/enabled", NULL);
     if (!entry.isValid())
         return false;
 
@@ -1828,8 +1820,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     case SC_MAP_LOADED:
         if (!gamemode || *gamemode == game_mode::DWARF)
         {
-            auto pworld = Core::getInstance().getWorld();
-            bool enable = pworld->GetPersistentData("siege-engine/enabled").isValid();
+            bool enable = World::GetPersistentData("siege-engine/enabled").isValid();
 
             if (enable)
             {

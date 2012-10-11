@@ -281,7 +281,7 @@ static void reset_tracking()
 
 static void init_map(color_ostream &out)
 {
-    auto config = Core::getInstance().getWorld()->GetPersistentData("burrows/config");
+    auto config = World::GetPersistentData("burrows/config");
     if (config.isValid())
     {
         auto_grow = !!(config.ival(0) & 1);
@@ -307,7 +307,7 @@ static void deinit_map(color_ostream &out)
 static PersistentDataItem create_config(color_ostream &out)
 {
     bool created;
-    auto rv = Core::getInstance().getWorld()->GetPersistentData("burrows/config", &created);
+    auto rv = World::GetPersistentData("burrows/config", &created);
     if (created && rv.isValid())
         rv.ival(0) = 0;
     if (!rv.isValid())

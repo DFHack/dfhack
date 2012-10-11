@@ -1806,6 +1806,14 @@ utils
 
   (For an explanation of ``new=true``, see table assignment in the wrapper section)
 
+* ``utils.erase_sorted_key(vector,key,field,cmpfun)``
+
+  Removes the item with the given key from the list. Returns: *did_erase, vector[idx], idx*.
+
+* ``utils.erase_sorted(vector,item,field,cmpfun)``
+
+  Exactly like ``erase_sorted_key``, but if field is specified, takes the key from ``item[field]``.
+
 * ``utils.prompt_yes_no(prompt, default)``
 
   Presents a yes/no prompt to the user. If ``default`` is not *nil*,

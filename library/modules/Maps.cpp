@@ -454,7 +454,7 @@ df::coord2d Maps::getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos)
     if (!block || !world->world_data)
         return df::coord2d();
 
-    auto des = MapExtras::index_tile<df::tile_designation>(block->designation,pos);
+    auto des = index_tile<df::tile_designation>(block->designation,pos);
     unsigned idx = des.bits.biome;
     if (idx < 9)
     {
@@ -529,8 +529,8 @@ bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
     if (!block1 || !block2)
         return false;
 
-    auto tile1 = MapExtras::index_tile<uint16_t>(block1->walkable, pos1);
-    auto tile2 = MapExtras::index_tile<uint16_t>(block2->walkable, pos2);
+    auto tile1 = index_tile<uint16_t>(block1->walkable, pos1);
+    auto tile2 = index_tile<uint16_t>(block2->walkable, pos2);
 
     return tile1 && tile1 == tile2;
 }

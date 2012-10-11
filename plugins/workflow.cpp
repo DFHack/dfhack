@@ -438,9 +438,7 @@ static void start_protect(color_ostream &out)
 
 static void init_state(color_ostream &out)
 {
-    auto pworld = Core::getInstance().getWorld();
-
-    config = pworld->GetPersistentData("workflow/config");
+    config = World::GetPersistentData("workflow/config");
     if (config.isValid() && config.ival(0) == -1)
         config.ival(0) = 0;
 
@@ -448,14 +446,14 @@ static void init_state(color_ostream &out)
 
     // Parse constraints
     std::vector<PersistentDataItem> items;
-    pworld->GetPersistentData(&items, "workflow/constraints");
+    World::GetPersistentData(&items, "workflow/constraints");
 
     for (int i = items.size()-1; i >= 0; i--) {
         if (get_constraint(out, items[i].val(), &items[i]))
             continue;
 
         out.printerr("Lost constraint %s\n", items[i].val().c_str());
-        pworld->DeletePersistentData(items[i]);
+        World::DeletePersistentData(items[i]);
     }
 
     last_tick_frame_count = world->frame_counter;
@@ -469,11 +467,9 @@ static void init_state(color_ostream &out)
 
 static void enable_plugin(color_ostream &out)
 {
-    auto pworld = Core::getInstance().getWorld();
-
     if (!config.isValid())
     {
-        config = pworld->AddPersistentData("workflow/config");
+        config = World::AddPersistentData("workflow/config");
         config.ival(0) = 0;
     }
 
@@ -729,7 +725,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         nct->config = *cfg;
     else
     {
-        nct->config = Core::getInstance().getWorld()->AddPersistentData("workflow/constraints");
+        nct->config = World::AddPersistentData("workflow/constraints");
         nct->init(str);
     }
 
@@ -743,7 +739,7 @@ static void delete_constraint(ItemConstraint *cv)
     if (idx >= 0)
         vector_erase_at(constraints, idx);
 
-    Core::getInstance().getWorld()->DeletePersistentData(cv->config);
+    World::DeletePersistentData(cv->config);
     delete cv;
 }
 

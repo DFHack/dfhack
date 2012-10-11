@@ -88,6 +88,36 @@ Interactive commands like 'liquids' cannot be used as hotkeys.
 
 Most of the commands come from plugins. Those reside in 'hack/plugins/'.
 
+Patched binaries
+================
+
+On linux and OSX, users of patched binaries may have to find the relevant
+section in symbols.xml, and add a new line with the checksum of their
+executable::
+
+    <md5-hash value='????????????????????????????????'/>
+
+In order to find the correct value of the hash, look into stderr.log;
+DFHack prints an error there if it does not recognize the hash.
+
+DFHack includes a small stand-alone utility for applying and removing
+binary patches from the game executable. Use it from the regular operating
+system console:
+
+ * ``binpatch check "Dwarf Fortress.exe" patch.dif``
+
+   Checks and prints if the patch is currently applied.
+
+ * ``binpatch apply "Dwarf Fortress.exe" patch.dif``
+
+   Applies the patch, unless it is already applied or in conflict.
+
+ * ``binpatch remove "Dwarf Fortress.exe" patch.dif``
+
+   Removes the patch, unless it is already removed.
+
+The patches are expected to be encoded in text format used by IDA.
+
 =============================
 Something doesn't work, help!
 =============================
@@ -1632,16 +1662,18 @@ removebadthoughts
 This script remove negative thoughts from your dwarves. Very useful against
 tantrum spirals.
 
-With a selected unit in 'v' mode, will clear this unit's mind, otherwise
-clear all your fort's units minds.
+The script can target a single creature, when used with the ``him`` argument,
+or the whole fort population, with ``all``.
+
+To show every bad thought present without actually removing them, run the
+script with the ``-n`` or ``--dry-run`` argument. This can give a quick
+hint on what bothers your dwarves the most.
 
 Individual dwarf happiness may not increase right after this command is run,
 but in the short term your dwarves will get much more joyful.
-The thoughts are set to be very old, and the game will remove them soon when
-you unpause.
 
-With the optional ``-v`` parameter, the script will dump the negative thoughts
-it removed.
+Internals: the thoughts are set to be very old, so that the game remove them
+quickly after you unpause.
 
 
 slayrace
@@ -1650,7 +1682,7 @@ Kills any unit of a given race.
 
 With no argument, lists the available races.
 
-With the special argument 'him', targets only the selected creature.
+With the special argument ``him``, targets only the selected creature.
 
 Any non-dead non-caged unit of the specified race gets its ``blood_count``
 set to 0, which means immediate death at the next game tick. For creatures

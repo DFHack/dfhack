@@ -258,7 +258,7 @@ static PersistentDataItem persistent_by_struct(lua_State *state, int idx)
     int id = lua_tointeger(state, -1);
     lua_pop(state, 1);
 
-    PersistentDataItem ref = Core::getInstance().getWorld()->GetPersistentData(id);
+    PersistentDataItem ref = World::GetPersistentData(id);
 
     if (ref.isValid())
     {
@@ -323,7 +323,7 @@ static PersistentDataItem get_persistent(lua_State *state)
     {
         const char *str = luaL_checkstring(state, 1);
 
-        return Core::getInstance().getWorld()->GetPersistentData(str);
+        return World::GetPersistentData(str);
     }
 }
 
@@ -342,7 +342,7 @@ static int dfhack_persistent_delete(lua_State *state)
 
     auto ref = get_persistent(state);
 
-    bool ok = Core::getInstance().getWorld()->DeletePersistentData(ref);
+    bool ok = World::DeletePersistentData(ref);
 
     lua_pushboolean(state, ok);
     return 1;
@@ -356,7 +356,7 @@ static int dfhack_persistent_get_all(lua_State *state)
     bool prefix = (lua_gettop(state)>=2 ? lua_toboolean(state,2) : false);
 
     std::vector<PersistentDataItem> data;
-    Core::getInstance().getWorld()->GetPersistentData(&data, str, prefix);
+    World::GetPersistentData(&data, str, prefix);
 
     if (data.empty())
     {
@@ -396,7 +396,7 @@ static int dfhack_persistent_save(lua_State *state)
 
     if (add)
     {
-        ref = Core::getInstance().getWorld()->AddPersistentData(str);
+        ref = World::AddPersistentData(str);
         added = true;
     }
     else if (lua_getmetatable(state, 1))
@@ -409,13 +409,13 @@ static int dfhack_persistent_save(lua_State *state)
     }
     else
     {
-        ref = Core::getInstance().getWorld()->GetPersistentData(str);
+        ref = World::GetPersistentData(str);
     }
 
     // Auto-add if not found
     if (!ref.isValid())
     {
-        ref = Core::getInstance().getWorld()->AddPersistentData(str);
+        ref = World::AddPersistentData(str);
         if (!ref.isValid())
             luaL_error(state, "cannot create persistent entry");
         added = true;
@@ -1146,6 +1146,7 @@ static const LuaWrapper::FunctionReg dfhack_screen_module[] = {
     WRAPM(Screen, inGraphicsMode),
     WRAPM(Screen, clear),
     WRAPM(Screen, invalidate),
+    WRAPM(Screen, getKeyDisplay),
     { NULL, NULL }
 };
 

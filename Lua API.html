@@ -932,6 +932,21 @@ Returns <em>entry, did_create_new</em></p>
 and automatically stored in the save game, these save and retrieval
 functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.</p>
+<p>It is also possible to associate one bit per map tile with an entry,
+using these two methods:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">entry:getTilemask(block[, create])</tt></p>
+<p>Retrieves the tile bitmask associated with this entry in the given map
+block. If <tt class="docutils literal">create</tt> is <em>true</em>, an empty mask is created if none exists;
+otherwise the function returns <em>nil</em>, which must be assumed to be the same
+as an all-zero mask.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">entry:deleteTilemask(block)</tt></p>
+<p>Deletes the associated tile mask from the given map block.</p>
+</li>
+</ul>
+<p>Note that these masks are only saved in fortress mode, and also that deleting
+the persistent entry will <strong>NOT</strong> delete the associated masks.</p>
 </div>
 <div class="section" id="material-info-lookup">
 <h3><a class="toc-backref" href="#id17">Material info lookup</a></h3>
@@ -1285,6 +1300,18 @@ can get out of date if doors are forbidden or unforbidden, or
 tools like liquids or tiletypes are used. It also cannot possibly
 take into account anything that depends on the actual units, like
 burrows, or the presence of invaders.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.hasTileAssignment(tilemask)</tt></p>
+<p>Checks if the tile_bitmask object is not <em>nil</em> and contains any set bits; returns <em>true</em> or <em>false</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileAssignment(tilemask,x,y)</tt></p>
+<p>Checks if the tile_bitmask object is not <em>nil</em> and has the relevant bit set; returns <em>true</em> or <em>false</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.setTileAssignment(tilemask,x,y,enable)</tt></p>
+<p>Sets the relevant bit in the tile_bitmask object to the <em>enable</em> argument.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.maps.resetTileAssignment(tilemask[,enable])</span></tt></p>
+<p>Sets all bits in the mask to the <em>enable</em> argument.</p>
 </li>
 </ul>
 </div>

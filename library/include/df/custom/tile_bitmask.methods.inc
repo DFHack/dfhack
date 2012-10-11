@@ -16,7 +16,7 @@ inline bool getassignment( const df::coord2d &xy )
 }
 inline bool getassignment( int x, int y )
 {
-    return (bits[y] & (1 << x));
+    return (bits[(y&15)] & (1 << (x&15)));
 }
 inline void setassignment( const df::coord2d &xy, bool bit )
 {
@@ -25,9 +25,9 @@ inline void setassignment( const df::coord2d &xy, bool bit )
 inline void setassignment( int x, int y, bool bit )
 {
     if(bit)
-        bits[y] |= (1 << x);
+        bits[(y&15)] |= (1 << (x&15));
     else
-        bits[y] &= ~(1 << x);
+        bits[(y&15)] &= ~(1 << (x&15));
 }
 bool has_assignments()
 {

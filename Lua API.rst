@@ -646,6 +646,24 @@ and automatically stored in the save game, these save and retrieval
 functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.
 
+It is also possible to associate one bit per map tile with an entry,
+using these two methods:
+
+* ``entry:getTilemask(block[, create])``
+
+  Retrieves the tile bitmask associated with this entry in the given map
+  block. If ``create`` is *true*, an empty mask is created if none exists;
+  otherwise the function returns *nil*, which must be assumed to be the same
+  as an all-zero mask.
+
+* ``entry:deleteTilemask(block)``
+
+  Deletes the associated tile mask from the given map block.
+
+Note that these masks are only saved in fortress mode, and also that deleting
+the persistent entry will **NOT** delete the associated masks.
+
+
 Material info lookup
 --------------------
 
@@ -1078,6 +1096,22 @@ Maps module
   tools like liquids or tiletypes are used. It also cannot possibly
   take into account anything that depends on the actual units, like
   burrows, or the presence of invaders.
+
+* ``dfhack.maps.hasTileAssignment(tilemask)``
+
+  Checks if the tile_bitmask object is not *nil* and contains any set bits; returns *true* or *false*.
+
+* ``dfhack.maps.getTileAssignment(tilemask,x,y)``
+
+  Checks if the tile_bitmask object is not *nil* and has the relevant bit set; returns *true* or *false*.
+
+* ``dfhack.maps.setTileAssignment(tilemask,x,y,enable)``
+
+  Sets the relevant bit in the tile_bitmask object to the *enable* argument.
+
+* ``dfhack.maps.resetTileAssignment(tilemask[,enable])``
+
+  Sets all bits in the mask to the *enable* argument.
 
 
 Burrows module

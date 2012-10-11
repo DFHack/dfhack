@@ -38,13 +38,18 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 
+#include "modules/Maps.h"
+
 #include "MiscUtils.h"
 
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/historical_figure.h"
+#include "df/map_block.h"
+#include "df/block_square_event_world_constructionst.h"
 
 using namespace DFHack;
+using namespace df::enums;
 
 using df::global::world;
 
@@ -311,4 +316,64 @@ bool World::DeletePersistentData(const PersistentDataItem &item)
     }
 
     return false;
+}
+
+df::tile_bitmask *World::getPersistentTilemask(const PersistentDataItem &item, df::map_block *block, bool create)
+{
+    if (!block)
+        return NULL;
+
+    int id = item.raw_id();
+    if (id > -100)
+        return NULL;
+
+    for (size_t i = 0; i < block->block_events.size(); i++)
+    {
+        auto ev = block->block_events[i];
+        if (ev->getType() != block_square_event_type::world_construction)
+            continue;
+        auto wcsev = strict_virtual_cast<df::block_square_event_world_constructionst>(ev);
+        if (!wcsev || wcsev->construction_id != id)
+            continue;
+        return &wcsev->tile_bitmask;
+    }
+
+    if (!create)
+        return NULL;
+
+    auto ev = df::allocate<df::block_square_event_world_constructionst>();
+    if (!ev)
+        return NULL;
+
+    ev->construction_id = id;
+    ev->tile_bitmask.clear();
+    vector_insert_at(block->block_events, 0, (df::block_square_event*)ev);
+
+    return &ev->tile_bitmask;
+}
+
+bool World::deletePersistentTilemask(const PersistentDataItem &item, df::map_block *block)
+{
+    if (!block)
+        return false;
+    int id = item.raw_id();
+    if (id > -100)
+        return false;
+
+    bool found = false;
+    for (int i = block->block_events.size()-1; i >= 0; i--)
+    {
+        auto ev = block->block_events[i];
+        if (ev->getType() != block_square_event_type::world_construction)
+            continue;
+        auto wcsev = strict_virtual_cast<df::block_square_event_world_constructionst>(ev);
+        if (!wcsev || wcsev->construction_id != id)
+            continue;
+
+        delete wcsev;
+        vector_erase_at(block->block_events, i);
+        found = true;
+    }
+
+    return found;
 }

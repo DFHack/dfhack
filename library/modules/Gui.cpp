@@ -85,6 +85,8 @@ using namespace DFHack;
 #include "df/assign_trade_status.h"
 #include "df/announcement_flags.h"
 #include "df/announcements.h"
+#include "df/stop_depart_condition.h"
+#include "df/route_stockpile_link.h"
 
 using namespace df::enums;
 using df::global::gview;
@@ -301,6 +303,45 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             focus += "/Define";
         else
             focus += "/List";
+        break;
+
+    case Hauling:
+        if (ui->hauling.in_assign_vehicle)
+        {
+            auto vehicle = vector_get(ui->hauling.vehicles, ui->hauling.cursor_vehicle);
+            focus += "/AssignVehicle/" + std::string(vehicle ? "Some" : "None");
+        }
+        else
+        {
+            int idx = ui->hauling.cursor_top;
+            auto route = vector_get(ui->hauling.view_routes, idx);
+            auto stop = vector_get(ui->hauling.view_stops, idx);
+            std::string tag = stop ? "Stop" : (route ? "Route" : "None");
+
+            if (ui->hauling.in_name)
+                focus += "/Rename/" + tag;
+            else if (ui->hauling.in_stop)
+            {
+                int sidx = ui->hauling.cursor_stop;
+                auto cond = vector_get(ui->hauling.stop_conditions, sidx);
+                auto link = vector_get(ui->hauling.stop_links, sidx);
+
+                focus += "/DefineStop";
+
+                if (cond)
+                    focus += "/Cond/" + enum_item_key(cond->mode);
+                else if (link)
+                {
+                    focus += "/Link/";
+                    if (link->mode.bits.give) focus += "Give";
+                    if (link->mode.bits.take) focus += "Take";
+                }
+                else
+                    focus += "/None";
+            }
+            else
+                focus += "/Select/" + tag;
+        }
         break;
 
     default:

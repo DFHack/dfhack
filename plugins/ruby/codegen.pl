@@ -232,7 +232,11 @@ sub render_global_class {
         render_struct_fields($type);
 
         my $vms = $type->findnodes('child::virtual-methods')->[0];
-        render_class_vmethods($vms) if $vms;
+        if ($vms)
+        {
+            my $voff = render_class_vmethods_voff($parent);
+            render_class_vmethods($vms, $voff);
+        }
     };
     push @lines_rb, "end\n";
 }
@@ -368,9 +372,29 @@ sub render_container_reftarget {
     }
 }
 
+# return the size of the parent's vtables
+sub render_class_vmethods_voff {
+    my ($name) = @_;
+
+    return 0 if !$name;
+
+    my $type = $global_types{$name};
+    my $parent = $type->getAttribute('inherits-from');
+
+    my $voff = render_class_vmethods_voff($parent);
+    my $vms = $type->findnodes('child::virtual-methods')->[0];
+
+    for my $meth ($vms->findnodes('child::vmethod'))
+    {
+        $voff += 4 if $meth->getAttribute('is-destructor') and $os eq 'linux';
+        $voff += 4;
+    }
+
+    return $voff;
+}
+
 sub render_class_vmethods {
-    my ($vms) = @_;
-    my $voff = 0;
+    my ($vms, $voff) = @_;
 
     for my $meth ($vms->findnodes('child::vmethod'))
     {

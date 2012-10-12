@@ -189,6 +189,10 @@ module DFHack
         end
 
         def to_s ; token ; end
+
+        def ===(other)
+            other.mat_index == mat_index and other.mat_type == mat_type
+        end
     end
 
     class << self

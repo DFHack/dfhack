@@ -3498,11 +3498,11 @@ command_result start_autonestbox(color_ostream &out)
 {
     enable_autonestbox = true;
 
-    if (!config_autobutcher.isValid())
+    if (!config_autonestbox.isValid())
     {
         config_autonestbox = World::AddPersistentData("autonestbox/config");
 
-        if (!config_autobutcher.isValid())
+        if (!config_autonestbox.isValid())
         {
             out << "Cannot enable autonestbox without a world!" << endl;
             return CR_OK;

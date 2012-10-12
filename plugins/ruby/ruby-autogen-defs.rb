@@ -785,6 +785,7 @@ module DFHack
         def isset(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
+            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_isset(@_memaddr, key)
         end
         alias is_set? isset
@@ -792,12 +793,14 @@ module DFHack
         def set(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
+            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_set(@_memaddr, key)
         end
 
         def delete(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
+            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_deletekey(@_memaddr, key)
         end
 

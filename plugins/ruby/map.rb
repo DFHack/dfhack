@@ -240,5 +240,35 @@ module DFHack
         def spawn_magma(quantity=7)
             spawn_liquid(quantity, true)
         end
+
+        # yield a serie of tiles until the block returns true, returns the matching tile
+        # the yielded tiles form a (squared) spiral centered here in the current zlevel
+        # eg for radius 4, yields (-4, -4), (-4, -3), .., (-4, 3),
+        #   (-4, 4), (-3, 4), .., (4, 4), .., (4, -4), .., (-3, -4)
+        # then move on to radius 5
+        def spiral_search(maxradius=100, minradius=0, step=1)
+            if minradius == 0
+                    return self if yield self
+                    minradius += step
+            end
+
+            sides = [[0, 1], [1, 0], [0, -1], [-1, 0]]
+            (minradius..maxradius).step(step) { |r|
+                sides.length.times { |s|
+                    dxr, dyr = sides[(s-1) % sides.length]
+                    dx, dy = sides[s]
+                    (-r...r).step(step) { |v|
+                        t = offset(dxr*r + dx*v, dyr*r + dy*v)
+                        return t if t and yield t
+                    }
+                }
+            }
+            nil
+        end
+
+        # returns dx^2+dy^2+dz^2
+        def distance_to(ot)
+            (x-ot.x)**2 + (y-ot.y)**2 + (z-ot.z)**2
+        end
     end
 end

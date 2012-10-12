@@ -279,7 +279,6 @@ sub render_struct_field_refs {
     my ($parent, $field, $name) = @_;
 
     my $reftg = $field->getAttribute('ref-target');
-    render_field_reftarget($parent, $field, $name, $reftg) if ($reftg);
 
     my $refto = $field->getAttribute('refers-to');
     render_field_refto($parent, $name, $refto) if ($refto);
@@ -289,6 +288,8 @@ sub render_struct_field_refs {
     if ($meta and $meta eq 'container' and $item) {
         my $itemreftg = $item->getAttribute('ref-target');
         render_container_reftarget($parent, $item, $name, $itemreftg) if $itemreftg;
+    } elsif ($reftg) {
+        render_field_reftarget($parent, $field, $name, $reftg);
     }
 }
 

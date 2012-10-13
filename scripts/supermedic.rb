@@ -21,8 +21,8 @@ find_nicknamed = lambda { |s|
     return patients
 }
 
-clear_wounds = lambda { |u|
-    if u.body.wounds.count > 0
+clear_wounds = lambda { |u, f|
+    if f or u.body.wounds.count > 0
     u.body.wounds = []
     u.body.wound_next_id = 1 #?
     puts "cleared all wounds."
@@ -35,57 +35,60 @@ clear_requests = lambda { |u|
     puts "cleared treatment requests."
 }
 
-repair_stand = lambda { |u|
+repair_stand = lambda { |u, f|
     return unless u.status2
-    if u.status2.able_stand < 2
+    if f or u.status2.able_stand < 2
         u.status2.able_stand = 2
         puts "repaired lost stand ability."
     end
-    if u.status2.able_stand_impair < 2
+    if f or u.status2.able_stand_impair < 2
         u.status2.able_stand_impair = 2
         puts "repaired impaired stand ability."
     end
 }
 
-repair_grasp = lambda { |u|
+repair_grasp = lambda { |u, f|
     return unless u.status2
-    if u.status2.able_grasp < 2
+    if f or u.status2.able_grasp < 2
         u.status2.able_grasp = 2
         puts "repaired lost grasp ability."
     end
-    if u.status2.able_grasp_impair < 2
+    if f or u.status2.able_grasp_impair < 2
         u.status2.able_grasp_impair = 2
         puts "repaired impaired grasp ability."
     end
 }
 
-wakeup = lambda { |u|
-    return unless u.job.current_job and u.job.current_job.job_type == :Rest
-    u.job.current_job.job_type = :Sleep
-    u.counters.unconscious = 0
-    puts "released from 'Rest' job."
+wakeup = lambda { |u, f|
+    return unless u.job.current_job
+    jobtype = u.job.current_job.job_type
+    if f or jobtype == :Rest
+        u.job.current_job.job_type = :Sleep
+        u.counters.unconscious = 0
+        puts "released from #{jobtype} job."
+    end
 }
 
-repair_him = lambda { |u|
+repair_him = lambda { |u, force|
     if args.include?("all") or args.empty?
-        clear_wounds[u]
+        clear_wounds[u, force]
         clear_requests[u]
-        repair_stand[u]
-        repair_grasp[u]
-        wakeup[u]
+        repair_stand[u, force]
+        repair_grasp[u, force]
+        wakeup[u, force]
     else
         args.each { |arg|
             case arg
             when "wounds"
-                clear_wounds[u]
+                clear_wounds[u, force]
             when "reqs"
                 clear_requests[u]
             when "stand"
-                repair_stand[u]
+                repair_stand[u, force]
             when "grasp"
-                repair_grasp[u]
+                repair_grasp[u, force]
             when "wake"
-                wakeup[u]
+                wakeup[u, force]
             end
         }
     end
@@ -93,7 +96,7 @@ repair_him = lambda { |u|
 
 if args.include?('man') or args.include?('help') or args.include?('?')
     puts "Repair him/her. Use this when you see the 'unmovable dwarves' hospital bugs."
-    puts "Please select by v or k or following target option."
+    puts "Please select a unit or select by following target option."
     puts "Options(target):"
     puts "  nick:x - execute repair function(s) to that nicknamed creature(s)."
     puts "           i.e. nick:foo means select all creature(s) nicknamed as 'foo'."
@@ -106,11 +109,17 @@ if args.include?('man') or args.include?('help') or args.include?('?')
     puts "  stand  - force walkable (also impair)"
     puts "  grasp  - force graspable (also impair)"
     puts "  wake   - release from 'Rest' job"
+    puts "Force Option:"
+    puts "  -f or --force - force execute repair function(s)"
+    puts ""
     puts "Usage:"
     puts "  supermedic wounds reqs stand wake"
     puts "    - repair the selecting patient without grasp"
+    puts ""
     puts "  supermedic nick:""Ignored Dwarf"""
     puts "    - do all repairs to nicknamed as ""Ignored Dwarf"""
+    puts "  supermedic wake -f"
+    puts "    - force unstuck from current job."
 else
     nick = ""
     patients = []
@@ -128,9 +137,10 @@ else
         patients << df.unit_find
     end
     if not patients.empty? and patients[0]
+        force = args.include?('-f') or args.include?('--force')
         patients.each { |u|
             puts "+ #{u.name} +"
-            repair_him[u]
+            repair_him[u, force]
         }
     end
 end

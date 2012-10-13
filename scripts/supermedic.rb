@@ -123,9 +123,12 @@ if args.include?('man') or args.include?('help') or args.include?('?')
 else
     nick = ""
     patients = []
+    force = false
     args = args.delete_if { |x|
         if /nick:(.+)/ =~ x
             nick = Regexp.last_match[1]
+        elsif x == '-f' or x == '--force'
+            force = true
         end
     }
     if /(['"])[^\1](.+)\1/ =~ nick # remove quotation chars
@@ -137,7 +140,6 @@ else
         patients << df.unit_find
     end
     if not patients.empty? and patients[0]
-        force = args.include?('-f') or args.include?('--force')
         patients.each { |u|
             puts "+ #{u.name} +"
             repair_him[u, force]

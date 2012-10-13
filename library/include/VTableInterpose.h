@@ -159,7 +159,7 @@ namespace DFHack
         void on_host_delete(virtual_identity *host);
 
         VMethodInterposeLinkBase *get_first_interpose(virtual_identity *id);
-        void find_child_hosts(virtual_identity *cur, void *vmptr);
+        bool find_child_hosts(virtual_identity *cur, void *vmptr);
     public:
         VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr, int priority);
         ~VMethodInterposeLinkBase();

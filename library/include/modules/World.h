@@ -37,6 +37,12 @@ distribution.
 
 #include "DataDefs.h"
 
+namespace df
+{
+    struct tile_bitmask;
+    struct map_block;
+}
+
 namespace DFHack
 {
     typedef df::game_mode GameMode;
@@ -120,6 +126,9 @@ namespace DFHack
         DFHACK_EXPORT bool DeletePersistentData(const PersistentDataItem &item);
 
         DFHACK_EXPORT void ClearPersistentCache();
+
+        DFHACK_EXPORT df::tile_bitmask *getPersistentTilemask(const PersistentDataItem &item, df::map_block *block, bool create = false);
+        DFHACK_EXPORT bool deletePersistentTilemask(const PersistentDataItem &item, df::map_block *block);
     }
 }
 #endif

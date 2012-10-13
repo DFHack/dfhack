@@ -30,6 +30,7 @@ distribution.
 
 #include "MemAccess.h"
 #include "Core.h"
+#include "Error.h"
 #include "VersionInfo.h"
 #include "tinythread.h"
 // must be last due to MS stupidity
@@ -311,11 +312,11 @@ static PersistentDataItem get_persistent(lua_State *state)
 
     if (lua_istable(state, 1))
     {
+        Lua::StackUnwinder frame(state);
+
         if (!lua_getmetatable(state, 1) ||
             !lua_rawequal(state, -1, lua_upvalueindex(1)))
             luaL_argerror(state, 1, "invalid table type");
-
-        lua_settop(state, 1);
 
         return persistent_by_struct(state, 1);
     }
@@ -446,11 +447,38 @@ static int dfhack_persistent_save(lua_State *state)
     return 2;
 }
 
+static int dfhack_persistent_getTilemask(lua_State *state)
+{
+    CoreSuspender suspend;
+
+    lua_settop(state, 3);
+    auto ref = get_persistent(state);
+    auto block = Lua::CheckDFObject<df::map_block>(state, 2);
+    bool create = lua_toboolean(state, 3);
+
+    Lua::PushDFObject(state, World::getPersistentTilemask(ref, block, create));
+    return 1;
+}
+
+static int dfhack_persistent_deleteTilemask(lua_State *state)
+{
+    CoreSuspender suspend;
+
+    lua_settop(state, 2);
+    auto ref = get_persistent(state);
+    auto block = Lua::CheckDFObject<df::map_block>(state, 2);
+
+    lua_pushboolean(state, World::deletePersistentTilemask(ref, block));
+    return 1;
+}
+
 static const luaL_Reg dfhack_persistent_funcs[] = {
     { "get", dfhack_persistent_get },
     { "delete", dfhack_persistent_delete },
     { "get_all", dfhack_persistent_get_all },
     { "save", dfhack_persistent_save },
+    { "getTilemask", dfhack_persistent_getTilemask },
+    { "deleteTilemask", dfhack_persistent_deleteTilemask },
     { NULL, NULL }
 };
 
@@ -937,6 +965,22 @@ static const luaL_Reg dfhack_items_funcs[] = {
 
 /***** Maps module *****/
 
+static bool hasTileAssignment(df::tile_bitmask *bm) {
+    return bm && bm->has_assignments();
+}
+static bool getTileAssignment(df::tile_bitmask *bm, int x, int y) {
+    return bm && bm->getassignment(x,y);
+}
+static void setTileAssignment(df::tile_bitmask *bm, int x, int y, bool val) {
+    CHECK_NULL_POINTER(bm);
+    bm->setassignment(x,y,val);
+}
+static void resetTileAssignment(df::tile_bitmask *bm, bool val) {
+    CHECK_NULL_POINTER(bm);
+    if (val) bm->set_all();
+    else bm->clear();
+}
+
 static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPN(getBlock, (df::map_block* (*)(int32_t,int32_t,int32_t))Maps::getBlock),
     WRAPM(Maps, enableBlockUpdates),
@@ -944,6 +988,10 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPM(Maps, getLocalInitFeature),
     WRAPM(Maps, canWalkBetween),
     WRAPM(Maps, spawnFlow),
+    WRAPN(hasTileAssignment, hasTileAssignment),
+    WRAPN(getTileAssignment, getTileAssignment),
+    WRAPN(setTileAssignment, setTileAssignment),
+    WRAPN(resetTileAssignment, resetTileAssignment),
     { NULL, NULL }
 };
 

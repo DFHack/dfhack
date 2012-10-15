@@ -48,14 +48,72 @@ end
 function mkdims_wh(x1,y1,w,h)
     return { x1=x1, y1=y1, x2=x1+w-1, y2=y1+h-1, width=w, height=h }
 end
-function inset(rect,dx1,dy1,dx2,dy2)
-    return mkdims_xy(
-        rect.x1+dx1, rect.y1+(dy1 or dx1),
-        rect.x2-(dx2 or dx1), rect.y2-(dy2 or dy1 or dx1)
-    )
-end
 function is_in_rect(rect,x,y)
     return x and y and x >= rect.x1 and x <= rect.x2 and y >= rect.y1 and y <= rect.y2
+end
+
+local function align_coord(gap,align,lv,rv)
+    if gap <= 0 then
+        return 0
+    end
+    if not align then
+        if rv and not lv then
+            align = 1.0
+        elseif lv and not rv then
+            align = 0.0
+        else
+            align = 0.5
+        end
+    end
+    return math.floor(gap*align)
+end
+
+function compute_frame_rect(wavail,havail,spec,xgap,ygap)
+    if not spec then
+        return mkdims_wh(0,0,wavail,havail)
+    end
+
+    local sw = wavail - (spec.l or 0) - (spec.r or 0)
+    local sh = havail - (spec.t or 0) - (spec.b or 0)
+    local rqw = math.min(sw, (spec.w or sw)+xgap)
+    local rqh = math.min(sh, (spec.h or sh)+ygap)
+    local ax = align_coord(sw - rqw, spec.xalign, spec.l, spec.r)
+    local ay = align_coord(sh - rqh, spec.yalign, spec.t, spec.b)
+
+    local rect = mkdims_wh((spec.l or 0) + ax, (spec.t or 0) + ay, rqw, rqh)
+    rect.wgap = sw - rqw
+    rect.hgap = sh - rqh
+    return rect
+end
+
+local function parse_inset(inset)
+    local l,r,t,b
+    if type(inset) == 'table' then
+        l,r = inset.l or inset.x, inset.r or inset.x
+        t,b = inset.t or inset.y, inset.b or inset.y
+    else
+        l = inset or 0
+        t,r,b = l,l,l
+    end
+    return l,r,t,b
+end
+
+function inset_frame(rect, inset, gap)
+    gap = gap or 0
+    local l,t,r,b = parse_inset(inset)
+    return mkdims_xy(rect.x1+l+gap, rect.y1+t+gap, rect.x2-r-gap, rect.y2-b-gap)
+end
+
+function compute_frame_body(wavail, havail, spec, inset, gap)
+    gap = gap or 0
+    local l,t,r,b = parse_inset(inset)
+    local rect = compute_frame_rect(wavail, havail, spec, gap*2+l+r, gap*2+t+b)
+    local body = mkdims_xy(rect.x1+l+gap, rect.y1+t+gap, rect.x2-r-gap, rect.y2-b-gap)
+    return rect, body
+end
+
+function blink_visible(delay)
+    return math.floor(dfhack.getTickCount()/delay) % 2 == 0
 end
 
 local function to_pen(default, pen, bg, bold)
@@ -296,11 +354,33 @@ View = defclass(View)
 
 View.ATTRS {
     active = true,
-    hidden = false,
+    visible = true,
+    view_id = DEFAULT_NIL,
 }
 
 function View:init(args)
     self.subviews = {}
+end
+
+function View:addviews(list)
+    local sv = self.subviews
+
+    for _,obj in ipairs(list) do
+        table.insert(sv, obj)
+
+        local id = obj.view_id
+        if id and type(id) ~= 'number' and sv[id] == nil then
+            sv[id] = obj
+        end
+    end
+
+    for _,dir in ipairs(list) do
+        for id,obj in pairs(dir) do
+            if id and type(id) ~= 'number' and sv[id] == nil then
+                sv[id] = obj
+            end
+        end
+    end
 end
 
 function View:getWindowSize()
@@ -320,6 +400,12 @@ function View:computeFrame(parent_rect)
     return mkdims_wh(0,0,parent_rect.width,parent_rect.height)
 end
 
+function View:updateSubviewLayout(frame_body)
+    for _,child in ipairs(self.subviews) do
+        child:updateLayout(frame_body)
+    end
+end
+
 function View:updateLayout(parent_rect)
     if not parent_rect then
         parent_rect = self.frame_parent_rect
@@ -332,16 +418,14 @@ function View:updateLayout(parent_rect)
     self.frame_rect = frame_rect
     self.frame_body = parent_rect:viewport(body_rect or frame_rect)
 
-    for _,child in ipairs(self.subviews) do
-        child:updateLayout(frame_body)
-    end
+    self:updateSubviewLayout(self.frame_body)
 
-    self:invoke_after('postUpdateLayout',frame_body)
+    self:invoke_after('postUpdateLayout', self.frame_body)
 end
 
 function View:renderSubviews(dc)
     for _,child in ipairs(self.subviews) do
-        if not child.hidden then
+        if child.visible then
             child:render(dc)
         end
     end
@@ -512,17 +596,8 @@ FramedScreen.ATTRS{
     frame_width = DEFAULT_NIL,
     frame_height = DEFAULT_NIL,
     frame_inset = 0,
+    frame_background = CLEAR_PEN,
 }
-
-local function hint_coord(gap,hint)
-    if hint and hint > 0 then
-        return math.min(hint,gap)
-    elseif hint and hint < 0 then
-        return math.max(0,gap-hint)
-    else
-        return math.floor(gap/2)
-    end
-end
 
 function FramedScreen:getWantedFrameSize()
     return self.frame_width, self.frame_height
@@ -530,28 +605,19 @@ end
 
 function FramedScreen:computeFrame(parent_rect)
     local sw, sh = parent_rect.width, parent_rect.height
-    local ins = self.frame_inset
-    local thickness = 2+ins*2
-    local iw, ih = sw-thickness, sh-thickness
     local fw, fh = self:getWantedFrameSize()
-    local width = math.min(fw or iw, iw)
-    local height = math.min(fh or ih, ih)
-    local gw, gh = iw-width, ih-height
-    local x1, y1 = hint_coord(gw,self.frame_xhint), hint_coord(gh,self.frame_yhint)
-    self.frame_opaque = (gw == 0 and gh == 0)
-    return mkdims_wh(x1,y1,width+thickness,height+thickness),
-           mkdims_wh(x1+1+ins,y1+1+ins,width,height)
+    return compute_frame_body(sw, sh, { w = fw, h = fh }, self.frame_inset, 1)
 end
 
 function FramedScreen:render(dc)
     local rect = self.frame_rect
     local x1,y1,x2,y2 = rect.x1, rect.y1, rect.x2, rect.y2
 
-    if self.frame_opaque then
+    if rect.wgap <= 0 and rect.hgap <= 0 then
         dc:clear()
     else
         self:renderParent()
-        dc:fill(rect, CLEAR_PEN)
+        dc:fill(rect, self.frame_background)
     end
 
     paint_frame(x1,y1,x2,y2,self.frame_style,self.frame_title)

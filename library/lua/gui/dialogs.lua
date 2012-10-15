@@ -3,6 +3,7 @@
 local _ENV = mkmodule('gui.dialogs')
 
 local gui = require('gui')
+local widgets = require('gui.widgets')
 local utils = require('utils')
 
 local dscreen = dfhack.screen
@@ -101,8 +102,6 @@ InputBox = defclass(InputBox, MessageBox)
 InputBox.focus_path = 'InputBox'
 
 InputBox.ATTRS{
-    input = '',
-    input_pen = DEFAULT_NIL,
     on_input = DEFAULT_NIL,
 }
 
@@ -110,46 +109,36 @@ function InputBox:preinit(info)
     info.on_accept = nil
 end
 
-function InputBox:getWantedFrameSize()
-    local mw, mh = InputBox.super.getWantedFrameSize(self)
-    return mw, mh+2
+function InputBox:init(info)
+    self:addviews{
+        widgets.EditField{
+            view_id = 'edit',
+            text = info.input,
+            text_pen = info.input_pen,
+            frame = { l = 1, r = 1, h = 1 },
+        }
+    }
 end
 
-function InputBox:onRenderBody(dc)
-    InputBox.super.onRenderBody(self, dc)
-
-    dc:newline(1)
-    dc:pen(self.input_pen or COLOR_LIGHTCYAN)
-    dc:fill(1,dc:cursorY(),dc.width-2,dc:cursorY())
-
-    local cursor = '_'
-    if math.floor(dfhack.getTickCount()/300) % 2 == 0 then
-        cursor = ' '
-    end
-    local txt = self.input .. cursor
-    if #txt > dc.width-2 then
-        txt = string.char(27)..string.sub(txt, #txt-dc.width+4)
-    end
-    dc:string(txt)
+function InputBox:getWantedFrameSize()
+    local mw, mh = InputBox.super.getWantedFrameSize(self)
+    self.subviews.edit.frame.t = mh
+    return mw, mh+2
 end
 
 function InputBox:onInput(keys)
     if keys.SELECT then
         self:dismiss()
         if self.on_input then
-            self.on_input(self.input)
+            self.on_input(self.subviews.edit.text)
         end
     elseif keys.LEAVESCREEN then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
-    elseif keys._STRING then
-        if keys._STRING == 0 then
-            self.input = string.sub(self.input, 1, #self.input-1)
-        else
-            self.input = self.input .. string.char(keys._STRING)
-        end
+    else
+        self:inputToSubviews(keys)
     end
 end
 

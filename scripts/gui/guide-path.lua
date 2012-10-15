@@ -69,17 +69,13 @@ local function get_path_point(gpath,i)
     return xyz2pos(gpath.x[i], gpath.y[i], gpath.z[i])
 end
 
-local function blink_visible(delay)
-    return math.floor(dfhack.getTickCount()/delay) % 2 == 0
-end
-
 function GuidePathUI:renderPath(cursor)
     local gpath = self.order.guide_path
     local startp = self.stop.pos
     local endp = self.next_stop.pos
     local vp = self:getViewport()
     local dc = gui.Painter.new(self.df_layout.map)
-    local visible = blink_visible(500)
+    local visible = gui.blink_visible(500)
 
     if visible then
         paintMapTile(dc, vp, cursor, endp, '+', COLOR_LIGHTGREEN)
@@ -123,7 +119,7 @@ function GuidePathUI:renderPath(cursor)
         end
     end
 
-    if blink_visible(120) then
+    if gui.blink_visible(120) then
         paintMapTile(dc, vp, cursor, startp, 240, COLOR_LIGHTGREEN, COLOR_GREEN)
     end
 

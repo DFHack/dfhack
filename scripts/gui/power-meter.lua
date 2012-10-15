@@ -12,6 +12,10 @@ PowerMeter = defclass(PowerMeter, guidm.MenuOverlay)
 
 PowerMeter.focus_path = 'power-meter'
 
+PowerMeter.ATTRS {
+    frame_background = false
+}
+
 function PowerMeter:init()
     self:assign{
         min_power = 0, max_power = -1, invert = false,

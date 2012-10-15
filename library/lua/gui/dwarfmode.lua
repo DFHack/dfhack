@@ -354,11 +354,12 @@ end
 MenuOverlay = defclass(MenuOverlay, DwarfOverlay)
 
 MenuOverlay.ATTRS {
-    frame_inset = 0
+    frame_inset = 0,
+    frame_background = CLEAR_PEN,
 }
 
 function MenuOverlay:computeFrame(parent_rect)
-    return self.df_layout.menu, gui.inset(self.df_layout.menu, self.frame_inset)
+    return self.df_layout.menu, gui.inset_frame(self.df_layout.menu, self.frame_inset)
 end
 
 function MenuOverlay:onAboutToShow(below)
@@ -380,6 +381,10 @@ function MenuOverlay:render(dc)
             {fg=COLOR_BLACK,bg=COLOR_DARKGREY},
             menu.x1+1, menu.y2+1, "DFHack"
         )
+
+        if self.frame_background then
+            dc:fill(menu, self.frame_background)
+        end
 
         MenuOverlay.super.render(self, dc)
     end

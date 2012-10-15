@@ -234,12 +234,12 @@ function SiegeEngine:onRenderBody_main(dc)
     if links then
         dc:key('CUSTOM_D'):string(": Delete, ")
         dc:key('CUSTOM_O'):string(": Zoom"):newline()
-        self:renderStockpiles(dc, links, bottom-2-dc:localY())
+        self:renderStockpiles(dc, links, bottom-2-dc:cursorY())
         dc:newline():newline()
     end
 
     local prof = self.building:getWorkshopProfile() or {}
-    dc:seek(1,math.max(dc:localY(),19))
+    dc:seek(1,math.max(dc:cursorY(),19))
     dc:key('CUSTOM_G'):key('CUSTOM_H'):key('CUSTOM_J'):key('CUSTOM_K')
     dc:string(': ')
     dc:string(df.skill_rating.attrs[prof.min_level or 0].caption):string('-')
@@ -461,7 +461,7 @@ function SiegeEngine:onRenderBody(dc)
 
     self.mode.render(dc)
 
-    dc:seek(1, math.max(dc:localY(), 21)):pen(COLOR_WHITE)
+    dc:seek(1, math.max(dc:cursorY(), 21)):pen(COLOR_WHITE)
     dc:key('LEAVESCREEN'):string(": Back, ")
     dc:key('CUSTOM_C'):string(": Recenter")
 end

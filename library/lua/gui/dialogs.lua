@@ -120,7 +120,7 @@ function InputBox:onRenderBody(dc)
 
     dc:newline(1)
     dc:pen(self.input_pen or COLOR_LIGHTCYAN)
-    dc:fill(1,dc:localY(),dc.width-2,dc:localY())
+    dc:fill(1,dc:cursorY(),dc.width-2,dc:cursorY())
 
     local cursor = '_'
     if math.floor(dfhack.getTickCount()/300) % 2 == 0 then

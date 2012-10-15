@@ -7,10 +7,6 @@ local dlg = require 'gui.dialogs'
 
 local tile_attrs = df.tiletype.attrs
 
-function same_xyz(a,b)
-    return a and b and a.x == b.x and a.y == b.y and a.z == b.z
-end
-
 GuidePathUI = defclass(GuidePathUI, guidm.MenuOverlay)
 
 GuidePathUI.focus_path = 'guide-path'

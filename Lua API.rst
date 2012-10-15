@@ -1727,6 +1727,18 @@ environment by the mandatory init file dfhack.lua:
 
   Returns a table with x, y and z as fields.
 
+* ``same_xyz(a,b)``
+
+  Checks if ``a`` and ``b`` have the same x, y and z fields.
+
+* ``get_path_xyz(path,i)``
+
+  Returns ``path.x[i], path.y[i], path.z[i]``.
+
+* ``pos2xy(obj)``, ``xy2pos(x,y)``, ``same_xy(a,b)``, ``get_path_xy(a,b)``
+
+  Same as above, but for 2D coordinates.
+
 * ``safe_index(obj,index...)``
 
   Walks a sequence of dereferences, which may be represented by numbers or strings.

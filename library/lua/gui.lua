@@ -377,7 +377,7 @@ function View:addviews(list)
     end
 
     for _,dir in ipairs(list) do
-        for id,obj in pairs(dir) do
+        for id,obj in pairs(dir.subviews) do
             if id and type(id) ~= 'number' and sv[id] == nil then
                 sv[id] = obj
             end
@@ -616,7 +616,7 @@ end
 
 function FramedScreen:computeFrame(parent_rect)
     local sw, sh = parent_rect.width, parent_rect.height
-    local fw, fh = self:getWantedFrameSize()
+    local fw, fh = self:getWantedFrameSize(parent_rect)
     return compute_frame_body(sw, sh, { w = fw, h = fh }, self.frame_inset, 1)
 end
 

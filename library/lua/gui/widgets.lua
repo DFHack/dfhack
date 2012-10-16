@@ -242,6 +242,8 @@ function render_text(obj,dc,x0,y0,pen,dpen)
                     local keystr = gui.getKeyDisplay(token.key)
                     local sep = token.key_sep or ''
 
+                    x = x + #keystr
+
                     if sep == '()' then
                         if dc then
                             dc:string(text)
@@ -285,6 +287,7 @@ Label.ATTRS{
     text_pen = COLOR_WHITE,
     text_dpen = COLOR_DARKGREY,
     auto_height = true,
+    auto_width = false,
 }
 
 function Label:init(args)
@@ -298,6 +301,13 @@ function Label:setText(text)
     if self.auto_height then
         self.frame = self.frame or {}
         self.frame.h = self:getTextHeight()
+    end
+end
+
+function Label:preUpdateLayout()
+    if self.auto_width then
+        self.frame = self.frame or {}
+        self.frame.w = self:getTextWidth()
     end
 end
 
@@ -404,6 +414,13 @@ end
 function List:moveCursor(delta, force_cb)
     local page = math.max(1, self.page_size)
     local cnt = #self.choices
+
+    if cnt < 1 then
+        self.page_top = 1
+        self.selected = 1
+        return
+    end
+
     local off = self.selected+delta-1
     local ds = math.abs(delta)
 
@@ -458,9 +475,15 @@ function List:onRenderBody(dc)
     end
 end
 
+function List:submit()
+    if self.on_submit and #self.choices > 0 then
+        self.on_submit(self:getSelected())
+    end
+end
+
 function List:onInput(keys)
     if self.on_submit and keys.SELECT then
-        self.on_submit(self:getSelected())
+        self:submit()
         return true
     else
         for k,v in pairs(self.scroll_keys) do
@@ -479,9 +502,7 @@ function List:onInput(keys)
         for i,v in ipairs(self.choices) do
             if v.key and keys[v.key] then
                 self:setSelected(i)
-                if self.on_submit then
-                    self.on_submit(self:getSelected())
-                end
+                self:submit()
                 return true
             end
         end

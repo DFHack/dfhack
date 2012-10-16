@@ -302,6 +302,24 @@ function sort_vector(vector,field,cmp)
     return vector
 end
 
+-- Linear search
+
+function linear_index(vector,obj)
+    local min,max
+    if df.isvalid(vector) then
+        min,max = 0,#vector-1
+    else
+        min,max = 1,#vector
+    end
+    for i=min,max do
+        if vector[i] == obj then
+            return i
+        end
+    end
+    return nil
+end
+
+
 -- Binary search in a vector or lua table
 function binsearch(vector,key,field,cmp,min,max)
     if not(min and max) then

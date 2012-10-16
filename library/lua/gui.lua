@@ -116,7 +116,7 @@ function blink_visible(delay)
     return math.floor(dfhack.getTickCount()/delay) % 2 == 0
 end
 
-local function to_pen(default, pen, bg, bold)
+function to_pen(default, pen, bg, bold)
     if pen == nil then
         return default or {}
     elseif type(pen) ~= 'table' then
@@ -363,6 +363,8 @@ function View:init(args)
 end
 
 function View:addviews(list)
+    if not list then return end
+
     local sv = self.subviews
 
     for _,obj in ipairs(list) do
@@ -413,10 +415,14 @@ function View:updateLayout(parent_rect)
         self.frame_parent_rect = parent_rect
     end
 
+    self:invoke_before('preUpdateLayout', parent_rect)
+
     local frame_rect,body_rect = self:computeFrame(parent_rect)
 
     self.frame_rect = frame_rect
     self.frame_body = parent_rect:viewport(body_rect or frame_rect)
+
+    self:invoke_after('postComputeFrame', self.frame_body)
 
     self:updateSubviewLayout(self.frame_body)
 
@@ -432,6 +438,8 @@ function View:renderSubviews(dc)
 end
 
 function View:render(dc)
+    self:onRenderFrame(dc, self.frame_rect)
+
     local sub_dc = Painter{
         view_rect = self.frame_body,
         clip_view = dc
@@ -440,6 +448,9 @@ function View:render(dc)
     self:onRenderBody(sub_dc)
 
     self:renderSubviews(sub_dc)
+end
+
+function View:onRenderFrame(dc,rect)
 end
 
 function View:onRenderBody(dc)
@@ -609,8 +620,7 @@ function FramedScreen:computeFrame(parent_rect)
     return compute_frame_body(sw, sh, { w = fw, h = fh }, self.frame_inset, 1)
 end
 
-function FramedScreen:render(dc)
-    local rect = self.frame_rect
+function FramedScreen:onRenderFrame(dc, rect)
     local x1,y1,x2,y2 = rect.x1, rect.y1, rect.x2, rect.y2
 
     if rect.wgap <= 0 and rect.hgap <= 0 then
@@ -621,8 +631,6 @@ function FramedScreen:render(dc)
     end
 
     paint_frame(x1,y1,x2,y2,self.frame_style,self.frame_title)
-
-    FramedScreen.super.render(self, dc)
 end
 
 return _ENV

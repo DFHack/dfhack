@@ -14,47 +14,35 @@ MessageBox.focus_path = 'MessageBox'
 
 MessageBox.ATTRS{
     frame_style = gui.GREY_LINE_FRAME,
+    frame_inset = 1,
     -- new attrs
-    text = {},
     on_accept = DEFAULT_NIL,
     on_cancel = DEFAULT_NIL,
     on_close = DEFAULT_NIL,
-    text_pen = DEFAULT_NIL,
 }
 
-function MessageBox:preinit(info)
-    if type(info.text) == 'string' then
-        info.text = utils.split_string(info.text, "\n")
-    end
+function MessageBox:init(info)
+    self:addviews{
+        widgets.Label{
+            view_id = 'label',
+            text = info.text,
+            text_pen = info.text_pen,
+            frame = { l = 0, t = 0 },
+            auto_height = true
+        }
+    }
 end
 
 function MessageBox:getWantedFrameSize()
-    local text = self.text
-    local w = #(self.frame_title or '') + 4
-    w = math.max(w, 20)
-    w = math.max(self.frame_width or w, w)
-    for _, l in ipairs(text) do
-        w = math.max(w, #l)
-    end
-    local h = #text+1
-    if h > 1 then
-        h = h+1
-    end
-    return w+2, #text+2
+    local label = self.subviews.label
+    local width = math.max(self.frame_width or 0, 20, #(self.frame_title or '') + 4)
+    return math.max(width, label:getTextWidth()), label:getTextHeight()
 end
 
-function MessageBox:onRenderBody(dc)
-    if #self.text > 0 then
-        dc:newline(1):pen(self.text_pen or COLOR_GREY)
-        for _, l in ipairs(self.text or {}) do
-            dc:string(l):newline(1)
-        end
-    end
-
+function MessageBox:onRenderFrame(dc,rect)
+    MessageBox.super.onRenderFrame(self,dc,rect)
     if self.on_accept then
-        local fr = self.frame_rect
-        local dc2 = gui.Painter.new_xy(fr.x1+1,fr.y2+1,fr.x2-8,fr.y2+1)
-        dc2:key('LEAVESCREEN'):string('/'):key('MENU_CONFIRM')
+        dc:seek(rect.x1+2,rect.y2):key('LEAVESCREEN'):string('/'):key('MENU_CONFIRM')
     end
 end
 
@@ -75,6 +63,8 @@ function MessageBox:onInput(keys)
         if self.on_cancel then
             self.on_cancel()
         end
+    else
+        self:inputToSubviews(keys)
     end
 end
 
@@ -115,14 +105,14 @@ function InputBox:init(info)
             view_id = 'edit',
             text = info.input,
             text_pen = info.input_pen,
-            frame = { l = 1, r = 1, h = 1 },
+            frame = { l = 0, r = 0, h = 1 },
         }
     }
 end
 
 function InputBox:getWantedFrameSize()
     local mw, mh = InputBox.super.getWantedFrameSize(self)
-    self.subviews.edit.frame.t = mh
+    self.subviews.edit.frame.t = mh+1
     return mw, mh+2
 end
 
@@ -165,107 +155,47 @@ ListBox.ATTRS{
     on_select = DEFAULT_NIL
 }
 
-function InputBox:preinit(info)
+function ListBox:preinit(info)
     info.on_accept = nil
 end
 
 function ListBox:init(info)
-    self.page_top = 1
-end
+    local spen = gui.to_pen(COLOR_CYAN, info.select_pen, nil, false)
+    local cpen = gui.to_pen(COLOR_LIGHTCYAN, info.cursor_pen or info.select_pen, nil, true)
 
-local function choice_text(entry)
-    if type(entry)=="table" then
-        return entry.caption or entry[1]
-    else
-        return entry
-    end
+    self:addviews{
+        widgets.List{
+            view_id = 'list',
+            selected = info.selected,
+            choices = info.choices,
+            text_pen = spen,
+            cursor_pen = cpen,
+            on_submit = function(sel,obj)
+                self:dismiss()
+                if self.on_select then self.on_select(sel, obj) end
+                local cb = obj.on_select or obj[2]
+                if cb then cb(obj, sel) end
+            end,
+            frame = { l = 0, r = 0 },
+        }
+    }
 end
 
 function ListBox:getWantedFrameSize()
-    local mw, mh = ListBox.super.getWantedFrameSize(self)
-    for _,v in ipairs(self.choices) do
-        local text = choice_text(v)
-        mw = math.max(mw, #text+2)
-    end
-    return mw, mh+#self.choices+1
-end
-
-function ListBox:postUpdateLayout()
-    self.page_size = self.frame_rect.height - #self.text - 3
-    self:moveCursor(0)
-end
-
-function ListBox:moveCursor(delta)
-    local page = math.max(1, self.page_size)
-    local cnt = #self.choices
-    local off = self.selection+delta-1
-    local ds = math.abs(delta)
-
-    if ds > 1 then
-        if off >= cnt+ds-1 then
-            off = 0
-        else
-            off = math.min(cnt-1, off)
-        end
-        if off <= -ds then
-            off = cnt-1
-        else
-            off = math.max(0, off)
-        end
-    end
-
-    self.selection = 1 + off % cnt
-    self.page_top = 1 + page * math.floor((self.selection-1) / page)
-end
-
-function ListBox:onRenderBody(dc)
-    ListBox.super.onRenderBody(self, dc)
-
-    dc:newline(1):pen(self.select_pen or COLOR_CYAN)
-
-    local choices = self.choices
-    local iend = math.min(#choices, self.page_top+self.page_size-1)
-
-    for i = self.page_top,iend do
-        local text = choice_text(choices[i])
-        if text then
-            dc.cur_pen.bold = (i == self.selection);
-            dc:string(text)
-        else
-            dc:string('?ERROR?', COLOR_LIGHTRED)
-        end
-        dc:newline(1)
-    end
+    local mw, mh = InputBox.super.getWantedFrameSize(self)
+    local list = self.subviews.list
+    list.frame.t = mh+1
+    return math.max(mw, list:getContentWidth()), mh+1+list:getContentHeight()
 end
 
 function ListBox:onInput(keys)
-    if keys.SELECT then
-        self:dismiss()
-
-        local choice=self.choices[self.selection]
-        if self.on_select then
-            self.on_select(self.selection, choice)
-        end
-
-        if choice then
-            local callback = choice.on_select or choice[2]
-            if callback then
-                callback(choice, self.selection)
-            end
-        end
-    elseif keys.LEAVESCREEN then
+    if keys.LEAVESCREEN then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
-    elseif keys.STANDARDSCROLL_UP then
-        self:moveCursor(-1)
-    elseif keys.STANDARDSCROLL_DOWN then
-        self:moveCursor(1)
-    elseif keys.STANDARDSCROLL_PAGEUP then
-        self:moveCursor(-self.page_size)
-    elseif keys.STANDARDSCROLL_PAGEDOWN then
-        self:moveCursor(self.page_size)
+    else
+        self:inputToSubviews(keys)
     end
 end
 

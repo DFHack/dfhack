@@ -125,6 +125,10 @@ end
 
 -- Misc functions
 
+NEWLINE = "\n"
+COMMA = ","
+PERIOD = "."
+
 function printall(table)
     local ok,f,t,k = pcall(pairs,table)
     if ok then

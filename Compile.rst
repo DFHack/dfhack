@@ -63,6 +63,34 @@ extra options.
 You can also use a cmake-friendly IDE like KDevelop 4 or the cmake-gui
 program.
 
+========
+Mac OS X
+========
+
+1. Download and unpack a copy of the latest DF
+2. Install Xcode from Mac App Store
+3. Open Xcode, go to Preferences > Downloads, and install the Command Line Tools.
+4. Install MacPorts.
+5. Install dependencies from MacPorts:
+	* sudo port install gcc45 +universal cmake +universal git-core +universal (This will take some time—maybe hours, depending on your machine.)
+		* At some point during this process, it may ask you to install a Java environment; let it do so.
+6. Install perl dependencies
+	1. sudo cpan (If this is the first time you've run cpan, you will need to go through the setup process. Just stick with the defaults for everything and you'll be fine.)
+    2. install XML::LibXML
+    3. install XML::LibXSLT
+7. Get the dfhack source
+	1. git clone https://github.com/danaris/dfhack.git
+    2. cd dfhack
+    3. git submodule init
+    4. git submodule update
+8. mkdir build-osx
+9. cd build-osx
+10. export CC=/opt/local/bin/gcc-mp-4.5
+11. export CXX=/opt/local/bin/g++-mp-4.5
+12. cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/path/to/DF/directory
+13. make
+14. make install
+
 =======
 Windows
 =======

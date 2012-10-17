@@ -143,8 +143,8 @@ function GuidePathUI:onRenderBody(dc)
     end
 
     dc:newline():newline(1)
-    dc:key('CUSTOM_Z'):string(": Reset path, ",COLOR_GREY,nil,path_ok~=nil)
-    dc:key('CUSTOM_P'):string(": Find path",COLOR_GREY,nil,false)
+    dc:key('CUSTOM_Z'):string(": Reset path",COLOR_GREY,nil,path_ok~=nil)
+    --dc:key('CUSTOM_P'):string(": Find path",COLOR_GREY,nil,false)
     dc:newline(1)
     dc:key('CUSTOM_C'):string(": Zoom cur, ")
     dc:key('CUSTOM_N'):string(": Zoom next")

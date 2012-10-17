@@ -361,3 +361,29 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
 
     return true;
 }
+
+bool Job::isSuitableItem(df::job_item *item, df::item_type itype, int isubtype)
+{
+    CHECK_NULL_POINTER(item);
+
+    if (itype == item_type::NONE)
+        return true;
+
+    ItemTypeInfo iinfo(itype, isubtype);
+    MaterialInfo minfo(item);
+
+    return iinfo.isValid() && iinfo.matches(*item, &minfo);
+}
+
+bool Job::isSuitableMaterial(df::job_item *item, int mat_type, int mat_index)
+{
+    CHECK_NULL_POINTER(item);
+
+    if (mat_type == -1 && mat_index == -1)
+        return true;
+
+    ItemTypeInfo iinfo(item);
+    MaterialInfo minfo(mat_type, mat_index);
+
+    return minfo.isValid() && iinfo.matches(*item, &minfo);
+}

@@ -863,6 +863,15 @@ Job module
   if there are any jobs with ``first_id <= id < job_next_id``,
   a lua list containing them.
 
+* ``dfhack.job.isSuitableItem(job_item, item_type, item_subtype)``
+
+  Does basic sanity checks to verify if the suggested item type matches
+  the flags in the job item.
+
+* ``dfhack.job.isSuitableMaterial(job_item, mat_type, mat_index)``
+
+  Likewise, if replacing material.
+
 Units module
 ------------
 

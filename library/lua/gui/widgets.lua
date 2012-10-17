@@ -22,6 +22,14 @@ local function getval(obj)
     end
 end
 
+local function map_opttab(tab,idx)
+    if tab then
+        return tab[idx]
+    else
+        return idx
+    end
+end
+
 ------------
 -- Widget --
 ------------
@@ -393,6 +401,10 @@ function List:setSelected(selected)
     return self.selected
 end
 
+function List:getChoices()
+    return self.choices
+end
+
 function List:getSelected()
     return self.selected, self.choices[self.selected]
 end
@@ -531,6 +543,143 @@ function List:onInput(keys)
             return check_text_keys(current, keys)
         end
     end
+end
+
+-------------------
+-- Filtered List --
+-------------------
+
+FilteredList = defclass(FilteredList, Widget)
+
+function FilteredList:init(info)
+    self.edit = EditField{
+        text_pen = info.cursor_pen,
+        frame = { l = info.icon_width, t = 0 },
+        on_change = self:callback('onFilterChange'),
+        on_char = self:callback('onFilterChar'),
+    }
+    self.list = List{
+        frame = { t = 2 },
+        text_pen = info.text_pen,
+        cursor_pen = info.cursor_pen,
+        inactive_pen = info.inactive_pen,
+        row_height = info.row_height,
+        scroll_keys = info.scroll_keys,
+        icon_width = info.icon_width,
+    }
+    if info.on_select then
+        self.list.on_select = function()
+            return info.on_select(self:getSelected())
+        end
+    end
+    if info.on_submit then
+        self.list.on_submit = function()
+            return info.on_submit(self:getSelected())
+        end
+    end
+    self.not_found = Label{
+        visible = false,
+        text = info.not_found_label or 'No matches',
+        text_pen = COLOR_LIGHTRED,
+        frame = { l = info.icon_width, t = 2 },
+    }
+    self:addviews{ self.list, self.edit, self.not_found }
+    self:setChoices(info.choices, info.selected)
+end
+
+function FilteredList:getChoices()
+    return self.choices
+end
+
+function FilteredList:setChoices(choices, pos)
+    choices = choices or {}
+    self.choices = choices
+    self.edit.text = ''
+    self.list:setChoices(choices, pos)
+    self.not_found.visible = (#choices == 0)
+end
+
+function FilteredList:submit()
+    return self.list:submit()
+end
+
+function FilteredList:canSubmit()
+    return not self.not_found.visible
+end
+
+function FilteredList:getSelected()
+    local i,v = self.list:getSelected()
+    return map_opttab(self.choice_index, i), v
+end
+
+function FilteredList:getContentWidth()
+    return self.list:getContentWidth()
+end
+
+function FilteredList:getContentHeight()
+    return self.list:getContentHeight() + 2
+end
+
+function FilteredList:getFilter()
+    return self.edit.text, self.list.choices
+end
+
+function FilteredList:setFilter(filter, pos)
+    local choices = self.choices
+    local cidx = nil
+
+    filter = filter or ''
+    self.edit.text = filter
+
+    if filter ~= '' then
+        local tokens = utils.split_string(filter, ' ')
+        local ipos = pos
+
+        choices = {}
+        cidx = {}
+        pos = nil
+
+        for i,v in ipairs(self.choices) do
+            local ok = true
+            local search_key = v.search_key or v.text
+            for _,key in ipairs(tokens) do
+                if key ~= '' and not string.match(search_key, '%f[^%s\x00]'..key) then
+                    ok = false
+                    break
+                end
+            end
+            if ok then
+                table.insert(choices, v)
+                cidx[#choices] = i
+                if ipos == i then
+                    pos = #choices
+                end
+            end
+        end
+    end
+
+    self.choice_index = cidx
+    self.list:setChoices(choices, pos)
+    self.not_found.visible = (#choices == 0)
+end
+
+function FilteredList:onFilterChange(text)
+    self:setFilter(text)
+end
+
+local bad_chars = {
+    ['%'] = true, ['.'] = true, ['+'] = true, ['*'] = true,
+    ['['] = true, [']'] = true, ['('] = true, [')'] = true,
+}
+
+function FilteredList:onFilterChar(char, text)
+    if bad_chars[char] then
+        return false
+    end
+    if char == ' ' then
+        return string.match(text, '%S$')
+    end
+    return true
 end
 
 return _ENV

@@ -43,28 +43,17 @@ function MaterialDialog:init(info)
             frame = { r = 0, b = 0 },
             auto_width = true,
         },
-        widgets.List{
+        widgets.FilteredList{
             view_id = 'list',
-            frame = { l = 0, r = 0, t = 6, b = 2 },
+            not_found_label = 'No matching materials',
+            frame = { l = 0, r = 0, t = 4, b = 2 },
             icon_width = 2,
             on_submit = self:callback('onSubmitItem'),
-        },
-        widgets.EditField{
-            view_id = 'edit',
-            frame = { l = 2, t = 4 },
-            on_change = self:callback('onFilterChoices'),
-            on_char = self:callback('onFilterChar'),
-        },
-        widgets.Label{
-            view_id = 'not_found',
-            text = 'No matching materials.',
-            text_pen = COLOR_LIGHTRED,
-            frame = { l = 2, r = 0, t = 6 },
         },
         widgets.Label{
             text = { {
                 key = 'SELECT', text = ': Select',
-                disabled = function() return self.subviews.not_found.visible end
+                disabled = function() return not self.subviews.list:canSubmit() end
             } },
             frame = { l = 0, b = 0 },
         }
@@ -198,18 +187,15 @@ function MaterialDialog:pushContext(name, choices)
     else
         table.insert(self.back_stack, {
             context_str = self.context_str,
-            all_choices = self.all_choices,
-            edit_text = self.subviews.edit.text,
-            choices = self.choices,
-            selected = self.subviews.list.selected,
+            all_choices = self.subviews.list:getChoices(),
+            edit_text = self.subviews.list:getFilter(),
+            selected = self.subviews.list:getSelected(),
         })
         self.subviews.back.visible = true
     end
 
     self.context_str = name
-    self.all_choices = choices
-    self.subviews.edit.text = ''
-    self:setChoices(choices, 1)
+    self.subviews.list:setChoices(choices, 1)
 end
 
 function MaterialDialog:onGoBack()
@@ -217,55 +203,8 @@ function MaterialDialog:onGoBack()
     self.subviews.back.visible = (#self.back_stack > 0)
 
     self.context_str = save.context_str
-    self.all_choices = save.all_choices
-    self.subviews.edit.text = save.edit_text
-    self:setChoices(save.choices, save.selected)
-end
-
-function MaterialDialog:setChoices(choices, pos)
-    self.choices = choices
-    self.subviews.list:setChoices(self.choices, pos)
-    self.subviews.not_found.visible = (#self.choices == 0)
-end
-
-function MaterialDialog:onFilterChoices(text)
-    local tokens = utils.split_string(text, ' ')
-    local choices = {}
-
-    for i,v in ipairs(self.all_choices) do
-        local ok = true
-        local search_key = v.search_key or v.text
-        for _,key in ipairs(tokens) do
-            if key ~= '' and not string.match(search_key, '%f[^%s\x00]'..key) then
-                ok = false
-                break
-            end
-        end
-        if ok then
-            table.insert(choices, v)
-        end
-    end
-
-    self:setChoices(choices)
-end
-
-local bad_chars = {
-    ['%'] = true, ['.'] = true, ['+'] = true, ['*'] = true,
-    ['['] = true, [']'] = true, ['('] = true, [')'] = true,
-}
-
-function MaterialDialog:onFilterChar(char, text)
-    if bad_chars[char] then
-        return false
-    end
-    if char == ' ' then
-        if #self.choices == 1 then
-            self.subviews.list:submit()
-            return false
-        end
-        return string.match(text, '%S$')
-    end
-    return true
+    self.subviews.list:setChoices(save.all_choices)
+    self.subviews.list:setFilter(save.edit_text, save.selected)
 end
 
 function MaterialDialog:submitMaterial(typ, index)

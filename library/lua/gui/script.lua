@@ -133,13 +133,14 @@ function showInputPrompt(title, text, tcolor, input, min_width)
     return wait()
 end
 
-function showListPrompt(title, text, tcolor, choices, min_width)
+function showListPrompt(title, text, tcolor, choices, min_width, filter)
     dlg.ListBox{
         frame_title = title,
         text = text,
         text_pen = tcolor,
         choices = choices,
         frame_width = min_width,
+        with_filter = filter,
         on_select = mkresume(true),
         on_cancel = mkresume(false),
         on_close = qresume(nil)

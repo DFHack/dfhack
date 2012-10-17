@@ -149,8 +149,8 @@ ListBox = defclass(ListBox, MessageBox)
 ListBox.focus_path = 'ListBox'
 
 ListBox.ATTRS{
-    selection = 1,
-    choices = {},
+    with_filter = false,
+    cursor_pen = DEFAULT_NIL,
     select_pen = DEFAULT_NIL,
     on_select = DEFAULT_NIL
 }
@@ -160,11 +160,16 @@ function ListBox:preinit(info)
 end
 
 function ListBox:init(info)
-    local spen = gui.to_pen(COLOR_CYAN, info.select_pen, nil, false)
-    local cpen = gui.to_pen(COLOR_LIGHTCYAN, info.cursor_pen or info.select_pen, nil, true)
+    local spen = gui.to_pen(COLOR_CYAN, self.select_pen, nil, false)
+    local cpen = gui.to_pen(COLOR_LIGHTCYAN, self.cursor_pen or self.select_pen, nil, true)
+
+    local list_widget = widgets.List
+    if self.with_filter then
+        list_widget = widgets.FilteredList
+    end
 
     self:addviews{
-        widgets.List{
+        list_widget{
             view_id = 'list',
             selected = info.selected,
             choices = info.choices,
@@ -199,7 +204,7 @@ function ListBox:onInput(keys)
     end
 end
 
-function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_width)
+function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_width, filter)
     ListBox{
         frame_title = title,
         text = text,
@@ -208,6 +213,7 @@ function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_
         on_select = on_select,
         on_cancel = on_cancel,
         frame_width = min_width,
+        with_filter = filter,
     }:show()
 end
 

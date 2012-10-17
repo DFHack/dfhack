@@ -374,6 +374,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                           "  unload PLUGIN|all     - Unload a plugin or all loaded plugins.\n"
                           "  reload PLUGIN|all     - Reload a plugin or all loaded plugins.\n"
                          );
+
+				con.print("\nDFHack version " DFHACK_VERSION ".\n");
             }
             else if (parts.size() == 1)
             {

@@ -42,7 +42,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         return CR_OK;
     }
 
-    df::map_block *old_block, *new_block;
     for (size_t i = 0; i < world->units.active.size(); i++)
     {
         df::unit *unit = world->units.active[i];
@@ -108,12 +107,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 static command_result fastdwarf (color_ostream &out, vector <string> & parameters)
 {
-    if (parameters.size() > 2) {
-        out.print("Incorrect usage.\n");
-        return CR_FAILURE;
-    }
+    if (parameters.size() > 2)
+        return CR_WRONG_USAGE;
 
-    if (parameters.size() <= 2)
+    if ((parameters.size() == 1) || (parameters.size() == 2))
     {
         if (parameters.size() == 2)
         {
@@ -122,10 +119,7 @@ static command_result fastdwarf (color_ostream &out, vector <string> & parameter
             else if (parameters[1] == "1")
                 enable_teledwarf = true;
             else
-            {
-                out.print("Incorrect usage.\n");
-                return CR_FAILURE;
-            }
+                return CR_WRONG_USAGE;
         }
         else
             enable_teledwarf = false;
@@ -155,10 +149,7 @@ static command_result fastdwarf (color_ostream &out, vector <string> & parameter
             }
         }
         else
-        {
-            out.print("Incorrect usage.\n");
-            return CR_FAILURE;
-        }
+            return CR_WRONG_USAGE;
     }
 
     out.print("Current state: fast = %d, teleport = %d.\n",

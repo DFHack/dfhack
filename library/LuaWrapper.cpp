@@ -1265,6 +1265,51 @@ static void BuildTypeMetatable(lua_State *state, type_identity *type)
  * Recursive walk of scopes to construct the df... tree.
  */
 
+static int wtype_pnext(lua_State *L)
+{
+    lua_settop(L, 2);  /* create a 2nd argument if there isn't one */
+    if (lua_next(L, lua_upvalueindex(1)))
+        return 2;
+    lua_pushnil(L);
+    return 1;
+}
+
+static int wtype_pairs(lua_State *state)
+{
+    lua_pushvalue(state, lua_upvalueindex(1));
+    lua_pushcclosure(state, wtype_pnext, 1);
+    lua_pushnil(state);
+    lua_pushnil(state);
+    return 3;
+}
+
+static int wtype_inext(lua_State *L)
+{
+    int i = luaL_checkint(L, 2);
+    i++;  /* next value */
+    if (i <= lua_tointeger(L, lua_upvalueindex(2)))
+    {
+        lua_pushinteger(L, i);
+        lua_rawgeti(L, lua_upvalueindex(1), i);
+        return 2;
+    }
+    else
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+}
+
+static int wtype_ipairs(lua_State *state)
+{
+    lua_pushvalue(state, lua_upvalueindex(1));
+    lua_pushvalue(state, lua_upvalueindex(3));
+    lua_pushcclosure(state, wtype_inext, 2);
+    lua_pushnil(state);
+    lua_pushvalue(state, lua_upvalueindex(2));
+    return 3;
+}
+
 static void RenderTypeChildren(lua_State *state, const std::vector<compound_identity*> &children);
 
 void LuaWrapper::AssociateId(lua_State *state, int table, int val, const char *name)
@@ -1278,7 +1323,7 @@ void LuaWrapper::AssociateId(lua_State *state, int table, int val, const char *n
     lua_rawset(state, table);
 }
 
-static void FillEnumKeys(lua_State *state, int ftable, enum_identity *eid)
+static void FillEnumKeys(lua_State *state, int ix_meta, int ftable, enum_identity *eid)
 {
     const char *const *keys = eid->getKeys();
 
@@ -1296,11 +1341,17 @@ static void FillEnumKeys(lua_State *state, int ftable, enum_identity *eid)
 
     if (eid->getFirstItem() <= eid->getLastItem())
     {
+        lua_pushvalue(state, base+1);
+        lua_pushinteger(state, eid->getFirstItem()-1);
+        lua_pushinteger(state, eid->getLastItem());
+        lua_pushcclosure(state, wtype_ipairs, 3);
+        lua_setfield(state, ix_meta, "__ipairs");
+
         lua_pushinteger(state, eid->getFirstItem());
-        lua_setfield(state, base+1, "_first_item");
+        lua_setfield(state, ftable, "_first_item");
 
         lua_pushinteger(state, eid->getLastItem());
-        lua_setfield(state, base+1, "_last_item");
+        lua_setfield(state, ftable, "_last_item");
     }
 
     SaveInTable(state, eid, &DFHACK_ENUM_TABLE_TOKEN);
@@ -1321,7 +1372,7 @@ static void FillEnumKeys(lua_State *state, int ftable, enum_identity *eid)
     lua_setmetatable(state, ftable);
 }
 
-static void FillBitfieldKeys(lua_State *state, int ftable, bitfield_identity *eid)
+static void FillBitfieldKeys(lua_State *state, int ix_meta, int ftable, bitfield_identity *eid)
 {
     // Create a new table attached to ftable as __index
     lua_newtable(state);
@@ -1338,11 +1389,17 @@ static void FillBitfieldKeys(lua_State *state, int ftable, bitfield_identity *ei
             i += bits[i].size-1;
     }
 
+    lua_pushvalue(state, base+1);
+    lua_pushinteger(state, -1);
+    lua_pushinteger(state, eid->getNumBits()-1);
+    lua_pushcclosure(state, wtype_ipairs, 3);
+    lua_setfield(state, ix_meta, "__ipairs");
+
     lua_pushinteger(state, 0);
-    lua_setfield(state, base+1, "_first_item");
+    lua_setfield(state, ftable, "_first_item");
 
     lua_pushinteger(state, eid->getNumBits()-1);
-    lua_setfield(state, base+1, "_last_item");
+    lua_setfield(state, ftable, "_last_item");
 
     SaveInTable(state, eid, &DFHACK_ENUM_TABLE_TOKEN);
 
@@ -1355,7 +1412,12 @@ static void RenderType(lua_State *state, compound_identity *node)
     assert(node->getName());
     std::string name = node->getFullName();
 
-    int base = lua_gettop(state);
+    // Frame:
+    //   base+1 - outer table
+    //   base+2 - metatable of outer table
+    //   base+3 - inner table
+    //   base+4 - pairs table
+    Lua::StackUnwinder base(state);
 
     lua_newtable(state);
     if (!lua_checkstack(state, 20))
@@ -1365,51 +1427,59 @@ static void RenderType(lua_State *state, compound_identity *node)
 
     // metatable
     lua_newtable(state);
+    int ix_meta = base+2;
 
     lua_dup(state);
     lua_setmetatable(state, base+1);
 
     lua_pushstring(state, name.c_str());
-    lua_setfield(state, base+2, "__metatable");
+    lua_setfield(state, ix_meta, "__metatable");
 
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPE_TOSTRING_NAME);
-    lua_setfield(state, base+2, "__tostring");
+    lua_setfield(state, ix_meta, "__tostring");
 
     lua_pushlightuserdata(state, node);
-    lua_rawsetp(state, base+2, &DFHACK_IDENTITY_FIELD_TOKEN);
+    lua_rawsetp(state, ix_meta, &DFHACK_IDENTITY_FIELD_TOKEN);
 
     // inner table
     lua_newtable(state);
+    int ftable = base+3;
 
     lua_dup(state);
-    lua_setfield(state, base+2, "__index");
+    lua_setfield(state, ix_meta, "__index");
 
-    int ftable = base+3;
+    // pairs table
+    lua_newtable(state);
+    int ptable = base+4;
+
+    lua_pushvalue(state, ptable);
+    lua_pushcclosure(state, wtype_pairs, 1);
+    lua_setfield(state, ix_meta, "__pairs");
 
     switch (node->type())
     {
     case IDTYPE_STRUCT:
         lua_pushstring(state, "struct-type");
         lua_setfield(state, ftable, "_kind");
-        IndexStatics(state, base+2, base+3, (struct_identity*)node);
+        IndexStatics(state, ix_meta, ftable, (struct_identity*)node);
         break;
 
     case IDTYPE_CLASS:
         lua_pushstring(state, "class-type");
         lua_setfield(state, ftable, "_kind");
-        IndexStatics(state, base+2, base+3, (struct_identity*)node);
+        IndexStatics(state, ix_meta, ftable, (struct_identity*)node);
         break;
 
     case IDTYPE_ENUM:
         lua_pushstring(state, "enum-type");
         lua_setfield(state, ftable, "_kind");
-        FillEnumKeys(state, ftable, (enum_identity*)node);
+        FillEnumKeys(state, ix_meta, ftable, (enum_identity*)node);
         break;
 
     case IDTYPE_BITFIELD:
         lua_pushstring(state, "bitfield-type");
         lua_setfield(state, ftable, "_kind");
-        FillBitfieldKeys(state, ftable, (bitfield_identity*)node);
+        FillBitfieldKeys(state, ix_meta, ftable, (bitfield_identity*)node);
         break;
 
     case IDTYPE_GLOBAL:
@@ -1425,14 +1495,14 @@ static void RenderType(lua_State *state, compound_identity *node)
             BuildTypeMetatable(state, node);
 
             lua_dup(state);
-            lua_setmetatable(state, base+3);
+            lua_setmetatable(state, ftable);
 
             lua_getfield(state, -1, "__newindex");
-            lua_setfield(state, base+2, "__newindex");
+            lua_setfield(state, ix_meta, "__newindex");
             lua_getfield(state, -1, "__pairs");
-            lua_setfield(state, base+2, "__pairs");
+            lua_setfield(state, ix_meta, "__pairs");
 
-            lua_pop(state, 3);
+            base += 1;
             return;
         }
 
@@ -1454,17 +1524,25 @@ static void RenderType(lua_State *state, compound_identity *node)
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_IS_INSTANCE_NAME);
     lua_setfield(state, ftable, "is_instance");
 
-    lua_pop(state, 2);
+    base += 1;
 }
 
 static void RenderTypeChildren(lua_State *state, const std::vector<compound_identity*> &children)
 {
+    // fieldtable pairstable |
+    int base = lua_gettop(state);
+
     for (size_t i = 0; i < children.size(); i++)
     {
         RenderType(state, children[i]);
         lua_pushstring(state, children[i]->getName());
         lua_swap(state);
-        lua_rawset(state, -3);
+
+        // save in both tables
+        lua_pushvalue(state, -2);
+        lua_pushvalue(state, -2);
+        lua_rawset(state, base);
+        lua_rawset(state, base-1);
     }
 }
 
@@ -1524,9 +1602,12 @@ static int DoAttach(lua_State *state)
     {
         // Assign df a metatable with read-only contents
         lua_newtable(state);
+        lua_newtable(state);
 
         // Render the type structure
         RenderTypeChildren(state, compound_identity::getTopScope());
+
+        lua_swap(state); // -> pairstable fieldtable
 
         lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
         lua_setfield(state, -2, "sizeof");
@@ -1558,7 +1639,12 @@ static int DoAttach(lua_State *state)
         lua_pushcfunction(state, meta_isnull);
         lua_setfield(state, -2, "isnull");
 
-        freeze_table(state, false, "df");
+        freeze_table(state, true, "df");
+
+        lua_swap(state);
+        lua_pushcclosure(state, wtype_pairs, 1);
+        lua_setfield(state, -2, "__pairs");
+        lua_pop(state, 1);
     }
 
     return 1;

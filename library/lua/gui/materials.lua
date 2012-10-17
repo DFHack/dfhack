@@ -46,6 +46,7 @@ function MaterialDialog:init(info)
         widgets.List{
             view_id = 'list',
             frame = { l = 0, r = 0, t = 6, b = 2 },
+            icon_width = 2,
             on_submit = self:callback('onSubmitItem'),
         },
         widgets.EditField{
@@ -83,12 +84,12 @@ end
 
 function MaterialDialog:initBuiltinMode()
     local choices = {
-        { text = '  none', mat_type = -1, mat_index = -1 },
-        { text = ARROW..' inorganic', key = 'CUSTOM_SHIFT_I',
+        { text = 'none', mat_type = -1, mat_index = -1 },
+        { icon = ARROW, text = 'inorganic', key = 'CUSTOM_SHIFT_I',
           cb = self:callback('initInorganicMode') },
-        { text = ARROW..' creature', key = 'CUSTOM_SHIFT_C',
+        { icon = ARROW, text = 'creature', key = 'CUSTOM_SHIFT_C',
           cb = self:callback('initCreatureMode')},
-        { text = ARROW..' plant', key = 'CUSTOM_SHIFT_P',
+        { icon = ARROW, text = 'plant', key = 'CUSTOM_SHIFT_P',
           cb = self:callback('initPlantMode') },
     }
 
@@ -138,8 +139,8 @@ function MaterialDialog:addObjectChoice(choices, obj, name, typ, index)
         self:addMaterial(choices, obj.material[0], typ, index, true)
     else
         table.insert(choices, {
-            text = ARROW..' '..name, mat_type = typ, mat_index = index,
-            ctx = name, obj = obj, cb = self:callback('onSelectObj')
+            icon = ARROW, text = name, mat_type = typ, mat_index = index,
+            obj = obj, cb = self:callback('onSelectObj')
         })
     end
 end
@@ -147,7 +148,7 @@ end
 function MaterialDialog:onSelectObj(item)
     local choices = {}
     self:addMaterials(choices, item.obj.material, item.mat_type, item.mat_index)
-    self:pushContext(item.ctx, choices)
+    self:pushContext(item.text, choices)
 end
 
 function MaterialDialog:addMaterials(choices, vector, tid, index, maxid, field)
@@ -183,7 +184,7 @@ function MaterialDialog:addMaterial(choices, mat, typ, idx, pfix)
         key = mat.prefix
     end
     table.insert(choices, {
-        text = '  '..name,
+        text = name,
         search_key = key,
         material = mat,
         mat_type = typ, mat_index = idx

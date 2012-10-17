@@ -222,6 +222,13 @@ function render_text(obj,dc,x0,y0,pen,dpen)
                 end
             end
 
+            if token.tile then
+                x = x + 1
+                if dc then
+                    dc:char(nil, token.tile)
+                end
+            end
+
             if token.text or token.key then
                 local text = getval(token.text) or ''
                 local keypen
@@ -356,6 +363,7 @@ List.ATTRS{
     on_submit = DEFAULT_NIL,
     row_height = 1,
     scroll_keys = STANDARDSCROLL,
+    icon_width = DEFAULT_NIL,
 }
 
 function List:init(info)
@@ -399,7 +407,7 @@ function List:getContentWidth()
         end
         width = math.max(width, roww)
     end
-    return width
+    return width + (self.icon_width or 0)
 end
 
 function List:getContentHeight()
@@ -449,6 +457,7 @@ function List:onRenderBody(dc)
     local choices = self.choices
     local top = self.page_top
     local iend = math.min(#choices, top+self.page_size-1)
+    local iw = self.icon_width
 
     for i = top,iend do
         local obj = choices[i]
@@ -465,7 +474,17 @@ function List:onRenderBody(dc)
         end
 
         local y = (i - top)*self.row_height
-        render_text(obj, dc, 0, y, cur_pen, cur_dpen)
+
+        if iw and obj.icon then
+            dc:seek(0, y)
+            if type(obj.icon) == 'table' then
+                dc:char(nil,obj.icon)
+            else
+                dc:string(obj.icon, obj.icon_pen or cur_pen)
+            end
+        end
+
+        render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen)
 
         if obj.key then
             local keystr = gui.getKeyDisplay(obj.key)

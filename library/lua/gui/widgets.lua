@@ -7,10 +7,9 @@ local utils = require('utils')
 
 local dscreen = dfhack.screen
 
-local function show_view(view,vis,act)
+local function show_view(view,vis)
     if view then
         view.visible = vis
-        view.active = act
     end
 end
 
@@ -79,7 +78,7 @@ Pages = defclass(Pages, Panel)
 
 function Pages:init(args)
     for _,v in ipairs(self.subviews) do
-        show_view(v, false, false)
+        v.visible = false
     end
     self:setSelected(args.selected or 1)
 end
@@ -96,9 +95,9 @@ function Pages:setSelected(idx)
         end
     end
 
-    show_view(self.subviews[self.selected], false, false)
+    show_view(self.subviews[self.selected], false)
     self.selected = math.min(math.max(1, idx), #self.subviews)
-    show_view(self.subviews[self.selected], true, true)
+    show_view(self.subviews[self.selected], true)
 end
 
 function Pages:getSelected()
@@ -583,7 +582,7 @@ function FilteredList:init(info)
         text_pen = COLOR_LIGHTRED,
         frame = { l = info.icon_width, t = 2 },
     }
-    self:addviews{ self.list, self.edit, self.not_found }
+    self:addviews{ self.edit, self.list, self.not_found }
     self:setChoices(info.choices, info.selected)
 end
 

@@ -457,8 +457,11 @@ function View:onRenderBody(dc)
 end
 
 function View:inputToSubviews(keys)
-    for _,child in ipairs(self.subviews) do
-        if child.active and child:onInput(keys) then
+    local children = self.subviews
+
+    for i=#children,1,-1 do
+        local child = children[i]
+        if child.visible and child.active and child:onInput(keys) then
             return true
         end
     end

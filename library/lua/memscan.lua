@@ -24,7 +24,7 @@ function CheckedArray:__len()
     return self.count
 end
 function CheckedArray:__index(idx)
-    if type(idx) == number then
+    if type(idx) == "number" then
         if idx >= self.count then
             error('Index out of bounds: '..tostring(idx))
         end

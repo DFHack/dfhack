@@ -1,3 +1,28 @@
+local dfu=require("dfusion")
+local ms=require("memscan")
+
+CustomEmbark=defclass(CustomEmbark,dfu.BinaryPlugin)
+CustomEmbark.ATTRS{filename="dfusion/embark/embark.o",name="CustomEmbark",race_caste_data=DEFAULT_NIL}
+function CustomEmbark:install()
+    local stoff=dfhack.internal.getAddress('start_dwarf_count')
+    if stoff==nil then
+        error("address for start_dwarf_count not found!")
+    end
+    local _,race_id_offset=df.sizeof(df.global.ui:_field("race_id"))
+    local needle={0x0f,0xb7,0x0d} --movzx,...
+    add_dword(needle,race_id_offset)    -- ...word ptr[]
+    local mem=ms.get_code_segment() 
+    local trg_offset=mem.uint8_t.find(needle,stoff)--maybe endoff=stoff+bignumber
+    if trg_offset==nil then
+        error("address for race_load not found")
+    end
+    needle={0x83,0xc8,0xff} -- or eax, 0xFF
+    local caste_offset=mem.uint8_t.find(needle,trg_offset)
+    if caste_offset==nil or caste_offset-stoff>1000 then
+        error("Caste change code not found or found too far!")
+    end
+    
+end
 function MakeTable(modpos,modsize,names)
 	count=0
 	castes={}

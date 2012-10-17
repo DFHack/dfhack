@@ -173,6 +173,7 @@ function ListBox:init(info)
             view_id = 'list',
             selected = info.selected,
             choices = info.choices,
+            icon_width = info.icon_width,
             text_pen = spen,
             cursor_pen = cpen,
             on_submit = function(sel,obj)

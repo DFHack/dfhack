@@ -21,6 +21,11 @@ MaterialDialog.ATTRS{
     frame_inset = 1,
     frame_title = 'Select Material',
     -- new attrs
+    none_caption = 'none',
+    use_inorganic = true,
+    use_creature = true,
+    use_plant = true,
+    mat_filter = DEFAULT_NIL,
     on_select = DEFAULT_NIL,
     on_cancel = DEFAULT_NIL,
     on_close = DEFAULT_NIL,
@@ -73,20 +78,32 @@ end
 
 function MaterialDialog:initBuiltinMode()
     local choices = {
-        { text = 'none', mat_type = -1, mat_index = -1 },
-        { icon = ARROW, text = 'inorganic', key = 'CUSTOM_SHIFT_I',
-          cb = self:callback('initInorganicMode') },
-        { icon = ARROW, text = 'creature', key = 'CUSTOM_SHIFT_C',
-          cb = self:callback('initCreatureMode')},
-        { icon = ARROW, text = 'plant', key = 'CUSTOM_SHIFT_P',
-          cb = self:callback('initPlantMode') },
+        { text = self.none_caption, mat_type = -1, mat_index = -1 },
     }
 
-    self:addMaterials(
-        choices,
-        df.global.world.raws.mat_table.builtin, 0, -1,
-        df.builtin_mats._last_item
-    )
+    if self.use_inorganic then
+        table.insert(choices, {
+            icon = ARROW, text = 'inorganic', key = 'CUSTOM_SHIFT_I',
+            cb = self:callback('initInorganicMode')
+        })
+    end
+    if self.use_creature then
+        table.insert(choices, {
+            icon = ARROW, text = 'creature', key = 'CUSTOM_SHIFT_C',
+            cb = self:callback('initCreatureMode')
+        })
+    end
+    if self.use_plant then
+        table.insert(choices, {
+            icon = ARROW, text = 'plant', key = 'CUSTOM_SHIFT_P',
+            cb = self:callback('initPlantMode')
+        })
+    end
+
+    local table = df.global.world.raws.mat_table.builtin
+    for i=0,df.builtin_mats._last_item do
+        self:addMaterial(choices, table[i], i, -1, false, nil)
+    end
 
     self:pushContext('Any material', choices)
 end
@@ -94,11 +111,9 @@ end
 function MaterialDialog:initInorganicMode()
     local choices = {}
 
-    self:addMaterials(
-        choices,
-        df.global.world.raws.inorganics, 0, nil,
-        nil, 'material'
-    )
+    for i,mat in ipairs(df.global.world.raws.inorganics) do
+        self:addMaterial(choices, mat.material, 0, i, false, mat)
+    end
 
     self:pushContext('Inorganic materials', choices)
 end
@@ -124,8 +139,26 @@ function MaterialDialog:initPlantMode()
 end
 
 function MaterialDialog:addObjectChoice(choices, obj, name, typ, index)
-    if #obj.material == 1 then
-        self:addMaterial(choices, obj.material[0], typ, index, true)
+    -- Check if any eligible children
+    local count = #obj.material
+    local idx = 0
+
+    if self.mat_filter then
+        count = 0
+        for i,v in ipairs(obj.material) do
+            if self.mat_filter(v, obj, typ+i, index) then
+                count = count + 1
+                if count > 1 then break end
+                idx = i
+            end
+        end
+    end
+
+    -- Create an entry
+    if count < 1 then
+        return
+    elseif count == 1 then
+        self:addMaterial(choices, obj.material[idx], typ+idx, index, true, obj)
     else
         table.insert(choices, {
             icon = ARROW, text = name, mat_type = typ, mat_index = index,
@@ -136,29 +169,19 @@ end
 
 function MaterialDialog:onSelectObj(item)
     local choices = {}
-    self:addMaterials(choices, item.obj.material, item.mat_type, item.mat_index)
+    for i,v in ipairs(item.obj.material) do
+        self:addMaterial(choices, v, item.mat_type+i, item.mat_index, false, item.obj)
+    end
     self:pushContext(item.text, choices)
 end
 
-function MaterialDialog:addMaterials(choices, vector, tid, index, maxid, field)
-    for i=0,(maxid or #vector-1) do
-        local mat = vector[i]
-        if mat and field then
-            mat = mat[field]
-        end
-        if mat then
-            local typ, idx
-            if index then
-                typ, idx = tid+i, index
-            else
-                typ, idx = tid, i
-            end
-            self:addMaterial(choices, mat, typ, idx)
-        end
+function MaterialDialog:addMaterial(choices, mat, typ, idx, pfix, parent)
+    -- Check the filter
+    if self.mat_filter and not self.mat_filter(mat, parent, typ, idx) then
+        return
     end
-end
 
-function MaterialDialog:addMaterial(choices, mat, typ, idx, pfix)
+    -- Find the material name
     local state = 0
     if mat.heat.melting_point <= 10015 then
         state = 1
@@ -167,11 +190,14 @@ function MaterialDialog:addMaterial(choices, mat, typ, idx, pfix)
     name = string.gsub(name, '^frozen ','')
     name = string.gsub(name, '^molten ','')
     name = string.gsub(name, '^condensed ','')
+
+    -- Add prefix if requested
     local key
     if pfix and mat.prefix ~= '' then
         name = mat.prefix .. ' ' .. name
         key = mat.prefix
     end
+
     table.insert(choices, {
         text = name,
         search_key = key,
@@ -239,10 +265,11 @@ function MaterialDialog:onInput(keys)
     end
 end
 
-function showMaterialPrompt(title, prompt, on_select, on_cancel)
+function showMaterialPrompt(title, prompt, on_select, on_cancel, mat_filter)
     MaterialDialog{
         frame_title = title,
         prompt = prompt,
+        mat_filter = mat_filter,
         on_select = on_select,
         on_cancel = on_cancel,
     }:show()

@@ -4,6 +4,7 @@ local _ENV = mkmodule('gui.materials')
 
 local gui = require('gui')
 local widgets = require('gui.widgets')
+local dlg = require('gui.dialogs')
 local utils = require('utils')
 
 ARROW = string.char(26)
@@ -273,6 +274,71 @@ function showMaterialPrompt(title, prompt, on_select, on_cancel, mat_filter)
         on_select = on_select,
         on_cancel = on_cancel,
     }:show()
+end
+
+local itemdefs = df.global.world.raws.itemdefs
+local itemtype_info = {
+    TRAPPARTS = { name = 'mechanisms' },
+    WEAPON = { defs = itemdefs.weapons },
+    TRAPCOMP = { defs = itemdefs.trapcomps },
+    TOY = { defs = itemdefs.toys },
+    TOOL = { defs = itemdefs.tools },
+    INSTRUMENT = { defs = itemdefs.instruments },
+    ARMOR = { defs = itemdefs.armor },
+    AMMO = { defs = itemdefs.ammo },
+    SIEGEAMMO = { defs = itemdefs.siege_ammo },
+    GLOVES = { defs = itemdefs.gloves },
+    SHOES = { defs = itemdefs.shoes },
+    SHIELD = { defs = itemdefs.shields },
+    HELM = { defs = itemdefs.helms },
+    PANTS = { defs = itemdefs.pants },
+    FOOD = { defs = itemdefs.food },
+}
+
+function ItemTypeDialog(args)
+    args.text = args.prompt or 'Type or select an item type'
+    args.text_pen = COLOR_WHITE
+    args.with_filter = true
+    args.icon_width = 2
+
+    local choices = { {
+        icon = '?', text = args.none_caption or 'none', item_type = -1, item_subtype = -1
+    } }
+    local filter = args.item_filter
+
+    for itype = 0,df.item_type._last_item do
+        local key = df.item_type[itype]
+        local info = itemtype_info[key]
+
+        if not filter or filter(itype,-1) then
+            local name = key
+            local icon
+            if info and info.defs then
+                name = 'any '..name
+                icon = '+'
+            end
+            if info and info.name then
+                name = info.name
+            end
+            table.insert(choices, {
+                icon = icon, text = string.lower(name), item_type = itype, item_subtype = -1
+            })
+        end
+
+        if info and info.defs then
+            for subtype,def in ipairs(info.defs) do
+                if not filter or filter(itype,subtype,def) then
+                    table.insert(choices, {
+                        icon = '\x1e', text = ' '..def.name, item_type = itype, item_subtype = subtype
+                    })
+                end
+            end
+        end
+    end
+
+    args.choices = choices
+
+    return dlg.ListBox(args)
 end
 
 return _ENV

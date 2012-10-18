@@ -69,12 +69,20 @@ wakeup = lambda { |u, f|
     end
 }
 
+clear_syndromes = lambda { |u, f|
+    if f or u.syndromes.active
+        u.syndromes.active = []
+        puts "cleared all syndromes."
+    end
+}
+
 repair_him = lambda { |u, force|
     if args.include?("all") or args.empty?
         clear_wounds[u, force]
         clear_requests[u]
         repair_stand[u, force]
         repair_grasp[u, force]
+        clear_syndromes[u, force]
         wakeup[u, force]
     else
         args.each { |arg|
@@ -87,6 +95,8 @@ repair_him = lambda { |u, force|
                 repair_stand[u, force]
             when "grasp"
                 repair_grasp[u, force]
+            when "syndromes"
+                clear_syndromes[u, force]
             when "wake"
                 wakeup[u, force]
             end
@@ -102,13 +112,14 @@ if args.include?('man') or args.include?('help') or args.include?('?')
     puts "           i.e. nick:foo means select all creature(s) nicknamed as 'foo'."
     puts "           you can use spaces by using quotes."
     puts "Options(repair):"
-    puts "  all    - execute all following repair functions to the patient."
-    puts "           no options is the same as execute all."
-    puts "  wounds - clear all wounds"
-    puts "  reqs   - clear all treatment requests"
-    puts "  stand  - force walkable (also impair)"
-    puts "  grasp  - force graspable (also impair)"
-    puts "  wake   - release from 'Rest' job"
+    puts "  all       - execute all following repair functions to the patient."
+    puts "              no options is the same as execute all."
+    puts "  wounds    - clear all wounds"
+    puts "  reqs      - clear all treatment requests"
+    puts "  stand     - force walkable (also impair)"
+    puts "  grasp     - force graspable (also impair)"
+    puts "  syndromes - clear all syndromes"
+    puts "  wake      - release from 'Rest' job"
     puts "Force Option:"
     puts "  -f or --force - force execute repair function(s)"
     puts ""

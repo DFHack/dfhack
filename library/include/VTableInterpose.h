@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -87,7 +87,8 @@ namespace DFHack
        with code defined by DFHack, while retaining ability to
        call the original code. The API can be safely used from
        plugins, and multiple hooks for the same vmethod are
-       automatically chained in undefined order.
+       automatically chained (subclass before superclass; at same
+       level highest priority called first; undefined order otherwise).
 
        Usage:
 
@@ -105,6 +106,8 @@ namespace DFHack
        };
 
        IMPLEMENT_VMETHOD_INTERPOSE(my_hack, foo);
+       or
+       IMPLEMENT_VMETHOD_INTERPOSE_PRIO(my_hack, foo, priority);
 
        void init() {
            if (!INTERPOSE_HOOK(my_hack, foo).apply())
@@ -121,9 +124,11 @@ namespace DFHack
     static DFHack::VMethodInterposeLink<interpose_base,interpose_ptr_##name> interpose_##name; \
     rtype interpose_fn_##name args
 
-#define IMPLEMENT_VMETHOD_INTERPOSE(class,name) \
+#define IMPLEMENT_VMETHOD_INTERPOSE_PRIO(class,name,priority) \
     DFHack::VMethodInterposeLink<class::interpose_base,class::interpose_ptr_##name> \
-        class::interpose_##name(&class::interpose_base::name, &class::interpose_fn_##name);
+        class::interpose_##name(&class::interpose_base::name, &class::interpose_fn_##name, priority);
+
+#define IMPLEMENT_VMETHOD_INTERPOSE(class,name) IMPLEMENT_VMETHOD_INTERPOSE_PRIO(class,name,0)
 
 #define INTERPOSE_NEXT(name) (this->*interpose_##name.chain)
 #define INTERPOSE_HOOK(class, name) (class::interpose_##name)
@@ -134,22 +139,33 @@ namespace DFHack
           1) Allow multiple hooks into the same vmethod
           2) Auto-remove hooks when a plugin is unloaded.
         */
+        friend class virtual_identity;
 
         virtual_identity *host; // Class with the vtable
         int vmethod_idx;
         void *interpose_method; // Pointer to the code of the interposing method
         void *chain_mptr;       // Pointer to the chain field below
+        int priority;
 
+        bool applied;
         void *saved_chain;      // Previous pointer to the code
         VMethodInterposeLinkBase *next, *prev; // Other hooks for the same method
 
+        // inherited vtable members
+        std::set<virtual_identity*> child_hosts;
+        std::set<VMethodInterposeLinkBase*> child_next;
+
         void set_chain(void *chain);
+        void on_host_delete(virtual_identity *host);
+
+        VMethodInterposeLinkBase *get_first_interpose(virtual_identity *id);
+        void find_child_hosts(virtual_identity *cur, void *vmptr);
     public:
-        VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr);
+        VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr, int priority);
         ~VMethodInterposeLinkBase();
 
-        bool is_applied() { return saved_chain != NULL; }
-        bool apply();
+        bool is_applied() { return applied; }
+        bool apply(bool enable = true);
         void remove();
     };
 
@@ -161,12 +177,13 @@ namespace DFHack
         operator Ptr () { return chain; }
 
         template<class Ptr2>
-        VMethodInterposeLink(Ptr target, Ptr2 src)
+        VMethodInterposeLink(Ptr target, Ptr2 src, int priority)
             : VMethodInterposeLinkBase(
                 &Base::_identity,
                 vmethod_pointer_to_idx(target),
                 method_pointer_to_addr(src),
-                &chain
+                &chain,
+                priority
               )
         { src = target; /* check compatibility */ }
     };

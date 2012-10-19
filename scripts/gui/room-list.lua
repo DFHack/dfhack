@@ -78,15 +78,17 @@ RoomList = defclass(RoomList, guidm.MenuOverlay)
 
 RoomList.focus_path = 'room-list'
 
-function RoomList:init(unit)
+RoomList.ATTRS{ unit = DEFAULT_NIL }
+
+function RoomList:init(info)
+    local unit = info.unit
     local base_bld = df.global.world.selected_building
 
-    self:init_fields{
-        unit = unit, base_building = base_bld,
+    self:assign{
+        base_building = base_bld,
         items = {}, selected = 1,
         own_rooms = {}, spouse_rooms = {}
     }
-    guidm.MenuOverlay.init(self)
 
     self.old_viewport = self:getViewport()
     self.old_cursor = guidm.getCursorPos()
@@ -115,8 +117,6 @@ function RoomList:init(unit)
         self.items = concat_lists({self.base_item}, self.items)
     ::found::
     end
-
-    return self
 end
 
 local sex_char = { [0] = 12, [1] = 11 }
@@ -235,12 +235,13 @@ function RoomList:onInput(keys)
 end
 
 local focus = dfhack.gui.getCurFocus()
-if focus == 'dwarfmode/QueryBuilding/Some' then
-    local base = df.global.world.selected_building
-    mkinstance(RoomList):init(base.owner):show()
-elseif focus == 'dwarfmode/QueryBuilding/Some/Assign/Unit' then
+
+if focus == 'dwarfmode/QueryBuilding/Some/Assign/Unit' then
     local unit = df.global.ui_building_assign_units[df.global.ui_building_item_cursor]
-    mkinstance(RoomList):init(unit):show()
+    RoomList{ unit = unit }:show()
+elseif string.match(dfhack.gui.getCurFocus(), '^dwarfmode/QueryBuilding/Some') then
+    local base = df.global.world.selected_building
+    RoomList{ unit = base.owner }:show()
 else
     qerror("This script requires the main dwarfmode view in 'q' mode")
 end

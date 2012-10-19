@@ -11,6 +11,7 @@
 #include "df/matter_state.h"
 #include "df/descriptor_color.h"
 #include "df/item_type.h"
+#include "df/strain_type.h"
 
 using std::string;
 using std::vector;
@@ -195,47 +196,17 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
         if (mat->molar_mass != 0xFBBC7818)
             out.print("\t[MOLAR_MASS:%i]\n", mat->molar_mass);
 
-        if (mat->strength.impact_yield != 10000)
-            out.print("\t[IMPACT_YIELD:%i]\n", mat->strength.impact_yield);
-        if (mat->strength.impact_fracture != 10000)
-            out.print("\t[IMPACT_FRACTURE:%i]\n", mat->strength.impact_fracture);
-        if (mat->strength.impact_strain_at_yield != 0)
-            out.print("\t[IMPACT_STRAIN_AT_YIELD:%i]\n", mat->strength.impact_strain_at_yield);
+        FOR_ENUM_ITEMS(strain_type, strain)
+        {
+            auto name = ENUM_KEY_STR(strain_type,strain);
 
-        if (mat->strength.compressive_yield != 10000)
-            out.print("\t[COMPRESSIVE_YIELD:%i]\n", mat->strength.compressive_yield);
-        if (mat->strength.compressive_fracture != 10000)
-            out.print("\t[COMPRESSIVE_FRACTURE:%i]\n", mat->strength.compressive_fracture);
-        if (mat->strength.compressive_strain_at_yield != 0)
-            out.print("\t[COMPRESSIVE_STRAIN_AT_YIELD:%i]\n", mat->strength.compressive_strain_at_yield);
-
-        if (mat->strength.tensile_yield != 10000)
-            out.print("\t[TENSILE_YIELD:%i]\n", mat->strength.tensile_yield);
-        if (mat->strength.tensile_fracture != 10000)
-            out.print("\t[TENSILE_FRACTURE:%i]\n", mat->strength.tensile_fracture);
-        if (mat->strength.tensile_strain_at_yield != 0)
-            out.print("\t[TENSILE_STRAIN_AT_YIELD:%i]\n", mat->strength.tensile_strain_at_yield);
-
-        if (mat->strength.torsion_yield != 10000)
-            out.print("\t[TORSION_YIELD:%i]\n", mat->strength.torsion_yield);
-        if (mat->strength.torsion_fracture != 10000)
-            out.print("\t[TORSION_FRACTURE:%i]\n", mat->strength.torsion_fracture);
-        if (mat->strength.torsion_strain_at_yield != 0)
-            out.print("\t[TORSION_STRAIN_AT_YIELD:%i]\n", mat->strength.torsion_strain_at_yield);
-
-        if (mat->strength.shear_yield != 10000)
-            out.print("\t[SHEAR_YIELD:%i]\n", mat->strength.shear_yield);
-        if (mat->strength.shear_fracture != 10000)
-            out.print("\t[SHEAR_FRACTURE:%i]\n", mat->strength.shear_fracture);
-        if (mat->strength.shear_strain_at_yield != 0)
-            out.print("\t[SHEAR_STRAIN_AT_YIELD:%i]\n", mat->strength.shear_strain_at_yield);
-
-        if (mat->strength.bending_yield != 10000)
-            out.print("\t[BENDING_YIELD:%i]\n", mat->strength.bending_yield);
-        if (mat->strength.bending_fracture != 10000)
-            out.print("\t[BENDING_FRACTURE:%i]\n", mat->strength.bending_fracture);
-        if (mat->strength.bending_strain_at_yield != 0)
-            out.print("\t[BENDING_STRAIN_AT_YIELD:%i]\n", mat->strength.bending_strain_at_yield);
+            if (mat->strength.yield[strain] != 10000)
+                out.print("\t[%s_YIELD:%i]\n", name.c_str(), mat->strength.yield[strain]);
+            if (mat->strength.fracture[strain] != 10000)
+                out.print("\t[%s_FRACTURE:%i]\n", name.c_str(), mat->strength.fracture[strain]);
+            if (mat->strength.strain_at_yield[strain] != 0)
+                out.print("\t[%s_STRAIN_AT_YIELD:%i]\n", name.c_str(), mat->strength.strain_at_yield[strain]);
+        }
 
         if (mat->strength.max_edge != 0)
             out.print("\t[MAX_EDGE:%i]\n", mat->strength.max_edge);

@@ -9,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 
+#include "modules/Units.h"
 #include "modules/World.h"
 
 // DF data structure definition headers
@@ -358,11 +359,11 @@ static const dwarf_state dwarf_states[] = {
     OTHER /* DrinkBlood */,
     OTHER /* ReportCrime */,
     OTHER /* ExecuteCriminal */,
-        BUSY /* TrainAnimal */,
-        BUSY /* CarveTrack */,
-        BUSY /* PushTrackVehicle */,
-        BUSY /* PlaceTrackVehicle */,
-        BUSY /* StoreItemInVehicle */
+    BUSY /* TrainAnimal */,
+    BUSY /* CarveTrack */,
+    BUSY /* PushTrackVehicle */,
+    BUSY /* PlaceTrackVehicle */,
+    BUSY /* StoreItemInVehicle */
 };
 
 struct labor_info
@@ -397,108 +398,108 @@ static int hauler_pct = 33;
 static std::vector<struct labor_info> labor_infos;
 
 static const struct labor_default default_labor_infos[] = {
-    /* MINE */                {AUTOMATIC, true, 2, 200, 0},
-    /* HAUL_STONE */        {HAULERS, false, 1, 200, 0},
-    /* HAUL_WOOD */            {HAULERS, false, 1, 200, 0},
-    /* HAUL_BODY */            {HAULERS, false, 1, 200, 0},
-    /* HAUL_FOOD */            {HAULERS, false, 1, 200, 0},
-    /* HAUL_REFUSE */        {HAULERS, false, 1, 200, 0},
-    /* HAUL_ITEM */            {HAULERS, false, 1, 200, 0},
-    /* HAUL_FURNITURE */    {HAULERS, false, 1, 200, 0},
-    /* HAUL_ANIMAL */        {HAULERS, false, 1, 200, 0},
-    /* CLEAN */                {HAULERS, false, 1, 200, 0},
-    /* CUTWOOD */            {AUTOMATIC, true, 1, 200, 0},
-    /* CARPENTER */            {AUTOMATIC, false, 1, 200, 0},
-    /* DETAIL */            {AUTOMATIC, false, 1, 200, 0},
-    /* MASON */                {AUTOMATIC, false, 1, 200, 0},
-    /* ARCHITECT */            {AUTOMATIC, false, 1, 200, 0},
-    /* ANIMALTRAIN */        {AUTOMATIC, false, 1, 200, 0},
-    /* ANIMALCARE */        {AUTOMATIC, false, 1, 200, 0},
-    /* DIAGNOSE */            {AUTOMATIC, false, 1, 200, 0},
-    /* SURGERY */            {AUTOMATIC, false, 1, 200, 0},
-    /* BONE_SETTING */        {AUTOMATIC, false, 1, 200, 0},
-    /* SUTURING */            {AUTOMATIC, false, 1, 200, 0},
-    /* DRESSING_WOUNDS */    {AUTOMATIC, false, 1, 200, 0},
-    /* FEED_WATER_CIVILIANS */ {AUTOMATIC, false, 200, 200, 0},
-    /* RECOVER_WOUNDED */    {HAULERS, false, 1, 200, 0},
-    /* BUTCHER */            {AUTOMATIC, false, 1, 200, 0},
-    /* TRAPPER */            {AUTOMATIC, false, 1, 200, 0},
-    /* DISSECT_VERMIN */    {AUTOMATIC, false, 1, 200, 0},
-    /* LEATHER */            {AUTOMATIC, false, 1, 200, 0},
-    /* TANNER */            {AUTOMATIC, false, 1, 200, 0},
-    /* BREWER */            {AUTOMATIC, false, 1, 200, 0},
-    /* ALCHEMIST */            {AUTOMATIC, false, 1, 200, 0},
-    /* SOAP_MAKER */        {AUTOMATIC, false, 1, 200, 0},
-    /* WEAVER */            {AUTOMATIC, false, 1, 200, 0},
-    /* CLOTHESMAKER */        {AUTOMATIC, false, 1, 200, 0},
-    /* MILLER */            {AUTOMATIC, false, 1, 200, 0},
-    /* PROCESS_PLANT */        {AUTOMATIC, false, 1, 200, 0},
-    /* MAKE_CHEESE */        {AUTOMATIC, false, 1, 200, 0},
-    /* MILK */                {AUTOMATIC, false, 1, 200, 0},
-    /* COOK */                {AUTOMATIC, false, 1, 200, 0},
-    /* PLANT */                {AUTOMATIC, false, 1, 200, 0},
-    /* HERBALIST */            {AUTOMATIC, false, 1, 200, 0},
-    /* FISH */                {AUTOMATIC, false, 1, 1, 0},
-    /* CLEAN_FISH */        {AUTOMATIC, false, 1, 200, 0},
-    /* DISSECT_FISH */        {AUTOMATIC, false, 1, 200, 0},
-    /* HUNT */                {AUTOMATIC, true, 1, 1, 0},
-    /* SMELT */                {AUTOMATIC, false, 1, 200, 0},
-    /* FORGE_WEAPON */        {AUTOMATIC, false, 1, 200, 0},
-    /* FORGE_ARMOR */        {AUTOMATIC, false, 1, 200, 0},
-    /* FORGE_FURNITURE */    {AUTOMATIC, false, 1, 200, 0},
-    /* METAL_CRAFT */        {AUTOMATIC, false, 1, 200, 0},
-    /* CUT_GEM */            {AUTOMATIC, false, 1, 200, 0},
-    /* ENCRUST_GEM */        {AUTOMATIC, false, 1, 200, 0},
-    /* WOOD_CRAFT */        {AUTOMATIC, false, 1, 200, 0},
-    /* STONE_CRAFT */        {AUTOMATIC, false, 1, 200, 0},
-    /* BONE_CARVE */        {AUTOMATIC, false, 1, 200, 0},
-    /* GLASSMAKER */        {AUTOMATIC, false, 1, 200, 0},
-    /* EXTRACT_STRAND */    {AUTOMATIC, false, 1, 200, 0},
-    /* SIEGECRAFT */        {AUTOMATIC, false, 1, 200, 0},
-    /* SIEGEOPERATE */        {AUTOMATIC, false, 1, 200, 0},
-    /* BOWYER */            {AUTOMATIC, false, 1, 200, 0},
-    /* MECHANIC */            {AUTOMATIC, false, 1, 200, 0},
-    /* POTASH_MAKING */        {AUTOMATIC, false, 1, 200, 0},
-    /* LYE_MAKING */        {AUTOMATIC, false, 1, 200, 0},
-    /* DYER */                {AUTOMATIC, false, 1, 200, 0},
-    /* BURN_WOOD */            {AUTOMATIC, false, 1, 200, 0},
-    /* OPERATE_PUMP */        {AUTOMATIC, false, 1, 200, 0},
-    /* SHEARER */            {AUTOMATIC, false, 1, 200, 0},
-    /* SPINNER */            {AUTOMATIC, false, 1, 200, 0},
-    /* POTTERY */            {AUTOMATIC, false, 1, 200, 0},
-    /* GLAZING */            {AUTOMATIC, false, 1, 200, 0},
-    /* PRESSING */            {AUTOMATIC, false, 1, 200, 0},
-    /* BEEKEEPING */        {AUTOMATIC, false, 1, 1, 0}, // reduce risk of stuck beekeepers (see http://www.bay12games.com/dwarves/mantisbt/view.php?id=3981)
-    /* WAX_WORKING */        {AUTOMATIC, false, 1, 200, 0},
+    /* MINE */                  {AUTOMATIC, true, 2, 200, 0},
+    /* HAUL_STONE */            {HAULERS, false, 1, 200, 0},
+    /* HAUL_WOOD */             {HAULERS, false, 1, 200, 0},
+    /* HAUL_BODY */             {HAULERS, false, 1, 200, 0},
+    /* HAUL_FOOD */             {HAULERS, false, 1, 200, 0},
+    /* HAUL_REFUSE */           {HAULERS, false, 1, 200, 0},
+    /* HAUL_ITEM */             {HAULERS, false, 1, 200, 0},
+    /* HAUL_FURNITURE */        {HAULERS, false, 1, 200, 0},
+    /* HAUL_ANIMAL */           {HAULERS, false, 1, 200, 0},
+    /* CLEAN */                 {HAULERS, false, 1, 200, 0},
+    /* CUTWOOD */               {AUTOMATIC, true, 1, 200, 0},
+    /* CARPENTER */             {AUTOMATIC, false, 1, 200, 0},
+    /* DETAIL */                {AUTOMATIC, false, 1, 200, 0},
+    /* MASON */                 {AUTOMATIC, false, 1, 200, 0},
+    /* ARCHITECT */             {AUTOMATIC, false, 1, 200, 0},
+    /* ANIMALTRAIN */           {AUTOMATIC, false, 1, 200, 0},
+    /* ANIMALCARE */            {AUTOMATIC, false, 1, 200, 0},
+    /* DIAGNOSE */              {AUTOMATIC, false, 1, 200, 0},
+    /* SURGERY */               {AUTOMATIC, false, 1, 200, 0},
+    /* BONE_SETTING */          {AUTOMATIC, false, 1, 200, 0},
+    /* SUTURING */              {AUTOMATIC, false, 1, 200, 0},
+    /* DRESSING_WOUNDS */       {AUTOMATIC, false, 1, 200, 0},
+    /* FEED_WATER_CIVILIANS */  {AUTOMATIC, false, 200, 200, 0},
+    /* RECOVER_WOUNDED */       {HAULERS, false, 1, 200, 0},
+    /* BUTCHER */               {AUTOMATIC, false, 1, 200, 0},
+    /* TRAPPER */               {AUTOMATIC, false, 1, 200, 0},
+    /* DISSECT_VERMIN */        {AUTOMATIC, false, 1, 200, 0},
+    /* LEATHER */               {AUTOMATIC, false, 1, 200, 0},
+    /* TANNER */                {AUTOMATIC, false, 1, 200, 0},
+    /* BREWER */                {AUTOMATIC, false, 1, 200, 0},
+    /* ALCHEMIST */             {AUTOMATIC, false, 1, 200, 0},
+    /* SOAP_MAKER */            {AUTOMATIC, false, 1, 200, 0},
+    /* WEAVER */                {AUTOMATIC, false, 1, 200, 0},
+    /* CLOTHESMAKER */          {AUTOMATIC, false, 1, 200, 0},
+    /* MILLER */                {AUTOMATIC, false, 1, 200, 0},
+    /* PROCESS_PLANT */         {AUTOMATIC, false, 1, 200, 0},
+    /* MAKE_CHEESE */           {AUTOMATIC, false, 1, 200, 0},
+    /* MILK */                  {AUTOMATIC, false, 1, 200, 0},
+    /* COOK */                  {AUTOMATIC, false, 1, 200, 0},
+    /* PLANT */                 {AUTOMATIC, false, 1, 200, 0},
+    /* HERBALIST */             {AUTOMATIC, false, 1, 200, 0},
+    /* FISH */                  {AUTOMATIC, false, 1, 1, 0},
+    /* CLEAN_FISH */            {AUTOMATIC, false, 1, 200, 0},
+    /* DISSECT_FISH */          {AUTOMATIC, false, 1, 200, 0},
+    /* HUNT */                  {AUTOMATIC, true, 1, 1, 0},
+    /* SMELT */                 {AUTOMATIC, false, 1, 200, 0},
+    /* FORGE_WEAPON */          {AUTOMATIC, false, 1, 200, 0},
+    /* FORGE_ARMOR */           {AUTOMATIC, false, 1, 200, 0},
+    /* FORGE_FURNITURE */       {AUTOMATIC, false, 1, 200, 0},
+    /* METAL_CRAFT */           {AUTOMATIC, false, 1, 200, 0},
+    /* CUT_GEM */               {AUTOMATIC, false, 1, 200, 0},
+    /* ENCRUST_GEM */           {AUTOMATIC, false, 1, 200, 0},
+    /* WOOD_CRAFT */            {AUTOMATIC, false, 1, 200, 0},
+    /* STONE_CRAFT */           {AUTOMATIC, false, 1, 200, 0},
+    /* BONE_CARVE */            {AUTOMATIC, false, 1, 200, 0},
+    /* GLASSMAKER */            {AUTOMATIC, false, 1, 200, 0},
+    /* EXTRACT_STRAND */        {AUTOMATIC, false, 1, 200, 0},
+    /* SIEGECRAFT */            {AUTOMATIC, false, 1, 200, 0},
+    /* SIEGEOPERATE */          {AUTOMATIC, false, 1, 200, 0},
+    /* BOWYER */                {AUTOMATIC, false, 1, 200, 0},
+    /* MECHANIC */              {AUTOMATIC, false, 1, 200, 0},
+    /* POTASH_MAKING */         {AUTOMATIC, false, 1, 200, 0},
+    /* LYE_MAKING */            {AUTOMATIC, false, 1, 200, 0},
+    /* DYER */                  {AUTOMATIC, false, 1, 200, 0},
+    /* BURN_WOOD */             {AUTOMATIC, false, 1, 200, 0},
+    /* OPERATE_PUMP */          {AUTOMATIC, false, 1, 200, 0},
+    /* SHEARER */               {AUTOMATIC, false, 1, 200, 0},
+    /* SPINNER */               {AUTOMATIC, false, 1, 200, 0},
+    /* POTTERY */               {AUTOMATIC, false, 1, 200, 0},
+    /* GLAZING */               {AUTOMATIC, false, 1, 200, 0},
+    /* PRESSING */              {AUTOMATIC, false, 1, 200, 0},
+    /* BEEKEEPING */            {AUTOMATIC, false, 1, 1, 0}, // reduce risk of stuck beekeepers (see http://www.bay12games.com/dwarves/mantisbt/view.php?id=3981)
+    /* WAX_WORKING */           {AUTOMATIC, false, 1, 200, 0},
     /* PUSH_HAUL_VEHICLES */    {HAULERS, false, 1, 200, 0}
 };
 
 static const int responsibility_penalties[] = {
-        0,      /* LAW_MAKING */
-        0,      /* LAW_ENFORCEMENT */
-        3000,    /* RECEIVE_DIPLOMATS */
-        0,      /* MEET_WORKERS */
-        1000,    /* MANAGE_PRODUCTION */
-        3000,   /* TRADE */
-        1000,    /* ACCOUNTING */
-        0,      /* ESTABLISH_COLONY_TRADE_AGREEMENTS */
-        0,      /* MAKE_INTRODUCTIONS */
-        0,      /* MAKE_PEACE_AGREEMENTS */
-        0,      /* MAKE_TOPIC_AGREEMENTS */
-        0,      /* COLLECT_TAXES */
-        0,      /* ESCORT_TAX_COLLECTOR */
-        0,      /* EXECUTIONS */
-        0,      /* TAME_EXOTICS */
-        0,      /* RELIGION */
-        0,      /* ATTACK_ENEMIES */
-        0,      /* PATROL_TERRITORY */
-        0,      /* MILITARY_GOALS */
-        0,      /* MILITARY_STRATEGY */
-        0,      /* UPGRADE_SQUAD_EQUIPMENT */
-        0,      /* EQUIPMENT_MANIFESTS */
-        0,      /* SORT_AMMUNITION */
-        0,      /* BUILD_MORALE */
-        5000    /* HEALTH_MANAGEMENT */
+    0,      /* LAW_MAKING */
+    0,      /* LAW_ENFORCEMENT */
+    3000,   /* RECEIVE_DIPLOMATS */
+    0,      /* MEET_WORKERS */
+    1000,   /* MANAGE_PRODUCTION */
+    3000,   /* TRADE */
+    1000,   /* ACCOUNTING */
+    0,      /* ESTABLISH_COLONY_TRADE_AGREEMENTS */
+    0,      /* MAKE_INTRODUCTIONS */
+    0,      /* MAKE_PEACE_AGREEMENTS */
+    0,      /* MAKE_TOPIC_AGREEMENTS */
+    0,      /* COLLECT_TAXES */
+    0,      /* ESCORT_TAX_COLLECTOR */
+    0,      /* EXECUTIONS */
+    0,      /* TAME_EXOTICS */
+    0,      /* RELIGION */
+    0,      /* ATTACK_ENEMIES */
+    0,      /* PATROL_TERRITORY */
+    0,      /* MILITARY_GOALS */
+    0,      /* MILITARY_STRATEGY */
+    0,      /* UPGRADE_SQUAD_EQUIPMENT */
+    0,      /* EQUIPMENT_MANIFESTS */
+    0,      /* SORT_AMMUNITION */
+    0,      /* BUILD_MORALE */
+    5000    /* HEALTH_MANAGEMENT */
 };
 
 struct dwarf_info_t
@@ -537,7 +538,7 @@ static void cleanup_state()
     labor_infos.clear();
 }
 
-static void reset_labor(df::enums::unit_labor::unit_labor labor)
+static void reset_labor(df::unit_labor labor)
 {
     labor_infos[labor].set_minimum_dwarfs(default_labor_infos[labor].minimum_dwarfs);
     labor_infos[labor].set_maximum_dwarfs(default_labor_infos[labor].maximum_dwarfs);
@@ -576,7 +577,7 @@ static void init_state()
     for (auto p = items.begin(); p != items.end(); p++)
     {
         string key = p->key();
-        df::enums::unit_labor::unit_labor labor = (df::enums::unit_labor::unit_labor) atoi(key.substr(strlen("autolabor/labors/")).c_str());
+        df::unit_labor labor = (df::unit_labor) atoi(key.substr(strlen("autolabor/labors/")).c_str());
         if (labor >= 0 && labor <= labor_infos.size())
         {
             labor_infos[labor].config = *p;
@@ -597,7 +598,7 @@ static void init_state()
 
         labor_infos[i].is_exclusive = default_labor_infos[i].is_exclusive;
         labor_infos[i].active_dwarfs = 0;
-        reset_labor((df::enums::unit_labor::unit_labor) i);
+        reset_labor((df::unit_labor) i);
     }
 
     generate_labor_to_skill_map();
@@ -611,12 +612,12 @@ static void generate_labor_to_skill_map()
     // Generate labor -> skill mapping
 
     for (int i = 0; i <= ENUM_LAST_ITEM(unit_labor); i++)
-        labor_to_skill[i] = df::enums::job_skill::NONE;
+        labor_to_skill[i] = job_skill::NONE;
 
     FOR_ENUM_ITEMS(job_skill, skill)
     {
         int labor = ENUM_ATTR(job_skill, labor, skill);
-        if (labor != df::enums::unit_labor::NONE)
+        if (labor != unit_labor::NONE)
         {
             /*
             assert(labor >= 0);
@@ -779,7 +780,7 @@ static void assign_labor(unit_labor::unit_labor labor,
 
             int value = dwarf_info[dwarf].mastery_penalty;
 
-            if (skill != df::enums::job_skill::NONE)
+            if (skill != job_skill::NONE)
             {
                 int skill_level = 0;
                 int skill_experience = 0;
@@ -843,9 +844,9 @@ static void assign_labor(unit_labor::unit_labor labor,
         int max_dwarfs = labor_infos[labor].maximum_dwarfs();
 
         // Special - don't assign hunt without a butchers, or fish without a fishery
-        if (df::enums::unit_labor::HUNT == labor && !has_butchers)
+        if (unit_labor::HUNT == labor && !has_butchers)
             min_dwarfs = max_dwarfs = 0;
-        if (df::enums::unit_labor::FISH == labor && !has_fishery)
+        if (unit_labor::FISH == labor && !has_fishery)
             min_dwarfs = max_dwarfs = 0;
 
         bool want_idle_dwarf = true;
@@ -956,15 +957,15 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     {
         df::building *build = world->buildings.all[i];
         auto type = build->getType();
-        if (df::enums::building_type::Workshop == type)
+        if (building_type::Workshop == type)
         {
-            auto subType = build->getSubtype();
-            if (df::enums::workshop_type::Butchers == subType)
+            df::workshop_type subType = (df::workshop_type)build->getSubtype();
+            if (workshop_type::Butchers == subType)
                 has_butchers = true;
-            if (df::enums::workshop_type::Fishery == subType)
+            if (workshop_type::Fishery == subType)
                 has_fishery = true;
         }
-        else if (df::enums::building_type::TradeDepot == type)
+        else if (building_type::TradeDepot == type)
         {
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
             trader_requested = depot->trade_flags.bits.trader_requested;
@@ -978,11 +979,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         }
     }
 
-    for (int i = 0; i < world->units.all.size(); ++i)
+    for (int i = 0; i < world->units.active.size(); ++i)
     {
-        df::unit* cre = world->units.all[i];
-        if (cre->race == race && cre->civ_id == civ && !cre->flags1.bits.marauder && !cre->flags1.bits.diplomat && !cre->flags1.bits.merchant &&
-            !cre->flags1.bits.dead && !cre->flags1.bits.forest)
+        df::unit* cre = world->units.active[i];
+        if (Units::isCitizen(cre))
         {
             if (cre->burrows.size() > 0)
                 continue;        // dwarfs assigned to burrows are skipped entirely
@@ -1002,9 +1002,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
     {
         dwarf_info[dwarf].single_labor = -1;
-
-//        assert(dwarfs[dwarf]->status.souls.size() > 0);
-//      assert fails can cause DF to crash, so don't do that
 
         if (dwarfs[dwarf]->status.souls.size() <= 0)
             continue;
@@ -1076,7 +1073,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
             // Track total & highest skill among normal/medical skills. (We don't care about personal or social skills.)
 
-            if (skill_class != df::enums::job_skill_class::Normal && skill_class != df::enums::job_skill_class::Medical)
+            if (skill_class != job_skill_class::Normal && skill_class != job_skill_class::Medical)
                 continue;
 
             if (dwarf_info[dwarf].highest_skill < skill_level)
@@ -1093,15 +1090,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         dwarf_info[dwarf].mastery_penalty -= 10 * dwarf_info[dwarf].total_skill;
         dwarf_info[dwarf].mastery_penalty -= dwarf_info[dwarf].noble_penalty;
 
-        for (int labor = ENUM_FIRST_ITEM(unit_labor); labor <= ENUM_LAST_ITEM(unit_labor); labor++)
+        FOR_ENUM_ITEMS(unit_labor, labor)
         {
-            if (labor == df::enums::unit_labor::NONE)
+            if (labor == unit_labor::NONE)
                 continue;
-
-            /*
-            assert(labor >= 0);
-            assert(labor < ARRAY_COUNT(labor_infos));
-            */
 
             if (labor_infos[labor].is_exclusive && dwarfs[dwarf]->status.labors[labor])
                 dwarf_info[dwarf].mastery_penalty -= 100;
@@ -1120,15 +1112,13 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         for (auto p = dwarfs[dwarf]->status.misc_traits.begin(); p < dwarfs[dwarf]->status.misc_traits.end(); p++)
         {
-            // 7 / 0x7 = Newly arrived migrant, will not work yet
-            // 17 / 0x11 = On break
-            if ((*p)->id == 0x07 || (*p)->id == 0x11)
+            if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
                 is_on_break = true;
         }
 
-        if (dwarfs[dwarf]->profession == df::enums::profession::BABY ||
-            dwarfs[dwarf]->profession == df::enums::profession::CHILD ||
-            dwarfs[dwarf]->profession == df::enums::profession::DRUNK)
+        if (dwarfs[dwarf]->profession == profession::BABY ||
+            dwarfs[dwarf]->profession == profession::CHILD ||
+            dwarfs[dwarf]->profession == profession::DRUNK)
         {
             dwarf_info[dwarf].state = CHILD;
         }
@@ -1146,18 +1136,13 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         else
         {
             int job = dwarfs[dwarf]->job.current_job->job_type;
-
-            /*
-            assert(job >= 0);
-            assert(job < ARRAY_COUNT(dwarf_states));
-            */
-                        if (job >= 0 && job < ARRAY_COUNT(dwarf_states))
-                            dwarf_info[dwarf].state = dwarf_states[job];
-                        else
-                        {
-                            out.print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
-                            dwarf_info[dwarf].state = OTHER;
-                        }
+            if (job >= 0 && job < ARRAY_COUNT(dwarf_states))
+                dwarf_info[dwarf].state = dwarf_states[job];
+            else
+            {
+                out.print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
+                dwarf_info[dwarf].state = OTHER;
+            }
         }
 
         state_count[dwarf_info[dwarf].state]++;
@@ -1170,13 +1155,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
     FOR_ENUM_ITEMS(unit_labor, labor)
     {
-        if (labor == df::enums::unit_labor::NONE)
+        if (labor == unit_labor::NONE)
             continue;
-
-        /*
-        assert(labor >= 0);
-        assert(labor < ARRAY_COUNT(labor_infos));
-        */
 
         labor_infos[labor].active_dwarfs = 0;
 
@@ -1217,11 +1197,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     {
         auto labor = *lp;
 
-        /*
-        assert(labor >= 0);
-        assert(labor < ARRAY_COUNT(labor_infos));
-        */
-
         assign_labor(labor, n_dwarfs, dwarf_info, trader_requested, dwarfs, has_butchers, has_fishery, out);
     }
 
@@ -1241,7 +1216,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         {
             FOR_ENUM_ITEMS(unit_labor, labor)
             {
-                if (labor == df::enums::unit_labor::NONE)
+                if (labor == unit_labor::NONE)
                     continue;
                 if (labor_infos[labor].mode() != HAULERS)
                     continue;
@@ -1264,13 +1239,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
     FOR_ENUM_ITEMS(unit_labor, labor)
     {
-        if (labor == df::enums::unit_labor::NONE)
+        if (labor == unit_labor::NONE)
             continue;
-
-        /*
-        assert(labor >= 0);
-        assert(labor < ARRAY_COUNT(labor_infos));
-        */
 
         if (labor_infos[labor].mode() != HAULERS)
             continue;
@@ -1311,7 +1281,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     return CR_OK;
 }
 
-void print_labor (df::enums::unit_labor::unit_labor labor, color_ostream &out)
+void print_labor (df::unit_labor labor, color_ostream &out)
 {
     string labor_name = ENUM_KEY_STR(unit_labor, labor);
     out << labor_name << ": ";
@@ -1358,7 +1328,6 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
         return CR_OK;
     }
-
     else if (parameters.size() == 2 && parameters[0] == "haulpct")
     {
         if (!enable_autolabor)
@@ -1371,15 +1340,15 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
         hauler_pct = pct;
         return CR_OK;
     }
-    else if (parameters.size() == 2 || parameters.size() == 3) {
-
+    else if (parameters.size() == 2 || parameters.size() == 3)
+    {
         if (!enable_autolabor)
         {
             out << "Error: The plugin is not enabled." << endl;
             return CR_FAILURE;
         }
 
-        df::enums::unit_labor::unit_labor labor = df::enums::unit_labor::NONE;
+        df::unit_labor labor = unit_labor::NONE;
 
         FOR_ENUM_ITEMS(unit_labor, test_labor)
         {
@@ -1387,7 +1356,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
                 labor = test_labor;
         }
 
-        if (labor == df::enums::unit_labor::NONE)
+        if (labor == unit_labor::NONE)
         {
             out.printerr("Could not find labor %s.\n", parameters[0].c_str());
             return CR_WRONG_USAGE;
@@ -1430,7 +1399,8 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
         return CR_OK;
     }
-    else if (parameters.size() == 1 && parameters[0] == "reset-all") {
+    else if (parameters.size() == 1 && parameters[0] == "reset-all")
+    {
         if (!enable_autolabor)
         {
             out << "Error: The plugin is not enabled." << endl;
@@ -1439,12 +1409,13 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
         for (int i = 0; i < labor_infos.size(); i++)
         {
-            reset_labor((df::enums::unit_labor::unit_labor) i);
+            reset_labor((df::unit_labor) i);
         }
         out << "All labors reset." << endl;
         return CR_OK;
     }
-    else if (parameters.size() == 1 && parameters[0] == "list" || parameters[0] == "status") {
+    else if (parameters.size() == 1 && parameters[0] == "list" || parameters[0] == "status")
+    {
         if (!enable_autolabor)
         {
             out << "Error: The plugin is not enabled." << endl;
@@ -1467,7 +1438,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
         {
             FOR_ENUM_ITEMS(unit_labor, labor)
             {
-                if (labor == df::enums::unit_labor::NONE)
+                if (labor == unit_labor::NONE)
                     continue;
 
                 print_labor(labor, out);
@@ -1571,7 +1542,7 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
     {
         df::building *build = world->buildings.all[i];
         auto type = build->getType();
-        if (df::enums::building_type::Stockpile == type)
+        if (building_type::Stockpile == type)
         {
             df::building_stockpilest *sp = virtual_cast<df::building_stockpilest>(build);
             StockpileInfo *spi = new StockpileInfo(sp);
@@ -1580,7 +1551,7 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
 
     }
 
-    std::vector<df::item*> &items = world->items.other[df::enums::items_other_id::ANY_FREE];
+    std::vector<df::item*> &items = world->items.other[items_other_id::ANY_FREE];
 
     // Precompute a bitmask with the bad flags
     df::item_flags bad_flags;
@@ -1602,13 +1573,13 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
         // we really only care about MEAT, FISH, FISH_RAW, PLANT, CHEESE, FOOD, and EGG
 
         df::item_type typ = item->getType();
-        if (typ != df::enums::item_type::MEAT &&
-            typ != df::enums::item_type::FISH &&
-            typ != df::enums::item_type::FISH_RAW &&
-            typ != df::enums::item_type::PLANT &&
-            typ != df::enums::item_type::CHEESE &&
-            typ != df::enums::item_type::FOOD &&
-            typ != df::enums::item_type::EGG)
+        if (typ != item_type::MEAT &&
+            typ != item_type::FISH &&
+            typ != item_type::FISH_RAW &&
+            typ != item_type::PLANT &&
+            typ != item_type::CHEESE &&
+            typ != item_type::FOOD &&
+            typ != item_type::EGG)
             continue;
 
         df::item *container = 0;
@@ -1673,11 +1644,11 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
 
         if (building) {
             df::building_type btype = building->getType();
-            if (btype == df::enums::building_type::TradeDepot ||
-                btype == df::enums::building_type::Wagon)
+            if (btype == building_type::TradeDepot ||
+                btype == building_type::Wagon)
                 continue; // items in trade depot or the embark wagon do not rot
 
-            if (typ == df::enums::item_type::EGG && btype ==df::enums::building_type::NestBox)
+            if (typ == item_type::EGG && btype ==building_type::NestBox)
                 continue; // eggs in nest box do not rot
         }
 

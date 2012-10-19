@@ -12,9 +12,15 @@ module DFHack
                     ref.unit_tg if ref.kind_of?(GeneralRefUnit)
                 when :viewscreen_unitlistst
                     v = curview
-                    # TODO fix xml to use enums everywhere
-                    page = DFHack::ViewscreenUnitlistst_TPage.int(v.page)
-                    v.units[page][v.cursor_pos[page]]
+                    v.units[v.page][v.cursor_pos[v.page]]
+                when :viewscreen_petst
+                    v = curview
+                    case v.mode
+                    when :List
+                        v.animal[v.cursor].unit if !v.is_vermin[v.cursor]
+                    when :SelectTrainer
+                        v.trainer_unit[v.trainer_cursor]
+                    end
                 else
                     case ui.main.mode
                     when :ViewUnits
@@ -24,6 +30,8 @@ module DFHack
                     when :LookAround
                         k = ui_look_list.items[ui_look_cursor]
                         k.unit if k.type == :Unit
+                    else
+                        ui.follow_unit_tg if ui.follow_unit != -1
                     end
                 end
             elsif what.kind_of?(Integer)
@@ -46,8 +54,8 @@ module DFHack
             }
         end
 
-	def unit_iscitizen(u)
-            u.race == ui.race_id and u.civ_id == ui.civ_id and !u.flags1.dead and !u.flags1.merchant and
+        def unit_iscitizen(u)
+            u.race == ui.race_id and u.civ_id == ui.civ_id and !u.flags1.dead and !u.flags1.merchant and !u.flags1.forest and
             !u.flags1.diplomat and !u.flags2.resident and !u.flags3.ghostly and
             !u.curse.add_tags1.OPPOSED_TO_LIFE and !u.curse.add_tags1.CRAZED and
             u.mood != :Berserk
@@ -104,7 +112,7 @@ module DFHack
     end
 
     class LanguageName
-        def to_s(english=true)
+        def to_s(english=false)
             df.translate_name(self, english)
         end
     end

@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -303,7 +303,7 @@ namespace DFHack
         void *vtable_ptr;
 
         friend class VMethodInterposeLinkBase;
-        std::vector<VMethodInterposeLinkBase*> interpose_list;
+        std::map<int,VMethodInterposeLinkBase*> interpose_list;
 
     protected:
         virtual void doInit(Core *core);
@@ -518,7 +518,7 @@ namespace DFHack {
     template<class T>
     inline const char *enum_item_raw_key(T val) {
         typedef df::enum_traits<T> traits;
-        return traits::is_valid(val) ? traits::key_table[val - traits::first_item_value] : NULL;
+        return traits::is_valid(val) ? traits::key_table[(short)val - traits::first_item_value] : NULL;
     }
 
     /**
@@ -706,6 +706,9 @@ namespace DFHack {
 
 // Global object pointers
 #include "df/global_objects.h"
+
+#define DF_GLOBAL_VALUE(name,defval) (df::global::name ? *df::global::name : defval)
+#define DF_GLOBAL_FIELD(name,fname,defval) (df::global::name ? df::global::name->fname : defval)
 
 // A couple of headers that have to be included at once
 #include "df/coord2d.h"

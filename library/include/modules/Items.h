@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -44,6 +44,7 @@ distribution.
 namespace df
 {
     struct itemdef;
+    struct proj_itemst;
 }
 
 namespace MapExtras {
@@ -155,5 +156,11 @@ DFHACK_EXPORT bool moveToContainer(MapExtras::MapCache &mc, df::item *item, df::
 DFHACK_EXPORT bool moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,int16_t use_mode);
 DFHACK_EXPORT bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit,
     df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Carried, int body_part = -1);
+
+/// Makes the item removed and marked for garbage collection
+DFHACK_EXPORT bool remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat = false);
+
+/// Detaches the items from its current location and turns it into a projectile
+DFHACK_EXPORT df::proj_itemst *makeProjectile(MapExtras::MapCache &mc, df::item *item);
 }
 }

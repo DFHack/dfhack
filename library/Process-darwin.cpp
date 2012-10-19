@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -27,6 +27,7 @@ distribution.
 #include <errno.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 
 #include <mach-o/dyld.h>
 
@@ -260,6 +261,13 @@ bool Process::getThreadIDs(vector<uint32_t> & threads )
         }
     }
     return true;
+}
+
+uint32_t Process::getTickCount()
+{
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    return (tp.tv_sec * 1000) + (tp.tv_usec / 1000);
 }
 
 string Process::getPath()

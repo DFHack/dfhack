@@ -3,12 +3,18 @@
 #include "Export.h"
 #include "PluginManager.h"
 
+#include <Error.h>
+#include <LuaTools.h>
+
 #include "modules/Gui.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
+#include "modules/World.h"
+#include "modules/Screen.h"
 
-#include "DataDefs.h"
+#include <VTableInterpose.h>
 #include "df/ui.h"
+#include "df/ui_sidebar_menus.h"
 #include "df/world.h"
 #include "df/squad.h"
 #include "df/unit.h"
@@ -18,6 +24,13 @@
 #include "df/historical_figure_info.h"
 #include "df/assumed_identity.h"
 #include "df/language_name.h"
+#include "df/building_stockpilest.h"
+#include "df/building_workshopst.h"
+#include "df/building_furnacest.h"
+#include "df/building_trapst.h"
+#include "df/building_siegeenginest.h"
+#include "df/building_civzonest.h"
+#include "df/viewscreen_dwarfmodest.h"
 
 #include "RemoteServer.h"
 #include "rename.pb.h"
@@ -34,7 +47,10 @@ using namespace df::enums;
 using namespace dfproto;
 
 using df::global::ui;
+using df::global::ui_sidebar_menus;
 using df::global::world;
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event);
 
 static command_result rename(color_ostream &out, vector <string> & parameters);
 
@@ -51,14 +67,197 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
             "  rename unit \"nickname\"\n"
             "  rename unit-profession \"custom profession\"\n"
             "    (a unit must be highlighted in the ui)\n"
+            "  rename building \"nickname\"\n"
+            "    (a building must be highlighted via 'q')\n"
         ));
+
+        if (Core::getInstance().isWorldLoaded())
+            plugin_onstatechange(out, SC_WORLD_LOADED);
     }
+
+    return CR_OK;
+}
+
+static void init_buildings(bool enable);
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
+{
+    switch (event) {
+    case SC_WORLD_LOADED:
+        init_buildings(true);
+        break;
+    case SC_WORLD_UNLOADED:
+        init_buildings(false);
+        break;
+    default:
+        break;
+    }
+
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
+}
+
+/*
+ * Building renaming - it needs some per-type hacking.
+ */
+
+#define KNOWN_BUILDINGS \
+    BUILDING('p', building_stockpilest, "Stockpile") \
+    BUILDING('w', building_workshopst, NULL) \
+    BUILDING('e', building_furnacest, NULL) \
+    BUILDING('T', building_trapst, NULL) \
+    BUILDING('i', building_siegeenginest, NULL) \
+    BUILDING('Z', building_civzonest, "Zone")
+
+#define BUILDING(code, cname, tag) \
+    struct cname##_hook : df::cname { \
+        typedef df::cname interpose_base; \
+        DEFINE_VMETHOD_INTERPOSE(void, getName, (std::string *buf)) { \
+            if (!name.empty()) {\
+                buf->clear(); \
+                *buf += name; \
+                *buf += " ("; \
+                if (tag) *buf += (const char*)tag; \
+                else { std::string tmp; INTERPOSE_NEXT(getName)(&tmp); *buf += tmp; } \
+                *buf += ")"; \
+                return; \
+            } \
+            else \
+                INTERPOSE_NEXT(getName)(buf); \
+        } \
+    }; \
+    IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cname##_hook, getName, 100);
+KNOWN_BUILDINGS
+#undef BUILDING
+
+struct dwarf_render_zone_hook : df::viewscreen_dwarfmodest {
+    typedef df::viewscreen_dwarfmodest interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+
+        if (ui->main.mode == ui_sidebar_mode::Zones &&
+            ui_sidebar_menus && ui_sidebar_menus->zone.selected &&
+            !ui_sidebar_menus->zone.selected->name.empty())
+        {
+            auto dims = Gui::getDwarfmodeViewDims();
+            int width = dims.menu_x2 - dims.menu_x1 - 1;
+
+            Screen::Pen pen(' ',COLOR_WHITE);
+            Screen::fillRect(pen, dims.menu_x1, dims.y1+1, dims.menu_x2, dims.y1+1);
+
+            std::string name;
+            ui_sidebar_menus->zone.selected->getName(&name);
+            Screen::paintString(pen, dims.menu_x1+1, dims.y1+1, name.substr(0, width));
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(dwarf_render_zone_hook, render);
+
+static char getBuildingCode(df::building *bld)
+{
+    CHECK_NULL_POINTER(bld);
+
+#define BUILDING(code, cname, tag) \
+    if (strict_virtual_cast<df::cname>(bld)) return code;
+KNOWN_BUILDINGS
+#undef BUILDING
+
+    return 0;
+}
+
+static bool enable_building_rename(char code, bool enable)
+{
+    if (code == 'Z')
+        INTERPOSE_HOOK(dwarf_render_zone_hook, render).apply(enable);
+
+    switch (code) {
+#define BUILDING(code, cname, tag) \
+    case code: return INTERPOSE_HOOK(cname##_hook, getName).apply(enable);
+KNOWN_BUILDINGS
+#undef BUILDING
+    default:
+        return false;
+    }
+}
+
+static void disable_building_rename()
+{
+    INTERPOSE_HOOK(dwarf_render_zone_hook, render).remove();
+
+#define BUILDING(code, cname, tag) \
+    INTERPOSE_HOOK(cname##_hook, getName).remove();
+KNOWN_BUILDINGS
+#undef BUILDING
+}
+
+static bool is_enabled_building(char code)
+{
+    switch (code) {
+#define BUILDING(code, cname, tag) \
+    case code: return INTERPOSE_HOOK(cname##_hook, getName).is_applied();
+KNOWN_BUILDINGS
+#undef BUILDING
+    default:
+        return false;
+    }
+}
+
+static void init_buildings(bool enable)
+{
+    disable_building_rename();
+
+    if (enable)
+    {
+        auto pworld = Core::getInstance().getWorld();
+        auto entry = pworld->GetPersistentData("rename/building_types");
+
+        if (entry.isValid())
+        {
+            std::string val = entry.val();
+            for (size_t i = 0; i < val.size(); i++)
+                enable_building_rename(val[i], true);
+        }
+    }
+}
+
+static bool canRenameBuilding(df::building *bld)
+{
+    return getBuildingCode(bld) != 0;
+}
+
+static bool isRenamingBuilding(df::building *bld)
+{
+    return is_enabled_building(getBuildingCode(bld));
+}
+
+static bool renameBuilding(df::building *bld, std::string name)
+{
+    char code = getBuildingCode(bld);
+    if (code == 0 && !name.empty())
+        return false;
+
+    if (!name.empty() && !is_enabled_building(code))
+    {
+        auto pworld = Core::getInstance().getWorld();
+        auto entry = pworld->GetPersistentData("rename/building_types", NULL);
+        if (!entry.isValid())
+            return false;
+
+        if (!enable_building_rename(code, true))
+            return false;
+
+        entry.val().push_back(code);
+    }
+
+    bld->name = name;
+    return true;
 }
 
 static df::squad *getSquadByIndex(unsigned idx)
@@ -101,13 +300,36 @@ static command_result RenameUnit(color_ostream &stream, const RenameUnitIn *in)
     return CR_OK;
 }
 
+static command_result RenameBuilding(color_ostream &stream, const RenameBuildingIn *in)
+{
+    auto building = df::building::find(in->building_id());
+    if (!building)
+        return CR_NOT_FOUND;
+
+    if (in->has_name())
+    {
+        if (!renameBuilding(building, in->name()))
+            return CR_FAILURE;
+    }
+
+    return CR_OK;
+}
+
 DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
 {
     RPCService *svc = new RPCService();
     svc->addFunction("RenameSquad", RenameSquad);
     svc->addFunction("RenameUnit", RenameUnit);
+    svc->addFunction("RenameBuilding", RenameBuilding);
     return svc;
 }
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(canRenameBuilding),
+    DFHACK_LUA_FUNCTION(isRenamingBuilding),
+    DFHACK_LUA_FUNCTION(renameBuilding),
+    DFHACK_LUA_END
+};
 
 static command_result rename(color_ostream &out, vector <string> &parameters)
 {
@@ -166,6 +388,21 @@ static command_result rename(color_ostream &out, vector <string> &parameters)
             return CR_WRONG_USAGE;
 
         unit->custom_profession = parameters[1];
+    }
+    else if (cmd == "building")
+    {
+        if (parameters.size() != 2)
+            return CR_WRONG_USAGE;
+
+        df::building *bld = Gui::getSelectedBuilding(out, true);
+        if (!bld)
+            return CR_WRONG_USAGE;
+
+        if (!renameBuilding(bld, parameters[1]))
+        {
+            out.printerr("This type of building is not supported.\n");
+            return CR_FAILURE;
+        }
     }
     else
     {

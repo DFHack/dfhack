@@ -788,6 +788,7 @@ sub render_item_number {
     my $subtype = $item->getAttribute('ld:subtype');
     my $meta = $item->getAttribute('ld:meta');
     my $initvalue = $item->getAttribute('init-value');
+    $initvalue ||= -1 if $item->getAttribute('refers-to') or $item->getAttribute('ref-target');
     my $typename = $item->getAttribute('type-name');
     undef $typename if ($meta and $meta eq 'bitfield-type');
     my $g = $global_types{$typename} if ($typename);
@@ -964,7 +965,7 @@ sub render_item_bytes {
     my $subtype = $item->getAttribute('ld:subtype');
     if ($subtype eq 'padding') {
     } elsif ($subtype eq 'static-string') {
-        my $size = $item->getAttribute('size');
+        my $size = $item->getAttribute('size') || -1;
         push @lines_rb, "static_string($size)";
     } else {
         print "no render bytes $subtype\n";

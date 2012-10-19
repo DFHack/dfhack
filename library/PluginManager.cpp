@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -186,14 +186,17 @@ Plugin::~Plugin()
 
 bool Plugin::load(color_ostream &con)
 {
-    RefAutolock lock(access);
-    if(state == PS_BROKEN)
     {
-        return false;
-    }
-    else if(state == PS_LOADED)
-    {
-        return true;
+        RefAutolock lock(access);
+        if(state == PS_LOADED)
+        {
+            return true;
+        }
+        else if(state != PS_UNLOADED)
+        {
+            return false;
+        }
+        state = PS_LOADING;
     }
     // enter suspend
     CoreSuspender suspend;
@@ -202,6 +205,7 @@ bool Plugin::load(color_ostream &con)
     if(!plug)
     {
         con.printerr("Can't load plugin %s\n", filename.c_str());
+        RefAutolock lock(access);
         state = PS_BROKEN;
         return false;
     }
@@ -211,6 +215,7 @@ bool Plugin::load(color_ostream &con)
     {
         con.printerr("Plugin %s has no name or version.\n", filename.c_str());
         ClosePlugin(plug);
+        RefAutolock lock(access);
         state = PS_BROKEN;
         return false;
     }
@@ -219,9 +224,11 @@ bool Plugin::load(color_ostream &con)
         con.printerr("Plugin %s was not built for this version of DFHack.\n"
                      "Plugin: %s, DFHack: %s\n", *plug_name, *plug_version, DFHACK_VERSION);
         ClosePlugin(plug);
+        RefAutolock lock(access);
         state = PS_BROKEN;
         return false;
     }
+    RefAutolock lock(access);
     plugin_init = (command_result (*)(color_ostream &, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
     if(!plugin_init)
     {
@@ -273,8 +280,11 @@ bool Plugin::unload(color_ostream &con)
         }
         // wait for all calls to finish
         access->wait();
+        state = PS_UNLOADING;
+        access->unlock();
         // enter suspend
         CoreSuspender suspend;
+        access->lock();
         // notify plugin about shutdown, if it has a shutdown function
         command_result cr = CR_OK;
         if(plugin_shutdown)

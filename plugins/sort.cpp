@@ -228,7 +228,7 @@ static void sort_null_first(vector<string> &parameters)
     vector_insert_at(parameters, 0, std::string("<exists"));
 }
 
-static df::layer_object_listst *getLayerList(df::viewscreen_layerst *layer, int idx)
+static df::layer_object_listst *getLayerList(df::viewscreen_layer *layer, int idx)
 {
     return virtual_cast<df::layer_object_listst>(vector_get(layer->layer_objects,idx));
 }
@@ -356,7 +356,7 @@ DEFINE_SORT_HANDLER(unit_sorters, pet, "/List", animals)
 
     std::vector<df::unit*> units;
     for (size_t i = 0; i < animals->animal.size(); i++)
-        units.push_back(animals->is_vermin[i] ? NULL : (df::unit*)animals->animal[i]);
+        units.push_back(animals->is_vermin[i] ? NULL : animals->animal[i].unit);
 
     if (compute_order(*pout, L, top, &order, units))
     {

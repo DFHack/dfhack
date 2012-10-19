@@ -1,6 +1,6 @@
-﻿/*
+/*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -894,7 +894,7 @@ static int meta_bitfield_len(lua_State *state)
 
 static void read_bitfield(lua_State *state, uint8_t *ptr, bitfield_identity *id, int idx)
 {
-    int size = id->getBits()[idx].size;
+    int size = std::max(1, id->getBits()[idx].size);
 
     int value = getBitfieldField(ptr, idx, size);
     if (size <= 1)
@@ -951,7 +951,7 @@ static int meta_bitfield_newindex(lua_State *state)
     }
 
     int idx = check_container_index(state, id->getNumBits(), 2, iidx, "write");
-    int size = id->getBits()[idx].size;
+    int size = std::max(1, id->getBits()[idx].size);
 
     if (lua_isboolean(state, 3) || lua_isnil(state, 3))
         setBitfieldField(ptr, idx, size, lua_toboolean(state, 3));

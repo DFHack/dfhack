@@ -25,11 +25,11 @@ end
 module DFHack
     class OnupdateCallback
         attr_accessor :callback, :timelimit, :minyear, :minyeartick
-        def initialize(cb, tl)
+        def initialize(cb, tl, initdelay=0)
             @callback = cb
             @ticklimit = tl
             @minyear = (tl ? df.cur_year : 0)
-            @minyeartick = (tl ? df.cur_year_tick : 0)
+            @minyeartick = (tl ? df.cur_year_tick+initdelay : 0)
         end
 
         # run callback if timedout
@@ -61,9 +61,9 @@ module DFHack
 
         # register a callback to be called every gframe or more
         # ex: DFHack.onupdate_register { DFHack.world.units[0].counters.job_counter = 0 }
-        def onupdate_register(ticklimit=nil, &b)
+        def onupdate_register(ticklimit=nil, initialtickdelay=0, &b)
             @onupdate_list ||= []
-            @onupdate_list << OnupdateCallback.new(b, ticklimit)
+            @onupdate_list << OnupdateCallback.new(b, ticklimit, initialtickdelay)
             DFHack.onupdate_active = true
             if onext = @onupdate_list.sort.first
                 DFHack.onupdate_minyear = onext.minyear
@@ -79,6 +79,13 @@ module DFHack
                 DFHack.onupdate_active = false
                 DFHack.onupdate_minyear = DFHack.onupdate_minyeartick = 0
             end
+        end
+
+        # same as onupdate_register, but remove the callback once it returns true
+        def onupdate_register_once(*a)
+            handle = onupdate_register(*a) {
+                onupdate_unregister(handle) if yield
+            }
         end
 
         TICKS_PER_YEAR = 1200*28*12
@@ -111,6 +118,14 @@ module DFHack
         def onstatechange_unregister(b)
             @onstatechange_list.delete b
         end
+
+        # same as onstatechange_register, but auto-unregisters if the block returns true
+        def onstatechange_register_once
+            handle = onstatechange_register { |st|
+                onstatechange_unregister(handle) if yield(st)
+            }
+        end
+
 
         # this method is called by dfhack every 'onstatechange'
         def onstatechange(newstate)

@@ -1,6 +1,6 @@
-﻿/*
+/*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -77,6 +77,10 @@ distribution.
 #include "df/job_material_category.h"
 #include "df/burrow.h"
 #include "df/building_civzonest.h"
+#include "df/region_map_entry.h"
+#include "df/flow_info.h"
+#include "df/unit_misc_trait.h"
+#include "df/proj_itemst.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -726,6 +730,7 @@ static std::string getOSType()
 }
 
 static std::string getDFVersion() { return Core::getInstance().vinfo->getVersion(); }
+static uint32_t getTickCount() { return Core::getInstance().p->getTickCount(); }
 
 static std::string getDFPath() { return Core::getInstance().p->getPath(); }
 static std::string getHackPath() { return Core::getInstance().getHackPath(); }
@@ -737,6 +742,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getOSType),
     WRAP(getDFVersion),
     WRAP(getDFPath),
+    WRAP(getTickCount),
     WRAP(getHackPath),
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),
@@ -754,8 +760,11 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getSelectedJob),
     WRAPM(Gui, getSelectedUnit),
     WRAPM(Gui, getSelectedItem),
+    WRAPM(Gui, getSelectedBuilding),
     WRAPM(Gui, showAnnouncement),
+    WRAPM(Gui, showZoomAnnouncement),
     WRAPM(Gui, showPopupAnnouncement),
+    WRAPM(Gui, showAutoAnnouncement),
     { NULL, NULL }
 };
 
@@ -807,12 +816,21 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getVisibleName),
     WRAPM(Units, getIdentity),
     WRAPM(Units, getNemesis),
+    WRAPM(Units, isCrazed),
+    WRAPM(Units, isOpposedToLife),
+    WRAPM(Units, hasExtravision),
+    WRAPM(Units, isBloodsucker),
+    WRAPM(Units, isMischievous),
+    WRAPM(Units, getMiscTrait),
     WRAPM(Units, isDead),
     WRAPM(Units, isAlive),
     WRAPM(Units, isSane),
     WRAPM(Units, isDwarf),
     WRAPM(Units, isCitizen),
     WRAPM(Units, getAge),
+    WRAPM(Units, getNominalSkill),
+    WRAPM(Units, getEffectiveSkill),
+    WRAPM(Units, computeMovementSpeed),
     WRAPM(Units, getProfessionName),
     WRAPM(Units, getCasteProfessionName),
     WRAPM(Units, getProfessionColor),
@@ -870,6 +888,18 @@ static bool items_moveToInventory
     return Items::moveToInventory(mc, item, unit, mode, body_part);
 }
 
+static bool items_remove(df::item *item, bool no_uncat)
+{
+    MapExtras::MapCache mc;
+    return Items::remove(mc, item, no_uncat);
+}
+
+static df::proj_itemst *items_makeProjectile(df::item *item)
+{
+    MapExtras::MapCache mc;
+    return Items::makeProjectile(mc, item);
+}
+
 static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getGeneralRef),
     WRAPM(Items, getSpecificRef),
@@ -881,6 +911,8 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPN(moveToContainer, items_moveToContainer),
     WRAPN(moveToBuilding, items_moveToBuilding),
     WRAPN(moveToInventory, items_moveToInventory),
+    WRAPN(makeProjectile, items_makeProjectile),
+    WRAPN(remove, items_remove),
     { NULL, NULL }
 };
 
@@ -911,13 +943,28 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
     WRAPM(Maps, canWalkBetween),
+    WRAPM(Maps, spawnFlow),
     { NULL, NULL }
 };
+
+static int maps_isValidTilePos(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    lua_pushboolean(L, Maps::isValidTilePos(pos));
+    return 1;
+}
 
 static int maps_getTileBlock(lua_State *L)
 {
     auto pos = CheckCoordXYZ(L, 1, true);
     Lua::PushDFObject(L, Maps::getTileBlock(pos));
+    return 1;
+}
+
+static int maps_ensureTileBlock(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Maps::ensureTileBlock(pos));
     return 1;
 }
 
@@ -931,12 +978,13 @@ static int maps_getRegionBiome(lua_State *L)
 static int maps_getTileBiomeRgn(lua_State *L)
 {
     auto pos = CheckCoordXYZ(L, 1, true);
-    Lua::PushPosXY(L, Maps::getTileBiomeRgn(pos));
-    return 1;
+    return Lua::PushPosXY(L, Maps::getTileBiomeRgn(pos));
 }
 
 static const luaL_Reg dfhack_maps_funcs[] = {
+    { "isValidTilePos", maps_isValidTilePos },
     { "getTileBlock", maps_getTileBlock },
+    { "ensureTileBlock", maps_ensureTileBlock },
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
     { NULL, NULL }
@@ -1038,7 +1086,9 @@ static int buildings_getCorrectSize(lua_State *state)
     return 5;
 }
 
-static int buildings_setSize(lua_State *state)
+namespace {
+
+int buildings_setSize(lua_State *state)
 {
     auto bld = Lua::CheckDFObject<df::building>(state, 1);
     df::coord2d size(luaL_optint(state, 2, 1), luaL_optint(state, 3, 1));
@@ -1059,11 +1109,13 @@ static int buildings_setSize(lua_State *state)
         return 1;
 }
 
+}
+
 static const luaL_Reg dfhack_buildings_funcs[] = {
     { "findAtTile", buildings_findAtTile },
     { "findCivzonesAt", buildings_findCivzonesAt },
     { "getCorrectSize", buildings_getCorrectSize },
-    { "setSize", buildings_setSize },
+    { "setSize", &Lua::CallWithCatchWrapper<buildings_setSize> },
     { NULL, NULL }
 };
 
@@ -1129,6 +1181,45 @@ static int screen_paintTile(lua_State *L)
     if (lua_gettop(L) >= 5 && !lua_isnil(L, 5))
         pen.tile = luaL_checkint(L, 5);
     lua_pushboolean(L, Screen::paintTile(pen, x, y));
+    return 1;
+}
+
+static int screen_readTile(lua_State *L)
+{
+    int x = luaL_checkint(L, 1);
+    int y = luaL_checkint(L, 2);
+    Pen pen = Screen::readTile(x, y);
+
+    if (!pen.valid())
+    {
+        lua_pushnil(L);
+    }
+    else
+    {
+        lua_newtable(L);
+        lua_pushinteger(L, pen.ch); lua_setfield(L, -2, "ch");
+        lua_pushinteger(L, pen.fg); lua_setfield(L, -2, "fg");
+        lua_pushinteger(L, pen.bg); lua_setfield(L, -2, "bg");
+        lua_pushboolean(L, pen.bold); lua_setfield(L, -2, "bold");
+
+        if (pen.tile)
+        {
+            lua_pushinteger(L, pen.tile); lua_setfield(L, -2, "tile");
+
+            switch (pen.tile_mode) {
+                case Pen::CharColor:
+                    lua_pushboolean(L, true); lua_setfield(L, -2, "tile_color");
+                    break;
+                case Pen::TileColor:
+                    lua_pushinteger(L, pen.tile_fg); lua_setfield(L, -2, "tile_fg");
+                    lua_pushinteger(L, pen.tile_bg); lua_setfield(L, -2, "tile_bg");
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
     return 1;
 }
 
@@ -1236,6 +1327,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "getMousePos", screen_getMousePos },
     { "getWindowSize", screen_getWindowSize },
     { "paintTile", screen_paintTile },
+    { "readTile", screen_readTile },
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
     { "findGraphicsTile", screen_findGraphicsTile },

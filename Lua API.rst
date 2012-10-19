@@ -488,7 +488,7 @@ Input & Output
   lock. Using an explicit ``dfhack.with_suspend`` will prevent
   this, forcing the function to block on input with lock held.
 
-* ``dfhack.interpreter([prompt[,env[,history_filename]]])``
+* ``dfhack.interpreter([prompt[,history_filename[,env]]])``
 
   Starts an interactive lua interpreter, using the specified prompt
   string, global environment and command-line history file.
@@ -548,6 +548,20 @@ Exception handling
 * ``dfhack.exception.verbose``
 
   The default value of the ``verbose`` argument of ``err:tostring()``.
+
+
+Miscellaneous
+-------------
+
+* ``dfhack.VERSION``
+
+  DFHack version string constant.
+
+* ``dfhack.curry(func,args...)``, or ``curry(func,args...)``
+
+  Returns a closure that invokes the function with args combined
+  both from the curry call and the closure call itself. I.e.
+  ``curry(func,a,b)(c,d)`` equals ``func(a,b,c,d)``.
 
 
 Locking and finalization
@@ -709,6 +723,10 @@ can be omitted.
 
   Returns the dfhack directory path, i.e. ``".../df/hack/"``.
 
+* ``dfhack.getTickCount()``
+
+  Returns the tick count in ms, exactly as DF ui uses.
+
 * ``dfhack.isWorldLoaded()``
 
   Checks if the world is loaded.
@@ -759,14 +777,28 @@ Gui module
   last case, the highlighted *contained item* is returned, not
   the container itself.
 
+* ``dfhack.gui.getSelectedBuilding([silent])``
+
+  Returns the building selected via *'q'*, *'t'*, *'k'* or *'i'*.
+
 * ``dfhack.gui.showAnnouncement(text,color[,is_bright])``
 
   Adds a regular announcement with given text, color, and brightness.
   The is_bright boolean actually seems to invert the brightness.
 
+* ``dfhack.gui.showZoomAnnouncement(type,pos,text,color[,is_bright])``
+
+  Like above, but also specifies a position you can zoom to from the announcement menu.
+
 * ``dfhack.gui.showPopupAnnouncement(text,color[,is_bright])``
 
   Pops up a titan-style modal announcement window.
+
+* ``dfhack.gui.showAutoAnnouncement(type,pos,text,color[,is_bright])``
+
+  Uses the type to look up options from announcements.txt, and calls the
+  above operations accordingly. If enabled, pauses and zooms to position.
+
 
 Job module
 ----------
@@ -840,6 +872,26 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
+* ``dfhack.units.isHidingCurse(unit)``
+
+  Checks if the unit hides improved attributes from its curse.
+
+* ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
+* ``dfhack.units.getMentalAttrValue(unit, attr_type)``
+
+  Computes the effective attribute value, including curse effect.
+
+* ``dfhack.units.isCrazed(unit)``
+* ``dfhack.units.isOpposedToLife(unit)``
+* ``dfhack.units.hasExtravision(unit)``
+* ``dfhack.units.isBloodsucker(unit)``
+
+  Simple checks of caste attributes that can be modified by curses.
+
+* ``dfhack.units.getMiscTrait(unit, type[, create])``
+
+  Finds (or creates if requested) a misc trait object with the given id.
+
 * ``dfhack.units.isDead(unit)``
 
   The unit is completely dead and passive, or a ghost.
@@ -865,6 +917,19 @@ Units module
 
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
+
+* ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
+
+  Retrieves the nominal skill level for the given unit. If ``use_rust``
+  is *true*, subtracts the rust penalty.
+
+* ``dfhack.units.getEffectiveSkill(unit, skill)``
+
+  Computes the effective rating for the given skill, taking into account exhaustion, pain etc.
+
+* ``dfhack.units.computeMovementSpeed(unit)``
+
+  Computes number of frames * 100 it takes the unit to move in its current state of mind and body.
 
 * ``dfhack.units.getNoblePositions(unit)``
 
@@ -943,6 +1008,14 @@ Items module
 
   Move the item to the unit inventory. Returns *false* if impossible.
 
+* ``dfhack.items.remove(item[, no_uncat])``
+
+  Removes the item, and marks it for garbage collection unless ``no_uncat`` is true.
+
+* ``dfhack.items.makeProjectile(item)``
+
+  Turns the item into a projectile, and returns the new object, or *nil* if impossible.
+
 
 Maps module
 -----------
@@ -959,9 +1032,17 @@ Maps module
 
   Returns a map block object for given x,y,z in local block coordinates.
 
+* ``dfhack.maps.isValidTilePos(coords)``, or isValidTilePos(x,y,z)``
+
+  Checks if the given df::coord or x,y,z in local tile coordinates are valid.
+
 * ``dfhack.maps.getTileBlock(coords)``, or ``getTileBlock(x,y,z)``
 
   Returns a map block object for given df::coord or x,y,z in local tile coordinates.
+
+* ``dfhack.maps.ensureTileBlock(coords)``, or ``ensureTileBlock(x,y,z)``
+
+  Like ``getTileBlock``, but if the block is not allocated, try creating it.
 
 * ``dfhack.maps.getRegionBiome(region_coord2d)``, or ``getRegionBiome(x,y)``
 
@@ -970,6 +1051,11 @@ Maps module
 * ``dfhack.maps.enableBlockUpdates(block[,flow,temperature])``
 
   Enables updates for liquid flow or temperature, unless already active.
+
+* ``dfhack.maps.spawnFlow(pos,type,mat_type,mat_index,dimension)``
+
+  Spawns a new flow (i.e. steam/mist/dust/etc) at the given pos, and with
+  the given parameters. Returns it, or *nil* if unsuccessful.
 
 * ``dfhack.maps.getGlobalInitFeature(index)``
 
@@ -1267,6 +1353,11 @@ Basic painting functions:
 
   Returns *false* if coordinates out of bounds, or other error.
 
+* ``dfhack.screen.readTile(x,y)``
+
+  Retrieves the contents of the specified tile from the screen buffers.
+  Returns a pen, or *nil* if invalid or TrueType.
+
 * ``dfhack.screen.paintString(pen,x,y,text)``
 
   Paints the string starting at *x,y*. Uses the string characters
@@ -1380,6 +1471,14 @@ Supported callbacks and fields are:
     If the left or right mouse button is pressed.
 
   If this method is omitted, the screen is dismissed on receival of the ``LEAVESCREEN`` key.
+
+* ``function screen:onGetSelectedUnit()``
+* ``function screen:onGetSelectedItem()``
+* ``function screen:onGetSelectedJob()``
+* ``function screen:onGetSelectedBuilding()``
+
+  Implement these to provide a return value for the matching
+  ``dfhack.gui.getSelected...`` function.
 
 
 Internal API
@@ -1736,6 +1835,86 @@ function:
   Returns ``value`` converted to a string. The ``indent_step``
   argument specifies the indentation step size in spaces. For
   the other arguments see the original documentation link above.
+
+class
+=====
+
+Implements a trivial single-inheritance class system.
+
+* ``Foo = defclass(Foo[, ParentClass])``
+
+  Defines or updates class Foo. The ``Foo = defclass(Foo)`` syntax
+  is needed so that when the module or script is reloaded, the
+  class identity will be preserved through the preservation of
+  global variable values.
+
+  The ``defclass`` function is defined as a stub in the global
+  namespace, and using it will auto-load the class module.
+
+* ``Class.super``
+
+  This class field is set by defclass to the parent class, and
+  allows a readable ``Class.super.method(self, ...)`` syntax for
+  calling superclass methods.
+
+* ``Class.ATTRS { foo = xxx, bar = yyy }``
+
+  Declares certain instance fields to be attributes, i.e. auto-initialized
+  from fields in the table used as the constructor argument. If omitted,
+  they are initialized with the default values specified in this declaration.
+
+  If the default value should be *nil*, use ``ATTRS { foo = DEFAULT_NIL }``.
+
+* ``new_obj = Class{ foo = arg, bar = arg, ... }``
+
+  Calling the class as a function creates and initializes a new instance.
+  Initialization happens in this order:
+
+  1. An empty instance table is created, and its metatable set.
+  2. The ``preinit`` method is called via ``invoke_before`` (see below)
+     with the table used as argument to the class. This method is intended
+     for validating and tweaking that argument table.
+  3. Declared ATTRS are initialized from the argument table or their default values.
+  4. The ``init`` method is called via ``invoke_after`` with the argument table.
+     This is the main constructor method.
+  5. The ``postinit`` method is called via ``invoke_after`` with the argument table.
+     Place code that should be called after the object is fully constructed here.
+
+Predefined instance methods:
+
+* ``instance:assign{ foo = xxx }``
+
+  Assigns all values in the input table to the matching instance fields.
+
+* ``instance:callback(method_name, [args...])``
+
+  Returns a closure that invokes the specified method of the class,
+  properly passing in self, and optionally a number of initial arguments too.
+  The arguments given to the closure are appended to these.
+
+* ``instance:invoke_before(method_name, args...)``
+
+  Navigates the inheritance chain of the instance starting from the most specific
+  class, and invokes the specified method with the arguments if it is defined in
+  that specific class. Equivalent to the following definition in every class::
+
+    function Class:invoke_before(method, ...)
+      if rawget(Class, method) then
+        rawget(Class, method)(self, ...)
+      end
+      Class.super.invoke_before(method, ...)
+    end
+
+* ``instance:invoke_after(method_name, args...)``
+
+  Like invoke_before, only the method is called after the recursive call to super,
+  i.e. invocations happen in the parent to child order.
+
+  These two methods are inspired by the Common Lisp before and after methods, and
+  are intended for implementing similar protocols for certain things. The class
+  library itself uses them for constructors.
+
+To avoid confusion, these methods cannot be redefined.
 
 
 =======

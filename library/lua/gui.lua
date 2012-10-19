@@ -18,7 +18,7 @@ function simulateInput(screen,...)
                 error('Invalid keycode: '..arg)
             end
         end
-        if type(arg) == 'number' then
+        if type(kv) == 'number' then
             keys[#keys+1] = kv
         end
     end
@@ -74,18 +74,23 @@ end
 
 Painter = defclass(Painter, nil)
 
-function Painter.new(rect, pen)
-    rect = rect or mkdims_wh(0,0,dscreen.getWindowSize())
-    local self = {
-        x1 = rect.x1, clip_x1 = rect.x1,
-        y1 = rect.y1, clip_y1 = rect.y1,
-        x2 = rect.x2, clip_x2 = rect.x2,
-        y2 = rect.y2, clip_y2 = rect.y2,
+function Painter:init(args)
+    local rect = args.rect or mkdims_wh(0,0,dscreen.getWindowSize())
+    local crect = args.clip_rect or rect
+    self:assign{
+        x = rect.x1, y = rect.y1,
+        x1 = rect.x1, clip_x1 = crect.x1,
+        y1 = rect.y1, clip_y1 = crect.y1,
+        x2 = rect.x2, clip_x2 = crect.x2,
+        y2 = rect.y2, clip_y2 = crect.y2,
         width = rect.x2-rect.x1+1,
         height = rect.y2-rect.y1+1,
-        cur_pen = to_pen(nil, pen or COLOR_GREY)
+        cur_pen = to_pen(nil, args.pen or COLOR_GREY)
     }
-    return mkinstance(Painter, self):seek(0,0)
+end
+
+function Painter.new(rect, pen)
+    return Painter{ rect = rect, pen = pen }
 end
 
 function Painter:isValidPos()
@@ -94,6 +99,9 @@ function Painter:isValidPos()
 end
 
 function Painter:viewport(x,y,w,h)
+    if type(x) == 'table' then
+        x,y,w,h = x.x1, x.y1, x.width, x.height
+    end
     local x1,y1 = self.x1+x, self.y1+y
     local x2,y2 = x1+w-1, y1+h-1
     local vp = {
@@ -159,10 +167,10 @@ function Painter:fill(x1,y1,x2,y2,pen,bg,bold)
     if type(x1) == 'table' then
         x1, y1, x2, y2, pen, bg, bold = x1.x1, x1.y1, x1.x2, x1.y2, y1, x2, y2
     end
-    x1 = math.max(x1,self.clip_x1)
-    y1 = math.max(y1,self.clip_y1)
-    x2 = math.min(x2,self.clip_x2)
-    y2 = math.min(y2,self.clip_y2)
+    x1 = math.max(x1+self.x1,self.clip_x1)
+    y1 = math.max(y1+self.y1,self.clip_y1)
+    x2 = math.min(x2+self.x1,self.clip_x2)
+    y2 = math.min(y2+self.y1,self.clip_y2)
     dscreen.fillRect(to_pen(self.cur_pen,pen,bg,bold),x1,y1,x2,y2)
     return self
 end
@@ -210,9 +218,8 @@ Screen = defclass(Screen)
 
 Screen.text_input_mode = false
 
-function Screen:init()
+function Screen:postinit()
     self:updateLayout()
-    return self
 end
 
 Screen.isDismissed = dscreen.isDismissed
@@ -277,6 +284,9 @@ end
 function Screen:onDismiss()
 end
 
+function Screen:onDestroy()
+end
+
 function Screen:onResize(w,h)
     self:updateLayout()
 end
@@ -338,7 +348,12 @@ end
 
 FramedScreen = defclass(FramedScreen, Screen)
 
-FramedScreen.frame_style = BOUNDARY_FRAME
+FramedScreen.ATTRS{
+    frame_style = BOUNDARY_FRAME,
+    frame_title = DEFAULT_NIL,
+    frame_width = DEFAULT_NIL,
+    frame_height = DEFAULT_NIL,
+}
 
 local function hint_coord(gap,hint)
     if hint and hint > 0 then
@@ -350,11 +365,16 @@ local function hint_coord(gap,hint)
     end
 end
 
+function FramedScreen:getWantedFrameSize()
+    return self.frame_width, self.frame_height
+end
+
 function FramedScreen:updateFrameSize()
     local sw, sh = dscreen.getWindowSize()
     local iw, ih = sw-2, sh-2
-    local width = math.min(self.frame_width or iw, iw)
-    local height = math.min(self.frame_height or ih, ih)
+    local fw, fh = self:getWantedFrameSize()
+    local width = math.min(fw or iw, iw)
+    local height = math.min(fh or ih, ih)
     local gw, gh = iw-width, ih-height
     local x1, y1 = hint_coord(gw,self.frame_xhint), hint_coord(gh,self.frame_yhint)
     self.frame_rect = mkdims_wh(x1+1,y1+1,width,height)

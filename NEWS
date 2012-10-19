@@ -1,0 +1,97 @@
+DFHack future
+
+  Nothing yet!
+
+DFHack v0.34.11-r2
+
+  Internals:
+    - full support for Mac OS X.
+    - a plugin that adds scripting in ruby.
+    - support for interposing virtual methods in DF from C++ plugins.
+    - support for creating new interface screens from C++ and lua.
+    - added various other API functions.
+  Notable bugfixes:
+    - better terminal reset after exit on linux.
+    - seedwatch now works on reclaim.
+    - the sort plugin won't crash on cages anymore.
+  Misc improvements:
+    - autodump: can move items to any walkable tile, not just floors.
+    - stripcaged: by default keep armor, new dumparmor option.
+    - zone: allow non-domesticated birds in nestboxes.
+    - workflow: quality range in constraints.
+    - cleanplants: new command to remove rain water from plants.
+    - liquids: can paint permaflow, i.e. what makes rivers power water wheels.
+    - prospect: pre-embark prospector accounts for caves & magma sea in its estimate.
+    - rename: supports renaming stockpiles, workshops, traps, siege engines.
+    - fastdwarf: now has an additional option to make dwarves teleport to their destination.
+  New commands:
+    - misery: multiplies every negative thought gained (2x by default).
+    - digtype: designates every tile of the same type of vein on the map for 'digging' (any dig designation).
+  New tweaks:
+    - tweak stable-cursor: keeps exact cursor position between d/k/t/q/v etc menus.
+    - tweak patrol-duty: makes Train orders reduce patrol timer, like the binary patch does.
+    - tweak readable-build-plate: fix unreadable truncation in unit pressure plate build ui.
+    - tweak stable-temp: fixes bug 6012; may improve FPS by 50-100% on a slow item-heavy fort.
+    - tweak fast-heat: speeds up item heating & cooling, thus making stable-temp act faster.
+    - tweak fix-dimensions: fixes subtracting small amounts from stacked liquids etc.
+    - tweak advmode-contained: fixes UI bug in custom reactions with container inputs in advmode.
+    - tweak fast-trade: Shift-Enter for selecting items quckly in Trade and Move to Depot screens.
+    - tweak military-stable-assign: Stop rightmost list of military->Positions from jumping to top.
+    - tweak military-color-assigned: In same list, color already assigned units in brown & green.
+  New scripts:
+    - fixnaked: removes thoughts about nakedness.
+    - setfps: set FPS cap at runtime, in case you want slow motion or speed-up.
+    - siren: wakes up units, stops breaks and parties - but causes bad thoughts.
+    - fix/population-cap: run after every migrant wave to prevent exceeding the cap.
+    - fix/stable-temp: counts items with temperature updates; does instant one-shot stable-temp.
+    - fix/loyaltycascade: fix units allegiance, eg after ordering a dwarf merchant kill.
+    - deathcause: shows the circumstances of death for a given body.
+    - digfort: designate areas to dig from a csv file.
+    - drainaquifer: remove aquifers from the map.
+    - growcrops: cheat to make farm crops instantly grow.
+    - magmasource: continuously spawn magma from any map tile.
+    - removebadthoughts: delete all negative thoughts from your dwarves.
+    - slayrace: instakill all units of a given race, optionally with magma.
+    - superdwarf: per-creature fastdwarf.
+  New GUI scripts:
+    - gui/mechanisms: browse mechanism links of the current building.
+    - gui/room-list: browse other rooms owned by the unit when assigning one.
+    - gui/liquids: a GUI front-end for the liquids plugin.
+    - gui/rename: renaming stockpiles, workshops and units via an in-game dialog.
+    - gui/power-meter: front-end for the Power Meter plugin.
+    - gui/siege-engine: front-end for the Siege Engine plugin.
+    - gui/choose-weapons: auto-choose matching weapons in the military equip screen.
+  Autolabor plugin:
+    - can set nonidle hauler percentage.
+    - broker excluded from all labors when needed at depot.
+    - likewise, anybody with a scheduled diplomat meeting.
+  New Dwarf Manipulator plugin:
+    Open the unit list, and press 'l' to access a Dwarf Therapist like UI in the game.
+  New Steam Engine plugin:
+    Dwarven Water Reactors don't make any sense whatsoever and cause lag, so this may be
+    a replacement for those concerned by it. The plugin detects if a workshop with a
+    certain name is in the raws used by the current world, and provides the necessary
+    behavior. See hack/raw/*_steam_engine.txt for the necessary raw definitions.
+    Note: Stuff like animal treadmills might be more period, but absolutely can't be
+    done with tools dfhack has access to.
+  New Power Meter plugin:
+    When activated, implements a pressure plate modification that detects power in gear
+    boxes built on the four adjacent N/S/W/E tiles. The gui/power-meter script implements
+    the necessary build configuration UI.
+  New Siege Engine plugin:
+    When enabled and configured via gui/siege-engine, allows aiming siege engines
+    at a designated rectangular area with 360 degree fire range and across Z levels;
+    this works by rewriting the projectile trajectory immediately after it appears.
+    Also supports loading catapults with non-boulder projectiles, taking from a stockpile,
+    and restricting operator skill range like with ordinary workshops.
+    Disclaimer: not in any way to undermine the future siege update from Toady, but
+    the aiming logic of existing engines hasn't been updated since 2D, and is almost
+    useless above ground :(. Again, things like making siegers bring their own engines
+    is totally out of the scope of dfhack and can only be done by Toady.
+  New Add Spatter plugin:
+    Detects reactions with certain names in the raws, and changes them from adding
+    improvements to adding item contaminants. This allows directly covering items
+    with poisons. The added spatters are immune both to water and 'clean items'.
+    Intended to give some use to all those giant cave spider poison barrels brought
+    by the caravans.
+

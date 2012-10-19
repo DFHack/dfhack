@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -280,6 +280,19 @@ bool MaterialInfo::findCreature(const std::string &token, const std::string &sub
 
         break;
     }
+    return decode(-1);
+}
+
+bool MaterialInfo::findProduct(df::material *material, const std::string &name)
+{
+    if (!material || name.empty())
+        return decode(-1);
+
+    auto &pids = material->reaction_product.id;
+    for (size_t i = 0; i < pids.size(); i++)
+        if ((*pids[i]) == name)
+            return decode(material->reaction_product.material, i);
+
     return decode(-1);
 }
 

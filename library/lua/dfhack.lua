@@ -46,6 +46,7 @@ end
 -- Error handling
 
 safecall = dfhack.safecall
+curry = dfhack.curry
 
 function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
@@ -83,7 +84,7 @@ function mkmodule(module,env)
             error("Not a table in package.loaded["..module.."]")
         end
     end
-    local plugname = string.match(module,'^plugins%.(%w+)$')
+    local plugname = string.match(module,'^plugins%.([%w%-]+)$')
     if plugname then
         dfhack.open_plugin(pkg,plugname)
     end
@@ -112,21 +113,14 @@ function rawset_default(target,source)
     end
 end
 
-function defclass(class,parent)
-    class = class or {}
-    rawset_default(class, { __index = class })
-    if parent then
-        setmetatable(class, parent)
-    else
-        rawset_default(class, { init_fields = rawset_default })
-    end
-    return class
+DEFAULT_NIL = DEFAULT_NIL or {} -- Unique token
+
+function defclass(...)
+    return require('class').defclass(...)
 end
 
-function mkinstance(class,table)
-    table = table or {}
-    setmetatable(table, class)
-    return table
+function mkinstance(...)
+    return require('class').mkinstance(...)
 end
 
 -- Misc functions
@@ -160,6 +154,23 @@ function xyz2pos(x,y,z)
         return {x=x,y=y,z=z}
     else
         return {x=-30000,y=-30000,z=-30000}
+    end
+end
+
+function pos2xy(pos)
+    if pos then
+        local x = pos.x
+        if x and x ~= -30000 then
+            return x, pos.y
+        end
+    end
+end
+
+function xy2pos(x,y)
+    if x then
+        return {x=x,y=y}
+    else
+        return {x=-30000,y=-30000}
     end
 end
 

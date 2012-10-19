@@ -24,7 +24,7 @@ command_result diglx (color_ostream &out, vector <string> & parameters);
 command_result digauto (color_ostream &out, vector <string> & parameters);
 command_result digexp (color_ostream &out, vector <string> & parameters);
 command_result digcircle (color_ostream &out, vector <string> & parameters);
-
+command_result digtype (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("dig");
 
@@ -57,6 +57,18 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(PluginCommand("digexp","Select or designate an exploratory pattern. Use 'digexp ?' for help.",digexp));
     commands.push_back(PluginCommand("digcircle","Dig designate a circle (filled or hollow) with given radius.",digcircle));
     //commands.push_back(PluginCommand("digauto","Mark a tile for continuous digging.",autodig));
+    commands.push_back(PluginCommand("digtype", "Dig all veins of a given type.", digtype,Gui::cursor_hotkey,
+        "For every tile on the map of the same vein type as the selected tile, this command designates it to have the same designation as the selected tile. If the selected tile has no designation, they will be dig designated.\n"
+        "If an argument is given, the designation of the selected tile is ignored, and all appropriate tiles are set to the specified designation.\n"
+        "Options:\n"
+        "  dig\n"
+        "  channel\n"
+        "  ramp\n"
+        "  updown - up/down stairs\n"
+        "  up     - up stairs\n"
+        "  down   - down stairs\n"
+        "  clear  - clear designation\n"
+        ));
     return CR_OK;
 }
 
@@ -951,7 +963,7 @@ command_result digexp (color_ostream &out, vector <string> & parameters)
                     mx.setDesignationAt(pos,des);
                 }
             }
-            mx.WriteAll();
+        mx.WriteAll();
     }
     else for(uint32_t x = 0; x < x_max; x++)
     {
@@ -1129,6 +1141,7 @@ command_result digv (color_ostream &out, vector <string> & parameters)
         }
     }
     MCache->WriteAll();
+    delete MCache;
     return CR_OK;
 }
 
@@ -1342,6 +1355,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
         }
     }
     MCache->WriteAll();
+    delete MCache;
     return CR_OK;
 }
 
@@ -1350,3 +1364,120 @@ command_result digauto (color_ostream &out, vector <string> & parameters)
 {
     return CR_NOT_IMPLEMENTED;
 }
+
+command_result digtype (color_ostream &out, vector <string> & parameters)
+{
+    //mostly copy-pasted from digv
+    CoreSuspender suspend;
+    if ( parameters.size() > 1 )
+    {
+        out.printerr("Too many parameters.\n");
+        return CR_FAILURE;
+    }
+    
+    uint32_t targetDigType;
+    if ( parameters.size() == 1 )
+    {
+        string parameter = parameters[0];
+        if ( parameter == "clear" )
+            targetDigType = tile_dig_designation::No;
+        else if ( parameter == "dig" )
+            targetDigType = tile_dig_designation::Default;
+        else if ( parameter == "updown" )
+            targetDigType = tile_dig_designation::UpDownStair;
+        else if ( parameter == "channel" )
+            targetDigType = tile_dig_designation::Channel;
+        else if ( parameter == "ramp" )
+            targetDigType = tile_dig_designation::Ramp;
+        else if ( parameter == "down" )
+            targetDigType = tile_dig_designation::DownStair;
+        else if ( parameter == "up" )
+            targetDigType = tile_dig_designation::UpStair;
+        else
+        {
+            out.printerr("Invalid parameter.\n");
+            return CR_FAILURE;
+        }
+    }
+    else
+    {
+        targetDigType = -1;
+    }
+    
+    if (!Maps::IsValid())
+    {
+        out.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+    
+    int32_t cx, cy, cz;
+    uint32_t xMax,yMax,zMax;
+    Maps::getSize(xMax,yMax,zMax);
+    uint32_t tileXMax = xMax * 16;
+    uint32_t tileYMax = yMax * 16;
+    Gui::getCursorCoords(cx,cy,cz);
+    if (cx == -30000)
+    {
+        out.printerr("Cursor is not active. Point the cursor at a vein.\n");
+        return CR_FAILURE;
+    }
+    DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
+    MapExtras::MapCache * mCache = new MapExtras::MapCache;
+    df::tile_designation baseDes = mCache->designationAt(xy);
+    df::tiletype tt = mCache->tiletypeAt(xy);
+    int16_t veinmat = mCache->veinMaterialAt(xy);
+    if( veinmat == -1 )
+    {
+        out.printerr("This tile is not a vein.\n");
+        delete mCache;
+        return CR_FAILURE;
+    }
+    out.print("(%d,%d,%d) tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, baseDes.whole);
+    
+    if ( targetDigType != -1 )
+    {
+        baseDes.bits.dig = (tile_dig_designation::tile_dig_designation)targetDigType;
+    }
+    else
+    {
+        if ( baseDes.bits.dig == tile_dig_designation::No )
+        {
+            baseDes.bits.dig = tile_dig_designation::Default;
+        }
+    }
+    
+    for( uint32_t z = 0; z < zMax; z++ )
+    {
+        for( uint32_t x = 1; x < tileXMax-1; x++ )
+        {
+            for( uint32_t y = 1; y < tileYMax-1; y++ )
+            {
+                DFHack::DFCoord current(x,y,z);
+                int16_t vmat2 = mCache->veinMaterialAt(current);
+                if ( vmat2 != veinmat )
+                    continue;
+                tt = mCache->tiletypeAt(current);
+                if (!DFHack::isWallTerrain(tt))
+                    continue;
+                
+                //designate it for digging
+                df::tile_designation des = mCache->designationAt(current);
+                if ( !mCache->testCoord(current) )
+                {
+                    out.printerr("testCoord failed at (%d,%d,%d)\n", x, y, z);
+                    delete mCache;
+                    return CR_FAILURE;
+                }
+                
+                df::tile_designation designation = mCache->designationAt(current);
+                designation.bits.dig = baseDes.bits.dig;
+                mCache->setDesignationAt(current, designation);
+            }
+        }
+    }
+    
+    mCache->WriteAll();
+    delete mCache;
+    return CR_OK;
+}
+

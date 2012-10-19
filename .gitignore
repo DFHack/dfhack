@@ -36,6 +36,9 @@ build/tools
 build/plugins
 build/depends
 build/install_manifest.txt
+build/README.html
+build/LUA_API.html
+build/COMPILE.html
 
 #ignore Kdevelop stuff
 .kdev4

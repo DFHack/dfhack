@@ -3411,7 +3411,6 @@ command_result start_autobutcher(color_ostream &out)
     if (!config_autobutcher.isValid())
     {
         config_autobutcher = pworld->AddPersistentData("autobutcher/config");
-        config_autobutcher.ival(0) = enable_autobutcher;
         config_autobutcher.ival(1) = sleep_autobutcher;
         config_autobutcher.ival(2) = enable_autobutcher_autowatch;
         config_autobutcher.ival(3) = default_fk;
@@ -3420,6 +3419,7 @@ command_result start_autobutcher(color_ostream &out)
         config_autobutcher.ival(6) = default_ma;
     }
 
+    config_autobutcher.ival(0) = enable_autobutcher;
     out << "Starting autobutcher." << endl;
 	init_autobutcher(out);
     return CR_OK;

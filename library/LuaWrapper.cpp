@@ -1641,10 +1641,13 @@ static int DoAttach(lua_State *state)
 
         freeze_table(state, true, "df");
 
-        lua_swap(state);
+        // pairstable dftable dfmeta
+
+        lua_pushvalue(state, -3);
         lua_pushcclosure(state, wtype_pairs, 1);
         lua_setfield(state, -2, "__pairs");
         lua_pop(state, 1);
+        lua_remove(state, -2);
     }
 
     return 1;

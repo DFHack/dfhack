@@ -75,6 +75,9 @@ keybinding add Ctrl-W@layer_military/Equip/Customize/View gui/choose-weapons
 # minecart Guide path
 keybinding add Alt-P@dwarfmode/Hauling/DefineStop/Cond/Guide gui/guide-path
 
+# workshop job details
+# keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
+
 ############################
 # UI and game logic tweaks #
 ############################

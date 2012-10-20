@@ -211,6 +211,11 @@ function parse_label_text(obj)
     obj.text_ids = idtab
 end
 
+local function is_disabled(token)
+    return (token.disabled ~= nil and getval(token.disabled)) or
+           (token.enabled ~= nil and not getval(token.enabled))
+end
+
 function render_text(obj,dc,x0,y0,pen,dpen)
     local width = 0
     for iline,line in ipairs(obj.text_lines) do
@@ -241,7 +246,7 @@ function render_text(obj,dc,x0,y0,pen,dpen)
                 local keypen
 
                 if dc then
-                    if getval(token.disabled) then
+                    if is_disabled(token) then
                         dc:pen(getval(token.dpen) or dpen)
                         keypen = COLOR_GREEN
                     else
@@ -287,7 +292,7 @@ end
 function check_text_keys(self, keys)
     if self.text_active then
         for _,item in ipairs(self.text_active) do
-            if item.key and keys[item.key] and not getval(item.disabled) then
+            if item.key and keys[item.key] and not is_disabled(item) then
                 item.on_activate()
                 return true
             end
@@ -359,6 +364,13 @@ STANDARDSCROLL = {
     STANDARDSCROLL_DOWN = 1,
     STANDARDSCROLL_PAGEUP = '-page',
     STANDARDSCROLL_PAGEDOWN = '+page',
+}
+
+SECONDSCROLL = {
+    SECONDSCROLL_UP = -1,
+    SECONDSCROLL_DOWN = 1,
+    SECONDSCROLL_PAGEUP = '-page',
+    SECONDSCROLL_PAGEDOWN = '+page',
 }
 
 List.ATTRS{

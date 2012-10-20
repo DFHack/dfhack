@@ -12,6 +12,7 @@ DFHack future
     - removebadthoughts: add --dry-run option
   New GUI scripts:
     - gui/guide-path: displays the cached path for minecart Guide orders.
+    - gui/workshop-job: displays inputs of a workshop job and allows tweaking them.
 
 DFHack v0.34.11-r2
 

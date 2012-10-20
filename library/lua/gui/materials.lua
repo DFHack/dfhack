@@ -238,8 +238,7 @@ function MaterialDialog:submitMaterial(typ, index)
     self:dismiss()
 
     if self.on_select then
-        local info = dfhack.matinfo.decode(typ, index)
-        self.on_select(info, typ, index)
+        self.on_select(typ, index)
     end
 end
 
@@ -276,25 +275,6 @@ function showMaterialPrompt(title, prompt, on_select, on_cancel, mat_filter)
     }:show()
 end
 
-local itemdefs = df.global.world.raws.itemdefs
-local itemtype_info = {
-    TRAPPARTS = { name = 'mechanisms' },
-    WEAPON = { defs = itemdefs.weapons },
-    TRAPCOMP = { defs = itemdefs.trapcomps },
-    TOY = { defs = itemdefs.toys },
-    TOOL = { defs = itemdefs.tools },
-    INSTRUMENT = { defs = itemdefs.instruments },
-    ARMOR = { defs = itemdefs.armor },
-    AMMO = { defs = itemdefs.ammo },
-    SIEGEAMMO = { defs = itemdefs.siege_ammo },
-    GLOVES = { defs = itemdefs.gloves },
-    SHOES = { defs = itemdefs.shoes },
-    SHIELD = { defs = itemdefs.shields },
-    HELM = { defs = itemdefs.helms },
-    PANTS = { defs = itemdefs.pants },
-    FOOD = { defs = itemdefs.food },
-}
-
 function ItemTypeDialog(args)
     args.text = args.prompt or 'Type or select an item type'
     args.text_pen = COLOR_WHITE
@@ -307,26 +287,24 @@ function ItemTypeDialog(args)
     local filter = args.item_filter
 
     for itype = 0,df.item_type._last_item do
-        local key = df.item_type[itype]
-        local info = itemtype_info[key]
+        local attrs = df.item_type.attrs[itype]
+        local defcnt = dfhack.items.getSubtypeCount(itype)
 
         if not filter or filter(itype,-1) then
-            local name = key
+            local name = attrs.caption or df.item_type[itype]
             local icon
-            if info and info.defs then
+            if defcnt >= 0 then
                 name = 'any '..name
                 icon = '+'
-            end
-            if info and info.name then
-                name = info.name
             end
             table.insert(choices, {
                 icon = icon, text = string.lower(name), item_type = itype, item_subtype = -1
             })
         end
 
-        if info and info.defs then
-            for subtype,def in ipairs(info.defs) do
+        if defcnt > 0 then
+            for subtype = 0,defcnt-1 do
+                local def = dfhack.items.getSubtypeDef(itype, subtype)
                 if not filter or filter(itype,subtype,def) then
                     table.insert(choices, {
                         icon = '\x1e', text = ' '..def.name, item_type = itype, item_subtype = subtype
@@ -337,6 +315,13 @@ function ItemTypeDialog(args)
     end
 
     args.choices = choices
+
+    if args.on_select then
+        local cb = args.on_select
+        args.on_select = function(idx, obj)
+            return cb(obj.item_type, obj.item_subtype)
+        end
+    end
 
     return dlg.ListBox(args)
 end

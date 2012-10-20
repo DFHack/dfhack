@@ -640,7 +640,7 @@ struct military_assign_hook : df::viewscreen_layer_militaryst {
             for (int y = y1, i = i1; i <= i2; i++, y++)
             {
                 auto unit = vector_get(positions.candidates, i);
-                if (!unit || unit->military.squad_index < 0)
+                if (!unit || unit->military.squad_id < 0)
                     continue;
 
                 for (int x = x1; x <= x2; x++)

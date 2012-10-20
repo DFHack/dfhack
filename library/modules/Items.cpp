@@ -245,7 +245,28 @@ bool Items::isCasteMaterial(df::item_type itype)
     return ENUM_ATTR(item_type, is_caste_mat, itype);
 }
 
-bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
+bool ItemTypeInfo::matches(df::job_item_vector_id vec_id)
+{
+    auto other_id = ENUM_ATTR(job_item_vector_id, other, vec_id);
+
+    auto explicit_item = ENUM_ATTR(items_other_id, item, other_id);
+    if (explicit_item != item_type::NONE && type != explicit_item)
+        return false;
+
+    auto generic_item = ENUM_ATTR(items_other_id, generic_item, other_id);
+    if (generic_item.size > 0)
+    {
+        for (size_t i = 0; i < generic_item.size; i++)
+            if (generic_item.items[i] == type)
+                return true;
+
+        return false;
+    }
+
+    return true;
+}
+
+bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool skip_vector)
 {
     using namespace df::enums::item_type;
 
@@ -253,6 +274,9 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
         return mat ? mat->matches(item) : false;
 
     if (Items::isCasteMaterial(type) && mat && !mat->isNone())
+        return false;
+
+    if (!skip_vector && !matches(item.vector_id))
         return false;
 
     df::job_item_flags1 ok1, mask1, item_ok1, item_mask1;

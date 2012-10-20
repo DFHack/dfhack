@@ -40,6 +40,7 @@ distribution.
 #include "df/building_actual.h"
 #include "df/body_part_raw.h"
 #include "df/unit_inventory_item.h"
+#include "df/job_item_vector_id.h"
 
 namespace df
 {
@@ -86,7 +87,8 @@ namespace DFHack
 
         bool find(const std::string &token);
 
-        bool matches(const df::job_item &item, MaterialInfo *mat = NULL);
+        bool matches(df::job_item_vector_id vec_id);
+        bool matches(const df::job_item &item, MaterialInfo *mat = NULL, bool skip_vector = false);
     };
 
     inline bool operator== (const ItemTypeInfo &a, const ItemTypeInfo &b) {

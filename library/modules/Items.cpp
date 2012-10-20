@@ -109,30 +109,47 @@ using df::global::proj_next_id;
     ITEM(PANTS, pants, itemdef_pantsst) \
     ITEM(FOOD, food, itemdef_foodst)
 
-bool ItemTypeInfo::decode(df::item_type type_, int16_t subtype_)
+int Items::getSubtypeCount(df::item_type itype)
 {
     using namespace df::enums::item_type;
 
-    type = type_;
-    subtype = subtype_;
-    custom = NULL;
-
     df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
 
-    switch (type_) {
-    case NONE:
-        return false;
-
+    switch (itype) {
 #define ITEM(type,vec,tclass) \
     case type: \
-        custom = vector_get(defs.vec, subtype); \
-        break;
+        return defs.vec.size();
 ITEMDEF_VECTORS
 #undef ITEM
 
     default:
-        break;
+        return -1;
     }
+}
+
+df::itemdef *Items::getSubtypeDef(df::item_type itype, int subtype)
+{
+    using namespace df::enums::item_type;
+
+    df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
+
+    switch (itype) {
+#define ITEM(type,vec,tclass) \
+    case type: \
+        return vector_get(defs.vec, subtype);
+ITEMDEF_VECTORS
+#undef ITEM
+
+    default:
+        return NULL;
+    }
+}
+
+bool ItemTypeInfo::decode(df::item_type type_, int16_t subtype_)
+{
+    type = type_;
+    subtype = subtype_;
+    custom = Items::getSubtypeDef(type_, subtype_);
 
     return isValid();
 }
@@ -170,6 +187,10 @@ ITEMDEF_VECTORS
     default:
         break;
     }
+
+    const char *name = ENUM_ATTR(item_type, caption, type);
+    if (name)
+        return name;
 
     return toLower(ENUM_KEY_STR(item_type, type));
 }
@@ -219,12 +240,20 @@ ITEMDEF_VECTORS
     return (subtype >= 0);
 }
 
+bool Items::isCasteMaterial(df::item_type itype)
+{
+    return ENUM_ATTR(item_type, is_caste_mat, itype);
+}
+
 bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
 {
     using namespace df::enums::item_type;
 
     if (!isValid())
         return mat ? mat->matches(item) : false;
+
+    if (Items::isCasteMaterial(type) && mat && !mat->isNone())
+        return false;
 
     df::job_item_flags1 ok1, mask1, item_ok1, item_mask1;
     df::job_item_flags2 ok2, mask2, item_ok2, item_mask2;

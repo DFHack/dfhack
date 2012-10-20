@@ -2494,20 +2494,21 @@ growcrops plump 40
 <h2><a class="toc-backref" href="#id118">removebadthoughts</a></h2>
 <p>This script remove negative thoughts from your dwarves. Very useful against
 tantrum spirals.</p>
-<p>With a selected unit in 'v' mode, will clear this unit's mind, otherwise
-clear all your fort's units minds.</p>
+<p>The script can target a single creature, when used with the <tt class="docutils literal">him</tt> argument,
+or the whole fort population, with <tt class="docutils literal">all</tt>.</p>
+<p>To show every bad thought present without actually removing them, run the
+script with the <tt class="docutils literal"><span class="pre">-n</span></tt> or <tt class="docutils literal"><span class="pre">--dry-run</span></tt> argument. This can give a quick
+hint on what bothers your dwarves the most.</p>
 <p>Individual dwarf happiness may not increase right after this command is run,
-but in the short term your dwarves will get much more joyful.
-The thoughts are set to be very old, and the game will remove them soon when
-you unpause.</p>
-<p>With the optional <tt class="docutils literal"><span class="pre">-v</span></tt> parameter, the script will dump the negative thoughts
-it removed.</p>
+but in the short term your dwarves will get much more joyful.</p>
+<p>Internals: the thoughts are set to be very old, so that the game remove them
+quickly after you unpause.</p>
 </div>
 <div class="section" id="slayrace">
 <h2><a class="toc-backref" href="#id119">slayrace</a></h2>
 <p>Kills any unit of a given race.</p>
 <p>With no argument, lists the available races.</p>
-<p>With the special argument 'him', targets only the selected creature.</p>
+<p>With the special argument <tt class="docutils literal">him</tt>, targets only the selected creature.</p>
 <p>Any non-dead non-caged unit of the specified race gets its <tt class="docutils literal">blood_count</tt>
 set to 0, which means immediate death at the next game tick. For creatures
 such as vampires, also set animal.vanish_countdown to 2.</p>

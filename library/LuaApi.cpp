@@ -82,6 +82,7 @@ distribution.
 #include "df/flow_info.h"
 #include "df/unit_misc_trait.h"
 #include "df/proj_itemst.h"
+#include "df/itemdef.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -937,6 +938,9 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, setOwner),
     WRAPM(Items, getContainer),
     WRAPM(Items, getDescription),
+    WRAPM(Items, isCasteMaterial),
+    WRAPM(Items, getSubtypeCount),
+    WRAPM(Items, getSubtypeDef),
     WRAPN(moveToGround, items_moveToGround),
     WRAPN(moveToContainer, items_moveToContainer),
     WRAPN(moveToBuilding, items_moveToBuilding),
@@ -1018,6 +1022,25 @@ static int maps_ensureTileBlock(lua_State *L)
     return 1;
 }
 
+static int maps_getTileType(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    auto ptype = Maps::getTileType(pos);
+    if (ptype)
+        lua_pushinteger(L, *ptype);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static int maps_getTileFlags(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Maps::getTileDesignation(pos));
+    Lua::PushDFObject(L, Maps::getTileOccupancy(pos));
+    return 2;
+}
+
 static int maps_getRegionBiome(lua_State *L)
 {
     auto pos = CheckCoordXY(L, 1, true);
@@ -1035,6 +1058,8 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
     { "getTileBlock", maps_getTileBlock },
     { "ensureTileBlock", maps_ensureTileBlock },
+    { "getTileType", maps_getTileType },
+    { "getTileFlags", maps_getTileFlags },
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
     { NULL, NULL }

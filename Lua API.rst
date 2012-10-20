@@ -1043,6 +1043,18 @@ Items module
 
   Turns the item into a projectile, and returns the new object, or *nil* if impossible.
 
+* ``dfhack.items.isCasteMaterial(item_type)``
+
+  Returns *true* if this item type uses a creature/caste pair as its material.
+
+* ``dfhack.items.getSubtypeCount(item_type)``
+
+  Returns the number of raw-defined subtypes of the given item type, or *-1* if not applicable.
+
+* ``dfhack.items.getSubtypeDef(item_type, subtype)``
+
+  Returns the raw definition for the given item type and subtype, or *nil* if invalid.
+
 
 Maps module
 -----------
@@ -1059,7 +1071,7 @@ Maps module
 
   Returns a map block object for given x,y,z in local block coordinates.
 
-* ``dfhack.maps.isValidTilePos(coords)``, or isValidTilePos(x,y,z)``
+* ``dfhack.maps.isValidTilePos(coords)``, or ``isValidTilePos(x,y,z)``
 
   Checks if the given df::coord or x,y,z in local tile coordinates are valid.
 
@@ -1070,6 +1082,14 @@ Maps module
 * ``dfhack.maps.ensureTileBlock(coords)``, or ``ensureTileBlock(x,y,z)``
 
   Like ``getTileBlock``, but if the block is not allocated, try creating it.
+
+* ``dfhack.maps.getTileType(coords)``, or ``getTileType(x,y,z)``
+
+  Returns the tile type at the given coordinates, or *nil* if invalid.
+
+* ``dfhack.maps.getTileFlags(coords)``, or ``getTileFlags(x,y,z)``
+
+  Returns designation and occupancy references for the given coordinates, or *nil, nil* if invalid.
 
 * ``dfhack.maps.getRegionBiome(region_coord2d)``, or ``getRegionBiome(x,y)``
 

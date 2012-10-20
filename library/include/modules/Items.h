@@ -123,6 +123,10 @@ struct dfh_item
 namespace Items
 {
 
+DFHACK_EXPORT bool isCasteMaterial(df::item_type itype);
+DFHACK_EXPORT int getSubtypeCount(df::item_type itype);
+DFHACK_EXPORT df::itemdef *getSubtypeDef(df::item_type itype, int subtype);
+
 /// Look for a particular item by ID
 DFHACK_EXPORT df::item * findItemByID(int32_t id);
 

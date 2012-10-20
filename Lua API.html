@@ -1110,6 +1110,13 @@ above operations accordingly. If enabled, pauses and zooms to position.</p>
 if there are any jobs with <tt class="docutils literal">first_id &lt;= id &lt; job_next_id</tt>,
 a lua list containing them.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.isSuitableItem(job_item, item_type, item_subtype)</tt></p>
+<p>Does basic sanity checks to verify if the suggested item type matches
+the flags in the job item.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.isSuitableMaterial(job_item, mat_type, mat_index)</tt></p>
+<p>Likewise, if replacing material.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="units-module">
@@ -1250,6 +1257,15 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.items.makeProjectile(item)</tt></p>
 <p>Turns the item into a projectile, and returns the new object, or <em>nil</em> if impossible.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.isCasteMaterial(item_type)</tt></p>
+<p>Returns <em>true</em> if this item type uses a creature/caste pair as its material.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getSubtypeCount(item_type)</tt></p>
+<p>Returns the number of raw-defined subtypes of the given item type, or <em>-1</em> if not applicable.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getSubtypeDef(item_type, subtype)</tt></p>
+<p>Returns the raw definition for the given item type and subtype, or <em>nil</em> if invalid.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="maps-module">
@@ -1264,7 +1280,7 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getBlock(x,y,z)</tt></p>
 <p>Returns a map block object for given x,y,z in local block coordinates.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.maps.isValidTilePos(coords)</tt>, or isValidTilePos(x,y,z)``</p>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.isValidTilePos(coords)</tt>, or <tt class="docutils literal">isValidTilePos(x,y,z)</tt></p>
 <p>Checks if the given df::coord or x,y,z in local tile coordinates are valid.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getTileBlock(coords)</tt>, or <tt class="docutils literal">getTileBlock(x,y,z)</tt></p>
@@ -1272,6 +1288,12 @@ Returns <em>false</em> in case of error.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.ensureTileBlock(coords)</tt>, or <tt class="docutils literal">ensureTileBlock(x,y,z)</tt></p>
 <p>Like <tt class="docutils literal">getTileBlock</tt>, but if the block is not allocated, try creating it.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileType(coords)</tt>, or <tt class="docutils literal">getTileType(x,y,z)</tt></p>
+<p>Returns the tile type at the given coordinates, or <em>nil</em> if invalid.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileFlags(coords)</tt>, or <tt class="docutils literal">getTileFlags(x,y,z)</tt></p>
+<p>Returns designation and occupancy references for the given coordinates, or <em>nil, nil</em> if invalid.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getRegionBiome(region_coord2d)</tt>, or <tt class="docutils literal">getRegionBiome(x,y)</tt></p>
 <p>Returns the biome info struct for the given global map region.</p>
@@ -1837,6 +1859,15 @@ coordinates), returns <em>nil</em>.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">xyz2pos(x,y,z)</tt></p>
 <p>Returns a table with x, y and z as fields.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">same_xyz(a,b)</tt></p>
+<p>Checks if <tt class="docutils literal">a</tt> and <tt class="docutils literal">b</tt> have the same x, y and z fields.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">get_path_xyz(path,i)</tt></p>
+<p>Returns <tt class="docutils literal">path.x[i], path.y[i], path.z[i]</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">pos2xy(obj)</tt>, <tt class="docutils literal">xy2pos(x,y)</tt>, <tt class="docutils literal">same_xy(a,b)</tt>, <tt class="docutils literal">get_path_xy(a,b)</tt></p>
+<p>Same as above, but for 2D coordinates.</p>
 </li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">safe_index(obj,index...)</span></tt></p>
 <p>Walks a sequence of dereferences, which may be represented by numbers or strings.

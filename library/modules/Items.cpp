@@ -256,11 +256,11 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
         return false;
 
     df::job_item_flags1 ok1, mask1, item_ok1, item_mask1;
-    df::job_item_flags2 ok2, mask2, item_ok2, item_mask2;
+    df::job_item_flags2 ok2, mask2, item_ok2, item_mask2, xmask2;
     df::job_item_flags3 ok3, mask3, item_ok3, item_mask3;
 
     ok1.whole = mask1.whole = item_ok1.whole = item_mask1.whole = 0;
-    ok2.whole = mask2.whole = item_ok2.whole = item_mask2.whole = 0;
+    ok2.whole = mask2.whole = item_ok2.whole = item_mask2.whole = xmask2.whole = 0;
     ok3.whole = mask3.whole = item_ok3.whole = item_mask3.whole = 0;
 
     if (mat) {
@@ -281,11 +281,15 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
     RQ(1,not_bin); RQ(1,lye_bearing);
 
     RQ(2,dye); RQ(2,dyeable); RQ(2,dyed); RQ(2,glass_making); RQ(2,screw);
-    RQ(2,building_material); RQ(2,fire_safe); RQ(2,magma_safe); RQ(2,non_economic);
+    RQ(2,building_material); RQ(2,fire_safe); RQ(2,magma_safe);
     RQ(2,totemable); RQ(2,plaster_containing); RQ(2,body_part); RQ(2,lye_milk_free);
     RQ(2,blunt); RQ(2,unengraved); RQ(2,hair_wool);
 
     RQ(3,any_raw_material); RQ(3,non_pressed); RQ(3,food_storage);
+
+    // only checked if boulder
+
+    xmask2.bits.non_economic = true;
 
     // Compute the ok mask
 
@@ -306,7 +310,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
 
     case BOULDER:
         OK(1,sharpenable);
-        OK(2,non_economic);
+        xmask2.bits.non_economic = false;
     case BAR:
         OK(3,any_raw_material);
     case BLOCKS:
@@ -431,6 +435,8 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
 
 #undef OK
 #undef RQ
+
+    mask2.whole &= ~xmask2.whole;
 
     return bits_match(item.flags1.whole, ok1.whole, mask1.whole) &&
            bits_match(item.flags2.whole, ok2.whole, mask2.whole) &&

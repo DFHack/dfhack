@@ -279,11 +279,11 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
     if (!skip_vector && !matches(item.vector_id))
         return false;
 
-    df::job_item_flags1 ok1, mask1, item_ok1, item_mask1;
+    df::job_item_flags1 ok1, mask1, item_ok1, item_mask1, xmask1;
     df::job_item_flags2 ok2, mask2, item_ok2, item_mask2, xmask2;
     df::job_item_flags3 ok3, mask3, item_ok3, item_mask3;
 
-    ok1.whole = mask1.whole = item_ok1.whole = item_mask1.whole = 0;
+    ok1.whole = mask1.whole = item_ok1.whole = item_mask1.whole = xmask1.whole = 0;
     ok2.whole = mask2.whole = item_ok2.whole = item_mask2.whole = xmask2.whole = 0;
     ok3.whole = mask3.whole = item_ok3.whole = item_mask3.whole = 0;
 
@@ -362,11 +362,13 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
     case CAGE:
         OK(1,milk);
         OK(1,milkable);
+        xmask1.bits.cookable = true;
         break;
 
     case BUCKET:
     case FLASK:
         OK(1,milk);
+        xmask1.bits.cookable = true;
         break;
 
     case TOOL:
@@ -374,6 +376,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
         OK(1,milk);
         OK(2,lye_milk_free);
         OK(2,blunt);
+        xmask1.bits.cookable = true;
 
         if (VIRTUAL_CAST_VAR(def, df::itemdef_toolst, custom)) {
             df::tool_uses key(tool_uses::FOOD_STORAGE);
@@ -389,11 +392,13 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
         OK(1,milk);
         OK(2,lye_milk_free);
         OK(3,food_storage);
+        xmask1.bits.cookable = true;
         break;
 
     case BOX:
         OK(1,bag); OK(1,sand_bearing); OK(1,milk);
         OK(2,dye); OK(2,plaster_containing);
+        xmask1.bits.cookable = true;
         break;
 
     case BIN:
@@ -460,6 +465,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
 #undef OK
 #undef RQ
 
+    mask1.whole &= ~xmask1.whole;
     mask2.whole &= ~xmask2.whole;
 
     return bits_match(item.flags1.whole, ok1.whole, mask1.whole) &&

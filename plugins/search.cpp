@@ -31,7 +31,7 @@ void OutputString(int8_t color, int &x, int y, const std::string &text)
 //
 // START: Base Search functionality
 //
-template <class S, class T, class V = void>
+template <class S, class T, class V = void*>
 class search_parent
 {
 public:
@@ -43,6 +43,7 @@ public:
         sort_list2 = NULL;
         viewscreen = NULL;
         select_key = 's';
+        track_secondary_values = false;
     }
 
     virtual bool process_input(set<df::interface_key> *input)
@@ -111,11 +112,13 @@ public:
 
 protected:
     const S *viewscreen;
-    vector <T*> saved_list1;
-    vector <V*> saved_list2;
+    vector <T> saved_list1, reference_list;
+    vector <V> saved_list2;
+    vector <int> saved_indexes;
 
     bool valid;
     bool redo_search;
+    bool track_secondary_values;
     string search_string;
 
     search_parent() : ascii_to_enum_offset(interface_key::STRING_A048 - '0'), shift_offset('A' - 'a')
@@ -123,13 +126,14 @@ protected:
         reset_all();
     }
 
-    virtual void init(int *cursor_pos, vector <T*> *sort_list1, vector <V*> *sort_list2 = NULL, char select_key = 's')
+    virtual void init(int *cursor_pos, vector <T> *sort_list1, vector <V> *sort_list2 = NULL, char select_key = 's')
     {
         this->cursor_pos = cursor_pos;
         this->sort_list1 = sort_list1;
         this->sort_list2 = sort_list2;
         this->select_key = select_key;
         select_token = (df::interface_key) (ascii_to_enum_offset + select_key);
+        track_secondary_values = false;
         valid = true;
     }
 
@@ -156,6 +160,43 @@ protected:
         search_string = "";
         saved_list1.clear();
         saved_list2.clear();
+        reference_list.clear();
+        saved_indexes.clear();
+    }
+
+    void update_secondary_values()
+    {
+        if (sort_list2 != NULL && track_secondary_values)
+        {
+            bool list_has_been_sorted = (sort_list1->size() == reference_list.size()
+                && *sort_list1 != reference_list);
+
+            for (int i = 0; i < saved_indexes.size(); i++)
+            {
+                int adjusted_item_index = i;
+                if (list_has_been_sorted)
+                {
+                    for (int j = 0; j < sort_list1->size(); j++)
+                    {
+                        if ((*sort_list1)[j] == reference_list[i])
+                        {
+                            adjusted_item_index = j;
+                            break;
+                        }
+                    }
+                }
+
+                saved_list2[saved_indexes[i]] = (*sort_list2)[adjusted_item_index];
+            }
+            saved_indexes.clear();
+        }
+    }
+
+    //Used to work out if filtered list has been sorted after filtering
+    void store_reference_values()
+    {
+        if (track_secondary_values)
+            reference_list = *sort_list1;
     }
 
     void clear_search()
@@ -164,8 +205,12 @@ protected:
         {
             *sort_list1 = saved_list1;
             if (sort_list2 != NULL) 
+            {
+                update_secondary_values();
                 *sort_list2 = saved_list2;
+            }
         }
+        store_reference_values();
         search_string = "";
     }
 
@@ -183,22 +228,34 @@ protected:
             if (sort_list2 != NULL)
                 saved_list2 = *sort_list2;
         }
+        else
+            update_secondary_values();
+
         sort_list1->clear();
         if (sort_list2 != NULL)
+        {
             sort_list2->clear();
+            saved_indexes.clear();
+        }
 
         string search_string_l = toLower(search_string);
         for (int i = 0; i < saved_list1.size(); i++ )
         {
-            T *element = saved_list1[i];
+            T element = saved_list1[i];
             string desc = toLower(get_element_description(element));
             if (desc.find(search_string_l) != string::npos)
             {
                 sort_list1->push_back(element);
                 if (sort_list2 != NULL)
+                {
                     sort_list2->push_back(saved_list2[i]);
+                    if (track_secondary_values)
+                        saved_indexes.push_back(i);
+                }
             }
         }
+
+        store_reference_values();
 
         *cursor_pos = 0;
     }
@@ -221,12 +278,12 @@ protected:
             OutputString(10, x, y, "_");
     }
 
-    virtual string get_element_description(T *element) const = 0;
+    virtual string get_element_description(T element) const = 0;
     virtual void render () const = 0;
 
 private:
-    vector <T*> *sort_list1;
-    vector <V*> *sort_list2;
+    vector <T> *sort_list1;
+    vector <V> *sort_list2;
     int *cursor_pos;
     char select_key;
 
@@ -237,7 +294,6 @@ private:
     const int shift_offset;
 
 };
-
 template <class S, class T, class V> search_parent<S,T,V> *search_parent<S,T,V> ::lock = NULL;
 
 
@@ -279,7 +335,7 @@ template <class T, class V, typename D> V search_hook<T, V, D> ::module;
 //
 // START: Stocks screen search
 //
-class stocks_search : public search_parent<df::viewscreen_storesst, df::item>
+class stocks_search : public search_parent<df::viewscreen_storesst, df::item*>
 {
 public:
 
@@ -354,7 +410,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(stocks_search_hook, render);
 //
 // START: Unit screen search
 //
-class unitlist_search : public search_parent<df::viewscreen_unitlistst, df::unit, df::job>
+class unitlist_search : public search_parent<df::viewscreen_unitlistst, df::unit*, df::job*>
 {
 public:
 
@@ -410,7 +466,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(unitlist_search_hook, render);
 //
 // START: Trade screen search
 //
-class trade_search_base : public search_parent<df::viewscreen_tradegoodsst, df::item>
+class trade_search_base : public search_parent<df::viewscreen_tradegoodsst, df::item*, char>
 {
 
 private:
@@ -434,7 +490,8 @@ public:
         if (!valid)
         {
             viewscreen = screen;
-            search_parent::init(&screen->trader_cursor, &screen->trader_items, NULL, 'q');
+            search_parent::init(&screen->trader_cursor, &screen->trader_items, &screen->trader_selected, 'q');
+            track_secondary_values = true;
         }
     }
 };
@@ -457,7 +514,8 @@ public:
         if (!valid)
         {
             viewscreen = screen;
-            search_parent::init(&screen->broker_cursor, &screen->broker_items, NULL, 'w');
+            search_parent::init(&screen->broker_cursor, &screen->broker_items, &screen->broker_selected, 'w');
+            track_secondary_values = true;
         }
     }
 };

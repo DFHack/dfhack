@@ -4,8 +4,23 @@ local _ENV = mkmodule('plugins.dfusion')
 local ms=require("memscan")
 
 local marker={0xDE,0xAD,0xBE,0xEF}
-patches={}
+--utility functions
+function dwordToTable(dword)
+    local b={bit32.extract(dword,0,8),bit32.extract(dword,8,8),bit32.extract(dword,16,8),bit32.extract(dword,24,8)}
+    return b
+end
+function concatTables(t1,t2)
+    for k,v in pairs(t2) do
+        table.insert(t1,v)
+    end
+end
+function makeCall(from,to)
+    local ret={0xe8}
+    concatTables(ret,dwordToTable(to-from-5))
+    return ret
+end
 -- A reversable binary patch
+patches={}
 BinaryPatch=defclass(BinaryPatch)
 BinaryPatch.ATTRS {pre_data=DEFAULT_NIL,data=DEFAULT_NIL,address=DEFAULT_NIL,name=DEFAULT_NIL}
 function BinaryPatch:init(args)
@@ -16,19 +31,8 @@ function BinaryPatch:init(args)
     if patches[self.name]~=nil then
         error("Patch already exist")
     end
-    self.max_val=0
-    for k,v in pairs(args.pre_data) do
-        if type(k)~="number" then
-            error("non number key in pre_data")
-        end
-        if self.max_val<k then
-            self.max_val=k
-        end
-    end
-    for k,v in pairs(args.data) do
-        if type(k)~="number" then
-            error("non number key in data")
-        end
+
+    for k,v in ipairs(args.data) do
         if args.pre_data[k]==nil then
             error("can't edit without revert data")
         end
@@ -37,32 +41,39 @@ end
 function BinaryPatch:postinit(args)
     patches[args.name]=self
 end
-function BinaryPatch:apply()
-    local arr=ms.CheckedArray.new('uint8_t',self.address,self.address+self.max_val)
-    for k,v in pairs(self.pre_data) do
+function BinaryPatch:test()
+    local arr=ms.CheckedArray.new('uint8_t',self.address,self.address+#self.pre_data)
+    for k,v in ipairs(self.pre_data) do
         if arr[k-1]~=v then
-            error(string.format("pre-data does not match expected:%x got:%x",v,arr[k-1]))
+            return false
         end
     end
+    return true
+end
+function BinaryPatch:apply()
+    if not self:test() then
+        error(string.format("pre-data for binary patch does not match expected")
+    end
     
-    local post_buf=df.new('uint8_t',self.max_val)
-    for k,v in pairs(self.pre_data) do
+    local post_buf=df.new('uint8_t',#self.pre_data)
+    for k,v in ipairs(self.pre_data) do
         if self.data[k]==nil then
             post_buf[k-1]=v
         else
             post_buf[k-1]=self.data[k]
         end
     end
-    local ret=dfhack.with_finalize(function() post_buf:delete() end,dfhack.internal.patchMemory,self.address,post_buf,self.max_val)
+    local ret=dfhack.with_finalize(function() post_buf:delete() end,dfhack.internal.patchMemory,self.address,post_buf,#self.pre_data)
     if not ret then
         error("Patch application failed!")
     end
     self.is_applied=true
-    --[[
-    for k,v in pairs(self.data) do
-        arr[k]=v
-    end
-    ]]--
+end
+function BinaryPatch:repatch(newdata)
+    if newdata==nil then newdata=self.data end
+    self:remove()
+    self.data=newdata
+    self:apply()
 end
 function BinaryPatch:remove(delete)
     if delete==nil then
@@ -71,13 +82,13 @@ function BinaryPatch:remove(delete)
     if not self.is_applied then
         error("can't remove BinaryPatch, not applied.")
     end
-    local arr=ms.CheckedArray.new('uint8_t',self.address,self.address+self.max_val)
+    local arr=ms.CheckedArray.new('uint8_t',self.address,self.address+#self.pre_data)
     
-    local post_buf=df.new('uint8_t',self.max_val)
+    local post_buf=df.new('uint8_t',#self.pre_data)
     for k,v in pairs(self.pre_data) do
             post_buf[k-1]=v
     end
-    local ret=dfhack.with_finalize(function() post_buf:delete() end,dfhack.internal.patchMemory,self.address,post_buf,self.max_val)
+    local ret=dfhack.with_finalize(function() post_buf:delete() end,dfhack.internal.patchMemory,self.address,post_buf,#self.pre_data)
     if not ret then
         error("Patch remove failed!")
     end
@@ -85,11 +96,7 @@ function BinaryPatch:remove(delete)
     if delete then
         patches[self.name]=nil
     end
-    
-    --[[
-    for k,v in pairs(self.data) do
-        arr[k]=self.pre_data[k]
-    end --]]
+
 end
 
 function BinaryPatch:__gc()
@@ -104,16 +111,16 @@ plugins=plugins or {}
 BinaryPlugin=defclass(BinaryPlugin)
 BinaryPlugin.ATTRS {filename=DEFAULT_NIL,reloc_table={},name=DEFAULT_NIL}
 function BinaryPlugin:init(args)
-    if args.name==nil then error("Not a valid plugin name!") end
-    if plugins[args.name]==nil then
-        plugins[args.name]=true
-    else
-        error("Trying to create a same plugin")
-    end
-    self.allocated_object={}
     
 end
 function BinaryPlugin:postinit(args)
+    if self.name==nil then error("Not a valid plugin name!") end
+    --if plugins[args.name]==nil then
+        plugins[self.name]=self
+    --else
+    --    error("Trying to create a same plugin")
+    --end
+    self.allocated_object={}
     self:load()
 end
 function BinaryPlugin:allocate(name,typename,arrsize)
@@ -149,6 +156,21 @@ function BinaryPlugin:find_marker(start_pos)
         end
     end
 end
+
+function BinaryPlugin:set_marker_dword(marker,dword) -- i hope Toady does not make a 64bit version...
+    if self.reloc_table[marker]==nil then
+        error("marker ".. marker.. " not found")
+    end
+    local b=dwordToTable(dword)
+    local off=self.reloc_table[marker]
+    for k,v in ipairs(b) do
+        self.data[off+k]=b[k]
+    end
+end
+function BinaryPlugin:move_to_df()
+    local _,addr=df.sizeof(self.data)
+    markAsExecutable(addr)
+end
 function BinaryPlugin:print_data()
     local out=""
     for i=0,self.size do
@@ -159,5 +181,14 @@ function BinaryPlugin:print_data()
         end
     end
     print(out)
+end
+function BinaryPlugin:__gc()
+    for k,v in pairs(self.allocated_object) do
+        df.delete(v)
+    end
+    if self.unload then
+        self:unload()
+    end
+    self.data:delete()
 end
 return _ENV

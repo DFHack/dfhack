@@ -58,8 +58,28 @@ static int loadObjectFile(lua_State* L)
     lua_setfield(L,table_pos,"symbols");
     return 1;
 }
+static int markAsExecutable(lua_State* L)
+{
+    unsigned addr=luaL_checkunsigned(L,1);
+    std::vector<DFHack::t_memrange> ranges;
+    DFHack::Core::getInstance().p->getMemRanges(ranges);
+    for(size_t i=0;i<ranges.size();i++)
+    {
+        if(ranges[i].isInRange((void*)addr))
+        {
+            DFHack::t_memrange newperm=ranges[i];
+            newperm.execute=true;
+            DFHack::Core::getInstance().p->setPermisions(ranges[i],newperm);
+            return 0;
+        }
+    }
+    lua_pushlstring(L,"Memory range not found",23);
+    lua_error(L);
+    return 0;
+}
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(loadObjectFile),
+    DFHACK_LUA_COMMAND(markAsExecutable),
     DFHACK_LUA_END
 };
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)

@@ -52,7 +52,7 @@ function BinaryPatch:test()
 end
 function BinaryPatch:apply()
     if not self:test() then
-        error(string.format("pre-data for binary patch does not match expected")
+        error(string.format("pre-data for binary patch does not match expected"))
     end
     
     local post_buf=df.new('uint8_t',#self.pre_data)

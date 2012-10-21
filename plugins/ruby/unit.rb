@@ -92,7 +92,7 @@ module DFHack
             # filter 'attend meeting'
             not u.specific_refs.find { |s| s.type == :ACTIVITY } and
             # filter soldiers (TODO check schedule)
-            u.military.squad_index == -1 and
+            u.military.squad_id == -1 and
             # filter 'on break'
             not u.status.misc_traits.find { |t| t.id == :OnBreak }
         end

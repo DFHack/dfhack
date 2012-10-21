@@ -93,7 +93,7 @@ orders.race = {
 
 orders.squad = {
     key = function(unit)
-        local sidx = unit.military.squad_index
+        local sidx = unit.military.squad_id
         if sidx >= 0 then
             return sidx
         end
@@ -102,7 +102,7 @@ orders.squad = {
 
 orders.squad_position = {
     key = function(unit)
-        local sidx = unit.military.squad_index
+        local sidx = unit.military.squad_id
         if sidx >= 0 then
             return sidx * 1000 + unit.military.squad_position
         end

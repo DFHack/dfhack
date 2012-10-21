@@ -89,7 +89,7 @@ end
 for _,v in ipairs(df.global.world.units.active) do
     local x,y,z = dfhack.units.getPosition(v)
     if x and dfhack.units.isCitizen(v) and is_in_burrows(xyz2pos(x,y,z)) then
-        if not in_siege and v.military.squad_index < 0 then
+        if not in_siege and v.military.squad_id < 0 then
             add_thought(v, df.unit_thought_type.LackProtection)
         end
         wake_unit(v)

@@ -48,6 +48,7 @@ module DFHack
                 end
             end
         rescue
+            df.onupdate_unregister self
             puts_err "onupdate cb #$!", $!.backtrace
         end
 

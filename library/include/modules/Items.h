@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -40,6 +40,7 @@ distribution.
 #include "df/building_actual.h"
 #include "df/body_part_raw.h"
 #include "df/unit_inventory_item.h"
+#include "df/job_item_vector_id.h"
 
 namespace df
 {
@@ -86,7 +87,8 @@ namespace DFHack
 
         bool find(const std::string &token);
 
-        bool matches(const df::job_item &item, MaterialInfo *mat = NULL);
+        bool matches(df::job_item_vector_id vec_id);
+        bool matches(const df::job_item &item, MaterialInfo *mat = NULL, bool skip_vector = false);
     };
 
     inline bool operator== (const ItemTypeInfo &a, const ItemTypeInfo &b) {
@@ -122,6 +124,10 @@ struct dfh_item
  */
 namespace Items
 {
+
+DFHACK_EXPORT bool isCasteMaterial(df::item_type itype);
+DFHACK_EXPORT int getSubtypeCount(df::item_type itype);
+DFHACK_EXPORT df::itemdef *getSubtypeDef(df::item_type itype, int subtype);
 
 /// Look for a particular item by ID
 DFHACK_EXPORT df::item * findItemByID(int32_t id);

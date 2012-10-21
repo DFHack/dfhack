@@ -3,16 +3,16 @@
 local _ENV = mkmodule('class')
 
 -- Metatable template for a class
-class_obj = {} or class_obj
+class_obj = class_obj or {}
 
 -- Methods shared by all classes
-common_methods = {} or common_methods
+common_methods = common_methods or {}
 
 -- Forbidden names for class fields and methods.
 reserved_names = { super = true, ATTRS = true }
 
 -- Attribute table metatable
-attrs_meta = {} or attrs_meta
+attrs_meta = attrs_meta or {}
 
 -- Create or updates a class; a class has metamethods and thus own metatable.
 function defclass(class,parent)
@@ -131,6 +131,14 @@ end
 
 function common_methods:callback(method, ...)
     return dfhack.curry(self[method], self, ...)
+end
+
+function common_methods:cb_getfield(field)
+    return function() return self[field] end
+end
+
+function common_methods:cb_setfield(field)
+    return function(val) self[field] = val end
 end
 
 function common_methods:assign(data)

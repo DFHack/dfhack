@@ -383,8 +383,16 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
 
     for (size_t i = 0; i < src.size(); i++)
     {
-        UnitInfo *cur = new UnitInfo;
         df::unit *unit = src[i];
+        if (!unit)
+        {
+            if (cursor_pos > i)
+                cursor_pos--;
+            continue;
+        }
+
+        UnitInfo *cur = new UnitInfo;
+
         cur->unit = unit;
         cur->allowEdit = true;
         cur->active_index = active_idx[unit];
@@ -435,10 +443,11 @@ void viewscreen_unitlaborsst::refreshNames()
         UnitInfo *cur = units[i];
         df::unit *unit = cur->unit;
 
-        cur->name = Translation::TranslateName(&unit->name, false);
-        cur->transname = Translation::TranslateName(&unit->name, true);
+        cur->name = Translation::TranslateName(Units::getVisibleName(unit), false);
+        cur->transname = Translation::TranslateName(Units::getVisibleName(unit), true);
         cur->profession = Units::getProfessionName(unit);
     }
+    calcSize();
 }
 
 void viewscreen_unitlaborsst::calcSize()
@@ -448,39 +457,92 @@ void viewscreen_unitlaborsst::calcSize()
         num_rows = units.size();
 
     int num_columns = gps->dimx - DISP_COLUMN_MAX - 1;
-    for (int i = 0; i < DISP_COLUMN_MAX; i++)
-        col_widths[i] = 0;
-    while (num_columns > 0)
+
+    // min/max width of columns
+    int col_minwidth[DISP_COLUMN_MAX];
+    int col_maxwidth[DISP_COLUMN_MAX];
+    col_minwidth[DISP_COLUMN_HAPPINESS] = 4;
+    col_maxwidth[DISP_COLUMN_HAPPINESS] = 4;
+    col_minwidth[DISP_COLUMN_NAME] = 0;
+    col_maxwidth[DISP_COLUMN_NAME] = 0;
+    col_minwidth[DISP_COLUMN_PROFESSION] = 0;
+    col_maxwidth[DISP_COLUMN_PROFESSION] = 0;
+    col_minwidth[DISP_COLUMN_LABORS] = num_columns*3/5;     // 60%
+    col_maxwidth[DISP_COLUMN_LABORS] = NUM_COLUMNS;
+
+    // get max_name/max_prof from strings length
+    for (size_t i = 0; i < units.size(); i++)
     {
-        num_columns--;
-        // need at least 4 digits for happiness
-        if (col_widths[DISP_COLUMN_HAPPINESS] < 4)
-        {
-            col_widths[DISP_COLUMN_HAPPINESS]++;
-            continue;
-        }
-        // of remaining, 20% for Name, 20% for Profession, 60% for Labors
-        switch (num_columns % 5)
-        {
-        case 0: case 2: case 4:
-            col_widths[DISP_COLUMN_LABORS]++;
-            break;
-        case 1:
-            col_widths[DISP_COLUMN_NAME]++;
-            break;
-        case 3:
-            col_widths[DISP_COLUMN_PROFESSION]++;
-            break;
-        }
+        if (col_maxwidth[DISP_COLUMN_NAME] < units[i]->name.size())
+            col_maxwidth[DISP_COLUMN_NAME] = units[i]->name.size();
+        if (col_maxwidth[DISP_COLUMN_PROFESSION] < units[i]->profession.size())
+            col_maxwidth[DISP_COLUMN_PROFESSION] = units[i]->profession.size();
     }
 
-    while (col_widths[DISP_COLUMN_LABORS] > NUM_COLUMNS)
+    // check how much room we have
+    int width_min = 0, width_max = 0;
+    for (int i = 0; i < DISP_COLUMN_MAX; i++)
     {
-        col_widths[DISP_COLUMN_LABORS]--;
-        if (col_widths[DISP_COLUMN_LABORS] & 1)
-            col_widths[DISP_COLUMN_NAME]++;
-        else
-            col_widths[DISP_COLUMN_PROFESSION]++;
+        width_min += col_minwidth[i];
+        width_max += col_maxwidth[i];
+    }
+
+    if (width_max <= num_columns)
+    {
+        // lots of space, distribute leftover (except last column)
+        int col_margin   = (num_columns - width_max) / (DISP_COLUMN_MAX-1);
+        int col_margin_r = (num_columns - width_max) % (DISP_COLUMN_MAX-1);
+        for (int i = DISP_COLUMN_MAX-1; i>=0; i--)
+        {
+            col_widths[i] = col_maxwidth[i];
+
+            if (i < DISP_COLUMN_MAX-1)
+            {
+                col_widths[i] += col_margin;
+
+                if (col_margin_r)
+                {
+                    col_margin_r--;
+                    col_widths[i]++;
+                }
+            }
+        }
+    }
+    else if (width_min <= num_columns)
+    {
+        // constrained, give between min and max to every column
+        int space = num_columns - width_min;
+        // max size columns not yet seen may consume
+        int next_consume_max = width_max - width_min;
+
+        for (int i = 0; i < DISP_COLUMN_MAX; i++)
+        {
+            // divide evenly remaining space
+            int col_margin = space / (DISP_COLUMN_MAX-i);
+
+            // take more if the columns after us cannot
+            next_consume_max -= (col_maxwidth[i]-col_minwidth[i]);
+            if (col_margin < space-next_consume_max)
+                col_margin = space - next_consume_max;
+
+            // no more than maxwidth
+            if (col_margin > col_maxwidth[i] - col_minwidth[i])
+                col_margin = col_maxwidth[i] - col_minwidth[i];
+
+            col_widths[i] = col_minwidth[i] + col_margin;
+
+            space -= col_margin;
+        }
+    }
+    else
+    {
+        // should not happen, min screen is 80x25
+        int space = num_columns;
+        for (int i = 0; i < DISP_COLUMN_MAX; i++)
+        {
+            col_widths[i] = space / (DISP_COLUMN_MAX-i);
+            space -= col_widths[i];
+        }
     }
 
     for (int i = 0; i < DISP_COLUMN_MAX; i++)
@@ -523,6 +585,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         {
             events->insert(interface_key::LEAVESCREEN);
             parent->feed(events);
+            events->clear();
         }
         return;
     }
@@ -532,6 +595,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (do_refresh_names)
         refreshNames();
+
+    int old_sel_row = sel_row;
 
     if (events->count(interface_key::CURSOR_UP) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_UPRIGHT))
         sel_row--;
@@ -552,9 +617,23 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
 
     if (sel_row < 0)
-        sel_row = 0;
+    {
+        if (old_sel_row == 0 && events->count(interface_key::CURSOR_UP))
+            sel_row = units.size() - 1;
+        else
+            sel_row = 0;
+    }
+
     if (sel_row > units.size() - 1)
-        sel_row = units.size() - 1;
+    {
+        if (old_sel_row == units.size()-1 && events->count(interface_key::CURSOR_DOWN))
+            sel_row = 0;
+        else
+            sel_row = units.size() - 1;
+    }
+
+    if (events->count(interface_key::STRING_A000))
+        sel_row = 0;
 
     if (sel_row < first_row)
         first_row = sel_row;
@@ -580,17 +659,33 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
     if ((sel_column != NUM_COLUMNS - 1) && events->count(interface_key::CURSOR_DOWN_Z))
     {
-        // go to end of current column group; if already at the end, go to the end of the next one
-        sel_column++;
+        // go to beginning of next group
         int cur = columns[sel_column].group;
-        while ((sel_column < NUM_COLUMNS - 1) && columns[sel_column + 1].group == cur)
-            sel_column++;
+        int next = sel_column+1;
+        while ((next < NUM_COLUMNS) && (columns[next].group == cur))
+            next++;
+        if ((next < NUM_COLUMNS) && (columns[next].group != cur))
+            sel_column = next;
     }
+
+    if (events->count(interface_key::STRING_A000))
+        sel_column = 0;
 
     if (sel_column < 0)
         sel_column = 0;
     if (sel_column > NUM_COLUMNS - 1)
         sel_column = NUM_COLUMNS - 1;
+
+    if (events->count(interface_key::CURSOR_DOWN_Z) || events->count(interface_key::CURSOR_UP_Z))
+    {
+        // when moving by group, ensure the whole group is shown onscreen
+        int endgroup_column = sel_column;
+        while ((endgroup_column < NUM_COLUMNS-1) && columns[endgroup_column+1].group == columns[sel_column].group)
+            endgroup_column++;
+
+        if (first_column < endgroup_column - col_widths[DISP_COLUMN_LABORS] + 1)
+            first_column = endgroup_column - col_widths[DISP_COLUMN_LABORS] + 1;
+    }
 
     if (sel_column < first_column)
         first_column = sel_column;
@@ -1010,30 +1105,30 @@ void viewscreen_unitlaborsst::render()
     }
 
     int x = 2;
-    OutputString(10, x, gps->dimy - 3, "Enter"); // SELECT key
+    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::SELECT));
     OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle labor, ");
 
-    OutputString(10, x, gps->dimy - 3, "Shift+Enter"); // SELECT_ALL key
+    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::SELECT_ALL));
     OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle Group, ");
 
-    OutputString(10, x, gps->dimy - 3, "v"); // UNITJOB_VIEW key
+    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW));
     OutputString(15, x, gps->dimy - 3, ": ViewCre, ");
 
-    OutputString(10, x, gps->dimy - 3, "c"); // UNITJOB_ZOOM_CRE key
+    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));
     OutputString(15, x, gps->dimy - 3, ": Zoom-Cre");
 
     x = 2;
-    OutputString(10, x, gps->dimy - 2, "Esc"); // LEAVESCREEN key
+    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
     OutputString(15, x, gps->dimy - 2, ": Done, ");
 
-    OutputString(10, x, gps->dimy - 2, "+"); // SECONDSCROLL_DOWN key
-    OutputString(10, x, gps->dimy - 2, "-"); // SECONDSCROLL_UP key
+    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
+    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
     OutputString(15, x, gps->dimy - 2, ": Sort by Skill, ");
 
-    OutputString(10, x, gps->dimy - 2, "*"); // SECONDSCROLL_PAGEDOWN key
-    OutputString(10, x, gps->dimy - 2, "/"); // SECONDSCROLL_PAGEUP key
+    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
+    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
     OutputString(15, x, gps->dimy - 2, ": Sort by (");
-    OutputString(10, x, gps->dimy - 2, "Tab"); // CHANGETAB key
+    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::CHANGETAB));
     OutputString(15, x, gps->dimy - 2, ") ");
     switch (altsort)
     {
@@ -1087,7 +1182,7 @@ struct unitlist_hook : df::viewscreen_unitlistst
         if (units[page].size())
         {
             int x = 2;
-            OutputString(12, x, gps->dimy - 2, "l"); // UNITVIEW_PRF_PROF key
+            OutputString(12, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::UNITVIEW_PRF_PROF));
             OutputString(15, x, gps->dimy - 2, ": Manage labors (DFHack)");
         }
     }

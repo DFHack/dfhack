@@ -563,9 +563,7 @@ static void reset_labor(df::unit_labor labor)
 
 static void init_state()
 {
-    auto pworld = Core::getInstance().getWorld();
-
-    config = pworld->GetPersistentData("autolabor/config");
+    config = World::GetPersistentData("autolabor/config");
     if (config.isValid() && config.ival(0) == -1)
         config.ival(0) = 0;
 
@@ -574,7 +572,7 @@ static void init_state()
     if (!enable_autolabor)
         return;
 
-    auto cfg_haulpct = pworld->GetPersistentData("autolabor/haulpct");
+    auto cfg_haulpct = World::GetPersistentData("autolabor/haulpct");
     if (cfg_haulpct.isValid())
     {
         hauler_pct = cfg_haulpct.ival(0);
@@ -588,7 +586,7 @@ static void init_state()
     labor_infos.resize(ARRAY_COUNT(default_labor_infos));
 
     std::vector<PersistentDataItem> items;
-    pworld->GetPersistentData(&items, "autolabor/labors/", true);
+    World::GetPersistentData(&items, "autolabor/labors/", true);
 
     for (auto p = items.begin(); p != items.end(); p++)
     {
@@ -610,7 +608,7 @@ static void init_state()
         std::stringstream name;
         name << "autolabor/labors/" << i;
 
-        labor_infos[i].config = pworld->AddPersistentData(name.str());
+        labor_infos[i].config = World::AddPersistentData(name.str());
 
         labor_infos[i].is_exclusive = default_labor_infos[i].is_exclusive;
         labor_infos[i].active_dwarfs = 0;
@@ -649,11 +647,9 @@ static void generate_labor_to_skill_map()
 
 static void enable_plugin(color_ostream &out)
 {
-    auto pworld = Core::getInstance().getWorld();
-
     if (!config.isValid())
     {
-        config = pworld->AddPersistentData("autolabor/config");
+        config = World::AddPersistentData("autolabor/config");
         config.ival(0) = 0;
     }
 

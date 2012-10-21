@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -159,7 +159,7 @@ namespace DFHack
         void on_host_delete(virtual_identity *host);
 
         VMethodInterposeLinkBase *get_first_interpose(virtual_identity *id);
-        void find_child_hosts(virtual_identity *cur, void *vmptr);
+        bool find_child_hosts(virtual_identity *cur, void *vmptr);
     public:
         VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr, int priority);
         ~VMethodInterposeLinkBase();

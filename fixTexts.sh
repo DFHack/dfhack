@@ -1,5 +1,18 @@
 #!/bin/bash
-rst2html  README.rst > Readme.html
-rst2html  COMPILE.rst > Compile.html
-rst2html  DEVEL.rst > Devel.html
-rst2html  LUA_API.rst > Lua\ API.html
+# regenerate documentation after editing the .rst files. Requires python and docutils.
+
+cd `dirname $0`
+
+function process() {
+    if [ "$1" -nt "$2" ]; then
+        rst2html --no-generator --no-datestamp "$1" "$2"
+    else
+        echo "$2 - up to date."
+    fi
+}
+
+process Readme.rst Readme.html
+process Compile.rst Compile.html
+process Lua\ API.rst Lua\ API.html
+process Contributors.rst Contributors.html
+

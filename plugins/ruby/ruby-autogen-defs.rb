@@ -282,6 +282,10 @@ module DFHack
                 DFHack.memory_read_int32(@_memaddr) & 0xffffffff
             end
 
+            def _setp(v)
+               DFHack.memory_write_int32(@_memaddr, v)
+            end
+
             def _get
                 addr = _getp
                 return if addr == 0
@@ -294,7 +298,15 @@ module DFHack
                 case v
                 when Pointer;   DFHack.memory_write_int32(@_memaddr, v._getp)
                 when MemStruct; DFHack.memory_write_int32(@_memaddr, v._memaddr)
-                when Integer;   DFHack.memory_write_int32(@_memaddr, v)
+                when Integer
+                    if @_tg and @_tg.kind_of?(MemHack::Number)
+                        if _getp == 0
+                            _setp(DFHack.malloc(@_tg._bits/8))
+                        end
+                        @_tg._at(_getp)._set(v)
+                    else
+                        DFHack.memory_write_int32(@_memaddr, v)
+                    end
                 when nil;       DFHack.memory_write_int32(@_memaddr, 0)
                 else _get._set(v)
                 end
@@ -785,6 +797,7 @@ module DFHack
         def isset(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
+            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_isset(@_memaddr, key)
         end
         alias is_set? isset
@@ -792,12 +805,14 @@ module DFHack
         def set(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
+            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_set(@_memaddr, key)
         end
 
         def delete(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
+            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_deletekey(@_memaddr, key)
         end
 

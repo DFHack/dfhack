@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -281,9 +281,10 @@ VMethodInterposeLinkBase *VMethodInterposeLinkBase::get_first_interpose(virtual_
     return item;
 }
 
-void VMethodInterposeLinkBase::find_child_hosts(virtual_identity *cur, void *vmptr)
+bool VMethodInterposeLinkBase::find_child_hosts(virtual_identity *cur, void *vmptr)
 {
     auto &children = cur->getChildren();
+    bool found = false;
 
     for (size_t i = 0; i < children.size(); i++)
     {
@@ -298,17 +299,32 @@ void VMethodInterposeLinkBase::find_child_hosts(virtual_identity *cur, void *vmp
                 continue;
 
             child_next.insert(base);
+            found = true;
         }
-        else
+        else if (child->vtable_ptr)
         {
             void *cptr = child->get_vmethod_ptr(vmethod_idx);
             if (cptr != vmptr)
                 continue;
 
             child_hosts.insert(child);
+            found = true;
+
             find_child_hosts(child, vmptr);
         }
+        else
+        {
+            // If this vtable is not known, but any of the children
+            // have the same vmethod, this one definitely does too
+            if (find_child_hosts(child, vmptr))
+            {
+                child_hosts.insert(child);
+                found = true;
+            }
+        }
     }
+
+    return found;
 }
 
 void VMethodInterposeLinkBase::on_host_delete(virtual_identity *from)

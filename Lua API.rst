@@ -488,7 +488,7 @@ Input & Output
   lock. Using an explicit ``dfhack.with_suspend`` will prevent
   this, forcing the function to block on input with lock held.
 
-* ``dfhack.interpreter([prompt[,env[,history_filename]]])``
+* ``dfhack.interpreter([prompt[,history_filename[,env]]])``
 
   Starts an interactive lua interpreter, using the specified prompt
   string, global environment and command-line history file.
@@ -645,6 +645,24 @@ Since the data is hidden in data structures owned by the DF world,
 and automatically stored in the save game, these save and retrieval
 functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.
+
+It is also possible to associate one bit per map tile with an entry,
+using these two methods:
+
+* ``entry:getTilemask(block[, create])``
+
+  Retrieves the tile bitmask associated with this entry in the given map
+  block. If ``create`` is *true*, an empty mask is created if none exists;
+  otherwise the function returns *nil*, which must be assumed to be the same
+  as an all-zero mask.
+
+* ``entry:deleteTilemask(block)``
+
+  Deletes the associated tile mask from the given map block.
+
+Note that these masks are only saved in fortress mode, and also that deleting
+the persistent entry will **NOT** delete the associated masks.
+
 
 Material info lookup
 --------------------
@@ -845,6 +863,15 @@ Job module
   if there are any jobs with ``first_id <= id < job_next_id``,
   a lua list containing them.
 
+* ``dfhack.job.isSuitableItem(job_item, item_type, item_subtype)``
+
+  Does basic sanity checks to verify if the suggested item type matches
+  the flags in the job item.
+
+* ``dfhack.job.isSuitableMaterial(job_item, mat_type, mat_index)``
+
+  Likewise, if replacing material.
+
 Units module
 ------------
 
@@ -917,6 +944,11 @@ Units module
 
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
+
+* ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
+
+  Retrieves the nominal skill level for the given unit. If ``use_rust``
+  is *true*, subtracts the rust penalty.
 
 * ``dfhack.units.getEffectiveSkill(unit, skill)``
 
@@ -1011,6 +1043,18 @@ Items module
 
   Turns the item into a projectile, and returns the new object, or *nil* if impossible.
 
+* ``dfhack.items.isCasteMaterial(item_type)``
+
+  Returns *true* if this item type uses a creature/caste pair as its material.
+
+* ``dfhack.items.getSubtypeCount(item_type)``
+
+  Returns the number of raw-defined subtypes of the given item type, or *-1* if not applicable.
+
+* ``dfhack.items.getSubtypeDef(item_type, subtype)``
+
+  Returns the raw definition for the given item type and subtype, or *nil* if invalid.
+
 
 Maps module
 -----------
@@ -1027,7 +1071,7 @@ Maps module
 
   Returns a map block object for given x,y,z in local block coordinates.
 
-* ``dfhack.maps.isValidTilePos(coords)``, or isValidTilePos(x,y,z)``
+* ``dfhack.maps.isValidTilePos(coords)``, or ``isValidTilePos(x,y,z)``
 
   Checks if the given df::coord or x,y,z in local tile coordinates are valid.
 
@@ -1038,6 +1082,14 @@ Maps module
 * ``dfhack.maps.ensureTileBlock(coords)``, or ``ensureTileBlock(x,y,z)``
 
   Like ``getTileBlock``, but if the block is not allocated, try creating it.
+
+* ``dfhack.maps.getTileType(coords)``, or ``getTileType(x,y,z)``
+
+  Returns the tile type at the given coordinates, or *nil* if invalid.
+
+* ``dfhack.maps.getTileFlags(coords)``, or ``getTileFlags(x,y,z)``
+
+  Returns designation and occupancy references for the given coordinates, or *nil, nil* if invalid.
 
 * ``dfhack.maps.getRegionBiome(region_coord2d)``, or ``getRegionBiome(x,y)``
 
@@ -1073,6 +1125,22 @@ Maps module
   tools like liquids or tiletypes are used. It also cannot possibly
   take into account anything that depends on the actual units, like
   burrows, or the presence of invaders.
+
+* ``dfhack.maps.hasTileAssignment(tilemask)``
+
+  Checks if the tile_bitmask object is not *nil* and contains any set bits; returns *true* or *false*.
+
+* ``dfhack.maps.getTileAssignment(tilemask,x,y)``
+
+  Checks if the tile_bitmask object is not *nil* and has the relevant bit set; returns *true* or *false*.
+
+* ``dfhack.maps.setTileAssignment(tilemask,x,y,enable)``
+
+  Sets the relevant bit in the tile_bitmask object to the *enable* argument.
+
+* ``dfhack.maps.resetTileAssignment(tilemask[,enable])``
+
+  Sets all bits in the mask to the *enable* argument.
 
 
 Burrows module
@@ -1688,6 +1756,18 @@ environment by the mandatory init file dfhack.lua:
 
   Returns a table with x, y and z as fields.
 
+* ``same_xyz(a,b)``
+
+  Checks if ``a`` and ``b`` have the same x, y and z fields.
+
+* ``get_path_xyz(path,i)``
+
+  Returns ``path.x[i], path.y[i], path.z[i]``.
+
+* ``pos2xy(obj)``, ``xy2pos(x,y)``, ``same_xy(a,b)``, ``get_path_xy(a,b)``
+
+  Same as above, but for 2D coordinates.
+
 * ``safe_index(obj,index...)``
 
   Walks a sequence of dereferences, which may be represented by numbers or strings.
@@ -1800,6 +1880,14 @@ utils
     utils.insert_or_update(soul.skills, {new=true, id=..., rating=...}, 'id')
 
   (For an explanation of ``new=true``, see table assignment in the wrapper section)
+
+* ``utils.erase_sorted_key(vector,key,field,cmpfun)``
+
+  Removes the item with the given key from the list. Returns: *did_erase, vector[idx], idx*.
+
+* ``utils.erase_sorted(vector,item,field,cmpfun)``
+
+  Exactly like ``erase_sorted_key``, but if field is specified, takes the key from ``item[field]``.
 
 * ``utils.prompt_yes_no(prompt, default)``
 

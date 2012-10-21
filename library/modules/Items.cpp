@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -109,30 +109,47 @@ using df::global::proj_next_id;
     ITEM(PANTS, pants, itemdef_pantsst) \
     ITEM(FOOD, food, itemdef_foodst)
 
-bool ItemTypeInfo::decode(df::item_type type_, int16_t subtype_)
+int Items::getSubtypeCount(df::item_type itype)
 {
     using namespace df::enums::item_type;
 
-    type = type_;
-    subtype = subtype_;
-    custom = NULL;
-
     df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
 
-    switch (type_) {
-    case NONE:
-        return false;
-
+    switch (itype) {
 #define ITEM(type,vec,tclass) \
     case type: \
-        custom = vector_get(defs.vec, subtype); \
-        break;
+        return defs.vec.size();
 ITEMDEF_VECTORS
 #undef ITEM
 
     default:
-        break;
+        return -1;
     }
+}
+
+df::itemdef *Items::getSubtypeDef(df::item_type itype, int subtype)
+{
+    using namespace df::enums::item_type;
+
+    df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
+
+    switch (itype) {
+#define ITEM(type,vec,tclass) \
+    case type: \
+        return vector_get(defs.vec, subtype);
+ITEMDEF_VECTORS
+#undef ITEM
+
+    default:
+        return NULL;
+    }
+}
+
+bool ItemTypeInfo::decode(df::item_type type_, int16_t subtype_)
+{
+    type = type_;
+    subtype = subtype_;
+    custom = Items::getSubtypeDef(type_, subtype_);
 
     return isValid();
 }
@@ -170,6 +187,10 @@ ITEMDEF_VECTORS
     default:
         break;
     }
+
+    const char *name = ENUM_ATTR(item_type, caption, type);
+    if (name)
+        return name;
 
     return toLower(ENUM_KEY_STR(item_type, type));
 }
@@ -219,19 +240,51 @@ ITEMDEF_VECTORS
     return (subtype >= 0);
 }
 
-bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
+bool Items::isCasteMaterial(df::item_type itype)
+{
+    return ENUM_ATTR(item_type, is_caste_mat, itype);
+}
+
+bool ItemTypeInfo::matches(df::job_item_vector_id vec_id)
+{
+    auto other_id = ENUM_ATTR(job_item_vector_id, other, vec_id);
+
+    auto explicit_item = ENUM_ATTR(items_other_id, item, other_id);
+    if (explicit_item != item_type::NONE && type != explicit_item)
+        return false;
+
+    auto generic_item = ENUM_ATTR(items_other_id, generic_item, other_id);
+    if (generic_item.size > 0)
+    {
+        for (size_t i = 0; i < generic_item.size; i++)
+            if (generic_item.items[i] == type)
+                return true;
+
+        return false;
+    }
+
+    return true;
+}
+
+bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool skip_vector)
 {
     using namespace df::enums::item_type;
 
     if (!isValid())
         return mat ? mat->matches(item) : false;
 
-    df::job_item_flags1 ok1, mask1, item_ok1, item_mask1;
-    df::job_item_flags2 ok2, mask2, item_ok2, item_mask2;
+    if (Items::isCasteMaterial(type) && mat && !mat->isNone())
+        return false;
+
+    if (!skip_vector && !matches(item.vector_id))
+        return false;
+
+    df::job_item_flags1 ok1, mask1, item_ok1, item_mask1, xmask1;
+    df::job_item_flags2 ok2, mask2, item_ok2, item_mask2, xmask2;
     df::job_item_flags3 ok3, mask3, item_ok3, item_mask3;
 
-    ok1.whole = mask1.whole = item_ok1.whole = item_mask1.whole = 0;
-    ok2.whole = mask2.whole = item_ok2.whole = item_mask2.whole = 0;
+    ok1.whole = mask1.whole = item_ok1.whole = item_mask1.whole = xmask1.whole = 0;
+    ok2.whole = mask2.whole = item_ok2.whole = item_mask2.whole = xmask2.whole = 0;
     ok3.whole = mask3.whole = item_ok3.whole = item_mask3.whole = 0;
 
     if (mat) {
@@ -252,11 +305,15 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
     RQ(1,not_bin); RQ(1,lye_bearing);
 
     RQ(2,dye); RQ(2,dyeable); RQ(2,dyed); RQ(2,glass_making); RQ(2,screw);
-    RQ(2,building_material); RQ(2,fire_safe); RQ(2,magma_safe); RQ(2,non_economic);
+    RQ(2,building_material); RQ(2,fire_safe); RQ(2,magma_safe);
     RQ(2,totemable); RQ(2,plaster_containing); RQ(2,body_part); RQ(2,lye_milk_free);
     RQ(2,blunt); RQ(2,unengraved); RQ(2,hair_wool);
 
     RQ(3,any_raw_material); RQ(3,non_pressed); RQ(3,food_storage);
+
+    // only checked if boulder
+
+    xmask2.bits.non_economic = true;
 
     // Compute the ok mask
 
@@ -277,7 +334,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
 
     case BOULDER:
         OK(1,sharpenable);
-        OK(2,non_economic);
+        xmask2.bits.non_economic = false;
     case BAR:
         OK(3,any_raw_material);
     case BLOCKS:
@@ -305,11 +362,13 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
     case CAGE:
         OK(1,milk);
         OK(1,milkable);
+        xmask1.bits.cookable = true;
         break;
 
     case BUCKET:
     case FLASK:
         OK(1,milk);
+        xmask1.bits.cookable = true;
         break;
 
     case TOOL:
@@ -317,6 +376,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
         OK(1,milk);
         OK(2,lye_milk_free);
         OK(2,blunt);
+        xmask1.bits.cookable = true;
 
         if (VIRTUAL_CAST_VAR(def, df::itemdef_toolst, custom)) {
             df::tool_uses key(tool_uses::FOOD_STORAGE);
@@ -332,11 +392,13 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
         OK(1,milk);
         OK(2,lye_milk_free);
         OK(3,food_storage);
+        xmask1.bits.cookable = true;
         break;
 
     case BOX:
         OK(1,bag); OK(1,sand_bearing); OK(1,milk);
         OK(2,dye); OK(2,plaster_containing);
+        xmask1.bits.cookable = true;
         break;
 
     case BIN:
@@ -402,6 +464,9 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
 
 #undef OK
 #undef RQ
+
+    mask1.whole &= ~xmask1.whole;
+    mask2.whole &= ~xmask2.whole;
 
     return bits_match(item.flags1.whole, ok1.whole, mask1.whole) &&
            bits_match(item.flags2.whole, ok2.whole, mask2.whole) &&

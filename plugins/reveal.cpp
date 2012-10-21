@@ -87,19 +87,18 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    World *World = Core::getInstance().getWorld();
     t_gamemodes gm;
-    World->ReadGameMode(gm);
+    World::ReadGameMode(gm);
     if(gm.g_mode == game_mode::DWARF)
     {
         // if the map is revealed and we're in fortress mode, force the game to pause.
         if(revealed == REVEALED)
         {
-            World->SetPauseState(true);
+            World::SetPauseState(true);
         }
         else if(nopause_state)
         {
-            World->SetPauseState(false);
+            World::SetPauseState(false);
         }
     }
     return CR_OK;
@@ -185,14 +184,13 @@ command_result reveal(color_ostream &out, vector<string> & params)
 
     CoreSuspender suspend;
 
-    World *World = Core::getInstance().getWorld();
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
     t_gamemodes gm;
-    World->ReadGameMode(gm);
+    World::ReadGameMode(gm);
     if(gm.g_mode == game_mode::ADVENTURE)
     {
         revealAdventure(out);
@@ -234,7 +232,7 @@ command_result reveal(color_ostream &out, vector<string> & params)
         if(pause)
         {
             revealed = REVEALED;
-            World->SetPauseState(true);
+            World::SetPauseState(true);
         }
         else
             revealed = DEMON_REVEALED;
@@ -264,14 +262,13 @@ command_result unreveal(color_ostream &out, vector<string> & params)
     }
     CoreSuspender suspend;
 
-    World *World = Core::getInstance().getWorld();
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
     t_gamemodes gm;
-    World->ReadGameMode(gm);
+    World::ReadGameMode(gm);
     if(gm.g_mode != game_mode::DWARF)
     {
         con.printerr("Only in fortress mode.\n");
@@ -337,7 +334,6 @@ command_result revflood(color_ostream &out, vector<string> & params)
     }
     CoreSuspender suspend;
     uint32_t x_max,y_max,z_max;
-    World * World = Core::getInstance().getWorld();
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -349,7 +345,7 @@ command_result revflood(color_ostream &out, vector<string> & params)
         return CR_FAILURE;
     }
     t_gamemodes gm;
-    World->ReadGameMode(gm);
+    World::ReadGameMode(gm);
     if(gm.g_type != game_type::DWARF_MAIN && gm.g_mode != game_mode::DWARF )
     {
         out.printerr("Only in proper dwarf mode.\n");

@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -38,99 +38,49 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 
+#include "modules/Maps.h"
+
 #include "MiscUtils.h"
 
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/historical_figure.h"
+#include "df/map_block.h"
+#include "df/block_square_event_world_constructionst.h"
 
 using namespace DFHack;
+using namespace df::enums;
 
 using df::global::world;
 
-Module* DFHack::createWorld()
-{
-    return new World();
-}
-
-struct World::Private
-{
-    Private()
-    {
-        Inited = PauseInited = StartedWeather = StartedMode = false;
-        next_persistent_id = 0;
-    }
-    bool Inited;
-
-    bool PauseInited;
-    bool StartedWeather;
-    bool StartedMode;
-
-    int next_persistent_id;
-    std::multimap<std::string, int> persistent_index;
-
-    Process * owner;
-};
-
+static int next_persistent_id = 0;
+static std::multimap<std::string, int> persistent_index;
 typedef std::pair<std::string, int> T_persistent_item;
-
-World::World()
-{
-    Core & c = Core::getInstance();
-    d = new Private;
-    d->owner = c.p;
-
-    if(df::global::pause_state)
-        d->PauseInited = true;
-
-    if(df::global::current_weather)
-        d->StartedWeather = true;
-    if (df::global::gamemode && df::global::gametype)
-        d->StartedMode = true;
-
-    d->Inited = true;
-}
-
-World::~World()
-{
-    delete d;
-}
-
-bool World::Start()
-{
-    return true;
-}
-
-bool World::Finish()
-{
-    return true;
-}
 
 bool World::ReadPauseState()
 {
-    if(!d->PauseInited) return false;
-    return *df::global::pause_state;
+    return DF_GLOBAL_VALUE(pause_state, false);
 }
 
 void World::SetPauseState(bool paused)
 {
-    if (d->PauseInited)
-        *df::global::pause_state = paused;
+    bool dummy;
+    DF_GLOBAL_VALUE(pause_state, dummy) = paused;
 }
 
 uint32_t World::ReadCurrentYear()
 {
-    return *df::global::cur_year;
+    return DF_GLOBAL_VALUE(cur_year, 0);
 }
 
 uint32_t World::ReadCurrentTick()
 {
-    return *df::global::cur_year_tick;
+    return DF_GLOBAL_VALUE(cur_year_tick, 0);
 }
 
 bool World::ReadGameMode(t_gamemodes& rd)
 {
-    if(d->Inited && d->StartedMode)
+    if(df::global::gamemode && df::global::gametype)
     {
         rd.g_mode = (DFHack::GameMode)*df::global::gamemode;
         rd.g_type = (DFHack::GameType)*df::global::gametype;
@@ -140,7 +90,7 @@ bool World::ReadGameMode(t_gamemodes& rd)
 }
 bool World::WriteGameMode(const t_gamemodes & wr)
 {
-    if(d->Inited && d->StartedMode)
+    if(df::global::gamemode && df::global::gametype)
     {
         *df::global::gamemode = wr.g_mode;
         *df::global::gametype = wr.g_type;
@@ -173,24 +123,24 @@ specified by memory.xml gets me the current month/date.
 */
 uint32_t World::ReadCurrentMonth()
 {
-    return this->ReadCurrentTick() / 1200 / 28;
+    return ReadCurrentTick() / 1200 / 28;
 }
 
 uint32_t World::ReadCurrentDay()
 {
-    return ((this->ReadCurrentTick() / 1200) % 28) + 1;
+    return ((ReadCurrentTick() / 1200) % 28) + 1;
 }
 
 uint8_t World::ReadCurrentWeather()
 {
-    if (d->Inited && d->StartedWeather)
+    if (df::global::current_weather)
         return (*df::global::current_weather)[2][2];
     return 0;
 }
 
 void World::SetCurrentWeather(uint8_t weather)
 {
-    if (d->Inited && d->StartedWeather)
+    if (df::global::current_weather)
         memset(df::global::current_weather, weather, 25);
 }
 
@@ -206,13 +156,13 @@ static PersistentDataItem dataFromHFig(df::historical_figure *hfig)
 
 void World::ClearPersistentCache()
 {
-    d->next_persistent_id = 0;
-    d->persistent_index.clear();
+    next_persistent_id = 0;
+    persistent_index.clear();
 }
 
-bool World::BuildPersistentCache()
+static bool BuildPersistentCache()
 {
-    if (d->next_persistent_id)
+    if (next_persistent_id)
         return true;
     if (!Core::getInstance().isWorldLoaded())
         return false;
@@ -220,20 +170,20 @@ bool World::BuildPersistentCache()
     std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
 
     // Determine the next entry id as min(-100, lowest_id-1)
-    d->next_persistent_id = -100;
+    next_persistent_id = -100;
 
     if (hfvec.size() > 0 && hfvec[0]->id <= -100)
-        d->next_persistent_id = hfvec[0]->id-1;
+        next_persistent_id = hfvec[0]->id-1;
 
     // Add the entries to the lookup table
-    d->persistent_index.clear();
+    persistent_index.clear();
 
     for (size_t i = 0; i < hfvec.size() && hfvec[i]->id <= -100; i++)
     {
         if (!hfvec[i]->name.has_name || hfvec[i]->name.first_name.empty())
             continue;
 
-        d->persistent_index.insert(T_persistent_item(hfvec[i]->name.first_name, -hfvec[i]->id));
+        persistent_index.insert(T_persistent_item(hfvec[i]->name.first_name, -hfvec[i]->id));
     }
 
     return true;
@@ -247,14 +197,14 @@ PersistentDataItem World::AddPersistentData(const std::string &key)
     std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
 
     df::historical_figure *hfig = new df::historical_figure();
-    hfig->id = d->next_persistent_id--;
+    hfig->id = next_persistent_id--;
     hfig->name.has_name = true;
     hfig->name.first_name = key;
     memset(hfig->name.words, 0xFF, sizeof(hfig->name.words));
 
     hfvec.insert(hfvec.begin(), hfig);
 
-    d->persistent_index.insert(T_persistent_item(key, -hfig->id));
+    persistent_index.insert(T_persistent_item(key, -hfig->id));
 
     return dataFromHFig(hfig);
 }
@@ -264,8 +214,8 @@ PersistentDataItem World::GetPersistentData(const std::string &key)
     if (!BuildPersistentCache())
         return PersistentDataItem();
 
-    auto it = d->persistent_index.find(key);
-    if (it != d->persistent_index.end())
+    auto it = persistent_index.find(key);
+    if (it != persistent_index.end())
         return GetPersistentData(it->second);
 
     return PersistentDataItem();
@@ -305,24 +255,24 @@ void World::GetPersistentData(std::vector<PersistentDataItem> *vec, const std::s
     if (!BuildPersistentCache())
         return;
 
-    auto eqrange = d->persistent_index.equal_range(key);
+    auto eqrange = persistent_index.equal_range(key);
 
     if (prefix)
     {
         if (key.empty())
         {
-            eqrange.first = d->persistent_index.begin();
-            eqrange.second = d->persistent_index.end();
+            eqrange.first = persistent_index.begin();
+            eqrange.second = persistent_index.end();
         }
         else
         {
             std::string bound = key;
             if (bound[bound.size()-1] != '/')
                 bound += "/";
-            eqrange.first = d->persistent_index.lower_bound(bound);
+            eqrange.first = persistent_index.lower_bound(bound);
 
             bound[bound.size()-1]++;
-            eqrange.second = d->persistent_index.lower_bound(bound);
+            eqrange.second = persistent_index.lower_bound(bound);
         }
     }
 
@@ -336,25 +286,26 @@ void World::GetPersistentData(std::vector<PersistentDataItem> *vec, const std::s
 
 bool World::DeletePersistentData(const PersistentDataItem &item)
 {
-    if (item.id > -100)
+    int id = item.raw_id();
+    if (id > -100)
         return false;
     if (!BuildPersistentCache())
         return false;
 
     std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
 
-    auto eqrange = d->persistent_index.equal_range(item.key_value);
+    auto eqrange = persistent_index.equal_range(item.key());
 
     for (auto it2 = eqrange.first; it2 != eqrange.second; )
     {
         auto it = it2; ++it2;
 
-        if (it->second != -item.id)
+        if (it->second != -id)
             continue;
 
-        d->persistent_index.erase(it);
+        persistent_index.erase(it);
 
-        int idx = binsearch_index(hfvec, item.id);
+        int idx = binsearch_index(hfvec, id);
 
         if (idx >= 0) {
             delete hfvec[idx];
@@ -365,4 +316,64 @@ bool World::DeletePersistentData(const PersistentDataItem &item)
     }
 
     return false;
+}
+
+df::tile_bitmask *World::getPersistentTilemask(const PersistentDataItem &item, df::map_block *block, bool create)
+{
+    if (!block)
+        return NULL;
+
+    int id = item.raw_id();
+    if (id > -100)
+        return NULL;
+
+    for (size_t i = 0; i < block->block_events.size(); i++)
+    {
+        auto ev = block->block_events[i];
+        if (ev->getType() != block_square_event_type::world_construction)
+            continue;
+        auto wcsev = strict_virtual_cast<df::block_square_event_world_constructionst>(ev);
+        if (!wcsev || wcsev->construction_id != id)
+            continue;
+        return &wcsev->tile_bitmask;
+    }
+
+    if (!create)
+        return NULL;
+
+    auto ev = df::allocate<df::block_square_event_world_constructionst>();
+    if (!ev)
+        return NULL;
+
+    ev->construction_id = id;
+    ev->tile_bitmask.clear();
+    vector_insert_at(block->block_events, 0, (df::block_square_event*)ev);
+
+    return &ev->tile_bitmask;
+}
+
+bool World::deletePersistentTilemask(const PersistentDataItem &item, df::map_block *block)
+{
+    if (!block)
+        return false;
+    int id = item.raw_id();
+    if (id > -100)
+        return false;
+
+    bool found = false;
+    for (int i = block->block_events.size()-1; i >= 0; i--)
+    {
+        auto ev = block->block_events[i];
+        if (ev->getType() != block_square_event_type::world_construction)
+            continue;
+        auto wcsev = strict_virtual_cast<df::block_square_event_world_constructionst>(ev);
+        if (!wcsev || wcsev->construction_id != id)
+            continue;
+
+        delete wcsev;
+        vector_erase_at(block->block_events, i);
+        found = true;
+    }
+
+    return found;
 }

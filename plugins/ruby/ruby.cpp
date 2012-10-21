@@ -118,18 +118,8 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-// send a single ruby line to be evaluated by the ruby thread
-DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *command)
+static command_result do_plugin_eval_ruby(color_ostream &out, const char *command)
 {
-    // if dlopen failed
-    if (!r_thread)
-        return CR_FAILURE;
-
-    // wrap all ruby code inside a suspend block
-    // if we dont do that and rely on ruby code doing it, we'll deadlock in
-    // onupdate
-    CoreSuspender suspend;
-
     command_result ret;
 
     // ensure ruby thread is idle
@@ -157,6 +147,27 @@ DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *c
     m_mutex->unlock();
 
     return ret;
+}
+
+// send a single ruby line to be evaluated by the ruby thread
+DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *command)
+{
+    // if dlopen failed
+    if (!r_thread)
+        return CR_FAILURE;
+
+    if (!strncmp(command, "nolock ", 7)) {
+        // debug only!
+        // run ruby commands without locking the main thread
+        // useful when the game is frozen after a segfault
+        return do_plugin_eval_ruby(out, command+7);
+    } else {
+        // wrap all ruby code inside a suspend block
+        // if we dont do that and rely on ruby code doing it, we'll deadlock in
+        // onupdate
+        CoreSuspender suspend;
+        return do_plugin_eval_ruby(out, command);
+    }
 }
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
@@ -205,8 +216,6 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
 
 static command_result df_rubyeval(color_ostream &out, std::vector <std::string> & parameters)
 {
-    command_result ret;
-
     if (parameters.size() == 1 && (parameters[0] == "help" || parameters[0] == "?"))
     {
         out.print("This command executes an arbitrary ruby statement.\n");

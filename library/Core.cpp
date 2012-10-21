@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -126,8 +126,34 @@ struct Core::Private
 void Core::cheap_tokenise(string const& input, vector<string> &output)
 {
     string *cur = NULL;
+    size_t i = 0;
 
-    for (size_t i = 0; i < input.size(); i++) {
+    // Check the first non-space character
+    while (i < input.size() && isspace(input[i])) i++;
+
+    // Special verbatim argument mode?
+    if (i < input.size() && input[i] == ':')
+    {
+        // Read the command
+        std::string cmd;
+        i++;
+        while (i < input.size() && !isspace(input[i]))
+            cmd.push_back(input[i++]);
+        if (!cmd.empty())
+            output.push_back(cmd);
+
+        // Find the argument
+        while (i < input.size() && isspace(input[i])) i++;
+
+        if (i < input.size())
+            output.push_back(input.substr(i));
+
+        return;
+    }
+
+    // Otherwise, parse in the regular quoted mode
+    for (; i < input.size(); i++)
+    {
         unsigned char c = input[i];
         if (isspace(c)) {
             cur = NULL;
@@ -348,6 +374,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                           "  unload PLUGIN|all     - Unload a plugin or all loaded plugins.\n"
                           "  reload PLUGIN|all     - Reload a plugin or all loaded plugins.\n"
                          );
+
+				con.print("\nDFHack version " DFHACK_VERSION ".\n");
             }
             else if (parts.size() == 1)
             {
@@ -601,8 +629,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
         }
         else if(first == "fpause")
         {
-            World * w = getWorld();
-            w->SetPauseState(true);
+            World::SetPauseState(true);
             con.print("The game was forced to pause!\n");
         }
         else if(first == "cls")
@@ -795,6 +822,8 @@ std::string Core::getHackPath()
 #endif
 }
 
+void init_screen_module(Core *);
+
 bool Core::Init()
 {
     if(started)
@@ -840,6 +869,7 @@ bool Core::Init()
 
     // Init global object pointers
     df::global::InitGlobals();
+    init_screen_module(this);
 
     cerr << "Initializing Console.\n";
     // init the console.
@@ -1096,7 +1126,7 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         last_world_data_ptr = new_wdata;
         last_local_map_ptr = new_mapdata;
 
-        getWorld()->ClearPersistentCache();
+        World::ClearPersistentCache();
 
         // and if the world is going away, we report the map change first
         if(had_map)
@@ -1114,7 +1144,7 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
         if (isMapLoaded() != had_map)
         {
-            getWorld()->ClearPersistentCache();
+            World::ClearPersistentCache();
             onStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
         }
     }
@@ -1652,7 +1682,6 @@ TYPE * Core::get##TYPE() \
     return s_mods.p##TYPE;\
 }
 
-MODULE_GETTER(World);
 MODULE_GETTER(Materials);
 MODULE_GETTER(Notes);
 MODULE_GETTER(Graphic);

@@ -3,13 +3,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Docutils 0.8.1: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.9.1: http://docutils.sourceforge.net/" />
 <title>DFHack Lua API</title>
 <style type="text/css">
 
 /*
 :Author: David Goodger (goodger@python.org)
-:Id: $Id: html4css1.css 7056 2011-06-17 10:50:48Z milde $
+:Id: $Id: html4css1.css 7434 2012-05-11 21:06:27Z milde $
 :Copyright: This stylesheet has been placed in the public domain.
 
 Default cascading style sheet for the HTML output of Docutils.
@@ -249,9 +249,17 @@ pre.address {
   margin-top: 0 ;
   font: inherit }
 
-pre.literal-block, pre.doctest-block, pre.math {
+pre.literal-block, pre.doctest-block, pre.math, pre.code {
   margin-left: 2em ;
   margin-right: 2em }
+
+pre.code .ln { /* line numbers */
+  color: grey;
+}
+
+.code {
+  background-color: #eeeeee
+}
 
 span.classifier {
   font-family: sans-serif ;
@@ -781,7 +789,7 @@ running coroutine and let the C++ code release the core suspend
 lock. Using an explicit <tt class="docutils literal">dfhack.with_suspend</tt> will prevent
 this, forcing the function to block on input with lock held.</p>
 </li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.interpreter([prompt[,env[,history_filename]]])</span></tt></p>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.interpreter([prompt[,history_filename[,env]]])</span></tt></p>
 <p>Starts an interactive lua interpreter, using the specified prompt
 string, global environment and command-line history file.</p>
 <p>If the interactive console is not accessible, returns <em>nil, error</em>.</p>
@@ -924,6 +932,21 @@ Returns <em>entry, did_create_new</em></p>
 and automatically stored in the save game, these save and retrieval
 functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.</p>
+<p>It is also possible to associate one bit per map tile with an entry,
+using these two methods:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">entry:getTilemask(block[, create])</tt></p>
+<p>Retrieves the tile bitmask associated with this entry in the given map
+block. If <tt class="docutils literal">create</tt> is <em>true</em>, an empty mask is created if none exists;
+otherwise the function returns <em>nil</em>, which must be assumed to be the same
+as an all-zero mask.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">entry:deleteTilemask(block)</tt></p>
+<p>Deletes the associated tile mask from the given map block.</p>
+</li>
+</ul>
+<p>Note that these masks are only saved in fortress mode, and also that deleting
+the persistent entry will <strong>NOT</strong> delete the associated masks.</p>
 </div>
 <div class="section" id="material-info-lookup">
 <h3><a class="toc-backref" href="#id17">Material info lookup</a></h3>
@@ -1087,6 +1110,13 @@ above operations accordingly. If enabled, pauses and zooms to position.</p>
 if there are any jobs with <tt class="docutils literal">first_id &lt;= id &lt; job_next_id</tt>,
 a lua list containing them.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.isSuitableItem(job_item, item_type, item_subtype)</tt></p>
+<p>Does basic sanity checks to verify if the suggested item type matches
+the flags in the job item.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.isSuitableMaterial(job_item, mat_type, mat_index)</tt></p>
+<p>Likewise, if replacing material.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="units-module">
@@ -1149,6 +1179,10 @@ same checks the game uses to decide game-over by extinction.</p>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.units.getAge(unit[,true_age])</span></tt></p>
 <p>Returns the age of the unit in years as a floating-point value.
 If <tt class="docutils literal">true_age</tt> is true, ignores false identities.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getNominalSkill(unit, skill[, use_rust])</tt></p>
+<p>Retrieves the nominal skill level for the given unit. If <tt class="docutils literal">use_rust</tt>
+is <em>true</em>, subtracts the rust penalty.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.getEffectiveSkill(unit, skill)</tt></p>
 <p>Computes the effective rating for the given skill, taking into account exhaustion, pain etc.</p>
@@ -1223,6 +1257,15 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.items.makeProjectile(item)</tt></p>
 <p>Turns the item into a projectile, and returns the new object, or <em>nil</em> if impossible.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.isCasteMaterial(item_type)</tt></p>
+<p>Returns <em>true</em> if this item type uses a creature/caste pair as its material.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getSubtypeCount(item_type)</tt></p>
+<p>Returns the number of raw-defined subtypes of the given item type, or <em>-1</em> if not applicable.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getSubtypeDef(item_type, subtype)</tt></p>
+<p>Returns the raw definition for the given item type and subtype, or <em>nil</em> if invalid.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="maps-module">
@@ -1237,7 +1280,7 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getBlock(x,y,z)</tt></p>
 <p>Returns a map block object for given x,y,z in local block coordinates.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.maps.isValidTilePos(coords)</tt>, or isValidTilePos(x,y,z)``</p>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.isValidTilePos(coords)</tt>, or <tt class="docutils literal">isValidTilePos(x,y,z)</tt></p>
 <p>Checks if the given df::coord or x,y,z in local tile coordinates are valid.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getTileBlock(coords)</tt>, or <tt class="docutils literal">getTileBlock(x,y,z)</tt></p>
@@ -1245,6 +1288,12 @@ Returns <em>false</em> in case of error.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.ensureTileBlock(coords)</tt>, or <tt class="docutils literal">ensureTileBlock(x,y,z)</tt></p>
 <p>Like <tt class="docutils literal">getTileBlock</tt>, but if the block is not allocated, try creating it.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileType(coords)</tt>, or <tt class="docutils literal">getTileType(x,y,z)</tt></p>
+<p>Returns the tile type at the given coordinates, or <em>nil</em> if invalid.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileFlags(coords)</tt>, or <tt class="docutils literal">getTileFlags(x,y,z)</tt></p>
+<p>Returns designation and occupancy references for the given coordinates, or <em>nil, nil</em> if invalid.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getRegionBiome(region_coord2d)</tt>, or <tt class="docutils literal">getRegionBiome(x,y)</tt></p>
 <p>Returns the biome info struct for the given global map region.</p>
@@ -1273,6 +1322,18 @@ can get out of date if doors are forbidden or unforbidden, or
 tools like liquids or tiletypes are used. It also cannot possibly
 take into account anything that depends on the actual units, like
 burrows, or the presence of invaders.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.hasTileAssignment(tilemask)</tt></p>
+<p>Checks if the tile_bitmask object is not <em>nil</em> and contains any set bits; returns <em>true</em> or <em>false</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileAssignment(tilemask,x,y)</tt></p>
+<p>Checks if the tile_bitmask object is not <em>nil</em> and has the relevant bit set; returns <em>true</em> or <em>false</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.setTileAssignment(tilemask,x,y,enable)</tt></p>
+<p>Sets the relevant bit in the tile_bitmask object to the <em>enable</em> argument.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.maps.resetTileAssignment(tilemask[,enable])</span></tt></p>
+<p>Sets all bits in the mask to the <em>enable</em> argument.</p>
 </li>
 </ul>
 </div>
@@ -1799,6 +1860,15 @@ coordinates), returns <em>nil</em>.</p>
 <li><p class="first"><tt class="docutils literal">xyz2pos(x,y,z)</tt></p>
 <p>Returns a table with x, y and z as fields.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">same_xyz(a,b)</tt></p>
+<p>Checks if <tt class="docutils literal">a</tt> and <tt class="docutils literal">b</tt> have the same x, y and z fields.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">get_path_xyz(path,i)</tt></p>
+<p>Returns <tt class="docutils literal">path.x[i], path.y[i], path.z[i]</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">pos2xy(obj)</tt>, <tt class="docutils literal">xy2pos(x,y)</tt>, <tt class="docutils literal">same_xy(a,b)</tt>, <tt class="docutils literal">get_path_xy(a,b)</tt></p>
+<p>Same as above, but for 2D coordinates.</p>
+</li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">safe_index(obj,index...)</span></tt></p>
 <p>Walks a sequence of dereferences, which may be represented by numbers or strings.
 Returns <em>nil</em> if any of obj or indices is <em>nil</em>, or a numeric index is out of array bounds.</p>
@@ -1901,6 +1971,12 @@ the vector cell if insertion didn't happen.</p>
 utils.insert_or_update(soul.skills, {new=true, id=..., rating=...}, 'id')
 </pre>
 <p>(For an explanation of <tt class="docutils literal">new=true</tt>, see table assignment in the wrapper section)</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.erase_sorted_key(vector,key,field,cmpfun)</tt></p>
+<p>Removes the item with the given key from the list. Returns: <em>did_erase, vector[idx], idx</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.erase_sorted(vector,item,field,cmpfun)</tt></p>
+<p>Exactly like <tt class="docutils literal">erase_sorted_key</tt>, but if field is specified, takes the key from <tt class="docutils literal">item[field]</tt>.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">utils.prompt_yes_no(prompt, default)</tt></p>
 <p>Presents a yes/no prompt to the user. If <tt class="docutils literal">default</tt> is not <em>nil</em>,

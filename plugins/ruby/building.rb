@@ -51,12 +51,14 @@ module DFHack
             subtype = WorkshopType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Workshop
             subtype = FurnaceType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Furnace
             subtype = CivzoneType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Civzone
+            subtype = TrapType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Trap
             bld.setSubtype(subtype)
             bld.setCustomType(custom)
             case type
             when :Furnace; bld.melt_remainder[world.raws.inorganics.length] = 0
             when :Coffin; bld.initBurialFlags
             when :Trap; bld.unk_cc = 500 if bld.trap_type == :PressurePlate
+            when :Floodgate; bld.gate_flags.closed = true
             end
             bld
         end
@@ -350,23 +352,13 @@ module DFHack
             job
         end
 
-        # check item flags to see if it is suitable for use as a building material
-        def building_isitemfree(i)
-            !i.flags.in_job and
-            !i.flags.in_inventory and
-            !i.flags.removed and
-            !i.flags.in_building and
-            !i.flags.owned and
-            !i.flags.forbid
-        end
-        
         # exemple usage
         def buildbed(pos=cursor)
             raise 'where to ?' if pos.x < 0
 
             item = world.items.all.find { |i|
                 i.kind_of?(ItemBedst) and
-                building_isitemfree(i)
+                item_isfree(i)
             }
             raise 'no free bed, build more !' if not item
 

@@ -12,9 +12,15 @@ module DFHack
                     ref.unit_tg if ref.kind_of?(GeneralRefUnit)
                 when :viewscreen_unitlistst
                     v = curview
-                    # TODO fix xml to use enums everywhere
-                    page = DFHack::ViewscreenUnitlistst_TPage.int(v.page)
-                    v.units[page][v.cursor_pos[page]]
+                    v.units[v.page][v.cursor_pos[v.page]]
+                when :viewscreen_petst
+                    v = curview
+                    case v.mode
+                    when :List
+                        v.animal[v.cursor].unit if !v.is_vermin[v.cursor]
+                    when :SelectTrainer
+                        v.trainer_unit[v.trainer_cursor]
+                    end
                 else
                     case ui.main.mode
                     when :ViewUnits
@@ -48,7 +54,7 @@ module DFHack
             }
         end
 
-	def unit_iscitizen(u)
+        def unit_iscitizen(u)
             u.race == ui.race_id and u.civ_id == ui.civ_id and !u.flags1.dead and !u.flags1.merchant and !u.flags1.forest and
             !u.flags1.diplomat and !u.flags2.resident and !u.flags3.ghostly and
             !u.curse.add_tags1.OPPOSED_TO_LIFE and !u.curse.add_tags1.CRAZED and
@@ -86,7 +92,7 @@ module DFHack
             # filter 'attend meeting'
             not u.specific_refs.find { |s| s.type == :ACTIVITY } and
             # filter soldiers (TODO check schedule)
-            u.military.squad_index == -1 and
+            u.military.squad_id == -1 and
             # filter 'on break'
             not u.status.misc_traits.find { |t| t.id == :OnBreak }
         end

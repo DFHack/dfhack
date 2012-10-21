@@ -31,7 +31,7 @@ Compatibility
 DFHack works on Windows XP, Vista, 7 or any modern Linux distribution.
 OSX is not supported due to lack of developers with a Mac.
 
-Currently, versions 0.34.08 - 0.34.11 are supported. If you need DFHack
+Currently, version 0.34.11 is supported (and tested). If you need DFHack
 for older versions, look for older releases.
 
 On Windows, you have to use the SDL version of DF.
@@ -87,6 +87,36 @@ they are re-created every time it is loaded.
 Interactive commands like 'liquids' cannot be used as hotkeys.
 
 Most of the commands come from plugins. Those reside in 'hack/plugins/'.
+
+Patched binaries
+================
+
+On linux and OSX, users of patched binaries may have to find the relevant
+section in symbols.xml, and add a new line with the checksum of their
+executable::
+
+    <md5-hash value='????????????????????????????????'/>
+
+In order to find the correct value of the hash, look into stderr.log;
+DFHack prints an error there if it does not recognize the hash.
+
+DFHack includes a small stand-alone utility for applying and removing
+binary patches from the game executable. Use it from the regular operating
+system console:
+
+ * ``binpatch check "Dwarf Fortress.exe" patch.dif``
+
+   Checks and prints if the patch is currently applied.
+
+ * ``binpatch apply "Dwarf Fortress.exe" patch.dif``
+
+   Applies the patch, unless it is already applied or in conflict.
+
+ * ``binpatch remove "Dwarf Fortress.exe" patch.dif``
+
+   Removes the patch, unless it is already removed.
+
+The patches are expected to be encoded in text format used by IDA.
 
 =============================
 Something doesn't work, help!
@@ -148,6 +178,24 @@ for context ``foo/bar/baz``, possible matches are any of ``@foo/bar/baz``, ``@fo
 Commands
 ========
 
+DFHack command syntax consists of a command name, followed by arguments separated
+by whitespace. To include whitespace in an argument, quote it in double quotes.
+To include a double quote character, use ``\"`` inside double quotes.
+
+If the first non-whitespace character of a line is ``#``, the line is treated
+as a comment, i.e. a silent no-op command.
+
+If the first non-whitespace character is ``:``, the command is parsed in a special
+alternative mode: first, non-whitespace characters immediately following the ``:``
+are used as the command name; the remaining part of the line, starting with the first
+non-whitespace character *after* the command name, is used verbatim as the first argument.
+The following two command lines are exactly equivalent:
+
+ * ``:foo a b "c d" e f``
+ * ``foo "a b \"c d\" e f"``
+
+This is intended for commands like ``rb_eval`` that evaluate script language statements.
+
 Almost all the commands support using the 'help <command-name>' built-in command
 to retrieve further help without having to look at this document. Alternatively,
 some accept a 'help'/'?' option on their command line.
@@ -175,11 +223,14 @@ by 'reveal hell'. This is nice for digging under rivers.
 
 fastdwarf
 ---------
-Makes your minions move at ludicrous speeds.
+Controls speedydwarf and teledwarf. Speedydwarf makes dwarves move quickly and perform tasks quickly. Teledwarf makes dwarves move instantaneously, but do jobs at the same speed.
 
- * Activate with 'fastdwarf 1'
- * Deactivate with 'fastdwarf 0'
-
+ * 'fastdwarf 0 0' disables both
+ * 'fastdwarf 0 1' disables speedydwarf and enables teledwarf
+ * 'fastdwarf 1 0' enables speedydwarf and disables teledwarf
+ * 'fastdwarf 1 1' enables both
+ * 'fastdwarf 0' disables both
+ * 'fastdwarf 1' enables speedydwarf and disables teledwarf
 
 Game interface
 ==============
@@ -603,14 +654,20 @@ Options:
 Pre-embark estimate
 ...................
 
-If called during the embark selection screen, displays an estimate of layer
-stone availability. If the 'all' option is specified, also estimates veins.
-The estimate is computed either for 1 embark tile of the blinking biome, or
-for all tiles of the embark rectangle.
+If prospect is called during the embark selection screen, it displays an estimate of
+layer stone availability.
+
+.. note::
+
+    The results of pre-embark prospect are an *estimate*, and can at best be expected
+    to be somewhere within +/- 30% of the true amount; sometimes it does a lot worse.
+    Especially, it is not clear how to precisely compute how many soil layers there
+    will be in a given embark tile, so it can report a whole extra layer, or omit one
+    that is actually present.
 
 Options:
 
- :all:            processes all tiles, even hidden ones.
+ :all:    Also estimate vein mineral amounts.
 
 reveal
 ------
@@ -780,6 +837,22 @@ Examples:
 * 'digcircle' = Do it again.
 
 
+digtype
+-------
+For every tile on the map of the same vein type as the selected tile, this command designates it to have the same designation as the selected tile. If the selected tile has no designation, they will be dig designated.
+If an argument is given, the designation of the selected tile is ignored, and all appropriate tiles are set to the specified designation.
+
+Options:
+
+ :dig:
+ :channel:
+ :ramp:
+ :updown: up/down stairs
+ :up:     up stairs
+ :down:   down stairs
+ :clear:  clear designation
+
+
 filltraffic
 -----------
 Set traffic designations using flood-fill starting at the cursor.
@@ -938,9 +1011,9 @@ accidentally placed a construction on top of a valuable mineral floor.
 
 tweak
 -----
-Contains various tweaks for minor bugs (currently just one).
+Contains various tweaks for minor bugs.
 
-Options:
+One-shot subcommands:
 
 :clear-missing:  Remove the missing status from the selected unit.
                  This allows engraving slabs for ghostly, but not yet
@@ -969,6 +1042,9 @@ Options:
                  and are not flagged as tame), but you are allowed to mark them
                  for slaughter. Grabbing wagons results in some funny spam, then
                  they are scuttled.
+
+Subcommands that persist until disabled or DF quit:
+
 :stable-cursor:  Saves the exact cursor position between t/q/k/d/etc menus of dwarfmode.
 :patrol-duty:    Makes Train orders not count as patrol duty to stop unhappy thoughts.
                  Does NOT fix the problem when soldiers go off-duty (i.e. civilian).
@@ -986,6 +1062,13 @@ Options:
                     in advmode. The issue is that the screen tries to force you to select
                     the contents separately from the container. This forcefully skips child
                     reagents.
+:fast-trade:     Makes Shift-Enter in the Move Goods to Depot and Trade screens select
+                 the current item (fully, in case of a stack), and scroll down one line.
+:military-stable-assign: Preserve list order and cursor position when assigning to squad,
+                         i.e. stop the rightmost list of the Positions page of the military
+                         screen from constantly resetting to the top.
+:military-color-assigned: Color squad candidates already assigned to other squads in brown/green
+                          to make them stand out more in the list.
 
 
 Mode switch and reclaim
@@ -1476,6 +1559,17 @@ Confirmed working DFusion plugins:
     * This is currently working only on Windows.
     * The game will be suspended while you're using dfusion. Don't panic when it doen't respond.
 
+misery
+------
+When enabled, every new negative dwarven thought will be multiplied by a factor (2 by default).
+
+Usage:
+
+:misery enable n:  enable misery with optional magnitude n. If specified, n must be positive.
+:misery n:         same as "misery enable n"
+:misery enable:    same as "misery enable 2"
+:misery disable:   stop adding new negative thoughts. This will not remove existing duplicated thoughts. Equivalent to "misery 1"
+:misery clear:     remove fake thoughts added in this session of DF. Saving makes them permanent! Does not change factor.
 
 =======
 Scripts
@@ -1544,8 +1638,9 @@ siren
 
 Wakes up sleeping units, cancels breaks and stops parties either everywhere,
 or in the burrows given as arguments. In return, adds bad thoughts about
-noise and tiredness. Also, the units with interrupted breaks will go on
-break again a lot sooner.
+noise, tiredness and lack of protection. Also, the units with interrupted
+breaks will go on break again a lot sooner. The script is intended for
+emergencies, e.g. when a siege appears, and all your military is partying.
 
 growcrops
 =========
@@ -1567,16 +1662,18 @@ removebadthoughts
 This script remove negative thoughts from your dwarves. Very useful against
 tantrum spirals.
 
-With a selected unit in 'v' mode, will clear this unit's mind, otherwise
-clear all your fort's units minds.
+The script can target a single creature, when used with the ``him`` argument,
+or the whole fort population, with ``all``.
+
+To show every bad thought present without actually removing them, run the
+script with the ``-n`` or ``--dry-run`` argument. This can give a quick
+hint on what bothers your dwarves the most.
 
 Individual dwarf happiness may not increase right after this command is run,
 but in the short term your dwarves will get much more joyful.
-The thoughts are set to be very old, and the game will remove them soon when
-you unpause.
 
-With the optional ``-v`` parameter, the script will dump the negative thoughts
-it removed.
+Internals: the thoughts are set to be very old, so that the game remove them
+quickly after you unpause.
 
 
 slayrace
@@ -1585,7 +1682,7 @@ Kills any unit of a given race.
 
 With no argument, lists the available races.
 
-With the special argument 'him', targets only the selected creature.
+With the special argument ``him``, targets only the selected creature.
 
 Any non-dead non-caged unit of the specified race gets its ``blood_count``
 set to 0, which means immediate death at the next game tick. For creatures
@@ -1636,8 +1733,8 @@ digfort
 A script to designate an area for digging according to a plan in csv format.
 
 This script, inspired from quickfort, can designate an area for digging.
-Your plan should be stored in a .csv file like this:
-:: 
+Your plan should be stored in a .csv file like this::
+
     # this is a comment 
     d;d;u;d;d;skip this tile;d
     d;d;d;i
@@ -1656,8 +1753,8 @@ superdwarf
 ==========
 Similar to fastdwarf, per-creature.
 
-To make any creature superfast, target it ingame using 'v' and:
-::  
+To make any creature superfast, target it ingame using 'v' and::
+
     superdwarf add
 
 Other options available: ``del``, ``clear``, ``list``.
@@ -1681,6 +1778,14 @@ In-game interface tools
 These tools work by displaying dialogs or overlays in the game window, and
 are mostly implemented by lua scripts.
 
+.. note::
+
+    In order to avoid user confusion, as a matter of policy all these tools
+    display the word "DFHack" on the screen somewhere while active.
+
+    As an exception, the tweak plugin described above does not follow this
+    guideline because it arguably just fixes small usability bugs in the game UI.
+
 
 Dwarf Manipulator
 =================
@@ -1699,14 +1804,15 @@ Use the arrow keys or number pad to move the cursor around, holding Shift to
 move 10 tiles at a time.
 
 Press the Z-Up (<) and Z-Down (>) keys to move quickly between labor/skill
-categories.
+categories. The numpad Z-Up and Z-Down keys seek to the first or last unit
+in the list. Backspace seeks to the top left corner.
 
 Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
 to toggle all labors within the selected category.
 
 Press the ``+-`` keys to sort the unit list according to the currently selected
 skill/labor, and press the ``*/`` keys to sort the unit list by Name, Profession,
-or Happiness (using Tab to select which sort method to use here).
+Happiness, or Arrival order (using Tab to select which sort method to use here).
 
 With a unit selected, you can press the "v" key to view its properties (and
 possibly set a custom nickname or profession) or the "c" key to exit
@@ -1726,19 +1832,19 @@ Pressing ESC normally returns to the unit screen, but Shift-ESC would exit
 directly to the main dwarf mode screen.
 
 
-Liquids
-=======
+gui/liquids
+===========
 
-Implemented by the gui/liquids script. To use, bind to a key and activate in the 'k' mode.
+To use, bind to a key and activate in the 'k' mode.
 
 While active, use the suggested keys to switch the usual liquids parameters, and Enter
 to select the target area and apply changes.
 
 
-Mechanisms
-==========
+gui/mechanisms
+==============
 
-Implemented by the gui/mechanims script. To use, bind to a key and activate in the 'q' mode.
+To use, bind to a key and activate in the 'q' mode.
 
 Lists mechanisms connected to the building, and their links. Navigating the list centers
 the view on the relevant linked buildings.
@@ -1748,20 +1854,10 @@ focus on the current one. Shift-Enter has an effect equivalent to pressing Enter
 re-entering the mechanisms ui.
 
 
-Power Meter
-===========
+gui/rename
+==========
 
-Front-end to the power-meter plugin implemented by the gui/power-meter script. Bind to a
-key and activate after selecting Pressure Plate in the build menu.
-
-The script follows the general look and feel of the regular pressure plate build
-configuration page, but configures parameters relevant to the modded power meter building.
-
-
-Rename
-======
-
-Backed by the rename plugin, the gui/rename script allows entering the desired name
+Backed by the rename plugin, this script allows entering the desired name
 via a simple dialog in the game ui.
 
 * ``gui/rename [building]`` in 'q' mode changes the name of a building.
@@ -1773,24 +1869,69 @@ via a simple dialog in the game ui.
 
 * ``gui/rename unit-profession`` changes the selected unit's custom profession name.
 
-The ``building`` or ``unit`` are automatically assumed when in relevant ui state.
+The ``building`` or ``unit`` options are automatically assumed when in relevant ui state.
 
 
-Room List
-=========
+gui/room-list
+=============
 
-Implemented by the gui/room-list script. To use, bind to a key and activate in the 'q' mode,
-either immediately or after opening the assign owner page.
+To use, bind to a key and activate in the 'q' mode, either immediately or after opening
+the assign owner page.
 
 The script lists other rooms owned by the same owner, or by the unit selected in the assign
 list, and allows unassigning them.
 
 
+gui/choose-weapons
+==================
+
+Bind to a key, and activate in the Equip->View/Customize page of the military screen.
+
+Depending on the cursor location, it rewrites all 'individual choice weapon' entries
+in the selected squad or position to use a specific weapon type matching the assigned
+unit's top skill. If the cursor is in the rightmost list over a weapon entry, it rewrites
+only that entry, and does it even if it is not 'individual choice'.
+
+Rationale: individual choice seems to be unreliable when there is a weapon shortage,
+and may lead to inappropriate weapons being selected.
+
+
+=============
+Behavior Mods
+=============
+
+These plugins, when activated via configuration UI or by detecting certain
+structures in RAWs, modify the game engine behavior concerning the target
+objects to add features not otherwise present.
+
+.. admonition:: DISCLAIMER
+
+    The plugins in this section have mostly been created for fun as an interesting
+    technical challenge, and do not represent any long-term plans to produce more
+    similar modifications of the game.
+
+
 Siege Engine
 ============
 
-Front-end to the siege-engine plugin implemented by the gui/siege-engine script. Bind to a
-key and activate after selecting a siege engine in 'q' mode.
+The siege-engine plugin enables siege engines to be linked to stockpiles, and
+aimed at an arbitrary rectangular area across Z levels, instead of the original
+four directions. Also, catapults can be ordered to load arbitrary objects, not
+just stones.
+
+Rationale
+---------
+
+Siege engines are a very interesting feature, but sadly almost useless in the current state
+because they haven't been updated since 2D and can only aim in four directions. This is an
+attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
+e.g. like making siegers bring their own, are something only Toady can do.
+
+Configuration UI
+----------------
+
+The configuration front-end to the plugin is implemented by the gui/siege-engine
+script. Bind it to a key and activate after selecting a siege engine in 'q' mode.
 
 The main mode displays the current target, selected ammo item type, linked stockpiles and
 the allowed operator skill range. The map tile color is changed to signify if it can be
@@ -1799,7 +1940,8 @@ yellow for partially blocked.
 
 Pressing 'r' changes into the target selection mode, which works by highlighting two points
 with Enter like all designations. When a target area is set, the engine projectiles are
-aimed at that area, or units within it, instead of the vanilla four directions.
+aimed at that area, or units within it (this doesn't actually change the original aiming
+code, instead the projectile trajectory parameters are rewritten as soon as it appears).
 
 After setting the target in this way for one engine, you can 'paste' the same area into others
 just by pressing 'p' in the main page of this script. The area to paste is kept until you quit
@@ -1811,19 +1953,18 @@ Exiting from the siege engine script via ESC reverts the view to the state prior
 the script. Shift-ESC retains the current viewport, and also exits from the 'q' mode to main
 menu.
 
-.. admonition:: DISCLAIMER
 
-    Siege engines are a very interesting feature, but currently nearly useless
-    because they haven't been updated since 2D and can only aim in four directions. This is an
-    attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
-    e.g. like making siegers bring their own, are something only Toady can do.
+Power Meter
+===========
 
+The power-meter plugin implements a modified pressure plate that detects power being
+supplied to gear boxes built in the four adjacent N/S/W/E tiles.
 
-=========
-RAW hacks
-=========
+The configuration front-end is implemented by the gui/power-meter script. Bind it to a
+key and activate after selecting Pressure Plate in the build menu.
 
-These plugins detect certain structures in RAWs, and enhance them in various ways.
+The script follows the general look and feel of the regular pressure plate build
+configuration page, but configures parameters relevant to the modded power meter building.
 
 
 Steam Engine
@@ -1855,7 +1996,7 @@ The magma version also needs magma.
 .. admonition:: ISSUE
 
     Since this building is a machine, and machine collapse
-    code cannot be modified, it would collapse over true open space.
+    code cannot be hooked, it would collapse over true open space.
     As a loophole, down stair provides support to machines, while
     being passable, so use them.
 
@@ -1866,7 +2007,7 @@ is extracted from the workshop raws.
 .. admonition:: ISSUE
 
     Like with collapse above, part of the code involved in
-    machine connection cannot be modified. As a result, the workshop
+    machine connection cannot be hooked. As a result, the workshop
     can only immediately connect to machine components built AFTER it.
     This also means that engines cannot be chained without intermediate
     short axles that can be built later than both of the engines.
@@ -1879,8 +2020,13 @@ on repeat). A furnace operator will come, possibly bringing a bar of fuel,
 and perform it. As a result, a "boiling water" item will appear
 in the 't' view of the workshop.
 
-**NOTE**: The completion of the job will actually consume one unit
-of the appropriate liquids from below the workshop.
+.. note::
+
+    The completion of the job will actually consume one unit
+    of the appropriate liquids from below the workshop. This means
+    that you cannot just raise 7 units of magma with a piston and
+    have infinite power. However, liquid consumption should be slow
+    enough that water can be supplied by a pond zone bucket chain.
 
 Every such item gives 100 power, up to a limit of 300 for coal,
 and 500 for a magma engine. The building can host twice that
@@ -1928,9 +2074,12 @@ Add Spatter
 ===========
 
 This plugin makes reactions with names starting with ``SPATTER_ADD_``
-produce contaminants on the items instead of improvements.
+produce contaminants on the items instead of improvements. The produced
+contaminants are immune to being washed away by water or destroyed by
+the ``clean items`` command.
 
-Intended to give some use to all those poisons that can be bought from caravans.
+The plugin is intended to give some use to all those poisons that can
+be bought from caravans. :)
 
 To be really useful this needs patches from bug 808, ``tweak fix-dimensions``
 and ``tweak advmode-contained``.

@@ -1,4 +1,20 @@
-DFHack v0.34.11-r2 (UNRELEASED)
+DFHack future
+
+  Internals:
+    - support for displaying active keybindings properly.
+    - support for reusable widgets in lua screen library.
+  Notable bugfixes:
+    - autobutcher can be re-enabled again after being stopped.
+    - stopped Dwarf Manipulator from unmasking vampires.
+  Misc improvements:
+    - fastdwarf: new mode using debug flags, and some internal consistency fixes.
+    - added a small stand-alone utility for applying and removing binary patches.
+    - removebadthoughts: add --dry-run option
+  New GUI scripts:
+    - gui/guide-path: displays the cached path for minecart Guide orders.
+    - gui/workshop-job: displays inputs of a workshop job and allows tweaking them.
+
+DFHack v0.34.11-r2
 
   Internals:
     - full support for Mac OS X.
@@ -19,6 +35,10 @@ DFHack v0.34.11-r2 (UNRELEASED)
     - liquids: can paint permaflow, i.e. what makes rivers power water wheels.
     - prospect: pre-embark prospector accounts for caves & magma sea in its estimate.
     - rename: supports renaming stockpiles, workshops, traps, siege engines.
+    - fastdwarf: now has an additional option to make dwarves teleport to their destination.
+  New commands:
+    - misery: multiplies every negative thought gained (2x by default).
+    - digtype: designates every tile of the same type of vein on the map for 'digging' (any dig designation).
   New tweaks:
     - tweak stable-cursor: keeps exact cursor position between d/k/t/q/v etc menus.
     - tweak patrol-duty: makes Train orders reduce patrol timer, like the binary patch does.
@@ -27,6 +47,9 @@ DFHack v0.34.11-r2 (UNRELEASED)
     - tweak fast-heat: speeds up item heating & cooling, thus making stable-temp act faster.
     - tweak fix-dimensions: fixes subtracting small amounts from stacked liquids etc.
     - tweak advmode-contained: fixes UI bug in custom reactions with container inputs in advmode.
+    - tweak fast-trade: Shift-Enter for selecting items quckly in Trade and Move to Depot screens.
+    - tweak military-stable-assign: Stop rightmost list of military->Positions from jumping to top.
+    - tweak military-color-assigned: In same list, color already assigned units in brown & green.
   New scripts:
     - fixnaked: removes thoughts about nakedness.
     - setfps: set FPS cap at runtime, in case you want slow motion or speed-up.
@@ -49,6 +72,7 @@ DFHack v0.34.11-r2 (UNRELEASED)
     - gui/rename: renaming stockpiles, workshops and units via an in-game dialog.
     - gui/power-meter: front-end for the Power Meter plugin.
     - gui/siege-engine: front-end for the Siege Engine plugin.
+    - gui/choose-weapons: auto-choose matching weapons in the military equip screen.
   Autolabor plugin:
     - can set nonidle hauler percentage.
     - broker excluded from all labors when needed at depot.

@@ -9,6 +9,7 @@
 
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_storesst.h"
+#include "df/viewscreen_tradegoodsst.h"
 #include "df/interface_key.h"
 
 using std::set;
@@ -31,25 +32,93 @@ void OutputString(int8_t color, int &x, int y, const std::string &text)
 // START: Base Search functionality
 //
 template <class S, class T, class V = void>
-struct search_parent
+class search_parent
 {
-    vector <T*> *sort_list1;
-    vector <V*> *sort_list2;
-    int *cursor_pos;
-    char select_key;
-    const S *viewscreen;
+public:
+    void reset_all()
+    {
+        reset_search();
+        valid = false;
+        sort_list1 = NULL;
+        sort_list2 = NULL;
+        viewscreen = NULL;
+        select_key = 's';
+    }
 
-    bool valid;
-    bool entry_mode;
-    bool redo_search;
-    string search_string;
+    virtual bool process_input(set<df::interface_key> *input)
+    {
+        if (lock != NULL && lock != this)
+            return false;
+
+        if (!should_check_input(input))
+            return false;
+
+        bool key_processed = true;
+
+        if (entry_mode)
+        {
+            df::interface_key last_token = *input->rbegin();
+            if (last_token >= interface_key::STRING_A032 && last_token <= interface_key::STRING_A126)
+            {
+                search_string += last_token - ascii_to_enum_offset;
+                do_search();
+            }
+            else if (last_token == interface_key::STRING_A000)
+            {
+                if (search_string.length() > 0)
+                {
+                    search_string.erase(search_string.length()-1);
+                    do_search();
+                }
+            }
+            else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
+            {
+                end_entry_mode();
+            }
+            else if  (input->count(interface_key::CURSOR_UP) || input->count(interface_key::CURSOR_DOWN)
+                || input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT))
+            {
+                end_entry_mode();
+                key_processed = false;
+            }
+        }
+        else if (input->count(select_token))
+        {
+            start_entry_mode();
+        }
+        else if (input->count((df::interface_key) (select_token + shift_offset)))
+        {
+            clear_search();
+        }
+        else
+        {
+            key_processed = false;
+        }
+
+        return key_processed || entry_mode;
+    }
+
+    virtual void do_post_update_check()
+    {
+        if (redo_search)
+        {
+            do_search();
+            redo_search = false;
+        }
+    }
+
+    static search_parent<S,T,V> *lock;
+
+protected:
+    const S *viewscreen;
     vector <T*> saved_list1;
     vector <V*> saved_list2;
 
-    df::interface_key select_token;
-    const int ascii_to_enum_offset;
+    bool valid;
+    bool redo_search;
+    string search_string;
 
-    search_parent() : ascii_to_enum_offset(interface_key::STRING_A048 - '0')
+    search_parent() : ascii_to_enum_offset(interface_key::STRING_A048 - '0'), shift_offset('A' - 'a')
     {
         reset_all();
     }
@@ -63,23 +132,30 @@ struct search_parent
         select_token = (df::interface_key) (ascii_to_enum_offset + select_key);
         valid = true;
     }
+
+    bool is_entry_mode()
+    {
+        return entry_mode;
+    }
+
+    void start_entry_mode()
+    {
+        entry_mode = true;
+        lock = this;
+    }
     
-    void reset_search()
+    void end_entry_mode()
     {
         entry_mode = false;
+        lock = NULL;
+    }
+
+    void reset_search()
+    {
+        end_entry_mode();
         search_string = "";
         saved_list1.clear();
         saved_list2.clear();
-    }
-
-    void reset_all()
-    {
-        reset_search();
-        valid = false;
-        sort_list1 = NULL;
-        sort_list2 = NULL;
-        viewscreen = NULL;
-        select_key = 's';
     }
 
     void clear_search()
@@ -90,6 +166,7 @@ struct search_parent
             if (sort_list2 != NULL) 
                 *sort_list2 = saved_list2;
         }
+        search_string = "";
     }
 
     void do_search()
@@ -126,75 +203,45 @@ struct search_parent
         *cursor_pos = 0;
     }
 
-    virtual bool process_input(const set<df::interface_key> *input)
+    virtual bool should_check_input(set<df::interface_key> *input)
     {
-        bool key_processed = true;
-        
-        if (entry_mode)
-        {
-            df::interface_key last_token = *input->rbegin();
-            if (last_token >= interface_key::STRING_A032 && last_token <= interface_key::STRING_A126)
-            {
-                search_string += last_token - ascii_to_enum_offset;
-                do_search();
-            }
-            else if (last_token == interface_key::STRING_A000)
-            {
-                if (search_string.length() > 0)
-                {
-                    search_string.erase(search_string.length()-1);
-                    do_search();
-                }
-            }
-            else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
-            {
-                entry_mode = false;
-            }
-            else if  (input->count(interface_key::CURSOR_UP) || input->count(interface_key::CURSOR_DOWN)
-                || input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT))
-            {
-                entry_mode = false;
-                key_processed = false;
-            }
-        }
-        else if (input->count(select_token))
-        {
-            entry_mode = true;
-        }
-        else
-        {
-            key_processed = false;
-        }
-
-        return key_processed;
+        return true;
     }
 
+    void print_search_option(int x, int y = -1) const
+    {
+        if (y == -1)
+            y = gps->dimy - 2;
+
+        OutputString((entry_mode) ? 4 : 12, x, y, string(1, select_key));
+        OutputString((entry_mode) ? 10 : 15, x, y, ": Search");
+        if (search_string.length() > 0 || entry_mode)
+            OutputString(15, x, y, ": " + search_string);
+        if (entry_mode)
+            OutputString(10, x, y, "_");
+    }
 
     virtual string get_element_description(T *element) const = 0;
     virtual void render () const = 0;
 
-    virtual void do_post_update_check()
-    {
-        if (redo_search)
-        {
-            do_search();
-            redo_search = false;
-        }
-    }
+private:
+    vector <T*> *sort_list1;
+    vector <V*> *sort_list2;
+    int *cursor_pos;
+    char select_key;
 
-    void print_search_option(int x) const
-    {
-        OutputString((entry_mode) ? 4 : 12, x, gps->dimy - 2, string(1, select_key));
-        OutputString((entry_mode) ? 10 : 15, x, gps->dimy - 2, ": Search");
-        if (search_string.length() > 0 || entry_mode)
-            OutputString(15, x, gps->dimy - 2, ": " + search_string);
-        if (entry_mode)
-            OutputString(10, x, gps->dimy - 2, "_");
-    }
+    bool entry_mode;
+
+    df::interface_key select_token;
+    const int ascii_to_enum_offset;
+    const int shift_offset;
+
 };
 
+template <class S, class T, class V> search_parent<S,T,V> *search_parent<S,T,V> ::lock = NULL;
 
-template <class T, class V>
+
+template <class T, class V, typename D = void>
 struct search_hook : T
 {
     typedef T interpose_base;
@@ -220,7 +267,7 @@ struct search_hook : T
     }
 };
 
-template <class T, class V> V search_hook<T, V> ::module;
+template <class T, class V, typename D> V search_hook<T, V, D> ::module;
 
 
 //
@@ -232,8 +279,10 @@ template <class T, class V> V search_hook<T, V> ::module;
 //
 // START: Stocks screen search
 //
-struct stocks_search : search_parent<df::viewscreen_storesst, df::item>
+class stocks_search : public search_parent<df::viewscreen_storesst, df::item>
 {
+public:
+
     virtual void render() const
     {
         if (!viewscreen->in_group_mode)
@@ -243,31 +292,6 @@ struct stocks_search : search_parent<df::viewscreen_storesst, df::item>
             int x = 1;
             OutputString(15, x, gps->dimy - 2, "Tab to enable Search");
         }
-    }
-
-    virtual string get_element_description(df::item *element) const
-    {
-        return Items::getDescription(element, 0, true);
-    }
-
-    virtual bool process_input(const set<df::interface_key> *input) 
-    {
-        if (viewscreen->in_group_mode)
-            return false;
-
-        if ((input->count(interface_key::CURSOR_UP) || input->count(interface_key::CURSOR_DOWN)) && !viewscreen->in_right_list)
-        {
-            saved_list1.clear();
-            entry_mode = false;
-            if (search_string.length() > 0)
-                redo_search = true;
-
-            return false;
-        }
-        else
-            return search_parent::process_input(input) || entry_mode;
-
-        return true;
     }
 
     virtual void do_post_update_check()
@@ -290,6 +314,30 @@ struct stocks_search : search_parent<df::viewscreen_storesst, df::item>
         }
     }
 
+
+private:
+    virtual string get_element_description(df::item *element) const
+    {
+        return Items::getDescription(element, 0, true);
+    }
+
+    virtual bool should_check_input(set<df::interface_key> *input) 
+    {
+        if (viewscreen->in_group_mode)
+            return false;
+
+        if ((input->count(interface_key::CURSOR_UP) || input->count(interface_key::CURSOR_DOWN)) && !viewscreen->in_right_list)
+        {
+            saved_list1.clear();
+            end_entry_mode();
+            if (search_string.length() > 0)
+                redo_search = true;
+
+            return false;
+        }
+
+        return true;
+    }
 };
 
 
@@ -306,33 +354,13 @@ IMPLEMENT_VMETHOD_INTERPOSE(stocks_search_hook, render);
 //
 // START: Unit screen search
 //
-struct unitlist_search : search_parent<df::viewscreen_unitlistst, df::unit, df::job>
+class unitlist_search : public search_parent<df::viewscreen_unitlistst, df::unit, df::job>
 {
+public:
+
     virtual void render() const
     {
         print_search_option(28);
-    }
-
-    virtual string get_element_description(df::unit *element) const
-    {
-        return Translation::TranslateName(Units::getVisibleName(element), false);
-    }
-
-    virtual bool process_input(const set<df::interface_key> *input) 
-    {
-        if (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT))
-        {
-            if (!entry_mode)
-            {
-                clear_search();
-                reset_search();
-                return false;
-            }
-        }
-        else 
-            return search_parent::process_input(input) || entry_mode;
-
-        return true;
     }
 
     virtual void init(df::viewscreen_unitlistst *screen)
@@ -343,6 +371,31 @@ struct unitlist_search : search_parent<df::viewscreen_unitlistst, df::unit, df::
             search_parent::init(&screen->cursor_pos[viewscreen->page], &screen->units[viewscreen->page], &screen->jobs[viewscreen->page]);
         }
     }
+
+private:
+    virtual string get_element_description(df::unit *element) const
+    {
+        return Translation::TranslateName(Units::getVisibleName(element), false);
+    }
+
+    virtual bool should_check_input(set<df::interface_key> *input) 
+    {
+        if (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT))
+        {
+            if (!is_entry_mode())
+            {
+                clear_search();
+                reset_search();
+            }
+            else
+                input->clear();
+
+            return false;
+        }
+
+        return true;
+    }
+
 };
 
 typedef search_hook<df::viewscreen_unitlistst, unitlist_search> unitlist_search_hook;
@@ -354,12 +407,78 @@ IMPLEMENT_VMETHOD_INTERPOSE(unitlist_search_hook, render);
 //
 
 
+//
+// START: Trade screen search
+//
+class trade_search_base : public search_parent<df::viewscreen_tradegoodsst, df::item>
+{
+
+private:
+    virtual string get_element_description(df::item *element) const
+    {
+        return Items::getDescription(element, 0, true);
+    }
+};
+
+
+class trade_search_merc : public trade_search_base
+{
+public:
+    virtual void render() const
+    {
+        print_search_option(2, 26);
+    }
+
+    virtual void init(df::viewscreen_tradegoodsst *screen)
+    {
+        if (!valid)
+        {
+            viewscreen = screen;
+            search_parent::init(&screen->trader_cursor, &screen->trader_items, NULL, 'q');
+        }
+    }
+};
+
+typedef search_hook<df::viewscreen_tradegoodsst, trade_search_merc, int> trade_search_merc_hook;
+IMPLEMENT_VMETHOD_INTERPOSE(trade_search_merc_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(trade_search_merc_hook, render);
+
+
+class trade_search_fort : public trade_search_base
+{
+public:
+    virtual void render() const
+    {
+        print_search_option(42, 26);
+    }
+
+    virtual void init(df::viewscreen_tradegoodsst *screen)
+    {
+        if (!valid)
+        {
+            viewscreen = screen;
+            search_parent::init(&screen->broker_cursor, &screen->broker_items, NULL, 'w');
+        }
+    }
+};
+
+typedef search_hook<df::viewscreen_tradegoodsst, trade_search_fort, char> trade_search_fort_hook;
+IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, render);
+
+//
+// END: Trade screen search
+//
+
+
 DFHACK_PLUGIN("search");
 
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     if (!gps || !INTERPOSE_HOOK(unitlist_search_hook, feed).apply() || !INTERPOSE_HOOK(unitlist_search_hook, render).apply()
+        || !INTERPOSE_HOOK(trade_search_merc_hook, feed).apply() || !INTERPOSE_HOOK(trade_search_merc_hook, render).apply()
+        || !INTERPOSE_HOOK(trade_search_fort_hook, feed).apply() || !INTERPOSE_HOOK(trade_search_fort_hook, render).apply()
         || !INTERPOSE_HOOK(stocks_search_hook, feed).apply() || !INTERPOSE_HOOK(stocks_search_hook, render).apply())
         out.printerr("Could not insert Search hooks!\n");
 
@@ -370,6 +489,10 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     INTERPOSE_HOOK(unitlist_search_hook, feed).remove();
     INTERPOSE_HOOK(unitlist_search_hook, render).remove();
+    INTERPOSE_HOOK(trade_search_merc_hook, feed).remove();
+    INTERPOSE_HOOK(trade_search_merc_hook, render).remove();
+    INTERPOSE_HOOK(trade_search_fort_hook, feed).remove();
+    INTERPOSE_HOOK(trade_search_fort_hook, render).remove();
     INTERPOSE_HOOK(stocks_search_hook, feed).remove();
     INTERPOSE_HOOK(stocks_search_hook, render).remove();
     return CR_OK;
@@ -378,6 +501,8 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_change_event event )
 {
     unitlist_search_hook::module.reset_all();
+    trade_search_merc_hook::module.reset_all();
+    trade_search_fort_hook::module.reset_all();
     stocks_search_hook::module.reset_all();
     return CR_OK;
 }

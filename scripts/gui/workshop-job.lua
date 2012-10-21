@@ -18,12 +18,14 @@ JobDetails.ATTRS {
 }
 
 function JobDetails:init(args)
+    self.building = dfhack.job.getHolder(self.job)
+
     local status = { text = 'No worker', pen = COLOR_DARKGREY }
     local worker = dfhack.job.getWorker(self.job)
     if self.job.flags.suspend then
         status = { text = 'Suspended', pen = COLOR_RED }
     elseif worker then
-        status = { text = dfhack.TranslateName(dfhack.unit.getVisibleName(worker)), pen = COLOR_GREEN }
+        status = { text = dfhack.TranslateName(dfhack.units.getVisibleName(worker)), pen = COLOR_GREEN }
     end
 
     self:addviews{
@@ -63,6 +65,14 @@ function JobDetails:init(args)
     self:initListChoices()
 end
 
+function JobDetails:onGetSelectedBuilding()
+    return self.building
+end
+
+function JobDetails:onGetSelectedJob()
+    return self.job
+end
+
 function describe_item_type(iobj)
     local itemline = 'any item'
     if iobj.item_type >= 0 then
@@ -79,10 +89,7 @@ function describe_item_type(iobj)
 end
 
 function is_caste_mat(iobj)
-    if iobj.item_type >= 0 then
-        return df.item_type.attrs[iobj.item_type].is_caste_mat
-    end
-    return false
+    return dfhack.items.isCasteMaterial(iobj.item_type)
 end
 
 function describe_material(iobj)
@@ -119,7 +126,7 @@ function JobDetails:initListChoices()
 
     local choices = {}
     for i,iobj in ipairs(self.job.job_items) do
-        local head = 'Item '..(i+1)..': '..(items[idx] or 0)..' of '..iobj.quantity
+        local head = 'Item '..(i+1)..': '..(items[i] or 0)..' of '..iobj.quantity
         if iobj.min_dimension > 0 then
             head = head .. '(size '..iobj.min_dimension..')'
         end
@@ -175,22 +182,42 @@ function JobDetails:canChangeIType()
     return obj ~= nil
 end
 
+function JobDetails:setItemType(obj, item_type, item_subtype)
+    obj.iobj.item_type = item_type
+    obj.iobj.item_subtype = item_subtype
+
+    if is_caste_mat(obj.iobj) then
+        self:setMaterial(obj, -1, -1)
+    end
+end
+
 function JobDetails:onChangeIType()
     local idx, obj = self.subviews.list:getSelected()
     guimat.ItemTypeDialog{
         prompt = 'Please select a new item type for input '..idx,
         none_caption = 'any item',
         item_filter = curry(dfhack.job.isSuitableItem, obj.iobj),
-        on_select = function(item_type, item_subtype)
-            obj.iobj.item_type = item_type
-            obj.iobj.item_subtype = item_subtype
-        end
+        on_select = self:callback('setItemType', obj)
     }:show()
 end
 
 function JobDetails:canChangeMat()
     local idx, obj = self.subviews.list:getSelected()
     return obj ~= nil and not is_caste_mat(obj.iobj)
+end
+
+function JobDetails:setMaterial(obj, mat_type, mat_index)
+    if  obj.index == 0
+    and self.job.mat_type == obj.iobj.mat_type
+    and self.job.mat_index == obj.iobj.mat_index
+    and self.job.job_type ~= df.job_type.PrepareMeal
+    then
+        self.job.mat_type = mat_type
+        self.job.mat_index = mat_index
+    end
+
+    obj.iobj.mat_type = mat_type
+    obj.iobj.mat_index = mat_index
 end
 
 function JobDetails:onChangeMat()
@@ -213,20 +240,18 @@ function JobDetails:onChangeMat()
         mat_filter = function(mat,parent,mat_type,mat_index)
             return dfhack.job.isSuitableMaterial(obj.iobj, mat_type, mat_index)
         end,
-        on_select = function(mat_type, mat_index)
-            if  idx == 1
-            and self.job.mat_type == obj.iobj.mat_type
-            and self.job.mat_index == obj.iobj.mat_index
-            and self.job.job_type ~= df.job_type.PrepareMeal
-            then
-                self.job.mat_type = mat_type
-                self.job.mat_index = mat_index
-            end
-
-            obj.iobj.mat_type = mat_type
-            obj.iobj.mat_index = mat_index
-        end
+        on_select = self:callback('setMaterial', obj)
     }:show()
+end
+
+function JobDetails:onInput(keys)
+    if self:propagateMoveKeys(keys) then
+        if df.global.world.selected_building ~= self.building then
+            self:dismiss()
+        end
+    else
+        JobDetails.super.onInput(self, keys)
+    end
 end
 
 if not string.match(dfhack.gui.getCurFocus(), '^dwarfmode/QueryBuilding/Some/Workshop/Job') then

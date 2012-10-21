@@ -238,6 +238,19 @@ local function get_movement_delta(key, delta, big_step)
     end
 end
 
+HOTKEY_KEYS = {}
+
+for i,v in ipairs(df.global.ui.main.hotkeys) do
+    HOTKEY_KEYS['D_HOTKEY'..(i+1)] = v
+end
+
+local function get_hotkey_target(key)
+    local hk = HOTKEY_KEYS[key]
+    if hk and hk.cmd == df.ui_hotkey.T_cmd.Zoom then
+        return xyz2pos(hk.x, hk.y, hk.z)
+    end
+end
+
 function Viewport:scrollByKey(key)
     local dx, dy, dz = get_movement_delta(key, 10, 20)
     if dx then
@@ -247,7 +260,12 @@ function Viewport:scrollByKey(key)
             self.z + dz
         )
     else
-        return self
+        local hk_pos = get_hotkey_target(key)
+        if hk_pos then
+            return self:centerOn(hk_pos)
+        else
+            return self
+        end
     end
 end
 
@@ -286,9 +304,11 @@ function DwarfOverlay:selectBuilding(building,cursor,viewport,gap)
 end
 
 function DwarfOverlay:propagateMoveKeys(keys)
-    for code,_ in pairs(MOVEMENT_KEYS) do
-        if keys[code] then
-            self:sendInputToParent(code)
+    for code,_ in pairs(keys) do
+        if MOVEMENT_KEYS[code] or HOTKEY_KEYS[code] then
+            if not HOTKEY_KEYS[code] or get_hotkey_target(code) then
+                self:sendInputToParent(code)
+            end
             return code
         end
     end
@@ -305,8 +325,8 @@ function DwarfOverlay:simulateViewScroll(keys, anchor, no_clip_cursor)
         return 'A_MOVE_SAME_SQUARE'
     end
 
-    for code,_ in pairs(MOVEMENT_KEYS) do
-        if keys[code] then
+    for code,_ in pairs(keys) do
+        if MOVEMENT_KEYS[code] or HOTKEY_KEYS[code] then
             local vp = self:getViewport():scrollByKey(code)
             if (cursor and not no_clip_cursor) or no_clip_cursor == false then
                 vp = vp:reveal(anchor,4,20,4,true)
@@ -329,16 +349,26 @@ function DwarfOverlay:simulateCursorMovement(keys, anchor)
         return 'A_MOVE_SAME_SQUARE'
     end
 
-    for code,_ in pairs(MOVEMENT_KEYS) do
-        if keys[code] then
+    for code,_ in pairs(keys) do
+        if MOVEMENT_KEYS[code] then
             local dx, dy, dz = get_movement_delta(code, 1, 10)
             local ncur = xyz2pos(cx+dx, cy+dy, cz+dz)
 
             if dfhack.maps.isValidTilePos(ncur) then
                 setCursorPos(ncur)
                 self:getViewport():reveal(ncur,4,10,6,true):set()
-                return code
             end
+
+            return code
+        elseif HOTKEY_KEYS[code] then
+            local pos = get_hotkey_target(code)
+
+            if pos and dfhack.maps.isValidTilePos(pos) then
+                setCursorPos(pos)
+                self:getViewport():centerOn(pos):set()
+            end
+
+            return code
         end
     end
 end

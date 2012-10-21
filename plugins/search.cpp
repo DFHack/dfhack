@@ -385,7 +385,7 @@ private:
             if (!is_entry_mode())
             {
                 clear_search();
-                reset_search();
+                reset_all();
             }
             else
                 input->clear();

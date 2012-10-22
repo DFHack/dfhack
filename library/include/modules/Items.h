@@ -161,7 +161,7 @@ DFHACK_EXPORT bool moveToGround(MapExtras::MapCache &mc, df::item *item, df::coo
 DFHACK_EXPORT bool moveToContainer(MapExtras::MapCache &mc, df::item *item, df::item *container);
 DFHACK_EXPORT bool moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,int16_t use_mode);
 DFHACK_EXPORT bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit,
-    df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Carried, int body_part = -1);
+    df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Hauled, int body_part = -1);
 
 /// Makes the item removed and marked for garbage collection
 DFHACK_EXPORT bool remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat = false);

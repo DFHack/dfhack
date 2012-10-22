@@ -321,7 +321,7 @@ std::string getUnitNameProfession(df::unit *unit)
 }
 
 enum InventoryMode {
-    INV_CARRIED,
+    INV_HAULED,
     INV_WEAPON,
     INV_WORN,
     INV_IN_CONTAINER
@@ -355,8 +355,8 @@ void listUnitInventory(std::vector<inv_item> *list, df::unit *unit)
         InventoryMode mode;
 
         switch (item->mode) {
-        case df::unit_inventory_item::Carried:
-            mode = INV_CARRIED;
+        case df::unit_inventory_item::Hauled:
+            mode = INV_HAULED;
             break;
         case df::unit_inventory_item::Weapon:
             mode = INV_WEAPON;

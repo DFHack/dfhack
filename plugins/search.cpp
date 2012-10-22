@@ -7,9 +7,10 @@
 
 #include <VTableInterpose.h>
 
-#include "df/viewscreen_unitlistst.h"
+#include "df/viewscreen_petst.h"
 #include "df/viewscreen_storesst.h"
 #include "df/viewscreen_tradegoodsst.h"
+#include "df/viewscreen_unitlistst.h"
 #include "df/interface_key.h"
 
 using std::set;
@@ -431,12 +432,16 @@ public:
 private:
     virtual string get_element_description(df::unit *element) const
     {
-        return Translation::TranslateName(Units::getVisibleName(element), false);
+        string desc = Translation::TranslateName(Units::getVisibleName(element), false);
+        if (viewscreen->page == 1)
+            desc += Units::getProfessionName(element);
+
+        return desc;
     }
 
     virtual bool should_check_input(set<df::interface_key> *input) 
     {
-        if (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT))
+        if (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT) || input->count(interface_key::CUSTOM_L))
         {
             if (!is_entry_mode())
             {
@@ -455,13 +460,21 @@ private:
 };
 
 typedef search_hook<df::viewscreen_unitlistst, unitlist_search> unitlist_search_hook;
-IMPLEMENT_VMETHOD_INTERPOSE(unitlist_search_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(unitlist_search_hook, render);
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, feed, 100);
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, render, 100);
 
 //
 // END: Unit screen search
 //
 
+
+//
+// TODO: Animals screen search
+//
+
+//
+// END: Animals screen search
+//
 
 //
 // START: Trade screen search

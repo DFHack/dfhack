@@ -493,7 +493,7 @@ static int setAmmoItem(lua_State *L)
     if (!entry.isValid())
         return 0;
 
-    engine->ammo_vector_id = job_item_vector_id::ANY_FREE;
+    engine->ammo_vector_id = job_item_vector_id::IN_PLAY;
     engine->ammo_item_type = item_type;
 
     FOR_ENUM_ITEMS(job_item_vector_id, id)

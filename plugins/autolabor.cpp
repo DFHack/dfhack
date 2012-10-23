@@ -1547,7 +1547,7 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
 
     }
 
-    std::vector<df::item*> &items = world->items.other[items_other_id::ANY_FREE];
+    std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
 
     // Precompute a bitmask with the bad flags
     df::item_flags bad_flags;

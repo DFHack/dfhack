@@ -500,7 +500,9 @@ static void OpenPersistent(lua_State *state)
  * Material info lookup *
  ************************/
 
-static void push_matinfo(lua_State *state, MaterialInfo &info)
+static int DFHACK_MATINFO_TOKEN = 0;
+
+void Lua::Push(lua_State *state, MaterialInfo &info)
 {
     if (!info.isValid())
     {
@@ -509,7 +511,7 @@ static void push_matinfo(lua_State *state, MaterialInfo &info)
     }
 
     lua_newtable(state);
-    lua_pushvalue(state, lua_upvalueindex(1));
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_MATINFO_TOKEN);
     lua_setmetatable(state, -2);
 
     lua_pushinteger(state, info.type);
@@ -564,7 +566,7 @@ static int dfhack_matinfo_find(lua_State *state)
         info.find(tokens);
     }
 
-    push_matinfo(state, info);
+    Lua::Push(state, info);
     return 1;
 }
 
@@ -632,7 +634,7 @@ static int dfhack_matinfo_decode(lua_State *state)
 {
     MaterialInfo info;
     decode_matinfo(state, &info, true);
-    push_matinfo(state, info);
+    Lua::Push(state, info);
     return 1;
 }
 
@@ -710,6 +712,9 @@ static const luaL_Reg dfhack_matinfo_funcs[] = {
 static void OpenMatinfo(lua_State *state)
 {
     luaL_getsubtable(state, lua_gettop(state), "matinfo");
+
+    lua_dup(state);
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_MATINFO_TOKEN);
 
     lua_dup(state);
     luaL_setfuncs(state, dfhack_matinfo_funcs, 1);

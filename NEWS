@@ -13,6 +13,7 @@ DFHack future
   New GUI scripts:
     - gui/guide-path: displays the cached path for minecart Guide orders.
     - gui/workshop-job: displays inputs of a workshop job and allows tweaking them.
+    - gui/workflow: a front-end for the workflow plugin.
 
 DFHack v0.34.11-r2
 

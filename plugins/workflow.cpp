@@ -4,6 +4,9 @@
 #include "PluginManager.h"
 #include "MiscUtils.h"
 
+#include "LuaTools.h"
+#include "DataFuncs.h"
+
 #include "modules/Materials.h"
 #include "modules/Items.h"
 #include "modules/Gui.h"
@@ -743,6 +746,20 @@ static void delete_constraint(ItemConstraint *cv)
     delete cv;
 }
 
+static bool deleteConstraint(std::string name)
+{
+    for (size_t i = 0; i < constraints.size(); i++)
+    {
+        if (constraints[i]->config.val() != name)
+            continue;
+
+        delete_constraint(constraints[i]);
+        return true;
+    }
+
+    return false;
+}
+
 /******************************
  *   JOB-CONSTRAINT MAPPING   *
  ******************************/
@@ -1347,6 +1364,153 @@ static void process_constraints(color_ostream &out)
     update_jobs_by_constraints(out);
 }
 
+static void update_data_structures(color_ostream &out)
+{
+    if (enabled) {
+        check_lost_jobs(out, 0);
+        recover_jobs(out);
+        update_job_data(out);
+        map_job_constraints(out);
+        map_job_items(out);
+    }
+}
+
+/*************
+ *  LUA API  *
+ *************/
+
+static bool isEnabled() { return enabled; }
+
+static void setEnabled(color_ostream &out, bool enable)
+{
+    if (enable && !enabled)
+    {
+        enable_plugin(out);
+    }
+    else if (!enable && enabled)
+    {
+        enabled = false;
+        setOptionEnabled(CF_ENABLED, false);
+        stop_protect(out);
+    }
+}
+
+static void push_constraint(lua_State *L, ItemConstraint *cv)
+{
+    lua_newtable(L);
+    int ctable = lua_gettop(L);
+
+    Lua::SetField(L, cv->config.entry_id(), ctable, "id");
+    Lua::SetField(L, cv->config.val(), ctable, "token");
+
+    // Constraint key
+
+    Lua::SetField(L, cv->item.type, ctable, "item_type");
+    Lua::SetField(L, cv->item.subtype, ctable, "item_subtype");
+
+    Lua::SetField(L, cv->is_craft, ctable, "is_craft");
+
+    Lua::PushDFObject(L, &cv->mat_mask);
+    lua_setfield(L, -2, "mat_mask");
+
+    Lua::SetField(L, cv->material.type, ctable, "mat_type");
+    Lua::SetField(L, cv->material.index, ctable, "mat_index");
+
+    Lua::SetField(L, (int)cv->min_quality, ctable, "min_quality");
+
+    // Constraint value
+
+    Lua::SetField(L, cv->goalByCount(), ctable, "goal_by_count");
+    Lua::SetField(L, cv->goalCount(), ctable, "goal_value");
+    Lua::SetField(L, cv->goalGap(), ctable, "goal_gap");
+
+    Lua::SetField(L, cv->item_amount, ctable, "cur_amount");
+    Lua::SetField(L, cv->item_count, ctable, "cur_count");
+    Lua::SetField(L, cv->item_inuse, ctable, "cur_in_use");
+
+    // Current state value
+
+    if (cv->request_resume)
+        Lua::SetField(L, "resume", ctable, "request");
+    else if (cv->request_suspend)
+        Lua::SetField(L, "suspend", ctable, "request");
+
+    lua_newtable(L);
+
+    for (size_t i = 0, j = 0; i < cv->jobs.size(); i++)
+    {
+        if (!cv->jobs[i]->isLive()) continue;
+        Lua::PushDFObject(L, cv->jobs[i]->actual_job);
+        lua_rawseti(L, -2, ++j);
+    }
+
+    lua_setfield(L, ctable, "jobs");
+}
+
+static int listConstraints(lua_State *L)
+{
+    auto job = Lua::CheckDFObject<df::job>(L, 1);
+    ProtectedJob *pj = NULL;
+    if (job)
+        pj = get_known(job->id);
+
+    if (!enabled || (job && !pj))
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    color_ostream &out = *Lua::GetOutput(L);
+    update_data_structures(out);
+
+    lua_newtable(L);
+
+    auto &vec = (pj ? pj->constraints : constraints);
+
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        push_constraint(L, vec[i]);
+        lua_rawseti(L, -2, i+1);
+    }
+
+    return 1;
+}
+
+static int setConstraint(lua_State *L)
+{
+    auto token = luaL_checkstring(L, 1);
+    bool by_count = lua_toboolean(L, 2);
+    int count = luaL_checkint(L, 3);
+    int gap = luaL_optint(L, 4, -1);
+
+    color_ostream &out = *Lua::GetOutput(L);
+
+    ItemConstraint *icv = get_constraint(out, token);
+    if (!icv)
+        luaL_error(L, "invalid constraint: %s", token);
+
+    icv->setGoalByCount(by_count);
+    icv->setGoalCount(count);
+    icv->setGoalGap(gap);
+
+    process_constraints(out);
+    push_constraint(L, icv);
+    return 1;
+}
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(isEnabled),
+    DFHACK_LUA_FUNCTION(setEnabled),
+    DFHACK_LUA_FUNCTION(deleteConstraint),
+    DFHACK_LUA_END
+};
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(listConstraints),
+    DFHACK_LUA_COMMAND(setConstraint),
+    DFHACK_LUA_END
+};
+
 /******************************
  *  PRINTING AND THE COMMAND  *
  ******************************/
@@ -1490,13 +1654,7 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
         return CR_FAILURE;
     }
 
-    if (enabled) {
-        check_lost_jobs(out, 0);
-        recover_jobs(out);
-        update_job_data(out);
-        map_job_constraints(out);
-        map_job_items(out);
-    }
+    update_data_structures(out);
 
     df::building *workshop = NULL;
     //FIXME: unused variable!
@@ -1514,18 +1672,11 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
     if (cmd == "enable" || cmd == "disable")
     {
         bool enable = (cmd == "enable");
-        if (enable && !enabled)
+        if (enable)
+            setEnabled(out, true);
+        else if (parameters.size() == 1)
         {
-            enable_plugin(out);
-        }
-        else if (!enable && parameters.size() == 1)
-        {
-            if (enabled)
-            {
-                enabled = false;
-                setOptionEnabled(CF_ENABLED, false);
-                stop_protect(out);
-            }
+            setEnabled(out, false);
 
             out << "The plugin is disabled." << endl;
             return CR_OK;
@@ -1643,14 +1794,8 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
         if (parameters.size() != 2)
             return CR_WRONG_USAGE;
 
-        for (size_t i = 0; i < constraints.size(); i++)
-        {
-            if (constraints[i]->config.val() != parameters[1])
-                continue;
-
-            delete_constraint(constraints[i]);
+        if (deleteConstraint(parameters[1]))
             return CR_OK;
-        }
 
         out.printerr("Constraint not found: %s\n", parameters[1].c_str());
         return CR_FAILURE;

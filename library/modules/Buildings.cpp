@@ -762,7 +762,7 @@ static void markBuildingTiles(df::building *bld, bool remove)
 
 static void linkRooms(df::building *bld)
 {
-    auto &vec = world->buildings.other[buildings_other_id::ANY_FREE];
+    auto &vec = world->buildings.other[buildings_other_id::IN_PLAY];
 
     bool changed = false;
 

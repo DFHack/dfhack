@@ -1150,7 +1150,7 @@ static void map_job_items(color_ostream &out)
 
     bool dry_buckets = isOptionEnabled(CF_DRYBUCKETS);
 
-    std::vector<df::item*> &items = world->items.other[items_other_id::ANY_FREE];
+    std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
 
     for (size_t i = 0; i < items.size(); i++)
     {

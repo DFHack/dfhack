@@ -323,6 +323,7 @@ public:
     void init(const std::string &str)
     {
         config.val() = str;
+        config.ival(0) = 10;
         config.ival(2) = 0;
     }
 
@@ -1481,7 +1482,7 @@ static int setConstraint(lua_State *L)
 {
     auto token = luaL_checkstring(L, 1);
     bool by_count = lua_toboolean(L, 2);
-    int count = luaL_checkint(L, 3);
+    int count = luaL_optint(L, 3, -1);
     int gap = luaL_optint(L, 4, -1);
 
     color_ostream &out = *Lua::GetOutput(L);
@@ -1491,8 +1492,10 @@ static int setConstraint(lua_State *L)
         luaL_error(L, "invalid constraint: %s", token);
 
     icv->setGoalByCount(by_count);
-    icv->setGoalCount(count);
-    icv->setGoalGap(gap);
+    if (!lua_isnil(L, 3))
+        icv->setGoalCount(count);
+    if (!lua_isnil(L, 4))
+        icv->setGoalGap(gap);
 
     process_constraints(out);
     push_constraint(L, icv);

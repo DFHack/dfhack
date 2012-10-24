@@ -125,10 +125,13 @@ end
 
 function describe_item_type(iobj)
     local itemline = 'any item'
-    if iobj.item_type >= 0 then
+    if iobj.is_craft then
+        itemline = 'any craft'
+    elseif iobj.item_type >= 0 then
         itemline = df.item_type.attrs[iobj.item_type].caption or iobj.item_type
-        local def = dfhack.items.getSubtypeDef(iobj.item_type, iobj.item_subtype)
-        local count = dfhack.items.getSubtypeCount(iobj.item_type, iobj.item_subtype)
+        local subtype = iobj.item_subtype or -1
+        local def = dfhack.items.getSubtypeDef(iobj.item_type, subtype)
+        local count = dfhack.items.getSubtypeCount(iobj.item_type, subtype)
         if def then
             itemline = def.name
         elseif count >= 0 then
@@ -139,14 +142,14 @@ function describe_item_type(iobj)
 end
 
 function is_caste_mat(iobj)
-    return dfhack.items.isCasteMaterial(iobj.item_type)
+    return dfhack.items.isCasteMaterial(iobj.item_type or -1)
 end
 
 function describe_material(iobj)
     local matline = 'any material'
     if is_caste_mat(iobj) then
-        matline = 'material not applicable'
-    elseif iobj.mat_type >= 0 then
+        matline = 'no material'
+    elseif (iobj.mat_type or -1) >= 0 then
         local info = dfhack.matinfo.decode(iobj.mat_type, iobj.mat_index)
         if info then
             matline = info:toString()
@@ -157,12 +160,16 @@ function describe_material(iobj)
     return matline
 end
 
-function list_flags(list, bitfield)
-    for name,val in pairs(bitfield) do
-        if val then
-            table.insert(list, name)
+function list_flags(bitfield)
+    local list = {}
+    if bitfield then
+        for name,val in pairs(bitfield) do
+            if val then
+                table.insert(list, name)
+            end
         end
     end
+    return list
 end
 
 function JobConstraints:initListChoices(clist)
@@ -186,19 +193,13 @@ function JobConstraints:initListChoices(clist)
         elseif cons.request == 'suspend' then
             order_pen = COLOR_RED
         end
-        local itemstr
-        if cons.is_craft then
-            itemstr = 'any craft'
-        else
-            itemstr = describe_item_type(cons)
-        end
+        local itemstr = describe_item_type(cons)
         if cons.min_quality > 0 then
             itemstr = itemstr .. ' ('..df.item_quality[cons.min_quality]..')'
         end
         local matstr = describe_material(cons)
         local matflagstr = ''
-        local matflags = {}
-        list_flags(matflags, cons.mat_mask)
+        local matflags = list_flags(cons.mat_mask)
         if #matflags > 0 then
             matflags[1] = 'any '..matflags[1]
             if matstr == 'any material' then
@@ -284,7 +285,80 @@ function JobConstraints:onIncRange(field, delta)
     self:saveConstraint(cons)
 end
 
+function make_constraint_variants(outputs)
+    local variants = {}
+    local known = {}
+    local function register(cons)
+        cons.token = workflow.constraintToToken(cons)
+        if not known[cons.token] then
+            known[cons.token] = true
+            table.insert(variants, cons)
+        end
+    end
+
+    local generic = {}
+    local anymat = {}
+    for i,cons in ipairs(outputs) do
+        local mask = cons.mat_mask
+        if (cons.mat_type or -1) >= 0 then
+            cons.mat_mask = nil
+        end
+        register(cons)
+        if mask then
+            table.insert(generic, {
+                item_type = cons.item_type,
+                item_subtype = cons.item_subtype,
+                is_craft = cons.is_craft,
+                mat_mask = mask
+            })
+        end
+        table.insert(anymat, {
+            item_type = cons.item_type,
+            item_subtype = cons.item_subtype,
+            is_craft = cons.is_craft
+        })
+    end
+    for i,cons in ipairs(generic) do register(cons) end
+    for i,cons in ipairs(anymat) do register(cons) end
+
+    return variants
+end
+
 function JobConstraints:onNewConstraint()
+    local outputs = workflow.listJobOutputs(self.job)
+    if #outputs == 0 then
+        dlg.showMessage('Unsupported', 'Workflow cannot guess the outputs of this job.', COLOR_LIGHTRED)
+        return
+    end
+
+    local variants = make_constraint_variants(outputs)
+
+    local choices = {}
+    for i,cons in ipairs(variants) do
+        local itemstr = describe_item_type(cons)
+        local matstr = describe_material(cons)
+        local matflags = list_flags(cons.mat_mask or {})
+        if #matflags > 0 then
+            local fstr = table.concat(matflags, '/')
+            if matstr == 'any material' then
+                matstr = 'any '..fstr
+            else
+                matstr = 'any '..fstr..' '..matstr
+            end
+        end
+
+        table.insert(choices, { text = itemstr..' of '..matstr, obj = cons })
+    end
+
+    dlg.showListPrompt(
+        'Job Outputs',
+        'Select one of the job outputs:',
+        COLOR_WHITE,
+        choices,
+        function(idx,item)
+            self:saveConstraint(item.obj)
+        end
+    )
 end
 
 function JobConstraints:onDeleteConstraint()

@@ -312,7 +312,7 @@ std::string MaterialInfo::getToken()
             else if (index == 1)
                 return "COAL:CHARCOAL";
         }
-        return material->id;
+        return material->id + ":NONE";
     case Inorganic:
         return "INORGANIC:" + inorganic->id;
     case Creature:

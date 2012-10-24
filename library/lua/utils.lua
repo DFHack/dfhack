@@ -283,6 +283,16 @@ function clone_with_default(obj,default,force)
     return rv
 end
 
+function parse_bitfield_int(value, type_ref)
+    local res = {}
+    for i,v in ipairs(type_ref) do
+        if bit32.extract(value, i) ~= 0 then
+            res[v] = true
+        end
+    end
+    return res
+end
+
 -- Sort a vector or lua table
 function sort_vector(vector,field,cmp)
     local fcmp = compare_field(field,cmp)
@@ -304,16 +314,26 @@ end
 
 -- Linear search
 
-function linear_index(vector,obj)
+function linear_index(vector,key,field)
     local min,max
     if df.isvalid(vector) then
         min,max = 0,#vector-1
     else
         min,max = 1,#vector
     end
-    for i=min,max do
-        if vector[i] == obj then
-            return i
+    if field then
+        for i=min,max do
+            local obj = vector[i]
+            if obj[field] == key then
+                return i, obj
+            end
+        end
+    else
+        for i=min,max do
+            local obj = vector[i]
+            if obj == key then
+                return i, obj
+            end
         end
     end
     return nil

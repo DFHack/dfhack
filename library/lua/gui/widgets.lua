@@ -216,7 +216,7 @@ local function is_disabled(token)
            (token.enabled ~= nil and not getval(token.enabled))
 end
 
-function render_text(obj,dc,x0,y0,pen,dpen)
+function render_text(obj,dc,x0,y0,pen,dpen,disabled)
     local width = 0
     for iline,line in ipairs(obj.text_lines) do
         local x = 0
@@ -246,7 +246,7 @@ function render_text(obj,dc,x0,y0,pen,dpen)
                 local keypen
 
                 if dc then
-                    if is_disabled(token) then
+                    if disabled or is_disabled(token) then
                         dc:pen(getval(token.dpen) or dpen)
                         keypen = COLOR_GREEN
                     else
@@ -305,6 +305,8 @@ Label = defclass(Label, Widget)
 Label.ATTRS{
     text_pen = COLOR_WHITE,
     text_dpen = COLOR_DARKGREY,
+    disabled = DEFAULT_NIL,
+    enabled = DEFAULT_NIL,
     auto_height = true,
     auto_width = false,
 }
@@ -346,11 +348,13 @@ function Label:getTextWidth()
 end
 
 function Label:onRenderBody(dc)
-    render_text(self,dc,0,0,self.text_pen,self.text_dpen)
+    render_text(self,dc,0,0,self.text_pen,self.text_dpen,is_disabled(self))
 end
 
 function Label:onInput(keys)
-    return check_text_keys(self, keys)
+    if not is_disabled(self) then
+        return check_text_keys(self, keys)
+    end
 end
 
 ----------
@@ -376,7 +380,6 @@ SECONDSCROLL = {
 List.ATTRS{
     text_pen = COLOR_CYAN,
     cursor_pen = COLOR_LIGHTCYAN,
-    cursor_dpen = DEFAULT_NIL,
     inactive_pen = DEFAULT_NIL,
     on_select = DEFAULT_NIL,
     on_submit = DEFAULT_NIL,
@@ -417,7 +420,9 @@ function List:getChoices()
 end
 
 function List:getSelected()
-    return self.selected, self.choices[self.selected]
+    if #self.choices > 0 then
+        return self.selected, self.choices[self.selected]
+    end
 end
 
 function List:getContentWidth()
@@ -485,15 +490,11 @@ function List:onRenderBody(dc)
     for i = top,iend do
         local obj = choices[i]
         local current = (i == self.selected)
-        local cur_pen = self.text_pen
-        local cur_dpen = cur_pen
+        local cur_pen = self.cursor_pen
+        local cur_dpen = self.text_pen
 
-        if current and active then
-            cur_pen = self.cursor_pen
-            cur_dpen = self.cursor_dpen or self.text_pen
-        elseif current then
+        if not self.active then
             cur_pen = self.inactive_pen or self.cursor_pen
-            cur_dpen = self.inactive_pen or self.text_pen
         end
 
         local y = (i - top)*self.row_height
@@ -503,11 +504,15 @@ function List:onRenderBody(dc)
             if type(obj.icon) == 'table' then
                 dc:char(nil,obj.icon)
             else
-                dc:string(obj.icon, obj.icon_pen or cur_pen)
+                if current then
+                    dc:string(obj.icon, obj.icon_pen or cur_pen)
+                else
+                    dc:string(obj.icon, obj.icon_pen or cur_dpen)
+                end
             end
         end
 
-        render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen)
+        render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen, not current)
 
         if obj.key then
             local keystr = gui.getKeyDisplay(obj.key)
@@ -620,7 +625,9 @@ end
 
 function FilteredList:getSelected()
     local i,v = self.list:getSelected()
-    return map_opttab(self.choice_index, i), v
+    if i then
+        return map_opttab(self.choice_index, i), v
+    end
 end
 
 function FilteredList:getContentWidth()

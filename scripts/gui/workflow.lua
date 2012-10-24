@@ -36,6 +36,8 @@ JobConstraints.ATTRS {
     frame_background = COLOR_BLACK,
 }
 
+local null_cons = { goal_value = 0, goal_gap = 0, goal_by_count = false }
+
 function JobConstraints:init(args)
     self.building = dfhack.job.getHolder(self.job)
 
@@ -56,13 +58,54 @@ function JobConstraints:init(args)
         },
         widgets.List{
             view_id = 'list',
-            frame = { t = 2, b = 2 },
+            frame = { t = 2, b = 6 },
             row_height = 4,
             scroll_keys = widgets.SECONDSCROLL,
         },
         widgets.Label{
+            frame = { l = 0, b = 3 },
+            enabled = self:callback('isAnySelected'),
+            text = {
+                { key = 'BUILDING_TRIGGER_ENABLE_CREATURE',
+                  text = function()
+                    local cons = self:getCurConstraint() or null_cons
+                    if cons.goal_by_count then
+                        return ': Count stacks  '
+                    else
+                        return ': Count items   '
+                    end
+                  end,
+                  on_activate = self:callback('onChangeUnit') },
+                { key = 'BUILDING_TRIGGER_ENABLE_MAGMA', text = ': Modify',
+                  on_activate = self:callback('onEditRange') },
+                  NEWLINE, '  ',
+                { key = 'BUILDING_TRIGGER_MIN_SIZE_DOWN',
+                  on_activate = self:callback('onIncRange', 'goal_gap', 5) },
+                { key = 'BUILDING_TRIGGER_MIN_SIZE_UP',
+                  on_activate = self:callback('onIncRange', 'goal_gap', -1) },
+                { text = function()
+                    local cons = self:getCurConstraint() or null_cons
+                    return string.format(': Min %-4d ', cons.goal_value - cons.goal_gap)
+                  end },
+                { key = 'BUILDING_TRIGGER_MAX_SIZE_DOWN',
+                  on_activate = self:callback('onIncRange', 'goal_value', -1) },
+                { key = 'BUILDING_TRIGGER_MAX_SIZE_UP',
+                  on_activate = self:callback('onIncRange', 'goal_value', 5) },
+                { text = function()
+                    local cons = self:getCurConstraint() or null_cons
+                    return string.format(': Max %-4d', cons.goal_value)
+                  end },
+            }
+        },
+        widgets.Label{
             frame = { l = 0, b = 0 },
             text = {
+                { key = 'CUSTOM_N', text = ': New limit, ',
+                  on_activate = self:callback('onNewConstraint') },
+                { key = 'CUSTOM_X', text = ': Delete',
+                  enabled = self:callback('isAnySelected'),
+                  on_activate = self:callback('onDeleteConstraint') },
+                NEWLINE, NEWLINE,
                 { key = 'LEAVESCREEN', text = ': Back',
                   on_activate = self:callback('dismiss') }
             }
@@ -157,7 +200,14 @@ function JobConstraints:initListChoices(clist)
         local matflags = {}
         list_flags(matflags, cons.mat_mask)
         if #matflags > 0 then
-            matflagstr = 'class: '..table.concat(matflags, ', ')
+            matflags[1] = 'any '..matflags[1]
+            if matstr == 'any material' then
+                matstr = table.concat(matflags, ', ')
+                matflags = {}
+            end
+        end
+        if #matflags > 0 then
+            matflagstr = table.concat(matflags, ', ')
         end
 
         table.insert(choices, {
@@ -170,6 +220,84 @@ function JobConstraints:initListChoices(clist)
     end
 
     self.subviews.list:setChoices(choices)
+end
+
+function JobConstraints:isAnySelected()
+    return self.subviews.list:getSelected() ~= nil
+end
+
+function JobConstraints:getCurConstraint()
+    local i,v = self.subviews.list:getSelected()
+    if v then return v.obj end
+end
+
+function JobConstraints:getCurUnit()
+    local cons = self:getCurConstraint()
+    if cons and cons.goal_by_count then
+        return 'stacks'
+    else
+        return 'items'
+    end
+end
+
+function JobConstraints:saveConstraint(cons)
+    workflow.setConstraint(cons.token, cons.goal_by_count, cons.goal_value, cons.goal_gap)
+    self:initListChoices()
+end
+
+function JobConstraints:onChangeUnit()
+    local cons = self:getCurConstraint()
+    cons.goal_by_count = not cons.goal_by_count
+    self:saveConstraint(cons)
+end
+
+function JobConstraints:onEditRange()
+    local cons = self:getCurConstraint()
+    dlg.showInputPrompt(
+        'Input Range',
+        'Enter the new constraint range:',
+        COLOR_WHITE,
+        (cons.goal_value-cons.goal_gap)..'-'..cons.goal_value,
+        function(text)
+            local maxv = string.match(text, '^%s*(%d+)%s*$')
+            if maxv then
+                cons.goal_value = maxv
+                return self:saveConstraint(cons)
+            end
+            local minv,maxv = string.match(text, '^%s*(%d+)-(%d+)%s*$')
+            if minv and maxv and minv ~= maxv then
+                cons.goal_value = math.max(minv,maxv)
+                cons.goal_gap = math.abs(maxv-minv)
+                return self:saveConstraint(cons)
+            end
+            dlg.showMessage('Invalid Range', 'This range is invalid: '..text, COLOR_LIGHTRED)
+        end
+    )
+end
+
+function JobConstraints:onIncRange(field, delta)
+    local cons = self:getCurConstraint()
+    if not cons.goal_by_count then
+        delta = delta * 5
+    end
+    cons[field] = math.max(1, cons[field] + delta)
+    self:saveConstraint(cons)
+end
+
+function JobConstraints:onNewConstraint()
+end
+
+function JobConstraints:onDeleteConstraint()
+    local cons = self:getCurConstraint()
+    dlg.showYesNoPrompt(
+        'Delete Constraint',
+        'Really delete the current constraint?',
+        COLOR_YELLOW,
+        function()
+            workflow.deleteConstraint(cons.token)
+            self:initListChoices()
+        end
+    )
 end
 
 function JobConstraints:onInput(keys)

@@ -64,12 +64,12 @@ function job_outputs.CustomReaction(callback, job)
                 end
 
                 if get_mat_prod then
+                    local p_code = prod.get_material.product_code
                     local mat = dfhack.matinfo.decode(mat_type, mat_index)
 
                     mat_type, mat_index = -1, -1
 
                     if mat then
-                        local p_code = prod.get_material.product_code
                         local rp = mat.material.reaction_product
                         local idx = utils.linear_index(rp.id, p_code)
                         if not idx then
@@ -77,7 +77,7 @@ function job_outputs.CustomReaction(callback, job)
                         end
                         mat_type, mat_index = rp.material.mat_type[idx], rp.material.mat_index[idx]
                     else
-                        if code == "SOAP_MAT" then
+                        if p_code == "SOAP_MAT" then
                             mat_mask = { soap = true }
                         end
                     end
@@ -106,7 +106,7 @@ local function guess_job_material(job)
     local jmat = df.job_type.attrs[job.job_type].material
     if jmat then
         mat_type, mat_index = df.builtin_mats[jmat] or -1, -1
-        if mat_type < 0 and df.job_material_category[jmat] then
+        if mat_type < 0 and df.dfhack_material_category[jmat] then
             mat_mask = { [jmat] = true }
         end
     end
@@ -218,6 +218,18 @@ local function enum_job_outputs(callback, job)
     else
         default_output(callback, job, guess_job_material(job))
     end
+end
+
+function doEnumJobOutputs(native_cb, job)
+    local function cb(info)
+        native_cb(
+            info.item_type, info.item_subtype,
+            info.mat_mask, info.mat_type, info.mat_index,
+            info.is_craft
+        )
+    end
+
+    enum_job_outputs(cb, job)
 end
 
 function listJobOutputs(job)

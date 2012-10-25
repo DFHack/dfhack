@@ -379,13 +379,6 @@ static bool isSupportedJob(df::job *job)
             job->job_type == job_type::CollectSand);
 }
 
-static void enumLiveJobs(std::map<int, df::job*> &rv)
-{
-    df::job_list_link *p = world->job_list.next;
-    for (; p; p = p->next)
-        rv[p->item->id] = p->item;
-}
-
 static bool isOptionEnabled(unsigned flag)
 {
     return config.isValid() && (config.ival(0) & flag) != 0;
@@ -828,71 +821,6 @@ static void link_job_constraint(ProtectedJob *pj, df::item_type itype, int16_t i
     }
 }
 
-static void compute_custom_job(ProtectedJob *pj, df::job *job)
-{
-    if (pj->reaction_id < 0)
-        pj->reaction_id = linear_index(df::reaction::get_vector(),
-                                       &df::reaction::code, job->reaction_name);
-
-    df::reaction *r = df::reaction::find(pj->reaction_id);
-    if (!r)
-        return;
-
-    for (size_t i = 0; i < r->products.size(); i++)
-    {
-        using namespace df::enums::reaction_product_item_flags;
-
-        VIRTUAL_CAST_VAR(prod, df::reaction_product_itemst, r->products[i]);
-        if (!prod || (prod->item_type < (df::item_type)0 && !prod->flags.is_set(CRAFTS)))
-            continue;
-
-        MaterialInfo mat(prod);
-        df::dfhack_material_category mat_mask(0);
-
-        bool get_mat_prod = prod->flags.is_set(GET_MATERIAL_PRODUCT);
-        if (get_mat_prod || prod->flags.is_set(GET_MATERIAL_SAME))
-        {
-            int reagent_idx = linear_index(r->reagents, &df::reaction_reagent::code,
-                                           prod->get_material.reagent_code);
-            if (reagent_idx < 0)
-                continue;
-
-            int item_idx = linear_index(job->job_items, &df::job_item::reagent_index, reagent_idx);
-            if (item_idx >= 0)
-                mat.decode(job->job_items[item_idx]);
-            else
-            {
-                VIRTUAL_CAST_VAR(src, df::reaction_reagent_itemst, r->reagents[reagent_idx]);
-                if (!src)
-                    continue;
-                mat.decode(src);
-            }
-
-            if (get_mat_prod)
-            {
-                std::string code = prod->get_material.product_code;
-
-                if (mat.isValid())
-                {
-                    int idx = linear_index(mat.material->reaction_product.id, code);
-                    if (idx < 0)
-                        continue;
-
-                    mat.decode(mat.material->reaction_product.material, idx);
-                }
-                else
-                {
-                    if (code == "SOAP_MAT")
-                        mat_mask.bits.soap = true;
-                }
-            }
-        }
-
-        link_job_constraint(pj, prod->item_type, prod->item_subtype,
-                            mat_mask, mat.type, mat.index, prod->flags.is_set(CRAFTS)); 
-    }
-}
-
 static void guess_job_material(df::job *job, MaterialInfo &mat, df::dfhack_material_category &mat_mask)
 {
     using namespace df::enums::job_type;
@@ -934,100 +862,24 @@ static void guess_job_material(df::job *job, MaterialInfo &mat, df::dfhack_mater
     }
 }
 
-static void compute_job_outputs(color_ostream &out, ProtectedJob *pj)
+static int cbEnumJobOutputs(lua_State *L)
 {
-    using namespace df::enums::job_type;
+    auto pj = (ProtectedJob*)lua_touserdata(L, lua_upvalueindex(1));
 
-    // Custom reactions handled in another function
-    df::job *job = pj->job_copy;
+    lua_settop(L, 6);
 
-    if (job->job_type == CustomReaction)
-    {
-        compute_custom_job(pj, job);
-        return;
-    }
+    df::dfhack_material_category mat_mask(0);
+    if (!lua_isnil(L, 3))
+        Lua::CheckDFAssign(L, &mat_mask, 3);
 
-    // Item type & subtype
-    df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
-    int16_t isubtype = job->item_subtype;
+    link_job_constraint(
+        pj,
+        (df::item_type)luaL_optint(L, 1, -1), luaL_optint(L, 2, -1),
+        mat_mask, luaL_optint(L, 4, -1), luaL_optint(L, 5, -1),
+        lua_toboolean(L, 6)
+    );
 
-    if (itype == item_type::NONE && job->job_type != MakeCrafts)
-        return;
-
-    // Item material & material category
-    MaterialInfo mat;
-    df::dfhack_material_category mat_mask;
-    guess_job_material(job, mat, mat_mask);
-
-    // Job-specific code
-    switch (job->job_type)
-    {
-    case SmeltOre:
-        if (mat.inorganic)
-        {
-            std::vector<int16_t> &ores = mat.inorganic->metal_ore.mat_index;
-            for (size_t i = 0; i < ores.size(); i++)
-                link_job_constraint(pj, item_type::BAR, -1, 0, 0, ores[i]);
-        }
-        return;
-
-    case ExtractMetalStrands:
-        if (mat.inorganic)
-        {
-            std::vector<int16_t> &threads = mat.inorganic->thread_metal.mat_index;
-            for (size_t i = 0; i < threads.size(); i++)
-                link_job_constraint(pj, item_type::THREAD, -1, 0, 0, threads[i]);
-        }
-        return;
-
-    case PrepareMeal:
-        if (job->mat_type != -1)
-        {
-            std::vector<df::itemdef_foodst*> &food = df::itemdef_foodst::get_vector();
-            for (size_t i = 0; i < food.size(); i++)
-                if (food[i]->level == job->mat_type)
-                    link_job_constraint(pj, item_type::FOOD, i, 0, -1, -1);
-            return;
-        }
-        break;
-
-    case MakeCrafts:
-        link_job_constraint(pj, item_type::NONE, -1, mat_mask, mat.type, mat.index, true);
-        return;
-
-#define PLANT_PROCESS_MAT(flag, tag) \
-        if (mat.plant && mat.plant->flags.is_set(plant_raw_flags::flag)) \
-            mat.decode(mat.plant->material_defs.type_##tag, \
-                       mat.plant->material_defs.idx_##tag); \
-        else mat.decode(-1);
-    case BrewDrink:
-        PLANT_PROCESS_MAT(DRINK, drink);
-        break;
-    case MillPlants:
-        PLANT_PROCESS_MAT(MILL, mill);
-        break;
-    case ProcessPlants:
-        PLANT_PROCESS_MAT(THREAD, thread);
-        break;
-    case ProcessPlantsBag:
-        PLANT_PROCESS_MAT(LEAVES, leaves);
-        break;
-    case ProcessPlantsBarrel:
-        PLANT_PROCESS_MAT(EXTRACT_BARREL, extract_barrel);
-        break;
-    case ProcessPlantsVial:
-        PLANT_PROCESS_MAT(EXTRACT_VIAL, extract_vial);
-        break;
-    case ExtractFromPlants:
-        PLANT_PROCESS_MAT(EXTRACT_STILL_VIAL, extract_still_vial);
-        break;
-#undef PLANT_PROCESS_MAT
-
-    default:
-        break;
-    }
-
-    link_job_constraint(pj, itype, isubtype, mat_mask, mat.type, mat.index);
+    return 0;
 }
 
 static void map_job_constraints(color_ostream &out)
@@ -1040,19 +892,32 @@ static void map_job_constraints(color_ostream &out)
         constraints[i]->is_active = false;
     }
 
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder frame(L);
+
+    bool ok = Lua::PushModulePublic(out, L, "plugins.workflow", "doEnumJobOutputs");
+    if (!ok)
+        out.printerr("The workflow lua module is not available.\n");
+
     for (TKnownJobs::const_iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
     {
         ProtectedJob *pj = it->second;
 
         pj->constraints.clear();
 
-        if (!pj->isLive())
+        if (!ok || !pj->isLive())
             continue;
 
         if (!melt_active && pj->actual_job->job_type == job_type::MeltMetalObject)
             melt_active = pj->isResumed();
 
-        compute_job_outputs(out, pj);
+        // Call the lua module
+        lua_pushvalue(L, -1);
+        lua_pushlightuserdata(L, pj);
+        lua_pushcclosure(L, cbEnumJobOutputs, 1);
+        Lua::PushDFObject(L, pj->job_copy);
+
+        Lua::SafeCall(out, L, 2, 0);
     }
 }
 

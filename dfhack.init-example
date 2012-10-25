@@ -79,7 +79,7 @@ keybinding add Alt-P@dwarfmode/Hauling/DefineStop/Cond/Guide gui/guide-path
 keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
 
 # workflow front-end
-keybinding add Ctrl-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
+keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
 
 ############################
 # UI and game logic tweaks #

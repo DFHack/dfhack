@@ -639,7 +639,12 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
 
 void dfhack_lua_viewscreen::render()
 {
-    if (Screen::isDismissed(this)) return;
+    if (Screen::isDismissed(this))
+    {
+        if (parent)
+            parent->render();
+        return;
+    }
 
     dfhack_viewscreen::render();
 

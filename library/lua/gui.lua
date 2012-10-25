@@ -513,17 +513,18 @@ function Screen:sendInputToParent(...)
     end
 end
 
-function Screen:show(below)
+function Screen:show(parent)
     if self._native then
         error("This screen is already on display")
     end
-    self:onAboutToShow(below)
-    if not dscreen.show(self, below) then
+    parent = parent or dfhack.gui.getCurViewscreen(true)
+    self:onAboutToShow(parent)
+    if not dscreen.show(self, parent.child) then
         error('Could not show screen')
     end
 end
 
-function Screen:onAboutToShow()
+function Screen:onAboutToShow(parent)
 end
 
 function Screen:onShow()

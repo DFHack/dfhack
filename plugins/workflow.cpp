@@ -1452,18 +1452,22 @@ static void push_constraint(lua_State *L, ItemConstraint *cv)
 static int listConstraints(lua_State *L)
 {
     auto job = Lua::CheckDFObject<df::job>(L, 1);
-    ProtectedJob *pj = NULL;
-    if (job)
-        pj = get_known(job->id);
 
-    if (!enabled || (job && !pj))
-    {
-        lua_pushnil(L);
+    lua_pushnil(L);
+
+    if (!enabled || (job && !isSupportedJob(job)))
         return 1;
-    }
 
     color_ostream &out = *Lua::GetOutput(L);
     update_data_structures(out);
+
+    ProtectedJob *pj = NULL;
+    if (job)
+    {
+        pj = get_known(job->id);
+        if (!pj)
+            return 1;
+    }
 
     lua_newtable(L);
 
@@ -1491,7 +1495,8 @@ static int setConstraint(lua_State *L)
     if (!icv)
         luaL_error(L, "invalid constraint: %s", token);
 
-    icv->setGoalByCount(by_count);
+    if (!lua_isnil(L, 2))
+        icv->setGoalByCount(by_count);
     if (!lua_isnil(L, 3))
         icv->setGoalCount(count);
     if (!lua_isnil(L, 4))

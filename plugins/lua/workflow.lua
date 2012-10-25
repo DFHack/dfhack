@@ -9,7 +9,7 @@ local utils = require 'utils'
  * isEnabled()
  * setEnabled(enable)
  * listConstraints([job]) -> {...}
- * setConstraint(token, by_count, goal[, gap]) -> {...}
+ * setConstraint(token[, by_count, goal, gap]) -> {...}
  * deleteConstraint(token) -> true/false
 
 --]]
@@ -39,6 +39,10 @@ local job_outputs = {}
 
 function job_outputs.CustomReaction(callback, job)
     local rid, r = get_reaction(job.reaction_name)
+
+    if not r then
+        return
+    end
 
     for i,prod in ipairs(r.products) do
         if df.reaction_product_itemst:is_instance(prod) then
@@ -239,11 +243,7 @@ function constraintToToken(cspec)
     end
     local mask_part
     if cspec.mat_mask then
-        local lst = {}
-        for n,v in pairs(cspec.mat_mask) do
-            if v then table.insert(lst,n) end
-        end
-        mask_part = table.concat(lst, ',')
+        mask_part = table.concat(utils.list_bitfield_flags(cspec.mat_mask), ',')
     end
     local mat_part
     if cspec.mat_type and cspec.mat_type >= 0 then
@@ -270,6 +270,45 @@ function constraintToToken(cspec)
     end
 
     return token
+end
+
+function listWeakenedConstraints(outputs)
+    local variants = {}
+    local known = {}
+    local function register(cons)
+        cons.token = constraintToToken(cons)
+        if not known[cons.token] then
+            known[cons.token] = true
+            table.insert(variants, cons)
+        end
+    end
+
+    local generic = {}
+    local anymat = {}
+    for i,cons in ipairs(outputs) do
+        local mask = cons.mat_mask
+        if (cons.mat_type or -1) >= 0 then
+            cons.mat_mask = nil
+        end
+        register(cons)
+        if mask then
+            table.insert(generic, {
+                item_type = cons.item_type,
+                item_subtype = cons.item_subtype,
+                is_craft = cons.is_craft,
+                mat_mask = mask
+            })
+        end
+        table.insert(anymat, {
+            item_type = cons.item_type,
+            item_subtype = cons.item_subtype,
+            is_craft = cons.is_craft
+        })
+    end
+    for i,cons in ipairs(generic) do register(cons) end
+    for i,cons in ipairs(anymat) do register(cons) end
+
+    return variants
 end
 
 return _ENV

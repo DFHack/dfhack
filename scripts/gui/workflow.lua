@@ -26,6 +26,23 @@ function check_enabled(cb,...)
     end
 end
 
+function check_repeat(job, cb)
+    if job.flags['repeat'] then
+        return cb(job)
+    else
+        dlg.showYesNoPrompt(
+            'Not Repeat Job',
+            { 'Workflow only tracks repeating jobs.', NEWLINE, NEWLINE,
+              'Press ', { key = 'MENU_CONFIRM' }, ' to make this one repeat.' },
+            COLOR_YELLOW,
+            function()
+                job.flags['repeat'] = true
+                return cb(job)
+            end
+        )
+    end
+end
+
 JobConstraints = defclass(JobConstraints, guidm.MenuOverlay)
 
 JobConstraints.focus_path = 'workflow-job'
@@ -40,14 +57,6 @@ local null_cons = { goal_value = 0, goal_gap = 0, goal_by_count = false }
 
 function JobConstraints:init(args)
     self.building = dfhack.job.getHolder(self.job)
-
-    local status = { text = 'No worker', pen = COLOR_DARKGREY }
-    local worker = dfhack.job.getWorker(self.job)
-    if self.job.flags.suspend then
-        status = { text = 'Suspended', pen = COLOR_RED }
-    elseif worker then
-        status = { text = dfhack.TranslateName(dfhack.units.getVisibleName(worker)), pen = COLOR_GREEN }
-    end
 
     self:addviews{
         widgets.Label{
@@ -160,19 +169,7 @@ function describe_material(iobj)
     return matline
 end
 
-function list_flags(bitfield)
-    local list = {}
-    if bitfield then
-        for name,val in pairs(bitfield) do
-            if val then
-                table.insert(list, name)
-            end
-        end
-    end
-    return list
-end
-
-function JobConstraints:initListChoices(clist)
+function JobConstraints:initListChoices(clist, sel_token)
     clist = clist or workflow.listConstraints(self.job)
 
     local choices = {}
@@ -199,7 +196,7 @@ function JobConstraints:initListChoices(clist)
         end
         local matstr = describe_material(cons)
         local matflagstr = ''
-        local matflags = list_flags(cons.mat_mask)
+        local matflags = utils.list_bitfield_flags(cons.mat_mask)
         if #matflags > 0 then
             matflags[1] = 'any '..matflags[1]
             if matstr == 'any material' then
@@ -216,11 +213,17 @@ function JobConstraints:initListChoices(clist)
                 goal, ' ', { text = '(now '..curval..')', pen = order_pen }, NEWLINE,
                 '  ', itemstr, NEWLINE, '  ', matstr, NEWLINE, '  ', matflagstr
             },
+            token = cons.token,
             obj = cons
         })
     end
 
-    self.subviews.list:setChoices(choices)
+    local selidx = nil
+    if sel_token then
+        selidx = utils.linear_index(choices, sel_token, 'token')
+    end
+
+    self.subviews.list:setChoices(choices, selidx)
 end
 
 function JobConstraints:isAnySelected()
@@ -232,18 +235,9 @@ function JobConstraints:getCurConstraint()
     if v then return v.obj end
 end
 
-function JobConstraints:getCurUnit()
-    local cons = self:getCurConstraint()
-    if cons and cons.goal_by_count then
-        return 'stacks'
-    else
-        return 'items'
-    end
-end
-
 function JobConstraints:saveConstraint(cons)
-    workflow.setConstraint(cons.token, cons.goal_by_count, cons.goal_value, cons.goal_gap)
-    self:initListChoices()
+    local out = workflow.setConstraint(cons.token, cons.goal_by_count, cons.goal_value, cons.goal_gap)
+    self:initListChoices(nil, out.token)
 end
 
 function JobConstraints:onChangeUnit()
@@ -285,45 +279,6 @@ function JobConstraints:onIncRange(field, delta)
     self:saveConstraint(cons)
 end
 
-function make_constraint_variants(outputs)
-    local variants = {}
-    local known = {}
-    local function register(cons)
-        cons.token = workflow.constraintToToken(cons)
-        if not known[cons.token] then
-            known[cons.token] = true
-            table.insert(variants, cons)
-        end
-    end
-
-    local generic = {}
-    local anymat = {}
-    for i,cons in ipairs(outputs) do
-        local mask = cons.mat_mask
-        if (cons.mat_type or -1) >= 0 then
-            cons.mat_mask = nil
-        end
-        register(cons)
-        if mask then
-            table.insert(generic, {
-                item_type = cons.item_type,
-                item_subtype = cons.item_subtype,
-                is_craft = cons.is_craft,
-                mat_mask = mask
-            })
-        end
-        table.insert(anymat, {
-            item_type = cons.item_type,
-            item_subtype = cons.item_subtype,
-            is_craft = cons.is_craft
-        })
-    end
-    for i,cons in ipairs(generic) do register(cons) end
-    for i,cons in ipairs(anymat) do register(cons) end
-
-    return variants
-end
-
 function JobConstraints:onNewConstraint()
     local outputs = workflow.listJobOutputs(self.job)
     if #outputs == 0 then
@@ -331,13 +286,13 @@ function JobConstraints:onNewConstraint()
         return
     end
 
-    local variants = make_constraint_variants(outputs)
+    local variants = workflow.listWeakenedConstraints(outputs)
 
     local choices = {}
     for i,cons in ipairs(variants) do
         local itemstr = describe_item_type(cons)
         local matstr = describe_material(cons)
-        local matflags = list_flags(cons.mat_mask or {})
+        local matflags = utils.list_bitfield_flags(cons.mat_mask)
         if #matflags > 0 then
             local fstr = table.concat(matflags, '/')
             if matstr == 'any material' then
@@ -352,7 +307,7 @@ function JobConstraints:onNewConstraint()
 
     dlg.showListPrompt(
         'Job Outputs',
-        'Select one of the job outputs:',
+        'Select one of the possible outputs:',
         COLOR_WHITE,
         choices,
         function(idx,item)
@@ -390,15 +345,13 @@ end
 
 check_enabled(function()
     local job = dfhack.gui.getSelectedJob()
-    if not job.flags['repeat'] then
-        dlg.showMessage('Not Supported', 'Workflow only tracks repeat jobs.', COLOR_LIGHTRED)
-        return
-    end
-    local clist = workflow.listConstraints(job)
-    if not clist then
-        dlg.showMessage('Not Supported', 'This type of job is not supported by workflow.', COLOR_LIGHTRED)
-        return
-    end
-    JobConstraints{ job = job, clist = clist }:show()
+    check_repeat(job, function(job)
+        local clist = workflow.listConstraints(job)
+        if not clist then
+            dlg.showMessage('Not Supported', 'This type of job is not supported by workflow.', COLOR_LIGHTRED)
+            return
+        end
+        JobConstraints{ job = job, clist = clist }:show()
+    end)
 end)
 

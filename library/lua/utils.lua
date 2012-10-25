@@ -283,7 +283,11 @@ function clone_with_default(obj,default,force)
     return rv
 end
 
+-- Parse an integer value into a bitfield table
 function parse_bitfield_int(value, type_ref)
+    if value == 0 then
+        return nil
+    end
     local res = {}
     for i,v in ipairs(type_ref) do
         if bit32.extract(value, i) ~= 0 then
@@ -291,6 +295,19 @@ function parse_bitfield_int(value, type_ref)
         end
     end
     return res
+end
+
+-- List the enabled flag names in the bitfield table
+function list_bitfield_flags(bitfield, list)
+    list = list or {}
+    if bitfield then
+        for name,val in pairs(bitfield) do
+            if val then
+                table.insert(list, name)
+            end
+        end
+    end
+    return list
 end
 
 -- Sort a vector or lua table

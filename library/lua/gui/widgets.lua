@@ -246,11 +246,12 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
                 local keypen
 
                 if dc then
+                    local tpen = getval(token.pen)
                     if disabled or is_disabled(token) then
-                        dc:pen(getval(token.dpen) or dpen)
+                        dc:pen(getval(token.dpen) or tpen or dpen)
                         keypen = COLOR_GREEN
                     else
-                        dc:pen(getval(token.pen) or pen)
+                        dc:pen(tpen or pen)
                         keypen = COLOR_LIGHTGREEN
                     end
                 end

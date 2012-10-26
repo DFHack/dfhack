@@ -1055,6 +1055,8 @@ static void map_job_items(color_ostream &out)
             break;
 
         case item_type::THREAD:
+            if (item->flags.bits.spider_web)
+                continue;
             if (item->getTotalDimension() < 15000)
                 is_invalid = true;
             break;

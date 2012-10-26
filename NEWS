@@ -19,6 +19,7 @@ DFHack future
   Workflow plugin:
     - properly considers minecarts assigned to routes busy.
     - code for deducing job outputs rewritten in lua for flexibility.
+    - logic fix: collecting webs produces silk, and ungathered webs are not thread.
 
 DFHack v0.34.11-r2
 

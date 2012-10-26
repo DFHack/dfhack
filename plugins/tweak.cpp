@@ -47,6 +47,15 @@
 #include "df/viewscreen_layer_assigntradest.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_layer_militaryst.h"
+#include "df/squad_position.h"
+#include "df/item_weaponst.h"
+#include "df/item_armorst.h"
+#include "df/item_helmst.h"
+#include "df/item_pantsst.h"
+#include "df/item_shoesst.h"
+#include "df/item_glovesst.h"
+#include "df/item_shieldst.h"
+#include "df/building_armorstandst.h"
 
 #include <stdlib.h>
 
@@ -124,6 +133,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak military-color-assigned [disable]\n"
         "    Color squad candidates already assigned to other squads in brown/green\n"
         "    to make them stand out more in the list.\n"
+        "  tweak armory [disable]\n"
+        "    Prevents squad equipment stored on armor stands and weapon racks from\n"
+        "    being carried off to ordinary stockpiles.\n"
     ));
     return CR_OK;
 }
@@ -658,6 +670,93 @@ struct military_assign_hook : df::viewscreen_layer_militaryst {
 IMPLEMENT_VMETHOD_INTERPOSE(military_assign_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(military_assign_hook, render);
 
+static bool belongs_to_position(df::item *item, df::building *holder, bool any_position)
+{
+    auto squad = df::squad::find(holder->getSpecificSquad());
+    if (!squad)
+        return false;
+
+    if (any_position)
+    {
+        for (size_t i = 0; i < squad->positions.size(); i++)
+        {
+            if (binsearch_index(squad->positions[i]->assigned_items, item->id) >= 0)
+                return true;
+        }
+    }
+    else
+    {
+        auto cpos = vector_get(squad->positions, holder->getSpecificPosition());
+        if (cpos && binsearch_index(cpos->assigned_items, item->id) >= 0)
+            return true;
+    }
+
+    return false;
+}
+
+static bool is_in_armory(df::item *item, df::building_type btype, bool any_position)
+{
+    if (item->flags.bits.in_inventory || item->flags.bits.on_ground)
+        return false;
+
+    auto holder_ref = Items::getGeneralRef(item, general_ref_type::BUILDING_HOLDER);
+    if (!holder_ref)
+        return false;
+
+    auto holder = holder_ref->getBuilding();
+    if (!holder || holder->getType() != btype)
+        return false;
+
+    return belongs_to_position(item, holder, any_position);
+}
+
+struct armory_weapon_hook : df::item_weaponst {
+    typedef df::item_weaponst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, isCollected, ())
+    {
+        if (is_in_armory(this, building_type::Weaponrack, true))
+            return false;
+
+        return INTERPOSE_NEXT(isCollected)();
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(armory_weapon_hook, isCollected);
+
+template<class Item> struct armory_hook : Item {
+    typedef Item interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, isCollected, ())
+    {
+        if (is_in_armory(this, building_type::Armorstand, false))
+            return false;
+
+        return INTERPOSE_NEXT(isCollected)();
+    }
+};
+
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_armorst>, isCollected);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_helmst>, isCollected);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_shoesst>, isCollected);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_pantsst>, isCollected);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_glovesst>, isCollected);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_shieldst>, isCollected);
+
+/*struct armory_armorstand_hook : df::building_armorstandst {
+    typedef df::building_armorstandst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, canStoreItem, (df::item *item, bool subtract_jobs))
+    {
+        if (specific_squad >= 0 && specific_position >= 0)
+            return item->isArmorNotClothing() && belongs_to_position(item, this, false);
+
+        return INTERPOSE_NEXT(canStoreItem)(item, subtract_jobs);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(armory_armorstand_hook, canStoreItem);*/
+
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
     if (vector_get(parameters, 1) == "disable")
@@ -830,6 +929,17 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     else if (cmd == "military-color-assigned")
     {
         enable_hook(out, INTERPOSE_HOOK(military_assign_hook, render), parameters);
+    }
+    else if (cmd == "armory")
+    {
+        enable_hook(out, INTERPOSE_HOOK(armory_weapon_hook, isCollected), parameters);
+        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_armorst>, isCollected), parameters);
+        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_helmst>, isCollected), parameters);
+        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_pantsst>, isCollected), parameters);
+        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_shoesst>, isCollected), parameters);
+        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_glovesst>, isCollected), parameters);
+        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_shieldst>, isCollected), parameters);
+        //enable_hook(out, INTERPOSE_HOOK(armory_armorstand_hook, canStoreItem), parameters);
     }
     else 
         return CR_WRONG_USAGE;

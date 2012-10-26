@@ -14,6 +14,9 @@ DFHack future
     - gui/guide-path: displays the cached path for minecart Guide orders.
     - gui/workshop-job: displays inputs of a workshop job and allows tweaking them.
     - gui/workflow: a front-end for the workflow plugin.
+  Workflow plugin:
+    - properly considers minecarts assigned to routes busy.
+    - code for deducing job outputs rewritten in lua for flexibility.
 
 DFHack v0.34.11-r2
 

@@ -9,26 +9,26 @@ local dlg = require 'gui.dialogs'
 
 local workflow = require 'plugins.workflow'
 
-function check_enabled(cb,...)
+function check_enabled(cb)
     if workflow.isEnabled() then
-        return cb(...)
+        return cb()
     else
         dlg.showYesNoPrompt(
             'Enable Plugin',
-            { 'The workflow plugin is not enabled currently.', NEWLINE, NEWLINE
+            { 'The workflow plugin is not enabled currently.', NEWLINE, NEWLINE,
               'Press ', { key = 'MENU_CONFIRM' }, ' to enable it.' },
             COLOR_YELLOW,
-            curry(function(...)
+            function()
                 workflow.setEnabled(true)
-                return cb(...)
-            end,...)
+                return cb()
+            end
         )
     end
 end
 
 function check_repeat(job, cb)
     if job.flags['repeat'] then
-        return cb(job)
+        return cb()
     else
         dlg.showYesNoPrompt(
             'Not Repeat Job',
@@ -37,7 +37,7 @@ function check_repeat(job, cb)
             COLOR_YELLOW,
             function()
                 job.flags['repeat'] = true
-                return cb(job)
+                return cb()
             end
         )
     end
@@ -188,7 +188,7 @@ function JobConstraints:initListChoices(clist, sel_token)
         if cons.request == 'resume' then
             order_pen = COLOR_GREEN
         elseif cons.request == 'suspend' then
-            order_pen = COLOR_RED
+            order_pen = COLOR_BLUE
         end
         local itemstr = describe_item_type(cons)
         if cons.min_quality > 0 then
@@ -343,9 +343,10 @@ if not string.match(dfhack.gui.getCurFocus(), '^dwarfmode/QueryBuilding/Some/Wor
     qerror("This script requires a workshop job selected in the 'q' mode")
 end
 
+local job = dfhack.gui.getSelectedJob()
+
 check_enabled(function()
-    local job = dfhack.gui.getSelectedJob()
-    check_repeat(job, function(job)
+    check_repeat(job, function()
         local clist = workflow.listConstraints(job)
         if not clist then
             dlg.showMessage('Not Supported', 'This type of job is not supported by workflow.', COLOR_LIGHTRED)

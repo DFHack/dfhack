@@ -63,7 +63,7 @@ wakeup = lambda { |u, f|
     return unless u.job.current_job
     jobtype = u.job.current_job.job_type
     if f or jobtype == :Rest
-        u.job.current_job.job_type = :Sleep
+        u.job.current_job = nil
         u.counters.unconscious = 0
         puts "released from #{jobtype} job."
     end

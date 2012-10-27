@@ -315,5 +315,22 @@ namespace DFHack
         // Get list of names given to ClassNameCheck constructors.
         static void getKnownClassNames(std::vector<std::string> &names);
     };
+
+    class DFHACK_EXPORT MemoryPatcher
+    {
+        Process *p;
+        std::vector<t_memrange> ranges, save;
+    public:
+        MemoryPatcher(Process *p = NULL);
+        ~MemoryPatcher();
+
+        bool verifyAccess(void *target, size_t size, bool write = false);
+        bool makeWritable(void *target, size_t size) {
+            return verifyAccess(target, size, true);
+        }
+        bool write(void *target, const void *src, size_t size);
+
+        void close();
+    };
 }
 #endif

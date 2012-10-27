@@ -294,6 +294,7 @@ namespace DFHack
 #endif
 
     class DFHACK_EXPORT VMethodInterposeLinkBase;
+    class MemoryPatcher;
 
     class DFHACK_EXPORT virtual_identity : public struct_identity {
         static std::map<void*, virtual_identity*> known;
@@ -313,7 +314,7 @@ namespace DFHack
         bool can_allocate() { return struct_identity::can_allocate() && (vtable_ptr != NULL); }
 
         void *get_vmethod_ptr(int index);
-        bool set_vmethod_ptr(int index, void *ptr);
+        bool set_vmethod_ptr(MemoryPatcher &patcher, int index, void *ptr);
 
     public:
         virtual_identity(size_t size, TAllocateFn alloc,

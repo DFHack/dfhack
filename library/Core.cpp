@@ -1615,15 +1615,27 @@ void ClassNameCheck::getKnownClassNames(std::vector<std::string> &names)
         names.push_back(*it);
 }
 
-bool Process::patchMemory(void *target, const void* src, size_t count)
+MemoryPatcher::MemoryPatcher(Process *p) : p(p)
+{
+    if (!p)
+        p = Core::getInstance().p;
+}
+
+MemoryPatcher::~MemoryPatcher()
+{
+    close();
+}
+
+bool MemoryPatcher::verifyAccess(void *target, size_t count, bool write)
 {
     uint8_t *sptr = (uint8_t*)target;
     uint8_t *eptr = sptr + count;
 
     // Find the valid memory ranges
-    std::vector<t_memrange> ranges;
-    getMemRanges(ranges);
+    if (ranges.empty())
+        p->getMemRanges(ranges);
 
+    // Find the ranges that this area spans
     unsigned start = 0;
     while (start < ranges.size() && ranges[start].end <= sptr)
         start++;
@@ -1645,24 +1657,49 @@ bool Process::patchMemory(void *target, const void* src, size_t count)
         if (!ranges[i].valid || !(ranges[i].read || ranges[i].execute) || ranges[i].shared)
             return false;
 
-    // Apply writable permissions & update
-    bool ok = true;
+    if (!write)
+        return true;
 
-    for (unsigned i = start; i < end && ok; i++)
+    // Apply writable permissions & update
+    for (unsigned i = start; i < end; i++)
     {
-        t_memrange perms = ranges[i];
+        auto &perms = ranges[i];
+        if (perms.write && perms.read)
+            continue;
+
+        save.push_back(perms);
         perms.write = perms.read = true;
-        if (!setPermisions(perms, perms))
-            ok = false;
+        if (!p->setPermisions(perms, perms))
+            return false;
     }
 
-    if (ok)
-        memmove(target, src, count);
+    return true;
+}
 
-    for (unsigned i = start; i < end && ok; i++)
-        setPermisions(ranges[i], ranges[i]);
+bool MemoryPatcher::write(void *target, const void *src, size_t size)
+{
+    if (!makeWritable(target, size))
+        return false;
 
-    return ok;
+    memmove(target, src, size);
+    return true;
+}
+
+void MemoryPatcher::close()
+{
+    for (size_t i  = 0; i < save.size(); i++)
+        p->setPermisions(save[i], save[i]);
+
+    save.clear();
+    ranges.clear();
+};
+
+
+bool Process::patchMemory(void *target, const void* src, size_t count)
+{
+    MemoryPatcher patcher(this);
+
+    return patcher.write(target, src, count);
 }
 
 /*******************************************************************************

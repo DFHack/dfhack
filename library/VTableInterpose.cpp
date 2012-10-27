@@ -166,12 +166,12 @@ void *virtual_identity::get_vmethod_ptr(int idx)
     return vtable[idx];
 }
 
-bool virtual_identity::set_vmethod_ptr(int idx, void *ptr)
+bool virtual_identity::set_vmethod_ptr(MemoryPatcher &patcher, int idx, void *ptr)
 {
     assert(idx >= 0);
     void **vtable = (void**)vtable_ptr;
     if (!vtable) return NULL;
-    return Core::getInstance().p->patchMemory(&vtable[idx], &ptr, sizeof(void*));
+    return patcher.write(&vtable[idx], &ptr, sizeof(void*));
 }
 
 /*
@@ -344,7 +344,9 @@ void VMethodInterposeLinkBase::on_host_delete(virtual_identity *from)
         auto last = this;
         while (last->prev) last = last->prev;
 
-        from->set_vmethod_ptr(vmethod_idx, last->saved_chain);
+        MemoryPatcher patcher;
+
+        from->set_vmethod_ptr(patcher, vmethod_idx, last->saved_chain);
 
         // Unlink the chains
         child_hosts.erase(from);
@@ -379,13 +381,15 @@ bool VMethodInterposeLinkBase::apply(bool enable)
     assert(old_ptr != NULL && (!old_link || old_link->interpose_method == old_ptr));
 
     // Apply the new method ptr
+    MemoryPatcher patcher;
+
     set_chain(old_ptr);
 
     if (next_link)
     {
         next_link->set_chain(interpose_method);
     }
-    else if (!host->set_vmethod_ptr(vmethod_idx, interpose_method))
+    else if (!host->set_vmethod_ptr(patcher, vmethod_idx, interpose_method))
     {
         set_chain(NULL);
         return false;
@@ -459,7 +463,7 @@ bool VMethodInterposeLinkBase::apply(bool enable)
     {
         auto nhost = *it;
         assert(nhost->interpose_list[vmethod_idx] == old_link);
-        nhost->set_vmethod_ptr(vmethod_idx, interpose_method);
+        nhost->set_vmethod_ptr(patcher, vmethod_idx, interpose_method);
         nhost->interpose_list[vmethod_idx] = this;
     }
 
@@ -496,9 +500,11 @@ void VMethodInterposeLinkBase::remove()
     }
     else
     {
+        MemoryPatcher patcher;
+
         // Remove from the list in the identity and vtable
         host->interpose_list[vmethod_idx] = prev;
-        host->set_vmethod_ptr(vmethod_idx, saved_chain);
+        host->set_vmethod_ptr(patcher, vmethod_idx, saved_chain);
 
         for (auto it = child_next.begin(); it != child_next.end(); ++it)
         {
@@ -515,7 +521,7 @@ void VMethodInterposeLinkBase::remove()
             auto nhost = *it;
             assert(nhost->interpose_list[vmethod_idx] == this);
             nhost->interpose_list[vmethod_idx] = prev;
-            nhost->set_vmethod_ptr(vmethod_idx, saved_chain);
+            nhost->set_vmethod_ptr(patcher, vmethod_idx, saved_chain);
             if (prev)
                 prev->child_hosts.insert(nhost);
         }

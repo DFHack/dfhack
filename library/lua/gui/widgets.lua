@@ -501,14 +501,17 @@ function List:onRenderBody(dc)
         local y = (i - top)*self.row_height
 
         if iw and obj.icon then
-            dc:seek(0, y)
-            if type(obj.icon) == 'table' then
-                dc:char(nil,obj.icon)
-            else
-                if current then
-                    dc:string(obj.icon, obj.icon_pen or cur_pen)
+            local icon = getval(obj.icon)
+            if icon then
+                dc:seek(0, y)
+                if type(icon) == 'table' then
+                    dc:char(nil,icon)
                 else
-                    dc:string(obj.icon, obj.icon_pen or cur_dpen)
+                    if current then
+                        dc:string(icon, obj.icon_pen or self.icon_pen or cur_pen)
+                    else
+                        dc:string(icon, obj.icon_pen or self.icon_pen or cur_dpen)
+                    end
                 end
             end
         end

@@ -49,20 +49,6 @@
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/squad_position.h"
-#include "df/item_weaponst.h"
-#include "df/item_armorst.h"
-#include "df/item_helmst.h"
-#include "df/item_pantsst.h"
-#include "df/item_shoesst.h"
-#include "df/item_glovesst.h"
-#include "df/item_shieldst.h"
-#include "df/item_flaskst.h"
-#include "df/item_backpackst.h"
-#include "df/item_quiverst.h"
-#include "df/building_weaponrackst.h"
-#include "df/building_armorstandst.h"
-#include "df/building_cabinetst.h"
-#include "df/building_boxst.h"
 #include "df/job.h"
 #include "df/general_ref_building_holderst.h"
 
@@ -142,11 +128,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak military-color-assigned [disable]\n"
         "    Color squad candidates already assigned to other squads in brown/green\n"
         "    to make them stand out more in the list.\n"
-        "  tweak armory [disable]\n"
-        "    Prevents squad equipment stored on armor stands and weapon racks from\n"
-        "    being carried off to ordinary stockpiles.\n"
-        "  tweak stock-armory [disable]\n"
-        "    Makes dwarves actively haul assigned equipment to the armory.\n"
     ));
     return CR_OK;
 }
@@ -681,181 +662,6 @@ struct military_assign_hook : df::viewscreen_layer_militaryst {
 IMPLEMENT_VMETHOD_INTERPOSE(military_assign_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(military_assign_hook, render);
 
-static bool belongs_to_position(df::item *item, df::building *holder)
-{
-    int sid = holder->getSpecificSquad();
-    if (sid < 0)
-        return false;
-
-    auto squad = df::squad::find(sid);
-    if (!squad)
-        return false;
-
-    int position = holder->getSpecificPosition();
-
-    if (position == -1 && holder->getType() == building_type::Weaponrack)
-    {
-        for (size_t i = 0; i < squad->positions.size(); i++)
-        {
-            if (binsearch_index(squad->positions[i]->assigned_items, item->id) >= 0)
-                return true;
-        }
-    }
-    else
-    {
-        auto cpos = vector_get(squad->positions, position);
-        if (cpos && binsearch_index(cpos->assigned_items, item->id) >= 0)
-            return true;
-    }
-
-    return false;
-}
-
-static bool is_in_armory(df::item *item)
-{
-    if (item->flags.bits.in_inventory || item->flags.bits.on_ground)
-        return false;
-
-    auto holder_ref = Items::getGeneralRef(item, general_ref_type::BUILDING_HOLDER);
-    if (!holder_ref)
-        return false;
-
-    auto holder = holder_ref->getBuilding();
-    if (!holder)
-        return false;
-
-    return belongs_to_position(item, holder);
-}
-
-template<class Item> struct armory_hook : Item {
-    typedef Item interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(bool, isCollected, ())
-    {
-        if (is_in_armory(this))
-            return false;
-
-        return INTERPOSE_NEXT(isCollected)();
-    }
-};
-
-template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_weaponst>, isCollected);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_armorst>, isCollected);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_helmst>, isCollected);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_shoesst>, isCollected);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_pantsst>, isCollected);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_glovesst>, isCollected);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_shieldst>, isCollected);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_flaskst>, isCollected);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_backpackst>, isCollected);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_quiverst>, isCollected);
-
-static void check_stock_armory(df::building *target, int squad_idx)
-{
-    auto squad = df::squad::find(squad_idx);
-    if (!squad)
-        return;
-
-    int position = target->getSpecificPosition();
-
-    for (size_t i = 0; i < squad->positions.size(); i++)
-    {
-        if (position >= 0 && position != int(i))
-            continue;
-
-        auto pos = squad->positions[i];
-
-        for (size_t j = 0; j < pos->assigned_items.size(); j++)
-        {
-            auto item = df::item::find(pos->assigned_items[j]);
-            if (!item || item->stockpile_countdown > 0)
-                continue;
-
-            if (item->flags.bits.in_job ||
-                item->flags.bits.removed ||
-                item->flags.bits.in_building ||
-                item->flags.bits.encased ||
-                item->flags.bits.owned ||
-                item->flags.bits.forbid ||
-                item->flags.bits.on_fire)
-                continue;
-
-            auto top = item;
-
-            while (top->flags.bits.in_inventory)
-            {
-                auto parent = Items::getContainer(top);
-                if (!parent) break;
-                top = parent;
-            }
-
-            if (Items::getGeneralRef(top, general_ref_type::UNIT_HOLDER))
-                continue;
-
-            if (is_in_armory(item))
-                continue;
-
-            if (!target->canStoreItem(item, true))
-                continue;
-
-            auto href = df::allocate<df::general_ref_building_holderst>();
-            if (!href)
-                continue;
-
-            auto job = new df::job();
-
-            job->pos = df::coord(target->centerx, target->centery, target->z);
-
-            switch (target->getType()) {
-                case building_type::Weaponrack:
-                    job->job_type = job_type::StoreWeapon;
-                    job->flags.bits.specific_dropoff = true;
-                    break;
-                case building_type::Armorstand:
-                    job->job_type = job_type::StoreArmor;
-                    job->flags.bits.specific_dropoff = true;
-                    break;
-                case building_type::Cabinet:
-                    job->job_type = job_type::StoreItemInCabinet;
-                    break;
-                default:
-                    job->job_type = job_type::StoreItemInChest;
-                    break;
-            }
-
-            if (!Job::attachJobItem(job, item, df::job_item_ref::Hauled))
-            {
-                delete job;
-                delete href;
-                continue;
-            }
-
-            href->building_id = target->id;
-            target->jobs.push_back(job);
-            job->references.push_back(href);
-
-            Job::linkIntoWorld(job);
-        }
-    }
-}
-
-template<class Building> struct stock_armory_hook : Building {
-    typedef Building interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(void, updateAction, ())
-    {
-        if (this->specific_squad >= 0 && DF_GLOBAL_VALUE(cur_year_tick,0) % 50 == 0)
-            check_stock_armory(this, this->specific_squad);
-
-        INTERPOSE_NEXT(updateAction)();
-    }
-};
-
-template<> IMPLEMENT_VMETHOD_INTERPOSE(stock_armory_hook<df::building_weaponrackst>, updateAction);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(stock_armory_hook<df::building_armorstandst>, updateAction);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(stock_armory_hook<df::building_cabinetst>, updateAction);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(stock_armory_hook<df::building_boxst>, updateAction);
-
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
     if (vector_get(parameters, 1) == "disable")
@@ -1028,26 +834,6 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     else if (cmd == "military-color-assigned")
     {
         enable_hook(out, INTERPOSE_HOOK(military_assign_hook, render), parameters);
-    }
-    else if (cmd == "armory")
-    {
-        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_weaponst>, isCollected), parameters);
-        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_armorst>, isCollected), parameters);
-        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_helmst>, isCollected), parameters);
-        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_pantsst>, isCollected), parameters);
-        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_shoesst>, isCollected), parameters);
-        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_glovesst>, isCollected), parameters);
-        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_shieldst>, isCollected), parameters);
-        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_flaskst>, isCollected), parameters);
-        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_backpackst>, isCollected), parameters);
-        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_quiverst>, isCollected), parameters);
-    }
-    else if (cmd == "stock-armory")
-    {
-        enable_hook(out, INTERPOSE_HOOK(stock_armory_hook<df::building_armorstandst>, updateAction), parameters);
-        enable_hook(out, INTERPOSE_HOOK(stock_armory_hook<df::building_weaponrackst>, updateAction), parameters);
-        enable_hook(out, INTERPOSE_HOOK(stock_armory_hook<df::building_boxst>, updateAction), parameters);
-        enable_hook(out, INTERPOSE_HOOK(stock_armory_hook<df::building_cabinetst>, updateAction), parameters);
     }
     else 
         return CR_WRONG_USAGE;

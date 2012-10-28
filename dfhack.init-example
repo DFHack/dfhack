@@ -121,7 +121,3 @@ tweak fast-trade
 tweak military-stable-assign
 # in same list, color units already assigned to squads in brown & green
 tweak military-color-assigned
-
-# stop squad equpment stored on weapon racks and armor stands from being stockpiled
-tweak armory
-tweak stock-armory

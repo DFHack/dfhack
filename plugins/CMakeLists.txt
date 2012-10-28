@@ -124,6 +124,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(power-meter power-meter.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(siege-engine siege-engine.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(add-spatter add-spatter.cpp)
+    DFHACK_PLUGIN(fix-armory fix-armory.cpp)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
     DFHACK_PLUGIN(misery misery.cpp)

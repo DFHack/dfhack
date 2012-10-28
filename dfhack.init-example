@@ -124,3 +124,4 @@ tweak military-color-assigned
 
 # stop squad equpment stored on weapon racks and armor stands from being stockpiled
 tweak armory
+tweak stock-armory

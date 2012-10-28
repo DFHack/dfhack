@@ -12,6 +12,7 @@ DFHack future
     - removebadthoughts: add --dry-run option
   New tweaks:
     - tweak armory: prevents stockpiling of armor and weapons stored on stands and racks.
+    - tweak stock-armory: makes dwarves actively haul equipment from stockpiles to the armory.
   New GUI scripts:
     - gui/guide-path: displays the cached path for minecart Guide orders.
     - gui/workshop-job: displays inputs of a workshop job and allows tweaking them.

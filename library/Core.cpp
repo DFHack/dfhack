@@ -1615,7 +1615,7 @@ void ClassNameCheck::getKnownClassNames(std::vector<std::string> &names)
         names.push_back(*it);
 }
 
-MemoryPatcher::MemoryPatcher(Process *p) : p(p)
+MemoryPatcher::MemoryPatcher(Process *p_) : p(p_)
 {
     if (!p)
         p = Core::getInstance().p;

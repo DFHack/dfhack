@@ -1714,6 +1714,15 @@ global environment, persistent between calls to the script.</p>
 If destination overlaps a completely invalid memory region, or another error
 occurs, returns false.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.patchBytes(write_table[, verify_table])</tt></p>
+<p>The first argument must be a lua table, which is interpreted as a mapping from
+memory addresses to byte values that should be stored there. The second argument
+may be a similar table of values that need to be checked before writing anything.</p>
+<p>The function takes care to either apply all of <tt class="docutils literal">write_table</tt>, or none of it.
+An empty <tt class="docutils literal">write_table</tt> with a nonempty <tt class="docutils literal">verify_table</tt> can be used to reasonably
+safely check if the memory contains certain values.</p>
+<p>Returns <em>true</em> if successful, or <em>nil, error_msg, address</em> if not.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.memmove(dest,src,count)</tt></p>
 <p>Wraps the standard memmove function. Accepts both numbers and refs as pointers.</p>
 </li>

@@ -1657,14 +1657,11 @@ bool MemoryPatcher::verifyAccess(void *target, size_t count, bool write)
         if (!ranges[i].valid || !(ranges[i].read || ranges[i].execute) || ranges[i].shared)
             return false;
 
-    if (!write)
-        return true;
-
     // Apply writable permissions & update
     for (unsigned i = start; i < end; i++)
     {
         auto &perms = ranges[i];
-        if (perms.write && perms.read)
+        if ((perms.write || !write) && perms.read)
             continue;
 
         save.push_back(perms);

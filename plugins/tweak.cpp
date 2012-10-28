@@ -55,6 +55,9 @@
 #include "df/item_shoesst.h"
 #include "df/item_glovesst.h"
 #include "df/item_shieldst.h"
+#include "df/item_flaskst.h"
+#include "df/item_backpackst.h"
+#include "df/item_quiverst.h"
 #include "df/building_armorstandst.h"
 
 #include <stdlib.h>
@@ -672,7 +675,11 @@ IMPLEMENT_VMETHOD_INTERPOSE(military_assign_hook, render);
 
 static bool belongs_to_position(df::item *item, df::building *holder, bool any_position)
 {
-    auto squad = df::squad::find(holder->getSpecificSquad());
+    int sid = holder->getSpecificSquad();
+    if (sid < 0)
+        return false;
+
+    auto squad = df::squad::find(sid);
     if (!squad)
         return false;
 
@@ -694,7 +701,7 @@ static bool belongs_to_position(df::item *item, df::building *holder, bool any_p
     return false;
 }
 
-static bool is_in_armory(df::item *item, df::building_type btype, bool any_position)
+static bool is_in_armory(df::item *item, bool any_position)
 {
     if (item->flags.bits.in_inventory || item->flags.bits.on_ground)
         return false;
@@ -704,7 +711,7 @@ static bool is_in_armory(df::item *item, df::building_type btype, bool any_posit
         return false;
 
     auto holder = holder_ref->getBuilding();
-    if (!holder || holder->getType() != btype)
+    if (!holder)
         return false;
 
     return belongs_to_position(item, holder, any_position);
@@ -715,7 +722,7 @@ struct armory_weapon_hook : df::item_weaponst {
 
     DEFINE_VMETHOD_INTERPOSE(bool, isCollected, ())
     {
-        if (is_in_armory(this, building_type::Weaponrack, true))
+        if (is_in_armory(this, true))
             return false;
 
         return INTERPOSE_NEXT(isCollected)();
@@ -729,7 +736,7 @@ template<class Item> struct armory_hook : Item {
 
     DEFINE_VMETHOD_INTERPOSE(bool, isCollected, ())
     {
-        if (is_in_armory(this, building_type::Armorstand, false))
+        if (is_in_armory(this, false))
             return false;
 
         return INTERPOSE_NEXT(isCollected)();
@@ -742,20 +749,9 @@ template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_shoesst>, isCollecte
 template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_pantsst>, isCollected);
 template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_glovesst>, isCollected);
 template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_shieldst>, isCollected);
-
-/*struct armory_armorstand_hook : df::building_armorstandst {
-    typedef df::building_armorstandst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(bool, canStoreItem, (df::item *item, bool subtract_jobs))
-    {
-        if (specific_squad >= 0 && specific_position >= 0)
-            return item->isArmorNotClothing() && belongs_to_position(item, this, false);
-
-        return INTERPOSE_NEXT(canStoreItem)(item, subtract_jobs);
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(armory_armorstand_hook, canStoreItem);*/
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_flaskst>, isCollected);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_backpackst>, isCollected);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_quiverst>, isCollected);
 
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
@@ -939,7 +935,9 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_shoesst>, isCollected), parameters);
         enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_glovesst>, isCollected), parameters);
         enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_shieldst>, isCollected), parameters);
-        //enable_hook(out, INTERPOSE_HOOK(armory_armorstand_hook, canStoreItem), parameters);
+        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_flaskst>, isCollected), parameters);
+        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_backpackst>, isCollected), parameters);
+        enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_quiverst>, isCollected), parameters);
     }
     else 
         return CR_WRONG_USAGE;

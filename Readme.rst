@@ -231,6 +231,8 @@ Controls speedydwarf and teledwarf. Speedydwarf makes dwarves move quickly and p
  * 'fastdwarf 1 1' enables both
  * 'fastdwarf 0' disables both
  * 'fastdwarf 1' enables speedydwarf and disables teledwarf
+ * 'fastdwarf 2 ...' sets a native debug flag in the game memory
+   that implements an even more aggressive version of speedydwarf.
 
 Game interface
 ==============
@@ -1070,6 +1072,51 @@ Subcommands that persist until disabled or DF quit:
 :military-color-assigned: Color squad candidates already assigned to other squads in brown/green
                           to make them stand out more in the list.
 
+fix-armory
+----------
+
+Enables a fix for storage of squad equipment in barracks.
+
+Specifically, it prevents your haulers from moving that equipment
+to stockpiles, and instead queues jobs to store it on weapon racks,
+armor stands, and in containers.
+
+.. note::
+
+  In order to actually be used, weapon racks have to be patched and
+  assigned to a squad. See documentation for ``gui/assign-rack`` below.
+
+  Also, the default capacity of armor stands is way too low, so check out
+  http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445
+  for a patch addressing that too.
+
+Note that the buildings in the armory are used as follows:
+
+* Weapon racks when fixed are used to store any assigned weapons.
+  Each rack belongs to a specific squad, and can store up to 5 weapons.
+
+* Armor stands belong to specific squad members and are used for
+  armor and shields. By default one stand can store one item of each
+  type (hence one boot or gauntlet); if patched, the limit is raised to 2,
+  which should be sufficient.
+
+* Cabinets are used to store assigned clothing for a specific squad member.
+  They are **never** used to store owned clothing.
+
+* Chests (boxes, etc) are used for a flask, backpack or quiver assigned
+  to the squad member. Due to a bug, food is dropped out of the backpack
+  when it is stored.
+
+Contrary to the common misconception, all these uses are controlled by the
+*Individual Equipment* usage flag; the Squad Equipment mode means nothing.
+
+.. warning::
+
+  Although armor stands, cabinets and chests properly belong only to one
+  squad member, the owner of the building used to create the barracks will
+  randomly use any containers inside the room. Thus, it is recommended to
+  always create the armory from a weapon rack.
+
 
 Mode switch and reclaim
 =======================
@@ -1212,6 +1259,9 @@ produce that kind of item are automatically suspended and resumed as the item
 amount goes above or below the limit. The gap specifies how much below the limit
 the amount has to drop before jobs are resumed; this is intended to reduce
 the frequency of jobs being toggled.
+
+Check out the ``gui/workflow`` script below for a simple front-end integrated
+in the game UI.
 
 
 Constraint examples
@@ -1894,6 +1944,102 @@ only that entry, and does it even if it is not 'individual choice'.
 
 Rationale: individual choice seems to be unreliable when there is a weapon shortage,
 and may lead to inappropriate weapons being selected.
+
+
+gui/guide-path
+==============
+
+Bind to a key, and activate in the Hauling menu with the cursor over a Guide order.
+
+The script displays the cached path that will be used by the order; the game
+computes it when the order is executed for the first time.
+
+
+gui/workshop-job
+================
+
+Bind to a key, and activate with a job selected in a workshop in the 'q' mode.
+
+The script shows a list of the input reagents of the selected job, and allows changing
+them like the ``job item-type`` and ``job item-material`` commands.
+
+Specifically, pressing the 'i' key pops up a dialog that lets you select an item
+type from a list. Pressing 'm', unless the item type does not allow a material,
+lets you choose a material.
+
+.. warning::
+
+  Due to the way input reagent matching works in DF, you must select an item type
+  if you select a material, or the material will be matched incorrectly in some cases.
+  If you press 'm' without choosing an item type, the script will auto-choose it
+  if there is only one valid choice, or pop up an error message box instead of the
+  material selection dialog.
+
+Note that both materials and item types presented in the dialogs are filtered
+by the job input flags, and even the selected item type for material selection,
+or material for item type selection. Many jobs would let you select only one
+input item type.
+
+For example, if you choose a *plant* input item type for your prepare meal job,
+it will only let you select cookable materials.
+
+If you choose a *barrel* item instead (meaning things stored in barrels, like
+drink or milk), it will let you select any material, since in this case the
+material is matched against the barrel itself. Then, if you select, say, iron,
+and then try to change the input item type, now it won't let you select *plant*;
+you have to unset the material first.
+
+
+gui/workflow
+============
+
+Bind to a key, and activate with a job selected in a workshop in the 'q' mode.
+
+This script provides a simple interface to constraints managed by the workflow
+plugin. When active, it displays a list of all constraints applicable to the
+current job, and their current status.
+
+A constraint specifies a certain range to be compared against either individual
+*item* or whole *stack* count, an item type and optionally a material. When the
+current count is below the lower bound of the range, the job is resumed; if it
+is above or equal to the top bound, it will be suspended. Within the range, the
+specific constraint has no effect on the job; others may still affect it.
+
+Pressing 'c' switches the current constraint between counting stacks or items.
+Pressing 'm' lets you input the range directly; 'e', 'r', 'd', 'f' adjust the
+bounds by 1, 5, or 25 depending on the direction and the 'c' setting (counting
+items and expanding the range each gives a 5x bonus).
+
+Pressing 'n' produces a list of possible outputs of this job as guessed by
+workflow, and lets you create a new constraint by just choosing one. If you
+don't see the choice you want in the list, it likely means you have to adjust
+the job material first using ``job item-material`` or ``gui/workshop-job``,
+as described in ``workflow`` documentation above. In this manner, this feature
+can be used for troubleshooting jobs that don't match the right constraints.
+
+
+gui/assign-rack
+===============
+
+Bind to a key, and activate when viewing a weapon rack in the 'q' mode.
+
+This script is part of a group of related fixes to make the armory storage
+work again. The existing issues are:
+
+* Weapon racks have to each be assigned to a specific squad, like with
+  beds/boxes/armor stands and individual squad members, but nothing in
+  the game does this. This issue is what this script addresses.
+
+* Even if assigned by the script, **the game will unassign the racks again without a binary patch**.
+  Check the comments for this bug to get it:
+  http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445
+
+* Haulers still take equpment stored in the armory away to the stockpiles,
+  unless the ``fix-armory`` plugin above is used.
+
+The script interface simply lets you designate one of the squads that
+are assigned to the barracks/armory containing the selected stand as
+the intended user.
 
 
 =============

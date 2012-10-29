@@ -1,89 +1,25 @@
-// TODO: which of these includes are actually needed?
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <MiscUtils.h>
-#include <modules/Screen.h>
-#include <modules/Translation.h>
-#include <modules/Units.h>
-#include <vector>
-#include <string>
-#include <set>
-#include <algorithm>
-#include <arpa/inet.h>
-#include <tinythread.h>
-#include <PassiveSocket.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 
+#include "DataDefs.h"
 #include "df/graphic.h"
 #include "df/enabler.h"
-#include "df/viewscreen_unitlistst.h"
-#include "df/interface_key.h"
-#include "df/unit.h"
-#include "df/unit_soul.h"
-#include "df/unit_skill.h"
-#include "df/creature_graphics_role.h"
-#include "df/creature_raw.h"
-#include "df/caste_raw.h"
+#include "df/renderer.h"
+
+#include <vector>
+#include <string>
+#include "PassiveSocket.h"
+#include "tinythread.h"
 
 using namespace DFHack;
 using namespace df::enums;
 
+using std::string;
+using std::vector;
 using df::global::gps;
 using df::global::enabler;
-
-//--- SNIP class definition from g_src ----------------------------------------
-enum zoom_commands { zoom_in, zoom_out, zoom_reset, zoom_fullscreen, zoom_resetgrid };
-
-class renderer {
-    void cleanup_arrays();
-protected:
-    friend class renderer_decorator;
-    unsigned char *screen;
-    long *screentexpos;
-    char *screentexpos_addcolor;
-    unsigned char *screentexpos_grayscale;
-    unsigned char *screentexpos_cf;
-    unsigned char *screentexpos_cbr;
-    // For partial printing:
-    unsigned char *screen_old;
-    long *screentexpos_old;
-    char *screentexpos_addcolor_old;
-    unsigned char *screentexpos_grayscale_old;
-    unsigned char *screentexpos_cf_old;
-    unsigned char *screentexpos_cbr_old;
-
-    //void gps_allocate(int x, int y);
-    //Either<texture_fullid,texture_ttfid> screen_to_texid(int x, int y);
-public:
-    //void display();
-    virtual void update_tile(int x, int y) = 0;
-    virtual void update_all() = 0;
-    virtual void render() = 0;
-    virtual void set_fullscreen(); // Should read from enabler.is_fullscreen()
-    virtual void zoom(zoom_commands cmd);
-    virtual void resize(int w, int h) = 0;
-    virtual void grid_resize(int w, int h) = 0;
-    //void swap_arrays();
-    renderer() {
-        screen = NULL;
-        screentexpos = NULL;
-        screentexpos_addcolor = NULL;
-        screentexpos_grayscale = NULL;
-        screentexpos_cf = NULL;
-        screentexpos_cbr = NULL;
-        screen_old = NULL;
-        screentexpos_old = NULL;
-        screentexpos_addcolor_old = NULL;
-        screentexpos_grayscale_old = NULL;
-        screentexpos_cf_old = NULL;
-        screentexpos_cbr_old = NULL;
-    }
-    virtual ~renderer();
-    virtual bool get_mouse_coords(int &x, int &y) = 0;
-    virtual bool uses_opengl();
-};
-//---- END class definition from g_src ----------------------------------------
 
 // The error messages are taken from the clsocket source code
 const char * translate_socket_error(CSimpleSocket::CSocketError err) {
@@ -146,7 +82,7 @@ class client_pool {
         client_pool * p = reinterpret_cast<client_pool *>(client_pool_pointer);
         CPassiveSocket socket;
         socket.Initialize();
-        if (socket.Listen((const uint8 *)"0.0.0.0", 8008)) {
+        if (socket.Listen((const uint8_t *)"0.0.0.0", 8008)) {
             std::cout << "Listening on a socket" << std::endl;
         } else {
             std::cout << "Not listening: " << socket.GetSocketError() << std::endl;
@@ -190,17 +126,17 @@ public:
     void broadcast(const std::string & message) {
         unsigned int sz = htonl(message.size());
         for (size_t i = 0; i < clients.size(); ++i) {
-            clients[i]->Send(reinterpret_cast<const uint8 *>(&sz), sizeof(sz));
-            clients[i]->Send((const uint8 *) message.c_str(), message.size());
+            clients[i]->Send(reinterpret_cast<const uint8_t *>(&sz), sizeof(sz));
+            clients[i]->Send((const uint8_t *) message.c_str(), message.size());
         }
     }
 };
 
 // A decorator (in the design pattern sense) of the DF renderer class.
 // Sends the screen contents to a client_pool.
-class renderer_decorator : public renderer {
+class renderer_decorator : public df::renderer {
     // the renderer we're decorating
-    renderer * inner;
+    df::renderer * inner;
 
     // how many frames have passed since we last sent a frame
     int framesNotPrinted;
@@ -258,7 +194,7 @@ class renderer_decorator : public renderer {
     }
 
 public:
-    renderer_decorator(renderer * inner, bool * alive)
+    renderer_decorator(df::renderer * inner, bool * alive)
         : inner(inner)
         , framesNotPrinted(0)
         , alive(alive)
@@ -307,7 +243,7 @@ public:
         clients.broadcast(frame.str());
     }
     virtual void set_fullscreen() { inner->set_fullscreen(); }
-    virtual void zoom(zoom_commands cmd) {
+    virtual void zoom(df::zoom_commands cmd) {
         copy_to_inner();
         inner->zoom(cmd);
     }
@@ -327,16 +263,16 @@ public:
         delete inner;
         inner = 0;
     }
-    virtual bool get_mouse_coords(int &x, int &y) { return inner->get_mouse_coords(x, y); }
+    virtual bool get_mouse_coords(int *x, int *y) { return inner->get_mouse_coords(x, y); }
     virtual bool uses_opengl() { return inner->uses_opengl(); }
 
-    static renderer_decorator * hook(renderer *& ptr, bool * alive) {
+    static renderer_decorator * hook(df::renderer *& ptr, bool * alive) {
         renderer_decorator * r = new renderer_decorator(ptr, alive);
         ptr = r;
         return r;
     }
 
-    static void unhook(renderer *& ptr, renderer_decorator * dec, color_ostream & out) {
+    static void unhook(df::renderer *& ptr, renderer_decorator * dec, color_ostream & out) {
         dec->copy_to_inner();
         ptr = dec->inner;
         dec->inner = 0;
@@ -346,8 +282,8 @@ public:
 
 DFHACK_PLUGIN("dfstream");
 
-inline renderer *& active_renderer() {
-    return reinterpret_cast<renderer *&>(enabler->renderer);
+inline df::renderer *& active_renderer() {
+    return enabler->renderer;
 }
 
 // This class is a smart pointer around a renderer_decorator.
@@ -384,6 +320,7 @@ public:
     auto_renderer_decorator & operator=(renderer_decorator *p) {
         reset();
         this->p = p;
+	return *this;
     }
 
     renderer_decorator * get() {

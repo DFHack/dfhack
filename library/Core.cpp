@@ -869,7 +869,6 @@ bool Core::Init()
 
     // Init global object pointers
     df::global::InitGlobals();
-    init_screen_module(this);
 
     cerr << "Initializing Console.\n";
     // init the console.
@@ -895,6 +894,7 @@ bool Core::Init()
     */
     // initialize data defs
     virtual_identity::Init(this);
+    init_screen_module(this);
 
     // initialize common lua context
     Lua::Core::Init(con);

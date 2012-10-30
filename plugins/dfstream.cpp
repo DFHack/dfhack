@@ -148,19 +148,19 @@ class renderer_decorator : public df::renderer {
     client_pool clients;
 
     // The following three methods facilitate copying of state to the inner object
-    void set_inner_to_null() {
-        inner->screen = NULL;
-        inner->screentexpos = NULL;
-        inner->screentexpos_addcolor = NULL;
-        inner->screentexpos_grayscale = NULL;
-        inner->screentexpos_cf = NULL;
-        inner->screentexpos_cbr = NULL;
-        inner->screen_old = NULL;
-        inner->screentexpos_old = NULL;
-        inner->screentexpos_addcolor_old = NULL;
-        inner->screentexpos_grayscale_old = NULL;
-        inner->screentexpos_cf_old = NULL;
-        inner->screentexpos_cbr_old = NULL;
+    void set_to_null() {
+        screen = NULL;
+        screentexpos = NULL;
+        screentexpos_addcolor = NULL;
+        screentexpos_grayscale = NULL;
+        screentexpos_cf = NULL;
+        screentexpos_cbr = NULL;
+        screen_old = NULL;
+        screentexpos_old = NULL;
+        screentexpos_addcolor_old = NULL;
+        screentexpos_grayscale_old = NULL;
+        screentexpos_cf_old = NULL;
+        screentexpos_cbr_old = NULL;
     }
 
     void copy_from_inner() {
@@ -259,9 +259,12 @@ public:
     }
     virtual ~renderer_decorator() {
         *alive = false;
-        if (inner) set_inner_to_null();
-        delete inner;
-        inner = 0;
+        if (inner) {
+            copy_to_inner();
+            delete inner;
+            inner = 0;
+        }
+        set_to_null();
     }
     virtual bool get_mouse_coords(int *x, int *y) { return inner->get_mouse_coords(x, y); }
     virtual bool uses_opengl() { return inner->uses_opengl(); }
@@ -336,6 +339,11 @@ auto_renderer_decorator decorator;
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
+    if (!df::renderer::_identity.can_allocate())
+    {
+        out.printerr("Cannot allocate a renderer\n");
+        return CR_OK;
+    }
     if (!decorator) {
         decorator = renderer_decorator::hook(active_renderer(), &decorator.alive);
     }
@@ -344,6 +352,10 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    if (decorator && active_renderer() == decorator.get())
+    {
+        renderer_decorator::unhook(active_renderer(), decorator.get(), out);
+    }
     decorator.reset();
     return CR_OK;
 }

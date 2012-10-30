@@ -11,6 +11,7 @@
 #include "modules/Items.h"
 #include "modules/Job.h"
 #include "modules/World.h"
+#include "modules/Maps.h"
 
 #include "MiscUtils.h"
 
@@ -21,6 +22,7 @@
 #include "df/squad.h"
 #include "df/unit.h"
 #include "df/squad_position.h"
+#include "df/items_other_id.h"
 #include "df/item_weaponst.h"
 #include "df/item_armorst.h"
 #include "df/item_helmst.h"
@@ -84,6 +86,32 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
     return CR_OK;
 }
 
+// Check if the item is assigned to any use controlled by the military tab
+static bool is_assigned_item(df::item *item)
+{
+    if (!ui)
+        return false;
+
+    auto type = item->getType();
+    int idx = binsearch_index(ui->equipment.items_assigned[type], item->id);
+    if (idx < 0)
+        return false;
+
+    // Exclude weapons used by miners, wood cutters etc
+    switch (type) {
+    case item_type::WEAPON:
+        if (binsearch_index(ui->equipment.work_weapons, item->id) >= 0)
+            return false;
+        break;
+
+    default:
+        break;
+    }
+
+    return true;
+}
+
+// Check if the item is assigned to the squad member who owns this armory building
 static bool belongs_to_position(df::item *item, df::building *holder)
 {
     int sid = holder->getSpecificSquad();
@@ -96,6 +124,7 @@ static bool belongs_to_position(df::item *item, df::building *holder)
 
     int position = holder->getSpecificPosition();
 
+    // Weapon racks belong to the whole squad, i.e. can be used by any position
     if (position == -1 && holder->getType() == building_type::Weaponrack)
     {
         for (size_t i = 0; i < squad->positions.size(); i++)
@@ -114,19 +143,17 @@ static bool belongs_to_position(df::item *item, df::building *holder)
     return false;
 }
 
+// Check if the item is appropriately stored in an armory building
 static bool is_in_armory(df::item *item)
 {
     if (item->flags.bits.in_inventory || item->flags.bits.on_ground)
         return false;
 
-    auto holder_ref = Items::getGeneralRef(item, general_ref_type::BUILDING_HOLDER);
-    if (!holder_ref)
-        return false;
-
-    auto holder = holder_ref->getBuilding();
+    auto holder = Items::getHolderBuilding(item);
     if (!holder)
         return false;
 
+    // If indeed in a building, check if it is the right one
     return belongs_to_position(item, holder);
 }
 
@@ -135,10 +162,46 @@ template<class Item> struct armory_hook : Item {
 
     DEFINE_VMETHOD_INTERPOSE(bool, isCollected, ())
     {
+        // Normally this vmethod is used to prevent stockpiling of uncollected webs.
+        // This uses it to also block stockpiling of items in the armory.
         if (is_in_armory(this))
             return false;
 
+        // Also never let items in process of being removed from uniform be stockpiled at once
+        if (this->flags.bits.in_inventory)
+        {
+            auto holder = Items::getHolderUnit(this);
+
+            if (holder && binsearch_index(holder->military.uniform_drop, this->id) >= 0)
+            {
+                if (is_assigned_item(this))
+                    return false;
+            }
+        }
+
         return INTERPOSE_NEXT(isCollected)();
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(bool, moveToGround, (int16_t x, int16_t y, int16_t z))
+    {
+        bool rv = INTERPOSE_NEXT(moveToGround)(x, y, z);
+
+        // Prevent instant restockpiling of dropped assigned items.
+        if (is_assigned_item(this))
+        {
+            // The original vmethod adds the item to this vector to force instant check
+            auto &ovec = world->items.other[items_other_id::ANY_RECENTLY_DROPPED];
+
+            // If it is indeed there, remove it
+            if (erase_from_vector(ovec, &df::item::id, this->id))
+            {
+                // and queue it to be checked normally in 0.5-1 in-game days
+                this->stockpile_countdown = 12 + random_int(12);
+                this->stockpile_delay = 0;
+            }
+        }
+
+        return rv;
     }
 };
 
@@ -153,11 +216,20 @@ template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_flaskst>, isCollecte
 template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_backpackst>, isCollected);
 template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_quiverst>, isCollected);
 
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_weaponst>, moveToGround);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_armorst>, moveToGround);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_helmst>, moveToGround);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_shoesst>, moveToGround);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_pantsst>, moveToGround);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_glovesst>, moveToGround);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_shieldst>, moveToGround);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_flaskst>, moveToGround);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_backpackst>, moveToGround);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_quiverst>, moveToGround);
+
+// Check if this item is loose and can be moved to armory
 static bool can_store_item(df::item *item)
 {
-    if (!item || item->stockpile_countdown > 0)
-        return false;
-
     if (item->flags.bits.in_job ||
         item->flags.bits.removed ||
         item->flags.bits.in_building ||
@@ -185,6 +257,69 @@ static bool can_store_item(df::item *item)
     return true;
 }
 
+// Queue a job to store the item in the building, if possible
+static bool try_store_item(df::building *target, df::item *item)
+{
+    // Check if the dwarves can path between the target and the item
+    df::coord tpos(target->centerx, target->centery, target->z);
+    df::coord ipos = Items::getPosition(item);
+
+    if (!Maps::canWalkBetween(tpos, ipos))
+        return false;
+
+    // Check if the target has enough space left
+    if (!target->canStoreItem(item, true))
+        return false;
+
+    // Create the job
+    auto href = df::allocate<df::general_ref_building_holderst>();
+    if (!href)
+        return false;
+
+    auto job = new df::job();
+
+    job->pos = tpos;
+
+    // Choose the job type - correct matching is needed so that
+    // later canStoreItem calls would take the job into account.
+    switch (target->getType()) {
+        case building_type::Weaponrack:
+            job->job_type = job_type::StoreWeapon;
+            // Without this flag dwarves will pick up the item, and
+            // then dismiss the job and put it back into the stockpile:
+            job->flags.bits.specific_dropoff = true;
+            break;
+        case building_type::Armorstand:
+            job->job_type = job_type::StoreArmor;
+            job->flags.bits.specific_dropoff = true;
+            break;
+        case building_type::Cabinet:
+            job->job_type = job_type::StoreItemInCabinet;
+            break;
+        default:
+            job->job_type = job_type::StoreItemInChest;
+            break;
+    }
+
+    // job <-> item link
+    if (!Job::attachJobItem(job, item, df::job_item_ref::Hauled))
+    {
+        delete job;
+        delete href;
+        return false;
+    }
+
+    // job <-> building link
+    href->building_id = target->id;
+    target->jobs.push_back(job);
+    job->references.push_back(href);
+
+    // add to job list
+    Job::linkIntoWorld(job);
+    return true;
+}
+
+// Store the item into the first building in the list that would accept it.
 static void try_store_item(std::vector<int32_t> &vec, df::item *item)
 {
     for (size_t i = 0; i < vec.size(); i++)
@@ -193,56 +328,23 @@ static void try_store_item(std::vector<int32_t> &vec, df::item *item)
         if (!target)
             continue;
 
-        if (!target->canStoreItem(item, true))
-            continue;
-
-        auto href = df::allocate<df::general_ref_building_holderst>();
-        if (!href)
+        if (try_store_item(target, item))
             return;
-
-        auto job = new df::job();
-
-        job->pos = df::coord(target->centerx, target->centery, target->z);
-
-        switch (target->getType()) {
-            case building_type::Weaponrack:
-                job->job_type = job_type::StoreWeapon;
-                job->flags.bits.specific_dropoff = true;
-                break;
-            case building_type::Armorstand:
-                job->job_type = job_type::StoreArmor;
-                job->flags.bits.specific_dropoff = true;
-                break;
-            case building_type::Cabinet:
-                job->job_type = job_type::StoreItemInCabinet;
-                break;
-            default:
-                job->job_type = job_type::StoreItemInChest;
-                break;
-        }
-
-        if (!Job::attachJobItem(job, item, df::job_item_ref::Hauled))
-        {
-            delete job;
-            delete href;
-            continue;
-        }
-
-        href->building_id = target->id;
-        target->jobs.push_back(job);
-        job->references.push_back(href);
-
-        Job::linkIntoWorld(job);
-        return;
     }
 }
 
+// Store the items into appropriate armory buildings
 static void try_store_item_set(std::vector<int32_t> &items, df::squad *squad, df::squad_position *pos)
 {
     for (size_t j = 0; j < items.size(); j++)
     {
         auto item = df::item::find(items[j]);
 
+        // bad id, or cooldown timer still counting
+        if (!item || item->stockpile_countdown > 0)
+            continue;
+
+        // not loose
         if (!can_store_item(item))
             continue;
 
@@ -264,9 +366,11 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out, state_change_ev
     if (!is_enabled)
         return CR_OK;
 
+    // Process every 50th frame, sort of like regular stockpiling does
     if (DF_GLOBAL_VALUE(cur_year_tick,1) % 50 != 0)
         return CR_OK;
 
+    // Loop over squads
     auto &squads = df::global::world->squads.all;
 
     for (size_t si = 0; si < squads.size(); si++)
@@ -304,6 +408,17 @@ static void enable_hooks(color_ostream &out, bool enable)
     enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_flaskst>, isCollected), enable);
     enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_backpackst>, isCollected), enable);
     enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_quiverst>, isCollected), enable);
+
+    enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_weaponst>, moveToGround), enable);
+    enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_armorst>, moveToGround), enable);
+    enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_helmst>, moveToGround), enable);
+    enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_pantsst>, moveToGround), enable);
+    enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_shoesst>, moveToGround), enable);
+    enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_glovesst>, moveToGround), enable);
+    enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_shieldst>, moveToGround), enable);
+    enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_flaskst>, moveToGround), enable);
+    enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_backpackst>, moveToGround), enable);
+    enable_hook(out, INTERPOSE_HOOK(armory_hook<df::item_quiverst>, moveToGround), enable);
 }
 
 static void enable_plugin(color_ostream &out)

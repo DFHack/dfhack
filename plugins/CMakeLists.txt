@@ -128,7 +128,7 @@ if (BUILD_SUPPORTED)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
     DFHACK_PLUGIN(misery misery.cpp)
-    DFHACK_PLUGIN(dfstream dfstream.cpp LINK_LIBRARIES clsocket dfhack-tinythread)
+    #DFHACK_PLUGIN(dfstream dfstream.cpp LINK_LIBRARIES clsocket dfhack-tinythread)
 endif()
 
 

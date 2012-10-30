@@ -172,7 +172,7 @@ template<class Item> struct armory_hook : Item {
         {
             auto holder = Items::getHolderUnit(this);
 
-            if (holder && binsearch_index(holder->military.uniform_drop, this->id) >= 0)
+            if (holder && ::binsearch_index(holder->military.uniform_drop, this->id) >= 0)
             {
                 if (is_assigned_item(this))
                     return false;

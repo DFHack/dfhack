@@ -339,7 +339,7 @@ auto_renderer_decorator decorator;
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (!df::renderer::_identity.can_allocate())
+    if (!df::renderer::_identity.can_instantiate())
     {
         out.printerr("Cannot allocate a renderer\n");
         return CR_OK;

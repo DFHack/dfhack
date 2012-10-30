@@ -151,6 +151,11 @@ DFHACK_EXPORT df::item *getContainer(df::item *item);
 /// which items does it contain?
 DFHACK_EXPORT void getContainedItems(df::item *item, /*output*/ std::vector<df::item*> *items);
 
+/// which building holds it?
+DFHACK_EXPORT df::building *getHolderBuilding(df::item *item);
+/// which unit holds it?
+DFHACK_EXPORT df::unit *getHolderUnit(df::item *item);
+
 /// Returns the true position of the item.
 DFHACK_EXPORT df::coord getPosition(df::item *item);
 

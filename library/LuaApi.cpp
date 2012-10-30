@@ -942,6 +942,8 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getOwner),
     WRAPM(Items, setOwner),
     WRAPM(Items, getContainer),
+    WRAPM(Items, getHolderBuilding),
+    WRAPM(Items, getHolderUnit),
     WRAPM(Items, getDescription),
     WRAPM(Items, isCasteMaterial),
     WRAPM(Items, getSubtypeCount),

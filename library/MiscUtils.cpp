@@ -148,6 +148,11 @@ bool prefix_matches(const std::string &prefix, const std::string &key, std::stri
     return false;
 }
 
+int random_int(int max)
+{
+    return int(int64_t(rand())*max/(int64_t(RAND_MAX)+1));
+}
+
 #ifdef LINUX_BUILD // Linux
 uint64_t GetTimeMs64()
 {

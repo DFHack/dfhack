@@ -331,6 +331,8 @@ inline T clip_range(T a, T1 minv, T2 maxv) {
     return a;
 }
 
+DFHACK_EXPORT int random_int(int max);
+
 /**
  * Returns the amount of milliseconds elapsed since the UNIX epoch.
  * Works on both windows and linux.

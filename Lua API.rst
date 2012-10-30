@@ -1019,6 +1019,14 @@ Items module
 
   Returns a list of items contained in this one.
 
+* ``dfhack.items.getHolderBuilding(item)``
+
+  Returns the holder building or *nil*.
+
+* ``dfhack.items.getHolderUnit(item)``
+
+  Returns the holder unit or *nil*.
+
 * ``dfhack.items.moveToGround(item,pos)``
 
   Move the item to the ground at position. Returns *false* if impossible.

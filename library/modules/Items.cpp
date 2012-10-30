@@ -592,6 +592,20 @@ void Items::getContainedItems(df::item *item, std::vector<df::item*> *items)
     }
 }
 
+df::building *Items::getHolderBuilding(df::item * item)
+{
+    auto ref = getGeneralRef(item, general_ref_type::BUILDING_HOLDER);
+
+    return ref ? ref->getBuilding() : NULL;
+}
+
+df::unit *Items::getHolderUnit(df::item * item)
+{
+    auto ref = getGeneralRef(item, general_ref_type::UNIT_HOLDER);
+
+    return ref ? ref->getUnit() : NULL;
+}
+
 df::coord Items::getPosition(df::item *item)
 {
     CHECK_NULL_POINTER(item);

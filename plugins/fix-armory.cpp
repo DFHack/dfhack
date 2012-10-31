@@ -90,6 +90,48 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
     return CR_OK;
 }
 
+/*
+ * PART 1 - Stop restockpiling of items stored in the armory.
+ *
+ * For everything other than ammo this is quite straightforward,
+ * since the uniform switch code already tries to store items
+ * in barracks containers, and it is thus known what the intention
+ * is. Moreover these containers know which squad and member they
+ * belong to.
+ *
+ * For ammo there is no such code (in fact, ammo is never removed
+ * from a quiver, except when it is dropped itself), so I had to
+ * apply some improvisation. There is one place where BOX containers
+ * with Squad Equipment set are used as an anchor location for a
+ * pathfinding check when assigning ammo, so presumably that's
+ * the correct place. I however wanted to also differentiate
+ * training ammo, so came up with the following rules:
+ *
+ *  1.  Combat ammo and ammo without any allowed use can be stored
+ *      in BOXes marked for Squad Equipment, either directly or via
+ *      containing room. No-allowed-use ammo is assumed to be reserved
+ *      for emergency combat use, or something like that.
+ *  1a. If assigned to a squad position, that box can be used _only_
+ *      for ammo assigned to that specific _squad_. Otherwise, if
+ *      multiple squads can use this room, they will store their
+ *      ammo all mixed up.
+ *  2.  Training ammo can be stored in BOXes within archery ranges
+ *      (designated from archery target) that are enabled for Training.
+ *      Train-only ammo in particular can _only_ be stored in such
+ *      boxes. The inspiration for this comes from some broken code
+ *      for weapon racks in Training rooms.
+ *
+ * As an additional feature (partially needed due to the constraints
+ * of working from an external hack), this plugin also blocks instant
+ * queueing of stockpiling jobs for items blocked on the ground, if
+ * these items are assigned to any squad.
+ *
+ * Since there apparently still are bugs that cause uniform items to be
+ * momentarily dropped on ground, this delay is set not to the minimally
+ * necessary 50 ticks, but to 0.5 - 1.0 in-game days, so as to provide a
+ * grace period during which the items can be instantly picked up again.
+ */
+
 // Check if the item is assigned to any use controlled by the military tab
 static bool is_assigned_item(df::item *item)
 {
@@ -104,6 +146,8 @@ static bool is_assigned_item(df::item *item)
     // Exclude weapons used by miners, wood cutters etc
     switch (type) {
     case item_type::WEAPON:
+        // the game code also checks this for ammo, funnily enough
+        // maybe it's not just for weapons?..
         if (binsearch_index(ui->equipment.work_weapons, item->id) >= 0)
             return false;
         break;
@@ -115,6 +159,7 @@ static bool is_assigned_item(df::item *item)
     return true;
 }
 
+// Check if this ammo item is assigned to this squad with one of the specified uses
 static bool is_squad_ammo(df::item *item, df::squad *squad, bool train, bool combat)
 {
     for (size_t i = 0; i < squad->ammunition.size(); i++)
@@ -123,6 +168,7 @@ static bool is_squad_ammo(df::item *item, df::squad *squad, bool train, bool com
         bool cs = spec->flags.bits.use_combat;
         bool ts = spec->flags.bits.use_training;
 
+        // no-use ammo assumed to be combat
         if (((cs || !ts) && combat) || (ts && train))
         {
             if (binsearch_index(spec->assigned, item->id) >= 0)
@@ -133,6 +179,7 @@ static bool is_squad_ammo(df::item *item, df::squad *squad, bool train, bool com
     return false;
 }
 
+// Recursively check room parents to find out if this ammo item is allowed here
 static bool can_store_ammo_rec(df::item *item, df::building *holder, int squad_id)
 {
     auto squads = holder->getSquads();
@@ -145,10 +192,13 @@ static bool can_store_ammo_rec(df::item *item, df::building *holder, int squad_i
         {
             auto use = (*squads)[i];
 
+            // For containers assigned to a squad, only consider that squad
             if (squad_id >= 0 && use->squad_id != squad_id)
                 continue;
 
+            // Squad Equipment -> combat
             bool combat = use->mode.bits.squad_eq;
+            // Archery target with Train -> training
             bool train = target && use->mode.bits.train;
 
             if (combat || train)
@@ -168,11 +218,14 @@ static bool can_store_ammo_rec(df::item *item, df::building *holder, int squad_i
     return false;
 }
 
+// Check if the ammo item can be stored in this container
 static bool can_store_ammo(df::item *item, df::building *holder)
 {
+    // Only chests
     if (holder->getType() != building_type::Box)
         return false;
 
+    // with appropriate flags set
     return can_store_ammo_rec(item, holder, holder->getSpecificSquad());
 }
 
@@ -225,33 +278,71 @@ static bool is_in_armory(df::item *item)
         return belongs_to_position(item, holder);
 }
 
+/*
+ * Hooks used to affect stockpiling code as it runs, and prevent it
+ * from doing unwanted stuff.
+ *
+ * Toady can simply add these checks directly to the stockpiling code;
+ * we have to abuse some handy item vmethods.
+ */
+
 template<class Item> struct armory_hook : Item {
     typedef Item interpose_base;
 
+    /*
+     * This vmethod is called by the actual stockpiling code before it
+     * tries to queue a job, and is normally used to prevent stockpiling
+     * of uncollected webs.
+     */
     DEFINE_VMETHOD_INTERPOSE(bool, isCollected, ())
     {
-        // Normally this vmethod is used to prevent stockpiling of uncollected webs.
-        // This uses it to also block stockpiling of items in the armory.
+        // Block stockpiling of items in the armory.
         if (is_in_armory(this))
             return false;
 
-        // Also never let items in process of being removed from uniform be stockpiled at once
+        /*
+         * When an item is removed from inventory due to Pickup Equipment
+         * process, the unit code directly invokes the stockpiling code
+         * and thus creates the job even before the item is actually dropped
+         * on the ground. We don't want this at all, especially due to the
+         * grace period idea.
+         *
+         * With access to source, that code can just be changed to simply
+         * drop the item on ground, without running stockpiling code.
+         */
         if (this->flags.bits.in_inventory)
         {
             auto holder = Items::getHolderUnit(this);
 
-            if (holder && ::binsearch_index(holder->military.uniform_drop, this->id) >= 0)
+            // When that call happens, the item is still in inventory
+            if (holder && is_assigned_item(this))
             {
-                if (is_assigned_item(this))
+                // And its ID is is this vector
+                if (::binsearch_index(holder->military.uniform_drop, this->id) >= 0)
                     return false;
             }
         }
 
+        // Call the original vmethod
         return INTERPOSE_NEXT(isCollected)();
     }
 
+    /*
+     * This vmethod is used to actually put the item on the ground.
+     * When it does that, it also adds it to a vector of items to be
+     * instanly restockpiled by a loop in another part of the code.
+     *
+     * We don't want this either, even more than when removing from
+     * uniform, because this can happen in lots of various situations,
+     * including deconstructed containers etc, and we want our own
+     * armory code below to have a chance to look at the item.
+     *
+     * The logical place for this code is in the loop that processes
+     * that vector, but that part is not virtual.
+     */
     DEFINE_VMETHOD_INTERPOSE(bool, moveToGround, (int16_t x, int16_t y, int16_t z))
     {
+        // First, let it do its work
         bool rv = INTERPOSE_NEXT(moveToGround)(x, y, z);
 
         // Prevent instant restockpiling of dropped assigned items.
@@ -298,6 +389,15 @@ template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_flaskst>, moveToGrou
 template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_backpackst>, moveToGround);
 template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_quiverst>, moveToGround);
 template<> IMPLEMENT_VMETHOD_INTERPOSE(armory_hook<df::item_ammost>, moveToGround);
+
+/*
+ * PART 2 - Actively queue jobs to haul assigned items to the armory.
+ *
+ * The logical place for this of course is in the same code that decides
+ * to put stuff in stockpiles, alongside the checks to prevent moving
+ * stuff away from the armory. We just run it independently every 50
+ * simulation frames.
+ */
 
 // Check if this item is loose and can be moved to armory
 static bool can_store_item(df::item *item)
@@ -397,6 +497,8 @@ static bool try_store_item(df::building *target, df::item *item)
     target->jobs.push_back(job);
     job->references.push_back(href);
 
+    // Two of the jobs need this link to find the job in canStoreItem().
+    // They also don't actually need BUILDING_HOLDER, but it doesn't hurt.
     if (dest)
     {
         auto rdest = df::allocate<df::general_ref_building_destinationst>();
@@ -438,6 +540,7 @@ static void try_store_item_set(std::vector<int32_t> &items, df::squad *squad, df
         if (!can_store_item(item))
             continue;
 
+        // queue jobs to put it in the appropriate container
         if (item->isWeapon())
             try_store_item(squad->rack_combat, item);
         else if (item->isClothing())
@@ -449,23 +552,30 @@ static void try_store_item_set(std::vector<int32_t> &items, df::squad *squad, df
     }
 }
 
-// Use a data structure sorted by free space, to even out the load
+// For storing ammo, use a data structure sorted by free space, to even out the load
 typedef std::map<int, std::set<df::building*> > ammo_box_set;
 
-static void index_boxes(df::building *root, ammo_box_set &group)
+// Enumerate boxes in the room, adding them to the set
+static void index_boxes(df::building *root, ammo_box_set &group, int squad_id)
 {
     if (root->getType() == building_type::Box)
     {
-        //color_ostream_proxy out(Core::getInstance().getConsole());
-        //out.print("%08x %d\n", unsigned(root), root->getFreeCapacity(true));
+        int id = root->getSpecificSquad();
 
-        group[root->getFreeCapacity(true)].insert(root);
+        if (id < 0 || id == squad_id)
+        {
+            //color_ostream_proxy out(Core::getInstance().getConsole());
+            //out.print("%08x %d\n", unsigned(root), root->getFreeCapacity(true));
+
+            group[root->getFreeCapacity(true)].insert(root);
+        }
     }
 
     for (size_t i = 0; i < root->children.size(); i++)
-        index_boxes(root->children[i], group);
+        index_boxes(root->children[i], group, squad_id);
 }
 
+// Loop over the set from most empty to least empty
 static bool try_store_ammo(df::item *item, ammo_box_set &group)
 {
     int volume = item->getVolume();
@@ -501,11 +611,11 @@ static void index_ammo_boxes(df::squad *squad, ammo_box_set &train_set, ammo_box
 
         // Chests in rooms marked for Squad Equipment used for combat ammo
         if (room->mode.bits.squad_eq)
-            index_boxes(bld, combat_set);
+            index_boxes(bld, combat_set, squad->id);
 
-        // Chests in archery ranges used for training-only ammo
+        // Chests in archery ranges used for training ammo
         if (room->mode.bits.train && bld->getType() == building_type::ArcheryTarget)
-            index_boxes(bld, train_set);
+            index_boxes(bld, train_set, squad->id);
     }
 }
 
@@ -529,16 +639,25 @@ static void try_store_ammo(df::squad *squad)
             if (!can_store_item(item))
                 continue;
 
+            // compute the maps lazily
             if (!indexed)
             {
                 indexed = true;
                 index_ammo_boxes(squad, train_set, combat_set);
             }
 
+            // BUG: if the same container is in both sets,
+            // when a job is queued, the free space in the other
+            // set will not be updated, which could lead to uneven
+            // loading - but not to overflowing the container!
+
+            // As said above, combat goes into Squad Equipment
             if (cs && try_store_ammo(item, combat_set))
                 continue;
+            // Training goes into Archery Range with Train
             if (ts && try_store_ammo(item, train_set))
                 continue;
+            // No use goes into combat
             if (!(ts || cs) && try_store_ammo(item, combat_set))
                 continue;
         }

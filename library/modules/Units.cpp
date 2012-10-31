@@ -889,8 +889,7 @@ int Units::getNominalSkill(df::unit *unit, df::job_skill skill_id, bool use_rust
 
     // Retrieve skill from unit soul:
 
-    df::enum_field<df::job_skill,int16_t> key(skill_id);
-    auto skill = binsearch_in_vector(unit->status.current_soul->skills, &df::unit_skill::id, key);
+    auto skill = binsearch_in_vector(unit->status.current_soul->skills, &df::unit_skill::id, skill_id);
 
     if (skill)
     {

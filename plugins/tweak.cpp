@@ -10,6 +10,7 @@
 #include "modules/Screen.h"
 #include "modules/Units.h"
 #include "modules/Items.h"
+#include "modules/Job.h"
 
 #include "MiscUtils.h"
 
@@ -47,6 +48,9 @@
 #include "df/viewscreen_layer_assigntradest.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_layer_militaryst.h"
+#include "df/squad_position.h"
+#include "df/job.h"
+#include "df/general_ref_building_holderst.h"
 
 #include <stdlib.h>
 

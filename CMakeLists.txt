@@ -145,7 +145,7 @@ include_directories(depends/clsocket/src)
 add_subdirectory(depends)
 
 
-find_package(Docutils)
+#find_package(Docutils)
 
 #set (RST_FILES
 #"Readme"

@@ -65,10 +65,14 @@ end
 
 local function apply_attrs(obj, attrs, init_table)
     for k,v in pairs(attrs) do
-        if v == DEFAULT_NIL then
-            v = nil
+        local init_v = init_table[k]
+        if init_v ~= nil then
+            obj[k] = init_v
+        elseif v == DEFAULT_NIL then
+            obj[k] = nil
+        else
+            obj[k] = v
         end
-        obj[k] = init_table[k] or v
     end
 end
 

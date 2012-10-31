@@ -1239,6 +1239,12 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.items.getContainedItems(item)</tt></p>
 <p>Returns a list of items contained in this one.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getHolderBuilding(item)</tt></p>
+<p>Returns the holder building or <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getHolderUnit(item)</tt></p>
+<p>Returns the holder unit or <em>nil</em>.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.items.moveToGround(item,pos)</tt></p>
 <p>Move the item to the ground at position. Returns <em>false</em> if impossible.</p>
 </li>
@@ -1713,6 +1719,15 @@ global environment, persistent between calls to the script.</p>
 <p>Like memmove below, but works even if dest is read-only memory, e.g. code.
 If destination overlaps a completely invalid memory region, or another error
 occurs, returns false.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.patchBytes(write_table[, verify_table])</tt></p>
+<p>The first argument must be a lua table, which is interpreted as a mapping from
+memory addresses to byte values that should be stored there. The second argument
+may be a similar table of values that need to be checked before writing anything.</p>
+<p>The function takes care to either apply all of <tt class="docutils literal">write_table</tt>, or none of it.
+An empty <tt class="docutils literal">write_table</tt> with a nonempty <tt class="docutils literal">verify_table</tt> can be used to reasonably
+safely check if the memory contains certain values.</p>
+<p>Returns <em>true</em> if successful, or <em>nil, error_msg, address</em> if not.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.memmove(dest,src,count)</tt></p>
 <p>Wraps the standard memmove function. Accepts both numbers and refs as pointers.</p>

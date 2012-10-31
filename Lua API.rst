@@ -1019,6 +1019,14 @@ Items module
 
   Returns a list of items contained in this one.
 
+* ``dfhack.items.getHolderBuilding(item)``
+
+  Returns the holder building or *nil*.
+
+* ``dfhack.items.getHolderUnit(item)``
+
+  Returns the holder unit or *nil*.
+
 * ``dfhack.items.moveToGround(item,pos)``
 
   Move the item to the ground at position. Returns *false* if impossible.
@@ -1580,6 +1588,18 @@ and are only documented here for completeness:
   Like memmove below, but works even if dest is read-only memory, e.g. code.
   If destination overlaps a completely invalid memory region, or another error
   occurs, returns false.
+
+* ``dfhack.internal.patchBytes(write_table[, verify_table])``
+
+  The first argument must be a lua table, which is interpreted as a mapping from
+  memory addresses to byte values that should be stored there. The second argument
+  may be a similar table of values that need to be checked before writing anything.
+
+  The function takes care to either apply all of ``write_table``, or none of it.
+  An empty ``write_table`` with a nonempty ``verify_table`` can be used to reasonably
+  safely check if the memory contains certain values.
+
+  Returns *true* if successful, or *nil, error_msg, address* if not.
 
 * ``dfhack.internal.memmove(dest,src,count)``
 

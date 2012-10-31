@@ -55,6 +55,7 @@ using namespace DFHack;
 #include "df/item.h"
 #include "df/job.h"
 #include "df/building.h"
+#include "df/renderer.h"
 
 using namespace df::enums;
 using df::global::init;
@@ -312,6 +313,47 @@ class DFHACK_EXPORT enabler_inputst {
  public:
   std::string GetKeyDisplay(int binding);
 };
+
+class DFHACK_EXPORT renderer {
+    unsigned char *screen;
+    long *screentexpos;
+    char *screentexpos_addcolor;
+    unsigned char *screentexpos_grayscale;
+    unsigned char *screentexpos_cf;
+    unsigned char *screentexpos_cbr;
+    // For partial printing:
+    unsigned char *screen_old;
+    long *screentexpos_old;
+    char *screentexpos_addcolor_old;
+    unsigned char *screentexpos_grayscale_old;
+    unsigned char *screentexpos_cf_old;
+    unsigned char *screentexpos_cbr_old;
+public:
+    virtual void update_tile(int x, int y) {};
+    virtual void update_all() {};
+    virtual void render() {};
+    virtual void set_fullscreen();
+    virtual void zoom(df::zoom_commands cmd);
+    virtual void resize(int w, int h) {};
+    virtual void grid_resize(int w, int h) {};
+    renderer() {
+        screen = NULL;
+        screentexpos = NULL;
+        screentexpos_addcolor = NULL;
+        screentexpos_grayscale = NULL;
+        screentexpos_cf = NULL;
+        screentexpos_cbr = NULL;
+        screen_old = NULL;
+        screentexpos_old = NULL;
+        screentexpos_addcolor_old = NULL;
+        screentexpos_grayscale_old = NULL;
+        screentexpos_cf_old = NULL;
+        screentexpos_cbr_old = NULL;
+    }
+    virtual ~renderer();
+    virtual bool get_mouse_coords(int &x, int &y) { return false; }
+    virtual bool uses_opengl();
+};
 #else
 struct less_sz {
   bool operator() (const string &a, const string &b) const {
@@ -326,7 +368,9 @@ static std::map<df::interface_key,std::set<string,less_sz> > *keydisplay = NULL;
 void init_screen_module(Core *core)
 {
 #ifdef _LINUX
-    core = core;
+    renderer tmp;
+    if (!strict_virtual_cast<df::renderer>((virtual_ptr)&tmp))
+        cerr << "Could not fetch the renderer vtable." << std::endl;
 #else
     if (!core->vinfo->getAddress("keydisplay", keydisplay))
         keydisplay = NULL;
@@ -639,7 +683,12 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
 
 void dfhack_lua_viewscreen::render()
 {
-    if (Screen::isDismissed(this)) return;
+    if (Screen::isDismissed(this))
+    {
+        if (parent)
+            parent->render();
+        return;
+    }
 
     dfhack_viewscreen::render();
 

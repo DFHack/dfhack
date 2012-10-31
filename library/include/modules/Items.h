@@ -151,6 +151,11 @@ DFHACK_EXPORT df::item *getContainer(df::item *item);
 /// which items does it contain?
 DFHACK_EXPORT void getContainedItems(df::item *item, /*output*/ std::vector<df::item*> *items);
 
+/// which building holds it?
+DFHACK_EXPORT df::building *getHolderBuilding(df::item *item);
+/// which unit holds it?
+DFHACK_EXPORT df::unit *getHolderUnit(df::item *item);
+
 /// Returns the true position of the item.
 DFHACK_EXPORT df::coord getPosition(df::item *item);
 
@@ -161,7 +166,7 @@ DFHACK_EXPORT bool moveToGround(MapExtras::MapCache &mc, df::item *item, df::coo
 DFHACK_EXPORT bool moveToContainer(MapExtras::MapCache &mc, df::item *item, df::item *container);
 DFHACK_EXPORT bool moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,int16_t use_mode);
 DFHACK_EXPORT bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit,
-    df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Carried, int body_part = -1);
+    df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Hauled, int body_part = -1);
 
 /// Makes the item removed and marked for garbage collection
 DFHACK_EXPORT bool remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat = false);

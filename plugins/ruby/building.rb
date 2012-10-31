@@ -227,7 +227,7 @@ module DFHack
 
         # link bld into other rooms if it is inside their extents or vice versa
         def building_linkrooms(bld)
-            world.buildings.other[:ANY_FREE].each { |ob|
+            world.buildings.other[:IN_PLAY].each { |ob|
                 next if ob.z != bld.z
                 if bld.is_room and bld.room.extents
                     next if ob.is_room or ob.x1 < bld.room.x or ob.x1 >= bld.room.x+bld.room.width or ob.y1 < bld.room.y or ob.y1 >= bld.room.y+bld.room.height

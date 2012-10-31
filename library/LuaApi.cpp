@@ -500,7 +500,9 @@ static void OpenPersistent(lua_State *state)
  * Material info lookup *
  ************************/
 
-static void push_matinfo(lua_State *state, MaterialInfo &info)
+static int DFHACK_MATINFO_TOKEN = 0;
+
+void Lua::Push(lua_State *state, MaterialInfo &info)
 {
     if (!info.isValid())
     {
@@ -509,7 +511,7 @@ static void push_matinfo(lua_State *state, MaterialInfo &info)
     }
 
     lua_newtable(state);
-    lua_pushvalue(state, lua_upvalueindex(1));
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_MATINFO_TOKEN);
     lua_setmetatable(state, -2);
 
     lua_pushinteger(state, info.type);
@@ -564,7 +566,7 @@ static int dfhack_matinfo_find(lua_State *state)
         info.find(tokens);
     }
 
-    push_matinfo(state, info);
+    Lua::Push(state, info);
     return 1;
 }
 
@@ -632,7 +634,7 @@ static int dfhack_matinfo_decode(lua_State *state)
 {
     MaterialInfo info;
     decode_matinfo(state, &info, true);
-    push_matinfo(state, info);
+    Lua::Push(state, info);
     return 1;
 }
 
@@ -710,6 +712,9 @@ static const luaL_Reg dfhack_matinfo_funcs[] = {
 static void OpenMatinfo(lua_State *state)
 {
     luaL_getsubtable(state, lua_gettop(state), "matinfo");
+
+    lua_dup(state);
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_MATINFO_TOKEN);
 
     lua_dup(state);
     luaL_setfuncs(state, dfhack_matinfo_funcs, 1);
@@ -937,6 +942,8 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getOwner),
     WRAPM(Items, setOwner),
     WRAPM(Items, getContainer),
+    WRAPM(Items, getHolderBuilding),
+    WRAPM(Items, getHolderUnit),
     WRAPM(Items, getDescription),
     WRAPM(Items, isCasteMaterial),
     WRAPM(Items, getSubtypeCount),
@@ -1530,6 +1537,81 @@ static int internal_patchMemory(lua_State *L)
     return 1;
 }
 
+static int internal_patchBytes(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);
+    lua_settop(L, 2);
+
+    MemoryPatcher patcher;
+
+    if (!lua_isnil(L, 2))
+    {
+        luaL_checktype(L, 2, LUA_TTABLE);
+
+        lua_pushnil(L);
+
+        while (lua_next(L, 2))
+        {
+            uint8_t *addr = (uint8_t*)checkaddr(L, -2, true);
+            int isnum;
+            uint8_t value = (uint8_t)lua_tounsignedx(L, -1, &isnum);
+            if (!isnum)
+                luaL_error(L, "invalid value in verify table");
+            lua_pop(L, 1);
+
+            if (!patcher.verifyAccess(addr, 1, false))
+            {
+                lua_pushnil(L);
+                lua_pushstring(L, "invalid verify address");
+                lua_pushvalue(L, -3);
+                return 3;
+            }
+
+            if (*addr != value)
+            {
+                lua_pushnil(L);
+                lua_pushstring(L, "wrong verify value");
+                lua_pushvalue(L, -3);
+                return 3;
+            }
+        }
+    }
+
+    lua_pushnil(L);
+
+    while (lua_next(L, 1))
+    {
+        uint8_t *addr = (uint8_t*)checkaddr(L, -2, true);
+        int isnum;
+        uint8_t value = (uint8_t)lua_tounsignedx(L, -1, &isnum);
+        if (!isnum)
+            luaL_error(L, "invalid value in write table");
+        lua_pop(L, 1);
+
+        if (!patcher.verifyAccess(addr, 1, true))
+        {
+            lua_pushnil(L);
+            lua_pushstring(L, "invalid write address");
+            lua_pushvalue(L, -3);
+            return 3;
+        }
+    }
+
+    lua_pushnil(L);
+
+    while (lua_next(L, 1))
+    {
+        uint8_t *addr = (uint8_t*)checkaddr(L, -2, true);
+        uint8_t value = (uint8_t)lua_tounsigned(L, -1);
+        lua_pop(L, 1);
+
+        *addr = value;
+    }
+
+    lua_pushboolean(L, true);
+    return 1;
+}
+
 static int internal_memmove(lua_State *L)
 {
     void *dest = checkaddr(L, 1);
@@ -1621,6 +1703,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getVTable", internal_getVTable },
     { "getMemRanges", internal_getMemRanges },
     { "patchMemory", internal_patchMemory },
+    { "patchBytes", internal_patchBytes },
     { "memmove", internal_memmove },
     { "memcmp", internal_memcmp },
     { "memscan", internal_memscan },

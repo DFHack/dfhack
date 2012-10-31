@@ -78,6 +78,12 @@ keybinding add Alt-P@dwarfmode/Hauling/DefineStop/Cond/Guide gui/guide-path
 # workshop job details
 keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
 
+# workflow front-end
+keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
+
+# assign weapon racks to squads so that they can be used
+keybinding add P@dwarfmode/QueryBuilding/Some/Weaponrack gui/assign-rack
+
 ############################
 # UI and game logic tweaks #
 ############################

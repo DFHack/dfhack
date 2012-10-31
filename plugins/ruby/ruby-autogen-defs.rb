@@ -181,7 +181,8 @@ module DFHack
                 @nume ||= const_get(:NUME)
             end
 
-            def self.int(i)
+            def self.int(i, allow_bad_sym=false)
+                raise ArgumentError, "invalid enum member #{i} of #{self}" if i.kind_of?(::Symbol) and not allow_bad_sym and not nume.has_key?(i)
                 nume[i] || i
             end
             def self.sym(i)
@@ -797,7 +798,6 @@ module DFHack
         def isset(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
-            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_isset(@_memaddr, key)
         end
         alias is_set? isset
@@ -805,14 +805,12 @@ module DFHack
         def set(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
-            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_set(@_memaddr, key)
         end
 
         def delete(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
-            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_deletekey(@_memaddr, key)
         end
 

@@ -1,11 +1,12 @@
+local _ENV = mkmodule('plugins.dfusion.embark')
 local dfu=require("plugins.dfusion")
 local ms=require("memscan")
 local MAX_RACES=100
 CustomEmbark=defclass(CustomEmbark,dfu.BinaryPlugin)
+CustomEmbark.name="CustomEmbark"
 local myos=dfhack.getOSType()
 if myos=="windows" then
-
-    CustomEmbark.ATTRS{filename="dfusion/embark/embark.o",name="CustomEmbark",race_caste_data=DEFAULT_NIL}
+    CustomEmbark.ATTRS{filename="hack/lua/plugins/dfusion/embark.o",name="CustomEmbark",race_caste_data=DEFAULT_NIL}
     CustomEmbark.class_status="valid, not installed"
     function CustomEmbark:install()
         local stoff=dfhack.internal.getAddress('start_dwarf_count')
@@ -46,15 +47,12 @@ if myos=="windows" then
         
         self.disable_castes=dfu.BinaryPatch{pre_data={0x83,0xc8,0xff},data={0x90,0x90,0x90},address=caste_offset,name="custom_embark_caste_disable"}
         self.disable_castes:apply()
-        self.dwarfcount=dfu.BinaryPatch{pre_data=dfu.dwordToTable(7),data=dfu.dwordToTable(#self.race_caste_data),address=stoff,name="custom_embark_embarkcount"}
-        self.dwarfcount:apply()
-        local caste_array=self:allocate("caste_array","uint16_t",#self.race_caste_data)
-        local race_array=self:allocate("race_array","uint16_t",#self.race_caste_data)
+        
+        
         self:setEmbarkParty(self.race_caste_data)
-        for k,v in ipairs(self.race_caste_data) do
-            caste_array[k-1]=v[2]
-            race_array[k-1]=v[1]
-        end
+        local caste_array=self:get_or_alloc("caste_array","uint16_t",MAX_RACES)
+        local race_array=self:get_or_alloc("race_array","uint16_t",MAX_RACES)
+        
         local race_array_off,caste_array_off
         local _
         _,race_array_off=df.sizeof(race_array)
@@ -67,6 +65,14 @@ if myos=="windows" then
         self.installed=true
     end
     function CustomEmbark:setEmbarkParty(racesAndCastes)
+        local stoff=dfhack.internal.getAddress('start_dwarf_count')
+        if #racesAndCastes<7 then
+            error("caste and race count must be bigger than 6")
+        end
+        if #racesAndCastes>MAX_RACES then
+            error("caste and race count must be less then "..MAX_RACES)
+        end
+        
         self.race_caste_data=racesAndCastes
         if self.dwarfcount== nil then
             self.dwarfcount=dfu.BinaryPatch{pre_data=dfu.dwordToTable(7),data=dfu.dwordToTable(#self.race_caste_data),address=stoff,name="custom_embark_embarkcount"}
@@ -74,7 +80,12 @@ if myos=="windows" then
         else
             self.dwarfcount:repatch(dfu.dwordToTable(#self.race_caste_data))
         end
-        
+        local caste_array=self:get_or_alloc("caste_array","uint16_t",MAX_RACES)
+        local race_array=self:get_or_alloc("race_array","uint16_t",MAX_RACES)
+        for k,v in ipairs(self.race_caste_data) do
+            caste_array[k-1]=v[2]
+            race_array[k-1]=v[1]
+        end
     end
     function CustomEmbark:status()
         if self.installed then
@@ -90,6 +101,48 @@ if myos=="windows" then
             self.dwarfcount:remove()
         end
     end
+    function CustomEmbark:edit()
+        local data=self.race_caste_data or {}
+        print(string.format("Old race count:%d",#data))
+        local endthis=false
+        print("current:")
+        while(not endthis) do
+            print(" #  RaceId       Race name        Caste num")
+            for k,v in pairs(data) do
+                local name=df.creature_raw.find(v[1]).creature_id or ""
+                print(string.format("%3d. %6d  %20s %d",k,v[1],name,v[2]))
+            end
+            print("a- add, r-remove, c-cancel, s-save and update")
+            local choice=io.stdin:read()
+            if choice=='a' then
+                print("Enter new race then caste ids:")
+                local race=tonumber(io.stdin:read())
+                local caste=tonumber(io.stdin:read())
+                if race and caste then
+                    table.insert(data,{race,caste})
+                else
+                    print("input parse error")
+                end
+            elseif choice=='r' then
+                print("enter number to remove:")
+                local num_rem=tonumber(io.stdin:read())
+                if num_rem~=nil then
+                    table.remove(data,num_rem)
+                end
+            elseif choice=='c' then
+                endthis=true
+            elseif choice=='s' then
+                endthis=true
+                if self.installed then
+                    self:setEmbarkParty(data)
+                else
+                    self.race_caste_data=data
+                    self:install()
+                end
+            end
+        end
+    end
 else
     CustomEmbark.class_status="invalid, os not supported"
 end
+return _ENV

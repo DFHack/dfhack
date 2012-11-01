@@ -107,6 +107,7 @@ end
 -- A binary hack (obj file) loader/manager
 -- has to have: a way to get offsets for marked areas (for post load modification) or some way to do that pre-load
 -- page managing (including excecute/write flags for DEP and the like)
+-- TODO plugin state enum, a way to modify post install (could include repatching code...)
 plugins=plugins or {}
 BinaryPlugin=defclass(BinaryPlugin)
 BinaryPlugin.ATTRS {filename=DEFAULT_NIL,reloc_table={},name=DEFAULT_NIL}
@@ -115,13 +116,20 @@ function BinaryPlugin:init(args)
 end
 function BinaryPlugin:postinit(args)
     if self.name==nil then error("Not a valid plugin name!") end
-    --if plugins[args.name]==nil then
+    if plugins[args.name]==nil then
         plugins[self.name]=self
-    --else
-    --    error("Trying to create a same plugin")
-    --end
+    else
+        error("Trying to create a same plugin")
+    end
     self.allocated_object={}
     self:load()
+end
+function BinaryPlugin:get_or_alloc(name,typename,arrsize)
+    if self.allocated_object[name]~=nil then
+        return self.allocated_object[name]
+    else
+        return self:allocate(name,typename,arrsize)
+    end
 end
 function BinaryPlugin:allocate(name,typename,arrsize)
     local trg
@@ -181,6 +189,9 @@ function BinaryPlugin:print_data()
         end
     end
     print(out)
+end
+function BinaryPlugin:status()
+    return "invalid, base class only!"
 end
 function BinaryPlugin:__gc()
     for k,v in pairs(self.allocated_object) do

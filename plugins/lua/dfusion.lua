@@ -202,4 +202,39 @@ function BinaryPlugin:__gc()
     end
     self.data:delete()
 end
+-- a Menu for some stuff. Maybe add a posibility of it working as a gui, or a gui adaptor?
+-- Todo add hints, and parse them to make a "smart" choice of parameters to pass
+SimpleMenu=defclass(SimpleMenu)
+SimpleMenu.ATTRS{title=DEFAULT_NIL}
+function SimpleMenu:init(args)
+    self.items={}
+end
+function SimpleMenu:add(name,entry,hints)
+	table.insert(self.items,{entry,name,hints})
+end
+function SimpleMenu:display()
+	print("Select choice (q exits):")
+	for p,c in pairs(self.items) do
+		print(string.format("%3d).%s",p,c[2]))
+	end
+	local ans
+	repeat
+		local r
+		r=io.stdin:read()
+		if r==nil then return end
+		if r=='q' then return end
+		ans=tonumber(r)
+		
+		if ans==nil or not(ans<=#self.items and ans>0) then
+			print("Invalid choice.")
+		end
+		
+	until ans~=nil and (ans<=#self.items and ans>0)
+    if type(self.items[ans][1])=="function" then
+        self.items[ans][1]()
+    else
+        self.items[ans][1]:display()
+    end
+end
+
 return _ENV

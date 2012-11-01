@@ -242,37 +242,7 @@ function engine.installMod(file,name,bonussize)
 	return T
 end
 
-it_menu={}
-it_menu.__index=it_menu
-function it_menu:add(name,func)
-	table.insert(self.items,{func,name})
-end
-function it_menu:display()
-	print("Select choice (q exits):")
-	for p,c in pairs(self.items) do
-		print(string.format("%3d).%s",p,c[2]))
-	end
-	local ans
-	repeat
-		local r
-		r=getline("")
-		if r==nil then return end
-		if r=='q' then return end
-		ans=tonumber(r)
-		
-		if ans==nil or not(ans<=#self.items and ans>0) then
-			print("incorrect choice")
-		end
-		
-	until ans~=nil and (ans<=#self.items and ans>0)
-	self.items[ans][1]()
-end
-function MakeMenu()
-	local ret={}
-	ret.items={}
-	setmetatable(ret,it_menu)
-	return ret
-end
+
 
 function PrintPattern(loadedpattern)
 	for k,v in pairs(loadedpattern) do

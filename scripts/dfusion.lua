@@ -4,8 +4,11 @@ local myos=dfhack.getOSType()
 args={...}
 mainmenu=dfu.SimpleMenu()
 function runsave()
-    print("doing file:"..df.global.world.cur_savegame.save_dir)
+    local path=string.format("data/save/%s/dfhack.lua",df.global.world.cur_savegame.save_dir)
+    print("doing file:"..path)
+    loadfile(path)()
 end
 mainmenu:add("Run save script",runsave)
 mainmenu:add("Adventurer tools",require("plugins.dfusion.adv_tools").menu)
+mainmenu:add("Misc tools",require("plugins.dfusion.tools").menu)
 mainmenu:display()

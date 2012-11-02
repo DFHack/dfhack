@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -233,6 +233,7 @@ DFHACK_EXPORT bool isDwarf(df::unit *unit);
 
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 
+DFHACK_EXPORT int getNominalSkill(df::unit *unit, df::job_skill skill_id, bool use_rust = false);
 DFHACK_EXPORT int getEffectiveSkill(df::unit *unit, df::job_skill skill_id);
 DFHACK_EXPORT int computeMovementSpeed(df::unit *unit);
 

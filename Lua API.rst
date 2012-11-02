@@ -488,7 +488,7 @@ Input & Output
   lock. Using an explicit ``dfhack.with_suspend`` will prevent
   this, forcing the function to block on input with lock held.
 
-* ``dfhack.interpreter([prompt[,env[,history_filename]]])``
+* ``dfhack.interpreter([prompt[,history_filename[,env]]])``
 
   Starts an interactive lua interpreter, using the specified prompt
   string, global environment and command-line history file.
@@ -646,6 +646,24 @@ and automatically stored in the save game, these save and retrieval
 functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.
 
+It is also possible to associate one bit per map tile with an entry,
+using these two methods:
+
+* ``entry:getTilemask(block[, create])``
+
+  Retrieves the tile bitmask associated with this entry in the given map
+  block. If ``create`` is *true*, an empty mask is created if none exists;
+  otherwise the function returns *nil*, which must be assumed to be the same
+  as an all-zero mask.
+
+* ``entry:deleteTilemask(block)``
+
+  Deletes the associated tile mask from the given map block.
+
+Note that these masks are only saved in fortress mode, and also that deleting
+the persistent entry will **NOT** delete the associated masks.
+
+
 Material info lookup
 --------------------
 
@@ -777,6 +795,10 @@ Gui module
   last case, the highlighted *contained item* is returned, not
   the container itself.
 
+* ``dfhack.gui.getSelectedBuilding([silent])``
+
+  Returns the building selected via *'q'*, *'t'*, *'k'* or *'i'*.
+
 * ``dfhack.gui.showAnnouncement(text,color[,is_bright])``
 
   Adds a regular announcement with given text, color, and brightness.
@@ -840,6 +862,15 @@ Job module
   Returns the current value of ``df.global.job_next_id``, and
   if there are any jobs with ``first_id <= id < job_next_id``,
   a lua list containing them.
+
+* ``dfhack.job.isSuitableItem(job_item, item_type, item_subtype)``
+
+  Does basic sanity checks to verify if the suggested item type matches
+  the flags in the job item.
+
+* ``dfhack.job.isSuitableMaterial(job_item, mat_type, mat_index)``
+
+  Likewise, if replacing material.
 
 Units module
 ------------
@@ -914,6 +945,11 @@ Units module
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
 
+* ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
+
+  Retrieves the nominal skill level for the given unit. If ``use_rust``
+  is *true*, subtracts the rust penalty.
+
 * ``dfhack.units.getEffectiveSkill(unit, skill)``
 
   Computes the effective rating for the given skill, taking into account exhaustion, pain etc.
@@ -983,6 +1019,14 @@ Items module
 
   Returns a list of items contained in this one.
 
+* ``dfhack.items.getHolderBuilding(item)``
+
+  Returns the holder building or *nil*.
+
+* ``dfhack.items.getHolderUnit(item)``
+
+  Returns the holder unit or *nil*.
+
 * ``dfhack.items.moveToGround(item,pos)``
 
   Move the item to the ground at position. Returns *false* if impossible.
@@ -1007,6 +1051,18 @@ Items module
 
   Turns the item into a projectile, and returns the new object, or *nil* if impossible.
 
+* ``dfhack.items.isCasteMaterial(item_type)``
+
+  Returns *true* if this item type uses a creature/caste pair as its material.
+
+* ``dfhack.items.getSubtypeCount(item_type)``
+
+  Returns the number of raw-defined subtypes of the given item type, or *-1* if not applicable.
+
+* ``dfhack.items.getSubtypeDef(item_type, subtype)``
+
+  Returns the raw definition for the given item type and subtype, or *nil* if invalid.
+
 
 Maps module
 -----------
@@ -1023,7 +1079,7 @@ Maps module
 
   Returns a map block object for given x,y,z in local block coordinates.
 
-* ``dfhack.maps.isValidTilePos(coords)``, or isValidTilePos(x,y,z)``
+* ``dfhack.maps.isValidTilePos(coords)``, or ``isValidTilePos(x,y,z)``
 
   Checks if the given df::coord or x,y,z in local tile coordinates are valid.
 
@@ -1034,6 +1090,14 @@ Maps module
 * ``dfhack.maps.ensureTileBlock(coords)``, or ``ensureTileBlock(x,y,z)``
 
   Like ``getTileBlock``, but if the block is not allocated, try creating it.
+
+* ``dfhack.maps.getTileType(coords)``, or ``getTileType(x,y,z)``
+
+  Returns the tile type at the given coordinates, or *nil* if invalid.
+
+* ``dfhack.maps.getTileFlags(coords)``, or ``getTileFlags(x,y,z)``
+
+  Returns designation and occupancy references for the given coordinates, or *nil, nil* if invalid.
 
 * ``dfhack.maps.getRegionBiome(region_coord2d)``, or ``getRegionBiome(x,y)``
 
@@ -1069,6 +1133,22 @@ Maps module
   tools like liquids or tiletypes are used. It also cannot possibly
   take into account anything that depends on the actual units, like
   burrows, or the presence of invaders.
+
+* ``dfhack.maps.hasTileAssignment(tilemask)``
+
+  Checks if the tile_bitmask object is not *nil* and contains any set bits; returns *true* or *false*.
+
+* ``dfhack.maps.getTileAssignment(tilemask,x,y)``
+
+  Checks if the tile_bitmask object is not *nil* and has the relevant bit set; returns *true* or *false*.
+
+* ``dfhack.maps.setTileAssignment(tilemask,x,y,enable)``
+
+  Sets the relevant bit in the tile_bitmask object to the *enable* argument.
+
+* ``dfhack.maps.resetTileAssignment(tilemask[,enable])``
+
+  Sets all bits in the mask to the *enable* argument.
 
 
 Burrows module
@@ -1463,6 +1543,14 @@ Supported callbacks and fields are:
 
   If this method is omitted, the screen is dismissed on receival of the ``LEAVESCREEN`` key.
 
+* ``function screen:onGetSelectedUnit()``
+* ``function screen:onGetSelectedItem()``
+* ``function screen:onGetSelectedJob()``
+* ``function screen:onGetSelectedBuilding()``
+
+  Implement these to provide a return value for the matching
+  ``dfhack.gui.getSelected...`` function.
+
 
 Internal API
 ------------
@@ -1500,6 +1588,18 @@ and are only documented here for completeness:
   Like memmove below, but works even if dest is read-only memory, e.g. code.
   If destination overlaps a completely invalid memory region, or another error
   occurs, returns false.
+
+* ``dfhack.internal.patchBytes(write_table[, verify_table])``
+
+  The first argument must be a lua table, which is interpreted as a mapping from
+  memory addresses to byte values that should be stored there. The second argument
+  may be a similar table of values that need to be checked before writing anything.
+
+  The function takes care to either apply all of ``write_table``, or none of it.
+  An empty ``write_table`` with a nonempty ``verify_table`` can be used to reasonably
+  safely check if the memory contains certain values.
+
+  Returns *true* if successful, or *nil, error_msg, address* if not.
 
 * ``dfhack.internal.memmove(dest,src,count)``
 
@@ -1676,6 +1776,18 @@ environment by the mandatory init file dfhack.lua:
 
   Returns a table with x, y and z as fields.
 
+* ``same_xyz(a,b)``
+
+  Checks if ``a`` and ``b`` have the same x, y and z fields.
+
+* ``get_path_xyz(path,i)``
+
+  Returns ``path.x[i], path.y[i], path.z[i]``.
+
+* ``pos2xy(obj)``, ``xy2pos(x,y)``, ``same_xy(a,b)``, ``get_path_xy(a,b)``
+
+  Same as above, but for 2D coordinates.
+
 * ``safe_index(obj,index...)``
 
   Walks a sequence of dereferences, which may be represented by numbers or strings.
@@ -1789,6 +1901,14 @@ utils
 
   (For an explanation of ``new=true``, see table assignment in the wrapper section)
 
+* ``utils.erase_sorted_key(vector,key,field,cmpfun)``
+
+  Removes the item with the given key from the list. Returns: *did_erase, vector[idx], idx*.
+
+* ``utils.erase_sorted(vector,item,field,cmpfun)``
+
+  Exactly like ``erase_sorted_key``, but if field is specified, takes the key from ``item[field]``.
+
 * ``utils.prompt_yes_no(prompt, default)``
 
   Presents a yes/no prompt to the user. If ``default`` is not *nil*,
@@ -1818,6 +1938,86 @@ function:
   Returns ``value`` converted to a string. The ``indent_step``
   argument specifies the indentation step size in spaces. For
   the other arguments see the original documentation link above.
+
+class
+=====
+
+Implements a trivial single-inheritance class system.
+
+* ``Foo = defclass(Foo[, ParentClass])``
+
+  Defines or updates class Foo. The ``Foo = defclass(Foo)`` syntax
+  is needed so that when the module or script is reloaded, the
+  class identity will be preserved through the preservation of
+  global variable values.
+
+  The ``defclass`` function is defined as a stub in the global
+  namespace, and using it will auto-load the class module.
+
+* ``Class.super``
+
+  This class field is set by defclass to the parent class, and
+  allows a readable ``Class.super.method(self, ...)`` syntax for
+  calling superclass methods.
+
+* ``Class.ATTRS { foo = xxx, bar = yyy }``
+
+  Declares certain instance fields to be attributes, i.e. auto-initialized
+  from fields in the table used as the constructor argument. If omitted,
+  they are initialized with the default values specified in this declaration.
+
+  If the default value should be *nil*, use ``ATTRS { foo = DEFAULT_NIL }``.
+
+* ``new_obj = Class{ foo = arg, bar = arg, ... }``
+
+  Calling the class as a function creates and initializes a new instance.
+  Initialization happens in this order:
+
+  1. An empty instance table is created, and its metatable set.
+  2. The ``preinit`` method is called via ``invoke_before`` (see below)
+     with the table used as argument to the class. This method is intended
+     for validating and tweaking that argument table.
+  3. Declared ATTRS are initialized from the argument table or their default values.
+  4. The ``init`` method is called via ``invoke_after`` with the argument table.
+     This is the main constructor method.
+  5. The ``postinit`` method is called via ``invoke_after`` with the argument table.
+     Place code that should be called after the object is fully constructed here.
+
+Predefined instance methods:
+
+* ``instance:assign{ foo = xxx }``
+
+  Assigns all values in the input table to the matching instance fields.
+
+* ``instance:callback(method_name, [args...])``
+
+  Returns a closure that invokes the specified method of the class,
+  properly passing in self, and optionally a number of initial arguments too.
+  The arguments given to the closure are appended to these.
+
+* ``instance:invoke_before(method_name, args...)``
+
+  Navigates the inheritance chain of the instance starting from the most specific
+  class, and invokes the specified method with the arguments if it is defined in
+  that specific class. Equivalent to the following definition in every class::
+
+    function Class:invoke_before(method, ...)
+      if rawget(Class, method) then
+        rawget(Class, method)(self, ...)
+      end
+      Class.super.invoke_before(method, ...)
+    end
+
+* ``instance:invoke_after(method_name, args...)``
+
+  Like invoke_before, only the method is called after the recursive call to super,
+  i.e. invocations happen in the parent to child order.
+
+  These two methods are inspired by the Common Lisp before and after methods, and
+  are intended for implementing similar protocols for certain things. The class
+  library itself uses them for constructors.
+
+To avoid confusion, these methods cannot be redefined.
 
 
 =======

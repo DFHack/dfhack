@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -90,6 +90,10 @@ namespace DFHack
         // the container itself.
         DFHACK_EXPORT bool any_item_hotkey(df::viewscreen *top);
         DFHACK_EXPORT df::item *getSelectedItem(color_ostream &out, bool quiet = false);
+
+        // A building is selected via 'q', 't' or 'i' (civzone)
+        DFHACK_EXPORT bool any_building_hotkey(df::viewscreen *top);
+        DFHACK_EXPORT df::building *getSelectedBuilding(color_ostream &out, bool quiet = false);
 
         // Show a plain announcement, or a titan-style popup message
         DFHACK_EXPORT void showAnnouncement(std::string message, int color = 7, bool bright = true);

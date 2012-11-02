@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -40,6 +40,7 @@ distribution.
 #include "df/building_actual.h"
 #include "df/body_part_raw.h"
 #include "df/unit_inventory_item.h"
+#include "df/job_item_vector_id.h"
 
 namespace df
 {
@@ -86,7 +87,8 @@ namespace DFHack
 
         bool find(const std::string &token);
 
-        bool matches(const df::job_item &item, MaterialInfo *mat = NULL);
+        bool matches(df::job_item_vector_id vec_id);
+        bool matches(const df::job_item &item, MaterialInfo *mat = NULL, bool skip_vector = false);
     };
 
     inline bool operator== (const ItemTypeInfo &a, const ItemTypeInfo &b) {
@@ -123,6 +125,10 @@ struct dfh_item
 namespace Items
 {
 
+DFHACK_EXPORT bool isCasteMaterial(df::item_type itype);
+DFHACK_EXPORT int getSubtypeCount(df::item_type itype);
+DFHACK_EXPORT df::itemdef *getSubtypeDef(df::item_type itype, int subtype);
+
 /// Look for a particular item by ID
 DFHACK_EXPORT df::item * findItemByID(int32_t id);
 
@@ -145,6 +151,11 @@ DFHACK_EXPORT df::item *getContainer(df::item *item);
 /// which items does it contain?
 DFHACK_EXPORT void getContainedItems(df::item *item, /*output*/ std::vector<df::item*> *items);
 
+/// which building holds it?
+DFHACK_EXPORT df::building *getHolderBuilding(df::item *item);
+/// which unit holds it?
+DFHACK_EXPORT df::unit *getHolderUnit(df::item *item);
+
 /// Returns the true position of the item.
 DFHACK_EXPORT df::coord getPosition(df::item *item);
 
@@ -155,7 +166,7 @@ DFHACK_EXPORT bool moveToGround(MapExtras::MapCache &mc, df::item *item, df::coo
 DFHACK_EXPORT bool moveToContainer(MapExtras::MapCache &mc, df::item *item, df::item *container);
 DFHACK_EXPORT bool moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,int16_t use_mode);
 DFHACK_EXPORT bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit,
-    df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Carried, int body_part = -1);
+    df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Hauled, int body_part = -1);
 
 /// Makes the item removed and marked for garbage collection
 DFHACK_EXPORT bool remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat = false);

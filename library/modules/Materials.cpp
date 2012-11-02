@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -312,7 +312,7 @@ std::string MaterialInfo::getToken()
             else if (index == 1)
                 return "COAL:CHARCOAL";
         }
-        return material->id;
+        return material->id + ":NONE";
     case Inorganic:
         return "INORGANIC:" + inorganic->id;
     case Creature:
@@ -497,7 +497,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(fire_safe, material->heat.melting_point > 11000);
     TEST(magma_safe, material->heat.melting_point > 12000);
     TEST(deep_material, FLAG(inorganic, inorganic_flags::SPECIAL));
-    TEST(non_economic, inorganic && !(ui && ui->economic_stone[index]));
+    TEST(non_economic, !inorganic || !(ui && vector_get(ui->economic_stone, index)));
 
     TEST(plant, plant);
     TEST(silk, MAT_FLAG(SILK));

@@ -1,6 +1,6 @@
-﻿/*
+/*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -30,6 +30,7 @@ distribution.
 
 #include "MemAccess.h"
 #include "Core.h"
+#include "Error.h"
 #include "VersionInfo.h"
 #include "tinythread.h"
 // must be last due to MS stupidity
@@ -81,6 +82,7 @@ distribution.
 #include "df/flow_info.h"
 #include "df/unit_misc_trait.h"
 #include "df/proj_itemst.h"
+#include "df/itemdef.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -258,7 +260,7 @@ static PersistentDataItem persistent_by_struct(lua_State *state, int idx)
     int id = lua_tointeger(state, -1);
     lua_pop(state, 1);
 
-    PersistentDataItem ref = Core::getInstance().getWorld()->GetPersistentData(id);
+    PersistentDataItem ref = World::GetPersistentData(id);
 
     if (ref.isValid())
     {
@@ -311,11 +313,11 @@ static PersistentDataItem get_persistent(lua_State *state)
 
     if (lua_istable(state, 1))
     {
+        Lua::StackUnwinder frame(state);
+
         if (!lua_getmetatable(state, 1) ||
             !lua_rawequal(state, -1, lua_upvalueindex(1)))
             luaL_argerror(state, 1, "invalid table type");
-
-        lua_settop(state, 1);
 
         return persistent_by_struct(state, 1);
     }
@@ -323,7 +325,7 @@ static PersistentDataItem get_persistent(lua_State *state)
     {
         const char *str = luaL_checkstring(state, 1);
 
-        return Core::getInstance().getWorld()->GetPersistentData(str);
+        return World::GetPersistentData(str);
     }
 }
 
@@ -342,7 +344,7 @@ static int dfhack_persistent_delete(lua_State *state)
 
     auto ref = get_persistent(state);
 
-    bool ok = Core::getInstance().getWorld()->DeletePersistentData(ref);
+    bool ok = World::DeletePersistentData(ref);
 
     lua_pushboolean(state, ok);
     return 1;
@@ -356,7 +358,7 @@ static int dfhack_persistent_get_all(lua_State *state)
     bool prefix = (lua_gettop(state)>=2 ? lua_toboolean(state,2) : false);
 
     std::vector<PersistentDataItem> data;
-    Core::getInstance().getWorld()->GetPersistentData(&data, str, prefix);
+    World::GetPersistentData(&data, str, prefix);
 
     if (data.empty())
     {
@@ -396,7 +398,7 @@ static int dfhack_persistent_save(lua_State *state)
 
     if (add)
     {
-        ref = Core::getInstance().getWorld()->AddPersistentData(str);
+        ref = World::AddPersistentData(str);
         added = true;
     }
     else if (lua_getmetatable(state, 1))
@@ -409,13 +411,13 @@ static int dfhack_persistent_save(lua_State *state)
     }
     else
     {
-        ref = Core::getInstance().getWorld()->GetPersistentData(str);
+        ref = World::GetPersistentData(str);
     }
 
     // Auto-add if not found
     if (!ref.isValid())
     {
-        ref = Core::getInstance().getWorld()->AddPersistentData(str);
+        ref = World::AddPersistentData(str);
         if (!ref.isValid())
             luaL_error(state, "cannot create persistent entry");
         added = true;
@@ -446,11 +448,38 @@ static int dfhack_persistent_save(lua_State *state)
     return 2;
 }
 
+static int dfhack_persistent_getTilemask(lua_State *state)
+{
+    CoreSuspender suspend;
+
+    lua_settop(state, 3);
+    auto ref = get_persistent(state);
+    auto block = Lua::CheckDFObject<df::map_block>(state, 2);
+    bool create = lua_toboolean(state, 3);
+
+    Lua::PushDFObject(state, World::getPersistentTilemask(ref, block, create));
+    return 1;
+}
+
+static int dfhack_persistent_deleteTilemask(lua_State *state)
+{
+    CoreSuspender suspend;
+
+    lua_settop(state, 2);
+    auto ref = get_persistent(state);
+    auto block = Lua::CheckDFObject<df::map_block>(state, 2);
+
+    lua_pushboolean(state, World::deletePersistentTilemask(ref, block));
+    return 1;
+}
+
 static const luaL_Reg dfhack_persistent_funcs[] = {
     { "get", dfhack_persistent_get },
     { "delete", dfhack_persistent_delete },
     { "get_all", dfhack_persistent_get_all },
     { "save", dfhack_persistent_save },
+    { "getTilemask", dfhack_persistent_getTilemask },
+    { "deleteTilemask", dfhack_persistent_deleteTilemask },
     { NULL, NULL }
 };
 
@@ -471,7 +500,9 @@ static void OpenPersistent(lua_State *state)
  * Material info lookup *
  ************************/
 
-static void push_matinfo(lua_State *state, MaterialInfo &info)
+static int DFHACK_MATINFO_TOKEN = 0;
+
+void Lua::Push(lua_State *state, MaterialInfo &info)
 {
     if (!info.isValid())
     {
@@ -480,7 +511,7 @@ static void push_matinfo(lua_State *state, MaterialInfo &info)
     }
 
     lua_newtable(state);
-    lua_pushvalue(state, lua_upvalueindex(1));
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_MATINFO_TOKEN);
     lua_setmetatable(state, -2);
 
     lua_pushinteger(state, info.type);
@@ -535,7 +566,7 @@ static int dfhack_matinfo_find(lua_State *state)
         info.find(tokens);
     }
 
-    push_matinfo(state, info);
+    Lua::Push(state, info);
     return 1;
 }
 
@@ -603,7 +634,7 @@ static int dfhack_matinfo_decode(lua_State *state)
 {
     MaterialInfo info;
     decode_matinfo(state, &info, true);
-    push_matinfo(state, info);
+    Lua::Push(state, info);
     return 1;
 }
 
@@ -683,6 +714,9 @@ static void OpenMatinfo(lua_State *state)
     luaL_getsubtable(state, lua_gettop(state), "matinfo");
 
     lua_dup(state);
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_MATINFO_TOKEN);
+
+    lua_dup(state);
     luaL_setfuncs(state, dfhack_matinfo_funcs, 1);
 
     lua_dup(state);
@@ -760,6 +794,7 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getSelectedJob),
     WRAPM(Gui, getSelectedUnit),
     WRAPM(Gui, getSelectedItem),
+    WRAPM(Gui, getSelectedBuilding),
     WRAPM(Gui, showAnnouncement),
     WRAPM(Gui, showZoomAnnouncement),
     WRAPM(Gui, showPopupAnnouncement),
@@ -780,6 +815,8 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,getWorker),
     WRAPM(Job,checkBuildingsNow),
     WRAPM(Job,checkDesignationsNow),
+    WRAPM(Job,isSuitableItem),
+    WRAPM(Job,isSuitableMaterial),
     WRAPN(is_equal, jobEqual),
     WRAPN(is_item_equal, jobItemEqual),
     { NULL, NULL }
@@ -827,6 +864,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isDwarf),
     WRAPM(Units, isCitizen),
     WRAPM(Units, getAge),
+    WRAPM(Units, getNominalSkill),
     WRAPM(Units, getEffectiveSkill),
     WRAPM(Units, computeMovementSpeed),
     WRAPM(Units, getProfessionName),
@@ -904,7 +942,12 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getOwner),
     WRAPM(Items, setOwner),
     WRAPM(Items, getContainer),
+    WRAPM(Items, getHolderBuilding),
+    WRAPM(Items, getHolderUnit),
     WRAPM(Items, getDescription),
+    WRAPM(Items, isCasteMaterial),
+    WRAPM(Items, getSubtypeCount),
+    WRAPM(Items, getSubtypeDef),
     WRAPN(moveToGround, items_moveToGround),
     WRAPN(moveToContainer, items_moveToContainer),
     WRAPN(moveToBuilding, items_moveToBuilding),
@@ -935,6 +978,22 @@ static const luaL_Reg dfhack_items_funcs[] = {
 
 /***** Maps module *****/
 
+static bool hasTileAssignment(df::tile_bitmask *bm) {
+    return bm && bm->has_assignments();
+}
+static bool getTileAssignment(df::tile_bitmask *bm, int x, int y) {
+    return bm && bm->getassignment(x,y);
+}
+static void setTileAssignment(df::tile_bitmask *bm, int x, int y, bool val) {
+    CHECK_NULL_POINTER(bm);
+    bm->setassignment(x,y,val);
+}
+static void resetTileAssignment(df::tile_bitmask *bm, bool val) {
+    CHECK_NULL_POINTER(bm);
+    if (val) bm->set_all();
+    else bm->clear();
+}
+
 static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPN(getBlock, (df::map_block* (*)(int32_t,int32_t,int32_t))Maps::getBlock),
     WRAPM(Maps, enableBlockUpdates),
@@ -942,6 +1001,10 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPM(Maps, getLocalInitFeature),
     WRAPM(Maps, canWalkBetween),
     WRAPM(Maps, spawnFlow),
+    WRAPN(hasTileAssignment, hasTileAssignment),
+    WRAPN(getTileAssignment, getTileAssignment),
+    WRAPN(setTileAssignment, setTileAssignment),
+    WRAPN(resetTileAssignment, resetTileAssignment),
     { NULL, NULL }
 };
 
@@ -966,6 +1029,25 @@ static int maps_ensureTileBlock(lua_State *L)
     return 1;
 }
 
+static int maps_getTileType(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    auto ptype = Maps::getTileType(pos);
+    if (ptype)
+        lua_pushinteger(L, *ptype);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static int maps_getTileFlags(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Maps::getTileDesignation(pos));
+    Lua::PushDFObject(L, Maps::getTileOccupancy(pos));
+    return 2;
+}
+
 static int maps_getRegionBiome(lua_State *L)
 {
     auto pos = CheckCoordXY(L, 1, true);
@@ -983,6 +1065,8 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
     { "getTileBlock", maps_getTileBlock },
     { "ensureTileBlock", maps_ensureTileBlock },
+    { "getTileType", maps_getTileType },
+    { "getTileFlags", maps_getTileFlags },
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
     { NULL, NULL }
@@ -1144,6 +1228,7 @@ static const LuaWrapper::FunctionReg dfhack_screen_module[] = {
     WRAPM(Screen, inGraphicsMode),
     WRAPM(Screen, clear),
     WRAPM(Screen, invalidate),
+    WRAPM(Screen, getKeyDisplay),
     { NULL, NULL }
 };
 
@@ -1452,6 +1537,81 @@ static int internal_patchMemory(lua_State *L)
     return 1;
 }
 
+static int internal_patchBytes(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);
+    lua_settop(L, 2);
+
+    MemoryPatcher patcher;
+
+    if (!lua_isnil(L, 2))
+    {
+        luaL_checktype(L, 2, LUA_TTABLE);
+
+        lua_pushnil(L);
+
+        while (lua_next(L, 2))
+        {
+            uint8_t *addr = (uint8_t*)checkaddr(L, -2, true);
+            int isnum;
+            uint8_t value = (uint8_t)lua_tounsignedx(L, -1, &isnum);
+            if (!isnum)
+                luaL_error(L, "invalid value in verify table");
+            lua_pop(L, 1);
+
+            if (!patcher.verifyAccess(addr, 1, false))
+            {
+                lua_pushnil(L);
+                lua_pushstring(L, "invalid verify address");
+                lua_pushvalue(L, -3);
+                return 3;
+            }
+
+            if (*addr != value)
+            {
+                lua_pushnil(L);
+                lua_pushstring(L, "wrong verify value");
+                lua_pushvalue(L, -3);
+                return 3;
+            }
+        }
+    }
+
+    lua_pushnil(L);
+
+    while (lua_next(L, 1))
+    {
+        uint8_t *addr = (uint8_t*)checkaddr(L, -2, true);
+        int isnum;
+        uint8_t value = (uint8_t)lua_tounsignedx(L, -1, &isnum);
+        if (!isnum)
+            luaL_error(L, "invalid value in write table");
+        lua_pop(L, 1);
+
+        if (!patcher.verifyAccess(addr, 1, true))
+        {
+            lua_pushnil(L);
+            lua_pushstring(L, "invalid write address");
+            lua_pushvalue(L, -3);
+            return 3;
+        }
+    }
+
+    lua_pushnil(L);
+
+    while (lua_next(L, 1))
+    {
+        uint8_t *addr = (uint8_t*)checkaddr(L, -2, true);
+        uint8_t value = (uint8_t)lua_tounsigned(L, -1);
+        lua_pop(L, 1);
+
+        *addr = value;
+    }
+
+    lua_pushboolean(L, true);
+    return 1;
+}
+
 static int internal_memmove(lua_State *L)
 {
     void *dest = checkaddr(L, 1);
@@ -1543,6 +1703,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getVTable", internal_getVTable },
     { "getMemRanges", internal_getMemRanges },
     { "patchMemory", internal_patchMemory },
+    { "patchBytes", internal_patchBytes },
     { "memmove", internal_memmove },
     { "memcmp", internal_memcmp },
     { "memscan", internal_memscan },

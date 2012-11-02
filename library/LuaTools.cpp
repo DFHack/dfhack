@@ -1,6 +1,6 @@
-﻿/*
+/*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -107,7 +107,8 @@ static void signal_typeid_error(color_ostream *out, lua_State *state,
                                 type_identity *type, const char *msg,
                                 int val_index, bool perr, bool signal)
 {
-    std::string error = stl_sprintf(msg, type->getFullName().c_str());
+    std::string typestr = type ? type->getFullName() : "any pointer";
+    std::string error = stl_sprintf(msg, typestr.c_str());
 
     if (signal)
     {
@@ -133,6 +134,8 @@ void *DFHack::Lua::CheckDFObject(lua_State *state, type_identity *type, int val_
     check_valid_ptr_index(state, val_index);
 
     if (lua_isnil(state, val_index))
+        return NULL;
+    if (lua_islightuserdata(state, val_index) && !lua_touserdata(state, val_index))
         return NULL;
 
     void *rv = get_object_internal(state, type, val_index, exact_type, false);
@@ -1814,7 +1817,9 @@ void DFHack::Lua::Core::onUpdate(color_ostream &out)
     lua_rawgetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
 
     run_timers(out, State, frame_timers, frame[1], ++frame_idx);
-    run_timers(out, State, tick_timers, frame[1], world->frame_counter);
+
+    if (world)
+        run_timers(out, State, tick_timers, frame[1], world->frame_counter);
 }
 
 void DFHack::Lua::Core::Init(color_ostream &out)

@@ -125,6 +125,10 @@ end
 
 -- Misc functions
 
+NEWLINE = "\n"
+COMMA = ","
+PERIOD = "."
+
 function printall(table)
     local ok,f,t,k = pcall(pairs,table)
     if ok then
@@ -157,6 +161,14 @@ function xyz2pos(x,y,z)
     end
 end
 
+function same_xyz(a,b)
+    return a and b and a.x == b.x and a.y == b.y and a.z == b.z
+end
+
+function get_path_xyz(path,i)
+    return path.x[i], path.y[i], path.z[i]
+end
+
 function pos2xy(pos)
     if pos then
         local x = pos.x
@@ -172,6 +184,14 @@ function xy2pos(x,y)
     else
         return {x=-30000,y=-30000}
     end
+end
+
+function same_xy(a,b)
+    return a and b and a.x == b.x and a.y == b.y
+end
+
+function get_path_xy(path,i)
+    return path.x[i], path.y[i]
 end
 
 function safe_index(obj,idx,...)

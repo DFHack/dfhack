@@ -17,8 +17,8 @@ local brushes = {
 }
 
 local paints = {
-    { tag = 'water', caption = 'Water', liquid = true, flow = true, key = 'w' },
-    { tag = 'magma', caption = 'Magma', liquid = true, flow = true, key = 'l' },
+    { tag = 'water', caption = 'Water', liquid = true, flow = true, key = 'D_LOOK_ARENA_WATER' },
+    { tag = 'magma', caption = 'Magma', liquid = true, flow = true, key = 'D_LOOK_ARENA_MAGMA' },
     { tag = 'obsidian', caption = 'Obsidian Wall' },
     { tag = 'obsidian_floor', caption = 'Obsidian Floor' },
     { tag = 'riversource', caption = 'River Source' },
@@ -64,7 +64,7 @@ function Toggle:render(dc)
     if item then
         dc:string(item.caption)
         if item.key then
-            dc:string(" ("):string(item.key, COLOR_LIGHTGREEN):string(")")
+            dc:string(" ("):key(item.key):string(")")
         end
     else
         dc:string('NONE', COLOR_RED)
@@ -160,9 +160,9 @@ function LiquidsUI:onRenderBody(dc)
 
     dc:newline():pen(COLOR_GREY)
 
-    dc:newline(1):string("b", COLOR_LIGHTGREEN):string(": ")
+    dc:newline(1):key('CUSTOM_B'):string(": ")
     self.brush:render(dc)
-    dc:newline(1):string("p", COLOR_LIGHTGREEN):string(": ")
+    dc:newline(1):key('CUSTOM_P'):string(": ")
     self.paint:render(dc)
 
     local paint = self.paint:get()
@@ -170,8 +170,8 @@ function LiquidsUI:onRenderBody(dc)
     dc:newline()
     if paint.liquid then
         dc:newline(1):string("Amount: "..self.amount)
-        dc:advance(1):string("("):string("-+", COLOR_LIGHTGREEN):string(")")
-        dc:newline(3):string("s", COLOR_LIGHTGREEN):string(": ")
+        dc:advance(1):string("("):key('SECONDSCROLL_UP'):key('SECONDSCROLL_DOWN'):string(")")
+        dc:newline(3):key('CUSTOM_S'):string(": ")
         self.set:render(dc)
     else
         dc:advance(0,2)
@@ -179,17 +179,17 @@ function LiquidsUI:onRenderBody(dc)
 
     dc:newline()
     if paint.flow then
-        dc:newline(1):string("f", COLOR_LIGHTGREEN):string(": ")
+        dc:newline(1):key('CUSTOM_F'):string(": ")
         self.flow:render(dc)
-        dc:newline(1):string("r", COLOR_LIGHTGREEN):string(": ")
+        dc:newline(1):key('CUSTOM_R'):string(": ")
         self.permaflow:render(dc)
     else
         dc:advance(0,2)
     end
 
     dc:newline():newline(1):pen(COLOR_WHITE)
-    dc:string("Esc", COLOR_LIGHTGREEN):string(": Back, ")
-    dc:string("Enter", COLOR_LIGHTGREEN):string(": Paint")
+    dc:key('LEAVESCREEN'):string(": Back, ")
+    dc:key('SELECT'):string(": Paint")
 end
 
 function ensure_blocks(cursor, size, cb)

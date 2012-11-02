@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -53,6 +53,7 @@ using namespace DFHack;
 #include "df/viewscreen_dungeon_monsterstatusst.h"
 #include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_unitlistst.h"
+#include "df/viewscreen_buildinglistst.h"
 #include "df/viewscreen_itemst.h"
 #include "df/viewscreen_layer.h"
 #include "df/viewscreen_layer_workshop_profilest.h"
@@ -84,6 +85,8 @@ using namespace DFHack;
 #include "df/assign_trade_status.h"
 #include "df/announcement_flags.h"
 #include "df/announcements.h"
+#include "df/stop_depart_condition.h"
+#include "df/route_stockpile_link.h"
 
 using namespace df::enums;
 using df::global::gview;
@@ -302,6 +305,45 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             focus += "/List";
         break;
 
+    case Hauling:
+        if (ui->hauling.in_assign_vehicle)
+        {
+            auto vehicle = vector_get(ui->hauling.vehicles, ui->hauling.cursor_vehicle);
+            focus += "/AssignVehicle/" + std::string(vehicle ? "Some" : "None");
+        }
+        else
+        {
+            int idx = ui->hauling.cursor_top;
+            auto route = vector_get(ui->hauling.view_routes, idx);
+            auto stop = vector_get(ui->hauling.view_stops, idx);
+            std::string tag = stop ? "Stop" : (route ? "Route" : "None");
+
+            if (ui->hauling.in_name)
+                focus += "/Rename/" + tag;
+            else if (ui->hauling.in_stop)
+            {
+                int sidx = ui->hauling.cursor_stop;
+                auto cond = vector_get(ui->hauling.stop_conditions, sidx);
+                auto link = vector_get(ui->hauling.stop_links, sidx);
+
+                focus += "/DefineStop";
+
+                if (cond)
+                    focus += "/Cond/" + enum_item_key(cond->mode);
+                else if (link)
+                {
+                    focus += "/Link/";
+                    if (link->mode.bits.give) focus += "Give";
+                    if (link->mode.bits.take) focus += "Take";
+                }
+                else
+                    focus += "/None";
+            }
+            else
+                focus += "/Select/" + tag;
+        }
+        break;
+
     default:
         break;
     }
@@ -342,6 +384,37 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_military)
     case df::viewscreen_layer_militaryst::Positions:
         {
             static const char *lists[] = { "/Squads", "/Positions", "/Candidates" };
+            focus += lists[cur_list];
+            break;
+        }
+
+    case df::viewscreen_layer_militaryst::Equip:
+        {
+            focus += "/" + enum_item_key(screen->equip.mode);
+
+            switch (screen->equip.mode)
+            {
+            case df::viewscreen_layer_militaryst::T_equip::Customize:
+                {
+                    if (screen->equip.edit_mode < 0)
+                        focus += "/View";
+                    else
+                        focus += "/" + enum_item_key(screen->equip.edit_mode);
+                    break;
+                }
+            case df::viewscreen_layer_militaryst::T_equip::Uniform:
+                break;
+            case df::viewscreen_layer_militaryst::T_equip::Priority:
+                {
+                    if (screen->equip.prio_in_move >= 0)
+                        focus += "/Move";
+                    else
+                        focus += "/View";
+                    break;
+                }
+            }
+
+            static const char *lists[] = { "/Squads", "/Positions", "/Choices" };
             focus += lists[cur_list];
             break;
         }
@@ -691,6 +764,8 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 
         return job;
     }
+    else if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedJob();
     else
         return getSelectedWorkshopJob(out, quiet);
 }
@@ -763,7 +838,7 @@ static df::unit *getAnyUnit(df::viewscreen *top)
         {
         case df::viewscreen_petst::List:
             if (!vector_get(screen->is_vermin, screen->cursor))
-                return (df::unit*)vector_get(screen->animal, screen->cursor);
+                return vector_get(screen->animal, screen->cursor).unit;
             return NULL;
 
         case df::viewscreen_petst::SelectTrainer:
@@ -780,6 +855,9 @@ static df::unit *getAnyUnit(df::viewscreen *top)
             return vector_get(screen->unit, list1->cursor);
         return NULL;
     }
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedUnit();
 
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
@@ -875,6 +953,9 @@ static df::item *getAnyItem(df::viewscreen *top)
         return NULL;
     }
 
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedItem();
+
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
 
@@ -931,6 +1012,70 @@ df::item *Gui::getSelectedItem(color_ostream &out, bool quiet)
         out.printerr("No item is selected in the UI.\n");
 
     return item;
+}
+
+static df::building *getAnyBuilding(df::viewscreen *top)
+{
+    using namespace ui_sidebar_mode;
+    using df::global::ui;
+    using df::global::ui_look_list;
+    using df::global::ui_look_cursor;
+    using df::global::world;
+    using df::global::ui_sidebar_menus;
+
+    if (auto screen = strict_virtual_cast<df::viewscreen_buildinglistst>(top))
+        return vector_get(screen->buildings, screen->cursor);
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedBuilding();
+
+    if (!Gui::dwarfmode_hotkey(top))
+        return NULL;
+
+    switch (ui->main.mode) {
+    case LookAround:
+    {
+        if (!ui_look_list || !ui_look_cursor)
+            return NULL;
+
+        auto item = vector_get(ui_look_list->items, *ui_look_cursor);
+        if (item && item->type == df::ui_look_list::T_items::Building)
+            return item->building;
+        else
+            return NULL;
+    }
+    case QueryBuilding:
+    case BuildingItems:
+    {
+        return world->selected_building;
+    }
+    case Zones:
+    case ZonesPenInfo:
+    case ZonesPitInfo:
+    case ZonesHospitalInfo:
+    {
+        if (ui_sidebar_menus)
+            return ui_sidebar_menus->zone.selected;
+        return NULL;
+    }
+    default:
+        return NULL;
+    }
+}
+
+bool Gui::any_building_hotkey(df::viewscreen *top)
+{
+    return getAnyBuilding(top) != NULL;
+}
+
+df::building *Gui::getSelectedBuilding(color_ostream &out, bool quiet)
+{
+    df::building *building = getAnyBuilding(Core::getTopViewscreen());
+
+    if (!building && !quiet)
+        out.printerr("No building is selected in the UI.\n");
+
+    return building;
 }
 
 //

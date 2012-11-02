@@ -65,8 +65,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     if (!followedUnit) return CR_OK; //Don't do anything if we're not following a unit
 
-    DFHack::World *world = Core::getInstance().getWorld();
-    if (world->ReadPauseState() && prevX==-1) return CR_OK; //Wait until the game is unpaused after first running "follow" to begin following
+    if (World::ReadPauseState() && prevX==-1) return CR_OK; //Wait until the game is unpaused after first running "follow" to begin following
 
     df::coord &unitPos = followedUnit->pos;
 
@@ -120,7 +119,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     Gui::setViewCoords(x, y, z);
 
     //If, for some reason, the cursor is active and the screen is still moving, move the cursor along with the screen
-    if (c_x != -30000 && !world->ReadPauseState())
+    if (c_x != -30000 && !World::ReadPauseState())
         Gui::setCursorCoords(c_x - (prevX-x), c_y - (prevY-y), z);
 
     //Save this round's stuff for next time so we can monitor for changes made by the user

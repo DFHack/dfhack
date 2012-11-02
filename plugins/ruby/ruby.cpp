@@ -118,18 +118,8 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-// send a single ruby line to be evaluated by the ruby thread
-DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *command)
+static command_result do_plugin_eval_ruby(color_ostream &out, const char *command)
 {
-    // if dlopen failed
-    if (!r_thread)
-        return CR_FAILURE;
-
-    // wrap all ruby code inside a suspend block
-    // if we dont do that and rely on ruby code doing it, we'll deadlock in
-    // onupdate
-    CoreSuspender suspend;
-
     command_result ret;
 
     // ensure ruby thread is idle
@@ -157,6 +147,27 @@ DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *c
     m_mutex->unlock();
 
     return ret;
+}
+
+// send a single ruby line to be evaluated by the ruby thread
+DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *command)
+{
+    // if dlopen failed
+    if (!r_thread)
+        return CR_FAILURE;
+
+    if (!strncmp(command, "nolock ", 7)) {
+        // debug only!
+        // run ruby commands without locking the main thread
+        // useful when the game is frozen after a segfault
+        return do_plugin_eval_ruby(out, command+7);
+    } else {
+        // wrap all ruby code inside a suspend block
+        // if we dont do that and rely on ruby code doing it, we'll deadlock in
+        // onupdate
+        CoreSuspender suspend;
+        return do_plugin_eval_ruby(out, command);
+    }
 }
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
@@ -205,8 +216,6 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
 
 static command_result df_rubyeval(color_ostream &out, std::vector <std::string> & parameters)
 {
-    command_result ret;
-
     if (parameters.size() == 1 && (parameters[0] == "help" || parameters[0] == "?"))
     {
         out.print("This command executes an arbitrary ruby statement.\n");
@@ -632,7 +641,7 @@ static VALUE rb_dfmemory_patch(VALUE self, VALUE addr, VALUE raw)
     bool ret;
 
     ret = Core::getInstance().p->patchMemory((void*)rb_num2ulong(addr),
-		    rb_string_value_ptr(&raw), strlen);
+            rb_string_value_ptr(&raw), strlen);
 
     return ret ? Qtrue : Qfalse;
 }
@@ -835,11 +844,54 @@ static VALUE rb_dfmemory_bitarray_set(VALUE self, VALUE addr, VALUE idx, VALUE v
     return Qtrue;
 }
 
+// add basic support for std::set<uint32> used for passing keyboard keys to viewscreens
+#include <set>
+static VALUE rb_dfmemory_set_new(VALUE self)
+{
+    std::set<unsigned long> *ptr = new std::set<unsigned long>;
+    return rb_uint2inum((uint32_t)ptr);
+}
+
+static VALUE rb_dfmemory_set_delete(VALUE self, VALUE set)
+{
+    std::set<unsigned long> *ptr = (std::set<unsigned long>*)rb_num2ulong(set);
+    if (ptr)
+        delete ptr;
+    return Qtrue;
+}
+
+static VALUE rb_dfmemory_set_set(VALUE self, VALUE set, VALUE key)
+{
+    std::set<unsigned long> *ptr = (std::set<unsigned long>*)rb_num2ulong(set);
+    ptr->insert(rb_num2ulong(key));
+    return Qtrue;
+}
+
+static VALUE rb_dfmemory_set_isset(VALUE self, VALUE set, VALUE key)
+{
+    std::set<unsigned long> *ptr = (std::set<unsigned long>*)rb_num2ulong(set);
+    return ptr->count(rb_num2ulong(key)) ? Qtrue : Qfalse;
+}
+
+static VALUE rb_dfmemory_set_deletekey(VALUE self, VALUE set, VALUE key)
+{
+    std::set<unsigned long> *ptr = (std::set<unsigned long>*)rb_num2ulong(set);
+    ptr->erase(rb_num2ulong(key));
+    return Qtrue;
+}
+
+static VALUE rb_dfmemory_set_clear(VALUE self, VALUE set)
+{
+    std::set<unsigned long> *ptr = (std::set<unsigned long>*)rb_num2ulong(set);
+    ptr->clear();
+    return Qtrue;
+}
+
 
 /* call an arbitrary object virtual method */
 #ifdef WIN32
-__declspec(naked) static int raw_vcall(char **that, unsigned long voff, unsigned long a0,
-        unsigned long a1, unsigned long a2, unsigned long a3)
+__declspec(naked) static int raw_vcall(void *that, void *fptr, unsigned long a0,
+        unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5)
 {
     // __thiscall requires that the callee cleans up the stack
     // here we dont know how many arguments it will take, so
@@ -848,6 +900,8 @@ __declspec(naked) static int raw_vcall(char **that, unsigned long voff, unsigned
         push ebp
         mov ebp, esp
 
+        push a5
+        push a4
         push a3
         push a2
         push a1
@@ -855,9 +909,7 @@ __declspec(naked) static int raw_vcall(char **that, unsigned long voff, unsigned
 
         mov ecx, that
 
-        mov eax, [ecx]
-        add eax, voff
-        call [eax]
+        call fptr
 
         mov esp, ebp
         pop ebp
@@ -865,23 +917,23 @@ __declspec(naked) static int raw_vcall(char **that, unsigned long voff, unsigned
     }
 }
 #else
-static int raw_vcall(char **that, unsigned long voff, unsigned long a0,
-        unsigned long a1, unsigned long a2, unsigned long a3)
+static int raw_vcall(void *that, void *fptr, unsigned long a0,
+        unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5)
 {
-    int (*fptr)(char **me, int, int, int, int);
-    fptr = (decltype(fptr))*(void**)(*that + voff);
-    return fptr(that, a0, a1, a2, a3);
+    int (*t_fptr)(void *me, int, int, int, int, int, int);
+    t_fptr = (decltype(t_fptr))fptr;
+    return t_fptr(that, a0, a1, a2, a3, a4, a5);
 }
 #endif
 
 // call an arbitrary vmethod, convert args/ret to native values for raw_vcall
-static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE cppvoff, VALUE a0, VALUE a1, VALUE a2, VALUE a3)
+static VALUE rb_dfvcall(VALUE self, VALUE cppobj, VALUE fptr, VALUE a0, VALUE a1, VALUE a2, VALUE a3, VALUE a4, VALUE a5)
 {
-    return rb_int2inum(raw_vcall((char**)rb_num2ulong(cppobj), rb_num2ulong(cppvoff),
+    return rb_int2inum(raw_vcall((void*)rb_num2ulong(cppobj), (void*)rb_num2ulong(fptr),
                 rb_num2ulong(a0), rb_num2ulong(a1),
-                rb_num2ulong(a2), rb_num2ulong(a3)));
+                rb_num2ulong(a2), rb_num2ulong(a3),
+                rb_num2ulong(a4), rb_num2ulong(a5)));
 }
-
 
 
 // define module DFHack and its methods
@@ -902,7 +954,7 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "print_err", RUBY_METHOD_FUNC(rb_dfprint_err), 1);
     rb_define_singleton_method(rb_cDFHack, "malloc", RUBY_METHOD_FUNC(rb_dfmalloc), 1);
     rb_define_singleton_method(rb_cDFHack, "free", RUBY_METHOD_FUNC(rb_dffree), 1);
-    rb_define_singleton_method(rb_cDFHack, "vmethod_do_call", RUBY_METHOD_FUNC(rb_dfvcall), 6);
+    rb_define_singleton_method(rb_cDFHack, "vmethod_do_call", RUBY_METHOD_FUNC(rb_dfvcall), 8);
 
     rb_define_singleton_method(rb_cDFHack, "memory_read", RUBY_METHOD_FUNC(rb_dfmemory_read), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_read_int8",  RUBY_METHOD_FUNC(rb_dfmemory_read_int8),  1);
@@ -950,4 +1002,10 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_resize", RUBY_METHOD_FUNC(rb_dfmemory_bitarray_resize), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_isset",  RUBY_METHOD_FUNC(rb_dfmemory_bitarray_isset), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_bitarray_set",    RUBY_METHOD_FUNC(rb_dfmemory_bitarray_set), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlset_new",       RUBY_METHOD_FUNC(rb_dfmemory_set_new), 0);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlset_delete",    RUBY_METHOD_FUNC(rb_dfmemory_set_delete), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlset_set",       RUBY_METHOD_FUNC(rb_dfmemory_set_set), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlset_isset",     RUBY_METHOD_FUNC(rb_dfmemory_set_isset), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlset_deletekey", RUBY_METHOD_FUNC(rb_dfmemory_set_deletekey), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_stlset_clear",     RUBY_METHOD_FUNC(rb_dfmemory_set_clear), 1);
 }

@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -294,6 +294,7 @@ namespace DFHack
 #endif
 
     class DFHACK_EXPORT VMethodInterposeLinkBase;
+    class MemoryPatcher;
 
     class DFHACK_EXPORT virtual_identity : public struct_identity {
         static std::map<void*, virtual_identity*> known;
@@ -313,7 +314,7 @@ namespace DFHack
         bool can_allocate() { return struct_identity::can_allocate() && (vtable_ptr != NULL); }
 
         void *get_vmethod_ptr(int index);
-        bool set_vmethod_ptr(int index, void *ptr);
+        bool set_vmethod_ptr(MemoryPatcher &patcher, int index, void *ptr);
 
     public:
         virtual_identity(size_t size, TAllocateFn alloc,
@@ -706,6 +707,9 @@ namespace DFHack {
 
 // Global object pointers
 #include "df/global_objects.h"
+
+#define DF_GLOBAL_VALUE(name,defval) (df::global::name ? *df::global::name : defval)
+#define DF_GLOBAL_FIELD(name,fname,defval) (df::global::name ? df::global::name->fname : defval)
 
 // A couple of headers that have to be included at once
 #include "df/coord2d.h"

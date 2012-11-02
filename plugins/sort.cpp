@@ -356,7 +356,7 @@ DEFINE_SORT_HANDLER(unit_sorters, pet, "/List", animals)
 
     std::vector<df::unit*> units;
     for (size_t i = 0; i < animals->animal.size(); i++)
-        units.push_back(animals->is_vermin[i] ? NULL : (df::unit*)animals->animal[i]);
+        units.push_back(animals->is_vermin[i] ? NULL : animals->animal[i].unit);
 
     if (compute_order(*pout, L, top, &order, units))
     {

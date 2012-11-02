@@ -177,8 +177,7 @@ static bool makePowerMeter(df::pressure_plate_info *info, int min_power, int max
 
     if (!enabled)
     {
-        auto pworld = Core::getInstance().getWorld();
-        auto entry = pworld->GetPersistentData("power-meter/enabled", NULL);
+        auto entry = World::GetPersistentData("power-meter/enabled", NULL);
         if (!entry.isValid())
             return false;
 
@@ -202,8 +201,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     switch (event) {
     case SC_WORLD_LOADED:
         {
-            auto pworld = Core::getInstance().getWorld();
-            bool enable = pworld->GetPersistentData("power-meter/enabled").isValid();
+            bool enable = World::GetPersistentData("power-meter/enabled").isValid();
 
             if (enable)
             {

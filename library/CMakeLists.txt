@@ -250,6 +250,9 @@ ADD_DEPENDENCIES(dfhack-client dfhack)
 
 ADD_EXECUTABLE(dfhack-run dfhack-run.cpp)
 
+ADD_EXECUTABLE(binpatch binpatch.cpp)
+TARGET_LINK_LIBRARIES(binpatch dfhack-md5)
+
 IF(BUILD_EGGY)
     SET_TARGET_PROPERTIES(dfhack PROPERTIES OUTPUT_NAME "egg" )
 else()
@@ -329,7 +332,7 @@ install(FILES xml/symbols.xml
 install(FILES ../dfhack.init-example
         DESTINATION ${DFHACK_BINARY_DESTINATION})
 
-install(TARGETS dfhack-run dfhack-client
+install(TARGETS dfhack-run dfhack-client binpatch
         LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
         RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 

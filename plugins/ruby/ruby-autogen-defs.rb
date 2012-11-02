@@ -124,15 +124,17 @@ module DFHack
                 case h
                 when Hash; h.each { |k, v| send("#{k}=", v) }
                 when Array; names = _field_names ; raise 'bad size' if names.length != h.length ; names.zip(h).each { |n, a| send("#{n}=", a) }
-                when Compound; _field_names.each { |n| send("#{n}=", h.send(n)) }
-                else raise 'wut?'
+                else _field_names.each { |n| send("#{n}=", h.send(n)) }
                 end
             end
             def _fields ; self.class._fields.to_a ; end
             def _fields_ancestors ; self.class._fields_ancestors.to_a ; end
             def _field_names ; _fields_ancestors.map { |n, o, s| n } ; end
             def _rtti_classname ; self.class._rtti_classname ; end
+            def _raw_rtti_classname ; df.get_rtti_classname(df.get_vtable_ptr(@_memaddr)) if self.class._rtti_classname ; end
             def _sizeof ; self.class._sizeof ; end
+            def ==(o) ; o.kind_of?(Compound) and o._memaddr == _memaddr ; end
+
             @@inspecting = {} # avoid infinite recursion on mutually-referenced objects
             def inspect
                 cn = self.class.name.sub(/^DFHack::/, '')
@@ -280,6 +282,10 @@ module DFHack
                 DFHack.memory_read_int32(@_memaddr) & 0xffffffff
             end
 
+            def _setp(v)
+               DFHack.memory_write_int32(@_memaddr, v)
+            end
+
             def _get
                 addr = _getp
                 return if addr == 0
@@ -289,12 +295,20 @@ module DFHack
 
             # XXX shaky...
             def _set(v)
-                if v.kind_of?(Pointer)
-                    DFHack.memory_write_int32(@_memaddr, v._getp)
-                elsif v.kind_of?(MemStruct)
-                    DFHack.memory_write_int32(@_memaddr, v._memaddr)
-                else
-                    _get._set(v)
+                case v
+                when Pointer;   DFHack.memory_write_int32(@_memaddr, v._getp)
+                when MemStruct; DFHack.memory_write_int32(@_memaddr, v._memaddr)
+                when Integer
+                    if @_tg and @_tg.kind_of?(MemHack::Number)
+                        if _getp == 0
+                            _setp(DFHack.malloc(@_tg._bits/8))
+                        end
+                        @_tg._at(_getp)._set(v)
+                    else
+                        DFHack.memory_write_int32(@_memaddr, v)
+                    end
+                when nil;       DFHack.memory_write_int32(@_memaddr, 0)
+                else _get._set(v)
                 end
             end
 
@@ -326,6 +340,16 @@ module DFHack
                 addr = _getp
                 return if addr == 0
                 self
+            end
+
+            def _set(v)
+                case v
+                when Pointer;   DFHack.memory_write_int32(@_memaddr, v._getp)
+                when MemStruct; DFHack.memory_write_int32(@_memaddr, v._memaddr)
+                when Integer;   DFHack.memory_write_int32(@_memaddr, v)
+                when nil;       DFHack.memory_write_int32(@_memaddr, 0)
+                else raise "cannot PointerAry._set(#{v.inspect})"
+                end
             end
 
             def [](i)
@@ -411,11 +435,20 @@ module DFHack
             def initialize(length)
                 @_length = length
             end
+            def length
+                if @_length == -1
+                    maxlen = 4096 - (@_memaddr & 0xfff)
+                    maxlen += 4096 until len = DFHack.memory_read(@_memaddr, maxlen).index(?\0)
+                    len
+                else
+                    @_length
+                end
+            end
             def _get
-                DFHack.memory_read(@_memaddr, @_length)
+                DFHack.memory_read(@_memaddr, length)
             end
             def _set(v)
-                DFHack.memory_write(@_memaddr, v[0, @_length])
+                DFHack.memory_write(@_memaddr, v[0, length])
             end
         end
 
@@ -464,7 +497,7 @@ module DFHack
             def []=(idx, v)
                 idx += length if idx < 0
                 if idx >= length
-                    insert_at(idx, 0)
+                    insert_at(length, 0) while idx >= length
                 elsif idx < 0
                     raise 'index out of bounds'
                 end
@@ -698,8 +731,8 @@ module DFHack
                 return if not addr
                 @_tg._at(addr)._get
             end
-	    alias next= _next=
-	    alias prev= _prev=
+            alias next= _next=
+            alias prev= _prev=
 
             include Enumerable
             def each
@@ -746,6 +779,55 @@ module DFHack
             @_memaddr = nil
         end
     end
+
+    class StlSet
+        attr_accessor :_memaddr, :_enum
+        def self.cpp_new(init=nil, enum=nil)
+            ret = new DFHack.memory_stlset_new, enum
+            init.each { |k| ret.set(k) } if init
+            ret
+        end
+
+        def initialize(addr, enum=nil)
+            addr = nil if addr == 0
+            @_memaddr = addr
+            @_enum = enum
+        end
+
+        def isset(key)
+            raise unless @_memaddr
+            key = @_enum.int(key) if _enum
+            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
+            DFHack.memory_stlset_isset(@_memaddr, key)
+        end
+        alias is_set? isset
+
+        def set(key)
+            raise unless @_memaddr
+            key = @_enum.int(key) if _enum
+            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
+            DFHack.memory_stlset_set(@_memaddr, key)
+        end
+
+        def delete(key)
+            raise unless @_memaddr
+            key = @_enum.int(key) if _enum
+            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
+            DFHack.memory_stlset_deletekey(@_memaddr, key)
+        end
+
+        def clear
+            raise unless @_memaddr
+            DFHack.memory_stlset_clear(@_memaddr)
+        end
+
+        def _cpp_delete
+            raise unless @_memaddr
+            DFHack.memory_stlset_delete(@_memaddr)
+            @_memaddr = nil
+        end
+    end
+
 
     # cpp rtti name -> rb class
     @rtti_n2c = {}
@@ -795,8 +877,12 @@ module DFHack
         v if v != 0
     end
 
-    def self.vmethod_call(obj, voff, a0=0, a1=0, a2=0, a3=0, a4=0)
-        vmethod_do_call(obj._memaddr, voff, vmethod_arg(a0), vmethod_arg(a1), vmethod_arg(a2), vmethod_arg(a3))
+    def self.vmethod_call(obj, voff, a0=0, a1=0, a2=0, a3=0, a4=0, a5=0)
+        this = obj._memaddr
+        vt = df.get_vtable_ptr(this)
+        fptr = df.memory_read_int32(vt + voff) & 0xffffffff
+        vmethod_do_call(this, fptr, vmethod_arg(a0), vmethod_arg(a1), vmethod_arg(a2),
+                        vmethod_arg(a3), vmethod_arg(a4), vmethod_arg(a5))
     end
 
     def self.vmethod_arg(arg)
@@ -805,7 +891,7 @@ module DFHack
         when true; 1
         when Integer; arg
         #when String; [arg].pack('p').unpack('L')[0] # raw pointer to buffer
-        when MemHack::Compound; arg._memaddr
+        when MemHack::Compound, StlSet; arg._memaddr
         else raise "bad vmethod arg #{arg.class}"
         end
     end

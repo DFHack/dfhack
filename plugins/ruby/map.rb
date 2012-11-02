@@ -26,7 +26,7 @@ module DFHack
             end
         end
 
-        def map_tile_at(x, y=nil, z=nil)
+        def map_tile_at(x=df.cursor, y=nil, z=nil)
             x = x.pos if x.respond_to?(:pos)
             x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
             b = map_block_at(x, y, z)
@@ -65,6 +65,14 @@ module DFHack
             @x, @y, @z = x, y, z
             @dx, @dy = @x&15, @y&15
             @mapblock = b
+        end
+
+        def offset(dx, dy=nil, dz=0)
+            if dx.respond_to?(:x)
+                dz = dx.z if dx.respond_to?(:z)
+                dx, dy = dx.x, dx.y
+            end
+            df.map_tile_at(@x+dx, @y+dy, @z+dz)
         end
 
         def designation
@@ -189,8 +197,25 @@ module DFHack
         end
 
         def dig(mode=:Default)
-            designation.dig = mode
-            mapblock.flags.designated = true
+            if mode == :Smooth
+                if (tilemat == :STONE or tilemat == :MINERAL) and caption !~ /smooth|pillar|fortification/i and   # XXX caption..
+                    designation.smooth == 0 and (designation.hidden or not df.world.job_list.find { |j|
+                        # the game removes 'smooth' designation as soon as it assigns a job, if we
+                        # re-set it the game may queue another :DetailWall that will carve a fortification
+                        (j.job_type == :DetailWall or j.job_type == :DetailFloor) and df.same_pos?(j, self)
+                    })
+                    designation.dig = :No
+                    designation.smooth = 1
+                    mapblock.flags.designated = true
+                end
+            else
+                return if mode != :No and designation.dig == :No and not designation.hidden and df.world.job_list.find { |j|
+                    # someone already enroute to dig here, avoid 'Inappropriate dig square' spam
+                    JobType::Type[j.job_type] == :Digging and df.same_pos?(j, self)
+                }
+                designation.dig = mode
+                mapblock.flags.designated = true if mode != :No
+            end
         end
 
         def spawn_liquid(quantity, is_magma=false, flowing=true)
@@ -214,6 +239,36 @@ module DFHack
 
         def spawn_magma(quantity=7)
             spawn_liquid(quantity, true)
+        end
+
+        # yield a serie of tiles until the block returns true, returns the matching tile
+        # the yielded tiles form a (squared) spiral centered here in the current zlevel
+        # eg for radius 4, yields (-4, -4), (-4, -3), .., (-4, 3),
+        #   (-4, 4), (-3, 4), .., (4, 4), .., (4, -4), .., (-3, -4)
+        # then move on to radius 5
+        def spiral_search(maxradius=100, minradius=0, step=1)
+            if minradius == 0
+                    return self if yield self
+                    minradius += step
+            end
+
+            sides = [[0, 1], [1, 0], [0, -1], [-1, 0]]
+            (minradius..maxradius).step(step) { |r|
+                sides.length.times { |s|
+                    dxr, dyr = sides[(s-1) % sides.length]
+                    dx, dy = sides[s]
+                    (-r...r).step(step) { |v|
+                        t = offset(dxr*r + dx*v, dyr*r + dy*v)
+                        return t if t and yield t
+                    }
+                }
+            }
+            nil
+        end
+
+        # returns dx^2+dy^2+dz^2
+        def distance_to(ot)
+            (x-ot.x)**2 + (y-ot.y)**2 + (z-ot.z)**2
         end
     end
 end

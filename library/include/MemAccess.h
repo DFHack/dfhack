@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -314,6 +314,23 @@ namespace DFHack
 
         // Get list of names given to ClassNameCheck constructors.
         static void getKnownClassNames(std::vector<std::string> &names);
+    };
+
+    class DFHACK_EXPORT MemoryPatcher
+    {
+        Process *p;
+        std::vector<t_memrange> ranges, save;
+    public:
+        MemoryPatcher(Process *p = NULL);
+        ~MemoryPatcher();
+
+        bool verifyAccess(void *target, size_t size, bool write = false);
+        bool makeWritable(void *target, size_t size) {
+            return verifyAccess(target, size, true);
+        }
+        bool write(void *target, const void *src, size_t size);
+
+        void close();
     };
 }
 #endif

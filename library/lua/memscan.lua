@@ -378,7 +378,7 @@ end
 
 -- Interactive search utility
 
-function DiffSearcher:find_interactive(prompt,data_type,condition_cb)
+function DiffSearcher:find_interactive(prompt,data_type,condition_cb,iter_limit)
     enum = enum or {}
 
     -- Loop for restarting search from scratch
@@ -393,6 +393,11 @@ function DiffSearcher:find_interactive(prompt,data_type,condition_cb)
         -- Loop through choices
         while true do
             print('')
+
+            if iter_limit and ccursor >= iter_limit then
+                dfhack.printerr('  Iteration limit reached without a solution.')
+                break
+            end
 
             local ok, value, delta = condition_cb(ccursor)
 

@@ -2,14 +2,31 @@ local _ENV = mkmodule('plugins.dfusion.tools')
 local dfu=require("plugins.dfusion")
 local ms=require "memscan"
 menu=dfu.SimpleMenu()
-function setrace(name) --TODO FIX
-	RaceTable=BuildNameTable()
-	print("Your current race is:"..GetRaceToken(df.global.ui.race_id))
+RaceNames={}
+function build_race_names()
+    if #RaceNames~=0 then
+        return RaceNames
+    else
+        for k,v in pairs(df.global.world.raws.creatures.all) do
+            RaceNames[v.creature_id]=k
+        end
+        dfhack.onStateChange.invalidate_races=function(change_id) --todo does this work?
+            if change_id==SC_WORLD_UNLOADED then
+                dfhack.onStateChange.invalidate_races=nil
+                RaceNames={}
+            end
+        end
+        return RaceNames
+    end
+end
+function setrace(name) 
+	local RaceTable=build_race_names()
+	print("Your current race is:"..df.global.world.raws.creatures.all[df.global.ui.race_id].creature_id)
 	local id
 	if name == nil then
 		print("Type new race's token name in full caps (q to quit):")
 		repeat
-			entry=getline()
+			local entry=io.stdin:read()
 			if entry=="q" then
 				return
 			end
@@ -24,16 +41,20 @@ function setrace(name) --TODO FIX
 	df.global.ui.race_id=id
 end
 menu:add("Set current race",setrace)
-function GiveSentience(names) --TODO FIX
-	RaceTable=RaceTable or BuildNameTable() --slow.If loaded don't load again
+function GiveSentience(names) 
+	local RaceTable=build_race_names() --slow.If loaded don't load again
+    local id,ids
 	if names ==nil then
 		ids={}
 		print("Type race's  token name in full caps to give sentience to:")
 		repeat
-			entry=getline()
+			id=io.stdin:read()
 			id=RaceTable[entry]
-		until id~=nil
-		table.insert(ids,id)
+            if id~=nil then
+                table.insert(ids,id)
+            end
+		until id==nil
+		
 	else
 		ids={}
 		for _,name in pairs(names) do
@@ -45,7 +66,7 @@ function GiveSentience(names) --TODO FIX
 		local races=df.global.world.raws.creatures.all
 
 		local castes=races[id].caste
-		print(string.format("Caste count:%i",castes.size))
+		print(string.format("Caste count:%i",#castes))
 		for i =0,#castes-1 do
 			
 			print("Caste name:"..castes[i].caste_id.."...")

@@ -87,7 +87,7 @@ function change_adv(unit,nemesis)
 				end
 			end
 		else
-			error("Current unit does not have nemesis record, further working not guaranteed")
+			qerror("Current unit does not have nemesis record, further working not guaranteed")
 		end
 	end
 end

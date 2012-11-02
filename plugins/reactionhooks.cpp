@@ -203,7 +203,7 @@ struct product_hook : item_product {
         (df::unit *unit, std::vector<df::item*> *out_items,
          std::vector<df::reaction_reagent*> *in_reag,
          std::vector<df::item*> *in_items,
-         int32_t quantity, int16_t skill,
+         int32_t quantity, df::job_skill skill,
          df::historical_entity *entity, df::world_site *site)
     ) {
         if (auto product = products[this])

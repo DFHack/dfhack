@@ -168,8 +168,6 @@ command_result memview (color_ostream &out, vector <string> & parameters)
 	else
 		memdata.refresh=0;
 
-
-	uint8_t *buf,*lbuf;
 	memdata.buf=new uint8_t[memdata.len];
 	memdata.lbuf=new uint8_t[memdata.len];
 	Core::getInstance().p->getMemRanges(memdata.ranges);

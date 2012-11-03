@@ -10,6 +10,7 @@
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/interface_key.h"
+#include "df/interfacest.h"
 
 using std::set;
 using std::vector;
@@ -19,6 +20,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 using df::global::gps;
+using df::global::gview;
 
 /*
 Search Plugin
@@ -37,6 +39,14 @@ void OutputString(int8_t color, int &x, int y, const std::string &text)
 {
     Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
     x += text.length();
+}
+
+static bool is_live_screen(const df::viewscreen *screen)
+{
+    for (df::viewscreen *cur = &gview->view; cur; cur = cur->child)
+        if (cur == screen)
+            return true;
+    return false;
 }
 
 //
@@ -58,6 +68,15 @@ public:
         viewscreen = NULL;
         select_key = 's';
         track_secondary_values = false;
+    }
+
+    bool reset_on_change()
+    {
+        if (valid && is_live_screen(viewscreen))
+            return false;
+
+        reset_all();
+        return true;
     }
 
     // A new keystroke is received in a searchable screen
@@ -245,6 +264,9 @@ protected:
                 update_secondary_values();
                 *sort_list2 = saved_list2;
             }
+
+            saved_list1.clear();
+            saved_list2.clear();
         }
         store_reference_values();
         search_string = "";
@@ -346,7 +368,12 @@ struct search_hook : T
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
-        module.init(this);
+        if (!module.init(this))
+        {
+            INTERPOSE_NEXT(feed)(input);
+            return;
+        }
+
         if (!module.process_input(input))
         {
             INTERPOSE_NEXT(feed)(input);
@@ -357,9 +384,10 @@ struct search_hook : T
 
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
-        module.init(this);
+        bool ok = module.init(this);
         INTERPOSE_NEXT(render)();
-        module.render();
+        if (ok)
+            module.render();
     }
 };
 
@@ -382,10 +410,10 @@ public:
     virtual void render() const
     {
         if (!viewscreen->in_group_mode)
-            print_search_option(1);
+            print_search_option(2);
         else
         {
-            int x = 1;
+            int x = 2;
             OutputString(15, x, gps->dimy - 2, "Tab to enable Search");
         }
     }
@@ -402,13 +430,18 @@ public:
             search_parent::do_post_update_check();
     }
 
-    virtual void init(df::viewscreen_storesst *screen) 
+    bool init(df::viewscreen_storesst *screen)
     {
+        if (screen != viewscreen && !reset_on_change())
+            return false;
+
         if (!valid)
         {
             viewscreen = screen;
             search_parent::init(&screen->item_cursor, &screen->items);
         }
+
+        return true;
     }
 
 
@@ -461,21 +494,25 @@ public:
         print_search_option(28);
     }
 
-    virtual void init(df::viewscreen_unitlistst *screen)
+    bool init(df::viewscreen_unitlistst *screen)
     {
+        if (screen != viewscreen && !reset_on_change())
+            return false;
+
         if (!valid)
         {
             viewscreen = screen;
             search_parent::init(&screen->cursor_pos[viewscreen->page], &screen->units[viewscreen->page], &screen->jobs[viewscreen->page]);
         }
+
+        return true;
     }
 
 private:
     virtual string get_element_description(df::unit *element) const
     {
         string desc = Translation::TranslateName(Units::getVisibleName(element), false);
-        if (viewscreen->page == 1)
-            desc += Units::getProfessionName(element); // Check animal type too
+        desc += ", " + Units::getProfessionName(element); // Check animal type too
 
         return desc;
     }
@@ -529,6 +566,29 @@ private:
     {
         return Items::getDescription(element, 0, true);
     }
+
+    virtual bool should_check_input(set<df::interface_key> *input)
+    {
+        if (is_entry_mode())
+            return true;
+
+        if (input->count(interface_key::TRADE_TRADE) ||
+            input->count(interface_key::TRADE_OFFER) ||
+            input->count(interface_key::TRADE_SEIZE))
+        {
+            // Block the keys if were searching
+            if (!search_string.empty())
+                input->clear();
+
+            // Trying to trade, reset search
+            clear_search();
+            reset_all();
+
+            return false;
+        }
+
+        return true;
+    }
 };
 
 
@@ -540,14 +600,19 @@ public:
         print_search_option(2, 26);
     }
 
-    virtual void init(df::viewscreen_tradegoodsst *screen)
+    bool init(df::viewscreen_tradegoodsst *screen)
     {
+        if (screen != viewscreen && !reset_on_change())
+            return false;
+
         if (!valid)
         {
             viewscreen = screen;
             search_parent::init(&screen->trader_cursor, &screen->trader_items, &screen->trader_selected, 'q');
             track_secondary_values = true;
         }
+
+        return true;
     }
 };
 
@@ -564,14 +629,19 @@ public:
         print_search_option(42, 26);
     }
 
-    virtual void init(df::viewscreen_tradegoodsst *screen)
+    bool init(df::viewscreen_tradegoodsst *screen)
     {
+        if (screen != viewscreen && !reset_on_change())
+            return false;
+
         if (!valid)
         {
             viewscreen = screen;
             search_parent::init(&screen->broker_cursor, &screen->broker_items, &screen->broker_selected, 'w');
             track_secondary_values = true;
         }
+
+        return true;
     }
 };
 
@@ -589,7 +659,7 @@ DFHACK_PLUGIN("search");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (!gps ||
+    if (!gps || !gview ||
         !INTERPOSE_HOOK(unitlist_search_hook, feed).apply() ||
         !INTERPOSE_HOOK(unitlist_search_hook, render).apply() ||
         !INTERPOSE_HOOK(trade_search_merc_hook, feed).apply() ||
@@ -620,10 +690,10 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
 {
     switch (event) {
     case SC_VIEWSCREEN_CHANGED:
-        unitlist_search_hook::module.reset_all();
-        trade_search_merc_hook::module.reset_all();
-        trade_search_fort_hook::module.reset_all();
-        stocks_search_hook::module.reset_all();
+        unitlist_search_hook::module.reset_on_change();
+        trade_search_merc_hook::module.reset_on_change();
+        trade_search_fort_hook::module.reset_on_change();
+        stocks_search_hook::module.reset_on_change();
         break;
 
     default:

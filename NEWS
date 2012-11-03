@@ -23,6 +23,9 @@ DFHack future
     Together with a couple of binary patches and the gui/assign-rack script,
     this plugin makes weapon racks, armor stands, chests and cabinets in
     properly designated barracks be used again for storage of squad equipment.
+  New Search plugin by falconne:
+    Adds an incremental search function to the Stocks, Trading and Unit List screens.
+
 
 DFHack v0.34.11-r2
 

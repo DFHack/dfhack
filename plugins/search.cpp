@@ -206,12 +206,12 @@ protected:
             bool list_has_been_sorted = (sort_list1->size() == reference_list.size()
                 && *sort_list1 != reference_list);
 
-            for (int i = 0; i < saved_indexes.size(); i++)
+            for (size_t i = 0; i < saved_indexes.size(); i++)
             {
                 int adjusted_item_index = i;
                 if (list_has_been_sorted)
                 {
-                    for (int j = 0; j < sort_list1->size(); j++)
+                    for (size_t j = 0; j < sort_list1->size(); j++)
                     {
                         if ((*sort_list1)[j] == reference_list[i])
                         {
@@ -278,7 +278,7 @@ protected:
         }
 
         string search_string_l = toLower(search_string);
-        for (int i = 0; i < saved_list1.size(); i++ )
+        for (size_t i = 0; i < saved_list1.size(); i++ )
         {
             T element = saved_list1[i];
             string desc = toLower(get_element_description(element));
@@ -440,8 +440,8 @@ private:
 
 
 typedef search_hook<df::viewscreen_storesst, stocks_search> stocks_search_hook;
-IMPLEMENT_VMETHOD_INTERPOSE(stocks_search_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(stocks_search_hook, render);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(stocks_search_hook, feed);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(stocks_search_hook, render);
 
 //
 // END: Stocks screen search
@@ -502,8 +502,8 @@ private:
 };
 
 typedef search_hook<df::viewscreen_unitlistst, unitlist_search> unitlist_search_hook;
-IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, feed, 100);
-IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, render, 100);
+template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, feed, 100);
+template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, render, 100);
 
 //
 // END: Unit screen search
@@ -552,8 +552,8 @@ public:
 };
 
 typedef search_hook<df::viewscreen_tradegoodsst, trade_search_merc, int> trade_search_merc_hook;
-IMPLEMENT_VMETHOD_INTERPOSE(trade_search_merc_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(trade_search_merc_hook, render);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_merc_hook, feed);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_merc_hook, render);
 
 
 class trade_search_fort : public trade_search_base
@@ -576,8 +576,8 @@ public:
 };
 
 typedef search_hook<df::viewscreen_tradegoodsst, trade_search_fort, char> trade_search_fort_hook;
-IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, render);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, feed);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, render);
 
 //
 // END: Trade screen search
@@ -589,10 +589,15 @@ DFHACK_PLUGIN("search");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (!gps || !INTERPOSE_HOOK(unitlist_search_hook, feed).apply() || !INTERPOSE_HOOK(unitlist_search_hook, render).apply()
-        || !INTERPOSE_HOOK(trade_search_merc_hook, feed).apply() || !INTERPOSE_HOOK(trade_search_merc_hook, render).apply()
-        || !INTERPOSE_HOOK(trade_search_fort_hook, feed).apply() || !INTERPOSE_HOOK(trade_search_fort_hook, render).apply()
-        || !INTERPOSE_HOOK(stocks_search_hook, feed).apply() || !INTERPOSE_HOOK(stocks_search_hook, render).apply())
+    if (!gps ||
+        !INTERPOSE_HOOK(unitlist_search_hook, feed).apply() ||
+        !INTERPOSE_HOOK(unitlist_search_hook, render).apply() ||
+        !INTERPOSE_HOOK(trade_search_merc_hook, feed).apply() ||
+        !INTERPOSE_HOOK(trade_search_merc_hook, render).apply() ||
+        !INTERPOSE_HOOK(trade_search_fort_hook, feed).apply() ||
+        !INTERPOSE_HOOK(trade_search_fort_hook, render).apply() ||
+        !INTERPOSE_HOOK(stocks_search_hook, feed).apply() ||
+        !INTERPOSE_HOOK(stocks_search_hook, render).apply())
         out.printerr("Could not insert Search hooks!\n");
 
     return CR_OK;
@@ -613,9 +618,17 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_change_event event )
 {
-    unitlist_search_hook::module.reset_all();
-    trade_search_merc_hook::module.reset_all();
-    trade_search_fort_hook::module.reset_all();
-    stocks_search_hook::module.reset_all();
+    switch (event) {
+    case SC_VIEWSCREEN_CHANGED:
+        unitlist_search_hook::module.reset_all();
+        trade_search_merc_hook::module.reset_all();
+        trade_search_fort_hook::module.reset_all();
+        stocks_search_hook::module.reset_all();
+        break;
+
+    default:
+        break;
+    }
+
     return CR_OK;
 }

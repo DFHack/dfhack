@@ -1555,37 +1555,12 @@ be feasibly used in the core context.</p>
 <p>Checks if [GRAPHICS:YES] was specified in init.</p>
 </li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.screen.paintTile(pen,x,y[,char,tile])</span></tt></p>
-<p>Paints a tile using given parameters. Pen is a table with following possible fields:</p>
-<dl class="docutils">
-<dt><tt class="docutils literal">ch</tt></dt>
-<dd><p class="first last">Provides the ordinary tile character, as either a 1-character string or a number.
-Can be overridden with the <tt class="docutils literal">char</tt> function parameter.</p>
-</dd>
-<dt><tt class="docutils literal">fg</tt></dt>
-<dd><p class="first last">Foreground color for the ordinary tile. Defaults to COLOR_GREY (7).</p>
-</dd>
-<dt><tt class="docutils literal">bg</tt></dt>
-<dd><p class="first last">Background color for the ordinary tile. Defaults to COLOR_BLACK (0).</p>
-</dd>
-<dt><tt class="docutils literal">bold</tt></dt>
-<dd><p class="first last">Bright/bold text flag. If <em>nil</em>, computed based on (fg &amp; 8); fg is masked to 3 bits.
-Otherwise should be <em>true/false</em>.</p>
-</dd>
-<dt><tt class="docutils literal">tile</tt></dt>
-<dd><p class="first last">Graphical tile id. Ignored unless [GRAPHICS:YES] was in init.txt.</p>
-</dd>
-<dt><tt class="docutils literal">tile_color = true</tt></dt>
-<dd><p class="first last">Specifies that the tile should be shaded with <em>fg/bg</em>.</p>
-</dd>
-<dt><tt class="docutils literal">tile_fg, tile_bg</tt></dt>
-<dd><p class="first last">If specified, overrides <em>tile_color</em> and supplies shading colors directly.</p>
-</dd>
-</dl>
+<p>Paints a tile using given parameters. See below for a description of pen.</p>
 <p>Returns <em>false</em> if coordinates out of bounds, or other error.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.screen.readTile(x,y)</tt></p>
 <p>Retrieves the contents of the specified tile from the screen buffers.
-Returns a pen, or <em>nil</em> if invalid or TrueType.</p>
+Returns a pen object, or <em>nil</em> if invalid or TrueType.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.screen.paintString(pen,x,y,text)</tt></p>
 <p>Paints the string starting at <em>x,y</em>. Uses the string characters
@@ -1608,6 +1583,59 @@ The values can then be used for the <em>tile</em> field of <em>pen</em> structur
 <li><p class="first"><tt class="docutils literal">dfhack.screen.invalidate()</tt></p>
 <p>Requests repaint of the screen by setting a flag. Unlike other
 functions in this section, this may be used at any time.</p>
+</li>
+</ul>
+<p>The &quot;pen&quot; argument used by functions above may be represented by
+a table with the following possible fields:</p>
+<blockquote>
+<dl class="docutils">
+<dt><tt class="docutils literal">ch</tt></dt>
+<dd>Provides the ordinary tile character, as either a 1-character string or a number.
+Can be overridden with the <tt class="docutils literal">char</tt> function parameter.</dd>
+<dt><tt class="docutils literal">fg</tt></dt>
+<dd>Foreground color for the ordinary tile. Defaults to COLOR_GREY (7).</dd>
+<dt><tt class="docutils literal">bg</tt></dt>
+<dd>Background color for the ordinary tile. Defaults to COLOR_BLACK (0).</dd>
+<dt><tt class="docutils literal">bold</tt></dt>
+<dd>Bright/bold text flag. If <em>nil</em>, computed based on (fg &amp; 8); fg is masked to 3 bits.
+Otherwise should be <em>true/false</em>.</dd>
+<dt><tt class="docutils literal">tile</tt></dt>
+<dd>Graphical tile id. Ignored unless [GRAPHICS:YES] was in init.txt.</dd>
+<dt><tt class="docutils literal">tile_color = true</tt></dt>
+<dd>Specifies that the tile should be shaded with <em>fg/bg</em>.</dd>
+<dt><tt class="docutils literal">tile_fg, tile_bg</tt></dt>
+<dd>If specified, overrides <em>tile_color</em> and supplies shading colors directly.</dd>
+</dl>
+</blockquote>
+<p>Alternatively, it may be a pre-parsed native object with the following API:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.pen.make(base[,pen_or_fg,bg,bold])</span></tt></p>
+<p>Creates a new pre-parsed pen by combining its arguments according to the
+following rules:</p>
+<ol class="arabic simple">
+<li>The <tt class="docutils literal">base</tt> argument may be a pen object, a pen table as specified above,
+or a single color value. In the single value case, it is split into
+<tt class="docutils literal">fg</tt> and <tt class="docutils literal">bold</tt> properties, and others are initialized to 0.
+This argument will be converted to a pre-parsed object and returned
+if there are no other arguments.</li>
+<li>If the <tt class="docutils literal">pen_or_fg</tt> argument is specified as a table or object, it
+completely replaces the base, and is returned instead of it.</li>
+<li>Otherwise, the non-nil subset of the optional arguments is used
+to update the <tt class="docutils literal">fg</tt>, <tt class="docutils literal">bg</tt> and <tt class="docutils literal">bold</tt> properties of the base.
+If the <tt class="docutils literal">bold</tt> flag is <em>nil</em>, but <em>pen_or_fg</em> is a number, <tt class="docutils literal">bold</tt>
+is deduced from it like in the simple base case.</li>
+</ol>
+<p>This function always returns a new pre-parsed pen, or <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.pen.parse(base[,pen_or_fg,bg,bold])</span></tt></p>
+<p>Exactly like the above function, but returns <tt class="docutils literal">base</tt> or <tt class="docutils literal">pen_or_fg</tt>
+directly if they are already a pre-parsed native object.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">pen.property</tt>, <tt class="docutils literal">pen.property = value</tt>, <tt class="docutils literal">pairs(pen)</tt></p>
+<p>Pre-parsed pens support reading and setting their properties,
+but don't behave exactly like a simple table would; for instance,
+assigning to <tt class="docutils literal">pen.tile_color</tt> also resets <tt class="docutils literal">pen.tile_fg</tt> and
+<tt class="docutils literal">pen.tile_bg</tt> to <em>nil</em>.</p>
 </li>
 </ul>
 <p>In order to actually be able to paint to the screen, it is necessary

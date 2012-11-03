@@ -1403,31 +1403,14 @@ Basic painting functions:
 
 * ``dfhack.screen.paintTile(pen,x,y[,char,tile])``
 
-  Paints a tile using given parameters. Pen is a table with following possible fields:
-
-  ``ch``
-    Provides the ordinary tile character, as either a 1-character string or a number.
-    Can be overridden with the ``char`` function parameter.
-  ``fg``
-    Foreground color for the ordinary tile. Defaults to COLOR_GREY (7).
-  ``bg``
-    Background color for the ordinary tile. Defaults to COLOR_BLACK (0).
-  ``bold``
-    Bright/bold text flag. If *nil*, computed based on (fg & 8); fg is masked to 3 bits.
-    Otherwise should be *true/false*.
-  ``tile``
-    Graphical tile id. Ignored unless [GRAPHICS:YES] was in init.txt.
-  ``tile_color = true``
-    Specifies that the tile should be shaded with *fg/bg*.
-  ``tile_fg, tile_bg``
-    If specified, overrides *tile_color* and supplies shading colors directly.
+  Paints a tile using given parameters. See below for a description of pen.
 
   Returns *false* if coordinates out of bounds, or other error.
 
 * ``dfhack.screen.readTile(x,y)``
 
   Retrieves the contents of the specified tile from the screen buffers.
-  Returns a pen, or *nil* if invalid or TrueType.
+  Returns a pen object, or *nil* if invalid or TrueType.
 
 * ``dfhack.screen.paintString(pen,x,y,text)``
 
@@ -1457,6 +1440,61 @@ Basic painting functions:
 
   Requests repaint of the screen by setting a flag. Unlike other
   functions in this section, this may be used at any time.
+
+The "pen" argument used by functions above may be represented by
+a table with the following possible fields:
+
+  ``ch``
+    Provides the ordinary tile character, as either a 1-character string or a number.
+    Can be overridden with the ``char`` function parameter.
+  ``fg``
+    Foreground color for the ordinary tile. Defaults to COLOR_GREY (7).
+  ``bg``
+    Background color for the ordinary tile. Defaults to COLOR_BLACK (0).
+  ``bold``
+    Bright/bold text flag. If *nil*, computed based on (fg & 8); fg is masked to 3 bits.
+    Otherwise should be *true/false*.
+  ``tile``
+    Graphical tile id. Ignored unless [GRAPHICS:YES] was in init.txt.
+  ``tile_color = true``
+    Specifies that the tile should be shaded with *fg/bg*.
+  ``tile_fg, tile_bg``
+    If specified, overrides *tile_color* and supplies shading colors directly.
+
+Alternatively, it may be a pre-parsed native object with the following API:
+
+* ``dfhack.pen.make(base[,pen_or_fg,bg,bold])``
+
+  Creates a new pre-parsed pen by combining its arguments according to the
+  following rules:
+
+  1. The ``base`` argument may be a pen object, a pen table as specified above,
+     or a single color value. In the single value case, it is split into
+     ``fg`` and ``bold`` properties, and others are initialized to 0.
+     This argument will be converted to a pre-parsed object and returned
+     if there are no other arguments.
+
+  2. If the ``pen_or_fg`` argument is specified as a table or object, it
+     completely replaces the base, and is returned instead of it.
+
+  3. Otherwise, the non-nil subset of the optional arguments is used
+     to update the ``fg``, ``bg`` and ``bold`` properties of the base.
+     If the ``bold`` flag is *nil*, but *pen_or_fg* is a number, ``bold``
+     is deduced from it like in the simple base case.
+
+  This function always returns a new pre-parsed pen, or *nil*.
+
+* ``dfhack.pen.parse(base[,pen_or_fg,bg,bold])``
+
+  Exactly like the above function, but returns ``base`` or ``pen_or_fg``
+  directly if they are already a pre-parsed native object.
+
+* ``pen.property``, ``pen.property = value``, ``pairs(pen)``
+
+  Pre-parsed pens support reading and setting their properties,
+  but don't behave exactly like a simple table would; for instance,
+  assigning to ``pen.tile_color`` also resets ``pen.tile_fg`` and
+  ``pen.tile_bg`` to *nil*.
 
 In order to actually be able to paint to the screen, it is necessary
 to create and register a viewscreen (basically a modal dialog) with

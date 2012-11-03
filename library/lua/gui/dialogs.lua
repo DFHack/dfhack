@@ -160,8 +160,8 @@ function ListBox:preinit(info)
 end
 
 function ListBox:init(info)
-    local spen = gui.to_pen(COLOR_CYAN, self.select_pen, nil, false)
-    local cpen = gui.to_pen(COLOR_LIGHTCYAN, self.cursor_pen or self.select_pen, nil, true)
+    local spen = dfhack.pen.parse(COLOR_CYAN, self.select_pen, nil, false)
+    local cpen = dfhack.pen.parse(COLOR_LIGHTCYAN, self.cursor_pen or self.select_pen, nil, true)
 
     local list_widget = widgets.List
     if self.with_filter then

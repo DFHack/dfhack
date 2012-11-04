@@ -1067,18 +1067,22 @@ void viewscreen_unitlaborsst::render()
     if (cur != NULL)
     {
         df::unit *unit = cur->unit;
-        int x = 1;
-        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, cur->transname);
+        int x = 1, y = 3 + num_rows + 2;
+        Screen::Pen white_pen(' ', 15, 0);
+
+        Screen::paintString(white_pen, x, y, (cur->unit && cur->unit->sex) ? "\x0b" : "\x0c");
+        x += 2;
+        Screen::paintString(white_pen, x, y, cur->transname);
         x += cur->transname.length();
 
         if (cur->transname.length())
         {
-            Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, ", ");
+            Screen::paintString(white_pen, x, y, ", ");
             x += 2;
         }
-        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, cur->profession);
+        Screen::paintString(white_pen, x, y, cur->profession);
         x += cur->profession.length();
-        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, ": ");
+        Screen::paintString(white_pen, x, y, ": ");
         x += 2;
 
         string str;

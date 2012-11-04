@@ -504,7 +504,7 @@ function List:onRenderBody(dc)
             local icon = getval(obj.icon)
             if icon then
                 dc:seek(0, y)
-                if type(icon) == 'table' then
+                if type(icon) ~= 'string' then
                     dc:char(nil,icon)
                 else
                     if current then
@@ -573,7 +573,7 @@ FilteredList = defclass(FilteredList, Widget)
 
 function FilteredList:init(info)
     self.edit = EditField{
-        text_pen = info.cursor_pen,
+        text_pen = info.edit_pen or info.cursor_pen,
         frame = { l = info.icon_width, t = 0 },
         on_change = self:callback('onFilterChange'),
         on_char = self:callback('onFilterChar'),
@@ -583,6 +583,7 @@ function FilteredList:init(info)
         text_pen = info.text_pen,
         cursor_pen = info.cursor_pen,
         inactive_pen = info.inactive_pen,
+        icon_pen = info.icon_pen,
         row_height = info.row_height,
         scroll_keys = info.scroll_keys,
         icon_width = info.icon_width,

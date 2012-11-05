@@ -60,8 +60,12 @@
 #include <VTableInterpose.h>
 #include <modules/Screen.h>
 #include "df/creature_raw.h"
-using df::global::gps;
+#include "df/enabler.h"
+
 using std::deque;
+using df::global::gps;
+using df::global::enabler;
+
 
 using std::vector;
 using std::string;
@@ -433,6 +437,7 @@ static void init_state(color_ostream &out)
     start_protect(out);
 }
 
+static bool first_update_done = false;
 static void enable_plugin(color_ostream &out)
 {
     auto pworld = Core::getInstance().getWorld();
@@ -445,9 +450,15 @@ static void enable_plugin(color_ostream &out)
 
     setOptionEnabled(CF_ENABLED, true);
     enabled = true;
-    out << "Enabling the plugin." << endl;
+    out << "Enabling workflow plugin." << endl;
+
+    for (vector<ItemConstraint *>::iterator it = constraints.begin(); it != constraints.end(); it++)
+    {
+        (*it)->history.clear();
+    }
 
     start_protect(out);
+    first_update_done = false;
 }
 
 /******************************
@@ -578,23 +589,6 @@ static void recover_jobs(color_ostream &out)
 
 static void process_constraints(color_ostream &out);
 
-#define ITEMDEF_VECTORS \
-    ITEM(WEAPON, weapons, itemdef_weaponst) \
-    ITEM(TRAPCOMP, trapcomps, itemdef_trapcompst) \
-    ITEM(TOY, toys, itemdef_toyst) \
-    ITEM(TOOL, tools, itemdef_toolst) \
-    ITEM(INSTRUMENT, instruments, itemdef_instrumentst) \
-    ITEM(ARMOR, armor, itemdef_armorst) \
-    ITEM(AMMO, ammo, itemdef_ammost) \
-    ITEM(SIEGEAMMO, siege_ammo, itemdef_siegeammost) \
-    ITEM(GLOVES, gloves, itemdef_glovesst) \
-    ITEM(SHOES, shoes, itemdef_shoesst) \
-    ITEM(SHIELD, shields, itemdef_shieldst) \
-    ITEM(HELM, helms, itemdef_helmst) \
-    ITEM(PANTS, pants, itemdef_pantsst) \
-    ITEM(FOOD, food, itemdef_foodst)
-
-static bool first_update_done = false;
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
     if (!enabled)
@@ -602,7 +596,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
 
     // Every 5 frames check the jobs for disappearance
     static unsigned cnt = 0;
-    if ((++cnt % 5) != 0 && !first_update_done)
+    if ((++cnt % 5) != 0 && first_update_done)
         return CR_OK;
 
     check_lost_jobs(out, world->frame_counter - last_tick_frame_count);
@@ -637,10 +631,42 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
  *   ITEM COUNT CONSTRAINT    *
  ******************************/
 
+static string get_constraint_material(ItemConstraint *cv)
+{
+    string text;
+    if (!cv->material.isNone())
+    {
+        text.append(cv->material.toString());
+        text.append(" ");
+    }
+
+    text.append(bitfield_to_string(cv->mat_mask));
+
+    return text;
+}
+
 static ItemConstraint * create_new_constraint(bool is_craft, ItemTypeInfo item, MaterialInfo material, 
                                               df::dfhack_material_category mat_mask, item_quality::item_quality minqual, 
-                                              int weight, PersistentDataItem * cfg, const std::string & str) 
+                                              PersistentDataItem * cfg, std::string str) 
 {
+    for (size_t i = 0; i < constraints.size(); i++)
+    {
+        ItemConstraint *ct = constraints[i];
+        if (ct->is_craft == is_craft &&
+            ct->item == item && ct->material == material &&
+            ct->mat_mask.whole == mat_mask.whole &&
+            ct->min_quality == minqual)
+            return ct;
+    }
+
+    int weight = 0;
+    if (item.subtype >= 0)
+        weight += 10000;
+    if (mat_mask.whole != 0)
+        weight += 100;
+    if (material.type >= 0)
+        weight += (material.index >= 0 ? 5000 : 1000);
+
     ItemConstraint *nct = new ItemConstraint;
     nct->is_craft = is_craft;
     nct->item = item;
@@ -653,6 +679,12 @@ static ItemConstraint * create_new_constraint(bool is_craft, ItemTypeInfo item, 
         nct->config = *cfg;
     else
     {
+        if (str.empty())
+        {
+            str = get_constraint_material(nct);
+            str.append(item.toString());
+        }
+
         nct->config = Core::getInstance().getWorld()->AddPersistentData("workflow/constraints");
         nct->init(str);
     }
@@ -669,8 +701,6 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     if (tokens.size() > 4)
         return NULL;
 
-    int weight = 0;
-
     bool is_craft = false;
     ItemTypeInfo item;
 
@@ -681,18 +711,12 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         return NULL;
     }
 
-    if (item.subtype >= 0)
-        weight += 10000;
-
     df::dfhack_material_category mat_mask;
     std::string maskstr = vector_get(tokens,1);
     if (!maskstr.empty() && !parseJobMaterialCategory(&mat_mask, maskstr)) {
         out.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
         return NULL;
     }
-    
-    if (mat_mask.whole != 0)
-        weight += 100;
     
     MaterialInfo material;
     std::string matstr = vector_get(tokens,2);
@@ -716,25 +740,12 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
 	    }
     }
 
-    if (material.type >= 0)
-        weight += (material.index >= 0 ? 5000 : 1000);
-
     if (mat_mask.whole && material.isValid() && !material.matches(mat_mask)) {
         out.printerr("Material %s doesn't match mask %s\n", matstr.c_str(), maskstr.c_str());
         return NULL;
     }
 
-    for (size_t i = 0; i < constraints.size(); i++)
-    {
-        ItemConstraint *ct = constraints[i];
-        if (ct->is_craft == is_craft &&
-            ct->item == item && ct->material == material &&
-            ct->mat_mask.whole == mat_mask.whole &&
-	    ct->min_quality == minqual)
-            return ct;
-    }
-
-    ItemConstraint *nct = create_new_constraint(is_craft, item, material, mat_mask, minqual, weight, cfg, str);
+    ItemConstraint *nct = create_new_constraint(is_craft, item, material, mat_mask, minqual, cfg, str);
 
     return nct;
 }
@@ -743,7 +754,15 @@ static void delete_constraint(ItemConstraint *cv)
 {
     int idx = linear_index(constraints, cv);
     if (idx >= 0)
+    {
+        for (vector<ProtectedJob *>::iterator it = constraints[idx]->jobs.begin(); it != constraints[idx]->jobs.end(); it++)
+        {
+            int idpj = linear_index((*it)->constraints, cv);
+            if (idpj >= 0)
+                vector_erase_at((*it)->constraints, idpj);
+        }
         vector_erase_at(constraints, idx);
+    }
 
     Core::getInstance().getWorld()->DeletePersistentData(cv->config);
     delete cv;
@@ -822,15 +841,7 @@ static void link_job_constraint(ProtectedJob *pj, df::item_type itype, int16_t i
         item.type = itype;
         item.subtype = isubtype;
 
-        int weight = 0;
-        if (item.subtype >= 0)
-            weight += 10000;
-        if (mat_mask.whole != 0)
-            weight += 100;
-        if (mat.type >= 0)
-            weight += (mat.index >= 0 ? 5000 : 1000);
-
-        ItemConstraint *nct = create_new_constraint(is_craft, item, mat, mat_mask, item_quality::Ordinary, weight, NULL, string("test"));
+        ItemConstraint *nct = create_new_constraint(is_craft, item, mat, mat_mask, item_quality::Ordinary, NULL, "");
         nct->jobs.push_back(pj);
         pj->constraints.push_back(nct);
     }
@@ -1510,6 +1521,1496 @@ static void print_job(color_ostream &out, ProtectedJob *pj)
         print_constraint(out, pj->constraints[i], true, "  ");
 }
 
+/******************************
+ *  Inventory Monitor         *
+ ******************************/
+#define MAX_ITEM_NAME 17
+#define MAX_MASK 10
+#define MAX_MATERIAL 21
+
+#define SIDEBAR_WIDTH 30
+#define COLOR_TITLE COLOR_BLUE
+#define COLOR_UNSELECTED COLOR_GREY
+#define COLOR_SELECTED COLOR_WHITE
+#define COLOR_HIGHLIGHTED COLOR_GREEN
+
+#define ITEMDEF_VECTORS \
+    ITEM(WEAPON, weapons, itemdef_weaponst) \
+    ITEM(TRAPCOMP, trapcomps, itemdef_trapcompst) \
+    ITEM(TOY, toys, itemdef_toyst) \
+    ITEM(TOOL, tools, itemdef_toolst) \
+    ITEM(INSTRUMENT, instruments, itemdef_instrumentst) \
+    ITEM(ARMOR, armor, itemdef_armorst) \
+    ITEM(AMMO, ammo, itemdef_ammost) \
+    ITEM(SIEGEAMMO, siege_ammo, itemdef_siegeammost) \
+    ITEM(GLOVES, gloves, itemdef_glovesst) \
+    ITEM(SHOES, shoes, itemdef_shoesst) \
+    ITEM(SHIELD, shields, itemdef_shieldst) \
+    ITEM(HELM, helms, itemdef_helmst) \
+    ITEM(PANTS, pants, itemdef_pantsst) \
+    ITEM(FOOD, food, itemdef_foodst)
+
+namespace wf_ui
+{
+    /*
+     * Utility Functions
+     */
+    typedef int8_t UIColor;
+
+    const int ascii_to_enum_offset = interface_key::STRING_A048 - '0';
+
+    inline string int_to_string(const int n)
+    {
+        return static_cast<ostringstream*>( &(ostringstream() << n) )->str();
+    }
+
+    static void set_to_limit(int &value, const int maximum, const int min = 0)
+    {
+        if (value < min)
+            value = min;
+        else if (value > maximum)
+            value = maximum;
+    }
+
+    inline void paint_text(const UIColor color, const int &x, const int &y, const std::string &text, const UIColor background = 0)
+    {
+        Screen::paintString(Screen::Pen(' ', color, background), x, y, text);
+    }
+
+    static string pad_string(string text, const int size, const bool front = true, const bool trim = false)
+    {
+        if (text.length() > size)
+        {
+            if (trim && size > 10)
+            {
+                text = text.substr(0, size-3);
+                text.append("...");
+            }
+            return text;
+        }
+
+        string aligned(size - text.length(), ' ');
+        if (front)
+        {
+            aligned.append(text);
+            return aligned;
+        }
+        else
+        {
+            text.append(aligned);
+            return text;
+        }
+    }
+
+    /*
+     * Adjustment Dialog
+     */
+
+    class AdjustmentScreen
+    {
+    public:
+        int32_t x, y, left_margin;
+
+        AdjustmentScreen();
+        void reset();
+        bool feed(set<df::interface_key> *input, ItemConstraint *cv, ProtectedJob *pj = NULL);
+        void render(ItemConstraint *cv);
+
+    protected:
+        int32_t adjustment_ui_display_start;
+
+        virtual void onConstraintChanged() {}
+        virtual void onModeChanged() {}
+
+    private:
+        bool edit_limit, edit_gap;
+        string edit_string;
+
+    };
+
+    AdjustmentScreen::AdjustmentScreen()
+    {
+        reset();
+    }
+
+    void AdjustmentScreen::reset()
+    {
+        edit_gap = false;
+        edit_limit = false;
+        adjustment_ui_display_start = 24;
+    }
+
+    bool AdjustmentScreen::feed(set<df::interface_key> *input, ItemConstraint *cv, ProtectedJob *pj /* = NULL */)
+    {
+        if ((edit_limit || edit_gap))
+        {
+            df::interface_key last_token = *input->rbegin();
+            if (last_token == interface_key::STRING_A000)
+            {
+                // Backspace
+                if (edit_string.length() > 0)
+                {
+                    edit_string.erase(edit_string.length()-1);
+                }
+
+                return true;
+            }
+
+            if (edit_string.length() >= 6)
+                return true;
+
+            if (last_token >= interface_key::STRING_A048 && last_token <= interface_key::STRING_A057)
+            {
+                // Numeric character
+                edit_string += last_token - ascii_to_enum_offset;
+            }
+            else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
+            {
+                if (input->count(interface_key::SELECT) && edit_string.length() > 0)
+                {
+                    if (edit_limit)
+                        cv->setGoalCount(atoi(edit_string.c_str()));
+                    else
+                        cv->setGoalGap(atoi(edit_string.c_str()));
+
+                    onConstraintChanged();
+                }
+                edit_string.clear();
+                edit_limit = false;
+                edit_gap = false;
+            }
+            else if (last_token == interface_key::STRING_A000)
+            {
+                // Backspace
+                if (edit_string.length() > 0)
+                {
+                    edit_string.erase(edit_string.length()-1);
+                }
+            }
+
+            return true;
+        }
+        else if (input->count(interface_key::CUSTOM_L))
+        {
+            edit_string = int_to_string(cv->goalCount());
+            edit_limit = true;
+        }
+        else if (input->count(interface_key::CUSTOM_G))
+        {
+            edit_string = int_to_string(cv->goalGap());
+            edit_gap = true;
+        }
+        else if (input->count(interface_key::CUSTOM_N))
+        {
+            cv->setGoalByCount(!cv->goalByCount());
+            onModeChanged();
+        }
+        else if (input->count(interface_key::CUSTOM_T))
+        {
+            if (cv)
+            {
+                // Remove tracking
+                if (pj)
+                {
+                    for (vector<ItemConstraint*>::iterator it = pj->constraints.begin(); it < pj->constraints.end(); it++)
+                        delete_constraint(*it);
+
+                    forget_job(color_ostream_proxy(Core::getInstance().getConsole()), pj);
+                }
+                else
+                    delete_constraint(cv);
+            }
+            else
+            {
+                // Add tracking
+                return false;
+            }
+
+            onConstraintChanged();
+        }
+        else
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    void AdjustmentScreen::render(ItemConstraint *cv)
+    {
+        left_margin = gps->dimx - 30;
+        x = left_margin;
+        y = adjustment_ui_display_start;
+        OutputString(COLOR_BROWN, x, y, "Workflow Settings", true, left_margin);
+        if (cv != NULL)
+        {
+            string text;
+            text.reserve(20);
+
+            text.append("Available: ");
+            text.append(int_to_string((cv->goalByCount()) ? cv->item_count : cv->item_amount));
+            text.append(" ");
+            text.append((cv->goalByCount()) ? "Stacks" : "Items");
+
+            OutputString(15, x, y, text, true, left_margin);
+
+            text.clear();
+            text.append("In use   : ");
+            text.append(int_to_string(cv->item_inuse));
+            OutputString(15, x, y, text, true, left_margin);
+
+            ++y;
+            text.clear();
+            text.append("Limit : ");
+            text.append((edit_limit) ? edit_string : int_to_string(cv->goalCount()));
+            OutputHotkeyString(x, y, text.c_str(), "l");
+            if (edit_limit)
+                OutputString(10, x, y, "_");
+
+            ++y;
+            x = left_margin;
+            text.clear();
+            text.append("Gap   : ");
+            text.append((edit_gap) ? edit_string : int_to_string(cv->goalGap()));
+            OutputHotkeyString(x, y, text.c_str(), "g");
+            if (edit_gap)
+                OutputString(10, x, y, "_");
+
+            ++y;
+            x = left_margin;
+            OutputHotkeyString(x, y, "Disable Tracking", "t", true, left_margin);
+            OutputHotkeyString(x, y, (cv->goalByCount()) ? "Count Items" : "Count Stacks", "n");
+        }
+        else
+            OutputHotkeyString(x, y, "Enable Tracking", "t", true, left_margin);
+    }
+
+
+    /*
+     * List classes
+     */
+    template <typename T>
+    class ListEntry
+    {
+    public:
+        T elem;
+        string text;
+        bool selected;
+
+        ListEntry(string text, T elem)
+        {
+            this->text = text;
+            this->elem = elem;
+            selected = false;
+        }
+    };
+
+    template <typename T>
+    class ListColumn
+    {
+    public:
+        string title;
+        int highlighted_index;
+        int display_start_offset;
+        int32_t bottom_margin, search_margin, left_margin;
+        bool search_entry_mode;
+        bool multiselect;
+        bool allow_null;
+        bool auto_select;
+        bool force_sort;
+
+        ListColumn()
+        {
+            clear();
+            left_margin = 2;
+            bottom_margin = 3;
+            search_margin = 38;
+            highlighted_index = 0;
+            multiselect = false;
+            allow_null = true;
+            auto_select = false;
+            search_entry_mode = false;
+            force_sort = false;
+        }
+
+        void clear()
+        {
+            list.clear();
+            display_list.clear();
+            display_start_offset = 0;
+            max_item_width = 0;
+            resize();
+        }
+
+        void resize()
+        {
+            display_max_rows = gps->dimy - 4 - bottom_margin;
+        }
+
+        void add(ListEntry<T> &entry)
+        {
+            list.push_back(entry);
+            if (entry.text.length() > max_item_width)
+                max_item_width = entry.text.length();
+        }
+
+        void add(string &text, T &elem)
+        {
+            list.push_back(ListEntry<T>(text, elem));
+            if (text.length() > max_item_width)
+                max_item_width = text.length();
+        }
+
+        virtual void display_extras(const T &elem, int32_t &x, int32_t &y) const {}
+
+        void display(const bool is_selected_column) const
+        {
+            int32_t y = 2;
+            paint_text(COLOR_TITLE, left_margin, y, title);
+
+            int last_index_able_to_display = display_start_offset + display_max_rows;
+            for (int i = display_start_offset; i < display_list.size() && i < last_index_able_to_display; i++)
+            {
+                ++y;
+                UIColor fg_color = (display_list[i]->selected) ? COLOR_SELECTED : COLOR_UNSELECTED;
+                UIColor bg_color = (is_selected_column && i == highlighted_index) ? COLOR_HIGHLIGHTED : COLOR_BLACK;
+                paint_text(fg_color, left_margin, y, display_list[i]->text, bg_color);
+                int x = left_margin + display_list[i]->text.length() + 1;
+                display_extras(display_list[i]->elem, x, y);
+            }
+
+            if (is_selected_column)
+            {
+                y = gps->dimy - bottom_margin;
+                int32_t x = search_margin;
+                OutputHotkeyString(x, y, "Search" ,"S");
+                if (!search_string.empty() || search_entry_mode)
+                {
+                    OutputString(COLOR_WHITE, x, y, ": ");
+                    OutputString(COLOR_WHITE, x, y, search_string);
+                    if (search_entry_mode)
+                        OutputString(COLOR_LIGHTGREEN, x, y, "_");
+                }
+            }
+        }
+
+        void filter_display()
+        {
+            ListEntry<T> *prev_selected = (getDisplayListSize() > 0) ? display_list[highlighted_index] : NULL;
+            display_list.clear();
+            for (size_t i = 0; i < list.size(); i++)
+            {
+                if (search_string.empty() || list[i].text.find(search_string) != string::npos)
+                {
+                    ListEntry<T> *entry = &list[i];
+                    display_list.push_back(entry);
+                    if (entry == prev_selected)
+                        highlighted_index = display_list.size() - 1;
+                }
+            }
+            changeHighlight(0);
+        }
+
+        void selectDefaultEntry()
+        {
+            for (size_t i = 0; i < display_list.size(); i++)
+            {
+                if (display_list[i]->selected)
+                {
+                    highlighted_index = i;
+                    break;
+                }
+            }
+        }
+
+        void validateHighlight()
+        {
+            set_to_limit(highlighted_index, display_list.size() - 1);
+
+            if (highlighted_index < display_start_offset)
+                display_start_offset = highlighted_index;
+            else if (highlighted_index >= display_start_offset + display_max_rows)
+                display_start_offset = highlighted_index - display_max_rows + 1;
+
+            if (auto_select || (!allow_null && list.size() == 1))
+                display_list[highlighted_index]->selected = true;
+        }
+
+        void changeHighlight(const int highlight_change, const int offset_shift = 0)
+        {
+            if (!initHighlightChange())
+                return;
+
+            highlighted_index += highlight_change + offset_shift * display_max_rows;
+
+            display_start_offset += offset_shift * display_max_rows;
+            set_to_limit(display_start_offset, max(0, (int)(display_list.size())-display_max_rows));
+            validateHighlight();
+        }
+
+        void setHighlight(const int index)
+        {
+            if (!initHighlightChange())
+                return;
+
+            highlighted_index = index;
+            validateHighlight();
+        }
+
+        bool initHighlightChange()
+        {
+            if (display_list.size() == 0)
+                return false;
+
+            if (auto_select && !multiselect)
+            {
+                for (vector< ListEntry<T> >::iterator it = list.begin(); it != list.end(); it++)
+                {
+                    it->selected = false;
+                }
+            }
+
+            return true;
+        }
+
+        void toggleHighlighted()
+        {
+            if (auto_select)
+                return;
+
+            ListEntry<T> *entry = display_list[highlighted_index];
+            if (!multiselect || !allow_null)
+            {
+                int selected_count = 0;
+                for (size_t i = 0; i < list.size(); i++)
+                {
+                    if (!multiselect && !entry->selected)
+                        list[i].selected = false;
+                    if (!allow_null && list[i].selected)
+                        selected_count++;
+                }
+
+                if (!allow_null && entry->selected && selected_count == 1)
+                    return;
+            }
+
+            entry->selected = !entry->selected;
+        }
+
+        vector<T*> getSelectedElems(bool only_one = false)
+        {
+            vector<T*> results;
+            for (vector< ListEntry<T> >::iterator it = list.begin(); it != list.end(); it++)
+            {
+                if ((*it).selected)
+                {
+                    results.push_back(&(*it).elem);
+                    if (only_one)
+                        break;
+                }
+            }
+
+            return results;
+        }
+
+        T* getFirstSelectedElem()
+        {
+            vector<T*> results = getSelectedElems(true);
+            if (results.size() == 0)
+                return NULL;
+            else
+                return results[0];
+        }
+
+        size_t getDisplayListSize()
+        {
+            return display_list.size();
+        }
+
+        size_t getBaseListSize()
+        {
+            return list.size();
+        }
+
+        bool feed(set<df::interface_key> *input)
+        {
+            if  (input->count(interface_key::CURSOR_UP))
+            {
+                search_entry_mode = false;
+                changeHighlight(-1);
+            }
+            else if  (input->count(interface_key::CURSOR_DOWN))
+            {
+                search_entry_mode = false;
+                changeHighlight(1);
+            }
+            else if  (input->count(interface_key::STANDARDSCROLL_PAGEUP))
+            {
+                search_entry_mode = false;
+                changeHighlight(0, -1);
+            }
+            else if  (input->count(interface_key::STANDARDSCROLL_PAGEDOWN))
+            {
+                search_entry_mode = false;
+                changeHighlight(0, 1);
+            }
+            else if (search_entry_mode)
+            {
+                // Search query typing mode
+
+                df::interface_key last_token = *input->rbegin();
+                if (last_token >= interface_key::STRING_A032 && last_token <= interface_key::STRING_A126)
+                {
+                    // Standard character
+                    search_string += last_token - ascii_to_enum_offset;
+                    filter_display();
+                }
+                else if (last_token == interface_key::STRING_A000)
+                {
+                    // Backspace
+                    if (search_string.length() > 0)
+                    {
+                        search_string.erase(search_string.length()-1);
+                        filter_display();
+                    }
+                }
+                else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
+                {
+                    // ENTER or ESC: leave typing mode
+                    search_entry_mode = false;
+                }
+                else if  (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT))
+                {
+                    // Arrow key pressed. Leave entry mode and allow screen to process key
+                    search_entry_mode = false;
+                    return false;
+                }
+
+                return true;
+            }
+
+            // Not in search query typing mode
+            else if  (input->count(interface_key::SELECT) && !auto_select)
+            {
+                toggleHighlighted();
+            }
+            else if  (input->count(interface_key::CUSTOM_S))
+            {
+                search_entry_mode = true;
+            }
+            else if  (input->count(interface_key::CUSTOM_SHIFT_S))
+            {
+                search_string.clear();
+                filter_display();
+            }
+            else if (enabler->tracking_on && gps->mouse_x != -1 && gps->mouse_y != -1 && enabler->mouse_lbut)
+            {
+                return setHighlightByMouse();
+            }
+            else
+                return false;
+
+            return true;
+        }
+
+        bool setHighlightByMouse()
+        {
+            if (gps->mouse_y >= 3 && gps->mouse_y < display_max_rows + 3 &&
+                gps->mouse_x >= left_margin && gps->mouse_x < left_margin + max_item_width)
+            {
+                int new_index = display_start_offset + gps->mouse_y - 3;
+                if (new_index < display_list.size())
+                    setHighlight(new_index);
+
+                enabler->mouse_lbut = enabler->mouse_rbut = 0;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        static bool compareText(ListEntry<T> const& a, ListEntry<T> const& b)
+        {
+            return a.text.compare(b.text) < 0;
+        }
+
+        void doSort(bool (*function)(ListEntry<T> const&, ListEntry<T> const&))
+        {
+            if (force_sort || list.size() < 100)
+                std::sort(list.begin(), list.end(), function);
+
+            filter_display();
+        }
+
+        virtual void sort()
+        {
+            doSort(&compareText);
+        }
+
+
+        private:
+            vector< ListEntry<T> > list;
+            vector< ListEntry<T>* > display_list;
+            string search_string;
+            int display_max_rows;
+            int max_item_width;
+    };
+
+    class viewscreenChooseMaterial : public dfhack_viewscreen
+    {
+    public:
+        static bool reset_list;
+
+        viewscreenChooseMaterial(ItemConstraint *cv = NULL);
+        void feed(set<df::interface_key> *input);
+        void render();
+
+        std::string getFocusString() { return "wfchoosemat"; }
+
+    private:
+        ItemConstraint *cv;
+
+        ListColumn<ItemTypeInfo> items_column;
+        ListColumn<df::dfhack_material_category> masks_column;
+        ListColumn<MaterialInfo> materials_column;
+        vector< ListEntry<df::dfhack_material_category> > all_masks;
+
+        int selected_column;
+
+        void populateItems();
+        void populateMasks(const bool set_defaults = false);
+        void populateMaterials(const bool set_defaults = false);
+
+        bool addMaterialEntry(df::dfhack_material_category &selected_category, 
+                                MaterialInfo &material, string name, const bool set_defaults);
+
+        virtual void resize(int32_t x, int32_t y);
+
+        void validateColumn();
+    };
+
+    bool viewscreenChooseMaterial::reset_list = false;
+
+
+    viewscreenChooseMaterial::viewscreenChooseMaterial(ItemConstraint *cv /*= NULL*/)
+    {
+        this->cv = cv;
+        selected_column = 0;
+        items_column.title = "Item";
+        items_column.allow_null = false;
+        items_column.multiselect = false;
+        items_column.auto_select = true;
+        items_column.force_sort = true;
+        masks_column.title = "Type";
+        masks_column.multiselect = true;
+        masks_column.left_margin = MAX_ITEM_NAME + 3;
+        materials_column.left_margin = MAX_ITEM_NAME + MAX_MASK + 4;
+        materials_column.title = "Material";
+
+
+        populateItems();
+        items_column.changeHighlight(0);
+
+        vector<string> raw_masks;
+        df::dfhack_material_category full_mat_mask, curr_mat_mask;
+        full_mat_mask.whole = -1;
+        curr_mat_mask.whole = 1;
+        bitfield_to_string(&raw_masks, full_mat_mask);
+        for (int i = 0; i < raw_masks.size(); i++)
+        {
+            if (raw_masks[i][0] == '?')
+                break;
+
+            all_masks.push_back(ListEntry<df::dfhack_material_category>(pad_string(raw_masks[i], MAX_MASK, false), curr_mat_mask));
+            curr_mat_mask.whole <<= 1;
+        }
+        populateMasks(cv != NULL);
+        populateMaterials(cv != NULL);
+
+        masks_column.selectDefaultEntry();
+        materials_column.selectDefaultEntry();
+        materials_column.changeHighlight(0);
+    }
+
+    void viewscreenChooseMaterial::populateItems()
+    {
+        items_column.clear();
+        if (cv != NULL)
+        {
+            items_column.add(cv->item.toString(), cv->item);
+        }
+        else
+        {
+            typedef df::enum_traits<df::item_type> traits;
+            int size = traits::last_item_value-traits::first_item_value+1;
+            for (size_t i = 0; i < size; i++)
+            {
+                //string item_name = traits::key_table[i];
+                df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
+                df::item_type val = df::item_type(i);
+                switch (val)
+                {
+#define ITEM(type_string,vec,tclass) \
+                    case df::item_type::type_string: \
+                        for (size_t j = 0; j < defs.vec.size(); j++) \
+                        { \
+                            if (defs.vec[j]->name[0] == '?') \
+                                continue; \
+                            DFHack::ItemTypeInfo item; \
+                            item.type = (df::item_type) i; \
+                            item.subtype = j; \
+                            item.custom = defs.vec[j]; \
+                            items_column.add(defs.vec[j]->name, item); \
+                        } \
+                        break;
+
+                    ITEMDEF_VECTORS
+#undef ITEM
+                default:
+                    DFHack::ItemTypeInfo item;
+                    item.type = (df::item_type) i;
+                    string name = item.toString();
+                    if (name[0] != '?')
+                        items_column.add(name, item);
+                    break;
+                }
+            }
+        }
+        items_column.sort();
+        items_column.changeHighlight(0);
+    }
+
+    void viewscreenChooseMaterial::populateMasks(const bool set_defaults /*= false */)
+    {
+        masks_column.clear();
+        for (vector< ListEntry<df::dfhack_material_category> >::iterator it = all_masks.begin(); it != all_masks.end(); it++)
+        {
+            auto entry = *it;
+            if (set_defaults)
+            {
+                if (cv->mat_mask.whole & entry.elem.whole)
+                    entry.selected = true;
+            }
+            masks_column.add(entry);
+        }
+        masks_column.sort();
+    }
+    
+    void viewscreenChooseMaterial::populateMaterials(const bool set_defaults /*= false */)
+    {
+        materials_column.clear();
+        df::dfhack_material_category selected_category;
+        vector<df::dfhack_material_category *> selected_materials = masks_column.getSelectedElems();
+        if (selected_materials.size() == 1)
+            selected_category = *selected_materials[0];
+        else if (selected_materials.size() > 1)
+            return;
+
+        df::world_raws &raws = world->raws;
+        for (int i = 1; i < DFHack::MaterialInfo::NUM_BUILTIN; i++)
+        {
+            auto obj = raws.mat_table.builtin[i];
+            if (obj)
+            {
+                MaterialInfo material;
+                material.decode(i, -1);
+                addMaterialEntry(selected_category, material, material.toString(), set_defaults);
+            }
+        }
+
+        for (size_t i = 0; i < raws.inorganics.size(); i++)
+        {
+            df::inorganic_raw *p = raws.inorganics[i];
+            MaterialInfo material;
+            material.decode(0, i);
+            addMaterialEntry(selected_category, material, material.toString(), set_defaults);
+        }
+
+        for (size_t i = 0; i < raws.plants.all.size(); i++)
+        {
+            df::plant_raw *p = raws.plants.all[i];
+            string basename = p->name;
+
+            MaterialInfo material;
+            material.decode(p->material_defs.type_basic_mat, p->material_defs.idx_basic_mat);
+            if (!selected_category.whole || material.matches(selected_category))
+            {
+                if (p->material.size() > 1)
+                    basename.append(" (all)");
+
+                ListEntry<MaterialInfo> entry(pad_string(basename, MAX_MATERIAL, false), material);
+                if (set_defaults)
+                {
+                    if (cv->material.matches(material))
+                        entry.selected = true;
+                }
+                materials_column.add(entry);
+
+                for (size_t j = 0; p->material.size() > 1 && j < p->material.size(); j++)
+                {
+                    MaterialInfo material;
+                    material.decode(DFHack::MaterialInfo::PLANT_BASE+j, i);
+                    //if (addMaterialEntry(selected_category, material, basename+" (" + p->material[j]->id + "): " + material.toString(), set_defaults))
+                    if (addMaterialEntry(selected_category, material, material.toString(), set_defaults))
+                        entry.selected = false;
+                }
+            }
+        }
+
+        for (size_t i = 0; i < raws.creatures.all.size(); i++)
+        {
+            df::creature_raw *p = raws.creatures.all[i];
+            string basename = p->name[0];
+
+            for (size_t j = 0; j < p->material.size(); j++)
+            {
+                MaterialInfo material;
+                material.decode(DFHack::MaterialInfo::CREATURE_BASE+j, i);
+                //addMaterialEntry(selected_category, material, basename+" (" + p->material[j]->id + "): " + material.toString(), set_defaults);
+                addMaterialEntry(selected_category, material, material.toString(), set_defaults);
+            }
+        }
+
+        materials_column.sort();
+    }
+
+
+    bool viewscreenChooseMaterial::addMaterialEntry(df::dfhack_material_category &selected_category, MaterialInfo &material, 
+                                                           string name, const bool set_defaults)
+    {
+        bool selected = false;
+        if (!selected_category.whole || material.matches(selected_category))
+        {
+            ListEntry<MaterialInfo> entry(pad_string(name, MAX_MATERIAL, false), material);
+            if (set_defaults)
+            {
+                if (cv->material.matches(material))
+                {
+                    entry.selected = true;
+                    selected = true;
+                    /*if (materials_column.highlighted_index == 0)
+                        materials_column.highlighted_index = materials_column.getBaseListSize();*/
+                }
+            }
+            materials_column.add(entry);
+        }
+
+        return selected;
+    }
+
+    void viewscreenChooseMaterial::feed(set<df::interface_key> *input)
+    {
+        bool key_processed;
+        switch (selected_column)
+        {
+        case 0:
+            key_processed = items_column.feed(input);
+            break;
+        case 1:
+            key_processed = masks_column.feed(input);
+            if (input->count(interface_key::SELECT))
+                populateMaterials(false);
+            break;
+        case 2:
+            key_processed = materials_column.feed(input);
+            break;
+        }
+
+        if (key_processed)
+            return;
+
+        if (input->count(interface_key::LEAVESCREEN))
+        {
+            input->clear();
+            Screen::dismiss(this);
+            return;
+        }
+        else if  (input->count(interface_key::SEC_SELECT))
+        {
+            df::dfhack_material_category mat_mask;
+            vector<df::dfhack_material_category *> selected_masks = masks_column.getSelectedElems();
+            for (vector<df::dfhack_material_category *>::iterator it = selected_masks.begin(); it != selected_masks.end(); it++)
+            {
+                mat_mask.whole |= (*it)->whole;
+            
+            }
+
+            MaterialInfo *selected_material = materials_column.getFirstSelectedElem();
+            MaterialInfo material = (selected_material) ? *selected_material : MaterialInfo();
+
+            if (cv == NULL)
+            {
+                ItemConstraint *nct = create_new_constraint(false, *items_column.getFirstSelectedElem(), material, mat_mask, item_quality::Ordinary, NULL, "");
+                nct->setGoalByCount(false);
+                nct->setGoalCount(10);
+                nct->setGoalGap(1);
+            }
+            else
+            {
+                cv->mat_mask = mat_mask;
+                cv->material = (selected_material) ? *selected_material : MaterialInfo();
+            }
+
+            reset_list = true;
+            Screen::dismiss(this);
+        }
+        else if  (input->count(interface_key::CURSOR_LEFT))
+        {
+            --selected_column;
+        }
+        else if  (input->count(interface_key::CURSOR_RIGHT))
+        {
+            selected_column++;
+        }
+        else if (enabler->tracking_on && enabler->mouse_lbut)
+        {
+            if (items_column.setHighlightByMouse())
+                selected_column = 0;
+            else if (masks_column.setHighlightByMouse())
+                selected_column = 1;
+            else if (materials_column.setHighlightByMouse())
+                selected_column = 2;
+
+            enabler->mouse_lbut = enabler->mouse_rbut = 0;
+        }
+    }
+
+    void viewscreenChooseMaterial::render()
+    {
+        if (Screen::isDismissed(this))
+            return;
+
+        dfhack_viewscreen::render();
+
+        Screen::clear();
+        Screen::drawBorder("  Workflow Material  ");
+
+        items_column.display(selected_column == 0);
+        masks_column.display(selected_column == 1);
+        materials_column.display(selected_column == 2);
+
+        int32_t y = gps->dimy - 3;
+        int32_t x = 2;
+        OutputHotkeyString(x, y, "Save", "Shift-Enter");
+        x += 3;
+        OutputHotkeyString(x, y, "Cancel", "Esc");
+    }
+
+    void viewscreenChooseMaterial::validateColumn()
+    {
+        set_to_limit(selected_column, 2);
+    }
+
+    void viewscreenChooseMaterial::resize(int32_t x, int32_t y)
+    {
+        dfhack_viewscreen::resize(x, y);
+        items_column.resize();
+        masks_column.resize();
+        materials_column.resize();
+    }
+
+    
+    /*
+     * Inventory Monitor
+     */
+    class viewscreenInventoryMonitor : public dfhack_viewscreen, public AdjustmentScreen
+    {
+    private:
+        struct TableRow
+        {
+            vector< pair<int32_t, int32_t> > history_plot;
+            int32_t limit_y, gap_y;
+            ItemConstraint *cv;
+            UIColor value_color;
+            UIColor limit_color;
+            int severity;
+        };
+
+        class MonitorListColumn : public ListColumn<TableRow>
+        {
+        public:
+            bool order_by_severity;
+
+            virtual void sort()
+            {
+                if (!order_by_severity)
+                    ListColumn::sort();
+                else
+                    doSort(&compareSeverity);
+            }
+
+        private:
+            void display_extras(const TableRow &row, int32_t &x, int32_t &y) const
+            {
+                string text;
+                text.append(int_to_string((row.cv->goalByCount()) ? row.cv->item_count : row.cv->item_amount));
+                text = pad_string(text, 6);
+                OutputString(row.value_color, x, y, text);
+
+                text = (row.cv->goalByCount()) ? " S " : " I ";
+                OutputString(COLOR_GREY, x, y, text);
+
+                text = int_to_string(row.cv->goalCount());
+                OutputString(row.limit_color, x, y, text);
+            }
+
+            static bool compareSeverity(ListEntry<TableRow> const& a, ListEntry<TableRow> const& b)
+            {
+                return a.elem.severity > b.elem.severity;
+            }
+        };
+
+    public:
+        viewscreenInventoryMonitor();
+
+        void feed(set<df::interface_key> *input);
+
+        void render();
+
+        std::string getFocusString() { return "invmonitor"; }
+
+        virtual void resize(int32_t x, int32_t y) 
+        {
+            dfhack_viewscreen::resize(x, y);
+            init();
+        }
+
+
+    private:
+        MonitorListColumn rows;
+        int32_t bottom_controls_row;
+        int32_t divider_x;
+        int chart_width, chart_height;
+        int32_t axis_y_end, axis_y_start, axis_x_start, axis_x_end;
+
+        void init();
+
+        virtual void onConstraintChanged();
+
+        virtual void onModeChanged();
+
+
+    };
+
+    viewscreenInventoryMonitor::viewscreenInventoryMonitor()
+    {
+        adjustment_ui_display_start = 2;
+        chart_width = SIDEBAR_WIDTH - 2;
+        rows.order_by_severity = false;
+
+        rows.multiselect = false;
+        rows.allow_null = false;
+        rows.auto_select = true;
+        rows.title = pad_string("Item", MAX_ITEM_NAME, false);
+        rows.title += " ";
+        rows.title += pad_string("Material", MAX_MATERIAL, false);
+        
+        init();
+    }
+    
+    void viewscreenInventoryMonitor::init()
+    {
+        bottom_controls_row = gps->dimy - 3;
+
+        divider_x = gps->dimx - SIDEBAR_WIDTH - 2;
+        chart_height = min(SIDEBAR_WIDTH, gps->dimy - 20);
+        axis_y_end = gps->dimy - 3;
+        axis_y_start = axis_y_end - chart_height;
+        axis_x_start = divider_x + 2;
+        axis_x_end = axis_x_start + chart_width - 1;
+
+        rows.clear();
+        for (vector<ItemConstraint *>::iterator it = constraints.begin(); it < constraints.end(); it++)
+        {
+            TableRow row;
+            row.cv = *it;
+
+            if (row.cv->jobs.size() > 0)
+            {
+                ProtectedJob *pj = row.cv->jobs[0];
+                if (!pj->isActuallyResumed() && pj->want_resumed)
+                    row.limit_color = COLOR_YELLOW;
+                else
+                    row.limit_color = COLOR_GREY;
+            }
+            else
+                row.limit_color = COLOR_RED;
+
+
+            int curr_value = (row.cv->goalByCount()) ? row.cv->item_count : row.cv->item_amount;
+            row.value_color = COLOR_GREY;
+            if (curr_value >= row.cv->goalCount() - row.cv->goalGap())
+                row.value_color = COLOR_LIGHTGREEN;
+            else if (curr_value >= (row.cv->goalCount() - row.cv->goalGap() * 2))
+                row.value_color = COLOR_GREEN;
+            else if (curr_value <= row.cv->goalGap())
+                row.value_color = COLOR_LIGHTRED;
+            else if (curr_value <= (row.cv->goalGap() * 2))
+                row.value_color = COLOR_RED;
+
+            int max_val = row.cv->goalCount();
+            float scale_y;
+            if (max_history_days > 0 && row.cv->history.size() > 0)
+            {
+                row.history_plot.clear();
+                max_val = max(max_val, *max_element(row.cv->history.begin(), row.cv->history.end()));
+                scale_y = (float) chart_height / (float) max_val;
+                float scale_x = (float) chart_width / (float) (max_history_days * 2);
+
+                int sumX, sumY, sumXY, sumXX;
+                sumX = sumY = sumXY = sumXX = 0;
+
+                for (size_t i = 0; i < row.cv->history.size(); i++)
+                {
+                    pair<int32_t, int32_t> point(axis_x_start + (int) (scale_x * (float) i), 
+                                                 axis_y_end - (int) (scale_y * (float) row.cv->history[i]));
+
+                    row.history_plot.push_back(point);
+
+                    if (row.value_color == COLOR_GREY)
+                    {
+                        sumX += i;
+                        sumY += row.cv->history[i];
+                        sumXY += i * row.cv->history[i];
+                        sumXX += i*i;
+                    }
+                }
+
+                if (row.value_color == COLOR_GREY)
+                {
+                    int count = row.cv->history.size();
+                    float slope = (float) (count * sumXY - sumX * sumY) / 
+                        (float) (count * sumXX - sumX * sumX);
+
+                    if (slope > 0.3f)
+                        row.value_color = COLOR_GREEN;
+                    else if (slope < -0.3f)
+                        row.value_color = COLOR_RED;
+                }
+
+            }
+            else
+            {
+                scale_y = (float) chart_height / (float) max_val;
+            }
+
+            row.limit_y = axis_y_end - (int) (scale_y * (float) row.cv->goalCount());
+            row.gap_y = axis_y_end - (int) (scale_y * (float) (row.cv->goalCount() - row.cv->goalGap()));
+
+            string text = pad_string(row.cv->item.toString(), MAX_ITEM_NAME, false);
+            text += " ";
+            text += pad_string(get_constraint_material(row.cv), MAX_MATERIAL, false, true);
+
+            switch (row.value_color)
+            {
+            case COLOR_LIGHTGREEN:
+                row.severity = 0;
+                break;
+            case COLOR_GREEN:
+                row.severity = 1;
+                break;
+            case COLOR_GREY:
+                row.severity = 2;
+                break;
+            case COLOR_RED:
+                row.severity = 3;
+                break;
+            case COLOR_LIGHTRED:
+                row.severity = 4;
+                break;
+            default:
+                break;
+            }
+
+            rows.add(text, row);
+        }
+        rows.sort();
+        rows.changeHighlight(0);
+    }
+    
+    void viewscreenInventoryMonitor::onConstraintChanged()
+    {
+        init();
+    }
+    
+    void viewscreenInventoryMonitor::onModeChanged()
+    {
+        TableRow *row = rows.getFirstSelectedElem();
+        if (!row)
+            return;
+        row->cv->history.clear();
+        init();
+    }
+        
+    void viewscreenInventoryMonitor::render()
+    {
+        if (Screen::isDismissed(this))
+            return;
+
+        if (viewscreenChooseMaterial::reset_list)
+        {
+            viewscreenChooseMaterial::reset_list = false;
+            init();
+            return;
+        }
+
+        dfhack_viewscreen::render();
+
+        Screen::clear();
+        Screen::drawBorder("  Inventory Monitor  ");
+
+        Screen::Pen border('\xDB', 8);
+        for (int32_t y = 1; y < gps->dimy - 1; y++)
+        {
+            paintTile(border, divider_x, y);
+        }
+
+        int32_t x = MAX_ITEM_NAME + MAX_MATERIAL + 3;
+        int32_t y = 2;
+        paint_text(COLOR_TITLE, x, y, "Stock / Limit");
+
+        rows.display(true);
+
+        y = bottom_controls_row;
+        x = 2;
+        OutputHotkeyString(x, y, "Add", "a");
+        x += 2;
+        OutputHotkeyString(x, y, "Edit", "e");
+        
+        x += 2;
+        OutputHotkeyString(x, y, (rows.order_by_severity) ? "Name Order" : "Severity Order", "o");
+
+        if (rows.getDisplayListSize() > 0)
+        {
+            TableRow *row = rows.getFirstSelectedElem();
+            AdjustmentScreen::render(row->cv);
+
+            if (max_history_days > 0)
+            {
+                paint_text(COLOR_BROWN, axis_x_start, axis_y_start-2, "      Stock History Chart");
+                Screen::Pen y_axis('\xB3', COLOR_BROWN);
+                x = axis_x_start;
+                for (y = axis_y_start; y <= axis_y_end; y++)
+                {
+                    paintTile(y_axis, x, y);
+                }
+
+                Screen::Pen up_arrow('\xCF', COLOR_BROWN);
+                paintTile(up_arrow, axis_x_start, axis_y_start-1);
+
+                Screen::Pen x_axis('\xC4', COLOR_BROWN);
+                y = axis_y_end;
+                for (x = axis_x_start; x <= axis_x_end; x++)
+                {
+                    paintTile(x_axis, x, y);
+                    paint_text(COLOR_LIGHTGREEN, x, row->limit_y, "-");
+                    paint_text(COLOR_GREEN, x, row->gap_y, "-");
+                }
+
+                Screen::Pen right_arrow('\xAF', COLOR_BROWN);
+                paintTile(right_arrow, axis_x_end+1, axis_y_end);
+
+                Screen::Pen zero_axis('\x9E', COLOR_BROWN);
+                paintTile(zero_axis, axis_x_start, axis_y_end);
+
+                for (size_t i = 0; i < row->history_plot.size(); i++)
+	            {
+                    int x = row->history_plot[i].first;
+                    int y = row->history_plot[i].second;
+                    paint_text(COLOR_CYAN, x, y, "*");
+	            }
+            }
+        }
+
+
+    }
+    
+    void viewscreenInventoryMonitor::feed(set<df::interface_key> *input)
+    {
+        if (!rows.search_entry_mode && rows.getDisplayListSize() > 0 && AdjustmentScreen::feed(input, rows.getFirstSelectedElem()->cv))
+            return;
+
+        if (rows.feed(input))
+            return;
+
+        if (input->count(interface_key::LEAVESCREEN))
+        {
+            input->clear();
+            Screen::dismiss(this);
+            return;
+        }
+        else if  (input->count(interface_key::CUSTOM_O))
+        {
+            rows.order_by_severity = !rows.order_by_severity;
+            rows.sort();
+        }
+        else if  ((input->count(interface_key::CUSTOM_E) || input->count(interface_key::SELECT)) && rows.getDisplayListSize() > 0)
+        {
+            TableRow *row = rows.getFirstSelectedElem();
+            if (row)
+            {
+                Screen::show(new viewscreenChooseMaterial(row->cv));
+            }
+        }
+        else if  (input->count(interface_key::CUSTOM_A))
+        {
+            Screen::show(new viewscreenChooseMaterial());
+        }
+        else if (enabler->tracking_on)
+        {
+            enabler->mouse_lbut = enabler->mouse_rbut = 0;
+        }
+    }
+
+    /******************************
+    *   Hook for workshop view   *
+    ******************************/
+    struct wf_workshop_hook : public df::viewscreen_dwarfmodest
+    {
+        typedef df::viewscreen_dwarfmodest interpose_base;
+
+        static color_ostream_proxy console_out;
+        static df::job *last_job;
+        static df::job *job;
+        static AdjustmentScreen dialog;
+        
+        bool checkJobSelection()
+        {
+            if (!enabled)
+                return false;
+
+            if (!first_update_done)
+            {
+                plugin_onupdate(console_out);
+            }
+
+            job = Gui::getSelectedWorkshopJob(console_out, true);
+            if (job != last_job)
+            {
+                dialog.reset();
+                last_job = job;
+            }
+
+
+            return job != NULL;
+        }
+
+        bool can_enable_plugin()
+        {
+            return (!enabled && 
+                Gui::dwarfmode_hotkey(Core::getTopViewscreen()) &&
+                ui->main.mode == ui_sidebar_mode::QueryBuilding &&
+                Gui::getSelectedWorkshopJob(console_out, true));
+        }
+
+        bool handleInput(set<df::interface_key> *input)
+        {
+            bool key_processed = true;
+            if (checkJobSelection())
+            {
+                ProtectedJob *pj = get_known(job->id);
+                if (!pj)
+                    return false;
+
+                ItemConstraint *cv = NULL;
+                if (pj->constraints.size() > 0)
+                    cv = pj->constraints[0];
+
+                if (!dialog.feed(input, cv, pj))
+                {
+                    if (input->count(interface_key::CUSTOM_T))
+                    {
+                        if (!cv)
+                        {
+                            // Add tracking
+                            compute_job_outputs(console_out, pj, true);
+                            if (pj->constraints.size() > 0)
+                            {
+                                cv = pj->constraints[0];
+                                cv->setGoalByCount(false);
+                                cv->setGoalCount(10);
+                                cv->setGoalGap(1);
+                                job->flags.bits.repeat = true;
+                            }
+                            else
+                            {
+                                Gui::showAnnouncement("Job type not currently supported", 6, true);
+                            }
+                        }
+                    }
+                    else if (input->count(interface_key::CUSTOM_M))
+                    {
+                        Screen::show(new viewscreenInventoryMonitor());
+                    }
+                    else
+                        key_processed = false;
+                }
+            }
+            else if (can_enable_plugin() && input->count(interface_key::CUSTOM_W))
+            {
+                enable_plugin(console_out);
+                plugin_onupdate(console_out);
+            }
+            else
+                key_processed = false;
+
+            return key_processed;
+        }
+
+        DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+        {
+            if (!handleInput(input))
+                INTERPOSE_NEXT(feed)(input);
+            else
+                input->clear();
+        }
+
+        DEFINE_VMETHOD_INTERPOSE(void, render, ())
+        {
+            INTERPOSE_NEXT(render)();
+            if (checkJobSelection())
+            {
+                ProtectedJob *pj = get_known(job->id);
+                if (!pj)
+                {
+                    pj = add_known_job(job);
+                    compute_job_outputs(console_out, pj);
+                }
+
+                ItemConstraint *cv = NULL;
+                if (pj->constraints.size() > 0)
+                {
+                    cv = pj->constraints[0];
+                }
+                dialog.render(cv);
+                if (cv)
+                    ++dialog.y;
+                OutputHotkeyString(dialog.left_margin, dialog.y, "Inventory Monitor", "m");
+            }
+            else if (can_enable_plugin())
+            {
+                int x = gps->dimx - 30;
+                int y = 24;
+                OutputHotkeyString(x, y, "Enable Workflow", "w");
+            }
+        }
+    };
+
+    color_ostream_proxy wf_workshop_hook::console_out(Core::getInstance().getConsole());
+    df::job *wf_workshop_hook::job = NULL;
+    df::job *wf_workshop_hook::last_job = NULL;
+    AdjustmentScreen wf_workshop_hook::dialog;
+
+
+    IMPLEMENT_VMETHOD_INTERPOSE(wf_workshop_hook, feed);
+    IMPLEMENT_VMETHOD_INTERPOSE(wf_workshop_hook, render);
+}
+
+#undef INV_MONITOR_COL_COUNT
+#undef MAX_ITEM_NAME
+
+
 static command_result workflow_cmd(color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
@@ -1678,6 +3179,7 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
                 continue;
 
             delete_constraint(constraints[i]);
+            //process_constraints(out);
             return CR_OK;
         }
 
@@ -1692,1077 +3194,25 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
         while (!constraints.empty())
             delete_constraint(constraints[0]);
 
+        //process_constraints(out);
+
         out.print("Removed all constraints.\n");
+        return CR_OK;
+    }
+    else if (cmd == "monitor")
+    {
+        if (!enabled)
+        {
+            enable_plugin(out);
+            plugin_onupdate(out);
+        }
+
+        Screen::show(new wf_ui::viewscreenInventoryMonitor());
         return CR_OK;
     }
     else
         return CR_WRONG_USAGE;
 }
-
-/******************************
- *  Inventory Monitor         *
- ******************************/
-#define INV_MONITOR_COL_COUNT 3
-#define MAX_ITEM_NAME 15
-#define MAX_MASK 10
-#define MAX_MATERIAL 20
-#define SIDEBAR_WIDTH 30
-#define COLOR_TITLE COLOR_BLUE
-#define COLOR_UNSELECTED COLOR_GREY
-#define COLOR_SELECTED COLOR_WHITE
-#define COLOR_HIGHLIGHTED COLOR_GREEN
-
-namespace wf_ui
-{
-    /*
-     * Utility Functions
-     */
-    typedef int8_t UIColor;
-
-    const int ascii_to_enum_offset = interface_key::STRING_A048 - '0';
-
-    inline string int_to_string(const int n)
-    {
-        return static_cast<ostringstream*>( &(ostringstream() << n) )->str();
-    }
-
-    void set_to_limit(int &value, const int maximum, const int min = 0)
-    {
-        if (value < min)
-            value = min;
-        else if (value > maximum)
-            value = maximum;
-    }
-
-    inline void paint_text(const UIColor color, const int &x, const int &y, const std::string &text, const UIColor background = 0)
-    {
-        Screen::paintString(Screen::Pen(' ', color, background), x, y, text);
-    }
-
-    string get_constraint_material(ItemConstraint *cv)
-    {
-        string text;
-        if (!cv->material.isNone())
-        {
-            text.append(cv->material.toString());
-            text.append(" ");
-        }
-
-        text.append(bitfield_to_string(cv->mat_mask));
-
-        return text;
-    }
-
-    string pad_string(string text, const int size, const bool front = true)
-    {
-        if (text.length() >= size)
-            return text;
-
-        string aligned(size - text.length(), ' ');
-        if (front)
-        {
-            aligned.append(text);
-            return aligned;
-        }
-        else
-        {
-            text.append(aligned);
-            return text;
-        }
-    }
-
-    /*
-     * Adjustment Dialog
-     */
-
-    class AdjustmentScreen
-    {
-    public:
-        int32_t x, y, left_margin;
-
-        AdjustmentScreen();
-        void reset();
-        bool feed(set<df::interface_key> *input, ItemConstraint *cv, ProtectedJob *pj = NULL);
-        void render(ItemConstraint *cv);
-
-    protected:
-        int32_t adjustment_ui_display_start;
-
-        virtual void onConstraintChanged() {}
-
-    private:
-        bool edit_limit, edit_gap;
-        string edit_string;
-
-    };
-
-    AdjustmentScreen::AdjustmentScreen()
-    {
-        reset();
-    }
-
-    void AdjustmentScreen::reset()
-    {
-        edit_gap = false;
-        edit_limit = false;
-        adjustment_ui_display_start = 24;
-    }
-
-    bool AdjustmentScreen::feed(set<df::interface_key> *input, ItemConstraint *cv, ProtectedJob *pj /* = NULL */)
-    {
-        if ((edit_limit || edit_gap))
-        {
-            df::interface_key last_token = *input->rbegin();
-            if (last_token == interface_key::STRING_A000)
-            {
-                // Backspace
-                if (edit_string.length() > 0)
-                {
-                    edit_string.erase(edit_string.length()-1);
-                }
-
-                return true;
-            }
-
-            if (edit_string.length() >= 6)
-                return true;
-
-            if (last_token >= interface_key::STRING_A048 && last_token <= interface_key::STRING_A057)
-            {
-                // Numeric character
-                edit_string += last_token - ascii_to_enum_offset;
-            }
-            else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
-            {
-                if (input->count(interface_key::SELECT) && edit_string.length() > 0)
-                {
-                    if (edit_limit)
-                        cv->setGoalCount(atoi(edit_string.c_str()));
-                    else
-                        cv->setGoalGap(atoi(edit_string.c_str()));
-
-                    onConstraintChanged();
-                }
-                edit_string.clear();
-                edit_limit = false;
-                edit_gap = false;
-            }
-            else if (last_token == interface_key::STRING_A000)
-            {
-                // Backspace
-                if (edit_string.length() > 0)
-                {
-                    edit_string.erase(edit_string.length()-1);
-                }
-            }
-
-            return true;
-        }
-        else if (input->count(interface_key::CUSTOM_L))
-        {
-            edit_string = int_to_string(cv->goalCount());
-            edit_limit = true;
-        }
-        else if (input->count(interface_key::CUSTOM_G))
-        {
-            edit_string = int_to_string(cv->goalGap());
-            edit_gap = true;
-        }
-        else if (input->count(interface_key::CUSTOM_M))
-        {
-            cv->setGoalByCount(!cv->goalByCount());
-            onConstraintChanged();
-        }
-        else if (input->count(interface_key::CUSTOM_T))
-        {
-            if (cv)
-            {
-                // Remove tracking
-                if (pj)
-                {
-                    for (vector<ItemConstraint*>::iterator it = pj->constraints.begin(); it < pj->constraints.end(); it++)
-                        delete_constraint(*it);
-
-                    forget_job(color_ostream_proxy(Core::getInstance().getConsole()), pj);
-                }
-            }
-            else
-            {
-                // Add tracking
-                return false;
-            }
-        }
-        else
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    void AdjustmentScreen::render(ItemConstraint *cv)
-    {
-        left_margin = gps->dimx - 30;
-        x = left_margin;
-        y = adjustment_ui_display_start;
-        if (cv != NULL)
-        {
-            string text;
-            text.reserve(20);
-
-            text.append(get_constraint_material(cv));
-            if (!text.empty())
-                text.append(" ");
-            text.append(cv->item.toString());
-
-            OutputString(COLOR_GREEN, x, y, text, true, left_margin);
-
-            text.clear();
-            text.append("Available: ");
-            text.append(int_to_string((cv->goalByCount()) ? cv->item_count : cv->item_amount));
-            text.append(" ");
-            text.append((cv->goalByCount()) ? "Stacks" : "Items");
-
-            OutputString(15, x, y, text, true, left_margin);
-
-            text.clear();
-            text.append("In use   : ");
-            text.append(int_to_string(cv->item_inuse));
-            OutputString(15, x, y, text, true, left_margin);
-
-            y += 2;
-            x = left_margin;
-            OutputHotkeyString(x, y, "Disable Tracking", "t", true, left_margin);
-
-            text.clear();
-            text.append("Limit: ");
-            text.append((edit_limit) ? edit_string : int_to_string(cv->goalCount()));
-            OutputHotkeyString(x, y, text.c_str(), "l");
-            if (edit_limit)
-                OutputString(10, x, y, "_");
-
-            ++y;
-            x = left_margin;
-            text.clear();
-            text.append("Gap: ");
-            text.append((edit_gap) ? edit_string : int_to_string(cv->goalGap()));
-            OutputHotkeyString(x, y, text.c_str(), "g");
-            int pad = (int) (11 - text.length());
-            if (edit_gap)
-            {
-                OutputString(10, x, y, "_");
-                --pad;
-            }
-
-            x += max(0, pad);
-            OutputHotkeyString(x, y, "Toggle Mode", "m");
-        }
-        else
-            OutputHotkeyString(x, y, "Enable Tracking", "t", true, left_margin);
-    }
-
-
-    /*
-     * List classes
-     */
-    template <typename T>
-    class ListEntry
-    {
-    public:
-        T elem;
-        string text;
-        bool selected;
-
-        ListEntry(string text, T elem)
-        {
-            this->text = text;
-            this->elem = elem;
-            selected = false;
-        }
-    };
-
-    template <typename T>
-    class ListColumn
-    {
-    public:
-        string title;
-        vector< ListEntry<T> > list;
-        int highlighted_index;
-        int display_max_rows;
-        int display_start_offset;
-        bool multiselect;
-        bool allow_null;
-
-        ListColumn()
-        {
-            highlighted_index = 0;
-            display_max_rows = gps->dimy - 4;
-            display_start_offset = 0;
-            multiselect = false;
-            allow_null = true;
-        }
-
-        void clear()
-        {
-            list.clear();
-        }
-
-        void add(ListEntry<T> &entry)
-        {
-            list.push_back(entry);
-        }
-
-        void add(string &text, T &elem)
-        {
-            list.push_back(ListEntry<T>(text, elem));
-        }
-
-        virtual void display_extras(const T &elem) const {}
-
-        void display(const int left_margin, const bool is_selected_column) const
-        {
-            int y = 2;
-            paint_text(COLOR_TITLE, left_margin, y, title);
-
-            int last_index_able_to_display = display_start_offset + display_max_rows;
-            for (int i = display_start_offset; i < list.size() && i < last_index_able_to_display; i++)
-            {
-                ++y;
-                UIColor fg_color = (list[i].selected) ? COLOR_SELECTED : COLOR_UNSELECTED;
-                UIColor bg_color = (is_selected_column && i == highlighted_index) ? COLOR_HIGHLIGHTED : COLOR_BLACK;
-                paint_text(fg_color, left_margin, y, list[i].text, bg_color);
-                display_extras(list[i].elem);
-            }
-        }
-
-        void changeHighlight(const int highlight_change, const int offset_shift = 0)
-        {
-            highlighted_index += highlight_change + offset_shift * display_max_rows;
-            set_to_limit(highlighted_index, list.size() - 1);
-
-            display_start_offset += offset_shift * display_max_rows;
-            set_to_limit(display_start_offset, max(0, (int)(list.size())-display_max_rows));
-
-
-            if (highlighted_index < display_start_offset)
-                display_start_offset = highlighted_index;
-            else if (highlighted_index >= display_start_offset + display_max_rows)
-                display_start_offset = highlighted_index - display_max_rows + 1;
-        }
-
-        void toggleHighlighted()
-        {
-            ListEntry<T> *entry = &list[highlighted_index];
-            if (!multiselect || !allow_null)
-            {
-                int selected_count = 0;
-                for (size_t i = 0; i < list.size(); i++)
-                {
-                    if (!multiselect && i != highlighted_index && !entry->selected)
-                        list[i].selected = false;
-                    if (!allow_null && list[i].selected)
-                        selected_count++;
-                }
-
-                if (!allow_null && entry->selected && selected_count == 1)
-                    return;
-            }
-
-            entry->selected = !entry->selected;
-        }
-
-        vector<T> getSelectedElems()
-        {
-            vector<T> results;
-            for (vector< ListEntry<T> >::iterator it = list.begin(); it != list.end(); it++)
-            {
-                if ((*it).selected)
-                    results.push_back((*it).elem);
-            }
-
-            return results;
-        }
-    };
-
-
-    class viewscreenChooseMaterial : public dfhack_viewscreen
-    {
-    public:
-        viewscreenChooseMaterial(ItemConstraint *cv = NULL);
-        void feed(set<df::interface_key> *input);
-        void render();
-
-        std::string getFocusString() { return "wfchoosemat"; }
-
-    private:
-        ItemConstraint *cv;
-
-        ListColumn<ItemTypeInfo> items_column;
-        ListColumn<df::dfhack_material_category> masks_column;
-        ListColumn<MaterialInfo> materials_column;
-        vector< ListEntry<df::dfhack_material_category> > all_masks;
-
-        int selected_column;
-
-        void populateItems();
-        void populateMasks(const bool set_defaults = false);
-        void populateMaterials(const bool set_defaults = false);
-
-        bool addMaterialEntry(df::dfhack_material_category &selected_category, 
-                                MaterialInfo &material, string name, const bool set_defaults);
-
-
-        void changeHighlight(const int highlight_change, const int offset_shift = 0);
-        void changeColumn(const int amount);
-        void toggleHighlighted();
-    };
-
-    viewscreenChooseMaterial::viewscreenChooseMaterial(ItemConstraint *cv /*= NULL*/)
-    {
-        this->cv = cv;
-        selected_column = 0;
-        items_column.title = "Item";
-        items_column.allow_null = false;
-        masks_column.title = "Type";
-        masks_column.multiselect = true;
-        materials_column.title = "Material";
-
-        populateItems();
-        items_column.list[0].selected = true;
-
-        vector<string> raw_masks;
-        df::dfhack_material_category full_mat_mask, curr_mat_mask;
-        full_mat_mask.whole = -1;
-        curr_mat_mask.whole = 1;
-        bitfield_to_string(&raw_masks, full_mat_mask);
-        for (int i = 0; i < raw_masks.size(); i++)
-        {
-            if (raw_masks[i][0] == '?')
-                break;
-
-            all_masks.push_back(ListEntry<df::dfhack_material_category>(pad_string(raw_masks[i], MAX_MASK, false), curr_mat_mask));
-            curr_mat_mask.whole <<= 1;
-        }
-        populateMasks(cv != NULL);
-        populateMaterials(cv != NULL);
-    }
-
-    void viewscreenChooseMaterial::populateItems()
-    {
-        items_column.clear();
-        if (cv != NULL)
-        {
-            items_column.add(cv->item.toString(), cv->item);
-        }
-    }
-
-    void viewscreenChooseMaterial::populateMasks(const bool set_defaults /*= false */)
-    {
-        masks_column.clear();
-
-        for (vector< ListEntry<df::dfhack_material_category> >::iterator it = all_masks.begin(); it != all_masks.end(); it++)
-        {
-            auto entry = *it;
-            if (set_defaults)
-            {
-                if (cv->mat_mask.whole & entry.elem.whole)
-                    entry.selected = true;
-            }
-            masks_column.add(entry);
-        }
-    }
-    
-    void viewscreenChooseMaterial::populateMaterials(const bool set_defaults /*= false */)
-    {
-        materials_column.clear();
-        df::dfhack_material_category selected_category;
-        vector<df::dfhack_material_category> selected_materials = masks_column.getSelectedElems();
-        if (selected_materials.size() == 1)
-            selected_category = selected_materials[0];
-        else if (selected_materials.size() > 1)
-            return;
-
-        df::world_raws &raws = world->raws;
-        for (int i = 1; i < DFHack::MaterialInfo::NUM_BUILTIN; i++)
-        {
-            auto obj = raws.mat_table.builtin[i];
-            if (obj)
-            {
-                MaterialInfo material;
-                material.decode(i, -1);
-                addMaterialEntry(selected_category, material, material.toString(), set_defaults);
-            }
-        }
-
-        for (size_t i = 0; i < raws.inorganics.size(); i++)
-        {
-            df::inorganic_raw *p = raws.inorganics[i];
-            MaterialInfo material;
-            material.decode(0, i);
-            addMaterialEntry(selected_category, material, material.toString(), set_defaults);
-        }
-
-        for (size_t i = 0; i < raws.plants.all.size(); i++)
-        {
-            df::plant_raw *p = raws.plants.all[i];
-            string basename = p->name;
-
-            MaterialInfo material;
-            material.decode(p->material_defs.type_basic_mat, p->material_defs.idx_basic_mat);
-            if (!selected_category.whole || material.matches(selected_category))
-            {
-                ListEntry<MaterialInfo> entry(pad_string(basename+" (all)", MAX_MATERIAL, false), material);
-                if (set_defaults)
-                {
-                    if (cv->material.matches(material))
-                        entry.selected = true;
-                }
-                materials_column.add(entry);
-
-                for (size_t j = 0; p->material.size() > 1 && j < p->material.size(); j++)
-                {
-                    MaterialInfo material;
-                    material.decode(DFHack::MaterialInfo::PLANT_BASE+j, i);
-                    if (addMaterialEntry(selected_category, material, basename+" (" + p->material[j]->id + "): " + material.toString(), set_defaults))
-                        entry.selected = false;
-                }
-            }
-        }
-
-        for (size_t i = 0; i < raws.creatures.all.size(); i++)
-        {
-            df::creature_raw *p = raws.creatures.all[i];
-            string basename = p->name[0];
-
-            for (size_t j = 0; j < p->material.size(); j++)
-            {
-                MaterialInfo material;
-                material.decode(DFHack::MaterialInfo::CREATURE_BASE+j, i);
-                addMaterialEntry(selected_category, material, basename+" (" + p->material[j]->id + "): " + material.toString(), set_defaults);
-            }
-        }
-    }
-
-
-    bool viewscreenChooseMaterial::addMaterialEntry(df::dfhack_material_category &selected_category, MaterialInfo &material, 
-                                                           string name, const bool set_defaults)
-    {
-        bool selected = false;
-        if (!selected_category.whole || material.matches(selected_category))
-        {
-            ListEntry<MaterialInfo> entry(pad_string(name, MAX_MATERIAL, false), material);
-            if (set_defaults)
-            {
-                if (cv->material.matches(material))
-                {
-                    entry.selected = true;
-                    selected = true;
-                }
-            }
-            materials_column.add(entry);
-        }
-
-        return selected;
-    }
-
-    void viewscreenChooseMaterial::feed(set<df::interface_key> *input)
-    {
-        if (input->count(interface_key::LEAVESCREEN))
-        {
-            input->clear();
-            Screen::dismiss(this);
-            return;
-        }
-        else if  (input->count(interface_key::CURSOR_UP))
-        {
-            changeHighlight(-1);
-        }
-        else if  (input->count(interface_key::CURSOR_DOWN))
-        {
-            changeHighlight(1);
-        }
-        else if  (input->count(interface_key::CURSOR_LEFT))
-        {
-            changeColumn(-1);
-        }
-        else if  (input->count(interface_key::CURSOR_RIGHT))
-        {
-            changeColumn(1);
-        }
-        else if  (input->count(interface_key::STANDARDSCROLL_PAGEUP))
-        {
-            changeHighlight(0, -1);
-        }
-        else if  (input->count(interface_key::STANDARDSCROLL_PAGEDOWN))
-        {
-            changeHighlight(0, 1);
-        }
-        else if  (input->count(interface_key::SELECT))
-        {
-            toggleHighlighted();
-        }
-    }
-
-    void viewscreenChooseMaterial::render()
-    {
-        if (Screen::isDismissed(this))
-            return;
-
-        dfhack_viewscreen::render();
-
-        Screen::clear();
-        Screen::drawBorder("  Workflow Material  ");
-
-        int x = 2;
-        items_column.display(x, selected_column == 0);
-
-        x += MAX_ITEM_NAME + 1;
-        masks_column.display(x, selected_column == 1);
-
-        x += MAX_MASK + 1;
-        materials_column.display(x, selected_column == 2);
-
-    }
-
-    void viewscreenChooseMaterial::changeHighlight(const int highlight_change, const int offset_shift /* = 0 */)
-    {
-        switch (selected_column)
-        {
-        case 0:
-            items_column.changeHighlight(highlight_change, offset_shift);
-            break;
-        case 1:
-            masks_column.changeHighlight(highlight_change, offset_shift);
-            break;
-        case 2:
-            materials_column.changeHighlight(highlight_change, offset_shift);
-            break;
-        }
-    }
-
-    void viewscreenChooseMaterial::changeColumn(const int amount)
-    {
-        selected_column += amount;
-        set_to_limit(selected_column, 2);
-    }
-
-    void viewscreenChooseMaterial::toggleHighlighted()
-    {
-        switch (selected_column)
-        {
-        case 0:
-            items_column.toggleHighlighted();
-            break;
-        case 1:
-            masks_column.toggleHighlighted();
-            populateMaterials(false);
-            break;
-        case 2:
-            materials_column.toggleHighlighted();
-            break;
-        }
-    }
-
-
-    /*
-     * Inventory Monitor
-     */
-    class viewscreenInventoryMonitor : public dfhack_viewscreen, public AdjustmentScreen
-    {
-    private:
-        struct TableRow
-        {
-            string texts[INV_MONITOR_COL_COUNT];
-            int8_t colors[INV_MONITOR_COL_COUNT];
-
-            vector< pair<int32_t, int32_t> > history_plot;
-            int32_t limit_y, gap_y;
-
-            ItemConstraint *cv;
-        };
-
-
-    public:
-        const static int column_widths[];
-        const static string column_titles[];
-        const static int title_row;
-
-        viewscreenInventoryMonitor();
-
-        void feed(set<df::interface_key> *input);
-
-        void render();
-
-        std::string getFocusString() { return "invmonitor"; }
-
-        virtual void resize(int32_t x, int32_t y) 
-        {
-            dfhack_viewscreen::resize(x, y);
-            init();
-        }
-
-        virtual void onConstraintChanged();
-
-    private:
-        vector<TableRow> rows;
-
-        int bottom_controls_row;
-        int table_max_rows;
-        int table_start_offset;
-        int selected_row;
-
-        int32_t divider_x;
-        int chart_width, chart_height;
-        int32_t axis_y_end, axis_y_start, axis_x_start, axis_x_end;
-
-        void init();
-
-        void changeSelection(const int amount);
-
-        static bool compareConstraints(TableRow const& a, TableRow const& b)
-        {
-            return a.texts[0].compare(b.texts[0]) < 0;
-        }
-    };
-
-    const int viewscreenInventoryMonitor::title_row = 2;
-
-    const int viewscreenInventoryMonitor::column_widths[] =
-    {MAX_ITEM_NAME, 20, 21};
-
-    const string viewscreenInventoryMonitor::column_titles[] =
-    {"Item", "Material", "Stock / Limit"};
-
-
-    viewscreenInventoryMonitor::viewscreenInventoryMonitor()
-    {
-        adjustment_ui_display_start = 2;
-        selected_row = 0;
-        chart_width = SIDEBAR_WIDTH - 2;
-
-        init();
-    }
-    
-    void viewscreenInventoryMonitor::init()
-    {
-        bottom_controls_row = gps->dimy - 2;
-        table_max_rows = bottom_controls_row - 4;
-        table_start_offset = 0;
-
-        divider_x = gps->dimx - SIDEBAR_WIDTH - 2;
-        chart_height = min(SIDEBAR_WIDTH, gps->dimy - 20);
-        axis_y_end = gps->dimy - 3;
-        axis_y_start = axis_y_end - chart_height;
-        axis_x_start = divider_x + 2;
-        axis_x_end = axis_x_start + chart_width - 1;
-
-        rows.clear();
-        for (vector<ItemConstraint *>::iterator it = constraints.begin(); it < constraints.end(); it++)
-        {
-            TableRow row;
-            row.cv = *it;
-
-            row.texts[0] = row.cv->item.toString();
-            row.colors[0] = COLOR_UNSELECTED;
-
-            row.texts[1] = get_constraint_material(row.cv);
-            row.colors[1] = COLOR_UNSELECTED;
-
-            string text;
-            text.append(int_to_string((row.cv->goalByCount()) ? row.cv->item_count : row.cv->item_amount));
-            text.append(" ");
-            text.append((row.cv->goalByCount()) ? "S " : "I ");
-            text = pad_string(text, 9);
-            text.append(int_to_string(row.cv->goalCount()));
-            row.texts[2] = text;
-            row.colors[2] = COLOR_UNSELECTED;
-
-            if (max_history_days > 0)
-            {
-                row.history_plot.clear();
-                int max_val = *max_element(row.cv->history.begin(), row.cv->history.end());
-                max_val = max(max_val, row.cv->goalCount());
-                float scale_y = (float) chart_height / (float) max_val;
-                float scale_x = (float) chart_width / (float) (max_history_days * 2);
-
-                row.limit_y = axis_y_end - (int) (scale_y * (float) row.cv->goalCount());
-                row.gap_y = axis_y_end - (int) (scale_y * (float) (row.cv->goalCount() - row.cv->goalGap()));
-                
-                for (size_t i = 0; i < row.cv->history.size(); i++)
-                {
-                    pair<int32_t, int32_t> point(axis_x_start + (int) (scale_x * (float) i), 
-                                                 axis_y_end - (int) (scale_y * (float) row.cv->history[i]));
-
-                    row.history_plot.push_back(point);
-                }
-            }
-
-            rows.push_back(row);
-        }
-
-        sort(rows.begin(), rows.end(), &viewscreenInventoryMonitor::compareConstraints);
-        changeSelection(0);
-    }
-    
-    void viewscreenInventoryMonitor::onConstraintChanged()
-    {
-        init();
-    }
-    
-    void viewscreenInventoryMonitor::render()
-    {
-        if (Screen::isDismissed(this))
-            return;
-
-        dfhack_viewscreen::render();
-
-        Screen::clear();
-        Screen::drawBorder("  Inventory Monitor  ");
-
-        Screen::Pen border('\xDB', 8);
-        for (int32_t y = 1; y < gps->dimy - 1; y++)
-        {
-            paintTile(border, divider_x, y);
-        }
-
-        int32_t x = 2;
-        int32_t y = title_row;
-
-
-        for (int column = 0; column < INV_MONITOR_COL_COUNT; column++)
-        {
-            paint_text(COLOR_TITLE, x, y, column_titles[column]);
-            x += column_widths[column];
-        }
-
-        int last_row_able_to_display = table_start_offset + table_max_rows;
-        for (int row = table_start_offset; row < last_row_able_to_display && row < rows.size(); row++)
-        {
-            x = 2;
-            ++y;
-            for (int column = 0; column < INV_MONITOR_COL_COUNT; column++)
-            {
-                int8_t color = rows[row].colors[column];
-                if (column < 2 && row == selected_row)
-                    color = COLOR_SELECTED;
-                paint_text(color, x, y, rows[row].texts[column]);
-                x += column_widths[column];
-            }
-        }
-
-        y = bottom_controls_row;
-        x = 2;
-        OutputHotkeyString(x, y, "Edit", "e");
-
-        if (rows.size() > 0)
-        {
-            TableRow row = rows[selected_row];
-            AdjustmentScreen::render(row.cv);
-
-            if (max_history_days > 0)
-            {
-                Screen::Pen y_axis('\xB3', COLOR_BROWN);
-                x = axis_x_start;
-                for (y = axis_y_start; y <= axis_y_end; y++)
-                {
-                    paintTile(y_axis, x, y);
-                }
-
-                Screen::Pen up_arrow('\xCF', COLOR_BROWN);
-                paintTile(up_arrow, axis_x_start, axis_y_start-1);
-
-                Screen::Pen x_axis('\xC4', COLOR_BROWN);
-                y = axis_y_end;
-                for (x = axis_x_start; x <= axis_x_end; x++)
-                {
-                    paintTile(x_axis, x, y);
-                    paint_text(COLOR_LIGHTGREEN, x, row.limit_y, "-");
-                    paint_text(COLOR_GREEN, x, row.gap_y, "-");
-                }
-
-                Screen::Pen right_arrow('\xAF', COLOR_BROWN);
-                paintTile(right_arrow, axis_x_end+1, axis_y_end);
-
-                Screen::Pen zero_axis('\x9E', COLOR_BROWN);
-                paintTile(zero_axis, axis_x_start, axis_y_end);
-
-                for (size_t i = 0; i < row.history_plot.size(); i++)
-	            {
-                    int x = row.history_plot[i].first;
-                    int y = row.history_plot[i].second;
-                    paint_text(COLOR_CYAN, x, y, "*");
-	            }
-            }
-        }
-
-
-    }
-
-    void viewscreenInventoryMonitor::feed(set<df::interface_key> *input)
-    {
-        if (rows.size() > 0 && AdjustmentScreen::feed(input, rows[selected_row].cv))
-            return;
-
-        if (input->count(interface_key::LEAVESCREEN))
-        {
-            input->clear();
-            Screen::dismiss(this);
-            return;
-        }
-        else if  (input->count(interface_key::CURSOR_UP))
-        {
-            changeSelection(-1);
-        }
-        else if  (input->count(interface_key::CURSOR_DOWN))
-        {
-            changeSelection(1);
-        }
-        else if  (input->count(interface_key::STANDARDSCROLL_PAGEUP))
-        {
-            table_start_offset = max(table_start_offset-table_max_rows, 0);
-            changeSelection(-table_max_rows);
-        }
-        else if  (input->count(interface_key::STANDARDSCROLL_PAGEDOWN))
-        {
-            table_start_offset = min(table_start_offset+table_max_rows, (int)(rows.size())-table_max_rows);
-            changeSelection(table_max_rows);
-        }
-        else if  (input->count(interface_key::CUSTOM_E))
-        {
-            Screen::show(new viewscreenChooseMaterial(rows[selected_row].cv));
-        }
-    }
-
-    void viewscreenInventoryMonitor::changeSelection(int amount)
-    {
-        selected_row += amount;
-        set_to_limit(selected_row, rows.size() - 1);
-
-        if (selected_row < table_start_offset)
-            table_start_offset = selected_row;
-        else if (selected_row >= table_start_offset + table_max_rows)
-            table_start_offset = selected_row - table_max_rows + 1;
-    }
-
-    /******************************
-    *   Hook for workshop view   *
-    ******************************/
-    struct wf_workshop_hook : public df::viewscreen_dwarfmodest
-    {
-        typedef df::viewscreen_dwarfmodest interpose_base;
-
-        static color_ostream_proxy console_out;
-        static df::job *last_job;
-        static df::job *job;
-        static AdjustmentScreen dialog;
-        
-        bool checkJobSelection()
-        {
-            if (!enabled)
-                return NULL;
-
-            if (!first_update_done)
-            {
-                plugin_onupdate(console_out);
-            }
-
-            job = Gui::getSelectedWorkshopJob(console_out, true);
-            if (job != last_job)
-            {
-                dialog.reset();
-                last_job = job;
-            }
-
-
-            return job != NULL;
-        }
-
-        bool handleInput(set<df::interface_key> *input)
-        {
-            bool key_processed = true;
-            if (checkJobSelection())
-            {
-                ProtectedJob *pj = get_known(job->id);
-                if (!pj)
-                    return false;
-
-                ItemConstraint *cv = NULL;
-                if (pj->constraints.size() > 0)
-                    cv = pj->constraints[0];
-
-                if (!dialog.feed(input, cv, pj))
-                {
-                    if (input->count(interface_key::CUSTOM_T))
-                    {
-                        if (!cv)
-                        {
-                            // Add tracking
-                            job->flags.bits.repeat = true;
-                            compute_job_outputs(console_out, pj, true);
-                            cv = pj->constraints[0];
-                            cv->setGoalByCount(false);
-                            cv->setGoalCount(10);
-                            cv->setGoalGap(1);
-                        }
-                    }
-                    else if (input->count(interface_key::CUSTOM_I))
-                    {
-                        Screen::show(new viewscreenInventoryMonitor());
-                    }
-                    else
-                        key_processed = false;
-                }
-            }
-            else
-                key_processed = false;
-
-            return key_processed;
-        }
-
-        DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
-        {
-            if (!handleInput(input))
-                INTERPOSE_NEXT(feed)(input);
-            else
-                input->clear();
-        }
-
-        DEFINE_VMETHOD_INTERPOSE(void, render, ())
-        {
-            INTERPOSE_NEXT(render)();
-            if (checkJobSelection())
-            {
-                ProtectedJob *pj = get_known(job->id);
-                if (!pj)
-                {
-                    pj = add_known_job(job);
-                    compute_job_outputs(console_out, pj);
-                }
-
-                ItemConstraint *cv = NULL;
-                if (pj->constraints.size() > 0)
-                {
-                    cv = pj->constraints[0];
-                }
-                dialog.render(cv);
-                ++dialog.y;
-                OutputHotkeyString(dialog.left_margin, dialog.y, "Inventory Monitor", "i");
-            }
-        }
-    };
-
-    color_ostream_proxy wf_workshop_hook::console_out(Core::getInstance().getConsole());
-    df::job *wf_workshop_hook::job = NULL;
-    df::job *wf_workshop_hook::last_job = NULL;
-    AdjustmentScreen wf_workshop_hook::dialog;
-
-
-    IMPLEMENT_VMETHOD_INTERPOSE(wf_workshop_hook, feed);
-    IMPLEMENT_VMETHOD_INTERPOSE(wf_workshop_hook, render);
-}
-
-#undef INV_MONITOR_COL_COUNT
-#undef MAX_ITEM_NAME
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {

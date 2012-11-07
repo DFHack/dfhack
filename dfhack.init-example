@@ -18,7 +18,7 @@ keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 
 # gui/rename script
 keybinding add Ctrl-Shift-N gui/rename
-keybinding add Alt-Shift-P "gui/rename unit-profession"
+keybinding add Ctrl-Shift-T "gui/rename unit-profession"
 
 ##############################
 # Generic adv mode bindings  #

@@ -160,7 +160,7 @@ static bool is_assigned_item(df::item *item)
 }
 
 // Check if this ammo item is assigned to this squad with one of the specified uses
-static bool is_squad_ammo(df::item *item, df::squad *squad, bool train, bool combat)
+static bool is_squad_ammo(df::item *item, df::squad *squad, bool combat, bool train)
 {
     for (size_t i = 0; i < squad->ammunition.size(); i++)
     {
@@ -186,8 +186,6 @@ static bool can_store_ammo_rec(df::item *item, df::building *holder, int squad_i
 
     if (squads)
     {
-        bool target = holder->getType() == building_type::ArcheryTarget;
-
         for (size_t i = 0; i < squads->size(); i++)
         {
             auto use = (*squads)[i];
@@ -198,8 +196,7 @@ static bool can_store_ammo_rec(df::item *item, df::building *holder, int squad_i
 
             // Squad Equipment -> combat
             bool combat = use->mode.bits.squad_eq;
-            // Archery target with Train -> training
-            bool train = target && use->mode.bits.train;
+            bool train = false;
 
             if (combat || train)
             {
@@ -207,6 +204,41 @@ static bool can_store_ammo_rec(df::item *item, df::building *holder, int squad_i
 
                 if (squad && is_squad_ammo(item, squad, combat, train))
                     return true;
+            }
+        }
+    }
+    // Ugh, archery targets don't actually have a squad use vector
+    else if (holder->getType() == building_type::ArcheryTarget)
+    {
+        auto &squads = df::global::world->squads.all;
+
+        for (size_t si = 0; si < squads.size(); si++)
+        {
+            auto squad = squads[si];
+
+            // For containers assigned to a squad, only consider that squad
+            if (squad_id >= 0 && squad->id != squad_id)
+                continue;
+
+            for (size_t j = 0; j < squad->rooms.size(); j++)
+            {
+                auto use = squad->rooms[j];
+
+                if (use->building_id != holder->id)
+                    continue;
+
+                // Squad Equipment -> combat
+                bool combat = use->mode.bits.squad_eq;
+                // Archery target with Train -> training
+                bool train = use->mode.bits.train;
+
+                if (combat || train)
+                {
+                    if (is_squad_ammo(item, squad, combat, train))
+                        return true;
+                }
+
+                break;
             }
         }
     }

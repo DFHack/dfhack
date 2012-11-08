@@ -1004,6 +1004,12 @@ static bool isRouteVehicle(df::item *item)
     return vehicle && vehicle->route_id >= 0;
 }
 
+static bool isAssignedSquad(df::item *item)
+{
+    auto &vec = ui->equipment.items_assigned[item->getType()];
+    return binsearch_index(vec, &df::item::id, item->id) >= 0;
+}
+
 static void map_job_items(color_ostream &out)
 {
     for (size_t i = 0; i < constraints.size(); i++)
@@ -1117,8 +1123,10 @@ static void map_job_items(color_ostream &out)
                 item->isAssignedToStockpile() ||
                 isRouteVehicle(item) ||
                 itemInRealJob(item) ||
-                itemBusy(item))
+                itemBusy(item) ||
+                isAssignedSquad(item))
             {
+                is_invalid = true;
                 cv->item_inuse++;
             }
             else

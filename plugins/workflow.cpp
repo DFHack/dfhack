@@ -640,7 +640,7 @@ static string get_constraint_material(ItemConstraint *cv)
         text.append(" ");
     }
 
-    text.append(bitfield_to_string(cv->mat_mask));
+    text.append(bitfield_to_string(cv->mat_mask, ","));
 
     return text;
 }
@@ -2904,17 +2904,26 @@ namespace wf_ui
                 Gui::getSelectedWorkshopJob(console_out, true));
         }
 
+        ProtectedJob *get_protected_job(int32_t id)
+        {
+            ProtectedJob *pj = get_known(id);
+            if (!pj && job->flags.bits.repeat)
+            {
+                pj = add_known_job(job);
+                compute_job_outputs(console_out, pj);
+            }
+
+            return pj;
+        }
+
         bool handleInput(set<df::interface_key> *input)
         {
             bool key_processed = true;
             if (checkJobSelection())
             {
-                ProtectedJob *pj = get_known(job->id);
-                if (!pj)
-                    return false;
-
+                ProtectedJob *pj = get_protected_job(job->id);
                 ItemConstraint *cv = NULL;
-                if (pj->constraints.size() > 0)
+                if (pj && pj->constraints.size() > 0)
                     cv = pj->constraints[0];
 
                 if (!dialog.feed(input, cv, pj))
@@ -2924,13 +2933,19 @@ namespace wf_ui
                         if (!cv)
                         {
                             // Add tracking
+                            if (!pj)
+                                pj = add_known_job(job);
+
                             compute_job_outputs(console_out, pj, true);
                             if (pj->constraints.size() > 0)
                             {
                                 cv = pj->constraints[0];
-                                cv->setGoalByCount(false);
-                                cv->setGoalCount(10);
-                                cv->setGoalGap(1);
+                                if (cv->goalCount() == -1)
+                                {
+                                    cv->setGoalByCount(false);
+                                    cv->setGoalCount(10);
+                                    cv->setGoalGap(1);
+                                }
                                 job->flags.bits.repeat = true;
                             }
                             else
@@ -2971,18 +2986,13 @@ namespace wf_ui
             INTERPOSE_NEXT(render)();
             if (checkJobSelection())
             {
-                ProtectedJob *pj = get_known(job->id);
-                if (!pj)
-                {
-                    pj = add_known_job(job);
-                    compute_job_outputs(console_out, pj);
-                }
-
                 ItemConstraint *cv = NULL;
-                if (pj->constraints.size() > 0)
+                ProtectedJob *pj = get_protected_job(job->id);
+                if (pj && pj->constraints.size() > 0)
                 {
                     cv = pj->constraints[0];
                 }
+
                 dialog.render(cv);
                 if (cv)
                     ++dialog.y;

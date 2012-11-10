@@ -645,6 +645,23 @@ static string get_constraint_material(ItemConstraint *cv)
     return text;
 }
 
+#define ITEMDEF_VECTORS \
+    ITEM(WEAPON, weapons, itemdef_weaponst) \
+    ITEM(TRAPCOMP, trapcomps, itemdef_trapcompst) \
+    ITEM(TOY, toys, itemdef_toyst) \
+    ITEM(TOOL, tools, itemdef_toolst) \
+    ITEM(INSTRUMENT, instruments, itemdef_instrumentst) \
+    ITEM(ARMOR, armor, itemdef_armorst) \
+    ITEM(AMMO, ammo, itemdef_ammost) \
+    ITEM(SIEGEAMMO, siege_ammo, itemdef_siegeammost) \
+    ITEM(GLOVES, gloves, itemdef_glovesst) \
+    ITEM(SHOES, shoes, itemdef_shoesst) \
+    ITEM(SHIELD, shields, itemdef_shieldst) \
+    ITEM(HELM, helms, itemdef_helmst) \
+    ITEM(PANTS, pants, itemdef_pantsst) \
+    ITEM(FOOD, food, itemdef_foodst)
+
+
 static ItemConstraint * create_new_constraint(bool is_craft, ItemTypeInfo item, MaterialInfo material, 
                                               df::dfhack_material_category mat_mask, item_quality::item_quality minqual, 
                                               PersistentDataItem * cfg, std::string str) 
@@ -681,8 +698,32 @@ static ItemConstraint * create_new_constraint(bool is_craft, ItemTypeInfo item, 
     {
         if (str.empty())
         {
-            str = get_constraint_material(nct);
-            str.append(item.toString());
+            std::string item_token = ENUM_KEY_STR(item_type, item.type);
+            if (item.custom)
+                item_token += ":" + item.custom->id;
+            else if (item.subtype != -1)
+            {
+                df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
+                switch (item.type)
+                {
+#define ITEM(type_string,vec,tclass) \
+                case df::item_type::type_string: \
+                    item_token += ":" + defs.vec[item.subtype]->id; \
+                    break;
+
+                    ITEMDEF_VECTORS
+#undef ITEM
+                default:
+                    break;
+                }
+            }
+
+            str.append(item_token);
+            str.append("/");
+            str.append(bitfield_to_string(mat_mask, ","));
+            str.append("/");
+            if ((material.type != 0 || material.index > 0) && !material.isNone())
+                str.append(material.getToken());
         }
 
         nct->config = Core::getInstance().getWorld()->AddPersistentData("workflow/constraints");
@@ -847,7 +888,7 @@ static void link_job_constraint(ProtectedJob *pj, df::item_type itype, int16_t i
     }
 }
 
-static void compute_custom_job(ProtectedJob *pj, df::job *job)
+static void compute_custom_job(ProtectedJob *pj, df::job *job, bool create_constraint = false)
 {
     if (pj->reaction_id < 0)
         pj->reaction_id = linear_index(df::reaction::get_vector(),
@@ -908,7 +949,7 @@ static void compute_custom_job(ProtectedJob *pj, df::job *job)
         }
 
         link_job_constraint(pj, prod->item_type, prod->item_subtype,
-                            mat_mask, mat.type, mat.index, prod->flags.is_set(CRAFTS)); 
+                            mat_mask, mat.type, mat.index, prod->flags.is_set(CRAFTS), create_constraint); 
     }
 }
 
@@ -962,7 +1003,7 @@ static void compute_job_outputs(color_ostream &out, ProtectedJob *pj, bool creat
 
     if (job->job_type == CustomReaction)
     {
-        compute_custom_job(pj, job);
+        compute_custom_job(pj, job, create_constraint);
         return;
     }
 
@@ -1533,22 +1574,6 @@ static void print_job(color_ostream &out, ProtectedJob *pj)
 #define COLOR_UNSELECTED COLOR_GREY
 #define COLOR_SELECTED COLOR_WHITE
 #define COLOR_HIGHLIGHTED COLOR_GREEN
-
-#define ITEMDEF_VECTORS \
-    ITEM(WEAPON, weapons, itemdef_weaponst) \
-    ITEM(TRAPCOMP, trapcomps, itemdef_trapcompst) \
-    ITEM(TOY, toys, itemdef_toyst) \
-    ITEM(TOOL, tools, itemdef_toolst) \
-    ITEM(INSTRUMENT, instruments, itemdef_instrumentst) \
-    ITEM(ARMOR, armor, itemdef_armorst) \
-    ITEM(AMMO, ammo, itemdef_ammost) \
-    ITEM(SIEGEAMMO, siege_ammo, itemdef_siegeammost) \
-    ITEM(GLOVES, gloves, itemdef_glovesst) \
-    ITEM(SHOES, shoes, itemdef_shoesst) \
-    ITEM(SHIELD, shields, itemdef_shieldst) \
-    ITEM(HELM, helms, itemdef_helmst) \
-    ITEM(PANTS, pants, itemdef_pantsst) \
-    ITEM(FOOD, food, itemdef_foodst)
 
 namespace wf_ui
 {
@@ -2439,18 +2464,21 @@ namespace wf_ui
             MaterialInfo *selected_material = materials_column.getFirstSelectedElem();
             MaterialInfo material = (selected_material) ? *selected_material : MaterialInfo();
 
-            if (cv == NULL)
+            if (cv != NULL)
             {
-                ItemConstraint *nct = create_new_constraint(false, *items_column.getFirstSelectedElem(), material, mat_mask, item_quality::Ordinary, NULL, "");
-                nct->setGoalByCount(false);
-                nct->setGoalCount(10);
-                nct->setGoalGap(1);
+                delete_constraint(cv);
             }
-            else
+
+            ItemConstraint *nct = create_new_constraint(false, *items_column.getFirstSelectedElem(), material, mat_mask, item_quality::Ordinary, NULL, "");
+            nct->setGoalByCount(false);
+            nct->setGoalCount(10);
+            nct->setGoalGap(1);
+
+            /*else
             {
                 cv->mat_mask = mat_mask;
                 cv->material = (selected_material) ? *selected_material : MaterialInfo();
-            }
+            }*/
 
             reset_list = true;
             Screen::dismiss(this);
@@ -3189,7 +3217,6 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
                 continue;
 
             delete_constraint(constraints[i]);
-            //process_constraints(out);
             return CR_OK;
         }
 
@@ -3203,8 +3230,6 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
 
         while (!constraints.empty())
             delete_constraint(constraints[0]);
-
-        //process_constraints(out);
 
         out.print("Removed all constraints.\n");
         return CR_OK;

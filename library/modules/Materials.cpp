@@ -425,6 +425,8 @@ bool MaterialInfo::matches(const df::dfhack_material_category &cat)
     TEST(glass, IS_GLASS);
     if (cat.bits.clay && linear_index(material->reaction_product.id, std::string("FIRED_MAT")) >= 0)
         return true;
+    if (cat.bits.milk && linear_index(material->reaction_product.id, std::string("CHEESE_MAT")) >= 0)
+        return true;
     return false;
 }
 

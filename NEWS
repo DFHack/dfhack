@@ -22,6 +22,7 @@ DFHack future
     - code for deducing job outputs rewritten in lua for flexibility.
     - logic fix: collecting webs produces silk, and ungathered webs are not thread.
     - items assigned to squads are considered busy, even if not in inventory.
+    - shearing and milking jobs are supported, but only with generic MILK or YARN outputs.
   New Fix Armory plugin:
     Together with a couple of binary patches and the gui/assign-rack script,
     this plugin makes weapon racks, armor stands, chests and cabinets in

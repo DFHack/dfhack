@@ -377,7 +377,9 @@ static bool isSupportedJob(df::job *job)
            Job::getHolder(job) &&
            (!job->job_items.empty() ||
             job->job_type == job_type::CollectClay ||
-            job->job_type == job_type::CollectSand);
+            job->job_type == job_type::CollectSand ||
+            job->job_type == job_type::MilkCreature ||
+            job->job_type == job_type::ShearCreature);
 }
 
 static bool isOptionEnabled(unsigned flag)

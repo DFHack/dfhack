@@ -132,6 +132,9 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
  * grace period during which the items can be instantly picked up again.
  */
 
+// Completely block the use of stockpiles
+#define NO_STOCKPILES
+
 // Check if the item is assigned to any use controlled by the military tab
 static bool is_assigned_item(df::item *item)
 {
@@ -142,19 +145,6 @@ static bool is_assigned_item(df::item *item)
     int idx = binsearch_index(ui->equipment.items_assigned[type], item->id);
     if (idx < 0)
         return false;
-
-    // Exclude weapons used by miners, wood cutters etc
-    switch (type) {
-    case item_type::WEAPON:
-        // the game code also checks this for ammo, funnily enough
-        // maybe it's not just for weapons?..
-        if (binsearch_index(ui->equipment.work_weapons, item->id) >= 0)
-            return false;
-        break;
-
-    default:
-        break;
-    }
 
     return true;
 }
@@ -328,6 +318,16 @@ template<class Item> struct armory_hook : Item {
      */
     DEFINE_VMETHOD_INTERPOSE(bool, isCollected, ())
     {
+#ifdef NO_STOCKPILES
+        /*
+         * Completely block any items assigned to a squad from being stored
+         * in stockpiles. The reason is that I still observe haulers running
+         * around with bins to pick them up for some reason. There could be
+         * some unaccounted race conditions involved.
+         */
+        if (is_assigned_item(this))
+            return false;
+#else
         // Block stockpiling of items in the armory.
         if (is_in_armory(this))
             return false;
@@ -354,6 +354,7 @@ template<class Item> struct armory_hook : Item {
                     return false;
             }
         }
+#endif
 
         // Call the original vmethod
         return INTERPOSE_NEXT(isCollected)();

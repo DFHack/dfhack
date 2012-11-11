@@ -100,6 +100,19 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
                 "    as the item amount goes above or below the limit. The gap specifies how\n"
                 "    much below the limit the amount has to drop before jobs are resumed;\n"
                 "    this is intended to reduce the frequency of jobs being toggled.\n"
+                "Constraint format:\n"
+                "  The contstraint spec consists of 4 parts, separated with '/' characters:\n"
+                "    ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]\n"
+                "  The first part is mandatory and specifies the item type and subtype,\n"
+                "  using the raw tokens for items, in the same syntax you would e.g. use\n"
+                "  for a custom reaction input. The subsequent parts are optional:\n"
+                "  - A generic material spec constrains the item material to one of\n"
+                "    the hard-coded generic classes, like WOOD, METAL, YARN or MILK.\n"
+                "  - A specific material spec chooses the material exactly, using the\n"
+                "    raw syntax for reaction input materials, e.g. INORGANIC:IRON,\n"
+                "    although for convenience it also allows just IRON, or ACACIA:WOOD.\n"
+                "  - A comma-separated list of miscellaneous flags, which currently can\n"
+                "    be used to ignore imported items or items below a certain quality.\n"
                 "Constraint examples:\n"
                 "  workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100\n"
                 "  workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50\n"
@@ -124,6 +137,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
                 "    In order for this to work, you have to set the material of\n"
                 "    the PLANT input on the Mill Plants job to MUSHROOM_CUP_DIMPLE\n"
                 "    using the 'job item-material' command.\n"
+                "  workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90\n"
+                "    Maintain 10-100 locally-made crafts of exceptional quality.\n"
             )
         );
     }
@@ -279,16 +294,19 @@ typedef std::map<std::pair<int,int>, bool> TMaterialCache;
 struct ItemConstraint {
     PersistentDataItem config;
 
+    // Fixed key parsed into fields
     bool is_craft;
     ItemTypeInfo item;
 
     MaterialInfo material;
     df::dfhack_material_category mat_mask;
 
+    item_quality::item_quality min_quality;
+    bool is_local;
+
+    // Tracking data
     int weight;
     std::vector<ProtectedJob*> jobs;
-
-    item_quality::item_quality min_quality;
 
     int item_amount, item_count, item_inuse;
     bool request_suspend, request_resume;
@@ -299,8 +317,9 @@ struct ItemConstraint {
 
 public:
     ItemConstraint()
-        : is_craft(false), weight(0), min_quality(item_quality::Ordinary),item_amount(0),
-          item_count(0), item_inuse(0), is_active(false), cant_resume_reported(false)
+        : is_craft(false), min_quality(item_quality::Ordinary), is_local(false),
+          weight(0), item_amount(0), item_count(0), item_inuse(0),
+          is_active(false), cant_resume_reported(false)
     {}
 
     int goalCount() { return config.ival(0); }
@@ -673,27 +692,12 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     
     if (mat_mask.whole != 0)
         weight += 100;
-    
+
     MaterialInfo material;
     std::string matstr = vector_get(tokens,2);
     if (!matstr.empty() && (!material.find(matstr) || !material.isValid())) {
         out.printerr("Cannot find material: %s\n", matstr.c_str());
         return NULL;
-    }
-
-    item_quality::item_quality minqual = item_quality::Ordinary;
-    std::string qualstr = vector_get(tokens, 3);
-    if(!qualstr.empty()) {
-	    if(qualstr == "ordinary") minqual = item_quality::Ordinary;
-	    else if(qualstr == "wellcrafted") minqual = item_quality::WellCrafted;
-	    else if(qualstr == "finelycrafted") minqual = item_quality::FinelyCrafted;
-	    else if(qualstr == "superior") minqual = item_quality::Superior;
-	    else if(qualstr == "exceptional") minqual = item_quality::Exceptional;
-	    else if(qualstr == "masterful") minqual = item_quality::Masterful;
-	    else {
-		    out.printerr("Cannot find quality: %s\nKnown qualities: ordinary, wellcrafted, finelycrafted, superior, exceptional, masterful\n", qualstr.c_str());
-		    return NULL;
-	    }
     }
 
     if (material.type >= 0)
@@ -704,13 +708,52 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         return NULL;
     }
 
+    item_quality::item_quality minqual = item_quality::Ordinary;
+    bool is_local = false;
+    std::string qualstr = vector_get(tokens, 3);
+
+    if(!qualstr.empty())
+    {
+        std::vector<std::string> qtokens;
+        split_string(&qtokens, qualstr, ",");
+
+        for (size_t i = 0; i < qtokens.size(); i++)
+        {
+            auto token = toLower(qtokens[i]);
+
+            if (token == "local")
+                is_local = true;
+            else
+            {
+                bool found = false;
+                FOR_ENUM_ITEMS(item_quality, qv)
+                {
+                    if (toLower(ENUM_KEY_STR(item_quality, qv)) != token)
+                        continue;
+                    minqual = qv;
+                    found = true;
+                }
+
+                if (!found)
+                {
+                    out.printerr("Cannot parse token: %s\n", token.c_str());
+                    return NULL;
+                }
+            }
+        }
+    }
+
+    if (is_local || minqual > item_quality::Ordinary)
+        weight += 10;
+
     for (size_t i = 0; i < constraints.size(); i++)
     {
         ItemConstraint *ct = constraints[i];
         if (ct->is_craft == is_craft &&
             ct->item == item && ct->material == material &&
             ct->mat_mask.whole == mat_mask.whole &&
-	    ct->min_quality == minqual)
+            ct->min_quality == minqual &&
+            ct->is_local == is_local)
             return ct;
     }
 
@@ -720,6 +763,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     nct->material = material;
     nct->mat_mask = mat_mask;
     nct->min_quality = minqual;
+    nct->is_local = is_local;
     nct->weight = weight;
 
     if (cfg)
@@ -1099,9 +1143,11 @@ static void map_job_items(color_ostream &out)
                     (cv->item.subtype != -1 && cv->item.subtype != isubtype))
                     continue;
             }
-	    if(item->getQuality() < cv->min_quality) {
-		    continue;
-	    }
+
+            if (cv->is_local && item->flags.bits.foreign)
+                continue;
+            if (item->getQuality() < cv->min_quality)
+                continue;
 
             TMaterialCache::iterator it = cv->material_cache.find(matkey);
 
@@ -1307,6 +1353,7 @@ static void push_constraint(lua_State *L, ItemConstraint *cv)
     Lua::SetField(L, cv->material.index, ctable, "mat_index");
 
     Lua::SetField(L, (int)cv->min_quality, ctable, "min_quality");
+    Lua::SetField(L, (bool)cv->is_local, ctable, "is_local");
 
     // Constraint value
 

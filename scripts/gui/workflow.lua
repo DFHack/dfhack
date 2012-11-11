@@ -191,8 +191,15 @@ function JobConstraints:initListChoices(clist, sel_token)
             order_pen = COLOR_BLUE
         end
         local itemstr = describe_item_type(cons)
-        if cons.min_quality > 0 then
-            itemstr = itemstr .. ' ('..df.item_quality[cons.min_quality]..')'
+        if cons.min_quality > 0 or cons.is_local then
+            local lst = {}
+            if cons.is_local then
+                table.insert(lst, 'local')
+            end
+            if cons.min_quality > 0 then
+                table.insert(lst, string.lower(df.item_quality[cons.min_quality]))
+            end
+            itemstr = itemstr .. ' ('..table.concat(lst,',')..')'
         end
         local matstr = describe_material(cons)
         local matflagstr = ''

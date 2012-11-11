@@ -58,9 +58,35 @@ The stonesense plugin might require some additional libraries on Linux.
 If any of the plugins or dfhack itself refuses to load, check the stderr.log
 file created in your DF folder.
 
+Getting started
+===============
+
+If DFHack is installed correctly, it will automatically pop up a console
+window once DF is started as usual on windows. Linux and Mac OS X require
+running the dfhack script from the terminal, and will use that terminal for
+the console.
+
+**NOTE**: The dfhack-run executable is there for calling DFHack commands in
+an already running DF+DFHack instance from external OS scripts and programs,
+and is *not* the way how you use DFHack normally.
+
+DFHack has a lot of features, which can be accessed by typing commands in the
+console, or by mapping them to keyboard shortcuts. Most of the newer and more
+user-friendly tools are designed to be at least partially used via the latter
+way.
+
+In order to set keybindings, you have to create a text configuration file
+called ``dfhack.init``; the installation comes with an example version called
+``dfhack.init-example``, which is fully functional, covers all of the recent
+features and can be simply renamed to ``dfhack.init``. You are encouraged to look
+through it to learn which features it makes available under which key combinations.
+
+For more information, refer to the rest of this document.
+
 ============
 Using DFHack
 ============
+
 DFHack basically extends what DF can do with something similar to the drop-down
 console found in Quake engine games. On Windows, this is a separate command line
 window. On linux, the terminal used to launch the dfhack script is taken over
@@ -1258,10 +1284,18 @@ Usage:
    List workflow-controlled jobs (if in a workshop, filtered by it).
  ``workflow list``
    List active constraints, and their job counts.
- ``workflow count <constraint-spec> <cnt-limit> [cnt-gap], workflow amount <constraint-spec> <cnt-limit> [cnt-gap]``
-   Set a constraint. The first form counts each stack as only 1 item.
+ ``workflow list-commands``
+   List active constraints as workflow commands that re-create them;
+   this list can be copied to a file, and then reloaded using the
+   ``script`` built-in command.
+ ``workflow count <constraint-spec> <cnt-limit> [cnt-gap]``
+   Set a constraint, counting every stack as 1 item.
+ ``workflow amount <constraint-spec> <cnt-limit> [cnt-gap]``
+   Set a constraint, counting all items within stacks.
  ``workflow unlimit <constraint-spec>``
    Delete a constraint.
+ ``workflow unlimit-all``
+   Delete all constraints.
 
 Function
 ........
@@ -1279,6 +1313,34 @@ the frequency of jobs being toggled.
 Check out the ``gui/workflow`` script below for a simple front-end integrated
 in the game UI.
 
+Constraint format
+.................
+
+The contstraint spec consists of 4 parts, separated with '/' characters::
+
+    ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]
+
+The first part is mandatory and specifies the item type and subtype,
+using the raw tokens for items, in the same syntax you would e.g. use
+for a custom reaction input. See this list for more info: http://dwarffortresswiki.org/index.php/Item_token
+
+The subsequent parts are optional:
+
+- A generic material spec constrains the item material to one of
+  the hard-coded generic classes, which currently include::
+
+    PLANT WOOD CLOTH SILK LEATHER BONE SHELL SOAP TOOTH HORN PEARL YARN
+    METAL STONE SAND GLASS CLAY MILK
+
+- A specific material spec chooses the material exactly, using the
+  raw syntax for reaction input materials, e.g. INORGANIC:IRON,
+  although for convenience it also allows just IRON, or ACACIA:WOOD etc.
+  See this page for more details on the unabbreviated raw syntax:
+
+  http://dwarffortresswiki.org/index.php/Material_token
+
+- A comma-separated list of miscellaneous flags, which currently can
+  be used to ignore imported items or items below a certain quality.
 
 Constraint examples
 ...................
@@ -1304,9 +1366,14 @@ Make sure there are always 25-30 empty bins/barrels/bags.
 
 Make sure there are always 15-20 coal and 25-30 copper bars.
 ::
-    
+
     workflow count BAR//COAL 20
     workflow count BAR//COPPER 30
+
+Produce 15-20 gold crafts.
+::
+
+    workflow count CRAFTS//GOLD 20
 
 Collect 15-20 sand bags and clay boulders.
 ::
@@ -1319,9 +1386,16 @@ Make sure there are always 80-100 units of dimple dye.
     
     workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20
 
+.. note::
+
   In order for this to work, you have to set the material of the PLANT input
   on the Mill Plants job to MUSHROOM_CUP_DIMPLE using the 'job item-material'
-  command.
+  command. Otherwise the plugin won't be able to deduce the output material.
+
+Maintain 10-100 locally-made crafts of exceptional quality.
+::
+
+    workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90
 
 
 Fortress activity management

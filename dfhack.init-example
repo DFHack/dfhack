@@ -2,21 +2,32 @@
 # Generic dwarfmode bindings #
 ##############################
 
+# toggle the display of water level as 1-7 tiles
 keybinding add Ctrl-W twaterlvl
 
 # with cursor:
+
+# designate the whole vein for digging
 keybinding add Ctrl-V digv
 keybinding add Ctrl-Shift-V "digv x"
+
+# clean the selected tile of blood etc
 keybinding add Ctrl-C spotclean
+
+# destroy items designated for dump in the selected tile
 keybinding add Ctrl-Shift-K autodump-destroy-here
 
-# any item:
+# with an item selected:
+
+# destroy the selected item
 keybinding add Ctrl-K autodump-destroy-item
+
+# scripts:
 
 # quicksave, only in main dwarfmode screen and menu page
 keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 
-# gui/rename script
+# gui/rename script - rename units and buildings
 keybinding add Ctrl-Shift-N gui/rename
 keybinding add Ctrl-Shift-T "gui/rename unit-profession"
 
@@ -31,10 +42,10 @@ keybinding add Ctrl-Shift-B "adv-bodyswap force"
 # Context-specific bindings #
 #############################
 
-# q->stockpile; p
+# q->stockpile; p - copy & paste stockpiles
 keybinding add Alt-P copystock
 
-# q->workshop
+# q->workshop - duplicate the selected job
 keybinding add Ctrl-D job-duplicate
 
 # materials: q->workshop; b->select items
@@ -48,7 +59,7 @@ keybinding add Shift-O "job-material OBSIDIAN"
 keybinding add Shift-T "job-material ORTHOCLASE"
 keybinding add Shift-G "job-material GLASS_GREEN"
 
-# sort units and items
+# sort units and items in the on-screen list
 keybinding add Alt-Shift-N "sort-units name" "sort-items description"
 keybinding add Alt-Shift-R "sort-units arrival"
 keybinding add Alt-Shift-T "sort-units profession" "sort-items type material"
@@ -60,7 +71,7 @@ keybinding add Ctrl-M@dwarfmode/QueryBuilding/Some gui/mechanisms
 # browse rooms of same owner
 keybinding add Alt-R@dwarfmode/QueryBuilding/Some gui/room-list
 
-# interface for the liquids plugin
+# interface for the liquids plugin - spawn water/magma/obsidian
 keybinding add Alt-L@dwarfmode/LookAround gui/liquids
 
 # machine power sensitive pressure plate construction

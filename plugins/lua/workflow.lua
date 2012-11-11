@@ -266,9 +266,16 @@ function constraintToToken(cspec)
             error('invalid material: '..cspec.mat_type..':'..(cspec.mat_index or -1))
         end
     end
-    local qpart
+    local qlist = {}
+    if cspec.is_local then
+        table.insert(qlist, "LOCAL")
+    end
     if cspec.quality and cspec.quality > 0 then
-        qpart = df.item_quality[cspec.quality] or error('invalid quality: '..cspec.quality)
+        table.insert(qlist, df.item_quality[cspec.quality] or error('invalid quality: '..cspec.quality))
+    end
+    local qpart
+    if #qlist > 0 then
+        qpart = table.concat(qlist, ',')
     end
 
     if mask_part or mat_part or qpart then

@@ -1,7 +1,8 @@
 
 local gui = require 'gui'
 local dlg = require 'gui.dialogs'
-
+local args={...}
+local is_cheat=(#args>0 and args[1]=="-c")
 local cursor=xyz2pos(df.global.cursor.x,df.global.cursor.y,df.global.cursor.z)
 local permited_equips={}
 
@@ -28,6 +29,13 @@ function CheckCursor(p)
     end
     return true
 end
+function getxyz() -- this will return pointers x,y and z coordinates.
+	local x=df.global.cursor.x
+	local y=df.global.cursor.y
+	local z=df.global.cursor.z	
+	return x,y,z -- return the coords
+end
+
 function GetCaste(race_id,caste_id)
     local race=df.creature_raw.find(race_id)
     return race.caste[caste_id]
@@ -302,8 +310,39 @@ end},
     end
     return true
 end},
+{name="Get in",f=function (unit_list,pos)
+    if not CheckCursor(pos) then
+        return false
+    end
+	adv=df.global.world.units.active[0]
+	item=getItemsAtPos(getxyz())[1]
+	print(item.id)
+    for k,v in pairs(unit_list) do
+        v.riding_item_id=item.id
+        local ref=df.general_ref_unit_riderst:new()
+        ref.unit_id=v.id
+        item.itemrefs:insert("#",ref)
+	end
+	return true
+end},
 }
-local cheats={}
+local cheats={
+{name="Patch up",f=function (unit_list)
+    local dft=require("plugins.dfusion.tools")
+    for k,v in pairs(unit_list) do 
+        dft.healunit(v)
+ 	end
+	return true
+end},
+{name="Power up",f=function (unit_list)
+    local dft=require("plugins.dfusion.tools")
+    for k,d in pairs(unit_list) do 
+        dft.powerup(d)
+    end
+    return true
+end},
+
+}
 --[[ todo: add cheats...]]--
 function getCompanions(unit)
     unit=unit or df.global.world.units.active[0]
@@ -371,7 +410,14 @@ function CompanionUi:onInput(keys)
                     self:dismiss()
                 end
             end
-            --do order
+            if is_cheat then
+                idx=idx-#orders
+                if cheats[idx] and cheats[idx].f then
+                    if cheats[idx].f(self:GetSelectedUnits(),cursor) then
+                        self:dismiss()
+                    end
+                end
+            end
         end
     end
 end
@@ -392,6 +438,11 @@ function CompanionUi:onRenderBody( dc)
     local char_A=string.byte('A')-1
     for k,v in ipairs(orders) do
         dc:seek(w/2,k):string(string.char(k+char_A)..". "):string(v.name);
+    end
+    if is_cheat then
+        for k,v in ipairs(cheats) do
+            dc:seek(w/2,k+#orders):string(string.char(k+#orders+char_A)..". "):string(v.name);
+        end
     end
 end
 local screen=CompanionUi{unit_list=getCompanions()}

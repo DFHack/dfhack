@@ -150,13 +150,8 @@ function project(unit,trg) --TODO add to menu?
 end
 function empregnate(unit)
 	if unit==nil then
-		unit=getSelectedUnit()
+		unit=dfhack.gui.getSelectedUnit()
 	end
-	
-	if unit==nil then
-		unit=getCreatureAtPos(getxyz())
-	end
-	
 	if unit==nil then
 		error("Failed to empregnate. Unit not selected/valid")
 	end
@@ -182,4 +177,67 @@ function empregnate(unit)
 	unit.relations.pregnancy_mystery=1
 end
 menu:add("Empregnate",empregnate)
+function healunit(unit)
+    if unit==nil then
+		unit=dfhack.gui.getSelectedUnit()
+	end
+
+	if unit==nil then
+		error("Failed to Heal unit. Unit not selected/valid")
+	end
+    
+    unit.body.wounds:resize(0) -- memory leak here :/
+	unit.body.blood_count=unit.body.blood_max
+	--set flags for standing and grasping...
+	unit.status2.able_stand=4
+	unit.status2.able_stand_impair=4
+	unit.status2.able_grasp=4
+	unit.status2.able_grasp_impair=4
+	--should also set temperatures, and flags for breath etc...
+	unit.flags1.dead=false
+	unit.flags2.calculated_bodyparts=false
+	unit.flags2.calculated_nerves=false
+	unit.flags2.circulatory_spray=false
+	unit.flags2.vision_good=true
+	unit.flags2.vision_damaged=false
+	unit.flags2.vision_missing=false
+	unit.counters.winded=0
+	unit.counters.unconscious=0
+	for k,v in pairs(unit.body.components) do
+		for kk,vv in pairs(v) do
+			if k == 'body_part_status' then v[kk].whole = 0  else v[kk] = 0 end
+		end
+	end
+end
+menu:add("Heal unit",healunit)
+function powerup(unit,labor_rating,military_rating,skills)
+    if unit==nil then
+		unit=dfhack.gui.getSelectedUnit()
+	end
+	if unit==nil then
+		error("Failed to power up unit. Unit not selected/valid")
+	end
+    
+    if unit.status.current_soul== nil then
+        error("Failed to power up unit. Unit has no soul")
+    end
+    local utils = require 'utils'
+    labor_rating = labor_rating or 15
+    military_rating = military_rating or 70
+
+    skill =skill or { 0,2,3,4,5,6,7,8,9,10,11,12,13,14,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,41,42,43,44,45,46,47,48,49,54,55,57,58,59,60,61,62,63,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,95,96,97,98,99,100,101,102,103,104,105,109,110,111,112,113,114,115 }
+    local military = { 38,39,41,42,43,44,45,46,54,99,100,101,102,103,104,105 }
+
+    for sk,sv in ipairs(skill) do
+    local new_rating = labor_rating
+    for _,v in ipairs(military) do
+      if v == sv then
+        local new_rating = military_rating
+      end
+    end
+    utils.insert_or_update(unit.status.current_soul.skills, { new = true, id = sv, rating = new_rating, experience = (new_rating * 500) + (new_rating * (new_rating - 1)) * 50}, 'id')
+    end
+  
+end
+menu:add("Power up",powerup)
 return _ENV

@@ -406,6 +406,7 @@ static void start_protect(color_ostream &out)
         out.print("Protecting %d jobs.\n", known_jobs.size());
 }
 
+static bool first_update_done = false;
 static void init_state(color_ostream &out)
 {
     auto pworld = Core::getInstance().getWorld();
@@ -430,6 +431,7 @@ static void init_state(color_ostream &out)
 
     last_tick_frame_count = world->frame_counter;
     last_frame_count = world->frame_counter;
+    first_update_done = false;
 
     if (!enabled)
         return;
@@ -437,7 +439,6 @@ static void init_state(color_ostream &out)
     start_protect(out);
 }
 
-static bool first_update_done = false;
 static void enable_plugin(color_ostream &out)
 {
     auto pworld = Core::getInstance().getWorld();

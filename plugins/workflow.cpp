@@ -466,7 +466,7 @@ static void enable_plugin(color_ostream &out)
  *     JOB AUTO-RECOVERY      *
  ******************************/
 
-static void forget_job(color_ostream &out, ProtectedJob *pj)
+static void forget_job(const color_ostream &out, ProtectedJob *pj)
 {
     known_jobs.erase(pj->id);
     delete pj;
@@ -1880,7 +1880,7 @@ namespace wf_ui
                 max_item_width = entry.text.length();
         }
 
-        void add(string &text, T &elem)
+        void add(const string &text, T &elem)
         {
             list.push_back(ListEntry<T>(text, elem));
             if (text.length() > max_item_width)
@@ -1990,7 +1990,7 @@ namespace wf_ui
 
             if (auto_select && !multiselect)
             {
-                for (vector< ListEntry<T> >::iterator it = list.begin(); it != list.end(); it++)
+                for (typename vector< ListEntry<T> >::iterator it = list.begin(); it != list.end(); it++)
                 {
                     it->selected = false;
                 }
@@ -2026,7 +2026,7 @@ namespace wf_ui
         vector<T*> getSelectedElems(bool only_one = false)
         {
             vector<T*> results;
-            for (vector< ListEntry<T> >::iterator it = list.begin(); it != list.end(); it++)
+            for (typename vector< ListEntry<T> >::iterator it = list.begin(); it != list.end(); it++)
             {
                 if ((*it).selected)
                 {

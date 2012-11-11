@@ -4,6 +4,8 @@ local ms=require("memscan")
 local MAX_RACES=100
 CustomEmbark=defclass(CustomEmbark,dfu.BinaryPlugin)
 CustomEmbark.name="CustomEmbark"
+
+print(t)
 local myos=dfhack.getOSType()
 if myos=="windows" then
     CustomEmbark.ATTRS{filename="hack/lua/plugins/dfusion/embark.o",name="CustomEmbark",race_caste_data=DEFAULT_NIL}

@@ -1,0 +1,1 @@
+as  -anl --32 -o friendship.o friendship.asm

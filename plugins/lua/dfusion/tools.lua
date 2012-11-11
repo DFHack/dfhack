@@ -94,8 +94,8 @@ function MakeFollow(unit,trgunit)
 		trgunit=df.global.world.units.active[0]
 	end
 	unit.relations.group_leader_id=trgunit.id
-	local u_nem=getNemesis(unit)
-	local t_nem=getNemesis(trgunit)
+	local u_nem=dfhack.units.getNemesis(unit)
+	local t_nem=dfhack.units.getNemesis(trgunit)
 	if u_nem then
 		u_nem.group_leader_id=t_nem.id
 	end

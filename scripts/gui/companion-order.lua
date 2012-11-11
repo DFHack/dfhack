@@ -7,6 +7,7 @@ local cursor=xyz2pos(df.global.cursor.x,df.global.cursor.y,df.global.cursor.z)
 local permited_equips={}
 
 permited_equips[df.item_backpackst]="UPPERBODY"
+permited_equips[df.item_quiverst]="UPPERBODY"
 permited_equips[df.item_flaskst]="UPPERBODY"
 permited_equips[df.item_armorst]="UPPERBODY"
 permited_equips[df.item_shoesst]="STANCE"
@@ -14,7 +15,7 @@ permited_equips[df.item_glovesst]="GRASP"
 permited_equips[df.item_helmst]="HEAD"
 permited_equips[df.item_pantsst]="LOWERBODY"
 function DoesHaveSubtype(item)
-    if df.item_backpackst:is_instance(item) or df.item_flaskst:is_instance(item) then
+    if df.item_backpackst:is_instance(item) or df.item_flaskst:is_instance(item) or df.item_quiverst:is_instance(item) then
         return false
     end
     return true
@@ -263,6 +264,26 @@ end},
     end
     return true
 end},
+{name="unwield",f=function (unit_list)
+    
+    for k,v in pairs(unit_list) do
+        local wep_count=0
+        for _,it in pairs(v.inventory) do
+            if it.mode==1 then
+                wep_count=wep_count+1
+            end
+        end
+        for i=1,wep_count do
+            for _,it in pairs(v.inventory) do
+                if it.mode==1 then
+                    dfhack.items.moveToGround(it.item,v.pos)
+                    break
+                end
+            end    
+        end
+    end
+    return true
+end},
 --[=[
 {name="roam not working :<",f=function (unit_list,pos,dist) --does not work
     if not CheckCursor(pos) then
@@ -310,21 +331,7 @@ end},
     end
     return true
 end},
-{name="Get in",f=function (unit_list,pos)
-    if not CheckCursor(pos) then
-        return false
-    end
-	adv=df.global.world.units.active[0]
-	item=getItemsAtPos(getxyz())[1]
-	print(item.id)
-    for k,v in pairs(unit_list) do
-        v.riding_item_id=item.id
-        local ref=df.general_ref_unit_riderst:new()
-        ref.unit_id=v.id
-        item.itemrefs:insert("#",ref)
-	end
-	return true
-end},
+
 }
 local cheats={
 {name="Patch up",f=function (unit_list)
@@ -341,7 +348,21 @@ end},
     end
     return true
 end},
-
+{name="get in",f=function (unit_list,pos)
+    if not CheckCursor(pos) then
+        return false
+    end
+	adv=df.global.world.units.active[0]
+	item=getItemsAtPos(getxyz())[1]
+	print(item.id)
+    for k,v in pairs(unit_list) do
+        v.riding_item_id=item.id
+        local ref=df.general_ref_unit_riderst:new()
+        ref.unit_id=v.id
+        item.itemrefs:insert("#",ref)
+	end
+	return true
+end},
 }
 --[[ todo: add cheats...]]--
 function getCompanions(unit)

@@ -35,7 +35,7 @@ function FriendshipRainbow:find_all()
         dfu.concatTables(locations,self:find_one(code,{0x0f,0xbf,reg},crace)) --movsx reg,[ptr]
         dfu.concatTables(locations,self:find_one(code,{0x66,0x8b,reg},crace)) --mov reg,[ptr]
     end
-    printall(locations)
+   
     return self:filter_locations(code,locations)
 end
 function FriendshipRainbow:filter_locations(codesg,locations)
@@ -107,5 +107,6 @@ function FriendshipRainbow:install(races)
         local addr=self:move_to_df()
         self:patchCalls(addr)
         self.installed=true
-    end
+end
+Friendship=Friendship or FriendshipRainbow()
 return _ENV

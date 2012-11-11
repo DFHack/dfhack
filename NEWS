@@ -11,6 +11,7 @@ DFHack future
     - added a small stand-alone utility for applying and removing binary patches.
     - removebadthoughts: add --dry-run option
   New scripts:
+    - binpatch: the same as the stand-alone binpatch.exe, but works at runtime.
     - region-pops: displays animal populations of the region and allows tweaking them.
   New GUI scripts:
     - gui/guide-path: displays the cached path for minecart Guide orders.

@@ -1761,6 +1761,17 @@ gui/*
 Scripts that implement dialogs inserted into the main game window are put in this
 directory.
 
+binpatch
+========
+
+Checks, applies or removes binary patches directly in memory at runtime::
+
+  binpatch check/apply/remove <patchname>
+
+If the name of the patch has no extension or directory separators, the
+script uses ``hack/patches/<df-version>/<name>.dif``, thus auto-selecting
+the version appropriate for the currently loaded executable.
+
 quicksave
 =========
 

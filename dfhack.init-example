@@ -132,3 +132,26 @@ tweak fast-trade
 tweak military-stable-assign
 # in same list, color units already assigned to squads in brown & green
 tweak military-color-assigned
+
+#######################################################
+# Apply binary patches at runtime                     #
+#                                                     #
+# Commented out by default; enable the ones you want. #
+#######################################################
+
+# Bug 5994 - items teleported when removing a construction
+#binpatch apply deconstruct-teleport
+#binpatch apply deconstruct-heapfall
+
+# Bug 4406 - hospital overstocking on all items
+#binpatch apply hospital-overstocking
+
+# Bug 808 - custom reactions completely using up all of their reagents
+#binpatch apply custom-reagent-size
+
+# Bug 4530 - marksdwarves not training when quiver full of combat-only ammo
+#binpatch apply training-ammo
+
+# Bug 1445 - weapon racks broken, armor stand capacity too low
+#binpatch apply weaponrack-unassign
+#binpatch apply armorstand-capacity

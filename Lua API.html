@@ -1763,8 +1763,16 @@ global environment, persistent between calls to the script.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getVTable(name)</tt></p>
 <p>Returns the pre-extracted vtable address <tt class="docutils literal">name</tt>, or <em>nil</em>.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.getImageBase()</tt></p>
+<p>Returns the mmap base of the executable.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getRebaseDelta()</tt></p>
 <p>Returns the ASLR rebase offset of the DF executable.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.internal.adjustOffset(offset[,to_file])</span></tt></p>
+<p>Returns the re-aligned offset, or <em>nil</em> if invalid.
+If <tt class="docutils literal">to_file</tt> is true, the offset is adjusted from memory to file.
+This function returns the original value everywhere except windows.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getMemRanges()</tt></p>
 <p>Returns a sequence of tables describing virtual memory ranges of the process.</p>

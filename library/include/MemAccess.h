@@ -275,11 +275,13 @@ namespace DFHack
             {
                 return my_descriptor;
             };
-            uint32_t getBase();
+            uintptr_t getBase();
             /// get the DF Process ID
             int getPID();
             /// get the DF Process FilePath
             std::string getPath();
+            /// Adjust between in-memory and in-file image offset
+            int adjustOffset(int offset, bool to_file = false);
 
             /// millisecond tick count, exactly as DF uses
             uint32_t getTickCount();

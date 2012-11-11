@@ -160,7 +160,7 @@ Process::Process(VersionInfoFactory * factory)
         identified = true;
         // give the process a data model and memory layout fixed for the base of first module
         my_descriptor  = new VersionInfo(*vinfo);
-        my_descriptor->rebaseTo((uint32_t)d->base);
+        my_descriptor->rebaseTo(getBase());
         for(size_t i = 0; i < threads_ids.size();i++)
         {
             HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads_ids[i]);
@@ -394,12 +394,45 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
-uint32_t Process::getBase()
+uintptr_t Process::getBase()
 {
     if(d)
-        return (uint32_t) d->base;
+        return (uintptr_t) d->base;
     return 0x400000;
 }
+
+int Process::adjustOffset(int offset, bool to_file)
+{
+    if (!d)
+        return -1;
+
+    for(int i = 0; i < d->pe_header.FileHeader.NumberOfSections; i++)
+    {
+        auto &section = d->sections[i];
+
+        if (to_file)
+        {
+            unsigned delta = offset - section.VirtualAddress;
+            if (delta >= section.Misc.VirtualSize)
+                continue;
+            if (!section.PointerToRawData || delta >= section.SizeOfRawData)
+                return -1;
+            return (int)(section.PointerToRawData + delta);
+        }
+        else
+        {
+            unsigned delta = offset - section.PointerToRawData;
+            if (!section.PointerToRawData || delta >= section.SizeOfRawData)
+                continue;
+            if (delta >= section.Misc.VirtualSize)
+                return -1;
+            return (int)(section.VirtualAddress + delta);
+        }
+    }
+
+    return -1;
+}
+
 
 string Process::doReadClassName (void * vptr)
 {

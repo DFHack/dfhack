@@ -155,9 +155,14 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     fclose(mapFile);
 }
 
-uint32_t Process::getBase()
+uintptr_t Process::getBase()
 {
-    return 0;
+    return 0x8048000;
+}
+
+int Process::adjustOffset(int offset, bool /*to_file*/)
+{
+    return offset;
 }
 
 static int getdir (string dir, vector<string> &files)

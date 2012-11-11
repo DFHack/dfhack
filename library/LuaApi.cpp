@@ -1718,9 +1718,11 @@ static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
     return rv;
 }
 
+static uint32_t getImageBase() { return Core::getInstance().p->getBase(); }
 static int getRebaseDelta() { return Core::getInstance().vinfo->getRebaseDelta(); }
 
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
+    WRAP(getImageBase),
     WRAP(getRebaseDelta),
     { NULL, NULL }
 };
@@ -1769,6 +1771,18 @@ static int internal_getVTable(lua_State *L)
     uint32_t addr = (uint32_t)Core::getInstance().vinfo->getVTable(name);
     if (addr)
         lua_pushnumber(L, addr);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static int internal_adjustOffset(lua_State *L)
+{
+    lua_settop(L, 2);
+    int off = luaL_checkint(L, 1);
+    int rv = Core::getInstance().p->adjustOffset(off, lua_toboolean(L, 2));
+    if (rv >= 0)
+        lua_pushinteger(L, rv);
     else
         lua_pushnil(L);
     return 1;
@@ -1981,6 +1995,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
     { "getVTable", internal_getVTable },
+    { "adjustOffset", internal_adjustOffset },
     { "getMemRanges", internal_getMemRanges },
     { "patchMemory", internal_patchMemory },
     { "patchBytes", internal_patchBytes },

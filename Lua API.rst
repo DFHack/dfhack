@@ -1618,9 +1618,19 @@ and are only documented here for completeness:
 
   Returns the pre-extracted vtable address ``name``, or *nil*.
 
+* ``dfhack.internal.getImageBase()``
+
+  Returns the mmap base of the executable.
+
 * ``dfhack.internal.getRebaseDelta()``
 
   Returns the ASLR rebase offset of the DF executable.
+
+* ``dfhack.internal.adjustOffset(offset[,to_file])``
+
+  Returns the re-aligned offset, or *nil* if invalid.
+  If ``to_file`` is true, the offset is adjusted from memory to file.
+  This function returns the original value everywhere except windows.
 
 * ``dfhack.internal.getMemRanges()``
 

@@ -12,11 +12,16 @@ DFHack future
     - removebadthoughts: add --dry-run option
   New scripts:
     - region-pops: displays animal populations of the region and allows tweaking them.
+    - lua: lua interpreter.
+    - dfusion: misc scripts with a text based menu.
+    - embark: lets you embark anywhere.
   New GUI scripts:
     - gui/guide-path: displays the cached path for minecart Guide orders.
     - gui/workshop-job: displays inputs of a workshop job and allows tweaking them.
     - gui/workflow: a front-end for the workflow plugin.
     - gui/assign-rack: works together with a binary patch to fix weapon racks.
+    - gui/gm-editor: an universal editor for lots of dfhack things.
+    - gui/companion-order: a adventure mode command interface for your companions.
   Workflow plugin:
     - properly considers minecarts assigned to routes busy.
     - code for deducing job outputs rewritten in lua for flexibility.
@@ -29,7 +34,8 @@ DFHack future
     properly designated barracks be used again for storage of squad equipment.
   New Search plugin by falconne:
     Adds an incremental search function to the Stocks, Trading and Unit List screens.
-
+  Dfusion plugin:
+    Reworked to make use of lua modules, now all the scripts can be used from other scripts.
 
 DFHack v0.34.11-r2
 

@@ -10,6 +10,8 @@ DFHack future
     - fastdwarf: new mode using debug flags, and some internal consistency fixes.
     - added a small stand-alone utility for applying and removing binary patches.
     - removebadthoughts: add --dry-run option
+  New scripts:
+    - region-pops: displays animal populations of the region and allows tweaking them.
   New GUI scripts:
     - gui/guide-path: displays the cached path for minecart Guide orders.
     - gui/workshop-job: displays inputs of a workshop job and allows tweaking them.
@@ -19,10 +21,15 @@ DFHack future
     - properly considers minecarts assigned to routes busy.
     - code for deducing job outputs rewritten in lua for flexibility.
     - logic fix: collecting webs produces silk, and ungathered webs are not thread.
+    - items assigned to squads are considered busy, even if not in inventory.
+    - shearing and milking jobs are supported, but only with generic MILK or YARN outputs.
   New Fix Armory plugin:
     Together with a couple of binary patches and the gui/assign-rack script,
     this plugin makes weapon racks, armor stands, chests and cabinets in
     properly designated barracks be used again for storage of squad equipment.
+  New Search plugin by falconne:
+    Adds an incremental search function to the Stocks, Trading and Unit List screens.
+
 
 DFHack v0.34.11-r2
 

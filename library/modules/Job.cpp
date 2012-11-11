@@ -75,7 +75,7 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job)
     {
         df::general_ref *ref = pnew->references[i];
 
-        if (virtual_cast<df::general_ref_unit_workerst>(ref))
+        if (virtual_cast<df::general_ref_unit>(ref))
             vector_erase_at(pnew->references, i);
         else
             pnew->references[i] = ref->clone();

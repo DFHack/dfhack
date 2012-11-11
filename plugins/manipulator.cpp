@@ -298,6 +298,10 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
 {
     if (sort_skill != job_skill::NONE)
     {
+        if (!d1->unit->status.current_soul)
+            return !descending;
+        if (!d2->unit->status.current_soul)
+            return descending;
         df::unit_skill *s1 = binsearch_in_vector<df::unit_skill,df::job_skill>(d1->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
         df::unit_skill *s2 = binsearch_in_vector<df::unit_skill,df::job_skill>(d2->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
         int l1 = s1 ? s1->rating : 0;
@@ -1030,7 +1034,9 @@ void viewscreen_unitlaborsst::render()
                 fg = 9;
             if (columns[col_offset].skill != job_skill::NONE)
             {
-                df::unit_skill *skill = binsearch_in_vector<df::unit_skill,df::job_skill>(unit->status.current_soul->skills, &df::unit_skill::id, columns[col_offset].skill);
+                df::unit_skill *skill = NULL;
+                if (unit->status.current_soul)
+                    skill = binsearch_in_vector<df::unit_skill,df::job_skill>(unit->status.current_soul->skills, &df::unit_skill::id, columns[col_offset].skill);
                 if ((skill != NULL) && (skill->rating || skill->experience))
                 {
                     int level = skill->rating;
@@ -1061,18 +1067,22 @@ void viewscreen_unitlaborsst::render()
     if (cur != NULL)
     {
         df::unit *unit = cur->unit;
-        int x = 1;
-        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, cur->transname);
+        int x = 1, y = 3 + num_rows + 2;
+        Screen::Pen white_pen(' ', 15, 0);
+
+        Screen::paintString(white_pen, x, y, (cur->unit && cur->unit->sex) ? "\x0b" : "\x0c");
+        x += 2;
+        Screen::paintString(white_pen, x, y, cur->transname);
         x += cur->transname.length();
 
         if (cur->transname.length())
         {
-            Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, ", ");
+            Screen::paintString(white_pen, x, y, ", ");
             x += 2;
         }
-        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, cur->profession);
+        Screen::paintString(white_pen, x, y, cur->profession);
         x += cur->profession.length();
-        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, ": ");
+        Screen::paintString(white_pen, x, y, ": ");
         x += 2;
 
         string str;
@@ -1086,7 +1096,9 @@ void viewscreen_unitlaborsst::render()
         }
         else
         {
-            df::unit_skill *skill = binsearch_in_vector<df::unit_skill,df::job_skill>(unit->status.current_soul->skills, &df::unit_skill::id, columns[sel_column].skill);
+            df::unit_skill *skill = NULL;
+            if (unit->status.current_soul)
+                skill = binsearch_in_vector<df::unit_skill,df::job_skill>(unit->status.current_soul->skills, &df::unit_skill::id, columns[sel_column].skill);
             if (skill)
             {
                 int level = skill->rating;

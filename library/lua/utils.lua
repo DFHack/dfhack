@@ -457,6 +457,7 @@ function getBuildingCenter(building)
     return xyz2pos(building.centerx, building.centery, building.z)
 end
 
+-- Split the string by the given delimiter
 function split_string(self, delimiter)
     local result = { }
     local from  = 1

@@ -204,6 +204,12 @@ namespace DFHack
     }
 
     inline
+    bool FlowPassableDown(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype_shape, passable_flow_down, tileShape(tiletype));
+    }
+
+    inline
     bool isWalkable(df::tiletype tiletype)
     {
         return ENUM_ATTR(tiletype_shape, walkable, tileShape(tiletype));

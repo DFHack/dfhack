@@ -725,6 +725,316 @@ static void OpenMatinfo(lua_State *state)
     lua_pop(state, 1);
 }
 
+/**************
+ * Pen object *
+ **************/
+
+static int DFHACK_PEN_TOKEN = 0;
+
+void Lua::Push(lua_State *L, const Screen::Pen &info)
+{
+    if (!info.valid())
+    {
+        lua_pushnil(L);
+        return;
+    }
+
+    void *pdata = lua_newuserdata(L, sizeof(Pen));
+
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_PEN_TOKEN);
+    lua_setmetatable(L, -2);
+
+    new (pdata) Pen(info);
+}
+
+static Pen *check_pen_native(lua_State *L, int index)
+{
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_PEN_TOKEN);
+
+    if (!lua_getmetatable(L, index) || !lua_rawequal(L, -1, -2))
+        luaL_argerror(L, index, "not a pen object");
+
+    lua_pop(L, 2);
+
+    return (Pen*)lua_touserdata(L, index);
+}
+
+void Lua::CheckPen(lua_State *L, Screen::Pen *pen, int index, bool allow_nil, bool allow_color)
+{
+    index = lua_absindex(L, index);
+
+    luaL_checkany(L, index);
+
+    if (lua_isnil(L, index))
+    {
+        if (!allow_nil)
+            luaL_argerror(L, index, "nil pen not allowed");
+
+        *pen = Pen(0,0,0,-1);
+    }
+    else if (lua_isuserdata(L, index))
+    {
+        *pen = *check_pen_native(L, index);
+    }
+    else if (allow_color && lua_isnumber(L, index))
+    {
+        *pen = Pen(0, lua_tointeger(L, index)&15, 0);
+    }
+    else
+    {
+        luaL_checktype(L, index, LUA_TTABLE);
+        decode_pen(L, *pen, index);
+    }
+}
+
+static int adjust_pen(lua_State *L, bool no_copy)
+{
+    lua_settop(L, 4);
+
+    Pen pen;
+    int iidx = 1;
+    Lua::CheckPen(L, &pen, 1, true, true);
+
+    if (!lua_isnil(L, 2) || !lua_isnil(L, 3) || !lua_isnil(L, 4))
+    {
+        if (lua_isnumber(L, 2) || lua_isnil(L, 2))
+        {
+            if (!pen.valid())
+                pen = Pen();
+
+            iidx = -1;
+
+            pen.fg = luaL_optint(L, 2, pen.fg) & 15;
+            pen.bg = luaL_optint(L, 3, pen.bg);
+
+            if (!lua_isnil(L, 4))
+                pen.bold = lua_toboolean(L, 4);
+            else if (!lua_isnil(L, 2))
+            {
+                pen.bold = !!(pen.fg & 8);
+                pen.fg &= 7;
+            }
+        }
+        else
+        {
+            iidx = 2;
+            Lua::CheckPen(L, &pen, 2, false, false);
+        }
+    }
+
+    if (no_copy && iidx > 0 && lua_isuserdata(L, iidx))
+        lua_pushvalue(L, iidx);
+    else
+        Lua::Push(L, pen);
+
+    return 1;
+}
+
+static int dfhack_pen_parse(lua_State *L)
+{
+    return adjust_pen(L, true);
+}
+
+static int dfhack_pen_make(lua_State *L)
+{
+    return adjust_pen(L, false);
+}
+
+static void make_pen_table(lua_State *L, Pen &pen)
+{
+    if (!pen.valid())
+        luaL_error(L, "invalid pen state");
+    else
+    {
+        lua_newtable(L);
+        lua_pushinteger(L, (unsigned char)pen.ch); lua_setfield(L, -2, "ch");
+        lua_pushinteger(L, pen.fg); lua_setfield(L, -2, "fg");
+        lua_pushinteger(L, pen.bg); lua_setfield(L, -2, "bg");
+        lua_pushboolean(L, pen.bold); lua_setfield(L, -2, "bold");
+
+        if (pen.tile)
+        {
+            lua_pushinteger(L, pen.tile); lua_setfield(L, -2, "tile");
+        }
+
+        switch (pen.tile_mode) {
+            case Pen::CharColor:
+                lua_pushboolean(L, true); lua_setfield(L, -2, "tile_color");
+                break;
+            case Pen::TileColor:
+                lua_pushinteger(L, pen.tile_fg); lua_setfield(L, -2, "tile_fg");
+                lua_pushinteger(L, pen.tile_bg); lua_setfield(L, -2, "tile_bg");
+                break;
+            default:
+                lua_pushboolean(L, false); lua_setfield(L, -2, "tile_color");
+                break;
+        }
+    }
+}
+
+static void get_pen_mirror(lua_State *L, int idx)
+{
+    lua_getuservalue(L, idx);
+
+    if (lua_isnil(L, -1))
+    {
+        lua_pop(L, 1);
+
+        Pen pen;
+        Lua::CheckPen(L, &pen, idx, false, false);
+        make_pen_table(L, pen);
+
+        lua_dup(L);
+        lua_setuservalue(L, idx);
+    }
+}
+
+static int dfhack_pen_index(lua_State *L)
+{
+    lua_settop(L, 2);
+    luaL_checktype(L, 1, LUA_TUSERDATA);
+
+    // check metatable
+    if (!lua_getmetatable(L, 1))
+        luaL_argerror(L, 1, "must be a pen");
+    lua_pushvalue(L, 2);
+    lua_rawget(L, -2);
+    if (!lua_isnil(L, -1))
+        return 1;
+
+    // otherwise read from the mirror table, creating it if necessary
+    lua_settop(L, 2);
+    get_pen_mirror(L, 1);
+    lua_pushvalue(L, 2);
+    lua_rawget(L, -2);
+    return 1;
+}
+
+static int pen_pnext(lua_State *L)
+{
+    lua_settop(L, 2);  /* create a 2nd argument if there isn't one */
+    if (lua_next(L, lua_upvalueindex(1)))
+        return 2;
+    lua_pushnil(L);
+    return 1;
+}
+
+static int dfhack_pen_pairs(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TUSERDATA);
+    get_pen_mirror(L, 1);
+    lua_pushcclosure(L, pen_pnext, 1);
+    lua_pushnil(L);
+    lua_pushnil(L);
+    return 3;
+}
+
+const char *const pen_fields[] = {
+    "ch", "fg", "bold", "bg", "tile", "tile_color", "tile_fg", "tile_bg", NULL
+};
+
+static int dfhack_pen_newindex(lua_State *L)
+{
+    lua_settop(L, 3);
+    luaL_checktype(L, 1, LUA_TUSERDATA);
+    int id = luaL_checkoption(L, 2, NULL, pen_fields);
+    int arg = 0;
+    Pen &pen = *check_pen_native(L, 1);
+    bool wipe_tile = false, wipe_tc = false;
+
+    switch (id) {
+    case 0:
+        if (lua_type(L, 3) != LUA_TNUMBER)
+            arg = (unsigned char)*luaL_checkstring(L, 3);
+        else
+            arg = luaL_checkint(L, 3);
+        pen.ch = arg;
+        lua_pushinteger(L, (unsigned char)pen.ch);
+        break;
+    case 1:
+        pen.fg = luaL_checkint(L, 3) & 15;
+        lua_pushinteger(L, pen.fg);
+        break;
+    case 2:
+        pen.bold = lua_toboolean(L, 3);
+        lua_pushboolean(L, pen.bold);
+        break;
+    case 3:
+        pen.bg = luaL_checkint(L, 3) & 15;
+        lua_pushinteger(L, pen.bg);
+        break;
+    case 4:
+        arg = lua_isnil(L, 3) ? 0 : luaL_checkint(L, 3);
+        if (arg < 0)
+            luaL_argerror(L, 3, "invalid tile index");
+        pen.tile = arg;
+        if (pen.tile)
+            lua_pushinteger(L, pen.tile);
+        else
+            lua_pushnil(L);
+        break;
+    case 5:
+        wipe_tile = (pen.tile_mode == Pen::TileColor);
+        pen.tile_mode = lua_toboolean(L, 3) ? Pen::CharColor : Pen::AsIs;
+        lua_pushboolean(L, pen.tile_mode == Pen::CharColor);
+        break;
+    case 6:
+        if (pen.tile_mode != Pen::TileColor) { wipe_tc = true; pen.tile_bg = 0; }
+        pen.tile_fg = luaL_checkint(L, 3) & 15;
+        pen.tile_mode = Pen::TileColor;
+        lua_pushinteger(L, pen.tile_fg);
+        break;
+    case 7:
+        if (pen.tile_mode != Pen::TileColor) { wipe_tc = true; pen.tile_fg = 7; }
+        pen.tile_bg = luaL_checkint(L, 3) & 15;
+        pen.tile_mode = Pen::TileColor;
+        lua_pushinteger(L, pen.tile_bg);
+        break;
+    }
+
+    lua_getuservalue(L, 1);
+
+    if (!lua_isnil(L, -1))
+    {
+        lua_remove(L, 3);
+        lua_insert(L, 2);
+        lua_rawset(L, 2);
+
+        if (wipe_tc) {
+            lua_pushnil(L); lua_setfield(L, 2, "tile_color");
+            lua_pushinteger(L, pen.tile_fg); lua_setfield(L, 2, "tile_fg");
+            lua_pushinteger(L, pen.tile_bg); lua_setfield(L, 2, "tile_bg");
+        }
+        if (wipe_tile) {
+            lua_pushnil(L); lua_setfield(L, 2, "tile_fg");
+            lua_pushnil(L); lua_setfield(L, 2, "tile_bg");
+        }
+    }
+
+    return 0;
+}
+
+static const luaL_Reg dfhack_pen_funcs[] = {
+    { "parse", dfhack_pen_parse },
+    { "make", dfhack_pen_make },
+    { "__index", dfhack_pen_index },
+    { "__pairs", dfhack_pen_pairs },
+    { "__newindex", dfhack_pen_newindex },
+    { NULL, NULL }
+};
+
+static void OpenPen(lua_State *state)
+{
+    luaL_getsubtable(state, lua_gettop(state), "pen");
+
+    lua_dup(state);
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_PEN_TOKEN);
+
+    luaL_setfuncs(state, dfhack_pen_funcs, 0);
+
+    lua_pop(state, 1);
+}
+
 /************************
  * Wrappers for C++ API *
  ************************/
@@ -1251,7 +1561,7 @@ static int screen_getWindowSize(lua_State *L)
 static int screen_paintTile(lua_State *L)
 {
     Pen pen;
-    decode_pen(L, pen, 1);
+    Lua::CheckPen(L, &pen, 1);
     int x = luaL_checkint(L, 2);
     int y = luaL_checkint(L, 3);
     if (lua_gettop(L) >= 4 && !lua_isnil(L, 4))
@@ -1272,44 +1582,14 @@ static int screen_readTile(lua_State *L)
     int x = luaL_checkint(L, 1);
     int y = luaL_checkint(L, 2);
     Pen pen = Screen::readTile(x, y);
-
-    if (!pen.valid())
-    {
-        lua_pushnil(L);
-    }
-    else
-    {
-        lua_newtable(L);
-        lua_pushinteger(L, pen.ch); lua_setfield(L, -2, "ch");
-        lua_pushinteger(L, pen.fg); lua_setfield(L, -2, "fg");
-        lua_pushinteger(L, pen.bg); lua_setfield(L, -2, "bg");
-        lua_pushboolean(L, pen.bold); lua_setfield(L, -2, "bold");
-
-        if (pen.tile)
-        {
-            lua_pushinteger(L, pen.tile); lua_setfield(L, -2, "tile");
-
-            switch (pen.tile_mode) {
-                case Pen::CharColor:
-                    lua_pushboolean(L, true); lua_setfield(L, -2, "tile_color");
-                    break;
-                case Pen::TileColor:
-                    lua_pushinteger(L, pen.tile_fg); lua_setfield(L, -2, "tile_fg");
-                    lua_pushinteger(L, pen.tile_bg); lua_setfield(L, -2, "tile_bg");
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
+    Lua::Push(L, pen);
     return 1;
 }
 
 static int screen_paintString(lua_State *L)
 {
     Pen pen;
-    decode_pen(L, pen, 1);
+    Lua::CheckPen(L, &pen, 1);
     int x = luaL_checkint(L, 2);
     int y = luaL_checkint(L, 3);
     const char *text = luaL_checkstring(L, 4);
@@ -1320,7 +1600,7 @@ static int screen_paintString(lua_State *L)
 static int screen_fillRect(lua_State *L)
 {
     Pen pen;
-    decode_pen(L, pen, 1);
+    Lua::CheckPen(L, &pen, 1);
     int x1 = luaL_checkint(L, 2);
     int y1 = luaL_checkint(L, 3);
     int x2 = luaL_checkint(L, 4);
@@ -1720,6 +2000,7 @@ void OpenDFHackApi(lua_State *state)
 {
     OpenPersistent(state);
     OpenMatinfo(state);
+    OpenPen(state);
 
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
     OpenModule(state, "gui", dfhack_gui_module);

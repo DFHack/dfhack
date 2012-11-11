@@ -41,6 +41,9 @@ namespace DFHack {
     namespace Units {
         struct NoblePosition;
     }
+    namespace Screen {
+        struct Pen;
+    };
 }
 
 namespace DFHack {namespace Lua {
@@ -285,6 +288,7 @@ namespace DFHack {namespace Lua {
     DFHACK_EXPORT void Push(lua_State *state, df::coord2d obj);
     void Push(lua_State *state, const Units::NoblePosition &pos);
     DFHACK_EXPORT void Push(lua_State *state, MaterialInfo &info);
+    DFHACK_EXPORT void Push(lua_State *state, const Screen::Pen &info);
     template<class T> inline void Push(lua_State *state, T *ptr) {
         PushDFObject(state, ptr);
     }
@@ -314,6 +318,8 @@ namespace DFHack {namespace Lua {
 
     DFHACK_EXPORT int PushPosXYZ(lua_State *state, df::coord pos);
     DFHACK_EXPORT int PushPosXY(lua_State *state, df::coord2d pos);
+
+    DFHACK_EXPORT void CheckPen(lua_State *L, Screen::Pen *pen, int index, bool allow_nil = false, bool allow_color = true);
 
     DFHACK_EXPORT bool IsCoreContext(lua_State *state);
 

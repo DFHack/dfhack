@@ -306,7 +306,7 @@ function JobConstraints:onNewConstraint()
     end
 
     dlg.showListPrompt(
-        'Job Outputs',
+        'New limit',
         'Select one of the possible outputs:',
         COLOR_WHITE,
         choices,

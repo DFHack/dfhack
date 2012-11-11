@@ -301,15 +301,26 @@ function listWeakenedConstraints(outputs)
         local mask = cons.mat_mask
         if (cons.mat_type or -1) >= 0 then
             cons.mat_mask = nil
+            local info = dfhack.matinfo.decode(cons)
+            if info then
+                for i,flag in ipairs(df.dfhack_material_category) do
+                    if flag and flag ~= 'wood2' and info:matches{[flag]=true} then
+                        mask = mask or {}
+                        mask[flag] = true
+                    end
+                end
+            end
         end
         register(cons)
         if mask then
-            table.insert(generic, {
-                item_type = cons.item_type,
-                item_subtype = cons.item_subtype,
-                is_craft = cons.is_craft,
-                mat_mask = mask
-            })
+            for k,v in pairs(mask) do
+                table.insert(generic, {
+                    item_type = cons.item_type,
+                    item_subtype = cons.item_subtype,
+                    is_craft = cons.is_craft,
+                    mat_mask = { [k] = v }
+                })
+            end
         end
         table.insert(anymat, {
             item_type = cons.item_type,

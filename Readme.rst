@@ -1898,6 +1898,31 @@ Pressing ESC normally returns to the unit screen, but Shift-ESC would exit
 directly to the main dwarf mode screen.
 
 
+Search
+======
+
+The search plugin adds search to the Stocks, Trading and Unit List screens.
+
+Searching works the same way as the search option in "Move to Depot" does.
+You will see the Search option displayed on screen with a hotkey (usually 's').
+Pressing it lets you start typing a query and the relevant list will start
+filtering automatically.
+
+Pressing ENTER, ESC or the arrow keys will return you to browsing the now
+filtered list, which still functions as normal. You can clear the filter
+by either going back into search mode and backspacing to delete it, or
+pressing the "shifted" version of the search hotkey while browsing the
+list (e.g. if the hotkey is 's', then hitting 'shift-s' will clear any
+filter).
+
+Leaving any screen automatically clears the filter.
+
+In the Trade screen, the actual trade will always only act on items that
+are actually visible in the list; the same effect applies to the Trade
+Value numbers displayed by the screen. Because of this, pressing the 't'
+key while search is active clears the search instead of executing the trade.
+
+
 gui/liquids
 ===========
 

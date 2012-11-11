@@ -320,7 +320,7 @@ struct workshop_hook : df::building_workshopst {
             for (int y = y1; y <= y2; y++)
             {
                 auto ptile = Maps::getTileType(x,y,z);
-                if (!ptile || !LowPassable(*ptile))
+                if (!ptile || !FlowPassableDown(*ptile))
                     continue;
 
                 auto pltile = Maps::getTileType(x,y,z-1);
@@ -891,7 +891,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(dwarfmode_hook, feed);
  * Scan raws for matching workshop buildings.
  */
 
-static bool find_engines()
+static bool find_engines(color_ostream &out)
 {
     engines.clear();
 
@@ -943,6 +943,8 @@ static bool find_engines()
 
         if (!ws.gear_tiles.empty())
             engines.push_back(ws);
+        else
+            out.printerr("%s has no gear tiles - ignoring.\n", wslist[i]->code.c_str());
     }
 
     return !engines.empty();
@@ -973,7 +975,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_WORLD_LOADED:
-        if (find_engines())
+        if (find_engines(out))
         {
             out.print("Detected steam engine workshops - enabling plugin.\n");
             enable_hooks(true);

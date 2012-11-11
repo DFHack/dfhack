@@ -41,7 +41,7 @@ static int loadObjectFile(lua_State* L)
     //Lua::Push(L,buf);
     lua_pushlightuserdata(L,buf);
     lua_setfield(L,table_pos,"data");
-    OutFile::vSymbol& symbols=f.GetSymbols();
+    const OutFile::vSymbol &symbols=f.GetSymbols();
     lua_newtable(L);
     for(size_t i=0;i<symbols.size();i++)
     {

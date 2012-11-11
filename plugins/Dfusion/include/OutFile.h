@@ -105,7 +105,7 @@ public:
     void GetText(char *ptr);
     size_t GetTextSize();
     void LoadSymbols();
-    vSymbol GetSymbols(){LoadSymbols();return symbols;};
+    const vSymbol &GetSymbols(){LoadSymbols();return symbols;};
     void PrintSymbols();
     void PrintRelocations();
 protected:

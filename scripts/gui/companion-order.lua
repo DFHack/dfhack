@@ -359,7 +359,7 @@ end},
         v.riding_item_id=item.id
         local ref=df.general_ref_unit_riderst:new()
         ref.unit_id=v.id
-        item.itemrefs:insert("#",ref)
+        item.general_refs:insert("#",ref)
 	end
 	return true
 end},

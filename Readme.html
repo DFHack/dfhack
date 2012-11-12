@@ -501,38 +501,40 @@ access DF memory and allow for easier development of new tools.</p>
 <li><a class="reference internal" href="#superdwarf" id="id126">superdwarf</a></li>
 <li><a class="reference internal" href="#drainaquifer" id="id127">drainaquifer</a></li>
 <li><a class="reference internal" href="#deathcause" id="id128">deathcause</a></li>
+<li><a class="reference internal" href="#lua" id="id129">lua</a></li>
+<li><a class="reference internal" href="#embark" id="id130">embark</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#in-game-interface-tools" id="id129">In-game interface tools</a><ul>
-<li><a class="reference internal" href="#dwarf-manipulator" id="id130">Dwarf Manipulator</a></li>
-<li><a class="reference internal" href="#search" id="id131">Search</a></li>
-<li><a class="reference internal" href="#gui-liquids" id="id132">gui/liquids</a></li>
-<li><a class="reference internal" href="#gui-mechanisms" id="id133">gui/mechanisms</a></li>
-<li><a class="reference internal" href="#gui-rename" id="id134">gui/rename</a></li>
-<li><a class="reference internal" href="#gui-room-list" id="id135">gui/room-list</a></li>
-<li><a class="reference internal" href="#gui-choose-weapons" id="id136">gui/choose-weapons</a></li>
-<li><a class="reference internal" href="#gui-guide-path" id="id137">gui/guide-path</a></li>
-<li><a class="reference internal" href="#gui-workshop-job" id="id138">gui/workshop-job</a></li>
-<li><a class="reference internal" href="#gui-workflow" id="id139">gui/workflow</a></li>
-<li><a class="reference internal" href="#gui-assign-rack" id="id140">gui/assign-rack</a></li>
+<li><a class="reference internal" href="#in-game-interface-tools" id="id131">In-game interface tools</a><ul>
+<li><a class="reference internal" href="#dwarf-manipulator" id="id132">Dwarf Manipulator</a></li>
+<li><a class="reference internal" href="#search" id="id133">Search</a></li>
+<li><a class="reference internal" href="#gui-liquids" id="id134">gui/liquids</a></li>
+<li><a class="reference internal" href="#gui-mechanisms" id="id135">gui/mechanisms</a></li>
+<li><a class="reference internal" href="#gui-rename" id="id136">gui/rename</a></li>
+<li><a class="reference internal" href="#gui-room-list" id="id137">gui/room-list</a></li>
+<li><a class="reference internal" href="#gui-choose-weapons" id="id138">gui/choose-weapons</a></li>
+<li><a class="reference internal" href="#gui-guide-path" id="id139">gui/guide-path</a></li>
+<li><a class="reference internal" href="#gui-workshop-job" id="id140">gui/workshop-job</a></li>
+<li><a class="reference internal" href="#gui-workflow" id="id141">gui/workflow</a></li>
+<li><a class="reference internal" href="#gui-assign-rack" id="id142">gui/assign-rack</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#behavior-mods" id="id141">Behavior Mods</a><ul>
-<li><a class="reference internal" href="#siege-engine" id="id142">Siege Engine</a><ul>
-<li><a class="reference internal" href="#rationale" id="id143">Rationale</a></li>
-<li><a class="reference internal" href="#configuration-ui" id="id144">Configuration UI</a></li>
+<li><a class="reference internal" href="#behavior-mods" id="id143">Behavior Mods</a><ul>
+<li><a class="reference internal" href="#siege-engine" id="id144">Siege Engine</a><ul>
+<li><a class="reference internal" href="#rationale" id="id145">Rationale</a></li>
+<li><a class="reference internal" href="#configuration-ui" id="id146">Configuration UI</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#power-meter" id="id145">Power Meter</a></li>
-<li><a class="reference internal" href="#steam-engine" id="id146">Steam Engine</a><ul>
-<li><a class="reference internal" href="#id1" id="id147">Rationale</a></li>
-<li><a class="reference internal" href="#construction" id="id148">Construction</a></li>
-<li><a class="reference internal" href="#operation" id="id149">Operation</a></li>
-<li><a class="reference internal" href="#explosions" id="id150">Explosions</a></li>
-<li><a class="reference internal" href="#save-files" id="id151">Save files</a></li>
+<li><a class="reference internal" href="#power-meter" id="id147">Power Meter</a></li>
+<li><a class="reference internal" href="#steam-engine" id="id148">Steam Engine</a><ul>
+<li><a class="reference internal" href="#id1" id="id149">Rationale</a></li>
+<li><a class="reference internal" href="#construction" id="id150">Construction</a></li>
+<li><a class="reference internal" href="#operation" id="id151">Operation</a></li>
+<li><a class="reference internal" href="#explosions" id="id152">Explosions</a></li>
+<li><a class="reference internal" href="#save-files" id="id153">Save files</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#add-spatter" id="id152">Add Spatter</a></li>
+<li><a class="reference internal" href="#add-spatter" id="id154">Add Spatter</a></li>
 </ul>
 </li>
 </ul>
@@ -1882,7 +1884,7 @@ to make them stand out more in the list.</td>
 <div class="section" id="fix-armory">
 <h3><a class="toc-backref" href="#id83">fix-armory</a></h3>
 <p>Enables a fix for storage of squad equipment in barracks.</p>
-<p>Specifically, it prevents your haulers from moving that equipment
+<p>Specifically, it prevents your haulers from moving squad equipment
 to stockpiles, and instead queues jobs to store it on weapon racks,
 armor stands, and in containers.</p>
 <div class="note">
@@ -1890,9 +1892,10 @@ armor stands, and in containers.</p>
 <p>In order to actually be used, weapon racks have to be patched and
 manually assigned to a squad. See documentation for <tt class="docutils literal"><span class="pre">gui/assign-rack</span></tt>
 below.</p>
-<p class="last">Also, the default capacity of armor stands is way too low, so check out
+<p class="last">Also, the default capacity of armor stands is way too low, so you
+may want to also apply the <tt class="docutils literal"><span class="pre">armorstand-capacity</span></tt> patch. Check out
 <a class="reference external" href="http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445">http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445</a>
-for a patch addressing that too.</p>
+for more information about the bugs.</p>
 </div>
 <p>Note that the buildings in the armory are used as follows:</p>
 <ul class="simple">
@@ -2510,23 +2513,26 @@ twice.</p>
 </div>
 <div class="section" id="dfusion">
 <h3><a class="toc-backref" href="#id112">dfusion</a></h3>
-<p>This is the DFusion lua plugin system by warmist/darius, running as a DFHack plugin.</p>
-<p>See the bay12 thread for details: <a class="reference external" href="http://www.bay12forums.com/smf/index.php?topic=69682.15">http://www.bay12forums.com/smf/index.php?topic=69682.15</a></p>
-<p>Confirmed working DFusion plugins:</p>
-<table class="docutils field-list" frame="void" rules="none">
+<dl class="docutils">
+<dt>This is the DFusion lua plugin system by Warmist, running as a DFHack plugin. There are two parts to this plugin: an interactive script that shows a text based menu and lua modules. Some of the functionality of is intentionaly left out of the menu:</dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">simple_embark:</th><td class="field-body">allows changing the number of dwarves available on embark.</td>
+<tr class="field"><th class="field-name">Friendship:</th><td class="field-body">a binary plugin that allows multi race forts (to use make a script that imports plugins.dfusion.friendship and use Friendship:install{table} table should contain list of race names.)</td>
+</tr>
+<tr class="field"><th class="field-name">Embark:</th><td class="field-body">a binary plugin that allows multi race embark (to use make a script that imports plugins.dfusion.embark and use Embark:install{table} table should contain list of race names or list of pairs (race-name, caste_id)).</td>
 </tr>
 </tbody>
 </table>
+</dd>
+</dl>
+<p>See the bay12 thread for details: <a class="reference external" href="http://www.bay12forums.com/smf/index.php?topic=93317.0">http://www.bay12forums.com/smf/index.php?topic=93317.0</a></p>
 <div class="note">
 <p class="first admonition-title">Note</p>
 <ul class="last simple">
 <li>Some of the DFusion plugins aren't completely ported yet. This can lead to crashes.</li>
-<li>This is currently working only on Windows.</li>
-<li>The game will be suspended while you're using dfusion. Don't panic when it doen't respond.</li>
+<li>The game will be suspended while you're using dfusion. Don't panic when it doesn't respond.</li>
 </ul>
 </div>
 </div>
@@ -2726,9 +2732,25 @@ superdwarf add
 <p>Focus a body part ingame, and this script will display the cause of death of
 the creature.</p>
 </div>
+<div class="section" id="lua">
+<h2><a class="toc-backref" href="#id129">lua</a></h2>
+<dl class="docutils">
+<dt>There are three ways to invoke this command:</dt>
+<dd><ol class="first last arabic simple">
+<li>without any parameters - starts an interactive lua interpreter</li>
+<li>-f &quot;filename&quot; or --file &quot;filename&quot; - loads and runs the file indicated by filename</li>
+<li>-s [&quot;filename&quot;] or --save [&quot;filename&quot;] - loads and runs the file indicated by filename from save directory. If filename is not supplied it loads &quot;dfhack.lua&quot;</li>
+</ol>
+</dd>
+</dl>
+</div>
+<div class="section" id="embark">
+<h2><a class="toc-backref" href="#id130">embark</a></h2>
+<p>Allows to embark anywhere. Currently windows only.</p>
+</div>
 </div>
 <div class="section" id="in-game-interface-tools">
-<h1><a class="toc-backref" href="#id129">In-game interface tools</a></h1>
+<h1><a class="toc-backref" href="#id131">In-game interface tools</a></h1>
 <p>These tools work by displaying dialogs or overlays in the game window, and
 are mostly implemented by lua scripts.</p>
 <div class="note">
@@ -2739,7 +2761,7 @@ display the word &quot;DFHack&quot; on the screen somewhere while active.</p>
 guideline because it arguably just fixes small usability bugs in the game UI.</p>
 </div>
 <div class="section" id="dwarf-manipulator">
-<h2><a class="toc-backref" href="#id130">Dwarf Manipulator</a></h2>
+<h2><a class="toc-backref" href="#id132">Dwarf Manipulator</a></h2>
 <p>Implemented by the manipulator plugin. To activate, open the unit screen and
 press 'l'.</p>
 <p>This tool implements a Dwarf Therapist-like interface within the game UI. The
@@ -2775,7 +2797,7 @@ cursor onto that cell instead of toggling it.</li>
 directly to the main dwarf mode screen.</p>
 </div>
 <div class="section" id="search">
-<h2><a class="toc-backref" href="#id131">Search</a></h2>
+<h2><a class="toc-backref" href="#id133">Search</a></h2>
 <p>The search plugin adds search to the Stocks, Trading and Unit List screens.</p>
 <p>Searching works the same way as the search option in &quot;Move to Depot&quot; does.
 You will see the Search option displayed on screen with a hotkey (usually 's').
@@ -2794,13 +2816,13 @@ Value numbers displayed by the screen. Because of this, pressing the 't'
 key while search is active clears the search instead of executing the trade.</p>
 </div>
 <div class="section" id="gui-liquids">
-<h2><a class="toc-backref" href="#id132">gui/liquids</a></h2>
+<h2><a class="toc-backref" href="#id134">gui/liquids</a></h2>
 <p>To use, bind to a key and activate in the 'k' mode.</p>
 <p>While active, use the suggested keys to switch the usual liquids parameters, and Enter
 to select the target area and apply changes.</p>
 </div>
 <div class="section" id="gui-mechanisms">
-<h2><a class="toc-backref" href="#id133">gui/mechanisms</a></h2>
+<h2><a class="toc-backref" href="#id135">gui/mechanisms</a></h2>
 <p>To use, bind to a key and activate in the 'q' mode.</p>
 <p>Lists mechanisms connected to the building, and their links. Navigating the list centers
 the view on the relevant linked buildings.</p>
@@ -2809,7 +2831,7 @@ focus on the current one. Shift-Enter has an effect equivalent to pressing Enter
 re-entering the mechanisms ui.</p>
 </div>
 <div class="section" id="gui-rename">
-<h2><a class="toc-backref" href="#id134">gui/rename</a></h2>
+<h2><a class="toc-backref" href="#id136">gui/rename</a></h2>
 <p>Backed by the rename plugin, this script allows entering the desired name
 via a simple dialog in the game ui.</p>
 <ul>
@@ -2825,14 +2847,14 @@ It is also possible to rename zones from the 'i' menu.</p>
 <p>The <tt class="docutils literal">building</tt> or <tt class="docutils literal">unit</tt> options are automatically assumed when in relevant ui state.</p>
 </div>
 <div class="section" id="gui-room-list">
-<h2><a class="toc-backref" href="#id135">gui/room-list</a></h2>
+<h2><a class="toc-backref" href="#id137">gui/room-list</a></h2>
 <p>To use, bind to a key and activate in the 'q' mode, either immediately or after opening
 the assign owner page.</p>
 <p>The script lists other rooms owned by the same owner, or by the unit selected in the assign
 list, and allows unassigning them.</p>
 </div>
 <div class="section" id="gui-choose-weapons">
-<h2><a class="toc-backref" href="#id136">gui/choose-weapons</a></h2>
+<h2><a class="toc-backref" href="#id138">gui/choose-weapons</a></h2>
 <p>Bind to a key, and activate in the Equip-&gt;View/Customize page of the military screen.</p>
 <p>Depending on the cursor location, it rewrites all 'individual choice weapon' entries
 in the selected squad or position to use a specific weapon type matching the assigned
@@ -2842,13 +2864,13 @@ only that entry, and does it even if it is not 'individual choice'.</p>
 and may lead to inappropriate weapons being selected.</p>
 </div>
 <div class="section" id="gui-guide-path">
-<h2><a class="toc-backref" href="#id137">gui/guide-path</a></h2>
+<h2><a class="toc-backref" href="#id139">gui/guide-path</a></h2>
 <p>Bind to a key, and activate in the Hauling menu with the cursor over a Guide order.</p>
 <p>The script displays the cached path that will be used by the order; the game
 computes it when the order is executed for the first time.</p>
 </div>
 <div class="section" id="gui-workshop-job">
-<h2><a class="toc-backref" href="#id138">gui/workshop-job</a></h2>
+<h2><a class="toc-backref" href="#id140">gui/workshop-job</a></h2>
 <p>Bind to a key, and activate with a job selected in a workshop in the 'q' mode.</p>
 <p>The script shows a list of the input reagents of the selected job, and allows changing
 them like the <tt class="docutils literal">job <span class="pre">item-type</span></tt> and <tt class="docutils literal">job <span class="pre">item-material</span></tt> commands.</p>
@@ -2876,7 +2898,7 @@ and then try to change the input item type, now it won't let you select <em>plan
 you have to unset the material first.</p>
 </div>
 <div class="section" id="gui-workflow">
-<h2><a class="toc-backref" href="#id139">gui/workflow</a></h2>
+<h2><a class="toc-backref" href="#id141">gui/workflow</a></h2>
 <p>Bind to a key, and activate with a job selected in a workshop in the 'q' mode.</p>
 <p>This script provides a simple interface to constraints managed by the workflow
 plugin. When active, it displays a list of all constraints applicable to the
@@ -2898,7 +2920,7 @@ as described in <tt class="docutils literal">workflow</tt> documentation above. 
 can be used for troubleshooting jobs that don't match the right constraints.</p>
 </div>
 <div class="section" id="gui-assign-rack">
-<h2><a class="toc-backref" href="#id140">gui/assign-rack</a></h2>
+<h2><a class="toc-backref" href="#id142">gui/assign-rack</a></h2>
 <p>Bind to a key, and activate when viewing a weapon rack in the 'q' mode.</p>
 <p>This script is part of a group of related fixes to make the armory storage
 work again. The existing issues are:</p>
@@ -2907,7 +2929,9 @@ work again. The existing issues are:</p>
 beds/boxes/armor stands and individual squad members, but nothing in
 the game does this. This issue is what this script addresses.</li>
 <li>Even if assigned by the script, <strong>the game will unassign the racks again without a binary patch</strong>.
-Check the comments for this bug to get it:
+This patch is called <tt class="docutils literal"><span class="pre">weaponrack-unassign</span></tt>, and can be applied via
+the binpatch program, or the matching script. See this for more info
+about the bug:
 <a class="reference external" href="http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445">http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445</a></li>
 <li>Haulers still take equpment stored in the armory away to the stockpiles,
 unless the <tt class="docutils literal"><span class="pre">fix-armory</span></tt> plugin above is used.</li>
@@ -2918,7 +2942,7 @@ the intended user.</p>
 </div>
 </div>
 <div class="section" id="behavior-mods">
-<h1><a class="toc-backref" href="#id141">Behavior Mods</a></h1>
+<h1><a class="toc-backref" href="#id143">Behavior Mods</a></h1>
 <p>These plugins, when activated via configuration UI or by detecting certain
 structures in RAWs, modify the game engine behavior concerning the target
 objects to add features not otherwise present.</p>
@@ -2929,20 +2953,20 @@ technical challenge, and do not represent any long-term plans to produce more
 similar modifications of the game.</p>
 </div>
 <div class="section" id="siege-engine">
-<h2><a class="toc-backref" href="#id142">Siege Engine</a></h2>
+<h2><a class="toc-backref" href="#id144">Siege Engine</a></h2>
 <p>The siege-engine plugin enables siege engines to be linked to stockpiles, and
 aimed at an arbitrary rectangular area across Z levels, instead of the original
 four directions. Also, catapults can be ordered to load arbitrary objects, not
 just stones.</p>
 <div class="section" id="rationale">
-<h3><a class="toc-backref" href="#id143">Rationale</a></h3>
+<h3><a class="toc-backref" href="#id145">Rationale</a></h3>
 <p>Siege engines are a very interesting feature, but sadly almost useless in the current state
 because they haven't been updated since 2D and can only aim in four directions. This is an
 attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
 e.g. like making siegers bring their own, are something only Toady can do.</p>
 </div>
 <div class="section" id="configuration-ui">
-<h3><a class="toc-backref" href="#id144">Configuration UI</a></h3>
+<h3><a class="toc-backref" href="#id146">Configuration UI</a></h3>
 <p>The configuration front-end to the plugin is implemented by the gui/siege-engine
 script. Bind it to a key and activate after selecting a siege engine in 'q' mode.</p>
 <p>The main mode displays the current target, selected ammo item type, linked stockpiles and
@@ -2963,7 +2987,7 @@ menu.</p>
 </div>
 </div>
 <div class="section" id="power-meter">
-<h2><a class="toc-backref" href="#id145">Power Meter</a></h2>
+<h2><a class="toc-backref" href="#id147">Power Meter</a></h2>
 <p>The power-meter plugin implements a modified pressure plate that detects power being
 supplied to gear boxes built in the four adjacent N/S/W/E tiles.</p>
 <p>The configuration front-end is implemented by the gui/power-meter script. Bind it to a
@@ -2972,11 +2996,11 @@ key and activate after selecting Pressure Plate in the build menu.</p>
 configuration page, but configures parameters relevant to the modded power meter building.</p>
 </div>
 <div class="section" id="steam-engine">
-<h2><a class="toc-backref" href="#id146">Steam Engine</a></h2>
+<h2><a class="toc-backref" href="#id148">Steam Engine</a></h2>
 <p>The steam-engine plugin detects custom workshops with STEAM_ENGINE in
 their token, and turns them into real steam engines.</p>
 <div class="section" id="id1">
-<h3><a class="toc-backref" href="#id147">Rationale</a></h3>
+<h3><a class="toc-backref" href="#id149">Rationale</a></h3>
 <p>The vanilla game contains only water wheels and windmills as sources of
 power, but windmills give relatively little power, and water wheels require
 flowing water, which must either be a real river and thus immovable and
@@ -2987,7 +3011,7 @@ it can be done just by combining existing features of the game engine
 in a new way with some glue code and a bit of custom logic.</p>
 </div>
 <div class="section" id="construction">
-<h3><a class="toc-backref" href="#id148">Construction</a></h3>
+<h3><a class="toc-backref" href="#id150">Construction</a></h3>
 <p>The workshop needs water as its input, which it takes via a
 passable floor tile below it, like usual magma workshops do.
 The magma version also needs magma.</p>
@@ -3011,7 +3035,7 @@ short axles that can be built later than both of the engines.</p>
 </div>
 </div>
 <div class="section" id="operation">
-<h3><a class="toc-backref" href="#id149">Operation</a></h3>
+<h3><a class="toc-backref" href="#id151">Operation</a></h3>
 <p>In order to operate the engine, queue the Stoke Boiler job (optionally
 on repeat). A furnace operator will come, possibly bringing a bar of fuel,
 and perform it. As a result, a &quot;boiling water&quot; item will appear
@@ -3042,7 +3066,7 @@ decrease it by further 4%, and also decrease the whole steam
 use rate by 10%.</p>
 </div>
 <div class="section" id="explosions">
-<h3><a class="toc-backref" href="#id150">Explosions</a></h3>
+<h3><a class="toc-backref" href="#id152">Explosions</a></h3>
 <p>The engine must be constructed using barrel, pipe and piston
 from fire-safe, or in the magma version magma-safe metals.</p>
 <p>During operation weak parts get gradually worn out, and
@@ -3051,7 +3075,7 @@ toppled during operation by a building destroyer, or a
 tantruming dwarf.</p>
 </div>
 <div class="section" id="save-files">
-<h3><a class="toc-backref" href="#id151">Save files</a></h3>
+<h3><a class="toc-backref" href="#id153">Save files</a></h3>
 <p>It should be safe to load and view engine-using fortresses
 from a DF version without DFHack installed, except that in such
 case the engines won't work. However actually making modifications
@@ -3062,7 +3086,7 @@ being generated.</p>
 </div>
 </div>
 <div class="section" id="add-spatter">
-<h2><a class="toc-backref" href="#id152">Add Spatter</a></h2>
+<h2><a class="toc-backref" href="#id154">Add Spatter</a></h2>
 <p>This plugin makes reactions with names starting with <tt class="docutils literal">SPATTER_ADD_</tt>
 produce contaminants on the items instead of improvements. The produced
 contaminants are immune to being washed away by water or destroyed by

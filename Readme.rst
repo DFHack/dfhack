@@ -1103,7 +1103,7 @@ fix-armory
 
 Enables a fix for storage of squad equipment in barracks.
 
-Specifically, it prevents your haulers from moving that equipment
+Specifically, it prevents your haulers from moving squad equipment
 to stockpiles, and instead queues jobs to store it on weapon racks,
 armor stands, and in containers.
 
@@ -1113,9 +1113,10 @@ armor stands, and in containers.
   manually assigned to a squad. See documentation for ``gui/assign-rack``
   below.
 
-  Also, the default capacity of armor stands is way too low, so check out
+  Also, the default capacity of armor stands is way too low, so you
+  may want to also apply the ``armorstand-capacity`` patch. Check out
   http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445
-  for a patch addressing that too.
+  for more information about the bugs.
 
 Note that the buildings in the armory are used as follows:
 
@@ -2165,7 +2166,9 @@ work again. The existing issues are:
   the game does this. This issue is what this script addresses.
 
 * Even if assigned by the script, **the game will unassign the racks again without a binary patch**.
-  Check the comments for this bug to get it:
+  This patch is called ``weaponrack-unassign``, and can be applied via
+  the binpatch program, or the matching script. See this for more info
+  about the bug:
   http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445
 
 * Haulers still take equpment stored in the armory away to the stockpiles,

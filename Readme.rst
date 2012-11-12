@@ -1685,19 +1685,17 @@ twice.
 
 dfusion
 -------
-This is the DFusion lua plugin system by warmist/darius, running as a DFHack plugin.
+This is the DFusion lua plugin system by Warmist, running as a DFHack plugin. There are two parts to this plugin: an interactive script that shows a text based menu and lua modules. Some of the functionality of is intentionaly left out of the menu:
+ :Friendship: a binary plugin that allows multi race forts (to use make a script that imports plugins.dfusion.friendship and use Friendship:install{table} table should contain list of race names.)
+ :Embark: a binary plugin that allows multi race embark (to use make a script that imports plugins.dfusion.embark and use Embark:install{table} table should contain list of race names or list of pairs (race-name, caste_id)).
 
-See the bay12 thread for details: http://www.bay12forums.com/smf/index.php?topic=69682.15
+See the bay12 thread for details: http://www.bay12forums.com/smf/index.php?topic=93317.0
 
-Confirmed working DFusion plugins:
-
-:simple_embark:   allows changing the number of dwarves available on embark.
 
 .. note::
 
     * Some of the DFusion plugins aren't completely ported yet. This can lead to crashes.
-    * This is currently working only on Windows.
-    * The game will be suspended while you're using dfusion. Don't panic when it doen't respond.
+    * The game will be suspended while you're using dfusion. Don't panic when it doesn't respond.
 
 misery
 ------
@@ -1921,6 +1919,16 @@ deathcause
 Focus a body part ingame, and this script will display the cause of death of
 the creature.
 
+lua
+===
+There are three ways to invoke this command:
+ 1. without any parameters - starts an interactive lua interpreter
+ 2. -f "filename" or --file "filename" - loads and runs the file indicated by filename
+ 3. -s ["filename"] or --save ["filename"] - loads and runs the file indicated by filename from save directory. If filename is not supplied it loads "dfhack.lua"
+
+embark
+======
+Allows to embark anywhere. Currently windows only.
 
 =======================
 In-game interface tools

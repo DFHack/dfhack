@@ -145,7 +145,7 @@ function project(unit,trg) --TODO add to menu?
 	citem.next=newlink
 	local proj_ref=df.general_ref_projectile:new()
 	proj_ref.projectile_id=p.id
-	unit.refs:insert(#unit.refs,proj_ref)
+	unit.general_refs:insert(#unit.general_refs,proj_ref)
 	unit.flags1.projectile=true
 end
 function empregnate(unit)

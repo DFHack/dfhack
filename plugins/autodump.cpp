@@ -277,9 +277,9 @@ command_result df_autodump_destroy_item(color_ostream &out, vector <string> & pa
         return CR_FAILURE;
     }
 
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->general_refs.size(); i++)
     {
-        df::general_ref *ref = item->itemrefs[i];
+        df::general_ref *ref = item->general_refs[i];
         if (ref->getType() == general_ref_type::UNIT_HOLDER)
         {
             out.printerr("Choosing not to destroy items in unit inventory.\n");

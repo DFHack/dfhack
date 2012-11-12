@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
@@ -895,7 +895,7 @@ static bool linkForConstruct(df::job* &job, df::building *bld)
     job = new df::job();
     job->job_type = df::job_type::ConstructBuilding;
     job->pos = df::coord(bld->centerx, bld->centery, bld->z);
-    job->references.push_back(ref);
+    job->general_refs.push_back(ref);
 
     bld->jobs.push_back(job);
 

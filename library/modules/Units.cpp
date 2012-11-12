@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
@@ -523,9 +523,9 @@ df::item *Units::getContainer(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    for (size_t i = 0; i < unit->refs.size(); i++)
+    for (size_t i = 0; i < unit->general_refs.size(); i++)
     {
-        df::general_ref *ref = unit->refs[i];
+        df::general_ref *ref = unit->general_refs[i];
         if (ref->getType() == general_ref_type::CONTAINED_IN_ITEM)
             return ref->getItem();
     }
@@ -607,9 +607,9 @@ df::nemesis_record *Units::getNemesis(df::unit *unit)
     if (!unit)
         return NULL;
 
-    for (unsigned i = 0; i < unit->refs.size(); i++)
+    for (unsigned i = 0; i < unit->general_refs.size(); i++)
     {
-        df::nemesis_record *rv = unit->refs[i]->getNemesis();
+        df::nemesis_record *rv = unit->general_refs[i]->getNemesis();
         if (rv && rv->unit == unit)
             return rv;
     }

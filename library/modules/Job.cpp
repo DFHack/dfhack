@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
@@ -71,14 +71,14 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job)
     pnew->specific_refs.clear();
 
     // Clone refs
-    for (int i = pnew->references.size()-1; i >= 0; i--)
+    for (int i = pnew->general_refs.size()-1; i >= 0; i--)
     {
-        df::general_ref *ref = pnew->references[i];
+        df::general_ref *ref = pnew->general_refs[i];
 
         if (virtual_cast<df::general_ref_unit>(ref))
-            vector_erase_at(pnew->references, i);
+            vector_erase_at(pnew->general_refs, i);
         else
-            pnew->references[i] = ref->clone();
+            pnew->general_refs[i] = ref->clone();
     }
 
     // Clone items
@@ -96,8 +96,8 @@ void DFHack::Job::deleteJobStruct(df::job *job)
     // Only allow free-floating job structs
     assert(!job->list_link && job->items.empty() && job->specific_refs.empty());
 
-    for (int i = job->references.size()-1; i >= 0; i--)
-        delete job->references[i];
+    for (int i = job->general_refs.size()-1; i >= 0; i--)
+        delete job->general_refs[i];
 
     for (int i = job->job_items.size()-1; i >= 0; i--)
         delete job->job_items[i];
@@ -232,9 +232,9 @@ df::building *DFHack::Job::getHolder(df::job *job)
 {
     CHECK_NULL_POINTER(job);
 
-    for (size_t i = 0; i < job->references.size(); i++)
+    for (size_t i = 0; i < job->general_refs.size(); i++)
     {
-        VIRTUAL_CAST_VAR(ref, df::general_ref_building_holderst, job->references[i]);
+        VIRTUAL_CAST_VAR(ref, df::general_ref_building_holderst, job->general_refs[i]);
         if (ref)
             return ref->getBuilding();
     }
@@ -246,9 +246,9 @@ df::unit *DFHack::Job::getWorker(df::job *job)
 {
     CHECK_NULL_POINTER(job);
 
-    for (size_t i = 0; i < job->references.size(); i++)
+    for (size_t i = 0; i < job->general_refs.size(); i++)
     {
-        VIRTUAL_CAST_VAR(ref, df::general_ref_unit_workerst, job->references[i]);
+        VIRTUAL_CAST_VAR(ref, df::general_ref_unit_workerst, job->general_refs[i]);
         if (ref)
             return ref->getUnit();
     }

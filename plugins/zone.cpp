@@ -753,10 +753,10 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     if(!verbose)
         return;
 
-    //out << "number of refs: " << creature->refs.size() << endl;
-    for(size_t r = 0; r<unit->refs.size(); r++)
+    //out << "number of refs: " << creature->general_refs.size() << endl;
+    for(size_t r = 0; r<unit->general_refs.size(); r++)
     {
-        df::general_ref* ref = unit->refs.at(r);
+        df::general_ref* ref = unit->general_refs.at(r);
         df::general_ref_type refType = ref->getType();
         out << "  ref#" << r <<" refType#" << refType << " "; //endl;
         switch(refType)
@@ -975,10 +975,10 @@ df::general_ref_building_civzone_assignedst * createCivzoneRef()
     for(size_t i = 0; i < world->units.all.size(); i++)
     {
         df::unit * creature = world->units.all[i];                    
-        for(size_t r = 0; r<creature->refs.size(); r++)
+        for(size_t r = 0; r<creature->general_refs.size(); r++)
         {
             df::general_ref* ref;
-            ref = creature->refs.at(r);
+            ref = creature->general_refs.at(r);
             if(ref->getType() == df::general_ref_type::BUILDING_CIVZONE_ASSIGNED)
             {
                 if (strict_virtual_cast<df::general_ref_building_civzone_assignedst>(ref))
@@ -1007,9 +1007,9 @@ bool isInBuiltCage(df::unit* unit);
 bool isAssigned(df::unit* unit)
 {
     bool assigned = false;
-    for (size_t r=0; r < unit->refs.size(); r++)
+    for (size_t r=0; r < unit->general_refs.size(); r++)
     {
-        df::general_ref * ref = unit->refs[r];
+        df::general_ref * ref = unit->general_refs[r];
         auto rtype = ref->getType();
         if(    rtype == df::general_ref_type::BUILDING_CIVZONE_ASSIGNED
             || rtype == df::general_ref_type::BUILDING_CAGED
@@ -1029,9 +1029,9 @@ bool isAssigned(df::unit* unit)
 bool isChained(df::unit* unit)
 {
     bool contained = false;
-    for (size_t r=0; r < unit->refs.size(); r++)
+    for (size_t r=0; r < unit->general_refs.size(); r++)
     {
-        df::general_ref * ref = unit->refs[r];
+        df::general_ref * ref = unit->general_refs[r];
         auto rtype = ref->getType();
         if(rtype == df::general_ref_type::BUILDING_CHAIN)
         {
@@ -1046,9 +1046,9 @@ bool isChained(df::unit* unit)
 bool isContainedInItem(df::unit* unit)
 {
     bool contained = false;
-    for (size_t r=0; r < unit->refs.size(); r++)
+    for (size_t r=0; r < unit->general_refs.size(); r++)
     {
-        df::general_ref * ref = unit->refs[r];
+        df::general_ref * ref = unit->general_refs[r];
         auto rtype = ref->getType();
         if(rtype == df::general_ref_type::CONTAINED_IN_ITEM)
         {
@@ -1280,14 +1280,14 @@ size_t countFreeEgglayers()
 bool unassignUnitFromBuilding(df::unit* unit)
 {
     bool success = false;
-    for (std::size_t idx = 0; idx < unit->refs.size(); idx++)
+    for (std::size_t idx = 0; idx < unit->general_refs.size(); idx++)
     {
-        df::general_ref * oldref = unit->refs[idx];
+        df::general_ref * oldref = unit->general_refs[idx];
         switch(oldref->getType())
         {
         case df::general_ref_type::BUILDING_CIVZONE_ASSIGNED:
             {
-                unit->refs.erase(unit->refs.begin() + idx);
+                unit->general_refs.erase(unit->general_refs.begin() + idx);
                 df::building_civzonest * oldciv = (df::building_civzonest *) oldref->getBuilding();
                 for(size_t oc=0; oc<oldciv->assigned_creature.size(); oc++)
                 {
@@ -1305,7 +1305,7 @@ bool unassignUnitFromBuilding(df::unit* unit)
         case df::general_ref_type::CONTAINED_IN_ITEM:
             {
                 // game does not erase the ref until creature gets removed from cage
-                //unit->refs.erase(unit->refs.begin() + idx);
+                //unit->general_refs.erase(unit->general_refs.begin() + idx);
                 
                 // walk through buildings, check cages for inhabitants, compare ids
                 for (size_t b=0; b < world->buildings.all.size(); b++)
@@ -1335,7 +1335,7 @@ bool unassignUnitFromBuilding(df::unit* unit)
         case df::general_ref_type::BUILDING_CHAIN:
             {
                 // try not erasing the ref and see what happens
-                //unit->refs.erase(unit->refs.begin() + idx);
+                //unit->general_refs.erase(unit->general_refs.begin() + idx);
                 // probably need to delete chain reference here
                 //success = true;
                 break;
@@ -1344,7 +1344,7 @@ bool unassignUnitFromBuilding(df::unit* unit)
         case df::general_ref_type::BUILDING_CAGED:
             {
                 // not sure what to do here, doesn't seem to get used by the game
-                //unit->refs.erase(unit->refs.begin() + idx);
+                //unit->general_refs.erase(unit->general_refs.begin() + idx);
                 //success = true;
                 break;
             }
@@ -1396,7 +1396,7 @@ command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building
     }
 
     ref->building_id = building->id;
-    unit->refs.push_back(ref);
+    unit->general_refs.push_back(ref);
 
     df::building_civzonest * civz = (df::building_civzonest *) building;
     civz->assigned_creature.push_back(unit->id);
@@ -1437,7 +1437,7 @@ command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::building
     }
 
     //ref->building_id = building->id;
-    //unit->refs.push_back(ref);
+    //unit->general_refs.push_back(ref);
 
     df::building_cagest* civz = (df::building_cagest*) building;
     civz->assigned_creature.push_back(unit->id);

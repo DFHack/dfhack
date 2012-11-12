@@ -974,9 +974,9 @@ static void map_job_constraints(color_ostream &out)
 
 static void dryBucket(df::item *item)
 {
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->general_refs.size(); i++)
     {
-        df::general_ref *ref = item->itemrefs[i];
+        df::general_ref *ref = item->general_refs[i];
         if (ref->getType() == general_ref_type::CONTAINS_ITEM)
         {
             df::item *obj = ref->getItem();
@@ -996,9 +996,9 @@ static bool itemBusy(df::item *item)
 {
     using namespace df::enums::item_type;
 
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->general_refs.size(); i++)
     {
-        df::general_ref *ref = item->itemrefs[i];
+        df::general_ref *ref = item->general_refs[i];
         if (ref->getType() == general_ref_type::CONTAINS_ITEM)
         {
             df::item *obj = ref->getItem();

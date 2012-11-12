@@ -528,7 +528,7 @@ static bool try_store_item(df::building *target, df::item *item)
     // job <-> building link
     href->building_id = target->id;
     target->jobs.push_back(job);
-    job->references.push_back(href);
+    job->general_refs.push_back(href);
 
     // Two of the jobs need this link to find the job in canStoreItem().
     // They also don't actually need BUILDING_HOLDER, but it doesn't hurt.
@@ -539,7 +539,7 @@ static bool try_store_item(df::building *target, df::item *item)
         if (rdest)
         {
             rdest->building_id = target->id;
-            job->references.push_back(rdest);
+            job->general_refs.push_back(rdest);
         }
     }
 

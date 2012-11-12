@@ -291,18 +291,18 @@ struct stable_temp_hook : df::item_actual {
 
     DEFINE_VMETHOD_INTERPOSE(bool, adjustTemperature, (uint16_t temp, int32_t rate_mult))
     {
-        if (temperature != temp)
+        if (temperature.whole != temp)
         {
             // Bug 6012 is caused by fixed-point precision mismatch jitter
             // when an item is being pushed by two sources at N and N+1.
             // This check suppresses it altogether.
-            if (temp == temperature+1 ||
-                (temp == temperature-1 && temperature_fraction == 0))
-                temp = temperature;
+            if (temp == temperature.whole+1 ||
+                (temp == temperature.whole-1 && temperature.fraction == 0))
+                temp = temperature.whole;
             // When SPEC_HEAT is NONE, the original function seems to not
             // change the temperature, yet return true, which is silly.
             else if (getSpecHeat() == 60001)
-                temp = temperature;
+                temp = temperature.whole;
         }
 
         return INTERPOSE_NEXT(adjustTemperature)(temp, rate_mult);
@@ -317,10 +317,10 @@ struct stable_temp_hook : df::item_actual {
             {
                 auto obj = (*contaminants)[i];
 
-                if (abs(obj->temperature - temperature) == 1)
+                if (abs(obj->temperature.whole - temperature.whole) == 1)
                 {
-                    obj->temperature = temperature;
-                    obj->temperature_fraction = temperature_fraction;
+                    obj->temperature.whole = temperature.whole;
+                    obj->temperature.fraction = temperature.fraction;
                 }
             }
         }
@@ -355,11 +355,11 @@ struct fast_heat_hook : df::item_actual {
         (uint16_t temp, bool local, bool contained, bool adjust, int32_t rate_mult)
     ) {
         // Some items take ages to cross the last degree, so speed them up
-        if (map_temp_mult > 0 && temp != temperature && max_heat_ticks > 0)
+        if (map_temp_mult > 0 && temp != temperature.whole && max_heat_ticks > 0)
         {
             int spec = getSpecHeat();
             if (spec != 60001)
-                rate_mult = std::max(map_temp_mult, spec/max_heat_ticks/abs(temp - temperature));
+                rate_mult = std::max(map_temp_mult, spec/max_heat_ticks/abs(temp - temperature.whole));
         }
 
         return INTERPOSE_NEXT(updateTemperature)(temp, local, contained, adjust, rate_mult);

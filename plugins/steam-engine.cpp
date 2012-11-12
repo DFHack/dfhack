@@ -263,7 +263,7 @@ struct liquid_hook : df::item_liquid_miscst {
     DEFINE_VMETHOD_INTERPOSE(bool, checkTemperatureDamage, ())
     {
         if (mat_state.whole & BOILING_FLAG)
-            temperature = std::max(int(temperature), getBoilingPoint()-1);
+            temperature.whole = std::max(int(temperature.whole), getBoilingPoint()-1);
 
         return INTERPOSE_NEXT(checkTemperatureDamage)();
     }
@@ -371,8 +371,8 @@ struct workshop_hook : df::building_workshopst {
         // Update flags
         liquid->flags.bits.in_building = true;
         liquid->mat_state.whole |= liquid_hook::BOILING_FLAG;
-        liquid->temperature = liquid->getBoilingPoint()-1;
-        liquid->temperature_fraction = 0;
+        liquid->temperature.whole = liquid->getBoilingPoint()-1;
+        liquid->temperature.fraction = 0;
 
         // This affects where the steam appears to come from
         if (engine->hearth_tile.isValid())
@@ -387,7 +387,7 @@ struct workshop_hook : df::building_workshopst {
     {
         liquid->wear = 4;
         liquid->flags.bits.in_building = false;
-        liquid->temperature = liquid->getBoilingPoint() + 10;
+        liquid->temperature.whole = liquid->getBoilingPoint() + 10;
 
         return liquid->checkMeltBoil();
     }

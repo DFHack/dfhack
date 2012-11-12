@@ -1,11 +1,15 @@
+-- Execute lua commands interactively or from files.
+
 local args={...}
-if args[1]=="--file" or args[1]=="-f" then
+local cmd = args[1]
+
+if cmd=="--file" or cmd=="-f" then
     local f,err=loadfile (args[2])
     if f==nil then
         qerror(err)
     end
     dfhack.pcall(f,table.unpack(args,3))
-elseif args[1]=="--save" or args[1]=="-s" then
+elseif cmd=="--save" or cmd=="-s" then
     if df.global.world.cur_savegame.save_dir=="" then
         qerror("Savefile not loaded")
     end
@@ -16,12 +20,27 @@ elseif args[1]=="--save" or args[1]=="-s" then
         qerror(err)
     end
     dfhack.pcall(f,table.unpack(args,3))
-elseif args[1]~=nil then
-    local f,err=load(args[1],'=(lua command)', 't')
+elseif cmd~=nil then
+    -- Support some of the prefixes allowed by dfhack.interpreter
+    local prefix
+    if string.match(cmd, "^[~!]") then
+        prefix = string.sub(cmd, 1, 1)
+        cmd = 'return '..string.sub(cmd, 2)
+    end
+
+    local f,err=load(cmd,'=(lua command)', 't')
     if f==nil then
         qerror(err)
     end
-    dfhack.pcall(f,table.unpack(args,2))
+
+    local rv = table.pack(dfhack.safecall(f,table.unpack(args,2)))
+
+    if rv[1] and prefix then
+        print(table.unpack(rv,2,rv.n))
+        if prefix == '~' then
+            printall(rv[2])
+        end
+    end
 else
     dfhack.interpreter("lua","lua.history")
 end

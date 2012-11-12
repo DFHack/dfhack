@@ -2734,15 +2734,22 @@ the creature.</p>
 </div>
 <div class="section" id="lua">
 <h2><a class="toc-backref" href="#id129">lua</a></h2>
-<dl class="docutils">
-<dt>There are three ways to invoke this command:</dt>
-<dd><ol class="first last arabic simple">
-<li>without any parameters - starts an interactive lua interpreter</li>
-<li>-f &quot;filename&quot; or --file &quot;filename&quot; - loads and runs the file indicated by filename</li>
-<li>-s [&quot;filename&quot;] or --save [&quot;filename&quot;] - loads and runs the file indicated by filename from save directory. If filename is not supplied it loads &quot;dfhack.lua&quot;</li>
+<p>There are the following ways to invoke this command:</p>
+<ol class="arabic">
+<li><p class="first"><tt class="docutils literal">lua</tt> (without any parameters)</p>
+<p>This starts an interactive lua interpreter.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">lua <span class="pre">-f</span> &quot;filename&quot;</tt> or <tt class="docutils literal">lua <span class="pre">--file</span> &quot;filename&quot;</tt></p>
+<p>This loads and runs the file indicated by filename.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">lua <span class="pre">-s</span> [&quot;filename&quot;]</tt> or <tt class="docutils literal">lua <span class="pre">--save</span> [&quot;filename&quot;]</tt></p>
+<p>This loads and runs the file indicated by filename from the save
+directory. If the filename is not supplied, it loads &quot;dfhack.lua&quot;.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">:lua</tt> <em>lua statement...</em></p>
+<p>Parses and executes the lua statement like the interactive interpreter would.</p>
+</li>
 </ol>
-</dd>
-</dl>
 </div>
 <div class="section" id="embark">
 <h2><a class="toc-backref" href="#id130">embark</a></h2>

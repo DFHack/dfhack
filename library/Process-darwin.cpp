@@ -305,3 +305,28 @@ bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
 
     return result==0;
 }
+
+// returns -1 on error
+void* Process::memAlloc(const int length)
+{
+    return mmap(0, length, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
+}
+
+int Process::memDealloc(const void *ptr, const int length)
+{
+    return munmap(ptr, length);
+}
+
+int Process::memProtect(const void *ptr, const int length, const int prot)
+{
+    int prot_native = 0;
+
+    if (prot & Process::MemProt::READ)
+        prot_native |= PROT_READ;
+    if (prot & Process::MemProt::WRITE)
+        prot_native |= PROT_WRITE;
+    if (prot & Process::MemProt::EXEC)
+        prot_native |= PROT_EXEC;
+
+    return mprotect(ptr, length, prot_native);
+}

@@ -519,18 +519,25 @@ df::coord Units::getPosition(df::unit *unit)
     return unit->pos;
 }
 
+df::general_ref *Units::getGeneralRef(df::unit *unit, df::general_ref_type type)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return findRef(unit->general_refs, type);
+}
+
+df::specific_ref *Units::getSpecificRef(df::unit *unit, df::specific_ref_type type)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return findRef(unit->specific_refs, type);
+}
+
 df::item *Units::getContainer(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    for (size_t i = 0; i < unit->general_refs.size(); i++)
-    {
-        df::general_ref *ref = unit->general_refs[i];
-        if (ref->getType() == general_ref_type::CONTAINED_IN_ITEM)
-            return ref->getItem();
-    }
-
-    return NULL;
+    return findItemRef(unit->general_refs, general_ref_type::CONTAINED_IN_ITEM);
 }
 
 static df::assumed_identity *getFigureIdentity(df::historical_figure *figure)

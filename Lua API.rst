@@ -833,6 +833,14 @@ Job module
 
   Prints info about the job item.
 
+* ``dfhack.job.getGeneralRef(job, type)``
+
+  Searches for a general_ref with the given type.
+
+* ``dfhack.job.getSpecificRef(job, type)``
+
+  Searches for a specific_ref with the given type.
+
 * ``dfhack.job.getHolder(job)``
 
   Returns the building holding the job.
@@ -878,6 +886,14 @@ Units module
 * ``dfhack.units.getPosition(unit)``
 
   Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
+
+* ``dfhack.units.getGeneralRef(unit, type)``
+
+  Searches for a general_ref with the given type.
+
+* ``dfhack.units.getSpecificRef(unit, type)``
+
+  Searches for a specific_ref with the given type.
 
 * ``dfhack.units.getContainer(unit)``
 
@@ -1197,6 +1213,14 @@ Burrows module
 
 Buildings module
 ----------------
+
+* ``dfhack.buildings.getGeneralRef(building, type)``
+
+  Searches for a general_ref with the given type.
+
+* ``dfhack.buildings.getSpecificRef(building, type)``
+
+  Searches for a specific_ref with the given type.
 
 * ``dfhack.buildings.setOwner(item,unit)``
 

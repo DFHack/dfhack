@@ -1121,6 +1121,8 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,cloneJobStruct),
     WRAPM(Job,printItemDetails),
     WRAPM(Job,printJobDetails),
+    WRAPM(Job,getGeneralRef),
+    WRAPM(Job,getSpecificRef),
     WRAPM(Job,getHolder),
     WRAPM(Job,getWorker),
     WRAPM(Job,checkBuildingsNow),
@@ -1157,6 +1159,8 @@ static const luaL_Reg dfhack_job_funcs[] = {
 /***** Units module *****/
 
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
+    WRAPM(Units, getGeneralRef),
+    WRAPM(Units, getSpecificRef),
     WRAPM(Units, getContainer),
     WRAPM(Units, setNickname),
     WRAPM(Units, getVisibleName),
@@ -1427,6 +1431,8 @@ static bool buildings_containsTile(df::building *bld, int x, int y, bool room) {
 }
 
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
+    WRAPM(Buildings, getGeneralRef),
+    WRAPM(Buildings, getSpecificRef),
     WRAPM(Buildings, setOwner),
     WRAPM(Buildings, allocInstance),
     WRAPM(Buildings, checkFreeTiles),

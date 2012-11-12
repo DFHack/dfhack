@@ -35,6 +35,7 @@ using namespace std;
 #include "Error.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
+#include "Types.h"
 
 #include "modules/Job.h"
 #include "modules/Materials.h"
@@ -226,6 +227,20 @@ void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
 
     for (size_t i = 0; i < job->job_items.size(); i++)
         printItemDetails(out, job->job_items[i], i);
+}
+
+df::general_ref *Job::getGeneralRef(df::job *job, df::general_ref_type type)
+{
+    CHECK_NULL_POINTER(job);
+
+    return findRef(job->general_refs, type);
+}
+
+df::specific_ref *Job::getSpecificRef(df::job *job, df::specific_ref_type type)
+{
+    CHECK_NULL_POINTER(job);
+
+    return findRef(job->specific_refs, type);
 }
 
 df::building *DFHack::Job::getHolder(df::job *job)

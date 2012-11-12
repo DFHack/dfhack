@@ -80,6 +80,10 @@ namespace DFHack
     DFHACK_EXPORT df::general_ref *findRef(std::vector<df::general_ref*> &vec, df::general_ref_type type);
     DFHACK_EXPORT bool removeRef(std::vector<df::general_ref*> &vec, df::general_ref_type type, int id);
 
+    DFHACK_EXPORT df::item *findItemRef(std::vector<df::general_ref*> &vec, df::general_ref_type type);
+    DFHACK_EXPORT df::building *findBuildingRef(std::vector<df::general_ref*> &vec, df::general_ref_type type);
+    DFHACK_EXPORT df::unit *findUnitRef(std::vector<df::general_ref*> &vec, df::general_ref_type type);
+
     DFHACK_EXPORT df::specific_ref *findRef(std::vector<df::specific_ref*> &vec, df::specific_ref_type type);
     DFHACK_EXPORT bool removeRef(std::vector<df::specific_ref*> &vec, df::specific_ref_type type, void *ptr);
 }// namespace DFHack

@@ -178,6 +178,20 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
     return true;
 }
 
+df::general_ref *Buildings::getGeneralRef(df::building *building, df::general_ref_type type)
+{
+    CHECK_NULL_POINTER(building);
+
+    return findRef(building->general_refs, type);
+}
+
+df::specific_ref *Buildings::getSpecificRef(df::building *building, df::specific_ref_type type)
+{
+    CHECK_NULL_POINTER(building);
+
+    return findRef(building->specific_refs, type);
+}
+
 bool Buildings::setOwner(df::building *bld, df::unit *unit)
 {
     CHECK_NULL_POINTER(bld);

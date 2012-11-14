@@ -118,6 +118,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(forceequip forceequip.cpp)
     DFHACK_PLUGIN(manipulator manipulator.cpp)
     DFHACK_PLUGIN(search search.cpp)
+    DFHACK_PLUGIN(automaterial automaterial.cpp)
     # this one exports functions to lua
     DFHACK_PLUGIN(burrows burrows.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(sort sort.cpp LINK_LIBRARIES lua)

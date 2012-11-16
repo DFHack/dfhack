@@ -50,13 +50,13 @@ using namespace DFHack;
 Process::Process(VersionInfoFactory * known_versions)
 {
     int target_result;
-    
+
     char path[1024];
     char *real_path;
-	uint32_t size = sizeof(path);
-	if (_NSGetExecutablePath(path, &size) == 0) {
-		real_path = realpath(path, NULL);
-	}
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size) == 0) {
+        real_path = realpath(path, NULL);
+    }
 
     identified = false;
     my_descriptor = 0;
@@ -166,29 +166,29 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
                        (vm_region_info_t)&info, &info_count, &object);
         if (kr == KERN_SUCCESS) {
             if (info.reserved==1) {
-				address += vmsize;
-            	continue;
+                address += vmsize;
+                continue;
             }
             Dl_info dlinfo;
             int dlcheck;
             dlcheck = dladdr((const void*)address, &dlinfo);
             if (dlcheck==0) {
-            	dlinfo.dli_fname = "";
+                dlinfo.dli_fname = "";
             }
-            
+
             t_memrange temp;
-			strncpy( temp.name, dlinfo.dli_fname, 1023 );
-			temp.name[1023] = 0;
-			temp.start = (void *) address;
-			temp.end = (void *) (address+vmsize);
-			temp.read = (info.protection & VM_PROT_READ);
-			temp.write = (info.protection & VM_PROT_WRITE);
-			temp.execute = (info.protection & VM_PROT_EXECUTE);
-			temp.shared = info.shared;
-			temp.valid = true;
-			ranges.push_back(temp);
-			
-			fprintf(stderr,
+            strncpy( temp.name, dlinfo.dli_fname, 1023 );
+            temp.name[1023] = 0;
+            temp.start = (void *) address;
+            temp.end = (void *) (address+vmsize);
+            temp.read = (info.protection & VM_PROT_READ);
+            temp.write = (info.protection & VM_PROT_WRITE);
+            temp.execute = (info.protection & VM_PROT_EXECUTE);
+            temp.shared = info.shared;
+            temp.valid = true;
+            ranges.push_back(temp);
+
+            fprintf(stderr,
             "%08x-%08x %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
                             address, (address + vmsize), (vmsize >> 10),
                             (info.protection & VM_PROT_READ)        ? 'r' : '-',
@@ -203,7 +203,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
                             info.user_wired_count,
                             info.reserved,
                             dlinfo.dli_fname);
-			
+
             address += vmsize;
         } else if (kr != KERN_INVALID_ADDRESS) {
 
@@ -277,15 +277,15 @@ uint32_t Process::getTickCount()
 
 string Process::getPath()
 {
-	char path[1024];
+    char path[1024];
     char *real_path;
-	uint32_t size = sizeof(path);
-	if (_NSGetExecutablePath(path, &size) == 0) {
-		real_path = realpath(path, NULL);
-	}
-	std::string path_string(real_path);
-	int last_slash = path_string.find_last_of("/");
-	std::string directory = path_string.substr(0,last_slash);
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size) == 0) {
+        real_path = realpath(path, NULL);
+    }
+    std::string path_string(real_path);
+    int last_slash = path_string.find_last_of("/");
+    std::string directory = path_string.substr(0,last_slash);
     return directory;
 }
 

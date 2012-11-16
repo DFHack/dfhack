@@ -35,7 +35,7 @@ distribution.
 
 // Stop some MS stupidity
 #ifdef interface
-	#undef interface
+    #undef interface
 #endif
 
 typedef struct lua_State lua_State;

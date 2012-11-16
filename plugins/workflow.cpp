@@ -1095,9 +1095,9 @@ static void map_job_items(color_ostream &out)
 
         bool is_invalid = false;
 
-		// don't count worn items
-		if (item->getWear() >= 1) 
-			is_invalid = true;
+        // don't count worn items
+        if (item->getWear() >= 1)
+            is_invalid = true;
 
         // Special handling
         switch (itype) {

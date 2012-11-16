@@ -197,10 +197,14 @@ PersistentDataItem World::AddPersistentData(const std::string &key)
     std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
 
     df::historical_figure *hfig = new df::historical_figure();
-    hfig->id = next_persistent_id--;
+    hfig->id = next_persistent_id;
     hfig->name.has_name = true;
     hfig->name.first_name = key;
     memset(hfig->name.words, 0xFF, sizeof(hfig->name.words));
+
+    if (!hfvec.empty())
+        hfig->id = std::min(hfig->id, hfvec[0]->id-1);
+    next_persistent_id = hfig->id-1;
 
     hfvec.insert(hfvec.begin(), hfig);
 

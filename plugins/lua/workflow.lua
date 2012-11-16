@@ -266,9 +266,16 @@ function constraintToToken(cspec)
             error('invalid material: '..cspec.mat_type..':'..(cspec.mat_index or -1))
         end
     end
-    local qpart
+    local qlist = {}
+    if cspec.is_local then
+        table.insert(qlist, "LOCAL")
+    end
     if cspec.quality and cspec.quality > 0 then
-        qpart = df.item_quality[cspec.quality] or error('invalid quality: '..cspec.quality)
+        table.insert(qlist, df.item_quality[cspec.quality] or error('invalid quality: '..cspec.quality))
+    end
+    local qpart
+    if #qlist > 0 then
+        qpart = table.concat(qlist, ',')
     end
 
     if mask_part or mat_part or qpart then
@@ -301,15 +308,26 @@ function listWeakenedConstraints(outputs)
         local mask = cons.mat_mask
         if (cons.mat_type or -1) >= 0 then
             cons.mat_mask = nil
+            local info = dfhack.matinfo.decode(cons)
+            if info then
+                for i,flag in ipairs(df.dfhack_material_category) do
+                    if flag and flag ~= 'wood2' and info:matches{[flag]=true} then
+                        mask = mask or {}
+                        mask[flag] = true
+                    end
+                end
+            end
         end
         register(cons)
         if mask then
-            table.insert(generic, {
-                item_type = cons.item_type,
-                item_subtype = cons.item_subtype,
-                is_craft = cons.is_craft,
-                mat_mask = mask
-            })
+            for k,v in pairs(mask) do
+                table.insert(generic, {
+                    item_type = cons.item_type,
+                    item_subtype = cons.item_subtype,
+                    is_craft = cons.is_craft,
+                    mat_mask = { [k] = v }
+                })
+            end
         end
         table.insert(anymat, {
             item_type = cons.item_type,

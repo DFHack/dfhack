@@ -178,6 +178,20 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
     return true;
 }
 
+df::general_ref *Buildings::getGeneralRef(df::building *building, df::general_ref_type type)
+{
+    CHECK_NULL_POINTER(building);
+
+    return findRef(building->general_refs, type);
+}
+
+df::specific_ref *Buildings::getSpecificRef(df::building *building, df::specific_ref_type type)
+{
+    CHECK_NULL_POINTER(building);
+
+    return findRef(building->specific_refs, type);
+}
+
 bool Buildings::setOwner(df::building *bld, df::unit *unit)
 {
     CHECK_NULL_POINTER(bld);
@@ -895,7 +909,7 @@ static bool linkForConstruct(df::job* &job, df::building *bld)
     job = new df::job();
     job->job_type = df::job_type::ConstructBuilding;
     job->pos = df::coord(bld->centerx, bld->centery, bld->z);
-    job->references.push_back(ref);
+    job->general_refs.push_back(ref);
 
     bld->jobs.push_back(job);
 

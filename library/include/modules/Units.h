@@ -205,6 +205,9 @@ DFHACK_EXPORT void CopyNameTo(df::unit *creature, df::language_name * target);
 /// Returns the true position of the unit (non-trivial in case of caged).
 DFHACK_EXPORT df::coord getPosition(df::unit *unit);
 
+DFHACK_EXPORT df::general_ref *getGeneralRef(df::unit *unit, df::general_ref_type type);
+DFHACK_EXPORT df::specific_ref *getSpecificRef(df::unit *unit, df::specific_ref_type type);
+
 DFHACK_EXPORT df::item *getContainer(df::unit *unit);
 
 DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
@@ -235,6 +238,8 @@ DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 
 DFHACK_EXPORT int getNominalSkill(df::unit *unit, df::job_skill skill_id, bool use_rust = false);
 DFHACK_EXPORT int getEffectiveSkill(df::unit *unit, df::job_skill skill_id);
+DFHACK_EXPORT int getExperience(df::unit *unit, df::job_skill skill_id, bool total = false);
+
 DFHACK_EXPORT int computeMovementSpeed(df::unit *unit);
 
 struct NoblePosition {

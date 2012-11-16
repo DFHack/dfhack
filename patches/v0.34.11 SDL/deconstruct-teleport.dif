@@ -1,0 +1,104 @@
+http://www.bay12games.com/dwarves/mantisbt/view.php?id=5994
+
+0x461de2
+F6 46 0C 01 74 31
+E9 0A 8E BC FF 90
+
+.text:008629E2                 jmp     near ptr loc_42B7F1 ; << CAVE
+.text:008629E7                 nop
+.text:008629E8 loc_8629E8:
+
+0x2abf1
+CC CC CC CC CC CC CC  CC CC CC CC CC CC CC CC
+8B 4C 24 2C F6 46 0C  01 75 08 E9 19 72 43 00
+
+.text:0042B7F1 loc_42B7F1:
+.text:0042B7F1                 mov     ecx, [esp+2Ch]  ; job
+.text:0042B7F5                 test    byte ptr [esi+0Ch], 1
+.text:0042B7F9                 jnz     short near ptr loc_42B803
+.text:0042B7FB coord_test_jfail:
+.text:0042B7FB                 jmp     loc_862A19
+
+0x2ac03
+CC CC CC CC CC  CC CC CC CC CC CC CC CC
+8B 41 10 3B 46  04 75 F0 EB 06 CC CC CC
+
+.text:0042B803 loc_42B803:
+.text:0042B803                 mov     eax, [ecx+10h]  ; job->pos.(x,y)
+.text:0042B806                 cmp     eax, [esi+4]    ; item->pos.(x,y)
+.text:0042B809                 jnz     short coord_test_jfail
+.text:0042B80B                 jmp     short near ptr loc_42B813
+
+0x2ac13
+CC CC CC CC CC  CC CC CC CC CC CC CC CC
+66 8B 41 14 66  3B 46 08 75 DE EB 06 CC
+
+text:0042B813 loc_42B813:
+.text:0042B813                 mov     ax, [ecx+14h]   ; job->pos.z
+.text:0042B817                 cmp     ax, [esi+8]     ; item->pos.z
+.text:0042B81B                 jnz     short coord_test_jfail
+.text:0042B81D                 jmp     short near ptr loc_42B825
+
+0x2ac25
+CC CC CC  CC CC CC CC CC CC CC CC
+E9 BE 71  43 00 CC CC CC CC CC CC
+
+.text:0042B825 loc_42B825:
+.text:0042B825                 jmp     loc_8629E8
+
+
+You can use this script to apply the generated patch below:
+http://stalkr.net/files/ida/idadif.py
+
+----8<----
+This difference file is created by The Interactive Disassembler
+
+Dwarf Fortress.exe
+0002ABF1: CC 8B
+0002ABF2: CC 4C
+0002ABF3: CC 24
+0002ABF4: CC 2C
+0002ABF5: CC F6
+0002ABF6: CC 46
+0002ABF7: CC 0C
+0002ABF8: CC 01
+0002ABF9: CC 75
+0002ABFA: CC 08
+0002ABFB: CC E9
+0002ABFC: CC 19
+0002ABFD: CC 72
+0002ABFE: CC 43
+0002ABFF: CC 00
+0002AC03: CC 8B
+0002AC04: CC 41
+0002AC05: CC 10
+0002AC06: CC 3B
+0002AC07: CC 46
+0002AC08: CC 04
+0002AC09: CC 75
+0002AC0A: CC F0
+0002AC0B: CC EB
+0002AC0C: CC 06
+0002AC13: CC 66
+0002AC14: CC 8B
+0002AC15: CC 41
+0002AC16: CC 14
+0002AC17: CC 66
+0002AC18: CC 3B
+0002AC19: CC 46
+0002AC1A: CC 08
+0002AC1B: CC 75
+0002AC1C: CC DE
+0002AC1D: CC EB
+0002AC1E: CC 06
+0002AC25: CC E9
+0002AC26: CC BE
+0002AC27: CC 71
+0002AC28: CC 43
+0002AC29: CC 00
+00461DE2: F6 E9
+00461DE3: 46 0A
+00461DE4: 0C 8E
+00461DE5: 01 BC
+00461DE6: 74 FF
+00461DE7: 31 90

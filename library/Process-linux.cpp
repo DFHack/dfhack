@@ -155,9 +155,14 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     fclose(mapFile);
 }
 
-uint32_t Process::getBase()
+uintptr_t Process::getBase()
 {
-    return 0;
+    return 0x8048000;
+}
+
+int Process::adjustOffset(int offset, bool /*to_file*/)
+{
+    return offset;
 }
 
 static int getdir (string dir, vector<string> &files)
@@ -230,4 +235,29 @@ bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
     result=mprotect((void *)range.start, (size_t)range.end-(size_t)range.start,protect);
 
     return result==0;
+}
+
+// returns -1 on error
+void* Process::memAlloc(const int length)
+{
+    return mmap(0, length, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+}
+
+int Process::memDealloc(void *ptr, const int length)
+{
+    return munmap(ptr, length);
+}
+
+int Process::memProtect(void *ptr, const int length, const int prot)
+{
+    int prot_native = 0;
+
+    if (prot & Process::MemProt::READ)
+        prot_native |= PROT_READ;
+    if (prot & Process::MemProt::WRITE)
+        prot_native |= PROT_WRITE;
+    if (prot & Process::MemProt::EXEC)
+        prot_native |= PROT_EXEC;
+
+    return mprotect(ptr, length, prot_native);
 }

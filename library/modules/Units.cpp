@@ -519,18 +519,25 @@ df::coord Units::getPosition(df::unit *unit)
     return unit->pos;
 }
 
+df::general_ref *Units::getGeneralRef(df::unit *unit, df::general_ref_type type)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return findRef(unit->general_refs, type);
+}
+
+df::specific_ref *Units::getSpecificRef(df::unit *unit, df::specific_ref_type type)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return findRef(unit->specific_refs, type);
+}
+
 df::item *Units::getContainer(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    for (size_t i = 0; i < unit->refs.size(); i++)
-    {
-        df::general_ref *ref = unit->refs[i];
-        if (ref->getType() == general_ref_type::CONTAINED_IN_ITEM)
-            return ref->getItem();
-    }
-
-    return NULL;
+    return findItemRef(unit->general_refs, general_ref_type::CONTAINED_IN_ITEM);
 }
 
 static df::assumed_identity *getFigureIdentity(df::historical_figure *figure)
@@ -607,9 +614,9 @@ df::nemesis_record *Units::getNemesis(df::unit *unit)
     if (!unit)
         return NULL;
 
-    for (unsigned i = 0; i < unit->refs.size(); i++)
+    for (unsigned i = 0; i < unit->general_refs.size(); i++)
     {
-        df::nemesis_record *rv = unit->refs[i]->getNemesis();
+        df::nemesis_record *rv = unit->general_refs[i]->getNemesis();
         if (rv && rv->unit == unit)
             return rv;
     }
@@ -900,6 +907,24 @@ int Units::getNominalSkill(df::unit *unit, df::job_skill skill_id, bool use_rust
     }
 
     return 0;
+}
+
+int Units::getExperience(df::unit *unit, df::job_skill skill_id, bool total)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if (!unit->status.current_soul)
+        return 0;
+
+    auto skill = binsearch_in_vector(unit->status.current_soul->skills, &df::unit_skill::id, skill_id);
+    if (!skill)
+        return 0;
+
+    int xp = skill->experience;
+    // exact formula used by the game:
+    if (total && skill->rating > 0)
+        xp += 500*skill->rating + 100*skill->rating*(skill->rating - 1)/2;
+    return xp;
 }
 
 int Units::getEffectiveSkill(df::unit *unit, df::job_skill skill_id)

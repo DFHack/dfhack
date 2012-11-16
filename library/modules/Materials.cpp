@@ -190,6 +190,8 @@ bool MaterialInfo::find(const std::vector<std::string> &items)
     }
     else if (items.size() == 2)
     {
+        if (items[1] == "NONE" && findBuiltin(items[0]))
+            return true;
         if (findPlant(items[0], items[1]))
             return true;
         if (findCreature(items[0], items[1]))
@@ -210,7 +212,7 @@ bool MaterialInfo::findBuiltin(const std::string &token)
     }
 
     df::world_raws &raws = world->raws;
-    for (int i = 1; i < NUM_BUILTIN; i++)
+    for (int i = 0; i < NUM_BUILTIN; i++)
     {
         auto obj = raws.mat_table.builtin[i];
         if (obj && obj->id == token)
@@ -312,7 +314,7 @@ std::string MaterialInfo::getToken()
             else if (index == 1)
                 return "COAL:CHARCOAL";
         }
-        return material->id + ":NONE";
+        return material->id;
     case Inorganic:
         return "INORGANIC:" + inorganic->id;
     case Creature:
@@ -422,6 +424,8 @@ bool MaterialInfo::matches(const df::dfhack_material_category &cat)
         return true;
     TEST(glass, IS_GLASS);
     if (cat.bits.clay && linear_index(material->reaction_product.id, std::string("FIRED_MAT")) >= 0)
+        return true;
+    if (cat.bits.milk && linear_index(material->reaction_product.id, std::string("CHEESE_MAT")) >= 0)
         return true;
     return false;
 }

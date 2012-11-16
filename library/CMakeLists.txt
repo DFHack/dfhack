@@ -346,6 +346,10 @@ install(DIRECTORY ${dfhack_SOURCE_DIR}/scripts
                        PATTERN "*.rb"
         )
 
+install(DIRECTORY ${dfhack_SOURCE_DIR}/patches
+        DESTINATION ${DFHACK_DATA_DESTINATION}
+        FILES_MATCHING PATTERN "*.dif")
+
 # Unused for so long that it's not even relevant now...
 if(BUILD_DEVEL)
     if(WIN32)

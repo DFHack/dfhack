@@ -76,6 +76,8 @@ namespace DFHack
             bool valid() const { return tile >= 0; }
             bool empty() const { return ch == 0 && tile == 0; }
 
+            // NOTE: LuaApi.cpp assumes this struct is plain data and has empty destructor
+
             Pen(char ch = 0, int8_t fg = 7, int8_t bg = 0, int tile = 0, bool color_tile = false)
               : ch(ch), fg(fg&7), bg(bg), bold(!!(fg&8)),
                 tile(tile), tile_mode(color_tile ? CharColor : AsIs), tile_fg(0), tile_bg(0)

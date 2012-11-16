@@ -6,7 +6,9 @@ local dscreen = dfhack.screen
 
 USE_GRAPHICS = dscreen.inGraphicsMode()
 
-CLEAR_PEN = {ch=32,fg=0,bg=0}
+local to_pen = dfhack.pen.parse
+
+CLEAR_PEN = to_pen{ch=32,fg=0,bg=0}
 
 function simulateInput(screen,...)
     local keys = {}
@@ -116,16 +118,6 @@ function blink_visible(delay)
     return math.floor(dfhack.getTickCount()/delay) % 2 == 0
 end
 
-function to_pen(default, pen, bg, bold)
-    if pen == nil then
-        return default or {}
-    elseif type(pen) ~= 'table' then
-        return {fg=pen,bg=bg,bold=bold}
-    else
-        return pen
-    end
-end
-
 function getKeyDisplay(code)
     if type(code) == 'string' then
         code = df.interface_key[code]
@@ -215,7 +207,8 @@ Painter = defclass(Painter, ViewRect)
 function Painter:init(args)
     self.x = self.x1
     self.y = self.y1
-    self.cur_pen = to_pen(nil, args.pen or COLOR_GREY)
+    self.cur_pen = to_pen(args.pen or COLOR_GREY)
+    self.cur_key_pen = to_pen(args.key_pen or COLOR_LIGHTGREEN)
 end
 
 function Painter.new(rect, pen)
@@ -241,6 +234,7 @@ end
 function Painter:viewport(x,y,w,h)
     local vp = ViewRect.viewport(x,y,w,h)
     vp.cur_pen = self.cur_pen
+    vp.cur_key_pen = self.cur_key_pen
     return mkinstance(Painter, vp):seek(0,0)
 end
 
@@ -280,10 +274,12 @@ function Painter:pen(pen,...)
 end
 
 function Painter:color(fg,bold,bg)
-    self.cur_pen = copyall(self.cur_pen)
-    self.cur_pen.fg = fg
-    self.cur_pen.bold = bold
-    if bg then self.cur_pen.bg = bg end
+    self.cur_pen = to_pen(self.cur_pen, fg, bg, bold)
+    return self
+end
+
+function Painter:key_pen(pen,...)
+    self.cur_key_pen = to_pen(self.cur_key_pen, pen, ...)
     return self
 end
 
@@ -339,10 +335,10 @@ function Painter:string(text,pen,...)
     return self:advance(#text, nil)
 end
 
-function Painter:key(code,pen,bg,...)
+function Painter:key(code,pen,...)
     return self:string(
         getKeyDisplay(code),
-        pen or COLOR_LIGHTGREEN, bg or self.cur_pen.bg, ...
+        to_pen(self.cur_key_pen, pen, ...)
     )
 end
 
@@ -557,28 +553,28 @@ end
 
 -- Plain grey-colored frame.
 GREY_FRAME = {
-    frame_pen = { ch = ' ', fg = COLOR_BLACK, bg = COLOR_GREY },
-    title_pen = { fg = COLOR_BLACK, bg = COLOR_WHITE },
-    signature_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
+    frame_pen = to_pen{ ch = ' ', fg = COLOR_BLACK, bg = COLOR_GREY },
+    title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_WHITE },
+    signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
 }
 
 -- The usual boundary used by the DF screens. Often has fancy pattern in tilesets.
 BOUNDARY_FRAME = {
-    frame_pen = { ch = 0xDB, fg = COLOR_DARKGREY, bg = COLOR_BLACK },
-    title_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
-    signature_pen = { fg = COLOR_BLACK, bg = COLOR_DARKGREY },
+    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_DARKGREY, bg = COLOR_BLACK },
+    title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
+    signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_DARKGREY },
 }
 
 GREY_LINE_FRAME = {
-    frame_pen = { ch = 206, fg = COLOR_GREY, bg = COLOR_BLACK },
-    h_frame_pen = { ch = 205, fg = COLOR_GREY, bg = COLOR_BLACK },
-    v_frame_pen = { ch = 186, fg = COLOR_GREY, bg = COLOR_BLACK },
-    lt_frame_pen = { ch = 201, fg = COLOR_GREY, bg = COLOR_BLACK },
-    lb_frame_pen = { ch = 200, fg = COLOR_GREY, bg = COLOR_BLACK },
-    rt_frame_pen = { ch = 187, fg = COLOR_GREY, bg = COLOR_BLACK },
-    rb_frame_pen = { ch = 188, fg = COLOR_GREY, bg = COLOR_BLACK },
-    title_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
-    signature_pen = { fg = COLOR_DARKGREY, bg = COLOR_BLACK },
+    frame_pen = to_pen{ ch = 206, fg = COLOR_GREY, bg = COLOR_BLACK },
+    h_frame_pen = to_pen{ ch = 205, fg = COLOR_GREY, bg = COLOR_BLACK },
+    v_frame_pen = to_pen{ ch = 186, fg = COLOR_GREY, bg = COLOR_BLACK },
+    lt_frame_pen = to_pen{ ch = 201, fg = COLOR_GREY, bg = COLOR_BLACK },
+    lb_frame_pen = to_pen{ ch = 200, fg = COLOR_GREY, bg = COLOR_BLACK },
+    rt_frame_pen = to_pen{ ch = 187, fg = COLOR_GREY, bg = COLOR_BLACK },
+    rb_frame_pen = to_pen{ ch = 188, fg = COLOR_GREY, bg = COLOR_BLACK },
+    title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
+    signature_pen = to_pen{ fg = COLOR_DARKGREY, bg = COLOR_BLACK },
 }
 
 function paint_frame(x1,y1,x2,y2,style,title)

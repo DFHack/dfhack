@@ -132,6 +132,9 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
  * grace period during which the items can be instantly picked up again.
  */
 
+// Completely block the use of stockpiles
+#define NO_STOCKPILES
+
 // Check if the item is assigned to any use controlled by the military tab
 static bool is_assigned_item(df::item *item)
 {
@@ -143,24 +146,11 @@ static bool is_assigned_item(df::item *item)
     if (idx < 0)
         return false;
 
-    // Exclude weapons used by miners, wood cutters etc
-    switch (type) {
-    case item_type::WEAPON:
-        // the game code also checks this for ammo, funnily enough
-        // maybe it's not just for weapons?..
-        if (binsearch_index(ui->equipment.work_weapons, item->id) >= 0)
-            return false;
-        break;
-
-    default:
-        break;
-    }
-
     return true;
 }
 
 // Check if this ammo item is assigned to this squad with one of the specified uses
-static bool is_squad_ammo(df::item *item, df::squad *squad, bool train, bool combat)
+static bool is_squad_ammo(df::item *item, df::squad *squad, bool combat, bool train)
 {
     for (size_t i = 0; i < squad->ammunition.size(); i++)
     {
@@ -186,8 +176,6 @@ static bool can_store_ammo_rec(df::item *item, df::building *holder, int squad_i
 
     if (squads)
     {
-        bool target = holder->getType() == building_type::ArcheryTarget;
-
         for (size_t i = 0; i < squads->size(); i++)
         {
             auto use = (*squads)[i];
@@ -198,8 +186,7 @@ static bool can_store_ammo_rec(df::item *item, df::building *holder, int squad_i
 
             // Squad Equipment -> combat
             bool combat = use->mode.bits.squad_eq;
-            // Archery target with Train -> training
-            bool train = target && use->mode.bits.train;
+            bool train = false;
 
             if (combat || train)
             {
@@ -207,6 +194,41 @@ static bool can_store_ammo_rec(df::item *item, df::building *holder, int squad_i
 
                 if (squad && is_squad_ammo(item, squad, combat, train))
                     return true;
+            }
+        }
+    }
+    // Ugh, archery targets don't actually have a squad use vector
+    else if (holder->getType() == building_type::ArcheryTarget)
+    {
+        auto &squads = df::global::world->squads.all;
+
+        for (size_t si = 0; si < squads.size(); si++)
+        {
+            auto squad = squads[si];
+
+            // For containers assigned to a squad, only consider that squad
+            if (squad_id >= 0 && squad->id != squad_id)
+                continue;
+
+            for (size_t j = 0; j < squad->rooms.size(); j++)
+            {
+                auto use = squad->rooms[j];
+
+                if (use->building_id != holder->id)
+                    continue;
+
+                // Squad Equipment -> combat
+                bool combat = use->mode.bits.squad_eq;
+                // Archery target with Train -> training
+                bool train = use->mode.bits.train;
+
+                if (combat || train)
+                {
+                    if (is_squad_ammo(item, squad, combat, train))
+                        return true;
+                }
+
+                break;
             }
         }
     }
@@ -296,6 +318,16 @@ template<class Item> struct armory_hook : Item {
      */
     DEFINE_VMETHOD_INTERPOSE(bool, isCollected, ())
     {
+#ifdef NO_STOCKPILES
+        /*
+         * Completely block any items assigned to a squad from being stored
+         * in stockpiles. The reason is that I still observe haulers running
+         * around with bins to pick them up for some reason. There could be
+         * some unaccounted race conditions involved.
+         */
+        if (is_assigned_item(this))
+            return false;
+#else
         // Block stockpiling of items in the armory.
         if (is_in_armory(this))
             return false;
@@ -322,6 +354,7 @@ template<class Item> struct armory_hook : Item {
                     return false;
             }
         }
+#endif
 
         // Call the original vmethod
         return INTERPOSE_NEXT(isCollected)();
@@ -495,7 +528,7 @@ static bool try_store_item(df::building *target, df::item *item)
     // job <-> building link
     href->building_id = target->id;
     target->jobs.push_back(job);
-    job->references.push_back(href);
+    job->general_refs.push_back(href);
 
     // Two of the jobs need this link to find the job in canStoreItem().
     // They also don't actually need BUILDING_HOLDER, but it doesn't hurt.
@@ -506,7 +539,7 @@ static bool try_store_item(df::building *target, df::item *item)
         if (rdest)
         {
             rdest->building_id = target->id;
-            job->references.push_back(rdest);
+            job->general_refs.push_back(rdest);
         }
     }
 

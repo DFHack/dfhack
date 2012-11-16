@@ -49,9 +49,9 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
         found = true;
         df::unit *unit = NULL;
         df::building *building = NULL;
-        for (size_t i = 0; i < job->references.size(); i++)
+        for (size_t i = 0; i < job->general_refs.size(); i++)
         {
-            df::general_ref *ref = job->references[i];
+            df::general_ref *ref = job->general_refs[i];
             if (ref->getType() == general_ref_type::UNIT_WORKER)
                 unit = ref->getUnit();
             if (ref->getType() == general_ref_type::BUILDING_HOLDER)

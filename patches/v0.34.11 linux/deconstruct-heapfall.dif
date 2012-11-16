@@ -1,0 +1,83 @@
+http://www.bay12games.com/dwarves/mantisbt/view.php?id=5994
+
+Original code:
+
+.text:087AC378                 cmp     edx, eax
+.text:087AC37A                 mov     [esp+4Ch], eax
+.text:087AC37E                 jnb     loc_87A7034
+.text:087AC384                 mov     [esp+48h], edx
+.text:087AC388                 mov     [esp+54h], ebx
+...
+.text:087AC440                 add     dword ptr [esp+48h], 4
+.text:087AC445                 mov     ebp, [esp+48h]
+.text:087AC449                 cmp     [esp+4Ch], ebp
+.text:087AC44D                 ja      loc_87AC38C
+
+Patch:
+
+0x76437a
+89 44 24 4C
+89 54 24 4C
+
+.text:087AC37A                 mov     [esp+4Ch], edx
+
+0x764384
+89 54 24 48  89 5C 24 54
+E8 8A 51 8A  FF 90 90 90
+
+.text:087AC384                 call    sub_8051513
+.text:087AC389                 nop
+.text:087AC38A                 nop
+.text:087AC38B                 nop
+
+0x764440
+83 44 24 48 04 8B 6C 24  48 39 6C 24 4C 0F 87 39  FF FF FF
+83 6C 24 48 04 8B 6C 24  48 39 6C 24 4C 0F 86 39  FF FF FF
+
+.text:087AC440                 sub     dword ptr [esp+48h], 4
+.text:087AC445                 mov     ebp, [esp+48h]
+.text:087AC449                 cmp     [esp+4Ch], ebp
+.text:087AC44D                 jbe     loc_87AC38C
+
+0x9513
+90 90 90 90 90  90 90 90 90 90 90 90 90
+83 E8 04 89 44  24 4C 89 5C 24 58 C3 90
+
+.text:08051513 sub_8051513     proc near
+.text:08051513                 sub     eax, 4
+.text:08051516                 mov     [esp+4Ch], eax ; 48h
+.text:0805151A                 mov     [esp+58h], ebx ; 54h
+.text:0805151E                 retn
+.text:0805151E sub_8051513     endp
+
+
+You can use this script to apply the generated patch below:
+http://stalkr.net/files/ida/idadif.py
+
+----8<----
+This difference file is created by The Interactive Disassembler
+
+Dwarf_Fortress
+00009513: 90 83
+00009514: 90 E8
+00009515: 90 04
+00009516: 90 89
+00009517: 90 44
+00009518: 90 24
+00009519: 90 4C
+0000951A: 90 89
+0000951B: 90 5C
+0000951C: 90 24
+0000951D: 90 58
+0000951E: 90 C3
+0076437B: 44 54
+00764384: 89 E8
+00764385: 54 8A
+00764386: 24 51
+00764387: 48 8A
+00764388: 89 FF
+00764389: 5C 90
+0076438A: 24 90
+0076438B: 54 90
+00764441: 44 6C
+0076444E: 87 86

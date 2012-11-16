@@ -494,7 +494,7 @@ int Process::memDealloc(void *ptr, const int length)
 int Process::memProtect(void *ptr, const int length, const int prot)
 {
     int prot_native = 0;
-    int old_prot = 0;
+    DWORD old_prot = 0;
 
     // only support a few constant combinations
     if (prot == 0)

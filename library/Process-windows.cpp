@@ -484,28 +484,28 @@ void* Process::memAlloc(const int length)
     return ret;
 }
 
-int Process::memDealloc(const void *ptr, const int length)
+int Process::memDealloc(void *ptr, const int length)
 {
     // can only free the whole region at once
     // vfree returns 0 on error
-    return !VirtualFree(ptr, 0, MEM_RELEASE)
+    return !VirtualFree(ptr, 0, MEM_RELEASE);
 }
 
-int Process::memProtect(const void *ptr, const int length, const int prot)
+int Process::memProtect(void *ptr, const int length, const int prot)
 {
     int prot_native = 0;
-    int old_prot = 0;
+    DWORD old_prot = 0;
 
     // only support a few constant combinations
     if (prot == 0)
         prot_native = PAGE_NOACCESS;
     else if (prot == Process::MemProt::READ)
         prot_native = PAGE_READONLY;
-    else if (prot == Process::MemProt::READ | Process::MemProt::WRITE)
+    else if (prot == (Process::MemProt::READ | Process::MemProt::WRITE))
         prot_native = PAGE_READWRITE;
-    else if (prot == Process::MemProt::READ | Process::MemProt::WRITE | Process::MemProt::EXECUTE)
+    else if (prot == (Process::MemProt::READ | Process::MemProt::WRITE | Process::MemProt::EXEC))
         prot_native = PAGE_EXECUTE_READWRITE;
-    else if (prot == Process::MemProt::READ | Process::MemProt::EXECUTE)
+    else if (prot == (Process::MemProt::READ | Process::MemProt::EXEC))
         prot_native = PAGE_EXECUTE_READ;
     else
         return -1;

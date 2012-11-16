@@ -909,6 +909,24 @@ int Units::getNominalSkill(df::unit *unit, df::job_skill skill_id, bool use_rust
     return 0;
 }
 
+int Units::getExperience(df::unit *unit, df::job_skill skill_id, bool total)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if (!unit->status.current_soul)
+        return 0;
+
+    auto skill = binsearch_in_vector(unit->status.current_soul->skills, &df::unit_skill::id, skill_id);
+    if (!skill)
+        return 0;
+
+    int xp = skill->experience;
+    // exact formula used by the game:
+    if (total && skill->rating > 0)
+        xp += 500*skill->rating + 100*skill->rating*(skill->rating - 1)/2;
+    return xp;
+}
+
 int Units::getEffectiveSkill(df::unit *unit, df::job_skill skill_id)
 {
     /*

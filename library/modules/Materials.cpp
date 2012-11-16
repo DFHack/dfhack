@@ -840,7 +840,7 @@ bool Materials::ReadAllMaterials(void)
 
 std::string Materials::getDescription(const t_material & mat)
 {
-    MaterialInfo mi(mat.material, mat.index);
+    MaterialInfo mi(mat.mat_type, mat.mat_index);
     if (mi.creature)
         return mi.creature->creature_id + " " + mi.material->id;
     else if (mi.plant)
@@ -853,7 +853,7 @@ std::string Materials::getDescription(const t_material & mat)
 // This is completely worthless now
 std::string Materials::getType(const t_material & mat)
 {
-    MaterialInfo mi(mat.material, mat.index);
+    MaterialInfo mi(mat.mat_type, mat.mat_index);
     switch (mi.mode)
     {
     case MaterialInfo::Builtin:

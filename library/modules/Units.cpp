@@ -405,7 +405,7 @@ bool Creatures::WriteJob(const t_creature * furball, std::vector<t_material> con
     for(i=0;i<cmats.size();i++)
     {
         p->writeWord(cmats[i] + off.job_material_itemtype_o, mat[i].itemType);
-        p->writeWord(cmats[i] + off.job_material_subtype_o, mat[i].subType);
+        p->writeWord(cmats[i] + off.job_material_subtype_o, mat[i].itemSubtype);
         p->writeWord(cmats[i] + off.job_material_subindex_o, mat[i].subIndex);
         p->writeDWord(cmats[i] + off.job_material_index_o, mat[i].index);
         p->writeDWord(cmats[i] + off.job_material_flags_o, mat[i].flags);
@@ -475,7 +475,7 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
     for(i=0;i<cmats.size();i++)
     {
         mat[i].itemType = p->readWord(cmats[i] + off.job_material_itemtype_o);
-        mat[i].subType = p->readWord(cmats[i] + off.job_material_subtype_o);
+        mat[i].itemSubtype = p->readWord(cmats[i] + off.job_material_subtype_o);
         mat[i].subIndex = p->readWord(cmats[i] + off.job_material_subindex_o);
         mat[i].index = p->readDWord(cmats[i] + off.job_material_index_o);
         mat[i].flags = p->readDWord(cmats[i] + off.job_material_flags_o);

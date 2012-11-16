@@ -8,7 +8,12 @@ when 'add'
 	if u = df.unit_find
 		$superdwarf_ids |= [u.id]
 
-		$superdwarf_onupdate ||= df.onupdate_register(1) {
+		if df.gamemode == :ADVENTURE
+			onupdate_delay = nil
+		else
+			onupdate_delay = 1
+		end
+		$superdwarf_onupdate ||= df.onupdate_register(onupdate_delay) {
 			if $superdwarf_ids.empty?
 				df.onupdate_unregister($superdwarf_onupdate)
 				$superdwarf_onupdate = nil

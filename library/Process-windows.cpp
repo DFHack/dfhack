@@ -484,14 +484,14 @@ void* Process::memAlloc(const int length)
     return ret;
 }
 
-int Process::memDealloc(const void *ptr, const int length)
+int Process::memDealloc(void *ptr, const int length)
 {
     // can only free the whole region at once
     // vfree returns 0 on error
     return !VirtualFree(ptr, 0, MEM_RELEASE)
 }
 
-int Process::memProtect(const void *ptr, const int length, const int prot)
+int Process::memProtect(void *ptr, const int length, const int prot)
 {
     int prot_native = 0;
     int old_prot = 0;

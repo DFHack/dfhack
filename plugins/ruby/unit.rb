@@ -21,7 +21,7 @@ module DFHack
                     when :SelectTrainer
                         v.trainer_unit[v.trainer_cursor]
                     end
-                else
+                when :viewscreen_dwarfmodest
                     case ui.main.mode
                     when :ViewUnits
                         # nobody selected => idx == 0
@@ -33,6 +33,15 @@ module DFHack
                     else
                         ui.follow_unit_tg if ui.follow_unit != -1
                     end
+                when :viewscreen_dungeonmodest
+                    case ui_advmode.menu
+                    when :Default
+                        world.units.active[0]
+                    else
+                        unit_find(cursor)   # XXX
+                    end
+                when :viewscreen_dungeon_monsterstatusst
+                    curview.unit
                 end
             elsif what.kind_of?(Integer)
                 # search by id

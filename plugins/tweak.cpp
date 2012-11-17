@@ -713,7 +713,7 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
                 {
                     // Sparring has a problem in that all of its participants decrement
                     // the countdown variable. Fix this by multiplying it by the member count.
-                    sp->countdown = sp->countdown * sp->participants.hist_figure_ids.size();
+                    sp->countdown = sp->countdown * sp->participants.units.size();
                 }
                 else if (auto sd = strict_virtual_cast<df::activity_event_skill_demonstrationst>(event))
                 {
@@ -722,7 +722,7 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
                     sd->wait_countdown = adjust_unit_divisor(sd->wait_countdown);
 
                     // Check if the game selected the most skilled unit as the teacher
-                    auto &units = sd->participants.participant_ids;
+                    auto &units = sd->participants.units;
                     int maxv = -1, cur_xp = -1, minv = 0;
                     int best = -1;
                     size_t spar = 0;
@@ -775,7 +775,7 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
                         out.print("Replacing teacher %d (%d xp) with %d (%d xp)\n",
                                   sd->unit_id, cur_xp, units[best], maxv);
 
-                        sd->hist_figure_id = sd->participants.hist_figure_ids[best];
+                        sd->hist_figure_id = sd->participants.histfigs[best];
                         sd->unit_id = units[best];
                     }
                 }
@@ -806,10 +806,11 @@ struct military_training_sd_hook : df::activity_event_skill_demonstrationst {
 
 IMPLEMENT_VMETHOD_INTERPOSE(military_training_sd_hook, process);
 
-static bool is_done(df::activity_event *event, df::unit *unit)
+template<class T>
+bool is_done(T *event, df::unit *unit)
 {
     return event->flags.bits.dismissed ||
-           binsearch_index(event->participants.participant_ids, unit->id) < 0;
+           binsearch_index(event->participants.units, unit->id) < 0;
 }
 
 struct military_training_sp_hook : df::activity_event_sparringst {

@@ -488,6 +488,18 @@ function List:onRenderBody(dc)
     local iend = math.min(#choices, top+self.page_size-1)
     local iw = self.icon_width
 
+    local function paint_icon(icon, obj)
+        if type(icon) ~= 'string' then
+            dc:char(nil,icon)
+        else
+            if current then
+                dc:string(icon, obj.icon_pen or self.icon_pen or cur_pen)
+            else
+                dc:string(icon, obj.icon_pen or self.icon_pen or cur_dpen)
+            end
+        end
+    end
+
     for i = top,iend do
         local obj = choices[i]
         local current = (i == self.selected)
@@ -499,29 +511,27 @@ function List:onRenderBody(dc)
         end
 
         local y = (i - top)*self.row_height
+        local icon = getval(obj.icon)
 
-        if iw and obj.icon then
-            local icon = getval(obj.icon)
-            if icon then
-                dc:seek(0, y)
-                if type(icon) ~= 'string' then
-                    dc:char(nil,icon)
-                else
-                    if current then
-                        dc:string(icon, obj.icon_pen or self.icon_pen or cur_pen)
-                    else
-                        dc:string(icon, obj.icon_pen or self.icon_pen or cur_dpen)
-                    end
-                end
-            end
+        if iw and icon then
+            dc:seek(0, y)
+            paint_icon(icon, obj)
         end
 
         render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen, not current)
 
+        local ip = dc.width
+
         if obj.key then
             local keystr = gui.getKeyDisplay(obj.key)
-            dc:seek(dc.width-2-#keystr,y):pen(self.text_pen)
+            ip = ip-2-#keystr
+            dc:seek(ip,y):pen(self.text_pen)
             dc:string('('):string(keystr,COLOR_LIGHTGREEN):string(')')
+        end
+
+        if icon and not iw then
+            dc:seek(ip-1,y)
+            paint_icon(icon, obj)
         end
     end
 end

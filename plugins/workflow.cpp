@@ -446,7 +446,7 @@ static void cleanup_state(color_ostream &out)
 }
 
 static void check_lost_jobs(color_ostream &out, int ticks);
-static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg = NULL);
+static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg = NULL, bool create = true);
 
 static void start_protect(color_ostream &out)
 {
@@ -660,7 +660,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
  *   ITEM COUNT CONSTRAINT    *
  ******************************/
 
-static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg)
+static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg, bool create)
 {
     std::vector<std::string> tokens;
     split_string(&tokens, str, "/");
@@ -683,7 +683,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     if (item.subtype >= 0)
         weight += 10000;
 
-    df::dfhack_material_category mat_mask;
+    df::dfhack_material_category mat_mask(0);
     std::string maskstr = vector_get(tokens,1);
     if (!maskstr.empty() && !parseJobMaterialCategory(&mat_mask, maskstr)) {
         out.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
@@ -756,6 +756,9 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
             ct->is_local == is_local)
             return ct;
     }
+
+    if (!create)
+        return NULL;
 
     ItemConstraint *nct = new ItemConstraint;
     nct->is_craft = is_craft;
@@ -1346,7 +1349,9 @@ static void push_constraint(lua_State *L, ItemConstraint *cv)
 
     Lua::SetField(L, cv->is_craft, ctable, "is_craft");
 
+    lua_getglobal(L, "copyall");
     Lua::PushDFObject(L, &cv->mat_mask);
+    lua_call(L, 1, 1);
     lua_setfield(L, -2, "mat_mask");
 
     Lua::SetField(L, cv->material.type, ctable, "mat_type");
@@ -1417,6 +1422,22 @@ static int listConstraints(lua_State *L)
     return 1;
 }
 
+static int findConstraint(lua_State *L)
+{
+    auto token = luaL_checkstring(L, 1);
+
+    color_ostream &out = *Lua::GetOutput(L);
+    update_data_structures(out);
+
+    ItemConstraint *icv = get_constraint(out, token, NULL, false);
+
+    if (icv)
+        push_constraint(L, icv);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
 static int setConstraint(lua_State *L)
 {
     auto token = luaL_checkstring(L, 1);
@@ -1425,6 +1446,7 @@ static int setConstraint(lua_State *L)
     int gap = luaL_optint(L, 4, -1);
 
     color_ostream &out = *Lua::GetOutput(L);
+    update_data_structures(out);
 
     ItemConstraint *icv = get_constraint(out, token);
     if (!icv)
@@ -1451,6 +1473,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
 
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(listConstraints),
+    DFHACK_LUA_COMMAND(findConstraint),
     DFHACK_LUA_COMMAND(setConstraint),
     DFHACK_LUA_END
 };

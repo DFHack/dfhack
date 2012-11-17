@@ -184,6 +184,10 @@ end
             self:changeSelected(10)
         elseif keys.SELECT then
             self:editSelected()
+        elseif keys.CUSTOM_ALT_O then
+            local trg=self:currentTarget()
+            local size,off=df.sizeof(trg.target:_field(trg.keys[trg.selected]))
+            dialog.showMessage("Offset",string.format("Size hex=%x,%x dec=%d,%d",size,off,size,off),COLOR_WHITE)
         elseif keys.CUSTOM_ALT_F then
             self:find()
         elseif keys.CUSTOM_ALT_E then

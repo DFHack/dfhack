@@ -12,6 +12,7 @@ DFHack future
     - removebadthoughts: add --dry-run option
   New tweaks:
     - tweak military-training: speed up melee squad training up to 10x (depends on unit count).
+    - superdwarf: work in adventure mode too
   New scripts:
     - binpatch: the same as the stand-alone binpatch.exe, but works at runtime.
     - region-pops: displays animal populations of the region and allows tweaking them.

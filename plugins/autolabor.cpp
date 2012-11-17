@@ -964,7 +964,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         else if (building_type::TradeDepot == type)
         {
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
-            trader_requested = depot->trade_flags.bits.trader_requested;
+            trader_requested = trader_requested || depot->trade_flags.bits.trader_requested;
             if (print_debug)
             {
                 if (trader_requested)

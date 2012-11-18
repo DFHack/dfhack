@@ -683,6 +683,55 @@ static bool can_spar(df::unit *unit) {
            (!unit->job.current_job || unit->job.current_job != job_type::Rest);
 }
 
+static bool has_spar_inventory(df::unit *unit, df::job_skill skill)
+{
+    using namespace df::enums::job_skill;
+
+    auto type = ENUM_ATTR(job_skill, type, skill);
+
+    if (type == job_skill_class::MilitaryWeapon)
+    {
+        for (size_t i = 0; i < unit->inventory.size(); i++)
+        {
+            auto item = unit->inventory[i];
+            if (item->mode == df::unit_inventory_item::Weapon &&
+                item->item->getMeleeSkill() == skill)
+                return true;
+        }
+
+        return false;
+    }
+
+    switch (skill) {
+        case THROW:
+        case RANGED_COMBAT:
+            return false;
+
+        case SHIELD:
+            for (size_t i = 0; i < unit->inventory.size(); i++)
+            {
+                auto item = unit->inventory[i];
+                if (item->mode == df::unit_inventory_item::Weapon &&
+                    item->item->getType() == item_type::SHIELD)
+                    return true;
+            }
+            return false;
+
+        case ARMOR:
+            for (size_t i = 0; i < unit->inventory.size(); i++)
+            {
+                auto item = unit->inventory[i];
+                if (item->mode == df::unit_inventory_item::Worn &&
+                    item->item->isArmorNotClothing())
+                    return true;
+            }
+            return false;
+
+        default:
+            return true;
+    }
+}
+
 struct military_training_ct_hook : df::activity_event_combat_trainingst {
     typedef df::activity_event_combat_trainingst interpose_base;
 
@@ -740,7 +789,7 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
                             maxv = xp;
                             best = j;
                         }
-                        if (can_spar(unit))
+                        if (can_spar(unit) && has_spar_inventory(unit, sd->skill))
                             spar++;
                     }
 
@@ -750,7 +799,8 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
                     if ((maxv - minv) < 64*15 && spar == units.size() &&
                         random_int(20) >= 5 + (maxv-minv)/64)
                     {
-                        out.print("Replacing demonstration with sparring.\n");
+                        out.print("Replacing %s demonstration (xp %d-%d) with sparring.\n",
+                                  ENUM_KEY_STR(job_skill, sd->skill).c_str(), minv, maxv);
 
                         if (auto spar = df::allocate<df::activity_event_sparringst>())
                         {
@@ -772,7 +822,8 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
                     // If the teacher has less xp than somebody else, switch
                     if (best >= 0 && maxv > cur_xp)
                     {
-                        out.print("Replacing teacher %d (%d xp) with %d (%d xp)\n",
+                        out.print("Replacing %s teacher %d (%d xp) with %d (%d xp)\n",
+                                  ENUM_KEY_STR(job_skill, sd->skill).c_str(),
                                   sd->unit_id, cur_xp, units[best], maxv);
 
                         sd->hist_figure_id = sd->participants.histfigs[best];

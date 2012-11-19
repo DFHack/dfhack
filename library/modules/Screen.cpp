@@ -234,6 +234,21 @@ bool Screen::invalidate()
     return true;
 }
 
+const Pen Screen::Painter::default_pen(0,COLOR_GREY,0);
+const Pen Screen::Painter::default_key_pen(0,COLOR_LIGHTGREEN,0);
+
+void Screen::Painter::do_paint_string(const std::string &str, const Pen &pen)
+{
+    if (gcursor.y < clip.first.y || gcursor.y > clip.second.y)
+        return;
+
+    int dx = std::max(0, int(clip.first.x - gcursor.x));
+    int len = std::min((int)str.size(), int(clip.second.x - gcursor.x + 1));
+
+    if (len > dx)
+        paintString(pen, gcursor.x + dx, gcursor.y, str.substr(dx, len-dx));
+}
+
 bool Screen::findGraphicsTile(const std::string &pagename, int x, int y, int *ptile, int *pgs)
 {
     if (!gps || !texture || x < 0 || y < 0) return false;

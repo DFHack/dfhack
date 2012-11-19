@@ -326,9 +326,8 @@ public:
     void setGoalCount(int v) { config.ival(0) = v; }
 
     int goalGap() {
-        int cval = (config.ival(1) <= 0) ? 5 : config.ival(1);
-        int cmax = std::max(goalCount()-5, goalCount()/2);
-        return std::max(1, std::min(cmax, cval));
+        int cval = (config.ival(1) <= 0) ? std::min(5,goalCount()/2) : config.ival(1);
+        return std::max(1, std::min(goalCount()-1, cval));
     }
     void setGoalGap(int v) { config.ival(1) = v; }
 

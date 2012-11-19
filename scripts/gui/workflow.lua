@@ -387,8 +387,7 @@ end
 
 function NewConstraint:onRangeChange()
     local cons = self.constraint
-    local lim = math.max(cons.goal_value-5, math.floor(cons.goal_value/2))
-    cons.goal_gap = math.max(1, math.min(cons.goal_gap, lim))
+    cons.goal_gap = math.max(1, math.min(cons.goal_gap, cons.goal_value-1))
 end
 
 JobConstraints = defclass(JobConstraints, guidm.MenuOverlay)

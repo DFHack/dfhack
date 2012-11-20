@@ -39,13 +39,19 @@ DFHACK_PLUGIN("automaterial");
 
 struct MaterialDescriptor
 {
+    df::item_type item_type;
+    int16_t item_subtype;
     int16_t type;
     int32_t index;
     bool valid;
 
     bool matches(const MaterialDescriptor &a) const
     {
-        return a.valid && valid && a.type == type && a.index == index;
+        return a.valid && valid && 
+            a.type == type && 
+            a.index == index &&
+            a.item_type == item_type &&
+            a.item_subtype == item_subtype;
     }
 };
 
@@ -150,12 +156,16 @@ static MaterialDescriptor get_material_in_list(size_t i)
 
     if (VIRTUAL_CAST_VAR(gen, df::build_req_choice_genst, ui_build_selector->choices[i]))
     {
+        result.item_type = gen->item_type;
+        result.item_subtype = gen->item_subtype;
         result.type = gen->mat_type;
         result.index = gen->mat_index;
         result.valid = true;
     }
     else if (VIRTUAL_CAST_VAR(spec, df::build_req_choice_specst, ui_build_selector->choices[i]))
     {
+        result.item_type = gen->item_type;
+        result.item_subtype = gen->item_subtype;
         result.type = spec->candidate->getActualMaterial();
         result.index = spec->candidate->getActualMaterialIndex();
         result.valid = true;
@@ -249,8 +259,6 @@ static bool check_autoselect(MaterialDescriptor &material, bool toggle)
 struct jobutils_hook : public df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
-
-    static color_ostream_proxy console_out;
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {

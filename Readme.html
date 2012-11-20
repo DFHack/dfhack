@@ -2771,6 +2771,7 @@ guideline because it arguably just fixes small usability bugs in the game UI.</p
 <h2><a class="toc-backref" href="#id132">Dwarf Manipulator</a></h2>
 <p>Implemented by the manipulator plugin. To activate, open the unit screen and
 press 'l'.</p>
+<img alt="images/manipulator.png" src="images/manipulator.png" />
 <p>This tool implements a Dwarf Therapist-like interface within the game UI. The
 far left column displays the unit's Happiness (color-coded based on its
 value), and the right half of the screen displays each dwarf's labor settings
@@ -2806,6 +2807,7 @@ directly to the main dwarf mode screen.</p>
 <div class="section" id="search">
 <h2><a class="toc-backref" href="#id133">Search</a></h2>
 <p>The search plugin adds search to the Stocks, Trading and Unit List screens.</p>
+<img alt="images/search.png" src="images/search.png" />
 <p>Searching works the same way as the search option in &quot;Move to Depot&quot; does.
 You will see the Search option displayed on screen with a hotkey (usually 's').
 Pressing it lets you start typing a query and the relevant list will start
@@ -2825,12 +2827,14 @@ key while search is active clears the search instead of executing the trade.</p>
 <div class="section" id="gui-liquids">
 <h2><a class="toc-backref" href="#id134">gui/liquids</a></h2>
 <p>To use, bind to a key and activate in the 'k' mode.</p>
+<img alt="images/liquids.png" src="images/liquids.png" />
 <p>While active, use the suggested keys to switch the usual liquids parameters, and Enter
 to select the target area and apply changes.</p>
 </div>
 <div class="section" id="gui-mechanisms">
 <h2><a class="toc-backref" href="#id135">gui/mechanisms</a></h2>
 <p>To use, bind to a key and activate in the 'q' mode.</p>
+<img alt="images/mechanisms.png" src="images/mechanisms.png" />
 <p>Lists mechanisms connected to the building, and their links. Navigating the list centers
 the view on the relevant linked buildings.</p>
 <p>To exit, press ESC or Enter; ESC recenters on the original building, while Enter leaves
@@ -2843,12 +2847,17 @@ re-entering the mechanisms ui.</p>
 via a simple dialog in the game ui.</p>
 <ul>
 <li><p class="first"><tt class="docutils literal">gui/rename [building]</tt> in 'q' mode changes the name of a building.</p>
+<img alt="images/rename-bld.png" src="images/rename-bld.png" />
 <p>The selected building must be one of stockpile, workshop, furnace, trap, or siege engine.
 It is also possible to rename zones from the 'i' menu.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">gui/rename [unit]</tt> with a unit selected changes the nickname.</p>
+<p>Unlike the built-in interface, this works even on enemies and animals.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">gui/rename <span class="pre">unit-profession</span></tt> changes the selected unit's custom profession name.</p>
+<img alt="images/rename-prof.png" src="images/rename-prof.png" />
+<p>Likewise, this can be applied to any unit, and when used on animals it overrides
+their species string.</p>
 </li>
 </ul>
 <p>The <tt class="docutils literal">building</tt> or <tt class="docutils literal">unit</tt> options are automatically assumed when in relevant ui state.</p>
@@ -2857,6 +2866,7 @@ It is also possible to rename zones from the 'i' menu.</p>
 <h2><a class="toc-backref" href="#id137">gui/room-list</a></h2>
 <p>To use, bind to a key and activate in the 'q' mode, either immediately or after opening
 the assign owner page.</p>
+<img alt="images/room-list.png" src="images/room-list.png" />
 <p>The script lists other rooms owned by the same owner, or by the unit selected in the assign
 list, and allows unassigning them.</p>
 </div>
@@ -2873,17 +2883,25 @@ and may lead to inappropriate weapons being selected.</p>
 <div class="section" id="gui-guide-path">
 <h2><a class="toc-backref" href="#id139">gui/guide-path</a></h2>
 <p>Bind to a key, and activate in the Hauling menu with the cursor over a Guide order.</p>
+<img alt="images/guide-path.png" src="images/guide-path.png" />
 <p>The script displays the cached path that will be used by the order; the game
 computes it when the order is executed for the first time.</p>
 </div>
 <div class="section" id="gui-workshop-job">
 <h2><a class="toc-backref" href="#id140">gui/workshop-job</a></h2>
 <p>Bind to a key, and activate with a job selected in a workshop in the 'q' mode.</p>
+<img alt="images/workshop-job.png" src="images/workshop-job.png" />
 <p>The script shows a list of the input reagents of the selected job, and allows changing
 them like the <tt class="docutils literal">job <span class="pre">item-type</span></tt> and <tt class="docutils literal">job <span class="pre">item-material</span></tt> commands.</p>
 <p>Specifically, pressing the 'i' key pops up a dialog that lets you select an item
-type from a list. Pressing 'm', unless the item type does not allow a material,
+type from a list.</p>
+<img alt="images/workshop-job-item.png" src="images/workshop-job-item.png" />
+<p>Pressing 'm', unless the item type does not allow a material,
 lets you choose a material.</p>
+<img alt="images/workshop-job-material.png" src="images/workshop-job-material.png" />
+<p>Since there are a lot more materials than item types, this dialog is more complex
+and uses a hierarchy of sub-menus. List choices that open a sub-menu are marked
+with an arrow on the left.</p>
 <div class="warning">
 <p class="first admonition-title">Warning</p>
 <p class="last">Due to the way input reagent matching works in DF, you must select an item type
@@ -2907,6 +2925,7 @@ you have to unset the material first.</p>
 <div class="section" id="gui-workflow">
 <h2><a class="toc-backref" href="#id141">gui/workflow</a></h2>
 <p>Bind to a key, and activate with a job selected in a workshop in the 'q' mode.</p>
+<img alt="images/workflow.png" src="images/workflow.png" />
 <p>This script provides a simple interface to constraints managed by the workflow
 plugin. When active, it displays a list of all constraints applicable to the
 current job, and their current status.</p>
@@ -2920,15 +2939,22 @@ Pressing 'm' lets you input the range directly; 'e', 'r', 'd', 'f' adjust the
 bounds by 1, 5, or 25 depending on the direction and the 'c' setting (counting
 items and expanding the range each gives a 5x bonus).</p>
 <p>Pressing 'n' produces a list of possible outputs of this job as guessed by
-workflow, and lets you create a new constraint by just choosing one. If you
+workflow, and lets you create a new constraint by choosing one as template. If you
 don't see the choice you want in the list, it likely means you have to adjust
 the job material first using <tt class="docutils literal">job <span class="pre">item-material</span></tt> or <tt class="docutils literal"><span class="pre">gui/workshop-job</span></tt>,
 as described in <tt class="docutils literal">workflow</tt> documentation above. In this manner, this feature
 can be used for troubleshooting jobs that don't match the right constraints.</p>
+<img alt="images/workflow-new1.png" src="images/workflow-new1.png" />
+<p>After selecting one of the presented outputs, the interface proceeds to the
+next dialog, which allows you to edit the suggested constraint parameters to
+suit your need, and set the item count range.</p>
+<img alt="images/workflow-new2.png" src="images/workflow-new2.png" />
+<p>If you don't need advanced settings, you can just press 'y' to confirm creation.</p>
 </div>
 <div class="section" id="gui-assign-rack">
 <h2><a class="toc-backref" href="#id142">gui/assign-rack</a></h2>
 <p>Bind to a key, and activate when viewing a weapon rack in the 'q' mode.</p>
+<img alt="images/assign-rack.png" src="images/assign-rack.png" />
 <p>This script is part of a group of related fixes to make the armory storage
 work again. The existing issues are:</p>
 <ul class="simple">
@@ -2945,7 +2971,8 @@ unless the <tt class="docutils literal"><span class="pre">fix-armory</span></tt>
 </ul>
 <p>The script interface simply lets you designate one of the squads that
 are assigned to the barracks/armory containing the selected stand as
-the intended user.</p>
+the intended user. In order to aid in the choice, it shows the number
+of currently assigned racks for every valid squad.</p>
 </div>
 </div>
 <div class="section" id="behavior-mods">
@@ -2976,6 +3003,7 @@ e.g. like making siegers bring their own, are something only Toady can do.</p>
 <h3><a class="toc-backref" href="#id146">Configuration UI</a></h3>
 <p>The configuration front-end to the plugin is implemented by the gui/siege-engine
 script. Bind it to a key and activate after selecting a siege engine in 'q' mode.</p>
+<img alt="images/siege-engine.png" src="images/siege-engine.png" />
 <p>The main mode displays the current target, selected ammo item type, linked stockpiles and
 the allowed operator skill range. The map tile color is changed to signify if it can be
 hit by the selected engine: green for fully reachable, blue for out of range, red for blocked,
@@ -2999,6 +3027,7 @@ menu.</p>
 supplied to gear boxes built in the four adjacent N/S/W/E tiles.</p>
 <p>The configuration front-end is implemented by the gui/power-meter script. Bind it to a
 key and activate after selecting Pressure Plate in the build menu.</p>
+<img alt="images/power-meter.png" src="images/power-meter.png" />
 <p>The script follows the general look and feel of the regular pressure plate build
 configuration page, but configures parameters relevant to the modded power meter building.</p>
 </div>

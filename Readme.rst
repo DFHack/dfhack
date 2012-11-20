@@ -1968,6 +1968,8 @@ Dwarf Manipulator
 Implemented by the manipulator plugin. To activate, open the unit screen and
 press 'l'.
 
+.. image:: images/manipulator.png
+
 This tool implements a Dwarf Therapist-like interface within the game UI. The
 far left column displays the unit's Happiness (color-coded based on its
 value), and the right half of the screen displays each dwarf's labor settings
@@ -2012,6 +2014,8 @@ Search
 
 The search plugin adds search to the Stocks, Trading and Unit List screens.
 
+.. image:: images/search.png
+
 Searching works the same way as the search option in "Move to Depot" does.
 You will see the Search option displayed on screen with a hotkey (usually 's').
 Pressing it lets you start typing a query and the relevant list will start
@@ -2037,6 +2041,8 @@ gui/liquids
 
 To use, bind to a key and activate in the 'k' mode.
 
+.. image:: images/liquids.png
+
 While active, use the suggested keys to switch the usual liquids parameters, and Enter
 to select the target area and apply changes.
 
@@ -2045,6 +2051,8 @@ gui/mechanisms
 ==============
 
 To use, bind to a key and activate in the 'q' mode.
+
+.. image:: images/mechanisms.png
 
 Lists mechanisms connected to the building, and their links. Navigating the list centers
 the view on the relevant linked buildings.
@@ -2062,12 +2070,21 @@ via a simple dialog in the game ui.
 
 * ``gui/rename [building]`` in 'q' mode changes the name of a building.
 
+  .. image:: images/rename-bld.png
+
   The selected building must be one of stockpile, workshop, furnace, trap, or siege engine.
   It is also possible to rename zones from the 'i' menu.
 
 * ``gui/rename [unit]`` with a unit selected changes the nickname.
 
+  Unlike the built-in interface, this works even on enemies and animals.
+
 * ``gui/rename unit-profession`` changes the selected unit's custom profession name.
+
+  .. image:: images/rename-prof.png
+
+  Likewise, this can be applied to any unit, and when used on animals it overrides
+  their species string.
 
 The ``building`` or ``unit`` options are automatically assumed when in relevant ui state.
 
@@ -2077,6 +2094,8 @@ gui/room-list
 
 To use, bind to a key and activate in the 'q' mode, either immediately or after opening
 the assign owner page.
+
+.. image:: images/room-list.png
 
 The script lists other rooms owned by the same owner, or by the unit selected in the assign
 list, and allows unassigning them.
@@ -2101,6 +2120,8 @@ gui/guide-path
 
 Bind to a key, and activate in the Hauling menu with the cursor over a Guide order.
 
+.. image:: images/guide-path.png
+
 The script displays the cached path that will be used by the order; the game
 computes it when the order is executed for the first time.
 
@@ -2110,12 +2131,24 @@ gui/workshop-job
 
 Bind to a key, and activate with a job selected in a workshop in the 'q' mode.
 
+.. image:: images/workshop-job.png
+
 The script shows a list of the input reagents of the selected job, and allows changing
 them like the ``job item-type`` and ``job item-material`` commands.
 
 Specifically, pressing the 'i' key pops up a dialog that lets you select an item
-type from a list. Pressing 'm', unless the item type does not allow a material,
+type from a list.
+
+.. image:: images/workshop-job-item.png
+
+Pressing 'm', unless the item type does not allow a material,
 lets you choose a material.
+
+.. image:: images/workshop-job-material.png
+
+Since there are a lot more materials than item types, this dialog is more complex
+and uses a hierarchy of sub-menus. List choices that open a sub-menu are marked
+with an arrow on the left.
 
 .. warning::
 
@@ -2145,6 +2178,8 @@ gui/workflow
 
 Bind to a key, and activate with a job selected in a workshop in the 'q' mode.
 
+.. image:: images/workflow.png
+
 This script provides a simple interface to constraints managed by the workflow
 plugin. When active, it displays a list of all constraints applicable to the
 current job, and their current status.
@@ -2161,17 +2196,30 @@ bounds by 1, 5, or 25 depending on the direction and the 'c' setting (counting
 items and expanding the range each gives a 5x bonus).
 
 Pressing 'n' produces a list of possible outputs of this job as guessed by
-workflow, and lets you create a new constraint by just choosing one. If you
+workflow, and lets you create a new constraint by choosing one as template. If you
 don't see the choice you want in the list, it likely means you have to adjust
 the job material first using ``job item-material`` or ``gui/workshop-job``,
 as described in ``workflow`` documentation above. In this manner, this feature
 can be used for troubleshooting jobs that don't match the right constraints.
+
+.. image:: images/workflow-new1.png
+
+After selecting one of the presented outputs, the interface proceeds to the
+next dialog, which allows you to edit the suggested constraint parameters to
+suit your need, and set the item count range.
+
+.. image:: images/workflow-new2.png
+
+If you don't need advanced settings, you can just press 'y' to confirm creation.
+
 
 
 gui/assign-rack
 ===============
 
 Bind to a key, and activate when viewing a weapon rack in the 'q' mode.
+
+.. image:: images/assign-rack.png
 
 This script is part of a group of related fixes to make the armory storage
 work again. The existing issues are:
@@ -2191,7 +2239,8 @@ work again. The existing issues are:
 
 The script interface simply lets you designate one of the squads that
 are assigned to the barracks/armory containing the selected stand as
-the intended user.
+the intended user. In order to aid in the choice, it shows the number
+of currently assigned racks for every valid squad.
 
 
 =============
@@ -2231,6 +2280,8 @@ Configuration UI
 The configuration front-end to the plugin is implemented by the gui/siege-engine
 script. Bind it to a key and activate after selecting a siege engine in 'q' mode.
 
+.. image:: images/siege-engine.png
+
 The main mode displays the current target, selected ammo item type, linked stockpiles and
 the allowed operator skill range. The map tile color is changed to signify if it can be
 hit by the selected engine: green for fully reachable, blue for out of range, red for blocked,
@@ -2260,6 +2311,8 @@ supplied to gear boxes built in the four adjacent N/S/W/E tiles.
 
 The configuration front-end is implemented by the gui/power-meter script. Bind it to a
 key and activate after selecting Pressure Plate in the build menu.
+
+.. image:: images/power-meter.png
 
 The script follows the general look and feel of the regular pressure plate build
 configuration page, but configures parameters relevant to the modded power meter building.

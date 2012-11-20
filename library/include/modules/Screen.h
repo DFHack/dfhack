@@ -110,7 +110,7 @@ namespace DFHack
             Pen chtile(char ch, int tile) { Pen cp(*this); cp.ch = ch; cp.tile = tile; return cp; }
         };
 
-        struct ViewRect {
+        struct DFHACK_EXPORT ViewRect {
             rect2d view, clip;
 
             ViewRect(rect2d area) : view(area), clip(area) {}

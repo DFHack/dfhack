@@ -1077,6 +1077,9 @@ Subcommands that persist until disabled or DF quit:
 :patrol-duty:    Makes Train orders not count as patrol duty to stop unhappy thoughts.
                  Does NOT fix the problem when soldiers go off-duty (i.e. civilian).
 :readable-build-plate: Fixes rendering of creature weight limits in pressure plate build menu.
+
+                       .. image:: images/tweak-plate.png
+
 :stable-temp:    Fixes performance bug 6012 by squashing jitter in temperature updates.
                  In very item-heavy forts with big stockpiles this can improve FPS by 50-100%
 :fast-heat:      Further improves temperature update performance by ensuring that 1 degree
@@ -1095,8 +1098,15 @@ Subcommands that persist until disabled or DF quit:
 :military-stable-assign: Preserve list order and cursor position when assigning to squad,
                          i.e. stop the rightmost list of the Positions page of the military
                          screen from constantly resetting to the top.
-:military-color-assigned: Color squad candidates already assigned to other squads in brown/green
+:military-color-assigned: Color squad candidates already assigned to other squads in yellow/green
                           to make them stand out more in the list.
+
+                          .. image:: images/tweak-mil-color.png
+
+:military-training: Speeds up melee squad training by removing an almost certainly
+                    unintended inverse dependency of training speed on unit count
+                    (i.e. the more units you have, the slower it becomes), and making
+                    the units spar more.
 
 fix-armory
 ----------
@@ -2039,7 +2049,7 @@ key while search is active clears the search instead of executing the trade.
 gui/liquids
 ===========
 
-To use, bind to a key and activate in the 'k' mode.
+To use, bind to a key (the example config uses Alt-L) and activate in the 'k' mode.
 
 .. image:: images/liquids.png
 
@@ -2050,7 +2060,7 @@ to select the target area and apply changes.
 gui/mechanisms
 ==============
 
-To use, bind to a key and activate in the 'q' mode.
+To use, bind to a key (the example config uses Ctrl-M) and activate in the 'q' mode.
 
 .. image:: images/mechanisms.png
 
@@ -2088,12 +2098,15 @@ via a simple dialog in the game ui.
 
 The ``building`` or ``unit`` options are automatically assumed when in relevant ui state.
 
+The example config binds building/unit rename to Ctrl-Shift-N, and
+unit profession change to Ctrl-Shift-T.
+
 
 gui/room-list
 =============
 
-To use, bind to a key and activate in the 'q' mode, either immediately or after opening
-the assign owner page.
+To use, bind to a key (the example config uses Alt-R) and activate in the 'q' mode,
+either immediately or after opening the assign owner page.
 
 .. image:: images/room-list.png
 
@@ -2104,7 +2117,8 @@ list, and allows unassigning them.
 gui/choose-weapons
 ==================
 
-Bind to a key, and activate in the Equip->View/Customize page of the military screen.
+Bind to a key (the example config uses Ctrl-W), and activate in the Equip->View/Customize
+page of the military screen.
 
 Depending on the cursor location, it rewrites all 'individual choice weapon' entries
 in the selected squad or position to use a specific weapon type matching the assigned
@@ -2118,7 +2132,8 @@ and may lead to inappropriate weapons being selected.
 gui/guide-path
 ==============
 
-Bind to a key, and activate in the Hauling menu with the cursor over a Guide order.
+Bind to a key (the example config uses Alt-P), and activate in the Hauling menu with
+the cursor over a Guide order.
 
 .. image:: images/guide-path.png
 
@@ -2129,7 +2144,8 @@ computes it when the order is executed for the first time.
 gui/workshop-job
 ================
 
-Bind to a key, and activate with a job selected in a workshop in the 'q' mode.
+Bind to a key (the example config uses Alt-A), and activate with a job selected in
+a workshop in the 'q' mode.
 
 .. image:: images/workshop-job.png
 
@@ -2176,7 +2192,8 @@ you have to unset the material first.
 gui/workflow
 ============
 
-Bind to a key, and activate with a job selected in a workshop in the 'q' mode.
+Bind to a key (the example config uses Alt-W), and activate with a job selected
+in a workshop in the 'q' mode.
 
 .. image:: images/workflow.png
 
@@ -2217,7 +2234,8 @@ If you don't need advanced settings, you can just press 'y' to confirm creation.
 gui/assign-rack
 ===============
 
-Bind to a key, and activate when viewing a weapon rack in the 'q' mode.
+Bind to a key (the example config uses P), and activate when viewing a weapon
+rack in the 'q' mode.
 
 .. image:: images/assign-rack.png
 
@@ -2278,7 +2296,8 @@ Configuration UI
 ----------------
 
 The configuration front-end to the plugin is implemented by the gui/siege-engine
-script. Bind it to a key and activate after selecting a siege engine in 'q' mode.
+script. Bind it to a key (the example config uses Alt-A) and activate after selecting
+a siege engine in 'q' mode.
 
 .. image:: images/siege-engine.png
 
@@ -2310,7 +2329,8 @@ The power-meter plugin implements a modified pressure plate that detects power b
 supplied to gear boxes built in the four adjacent N/S/W/E tiles.
 
 The configuration front-end is implemented by the gui/power-meter script. Bind it to a
-key and activate after selecting Pressure Plate in the build menu.
+key (the example config uses Ctrl-Shift-M) and activate after selecting Pressure Plate
+in the build menu.
 
 .. image:: images/power-meter.png
 

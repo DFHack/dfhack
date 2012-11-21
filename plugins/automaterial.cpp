@@ -14,13 +14,14 @@
 // DF data structure definition headers
 #include "DataDefs.h"
 #include "MiscUtils.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/ui_build_selector.h"
 #include "df/build_req_choice_genst.h"
 #include "df/build_req_choice_specst.h"
+#include "df/construction_type.h"
 #include "df/item.h"
-
 #include "df/ui.h"
+#include "df/ui_build_selector.h"
+#include "df/viewscreen_dwarfmodest.h"
+
 #include "modules/Gui.h"
 #include "modules/Screen.h"
 
@@ -33,7 +34,6 @@ using namespace df::enums;
 using df::global::gps;
 using df::global::ui;
 using df::global::ui_build_selector;
-
 
 DFHACK_PLUGIN("automaterial");
 
@@ -55,12 +55,10 @@ struct MaterialDescriptor
     }
 };
 
-typedef int16_t construction_type;
-
-static map<construction_type, MaterialDescriptor> last_used_material;
-static map<construction_type, MaterialDescriptor> last_moved_material;
-static map< construction_type, vector<MaterialDescriptor> > preferred_materials;
-static map< construction_type, df::interface_key > hotkeys;
+static map<int16_t, MaterialDescriptor> last_used_material;
+static map<int16_t, MaterialDescriptor> last_moved_material;
+static map< int16_t, vector<MaterialDescriptor> > preferred_materials;
+static map< int16_t, df::interface_key > hotkeys;
 static bool last_used_moved = false;
 static bool auto_choose_materials = true;
 static bool auto_choose_attempted = true;
@@ -70,7 +68,6 @@ static command_result automaterial_cmd(color_ostream &out, vector <string> & par
 {
     return CR_OK;
 }
-
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
@@ -183,7 +180,6 @@ static MaterialDescriptor get_material_in_list(size_t i)
     return result;
 }
 
-
 static bool is_material_in_autoselect(size_t &i, MaterialDescriptor &material)
 {
     for (i = 0; i < get_curr_constr_prefs().size(); i++)
@@ -225,27 +221,6 @@ static bool move_material_to_top(MaterialDescriptor &material)
     return false;
 }
 
-static bool choose_materials()
-{
-    size_t size = ui_build_selector->choices.size();
-    for (size_t i = 0; i < size; i++)
-    {
-        MaterialDescriptor material = get_material_in_list(i);
-        size_t j;
-        if (is_material_in_autoselect(j, material))
-        {
-            ui_build_selector->sel_index = i;
-            std::set< df::interface_key > keys;
-            keys.insert(df::interface_key::SELECT_ALL);
-            Core::getTopViewscreen()->feed(&keys);
-            if (!in_material_choice_stage())
-                return true;
-        }
-    }
-
-    return false;
-}
-
 static bool check_autoselect(MaterialDescriptor &material, bool toggle)
 {
     size_t idx;
@@ -268,6 +243,27 @@ static bool check_autoselect(MaterialDescriptor &material, bool toggle)
 struct jobutils_hook : public df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
+
+    bool choose_materials()
+    {
+        size_t size = ui_build_selector->choices.size();
+        for (size_t i = 0; i < size; i++)
+        {
+            MaterialDescriptor material = get_material_in_list(i);
+            size_t j;
+            if (is_material_in_autoselect(j, material))
+            {
+                ui_build_selector->sel_index = i;
+                std::set< df::interface_key > keys;
+                keys.insert(df::interface_key::SELECT_ALL);
+                this->feed(&keys);
+                if (!in_material_choice_stage())
+                    return true;
+            }
+        }
+
+        return false;
+    }
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
@@ -302,15 +298,17 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             }
         }
 
-        construction_type last_used_constr_subtype = (in_material_choice_stage()) ?  ui_build_selector->building_subtype : -1;
+        int16_t last_used_constr_subtype = (in_material_choice_stage()) ?  ui_build_selector->building_subtype : -1;
         INTERPOSE_NEXT(feed)(input);
 
-        if (revert_to_last_used_type && last_used_constr_subtype >= 0 && !in_material_choice_stage())
+        if (revert_to_last_used_type && 
+            last_used_constr_subtype >= 0 && 
+            !in_material_choice_stage() &&
+            hotkeys.find(last_used_constr_subtype) != hotkeys.end())
         {
             input->clear();
-            std::set< df::interface_key > keys;
-            keys.insert(hotkeys[last_used_constr_subtype]);
-            Core::getTopViewscreen()->feed(&keys);
+            input->insert(hotkeys[last_used_constr_subtype]);
+            this->feed(input);
         }
     }
 
@@ -394,46 +392,14 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     if (!gps || !INTERPOSE_HOOK(jobutils_hook, feed).apply() || !INTERPOSE_HOOK(jobutils_hook, render).apply())
         out.printerr("Could not insert jobutils hooks!\n");
 
-    hotkeys[1] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_WALL;
-    hotkeys[2] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_FLOOR;
-    hotkeys[6] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_RAMP;
-    hotkeys[3] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_STAIR_UP;
-    hotkeys[4] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_STAIR_DOWN;
-    hotkeys[5] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_STAIR_UPDOWN;
-    hotkeys[0] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_FORTIFICATION;
-    hotkeys[7] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_TRACK;
-    hotkeys[5] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_TRACK_STOP;
+    hotkeys[construction_type::Wall] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_WALL;
+    hotkeys[construction_type::Floor] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_FLOOR;
+    hotkeys[construction_type::Ramp] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_RAMP;
+    hotkeys[construction_type::UpStair] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_STAIR_UP;
+    hotkeys[construction_type::DownStair] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_STAIR_DOWN;
+    hotkeys[construction_type::UpDownStair] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_STAIR_UPDOWN;
+    hotkeys[construction_type::Fortification] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_FORTIFICATION;
+    //Ignore tracks, DF already returns to track menu
 
-    commands.push_back(PluginCommand(
-        "automaterial", "Makes construction easier by auto selecting materials",
-        automaterial_cmd, false, /* true means that the command can't be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  Makes construction easier by auto selecting materials.\n"
-        ));
     return CR_OK;
 }
-
-
-/*
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
-{
-    switch (event) {
-    case SC_GAME_LOADED:
-        // initialize from the world just loaded
-        break;
-    case SC_GAME_UNLOADED:
-        // cleanup
-        break;
-    default:
-        break;
-    }
-    return CR_OK;
-}
-*/
-
-/*
-DFhackCExport command_result plugin_onupdate ( color_ostream &out )
-{
-    return CR_OK;
-}
-*/

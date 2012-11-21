@@ -102,8 +102,18 @@ void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bo
 static inline bool in_material_choice_stage()
 {
     return Gui::build_selector_hotkey(Core::getTopViewscreen()) && 
+        ui_build_selector->building_type == df::building_type::Construction &&
         ui->main.mode == ui_sidebar_mode::Build && 
         ui_build_selector->stage == 2;
+}
+
+static inline bool in_placement_stage()
+{
+    return Gui::dwarfmode_hotkey(Core::getTopViewscreen()) && 
+        ui->main.mode == ui_sidebar_mode::Build &&
+        ui_build_selector &&
+        ui_build_selector->building_type == df::building_type::Construction &&
+        ui_build_selector->stage == 1;
 }
 
 static inline bool in_type_choice_stage()
@@ -111,8 +121,7 @@ static inline bool in_type_choice_stage()
     return Gui::dwarfmode_hotkey(Core::getTopViewscreen()) && 
         ui->main.mode == ui_sidebar_mode::Build &&
         ui_build_selector &&
-        ui_build_selector->building_type >= 0 &&
-        ui_build_selector->stage == 1;
+        ui_build_selector->building_type < 0;
 }
 
 static inline vector<MaterialDescriptor> &get_curr_constr_prefs()
@@ -281,7 +290,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                 }
             }
         }
-        else if (in_type_choice_stage())
+        else if (in_placement_stage())
         {
             if (input->count(interface_key::CUSTOM_A))
             {
@@ -358,7 +367,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                 OutputHotkeyString(x, y, toggle_string.c_str(), "a", true, left_margin);
             }
         }
-        else if (in_type_choice_stage() && ui_build_selector->building_subtype != 7)
+        else if (in_placement_stage() && ui_build_selector->building_subtype != 7)
         {
             int left_margin = gps->dimx - 30;
             int x = left_margin;

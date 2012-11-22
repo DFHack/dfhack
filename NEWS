@@ -19,6 +19,7 @@ DFHack future
     - lua: lua interpreter front-end converted to a script from a native command.
     - dfusion: misc scripts with a text based menu.
     - embark: lets you embark anywhere.
+    - lever: list and pull fort levers from the dfhack console.
   New GUI scripts:
     - gui/guide-path: displays the cached path for minecart Guide orders.
     - gui/workshop-job: displays inputs of a workshop job and allows tweaking them.
@@ -26,6 +27,14 @@ DFHack future
     - gui/assign-rack: works together with a binary patch to fix weapon racks.
     - gui/gm-editor: an universal editor for lots of dfhack things.
     - gui/companion-order: a adventure mode command interface for your companions.
+  New binary patches:
+    - armorstand-capacity
+    - custom-reagent-size
+    - deconstruct-heapfall
+    - deconstruct-teleport
+    - hospital-overstocking
+    - training-ammo
+    - weaponrack-unassign
   Workflow plugin:
     - properly considers minecarts assigned to routes busy.
     - code for deducing job outputs rewritten in lua for flexibility.

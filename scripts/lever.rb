@@ -13,15 +13,13 @@ def lever_pull_job(bld)
 end
 
 def lever_pull_cheat(bld)
-	bld.state = (bld.state == 0 ? 1 : 0)
-
 	bld.linked_mechanisms.each { |i|
 		i.general_refs.grep(DFHack::GeneralRefBuildingHolderst).each { |r|
-			tg = r.building_tg
-			next if tg.gate_flags.closing or tg.gate_flags.opening
-			r.building_tg.setTriggerState(tg.gate_flags.closed ? 0 : 1)
+			r.building_tg.setTriggerState(bld.state)
 		}
 	}
+
+	bld.state = (bld.state == 0 ? 1 : 0)
 
 	puts lever_descr(bld)
 end

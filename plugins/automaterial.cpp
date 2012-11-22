@@ -74,28 +74,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-
-void OutputString(int8_t color, int &x, int &y, const std::string &text, bool newline = false, int left_margin = 0)
-{
-    Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
-    if (newline)
-    {
-        ++y;
-        x = left_margin;
-    }
-    else
-        x += text.length();
-}
-
-void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bool newline = false, int left_margin = 0, int8_t color = COLOR_WHITE)
-{
-    OutputString(10, x, y, hotkey);
-    string display(": ");
-    display.append(text);
-    OutputString(color, x, y, display, newline, left_margin);
-}
-
-
 static inline bool in_material_choice_stage()
 {
     return Gui::build_selector_hotkey(Core::getTopViewscreen()) && 
@@ -137,7 +115,7 @@ static inline MaterialDescriptor &get_last_used_material()
     return last_used_material[ui_build_selector->building_subtype];
 }
 
-static void set_last_used_material(MaterialDescriptor &matetial)
+static void set_last_used_material(const MaterialDescriptor &matetial)
 {
     last_used_material[ui_build_selector->building_subtype] = matetial;
 }
@@ -150,7 +128,7 @@ static MaterialDescriptor &get_last_moved_material()
     return last_moved_material[ui_build_selector->building_subtype];
 }
 
-static void set_last_moved_material(MaterialDescriptor &matetial)
+static void set_last_moved_material(const MaterialDescriptor &matetial)
 {
     last_moved_material[ui_build_selector->building_subtype] = matetial;
 }
@@ -306,9 +284,9 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             !in_material_choice_stage() &&
             hotkeys.find(last_used_constr_subtype) != hotkeys.end())
         {
-            input->clear();
-            input->insert(hotkeys[last_used_constr_subtype]);
-            this->feed(input);
+            interface_key_set keys;
+            keys.insert(hotkeys[last_used_constr_subtype]);
+            INTERPOSE_NEXT(feed)(&keys);
         }
     }
 
@@ -349,47 +327,42 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             MaterialDescriptor material = get_material_in_list(ui_build_selector->sel_index);
             if (material.valid)
             {
-                int left_margin = gps->dimx - 30;
-                int x = left_margin;
-                int y = 25;
-
-                string toggle_string = "Enable";
                 string title = "Disabled";
                 if (check_autoselect(material, false))
                 {
-                    toggle_string = "Disable";
                     title = "Enabled";
                 }
 
-                OutputString(COLOR_BROWN, x, y, "DFHack Autoselect: " + title, true, left_margin);
-                OutputHotkeyString(x, y, toggle_string.c_str(), "a", true, left_margin);
+                auto dims = Gui::getDwarfmodeViewDims();
+                Screen::Painter dc(dims.menu());
+
+                dc.seek(1,24).key_pen(COLOR_LIGHTRED).pen(COLOR_WHITE);
+                dc.key(interface_key::CUSTOM_A).string(": Autoselect "+title);
             }
         }
-        else if (in_placement_stage() && ui_build_selector->building_subtype != 7)
+        else if (in_placement_stage() && ui_build_selector->building_subtype < construction_type::TrackN)
         {
-            int left_margin = gps->dimx - 30;
-            int x = left_margin;
-            int y = 25;
+            string autoselect_toggle = (auto_choose_materials) ? "Disable" : "Enable";
+            string revert_toggle = (revert_to_last_used_type) ? "Disable" : "Enable";
 
-            string autoselect_toggle_string = (auto_choose_materials) ? "Disable Auto Mat-select" : "Enable Auto Mat-select";
-            string revert_toggle_string = (revert_to_last_used_type) ? "Disable Auto Type-select" : "Enable Auto Type-select";
+            auto dims = Gui::getDwarfmodeViewDims();
+            Screen::Painter dc(dims.menu());
 
-            OutputString(COLOR_BROWN, x, y, "DFHack Options", true, left_margin);
-            OutputHotkeyString(x, y, autoselect_toggle_string.c_str(), "a", true, left_margin);
-            OutputHotkeyString(x, y, revert_toggle_string.c_str(), "t", true, left_margin);
+            dc.seek(1,23).key_pen(COLOR_LIGHTRED).pen(COLOR_WHITE);
+            dc.key(interface_key::CUSTOM_A).string(": "+autoselect_toggle+" Auto Mat-Select").newline(1);
+            dc.key(interface_key::CUSTOM_T).string(": "+revert_toggle+" Auto Type-Select");
         }
     }
 };
-
-color_ostream_proxy console_out(Core::getInstance().getConsole());
-
 
 IMPLEMENT_VMETHOD_INTERPOSE(jobutils_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(jobutils_hook, render);
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!gps || !INTERPOSE_HOOK(jobutils_hook, feed).apply() || !INTERPOSE_HOOK(jobutils_hook, render).apply())
+    if (!gps || !ui_build_selector ||
+        !INTERPOSE_HOOK(jobutils_hook, feed).apply() ||
+        !INTERPOSE_HOOK(jobutils_hook, render).apply())
         out.printerr("Could not insert jobutils hooks!\n");
 
     hotkeys[construction_type::Wall] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_WALL;

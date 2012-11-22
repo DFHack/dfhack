@@ -47,6 +47,9 @@ DFHack future
     properly designated barracks be used again for storage of squad equipment.
   New Search plugin by falconne:
     Adds an incremental search function to the Stocks, Trading and Unit List screens.
+  New AutoMaterial plugin by falconne:
+    Makes building constructions (walls, floors, fortifications, etc) a little bit easier by
+    saving you from having to trawl through long lists of materials each time you place one.
   Dfusion plugin:
     Reworked to make use of lua modules, now all the scripts can be used from other scripts.
 

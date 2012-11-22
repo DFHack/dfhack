@@ -144,6 +144,16 @@ system console:
 
 The patches are expected to be encoded in text format used by IDA.
 
+
+Live patching
+-------------
+
+As an alternative, you can use the ``binpatch`` dfhack command to apply/remove
+patches live in memory during a DF session.
+
+In this case, updating symbols.xml is not necessary.
+
+
 =============================
 Something doesn't work, help!
 =============================
@@ -1955,6 +1965,41 @@ There are the following ways to invoke this command:
 embark
 ======
 Allows to embark anywhere. Currently windows only.
+
+lever
+=====
+Allow manipulation of in-game levers from the dfhack console.
+
+Can list levers, including state and links, with::
+
+    lever list
+
+To queue a job so that a dwarf will pull the lever 42, use ``lever pull 42``.
+This is the same as 'q'uerying the building and queue a 'P'ull request.
+
+To magically toggle the lever immediately, use::
+
+    lever pull 42 --now
+
+stripcaged
+==========
+For dumping items inside cages. Will mark selected items for dumping, then
+a dwarf may come and actually dump it. See also ``autodump``.
+
+With the ``items`` argument, only dumps items laying in the cage, excluding
+stuff worn by caged creatures. ``weapons`` will dump worn weapons, ``armor``
+will dump everything worn by caged creatures (including armor and clothing),
+and ``all`` will dump everything, on a creature or not.
+
+``stripcaged list`` will display on the dfhack console the list of all cages
+and their item content.
+
+Without further arguments, all commands work on all cages and animal traps on
+the map. With the ``here`` argument, considers only the in-game selected cage
+(or the cage under the game cursor). To target only specific cages, you can
+alternatively pass cage IDs as arguments::
+
+  stripcaged weapons 25321 34228
 
 =======================
 In-game interface tools

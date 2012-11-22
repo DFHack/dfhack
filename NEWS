@@ -21,6 +21,7 @@ DFHack future
     - dfusion: misc scripts with a text based menu.
     - embark: lets you embark anywhere.
     - lever: list and pull fort levers from the dfhack console.
+    - stripcaged: mark items inside cages for dumping, eg caged goblin weapons.
   New GUI scripts:
     - gui/guide-path: displays the cached path for minecart Guide orders.
     - gui/workshop-job: displays inputs of a workshop job and allows tweaking them.

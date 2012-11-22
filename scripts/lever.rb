@@ -10,6 +10,8 @@ def lever_pull_job(bld)
 	job.general_refs << ref
 	bld.jobs << job
 	df.job_link job
+
+	puts lever_descr(bld)
 end
 
 def lever_pull_cheat(bld)
@@ -31,6 +33,14 @@ def lever_descr(bld, idx=nil)
 	descr = ''
 	descr << "#{idx}: " if idx
 	descr << "lever ##{bld.id} @[#{bld.centerx}, #{bld.centery}, #{bld.z}] #{bld.state == 0 ? '\\' : '/'}"
+	bld.jobs.each { |j|
+		if j.job_type == :PullLever
+			flags = ''
+			flags << ', repeat' if j.flags.repeat
+			flags << ', suspended' if j.flags.suspend
+			descr << " (pull order#{flags})"
+		end
+	}
 
 	bld.linked_mechanisms.map { |i|
 		i.general_refs.grep(DFHack::GeneralRefBuildingHolderst)

@@ -11,6 +11,7 @@ DFHack future
     - added a small stand-alone utility for applying and removing binary patches.
     - removebadthoughts: add --dry-run option
     - superdwarf: work in adventure mode too
+    - tweak stable-cursor: carries cursor location from/to Build menu.
   New tweaks:
     - tweak military-training: speed up melee squad training up to 10x (normally 3-5x).
   New scripts:

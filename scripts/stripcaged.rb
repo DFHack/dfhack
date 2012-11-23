@@ -90,6 +90,7 @@ end
 
 def cage_dump_list(list)
 	count_total = Hash.new(0)
+	empty_cages = 0
 	list.each { |cage|
 		count = Hash.new(0)
 
@@ -113,13 +114,18 @@ def cage_dump_list(list)
 		       else cage._rtti_classname
 		       end
 
-		puts "#{type} ##{cage.id}: ", count.sort_by { |k, v| v }.map { |k, v| " #{v} #{k}" }
+		if count.empty?
+			empty_cages += 1
+		else
+			puts "#{type} ##{cage.id}: ", count.sort_by { |k, v| v }.map { |k, v| " #{v} #{k}" }
+		end
 
 		count.each { |k, v| count_total[k] += v }
 	}
 
 	if list.length > 2
 		puts '', "Total: ", count_total.sort_by { |k, v| v }.map { |k, v| " #{v} #{k}" }
+		puts "with #{plural(empty_cages, 'empty cage')}"
 	end
 end
 

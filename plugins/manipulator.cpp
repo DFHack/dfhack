@@ -1120,10 +1120,10 @@ void viewscreen_unitlaborsst::render()
     }
 
     int x = 2, y = dim.y - 3;
-    OutputString(10, x, dim.y - 3, Screen::getKeyDisplay(interface_key::SELECT));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT));
     OutputString(canToggle ? 15 : 8, x, y, ": Toggle labor, ");
 
-    OutputString(10, x, dim.y - 3, Screen::getKeyDisplay(interface_key::SELECT_ALL));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT_ALL));
     OutputString(canToggle ? 15 : 8, x, y, ": Toggle Group, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW));

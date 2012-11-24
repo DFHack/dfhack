@@ -1060,7 +1060,7 @@ void viewscreen_unitlaborsst::render()
                 }
             }
             else
-                bg = 4;
+                bg = 3;
             Screen::paintTile(Screen::Pen(c, fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 4 + row);
         }
     }

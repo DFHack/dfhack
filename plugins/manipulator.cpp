@@ -469,10 +469,10 @@ void viewscreen_unitlaborsst::calcSize()
     int col_maxwidth[DISP_COLUMN_MAX];
     col_minwidth[DISP_COLUMN_HAPPINESS] = 4;
     col_maxwidth[DISP_COLUMN_HAPPINESS] = 4;
-    col_minwidth[DISP_COLUMN_NAME] = 15;
-    col_maxwidth[DISP_COLUMN_NAME] = 15;        // adjusted in the loop below
-    col_minwidth[DISP_COLUMN_PROFESSION] = 15;
-    col_maxwidth[DISP_COLUMN_PROFESSION] = 15;  // adjusted in the loop below
+    col_minwidth[DISP_COLUMN_NAME] = 16;
+    col_maxwidth[DISP_COLUMN_NAME] = 16;        // adjusted in the loop below
+    col_minwidth[DISP_COLUMN_PROFESSION] = 10;
+    col_maxwidth[DISP_COLUMN_PROFESSION] = 10;  // adjusted in the loop below
     col_minwidth[DISP_COLUMN_LABORS] = num_columns*3/5;     // 60%
     col_maxwidth[DISP_COLUMN_LABORS] = NUM_COLUMNS;
 

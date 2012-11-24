@@ -842,7 +842,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         df::unit *unit = cur->unit;
         const SkillColumn &col = columns[input_column];
-        bool newstatus = !unit->status.labors[col.labor];
+        bool newstatus = (col.labor == unit_labor::NONE) ? true : !unit->status.labors[col.labor];
         for (int i = 0; i < NUM_COLUMNS; i++)
         {
             if (columns[i].group != col.group)

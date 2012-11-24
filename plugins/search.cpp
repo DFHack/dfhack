@@ -329,8 +329,9 @@ protected:
     // Display hotkey message
     void print_search_option(int x, int y = -1) const
     {
+        auto dim = Screen::getWindowSize();
         if (y == -1)
-            y = gps->dimy - 2;
+            y = dim.y - 2;
 
         OutputString((entry_mode) ? 4 : 12, x, y, string(1, select_key));
         OutputString((entry_mode) ? 10 : 15, x, y, ": Search");
@@ -413,8 +414,9 @@ public:
             print_search_option(2);
         else
         {
-            int x = 2;
-            OutputString(15, x, gps->dimy - 2, "Tab to enable Search");
+            auto dim = Screen::getWindowSize();
+            int x = 2, y = dim.y - 2;
+            OutputString(15, x, y, "Tab to enable Search");
         }
     }
 

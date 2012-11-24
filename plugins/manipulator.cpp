@@ -456,11 +456,13 @@ void viewscreen_unitlaborsst::refreshNames()
 
 void viewscreen_unitlaborsst::calcSize()
 {
-    num_rows = gps->dimy - 10;
+    auto dim = Screen::getWindowSize();
+
+    num_rows = dim.y - 10;
     if (num_rows > units.size())
         num_rows = units.size();
 
-    int num_columns = gps->dimx - DISP_COLUMN_MAX - 1;
+    int num_columns = dim.x - DISP_COLUMN_MAX - 1;
 
     // min/max width of columns
     int col_minwidth[DISP_COLUMN_MAX];
@@ -940,9 +942,10 @@ void viewscreen_unitlaborsst::render()
 
     dfhack_viewscreen::render();
 
+    auto dim = Screen::getWindowSize();
+
     Screen::clear();
     Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
-
 
     Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_HAPPINESS], 2, "Hap.");
     Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_NAME], 2, "Name");
@@ -1116,48 +1119,48 @@ void viewscreen_unitlaborsst::render()
         canToggle = (cur->allowEdit) && (columns[sel_column].labor != unit_labor::NONE);
     }
 
-    int x = 2;
-    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::SELECT));
-    OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle labor, ");
+    int x = 2, y = dim.y - 3;
+    OutputString(10, x, dim.y - 3, Screen::getKeyDisplay(interface_key::SELECT));
+    OutputString(canToggle ? 15 : 8, x, y, ": Toggle labor, ");
 
-    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::SELECT_ALL));
-    OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle Group, ");
+    OutputString(10, x, dim.y - 3, Screen::getKeyDisplay(interface_key::SELECT_ALL));
+    OutputString(canToggle ? 15 : 8, x, y, ": Toggle Group, ");
 
-    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW));
-    OutputString(15, x, gps->dimy - 3, ": ViewCre, ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW));
+    OutputString(15, x, y, ": ViewCre, ");
 
-    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));
-    OutputString(15, x, gps->dimy - 3, ": Zoom-Cre");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));
+    OutputString(15, x, y, ": Zoom-Cre");
 
-    x = 2;
-    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
-    OutputString(15, x, gps->dimy - 2, ": Done, ");
+    x = 2; y = dim.y - 2;
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
+    OutputString(15, x, y, ": Done, ");
 
-    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
-    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
-    OutputString(15, x, gps->dimy - 2, ": Sort by Skill, ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
+    OutputString(15, x, y, ": Sort by Skill, ");
 
-    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
-    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
-    OutputString(15, x, gps->dimy - 2, ": Sort by (");
-    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::CHANGETAB));
-    OutputString(15, x, gps->dimy - 2, ") ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
+    OutputString(15, x, y, ": Sort by (");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CHANGETAB));
+    OutputString(15, x, y, ") ");
     switch (altsort)
     {
     case ALTSORT_NAME:
-        OutputString(15, x, gps->dimy - 2, "Name");
+        OutputString(15, x, y, "Name");
         break;
     case ALTSORT_PROFESSION:
-        OutputString(15, x, gps->dimy - 2, "Profession");
+        OutputString(15, x, y, "Profession");
         break;
     case ALTSORT_HAPPINESS:
-        OutputString(15, x, gps->dimy - 2, "Happiness");
+        OutputString(15, x, y, "Happiness");
         break;
     case ALTSORT_ARRIVAL:
-        OutputString(15, x, gps->dimy - 2, "Arrival");
+        OutputString(15, x, y, "Arrival");
         break;
     default:
-        OutputString(15, x, gps->dimy - 2, "Unknown");
+        OutputString(15, x, y, "Unknown");
         break;
     }
 }
@@ -1193,9 +1196,10 @@ struct unitlist_hook : df::viewscreen_unitlistst
 
         if (units[page].size())
         {
-            int x = 2;
-            OutputString(12, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::UNITVIEW_PRF_PROF));
-            OutputString(15, x, gps->dimy - 2, ": Manage labors (DFHack)");
+            auto dim = Screen::getWindowSize();
+            int x = 2, y = dim.y - 2;
+            OutputString(12, x, y, Screen::getKeyDisplay(interface_key::UNITVIEW_PRF_PROF));
+            OutputString(15, x, y, ": Manage labors (DFHack)");
         }
     }
 };

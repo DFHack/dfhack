@@ -24,8 +24,9 @@ end
 
 module DFHack
     class OnupdateCallback
-        attr_accessor :callback, :timelimit, :minyear, :minyeartick
-        def initialize(cb, tl, initdelay=0)
+        attr_accessor :callback, :timelimit, :minyear, :minyeartick, :description
+        def initialize(descr, cb, tl, initdelay=0)
+            @description = descr
             @callback = cb
             @ticklimit = tl
             @minyear = (tl ? df.cur_year : 0)
@@ -34,22 +35,21 @@ module DFHack
 
         # run callback if timedout
         def check_run(year, yeartick, yearlen)
-            if !@ticklimit
-                @callback.call
-            else
-                if year > @minyear or (year == @minyear and yeartick >= @minyeartick)
-                    @minyear = year
-                    @minyeartick = yeartick + @ticklimit
-                    if @minyeartick > yearlen
-                        @minyear += 1
-                        @minyeartick -= yearlen
-                    end
-                    @callback.call
+            if @ticklimit
+                return unless year > @minyear or (year == @minyear and yeartick >= @minyeartick)
+                @minyear = year
+                @minyeartick = yeartick + @ticklimit
+                if @minyeartick > yearlen
+                    @minyear += 1
+                    @minyeartick -= yearlen
                 end
             end
+            # t0 = Time.now
+            @callback.call
+            # dt = Time.now - t0 ; puts "rb cb #@description took #{'%.02f' % dt}s" if dt > 0.1
         rescue
             df.onupdate_unregister self
-            puts_err "onupdate cb #$!", $!.backtrace
+            puts_err "onupdate #@description unregistered: #$!", $!.backtrace
         end
 
         def <=>(o)
@@ -61,10 +61,11 @@ module DFHack
         attr_accessor :onupdate_list, :onstatechange_list
 
         # register a callback to be called every gframe or more
-        # ex: DFHack.onupdate_register { DFHack.world.units[0].counters.job_counter = 0 }
-        def onupdate_register(ticklimit=nil, initialtickdelay=0, &b)
+        # ex: DFHack.onupdate_register('fastdwarf') { DFHack.world.units[0].counters.job_counter = 0 }
+        def onupdate_register(descr, ticklimit=nil, initialtickdelay=0, &b)
+            raise ArgumentError, 'need a description as 1st arg' unless descr.kind_of?(::String)
             @onupdate_list ||= []
-            @onupdate_list << OnupdateCallback.new(b, ticklimit, initialtickdelay)
+            @onupdate_list << OnupdateCallback.new(descr, b, ticklimit, initialtickdelay)
             DFHack.onupdate_active = true
             if onext = @onupdate_list.sort.first
                 DFHack.onupdate_minyear = onext.minyear
@@ -73,8 +74,9 @@ module DFHack
             @onupdate_list.last
         end
 
-        # delete the callback for onupdate ; use the value returned by onupdate_register
+        # delete the callback for onupdate ; use the value returned by onupdate_register or the description
         def onupdate_unregister(b)
+            b = @onupdate_list.find { |bb| bb.description == b } if b.kind_of?(String)
             @onupdate_list.delete b
             if @onupdate_list.empty?
                 DFHack.onupdate_active = false

@@ -26,7 +26,7 @@ class AutoUnsuspend
 	end
 	
 	def start
-		@onupdate = df.onupdate_register (5) { process }
+		@onupdate = df.onupdate_register('autounsuspend', 5) { process }
 		@running = true
 	end
 	
@@ -36,7 +36,7 @@ class AutoUnsuspend
 	end
 	
 	def status
-		stat = @running ? "Running." : "Loaded."
+		@running ? 'Running.' : 'Stopped.'
 	end
 		
 end	
@@ -53,6 +53,6 @@ else
     if $AutoUnsuspend
         puts $AutoUnsuspend.status
     else
-        puts "AI not started"
+        puts 'Not loaded.'
     end
 end

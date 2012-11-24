@@ -5,7 +5,7 @@ class AutoFarm
 		@lastcounts = Hash.new(0)
 	end
 	
-	def setthreshold (id, v)
+	def setthreshold(id, v)
 		if df.world.raws.plants.all.find { |r| r.id == id }
 			@thresholds[id] = v.to_i
 		else
@@ -13,11 +13,11 @@ class AutoFarm
 		end
 	end
 	
-	def setdefault (v)
+	def setdefault(v)
 		@thresholds.default = v.to_i
 	end
 	
-	def is_plantable (plant)
+	def is_plantable(plant)
 		season = df.cur_season
 		harvest = df.cur_season_tick + plant.growdur * 10
 		will_finish =  harvest < 10080
@@ -40,7 +40,7 @@ class AutoFarm
 		return plantable
 	end
 	
-	def set_farms ( plants, farms)
+	def set_farms( plants, farms)
 		return if farms.length == 0
 		if plants.length == 0
 			plants = [-1]
@@ -66,7 +66,7 @@ class AutoFarm
 			if (!i.flags.dump && !i.flags.forbid && !i.flags.garbage_collect &&
 				!i.flags.hostile && !i.flags.on_fire && !i.flags.rotten &&
 				!i.flags.trader && !i.flags.in_building && !i.flags.construction &&
-				!i.flags.artifact1 && plantable.has_key? (i.mat_index))
+				!i.flags.artifact1 && plantable.has_key?(i.mat_index))
 				counts[i.mat_index] = counts[i.mat_index] + i.stack_size
 			end
 		}
@@ -95,13 +95,13 @@ class AutoFarm
 			end
 		}
 		
-		set_farms (plants_s, farms_s)
-		set_farms (plants_u, farms_u)
+		set_farms(plants_s, farms_s)
+		set_farms(plants_u, farms_u)
 		
 	end
 	
 	def start
-		@onupdate = df.onupdate_register (100) { process }
+		@onupdate = df.onupdate_register('autofarm', 100) { process }
 		@running = true
 	end
 	

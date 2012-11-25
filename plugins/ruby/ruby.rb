@@ -47,7 +47,7 @@ module DFHack
             # t0 = Time.now
             @callback.call
             # dt = Time.now - t0 ; puts "rb cb #@description took #{'%.02f' % dt}s" if dt > 0.1
-        rescue
+        rescue Exception
             df.onupdate_unregister self
             puts_err "onupdate #@description unregistered: #$!", $!.backtrace
         end

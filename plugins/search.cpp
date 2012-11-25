@@ -521,7 +521,8 @@ private:
 
     virtual bool should_check_input(set<df::interface_key> *input) 
     {
-        if (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT) || input->count(interface_key::CUSTOM_L))
+        if (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT) || 
+            (!is_entry_mode() && input->count(interface_key::UNITVIEW_PRF_PROF)))
         {
             if (!is_entry_mode())
             {

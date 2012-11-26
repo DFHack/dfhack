@@ -56,7 +56,7 @@ module DFHack
         def item_isfree(i)
             !i.flags.trader and
             !i.flags.in_job and
-            !i.flags.in_inventory and
+            (!i.flags.in_inventory or i.general_refs.grep(GeneralRefContainedInItemst).first) and
             !i.flags.removed and
             !i.flags.in_building and
             !i.flags.owned and

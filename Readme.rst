@@ -2032,8 +2032,12 @@ This tool implements a Dwarf Therapist-like interface within the game UI. The
 far left column displays the unit's Happiness (color-coded based on its
 value), and the right half of the screen displays each dwarf's labor settings
 and skill levels (0-9 for Dabbling thru Professional, A-E for Great thru Grand
-Master, and U-Z for Legendary thru Legendary+5). Cells with red backgrounds
-denote skills not controlled by labors.
+Master, and U-Z for Legendary thru Legendary+5).
+
+Cells with teal backgrounds denote skills not controlled by labors, e.g.
+military and social skills.
+
+.. image:: images/manipulator2.png
 
 Use the arrow keys or number pad to move the cursor around, holding Shift to
 move 10 tiles at a time.

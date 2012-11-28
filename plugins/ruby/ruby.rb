@@ -23,6 +23,8 @@ module Kernel
 end
 
 module DFHack
+    VERSION = version
+
     class OnupdateCallback
         attr_accessor :callback, :timelimit, :minyear, :minyeartick, :description
         def initialize(descr, cb, tl, initdelay=0)

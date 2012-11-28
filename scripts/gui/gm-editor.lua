@@ -170,6 +170,19 @@ function GmEditorUi:onRenderBody( dc)
         
     end
 end
+function GmEditorUi:set(input)
+    local trg=self:currentTarget() 
+    
+    if input== nil then
+        dialog.showInputPrompt("Set to what?","Lua code to set to (v cur target):",COLOR_WHITE,"",dfhack.curry(self.set,self))
+        return
+    end
+    local e,what=load("return function(v) return "..input.." end")
+    if e==nil then
+        dialog.showMessage("Error!","function failed to compile\n"..what,COLOR_RED)
+    end
+    trg.target[trg.keys[trg.selected]]=e()(trg)
+end
  function GmEditorUi:onInput(keys)
     if self.mode==MODE_BROWSE then
         if keys.LEAVESCREEN  then
@@ -190,6 +203,8 @@ end
             dialog.showMessage("Offset",string.format("Size hex=%x,%x dec=%d,%d",size,off,size,off),COLOR_WHITE)
         elseif keys.CUSTOM_ALT_F then
             self:find()
+        elseif keys.CUSTOM_ALT_S then
+            self:set()
         elseif keys.CUSTOM_ALT_E then
             --self:specialEditor()
         elseif keys.CUSTOM_ALT_I then --insert

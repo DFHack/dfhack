@@ -2736,7 +2736,11 @@ containing newlines, or a table with the following possible fields:
 * ``token.id``
 
   Specifies a unique identifier for the token.
+  
+* ``token.minw``
 
+  Specifies minimal token width
+  
 * ``token.line``, ``token.x1``, ``token.x2``
 
   Reserved for internal use.

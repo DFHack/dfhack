@@ -1126,7 +1126,7 @@ static void map_job_items(color_ostream &out)
 #define F(x) bad_flags.bits.x = true;
     F(dump); F(forbid); F(garbage_collect);
     F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(construction); F(artifact1);
+    F(in_building); F(construction); F(artifact);
 #undef F
 
     bool dry_buckets = isOptionEnabled(CF_DRYBUCKETS);

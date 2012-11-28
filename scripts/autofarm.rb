@@ -66,7 +66,7 @@ class AutoFarm
 			if (!i.flags.dump && !i.flags.forbid && !i.flags.garbage_collect &&
 				!i.flags.hostile && !i.flags.on_fire && !i.flags.rotten &&
 				!i.flags.trader && !i.flags.in_building && !i.flags.construction &&
-				!i.flags.artifact1 && plantable.has_key?(i.mat_index))
+				!i.flags.artifact && plantable.has_key?(i.mat_index))
 				counts[i.mat_index] = counts[i.mat_index] + i.stack_size
 			end
 		}

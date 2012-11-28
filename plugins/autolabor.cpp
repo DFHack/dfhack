@@ -1556,7 +1556,7 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
 #define F(x) bad_flags.bits.x = true;
     F(dump); F(forbid); F(garbage_collect);
     F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(construction); F(artifact1);
+    F(in_building); F(construction); F(artifact);
     F(spider_web); F(owned); F(in_job);
 #undef F
 

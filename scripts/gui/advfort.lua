@@ -135,9 +135,15 @@ function NotConstruct(args)
         return false, "Can only do it on non constructions"
     end
 end
+function IsBuilding(args)
+    if dfhack.buildings.findAtTile(args.pos) then
+        return true
+    end
+    return false, "Can only do it on buildings"
+end
 function IsConstruct(args)
     local tt=dfhack.maps.getTileType(args.pos)
-    if tile_attrs[tt].material==df.tiletype_material.CONSTRUCTION or dfhack.buildings.findAtTile(args.pos) then
+    if tile_attrs[tt].material==df.tiletype_material.CONSTRUCTION then
         return true
     else
         return false, "Can only do it on constructions"
@@ -273,15 +279,19 @@ function BuildingChosen(st_pos,pos,index)
 end
 
 --[[ end of buildings ]]--
-function RemoveConstruction(args)
+function RemoveBuilding(args)
     local bld=dfhack.buildings.findAtTile(args.pos)
-    if bld==nil then
-        MakeJob(args.unit,args.pos,df.job_type.RemoveConstruction,args.old_pos)
-    else
+    if bld~=nil then
         bld:queueDestroy()
-        AssignUnitToJob(bld.jobs[0],args.unit,args.old_pos)
+        for k,v in ipairs(bld.jobs) do
+            if v.job_type==df.job_type.DestroyBuilding then
+                AssignUnitToJob(v,args.unit,args.old_pos)
+                return
+            end
+        end
     end
 end
+
 function AssignJobToBuild(args)
     local bld=dfhack.buildings.findAtTile(args.pos)
     if bld~=nil then
@@ -329,10 +339,11 @@ dig_modes={
     --{"Surgery"              ,df.job_type.Surgery,{IsUnit},{SetPatientRef}},
     --{"TameAnimal"           ,df.job_type.TameAnimal,{IsUnit},{SetCreatureRef}}, 
     {"GatherPlants"         ,df.job_type.GatherPlants,{IsPlant}},
-    {"RemoveConstruction"   ,RemoveConstruction,{IsConstruct}},
+    {"RemoveConstruction"   ,df.job_type.RemoveConstruction,{IsConstruct}},
+    {"RemoveBuilding"       ,RemoveBuilding,{IsBuilding}},
     --{"HandleLargeCreature"   ,df.job_type.HandleLargeCreature,{isUnit},{SetCreatureRef}},
     {"Build"                ,AssignJobToBuild},
-    {"RemoveStairs"                ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},
+    {"RemoveStairs"         ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},
     
 }
 

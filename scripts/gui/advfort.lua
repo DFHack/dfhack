@@ -393,7 +393,7 @@ ALLOWED_KEYS={
     A_MOVE_N=true,A_MOVE_S=true,A_MOVE_W=true,A_MOVE_E=true,A_MOVE_NW=true,
     A_MOVE_NE=true,A_MOVE_SW=true,A_MOVE_SE=true,A_STANCE=true,SELECT=true,A_MOVE_DOWN_AUX=true,
     A_MOVE_UP_AUX=true,A_LOOK=true,CURSOR_DOWN=true,CURSOR_UP=true,CURSOR_LEFT=true,CURSOR_RIGHT=true,
-    CURSOR_UPLEFT=true,CURSOR_UPRIGHT=true,CURSOR_DOWNLEFT=true,CURSOR_DOWNRIGHT=true
+    CURSOR_UPLEFT=true,CURSOR_UPRIGHT=true,CURSOR_DOWNLEFT=true,CURSOR_DOWNRIGHT=true,A_CLEAR_ANNOUNCEMENTS=true,
 }
 function moddedpos(pos,delta)
     return {x=pos.x+delta[1],y=pos.y+delta[2],z=pos.z+delta[3]}
@@ -413,7 +413,11 @@ end
 function usetool:onInput(keys)
 
     if keys.LEAVESCREEN  then
-        self:dismiss()
+        if df.global.cursor.x~=-30000 then
+            self:sendInputToParent("LEAVESCREEN")
+        else
+            self:dismiss()
+        end
     elseif keys[keybinds.key_next.key] then
         mode=(mode+1)%#dig_modes
     elseif keys[keybinds.key_prev.key] then

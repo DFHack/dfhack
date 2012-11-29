@@ -79,7 +79,7 @@ function GmEditorUi:init(args)
     local mainPage=widgets.Panel{
         subviews={
             mainList,
-            widgets.Label{text={{text="<no item>",id="name",minw=50},{gap=1,text="Help",key="HELP",key_sep = '()'}}, view_id = 'lbl_current_item',frame = {l=1,t=1,yalign=0}},
+            widgets.Label{text={{text="<no item>",id="name"},{gap=1,text="Help",key="HELP",key_sep = '()'}}, view_id = 'lbl_current_item',frame = {l=1,t=1,yalign=0}},
             --widgets.Label{text="BLAH2"}
                 }
         ,view_id='page_main'}
@@ -243,7 +243,7 @@ function GmEditorUi:updateTarget(preserve_pos,reindex)
     self.subviews.lbl_current_item:itemById('name').text=tostring(trg.target)
     local t={}
     for k,v in pairs(trg.keys) do
-        table.insert(t,{text={{text=tostring(v),minw=25},{gap=1,text=tostring(trg.target[v]),}}})
+        table.insert(t,{text={{text=string.format("%-25s",tostring(v))},{gap=1,text=tostring(trg.target[v]),}}})
     end
     local last_pos
     if preserve_pos then

@@ -332,7 +332,7 @@ function usetool:init(args)
     self:addviews{
         wid.Label{
             frame = {xalign=0,yalign=0},
-            text={{key=keybinds.key_prev.key},{gap=1,text=dfhack.curry(usetool.getModeName,self),minw=15},{gap=1,key=keybinds.key_next.key}}
+            text={{key=keybinds.key_prev.key},{gap=1,text=dfhack.curry(usetool.getModeName,self)},{gap=1,key=keybinds.key_next.key}}
                   }
             }
 end

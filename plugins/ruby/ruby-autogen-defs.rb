@@ -308,7 +308,7 @@ module DFHack
                         DFHack.memory_write_int32(@_memaddr, v)
                     end
                 when nil;       DFHack.memory_write_int32(@_memaddr, 0)
-                else _get._set(v)
+                else @_tg._at(_getp)._set(v)
                 end
             end
 

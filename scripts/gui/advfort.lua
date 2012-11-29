@@ -409,7 +409,7 @@ function usetool:onInput(keys)
         local cur_mode=dig_modes[(mode or 0)+1]
         local failed=false
         for code,_ in pairs(keys) do
-            print(code)
+            --print(code)
             if MOVEMENT_KEYS[code] then
                 local state={unit=adv,pos=moddedpos(adv.pos,MOVEMENT_KEYS[code]),dir=MOVEMENT_KEYS[code],
                         old_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z}}

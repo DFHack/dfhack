@@ -2354,7 +2354,16 @@ gui/advfort
 
 This script allows to perform jobs in adventure mode. For more complete help
 press '?' while script is running. It's most confortable to use this as a 
-keybinding. (e.g. keybinding set Ctrl-T gui/advfort)
+keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
+
+* -a or --nodfassign - uses different method to assign items.
+
+* -i or --inventory - checks inventory for possible items to use in the job.
+
+* -c or --cheat - relaxes item requirements for buildings (e.g. walls from bones).
+  implies -a
+
+
 
 gui/gm-editor
 =============

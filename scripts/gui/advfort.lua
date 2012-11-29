@@ -339,7 +339,7 @@ function AssignJobToBuild(args)
                 AssignUnitToJob(bld.jobs[0],args.unit,args.from_pos) --todo check if correct job type
             end
         else
-            args.pre_action=AssignJobItems
+            args.pre_actions={AssignJobItems}
             local ok,msg=MakeJob(args)
             return ok,msg
         end
@@ -367,7 +367,32 @@ function ContinueJob(unit)
         unit.path.dest:assign(c_job.pos)
     end
 end
-
+function AddItemRefMason(args)
+    --printall(args)
+    args.job.job_items:insert("#",{new=true,mat_type=0,quantity=1})
+    return true
+end
+workshops={
+    [df.workshop_type.Mason]={
+        common={item_type=df.item_type.BOULDER,vector_id=df.job_item_vector_id.BOULDER, mat_type=0,flags2={non_economic=true,},flags3={hard=true}},
+        [df.job_type.ConstructArmorStand]={{}},
+        [df.job_type.ConstructBlocks]={{}},
+        [df.job_type.ConstructThrone]={{}},
+        [df.job_type.ConstructCoffin]={{}},
+        [df.job_type.ConstructDoor]={{}},
+        [df.job_type.ConstructFloodgate]={{}},
+        [df.job_type.ConstructHatchCover]={{}},
+        [df.job_type.ConstructGrate]={{}},
+        [df.job_type.ConstructCabinet]={{}},
+        [df.job_type.ConstructCofer]={{}},
+        [df.job_type.ConstructStatue]={{}},
+        [df.job_type.ConstructSlab]={{}},
+        [df.job_type.ConstructTable]={{}},
+        [df.job_type.ConstructWeaponRack]={{}},
+        [df.job_type.ConstructQuern]={{}},
+        [df.job_type.ConstructMillstone]={{}},
+        },
+    }
 dig_modes={
     {"CarveFortification"   ,df.job_type.CarveFortification,{IsWall,IsHardMat}},
     {"DetailWall"           ,df.job_type.DetailWall,{IsWall,IsHardMat}},
@@ -389,7 +414,7 @@ dig_modes={
     {"RemoveBuilding"       ,RemoveBuilding,{IsBuilding}},
     --{"HandleLargeCreature"   ,df.job_type.HandleLargeCreature,{isUnit},{SetCreatureRef}},
     {"Build"                ,AssignJobToBuild},
-    --{"ConstructBlocks"         ,df.job_type.ConstructBlocks,{},{SetBuildingRef},{AssignJobItems}},
+    --{"ConstructBlocks"         ,df.job_type.ConstructBlocks,{},{AssignBuildingRef},{AddItemRefMason,AssignJobItems}},
     {"RemoveStairs"         ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},
     --{"LoadCageTrap"         ,df.job_type.LoadCageTrap,{},{SetBuildingRef},{AssignJobItems}},
     
@@ -426,7 +451,6 @@ function usetool:init(args)
             }
 end
 function usetool:onRenderBody(dc)
-    
     self:renderParent()
 end
 function usetool:onIdle()
@@ -490,14 +514,13 @@ function usetool:onInput(keys)
         ContinueJob(adv)
         self:sendInputToParent("A_WAIT")
     else
-        
         local cur_mode=dig_modes[(mode or 0)+1]
         local failed=false
         for code,_ in pairs(keys) do
             --print(code)
             if MOVEMENT_KEYS[code] then
                 local state={unit=adv,pos=moddedpos(adv.pos,MOVEMENT_KEYS[code]),dir=MOVEMENT_KEYS[code],
-                        from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z},post_action=cur_mode[4],pre_action=cur_mode[5],job_type=cur_mode[2],screen=self}
+                        from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z},post_action=cur_mode[4],pre_actions=cur_mode[5],job_type=cur_mode[2],screen=self}
                 if code=="SELECT" then
                     if df.global.cursor.x~=-30000 then
                         state.pos={x=df.global.cursor.x,y=df.global.cursor.y,z=df.global.cursor.z}
@@ -541,7 +564,6 @@ function usetool:onInput(keys)
                 end
             end
         end
-        
     end
 end
 usetool():show()

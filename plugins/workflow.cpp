@@ -1628,6 +1628,17 @@ namespace wf_ui
         }
     }
 
+    static int get_left_margin()
+    {
+        int left_margin = gps->dimx - 30;
+        int8_t a = *df::global::ui_menu_width;
+        int8_t b = *df::global::ui_area_map_width;
+        if ((a == 1 && b > 1) || (a == 2 && b == 2))
+            left_margin -= 24;
+
+        return left_margin;
+    }
+
     /*
      * Adjustment Dialog
      */
@@ -1640,7 +1651,7 @@ namespace wf_ui
         AdjustmentScreen();
         void reset();
         bool feed(set<df::interface_key> *input, ItemConstraint *cv, ProtectedJob *pj = NULL);
-        void render(ItemConstraint *cv);
+        void render(ItemConstraint *cv, bool in_monitor);
 
     protected:
         int32_t adjustment_ui_display_start;
@@ -1762,9 +1773,9 @@ namespace wf_ui
         return true;
     }
 
-    void AdjustmentScreen::render(ItemConstraint *cv)
+    void AdjustmentScreen::render(ItemConstraint *cv, bool in_monitor)
     {
-        left_margin = gps->dimx - 30;
+        left_margin = (in_monitor) ? gps->dimx - 30 : get_left_margin();
         x = left_margin;
         y = adjustment_ui_display_start;
         OutputString(COLOR_BROWN, x, y, "Workflow Settings", true, left_margin);
@@ -2813,7 +2824,7 @@ namespace wf_ui
         if (rows.getDisplayListSize() > 0)
         {
             TableRow *row = rows.getFirstSelectedElem();
-            AdjustmentScreen::render(row->cv);
+            AdjustmentScreen::render(row->cv, true);
 
             if (max_history_days > 0)
             {
@@ -3022,14 +3033,14 @@ namespace wf_ui
                     cv = pj->constraints[0];
                 }
 
-                dialog.render(cv);
+                dialog.render(cv, false);
                 if (cv)
                     ++dialog.y;
                 OutputHotkeyString(dialog.left_margin, dialog.y, "Inventory Monitor", "m");
             }
             else if (can_enable_plugin())
             {
-                int x = gps->dimx - 30;
+                int x = get_left_margin();
                 int y = 24;
                 OutputHotkeyString(x, y, "Enable Workflow", "w");
             }

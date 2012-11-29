@@ -2194,6 +2194,30 @@ are assigned to the barracks/armory containing the selected stand as
 the intended user.
 
 
+gui/advfort
+=============
+
+This script allows to perform jobs in adventure mode. For more complete help
+press '?' while script is running. It's most confortable to use this as a 
+keybinding. (e.g. keybinding set Ctrl-T gui/advfort)
+
+gui/gm-editor
+=============
+
+There are three ways to open this editor:
+
+* using gui/gm-editor command/keybinding - opens editor on what is selected
+  or viewed (e.g. unit/item description screen)
+
+* using gui/gm-editor <lua command> - executes lua command and opens editor on
+  it's results (e.g. gui/gm-editor "df.global.world.items.all" shows all items)
+  
+* using gui/gm-edito dialog - shows an in game dialog to input lua command. Works
+  the same as version above.
+  
+This editor allows to change and modify almost anything in df. Press '?' for an 
+in-game help.
+
 =============
 Behavior Mods
 =============

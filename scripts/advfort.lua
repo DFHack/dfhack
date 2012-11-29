@@ -3,19 +3,15 @@ local gui = require 'gui'
 local wid=require 'gui.widgets'
 local dialog=require 'gui.dialogs'
 local buildings=require 'dfhack.buildings'
---[[**********************
-    tools and their uses:
-    1. axe -> chop trees
-    2. pickaxe -> dig, carve floors/ramps/stairs/etc (engrave too for now)
---]]
+
 mode=mode or 0
 keybinds={
 key_next={key="CUSTOM_SHIFT_T",desc="Next job in the list"},
 key_prev={key="CUSTOM_SHIFT_R",desc="Previous job in the list"},
 key_continue={key="A_WAIT",desc="Continue job if available"},
---key_down_alt1={key="A_CUSTOM_CTRL_D",desc="Use job down"},--does not work?
+key_down_alt1={key="CUSTOM_CTRL_D",desc="Use job down"},--does not work?
 key_down_alt2={key="CURSOR_DOWN_Z_AUX",desc="Use job down"},
---key_up_alt1={key="A_CUSTOM_CTRL_E",desc="Use job up"}, --does not work?
+key_up_alt1={key="CUSTOM_CTRL_E",desc="Use job up"}, --does not work?
 key_up_alt2={key="CURSOR_UP_Z_AUX",desc="Use job up"},
 key_use_same={key="A_MOVE_SAME_SQUARE",desc="Use job at the tile you are standing"},
 }
@@ -337,8 +333,12 @@ function usetool:init(args)
             }
 end
 function usetool:onRenderBody(dc)
-    self._native.parent:logic()
+    
     self:renderParent()
+end
+function usetool:onIdle()
+    
+    self._native.parent:logic()
 end
 MOVEMENT_KEYS = {
     A_CARE_MOVE_N = { 0, -1, 0 }, A_CARE_MOVE_S = { 0, 1, 0 },
@@ -349,15 +349,15 @@ MOVEMENT_KEYS = {
     A_MOVE_W = { -1, 0, 0 }, A_MOVE_E = { 1, 0, 0 },
     A_MOVE_NW = { -1, -1, 0 }, A_MOVE_NE = { 1, -1, 0 },
     A_MOVE_SW = { -1, 1, 0 }, A_MOVE_SE = { 1, 1, 0 },--]]
-    --[[CURSOR_UP_FAST = { 0, -1, 0, true }, CURSOR_DOWN_FAST = { 0, 1, 0, true },
-    CURSOR_LEFT_FAST = { -1, 0, 0, true }, CURSOR_RIGHT_FAST = { 1, 0, 0, true },
-    CURSOR_UPLEFT_FAST = { -1, -1, 0, true }, CURSOR_UPRIGHT_FAST = { 1, -1, 0, true },
-    CURSOR_DOWNLEFT_FAST = { -1, 1, 0, true }, CURSOR_DOWNRIGHT_FAST = { 1, 1, 0, true },]]--
     A_CUSTOM_CTRL_D = { 0, 0, -1 },
     A_CUSTOM_CTRL_E = { 0, 0, 1 },
     CURSOR_UP_Z_AUX = { 0, 0, 1 }, CURSOR_DOWN_Z_AUX = { 0, 0, -1 },
     A_MOVE_SAME_SQUARE={0,0,0},
     SELECT={0,0,0},
+}
+ALLOWED_KEYS={
+    A_MOVE_N=true,A_MOVE_S=true,A_MOVE_W=true,A_MOVE_E=true,A_MOVE_NW=true,
+    A_MOVE_NE=true,A_MOVE_SW=true,A_MOVE_SE=true,A_STANCE=true,SELECT=true
 }
 function moddedpos(pos,delta)
     return {x=pos.x+delta[1],y=pos.y+delta[2],z=pos.z+delta[3]}
@@ -393,7 +393,7 @@ function usetool:onInput(keys)
         local cur_mode=dig_modes[(mode or 0)+1]
         local failed=false
         for code,_ in pairs(keys) do
-            --print(code)
+            print(code)
             if MOVEMENT_KEYS[code] then
                 local state={unit=adv,pos=moddedpos(adv.pos,MOVEMENT_KEYS[code]),dir=MOVEMENT_KEYS[code],
                         old_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z}}
@@ -429,9 +429,12 @@ function usetool:onInput(keys)
                 return code
             end
             if code~="_STRING" and code~="_MOUSE_L" and code~="_MOUSE_R" then
-                self:sendInputToParent(code)
+                if ALLOWED_KEYS[code] then
+                    self:sendInputToParent(code)
+                end
             end
         end
+        
     end
 end
 usetool():show()

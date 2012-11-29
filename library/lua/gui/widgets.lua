@@ -282,10 +282,7 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
                     end
                 end
             end
-            if token.minw and x<token.minw then
-                dc:advance(token.minw-x)
-                x = math.max(x,token.minw or 0)
-            end
+
             token.x2 = x
         end
         width = math.max(width, x)

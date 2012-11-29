@@ -109,7 +109,7 @@ function MakePredicateWieldsItem(item_skill)
         local inv=args.unit.inventory
         for k,v in pairs(inv) do
             if v.mode==1 and df.item_weaponst:is_instance(v.item) then
-                if v.item.subtype.skill_melee==item_skill then --and unit.body.weapon_bp==v.body_part_id
+                if v.item.subtype.skill_melee==item_skill and args.unit.body.weapon_bp==v.body_part_id then
                     return true
                 end
             end
@@ -357,7 +357,8 @@ MOVEMENT_KEYS = {
 }
 ALLOWED_KEYS={
     A_MOVE_N=true,A_MOVE_S=true,A_MOVE_W=true,A_MOVE_E=true,A_MOVE_NW=true,
-    A_MOVE_NE=true,A_MOVE_SW=true,A_MOVE_SE=true,A_STANCE=true,SELECT=true
+    A_MOVE_NE=true,A_MOVE_SW=true,A_MOVE_SE=true,A_STANCE=true,SELECT=true,A_MOVE_DOWN_AUX=true,
+    A_MOVE_UP_AUX=true
 }
 function moddedpos(pos,delta)
     return {x=pos.x+delta[1],y=pos.y+delta[2],z=pos.z+delta[3]}

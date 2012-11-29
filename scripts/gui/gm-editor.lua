@@ -50,6 +50,16 @@ function burning_red(input) -- todo does not work! bug angavrilov that so that h
     local col=COLOR_LIGHTRED
     return {text=input,pen=dfhack.pen.parse{fg=COLOR_LIGHTRED,bg=0}}
 end
+function Disclaimer(tlb)
+    local dsc={"Association Of ",{text="Psychic ",pen=dfhack.pen.parse{fg=COLOR_YELLOW,bg=0}},
+        "Dwarves (AOPD) is not responsible for all the damage",NEWLINE,"that this tool can (and will) cause to you and your loved dwarves",NEWLINE,"and/or saves.Please use with caution.",NEWLINE,{text="Magma not included.",pen=dfhack.pen.parse{fg=COLOR_LIGHTRED,bg=0}}}
+    if tlb then
+        for _,v in ipairs(dsc) do
+            table.insert(tlb,v)
+        end
+    end
+    return dsc
+end
 function GmEditorUi:init(args)
     self.stack={}
     self.item_count=0
@@ -60,17 +70,7 @@ function GmEditorUi:init(args)
         table.insert(helptext,NEWLINE)
     end
     table.insert(helptext,NEWLINE)
-    table.insert(helptext,{text="DISCLAIMER:",pen=dfhack.pen.parse{fg=COLOR_RED,bg=0}})
-    table.insert(helptext,NEWLINE)
-    table.insert(helptext,"Association Of ")
-    table.insert(helptext,{text="Psychic ",pen=dfhack.pen.parse{fg=COLOR_YELLOW,bg=0}})
-    table.insert(helptext,"Dwarves (AOPD) is not responsible for all the damage")
-    table.insert(helptext,NEWLINE)
-    table.insert(helptext,"that this tool can (and will) cause to you and your loved dwarves")
-    table.insert(helptext,NEWLINE)
-    table.insert(helptext,"and/or saves.Please use with caution.")
-    table.insert(helptext,NEWLINE)
-    table.insert(helptext,{text="Magma not included.",pen=dfhack.pen.parse{fg=COLOR_LIGHTRED,bg=0}})
+    Disclaimer(helptext)
     
     local helpPage=widgets.Panel{
         subviews={widgets.Label{text=helptext,frame = {l=1,t=1,yalign=0}}}}

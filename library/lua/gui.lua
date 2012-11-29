@@ -10,13 +10,19 @@ local to_pen = dfhack.pen.parse
 
 CLEAR_PEN = to_pen{ch=32,fg=0,bg=0}
 
+local FAKE_INPUT_KEYS = {
+    _MOUSE_L = true,
+    _MOUSE_R = true,
+    _STRING = true,
+}
+
 function simulateInput(screen,...)
     local keys = {}
     local function push_key(arg)
         local kv = arg
         if type(arg) == 'string' then
             kv = df.interface_key[arg]
-            if kv == nil then
+            if kv == nil and not FAKE_INPUT_KEYS[arg] then
                 error('Invalid keycode: '..arg)
             end
         end

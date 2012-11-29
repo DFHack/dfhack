@@ -4,6 +4,8 @@ local wid=require 'gui.widgets'
 local dialog=require 'gui.dialogs'
 local buildings=require 'dfhack.buildings'
 
+local tile_attrs = df.tiletype.attrs
+
 mode=mode or 0
 keybinds={
 key_next={key="CUSTOM_SHIFT_T",desc="Next job in the list"},
@@ -125,51 +127,54 @@ function makeset(args)
     end
     return tbl
 end
+function NotConstruct(args)
+    local tt=dfhack.maps.getTileType(args.pos)
+    if tile_attrs[tt].material~=df.tiletype_material.CONSTRUCTION and dfhack.buildings.findAtTile(args.pos)==nil then
+        return true
+    else
+        return false, "Can only do it on non constructions"
+    end
+end
 function IsConstruct(args)
     local tt=dfhack.maps.getTileType(args.pos)
-    local cwalls=makeset{  df.tiletype.ConstructedWallRD2, df.tiletype.ConstructedWallR2D, df.tiletype.ConstructedWallR2U, df.tiletype.ConstructedWallRU2,
-  df.tiletype.ConstructedWallL2U, df.tiletype.ConstructedWallLU2, df.tiletype.ConstructedWallL2D, df.tiletype.ConstructedWallLD2,
-  df.tiletype.ConstructedWallLRUD, df.tiletype.ConstructedWallRUD, df.tiletype.ConstructedWallLRD, df.tiletype.ConstructedWallLRU,
-  df.tiletype.ConstructedWallLUD, df.tiletype.ConstructedWallRD, df.tiletype.ConstructedWallRU, df.tiletype.ConstructedWallLU,
-  df.tiletype.ConstructedWallLD, df.tiletype.ConstructedWallUD, df.tiletype.ConstructedWallLR,}
-    if cwalls[tt] or dfhack.buildings.findAtTile(args.pos) then
+    if tile_attrs[tt].material==df.tiletype_material.CONSTRUCTION or dfhack.buildings.findAtTile(args.pos) then
         return true
     else
         return false, "Can only do it on constructions"
     end
 end
+function IsHardMaterial(args)
+    local tt=dfhack.maps.getTileType(args.pos)
+    local mat=tile_attrs[tt].material
+    local hard_materials={df.tiletype_material.STONE,df.tiletype_material.FEATURE,
+        df.tiletype_material.LAVA_STONE,df.tiletype_material.MINERAL,df.tiletype_material.FROZEN_LIQUID,}
+    if hard_materials[mat] then
+        return true
+    else
+        return false, "Can only do it on hard materials"
+    end
+end
+function IsStairs(args)
+    local tt=dfhack.maps.getTileType(args.pos)
+    local shape=tile_attrs[tt].shape
+    if shape==df.tiletype_shape.STAIR_UP or shape==df.tiletype_shape.STAIR_DOWN or shape==df.tiletype_shape.STAIR_UPDOWN or shape==df.tiletype_shape.RAMP then
+        return true
+    else
+        return false,"Can only do it on stairs/ramps"
+    end
+end
+function IsFloor(args)
+    local tt=dfhack.maps.getTileType(args.pos)
+    local shape=tile_attrs[tt].shape
+    if shape==df.tiletype_shape.FLOOR or shape==df.tiletype_shape.BOULDER or shape==df.tiletype_shape.PEBBLES then
+        return true
+    else
+        return false,"Can only do it on floors"
+    end
+end
 function IsWall(args)
     local tt=dfhack.maps.getTileType(args.pos)
-    local walls=makeset{df.tiletype.StoneWallWorn1, df.tiletype.StoneWallWorn2, df.tiletype.StoneWallWorn3, df.tiletype.StoneWall,
-  df.tiletype.SoilWall, df.tiletype.LavaWallSmoothRD2, df.tiletype.LavaWallSmoothR2D, df.tiletype.LavaWallSmoothR2U, df.tiletype.LavaWallSmoothRU2,
-  df.tiletype.LavaWallSmoothL2U, df.tiletype.LavaWallSmoothLU2, df.tiletype.LavaWallSmoothL2D, df.tiletype.LavaWallSmoothLD2, df.tiletype.LavaWallSmoothLRUD,
-  df.tiletype.LavaWallSmoothRUD, df.tiletype.LavaWallSmoothLRD, df.tiletype.LavaWallSmoothLRU, df.tiletype.LavaWallSmoothLUD, df.tiletype.LavaWallSmoothRD,
-  df.tiletype.LavaWallSmoothRU, df.tiletype.LavaWallSmoothLU, df.tiletype.LavaWallSmoothLD, df.tiletype.LavaWallSmoothUD, df.tiletype.LavaWallSmoothLR,
-  df.tiletype.FeatureWallSmoothRD2, df.tiletype.FeatureWallSmoothR2D, df.tiletype.FeatureWallSmoothR2U, df.tiletype.FeatureWallSmoothRU2,
-  df.tiletype.FeatureWallSmoothL2U, df.tiletype.FeatureWallSmoothLU2, df.tiletype.FeatureWallSmoothL2D, df.tiletype.FeatureWallSmoothLD2,
-  df.tiletype.FeatureWallSmoothLRUD, df.tiletype.FeatureWallSmoothRUD, df.tiletype.FeatureWallSmoothLRD, df.tiletype.FeatureWallSmoothLRU,
-  df.tiletype.FeatureWallSmoothLUD, df.tiletype.FeatureWallSmoothRD, df.tiletype.FeatureWallSmoothRU, df.tiletype.FeatureWallSmoothLU,
-  df.tiletype.FeatureWallSmoothLD, df.tiletype.FeatureWallSmoothUD, df.tiletype.FeatureWallSmoothLR, df.tiletype.StoneWallSmoothRD2,
-  df.tiletype.StoneWallSmoothR2D, df.tiletype.StoneWallSmoothR2U, df.tiletype.StoneWallSmoothRU2, df.tiletype.StoneWallSmoothL2U,
-  df.tiletype.StoneWallSmoothLU2, df.tiletype.StoneWallSmoothL2D, df.tiletype.StoneWallSmoothLD2, df.tiletype.StoneWallSmoothLRUD,
-  df.tiletype.StoneWallSmoothRUD, df.tiletype.StoneWallSmoothLRD, df.tiletype.StoneWallSmoothLRU, df.tiletype.StoneWallSmoothLUD,
-  df.tiletype.StoneWallSmoothRD, df.tiletype.StoneWallSmoothRU, df.tiletype.StoneWallSmoothLU, df.tiletype.StoneWallSmoothLD,
-  df.tiletype.StoneWallSmoothUD, df.tiletype.StoneWallSmoothLR, df.tiletype.LavaWallWorn1, df.tiletype.LavaWallWorn2, df.tiletype.LavaWallWorn3,
-  df.tiletype.LavaWall, df.tiletype.FeatureWallWorn1, df.tiletype.FeatureWallWorn2, df.tiletype.FeatureWallWorn3, df.tiletype.FeatureWall,
-  df.tiletype.FrozenWallWorn1, df.tiletype.FrozenWallWorn2, df.tiletype.FrozenWallWorn3, df.tiletype.FrozenWall, df.tiletype.MineralWallSmoothRD2,
-  df.tiletype.MineralWallSmoothR2D, df.tiletype.MineralWallSmoothR2U, df.tiletype.MineralWallSmoothRU2, df.tiletype.MineralWallSmoothL2U,
-  df.tiletype.MineralWallSmoothLU2, df.tiletype.MineralWallSmoothL2D, df.tiletype.MineralWallSmoothLD2, df.tiletype.MineralWallSmoothLRUD,
-  df.tiletype.MineralWallSmoothRUD, df.tiletype.MineralWallSmoothLRD, df.tiletype.MineralWallSmoothLRU, df.tiletype.MineralWallSmoothLUD,
-  df.tiletype.MineralWallSmoothRD, df.tiletype.MineralWallSmoothRU, df.tiletype.MineralWallSmoothLU, df.tiletype.MineralWallSmoothLD,
-  df.tiletype.MineralWallSmoothUD, df.tiletype.MineralWallSmoothLR, df.tiletype.MineralWallWorn1, df.tiletype.MineralWallWorn2,
-  df.tiletype.MineralWallWorn3, df.tiletype.MineralWall, df.tiletype.FrozenWallSmoothRD2, df.tiletype.FrozenWallSmoothR2D,
-  df.tiletype.FrozenWallSmoothR2U, df.tiletype.FrozenWallSmoothRU2, df.tiletype.FrozenWallSmoothL2U, df.tiletype.FrozenWallSmoothLU2,
-  df.tiletype.FrozenWallSmoothL2D, df.tiletype.FrozenWallSmoothLD2, df.tiletype.FrozenWallSmoothLRUD, df.tiletype.FrozenWallSmoothRUD,
-  df.tiletype.FrozenWallSmoothLRD, df.tiletype.FrozenWallSmoothLRU, df.tiletype.FrozenWallSmoothLUD, df.tiletype.FrozenWallSmoothRD,
-  df.tiletype.FrozenWallSmoothRU, df.tiletype.FrozenWallSmoothLU, df.tiletype.FrozenWallSmoothLD, df.tiletype.FrozenWallSmoothUD,
-  df.tiletype.FrozenWallSmoothLR,
-  }
-    if walls[tt] then
+    if tile_attrs[tt].shape==df.tiletype_shape.WALL then
         return true
     else
         return false, "Can only do it on walls"
@@ -177,19 +182,24 @@ function IsWall(args)
 end
 function IsTree(args)
     local tt=dfhack.maps.getTileType(args.pos)
-    if tt==24 then
+    if tile_attrs[tt].shape==df.tiletype_shape.TREE then
         return true
     else
         return false, "Can only do it on trees"
     end
-    
+end
+function IsPlant(args)
+    local tt=dfhack.maps.getTileType(args.pos)
+    if tile_attrs[tt].shape==df.tiletype_shape.PLANT then
+        return true
+    else
+        return false, "Can only do it on plants"
+    end
 end
 function IsWater(args)
     return true
 end
-function IsPlant(args)
-    return true
-end
+
 function IsUnit(args)
     local pos=args.pos
     for k,v in pairs(df.global.world.units.active) do
@@ -212,6 +222,9 @@ function AssignBuildingRef(args)
     local bld=dfhack.buildings.findAtTile(args.pos)
     args.job.general_refs:insert("#",{new=df.general_ref_building_holderst,building_id=bld.id})
     bld.jobs:insert("#",args.job)
+end
+function AssignItems(items,args)
+    
 end
 --[[ building submodule... ]]--
 function DialogBuildingChoose(on_select, on_cancel)
@@ -291,10 +304,10 @@ function ContinueJob(unit)
 end
 
 dig_modes={
-    {"CarveFortification"   ,df.job_type.CarveFortification,{IsWall}},
-    {"DetailWall"           ,df.job_type.DetailWall,{IsWall}},
-    {"DetailFloor"          ,df.job_type.DetailFloor},
-    --{"CarveTrack"          ,df.job_type.CarveTrack}, -- does not work??
+    {"CarveFortification"   ,df.job_type.CarveFortification,{IsWall,IsHardMat}},
+    {"DetailWall"           ,df.job_type.DetailWall,{IsWall,IsHardMat}},
+    {"DetailFloor"          ,df.job_type.DetailFloor,{IsFloor,IsHardMat}},
+    --{"CarveTrack"           ,df.job_type.CarveTrack}, -- does not work??
     {"Dig"                  ,df.job_type.Dig,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall}},
     {"CarveUpwardStaircase" ,df.job_type.CarveUpwardStaircase,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall}},
     {"CarveDownwardStaircase",df.job_type.CarveDownwardStaircase,{MakePredicateWieldsItem(df.job_skill.MINING)}},
@@ -310,6 +323,7 @@ dig_modes={
     {"RemoveConstruction"   ,df.job_type.RemoveConstruction,{IsConstruct}},
     --{"HandleLargeCreature"   ,df.job_type.HandleLargeCreature,{isUnit},{SetCreatureRef}},
     {"Build"                ,AssignJobToBuild},
+    {"RemoveStairs"                ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},
     
 }
 
@@ -358,7 +372,8 @@ MOVEMENT_KEYS = {
 ALLOWED_KEYS={
     A_MOVE_N=true,A_MOVE_S=true,A_MOVE_W=true,A_MOVE_E=true,A_MOVE_NW=true,
     A_MOVE_NE=true,A_MOVE_SW=true,A_MOVE_SE=true,A_STANCE=true,SELECT=true,A_MOVE_DOWN_AUX=true,
-    A_MOVE_UP_AUX=true
+    A_MOVE_UP_AUX=true,A_LOOK=true,CURSOR_DOWN=true,CURSOR_UP=true,CURSOR_LEFT=true,CURSOR_RIGHT=true,
+    CURSOR_UPLEFT=true,CURSOR_UPRIGHT=true,CURSOR_DOWNLEFT=true,CURSOR_DOWNRIGHT=true
 }
 function moddedpos(pos,delta)
     return {x=pos.x+delta[1],y=pos.y+delta[2],z=pos.z+delta[3]}

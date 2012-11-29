@@ -6,7 +6,18 @@ local buildings=require 'dfhack.buildings'
 local bdialog=require 'gui.buildings'
 
 local tile_attrs = df.tiletype.attrs
-
+settings={build_by_items=false,check_inv=false,df_assign=true}
+for k,v in ipairs({...}) do
+    if v=="-c" or v=="--cheat" then
+        settings.build_by_items=true
+        settings.df_assign=false
+    elseif v=="-i" or v=="--inventory" then
+        settings.check_inv=true
+        settings.df_assign=false
+    elseif v=="-a" or v=="--nodfassign" then
+        settings.df_assign=false
+    end
+end
 mode=mode or 0
 keybinds={
 key_next={key="CUSTOM_SHIFT_T",desc="Next job in the list"},
@@ -61,19 +72,29 @@ function AddNewJob(job)
     nl.item=job
     job.list_link=nl
 end
-function MakeJob(unit,pos,job_type,unit_pos,post_actions)
+function MakeJob(args)
     local nj=df.job:new()
     nj.id=df.global.job_next_id
     df.global.job_next_id=df.global.job_next_id+1
     --nj.flags.special=true
-    nj.job_type=job_type
+    nj.job_type=args.job_type
     nj.completion_timer=-1
-    --nj.unk4a=12
-    --nj.unk4b=0
-    nj.pos:assign(pos)
-    AssignUnitToJob(nj,unit,unit_pos)
-    for k,v in ipairs(post_actions or {}) do
-        v{job=nj,pos=pos,old_pos=unit_pos,unit=unit}
+
+    nj.pos:assign(args.pos)
+    args.job=nj
+    local failed=false
+    for k,v in ipairs(args.pre_actions or {}) do
+        local ok,msg=v(args)
+        if not ok then
+            failed=true
+            return false,msg
+        end
+    end
+    if not failed then
+        AssignUnitToJob(nj,args.unit,args.from_pos)
+    end
+    for k,v in ipairs(args.post_actions or {}) do
+        v(args)
     end
     AddNewJob(nj)
     return nj
@@ -121,6 +142,7 @@ function MakePredicateWieldsItem(item_skill)
     end
     return pred
 end
+
 function makeset(args)
     local tbl={}
     for k,v in pairs(args) do
@@ -230,10 +252,6 @@ function AssignBuildingRef(args)
     args.job.general_refs:insert("#",{new=df.general_ref_building_holderst,building_id=bld.id})
     bld.jobs:insert("#",args.job)
 end
-function AssignItems(items,args)
-    
-end
---[[ building submodule... ]]--
 
 function BuildingChosen(inp_args,type_id,subtype_id,custom_id)
     local args={}
@@ -241,40 +259,94 @@ function BuildingChosen(inp_args,type_id,subtype_id,custom_id)
     args.subtype=subtype_id
     args.custom=custom_id
     args.pos=inp_args.pos
-    args.items=itemsAtPos(inp_args.old_pos)
+    --if settings.build_by_items then
+    --    args.items=itemsAtPos(inp_args.from_pos)
+    --end
+    --printall(args.items)
     buildings.constructBuilding(args)
 end
 
---[[ end of buildings ]]--
+
 function RemoveBuilding(args)
     local bld=dfhack.buildings.findAtTile(args.pos)
     if bld~=nil then
         bld:queueDestroy()
         for k,v in ipairs(bld.jobs) do
             if v.job_type==df.job_type.DestroyBuilding then
-                AssignUnitToJob(v,args.unit,args.old_pos)
-                return
+                AssignUnitToJob(v,args.unit,args.from_pos)
+                return true
+            end
+        end
+        return false,"Building removal job failed to be created"
+    else
+        return false,"No building to remove"
+    end
+end
+function AssignJobItems(args)
+    if settings.df_assign then
+        return true
+    end
+    --printall(args)
+    local job=args.job
+    local its=itemsAtPos(args.from_pos)
+    if settings.check_inv then
+        for k,v in pairs(args.unit.inventory) do
+            table.insert(its,v.item)
+        end
+    end
+    --[[while(#job.items>0) do --clear old job items
+        job.items[#job.items-1]:delete()
+        job.items:erase(#job.items-1)
+    end]]
+    local used_item_id={}
+    for job_id, trg_job_item in ipairs(job.job_items) do
+        for _,cur_item in pairs(its) do 
+            if not used_item_id[cur_item.id] then
+                if (trg_job_item.quantity>0 and dfhack.job.isSuitableItem(trg_job_item, cur_item:getType(), cur_item:getSubtype()) and
+                    dfhack.job.isSuitableMaterial(trg_job_item, cur_item:getMaterial(), cur_item:getMaterialIndex())) or settings.build_by_items then
+                    job.items:insert("#",{new=true,item=cur_item,role=2,job_item_idx=job_id})
+                    trg_job_item.quantity=trg_job_item.quantity-1
+                    --print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),trg_job_item.quantity))
+                    used_item_id[cur_item.id]=true
+                end
             end
         end
     end
+    --[[print("+============+")
+    printall(job.items)
+    print("-============-")
+    printall(job.job_items)
+    print("+============+")]]--
+    if not settings.build_by_items then
+        for job_id, trg_job_item in ipairs(job.job_items) do
+            if trg_job_item.quantity>0 then
+                return false, "Not enough items for this job"
+            end
+        end
+    end
+    return true
 end
-
 function AssignJobToBuild(args)
     local bld=dfhack.buildings.findAtTile(args.pos)
+    args.job_type=df.job_type.ConstructBuilding
     if bld~=nil then
         if #bld.jobs>0 then
-            AssignUnitToJob(bld.jobs[0],args.unit,args.old_pos)
-        else
-            local jb=MakeJob(args.unit,args.pos,df.job_type.ConstructBuilding,args.old_pos,{AssignBuildingRef})
-            local its=itemsAtPos(args.old_pos)
-            for k,v in pairs(its) do
-                jb.items:insert("#",{new=true,item=v,role=2})
+            args.job=bld.jobs[0]
+            local ok,msg=AssignJobItems(args)
+            if not ok then
+                return false,msg
+            else
+                AssignUnitToJob(bld.jobs[0],args.unit,args.from_pos) --todo check if correct job type
             end
-            
+        else
+            args.pre_action=AssignJobItems
+            local ok,msg=MakeJob(args)
+            return ok,msg
         end
     else
         bdialog.BuildingDialog{on_select=dfhack.curry(BuildingChosen,args),hide_none=true}:show()
     end
+    return true
 end
 function CancelJob(unit)
     local c_job=unit.job.current_job 
@@ -317,12 +389,17 @@ dig_modes={
     {"RemoveBuilding"       ,RemoveBuilding,{IsBuilding}},
     --{"HandleLargeCreature"   ,df.job_type.HandleLargeCreature,{isUnit},{SetCreatureRef}},
     {"Build"                ,AssignJobToBuild},
+    --{"ConstructBlocks"         ,df.job_type.ConstructBlocks,{},{SetBuildingRef},{AssignJobItems}},
     {"RemoveStairs"         ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},
+    --{"LoadCageTrap"         ,df.job_type.LoadCageTrap,{},{SetBuildingRef},{AssignJobItems}},
     
 }
 
 
 usetool=defclass(usetool,gui.Screen)
+function usetool:getShopMode()
+    return "In shop"
+end
 function usetool:getModeName()
     local adv=df.global.world.units.active[0]
     if adv.job.current_job then
@@ -332,11 +409,19 @@ function usetool:getModeName()
     end
     
 end
+
 function usetool:init(args)
     self:addviews{
         wid.Label{
+            view_id="main_label",
             frame = {xalign=0,yalign=0},
             text={{key=keybinds.key_prev.key},{gap=1,text=dfhack.curry(usetool.getModeName,self)},{gap=1,key=keybinds.key_next.key}}
+                  },
+        wid.Label{
+            view_id="shop_label",
+            visible=false,
+            frame = {xalign=0,yalign=0},
+            text={{key=keybinds.key_prev.key},{gap=1,text=dfhack.curry(usetool.getShopMode,self),pen=dfhack.pen.parse{fg=COLOR_YELLOW,bg=0}},{gap=1,key=keybinds.key_next.key}}
                   }
             }
 end
@@ -412,7 +497,7 @@ function usetool:onInput(keys)
             --print(code)
             if MOVEMENT_KEYS[code] then
                 local state={unit=adv,pos=moddedpos(adv.pos,MOVEMENT_KEYS[code]),dir=MOVEMENT_KEYS[code],
-                        old_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z}}
+                        from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z},post_action=cur_mode[4],pre_action=cur_mode[5],job_type=cur_mode[2],screen=self}
                 if code=="SELECT" then
                     if df.global.cursor.x~=-30000 then
                         state.pos={x=df.global.cursor.x,y=df.global.cursor.y,z=df.global.cursor.z}
@@ -422,25 +507,31 @@ function usetool:onInput(keys)
                 end
                
                 for _,p in pairs(cur_mode[3] or {}) do
-                    local t,v=p(state)
-                    if t==false then
-                        dfhack.gui.showAnnouncement(v,5,1)
+                    local ok,msg=p(state)
+                    if ok==false then
+                        dfhack.gui.showAnnouncement(msg,5,1)
                         failed=true
                     end
                 end
+                
                 if not failed then
+                    local ok,msg
                     if type(cur_mode[2])=="function" then
-                        cur_mode[2](state)
+                        ok,msg=cur_mode[2](state)
                     else
-                        MakeJob(adv,moddedpos(adv.pos,MOVEMENT_KEYS[code]),cur_mode[2],adv.pos,cur_mode[4])
+                        ok,msg=MakeJob(state)
+                        --(adv,moddedpos(adv.pos,MOVEMENT_KEYS[code]),cur_mode[2],adv.pos,cur_mode[4])
+                        
                     end
                     
                     if code=="SELECT" then
                         self:sendInputToParent("LEAVESCREEN")
                     end
-                    
-                    self:sendInputToParent("A_WAIT")
-                    
+                    if ok then
+                        self:sendInputToParent("A_WAIT")
+                    else
+                        dfhack.gui.showAnnouncement(msg,5,1)
+                    end
                 end
                 return code
             end

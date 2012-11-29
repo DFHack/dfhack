@@ -273,6 +273,15 @@ function BuildingChosen(st_pos,pos,index)
 end
 
 --[[ end of buildings ]]--
+function RemoveConstruction(args)
+    local bld=dfhack.buildings.findAtTile(args.pos)
+    if bld==nil then
+        MakeJob(args.unit,args.pos,df.job_type.RemoveConstruction,args.old_pos)
+    else
+        bld:queueDestroy()
+        AssignUnitToJob(bld.jobs[0],args.unit,args.old_pos)
+    end
+end
 function AssignJobToBuild(args)
     local bld=dfhack.buildings.findAtTile(args.pos)
     if bld~=nil then
@@ -320,7 +329,7 @@ dig_modes={
     --{"Surgery"              ,df.job_type.Surgery,{IsUnit},{SetPatientRef}},
     --{"TameAnimal"           ,df.job_type.TameAnimal,{IsUnit},{SetCreatureRef}}, 
     {"GatherPlants"         ,df.job_type.GatherPlants,{IsPlant}},
-    {"RemoveConstruction"   ,df.job_type.RemoveConstruction,{IsConstruct}},
+    {"RemoveConstruction"   ,RemoveConstruction,{IsConstruct}},
     --{"HandleLargeCreature"   ,df.job_type.HandleLargeCreature,{isUnit},{SetCreatureRef}},
     {"Build"                ,AssignJobToBuild},
     {"RemoveStairs"                ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},

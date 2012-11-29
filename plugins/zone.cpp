@@ -1,12 +1,12 @@
 // Intention: help with activity zone management (auto-pasture animals, auto-pit goblins, ...)
-// 
+//
 // the following things would be nice:
 // - dump info about pastures, pastured animals, count non-pastured tame animals, print gender info
 // - help finding caged dwarves? (maybe even allow to build their cages for fast release)
 // - dump info about caged goblins, animals, ...
 // - count grass tiles on pastures, move grazers to new pasture if old pasture is empty
 //   move hungry unpastured grazers to pasture with grass
-// 
+//
 // What is working so far:
 // - print detailed info about activity zone and units under cursor (mostly for checking refs and stuff)
 // - mark a zone which is used for future assignment commands
@@ -287,7 +287,7 @@ static PersistentDataItem config_autonestbox;
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
-    switch (event) 
+    switch (event)
     {
     case DFHack::SC_MAP_LOADED:
         // initialize from the world just loaded
@@ -320,7 +320,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             autoNestbox(out, false);
         }
     }
-    
+
     if(enable_autobutcher)
     {
         if(++ticks_autobutcher >= sleep_autobutcher)
@@ -630,7 +630,7 @@ bool isTamable(df::unit* unit)
     {
         df::caste_raw *caste = raw->caste[j];
         if(caste->flags.is_set(caste_raw_flags::PET) ||
-			caste->flags.is_set(caste_raw_flags::PET_EXOTIC)) 
+            caste->flags.is_set(caste_raw_flags::PET_EXOTIC))
             return true;
     }
     return false;
@@ -652,8 +652,8 @@ bool isFemale(df::unit* unit)
 bool hasValidMapPos(df::unit* unit)
 {
     if(    unit->pos.x >=0 && unit->pos.y >= 0 && unit->pos.z >= 0
-        && unit->pos.x < world->map.x_count 
-        && unit->pos.y < world->map.y_count 
+        && unit->pos.x < world->map.x_count
+        && unit->pos.y < world->map.y_count
         && unit->pos.z < world->map.z_count)
         return true;
     else
@@ -662,7 +662,7 @@ bool hasValidMapPos(df::unit* unit)
 
 bool isNaked(df::unit* unit)
 {
-	return (unit->inventory.empty());
+    return (unit->inventory.empty());
 }
 
 
@@ -694,7 +694,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
             out << " '" << unit->name.nickname << "'";
         out << ", ";
     }
-    
+
     if(isAdult(unit))
         out << "adult";
     else if(isBaby(unit))
@@ -702,7 +702,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     else if(isChild(unit))
         out << "child";
     out << " ";
-    // sometimes empty even in vanilla RAWS, sometimes contains full race name (e.g. baby alpaca) 
+    // sometimes empty even in vanilla RAWS, sometimes contains full race name (e.g. baby alpaca)
     // all animals I looked at don't have babies anyways, their offspring starts as CHILD
     //out << getRaceBabyName(unit);
     //out << getRaceChildName(unit);
@@ -725,7 +725,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     out << ", age: " << getUnitAge(unit);
 
     if(isTame(unit))
-        out << ", tame";    
+        out << ", tame";
     if(isOwnCiv(unit))
         out << ", owned";
     if(isWar(unit))
@@ -742,7 +742,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
         out << ", grazer";
     if(isMilkable(unit))
         out << ", milkable";
-    
+
     if(verbose)
     {
         out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ") " << endl;
@@ -820,7 +820,7 @@ bool isPitPond(df::building * building)
 
     if(civ->zone_flags.bits.pit_pond) // && civ->pit_flags==0)
         return true;
-    else 
+    else
         return false;
 }
 
@@ -879,7 +879,7 @@ df::unit* findUnitById(int32_t id)
 int32_t findPenPitAtCursor()
 {
     int32_t foundID = -1;
-    
+
     if(cursor->x == -30000)
         return -1;
 
@@ -906,7 +906,7 @@ int32_t findPenPitAtCursor()
 int32_t findCageAtCursor()
 {
     int32_t foundID = -1;
-    
+
     if(cursor->x == -30000)
         return -1;
 
@@ -935,7 +935,7 @@ int32_t findCageAtCursor()
 int32_t findChainAtCursor()
 {
     int32_t foundID = -1;
-    
+
     if(cursor->x == -30000)
         return -1;
 
@@ -974,7 +974,7 @@ df::general_ref_building_civzone_assignedst * createCivzoneRef()
     // being called for the first time, need to initialize the vtable
     for(size_t i = 0; i < world->units.all.size(); i++)
     {
-        df::unit * creature = world->units.all[i];                    
+        df::unit * creature = world->units.all[i];
         for(size_t r = 0; r<creature->general_refs.size(); r++)
         {
             df::general_ref* ref;
@@ -984,7 +984,7 @@ df::general_ref_building_civzone_assignedst * createCivzoneRef()
                 if (strict_virtual_cast<df::general_ref_building_civzone_assignedst>(ref))
                 {
                     // !! calling new() doesn't work, need _identity.instantiate() instead !!
-                    newref = (df::general_ref_building_civzone_assignedst*) 
+                    newref = (df::general_ref_building_civzone_assignedst*)
                         df::general_ref_building_civzone_assignedst::_identity.instantiate();
                     vt_initialized = true;
                     break;
@@ -1090,13 +1090,13 @@ bool isInBuiltCageRoom(df::unit* unit)
     for (size_t b=0; b < world->buildings.all.size(); b++)
     {
         df::building* building = world->buildings.all[b];
-        
+
         // !!! building->isRoom() returns true if the building can be made a room but currently isn't
         // !!! except for coffins/tombs which always return false
         // !!! using the bool is_room however gives the correct state/value
         if(!building->is_room)
             continue;
-        
+
         if(building->getType() == building_type::Cage)
         {
             df::building_cagest* cage = (df::building_cagest*) building;
@@ -1118,7 +1118,7 @@ bool isInBuiltCageRoom(df::unit* unit)
 // check a map position for a built cage
 // animals in cages are CONTAINED_IN_ITEM, no matter if they are on a stockpile or inside a built cage
 // if they are on animal stockpiles they should count as unassigned to allow pasturing them
-// if they are inside built cages they should be ignored in case the cage is a zoo or linked to a lever or whatever 
+// if they are inside built cages they should be ignored in case the cage is a zoo or linked to a lever or whatever
 bool isBuiltCageAtPos(df::coord pos)
 {
     bool cage = false;
@@ -1232,7 +1232,7 @@ bool isFreeEgglayer(df::unit * unit)
 {
     if( !isDead(unit) && !isUndead(unit)
         && isFemale(unit)
-        && isTame(unit) 
+        && isTame(unit)
         && isOwnCiv(unit)
         && isEggLayer(unit)
         && !isAssigned(unit)
@@ -1306,7 +1306,7 @@ bool unassignUnitFromBuilding(df::unit* unit)
             {
                 // game does not erase the ref until creature gets removed from cage
                 //unit->general_refs.erase(unit->general_refs.begin() + idx);
-                
+
                 // walk through buildings, check cages for inhabitants, compare ids
                 for (size_t b=0; b < world->buildings.all.size(); b++)
                 {
@@ -1379,7 +1379,7 @@ command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building
             << "before using 'assign' for the first time." << endl;
         return CR_WRONG_USAGE;
     }
-        
+
     // check if unit is already pastured, remove that ref from unit and old pasture
     //    testing showed that removing the ref from the unit only seems to be necessary for pastured creatures
     //    if they are in cages on stockpiles the game unassigns them automatically
@@ -1401,8 +1401,8 @@ command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building
     df::building_civzonest * civz = (df::building_civzonest *) building;
     civz->assigned_creature.push_back(unit->id);
 
-    out << "Unit " << unit->id 
-        << "(" << getRaceName(unit) << ")" 
+    out << "Unit " << unit->id
+        << "(" << getRaceName(unit) << ")"
         << " assigned to zone " << building->id;
     if(isPitPond(building))
         out << " (pit/pond).";
@@ -1425,7 +1425,7 @@ command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::building
     // don't assign owned pets to a cage. the owner will release them, resulting into infinite hauling (df bug)
     if(unit->relations.pet_owner_id != -1)
         return CR_OK;
-        
+
     // check if unit is already pastured or caged, remove refs where necessary
     bool cleared_old = unassignUnitFromBuilding(unit);
     if(verbose)
@@ -1442,8 +1442,8 @@ command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::building
     df::building_cagest* civz = (df::building_cagest*) building;
     civz->assigned_creature.push_back(unit->id);
 
-    out << "Unit " << unit->id 
-        << "(" << getRaceName(unit) << ")" 
+    out << "Unit " << unit->id
+        << "(" << getRaceName(unit) << ")"
         << " assigned to cage " << building->id;
     out << endl;
 
@@ -1631,7 +1631,7 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
         out << " (pit flags:" << civ->pit_flags.whole << ")";
         if(civ->pit_flags.bits.is_pond)
             out << ", pond";
-        else 
+        else
             out << ", pit";
     }
     out << endl;
@@ -1654,7 +1654,7 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
             df::unit * creature = world->units.all[i];
             if(creature->id != cindex)
                 continue;
-                    
+
             unitInfo(out, creature, verbose);
         }
     }
@@ -1694,7 +1694,7 @@ void cageInfo(color_ostream & out, df::building* building, bool verbose)
             df::unit * creature = world->units.all[i];
             if(creature->id != cindex)
                 continue;
-                    
+
             unitInfo(out, creature, verbose);
         }
     }
@@ -1737,7 +1737,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool zone_info = false;
     //bool cage_info = false;
     //bool chain_info = false;
-    
+
     bool invert_filter = false;
     bool find_unassigned = false;
     bool find_caged = false;
@@ -1763,17 +1763,17 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool find_female = false;
     bool find_not_female = false;
     bool find_egglayer = false;
-	bool find_not_egglayer = false;
+    bool find_not_egglayer = false;
     bool find_grazer = false;
     bool find_not_grazer = false;
     bool find_milkable = false;
     bool find_not_milkable = false;
     bool find_named = false;
     bool find_not_named = false;
-	bool find_naked = false;
-	bool find_not_naked = false;
-	bool find_tamable = false;
-	bool find_not_tamable = false;
+    bool find_naked = false;
+    bool find_not_naked = false;
+    bool find_tamable = false;
+    bool find_not_tamable = false;
 
     bool find_agemin = false;
     bool find_agemax = false;
@@ -1801,7 +1801,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     for (size_t i = 0; i < parameters.size(); i++)
     {
         string & p = parameters[i];
-        
+
         if (p == "help" || p == "?")
         {
             out << zone_help << endl;
@@ -2388,7 +2388,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 df::unit *unit = world->units.all[c];
 
                 // ignore dead and undead units
-                if (isDead(unit) || isUndead(unit)) 
+                if (isDead(unit) || isUndead(unit))
                     continue;
 
                 // ignore merchant units by default
@@ -2432,7 +2432,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     || (find_grazer && !isGrazer(unit))
                     || (find_not_grazer && isGrazer(unit))
                     || (find_egglayer && !isEggLayer(unit))
-					|| (find_not_egglayer && isEggLayer(unit))
+                    || (find_not_egglayer && isEggLayer(unit))
                     || (find_milkable && !isMilkable(unit))
                     || (find_not_milkable && isMilkable(unit))
                     || (find_male && !isMale(unit))
@@ -2441,10 +2441,10 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     || (find_not_female && isFemale(unit))
                     || (find_named && !unit->name.has_name)
                     || (find_not_named && unit->name.has_name)
-					|| (find_naked && !isNaked(unit))
-					|| (find_not_naked && isNaked(unit))
-					|| (find_tamable && !isTamable(unit))
-					|| (find_not_tamable && isTamable(unit))
+                    || (find_naked && !isNaked(unit))
+                    || (find_not_naked && isNaked(unit))
+                    || (find_tamable && !isTamable(unit))
+                    || (find_not_tamable && isTamable(unit))
                     || (find_trainable_war && (isWar(unit) || isHunter(unit) || !isTrainableWar(unit)))
                     || (find_not_trainable_war && isTrainableWar(unit)) // hm, is this check enough?
                     || (find_trainable_hunting && (isWar(unit) || isHunter(unit) || !isTrainableHunting(unit)))
@@ -2471,7 +2471,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     unitInfo(out, unit, verbose);
                     continue;
                 }
-                
+
                 if(nick_set)
                 {
                     Units::setNickname(unit, target_nick);
@@ -2540,8 +2540,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     }
 
     // de-assign from pen or pit
-    // using the zone tool to free creatures from cages or chains 
-    // is pointless imo since that is already quite easy using the ingame UI. 
+    // using the zone tool to free creatures from cages or chains
+    // is pointless imo since that is already quite easy using the ingame UI.
     // but it's easy to implement so I might as well add it later
     if(building_unassign)
     {
@@ -2555,7 +2555,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             out << "Unit unassigned." << endl;
         else
             out << "Unit is not assigned to an activity zone!" << endl;
-        
+
         return CR_OK;
     }
 
@@ -2574,7 +2574,7 @@ command_result df_autonestbox(color_ostream &out, vector <string> & parameters)
     for (size_t i = 0; i < parameters.size(); i++)
     {
         string & p = parameters[i];
-        
+
         if (p == "help" || p == "?")
         {
             out << autonestbox_help << endl;
@@ -2687,7 +2687,7 @@ command_result autoNestbox( color_ostream &out, bool verbose = false )
         Gui::showAnnouncement(announce, 2, false);
         out << announce << endl;
         // can complain again
-        // (might lead to spamming the same message twice, but catches the case 
+        // (might lead to spamming the same message twice, but catches the case
         // where for example 2 new egglayers hatched right after 2 zones were created and assigned)
         autonestbox_did_complain = false;
     }
@@ -2699,7 +2699,7 @@ command_result autoNestbox( color_ostream &out, bool verbose = false )
 
 // getUnitAge() returns 0 if born in current year, therefore the look at birth_time in that case
 // (assuming that the value from there indicates in which tick of the current year the unit was born)
-bool compareUnitAgesYounger(df::unit* i, df::unit* j) 
+bool compareUnitAgesYounger(df::unit* i, df::unit* j)
 {
     int32_t age_i = getUnitAge(i);
     int32_t age_j = getUnitAge(j);
@@ -2708,10 +2708,10 @@ bool compareUnitAgesYounger(df::unit* i, df::unit* j)
         age_i = i->relations.birth_time;
         age_j = j->relations.birth_time;
     }
-    return (age_i < age_j); 
+    return (age_i < age_j);
 }
-bool compareUnitAgesOlder(df::unit* i, df::unit* j) 
-{ 
+bool compareUnitAgesOlder(df::unit* i, df::unit* j)
+{
     int32_t age_i = getUnitAge(i);
     int32_t age_j = getUnitAge(j);
     if(age_i == 0 && age_j == 0)
@@ -2719,7 +2719,7 @@ bool compareUnitAgesOlder(df::unit* i, df::unit* j)
         age_i = i->relations.birth_time;
         age_j = j->relations.birth_time;
     }
-    return (age_i > age_j); 
+    return (age_i > age_j);
 }
 
 //enum WatchedRaceSubtypes
@@ -2748,7 +2748,7 @@ public:
     vector <df::unit*> mk_ptr;
     vector <df::unit*> fa_ptr;
     vector <df::unit*> ma_ptr;
-    
+
     WatchedRace(bool watch, int id, int _fk, int _mk, int _fa, int _ma)
     {
         isWatched = watch;
@@ -2786,8 +2786,8 @@ public:
             string keyname = "autobutcher/watchlist/" + getRaceName(raceId);
             out << "Something failed, could not find/create config key " << keyname << "!" << endl;
         }
-    } 
-    
+    }
+
     void RemoveConfig(color_ostream & out)
     {
         if(!rconfig.isValid())
@@ -2802,7 +2802,7 @@ public:
         sort(fa_ptr.begin(), fa_ptr.end(), compareUnitAgesYounger);
         sort(ma_ptr.begin(), ma_ptr.end(), compareUnitAgesYounger);
     }
-    
+
     void PushUnit(df::unit * unit)
     {
         if(isFemale(unit))
@@ -2894,7 +2894,7 @@ public:
     }
 };
 // vector of races handled by autobutcher
-// the name is a bit misleading since entries can be set to 'unwatched' 
+// the name is a bit misleading since entries can be set to 'unwatched'
 // to ignore them for a while but still keep the target count settings
 std::vector<WatchedRace*> watched_races;
 
@@ -2933,7 +2933,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     }
 
     // parse main command
-    string & p = parameters[0];        
+    string & p = parameters[0];
     if (p == "help" || p == "?")
     {
         out << autobutcher_help << endl;
@@ -3058,19 +3058,19 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     if(list_watched)
     {
         out << "Autobutcher status: ";
-        
+
         if(enable_autobutcher)
             out << "enabled,";
         else
             out << "not enabled,";
-        
+
         if (enable_autobutcher_autowatch)
             out << " autowatch,";
         else
             out << " noautowatch,";
-        
+
         out << " sleep: " << sleep_autobutcher << endl;
-        
+
         out << "Default setting for new races:"
             << " fk=" << default_fk
             << " mk=" << default_mk
@@ -3094,7 +3094,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
                 out << "watched: ";
             else
                 out << "not watched: ";
-            out << name 
+            out << name
                 << " fk=" << w->fk
                 << " mk=" << w->mk
                 << " fa=" << w->fa
@@ -3114,7 +3114,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         out << run << "start" << endl;
 
         if(!enable_autobutcher)
-            out << run << "stop" << endl;        
+            out << run << "stop" << endl;
 
         if (enable_autobutcher_autowatch)
             out << run << "autowatch" << endl;
@@ -3147,8 +3147,8 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     }
 
     // parse rest of parameters for commands followed by a list of races
-    if(    watch_race 
-        || unwatch_race 
+    if(    watch_race
+        || unwatch_race
         || forget_race
         || change_target )
     {
@@ -3226,7 +3226,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     else
     {
         // map race names from parameter list to ids
-        size_t num_races = df::global::world->raws.creatures.all.size(); 
+        size_t num_races = df::global::world->raws.creatures.all.size();
         while(target_racenames.size())
         {
             bool found_race = false;
@@ -3345,7 +3345,7 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
             || isHunter(unit) // ignore hunting dogs etc
             // ignore creatures in built cages which are defined as rooms to leave zoos alone
             // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
-            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom() 
+            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
             || unit->name.has_name
             )
             continue;
@@ -3372,7 +3372,7 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
             string announce;
             announce = "New race added to autobutcher watchlist: " + getRaceName(w->raceId);
             Gui::showAnnouncement(announce, 2, false);
-            //out << announce << endl;       
+            //out << announce << endl;
         }
     }
 
@@ -3389,7 +3389,7 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
             string announce;
             announce = getRaceName(w->raceId) + " marked for slaughter: " + ss.str();
             Gui::showAnnouncement(announce, 2, false);
-            //out << announce << endl;       
+            //out << announce << endl;
         }
     }
     //out << slaughter_count << " units total marked for slaughter." << endl;
@@ -3425,13 +3425,13 @@ command_result start_autobutcher(color_ostream &out)
     config_autobutcher.ival(0) = enable_autobutcher;
 
     out << "Starting autobutcher." << endl;
-	init_autobutcher(out);
+    init_autobutcher(out);
     return CR_OK;
 }
 
 command_result init_autobutcher(color_ostream &out)
 {
-	cleanup_autobutcher(out);
+    cleanup_autobutcher(out);
 
     config_autobutcher = World::GetPersistentData("autobutcher/config");
     if(config_autobutcher.isValid())
@@ -3466,9 +3466,9 @@ command_result init_autobutcher(color_ostream &out)
 
     std::vector<PersistentDataItem> items;
     World::GetPersistentData(&items, "autobutcher/watchlist/", true);
-	for (auto p = items.begin(); p != items.end(); p++)
-	{
-		string key = p->key();
+    for (auto p = items.begin(); p != items.end(); p++)
+    {
+        string key = p->key();
         out << "Reading from save: " << key << endl;
         //out << "  raceid: "   << p->ival(0) << endl;
         //out << "  watched: "  << p->ival(1) << endl;
@@ -3476,7 +3476,7 @@ command_result init_autobutcher(color_ostream &out)
         //out << "  mk: "       << p->ival(3) << endl;
         //out << "  fa: "       << p->ival(4) << endl;
         //out << "  ma: "       << p->ival(5) << endl;
-        
+
         WatchedRace * w = new WatchedRace(p->ival(1), p->ival(0), p->ival(2), p->ival(3),p->ival(4),p->ival(5));
         w->rconfig = *p;
         watched_races.push_back(w);
@@ -3514,13 +3514,13 @@ command_result start_autonestbox(color_ostream &out)
     config_autonestbox.ival(0) = enable_autonestbox;
 
     out << "Starting autonestbox." << endl;
-	init_autonestbox(out);
+    init_autonestbox(out);
     return CR_OK;
 }
 
 command_result init_autonestbox(color_ostream &out)
 {
-	cleanup_autonestbox(out);
+    cleanup_autonestbox(out);
 
     config_autonestbox = World::GetPersistentData("autonestbox/config");
     if(config_autonestbox.isValid())

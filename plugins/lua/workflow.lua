@@ -9,6 +9,7 @@ local utils = require 'utils'
  * isEnabled()
  * setEnabled(enable)
  * listConstraints([job]) -> {...}
+ * findConstraint(token) -> {...} or nil
  * setConstraint(token[, by_count, goal, gap]) -> {...}
  * deleteConstraint(token) -> true/false
 
@@ -255,7 +256,7 @@ function constraintToToken(cspec)
     end
     local mask_part
     if cspec.mat_mask then
-        mask_part = table.concat(utils.list_bitfield_flags(cspec.mat_mask), ',')
+        mask_part = string.upper(table.concat(utils.list_bitfield_flags(cspec.mat_mask), ','))
     end
     local mat_part
     if cspec.mat_type and cspec.mat_type >= 0 then
@@ -270,8 +271,9 @@ function constraintToToken(cspec)
     if cspec.is_local then
         table.insert(qlist, "LOCAL")
     end
-    if cspec.quality and cspec.quality > 0 then
-        table.insert(qlist, df.item_quality[cspec.quality] or error('invalid quality: '..cspec.quality))
+    if cspec.min_quality and cspec.min_quality > 0 then
+        local qn = df.item_quality[cspec.min_quality] or error('invalid quality: '..cspec.min_quality)
+        table.insert(qlist, qn)
     end
     local qpart
     if #qlist > 0 then

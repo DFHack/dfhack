@@ -138,7 +138,6 @@ module DFHack
             @@inspecting = {} # avoid infinite recursion on mutually-referenced objects
             def inspect
                 cn = self.class.name.sub(/^DFHack::/, '')
-                cn << ' @' << ('0x%X' % _memaddr) if cn != ''
                 out = "#<#{cn}"
                 return out << ' ...>' if @@inspecting[_memaddr]
                 @@inspecting[_memaddr] = true
@@ -654,6 +653,13 @@ module DFHack
                 else
                     DFHack.memory_bitarray_set(@_memaddr, idx, v)
                 end
+            end
+            def inspect
+                out = "#<DfFlagarray"
+                each_with_index { |e, idx|
+                    out << " #{_indexenum.sym(idx)}" if e
+                }
+                out << '>'
             end
 
             include Enumerable

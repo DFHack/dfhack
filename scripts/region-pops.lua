@@ -99,6 +99,16 @@ function boost_population(entry, factor, boost_count)
     return boost_count
 end
 
+function incr_population(entry, factor, boost_count)
+    for _,v in ipairs(entry.records) do
+        if v.quantity < 10000001 then
+            boost_count = boost_count + 1
+            v.quantity = math.max(0, v.quantity + factor)
+        end
+    end
+    return boost_count
+end
+
 local args = {...}
 local pops = enum_populations()
 
@@ -124,6 +134,26 @@ elseif args[1] == 'boost' or args[1] == 'boost-all' then
     end
 
     print('Updated '..count..' populations.')
+elseif args[1] == 'incr' or args[1] == 'incr-all' then
+    local factor = tonumber(args[3])
+    if not factor then
+        qerror('Invalid increment factor.')
+    end
+
+    local count = 0
+
+    if args[1] == 'incr' then
+        local entry = pops.any[args[2]] or qerror('Unknown population token.')
+        count = incr_population(entry, factor, count)
+    else
+        for k,entry in pairs(pops.any) do
+            if string.match(k, args[2]) then
+                count = incr_population(entry, factor, count)
+            end
+        end
+    end
+
+    print('Updated '..count..' populations.')
 else
     print([[
 Usage:
@@ -136,6 +166,10 @@ Usage:
     If the factor is greater than one, increases the
     population, otherwise decreases it.
   region-pops boost-all <pattern> <factor>
+    Same as above, but match using a pattern acceptable to list.
+  region-pops incr <TOKEN> <factor>
+    Augment (or diminish) all populations of TOKEN by factor (additive).
+  region-pops incr-all <pattern> <factor>
     Same as above, but match using a pattern acceptable to list.
 ]])
 end

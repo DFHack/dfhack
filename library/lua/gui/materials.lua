@@ -23,6 +23,7 @@ MaterialDialog.ATTRS{
     frame_title = 'Select Material',
     -- new attrs
     none_caption = 'none',
+    hide_none = false,
     use_inorganic = true,
     use_creature = true,
     use_plant = true,
@@ -68,7 +69,7 @@ function MaterialDialog:init(info)
 end
 
 function MaterialDialog:getWantedFrameSize(rect)
-    return math.max(40, #self.prompt), math.min(28, rect.height-8)
+    return math.max(self.frame_width or 40, #self.prompt), math.min(28, rect.height-8)
 end
 
 function MaterialDialog:onDestroy()
@@ -78,9 +79,10 @@ function MaterialDialog:onDestroy()
 end
 
 function MaterialDialog:initBuiltinMode()
-    local choices = {
-        { text = self.none_caption, mat_type = -1, mat_index = -1 },
-    }
+    local choices = {}
+    if not self.hide_none then
+        table.insert(choices, { text = self.none_caption, mat_type = -1, mat_index = -1 })
+    end
 
     if self.use_inorganic then
         table.insert(choices, {
@@ -281,9 +283,15 @@ function ItemTypeDialog(args)
     args.with_filter = true
     args.icon_width = 2
 
-    local choices = { {
-        icon = '?', text = args.none_caption or 'none', item_type = -1, item_subtype = -1
-    } }
+    local choices = {}
+
+    if not args.hide_none then
+        table.insert(choices, {
+            icon = '?', text = args.none_caption or 'none',
+            item_type = -1, item_subtype = -1
+        })
+    end
+
     local filter = args.item_filter
 
     for itype = 0,df.item_type._last_item do

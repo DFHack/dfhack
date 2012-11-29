@@ -238,6 +238,8 @@ DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 
 DFHACK_EXPORT int getNominalSkill(df::unit *unit, df::job_skill skill_id, bool use_rust = false);
 DFHACK_EXPORT int getEffectiveSkill(df::unit *unit, df::job_skill skill_id);
+DFHACK_EXPORT int getExperience(df::unit *unit, df::job_skill skill_id, bool total = false);
+
 DFHACK_EXPORT int computeMovementSpeed(df::unit *unit);
 
 struct NoblePosition {

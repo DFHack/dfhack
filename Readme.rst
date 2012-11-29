@@ -144,6 +144,16 @@ system console:
 
 The patches are expected to be encoded in text format used by IDA.
 
+
+Live patching
+-------------
+
+As an alternative, you can use the ``binpatch`` dfhack command to apply/remove
+patches live in memory during a DF session.
+
+In this case, updating symbols.xml is not necessary.
+
+
 =============================
 Something doesn't work, help!
 =============================
@@ -1077,6 +1087,9 @@ Subcommands that persist until disabled or DF quit:
 :patrol-duty:    Makes Train orders not count as patrol duty to stop unhappy thoughts.
                  Does NOT fix the problem when soldiers go off-duty (i.e. civilian).
 :readable-build-plate: Fixes rendering of creature weight limits in pressure plate build menu.
+
+                       .. image:: images/tweak-plate.png
+
 :stable-temp:    Fixes performance bug 6012 by squashing jitter in temperature updates.
                  In very item-heavy forts with big stockpiles this can improve FPS by 50-100%
 :fast-heat:      Further improves temperature update performance by ensuring that 1 degree
@@ -1095,8 +1108,15 @@ Subcommands that persist until disabled or DF quit:
 :military-stable-assign: Preserve list order and cursor position when assigning to squad,
                          i.e. stop the rightmost list of the Positions page of the military
                          screen from constantly resetting to the top.
-:military-color-assigned: Color squad candidates already assigned to other squads in brown/green
+:military-color-assigned: Color squad candidates already assigned to other squads in yellow/green
                           to make them stand out more in the list.
+
+                          .. image:: images/tweak-mil-color.png
+
+:military-training: Speeds up melee squad training by removing an almost certainly
+                    unintended inverse dependency of training speed on unit count
+                    (i.e. the more units you have, the slower it becomes), and making
+                    the units spar more.
 
 fix-armory
 ----------
@@ -1946,6 +1966,41 @@ embark
 ======
 Allows to embark anywhere. Currently windows only.
 
+lever
+=====
+Allow manipulation of in-game levers from the dfhack console.
+
+Can list levers, including state and links, with::
+
+    lever list
+
+To queue a job so that a dwarf will pull the lever 42, use ``lever pull 42``.
+This is the same as 'q'uerying the building and queue a 'P'ull request.
+
+To magically toggle the lever immediately, use::
+
+    lever pull 42 --now
+
+stripcaged
+==========
+For dumping items inside cages. Will mark selected items for dumping, then
+a dwarf may come and actually dump it. See also ``autodump``.
+
+With the ``items`` argument, only dumps items laying in the cage, excluding
+stuff worn by caged creatures. ``weapons`` will dump worn weapons, ``armor``
+will dump everything worn by caged creatures (including armor and clothing),
+and ``all`` will dump everything, on a creature or not.
+
+``stripcaged list`` will display on the dfhack console the list of all cages
+and their item content.
+
+Without further arguments, all commands work on all cages and animal traps on
+the map. With the ``here`` argument, considers only the in-game selected cage
+(or the cage under the game cursor). To target only specific cages, you can
+alternatively pass cage IDs as arguments::
+
+  stripcaged weapons 25321 34228
+
 =======================
 In-game interface tools
 =======================
@@ -1958,6 +2013,9 @@ are mostly implemented by lua scripts.
     In order to avoid user confusion, as a matter of policy all these tools
     display the word "DFHack" on the screen somewhere while active.
 
+    When that is not appropriate because they merely add keybinding hints to
+    existing DF screens, they deliberately use red instead of green for the key.
+
     As an exception, the tweak plugin described above does not follow this
     guideline because it arguably just fixes small usability bugs in the game UI.
 
@@ -1968,12 +2026,18 @@ Dwarf Manipulator
 Implemented by the manipulator plugin. To activate, open the unit screen and
 press 'l'.
 
+.. image:: images/manipulator.png
+
 This tool implements a Dwarf Therapist-like interface within the game UI. The
 far left column displays the unit's Happiness (color-coded based on its
 value), and the right half of the screen displays each dwarf's labor settings
 and skill levels (0-9 for Dabbling thru Professional, A-E for Great thru Grand
-Master, and U-Z for Legendary thru Legendary+5). Cells with red backgrounds
-denote skills not controlled by labors.
+Master, and U-Z for Legendary thru Legendary+5).
+
+Cells with teal backgrounds denote skills not controlled by labors, e.g.
+military and social skills.
+
+.. image:: images/manipulator2.png
 
 Use the arrow keys or number pad to move the cursor around, holding Shift to
 move 10 tiles at a time.
@@ -2012,6 +2076,8 @@ Search
 
 The search plugin adds search to the Stocks, Trading and Unit List screens.
 
+.. image:: images/search.png
+
 Searching works the same way as the search option in "Move to Depot" does.
 You will see the Search option displayed on screen with a hotkey (usually 's').
 Pressing it lets you start typing a query and the relevant list will start
@@ -2032,10 +2098,48 @@ Value numbers displayed by the screen. Because of this, pressing the 't'
 key while search is active clears the search instead of executing the trade.
 
 
+AutoMaterial
+============
+
+The automaterial plugin makes building constructions (walls, floors, fortifications,
+etc) a little bit easier by saving you from having to trawl through long lists of
+materials each time you place one.
+
+Firstly, it moves the last used material for a given construction type to the top of
+the list, if there are any left. So if you build a wall with chalk blocks, the next
+time you place a wall the chalk blocks will be at the top of the list, regardless of
+distance (it only does this in "grouped" mode, as individual item lists could be huge).
+This should mean you can place most constructions without having to search for your
+preferred material type.
+
+.. image:: images/automaterial-mat.png
+
+Pressing 'a' while highlighting any material will enable that material for "auto select"
+for this construction type. You can enable multiple materials as autoselect. Now the next
+time you place this type of construction, the plugin will automatically choose materials
+for you from the kinds you enabled. If there is enough to satisfy the whole placement,
+you won't be prompted with the material screen - the construction will be placed and you
+will be back in the construction menu as if you did it manually.
+
+When choosing the construction placement, you will see a couple of options:
+
+.. image:: images/automaterial-pos.png
+
+Use 'a' here to temporarily disable the material autoselection, e.g. if you need
+to go to the material selection screen so you can toggle some materials on or off.
+
+The other option (auto type selection, off by default) can be toggled on with 't'. If you
+toggle this option on, instead of returning you to the main construction menu after selecting
+materials, it returns you back to this screen. If you use this along with several autoselect
+enabled materials, you should be able to place complex constructions more conveniently.
+
+
 gui/liquids
 ===========
 
-To use, bind to a key and activate in the 'k' mode.
+To use, bind to a key (the example config uses Alt-L) and activate in the 'k' mode.
+
+.. image:: images/liquids.png
 
 While active, use the suggested keys to switch the usual liquids parameters, and Enter
 to select the target area and apply changes.
@@ -2044,7 +2148,9 @@ to select the target area and apply changes.
 gui/mechanisms
 ==============
 
-To use, bind to a key and activate in the 'q' mode.
+To use, bind to a key (the example config uses Ctrl-M) and activate in the 'q' mode.
+
+.. image:: images/mechanisms.png
 
 Lists mechanisms connected to the building, and their links. Navigating the list centers
 the view on the relevant linked buildings.
@@ -2062,21 +2168,35 @@ via a simple dialog in the game ui.
 
 * ``gui/rename [building]`` in 'q' mode changes the name of a building.
 
+  .. image:: images/rename-bld.png
+
   The selected building must be one of stockpile, workshop, furnace, trap, or siege engine.
   It is also possible to rename zones from the 'i' menu.
 
 * ``gui/rename [unit]`` with a unit selected changes the nickname.
 
+  Unlike the built-in interface, this works even on enemies and animals.
+
 * ``gui/rename unit-profession`` changes the selected unit's custom profession name.
 
+  .. image:: images/rename-prof.png
+
+  Likewise, this can be applied to any unit, and when used on animals it overrides
+  their species string.
+
 The ``building`` or ``unit`` options are automatically assumed when in relevant ui state.
+
+The example config binds building/unit rename to Ctrl-Shift-N, and
+unit profession change to Ctrl-Shift-T.
 
 
 gui/room-list
 =============
 
-To use, bind to a key and activate in the 'q' mode, either immediately or after opening
-the assign owner page.
+To use, bind to a key (the example config uses Alt-R) and activate in the 'q' mode,
+either immediately or after opening the assign owner page.
+
+.. image:: images/room-list.png
 
 The script lists other rooms owned by the same owner, or by the unit selected in the assign
 list, and allows unassigning them.
@@ -2085,7 +2205,8 @@ list, and allows unassigning them.
 gui/choose-weapons
 ==================
 
-Bind to a key, and activate in the Equip->View/Customize page of the military screen.
+Bind to a key (the example config uses Ctrl-W), and activate in the Equip->View/Customize
+page of the military screen.
 
 Depending on the cursor location, it rewrites all 'individual choice weapon' entries
 in the selected squad or position to use a specific weapon type matching the assigned
@@ -2099,7 +2220,10 @@ and may lead to inappropriate weapons being selected.
 gui/guide-path
 ==============
 
-Bind to a key, and activate in the Hauling menu with the cursor over a Guide order.
+Bind to a key (the example config uses Alt-P), and activate in the Hauling menu with
+the cursor over a Guide order.
+
+.. image:: images/guide-path.png
 
 The script displays the cached path that will be used by the order; the game
 computes it when the order is executed for the first time.
@@ -2108,14 +2232,27 @@ computes it when the order is executed for the first time.
 gui/workshop-job
 ================
 
-Bind to a key, and activate with a job selected in a workshop in the 'q' mode.
+Bind to a key (the example config uses Alt-A), and activate with a job selected in
+a workshop in the 'q' mode.
+
+.. image:: images/workshop-job.png
 
 The script shows a list of the input reagents of the selected job, and allows changing
 them like the ``job item-type`` and ``job item-material`` commands.
 
 Specifically, pressing the 'i' key pops up a dialog that lets you select an item
-type from a list. Pressing 'm', unless the item type does not allow a material,
+type from a list.
+
+.. image:: images/workshop-job-item.png
+
+Pressing 'm', unless the item type does not allow a material,
 lets you choose a material.
+
+.. image:: images/workshop-job-material.png
+
+Since there are a lot more materials than item types, this dialog is more complex
+and uses a hierarchy of sub-menus. List choices that open a sub-menu are marked
+with an arrow on the left.
 
 .. warning::
 
@@ -2143,7 +2280,10 @@ you have to unset the material first.
 gui/workflow
 ============
 
-Bind to a key, and activate with a job selected in a workshop in the 'q' mode.
+Bind to a key (the example config uses Alt-W), and activate with a job selected
+in a workshop in the 'q' mode.
+
+.. image:: images/workflow.png
 
 This script provides a simple interface to constraints managed by the workflow
 plugin. When active, it displays a list of all constraints applicable to the
@@ -2161,17 +2301,31 @@ bounds by 1, 5, or 25 depending on the direction and the 'c' setting (counting
 items and expanding the range each gives a 5x bonus).
 
 Pressing 'n' produces a list of possible outputs of this job as guessed by
-workflow, and lets you create a new constraint by just choosing one. If you
+workflow, and lets you create a new constraint by choosing one as template. If you
 don't see the choice you want in the list, it likely means you have to adjust
 the job material first using ``job item-material`` or ``gui/workshop-job``,
 as described in ``workflow`` documentation above. In this manner, this feature
 can be used for troubleshooting jobs that don't match the right constraints.
 
+.. image:: images/workflow-new1.png
+
+After selecting one of the presented outputs, the interface proceeds to the
+next dialog, which allows you to edit the suggested constraint parameters to
+suit your need, and set the item count range.
+
+.. image:: images/workflow-new2.png
+
+If you don't need advanced settings, you can just press 'y' to confirm creation.
+
+
 
 gui/assign-rack
 ===============
 
-Bind to a key, and activate when viewing a weapon rack in the 'q' mode.
+Bind to a key (the example config uses P), and activate when viewing a weapon
+rack in the 'q' mode.
+
+.. image:: images/assign-rack.png
 
 This script is part of a group of related fixes to make the armory storage
 work again. The existing issues are:
@@ -2191,7 +2345,8 @@ work again. The existing issues are:
 
 The script interface simply lets you designate one of the squads that
 are assigned to the barracks/armory containing the selected stand as
-the intended user.
+the intended user. In order to aid in the choice, it shows the number
+of currently assigned racks for every valid squad.
 
 
 gui/advfort
@@ -2253,7 +2408,10 @@ Configuration UI
 ----------------
 
 The configuration front-end to the plugin is implemented by the gui/siege-engine
-script. Bind it to a key and activate after selecting a siege engine in 'q' mode.
+script. Bind it to a key (the example config uses Alt-A) and activate after selecting
+a siege engine in 'q' mode.
+
+.. image:: images/siege-engine.png
 
 The main mode displays the current target, selected ammo item type, linked stockpiles and
 the allowed operator skill range. The map tile color is changed to signify if it can be
@@ -2283,7 +2441,10 @@ The power-meter plugin implements a modified pressure plate that detects power b
 supplied to gear boxes built in the four adjacent N/S/W/E tiles.
 
 The configuration front-end is implemented by the gui/power-meter script. Bind it to a
-key and activate after selecting Pressure Plate in the build menu.
+key (the example config uses Ctrl-Shift-M) and activate after selecting Pressure Plate
+in the build menu.
+
+.. image:: images/power-meter.png
 
 The script follows the general look and feel of the regular pressure plate build
 configuration page, but configures parameters relevant to the modded power meter building.

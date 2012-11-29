@@ -159,8 +159,8 @@ module DFHack
             v.inorganic_mat if v
         end
 
-        # return the world_data.geo_biome for current tile
-        def geo_biome
+        # return the RegionMapEntry (from designation.biome)
+        def region_map_entry
             b = designation.biome
             wd = df.world.world_data
 
@@ -174,7 +174,12 @@ module DFHack
             ry -= 1 if b < 3 and ry > 0
             ry += 1 if b > 5 and ry < wd.world_height-1
 
-            wd.geo_biomes[ wd.region_map[rx][ry].geo_index ]
+            wd.region_map[rx][ry]
+        end
+
+        # return the world_data.geo_biome for current tile
+        def geo_biome
+            df.world.world_data.geo_biomes[ region_map_entry.geo_index ]
         end
 
         # return the world_data.geo_biome.layer for current tile
@@ -182,14 +187,53 @@ module DFHack
             geo_biome.layers[designation.geolayer_index]
         end
 
-        # current tile mat_index (vein if applicable, or base material)
-        def mat_index
-            mat_index_vein or stone_layer.mat_index
+        # MaterialInfo: token for current tile, based on tilemat (vein, soil, plant, lava_stone...)
+        def mat_info
+            case tilemat
+            when :SOIL
+                base = stone_layer
+                if !df.world.raws.inorganics[base.mat_index].flags[:SOIL_ANY]
+                    base = geo_biome.layers.find_all { |l| df.world.raws.inorganics[l.mat_index].flags[:SOIL_ANY] }.last
+                end
+                mat_index = (base ? base.mat_index : rand(df.world.raws.inorganics.length))
+                MaterialInfo.new(0, mat_index)
+
+            when :STONE
+                base = stone_layer
+                if df.world.raws.inorganics[base.mat_index].flags[:SOIL_ANY]
+                    base = geo_biome.layers.find { |l| !df.world.raws.inorganics[l.mat_index].flags[:SOIL_ANY] }
+                end
+                mat_index = (base ? base.mat_index : rand(df.world.raws.inorganics.length))
+                MaterialInfo.new(0, mat_index)
+
+            when :MINERAL
+                mat_index = (mat_index_vein || stone_layer.mat_index)
+                MaterialInfo.new(0, mat_index)
+
+            when :LAVA_STONE
+                # XXX this is wrong
+                # maybe should search world.region_details.pos == biome_region_pos ?
+                idx = mapblock.region_offset[designation.biome]
+                mat_index = df.world.world_data.region_details[idx].lava_stone
+                MaterialInfo.new(0, mat_index)
+
+            # TODO
+            #when :PLANT
+            #when :GRASS_DARK, :GRASS_DEAD, :GRASS_DRY, :GRASS_LIGHT
+            #when :FEATURE
+            #when :FROZEN_LIQUID
+            #when :CONSTRUCTION
+            else    # AIR ASHES BROOK CAMPFIRE DRIFTWOOD FIRE HFS MAGMA POOL RIVER
+                MaterialInfo.new(-1, -1)
+            end
         end
 
-        # MaterialInfo: inorganic token for current tile
-        def mat_info
-            MaterialInfo.new(0, mat_index)
+        def mat_type
+            mat_info.mat_type
+        end
+
+        def mat_index
+            mat_info.mat_index
         end
 
         def inspect

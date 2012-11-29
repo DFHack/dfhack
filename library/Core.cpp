@@ -375,7 +375,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                           "  reload PLUGIN|all     - Reload a plugin or all loaded plugins.\n"
                          );
 
-				con.print("\nDFHack version " DFHACK_VERSION ".\n");
+                con.print("\nDFHack version " DFHACK_VERSION ".\n");
             }
             else if (parts.size() == 1)
             {
@@ -747,13 +747,13 @@ void fIOthread(void * iodata)
         else if(ret)
         {
             // a proper, non-empty command was entered
-			fprintf(stderr,"Adding command to history\n");
+            fprintf(stderr,"Adding command to history\n");
             main_history.add(command);
-			fprintf(stderr,"Saving history\n");
+            fprintf(stderr,"Saving history\n");
             main_history.save("dfhack.history");
         }
         
-		fprintf(stderr,"Running command\n");
+        fprintf(stderr,"Running command\n");
 
         auto rv = core->runCommand(con, command);
 

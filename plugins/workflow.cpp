@@ -293,6 +293,7 @@ typedef std::map<std::pair<int,int>, bool> TMaterialCache;
 
 struct ItemConstraint {
     PersistentDataItem config;
+    PersistentDataItem history;
 
     // Fixed key parsed into fields
     bool is_craft;
@@ -308,7 +309,7 @@ struct ItemConstraint {
     int weight;
     std::vector<ProtectedJob*> jobs;
 
-    int item_amount, item_count, item_inuse;
+    int item_amount, item_count, item_inuse_amount, item_inuse_count;
     bool request_suspend, request_resume;
 
     bool is_active, cant_resume_reported;
@@ -318,7 +319,7 @@ struct ItemConstraint {
 public:
     ItemConstraint()
         : is_craft(false), min_quality(item_quality::Ordinary), is_local(false),
-          weight(0), item_amount(0), item_count(0), item_inuse(0),
+          weight(0), item_amount(0), item_count(0), item_inuse_amount(0), item_inuse_count(0),
           is_active(false), cant_resume_reported(false)
     {}
 
@@ -326,9 +327,8 @@ public:
     void setGoalCount(int v) { config.ival(0) = v; }
 
     int goalGap() {
-        int cval = (config.ival(1) <= 0) ? 5 : config.ival(1);
-        int cmax = std::max(goalCount()-5, goalCount()/2);
-        return std::max(1, std::min(cmax, cval));
+        int cval = (config.ival(1) <= 0) ? std::min(5,goalCount()/2) : config.ival(1);
+        return std::max(1, std::min(goalCount()-1, cval));
     }
     void setGoalGap(int v) { config.ival(1) = v; }
 
@@ -352,6 +352,44 @@ public:
         int size = goalByCount() ? item_count : item_amount;
         request_resume = (size <= goalCount()-goalGap());
         request_suspend = (size >= goalCount());
+    }
+
+    static const size_t int28_size = PersistentDataItem::int28_size;
+    static const size_t hist_entry_size = PersistentDataItem::int28_size * 4;
+
+    size_t history_size() {
+        return history.data_size() / hist_entry_size;
+    }
+    size_t history_base(int idx) {
+        size_t hsize = history_size();
+        return ((history.ival(0)+hsize-idx) % hsize) * hist_entry_size;
+    }
+    int history_count(int idx) {
+        return history.get_int28(history_base(idx) + 0*int28_size);
+    }
+    int history_amount(int idx) {
+        return history.get_int28(history_base(idx) + 1*int28_size);
+    }
+    int history_inuse_count(int idx) {
+        return history.get_int28(history_base(idx) + 2*int28_size);
+    }
+    int history_inuse_amount(int idx) {
+        return history.get_int28(history_base(idx) + 3*int28_size);
+    }
+
+    void updateHistory()
+    {
+        size_t buffer_size = history_size();
+        if (buffer_size < 28)
+            history.ensure_data(hist_entry_size*buffer_size++, hist_entry_size);
+        history.ival(0) = (history.ival(0)+1) % buffer_size;
+
+        size_t base = history.ival(0) * hist_entry_size;
+
+        history.set_int28(base + 0*int28_size, item_count);
+        history.set_int28(base + 1*int28_size, item_amount);
+        history.set_int28(base + 2*int28_size, item_inuse_count);
+        history.set_int28(base + 3*int28_size, item_inuse_amount);
     }
 };
 
@@ -446,7 +484,7 @@ static void cleanup_state(color_ostream &out)
 }
 
 static void check_lost_jobs(color_ostream &out, int ticks);
-static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg = NULL);
+static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg = NULL, bool create = true);
 
 static void start_protect(color_ostream &out)
 {
@@ -650,6 +688,9 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
 
             update_job_data(out);
             process_constraints(out);
+
+            for (size_t i = 0; i < constraints.size(); i++)
+                constraints[i]->updateHistory();
         }
     }
 
@@ -660,7 +701,11 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
  *   ITEM COUNT CONSTRAINT    *
  ******************************/
 
-static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg)
+static std::string history_key(PersistentDataItem &config) {
+    return stl_sprintf("workflow/history/%d", config.entry_id());
+}
+
+static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg, bool create)
 {
     std::vector<std::string> tokens;
     split_string(&tokens, str, "/");
@@ -683,7 +728,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     if (item.subtype >= 0)
         weight += 10000;
 
-    df::dfhack_material_category mat_mask;
+    df::dfhack_material_category mat_mask(0);
     std::string maskstr = vector_get(tokens,1);
     if (!maskstr.empty() && !parseJobMaterialCategory(&mat_mask, maskstr)) {
         out.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
@@ -757,6 +802,9 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
             return ct;
     }
 
+    if (!create)
+        return NULL;
+
     ItemConstraint *nct = new ItemConstraint;
     nct->is_craft = is_craft;
     nct->item = item;
@@ -774,6 +822,8 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         nct->init(str);
     }
 
+    nct->history = World::GetPersistentData(history_key(nct->config), NULL);
+
     constraints.push_back(nct);
     return nct;
 }
@@ -785,6 +835,7 @@ static void delete_constraint(ItemConstraint *cv)
         vector_erase_at(constraints, idx);
 
     World::DeletePersistentData(cv->config);
+    World::DeletePersistentData(cv->history);
     delete cv;
 }
 
@@ -1062,7 +1113,8 @@ static void map_job_items(color_ostream &out)
     {
         constraints[i]->item_amount = 0;
         constraints[i]->item_count = 0;
-        constraints[i]->item_inuse = 0;
+        constraints[i]->item_inuse_amount = 0;
+        constraints[i]->item_inuse_count = 0;
     }
 
     meltable_count = 0;
@@ -1074,7 +1126,7 @@ static void map_job_items(color_ostream &out)
 #define F(x) bad_flags.bits.x = true;
     F(dump); F(forbid); F(garbage_collect);
     F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(construction); F(artifact1);
+    F(in_building); F(construction); F(artifact);
 #undef F
 
     bool dry_buckets = isOptionEnabled(CF_DRYBUCKETS);
@@ -1095,9 +1147,9 @@ static void map_job_items(color_ostream &out)
 
         bool is_invalid = false;
 
-		// don't count worn items
-		if (item->getWear() >= 1) 
-			is_invalid = true;
+        // don't count worn items
+        if (item->getWear() >= 1)
+            is_invalid = true;
 
         // Special handling
         switch (itype) {
@@ -1175,7 +1227,8 @@ static void map_job_items(color_ostream &out)
                 isAssignedSquad(item))
             {
                 is_invalid = true;
-                cv->item_inuse++;
+                cv->item_inuse_count++;
+                cv->item_inuse_amount += item->getStackSize();
             }
             else
             {
@@ -1346,7 +1399,9 @@ static void push_constraint(lua_State *L, ItemConstraint *cv)
 
     Lua::SetField(L, cv->is_craft, ctable, "is_craft");
 
+    lua_getglobal(L, "copyall");
     Lua::PushDFObject(L, &cv->mat_mask);
+    lua_call(L, 1, 1);
     lua_setfield(L, -2, "mat_mask");
 
     Lua::SetField(L, cv->material.type, ctable, "mat_type");
@@ -1363,7 +1418,8 @@ static void push_constraint(lua_State *L, ItemConstraint *cv)
 
     Lua::SetField(L, cv->item_amount, ctable, "cur_amount");
     Lua::SetField(L, cv->item_count, ctable, "cur_count");
-    Lua::SetField(L, cv->item_inuse, ctable, "cur_in_use");
+    Lua::SetField(L, cv->item_inuse_amount, ctable, "cur_in_use_amount");
+    Lua::SetField(L, cv->item_inuse_count, ctable, "cur_in_use_count");
 
     // Current state value
 
@@ -1417,6 +1473,22 @@ static int listConstraints(lua_State *L)
     return 1;
 }
 
+static int findConstraint(lua_State *L)
+{
+    auto token = luaL_checkstring(L, 1);
+
+    color_ostream &out = *Lua::GetOutput(L);
+    update_data_structures(out);
+
+    ItemConstraint *icv = get_constraint(out, token, NULL, false);
+
+    if (icv)
+        push_constraint(L, icv);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
 static int setConstraint(lua_State *L)
 {
     auto token = luaL_checkstring(L, 1);
@@ -1425,6 +1497,7 @@ static int setConstraint(lua_State *L)
     int gap = luaL_optint(L, 4, -1);
 
     color_ostream &out = *Lua::GetOutput(L);
+    update_data_structures(out);
 
     ItemConstraint *icv = get_constraint(out, token);
     if (!icv)
@@ -1442,6 +1515,40 @@ static int setConstraint(lua_State *L)
     return 1;
 }
 
+static int getCountHistory(lua_State *L)
+{
+    auto token = luaL_checkstring(L, 1);
+
+    color_ostream &out = *Lua::GetOutput(L);
+    update_data_structures(out);
+
+    ItemConstraint *icv = get_constraint(out, token, NULL, false);
+
+    if (icv)
+    {
+        size_t hsize = icv->history_size();
+
+        lua_createtable(L, hsize, 0);
+
+        for (int i = hsize-1; i >= 0; i--)
+        {
+            lua_createtable(L, 0, 4);
+
+            Lua::SetField(L, icv->history_amount(i), -1, "cur_amount");
+            Lua::SetField(L, icv->history_count(i), -1, "cur_count");
+            Lua::SetField(L, icv->history_inuse_amount(i), -1, "cur_in_use_amount");
+            Lua::SetField(L, icv->history_inuse_count(i), -1, "cur_in_use_count");
+
+            lua_rawseti(L, -2, hsize-i); // reverse order
+        }
+    }
+    else
+        lua_pushnil(L);
+
+    return 1;
+}
+
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(isEnabled),
     DFHACK_LUA_FUNCTION(setEnabled),
@@ -1451,7 +1558,9 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
 
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(listConstraints),
+    DFHACK_LUA_COMMAND(findConstraint),
     DFHACK_LUA_COMMAND(setConstraint),
+    DFHACK_LUA_COMMAND(getCountHistory),
     DFHACK_LUA_END
 };
 
@@ -1499,10 +1608,10 @@ static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job
            << cv->goalCount() << " (gap " << cv->goalGap() << ")" << endl;
     out.reset_color();
 
-    if (cv->item_count || cv->item_inuse)
+    if (cv->item_count || cv->item_inuse_count)
         out << prefix << "  items: amount " << cv->item_amount << "; "
                          << cv->item_count << " stacks available, "
-                         << cv->item_inuse << " in use." << endl;
+                         << cv->item_inuse_count << " in use." << endl;
 
     if (no_job) return;
 

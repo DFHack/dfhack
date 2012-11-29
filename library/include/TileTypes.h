@@ -41,7 +41,7 @@ namespace DFHack
         struct
         {
             //Maybe should add 'up' and 'down' for Z-levels?
-            unsigned char	north,south,west,east;
+            unsigned char north,south,west,east;
         };
 
         inline TileDirection()

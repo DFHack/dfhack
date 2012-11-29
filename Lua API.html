@@ -1109,6 +1109,12 @@ above operations accordingly. If enabled, pauses and zooms to position.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.job.printItemDetails(jobitem,idx)</tt></p>
 <p>Prints info about the job item.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.getGeneralRef(job, type)</tt></p>
+<p>Searches for a general_ref with the given type.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.getSpecificRef(job, type)</tt></p>
+<p>Searches for a specific_ref with the given type.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.job.getHolder(job)</tt></p>
 <p>Returns the building holding the job.</p>
 </li>
@@ -1146,6 +1152,12 @@ the flags in the job item.</p>
 <ul>
 <li><p class="first"><tt class="docutils literal">dfhack.units.getPosition(unit)</tt></p>
 <p>Returns true <em>x,y,z</em> of the unit, or <em>nil</em> if invalid; may be not equal to unit.pos if caged.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getGeneralRef(unit, type)</tt></p>
+<p>Searches for a general_ref with the given type.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getSpecificRef(unit, type)</tt></p>
+<p>Searches for a specific_ref with the given type.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.getContainer(unit)</tt></p>
 <p>Returns the container (cage) item or <em>nil</em>.</p>
@@ -1208,6 +1220,9 @@ is <em>true</em>, subtracts the rust penalty.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.getEffectiveSkill(unit, skill)</tt></p>
 <p>Computes the effective rating for the given skill, taking into account exhaustion, pain etc.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getExperience(unit, skill[, total])</tt></p>
+<p>Returns the experience value for the given skill. If <tt class="docutils literal">total</tt> is true, adds experience implied by the current rating.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.computeMovementSpeed(unit)</tt></p>
 <p>Computes number of frames * 100 it takes the unit to move in its current state of mind and body.</p>
@@ -1403,6 +1418,12 @@ burrows, or the presence of invaders.</p>
 <div class="section" id="buildings-module">
 <h3><a class="toc-backref" href="#id25">Buildings module</a></h3>
 <ul>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.getGeneralRef(building, type)</tt></p>
+<p>Searches for a general_ref with the given type.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.getSpecificRef(building, type)</tt></p>
+<p>Searches for a specific_ref with the given type.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.buildings.setOwner(item,unit)</tt></p>
 <p>Replaces the owner of the building. If unit is <em>nil</em>, removes ownership.
 Returns <em>false</em> in case of error.</p>

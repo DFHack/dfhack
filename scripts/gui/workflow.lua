@@ -43,95 +43,6 @@ function check_repeat(job, cb)
     end
 end
 
-JobConstraints = defclass(JobConstraints, guidm.MenuOverlay)
-
-JobConstraints.focus_path = 'workflow-job'
-
-JobConstraints.ATTRS {
-    job = DEFAULT_NIL,
-    frame_inset = 1,
-    frame_background = COLOR_BLACK,
-}
-
-local null_cons = { goal_value = 0, goal_gap = 0, goal_by_count = false }
-
-function JobConstraints:init(args)
-    self.building = dfhack.job.getHolder(self.job)
-
-    self:addviews{
-        widgets.Label{
-            frame = { l = 0, t = 0 },
-            text = {
-                'Workflow Constraints'
-            }
-        },
-        widgets.List{
-            view_id = 'list',
-            frame = { t = 2, b = 6 },
-            row_height = 4,
-            scroll_keys = widgets.SECONDSCROLL,
-        },
-        widgets.Label{
-            frame = { l = 0, b = 3 },
-            enabled = self:callback('isAnySelected'),
-            text = {
-                { key = 'BUILDING_TRIGGER_ENABLE_CREATURE',
-                  text = function()
-                    local cons = self:getCurConstraint() or null_cons
-                    if cons.goal_by_count then
-                        return ': Count stacks  '
-                    else
-                        return ': Count items   '
-                    end
-                  end,
-                  on_activate = self:callback('onChangeUnit') },
-                { key = 'BUILDING_TRIGGER_ENABLE_MAGMA', text = ': Modify',
-                  on_activate = self:callback('onEditRange') },
-                  NEWLINE, '  ',
-                { key = 'BUILDING_TRIGGER_MIN_SIZE_DOWN',
-                  on_activate = self:callback('onIncRange', 'goal_gap', 5) },
-                { key = 'BUILDING_TRIGGER_MIN_SIZE_UP',
-                  on_activate = self:callback('onIncRange', 'goal_gap', -1) },
-                { text = function()
-                    local cons = self:getCurConstraint() or null_cons
-                    return string.format(': Min %-4d ', cons.goal_value - cons.goal_gap)
-                  end },
-                { key = 'BUILDING_TRIGGER_MAX_SIZE_DOWN',
-                  on_activate = self:callback('onIncRange', 'goal_value', -1) },
-                { key = 'BUILDING_TRIGGER_MAX_SIZE_UP',
-                  on_activate = self:callback('onIncRange', 'goal_value', 5) },
-                { text = function()
-                    local cons = self:getCurConstraint() or null_cons
-                    return string.format(': Max %-4d', cons.goal_value)
-                  end },
-            }
-        },
-        widgets.Label{
-            frame = { l = 0, b = 0 },
-            text = {
-                { key = 'CUSTOM_N', text = ': New limit, ',
-                  on_activate = self:callback('onNewConstraint') },
-                { key = 'CUSTOM_X', text = ': Delete',
-                  enabled = self:callback('isAnySelected'),
-                  on_activate = self:callback('onDeleteConstraint') },
-                NEWLINE, NEWLINE,
-                { key = 'LEAVESCREEN', text = ': Back',
-                  on_activate = self:callback('dismiss') }
-            }
-        },
-    }
-
-    self:initListChoices(args.clist)
-end
-
-function JobConstraints:onGetSelectedBuilding()
-    return self.building
-end
-
-function JobConstraints:onGetSelectedJob()
-    return self.job
-end
-
 function describe_item_type(iobj)
     local itemline = 'any item'
     if iobj.is_craft then
@@ -167,6 +78,374 @@ function describe_material(iobj)
         end
     end
     return matline
+end
+
+local null_cons = { goal_value = 0, goal_gap = 0, goal_by_count = false }
+
+RangeEditor = defclass(RangeEditor, widgets.Label)
+
+RangeEditor.ATTRS {
+    get_cb = DEFAULT_NIL,
+    save_cb = DEFAULT_NIL
+}
+
+function RangeEditor:init(args)
+    self:setText{
+        { key = 'BUILDING_TRIGGER_ENABLE_CREATURE',
+            text = function()
+            local cons = self.get_cb() or null_cons
+            if cons.goal_by_count then
+                return ': Count stacks  '
+            else
+                return ': Count items   '
+            end
+            end,
+            on_activate = self:callback('onChangeUnit') },
+        { key = 'BUILDING_TRIGGER_ENABLE_MAGMA', text = ': Modify',
+            on_activate = self:callback('onEditRange') },
+            NEWLINE, '  ',
+        { key = 'BUILDING_TRIGGER_MIN_SIZE_DOWN',
+            on_activate = self:callback('onIncRange', 'goal_gap', 5) },
+        { key = 'BUILDING_TRIGGER_MIN_SIZE_UP',
+            on_activate = self:callback('onIncRange', 'goal_gap', -1) },
+        { text = function()
+            local cons = self.get_cb() or null_cons
+            return string.format(': Min %-4d ', cons.goal_value - cons.goal_gap)
+            end },
+        { key = 'BUILDING_TRIGGER_MAX_SIZE_DOWN',
+            on_activate = self:callback('onIncRange', 'goal_value', -1) },
+        { key = 'BUILDING_TRIGGER_MAX_SIZE_UP',
+            on_activate = self:callback('onIncRange', 'goal_value', 5) },
+        { text = function()
+            local cons = self.get_cb() or null_cons
+            return string.format(': Max %-4d', cons.goal_value)
+            end },
+    }
+end
+
+function RangeEditor:onChangeUnit()
+    local cons = self.get_cb()
+    cons.goal_by_count = not cons.goal_by_count
+    self.save_cb(cons)
+end
+
+function RangeEditor:onEditRange()
+    local cons = self.get_cb()
+    dlg.showInputPrompt(
+        'Input Range',
+        'Enter the new constraint range:',
+        COLOR_WHITE,
+        (cons.goal_value-cons.goal_gap)..'-'..cons.goal_value,
+        function(text)
+            local maxv = string.match(text, '^%s*(%d+)%s*$')
+            if maxv then
+                cons.goal_value = maxv
+                return self.save_cb(cons)
+            end
+            local minv,maxv = string.match(text, '^%s*(%d+)-(%d+)%s*$')
+            if minv and maxv and minv ~= maxv then
+                cons.goal_value = math.max(minv,maxv)
+                cons.goal_gap = math.abs(maxv-minv)
+                return self.save_cb(cons)
+            end
+            dlg.showMessage('Invalid Range', 'This range is invalid: '..text, COLOR_LIGHTRED)
+        end
+    )
+end
+
+function RangeEditor:onIncRange(field, delta)
+    local cons = self.get_cb()
+    if not cons.goal_by_count then
+        delta = delta * 5
+    end
+    cons[field] = math.max(1, cons[field] + delta)
+    self.save_cb(cons)
+end
+
+NewConstraint = defclass(NewConstraint, gui.FramedScreen)
+
+NewConstraint.focus_path = 'workflow/new'
+
+NewConstraint.ATTRS {
+    frame_style = gui.GREY_LINE_FRAME,
+    frame_title = 'New workflow constraint',
+    frame_width = 39,
+    frame_height = 20,
+    frame_inset = 1,
+    constraint = DEFAULT_NIL,
+    on_submit = DEFAULT_NIL,
+}
+
+function NewConstraint:init(args)
+    self.constraint = args.constraint or {}
+    rawset_default(self.constraint, { goal_value = 10, goal_gap = 5, goal_by_count = false })
+
+    local matlist = {}
+    local matsel = 1
+    local matmask = self.constraint.mat_mask
+
+    for i,v in ipairs(df.dfhack_material_category) do
+        if v and v ~= 'wood2' then
+            table.insert(matlist, { icon = self:callback('isMatSelected', v), text = v })
+            if matmask and matmask[v] and matsel == 1 then
+                matsel = #matlist
+            end
+        end
+    end
+
+    self:addviews{
+        widgets.Label{
+            frame = { l = 0, t = 0 },
+            text = 'Items matching:'
+        },
+        widgets.Label{
+            frame = { l = 1, t = 2, w = 26 },
+            text = {
+                'Type: ',
+                { pen = COLOR_LIGHTCYAN,
+                  text = function() return describe_item_type(self.constraint) end },
+                NEWLINE, '  ',
+                { key = 'CUSTOM_T', text = ': Select, ',
+                  on_activate = self:callback('chooseType') },
+                { key = 'CUSTOM_SHIFT_C', text = ': Crafts',
+                  on_activate = self:callback('chooseCrafts') },
+                NEWLINE, NEWLINE,
+                'Material: ',
+                { pen = COLOR_LIGHTCYAN,
+                  text = function() return describe_material(self.constraint) end },
+                NEWLINE, '  ',
+                { key = 'CUSTOM_P', text = ': Specific',
+                  on_activate = self:callback('chooseMaterial') },
+                NEWLINE, NEWLINE,
+                'Other:',
+                NEWLINE, ' ',
+                { key = 'D_MILITARY_SUPPLIES_WATER_DOWN',
+                  on_activate = self:callback('incQuality', -1) },
+                { key = 'D_MILITARY_SUPPLIES_WATER_UP', key_sep = ': ',
+                  text = function()
+                    return df.item_quality[self.constraint.min_quality or 0]..' quality'
+                  end,
+                  on_activate = self:callback('incQuality', 1) },
+                NEWLINE, '  ',
+                { key = 'CUSTOM_L', key_sep = ': ',
+                  text = function()
+                    if self.constraint.is_local then
+                        return 'Locally made only'
+                    else
+                        return 'Include foreign'
+                    end
+                  end,
+                  on_activate = self:callback('toggleLocal') },
+            }
+        },
+        widgets.Label{
+            frame = { l = 0, t = 13 },
+            text = {
+                'Desired range: ',
+                { pen = COLOR_LIGHTCYAN,
+                  text = function()
+                    local cons = self.constraint
+                    local goal = (cons.goal_value-cons.goal_gap)..'-'..cons.goal_value
+                    if cons.goal_by_count then
+                        return goal .. ' stacks'
+                    else
+                        return goal .. ' items'
+                    end
+                  end },
+            }
+        },
+        RangeEditor{
+            frame = { l = 1, t = 15 },
+            get_cb = self:cb_getfield('constraint'),
+            save_cb = self:callback('onRangeChange'),
+        },
+        widgets.Label{
+            frame = { l = 30, t = 0 },
+            text = 'Mat class'
+        },
+        widgets.List{
+            view_id = 'matlist',
+            frame = { l = 30, t = 2, w = 9, h = 18 },
+            scroll_keys = widgets.STANDARDSCROLL,
+            choices = matlist,
+            selected = matsel,
+            on_submit = self:callback('onToggleMatclass')
+        },
+        widgets.Label{
+            frame = { l = 0, b = 0, w = 29 },
+            text = {
+                { key = 'LEAVESCREEN', text = ': Cancel, ',
+                  on_activate = self:callback('dismiss') },
+                { key = 'MENU_CONFIRM', key_sep = ': ',
+                  text = function()
+                    if self.is_existing then return 'Update' else return 'Create new' end
+                  end,
+                  on_activate = function()
+                    self:dismiss()
+                    if self.on_submit then
+                        self.on_submit(self.constraint)
+                    end
+                  end },
+            }
+        },
+    }
+end
+
+function NewConstraint:postinit()
+    self:onChange()
+end
+
+function NewConstraint:onChange()
+    local token = workflow.constraintToToken(self.constraint)
+    local out = workflow.findConstraint(token)
+
+    if out then
+        self.constraint = out
+        self.is_existing = true
+    else
+        self.constraint.token = token
+        self.is_existing = false
+    end
+end
+
+function NewConstraint:chooseType()
+    guimat.ItemTypeDialog{
+        prompt = 'Please select a new item type',
+        hide_none = true,
+        on_select = function(itype,isub)
+            local cons = self.constraint
+            cons.item_type = itype
+            cons.item_subtype = isub
+            cons.is_craft = nil
+            self:onChange()
+        end
+    }:show()
+end
+
+function NewConstraint:chooseCrafts()
+    local cons = self.constraint
+    cons.item_type = -1
+    cons.item_subtype = -1
+    cons.is_craft = true
+    self:onChange()
+end
+
+function NewConstraint:chooseMaterial()
+    local cons = self.constraint
+    guimat.MaterialDialog{
+        prompt = 'Please select a new material',
+        none_caption = 'any material',
+        frame_width = 37,
+        on_select = function(mat_type, mat_index)
+            local cons = self.constraint
+            cons.mat_type = mat_type
+            cons.mat_index = mat_index
+            cons.mat_mask = nil
+            self:onChange()
+        end
+    }:show()
+end
+
+function NewConstraint:incQuality(diff)
+    local cons = self.constraint
+    local nq = (cons.min_quality or 0) + diff
+    if nq < 0 then
+        nq = df.item_quality.Masterful
+    elseif nq > df.item_quality.Masterful then
+        nq = 0
+    end
+    cons.min_quality = nq
+    self:onChange()
+end
+
+function NewConstraint:toggleLocal()
+    local cons = self.constraint
+    cons.is_local = not cons.is_local
+    self:onChange()
+end
+
+function NewConstraint:isMatSelected(token)
+    if self.constraint.mat_mask and self.constraint.mat_mask[token] then
+        return { ch = '\xfb', fg = COLOR_LIGHTGREEN }
+    else
+        return nil
+    end
+end
+
+function NewConstraint:onToggleMatclass(idx,obj)
+    local cons = self.constraint
+    if cons.mat_mask and cons.mat_mask[obj.text] then
+        cons.mat_mask[obj.text] = false
+    else
+        cons.mat_mask = cons.mat_mask or {}
+        cons.mat_mask[obj.text] = true
+        cons.mat_type = -1
+        cons.mat_index = -1
+    end
+    self:onChange()
+end
+
+function NewConstraint:onRangeChange()
+    local cons = self.constraint
+    cons.goal_gap = math.max(1, math.min(cons.goal_gap, cons.goal_value-1))
+end
+
+JobConstraints = defclass(JobConstraints, guidm.MenuOverlay)
+
+JobConstraints.focus_path = 'workflow/job'
+
+JobConstraints.ATTRS {
+    job = DEFAULT_NIL,
+    frame_inset = 1,
+    frame_background = COLOR_BLACK,
+}
+
+function JobConstraints:init(args)
+    self.building = dfhack.job.getHolder(self.job)
+
+    self:addviews{
+        widgets.Label{
+            frame = { l = 0, t = 0 },
+            text = {
+                'Workflow Constraints'
+            }
+        },
+        widgets.List{
+            view_id = 'list',
+            frame = { t = 2, b = 6 },
+            row_height = 4,
+            scroll_keys = widgets.SECONDSCROLL,
+        },
+        RangeEditor{
+            frame = { l = 0, b = 3 },
+            enabled = self:callback('isAnySelected'),
+            get_cb = self:callback('getCurConstraint'),
+            save_cb = self:callback('saveConstraint'),
+        },
+        widgets.Label{
+            frame = { l = 0, b = 0 },
+            text = {
+                { key = 'CUSTOM_N', text = ': New limit, ',
+                  on_activate = self:callback('onNewConstraint') },
+                { key = 'CUSTOM_X', text = ': Delete',
+                  enabled = self:callback('isAnySelected'),
+                  on_activate = self:callback('onDeleteConstraint') },
+                NEWLINE, NEWLINE,
+                { key = 'LEAVESCREEN', text = ': Back',
+                  on_activate = self:callback('dismiss') }
+            }
+        },
+    }
+
+    self:initListChoices(args.clist)
+end
+
+function JobConstraints:onGetSelectedBuilding()
+    return self.building
+end
+
+function JobConstraints:onGetSelectedJob()
+    return self.job
 end
 
 function JobConstraints:initListChoices(clist, sel_token)
@@ -247,45 +526,6 @@ function JobConstraints:saveConstraint(cons)
     self:initListChoices(nil, out.token)
 end
 
-function JobConstraints:onChangeUnit()
-    local cons = self:getCurConstraint()
-    cons.goal_by_count = not cons.goal_by_count
-    self:saveConstraint(cons)
-end
-
-function JobConstraints:onEditRange()
-    local cons = self:getCurConstraint()
-    dlg.showInputPrompt(
-        'Input Range',
-        'Enter the new constraint range:',
-        COLOR_WHITE,
-        (cons.goal_value-cons.goal_gap)..'-'..cons.goal_value,
-        function(text)
-            local maxv = string.match(text, '^%s*(%d+)%s*$')
-            if maxv then
-                cons.goal_value = maxv
-                return self:saveConstraint(cons)
-            end
-            local minv,maxv = string.match(text, '^%s*(%d+)-(%d+)%s*$')
-            if minv and maxv and minv ~= maxv then
-                cons.goal_value = math.max(minv,maxv)
-                cons.goal_gap = math.abs(maxv-minv)
-                return self:saveConstraint(cons)
-            end
-            dlg.showMessage('Invalid Range', 'This range is invalid: '..text, COLOR_LIGHTRED)
-        end
-    )
-end
-
-function JobConstraints:onIncRange(field, delta)
-    local cons = self:getCurConstraint()
-    if not cons.goal_by_count then
-        delta = delta * 5
-    end
-    cons[field] = math.max(1, cons[field] + delta)
-    self:saveConstraint(cons)
-end
-
 function JobConstraints:onNewConstraint()
     local outputs = workflow.listJobOutputs(self.job)
     if #outputs == 0 then
@@ -318,7 +558,10 @@ function JobConstraints:onNewConstraint()
         COLOR_WHITE,
         choices,
         function(idx,item)
-            self:saveConstraint(item.obj)
+            NewConstraint{
+                constraint = item.obj,
+                on_submit = self:callback('saveConstraint')
+            }:show()
         end
     )
 end

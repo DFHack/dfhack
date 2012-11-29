@@ -133,6 +133,9 @@ tweak military-stable-assign
 # in same list, color units already assigned to squads in brown & green
 tweak military-color-assigned
 
+# remove inverse dependency of squad training speed on unit list size and use more sparring
+tweak military-training
+
 #######################################################
 # Apply binary patches at runtime                     #
 #                                                     #

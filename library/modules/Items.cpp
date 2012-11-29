@@ -495,10 +495,10 @@ bool Items::copyItem(df::item * itembase, DFHack::dfh_item &item)
     item.id = itreal->id;
     item.age = itreal->age;
     item.flags = itreal->flags;
-    item.matdesc.itemType = itreal->getType();
-    item.matdesc.subType = itreal->getSubtype();
-    item.matdesc.material = itreal->getMaterial();
-    item.matdesc.index = itreal->getMaterialIndex();
+    item.matdesc.item_type = itreal->getType();
+    item.matdesc.item_subtype = itreal->getSubtype();
+    item.matdesc.mat_type = itreal->getMaterial();
+    item.matdesc.mat_index = itreal->getMaterialIndex();
     item.wear_level = itreal->getWear();
     item.quality = itreal->getQuality();
     item.quantity = itreal->getStackSize();

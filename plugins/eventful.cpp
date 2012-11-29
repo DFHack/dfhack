@@ -185,7 +185,7 @@ df::item* find_item(
 }
 
 static void handle_reaction_done(color_ostream &out,df::reaction*, df::unit *unit, std::vector<df::item*> *in_items,std::vector<df::reaction_reagent*> *in_reag
-	, std::vector<df::item*> *out_items,bool *call_native){};
+    , std::vector<df::item*> *out_items,bool *call_native){};
 
 DEFINE_LUA_EVENT_6(onReactionComplete, handle_reaction_done,df::reaction*, df::unit *, std::vector<df::item*> *,std::vector<df::reaction_reagent*> *,std::vector<df::item*> *,bool *);
 
@@ -208,13 +208,13 @@ struct product_hook : item_product {
     ) {
         if (auto product = products[this])
         {
-			df::reaction* this_reaction=product->react;
-			CoreSuspendClaimer suspend;
-			color_ostream_proxy out(Core::getInstance().getConsole());
-			bool call_native=true;
+            df::reaction* this_reaction=product->react;
+            CoreSuspendClaimer suspend;
+            color_ostream_proxy out(Core::getInstance().getConsole());
+            bool call_native=true;
             onReactionComplete(out,this_reaction,unit,in_items,in_reag,out_items,&call_native);
-			if(!call_native)
-				return;
+            if(!call_native)
+                return;
         }
 
         INTERPOSE_NEXT(produce)(unit, out_items, in_reag, in_items, quantity, skill, entity, site);
@@ -233,12 +233,12 @@ IMPLEMENT_VMETHOD_INTERPOSE(product_hook, produce);
 
 
 static void parse_product(
-	color_ostream &out, ProductInfo &info, df::reaction *react, item_product *prod
-	) {
-		info.react = react;
-		info.product = prod;
-		info.material.mat_type = prod->mat_type;
-		info.material.mat_index = prod->mat_index;
+    color_ostream &out, ProductInfo &info, df::reaction *react, item_product *prod
+    ) {
+        info.react = react;
+        info.product = prod;
+        info.material.mat_type = prod->mat_type;
+        info.material.mat_index = prod->mat_index;
 }
 
 static bool find_reactions(color_ostream &out)

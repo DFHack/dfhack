@@ -552,18 +552,22 @@ function JobConstraints:onNewConstraint()
         table.insert(choices, { text = itemstr..' of '..matstr, obj = cons })
     end
 
-    dlg.showListPrompt(
-        'New limit',
-        'Select one of the possible outputs:',
-        COLOR_WHITE,
-        choices,
-        function(idx,item)
+    dlg.ListBox{
+        frame_title = 'New limit',
+        text = 'Select one of the possible outputs:',
+        text_pen = COLOR_WHITE,
+        choices = choices,
+        on_select = function(idx,item)
+            self:saveConstraint(item.obj)
+        end,
+        select2_hint = 'Advanced',
+        on_select2 = function(idx,item)
             NewConstraint{
                 constraint = item.obj,
                 on_submit = self:callback('saveConstraint')
             }:show()
-        end
-    )
+        end,
+    }:show()
 end
 
 function JobConstraints:onDeleteConstraint()

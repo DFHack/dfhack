@@ -2777,6 +2777,8 @@ It has the following attributes:
 :on_select: Selection change callback; called as ``on_select(index,choice)``.
 :on_submit: Enter key callback; if specified, the list reacts to the key
             and calls it as ``on_submit(index,choice)``.
+:on_submit2: Shift-Enter key callback; if specified, the list reacts to the key
+             and calls it as ``on_submit2(index,choice)``.
 :row_height: Height of every row in text lines.
 :icon_width: If not *nil*, the specified number of character columns
              are reserved to the left of the list item for the icons.
@@ -2825,6 +2827,10 @@ The list supports the following methods:
 * ``list:submit()``
 
   Call the ``on_submit`` callback, as if the Enter key was handled.
+
+* ``list:submit2()``
+
+  Call the ``on_submit2`` callback, as if the Shift-Enter key was handled.
 
 FilteredList class
 ------------------

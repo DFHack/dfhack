@@ -2309,14 +2309,12 @@ can be used for troubleshooting jobs that don't match the right constraints.
 
 .. image:: images/workflow-new1.png
 
-After selecting one of the presented outputs, the interface proceeds to the
+If you select one of the outputs with Enter, the matching constraint is simply
+added to the list. If you use Shift-Enter, the interface proceeds to the
 next dialog, which allows you to edit the suggested constraint parameters to
 suit your need, and set the item count range.
 
 .. image:: images/workflow-new2.png
-
-If you don't need advanced settings, you can just press 'y' to confirm creation.
-
 
 
 gui/assign-rack

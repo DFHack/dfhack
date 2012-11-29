@@ -384,6 +384,7 @@ List.ATTRS{
     inactive_pen = DEFAULT_NIL,
     on_select = DEFAULT_NIL,
     on_submit = DEFAULT_NIL,
+    on_submit2 = DEFAULT_NIL,
     row_height = 1,
     scroll_keys = STANDARDSCROLL,
     icon_width = DEFAULT_NIL,
@@ -542,9 +543,18 @@ function List:submit()
     end
 end
 
+function List:submit2()
+    if self.on_submit2 and #self.choices > 0 then
+        self.on_submit2(self:getSelected())
+    end
+end
+
 function List:onInput(keys)
     if self.on_submit and keys.SELECT then
         self:submit()
+        return true
+    elseif self.on_submit2 and keys.SEC_SELECT then
+        self:submit2()
         return true
     else
         for k,v in pairs(self.scroll_keys) do
@@ -608,6 +618,11 @@ function FilteredList:init(info)
             return info.on_submit(self:getSelected())
         end
     end
+    if info.on_submit2 then
+        self.list.on_submit2 = function()
+            return info.on_submit2(self:getSelected())
+        end
+    end
     self.not_found = Label{
         visible = false,
         text = info.not_found_label or 'No matches',
@@ -632,6 +647,10 @@ end
 
 function FilteredList:submit()
     return self.list:submit()
+end
+
+function FilteredList:submit2()
+    return self.list:submit2()
 end
 
 function FilteredList:canSubmit()

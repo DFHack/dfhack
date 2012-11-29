@@ -309,9 +309,16 @@ function AssignJobToBuild(args)
         DialogBuildingChoose(dfhack.curry(BuildingChosen,args.old_pos,args.pos))
     end
 end
+function CancelJob(unit)
+    local c_job=unit.job.current_job 
+    if c_job then
+        unit.job.current_job =nil --todo add real cancelation        
+    end
+end
 function ContinueJob(unit)
     local c_job=unit.job.current_job 
     if c_job then
+        c_job.flags.suspend=false
         for k,v in pairs(c_job.items) do
             if v.is_fetching==1 then
                 unit.path.dest:assign(v.item.pos)
@@ -394,6 +401,7 @@ ALLOWED_KEYS={
     A_MOVE_NE=true,A_MOVE_SW=true,A_MOVE_SE=true,A_STANCE=true,SELECT=true,A_MOVE_DOWN_AUX=true,
     A_MOVE_UP_AUX=true,A_LOOK=true,CURSOR_DOWN=true,CURSOR_UP=true,CURSOR_LEFT=true,CURSOR_RIGHT=true,
     CURSOR_UPLEFT=true,CURSOR_UPRIGHT=true,CURSOR_DOWNLEFT=true,CURSOR_DOWNRIGHT=true,A_CLEAR_ANNOUNCEMENTS=true,
+    CURSOR_UP_Z=true,CURSOR_DOWN_Z=true,
 }
 function moddedpos(pos,delta)
     return {x=pos.x+delta[1],y=pos.y+delta[2],z=pos.z+delta[3]}
@@ -411,12 +419,13 @@ function usetool:onHelp()
     showHelp()
 end
 function usetool:onInput(keys)
-
+    local adv=df.global.world.units.active[0]
     if keys.LEAVESCREEN  then
         if df.global.cursor.x~=-30000 then
             self:sendInputToParent("LEAVESCREEN")
         else
             self:dismiss()
+            CancelJob(adv)
         end
     elseif keys[keybinds.key_next.key] then
         mode=(mode+1)%#dig_modes
@@ -426,14 +435,14 @@ function usetool:onInput(keys)
     --elseif keys.A_LOOK then
     --    self:sendInputToParent("A_LOOK")
     elseif keys[keybinds.key_continue.key] then
-        ContinueJob(df.global.world.units.active[0])
+        ContinueJob(adv)
         self:sendInputToParent("A_WAIT")
     else
-        local adv=df.global.world.units.active[0]
+        
         local cur_mode=dig_modes[(mode or 0)+1]
         local failed=false
         for code,_ in pairs(keys) do
-            --print(code)
+            print(code)
             if MOVEMENT_KEYS[code] then
                 local state={unit=adv,pos=moddedpos(adv.pos,MOVEMENT_KEYS[code]),dir=MOVEMENT_KEYS[code],
                         old_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z}}

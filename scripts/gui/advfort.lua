@@ -3,6 +3,7 @@ local gui = require 'gui'
 local wid=require 'gui.widgets'
 local dialog=require 'gui.dialogs'
 local buildings=require 'dfhack.buildings'
+local bdialog=require 'gui.buildings'
 
 local tile_attrs = df.tiletype.attrs
 
@@ -11,9 +12,9 @@ keybinds={
 key_next={key="CUSTOM_SHIFT_T",desc="Next job in the list"},
 key_prev={key="CUSTOM_SHIFT_R",desc="Previous job in the list"},
 key_continue={key="A_WAIT",desc="Continue job if available"},
-key_down_alt1={key="CUSTOM_CTRL_D",desc="Use job down"},--does not work?
+key_down_alt1={key="CUSTOM_CTRL_D",desc="Use job down"},
 key_down_alt2={key="CURSOR_DOWN_Z_AUX",desc="Use job down"},
-key_up_alt1={key="CUSTOM_CTRL_E",desc="Use job up"}, --does not work?
+key_up_alt1={key="CUSTOM_CTRL_E",desc="Use job up"}, 
 key_up_alt2={key="CURSOR_UP_Z_AUX",desc="Use job up"},
 key_use_same={key="A_MOVE_SAME_SQUARE",desc="Use job at the tile you are standing"},
 }
@@ -233,49 +234,15 @@ function AssignItems(items,args)
     
 end
 --[[ building submodule... ]]--
-function DialogBuildingChoose(on_select, on_cancel)
-    blist={}
-    for i=df.building_type._first_item,df.building_type._last_item do
-        table.insert(blist,df.building_type[i])
-    end
-    dialog.showListPrompt("Building list", "Choose building:", COLOR_WHITE, blist, on_select, on_cancel, nil, true)
-end
-function DialogSubtypeChoose(subtype,on_select, on_cancel)
-    blist={}
-    for i=subtype._first_item,subtype._last_item do
-        table.insert(blist,subtype[i])
-    end
-    dialog.showListPrompt("Subtype", "Choose subtype:", COLOR_WHITE, blist, on_select, on_cancel, nil, true)
-end
---workshop, furnaces, traps
-invalid_buildings={}
-function SubtypeChosen(args,index)
-    args.subtype=index-1
-    buildings.constructBuilding(args)
-end
-function BuildingChosen(st_pos,pos,index)
-    local b_type=index-2
+
+function BuildingChosen(inp_args,type_id,subtype_id,custom_id)
     local args={}
-    args.type=b_type
-    args.pos=pos
-    args.items=itemsAtPos(st_pos)
-    if invalid_buildings[b_type] then
-        return 
-    elseif b_type==df.building_type.Construction then
-        DialogSubtypeChoose(df.construction_type,dfhack.curry(SubtypeChosen,args))
-        return
-    elseif b_type==df.building_type.Furnace then
-        DialogSubtypeChoose(df.furnace_type,dfhack.curry(SubtypeChosen,args))
-        return
-    elseif b_type==df.building_type.Trap then
-        DialogSubtypeChoose(df.trap_type,dfhack.curry(SubtypeChosen,args))
-        return
-    elseif b_type==df.building_type.Workshop then
-        DialogSubtypeChoose(df.workshop_type,dfhack.curry(SubtypeChosen,args))
-        return
-    else
-        buildings.constructBuilding(args)
-    end
+    args.type=type_id
+    args.subtype=subtype_id
+    args.custom=custom_id
+    args.pos=inp_args.pos
+    args.items=itemsAtPos(inp_args.old_pos)
+    buildings.constructBuilding(args)
 end
 
 --[[ end of buildings ]]--
@@ -306,7 +273,7 @@ function AssignJobToBuild(args)
             
         end
     else
-        DialogBuildingChoose(dfhack.curry(BuildingChosen,args.old_pos,args.pos))
+        bdialog.BuildingDialog{on_select=dfhack.curry(BuildingChosen,args),hide_none=true}:show()
     end
 end
 function CancelJob(unit)

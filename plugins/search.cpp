@@ -7,9 +7,12 @@
 
 //#include "df/viewscreen_petst.h"
 #include "df/viewscreen_storesst.h"
+#include "df/viewscreen_layer_stockpilest.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/interface_key.h"
+#include "df/interfacest.h"
+#include "df/layer_object_listst.h"
 
 using std::set;
 using std::vector;
@@ -19,6 +22,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 using df::global::gps;
+using df::global::gview;
 
 /*
 Search Plugin
@@ -37,6 +41,14 @@ void OutputString(int8_t color, int &x, int y, const std::string &text)
 {
     Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
     x += text.length();
+}
+
+static bool is_live_screen(const df::viewscreen *screen)
+{
+    for (df::viewscreen *cur = &gview->view; cur; cur = cur->child)
+        if (cur == screen)
+            return true;
+    return false;
 }
 
 //
@@ -58,6 +70,20 @@ public:
         viewscreen = NULL;
         select_key = 's';
         track_secondary_values = false;
+    }
+
+    bool reset_on_change()
+    {
+        if (valid && is_live_screen(viewscreen))
+            return false;
+
+        reset_all();
+        return true;
+    }
+
+    bool is_valid()
+    {
+        return valid;
     }
 
     // A new keystroke is received in a searchable screen
@@ -145,9 +171,9 @@ protected:
     const S *viewscreen;
     vector <T> saved_list1, reference_list;
     vector <V> saved_list2;
+    vector <V> *sort_list2;
     vector <int> saved_indexes;
 
-    bool valid;
     bool redo_search;
     bool track_secondary_values;
     string search_string;
@@ -206,12 +232,12 @@ protected:
             bool list_has_been_sorted = (sort_list1->size() == reference_list.size()
                 && *sort_list1 != reference_list);
 
-            for (int i = 0; i < saved_indexes.size(); i++)
+            for (size_t i = 0; i < saved_indexes.size(); i++)
             {
                 int adjusted_item_index = i;
                 if (list_has_been_sorted)
                 {
-                    for (int j = 0; j < sort_list1->size(); j++)
+                    for (size_t j = 0; j < sort_list1->size(); j++)
                     {
                         if ((*sort_list1)[j] == reference_list[i])
                         {
@@ -221,10 +247,15 @@ protected:
                     }
                 }
 
-                saved_list2[saved_indexes[i]] = (*sort_list2)[adjusted_item_index];
+                update_saved_secondary_list_item(saved_indexes[i], adjusted_item_index);
             }
             saved_indexes.clear();
         }
+    }
+
+    virtual void update_saved_secondary_list_item(size_t i, size_t j)
+    {
+        saved_list2[i] = (*sort_list2)[j];
     }
 
     // Store a copy of filtered list, used later to work out if filtered list has been sorted after filtering
@@ -235,7 +266,7 @@ protected:
     }
 
     // Shortcut to clear the search immediately
-    void clear_search()
+    virtual void clear_search()
     {
         if (saved_list1.size() > 0)
         {
@@ -245,13 +276,16 @@ protected:
                 update_secondary_values();
                 *sort_list2 = saved_list2;
             }
+
+            saved_list1.clear();
+            saved_list2.clear();
         }
         store_reference_values();
         search_string = "";
     }
 
     // The actual sort
-    void do_search()
+    virtual void do_search()
     {
         if (search_string.length() == 0)
         {
@@ -278,7 +312,7 @@ protected:
         }
 
         string search_string_l = toLower(search_string);
-        for (int i = 0; i < saved_list1.size(); i++ )
+        for (size_t i = 0; i < saved_list1.size(); i++ )
         {
             T element = saved_list1[i];
             string desc = toLower(get_element_description(element));
@@ -296,7 +330,8 @@ protected:
 
         store_reference_values(); //Keep a copy, in case user sorts new list
 
-        *cursor_pos = 0;
+        if (cursor_pos)
+            *cursor_pos = 0;
     }
 
     virtual bool should_check_input(set<df::interface_key> *input)
@@ -307,8 +342,9 @@ protected:
     // Display hotkey message
     void print_search_option(int x, int y = -1) const
     {
+        auto dim = Screen::getWindowSize();
         if (y == -1)
-            y = gps->dimy - 2;
+            y = dim.y - 2;
 
         OutputString((entry_mode) ? 4 : 12, x, y, string(1, select_key));
         OutputString((entry_mode) ? 10 : 15, x, y, ": Search");
@@ -323,10 +359,9 @@ protected:
 
 private:
     vector <T> *sort_list1;
-    vector <V> *sort_list2;
     int *cursor_pos;
     char select_key;
-
+    bool valid;
     bool entry_mode;
 
     df::interface_key select_token;
@@ -336,7 +371,8 @@ private:
 };
 template <class S, class T, class V> search_parent<S,T,V> *search_parent<S,T,V> ::lock = NULL;
 
-// Parent struct for the hooks
+// Parent struct for the hooks, use optional param D to generate multiple classes with same T & V
+// but different static modules
 template <class T, class V, typename D = void>
 struct search_hook : T
 {
@@ -346,7 +382,12 @@ struct search_hook : T
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
-        module.init(this);
+        if (!module.init(this))
+        {
+            INTERPOSE_NEXT(feed)(input);
+            return;
+        }
+
         if (!module.process_input(input))
         {
             INTERPOSE_NEXT(feed)(input);
@@ -357,9 +398,10 @@ struct search_hook : T
 
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
-        module.init(this);
+        bool ok = module.init(this);
         INTERPOSE_NEXT(render)();
-        module.render();
+        if (ok)
+            module.render();
     }
 };
 
@@ -382,11 +424,12 @@ public:
     virtual void render() const
     {
         if (!viewscreen->in_group_mode)
-            print_search_option(1);
+            print_search_option(2);
         else
         {
-            int x = 1;
-            OutputString(15, x, gps->dimy - 2, "Tab to enable Search");
+            auto dim = Screen::getWindowSize();
+            int x = 2, y = dim.y - 2;
+            OutputString(15, x, y, "Tab to enable Search");
         }
     }
 
@@ -402,13 +445,18 @@ public:
             search_parent::do_post_update_check();
     }
 
-    virtual void init(df::viewscreen_storesst *screen) 
+    bool init(df::viewscreen_storesst *screen)
     {
-        if (!valid)
+        if (screen != viewscreen && !reset_on_change())
+            return false;
+
+        if (!is_valid())
         {
             viewscreen = screen;
             search_parent::init(&screen->item_cursor, &screen->items);
         }
+
+        return true;
     }
 
 
@@ -461,21 +509,25 @@ public:
         print_search_option(28);
     }
 
-    virtual void init(df::viewscreen_unitlistst *screen)
+    bool init(df::viewscreen_unitlistst *screen)
     {
-        if (!valid)
+        if (screen != viewscreen && !reset_on_change())
+            return false;
+
+        if (!is_valid())
         {
             viewscreen = screen;
             search_parent::init(&screen->cursor_pos[viewscreen->page], &screen->units[viewscreen->page], &screen->jobs[viewscreen->page]);
         }
+
+        return true;
     }
 
 private:
     virtual string get_element_description(df::unit *element) const
     {
         string desc = Translation::TranslateName(Units::getVisibleName(element), false);
-        if (viewscreen->page == 1)
-            desc += Units::getProfessionName(element); // Check animal type too
+        desc += ", " + Units::getProfessionName(element); // Check animal type too
 
         return desc;
     }
@@ -530,6 +582,29 @@ private:
     {
         return Items::getDescription(element, 0, true);
     }
+
+    virtual bool should_check_input(set<df::interface_key> *input)
+    {
+        if (is_entry_mode())
+            return true;
+
+        if (input->count(interface_key::TRADE_TRADE) ||
+            input->count(interface_key::TRADE_OFFER) ||
+            input->count(interface_key::TRADE_SEIZE))
+        {
+            // Block the keys if were searching
+            if (!search_string.empty())
+                input->clear();
+
+            // Trying to trade, reset search
+            clear_search();
+            reset_all();
+
+            return false;
+        }
+
+        return true;
+    }
 };
 
 
@@ -541,14 +616,19 @@ public:
         print_search_option(2, 26);
     }
 
-    virtual void init(df::viewscreen_tradegoodsst *screen)
+    bool init(df::viewscreen_tradegoodsst *screen)
     {
-        if (!valid)
+        if (screen != viewscreen && !reset_on_change())
+            return false;
+
+        if (!is_valid())
         {
             viewscreen = screen;
             search_parent::init(&screen->trader_cursor, &screen->trader_items, &screen->trader_selected, 'q');
             track_secondary_values = true;
         }
+
+        return true;
     }
 };
 
@@ -565,14 +645,19 @@ public:
         print_search_option(42, 26);
     }
 
-    virtual void init(df::viewscreen_tradegoodsst *screen)
+    bool init(df::viewscreen_tradegoodsst *screen)
     {
-        if (!valid)
+        if (screen != viewscreen && !reset_on_change())
+            return false;
+
+        if (!is_valid())
         {
             viewscreen = screen;
             search_parent::init(&screen->broker_cursor, &screen->broker_items, &screen->broker_selected, 'w');
             track_secondary_values = true;
         }
+
+        return true;
     }
 };
 
@@ -585,15 +670,100 @@ template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, render);
 //
 
 
+//
+// START: Stockpile screen search
+//
+
+class stockpile_search : public search_parent<df::viewscreen_layer_stockpilest, string *, bool *>
+{
+public:
+    void update_saved_secondary_list_item(size_t i, size_t j)
+    {
+        *saved_list2[i] = *(*sort_list2)[j];
+    }
+
+    string get_element_description(string *element) const
+    {
+        return *element;
+    }
+
+    void render() const
+    {
+        print_search_option(2, 25);
+    }
+
+    static df::layer_object_listst *getLayerList(const df::viewscreen_layer *layer, int idx)
+    {
+        return virtual_cast<df::layer_object_listst>(vector_get(layer->layer_objects,idx));
+    }
+
+    bool init(df::viewscreen_layer_stockpilest *screen)
+    {
+        if (screen != viewscreen && !reset_on_change())
+            return false;
+
+        auto list3 = getLayerList(screen, 2);
+        if (!list3->active)
+        {
+            if (is_valid())
+            {
+                clear_search();
+                reset_all();
+            }
+
+            return false;
+        }
+
+        if (!is_valid())
+        {
+            viewscreen = screen;
+            search_parent::init(&list3->cursor, &screen->item_names, &screen->item_status);
+            track_secondary_values = true;
+        }
+
+        return true;
+    }
+
+    void do_search() 
+    {
+        search_parent::do_search();
+        auto list3 = getLayerList(viewscreen, 2);
+        list3->num_entries = viewscreen->item_names.size();
+    }
+
+    void clear_search()
+    {
+        search_parent::clear_search();
+        auto list3 = getLayerList(viewscreen, 2);
+        list3->num_entries = viewscreen->item_names.size();
+    }
+};
+
+typedef search_hook<df::viewscreen_layer_stockpilest, stockpile_search> stockpile_search_hook;
+template<> IMPLEMENT_VMETHOD_INTERPOSE(stockpile_search_hook, feed);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(stockpile_search_hook, render);
+
+//
+// END: Stockpile screen search
+//
+
+
 DFHACK_PLUGIN("search");
 
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (!gps || !INTERPOSE_HOOK(unitlist_search_hook, feed).apply() || !INTERPOSE_HOOK(unitlist_search_hook, render).apply()
-        || !INTERPOSE_HOOK(trade_search_merc_hook, feed).apply() || !INTERPOSE_HOOK(trade_search_merc_hook, render).apply()
-        || !INTERPOSE_HOOK(trade_search_fort_hook, feed).apply() || !INTERPOSE_HOOK(trade_search_fort_hook, render).apply()
-        || !INTERPOSE_HOOK(stocks_search_hook, feed).apply() || !INTERPOSE_HOOK(stocks_search_hook, render).apply())
+    if (!gps || !gview ||
+        !INTERPOSE_HOOK(unitlist_search_hook, feed).apply() ||
+        !INTERPOSE_HOOK(unitlist_search_hook, render).apply() ||
+        !INTERPOSE_HOOK(trade_search_merc_hook, feed).apply() ||
+        !INTERPOSE_HOOK(trade_search_merc_hook, render).apply() ||
+        !INTERPOSE_HOOK(trade_search_fort_hook, feed).apply() ||
+        !INTERPOSE_HOOK(trade_search_fort_hook, render).apply() ||
+        !INTERPOSE_HOOK(stocks_search_hook, feed).apply() ||
+        !INTERPOSE_HOOK(stocks_search_hook, render).apply() || 
+        !INTERPOSE_HOOK(stockpile_search_hook, feed).apply() || 
+        !INTERPOSE_HOOK(stockpile_search_hook, render).apply())
         out.printerr("Could not insert Search hooks!\n");
 
     return CR_OK;
@@ -609,14 +779,25 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     INTERPOSE_HOOK(trade_search_fort_hook, render).remove();
     INTERPOSE_HOOK(stocks_search_hook, feed).remove();
     INTERPOSE_HOOK(stocks_search_hook, render).remove();
+    INTERPOSE_HOOK(stockpile_search_hook, feed).remove();
+    INTERPOSE_HOOK(stockpile_search_hook, render).remove();
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_change_event event )
 {
-    unitlist_search_hook::module.reset_all();
-    trade_search_merc_hook::module.reset_all();
-    trade_search_fort_hook::module.reset_all();
-    stocks_search_hook::module.reset_all();
+    switch (event) {
+    case SC_VIEWSCREEN_CHANGED:
+        unitlist_search_hook::module.reset_on_change();
+        trade_search_merc_hook::module.reset_on_change();
+        trade_search_fort_hook::module.reset_on_change();
+        stocks_search_hook::module.reset_on_change();
+        stockpile_search_hook::module.reset_on_change();
+        break;
+
+    default:
+        break;
+    }
+
     return CR_OK;
 }

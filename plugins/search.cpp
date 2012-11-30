@@ -440,8 +440,8 @@ private:
 
 
 typedef search_hook<df::viewscreen_storesst, stocks_search> stocks_search_hook;
-IMPLEMENT_VMETHOD_INTERPOSE(stocks_search_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(stocks_search_hook, render);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(stocks_search_hook, feed);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(stocks_search_hook, render);
 
 //
 // END: Stocks screen search
@@ -503,8 +503,8 @@ private:
 };
 
 typedef search_hook<df::viewscreen_unitlistst, unitlist_search> unitlist_search_hook;
-IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, feed, 100);
-IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, render, 100);
+template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, feed, 100);
+template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, render, 100);
 
 //
 // END: Unit screen search
@@ -553,8 +553,8 @@ public:
 };
 
 typedef search_hook<df::viewscreen_tradegoodsst, trade_search_merc, int> trade_search_merc_hook;
-IMPLEMENT_VMETHOD_INTERPOSE(trade_search_merc_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(trade_search_merc_hook, render);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_merc_hook, feed);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_merc_hook, render);
 
 
 class trade_search_fort : public trade_search_base
@@ -577,8 +577,8 @@ public:
 };
 
 typedef search_hook<df::viewscreen_tradegoodsst, trade_search_fort, char> trade_search_fort_hook;
-IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, render);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, feed);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, render);
 
 //
 // END: Trade screen search

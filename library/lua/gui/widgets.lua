@@ -60,6 +60,7 @@ Panel = defclass(Panel, Widget)
 
 Panel.ATTRS {
     on_render = DEFAULT_NIL,
+    on_layout = DEFAULT_NIL,
 }
 
 function Panel:init(args)
@@ -68,6 +69,10 @@ end
 
 function Panel:onRenderBody(dc)
     if self.on_render then self.on_render(dc) end
+end
+
+function Panel:postComputeFrame(body)
+    if self.on_layout then self.on_layout(body) end
 end
 
 -----------
@@ -242,7 +247,7 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
             end
 
             if token.text or token.key then
-                local text = getval(token.text) or ''
+                local text = ''..(getval(token.text) or '')
                 local keypen
 
                 if dc then
@@ -256,7 +261,23 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
                     end
                 end
 
-                x = x + #text
+                local width = getval(token.width)
+                local padstr
+                if width then
+                    x = x + width
+                    if #text > width then
+                        text = string.sub(text,1,width)
+                    else
+                        if token.pad_char then
+                            padstr = string.rep(token.pad_char,width-#text)
+                        end
+                        if dc and token.rjustify then
+                            if padstr then dc:string(padstr) else dc:advance(width-#text) end
+                        end
+                    end
+                else
+                    x = x + #text
+                end
 
                 if token.key then
                     local keystr = gui.getKeyDisplay(token.key)
@@ -280,6 +301,10 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
                     if dc then
                         dc:string(text)
                     end
+                end
+
+                if width and dc and not token.rjustify then
+                    if padstr then dc:string(padstr) else dc:advance(width-#text) end
                 end
             end
 
@@ -384,6 +409,7 @@ List.ATTRS{
     inactive_pen = DEFAULT_NIL,
     on_select = DEFAULT_NIL,
     on_submit = DEFAULT_NIL,
+    on_submit2 = DEFAULT_NIL,
     row_height = 1,
     scroll_keys = STANDARDSCROLL,
     icon_width = DEFAULT_NIL,
@@ -542,9 +568,18 @@ function List:submit()
     end
 end
 
+function List:submit2()
+    if self.on_submit2 and #self.choices > 0 then
+        self.on_submit2(self:getSelected())
+    end
+end
+
 function List:onInput(keys)
     if self.on_submit and keys.SELECT then
         self:submit()
+        return true
+    elseif self.on_submit2 and keys.SEC_SELECT then
+        self:submit2()
         return true
     else
         for k,v in pairs(self.scroll_keys) do
@@ -581,10 +616,14 @@ end
 
 FilteredList = defclass(FilteredList, Widget)
 
+FilteredList.ATTRS {
+    edit_below = false,
+}
+
 function FilteredList:init(info)
     self.edit = EditField{
         text_pen = info.edit_pen or info.cursor_pen,
-        frame = { l = info.icon_width, t = 0 },
+        frame = { l = info.icon_width, t = 0, h = 1 },
         on_change = self:callback('onFilterChange'),
         on_char = self:callback('onFilterChar'),
     }
@@ -598,6 +637,10 @@ function FilteredList:init(info)
         scroll_keys = info.scroll_keys,
         icon_width = info.icon_width,
     }
+    if self.edit_below then
+        self.edit.frame = { l = info.icon_width, b = 0, h = 1 }
+        self.list.frame = { t = 0, b = 2 }
+    end
     if info.on_select then
         self.list.on_select = function()
             return info.on_select(self:getSelected())
@@ -608,11 +651,16 @@ function FilteredList:init(info)
             return info.on_submit(self:getSelected())
         end
     end
+    if info.on_submit2 then
+        self.list.on_submit2 = function()
+            return info.on_submit2(self:getSelected())
+        end
+    end
     self.not_found = Label{
         visible = false,
         text = info.not_found_label or 'No matches',
         text_pen = COLOR_LIGHTRED,
-        frame = { l = info.icon_width, t = 2 },
+        frame = { l = info.icon_width, t = self.list.frame.t },
     }
     self:addviews{ self.edit, self.list, self.not_found }
     self:setChoices(info.choices, info.selected)
@@ -632,6 +680,10 @@ end
 
 function FilteredList:submit()
     return self.list:submit()
+end
+
+function FilteredList:submit2()
+    return self.list:submit2()
 end
 
 function FilteredList:canSubmit()

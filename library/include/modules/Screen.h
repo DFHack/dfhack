@@ -28,7 +28,9 @@ distribution.
 #include "BitArray.h"
 #include "ColorText.h"
 #include "Types.h"
+
 #include <string>
+#include <set>
 
 #include "DataDefs.h"
 #include "df/graphic.h"
@@ -50,6 +52,8 @@ namespace df
 namespace DFHack
 {
     class Core;
+
+    typedef std::set<df::interface_key> interface_key_set;
 
     /**
      * The Screen module

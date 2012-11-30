@@ -212,15 +212,31 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
 
+    bool check_default()
+    {
+        switch (ui->main.mode) {
+            case ui_sidebar_mode::Default:
+                return true;
+
+            case ui_sidebar_mode::Build:
+                return ui_build_selector &&
+                       (ui_build_selector->building_type < 0 ||
+                        ui_build_selector->stage < 1);
+
+            default:
+                return false;
+        }
+    }
+
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
-        bool was_default = (ui->main.mode == df::ui_sidebar_mode::Default);
+        bool was_default = check_default();
         df::coord view = Gui::getViewportPos();
         df::coord cursor = Gui::getCursorPos();
 
         INTERPOSE_NEXT(feed)(input);
 
-        bool is_default = (ui->main.mode == df::ui_sidebar_mode::Default);
+        bool is_default = check_default();
         df::coord cur_cursor = Gui::getCursorPos();
 
         if (is_default && !was_default)
@@ -241,7 +257,7 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
             tmp.insert(interface_key::CURSOR_UP_Z);
             INTERPOSE_NEXT(feed)(&tmp);
         }
-        else if (cur_cursor.isValid())
+        else if (!is_default && cur_cursor.isValid())
         {
             last_cursor = df::coord();
         }

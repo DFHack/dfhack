@@ -10,13 +10,19 @@ local to_pen = dfhack.pen.parse
 
 CLEAR_PEN = to_pen{ch=32,fg=0,bg=0}
 
+local FAKE_INPUT_KEYS = {
+    _MOUSE_L = true,
+    _MOUSE_R = true,
+    _STRING = true,
+}
+
 function simulateInput(screen,...)
     local keys = {}
     local function push_key(arg)
         local kv = arg
         if type(arg) == 'string' then
             kv = df.interface_key[arg]
-            if kv == nil then
+            if kv == nil and not FAKE_INPUT_KEYS[arg] then
                 error('Invalid keycode: '..arg)
             end
         end
@@ -106,10 +112,14 @@ function inset_frame(rect, inset, gap)
     return mkdims_xy(rect.x1+l+gap, rect.y1+t+gap, rect.x2-r-gap, rect.y2-b-gap)
 end
 
-function compute_frame_body(wavail, havail, spec, inset, gap)
+function compute_frame_body(wavail, havail, spec, inset, gap, inner_frame)
     gap = gap or 0
     local l,t,r,b = parse_inset(inset)
-    local rect = compute_frame_rect(wavail, havail, spec, gap*2+l+r, gap*2+t+b)
+    local xgap,ygap = 0,0
+    if inner_frame then
+        xgap,ygap = gap*2+l+r, gap*2+t+b
+    end
+    local rect = compute_frame_rect(wavail, havail, spec, xgap, ygap)
     local body = mkdims_xy(rect.x1+l+gap, rect.y1+t+gap, rect.x2-r-gap, rect.y2-b-gap)
     return rect, body
 end
@@ -617,7 +627,7 @@ end
 function FramedScreen:computeFrame(parent_rect)
     local sw, sh = parent_rect.width, parent_rect.height
     local fw, fh = self:getWantedFrameSize(parent_rect)
-    return compute_frame_body(sw, sh, { w = fw, h = fh }, self.frame_inset, 1)
+    return compute_frame_body(sw, sh, { w = fw, h = fh }, self.frame_inset, 1, true)
 end
 
 function FramedScreen:onRenderFrame(dc, rect)

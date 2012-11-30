@@ -2853,6 +2853,9 @@ this may be extended with mouse click support.</p>
 <tr class="field"><th class="field-name">on_submit:</th><td class="field-body">Enter key callback; if specified, the list reacts to the key
 and calls it as <tt class="docutils literal">on_submit(index,choice)</tt>.</td>
 </tr>
+<tr class="field"><th class="field-name">on_submit2:</th><td class="field-body">Shift-Enter key callback; if specified, the list reacts to the key
+and calls it as <tt class="docutils literal">on_submit2(index,choice)</tt>.</td>
+</tr>
 <tr class="field"><th class="field-name">row_height:</th><td class="field-body">Height of every row in text lines.</td>
 </tr>
 <tr class="field"><th class="field-name">icon_width:</th><td class="field-body">If not <em>nil</em>, the specified number of character columns
@@ -2907,6 +2910,9 @@ with the following fields:</p>
 </li>
 <li><p class="first"><tt class="docutils literal">list:submit()</tt></p>
 <p>Call the <tt class="docutils literal">on_submit</tt> callback, as if the Enter key was handled.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:submit2()</tt></p>
+<p>Call the <tt class="docutils literal">on_submit2</tt> callback, as if the Shift-Enter key was handled.</p>
 </li>
 </ul>
 </div>

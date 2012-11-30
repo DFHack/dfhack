@@ -125,9 +125,9 @@ DFHack callbacks
 
 The plugin interfaces with dfhack 'onupdate' hook.
 To register ruby code to be run every graphic frame, use:
- handle = df.onupdate_register { puts 'i love flooding the console' }
+ handle = df.onupdate_register('log') { puts 'i love flooding the console' }
 You can also rate-limit when your callback is called to a number of game ticks:
- handle = df.onupdate_register(10) { puts '10 more in-game ticks elapsed' }
+ handle = df.onupdate_register('myname', 10) { puts '10 more in-game ticks elapsed' }
 In this case, the callback is called immediately, and then every X in-game
 ticks (advances only when the game is unpaused).
 To stop being called, use:

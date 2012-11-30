@@ -2710,6 +2710,16 @@ containing newlines, or a table with the following possible fields:
 
   Specifies a pen to paint as one tile before the main part of the token.
 
+* ``token.width = ...``
+
+  If specified either as a value or a callback, the text field is padded
+  or truncated to the specified number.
+
+* ``token.pad_char = '?'``
+
+  If specified together with ``width``, the padding area is filled with
+  this character instead of just being skipped over.
+
 * ``token.key = '...'``
 
   Specifies the keycode associated with the token. The string description
@@ -2777,6 +2787,8 @@ It has the following attributes:
 :on_select: Selection change callback; called as ``on_select(index,choice)``.
 :on_submit: Enter key callback; if specified, the list reacts to the key
             and calls it as ``on_submit(index,choice)``.
+:on_submit2: Shift-Enter key callback; if specified, the list reacts to the key
+             and calls it as ``on_submit2(index,choice)``.
 :row_height: Height of every row in text lines.
 :icon_width: If not *nil*, the specified number of character columns
              are reserved to the left of the list item for the icons.
@@ -2826,6 +2838,10 @@ The list supports the following methods:
 
   Call the ``on_submit`` callback, as if the Enter key was handled.
 
+* ``list:submit2()``
+
+  Call the ``on_submit2`` callback, as if the Shift-Enter key was handled.
+
 FilteredList class
 ------------------
 
@@ -2836,6 +2852,7 @@ In addition to passing through all attributes supported by List, it
 supports:
 
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
+:edit_below: If true, the edit field is placed below the list instead of above.
 :not_found_label: Specifies the text of the label shown when no items match the filter.
 
 The list choices may include the following attributes:

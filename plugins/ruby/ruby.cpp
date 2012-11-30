@@ -438,6 +438,12 @@ static VALUE rb_cDFHack;
 
 // DFHack module ruby methods, binds specific dfhack methods
 
+// df-dfhack version (eg "0.34.11-r2")
+static VALUE rb_dfversion(VALUE self)
+{
+    return rb_str_new(DFHACK_VERSION, strlen(DFHACK_VERSION));
+}
+
 // enable/disable calls to DFHack.onupdate()
 static VALUE rb_dfonupdate_active(VALUE self)
 {
@@ -955,6 +961,7 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "malloc", RUBY_METHOD_FUNC(rb_dfmalloc), 1);
     rb_define_singleton_method(rb_cDFHack, "free", RUBY_METHOD_FUNC(rb_dffree), 1);
     rb_define_singleton_method(rb_cDFHack, "vmethod_do_call", RUBY_METHOD_FUNC(rb_dfvcall), 8);
+    rb_define_singleton_method(rb_cDFHack, "version", RUBY_METHOD_FUNC(rb_dfversion), 0);
 
     rb_define_singleton_method(rb_cDFHack, "memory_read", RUBY_METHOD_FUNC(rb_dfmemory_read), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_read_int8",  RUBY_METHOD_FUNC(rb_dfmemory_read_int8),  1);

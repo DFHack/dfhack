@@ -25,12 +25,19 @@ else
 		puts "Not a historical figure, cannot death find info"
 	else
 		events = df.world.history.events
+		found = false
 		(0...events.length).reverse_each { |i|
-			if events[i].kind_of?(DFHack::HistoryEventHistFigureDiedst) and events[i].victim_hf == hf
-				display_death_event(events[i])
+			e = events[i]
+			if e.kind_of?(DFHack::HistoryEventHistFigureDiedst) and e.victim_hf == hf
+				display_death_event(e)
+				found = true
 				break
 			end
 		}
+		if not found
+			u = item.unit_tg
+			puts "#{u.name} is not dead yet !" if u and not u.flags1.dead
+		end
 	end
 end
 

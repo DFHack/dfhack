@@ -321,7 +321,7 @@ std::string getUnitNameProfession(df::unit *unit)
 }
 
 enum InventoryMode {
-    INV_CARRIED,
+    INV_HAULED,
     INV_WEAPON,
     INV_WORN,
     INV_IN_CONTAINER
@@ -331,7 +331,7 @@ typedef std::pair<df::item*,InventoryMode> inv_item;
 
 static void listContainerInventory(std::vector<inv_item> *list, df::item *container)
 {
-    auto &refs = container->itemrefs;
+    auto &refs = container->general_refs;
     for (size_t i = 0; i < refs.size(); i++)
     {
         auto ref = refs[i];
@@ -355,8 +355,8 @@ void listUnitInventory(std::vector<inv_item> *list, df::unit *unit)
         InventoryMode mode;
 
         switch (item->mode) {
-        case df::unit_inventory_item::Carried:
-            mode = INV_CARRIED;
+        case df::unit_inventory_item::Hauled:
+            mode = INV_HAULED;
             break;
         case df::unit_inventory_item::Weapon:
             mode = INV_WEAPON;
@@ -372,9 +372,9 @@ void listUnitInventory(std::vector<inv_item> *list, df::unit *unit)
 
 bool isShopItem(df::item *item)
 {
-    for (size_t k = 0; k < item->itemrefs.size(); k++)
+    for (size_t k = 0; k < item->general_refs.size(); k++)
     {
-        auto ref = item->itemrefs[k];
+        auto ref = item->general_refs[k];
         if (virtual_cast<df::general_ref_building_civzone_assignedst>(ref))
             return true;
     }
@@ -404,7 +404,7 @@ int containsMetalItems(df::item *item, bool all, bool non_trader, bool rec = fal
 {
     int cnt = 0;
 
-    auto &refs = item->itemrefs;
+    auto &refs = item->general_refs;
     for (size_t i = 0; i < refs.size(); i++)
     {
         auto ref = refs[i];

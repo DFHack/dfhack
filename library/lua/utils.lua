@@ -283,6 +283,33 @@ function clone_with_default(obj,default,force)
     return rv
 end
 
+-- Parse an integer value into a bitfield table
+function parse_bitfield_int(value, type_ref)
+    if value == 0 then
+        return nil
+    end
+    local res = {}
+    for i,v in ipairs(type_ref) do
+        if bit32.extract(value, i) ~= 0 then
+            res[v] = true
+        end
+    end
+    return res
+end
+
+-- List the enabled flag names in the bitfield table
+function list_bitfield_flags(bitfield, list)
+    list = list or {}
+    if bitfield then
+        for name,val in pairs(bitfield) do
+            if val then
+                table.insert(list, name)
+            end
+        end
+    end
+    return list
+end
+
 -- Sort a vector or lua table
 function sort_vector(vector,field,cmp)
     local fcmp = compare_field(field,cmp)
@@ -304,16 +331,26 @@ end
 
 -- Linear search
 
-function linear_index(vector,obj)
+function linear_index(vector,key,field)
     local min,max
     if df.isvalid(vector) then
         min,max = 0,#vector-1
     else
         min,max = 1,#vector
     end
-    for i=min,max do
-        if vector[i] == obj then
-            return i
+    if field then
+        for i=min,max do
+            local obj = vector[i]
+            if obj[field] == key then
+                return i, obj
+            end
+        end
+    else
+        for i=min,max do
+            local obj = vector[i]
+            if obj == key then
+                return i, obj
+            end
         end
     end
     return nil
@@ -420,6 +457,7 @@ function getBuildingCenter(building)
     return xyz2pos(building.centerx, building.centery, building.z)
 end
 
+-- Split the string by the given delimiter
 function split_string(self, delimiter)
     local result = { }
     local from  = 1

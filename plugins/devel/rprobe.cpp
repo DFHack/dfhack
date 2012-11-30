@@ -67,10 +67,10 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
 
     // Embark screen active: estimate using world geology data
     VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, Core::getTopViewscreen());
-	
-	if (!screen) 
-		return CR_WRONG_USAGE;
-	
+
+    if (!screen)
+        return CR_WRONG_USAGE;
+
     if (!world || !world->world_data)
     {
         out.printerr("World data is not available.\n");
@@ -78,9 +78,9 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
     }
 
 
-    if (parameters.size() == 2) 
+    if (parameters.size() == 2)
     {
-        if (parameters[0] == "rai") 
+        if (parameters[0] == "rai")
             set_field = 0;
         else if (parameters[0] == "veg")
             set_field = 1;
@@ -97,7 +97,7 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
         else
             return CR_WRONG_USAGE;
 
-        if (screen->biome_highlighted) 
+        if (screen->biome_highlighted)
             to_set = screen->biome_idx;
         else
             to_set = 0;
@@ -110,7 +110,7 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
     coord2d cur_region = screen->region_pos;
 
     // Compute biomes
-    for (int i = 0; i < screen->biome_rgn.size(); i++) 
+    for (int i = 0; i < screen->biome_rgn.size(); i++)
     {
         coord2d rg = screen->biome_rgn[i];
 
@@ -140,7 +140,7 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
             " geo_index: " << rd->geo_index <<
             " landmass_id: " << rd->landmass_id <<
             " flags: " << hex << rd->flags.as_int() << dec << endl;
-        out << 
+        out <<
             "rai: " << rd->rainfall << " " <<
             "veg: " << rd->vegetation << " " <<
             "tem: " << rd->temperature << " " <<
@@ -148,17 +148,17 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
             "dra: " << rd->drainage << " " <<
             "sav: " << rd->savagery << " " <<
             "sal: " << rd->salinity;
-            
+
         int32_t *p = (int32_t *)rd;
         int c = sizeof(*rd) / sizeof(int32_t);
         for (int j = 0; j < c; j++) {
-            if (j % 8 == 0) 
+            if (j % 8 == 0)
             out << endl << setfill('0') << setw(8) << hex << (int)(rd+j) << ": ";
             out << " " << setfill('0') << setw(8) << hex << p[j];
         }
         out << setfill(' ') << setw(0) << dec << endl;
 
     }
-    
+
     return CR_OK;
 }

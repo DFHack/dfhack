@@ -81,6 +81,55 @@ namespace DFHack
         int &ival(int i) { return int_values[i]; }
         int ival(int i) const { return int_values[i]; }
 
+        // Pack binary data into string field.
+        // Since DF serialization chokes on NUL bytes,
+        // use bit magic to ensure none of the bytes is 0.
+        // Choose the lowest bit for padding so that
+        // sign-extend can be used normally.
+
+        size_t data_size() const { return str_value->size(); }
+
+        bool check_data(size_t off, size_t sz = 1) {
+            return (str_value->size() >= off+sz);
+        }
+        void ensure_data(size_t off, size_t sz = 0) {
+            if (str_value->size() < off+sz) str_value->resize(off+sz, '\x01');
+        }
+        uint8_t *pdata(size_t off) { return (uint8_t*)&(*str_value)[off]; }
+
+        static const size_t int7_size = 1;
+        uint8_t get_uint7(size_t off) {
+            uint8_t *p = pdata(off);
+            return p[0]>>1;
+        }
+        int8_t get_int7(size_t off) {
+            uint8_t *p = pdata(off);
+            return int8_t(p[0])>>1;
+        }
+        void set_uint7(size_t off, uint8_t val) {
+            uint8_t *p = pdata(off);
+            p[0] = uint8_t((val<<1) | 1);
+        }
+        void set_int7(size_t off, int8_t val) { set_uint7(off, val); }
+
+        static const size_t int28_size = 4;
+        uint32_t get_uint28(size_t off) {
+            uint8_t *p = pdata(off);
+            return (p[0]>>1) | ((p[1]&~1U)<<6) | ((p[2]&~1U)<<13) | ((p[3]&~1U)<<20);
+        }
+        int32_t get_int28(size_t off) {
+            uint8_t *p = pdata(off);
+            return (p[0]>>1) | ((p[1]&~1U)<<6) | ((p[2]&~1U)<<13) | ((int8_t(p[3])&~1)<<20);
+        }
+        void set_uint28(size_t off, uint32_t val) {
+            uint8_t *p = pdata(off);
+            p[0] = uint8_t((val<<1) | 1);
+            p[1] = uint8_t((val>>6) | 1);
+            p[2] = uint8_t((val>>13) | 1);
+            p[3] = uint8_t((val>>20) | 1);
+        }
+        void set_int28(size_t off, int32_t val) { set_uint28(off, val); }
+
         PersistentDataItem() : id(0), str_value(0), int_values(0) {}
         PersistentDataItem(int id, const std::string &key, std::string *sv, int *iv)
             : id(id), key_value(key), str_value(sv), int_values(iv) {}

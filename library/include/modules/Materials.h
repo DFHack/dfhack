@@ -338,10 +338,10 @@ namespace DFHack
      */
     struct t_material
     {
-        t_itemType itemType;
-        t_itemSubtype subType;
-        t_materialType material;
-        t_materialIndex index;
+        t_itemType item_type;
+        t_itemSubtype item_subtype;
+        t_materialType mat_type;
+        t_materialIndex mat_index;
         uint32_t flags;
     };
     /**

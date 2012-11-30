@@ -375,7 +375,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                           "  reload PLUGIN|all     - Reload a plugin or all loaded plugins.\n"
                          );
 
-				con.print("\nDFHack version " DFHACK_VERSION ".\n");
+                con.print("\nDFHack version " DFHACK_VERSION ".\n");
             }
             else if (parts.size() == 1)
             {
@@ -747,13 +747,13 @@ void fIOthread(void * iodata)
         else if(ret)
         {
             // a proper, non-empty command was entered
-			fprintf(stderr,"Adding command to history\n");
+            fprintf(stderr,"Adding command to history\n");
             main_history.add(command);
-			fprintf(stderr,"Saving history\n");
+            fprintf(stderr,"Saving history\n");
             main_history.save("dfhack.history");
         }
         
-		fprintf(stderr,"Running command\n");
+        fprintf(stderr,"Running command\n");
 
         auto rv = core->runCommand(con, command);
 
@@ -869,7 +869,6 @@ bool Core::Init()
 
     // Init global object pointers
     df::global::InitGlobals();
-    init_screen_module(this);
 
     cerr << "Initializing Console.\n";
     // init the console.
@@ -895,6 +894,7 @@ bool Core::Init()
     */
     // initialize data defs
     virtual_identity::Init(this);
+    init_screen_module(this);
 
     // initialize common lua context
     Lua::Core::Init(con);
@@ -1615,15 +1615,27 @@ void ClassNameCheck::getKnownClassNames(std::vector<std::string> &names)
         names.push_back(*it);
 }
 
-bool Process::patchMemory(void *target, const void* src, size_t count)
+MemoryPatcher::MemoryPatcher(Process *p_) : p(p_)
+{
+    if (!p)
+        p = Core::getInstance().p;
+}
+
+MemoryPatcher::~MemoryPatcher()
+{
+    close();
+}
+
+bool MemoryPatcher::verifyAccess(void *target, size_t count, bool write)
 {
     uint8_t *sptr = (uint8_t*)target;
     uint8_t *eptr = sptr + count;
 
     // Find the valid memory ranges
-    std::vector<t_memrange> ranges;
-    getMemRanges(ranges);
+    if (ranges.empty())
+        p->getMemRanges(ranges);
 
+    // Find the ranges that this area spans
     unsigned start = 0;
     while (start < ranges.size() && ranges[start].end <= sptr)
         start++;
@@ -1646,23 +1658,45 @@ bool Process::patchMemory(void *target, const void* src, size_t count)
             return false;
 
     // Apply writable permissions & update
-    bool ok = true;
-
-    for (unsigned i = start; i < end && ok; i++)
+    for (unsigned i = start; i < end; i++)
     {
-        t_memrange perms = ranges[i];
+        auto &perms = ranges[i];
+        if ((perms.write || !write) && perms.read)
+            continue;
+
+        save.push_back(perms);
         perms.write = perms.read = true;
-        if (!setPermisions(perms, perms))
-            ok = false;
+        if (!p->setPermisions(perms, perms))
+            return false;
     }
 
-    if (ok)
-        memmove(target, src, count);
+    return true;
+}
 
-    for (unsigned i = start; i < end && ok; i++)
-        setPermisions(ranges[i], ranges[i]);
+bool MemoryPatcher::write(void *target, const void *src, size_t size)
+{
+    if (!makeWritable(target, size))
+        return false;
 
-    return ok;
+    memmove(target, src, size);
+    return true;
+}
+
+void MemoryPatcher::close()
+{
+    for (size_t i  = 0; i < save.size(); i++)
+        p->setPermisions(save[i], save[i]);
+
+    save.clear();
+    ranges.clear();
+};
+
+
+bool Process::patchMemory(void *target, const void* src, size_t count)
+{
+    MemoryPatcher patcher(this);
+
+    return patcher.write(target, src, count);
 }
 
 /*******************************************************************************

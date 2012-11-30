@@ -60,6 +60,7 @@ Panel = defclass(Panel, Widget)
 
 Panel.ATTRS {
     on_render = DEFAULT_NIL,
+    on_layout = DEFAULT_NIL,
 }
 
 function Panel:init(args)
@@ -68,6 +69,10 @@ end
 
 function Panel:onRenderBody(dc)
     if self.on_render then self.on_render(dc) end
+end
+
+function Panel:postComputeFrame(body)
+    if self.on_layout then self.on_layout(body) end
 end
 
 -----------
@@ -216,7 +221,7 @@ local function is_disabled(token)
            (token.enabled ~= nil and not getval(token.enabled))
 end
 
-function render_text(obj,dc,x0,y0,pen,dpen)
+function render_text(obj,dc,x0,y0,pen,dpen,disabled)
     local width = 0
     for iline,line in ipairs(obj.text_lines) do
         local x = 0
@@ -242,20 +247,37 @@ function render_text(obj,dc,x0,y0,pen,dpen)
             end
 
             if token.text or token.key then
-                local text = getval(token.text) or ''
+                local text = ''..(getval(token.text) or '')
                 local keypen
 
                 if dc then
-                    if is_disabled(token) then
-                        dc:pen(getval(token.dpen) or dpen)
+                    local tpen = getval(token.pen)
+                    if disabled or is_disabled(token) then
+                        dc:pen(getval(token.dpen) or tpen or dpen)
                         keypen = COLOR_GREEN
                     else
-                        dc:pen(getval(token.pen) or pen)
+                        dc:pen(tpen or pen)
                         keypen = COLOR_LIGHTGREEN
                     end
                 end
 
-                x = x + #text
+                local width = getval(token.width)
+                local padstr
+                if width then
+                    x = x + width
+                    if #text > width then
+                        text = string.sub(text,1,width)
+                    else
+                        if token.pad_char then
+                            padstr = string.rep(token.pad_char,width-#text)
+                        end
+                        if dc and token.rjustify then
+                            if padstr then dc:string(padstr) else dc:advance(width-#text) end
+                        end
+                    end
+                else
+                    x = x + #text
+                end
 
                 if token.key then
                     local keystr = gui.getKeyDisplay(token.key)
@@ -279,6 +301,10 @@ function render_text(obj,dc,x0,y0,pen,dpen)
                     if dc then
                         dc:string(text)
                     end
+                end
+
+                if width and dc and not token.rjustify then
+                    if padstr then dc:string(padstr) else dc:advance(width-#text) end
                 end
             end
 
@@ -305,6 +331,8 @@ Label = defclass(Label, Widget)
 Label.ATTRS{
     text_pen = COLOR_WHITE,
     text_dpen = COLOR_DARKGREY,
+    disabled = DEFAULT_NIL,
+    enabled = DEFAULT_NIL,
     auto_height = true,
     auto_width = false,
 }
@@ -346,11 +374,13 @@ function Label:getTextWidth()
 end
 
 function Label:onRenderBody(dc)
-    render_text(self,dc,0,0,self.text_pen,self.text_dpen)
+    render_text(self,dc,0,0,self.text_pen,self.text_dpen,is_disabled(self))
 end
 
 function Label:onInput(keys)
-    return check_text_keys(self, keys)
+    if not is_disabled(self) then
+        return check_text_keys(self, keys)
+    end
 end
 
 ----------
@@ -376,10 +406,10 @@ SECONDSCROLL = {
 List.ATTRS{
     text_pen = COLOR_CYAN,
     cursor_pen = COLOR_LIGHTCYAN,
-    cursor_dpen = DEFAULT_NIL,
     inactive_pen = DEFAULT_NIL,
     on_select = DEFAULT_NIL,
     on_submit = DEFAULT_NIL,
+    on_submit2 = DEFAULT_NIL,
     row_height = 1,
     scroll_keys = STANDARDSCROLL,
     icon_width = DEFAULT_NIL,
@@ -417,7 +447,9 @@ function List:getChoices()
 end
 
 function List:getSelected()
-    return self.selected, self.choices[self.selected]
+    if #self.choices > 0 then
+        return self.selected, self.choices[self.selected]
+    end
 end
 
 function List:getContentWidth()
@@ -482,37 +514,50 @@ function List:onRenderBody(dc)
     local iend = math.min(#choices, top+self.page_size-1)
     local iw = self.icon_width
 
+    local function paint_icon(icon, obj)
+        if type(icon) ~= 'string' then
+            dc:char(nil,icon)
+        else
+            if current then
+                dc:string(icon, obj.icon_pen or self.icon_pen or cur_pen)
+            else
+                dc:string(icon, obj.icon_pen or self.icon_pen or cur_dpen)
+            end
+        end
+    end
+
     for i = top,iend do
         local obj = choices[i]
         local current = (i == self.selected)
-        local cur_pen = self.text_pen
-        local cur_dpen = cur_pen
+        local cur_pen = self.cursor_pen
+        local cur_dpen = self.text_pen
 
-        if current and active then
-            cur_pen = self.cursor_pen
-            cur_dpen = self.cursor_dpen or self.text_pen
-        elseif current then
+        if not self.active then
             cur_pen = self.inactive_pen or self.cursor_pen
-            cur_dpen = self.inactive_pen or self.text_pen
         end
 
         local y = (i - top)*self.row_height
+        local icon = getval(obj.icon)
 
-        if iw and obj.icon then
+        if iw and icon then
             dc:seek(0, y)
-            if type(obj.icon) == 'table' then
-                dc:char(nil,obj.icon)
-            else
-                dc:string(obj.icon, obj.icon_pen or cur_pen)
-            end
+            paint_icon(icon, obj)
         end
 
-        render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen)
+        render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen, not current)
+
+        local ip = dc.width
 
         if obj.key then
             local keystr = gui.getKeyDisplay(obj.key)
-            dc:seek(dc.width-2-#keystr,y):pen(self.text_pen)
+            ip = ip-2-#keystr
+            dc:seek(ip,y):pen(self.text_pen)
             dc:string('('):string(keystr,COLOR_LIGHTGREEN):string(')')
+        end
+
+        if icon and not iw then
+            dc:seek(ip-1,y)
+            paint_icon(icon, obj)
         end
     end
 end
@@ -523,9 +568,18 @@ function List:submit()
     end
 end
 
+function List:submit2()
+    if self.on_submit2 and #self.choices > 0 then
+        self.on_submit2(self:getSelected())
+    end
+end
+
 function List:onInput(keys)
     if self.on_submit and keys.SELECT then
         self:submit()
+        return true
+    elseif self.on_submit2 and keys.SEC_SELECT then
+        self:submit2()
         return true
     else
         for k,v in pairs(self.scroll_keys) do
@@ -562,10 +616,14 @@ end
 
 FilteredList = defclass(FilteredList, Widget)
 
+FilteredList.ATTRS {
+    edit_below = false,
+}
+
 function FilteredList:init(info)
     self.edit = EditField{
-        text_pen = info.cursor_pen,
-        frame = { l = info.icon_width, t = 0 },
+        text_pen = info.edit_pen or info.cursor_pen,
+        frame = { l = info.icon_width, t = 0, h = 1 },
         on_change = self:callback('onFilterChange'),
         on_char = self:callback('onFilterChar'),
     }
@@ -574,10 +632,15 @@ function FilteredList:init(info)
         text_pen = info.text_pen,
         cursor_pen = info.cursor_pen,
         inactive_pen = info.inactive_pen,
+        icon_pen = info.icon_pen,
         row_height = info.row_height,
         scroll_keys = info.scroll_keys,
         icon_width = info.icon_width,
     }
+    if self.edit_below then
+        self.edit.frame = { l = info.icon_width, b = 0, h = 1 }
+        self.list.frame = { t = 0, b = 2 }
+    end
     if info.on_select then
         self.list.on_select = function()
             return info.on_select(self:getSelected())
@@ -588,11 +651,16 @@ function FilteredList:init(info)
             return info.on_submit(self:getSelected())
         end
     end
+    if info.on_submit2 then
+        self.list.on_submit2 = function()
+            return info.on_submit2(self:getSelected())
+        end
+    end
     self.not_found = Label{
         visible = false,
         text = info.not_found_label or 'No matches',
         text_pen = COLOR_LIGHTRED,
-        frame = { l = info.icon_width, t = 2 },
+        frame = { l = info.icon_width, t = self.list.frame.t },
     }
     self:addviews{ self.edit, self.list, self.not_found }
     self:setChoices(info.choices, info.selected)
@@ -614,13 +682,19 @@ function FilteredList:submit()
     return self.list:submit()
 end
 
+function FilteredList:submit2()
+    return self.list:submit2()
+end
+
 function FilteredList:canSubmit()
     return not self.not_found.visible
 end
 
 function FilteredList:getSelected()
     local i,v = self.list:getSelected()
-    return map_opttab(self.choice_index, i), v
+    if i then
+        return map_opttab(self.choice_index, i), v
+    end
 end
 
 function FilteredList:getContentWidth()

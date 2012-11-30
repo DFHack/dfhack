@@ -36,10 +36,14 @@ distribution.
 
 namespace DFHack {
     class function_identity_base;
+    struct MaterialInfo;
 
     namespace Units {
         struct NoblePosition;
     }
+    namespace Screen {
+        struct Pen;
+    };
 }
 
 namespace DFHack {namespace Lua {
@@ -283,6 +287,8 @@ namespace DFHack {namespace Lua {
     DFHACK_EXPORT void Push(lua_State *state, df::coord obj);
     DFHACK_EXPORT void Push(lua_State *state, df::coord2d obj);
     void Push(lua_State *state, const Units::NoblePosition &pos);
+    DFHACK_EXPORT void Push(lua_State *state, MaterialInfo &info);
+    DFHACK_EXPORT void Push(lua_State *state, const Screen::Pen &info);
     template<class T> inline void Push(lua_State *state, T *ptr) {
         PushDFObject(state, ptr);
     }
@@ -312,6 +318,8 @@ namespace DFHack {namespace Lua {
 
     DFHACK_EXPORT int PushPosXYZ(lua_State *state, df::coord pos);
     DFHACK_EXPORT int PushPosXY(lua_State *state, df::coord2d pos);
+
+    DFHACK_EXPORT void CheckPen(lua_State *L, Screen::Pen *pen, int index, bool allow_nil = false, bool allow_color = true);
 
     DFHACK_EXPORT bool IsCoreContext(lua_State *state);
 
@@ -472,3 +480,18 @@ namespace DFHack {namespace Lua {
             name##_event.invoke(out, 5); \
         } \
     }
+
+#define DEFINE_LUA_EVENT_6(name, handler, arg_type1, arg_type2, arg_type3, arg_type4, arg_type5,arg_type6) \
+    static DFHack::Lua::Notification name##_event(df::wrap_function(handler, true)); \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4,arg_type5 arg5, arg_type6 arg6) { \
+    handler(out, arg1, arg2, arg3, arg4, arg5, arg6); \
+    if (auto state = name##_event.state_if_count()) { \
+    DFHack::Lua::Push(state, arg1); \
+    DFHack::Lua::Push(state, arg2); \
+    DFHack::Lua::Push(state, arg3); \
+    DFHack::Lua::Push(state, arg4); \
+    DFHack::Lua::Push(state, arg5); \
+    DFHack::Lua::Push(state, arg6); \
+    name##_event.invoke(out, 6); \
+    } \
+}

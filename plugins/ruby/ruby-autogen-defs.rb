@@ -138,7 +138,6 @@ module DFHack
             @@inspecting = {} # avoid infinite recursion on mutually-referenced objects
             def inspect
                 cn = self.class.name.sub(/^DFHack::/, '')
-                cn << ' @' << ('0x%X' % _memaddr) if cn != ''
                 out = "#<#{cn}"
                 return out << ' ...>' if @@inspecting[_memaddr]
                 @@inspecting[_memaddr] = true
@@ -181,7 +180,8 @@ module DFHack
                 @nume ||= const_get(:NUME)
             end
 
-            def self.int(i)
+            def self.int(i, allow_bad_sym=false)
+                raise ArgumentError, "invalid enum member #{i} of #{self}" if i.kind_of?(::Symbol) and not allow_bad_sym and not nume.has_key?(i)
                 nume[i] || i
             end
             def self.sym(i)
@@ -308,7 +308,7 @@ module DFHack
                         DFHack.memory_write_int32(@_memaddr, v)
                     end
                 when nil;       DFHack.memory_write_int32(@_memaddr, 0)
-                else _get._set(v)
+                else @_tg._at(_getp)._set(v)
                 end
             end
 
@@ -654,6 +654,13 @@ module DFHack
                     DFHack.memory_bitarray_set(@_memaddr, idx, v)
                 end
             end
+            def inspect
+                out = "#<DfFlagarray"
+                each_with_index { |e, idx|
+                    out << " #{_indexenum.sym(idx)}" if e
+                }
+                out << '>'
+            end
 
             include Enumerable
         end
@@ -797,7 +804,6 @@ module DFHack
         def isset(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
-            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_isset(@_memaddr, key)
         end
         alias is_set? isset
@@ -805,14 +811,12 @@ module DFHack
         def set(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
-            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_set(@_memaddr, key)
         end
 
         def delete(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
-            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_deletekey(@_memaddr, key)
         end
 

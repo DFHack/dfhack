@@ -373,10 +373,8 @@ function DwarfOverlay:simulateCursorMovement(keys, anchor)
     end
 end
 
-function DwarfOverlay:onAboutToShow(below)
-    local screen = dfhack.gui.getCurViewscreen()
-    if below then screen = below.parent end
-    if not df.viewscreen_dwarfmodest:is_instance(screen) then
+function DwarfOverlay:onAboutToShow(parent)
+    if not df.viewscreen_dwarfmodest:is_instance(parent) then
         error("This screen requires the main dwarfmode view")
     end
 end

@@ -41,7 +41,7 @@ namespace DFHack
         struct
         {
             //Maybe should add 'up' and 'down' for Z-levels?
-            unsigned char	north,south,west,east;
+            unsigned char north,south,west,east;
         };
 
         inline TileDirection()
@@ -201,6 +201,12 @@ namespace DFHack
     bool FlowPassable(df::tiletype tiletype)
     {
         return ENUM_ATTR(tiletype_shape, passable_flow, tileShape(tiletype));
+    }
+
+    inline
+    bool FlowPassableDown(df::tiletype tiletype)
+    {
+        return ENUM_ATTR(tiletype_shape, passable_flow_down, tileShape(tiletype));
     }
 
     inline

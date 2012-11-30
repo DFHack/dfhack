@@ -29,7 +29,18 @@ class AutoFarm
 	
 	def find_plantable_plants
 		plantable = {}
-		for i in 0..df.ui.tasks.known_plants.length-1
+		counts = {}
+		
+		df.world.items.other[:SEEDS].each { |i|
+			if (!i.flags.dump && !i.flags.forbid && !i.flags.garbage_collect &&
+				!i.flags.hostile && !i.flags.on_fire && !i.flags.rotten &&
+				!i.flags.trader && !i.flags.in_building && !i.flags.construction &&
+				!i.flags.artifact1 && plantable.has_key? (i.mat_index))
+				counts[i.mat_index] = counts[i.mat_index] + i.stack_size
+			end
+		}
+
+		counts.keys.each { |i|
 			if df.ui.tasks.known_plants[i]
 				plant = df.world.raws.plants.all[i]
 				if is_plantable(plant)
@@ -37,7 +48,8 @@ class AutoFarm
 					plantable[i] = :Underground if (plant.underground_depth_min > 0 || plant.underground_depth_max > 0)
 				end
 			end
-		end
+		}
+		
 		return plantable
 	end
 	

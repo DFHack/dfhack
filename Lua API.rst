@@ -2710,6 +2710,16 @@ containing newlines, or a table with the following possible fields:
 
   Specifies a pen to paint as one tile before the main part of the token.
 
+* ``token.width = ...``
+
+  If specified either as a value or a callback, the text field is padded
+  or truncated to the specified number.
+
+* ``token.pad_char = '?'``
+
+  If specified together with ``width``, the padding area is filled with
+  this character instead of just being skipped over.
+
 * ``token.key = '...'``
 
   Specifies the keycode associated with the token. The string description
@@ -2842,6 +2852,7 @@ In addition to passing through all attributes supported by List, it
 supports:
 
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
+:edit_below: If true, the edit field is placed below the list instead of above.
 :not_found_label: Specifies the text of the label shown when no items match the filter.
 
 The list choices may include the following attributes:

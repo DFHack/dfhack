@@ -47,7 +47,9 @@ using namespace std;
 #include "modules/MapCache.h"
 #include "modules/Buildings.h"
 #include "modules/World.h"
+#include "modules/Screen.h"
 #include "MiscUtils.h"
+#include <VTableInterpose.h>
 
 #include <df/ui.h>
 #include "df/world.h"
@@ -60,6 +62,8 @@ using namespace std;
 #include "df/general_ref_building_civzone_assignedst.h"
 #include <df/creature_raw.h>
 #include <df/caste_raw.h>
+#include "df/viewscreen_dwarfmodest.h"
+#include "modules/Translation.h"
 
 using std::vector;
 using std::string;
@@ -68,6 +72,8 @@ using namespace df::enums;
 using df::global::world;
 using df::global::cursor;
 using df::global::ui;
+using df::global::ui_build_selector;
+using df::global::gps;
 
 using namespace DFHack::Gui;
 
@@ -238,34 +244,6 @@ command_result init_autonestbox(color_ostream &out);
 command_result cleanup_autonestbox(color_ostream &out);
 command_result start_autonestbox(color_ostream &out);
 
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
-{
-    commands.push_back(PluginCommand(
-        "zone", "manage activity zones.",
-        df_zone, false,
-        zone_help.c_str()
-        ));
-    commands.push_back(PluginCommand(
-        "autonestbox", "auto-assign nestbox zones.",
-        df_autonestbox, false,
-        autonestbox_help.c_str()
-        ));
-    commands.push_back(PluginCommand(
-        "autobutcher", "auto-assign lifestock for butchering.",
-        df_autobutcher, false,
-        autobutcher_help.c_str()
-        ));
-    init_autobutcher(out);
-    init_autonestbox(out);
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
-    cleanup_autobutcher(out);
-    cleanup_autonestbox(out);
-    return CR_OK;
-}
 
 ///////////////
 // stuff for autonestbox and autobutcher
@@ -1016,6 +994,22 @@ bool isAssigned(df::unit* unit)
             || rtype == df::general_ref_type::BUILDING_CHAIN
             || (rtype == df::general_ref_type::CONTAINED_IN_ITEM && isInBuiltCage(unit))
             )
+        {
+            assigned = true;
+            break;
+        }
+    }
+    return assigned;
+}
+
+bool isAssignedToZone(df::unit* unit)
+{
+    bool assigned = false;
+    for (size_t r=0; r < unit->refs.size(); r++)
+    {
+        df::general_ref * ref = unit->refs[r];
+        auto rtype = ref->getType();
+        if(rtype == df::general_ref_type::BUILDING_CIVZONE_ASSIGNED)
         {
             assigned = true;
             break;
@@ -3543,5 +3537,336 @@ command_result cleanup_autonestbox(color_ostream &out)
 {
     // nothing to cleanup currently
     // (future version of autonestbox could store info about cages for useless male kids)
+    return CR_OK;
+}
+
+
+//START zone filters
+using df::global::ui_building_item_cursor;
+using df::global::ui_building_assign_type;
+using df::global::ui_building_assign_is_marked;
+using df::global::ui_building_assign_units;
+using df::global::ui_building_assign_items;
+
+static const int ascii_to_enum_offset = interface_key::STRING_A048 - '0';
+
+void OutputString(int8_t color, int &x, int y, const std::string &text)
+{
+    Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
+    x += text.length();
+}
+
+class zone_filter
+{
+public:
+    zone_filter()
+    {
+        initialized = false;
+    }
+
+    void initialize(const df::ui_sidebar_mode &mode)
+    {
+        if (!initialized)
+        {
+            this->mode = mode;
+            saved_ui_building_assign_type.clear();
+            saved_ui_building_assign_units.clear();
+            saved_ui_building_assign_items.clear();
+            saved_ui_building_assign_is_marked.clear();
+            saved_indexes.clear();
+
+            for (size_t i = 0; i < ui_building_assign_units->size(); i++)
+            {
+                saved_ui_building_assign_type.push_back(ui_building_assign_type->at(i));
+                saved_ui_building_assign_units.push_back(ui_building_assign_units->at(i));
+                saved_ui_building_assign_items.push_back(ui_building_assign_items->at(i));
+                saved_ui_building_assign_is_marked.push_back(ui_building_assign_is_marked->at(i));
+            }
+
+            search_string.clear();
+            show_non_grazers = show_pastured = show_other_zones = true;
+            entry_mode = false;
+
+            initialized = true;
+        }
+    }
+
+    void deinitialize()
+    {
+        initialized = false;
+    }
+
+    void apply_filters()
+    {
+        if (saved_indexes.size() > 0)
+        {
+            bool list_has_been_sorted = (ui_building_assign_units->size() == reference_list.size()
+                && *ui_building_assign_units != reference_list);
+
+            for (size_t i = 0; i < saved_indexes.size(); i++)
+            {
+                int adjusted_item_index = i;
+                if (list_has_been_sorted)
+                {
+                    for (int j = 0; j < ui_building_assign_units->size(); j++)
+                    {
+                        if (ui_building_assign_units->at(j) == reference_list[i])
+                        {
+                            adjusted_item_index = j;
+                            break;
+                        }
+                    }
+                }
+
+                saved_ui_building_assign_is_marked[saved_indexes[i]] = ui_building_assign_is_marked->at(adjusted_item_index);
+            }
+        }
+        
+        string search_string_l = toLower(search_string);
+        saved_indexes.clear();
+        ui_building_assign_type->clear();
+        ui_building_assign_is_marked->clear();
+        ui_building_assign_units->clear();
+        ui_building_assign_items->clear();
+
+        for (size_t i = 0; i < saved_ui_building_assign_units.size(); i++)
+        {
+            df::unit *curr_unit = saved_ui_building_assign_units[i];
+
+            if (!curr_unit)
+                continue;
+
+            if (!show_non_grazers && !isGrazer(curr_unit))
+                continue;
+
+            if (!show_pastured && isAssignedToZone(curr_unit))
+                continue;
+
+            if (!search_string_l.empty())
+            {
+                string desc = Translation::TranslateName(
+                    Units::getVisibleName(curr_unit), false);
+
+                desc += Units::getProfessionName(curr_unit);
+                desc = toLower(desc);
+
+                if (desc.find(search_string_l) == string::npos)
+                    continue;
+            }
+
+            ui_building_assign_type->push_back(saved_ui_building_assign_type[i]);
+            ui_building_assign_units->push_back(curr_unit);
+            ui_building_assign_items->push_back(saved_ui_building_assign_items[i]);
+            ui_building_assign_is_marked->push_back(saved_ui_building_assign_is_marked[i]);
+
+            saved_indexes.push_back(i); // Used to map filtered indexes back to original, if needed
+        }
+
+        reference_list = *ui_building_assign_units;
+        *ui_building_item_cursor = 0;
+    }
+
+    bool handle_input(const set<df::interface_key> *input)
+    {
+        if (!initialized)
+            return false;
+
+        bool key_processed = true;
+
+        if (entry_mode)
+        {
+            // Query typing mode
+
+            if  (input->count(interface_key::SECONDSCROLL_UP) || input->count(interface_key::SECONDSCROLL_DOWN) ||
+                input->count(interface_key::SECONDSCROLL_PAGEUP) || input->count(interface_key::SECONDSCROLL_PAGEDOWN))
+            {
+                // Arrow key pressed. Leave entry mode and allow screen to process key
+                entry_mode = false;
+                return false;
+            }
+
+            df::interface_key last_token = *input->rbegin();
+            if (last_token >= interface_key::STRING_A032 && last_token <= interface_key::STRING_A126)
+            {
+                // Standard character
+                search_string += last_token - ascii_to_enum_offset;
+                apply_filters();
+            }
+            else if (last_token == interface_key::STRING_A000)
+            {
+                // Backspace
+                if (search_string.length() > 0)
+                {
+                    search_string.erase(search_string.length()-1);
+                    apply_filters();
+                }
+            }
+            else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
+            {
+                // ENTER or ESC: leave typing mode
+                entry_mode = false;
+            }
+        }
+        // Not in query typing mode
+        else if (input->count(interface_key::CUSTOM_G) && mode == ui_sidebar_mode::ZonesPenInfo)
+        {
+            show_non_grazers = !show_non_grazers;
+            apply_filters();
+        }
+        else if (input->count(interface_key::CUSTOM_P) && mode == ui_sidebar_mode::ZonesPenInfo)
+        {
+            show_pastured = !show_pastured;
+            apply_filters();
+        }
+        else if (input->count(interface_key::CUSTOM_S))
+        {
+            // Hotkey pressed, enter typing mode
+            entry_mode = true;
+        }
+        else if (input->count(interface_key::CUSTOM_SHIFT_S))
+        {
+            // Shift + Hotkey pressed, clear query
+            search_string.clear();
+            apply_filters();
+        }
+        else
+        {
+            // Not a key for us, pass it on to the screen
+            key_processed = false;
+        }
+
+        return key_processed || entry_mode; // Only pass unrecognized keys down if not in typing mode
+    }
+
+    void do_render()
+    {
+        if (!initialized)
+            return;
+
+        int left_margin = gps->dimx - 30;
+        int8_t a = *df::global::ui_menu_width;
+        int8_t b = *df::global::ui_area_map_width;
+        if ((a == 1 && b > 1) || (a == 2 && b == 2))
+            left_margin -= 24;
+
+        int x = left_margin;
+        int y = 24;
+
+        OutputString(COLOR_BROWN, x, y, "DFHack Filtering");
+        x = left_margin;
+        ++y;
+        OutputString(COLOR_LIGHTGREEN, x, y, "s");
+        OutputString(COLOR_WHITE, x, y, ": Search");
+        if (!search_string.empty() || entry_mode)
+        {
+            OutputString(COLOR_WHITE, x, y, ": ");
+            if (!search_string.empty())
+                OutputString(COLOR_WHITE, x, y, search_string);
+            if (entry_mode)
+                OutputString(COLOR_LIGHTGREEN, x, y, "_");
+        }
+
+        if (mode == ui_sidebar_mode::ZonesPenInfo)
+        {
+            x = left_margin;
+            y += 2;
+            OutputString(COLOR_LIGHTGREEN, x, y, "g");
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString((show_non_grazers) ? COLOR_WHITE : COLOR_GREY, x, y, "Non-Grazing");
+
+            x = left_margin;
+            ++y;
+            OutputString(COLOR_LIGHTGREEN, x, y, "p");
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString((show_pastured) ? COLOR_WHITE : COLOR_GREY, x, y, "Currently Pastured");
+        }
+    }
+
+private:
+    df::ui_sidebar_mode mode;
+    string search_string;
+    bool initialized;
+    bool entry_mode;
+    bool show_non_grazers, show_pastured, show_other_zones;
+
+    std::vector<int8_t> saved_ui_building_assign_type;
+    std::vector<df::unit*> saved_ui_building_assign_units, reference_list;
+    std::vector<df::item*> saved_ui_building_assign_items;
+    std::vector<char> saved_ui_building_assign_is_marked;
+
+    vector <int> saved_indexes;
+
+};
+
+struct zone_hook : public df::viewscreen_dwarfmodest
+{
+    typedef df::viewscreen_dwarfmodest interpose_base;
+    static zone_filter filter;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        if (!filter.handle_input(input))
+            INTERPOSE_NEXT(feed)(input);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        if ((ui->main.mode == ui_sidebar_mode::ZonesPenInfo || ui->main.mode == ui_sidebar_mode::ZonesPitInfo) &&
+            ui_building_assign_type && ui_building_assign_units &&
+            ui_building_assign_is_marked && ui_building_assign_items &&
+            ui_building_assign_type->size() == ui_building_assign_units->size() &&
+            ui_building_item_cursor)
+        {
+            if (vector_get(*ui_building_assign_units, *ui_building_item_cursor))
+                filter.initialize(ui->main.mode);
+        }
+        else
+        {
+            filter.deinitialize();
+        }
+
+        INTERPOSE_NEXT(render)();
+
+        filter.do_render();
+
+    }
+};
+
+zone_filter zone_hook::filter;
+
+IMPLEMENT_VMETHOD_INTERPOSE(zone_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(zone_hook, render);
+//END zone filters
+
+
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
+{
+    if (!gps || !INTERPOSE_HOOK(zone_hook, feed).apply() || !INTERPOSE_HOOK(zone_hook, render).apply())
+        out.printerr("Could not insert jobutils hooks!\n");
+
+    commands.push_back(PluginCommand(
+        "zone", "manage activity zones.",
+        df_zone, false,
+        zone_help.c_str()
+        ));
+    commands.push_back(PluginCommand(
+        "autonestbox", "auto-assign nestbox zones.",
+        df_autonestbox, false,
+        autonestbox_help.c_str()
+        ));
+    commands.push_back(PluginCommand(
+        "autobutcher", "auto-assign lifestock for butchering.",
+        df_autobutcher, false,
+        autobutcher_help.c_str()
+        ));
+    init_autobutcher(out);
+    init_autonestbox(out);
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
+{
+    cleanup_autobutcher(out);
+    cleanup_autonestbox(out);
     return CR_OK;
 }

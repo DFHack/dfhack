@@ -18,10 +18,11 @@ class AutoFarm
 	end
 	
 	def is_plantable (plant)
+		has_seed = plant.flags[:SEED]
 		season = df.cur_season
 		harvest = df.cur_season_tick + plant.growdur * 10
 		will_finish =  harvest < 10080
-		can_plant = plant.flags[season]
+		can_plant = has_seed && plant.flags[season]
 		can_plant = can_plant && (will_finish || plant.flags[(season+1)%4])
 		can_plant
 	end

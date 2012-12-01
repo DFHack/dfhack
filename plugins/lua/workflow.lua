@@ -8,7 +8,7 @@ local utils = require 'utils'
 
  * isEnabled()
  * setEnabled(enable)
- * listConstraints([job[,with_history]]) -> {{...},...}
+ * listConstraints([job[,with_history] ]) -> {{...},...}
  * findConstraint(token) -> {...} or nil
  * setConstraint(token[, by_count, goal, gap]) -> {...}
  * deleteConstraint(token) -> true/false

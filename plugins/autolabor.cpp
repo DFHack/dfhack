@@ -50,7 +50,8 @@
 #include <df/reaction.h>
 #include <df/job_item.h>
 #include <df/job_item_ref.h>
-
+#include <df/unit_health_info.h>
+#include <df/unit_health_flags.h>
 
 #include <MiscUtils.h>
 
@@ -67,29 +68,29 @@ using df::global::world;
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
 /*
- * Autolabor module for dfhack
- *
- * The idea behind this module is to constantly adjust labors so that the right dwarves
- * are assigned to new tasks. The key is that, for almost all labors, once a dwarf begins
- * a job it will finish that job even if the associated labor is removed. Thus the
- * strategy is to frequently decide, for each labor, which dwarves should possibly take
- * a new job for that labor if it comes in and which shouldn't, and then set the labors
- * appropriately. The updating should happen as often as can be reasonably done without
- * causing lag.
- *
- * The obvious thing to do is to just set each labor on a single idle dwarf who is best
- * suited to doing new jobs of that labor. This works in a way, but it leads to a lot
- * of idle dwarves since only one dwarf will be dispatched for each labor in an update
- * cycle, and dwarves that finish tasks will wait for the next update before being
- * dispatched. An improvement is to also set some labors on dwarves that are currently
- * doing a job, so that they will immediately take a new job when they finish. The
- * details of which dwarves should have labors set is mostly a heuristic.
- *
- * A complication to the above simple scheme is labors that have associated equipment.
- * Enabling/disabling these labors causes dwarves to change equipment, and disabling
- * them in the middle of a job may cause the job to be abandoned. Those labors
- * (mining, hunting, and woodcutting) need to be handled carefully to minimize churn.
- */
+* Autolabor module for dfhack
+*
+* The idea behind this module is to constantly adjust labors so that the right dwarves
+* are assigned to new tasks. The key is that, for almost all labors, once a dwarf begins
+* a job it will finish that job even if the associated labor is removed. Thus the
+* strategy is to frequently decide, for each labor, which dwarves should possibly take
+* a new job for that labor if it comes in and which shouldn't, and then set the labors
+* appropriately. The updating should happen as often as can be reasonably done without
+* causing lag.
+*
+* The obvious thing to do is to just set each labor on a single idle dwarf who is best
+* suited to doing new jobs of that labor. This works in a way, but it leads to a lot
+* of idle dwarves since only one dwarf will be dispatched for each labor in an update
+* cycle, and dwarves that finish tasks will wait for the next update before being
+* dispatched. An improvement is to also set some labors on dwarves that are currently
+* doing a job, so that they will immediately take a new job when they finish. The
+* details of which dwarves should have labors set is mostly a heuristic.
+*
+* A complication to the above simple scheme is labors that have associated equipment.
+* Enabling/disabling these labors causes dwarves to change equipment, and disabling
+* them in the middle of a job may cause the job to be abandoned. Those labors
+* (mining, hunting, and woodcutting) need to be handled carefully to minimize churn.
+*/
 
 static int enable_autolabor = 0;
 
@@ -538,100 +539,610 @@ struct dwarf_info_t
             (labor == df::unit_labor::HUNT    && !has_crossbow))
             dwarf->military.pickup_flags.bits.update = 1;
     }
+
+    void clear_labor(df::unit_labor labor) 
+    {
+        dwarf->status.labors[labor] = false;
+        if ((labor == df::unit_labor::MINE    && has_pick) ||
+            (labor == df::unit_labor::CUTWOOD && has_axe) ||
+            (labor == df::unit_labor::HUNT    && has_crossbow))
+            dwarf->military.pickup_flags.bits.update = 1;
+    }
+
 };
 
 static df::unit_labor hauling_labor_map[] =
+{
+    df::unit_labor::HAUL_ITEM,	/* BAR */
+    df::unit_labor::HAUL_ITEM,	/* SMALLGEM */
+    df::unit_labor::HAUL_ITEM,	/* BLOCKS */
+    df::unit_labor::HAUL_ITEM,	/* ROUGH */
+    df::unit_labor::HAUL_STONE,	/* BOULDER */
+    df::unit_labor::HAUL_WOOD,	/* WOOD */
+    df::unit_labor::HAUL_FURNITURE,	/* DOOR */
+    df::unit_labor::HAUL_FURNITURE,	/* FLOODGATE */
+    df::unit_labor::HAUL_FURNITURE,	/* BED */
+    df::unit_labor::HAUL_FURNITURE,	/* CHAIR */
+    df::unit_labor::HAUL_ITEM,	/* CHAIN */
+    df::unit_labor::HAUL_ITEM,	/* FLASK */
+    df::unit_labor::HAUL_ITEM,	/* GOBLET */
+    df::unit_labor::HAUL_ITEM,	/* INSTRUMENT */
+    df::unit_labor::HAUL_ITEM,	/* TOY */
+    df::unit_labor::HAUL_FURNITURE,	/* WINDOW */
+    df::unit_labor::HAUL_ANIMAL,	/* CAGE */
+    df::unit_labor::HAUL_ITEM,	/* BARREL */
+    df::unit_labor::HAUL_ITEM,	/* BUCKET */
+    df::unit_labor::HAUL_ANIMAL,	/* ANIMALTRAP */
+    df::unit_labor::HAUL_FURNITURE,	/* TABLE */
+    df::unit_labor::HAUL_FURNITURE,	/* COFFIN */
+    df::unit_labor::HAUL_FURNITURE,	/* STATUE */
+    df::unit_labor::HAUL_BODY,	/* CORPSE */
+    df::unit_labor::HAUL_ITEM,	/* WEAPON */
+    df::unit_labor::HAUL_ITEM,	/* ARMOR */
+    df::unit_labor::HAUL_ITEM,	/* SHOES */
+    df::unit_labor::HAUL_ITEM,	/* SHIELD */
+    df::unit_labor::HAUL_ITEM,	/* HELM */
+    df::unit_labor::HAUL_ITEM,	/* GLOVES */
+    df::unit_labor::HAUL_FURNITURE,	/* BOX */
+    df::unit_labor::HAUL_ITEM,	/* BIN */
+    df::unit_labor::HAUL_FURNITURE,	/* ARMORSTAND */
+    df::unit_labor::HAUL_FURNITURE,	/* WEAPONRACK */
+    df::unit_labor::HAUL_FURNITURE,	/* CABINET */
+    df::unit_labor::HAUL_ITEM,	/* FIGURINE */
+    df::unit_labor::HAUL_ITEM,	/* AMULET */
+    df::unit_labor::HAUL_ITEM,	/* SCEPTER */
+    df::unit_labor::HAUL_ITEM,	/* AMMO */
+    df::unit_labor::HAUL_ITEM,	/* CROWN */
+    df::unit_labor::HAUL_ITEM,	/* RING */
+    df::unit_labor::HAUL_ITEM,	/* EARRING */
+    df::unit_labor::HAUL_ITEM,	/* BRACELET */
+    df::unit_labor::HAUL_ITEM,	/* GEM */
+    df::unit_labor::HAUL_FURNITURE,	/* ANVIL */
+    df::unit_labor::HAUL_BODY,	/* CORPSEPIECE */
+    df::unit_labor::HAUL_REFUSE,	/* REMAINS */
+    df::unit_labor::HAUL_FOOD,	/* MEAT */
+    df::unit_labor::HAUL_FOOD,	/* FISH */
+    df::unit_labor::HAUL_FOOD,	/* FISH_RAW */
+    df::unit_labor::HAUL_REFUSE,	/* VERMIN */
+    df::unit_labor::HAUL_ITEM,	/* PET */
+    df::unit_labor::HAUL_FOOD,	/* SEEDS */
+    df::unit_labor::HAUL_FOOD,	/* PLANT */
+    df::unit_labor::HAUL_ITEM,	/* SKIN_TANNED */
+    df::unit_labor::HAUL_FOOD,	/* LEAVES */
+    df::unit_labor::HAUL_ITEM,	/* THREAD */
+    df::unit_labor::HAUL_ITEM,	/* CLOTH */
+    df::unit_labor::HAUL_ITEM,	/* TOTEM */
+    df::unit_labor::HAUL_ITEM,	/* PANTS */
+    df::unit_labor::HAUL_ITEM,	/* BACKPACK */
+    df::unit_labor::HAUL_ITEM,	/* QUIVER */
+    df::unit_labor::HAUL_FURNITURE,	/* CATAPULTPARTS */
+    df::unit_labor::HAUL_FURNITURE,	/* BALLISTAPARTS */
+    df::unit_labor::HAUL_FURNITURE,	/* SIEGEAMMO */
+    df::unit_labor::HAUL_FURNITURE,	/* BALLISTAARROWHEAD */
+    df::unit_labor::HAUL_FURNITURE,	/* TRAPPARTS */
+    df::unit_labor::HAUL_FURNITURE,	/* TRAPCOMP */
+    df::unit_labor::HAUL_FOOD,	/* DRINK */
+    df::unit_labor::HAUL_FOOD,	/* POWDER_MISC */
+    df::unit_labor::HAUL_FOOD,	/* CHEESE */
+    df::unit_labor::HAUL_FOOD,	/* FOOD */
+    df::unit_labor::HAUL_FOOD,	/* LIQUID_MISC */
+    df::unit_labor::HAUL_ITEM,	/* COIN */
+    df::unit_labor::HAUL_FOOD,	/* GLOB */
+    df::unit_labor::HAUL_STONE,	/* ROCK */
+    df::unit_labor::HAUL_FURNITURE,	/* PIPE_SECTION */
+    df::unit_labor::HAUL_FURNITURE,	/* HATCH_COVER */
+    df::unit_labor::HAUL_FURNITURE,	/* GRATE */
+    df::unit_labor::HAUL_FURNITURE,	/* QUERN */
+    df::unit_labor::HAUL_FURNITURE,	/* MILLSTONE */
+    df::unit_labor::HAUL_ITEM,	/* SPLINT */
+    df::unit_labor::HAUL_ITEM,	/* CRUTCH */
+    df::unit_labor::HAUL_FURNITURE,	/* TRACTION_BENCH */
+    df::unit_labor::HAUL_ITEM,	/* ORTHOPEDIC_CAST */
+    df::unit_labor::HAUL_ITEM,	/* TOOL */
+    df::unit_labor::HAUL_FURNITURE,	/* SLAB */
+    df::unit_labor::HAUL_FOOD,	/* EGG */
+    df::unit_labor::HAUL_ITEM,	/* BOOK */
+};
+
+static df::unit_labor workshop_build_labor[] = 
+{
+    /* Carpenters */		df::unit_labor::CARPENTER,
+    /* Farmers */			df::unit_labor::HERBALIST,
+    /* Masons */			df::unit_labor::MASON,
+    /* Craftsdwarfs */		df::unit_labor::STONE_CRAFT,
+    /* Jewelers */			df::unit_labor::CUT_GEM,
+    /* MetalsmithsForge */	df::unit_labor::METAL_CRAFT,
+    /* MagmaForge */		df::unit_labor::METAL_CRAFT,
+    /* Bowyers */			df::unit_labor::BOWYER,
+    /* Mechanics */			df::unit_labor::MECHANIC,
+    /* Siege */				df::unit_labor::SIEGECRAFT,
+    /* Butchers */			df::unit_labor::BUTCHER,
+    /* Leatherworks */		df::unit_labor::LEATHER,
+    /* Tanners */			df::unit_labor::TANNER,
+    /* Clothiers */			df::unit_labor::CLOTHESMAKER,
+    /* Fishery */			df::unit_labor::FISH,
+    /* Still */				df::unit_labor::BREWER,
+    /* Loom */				df::unit_labor::WEAVER,
+    /* Quern */				df::unit_labor::MILLER,
+    /* Kennels */			df::unit_labor::ANIMALTRAIN,
+    /* Kitchen */			df::unit_labor::COOK,
+    /* Ashery */			df::unit_labor::LYE_MAKING,
+    /* Dyers */				df::unit_labor::DYER,
+    /* Millstone */			df::unit_labor::MILLER,
+    /* Custom */			df::unit_labor::NONE,
+    /* Tool */				df::unit_labor::NONE
+};
+
+static df::building* get_building_from_job(df::job* j)
+{
+    for (auto r = j->general_refs.begin(); r != j->general_refs.end(); r++)
     {
-        df::unit_labor::HAUL_ITEM,	/* BAR */
-        df::unit_labor::HAUL_ITEM,	/* SMALLGEM */
-        df::unit_labor::HAUL_ITEM,	/* BLOCKS */
-        df::unit_labor::HAUL_ITEM,	/* ROUGH */
-        df::unit_labor::HAUL_STONE,	/* BOULDER */
-        df::unit_labor::HAUL_WOOD,	/* WOOD */
-        df::unit_labor::HAUL_FURNITURE,	/* DOOR */
-        df::unit_labor::HAUL_FURNITURE,	/* FLOODGATE */
-        df::unit_labor::HAUL_FURNITURE,	/* BED */
-        df::unit_labor::HAUL_FURNITURE,	/* CHAIR */
-        df::unit_labor::HAUL_ITEM,	/* CHAIN */
-        df::unit_labor::HAUL_ITEM,	/* FLASK */
-        df::unit_labor::HAUL_ITEM,	/* GOBLET */
-        df::unit_labor::HAUL_ITEM,	/* INSTRUMENT */
-        df::unit_labor::HAUL_ITEM,	/* TOY */
-        df::unit_labor::HAUL_FURNITURE,	/* WINDOW */
-        df::unit_labor::HAUL_ANIMAL,	/* CAGE */
-        df::unit_labor::HAUL_ITEM,	/* BARREL */
-        df::unit_labor::HAUL_ITEM,	/* BUCKET */
-        df::unit_labor::HAUL_ANIMAL,	/* ANIMALTRAP */
-        df::unit_labor::HAUL_FURNITURE,	/* TABLE */
-        df::unit_labor::HAUL_FURNITURE,	/* COFFIN */
-        df::unit_labor::HAUL_FURNITURE,	/* STATUE */
-        df::unit_labor::HAUL_BODY,	/* CORPSE */
-        df::unit_labor::HAUL_ITEM,	/* WEAPON */
-        df::unit_labor::HAUL_ITEM,	/* ARMOR */
-        df::unit_labor::HAUL_ITEM,	/* SHOES */
-        df::unit_labor::HAUL_ITEM,	/* SHIELD */
-        df::unit_labor::HAUL_ITEM,	/* HELM */
-        df::unit_labor::HAUL_ITEM,	/* GLOVES */
-        df::unit_labor::HAUL_FURNITURE,	/* BOX */
-        df::unit_labor::HAUL_ITEM,	/* BIN */
-        df::unit_labor::HAUL_FURNITURE,	/* ARMORSTAND */
-        df::unit_labor::HAUL_FURNITURE,	/* WEAPONRACK */
-        df::unit_labor::HAUL_FURNITURE,	/* CABINET */
-        df::unit_labor::HAUL_ITEM,	/* FIGURINE */
-        df::unit_labor::HAUL_ITEM,	/* AMULET */
-        df::unit_labor::HAUL_ITEM,	/* SCEPTER */
-        df::unit_labor::HAUL_ITEM,	/* AMMO */
-        df::unit_labor::HAUL_ITEM,	/* CROWN */
-        df::unit_labor::HAUL_ITEM,	/* RING */
-        df::unit_labor::HAUL_ITEM,	/* EARRING */
-        df::unit_labor::HAUL_ITEM,	/* BRACELET */
-        df::unit_labor::HAUL_ITEM,	/* GEM */
-        df::unit_labor::HAUL_FURNITURE,	/* ANVIL */
-        df::unit_labor::HAUL_BODY,	/* CORPSEPIECE */
-        df::unit_labor::HAUL_REFUSE,	/* REMAINS */
-        df::unit_labor::HAUL_FOOD,	/* MEAT */
-        df::unit_labor::HAUL_FOOD,	/* FISH */
-        df::unit_labor::HAUL_FOOD,	/* FISH_RAW */
-        df::unit_labor::HAUL_REFUSE,	/* VERMIN */
-        df::unit_labor::HAUL_ITEM,	/* PET */
-        df::unit_labor::HAUL_FOOD,	/* SEEDS */
-        df::unit_labor::HAUL_FOOD,	/* PLANT */
-        df::unit_labor::HAUL_ITEM,	/* SKIN_TANNED */
-        df::unit_labor::HAUL_FOOD,	/* LEAVES */
-        df::unit_labor::HAUL_ITEM,	/* THREAD */
-        df::unit_labor::HAUL_ITEM,	/* CLOTH */
-        df::unit_labor::HAUL_ITEM,	/* TOTEM */
-        df::unit_labor::HAUL_ITEM,	/* PANTS */
-        df::unit_labor::HAUL_ITEM,	/* BACKPACK */
-        df::unit_labor::HAUL_ITEM,	/* QUIVER */
-        df::unit_labor::HAUL_FURNITURE,	/* CATAPULTPARTS */
-        df::unit_labor::HAUL_FURNITURE,	/* BALLISTAPARTS */
-        df::unit_labor::HAUL_FURNITURE,	/* SIEGEAMMO */
-        df::unit_labor::HAUL_FURNITURE,	/* BALLISTAARROWHEAD */
-        df::unit_labor::HAUL_FURNITURE,	/* TRAPPARTS */
-        df::unit_labor::HAUL_FURNITURE,	/* TRAPCOMP */
-        df::unit_labor::HAUL_FOOD,	/* DRINK */
-        df::unit_labor::HAUL_FOOD,	/* POWDER_MISC */
-        df::unit_labor::HAUL_FOOD,	/* CHEESE */
-        df::unit_labor::HAUL_FOOD,	/* FOOD */
-        df::unit_labor::HAUL_FOOD,	/* LIQUID_MISC */
-        df::unit_labor::HAUL_ITEM,	/* COIN */
-        df::unit_labor::HAUL_FOOD,	/* GLOB */
-        df::unit_labor::HAUL_STONE,	/* ROCK */
-        df::unit_labor::HAUL_FURNITURE,	/* PIPE_SECTION */
-        df::unit_labor::HAUL_FURNITURE,	/* HATCH_COVER */
-        df::unit_labor::HAUL_FURNITURE,	/* GRATE */
-        df::unit_labor::HAUL_FURNITURE,	/* QUERN */
-        df::unit_labor::HAUL_FURNITURE,	/* MILLSTONE */
-        df::unit_labor::HAUL_ITEM,	/* SPLINT */
-        df::unit_labor::HAUL_ITEM,	/* CRUTCH */
-        df::unit_labor::HAUL_FURNITURE,	/* TRACTION_BENCH */
-        df::unit_labor::HAUL_ITEM,	/* ORTHOPEDIC_CAST */
-        df::unit_labor::HAUL_ITEM,	/* TOOL */
-        df::unit_labor::HAUL_FURNITURE,	/* SLAB */
-        df::unit_labor::HAUL_FOOD,	/* EGG */
-        df::unit_labor::HAUL_ITEM,	/* BOOK */
+        if ((*r)->getType() == df::general_ref_type::BUILDING_HOLDER)
+        {
+            int32_t id = ((df::general_ref_building_holderst*)(*r))->building_id;
+            df::building* bld = binsearch_in_vector(world->buildings.all, id);
+            return bld;
+        }
+    }
+    return 0;
+}
+
+class JobLaborMapper {
+private:
+    class jlfunc 
+    {
+    public:
+        virtual df::unit_labor get_labor(df::job* j) = 0;
     };
+
+    class jlfunc_const : public jlfunc 
+    {
+    private:
+        df::unit_labor labor;
+    public:
+        df::unit_labor get_labor(df::job* j) 
+        {
+            return labor;
+        }
+        jlfunc_const(df::unit_labor l) : labor(l) {};
+    };
+
+    class jlfunc_hauling : public jlfunc 
+    {
+    public:
+        df::unit_labor get_labor(df::job* j)
+        {
+            df::item* item = j->items[0]->item;
+            return hauling_labor_map[item->getType()];
+        }
+        jlfunc_hauling() {};
+    };
+
+    class jlfunc_construct_bld : public jlfunc 
+    {
+    public:
+        df::unit_labor get_labor(df::job* j)
+        {
+            df::building* bld = get_building_from_job (j);
+            switch (bld->getType()) 
+            {
+            case df::building_type::Workshop:
+                df::building_workshopst* ws = (df::building_workshopst*) bld;
+                if (ws->type == df::workshop_type::Custom) 
+                {
+                    df::building_def* def = df::building_def::find(ws->custom_type);
+                    return def->build_labors[0];
+                } 
+                else 
+                    return workshop_build_labor[ws->type];
+
+                break;
+            }
+
+            // FIXME
+            return df::unit_labor::NONE;
+        }
+        jlfunc_construct_bld() {}
+    };
+
+    class jlfunc_destroy_bld : public jlfunc 
+    {
+    public:
+        df::unit_labor get_labor(df::job* j)
+        {
+            df::building* bld = get_building_from_job (j);
+            df::building_type type = bld->getType();
+
+            // FIXME
+            return df::unit_labor::NONE;
+        }
+        jlfunc_destroy_bld() {}
+    };
+
+    class jlfunc_make : public jlfunc 
+    {
+    private:
+        df::unit_labor metaltype;
+    public:
+        df::unit_labor get_labor(df::job* j)
+        {
+            df::building* bld = get_building_from_job(j);
+            if (bld->getType() == df::building_type::Workshop)
+            {
+                df::workshop_type type = ((df::building_workshopst*)(bld))->type;
+                switch (type) 
+                {
+                case df::workshop_type::Craftsdwarfs:
+                    {
+                        df::item_type jobitem = j->job_items[0]->item_type;
+                        switch (jobitem) 
+                        {
+                        case df::item_type::BOULDER:
+                            return df::unit_labor::STONE_CRAFT;
+                        case df::item_type::NONE:
+                            if (j->material_category.bits.bone)
+                                return df::unit_labor::BONE_CARVE;
+                            else
+                                return df::unit_labor::NONE; //FIXME
+                        default:
+                            return df::unit_labor::NONE; //FIXME
+                        }
+                    }
+                case df::workshop_type::Masons:
+                    return df::unit_labor::MASON;
+                case df::workshop_type::Carpenters:
+                    return df::unit_labor::CARPENTER;
+                case df::workshop_type::Leatherworks:
+                    return df::unit_labor::LEATHER;
+                case df::workshop_type::Clothiers:
+                    return df::unit_labor::CLOTHESMAKER;
+                case df::workshop_type::MagmaForge:
+                case df::workshop_type::MetalsmithsForge:
+                    return metaltype;
+                default:
+                    return df::unit_labor::NONE; // FIXME
+                }
+            }
+            else if (bld->getType() == df::building_type::Furnace)
+            {
+                df::furnace_type type = ((df::building_furnacest*)(bld))->type;
+                switch (type) 
+                {
+                case df::furnace_type::MagmaGlassFurnace:
+                case df::furnace_type::GlassFurnace:
+                    return df::unit_labor::GLASSMAKER;
+                default:
+                    return df::unit_labor::NONE; // FIXME
+                }
+            }
+
+            return df::unit_labor::NONE; // FIXME
+        }
+
+        jlfunc_make (df::unit_labor mt) : metaltype(mt) {}
+    };
+
+    class jlfunc_custom : public jlfunc 
+    {
+    public:
+        df::unit_labor get_labor(df::job* j)
+        {
+            for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
+            {
+                if ((*r)->code == j->reaction_name)
+                {
+                    df::job_skill skill = (*r)->skill;
+                    df::unit_labor labor = ENUM_ATTR(job_skill, labor, skill);
+                    return labor;
+                }
+            }
+            return df::unit_labor::NONE;
+        }
+        jlfunc_custom() {}
+    };
+
+    map<df::unit_labor, jlfunc*> jlf_cache;
+
+    jlfunc* jlf_const(df::unit_labor l) {
+        jlfunc* jlf;
+        if (jlf_cache.count(l) == 0)
+        {
+            jlf = new jlfunc_const(l);
+            jlf_cache[l] = jlf;
+        }
+        else
+            jlf = jlf_cache[l];
+
+        return jlf;
+    }
+private:
+    jlfunc *jlf_hauling, *jlf_make_furniture, *jlf_make_object, *jlf_make_armor, *jlf_make_weapon;
+    jlfunc *job_to_labor_table[ENUM_LAST_ITEM(job_type)+1];
+
+public:
+    ~JobLaborMapper() 
+    {
+        delete jlf_hauling;
+        delete jlf_make_furniture;
+        delete jlf_make_object;
+        delete jlf_make_armor;
+        delete jlf_make_weapon;
+    }
+
+    JobLaborMapper() 
+    {
+        jlf_hauling		   = new jlfunc_hauling();
+        jlf_make_furniture = new jlfunc_make(df::unit_labor::FORGE_FURNITURE);
+        jlf_make_object    = new jlfunc_make(df::unit_labor::METAL_CRAFT);
+        jlf_make_armor     = new jlfunc_make(df::unit_labor::FORGE_ARMOR);
+        jlf_make_weapon    = new jlfunc_make(df::unit_labor::FORGE_WEAPON);
+
+        jlfunc* jlf_no_labor = jlf_const(df::unit_labor::NONE);
+
+        job_to_labor_table[df::job_type::CarveFortification]	= jlf_const(df::unit_labor::DETAIL);
+        job_to_labor_table[df::job_type::DetailWall]			= jlf_const(df::unit_labor::DETAIL);
+        job_to_labor_table[df::job_type::DetailFloor]			= jlf_const(df::unit_labor::DETAIL);
+        job_to_labor_table[df::job_type::Dig]					= jlf_const(df::unit_labor::MINE);
+        job_to_labor_table[df::job_type::CarveUpwardStaircase]	= jlf_const(df::unit_labor::MINE);
+        job_to_labor_table[df::job_type::CarveDownwardStaircase] = jlf_const(df::unit_labor::MINE);
+        job_to_labor_table[df::job_type::CarveUpDownStaircase]	= jlf_const(df::unit_labor::MINE);
+        job_to_labor_table[df::job_type::CarveRamp]				= jlf_const(df::unit_labor::MINE);
+        job_to_labor_table[df::job_type::DigChannel]			= jlf_const(df::unit_labor::MINE);
+        job_to_labor_table[df::job_type::FellTree]				= jlf_const(df::unit_labor::CUTWOOD);
+        job_to_labor_table[df::job_type::GatherPlants]			= jlf_const(df::unit_labor::HERBALIST);
+        job_to_labor_table[df::job_type::RemoveConstruction]	= jlf_no_labor;
+        job_to_labor_table[df::job_type::CollectWebs]			= jlf_const(df::unit_labor::WEAVER);
+        job_to_labor_table[df::job_type::BringItemToDepot]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::BringItemToShop]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::Eat]					= jlf_no_labor;
+        job_to_labor_table[df::job_type::GetProvisions]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::Drink]					= jlf_no_labor;
+        job_to_labor_table[df::job_type::Drink2]				= jlf_no_labor;
+        job_to_labor_table[df::job_type::FillWaterskin]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::FillWaterskin2]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::Sleep]					= jlf_no_labor;
+        job_to_labor_table[df::job_type::CollectSand]			= jlf_const(df::unit_labor::GLASSMAKER);
+        job_to_labor_table[df::job_type::Fish]					= jlf_const(df::unit_labor::FISH);
+        job_to_labor_table[df::job_type::Hunt]					= jlf_const(df::unit_labor::HUNT);
+        job_to_labor_table[df::job_type::HuntVermin]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::Kidnap]				= jlf_no_labor;
+        job_to_labor_table[df::job_type::BeatCriminal]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::StartingFistFight]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::CollectTaxes]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::GuardTaxCollector]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::CatchLiveLandAnimal]	= jlf_const(df::unit_labor::HUNT);
+        job_to_labor_table[df::job_type::CatchLiveFish]			= jlf_const(df::unit_labor::FISH);
+        job_to_labor_table[df::job_type::ReturnKill]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::CheckChest]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::StoreOwnedItem]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::PlaceItemInTomb]		= jlf_const(df::unit_labor::HAUL_BODY);
+        job_to_labor_table[df::job_type::StoreItemInStockpile]	= jlf_hauling;
+        job_to_labor_table[df::job_type::StoreItemInBag]		= jlf_hauling;
+        job_to_labor_table[df::job_type::StoreItemInHospital]	= jlf_hauling;
+        job_to_labor_table[df::job_type::StoreItemInChest]		= jlf_hauling;
+        job_to_labor_table[df::job_type::StoreItemInCabinet]	= jlf_hauling;
+        job_to_labor_table[df::job_type::StoreWeapon]			= jlf_hauling;
+        job_to_labor_table[df::job_type::StoreArmor]			= jlf_hauling;
+        job_to_labor_table[df::job_type::StoreItemInBarrel]		= jlf_hauling;
+        job_to_labor_table[df::job_type::StoreItemInBin]		= jlf_hauling;
+        job_to_labor_table[df::job_type::SeekArtifact]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::SeekInfant]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::AttendParty]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::GoShopping]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::GoShopping2]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::Clean]					= jlf_const(df::unit_labor::CLEAN);
+        job_to_labor_table[df::job_type::Rest]					= jlf_no_labor;
+        job_to_labor_table[df::job_type::PickupEquipment]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::DumpItem]				= jlf_hauling;
+        job_to_labor_table[df::job_type::StrangeMoodCrafter]	= jlf_no_labor;
+        job_to_labor_table[df::job_type::StrangeMoodJeweller]	= jlf_no_labor;
+        job_to_labor_table[df::job_type::StrangeMoodForge]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::StrangeMoodMagmaForge] = jlf_no_labor;
+        job_to_labor_table[df::job_type::StrangeMoodBrooding]	= jlf_no_labor;
+        job_to_labor_table[df::job_type::StrangeMoodFell]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::StrangeMoodCarpenter]	= jlf_no_labor;
+        job_to_labor_table[df::job_type::StrangeMoodMason]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::StrangeMoodBowyer]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::StrangeMoodTanner]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::StrangeMoodWeaver]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::StrangeMoodGlassmaker] = jlf_no_labor;
+        job_to_labor_table[df::job_type::StrangeMoodMechanics]	= jlf_no_labor;
+        job_to_labor_table[df::job_type::ConstructBuilding]     = new jlfunc_construct_bld();
+        job_to_labor_table[df::job_type::ConstructDoor]			= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructFloodgate]	= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructBed]			= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructThrone]		= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructCoffin]		= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructTable]		= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructChest]		= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructBin]			= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructArmorStand]	= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructWeaponRack]	= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructCabinet]		= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructStatue]		= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructBlocks]		= jlf_make_furniture;
+        job_to_labor_table[df::job_type::MakeRawGlass]			= jlf_const(df::unit_labor::GLASSMAKER);
+        job_to_labor_table[df::job_type::MakeCrafts]			= jlf_make_object;
+        job_to_labor_table[df::job_type::MintCoins]				= jlf_const(df::unit_labor::METAL_CRAFT);
+        job_to_labor_table[df::job_type::CutGems]				= jlf_const(df::unit_labor::CUT_GEM);
+        job_to_labor_table[df::job_type::CutGlass]				= jlf_const(df::unit_labor::CUT_GEM);
+        job_to_labor_table[df::job_type::EncrustWithGems]		= jlf_const(df::unit_labor::ENCRUST_GEM);
+        job_to_labor_table[df::job_type::EncrustWithGlass]		= jlf_const(df::unit_labor::ENCRUST_GEM);
+        job_to_labor_table[df::job_type::DestroyBuilding]		= new jlfunc_destroy_bld();
+        job_to_labor_table[df::job_type::SmeltOre]				= jlf_const(df::unit_labor::SMELT);
+        job_to_labor_table[df::job_type::MeltMetalObject]		= jlf_const(df::unit_labor::SMELT);
+        job_to_labor_table[df::job_type::ExtractMetalStrands]	= jlf_const(df::unit_labor::EXTRACT_STRAND);
+        job_to_labor_table[df::job_type::PlantSeeds]			= jlf_const(df::unit_labor::PLANT);
+        job_to_labor_table[df::job_type::HarvestPlants]			= jlf_const(df::unit_labor::PLANT);
+        job_to_labor_table[df::job_type::TrainHuntingAnimal]	= jlf_const(df::unit_labor::ANIMALTRAIN);
+        job_to_labor_table[df::job_type::TrainWarAnimal]		= jlf_const(df::unit_labor::ANIMALTRAIN);
+        job_to_labor_table[df::job_type::MakeWeapon]			= jlf_make_weapon;
+        job_to_labor_table[df::job_type::ForgeAnvil]			= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructCatapultParts] = jlf_const(df::unit_labor::SIEGECRAFT);
+        job_to_labor_table[df::job_type::ConstructBallistaParts] = jlf_const(df::unit_labor::SIEGECRAFT);
+        job_to_labor_table[df::job_type::MakeArmor]				= jlf_make_armor;
+        job_to_labor_table[df::job_type::MakeHelm]				= jlf_make_armor;
+        job_to_labor_table[df::job_type::MakePants]				= jlf_make_armor;
+        job_to_labor_table[df::job_type::StudWith]				= jlf_make_object;
+        job_to_labor_table[df::job_type::ButcherAnimal]			= jlf_const(df::unit_labor::BUTCHER);
+        job_to_labor_table[df::job_type::PrepareRawFish]		= jlf_const(df::unit_labor::CLEAN_FISH);
+        job_to_labor_table[df::job_type::MillPlants]			= jlf_const(df::unit_labor::MILLER);
+        job_to_labor_table[df::job_type::BaitTrap]				= jlf_const(df::unit_labor::TRAPPER);
+        job_to_labor_table[df::job_type::MilkCreature]			= jlf_const(df::unit_labor::MILK);
+        job_to_labor_table[df::job_type::MakeCheese]			= jlf_const(df::unit_labor::MAKE_CHEESE);
+        job_to_labor_table[df::job_type::ProcessPlants]			= jlf_const(df::unit_labor::PROCESS_PLANT);
+        job_to_labor_table[df::job_type::ProcessPlantsBag]		= jlf_const(df::unit_labor::PROCESS_PLANT);
+        job_to_labor_table[df::job_type::ProcessPlantsVial]		= jlf_const(df::unit_labor::PROCESS_PLANT);
+        job_to_labor_table[df::job_type::ProcessPlantsBarrel]	= jlf_const(df::unit_labor::PROCESS_PLANT);
+        job_to_labor_table[df::job_type::PrepareMeal]			= jlf_const(df::unit_labor::COOK);
+        job_to_labor_table[df::job_type::WeaveCloth]			= jlf_const(df::unit_labor::WEAVER);
+        job_to_labor_table[df::job_type::MakeGloves]			= jlf_make_armor;
+        job_to_labor_table[df::job_type::MakeShoes]				= jlf_make_armor;
+        job_to_labor_table[df::job_type::MakeShield]			= jlf_make_armor;
+        job_to_labor_table[df::job_type::MakeCage]				= jlf_make_furniture;
+        job_to_labor_table[df::job_type::MakeChain]				= jlf_make_object;
+        job_to_labor_table[df::job_type::MakeFlask]				= jlf_make_object;
+        job_to_labor_table[df::job_type::MakeGoblet]			= jlf_make_object;
+        job_to_labor_table[df::job_type::MakeInstrument]		= jlf_make_object;
+        job_to_labor_table[df::job_type::MakeToy]				= jlf_make_object;
+        job_to_labor_table[df::job_type::MakeAnimalTrap]		= jlf_const(df::unit_labor::TRAPPER);
+        job_to_labor_table[df::job_type::MakeBarrel]			= jlf_make_furniture;
+        job_to_labor_table[df::job_type::MakeBucket]			= jlf_make_furniture;
+        job_to_labor_table[df::job_type::MakeWindow]			= jlf_make_furniture;
+        job_to_labor_table[df::job_type::MakeTotem]				= jlf_const(df::unit_labor::BONE_CARVE);
+        job_to_labor_table[df::job_type::MakeAmmo]				= jlf_make_weapon;
+        job_to_labor_table[df::job_type::DecorateWith]			= jlf_make_object;
+        job_to_labor_table[df::job_type::MakeBackpack]			= jlf_make_object;
+        job_to_labor_table[df::job_type::MakeQuiver]			= jlf_make_armor;
+        job_to_labor_table[df::job_type::MakeBallistaArrowHead] = jlf_make_weapon;
+        job_to_labor_table[df::job_type::AssembleSiegeAmmo]		= jlf_const(df::unit_labor::SIEGECRAFT);
+        job_to_labor_table[df::job_type::LoadCatapult]			= jlf_const(df::unit_labor::SIEGEOPERATE);
+        job_to_labor_table[df::job_type::LoadBallista]			= jlf_const(df::unit_labor::SIEGEOPERATE);
+        job_to_labor_table[df::job_type::FireCatapult]			= jlf_const(df::unit_labor::SIEGEOPERATE);
+        job_to_labor_table[df::job_type::FireBallista]			= jlf_const(df::unit_labor::SIEGEOPERATE);
+        job_to_labor_table[df::job_type::ConstructMechanisms]	= jlf_const(df::unit_labor::MECHANIC);
+        job_to_labor_table[df::job_type::MakeTrapComponent]		= jlf_const(df::unit_labor::MECHANIC) ;
+        job_to_labor_table[df::job_type::LoadCageTrap]			= jlf_const(df::unit_labor::MECHANIC) ;
+        job_to_labor_table[df::job_type::LoadStoneTrap]			= jlf_const(df::unit_labor::MECHANIC) ;
+        job_to_labor_table[df::job_type::LoadWeaponTrap]		= jlf_const(df::unit_labor::MECHANIC) ;
+        job_to_labor_table[df::job_type::CleanTrap]				= jlf_const(df::unit_labor::MECHANIC) ;
+        job_to_labor_table[df::job_type::CastSpell]				= jlf_no_labor;
+        job_to_labor_table[df::job_type::LinkBuildingToTrigger] = jlf_const(df::unit_labor::MECHANIC) ;
+        job_to_labor_table[df::job_type::PullLever]				= jlf_no_labor;
+        job_to_labor_table[df::job_type::BrewDrink]				= jlf_const(df::unit_labor::BREWER) ;
+        job_to_labor_table[df::job_type::ExtractFromPlants]		= jlf_const(df::unit_labor::HERBALIST) ;
+        job_to_labor_table[df::job_type::ExtractFromRawFish]	= jlf_const(df::unit_labor::DISSECT_FISH) ;
+        job_to_labor_table[df::job_type::ExtractFromLandAnimal] = jlf_const(df::unit_labor::DISSECT_VERMIN) ;
+        job_to_labor_table[df::job_type::TameVermin]			= jlf_const(df::unit_labor::ANIMALTRAIN) ;
+        job_to_labor_table[df::job_type::TameAnimal]			= jlf_const(df::unit_labor::ANIMALTRAIN) ;
+        job_to_labor_table[df::job_type::ChainAnimal]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::UnchainAnimal]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::UnchainPet]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::ReleaseLargeCreature]	= jlf_no_labor;
+        job_to_labor_table[df::job_type::ReleasePet]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::ReleaseSmallCreature]	= jlf_no_labor;
+        job_to_labor_table[df::job_type::HandleSmallCreature]	= jlf_no_labor;
+        job_to_labor_table[df::job_type::HandleLargeCreature]	= jlf_no_labor;
+        job_to_labor_table[df::job_type::CageLargeCreature]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::CageSmallCreature]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::RecoverWounded]		= jlf_const(df::unit_labor::RECOVER_WOUNDED);
+        job_to_labor_table[df::job_type::DiagnosePatient]		= jlf_const(df::unit_labor::DIAGNOSE) ;
+        job_to_labor_table[df::job_type::ImmobilizeBreak]		= jlf_const(df::unit_labor::BONE_SETTING) ;
+        job_to_labor_table[df::job_type::DressWound]			= jlf_const(df::unit_labor::DRESSING_WOUNDS) ;
+        job_to_labor_table[df::job_type::CleanPatient]			= jlf_const(df::unit_labor::CLEAN) ;
+        job_to_labor_table[df::job_type::Surgery]				= jlf_const(df::unit_labor::SURGERY) ;
+        job_to_labor_table[df::job_type::Suture]				= jlf_const(df::unit_labor::SUTURING);
+        job_to_labor_table[df::job_type::SetBone]				= jlf_const(df::unit_labor::BONE_SETTING) ;
+        job_to_labor_table[df::job_type::PlaceInTraction]		= jlf_const(df::unit_labor::BONE_SETTING) ;
+        job_to_labor_table[df::job_type::DrainAquarium]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::FillAquarium]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::FillPond]				= jlf_no_labor;
+        job_to_labor_table[df::job_type::GiveWater]				= jlf_const(df::unit_labor::FEED_WATER_CIVILIANS) ;
+        job_to_labor_table[df::job_type::GiveFood]				= jlf_const(df::unit_labor::FEED_WATER_CIVILIANS) ;
+        job_to_labor_table[df::job_type::GiveWater2]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::GiveFood2]				= jlf_no_labor;
+        job_to_labor_table[df::job_type::RecoverPet]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::PitLargeAnimal]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::PitSmallAnimal]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::SlaughterAnimal]		= jlf_const(df::unit_labor::BUTCHER);
+        job_to_labor_table[df::job_type::MakeCharcoal]			= jlf_const(df::unit_labor::BURN_WOOD);
+        job_to_labor_table[df::job_type::MakeAsh]				= jlf_const(df::unit_labor::BURN_WOOD);
+        job_to_labor_table[df::job_type::MakeLye]				= jlf_const(df::unit_labor::LYE_MAKING);
+        job_to_labor_table[df::job_type::MakePotashFromLye]		= jlf_const(df::unit_labor::POTASH_MAKING);
+        job_to_labor_table[df::job_type::FertilizeField]		= jlf_const(df::unit_labor::PLANT);
+        job_to_labor_table[df::job_type::MakePotashFromAsh]		= jlf_const(df::unit_labor::POTASH_MAKING);
+        job_to_labor_table[df::job_type::DyeThread]				= jlf_const(df::unit_labor::DYER);
+        job_to_labor_table[df::job_type::DyeCloth]				= jlf_const(df::unit_labor::DYER);
+        job_to_labor_table[df::job_type::SewImage]				= jlf_make_object;
+        job_to_labor_table[df::job_type::MakePipeSection]		= jlf_make_furniture;
+        job_to_labor_table[df::job_type::OperatePump]			= jlf_const(df::unit_labor::OPERATE_PUMP);
+        job_to_labor_table[df::job_type::ManageWorkOrders]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::UpdateStockpileRecords] = jlf_no_labor;
+        job_to_labor_table[df::job_type::TradeAtDepot]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::ConstructHatchCover]	= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructGrate]		= jlf_make_furniture;
+        job_to_labor_table[df::job_type::RemoveStairs]			= jlf_const(df::unit_labor::MINE);
+        job_to_labor_table[df::job_type::ConstructQuern]		= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructMillstone]	= jlf_make_furniture ;
+        job_to_labor_table[df::job_type::ConstructSplint]		= jlf_make_object ;
+        job_to_labor_table[df::job_type::ConstructCrutch]		= jlf_make_object;
+        job_to_labor_table[df::job_type::ConstructTractionBench] = jlf_const(df::unit_labor::MECHANIC);
+        job_to_labor_table[df::job_type::CleanSelf]				= jlf_no_labor;
+        job_to_labor_table[df::job_type::BringCrutch]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::ApplyCast]				= jlf_const(df::unit_labor::BONE_SETTING);
+        job_to_labor_table[df::job_type::CustomReaction]        = new jlfunc_custom();
+        job_to_labor_table[df::job_type::ConstructSlab]			= jlf_make_furniture;
+        job_to_labor_table[df::job_type::EngraveSlab]			= jlf_const(df::unit_labor::STONE_CRAFT);
+        job_to_labor_table[df::job_type::ShearCreature]			= jlf_const(df::unit_labor::SHEARER);
+        job_to_labor_table[df::job_type::SpinThread]			= jlf_const(df::unit_labor::SPINNER);
+        job_to_labor_table[df::job_type::PenLargeAnimal]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::PenSmallAnimal]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::MakeTool]				= jlf_make_furniture;
+        job_to_labor_table[df::job_type::CollectClay]			= jlf_const(df::unit_labor::POTTERY);
+        job_to_labor_table[df::job_type::InstallColonyInHive]	= jlf_const(df::unit_labor::BEEKEEPING);
+        job_to_labor_table[df::job_type::CollectHiveProducts]	= jlf_const(df::unit_labor::BEEKEEPING);
+        job_to_labor_table[df::job_type::CauseTrouble]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::DrinkBlood]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::ReportCrime]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::ExecuteCriminal]		= jlf_no_labor;
+        job_to_labor_table[df::job_type::TrainAnimal]			= jlf_const(df::unit_labor::ANIMALTRAIN);
+        job_to_labor_table[df::job_type::CarveTrack]			= jlf_const(df::unit_labor::DETAIL);
+        job_to_labor_table[df::job_type::PushTrackVehicle]		= jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE);
+        job_to_labor_table[df::job_type::PlaceTrackVehicle]		= jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE);
+        job_to_labor_table[df::job_type::StoreItemInVehicle]    = jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE);
+    };
+
+    df::unit_labor find_job_labor(df::job* j)
+    {
+        if (j->job_type == df::job_type::CustomReaction)
+        {
+            for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
+            {
+                if ((*r)->code == j->reaction_name)
+                {
+                    df::job_skill skill = (*r)->skill;
+                    return ENUM_ATTR(job_skill, labor, skill);
+                }
+            }
+            return df::unit_labor::NONE;
+        } 
+
+        df::job_skill skill;
+        df::unit_labor labor;
+        skill = ENUM_ATTR(job_type, skill, j->job_type);
+        if (skill != df::job_skill::NONE) 
+            labor = ENUM_ATTR(job_skill, labor, skill);
+        else
+            labor = ENUM_ATTR(job_type, labor, j->job_type);
+
+        if (labor == df::unit_labor::NONE)
+            labor = job_to_labor_table[j->job_type]->get_labor(j);
+
+        return labor;
+    }
+};
+
+static JobLaborMapper* labor_mapper;
 
 static bool isOptionEnabled(unsigned flag)
 {
@@ -652,6 +1163,11 @@ static void setOptionEnabled(ConfigFlags flag, bool on)
 static void cleanup_state()
 {
     labor_infos.clear();
+    if (labor_mapper) 
+    {
+        delete labor_mapper;
+        labor_mapper = 0;
+    }
 }
 
 static void reset_labor(df::unit_labor labor)
@@ -716,6 +1232,9 @@ static void init_state()
     }
 
     generate_labor_to_skill_map();
+
+    if (!labor_mapper)
+        labor_mapper = new JobLaborMapper();
 
 }
 
@@ -804,7 +1323,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "    Have haulers feed and water wounded dwarves.\n"
         "  autolabor CUTWOOD disable\n"
         "    Turn off autolabor for wood cutting.\n"
-    ));
+        ));
 
     init_state();
 
@@ -816,490 +1335,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     cleanup_state();
 
     return CR_OK;
-}
-
-
-static df::building* get_building_from_job(df::job* j)
-{
-    for (auto r = j->general_refs.begin(); r != j->general_refs.end(); r++)
-    {
-        if ((*r)->getType() == df::general_ref_type::BUILDING_HOLDER)
-        {
-            int32_t id = ((df::general_ref_building_holderst*)(*r))->building_id;
-            df::building* bld = binsearch_in_vector(world->buildings.all, id);
-            return bld;
-        }
-    }
-    return 0;
-}
-
-
-
-static df::unit_labor workshop_build_labor[] = 
-{
-    /* Carpenters */		df::unit_labor::CARPENTER,
-    /* Farmers */			df::unit_labor::HERBALIST,
-    /* Masons */			df::unit_labor::MASON,
-    /* Craftsdwarfs */		df::unit_labor::STONE_CRAFT,
-    /* Jewelers */			df::unit_labor::CUT_GEM,
-    /* MetalsmithsForge */	df::unit_labor::METAL_CRAFT,
-    /* MagmaForge */		df::unit_labor::METAL_CRAFT,
-    /* Bowyers */			df::unit_labor::BOWYER,
-    /* Mechanics */			df::unit_labor::MECHANIC,
-    /* Siege */				df::unit_labor::SIEGECRAFT,
-    /* Butchers */			df::unit_labor::BUTCHER,
-    /* Leatherworks */		df::unit_labor::LEATHER,
-    /* Tanners */			df::unit_labor::TANNER,
-    /* Clothiers */			df::unit_labor::CLOTHESMAKER,
-    /* Fishery */			df::unit_labor::FISH,
-    /* Still */				df::unit_labor::BREWER,
-    /* Loom */				df::unit_labor::WEAVER,
-    /* Quern */				df::unit_labor::MILLER,
-    /* Kennels */			df::unit_labor::ANIMALTRAIN,
-    /* Kitchen */			df::unit_labor::COOK,
-    /* Ashery */			df::unit_labor::LYE_MAKING,
-    /* Dyers */				df::unit_labor::DYER,
-    /* Millstone */			df::unit_labor::MILLER,
-    /* Custom */			df::unit_labor::NONE,
-    /* Tool */				df::unit_labor::NONE
-};
-
-class jlfunc 
-{
-    public:
-    virtual df::unit_labor get_labor(df::job* j) = 0;
-};
-
-class jlfunc_const : public jlfunc 
-{
-    private:
-    df::unit_labor labor;
-    public:
-    df::unit_labor get_labor(df::job* j) 
-    {
-        return labor;
-    }
-    jlfunc_const(df::unit_labor l) : labor(l) {};
-};
-
-class jlfunc_hauling : public jlfunc 
-{
-public:
-    df::unit_labor get_labor(df::job* j)
-    {
-        df::item* item = j->items[0]->item;
-        return hauling_labor_map[item->getType()];
-    }
-    jlfunc_hauling() {};
-};
-
-class jlfunc_construct_bld : public jlfunc 
-{
-public:
-    df::unit_labor get_labor(df::job* j)
-    {
-        df::building* bld = get_building_from_job (j);
-        switch (bld->getType()) 
-        {
-        case df::building_type::Workshop:
-            df::building_workshopst* ws = (df::building_workshopst*) bld;
-            if (ws->type == df::workshop_type::Custom) 
-            {
-                df::building_def* def = df::building_def::find(ws->custom_type);
-                return def->build_labors[0];
-            } 
-            else 
-                return workshop_build_labor[ws->type];
-        
-            break;
-        }
-
-        // FIXME
-        return df::unit_labor::NONE;
-    }
-    jlfunc_construct_bld() {}
-};
-
-class jlfunc_destroy_bld : public jlfunc 
-{
-public:
-    df::unit_labor get_labor(df::job* j)
-    {
-        df::building* bld = get_building_from_job (j);
-        df::building_type type = bld->getType();
-
-        // FIXME
-        return df::unit_labor::NONE;
-    }
-    jlfunc_destroy_bld() {}
-};
-
-class jlfunc_make : public jlfunc 
-{
-private:
-    df::unit_labor metaltype;
-public:
-    df::unit_labor get_labor(df::job* j)
-    {
-        df::building* bld = get_building_from_job(j);
-        if (bld->getType() == df::building_type::Workshop)
-        {
-            df::workshop_type type = ((df::building_workshopst*)(bld))->type;
-            switch (type) 
-            {
-            case df::workshop_type::Craftsdwarfs:
-                {
-                    df::item_type jobitem = j->job_items[0]->item_type;
-                    switch (jobitem) 
-                    {
-                    case df::item_type::BOULDER:
-                        return df::unit_labor::STONE_CRAFT;
-                    case df::item_type::NONE:
-                        if (j->material_category.bits.bone)
-                            return df::unit_labor::BONE_CARVE;
-                        else
-                            return df::unit_labor::NONE; //FIXME
-                    default:
-                        return df::unit_labor::NONE; //FIXME
-                    }
-                }
-            case df::workshop_type::Masons:
-                return df::unit_labor::MASON;
-            case df::workshop_type::Carpenters:
-                return df::unit_labor::CARPENTER;
-            case df::workshop_type::Leatherworks:
-                return df::unit_labor::LEATHER;
-            case df::workshop_type::Clothiers:
-                return df::unit_labor::CLOTHESMAKER;
-            case df::workshop_type::MagmaForge:
-            case df::workshop_type::MetalsmithsForge:
-                return metaltype;
-            default:
-                return df::unit_labor::NONE; // FIXME
-            }
-        }
-        else if (bld->getType() == df::building_type::Furnace)
-        {
-            df::furnace_type type = ((df::building_furnacest*)(bld))->type;
-            switch (type) 
-            {
-            case df::furnace_type::MagmaGlassFurnace:
-            case df::furnace_type::GlassFurnace:
-                return df::unit_labor::GLASSMAKER;
-            default:
-                return df::unit_labor::NONE; // FIXME
-            }
-        }
-
-        return df::unit_labor::NONE; // FIXME
-    }
-
-    jlfunc_make (df::unit_labor mt) : metaltype(mt) {}
-};
-
-class jlfunc_custom : public jlfunc 
-{
-public:
-    df::unit_labor get_labor(df::job* j)
-    {
-        for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
-        {
-            if ((*r)->code == j->reaction_name)
-            {
-                df::job_skill skill = (*r)->skill;
-                df::unit_labor labor = ENUM_ATTR(job_skill, labor, skill);
-                return labor;
-            }
-        }
-        return df::unit_labor::NONE;
-    }
-    jlfunc_custom() {}
-};
-
-static map<df::unit_labor, jlfunc*> jlf_cache;
-
-jlfunc* jlf_const(df::unit_labor l) {
-    jlfunc* jlf;
-    if (jlf_cache.count(l) == 0)
-    {
-        jlf = jlf_const(l);
-        jlf_cache[l] = jlf;
-    }
-    else
-        jlf = jlf_cache[l];
-
-    return jlf;
-}
-
-static jlfunc* jlf_no_labor = jlf_const(df::unit_labor::NONE);
-static jlfunc* jlf_hauling = new jlfunc_hauling();
-static jlfunc* jlf_make_furniture = new jlfunc_make(df::unit_labor::FORGE_FURNITURE);
-static jlfunc* jlf_make_object    = new jlfunc_make(df::unit_labor::METAL_CRAFT);
-static jlfunc* jlf_make_armor     = new jlfunc_make(df::unit_labor::FORGE_ARMOR);
-static jlfunc* jlf_make_weapon    = new jlfunc_make(df::unit_labor::FORGE_WEAPON);
-
-static jlfunc* job_to_labor_table[] = {
-    jlf_const(df::unit_labor::DETAIL) /* CarveFortification */,
-    jlf_const(df::unit_labor::DETAIL) /* DetailWall */,
-    jlf_const(df::unit_labor::DETAIL) /* DetailFloor */,
-    jlf_const(df::unit_labor::MINE) /* Dig */,
-    jlf_const(df::unit_labor::MINE) /* CarveUpwardStaircase */,
-    jlf_const(df::unit_labor::MINE) /* CarveDownwardStaircase */,
-    jlf_const(df::unit_labor::MINE) /* CarveUpDownStaircase */,
-    jlf_const(df::unit_labor::MINE) /* CarveRamp */,
-    jlf_const(df::unit_labor::MINE) /* DigChannel */,
-    jlf_const(df::unit_labor::CUTWOOD) /* FellTree */,
-    jlf_const(df::unit_labor::HERBALIST) /* GatherPlants */,
-    jlf_no_labor /* RemoveConstruction */,
-    jlf_const(df::unit_labor::WEAVER) /* CollectWebs */,
-    jlf_no_labor /* BringItemToDepot */,
-    jlf_no_labor /* BringItemToShop */,
-    jlf_no_labor /* Eat */,
-    jlf_no_labor /* GetProvisions */,
-    jlf_no_labor /* Drink */,
-    jlf_no_labor /* Drink2 */,
-    jlf_no_labor /* FillWaterskin */,
-    jlf_no_labor /* FillWaterskin2 */,
-    jlf_no_labor /* Sleep */,
-    jlf_const(df::unit_labor::GLASSMAKER) /* CollectSand */,
-    jlf_const(df::unit_labor::FISH) /* Fish */,
-    jlf_const(df::unit_labor::HUNT) /* Hunt */,
-    jlf_no_labor /* HuntVermin */,
-    jlf_no_labor /* Kidnap */,
-    jlf_no_labor /* BeatCriminal */,
-    jlf_no_labor /* StartingFistFight */,
-    jlf_no_labor /* CollectTaxes */,
-    jlf_no_labor /* GuardTaxCollector */,
-    jlf_const(df::unit_labor::HUNT) /* CatchLiveLandAnimal */,
-    jlf_const(df::unit_labor::FISH) /* CatchLiveFish */,
-    jlf_no_labor /* ReturnKill */,
-    jlf_no_labor /* CheckChest */,
-    jlf_no_labor /* StoreOwnedItem */,
-    jlf_const(df::unit_labor::HAUL_BODY) /* PlaceItemInTomb */,
-    jlf_hauling /* StoreItemInStockpile */,
-    jlf_hauling /* StoreItemInBag */,
-    jlf_hauling /* StoreItemInHospital */,
-    jlf_hauling /* StoreItemInChest */,
-    jlf_hauling /* StoreItemInCabinet */,
-    jlf_hauling /* StoreWeapon */,
-    jlf_hauling /* StoreArmor */,
-    jlf_hauling /* StoreItemInBarrel */,
-    jlf_hauling /* StoreItemInBin */,
-    jlf_no_labor /* SeekArtifact */,
-    jlf_no_labor /* SeekInfant */,
-    jlf_no_labor /* AttendParty */,
-    jlf_no_labor /* GoShopping */,
-    jlf_no_labor /* GoShopping2 */,
-    jlf_const(df::unit_labor::CLEAN) /* Clean */,
-    jlf_no_labor /* Rest */,
-    jlf_no_labor /* PickupEquipment */,
-    jlf_hauling /* DumpItem */,
-    jlf_no_labor /* StrangeMoodCrafter */,
-    jlf_no_labor /* StrangeMoodJeweller */,
-    jlf_no_labor /* StrangeMoodForge */,
-    jlf_no_labor /* StrangeMoodMagmaForge */,
-    jlf_no_labor /* StrangeMoodBrooding */,
-    jlf_no_labor /* StrangeMoodFell */,
-    jlf_no_labor /* StrangeMoodCarpenter */,
-    jlf_no_labor /* StrangeMoodMason */,
-    jlf_no_labor /* StrangeMoodBowyer */,
-    jlf_no_labor /* StrangeMoodTanner */,
-    jlf_no_labor /* StrangeMoodWeaver */,
-    jlf_no_labor /* StrangeMoodGlassmaker */,
-    jlf_no_labor /* StrangeMoodMechanics */,
-    new jlfunc_construct_bld() /* ConstructBuilding */,
-    jlf_make_furniture /* ConstructDoor */,
-    jlf_make_furniture /* ConstructFloodgate */,
-    jlf_make_furniture /* ConstructBed */,
-    jlf_make_furniture /* ConstructThrone */,
-    jlf_make_furniture /* ConstructCoffin */,
-    jlf_make_furniture /* ConstructTable */,
-    jlf_make_furniture /* ConstructChest */,
-    jlf_make_furniture /* ConstructBin */,
-    jlf_make_furniture /* ConstructArmorStand */,
-    jlf_make_furniture /* ConstructWeaponRack */,
-    jlf_make_furniture /* ConstructCabinet */,
-    jlf_make_furniture /* ConstructStatue */,
-    jlf_make_furniture /* ConstructBlocks */,
-    jlf_const(df::unit_labor::GLASSMAKER) /* MakeRawGlass */,
-    jlf_make_object /* MakeCrafts */,
-    jlf_const(df::unit_labor::METAL_CRAFT) /* MintCoins */,
-    jlf_const(df::unit_labor::CUT_GEM) /* CutGems */,
-    jlf_const(df::unit_labor::CUT_GEM) /* CutGlass */,
-    jlf_const(df::unit_labor::ENCRUST_GEM) /* EncrustWithGems */,
-    jlf_const(df::unit_labor::ENCRUST_GEM) /* EncrustWithGlass */,
-    new jlfunc_destroy_bld() /* DestroyBuilding */,
-    jlf_const(df::unit_labor::SMELT) /* SmeltOre */,
-    jlf_const(df::unit_labor::SMELT) /* MeltMetalObject */,
-    jlf_const(df::unit_labor::EXTRACT_STRAND) /* ExtractMetalStrands */,
-    jlf_const(df::unit_labor::PLANT) /* PlantSeeds */,
-    jlf_const(df::unit_labor::PLANT) /* HarvestPlants */,
-    jlf_const(df::unit_labor::ANIMALTRAIN) /* TrainHuntingAnimal */,
-    jlf_const(df::unit_labor::ANIMALTRAIN) /* TrainWarAnimal */,
-    jlf_make_weapon /* MakeWeapon */,
-    jlf_make_furniture /* ForgeAnvil */,
-    jlf_const(df::unit_labor::SIEGECRAFT) /* ConstructCatapultParts */,
-    jlf_const(df::unit_labor::SIEGECRAFT) /* ConstructBallistaParts */,
-    jlf_make_armor /* MakeArmor */,
-    jlf_make_armor /* MakeHelm */,
-    jlf_make_armor /* MakePants */,
-    jlf_make_object /* StudWith */,
-    jlf_const(df::unit_labor::BUTCHER) /* ButcherAnimal */,
-    jlf_const(df::unit_labor::CLEAN_FISH) /* PrepareRawFish */,
-    jlf_const(df::unit_labor::MILLER) /* MillPlants */,
-    jlf_const(df::unit_labor::TRAPPER) /* BaitTrap */,
-    jlf_const(df::unit_labor::MILK) /* MilkCreature */,
-    jlf_const(df::unit_labor::MAKE_CHEESE) /* MakeCheese */,
-    jlf_const(df::unit_labor::PROCESS_PLANT) /* ProcessPlants */,
-    jlf_const(df::unit_labor::PROCESS_PLANT) /* ProcessPlantsBag */,
-    jlf_const(df::unit_labor::PROCESS_PLANT) /* ProcessPlantsVial */,
-    jlf_const(df::unit_labor::PROCESS_PLANT) /* ProcessPlantsBarrel */,
-    jlf_const(df::unit_labor::COOK) /* PrepareMeal */,
-    jlf_const(df::unit_labor::WEAVER) /* WeaveCloth */,
-    jlf_make_armor /* MakeGloves */,
-    jlf_make_armor /* MakeShoes */,
-    jlf_make_armor /* MakeShield */,
-    jlf_make_furniture /* MakeCage */,
-    jlf_make_object /* MakeChain */,
-    jlf_make_object /* MakeFlask */,
-    jlf_make_object /* MakeGoblet */,
-    jlf_make_object/* MakeInstrument */,
-    jlf_make_object/* MakeToy */,
-    jlf_const(df::unit_labor::TRAPPER) /* MakeAnimalTrap */,
-    jlf_make_furniture /* MakeBarrel */,
-    jlf_make_furniture /* MakeBucket */,
-    jlf_make_furniture /* MakeWindow */,
-    jlf_const(df::unit_labor::BONE_CARVE) /* MakeTotem */,
-    jlf_make_weapon /* MakeAmmo */,
-    jlf_make_object /* DecorateWith */,
-    jlf_make_object /* MakeBackpack */,
-    jlf_make_armor /* MakeQuiver */,
-    jlf_make_weapon /* MakeBallistaArrowHead */,
-    jlf_const(df::unit_labor::SIEGECRAFT) /* AssembleSiegeAmmo */,
-    jlf_const(df::unit_labor::SIEGEOPERATE) /* LoadCatapult */,
-    jlf_const(df::unit_labor::SIEGEOPERATE) /* LoadBallista */,
-    jlf_const(df::unit_labor::SIEGEOPERATE) /* FireCatapult */,
-    jlf_const(df::unit_labor::SIEGEOPERATE) /* FireBallista */,
-    jlf_const(df::unit_labor::MECHANIC) /* ConstructMechanisms */,
-    jlf_const(df::unit_labor::MECHANIC)  /* MakeTrapComponent */,
-    jlf_const(df::unit_labor::MECHANIC)  /* LoadCageTrap */,
-    jlf_const(df::unit_labor::MECHANIC)  /* LoadStoneTrap */,
-    jlf_const(df::unit_labor::MECHANIC)  /* LoadWeaponTrap */,
-    jlf_const(df::unit_labor::MECHANIC)  /* CleanTrap */,
-    jlf_no_labor /* CastSpell */,
-    jlf_const(df::unit_labor::MECHANIC)  /* LinkBuildingToTrigger */,
-    jlf_no_labor /* PullLever */,
-    jlf_const(df::unit_labor::BREWER)  /* BrewDrink */,
-    jlf_const(df::unit_labor::HERBALIST)  /* ExtractFromPlants */,
-    jlf_const(df::unit_labor::DISSECT_FISH)  /* ExtractFromRawFish */,
-    jlf_const(df::unit_labor::DISSECT_VERMIN)  /* ExtractFromLandAnimal */,
-    jlf_const(df::unit_labor::ANIMALTRAIN)  /* TameVermin */,
-    jlf_const(df::unit_labor::ANIMALTRAIN)  /* TameAnimal */,
-    jlf_no_labor /* ChainAnimal */,
-    jlf_no_labor /* UnchainAnimal */,
-    jlf_no_labor /* UnchainPet */,
-    jlf_no_labor /* ReleaseLargeCreature */,
-    jlf_no_labor /* ReleasePet */,
-    jlf_no_labor /* ReleaseSmallCreature */,
-    jlf_no_labor /* HandleSmallCreature */,
-    jlf_no_labor /* HandleLargeCreature */,
-    jlf_no_labor /* CageLargeCreature */,
-    jlf_no_labor /* CageSmallCreature */,
-    jlf_const(df::unit_labor::RECOVER_WOUNDED) /* RecoverWounded */,
-    jlf_const(df::unit_labor::DIAGNOSE)  /* DiagnosePatient */,
-    jlf_const(df::unit_labor::BONE_SETTING)  /* ImmobilizeBreak */,
-    jlf_const(df::unit_labor::DRESSING_WOUNDS)  /* DressWound */,
-    jlf_const(df::unit_labor::CLEAN)  /* CleanPatient */,
-    jlf_const(df::unit_labor::SURGERY)  /* Surgery */,
-    jlf_const(df::unit_labor::SUTURING) /* Suture */,
-    jlf_const(df::unit_labor::BONE_SETTING)  /* SetBone */,
-    jlf_const(df::unit_labor::BONE_SETTING)  /* PlaceInTraction */,
-    jlf_no_labor /* DrainAquarium */,
-    jlf_no_labor /* FillAquarium */,
-    jlf_no_labor /* FillPond */,
-    jlf_const(df::unit_labor::FEED_WATER_CIVILIANS)  /* GiveWater */,
-    jlf_const(df::unit_labor::FEED_WATER_CIVILIANS)  /* GiveFood */,
-    jlf_no_labor /* GiveWater2 */,
-    jlf_no_labor /* GiveFood2 */,
-    jlf_no_labor /* RecoverPet */,
-    jlf_no_labor /* PitLargeAnimal */,
-    jlf_no_labor /* PitSmallAnimal */,
-    jlf_const(df::unit_labor::BUTCHER) /* SlaughterAnimal */,
-    jlf_const(df::unit_labor::BURN_WOOD) /* MakeCharcoal */,
-    jlf_const(df::unit_labor::BURN_WOOD) /* MakeAsh */,
-    jlf_const(df::unit_labor::LYE_MAKING) /* MakeLye */,
-    jlf_const(df::unit_labor::POTASH_MAKING) /* MakePotashFromLye */,
-    jlf_const(df::unit_labor::PLANT) /* FertilizeField */,
-    jlf_const(df::unit_labor::POTASH_MAKING) /* MakePotashFromAsh */,
-    jlf_const(df::unit_labor::DYER) /* DyeThread */,
-    jlf_const(df::unit_labor::DYER) /* DyeCloth */,
-    jlf_make_object /* SewImage */,
-    jlf_make_furniture /* MakePipeSection */,
-    jlf_const(df::unit_labor::OPERATE_PUMP) /* OperatePump */,
-    jlf_no_labor /* ManageWorkOrders */,
-    jlf_no_labor /* UpdateStockpileRecords */,
-    jlf_no_labor /* TradeAtDepot */,
-    jlf_make_furniture /* ConstructHatchCover */,
-    jlf_make_furniture /* ConstructGrate */,
-    jlf_const(df::unit_labor::MINE) /* RemoveStairs */,
-    jlf_make_furniture /* ConstructQuern */,
-    jlf_make_furniture  /* ConstructMillstone */,
-    jlf_make_object  /* ConstructSplint */,
-    jlf_make_object /* ConstructCrutch */,
-    jlf_const(df::unit_labor::MECHANIC) /* ConstructTractionBench */,
-    jlf_no_labor /* CleanSelf */,
-    jlf_no_labor /* BringCrutch */,
-    jlf_const(df::unit_labor::BONE_SETTING) /* ApplyCast */,
-    new jlfunc_custom() /* CustomReaction */,
-    jlf_make_furniture /* ConstructSlab */,
-    jlf_const(df::unit_labor::STONE_CRAFT) /* EngraveSlab */,
-    jlf_const(df::unit_labor::SHEARER) /* ShearCreature */,
-    jlf_const(df::unit_labor::SPINNER) /* SpinThread */,
-    jlf_no_labor /* PenLargeAnimal */,
-    jlf_no_labor /* PenSmallAnimal */,
-    jlf_make_furniture /* MakeTool */,
-    jlf_const(df::unit_labor::POTTERY) /* CollectClay */,
-    jlf_const(df::unit_labor::BEEKEEPING) /* InstallColonyInHive */,
-    jlf_const(df::unit_labor::BEEKEEPING) /* CollectHiveProducts */,
-    jlf_no_labor /* CauseTrouble */,
-    jlf_no_labor /* DrinkBlood */,
-    jlf_no_labor /* ReportCrime */,
-    jlf_no_labor /* ExecuteCriminal */,
-    jlf_const(df::unit_labor::ANIMALTRAIN) /* TrainAnimal */,
-    jlf_const(df::unit_labor::DETAIL) /* CarveTrack */,
-    jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE) /* PushTrackVehicle */,
-    jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE) /* PlaceTrackVehicle */,
-    jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE) /* StoreItemInVehicle */
-};
-
-
-static df::unit_labor find_job_labor(df::job* j)
-{
-    if (j->job_type == df::job_type::CustomReaction)
-    {
-        for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
-        {
-            if ((*r)->code == j->reaction_name)
-            {
-                df::job_skill skill = (*r)->skill;
-                return ENUM_ATTR(job_skill, labor, skill);
-            }
-        }
-        return df::unit_labor::NONE;
-    } 
-
-    df::job_skill skill;
-    df::unit_labor labor;
-    skill = ENUM_ATTR(job_type, skill, j->job_type);
-    if (skill != df::job_skill::NONE) 
-        labor = ENUM_ATTR(job_skill, labor, skill);
-    else
-        labor = ENUM_ATTR(job_type, labor, j->job_type);
-
-    if (labor == df::unit_labor::NONE)
-        labor = job_to_labor_table[j->job_type]->get_labor(j);
-
-    return labor;
 }
 
 class AutoLaborManager {
@@ -1337,9 +1372,21 @@ private:
     int pick_count;
     int axe_count;
 
+    int cnt_recover_wounded;
+    int cnt_diagnosis;
+    int cnt_immobilize;	
+    int cnt_dressing;
+    int cnt_cleaning;
+    int cnt_surgery;
+    int cnt_suture;
+    int cnt_setting;
+    int cnt_traction;
+    int cnt_crutch;
+
+
     std::map<df::unit_labor, int> labor_needed;
     std::vector<dwarf_info_t*> dwarf_info;
-    std::deque<dwarf_info_t*> idle_dwarfs;
+    std::list<dwarf_info_t*> idle_dwarfs;
 
 private:
     void scan_buildings()
@@ -1435,7 +1482,7 @@ private:
             df::item* item = world->items.all[i];
             if (item->flags.whole & bad_flags.whole)
                 continue;
-    
+
             if (!item->isWeapon()) 
                 continue;
 
@@ -1472,7 +1519,7 @@ private:
             if (worker != -1)
                 continue;
 
-            df::unit_labor labor = find_job_labor (j);
+            df::unit_labor labor = labor_mapper->find_job_labor (j);
 
             if (print_debug)
                 out.print ("Job requiring labor %d found\n", labor);
@@ -1492,9 +1539,6 @@ private:
 
             if (Units::isCitizen(cre))
             {
-                if (cre->burrows.size() > 0)
-                    continue;        // dwarfs assigned to burrows are skipped entirely
-
                 dwarf_info_t* dwarf = add_dwarf(cre);
 
                 df::historical_figure* hf = df::historical_figure::find(dwarf->dwarf->hist_figure_id);
@@ -1557,7 +1601,7 @@ private:
                 {
                     state = CHILD;
                 }
-                else if (ENUM_ATTR(profession, military, dwarf->dwarf->profession))
+                else if (dwarf->dwarf->military.cur_uniform != 0)
                     state = MILITARY;
                 else if (dwarf->dwarf->job.current_job == NULL)
                 {
@@ -1565,6 +1609,8 @@ private:
                         state = OTHER;
                     else if (dwarf->dwarf->specific_refs.size() > 0)
                         state = OTHER;
+                    else if (dwarf->dwarf->burrows.size() > 0)
+                        state = OTHER;        // dwarfs assigned to burrows are treated as if permanently busy
                     else
                         state = IDLE;
                 }
@@ -1584,6 +1630,31 @@ private:
 
                 if (print_debug)
                     out.print("Dwarf \"%s\": state %s\n", dwarf->dwarf->name.first_name.c_str(), state_names[dwarf->state]);
+
+                // determine if dwarf has medical needs
+                if (dwarf->dwarf->health) 
+                {
+                    if (dwarf->dwarf->health->flags.bits.needs_recovery) 
+                        cnt_recover_wounded++;
+                    if (dwarf->dwarf->health->flags.bits.rq_diagnosis) 
+                        cnt_diagnosis++;
+                    if (dwarf->dwarf->health->flags.bits.rq_immobilize) 
+                        cnt_immobilize++;
+                    if (dwarf->dwarf->health->flags.bits.rq_dressing) 
+                        cnt_dressing++;
+                    if (dwarf->dwarf->health->flags.bits.rq_cleaning) 
+                        cnt_cleaning++;
+                    if (dwarf->dwarf->health->flags.bits.rq_surgery) 
+                        cnt_surgery++;
+                    if (dwarf->dwarf->health->flags.bits.rq_suture) 
+                        cnt_suture++;
+                    if (dwarf->dwarf->health->flags.bits.rq_setting) 
+                        cnt_setting++;
+                    if (dwarf->dwarf->health->flags.bits.rq_traction) 
+                        cnt_traction++;
+                    if (dwarf->dwarf->health->flags.bits.rq_crutch) 
+                        cnt_crutch++;
+                }
 
                 // check if dwarf has an axe, pick, or crossbow
 
@@ -1620,9 +1691,9 @@ private:
                     }
                 }
 
-                // clear labors if currently idle
+                // clear labors of dwarfs with clear_all set
 
-                if (state == IDLE || dwarf->clear_all) 
+                if (dwarf->clear_all) 
                 {
                     FOR_ENUM_ITEMS(unit_labor, labor)
                     {
@@ -1644,6 +1715,10 @@ private:
 public:
     void process()
     {
+        dig_count = tree_count = plant_count = detail_count = pick_count = axe_count = 0;
+        cnt_recover_wounded = cnt_diagnosis = cnt_immobilize = cnt_dressing = cnt_cleaning = cnt_surgery = cnt_suture =
+            cnt_setting = cnt_traction = cnt_crutch = 0;
+
         // scan for specific buildings of interest
 
         scan_buildings();
@@ -1656,8 +1731,6 @@ public:
 
         count_tools();
 
-        // create job entries for designation
-
         // collect current job list 
 
         collect_job_list();
@@ -1666,35 +1739,67 @@ public:
 
         collect_dwarf_list();
 
+        // add job entries for designation-related jobs
+
+        labor_needed[df::unit_labor::MINE]      += std::min(pick_count, dig_count);
+        labor_needed[df::unit_labor::CUTWOOD]   += std::min(axe_count, tree_count);
+        labor_needed[df::unit_labor::DETAIL]    += detail_count;
+        labor_needed[df::unit_labor::HERBALIST] += plant_count;
+
+        // add job entries for health care
+
+        labor_needed[df::unit_labor::RECOVER_WOUNDED] += cnt_recover_wounded;
+        labor_needed[df::unit_labor::DIAGNOSE]		  += cnt_diagnosis;
+        labor_needed[df::unit_labor::BONE_SETTING]    += cnt_immobilize;
+        labor_needed[df::unit_labor::DRESSING_WOUNDS] += cnt_dressing;
+        labor_needed[df::unit_labor::CLEAN]			  += cnt_cleaning;
+        labor_needed[df::unit_labor::SURGERY]         += cnt_surgery;
+        labor_needed[df::unit_labor::SUTURING]        += cnt_suture;
+        labor_needed[df::unit_labor::BONE_SETTING]    += cnt_setting;
+        labor_needed[df::unit_labor::BONE_SETTING]    += cnt_traction;
+        labor_needed[df::unit_labor::HAUL_ITEM]       += cnt_crutch;
+
+        if (print_debug)
+        {
+            for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
+            {
+                out.print ("labor_needed [%d] = %d\n", i->first, i->second);
+            }	
+        }
+
         // match idle dwarfs to need list - if an idle dwarf is assigned to that labor, then yay, decrement the need count
         // and remove the idle dwarf from the idle list
 
-        for (auto i = idle_dwarfs.begin(); i != idle_dwarfs.end(); i++) 
+        for (auto d = idle_dwarfs.begin(); d != idle_dwarfs.end(); d++) 
         {
             FOR_ENUM_ITEMS(unit_labor, l)
             {
-                if ((*i)->dwarf->status.labors[l])
+                if (l == df::unit_labor::NONE)
+                    continue;
+
+                if ((*d)->dwarf->status.labors[l])
                     if (labor_needed[l] > 0)
                     {
                         if (print_debug)
-                            out.print("assign \"%s\" labor %d (carried through)\n", (*i)->dwarf->name.first_name.c_str(), l);
+                            out.print("assign \"%s\" labor %d (carried through)\n", (*d)->dwarf->name.first_name.c_str(), l);
                         labor_needed[l]--;
-                        idle_dwarfs.erase(i);	// remove from idle list
+                        d = idle_dwarfs.erase(d);	// remove from idle list
+                        d--;						// and go back one
                         break;
                     } else {
-                        (*i)->dwarf->status.labors[l] = false;
+                        (*d)->clear_labor(l);
                     }
             }
         }
 
         priority_queue<pair<int, df::unit_labor>> pq;
-        
+
         for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
         {
             if (i->second > 0) 
                 pq.push(make_pair(i->second, i->first));
         }
-            
+
         while (!idle_dwarfs.empty() && !pq.empty())
         {
             df::unit_labor labor = pq.top().second;
@@ -1704,13 +1809,13 @@ public:
             if (print_debug) 
                 out.print("labor %d skill %d remaining %d\n", labor, skill, remaining);
 
-            std::deque<dwarf_info_t*>::iterator bestdwarf = idle_dwarfs.begin();
+            std::list<dwarf_info_t*>::iterator bestdwarf = idle_dwarfs.begin();
 
             if (skill != df::job_skill::NONE) 
             {
                 int best_skill_level = -1;
 
-                for (std::deque<dwarf_info_t*>::iterator k = idle_dwarfs.begin(); k != idle_dwarfs.end(); k++)
+                for (std::list<dwarf_info_t*>::iterator k = idle_dwarfs.begin(); k != idle_dwarfs.end(); k++)
                 {
                     dwarf_info_t* d = (*k);
                     int	skill_level = Units::getEffectiveSkill(d->dwarf, skill);
@@ -1809,7 +1914,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
     if (parameters.size() == 1 &&
         (parameters[0] == "0" || parameters[0] == "enable" ||
-         parameters[0] == "1" || parameters[0] == "disable"))
+        parameters[0] == "1" || parameters[0] == "disable"))
     {
         bool enable = (parameters[0] == "1" || parameters[0] == "enable");
         if (enable && !enable_autolabor)

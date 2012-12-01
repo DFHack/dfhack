@@ -1507,17 +1507,47 @@ private:
             if (!j) 
                 continue;
 
-            if (j->flags.bits.suspend)
+            if (j->flags.bits.suspend || j->flags.bits.item_lost)
                 continue;
 
             int worker = -1;
+            int bld = -1;
 
             for (int r = 0; r < j->general_refs.size(); ++r)
+            {
                 if (j->general_refs[r]->getType() == df::general_ref_type::UNIT_WORKER)
                     worker = ((df::general_ref_unit_workerst *)(j->general_refs[r]))->unit_id;
+                if (j->general_refs[r]->getType() == df::general_ref_type::BUILDING_HOLDER)
+                    bld = ((df::general_ref_building_holderst *)(j->general_refs[r]))->building_id;
+            }
 
             if (worker != -1)
                 continue;
+
+            if (bld != -1) 
+            {
+                if (print_debug)
+                    out.print("Checking job %d for first in queue at building %d\n", j->id, bld);
+                df::building* b = binsearch_in_vector(world->buildings.all, bld);
+                int fjid = -1;
+                for (int jn = 0; jn < b->jobs.size(); jn++)
+                {
+                    if (b->jobs[jn]->flags.bits.suspend)
+                        continue;
+                    fjid = b->jobs[jn]->id;
+                    break;
+                }
+                // check if this job is the first nonsuspended job on this building; if not, ignore it
+                if (fjid != j->id) {
+                    if (print_debug)
+                        out.print("Job %d is not first in queue at building %d (%d), skipping\n", j->id, bld, fjid);
+                    continue;
+                }
+
+                if (print_debug)
+                    out.print("Job %d is in queue at building %d\n", j->id, bld);
+
+            }
 
             df::unit_labor labor = labor_mapper->find_job_labor (j);
 
@@ -1763,12 +1793,15 @@ public:
         {
             for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
             {
-                out.print ("labor_needed [%d] = %d\n", i->first, i->second);
+                out.print ("labor_needed [%s] = %d\n", ENUM_KEY_STR(unit_labor, i->first).c_str(), i->second);
             }	
         }
 
         // match idle dwarfs to need list - if an idle dwarf is assigned to that labor, then yay, decrement the need count
         // and remove the idle dwarf from the idle list
+
+        if (print_debug)
+            out.print("idle count = %d, labor need count = %d\n", idle_dwarfs.size(), labor_needed.size());
 
         for (auto d = idle_dwarfs.begin(); d != idle_dwarfs.end(); d++) 
         {
@@ -1781,7 +1814,7 @@ public:
                     if (labor_needed[l] > 0)
                     {
                         if (print_debug)
-                            out.print("assign \"%s\" labor %d (carried through)\n", (*d)->dwarf->name.first_name.c_str(), l);
+                            out.print("assign \"%s\" labor %s (carried through)\n", (*d)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, l).c_str());
                         labor_needed[l]--;
                         d = idle_dwarfs.erase(d);	// remove from idle list
                         d--;						// and go back one
@@ -1800,6 +1833,9 @@ public:
                 pq.push(make_pair(i->second, i->first));
         }
 
+        if (print_debug)
+            out.print("idle count = %d, labor need count = %d\n", idle_dwarfs.size(), pq.size());
+
         while (!idle_dwarfs.empty() && !pq.empty())
         {
             df::unit_labor labor = pq.top().second;
@@ -1807,7 +1843,7 @@ public:
             df::job_skill skill = labor_to_skill[labor];
 
             if (print_debug) 
-                out.print("labor %d skill %d remaining %d\n", labor, skill, remaining);
+                out.print("labor %s skill %s remaining %d\n", ENUM_KEY_STR(unit_labor, labor).c_str(), ENUM_KEY_STR(job_skill, skill).c_str(), remaining);
 
             std::list<dwarf_info_t*>::iterator bestdwarf = idle_dwarfs.begin();
 
@@ -1829,7 +1865,7 @@ public:
             }
 
             if (print_debug)
-                out.print("assign \"%s\" labor %d\n", (*bestdwarf)->dwarf->name.first_name.c_str(), labor);
+                out.print("assign \"%s\" labor %s\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str());
             (*bestdwarf)->set_labor(labor);
 
             idle_dwarfs.erase(bestdwarf);

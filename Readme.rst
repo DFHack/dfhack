@@ -2074,7 +2074,7 @@ directly to the main dwarf mode screen.
 Search
 ======
 
-The search plugin adds search to the Stocks, Trading and Unit List screens.
+The search plugin adds search to the Stocks, Trading, Stockpile and Unit List screens.
 
 .. image:: images/search.png
 
@@ -2096,6 +2096,16 @@ In the Trade screen, the actual trade will always only act on items that
 are actually visible in the list; the same effect applies to the Trade
 Value numbers displayed by the screen. Because of this, pressing the 't'
 key while search is active clears the search instead of executing the trade.
+
+In the stockpile screen the option only appears if the cursor is in the
+rightmost list:
+
+.. image:: images/search-stockpile.png
+
+Note that the 'Permit XXX'/'Forbid XXX' keys conveniently operate only
+on items actually shown in the rightmost list, so it is possible to select
+only fat or tallow by forbidding fats, then searching for fat/tallow, and
+using Permit Fats again while the list is filtered.
 
 
 AutoMaterial

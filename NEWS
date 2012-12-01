@@ -25,18 +25,18 @@ DFHack future
   New GUI scripts:
     - gui/guide-path: displays the cached path for minecart Guide orders.
     - gui/workshop-job: displays inputs of a workshop job and allows tweaking them.
-    - gui/workflow: a front-end for the workflow plugin.
+    - gui/workflow: a front-end for the workflow plugin (part inspired by falconne).
     - gui/assign-rack: works together with a binary patch to fix weapon racks.
     - gui/gm-editor: an universal editor for lots of dfhack things.
     - gui/companion-order: a adventure mode command interface for your companions.
-  New binary patches:
-    - armorstand-capacity
-    - custom-reagent-size
-    - deconstruct-heapfall
-    - deconstruct-teleport
-    - hospital-overstocking
-    - training-ammo
-    - weaponrack-unassign
+  New binary patches (for use with binpatch):
+    - armorstand-capacity: doubles the capacity of armor stands.
+    - custom-reagent-size: lets custom reactions use small amounts of inputs.
+    - deconstruct-heapfall: stops some items still falling on head when deconstructing.
+    - deconstruct-teleport: stops items from 16x16 block teleporting when deconstructing.
+    - hospital-overstocking: stops hospital overstocking with supplies.
+    - training-ammo: lets dwarves with quiver full of combat-only ammo train.
+    - weaponrack-unassign: fixes bug that negates work done by gui/assign-rack.
   Workflow plugin:
     - properly considers minecarts assigned to routes busy.
     - code for deducing job outputs rewritten in lua for flexibility.
@@ -48,7 +48,7 @@ DFHack future
     this plugin makes weapon racks, armor stands, chests and cabinets in
     properly designated barracks be used again for storage of squad equipment.
   New Search plugin by falconne:
-    Adds an incremental search function to the Stocks, Trading and Unit List screens.
+    Adds an incremental search function to the Stocks, Trading, Stockpile and Unit List screens.
   New AutoMaterial plugin by falconne:
     Makes building constructions (walls, floors, fortifications, etc) a little bit easier by
     saving you from having to trawl through long lists of materials each time you place one.

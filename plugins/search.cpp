@@ -689,7 +689,7 @@ public:
 
     void render() const
     {
-        print_search_option(2, 25);
+        print_search_option(51, 23);
     }
 
     static df::layer_object_listst *getLayerList(const df::viewscreen_layer *layer, int idx)

@@ -130,12 +130,20 @@ RangeEditor = defclass(RangeEditor, widgets.Label)
 
 RangeEditor.ATTRS {
     get_cb = DEFAULT_NIL,
-    save_cb = DEFAULT_NIL
+    save_cb = DEFAULT_NIL,
+    keys = {
+        count = 'CUSTOM_SHIFT_I',
+        modify = 'CUSTOM_SHIFT_R',
+        min_dec = 'BUILDING_TRIGGER_MIN_SIZE_DOWN',
+        min_inc = 'BUILDING_TRIGGER_MIN_SIZE_UP',
+        max_dec = 'BUILDING_TRIGGER_MAX_SIZE_DOWN',
+        max_inc = 'BUILDING_TRIGGER_MAX_SIZE_UP',
+    }
 }
 
 function RangeEditor:init(args)
     self:setText{
-        { key = 'BUILDING_TRIGGER_ENABLE_CREATURE',
+        { key = self.keys.count,
             text = function()
             local cons = self.get_cb() or null_cons
             if cons.goal_by_count then
@@ -145,21 +153,21 @@ function RangeEditor:init(args)
             end
             end,
             on_activate = self:callback('onChangeUnit') },
-        { key = 'BUILDING_TRIGGER_ENABLE_MAGMA', text = ': Modify',
+        { key = self.keys.modify, text = ': Range',
             on_activate = self:callback('onEditRange') },
             NEWLINE, '  ',
-        { key = 'BUILDING_TRIGGER_MIN_SIZE_DOWN',
-            on_activate = self:callback('onIncRange', 'goal_gap', 5) },
-        { key = 'BUILDING_TRIGGER_MIN_SIZE_UP',
+        { key = self.keys.min_dec,
+            on_activate = self:callback('onIncRange', 'goal_gap', 2) },
+        { key = self.keys.min_inc,
             on_activate = self:callback('onIncRange', 'goal_gap', -1) },
         { text = function()
             local cons = self.get_cb() or null_cons
             return string.format(': Min %-4d ', cons.goal_value - cons.goal_gap)
             end },
-        { key = 'BUILDING_TRIGGER_MAX_SIZE_DOWN',
+        { key = self.keys.max_dec,
             on_activate = self:callback('onIncRange', 'goal_value', -1) },
-        { key = 'BUILDING_TRIGGER_MAX_SIZE_UP',
-            on_activate = self:callback('onIncRange', 'goal_value', 5) },
+        { key = self.keys.max_inc,
+            on_activate = self:callback('onIncRange', 'goal_value', 2) },
         { text = function()
             local cons = self.get_cb() or null_cons
             return string.format(': Max %-4d', cons.goal_value)
@@ -200,9 +208,9 @@ end
 function RangeEditor:onIncRange(field, delta)
     local cons = self.get_cb()
     if not cons.goal_by_count then
-        delta = delta * 5
+        delta = delta * 2
     end
-    cons[field] = math.max(1, cons[field] + delta)
+    cons[field] = math.max(1, cons[field] + delta*5)
     self.save_cb(cons)
 end
 
@@ -295,7 +303,7 @@ function NewConstraint:init(args)
             }
         },
         widgets.Label{
-            frame = { l = 0, t = 13 },
+            frame = { l = 0, t = 14 },
             text = {
                 'Desired range: ',
                 { pen = COLOR_LIGHTCYAN,
@@ -311,7 +319,7 @@ function NewConstraint:init(args)
             }
         },
         RangeEditor{
-            frame = { l = 1, t = 15 },
+            frame = { l = 1, t = 16 },
             get_cb = self:cb_getfield('constraint'),
             save_cb = self:callback('onRangeChange'),
         },
@@ -353,7 +361,7 @@ function NewConstraint:postinit()
 end
 
 function NewConstraint:isValid()
-    return self.constraint.item_type >= 0
+    return self.constraint.item_type >= 0 or self.constraint.is_craft
 end
 
 function NewConstraint:onChange()
@@ -456,6 +464,59 @@ function NewConstraint:onRangeChange()
 end
 
 ------------------------------
+-- CONSTRAINT HISTORY GRAPH --
+------------------------------
+
+HistoryGraph = defclass(HistoryGraph, widgets.Widget)
+
+HistoryGraph.ATTRS {
+    frame_inset = 1,
+    history_pen = COLOR_CYAN,
+}
+
+function HistoryGraph:init(info)
+end
+
+function HistoryGraph:setData(history, bars)
+    self.history = history or {}
+    self.bars = bars or {}
+
+    local maxval = 1
+    for i,v in ipairs(self.history) do
+        maxval = math.max(maxval, v)
+    end
+    for i,v in ipairs(self.bars) do
+        maxval = math.max(maxval, v.value)
+    end
+    self.max_value = maxval
+end
+
+function HistoryGraph:onRenderFrame(dc,rect)
+    dc:fill(rect.x1,rect.y1,rect.x1,rect.y2,{ch='\xb3', fg=COLOR_BROWN})
+    dc:fill(rect.x1,rect.y2,rect.x2,rect.y2,{ch='\xc4', fg=COLOR_BROWN})
+    dc:seek(rect.x1,rect.y1):char('\x1e', COLOR_BROWN)
+    dc:seek(rect.x1,rect.y2):char('\xc5', COLOR_BROWN)
+    dc:seek(rect.x2,rect.y2):char('\x10', COLOR_BROWN)
+    dc:seek(rect.x1,rect.y2-1):char('0', COLOR_BROWN)
+end
+
+function HistoryGraph:onRenderBody(dc)
+    local coeff = (dc.height-1)/self.max_value
+
+    for i,v in ipairs(self.bars) do
+        local y = dc.height-1-math.floor(0.5 + coeff*v.value)
+        dc:fill(0,y,dc.width-1,y,v.pen or {ch='-', fg=COLOR_GREEN})
+    end
+
+    local xbase = dc.width-1-#self.history
+    for i,v in ipairs(self.history) do
+        local x = xbase + i
+        local y = dc.height-1-math.floor(0.5 + coeff*v)
+        dc:seek(x,y):char('*', self.history_pen)
+    end
+end
+
+------------------------------
 -- GLOBAL CONSTRAINT SCREEN --
 ------------------------------
 
@@ -478,7 +539,53 @@ function ConstraintList:init(args)
 
     self:addviews{
         widgets.Panel{
-            frame = { w = 31, r = 0, h = 6, t = 0 },
+            frame = { l = 0, r = 31 },
+            frame_inset = 1,
+            on_layout = function(body)
+                self.fwidth = body.width - (12+1+1+7+1+1+1+7)
+            end,
+            subviews = {
+                widgets.Label{
+                    frame = { l = 0, t = 0 },
+                    text_pen = COLOR_CYAN,
+                    text = {
+                        { text = 'Item', width = 12 }, ' ',
+                        { text = 'Material etc', width = fwidth_cb }, ' ',
+                        { text = 'Stock / Limit' },
+                    }
+                },
+                widgets.FilteredList{
+                    view_id = 'list',
+                    frame = { t = 2, b = 2 },
+                    edit_below = true,
+                    not_found_label = 'No matching constraints',
+                    edit_pen = COLOR_LIGHTCYAN,
+                    text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
+                    cursor_pen = { fg = COLOR_WHITE, bg = COLOR_GREEN },
+                    on_select = self:callback('onSelectConstraint'),
+                },
+                widgets.Label{
+                    frame = { b = 0, h = 1 },
+                    text = {
+                        { key = 'CUSTOM_SHIFT_A', text = ': Add',
+                          on_activate = self:callback('onNewConstraint') }, ', ',
+                        { key = 'CUSTOM_SHIFT_X', text = ': Delete',
+                          on_activate = self:callback('onDeleteConstraint') }, ', ',
+                        { key = 'CUSTOM_SHIFT_O', text = ': Severity Order',
+                          on_activate = self:callback('onSwitchSort'),
+                          pen = function()
+                            if self.sort_by_severity then
+                              return COLOR_LIGHTCYAN
+                            else
+                              return COLOR_WHITE
+                            end
+                          end },
+                    }
+                }
+            }
+        },
+        widgets.Panel{
+            frame = { w = 30, r = 0, h = 6, t = 0 },
             frame_inset = 1,
             subviews = {
                 widgets.Label{
@@ -504,80 +611,34 @@ function ConstraintList:init(args)
                     enabled = self:callback('isAnySelected'),
                     get_cb = self:callback('getCurConstraint'),
                     save_cb = self:callback('saveConstraint'),
+                    keys = {
+                        count = 'CUSTOM_SHIFT_I',
+                        modify = 'CUSTOM_SHIFT_R',
+                        min_dec = 'SECONDSCROLL_PAGEUP',
+                        min_inc = 'SECONDSCROLL_PAGEDOWN',
+                        max_dec = 'SECONDSCROLL_UP',
+                        max_inc = 'SECONDSCROLL_DOWN',
+                    }
                 },
             }
         },
         widgets.Widget{
             active = false,
-            frame = { w = 1, r = 31 },
+            frame = { w = 1, r = 30 },
             frame_background = gui.BOUNDARY_FRAME.frame_pen,
         },
         widgets.Widget{
             active = false,
-            frame = { w = 31, r = 0, h = 1, t = 6 },
+            frame = { w = 30, r = 0, h = 1, t = 6 },
             frame_background = gui.BOUNDARY_FRAME.frame_pen,
         },
-        widgets.Panel{
-            frame = { l = 0, r = 32 },
-            frame_inset = 1,
-            on_layout = function(body)
-                self.fwidth = body.width - (12+1+1+7+1+1+1+7)
-            end,
-            subviews = {
-                widgets.Label{
-                    frame = { l = 0, t = 0 },
-                    text_pen = COLOR_CYAN,
-                    text = {
-                        { text = 'Item', width = 12 }, ' ',
-                        { text = 'Material etc', width = fwidth_cb }, ' ',
-                        { text = 'Stock / Limit' },
-                    }
-                },
-                widgets.FilteredList{
-                    view_id = 'list',
-                    frame = { t = 2, b = 2 },
-                    edit_below = true,
-                    not_found_label = 'No matching constraints',
-                    edit_pen = COLOR_LIGHTCYAN,
-                    text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
-                    cursor_pen = { fg = COLOR_WHITE, bg = COLOR_GREEN },
-                },
-                widgets.Label{
-                    frame = { b = 0, h = 1 },
-                    text = {
-                        { key = 'CUSTOM_SHIFT_A', text = ': Add',
-                          on_activate = self:callback('onNewConstraint') }, ', ',
-                        { key = 'CUSTOM_SHIFT_X', text = ': Delete',
-                          on_activate = self:callback('onDeleteConstraint') }, ', ',
-                        { key = 'CUSTOM_SHIFT_O', text = ': Severity Order',
-                          on_activate = self:callback('onSwitchSort'),
-                          pen = function()
-                            if self.sort_by_severity then
-                              return COLOR_LIGHTCYAN
-                            else
-                              return COLOR_WHITE
-                            end
-                          end }, ', ',
-                        { key = 'CUSTOM_SHIFT_S', text = ': Search',
-                          on_activate = function()
-                            self.subviews.list.edit.active = not self.subviews.list.edit.active
-                          end,
-                          pen = function()
-                            if self.subviews.list.edit.active then
-                              return COLOR_LIGHTCYAN
-                            else
-                              return COLOR_WHITE
-                            end
-                          end }
-                    }
-                }
-            }
-        },
+        HistoryGraph{
+            view_id = 'graph',
+            frame = { w = 30, r = 0, t = 7, b = 0 },
+        }
     }
 
-    self.subviews.list.edit.active = false
-
-    self:initListChoices()
+    self:initListChoices(nil, args.select_token)
 end
 
 function stock_trend_color(cons)
@@ -733,6 +794,29 @@ function ConstraintList:onDeleteConstraint()
     )
 end
 
+function ConstraintList:onSelectConstraint(idx,item)
+    local history, bars
+
+    if item then
+        local cons = item.obj
+        local vfield = if_by_count(cons, 'cur_count', 'cur_amount')
+
+        bars = {
+            { value = cons.goal_value - cons.goal_gap, pen = {ch='-', fg=COLOR_GREEN} },
+            { value = cons.goal_value, pen = {ch='-', fg=COLOR_LIGHTGREEN} },
+        }
+
+        history = {}
+        for i,v in ipairs(cons.history or {}) do
+            table.insert(history, v[vfield])
+        end
+
+        table.insert(history, cons[vfield])
+    end
+
+    self.subviews.graph:setData(history, bars)
+end
+
 -------------------------------
 -- WORKSHOP JOB INFO OVERLAY --
 -------------------------------
@@ -772,14 +856,20 @@ function JobConstraints:init(args)
         widgets.Label{
             frame = { l = 0, b = 0 },
             text = {
-                { key = 'CUSTOM_N', text = ': New limit, ',
+                { key = 'CUSTOM_SHIFT_A', text = ': Add limit, ',
                   on_activate = self:callback('onNewConstraint') },
-                { key = 'CUSTOM_X', text = ': Delete',
+                { key = 'CUSTOM_SHIFT_X', text = ': Delete',
                   enabled = self:callback('isAnySelected'),
                   on_activate = self:callback('onDeleteConstraint') },
                 NEWLINE, NEWLINE,
                 { key = 'LEAVESCREEN', text = ': Back',
-                  on_activate = self:callback('dismiss') }
+                  on_activate = self:callback('dismiss') },
+                '       ',
+                { key = 'CUSTOM_SHIFT_S', text = ': Status',
+                  on_activate = function()
+                    local sel = self:getCurConstraint()
+                    ConstraintList{ select_token = (sel or {}).token }:show()
+                  end }
             }
         },
     }
@@ -873,22 +963,16 @@ function JobConstraints:onNewConstraint()
     local choices = {}
     for i,cons in ipairs(variants) do
         local itemstr = describe_item_type(cons)
-        local matstr = describe_material(cons)
-        local matflags = utils.list_bitfield_flags(cons.mat_mask)
-        if #matflags > 0 then
-            local fstr = table.concat(matflags, '/')
-            if matstr == 'any material' then
-                matstr = 'any '..fstr
-            else
-                matstr = 'any '..fstr..' '..matstr
-            end
+        local matstr,matflags = describe_material(cons)
+        if matflags then
+            matstr = matflags..' '..matstr
         end
 
         table.insert(choices, { text = itemstr..' of '..matstr, obj = cons })
     end
 
     dlg.ListBox{
-        frame_title = 'New limit',
+        frame_title = 'Add limit',
         text = 'Select one of the possible outputs:',
         text_pen = COLOR_WHITE,
         choices = choices,
@@ -930,7 +1014,7 @@ end
 
 local args = {...}
 
-if args[1] == 'list' then
+if args[1] == 'status' then
     check_enabled(function() ConstraintList{}:show() end)
 else
     if not string.match(dfhack.gui.getCurFocus(), '^dwarfmode/QueryBuilding/Some/Workshop/Job') then

@@ -2295,12 +2295,12 @@ current count is below the lower bound of the range, the job is resumed; if it
 is above or equal to the top bound, it will be suspended. Within the range, the
 specific constraint has no effect on the job; others may still affect it.
 
-Pressing 'c' switches the current constraint between counting stacks or items.
-Pressing 'm' lets you input the range directly; 'e', 'r', 'd', 'f' adjust the
-bounds by 1, 5, or 25 depending on the direction and the 'c' setting (counting
-items and expanding the range each gives a 5x bonus).
+Pressing 'I' switches the current constraint between counting stacks or items.
+Pressing 'R' lets you input the range directly; 'e', 'r', 'd', 'f' adjust the
+bounds by 5, 10, or 20 depending on the direction and the 'I' setting (counting
+items and expanding the range each gives a 2x bonus).
 
-Pressing 'n' produces a list of possible outputs of this job as guessed by
+Pressing 'A' produces a list of possible outputs of this job as guessed by
 workflow, and lets you create a new constraint by choosing one as template. If you
 don't see the choice you want in the list, it likely means you have to adjust
 the job material first using ``job item-material`` or ``gui/workshop-job``,
@@ -2315,6 +2315,29 @@ next dialog, which allows you to edit the suggested constraint parameters to
 suit your need, and set the item count range.
 
 .. image:: images/workflow-new2.png
+
+Pressing 'S' (or, with the example config, Alt-W in the 'z' stocks screen)
+opens the overall status screen, which was copied from the C++ implementation
+by falconne for better integration with the rest of the lua script:
+
+.. image:: images/workflow-status.png
+
+This screen shows all currently existing workflow constraints, and allows
+monitoring and/or changing them from one screen. The constraint list can
+be filtered by typing text in the field below.
+
+The color of the stock level number indicates how "healthy" the stock level
+is, based on current count and trend. Bright green is very good, green is good,
+red is bad, bright red is very bad.
+
+The limit number is also color-coded. Red means that there are currently no
+workshops producing that item (i.e. no jobs). If it's yellow, that means the
+production has been delayed, possibly due to lack of input materials.
+
+The chart on the right is a plot of the last 14 days (28 half day plots) worth
+of stock history for the selected item, with the rightmost point representing
+the current stock value. The bright green dashed line is the target
+limit (maximum) and the dark green line is that minus the gap (minimum).
 
 
 gui/assign-rack

@@ -418,7 +418,13 @@ List.ATTRS{
 function List:init(info)
     self.page_top = 1
     self.page_size = 1
-    self:setChoices(info.choices, info.selected)
+
+    if info.choices then
+        self:setChoices(info.choices, info.selected)
+    else
+        self.choices = {}
+        self.selected = 1
+    end
 end
 
 function List:setChoices(choices, selected)
@@ -481,6 +487,9 @@ function List:moveCursor(delta, force_cb)
     if cnt < 1 then
         self.page_top = 1
         self.selected = 1
+        if force_cb and self.on_select then
+            self.on_select(nil,nil)
+        end
         return
     end
 
@@ -657,13 +666,17 @@ function FilteredList:init(info)
         end
     end
     self.not_found = Label{
-        visible = false,
+        visible = true,
         text = info.not_found_label or 'No matches',
         text_pen = COLOR_LIGHTRED,
         frame = { l = info.icon_width, t = self.list.frame.t },
     }
     self:addviews{ self.edit, self.list, self.not_found }
-    self:setChoices(info.choices, info.selected)
+    if info.choices then
+        self:setChoices(info.choices, info.selected)
+    else
+        self.choices = {}
+    end
 end
 
 function FilteredList:getChoices()

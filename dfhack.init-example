@@ -91,6 +91,7 @@ keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
 
 # workflow front-end
 keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
+keybinding add Alt-W@overallstatus "gui/workflow status"
 
 # assign weapon racks to squads so that they can be used
 keybinding add P@dwarfmode/QueryBuilding/Some/Weaponrack gui/assign-rack

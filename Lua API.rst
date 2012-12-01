@@ -2785,6 +2785,8 @@ It has the following attributes:
 :inactive_pen: If specified, used for the cursor when the widget is not active.
 :icon_pen: Default pen for icons.
 :on_select: Selection change callback; called as ``on_select(index,choice)``.
+            This is also called with *nil* arguments if ``setChoices`` is called
+            with an empty list.
 :on_submit: Enter key callback; if specified, the list reacts to the key
             and calls it as ``on_submit(index,choice)``.
 :on_submit2: Shift-Enter key callback; if specified, the list reacts to the key

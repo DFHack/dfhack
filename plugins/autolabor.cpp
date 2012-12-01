@@ -45,7 +45,11 @@
 #include <df/general_ref_unit_workerst.h>
 #include <df/general_ref_building_holderst.h>
 #include <df/building_workshopst.h>
+#include <df/building_furnacest.h>
+#include <df/building_def.h>
 #include <df/reaction.h>
+#include <df/job_item.h>
+#include <df/job_item_ref.h>
 
 
 #include <MiscUtils.h>
@@ -515,26 +519,119 @@ static const int responsibility_penalties[] = {
 
 struct dwarf_info_t
 {
-	df::unit* dwarf;
+    df::unit* dwarf;
     dwarf_state state;
 
-	bool clear_all;
+    bool clear_all;
 
-	bool has_axe;
-	bool has_pick;
-	bool has_crossbow;
+    bool has_axe;
+    bool has_pick;
+    bool has_crossbow;
 
-	dwarf_info_t(df::unit* dw) : dwarf(dw), clear_all(0), has_axe(0), has_pick(0), has_crossbow(0), state(OTHER) {}
+    dwarf_info_t(df::unit* dw) : dwarf(dw), clear_all(0), has_axe(0), has_pick(0), has_crossbow(0), state(OTHER) {}
 
-	void set_labor(df::unit_labor labor) 
-	{
-		dwarf->status.labors[labor] = true;
-		if ((labor == df::unit_labor::MINE    && !has_pick) ||
-			(labor == df::unit_labor::CUTWOOD && !has_axe) ||
-			(labor == df::unit_labor::HUNT    && !has_crossbow))
-			dwarf->military.pickup_flags.bits.update = 1;
-	}
+    void set_labor(df::unit_labor labor) 
+    {
+        dwarf->status.labors[labor] = true;
+        if ((labor == df::unit_labor::MINE    && !has_pick) ||
+            (labor == df::unit_labor::CUTWOOD && !has_axe) ||
+            (labor == df::unit_labor::HUNT    && !has_crossbow))
+            dwarf->military.pickup_flags.bits.update = 1;
+    }
 };
+
+static df::unit_labor hauling_labor_map[] =
+    {
+        df::unit_labor::HAUL_ITEM,	/* BAR */
+        df::unit_labor::HAUL_ITEM,	/* SMALLGEM */
+        df::unit_labor::HAUL_ITEM,	/* BLOCKS */
+        df::unit_labor::HAUL_ITEM,	/* ROUGH */
+        df::unit_labor::HAUL_STONE,	/* BOULDER */
+        df::unit_labor::HAUL_WOOD,	/* WOOD */
+        df::unit_labor::HAUL_FURNITURE,	/* DOOR */
+        df::unit_labor::HAUL_FURNITURE,	/* FLOODGATE */
+        df::unit_labor::HAUL_FURNITURE,	/* BED */
+        df::unit_labor::HAUL_FURNITURE,	/* CHAIR */
+        df::unit_labor::HAUL_ITEM,	/* CHAIN */
+        df::unit_labor::HAUL_ITEM,	/* FLASK */
+        df::unit_labor::HAUL_ITEM,	/* GOBLET */
+        df::unit_labor::HAUL_ITEM,	/* INSTRUMENT */
+        df::unit_labor::HAUL_ITEM,	/* TOY */
+        df::unit_labor::HAUL_FURNITURE,	/* WINDOW */
+        df::unit_labor::HAUL_ANIMAL,	/* CAGE */
+        df::unit_labor::HAUL_ITEM,	/* BARREL */
+        df::unit_labor::HAUL_ITEM,	/* BUCKET */
+        df::unit_labor::HAUL_ANIMAL,	/* ANIMALTRAP */
+        df::unit_labor::HAUL_FURNITURE,	/* TABLE */
+        df::unit_labor::HAUL_FURNITURE,	/* COFFIN */
+        df::unit_labor::HAUL_FURNITURE,	/* STATUE */
+        df::unit_labor::HAUL_BODY,	/* CORPSE */
+        df::unit_labor::HAUL_ITEM,	/* WEAPON */
+        df::unit_labor::HAUL_ITEM,	/* ARMOR */
+        df::unit_labor::HAUL_ITEM,	/* SHOES */
+        df::unit_labor::HAUL_ITEM,	/* SHIELD */
+        df::unit_labor::HAUL_ITEM,	/* HELM */
+        df::unit_labor::HAUL_ITEM,	/* GLOVES */
+        df::unit_labor::HAUL_FURNITURE,	/* BOX */
+        df::unit_labor::HAUL_ITEM,	/* BIN */
+        df::unit_labor::HAUL_FURNITURE,	/* ARMORSTAND */
+        df::unit_labor::HAUL_FURNITURE,	/* WEAPONRACK */
+        df::unit_labor::HAUL_FURNITURE,	/* CABINET */
+        df::unit_labor::HAUL_ITEM,	/* FIGURINE */
+        df::unit_labor::HAUL_ITEM,	/* AMULET */
+        df::unit_labor::HAUL_ITEM,	/* SCEPTER */
+        df::unit_labor::HAUL_ITEM,	/* AMMO */
+        df::unit_labor::HAUL_ITEM,	/* CROWN */
+        df::unit_labor::HAUL_ITEM,	/* RING */
+        df::unit_labor::HAUL_ITEM,	/* EARRING */
+        df::unit_labor::HAUL_ITEM,	/* BRACELET */
+        df::unit_labor::HAUL_ITEM,	/* GEM */
+        df::unit_labor::HAUL_FURNITURE,	/* ANVIL */
+        df::unit_labor::HAUL_BODY,	/* CORPSEPIECE */
+        df::unit_labor::HAUL_REFUSE,	/* REMAINS */
+        df::unit_labor::HAUL_FOOD,	/* MEAT */
+        df::unit_labor::HAUL_FOOD,	/* FISH */
+        df::unit_labor::HAUL_FOOD,	/* FISH_RAW */
+        df::unit_labor::HAUL_REFUSE,	/* VERMIN */
+        df::unit_labor::HAUL_ITEM,	/* PET */
+        df::unit_labor::HAUL_FOOD,	/* SEEDS */
+        df::unit_labor::HAUL_FOOD,	/* PLANT */
+        df::unit_labor::HAUL_ITEM,	/* SKIN_TANNED */
+        df::unit_labor::HAUL_FOOD,	/* LEAVES */
+        df::unit_labor::HAUL_ITEM,	/* THREAD */
+        df::unit_labor::HAUL_ITEM,	/* CLOTH */
+        df::unit_labor::HAUL_ITEM,	/* TOTEM */
+        df::unit_labor::HAUL_ITEM,	/* PANTS */
+        df::unit_labor::HAUL_ITEM,	/* BACKPACK */
+        df::unit_labor::HAUL_ITEM,	/* QUIVER */
+        df::unit_labor::HAUL_FURNITURE,	/* CATAPULTPARTS */
+        df::unit_labor::HAUL_FURNITURE,	/* BALLISTAPARTS */
+        df::unit_labor::HAUL_FURNITURE,	/* SIEGEAMMO */
+        df::unit_labor::HAUL_FURNITURE,	/* BALLISTAARROWHEAD */
+        df::unit_labor::HAUL_FURNITURE,	/* TRAPPARTS */
+        df::unit_labor::HAUL_FURNITURE,	/* TRAPCOMP */
+        df::unit_labor::HAUL_FOOD,	/* DRINK */
+        df::unit_labor::HAUL_FOOD,	/* POWDER_MISC */
+        df::unit_labor::HAUL_FOOD,	/* CHEESE */
+        df::unit_labor::HAUL_FOOD,	/* FOOD */
+        df::unit_labor::HAUL_FOOD,	/* LIQUID_MISC */
+        df::unit_labor::HAUL_ITEM,	/* COIN */
+        df::unit_labor::HAUL_FOOD,	/* GLOB */
+        df::unit_labor::HAUL_STONE,	/* ROCK */
+        df::unit_labor::HAUL_FURNITURE,	/* PIPE_SECTION */
+        df::unit_labor::HAUL_FURNITURE,	/* HATCH_COVER */
+        df::unit_labor::HAUL_FURNITURE,	/* GRATE */
+        df::unit_labor::HAUL_FURNITURE,	/* QUERN */
+        df::unit_labor::HAUL_FURNITURE,	/* MILLSTONE */
+        df::unit_labor::HAUL_ITEM,	/* SPLINT */
+        df::unit_labor::HAUL_ITEM,	/* CRUTCH */
+        df::unit_labor::HAUL_FURNITURE,	/* TRACTION_BENCH */
+        df::unit_labor::HAUL_ITEM,	/* ORTHOPEDIC_CAST */
+        df::unit_labor::HAUL_ITEM,	/* TOOL */
+        df::unit_labor::HAUL_FURNITURE,	/* SLAB */
+        df::unit_labor::HAUL_FOOD,	/* EGG */
+        df::unit_labor::HAUL_ITEM,	/* BOOK */
+    };
 
 static bool isOptionEnabled(unsigned flag)
 {
@@ -724,531 +821,921 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 static df::building* get_building_from_job(df::job* j)
 {
-	for (auto r = j->general_refs.begin(); r != j->general_refs.end(); r++)
-	{
-		if ((*r)->getType() == df::general_ref_type::BUILDING_HOLDER)
-		{
-			int32_t id = ((df::general_ref_building_holderst*)(*r))->building_id;
-			df::building* bld = binsearch_in_vector(world->buildings.all, id);
-			return bld;
-		}
-	}
-	return 0;
+    for (auto r = j->general_refs.begin(); r != j->general_refs.end(); r++)
+    {
+        if ((*r)->getType() == df::general_ref_type::BUILDING_HOLDER)
+        {
+            int32_t id = ((df::general_ref_building_holderst*)(*r))->building_id;
+            df::building* bld = binsearch_in_vector(world->buildings.all, id);
+            return bld;
+        }
+    }
+    return 0;
 }
 
-static df::job_skill workshop_build_labor[] = 
+
+
+static df::unit_labor workshop_build_labor[] = 
 {
-	/* Carpenters */		df::job_skill::CARPENTRY,
-	/* Farmers */			df::job_skill::PROCESSPLANTS,
-    /* Masons */			df::job_skill::MASONRY,
-	/* Craftsdwarfs */		df::job_skill::STONECRAFT,
-	/* Jewelers */			df::job_skill::CUTGEM,
-	/* MetalsmithsForge */	df::job_skill::METALCRAFT,
-	/* MagmaForge */		df::job_skill::METALCRAFT,
-	/* Bowyers */			df::job_skill::BOWYER,
-	/* Mechanics */			df::job_skill::MECHANICS,
-	/* Siege */				df::job_skill::SIEGECRAFT,
-	/* Butchers */			df::job_skill::BUTCHER,
-	/* Leatherworks */		df::job_skill::LEATHERWORK,
-	/* Tanners */			df::job_skill::TANNER,
-	/* Clothiers */			df::job_skill::CLOTHESMAKING,
-	/* Fishery */			df::job_skill::FISH,
-	/* Still */				df::job_skill::BREWING,
-	/* Loom */				df::job_skill::WEAVING,
-	/* Quern */				df::job_skill::MILLING,
-	/* Kennels */			df::job_skill::ANIMALTRAIN,
-	/* Kitchen */			df::job_skill::COOK,
-	/* Ashery */			df::job_skill::LYE_MAKING,
-	/* Dyers */				df::job_skill::DYER,
-	/* Millstone */			df::job_skill::MILLING,
-	/* Custom */			(df::job_skill) -1,
-	/* Tool */				(df::job_skill) -1
+    /* Carpenters */		df::unit_labor::CARPENTER,
+    /* Farmers */			df::unit_labor::HERBALIST,
+    /* Masons */			df::unit_labor::MASON,
+    /* Craftsdwarfs */		df::unit_labor::STONE_CRAFT,
+    /* Jewelers */			df::unit_labor::CUT_GEM,
+    /* MetalsmithsForge */	df::unit_labor::METAL_CRAFT,
+    /* MagmaForge */		df::unit_labor::METAL_CRAFT,
+    /* Bowyers */			df::unit_labor::BOWYER,
+    /* Mechanics */			df::unit_labor::MECHANIC,
+    /* Siege */				df::unit_labor::SIEGECRAFT,
+    /* Butchers */			df::unit_labor::BUTCHER,
+    /* Leatherworks */		df::unit_labor::LEATHER,
+    /* Tanners */			df::unit_labor::TANNER,
+    /* Clothiers */			df::unit_labor::CLOTHESMAKER,
+    /* Fishery */			df::unit_labor::FISH,
+    /* Still */				df::unit_labor::BREWER,
+    /* Loom */				df::unit_labor::WEAVER,
+    /* Quern */				df::unit_labor::MILLER,
+    /* Kennels */			df::unit_labor::ANIMALTRAIN,
+    /* Kitchen */			df::unit_labor::COOK,
+    /* Ashery */			df::unit_labor::LYE_MAKING,
+    /* Dyers */				df::unit_labor::DYER,
+    /* Millstone */			df::unit_labor::MILLER,
+    /* Custom */			df::unit_labor::NONE,
+    /* Tool */				df::unit_labor::NONE
 };
+
+class jlfunc 
+{
+    public:
+    virtual df::unit_labor get_labor(df::job* j) = 0;
+};
+
+class jlfunc_const : public jlfunc 
+{
+    private:
+    df::unit_labor labor;
+    public:
+    df::unit_labor get_labor(df::job* j) 
+    {
+        return labor;
+    }
+    jlfunc_const(df::unit_labor l) : labor(l) {};
+};
+
+class jlfunc_hauling : public jlfunc 
+{
+public:
+    df::unit_labor get_labor(df::job* j)
+    {
+        df::item* item = j->items[0]->item;
+        return hauling_labor_map[item->getType()];
+    }
+    jlfunc_hauling() {};
+};
+
+class jlfunc_construct_bld : public jlfunc 
+{
+public:
+    df::unit_labor get_labor(df::job* j)
+    {
+        df::building* bld = get_building_from_job (j);
+        switch (bld->getType()) 
+        {
+        case df::building_type::Workshop:
+            df::building_workshopst* ws = (df::building_workshopst*) bld;
+            if (ws->type == df::workshop_type::Custom) 
+            {
+                df::building_def* def = df::building_def::find(ws->custom_type);
+                return def->build_labors[0];
+            } 
+            else 
+                return workshop_build_labor[ws->type];
+        
+            break;
+        }
+
+        // FIXME
+        return df::unit_labor::NONE;
+    }
+    jlfunc_construct_bld() {}
+};
+
+class jlfunc_destroy_bld : public jlfunc 
+{
+public:
+    df::unit_labor get_labor(df::job* j)
+    {
+        df::building* bld = get_building_from_job (j);
+        df::building_type type = bld->getType();
+
+        // FIXME
+        return df::unit_labor::NONE;
+    }
+    jlfunc_destroy_bld() {}
+};
+
+class jlfunc_make : public jlfunc 
+{
+private:
+    df::unit_labor metaltype;
+public:
+    df::unit_labor get_labor(df::job* j)
+    {
+        df::building* bld = get_building_from_job(j);
+        if (bld->getType() == df::building_type::Workshop)
+        {
+            df::workshop_type type = ((df::building_workshopst*)(bld))->type;
+            switch (type) 
+            {
+            case df::workshop_type::Craftsdwarfs:
+                {
+                    df::item_type jobitem = j->job_items[0]->item_type;
+                    switch (jobitem) 
+                    {
+                    case df::item_type::BOULDER:
+                        return df::unit_labor::STONE_CRAFT;
+                    case df::item_type::NONE:
+                        if (j->material_category.bits.bone)
+                            return df::unit_labor::BONE_CARVE;
+                        else
+                            return df::unit_labor::NONE; //FIXME
+                    default:
+                        return df::unit_labor::NONE; //FIXME
+                    }
+                }
+            case df::workshop_type::Masons:
+                return df::unit_labor::MASON;
+            case df::workshop_type::Carpenters:
+                return df::unit_labor::CARPENTER;
+            case df::workshop_type::Leatherworks:
+                return df::unit_labor::LEATHER;
+            case df::workshop_type::Clothiers:
+                return df::unit_labor::CLOTHESMAKER;
+            case df::workshop_type::MagmaForge:
+            case df::workshop_type::MetalsmithsForge:
+                return metaltype;
+            default:
+                return df::unit_labor::NONE; // FIXME
+            }
+        }
+        else if (bld->getType() == df::building_type::Furnace)
+        {
+            df::furnace_type type = ((df::building_furnacest*)(bld))->type;
+            switch (type) 
+            {
+            case df::furnace_type::MagmaGlassFurnace:
+            case df::furnace_type::GlassFurnace:
+                return df::unit_labor::GLASSMAKER;
+            default:
+                return df::unit_labor::NONE; // FIXME
+            }
+        }
+
+        return df::unit_labor::NONE; // FIXME
+    }
+
+    jlfunc_make (df::unit_labor mt) : metaltype(mt) {}
+};
+
+class jlfunc_custom : public jlfunc 
+{
+public:
+    df::unit_labor get_labor(df::job* j)
+    {
+        for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
+        {
+            if ((*r)->code == j->reaction_name)
+            {
+                df::job_skill skill = (*r)->skill;
+                df::unit_labor labor = ENUM_ATTR(job_skill, labor, skill);
+                return labor;
+            }
+        }
+        return df::unit_labor::NONE;
+    }
+    jlfunc_custom() {}
+};
+
+static map<df::unit_labor, jlfunc*> jlf_cache;
+
+jlfunc* jlf_const(df::unit_labor l) {
+    jlfunc* jlf;
+    if (jlf_cache.count(l) == 0)
+    {
+        jlf = jlf_const(l);
+        jlf_cache[l] = jlf;
+    }
+    else
+        jlf = jlf_cache[l];
+
+    return jlf;
+}
+
+static jlfunc* jlf_no_labor = jlf_const(df::unit_labor::NONE);
+static jlfunc* jlf_hauling = new jlfunc_hauling();
+static jlfunc* jlf_make_furniture = new jlfunc_make(df::unit_labor::FORGE_FURNITURE);
+static jlfunc* jlf_make_object    = new jlfunc_make(df::unit_labor::METAL_CRAFT);
+static jlfunc* jlf_make_armor     = new jlfunc_make(df::unit_labor::FORGE_ARMOR);
+static jlfunc* jlf_make_weapon    = new jlfunc_make(df::unit_labor::FORGE_WEAPON);
+
+static jlfunc* job_to_labor_table[] = {
+    jlf_const(df::unit_labor::DETAIL) /* CarveFortification */,
+    jlf_const(df::unit_labor::DETAIL) /* DetailWall */,
+    jlf_const(df::unit_labor::DETAIL) /* DetailFloor */,
+    jlf_const(df::unit_labor::MINE) /* Dig */,
+    jlf_const(df::unit_labor::MINE) /* CarveUpwardStaircase */,
+    jlf_const(df::unit_labor::MINE) /* CarveDownwardStaircase */,
+    jlf_const(df::unit_labor::MINE) /* CarveUpDownStaircase */,
+    jlf_const(df::unit_labor::MINE) /* CarveRamp */,
+    jlf_const(df::unit_labor::MINE) /* DigChannel */,
+    jlf_const(df::unit_labor::CUTWOOD) /* FellTree */,
+    jlf_const(df::unit_labor::HERBALIST) /* GatherPlants */,
+    jlf_no_labor /* RemoveConstruction */,
+    jlf_const(df::unit_labor::WEAVER) /* CollectWebs */,
+    jlf_no_labor /* BringItemToDepot */,
+    jlf_no_labor /* BringItemToShop */,
+    jlf_no_labor /* Eat */,
+    jlf_no_labor /* GetProvisions */,
+    jlf_no_labor /* Drink */,
+    jlf_no_labor /* Drink2 */,
+    jlf_no_labor /* FillWaterskin */,
+    jlf_no_labor /* FillWaterskin2 */,
+    jlf_no_labor /* Sleep */,
+    jlf_const(df::unit_labor::GLASSMAKER) /* CollectSand */,
+    jlf_const(df::unit_labor::FISH) /* Fish */,
+    jlf_const(df::unit_labor::HUNT) /* Hunt */,
+    jlf_no_labor /* HuntVermin */,
+    jlf_no_labor /* Kidnap */,
+    jlf_no_labor /* BeatCriminal */,
+    jlf_no_labor /* StartingFistFight */,
+    jlf_no_labor /* CollectTaxes */,
+    jlf_no_labor /* GuardTaxCollector */,
+    jlf_const(df::unit_labor::HUNT) /* CatchLiveLandAnimal */,
+    jlf_const(df::unit_labor::FISH) /* CatchLiveFish */,
+    jlf_no_labor /* ReturnKill */,
+    jlf_no_labor /* CheckChest */,
+    jlf_no_labor /* StoreOwnedItem */,
+    jlf_const(df::unit_labor::HAUL_BODY) /* PlaceItemInTomb */,
+    jlf_hauling /* StoreItemInStockpile */,
+    jlf_hauling /* StoreItemInBag */,
+    jlf_hauling /* StoreItemInHospital */,
+    jlf_hauling /* StoreItemInChest */,
+    jlf_hauling /* StoreItemInCabinet */,
+    jlf_hauling /* StoreWeapon */,
+    jlf_hauling /* StoreArmor */,
+    jlf_hauling /* StoreItemInBarrel */,
+    jlf_hauling /* StoreItemInBin */,
+    jlf_no_labor /* SeekArtifact */,
+    jlf_no_labor /* SeekInfant */,
+    jlf_no_labor /* AttendParty */,
+    jlf_no_labor /* GoShopping */,
+    jlf_no_labor /* GoShopping2 */,
+    jlf_const(df::unit_labor::CLEAN) /* Clean */,
+    jlf_no_labor /* Rest */,
+    jlf_no_labor /* PickupEquipment */,
+    jlf_hauling /* DumpItem */,
+    jlf_no_labor /* StrangeMoodCrafter */,
+    jlf_no_labor /* StrangeMoodJeweller */,
+    jlf_no_labor /* StrangeMoodForge */,
+    jlf_no_labor /* StrangeMoodMagmaForge */,
+    jlf_no_labor /* StrangeMoodBrooding */,
+    jlf_no_labor /* StrangeMoodFell */,
+    jlf_no_labor /* StrangeMoodCarpenter */,
+    jlf_no_labor /* StrangeMoodMason */,
+    jlf_no_labor /* StrangeMoodBowyer */,
+    jlf_no_labor /* StrangeMoodTanner */,
+    jlf_no_labor /* StrangeMoodWeaver */,
+    jlf_no_labor /* StrangeMoodGlassmaker */,
+    jlf_no_labor /* StrangeMoodMechanics */,
+    new jlfunc_construct_bld() /* ConstructBuilding */,
+    jlf_make_furniture /* ConstructDoor */,
+    jlf_make_furniture /* ConstructFloodgate */,
+    jlf_make_furniture /* ConstructBed */,
+    jlf_make_furniture /* ConstructThrone */,
+    jlf_make_furniture /* ConstructCoffin */,
+    jlf_make_furniture /* ConstructTable */,
+    jlf_make_furniture /* ConstructChest */,
+    jlf_make_furniture /* ConstructBin */,
+    jlf_make_furniture /* ConstructArmorStand */,
+    jlf_make_furniture /* ConstructWeaponRack */,
+    jlf_make_furniture /* ConstructCabinet */,
+    jlf_make_furniture /* ConstructStatue */,
+    jlf_make_furniture /* ConstructBlocks */,
+    jlf_const(df::unit_labor::GLASSMAKER) /* MakeRawGlass */,
+    jlf_make_object /* MakeCrafts */,
+    jlf_const(df::unit_labor::METAL_CRAFT) /* MintCoins */,
+    jlf_const(df::unit_labor::CUT_GEM) /* CutGems */,
+    jlf_const(df::unit_labor::CUT_GEM) /* CutGlass */,
+    jlf_const(df::unit_labor::ENCRUST_GEM) /* EncrustWithGems */,
+    jlf_const(df::unit_labor::ENCRUST_GEM) /* EncrustWithGlass */,
+    new jlfunc_destroy_bld() /* DestroyBuilding */,
+    jlf_const(df::unit_labor::SMELT) /* SmeltOre */,
+    jlf_const(df::unit_labor::SMELT) /* MeltMetalObject */,
+    jlf_const(df::unit_labor::EXTRACT_STRAND) /* ExtractMetalStrands */,
+    jlf_const(df::unit_labor::PLANT) /* PlantSeeds */,
+    jlf_const(df::unit_labor::PLANT) /* HarvestPlants */,
+    jlf_const(df::unit_labor::ANIMALTRAIN) /* TrainHuntingAnimal */,
+    jlf_const(df::unit_labor::ANIMALTRAIN) /* TrainWarAnimal */,
+    jlf_make_weapon /* MakeWeapon */,
+    jlf_make_furniture /* ForgeAnvil */,
+    jlf_const(df::unit_labor::SIEGECRAFT) /* ConstructCatapultParts */,
+    jlf_const(df::unit_labor::SIEGECRAFT) /* ConstructBallistaParts */,
+    jlf_make_armor /* MakeArmor */,
+    jlf_make_armor /* MakeHelm */,
+    jlf_make_armor /* MakePants */,
+    jlf_make_object /* StudWith */,
+    jlf_const(df::unit_labor::BUTCHER) /* ButcherAnimal */,
+    jlf_const(df::unit_labor::CLEAN_FISH) /* PrepareRawFish */,
+    jlf_const(df::unit_labor::MILLER) /* MillPlants */,
+    jlf_const(df::unit_labor::TRAPPER) /* BaitTrap */,
+    jlf_const(df::unit_labor::MILK) /* MilkCreature */,
+    jlf_const(df::unit_labor::MAKE_CHEESE) /* MakeCheese */,
+    jlf_const(df::unit_labor::PROCESS_PLANT) /* ProcessPlants */,
+    jlf_const(df::unit_labor::PROCESS_PLANT) /* ProcessPlantsBag */,
+    jlf_const(df::unit_labor::PROCESS_PLANT) /* ProcessPlantsVial */,
+    jlf_const(df::unit_labor::PROCESS_PLANT) /* ProcessPlantsBarrel */,
+    jlf_const(df::unit_labor::COOK) /* PrepareMeal */,
+    jlf_const(df::unit_labor::WEAVER) /* WeaveCloth */,
+    jlf_make_armor /* MakeGloves */,
+    jlf_make_armor /* MakeShoes */,
+    jlf_make_armor /* MakeShield */,
+    jlf_make_furniture /* MakeCage */,
+    jlf_make_object /* MakeChain */,
+    jlf_make_object /* MakeFlask */,
+    jlf_make_object /* MakeGoblet */,
+    jlf_make_object/* MakeInstrument */,
+    jlf_make_object/* MakeToy */,
+    jlf_const(df::unit_labor::TRAPPER) /* MakeAnimalTrap */,
+    jlf_make_furniture /* MakeBarrel */,
+    jlf_make_furniture /* MakeBucket */,
+    jlf_make_furniture /* MakeWindow */,
+    jlf_const(df::unit_labor::BONE_CARVE) /* MakeTotem */,
+    jlf_make_weapon /* MakeAmmo */,
+    jlf_make_object /* DecorateWith */,
+    jlf_make_object /* MakeBackpack */,
+    jlf_make_armor /* MakeQuiver */,
+    jlf_make_weapon /* MakeBallistaArrowHead */,
+    jlf_const(df::unit_labor::SIEGECRAFT) /* AssembleSiegeAmmo */,
+    jlf_const(df::unit_labor::SIEGEOPERATE) /* LoadCatapult */,
+    jlf_const(df::unit_labor::SIEGEOPERATE) /* LoadBallista */,
+    jlf_const(df::unit_labor::SIEGEOPERATE) /* FireCatapult */,
+    jlf_const(df::unit_labor::SIEGEOPERATE) /* FireBallista */,
+    jlf_const(df::unit_labor::MECHANIC) /* ConstructMechanisms */,
+    jlf_const(df::unit_labor::MECHANIC)  /* MakeTrapComponent */,
+    jlf_const(df::unit_labor::MECHANIC)  /* LoadCageTrap */,
+    jlf_const(df::unit_labor::MECHANIC)  /* LoadStoneTrap */,
+    jlf_const(df::unit_labor::MECHANIC)  /* LoadWeaponTrap */,
+    jlf_const(df::unit_labor::MECHANIC)  /* CleanTrap */,
+    jlf_no_labor /* CastSpell */,
+    jlf_const(df::unit_labor::MECHANIC)  /* LinkBuildingToTrigger */,
+    jlf_no_labor /* PullLever */,
+    jlf_const(df::unit_labor::BREWER)  /* BrewDrink */,
+    jlf_const(df::unit_labor::HERBALIST)  /* ExtractFromPlants */,
+    jlf_const(df::unit_labor::DISSECT_FISH)  /* ExtractFromRawFish */,
+    jlf_const(df::unit_labor::DISSECT_VERMIN)  /* ExtractFromLandAnimal */,
+    jlf_const(df::unit_labor::ANIMALTRAIN)  /* TameVermin */,
+    jlf_const(df::unit_labor::ANIMALTRAIN)  /* TameAnimal */,
+    jlf_no_labor /* ChainAnimal */,
+    jlf_no_labor /* UnchainAnimal */,
+    jlf_no_labor /* UnchainPet */,
+    jlf_no_labor /* ReleaseLargeCreature */,
+    jlf_no_labor /* ReleasePet */,
+    jlf_no_labor /* ReleaseSmallCreature */,
+    jlf_no_labor /* HandleSmallCreature */,
+    jlf_no_labor /* HandleLargeCreature */,
+    jlf_no_labor /* CageLargeCreature */,
+    jlf_no_labor /* CageSmallCreature */,
+    jlf_const(df::unit_labor::RECOVER_WOUNDED) /* RecoverWounded */,
+    jlf_const(df::unit_labor::DIAGNOSE)  /* DiagnosePatient */,
+    jlf_const(df::unit_labor::BONE_SETTING)  /* ImmobilizeBreak */,
+    jlf_const(df::unit_labor::DRESSING_WOUNDS)  /* DressWound */,
+    jlf_const(df::unit_labor::CLEAN)  /* CleanPatient */,
+    jlf_const(df::unit_labor::SURGERY)  /* Surgery */,
+    jlf_const(df::unit_labor::SUTURING) /* Suture */,
+    jlf_const(df::unit_labor::BONE_SETTING)  /* SetBone */,
+    jlf_const(df::unit_labor::BONE_SETTING)  /* PlaceInTraction */,
+    jlf_no_labor /* DrainAquarium */,
+    jlf_no_labor /* FillAquarium */,
+    jlf_no_labor /* FillPond */,
+    jlf_const(df::unit_labor::FEED_WATER_CIVILIANS)  /* GiveWater */,
+    jlf_const(df::unit_labor::FEED_WATER_CIVILIANS)  /* GiveFood */,
+    jlf_no_labor /* GiveWater2 */,
+    jlf_no_labor /* GiveFood2 */,
+    jlf_no_labor /* RecoverPet */,
+    jlf_no_labor /* PitLargeAnimal */,
+    jlf_no_labor /* PitSmallAnimal */,
+    jlf_const(df::unit_labor::BUTCHER) /* SlaughterAnimal */,
+    jlf_const(df::unit_labor::BURN_WOOD) /* MakeCharcoal */,
+    jlf_const(df::unit_labor::BURN_WOOD) /* MakeAsh */,
+    jlf_const(df::unit_labor::LYE_MAKING) /* MakeLye */,
+    jlf_const(df::unit_labor::POTASH_MAKING) /* MakePotashFromLye */,
+    jlf_const(df::unit_labor::PLANT) /* FertilizeField */,
+    jlf_const(df::unit_labor::POTASH_MAKING) /* MakePotashFromAsh */,
+    jlf_const(df::unit_labor::DYER) /* DyeThread */,
+    jlf_const(df::unit_labor::DYER) /* DyeCloth */,
+    jlf_make_object /* SewImage */,
+    jlf_make_furniture /* MakePipeSection */,
+    jlf_const(df::unit_labor::OPERATE_PUMP) /* OperatePump */,
+    jlf_no_labor /* ManageWorkOrders */,
+    jlf_no_labor /* UpdateStockpileRecords */,
+    jlf_no_labor /* TradeAtDepot */,
+    jlf_make_furniture /* ConstructHatchCover */,
+    jlf_make_furniture /* ConstructGrate */,
+    jlf_const(df::unit_labor::MINE) /* RemoveStairs */,
+    jlf_make_furniture /* ConstructQuern */,
+    jlf_make_furniture  /* ConstructMillstone */,
+    jlf_make_object  /* ConstructSplint */,
+    jlf_make_object /* ConstructCrutch */,
+    jlf_const(df::unit_labor::MECHANIC) /* ConstructTractionBench */,
+    jlf_no_labor /* CleanSelf */,
+    jlf_no_labor /* BringCrutch */,
+    jlf_const(df::unit_labor::BONE_SETTING) /* ApplyCast */,
+    new jlfunc_custom() /* CustomReaction */,
+    jlf_make_furniture /* ConstructSlab */,
+    jlf_const(df::unit_labor::STONE_CRAFT) /* EngraveSlab */,
+    jlf_const(df::unit_labor::SHEARER) /* ShearCreature */,
+    jlf_const(df::unit_labor::SPINNER) /* SpinThread */,
+    jlf_no_labor /* PenLargeAnimal */,
+    jlf_no_labor /* PenSmallAnimal */,
+    jlf_make_furniture /* MakeTool */,
+    jlf_const(df::unit_labor::POTTERY) /* CollectClay */,
+    jlf_const(df::unit_labor::BEEKEEPING) /* InstallColonyInHive */,
+    jlf_const(df::unit_labor::BEEKEEPING) /* CollectHiveProducts */,
+    jlf_no_labor /* CauseTrouble */,
+    jlf_no_labor /* DrinkBlood */,
+    jlf_no_labor /* ReportCrime */,
+    jlf_no_labor /* ExecuteCriminal */,
+    jlf_const(df::unit_labor::ANIMALTRAIN) /* TrainAnimal */,
+    jlf_const(df::unit_labor::DETAIL) /* CarveTrack */,
+    jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE) /* PushTrackVehicle */,
+    jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE) /* PlaceTrackVehicle */,
+    jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE) /* StoreItemInVehicle */
+};
+
 
 static df::unit_labor find_job_labor(df::job* j)
 {
-	df::job_skill skill;
-	df::unit_labor labor;
+    if (j->job_type == df::job_type::CustomReaction)
+    {
+        for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
+        {
+            if ((*r)->code == j->reaction_name)
+            {
+                df::job_skill skill = (*r)->skill;
+                return ENUM_ATTR(job_skill, labor, skill);
+            }
+        }
+        return df::unit_labor::NONE;
+    } 
 
-	labor = df::unit_labor::NONE;
+    df::job_skill skill;
+    df::unit_labor labor;
+    skill = ENUM_ATTR(job_type, skill, j->job_type);
+    if (skill != df::job_skill::NONE) 
+        labor = ENUM_ATTR(job_skill, labor, skill);
+    else
+        labor = ENUM_ATTR(job_type, labor, j->job_type);
 
-	switch (j->job_type) 
-	{
-	case df::job_type::ConstructBuilding:
-	case df::job_type::DestroyBuilding:
-		{
-			df::building* bld = get_building_from_job (j);
-			switch (bld->getType()) 
-			{
-			case df::building_type::Workshop:
-				df::building_workshopst* ws = (df::building_workshopst*) bld;
-				skill = workshop_build_labor[ws->type];
-				break;
-			}
-		}
-		break;
-		
-	case df::job_type::CustomReaction:
-		for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
-		{
-			if ((*r)->code == j->reaction_name)
-			{
-				skill = (*r)->skill;
-				break;
-			}
-		}
-		break;
-	default:
-		skill = ENUM_ATTR(job_type, skill, j->job_type);
-	} 
+    if (labor == df::unit_labor::NONE)
+        labor = job_to_labor_table[j->job_type]->get_labor(j);
 
-	if (skill != df::job_skill::NONE)
-		labor = ENUM_ATTR(job_skill, labor, skill);
-
-	if (labor == df::unit_labor::NONE)
-		labor = ENUM_ATTR(job_type, labor, j->job_type);
-
-	if (labor == -1) 
-	{
-	}
-
-	return labor;
+    return labor;
 }
 
 class AutoLaborManager {
-	color_ostream& out;
+    color_ostream& out;
 
 public: 
-	AutoLaborManager(color_ostream& o) : out(o)
-	{
-	}
+    AutoLaborManager(color_ostream& o) : out(o)
+    {
+    }
 
-	~AutoLaborManager()
-	{
-		for (std::vector<dwarf_info_t*>::iterator i = dwarf_info.begin(); 
-			i != dwarf_info.end(); i++)
-			delete (*i);
-	}
+    ~AutoLaborManager()
+    {
+        for (std::vector<dwarf_info_t*>::iterator i = dwarf_info.begin(); 
+            i != dwarf_info.end(); i++)
+            delete (*i);
+    }
 
-	dwarf_info_t* add_dwarf(df::unit* u)
-	{
-		dwarf_info_t* dwarf = new dwarf_info_t(u);
-		dwarf_info.push_back(dwarf);
-		return dwarf;
-	}
+    dwarf_info_t* add_dwarf(df::unit* u)
+    {
+        dwarf_info_t* dwarf = new dwarf_info_t(u);
+        dwarf_info.push_back(dwarf);
+        return dwarf;
+    }
 
-
-private:
-	bool has_butchers;
-	bool has_fishery;
-	bool trader_requested;
-
-	int dig_count;
-	int tree_count;
-	int plant_count;
-	int detail_count;
-	int pick_count;
-	int axe_count;
-
-	std::map<df::unit_labor, int> labor_needed;
-	std::vector<dwarf_info_t*> dwarf_info;
-	std::deque<dwarf_info_t*> idle_dwarfs;
 
 private:
-	void scan_buildings()
-	{
-		for (auto b = world->buildings.all.begin(); b != world->buildings.all.end(); b++)
-		{
-			df::building *build = *b;
-			auto type = build->getType();
-			if (building_type::Workshop == type)
-			{
-				df::workshop_type subType = (df::workshop_type)build->getSubtype();
-				if (workshop_type::Butchers == subType)
-					has_butchers = true;
-				if (workshop_type::Fishery == subType)
-					has_fishery = true;
-			}
-			else if (building_type::TradeDepot == type)
-			{
-				df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
-				trader_requested = depot->trade_flags.bits.trader_requested;
-				if (print_debug)
-				{
-					if (trader_requested)
-						out.print("Trade depot found and trader requested, trader will be excluded from all labors.\n");
-					else
-						out.print("Trade depot found but trader is not requested.\n");
-				}
-			}
-		}
-	}
+    bool has_butchers;
+    bool has_fishery;
+    bool trader_requested;
 
-	void count_map_designations()
-	{
-		dig_count = 0;
-		tree_count = 0; 
-		plant_count = 0;
-		detail_count = 0;
+    int dig_count;
+    int tree_count;
+    int plant_count;
+    int detail_count;
+    int pick_count;
+    int axe_count;
 
-		for (int i = 0; i < world->map.map_blocks.size(); ++i)
-		{
-			df::map_block* bl = world->map.map_blocks[i];
+    std::map<df::unit_labor, int> labor_needed;
+    std::vector<dwarf_info_t*> dwarf_info;
+    std::deque<dwarf_info_t*> idle_dwarfs;
 
-			if (!bl->flags.bits.designated)
-				continue;
+private:
+    void scan_buildings()
+    {
+        for (auto b = world->buildings.all.begin(); b != world->buildings.all.end(); b++)
+        {
+            df::building *build = *b;
+            auto type = build->getType();
+            if (building_type::Workshop == type)
+            {
+                df::workshop_type subType = (df::workshop_type)build->getSubtype();
+                if (workshop_type::Butchers == subType)
+                    has_butchers = true;
+                if (workshop_type::Fishery == subType)
+                    has_fishery = true;
+            }
+            else if (building_type::TradeDepot == type)
+            {
+                df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
+                trader_requested = depot->trade_flags.bits.trader_requested;
+                if (print_debug)
+                {
+                    if (trader_requested)
+                        out.print("Trade depot found and trader requested, trader will be excluded from all labors.\n");
+                    else
+                        out.print("Trade depot found but trader is not requested.\n");
+                }
+            }
+        }
+    }
 
-			if (print_debug)
-				out.print ("block with designations found: %d, %d, %d\n", bl->map_pos.x, bl->map_pos.y, bl->map_pos.z);
+    void count_map_designations()
+    {
+        dig_count = 0;
+        tree_count = 0; 
+        plant_count = 0;
+        detail_count = 0;
 
-			for (int x = 0; x < 16; x++)
-				for (int y = 0; y < 16; y++)
-				{
-					df::tile_dig_designation dig = bl->designation[x][y].bits.dig;
-					if (dig != df::enums::tile_dig_designation::No) 
-					{
-						df::tiletype tt = bl->tiletype[x][y];
-						df::tiletype_shape tts = ENUM_ATTR(tiletype, shape, tt);
-						switch (tts) 
-						{
-						case df::enums::tiletype_shape::TREE:
-							tree_count++; break;
-						case df::enums::tiletype_shape::SHRUB:
-							plant_count++; break;
-						default:
-							dig_count++; break;
-						}
-					}
-					if (bl->designation[x][y].bits.smooth != 0)
-						detail_count++;
-				}
-		}
+        for (int i = 0; i < world->map.map_blocks.size(); ++i)
+        {
+            df::map_block* bl = world->map.map_blocks[i];
 
-		if (print_debug)
-			out.print("Dig count = %d, Cut tree count = %d, gather plant count = %d, detail count = %d\n", dig_count, tree_count, plant_count, detail_count);
+            if (!bl->flags.bits.designated)
+                continue;
 
-	}
+            if (print_debug)
+                out.print ("block with designations found: %d, %d, %d\n", bl->map_pos.x, bl->map_pos.y, bl->map_pos.z);
 
-	void count_tools()
-	{
-		pick_count = 0;
-		axe_count = 0;
+            for (int x = 0; x < 16; x++)
+                for (int y = 0; y < 16; y++)
+                {
+                    df::tile_dig_designation dig = bl->designation[x][y].bits.dig;
+                    if (dig != df::enums::tile_dig_designation::No) 
+                    {
+                        df::tiletype tt = bl->tiletype[x][y];
+                        df::tiletype_shape tts = ENUM_ATTR(tiletype, shape, tt);
+                        switch (tts) 
+                        {
+                        case df::enums::tiletype_shape::TREE:
+                            tree_count++; break;
+                        case df::enums::tiletype_shape::SHRUB:
+                            plant_count++; break;
+                        default:
+                            dig_count++; break;
+                        }
+                    }
+                    if (bl->designation[x][y].bits.smooth != 0)
+                        detail_count++;
+                }
+        }
 
-		df::item_flags bad_flags;
-		bad_flags.whole = 0;
+        if (print_debug)
+            out.print("Dig count = %d, Cut tree count = %d, gather plant count = %d, detail count = %d\n", dig_count, tree_count, plant_count, detail_count);
+
+    }
+
+    void count_tools()
+    {
+        pick_count = 0;
+        axe_count = 0;
+
+        df::item_flags bad_flags;
+        bad_flags.whole = 0;
 
 #define F(x) bad_flags.bits.x = true;
-		F(dump); F(forbid); F(garbage_collect);
-		F(hostile); F(on_fire); F(rotten); F(trader);
-		F(in_building); F(construction); F(artifact);
+        F(dump); F(forbid); F(garbage_collect);
+        F(hostile); F(on_fire); F(rotten); F(trader);
+        F(in_building); F(construction); F(artifact);
 #undef F
 
-		for (int i = 0; i < world->items.all.size(); ++i)
-		{
-			df::item* item = world->items.all[i];
-			if (item->flags.whole & bad_flags.whole)
-				continue;
-	
-			if (!item->isWeapon()) 
-				continue;
+        for (int i = 0; i < world->items.all.size(); ++i)
+        {
+            df::item* item = world->items.all[i];
+            if (item->flags.whole & bad_flags.whole)
+                continue;
+    
+            if (!item->isWeapon()) 
+                continue;
 
-			df::itemdef_weaponst* weapondef = ((df::item_weaponst*)item)->subtype;
-			df::job_skill weaponsk = (df::job_skill) weapondef->skill_melee;
-			if (weaponsk == df::job_skill::AXE)
-				axe_count++;
-			else if (weaponsk == df::job_skill::MINING)
-				pick_count++;
-		}
+            df::itemdef_weaponst* weapondef = ((df::item_weaponst*)item)->subtype;
+            df::job_skill weaponsk = (df::job_skill) weapondef->skill_melee;
+            if (weaponsk == df::job_skill::AXE)
+                axe_count++;
+            else if (weaponsk == df::job_skill::MINING)
+                pick_count++;
+        }
 
-		if (print_debug)
-			out.print("Axes = %d, picks = %d\n", axe_count, pick_count);
+        if (print_debug)
+            out.print("Axes = %d, picks = %d\n", axe_count, pick_count);
 
-	}
+    }
 
-	void collect_job_list()
-	{
-		for (df::job_list_link* jll = world->job_list.next; jll; jll = jll->next)
-		{
-			df::job* j = jll->item;
-			if (!j) 
-				continue;
+    void collect_job_list()
+    {
+        for (df::job_list_link* jll = world->job_list.next; jll; jll = jll->next)
+        {
+            df::job* j = jll->item;
+            if (!j) 
+                continue;
 
-			if (j->flags.bits.suspend)
-				continue;
+            if (j->flags.bits.suspend)
+                continue;
 
-			int worker = -1;
+            int worker = -1;
 
-			for (int r = 0; r < j->general_refs.size(); ++r)
-				if (j->general_refs[r]->getType() == df::general_ref_type::UNIT_WORKER)
-					worker = ((df::general_ref_unit_workerst *)(j->general_refs[r]))->unit_id;
+            for (int r = 0; r < j->general_refs.size(); ++r)
+                if (j->general_refs[r]->getType() == df::general_ref_type::UNIT_WORKER)
+                    worker = ((df::general_ref_unit_workerst *)(j->general_refs[r]))->unit_id;
 
-			if (worker != -1)
-				continue;
+            if (worker != -1)
+                continue;
 
-			df::unit_labor labor = find_job_labor (j);
+            df::unit_labor labor = find_job_labor (j);
 
-			if (print_debug)
-				out.print ("Job requiring labor %d found\n", labor);
+            if (print_debug)
+                out.print ("Job requiring labor %d found\n", labor);
 
-			if (labor != df::unit_labor::NONE)
-				labor_needed[labor]++;
-		}
+            if (labor != df::unit_labor::NONE)
+                labor_needed[labor]++;
+        }
 
-	}
+    }
 
-	void collect_dwarf_list()
-	{
+    void collect_dwarf_list()
+    {
 
-		for (auto u = world->units.active.begin(); u != world->units.active.end(); ++u)
-		{
-			df::unit* cre = *u;
+        for (auto u = world->units.active.begin(); u != world->units.active.end(); ++u)
+        {
+            df::unit* cre = *u;
 
-			if (Units::isCitizen(cre))
-			{
-				if (cre->burrows.size() > 0)
-					continue;        // dwarfs assigned to burrows are skipped entirely
+            if (Units::isCitizen(cre))
+            {
+                if (cre->burrows.size() > 0)
+                    continue;        // dwarfs assigned to burrows are skipped entirely
 
-				dwarf_info_t* dwarf = add_dwarf(cre);
+                dwarf_info_t* dwarf = add_dwarf(cre);
 
-				df::historical_figure* hf = df::historical_figure::find(dwarf->dwarf->hist_figure_id);
-				for (int i = 0; i < hf->entity_links.size(); i++)
-				{
-					df::histfig_entity_link* hfelink = hf->entity_links.at(i);
-					if (hfelink->getType() == df::histfig_entity_link_type::POSITION)
-					{
-						df::histfig_entity_link_positionst *epos =
-							(df::histfig_entity_link_positionst*) hfelink;
-						df::historical_entity* entity = df::historical_entity::find(epos->entity_id);
-						if (!entity)
-							continue;
-						df::entity_position_assignment* assignment = binsearch_in_vector(entity->positions.assignments, epos->assignment_id);
-						if (!assignment)
-							continue;
-						df::entity_position* position = binsearch_in_vector(entity->positions.own, assignment->position_id);
-						if (!position)
-							continue;
+                df::historical_figure* hf = df::historical_figure::find(dwarf->dwarf->hist_figure_id);
+                for (int i = 0; i < hf->entity_links.size(); i++)
+                {
+                    df::histfig_entity_link* hfelink = hf->entity_links.at(i);
+                    if (hfelink->getType() == df::histfig_entity_link_type::POSITION)
+                    {
+                        df::histfig_entity_link_positionst *epos =
+                            (df::histfig_entity_link_positionst*) hfelink;
+                        df::historical_entity* entity = df::historical_entity::find(epos->entity_id);
+                        if (!entity)
+                            continue;
+                        df::entity_position_assignment* assignment = binsearch_in_vector(entity->positions.assignments, epos->assignment_id);
+                        if (!assignment)
+                            continue;
+                        df::entity_position* position = binsearch_in_vector(entity->positions.own, assignment->position_id);
+                        if (!position)
+                            continue;
 
-						if (position->responsibilities[df::entity_position_responsibility::TRADE])
-							if (trader_requested)
-								dwarf->clear_all = true;
-					}
+                        if (position->responsibilities[df::entity_position_responsibility::TRADE])
+                            if (trader_requested)
+                                dwarf->clear_all = true;
+                    }
 
-				}
+                }
 
-				// identify dwarfs who are needed for meetings and mark them for exclusion
+                // identify dwarfs who are needed for meetings and mark them for exclusion
 
-				for (int i = 0; i < ui->activities.size(); ++i)
-				{
-					df::activity_info *act = ui->activities[i];
-					if (!act) continue;
-					bool p1 = act->person1 == dwarf->dwarf;
-					bool p2 = act->person2 == dwarf->dwarf;
+                for (int i = 0; i < ui->activities.size(); ++i)
+                {
+                    df::activity_info *act = ui->activities[i];
+                    if (!act) continue;
+                    bool p1 = act->person1 == dwarf->dwarf;
+                    bool p2 = act->person2 == dwarf->dwarf;
 
-					if (p1 || p2)
-					{
-						dwarf->clear_all = true;
-						if (print_debug)
-							out.print("Dwarf \"%s\" has a meeting, will be cleared of all labors\n", dwarf->dwarf->name.first_name.c_str());
-						break;
-					}
-				}
+                    if (p1 || p2)
+                    {
+                        dwarf->clear_all = true;
+                        if (print_debug)
+                            out.print("Dwarf \"%s\" has a meeting, will be cleared of all labors\n", dwarf->dwarf->name.first_name.c_str());
+                        break;
+                    }
+                }
 
-				// Find the activity state for each dwarf-> 
+                // Find the activity state for each dwarf-> 
 
-				bool is_on_break = false;
-				dwarf_state state = OTHER;
+                bool is_on_break = false;
+                dwarf_state state = OTHER;
 
-				for (auto p = dwarf->dwarf->status.misc_traits.begin(); p < dwarf->dwarf->status.misc_traits.end(); p++)
-				{
-					if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
-						is_on_break = true;
-				}
+                for (auto p = dwarf->dwarf->status.misc_traits.begin(); p < dwarf->dwarf->status.misc_traits.end(); p++)
+                {
+                    if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
+                        is_on_break = true;
+                }
 
-				if (dwarf->dwarf->profession == profession::BABY ||
-					dwarf->dwarf->profession == profession::CHILD ||
-					dwarf->dwarf->profession == profession::DRUNK)
-				{
-					state = CHILD;
-				}
-				else if (ENUM_ATTR(profession, military, dwarf->dwarf->profession))
-					state = MILITARY;
-				else if (dwarf->dwarf->job.current_job == NULL)
-				{
-					if (is_on_break)
-						state = OTHER;
-					else if (dwarf->dwarf->specific_refs.size() > 0)
-						state = OTHER;
-					else
-						state = IDLE;
-				}
-				else
-				{
-					int job = dwarf->dwarf->job.current_job->job_type;
-					if (job >= 0 && job < ARRAY_COUNT(dwarf_states))
-						state = dwarf_states[job];
-					else
-					{
-						out.print("Dwarf \"%s\" has unknown job %i\n", dwarf->dwarf->name.first_name.c_str(), job);
-						state = OTHER;
-					}
-				}
+                if (dwarf->dwarf->profession == profession::BABY ||
+                    dwarf->dwarf->profession == profession::CHILD ||
+                    dwarf->dwarf->profession == profession::DRUNK)
+                {
+                    state = CHILD;
+                }
+                else if (ENUM_ATTR(profession, military, dwarf->dwarf->profession))
+                    state = MILITARY;
+                else if (dwarf->dwarf->job.current_job == NULL)
+                {
+                    if (is_on_break)
+                        state = OTHER;
+                    else if (dwarf->dwarf->specific_refs.size() > 0)
+                        state = OTHER;
+                    else
+                        state = IDLE;
+                }
+                else
+                {
+                    int job = dwarf->dwarf->job.current_job->job_type;
+                    if (job >= 0 && job < ARRAY_COUNT(dwarf_states))
+                        state = dwarf_states[job];
+                    else
+                    {
+                        out.print("Dwarf \"%s\" has unknown job %i\n", dwarf->dwarf->name.first_name.c_str(), job);
+                        state = OTHER;
+                    }
+                }
 
-				dwarf->state = state;
+                dwarf->state = state;
 
-				if (print_debug)
-					out.print("Dwarf \"%s\": state %s\n", dwarf->dwarf->name.first_name.c_str(), state_names[dwarf->state]);
+                if (print_debug)
+                    out.print("Dwarf \"%s\": state %s\n", dwarf->dwarf->name.first_name.c_str(), state_names[dwarf->state]);
 
-				// check if dwarf has an axe, pick, or crossbow
+                // check if dwarf has an axe, pick, or crossbow
 
-				for (int j = 0; j < dwarf->dwarf->inventory.size(); j++)
-				{
-					df::unit_inventory_item* ui = dwarf->dwarf->inventory[j];
-					if (ui->mode == df::unit_inventory_item::Weapon && ui->item->isWeapon())
-					{
-						df::itemdef_weaponst* weapondef = ((df::item_weaponst*)(ui->item))->subtype;
-						df::job_skill weaponsk = (df::job_skill) weapondef->skill_melee;
-						df::job_skill rangesk = (df::job_skill) weapondef->skill_ranged;
-						if (weaponsk == df::job_skill::AXE)
-						{
-							dwarf->has_axe = 1;
-							if (state != IDLE) 
-								axe_count--;
-							if (print_debug)
-								out.print("Dwarf \"%s\" has an axe\n", dwarf->dwarf->name.first_name.c_str());
-						}
-						else if (weaponsk == df::job_skill::MINING)
-						{
-							dwarf->has_pick = 1;
-							if (state != IDLE) 
-								pick_count--;
-							if (print_debug)
-								out.print("Dwarf \"%s\" has an pick\n", dwarf->dwarf->name.first_name.c_str());
-						}
-						else if (rangesk == df::job_skill::CROSSBOW)
-						{
-							dwarf->has_crossbow = 1;
-							if (print_debug)
-								out.print("Dwarf \"%s\" has a crossbow\n", dwarf->dwarf->name.first_name.c_str());
-						}
-					}
-				}
+                for (int j = 0; j < dwarf->dwarf->inventory.size(); j++)
+                {
+                    df::unit_inventory_item* ui = dwarf->dwarf->inventory[j];
+                    if (ui->mode == df::unit_inventory_item::Weapon && ui->item->isWeapon())
+                    {
+                        df::itemdef_weaponst* weapondef = ((df::item_weaponst*)(ui->item))->subtype;
+                        df::job_skill weaponsk = (df::job_skill) weapondef->skill_melee;
+                        df::job_skill rangesk = (df::job_skill) weapondef->skill_ranged;
+                        if (weaponsk == df::job_skill::AXE)
+                        {
+                            dwarf->has_axe = 1;
+                            if (state != IDLE) 
+                                axe_count--;
+                            if (print_debug)
+                                out.print("Dwarf \"%s\" has an axe\n", dwarf->dwarf->name.first_name.c_str());
+                        }
+                        else if (weaponsk == df::job_skill::MINING)
+                        {
+                            dwarf->has_pick = 1;
+                            if (state != IDLE) 
+                                pick_count--;
+                            if (print_debug)
+                                out.print("Dwarf \"%s\" has an pick\n", dwarf->dwarf->name.first_name.c_str());
+                        }
+                        else if (rangesk == df::job_skill::CROSSBOW)
+                        {
+                            dwarf->has_crossbow = 1;
+                            if (print_debug)
+                                out.print("Dwarf \"%s\" has a crossbow\n", dwarf->dwarf->name.first_name.c_str());
+                        }
+                    }
+                }
 
-				// clear labors if currently idle
+                // clear labors if currently idle
 
-				if (state == IDLE || dwarf->clear_all) 
-				{
-					FOR_ENUM_ITEMS(unit_labor, labor)
-					{
-						if (labor == unit_labor::NONE) 
-							continue;
+                if (state == IDLE || dwarf->clear_all) 
+                {
+                    FOR_ENUM_ITEMS(unit_labor, labor)
+                    {
+                        if (labor == unit_labor::NONE) 
+                            continue;
 
-						dwarf->dwarf->status.labors[labor] = false;
-					}
-				}
+                        dwarf->dwarf->status.labors[labor] = false;
+                    }
+                }
 
-				if (state == IDLE && !dwarf->clear_all)
-					idle_dwarfs.push_back(dwarf);
+                if (state == IDLE && !dwarf->clear_all)
+                    idle_dwarfs.push_back(dwarf);
 
-			}
+            }
 
-		}
-	}
+        }
+    }
 
 public:
-	void process()
-	{
-		// scan for specific buildings of interest
+    void process()
+    {
+        // scan for specific buildings of interest
 
-		scan_buildings();
+        scan_buildings();
 
-		// count number of squares designated for dig, wood cutting, detailing, and plant harvesting
+        // count number of squares designated for dig, wood cutting, detailing, and plant harvesting
 
-		count_map_designations();
+        count_map_designations();
 
-		// count number of picks and axes available for use
+        // count number of picks and axes available for use
 
-		count_tools();
+        count_tools();
 
-		// create job entries for designation
+        // create job entries for designation
 
-		// collect current job list 
+        // collect current job list 
 
-		collect_job_list();
+        collect_job_list();
 
-		// collect list of dwarfs
+        // collect list of dwarfs
 
-		collect_dwarf_list();
+        collect_dwarf_list();
 
-		// match idle dwarfs to need list - if an idle dwarf is assigned to that labor, then yay, decrement the need count
-		// and remove the idle dwarf from the idle list
+        // match idle dwarfs to need list - if an idle dwarf is assigned to that labor, then yay, decrement the need count
+        // and remove the idle dwarf from the idle list
 
-		for (auto i = idle_dwarfs.begin(); i != idle_dwarfs.end(); i++) 
-		{
-		    FOR_ENUM_ITEMS(unit_labor, l)
-			{
-				if ((*i)->dwarf->status.labors[l])
-					if (labor_needed[l] > 0)
-					{
-						if (print_debug)
-							out.print("assign \"%s\" labor %d (carried through)\n", (*i)->dwarf->name.first_name.c_str(), l);
-						labor_needed[l]--;
-						idle_dwarfs.erase(i);	// remove from idle list
-						break;
-					} else {
-						(*i)->dwarf->status.labors[l] = false;
-					}
-			}
-		}
+        for (auto i = idle_dwarfs.begin(); i != idle_dwarfs.end(); i++) 
+        {
+            FOR_ENUM_ITEMS(unit_labor, l)
+            {
+                if ((*i)->dwarf->status.labors[l])
+                    if (labor_needed[l] > 0)
+                    {
+                        if (print_debug)
+                            out.print("assign \"%s\" labor %d (carried through)\n", (*i)->dwarf->name.first_name.c_str(), l);
+                        labor_needed[l]--;
+                        idle_dwarfs.erase(i);	// remove from idle list
+                        break;
+                    } else {
+                        (*i)->dwarf->status.labors[l] = false;
+                    }
+            }
+        }
 
-		priority_queue<pair<int, df::unit_labor>> pq;
-		
-		for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
-		{
-			if (i->second > 0) 
-				pq.push(make_pair(i->second, i->first));
-		}
-			
-		while (!idle_dwarfs.empty() && !pq.empty())
-		{
-			df::unit_labor labor = pq.top().second;
-			int remaining = pq.top().first;
-			df::job_skill skill = labor_to_skill[labor];
+        priority_queue<pair<int, df::unit_labor>> pq;
+        
+        for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
+        {
+            if (i->second > 0) 
+                pq.push(make_pair(i->second, i->first));
+        }
+            
+        while (!idle_dwarfs.empty() && !pq.empty())
+        {
+            df::unit_labor labor = pq.top().second;
+            int remaining = pq.top().first;
+            df::job_skill skill = labor_to_skill[labor];
 
-			if (print_debug) 
-				out.print("labor %d skill %d remaining %d\n", labor, skill, remaining);
+            if (print_debug) 
+                out.print("labor %d skill %d remaining %d\n", labor, skill, remaining);
 
-			std::deque<dwarf_info_t*>::iterator bestdwarf = idle_dwarfs.begin();
+            std::deque<dwarf_info_t*>::iterator bestdwarf = idle_dwarfs.begin();
 
-			if (skill != df::job_skill::NONE) 
-			{
-				int best_skill_level = -1;
+            if (skill != df::job_skill::NONE) 
+            {
+                int best_skill_level = -1;
 
-				for (std::deque<dwarf_info_t*>::iterator k = idle_dwarfs.begin(); k != idle_dwarfs.end(); k++)
-				{
-					dwarf_info_t* d = (*k);
-					int	skill_level = Units::getEffectiveSkill(d->dwarf, skill);
+                for (std::deque<dwarf_info_t*>::iterator k = idle_dwarfs.begin(); k != idle_dwarfs.end(); k++)
+                {
+                    dwarf_info_t* d = (*k);
+                    int	skill_level = Units::getEffectiveSkill(d->dwarf, skill);
 
-					if (skill_level > best_skill_level) 
-					{
-						bestdwarf = k;
-						best_skill_level = skill_level;
-					}
-				}
-			}
+                    if (skill_level > best_skill_level) 
+                    {
+                        bestdwarf = k;
+                        best_skill_level = skill_level;
+                    }
+                }
+            }
 
-			if (print_debug)
-				out.print("assign \"%s\" labor %d\n", (*bestdwarf)->dwarf->name.first_name.c_str(), labor);
-			(*bestdwarf)->set_labor(labor);
+            if (print_debug)
+                out.print("assign \"%s\" labor %d\n", (*bestdwarf)->dwarf->name.first_name.c_str(), labor);
+            (*bestdwarf)->set_labor(labor);
 
-			idle_dwarfs.erase(bestdwarf);
-			pq.pop();
-			if (--remaining)
-				pq.push(make_pair(remaining, labor));
-		}
+            idle_dwarfs.erase(bestdwarf);
+            pq.pop();
+            if (--remaining)
+                pq.push(make_pair(remaining, labor));
+        }
 
-		print_debug = 0;
+        print_debug = 0;
 
-	}
+    }
 
 };
 
@@ -1284,9 +1771,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         return CR_OK;
     step_count = 0;
 
-	AutoLaborManager alm(out);
+    AutoLaborManager alm(out);
 
-	alm.process();
+    alm.process();
 
 
     return CR_OK;

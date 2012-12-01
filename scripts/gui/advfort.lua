@@ -461,7 +461,7 @@ workshops={
         [df.job_type.ExtractFromPlants]={{item_type=df.item_type.PLANT,flags1={unrotten=true,extract_bearing_plant=true}},{item_type=df.item_type.FLASK,flags1={empty=true}}},
     },
     [df.workshop_type.Masons]={
-        common={item_type=df.item_type.BOULDER,item_subtype=-1,vector_id=df.job_item_vector_id.BOULDER, mat_type=0,mat_index=-1,quantity=1,flags2={non_economic=true},flags3={hard=true}},
+        common={item_type=df.item_type.BOULDER,item_subtype=-1,vector_id=df.job_item_vector_id.BOULDER, mat_type=0,mat_index=-1,quantity=1,flags3={hard=true}},--flags2={non_economic=true},
         [df.job_type.ConstructArmorStand]={{}},
         [df.job_type.ConstructBlocks]={{}},
         [df.job_type.ConstructThrone]={{}},
@@ -520,7 +520,8 @@ workshops={
     },
     [df.workshop_type.Mechanics]={
         common={quantity=1},
-        [df.job_type.ConstructMechanisms]={{item_type=df.item_type.BOULDER,item_subtype=-1,vector_id=df.job_item_vector_id.BOULDER, mat_type=0,mat_index=-1,quantity=1,flags2={non_economic=true},flags3={hard=true}}},
+        [df.job_type.ConstructMechanisms]={{item_type=df.item_type.BOULDER,item_subtype=-1,vector_id=df.job_item_vector_id.BOULDER, mat_type=0,mat_index=-1,quantity=1,
+        flags3={hard=true}}}, -- flags2={non_economic=true}
         [df.job_type.ConstructTractionBench]={{item_type=df.item_type.TABLE},{item_type=df.item_type.MECHANISM},{item_type=df.item_type.CHAIN}}
         },
     }
@@ -554,6 +555,7 @@ dig_modes={
 
 
 usetool=defclass(usetool,gui.Screen)
+usetool.focus_path = 'advfort'
 function usetool:getModeName()
     local adv=df.global.world.units.active[0]
     if adv.job.current_job then
@@ -785,5 +787,8 @@ function usetool:onInput(keys)
             self:fieldInput(keys)
         end
     end
+end
+if not (dfhack.gui.getCurFocus()=="dungeonmode/Look" or dfhack.gui.getCurFocus()=="dungeonmode/Default") then
+    qerror("This script requires an adventurer mode with (l)ook or default mode.")
 end
 usetool():show()

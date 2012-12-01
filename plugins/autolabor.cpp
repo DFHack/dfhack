@@ -727,16 +727,19 @@ private:
             switch (bld->getType()) 
             {
             case df::building_type::Workshop:
-                df::building_workshopst* ws = (df::building_workshopst*) bld;
-                if (ws->type == df::workshop_type::Custom) 
                 {
-                    df::building_def* def = df::building_def::find(ws->custom_type);
-                    return def->build_labors[0];
-                } 
-                else 
-                    return workshop_build_labor[ws->type];
-
+                    df::building_workshopst* ws = (df::building_workshopst*) bld;
+                    if (ws->type == df::workshop_type::Custom) 
+                    {
+                        df::building_def* def = df::building_def::find(ws->custom_type);
+                        return def->build_labors[0];
+                    } 
+                    else 
+                        return workshop_build_labor[ws->type];
+                }
                 break;
+            case df::building_type::FarmPlot:
+                return df::unit_labor::PLANT;
             }
 
             // FIXME
@@ -1830,7 +1833,7 @@ public:
         for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
         {
             if (i->second > 0) 
-                pq.push(make_pair(i->second, i->first));
+                pq.push(make_pair(100, i->first));
         }
 
         if (print_debug)
@@ -1839,11 +1842,11 @@ public:
         while (!idle_dwarfs.empty() && !pq.empty())
         {
             df::unit_labor labor = pq.top().second;
-            int remaining = pq.top().first;
+            int priority = pq.top().first;
             df::job_skill skill = labor_to_skill[labor];
 
             if (print_debug) 
-                out.print("labor %s skill %s remaining %d\n", ENUM_KEY_STR(unit_labor, labor).c_str(), ENUM_KEY_STR(job_skill, skill).c_str(), remaining);
+                out.print("labor %s skill %s priority %d\n", ENUM_KEY_STR(unit_labor, labor).c_str(), ENUM_KEY_STR(job_skill, skill).c_str(), priority);
 
             std::list<dwarf_info_t*>::iterator bestdwarf = idle_dwarfs.begin();
 
@@ -1870,8 +1873,11 @@ public:
 
             idle_dwarfs.erase(bestdwarf);
             pq.pop();
-            if (--remaining)
-                pq.push(make_pair(remaining, labor));
+            if (--labor_needed[labor] > 0) 
+            {
+                priority /= 2;
+                pq.push(make_pair(priority, labor));
+            }
         }
 
         print_debug = 0;

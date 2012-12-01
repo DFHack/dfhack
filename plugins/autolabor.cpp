@@ -8,6 +8,9 @@
 
 #include <vector>
 #include <algorithm>
+#include <queue>
+#include <map>
+#include <iterator>
 
 #include "modules/Units.h"
 #include "modules/World.h"
@@ -721,7 +724,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 static df::building* get_building_from_job(df::job* j)
 {
-	for (auto r = j->references.begin(); r != j->references.end(); r++)
+	for (auto r = j->general_refs.begin(); r != j->general_refs.end(); r++)
 	{
 		if ((*r)->getType() == df::general_ref_type::BUILDING_HOLDER)
 		{
@@ -762,12 +765,17 @@ static df::job_skill workshop_build_labor[] =
 	/* Tool */				(df::job_skill) -1
 };
 
-static void find_job_skill_labor(df::job* j, df::job_skill &skill, df::unit_labor &labor)
+static df::unit_labor find_job_labor(df::job* j)
 {
+	df::job_skill skill;
+	df::unit_labor labor;
+
+	labor = df::unit_labor::NONE;
 
 	switch (j->job_type) 
 	{
 	case df::job_type::ConstructBuilding:
+	case df::job_type::DestroyBuilding:
 		{
 			df::building* bld = get_building_from_job (j);
 			switch (bld->getType()) 
@@ -779,6 +787,7 @@ static void find_job_skill_labor(df::job* j, df::job_skill &skill, df::unit_labo
 			}
 		}
 		break;
+		
 	case df::job_type::CustomReaction:
 		for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
 		{
@@ -803,6 +812,7 @@ static void find_job_skill_labor(df::job* j, df::job_skill &skill, df::unit_labo
 	{
 	}
 
+	return labor;
 }
 
 class AutoLaborManager {
@@ -840,7 +850,7 @@ private:
 	int pick_count;
 	int axe_count;
 
-	std::vector<df::job*> jobs;
+	std::map<df::unit_labor, int> labor_needed;
 	std::vector<dwarf_info_t*> dwarf_info;
 	std::deque<dwarf_info_t*> idle_dwarfs;
 
@@ -930,7 +940,7 @@ private:
 #define F(x) bad_flags.bits.x = true;
 		F(dump); F(forbid); F(garbage_collect);
 		F(hostile); F(on_fire); F(rotten); F(trader);
-		F(in_building); F(construction); F(artifact1);
+		F(in_building); F(construction); F(artifact);
 #undef F
 
 		for (int i = 0; i < world->items.all.size(); ++i)
@@ -957,9 +967,6 @@ private:
 
 	void collect_job_list()
 	{
-		std::vector<df::job*> repeating_jobs;
-		
-
 		for (df::job_list_link* jll = world->job_list.next; jll; jll = jll->next)
 		{
 			df::job* j = jll->item;
@@ -971,24 +978,21 @@ private:
 
 			int worker = -1;
 
-			for (int r = 0; r < j->references.size(); ++r)
-				if (j->references[r]->getType() == df::general_ref_type::UNIT_WORKER)
-					worker = ((df::general_ref_unit_workerst *)(j->references[r]))->unit_id;
+			for (int r = 0; r < j->general_refs.size(); ++r)
+				if (j->general_refs[r]->getType() == df::general_ref_type::UNIT_WORKER)
+					worker = ((df::general_ref_unit_workerst *)(j->general_refs[r]))->unit_id;
 
 			if (worker != -1)
 				continue;
 
-			if (j->flags.bits.repeat)
-				repeating_jobs.push_back(j);
-			else
-				jobs.push_back(j);
+			df::unit_labor labor = find_job_labor (j);
+
+			if (print_debug)
+				out.print ("Job requiring labor %d found\n", labor);
+
+			if (labor != df::unit_labor::NONE)
+				labor_needed[labor]++;
 		}
-
-		if (print_debug)
-			out.print("%d repeating jobs, %d nonrepeating jobs\n", repeating_jobs.size(), jobs.size());
-
-		for (int i = 0; i < repeating_jobs.size(); i++) 
-			jobs.push_back(repeating_jobs[i]);
 
 	}
 
@@ -1150,37 +1154,6 @@ private:
 		}
 	}
 
-	void assign_one_dwarf (df::job_skill skill, df::unit_labor labor)
-	{
-		if (labor == df::unit_labor::NONE)
-			return;
-
-		std::deque<dwarf_info_t*>::iterator bestdwarf = idle_dwarfs.begin();
-
-		if (skill != df::job_skill::NONE) 
-		{
-			int best_skill_level = -1;
-
-			for (std::deque<dwarf_info_t*>::iterator k = idle_dwarfs.begin(); k != idle_dwarfs.end(); k++)
-			{
-				dwarf_info_t* d = (*k);
-				int	skill_level = Units::getEffectiveSkill(d->dwarf, skill);
-
-				if (skill_level > best_skill_level) 
-				{
-					bestdwarf = k;
-					best_skill_level = skill_level;
-				}
-			}
-		}
-
-		if (print_debug)
-			out.print("assign \"%s\" labor %d\n", (*bestdwarf)->dwarf->name.first_name.c_str(), labor);
-		(*bestdwarf)->set_labor(labor);
-
-		idle_dwarfs.erase(bestdwarf);
-	}
-
 public:
 	void process()
 	{
@@ -1196,6 +1169,8 @@ public:
 
 		count_tools();
 
+		// create job entries for designation
+
 		// collect current job list 
 
 		collect_job_list();
@@ -1204,82 +1179,76 @@ public:
 
 		collect_dwarf_list();
 
-		// assign jobs requiring skill to idle dwarfs
+		// match idle dwarfs to need list - if an idle dwarf is assigned to that labor, then yay, decrement the need count
+		// and remove the idle dwarf from the idle list
 
-		int jobs_to_assign = jobs.size();
-		if (jobs_to_assign > idle_dwarfs.size()) 
-			jobs_to_assign = idle_dwarfs.size();
-
-		if (print_debug)
-			out.print ("Assign idle (skilled): %d\n", jobs_to_assign);
-
-		std::vector<df::job*> jobs2;
-
-		for (int i = 0; i < jobs_to_assign; ++i)
+		for (auto i = idle_dwarfs.begin(); i != idle_dwarfs.end(); i++) 
 		{
-			df::job* j = jobs[i];
-
-			df::job_skill skill;
-			df::unit_labor labor;
-
-			find_job_skill_labor(j, skill, labor);
-
-			if(print_debug)
-				out.print("Job skill = %d labor = %d\n", skill, labor);
-
-			if (labor == -1)
-				out.print("Invalid labor for job (%d)\n", j->job_type);
-
-			if (skill == df::job_skill::NONE)
-				jobs2.push_back(j);
-			else 
-				assign_one_dwarf(skill, labor);
+		    FOR_ENUM_ITEMS(unit_labor, l)
+			{
+				if ((*i)->dwarf->status.labors[l])
+					if (labor_needed[l] > 0)
+					{
+						if (print_debug)
+							out.print("assign \"%s\" labor %d (carried through)\n", (*i)->dwarf->name.first_name.c_str(), l);
+						labor_needed[l]--;
+						idle_dwarfs.erase(i);	// remove from idle list
+						break;
+					} else {
+						(*i)->dwarf->status.labors[l] = false;
+					}
+			}
 		}
 
-		// assign mining jobs to idle dwarfs
-
-		int dig_max = dig_count;
-		if (dig_max > pick_count) 
-			dig_max = pick_count; 
-
-		jobs_to_assign = dig_max - jobs2.size();
-		if (jobs_to_assign > idle_dwarfs.size()) 
-			jobs_to_assign = idle_dwarfs.size();
-
-		if (print_debug)
-			out.print ("Assign idle (mining): %d\n", jobs_to_assign);
-
-		for (int i = 0; i < jobs_to_assign; ++i)
+		priority_queue<pair<int, df::unit_labor>> pq;
+		
+		for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
 		{
-			df::job_skill skill = df::job_skill::MINING;
-			df::unit_labor labor = df::unit_labor::MINE;
-
-			assign_one_dwarf(skill, labor);
+			if (i->second > 0) 
+				pq.push(make_pair(i->second, i->first));
 		}
-
-		// now assign unskilled jobs to idle dwarfs
-
-		jobs_to_assign = jobs2.size();
-		if (jobs_to_assign > idle_dwarfs.size()) 
-			jobs_to_assign = idle_dwarfs.size();
-
-		if (print_debug)
-			out.print ("Assign idle (unskilled): %d\n", jobs_to_assign);
-
-		for (int i = 0; i < jobs_to_assign; ++i)
+			
+		while (!idle_dwarfs.empty() && !pq.empty())
 		{
-			df::job* j = jobs2[i];
+			df::unit_labor labor = pq.top().second;
+			int remaining = pq.top().first;
+			df::job_skill skill = labor_to_skill[labor];
 
-			df::job_skill skill;
-			df::unit_labor labor;
+			if (print_debug) 
+				out.print("labor %d skill %d remaining %d\n", labor, skill, remaining);
 
-			find_job_skill_labor(j, skill, labor);
-			assign_one_dwarf(skill, labor);
+			std::deque<dwarf_info_t*>::iterator bestdwarf = idle_dwarfs.begin();
+
+			if (skill != df::job_skill::NONE) 
+			{
+				int best_skill_level = -1;
+
+				for (std::deque<dwarf_info_t*>::iterator k = idle_dwarfs.begin(); k != idle_dwarfs.end(); k++)
+				{
+					dwarf_info_t* d = (*k);
+					int	skill_level = Units::getEffectiveSkill(d->dwarf, skill);
+
+					if (skill_level > best_skill_level) 
+					{
+						bestdwarf = k;
+						best_skill_level = skill_level;
+					}
+				}
+			}
+
+			if (print_debug)
+				out.print("assign \"%s\" labor %d\n", (*bestdwarf)->dwarf->name.first_name.c_str(), labor);
+			(*bestdwarf)->set_labor(labor);
+
+			idle_dwarfs.erase(bestdwarf);
+			pq.pop();
+			if (--remaining)
+				pq.push(make_pair(remaining, labor));
 		}
 
 		print_debug = 0;
 
-		}
+	}
 
 };
 

@@ -1,6 +1,9 @@
-// This is a generic plugin that does nothing useful apart from acting as an example... of a plugin that does nothing :D
+/*
+* Autolabor 2.0 module for dfhack
+*
+* */
 
-// some headers required for a plugin. Nothing special, just the basics.
+
 #include "Core.h"
 #include <Console.h>
 #include <Export.h>
@@ -68,31 +71,6 @@ using df::global::world;
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
-/*
-* Autolabor module for dfhack
-*
-* The idea behind this module is to constantly adjust labors so that the right dwarves
-* are assigned to new tasks. The key is that, for almost all labors, once a dwarf begins
-* a job it will finish that job even if the associated labor is removed. Thus the
-* strategy is to frequently decide, for each labor, which dwarves should possibly take
-* a new job for that labor if it comes in and which shouldn't, and then set the labors
-* appropriately. The updating should happen as often as can be reasonably done without
-* causing lag.
-*
-* The obvious thing to do is to just set each labor on a single idle dwarf who is best
-* suited to doing new jobs of that labor. This works in a way, but it leads to a lot
-* of idle dwarves since only one dwarf will be dispatched for each labor in an update
-* cycle, and dwarves that finish tasks will wait for the next update before being
-* dispatched. An improvement is to also set some labors on dwarves that are currently
-* doing a job, so that they will immediately take a new job when they finish. The
-* details of which dwarves should have labors set is mostly a heuristic.
-*
-* A complication to the above simple scheme is labors that have associated equipment.
-* Enabling/disabling these labors causes dwarves to change equipment, and disabling
-* them in the middle of a job may cause the job to be abandoned. Those labors
-* (mining, hunting, and woodcutting) need to be handled carefully to minimize churn.
-*/
-
 static int enable_autolabor = 0;
 
 static bool print_debug = 0;
@@ -115,12 +93,6 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 DFHACK_PLUGIN("autolabor");
 
 static void generate_labor_to_skill_map();
-
-enum labor_mode {
-    DISABLE,
-    HAULERS,
-    AUTOMATIC,
-};
 
 enum dwarf_state {
     // Ready for a new task
@@ -387,136 +359,108 @@ struct labor_info
 {
     PersistentDataItem config;
 
-    bool is_exclusive;
     int active_dwarfs;
 
-    labor_mode mode() { return (labor_mode) config.ival(0); }
-    void set_mode(labor_mode mode) { config.ival(0) = mode; }
-
-    int minimum_dwarfs() { return config.ival(1); }
-    void set_minimum_dwarfs(int minimum_dwarfs) { config.ival(1) = minimum_dwarfs; }
+    int priority() { return config.ival(1); }
+    void set_priority(int priority) { config.ival(1) = priority; }
 
     int maximum_dwarfs() { return config.ival(2); }
     void set_maximum_dwarfs(int maximum_dwarfs) { config.ival(2) = maximum_dwarfs; }
+
+    int time_since_last_assigned() 
+    { 
+        return (*df::global::cur_year - config.ival(3)) * 403200 + *df::global::cur_year_tick - config.ival(4); 
+    }
+    void mark_assigned() {
+        config.ival(3) = (* df::global::cur_year);
+        config.ival(4) = (* df::global::cur_year_tick);
+    }
 
 };
 
 struct labor_default
 {
-    labor_mode mode;
-    bool is_exclusive;
-    int minimum_dwarfs;
+    int priority;
     int maximum_dwarfs;
-    int active_dwarfs;
 };
-
-static int hauler_pct = 33;
 
 static std::vector<struct labor_info> labor_infos;
 
 static const struct labor_default default_labor_infos[] = {
-    /* MINE */                  {AUTOMATIC, true, 2, 200, 0},
-    /* HAUL_STONE */            {HAULERS, false, 1, 200, 0},
-    /* HAUL_WOOD */             {HAULERS, false, 1, 200, 0},
-    /* HAUL_BODY */             {HAULERS, false, 1, 200, 0},
-    /* HAUL_FOOD */             {HAULERS, false, 1, 200, 0},
-    /* HAUL_REFUSE */           {HAULERS, false, 1, 200, 0},
-    /* HAUL_ITEM */             {HAULERS, false, 1, 200, 0},
-    /* HAUL_FURNITURE */        {HAULERS, false, 1, 200, 0},
-    /* HAUL_ANIMAL */           {HAULERS, false, 1, 200, 0},
-    /* CLEAN */                 {HAULERS, false, 1, 200, 0},
-    /* CUTWOOD */               {AUTOMATIC, true, 1, 200, 0},
-    /* CARPENTER */             {AUTOMATIC, false, 1, 200, 0},
-    /* DETAIL */                {AUTOMATIC, false, 1, 200, 0},
-    /* MASON */                 {AUTOMATIC, false, 1, 200, 0},
-    /* ARCHITECT */             {AUTOMATIC, false, 1, 200, 0},
-    /* ANIMALTRAIN */           {AUTOMATIC, false, 1, 200, 0},
-    /* ANIMALCARE */            {AUTOMATIC, false, 1, 200, 0},
-    /* DIAGNOSE */              {AUTOMATIC, false, 1, 200, 0},
-    /* SURGERY */               {AUTOMATIC, false, 1, 200, 0},
-    /* BONE_SETTING */          {AUTOMATIC, false, 1, 200, 0},
-    /* SUTURING */              {AUTOMATIC, false, 1, 200, 0},
-    /* DRESSING_WOUNDS */       {AUTOMATIC, false, 1, 200, 0},
-    /* FEED_WATER_CIVILIANS */  {AUTOMATIC, false, 200, 200, 0},
-    /* RECOVER_WOUNDED */       {HAULERS, false, 1, 200, 0},
-    /* BUTCHER */               {AUTOMATIC, false, 1, 200, 0},
-    /* TRAPPER */               {AUTOMATIC, false, 1, 200, 0},
-    /* DISSECT_VERMIN */        {AUTOMATIC, false, 1, 200, 0},
-    /* LEATHER */               {AUTOMATIC, false, 1, 200, 0},
-    /* TANNER */                {AUTOMATIC, false, 1, 200, 0},
-    /* BREWER */                {AUTOMATIC, false, 1, 200, 0},
-    /* ALCHEMIST */             {AUTOMATIC, false, 1, 200, 0},
-    /* SOAP_MAKER */            {AUTOMATIC, false, 1, 200, 0},
-    /* WEAVER */                {AUTOMATIC, false, 1, 200, 0},
-    /* CLOTHESMAKER */          {AUTOMATIC, false, 1, 200, 0},
-    /* MILLER */                {AUTOMATIC, false, 1, 200, 0},
-    /* PROCESS_PLANT */         {AUTOMATIC, false, 1, 200, 0},
-    /* MAKE_CHEESE */           {AUTOMATIC, false, 1, 200, 0},
-    /* MILK */                  {AUTOMATIC, false, 1, 200, 0},
-    /* COOK */                  {AUTOMATIC, false, 1, 200, 0},
-    /* PLANT */                 {AUTOMATIC, false, 1, 200, 0},
-    /* HERBALIST */             {AUTOMATIC, false, 1, 200, 0},
-    /* FISH */                  {AUTOMATIC, false, 1, 1, 0},
-    /* CLEAN_FISH */            {AUTOMATIC, false, 1, 200, 0},
-    /* DISSECT_FISH */          {AUTOMATIC, false, 1, 200, 0},
-    /* HUNT */                  {AUTOMATIC, true, 1, 1, 0},
-    /* SMELT */                 {AUTOMATIC, false, 1, 200, 0},
-    /* FORGE_WEAPON */          {AUTOMATIC, false, 1, 200, 0},
-    /* FORGE_ARMOR */           {AUTOMATIC, false, 1, 200, 0},
-    /* FORGE_FURNITURE */       {AUTOMATIC, false, 1, 200, 0},
-    /* METAL_CRAFT */           {AUTOMATIC, false, 1, 200, 0},
-    /* CUT_GEM */               {AUTOMATIC, false, 1, 200, 0},
-    /* ENCRUST_GEM */           {AUTOMATIC, false, 1, 200, 0},
-    /* WOOD_CRAFT */            {AUTOMATIC, false, 1, 200, 0},
-    /* STONE_CRAFT */           {AUTOMATIC, false, 1, 200, 0},
-    /* BONE_CARVE */            {AUTOMATIC, false, 1, 200, 0},
-    /* GLASSMAKER */            {AUTOMATIC, false, 1, 200, 0},
-    /* EXTRACT_STRAND */        {AUTOMATIC, false, 1, 200, 0},
-    /* SIEGECRAFT */            {AUTOMATIC, false, 1, 200, 0},
-    /* SIEGEOPERATE */          {AUTOMATIC, false, 1, 200, 0},
-    /* BOWYER */                {AUTOMATIC, false, 1, 200, 0},
-    /* MECHANIC */              {AUTOMATIC, false, 1, 200, 0},
-    /* POTASH_MAKING */         {AUTOMATIC, false, 1, 200, 0},
-    /* LYE_MAKING */            {AUTOMATIC, false, 1, 200, 0},
-    /* DYER */                  {AUTOMATIC, false, 1, 200, 0},
-    /* BURN_WOOD */             {AUTOMATIC, false, 1, 200, 0},
-    /* OPERATE_PUMP */          {AUTOMATIC, false, 1, 200, 0},
-    /* SHEARER */               {AUTOMATIC, false, 1, 200, 0},
-    /* SPINNER */               {AUTOMATIC, false, 1, 200, 0},
-    /* POTTERY */               {AUTOMATIC, false, 1, 200, 0},
-    /* GLAZING */               {AUTOMATIC, false, 1, 200, 0},
-    /* PRESSING */              {AUTOMATIC, false, 1, 200, 0},
-    /* BEEKEEPING */            {AUTOMATIC, false, 1, 1, 0}, // reduce risk of stuck beekeepers (see http://www.bay12games.com/dwarves/mantisbt/view.php?id=3981)
-    /* WAX_WORKING */           {AUTOMATIC, false, 1, 200, 0},
-    /* PUSH_HAUL_VEHICLES */    {HAULERS, false, 1, 200, 0}
-};
-
-static const int responsibility_penalties[] = {
-    0,      /* LAW_MAKING */
-    0,      /* LAW_ENFORCEMENT */
-    3000,   /* RECEIVE_DIPLOMATS */
-    0,      /* MEET_WORKERS */
-    1000,   /* MANAGE_PRODUCTION */
-    3000,   /* TRADE */
-    1000,   /* ACCOUNTING */
-    0,      /* ESTABLISH_COLONY_TRADE_AGREEMENTS */
-    0,      /* MAKE_INTRODUCTIONS */
-    0,      /* MAKE_PEACE_AGREEMENTS */
-    0,      /* MAKE_TOPIC_AGREEMENTS */
-    0,      /* COLLECT_TAXES */
-    0,      /* ESCORT_TAX_COLLECTOR */
-    0,      /* EXECUTIONS */
-    0,      /* TAME_EXOTICS */
-    0,      /* RELIGION */
-    0,      /* ATTACK_ENEMIES */
-    0,      /* PATROL_TERRITORY */
-    0,      /* MILITARY_GOALS */
-    0,      /* MILITARY_STRATEGY */
-    0,      /* UPGRADE_SQUAD_EQUIPMENT */
-    0,      /* EQUIPMENT_MANIFESTS */
-    0,      /* SORT_AMMUNITION */
-    0,      /* BUILD_MORALE */
-    5000    /* HEALTH_MANAGEMENT */
+    /* MINE */                  {200, 0},
+    /* HAUL_STONE */            {100, 0},
+    /* HAUL_WOOD */             {100, 0},
+    /* HAUL_BODY */             {200, 0},
+    /* HAUL_FOOD */             {300, 0},
+    /* HAUL_REFUSE */           {100, 0},
+    /* HAUL_ITEM */             {100, 0},
+    /* HAUL_FURNITURE */        {100, 0},
+    /* HAUL_ANIMAL */           {100, 0},
+    /* CLEAN */                 {200, 0},
+    /* CUTWOOD */               {200, 0},
+    /* CARPENTER */             {200, 0},
+    /* DETAIL */                {200, 0},
+    /* MASON */                 {200, 0},
+    /* ARCHITECT */             {400, 0},
+    /* ANIMALTRAIN */           {200, 0},
+    /* ANIMALCARE */            {200, 0},
+    /* DIAGNOSE */              {1000, 0},
+    /* SURGERY */               {1000, 0},
+    /* BONE_SETTING */          {1000, 0},
+    /* SUTURING */              {1000, 0},
+    /* DRESSING_WOUNDS */       {1000, 0},
+    /* FEED_WATER_CIVILIANS */  {1000, 0},
+    /* RECOVER_WOUNDED */       {200, 0},
+    /* BUTCHER */               {200, 0},
+    /* TRAPPER */               {200, 0},
+    /* DISSECT_VERMIN */        {200, 0},
+    /* LEATHER */               {200, 0},
+    /* TANNER */                {200, 0},
+    /* BREWER */                {200, 0},
+    /* ALCHEMIST */             {200, 0},
+    /* SOAP_MAKER */            {200, 0},
+    /* WEAVER */                {200, 0},
+    /* CLOTHESMAKER */          {200, 0},
+    /* MILLER */                {200, 0},
+    /* PROCESS_PLANT */         {200, 0},
+    /* MAKE_CHEESE */           {200, 0},
+    /* MILK */                  {200, 0},
+    /* COOK */                  {200, 0},
+    /* PLANT */                 {200, 0},
+    /* HERBALIST */             {200, 0},
+    /* FISH */                  {100, 0},
+    /* CLEAN_FISH */            {200, 0},
+    /* DISSECT_FISH */          {200, 0},
+    /* HUNT */                  {100, 0},
+    /* SMELT */                 {200, 0},
+    /* FORGE_WEAPON */          {200, 0},
+    /* FORGE_ARMOR */           {200, 0},
+    /* FORGE_FURNITURE */       {200, 0},
+    /* METAL_CRAFT */           {200, 0},
+    /* CUT_GEM */               {200, 0},
+    /* ENCRUST_GEM */           {200, 0},
+    /* WOOD_CRAFT */            {200, 0},
+    /* STONE_CRAFT */           {200, 0},
+    /* BONE_CARVE */            {200, 0},
+    /* GLASSMAKER */            {200, 0},
+    /* EXTRACT_STRAND */        {200, 0},
+    /* SIEGECRAFT */            {200, 0},
+    /* SIEGEOPERATE */          {200, 0},
+    /* BOWYER */                {200, 0},
+    /* MECHANIC */              {200, 0},
+    /* POTASH_MAKING */         {200, 0},
+    /* LYE_MAKING */            {200, 0},
+    /* DYER */                  {200, 0},
+    /* BURN_WOOD */             {200, 0},
+    /* OPERATE_PUMP */          {200, 0},
+    /* SHEARER */               {200, 0},
+    /* SPINNER */               {200, 0},
+    /* POTTERY */               {200, 0},
+    /* GLAZING */               {200, 0},
+    /* PRESSING */              {200, 0},
+    /* BEEKEEPING */            {200, 1}, // reduce risk of stuck beekeepers (see http://www.bay12games.com/dwarves/mantisbt/view.php?id=3981)
+    /* WAX_WORKING */           {200, 0},
+    /* PUSH_HAUL_VEHICLES */    {200, 0}
 };
 
 struct dwarf_info_t
@@ -555,6 +499,12 @@ struct dwarf_info_t
     }
 
 };
+
+/* 
+* Here starts all the complicated stuff to try to deduce labors from jobs.
+* This is all way more complicated than it really ought to be, but I have
+* not found a way to make it simpler.
+*/
 
 static df::unit_labor hauling_labor_map[] =
 {
@@ -1232,6 +1182,8 @@ public:
     }
 };
 
+/* End of labor deducer */
+
 static JobLaborMapper* labor_mapper;
 
 static bool isOptionEnabled(unsigned flag)
@@ -1262,14 +1214,13 @@ static void cleanup_state()
 
 static void reset_labor(df::unit_labor labor)
 {
-    labor_infos[labor].set_minimum_dwarfs(default_labor_infos[labor].minimum_dwarfs);
+    labor_infos[labor].set_priority(default_labor_infos[labor].priority);
     labor_infos[labor].set_maximum_dwarfs(default_labor_infos[labor].maximum_dwarfs);
-    labor_infos[labor].set_mode(default_labor_infos[labor].mode);
 }
 
 static void init_state()
 {
-    config = World::GetPersistentData("autolabor/config");
+    config = World::GetPersistentData("autolabor/2.0/config");
     if (config.isValid() && config.ival(0) == -1)
         config.ival(0) = 0;
 
@@ -1278,30 +1229,19 @@ static void init_state()
     if (!enable_autolabor)
         return;
 
-    auto cfg_haulpct = World::GetPersistentData("autolabor/haulpct");
-    if (cfg_haulpct.isValid())
-    {
-        hauler_pct = cfg_haulpct.ival(0);
-    }
-    else
-    {
-        hauler_pct = 33;
-    }
-
     // Load labors from save
     labor_infos.resize(ARRAY_COUNT(default_labor_infos));
 
     std::vector<PersistentDataItem> items;
-    World::GetPersistentData(&items, "autolabor/labors/", true);
+    World::GetPersistentData(&items, "autolabor/2.0/labors/", true);
 
     for (auto p = items.begin(); p != items.end(); p++)
     {
         string key = p->key();
-        df::unit_labor labor = (df::unit_labor) atoi(key.substr(strlen("autolabor/labors/")).c_str());
+        df::unit_labor labor = (df::unit_labor) atoi(key.substr(strlen("autolabor/2.0/labors/")).c_str());
         if (labor >= 0 && labor <= labor_infos.size())
         {
             labor_infos[labor].config = *p;
-            labor_infos[labor].is_exclusive = default_labor_infos[labor].is_exclusive;
             labor_infos[labor].active_dwarfs = 0;
         }
     }
@@ -1312,11 +1252,10 @@ static void init_state()
             continue;
 
         std::stringstream name;
-        name << "autolabor/labors/" << i;
+        name << "autolabor/2.0/labors/" << i;
 
         labor_infos[i].config = World::AddPersistentData(name.str());
-
-        labor_infos[i].is_exclusive = default_labor_infos[i].is_exclusive;
+        labor_infos[i].mark_assigned();
         labor_infos[i].active_dwarfs = 0;
         reset_labor((df::unit_labor) i);
     }
@@ -1358,7 +1297,7 @@ static void enable_plugin(color_ostream &out)
 {
     if (!config.isValid())
     {
-        config = World::AddPersistentData("autolabor/config");
+        config = World::AddPersistentData("autolabor/2.0/config");
         config.ival(0) = 0;
     }
 
@@ -1384,13 +1323,13 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  autolabor enable\n"
         "  autolabor disable\n"
         "    Enables or disables the plugin.\n"
-        "  autolabor <labor> <minimum> [<maximum>]\n"
-        "    Set number of dwarves assigned to a labor.\n"
-        "  autolabor <labor> haulers\n"
-        "    Set a labor to be handled by hauler dwarves.\n"
-        "  autolabor <labor> disable\n"
-        "    Turn off autolabor for a specific labor.\n"
-        "  autolabor <labor> reset\n"
+        "  autolabor max <labor> <maximum>\n"
+        "    Set max number of dwarves assigned to a labor.\n"
+        "  autolabor max <labor> none\n"
+        "    Unrestrict the number of dwarves assigned to a labor.\n"
+        "  autolabor priority <labor> <priority>\n"
+        "    Change the assignment priority of a labor (default is 100)\n"
+        "  autolabor reset <labor>\n"
         "    Return a labor to the default handling.\n"
         "  autolabor reset-all\n"
         "    Return all labors to the default handling.\n"
@@ -1400,19 +1339,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "    Show basic status information.\n"
         "Function:\n"
         "  When enabled, autolabor periodically checks your dwarves and enables or\n"
-        "  disables labors. It tries to keep as many dwarves as possible busy but\n"
-        "  also tries to have dwarves specialize in specific skills.\n"
+        "  disables labors.  Generally, each dwarf will be assigned exactly one labor.\n"
         "  Warning: autolabor will override any manual changes you make to labors\n"
         "  while it is enabled.\n"
-        "Examples:\n"
-        "  autolabor MINE 2\n"
-        "    Keep at least 2 dwarves with mining enabled.\n"
-        "  autolabor CUT_GEM 1 1\n"
-        "    Keep exactly 1 dwarf with gemcutting enabled.\n"
-        "  autolabor FEED_WATER_CIVILIANS haulers\n"
-        "    Have haulers feed and water wounded dwarves.\n"
-        "  autolabor CUTWOOD disable\n"
-        "    Turn off autolabor for wood cutting.\n"
         ));
 
     init_state();
@@ -1563,9 +1492,10 @@ private:
         F(in_building); F(construction); F(artifact);
 #undef F
 
-        for (int i = 0; i < world->items.all.size(); ++i)
+        auto& v = world->items.other[df::items_other_id::WEAPON];
+        for (auto i = v.begin(); i != v.end(); i++)
         {
-            df::item* item = world->items.all[i];
+            df::item* item = *i;
             if (item->flags.whole & bad_flags.whole)
                 continue;
 
@@ -1629,8 +1559,13 @@ private:
 
             df::unit_labor labor = labor_mapper->find_job_labor (j);
 
-            if (labor != df::unit_labor::NONE)
+            if (labor != df::unit_labor::NONE) 
+            {
                 labor_needed[labor]++;
+
+                if (worker != -1)
+                    labor_infos[labor].mark_assigned();
+            }
         }
 
     }
@@ -1897,8 +1832,16 @@ public:
 
         for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
         {
+            df::unit_labor l = i->first;
+            if (labor_infos[l].maximum_dwarfs() > 0 &&
+                i->second > labor_infos[l].maximum_dwarfs())
+                i->second = labor_infos[l].maximum_dwarfs();
             if (i->second > 0) 
-                pq.push(make_pair(100, i->first));
+            {
+                int priority = labor_infos[l].priority();
+                priority += labor_infos[l].time_since_last_assigned()/12;
+                pq.push(make_pair(priority, l));
+            }
         }
 
         if (print_debug)
@@ -2038,16 +1981,22 @@ void print_labor (df::unit_labor labor, color_ostream &out)
     out << labor_name << ": ";
     for (int i = 0; i < 20 - (int)labor_name.length(); i++)
         out << ' ';
-    if (labor_infos[labor].mode() == DISABLE)
-        out << "disabled" << endl;
-    else
+    out << "priority " << labor_infos[labor].priority()
+        << ", maximum " << labor_infos[labor].maximum_dwarfs()
+        << ", currently " << labor_infos[labor].active_dwarfs << " dwarfs" << endl;
+}
+
+df::unit_labor lookup_labor_by_name (std::string& name)
+{
+    df::unit_labor labor = df::unit_labor::NONE;
+
+    FOR_ENUM_ITEMS(unit_labor, test_labor)
     {
-        if (labor_infos[labor].mode() == HAULERS)
-            out << "haulers";
-        else
-            out << "minimum " << labor_infos[labor].minimum_dwarfs() << ", maximum " << labor_infos[labor].maximum_dwarfs();
-        out << ", currently " << labor_infos[labor].active_dwarfs << " dwarfs" << endl;
+        if (name == ENUM_KEY_STR(unit_labor, test_labor))
+            labor = test_labor;
     }
+
+    return labor;
 }
 
 
@@ -2061,10 +2010,9 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     }
 
     if (parameters.size() == 1 &&
-        (parameters[0] == "0" || parameters[0] == "enable" ||
-        parameters[0] == "1" || parameters[0] == "disable"))
+        (parameters[0] == "enable" || parameters[0] == "disable"))
     {
-        bool enable = (parameters[0] == "1" || parameters[0] == "enable");
+        bool enable = (parameters[0] == "enable");
         if (enable && !enable_autolabor)
         {
             enable_plugin(out);
@@ -2079,7 +2027,8 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
         return CR_OK;
     }
-    else if (parameters.size() == 2 && parameters[0] == "haulpct")
+    else if (parameters.size() == 3 && 
+        (parameters[0] == "max" || parameters[0] == "priority"))
     {
         if (!enable_autolabor)
         {
@@ -2087,67 +2036,46 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
             return CR_FAILURE;
         }
 
-        int pct = atoi (parameters[1].c_str());
-        hauler_pct = pct;
-        return CR_OK;
-    }
-    else if (parameters.size() == 2 || parameters.size() == 3)
-    {
-        if (!enable_autolabor)
-        {
-            out << "Error: The plugin is not enabled." << endl;
-            return CR_FAILURE;
-        }
+        df::unit_labor labor = lookup_labor_by_name(parameters[1]);
 
-        df::unit_labor labor = unit_labor::NONE;
-
-        FOR_ENUM_ITEMS(unit_labor, test_labor)
-        {
-            if (parameters[0] == ENUM_KEY_STR(unit_labor, test_labor))
-                labor = test_labor;
-        }
-
-        if (labor == unit_labor::NONE)
+        if (labor == df::unit_labor::NONE)
         {
             out.printerr("Could not find labor %s.\n", parameters[0].c_str());
             return CR_WRONG_USAGE;
         }
 
-        if (parameters[1] == "haulers")
+        int v;
+
+        if (parameters[2] == "none")
+            v = 0;
+        else 
+            v = atoi (parameters[2].c_str());
+
+        if (parameters[0] == "max")
+            labor_infos[labor].set_maximum_dwarfs(v);
+        else if (parameters[0] == "priority")
+            labor_infos[labor].set_priority(v);
+
+        print_labor(labor, out);
+        return CR_OK;
+    }
+    else if (parameters.size() == 2 && parameters[0] == "reset")
+    {
+        if (!enable_autolabor)
         {
-            labor_infos[labor].set_mode(HAULERS);
-            print_labor(labor, out);
-            return CR_OK;
-        }
-        if (parameters[1] == "disable")
-        {
-            labor_infos[labor].set_mode(DISABLE);
-            print_labor(labor, out);
-            return CR_OK;
-        }
-        if (parameters[1] == "reset")
-        {
-            reset_labor(labor);
-            print_labor(labor, out);
-            return CR_OK;
+            out << "Error: The plugin is not enabled." << endl;
+            return CR_FAILURE;
         }
 
-        int minimum = atoi (parameters[1].c_str());
-        int maximum = 200;
-        if (parameters.size() == 3)
-            maximum = atoi (parameters[2].c_str());
+        df::unit_labor labor = lookup_labor_by_name(parameters[1]);
 
-        if (maximum < minimum || maximum < 0 || minimum < 0)
+        if (labor == df::unit_labor::NONE)
         {
-            out.printerr("Syntax: autolabor <labor> <minimum> [<maximum>]\n", maximum, minimum);
+            out.printerr("Could not find labor %s.\n", parameters[0].c_str());
             return CR_WRONG_USAGE;
         }
-
-        labor_infos[labor].set_minimum_dwarfs(minimum);
-        labor_infos[labor].set_maximum_dwarfs(maximum);
-        labor_infos[labor].set_mode(AUTOMATIC);
+        reset_labor(labor);
         print_labor(labor, out);
-
         return CR_OK;
     }
     else if (parameters.size() == 1 && parameters[0] == "reset-all")
@@ -2213,8 +2141,8 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     else
     {
         out.print("Automatically assigns labors to dwarves.\n"
-            "Activate with 'autolabor 1', deactivate with 'autolabor 0'.\n"
-            "Current state: %d.\n", enable_autolabor);
+            "Activate with 'autolabor enable', deactivate with 'autolabor disable'.\n"
+            "Current state: %s.\n", enable_autolabor ? "enabled" : "disabled");
 
         return CR_OK;
     }

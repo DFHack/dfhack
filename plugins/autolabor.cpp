@@ -705,7 +705,22 @@ static df::unit_labor construction_build_labor (df::item* i)
     return df::unit_labor::MASON;
 }
 
+color_ostream* debug_stream;
+
+void debug (char* fmt, ...)
+{
+    if (debug_stream)
+    {
+        va_list args;
+        va_start(args,fmt);
+        debug_stream->vprint(fmt, args);
+        va_end(args);
+    }
+}
+
+
 class JobLaborMapper {
+
 private:
     class jlfunc 
     {
@@ -772,7 +787,9 @@ private:
                 return df::unit_labor::PLANT;
             }
 
-            // FIXME
+            debug ("AUTOLABOR: Cannot deduce labor for construct building job of type %s\n",
+                ENUM_KEY_STR(building_type, bld->getType()).c_str());
+
             return df::unit_labor::NONE;
         }
         jlfunc_construct_bld() {}
@@ -786,7 +803,35 @@ private:
             df::building* bld = get_building_from_job (j);
             df::building_type type = bld->getType();
 
-            // FIXME
+            switch (bld->getType()) 
+            {
+            case df::building_type::Workshop:
+                {
+                    df::building_workshopst* ws = (df::building_workshopst*) bld;
+                    if (ws->type == df::workshop_type::Custom) 
+                    {
+                        df::building_def* def = df::building_def::find(ws->custom_type);
+                        return def->build_labors[0];
+                    } 
+                    else 
+                        return workshop_build_labor[ws->type];
+                }
+                break;
+            case df::building_type::Furnace:
+            case df::building_type::TradeDepot:
+            case df::building_type::Construction:
+                {
+                    df::building_actual* b = (df::building_actual*) bld;
+                    return construction_build_labor(j->items[0]->item);
+                }
+                break;
+            case df::building_type::FarmPlot:
+                return df::unit_labor::PLANT;
+            }
+
+            debug ("AUTOLABOR: Cannot deduce labor for destroy building job of type %s\n",
+                ENUM_KEY_STR(building_type, bld->getType()).c_str());
+
             return df::unit_labor::NONE;
         }
         jlfunc_destroy_bld() {}
@@ -816,9 +861,14 @@ private:
                             if (j->material_category.bits.bone)
                                 return df::unit_labor::BONE_CARVE;
                             else
-                                return df::unit_labor::NONE; //FIXME
+                            {
+                                debug ("AUTOLABOR: Cannot deduce labor for make crafts job (not bone)\n");
+                                return df::unit_labor::NONE; 
+                            }
                         default:
-                            return df::unit_labor::NONE; //FIXME
+                            debug ("AUTOLABOR: Cannot deduce labor for make crafts job, item type %s\n", 
+                                ENUM_KEY_STR(item_type, jobitem).c_str());
+                            return df::unit_labor::NONE; 
                         }
                     }
                 case df::workshop_type::Masons:
@@ -833,7 +883,9 @@ private:
                 case df::workshop_type::MetalsmithsForge:
                     return metaltype;
                 default:
-                    return df::unit_labor::NONE; // FIXME
+                    debug ("AUTOLABOR: Cannot deduce labor for make job, workshop type %s\n",
+                        ENUM_KEY_STR(workshop_type, type).c_str());
+                    return df::unit_labor::NONE; 
                 }
             }
             else if (bld->getType() == df::building_type::Furnace)
@@ -845,11 +897,16 @@ private:
                 case df::furnace_type::GlassFurnace:
                     return df::unit_labor::GLASSMAKER;
                 default:
-                    return df::unit_labor::NONE; // FIXME
+                    debug ("AUTOLABOR: Cannot deduce labor for make job, furnace type %s\n",
+                        ENUM_KEY_STR(furnace_type, type).c_str());
+                    return df::unit_labor::NONE; 
                 }
             }
 
-            return df::unit_labor::NONE; // FIXME
+            debug ("AUTOLABOR: Cannot deduce labor for make job, building type %s\n",
+                ENUM_KEY_STR(building_type, bld->getType()).c_str());
+
+            return df::unit_labor::NONE; 
         }
 
         jlfunc_make (df::unit_labor mt) : metaltype(mt) {}
@@ -1515,9 +1572,6 @@ private:
             if (item->flags.whole & bad_flags.whole)
                 continue;
 
-            if (!item->flags.bits.in_inventory && !item->isAssignedToStockpile())
-                labor_needed[hauling_labor_map[item->getType()]]++;
-
             if (!item->isWeapon()) 
                 continue;
 
@@ -1675,6 +1729,11 @@ private:
                         state = OTHER;
                     else if (dwarf->dwarf->burrows.size() > 0)
                         state = OTHER;        // dwarfs assigned to burrows are treated as if permanently busy
+                    else if (dwarf->dwarf->status2.able_grasp_impair == 0)
+                    {
+                        state = OTHER;      // dwarfs unable to grasp are incapable of nearly all labors
+                        dwarf->clear_all = true;
+                    }
                     else
                         state = IDLE;
                 }
@@ -1834,6 +1893,17 @@ public:
         labor_needed[df::unit_labor::BONE_SETTING]    += cnt_traction;
         labor_needed[df::unit_labor::HAUL_ITEM]       += cnt_crutch;
 
+        // add entries for hauling jobs
+
+        labor_needed[df::unit_labor::HAUL_STONE]     += world->stockpile.num_jobs[1];
+        labor_needed[df::unit_labor::HAUL_WOOD]      += world->stockpile.num_jobs[2];
+        labor_needed[df::unit_labor::HAUL_ITEM]      += world->stockpile.num_jobs[3];
+        labor_needed[df::unit_labor::HAUL_BODY]      += world->stockpile.num_jobs[5];
+        labor_needed[df::unit_labor::HAUL_FOOD]      += world->stockpile.num_jobs[6];
+        labor_needed[df::unit_labor::HAUL_REFUSE]    += world->stockpile.num_jobs[7];
+        labor_needed[df::unit_labor::HAUL_FURNITURE] += world->stockpile.num_jobs[8];
+        labor_needed[df::unit_labor::HAUL_ANIMAL]    += world->stockpile.num_jobs[9];
+
         if (print_debug)
         {
             for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
@@ -1852,6 +1922,15 @@ public:
 
         if (print_debug)
             out.print("idle count = %d, labor need count = %d\n", available_dwarfs.size(), pq.size());
+
+        int canary = (1 << df::unit_labor::HAUL_STONE) |
+            (1 << df::unit_labor::HAUL_WOOD) |
+            (1 << df::unit_labor::HAUL_BODY) |
+            (1 << df::unit_labor::HAUL_FOOD) |
+            (1 << df::unit_labor::HAUL_REFUSE) |
+            (1 << df::unit_labor::HAUL_ITEM) |
+            (1 << df::unit_labor::HAUL_FURNITURE) |
+            (1 << df::unit_labor::HAUL_ANIMAL);
 
         while (!available_dwarfs.empty() && !pq.empty())
         {
@@ -1899,6 +1978,9 @@ public:
                     (*bestdwarf)->clear_labor(l);
             }
 
+            if (labor >= df::unit_labor::HAUL_STONE && labor <= df::unit_labor::HAUL_ANIMAL)
+                canary &= ~(1 << labor);
+
             available_dwarfs.erase(bestdwarf);
             pq.pop();
             if (--labor_needed[labor] > 0) 
@@ -1906,6 +1988,19 @@ public:
                 priority /= 2;
                 pq.push(make_pair(priority, labor));
             }
+        }
+
+        if (canary != 0)
+        {
+            dwarf_info_t* d = dwarf_info.front();
+            FOR_ENUM_ITEMS (unit_labor, l)
+            {
+                if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMAL &&
+                    canary & (1 << l))
+                    d->set_labor(l);
+            }
+            if (print_debug)
+                out.print ("Setting %s as the hauling canary\n", d->dwarf->name.first_name.c_str());
         }
 
         print_debug = 0;
@@ -1945,6 +2040,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     if (++step_count < 60)
         return CR_OK;
     step_count = 0;
+
+    debug_stream = &out;
 
     AutoLaborManager alm(out);
 

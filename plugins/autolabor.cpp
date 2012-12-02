@@ -1521,9 +1521,6 @@ private:
             if (!bl->flags.bits.designated)
                 continue;
 
-            if (print_debug)
-                out.print ("block with designations found: %d, %d, %d\n", bl->map_pos.x, bl->map_pos.y, bl->map_pos.z);
-
             for (int x = 0; x < 16; x++)
                 for (int y = 0; y < 16; y++)
                 {
@@ -1614,8 +1611,6 @@ private:
 
             if (bld != -1) 
             {
-                if (print_debug)
-                    out.print("Checking job %d for first in queue at building %d\n", j->id, bld);
                 df::building* b = binsearch_in_vector(world->buildings.all, bld);
                 int fjid = -1;
                 for (int jn = 0; jn < b->jobs.size(); jn++)
@@ -1627,20 +1622,12 @@ private:
                 }
                 // check if this job is the first nonsuspended job on this building; if not, ignore it
                 if (fjid != j->id) {
-                    if (print_debug)
-                        out.print("Job %d is not first in queue at building %d (%d), skipping\n", j->id, bld, fjid);
                     continue;
                 }
-
-                if (print_debug)
-                    out.print("Job %d is in queue at building %d\n", j->id, bld);
 
             }
 
             df::unit_labor labor = labor_mapper->find_job_labor (j);
-
-            if (print_debug)
-                out.print ("Job requiring labor %d found\n", labor);
 
             if (labor != df::unit_labor::NONE)
                 labor_needed[labor]++;
@@ -1805,22 +1792,16 @@ private:
                             dwarf->has_axe = 1;
                             if (state != IDLE) 
                                 axe_count--;
-                            if (print_debug)
-                                out.print("Dwarf \"%s\" has an axe\n", dwarf->dwarf->name.first_name.c_str());
                         }
                         else if (weaponsk == df::job_skill::MINING)
                         {
                             dwarf->has_pick = 1;
                             if (state != IDLE) 
                                 pick_count--;
-                            if (print_debug)
-                                out.print("Dwarf \"%s\" has an pick\n", dwarf->dwarf->name.first_name.c_str());
                         }
                         else if (rangesk == df::job_skill::CROSSBOW)
                         {
                             dwarf->has_crossbow = 1;
-                            if (print_debug)
-                                out.print("Dwarf \"%s\" has a crossbow\n", dwarf->dwarf->name.first_name.c_str());
                         }
                     }
                 }
@@ -1921,7 +1902,7 @@ public:
         }
 
         if (print_debug)
-            out.print("idle count = %d, labor need count = %d\n", available_dwarfs.size(), pq.size());
+            out.print("available count = %d, distinct labors needed = %d\n", available_dwarfs.size(), pq.size());
 
         int canary = (1 << df::unit_labor::HAUL_STONE) |
             (1 << df::unit_labor::HAUL_WOOD) |
@@ -1954,7 +1935,7 @@ public:
                     int	skill_level = Units::getEffectiveSkill(d->dwarf, skill);
                 }
 
-                int score = skill_level * 100 - (d->high_skill - skill) * 100;
+                int score = skill_level * 100 - (d->high_skill - skill_level) * 100;
                 if (d->dwarf->status.labors[labor])
                     score += 300;
                 if ((labor == df::unit_labor::MINE && d->has_pick) ||

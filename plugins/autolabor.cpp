@@ -52,6 +52,7 @@
 #include <df/job_item_ref.h>
 #include <df/unit_health_info.h>
 #include <df/unit_health_flags.h>
+#include <df/building_design.h>
 
 #include <MiscUtils.h>
 
@@ -529,7 +530,11 @@ struct dwarf_info_t
     bool has_pick;
     bool has_crossbow;
 
-    dwarf_info_t(df::unit* dw) : dwarf(dw), clear_all(0), has_axe(0), has_pick(0), has_crossbow(0), state(OTHER) {}
+    int high_skill;
+
+    dwarf_info_t(df::unit* dw) : dwarf(dw), clear_all(0), has_axe(0), has_pick(0), has_crossbow(0), state(OTHER), high_skill(0) 
+    {
+    }
 
     void set_labor(df::unit_labor labor) 
     {
@@ -647,7 +652,7 @@ static df::unit_labor hauling_labor_map[] =
 static df::unit_labor workshop_build_labor[] = 
 {
     /* Carpenters */		df::unit_labor::CARPENTER,
-    /* Farmers */			df::unit_labor::HERBALIST,
+    /* Farmers */			df::unit_labor::PROCESS_PLANT,
     /* Masons */			df::unit_labor::MASON,
     /* Craftsdwarfs */		df::unit_labor::STONE_CRAFT,
     /* Jewelers */			df::unit_labor::CUT_GEM,
@@ -685,6 +690,19 @@ static df::building* get_building_from_job(df::job* j)
         }
     }
     return 0;
+}
+
+static df::unit_labor construction_build_labor (df::item* i) 
+{
+    MaterialInfo matinfo;
+    if (matinfo.decode(i))
+    {
+        if (matinfo.material->flags.is_set(df::material_flags::IS_METAL))
+            return df::unit_labor::METAL_CRAFT;
+        if (matinfo.material->flags.is_set(df::material_flags::WOOD))
+            return df::unit_labor::CARPENTER;
+    }
+    return df::unit_labor::MASON;
 }
 
 class JobLaborMapper {
@@ -729,6 +747,8 @@ private:
             case df::building_type::Workshop:
                 {
                     df::building_workshopst* ws = (df::building_workshopst*) bld;
+                    if (ws->design && !ws->design->flags.bits.designed)
+                        return df::unit_labor::ARCHITECT;
                     if (ws->type == df::workshop_type::Custom) 
                     {
                         df::building_def* def = df::building_def::find(ws->custom_type);
@@ -736,6 +756,16 @@ private:
                     } 
                     else 
                         return workshop_build_labor[ws->type];
+                }
+                break;
+            case df::building_type::Furnace:
+            case df::building_type::TradeDepot:
+            case df::building_type::Construction:
+                {
+                    df::building_actual* b = (df::building_actual*) bld;
+                    if (b->design && !b->design->flags.bits.designed)
+                        return df::unit_labor::ARCHITECT;
+                    return construction_build_labor(j->items[0]->item);
                 }
                 break;
             case df::building_type::FarmPlot:
@@ -1386,10 +1416,9 @@ private:
     int cnt_traction;
     int cnt_crutch;
 
-
     std::map<df::unit_labor, int> labor_needed;
     std::vector<dwarf_info_t*> dwarf_info;
-    std::list<dwarf_info_t*> idle_dwarfs;
+    std::list<dwarf_info_t*> available_dwarfs;
 
 private:
     void scan_buildings()
@@ -1486,6 +1515,9 @@ private:
             if (item->flags.whole & bad_flags.whole)
                 continue;
 
+            if (!item->flags.bits.in_inventory && !item->isAssignedToStockpile())
+                labor_needed[hauling_labor_map[item->getType()]]++;
+
             if (!item->isWeapon()) 
                 continue;
 
@@ -1504,6 +1536,8 @@ private:
 
     void collect_job_list()
     {
+        labor_needed.clear();
+
         for (df::job_list_link* jll = world->job_list.next; jll; jll = jll->next)
         {
             df::job* j = jll->item;
@@ -1523,9 +1557,6 @@ private:
                 if (j->general_refs[r]->getType() == df::general_ref_type::BUILDING_HOLDER)
                     bld = ((df::general_ref_building_holderst *)(j->general_refs[r]))->building_id;
             }
-
-            if (worker != -1)
-                continue;
 
             if (bld != -1) 
             {
@@ -1617,7 +1648,7 @@ private:
                     }
                 }
 
-                // Find the activity state for each dwarf-> 
+                // Find the activity state for each dwarf
 
                 bool is_on_break = false;
                 dwarf_state state = OTHER;
@@ -1689,6 +1720,17 @@ private:
                         cnt_crutch++;
                 }
 
+                // find dwarf's highest effective skill
+
+                int high_skill = 0;
+
+                FOR_ENUM_ITEMS (job_skill, skill)
+                {
+                    int	skill_level = Units::getEffectiveSkill(dwarf->dwarf, skill);
+                    high_skill = std::max(high_skill, skill_level);
+                }
+
+                dwarf->high_skill = high_skill;
                 // check if dwarf has an axe, pick, or crossbow
 
                 for (int j = 0; j < dwarf->dwarf->inventory.size(); j++)
@@ -1733,17 +1775,17 @@ private:
                         if (labor == unit_labor::NONE) 
                             continue;
 
-                        dwarf->dwarf->status.labors[labor] = false;
+                        dwarf->clear_labor(labor);
                     }
                 }
 
-                if (state == IDLE && !dwarf->clear_all)
-                    idle_dwarfs.push_back(dwarf);
+                if ((state == IDLE || state == BUSY) && !dwarf->clear_all)
+                    available_dwarfs.push_back(dwarf);
 
             }
 
         }
-    }
+    }			
 
 public:
     void process()
@@ -1760,13 +1802,13 @@ public:
 
         count_map_designations();
 
-        // count number of picks and axes available for use
-
-        count_tools();
-
         // collect current job list 
 
         collect_job_list();
+
+        // count number of picks and axes available for use
+
+        count_tools();
 
         // collect list of dwarfs
 
@@ -1800,34 +1842,6 @@ public:
             }	
         }
 
-        // match idle dwarfs to need list - if an idle dwarf is assigned to that labor, then yay, decrement the need count
-        // and remove the idle dwarf from the idle list
-
-        if (print_debug)
-            out.print("idle count = %d, labor need count = %d\n", idle_dwarfs.size(), labor_needed.size());
-
-        for (auto d = idle_dwarfs.begin(); d != idle_dwarfs.end(); d++) 
-        {
-            FOR_ENUM_ITEMS(unit_labor, l)
-            {
-                if (l == df::unit_labor::NONE)
-                    continue;
-
-                if ((*d)->dwarf->status.labors[l])
-                    if (labor_needed[l] > 0)
-                    {
-                        if (print_debug)
-                            out.print("assign \"%s\" labor %s (carried through)\n", (*d)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, l).c_str());
-                        labor_needed[l]--;
-                        d = idle_dwarfs.erase(d);	// remove from idle list
-                        d--;						// and go back one
-                        break;
-                    } else {
-                        (*d)->clear_labor(l);
-                    }
-            }
-        }
-
         priority_queue<pair<int, df::unit_labor>> pq;
 
         for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
@@ -1837,9 +1851,9 @@ public:
         }
 
         if (print_debug)
-            out.print("idle count = %d, labor need count = %d\n", idle_dwarfs.size(), pq.size());
+            out.print("idle count = %d, labor need count = %d\n", available_dwarfs.size(), pq.size());
 
-        while (!idle_dwarfs.empty() && !pq.empty())
+        while (!available_dwarfs.empty() && !pq.empty())
         {
             df::unit_labor labor = pq.top().second;
             int priority = pq.top().first;
@@ -1848,30 +1862,44 @@ public:
             if (print_debug) 
                 out.print("labor %s skill %s priority %d\n", ENUM_KEY_STR(unit_labor, labor).c_str(), ENUM_KEY_STR(job_skill, skill).c_str(), priority);
 
-            std::list<dwarf_info_t*>::iterator bestdwarf = idle_dwarfs.begin();
+            std::list<dwarf_info_t*>::iterator bestdwarf = available_dwarfs.begin();
 
-            if (skill != df::job_skill::NONE) 
+            int best_score = -10000;
+
+            for (std::list<dwarf_info_t*>::iterator k = available_dwarfs.begin(); k != available_dwarfs.end(); k++)
             {
-                int best_skill_level = -1;
-
-                for (std::list<dwarf_info_t*>::iterator k = idle_dwarfs.begin(); k != idle_dwarfs.end(); k++)
+                dwarf_info_t* d = (*k);
+                int skill_level = 0;
+                if (skill != df::job_skill::NONE) 
                 {
-                    dwarf_info_t* d = (*k);
                     int	skill_level = Units::getEffectiveSkill(d->dwarf, skill);
+                }
 
-                    if (skill_level > best_skill_level) 
-                    {
-                        bestdwarf = k;
-                        best_skill_level = skill_level;
-                    }
+                int score = skill_level * 100 - (d->high_skill - skill) * 100;
+                if (d->dwarf->status.labors[labor])
+                    score += 300;
+                if ((labor == df::unit_labor::MINE && d->has_pick) ||
+                    (labor == df::unit_labor::CUTWOOD && d->has_axe) ||
+                    (labor == df::unit_labor::HUNT && d->has_crossbow))
+                    score += 300;
+                if (score > best_score)
+                {
+                    bestdwarf = k;
+                    best_score = score;
                 }
             }
 
             if (print_debug)
-                out.print("assign \"%s\" labor %s\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str());
-            (*bestdwarf)->set_labor(labor);
+                out.print("assign \"%s\" labor %s score=%d\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), best_score);
+            FOR_ENUM_ITEMS(unit_labor, l)
+            {
+                if (l == labor)
+                    (*bestdwarf)->set_labor(l);
+                else
+                    (*bestdwarf)->clear_labor(l);
+            }
 
-            idle_dwarfs.erase(bestdwarf);
+            available_dwarfs.erase(bestdwarf);
             pq.pop();
             if (--labor_needed[labor] > 0) 
             {

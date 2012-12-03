@@ -253,7 +253,7 @@ function GmEditorUi:updateTarget(preserve_pos,reindex)
     if last_pos then
         self.subviews.list_main:setSelected(last_pos)
     else
-        self.subviews.list_main:setSelected(1)
+        self.subviews.list_main:setSelected(trg.selected)
     end
 end
 function GmEditorUi:pushTarget(target_to_push)
@@ -261,6 +261,9 @@ function GmEditorUi:pushTarget(target_to_push)
     new_tbl.target=target_to_push
     new_tbl.keys={}
     new_tbl.selected=1
+    if self:currentTarget()~=nil then
+        self:currentTarget().selected=self.subviews.list_main:getSelected()
+    end
     for k,v in pairs(target_to_push) do
         table.insert(new_tbl.keys,k)
     end

@@ -726,6 +726,7 @@ private:
             case df::building_type::Furnace:
             case df::building_type::TradeDepot:
             case df::building_type::Construction:
+            case df::building_type::Bridge:
                 {
                     df::building_actual* b = (df::building_actual*) bld;
                     if (b->design && !b->design->flags.bits.designed)
@@ -749,7 +750,10 @@ private:
             case df::building_type::WindowGlass:
             case df::building_type::WindowGem:
             case df::building_type::Cage:
+            case df::building_type::NestBox:
                 return df::unit_labor::HAUL_FURNITURE;
+            case df::building_type::Trap:
+                return df::unit_labor::MECHANIC;
             }
 
             debug ("AUTOLABOR: Cannot deduce labor for construct building job of type %s\n",
@@ -785,9 +789,10 @@ private:
             case df::building_type::Furnace:
             case df::building_type::TradeDepot:
             case df::building_type::Construction:
+            case df::building_type::Wagon:
                 {
                     df::building_actual* b = (df::building_actual*) bld;
-                    return construction_build_labor(j->items[0]->item);
+                    return construction_build_labor(b->contained_items[0]->item);
                 }
                 break;
             case df::building_type::FarmPlot:
@@ -1784,6 +1789,14 @@ public:
         cnt_recover_wounded = cnt_diagnosis = cnt_immobilize = cnt_dressing = cnt_cleaning = cnt_surgery = cnt_suture =
             cnt_setting = cnt_traction = cnt_crutch = 0;
 
+        FOR_ENUM_ITEMS(unit_labor, l)
+        {
+            if (l == df::unit_labor::NONE)
+                continue;
+
+            labor_infos[l].active_dwarfs = 0;
+        }
+
         // scan for specific buildings of interest
 
         scan_buildings();
@@ -1893,13 +1906,13 @@ public:
                     int	skill_level = Units::getEffectiveSkill(d->dwarf, skill);
                 }
 
-                int score = skill_level * 100 - (d->high_skill - skill_level) * 100;
+                int score = skill_level * 100 - (d->high_skill - skill_level) * 200;
                 if (d->dwarf->status.labors[labor])
-                    score += 300;
+                    score += 500;
                 if ((labor == df::unit_labor::MINE && d->has_pick) ||
                     (labor == df::unit_labor::CUTWOOD && d->has_axe) ||
                     (labor == df::unit_labor::HUNT && d->has_crossbow))
-                    score += 300;
+                    score += 500;
                 if (score > best_score)
                 {
                     bestdwarf = k;
@@ -1919,6 +1932,7 @@ public:
 
             if (labor >= df::unit_labor::HAUL_STONE && labor <= df::unit_labor::HAUL_ANIMAL)
                 canary &= ~(1 << labor);
+            labor_infos[labor].active_dwarfs++;
 
             available_dwarfs.erase(bestdwarf);
             pq.pop();

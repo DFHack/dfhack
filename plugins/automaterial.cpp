@@ -137,7 +137,7 @@ static inline MaterialDescriptor &get_last_used_material()
     return last_used_material[ui_build_selector->building_subtype];
 }
 
-static void set_last_used_material(MaterialDescriptor &matetial)
+static void set_last_used_material(const MaterialDescriptor &matetial)
 {
     last_used_material[ui_build_selector->building_subtype] = matetial;
 }
@@ -150,7 +150,7 @@ static MaterialDescriptor &get_last_moved_material()
     return last_moved_material[ui_build_selector->building_subtype];
 }
 
-static void set_last_moved_material(MaterialDescriptor &matetial)
+static void set_last_moved_material(const MaterialDescriptor &matetial)
 {
     last_moved_material[ui_build_selector->building_subtype] = matetial;
 }

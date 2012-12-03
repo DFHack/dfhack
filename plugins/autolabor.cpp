@@ -1574,7 +1574,8 @@ private:
                     break;
                 }
                 // check if this job is the first nonsuspended job on this building; if not, ignore it
-                if (fjid != j->id) {
+                // (except for farms)
+                if (fjid != j->id && b->getType() != df::building_type::FarmPlot) {
                     continue;
                 }
 

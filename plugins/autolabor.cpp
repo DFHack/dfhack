@@ -56,6 +56,7 @@
 #include <df/unit_health_info.h>
 #include <df/unit_health_flags.h>
 #include <df/building_design.h>
+#include <df/vehicle.h>
 
 #include <MiscUtils.h>
 
@@ -1143,9 +1144,9 @@ public:
         job_to_labor_table[df::job_type::ConstructGrate]		= jlf_make_furniture;
         job_to_labor_table[df::job_type::RemoveStairs]			= jlf_const(df::unit_labor::MINE);
         job_to_labor_table[df::job_type::ConstructQuern]		= jlf_make_furniture;
-        job_to_labor_table[df::job_type::ConstructMillstone]	= jlf_make_furniture ;
-        job_to_labor_table[df::job_type::ConstructSplint]		= jlf_make_object ;
-        job_to_labor_table[df::job_type::ConstructCrutch]		= jlf_make_object;
+        job_to_labor_table[df::job_type::ConstructMillstone]	= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructSplint]		= jlf_make_furniture;
+        job_to_labor_table[df::job_type::ConstructCrutch]		= jlf_make_furniture;
         job_to_labor_table[df::job_type::ConstructTractionBench] = jlf_const(df::unit_labor::MECHANIC);
         job_to_labor_table[df::job_type::CleanSelf]				= jlf_no_labor;
         job_to_labor_table[df::job_type::BringCrutch]			= jlf_no_labor;
@@ -1422,6 +1423,8 @@ private:
     int cnt_traction;
     int cnt_crutch;
 
+    int need_food_water;
+
     std::map<df::unit_labor, int> labor_needed;
     std::vector<dwarf_info_t*> dwarf_info;
     std::list<dwarf_info_t*> available_dwarfs;
@@ -1667,8 +1670,6 @@ private:
                 {
                     if (is_on_break)
                         state = OTHER;
-                    else if (dwarf->dwarf->specific_refs.size() > 0)
-                        state = OTHER;
                     else if (dwarf->dwarf->burrows.size() > 0)
                         state = OTHER;        // dwarfs assigned to burrows are treated as if permanently busy
                     else if (dwarf->dwarf->status2.able_grasp_impair == 0)
@@ -1720,6 +1721,9 @@ private:
                     if (dwarf->dwarf->health->flags.bits.rq_crutch) 
                         cnt_crutch++;
                 }
+
+                if (dwarf->dwarf->counters2.hunger_timer > 60000 || dwarf->dwarf->counters2.thirst_timer > 40000)
+                    need_food_water++;
 
                 // find dwarf's highest effective skill
 
@@ -1788,6 +1792,7 @@ public:
         dig_count = tree_count = plant_count = detail_count = pick_count = axe_count = 0;
         cnt_recover_wounded = cnt_diagnosis = cnt_immobilize = cnt_dressing = cnt_cleaning = cnt_surgery = cnt_suture =
             cnt_setting = cnt_traction = cnt_crutch = 0;
+        need_food_water = 0;
 
         FOR_ENUM_ITEMS(unit_labor, l)
         {
@@ -1837,6 +1842,8 @@ public:
         labor_needed[df::unit_labor::BONE_SETTING]    += cnt_traction;
         labor_needed[df::unit_labor::HAUL_ITEM]       += cnt_crutch;
 
+        labor_needed[df::unit_labor::FEED_WATER_CIVILIANS] += need_food_water;
+
         // add entries for hauling jobs
 
         labor_needed[df::unit_labor::HAUL_STONE]     += world->stockpile.num_jobs[1];
@@ -1847,6 +1854,12 @@ public:
         labor_needed[df::unit_labor::HAUL_REFUSE]    += world->stockpile.num_jobs[7];
         labor_needed[df::unit_labor::HAUL_FURNITURE] += world->stockpile.num_jobs[8];
         labor_needed[df::unit_labor::HAUL_ANIMAL]    += world->stockpile.num_jobs[9];
+
+        // add entries for vehicle hauling
+
+        for (auto v = world->vehicles.all.begin(); v != world->vehicles.all.end(); v++)
+            if ((*v)->route_id != -1) 
+                labor_needed[df::unit_labor::PUSH_HAUL_VEHICLE]++;        
 
         if (print_debug)
         {

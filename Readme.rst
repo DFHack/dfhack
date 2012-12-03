@@ -2362,7 +2362,8 @@ keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
 
 * -c or --cheat - relaxes item requirements for buildings (e.g. walls from bones).
   implies -a
-
+  
+* job - selects that job (e.g. Dig or FellTree)
 
 
 gui/gm-editor

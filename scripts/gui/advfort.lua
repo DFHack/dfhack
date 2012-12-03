@@ -16,11 +16,16 @@ local wid=require 'gui.widgets'
 local dialog=require 'gui.dialogs'
 local buildings=require 'dfhack.buildings'
 local bdialog=require 'gui.buildings'
+local workshopJobs=require 'dfhack.workshops'
 
 local tile_attrs = df.tiletype.attrs
 
 settings={build_by_items=false,check_inv=false,df_assign=true}
-for k,v in ipairs({...}) do
+
+
+
+local mode_name
+for k,v in ipairs({...}) do --setting parsing
     if v=="-c" or v=="--cheat" then
         settings.build_by_items=true
         settings.df_assign=false
@@ -29,6 +34,9 @@ for k,v in ipairs({...}) do
         settings.df_assign=false
     elseif v=="-a" or v=="--nodfassign" then
         settings.df_assign=false
+    else
+        mode_name=v
+       
     end
 end
 
@@ -63,7 +71,7 @@ function showHelp()
     Disclaimer(helptext)
     require("gui.dialogs").showMessage("Help!?!",helptext)
 end
-
+--[[    low level job management    ]]--
 function getLastJobLink()
     local st=df.global.world.job_list
     while st.next~=nil do
@@ -79,7 +87,7 @@ function addNewJob(job)
     newLink.item=job
     job.list_link=newLink
 end
-function MakeJob(args)
+function makeJob(args)
     local newJob=df.job:new()
     newJob.id=df.global.job_next_id
     df.global.job_next_id=df.global.job_next_id+1
@@ -89,29 +97,46 @@ function MakeJob(args)
 
     newJob.pos:assign(args.pos)
     args.job=newJob
-    local failed=false
+    local failed
     for k,v in ipairs(args.pre_actions or {}) do
         local ok,msg=v(args)
         if not ok then
-            failed=true
-            return false,msg
+            failed=msg
+            break
         end
     end
-    if not failed then
+    if failed==nil then
         AssignUnitToJob(newJob,args.unit,args.from_pos)
+        for k,v in ipairs(args.post_actions or {}) do
+            local ok,msg=v(args)
+            if not ok then
+                failed=msg
+                break
+            end
+        end
+        if failed then
+            UnassignJob(newJob,args.unit)
+        end
     end
-    for k,v in ipairs(args.post_actionss or {}) do
-        v(args)
+    if failed==nil then
+        addNewJob(newJob)
+        return newJob
+    else
+        newJob:delete()
+        return false,failed
     end
-    addNewJob(newJob)
-    return newJob
+    
 end
 
+function UnassignJob(job,unit,unit_pos)
+    unit.job.current_job=nil
+end
 function AssignUnitToJob(job,unit,unit_pos)
     job.general_refs:insert("#",{new=df.general_ref_unit_workerst,unit_id=unit.id})
     unit.job.current_job=job
     unit_pos=unit_pos or {x=job.pos.x,y=job.pos.y,z=job.pos.z}
     unit.path.dest:assign(unit_pos)
+    return true
 end
 function SetCreatureRef(args)
     local job=args.job
@@ -258,6 +283,7 @@ function AssignBuildingRef(args)
     local bld=dfhack.buildings.findAtTile(args.pos)
     args.job.general_refs:insert("#",{new=df.general_ref_building_holderst,building_id=bld.id})
     bld.jobs:insert("#",args.job)
+    return true
 end
 
 function BuildingChosen(inp_args,type_id,subtype_id,custom_id)
@@ -289,8 +315,8 @@ function RemoveBuilding(args)
         return false,"No building to remove"
     end
 end
-function isSuitableItem(job_item,item)
 
+function isSuitableItem(job_item,item)
     if job_item.item_type~=-1 then
         if item:getType()~= job_item.item_type then
             return false, "type"
@@ -312,9 +338,16 @@ function isSuitableItem(job_item,item)
     end
     local matinfo=dfhack.matinfo.decode(item)
     --print(matinfo:getCraftClass())
+    --print("Matching ",item," vs ",job_item)
     if not matinfo:matches(job_item) then
         return false,"matinfo"
     end
+    -- some bonus checks:
+    if job_item.flags2.building_material and not item:isBuildMat() then
+        return false,"non-build mat"
+    end
+    -- *****************
+    --print("--Matched")
     --reagen_index?? reaction_id??
     if job_item.metal_ore~=-1 and not item:isMetalOre(job_item.metal_ore) then
         return false,"metal ore"
@@ -336,15 +369,25 @@ function isSuitableItem(job_item,item)
     end
     return true
 end
-function AssignJobItems(args,is_workshop_job)
-    if settings.df_assign and not is_workshop_job then
+function getItemsUncollected(job)
+    local ret={}
+    for id,jitem in pairs(job.items) do
+        local x,y,z=dfhack.items.getPosition(jitem.item)
+        if x~=job.pos.x or y~=job.pos.y or z~=job.pos.z then
+            table.insert(ret,jitem)
+        end
+    end
+    return ret
+end
+function AssignJobItems(args)
+    
+    if settings.df_assign then --use df default logic and hope that it would work
         return true
     end
-    --print("Assign")
-    --printall(args)
+    -- first find items that you want to use for the job
     local job=args.job
     local its=itemsAtPos(args.from_pos)
-    if settings.check_inv then
+    if settings.check_inv then --check inventory and contained items
         for k,v in pairs(args.unit.inventory) do
             table.insert(its,v.item)
         end
@@ -363,19 +406,27 @@ function AssignJobItems(args,is_workshop_job)
         job.items[#job.items-1]:delete()
         job.items:erase(#job.items-1)
     end]]
+    local item_counts={}
+    for job_id, trg_job_item in ipairs(job.job_items) do
+        item_counts[job_id]=trg_job_item.quantity
+        printall(trg_job_item)
+        printall(trg_job_item.flags2)
+    end
     local used_item_id={}
     for job_id, trg_job_item in ipairs(job.job_items) do
         for _,cur_item in pairs(its) do 
             if not used_item_id[cur_item.id] then
                 
-                local item_suitable,msg=isSuitableItem(trg_job_item,cur_item)
+                local item_suitable,msg=isSuitableItem(trg_job_item,cur_item) 
                 --if msg then
                 --    print(cur_item,msg)
                 --end
-                if (trg_job_item.quantity>0 and item_suitable) or settings.build_by_items then
-                    job.items:insert("#",{new=true,item=cur_item,role=2,job_item_idx=job_id})
-                    trg_job_item.quantity=trg_job_item.quantity-1
-                    --print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),trg_job_item.quantity))
+                
+                if (item_counts[job_id]>0 and item_suitable) or settings.build_by_items then
+                    cur_item.flags.in_job=true
+                    job.items:insert("#",{new=true,item=cur_item,role=df.job_item_ref.T_role.Reagent,job_item_idx=job_id})
+                    item_counts[job_id]=item_counts[job_id]-1
+                    print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),item_counts[job_id]))
                     used_item_id[cur_item.id]=true
                 end
             end
@@ -384,28 +435,44 @@ function AssignJobItems(args,is_workshop_job)
     
     if not settings.build_by_items then
         for job_id, trg_job_item in ipairs(job.job_items) do
-            if trg_job_item.quantity>0 then
+            if item_counts[job_id]>0 then
                 return false, "Not enough items for this job"
             end
         end
     end
+    local uncollected = getItemsUncollected(job)
+    if #uncollected == 0 then
+        job.flags.working=true
+    else
+        uncollected[1].is_fetching=1
+        job.flags.fetching=true
+    end
+    --todo set working for workshops if items are present, else set fetching (and at least one item to is_fetching=1)
+    --job.flags.working=true
     return true
 end
 function AssignJobToBuild(args)
     local bld=dfhack.buildings.findAtTile(args.pos)
     args.job_type=df.job_type.ConstructBuilding
     if bld~=nil then
-        if #bld.jobs>0 then
-            args.job=bld.jobs[0]
+        for idx,job in pairs(bld.jobs) do
+            if job.job_type==df.job_type.ConstructBuilding then
+                args.job=job
+                break
+            end
+        end
+        
+        if args.job~=nil then
             local ok,msg=AssignJobItems(args)
             if not ok then
                 return false,msg
             else
-                AssignUnitToJob(bld.jobs[0],args.unit,args.from_pos) --todo check if correct job type
+                AssignUnitToJob(args.job,args.unit,args.from_pos) 
             end
         else
-            args.pre_actions={AssignJobItems}
-            local ok,msg=MakeJob(args)
+            local t={items=buildings.getFiltersByType({},bld:getType(),bld:getSubtype(),bld:getCustomType())}
+            args.pre_actions={dfhack.curry(setFiltersUp,t),AssignJobItems,AssignBuildingRef}
+            local ok,msg=makeJob(args)
             return ok,msg
         end
     else
@@ -439,94 +506,8 @@ function ContinueJob(unit)
         unit.path.dest:assign(c_job.pos)
     end
 end
-workshops={
-    --[=[
-    [df.workshop_type.Jewelers]={
-        --TODO add material.IS_GEM
-        [df.job_type.CutGems]={{test={isMaterialGem},item_type=df.item_type.BOULDER},
-        [df.job_type.EncrustWithGems]={{item_type=df.item_type.SMALLGEM},{flags1={improvable=true,finished_goods=true}},
-        [df.job_type.EncrustWithGems]={{item_type=df.item_type.SMALLGEM},{flags1={improvable=true,ammo=true}},
-        [df.job_type.EncrustWithGems]={{item_type=df.item_type.SMALLGEM},{flags1={improvable=true,furniture=true}},
-    }
-    ]=]
-    [df.workshop_type.Fishery]={
-        common={quantity=1},
-        [df.job_type.PrepareRawFish]={{item_type=df.item_type.FISH_RAW,flags1={unrotten=true}}},
-        [df.job_type.ExtractFromRawFish]={{flags1={unrotten=true,extract_bearing_fish=true}},{item_type=df.item_type.FLASK,flags1={empty=true,glass=true}}},
-        [df.job_type.CatchLiveFish]={}, -- no items?
-    },
-    [df.workshop_type.Still]={
-        common={quantity=1},
-        [df.job_type.BrewDrink]={{flags1={distillable=true},vector_id=22},{flags1={empty=true},flags3={food_storage=true}}},
-        [df.job_type.ExtractFromPlants]={{item_type=df.item_type.PLANT,flags1={unrotten=true,extract_bearing_plant=true}},{item_type=df.item_type.FLASK,flags1={empty=true}}},
-    },
-    [df.workshop_type.Masons]={
-        common={item_type=df.item_type.BOULDER,item_subtype=-1,vector_id=df.job_item_vector_id.BOULDER, mat_type=0,mat_index=-1,quantity=1,flags3={hard=true}},--flags2={non_economic=true},
-        [df.job_type.ConstructArmorStand]={{}},
-        [df.job_type.ConstructBlocks]={{}},
-        [df.job_type.ConstructThrone]={{}},
-        [df.job_type.ConstructCoffin]={{}},
-        [df.job_type.ConstructDoor]={{}},
-        [df.job_type.ConstructFloodgate]={{}},
-        [df.job_type.ConstructHatchCover]={{}},
-        [df.job_type.ConstructGrate]={{}},
-        [df.job_type.ConstructCabinet]={{}},
-        [df.job_type.ConstructChest]={{}},
-        [df.job_type.ConstructStatue]={{}},
-        [df.job_type.ConstructSlab]={{}},
-        [df.job_type.ConstructTable]={{}},
-        [df.job_type.ConstructWeaponRack]={{}},
-        [df.job_type.ConstructQuern]={{}},
-        [df.job_type.ConstructMillstone]={{}},
-        },
-    [df.workshop_type.Carpenters]={
-        common={item_type=df.item_type.WOOD,vector_id=df.job_item_vector_id.WOOD,quantity=1},
-        
-        [df.job_type.MakeBarrel]={{}},
-        --[[ from raws
-        [df.job_type.MakeShield]={{}},
-        [df.job_type.MakeShield]={item_subtype=1,{}}, --buckler
-        [df.job_type.MakeWeapon]={item_subtype=23,{}}, --training spear -> from raws...
-        [df.job_type.MakeWeapon]={item_subtype=22,{}}, --training sword
-        [df.job_type.MakeWeapon]={item_subtype=21,{}}, --training axe 
-        --]]
-        [df.job_type.ConstructBlocks]={{}},
-        [df.job_type.MakeBucket]={{}},
-        [df.job_type.MakeAnimalTrap]={{}},
-        [df.job_type.MakeCage]={{}},
-        [df.job_type.ConstructArmorStand]={{}},
-        [df.job_type.ConstructBed]={{}},
-        [df.job_type.ConstructThrone]={{}},
-        [df.job_type.ConstructCoffin]={{}},
-        [df.job_type.ConstructDoor]={{}},
-        [df.job_type.ConstructFloodgate]={{}},
-        [df.job_type.ConstructHatchCover]={{}},
-        [df.job_type.ConstructGrate]={{}},
-        [df.job_type.ConstructCabinet]={{}},
-        [df.job_type.ConstructBin]={{}},
-        [df.job_type.ConstructChest]={{}},
-        [df.job_type.ConstructStatue]={{}},
-        [df.job_type.ConstructSlab]={{}},
-        [df.job_type.ConstructTable]={{}},
-        [df.job_type.ConstructWeaponRack]={{}},
-        --[[ from raws
-        [df.job_type.MakeTrapComponent]={item_subtype=1,{}}, --corkscrew
-        [df.job_type.MakeTrapComponent]={item_subtype=2,{}}, --ball
-        [df.job_type.MakeTrapComponent]={item_subtype=4,{}}, --spike
-        [df.job_type.MakeTool]={item_subtype=16,{}}, --minecart (?? maybe from raws?)
-        --]]
-        [df.job_type.ConstructSplint]={{}},
-        [df.job_type.ConstructCrutch]={{}},
-    },
-    [df.workshop_type.Mechanics]={
-        common={quantity=1},
-        [df.job_type.ConstructMechanisms]={{item_type=df.item_type.BOULDER,item_subtype=-1,vector_id=df.job_item_vector_id.BOULDER, mat_type=0,mat_index=-1,quantity=1,
-        flags3={hard=true}}}, -- flags2={non_economic=true}
-        [df.job_type.ConstructTractionBench]={{item_type=df.item_type.TABLE},{item_type=df.item_type.MECHANISM},{item_type=df.item_type.CHAIN}}
-        },
-    }
 
-dig_modes={
+actions={
     {"CarveFortification"   ,df.job_type.CarveFortification,{IsWall,IsHardMat}},
     {"DetailWall"           ,df.job_type.DetailWall,{IsWall,IsHardMat}},
     {"DetailFloor"          ,df.job_type.DetailFloor,{IsFloor,IsHardMat}},
@@ -541,39 +522,34 @@ dig_modes={
     {"Fish"                 ,df.job_type.Fish,{IsWater}},
     --{"Diagnose Patient"     ,df.job_type.DiagnosePatient,{IsUnit},{SetPatientRef}},
     --{"Surgery"              ,df.job_type.Surgery,{IsUnit},{SetPatientRef}},
-    --{"TameAnimal"           ,df.job_type.TameAnimal,{IsUnit},{SetCreatureRef}}, 
+    {"TameAnimal"           ,df.job_type.TameAnimal,{IsUnit},{SetCreatureRef}}, 
     {"GatherPlants"         ,df.job_type.GatherPlants,{IsPlant}},
     {"RemoveConstruction"   ,df.job_type.RemoveConstruction,{IsConstruct}},
     {"RemoveBuilding"       ,RemoveBuilding,{IsBuilding}},
+    {"RemoveStairs"         ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},
     --{"HandleLargeCreature"   ,df.job_type.HandleLargeCreature,{isUnit},{SetCreatureRef}},
     {"Build"                ,AssignJobToBuild},
-    --{"ConstructBlocks"         ,df.job_type.ConstructBlocks,{},{AssignBuildingRef},{AddItemRefMason,AssignJobItems}},
-    {"RemoveStairs"         ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},
-    --{"LoadCageTrap"         ,df.job_type.LoadCageTrap,{},{SetBuildingRef},{AssignJobItems}},
     
 }
 
-
+for id,action in pairs(actions) do
+    if action[1]==mode_name then
+        mode=id-1
+        break
+    end
+end
 usetool=defclass(usetool,gui.Screen)
 usetool.focus_path = 'advfort'
 function usetool:getModeName()
     local adv=df.global.world.units.active[0]
     if adv.job.current_job then
-        return string.format("%s working(%d) ",(dig_modes[(mode or 0)+1][1] or ""),adv.job.current_job.completion_timer)
+        return string.format("%s working(%d) ",(actions[(mode or 0)+1][1] or ""),adv.job.current_job.completion_timer)
     else
-        return dig_modes[(mode or 0)+1][1] or " "
+        return actions[(mode or 0)+1][1] or " "
     end
     
 end
-function usetool:isOnWorkshop()
-    local adv=df.global.world.units.active[0]
-    local bld=dfhack.buildings.findAtTile(adv.pos)
-    if bld and bld:getType()==df.building_type.Workshop and bld.construction_stage==3 then
-        return true,bld
-    else
-        return false
-    end
-end
+
 function usetool:init(args)
     self:addviews{
         wid.Label{
@@ -589,14 +565,11 @@ function usetool:init(args)
             frame = {l=35,xalign=0,yalign=0},
             visible=false,
             text={
-                {gap=1,key=keybinds.workshop.key,key_sep="()", text="Workshop Mode",pen=dfhack.pen.parse{fg=COLOR_YELLOW,bg=0}}}
+                {id="text1",gap=1,key=keybinds.workshop.key,key_sep="()", text="Workshop menu",pen=dfhack.pen.parse{fg=COLOR_YELLOW,bg=0}}}
                   }
             }
 end
-function usetool:onRenderBody(dc)
-    self:shopMode(self:isOnWorkshop())
-    self:renderParent()
-end
+
 function usetool:onIdle()
     
     self._native.parent:logic()
@@ -626,31 +599,19 @@ ALLOWED_KEYS={
 function moddedpos(pos,delta)
     return {x=pos.x+delta[1],y=pos.y+delta[2],z=pos.z+delta[3]}
 end
-function usetool:onDismiss()
-    local adv=df.global.world.units.active[0]
-    --TODO: cancel job
-    --[[if adv and adv.job.current_job then
-        local cj=adv.job.current_job
-        adv.jobs.current_job=nil
-        cj:delete()
-    end]]
-end
 function usetool:onHelp()
     showHelp()
 end
-function setFiltersUp(common,specific,args)
+function setFiltersUp(specific,args)
     local job=args.job
-    for k,v in pairs(specific) do
-        if type(k)=="string" then
-            job[k]=v
-        end
+    if specific.job_fields~=nil then
+        job:assign(specific.job_fields)
     end
-    for _,v in ipairs(specific) do
-        local filter
-        filter=require("utils").clone(common or {})
+    --printall(specific)
+    for _,v in ipairs(specific.items) do
+        --printall(v)
+        local filter=v
         filter.new=true
-        require("utils").assign(filter,v)
-        --printall(filter)
         job.job_items:insert("#",filter)
     end
     return true
@@ -659,8 +620,8 @@ function onWorkShopJobChosen(args,idx,choice)
     args.pos=args.from_pos
     args.job_type=choice.job_id
     args.post_actions={AssignBuildingRef}
-    args.pre_actions={dfhack.curry(setFiltersUp,args.common,choice.filter),function(args)return AssignJobItems(args,true) end}
-    local job,msg=MakeJob(args)
+    args.pre_actions={dfhack.curry(setFiltersUp,choice.filter),AssignJobItems}
+    local job,msg=makeJob(args)
     if not job then
         dfhack.gui.showAnnouncement(msg,5,1)
     end
@@ -676,30 +637,79 @@ function onWorkShopJobChosen(args,idx,choice)
     --local ok,msg=AssignJobItems(args)
     --print(ok,msg)
 end
+function siegeWeaponActionChosen(building,actionid)
+    local args
+    if actionid==1 then
+        building.facing=(building.facing+1)%4
+    elseif actionid==2 then
+        local action=df.job_type.LoadBallista
+        if building:getSubtype()==df.siegeengine_type.Catapult then
+            action=df.job_type.LoadCatapult
+        end
+        args={}
+        args.job_type=action
+        args.unit=df.global.world.units.active[0]
+        local from_pos={x=args.unit.pos.x,y=args.unit.pos.y, z=args.unit.pos.z}
+        args.from_pos=from_pos
+        args.pos=from_pos
+        args.pre_actions={dfhack.curry(setFiltersUp,{items={{}}})}
+        --issue a job...
+    elseif actionid==3 then
+        local action=df.job_type.FireBallista
+        if building:getSubtype()==df.siegeengine_type.Catapult then
+            action=df.job_type.FireCatapult
+        end
+        args={}
+        args.job_type=action
+        args.unit=df.global.world.units.active[0]
+        local from_pos={x=args.unit.pos.x,y=args.unit.pos.y, z=args.unit.pos.z}
+        args.from_pos=from_pos
+        args.pos=from_pos
+        --another job?
+    end
+    if args~=nil then
+        args.post_actions={AssignBuildingRef}
+        local ok,msg=makeJob(args)
+        if not ok then
+            dfhack.gui.showAnnouncement(msg,5,1)
+        end
+    end
+end
+function usetool:openSiegeWindow(building)
+    require("gui.dialogs").showListPrompt("Engine job choice", "Choose what to do:",COLOR_WHITE,{"Turn","Load","Fire"},
+        dfhack.curry(siegeWeaponActionChosen,building))
+end
 function usetool:openShopWindow(building)
     local adv=df.global.world.units.active[0]
-    
-    local shop_type=building:getSubtype()
-   
-    local filter_pile=workshops[shop_type]
-    
+    local filter_pile=workshopJobs.getJobs(building:getType(),building:getSubtype(),building:getCustomType())
     if filter_pile then
         local state={unit=adv,from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z}
         ,screen=self,bld=building,common=filter_pile.common}
         choices={}
         for k,v in pairs(filter_pile) do
-            if k~= "common" then
-                table.insert(choices,{job_id=k,text=df.job_type[k]:lower(),filter=v})
-                
-            end
+            table.insert(choices,{job_id=0,text=v.name:lower(),filter=v})
         end
         require("gui.dialogs").showListPrompt("Workshop job choice", "Choose what to make",COLOR_WHITE,choices,dfhack.curry(onWorkShopJobChosen,state)
             ,nil, nil,true)
     end
 end
-function usetool:shopMode(enable,wshop)    
+MODES={
+    [df.building_type.Workshop]={
+        name="Workshop menu",
+        input=usetool.openShopWindow,
+    },
+    [df.building_type.SiegeEngine]={
+        name="Siege menu",
+        input=usetool.openSiegeWindow,
+    },
+}
+function usetool:shopMode(enable,mode,building)    
     self.subviews.shopLabel.visible=enable
-    self.in_shop=wshop
+    if mode then
+    self.subviews.shopLabel:itemById("text1").text=mode.name
+    self.building=building
+    end
+    self.mode=mode
 end
 function usetool:shopInput(keys)
     if keys[keybinds.workshop.key] then
@@ -708,7 +718,7 @@ function usetool:shopInput(keys)
 end
 function usetool:fieldInput(keys)
     local adv=df.global.world.units.active[0]
-    local cur_mode=dig_modes[(mode or 0)+1]
+    local cur_mode=actions[(mode or 0)+1]
     local failed=false
     for code,_ in pairs(keys) do
         --print(code)
@@ -736,7 +746,7 @@ function usetool:fieldInput(keys)
                 if type(cur_mode[2])=="function" then
                     ok,msg=cur_mode[2](state)
                 else
-                    ok,msg=MakeJob(state)
+                    ok,msg=makeJob(state)
                     --(adv,moddedpos(adv.pos,MOVEMENT_KEYS[code]),cur_mode[2],adv.pos,cur_mode[4])
                     
                 end
@@ -770,23 +780,38 @@ function usetool:onInput(keys)
             CancelJob(adv)
         end
     elseif keys[keybinds.nextJob.key] then
-        mode=(mode+1)%#dig_modes
+        mode=(mode+1)%#actions
     elseif keys[keybinds.prevJob.key] then
         mode=mode-1
-        if mode<0 then mode=#dig_modes-1 end
+        if mode<0 then mode=#actions-1 end
     --elseif keys.A_LOOK then
     --    self:sendInputToParent("A_LOOK")
     elseif keys[keybinds.continue.key] then
         ContinueJob(adv)
         self:sendInputToParent("A_WAIT")
     else
-        if self.in_shop then
-            self:shopInput(keys)
-            self:fieldInput(keys)
+        if self.mode~=nil then
+            if keys[keybinds.workshop.key] then
+                self.mode.input(self,self.building)
+            end
+            self:fieldInput(keys)    
         else
             self:fieldInput(keys)
         end
     end
+end
+function usetool:isOnBuilding()
+    local adv=df.global.world.units.active[0]
+    local bld=dfhack.buildings.findAtTile(adv.pos)
+    if bld and MODES[bld:getType()]~=nil and bld.construction_stage==3 then
+        return true,MODES[bld:getType()],bld
+    else
+        return false
+    end
+end
+function usetool:onRenderBody(dc)
+    self:shopMode(self:isOnBuilding())
+    self:renderParent()
 end
 if not (dfhack.gui.getCurFocus()=="dungeonmode/Look" or dfhack.gui.getCurFocus()=="dungeonmode/Default") then
     qerror("This script requires an adventurer mode with (l)ook or default mode.")

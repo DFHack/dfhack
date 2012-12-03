@@ -14,7 +14,7 @@ WORKSHOP_ABSTRACT={
 }
 WORKSHOP_SPECIAL={
     [df.building_type.Workshop]=true,[df.building_type.Furnace]=true,[df.building_type.Trap]=true,
-    [df.building_type.Construction]=true
+    [df.building_type.Construction]=true,[df.building_type.SiegeEngine]=true
 }
 BuildingDialog = defclass(BuildingDialog, gui.FramedScreen)
 
@@ -33,6 +33,7 @@ BuildingDialog.ATTRS{
     use_tool_workshop=true,
     use_furnace = true,
     use_construction = true,
+    use_siege = true,
     use_trap = true,
     use_custom = true,
     building_filter = DEFAULT_NIL,
@@ -116,13 +117,20 @@ function BuildingDialog:initBuiltinMode()
             cb = self:callback('initConstructionMode')
         })
     end
+    if self.use_siege then
+        table.insert(choices, {
+            icon = ARROW, text = 'siege engine', key = 'CUSTOM_SHIFT_S',
+            cb = self:callback('initSiegeMode')
+        })
+    end
     if self.use_custom then
         table.insert(choices, {
             icon = ARROW, text = 'custom workshop', key = 'CUSTOM_SHIFT_U',
             cb = self:callback('initCustomMode')
         })
     end
-
+    
+    
    
     for i=0,df.building_type._last_item do
         if (not WORKSHOP_ABSTRACT[i] or self.use_abstract)and not WORKSHOP_SPECIAL[i]  then
@@ -174,6 +182,15 @@ function BuildingDialog:initFurnaceMode()
     self:pushContext('Furnaces', choices)
 end
 
+function BuildingDialog:initSiegeMode()
+    local choices = {}
+
+    for i=0,df.siegeengine_type._last_item do
+        self:addBuilding(choices, df.siegeengine_type[i], df.building_type.SiegeEngine, i,-1,nil)
+    end
+
+    self:pushContext('Siege weapons', choices)
+end
 function BuildingDialog:initCustomMode()
     local choices = {}
     local raws=df.global.world.raws.buildings.all

@@ -40,31 +40,9 @@ namespace Vegetation
 {
 const uint32_t sapling_to_tree_threshold = 120 * 28 * 12 * 3; // 3 years
 
-// "Simplified" copy of plant
-struct t_plant {
-    df::language_name name;
-    df::plant_flags flags;
-    int16_t material;
-    df::coord pos;
-    int32_t grow_counter;
-    uint16_t temperature_1;
-    uint16_t temperature_2;
-    int32_t is_burning;
-    int32_t hitpoints;
-    int16_t update_order;
-    //std::vector<void *> unk1;
-    //int32_t unk2;
-    //uint16_t temperature_3;
-    //uint16_t temperature_4;
-    //uint16_t temperature_5;
-    // Pointer to original object, in case you want to modify it
-    df::plant *origin;
-};
-
 DFHACK_EXPORT bool isValid();
 DFHACK_EXPORT uint32_t getCount();
 DFHACK_EXPORT df::plant * getPlant(const int32_t index);
-DFHACK_EXPORT bool copyPlant (const int32_t index, t_plant &out);
 }
 }
 #endif

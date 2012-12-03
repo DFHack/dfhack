@@ -58,28 +58,3 @@ df::plant * Vegetation::getPlant(const int32_t index)
         return NULL;
     return world->plants.all[index];
 }
-
-bool Vegetation::copyPlant(const int32_t index, t_plant &out)
-{
-    if (uint32_t(index) >= getCount())
-        return false;
-
-    out.origin = world->plants.all[index];
-
-    out.name = out.origin->name;
-    out.flags = out.origin->flags;
-    out.material = out.origin->material;
-    out.pos = out.origin->pos;
-    out.grow_counter = out.origin->grow_counter;
-    out.temperature_1 = out.origin->temperature.whole;
-    out.temperature_2 = out.origin->temperature.fraction;
-    out.is_burning = out.origin->is_burning;
-    out.hitpoints = out.origin->hitpoints;
-    out.update_order = out.origin->update_order;
-    //out.unk1 = out.origin->anon_1;
-    //out.unk2 = out.origin->anon_2;
-    //out.temperature_3 = out.origin->temperature_unk;
-    //out.temperature_4 = out.origin->min_safe_temp;
-    //out.temperature_5 = out.origin->max_safe_temp;
-    return true;
-}

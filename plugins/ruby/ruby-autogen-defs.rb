@@ -78,6 +78,9 @@ module DFHack
                 def df_flagarray(indexenum=nil)
                     DfFlagarray.new(indexenum)
                 end
+                def df_static_flagarray(len, indexenum=nil)
+                    DfStaticFlagarray.new(len, indexenum)
+                end
                 def df_array(tglen)
                     DfArray.new(tglen, yield)
                 end
@@ -672,6 +675,48 @@ module DFHack
             end
             def inspect
                 out = "#<DfFlagarray"
+                each_with_index { |e, idx|
+                    out << " #{_indexenum.sym(idx)}" if e
+                }
+                out << '>'
+            end
+
+            include Enumerable
+        end
+        class DfStaticFlagarray < MemStruct
+            attr_accessor :_indexenum
+            def initialize(len, indexenum)
+                @len = len*8
+                @_indexenum = indexenum
+            end
+            def length
+                @len
+            end
+            def size ; length ; end
+            def [](idx)
+                idx = _indexenum.int(idx) if _indexenum
+                idx += length if idx < 0
+                return if idx < 0 or idx >= length
+                byte = DFHack.memory_read_int8(@_memaddr + idx/8)
+                (byte & (1 << (idx%8))) > 0
+            end
+            def []=(idx, v)
+                idx = _indexenum.int(idx) if _indexenum
+                idx += length if idx < 0
+                if idx >= length or idx < 0
+                    raise 'index out of bounds'
+                else
+                    byte = DFHack.memory_read_int8(@_memaddr + idx/8)
+                    if (v == nil or v == false or v == 0)
+                        byte &= 0xff ^ (1 << (idx%8))
+                    else
+                        byte |= (1 << (idx%8))
+                    end
+                    DFHack.memory_write_int8(@_memaddr + idx/8, byte)
+                end
+            end
+            def inspect
+                out = "#<DfStaticFlagarray"
                 each_with_index { |e, idx|
                     out << " #{_indexenum.sym(idx)}" if e
                 }

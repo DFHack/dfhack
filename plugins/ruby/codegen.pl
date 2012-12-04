@@ -849,6 +849,9 @@ sub render_item_number {
     } elsif ($subtype eq 's-float') {
         push @lines_rb, 'float';
         return;
+    } elsif ($subtype eq 'd-float') {
+        push @lines_rb, 'double';
+        return;
     } else {
         print "no render number $subtype\n";
         return;

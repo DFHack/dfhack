@@ -35,6 +35,9 @@ module DFHack
                 def float
                     Float.new
                 end
+                def double
+                    Double.new
+                end
                 def bit(shift, enum=nil)
                     BitField.new(shift, 1, enum)
                 end
@@ -231,6 +234,19 @@ module DFHack
 
             def _set(v)
                 DFHack.memory_write_float(@_memaddr, v)
+            end
+
+            def _cpp_init
+                _set(0.0)
+            end
+        end
+        class Double < MemStruct
+            def _get
+                DFHack.memory_read_double(@_memaddr)
+            end
+
+            def _set(v)
+                DFHack.memory_write_double(@_memaddr, v)
             end
 
             def _cpp_init

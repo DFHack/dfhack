@@ -994,7 +994,7 @@ public:
         job_to_labor_table[df::job_type::Clean]					= jlf_const(df::unit_labor::CLEAN);
         job_to_labor_table[df::job_type::Rest]					= jlf_no_labor;
         job_to_labor_table[df::job_type::PickupEquipment]		= jlf_no_labor;
-        job_to_labor_table[df::job_type::DumpItem]				= jlf_hauling;
+        job_to_labor_table[df::job_type::DumpItem]				= jlf_const(df::unit_labor::HAUL_REFUSE);
         job_to_labor_table[df::job_type::StrangeMoodCrafter]	= jlf_no_labor;
         job_to_labor_table[df::job_type::StrangeMoodJeweller]	= jlf_no_labor;
         job_to_labor_table[df::job_type::StrangeMoodForge]		= jlf_no_labor;
@@ -1515,10 +1515,14 @@ private:
         F(in_building); F(construction); F(artifact);
 #undef F
 
-        auto& v = world->items.other[df::items_other_id::WEAPON];
+        auto& v = world->items.all;
         for (auto i = v.begin(); i != v.end(); i++)
         {
             df::item* item = *i;
+
+            if (item->flags.bits.dump)
+                labor_needed[df::unit_labor::HAUL_REFUSE]++;
+
             if (item->flags.whole & bad_flags.whole)
                 continue;
 

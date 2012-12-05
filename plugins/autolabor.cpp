@@ -82,6 +82,8 @@ static PersistentDataItem config;
 
 enum ConfigFlags {
     CF_ENABLED = 1,
+    CF_ALLOW_FISHING = 2,
+    CF_ALLOW_HUNTING = 4,
 };
 
 
@@ -483,20 +485,26 @@ struct dwarf_info_t
 
     void set_labor(df::unit_labor labor) 
     {
-        dwarf->status.labors[labor] = true;
-        if ((labor == df::unit_labor::MINE    && !has_pick) ||
-            (labor == df::unit_labor::CUTWOOD && !has_axe) ||
-            (labor == df::unit_labor::HUNT    && !has_crossbow))
-            dwarf->military.pickup_flags.bits.update = 1;
+        if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor))
+        {
+            dwarf->status.labors[labor] = true;
+            if ((labor == df::unit_labor::MINE    && !has_pick) ||
+                (labor == df::unit_labor::CUTWOOD && !has_axe) ||
+                (labor == df::unit_labor::HUNT    && !has_crossbow))
+                dwarf->military.pickup_flags.bits.update = 1;
+        }
     }
 
     void clear_labor(df::unit_labor labor) 
     {
-        dwarf->status.labors[labor] = false;
-        if ((labor == df::unit_labor::MINE    && has_pick) ||
-            (labor == df::unit_labor::CUTWOOD && has_axe) ||
-            (labor == df::unit_labor::HUNT    && has_crossbow))
-            dwarf->military.pickup_flags.bits.update = 1;
+        if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor))
+        {
+            dwarf->status.labors[labor] = false;
+            if ((labor == df::unit_labor::MINE    && has_pick) ||
+                (labor == df::unit_labor::CUTWOOD && has_axe) ||
+                (labor == df::unit_labor::HUNT    && has_crossbow))
+                dwarf->military.pickup_flags.bits.update = 1;
+        }
     }
 
 };
@@ -752,6 +760,7 @@ private:
             case df::building_type::WindowGem:
             case df::building_type::Cage:
             case df::building_type::NestBox:
+            case df::building_type::TractionBench:
                 return df::unit_labor::HAUL_FURNITURE;
             case df::building_type::Trap:
                 return df::unit_labor::MECHANIC;
@@ -1736,7 +1745,7 @@ private:
 
                 FOR_ENUM_ITEMS (job_skill, skill)
                 {
-                    int	skill_level = Units::getEffectiveSkill(dwarf->dwarf, skill);
+                    int	skill_level = Units::getNominalSkill(dwarf->dwarf, skill, false);
                     high_skill = std::max(high_skill, skill_level);
                 }
 
@@ -1866,6 +1875,14 @@ public:
             if ((*v)->route_id != -1) 
                 labor_needed[df::unit_labor::PUSH_HAUL_VEHICLE]++;        
 
+        // add fishing & hunting
+
+        if (isOptionEnabled(CF_ALLOW_FISHING) && has_fishery)
+            labor_needed[df::unit_labor::FISH] ++;
+
+        if (isOptionEnabled(CF_ALLOW_HUNTING) && has_butchers)
+            labor_needed[df::unit_labor::HUNT] ++;
+
         if (print_debug)
         {
             for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
@@ -1893,6 +1910,31 @@ public:
         if (print_debug)
             out.print("available count = %d, distinct labors needed = %d\n", available_dwarfs.size(), pq.size());
 
+        std::map<df::unit_labor, int> to_assign;
+
+        to_assign.clear();
+        
+        int av = available_dwarfs.size();
+
+        while (!pq.empty() && av > 0) 
+        {
+            df::unit_labor labor = pq.top().second;
+            int priority = pq.top().first;
+            to_assign[labor]++;
+            pq.pop();
+            av--;
+
+            if (print_debug)
+                out.print("Will assign: %s priority %d (%d)\n", ENUM_KEY_STR(unit_labor, labor).c_str(), priority, to_assign[labor]);
+
+            if (--labor_needed[labor] > 0) 
+            {
+                priority /= 2;
+                pq.push(make_pair(priority, labor));
+            }
+
+        }
+
         int canary = (1 << df::unit_labor::HAUL_STONE) |
             (1 << df::unit_labor::HAUL_WOOD) |
             (1 << df::unit_labor::HAUL_BODY) |
@@ -1902,63 +1944,65 @@ public:
             (1 << df::unit_labor::HAUL_FURNITURE) |
             (1 << df::unit_labor::HAUL_ANIMAL);
 
-        while (!available_dwarfs.empty() && !pq.empty())
+        while (!available_dwarfs.empty())
         {
-            df::unit_labor labor = pq.top().second;
-            int priority = pq.top().first;
-            df::job_skill skill = labor_to_skill[labor];
-
-            if (print_debug) 
-                out.print("labor %s skill %s priority %d\n", ENUM_KEY_STR(unit_labor, labor).c_str(), ENUM_KEY_STR(job_skill, skill).c_str(), priority);
-
             std::list<dwarf_info_t*>::iterator bestdwarf = available_dwarfs.begin();
 
             int best_score = -10000;
+            df::unit_labor best_labor = df::unit_labor::NONE;
 
-            for (std::list<dwarf_info_t*>::iterator k = available_dwarfs.begin(); k != available_dwarfs.end(); k++)
+            for (auto j = to_assign.begin(); j != to_assign.end(); j++) 
             {
-                dwarf_info_t* d = (*k);
-                int skill_level = 0;
-                if (skill != df::job_skill::NONE) 
-                {
-                    int	skill_level = Units::getEffectiveSkill(d->dwarf, skill);
-                }
+                if (j->second <= 0) 
+                    continue;
 
-                int score = skill_level * 100 - (d->high_skill - skill_level) * 200;
-                if (d->dwarf->status.labors[labor])
-                    score += 500;
-                if ((labor == df::unit_labor::MINE && d->has_pick) ||
-                    (labor == df::unit_labor::CUTWOOD && d->has_axe) ||
-                    (labor == df::unit_labor::HUNT && d->has_crossbow))
-                    score += 500;
-                if (score > best_score)
+                df::unit_labor labor = j->first;
+                df::job_skill skill = labor_to_skill[labor];
+
+                for (std::list<dwarf_info_t*>::iterator k = available_dwarfs.begin(); k != available_dwarfs.end(); k++)
                 {
-                    bestdwarf = k;
-                    best_score = score;
+                    dwarf_info_t* d = (*k);
+                    int skill_level = 0;
+                    if (skill != df::job_skill::NONE) 
+                    {
+                        skill_level = Units::getEffectiveSkill(d->dwarf, skill);
+                    }
+                    int score = skill_level * 100 - (d->high_skill - skill_level) * 500;
+                    if (d->dwarf->status.labors[labor])
+                        score += 500;
+                    if ((labor == df::unit_labor::MINE && d->has_pick) ||
+                        (labor == df::unit_labor::CUTWOOD && d->has_axe) ||
+                        (labor == df::unit_labor::HUNT && d->has_crossbow))
+                        score += 500;
+
+                    if (score > best_score)
+                    {
+                        bestdwarf = k;
+                        best_score = score;
+                        best_labor = labor;
+                    }
                 }
             }
 
             if (print_debug)
-                out.print("assign \"%s\" labor %s score=%d\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), best_score);
+                 out.print("assign \"%s\" labor %s score=%d\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, best_labor).c_str(), best_score);
+
             FOR_ENUM_ITEMS(unit_labor, l)
             {
-                if (l == labor)
+                if (l == df::unit_labor::NONE)
+                    continue;
+
+                if (l == best_labor)
                     (*bestdwarf)->set_labor(l);
                 else
                     (*bestdwarf)->clear_labor(l);
             }
 
-            if (labor >= df::unit_labor::HAUL_STONE && labor <= df::unit_labor::HAUL_ANIMAL)
-                canary &= ~(1 << labor);
-            labor_infos[labor].active_dwarfs++;
-
+            if (best_labor >= df::unit_labor::HAUL_STONE && best_labor <= df::unit_labor::HAUL_ANIMAL)
+                canary &= ~(1 << best_labor);
+            labor_infos[best_labor].active_dwarfs++;
+            to_assign[best_labor]--;
             available_dwarfs.erase(bestdwarf);
-            pq.pop();
-            if (--labor_needed[labor] > 0) 
-            {
-                priority /= 2;
-                pq.push(make_pair(priority, labor));
-            }
         }
 
         if (canary != 0)
@@ -2123,6 +2167,28 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
         }
         reset_labor(labor);
         print_labor(labor, out);
+        return CR_OK;
+    }
+    else if (parameters.size() == 1 && (parameters[0] == "allow-fishing" || parameters[0] == "forbid-fishing"))
+    {
+        if (!enable_autolabor)
+        {
+            out << "Error: The plugin is not enabled." << endl;
+            return CR_FAILURE;
+        }
+
+        setOptionEnabled(CF_ALLOW_FISHING, (parameters[0] == "allow-fishing"));
+        return CR_OK;
+    }
+    else if (parameters.size() == 1 && (parameters[0] == "allow-hunting" || parameters[0] == "forbid-hunting"))
+    {
+        if (!enable_autolabor)
+        {
+            out << "Error: The plugin is not enabled." << endl;
+            return CR_FAILURE;
+        }
+
+        setOptionEnabled(CF_ALLOW_HUNTING, (parameters[0] == "allow-hunting"));
         return CR_OK;
     }
     else if (parameters.size() == 1 && parameters[0] == "reset-all")

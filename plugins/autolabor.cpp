@@ -57,6 +57,9 @@
 #include <df/unit_health_flags.h>
 #include <df/building_design.h>
 #include <df/vehicle.h>
+#include <df/units_other_id.h>
+#include <df/ui.h>
+#include <df/training_assignment.h>
 
 #include <MiscUtils.h>
 
@@ -761,6 +764,7 @@ private:
             case df::building_type::Cage:
             case df::building_type::NestBox:
             case df::building_type::TractionBench:
+            case df::building_type::Slab:
                 return df::unit_labor::HAUL_FURNITURE;
             case df::building_type::Trap:
                 return df::unit_labor::MECHANIC;
@@ -1162,7 +1166,7 @@ public:
         job_to_labor_table[df::job_type::ApplyCast]				= jlf_const(df::unit_labor::BONE_SETTING);
         job_to_labor_table[df::job_type::CustomReaction]        = new jlfunc_custom();
         job_to_labor_table[df::job_type::ConstructSlab]			= jlf_make_furniture;
-        job_to_labor_table[df::job_type::EngraveSlab]			= jlf_const(df::unit_labor::STONE_CRAFT);
+        job_to_labor_table[df::job_type::EngraveSlab]			= jlf_const(df::unit_labor::DETAIL);
         job_to_labor_table[df::job_type::ShearCreature]			= jlf_const(df::unit_labor::SHEARER);
         job_to_labor_table[df::job_type::SpinThread]			= jlf_const(df::unit_labor::SPINNER);
         job_to_labor_table[df::job_type::PenLargeAnimal]		= jlf_no_labor;
@@ -1873,7 +1877,7 @@ public:
 
         for (auto v = world->vehicles.all.begin(); v != world->vehicles.all.end(); v++)
             if ((*v)->route_id != -1) 
-                labor_needed[df::unit_labor::PUSH_HAUL_VEHICLE]++;        
+                labor_needed[df::unit_labor::PUSH_HAUL_VEHICLE]++;
 
         // add fishing & hunting
 
@@ -1882,6 +1886,16 @@ public:
 
         if (isOptionEnabled(CF_ALLOW_HUNTING) && has_butchers)
             labor_needed[df::unit_labor::HUNT] ++;
+
+        /* add animal trainers */
+        for (auto a = df::global::ui->equipment.training_assignments.begin();
+            a != df::global::ui->equipment.training_assignments.end();
+            a++)
+        {
+            labor_needed[df::unit_labor::ANIMALTRAIN]++;
+            // note: this doesn't test to see if the trainer is actually needed, and thus will overallocate trainers.  bleah.
+        }
+
 
         if (print_debug)
         {

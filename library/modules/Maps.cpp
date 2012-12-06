@@ -59,6 +59,7 @@ using namespace std;
 #include "df/z_level_flags.h"
 #include "df/region_map_entry.h"
 #include "df/flow_info.h"
+#include "df/plant.h"
 
 using namespace DFHack;
 using namespace df::enums;

@@ -739,6 +739,7 @@ private:
             case df::building_type::TradeDepot:
             case df::building_type::Construction:
             case df::building_type::Bridge:
+            case df::building_type::ArcheryTarget:
                 {
                     df::building_actual* b = (df::building_actual*) bld;
                     if (b->design && !b->design->flags.bits.designed)
@@ -936,6 +937,9 @@ private:
 public:
     ~JobLaborMapper() 
     {
+        for (auto i = jlf_cache.begin(); i != jlf_cache.end(); i++)
+            delete i->second;
+
         delete jlf_hauling;
         delete jlf_make_furniture;
         delete jlf_make_object;

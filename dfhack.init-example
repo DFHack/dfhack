@@ -137,6 +137,13 @@ tweak military-color-assigned
 # remove inverse dependency of squad training speed on unit list size and use more sparring
 tweak military-training
 
+###########
+# Scripts #
+###########
+
+# write the correct season to gamelog on world load
+soundsense-season
+
 #######################################################
 # Apply binary patches at runtime                     #
 #                                                     #

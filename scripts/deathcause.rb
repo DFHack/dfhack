@@ -33,7 +33,7 @@ elsif hf == -1
 else
 	histfig = df.world.history.figures.binsearch(hf)
 	unit = histfig ? df.unit_find(histfig.unit_id) : nil
-	if unit and not unit.flags1.dead
+	if unit and not unit.flags1.dead and not unit.flags3.ghostly
 		puts "#{unit.name} is not dead yet !"
 
 	else

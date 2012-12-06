@@ -8,7 +8,7 @@ down_alt2={key="CURSOR_DOWN_Z_AUX",desc="Use job down"},
 up_alt1={key="CUSTOM_CTRL_E",desc="Use job up"}, 
 up_alt2={key="CURSOR_UP_Z_AUX",desc="Use job up"},
 use_same={key="A_MOVE_SAME_SQUARE",desc="Use job at the tile you are standing"},
-workshop={key="CHANGETAB",desc="Show workshop jobs"},
+workshop={key="CHANGETAB",desc="Show building menu"},
 }
 
 local gui = require 'gui'
@@ -190,6 +190,13 @@ function NotConstruct(args)
         return false, "Can only do it on non constructions"
     end
 end
+function NoConstructedBuilding(args)
+    local bld=dfhack.buildings.findAtTile(args.pos)
+    if bld and bld.construction_stage==3 then
+        return false, "Can only do it on clear area or non-finished buildings"
+    end
+    return true
+end
 function IsBuilding(args)
     if dfhack.buildings.findAtTile(args.pos) then
         return true
@@ -270,8 +277,8 @@ function IsUnit(args)
     end
     return false,"Unit must be present"
 end
-function itemsAtPos(pos)
-    local ret={}
+function itemsAtPos(pos,tbl)
+    local ret=tbl or {}
     for k,v in pairs(df.global.world.items.all) do
         if v.pos.x==pos.x and v.pos.y==pos.y and v.pos.z==pos.z and v.flags.on_ground then
             table.insert(ret,v)
@@ -379,6 +386,41 @@ function getItemsUncollected(job)
     end
     return ret
 end
+function AddItem(tbl,item,recurse)
+    table.insert(tbl,item)
+    if recurse then
+        local subitems=dfhack.items.getContainedItems(item)
+        if subitems~=nil then
+            for k,v in pairs(subitems) do
+                AddItem(tbl,v,recurse)
+            end
+        end
+    end
+end
+function EnumItems(args)
+    local ret=args.table or {}
+    if args.all then
+        for k,v in pairs(df.global.world.items.all) do
+            if v.flags.on_ground then
+                AddItem(ret,v,args.deep)
+            end
+        end
+    elseif args.pos~=nil then
+        for k,v in pairs(df.global.world.items.all) do
+            if v.pos.x==args.pos.x and v.pos.y==args.pos.y and v.pos.z==args.pos.z and v.flags.on_ground then
+                AddItem(ret,v,args.deep)
+            end
+        end
+    end
+    if args.unit~=nil then
+        for k,v in pairs(args.unit.inventory) do
+            if args.inv[v.mode] then
+                AddItem(ret,v.item,args.deep)
+            end
+        end
+    end
+    return ret
+end
 function AssignJobItems(args)
     
     if settings.df_assign then --use df default logic and hope that it would work
@@ -386,22 +428,9 @@ function AssignJobItems(args)
     end
     -- first find items that you want to use for the job
     local job=args.job
-    local its=itemsAtPos(args.from_pos)
-    if settings.check_inv then --check inventory and contained items
-        for k,v in pairs(args.unit.inventory) do
-            table.insert(its,v.item)
-        end
-        local contained={}
-        for k,v in pairs(its) do
-            local cc=dfhack.items.getContainedItems(v)
-            for _,c_item in pairs(cc) do
-                table.insert(contained,c_item)
-            end
-        end
-        for k,v in pairs(contained) do
-            table.insert(its,v)
-        end
-    end
+    local its=EnumItems{pos=args.from_pos,unit=args.unit,
+        inv={[df.unit_inventory_item.T_mode.Hauled]=settings.check_inv,[df.unit_inventory_item.T_mode.Worn]=settings.check_inv,
+             [df.unit_inventory_item.T_mode.Weapon]=settings.check_inv,},deep=true}
     --[[while(#job.items>0) do --clear old job items
         job.items[#job.items-1]:delete()
         job.items:erase(#job.items-1)
@@ -528,7 +557,7 @@ actions={
     {"RemoveBuilding"       ,RemoveBuilding,{IsBuilding}},
     {"RemoveStairs"         ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},
     --{"HandleLargeCreature"   ,df.job_type.HandleLargeCreature,{isUnit},{SetCreatureRef}},
-    {"Build"                ,AssignJobToBuild},
+    {"Build"                ,AssignJobToBuild,{NoConstructedBuilding}},
     
 }
 
@@ -675,6 +704,26 @@ function siegeWeaponActionChosen(building,actionid)
         end
     end
 end
+function putItemToBuilding(building,item)
+    if building:getType()==df.building_type.Table then
+        dfhack.items.moveToBuilding(item,building,0)
+    else
+        local container=building.contained_items[0].item --todo maybe iterate over all, add if usemode==2?
+        dfhack.items.moveToContainer(item,container)
+    end
+end
+function usetool:openPutWindow(building)
+    
+    local adv=df.global.world.units.active[0]
+    local items=EnumItems{pos=adv.pos,unit=adv,
+        inv={[df.unit_inventory_item.T_mode.Hauled]=true,[df.unit_inventory_item.T_mode.Worn]=true,
+             [df.unit_inventory_item.T_mode.Weapon]=true,},deep=true}
+    local choices={}
+    for k,v in pairs(items) do
+        table.insert(choices,{text=dfhack.items.getDescription(v,0),item=v})
+    end
+    require("gui.dialogs").showListPrompt("Item choice", "Choose item to put into:", COLOR_WHITE,choices,function (idx,choice) putItemToBuilding(building,choice.item) end)
+end
 function usetool:openSiegeWindow(building)
     require("gui.dialogs").showListPrompt("Engine job choice", "Choose what to do:",COLOR_WHITE,{"Turn","Load","Fire"},
         dfhack.curry(siegeWeaponActionChosen,building))
@@ -694,6 +743,30 @@ function usetool:openShopWindow(building)
     end
 end
 MODES={
+    [df.building_type.Table]={ --todo filters...
+        name="Put items",
+        input=usetool.openPutWindow,
+    },
+    [df.building_type.Coffin]={
+        name="Put items",
+        input=usetool.openPutWindow,
+    },
+    [df.building_type.Box]={
+        name="Put items",
+        input=usetool.openPutWindow,
+    },
+    [df.building_type.Weaponrack]={
+        name="Put items",
+        input=usetool.openPutWindow,
+    },
+    [df.building_type.Armorstand]={
+        name="Put items",
+        input=usetool.openPutWindow,
+    },
+    [df.building_type.Cabinet]={
+        name="Put items",
+        input=usetool.openPutWindow,
+    },
     [df.building_type.Workshop]={
         name="Workshop menu",
         input=usetool.openShopWindow,
@@ -803,7 +876,7 @@ end
 function usetool:isOnBuilding()
     local adv=df.global.world.units.active[0]
     local bld=dfhack.buildings.findAtTile(adv.pos)
-    if bld and MODES[bld:getType()]~=nil and bld.construction_stage==3 then
+    if bld and MODES[bld:getType()]~=nil then
         return true,MODES[bld:getType()],bld
     else
         return false

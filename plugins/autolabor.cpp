@@ -1751,10 +1751,14 @@ private:
 
                 int high_skill = 0;
 
-                FOR_ENUM_ITEMS (job_skill, skill)
+                FOR_ENUM_ITEMS (unit_labor, labor)
                 {
-                    int	skill_level = Units::getNominalSkill(dwarf->dwarf, skill, false);
-                    high_skill = std::max(high_skill, skill_level);
+                    df::job_skill skill = labor_to_skill[labor];
+                    if (skill != df::job_skill::NONE)
+                    {
+                        int	skill_level = Units::getNominalSkill(dwarf->dwarf, skill, false);
+                        high_skill = std::max(high_skill, skill_level);
+                    }
                 }
 
                 dwarf->high_skill = high_skill;

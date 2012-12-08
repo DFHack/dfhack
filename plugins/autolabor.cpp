@@ -483,9 +483,12 @@ struct dwarf_info_t
 
     int high_skill;
 
+    bool has_children;
+
     df::unit_labor using_labor;
 
-    dwarf_info_t(df::unit* dw) : dwarf(dw), clear_all(0), has_axe(0), has_pick(0), has_crossbow(0), state(OTHER), high_skill(0) 
+    dwarf_info_t(df::unit* dw) : dwarf(dw), clear_all(false), has_axe(false), has_pick(false), has_crossbow(false), 
+        state(OTHER), high_skill(0), has_children(false)
     {
     }
 
@@ -1481,6 +1484,7 @@ private:
     int need_food_water;
 
     std::map<df::unit_labor, int> labor_needed;
+    std::map<df::unit_labor, bool> labor_outside;
     std::vector<dwarf_info_t*> dwarf_info;
     std::list<dwarf_info_t*> available_dwarfs;
 
@@ -1648,6 +1652,13 @@ private:
 
                 if (worker != -1)
                     labor_infos[labor].mark_assigned();
+
+                if (j->pos.isValid())
+                {
+                    df::tile_designation* d = Maps::getTileDesignation(j->pos);
+                    if (d->bits.outside)
+                        labor_outside[labor] = true;
+                }
             }
         }
 
@@ -1703,6 +1714,21 @@ private:
                         dwarf->clear_all = true;
                         if (print_debug)
                             out.print("Dwarf \"%s\" has a meeting, will be cleared of all labors\n", dwarf->dwarf->name.first_name.c_str());
+                        break;
+                    }
+                }
+
+                // check to see if dwarf has minor children
+
+                for (auto u2 = world->units.active.begin(); u2 != world->units.active.end(); ++u2)
+                {
+                    if ((*u2)->relations.mother_id == dwarf->dwarf->id &&
+                        !(*u2)->flags1.bits.dead &&
+                        ((*u2)->profession == df::profession::CHILD || (*u2)->profession == df::profession::BABY))
+                    {
+                        dwarf->has_children = true;
+                        if (print_debug)
+                            out.print("Dwarf %s has minor children\n", dwarf->dwarf->name.first_name.c_str());
                         break;
                     }
                 }
@@ -1965,7 +1991,8 @@ public:
         {
             for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
             {
-                out.print ("labor_needed [%s] = %d\n", ENUM_KEY_STR(unit_labor, i->first).c_str(), i->second);
+                out.print ("labor_needed [%s] = %d, outside = %d\n", ENUM_KEY_STR(unit_labor, i->first).c_str(), i->second,
+                    labor_outside[i->first]);
             }	
         }
 
@@ -2026,7 +2053,7 @@ public:
         {
             std::list<dwarf_info_t*>::iterator bestdwarf = available_dwarfs.begin();
 
-            int best_score = -10000;
+            int best_score = INT_MIN;
             df::unit_labor best_labor = df::unit_labor::NONE;
 
             for (auto j = to_assign.begin(); j != to_assign.end(); j++) 
@@ -2052,6 +2079,8 @@ public:
                         (labor == df::unit_labor::CUTWOOD && d->has_axe) ||
                         (labor == df::unit_labor::HUNT && d->has_crossbow))
                         score += 500;
+                    if (d->has_children && labor_outside[labor])
+                        score -= 5000;
 
                     if (score > best_score)
                     {

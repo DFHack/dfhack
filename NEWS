@@ -29,6 +29,7 @@ DFHack future
     - gui/assign-rack: works together with a binary patch to fix weapon racks.
     - gui/gm-editor: an universal editor for lots of dfhack things.
     - gui/companion-order: a adventure mode command interface for your companions.
+    - gui/advfort: a way to do jobs with your adventurer (e.g. build fort).
   New binary patches:
     - armorstand-capacity
     - custom-reagent-size

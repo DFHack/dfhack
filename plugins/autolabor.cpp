@@ -710,16 +710,20 @@ private:
     public:
         df::unit_labor get_labor(df::job* j)
         {
+            df::item* item = 0;
             if (j->job_type == df::job_type::StoreItemInStockpile && j->item_subtype != -1)
                 return (df::unit_labor) j->item_subtype;
 
-            df::item* item;
-//            if (j->job_type == df::job_type::StoreItemInBarrel)
-//                item = j->items[1]->item;
-//            else
-                item = j->items[0]->item;
+            for (auto i = j->items.begin(); i != j->items.end(); i++)
+            {
+                if ((*i)->role == 7)
+                {
+                    item = (*i)->item;
+                    break;
+                }
+            }
 
-            if (item->flags.bits.container && item->getType() != df::item_type::BIN) 
+            if (item && item->flags.bits.container) 
             {
                 for (auto a = item->general_refs.begin(); a != item->general_refs.end(); a++)
                 {
@@ -731,8 +735,9 @@ private:
                     }
                 }
             }
-            df::unit_labor l = hauling_labor_map[item->getType()];
-            if (l == df::unit_labor::HAUL_REFUSE && item->flags.bits.dead_dwarf)
+
+            df::unit_labor l = item ? hauling_labor_map[item->getType()] : df::unit_labor::HAUL_ITEM;
+            if (item && l == df::unit_labor::HAUL_REFUSE && item->flags.bits.dead_dwarf)
                 l = df::unit_labor::HAUL_BODY;
             return l;
         }
@@ -1751,7 +1756,7 @@ private:
                         if (labor != df::unit_labor::NONE)
                         {
                             labor_needed[labor]--;
-                            if (!dwarf->dwarf->status.labors[labor])
+                            if (!dwarf->dwarf->status.labors[labor] && print_debug)
                             {
                                 out.print("AUTOLABOR: dwarf %s (id %d) is doing job %s(%d) but is not enabled for labor %s(%d).\n",
                                     dwarf->dwarf->name.first_name.c_str(), dwarf->dwarf->id,
@@ -1986,7 +1991,7 @@ public:
         std::map<df::unit_labor, int> to_assign;
 
         to_assign.clear();
-        
+
         int av = available_dwarfs.size();
 
         while (!pq.empty() && av > 0) 
@@ -2058,7 +2063,7 @@ public:
             }
 
             if (print_debug)
-                 out.print("assign \"%s\" labor %s score=%d\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, best_labor).c_str(), best_score);
+                out.print("assign \"%s\" labor %s score=%d\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, best_labor).c_str(), best_score);
 
             FOR_ENUM_ITEMS(unit_labor, l)
             {
@@ -2073,8 +2078,13 @@ public:
 
             if (best_labor >= df::unit_labor::HAUL_STONE && best_labor <= df::unit_labor::HAUL_ANIMAL)
                 canary &= ~(1 << best_labor);
-            labor_infos[best_labor].active_dwarfs++;
-            to_assign[best_labor]--;
+
+            if (best_labor != df::unit_labor::NONE)
+            {
+                labor_infos[best_labor].active_dwarfs++;
+                to_assign[best_labor]--;
+            }
+
             available_dwarfs.erase(bestdwarf);
         }
 

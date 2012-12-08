@@ -30,7 +30,7 @@ function InspectScreen:onRenderFrame(dc, rect)
     if gui.blink_visible(100) then
         dfhack.screen.paintTile({ch='X',fg=COLOR_LIGHTGREEN}, self.cursor_x, self.cursor_y)
     end
-    dc:fill(rect, {ch=' ',fg=COLOR_BLACK,bg=COLOR_CYAN})
+    dc:fill(rect, {ch=' ',fg=COLOR_WHITE,bg=COLOR_CYAN})
 end
 
 local FG_PEN = {fg=COLOR_WHITE,bg=COLOR_BLACK,tile_color=true}

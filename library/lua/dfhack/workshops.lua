@@ -23,6 +23,68 @@ input_filter_defaults = {
     has_tool_use = -1,
     quantity = 1
 }
+local fuel={item_type=df.item_type.BAR,mat_type=df.builtin_mats.COAL}
+jobs_furnace={
+    [df.furnace_type.Smelter]={
+        {
+            name="Melt metal object",
+            items={fuel,{flags2={allow_melt_dump=true}}},--also maybe melt_designated
+            job_fields={job_type=df.job_type.MeltMetalObject}
+        }
+    },
+    [df.furnace_type.MagmaSmelter]={
+        {
+            name="Melt metal object",
+            items={{flags2={allow_melt_dump=true}}},--also maybe melt_designated
+            job_fields={job_type=df.job_type.MeltMetalObject}
+        }
+    },
+    --[[ [df.furnace_type.MetalsmithsForge]={
+        unpack(concat(furnaces,mechanism,anvil,crafts,coins,flask))
+        
+    },
+    ]]
+    --MetalsmithsForge,
+    --MagmaForge
+    --[[
+        forges:
+            weapons and ammo-> from raws...
+            armor -> raws
+            furniture -> builtins?
+            siege eq-> builtin (only balista head)
+            trap eq -> from raws+ mechanisms
+            other object-> anvil, crafts, goblets,toys,instruments,nestbox... (raws?) flask, coins,stud with iron
+            metal clothing-> raws???
+    ]]
+    [df.furnace_type.GlassFurnace]={
+        {
+            name="collect sand",
+            items={},
+            job_fields={job_type=df.job_type.CollectSand}
+        },
+        --glass crafts x3
+    },
+    [df.furnace_type.WoodFurnace]={
+        defaults={item_type=df.item_type.WOOD,vector_id=df.job_item_vector_id.WOOD},
+        {
+            name="make charcoal",
+            items={{}},
+            job_fields={job_type=df.job_type.MakeCharcoal}
+        },
+        {
+            name="make ash",
+            items={{}},
+            job_fields={job_type=df.job_type.MakeAsh}
+        }
+    },
+    [df.furnace_type.Kiln]={
+        {
+            name="collect clay",
+            items={},
+            job_fields={job_type=df.job_type.CollectClay}
+        }
+    },
+}
 jobs_workshop={
     
     [df.workshop_type.Jewelers]={
@@ -162,6 +224,7 @@ jobs_workshop={
         },
     },
     [df.workshop_type.Carpenters]={
+        --training weapons, wooden shields
         defaults={item_type=df.item_type.WOOD,vector_id=df.job_item_vector_id.WOOD},
         
         {
@@ -435,14 +498,71 @@ local function scanRawsReaction(buildingId,workshopId,customId)
     end
     return ret
 end
-function getJobs(building_id,workshopId,customId)
+local function reagentToJobItem(reagent,react_id,reagentId)
+    local ret_item
+    ret_item=utils.clone_with_default(reagent, input_filter_defaults)
+    ret_item.reaction_id=react_id
+    ret_item.reagent_index=reagentId
+    return ret_item
+end
+local function addReactionJobs(ret,bid,wid,cid)
+    local reactions=scanRawsReaction(bid,wid or -1,cid or -1)
+    for idx,react in pairs(reactions) do
+    local job={name=react.name,
+               items={},job_fields={job_type=df.job_type.CustomReaction,reaction_name=react.code}
+              }
+        for reagentId,reagent in pairs(react.reagents) do
+            table.insert(job.items,reagentToJobItem(reagent,idx,reagentId))
+        end
+        if react.flags.FUEL then
+            table.insert(job.items,fuel)
+        end
+        table.insert(ret,job)
+    end
+end
+local function scanRawsOres()
+    local ret={}
+    for idx,ore in ipairs(df.global.world.raws.inorganics) do
+        if #ore.metal_ore.mat_index~=0 then
+            ret[idx]=ore
+        end
+    end
+    return ret
+end
+local function addSmeltJobs(ret,use_fuel)
+    local ores=scanRawsOres()
+    for idx,ore in pairs(ores) do
+        print("adding:",ore.material.state_name.Solid)
+        printall(ore)
+    local job={name="smelt "..ore.material.state_name.Solid,job_fields={job_type=df.job_type.SmeltOre,mat_type=df.builtin_mats.INORGANIC,mat_index=idx},items={
+        {item_type=df.item_type.BOULDER,mat_type=df.builtin_mats.INORGANIC,mat_index=idx,vector_id=df.job_item_vector_id.BOULDER}}}
+        if use_fuel then
+            table.insert(job.items,fuel)
+        end
+        table.insert(ret,job)
+    end
+    return ret
+end
+function getJobs(buildingId,workshopId,customId)
     local ret={}
     local c_jobs
-    if building_id==df.building_type.Workshop then
+    if buildingId==df.building_type.Workshop then
         c_jobs=jobs_workshop[workshopId]
+    elseif buildingId==df.building_type.Furnace then
+        c_jobs=jobs_furnace[workshopId]
+        
+        if workshopId == df.furnace_type.Smelter or workshopId == df.furnace_type.MagmaSmelter then
+            c_jobs=utils.clone(c_jobs,true)
+            addSmeltJobs(c_jobs,workshopId == df.furnace_type.Smelter)
+        end
     else
         return nil
     end
+    if c_jobs==nil then
+        return 
+    end
+    c_jobs=utils.clone(c_jobs,true)
+    addReactionJobs(c_jobs,buildingId,workshopId,customId)
     for jobId,contents in pairs(c_jobs) do
         if jobId~="defaults" then
             local entry={}

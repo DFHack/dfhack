@@ -454,7 +454,7 @@ function AssignJobItems(args)
                 if (item_counts[job_id]>0 and item_suitable) or settings.build_by_items then
                     cur_item.flags.in_job=true
                     job.items:insert("#",{new=true,item=cur_item,role=df.job_item_ref.T_role.Reagent,job_item_idx=job_id})
-                    item_counts[job_id]=item_counts[job_id]-1
+                    item_counts[job_id]=item_counts[job_id]-cur_item:getTotalDimension()
                     print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),item_counts[job_id]))
                     used_item_id[cur_item.id]=true
                 end
@@ -740,6 +740,8 @@ function usetool:openShopWindow(building)
         end
         require("gui.dialogs").showListPrompt("Workshop job choice", "Choose what to make",COLOR_WHITE,choices,dfhack.curry(onWorkShopJobChosen,state)
             ,nil, nil,true)
+    else
+        qerror("No jobs for this workshop")
     end
 end
 MODES={
@@ -768,6 +770,10 @@ MODES={
         input=usetool.openPutWindow,
     },
     [df.building_type.Workshop]={
+        name="Workshop menu",
+        input=usetool.openShopWindow,
+    },
+    [df.building_type.Furnace]={
         name="Workshop menu",
         input=usetool.openShopWindow,
     },
@@ -876,7 +882,7 @@ end
 function usetool:isOnBuilding()
     local adv=df.global.world.units.active[0]
     local bld=dfhack.buildings.findAtTile(adv.pos)
-    if bld and MODES[bld:getType()]~=nil then
+    if bld and MODES[bld:getType()]~=nil and bld:getBuildStage()==bld:getMaxBuildStage() then
         return true,MODES[bld:getType()],bld
     else
         return false

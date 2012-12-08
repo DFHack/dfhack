@@ -60,6 +60,7 @@
 #include <df/units_other_id.h>
 #include <df/ui.h>
 #include <df/training_assignment.h>
+#include <df/general_ref_contains_itemst.h>
 
 #include <MiscUtils.h>
 
@@ -482,6 +483,8 @@ struct dwarf_info_t
 
     int high_skill;
 
+    df::unit_labor using_labor;
+
     dwarf_info_t(df::unit* dw) : dwarf(dw), clear_all(0), has_axe(0), has_pick(0), has_crossbow(0), state(OTHER), high_skill(0) 
     {
     }
@@ -521,9 +524,9 @@ struct dwarf_info_t
 static df::unit_labor hauling_labor_map[] =
 {
     df::unit_labor::HAUL_ITEM,	/* BAR */
-    df::unit_labor::HAUL_ITEM,	/* SMALLGEM */
+    df::unit_labor::HAUL_STONE,	/* SMALLGEM */
     df::unit_labor::HAUL_ITEM,	/* BLOCKS */
-    df::unit_labor::HAUL_ITEM,	/* ROUGH */
+    df::unit_labor::HAUL_STONE,	/* ROUGH */
     df::unit_labor::HAUL_STONE,	/* BOULDER */
     df::unit_labor::HAUL_WOOD,	/* WOOD */
     df::unit_labor::HAUL_FURNITURE,	/* DOOR */
@@ -543,7 +546,7 @@ static df::unit_labor hauling_labor_map[] =
     df::unit_labor::HAUL_FURNITURE,	/* TABLE */
     df::unit_labor::HAUL_FURNITURE,	/* COFFIN */
     df::unit_labor::HAUL_FURNITURE,	/* STATUE */
-    df::unit_labor::HAUL_BODY,	/* CORPSE */
+    df::unit_labor::HAUL_REFUSE,	/* CORPSE */
     df::unit_labor::HAUL_ITEM,	/* WEAPON */
     df::unit_labor::HAUL_ITEM,	/* ARMOR */
     df::unit_labor::HAUL_ITEM,	/* SHOES */
@@ -565,7 +568,7 @@ static df::unit_labor hauling_labor_map[] =
     df::unit_labor::HAUL_ITEM,	/* BRACELET */
     df::unit_labor::HAUL_ITEM,	/* GEM */
     df::unit_labor::HAUL_FURNITURE,	/* ANVIL */
-    df::unit_labor::HAUL_BODY,	/* CORPSEPIECE */
+    df::unit_labor::HAUL_REFUSE,	/* CORPSEPIECE */
     df::unit_labor::HAUL_REFUSE,	/* REMAINS */
     df::unit_labor::HAUL_FOOD,	/* MEAT */
     df::unit_labor::HAUL_FOOD,	/* FISH */
@@ -707,8 +710,31 @@ private:
     public:
         df::unit_labor get_labor(df::job* j)
         {
-            df::item* item = j->items[0]->item;
-            return hauling_labor_map[item->getType()];
+            if (j->job_type == df::job_type::StoreItemInStockpile && j->item_subtype != -1)
+                return (df::unit_labor) j->item_subtype;
+
+            df::item* item;
+//            if (j->job_type == df::job_type::StoreItemInBarrel)
+//                item = j->items[1]->item;
+//            else
+                item = j->items[0]->item;
+
+            if (item->flags.bits.container && item->getType() != df::item_type::BIN) 
+            {
+                for (auto a = item->general_refs.begin(); a != item->general_refs.end(); a++)
+                {
+                    if ((*a)->getType() == df::general_ref_type::CONTAINS_ITEM)
+                    {
+                        int item_id = ((df::general_ref_contains_itemst *) (*a))->item_id;
+                        item = binsearch_in_vector(world->items.all, item_id);
+                        break;
+                    }
+                }
+            }
+            df::unit_labor l = hauling_labor_map[item->getType()];
+            if (l == df::unit_labor::HAUL_REFUSE && item->flags.bits.dead_dwarf)
+                l = df::unit_labor::HAUL_BODY;
+            return l;
         }
         jlfunc_hauling() {};
     };
@@ -931,29 +957,45 @@ private:
         return jlf;
     }
 private:
-    jlfunc *jlf_hauling, *jlf_make_furniture, *jlf_make_object, *jlf_make_armor, *jlf_make_weapon;
-    jlfunc *job_to_labor_table[ENUM_LAST_ITEM(job_type)+1];
+    std::map<df::job_type,jlfunc*> job_to_labor_table;
 
 public:
     ~JobLaborMapper() 
     {
-        for (auto i = jlf_cache.begin(); i != jlf_cache.end(); i++)
-            delete i->second;
+        std::set<jlfunc*> log;
 
-        delete jlf_hauling;
-        delete jlf_make_furniture;
-        delete jlf_make_object;
-        delete jlf_make_armor;
-        delete jlf_make_weapon;
+        for (auto i = jlf_cache.begin(); i != jlf_cache.end(); i++)
+        {
+            if (!log.count(i->second))
+            {
+                log.insert(i->second);
+                delete i->second;
+            }
+            i->second = 0;
+        }
+
+        FOR_ENUM_ITEMS (job_type, j)
+        {
+            if (j < 0) 
+                continue;
+
+            jlfunc* p = job_to_labor_table[j];
+            if (!log.count(p))
+            {
+                log.insert(p);
+                delete p;
+            }
+            job_to_labor_table[j] = 0;
+        }
     }
 
     JobLaborMapper() 
     {
-        jlf_hauling		   = new jlfunc_hauling();
-        jlf_make_furniture = new jlfunc_make(df::unit_labor::FORGE_FURNITURE);
-        jlf_make_object    = new jlfunc_make(df::unit_labor::METAL_CRAFT);
-        jlf_make_armor     = new jlfunc_make(df::unit_labor::FORGE_ARMOR);
-        jlf_make_weapon    = new jlfunc_make(df::unit_labor::FORGE_WEAPON);
+        jlfunc* jlf_hauling		   = new jlfunc_hauling();
+        jlfunc* jlf_make_furniture = new jlfunc_make(df::unit_labor::FORGE_FURNITURE);
+        jlfunc* jlf_make_object    = new jlfunc_make(df::unit_labor::METAL_CRAFT);
+        jlfunc* jlf_make_armor     = new jlfunc_make(df::unit_labor::FORGE_ARMOR);
+        jlfunc* jlf_make_weapon    = new jlfunc_make(df::unit_labor::FORGE_WEAPON);
 
         jlfunc* jlf_no_labor = jlf_const(df::unit_labor::NONE);
 
@@ -979,7 +1021,7 @@ public:
         job_to_labor_table[df::job_type::FillWaterskin]			= jlf_no_labor;
         job_to_labor_table[df::job_type::FillWaterskin2]		= jlf_no_labor;
         job_to_labor_table[df::job_type::Sleep]					= jlf_no_labor;
-        job_to_labor_table[df::job_type::CollectSand]			= jlf_const(df::unit_labor::GLASSMAKER);
+        job_to_labor_table[df::job_type::CollectSand]			= jlf_const(df::unit_labor::HAUL_ITEM);
         job_to_labor_table[df::job_type::Fish]					= jlf_const(df::unit_labor::FISH);
         job_to_labor_table[df::job_type::Hunt]					= jlf_const(df::unit_labor::HUNT);
         job_to_labor_table[df::job_type::HuntVermin]			= jlf_no_labor;
@@ -1002,7 +1044,7 @@ public:
         job_to_labor_table[df::job_type::StoreWeapon]			= jlf_hauling;
         job_to_labor_table[df::job_type::StoreArmor]			= jlf_hauling;
         job_to_labor_table[df::job_type::StoreItemInBarrel]		= jlf_hauling;
-        job_to_labor_table[df::job_type::StoreItemInBin]		= jlf_hauling;
+        job_to_labor_table[df::job_type::StoreItemInBin]		= jlf_const(df::unit_labor::HAUL_ITEM);
         job_to_labor_table[df::job_type::SeekArtifact]			= jlf_no_labor;
         job_to_labor_table[df::job_type::SeekInfant]			= jlf_no_labor;
         job_to_labor_table[df::job_type::AttendParty]			= jlf_no_labor;
@@ -1205,16 +1247,9 @@ public:
             return df::unit_labor::NONE;
         } 
 
-        df::job_skill skill;
-        df::unit_labor labor;
-        skill = ENUM_ATTR(job_type, skill, j->job_type);
-        if (skill != df::job_skill::NONE) 
-            labor = ENUM_ATTR(job_skill, labor, skill);
-        else
-            labor = ENUM_ATTR(job_type, labor, j->job_type);
 
-        if (labor == df::unit_labor::NONE)
-            labor = job_to_labor_table[j->job_type]->get_labor(j);
+        df::unit_labor labor;
+        labor = job_to_labor_table[j->job_type]->get_labor(j);
 
         return labor;
     }
@@ -1222,7 +1257,7 @@ public:
 
 /* End of labor deducer */
 
-static JobLaborMapper* labor_mapper;
+static JobLaborMapper* labor_mapper = 0;
 
 static bool isOptionEnabled(unsigned flag)
 {
@@ -1243,11 +1278,6 @@ static void setOptionEnabled(ConfigFlags flag, bool on)
 static void cleanup_state()
 {
     labor_infos.clear();
-    if (labor_mapper) 
-    {
-        delete labor_mapper;
-        labor_mapper = 0;
-    }
 }
 
 static void reset_labor(df::unit_labor labor)
@@ -1297,11 +1327,6 @@ static void init_state()
         labor_infos[i].active_dwarfs = 0;
         reset_labor((df::unit_labor) i);
     }
-
-    generate_labor_to_skill_map();
-
-    if (!labor_mapper)
-        labor_mapper = new JobLaborMapper();
 
 }
 
@@ -1382,6 +1407,10 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  while it is enabled.\n"
         ));
 
+    generate_labor_to_skill_map();
+
+    labor_mapper = new JobLaborMapper();
+
     init_state();
 
     return CR_OK;
@@ -1390,6 +1419,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     cleanup_state();
+
+    delete labor_mapper;
 
     return CR_OK;
 }
@@ -1400,13 +1431,15 @@ class AutoLaborManager {
 public: 
     AutoLaborManager(color_ostream& o) : out(o)
     {
+        dwarf_info.clear();
     }
 
     ~AutoLaborManager()
     {
-        for (std::vector<dwarf_info_t*>::iterator i = dwarf_info.begin(); 
-            i != dwarf_info.end(); i++)
-            delete (*i);
+        for (auto d = dwarf_info.begin(); d != dwarf_info.end(); d++)
+        {
+            delete (*d);
+        }
     }
 
     dwarf_info_t* add_dwarf(df::unit* u)
@@ -1704,13 +1737,27 @@ private:
                 }
                 else
                 {
-                    int job = dwarf->dwarf->job.current_job->job_type;
+                    df::job_type job = dwarf->dwarf->job.current_job->job_type;
                     if (job >= 0 && job < ARRAY_COUNT(dwarf_states))
                         state = dwarf_states[job];
                     else
                     {
                         out.print("Dwarf \"%s\" has unknown job %i\n", dwarf->dwarf->name.first_name.c_str(), job);
                         state = OTHER;
+                    }
+                    if (state == BUSY)
+                    {
+                        df::unit_labor labor = labor_mapper->find_job_labor(dwarf->dwarf->job.current_job);
+                        if (labor != df::unit_labor::NONE)
+                        {
+                            labor_needed[labor]--;
+                            if (!dwarf->dwarf->status.labors[labor])
+                            {
+                                out.print("AUTOLABOR: dwarf %s (id %d) is doing job %s(%d) but is not enabled for labor %s(%d).\n",
+                                    dwarf->dwarf->name.first_name.c_str(), dwarf->dwarf->id,
+                                    ENUM_KEY_STR(job_type, job).c_str(), job, ENUM_KEY_STR(unit_labor, labor).c_str(), labor);
+                            }
+                        }
                     }
                 }
 
@@ -1753,6 +1800,9 @@ private:
 
                 FOR_ENUM_ITEMS (unit_labor, labor)
                 {
+                    if (labor == df::unit_labor::NONE)
+                        continue;
+
                     df::job_skill skill = labor_to_skill[labor];
                     if (skill != df::job_skill::NONE)
                     {
@@ -1804,7 +1854,7 @@ private:
                     }
                 }
 
-                if ((state == IDLE || state == BUSY) && !dwarf->clear_all)
+                if ((state == IDLE) && !dwarf->clear_all)
                     available_dwarfs.push_back(dwarf);
 
             }
@@ -1815,6 +1865,8 @@ private:
 public:
     void process()
     {
+        dwarf_info.clear();
+
         dig_count = tree_count = plant_count = detail_count = pick_count = axe_count = 0;
         cnt_recover_wounded = cnt_diagnosis = cnt_immobilize = cnt_dressing = cnt_cleaning = cnt_surgery = cnt_suture =
             cnt_setting = cnt_traction = cnt_crutch = 0;
@@ -1903,7 +1955,6 @@ public:
             labor_needed[df::unit_labor::ANIMALTRAIN]++;
             // note: this doesn't test to see if the trainer is actually needed, and thus will overallocate trainers.  bleah.
         }
-
 
         if (print_debug)
         {
@@ -2079,11 +2130,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     step_count = 0;
 
     debug_stream = &out;
-
     AutoLaborManager alm(out);
-
     alm.process();
-
 
     return CR_OK;
 }

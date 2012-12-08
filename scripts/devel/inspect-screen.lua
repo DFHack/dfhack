@@ -48,8 +48,10 @@ function InspectScreen:onRenderBody(dc)
             fgcolor = (fgcolor+8)%16
             fgstr = fgstr..'+8'
         end
-        dc:string('FG: '):string('NN',{fg=fgcolor}):string(' '):string(''..fgstr,TXT_PEN):newline()
-        dc:string('BG: '):string('NN',{fg=info.bg}):string(' '):string(''..info.bg,TXT_PEN):newline()
+        dc:string('FG: '):string('NN',{fg=fgcolor}):string(' '):string(''..fgstr,TXT_PEN)
+        dc:seek(dc.width-1):char(info.ch,{fg=info.fg,bold=info.bold}):newline()
+        dc:string('BG: '):string('NN',{fg=info.bg}):string(' '):string(''..info.bg,TXT_PEN)
+        dc:seek(dc.width-1):char(info.ch,{fg=COLOR_BLACK,bg=info.bg}):newline()
         local bstring = 'false'
         if info.bold then bstring = 'true' end
         dc:string('Bold: '..bstring):newline():newline()

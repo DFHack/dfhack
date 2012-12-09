@@ -7,6 +7,8 @@
 #include <VTableInterpose.h>
 #include "df/unit.h"
 #include "df/item.h"
+#include "df/item_actual.h"
+#include "df/unit_wound.h"
 #include "df/world.h"
 #include "df/reaction.h"
 #include "df/reaction_reagent_itemst.h"
@@ -82,12 +84,14 @@ static bool is_lua_hook(const std::string &name)
 
 static void handle_reaction_done(color_ostream &out,df::reaction*, df::unit *unit, std::vector<df::item*> *in_items,std::vector<df::reaction_reagent*> *in_reag
     , std::vector<df::item*> *out_items,bool *call_native){};
+static void handle_contaminate_wound(color_ostream &out,df::item_actual*,df::unit* unit, df::unit_wound* wound, uint8_t a1, int16_t a2){};
 
 DEFINE_LUA_EVENT_6(onReactionComplete, handle_reaction_done,df::reaction*, df::unit *, std::vector<df::item*> *,std::vector<df::reaction_reagent*> *,std::vector<df::item*> *,bool *);
-
+DEFINE_LUA_EVENT_5(onItemContaminateWound, handle_contaminate_wound, df::item_actual*,df::unit* , df::unit_wound* , uint8_t , int16_t );
 
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onReactionComplete),
+    DFHACK_LUA_EVENT(onItemContaminateWound),
     DFHACK_LUA_END
 };
 
@@ -120,7 +124,18 @@ struct product_hook : item_product {
 IMPLEMENT_VMETHOD_INTERPOSE(product_hook, produce);
 
 
+struct item_hooks :df::item_actual {
+        typedef df::item_actual interpose_base;
 
+        DEFINE_VMETHOD_INTERPOSE(void, contaminateWound,(df::unit* unit, df::unit_wound* wound, uint8_t a1, int16_t a2))
+        {
+            CoreSuspendClaimer suspend;
+            color_ostream_proxy out(Core::getInstance().getConsole());
+            onItemContaminateWound(out,this,unit,wound,a1,a2);
+            INTERPOSE_NEXT(contaminateWound)(unit,wound,a1,a2);
+        }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(item_hooks, contaminateWound);
 
 
 /*
@@ -176,21 +191,26 @@ static bool find_reactions(color_ostream &out)
 
 static void enable_hooks(bool enable)
 {
-    INTERPOSE_HOOK(product_hook, produce).apply(enable);
+    INTERPOSE_HOOK(item_hooks,contaminateWound).apply(enable);
 }
 static void world_specific_hooks(color_ostream &out,bool enable)
 {
     if(enable && find_reactions(out))
     {
         out.print("Detected reaction hooks - enabling plugin.\n");
-        enable_hooks(true);
+        INTERPOSE_HOOK(product_hook, produce).apply(true);
     }
     else
     {
-        enable_hooks(false);
+       INTERPOSE_HOOK(product_hook, produce).apply(false);
         reactions.clear();
         products.clear();
     }
+}
+void disable_all_hooks(color_ostream &out)
+{
+    world_specific_hooks(out,false);
+    enable_hooks(false);
 }
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
@@ -213,12 +233,12 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     if (Core::getInstance().isWorldLoaded())
         plugin_onstatechange(out, SC_WORLD_LOADED);
-
+    enable_hooks(true);
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    enable_hooks(false);
+    disable_all_hooks(out);
     return CR_OK;
 }

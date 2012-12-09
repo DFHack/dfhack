@@ -55,7 +55,9 @@ DFHack future
     saving you from having to trawl through long lists of materials each time you place one.
   Dfusion plugin:
     Reworked to make use of lua modules, now all the scripts can be used from other scripts.
-
+  New Eventful plugin:
+    A collection of lua events, that will allow new ways to interact with df world.
+    
 DFHack v0.34.11-r2
 
   Internals:

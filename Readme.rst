@@ -2576,3 +2576,34 @@ be bought from caravans. :)
 
 To be really useful this needs patches from bug 808, ``tweak fix-dimensions``
 and ``tweak advmode-contained``.
+
+Eventful
+========
+
+This plugin exports some events to lua thus allowing to run lua functions
+on DF world events.
+
+List of events
+--------------
+
+1. onReactionComplete(reaction,unit,input_items,input_reagents,output_items,call_native) - auto activates if detects reactions starting with ``LUA_HOOK_``. Is called when reaction finishes.
+2. onItemContaminateWound(item,unit,wound,number1,number2) - Is called when item tries to contaminate wound (e.g. stuck in)
+
+Examples
+--------
+Spawn dragon breath on each item attempt to contaminate wound:
+::
+
+  b=require "plugins.eventful"
+    b.onItemContaminateWound.one=function(item,unit,un_wound,x,y)
+        local flw=dfhack.maps.spawnFlow(unit.pos,6,0,0,50000)
+    end
+
+Reaction complete example"
+::
+
+  b.onReactionComplete.one=function(reaction,unit,in_items,in_reag,out_items,call_native)
+    local pos=copyall(unit.pos)
+    dfhack.timeout(100,"ticks",function() dfhack.maps.spawnFlow(pos,6,0,0,50000) end) -- spawn dragonbreath after 100 ticks
+    call_native.value=false --do not call real item creation code
+  end

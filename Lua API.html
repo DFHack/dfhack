@@ -1749,7 +1749,10 @@ options; if multiple interpretations exist, the table will contain multiple keys
 <dd><p class="first last">Maps to an integer in range 0-255. Duplicates a separate &quot;STRING_A???&quot; code for convenience.</p>
 </dd>
 <dt><tt class="docutils literal">_MOUSE_L, _MOUSE_R</tt></dt>
-<dd><p class="first last">If the left or right mouse button is pressed.</p>
+<dd><p class="first last">If the left or right mouse button is being pressed.</p>
+</dd>
+<dt><tt class="docutils literal">_MOUSE_L_DOWN, _MOUSE_R_DOWN</tt></dt>
+<dd><p class="first last">If the left or right mouse button was just pressed.</p>
 </dd>
 </dl>
 <p>If this method is omitted, the screen is dismissed on receival of the <tt class="docutils literal">LEAVESCREEN</tt> key.</p>
@@ -2787,6 +2790,14 @@ before rendering the token.</p>
 <li><p class="first"><tt class="docutils literal">token.tile = pen</tt></p>
 <p>Specifies a pen to paint as one tile before the main part of the token.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">token.width = ...</tt></p>
+<p>If specified either as a value or a callback, the text field is padded
+or truncated to the specified number.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">token.pad_char = <span class="pre">'?'</span></tt></p>
+<p>If specified together with <tt class="docutils literal">width</tt>, the padding area is filled with
+this character instead of just being skipped over.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">token.key = <span class="pre">'...'</span></tt></p>
 <p>Specifies the keycode associated with the token. The string description
 of the key binding is added to the text content of the token.</p>
@@ -2848,7 +2859,9 @@ this may be extended with mouse click support.</p>
 </tr>
 <tr class="field"><th class="field-name">icon_pen:</th><td class="field-body">Default pen for icons.</td>
 </tr>
-<tr class="field"><th class="field-name">on_select:</th><td class="field-body">Selection change callback; called as <tt class="docutils literal">on_select(index,choice)</tt>.</td>
+<tr class="field"><th class="field-name">on_select:</th><td class="field-body">Selection change callback; called as <tt class="docutils literal">on_select(index,choice)</tt>.
+This is also called with <em>nil</em> arguments if <tt class="docutils literal">setChoices</tt> is called
+with an empty list.</td>
 </tr>
 <tr class="field"><th class="field-name">on_submit:</th><td class="field-body">Enter key callback; if specified, the list reacts to the key
 and calls it as <tt class="docutils literal">on_submit(index,choice)</tt>.</td>
@@ -2927,6 +2940,8 @@ supports:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field"><th class="field-name">edit_pen:</th><td class="field-body">If specified, used instead of <tt class="docutils literal">cursor_pen</tt> for the edit field.</td>
+</tr>
+<tr class="field"><th class="field-name">edit_below:</th><td class="field-body">If true, the edit field is placed below the list instead of above.</td>
 </tr>
 <tr class="field"><th class="field-name" colspan="2">not_found_label:</th></tr>
 <tr class="field"><td>&nbsp;</td><td class="field-body">Specifies the text of the label shown when no items match the filter.</td>

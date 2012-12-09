@@ -343,6 +343,50 @@ command_result Core::runCommand(color_ostream &out, const std::string &command)
         return CR_NOT_IMPLEMENTED;
 }
 
+static bool try_autocomplete(color_ostream &con, const std::string &first, std::string &completed)
+{
+    std::vector<std::string> possible;
+
+    auto plug_mgr = Core::getInstance().getPluginManager();
+    for(size_t i = 0; i < plug_mgr->size(); i++)
+    {
+        const Plugin * plug = (plug_mgr->operator[](i));
+        for (size_t j = 0; j < plug->size(); j++)
+        {
+            const PluginCommand &pcmd = plug->operator[](j);
+            if (pcmd.isHotkeyCommand())
+                continue;
+            if (pcmd.name.substr(0, first.size()) == first)
+                possible.push_back(pcmd.name);
+        }
+    }
+
+    bool all = (first.find('/') != std::string::npos);
+
+    std::map<string, string> scripts;
+    listScripts(plug_mgr, scripts, Core::getInstance().getHackPath() + "scripts/", all);
+    for (auto iter = scripts.begin(); iter != scripts.end(); ++iter)
+        if (iter->first.substr(0, first.size()) == first)
+            possible.push_back(iter->first);
+
+    if (possible.size() == 1)
+    {
+        completed = possible[0];
+        fprintf(stderr, "Autocompleted %s to %s\n", first.c_str(), completed.c_str());
+        return true;
+    }
+
+    if (possible.size() > 1 && possible.size() < 8)
+    {
+        std::string out;
+        for (size_t i = 0; i < possible.size(); i++)
+            out += " " + possible[i];
+        con.print("Possible completions:%s\n", out.c_str());
+    }
+
+    return false;
+}
+
 command_result Core::runCommand(color_ostream &con, const std::string &first, vector<string> &parts)
 {
     if (!first.empty())
@@ -665,10 +709,14 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
             if(res == CR_NOT_IMPLEMENTED)
             {
                 auto filename = getHackPath() + "scripts/" + first;
+                std::string completed;
+
                 if (fileExists(filename + ".lua"))
                     res = runLuaScript(con, first, parts);
                 else if (plug_mgr->eval_ruby && fileExists(filename + ".rb"))
                     res = runRubyScript(con, plug_mgr, first, parts);
+                else if (try_autocomplete(con, first, completed))
+                    return runCommand(con, completed, parts);
                 else
                     con.printerr("%s is not a recognized command.\n", first.c_str());
             }
@@ -733,7 +781,6 @@ void fIOthread(void * iodata)
     {
         string command = "";
         int ret = con.lineedit("[DFHack]# ",command, main_history);
-        fprintf(stderr,"Command: [%s]\n",command.c_str());
         if(ret == -2)
         {
             cerr << "Console is shutting down properly." << endl;
@@ -747,14 +794,10 @@ void fIOthread(void * iodata)
         else if(ret)
         {
             // a proper, non-empty command was entered
-            fprintf(stderr,"Adding command to history\n");
             main_history.add(command);
-            fprintf(stderr,"Saving history\n");
             main_history.save("dfhack.history");
         }
         
-        fprintf(stderr,"Running command\n");
-
         auto rv = core->runCommand(con, command);
 
         if (rv == CR_NOT_IMPLEMENTED)

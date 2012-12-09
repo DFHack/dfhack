@@ -1610,7 +1610,10 @@ Supported callbacks and fields are:
     Maps to an integer in range 0-255. Duplicates a separate "STRING_A???" code for convenience.
 
   ``_MOUSE_L, _MOUSE_R``
-    If the left or right mouse button is pressed.
+    If the left or right mouse button is being pressed.
+
+  ``_MOUSE_L_DOWN, _MOUSE_R_DOWN``
+    If the left or right mouse button was just pressed.
 
   If this method is omitted, the screen is dismissed on receival of the ``LEAVESCREEN`` key.
 
@@ -2785,6 +2788,8 @@ It has the following attributes:
 :inactive_pen: If specified, used for the cursor when the widget is not active.
 :icon_pen: Default pen for icons.
 :on_select: Selection change callback; called as ``on_select(index,choice)``.
+            This is also called with *nil* arguments if ``setChoices`` is called
+            with an empty list.
 :on_submit: Enter key callback; if specified, the list reacts to the key
             and calls it as ``on_submit(index,choice)``.
 :on_submit2: Shift-Enter key callback; if specified, the list reacts to the key

@@ -148,8 +148,8 @@ static MaterialDescriptor get_material_in_list(size_t i)
     }
     else if (VIRTUAL_CAST_VAR(spec, df::build_req_choice_specst, ui_build_selector->choices[i]))
     {
-        result.item_type = gen->item_type;
-        result.item_subtype = gen->item_subtype;
+        result.item_type = spec->candidate->getType();
+        result.item_subtype = spec->candidate->getSubtype();
         result.type = spec->candidate->getActualMaterial();
         result.index = spec->candidate->getActualMaterialIndex();
         result.valid = true;
@@ -294,7 +294,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
     {
         if (in_material_choice_stage())
         {
-            if (!last_used_moved)
+            if (!last_used_moved && ui_build_selector->is_grouped)
             {
                 if (auto_choose_materials && get_curr_constr_prefs().size() > 0)
                 {
@@ -304,7 +304,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                         return;
                     }
                 }
-                else if (ui_build_selector->is_grouped)
+                else
                 {
                     last_used_moved = true;
                     move_material_to_top(get_last_used_material());

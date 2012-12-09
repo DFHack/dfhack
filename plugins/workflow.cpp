@@ -322,6 +322,7 @@ struct ItemConstraint {
     bool request_suspend, request_resume;
 
     bool is_active, cant_resume_reported;
+    int low_stock_reported;
 
     TMaterialCache material_cache;
 
@@ -329,7 +330,7 @@ public:
     ItemConstraint()
         : is_craft(false), min_quality(item_quality::Ordinary), is_local(false),
           weight(0), item_amount(0), item_count(0), item_inuse_amount(0), item_inuse_count(0),
-          is_active(false), cant_resume_reported(false)
+          is_active(false), cant_resume_reported(false), low_stock_reported(-1)
     {}
 
     int goalCount() { return config.ival(0); }
@@ -349,6 +350,8 @@ public:
             config.ival(2) &= ~1;
     }
 
+    int curItemStock() { return goalByCount() ? item_count : item_amount; }
+
     void init(const std::string &str)
     {
         config.val() = str;
@@ -358,7 +361,7 @@ public:
 
     void computeRequest()
     {
-        int size = goalByCount() ? item_count : item_amount;
+        int size = curItemStock();
         request_resume = (size <= goalCount()-goalGap());
         request_suspend = (size >= goalCount());
     }
@@ -1322,6 +1325,20 @@ static void update_jobs_by_constraints(color_ostream &out)
             info = ct->material.toString() + " " + info;
         else if (ct->mat_mask.whole)
             info = bitfield_to_string(ct->mat_mask) + " " + info;
+
+        if (ct->low_stock_reported != DF_GLOBAL_VALUE(cur_season,-1))
+        {
+            int count = ct->goalCount(), gap = ct->goalGap();
+
+            if (count >= gap*3 && ct->curItemStock() < std::min(gap*2, (count-gap)/2))
+            {
+                ct->low_stock_reported = DF_GLOBAL_VALUE(cur_season,-1);
+
+                Gui::showAnnouncement("Stock level is low: " + info, COLOR_BROWN, true);
+            }
+            else
+                ct->low_stock_reported = -1;
+        }
 
         if (is_running != ct->is_active)
         {

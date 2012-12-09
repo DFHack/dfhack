@@ -63,12 +63,54 @@ module DFHack
             }
         end
 
+        def unit_testflagcurse(u, flag)
+            return false if u.curse.rem_tags1.send(flag)
+            return true if u.curse.add_tags1.send(flag)
+            return false if u.caste < 0
+            u.race_tg.caste[u.caste].flags[flag]
+        end
+
+        def unit_isfortmember(u)
+            # RE from viewscreen_unitlistst ctor
+            return false if df.gamemode != :DWARF or
+                    u.mood == :Berserk or
+                    unit_testflagcurse(u, :CRAZED) or
+                    unit_testflagcurse(u, :OPPOSED_TO_LIFE) or
+                    u.unknown8.unk2 or
+                    u.flags3.ghostly or
+                    u.flags1.marauder or u.flags1.active_invader or u.flags1.invader_origin or
+                    u.flags1.forest or
+                    u.flags1.merchant or u.flags1.diplomat
+            return true if u.flags1.tame
+            return false if u.flags2.underworld or u.flags2.resident or
+                    u.flags2.visitor_uninvited or u.flags2.visitor or
+                    u.civ_id == -1 or
+                    u.civ_id != df.ui.civ_id
+            true
+        end
+
+        # return the page in viewscreen_unitlist where the unit would appear
+        def unit_category(u)
+            return if u.flags1.left or u.flags1.incoming
+            # return if hostile & unit_invisible(u) (hidden_in_ambush or caged+mapblock.hidden or caged+holder.ambush
+            return :Dead if u.flags1.dead
+            return :Dead if u.flags3.ghostly # hostile ?
+            return :Others if !unit_isfortmember(u)
+            casteflags = u.race_tg.caste[u.caste].flags if u.caste >= 0
+            return :Livestock if casteflags and (casteflags[:PET] or casteflags[:PET_EXOTIC])
+            return :Citizens if unit_testflagcurse(u, :CAN_SPEAK)
+            :Livestock
+            # some other stuff with ui.race_id ? (jobs only?)
+        end
+
         def unit_iscitizen(u)
-            u.race == ui.race_id and u.civ_id == ui.civ_id and !u.flags1.dead and !u.flags1.merchant and !u.flags1.forest and
-            !u.flags1.diplomat and !u.flags2.resident and !u.flags3.ghostly and
-            !u.curse.add_tags1.OPPOSED_TO_LIFE and !u.curse.add_tags1.CRAZED and
-            u.mood != :Berserk
-            # TODO check curse ; currently this should keep vampires, but may include werebeasts
+            unit_category(u) == :Citizens
+        end
+
+        def unit_ishostile(u)
+            unit_category(u) == :Others and
+            # TODO
+            true
         end
 
         # list workers (citizen, not crazy / child / inmood / noble)

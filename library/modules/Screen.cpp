@@ -664,13 +664,23 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
 
     if (enabler && enabler->tracking_on)
     {
-        if (enabler->mouse_lbut) {
+        if (enabler->mouse_lbut_down) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_L");
         }
-        if (enabler->mouse_rbut) {
+        if (enabler->mouse_rbut_down) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_R");
+        }
+        if (enabler->mouse_lbut) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_L_DOWN");
+            enabler->mouse_lbut = 0;
+        }
+        if (enabler->mouse_rbut) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_R_DOWN");
+            enabler->mouse_rbut = 0;
         }
     }
 

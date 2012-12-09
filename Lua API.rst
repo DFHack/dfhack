@@ -1610,7 +1610,10 @@ Supported callbacks and fields are:
     Maps to an integer in range 0-255. Duplicates a separate "STRING_A???" code for convenience.
 
   ``_MOUSE_L, _MOUSE_R``
-    If the left or right mouse button is pressed.
+    If the left or right mouse button is being pressed.
+
+  ``_MOUSE_L_DOWN, _MOUSE_R_DOWN``
+    If the left or right mouse button was just pressed.
 
   If this method is omitted, the screen is dismissed on receival of the ``LEAVESCREEN`` key.
 
@@ -2710,6 +2713,16 @@ containing newlines, or a table with the following possible fields:
 
   Specifies a pen to paint as one tile before the main part of the token.
 
+* ``token.width = ...``
+
+  If specified either as a value or a callback, the text field is padded
+  or truncated to the specified number.
+
+* ``token.pad_char = '?'``
+
+  If specified together with ``width``, the padding area is filled with
+  this character instead of just being skipped over.
+
 * ``token.key = '...'``
 
   Specifies the keycode associated with the token. The string description
@@ -2775,8 +2788,12 @@ It has the following attributes:
 :inactive_pen: If specified, used for the cursor when the widget is not active.
 :icon_pen: Default pen for icons.
 :on_select: Selection change callback; called as ``on_select(index,choice)``.
+            This is also called with *nil* arguments if ``setChoices`` is called
+            with an empty list.
 :on_submit: Enter key callback; if specified, the list reacts to the key
             and calls it as ``on_submit(index,choice)``.
+:on_submit2: Shift-Enter key callback; if specified, the list reacts to the key
+             and calls it as ``on_submit2(index,choice)``.
 :row_height: Height of every row in text lines.
 :icon_width: If not *nil*, the specified number of character columns
              are reserved to the left of the list item for the icons.
@@ -2826,6 +2843,10 @@ The list supports the following methods:
 
   Call the ``on_submit`` callback, as if the Enter key was handled.
 
+* ``list:submit2()``
+
+  Call the ``on_submit2`` callback, as if the Shift-Enter key was handled.
+
 FilteredList class
 ------------------
 
@@ -2836,6 +2857,7 @@ In addition to passing through all attributes supported by List, it
 supports:
 
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
+:edit_below: If true, the edit field is placed below the list instead of above.
 :not_found_label: Specifies the text of the label shown when no items match the filter.
 
 The list choices may include the following attributes:
@@ -2932,6 +2954,36 @@ sort
 Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.
 
+Eventful
+========
+
+This plugin exports some events to lua thus allowing to run lua functions
+on DF world events.
+
+List of events
+--------------
+
+1. onReactionComplete(reaction,unit,input_items,input_reagents,output_items,call_native) - auto activates if detects reactions starting with ``LUA_HOOK_``. Is called when reaction finishes.
+2. onItemContaminateWound(item,unit,wound,number1,number2) - Is called when item tries to contaminate wound (e.g. stuck in)
+
+Examples
+--------
+Spawn dragon breath on each item attempt to contaminate wound:
+::
+
+  b=require "plugins.eventful"
+    b.onItemContaminateWound.one=function(item,unit,un_wound,x,y)
+        local flw=dfhack.maps.spawnFlow(unit.pos,6,0,0,50000)
+    end
+
+Reaction complete example"
+::
+
+  b.onReactionComplete.one=function(reaction,unit,in_items,in_reag,out_items,call_native)
+    local pos=copyall(unit.pos)
+    dfhack.timeout(100,"ticks",function() dfhack.maps.spawnFlow(pos,6,0,0,50000) end) -- spawn dragonbreath after 100 ticks
+    call_native.value=false --do not call real item creation code
+  end
 
 =======
 Scripts

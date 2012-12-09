@@ -291,6 +291,15 @@ int ProtectedJob::cur_tick_idx = 0;
 
 typedef std::map<std::pair<int,int>, bool> TMaterialCache;
 
+static const size_t MAX_HISTORY_SIZE = 28;
+
+enum HistoryItem {
+    HIST_COUNT = 0,
+    HIST_AMOUNT,
+    HIST_INUSE_COUNT,
+    HIST_INUSE_AMOUNT
+};
+
 struct ItemConstraint {
     PersistentDataItem config;
     PersistentDataItem history;
@@ -313,6 +322,7 @@ struct ItemConstraint {
     bool request_suspend, request_resume;
 
     bool is_active, cant_resume_reported;
+    int low_stock_reported;
 
     TMaterialCache material_cache;
 
@@ -320,7 +330,7 @@ public:
     ItemConstraint()
         : is_craft(false), min_quality(item_quality::Ordinary), is_local(false),
           weight(0), item_amount(0), item_count(0), item_inuse_amount(0), item_inuse_count(0),
-          is_active(false), cant_resume_reported(false)
+          is_active(false), cant_resume_reported(false), low_stock_reported(-1)
     {}
 
     int goalCount() { return config.ival(0); }
@@ -340,6 +350,8 @@ public:
             config.ival(2) &= ~1;
     }
 
+    int curItemStock() { return goalByCount() ? item_count : item_amount; }
+
     void init(const std::string &str)
     {
         config.val() = str;
@@ -349,7 +361,7 @@ public:
 
     void computeRequest()
     {
-        int size = goalByCount() ? item_count : item_amount;
+        int size = curItemStock();
         request_resume = (size <= goalCount()-goalGap());
         request_suspend = (size >= goalCount());
     }
@@ -360,36 +372,29 @@ public:
     size_t history_size() {
         return history.data_size() / hist_entry_size;
     }
-    size_t history_base(int idx) {
+    int history_value(int idx, HistoryItem item) {
         size_t hsize = history_size();
-        return ((history.ival(0)+hsize-idx) % hsize) * hist_entry_size;
+        size_t base = ((history.ival(0)+1+idx) % hsize) * hist_entry_size;
+        return history.get_int28(base + item*int28_size);
     }
-    int history_count(int idx) {
-        return history.get_int28(history_base(idx) + 0*int28_size);
-    }
-    int history_amount(int idx) {
-        return history.get_int28(history_base(idx) + 1*int28_size);
-    }
-    int history_inuse_count(int idx) {
-        return history.get_int28(history_base(idx) + 2*int28_size);
-    }
-    int history_inuse_amount(int idx) {
-        return history.get_int28(history_base(idx) + 3*int28_size);
-    }
+    int history_count(int idx) { return history_value(idx, HIST_COUNT); }
+    int history_amount(int idx) { return history_value(idx, HIST_AMOUNT); }
+    int history_inuse_count(int idx) { return history_value(idx, HIST_INUSE_COUNT); }
+    int history_inuse_amount(int idx) { return history_value(idx, HIST_INUSE_AMOUNT); }
 
     void updateHistory()
     {
         size_t buffer_size = history_size();
-        if (buffer_size < 28)
-            history.ensure_data(hist_entry_size*buffer_size++, hist_entry_size);
+        if (buffer_size < MAX_HISTORY_SIZE && size_t(history.ival(0)+1) == buffer_size)
+            history.ensure_data(hist_entry_size*++buffer_size);
         history.ival(0) = (history.ival(0)+1) % buffer_size;
 
         size_t base = history.ival(0) * hist_entry_size;
 
-        history.set_int28(base + 0*int28_size, item_count);
-        history.set_int28(base + 1*int28_size, item_amount);
-        history.set_int28(base + 2*int28_size, item_inuse_count);
-        history.set_int28(base + 3*int28_size, item_inuse_amount);
+        history.set_int28(base + HIST_COUNT*int28_size, item_count);
+        history.set_int28(base + HIST_AMOUNT*int28_size, item_amount);
+        history.set_int28(base + HIST_INUSE_COUNT*int28_size, item_inuse_count);
+        history.set_int28(base + HIST_INUSE_AMOUNT*int28_size, item_inuse_amount);
     }
 };
 
@@ -1321,6 +1326,20 @@ static void update_jobs_by_constraints(color_ostream &out)
         else if (ct->mat_mask.whole)
             info = bitfield_to_string(ct->mat_mask) + " " + info;
 
+        if (ct->low_stock_reported != DF_GLOBAL_VALUE(cur_season,-1))
+        {
+            int count = ct->goalCount(), gap = ct->goalGap();
+
+            if (count >= gap*3 && ct->curItemStock() < std::min(gap*2, (count-gap)/2))
+            {
+                ct->low_stock_reported = DF_GLOBAL_VALUE(cur_season,-1);
+
+                Gui::showAnnouncement("Stock level is low: " + info, COLOR_BROWN, true);
+            }
+            else
+                ct->low_stock_reported = -1;
+        }
+
         if (is_running != ct->is_active)
         {
             if (is_running && ct->request_resume)
@@ -1384,6 +1403,25 @@ static void setEnabled(color_ostream &out, bool enable)
     }
 }
 
+static void push_count_history(lua_State *L, ItemConstraint *icv)
+{
+    size_t hsize = icv->history_size();
+
+    lua_createtable(L, hsize, 0);
+
+    for (size_t i = 0; i < hsize; i++)
+    {
+        lua_createtable(L, 0, 4);
+
+        Lua::SetField(L, icv->history_amount(i), -1, "cur_amount");
+        Lua::SetField(L, icv->history_count(i), -1, "cur_count");
+        Lua::SetField(L, icv->history_inuse_amount(i), -1, "cur_in_use_amount");
+        Lua::SetField(L, icv->history_inuse_count(i), -1, "cur_in_use_count");
+
+        lua_rawseti(L, -2, i+1);
+    }
+}
+
 static void push_constraint(lua_State *L, ItemConstraint *cv)
 {
     lua_newtable(L);
@@ -1430,19 +1468,31 @@ static void push_constraint(lua_State *L, ItemConstraint *cv)
 
     lua_newtable(L);
 
+    bool resumed = false, want_resumed = false;
+
     for (size_t i = 0, j = 0; i < cv->jobs.size(); i++)
     {
         if (!cv->jobs[i]->isLive()) continue;
         Lua::PushDFObject(L, cv->jobs[i]->actual_job);
         lua_rawseti(L, -2, ++j);
+
+        if (cv->jobs[i]->want_resumed) {
+            want_resumed = true;
+            resumed = resumed || cv->jobs[i]->isActuallyResumed();
+        }
     }
 
     lua_setfield(L, ctable, "jobs");
+
+    if (want_resumed && !resumed)
+        Lua::SetField(L, true, ctable, "is_delayed");
 }
 
 static int listConstraints(lua_State *L)
 {
+    lua_settop(L, 2);
     auto job = Lua::CheckDFObject<df::job>(L, 1);
+    bool with_history = lua_toboolean(L, 2);
 
     lua_pushnil(L);
 
@@ -1467,6 +1517,13 @@ static int listConstraints(lua_State *L)
     for (size_t i = 0; i < vec.size(); i++)
     {
         push_constraint(L, vec[i]);
+
+        if (with_history)
+        {
+            push_count_history(L, vec[i]);
+            lua_setfield(L, -2, "history");
+        }
+
         lua_rawseti(L, -2, i+1);
     }
 
@@ -1525,23 +1582,7 @@ static int getCountHistory(lua_State *L)
     ItemConstraint *icv = get_constraint(out, token, NULL, false);
 
     if (icv)
-    {
-        size_t hsize = icv->history_size();
-
-        lua_createtable(L, hsize, 0);
-
-        for (int i = hsize-1; i >= 0; i--)
-        {
-            lua_createtable(L, 0, 4);
-
-            Lua::SetField(L, icv->history_amount(i), -1, "cur_amount");
-            Lua::SetField(L, icv->history_count(i), -1, "cur_count");
-            Lua::SetField(L, icv->history_inuse_amount(i), -1, "cur_in_use_amount");
-            Lua::SetField(L, icv->history_inuse_count(i), -1, "cur_in_use_count");
-
-            lua_rawseti(L, -2, hsize-i); // reverse order
-        }
-    }
+        push_count_history(L, icv);
     else
         lua_pushnil(L);
 

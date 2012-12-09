@@ -9,16 +9,18 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include "modules/Vegetation.h"
 #include "modules/Maps.h"
 #include "modules/Gui.h"
 #include "TileTypes.h"
 #include "modules/MapCache.h"
+#include "df/plant.h"
 
 using std::vector;
 using std::string;
 using namespace DFHack;
 using df::global::world;
+
+const uint32_t sapling_to_tree_threshold = 120 * 28 * 12 * 3; // 3 years
 
 command_result df_grow (color_ostream &out, vector <string> & parameters);
 command_result df_immolate (color_ostream &out, vector <string> & parameters);
@@ -113,7 +115,7 @@ static command_result immolations (color_ostream &out, do_what what, bool shrubs
             if(shrubs && p->flags.bits.is_shrub || trees && !p->flags.bits.is_shrub)
             {
                 if (what == do_immolate)
-                    p->is_burning = true;
+                    p->damage_flags.bits.is_burning = true;
                 p->hitpoints = 0;
                 destroyed ++;
             }
@@ -136,7 +138,7 @@ static command_result immolations (color_ostream &out, do_what what, bool shrubs
                     if(tree->pos.x == x && tree->pos.y == y && tree->pos.z == z)
                     {
                         if(what == do_immolate)
-                            tree->is_burning = true;
+                            tree->damage_flags.bits.is_burning = true;
                         tree->hitpoints = 0;
                         didit = true;
                         break;
@@ -219,7 +221,7 @@ command_result df_grow (color_ostream &out, vector <string> & parameters)
                     if(tileShape(map.tiletypeAt(DFCoord(x,y,z))) == tiletype_shape::SAPLING &&
                         tileSpecial(map.tiletypeAt(DFCoord(x,y,z))) != tiletype_special::DEAD)
                     {
-                        tree->grow_counter = Vegetation::sapling_to_tree_threshold;
+                        tree->grow_counter = sapling_to_tree_threshold;
                     }
                     break;
                 }
@@ -235,7 +237,7 @@ command_result df_grow (color_ostream &out, vector <string> & parameters)
             df::tiletype ttype = map.tiletypeAt(df::coord(p->pos.x,p->pos.y,p->pos.z));
             if(!p->flags.bits.is_shrub && tileShape(ttype) == tiletype_shape::SAPLING && tileSpecial(ttype) != tiletype_special::DEAD)
             {
-                p->grow_counter = Vegetation::sapling_to_tree_threshold;
+                p->grow_counter = sapling_to_tree_threshold;
             }
         }
     }

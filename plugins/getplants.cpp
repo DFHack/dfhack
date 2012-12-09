@@ -11,8 +11,8 @@
 #include "df/map_block.h"
 #include "df/tile_dig_designation.h"
 #include "df/plant_raw.h"
+#include "df/plant.h"
 
-#include "modules/Vegetation.h"
 #include <set>
 
 using std::string;

@@ -110,7 +110,8 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
  *  1.  Combat ammo and ammo without any allowed use can be stored
  *      in BOXes marked for Squad Equipment, either directly or via
  *      containing room. No-allowed-use ammo is assumed to be reserved
- *      for emergency combat use, or something like that.
+ *      for emergency combat use, or something like that; however if
+ *      it is already stored in a training chest, it won't be moved.
  *  1a. If assigned to a squad position, that box can be used _only_
  *      for ammo assigned to that specific _squad_. Otherwise, if
  *      multiple squads can use this room, they will store their
@@ -158,8 +159,8 @@ static bool is_squad_ammo(df::item *item, df::squad *squad, bool combat, bool tr
         bool cs = spec->flags.bits.use_combat;
         bool ts = spec->flags.bits.use_training;
 
-        // no-use ammo assumed to be combat
-        if (((cs || !ts) && combat) || (ts && train))
+        // no-use ammo assumed to fit any category
+        if (((cs || !ts) && combat) || ((ts || !cs) && train))
         {
             if (binsearch_index(spec->assigned, item->id) >= 0)
                 return true;

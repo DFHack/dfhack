@@ -578,6 +578,11 @@ static VALUE rb_dfmemory_read_float(VALUE self, VALUE addr)
     return rb_float_new(*(float*)rb_num2ulong(addr));
 }
 
+static VALUE rb_dfmemory_read_double(VALUE self, VALUE addr)
+{
+    return rb_float_new(*(double*)rb_num2ulong(addr));
+}
+
 
 // memory writing (buffer)
 static VALUE rb_dfmemory_write(VALUE self, VALUE addr, VALUE raw)
@@ -610,6 +615,12 @@ static VALUE rb_dfmemory_write_int32(VALUE self, VALUE addr, VALUE val)
 static VALUE rb_dfmemory_write_float(VALUE self, VALUE addr, VALUE val)
 {
     *(float*)rb_num2ulong(addr) = rb_num2dbl(val);
+    return Qtrue;
+}
+
+static VALUE rb_dfmemory_write_double(VALUE self, VALUE addr, VALUE val)
+{
+    *(double*)rb_num2ulong(addr) = rb_num2dbl(val);
     return Qtrue;
 }
 
@@ -968,12 +979,14 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "memory_read_int16", RUBY_METHOD_FUNC(rb_dfmemory_read_int16), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_read_int32", RUBY_METHOD_FUNC(rb_dfmemory_read_int32), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_read_float", RUBY_METHOD_FUNC(rb_dfmemory_read_float), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_read_double", RUBY_METHOD_FUNC(rb_dfmemory_read_double), 1);
 
     rb_define_singleton_method(rb_cDFHack, "memory_write", RUBY_METHOD_FUNC(rb_dfmemory_write), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_int8",  RUBY_METHOD_FUNC(rb_dfmemory_write_int8),  2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_int16", RUBY_METHOD_FUNC(rb_dfmemory_write_int16), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_int32", RUBY_METHOD_FUNC(rb_dfmemory_write_int32), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_float", RUBY_METHOD_FUNC(rb_dfmemory_write_float), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_write_double", RUBY_METHOD_FUNC(rb_dfmemory_write_double), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_check", RUBY_METHOD_FUNC(rb_dfmemory_check), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_patch", RUBY_METHOD_FUNC(rb_dfmemory_patch), 2);
 

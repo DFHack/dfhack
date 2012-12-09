@@ -7,10 +7,12 @@
 
 //#include "df/viewscreen_petst.h"
 #include "df/viewscreen_storesst.h"
+#include "df/viewscreen_layer_stockpilest.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/interface_key.h"
 #include "df/interfacest.h"
+#include "df/layer_object_listst.h"
 
 using std::set;
 using std::vector;
@@ -77,6 +79,11 @@ public:
 
         reset_all();
         return true;
+    }
+
+    bool is_valid()
+    {
+        return valid;
     }
 
     // A new keystroke is received in a searchable screen
@@ -164,9 +171,9 @@ protected:
     const S *viewscreen;
     vector <T> saved_list1, reference_list;
     vector <V> saved_list2;
+    vector <V> *sort_list2;
     vector <int> saved_indexes;
 
-    bool valid;
     bool redo_search;
     bool track_secondary_values;
     string search_string;
@@ -240,10 +247,15 @@ protected:
                     }
                 }
 
-                saved_list2[saved_indexes[i]] = (*sort_list2)[adjusted_item_index];
+                update_saved_secondary_list_item(saved_indexes[i], adjusted_item_index);
             }
             saved_indexes.clear();
         }
+    }
+
+    virtual void update_saved_secondary_list_item(size_t i, size_t j)
+    {
+        saved_list2[i] = (*sort_list2)[j];
     }
 
     // Store a copy of filtered list, used later to work out if filtered list has been sorted after filtering
@@ -254,7 +266,7 @@ protected:
     }
 
     // Shortcut to clear the search immediately
-    void clear_search()
+    virtual void clear_search()
     {
         if (saved_list1.size() > 0)
         {
@@ -273,7 +285,7 @@ protected:
     }
 
     // The actual sort
-    void do_search()
+    virtual void do_search()
     {
         if (search_string.length() == 0)
         {
@@ -318,7 +330,8 @@ protected:
 
         store_reference_values(); //Keep a copy, in case user sorts new list
 
-        *cursor_pos = 0;
+        if (cursor_pos)
+            *cursor_pos = 0;
     }
 
     virtual bool should_check_input(set<df::interface_key> *input)
@@ -346,10 +359,9 @@ protected:
 
 private:
     vector <T> *sort_list1;
-    vector <V> *sort_list2;
     int *cursor_pos;
     char select_key;
-
+    bool valid;
     bool entry_mode;
 
     df::interface_key select_token;
@@ -359,7 +371,8 @@ private:
 };
 template <class S, class T, class V> search_parent<S,T,V> *search_parent<S,T,V> ::lock = NULL;
 
-// Parent struct for the hooks
+// Parent struct for the hooks, use optional param D to generate multiple classes with same T & V
+// but different static modules
 template <class T, class V, typename D = void>
 struct search_hook : T
 {
@@ -437,7 +450,7 @@ public:
         if (screen != viewscreen && !reset_on_change())
             return false;
 
-        if (!valid)
+        if (!is_valid())
         {
             viewscreen = screen;
             search_parent::init(&screen->item_cursor, &screen->items);
@@ -501,7 +514,7 @@ public:
         if (screen != viewscreen && !reset_on_change())
             return false;
 
-        if (!valid)
+        if (!is_valid())
         {
             viewscreen = screen;
             search_parent::init(&screen->cursor_pos[viewscreen->page], &screen->units[viewscreen->page], &screen->jobs[viewscreen->page]);
@@ -608,7 +621,7 @@ public:
         if (screen != viewscreen && !reset_on_change())
             return false;
 
-        if (!valid)
+        if (!is_valid())
         {
             viewscreen = screen;
             search_parent::init(&screen->trader_cursor, &screen->trader_items, &screen->trader_selected, 'q');
@@ -637,7 +650,7 @@ public:
         if (screen != viewscreen && !reset_on_change())
             return false;
 
-        if (!valid)
+        if (!is_valid())
         {
             viewscreen = screen;
             search_parent::init(&screen->broker_cursor, &screen->broker_items, &screen->broker_selected, 'w');
@@ -657,6 +670,84 @@ template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, render);
 //
 
 
+//
+// START: Stockpile screen search
+//
+
+class stockpile_search : public search_parent<df::viewscreen_layer_stockpilest, string *, bool *>
+{
+public:
+    void update_saved_secondary_list_item(size_t i, size_t j)
+    {
+        *saved_list2[i] = *(*sort_list2)[j];
+    }
+
+    string get_element_description(string *element) const
+    {
+        return *element;
+    }
+
+    void render() const
+    {
+        print_search_option(51, 23);
+    }
+
+    static df::layer_object_listst *getLayerList(const df::viewscreen_layer *layer, int idx)
+    {
+        return virtual_cast<df::layer_object_listst>(vector_get(layer->layer_objects,idx));
+    }
+
+    bool init(df::viewscreen_layer_stockpilest *screen)
+    {
+        if (screen != viewscreen && !reset_on_change())
+            return false;
+
+        auto list3 = getLayerList(screen, 2);
+        if (!list3->active)
+        {
+            if (is_valid())
+            {
+                clear_search();
+                reset_all();
+            }
+
+            return false;
+        }
+
+        if (!is_valid())
+        {
+            viewscreen = screen;
+            search_parent::init(&list3->cursor, &screen->item_names, &screen->item_status);
+            track_secondary_values = true;
+        }
+
+        return true;
+    }
+
+    void do_search() 
+    {
+        search_parent::do_search();
+        auto list3 = getLayerList(viewscreen, 2);
+        list3->num_entries = viewscreen->item_names.size();
+    }
+
+    void clear_search()
+    {
+        search_parent::clear_search();
+        auto list3 = getLayerList(viewscreen, 2);
+        list3->num_entries = viewscreen->item_names.size();
+    }
+};
+
+typedef search_hook<df::viewscreen_layer_stockpilest, stockpile_search> stockpile_search_hook;
+template<> IMPLEMENT_VMETHOD_INTERPOSE(stockpile_search_hook, feed);
+template<> IMPLEMENT_VMETHOD_INTERPOSE(stockpile_search_hook, render);
+
+//
+// END: Stockpile screen search
+//
+
+
 DFHACK_PLUGIN("search");
 
 
@@ -670,7 +761,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         !INTERPOSE_HOOK(trade_search_fort_hook, feed).apply() ||
         !INTERPOSE_HOOK(trade_search_fort_hook, render).apply() ||
         !INTERPOSE_HOOK(stocks_search_hook, feed).apply() ||
-        !INTERPOSE_HOOK(stocks_search_hook, render).apply())
+        !INTERPOSE_HOOK(stocks_search_hook, render).apply() ||
+        !INTERPOSE_HOOK(stockpile_search_hook, feed).apply() ||
+        !INTERPOSE_HOOK(stockpile_search_hook, render).apply())
         out.printerr("Could not insert Search hooks!\n");
 
     return CR_OK;
@@ -686,6 +779,8 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     INTERPOSE_HOOK(trade_search_fort_hook, render).remove();
     INTERPOSE_HOOK(stocks_search_hook, feed).remove();
     INTERPOSE_HOOK(stocks_search_hook, render).remove();
+    INTERPOSE_HOOK(stockpile_search_hook, feed).remove();
+    INTERPOSE_HOOK(stockpile_search_hook, render).remove();
     return CR_OK;
 }
 
@@ -697,6 +792,7 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
         trade_search_merc_hook::module.reset_on_change();
         trade_search_fort_hook::module.reset_on_change();
         stocks_search_hook::module.reset_on_change();
+        stockpile_search_hook::module.reset_on_change();
         break;
 
     default:

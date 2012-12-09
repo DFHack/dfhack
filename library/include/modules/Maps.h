@@ -32,7 +32,6 @@ distribution.
 
 #include "Export.h"
 #include "Module.h"
-#include "modules/Vegetation.h"
 #include <vector>
 #include "BitArray.h"
 #include "modules/Materials.h"

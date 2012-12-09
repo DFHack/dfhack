@@ -47,9 +47,12 @@ def lever_descr(bld, idx=nil)
 	}.flatten.each { |r|
 		# linked building description
 		tg = r.building_tg
-		state = tg.gate_flags.closed ? 'closed' : 'opened'
-		state << ', closing' if tg.gate_flags.closing
-		state << ', opening' if tg.gate_flags.opening
+		state = ''
+		if tg.respond_to?(:gate_flags)
+			state << (tg.gate_flags.closed ? 'closed' : 'opened')
+			state << ", closing (#{tg.timer})" if tg.gate_flags.closing
+			state << ", opening (#{tg.timer})" if tg.gate_flags.opening
+		end
 
 		ret << (descr + " linked to #{tg._rtti_classname} ##{tg.id} @[#{tg.centerx}, #{tg.centery}, #{tg.z}] #{state}")
 

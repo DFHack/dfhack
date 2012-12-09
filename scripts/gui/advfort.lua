@@ -382,7 +382,16 @@ function isSuitableItem(job_item,item)
         end
     end
     if job_item.reaction_class~="" then
-    
+        local ok=false
+        for k,v in pairs(matinfo.material.reaction_class) do
+            if v.value==job_item.reaction_class then
+                ok=true
+                break
+            end
+        end
+        if not ok then
+            return false, "no material reaction class"
+        end
     end
     return true
 end
@@ -455,9 +464,9 @@ function AssignJobItems(args)
             if not used_item_id[cur_item.id] then
                 
                 local item_suitable,msg=isSuitableItem(trg_job_item,cur_item) 
-                --if msg then
-                --    print(cur_item,msg)
-                --end
+                if msg then
+                    print(cur_item,msg)
+                end
                 
                 if (item_counts[job_id]>0 and item_suitable) or settings.build_by_items then
                     cur_item.flags.in_job=true

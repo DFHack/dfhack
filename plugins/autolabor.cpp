@@ -1762,6 +1762,8 @@ private:
                     {
                         state = OTHER;      // dwarfs unable to grasp are incapable of nearly all labors
                         dwarf->clear_all = true;
+                        if (print_debug)
+                            out.print ("Dwarf %s is disabled, will not be assigned labors\n", dwarf->dwarf->name.first_name.c_str());
                     }
                     else
                         state = IDLE;
@@ -1795,7 +1797,7 @@ private:
                 dwarf->state = state;
 
                 if (print_debug)
-                    out.print("Dwarf \"%s\": state %s\n", dwarf->dwarf->name.first_name.c_str(), state_names[dwarf->state]);
+                    out.print("Dwarf \"%s\": state %s %d\n", dwarf->dwarf->name.first_name.c_str(), state_names[dwarf->state], dwarf->clear_all);
 
                 // determine if dwarf has medical needs
                 if (dwarf->dwarf->health) 
@@ -1884,8 +1886,7 @@ private:
                         dwarf->clear_labor(labor);
                     }
                 }
-
-                if ((state == IDLE) && !dwarf->clear_all)
+                else if (state == IDLE)
                     available_dwarfs.push_back(dwarf);
 
             }
@@ -1902,6 +1903,8 @@ public:
         cnt_recover_wounded = cnt_diagnosis = cnt_immobilize = cnt_dressing = cnt_cleaning = cnt_surgery = cnt_suture =
             cnt_setting = cnt_traction = cnt_crutch = 0;
         need_food_water = 0;
+
+        trader_requested = false;
 
         FOR_ENUM_ITEMS(unit_labor, l)
         {

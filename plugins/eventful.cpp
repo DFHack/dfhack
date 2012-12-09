@@ -2,35 +2,15 @@
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
-#include <modules/Gui.h>
-#include <modules/Screen.h>
-#include <modules/Maps.h>
-#include <modules/Job.h>
-#include <modules/Items.h>
-#include <modules/Units.h>
-#include <TileTypes.h>
-#include <vector>
-#include <cstdio>
-#include <stack>
-#include <string>
-#include <cmath>
 #include <string.h>
 
 #include <VTableInterpose.h>
-#include "df/item_liquid_miscst.h"
-#include "df/item_constructed.h"
-#include "df/builtin_mats.h"
+#include "df/unit.h"
+#include "df/item.h"
 #include "df/world.h"
-#include "df/job.h"
-#include "df/job_item.h"
-#include "df/job_item_ref.h"
-#include "df/ui.h"
-#include "df/report.h"
 #include "df/reaction.h"
 #include "df/reaction_reagent_itemst.h"
 #include "df/reaction_product_itemst.h"
-#include "df/matter_state.h"
-#include "df/contaminant.h"
 
 #include "MiscUtils.h"
 #include "LuaTools.h"
@@ -47,7 +27,7 @@ using df::global::ui;
 
 typedef df::reaction_product_itemst item_product;
 
-DFHACK_PLUGIN("reactionhooks");
+DFHACK_PLUGIN("eventful");
 
 struct ReagentSource {
     int idx;
@@ -96,93 +76,9 @@ static bool is_lua_hook(const std::string &name)
     return name.size() > 9 && memcmp(name.data(), "LUA_HOOK_", 9) == 0;
 }
 
-static void find_material(int *type, int *index, df::item *input, MaterialSource &mat)
-{
-    if (input && mat.reagent)
-    {
-        MaterialInfo info(input);
-
-        if (mat.product)
-        {
-            if (!info.findProduct(info, mat.product_name))
-            {
-                color_ostream_proxy out(Core::getInstance().getConsole());
-                out.printerr("Cannot find product '%s'\n", mat.product_name.c_str());
-            }
-        }
-
-        *type = info.type;
-        *index = info.index;
-    }
-    else
-    {
-        *type = mat.mat_type;
-        *index = mat.mat_index;
-    }
-}
-
-
 /*
  * Hooks
  */
-
-typedef std::map<int, std::vector<df::item*> > item_table;
-
-static void index_items(item_table &table, df::job *job, ReactionInfo *info)
-{
-    for (int i = job->items.size()-1; i >= 0; i--)
-    {
-        auto iref = job->items[i];
-        if (iref->job_item_idx < 0) continue;
-        auto iitem = job->job_items[iref->job_item_idx];
-
-        if (iitem->contains.empty())
-        {
-            table[iitem->reagent_index].push_back(iref->item);
-        }
-        else
-        {
-            std::vector<df::item*> contents;
-            Items::getContainedItems(iref->item, &contents);
-
-            for (int j = contents.size()-1; j >= 0; j--)
-            {
-                for (int k = iitem->contains.size()-1; k >= 0; k--)
-                {
-                    int ridx = iitem->contains[k];
-                    auto reag = info->react->reagents[ridx];
-
-                    if (reag->matchesChild(contents[j], info->react, iitem->reaction_id))
-                        table[ridx].push_back(contents[j]);
-                }
-            }
-        }
-    }
-}
-
-df::item* find_item(ReagentSource &info, item_table &table)
-{
-    if (!info.reagent)
-        return NULL;
-    if (table[info.idx].empty())
-        return NULL;
-    return table[info.idx].back();
-}
-
-
-
-df::item* find_item(
-    ReagentSource &info,
-    std::vector<df::reaction_reagent*> *in_reag,
-    std::vector<df::item*> *in_items
-) {
-    if (!info.reagent)
-        return NULL;
-    for (int i = in_items->size(); i >= 0; i--)
-        if ((*in_reag)[i] == info.reagent)
-            return (*in_items)[i];
-    return NULL;
-}
 
 static void handle_reaction_done(color_ostream &out,df::reaction*, df::unit *unit, std::vector<df::item*> *in_items,std::vector<df::reaction_reagent*> *in_reag
     , std::vector<df::item*> *out_items,bool *call_native){};
@@ -282,23 +178,29 @@ static void enable_hooks(bool enable)
 {
     INTERPOSE_HOOK(product_hook, produce).apply(enable);
 }
-
+static void world_specific_hooks(color_ostream &out,bool enable)
+{
+    if(enable && find_reactions(out))
+    {
+        out.print("Detected reaction hooks - enabling plugin.\n");
+        enable_hooks(true);
+    }
+    else
+    {
+        enable_hooks(false);
+        reactions.clear();
+        products.clear();
+    }
+}
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
     case SC_WORLD_LOADED:
-        if (find_reactions(out))
-        {
-            out.print("Detected reaction hooks - enabling plugin.\n");
-            enable_hooks(true);
-        }
-        else
-            enable_hooks(false);
+        world_specific_hooks(out,true);
         break;
     case SC_WORLD_UNLOADED:
-        enable_hooks(false);
-        reactions.clear();
-        products.clear();
+        world_specific_hooks(out,false);
+        
         break;
     default:
         break;

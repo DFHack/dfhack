@@ -324,6 +324,7 @@ function RemoveBuilding(args)
 end
 
 function isSuitableItem(job_item,item)
+    --todo butcher test
     if job_item.item_type~=-1 then
         if item:getType()~= job_item.item_type then
             return false, "type"
@@ -369,7 +370,16 @@ function isSuitableItem(job_item,item)
         end
     end
     if job_item.has_material_reaction_product~="" then
-    
+        local ok=false
+        for k,v in pairs(matinfo.material.reaction_product.id) do
+            if v.value==job_item.has_material_reaction_product then
+                ok=true
+                break
+            end
+        end
+        if not ok then
+            return false, "no material reaction product"
+        end
     end
     if job_item.reaction_class~="" then
     
@@ -438,8 +448,6 @@ function AssignJobItems(args)
     local item_counts={}
     for job_id, trg_job_item in ipairs(job.job_items) do
         item_counts[job_id]=trg_job_item.quantity
-        printall(trg_job_item)
-        printall(trg_job_item.flags2)
     end
     local used_item_id={}
     for job_id, trg_job_item in ipairs(job.job_items) do
@@ -455,7 +463,7 @@ function AssignJobItems(args)
                     cur_item.flags.in_job=true
                     job.items:insert("#",{new=true,item=cur_item,role=df.job_item_ref.T_role.Reagent,job_item_idx=job_id})
                     item_counts[job_id]=item_counts[job_id]-cur_item:getTotalDimension()
-                    print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),item_counts[job_id]))
+                    --print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),item_counts[job_id]))
                     used_item_id[cur_item.id]=true
                 end
             end

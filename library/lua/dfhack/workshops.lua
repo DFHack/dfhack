@@ -559,9 +559,11 @@ function getJobs(buildingId,workshopId,customId)
         return nil
     end
     if c_jobs==nil then
-        return 
+        c_jobs={}
+    else
+        c_jobs=utils.clone(c_jobs,true)
     end
-    c_jobs=utils.clone(c_jobs,true)
+    
     addReactionJobs(c_jobs,buildingId,workshopId,customId)
     for jobId,contents in pairs(c_jobs) do
         if jobId~="defaults" then

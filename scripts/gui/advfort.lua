@@ -464,9 +464,9 @@ function AssignJobItems(args)
             if not used_item_id[cur_item.id] then
                 
                 local item_suitable,msg=isSuitableItem(trg_job_item,cur_item) 
-                if msg then
-                    print(cur_item,msg)
-                end
+                --if msg then
+                --    print(cur_item,msg)
+                --end
                 
                 if (item_counts[job_id]>0 and item_suitable) or settings.build_by_items then
                     cur_item.flags.in_job=true

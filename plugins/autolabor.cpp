@@ -484,11 +484,12 @@ struct dwarf_info_t
     int high_skill;
 
     bool has_children;
+    bool armed;
 
     df::unit_labor using_labor;
 
     dwarf_info_t(df::unit* dw) : dwarf(dw), clear_all(false), has_axe(false), has_pick(false), has_crossbow(false), 
-        state(OTHER), high_skill(0), has_children(false)
+        state(OTHER), high_skill(0), has_children(false), armed(false)
     {
     }
 
@@ -1783,7 +1784,7 @@ private:
                         df::unit_labor labor = labor_mapper->find_job_labor(dwarf->dwarf->job.current_job);
                         if (labor != df::unit_labor::NONE)
                         {
-                            labor_needed[labor]--;
+                            dwarf->using_labor = labor;
                             if (!dwarf->dwarf->status.labors[labor] && print_debug)
                             {
                                 out.print("AUTOLABOR: dwarf %s (id %d) is doing job %s(%d) but is not enabled for labor %s(%d).\n",
@@ -1852,6 +1853,7 @@ private:
                     df::unit_inventory_item* ui = dwarf->dwarf->inventory[j];
                     if (ui->mode == df::unit_inventory_item::Weapon && ui->item->isWeapon())
                     {
+                        dwarf->armed = true;
                         df::itemdef_weaponst* weapondef = ((df::item_weaponst*)(ui->item))->subtype;
                         df::job_skill weaponsk = (df::job_skill) weapondef->skill_melee;
                         df::job_skill rangesk = (df::job_skill) weapondef->skill_ranged;
@@ -1886,7 +1888,7 @@ private:
                         dwarf->clear_labor(labor);
                     }
                 }
-                else if (state == IDLE)
+                else if (state == IDLE || state == BUSY)
                     available_dwarfs.push_back(dwarf);
 
             }
@@ -2071,11 +2073,13 @@ public:
                 {
                     dwarf_info_t* d = (*k);
                     int skill_level = 0;
+                    int xp = 0;
                     if (skill != df::job_skill::NONE) 
                     {
                         skill_level = Units::getEffectiveSkill(d->dwarf, skill);
+                        xp = Units::getExperience(d->dwarf, skill, false);
                     }
-                    int score = skill_level * 100 - (d->high_skill - skill_level) * 500;
+                    int score = skill_level * 100 - (d->high_skill - skill_level) * 500 + (xp / (skill_level + 5));
                     if (d->dwarf->status.labors[labor])
                         score += 500;
                     if ((labor == df::unit_labor::MINE && d->has_pick) ||
@@ -2084,7 +2088,10 @@ public:
                         score += 500;
                     if (d->has_children && labor_outside[labor])
                         score -= 5000;
-
+                    if (d->armed && labor_outside[labor])
+                        score += 1000;
+                    if (d->state == BUSY && d->using_labor == labor)
+                        score += 5000;
                     if (score > best_score)
                     {
                         bestdwarf = k;

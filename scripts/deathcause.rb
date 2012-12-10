@@ -10,6 +10,20 @@ def display_death_event(e)
 	puts str.chomp(',') + '.'
 end
 
+def display_death_unit(u)
+	death_info = u.counters.death_tg
+	killer = death_info.killer_tg if death_info
+
+	str = "The #{u.race_tg.name[0]}"
+	str << " #{u.name}" if u.name.has_name
+	str << " died"
+	str << " in year #{death_info.event_year}" if death_info
+	str << " (cause: #{u.counters.death_cause.to_s.downcase})," if u.counters.death_cause != -1
+	str << " killed by the #{killer.race_tg.name[0]} #{killer.name}" if killer
+
+	puts str.chomp(',') + '.'
+end
+
 item = df.item_find(:selected)
 unit = df.unit_find(:selected)
 
@@ -27,8 +41,11 @@ if not hf
 	puts "Please select a corpse in the loo'k' menu, or an unit in the 'u'nitlist screen"
 
 elsif hf == -1
-	# TODO try to retrieve info from the unit (u = item.unit_tg)
-	puts "Not a historical figure, cannot death find info"
+	if unit ||= item.unit_tg
+		display_death_unit(unit)
+	else
+		puts "Not a historical figure, cannot death find info"
+	end
 
 else
 	histfig = df.world.history.figures.binsearch(hf)

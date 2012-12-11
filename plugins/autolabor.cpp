@@ -2059,7 +2059,7 @@ public:
             std::list<dwarf_info_t*>::iterator bestdwarf = available_dwarfs.begin();
 
             int best_score = INT_MIN;
-            df::unit_labor best_labor = df::unit_labor::NONE;
+            df::unit_labor best_labor = df::unit_labor::CLEAN;
 
             for (auto j = to_assign.begin(); j != to_assign.end(); j++) 
             {
@@ -2079,19 +2079,19 @@ public:
                         skill_level = Units::getEffectiveSkill(d->dwarf, skill);
                         xp = Units::getExperience(d->dwarf, skill, false);
                     }
-                    int score = skill_level * 100 - (d->high_skill - skill_level) * 500 + (xp / (skill_level + 5));
+                    int score = skill_level * 1000 - (d->high_skill - skill_level) * 2000 + (xp / (skill_level + 5) * 10);
                     if (d->dwarf->status.labors[labor])
                         score += 500;
                     if ((labor == df::unit_labor::MINE && d->has_pick) ||
                         (labor == df::unit_labor::CUTWOOD && d->has_axe) ||
                         (labor == df::unit_labor::HUNT && d->has_crossbow))
-                        score += 500;
+                        score += 3000;
                     if (d->has_children && labor_outside[labor])
-                        score -= 5000;
+                        score -= 10000;
                     if (d->armed && labor_outside[labor])
-                        score += 1000;
-                    if (d->state == BUSY && d->using_labor == labor)
                         score += 5000;
+                    if (d->state == BUSY && d->using_labor == labor)
+                        score += 7500;
                     if (score > best_score)
                     {
                         bestdwarf = k;

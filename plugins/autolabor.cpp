@@ -1178,7 +1178,7 @@ public:
         job_to_labor_table[df::job_type::DiagnosePatient]		= jlf_const(df::unit_labor::DIAGNOSE) ;
         job_to_labor_table[df::job_type::ImmobilizeBreak]		= jlf_const(df::unit_labor::BONE_SETTING) ;
         job_to_labor_table[df::job_type::DressWound]			= jlf_const(df::unit_labor::DRESSING_WOUNDS) ;
-        job_to_labor_table[df::job_type::CleanPatient]			= jlf_const(df::unit_labor::CLEAN) ;
+        job_to_labor_table[df::job_type::CleanPatient]			= jlf_const(df::unit_labor::DRESSING_WOUNDS) ;
         job_to_labor_table[df::job_type::Surgery]				= jlf_const(df::unit_labor::SURGERY) ;
         job_to_labor_table[df::job_type::Suture]				= jlf_const(df::unit_labor::SUTURING);
         job_to_labor_table[df::job_type::SetBone]				= jlf_const(df::unit_labor::BONE_SETTING) ;
@@ -1949,7 +1949,7 @@ public:
         labor_needed[df::unit_labor::DIAGNOSE]		  += cnt_diagnosis;
         labor_needed[df::unit_labor::BONE_SETTING]    += cnt_immobilize;
         labor_needed[df::unit_labor::DRESSING_WOUNDS] += cnt_dressing;
-        labor_needed[df::unit_labor::CLEAN]			  += cnt_cleaning;
+        labor_needed[df::unit_labor::DRESSING_WOUNDS] += cnt_cleaning;
         labor_needed[df::unit_labor::SURGERY]         += cnt_surgery;
         labor_needed[df::unit_labor::SUTURING]        += cnt_suture;
         labor_needed[df::unit_labor::BONE_SETTING]    += cnt_setting;

@@ -1217,7 +1217,7 @@ public:
         job_to_labor_table[df::job_type::ConstructCrutch]		= jlf_make_furniture;
         job_to_labor_table[df::job_type::ConstructTractionBench] = jlf_const(df::unit_labor::MECHANIC);
         job_to_labor_table[df::job_type::CleanSelf]				= jlf_no_labor;
-        job_to_labor_table[df::job_type::BringCrutch]			= jlf_no_labor;
+        job_to_labor_table[df::job_type::BringCrutch]			= jlf_const(df::unit_labor::BONE_SETTING);
         job_to_labor_table[df::job_type::ApplyCast]				= jlf_const(df::unit_labor::BONE_SETTING);
         job_to_labor_table[df::job_type::CustomReaction]        = new jlfunc_custom();
         job_to_labor_table[df::job_type::ConstructSlab]			= jlf_make_furniture;
@@ -1954,7 +1954,7 @@ public:
         labor_needed[df::unit_labor::SUTURING]        += cnt_suture;
         labor_needed[df::unit_labor::BONE_SETTING]    += cnt_setting;
         labor_needed[df::unit_labor::BONE_SETTING]    += cnt_traction;
-        labor_needed[df::unit_labor::HAUL_ITEM]       += cnt_crutch;
+        labor_needed[df::unit_labor::BONE_SETTING]    += cnt_crutch;
 
         labor_needed[df::unit_labor::FEED_WATER_CIVILIANS] += need_food_water;
 

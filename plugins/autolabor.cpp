@@ -385,89 +385,96 @@ struct labor_info
 
 };
 
+enum tools_enum {
+    TOOL_NONE, TOOL_PICK, TOOL_AXE, TOOL_CROSSBOW,
+    TOOLS_MAX
+};
+
+
 struct labor_default
 {
     int priority;
     int maximum_dwarfs;
+    tools_enum tool;
 };
 
 static std::vector<struct labor_info> labor_infos;
 
 static const struct labor_default default_labor_infos[] = {
-    /* MINE */                  {200, 0},
-    /* HAUL_STONE */            {100, 0},
-    /* HAUL_WOOD */             {100, 0},
-    /* HAUL_BODY */             {200, 0},
-    /* HAUL_FOOD */             {300, 0},
-    /* HAUL_REFUSE */           {100, 0},
-    /* HAUL_ITEM */             {100, 0},
-    /* HAUL_FURNITURE */        {100, 0},
-    /* HAUL_ANIMAL */           {100, 0},
-    /* CLEAN */                 {200, 0},
-    /* CUTWOOD */               {200, 0},
-    /* CARPENTER */             {200, 0},
-    /* DETAIL */                {200, 0},
-    /* MASON */                 {200, 0},
-    /* ARCHITECT */             {400, 0},
-    /* ANIMALTRAIN */           {200, 0},
-    /* ANIMALCARE */            {200, 0},
-    /* DIAGNOSE */              {1000, 0},
-    /* SURGERY */               {1000, 0},
-    /* BONE_SETTING */          {1000, 0},
-    /* SUTURING */              {1000, 0},
-    /* DRESSING_WOUNDS */       {1000, 0},
-    /* FEED_WATER_CIVILIANS */  {1000, 0},
-    /* RECOVER_WOUNDED */       {200, 0},
-    /* BUTCHER */               {200, 0},
-    /* TRAPPER */               {200, 0},
-    /* DISSECT_VERMIN */        {200, 0},
-    /* LEATHER */               {200, 0},
-    /* TANNER */                {200, 0},
-    /* BREWER */                {200, 0},
-    /* ALCHEMIST */             {200, 0},
-    /* SOAP_MAKER */            {200, 0},
-    /* WEAVER */                {200, 0},
-    /* CLOTHESMAKER */          {200, 0},
-    /* MILLER */                {200, 0},
-    /* PROCESS_PLANT */         {200, 0},
-    /* MAKE_CHEESE */           {200, 0},
-    /* MILK */                  {200, 0},
-    /* COOK */                  {200, 0},
-    /* PLANT */                 {200, 0},
-    /* HERBALIST */             {200, 0},
-    /* FISH */                  {100, 0},
-    /* CLEAN_FISH */            {200, 0},
-    /* DISSECT_FISH */          {200, 0},
-    /* HUNT */                  {100, 0},
-    /* SMELT */                 {200, 0},
-    /* FORGE_WEAPON */          {200, 0},
-    /* FORGE_ARMOR */           {200, 0},
-    /* FORGE_FURNITURE */       {200, 0},
-    /* METAL_CRAFT */           {200, 0},
-    /* CUT_GEM */               {200, 0},
-    /* ENCRUST_GEM */           {200, 0},
-    /* WOOD_CRAFT */            {200, 0},
-    /* STONE_CRAFT */           {200, 0},
-    /* BONE_CARVE */            {200, 0},
-    /* GLASSMAKER */            {200, 0},
-    /* EXTRACT_STRAND */        {200, 0},
-    /* SIEGECRAFT */            {200, 0},
-    /* SIEGEOPERATE */          {200, 0},
-    /* BOWYER */                {200, 0},
-    /* MECHANIC */              {200, 0},
-    /* POTASH_MAKING */         {200, 0},
-    /* LYE_MAKING */            {200, 0},
-    /* DYER */                  {200, 0},
-    /* BURN_WOOD */             {200, 0},
-    /* OPERATE_PUMP */          {200, 0},
-    /* SHEARER */               {200, 0},
-    /* SPINNER */               {200, 0},
-    /* POTTERY */               {200, 0},
-    /* GLAZING */               {200, 0},
-    /* PRESSING */              {200, 0},
-    /* BEEKEEPING */            {200, 1}, // reduce risk of stuck beekeepers (see http://www.bay12games.com/dwarves/mantisbt/view.php?id=3981)
-    /* WAX_WORKING */           {200, 0},
-    /* PUSH_HAUL_VEHICLES */    {200, 0}
+    /* MINE */                  {200, 0, TOOL_PICK},
+    /* HAUL_STONE */            {100, 0, TOOL_NONE},
+    /* HAUL_WOOD */             {100, 0, TOOL_NONE},
+    /* HAUL_BODY */             {200, 0, TOOL_NONE},
+    /* HAUL_FOOD */             {300, 0, TOOL_NONE},
+    /* HAUL_REFUSE */           {100, 0, TOOL_NONE},
+    /* HAUL_ITEM */             {100, 0, TOOL_NONE},
+    /* HAUL_FURNITURE */        {100, 0, TOOL_NONE},
+    /* HAUL_ANIMAL */           {100, 0, TOOL_NONE},
+    /* CLEAN */                 {200, 0, TOOL_NONE},
+    /* CUTWOOD */               {200, 0, TOOL_AXE},
+    /* CARPENTER */             {200, 0, TOOL_NONE},
+    /* DETAIL */                {200, 0, TOOL_NONE},
+    /* MASON */                 {200, 0, TOOL_NONE},
+    /* ARCHITECT */             {400, 0, TOOL_NONE},
+    /* ANIMALTRAIN */           {200, 0, TOOL_NONE},
+    /* ANIMALCARE */            {200, 0, TOOL_NONE},
+    /* DIAGNOSE */              {1000, 0, TOOL_NONE},
+    /* SURGERY */               {1000, 0, TOOL_NONE},
+    /* BONE_SETTING */          {1000, 0, TOOL_NONE},
+    /* SUTURING */              {1000, 0, TOOL_NONE},
+    /* DRESSING_WOUNDS */       {1000, 0, TOOL_NONE},
+    /* FEED_WATER_CIVILIANS */  {1000, 0, TOOL_NONE},
+    /* RECOVER_WOUNDED */       {200, 0, TOOL_NONE},
+    /* BUTCHER */               {200, 0, TOOL_NONE},
+    /* TRAPPER */               {200, 0, TOOL_NONE},
+    /* DISSECT_VERMIN */        {200, 0, TOOL_NONE},
+    /* LEATHER */               {200, 0, TOOL_NONE},
+    /* TANNER */                {200, 0, TOOL_NONE},
+    /* BREWER */                {200, 0, TOOL_NONE},
+    /* ALCHEMIST */             {200, 0, TOOL_NONE},
+    /* SOAP_MAKER */            {200, 0, TOOL_NONE},
+    /* WEAVER */                {200, 0, TOOL_NONE},
+    /* CLOTHESMAKER */          {200, 0, TOOL_NONE},
+    /* MILLER */                {200, 0, TOOL_NONE},
+    /* PROCESS_PLANT */         {200, 0, TOOL_NONE},
+    /* MAKE_CHEESE */           {200, 0, TOOL_NONE},
+    /* MILK */                  {200, 0, TOOL_NONE},
+    /* COOK */                  {200, 0, TOOL_NONE},
+    /* PLANT */                 {200, 0, TOOL_NONE},
+    /* HERBALIST */             {200, 0, TOOL_NONE},
+    /* FISH */                  {100, 0, TOOL_NONE},
+    /* CLEAN_FISH */            {200, 0, TOOL_NONE},
+    /* DISSECT_FISH */          {200, 0, TOOL_NONE},
+    /* HUNT */                  {100, 0, TOOL_CROSSBOW},
+    /* SMELT */                 {200, 0, TOOL_NONE},
+    /* FORGE_WEAPON */          {200, 0, TOOL_NONE},
+    /* FORGE_ARMOR */           {200, 0, TOOL_NONE},
+    /* FORGE_FURNITURE */       {200, 0, TOOL_NONE},
+    /* METAL_CRAFT */           {200, 0, TOOL_NONE},
+    /* CUT_GEM */               {200, 0, TOOL_NONE},
+    /* ENCRUST_GEM */           {200, 0, TOOL_NONE},
+    /* WOOD_CRAFT */            {200, 0, TOOL_NONE},
+    /* STONE_CRAFT */           {200, 0, TOOL_NONE},
+    /* BONE_CARVE */            {200, 0, TOOL_NONE},
+    /* GLASSMAKER */            {200, 0, TOOL_NONE},
+    /* EXTRACT_STRAND */        {200, 0, TOOL_NONE},
+    /* SIEGECRAFT */            {200, 0, TOOL_NONE},
+    /* SIEGEOPERATE */          {200, 0, TOOL_NONE},
+    /* BOWYER */                {200, 0, TOOL_NONE},
+    /* MECHANIC */              {200, 0, TOOL_NONE},
+    /* POTASH_MAKING */         {200, 0, TOOL_NONE},
+    /* LYE_MAKING */            {200, 0, TOOL_NONE},
+    /* DYER */                  {200, 0, TOOL_NONE},
+    /* BURN_WOOD */             {200, 0, TOOL_NONE},
+    /* OPERATE_PUMP */          {200, 0, TOOL_NONE},
+    /* SHEARER */               {200, 0, TOOL_NONE},
+    /* SPINNER */               {200, 0, TOOL_NONE},
+    /* POTTERY */               {200, 0, TOOL_NONE},
+    /* GLAZING */               {200, 0, TOOL_NONE},
+    /* PRESSING */              {200, 0, TOOL_NONE},
+    /* BEEKEEPING */            {200, 0, TOOL_NONE},
+    /* WAX_WORKING */           {200, 0, TOOL_NONE},
+    /* PUSH_HAUL_VEHICLES */    {200, 0, TOOL_NONE}
 };
 
 struct dwarf_info_t
@@ -477,9 +484,7 @@ struct dwarf_info_t
 
     bool clear_all;
 
-    bool has_axe;
-    bool has_pick;
-    bool has_crossbow;
+    bool has_tool[TOOLS_MAX];
 
     int high_skill;
 
@@ -488,9 +493,11 @@ struct dwarf_info_t
 
     df::unit_labor using_labor;
 
-    dwarf_info_t(df::unit* dw) : dwarf(dw), clear_all(false), has_axe(false), has_pick(false), has_crossbow(false), 
+    dwarf_info_t(df::unit* dw) : dwarf(dw), clear_all(false), 
         state(OTHER), high_skill(0), has_children(false), armed(false)
     {
+        for (int e = TOOL_NONE; e < TOOLS_MAX; e++) 
+            has_tool[e] = false;
     }
 
     void set_labor(df::unit_labor labor) 
@@ -498,10 +505,6 @@ struct dwarf_info_t
         if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor))
         {
             dwarf->status.labors[labor] = true;
-            if ((labor == df::unit_labor::MINE    && !has_pick) ||
-                (labor == df::unit_labor::CUTWOOD && !has_axe) ||
-                (labor == df::unit_labor::HUNT    && !has_crossbow))
-                dwarf->military.pickup_flags.bits.update = 1;
         }
     }
 
@@ -510,10 +513,6 @@ struct dwarf_info_t
         if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor))
         {
             dwarf->status.labors[labor] = false;
-            if ((labor == df::unit_labor::MINE    && has_pick) ||
-                (labor == df::unit_labor::CUTWOOD && has_axe) ||
-                (labor == df::unit_labor::HUNT    && has_crossbow))
-                dwarf->military.pickup_flags.bits.update = 1;
         }
     }
 
@@ -1472,8 +1471,9 @@ private:
     int tree_count;
     int plant_count;
     int detail_count;
-    int pick_count;
-    int axe_count;
+
+    int tool_count[TOOLS_MAX];
+    bool reequip_needed[TOOLS_MAX];
 
     int cnt_recover_wounded;
     int cnt_diagnosis;
@@ -1542,7 +1542,7 @@ private:
                 {
                     if (bl->designation[x][y].bits.hidden)
                         continue;
-                  
+
                     df::tile_dig_designation dig = bl->designation[x][y].bits.dig;
                     if (dig != df::enums::tile_dig_designation::No) 
                     {
@@ -1570,8 +1570,8 @@ private:
 
     void count_tools()
     {
-        pick_count = 0;
-        axe_count = 0;
+        for (int e = TOOL_NONE; e < TOOLS_MAX; e++)
+            tool_count[e] = 0;
 
         df::item_flags bad_flags;
         bad_flags.whole = 0;
@@ -1598,14 +1598,14 @@ private:
 
             df::itemdef_weaponst* weapondef = ((df::item_weaponst*)item)->subtype;
             df::job_skill weaponsk = (df::job_skill) weapondef->skill_melee;
+            df::job_skill weaponsk2 = (df::job_skill) weapondef->skill_ranged;
             if (weaponsk == df::job_skill::AXE)
-                axe_count++;
+                tool_count[TOOL_AXE]++;
             else if (weaponsk == df::job_skill::MINING)
-                pick_count++;
+                tool_count[TOOL_PICK]++;
+            else if (weaponsk2 = df::job_skill::CROSSBOW)
+                tool_count[TOOL_CROSSBOW]++;
         }
-
-        if (print_debug)
-            out.print("Axes = %d, picks = %d\n", axe_count, pick_count);
 
     }
 
@@ -1866,19 +1866,21 @@ private:
                         df::job_skill rangesk = (df::job_skill) weapondef->skill_ranged;
                         if (weaponsk == df::job_skill::AXE)
                         {
-                            dwarf->has_axe = 1;
+                            dwarf->has_tool[TOOL_AXE] = true;
                             if (state != IDLE) 
-                                axe_count--;
+                                tool_count[TOOL_AXE]--;
                         }
                         else if (weaponsk == df::job_skill::MINING)
                         {
-                            dwarf->has_pick = 1;
+                            dwarf->has_tool[TOOL_PICK] = 1;
                             if (state != IDLE) 
-                                pick_count--;
+                                tool_count[TOOL_PICK]--;
                         }
                         else if (rangesk == df::job_skill::CROSSBOW)
                         {
-                            dwarf->has_crossbow = 1;
+                            dwarf->has_tool[TOOL_CROSSBOW] = 1;
+                            if (state != IDLE) 
+                                tool_count[TOOL_CROSSBOW]--;
                         }
                     }
                 }
@@ -1908,10 +1910,13 @@ public:
     {
         dwarf_info.clear();
 
-        dig_count = tree_count = plant_count = detail_count = pick_count = axe_count = 0;
+        dig_count = tree_count = plant_count = detail_count = 0;
         cnt_recover_wounded = cnt_diagnosis = cnt_immobilize = cnt_dressing = cnt_cleaning = cnt_surgery = cnt_suture =
             cnt_setting = cnt_traction = cnt_crutch = 0;
         need_food_water = 0;
+
+        for (int e = 0; e < TOOLS_MAX; e++)
+            tool_count[e] = 0;
 
         trader_requested = false;
 
@@ -1945,8 +1950,8 @@ public:
 
         // add job entries for designation-related jobs
 
-        labor_needed[df::unit_labor::MINE]      += std::min(pick_count, dig_count);
-        labor_needed[df::unit_labor::CUTWOOD]   += std::min(axe_count, tree_count);
+        labor_needed[df::unit_labor::MINE]      += std::min(tool_count[TOOL_PICK], dig_count);
+        labor_needed[df::unit_labor::CUTWOOD]   += std::min(tool_count[TOOL_AXE], tree_count);
         labor_needed[df::unit_labor::DETAIL]    += detail_count;
         labor_needed[df::unit_labor::HERBALIST] += plant_count;
 
@@ -2089,9 +2094,8 @@ public:
                     int score = skill_level * 1000 - (d->high_skill - skill_level) * 2000 + (xp / (skill_level + 5) * 10);
                     if (d->dwarf->status.labors[labor])
                         score += 500;
-                    if ((labor == df::unit_labor::MINE && d->has_pick) ||
-                        (labor == df::unit_labor::CUTWOOD && d->has_axe) ||
-                        (labor == df::unit_labor::HUNT && d->has_crossbow))
+                    if (default_labor_infos[labor].tool != TOOL_NONE &&
+                        d->has_tool[default_labor_infos[labor].tool]) 
                         score += 3000;
                     if (d->has_children && labor_outside[labor])
                         score -= 10000;
@@ -2120,8 +2124,17 @@ public:
                     continue;
 
                 if (l == best_labor)
+                {
                     (*bestdwarf)->set_labor(l);
-                else
+                    tools_enum t = default_labor_infos[l].tool;
+                    if (t != TOOL_NONE)
+                    {
+                        tool_count[t]--;
+                        if (!(*bestdwarf)->has_tool[t])
+                            (*bestdwarf)->dwarf->military.pickup_flags.bits.update = true;
+                    }
+                }
+                else 
                     (*bestdwarf)->clear_labor(l);
             }
 
@@ -2148,6 +2161,21 @@ public:
             }
             if (print_debug)
                 out.print ("Setting %s as the hauling canary\n", d->dwarf->name.first_name.c_str());
+        }
+
+        /* set reequip on any dwarfs who are carrying tools needed by others */
+
+        for (auto d = dwarf_info.begin(); d != dwarf_info.end(); d++)
+        {
+            FOR_ENUM_ITEMS (unit_labor, l)
+            {
+                tools_enum t = default_labor_infos[l].tool;
+                if (t != TOOL_NONE && tool_count[t] < 0 && (*d)->has_tool[t] && !(*d)->dwarf->status.labors[l])
+                {
+                    tool_count[t]++;
+                    (*d)->dwarf->military.pickup_flags.bits.update = 1;
+                }
+            }
         }
 
         print_debug = 0;

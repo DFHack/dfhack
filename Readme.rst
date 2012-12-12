@@ -1942,6 +1942,7 @@ deathcause
 ==========
 Focus a body part ingame, and this script will display the cause of death of
 the creature.
+Also works when selecting units from the 'u'nitlist viewscreen.
 
 lua
 ===
@@ -2003,6 +2004,33 @@ the map. With the ``here`` argument, considers only the in-game selected cage
 alternatively pass cage IDs as arguments::
 
   stripcaged weapons 25321 34228
+
+create-items
+============
+Spawn arbitrary items under the cursor.
+
+The first argument gives the item category, the second gives the material,
+and the optionnal third gives the number of items to create (defaults to 20).
+
+Currently supported item categories: ``boulder``, ``bar``, ``plant``, ``log``,
+``web``.
+
+Instead of material, using ``list`` makes the script list eligible materials.
+
+The ``web`` item category will create an uncollected cobweb on the floor.
+
+Note that the script does not enforce anything, and will let you create
+boulders of toad blood and stuff like that.
+However the ``list`` mode will only show 'normal' materials.
+
+Exemples::
+
+    create-items boulders COAL_BITUMINOUS 12
+    create-items plant tail_pig
+    create-items log list
+    create-items web CREATURE:SPIDER_CAVE_GIANT:SILK
+    create-items bar CREATURE:CAT:SOAP
+    create-items bar adamantine
 
 =======================
 In-game interface tools

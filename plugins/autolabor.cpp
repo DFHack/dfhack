@@ -1540,6 +1540,9 @@ private:
             for (int x = 0; x < 16; x++)
                 for (int y = 0; y < 16; y++)
                 {
+                    if (bl->designation[x][y].bits.hidden)
+                        continue;
+                  
                     df::tile_dig_designation dig = bl->designation[x][y].bits.dig;
                     if (dig != df::enums::tile_dig_designation::No) 
                     {
@@ -2094,8 +2097,11 @@ public:
                         score -= 10000;
                     if (d->armed && labor_outside[labor])
                         score += 5000;
-                    if (d->state == BUSY && d->using_labor == labor)
-                        score += 7500;
+                    if (d->state == BUSY)
+                        if (d->using_labor == labor)
+                            score += 7500;
+                        else
+                            score -= 7500;
                     if (score > best_score)
                     {
                         bestdwarf = k;

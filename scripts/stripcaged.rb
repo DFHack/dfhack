@@ -138,7 +138,10 @@ if here_only
 	if not it.kind_of?(DFHack::ItemCagest) and not it.kind_of?(DFHack::ItemAnimaltrapst)
 		list = df.world.items.other[:ANY_CAGE_OR_TRAP].find_all { |i| df.at_cursor?(i) }
 	end
-	puts 'Please select a cage' if list.empty?
+	if list.empty?
+		puts 'Please select a cage'
+		throw :script_finished
+	end
 
 elsif ids = $script_args.find_all { |arg| arg =~ /^\d+$/ } and ids.first
 	list = []
@@ -153,7 +156,10 @@ elsif ids = $script_args.find_all { |arg| arg =~ /^\d+$/ } and ids.first
 			list << it
 		end
 	}
-	puts 'Please use a valid cage id' if list.empty?
+	if list.empty?
+		puts 'Please use a valid cage id'
+		throw :script_finished
+	end
 
 else
 	list = df.world.items.other[:ANY_CAGE_OR_TRAP]
@@ -162,18 +168,16 @@ end
 
 # act
 case $script_args[0]
-when 'items'
-	cage_dump_items(list) if not list.empty?
-when 'armor'
-	cage_dump_armor(list) if not list.empty?
-when 'weapons'
-	cage_dump_weapons(list) if not list.empty?
+when /^it/i
+	cage_dump_items(list)
+when /^arm/i
+	cage_dump_armor(list)
+when /^wea/i
+	cage_dump_weapons(list)
 when 'all'
-	cage_dump_all(list) if not list.empty?
-
+	cage_dump_all(list)
 when 'list'
-	cage_dump_list(list) if not list.empty?
-
+	cage_dump_list(list)
 else
 	puts <<EOS
 Marks items inside all cages for dumping.

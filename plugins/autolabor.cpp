@@ -804,6 +804,9 @@ private:
             case df::building_type::Slab:
                 return df::unit_labor::HAUL_FURNITURE;
             case df::building_type::Trap:
+            case df::building_type::GearAssembly:
+            case df::building_type::AxleHorizontal:
+            case df::building_type::AxleVertical:
                 return df::unit_labor::MECHANIC;
             }
 

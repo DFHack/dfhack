@@ -189,10 +189,10 @@ function healunit(unit)
     unit.body.wounds:resize(0) -- memory leak here :/
 	unit.body.blood_count=unit.body.blood_max
 	--set flags for standing and grasping...
-	unit.status2.able_stand=4
-	unit.status2.able_stand_impair=4
-	unit.status2.able_grasp=4
-	unit.status2.able_grasp_impair=4
+	unit.status2.limbs_stand_max=4
+	unit.status2.limbs_stand_count=4
+	unit.status2.limbs_grasp_max=4
+	unit.status2.limbs_grasp_count=4
 	--should also set temperatures, and flags for breath etc...
 	unit.flags1.dead=false
 	unit.flags2.calculated_bodyparts=false

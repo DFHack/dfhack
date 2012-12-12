@@ -316,7 +316,7 @@ static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr,
         rbcmd += "'" + args[i] + "', ";
     rbcmd += "]\n";
 
-    rbcmd += "load './hack/scripts/" + name + ".rb'";
+    rbcmd += "catch(:script_finished) { load './hack/scripts/" + name + ".rb' }";
 
     return plug_mgr->eval_ruby(out, rbcmd.c_str());
 }

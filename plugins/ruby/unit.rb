@@ -76,7 +76,7 @@ module DFHack
                     u.mood == :Berserk or
                     unit_testflagcurse(u, :CRAZED) or
                     unit_testflagcurse(u, :OPPOSED_TO_LIFE) or
-                    u.unknown8.unk2 or
+                    u.enemy.undead or
                     u.flags3.ghostly or
                     u.flags1.marauder or u.flags1.active_invader or u.flags1.invader_origin or
                     u.flags1.forest or
@@ -112,6 +112,9 @@ module DFHack
             # TODO
             true
         end
+
+	# merchant: df.ui.caravans.find { |cv| cv.entity == u.civ_id }
+	# diplomat: df.ui.dip_meeting_info.find { |m| m.diplomat_id == u.hist_figure_id or m.diplomat_id2 == u.hist_figure_id }
 
         # list workers (citizen, not crazy / child / inmood / noble)
         def unit_workers

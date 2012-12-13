@@ -299,10 +299,17 @@ int32_t processJob(color_ostream& out, int32_t jobId) {
             //add each syndrome to the guy who did the job
             df::syndrome* syndrome = inorganic->material.syndrome[b];
             //check that the syndrome applies to that guy
-            bool applies = syndrome->syn_affected_class.size() == 0;
-            if ( applies ) {
-                //out.print("No syn_affected_class.\n");
-            }
+            /*
+             * If there is no affected class or affected creature, then anybody who isn't immune is fair game.
+             *
+             * Otherwise, it works like this:
+             *  add all the affected class creatures
+             *  remove all the immune class creatures
+             *  add all the affected creatures
+             *  remove all the immune creatures
+             *  you're affected if and only if you're in the remaining list after all of that
+             **/
+            bool applies = syndrome->syn_affected_class.size() == 0 && syndrome->syn_affected_creature_1.size() == 0;
             for ( size_t c = 0; c < syndrome->syn_affected_class.size(); c++ ) {
                 if ( applies )
                     break;
@@ -312,11 +319,6 @@ int32_t processJob(color_ostream& out, int32_t jobId) {
                         break;
                     }
                 }
-            }
-            if ( syndrome->syn_affected_creature_1.size() != 0 ) {
-                applies = false;
-            } else {
-                //out.print("No syn_affected_creature.\n");
             }
             for ( size_t c = 0; c < syndrome->syn_immune_class.size(); c++ ) {
                 if ( !applies )
@@ -342,10 +344,6 @@ int32_t processJob(color_ostream& out, int32_t jobId) {
                     break;
                 }
             }
-            if ( !applies ) {
-                //out.print("Not in syn_affected_creature.\n");
-                continue;
-            }
             for ( size_t c = 0; c < syndrome->syn_immune_creature_1.size(); c++ ) {
                 if ( creature_name != *syndrome->syn_immune_creature_1[c] )
                     continue;
@@ -356,7 +354,6 @@ int32_t processJob(color_ostream& out, int32_t jobId) {
                 }
             }
             if ( !applies ) {
-                //out.print("Creature is immune.\n");
                 continue;
             }
             if ( giveSyndrome(out, workerId, syndrome) < 0 )

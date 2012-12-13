@@ -801,6 +801,7 @@ private:
             case df::building_type::NestBox:
             case df::building_type::TractionBench:
             case df::building_type::Slab:
+            case df::building_type::Chain:
                 return df::unit_labor::HAUL_FURNITURE;
             case df::building_type::Trap:
             case df::building_type::GearAssembly:
@@ -850,6 +851,8 @@ private:
                 break;
             case df::building_type::FarmPlot:
                 return df::unit_labor::PLANT;
+            case df::building_type::Trap:
+                return df::unit_labor::MECHANIC;
             }
 
             debug ("AUTOLABOR: Cannot deduce labor for destroy building job of type %s\n",
@@ -1758,7 +1761,7 @@ private:
                 {
                     state = CHILD;
                 }
-                else if (dwarf->dwarf->military.cur_uniform != 0)
+                else if (ENUM_ATTR(profession, military, dwarf->dwarf->profession))
                     state = MILITARY;
                 else if (dwarf->dwarf->job.current_job == NULL)
                 {

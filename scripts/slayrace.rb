@@ -43,7 +43,7 @@ df.world.units.active.map { |u|
 	if checkunit[u]
 		if (u.enemy.undead or
 		    (u.curse.add_tags1.OPPOSED_TO_LIFE and not
-		     u.curse.del_tags1.OPPOSED_TO_LIFE))
+		     u.curse.rem_tags1.OPPOSED_TO_LIFE))
 			all_races['Undead'] += 1
 		else
 			all_races[u.race_tg.creature_id] += 1
@@ -67,7 +67,7 @@ when /^undead/i
 	df.world.units.active.each { |u|
 		if (u.enemy.undead or
 		    (u.curse.add_tags1.OPPOSED_TO_LIFE and not
-		     u.curse.del_tags1.OPPOSED_TO_LIFE)) and
+		     u.curse.rem_tags1.OPPOSED_TO_LIFE)) and
 		   checkunit[u]
 			slayit[u]
 			count += 1

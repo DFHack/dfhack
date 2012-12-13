@@ -2,9 +2,10 @@
 #include "Export.h"
 #include "DataDefs.h"
 #include "Core.h"
-#include "df/job.h"
+#include "df/caste_raw.h"
+#include "df/creature_raw.h"
 #include "df/global_objects.h"
-#include "df/ui.h"
+#include "df/job.h"
 #include "df/job_type.h"
 #include "df/reaction.h"
 #include "df/reaction_product.h"
@@ -12,6 +13,7 @@
 #include "df/reaction_product_itemst.h"
 #include "df/syndrome.h"
 #include "df/unit_syndrome.h"
+#include "df/ui.h"
 #include "df/unit.h"
 #include "df/general_ref.h"
 #include "df/general_ref_type.h"
@@ -31,25 +33,6 @@ using namespace DFHack;
 Example usage:
 
 //////////////////////////////////////////////
-//in file interaction_duck.txt
-interaction_duck
-
-[OBJECT:INTERACTION]
-
-[INTERACTION:DUMMY_DUCK_INTERACTION]
-	[I_SOURCE:CREATURE_ACTION]
-	[I_TARGET:A:CREATURE]
-		[IT_LOCATION:CONTEXT_CREATURE]
-		[IT_MANUAL_INPUT:target]
-		[IT_IMMUNE_CREATURE:BIRD_DUCK:MALE]
-	[I_EFFECT:ADD_SYNDROME]
-		[IE_TARGET:A]
-		[IE_IMMEDIATE]
-		[SYNDROME]
-            [SYN_NAME:chronicDuckSyndrome]
-			[CE_BODY_TRANSFORMATION:PROB:100:START:0]
-				[CE:CREATURE:BIRD_DUCK:MALE]
-//////////////////////////////////////////////
 //In file inorganic_duck.txt
 inorganic_stone_duck
 
@@ -60,8 +43,11 @@ inorganic_stone_duck
 [STATE_NAME_ADJ:ALL_SOLID:drakium][DISPLAY_COLOR:0:7:0][TILE:'.']
 [IS_STONE]
 [SOLID_DENSITY:1][MELTING_POINT:25000]
-[CAUSE_SYNDROME:chronicDuckSyndrome]
-[BOILING_POINT:50000]
+[BOILING_POINT:9999] //This is the critical line: boiling point must be <= 10000
+[SYNDROME]
+    [SYN_NAME:Chronic Duck Syndrome]
+    [CE_BODY_TRANSFORMATION:PROB:100:START:0]
+        [CE:CREATURE:BIRD_DUCK:MALE] //even though we don't have SYN_INHALED, the plugin will add it
 ///////////////////////////////////////////////
 //In file building_duck.txt
 building_duck
@@ -116,6 +102,29 @@ DFHACK_PLUGIN("autoSyndrome");
 command_result autoSyndrome(color_ostream& out, vector<string>& parameters);
 int32_t processJob(color_ostream& out, int32_t id);
 int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrome);
+
+DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginCommand> &commands) {
+    commands.push_back(PluginCommand("autoSyndrome", "Automatically give units syndromes when they complete jobs, as configured in the raw files.\n", &autoSyndrome, false,
+        "autoSyndrome:\n"
+        "  autoSyndrome 0 //disable\n"
+        "  autoSyndrome 1 //enable\n"
+        "  autoSyndrome disable //disable\n"
+        "  autoSyndrome enable //enable\n"
+        "\n"
+        "autoSyndrome looks for recently completed jobs matching certain conditions, and if it finds one, then it will give the dwarf that finished that job the syndrome specified in the raw files.\n"
+        "\n"
+        "Requirements:\n"
+        "  1) The job must be a custom reaction.\n"
+        "  2) The job must produce a stone of some inorganic material.\n"
+        "  3) The stone must have a boiling temperature less than or equal to 10000.\n"
+        "\n"
+        "When these conditions are met, the unit that completed the job will immediately become afflicted with all applicable syndromes associated with the inorganic material of the stone, or stones. It should correctly check for whether the creature or caste is affected or immune, but it ignores syn_affected_class tags.\n"
+        "Multiple syndromes per stone, or multiple boiling rocks produced with the same reaction should work fine.\n"
+        ));
+    
+    
+    return CR_OK;
+}
 
 DFhackCExport command_result plugin_shutdown(color_ostream& out) {
     return CR_OK;
@@ -204,27 +213,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out) {
     return CR_OK;
 }*/
 
-DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginCommand> &commands) {
-    commands.push_back(PluginCommand("autoSyndrome", "Automatically give units syndromes when they complete jobs, as configured in the raw files.\n", &autoSyndrome, false,
-        "autoSyndrome:\n"
-        "  autoSyndrome 0 //disable\n"
-        "  autoSyndrome 1 //enable\n"
-        "  autoSyndrome disable //disable\n"
-        "  autoSyndrome enable //enable\n"
-        "\n"
-        "autoSyndrome looks for recently completed jobs matching certain conditions, and if it finds one, then it will give the dwarf that finished that job the syndrome specified in the raw files.\n"
-        "\n"
-        "Requirements:\n"
-        "  1) The job must be a custom reaction.\n"
-        "  2) The job must produce a stone of some inorganic material.\n"
-        "  3) The material of one of the stones produced must have a token in its raw file of the form [CAUSE_SYNDROME:syndrome_name].\n"
-        "\n"
-        "If a syndrome with the tag [SYN_NAME:syndrome_name] exists, then the unit that completed the job will become afflicted with that syndrome as soon as the job is completed.\n"));
-    
-    
-    return CR_OK;
-}
-
 command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
     if ( parameters.size() > 1 )
         return CR_WRONG_USAGE;
@@ -273,7 +261,22 @@ int32_t processJob(color_ostream& out, int32_t jobId) {
         return -1;
     }
 
-    //find all of the products it makes. Look for a stone with a material with special tags.
+    if ( jobWorkers.find(jobId) == jobWorkers.end() ) {
+        out.print("%s, line %d: couldn't find worker for job %d.\n", __FILE__, __LINE__, jobId);
+        return -1;
+    }
+    int32_t workerId = jobWorkers[jobId];
+    int32_t workerIndex = df::unit::binsearch_index(df::global::world->units.all, workerId);
+    if ( workerIndex < 0 ) {
+        out.print("%s line %d: Couldn't find unit %d.\n", __FILE__, __LINE__, workerId);
+        return -1;
+    }
+    df::unit* unit = df::global::world->units.all[workerIndex];
+    df::creature_raw* creature = df::global::world->raws.creatures.all[unit->race];
+    std::string& creature_name = creature->creature_id;
+    std::string& creature_caste = creature->caste[unit->caste]->caste_id;
+
+    //find all of the products it makes. Look for a stone with a low boiling point.
     bool foundIt = false;
     for ( size_t a = 0; a < reaction->products.size(); a++ ) {
         df::reaction_product_type type = reaction->products[a]->getType();
@@ -286,39 +289,47 @@ int32_t processJob(color_ostream& out, int32_t jobId) {
             continue;
         //for now don't worry about subtype
 
+        //must be a boiling rock syndrome
         df::inorganic_raw* inorganic = df::global::world->raws.inorganics[bob->mat_index];
-        const char* helper = "CAUSE_SYNDROME:";
-        for ( size_t b = 0; b < inorganic->str.size(); b++ ) {
-            //out.print("inorganic str = \"%s\"\n", inorganic->str[b]->c_str());
-            size_t c = inorganic->str[b]->find(helper);
-            if ( c == string::npos )
-                continue;
-            string tail = inorganic->str[b]->substr(c + strlen(helper), inorganic->str[b]->length() - strlen(helper) - 2);
-            //out.print("tail = %s\n", tail.c_str());
+        if ( inorganic->material.heat.boiling_point > 10000 )
+            continue;
 
-            //find the syndrome with this name, and give apply it to the dwarf working on the job
-            //first find out who completed the job
-            if ( jobWorkers.find(jobId) == jobWorkers.end() ) {
-                out.print("%s, line %d: could not find job worker for jobs %d.\n", __FILE__, __LINE__, jobId);
-                return -1;
+        for ( size_t b = 0; b < inorganic->material.syndrome.size(); b++ ) {
+            //add each syndrome to the guy who did the job
+            df::syndrome* syndrome = inorganic->material.syndrome[b];
+            //check that the syndrome applies to that guy
+            bool applies = syndrome->syn_affected_creature_1.size() == 0;
+            if ( applies ) {
+                //out.print("No syn_affected_creature.\n");
             }
-            int32_t workerId = jobWorkers[jobId];
-            
-            //find the syndrome
-            df::syndrome* syndrome = NULL;
-            for ( size_t d = 0; d < df::global::world->raws.syndromes.all.size(); d++ ) {
-                df::syndrome* candidate = df::global::world->raws.syndromes.all[d];
-                if ( candidate->syn_name != tail )
+            for ( size_t c = 0; c < syndrome->syn_affected_creature_1.size(); c++ ) {
+                if ( creature_name != *syndrome->syn_affected_creature_1[c] )
                     continue;
-                syndrome = candidate;
-                break;
+                if ( *syndrome->syn_affected_creature_2[c] == "ALL" ||
+                     *syndrome->syn_affected_creature_2[c] == creature_caste ) {
+                    applies = true;
+                    break;
+                }
             }
-            if ( syndrome == NULL )
-                return 0;
-
+            if ( !applies ) {
+                //out.print("Not in syn_affected_creature.\n");
+                continue;
+            }
+            for ( size_t c = 0; c < syndrome->syn_immune_creature_1.size(); c++ ) {
+                if ( creature_name != *syndrome->syn_immune_creature_1[c] )
+                    continue;
+                if ( *syndrome->syn_immune_creature_2[c] == "ALL" ||
+                     *syndrome->syn_immune_creature_2[c] == creature_caste ) {
+                    applies = false;
+                    break;
+                }
+            }
+            if ( !applies ) {
+                //out.print("Creature is immune.\n");
+                continue;
+            }
             if ( giveSyndrome(out, workerId, syndrome) < 0 )
                 return -1;
-            //out.print("Gave syndrome.\n");
         }
     }
     if ( !foundIt )

@@ -118,7 +118,7 @@ DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginComman
         "  2) The job must produce a stone of some inorganic material.\n"
         "  3) The stone must have a boiling temperature less than or equal to 10000.\n"
         "\n"
-        "When these conditions are met, the unit that completed the job will immediately become afflicted with all applicable syndromes associated with the inorganic material of the stone, or stones. It should correctly check for whether the creature or caste is affected or immune, but it ignores syn_affected_class tags.\n"
+        "When these conditions are met, the unit that completed the job will immediately become afflicted with all applicable syndromes associated with the inorganic material of the stone, or stones. It should correctly check for whether the creature or caste is affected or immune, and it should also correctly account for affected and immune creature classes.\n"
         "Multiple syndromes per stone, or multiple boiling rocks produced with the same reaction should work fine.\n"
         ));
     
@@ -273,8 +273,9 @@ int32_t processJob(color_ostream& out, int32_t jobId) {
     }
     df::unit* unit = df::global::world->units.all[workerIndex];
     df::creature_raw* creature = df::global::world->raws.creatures.all[unit->race];
+    df::caste_raw* caste = creature->caste[unit->caste];
     std::string& creature_name = creature->creature_id;
-    std::string& creature_caste = creature->caste[unit->caste]->caste_id;
+    std::string& creature_caste = caste->caste_id;
 
     //find all of the products it makes. Look for a stone with a low boiling point.
     bool foundIt = false;
@@ -298,9 +299,39 @@ int32_t processJob(color_ostream& out, int32_t jobId) {
             //add each syndrome to the guy who did the job
             df::syndrome* syndrome = inorganic->material.syndrome[b];
             //check that the syndrome applies to that guy
-            bool applies = syndrome->syn_affected_creature_1.size() == 0;
+            bool applies = syndrome->syn_affected_class.size() == 0;
             if ( applies ) {
+                //out.print("No syn_affected_class.\n");
+            }
+            for ( size_t c = 0; c < syndrome->syn_affected_class.size(); c++ ) {
+                if ( applies )
+                    break;
+                for ( size_t d = 0; d < caste->creature_class.size(); d++ ) {
+                    if ( *syndrome->syn_affected_class[c] == *caste->creature_class[d] ) {
+                        applies = true;
+                        break;
+                    }
+                }
+            }
+            if ( syndrome->syn_affected_creature_1.size() != 0 ) {
+                applies = false;
+            } else {
                 //out.print("No syn_affected_creature.\n");
+            }
+            for ( size_t c = 0; c < syndrome->syn_immune_class.size(); c++ ) {
+                if ( !applies )
+                    break;
+                for ( size_t d = 0; d < caste->creature_class.size(); d++ ) {
+                    if ( *syndrome->syn_immune_class[c] == *caste->creature_class[d] ) {
+                        applies = false;
+                        break;
+                    }
+                }
+            }
+
+            if ( syndrome->syn_affected_creature_1.size() != syndrome->syn_affected_creature_2.size() ) {
+                out.print("%s, line %d: different affected creature/caste sizes.\n", __FILE__, __LINE__);
+                return -1;
             }
             for ( size_t c = 0; c < syndrome->syn_affected_creature_1.size(); c++ ) {
                 if ( creature_name != *syndrome->syn_affected_creature_1[c] )

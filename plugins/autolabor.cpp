@@ -853,6 +853,8 @@ private:
                 return df::unit_labor::PLANT;
             case df::building_type::Trap:
                 return df::unit_labor::MECHANIC;
+            case df::building_type::Cage:
+                return df::unit_labor::HAUL_FURNITURE;
             }
 
             debug ("AUTOLABOR: Cannot deduce labor for destroy building job of type %s\n",

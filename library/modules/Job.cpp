@@ -54,7 +54,7 @@ using namespace std;
 using namespace DFHack;
 using namespace df::enums;
 
-df::job *DFHack::Job::cloneJobStruct(df::job *job)
+df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepWorkerData)
 {
     CHECK_NULL_POINTER(job);
 
@@ -75,7 +75,7 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job)
     {
         df::general_ref *ref = pnew->references[i];
 
-        if (virtual_cast<df::general_ref_unit_workerst>(ref))
+        if (!keepWorkerData && virtual_cast<df::general_ref_unit_workerst>(ref))
             vector_erase_at(pnew->references, i);
         else
             pnew->references[i] = ref->clone();

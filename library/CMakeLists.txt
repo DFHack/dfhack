@@ -111,6 +111,7 @@ include/modules/Burrows.h
 include/modules/Constructions.h
 include/modules/Units.h
 include/modules/Engravings.h
+include/modules/EventManager.h
 include/modules/Gui.h
 include/modules/Items.h
 include/modules/Job.h
@@ -133,6 +134,7 @@ modules/Burrows.cpp
 modules/Constructions.cpp
 modules/Units.cpp
 modules/Engravings.cpp
+modules/EventManager.cpp
 modules/Gui.cpp
 modules/Items.cpp
 modules/Job.cpp

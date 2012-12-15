@@ -12,7 +12,6 @@ namespace DFHack {
     namespace EventManager {
         namespace EventType {
             enum EventType {
-                NONE,
                 TICK,
                 JOB_INITIATED,
                 JOB_COMPLETED,

@@ -9,7 +9,10 @@
 #include "df/item.h"
 #include "df/world.h"
 
+#include <vector>
+
 using namespace DFHack;
+using namespace std;
 
 DFHACK_PLUGIN("eventExample");
 
@@ -19,7 +22,15 @@ void timePassed(color_ostream& out, void* ptr);
 void unitDeath(color_ostream& out, void* ptr);
 void itemCreate(color_ostream& out, void* ptr);
 
+command_result eventExample(color_ostream& out, vector<string>& parameters);
+
+
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
+    commands.push_back(PluginCommand("eventExample", "Sets up a few event triggers.",eventExample));
+    return CR_OK;
+}
+
+command_result eventExample(color_ostream& out, vector<string>& parameters) {
     EventManager::EventHandler initiateHandler(jobInitiated);
     EventManager::EventHandler completeHandler(jobCompleted);
     EventManager::EventHandler timeHandler(timePassed);
@@ -35,7 +46,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
     EventManager::registerTick(timeHandler, 8, me);
     EventManager::registerListener(EventManager::EventType::UNIT_DEATH, deathHandler, me);
     EventManager::registerListener(EventManager::EventType::ITEM_CREATED, itemHandler, me);
-    
+    out.print("Events registered.\n");
     return CR_OK;
 }
 

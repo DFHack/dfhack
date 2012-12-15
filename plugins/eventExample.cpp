@@ -13,11 +13,13 @@ DFHACK_PLUGIN("eventExample");
 void jobInitiated(color_ostream& out, void* job);
 void jobCompleted(color_ostream& out, void* job);
 void timePassed(color_ostream& out, void* ptr);
+void unitDeath(color_ostream& out, void* ptr);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
     EventManager::EventHandler initiateHandler(jobInitiated);
     EventManager::EventHandler completeHandler(jobCompleted);
     EventManager::EventHandler timeHandler(timePassed);
+    EventManager::EventHandler deathHandler(unitDeath);
     Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("eventExample");
 
     EventManager::registerListener(EventManager::EventType::JOB_INITIATED, initiateHandler, me);
@@ -26,6 +28,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
     EventManager::registerTick(timeHandler, 2, me);
     EventManager::registerTick(timeHandler, 4, me);
     EventManager::registerTick(timeHandler, 8, me);
+    EventManager::registerListener(EventManager::EventType::UNIT_DEATH, deathHandler, me);
     
     return CR_OK;
 }
@@ -40,4 +43,8 @@ void jobCompleted(color_ostream& out, void* job) {
 
 void timePassed(color_ostream& out, void* ptr) {
     out.print("Time: %d\n", (int32_t)(ptr));
+}
+
+void unitDeath(color_ostream& out, void* ptr) {
+    out.print("Death: %d\n", (int32_t)(ptr));
 }

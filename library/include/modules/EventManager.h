@@ -14,14 +14,11 @@ namespace DFHack {
             enum EventType {
                 NONE,
                 TICK,
-                TICK_TILE,
                 JOB_INITIATED,
                 JOB_COMPLETED,
-                LIFE,
-                CREATURE,
-                ITEM,
-                TILE,
-                EVENT_MAX=TILE
+                UNIT_DEATH,
+                //ITEM_CREATED,
+                EVENT_MAX=UNIT_DEATH
             };
         }
 

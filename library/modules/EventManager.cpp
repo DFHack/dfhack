@@ -6,6 +6,7 @@
 #include "df/job.h"
 #include "df/global_objects.h"
 #include "df/job_list_link.h"
+#include "df/unit.h"
 #include "df/world.h"
 
 //#include <list>
@@ -85,10 +86,12 @@ void DFHack::EventManager::unregisterAll(Plugin* plugin) {
 static void manageTickEvent(color_ostream& out);
 static void manageJobInitiatedEvent(color_ostream& out);
 static void manageJobCompletedEvent(color_ostream& out);
+static void manageUnitDeathEvent(color_ostream& out);
 
-uint32_t lastTick = 0;
-int32_t lastJobId = -1;
+static uint32_t lastTick = 0;
+static int32_t lastJobId = -1;
 static map<int32_t, df::job*> prevJobs;
+static set<int32_t> livingUnits;
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     if ( event == DFHack::SC_MAP_UNLOADED ) {
@@ -99,6 +102,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         }
         prevJobs.clear();
         tickQueue.clear();
+        livingUnits.clear();
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
             + DFHack::World::ReadCurrentTick();
@@ -125,6 +129,7 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     manageTickEvent(out);
     manageJobInitiatedEvent(out);
     manageJobCompletedEvent(out);
+    manageUnitDeathEvent(out);
     
     return;
 }
@@ -212,5 +217,27 @@ static void manageJobCompletedEvent(color_ostream& out) {
     for ( size_t a = 0; a < toDelete.size(); a++ ) {
         prevJobs.erase(a);
     }*/
+}
+
+static void manageUnitDeathEvent(color_ostream& out) {
+    if ( handlers[EventType::UNIT_DEATH].empty() ) {
+        return;
+    }
+    
+    for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
+        df::unit* unit = df::global::world->units.active[a];
+        if ( unit->counters.death_id == -1 ) {
+            livingUnits.insert(unit->id);
+            continue;
+        }
+        //dead: if dead since last check, trigger events
+        if ( livingUnits.find(unit->id) == livingUnits.end() )
+            continue;
+
+        for ( auto i = handlers[EventType::UNIT_DEATH].begin(); i != handlers[EventType::UNIT_DEATH].end(); i++ ) {
+            (*i).second.eventHandler(out, (void*)unit->id);
+        }
+        livingUnits.erase(unit->id);
+    }
 }
 

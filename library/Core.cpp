@@ -44,6 +44,7 @@ using namespace std;
 #include "VersionInfo.h"
 #include "PluginManager.h"
 #include "ModuleFactory.h"
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
 #include "modules/World.h"
 #include "modules/Graphic.h"
@@ -1238,6 +1239,8 @@ static int buildings_timer = 0;
 
 void Core::onUpdate(color_ostream &out)
 {
+    EventManager::manageEvents(out);
+
     // convert building reagents
     if (buildings_do_onupdate && (++buildings_timer & 1))
         buildings_onUpdate(out);

@@ -3,8 +3,9 @@
 #include "modules/Job.h"
 #include "modules/World.h"
 
-#include "df/job.h"
 #include "df/global_objects.h"
+#include "df/item.h"
+#include "df/job.h"
 #include "df/job_list_link.h"
 #include "df/unit.h"
 #include "df/world.h"
@@ -87,11 +88,13 @@ static void manageTickEvent(color_ostream& out);
 static void manageJobInitiatedEvent(color_ostream& out);
 static void manageJobCompletedEvent(color_ostream& out);
 static void manageUnitDeathEvent(color_ostream& out);
+static void manageItemCreationEvent(color_ostream& out);
 
 static uint32_t lastTick = 0;
 static int32_t lastJobId = -1;
 static map<int32_t, df::job*> prevJobs;
 static set<int32_t> livingUnits;
+static int32_t nextItem;
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     if ( event == DFHack::SC_MAP_UNLOADED ) {
@@ -103,6 +106,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         prevJobs.clear();
         tickQueue.clear();
         livingUnits.clear();
+        nextItem = -1;
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
             + DFHack::World::ReadCurrentTick();
@@ -113,6 +117,8 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         tickQueue.clear();
 
         tickQueue.insert(newTickQueue.begin(), newTickQueue.end());
+
+        nextItem = *df::global::item_next_id;
     }
 }
 
@@ -130,7 +136,8 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     manageJobInitiatedEvent(out);
     manageJobCompletedEvent(out);
     manageUnitDeathEvent(out);
-    
+    manageItemCreationEvent(out);
+
     return;
 }
 
@@ -239,5 +246,36 @@ static void manageUnitDeathEvent(color_ostream& out) {
         }
         livingUnits.erase(unit->id);
     }
+}
+
+static void manageItemCreationEvent(color_ostream& out) {
+    if ( handlers[EventType::ITEM_CREATED].empty() ) {
+        return;
+    }
+
+    if ( nextItem >= *df::global::item_next_id ) {
+        return;
+    }
+
+    size_t index = df::item::binsearch_index(df::global::world->items.all, nextItem, false);
+    for ( size_t a = index; a < df::global::world->items.all.size(); a++ ) {
+        df::item* item = df::global::world->items.all[a];
+        //invaders
+        if ( item->flags.bits.foreign )
+            continue;
+        //traders who bring back your items?
+        if ( item->flags.bits.trader )
+            continue;
+        //migrants
+        if ( item->flags.bits.owned )
+            continue;
+        //spider webs don't count
+        if ( item->flags.bits.spider_web )
+            continue;
+        for ( auto i = handlers[EventType::ITEM_CREATED].begin(); i != handlers[EventType::ITEM_CREATED].end(); i++ ) {
+            (*i).second.eventHandler(out, (void*)item->id);
+        }
+    }
+    nextItem = *df::global::item_next_id;
 }
 

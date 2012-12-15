@@ -17,8 +17,8 @@ namespace DFHack {
                 JOB_INITIATED,
                 JOB_COMPLETED,
                 UNIT_DEATH,
-                //ITEM_CREATED,
-                EVENT_MAX=UNIT_DEATH
+                ITEM_CREATED,
+                EVENT_MAX
             };
         }
 

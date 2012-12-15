@@ -94,7 +94,6 @@ reaction_duck
 Next, start a new fort in a new world, build a duck workshop, then have someone become a duck.
 */
 
-const int32_t ticksPerYear = 403200;
 bool enabled = true;
 
 DFHACK_PLUGIN("autoSyndrome");

@@ -2,6 +2,11 @@
 #include "Export.h"
 #include "DataDefs.h"
 #include "Core.h"
+
+#include "modules/EventManager.h"
+#include "modules/Job.h"
+#include "modules/Maps.h"
+
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
 #include "df/global_objects.h"
@@ -18,8 +23,6 @@
 #include "df/general_ref.h"
 #include "df/general_ref_type.h"
 #include "df/general_ref_unit_workerst.h"
-#include "modules/Maps.h"
-#include "modules/Job.h"
 
 #include <string>
 #include <vector>
@@ -92,15 +95,12 @@ Next, start a new fort in a new world, build a duck workshop, then have someone 
 */
 
 const int32_t ticksPerYear = 403200;
-int32_t lastRun = 0;
-unordered_map<int32_t, df::job*> prevJobs;
-unordered_map<int32_t, int32_t> jobWorkers;
 bool enabled = true;
 
 DFHACK_PLUGIN("autoSyndrome");
 
 command_result autoSyndrome(color_ostream& out, vector<string>& parameters);
-int32_t processJob(color_ostream& out, int32_t id);
+void processJob(color_ostream& out, void* jobPtr);
 int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrome);
 
 DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginCommand> &commands) {
@@ -123,89 +123,13 @@ DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginComman
         ));
     
     
+    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("autoSyndrome");
+    EventManager::EventHandler handle(processJob);
+    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, me);
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream& out) {
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_onupdate(color_ostream& out) {
-    if ( !enabled )
-        return CR_OK;
-    if(DFHack::Maps::IsValid() == false) {
-        return CR_OK;
-    }
-    
-    //don't run more than once per tick
-    int32_t time = (*df::global::cur_year)*ticksPerYear + (*df::global::cur_year_tick);
-    if ( time <= lastRun )
-        return CR_OK;
-    lastRun = time;
-
-    //keep track of all queued jobs. When one completes (and is not cancelled), check if it's a boiling rock job, and if so, give the worker the appropriate syndrome
-    unordered_map<int32_t, df::job*> jobs;
-    df::job_list_link* link = &df::global::world->job_list;
-    for( ; link != NULL; link = link->next ) {
-        df::job* item = link->item;
-        if ( item == NULL )
-            continue;
-        //-1 usually means it hasn't been assigned yet.
-        if ( item->completion_timer < 0 )
-            continue;
-        //if the completion timer is more than one, then the job will never disappear next tick unless it's cancelled
-        if ( item->completion_timer > 1 )
-            continue;
-
-        //only consider jobs that have been started
-        int32_t workerId = -1;
-        for ( size_t a = 0; a < item->references.size(); a++ ) {
-            if ( item->references[a]->getType() != df::enums::general_ref_type::UNIT_WORKER )
-                continue;
-            if ( workerId != -1 ) {
-                out.print("%s, line %d: Found two workers on the same job.\n", __FILE__, __LINE__);
-            }
-            workerId = ((df::general_ref_unit_workerst*)item->references[a])->unit_id;
-        }
-        if ( workerId == -1 )
-            continue;
-
-        jobs[item->id] = item;
-        jobWorkers[item->id] = workerId;
-    }
-    
-    //if it's not on the job list anymore, and its completion timer was 0, then it probably finished and was not cancelled, so process the job.
-    for ( unordered_map<int32_t, df::job*>::iterator i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
-        int32_t id = (*i).first;
-        df::job* completion = (*i).second;
-        if ( jobs.find(id) != jobs.end() )
-            continue;
-        if ( completion->completion_timer > 0 )
-            continue;
-        if ( processJob(out, id) < 0 ) {
-            //enabled = false;
-            return CR_FAILURE;
-        }
-    }
-
-    //delete obselete job copies
-    for ( unordered_map<int32_t, df::job*>::iterator i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
-        int32_t id = (*i).first;
-        df::job* oldJob = (*i).second;
-        DFHack::Job::deleteJobStruct(oldJob);
-        if ( jobs.find(id) == jobs.end() )
-            jobWorkers.erase(id);
-    }
-    prevJobs.clear();
-
-    //make copies of the jobs we looked at this tick in case they disappear next frame.
-    for ( unordered_map<int32_t, df::job*>::iterator i = jobs.begin(); i != jobs.end(); i++ ) {
-        int32_t id = (*i).first;
-        df::job* oldJob = (*i).second;
-        df::job* jobCopy = DFHack::Job::cloneJobStruct(oldJob);
-        prevJobs[id] = jobCopy;
-    }
-    
     return CR_OK;
 }
 
@@ -217,6 +141,7 @@ command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
     if ( parameters.size() > 1 )
         return CR_WRONG_USAGE;
 
+    bool wasEnabled = enabled;
     if ( parameters.size() == 1 ) {
         if ( parameters[0] == "enable" ) {
             enabled = true;
@@ -232,22 +157,31 @@ command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
     }
 
     out.print("autoSyndrome is %s\n", enabled ? "enabled" : "disabled");
+    if ( enabled == wasEnabled )
+        return CR_OK;
+
+    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("autoSyndrome");
+    if ( enabled ) {
+        EventManager::EventHandler handle(processJob);
+        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, me);
+    } else {
+        EventManager::unregisterAll(me);
+    }
     return CR_OK;
 }
 
-int32_t processJob(color_ostream& out, int32_t jobId) {
-    df::job* job = prevJobs[jobId];
+void processJob(color_ostream& out, void* jobPtr) {
+    df::job* job = (df::job*)jobPtr;
     if ( job == NULL ) {
-        out.print("Error %s line %d: couldn't find job %d.\n", __FILE__, __LINE__, jobId);
-        return -1;
+        out.print("Error %s line %d: null job.\n", __FILE__, __LINE__);
+        return;
     }
+    if ( job->completion_timer > 0 )
+        return;
     
     if ( job->job_type != df::job_type::CustomReaction )
-        return 0;
+        return;
     
-    //find the custom reaction raws and see if we have any special tags there
-    //out.print("job: \"%s\"\n", job->reaction_name.c_str());
-
     df::reaction* reaction = NULL;
     for ( size_t a = 0; a < df::global::world->raws.reactions.size(); a++ ) {
         df::reaction* candidate = df::global::world->raws.reactions[a];
@@ -258,18 +192,27 @@ int32_t processJob(color_ostream& out, int32_t jobId) {
     }
     if ( reaction == NULL ) {
         out.print("%s, line %d: could not find reaction \"%s\".\n", __FILE__, __LINE__, job->reaction_name.c_str() );
-        return -1;
+        return;
+    }
+    
+    int32_t workerId = -1;
+    for ( size_t a = 0; a < job->references.size(); a++ ) {
+        if ( job->references[a]->getType() != df::enums::general_ref_type::UNIT_WORKER )
+            continue;
+        if ( workerId != -1 ) {
+            out.print("%s, line %d: Found two workers on the same job.\n", __FILE__, __LINE__);
+        }
+        workerId = ((df::general_ref_unit_workerst*)job->references[a])->unit_id;
+        if (workerId == -1) {
+            out.print("%s, line %d: invalid worker.\n", __FILE__, __LINE__);
+            continue;
+        }
     }
 
-    if ( jobWorkers.find(jobId) == jobWorkers.end() ) {
-        out.print("%s, line %d: couldn't find worker for job %d.\n", __FILE__, __LINE__, jobId);
-        return -1;
-    }
-    int32_t workerId = jobWorkers[jobId];
     int32_t workerIndex = df::unit::binsearch_index(df::global::world->units.all, workerId);
     if ( workerIndex < 0 ) {
         out.print("%s line %d: Couldn't find unit %d.\n", __FILE__, __LINE__, workerId);
-        return -1;
+        return;
     }
     df::unit* unit = df::global::world->units.all[workerIndex];
     df::creature_raw* creature = df::global::world->raws.creatures.all[unit->race];
@@ -333,7 +276,7 @@ int32_t processJob(color_ostream& out, int32_t jobId) {
 
             if ( syndrome->syn_affected_creature_1.size() != syndrome->syn_affected_creature_2.size() ) {
                 out.print("%s, line %d: different affected creature/caste sizes.\n", __FILE__, __LINE__);
-                return -1;
+                return;
             }
             for ( size_t c = 0; c < syndrome->syn_affected_creature_1.size(); c++ ) {
                 if ( creature_name != *syndrome->syn_affected_creature_1[c] )
@@ -357,13 +300,13 @@ int32_t processJob(color_ostream& out, int32_t jobId) {
                 continue;
             }
             if ( giveSyndrome(out, workerId, syndrome) < 0 )
-                return -1;
+                return;
         }
     }
     if ( !foundIt )
-        return 0;
+        return;
 
-    return -2;
+    return;
 }
 
 /*

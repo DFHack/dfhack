@@ -1,4 +1,5 @@
 #include "Core.h"
+#include "Console.h"
 #include "modules/EventManager.h"
 #include "modules/Job.h"
 #include "modules/World.h"
@@ -33,10 +34,16 @@ void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler
     handlers[e].insert(pair<Plugin*, EventHandler>(plugin, handler));
 }
 
-void DFHack::EventManager::registerTick(EventHandler handler, int32_t when, Plugin* plugin) {
+void DFHack::EventManager::registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute) {
     uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
         + DFHack::World::ReadCurrentTick();
     if ( !Core::getInstance().isWorldLoaded() ) {
+        tick = 0;
+        if ( absolute ) {
+            Core::getInstance().getConsole().print("Warning: absolute flag will not be honored.\n");
+        }
+    }
+    if ( absolute ) {
         tick = 0;
     }
     

@@ -2965,6 +2965,10 @@ List of events
 
 1. onReactionComplete(reaction,unit,input_items,input_reagents,output_items,call_native) - auto activates if detects reactions starting with ``LUA_HOOK_``. Is called when reaction finishes.
 2. onItemContaminateWound(item,unit,wound,number1,number2) - Is called when item tries to contaminate wound (e.g. stuck in)
+3. onProjItemCheckMovement(projectile) - is called when projectile moves
+4. onProjItemCheckImpact(projectile,somebool) - is called when projectile hits something
+5. onProjUnitCheckMovement(projectile) - is called when projectile moves
+6. onProjUnitCheckImpact(projectile,somebool) - is called when projectile hits something
 
 Examples
 --------
@@ -2976,13 +2980,21 @@ Spawn dragon breath on each item attempt to contaminate wound:
         local flw=dfhack.maps.spawnFlow(unit.pos,6,0,0,50000)
     end
 
-Reaction complete example"
+Reaction complete example:
 ::
-
+  b=require "plugins.eventful"
   b.onReactionComplete.one=function(reaction,unit,in_items,in_reag,out_items,call_native)
     local pos=copyall(unit.pos)
     dfhack.timeout(100,"ticks",function() dfhack.maps.spawnFlow(pos,6,0,0,50000) end) -- spawn dragonbreath after 100 ticks
     call_native.value=false --do not call real item creation code
+  end
+
+Granade example:
+::
+  b=require "plugins.eventful"
+  b.onProjItemCheckImpact.one=function(projectile)
+    -- you can check if projectile.item e.g. has correct material
+    dfhack.maps.spawnFlow(projectile.cur_pos,6,0,0,50000) 
   end
 
 =======

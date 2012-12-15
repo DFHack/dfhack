@@ -215,8 +215,9 @@ function GmEditorUi:onInput(keys)
         end
     elseif keys[keybindings.offset.key] then
         local trg=self:currentTarget()
-        local size,off=df.sizeof(trg.target:_field(trg.keys[trg.selected]))
-        dialog.showMessage("Offset",string.format("Size hex=%x,%x dec=%d,%d",size,off,size,off),COLOR_WHITE)
+        local _,stoff=df.sizeof(trg.target)
+        local size,off=df.sizeof(trg.target:_field(self:getSelectedKey()))
+        dialog.showMessage("Offset",string.format("Size hex=%x,%x dec=%d,%d\nRelative hex=%x dec=%d",size,off,size,off,off-stoff,off-stoff),COLOR_WHITE)
     --elseif keys.CUSTOM_ALT_F then --filter?
     elseif keys[keybindings.find.key] then
         self:find()

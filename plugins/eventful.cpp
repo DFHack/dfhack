@@ -14,6 +14,9 @@
 #include "df/reaction_reagent_itemst.h"
 #include "df/reaction_product_itemst.h"
 
+#include "df/proj_itemst.h"
+#include "df/proj_unitst.h"
+
 #include "MiscUtils.h"
 #include "LuaTools.h"
 
@@ -85,13 +88,26 @@ static bool is_lua_hook(const std::string &name)
 static void handle_reaction_done(color_ostream &out,df::reaction*, df::unit *unit, std::vector<df::item*> *in_items,std::vector<df::reaction_reagent*> *in_reag
     , std::vector<df::item*> *out_items,bool *call_native){};
 static void handle_contaminate_wound(color_ostream &out,df::item_actual*,df::unit* unit, df::unit_wound* wound, uint8_t a1, int16_t a2){};
+static void handle_projitem_ci(color_ostream &out,df::proj_itemst*,bool){};
+static void handle_projitem_cm(color_ostream &out,df::proj_itemst*){};
+static void handle_projunit_ci(color_ostream &out,df::proj_unitst*,bool){};
+static void handle_projunit_cm(color_ostream &out,df::proj_unitst*){};
 
 DEFINE_LUA_EVENT_6(onReactionComplete, handle_reaction_done,df::reaction*, df::unit *, std::vector<df::item*> *,std::vector<df::reaction_reagent*> *,std::vector<df::item*> *,bool *);
 DEFINE_LUA_EVENT_5(onItemContaminateWound, handle_contaminate_wound, df::item_actual*,df::unit* , df::unit_wound* , uint8_t , int16_t );
+//projectiles
+DEFINE_LUA_EVENT_2(onProjItemCheckImpact, handle_projitem_ci, df::proj_itemst*,bool );
+DEFINE_LUA_EVENT_1(onProjItemCheckMovement, handle_projitem_cm, df::proj_itemst*);
+DEFINE_LUA_EVENT_2(onProjUnitCheckImpact, handle_projunit_ci, df::proj_unitst*,bool );
+DEFINE_LUA_EVENT_1(onProjUnitCheckMovement, handle_projunit_cm, df::proj_unitst* );
 
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onReactionComplete),
     DFHACK_LUA_EVENT(onItemContaminateWound),
+    DFHACK_LUA_EVENT(onProjItemCheckImpact),
+    DFHACK_LUA_EVENT(onProjItemCheckMovement),
+    DFHACK_LUA_EVENT(onProjUnitCheckImpact),
+    DFHACK_LUA_EVENT(onProjUnitCheckMovement),
     DFHACK_LUA_END
 };
 
@@ -134,10 +150,49 @@ struct item_hooks :df::item_actual {
             onItemContaminateWound(out,this,unit,wound,a1,a2);
             INTERPOSE_NEXT(contaminateWound)(unit,wound,a1,a2);
         }
+
 };
 IMPLEMENT_VMETHOD_INTERPOSE(item_hooks, contaminateWound);
 
+struct proj_item_hook: df::proj_itemst{
+    typedef df::proj_itemst interpose_base;
+    DEFINE_VMETHOD_INTERPOSE(bool,checkImpact,(bool mode))
+    {
+        CoreSuspendClaimer suspend;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+        onProjItemCheckImpact(out,this,mode);
+        return INTERPOSE_NEXT(checkImpact)(mode); //returns destroy item or not?
+    }
+    DEFINE_VMETHOD_INTERPOSE(bool,checkMovement,())
+    {
+        CoreSuspendClaimer suspend;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+        onProjItemCheckMovement(out,this);
+        return INTERPOSE_NEXT(checkMovement)();
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(proj_item_hook,checkImpact);
+IMPLEMENT_VMETHOD_INTERPOSE(proj_item_hook,checkMovement);
 
+struct proj_unit_hook: df::proj_unitst{
+    typedef df::proj_unitst interpose_base;
+    DEFINE_VMETHOD_INTERPOSE(bool,checkImpact,(bool mode))
+    {
+        CoreSuspendClaimer suspend;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+        onProjUnitCheckImpact(out,this,mode);
+        return INTERPOSE_NEXT(checkImpact)(mode); //returns destroy item or not?
+    }
+    DEFINE_VMETHOD_INTERPOSE(bool,checkMovement,())
+    {
+        CoreSuspendClaimer suspend;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+        onProjUnitCheckMovement(out,this);
+        return INTERPOSE_NEXT(checkMovement)();
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(proj_unit_hook,checkImpact);
+IMPLEMENT_VMETHOD_INTERPOSE(proj_unit_hook,checkMovement);
 /*
  * Scan raws for matching reactions.
  */
@@ -192,6 +247,10 @@ static bool find_reactions(color_ostream &out)
 static void enable_hooks(bool enable)
 {
     INTERPOSE_HOOK(item_hooks,contaminateWound).apply(enable);
+    INTERPOSE_HOOK(proj_unit_hook,checkImpact).apply(enable);
+    INTERPOSE_HOOK(proj_unit_hook,checkMovement).apply(enable);
+    INTERPOSE_HOOK(proj_item_hook,checkImpact).apply(enable);
+    INTERPOSE_HOOK(proj_item_hook,checkMovement).apply(enable);
 }
 static void world_specific_hooks(color_ostream &out,bool enable)
 {

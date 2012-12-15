@@ -905,6 +905,7 @@ bool Core::Init()
     cerr << "Initializing Plugins.\n";
     // create plugin manager
     plug_mgr = new PluginManager(this);
+    plug_mgr->init(this);
     IODATA *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
@@ -1254,6 +1255,8 @@ void Core::onUpdate(color_ostream &out)
 
 void Core::onStateChange(color_ostream &out, state_change_event event)
 {
+    EventManager::onStateChange(out, event);
+
     buildings_onStateChange(out, event);
 
     plug_mgr->OnStateChange(out, event);

@@ -2,6 +2,7 @@
 #include "Console.h"
 #include "Core.h"
 #include "Export.h"
+#include "PluginManager.h"
 #include "modules/EventManager.h"
 #include "DataDefs.h"
 
@@ -15,9 +16,10 @@ void jobCompleted(color_ostream& out, void* job);
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
     EventManager::EventHandler initiateHandler(jobInitiated);
     EventManager::EventHandler completeHandler(jobCompleted);
+    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("eventExample");
 
-    EventManager::registerListener(EventManager::EventType::JOB_INITIATED, initiateHandler, NULL);
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, completeHandler, NULL);
+    EventManager::registerListener(EventManager::EventType::JOB_INITIATED, initiateHandler, me);
+    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, completeHandler, me);
     
     return CR_OK;
 }

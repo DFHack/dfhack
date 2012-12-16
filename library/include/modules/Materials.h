@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -130,6 +130,11 @@ namespace DFHack
         bool findInorganic(const std::string &token);
         bool findPlant(const std::string &token, const std::string &subtoken);
         bool findCreature(const std::string &token, const std::string &subtoken);
+
+        bool findProduct(df::material *material, const std::string &name);
+        bool findProduct(const MaterialInfo &info, const std::string &name) {
+            return findProduct(info.material, name);
+        }
 
         std::string getToken();
         std::string toString(uint16_t temp = 10015, bool named = true);

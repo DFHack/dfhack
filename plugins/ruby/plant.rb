@@ -51,7 +51,7 @@ module DFHack
         end
 
         SaplingToTreeAge = 120960
-        def cuttrees(material=nil, count_max=100)
+        def cuttrees(material=nil, count_max=100, quiet=false)
             if !material
                 # list trees
                 cnt = Hash.new(0)
@@ -62,7 +62,7 @@ module DFHack
                 }
                 cnt.sort_by { |mat, c| c }.each { |mat, c|
                     name = @raws_tree_name[mat]
-                    puts " #{name} #{c}"
+                    puts " #{name} #{c}" unless quiet
                 }
             else
                 cnt = 0
@@ -78,11 +78,11 @@ module DFHack
                         break if cnt == count_max
                     end
                 }
-                puts "Updated #{cnt} plant designations"
+                puts "Updated #{cnt} plant designations" unless quiet
             end
         end
 
-        def growtrees(material=nil, count_max=100)
+        def growtrees(material=nil, count_max=100, quiet=false)
             if !material
                 # list plants
                 cnt = Hash.new(0)
@@ -93,7 +93,7 @@ module DFHack
                 }
                 cnt.sort_by { |mat, c| c }.each { |mat, c|
                     name = @raws_tree_name[mat]
-                    puts " #{name} #{c}"
+                    puts " #{name} #{c}" unless quiet
                 }
             else
                 cnt = 0
@@ -104,7 +104,7 @@ module DFHack
                     cnt += 1
                     break if cnt == count_max
                 }
-                puts "Grown #{cnt} saplings"
+                puts "Grown #{cnt} saplings" unless quiet
             end
         end
     end

@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -65,6 +65,7 @@ namespace  DFHack
                            RPCService *owner, const char *name, int flags)
             : RPCFunctionBase(in, out), name(name), flags(flags), owner(owner), id(-1)
         {}
+        virtual ~ServerFunctionBase() {}
 
         RPCService *owner;
         int16_t id;

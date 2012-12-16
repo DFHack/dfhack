@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -49,6 +49,7 @@ using namespace DFHack;
 #include "df/ui_look_list.h"
 #include "df/d_init.h"
 #include "df/item.h"
+#include "df/unit.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/general_ref_building_holderst.h"
@@ -177,6 +178,44 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
     return true;
 }
 
+bool Buildings::setOwner(df::building *bld, df::unit *unit)
+{
+    CHECK_NULL_POINTER(bld);
+
+    if (!bld->is_room)
+        return false;
+    if (bld->owner == unit)
+        return true;
+
+    if (bld->owner)
+    {
+        auto &blist = bld->owner->owned_buildings;
+        vector_erase_at(blist, linear_index(blist, bld));
+
+        if (auto spouse = df::unit::find(bld->owner->relations.spouse_id))
+        {
+            auto &blist = spouse->owned_buildings;
+            vector_erase_at(blist, linear_index(blist, bld));
+        }
+    }
+
+    bld->owner = unit;
+
+    if (unit)
+    {
+        unit->owned_buildings.push_back(bld);
+
+        if (auto spouse = df::unit::find(unit->relations.spouse_id))
+        {
+            auto &blist = spouse->owned_buildings;
+            if (bld->canUseSpouseRoom() && linear_index(blist, bld) < 0)
+                blist.push_back(bld);
+        }
+    }
+
+    return true;
+}
+
 df::building *Buildings::findAtTile(df::coord pos)
 {
     auto occ = Maps::getTileOccupancy(pos);
@@ -285,7 +324,7 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
         {
             auto obj = (df::building_trapst*)bld;
             if (obj->trap_type == trap_type::PressurePlate)
-                obj->unk_cc = 500;
+                obj->ready_timeout = 500;
             break;
         }
     default:
@@ -723,7 +762,7 @@ static void markBuildingTiles(df::building *bld, bool remove)
 
 static void linkRooms(df::building *bld)
 {
-    auto &vec = world->buildings.other[buildings_other_id::ANY_FREE];
+    auto &vec = world->buildings.other[buildings_other_id::IN_PLAY];
 
     bool changed = false;
 

@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -181,7 +181,7 @@ void DFHack::Job::printItemDetails(color_ostream &out, df::job_item *item, int i
         out << "    reaction class: " << item->reaction_class << endl;
     if (!item->has_material_reaction_product.empty())
         out << "    reaction product: " << item->has_material_reaction_product << endl;
-    if (item->has_tool_use >= 0)
+    if (item->has_tool_use >= (df::tool_uses)0)
         out << "    tool use: " << ENUM_KEY_STR(tool_uses, item->has_tool_use) << endl;
 }
 
@@ -189,7 +189,7 @@ void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
 {
     CHECK_NULL_POINTER(job);
 
-    out.color(job->flags.bits.suspend ? Console::COLOR_DARKGREY : Console::COLOR_GREY);
+    out.color(job->flags.bits.suspend ? COLOR_DARKGREY : COLOR_GREY);
     out << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_type);
     if (job->flags.whole)
            out << " (" << bitfield_to_string(job->flags) << ")";
@@ -360,4 +360,30 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
         job->items.push_back(job_link);
 
     return true;
+}
+
+bool Job::isSuitableItem(df::job_item *item, df::item_type itype, int isubtype)
+{
+    CHECK_NULL_POINTER(item);
+
+    if (itype == item_type::NONE)
+        return true;
+
+    ItemTypeInfo iinfo(itype, isubtype);
+    MaterialInfo minfo(item);
+
+    return iinfo.isValid() && iinfo.matches(*item, &minfo);
+}
+
+bool Job::isSuitableMaterial(df::job_item *item, int mat_type, int mat_index)
+{
+    CHECK_NULL_POINTER(item);
+
+    if (mat_type == -1 && mat_index == -1)
+        return true;
+
+    ItemTypeInfo iinfo(item);
+    MaterialInfo minfo(mat_type, mat_index);
+
+    return minfo.isValid() && iinfo.matches(*item, &minfo);
 }

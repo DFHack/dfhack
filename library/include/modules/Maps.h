@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -50,6 +50,7 @@ distribution.
 #include "df/tile_dig_designation.h"
 #include "df/tile_traffic.h"
 #include "df/feature_init.h"
+#include "df/flow_type.h"
 
 /**
  * \defgroup grp_maps Maps module and its types
@@ -151,6 +152,21 @@ typedef uint8_t biome_indices40d [9];
 typedef uint16_t t_temperatures [16][16];
 
 /**
+ * Index a tile array by a 2D coordinate, clipping it to mod 16
+ */
+template<class R, class T> inline R index_tile(T &v, df::coord2d p) {
+    return v[p.x&15][p.y&15];
+}
+
+/**
+ * Check if a 2D coordinate is in the 0-15 range.
+ */
+inline bool is_valid_tile_coord(df::coord2d p) {
+    return (p.x & ~15) == 0 && (p.y & ~15) == 0;
+}
+
+
+/**
  * The Maps module
  * \ingroup grp_modules
  * \ingroup grp_maps
@@ -232,14 +248,19 @@ extern DFHACK_EXPORT void getSize(uint32_t& x, uint32_t& y, uint32_t& z);
 /// get the position of the map on world map
 extern DFHACK_EXPORT void getPosition(int32_t& x, int32_t& y, int32_t& z);
 
+extern DFHACK_EXPORT bool isValidTilePos(int32_t x, int32_t y, int32_t z);
+inline bool isValidTilePos(df::coord pos) { return isValidTilePos(pos.x, pos.y, pos.z); }
+
 /**
  * Get the map block or NULL if block is not valid
  */
 extern DFHACK_EXPORT df::map_block * getBlock (int32_t blockx, int32_t blocky, int32_t blockz);
 extern DFHACK_EXPORT df::map_block * getTileBlock (int32_t x, int32_t y, int32_t z);
+extern DFHACK_EXPORT df::map_block * ensureTileBlock (int32_t x, int32_t y, int32_t z);
 
 inline df::map_block * getBlock (df::coord pos) { return getBlock(pos.x, pos.y, pos.z); }
 inline df::map_block * getTileBlock (df::coord pos) { return getTileBlock(pos.x, pos.y, pos.z); }
+inline df::map_block * ensureTileBlock (df::coord pos) { return ensureTileBlock(pos.x, pos.y, pos.z); }
 
 extern DFHACK_EXPORT df::tiletype *getTileType(int32_t x, int32_t y, int32_t z);
 extern DFHACK_EXPORT df::tile_designation *getTileDesignation(int32_t x, int32_t y, int32_t z);
@@ -258,7 +279,7 @@ inline df::tile_occupancy *getTileOccupancy(df::coord pos) {
 /**
  * Returns biome info about the specified world region.
  */
-DFHACK_EXPORT df::world_data::T_region_map *getRegionBiome(df::coord2d rgn_pos);
+DFHACK_EXPORT df::region_map_entry *getRegionBiome(df::coord2d rgn_pos);
 
 /**
  * Returns biome world region coordinates for the given tile within given block.
@@ -271,6 +292,8 @@ inline df::coord2d getTileBiomeRgn(df::coord pos) {
 
 // Enables per-frame updates for liquid flow and/or temperature.
 DFHACK_EXPORT void enableBlockUpdates(df::map_block *blk, bool flow = false, bool temperature = false);
+
+DFHACK_EXPORT df::flow_info *spawnFlow(df::coord pos, df::flow_type type, int mat_type = 0, int mat_index = -1, int density = 100);
 
 /// sorts the block event vector into multiple vectors by type
 /// mineral veins, what's under ice, blood smears and mud

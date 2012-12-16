@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -108,6 +108,50 @@ struct Plugin::RefAutoinc
     ~RefAutoinc(){ lock->lock_sub(); };
 };
 
+struct Plugin::LuaCommand {
+    Plugin *owner;
+    std::string name;
+    int (*command)(lua_State *state);
+
+    LuaCommand(Plugin *owner, std::string name)
+      : owner(owner), name(name), command(NULL) {}
+};
+
+struct Plugin::LuaFunction {
+    Plugin *owner;
+    std::string name;
+    function_identity_base *identity;
+    bool silent;
+
+    LuaFunction(Plugin *owner, std::string name)
+      : owner(owner), name(name), identity(NULL), silent(false) {}
+};
+
+struct Plugin::LuaEvent : public Lua::Event::Owner {
+    LuaFunction handler;
+    Lua::Notification *event;
+    bool active;
+    int count;
+
+    LuaEvent(Plugin *owner, std::string name)
+      : handler(owner,name), event(NULL), active(false), count(0)
+    {
+        handler.silent = true;
+    }
+
+    void on_count_changed(int new_cnt, int delta) {
+        RefAutoinc lock(handler.owner->access);
+        count = new_cnt;
+        if (event)
+            event->on_count_changed(new_cnt, delta);
+    }
+    void on_invoked(lua_State *state, int nargs, bool from_c) {
+        RefAutoinc lock(handler.owner->access);
+        if (event)
+            event->on_invoked(state, nargs, from_c);
+    }
+};
+
 Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _filename, PluginManager * pm)
 {
     filename = filepath;
@@ -142,19 +186,26 @@ Plugin::~Plugin()
 
 bool Plugin::load(color_ostream &con)
 {
-    RefAutolock lock(access);
-    if(state == PS_BROKEN)
     {
-        return false;
+        RefAutolock lock(access);
+        if(state == PS_LOADED)
+        {
+            return true;
+        }
+        else if(state != PS_UNLOADED)
+        {
+            return false;
+        }
+        state = PS_LOADING;
     }
-    else if(state == PS_LOADED)
-    {
-        return true;
-    }
+    // enter suspend
+    CoreSuspender suspend;
+    // open the library, etc
     DFLibrary * plug = OpenPlugin(filename.c_str());
     if(!plug)
     {
         con.printerr("Can't load plugin %s\n", filename.c_str());
+        RefAutolock lock(access);
         state = PS_BROKEN;
         return false;
     }
@@ -164,6 +215,7 @@ bool Plugin::load(color_ostream &con)
     {
         con.printerr("Plugin %s has no name or version.\n", filename.c_str());
         ClosePlugin(plug);
+        RefAutolock lock(access);
         state = PS_BROKEN;
         return false;
     }
@@ -172,9 +224,11 @@ bool Plugin::load(color_ostream &con)
         con.printerr("Plugin %s was not built for this version of DFHack.\n"
                      "Plugin: %s, DFHack: %s\n", *plug_name, *plug_version, DFHACK_VERSION);
         ClosePlugin(plug);
+        RefAutolock lock(access);
         state = PS_BROKEN;
         return false;
     }
+    RefAutolock lock(access);
     plugin_init = (command_result (*)(color_ostream &, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
     if(!plugin_init)
     {
@@ -226,6 +280,11 @@ bool Plugin::unload(color_ostream &con)
         }
         // wait for all calls to finish
         access->wait();
+        state = PS_UNLOADING;
+        access->unlock();
+        // enter suspend
+        CoreSuspender suspend;
+        access->lock();
         // notify plugin about shutdown, if it has a shutdown function
         command_result cr = CR_OK;
         if(plugin_shutdown)
@@ -439,7 +498,11 @@ void Plugin::index_lua(DFLibrary *lib)
             cmd->handler.identity = evlist->event->get_handler();
             cmd->event = evlist->event;
             if (cmd->active)
+            {
                 cmd->event->bind(Lua::Core::State, cmd);
+                if (cmd->count > 0)
+                    cmd->event->on_count_changed(cmd->count, 0);
+            }
         }
     }
 }
@@ -467,7 +530,7 @@ int Plugin::lua_cmd_wrapper(lua_State *state)
         luaL_error(state, "plugin command %s() has been unloaded",
                    (cmd->owner->name+"."+cmd->name).c_str());
 
-    return cmd->command(state);
+    return Lua::CallWithCatch(state, cmd->command, cmd->name.c_str());
 }
 
 int Plugin::lua_fun_wrapper(lua_State *state)
@@ -477,8 +540,13 @@ int Plugin::lua_fun_wrapper(lua_State *state)
     RefAutoinc lock(cmd->owner->access);
 
     if (!cmd->identity)
+    {
+        if (cmd->silent)
+            return 0;
+
         luaL_error(state, "plugin function %s() has been unloaded",
                    (cmd->owner->name+"."+cmd->name).c_str());
+    }
 
     return LuaWrapper::method_wrapper_core(state, cmd->identity);
 }
@@ -506,14 +574,14 @@ void Plugin::open_lua(lua_State *state, int table)
     {
         for (auto it = lua_events.begin(); it != lua_events.end(); ++it)
         {
-            Lua::MakeEvent(state, it->second);
+            Lua::Event::Make(state, it->second, it->second);
 
             push_function(state, &it->second->handler);
-            lua_rawsetp(state, -2, NULL);
+            Lua::Event::SetPrivateCallback(state, -2);
 
             it->second->active = true;
             if (it->second->event)
-                it->second->event->bind(state, it->second);
+                it->second->event->bind(Lua::Core::State, it->second);
 
             lua_setfield(state, table, it->first.c_str());
         }

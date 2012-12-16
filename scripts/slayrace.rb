@@ -33,12 +33,14 @@ slayit = lambda { |u|
 	end
 }
 
-all_races = df.world.units.active.map { |u|
-	u.race_tg.creature_id if checkunit[u]
-}.compact.uniq.sort
+all_races = Hash.new(0)
+
+df.world.units.active.map { |u|
+	all_races[u.race_tg.creature_id] += 1 if checkunit[u]
+}
 
 if !race
-	puts all_races
+	all_races.sort_by { |race, cnt| [cnt, race] }.each{ |race, cnt| puts " #{race} #{cnt}" }
 elsif race == 'him'
 	if him = df.unit_find
 		slayit[him]
@@ -46,7 +48,7 @@ elsif race == 'him'
 		puts "Choose target"
 	end
 else
-	raw_race = df.match_rawname(race, all_races)
+	raw_race = df.match_rawname(race, all_races.keys)
 	raise 'invalid race' if not raw_race
 
 	race_nr = df.world.raws.creatures.all.index { |cr| cr.creature_id == raw_race }

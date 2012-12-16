@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -57,6 +57,8 @@ using namespace std;
 #include "df/builtin_mats.h"
 #include "df/block_square_event_grassst.h"
 #include "df/z_level_flags.h"
+#include "df/region_map_entry.h"
+#include "df/flow_info.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -137,15 +139,55 @@ df::map_block *Maps::getBlock (int32_t blockx, int32_t blocky, int32_t blockz)
     return world->map.block_index[blockx][blocky][blockz];
 }
 
-df::map_block *Maps::getTileBlock (int32_t x, int32_t y, int32_t z)
+bool Maps::isValidTilePos(int32_t x, int32_t y, int32_t z)
 {
     if (!IsValid())
-        return NULL;
+        return false;
     if ((x < 0) || (y < 0) || (z < 0))
-        return NULL;
+        return false;
     if ((x >= world->map.x_count) || (y >= world->map.y_count) || (z >= world->map.z_count))
+        return false;
+    return true;
+}
+
+df::map_block *Maps::getTileBlock (int32_t x, int32_t y, int32_t z)
+{
+    if (!isValidTilePos(x,y,z))
         return NULL;
     return world->map.block_index[x >> 4][y >> 4][z];
+}
+
+df::map_block *Maps::ensureTileBlock (int32_t x, int32_t y, int32_t z)
+{
+    if (!isValidTilePos(x,y,z))
+        return NULL;
+
+    auto column = world->map.block_index[x >> 4][y >> 4];
+    auto &slot = column[z];
+    if (slot)
+        return slot;
+
+    // Find another block below
+    int z2 = z;
+    while (z2 >= 0 && !column[z2]) z2--;
+    if (z2 < 0)
+        return NULL;
+
+    slot = new df::map_block();
+    slot->region_pos = column[z2]->region_pos;
+    slot->map_pos = column[z2]->map_pos;
+    slot->map_pos.z = z;
+
+    // Assume sky
+    df::tile_designation dsgn(0);
+    dsgn.bits.light = true;
+    dsgn.bits.outside = true;
+
+    for (int tx = 0; tx < 16; tx++)
+        for (int ty = 0; ty < 16; ty++)
+            slot->designation[tx][ty] = dsgn;
+
+    return slot;
 }
 
 df::tiletype *Maps::getTileType(int32_t x, int32_t y, int32_t z)
@@ -166,7 +208,7 @@ df::tile_occupancy *Maps::getTileOccupancy(int32_t x, int32_t y, int32_t z)
     return block ? &block->occupancy[x&15][y&15] : NULL;
 }
 
-df::world_data::T_region_map *Maps::getRegionBiome(df::coord2d rgn_pos)
+df::region_map_entry *Maps::getRegionBiome(df::coord2d rgn_pos)
 {
     auto data = world->world_data;
     if (!data)
@@ -201,6 +243,26 @@ void Maps::enableBlockUpdates(df::map_block *blk, bool flow, bool temperature)
         z_flags->bits.update = true;
         z_flags->bits.update_twice = true;
     }
+}
+
+df::flow_info *Maps::spawnFlow(df::coord pos, df::flow_type type, int mat_type, int mat_index, int density)
+{
+    using df::global::flows;
+
+    auto block = getTileBlock(pos);
+    if (!flows || !block)
+        return NULL;
+
+    auto flow = new df::flow_info();
+    flow->type = type;
+    flow->mat_type = mat_type;
+    flow->mat_index = mat_index;
+    flow->density = std::min(100, density);
+    flow->pos = pos;
+
+    block->flows.push_back(flow);
+    flows->push_back(flow);
+    return flow;
 }
 
 df::feature_init *Maps::getGlobalInitFeature(int32_t index)
@@ -245,7 +307,7 @@ df::feature_init *Maps::getLocalInitFeature(df::coord2d rgn_pos, int32_t index)
     df::coord2d bigregion = rgn_pos / 16;
 
     // bigregion is 16x16 regions. for each bigregion in X dimension:
-    auto fptr = data->unk_204[bigregion.x][bigregion.y].features;
+    auto fptr = data->feature_map[bigregion.x][bigregion.y].features;
     if (!fptr)
         return NULL;
 
@@ -392,7 +454,7 @@ df::coord2d Maps::getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos)
     if (!block || !world->world_data)
         return df::coord2d();
 
-    auto des = MapExtras::index_tile<df::tile_designation>(block->designation,pos);
+    auto des = index_tile<df::tile_designation>(block->designation,pos);
     unsigned idx = des.bits.biome;
     if (idx < 9)
     {
@@ -467,8 +529,8 @@ bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
     if (!block1 || !block2)
         return false;
 
-    auto tile1 = MapExtras::index_tile<uint16_t>(block1->walkable, pos1);
-    auto tile2 = MapExtras::index_tile<uint16_t>(block2->walkable, pos2);
+    auto tile1 = index_tile<uint16_t>(block1->walkable, pos1);
+    auto tile2 = index_tile<uint16_t>(block2->walkable, pos2);
 
     return tile1 && tile1 == tile2;
 }
@@ -484,8 +546,14 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
     valid = false;
     bcoord = _bcoord;
     block = Maps::getBlock(bcoord);
-    item_counts = NULL;
     tags = NULL;
+
+    init();
+}
+
+void MapExtras::Block::init()
+{
+    item_counts = NULL;
     tiles = NULL;
     basemats = NULL;
 
@@ -506,6 +574,23 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
         memset(temp1,0,sizeof(temp1));
         memset(temp2,0,sizeof(temp2));
     }
+}
+
+bool MapExtras::Block::Allocate()
+{
+    if (block)
+        return true;
+
+    block = Maps::ensureTileBlock(bcoord.x*16, bcoord.y*16, bcoord.z);
+    if (!block)
+        return false;
+
+    delete[] item_counts;
+    delete tiles;
+    delete basemats;
+    init();
+
+    return true;
 }
 
 MapExtras::Block::~Block()

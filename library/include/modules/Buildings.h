@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -91,6 +91,11 @@ DFHACK_EXPORT bool Read (const uint32_t index, t_building & building);
  * custom_type of -1 implies ordinary building
  */
 DFHACK_EXPORT bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
+
+/**
+ * Sets the owner unit for the building.
+ */
+DFHACK_EXPORT bool setOwner(df::building *building, df::unit *owner);
 
 /**
  * Find the building located at the specified tile.

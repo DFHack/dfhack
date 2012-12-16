@@ -488,7 +488,7 @@ Input & Output
   lock. Using an explicit ``dfhack.with_suspend`` will prevent
   this, forcing the function to block on input with lock held.
 
-* ``dfhack.interpreter([prompt[,env[,history_filename]]])``
+* ``dfhack.interpreter([prompt[,history_filename[,env]]])``
 
   Starts an interactive lua interpreter, using the specified prompt
   string, global environment and command-line history file.
@@ -548,6 +548,20 @@ Exception handling
 * ``dfhack.exception.verbose``
 
   The default value of the ``verbose`` argument of ``err:tostring()``.
+
+
+Miscellaneous
+-------------
+
+* ``dfhack.VERSION``
+
+  DFHack version string constant.
+
+* ``dfhack.curry(func,args...)``, or ``curry(func,args...)``
+
+  Returns a closure that invokes the function with args combined
+  both from the curry call and the closure call itself. I.e.
+  ``curry(func,a,b)(c,d)`` equals ``func(a,b,c,d)``.
 
 
 Locking and finalization
@@ -632,6 +646,24 @@ and automatically stored in the save game, these save and retrieval
 functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.
 
+It is also possible to associate one bit per map tile with an entry,
+using these two methods:
+
+* ``entry:getTilemask(block[, create])``
+
+  Retrieves the tile bitmask associated with this entry in the given map
+  block. If ``create`` is *true*, an empty mask is created if none exists;
+  otherwise the function returns *nil*, which must be assumed to be the same
+  as an all-zero mask.
+
+* ``entry:deleteTilemask(block)``
+
+  Deletes the associated tile mask from the given map block.
+
+Note that these masks are only saved in fortress mode, and also that deleting
+the persistent entry will **NOT** delete the associated masks.
+
+
 Material info lookup
 --------------------
 
@@ -709,6 +741,10 @@ can be omitted.
 
   Returns the dfhack directory path, i.e. ``".../df/hack/"``.
 
+* ``dfhack.getTickCount()``
+
+  Returns the tick count in ms, exactly as DF ui uses.
+
 * ``dfhack.isWorldLoaded()``
 
   Checks if the world is loaded.
@@ -724,14 +760,19 @@ can be omitted.
 Gui module
 ----------
 
-* ``dfhack.gui.getCurViewscreen()``
+* ``dfhack.gui.getCurViewscreen([skip_dismissed])``
 
-  Returns the viewscreen that is current in the core.
+  Returns the topmost viewscreen. If ``skip_dismissed`` is *true*,
+  ignores screens already marked to be removed.
 
 * ``dfhack.gui.getFocusString(viewscreen)``
 
   Returns a string representation of the current focus position
   in the ui. The string has a "screen/foo/bar/baz..." format.
+
+* ``dfhack.gui.getCurFocus([skip_dismissed])``
+
+  Returns the focus string of the current viewscreen.
 
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
 
@@ -754,14 +795,28 @@ Gui module
   last case, the highlighted *contained item* is returned, not
   the container itself.
 
+* ``dfhack.gui.getSelectedBuilding([silent])``
+
+  Returns the building selected via *'q'*, *'t'*, *'k'* or *'i'*.
+
 * ``dfhack.gui.showAnnouncement(text,color[,is_bright])``
 
   Adds a regular announcement with given text, color, and brightness.
   The is_bright boolean actually seems to invert the brightness.
 
+* ``dfhack.gui.showZoomAnnouncement(type,pos,text,color[,is_bright])``
+
+  Like above, but also specifies a position you can zoom to from the announcement menu.
+
 * ``dfhack.gui.showPopupAnnouncement(text,color[,is_bright])``
 
   Pops up a titan-style modal announcement window.
+
+* ``dfhack.gui.showAutoAnnouncement(type,pos,text,color[,is_bright])``
+
+  Uses the type to look up options from announcements.txt, and calls the
+  above operations accordingly. If enabled, pauses and zooms to position.
+
 
 Job module
 ----------
@@ -808,6 +863,15 @@ Job module
   if there are any jobs with ``first_id <= id < job_next_id``,
   a lua list containing them.
 
+* ``dfhack.job.isSuitableItem(job_item, item_type, item_subtype)``
+
+  Does basic sanity checks to verify if the suggested item type matches
+  the flags in the job item.
+
+* ``dfhack.job.isSuitableMaterial(job_item, mat_type, mat_index)``
+
+  Likewise, if replacing material.
+
 Units module
 ------------
 
@@ -835,6 +899,26 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
+* ``dfhack.units.isHidingCurse(unit)``
+
+  Checks if the unit hides improved attributes from its curse.
+
+* ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
+* ``dfhack.units.getMentalAttrValue(unit, attr_type)``
+
+  Computes the effective attribute value, including curse effect.
+
+* ``dfhack.units.isCrazed(unit)``
+* ``dfhack.units.isOpposedToLife(unit)``
+* ``dfhack.units.hasExtravision(unit)``
+* ``dfhack.units.isBloodsucker(unit)``
+
+  Simple checks of caste attributes that can be modified by curses.
+
+* ``dfhack.units.getMiscTrait(unit, type[, create])``
+
+  Finds (or creates if requested) a misc trait object with the given id.
+
 * ``dfhack.units.isDead(unit)``
 
   The unit is completely dead and passive, or a ghost.
@@ -861,6 +945,19 @@ Units module
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
 
+* ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
+
+  Retrieves the nominal skill level for the given unit. If ``use_rust``
+  is *true*, subtracts the rust penalty.
+
+* ``dfhack.units.getEffectiveSkill(unit, skill)``
+
+  Computes the effective rating for the given skill, taking into account exhaustion, pain etc.
+
+* ``dfhack.units.computeMovementSpeed(unit)``
+
+  Computes number of frames * 100 it takes the unit to move in its current state of mind and body.
+
 * ``dfhack.units.getNoblePositions(unit)``
 
   Returns a list of tables describing noble position assignments, or *nil*.
@@ -874,6 +971,15 @@ Units module
 * ``dfhack.units.getCasteProfessionName(race,caste,prof_id[,plural])``
 
   Retrieves the profession name for the given race/caste using raws.
+
+* ``dfhack.units.getProfessionColor(unit[,ignore_noble])``
+
+  Retrieves the color associated with the profession, using noble assignments
+  or raws. The ``ignore_noble`` boolean disables the use of noble positions.
+
+* ``dfhack.units.getCasteProfessionColor(race,caste,prof_id)``
+
+  Retrieves the profession color for the given race/caste using raws.
 
 
 Items module
@@ -913,6 +1019,14 @@ Items module
 
   Returns a list of items contained in this one.
 
+* ``dfhack.items.getHolderBuilding(item)``
+
+  Returns the holder building or *nil*.
+
+* ``dfhack.items.getHolderUnit(item)``
+
+  Returns the holder unit or *nil*.
+
 * ``dfhack.items.moveToGround(item,pos)``
 
   Move the item to the ground at position. Returns *false* if impossible.
@@ -928,6 +1042,26 @@ Items module
 * ``dfhack.items.moveToInventory(item,unit,use_mode,body_part)``
 
   Move the item to the unit inventory. Returns *false* if impossible.
+
+* ``dfhack.items.remove(item[, no_uncat])``
+
+  Removes the item, and marks it for garbage collection unless ``no_uncat`` is true.
+
+* ``dfhack.items.makeProjectile(item)``
+
+  Turns the item into a projectile, and returns the new object, or *nil* if impossible.
+
+* ``dfhack.items.isCasteMaterial(item_type)``
+
+  Returns *true* if this item type uses a creature/caste pair as its material.
+
+* ``dfhack.items.getSubtypeCount(item_type)``
+
+  Returns the number of raw-defined subtypes of the given item type, or *-1* if not applicable.
+
+* ``dfhack.items.getSubtypeDef(item_type, subtype)``
+
+  Returns the raw definition for the given item type and subtype, or *nil* if invalid.
 
 
 Maps module
@@ -945,9 +1079,25 @@ Maps module
 
   Returns a map block object for given x,y,z in local block coordinates.
 
+* ``dfhack.maps.isValidTilePos(coords)``, or ``isValidTilePos(x,y,z)``
+
+  Checks if the given df::coord or x,y,z in local tile coordinates are valid.
+
 * ``dfhack.maps.getTileBlock(coords)``, or ``getTileBlock(x,y,z)``
 
   Returns a map block object for given df::coord or x,y,z in local tile coordinates.
+
+* ``dfhack.maps.ensureTileBlock(coords)``, or ``ensureTileBlock(x,y,z)``
+
+  Like ``getTileBlock``, but if the block is not allocated, try creating it.
+
+* ``dfhack.maps.getTileType(coords)``, or ``getTileType(x,y,z)``
+
+  Returns the tile type at the given coordinates, or *nil* if invalid.
+
+* ``dfhack.maps.getTileFlags(coords)``, or ``getTileFlags(x,y,z)``
+
+  Returns designation and occupancy references for the given coordinates, or *nil, nil* if invalid.
 
 * ``dfhack.maps.getRegionBiome(region_coord2d)``, or ``getRegionBiome(x,y)``
 
@@ -956,6 +1106,11 @@ Maps module
 * ``dfhack.maps.enableBlockUpdates(block[,flow,temperature])``
 
   Enables updates for liquid flow or temperature, unless already active.
+
+* ``dfhack.maps.spawnFlow(pos,type,mat_type,mat_index,dimension)``
+
+  Spawns a new flow (i.e. steam/mist/dust/etc) at the given pos, and with
+  the given parameters. Returns it, or *nil* if unsuccessful.
 
 * ``dfhack.maps.getGlobalInitFeature(index)``
 
@@ -978,6 +1133,22 @@ Maps module
   tools like liquids or tiletypes are used. It also cannot possibly
   take into account anything that depends on the actual units, like
   burrows, or the presence of invaders.
+
+* ``dfhack.maps.hasTileAssignment(tilemask)``
+
+  Checks if the tile_bitmask object is not *nil* and contains any set bits; returns *true* or *false*.
+
+* ``dfhack.maps.getTileAssignment(tilemask,x,y)``
+
+  Checks if the tile_bitmask object is not *nil* and has the relevant bit set; returns *true* or *false*.
+
+* ``dfhack.maps.setTileAssignment(tilemask,x,y,enable)``
+
+  Sets the relevant bit in the tile_bitmask object to the *enable* argument.
+
+* ``dfhack.maps.resetTileAssignment(tilemask[,enable])``
+
+  Sets all bits in the mask to the *enable* argument.
 
 
 Burrows module
@@ -1026,6 +1197,11 @@ Burrows module
 
 Buildings module
 ----------------
+
+* ``dfhack.buildings.setOwner(item,unit)``
+
+  Replaces the owner of the building. If unit is *nil*, removes ownership.
+  Returns *false* in case of error.
 
 * ``dfhack.buildings.getSize(building)``
 
@@ -1204,6 +1380,221 @@ Constructions module
   Returns *true, was_only_planned* if removed; or *false* if none found.
 
 
+Screen API
+----------
+
+The screen module implements support for drawing to the tiled screen of the game.
+Note that drawing only has any effect when done from callbacks, so it can only
+be feasibly used in the core context.
+
+Basic painting functions:
+
+* ``dfhack.screen.getWindowSize()``
+
+  Returns *width, height* of the screen.
+
+* ``dfhack.screen.getMousePos()``
+
+  Returns *x,y* of the tile the mouse is over.
+
+* ``dfhack.screen.inGraphicsMode()``
+
+  Checks if [GRAPHICS:YES] was specified in init.
+
+* ``dfhack.screen.paintTile(pen,x,y[,char,tile])``
+
+  Paints a tile using given parameters. See below for a description of pen.
+
+  Returns *false* if coordinates out of bounds, or other error.
+
+* ``dfhack.screen.readTile(x,y)``
+
+  Retrieves the contents of the specified tile from the screen buffers.
+  Returns a pen object, or *nil* if invalid or TrueType.
+
+* ``dfhack.screen.paintString(pen,x,y,text)``
+
+  Paints the string starting at *x,y*. Uses the string characters
+  in sequence to override the ``ch`` field of pen.
+
+  Returns *true* if painting at least one character succeeded.
+
+* ``dfhack.screen.fillRect(pen,x1,y1,x2,y2)``
+
+  Fills the rectangle specified by the coordinates with the given pen.
+  Returns *true* if painting at least one character succeeded.
+
+* ``dfhack.screen.findGraphicsTile(pagename,x,y)``
+
+  Finds a tile from a graphics set (i.e. the raws used for creatures),
+  if in graphics mode and loaded.
+
+  Returns: *tile, tile_grayscale*, or *nil* if not found.
+  The values can then be used for the *tile* field of *pen* structures.
+
+* ``dfhack.screen.clear()``
+
+  Fills the screen with blank background.
+
+* ``dfhack.screen.invalidate()``
+
+  Requests repaint of the screen by setting a flag. Unlike other
+  functions in this section, this may be used at any time.
+
+* ``dfhack.screen.getKeyDisplay(key)``
+
+  Returns the string that should be used to represent the given
+  logical keybinding on the screen in texts like "press Key to ...".
+
+The "pen" argument used by functions above may be represented by
+a table with the following possible fields:
+
+  ``ch``
+    Provides the ordinary tile character, as either a 1-character string or a number.
+    Can be overridden with the ``char`` function parameter.
+  ``fg``
+    Foreground color for the ordinary tile. Defaults to COLOR_GREY (7).
+  ``bg``
+    Background color for the ordinary tile. Defaults to COLOR_BLACK (0).
+  ``bold``
+    Bright/bold text flag. If *nil*, computed based on (fg & 8); fg is masked to 3 bits.
+    Otherwise should be *true/false*.
+  ``tile``
+    Graphical tile id. Ignored unless [GRAPHICS:YES] was in init.txt.
+  ``tile_color = true``
+    Specifies that the tile should be shaded with *fg/bg*.
+  ``tile_fg, tile_bg``
+    If specified, overrides *tile_color* and supplies shading colors directly.
+
+Alternatively, it may be a pre-parsed native object with the following API:
+
+* ``dfhack.pen.make(base[,pen_or_fg,bg,bold])``
+
+  Creates a new pre-parsed pen by combining its arguments according to the
+  following rules:
+
+  1. The ``base`` argument may be a pen object, a pen table as specified above,
+     or a single color value. In the single value case, it is split into
+     ``fg`` and ``bold`` properties, and others are initialized to 0.
+     This argument will be converted to a pre-parsed object and returned
+     if there are no other arguments.
+
+  2. If the ``pen_or_fg`` argument is specified as a table or object, it
+     completely replaces the base, and is returned instead of it.
+
+  3. Otherwise, the non-nil subset of the optional arguments is used
+     to update the ``fg``, ``bg`` and ``bold`` properties of the base.
+     If the ``bold`` flag is *nil*, but *pen_or_fg* is a number, ``bold``
+     is deduced from it like in the simple base case.
+
+  This function always returns a new pre-parsed pen, or *nil*.
+
+* ``dfhack.pen.parse(base[,pen_or_fg,bg,bold])``
+
+  Exactly like the above function, but returns ``base`` or ``pen_or_fg``
+  directly if they are already a pre-parsed native object.
+
+* ``pen.property``, ``pen.property = value``, ``pairs(pen)``
+
+  Pre-parsed pens support reading and setting their properties,
+  but don't behave exactly like a simple table would; for instance,
+  assigning to ``pen.tile_color`` also resets ``pen.tile_fg`` and
+  ``pen.tile_bg`` to *nil*.
+
+In order to actually be able to paint to the screen, it is necessary
+to create and register a viewscreen (basically a modal dialog) with
+the game.
+
+**NOTE**: As a matter of policy, in order to avoid user confusion, all
+interface screens added by dfhack should bear the "DFHack" signature.
+
+Screens are managed with the following functions:
+
+* ``dfhack.screen.show(screen[,below])``
+
+  Displays the given screen, possibly placing it below a different one.
+  The screen must not be already shown. Returns *true* if success.
+
+* ``dfhack.screen.dismiss(screen[,to_first])``
+
+  Marks the screen to be removed when the game enters its event loop.
+  If ``to_first`` is *true*, all screens up to the first one will be deleted.
+
+* ``dfhack.screen.isDismissed(screen)``
+
+  Checks if the screen is already marked for removal.
+
+Apart from a native viewscreen object, these functions accept a table
+as a screen. In this case, ``show`` creates a new native viewscreen
+that delegates all processing to methods stored in that table.
+
+**NOTE**: Lua-implemented screens are only supported in the core context.
+
+Supported callbacks and fields are:
+
+* ``screen._native``
+
+  Initialized by ``show`` with a reference to the backing viewscreen
+  object, and removed again when the object is deleted.
+
+* ``function screen:onShow()``
+
+  Called by ``dfhack.screen.show`` if successful.
+
+* ``function screen:onDismiss()``
+
+  Called by ``dfhack.screen.dismiss`` if successful.
+
+* ``function screen:onDestroy()``
+
+  Called from the destructor when the viewscreen is deleted.
+
+* ``function screen:onResize(w, h)``
+
+  Called before ``onRender`` or ``onIdle`` when the window size has changed.
+
+* ``function screen:onRender()``
+
+  Called when the viewscreen should paint itself. This is the only context
+  where the above painting functions work correctly.
+
+  If omitted, the screen is cleared; otherwise it should do that itself.
+  In order to make a see-through dialog, call ``self._native.parent:render()``.
+
+* ``function screen:onIdle()``
+
+  Called every frame when the screen is on top of the stack.
+
+* ``function screen:onHelp()``
+
+  Called when the help keybinding is activated (usually '?').
+
+* ``function screen:onInput(keys)``
+
+  Called when keyboard or mouse events are available.
+  If any keys are pressed, the keys argument is a table mapping them to *true*.
+  Note that this refers to logical keybingings computed from real keys via
+  options; if multiple interpretations exist, the table will contain multiple keys.
+
+  The table also may contain special keys:
+
+  ``_STRING``
+    Maps to an integer in range 0-255. Duplicates a separate "STRING_A???" code for convenience.
+
+  ``_MOUSE_L, _MOUSE_R``
+    If the left or right mouse button is pressed.
+
+  If this method is omitted, the screen is dismissed on receival of the ``LEAVESCREEN`` key.
+
+* ``function screen:onGetSelectedUnit()``
+* ``function screen:onGetSelectedItem()``
+* ``function screen:onGetSelectedJob()``
+* ``function screen:onGetSelectedBuilding()``
+
+  Implement these to provide a return value for the matching
+  ``dfhack.gui.getSelected...`` function.
+
+
 Internal API
 ------------
 
@@ -1234,6 +1625,24 @@ and are only documented here for completeness:
 * ``dfhack.internal.getMemRanges()``
 
   Returns a sequence of tables describing virtual memory ranges of the process.
+
+* ``dfhack.internal.patchMemory(dest,src,count)``
+
+  Like memmove below, but works even if dest is read-only memory, e.g. code.
+  If destination overlaps a completely invalid memory region, or another error
+  occurs, returns false.
+
+* ``dfhack.internal.patchBytes(write_table[, verify_table])``
+
+  The first argument must be a lua table, which is interpreted as a mapping from
+  memory addresses to byte values that should be stored there. The second argument
+  may be a similar table of values that need to be checked before writing anything.
+
+  The function takes care to either apply all of ``write_table``, or none of it.
+  An empty ``write_table`` with a nonempty ``verify_table`` can be used to reasonably
+  safely check if the memory contains certain values.
+
+  Returns *true* if successful, or *nil, error_msg, address* if not.
 
 * ``dfhack.internal.memmove(dest,src,count)``
 
@@ -1296,8 +1705,8 @@ Core context specific functions:
 Event type
 ----------
 
-An event is just a lua table with a predefined metatable that
-contains a __call metamethod. When it is invoked, it loops
+An event is a native object transparently wrapping a lua table,
+and implementing a __call metamethod. When it is invoked, it loops
 through the table with next and calls all contained values.
 This is intended as an extensible way to add listeners.
 
@@ -1312,10 +1721,18 @@ Features:
 
 * ``event[key] = function``
 
-  Sets the function as one of the listeners.
+  Sets the function as one of the listeners. Assign *nil* to remove it.
 
   **NOTE**: The ``df.NULL`` key is reserved for the use by
-  the C++ owner of the event, and has some special semantics.
+  the C++ owner of the event; it is an error to try setting it.
+
+* ``#event``
+
+  Returns the number of non-nil listeners.
+
+* ``pairs(event)``
+
+  Iterates over all listeners in the table.
 
 * ``event(args...)``
 
@@ -1384,6 +1801,11 @@ environment by the mandatory init file dfhack.lua:
 
   safecall, qerror, mkmodule, reload
 
+* Miscellaneous constants
+
+  :NEWLINE, COMMA, PERIOD: evaluate to the relevant character strings.
+  :DEFAULT_NIL: is an unspecified unique token used by the class module below.
+
 * ``printall(obj)``
 
   If the argument is a lua table or DF object reference, prints all fields.
@@ -1401,6 +1823,18 @@ environment by the mandatory init file dfhack.lua:
 * ``xyz2pos(x,y,z)``
 
   Returns a table with x, y and z as fields.
+
+* ``same_xyz(a,b)``
+
+  Checks if ``a`` and ``b`` have the same x, y and z fields.
+
+* ``get_path_xyz(path,i)``
+
+  Returns ``path.x[i], path.y[i], path.z[i]``.
+
+* ``pos2xy(obj)``, ``xy2pos(x,y)``, ``same_xy(a,b)``, ``get_path_xy(a,b)``
+
+  Same as above, but for 2D coordinates.
 
 * ``safe_index(obj,index...)``
 
@@ -1482,11 +1916,28 @@ utils
   as a guide to which values should be skipped as uninteresting.
   The ``force`` argument makes it always return a non-*nil* value.
 
+* ``utils.parse_bitfield_int(value, type_ref)``
+
+  Given an int ``value``, and a bitfield type in the ``df`` tree,
+  it returns a lua table mapping the enabled bit keys to *true*,
+  unless value is 0, in which case it returns *nil*.
+
+* ``utils.list_bitfield_flags(bitfield[, list])``
+
+  Adds all enabled bitfield keys to ``list`` or a newly-allocated
+  empty sequence, and returns it. The ``bitfield`` argument may
+  be *nil*.
+
 * ``utils.sort_vector(vector,field,cmpfun)``
 
   Sorts a native vector or lua sequence using the comparator function.
   If ``field`` is not *nil*, applies the comparator to the field instead
   of the whole object.
+
+* ``utils.linear_index(vector,key[,field])``
+
+  Searches for ``key`` in the vector, and returns *index, found_value*,
+  or *nil* if none found.
 
 * ``utils.binsearch(vector,key,field,cmpfun,min,max)``
 
@@ -1514,6 +1965,31 @@ utils
     utils.insert_or_update(soul.skills, {new=true, id=..., rating=...}, 'id')
 
   (For an explanation of ``new=true``, see table assignment in the wrapper section)
+
+* ``utils.erase_sorted_key(vector,key,field,cmpfun)``
+
+  Removes the item with the given key from the list. Returns: *did_erase, vector[idx], idx*.
+
+* ``utils.erase_sorted(vector,item,field,cmpfun)``
+
+  Exactly like ``erase_sorted_key``, but if field is specified, takes the key from ``item[field]``.
+
+* ``utils.call_with_string(obj,methodname,...)``
+
+  Allocates a temporary string object, calls ``obj:method(tmp,...)``, and
+  returns the value written into the temporary after deleting it.
+
+* ``utils.getBuildingName(building)``
+
+  Returns the string description of the given building.
+
+* ``utils.getBuildingCenter(building)``
+
+  Returns an x/y/z table pointing at the building center.
+
+* ``utils.split_string(string, delimiter)``
+
+  Splits the string by the given delimiter, and returns a sequence of results.
 
 * ``utils.prompt_yes_no(prompt, default)``
 
@@ -1544,6 +2020,816 @@ function:
   Returns ``value`` converted to a string. The ``indent_step``
   argument specifies the indentation step size in spaces. For
   the other arguments see the original documentation link above.
+
+class
+=====
+
+Implements a trivial single-inheritance class system.
+
+* ``Foo = defclass(Foo[, ParentClass])``
+
+  Defines or updates class Foo. The ``Foo = defclass(Foo)`` syntax
+  is needed so that when the module or script is reloaded, the
+  class identity will be preserved through the preservation of
+  global variable values.
+
+  The ``defclass`` function is defined as a stub in the global
+  namespace, and using it will auto-load the class module.
+
+* ``Class.super``
+
+  This class field is set by defclass to the parent class, and
+  allows a readable ``Class.super.method(self, ...)`` syntax for
+  calling superclass methods.
+
+* ``Class.ATTRS { foo = xxx, bar = yyy }``
+
+  Declares certain instance fields to be attributes, i.e. auto-initialized
+  from fields in the table used as the constructor argument. If omitted,
+  they are initialized with the default values specified in this declaration.
+
+  If the default value should be *nil*, use ``ATTRS { foo = DEFAULT_NIL }``.
+
+  Declaring an attribute is mostly the same as defining your ``init`` method like this::
+
+    function Class.init(args)
+        self.attr1 = args.attr1 or default1
+        self.attr2 = args.attr2 or default2
+        ...
+    end
+
+  The main difference is that attributes are processed as a separate
+  initialization step, before any ``init`` methods are called. They
+  also make the directy relation between instance fields and constructor
+  arguments more explicit.
+
+* ``new_obj = Class{ foo = arg, bar = arg, ... }``
+
+  Calling the class as a function creates and initializes a new instance.
+  Initialization happens in this order:
+
+  1. An empty instance table is created, and its metatable set.
+  2. The ``preinit`` methods are called via ``invoke_before`` (see below)
+     with the table used as argument to the class. These methods are intended
+     for validating and tweaking that argument table.
+  3. Declared ATTRS are initialized from the argument table or their default values.
+  4. The ``init`` methods are called via ``invoke_after`` with the argument table.
+     This is the main constructor method.
+  5. The ``postinit`` methods are called via ``invoke_after`` with the argument table.
+     Place code that should be called after the object is fully constructed here.
+
+Predefined instance methods:
+
+* ``instance:assign{ foo = xxx }``
+
+  Assigns all values in the input table to the matching instance fields.
+
+* ``instance:callback(method_name, [args...])``
+
+  Returns a closure that invokes the specified method of the class,
+  properly passing in self, and optionally a number of initial arguments too.
+  The arguments given to the closure are appended to these.
+
+* ``instance:cb_getfield(field_name)``
+
+  Returns a closure that returns the specified field of the object when called.
+
+* ``instance:cb_setfield(field_name)``
+
+  Returns a closure that sets the specified field to its argument when called.
+
+* ``instance:invoke_before(method_name, args...)``
+
+  Navigates the inheritance chain of the instance starting from the most specific
+  class, and invokes the specified method with the arguments if it is defined in
+  that specific class. Equivalent to the following definition in every class::
+
+    function Class:invoke_before(method, ...)
+      if rawget(Class, method) then
+        rawget(Class, method)(self, ...)
+      end
+      Class.super.invoke_before(method, ...)
+    end
+
+* ``instance:invoke_after(method_name, args...)``
+
+  Like invoke_before, only the method is called after the recursive call to super,
+  i.e. invocations happen in the parent to child order.
+
+  These two methods are inspired by the Common Lisp before and after methods, and
+  are intended for implementing similar protocols for certain things. The class
+  library itself uses them for constructors.
+
+To avoid confusion, these methods cannot be redefined.
+
+==================
+In-game UI Library
+==================
+
+A number of lua modules with names starting with ``gui`` are dedicated
+to wrapping the natives of the ``dfhack.screen`` module in a way that
+is easy to use. This allows relatively easily and naturally creating
+dialogs that integrate in the main game UI window.
+
+These modules make extensive use of the ``class`` module, and define
+things ranging from the basic ``Painter``, ``View`` and ``Screen``
+classes, to fully functional predefined dialogs.
+
+gui
+===
+
+This module defines the most important classes and functions for
+implementing interfaces. This documents those of them that are
+considered stable.
+
+
+Misc
+----
+
+* ``USE_GRAPHICS``
+
+  Contains the value of ``dfhack.screen.inGraphicsMode()``, which cannot be
+  changed without restarting the game and thus is constant during the session.
+
+* ``CLEAR_PEN``
+
+  The black pen used to clear the screen.
+
+* ``simulateInput(screen, keys...)``
+
+  This function wraps an undocumented native function that passes a set of
+  keycodes to a screen, and is the official way to do that.
+
+  Every argument after the initial screen may be *nil*, a numeric keycode,
+  a string keycode, a sequence of numeric or string keycodes, or a mapping
+  of keycodes to *true* or *false*. For instance, it is possible to use the
+  table passed as argument to ``onInput``.
+
+* ``mkdims_xy(x1,y1,x2,y2)``
+
+  Returns a table containing the arguments as fields, and also ``width`` and
+  ``height`` that contains the rectangle dimensions.
+
+* ``mkdims_wh(x1,y1,width,height)``
+
+  Returns the same kind of table as ``mkdims_xy``, only this time it computes
+  ``x2`` and ``y2``.
+
+* ``is_in_rect(rect,x,y)``
+
+  Checks if the given point is within a rectangle, represented by a table produced
+  by one of the ``mkdims`` functions.
+
+* ``blink_visible(delay)``
+
+  Returns *true* or *false*, with the value switching to the opposite every ``delay``
+  msec. This is intended for rendering blinking interface objects.
+
+* ``getKeyDisplay(keycode)``
+
+  Wraps ``dfhack.screen.getKeyDisplay`` in order to allow using strings for the keycode argument.
+
+
+ViewRect class
+--------------
+
+This class represents an on-screen rectangle with an associated independent
+clip area rectangle. It is the base of the ``Painter`` class, and is used by
+``Views`` to track their client area.
+
+* ``ViewRect{ rect = ..., clip_rect = ..., view_rect = ..., clip_view = ... }``
+
+  The constructor has the following arguments:
+
+  :rect: The ``mkdims`` rectangle in screen coordinates of the logical viewport.
+         Defaults to the whole screen.
+  :clip_rect: The clip rectangle in screen coordinates. Defaults to ``rect``.
+  :view_rect: A ViewRect object to copy from; overrides both ``rect`` and ``clip_rect``.
+  :clip_view: A ViewRect object to intersect the specified clip area with.
+
+* ``rect:isDefunct()``
+
+  Returns *true* if the clip area is empty, i.e. no painting is possible.
+
+* ``rect:inClipGlobalXY(x,y)``
+
+  Checks if these global coordinates are within the clip rectangle.
+
+* ``rect:inClipLocalXY(x,y)``
+
+  Checks if these coordinates (specified relative to ``x1,y1``) are within the clip rectangle.
+
+* ``rect:localXY(x,y)``
+
+  Converts a pair of global coordinates to local; returns *x_local,y_local*.
+
+* ``rect:globalXY(x,y)``
+
+  Converts a pair of local coordinates to global; returns *x_global,y_global*.
+
+* ``rect:viewport(x,y,w,h)`` or ``rect:viewport(subrect)``
+
+  Returns a ViewRect representing a sub-rectangle of the current one.
+  The arguments are specified in local coordinates; the ``subrect``
+  argument must be a ``mkdims`` table. The returned object consists of
+  the exact specified rectangle, and a clip area produced by intersecting
+  it with the clip area of the original object.
+
+
+Painter class
+-------------
+
+The painting natives in ``dfhack.screen`` apply to the whole screen, are
+completely stateless and don't implement clipping.
+
+The Painter class inherits from ViewRect to provide clipping and local
+coordinates, and tracks current cursor position and current pen.
+
+* ``Painter{ ..., pen = ..., key_pen = ... }``
+
+  In addition to ViewRect arguments, Painter accepts a suggestion of
+  the initial value for the main pen, and the keybinding pen. They
+  default to COLOR_GREY and COLOR_LIGHTGREEN otherwise.
+
+  There are also some convenience functions that wrap this constructor:
+
+  - ``Painter.new(rect,pen)``
+  - ``Painter.new_view(view_rect,pen)``
+  - ``Painter.new_xy(x1,y1,x2,y2,pen)``
+  - ``Painter.new_wh(x1,y1,width,height,pen)``
+
+* ``painter:isValidPos()``
+
+  Checks if the current cursor position is within the clip area.
+
+* ``painter:viewport(x,y,w,h)``
+
+  Like the superclass method, but returns a Painter object.
+
+* ``painter:cursor()``
+
+  Returns the current cursor *x,y* in local coordinates.
+
+* ``painter:seek(x,y)``
+
+  Sets the current cursor position, and returns *self*.
+  Either of the arguments may be *nil* to keep the current value.
+
+* ``painter:advance(dx,dy)``
+
+  Adds the given offsets to the cursor position, and returns *self*.
+  Either of the arguments may be *nil* to keep the current value.
+
+* ``painter:newline([dx])``
+
+  Advances the cursor to the start of the next line plus the given x offset, and returns *self*.
+
+* ``painter:pen(...)``
+
+  Sets the current pen to ``dfhack.pen.parse(old_pen,...)``, and returns *self*.
+
+* ``painter:key_pen(...)``
+
+  Sets the current keybinding pen to ``dfhack.pen.parse(old_pen,...)``, and returns *self*.
+
+* ``painter:clear()``
+
+  Fills the whole clip rectangle with ``CLEAR_PEN``, and returns *self*.
+
+* ``painter:fill(x1,y1,x2,y2[,...])`` or ``painter:fill(rect[,...])``
+
+  Fills the specified local coordinate rectangle with ``dfhack.pen.parse(cur_pen,...)``,
+  and returns *self*.
+
+* ``painter:char([char[, ...]])``
+
+  Paints one character using ``char`` and ``dfhack.pen.parse(cur_pen,...)``; returns *self*.
+  The ``char`` argument, if not nil, is used to override the ``ch`` property of the pen.
+
+* ``painter:tile([char, tile[, ...]])``
+
+  Like above, but also allows overriding the ``tile`` property on ad-hoc basis.
+
+* ``painter:string(text[, ...])``
+
+  Paints the string with ``dfhack.pen.parse(cur_pen,...)``; returns *self*.
+
+* ``painter:key(keycode[, ...])``
+
+  Paints the description of the keycode using ``dfhack.pen.parse(cur_key_pen,...)``; returns *self*.
+
+As noted above, all painting methods return *self*, in order to allow chaining them like this::
+
+  painter:pen(foo):seek(x,y):char(1):advance(1):string('bar')...
+
+
+View class
+----------
+
+This class is the common abstract base of both the stand-alone screens
+and common widgets to be used inside them. It defines the basic layout,
+rendering and event handling framework.
+
+The class defines the following attributes:
+
+:visible: Specifies that the view should be painted.
+:active: Specifies that the view should receive events, if also visible.
+:view_id: Specifies an identifier to easily identify the view among subviews.
+          This is reserved for implementation of top-level views, and should
+          not be used by widgets for their internal subviews.
+
+It also always has the following fields:
+
+:subviews: Contains a table of all subviews. The sequence part of the
+           table is used for iteration. In addition, subviews are also
+           indexed under their *view_id*, if any; see ``addviews()`` below.
+
+These fields are computed by the layout process:
+
+:frame_parent_rect: The ViewRect represeting the client area of the parent view.
+:frame_rect: The ``mkdims`` rect of the outer frame in parent-local coordinates.
+:frame_body: The ViewRect representing the body part of the View's own frame.
+
+The class has the following methods:
+
+* ``view:addviews(list)``
+
+  Adds the views in the list to the ``subviews`` sequence. If any of the views
+  in the list have ``view_id`` attributes that don't conflict with existing keys
+  in ``subviews``, also stores them under the string keys. Finally, copies any
+  non-conflicting string keys from the ``subviews`` tables of the listed views.
+
+  Thus, doing something like this::
+
+    self:addviews{
+        Panel{
+            view_id = 'panel',
+            subviews = {
+                Label{ view_id = 'label' }
+            }
+        }
+    }
+
+  Would make the label accessible as both ``self.subviews.label`` and
+  ``self.subviews.panel.subviews.label``.
+
+* ``view:getWindowSize()``
+
+  Returns the dimensions of the ``frame_body`` rectangle.
+
+* ``view:getMousePos()``
+
+  Returns the mouse *x,y* in coordinates local to the ``frame_body``
+  rectangle if it is within its clip area, or nothing otherwise.
+
+* ``view:updateLayout([parent_rect])``
+
+  Recomputes layout of the view and its subviews. If no argument is
+  given, re-uses the previous parent rect. The process goes as follows:
+
+  1. Calls ``preUpdateLayout(parent_rect)`` via ``invoke_before``.
+  2. Uses ``computeFrame(parent_rect)`` to compute the desired frame.
+  3. Calls ``postComputeFrame(frame_body)`` via ``invoke_after``.
+  4. Calls ``updateSubviewLayout(frame_body)`` to update children.
+  5. Calls ``postUpdateLayout(frame_body)`` via ``invoke_after``.
+
+* ``view:computeFrame(parent_rect)`` *(for overriding)*
+
+  Called by ``updateLayout`` in order to compute the frame rectangle(s).
+  Should return the ``mkdims`` rectangle for the outer frame, and optionally
+  also for the body frame. If only one rectangle is returned, it is used
+  for both frames, and the margin becomes zero.
+
+* ``view:updateSubviewLayout(frame_body)``
+
+  Calls ``updateLayout`` on all children.
+
+* ``view:render(painter)``
+
+  Given the parent's painter, renders the view via the following process:
+
+  1. Calls ``onRenderFrame(painter, frame_rect)`` to paint the outer frame.
+  2. Creates a new painter using the ``frame_body`` rect.
+  3. Calls ``onRenderBody(new_painter)`` to paint the client area.
+  4. Calls ``renderSubviews(new_painter)`` to paint visible children.
+
+* ``view:renderSubviews(painter)``
+
+  Calls ``render`` on all ``visible`` subviews in the order they
+  appear in the ``subviews`` sequence.
+
+* ``view:onRenderFrame(painter, rect)`` *(for overriding)*
+
+  Called by ``render`` to paint the outer frame; by default does nothing.
+
+* ``view:onRenderBody(painter)`` *(for overriding)*
+
+  Called by ``render`` to paint the client area; by default does nothing.
+
+* ``view:onInput(keys)`` *(for overriding)*
+
+  Override this to handle events. By default directly calls ``inputToSubviews``.
+  Return a true value from this method to signal that the event has been handled
+  and should not be passed on to more views.
+
+* ``view:inputToSubviews(keys)``
+
+  Calls ``onInput`` on all visible active subviews, iterating the ``subviews``
+  sequence in *reverse order*, so that topmost subviews get events first.
+  Returns *true* if any of the subviews handled the event.
+
+
+Screen class
+------------
+
+This is a View subclass intended for use as a stand-alone dialog or screen.
+It adds the following methods:
+
+* ``screen:isShown()``
+
+  Returns *true* if the screen is currently in the game engine's display stack.
+
+* ``screen:isDismissed()``
+
+  Returns *true* if the screen is dismissed.
+
+* ``screen:isActive()``
+
+  Returns *true* if the screen is shown and not dismissed.
+
+* ``screen:invalidate()``
+
+  Requests a repaint. Note that currently using it is not necessary, because
+  repaints are constantly requested automatically, due to issues with native
+  screens happening otherwise.
+
+* ``screen:renderParent()``
+
+  Asks the parent native screen to render itself, or clears the screen if impossible.
+
+* ``screen:sendInputToParent(...)``
+
+  Uses ``simulateInput`` to send keypresses to the native parent screen.
+
+* ``screen:show([parent])``
+
+  Adds the screen to the display stack with the given screen as the parent;
+  if parent is not specified, places this one one topmost. Before calling
+  ``dfhack.screen.show``, calls ``self:onAboutToShow(parent)``.
+
+* ``screen:onAboutToShow(parent)`` *(for overriding)*
+
+  Called when ``dfhack.screen.show`` is about to be called.
+
+* ``screen:onShow()``
+
+  Called by ``dfhack.screen.show`` once the screen is successfully shown.
+
+* ``screen:dismiss()``
+
+  Dismisses the screen. A dismissed screen does not receive any more
+  events or paint requests, but may remain in the display stack for
+  a short time until the game removes it.
+
+* ``screen:onDismiss()`` *(for overriding)*
+
+  Called by ``dfhack.screen.dismiss()``.
+
+* ``screen:onDestroy()`` *(for overriding)*
+
+  Called by the native code when the screen is fully destroyed and removed
+  from the display stack. Place code that absolutely must be called whenever
+  the screen is removed by any means here.
+
+* ``screen:onResize``, ``screen:onRender``
+
+  Defined as callbacks for native code.
+
+
+FramedScreen class
+------------------
+
+A Screen subclass that paints a visible frame around its body.
+Most dialogs should inherit from this class.
+
+A framed screen has the following attributes:
+
+:frame_style: A table that defines a set of pens to draw various parts of the frame.
+:frame_title: A string to display in the middle of the top of the frame.
+:frame_width: Desired width of the client area. If *nil*, the screen will occupy the whole width.
+:frame_height: Likewise, for height.
+:frame_inset: The gap between the frame and the client area. Defaults to 0.
+:frame_background: The pen to fill in the frame with. Defaults to CLEAR_PEN.
+
+There are the following predefined frame style tables:
+
+* ``GREY_FRAME``
+
+  A plain grey-colored frame.
+
+* ``BOUNDARY_FRAME``
+
+  The same frame as used by the usual full-screen DF views, like dwarfmode.
+
+* ``GREY_LINE_FRAME``
+
+  A frame consisting of grey lines, similar to the one used by titan announcements.
+
+
+gui.widgets
+===========
+
+This module implements some basic widgets based on the View infrastructure.
+
+Widget class
+------------
+
+Base of all the widgets. Inherits from View and has the following attributes:
+
+* ``frame = {...}``
+
+  Specifies the constraints on the outer frame of the widget.
+  If omitted, the widget will occupy the whole parent rectangle.
+
+  The frame is specified as a table with the following possible fields:
+
+  :l: gap between the left edges of the frame and the parent.
+  :t: gap between the top edges of the frame and the parent.
+  :r: gap between the right edges of the frame and the parent.
+  :b: gap between the bottom edges of the frame and the parent.
+  :w: maximum width of the frame.
+  :h: maximum heigth of the frame.
+  :xalign: X alignment of the frame.
+  :yalign: Y alignment of the frame.
+
+  First the ``l,t,r,b`` fields restrict the available area for
+  placing the frame. If ``w`` and ``h`` are not specified or
+  larger then the computed area, it becomes the frame. Otherwise
+  the smaller frame is placed within the are based on the
+  ``xalign/yalign`` fields. If the align hints are omitted, they
+  are assumed to be 0, 1, or 0.5 based on which of the ``l/r/t/b``
+  fields are set.
+
+* ``frame_inset = {...}``
+
+  Specifies the gap between the outer frame, and the client area.
+  The attribute may be a simple integer value to specify a uniform
+  inset, or a table with the following fields:
+
+  :l: left margin.
+  :t: top margin.
+  :r: right margin.
+  :b: bottom margin.
+  :x: left/right margin, if ``l`` and/or ``r`` are omitted.
+  :y: top/bottom margin, if ``t`` and/or ``b`` are omitted.
+
+* ``frame_background = pen``
+
+  The pen to fill the outer frame with. Defaults to no fill.
+
+Panel class
+-----------
+
+Inherits from Widget, and intended for grouping a number of subviews.
+
+Has attributes:
+
+* ``subviews = {}``
+
+  Used to initialize the subview list in the constructor.
+
+* ``on_render = function(painter)``
+
+  Called from ``onRenderBody``.
+
+Pages class
+-----------
+
+Subclass of Panel; keeps exactly one child visible.
+
+* ``Pages{ ..., selected = ... }``
+
+  Specifies which child to select initially; defaults to the first one.
+
+* ``pages:getSelected()``
+
+  Returns the selected *index, child*.
+
+* ``pages:setSelected(index)``
+
+  Selects the specified child, hiding the previous selected one.
+  It is permitted to use the subview object, or its ``view_id`` as index.
+
+EditField class
+---------------
+
+Subclass of Widget; implements a simple edit field.
+
+Attributes:
+
+:text: The current contents of the field.
+:text_pen: The pen to draw the text with.
+:on_char: Input validation callback; used as ``on_char(new_char,text)``.
+          If it returns false, the character is ignored.
+:on_change: Change notification callback; used as ``on_change(new_text,old_text)``.
+:on_submit: Enter key callback; if set the field will handle the key and call ``on_submit(text)``.
+
+Label class
+-----------
+
+This Widget subclass implements flowing semi-static text.
+
+It has the following attributes:
+
+:text_pen: Specifies the pen for active text.
+:text_dpen: Specifies the pen for disabled text.
+:disabled: Boolean or a callback; if true, the label is disabled.
+:enabled: Boolean or a callback; if false, the label is disabled.
+:auto_height: Sets self.frame.h from the text height.
+:auto_width: Sets self.frame.w from the text width.
+
+The text itself is represented as a complex structure, and passed
+to the object via the ``text`` argument of the constructor, or via
+the ``setText`` method, as one of:
+
+* A simple string, possibly containing newlines.
+* A sequence of tokens.
+
+Every token in the sequence in turn may be either a string, possibly
+containing newlines, or a table with the following possible fields:
+
+* ``token.text = ...``
+
+  Specifies the main text content of a token, and may be a string, or
+  a callback returning a string.
+
+* ``token.gap = ...``
+
+  Specifies the number of character positions to advance on the line
+  before rendering the token.
+
+* ``token.tile = pen``
+
+  Specifies a pen to paint as one tile before the main part of the token.
+
+* ``token.key = '...'``
+
+  Specifies the keycode associated with the token. The string description
+  of the key binding is added to the text content of the token.
+
+* ``token.key_sep = '...'``
+
+  Specifies the separator to place between the keybinding label produced
+  by ``token.key``, and the main text of the token. If the separator is
+  '()', the token is formatted as ``text..' ('..binding..')'``. Otherwise
+  it is simply ``binding..sep..text``.
+
+* ``token.enabled``, ``token.disabled``
+
+  Same as the attributes of the label itself, but applies only to the token.
+
+* ``token.pen``, ``token.dpen``
+
+  Specify the pen and disabled pen to be used for the token's text.
+  The field may be either the pen itself, or a callback that returns it.
+
+* ``token.on_activate``
+
+  If this field is not nil, and ``token.key`` is set, the token will actually
+  respond to that key binding unless disabled, and call this callback. Eventually
+  this may be extended with mouse click support.
+
+* ``token.id``
+
+  Specifies a unique identifier for the token.
+
+* ``token.line``, ``token.x1``, ``token.x2``
+
+  Reserved for internal use.
+
+The Label widget implements the following methods:
+
+* ``label:setText(new_text)``
+
+  Replaces the text currently contained in the widget.
+
+* ``label:itemById(id)``
+
+  Finds a token by its ``id`` field.
+
+* ``label:getTextHeight()``
+
+  Computes the height of the text.
+
+* ``label:getTextWidth()``
+
+  Computes the width of the text.
+
+List class
+----------
+
+The List widget implements a simple list with paging.
+
+It has the following attributes:
+
+:text_pen: Specifies the pen for deselected list entries.
+:cursor_pen: Specifies the pen for the selected entry.
+:inactive_pen: If specified, used for the cursor when the widget is not active.
+:icon_pen: Default pen for icons.
+:on_select: Selection change callback; called as ``on_select(index,choice)``.
+:on_submit: Enter key callback; if specified, the list reacts to the key
+            and calls it as ``on_submit(index,choice)``.
+:row_height: Height of every row in text lines.
+:icon_width: If not *nil*, the specified number of character columns
+             are reserved to the left of the list item for the icons.
+:scroll_keys: Specifies which keys the list should react to as a table.
+
+Every list item may be specified either as a string, or as a lua table
+with the following fields:
+
+:text: Specifies the label text in the same format as the Label text.
+:caption, [1]: Deprecated legacy aliases for **text**.
+:text_*: Reserved for internal use.
+:key: Specifies a keybinding that acts as a shortcut for the specified item.
+:icon: Specifies an icon string, or a pen to paint a single character. May be a callback.
+:icon_pen: When the icon is a string, used to paint it.
+
+The list supports the following methods:
+
+* ``List{ ..., choices = ..., selected = ... }``
+
+  Same as calling ``setChoices`` after construction.
+
+* ``list:setChoices(choices[, selected])``
+
+  Replaces the list of choices, possibly also setting the currently selected index.
+
+* ``list:setSelected(selected)``
+
+  Sets the currently selected index. Returns the index after validation.
+
+* ``list:getChoices()``
+
+  Returns the list of choices.
+
+* ``list:getSelected()``
+
+  Returns the selected *index, choice*, or nothing if the list is empty.
+
+* ``list:getContentWidth()``
+
+  Returns the minimal width to draw all choices without clipping.
+
+* ``list:getContentHeight()``
+
+  Returns the minimal width to draw all choices without scrolling.
+
+* ``list:submit()``
+
+  Call the ``on_submit`` callback, as if the Enter key was handled.
+
+FilteredList class
+------------------
+
+This widget combines List, EditField and Label into a combo-box like
+construction that allows filtering the list by subwords of its items.
+
+In addition to passing through all attributes supported by List, it
+supports:
+
+:edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
+:not_found_label: Specifies the text of the label shown when no items match the filter.
+
+The list choices may include the following attributes:
+
+:search_key: If specified, used instead of **text** to match against the filter.
+
+The widget implements:
+
+* ``list:setChoices(choices[, selected])``
+
+  Resets the filter, and passes through to the inner list.
+
+* ``list:getChoices()``
+
+  Returns the list of *all* choices.
+
+* ``list:getFilter()``
+
+  Returns the current filter string, and the *filtered* list of choices.
+
+* ``list:setFilter(filter[,pos])``
+
+  Sets the new filter string, filters the list, and selects the item at
+  index ``pos`` in the *unfiltered* list if possible.
+
+* ``list:canSubmit()``
+
+  Checks if there are currently any choices in the filtered list.
+
+* ``list:getSelected()``, ``list:getContentWidth()``, ``list:getContentHeight()``, ``list:submit()``
+
+  Same as with an ordinary list.
 
 
 =======

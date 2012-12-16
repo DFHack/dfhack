@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -28,6 +28,7 @@ distribution.
 #include <sstream>
 #include <vector>
 #include <map>
+#include <set>
 
 #include "Core.h"
 #include "BitArray.h"
@@ -292,12 +293,18 @@ namespace DFHack
     typedef virtual_class *virtual_ptr;
 #endif
 
+    class DFHACK_EXPORT VMethodInterposeLinkBase;
+    class MemoryPatcher;
+
     class DFHACK_EXPORT virtual_identity : public struct_identity {
         static std::map<void*, virtual_identity*> known;
 
         const char *original_name;
 
         void *vtable_ptr;
+
+        friend class VMethodInterposeLinkBase;
+        std::map<int,VMethodInterposeLinkBase*> interpose_list;
 
     protected:
         virtual void doInit(Core *core);
@@ -306,10 +313,14 @@ namespace DFHack
 
         bool can_allocate() { return struct_identity::can_allocate() && (vtable_ptr != NULL); }
 
+        void *get_vmethod_ptr(int index);
+        bool set_vmethod_ptr(MemoryPatcher &patcher, int index, void *ptr);
+
     public:
         virtual_identity(size_t size, TAllocateFn alloc,
                          const char *dfhack_name, const char *original_name,
                          virtual_identity *parent, const struct_field_info *fields);
+        ~virtual_identity();
 
         virtual identity_type type() { return IDTYPE_CLASS; }
 
@@ -336,6 +347,8 @@ namespace DFHack
             return vtable_ptr ? (vtable_ptr == get_vtable(instance_ptr)) 
                               : (this == get(instance_ptr));
         }
+
+        template<class P> static P get_vmethod_ptr(P selector);
 
     public:
         bool can_instantiate() { return can_allocate(); }
@@ -506,7 +519,7 @@ namespace DFHack {
     template<class T>
     inline const char *enum_item_raw_key(T val) {
         typedef df::enum_traits<T> traits;
-        return traits::is_valid(val) ? traits::key_table[val - traits::first_item_value] : NULL;
+        return traits::is_valid(val) ? traits::key_table[(short)val - traits::first_item_value] : NULL;
     }
 
     /**
@@ -694,6 +707,9 @@ namespace DFHack {
 
 // Global object pointers
 #include "df/global_objects.h"
+
+#define DF_GLOBAL_VALUE(name,defval) (df::global::name ? *df::global::name : defval)
+#define DF_GLOBAL_FIELD(name,fname,defval) (df::global::name ? df::global::name->fname : defval)
 
 // A couple of headers that have to be included at once
 #include "df/coord2d.h"

@@ -19,6 +19,7 @@
 #include "df/world_data.h"
 #include "df/world_geo_biome.h"
 #include "df/world_geo_layer.h"
+#include "df/region_map_entry.h"
 
 using namespace DFHack;
 using namespace df::enums;

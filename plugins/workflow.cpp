@@ -4,6 +4,9 @@
 #include "PluginManager.h"
 #include "MiscUtils.h"
 
+#include "LuaTools.h"
+#include "DataFuncs.h"
+
 #include "modules/Materials.h"
 #include "modules/Items.h"
 #include "modules/Gui.h"
@@ -37,6 +40,7 @@
 #include "df/plant_raw.h"
 #include "df/inorganic_raw.h"
 #include "df/builtin_mats.h"
+#include "df/vehicle.h"
 
 using std::vector;
 using std::string;
@@ -303,8 +307,9 @@ public:
     void setGoalCount(int v) { config.ival(0) = v; }
 
     int goalGap() {
-        int gcnt = std::max(1, goalCount()/2);
-        return std::min(gcnt, config.ival(1) <= 0 ? 5 : config.ival(1));
+        int cval = (config.ival(1) <= 0) ? 5 : config.ival(1);
+        int cmax = std::max(goalCount()-5, goalCount()/2);
+        return std::max(1, std::min(cmax, cval));
     }
     void setGoalGap(int v) { config.ival(1) = v; }
 
@@ -319,6 +324,7 @@ public:
     void init(const std::string &str)
     {
         config.val() = str;
+        config.ival(0) = 10;
         config.ival(2) = 0;
     }
 
@@ -372,13 +378,6 @@ static bool isSupportedJob(df::job *job)
            (!job->job_items.empty() ||
             job->job_type == job_type::CollectClay ||
             job->job_type == job_type::CollectSand);
-}
-
-static void enumLiveJobs(std::map<int, df::job*> &rv)
-{
-    df::job_list_link *p = world->job_list.next;
-    for (; p; p = p->next)
-        rv[p->item->id] = p->item;
 }
 
 static bool isOptionEnabled(unsigned flag)
@@ -438,9 +437,7 @@ static void start_protect(color_ostream &out)
 
 static void init_state(color_ostream &out)
 {
-    auto pworld = Core::getInstance().getWorld();
-
-    config = pworld->GetPersistentData("workflow/config");
+    config = World::GetPersistentData("workflow/config");
     if (config.isValid() && config.ival(0) == -1)
         config.ival(0) = 0;
 
@@ -448,14 +445,14 @@ static void init_state(color_ostream &out)
 
     // Parse constraints
     std::vector<PersistentDataItem> items;
-    pworld->GetPersistentData(&items, "workflow/constraints");
+    World::GetPersistentData(&items, "workflow/constraints");
 
     for (int i = items.size()-1; i >= 0; i--) {
         if (get_constraint(out, items[i].val(), &items[i]))
             continue;
 
         out.printerr("Lost constraint %s\n", items[i].val().c_str());
-        pworld->DeletePersistentData(items[i]);
+        World::DeletePersistentData(items[i]);
     }
 
     last_tick_frame_count = world->frame_counter;
@@ -469,11 +466,9 @@ static void init_state(color_ostream &out)
 
 static void enable_plugin(color_ostream &out)
 {
-    auto pworld = Core::getInstance().getWorld();
-
     if (!config.isValid())
     {
-        config = pworld->AddPersistentData("workflow/config");
+        config = World::AddPersistentData("workflow/config");
         config.ival(0) = 0;
     }
 
@@ -729,7 +724,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         nct->config = *cfg;
     else
     {
-        nct->config = Core::getInstance().getWorld()->AddPersistentData("workflow/constraints");
+        nct->config = World::AddPersistentData("workflow/constraints");
         nct->init(str);
     }
 
@@ -743,8 +738,22 @@ static void delete_constraint(ItemConstraint *cv)
     if (idx >= 0)
         vector_erase_at(constraints, idx);
 
-    Core::getInstance().getWorld()->DeletePersistentData(cv->config);
+    World::DeletePersistentData(cv->config);
     delete cv;
+}
+
+static bool deleteConstraint(std::string name)
+{
+    for (size_t i = 0; i < constraints.size(); i++)
+    {
+        if (constraints[i]->config.val() != name)
+            continue;
+
+        delete_constraint(constraints[i]);
+        return true;
+    }
+
+    return false;
 }
 
 /******************************
@@ -813,71 +822,6 @@ static void link_job_constraint(ProtectedJob *pj, df::item_type itype, int16_t i
     }
 }
 
-static void compute_custom_job(ProtectedJob *pj, df::job *job)
-{
-    if (pj->reaction_id < 0)
-        pj->reaction_id = linear_index(df::reaction::get_vector(),
-                                       &df::reaction::code, job->reaction_name);
-
-    df::reaction *r = df::reaction::find(pj->reaction_id);
-    if (!r)
-        return;
-
-    for (size_t i = 0; i < r->products.size(); i++)
-    {
-        using namespace df::enums::reaction_product_item_flags;
-
-        VIRTUAL_CAST_VAR(prod, df::reaction_product_itemst, r->products[i]);
-        if (!prod || (prod->item_type < 0 && !prod->flags.is_set(CRAFTS)))
-            continue;
-
-        MaterialInfo mat(prod);
-        df::dfhack_material_category mat_mask(0);
-
-        bool get_mat_prod = prod->flags.is_set(GET_MATERIAL_PRODUCT);
-        if (get_mat_prod || prod->flags.is_set(GET_MATERIAL_SAME))
-        {
-            int reagent_idx = linear_index(r->reagents, &df::reaction_reagent::code,
-                                           prod->get_material.reagent_code);
-            if (reagent_idx < 0)
-                continue;
-
-            int item_idx = linear_index(job->job_items, &df::job_item::reagent_index, reagent_idx);
-            if (item_idx >= 0)
-                mat.decode(job->job_items[item_idx]);
-            else
-            {
-                VIRTUAL_CAST_VAR(src, df::reaction_reagent_itemst, r->reagents[reagent_idx]);
-                if (!src)
-                    continue;
-                mat.decode(src);
-            }
-
-            if (get_mat_prod)
-            {
-                std::string code = prod->get_material.product_code;
-
-                if (mat.isValid())
-                {
-                    int idx = linear_index(mat.material->reaction_product.id, code);
-                    if (idx < 0)
-                        continue;
-
-                    mat.decode(mat.material->reaction_product.material, idx);
-                }
-                else
-                {
-                    if (code == "SOAP_MAT")
-                        mat_mask.bits.soap = true;
-                }
-            }
-        }
-
-        link_job_constraint(pj, prod->item_type, prod->item_subtype,
-                            mat_mask, mat.type, mat.index, prod->flags.is_set(CRAFTS)); 
-    }
-}
-
 static void guess_job_material(df::job *job, MaterialInfo &mat, df::dfhack_material_category &mat_mask)
 {
     using namespace df::enums::job_type;
@@ -919,100 +863,24 @@ static void guess_job_material(df::job *job, MaterialInfo &mat, df::dfhack_mater
     }
 }
 
-static void compute_job_outputs(color_ostream &out, ProtectedJob *pj)
+static int cbEnumJobOutputs(lua_State *L)
 {
-    using namespace df::enums::job_type;
+    auto pj = (ProtectedJob*)lua_touserdata(L, lua_upvalueindex(1));
 
-    // Custom reactions handled in another function
-    df::job *job = pj->job_copy;
+    lua_settop(L, 6);
 
-    if (job->job_type == CustomReaction)
-    {
-        compute_custom_job(pj, job);
-        return;
-    }
+    df::dfhack_material_category mat_mask(0);
+    if (!lua_isnil(L, 3))
+        Lua::CheckDFAssign(L, &mat_mask, 3);
 
-    // Item type & subtype
-    df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
-    int16_t isubtype = job->item_subtype;
+    link_job_constraint(
+        pj,
+        (df::item_type)luaL_optint(L, 1, -1), luaL_optint(L, 2, -1),
+        mat_mask, luaL_optint(L, 4, -1), luaL_optint(L, 5, -1),
+        lua_toboolean(L, 6)
+    );
 
-    if (itype == item_type::NONE && job->job_type != MakeCrafts)
-        return;
-
-    // Item material & material category
-    MaterialInfo mat;
-    df::dfhack_material_category mat_mask;
-    guess_job_material(job, mat, mat_mask);
-
-    // Job-specific code
-    switch (job->job_type)
-    {
-    case SmeltOre:
-        if (mat.inorganic)
-        {
-            std::vector<int16_t> &ores = mat.inorganic->metal_ore.mat_index;
-            for (size_t i = 0; i < ores.size(); i++)
-                link_job_constraint(pj, item_type::BAR, -1, 0, 0, ores[i]);
-        }
-        return;
-
-    case ExtractMetalStrands:
-        if (mat.inorganic)
-        {
-            std::vector<int16_t> &threads = mat.inorganic->thread_metal.mat_index;
-            for (size_t i = 0; i < threads.size(); i++)
-                link_job_constraint(pj, item_type::THREAD, -1, 0, 0, threads[i]);
-        }
-        return;
-
-    case PrepareMeal:
-        if (job->mat_type != -1)
-        {
-            std::vector<df::itemdef_foodst*> &food = df::itemdef_foodst::get_vector();
-            for (size_t i = 0; i < food.size(); i++)
-                if (food[i]->level == job->mat_type)
-                    link_job_constraint(pj, item_type::FOOD, i, 0, -1, -1);
-            return;
-        }
-        break;
-
-    case MakeCrafts:
-        link_job_constraint(pj, item_type::NONE, -1, mat_mask, mat.type, mat.index, true);
-        return;
-
-#define PLANT_PROCESS_MAT(flag, tag) \
-        if (mat.plant && mat.plant->flags.is_set(plant_raw_flags::flag)) \
-            mat.decode(mat.plant->material_defs.type_##tag, \
-                       mat.plant->material_defs.idx_##tag); \
-        else mat.decode(-1);
-    case BrewDrink:
-        PLANT_PROCESS_MAT(DRINK, drink);
-        break;
-    case MillPlants:
-        PLANT_PROCESS_MAT(MILL, mill);
-        break;
-    case ProcessPlants:
-        PLANT_PROCESS_MAT(THREAD, thread);
-        break;
-    case ProcessPlantsBag:
-        PLANT_PROCESS_MAT(LEAVES, leaves);
-        break;
-    case ProcessPlantsBarrel:
-        PLANT_PROCESS_MAT(EXTRACT_BARREL, extract_barrel);
-        break;
-    case ProcessPlantsVial:
-        PLANT_PROCESS_MAT(EXTRACT_VIAL, extract_vial);
-        break;
-    case ExtractFromPlants:
-        PLANT_PROCESS_MAT(EXTRACT_STILL_VIAL, extract_still_vial);
-        break;
-#undef PLANT_PROCESS_MAT
-
-    default:
-        break;
-    }
-
-    link_job_constraint(pj, itype, isubtype, mat_mask, mat.type, mat.index);
+    return 0;
 }
 
 static void map_job_constraints(color_ostream &out)
@@ -1025,19 +893,32 @@ static void map_job_constraints(color_ostream &out)
         constraints[i]->is_active = false;
     }
 
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder frame(L);
+
+    bool ok = Lua::PushModulePublic(out, L, "plugins.workflow", "doEnumJobOutputs");
+    if (!ok)
+        out.printerr("The workflow lua module is not available.\n");
+
     for (TKnownJobs::const_iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
     {
         ProtectedJob *pj = it->second;
 
         pj->constraints.clear();
 
-        if (!pj->isLive())
+        if (!ok || !pj->isLive())
             continue;
 
         if (!melt_active && pj->actual_job->job_type == job_type::MeltMetalObject)
             melt_active = pj->isResumed();
 
-        compute_job_outputs(out, pj);
+        // Call the lua module
+        lua_pushvalue(L, -1);
+        lua_pushlightuserdata(L, pj);
+        lua_pushcclosure(L, cbEnumJobOutputs, 1);
+        Lua::PushDFObject(L, pj->job_copy);
+
+        Lua::SafeCall(out, L, 2, 0);
     }
 }
 
@@ -1114,6 +995,15 @@ static bool itemInRealJob(df::item *item)
                != job_type_class::Hauling;
 }
 
+static bool isRouteVehicle(df::item *item)
+{
+    int id = item->getVehicleID();
+    if (id < 0) return false;
+
+    auto vehicle = df::vehicle::find(id);
+    return vehicle && vehicle->route_id >= 0;
+}
+
 static void map_job_items(color_ostream &out)
 {
     for (size_t i = 0; i < constraints.size(); i++)
@@ -1137,7 +1027,7 @@ static void map_job_items(color_ostream &out)
 
     bool dry_buckets = isOptionEnabled(CF_DRYBUCKETS);
 
-    std::vector<df::item*> &items = world->items.other[items_other_id::ANY_FREE];
+    std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
 
     for (size_t i = 0; i < items.size(); i++)
     {
@@ -1165,6 +1055,8 @@ static void map_job_items(color_ostream &out)
             break;
 
         case item_type::THREAD:
+            if (item->flags.bits.spider_web)
+                continue;
             if (item->getTotalDimension() < 15000)
                 is_invalid = true;
             break;
@@ -1223,6 +1115,7 @@ static void map_job_items(color_ostream &out)
                 item->flags.bits.owned ||
                 item->flags.bits.in_chest ||
                 item->isAssignedToStockpile() ||
+                isRouteVehicle(item) ||
                 itemInRealJob(item) ||
                 itemBusy(item))
             {
@@ -1351,6 +1244,160 @@ static void process_constraints(color_ostream &out)
     update_jobs_by_constraints(out);
 }
 
+static void update_data_structures(color_ostream &out)
+{
+    if (enabled) {
+        check_lost_jobs(out, 0);
+        recover_jobs(out);
+        update_job_data(out);
+        map_job_constraints(out);
+        map_job_items(out);
+    }
+}
+
+/*************
+ *  LUA API  *
+ *************/
+
+static bool isEnabled() { return enabled; }
+
+static void setEnabled(color_ostream &out, bool enable)
+{
+    if (enable && !enabled)
+    {
+        enable_plugin(out);
+    }
+    else if (!enable && enabled)
+    {
+        enabled = false;
+        setOptionEnabled(CF_ENABLED, false);
+        stop_protect(out);
+    }
+}
+
+static void push_constraint(lua_State *L, ItemConstraint *cv)
+{
+    lua_newtable(L);
+    int ctable = lua_gettop(L);
+
+    Lua::SetField(L, cv->config.entry_id(), ctable, "id");
+    Lua::SetField(L, cv->config.val(), ctable, "token");
+
+    // Constraint key
+
+    Lua::SetField(L, cv->item.type, ctable, "item_type");
+    Lua::SetField(L, cv->item.subtype, ctable, "item_subtype");
+
+    Lua::SetField(L, cv->is_craft, ctable, "is_craft");
+
+    Lua::PushDFObject(L, &cv->mat_mask);
+    lua_setfield(L, -2, "mat_mask");
+
+    Lua::SetField(L, cv->material.type, ctable, "mat_type");
+    Lua::SetField(L, cv->material.index, ctable, "mat_index");
+
+    Lua::SetField(L, (int)cv->min_quality, ctable, "min_quality");
+
+    // Constraint value
+
+    Lua::SetField(L, cv->goalByCount(), ctable, "goal_by_count");
+    Lua::SetField(L, cv->goalCount(), ctable, "goal_value");
+    Lua::SetField(L, cv->goalGap(), ctable, "goal_gap");
+
+    Lua::SetField(L, cv->item_amount, ctable, "cur_amount");
+    Lua::SetField(L, cv->item_count, ctable, "cur_count");
+    Lua::SetField(L, cv->item_inuse, ctable, "cur_in_use");
+
+    // Current state value
+
+    if (cv->request_resume)
+        Lua::SetField(L, "resume", ctable, "request");
+    else if (cv->request_suspend)
+        Lua::SetField(L, "suspend", ctable, "request");
+
+    lua_newtable(L);
+
+    for (size_t i = 0, j = 0; i < cv->jobs.size(); i++)
+    {
+        if (!cv->jobs[i]->isLive()) continue;
+        Lua::PushDFObject(L, cv->jobs[i]->actual_job);
+        lua_rawseti(L, -2, ++j);
+    }
+
+    lua_setfield(L, ctable, "jobs");
+}
+
+static int listConstraints(lua_State *L)
+{
+    auto job = Lua::CheckDFObject<df::job>(L, 1);
+
+    lua_pushnil(L);
+
+    if (!enabled || (job && !isSupportedJob(job)))
+        return 1;
+
+    color_ostream &out = *Lua::GetOutput(L);
+    update_data_structures(out);
+
+    ProtectedJob *pj = NULL;
+    if (job)
+    {
+        pj = get_known(job->id);
+        if (!pj)
+            return 1;
+    }
+
+    lua_newtable(L);
+
+    auto &vec = (pj ? pj->constraints : constraints);
+
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        push_constraint(L, vec[i]);
+        lua_rawseti(L, -2, i+1);
+    }
+
+    return 1;
+}
+
+static int setConstraint(lua_State *L)
+{
+    auto token = luaL_checkstring(L, 1);
+    bool by_count = lua_toboolean(L, 2);
+    int count = luaL_optint(L, 3, -1);
+    int gap = luaL_optint(L, 4, -1);
+
+    color_ostream &out = *Lua::GetOutput(L);
+
+    ItemConstraint *icv = get_constraint(out, token);
+    if (!icv)
+        luaL_error(L, "invalid constraint: %s", token);
+
+    if (!lua_isnil(L, 2))
+        icv->setGoalByCount(by_count);
+    if (!lua_isnil(L, 3))
+        icv->setGoalCount(count);
+    if (!lua_isnil(L, 4))
+        icv->setGoalGap(gap);
+
+    process_constraints(out);
+    push_constraint(L, icv);
+    return 1;
+}
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(isEnabled),
+    DFHACK_LUA_FUNCTION(setEnabled),
+    DFHACK_LUA_FUNCTION(deleteConstraint),
+    DFHACK_LUA_END
+};
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(listConstraints),
+    DFHACK_LUA_COMMAND(setConstraint),
+    DFHACK_LUA_END
+};
+
 /******************************
  *  PRINTING AND THE COMMAND  *
  ******************************/
@@ -1380,15 +1427,15 @@ static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job
 {
     Console::color_value color;
     if (cv->request_resume)
-        color = Console::COLOR_GREEN;
+        color = COLOR_GREEN;
     else if (cv->request_suspend)
-        color = Console::COLOR_CYAN;
+        color = COLOR_CYAN;
     else
-        color = Console::COLOR_DARKGREY;
+        color = COLOR_DARKGREY;
 
     out.color(color);
     out << prefix << "Constraint " << flush;
-    out.color(Console::COLOR_GREY);
+    out.color(COLOR_GREY);
     out << cv->config.val() << " " << flush;
     out.color(color);
     out << (cv->goalByCount() ? "count " : "amount ")
@@ -1437,18 +1484,18 @@ static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job
         {
             if (pj->want_resumed)
             {
-                out.color(Console::COLOR_YELLOW);
+                out.color(COLOR_YELLOW);
                 out << start << " (delayed)" << endl;
             }
             else
             {
-                out.color(Console::COLOR_BLUE);
+                out.color(COLOR_BLUE);
                 out << start << " (suspended)" << endl;
             }
         }
         else
         {
-            out.color(Console::COLOR_GREEN);
+            out.color(COLOR_GREEN);
             out << start << endl;
         }
 
@@ -1472,11 +1519,11 @@ static void print_job(color_ostream &out, ProtectedJob *pj)
         isOptionEnabled(CF_AUTOMELT))
     {
         if (meltable_count <= 0)
-            out.color(Console::COLOR_CYAN);
+            out.color(COLOR_CYAN);
         else if (pj->want_resumed && !pj->isActuallyResumed())
-            out.color(Console::COLOR_YELLOW);
+            out.color(COLOR_YELLOW);
         else
-            out.color(Console::COLOR_GREEN);
+            out.color(COLOR_GREEN);
         out << "  Meltable: " << meltable_count << " objects." << endl;
         out.reset_color();
     }
@@ -1494,13 +1541,7 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
         return CR_FAILURE;
     }
 
-    if (enabled) {
-        check_lost_jobs(out, 0);
-        recover_jobs(out);
-        update_job_data(out);
-        map_job_constraints(out);
-        map_job_items(out);
-    }
+    update_data_structures(out);
 
     df::building *workshop = NULL;
     //FIXME: unused variable!
@@ -1518,18 +1559,11 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
     if (cmd == "enable" || cmd == "disable")
     {
         bool enable = (cmd == "enable");
-        if (enable && !enabled)
+        if (enable)
+            setEnabled(out, true);
+        else if (parameters.size() == 1)
         {
-            enable_plugin(out);
-        }
-        else if (!enable && parameters.size() == 1)
-        {
-            if (enabled)
-            {
-                enabled = false;
-                setOptionEnabled(CF_ENABLED, false);
-                stop_protect(out);
-            }
+            setEnabled(out, false);
 
             out << "The plugin is disabled." << endl;
             return CR_OK;
@@ -1647,14 +1681,8 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
         if (parameters.size() != 2)
             return CR_WRONG_USAGE;
 
-        for (size_t i = 0; i < constraints.size(); i++)
-        {
-            if (constraints[i]->config.val() != parameters[1])
-                continue;
-
-            delete_constraint(constraints[i]);
+        if (deleteConstraint(parameters[1]))
             return CR_OK;
-        }
 
         out.printerr("Constraint not found: %s\n", parameters[1].c_str());
         return CR_FAILURE;

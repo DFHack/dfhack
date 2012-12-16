@@ -12,9 +12,15 @@ module DFHack
                     ref.unit_tg if ref.kind_of?(GeneralRefUnit)
                 when :viewscreen_unitlistst
                     v = curview
-                    # TODO fix xml to use enums everywhere
-                    page = DFHack::ViewscreenUnitlistst_TPage.int(v.page)
-                    v.units[page][v.cursor_pos[page]]
+                    v.units[v.page][v.cursor_pos[v.page]]
+                when :viewscreen_petst
+                    v = curview
+                    case v.mode
+                    when :List
+                        v.animal[v.cursor].unit if !v.is_vermin[v.cursor]
+                    when :SelectTrainer
+                        v.trainer_unit[v.trainer_cursor]
+                    end
                 else
                     case ui.main.mode
                     when :ViewUnits
@@ -24,6 +30,8 @@ module DFHack
                     when :LookAround
                         k = ui_look_list.items[ui_look_cursor]
                         k.unit if k.type == :Unit
+                    else
+                        ui.follow_unit_tg if ui.follow_unit != -1
                     end
                 end
             elsif what.kind_of?(Integer)
@@ -41,48 +49,60 @@ module DFHack
 
         # returns an Array of all units that are current fort citizen (dwarves, on map, not hostile)
         def unit_citizens
-            race = ui.race_id
-            civ = ui.civ_id
             world.units.active.find_all { |u| 
-                u.race == race and u.civ_id == civ and !u.flags1.dead and !u.flags1.merchant and
-                !u.flags1.diplomat and !u.flags2.resident and !u.flags3.ghostly and
-                !u.curse.add_tags1.OPPOSED_TO_LIFE and !u.curse.add_tags1.CRAZED and
-                u.mood != :Berserk
-                # TODO check curse ; currently this should keep vampires, but may include werebeasts
+                unit_iscitizen(u)
             }
+        end
+
+        def unit_iscitizen(u)
+            u.race == ui.race_id and u.civ_id == ui.civ_id and !u.flags1.dead and !u.flags1.merchant and !u.flags1.forest and
+            !u.flags1.diplomat and !u.flags2.resident and !u.flags3.ghostly and
+            !u.curse.add_tags1.OPPOSED_TO_LIFE and !u.curse.add_tags1.CRAZED and
+            u.mood != :Berserk
+            # TODO check curse ; currently this should keep vampires, but may include werebeasts
         end
 
         # list workers (citizen, not crazy / child / inmood / noble)
         def unit_workers
-            unit_citizens.find_all { |u|
-                u.mood == :None and
-                u.profession != :CHILD and
-                u.profession != :BABY and
-                # TODO MENIAL_WORK_EXEMPTION_SPOUSE
-                !unit_entitypositions(u).find { |pos| pos.flags[:MENIAL_WORK_EXEMPTION] }
+            world.units.active.find_all { |u|
+                unit_isworker(u)
             }
+        end
+
+        def unit_isworker(u)
+            unit_iscitizen(u) and
+            u.mood == :None and
+            u.profession != :CHILD and
+            u.profession != :BABY and
+            # TODO MENIAL_WORK_EXEMPTION_SPOUSE
+            !unit_entitypositions(u).find { |pos| pos.flags[:MENIAL_WORK_EXEMPTION] }
         end
 
         # list currently idle workers
         def unit_idlers
-            unit_workers.find_all { |u|
-                # current_job includes eat/drink/sleep/pickupequip
-                !u.job.current_job and 
-                # filter 'attend meeting'
-                not u.specific_refs.find { |s| s.type == :ACTIVITY } and
-                # filter soldiers (TODO check schedule)
-                u.military.squad_index == -1 and
-                # filter 'on break'
-                not u.status.misc_traits.find { |t| t.id == :OnBreak }
+            world.units.active.find_all { |u|
+                unit_isidler(u)
             }
+        end
+
+        def unit_isidler(u)
+            unit_isworker(u) and
+            # current_job includes eat/drink/sleep/pickupequip
+            !u.job.current_job and 
+            # filter 'attend meeting'
+            not u.specific_refs.find { |s| s.type == :ACTIVITY } and
+            # filter soldiers (TODO check schedule)
+            u.military.squad_id == -1 and
+            # filter 'on break'
+            not u.status.misc_traits.find { |t| t.id == :OnBreak }
         end
 
         def unit_entitypositions(unit)
             list = []
-            return list if not hf = world.history.figures.binsearch(unit.hist_figure_id)
+            return list if not hf = unit.hist_figure_tg
             hf.entity_links.each { |el|
                 next if el._rtti_classname != :histfig_entity_link_positionst
-                next if not ent = world.entities.all.binsearch(el.entity_id)
+                next if not ent = el.entity_tg
                 next if not pa = ent.positions.assignments.binsearch(el.assignment_id)
                 next if not pos = ent.positions.own.binsearch(pa.position_id)
                 list << pos
@@ -92,7 +112,7 @@ module DFHack
     end
 
     class LanguageName
-        def to_s(english=true)
+        def to_s(english=false)
             df.translate_name(self, english)
         end
     end

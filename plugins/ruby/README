@@ -177,7 +177,7 @@ Symbol. This works for array indexes too.
  ex: df.unit_find(:selected).status.labors[:HAUL_FOOD] = true
      df.map_tile_at(df.cursor).designation.liquid_type = :Water
 
-Virtual method calls are supported for C++ objects, with a maximum of 4
+Virtual method calls are supported for C++ objects, with a maximum of 6
 arguments. Arguments / return value are interpreted as Compound/Enums as
 specified in the vmethod definition in the xmls.
 
@@ -213,8 +213,7 @@ Find the raws name of the plant under cursor
  p df.world.raws.plants.all[plant.mat_index].id
 
 Dig a channel under the cursor
- df.map_designation_at(df.cursor).dig = :Channel
- df.map_block_at(df.cursor).flags.designated = true
+ df.map_tile_at(df.cursor).dig(:Channel)
 
 Spawn 2/7 magma on the tile of the dwarf nicknamed 'hotfeet'
  hot = df.unit_citizens.find { |u| u.name.nickname == 'hotfeet' }

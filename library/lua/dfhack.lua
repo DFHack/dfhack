@@ -46,6 +46,7 @@ end
 -- Error handling
 
 safecall = dfhack.safecall
+curry = dfhack.curry
 
 function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
@@ -83,7 +84,7 @@ function mkmodule(module,env)
             error("Not a table in package.loaded["..module.."]")
         end
     end
-    local plugname = string.match(module,'^plugins%.(%w+)$')
+    local plugname = string.match(module,'^plugins%.([%w%-]+)$')
     if plugname then
         dfhack.open_plugin(pkg,plugname)
     end
@@ -102,11 +103,36 @@ function reload(module)
     dofile(path)
 end
 
+-- Trivial classes
+
+function rawset_default(target,source)
+    for k,v in pairs(source) do
+        if rawget(target,k) == nil then
+            rawset(target,k,v)
+        end
+    end
+end
+
+DEFAULT_NIL = DEFAULT_NIL or {} -- Unique token
+
+function defclass(...)
+    return require('class').defclass(...)
+end
+
+function mkinstance(...)
+    return require('class').mkinstance(...)
+end
+
 -- Misc functions
 
+NEWLINE = "\n"
+COMMA = ","
+PERIOD = "."
+
 function printall(table)
-    if type(table) == 'table' or df.isvalid(table) == 'ref' then
-        for k,v in pairs(table) do
+    local ok,f,t,k = pcall(pairs,table)
+    if ok then
+        for k,v in f,t,k do
             print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
         end
     end
@@ -135,12 +161,37 @@ function xyz2pos(x,y,z)
     end
 end
 
-function rawset_default(target,source)
-    for k,v in pairs(source) do
-        if rawget(target,k) == nil then
-            rawset(target,k,v)
+function same_xyz(a,b)
+    return a and b and a.x == b.x and a.y == b.y and a.z == b.z
+end
+
+function get_path_xyz(path,i)
+    return path.x[i], path.y[i], path.z[i]
+end
+
+function pos2xy(pos)
+    if pos then
+        local x = pos.x
+        if x and x ~= -30000 then
+            return x, pos.y
         end
     end
+end
+
+function xy2pos(x,y)
+    if x then
+        return {x=x,y=y}
+    else
+        return {x=-30000,y=-30000}
+    end
+end
+
+function same_xy(a,b)
+    return a and b and a.x == b.x and a.y == b.y
+end
+
+function get_path_xy(path,i)
+    return path.x[i], path.y[i]
 end
 
 function safe_index(obj,idx,...)
@@ -159,10 +210,6 @@ function safe_index(obj,idx,...)
 end
 
 -- String conversions
-
-function dfhack.event:__tostring()
-    return "<event>"
-end
 
 function dfhack.persistent:__tostring()
     return "<persistent "..self.entry_id..":"..self.key.."=\""

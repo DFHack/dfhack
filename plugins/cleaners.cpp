@@ -50,12 +50,12 @@ command_result cleanmap (color_ostream &out, bool snow, bool mud)
             // filter snow
             if(!snow
                 && spatter->mat_type == builtin_mats::WATER
-                && spatter->mat_state == matter_state::Powder)
+                && spatter->mat_state == (short)matter_state::Powder)
                 continue;
             // filter mud
             if(!mud
                 && spatter->mat_type == builtin_mats::MUD
-                && spatter->mat_state == matter_state::Solid)
+                && spatter->mat_state == (short)matter_state::Solid)
                 continue;
 
             delete evt;
@@ -81,11 +81,18 @@ command_result cleanitems (color_ostream &out)
         df::item_actual *item = (df::item_actual *)world->items.all[i];
         if (item->contaminants && item->contaminants->size())
         {
+            std::vector<df::contaminant*> saved;
             for (size_t j = 0; j < item->contaminants->size(); j++)
-                delete item->contaminants->at(j);
+            {
+                auto obj = (*item->contaminants)[j];
+                if (obj->flags.whole & 0x8000) // DFHack-generated contaminant
+                    saved.push_back(obj);
+                else
+                    delete obj;
+            }
             cleaned_items++;
-            cleaned_total += item->contaminants->size();
-            item->contaminants->clear();
+            cleaned_total += item->contaminants->size() - saved.size();
+            item->contaminants->swap(saved);
         }
     }
     if (cleaned_total)
@@ -111,6 +118,28 @@ command_result cleanunits (color_ostream &out)
     }
     if (cleaned_total)
         out.print("Removed %d contaminants from %d creatures.\n", cleaned_total, cleaned_units);
+    return CR_OK;
+}
+
+command_result cleanplants (color_ostream &out)
+{
+    // Invoked from clean(), already suspended
+    int cleaned_plants = 0, cleaned_total = 0;
+    for (size_t i = 0; i < world->plants.all.size(); i++)
+    {
+        df::plant *plant = world->plants.all[i];
+
+        if (plant->contaminants.size())
+        {
+            for (size_t j = 0; j < plant->contaminants.size(); j++)
+                delete plant->contaminants[j];
+            cleaned_plants++;
+            cleaned_total += plant->contaminants.size();
+            plant->contaminants.clear();
+        }
+    }
+    if (cleaned_total)
+        out.print("Removed %d contaminants from %d plants.\n", cleaned_total, cleaned_plants);
     return CR_OK;
 }
 
@@ -153,6 +182,7 @@ command_result clean (color_ostream &out, vector <string> & parameters)
     bool mud = false;
     bool units = false;
     bool items = false;
+    bool plants = false;
     for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "map")
@@ -161,11 +191,14 @@ command_result clean (color_ostream &out, vector <string> & parameters)
             units = true;
         else if(parameters[i] == "items")
             items = true;
+        else if(parameters[i] == "plants")
+            plants = true;
         else if(parameters[i] == "all")
         {
             map = true;
             items = true;
             units = true;
+            plants = true;
         }
         else if(parameters[i] == "snow")
             snow = true;
@@ -174,7 +207,7 @@ command_result clean (color_ostream &out, vector <string> & parameters)
         else
             return CR_WRONG_USAGE;
     }
-    if(!map && !units && !items)
+    if(!map && !units && !items && !plants)
         return CR_WRONG_USAGE;
 
     CoreSuspender suspend;
@@ -185,6 +218,8 @@ command_result clean (color_ostream &out, vector <string> & parameters)
         cleanunits(out);
     if(items)
         cleanitems(out);
+    if(plants)
+        cleanplants(out);
     return CR_OK;
 }
 
@@ -198,6 +233,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  map        - clean the map tiles\n"
         "  items      - clean all items\n"
         "  units      - clean all creatures\n"
+        "  plants     - clean all plants\n"
         "  all        - clean everything.\n"
         "More options for 'map':\n"
         "  snow       - also remove snow\n"

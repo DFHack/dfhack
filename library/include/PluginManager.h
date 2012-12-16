@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -128,7 +128,9 @@ namespace DFHack
         {
             PS_UNLOADED,
             PS_LOADED,
-            PS_BROKEN
+            PS_BROKEN,
+            PS_LOADING,
+            PS_UNLOADING
         };
         friend class PluginManager;
         friend class RPCService;
@@ -173,31 +175,16 @@ namespace DFHack
         PluginManager * parent;
         plugin_state state;
 
-        struct LuaCommand {
-            Plugin *owner;
-            std::string name;
-            int (*command)(lua_State *state);
-            LuaCommand(Plugin *owner, std::string name) : owner(owner), name(name) {}
-        };
+        struct LuaCommand;
         std::map<std::string, LuaCommand*> lua_commands;
         static int lua_cmd_wrapper(lua_State *state);
 
-        struct LuaFunction {
-            Plugin *owner;
-            std::string name;
-            function_identity_base *identity;
-            LuaFunction(Plugin *owner, std::string name) : owner(owner), name(name) {}
-        };
+        struct LuaFunction;
         std::map<std::string, LuaFunction*> lua_functions;
         static int lua_fun_wrapper(lua_State *state);
         void push_function(lua_State *state, LuaFunction *fn);
 
-        struct LuaEvent {
-            LuaFunction handler;
-            Lua::Notification *event;
-            bool active;
-            LuaEvent(Plugin *owner, std::string name) : handler(owner,name), active(false) {}
-        };
+        struct LuaEvent;
         std::map<std::string, LuaEvent*> lua_events;
 
         void index_lua(DFLibrary *lib);

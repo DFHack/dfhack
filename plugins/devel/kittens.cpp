@@ -257,7 +257,7 @@ command_result kittens (color_ostream &out, vector <string> & parameters)
     };
     con.cursor(false);
     con.clear();
-    Console::color_value color = Console::COLOR_BLUE;
+    Console::color_value color = COLOR_BLUE;
     while(1)
     {
         if(shutdown_flag)
@@ -282,7 +282,7 @@ command_result kittens (color_ostream &out, vector <string> & parameters)
         con.flush();
         con.msleep(60);
         ((int&)color) ++;
-        if(color > Console::COLOR_MAX)
-            color = Console::COLOR_BLUE;
+        if(color > COLOR_MAX)
+            color = COLOR_BLUE;
     }
 }

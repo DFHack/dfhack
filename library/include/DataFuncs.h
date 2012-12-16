@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -75,106 +75,133 @@ namespace df {
     cur_lua_ostream_argument name(state);
 
 #define INSTANTIATE_RETURN_TYPE(FArgs) \
-    template<FW_TARGSC class RT> struct return_type<RT (*) FArgs> { typedef RT type; }; \
-    template<FW_TARGSC class RT, class CT> struct return_type<RT (CT::*) FArgs> { typedef RT type; };
-
-#define INSTANTIATE_WRAPPERS(Count, FArgs, Args, Loads) \
-    template<FW_TARGS> struct function_wrapper<void (*) FArgs, true> { \
+    template<FW_TARGSC class RT> struct return_type<RT (*) FArgs> { \
+        typedef RT type; \
         static const bool is_method = false; \
+    }; \
+    template<FW_TARGSC class RT, class CT> struct return_type<RT (CT::*) FArgs> { \
+        typedef RT type; \
+        typedef CT class_type; \
+        static const bool is_method = true; \
+    };
+
+#define INSTANTIATE_WRAPPERS2(Count, FArgs, Args, Loads) \
+    template<FW_TARGS> struct function_wrapper<void (*) FArgs, true> { \
         static const int num_args = Count; \
         static void execute(lua_State *state, int base, void (*cb) FArgs) { Loads; INVOKE_VOID(cb Args); } \
     }; \
     template<FW_TARGSC class RT> struct function_wrapper<RT (*) FArgs, false> { \
-        static const bool is_method = false; \
         static const int num_args = Count; \
         static void execute(lua_State *state, int base, RT (*cb) FArgs) { Loads; INVOKE_RV(cb Args); } \
     }; \
     template<FW_TARGSC class CT> struct function_wrapper<void (CT::*) FArgs, true> { \
-        static const bool is_method = true; \
         static const int num_args = Count+1; \
         static void execute(lua_State *state, int base, void (CT::*cb) FArgs) { \
             LOAD_CLASS() Loads; INVOKE_VOID((self->*cb) Args); } \
     }; \
     template<FW_TARGSC class RT, class CT> struct function_wrapper<RT (CT::*) FArgs, false> { \
-        static const bool is_method = true; \
         static const int num_args = Count+1; \
         static void execute(lua_State *state, int base, RT (CT::*cb) FArgs) { \
             LOAD_CLASS(); Loads; INVOKE_RV((self->*cb) Args); } \
     };
 
+#define INSTANTIATE_WRAPPERS(Count, FArgs, OFArgs, Args, OArgs, Loads) \
+    INSTANTIATE_WRAPPERS2(Count, FArgs, Args, Loads) \
+    INSTANTIATE_WRAPPERS2(Count, OFArgs, OArgs, LOAD_OSTREAM(out); Loads)
+
 #define FW_TARGSC
 #define FW_TARGS
 INSTANTIATE_RETURN_TYPE(())
-INSTANTIATE_WRAPPERS(0, (), (), ;)
-INSTANTIATE_WRAPPERS(0, (OSTREAM_ARG), (out), LOAD_OSTREAM(out);)
+INSTANTIATE_WRAPPERS(0, (), (OSTREAM_ARG), (), (out), ;)
 #undef FW_TARGS
 
 #undef FW_TARGSC
 #define FW_TARGSC FW_TARGS,
 #define FW_TARGS class A1
 INSTANTIATE_RETURN_TYPE((A1))
-INSTANTIATE_WRAPPERS(1, (A1), (vA1), LOAD_ARG(A1);)
-INSTANTIATE_WRAPPERS(1, (OSTREAM_ARG,A1), (out,vA1), LOAD_OSTREAM(out); LOAD_ARG(A1);)
+INSTANTIATE_WRAPPERS(1, (A1), (OSTREAM_ARG,A1), (vA1), (out,vA1), LOAD_ARG(A1);)
 #undef FW_TARGS
 
 #define FW_TARGS class A1, class A2
 INSTANTIATE_RETURN_TYPE((A1,A2))
-INSTANTIATE_WRAPPERS(2, (A1,A2), (vA1,vA2), LOAD_ARG(A1); LOAD_ARG(A2);)
-INSTANTIATE_WRAPPERS(2, (OSTREAM_ARG,A1,A2), (out,vA1,vA2),
-                     LOAD_OSTREAM(out); LOAD_ARG(A1); LOAD_ARG(A2);)
+INSTANTIATE_WRAPPERS(2, (A1,A2), (OSTREAM_ARG,A1,A2), (vA1,vA2), (out,vA1,vA2),
+                     LOAD_ARG(A1); LOAD_ARG(A2);)
 #undef FW_TARGS
 
 #define FW_TARGS class A1, class A2, class A3
 INSTANTIATE_RETURN_TYPE((A1,A2,A3))
-INSTANTIATE_WRAPPERS(3, (A1,A2,A3), (vA1,vA2,vA3), LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);)
-INSTANTIATE_WRAPPERS(3, (OSTREAM_ARG,A1,A2,A3), (out,vA1,vA2,vA3),
-                     LOAD_OSTREAM(out); LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);)
+INSTANTIATE_WRAPPERS(3, (A1,A2,A3), (OSTREAM_ARG,A1,A2,A3), (vA1,vA2,vA3), (out,vA1,vA2,vA3),
+                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);)
 #undef FW_TARGS
 
 #define FW_TARGS class A1, class A2, class A3, class A4
 INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4))
-INSTANTIATE_WRAPPERS(4, (A1,A2,A3,A4), (vA1,vA2,vA3,vA4),
+INSTANTIATE_WRAPPERS(4, (A1,A2,A3,A4), (OSTREAM_ARG,A1,A2,A3,A4),
+                        (vA1,vA2,vA3,vA4), (out,vA1,vA2,vA3,vA4),
                      LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);)
-INSTANTIATE_WRAPPERS(4, (OSTREAM_ARG,A1,A2,A3,A4), (out,vA1,vA2,vA3,vA4),
-                     LOAD_OSTREAM(out); LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);)
 #undef FW_TARGS
 
 #define FW_TARGS class A1, class A2, class A3, class A4, class A5
 INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5))
-INSTANTIATE_WRAPPERS(5, (A1,A2,A3,A4,A5), (vA1,vA2,vA3,vA4,vA5),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4); LOAD_ARG(A5);)
-INSTANTIATE_WRAPPERS(5, (OSTREAM_ARG,A1,A2,A3,A4,A5), (out,vA1,vA2,vA3,vA4,vA5),
-                     LOAD_OSTREAM(out); LOAD_ARG(A1); LOAD_ARG(A2);
-                     LOAD_ARG(A3); LOAD_ARG(A4); LOAD_ARG(A5);)
+INSTANTIATE_WRAPPERS(5, (A1,A2,A3,A4,A5), (OSTREAM_ARG,A1,A2,A3,A4,A5),
+                        (vA1,vA2,vA3,vA4,vA5), (out,vA1,vA2,vA3,vA4,vA5),
+                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
+                     LOAD_ARG(A5);)
 #undef FW_TARGS
 
 #define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6
 INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6))
-INSTANTIATE_WRAPPERS(6, (A1,A2,A3,A4,A5,A6), (vA1,vA2,vA3,vA4,vA5,vA6),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);
-                     LOAD_ARG(A4); LOAD_ARG(A5); LOAD_ARG(A6);)
-INSTANTIATE_WRAPPERS(6, (OSTREAM_ARG,A1,A2,A3,A4,A5,A6), (out,vA1,vA2,vA3,vA4,vA5,vA6),
-                     LOAD_OSTREAM(out); LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);
-                     LOAD_ARG(A4); LOAD_ARG(A5); LOAD_ARG(A6);)
+INSTANTIATE_WRAPPERS(6, (A1,A2,A3,A4,A5,A6), (OSTREAM_ARG,A1,A2,A3,A4,A5,A6),
+                        (vA1,vA2,vA3,vA4,vA5,vA6), (out,vA1,vA2,vA3,vA4,vA5,vA6),
+                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
+                     LOAD_ARG(A5); LOAD_ARG(A6);)
 #undef FW_TARGS
 
 #define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7
 INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7))
-INSTANTIATE_WRAPPERS(7, (A1,A2,A3,A4,A5,A6,A7), (vA1,vA2,vA3,vA4,vA5,vA6,vA7),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);
-                     LOAD_ARG(A4); LOAD_ARG(A5); LOAD_ARG(A6);
-                     LOAD_ARG(A7);)
-INSTANTIATE_WRAPPERS(7, (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7), (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7),
-                     LOAD_OSTREAM(out); LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);
-                     LOAD_ARG(A4); LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7);)
+INSTANTIATE_WRAPPERS(7, (A1,A2,A3,A4,A5,A6,A7), (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7),
+                        (vA1,vA2,vA3,vA4,vA5,vA6,vA7), (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7),
+                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
+                     LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7);)
 #undef FW_TARGS
 
 #define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8
 INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7,A8))
+INSTANTIATE_WRAPPERS(8, (A1,A2,A3,A4,A5,A6,A7,A8), (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7,A8),
+                        (vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8), (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8),
+                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
+                     LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7); LOAD_ARG(A8);)
+#undef FW_TARGS
+
+#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9
+INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7,A8,A9))
+INSTANTIATE_WRAPPERS(9, (A1,A2,A3,A4,A5,A6,A7,A8,A9),
+                        (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7,A8,A9),
+                        (vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9),
+                        (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9),
+                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
+                     LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7); LOAD_ARG(A8);
+                     LOAD_ARG(A9);)
+#undef FW_TARGS
+
+#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10
+INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7,A8,A9,A10))
+INSTANTIATE_WRAPPERS(10, (A1,A2,A3,A4,A5,A6,A7,A8,A9,A10),
+                         (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10),
+                         (vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9,vA10),
+                         (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9,vA10),
+                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
+                     LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7); LOAD_ARG(A8);
+                     LOAD_ARG(A9); LOAD_ARG(A10);)
+#undef FW_TARGS
+
+#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11
+INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11))
 #undef FW_TARGS
 
 #undef FW_TARGSC
 #undef INSTANTIATE_WRAPPERS
+#undef INSTANTIATE_WRAPPERS2
 #undef INVOKE_VOID
 #undef INVOKE_RV
 #undef LOAD_CLASS

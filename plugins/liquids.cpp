@@ -27,6 +27,7 @@
 #include <set>
 #include <cstdlib>
 #include <sstream>
+#include <memory>
 using std::vector;
 using std::string;
 using std::endl;
@@ -41,6 +42,7 @@ using std::set;
 #include "modules/Gui.h"
 #include "TileTypes.h"
 #include "modules/MapCache.h"
+#include "LuaTools.h"
 #include "Brushes.h"
 using namespace MapExtras;
 using namespace DFHack;
@@ -50,7 +52,6 @@ CommandHistory liquids_hist;
 
 command_result df_liquids (color_ostream &out, vector <string> & parameters);
 command_result df_liquids_here (color_ostream &out, vector <string> & parameters);
-command_result df_liquids_execute (color_ostream &out);
 
 DFHACK_PLUGIN("liquids");
 
@@ -74,13 +75,79 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-// static stuff to be remembered between sessions
-static string brushname = "point";
-static string mode="magma";
-static string flowmode="f+";
-static string _setmode ="s.";
-static unsigned int amount = 7;
-static int width = 1, height = 1, z_levels = 1;
+enum BrushType {
+    B_POINT, B_RANGE, B_BLOCK, B_COLUMN, B_FLOOD
+};
+
+static const char *brush_name[] = {
+    "point", "range", "block", "column", "flood", NULL
+};
+
+enum PaintMode {
+    P_WATER, P_MAGMA, P_OBSIDIAN, P_OBSIDIAN_FLOOR,
+    P_RIVER_SOURCE, P_FLOW_BITS, P_WCLEAN
+};
+
+static const char *paint_mode_name[] = {
+    "water", "magma", "obsidian", "obsidian_floor",
+    "riversource", "flowbits", "wclean", NULL
+};
+
+enum ModifyMode {
+    M_INC, M_KEEP, M_DEC
+};
+
+static const char *modify_mode_name[] = {
+    "+", ".", "-", NULL
+};
+
+enum PermaflowMode {
+    PF_KEEP, PF_NONE,
+    PF_NORTH, PF_SOUTH, PF_EAST, PF_WEST,
+    PF_NORTHEAST, PF_NORTHWEST, PF_SOUTHEAST, PF_SOUTHWEST
+};
+
+static const char *permaflow_name[] = {
+    ".", "-", "N", "S", "E", "W",
+    "NE", "NW", "SE", "SW", NULL
+};
+
+#define X(name) tile_liquid_flow_dir::name
+static const df::tile_liquid_flow_dir permaflow_id[] = {
+    X(none), X(none), X(north), X(south), X(east), X(west),
+    X(northeast), X(northwest), X(southeast), X(southwest)
+};
+#undef X
+
+struct OperationMode {
+    BrushType brush;
+    PaintMode paint;
+    ModifyMode flowmode;
+    ModifyMode setmode;
+    PermaflowMode permaflow;
+    unsigned int amount;
+    df::coord size;
+
+    OperationMode() :
+        brush(B_POINT), paint(P_MAGMA),
+        flowmode(M_INC), setmode(M_KEEP), permaflow(PF_KEEP), amount(7),
+        size(1,1,1)
+    {}
+} cur_mode;
+
+command_result df_liquids_execute(color_ostream &out);
+command_result df_liquids_execute(color_ostream &out, OperationMode &mode, df::coord pos);
+
+static void print_prompt(std::ostream &str, OperationMode &cur_mode)
+{
+    str <<"[" << paint_mode_name[cur_mode.paint] << ":" << brush_name[cur_mode.brush];
+    if (cur_mode.brush == B_RANGE)
+        str << "(w" << cur_mode.size.x << ":h" << cur_mode.size.y << ":z" << cur_mode.size.z << ")";
+    str << ":" << cur_mode.amount << ":f" << modify_mode_name[cur_mode.flowmode]
+        << ":s" << modify_mode_name[cur_mode.setmode]
+        << ":pf" << permaflow_name[cur_mode.permaflow]
+        << "]";
+}
 
 command_result df_liquids (color_ostream &out_, vector <string> & parameters)
 {
@@ -117,10 +184,8 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         string input = "";
 
         std::stringstream str;
-        str <<"[" << mode << ":" << brushname;
-        if (brushname == "range")
-            str << "(w" << width << ":h" << height << ":z" << z_levels << ")";
-        str << ":" << amount << ":" << flowmode << ":" << _setmode << "]#";
+        print_prompt(str, cur_mode);
+        str << "# ";
         if(out.lineedit(str.str(),input,liquids_hist) == -1)
             return CR_FAILURE;
         liquids_hist.add(input);
@@ -147,6 +212,10 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
                  << "f+            - make the spawned liquid flow" << endl
                  << "f.            - don't change flow state (read state in flow mode)" << endl
                  << "f-            - make the spawned liquid static" << endl
+                 << "Permaflow (only for water):" << endl
+                 << "pf.           - don't change permaflow state" << endl
+                 << "pf-           - make the spawned liquid static" << endl
+                 << "pf[NS][EW]    - make the spawned liquid permanently flow" << endl
                  << "0-7           - set liquid amount" << endl
                  << "Brush:" << endl
                  << "point         - single tile [p]" << endl
@@ -168,38 +237,39 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         }
         else if(command == "m")
         {
-            mode = "magma";
+            cur_mode.paint = P_MAGMA;
         }
         else if(command == "o")
         {
-            mode = "obsidian";
+            cur_mode.paint = P_OBSIDIAN;
         }
         else if(command == "of")
         {
-            mode = "obsidian_floor";
+            cur_mode.paint = P_OBSIDIAN_FLOOR;
         }
         else if(command == "w")
         {
-            mode = "water";
+            cur_mode.paint = P_WATER;
         }
         else if(command == "f")
         {
-            mode = "flowbits";
+            cur_mode.paint = P_FLOW_BITS;
         }
         else if(command == "rs")
         {
-            mode = "riversource";
+            cur_mode.paint = P_RIVER_SOURCE;
         }
         else if(command == "wclean")
         {
-            mode = "wclean";
+            cur_mode.paint = P_WCLEAN;
         }
         else if(command == "point" || command == "p")
         {
-            brushname = "point";
+            cur_mode.brush = B_POINT;
         }
         else if(command == "range" || command == "r")
         {
+            int width, height, z_levels;
             command_result res = parseRectangle(out, commands, 1, commands.size(),
                                                 width, height, z_levels);
             if (res != CR_OK)
@@ -209,24 +279,26 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
 
             if (width == 1 && height == 1 && z_levels == 1)
             {
-                brushname = "point";
+                cur_mode.brush = B_POINT;
+                cur_mode.size = df::coord(1, 1, 1);
             }
             else
             {
-                brushname = "range";
+                cur_mode.brush = B_RANGE;
+                cur_mode.size = df::coord(width, height, z_levels);
             }
         }
         else if(command == "block")
         {
-            brushname = "block";
+            cur_mode.brush = B_BLOCK;
         }
         else if(command == "column")
         {
-            brushname = "column";
+            cur_mode.brush = B_COLUMN;
         }
         else if(command == "flood")
         {
-            brushname = "flood";
+            cur_mode.brush = B_FLOOD;
         }
         else if(command == "q")
         {
@@ -234,45 +306,59 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         }
         else if(command == "f+")
         {
-            flowmode = "f+";
+            cur_mode.flowmode = M_INC;
         }
         else if(command == "f-")
         {
-            flowmode = "f-";
+            cur_mode.flowmode = M_DEC;
         }
         else if(command == "f.")
         {
-            flowmode = "f.";
+            cur_mode.flowmode = M_KEEP;
         }
         else if(command == "s+")
         {
-            _setmode = "s+";
+            cur_mode.setmode = M_INC;
         }
         else if(command == "s-")
         {
-            _setmode = "s-";
+            cur_mode.setmode = M_DEC;
         }
         else if(command == "s.")
         {
-            _setmode = "s.";
+            cur_mode.setmode = M_KEEP;
+        }
+        else if (command.size() > 2 && memcmp(command.c_str(), "pf", 2) == 0)
+        {
+            auto *tail = command.c_str()+2;
+            for (int pm = PF_KEEP; pm <= PF_SOUTHWEST; pm++)
+            {
+                if (strcmp(tail, permaflow_name[pm]) != 0)
+                    continue;
+                cur_mode.permaflow = PermaflowMode(pm);
+                tail = NULL;
+                break;
+            }
+            if (tail)
+                out << command << " : invalid permaflow mode" << endl;
         }
         // blah blah, bad code, bite me.
         else if(command == "0")
-            amount = 0;
+            cur_mode.amount = 0;
         else if(command == "1")
-            amount = 1;
+            cur_mode.amount = 1;
         else if(command == "2")
-            amount = 2;
+            cur_mode.amount = 2;
         else if(command == "3")
-            amount = 3;
+            cur_mode.amount = 3;
         else if(command == "4")
-            amount = 4;
+            cur_mode.amount = 4;
         else if(command == "5")
-            amount = 5;
+            cur_mode.amount = 5;
         else if(command == "6")
-            amount = 6;
+            cur_mode.amount = 6;
         else if(command == "7")
-            amount = 7;
+            cur_mode.amount = 7;
         else if(command.empty())
         {
             df_liquids_execute(out);
@@ -298,78 +384,75 @@ command_result df_liquids_here (color_ostream &out, vector <string> & parameters
     }
 
     out.print("Run liquids-here with these parameters: ");
-    out << "[" << mode << ":" << brushname;
-    if (brushname == "range")
-        out << "(w" << width << ":h" << height << ":z" << z_levels << ")";
-    out << ":" << amount << ":" << flowmode << ":" << _setmode << "]\n";
+    print_prompt(out, cur_mode);
+    out << endl;
 
     return df_liquids_execute(out);
 }
 
 command_result df_liquids_execute(color_ostream &out)
 {
-    // create brush type depending on old parameters
-    Brush * brush;
-
-    if (brushname == "point")
-    {
-        brush = new RectangleBrush(1,1,1,0,0,0);
-        //width = 1;
-        //height = 1;
-        //z_levels = 1;
-    }
-    else if (brushname == "range")
-    {
-        brush = new RectangleBrush(width,height,z_levels,0,0,0);
-    }
-    else if(brushname == "block")
-    {
-        brush = new BlockBrush();
-    }
-    else if(brushname == "column")
-    {
-        brush = new ColumnBrush();
-    }
-    else if(brushname == "flood")
-    {
-        brush = new FloodBrush(&Core::getInstance());
-    }
-    else
-    {
-        // this should never happen!
-        out << "Old brushtype is invalid! Resetting to point brush.\n";
-        brushname = "point";
-        width = 1;
-        height = 1;
-        z_levels = 1;
-        brush = new RectangleBrush(width,height,z_levels,0,0,0);
-    }
-
     CoreSuspender suspend;
 
-    do
+    auto cursor = Gui::getCursorPos();
+    if (!cursor.isValid())
     {
-        if (!Maps::IsValid())
-        {
-            out << "Can't see any DF map loaded." << endl;
-            break;;
-        }
-        int32_t x,y,z;
-        if(!Gui::getCursorCoords(x,y,z))
-        {
-            out << "Can't get cursor coords! Make sure you have a cursor active in DF." << endl;
-            break;
-        }
-        out << "cursor coords: " << x << "/" << y << "/" << z << endl;
-        MapCache mcache;
-        DFHack::DFCoord cursor(x,y,z);
-        coord_vec all_tiles = brush->points(mcache,cursor);
-        out << "working..." << endl;
+        out.printerr("Can't get cursor coords! Make sure you have a cursor active in DF.\n");
+        return CR_WRONG_USAGE;
+    }
 
-        // Force the game to recompute its walkability cache
-        df::global::world->reindex_pathfinding = true;
+    auto rv = df_liquids_execute(out, cur_mode, cursor);
+    if (rv == CR_OK)
+        out << "OK" << endl;
+    return rv;
+}
 
-        if(mode == "obsidian")
+command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, df::coord cursor)
+{
+    // create brush type depending on old parameters
+    Brush *brush;
+
+    switch (cur_mode.brush)
+    {
+    case B_POINT:
+        brush = new RectangleBrush(1,1,1,0,0,0);
+        break;
+    case B_RANGE:
+        brush = new RectangleBrush(cur_mode.size.x,cur_mode.size.y,cur_mode.size.z,0,0,0);
+        break;
+    case B_BLOCK:
+        brush = new BlockBrush();
+        break;
+    case B_COLUMN:
+        brush = new ColumnBrush();
+        break;
+    case B_FLOOD:
+        brush = new FloodBrush(&Core::getInstance());
+        break;
+    default:
+        // this should never happen!
+        out << "Old brushtype is invalid! Resetting to point brush.\n";
+        cur_mode.brush = B_POINT;
+        brush = new RectangleBrush(1,1,1,0,0,0);
+    }
+
+    std::auto_ptr<Brush> brush_ref(brush);
+
+    if (!Maps::IsValid())
+    {
+        out << "Can't see any DF map loaded." << endl;
+        return CR_FAILURE;
+    }
+
+    MapCache mcache;
+    coord_vec all_tiles = brush->points(mcache,cursor);
+
+    // Force the game to recompute its walkability cache
+    df::global::world->reindex_pathfinding = true;
+
+    switch (cur_mode.paint)
+    {
+    case P_OBSIDIAN:
         {
             coord_vec::iterator iter = all_tiles.begin();
             while (iter != all_tiles.end())
@@ -383,8 +466,9 @@ command_result df_liquids_execute(color_ostream &out)
                 mcache.setDesignationAt(*iter, des);
                 iter ++;
             }
+            break;
         }
-        if(mode == "obsidian_floor")
+    case P_OBSIDIAN_FLOOR:
         {
             coord_vec::iterator iter = all_tiles.begin();
             while (iter != all_tiles.end())
@@ -392,8 +476,9 @@ command_result df_liquids_execute(color_ostream &out)
                 mcache.setTiletypeAt(*iter, findRandomVariant(tiletype::LavaFloor1));
                 iter ++;
             }
+            break;
         }
-        else if(mode == "riversource")
+    case P_RIVER_SOURCE:
         {
             coord_vec::iterator iter = all_tiles.begin();
             while (iter != all_tiles.end())
@@ -413,8 +498,9 @@ command_result df_liquids_execute(color_ostream &out)
 
                 iter++;
             }
+            break;
         }
-        else if(mode=="wclean")
+    case P_WCLEAN:
         {
             coord_vec::iterator iter = all_tiles.begin();
             while (iter != all_tiles.end())
@@ -426,8 +512,11 @@ command_result df_liquids_execute(color_ostream &out)
                 mcache.setDesignationAt(current,des);
                 iter++;
             }
+            break;
         }
-        else if(mode== "magma" || mode== "water" || mode == "flowbits")
+    case P_MAGMA:
+    case P_WATER:
+    case P_FLOW_BITS:
         {
             set <Block *> seen_blocks;
             coord_vec::iterator iter = all_tiles.begin();
@@ -442,6 +531,7 @@ command_result df_liquids_execute(color_ostream &out)
                     iter ++;
                     continue;
                 }
+                auto raw_block = block->getRaw();
                 df::tile_designation des = mcache.designationAt(current);
                 df::tiletype tt = mcache.tiletypeAt(current);
                 // don't put liquids into places where they don't belong...
@@ -450,30 +540,29 @@ command_result df_liquids_execute(color_ostream &out)
                     iter++;
                     continue;
                 }
-                if(mode != "flowbits")
+                if(cur_mode.paint != P_FLOW_BITS)
                 {
                     unsigned old_amount = des.bits.flow_size;
                     unsigned new_amount = old_amount;
                     df::tile_liquid old_liquid = des.bits.liquid_type;
                     df::tile_liquid new_liquid = old_liquid;
                     // Compute new liquid type and amount
-                    if(_setmode == "s.")
+                    switch (cur_mode.setmode)
                     {
-                        new_amount = amount;
+                    case M_KEEP:
+                        new_amount = cur_mode.amount;
+                        break;
+                    case M_INC:
+                        if(old_amount < cur_mode.amount)
+                            new_amount = cur_mode.amount;
+                        break;
+                    case M_DEC:
+                        if (old_amount > cur_mode.amount)
+                            new_amount = cur_mode.amount;
                     }
-                    else if(_setmode == "s+")
-                    {
-                        if(old_amount < amount)
-                            new_amount = amount;
-                    }
-                    else if(_setmode == "s-")
-                    {
-                        if (old_amount > amount)
-                            new_amount = amount;
-                    }
-                    if (mode == "magma")
+                    if (cur_mode.paint == P_MAGMA)
                         new_liquid = tile_liquid::Magma;
-                    else if (mode == "water")
+                    else if (cur_mode.paint == P_WATER)
                         new_liquid = tile_liquid::Water;
                     // Store new amount and type
                     des.bits.flow_size = new_amount;
@@ -502,40 +591,77 @@ command_result df_liquids_execute(color_ostream &out)
                     // request flow engine updates
                     block->enableBlockUpdates(new_amount != old_amount, new_liquid != old_liquid);
                 }
+                if (cur_mode.permaflow != PF_KEEP && raw_block)
+                {
+                    auto &flow = raw_block->liquid_flow[current.x&15][current.y&15];
+                    flow.bits.perm_flow_dir = permaflow_id[cur_mode.permaflow];
+                    flow.bits.temp_flow_timer = 0;
+                }
                 seen_blocks.insert(block);
                 iter++;
             }
             set <Block *>::iterator biter = seen_blocks.begin();
             while (biter != seen_blocks.end())
             {
-                if(flowmode == "f+")
+                switch (cur_mode.flowmode)
                 {
+                case M_INC:
                     (*biter)->enableBlockUpdates(true);
-                }
-                else if(flowmode == "f-")
-                {
+                    break;
+                case M_DEC:
                     if (auto block = (*biter)->getRaw())
                     {
                         block->flags.bits.update_liquid = false;
                         block->flags.bits.update_liquid_twice = false;
                     }
-                }
-                else
-                {
-                    auto bflags = (*biter)->BlockFlags();
-                    out << "flow bit 1 = " << bflags.bits.update_liquid << endl; 
-                    out << "flow bit 2 = " << bflags.bits.update_liquid_twice << endl;
+                    break;
+                case M_KEEP:
+                    {
+                        auto bflags = (*biter)->BlockFlags();
+                        out << "flow bit 1 = " << bflags.bits.update_liquid << endl; 
+                        out << "flow bit 2 = " << bflags.bits.update_liquid_twice << endl;
+                    }
                 }
                 biter ++;
             }
+            break;
         }
-        if(mcache.WriteAll())
-            out << "OK" << endl;
-        else
-            out << "Something failed horribly! RUN!" << endl;
-    } while (0);
+    }
 
-    // cleanup
-    delete brush;
+    if(!mcache.WriteAll())
+    {
+        out << "Something failed horribly! RUN!" << endl;
+        return CR_FAILURE;
+    }
+
     return CR_OK;
 }
+
+static int paint(lua_State *L)
+{
+    df::coord pos;
+    OperationMode mode;
+
+    lua_settop(L, 8);
+    Lua::CheckDFAssign(L, &pos, 1);
+    if (!pos.isValid())
+        luaL_argerror(L, 1, "invalid cursor position");
+    mode.brush = (BrushType)luaL_checkoption(L, 2, NULL, brush_name);
+    mode.paint = (PaintMode)luaL_checkoption(L, 3, NULL, paint_mode_name);
+    mode.amount = luaL_optint(L, 4, 7);
+    if (mode.amount < 0 || mode.amount > 7)
+        luaL_argerror(L, 4, "invalid liquid amount");
+    if (!lua_isnil(L, 5))
+        Lua::CheckDFAssign(L, &mode.size, 5);
+    mode.setmode = (ModifyMode)luaL_checkoption(L, 6, ".", modify_mode_name);
+    mode.flowmode = (ModifyMode)luaL_checkoption(L, 7, "+", modify_mode_name);
+    mode.permaflow = (PermaflowMode)luaL_checkoption(L, 8, ".", permaflow_name);
+
+    lua_pushboolean(L, df_liquids_execute(*Lua::GetOutput(L), mode, pos));
+    return 1;
+}
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(paint),
+    DFHACK_LUA_END
+};

@@ -23,9 +23,15 @@ orders.description = {
     end
 }
 
-orders.quality = {
+orders.base_quality = {
     key = function(item)
         return item:getQuality()
+    end
+}
+
+orders.quality = {
+    key = function(item)
+        return item:getOverallQuality()
     end
 }
 

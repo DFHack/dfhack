@@ -63,7 +63,7 @@ set(DF_VERSION_MINOR "34")
 set(DF_VERSION_PATCH "11")
 set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
 
-SET(DFHACK_RELEASE "r1" CACHE STRING "Current release revision.")
+SET(DFHACK_RELEASE "r2" CACHE STRING "Current release revision.")
 
 set(DFHACK_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}-${DFHACK_RELEASE}")
 add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")
@@ -111,6 +111,9 @@ IF(UNIX)
   SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -Wall -Wno-unused-variable")
   SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic -std=c++0x")
   SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic")
+ELSEIF(MSVC)
+  # for msvc, tell it to always use 8-byte pointers to member functions to avoid confusion
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /vmm")
 ENDIF()
 
 # use shared libraries for protobuf
@@ -142,12 +145,33 @@ include_directories(depends/clsocket/src)
 add_subdirectory(depends)
 
 
+#find_package(Docutils)
+
+#set (RST_FILES
+#"Readme"
+#"Compile"
+#"LUA Api"
+#"Contributors"
+#)
+
+#set (RST_PROCESSED_FILES "")
+#IF(RST2HTML_EXECUTABLE)
+#    foreach(F ${RST_FILES})
+#        add_custom_command(
+#            OUTPUT "${dfhack_BINARY_DIR}/${F}.html"
+#            COMMAND ${RST2HTML_EXECUTABLE} "${dfhack_SOURCE_DIR}/${F}.rst" "${dfhack_BINARY_DIR}/${F}.html"
+#            COMMENT "Translating ${F} to html"
+#            DEPENDS "${dfhack_SOURCE_DIR}/${F}.rst")
+#        list (APPEND RST_PROCESSED_FILES "${dfhack_BINARY_DIR}/${F}.html")
+#    endforeach()
+#    add_custom_target(HTML_DOCS ALL DEPENDS ${RST_PROCESSED_FILES})
+#ENDIF()
 
 # build the lib itself
 IF(BUILD_LIBRARY)
     add_subdirectory (library)
     ## install the default documentation files
-    install(FILES LICENSE Readme.html Compile.html Lua\ API.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES LICENSE "Lua API.html" Readme.html Compile.html Contributors.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
 #build the plugins

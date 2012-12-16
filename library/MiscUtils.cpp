@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -146,6 +146,11 @@ bool prefix_matches(const std::string &prefix, const std::string &key, std::stri
         return true;
     }
     return false;
+}
+
+int random_int(int max)
+{
+    return int(int64_t(rand())*max/(int64_t(RAND_MAX)+1));
 }
 
 #ifdef LINUX_BUILD // Linux

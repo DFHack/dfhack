@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -190,6 +190,8 @@ bool MaterialInfo::find(const std::vector<std::string> &items)
     }
     else if (items.size() == 2)
     {
+        if (items[1] == "NONE" && findBuiltin(items[0]))
+            return true;
         if (findPlant(items[0], items[1]))
             return true;
         if (findCreature(items[0], items[1]))
@@ -210,7 +212,7 @@ bool MaterialInfo::findBuiltin(const std::string &token)
     }
 
     df::world_raws &raws = world->raws;
-    for (int i = 1; i < NUM_BUILTIN; i++)
+    for (int i = 0; i < NUM_BUILTIN; i++)
     {
         auto obj = raws.mat_table.builtin[i];
         if (obj && obj->id == token)
@@ -280,6 +282,19 @@ bool MaterialInfo::findCreature(const std::string &token, const std::string &sub
 
         break;
     }
+    return decode(-1);
+}
+
+bool MaterialInfo::findProduct(df::material *material, const std::string &name)
+{
+    if (!material || name.empty())
+        return decode(-1);
+
+    auto &pids = material->reaction_product.id;
+    for (size_t i = 0; i < pids.size(); i++)
+        if ((*pids[i]) == name)
+            return decode(material->reaction_product.material, i);
+
     return decode(-1);
 }
 
@@ -484,7 +499,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(fire_safe, material->heat.melting_point > 11000);
     TEST(magma_safe, material->heat.melting_point > 12000);
     TEST(deep_material, FLAG(inorganic, inorganic_flags::SPECIAL));
-    TEST(non_economic, inorganic && !(ui && ui->economic_stone[index]));
+    TEST(non_economic, !inorganic || !(ui && vector_get(ui->economic_stone, index)));
 
     TEST(plant, plant);
     TEST(silk, MAT_FLAG(SILK));

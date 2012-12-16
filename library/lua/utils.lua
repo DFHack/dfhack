@@ -283,6 +283,33 @@ function clone_with_default(obj,default,force)
     return rv
 end
 
+-- Parse an integer value into a bitfield table
+function parse_bitfield_int(value, type_ref)
+    if value == 0 then
+        return nil
+    end
+    local res = {}
+    for i,v in ipairs(type_ref) do
+        if bit32.extract(value, i) ~= 0 then
+            res[v] = true
+        end
+    end
+    return res
+end
+
+-- List the enabled flag names in the bitfield table
+function list_bitfield_flags(bitfield, list)
+    list = list or {}
+    if bitfield then
+        for name,val in pairs(bitfield) do
+            if val then
+                table.insert(list, name)
+            end
+        end
+    end
+    return list
+end
+
 -- Sort a vector or lua table
 function sort_vector(vector,field,cmp)
     local fcmp = compare_field(field,cmp)
@@ -301,6 +328,34 @@ function sort_vector(vector,field,cmp)
     end
     return vector
 end
+
+-- Linear search
+
+function linear_index(vector,key,field)
+    local min,max
+    if df.isvalid(vector) then
+        min,max = 0,#vector-1
+    else
+        min,max = 1,#vector
+    end
+    if field then
+        for i=min,max do
+            local obj = vector[i]
+            if obj[field] == key then
+                return i, obj
+            end
+        end
+    else
+        for i=min,max do
+            local obj = vector[i]
+            if obj == key then
+                return i, obj
+            end
+        end
+    end
+    return nil
+end
+
 
 -- Binary search in a vector or lua table
 function binsearch(vector,key,field,cmp,min,max)
@@ -359,6 +414,61 @@ function insert_or_update(vector,item,field,cmp)
         cur = vector[pos]
     end
     return added,cur,pos
+end
+
+-- Binary search and erase
+function erase_sorted_key(vector,key,field,cmp)
+    local cur,found,pos = binsearch(vector,key,field,cmp)
+    if found then
+        if df.isvalid(vector) then
+            vector:erase(pos)
+        else
+            table.remove(vector, pos)
+        end
+    end
+    return found,cur,pos
+end
+
+function erase_sorted(vector,item,field,cmp)
+    local key = item
+    if field and item then
+        key = item[field]
+    end
+    return erase_sorted_key(vector,key,field,cmp)
+end
+
+-- Calls a method with a string temporary
+function call_with_string(obj,methodname,...)
+    return dfhack.with_temp_object(
+        df.new "string",
+        function(str,obj,methodname,...)
+            obj[methodname](obj,str,...)
+            return str.value
+        end,
+        obj,methodname,...
+    )
+end
+
+function getBuildingName(building)
+    return call_with_string(building, 'getName')
+end
+
+function getBuildingCenter(building)
+    return xyz2pos(building.centerx, building.centery, building.z)
+end
+
+-- Split the string by the given delimiter
+function split_string(self, delimiter)
+    local result = { }
+    local from  = 1
+    local delim_from, delim_to = string.find( self, delimiter, from  )
+    while delim_from do
+        table.insert( result, string.sub( self, from , delim_from-1 ) )
+        from  = delim_to + 1
+        delim_from, delim_to = string.find( self, delimiter, from  )
+    end
+    table.insert( result, string.sub( self, from  ) )
+    return result
 end
 
 -- Ask a yes-no question

@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -32,6 +32,7 @@ distribution.
 #include "DataDefs.h"
 #include "df/init.h"
 #include "df/ui.h"
+#include "df/announcement_type.h"
 
 namespace df {
     struct viewscreen;
@@ -55,8 +56,6 @@ namespace DFHack
      */
     namespace Gui
     {
-        inline df::viewscreen *getCurViewscreen() { return Core::getTopViewscreen(); }
-
         DFHACK_EXPORT std::string getFocusString(df::viewscreen *top);
 
         // Full-screen item details view
@@ -92,13 +91,38 @@ namespace DFHack
         DFHACK_EXPORT bool any_item_hotkey(df::viewscreen *top);
         DFHACK_EXPORT df::item *getSelectedItem(color_ostream &out, bool quiet = false);
 
+        // A building is selected via 'q', 't' or 'i' (civzone)
+        DFHACK_EXPORT bool any_building_hotkey(df::viewscreen *top);
+        DFHACK_EXPORT df::building *getSelectedBuilding(color_ostream &out, bool quiet = false);
+
         // Show a plain announcement, or a titan-style popup message
         DFHACK_EXPORT void showAnnouncement(std::string message, int color = 7, bool bright = true);
+        DFHACK_EXPORT void showZoomAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true);
         DFHACK_EXPORT void showPopupAnnouncement(std::string message, int color = 7, bool bright = true);
+
+        // Show an announcement with effects determined by announcements.txt
+        DFHACK_EXPORT void showAutoAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true);
 
         /*
          * Cursor and window coords
          */
+        DFHACK_EXPORT df::coord getViewportPos();
+        DFHACK_EXPORT df::coord getCursorPos();
+
+        static const int AREA_MAP_WIDTH = 23;
+        static const int MENU_WIDTH = 30;
+
+        struct DwarfmodeDims {
+            int map_x1, map_x2, menu_x1, menu_x2, area_x1, area_x2;
+            int y1, y2;
+            bool menu_on, area_on, menu_forced;
+        };
+
+        DFHACK_EXPORT DwarfmodeDims getDwarfmodeViewDims();
+
+        DFHACK_EXPORT void resetDwarfmodeView(bool pause = false);
+        DFHACK_EXPORT bool revealInDwarfmodeMap(df::coord pos, bool center = false);
+
         DFHACK_EXPORT bool getViewCoords (int32_t &x, int32_t &y, int32_t &z);
         DFHACK_EXPORT bool setViewCoords (const int32_t x, const int32_t y, const int32_t z);
 
@@ -113,7 +137,11 @@ namespace DFHack
          * Gui screens
          */
         /// Get the current top-level view-screen
-        DFHACK_EXPORT df::viewscreen * GetCurrentScreen();
+        DFHACK_EXPORT df::viewscreen *getCurViewscreen(bool skip_dismissed = false);
+
+        inline std::string getCurFocus(bool skip_dismissed = false) {
+            return getFocusString(getCurViewscreen(skip_dismissed));
+        }
 
         /// get the size of the window buffer
         DFHACK_EXPORT bool getWindowSize(int32_t & width, int32_t & height);

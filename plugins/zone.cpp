@@ -792,7 +792,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
 bool isActivityZone(df::building * building)
 {
     if(    building->getType() == building_type::Civzone
-        && building->getSubtype() == civzone_type::ActivityZone)
+        && building->getSubtype() == (short)civzone_type::ActivityZone)
         return true;
     else
         return false;
@@ -1603,7 +1603,7 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
     if(building->getType()!= building_type::Civzone)
         return;
 
-    if(building->getSubtype() != civzone_type::ActivityZone)
+    if(building->getSubtype() != (short)civzone_type::ActivityZone)
         return;
 
     string name;
@@ -2769,10 +2769,7 @@ public:
         if(!rconfig.isValid())
         {
             string keyname = "autobutcher/watchlist/" + getRaceName(raceId);
-            auto pworld = Core::getInstance().getWorld();
-            rconfig = pworld->GetPersistentData(keyname);
-            if(!rconfig.isValid())
-                rconfig = pworld->AddPersistentData(keyname);
+            rconfig = World::GetPersistentData(keyname, NULL);
         }
         if(rconfig.isValid())
         {
@@ -2795,7 +2792,7 @@ public:
     {
         if(!rconfig.isValid())
             return;
-        Core::getInstance().getWorld()->DeletePersistentData(rconfig);
+        World::DeletePersistentData(rconfig);
     }
 
     void SortUnitsByAge()
@@ -3405,13 +3402,18 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
 
 command_result start_autobutcher(color_ostream &out)
 {
-    auto pworld = Core::getInstance().getWorld();
-
     enable_autobutcher = true;
+
     if (!config_autobutcher.isValid())
     {
-        config_autobutcher = pworld->AddPersistentData("autobutcher/config");
-        config_autobutcher.ival(0) = enable_autobutcher;
+        config_autobutcher = World::AddPersistentData("autobutcher/config");
+
+        if (!config_autobutcher.isValid())
+        {
+            out << "Cannot enable autobutcher without a world!" << endl;
+            return CR_OK;
+        }
+
         config_autobutcher.ival(1) = sleep_autobutcher;
         config_autobutcher.ival(2) = enable_autobutcher_autowatch;
         config_autobutcher.ival(3) = default_fk;
@@ -3419,6 +3421,8 @@ command_result start_autobutcher(color_ostream &out)
         config_autobutcher.ival(5) = default_fa;
         config_autobutcher.ival(6) = default_ma;
     }
+
+    config_autobutcher.ival(0) = enable_autobutcher;
 
     out << "Starting autobutcher." << endl;
 	init_autobutcher(out);
@@ -3428,14 +3432,8 @@ command_result start_autobutcher(color_ostream &out)
 command_result init_autobutcher(color_ostream &out)
 {
 	cleanup_autobutcher(out);
-    auto pworld = Core::getInstance().getWorld();
-    if(!pworld)
-    {
-        out << "Autobutcher has no world to read from!" << endl;
-        return CR_OK;
-    }
 
-    config_autobutcher = pworld->GetPersistentData("autobutcher/config");
+    config_autobutcher = World::GetPersistentData("autobutcher/config");
     if(config_autobutcher.isValid())
     {
         if (config_autobutcher.ival(0) == -1)
@@ -3467,7 +3465,7 @@ command_result init_autobutcher(color_ostream &out)
     // read watchlist from save
 
     std::vector<PersistentDataItem> items;
-    pworld->GetPersistentData(&items, "autobutcher/watchlist/", true);
+    World::GetPersistentData(&items, "autobutcher/watchlist/", true);
 	for (auto p = items.begin(); p != items.end(); p++)
 	{
 		string key = p->key();
@@ -3498,14 +3496,23 @@ command_result cleanup_autobutcher(color_ostream &out)
 
 command_result start_autonestbox(color_ostream &out)
 {
-    auto pworld = Core::getInstance().getWorld();
     enable_autonestbox = true;
-    if (!config_autobutcher.isValid())
+
+    if (!config_autonestbox.isValid())
     {
-        config_autonestbox = pworld->AddPersistentData("autonestbox/config");
-        config_autonestbox.ival(0) = enable_autonestbox;
+        config_autonestbox = World::AddPersistentData("autonestbox/config");
+
+        if (!config_autonestbox.isValid())
+        {
+            out << "Cannot enable autonestbox without a world!" << endl;
+            return CR_OK;
+        }
+
         config_autonestbox.ival(1) = sleep_autonestbox;
     }
+
+    config_autonestbox.ival(0) = enable_autonestbox;
+
     out << "Starting autonestbox." << endl;
 	init_autonestbox(out);
     return CR_OK;
@@ -3514,14 +3521,8 @@ command_result start_autonestbox(color_ostream &out)
 command_result init_autonestbox(color_ostream &out)
 {
 	cleanup_autonestbox(out);
-    auto pworld = Core::getInstance().getWorld();
-    if(!pworld)
-    {
-        out << "Autonestbox has no world to read from!" << endl;
-        return CR_OK;
-    }
 
-    config_autonestbox = pworld->GetPersistentData("autonestbox/config");
+    config_autonestbox = World::GetPersistentData("autonestbox/config");
     if(config_autonestbox.isValid())
     {
         if (config_autonestbox.ival(0) == -1)

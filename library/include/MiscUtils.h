@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -330,6 +330,8 @@ inline T clip_range(T a, T1 minv, T2 maxv) {
     if (a > maxv) return maxv;
     return a;
 }
+
+DFHACK_EXPORT int random_int(int max);
 
 /**
  * Returns the amount of milliseconds elapsed since the UNIX epoch.

@@ -8,6 +8,8 @@ module DFHack
                     k.building if k.type == :Building
                 when :BuildingItems, :QueryBuilding
                     world.selected_building
+                when :Zones, :ZonesPenInfo, :ZonesPitInfo, :ZonesHospitalInfo
+                    ui_sidebar_menus.zone.selected
                 end
 
             elsif what.kind_of?(Integer)
@@ -21,8 +23,8 @@ module DFHack
                     if b.room.extents
                         dx = x - b.room.x
                         dy = y - b.room.y
-                        dx >= 0 and dx <= b.room.width and
-                        dy >= 0 and dy <= b.room.height and
+                        dx >= 0 and dx < b.room.width and
+                        dy >= 0 and dy < b.room.height and
                         b.room.extents[ dy*b.room.width + dx ] > 0
                     else
                         b.x1 <= x and b.x2 >= x and
@@ -46,12 +48,17 @@ module DFHack
             raise "invalid building type #{type.inspect}" if not cls
             bld = cls.cpp_new
             bld.race = ui.race_id
-            bld.setSubtype(subtype) if subtype != -1
-            bld.setCustomType(custom) if custom != -1
+            subtype = WorkshopType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Workshop
+            subtype = FurnaceType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Furnace
+            subtype = CivzoneType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Civzone
+            subtype = TrapType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Trap
+            bld.setSubtype(subtype)
+            bld.setCustomType(custom)
             case type
             when :Furnace; bld.melt_remainder[world.raws.inorganics.length] = 0
             when :Coffin; bld.initBurialFlags
             when :Trap; bld.unk_cc = 500 if bld.trap_type == :PressurePlate
+            when :Floodgate; bld.gate_flags.closed = true
             end
             bld
         end
@@ -176,9 +183,20 @@ module DFHack
 
         # set building at position, with optional width/height
         def building_position(bld, pos, w=nil, h=nil)
-            bld.x1 = pos.x
-            bld.y1 = pos.y
-            bld.z  = pos.z
+            if pos.respond_to?(:x1)
+                x, y, z = pos.x1, pos.y1, pos.z
+                w ||= pos.x2-pos.x1+1 if pos.respond_to?(:x2)
+                h ||= pos.y2-pos.y1+1 if pos.respond_to?(:y2)
+            elsif pos.respond_to?(:x)
+                x, y, z = pos.x, pos.y, pos.z
+            else
+                x, y, z = pos
+            end
+            w ||= pos.w if pos.respond_to?(:w)
+            h ||= pos.h if pos.respond_to?(:h)
+            bld.x1 = x
+            bld.y1 = y
+            bld.z  = z
             bld.x2 = bld.x1+w-1 if w
             bld.y2 = bld.y1+h-1 if h
             building_setsize(bld)
@@ -193,7 +211,7 @@ module DFHack
             z = bld.z
             (bld.x1..bld.x2).each { |x|
                 (bld.y1..bld.y2).each { |y|
-                    next if !extents or bld.room.extents[bld.room.width*(y-bld.room.y)+(x-bld.room.x)] == 0
+                    next if extents and bld.room.extents[bld.room.width*(y-bld.room.y)+(x-bld.room.x)] == 0
                     next if not mb = map_block_at(x, y, z)
                     des = mb.designation[x%16][y%16]
                     des.pile = stockpile
@@ -207,17 +225,24 @@ module DFHack
             }
         end
 
-        # link bld into other rooms if it is inside their extents
+        # link bld into other rooms if it is inside their extents or vice versa
         def building_linkrooms(bld)
-            didstuff = false
-            world.buildings.other[:ANY_FREE].each { |ob|
-                next if !ob.is_room or ob.z != bld.z
-                next if !ob.room.extents or !ob.isExtentShaped or ob.room.extents[ob.room.width*(bld.y1-ob.room.y)+(bld.x1-ob.room.x)] == 0
-                didstuff = true
-                ob.children << bld
-                bld.parents << ob
+            world.buildings.other[:IN_PLAY].each { |ob|
+                next if ob.z != bld.z
+                if bld.is_room and bld.room.extents
+                    next if ob.is_room or ob.x1 < bld.room.x or ob.x1 >= bld.room.x+bld.room.width or ob.y1 < bld.room.y or ob.y1 >= bld.room.y+bld.room.height
+                    next if bld.room.extents[bld.room.width*(ob.y1-bld.room.y)+(ob.x1-bld.room.x)] == 0
+                    ui.equipment.update.buildings = true
+                    bld.children << ob
+                    ob.parents << bld
+                elsif ob.is_room and ob.room.extents
+                    next if bld.is_room or bld.x1 < ob.room.x or bld.x1 >= ob.room.x+ob.room.width or bld.y1 < ob.room.y or bld.y1 >= ob.room.y+ob.room.height
+                    next if ob.room.extents[ob.room.width*(bld.y1-ob.room.y)+(bld.x1-ob.room.x)].to_i == 0
+                    ui.equipment.update.buildings = true
+                    ob.children << bld
+                    bld.parents << ob
+                end
             }
-            ui.equipment.update.buildings = true if didstuff
         end
 
         # link the building into the world, set map data, link rooms, bld.id
@@ -274,35 +299,66 @@ module DFHack
             building_createdesign(bld, rough)
         end
 
+        # construct an abstract building (stockpile, farmplot, ...)
+        def building_construct_abstract(bld)
+            case bld.getType
+            when :Stockpile
+                max = df.world.buildings.other[:STOCKPILE].map { |s| s.stockpile_number }.max
+                bld.stockpile_number = max.to_i + 1
+            when :Civzone
+                max = df.world.buildings.other[:ANY_ZONE].map { |z| z.zone_num }.max
+                bld.zone_num = max.to_i + 1
+            end
+            building_link bld
+            if !bld.flags.exists
+                bld.flags.exists = true
+                bld.initFarmSeasons
+            end
+        end
+
+        def building_setowner(bld, unit)
+            return unless bld.is_room
+            return if bld.owner == unit
+            
+            if bld.owner
+                if idx = bld.owner.owned_buildings.index { |ob| ob.id == bld.id }
+                    bld.owner.owned_buildings.delete_at(idx)
+                end
+                if spouse = bld.owner.relations.spouse_tg and
+                        idx = spouse.owned_buildings.index { |ob| ob.id == bld.id }
+                    spouse.owned_buildings.delete_at(idx)
+                end
+            end
+            bld.owner = unit
+            if unit
+                unit.owned_buildings << bld
+                if spouse = bld.owner.relations.spouse_tg and
+                        !spouse.owned_buildings.index { |ob| ob.id == bld.id } and
+                        bld.canUseSpouseRoom
+                    spouse.owned_buildings << bld
+                end
+            end
+        end
+
         # creates a job to deconstruct the building
         def building_deconstruct(bld)
             job = Job.cpp_new
             refbuildingholder = GeneralRefBuildingHolderst.cpp_new
             job.job_type = :DestroyBuilding
-            refbuildingholder.building_id = building.id
+            refbuildingholder.building_id = bld.id
             job.references << refbuildingholder
-            building.jobs << job
+            bld.jobs << job
             job_link job
             job
         end
 
-        # check item flags to see if it is suitable for use as a building material
-        def building_isitemfree(i)
-            !i.flags.in_job and
-            !i.flags.in_inventory and
-            !i.flags.removed and
-            !i.flags.in_building and
-            !i.flags.owned and
-            !i.flags.forbid
-        end
-        
         # exemple usage
         def buildbed(pos=cursor)
             raise 'where to ?' if pos.x < 0
 
             item = world.items.all.find { |i|
                 i.kind_of?(ItemBedst) and
-                building_isitemfree(i)
+                item_isfree(i)
             }
             raise 'no free bed, build more !' if not item
 

@@ -188,7 +188,6 @@ static void manageJobInitiatedEvent(color_ostream& out) {
     lastJobId = *df::global::job_next_id - 1;
 }
 
-
 static void manageJobCompletedEvent(color_ostream& out) {
     if ( handlers[EventType::JOB_COMPLETED].empty() ) {
         return;

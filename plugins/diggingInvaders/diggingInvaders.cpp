@@ -85,17 +85,17 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 class Edge {
 public:
-    //static map<df::coord, int> pointCost;
+    //static map<df::coord, int32_t> pointCost;
     df::coord p1;
     df::coord p2;
-    int cost;
-    Edge(df::coord p1In, df::coord p2In, int costIn): p1(p1In), p2(p2In), cost(costIn) {
+    int32_t cost;
+    Edge(df::coord p1In, df::coord p2In, int32_t costIn): p1(p1In), p2(p2In), cost(costIn) {
         
     }
     
     /*bool operator<(const Edge e) const {
-        int pCost = max(pointCost[p1], pointCost[p2]) + cost;
-        int e_pCost = max(pointCost[e.p1], pointCost[e.p2]) + e.cost;
+        int32_t pCost = max(pointCost[p1], pointCost[p2]) + cost;
+        int32_t e_pCost = max(pointCost[e.p1], pointCost[e.p2]) + e.cost;
         if ( pCost != e_pCost )
             return pCost < e_pCost;
         if ( p1 != e.p1 )
@@ -104,34 +104,33 @@ public:
     }*/
 };
 
-vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int xMax, int yMax, int zMax);
+vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax);
 df::coord getRoot(df::coord point, map<df::coord, df::coord>& rootMap);
 
 class PointComp {
 public:
-    map<df::coord, int> *pointCost;
-    PointComp(map<df::coord, int> *p): pointCost(p) {
+    map<df::coord, int32_t> *pointCost;
+    PointComp(map<df::coord, int32_t> *p): pointCost(p) {
         
     }
     
-    int operator()(df::coord p1, df::coord p2) {
-        map<df::coord, int>::iterator i1 = pointCost->find(p1);
-        map<df::coord, int>::iterator i2 = pointCost->find(p2);
+    int32_t operator()(df::coord p1, df::coord p2) {
+        map<df::coord, int32_t>::iterator i1 = pointCost->find(p1);
+        map<df::coord, int32_t>::iterator i2 = pointCost->find(p2);
         if ( i1 == pointCost->end() && i2 == pointCost->end() )
             return p1 < p2;
         if ( i1 == pointCost->end() )
             return 1;
         if ( i2 == pointCost->end() )
             return -1;
-        int c1 = (*i1).second;
-        int c2 = (*i2).second;
+        int32_t c1 = (*i1).second;
+        int32_t c2 = (*i2).second;
         if ( c1 != c2 )
             return c1 < c2;
         return p1 < p2;
     }
 };
 
-// A command! It sits around and looks pretty. And it's nice and friendly.
 command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string> & parameters)
 {
     if (!parameters.empty())
@@ -151,15 +150,15 @@ command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string>
     //TODO: consider whether to pursue hidden dwarf diplomats and merchants
     vector<df::unit*> locals;
     vector<df::unit*> invaders;
-    map<df::coord, int> dwarfCount;
+    map<df::coord, int32_t> dwarfCount;
     //map<df::coord, set<Edge>*> edgeSet;
     map<df::coord, df::coord> rootMap;
     map<df::coord, df::coord> parentMap;
-    map<df::coord, int> pointCost;
+    map<df::coord, int32_t> pointCost;
     PointComp comp(&pointCost);
     set<df::coord, PointComp> fringe(comp);
-    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
-        df::unit* unit = df::global::world->units.all[a];
+    for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
+        df::unit* unit = df::global::world->units.active[a];
         bool isInvader = false;
         if ( df::global::ui->invasions.next_id > 0 && unit->invasion_id+1 == df::global::ui->invasions.next_id ) {
             invaders.push_back(unit);
@@ -185,11 +184,11 @@ command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string>
         return CR_OK; //no invaders, no problem!
     }
     set<df::coord> importantPoints;
-    int a=0;
-    int dwarvesFound = 1;
+    int32_t a=0;
+    int32_t dwarvesFound = 1;
     while(dwarvesFound < invaders.size()+locals.size() && fringe.size() > 0) {
         df::coord point = *fringe.begin();
-        //out.print("%d: (%d,%d,%d); dwarvesFound = %d\n", a++, (int)point.x, (int)point.y, (int)point.z, dwarvesFound);
+        //out.print("%d: (%d,%d,%d); dwarvesFound = %d\n", a++, (int32_t)point.x, (int32_t)point.y, (int32_t)point.z, dwarvesFound);
         //if ( a > 10000 ) break;
         fringe.erase(fringe.begin());
         //dwarfCount[getRoot(point, rootMap)] += dwarfCount[point];
@@ -198,11 +197,11 @@ command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string>
             dwarfCount[getRoot(point, rootMap)] += dwarfCount[point];
         }
         
-        int costSoFar = pointCost[point];
+        int32_t costSoFar = pointCost[point];
         vector<Edge>* neighbors = getEdgeSet(out, point, cache, xMax, yMax, zMax);
         for ( size_t a = 0; a < neighbors->size(); a++ ) {
             df::coord neighbor = (*neighbors)[a].p2;
-            int neighborCost;
+            int32_t neighborCost;
             if ( pointCost.find(neighbor) == pointCost.end() )
                 neighborCost = -1;
             else
@@ -248,7 +247,7 @@ command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string>
     out.print("Important points:\n");
     for ( set<df::coord>::iterator i = importantPoints.begin(); i != importantPoints.end(); i++ ) {
         df::coord point = *i;
-        out.print("  (%d, %d, %d)\n", (int)point.x, (int)point.y, (int)point.z);
+        out.print("  (%d, %d, %d)\n", (int32_t)point.x, (int32_t)point.y, (int32_t)point.z);
     }
     
     //dig out all the important points
@@ -265,7 +264,7 @@ command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string>
             df::tiletype_shape shape = tileShape(type);
             df::tiletype_shape_basic basic = ENUM_ATTR(tiletype_shape, basic_shape, shape);
             df::tile_building_occ building_occ = block->occupancy[point.x%16][point.y%16].bits.building;
-            int z = point.z;
+            int32_t z = point.z;
             if ( basic == df::tiletype_shape_basic::Ramp && building_occ == df::tile_building_occ::None ) {
                 df::map_block* block2 = cache.BlockAt(df::coord(point.x/16, point.y/16, point.z+1))->getRaw();
                 if ( block2 != NULL ) {
@@ -332,23 +331,23 @@ command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string>
     return CR_OK;
 }
 
-vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int xMax, int yMax, int zMax) {
+vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax) {
     vector<df::coord> candidates;
-    for ( int dx = -1; dx <= 1; dx++ ) {
+    for ( int32_t dx = -1; dx <= 1; dx++ ) {
         if ( point.x + dx < 0 ) continue;
-        for ( int dy = -1; dy <= 1; dy++ ) {
+        for ( int32_t dy = -1; dy <= 1; dy++ ) {
             if ( point.y + dy < 0 ) continue;
             if ( dx == 0 && dy == 0)
                 continue;
             candidates.push_back(df::coord(point.x+dx,point.y+dy,point.z));
         }
     }
-    for ( int dz = -1; dz <= 1; dz++ ) {
+    for ( int32_t dz = -1; dz <= 1; dz++ ) {
         if ( point.z + dz < 0 ) continue;
         if ( dz == 0 ) continue;
         candidates.push_back(df::coord(point.x, point.y, point.z+dz));
     }
-    int connectivityType;
+    int32_t connectivityType;
     {
         df::map_block* block = cache.BlockAt(df::coord(point.x/16, point.y/16, point.z))->getRaw();
         if ( block == NULL ) {
@@ -358,13 +357,13 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCach
     }
     if ( connectivityType == 0 )
         return new vector<Edge>;
-    for ( int dx = -1; dx <= 1; dx++ ) {
+    for ( int32_t dx = -1; dx <= 1; dx++ ) {
         if ( point.x + dx < 0 )
             continue;
-        for ( int dy = -1; dy <= 1; dy++ ) {
+        for ( int32_t dy = -1; dy <= 1; dy++ ) {
             if ( point.y + dy < 0 )
                 continue;
-            for ( int dz = -1; dz <= 1; dz++ ) {
+            for ( int32_t dz = -1; dz <= 1; dz++ ) {
                 if ( dz == 0 ) continue;
                 if ( point.z + dz < 0 )
                     continue;
@@ -409,8 +408,8 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCach
             upBasicShape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
         }
         if ( upBasicShape == df::tiletype_shape_basic::Ramp ) {
-            for ( int dx = -1; dx <= 1; dx++ ) {
-                for ( int dy = -1; dy <= 1; dy++ ) {
+            for ( int32_t dx = -1; dx <= 1; dx++ ) {
+                for ( int32_t dy = -1; dy <= 1; dy++ ) {
                     if ( dx == 0 && dy == 0 )
                         continue;
                     df::tiletype type = cache.tiletypeAt(df::coord(point.x+dx, point.y+dy, point.z+1));
@@ -464,7 +463,7 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCach
             }
         }
         
-        int cost = 1;
+        int32_t cost = 1;
         if ( basePointIsWall || basicShape == df::tiletype_shape_basic::Wall ) {
             cost += 1000000; //TODO: fancy cost
         }

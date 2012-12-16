@@ -205,6 +205,7 @@ namespace DFHack
         friend class Plugin;
         PluginManager(Core * core);
         ~PluginManager();
+        void init(Core* core);
         void OnUpdate(color_ostream &out);
         void OnStateChange(color_ostream &out, state_change_event event);
         void registerCommands( Plugin * p );

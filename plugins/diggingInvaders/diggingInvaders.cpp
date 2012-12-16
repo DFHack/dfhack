@@ -1,9 +1,15 @@
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-
+#include "Console.h"
 #include "DataDefs.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "Types.h"
+
+#include "modules/Buildings.h"
+#include "modules/EventManager.h"
+#include "modules/MapCache.h"
+#include "modules/World.h"
+
 #include "df/building.h"
 #include "df/coord.h"
 #include "df/map_block.h"
@@ -11,16 +17,10 @@
 #include "df/unit.h"
 #include "df/world.h"
 
-#include "Types.h"
-#include "modules/Buildings.h"
-	//crashes without Types.h
-#include "modules/MapCache.h"
-#include "modules/World.h"
-
-#include <vector>
 #include <algorithm>
 #include <map>
 #include <set>
+#include <vector>
 using namespace std;
 
 using namespace DFHack;
@@ -30,10 +30,8 @@ command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string>
 
 DFHACK_PLUGIN("diggingInvaders");
 
-// Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    //out.print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA!\n\n\n\n\n");
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
         "diggingInvaders", "Makes invaders dig to your dwarves.",
@@ -44,12 +42,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     return CR_OK;
 }
 
-// This is called right before the plugin library is removed from memory.
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    // You *MUST* kill all threads you created before this returns.
-    // If everything fails, just return CR_FAILURE. Your plugin will be
-    // in a zombie state, but things won't crash.
     return CR_OK;
 }
 

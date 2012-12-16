@@ -886,7 +886,9 @@ private:
                         case df::item_type::BOULDER:
                             return df::unit_labor::STONE_CRAFT;
                         case df::item_type::NONE:
-                            if (j->material_category.bits.bone)
+                            if (j->material_category.bits.bone || 
+                                j->material_category.bits.horn ||
+                                j->material_category.bits.tooth)
                                 return df::unit_labor::BONE_CARVE;
                             else
                             {

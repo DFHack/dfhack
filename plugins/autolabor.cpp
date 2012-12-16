@@ -853,7 +853,24 @@ private:
                 return df::unit_labor::PLANT;
             case df::building_type::Trap:
                 return df::unit_labor::MECHANIC;
+            case df::building_type::Chair:
+            case df::building_type::Bed:
+            case df::building_type::Table:
+            case df::building_type::Coffin:
+            case df::building_type::Door:
+            case df::building_type::Floodgate:
+            case df::building_type::Box:
+            case df::building_type::Weaponrack:
+            case df::building_type::Armorstand:
+            case df::building_type::Cabinet:
+            case df::building_type::Statue:
+            case df::building_type::WindowGlass:
+            case df::building_type::WindowGem:
             case df::building_type::Cage:
+            case df::building_type::NestBox:
+            case df::building_type::TractionBench:
+            case df::building_type::Slab:
+            case df::building_type::Chain:
                 return df::unit_labor::HAUL_FURNITURE;
             }
 

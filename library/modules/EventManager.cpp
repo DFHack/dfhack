@@ -173,13 +173,14 @@ static void manageJobInitiatedEvent(color_ostream& out) {
     if ( lastJobId+1 == *df::global::job_next_id ) {
         return; //no new jobs
     }
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_INITIATED].begin(), handlers[EventType::JOB_INITIATED].end());
     
     for ( df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
         if ( link->item->id <= lastJobId )
             continue;
-        for ( multimap<Plugin*, EventHandler>::iterator i = handlers[EventType::JOB_INITIATED].begin(); i != handlers[EventType::JOB_INITIATED].end(); i++ ) {
+        for ( auto i = copy.begin(); i != copy.end(); i++ ) {
             (*i).second.eventHandler(out, (void*)link->item);
         }
     }
@@ -193,6 +194,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
         return;
     }
     
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     map<int32_t, df::job*> nowJobs;
     for ( df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
@@ -205,7 +207,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
             continue;
 
         //recently finished or cancelled job!
-        for ( multimap<Plugin*, EventHandler>::iterator j = handlers[EventType::JOB_COMPLETED].begin(); j != handlers[EventType::JOB_COMPLETED].end(); j++ ) {
+        for ( auto j = copy.begin(); j != copy.end(); j++ ) {
             (*j).second.eventHandler(out, (void*)(*i).second);
         }
     }
@@ -238,6 +240,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
         return;
     }
     
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
     for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
         df::unit* unit = df::global::world->units.active[a];
         if ( unit->counters.death_id == -1 ) {
@@ -248,7 +251,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
         if ( livingUnits.find(unit->id) == livingUnits.end() )
             continue;
 
-        for ( auto i = handlers[EventType::UNIT_DEATH].begin(); i != handlers[EventType::UNIT_DEATH].end(); i++ ) {
+        for ( auto i = copy.begin(); i != copy.end(); i++ ) {
             (*i).second.eventHandler(out, (void*)unit->id);
         }
         livingUnits.erase(unit->id);
@@ -264,6 +267,7 @@ static void manageItemCreationEvent(color_ostream& out) {
         return;
     }
 
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::ITEM_CREATED].begin(), handlers[EventType::ITEM_CREATED].end());
     size_t index = df::item::binsearch_index(df::global::world->items.all, nextItem, false);
     for ( size_t a = index; a < df::global::world->items.all.size(); a++ ) {
         df::item* item = df::global::world->items.all[a];
@@ -279,7 +283,7 @@ static void manageItemCreationEvent(color_ostream& out) {
         //spider webs don't count
         if ( item->flags.bits.spider_web )
             continue;
-        for ( auto i = handlers[EventType::ITEM_CREATED].begin(); i != handlers[EventType::ITEM_CREATED].end(); i++ ) {
+        for ( auto i = copy.begin(); i != copy.end(); i++ ) {
             (*i).second.eventHandler(out, (void*)item->id);
         }
     }

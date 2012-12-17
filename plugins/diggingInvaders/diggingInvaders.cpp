@@ -116,8 +116,12 @@ public:
     bool operator<(const Edge& e) const {
         if ( cost != e.cost )
             return cost < e.cost;
+        if ( p1.z != e.p1.z )
+            return p1.z < e.p1.z;
         if ( p1 != e.p1 )
             return p1 < e.p1;
+        if ( p2.z != e.p2.z )
+            return p2.z < e.p2.z;
         if ( p2 != e.p2 )
             return p2 < e.p2;
         return false;
@@ -354,17 +358,17 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, int32_t xMax, int3
                 df::coord neighbor(point.x+dx, point.y+dy, point.z+dz);
                 if ( neighbor.x < 0 || neighbor.x >= xMax || neighbor.y < 0 || neighbor.y >= yMax || neighbor.z < 0 || neighbor.z >= zMax )
                     continue;
-                if ( dz != 0 && (point.x == 0 || point.y == 0 || point.z == 0 || point.x == xMax-1 || point.y == yMax-1 || point.z == zMax-1 || neighbor.x == 0 || neighbor.y == 0 || neighbor.z == 0 || neighbor.x == xMax-1 || neighbor.y == yMax-1 || neighbor.z == zMax-1) )
+                if ( /*dz != 0 &&*/ /*(point.x == 0 || point.y == 0 || point.z == 0 || point.x == xMax-1 || point.y == yMax-1 || point.z == zMax-1) ||*/ (neighbor.x == 0 || neighbor.y == 0 || neighbor.z == 0 || neighbor.x == xMax-1 || neighbor.y == yMax-1 || neighbor.z == zMax-1) )
                     continue;
                 if ( dx == 0 && dy == 0 && dz == 0 )
                     continue;
                 int32_t cost = 0;
-                if ( dz != 0 ) cost++;
+                //if ( dz != 0 ) cost++;
                 if ( Maps::canWalkBetween(point, neighbor) ) {
-                    Edge edge(point, neighbor, cost+1);
+                    Edge edge(point, neighbor, cost+0);
                     result->push_back(edge);
                 } else {
-                    Edge edge(point, neighbor, cost+100);
+                    Edge edge(point, neighbor, cost+1);
                     result->push_back(edge);
                 }
             }

@@ -20,6 +20,7 @@
 #include "df/world.h"
 
 #include <algorithm>
+#include <cstring>
 #include <map>
 #include <set>
 #include <vector>
@@ -93,13 +94,68 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     }
 };*/
 
+const size_t costDim = 2;
+
+struct Cost {
+    int32_t cost[costDim];
+    Cost() {
+        memset(cost, 0, costDim*sizeof(int32_t));
+    }
+    Cost( int32_t costIn[costDim] ) {
+        memcpy(cost, costIn, costDim*sizeof(int32_t));
+    }
+    Cost(const Cost& c) {
+        memcpy(cost, c.cost, costDim*sizeof(int32_t));
+    }
+    Cost( int32_t i ) {
+        memset(cost, 0, costDim*sizeof(int32_t));
+        cost[0] = i;
+    }
+
+    bool operator>(const Cost& c) const {
+        for ( size_t a = 0; a < costDim; a++ ) {
+            if ( cost[costDim-1-a] != c.cost[costDim-1-a] )
+                return cost[costDim-1-a] > c.cost[costDim-1-a];
+        }
+        return false;
+    }
+
+    bool operator<(const Cost& c) const {
+        for ( size_t a = 0; a < costDim; a++ ) {
+            if ( cost[costDim-1-a] != c.cost[costDim-1-a] )
+                return cost[costDim-1-a] < c.cost[costDim-1-a];
+        }
+        return false;
+    }
+
+    bool operator==(const Cost& c) const {
+        for ( size_t a = 0; a < costDim; a++ ) {
+            if ( cost[a] != c.cost[a] )
+                return false;
+        }
+        return true;
+    }
+
+    bool operator!=(const Cost& c) const {
+        return !( *this == c);
+    }
+
+    Cost operator+(const Cost& c) const {
+        Cost result(*this);
+        for ( size_t a = 0; a < costDim; a++ ) {
+            result.cost[a] += c.cost[a];
+        }
+        return result;
+    }
+};
+
 class Edge {
 public:
     //static map<df::coord, int32_t> pointCost;
     df::coord p1;
     df::coord p2;
-    int32_t cost;
-    Edge(df::coord p1In, df::coord p2In, int32_t costIn): cost(costIn) {
+    Cost cost;
+    Edge(df::coord p1In, df::coord p2In, Cost costIn): cost(costIn) {
         if ( p2In < p1In ) {
             p1 = p2In;
             p2 = p1In;
@@ -126,16 +182,6 @@ public:
             return p2 < e.p2;
         return false;
     }
-    
-    /*bool operator<(const Edge e) const {
-        int32_t pCost = max(pointCost[p1], pointCost[p2]) + cost;
-        int32_t e_pCost = max(pointCost[e.p1], pointCost[e.p2]) + e.cost;
-        if ( pCost != e_pCost )
-            return pCost < e_pCost;
-        if ( p1 != e.p1 )
-            return p1 < e.p1;
-        return p2 < e.p2;
-    }*/
 };
 
 vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, int32_t xMax, int32_t yMax, int32_t zMax);
@@ -143,23 +189,23 @@ df::coord getRoot(df::coord point, map<df::coord, df::coord>& rootMap);
 
 class PointComp {
 public:
-    map<df::coord, int32_t> *pointCost;
-    PointComp(map<df::coord, int32_t> *p): pointCost(p) {
+    map<df::coord, Cost> *pointCost;
+    PointComp(map<df::coord, Cost> *p): pointCost(p) {
         
     }
     
     int32_t operator()(df::coord p1, df::coord p2) {
         if ( p1 == p2 ) return 0;
-        map<df::coord, int32_t>::iterator i1 = pointCost->find(p1);
-        map<df::coord, int32_t>::iterator i2 = pointCost->find(p2);
+        auto i1 = pointCost->find(p1);
+        auto i2 = pointCost->find(p2);
         if ( i1 == pointCost->end() && i2 == pointCost->end() )
             return p1 < p2;
         if ( i1 == pointCost->end() )
-            return 1;
+            return true;
         if ( i2 == pointCost->end() )
-            return -1;
-        int32_t c1 = (*i1).second;
-        int32_t c2 = (*i2).second;
+            return false;
+        Cost c1 = (*i1).second;
+        Cost c2 = (*i2).second;
         if ( c1 != c2 )
             return c1 < c2;
         return p1 < p2;
@@ -177,7 +223,7 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
     set<df::coord> invaderPts;
     set<df::coord> localPts;
     map<df::coord, df::coord> parentMap;
-    map<df::coord, int32_t> costMap;
+    map<df::coord, Cost> costMap;
     PointComp comp(&costMap);
     set<df::coord, PointComp> fringe(comp);
     uint32_t xMax, yMax, zMax;
@@ -232,7 +278,7 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
             localPtsFound++;
             if ( localPtsFound >= localPts.size() )
                 break;
-            if ( costMap[pt] > 0 )
+            if ( costMap[pt].cost[1] > 0 )
                 break;
         }
 
@@ -245,7 +291,7 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
             }
             delete edges;
         }
-        int32_t myCost = costMap[pt];
+        Cost myCost = costMap[pt];
         set<Edge>& myEdges = edgeSet[pt];
         for ( auto a = myEdges.begin(); a != myEdges.end(); a++ ) {
             Edge e = *a;
@@ -271,13 +317,17 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
             continue;
         if ( parentMap.find(pt) == parentMap.end() )
             continue;
+        if ( costMap[pt].cost[1] == 0 )
+            continue;
         while ( parentMap.find(pt) != parentMap.end() ) {
+            out.print("(%d,%d,%d)\n", pt.x, pt.y, pt.z);
             df::coord parent = parentMap[pt];
             if ( !Maps::canWalkBetween(pt, parent) ) {
-                importantEdges.insert(Edge(pt,parent,1));
+                importantEdges.insert(Edge(pt,parent,0));
             }
             pt = parent;
         }
+        break;
     }
 
     for ( auto i = importantEdges.begin(); i != importantEdges.end(); i++ ) {
@@ -343,13 +393,14 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, int32_t xMax, int3
                     continue;
                 if ( dx == 0 && dy == 0 && dz == 0 )
                     continue;
-                int32_t cost = 0;
+                Cost cost = 1;
                 //if ( dz != 0 ) cost++;
                 if ( Maps::canWalkBetween(point, neighbor) ) {
-                    Edge edge(point, neighbor, cost+0);
+                    Edge edge(point, neighbor, cost);
                     result->push_back(edge);
                 } else {
-                    Edge edge(point, neighbor, cost+1);
+                    cost.cost[1] = 1;
+                    Edge edge(point, neighbor, cost);
                     result->push_back(edge);
                 }
             }

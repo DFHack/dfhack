@@ -521,7 +521,7 @@ bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<df::coord2d>
     return true;
 }
 
-bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
+bool Maps::canPathBetween(df::coord pos1, df::coord pos2)
 {
     auto block1 = getTileBlock(pos1);
     auto block2 = getTileBlock(pos2);
@@ -533,6 +533,50 @@ bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
     auto tile2 = index_tile<uint16_t>(block2->walkable, pos2);
 
     return tile1 && tile1 == tile2;
+}
+
+bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
+{
+    bool b = canPathBetween(pos1, pos2);
+    if ( !b )
+        return false;
+
+    int32_t dx = pos1.x-pos2.x;
+    int32_t dy = pos1.y-pos2.y;
+    int32_t dz = pos1.z-pos2.z;
+
+    if ( dx*dx > 1 || dy*dy > 1 || dz*dz > 1 )
+        return false;
+
+    if ( dz == 0 )
+        return true;
+
+    df::tiletype* type1 = Maps::getTileType(pos1);
+    df::tiletype* type2 = Maps::getTileType(pos2);
+
+    df::tiletype_shape shape1 = ENUM_ATTR(tiletype,shape,*type1);
+    df::tiletype_shape shape2 = ENUM_ATTR(tiletype,shape,*type2);
+
+    if ( pos2.z < pos1.z ) {
+        df::tiletype_shape temp = shape1;
+        shape1 = shape2;
+        shape2 = temp;
+    }
+    if ( dx == 0 && dy == 0 ) {
+        if ( shape1 == tiletype_shape::STAIR_UPDOWN && shape2 == shape1 )
+            return true;
+        if ( shape1 == tiletype_shape::STAIR_UPDOWN && shape2 == tiletype_shape::STAIR_DOWN )
+            return true;
+        if ( shape1 == tiletype_shape::STAIR_UP && shape2 == tiletype_shape::STAIR_UPDOWN )
+            return true;
+        return false;
+    }
+    
+    //diagonal up: has to be a ramp
+    if ( shape1 == tiletype_shape::RAMP && shape2 == tiletype_shape::RAMP )
+        return true;
+
+    return false;
 }
 
 #define COPY(a,b) memcpy(&a,&b,sizeof(a))

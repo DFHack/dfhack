@@ -1016,27 +1016,16 @@ bool Buildings::deconstruct(df::building *bld)
         bld->queueDestroy();
         return false;
     }
-    
-    return deconstructImmediately(bld);
-}
 
-bool Buildings::deconstructImmediately(df::building *bld)
-{
-    using df::global::ui;
-    using df::global::world;
-    using df::global::ui_look_list;
-    
-    CHECK_NULL_POINTER(bld);
-    
     /* Immediate destruction code path.
        Should only happen for abstract and unconstructed buildings.*/
-    
+
     if (bld->isSettingOccupancy())
     {
         markBuildingTiles(bld, true);
         bld->cleanupMap();
     }
-    
+
     bld->removeUses(false, false);
     // Assume: no parties.
     unlinkRooms(bld);
@@ -1047,16 +1036,16 @@ bool Buildings::deconstructImmediately(df::building *bld)
     // Assume: does not affect pathfinding
     bld->deconstructItems(false, false);
     // Don't clear arrows.
-    
+
     bld->uncategorize();
     delete bld;
-    
+
     if (world->selected_building == bld)
     {
         world->selected_building = NULL;
         world->update_selected_building = true;
     }
-    
+
     for (int i = ui_look_list->items.size()-1; i >= 0; i--)
     {
         auto item = ui_look_list->items[i];
@@ -1067,10 +1056,10 @@ bool Buildings::deconstructImmediately(df::building *bld)
             delete item;
         }
     }
-    
+
     Job::checkBuildingsNow();
     Job::checkDesignationsNow();
-    
+
     return true;
 }
 

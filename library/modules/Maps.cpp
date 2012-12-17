@@ -569,6 +569,8 @@ bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
             return true;
         if ( shape1 == tiletype_shape::STAIR_UP && shape2 == tiletype_shape::STAIR_UPDOWN )
             return true;
+        if ( shape1 == tiletype_shape::STAIR_UP && shape2 == tiletype_shape::STAIR_DOWN )
+            return true;
         return false;
     }
     

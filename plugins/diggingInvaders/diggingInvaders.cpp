@@ -110,10 +110,12 @@ public:
     }
 
     bool operator==(const Edge& e) const {
-        return (p1 == e.p1 && p2 == e.p2);
+        return (cost == e.cost && p1 == e.p1 && p2 == e.p2);
     }
 
     bool operator<(const Edge& e) const {
+        if ( cost != e.cost )
+            return cost < e.cost;
         if ( p1 != e.p1 )
             return p1 < e.p1;
         if ( p2 != e.p2 )
@@ -183,9 +185,6 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
             continue;
         if ( !Units::isCitizen(unit) && !unit->flags1.bits.active_invader )
             continue;
-        if ( unit->flags2.bits.resident ) {
-            out.print("resident\n");
-        }
         
         if ( roots.find(unit->pos) != roots.end() )
             continue;
@@ -203,11 +202,7 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
 
     set<Edge> importantEdges;
 
-    int32_t dumb = 0;
     while(roots.size() > 1) {
-        if ( dumb >= 1000 )
-            break;
-        dumb++;
         set<df::coord> toDelete;
         int32_t firstSize = edgeSet[*roots.begin()].size();
         //out.print("%s, %d: root size = %d, first size = %d\n", __FILE__, __LINE__, roots.size(), firstSize);
@@ -319,6 +314,8 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
         if ( (*a).second < 2 )
             continue;
         out.print("Requires action: (%d,%d,%d): %d\n", pos.x,pos.y,pos.z, (*a).second);
+        df::map_block* block = Maps::getTileBlock(pos);
+        block->tiletype[pos.x&0x0F][pos.y&0x0F] = df::enums::tiletype::ConstructedStairUD;
     }
 
     /*for ( auto a = importantPoints.begin(); a != importantPoints.end(); a++ ) {

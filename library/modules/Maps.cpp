@@ -576,7 +576,7 @@ bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
     }
     
     //diagonal up: has to be a ramp
-    if ( shape1 == tiletype_shape::RAMP && shape2 == tiletype_shape::RAMP ) {
+    if ( shape1 == tiletype_shape::RAMP /*&& shape2 == tiletype_shape::RAMP*/ ) {
         df::coord up = df::coord(pos1.x,pos1.y,pos1.z+1);
         df::tiletype* typeUp = Maps::getTileType(up);
         df::tiletype_shape shapeUp = ENUM_ATTR(tiletype,shape,*typeUp);

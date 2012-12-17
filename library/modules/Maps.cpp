@@ -551,17 +551,18 @@ bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
     if ( dz == 0 )
         return true;
 
+    if ( pos2.z < pos1.z ) {
+        df::coord temp = pos1;
+        pos1 = pos2;
+        pos2 = temp;
+    }
+
     df::tiletype* type1 = Maps::getTileType(pos1);
     df::tiletype* type2 = Maps::getTileType(pos2);
 
     df::tiletype_shape shape1 = ENUM_ATTR(tiletype,shape,*type1);
     df::tiletype_shape shape2 = ENUM_ATTR(tiletype,shape,*type2);
 
-    if ( pos2.z < pos1.z ) {
-        df::tiletype_shape temp = shape1;
-        shape1 = shape2;
-        shape2 = temp;
-    }
     if ( dx == 0 && dy == 0 ) {
         if ( shape1 == tiletype_shape::STAIR_UPDOWN && shape2 == shape1 )
             return true;
@@ -575,8 +576,12 @@ bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
     }
     
     //diagonal up: has to be a ramp
-    if ( shape1 == tiletype_shape::RAMP && shape2 == tiletype_shape::RAMP )
-        return true;
+    if ( shape1 == tiletype_shape::RAMP && shape2 == tiletype_shape::RAMP ) {
+        df::coord up = df::coord(pos1.x,pos1.y,pos1.z+1);
+        df::tiletype* typeUp = Maps::getTileType(up);
+        df::tiletype_shape shapeUp = ENUM_ATTR(tiletype,shape,*typeUp);
+        return shapeUp == tiletype_shape::RAMP_TOP;
+    }
 
     return false;
 }

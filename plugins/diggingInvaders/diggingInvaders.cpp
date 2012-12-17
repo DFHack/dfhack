@@ -17,9 +17,13 @@
 #include "df/map_block.h"
 #include "df/ui.h"
 #include "df/unit.h"
+#include "df/tiletype.h"
+#include "df/tiletype_shape.h"
+#include "df/tiletype_shape_basic.h"
 #include "df/world.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <map>
 #include <set>
@@ -94,7 +98,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     }
 };*/
 
-const size_t costDim = 2;
+//cost is [path cost, dig cost, construct cost]. Minimize constructions, then minimize dig cost, then minimize path cost.
+const size_t costDim = 3;
 
 struct Cost {
     int32_t cost[costDim];
@@ -309,7 +314,7 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
     }
 
     //find important edges
-    set<Edge> importantEdges;
+    list<Edge> importantEdges;
     map<df::coord, int32_t> importance;
     for ( auto i = localPts.begin(); i != localPts.end(); i++ ) {
         df::coord pt = *i;
@@ -317,13 +322,13 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
             continue;
         if ( parentMap.find(pt) == parentMap.end() )
             continue;
-        if ( costMap[pt].cost[1] == 0 )
+        if ( costMap[pt].cost[1] == 0 && costMap[pt].cost[2] == 0 )
             continue;
         while ( parentMap.find(pt) != parentMap.end() ) {
             out.print("(%d,%d,%d)\n", pt.x, pt.y, pt.z);
             df::coord parent = parentMap[pt];
             if ( !Maps::canWalkBetween(pt, parent) ) {
-                importantEdges.insert(Edge(pt,parent,0));
+                importantEdges.push_front(Edge(pt,parent,0));
             }
             pt = parent;
         }
@@ -332,6 +337,34 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
 
     for ( auto i = importantEdges.begin(); i != importantEdges.end(); i++ ) {
         Edge e = *i;
+        df::coord pt1 = e.p1;
+        df::coord pt2 = e.p2;
+        if ( costMap[e.p2] < costMap[e.p1] ) {
+            pt1 = e.p2;
+            pt2 = e.p1;
+        }
+        df::building* building = Buildings::findAtTile(pt2);
+        if ( building != NULL ) {
+            out.print("%d\n", __LINE__);
+            building->flags.bits.almost_deleted = true;
+            //Buildings::deconstructImmediately(building);
+            out.print("%d\n", __LINE__);
+        } else {
+            df::map_block* block1 = Maps::getTileBlock(pt1);
+            df::map_block* block2 = Maps::getTileBlock(pt2);
+            df::tiletype* type1 = Maps::getTileType(pt1);
+            df::tiletype* type2 = Maps::getTileType(pt2);
+            df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
+            df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
+
+            if ( pt1.z != pt2.z && shape1 != df::enums::tiletype_shape::STAIR_DOWN && shape1 != df::enums::tiletype_shape::STAIR_UPDOWN ) {
+                block1->tiletype[pt2.x&0x0F][pt2.y&0x0F] = df::enums::tiletype::ConstructedStairUD;
+            }
+
+            if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Wall ) {
+                block2->tiletype[pt2.x&0x0F][pt2.y&0x0F] = df::enums::tiletype::ConstructedStairUD;
+            }
+        }
         /*if ( e.p1.z == e.p2.z ) {
             
         }*/
@@ -339,6 +372,7 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
         importance[e.p2]++;
     }
 
+#if 0
     //dig important points
     for ( auto a = importance.begin(); a != importance.end(); a++ ) {
         df::coord pos = (*a).first;
@@ -350,12 +384,6 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
         df::map_block* block = Maps::getTileBlock(pos);
         block->tiletype[pos.x&0x0F][pos.y&0x0F] = df::enums::tiletype::ConstructedStairUD;
     }
-
-#if 0
-    /*for ( auto a = importantPoints.begin(); a != importantPoints.end(); a++ ) {
-        df::coord pos = (*a);
-        out.print("Important point: (%d,%d,%d)\n", pos.x,pos.y,pos.z);
-    }*/
 #endif
 
     return CR_OK;
@@ -399,7 +427,89 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, int32_t xMax, int3
                     Edge edge(point, neighbor, cost);
                     result->push_back(edge);
                 } else {
-                    cost.cost[1] = 1;
+                    //cost.cost[1] = 1;
+                    //find out WHY we can't walk there
+                    //make it simple: don't deal with unallocated blocks
+                    Maps::ensureTileBlock(point);
+                    Maps::ensureTileBlock(neighbor);
+                    df::tiletype* type1 = Maps::getTileType(point);
+                    df::tiletype* type2 = Maps::getTileType(neighbor);
+                    df::map_block* block1 = Maps::getTileBlock(point);
+                    df::map_block* block2 = Maps::getTileBlock(neighbor);
+                    
+                    df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
+                    df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
+
+                    {
+                        df::building* building1 = Buildings::findAtTile(point);
+                        df::building* building2 = Buildings::findAtTile(neighbor);
+                        if ( building2 != NULL && building2 != building1 ) {
+                            cost.cost[1] += 1;
+                            if ( dz != 0 )
+                                continue;
+                        }
+                    }
+
+                    if ( shape2 == df::enums::tiletype_shape::EMPTY ) {
+                        cost.cost[2] += 1;
+                    } else {
+                        if ( point.z == neighbor.z ) {
+                            if ( ENUM_ATTR(tiletype_shape, walkable, shape2) ) {
+                                if ( ENUM_ATTR(tiletype_shape, walkable, shape1 ) ) {
+                                    //exit(1);
+                                    //must be building impassible tile or something
+                                    //TODO: check
+                                    df::building* building = Buildings::findAtTile(neighbor);
+                                    if ( building != NULL )
+                                        cost.cost[1]+=1;
+                                    else {
+                                        building = Buildings::findAtTile(point);
+                                        if ( building == NULL ) {
+                                            //out.print("%s, %d: (%d,%d,%d), (%d,%d,%d)\n", __FILE__, __LINE__, point.x,point.y,point.z, neighbor.x,neighbor.y,neighbor.z);
+                                            //exit(1);
+                                            //TODO: deal with the silly RAMP_TOP condition
+                                            continue;
+                                        }
+                                    }
+                                }
+                                //this is fine: only charge once for digging through a wall
+                            } else {
+                                cost.cost[1] += 20;
+                            }
+                        } else {
+                            bool ascending = neighbor.z > point.z;
+                            /*df::tiletype_shape temp;
+                            if ( neighbor.z > point.z ) {
+                                temp = shape1;
+                                shape1 = shape2;
+                                shape2 = temp;
+                            }*/
+                            if ( point.x == neighbor.x && point.y == neighbor.y ) {
+                                if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Stair ) {
+                                    if ( (ascending && ENUM_ATTR(tiletype_shape, passable_low, shape2)) || (!ascending && ENUM_ATTR(tiletype_shape, walkable_up, shape2)) ) {
+                                        //must be a forbidden hatch: TODO: check
+                                        cost.cost[1] += 1;
+                                    } else {
+                                        //too complicated
+                                        continue;
+                                    }
+                                } else {
+                                    //bad!
+                                    if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Wall ) {
+                                        cost.cost[1] += 20;
+                                    } else if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Open ) {
+                                        cost.cost[2] += 1;
+                                    } else {
+                                        continue;
+                                    }
+                                }
+                            } else {
+                                //too complicated
+                                continue;
+                            }
+                        }
+                    }
+                    
                     Edge edge(point, neighbor, cost);
                     result->push_back(edge);
                 }

@@ -174,27 +174,38 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
     CoreSuspender suspend;
     
     map<df::coord, set<Edge> > edgeSet;
-    set<df::coord> roots;
-    set<df::coord> importantPoints;
-    map<df::coord, df::coord> rootMap;
+    set<df::coord> invaderPts;
+    set<df::coord> localPts;
+    map<df::coord, df::coord> parentMap;
+    map<df::coord, int32_t> costMap;
+    PointComp comp(&costMap);
+    set<df::coord, PointComp> fringe(comp);
     uint32_t xMax, yMax, zMax;
     Maps::getSize(xMax,yMax,zMax);
     xMax *= 16;
     yMax *= 16;
+
+    //TODO: look for invaders with buildingdestroyer:3
 
     //find all locals and invaders
     for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
         df::unit* unit = df::global::world->units.active[a];
         if ( unit->flags1.bits.dead )
             continue;
-        if ( !Units::isCitizen(unit) && !unit->flags1.bits.active_invader )
+        if ( Units::isCitizen(unit) ) {
+            if ( localPts.find(unit->pos) != localPts.end() )
+                continue;
+            localPts.insert(unit->pos);
+        } else if ( unit->flags1.bits.active_invader ) {
+            if ( invaderPts.find(unit->pos) != invaderPts.end() )
+                continue;
+            invaderPts.insert(unit->pos);
+            costMap[unit->pos] = 0;
+            fringe.insert(unit->pos);
+        } else {
             continue;
+        }
         
-        if ( roots.find(unit->pos) != roots.end() )
-            continue;
-
-        roots.insert(unit->pos);
-        importantPoints.insert(unit->pos);
         vector<Edge>* neighbors = getEdgeSet(out, unit->pos, xMax, yMax, zMax);
         set<Edge>& rootEdges = edgeSet[unit->pos];
         for ( auto i = neighbors->begin(); i != neighbors->end(); i++ ) {
@@ -204,128 +215,98 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
         delete neighbors;
     }
 
-    set<Edge> importantEdges;
+    int32_t localPtsFound = 0;
+    set<df::coord> closedSet;
 
-    while(roots.size() > 1) {
-        set<df::coord> toDelete;
-        int32_t firstSize = edgeSet[*roots.begin()].size();
-        //out.print("%s, %d: root size = %d, first size = %d\n", __FILE__, __LINE__, roots.size(), firstSize);
-        for ( auto i = roots.begin(); i != roots.end(); i++ ) {
-            df::coord root = *i;
-            //out.print("  (%d,%d,%d)\n", root.x, root.y, root.z);
-            if ( toDelete.find(root) != toDelete.end() )
-                continue;
-            if ( edgeSet[root].empty() ) {
-                out.print("%s, %d: Error: no edges: %d, %d, %d\n", __FILE__, __LINE__, root.x, root.y, root.z);
-                return CR_FAILURE;
-            }
-            set<Edge>& myEdges = edgeSet[root];
-            Edge edge = *myEdges.begin();
-            myEdges.erase(myEdges.begin());
-            if ( edgeSet[root].size() != myEdges.size() ) {
-                out.print("DOOOOOM! %s, %d\n", __FILE__, __LINE__);
-                return CR_FAILURE;
-            }
-            if ( getRoot(edge.p1, rootMap) != root && getRoot(edge.p2, rootMap) != root ) {
-                out.print("%s, %d: Invalid edge.\n", __FILE__, __LINE__);
-                return CR_FAILURE;
-            }
-            
-            df::coord other = edge.p1;
-            if ( getRoot(other, rootMap) == root )
-                other = edge.p2;
-            if ( getRoot(other, rootMap) == root ) {
-                //out.print("%s, %d: Error: self edge: %d, %d, %d\n", __FILE__, __LINE__, root.x, root.y, root.z);
-                /*vector<Edge> badEdges;
-                for ( auto j = myEdges.begin(); j != myEdges.end(); j++ ) {
-                    Edge e = *j;
-                    if ( getRoot(e.p1, rootMap) == getRoot(e.p2, rootMap) )
-                        badEdges.push_back(e);
-                }
-                for ( size_t j = 0; j < badEdges.size(); j++ ) {
-                    myEdges.erase(badEdges[j]);
-                }*/
-                continue;
-            }
-
-            importantEdges.insert(edge);
-
-            df::coord otherRoot = getRoot(other,rootMap);
-            rootMap[otherRoot] = root;
-            
-            //merge his stuff with my stuff
-            if ( edgeSet.find(other) == edgeSet.end() ) {
-                set<Edge>& hisEdges = edgeSet[other];
-                vector<Edge>* neighbors = getEdgeSet(out, other, xMax, yMax, zMax);
-                for ( auto i = neighbors->begin(); i != neighbors->end(); i++ ) {
-                    Edge edge = *i;
-                    hisEdges.insert(edge);
-                }
-                delete neighbors;
-            }
-            set<Edge>& hisEdges = edgeSet[other];
-
-            for ( auto j = hisEdges.begin(); j != hisEdges.end(); j++ ) {
-                Edge e = *j;
-                if ( getRoot(e.p1, rootMap) == getRoot(e.p2, rootMap) )
-                    continue;
-                df::coord farPt = e.p1;
-                if ( farPt == other )
-                    farPt = e.p2;
-                myEdges.insert(e);
-                //myEdges.insert(Edge(root, farPt, e.cost));
-            }
-            //hisEdges.clear();
-            edgeSet.erase(otherRoot);
-            toDelete.insert(otherRoot);
+    while(!fringe.empty()) {
+        df::coord pt = *(fringe.begin());
+        fringe.erase(fringe.begin());
+        out.print("line %d: fringe size = %d, localPtsFound = %d / %d, closedSetSize = %d\n", __LINE__, fringe.size(), localPtsFound, localPts.size(), closedSet.size());
+        if ( closedSet.find(pt) != closedSet.end() ) {
+            out.print("Double closure! Bad!\n");
+            break;
         }
-        for ( auto j = toDelete.begin(); j != toDelete.end(); j++ ) {
-            df::coord bob = *j;
-            roots.erase(bob);
+        closedSet.insert(pt);
+        
+        if ( localPts.find(pt) != localPts.end() ) {
+            localPtsFound++;
+            if ( localPtsFound >= localPts.size() )
+                break;
+            if ( costMap[pt] > 0 )
+                break;
+        }
+
+        if ( edgeSet.find(pt) == edgeSet.end() ) {
+            set<Edge>& temp = edgeSet[pt];
+            vector<Edge>* edges = getEdgeSet(out, pt, xMax, yMax, zMax);
+            for ( auto a = edges->begin(); a != edges->end(); a++ ) {
+                Edge e = *a;
+                temp.insert(e);
+            }
+            delete edges;
+        }
+        int32_t myCost = costMap[pt];
+        set<Edge>& myEdges = edgeSet[pt];
+        for ( auto a = myEdges.begin(); a != myEdges.end(); a++ ) {
+            Edge e = *a;
+            df::coord other = e.p1;
+            if ( other == pt )
+                other = e.p2;
+            if ( costMap.find(other) == costMap.end() || costMap[other] > myCost + e.cost ) {
+                fringe.erase(other);
+                costMap[other] = myCost + e.cost;
+                fringe.insert(other);
+                parentMap[other] = pt;
+            }
+        }
+        edgeSet.erase(pt);
+    }
+
+    //find important edges
+    set<Edge> importantEdges;
+    map<df::coord, int32_t> importance;
+    for ( auto i = localPts.begin(); i != localPts.end(); i++ ) {
+        df::coord pt = *i;
+        if ( costMap.find(pt) == costMap.end() )
+            continue;
+        if ( parentMap.find(pt) == parentMap.end() )
+            continue;
+        while ( parentMap.find(pt) != parentMap.end() ) {
+            df::coord parent = parentMap[pt];
+            if ( !Maps::canWalkBetween(pt, parent) ) {
+                importantEdges.insert(Edge(pt,parent,1));
+            }
+            pt = parent;
         }
     }
 
-    edgeSet.clear();
     for ( auto i = importantEdges.begin(); i != importantEdges.end(); i++ ) {
         Edge e = *i;
-        edgeSet[e.p1].insert(e);
-        edgeSet[e.p2].insert(e);
+        /*if ( e.p1.z == e.p2.z ) {
+            
+        }*/
+        importance[e.p1]++;
+        importance[e.p2]++;
     }
 
-    //now we find the edges used along the paths between any two roots
-    importantEdges.clear();
-    glob_out = &out;
-    {
-        important(*importantPoints.begin(), edgeSet, df::coord(-1,-1,-1), importantPoints, importantEdges);
-    }
-
-    //NOW we filter to see edges that require digging/constructing
-    map<df::coord, int32_t> actionable;
-    for ( auto a = importantEdges.begin(); a != importantEdges.end(); a++ ) {
-        Edge e = *a;
-        if ( Maps::canWalkBetween(e.p1, e.p2) )
-            continue;
-        actionable[e.p1]++;
-        if( actionable[e.p1] == 0 ) {
-            out.print("fuck\n");
-            return CR_FAILURE;
-        }
-        actionable[e.p2]++;
-    }
-
-    for ( auto a = actionable.begin(); a != actionable.end(); a++ ) {
+    //dig important points
+    for ( auto a = importance.begin(); a != importance.end(); a++ ) {
         df::coord pos = (*a).first;
-        if ( (*a).second < 2 )
+        int32_t cost = (*a).second;
+        if ( cost < 1 )
             continue;
-        out.print("Requires action: (%d,%d,%d): %d\n", pos.x,pos.y,pos.z, (*a).second);
+
+        out.print("Requires action: (%d,%d,%d): %d\n", pos.x,pos.y,pos.z, cost);
         df::map_block* block = Maps::getTileBlock(pos);
         block->tiletype[pos.x&0x0F][pos.y&0x0F] = df::enums::tiletype::ConstructedStairUD;
     }
 
+#if 0
     /*for ( auto a = importantPoints.begin(); a != importantPoints.end(); a++ ) {
         df::coord pos = (*a);
         out.print("Important point: (%d,%d,%d)\n", pos.x,pos.y,pos.z);
     }*/
+#endif
 
     return CR_OK;
 }
@@ -358,7 +339,7 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, int32_t xMax, int3
                 df::coord neighbor(point.x+dx, point.y+dy, point.z+dz);
                 if ( neighbor.x < 0 || neighbor.x >= xMax || neighbor.y < 0 || neighbor.y >= yMax || neighbor.z < 0 || neighbor.z >= zMax )
                     continue;
-                if ( /*dz != 0 &&*/ /*(point.x == 0 || point.y == 0 || point.z == 0 || point.x == xMax-1 || point.y == yMax-1 || point.z == zMax-1) ||*/ (neighbor.x == 0 || neighbor.y == 0 || neighbor.z == 0 || neighbor.x == xMax-1 || neighbor.y == yMax-1 || neighbor.z == zMax-1) )
+                if ( dz != 0 && /*(point.x == 0 || point.y == 0 || point.z == 0 || point.x == xMax-1 || point.y == yMax-1 || point.z == zMax-1) ||*/ (neighbor.x == 0 || neighbor.y == 0 || neighbor.z == 0 || neighbor.x == xMax-1 || neighbor.y == yMax-1 || neighbor.z == zMax-1) )
                     continue;
                 if ( dx == 0 && dy == 0 && dz == 0 )
                     continue;

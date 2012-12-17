@@ -7,7 +7,9 @@
 
 #include "modules/Buildings.h"
 #include "modules/EventManager.h"
+#include "modules/Maps.h"
 #include "modules/MapCache.h"
+#include "modules/Units.h"
 #include "modules/World.h"
 
 #include "df/building.h"
@@ -25,6 +27,14 @@ using namespace std;
 
 using namespace DFHack;
 using namespace df::enums;
+
+///////////////////////
+color_ostream* glob_out;
+
+#if 0
+#define DEBUG_PRINT(str) \
+out.print("%s, line %d" STR, __FILE__, __LINE__);
+#endif
 
 command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string> & parameters);
 
@@ -89,8 +99,26 @@ public:
     df::coord p1;
     df::coord p2;
     int32_t cost;
-    Edge(df::coord p1In, df::coord p2In, int32_t costIn): p1(p1In), p2(p2In), cost(costIn) {
-        
+    Edge(df::coord p1In, df::coord p2In, int32_t costIn): cost(costIn) {
+        if ( p2In < p1In ) {
+            p1 = p2In;
+            p2 = p1In;
+        } else {
+            p1 = p1In;
+            p2 = p2In;
+        }
+    }
+
+    bool operator==(const Edge& e) const {
+        return (p1 == e.p1 && p2 == e.p2);
+    }
+
+    bool operator<(const Edge& e) const {
+        if ( p1 != e.p1 )
+            return p1 < e.p1;
+        if ( p2 != e.p2 )
+            return p2 < e.p2;
+        return false;
     }
     
     /*bool operator<(const Edge e) const {
@@ -104,7 +132,7 @@ public:
     }*/
 };
 
-vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax);
+vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, int32_t xMax, int32_t yMax, int32_t zMax);
 df::coord getRoot(df::coord point, map<df::coord, df::coord>& rootMap);
 
 class PointComp {
@@ -115,6 +143,7 @@ public:
     }
     
     int32_t operator()(df::coord p1, df::coord p2) {
+        if ( p1 == p2 ) return 0;
         map<df::coord, int32_t>::iterator i1 = pointCost->find(p1);
         map<df::coord, int32_t>::iterator i2 = pointCost->find(p2);
         if ( i1 == pointCost->end() && i2 == pointCost->end() )
@@ -131,348 +160,220 @@ public:
     }
 };
 
-command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string> & parameters)
-{
+bool important(df::coord pos, map<df::coord, set<Edge> >& edges, df::coord prev, set<df::coord>& importantPoints, set<Edge>& importantEdges);
+
+command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>& parameters) {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
     CoreSuspender suspend;
     
-    //eventually we're going to want a path from each surviving invader to each dwarf, but for now, let's just do from each dwarf to each dwarf
-    int32_t race_id = df::global::ui->race_id;
-    int32_t civ_id = df::global::ui->civ_id;
-    
+    map<df::coord, set<Edge> > edgeSet;
+    set<df::coord> roots;
+    set<df::coord> importantPoints;
+    map<df::coord, df::coord> rootMap;
     uint32_t xMax, yMax, zMax;
     Maps::getSize(xMax,yMax,zMax);
     xMax *= 16;
     yMax *= 16;
-    MapExtras::MapCache cache;
-    
-    //TODO: consider whether to pursue hidden dwarf diplomats and merchants
-    vector<df::unit*> locals;
-    vector<df::unit*> invaders;
-    map<df::coord, int32_t> dwarfCount;
-    //map<df::coord, set<Edge>*> edgeSet;
-    map<df::coord, df::coord> rootMap;
-    map<df::coord, df::coord> parentMap;
-    map<df::coord, int32_t> pointCost;
-    PointComp comp(&pointCost);
-    set<df::coord, PointComp> fringe(comp);
+
+    //find all locals and invaders
     for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
         df::unit* unit = df::global::world->units.active[a];
-        bool isInvader = false;
-        if ( df::global::ui->invasions.next_id > 0 && unit->invasion_id+1 == df::global::ui->invasions.next_id ) {
-            invaders.push_back(unit);
-            //dwarfCount[unit->pos]++;
-            isInvader = true;
-        }
-        
-        if ( (!isInvader && (unit->race != race_id || unit->civ_id != civ_id)) || unit->flags1.bits.dead )
+        if ( unit->flags1.bits.dead )
             continue;
-        
-        if ( !isInvader )
-            locals.push_back(unit);
-        dwarfCount[unit->pos]++;
-        //edgeSet[unit->pos] = getEdgeSet(unit->pos, cache, xMax, yMax, zMax);
-        rootMap[unit->pos] = unit->pos;
-        parentMap[unit->pos] = unit->pos;
-        pointCost[unit->pos] = 0;
-        fringe.insert(unit->pos);
-    }
-    
-    //TODO: if only one connectivity group, return
-    if ( invaders.size() == 0 ) {
-        return CR_OK; //no invaders, no problem!
-    }
-    set<df::coord> importantPoints;
-    int32_t a=0;
-    int32_t dwarvesFound = 1;
-    while(dwarvesFound < invaders.size()+locals.size() && fringe.size() > 0) {
-        df::coord point = *fringe.begin();
-        //out.print("%d: (%d,%d,%d); dwarvesFound = %d\n", a++, (int32_t)point.x, (int32_t)point.y, (int32_t)point.z, dwarvesFound);
-        //if ( a > 10000 ) break;
-        fringe.erase(fringe.begin());
-        //dwarfCount[getRoot(point, rootMap)] += dwarfCount[point];
-        
-        if ( getRoot(point, rootMap) != point && dwarfCount[point] != 0 ) {
-            dwarfCount[getRoot(point, rootMap)] += dwarfCount[point];
+        if ( !Units::isCitizen(unit) && !unit->flags1.bits.active_invader )
+            continue;
+        if ( unit->flags2.bits.resident ) {
+            out.print("resident\n");
         }
         
-        int32_t costSoFar = pointCost[point];
-        vector<Edge>* neighbors = getEdgeSet(out, point, cache, xMax, yMax, zMax);
-        for ( size_t a = 0; a < neighbors->size(); a++ ) {
-            df::coord neighbor = (*neighbors)[a].p2;
-            int32_t neighborCost;
-            if ( pointCost.find(neighbor) == pointCost.end() )
-                neighborCost = -1;
-            else
-                neighborCost = pointCost[neighbor];
-            if ( neighborCost == -1 || neighborCost > costSoFar + (*neighbors)[a].cost ) {
-                fringe.erase(neighbor);
-                pointCost[neighbor] = costSoFar + (*neighbors)[a].cost;
-                parentMap[neighbor] = point;
-                //if ( getRoot(neighbor, rootMap) == neighbor )
-                rootMap[neighbor] = rootMap[point];
-                fringe.insert(neighbor);
-            }
-            df::coord pointRoot = getRoot(point, rootMap);
-            df::coord neighborRoot = getRoot(neighbor, rootMap);
-            //check for unified sections of the map
-            if ( neighborRoot != neighbor && neighborRoot != pointRoot ) {
-                //dwarvesFound++;
-                dwarfCount[pointRoot] += dwarfCount[neighborRoot];
-                dwarfCount[neighborRoot] = 0;
-                dwarvesFound = max(dwarvesFound, dwarfCount[pointRoot]);
-                rootMap[neighborRoot] = rootMap[pointRoot];
-                
-                df::coord temp = point;
-                while(true) {
-                    importantPoints.insert(temp);
-                    if ( parentMap[temp] != temp )
-                        temp = parentMap[temp];
-                    else break;
-                }
-                temp = neighbor;
-                while(true) {
-                    importantPoints.insert(temp);
-                    if ( parentMap[temp] != temp )
-                        temp = parentMap[temp];
-                    else break;
-                }
-            }
+        if ( roots.find(unit->pos) != roots.end() )
+            continue;
+
+        roots.insert(unit->pos);
+        importantPoints.insert(unit->pos);
+        vector<Edge>* neighbors = getEdgeSet(out, unit->pos, xMax, yMax, zMax);
+        set<Edge>& rootEdges = edgeSet[unit->pos];
+        for ( auto i = neighbors->begin(); i != neighbors->end(); i++ ) {
+            Edge edge = *i;
+            rootEdges.insert(edge);
         }
         delete neighbors;
     }
-    out.print("dwarves found: %d\n", dwarvesFound);
-    
-    out.print("Important points:\n");
-    for ( set<df::coord>::iterator i = importantPoints.begin(); i != importantPoints.end(); i++ ) {
-        df::coord point = *i;
-        out.print("  (%d, %d, %d)\n", (int32_t)point.x, (int32_t)point.y, (int32_t)point.z);
-    }
-    
-    //dig out all the important points
-    for ( set<df::coord>::iterator i = importantPoints.begin(); i != importantPoints.end(); i++ ) {
-        df::coord point = *i;
-        
-        //deal with buildings, hatches, and doors
-        {
-            df::map_block* block = cache.BlockAt(df::coord((point.x)/16, (point.y)/16, point.z))->getRaw();
-            /*if ( block == NULL ) {
+
+    set<Edge> importantEdges;
+
+    int32_t dumb = 0;
+    while(roots.size() > 1) {
+        if ( dumb >= 1000 )
+            break;
+        dumb++;
+        set<df::coord> toDelete;
+        int32_t firstSize = edgeSet[*roots.begin()].size();
+        //out.print("%s, %d: root size = %d, first size = %d\n", __FILE__, __LINE__, roots.size(), firstSize);
+        for ( auto i = roots.begin(); i != roots.end(); i++ ) {
+            df::coord root = *i;
+            //out.print("  (%d,%d,%d)\n", root.x, root.y, root.z);
+            if ( toDelete.find(root) != toDelete.end() )
                 continue;
-            }*/
-            df::tiletype type = cache.tiletypeAt(point);
-            df::tiletype_shape shape = tileShape(type);
-            df::tiletype_shape_basic basic = ENUM_ATTR(tiletype_shape, basic_shape, shape);
-            df::tile_building_occ building_occ = block->occupancy[point.x%16][point.y%16].bits.building;
-            int32_t z = point.z;
-            if ( basic == df::tiletype_shape_basic::Ramp && building_occ == df::tile_building_occ::None ) {
-                df::map_block* block2 = cache.BlockAt(df::coord(point.x/16, point.y/16, point.z+1))->getRaw();
-                if ( block2 != NULL ) {
-                    building_occ = block2->occupancy[point.x%16][point.y%16].bits.building;
-                    z = z+1;
-                    if ( building_occ != df::tile_building_occ::None ) {
-                        //if it doesn't block pathing, don't destroy it
-                        
-                    }
-                }
+            if ( edgeSet[root].empty() ) {
+                out.print("%s, %d: Error: no edges: %d, %d, %d\n", __FILE__, __LINE__, root.x, root.y, root.z);
+                return CR_FAILURE;
             }
-            if ( building_occ != df::tile_building_occ::None ) {
-                //find the building there
-                bool foundIt = false;
-                for( size_t a = 0; a < df::global::world->buildings.all.size(); a++ ) {
-                    df::building* building = df::global::world->buildings.all[a];
-                    if ( z != building->z )
-                        continue;
-                    if ( building->x1 < point.x || building->x2 > point.x )
-                        continue;
-                    if ( building->y1 < point.y || building->y2 > point.y )
-                        continue;
-                    //found it!
-                    foundIt = true;
-                    //destroy it
-					out.print("deconstructImmediately...\n");
-					DFHack::Buildings::deconstructImmediately(building);
-					out.print("done\n");
-					building = NULL;
-                    //building->deconstructItems(false, false);
-                    //building->removeUses(false, false);
-                    break;
-                }
-                if ( !foundIt ) {
-                    out.print("Error: could not find building at (%d,%d,%d).\n", point.x, point.y, point.z);
-                }
+            set<Edge>& myEdges = edgeSet[root];
+            Edge edge = *myEdges.begin();
+            myEdges.erase(myEdges.begin());
+            if ( edgeSet[root].size() != myEdges.size() ) {
+                out.print("DOOOOOM! %s, %d\n", __FILE__, __LINE__);
+                return CR_FAILURE;
             }
+            if ( getRoot(edge.p1, rootMap) != root && getRoot(edge.p2, rootMap) != root ) {
+                out.print("%s, %d: Invalid edge.\n", __FILE__, __LINE__);
+                return CR_FAILURE;
+            }
+            
+            df::coord other = edge.p1;
+            if ( getRoot(other, rootMap) == root )
+                other = edge.p2;
+            if ( getRoot(other, rootMap) == root ) {
+                //out.print("%s, %d: Error: self edge: %d, %d, %d\n", __FILE__, __LINE__, root.x, root.y, root.z);
+                /*vector<Edge> badEdges;
+                for ( auto j = myEdges.begin(); j != myEdges.end(); j++ ) {
+                    Edge e = *j;
+                    if ( getRoot(e.p1, rootMap) == getRoot(e.p2, rootMap) )
+                        badEdges.push_back(e);
+                }
+                for ( size_t j = 0; j < badEdges.size(); j++ ) {
+                    myEdges.erase(badEdges[j]);
+                }*/
+                continue;
+            }
+
+            importantEdges.insert(edge);
+
+            df::coord otherRoot = getRoot(other,rootMap);
+            rootMap[otherRoot] = root;
+            
+            //merge his stuff with my stuff
+            if ( edgeSet.find(other) == edgeSet.end() ) {
+                set<Edge>& hisEdges = edgeSet[other];
+                vector<Edge>* neighbors = getEdgeSet(out, other, xMax, yMax, zMax);
+                for ( auto i = neighbors->begin(); i != neighbors->end(); i++ ) {
+                    Edge edge = *i;
+                    hisEdges.insert(edge);
+                }
+                delete neighbors;
+            }
+            set<Edge>& hisEdges = edgeSet[other];
+
+            for ( auto j = hisEdges.begin(); j != hisEdges.end(); j++ ) {
+                Edge e = *j;
+                if ( getRoot(e.p1, rootMap) == getRoot(e.p2, rootMap) )
+                    continue;
+                df::coord farPt = e.p1;
+                if ( farPt == other )
+                    farPt = e.p2;
+                myEdges.insert(e);
+                //myEdges.insert(Edge(root, farPt, e.cost));
+            }
+            //hisEdges.clear();
+            edgeSet.erase(otherRoot);
+            toDelete.insert(otherRoot);
         }
-        
-        df::tiletype type = cache.tiletypeAt(point);
-        df::tiletype_shape shape = tileShape(type);
-        if ( shape == df::tiletype_shape::STAIR_UPDOWN )
-            continue;
-        df::tiletype_shape_basic basicShape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
-        bool uppyDowny;
-        {
-            //only needs to change if we need uppy-downiness
-            df::coord up = df::coord(point.x, point.y, point.z+1);
-            df::coord down = df::coord(point.x, point.y, point.z-1);
-            uppyDowny = !(importantPoints.find(up) == importantPoints.end() && importantPoints.find(down) == importantPoints.end());
-        }
-        if ( (basicShape == df::tiletype_shape_basic::Floor || basicShape == df::tiletype_shape_basic::Ramp) && !uppyDowny ) {
-            continue;
-        }
-        
-        if ( uppyDowny ) {
-            cache.setTiletypeAt(point, df::tiletype::StoneStairUD);
-        } else {
-            cache.setTiletypeAt(point, df::tiletype::StoneFloor1);
+        for ( auto j = toDelete.begin(); j != toDelete.end(); j++ ) {
+            df::coord bob = *j;
+            roots.erase(bob);
         }
     }
-    
-    cache.WriteAll();
+
+    edgeSet.clear();
+    for ( auto i = importantEdges.begin(); i != importantEdges.end(); i++ ) {
+        Edge e = *i;
+        edgeSet[e.p1].insert(e);
+        edgeSet[e.p2].insert(e);
+    }
+
+    //now we find the edges used along the paths between any two roots
+    importantEdges.clear();
+    glob_out = &out;
+    {
+        important(*importantPoints.begin(), edgeSet, df::coord(-1,-1,-1), importantPoints, importantEdges);
+    }
+
+    //NOW we filter to see edges that require digging/constructing
+    map<df::coord, int32_t> actionable;
+    for ( auto a = importantEdges.begin(); a != importantEdges.end(); a++ ) {
+        Edge e = *a;
+        if ( Maps::canWalkBetween(e.p1, e.p2) )
+            continue;
+        actionable[e.p1]++;
+        if( actionable[e.p1] == 0 ) {
+            out.print("fuck\n");
+            return CR_FAILURE;
+        }
+        actionable[e.p2]++;
+    }
+
+    for ( auto a = actionable.begin(); a != actionable.end(); a++ ) {
+        df::coord pos = (*a).first;
+        if ( (*a).second < 2 )
+            continue;
+        out.print("Requires action: (%d,%d,%d): %d\n", pos.x,pos.y,pos.z, (*a).second);
+    }
+
+    /*for ( auto a = importantPoints.begin(); a != importantPoints.end(); a++ ) {
+        df::coord pos = (*a);
+        out.print("Important point: (%d,%d,%d)\n", pos.x,pos.y,pos.z);
+    }*/
+
     return CR_OK;
 }
 
-vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax) {
-    vector<df::coord> candidates;
-    for ( int32_t dx = -1; dx <= 1; dx++ ) {
-        if ( point.x + dx < 0 ) continue;
-        for ( int32_t dy = -1; dy <= 1; dy++ ) {
-            if ( point.y + dy < 0 ) continue;
-            if ( dx == 0 && dy == 0)
-                continue;
-            candidates.push_back(df::coord(point.x+dx,point.y+dy,point.z));
-        }
-    }
-    for ( int32_t dz = -1; dz <= 1; dz++ ) {
-        if ( point.z + dz < 0 ) continue;
-        if ( dz == 0 ) continue;
-        candidates.push_back(df::coord(point.x, point.y, point.z+dz));
-    }
-    int32_t connectivityType;
-    {
-        df::map_block* block = cache.BlockAt(df::coord(point.x/16, point.y/16, point.z))->getRaw();
-        if ( block == NULL ) {
-            return new vector<Edge>;
-        }
-        connectivityType = block->walkable[point.x%16][point.y%16];
-    }
-    if ( connectivityType == 0 )
-        return new vector<Edge>;
-    for ( int32_t dx = -1; dx <= 1; dx++ ) {
-        if ( point.x + dx < 0 )
+bool important(df::coord pos, map<df::coord, set<Edge> >& edges, df::coord prev, set<df::coord>& importantPoints, set<Edge>& importantEdges) {
+    //glob_out->print("oh my glob; (%d,%d,%d)\n", pos.x,pos.y,pos.z);
+    set<Edge>& myEdges = edges[pos];
+    bool result = importantPoints.find(pos) != importantPoints.end();
+    for ( auto i = myEdges.begin(); i != myEdges.end(); i++ ) {
+        Edge e = *i;
+        df::coord other = e.p1;
+        if ( other == pos )
+            other = e.p2;
+        if ( other == prev )
             continue;
-        for ( int32_t dy = -1; dy <= 1; dy++ ) {
-            if ( point.y + dy < 0 )
-                continue;
-            for ( int32_t dz = -1; dz <= 1; dz++ ) {
-                if ( dz == 0 ) continue;
-                if ( point.z + dz < 0 )
-                    continue;
-                if ( dx == 0 && dy == 0 )
-                    continue;
-                df::map_block* block = cache.BlockAt(df::coord((point.x+dx)/16, (point.y+dy)/16, point.z+dz))->getRaw();
-                if ( block == NULL ) {
-                    continue;
-                }
-                if ( block->walkable[(point.x+dx)%16][(point.y+dy)%16] != connectivityType ) {
-                    continue;
-                }
-                candidates.push_back(df::coord(point.x+dx, point.y+dy, point.z+dz));
-            }
+        if ( important(other, edges, pos, importantPoints, importantEdges) ) {
+            result = true;
+            importantEdges.insert(e);
         }
     }
-    
-    //TODO: ramps, buildings
-    
+    return result;
+}
+
+vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, int32_t xMax, int32_t yMax, int32_t zMax) {
     vector<Edge>* result = new vector<Edge>;
-    df::tiletype_shape_basic basePointBasicShape;
-    bool basePointIsWall;
-    {
-        df::tiletype type = cache.tiletypeAt(point);
-        df::tiletype_shape shape = tileShape(type);
-        if ( shape == df::tiletype_shape::EMPTY )
-            return result;
-        basePointBasicShape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
-        //TODO: worry about up stairs vs down stairs vs updown stairs
-    }
     
-    if ( basePointBasicShape == df::tiletype_shape_basic::Wall && cache.hasConstructionAt(point) )
-        return result;
-    
-    /*if ( point.z < zMax-1 ) {
-        //ramps part 1: going up
-        //if I'm a ramp, and there's a wall in some direction, and there's nothing above me, and that tile is open, I can go there.
-        df::tiletype_shape_basic upBasicShape;
-        {
-            df::tiletype type = cache.tiletypeAt(df::coord(point.x, point.y, point.z+1));
-            df::tiletype_shape shape = tileShape(type);
-            upBasicShape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
-        }
-        if ( upBasicShape == df::tiletype_shape_basic::Ramp ) {
-            for ( int32_t dx = -1; dx <= 1; dx++ ) {
-                for ( int32_t dy = -1; dy <= 1; dy++ ) {
-                    if ( dx == 0 && dy == 0 )
-                        continue;
-                    df::tiletype type = cache.tiletypeAt(df::coord(point.x+dx, point.y+dy, point.z+1));
-                    df::tiletype_shape shape = tileShape(type);
-                    df::tiletype_shape_basic basicShape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
-                    if ( basicShape == df::tiletype_shape_basic::Floor ||
-                        basicShape == df::tiletype_shape_basic::Stair ||
-                        basicShape == df::tiletype_shape_basic::Ramp ) {
-                        candidates.push_back(df::coord(point.x+dx, point.y+dy, point.z+1));
-                    }
+    for ( int32_t dx = -1; dx <= 1; dx++ ) {
+        for ( int32_t dy = -1; dy <= 1; dy++ ) {
+            for ( int32_t dz = -1; dz <= 1; dz++ ) {
+                df::coord neighbor(point.x+dx, point.y+dy, point.z+dz);
+                if ( neighbor.x < 0 || neighbor.x >= xMax || neighbor.y < 0 || neighbor.y >= yMax || neighbor.z < 0 || neighbor.z >= zMax )
+                    continue;
+                if ( dz != 0 && (point.x == 0 || point.y == 0 || point.z == 0 || point.x == xMax-1 || point.y == yMax-1 || point.z == zMax-1 || neighbor.x == 0 || neighbor.y == 0 || neighbor.z == 0 || neighbor.x == xMax-1 || neighbor.y == yMax-1 || neighbor.z == zMax-1) )
+                    continue;
+                if ( dx == 0 && dy == 0 && dz == 0 )
+                    continue;
+                int32_t cost = 0;
+                if ( dz != 0 ) cost++;
+                if ( Maps::canWalkBetween(point, neighbor) ) {
+                    Edge edge(point, neighbor, cost+1);
+                    result->push_back(edge);
+                } else {
+                    Edge edge(point, neighbor, cost+100);
+                    result->push_back(edge);
                 }
             }
         }
     }
-    
-    if ( point.z >= 1 ) {
-        //ramps part 2: going down
-        
-    }*/
-    
-    for ( size_t a = 0; a < candidates.size(); a++ ) {
-        if ( candidates[a].x <= 1 || candidates[a].x >= xMax-1
-            || candidates[a].y <= 1 || candidates[a].y >= yMax-1
-            || candidates[a].z <= 1 || candidates[a].z >= zMax-1
-        ) {
-            continue;
-        }
-        df::tiletype type = cache.tiletypeAt(candidates[a]);
-        df::tiletype_shape shape = tileShape(type); //what namespace?
-        if ( shape == df::tiletype_shape::EMPTY )
-            continue;
-        df::tiletype_shape_basic basicShape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
-        if ( basicShape == df::tiletype_shape_basic::Wall && cache.hasConstructionAt(candidates[a]) ) {
-            continue;
-        }
-        
-        //if it's a forbidden door, continue
-        df::map_block* block = cache.BlockAt(df::coord(candidates[a].x/16, candidates[a].y/16, candidates[a].z))->getRaw();
-        if ( block == NULL ) {
-            continue;
-        } else {
-            df::tile_building_occ building_occ = block->occupancy[candidates[a].x%16][candidates[a].y%16].bits.building;
-            if ( building_occ == df::tile_building_occ::Obstacle )
-                continue;
-            if ( building_occ == df::tile_building_occ::Impassable )
-                continue;
-            if ( building_occ == df::tile_building_occ::Well )
-                continue;
-            if ( building_occ == df::tile_building_occ::Dynamic ) {
-                //continue; //TODO: check df.map.xml.walkable
-            }
-        }
-        
-        int32_t cost = 1;
-        if ( basePointIsWall || basicShape == df::tiletype_shape_basic::Wall ) {
-            cost += 1000000; //TODO: fancy cost
-        }
-        //if ( candidates[a] < point ) {
-        //    result->push_back(Edge(candidates[a], point, cost));
-        //} else {
-        result->push_back(Edge(point, candidates[a], cost));
-        //}
-    }
+
     return result;
 }
 

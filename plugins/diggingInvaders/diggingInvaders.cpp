@@ -98,8 +98,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     }
 };*/
 
-//cost is [path cost, dig cost, construct cost]. Minimize constructions, then minimize dig cost, then minimize path cost.
-const size_t costDim = 3;
+//cost is [path cost, building destruction cost, dig cost, construct cost]. Minimize constructions, then minimize dig cost, then minimize path cost.
+const size_t costDim = 4;
 
 struct Cost {
     int32_t cost[costDim];
@@ -347,7 +347,6 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
         if ( building != NULL ) {
             out.print("%d\n", __LINE__);
             building->flags.bits.almost_deleted = true;
-            //Buildings::deconstructImmediately(building);
             out.print("%d\n", __LINE__);
         } else {
             df::map_block* block1 = Maps::getTileBlock(pt1);
@@ -451,7 +450,7 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, int32_t xMax, int3
                     }
 
                     if ( shape2 == df::enums::tiletype_shape::EMPTY ) {
-                        cost.cost[2] += 1;
+                        cost.cost[3] += 1;
                     } else {
                         if ( point.z == neighbor.z ) {
                             if ( ENUM_ATTR(tiletype_shape, walkable, shape2) ) {
@@ -474,7 +473,7 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, int32_t xMax, int3
                                 }
                                 //this is fine: only charge once for digging through a wall
                             } else {
-                                cost.cost[1] += 20;
+                                cost.cost[2] += 1;
                             }
                         } else {
                             bool ascending = neighbor.z > point.z;
@@ -496,9 +495,9 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, int32_t xMax, int3
                                 } else {
                                     //bad!
                                     if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Wall ) {
-                                        cost.cost[1] += 20;
-                                    } else if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Open ) {
                                         cost.cost[2] += 1;
+                                    } else if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Open ) {
+                                        cost.cost[3] += 1;
                                     } else {
                                         continue;
                                     }

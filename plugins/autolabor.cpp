@@ -775,6 +775,7 @@ private:
             case df::building_type::Bridge:
             case df::building_type::ArcheryTarget:
             case df::building_type::WaterWheel:
+            case df::building_type::RoadPaved:
                 {
                     df::building_actual* b = (df::building_actual*) bld;
                     if (b->design && !b->design->flags.bits.designed)

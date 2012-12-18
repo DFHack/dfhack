@@ -26,6 +26,7 @@
 #include "df/world.h"
 
 #include <algorithm>
+#include <ctime>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -195,7 +196,6 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
 void doDiggingInvaders(color_ostream& out, void* ptr) {
     CoreSuspender suspend;
     
-    map<df::coord, set<Edge> > edgeSet;
     set<df::coord> invaderPts;
     set<df::coord> localPts;
     map<df::coord, df::coord> parentMap;
@@ -228,19 +228,13 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
         } else {
             continue;
         }
-        
-        vector<Edge>* neighbors = getEdgeSet(out, unit->pos, cache, xMax, yMax, zMax);
-        set<Edge>& rootEdges = edgeSet[unit->pos];
-        for ( auto i = neighbors->begin(); i != neighbors->end(); i++ ) {
-            Edge edge = *i;
-            rootEdges.insert(edge);
-        }
-        delete neighbors;
     }
 
     int32_t localPtsFound = 0;
     set<df::coord> closedSet;
 
+    clock_t t0 = clock();
+    clock_t totalEdgeTime = 0;
     while(!fringe.empty()) {
         df::coord pt = *(fringe.begin());
         fringe.erase(fringe.begin());
@@ -249,30 +243,23 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             out.print("Double closure! Bad!\n");
             break;
         }
-        closedSet.insert(pt);
+        //closedSet.insert(pt);
         
         if ( localPts.find(pt) != localPts.end() ) {
             localPtsFound++;
             if ( localPtsFound >= localPts.size() )
                 break;
-            if ( costMap[pt].cost[1] > 0 )
+            if ( costMap[pt].cost[1] > 0 || costMap[pt].cost[2] > 0 || costMap[pt].cost[3] > 0 )
                 break;
         }
 
-        if ( edgeSet.find(pt) == edgeSet.end() ) {
-            set<Edge>& temp = edgeSet[pt];
-            vector<Edge>* edges = getEdgeSet(out, pt, cache, xMax, yMax, zMax);
-            for ( auto a = edges->begin(); a != edges->end(); a++ ) {
-                Edge e = *a;
-                temp.insert(e);
-            }
-            delete edges;
-        }
-        Cost myCost = costMap[pt];
-        set<Edge>& myEdges = edgeSet[pt];
-        for ( auto a = myEdges.begin(); a != myEdges.end(); a++ ) {
-            Edge e = *a;
-            df::coord other = e.p1;
+        Cost& myCost = costMap[pt];
+        clock_t edgeTime = clock();
+        vector<Edge>* myEdges = getEdgeSet(out, pt, cache, xMax, yMax, zMax);
+        totalEdgeTime += (clock() - edgeTime);
+        for ( auto a = myEdges->begin(); a != myEdges->end(); a++ ) {
+            Edge &e = *a;
+            df::coord& other = e.p1;
             if ( other == pt )
                 other = e.p2;
             if ( costMap.find(other) == costMap.end() || costMap[other] > myCost + e.cost ) {
@@ -282,8 +269,10 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
                 parentMap[other] = pt;
             }
         }
-        edgeSet.erase(pt);
+        delete myEdges;
     }
+    clock_t time = clock() - t0;
+    out.print("time = %d, totalEdgeTime = %d\n", time, totalEdgeTime);
 
     //find important edges
     list<Edge> importantEdges;

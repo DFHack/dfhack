@@ -4,6 +4,8 @@
 #include "modules/Job.h"
 #include "modules/World.h"
 
+#include "df/building.h"
+#include "df/construction.h"
 #include "df/global_objects.h"
 #include "df/item.h"
 #include "df/job.h"
@@ -11,9 +13,10 @@
 #include "df/unit.h"
 #include "df/world.h"
 
-//#include <list>
 #include <map>
-//#include <vector>
+#include <unordered_map>
+#include <unordered_set>
+
 using namespace std;
 using namespace DFHack;
 using namespace EventManager;
@@ -21,11 +24,13 @@ using namespace EventManager;
 /*
  * TODO:
  *  error checking
+ *  consider a typedef instead of a struct for EventHandler
  **/
 
 //map<uint32_t, vector<DFHack::EventManager::EventHandler> > tickQueue;
 multimap<uint32_t, EventHandler> tickQueue;
 
+//TODO: consider unordered_map of pairs, or unordered_map of unordered_set, or whatever
 multimap<Plugin*, EventHandler> handlers[EventType::EVENT_MAX];
 
 const uint32_t ticksPerYear = 403200;
@@ -96,12 +101,30 @@ static void manageJobInitiatedEvent(color_ostream& out);
 static void manageJobCompletedEvent(color_ostream& out);
 static void manageUnitDeathEvent(color_ostream& out);
 static void manageItemCreationEvent(color_ostream& out);
+static void manageBuildingEvent(color_ostream& out);
+static void manageConstructionEvent(color_ostream& out);
 
+//tick event
 static uint32_t lastTick = 0;
+
+//job initiated
 static int32_t lastJobId = -1;
-static map<int32_t, df::job*> prevJobs;
-static set<int32_t> livingUnits;
+
+//job completed
+static unordered_map<int32_t, df::job*> prevJobs;
+
+//unit death
+static unordered_set<int32_t> livingUnits;
+
+//item creation
 static int32_t nextItem;
+
+//building
+static int32_t nextBuilding;
+static unordered_set<int32_t> buildings;
+
+//construction
+static unordered_set<df::construction*> constructions;
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     if ( event == DFHack::SC_MAP_UNLOADED ) {
@@ -114,6 +137,9 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         tickQueue.clear();
         livingUnits.clear();
         nextItem = -1;
+        nextBuilding = -1;
+        buildings.clear();
+        constructions.clear();
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
             + DFHack::World::ReadCurrentTick();
@@ -126,6 +152,8 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         tickQueue.insert(newTickQueue.begin(), newTickQueue.end());
 
         nextItem = *df::global::item_next_id;
+        nextBuilding = *df::global::building_next_id;
+        constructions.insert(df::global::world->constructions.begin(), df::global::world->constructions.end());
     }
 }
 
@@ -144,6 +172,8 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     manageJobCompletedEvent(out);
     manageUnitDeathEvent(out);
     manageItemCreationEvent(out);
+    manageBuildingEvent(out);
+    manageConstructionEvent(out);
 
     return;
 }
@@ -201,7 +231,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
         nowJobs[link->item->id] = link->item;
     }
 
-    for ( map<int32_t, df::job*>::iterator i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
+    for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
         if ( nowJobs.find((*i).first) != nowJobs.end() )
             continue;
 
@@ -212,13 +242,13 @@ static void manageJobCompletedEvent(color_ostream& out) {
     }
 
     //erase old jobs, copy over possibly altered jobs
-    for ( map<int32_t, df::job*>::iterator i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
+    for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
         Job::deleteJobStruct((*i).second);
     }
     prevJobs.clear();
     
     //create new jobs
-    for ( map<int32_t, df::job*>::iterator j = nowJobs.begin(); j != nowJobs.end(); j++ ) {
+    for ( auto j = nowJobs.begin(); j != nowJobs.end(); j++ ) {
         /*map<int32_t, df::job*>::iterator i = prevJobs.find((*j).first);
         if ( i != prevJobs.end() ) {
             continue;
@@ -289,3 +319,77 @@ static void manageItemCreationEvent(color_ostream& out) {
     nextItem = *df::global::item_next_id;
 }
 
+static void manageBuildingEvent(color_ostream& out) {
+    /*
+     * TODO: could be faster
+     * consider looking at jobs: building creation / destruction
+     **/
+    if ( handlers[EventType::ITEM_CREATED].empty() )
+        return;
+    
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::BUILDING].begin(), handlers[EventType::BUILDING].end());
+    //first alert people about new buildings
+    for ( int32_t a = nextBuilding; a < *df::global::building_next_id; a++ ) {
+        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, a);
+        if ( index == -1 ) {
+            out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
+        }
+        buildings.insert(a);
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler bob = (*b).second;
+            bob.eventHandler(out, (void*)a);
+        }
+    }
+    nextBuilding = *df::global::building_next_id;
+    
+    //now alert people about destroyed buildings
+    unordered_set<int32_t> toDelete;
+    for ( auto a = buildings.begin(); a != buildings.end(); a++ ) {
+        int32_t id = *a;
+        int32_t index = df::building::binsearch_index(df::global::world->buildings.all,id);
+        if ( index != -1 )
+            continue;
+        toDelete.insert(id);
+
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler bob = (*b).second;
+            bob.eventHandler(out, (void*)id);
+        }
+    }
+
+    for ( auto a = toDelete.begin(); a != toDelete.end(); a++ ) {
+        int32_t id = *a;
+        buildings.erase(id);
+    }
+}
+
+static void manageConstructionEvent(color_ostream& out) {
+    if ( handlers[EventType::CONSTRUCTION].empty() )
+        return;
+
+    unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
+    
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
+    for ( auto a = constructions.begin(); a != constructions.end(); a++ ) {
+        df::construction* construction = *a;
+        if ( constructionsNow.find(construction) != constructionsNow.end() )
+            continue;
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler handle = (*b).second;
+            handle.eventHandler(out, (void*)construction);
+        }
+    }
+
+    for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); a++ ) {
+        df::construction* construction = *a;
+        if ( constructions.find(construction) != constructions.end() )
+            continue;
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler handle = (*b).second;
+            handle.eventHandler(out, (void*)construction);
+        }
+    }
+    
+    constructions.clear();
+    constructions.insert(constructionsNow.begin(), constructionsNow.end());
+}

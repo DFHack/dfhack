@@ -21,6 +21,8 @@ void jobCompleted(color_ostream& out, void* job);
 void timePassed(color_ostream& out, void* ptr);
 void unitDeath(color_ostream& out, void* ptr);
 void itemCreate(color_ostream& out, void* ptr);
+void building(color_ostream& out, void* ptr);
+void construction(color_ostream& out, void* ptr);
 
 command_result eventExample(color_ostream& out, vector<string>& parameters);
 
@@ -36,7 +38,10 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
     EventManager::EventHandler timeHandler(timePassed);
     EventManager::EventHandler deathHandler(unitDeath);
     EventManager::EventHandler itemHandler(itemCreate);
+    EventManager::EventHandler buildingHandler(building);
+    EventManager::EventHandler constructionHandler(construction);
     Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("eventExample");
+    EventManager::unregisterAll(me);
 
     EventManager::registerListener(EventManager::EventType::JOB_INITIATED, initiateHandler, me);
     EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, completeHandler, me);
@@ -46,6 +51,8 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
     EventManager::registerTick(timeHandler, 8, me);
     EventManager::registerListener(EventManager::EventType::UNIT_DEATH, deathHandler, me);
     EventManager::registerListener(EventManager::EventType::ITEM_CREATED, itemHandler, me);
+    EventManager::registerListener(EventManager::EventType::BUILDING, buildingHandler, me);
+    EventManager::registerListener(EventManager::EventType::CONSTRUCTION, constructionHandler, me);
     out.print("Events registered.\n");
     return CR_OK;
 }
@@ -77,3 +84,10 @@ void itemCreate(color_ostream& out, void* ptr) {
     out.print("Item created: %d, %s, at (%d,%d,%d)\n", (int32_t)(ptr), ENUM_KEY_STR(item_type, type).c_str(), pos.x, pos.y, pos.z);
 }
 
+void building(color_ostream& out, void* ptr) {
+    out.print("Building created/destroyed: %d\n", (int32_t)ptr);
+}
+
+void construction(color_ostream& out, void* ptr) {
+    out.print("Construction created/destroyed: 0x%X\n", ptr);
+}

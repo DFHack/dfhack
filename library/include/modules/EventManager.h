@@ -17,6 +17,8 @@ namespace DFHack {
                 JOB_COMPLETED,
                 UNIT_DEATH,
                 ITEM_CREATED,
+                BUILDING,
+                CONSTRUCTION,
                 EVENT_MAX
             };
         }

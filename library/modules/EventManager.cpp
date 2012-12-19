@@ -1,5 +1,7 @@
 #include "Core.h"
 #include "Console.h"
+#include "modules/Buildings.h"
+#include "modules/Constructions.h"
 #include "modules/EventManager.h"
 #include "modules/Job.h"
 #include "modules/World.h"
@@ -127,6 +129,16 @@ static unordered_set<int32_t> buildings;
 static unordered_set<df::construction*> constructions;
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
+    static bool doOnce = false;
+    if ( !doOnce ) {
+        //TODO: put this somewhere else
+        doOnce = true;
+        EventHandler buildingHandler(Buildings::updateBuildings);
+        EventHandler constructionHandler(Constructions::updateConstructions);
+        DFHack::EventManager::registerListener(EventType::BUILDING, buildingHandler, NULL);
+        DFHack::EventManager::registerListener(EventType::CONSTRUCTION, constructionHandler, NULL);
+        out.print("Registered listeners.\n %d", __LINE__);
+    }
     if ( event == DFHack::SC_MAP_UNLOADED ) {
         lastTick = 0;
         lastJobId = -1;
@@ -151,9 +163,9 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
 
         tickQueue.insert(newTickQueue.begin(), newTickQueue.end());
 
-        nextItem = *df::global::item_next_id;
-        nextBuilding = *df::global::building_next_id;
-        constructions.insert(df::global::world->constructions.begin(), df::global::world->constructions.end());
+        nextItem = 0;
+        nextBuilding = 0;
+        lastTick = 0;
     }
 }
 
@@ -324,7 +336,7 @@ static void manageBuildingEvent(color_ostream& out) {
      * TODO: could be faster
      * consider looking at jobs: building creation / destruction
      **/
-    if ( handlers[EventType::ITEM_CREATED].empty() )
+    if ( handlers[EventType::BUILDING].empty() )
         return;
     
     multimap<Plugin*,EventHandler> copy(handlers[EventType::BUILDING].begin(), handlers[EventType::BUILDING].end());
@@ -361,6 +373,8 @@ static void manageBuildingEvent(color_ostream& out) {
         int32_t id = *a;
         buildings.erase(id);
     }
+    
+    out.print("Sent building event.\n %d", __LINE__);
 }
 
 static void manageConstructionEvent(color_ostream& out) {

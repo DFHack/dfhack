@@ -65,6 +65,8 @@ DFHACK_EXPORT bool designateNew(df::coord pos, df::construction_type type,
 
 DFHACK_EXPORT bool designateRemove(df::coord pos, bool *immediate = NULL);
 
+void updateConstructions(color_ostream& out, void* ptr);
+
 }
 }
 #endif

@@ -169,3 +169,8 @@ bool Constructions::designateRemove(df::coord pos, bool *immediate)
 
     return false;
 }
+
+
+void Constructions::updateConstructions(color_ostream& out, void* ptr) {
+    //do stuff
+}

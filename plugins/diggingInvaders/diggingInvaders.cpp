@@ -52,23 +52,13 @@
 #include <map>
 #include <set>
 #include <vector>
-
-#define HASHMAP 1
-#if HASHMAP
 #include <unordered_set>
 #include <unordered_map>
-
-#endif
 
 using namespace std;
 
 using namespace DFHack;
 using namespace df::enums;
-
-int32_t digSpeed = 100;
-int32_t destroySpeed = 100;
-int32_t deconstructSpeed = 100;
-int32_t constructSpeed = 100;
 
 command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string> & parameters);
 
@@ -101,106 +91,15 @@ enum CostDimension {
     costDim
 };
 
-const int32_t costBucket[] = {
+const int64_t costWeight[] = {
 //Distance
-0,
-//DestroyBuilding
 1,
-//Dig
+//Destroy Building
 2,
+//Dig
+100,
 //DestroyConstruction
-3,
-};
-
-struct Cost {
-    int32_t cost[costDim];
-    Cost() {
-        memset(cost, 0, costDim*sizeof(int32_t));
-    }
-    Cost( int32_t costIn[costDim] ) {
-        memcpy(cost, costIn, costDim*sizeof(int32_t));
-    }
-    Cost(const Cost& c) {
-        memcpy(cost, c.cost, costDim*sizeof(int32_t));
-    }
-    Cost( int32_t i ) {
-        memset(cost, 0, costDim*sizeof(int32_t));
-        cost[CostDimension::Distance] = i;
-    }
-
-    /*
-    int32_t workNeeded() const {
-        int32_t result = 0;
-        for ( int32_t a = 1; a < costDim; a++ ) {
-            result += cost[a];
-        }
-        return result;
-    }
-    */
-
-    int32_t compare(const Cost& c) const {
-        int32_t table[costDim];
-        memset(table, 0, costDim*sizeof(int32_t));
-        for ( size_t a = 0; a < costDim; a++ ) {
-            table[costBucket[a]] += cost[a] - c.cost[a];
-        }
-        for ( size_t a = 0; a < costDim; a++ ) {
-            if ( table[costDim-1-a] > 0 )
-                return 1;
-            if ( table[costDim-1-a] < 0 )
-                return -1;
-        }
-        return 0;
-    }
-
-    bool operator>(const Cost& c) const {
-        return compare(c) > 0;
-        /*
-        for ( size_t a = 0; a < costDim; a++ ) {
-            if ( cost[costDim-1-a] != c.cost[costDim-1-a] )
-                return cost[costDim-1-a] > c.cost[costDim-1-a];
-        }
-        return false;
-        */
-    }
-
-    bool operator<(const Cost& c) const {
-        return compare(c) < 0;
-        /*
-        for ( size_t a = 0; a < costDim; a++ ) {
-            if ( cost[costDim-1-a] != c.cost[costDim-1-a] )
-                return cost[costDim-1-a] < c.cost[costDim-1-a];
-        }
-        return false;
-        */
-    }
-
-    bool operator==(const Cost& c) const {
-        return compare(c) == 0;
-        /*
-        for ( size_t a = 0; a < costDim; a++ ) {
-            if ( cost[a] != c.cost[a] )
-                return false;
-        }
-        return true;
-        */
-    }
-
-    bool operator<=(const Cost& c) const {
-        return compare(c) <= 0;
-    }
-
-    bool operator!=(const Cost& c) const {
-        return compare(c) != 0;
-    }
-
-    Cost operator+(const Cost& c) const {
-        Cost result(*this);
-        for ( size_t a = 0; a < costDim; a++ ) {
-            result.cost[a] += c.cost[a];
-        }
-        return result;
-    }
+100,
 };
 
 class Edge {
@@ -208,8 +107,8 @@ public:
     //static map<df::coord, int32_t> pointCost;
     df::coord p1;
     df::coord p2;
-    Cost cost;
-    Edge(df::coord p1In, df::coord p2In, Cost costIn): cost(costIn) {
+    int64_t cost;
+    Edge(df::coord p1In, df::coord p2In, int64_t costIn): cost(costIn) {
         if ( p2In < p1In ) {
             p1 = p2In;
             p2 = p1In;
@@ -240,11 +139,7 @@ public:
 
 vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax);
 
-#if HASHMAP
 df::coord getRoot(df::coord point, unordered_map<df::coord, df::coord>& rootMap);
-#else
-df::coord getRoot(df::coord point, map<df::coord, df::coord>& rootMap);
-#endif
 
 struct PointHash {
     size_t operator()(const df::coord c) const {
@@ -254,17 +149,10 @@ struct PointHash {
 
 class PointComp {
 public:
-#if HASHMAP
-    unordered_map<df::coord, Cost, PointHash> *pointCost;
-    PointComp(unordered_map<df::coord, Cost, PointHash> *p): pointCost(p) {
+    unordered_map<df::coord, int64_t, PointHash> *pointCost;
+    PointComp(unordered_map<df::coord, int64_t, PointHash> *p): pointCost(p) {
         
     }
-#else
-    map<df::coord, Cost> *pointCost;
-    PointComp(map<df::coord, Cost> *p): pointCost(p) {
-        
-    }
-#endif
     
     int32_t operator()(df::coord p1, df::coord p2) {
         if ( p1 == p2 ) return 0;
@@ -276,8 +164,8 @@ public:
             return true;
         if ( i2 == pointCost->end() )
             return false;
-        Cost c1 = (*i1).second;
-        Cost c2 = (*i2).second;
+        int64_t c1 = (*i1).second;
+        int64_t c2 = (*i2).second;
         if ( c1 != c2 )
             return c1 < c2;
         return p1 < p2;
@@ -297,17 +185,10 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
 void doDiggingInvaders(color_ostream& out, void* ptr) {
     CoreSuspender suspend;
     
-#if HASHMAP
     unordered_set<df::coord, PointHash> invaderPts;
     unordered_set<df::coord, PointHash> localPts;
     unordered_map<df::coord,df::coord,PointHash> parentMap;
-    unordered_map<df::coord,Cost,PointHash> costMap;
-#else
-    set<df::coord> invaderPts;
-    set<df::coord> localPts;
-    map<df::coord, df::coord> parentMap;
-    map<df::coord, Cost> costMap;
-#endif
+    unordered_map<df::coord,int64_t,PointHash> costMap;
 
     PointComp comp(&costMap);
     set<df::coord, PointComp> fringe(comp);
@@ -345,11 +226,8 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
     out << firstInvader->pos.x << ", " << firstInvader->pos.y << ", " << firstInvader->pos.z << endl;
 
     int32_t localPtsFound = 0;
-#if HASHMAP
     unordered_set<df::coord,PointHash> closedSet;
-#else
-    set<df::coord> closedSet;
-#endif
+    unordered_map<df::coord,int32_t,PointHash> workNeeded; //non-walking work needed to get there
 
     clock_t t0 = clock();
     clock_t totalEdgeTime = 0;
@@ -367,18 +245,11 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             localPtsFound++;
             if ( localPtsFound >= localPts.size() )
                 break;
-            bool doBreak = false;
-            for ( int32_t a = 1; a < costDim; a++ ) {
-                if ( costMap[pt].cost[a] > 0 ) {
-                    doBreak = true;
-                    break;
-                }
-            }
-            if ( doBreak )
+            if ( workNeeded.find(pt) != workNeeded.end() && workNeeded[pt] > 0 )
                 break;
         }
 
-        Cost& myCost = costMap[pt];
+        int64_t myCost = costMap[pt];
         clock_t edgeTime = clock();
         vector<Edge>* myEdges = getEdgeSet(out, pt, cache, xMax, yMax, zMax);
         totalEdgeTime += (clock() - edgeTime);
@@ -391,7 +262,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             //    continue;
             auto i = costMap.find(other);
             if ( i != costMap.end() ) {
-                Cost& cost = (*i).second;
+                int64_t cost = (*i).second;
                 if ( cost <= myCost + e.cost ) {
                     continue;
                 }
@@ -400,6 +271,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             costMap[other] = myCost + e.cost;
             fringe.insert(other);
             parentMap[other] = pt;
+            workNeeded[other] = (e.cost > 1 ? 1 : 0) + workNeeded[pt];
         }
         delete myEdges;
     }
@@ -417,17 +289,10 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             continue;
         if ( parentMap.find(pt) == parentMap.end() )
             continue;
-        bool requireAction = false;
-        for ( int32_t a = 1; a < costDim; a++ ) {
-            if ( costMap[pt].cost[a] != 0 ) {
-                requireAction = true;
-                break;
-            }
-        }
-        if ( !requireAction )
+        if ( workNeeded[pt] == 0 ) 
             continue;
         while ( parentMap.find(pt) != parentMap.end() ) {
-            //out.print("(%d,%d,%d)\n", pt.x, pt.y, pt.z);
+            out.print("(%d,%d,%d)\n", pt.x, pt.y, pt.z);
             df::coord parent = parentMap[pt];
             if ( pt.z < parent.z ) {
                 requiresZNeg.insert(parent);
@@ -436,13 +301,9 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
                 requiresZNeg.insert(pt);
                 requiresZPos.insert(parent);
             }
-            Cost cost1 = costMap[pt];
-            Cost cost2 = costMap[parent];
-            cost1.cost[0] = 0;
-            cost2.cost[0] = 0;
-            if ( true || cost1 != cost2 ) {
+            //if ( workNeeded[pt] > workNeeded[parent] ) {
                 importantEdges.push_front(Edge(pt,parent,0));
-            }
+            //}
             pt = parent;
         }
         break;
@@ -472,41 +333,57 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
 
     bool didSomething = false;
     df::coord where;
+out << __LINE__ << endl;
     for ( auto i = importantEdges.begin(); i != importantEdges.end(); i++ ) {
+out << __LINE__ << endl;
         Edge e = *i;
         df::coord pt1 = e.p1;
         df::coord pt2 = e.p2;
         if ( costMap[e.p2] < costMap[e.p1] ) {
+out << __LINE__ << endl;
             pt1 = e.p2;
             pt2 = e.p1;
         }
+out << __LINE__ << endl;
         bool important = //requireZNeg.find(pt1) != requireZNeg.end() ||
             //requireZPos.find(pt1) != requireZPos.end() ||
             requiresZNeg.find(pt2) != requiresZNeg.end() ||
-            requiresZPos.find(pt2) != requiresZPos.end();
+            requiresZPos.find(pt2) != requiresZPos.end() ||
+            Buildings::findAtTile(pt2) != NULL;
         if ( !important ) {
-            Cost c1 = costMap[pt1];
-            Cost c2 = costMap[pt2];
-            c1.cost[0] = 0;
-            c2.cost[0] = 0;
-            if ( c1 == c2 ) {
+out << __LINE__ << endl;
+            if ( workNeeded[pt2] <= workNeeded[pt1] ) {
+out << __LINE__ << endl;
                 //definitely not important
                 continue;
             }
         }
 
+out << __LINE__ << endl;
+        if ( workNeeded[pt1] > 0 )
+            continue;
+
         df::map_block* block1 = Maps::getTileBlock(pt1);
+out << __LINE__ << endl;
         df::map_block* block2 = Maps::getTileBlock(pt2);
         bool passable1 = block1->walkable[pt1.x&0x0F][pt1.y&0x0F];
         bool passable2 = block2->walkable[pt2.x&0x0F][pt2.y&0x0F];
 
         //TODO: if actions required > 1, continue
         df::building* building = Buildings::findAtTile(pt2);
-        if ( building != NULL && passable2 ) {
-            building = NULL;
+out << __LINE__ << endl;
+        if ( building != NULL && building->getType() == df::enums::building_type::Stockpile ) {
+out << __LINE__ << endl;
+            continue;
         }
+out << __LINE__ << endl;
+        if ( building != NULL && passable2 ) {
+            //building = NULL;
+        }
+out << __LINE__ << endl;
         if ( building != NULL ) {
-            out.print("%s, line %d: Destroying building %d\n", __FILE__, __LINE__, building->id);
+out << __LINE__ << endl;
+            out.print("%s, line %d: Destroying building %d at (%d,%d,%d)\n", __FILE__, __LINE__, building->id, pt2.x,pt2.y,pt2.z);
             //building->flags.bits.almost_deleted = true;
             
             df::job* job = new df::job;
@@ -532,14 +409,17 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             
             didSomething = true;
             where = pt2;
-            continue;
+out << __LINE__ << endl;
+            break;
         } else {
+out << __LINE__ << endl;
             df::tiletype* type1 = Maps::getTileType(pt1);
             df::tiletype* type2 = Maps::getTileType(pt2);
             df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
             df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
             bool construction2 = ENUM_ATTR(tiletype, material, *type1) == df::enums::tiletype_material::CONSTRUCTION;
             if ( construction2 ) {
+out << __LINE__ << endl;
                 out.print("%s, line %d. Removing construction (%d,%d,%d)\n", __FILE__, __LINE__, pt2.x,pt2.y,pt2.z);
                 df::job* job = new df::job();
                 job->job_type = df::enums::job_type::RemoveConstruction;
@@ -557,6 +437,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
                 Job::linkIntoWorld(job);
                 didSomething = true;
                 where = pt2;
+out << __LINE__ << endl;
                 break;
             }
 
@@ -567,6 +448,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
                 break;
             }*/
 
+out << __LINE__ << endl;
             bool up = requiresZPos.find(pt2) != requiresZPos.end();
             bool down = requiresZNeg.find(pt2) != requiresZNeg.end();
             df::job* job = new df::job;
@@ -619,6 +501,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             pick->skill_used = (df::enums::job_skill::job_skill)0;
             pick->maker = -1;
             df::itemdef_weaponst* itemdef = NULL;
+out << __LINE__ << endl;
             for ( size_t a = 0; a < df::global::world->raws.itemdefs.weapons.size(); a++ ) {
                 df::itemdef_weaponst* candidate = df::global::world->raws.itemdefs.weapons[a];
                 if ( candidate->id == "ITEM_WEAPON_PICK" ) {
@@ -626,16 +509,20 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
                     break;
                 }
             }
+out << __LINE__ << endl;
             if ( itemdef == NULL ) {
                 out.print("%s, %d: null itemdef.\n", __FILE__, __LINE__);
                 return;
             }
+out << __LINE__ << endl;
             pick->subtype = itemdef;
             pick->sharpness = 5000;
 
             int32_t part = -1;
             part = firstInvader->body.unk_3c8; //weapon_bp
+out << __LINE__ << endl;
             if ( part == -1 ) {
+out << __LINE__ << endl;
                 out.print("%s, %d: no grasp part.\n", __FILE__, __LINE__);
                 return;
             }
@@ -650,14 +537,17 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             Items::moveToInventory(cache, pick, firstInvader, df::unit_inventory_item::T_mode::Weapon, part);
             didSomething = true;
             where = pt2;
+out << __LINE__ << endl;
             break;
         }
     }
+out << __LINE__ << endl;
     out << "didSomething = " << didSomething << endl;
 
     if ( !didSomething )
         return;
     
+/*
     Cost cost = costMap[where];
     float cost_tick = 0;
     cost_tick += cost.cost[CostDimension::Distance];
@@ -668,45 +558,275 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
     Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("diggingInvaders");
     //EventManager::registerTick(handle, (int32_t)cost_tick, me);
     df::global::world->reindex_pathfinding = true;
+*/
 }
 
+int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
+    //first, list all the facts
+    int32_t dx = pt2.x - pt1.x;
+    int32_t dy = pt2.y - pt1.y;
+    int32_t dz = pt2.z - pt1.z;
+    int64_t cost = costWeight[CostDimension::Distance];
+    
+    Maps::ensureTileBlock(pt1);
+    Maps::ensureTileBlock(pt2);
+    df::tiletype* type1 = Maps::getTileType(pt1);
+    df::tiletype* type2 = Maps::getTileType(pt2);
+    df::map_block* block1 = Maps::getTileBlock(pt1);
+    df::map_block* block2 = Maps::getTileBlock(pt2);
+    df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
+    df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
 
-int32_t getDestroyCost(df::building* building) {
-    return 1;
-#if 0 
-    if ( building->mat_type != 0 ) {
-        cerr << "Error " << __FILE__ << ", " << __LINE__ << endl;
-        exit(1);
+    bool construction1 = ENUM_ATTR(tiletype, material, *type1) == df::enums::tiletype_material::CONSTRUCTION;
+    bool construction2 = ENUM_ATTR(tiletype, material, *type2) == df::enums::tiletype_material::CONSTRUCTION;
+    bool passable1 = block1->walkable[pt1.x&0xF][pt1.y&0xF] != 0;
+    bool passable2 = block2->walkable[pt2.x&0xF][pt2.y&0xF] != 0;
+    bool passable_high1 = ENUM_ATTR(tiletype_shape, passable_high, shape1);
+    bool passable_high2 = ENUM_ATTR(tiletype_shape, passable_high, shape2);
+    bool passable_low1 = ENUM_ATTR(tiletype_shape, passable_low, shape1);
+    bool passable_low2 = ENUM_ATTR(tiletype_shape, passable_low, shape2);
+
+    bool building1, building2;
+    bool sameBuilding = false;
+    {
+        df::enums::tile_building_occ::tile_building_occ awk = block1->occupancy[pt1.x&0x0F][pt1.y&0x0F].bits.building;
+        building1 = awk == df::enums::tile_building_occ::Obstacle || awk == df::enums::tile_building_occ::Impassable;
+        awk = block2->occupancy[pt2.x&0x0F][pt2.y&0x0F].bits.building;
+        building2 = awk == df::enums::tile_building_occ::Obstacle || awk == df::enums::tile_building_occ::Impassable;
+        if ( building1 && building2 ) {
+            df::building* b1 = Buildings::findAtTile(pt1);
+            df::building* b2 = Buildings::findAtTile(pt2);
+            sameBuilding = b1 == b2;
+        }
     }
-    df::inorganic_raw* mat = df::global::world->raws.inorganics[building->mat_index];
-    int32_t str = mat->material.strength.fracture[df::enums::strain_type::IMPACT];
-    return str / destroySpeed;
-#endif
-}
 
-int32_t getDigCost(MapExtras::MapCache& cache, df::coord point) {
-    //TODO: check for constructions
-    return 1;
-#if 0
-    df::tiletype* type = Maps::getTileType(point);
-    df::enums::tiletype_material::tiletype_material ttmat = ENUM_ATTR(tiletype, material, *type);
-    if ( ttmat == df::enums::tiletype_material::CONSTRUCTION ) {
-        //construction stuff
-        return 1;
-    } else if ( ttmat == df::enums::tiletype_material::SOIL ) {
+    if ( Maps::canStepBetween(pt1, pt2) ) {
+        if ( building2 && !sameBuilding ) {
+            cost += costWeight[CostDimension::DestroyBuilding];
+        }
+        return cost;
+    }
+
+    if ( shape2 == df::enums::tiletype_shape::EMPTY ) {
+        return -1;
+    }
+
+    //cannot step between: find out why
+    if ( dz == 0 ) {
+        if ( passable2 && !passable1 ) {
+            return cost;
+        }
+        if ( passable1 && passable2 ) {
+            out << __FILE__ << ", line " << __LINE__ << ": WTF?" << endl;
+            return cost;
+        }
+        //pt2 is not passable. it must be a construction, a building, or a wall.
+        if ( building2 ) {
+            if ( sameBuilding ) {
+                //don't charge twice for destroying the same building
+                return cost;
+            }
+            cost += costWeight[CostDimension::DestroyBuilding];
+            return cost;
+        }
+        if ( construction2 ) {
+            //impassible constructions must be deconstructed
+            cost += costWeight[CostDimension::DestroyConstruction];
+            return cost;
+        }
+
+        if ( shape2 == df::enums::tiletype_shape::TREE ) {
+            return -1;
+        }
+
+        if ( shape2 == df::enums::tiletype_shape::RAMP_TOP ) {
+            return -1;
+        }
         
+        //it has to be a wall
+        if ( shape2 != df::enums::tiletype_shape::WALL ) {
+            out << "shape = " << (int32_t)shape2 << endl;
+            out << __FILE__ << ", line " << __LINE__ << ": WTF?" << endl;
+            return cost;
+        }
+
+        cost += costWeight[CostDimension::Dig];
+        return cost;
+    }
+
+    //dz != 0
+    if ( dx == 0 && dy == 0 ) {
+        if ( dz > 0 ) {
+            if ( passable_low2 )
+                return cost;
+            if ( building2 || construction2 ) {
+                return -1;
+            }
+            cost += costWeight[CostDimension::Dig];
+            return cost;
+        }
+        
+        //descending
+        if ( passable_high2 )
+            return cost;
+        
+        if ( building2 || construction2 ) {
+            return -1;
+        }
+        
+        //must be a wall?
+        if ( shape2 != df::enums::tiletype_shape::WALL ) {
+            out.print("%s, line %n: WTF?\n", __FILE__, __LINE__);
+            return cost;
+        }
+
+        cost += costWeight[CostDimension::Dig];
+        return cost;
     }
     
-    return 1;
+    //moving diagonally
+    return -1;
+#if 0
+    //if ( dz != 0 ) cost++;
+    if ( Maps::canStepBetween(point, neighbor) ) {
+        df::map_block* block2 = Maps::getTileBlock(neighbor);
+        df::enums::tile_building_occ::tile_building_occ occ = block2->occupancy[neighbor.x&0x0F][neighbor.y&0x0F].bits.building; 
+        bool building2 = occ == df::enums::tile_building_occ::Obstacle || occ == df::enums::tile_building_occ::Impassable || occ == df::enums::tile_building_occ::Floored;
+        if ( building2 ) {
+            df::building* building = Buildings::findAtTile(neighbor);
+            if ( true || building->getType() == df::enums::building_type::Hatch ) {
+                if ( true || building->isForbidden() ) {
+                    //TODO: worry about destroying hatches with nowhere to stand
+                    cost += costWeight[CostDimension::DestroyBuilding];
+                }
+            }
+        }
+        
+        Edge edge(point, neighbor, cost);
+        result->push_back(edge);
+    } else {
+        //find out WHY we can't walk there
+        //make it simple: don't deal with unallocated blocks
+        Maps::ensureTileBlock(point);
+        Maps::ensureTileBlock(neighbor);
+        df::tiletype* type1 = Maps::getTileType(point);
+        df::tiletype* type2 = Maps::getTileType(neighbor);
+        df::map_block* block1 = Maps::getTileBlock(point);
+        df::map_block* block2 = Maps::getTileBlock(neighbor);
+
+        df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
+        df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
+
+        bool construction1 = ENUM_ATTR(tiletype, material, *type1) == df::enums::tiletype_material::CONSTRUCTION;
+        bool construction2 = ENUM_ATTR(tiletype, material, *type2) == df::enums::tiletype_material::CONSTRUCTION;
+        bool passable1 = block1->walkable[point.x&0xF][point.y&0xF] != 0;
+        bool passable2 = block2->walkable[neighbor.x&0xF][neighbor.y&0xF] != 0;
+
+        bool building1, building2;
+        bool sameBuilding = false;
+        {
+            df::enums::tile_building_occ::tile_building_occ awk = block1->occupancy[point.x&0x0F][point.y&0x0F].bits.building;
+            building1 = awk == df::enums::tile_building_occ::Obstacle || awk == df::enums::tile_building_occ::Impassable;
+            awk = block2->occupancy[neighbor.x&0x0F][neighbor.y&0x0F].bits.building;
+            building2 = awk == df::enums::tile_building_occ::Obstacle || awk == df::enums::tile_building_occ::Impassable;
+            if ( building1 && building2 ) {
+                df::building* b1 = Buildings::findAtTile(point);
+                df::building* b2 = Buildings::findAtTile(neighbor);
+                sameBuilding = b1 == b2;
+            }
+        }
+
+        if ( !passable2 && building2 && !sameBuilding ) {
+            df::building* b2 = Buildings::findAtTile(neighbor);
+            cost += costWeight[CostDimension::DestroyBuilding];
+            if ( dz != 0 )
+                continue;
+        } else {
+
+            if ( shape2 == df::enums::tiletype_shape::EMPTY ) {
+                //cost.cost[CostDimension::Construct] += getConstructCost(neighbor);
+                continue;
+            } else {
+                if ( dz == 0 ) {
+                    if ( passable2 ) {
+                        if ( passable1 ) {
+                            out.print("%s, line %d: weirdness. (%d,%d,%d), (%d,%d,%d)\n", __FILE__, __LINE__, point.x,point.y,point.z, neighbor.x,neighbor.y,neighbor.z);
+                            //exit(1);
+                            //TODO: check
+                        } else {
+                            //this is fine: only charge once for digging through a wall, etc
+                        }
+                    } else {
+                        //passable2 is false
+                        if ( construction2 ) {
+                            //must deconstruct orthogonally
+                            if ( dx*dy != 0 )
+                                continue;
+                            cost += costWeight[CostDimension::DestroyConstruction];
+                        } else {
+                            cost += costWeight[CostDimension::Dig];
+                        }
+                    }
+                } else {
+                    //dz is nonzero
+                    bool ascending = dz > 0;
+                    if ( dx == 0 && dy == 0 ) {
+                        if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Stair ) {
+                            if ( (ascending && ENUM_ATTR(tiletype_shape, passable_low, shape2)) || (!ascending && ENUM_ATTR(tiletype_shape, walkable_up, shape2)) ) {
+                                out.print("%s, line %d: weirdness. (%d,%d,%d), (%d,%d,%d)\n", __FILE__, __LINE__, point.x,point.y,point.z, neighbor.x,neighbor.y,neighbor.z);
+                                //TODO: check for forbidden hatch
+                                continue;
+                            } else {
+                                //figure out if we can dig something in there
+                                df::enums::tiletype_shape_basic::tiletype_shape_basic basic = ENUM_ATTR(tiletype_shape, basic_shape, shape2);
+                                if ( ascending ) {
+                                    if ( construction2 )
+                                        continue; //technically possible: moving up, construction is up stair, hiding a floor with no down stair
+                                    if ( basic == df::enums::tiletype_shape_basic::Wall || basic == df::enums::tiletype_shape_basic::Stair || df::enums::tiletype_shape_basic::Floor ) {
+                                        cost += costWeight[CostDimension::Dig];
+                                    } else {
+                                        continue;
+                                    }
+                                } else {
+                                    //descending
+                                    if ( construction2 )
+                                        continue;
+                                    if ( basic == df::enums::tiletype_shape_basic::Wall ) {
+                                        cost += costWeight[CostDimension::Dig];
+                                    } else if ( basic == df::enums::tiletype_shape_basic::Ramp ) {
+                                        //do nothing
+                                    } else if ( basic == df::enums::tiletype_shape_basic::Floor ) {
+                                        //do nothing
+                                    } else {
+                                        continue;
+                                    }
+                                }
+                            }
+                        } else {
+                            //shape2 is not a stair
+                            if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Wall ) {
+                                if ( construction2 )
+                                    continue;
+                                cost += costWeight[CostDimension::Dig];
+                            } else if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Open ) {
+                                continue;
+                            } else {
+                                if ( ascending && ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Floor && !construction2 ) {
+                                    cost += costWeight[CostDimension::Dig];
+                                }
+                                continue;
+                            }
+                        }
+                    } else {
+                        //now we're talking about moving up and down nonvertically, ie with ramps
+                        continue;
+                    }
+                }
+            }
+        }
+    }                    
+    return cost;
 #endif
-}
-
-int32_t getDeconstructCost(df::coord point) {
-    return 1;
-}
-
-int32_t getConstructCost(df::coord point) {
-    return 1;
 }
 
 vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax) {
@@ -723,155 +843,11 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCach
                     continue;
                 if ( dx == 0 && dy == 0 && dz == 0 )
                     continue;
-                Cost cost = 1;
-                //if ( dz != 0 ) cost++;
-                if ( Maps::canStepBetween(point, neighbor) ) {
-                    df::map_block* block2 = Maps::getTileBlock(neighbor);
-                    bool building2 = block2->occupancy[point.x&0x0F][point.y&0x0F].bits.building == df::enums::tile_building_occ::Obstacle || block2->occupancy[point.x&0x0F][point.y&0x0F].bits.building == df::enums::tile_building_occ::Impassable;
-                    if ( building2 ) {
-                        df::building* building = Buildings::findAtTile(neighbor);
-                        if ( building->getType() == df::enums::building_type::Hatch ) {
-                            if ( building->isForbidden() ) {
-                                //TODO: worry about destroying hatches with nowhere to stand
-                                cost.cost[CostDimension::DestroyBuilding] += getDestroyCost(building);
-                            }
-                        }
-                    }
-                    
-                    Edge edge(point, neighbor, cost);
-                    result->push_back(edge);
-                } else {
-#if 0
-                    {
-                        cost.cost[1] = 1;
-                        result->push_back(Edge(point,neighbor,cost));
-                        continue;
-                    }
-#endif
-                    //cost.cost[1] = 1;
-                    //find out WHY we can't walk there
-                    //make it simple: don't deal with unallocated blocks
-                    Maps::ensureTileBlock(point);
-                    Maps::ensureTileBlock(neighbor);
-                    df::tiletype* type1 = Maps::getTileType(point);
-                    df::tiletype* type2 = Maps::getTileType(neighbor);
-                    df::map_block* block1 = Maps::getTileBlock(point);
-                    df::map_block* block2 = Maps::getTileBlock(neighbor);
-
-                    df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
-                    df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
-
-                    bool construction1 = ENUM_ATTR(tiletype, material, *type1) == df::enums::tiletype_material::CONSTRUCTION;
-                    bool construction2 = ENUM_ATTR(tiletype, material, *type2) == df::enums::tiletype_material::CONSTRUCTION;
-                    bool passable1 = block1->walkable[point.x&0xF][point.y&0xF] != 0;
-                    bool passable2 = block2->walkable[neighbor.x&0xF][neighbor.y&0xF] != 0;
-
-                    bool building1, building2;
-                    bool sameBuilding = false;
-                    {
-                        df::enums::tile_building_occ::tile_building_occ awk = block1->occupancy[point.x&0x0F][point.y&0x0F].bits.building;
-                        building1 = awk == df::enums::tile_building_occ::Obstacle || awk == df::enums::tile_building_occ::Impassable;
-                        awk = block2->occupancy[neighbor.x&0x0F][neighbor.y&0x0F].bits.building;
-                        building2 = awk == df::enums::tile_building_occ::Obstacle || awk == df::enums::tile_building_occ::Impassable;
-                        if ( building1 && building2 ) {
-                            df::building* b1 = Buildings::findAtTile(point);
-                            df::building* b2 = Buildings::findAtTile(neighbor);
-                            sameBuilding = b1 == b2;
-                        }
-                    }
-
-                    if ( !passable2 && building2 && !sameBuilding ) {
-                        df::building* b2 = Buildings::findAtTile(neighbor);
-                        cost.cost[CostDimension::DestroyBuilding] += getDestroyCost(b2);
-                        if ( dz != 0 )
-                            continue;
-                    } else {
-
-                        if ( shape2 == df::enums::tiletype_shape::EMPTY ) {
-                            //cost.cost[CostDimension::Construct] += getConstructCost(neighbor);
-                            continue;
-                        } else {
-                            if ( dz == 0 ) {
-                                if ( passable2 ) {
-                                    if ( passable1 ) {
-                                        out.print("%s, line %d: weirdness. (%d,%d,%d), (%d,%d,%d)\n", __FILE__, __LINE__, point.x,point.y,point.z, neighbor.x,neighbor.y,neighbor.z);
-                                        //exit(1);
-                                        //TODO: check
-                                    } else {
-                                        //this is fine: only charge once for digging through a wall, etc
-                                    }
-                                } else {
-                                    //passable2 is false
-                                    if ( construction2 ) {
-                                        //must deconstruct orthogonally
-                                        if ( dx*dy != 0 )
-                                            continue;
-                                        cost.cost[CostDimension::DestroyConstruction] += getDeconstructCost(neighbor);
-                                    } else {
-                                        cost.cost[CostDimension::Dig] += getDigCost(cache, neighbor);
-                                    }
-                                }
-                            } else {
-                                //dz is nonzero
-                                bool ascending = dz > 0;
-                                if ( dx == 0 && dy == 0 ) {
-                                    if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Stair ) {
-                                        if ( (ascending && ENUM_ATTR(tiletype_shape, passable_low, shape2)) || (!ascending && ENUM_ATTR(tiletype_shape, walkable_up, shape2)) ) {
-                                            out.print("%s, line %d: weirdness. (%d,%d,%d), (%d,%d,%d)\n", __FILE__, __LINE__, point.x,point.y,point.z, neighbor.x,neighbor.y,neighbor.z);
-                                            //TODO: check for forbidden hatch
-                                            continue;
-                                        } else {
-                                            //figure out if we can dig something in there
-                                            df::enums::tiletype_shape_basic::tiletype_shape_basic basic = ENUM_ATTR(tiletype_shape, basic_shape, shape2);
-                                            if ( ascending ) {
-                                                if ( construction2 )
-                                                    continue; //technically possible: moving up, construction is up stair, hiding a floor with no down stair
-                                                if ( basic == df::enums::tiletype_shape_basic::Wall || basic == df::enums::tiletype_shape_basic::Stair || df::enums::tiletype_shape_basic::Floor ) {
-                                                    cost.cost[CostDimension::Dig] += 1;
-                                                } else {
-                                                    continue;
-                                                }
-                                            } else {
-                                                //descending
-                                                if ( construction2 )
-                                                    continue;
-                                                if ( basic == df::enums::tiletype_shape_basic::Wall ) {
-                                                    cost.cost[CostDimension::Dig] += 1;
-                                                } else {
-                                                    continue;
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        //shape2 is not a stair
-                                        if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Wall ) {
-                                            if ( construction2 )
-                                                continue;
-                                            cost.cost[CostDimension::Dig] += getDigCost(cache, neighbor);
-                                        } else if ( ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Open ) {
-                                            continue;
-                                            //cost.cost[CostDimension::Construct] += getConstructCost(neighbor);
-                                        } else {
-                                            if ( ascending && ENUM_ATTR(tiletype_shape, basic_shape, shape2) == df::enums::tiletype_shape_basic::Floor && !construction2 ) {
-                                                cost.cost[CostDimension::Dig] += 1;
-                                            }
-                                            continue;
-                                        }
-                                    }
-                                } else {
-                                    //now we're talking about moving up and down nonvertically, ie with ramps
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                    
-                    if ( cost.cost[CostDimension::DestroyBuilding] != 0 ) {
-                        //out.print("Line %d: Destroy building from (%d,%d,%d), (%d,%d,%d)\n", __LINE__, point.x,point.y,point.z, neighbor.x,neighbor.y,neighbor.z);
-                    }
-                    Edge edge(point, neighbor, cost);
-                    result->push_back(edge);
-                }
+                int64_t cost = getEdgeCost(out, point, neighbor);
+                if ( cost == -1 )
+                    continue;
+                Edge edge(point, neighbor, cost);
+                result->push_back(edge);
             }
         }
     }

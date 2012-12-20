@@ -5,6 +5,9 @@
 #include <string.h>
 
 #include <VTableInterpose.h>
+
+#include "df/building_workshopst.h"
+
 #include "df/unit.h"
 #include "df/item.h"
 #include "df/item_actual.h"
@@ -84,6 +87,7 @@ static bool is_lua_hook(const std::string &name)
 /*
  * Hooks
  */
+static void handle_fillsidebar(color_ostream &out,df::building_workshopst*,bool *call_native){};
 
 static void handle_reaction_done(color_ostream &out,df::reaction*, df::unit *unit, std::vector<df::item*> *in_items,std::vector<df::reaction_reagent*> *in_reag
     , std::vector<df::item*> *out_items,bool *call_native){};
@@ -92,6 +96,8 @@ static void handle_projitem_ci(color_ostream &out,df::proj_itemst*,bool){};
 static void handle_projitem_cm(color_ostream &out,df::proj_itemst*){};
 static void handle_projunit_ci(color_ostream &out,df::proj_unitst*,bool){};
 static void handle_projunit_cm(color_ostream &out,df::proj_unitst*){};
+
+DEFINE_LUA_EVENT_2(onWorkshopFillSidebarMenu, handle_fillsidebar, df::building_workshopst*,bool* );
 
 DEFINE_LUA_EVENT_6(onReactionComplete, handle_reaction_done,df::reaction*, df::unit *, std::vector<df::item*> *,std::vector<df::reaction_reagent*> *,std::vector<df::item*> *,bool *);
 DEFINE_LUA_EVENT_5(onItemContaminateWound, handle_contaminate_wound, df::item_actual*,df::unit* , df::unit_wound* , uint8_t , int16_t );
@@ -102,6 +108,7 @@ DEFINE_LUA_EVENT_2(onProjUnitCheckImpact, handle_projunit_ci, df::proj_unitst*,b
 DEFINE_LUA_EVENT_1(onProjUnitCheckMovement, handle_projunit_cm, df::proj_unitst* );
 
 DFHACK_PLUGIN_LUA_EVENTS {
+    DFHACK_LUA_EVENT(onWorkshopFillSidebarMenu),
     DFHACK_LUA_EVENT(onReactionComplete),
     DFHACK_LUA_EVENT(onItemContaminateWound),
     DFHACK_LUA_EVENT(onProjItemCheckImpact),
@@ -110,7 +117,19 @@ DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onProjUnitCheckMovement),
     DFHACK_LUA_END
 };
-
+struct workshop_hook : df::building_workshopst{
+    typedef df::building_workshopst interpose_base;
+    DEFINE_VMETHOD_INTERPOSE(void,fillSidebarMenu,())
+    {
+        CoreSuspendClaimer suspend;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+        bool call_native=true;
+        onWorkshopFillSidebarMenu(out,this,&call_native);
+        if(call_native)
+            INTERPOSE_NEXT(fillSidebarMenu)();
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, fillSidebarMenu);
 struct product_hook : item_product {
     typedef item_product interpose_base;
 
@@ -246,6 +265,7 @@ static bool find_reactions(color_ostream &out)
 
 static void enable_hooks(bool enable)
 {
+    INTERPOSE_HOOK(workshop_hook,fillSidebarMenu).apply(enable);
     INTERPOSE_HOOK(item_hooks,contaminateWound).apply(enable);
     INTERPOSE_HOOK(proj_unit_hook,checkImpact).apply(enable);
     INTERPOSE_HOOK(proj_unit_hook,checkMovement).apply(enable);

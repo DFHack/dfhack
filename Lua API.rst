@@ -2969,6 +2969,7 @@ List of events
 4. onProjItemCheckImpact(projectile,somebool) - is called when projectile hits something
 5. onProjUnitCheckMovement(projectile) - is called when projectile moves
 6. onProjUnitCheckImpact(projectile,somebool) - is called when projectile hits something
+6. onWorkshopFillSidebarMenu(workshop,callnative) - is called when viewing a workshop in 'q' mode, to populate reactions, usefull for custom viewscreens for shops
 
 Examples
 --------

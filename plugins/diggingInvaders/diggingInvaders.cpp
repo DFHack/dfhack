@@ -725,7 +725,7 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCach
                     continue;
                 Cost cost = 1;
                 //if ( dz != 0 ) cost++;
-                if ( Maps::canWalkBetween(point, neighbor) ) {
+                if ( Maps::canStepBetween(point, neighbor) ) {
                     df::map_block* block2 = Maps::getTileBlock(neighbor);
                     bool building2 = block2->occupancy[point.x&0x0F][point.y&0x0F].bits.building == df::enums::tile_building_occ::Obstacle || block2->occupancy[point.x&0x0F][point.y&0x0F].bits.building == df::enums::tile_building_occ::Impassable;
                     if ( building2 ) {

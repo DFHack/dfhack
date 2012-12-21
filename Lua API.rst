@@ -741,6 +741,10 @@ can be omitted.
 
   Returns the dfhack directory path, i.e. ``".../df/hack/"``.
 
+* ``dfhack.getSavePath()``
+
+  Returns the path to the current save directory, or *nil* if no save loaded.
+
 * ``dfhack.getTickCount()``
 
   Returns the tick count in ms, exactly as DF ui uses.
@@ -2993,3 +2997,24 @@ from other scripts) in any context, via the same function the core uses:
   The ``name`` argument should be the name stem, as would be used on the command line.
 
 Note that this function lets errors propagate to the caller.
+
+Save init script
+================
+
+If a save directory contains a file called ``raw/init.lua``, it is
+automatically loaded and executed every time the save is loaded. It
+can also define the following functions to be called by dfhack:
+
+* ``function onStateChange(op) ... end``
+
+  Automatically called from the regular onStateChange event as long
+  as the save is still loaded. This avoids the need to install a hook
+  into the global ``dfhack.onStateChange`` table, with associated
+  cleanup concerns.
+
+* ``function onUnload() ... end``
+
+  Called when the save containing the script is unloaded. This function
+  should clean up any global hooks installed by the script.
+
+Within the init script, the path to the save directory is available as ``SAVE_PATH``.

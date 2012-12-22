@@ -234,12 +234,32 @@ void processJob(color_ostream& out, void* jobPtr) {
 
         //must be a boiling rock syndrome
         df::inorganic_raw* inorganic = df::global::world->raws.inorganics[bob->mat_index];
-        if ( inorganic->material.heat.boiling_point > 10000 )
-            continue;
+        if ( inorganic->material.heat.boiling_point > 10000 ) {
+            //continue;
+        }
 
         for ( size_t b = 0; b < inorganic->material.syndrome.size(); b++ ) {
             //add each syndrome to the guy who did the job
             df::syndrome* syndrome = inorganic->material.syndrome[b];
+            bool foundCommand = false;
+            string commandStr;
+            vector<string> args;
+            for ( size_t c = 0; c < syndrome->syn_class.size(); c++ ) {
+                std::string* clazz = syndrome->syn_class[c];
+                out.print("Class = %s\n", clazz->c_str());
+                if ( foundCommand ) {
+                    if ( commandStr == "" )
+                        commandStr = *clazz;
+                    else
+                        args.push_back(*clazz);
+                } else if ( *clazz == "command" ) {
+                    foundCommand = true;
+                }
+            }
+            if ( commandStr != "" ) {
+                out.print("Running command thingy.");
+                Core::getInstance().runCommand(out, commandStr, args);
+            }
             //check that the syndrome applies to that guy
             /*
              * If there is no affected class or affected creature, then anybody who isn't immune is fair game.

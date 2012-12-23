@@ -1850,13 +1850,16 @@ slayrace
 ========
 Kills any unit of a given race.
 
-With no argument, lists the available races.
+With no argument, lists the available races and count eligible targets.
 
 With the special argument ``him``, targets only the selected creature.
 
+With the special argument ``undead``, targets all undeads on the map,
+regardless of their race.
+
 Any non-dead non-caged unit of the specified race gets its ``blood_count``
 set to 0, which means immediate death at the next game tick. For creatures
-such as vampires, also set animal.vanish_countdown to 2.
+such as vampires, it also sets animal.vanish_countdown to 2.
 
 An alternate mode is selected by adding a 2nd argument to the command,
 ``magma``. In this case, a column of 7/7 magma is generated on top of the
@@ -1939,6 +1942,7 @@ deathcause
 ==========
 Focus a body part ingame, and this script will display the cause of death of
 the creature.
+Also works when selecting units from the 'u'nitlist viewscreen.
 
 lua
 ===
@@ -2000,6 +2004,33 @@ the map. With the ``here`` argument, considers only the in-game selected cage
 alternatively pass cage IDs as arguments::
 
   stripcaged weapons 25321 34228
+
+create-items
+============
+Spawn arbitrary items under the cursor.
+
+The first argument gives the item category, the second gives the material,
+and the optionnal third gives the number of items to create (defaults to 20).
+
+Currently supported item categories: ``boulder``, ``bar``, ``plant``, ``log``,
+``web``.
+
+Instead of material, using ``list`` makes the script list eligible materials.
+
+The ``web`` item category will create an uncollected cobweb on the floor.
+
+Note that the script does not enforce anything, and will let you create
+boulders of toad blood and stuff like that.
+However the ``list`` mode will only show 'normal' materials.
+
+Exemples::
+
+    create-items boulders COAL_BITUMINOUS 12
+    create-items plant tail_pig
+    create-items log list
+    create-items web CREATURE:SPIDER_CAVE_GIANT:SILK
+    create-items bar CREATURE:CAT:SOAP
+    create-items bar adamantine
 
 =======================
 In-game interface tools

@@ -66,29 +66,6 @@ struct MaterialDescriptor
     }
 };
 
-static map<int16_t, MaterialDescriptor> last_used_material;
-static map<int16_t, MaterialDescriptor> last_moved_material;
-static map< int16_t, vector<MaterialDescriptor> > preferred_materials;
-static map< int16_t, df::interface_key > hotkeys;
-static bool last_used_moved = false;
-static bool auto_choose_materials = true;
-static bool auto_choose_attempted = true;
-static bool revert_to_last_used_type = false;
-
-struct point
-{
-    int32_t x, y, z;
-};
-
-static enum t_box_select_mode {SELECT_FIRST, SELECT_SECOND, SELECT_MATERIALS, AUTOSELECT_MATERIALS} box_select_mode = SELECT_FIRST;
-static point box_first, box_second;
-static bool box_select_enabled = false;
-static bool show_box_selection = true;
-static bool hollow_selection = false;
-#define SELECTION_IGNORE_TICKS 10
-static int ignore_selection = SELECTION_IGNORE_TICKS;
-static deque<df::item*> box_select_materials;
-static vector<df::coord> building_sites;
 
 static command_result automaterial_cmd(color_ostream &out, vector <string> & parameters)
 {
@@ -99,7 +76,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
 }
-
 
 void OutputString(int8_t color, int &x, int &y, const std::string &text, bool newline = false, int left_margin = 0)
 {
@@ -125,6 +101,31 @@ static string int_to_string(int i)
 {
     return static_cast<ostringstream*>( &(ostringstream() << i))->str();
 }
+
+//START UI Functions
+struct coord32_t
+{
+    int32_t x, y, z;
+};
+
+static enum t_box_select_mode {SELECT_FIRST, SELECT_SECOND, SELECT_MATERIALS, AUTOSELECT_MATERIALS} box_select_mode = SELECT_FIRST;
+static coord32_t box_first, box_second;
+static bool box_select_enabled = false;
+static bool show_box_selection = true;
+static bool hollow_selection = false;
+static deque<df::item*> box_select_materials;
+
+#define SELECTION_IGNORE_TICKS 10
+static int ignore_selection = SELECTION_IGNORE_TICKS;
+
+static map<int16_t, MaterialDescriptor> last_used_material;
+static map<int16_t, MaterialDescriptor> last_moved_material;
+static map< int16_t, vector<MaterialDescriptor> > preferred_materials;
+static map< int16_t, df::interface_key > hotkeys;
+static bool last_used_moved = false;
+static bool auto_choose_materials = true;
+static bool auto_choose_attempted = true;
+static bool revert_to_last_used_type = false;
 
 static inline bool in_material_choice_stage()
 {
@@ -280,10 +281,48 @@ static void cancel_box_selection()
     if (!show_box_selection)
         Gui::setDesignationCoords(-1, -1, -1);
 }
+//END UI Functions
 
-static bool is_valid_building_site(df::coord &pos, bool orthogonal_check)
+//START Building and Verification
+struct building_site
 {
-    auto ttype = Maps::getTileType(pos);
+    df::coord pos;
+    bool in_open_air;
+
+    building_site(df::coord pos, bool in_open_air)
+    {
+        this->pos = pos;
+        this->in_open_air = in_open_air;
+    }
+
+    building_site() {}
+};
+
+static deque<building_site> valid_building_sites;
+static deque<building_site> open_air_sites;
+static building_site anchor;
+static bool in_future_placement_mode = false;
+
+static bool is_orthogonal_to_pending_construction(building_site &site)
+{
+    for (deque<building_site>::iterator it = valid_building_sites.begin(); it != valid_building_sites.end(); it++)
+    {
+        if ((it->pos.x == site.pos.x && abs(it->pos.y - site.pos.y) == 1) || (it->pos.y == site.pos.y && abs(it->pos.x - site.pos.x) == 1))
+        {
+            site.in_open_air = true;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool is_valid_building_site(building_site &site, bool orthogonal_check)
+{
+    if (!Maps::isValidTilePos(site.pos))
+        return false;
+
+    auto ttype = Maps::getTileType(site.pos);
 
     if (!ttype)
         return false;
@@ -294,29 +333,51 @@ static bool is_valid_building_site(df::coord &pos, bool orthogonal_check)
     if (shapeBasic == tiletype_shape_basic::Open)
     {
         if (orthogonal_check)
+        {
+            if (!in_future_placement_mode)
+                return false;
+
+            auto current = Buildings::findAtTile(site.pos);
+            if (current)
+            {
+                auto cons = strict_virtual_cast<df::building_constructionst>(current);
+                if (!cons || cons->type != construction_type::Floor)
+                    return false;
+
+                site.in_open_air = true;
+                return true;
+            }
+
             return false;
+        }
 
         bool valid_orthogonal_tile_found = false;
         df::coord orthagonal_pos;
-        orthagonal_pos.z = pos.z;
-        for (orthagonal_pos.x = pos.x-1; orthagonal_pos.x <= pos.x+1 && !valid_orthogonal_tile_found; orthagonal_pos.x++)
+        orthagonal_pos.z = site.pos.z;
+        for (orthagonal_pos.x = site.pos.x-1; orthagonal_pos.x <= site.pos.x+1 && !valid_orthogonal_tile_found; orthagonal_pos.x++)
         {
-            for (orthagonal_pos.y = pos.y-1; orthagonal_pos.y <= pos.y+1; orthagonal_pos.y++)
+            for (orthagonal_pos.y = site.pos.y-1; orthagonal_pos.y <= site.pos.y+1; orthagonal_pos.y++)
             {
-                if (pos.x != orthagonal_pos.x && pos.y != orthagonal_pos.y)
+                if ((site.pos.x == orthagonal_pos.x) == (site.pos.y == orthagonal_pos.y))
                     continue;
 
-                if (Maps::isValidTilePos(orthagonal_pos) && is_valid_building_site(orthagonal_pos, true))
+                building_site orthogonal_site(orthagonal_pos, false);
+                if (is_valid_building_site(orthogonal_site, true))
                 {
                     valid_orthogonal_tile_found = true;
+                    if (orthogonal_site.in_open_air)
+                        site.in_open_air = true;
                     break;
                 }
 
             }
         }
 
-        if (!valid_orthogonal_tile_found)
+        if (!valid_orthogonal_tile_found && !is_orthogonal_to_pending_construction(site))
+        {
+            site.in_open_air = true;
             return false;
+        }
     }
     else
     {
@@ -347,19 +408,19 @@ static bool is_valid_building_site(df::coord &pos, bool orthogonal_check)
         }
     }
 
-    auto designation = Maps::getTileDesignation(pos);
+    auto designation = Maps::getTileDesignation(site.pos);
     if (designation->bits.flow_size > 2)
         return false;
 
     if (orthogonal_check)
         return true;
 
-    auto current = Buildings::findAtTile(pos);
+    auto current = Buildings::findAtTile(site.pos);
     if (current)
         return false;
 
     df::coord2d size(1,1);
-    return Buildings::checkFreeTiles(pos, size, NULL, false, false);
+    return Buildings::checkFreeTiles(site.pos, size, NULL, false, false);
 }
 
 static bool designate_new_construction(df::coord &pos, df::construction_type &type, df::item *item)
@@ -379,10 +440,13 @@ static bool designate_new_construction(df::coord &pos, df::construction_type &ty
 
     return true;
 }
+//END Building and Verification
 
 
+//START Viewscreen Hook
 struct jobutils_hook : public df::viewscreen_dwarfmodest
 {
+    //START UI Methods
     typedef df::viewscreen_dwarfmodest interpose_base;
 
     void send_key(const df::interface_key &key)
@@ -418,41 +482,6 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         }
 
         return false;
-    }
-
-    bool populate_box_materials(vector<MaterialDescriptor> &gen_materials)
-    {
-        bool result = false;
-
-        if (gen_materials.size() == 0)
-            return result;
-
-        if (ui_build_selector->is_grouped)
-            send_key(interface_key::BUILDING_EXPAND_CONTRACT);
-
-        size_t size = ui_build_selector->choices.size();
-        vector<MaterialDescriptor>::iterator gen_material;
-        for (size_t i = 0; i < size; i++)
-        {
-            if (VIRTUAL_CAST_VAR(spec, df::build_req_choice_specst, ui_build_selector->choices[i]))
-            {
-                for (gen_material = gen_materials.begin(); gen_material != gen_materials.end(); gen_material++)
-                {
-                    if (gen_material->item_type == spec->candidate->getType() &&
-                        gen_material->item_subtype == spec->candidate->getSubtype() &&
-                        gen_material->type == spec->candidate->getActualMaterial() &&
-                        gen_material->index == spec->candidate->getActualMaterialIndex())
-                    {
-                        box_select_materials.push_back(spec->candidate);
-                        result = true;
-                        break;
-                    }
-                }
-            }
-        }
-        send_key(interface_key::BUILDING_EXPAND_CONTRACT);
-
-        return result;
     }
 
     void draw_box_selection()
@@ -499,116 +528,13 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         }
         else if (show_box_selection && box_select_mode == SELECT_MATERIALS)
         {
-            for (vector<df::coord>::iterator it = building_sites.begin(); it != building_sites.end(); it++)
+            for (deque<building_site>::iterator it = valid_building_sites.begin(); it != valid_building_sites.end(); it++)
             {
-                int32_t x = it->x - vport.x + 1;
-                int32_t y = it->y - vport.y + 1;
+                int32_t x = it->pos.x - vport.x + 1;
+                int32_t y = it->pos.y - vport.y + 1;
                 OutputString(COLOR_GREEN, x, y, "X");
             }
         }
-    }
-
-    static void find_valid_building_sites()
-    {
-        building_sites.clear();
-
-        int xD = (box_second.x > box_first.x) ? 1 : -1;
-        int yD = (box_second.y > box_first.y) ? 1 : -1;
-        for (int32_t xB = box_first.x; (xD > 0) ? (xB <= box_second.x) : (xB >= box_second.x); xB += xD)
-        {
-            for (int32_t yB = box_first.y; (yD > 0) ? (yB <= box_second.y) : (yB >= box_second.y); yB += yD)
-            {
-                if (hollow_selection && !(xB == box_first.x || xB == box_second.x || yB == box_first.y || yB == box_second.y))
-                    continue;
-
-                df::coord pos(xB, yB, box_second.z);
-                if (is_valid_building_site(pos, false))
-                    building_sites.push_back(pos);
-            }
-        }
-    }
-
-    void apply_box_selection(bool new_start)
-    {
-        static bool saved_revert_setting = false;
-        static bool auto_select_applied = false;
-
-        box_select_mode = SELECT_MATERIALS;
-        if (new_start)
-        {
-            find_valid_building_sites();
-            saved_revert_setting = revert_to_last_used_type;
-            revert_to_last_used_type = true;
-            auto_select_applied = false;
-            box_select_materials.clear();
-        }
-
-        while (building_sites.size() > 0)
-        {
-            df::coord pos = building_sites.back();
-            building_sites.pop_back();
-            if (box_select_materials.size() > 0)
-            {
-                df::construction_type type = (df::construction_type) ui_build_selector->building_subtype;
-                df::item *item = NULL;
-                while (box_select_materials.size() > 0)
-                {
-                    item = box_select_materials.front();
-                    if (!item->flags.bits.in_job)
-                        break;
-                    box_select_materials.pop_front();
-                    item = NULL;
-                }
-
-                if (item != NULL)
-                {
-                    if (designate_new_construction(pos, type, item))
-                    {
-                        box_select_materials.pop_front();
-                        box_select_mode = AUTOSELECT_MATERIALS;
-                        send_key(interface_key::LEAVESCREEN); //Must do this to register items in use
-                        send_key(hotkeys[type]);
-                        box_select_mode = SELECT_MATERIALS;
-                    }
-                    continue;
-                }
-            }
-
-            Gui::setCursorCoords(pos.x, pos.y, box_second.z);
-            send_key(interface_key::CURSOR_DOWN_Z);
-            send_key(interface_key::CURSOR_UP_Z);
-            send_key(df::interface_key::SELECT);
-
-            if (in_material_choice_stage())
-            {
-                if (!auto_select_applied)
-                {
-                    auto_select_applied = true;
-                    if (populate_box_materials(preferred_materials[ui_build_selector->building_subtype]))
-                    {
-                        building_sites.push_back(pos); //Retry current tile with auto select
-                        continue;
-                    }
-                }
-
-                last_used_moved = false;
-                return;
-            }
-        }
-
-        Gui::setCursorCoords(box_second.x, box_second.y, box_second.z);
-        send_key(interface_key::CURSOR_DOWN_Z);
-        send_key(interface_key::CURSOR_UP_Z);
-
-        revert_to_last_used_type = saved_revert_setting;
-        if (!revert_to_last_used_type)
-        {
-            send_key(df::interface_key::LEAVESCREEN);
-        }
-
-        cancel_box_selection();
-        hollow_selection = false;
-        ignore_selection = 0;
     }
 
     void reset_existing_selection()
@@ -639,14 +565,17 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 
                     set_last_used_material(material);
 
-                    if (box_select_enabled && input->count(interface_key::SEC_SELECT) && ui_build_selector->is_grouped)
+                    if (box_select_enabled)
                     {
                         auto curr_index = ui_build_selector->sel_index;
                         vector<MaterialDescriptor> gen_material;
                         gen_material.push_back(get_material_in_list(curr_index));
                         box_select_materials.clear();
-                        populate_box_materials(gen_material);
-                        ui_build_selector->sel_index = curr_index;
+                        // Populate material list with selected material
+                        populate_box_materials(gen_material, ((input->count(interface_key::SEC_SELECT) && ui_build_selector->is_grouped) ? -1 : 1));
+
+                        input->clear(); // Let the apply_box_selection routine allocate the construction
+                        input->insert(interface_key::LEAVESCREEN);
                     }
                 }
                 else if (input->count(interface_key::CUSTOM_A))
@@ -753,6 +682,204 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             }
         }
     }
+    //END UI Methods
+
+    //START Building Application
+    bool populate_box_materials(vector<MaterialDescriptor> &gen_materials, int32_t count = -1)
+    {
+        bool result = false;
+
+        if (gen_materials.size() == 0)
+            return result;
+
+        if (ui_build_selector->is_grouped)
+            send_key(interface_key::BUILDING_EXPAND_CONTRACT);
+
+        size_t size = ui_build_selector->choices.size();
+        vector<MaterialDescriptor>::iterator gen_material;
+        for (size_t i = 0; i < size; i++)
+        {
+            if (VIRTUAL_CAST_VAR(spec, df::build_req_choice_specst, ui_build_selector->choices[i]))
+            {
+                for (gen_material = gen_materials.begin(); gen_material != gen_materials.end(); gen_material++)
+                {
+                    if (gen_material->item_type == spec->candidate->getType() &&
+                        gen_material->item_subtype == spec->candidate->getSubtype() &&
+                        gen_material->type == spec->candidate->getActualMaterial() &&
+                        gen_material->index == spec->candidate->getActualMaterialIndex())
+                    {
+                        box_select_materials.push_back(spec->candidate);
+                        if (count > -1)
+                            return true; // Right now we only support 1 or all materials
+
+                        result = true;
+                        break;
+                    }
+                }
+            }
+        }
+        send_key(interface_key::BUILDING_EXPAND_CONTRACT);
+
+        return result;
+    }
+
+    void move_cursor(df::coord &pos)
+    {
+        Gui::setCursorCoords(pos.x, pos.y, pos.z);
+        send_key(interface_key::CURSOR_DOWN_Z);
+        send_key(interface_key::CURSOR_UP_Z);
+    }
+
+    void move_cursor(coord32_t &pos)
+    {
+        move_cursor(df::coord((int16_t) pos.x, (int16_t) pos.y, (int16_t) pos.z));
+    }
+
+    static bool find_valid_building_sites()
+    {
+        valid_building_sites.clear();
+        open_air_sites.clear();
+
+        int xD = (box_second.x > box_first.x) ? 1 : -1;
+        int yD = (box_second.y > box_first.y) ? 1 : -1;
+        for (int32_t xB = box_first.x; (xD > 0) ? (xB <= box_second.x) : (xB >= box_second.x); xB += xD)
+        {
+            for (int32_t yB = box_first.y; (yD > 0) ? (yB <= box_second.y) : (yB >= box_second.y); yB += yD)
+            {
+                if (hollow_selection && !(xB == box_first.x || xB == box_second.x || yB == box_first.y || yB == box_second.y))
+                    continue;
+
+                building_site site(df::coord(xB, yB, box_second.z), false);
+                if (is_valid_building_site(site, false))
+                    valid_building_sites.push_back(site);
+                else if (site.in_open_air)
+                    open_air_sites.push_back(site);
+            }
+        }
+
+        size_t last_open_air_count = 0;
+        while (valid_building_sites.size() > 0 && open_air_sites.size() != last_open_air_count)
+        {
+            last_open_air_count = open_air_sites.size();
+            deque<building_site> current_open_air_list = open_air_sites;
+            open_air_sites.clear();
+            for (deque<building_site>::iterator it = current_open_air_list.begin(); it != current_open_air_list.end(); it++)
+            {
+                if (is_orthogonal_to_pending_construction(*it))
+                    valid_building_sites.push_back(*it);
+                else
+                    open_air_sites.push_back(*it);
+            }
+
+        }
+
+        return valid_building_sites.size() > 0;
+    }
+
+    void apply_box_selection(bool new_start)
+    {
+        static bool saved_revert_setting = false;
+        static bool auto_select_applied = false;
+
+        box_select_mode = SELECT_MATERIALS;
+        if (new_start)
+        {
+            if (!find_valid_building_sites())
+            {
+                cancel_box_selection();
+                hollow_selection = false;
+                return;
+            }
+
+            saved_revert_setting = revert_to_last_used_type;
+            revert_to_last_used_type = true;
+            auto_select_applied = false;
+            box_select_materials.clear();
+
+            // First valid site is guaranteed to be anchored, either on a tile or against a valid orthogonal tile
+            // Use it as an anchor point to generate materials list
+            anchor = valid_building_sites.front(); 
+            valid_building_sites.pop_front();
+            valid_building_sites.push_back(anchor);
+        }
+
+        while (valid_building_sites.size() > 0)
+        {
+            building_site site = valid_building_sites.front();
+            valid_building_sites.pop_front();
+            if (box_select_materials.size() > 0)
+            {
+                df::construction_type type = (df::construction_type) ui_build_selector->building_subtype;
+                df::item *item = NULL;
+                while (box_select_materials.size() > 0)
+                {
+                    item = box_select_materials.front();
+                    if (!item->flags.bits.in_job)
+                        break;
+                    box_select_materials.pop_front();
+                    item = NULL;
+                }
+
+                if (item != NULL)
+                {
+                    if (designate_new_construction(site.pos, type, item))
+                    {
+                        box_select_materials.pop_front();
+                        box_select_mode = AUTOSELECT_MATERIALS;
+                        send_key(interface_key::LEAVESCREEN); //Must do this to register items in use
+                        send_key(hotkeys[type]);
+                        box_select_mode = SELECT_MATERIALS;
+                    }
+                    continue;
+                }
+            }
+
+            // Generate material list using regular construction placement routine
+
+            if (site.in_open_air)
+            {
+                // Cannot invoke material selection on an unconnected tile, use anchor instead
+                move_cursor(anchor.pos);
+                send_key(df::interface_key::SELECT);
+            }
+
+            move_cursor(site.pos);
+
+            if (!site.in_open_air)
+                send_key(df::interface_key::SELECT);
+
+            if (in_material_choice_stage())
+            {
+                valid_building_sites.push_front(site); //Redo current tile with whatever gets selected
+                if (!auto_select_applied)
+                {
+                    // See if any auto select materials are available
+                    auto_select_applied = true;
+                    if (auto_choose_materials && populate_box_materials(preferred_materials[ui_build_selector->building_subtype]))
+                    {
+                        continue;
+                    }
+                }
+
+                last_used_moved = false;
+                return; // No auto select materials left, ask user
+            }
+        }
+
+        // Allocation done, reset
+        move_cursor(box_second);
+
+        revert_to_last_used_type = saved_revert_setting;
+        if (!revert_to_last_used_type)
+        {
+            send_key(df::interface_key::LEAVESCREEN);
+        }
+
+        cancel_box_selection();
+        hollow_selection = false;
+        ignore_selection = 0;
+    }
+    //END Building Application
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
@@ -850,7 +977,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                 {
                     ++y;
                     OutputString(COLOR_BROWN, x, y, "Construction:", true, left_margin);
-                    OutputString(COLOR_WHITE, x, y, int_to_string(building_sites.size() + 1) + " tiles to fill", true, left_margin);
+                    OutputString(COLOR_WHITE, x, y, int_to_string(valid_building_sites.size() + 1) + " tiles to fill", true, left_margin);
                 }
             }
         }
@@ -901,6 +1028,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         }
     }
 };
+//END Viewscreen Hook
 
 color_ostream_proxy console_out(Core::getInstance().getConsole());
 

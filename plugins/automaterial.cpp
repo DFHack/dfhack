@@ -281,22 +281,78 @@ static void cancel_box_selection()
         Gui::setDesignationCoords(-1, -1, -1);
 }
 
-static bool is_valid_building_site(df::coord &pos)
+static bool is_valid_building_site(df::coord &pos, bool orthogonal_check)
 {
     auto ttype = Maps::getTileType(pos);
-    if (!ttype || 
-        *ttype == tiletype::Tree ||
-        tileMaterial(*ttype) == tiletype_material::CONSTRUCTION ||
-        tileMaterial(*ttype) == tiletype_material::AIR ||
-        tileMaterial(*ttype) == tiletype_material::CAMPFIRE ||
-        tileMaterial(*ttype) == tiletype_material::FIRE ||
-        tileMaterial(*ttype) == tiletype_material::MAGMA ||
-        tileMaterial(*ttype) == tiletype_material::DRIFTWOOD ||
-        tileMaterial(*ttype) == tiletype_material::POOL ||
-        tileMaterial(*ttype) == tiletype_material::BROOK ||
-        tileMaterial(*ttype) == tiletype_material::RIVER
-        )
+
+    if (!ttype)
         return false;
+
+    auto shape = tileShape(*ttype);
+    auto shapeBasic = tileShapeBasic(shape);
+
+    if (shapeBasic == tiletype_shape_basic::Open)
+    {
+        if (orthogonal_check)
+            return false;
+
+        bool valid_orthogonal_tile_found = false;
+        df::coord orthagonal_pos;
+        orthagonal_pos.z = pos.z;
+        for (orthagonal_pos.x = pos.x-1; orthagonal_pos.x <= pos.x+1 && !valid_orthogonal_tile_found; orthagonal_pos.x++)
+        {
+            for (orthagonal_pos.y = pos.y-1; orthagonal_pos.y <= pos.y+1; orthagonal_pos.y++)
+            {
+                if (pos.x != orthagonal_pos.x && pos.y != orthagonal_pos.y)
+                    continue;
+
+                if (Maps::isValidTilePos(orthagonal_pos) && is_valid_building_site(orthagonal_pos, true))
+                {
+                    valid_orthogonal_tile_found = true;
+                    break;
+                }
+
+            }
+        }
+
+        if (!valid_orthogonal_tile_found)
+            return false;
+    }
+    else
+    {
+        auto material = tileMaterial(*ttype);
+        if (shape == tiletype_shape::RAMP)
+        {
+            if (material == tiletype_material::CONSTRUCTION)
+                return false;
+        }
+        else
+        {
+            if (shapeBasic != tiletype_shape_basic::Floor)
+                return false;
+
+            if (shape == tiletype_shape::TREE)
+                return false;
+
+            if (material == tiletype_material::FIRE ||
+                material == tiletype_material::POOL ||
+                material == tiletype_material::BROOK ||
+                material == tiletype_material::RIVER ||
+                material == tiletype_material::MAGMA ||
+                material == tiletype_material::DRIFTWOOD ||
+                material == tiletype_material::CAMPFIRE
+                )
+
+                return false;
+        }
+    }
+
+    auto designation = Maps::getTileDesignation(pos);
+    if (designation->bits.flow_size > 2)
+        return false;
+
+    if (orthogonal_check)
+        return true;
 
     auto current = Buildings::findAtTile(pos);
     if (current)
@@ -466,7 +522,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                     continue;
 
                 df::coord pos(xB, yB, box_second.z);
-                if (is_valid_building_site(pos))
+                if (is_valid_building_site(pos, false))
                     building_sites.push_back(pos);
             }
         }
@@ -612,9 +668,11 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             }
             else if (input->count(interface_key::CUSTOM_B))
             {
+                reset_existing_selection();
                 box_select_enabled = !box_select_enabled;
                 if (!box_select_enabled)
                     cancel_box_selection();
+
                 return;
             }
             else if (input->count(interface_key::LEAVESCREEN))

@@ -126,6 +126,7 @@ static bool last_used_moved = false;
 static bool auto_choose_materials = true;
 static bool auto_choose_attempted = true;
 static bool revert_to_last_used_type = false;
+static bool allow_future_placement = false;
 
 static inline bool in_material_choice_stage()
 {
@@ -283,6 +284,7 @@ static void cancel_box_selection()
 }
 //END UI Functions
 
+
 //START Building and Verification
 struct building_site
 {
@@ -301,7 +303,6 @@ struct building_site
 static deque<building_site> valid_building_sites;
 static deque<building_site> open_air_sites;
 static building_site anchor;
-static bool in_future_placement_mode = false;
 
 static bool is_orthogonal_to_pending_construction(building_site &site)
 {
@@ -317,7 +318,7 @@ static bool is_orthogonal_to_pending_construction(building_site &site)
     return false;
 }
 
-static bool is_valid_building_site(building_site &site, bool orthogonal_check)
+static bool is_valid_building_site(building_site &site, bool orthogonal_check, bool check_placed_constructions, bool in_future_placement_mode)
 {
     if (!Maps::isValidTilePos(site.pos))
         return false;
@@ -362,7 +363,7 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check)
                     continue;
 
                 building_site orthogonal_site(orthagonal_pos, false);
-                if (is_valid_building_site(orthogonal_site, true))
+                if (is_valid_building_site(orthogonal_site, true, check_placed_constructions, in_future_placement_mode))
                 {
                     valid_orthogonal_tile_found = true;
                     if (orthogonal_site.in_open_air)
@@ -373,11 +374,16 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check)
             }
         }
 
-        if (!valid_orthogonal_tile_found && !is_orthogonal_to_pending_construction(site))
+        if (!(valid_orthogonal_tile_found || (check_placed_constructions && is_orthogonal_to_pending_construction(site))))
         {
             site.in_open_air = true;
             return false;
         }
+    }
+    else if (orthogonal_check)
+    {
+        if (shape != tiletype_shape::RAMP && shapeBasic != tiletype_shape_basic::Floor)
+            return false;
     }
     else
     {
@@ -391,6 +397,24 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check)
         {
             if (shapeBasic != tiletype_shape_basic::Floor)
                 return false;
+
+            if (material == tiletype_material::CONSTRUCTION)
+            {
+                // Can build on top of a wall, but not on a constructed floor
+                df::coord pos_below = site.pos;
+                pos_below.z--;
+                if (!Maps::isValidTilePos(pos_below))
+                    return false;
+
+                auto ttype = Maps::getTileType(pos_below);
+                if (!ttype)
+                    return false;
+
+                auto shape = tileShape(*ttype);
+                auto shapeBasic = tileShapeBasic(shape);
+                if (tileShapeBasic(shape) != tiletype_shape_basic::Wall)
+                    return false;
+            }
 
             if (shape == tiletype_shape::TREE)
                 return false;
@@ -408,12 +432,12 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check)
         }
     }
 
+    if (orthogonal_check)
+        return true;
+
     auto designation = Maps::getTileDesignation(site.pos);
     if (designation->bits.flow_size > 2)
         return false;
-
-    if (orthogonal_check)
-        return true;
 
     auto current = Buildings::findAtTile(site.pos);
     if (current)
@@ -421,6 +445,95 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check)
 
     df::coord2d size(1,1);
     return Buildings::checkFreeTiles(site.pos, size, NULL, false, false);
+}
+
+
+static bool find_anchor_in_spiral(const df::coord &start)
+{
+    bool found = false;
+
+    for (anchor.pos.z = start.z; anchor.pos.z > start.z - 4; anchor.pos.z--)
+    {
+        int x, y, dx, dy;
+        x = y = dx = 0;
+        dy = -1;
+        const int side = 11;
+        const int maxI = side*side;
+        for (int i = 0; i < maxI; i++)
+        {
+            if (-side/2 < x && x <= side/2 && -side/2 < y && y <= side/2)
+            {
+                anchor.pos.x = start.x + x;
+                anchor.pos.y = start.y + y;
+                if (is_valid_building_site(anchor, false, false, false))
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if ((x == y) || ((x < 0) && (x == -y)) || ((x > 0) && (x == 1-y)))
+            {
+                int tmp = dx;
+                dx = -dy;
+                dy = tmp;
+            }
+
+            x += dx;
+            y += dy;
+        }
+
+        if (found)
+            break;
+    }
+
+    return found;
+}
+
+static bool find_valid_building_sites(bool in_future_placement_mode)
+{
+    valid_building_sites.clear();
+    open_air_sites.clear();
+
+    int xD = (box_second.x > box_first.x) ? 1 : -1;
+    int yD = (box_second.y > box_first.y) ? 1 : -1;
+    for (int32_t xB = box_first.x; (xD > 0) ? (xB <= box_second.x) : (xB >= box_second.x); xB += xD)
+    {
+        for (int32_t yB = box_first.y; (yD > 0) ? (yB <= box_second.y) : (yB >= box_second.y); yB += yD)
+        {
+            if (hollow_selection && !(xB == box_first.x || xB == box_second.x || yB == box_first.y || yB == box_second.y))
+                continue;
+
+            building_site site(df::coord(xB, yB, box_second.z), false);
+            if (is_valid_building_site(site, false, true, in_future_placement_mode))
+                valid_building_sites.push_back(site);
+            else if (site.in_open_air)
+            {
+                if (in_future_placement_mode)
+                    valid_building_sites.push_back(site);
+                else
+                    open_air_sites.push_back(site);
+            }
+        }
+    }
+
+    size_t last_open_air_count = 0;
+    while (valid_building_sites.size() > 0 && open_air_sites.size() != last_open_air_count)
+    {
+        last_open_air_count = open_air_sites.size();
+        deque<building_site> current_open_air_list = open_air_sites;
+        open_air_sites.clear();
+        for (deque<building_site>::iterator it = current_open_air_list.begin(); it != current_open_air_list.end(); it++)
+        {
+            if (is_orthogonal_to_pending_construction(*it))
+                valid_building_sites.push_back(*it);
+            else
+                open_air_sites.push_back(*it);
+        }
+
+    }
+
+    return valid_building_sites.size() > 0;
 }
 
 static bool designate_new_construction(df::coord &pos, df::construction_type &type, df::item *item)
@@ -548,6 +661,9 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 
     void handle_input(set<df::interface_key> *input)
     {
+        if (ui_build_selector->building_subtype >= 7)
+            return;
+
         if (in_material_choice_stage())
         {
             if (input->count(interface_key::LEAVESCREEN))
@@ -604,6 +720,10 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 
                 return;
             }
+            else if (input->count(interface_key::CUSTOM_O))
+            {
+                allow_future_placement = !allow_future_placement;
+            }
             else if (input->count(interface_key::LEAVESCREEN))
             {
                 switch (box_select_mode)
@@ -616,10 +736,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                     break;
                 }
             }
-            else if (box_select_enabled && 
-                (ui_build_selector->building_subtype == construction_type::Wall || 
-                 ui_build_selector->building_subtype == construction_type::Fortification || 
-                 ui_build_selector->building_subtype == construction_type::Floor))
+            else if (box_select_enabled)
             {
                 if (input->count(interface_key::SELECT))
                 {
@@ -735,47 +852,6 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         move_cursor(df::coord((int16_t) pos.x, (int16_t) pos.y, (int16_t) pos.z));
     }
 
-    static bool find_valid_building_sites()
-    {
-        valid_building_sites.clear();
-        open_air_sites.clear();
-
-        int xD = (box_second.x > box_first.x) ? 1 : -1;
-        int yD = (box_second.y > box_first.y) ? 1 : -1;
-        for (int32_t xB = box_first.x; (xD > 0) ? (xB <= box_second.x) : (xB >= box_second.x); xB += xD)
-        {
-            for (int32_t yB = box_first.y; (yD > 0) ? (yB <= box_second.y) : (yB >= box_second.y); yB += yD)
-            {
-                if (hollow_selection && !(xB == box_first.x || xB == box_second.x || yB == box_first.y || yB == box_second.y))
-                    continue;
-
-                building_site site(df::coord(xB, yB, box_second.z), false);
-                if (is_valid_building_site(site, false))
-                    valid_building_sites.push_back(site);
-                else if (site.in_open_air)
-                    open_air_sites.push_back(site);
-            }
-        }
-
-        size_t last_open_air_count = 0;
-        while (valid_building_sites.size() > 0 && open_air_sites.size() != last_open_air_count)
-        {
-            last_open_air_count = open_air_sites.size();
-            deque<building_site> current_open_air_list = open_air_sites;
-            open_air_sites.clear();
-            for (deque<building_site>::iterator it = current_open_air_list.begin(); it != current_open_air_list.end(); it++)
-            {
-                if (is_orthogonal_to_pending_construction(*it))
-                    valid_building_sites.push_back(*it);
-                else
-                    open_air_sites.push_back(*it);
-            }
-
-        }
-
-        return valid_building_sites.size() > 0;
-    }
-
     void apply_box_selection(bool new_start)
     {
         static bool saved_revert_setting = false;
@@ -784,7 +860,34 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         box_select_mode = SELECT_MATERIALS;
         if (new_start)
         {
-            if (!find_valid_building_sites())
+            bool ok_to_continue = false;
+            bool in_future_placement_mode = false;
+            if (!find_valid_building_sites(false))
+            {
+                if (allow_future_placement)
+                {
+                    in_future_placement_mode = find_valid_building_sites(true);
+                }
+            }
+            else
+            {
+                ok_to_continue = true;
+            }
+
+            if (in_future_placement_mode)
+            {
+                ok_to_continue = find_anchor_in_spiral(valid_building_sites[0].pos);
+            }
+            else if (ok_to_continue)
+            {
+                // First valid site is guaranteed to be anchored, either on a tile or against a valid orthogonal tile
+                // Use it as an anchor point to generate materials list
+                anchor = valid_building_sites.front(); 
+                valid_building_sites.pop_front();
+                valid_building_sites.push_back(anchor);
+            }
+
+            if (!ok_to_continue)
             {
                 cancel_box_selection();
                 hollow_selection = false;
@@ -796,11 +899,6 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             auto_select_applied = false;
             box_select_materials.clear();
 
-            // First valid site is guaranteed to be anchored, either on a tile or against a valid orthogonal tile
-            // Use it as an anchor point to generate materials list
-            anchor = valid_building_sites.front(); 
-            valid_building_sites.pop_front();
-            valid_building_sites.push_back(anchor);
         }
 
         while (valid_building_sites.size() > 0)
@@ -924,7 +1022,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             if (!last_used_moved && ui_build_selector->is_grouped)
             {
                 last_used_moved = true;
-                if (choose_materials())
+                if (!box_select_enabled && choose_materials())
                 {
                     return;
                 }
@@ -990,40 +1088,36 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             OutputHotkeyString(x, y, autoselect_toggle_string.c_str(), "a", true, left_margin);
             OutputHotkeyString(x, y, revert_toggle_string.c_str(), "t", true, left_margin);
 
-            if (ui_build_selector->building_subtype == construction_type::Wall || 
-                ui_build_selector->building_subtype == construction_type::Fortification || 
-                ui_build_selector->building_subtype == construction_type::Floor)
+            ++y;
+            OutputHotkeyString(x, y, (box_select_enabled) ? "Disable Box Select" : "Enable Box Select", "b", true, left_margin);
+            if (box_select_enabled)
             {
-                ++y;
-                OutputHotkeyString(x, y, (box_select_enabled) ? "Disable Box Select" : "Enable Box Select", "b", true, left_margin);
-                if (box_select_enabled)
+                OutputHotkeyString(x, y, (show_box_selection) ? "Disable Box Marking" : "Enable Box Marking", "x", true, left_margin);
+                OutputHotkeyString(x, y, (hollow_selection) ? "Make Solid" : "Make Hollow", "h", true, left_margin);
+                OutputHotkeyString(x, y, (allow_future_placement) ? "Disable Open Placement" : "Enable Open Placement", "o", true, left_margin);
+            }
+            ++y;
+            if (box_select_enabled)
+            {
+                Screen::Pen pen(' ',COLOR_BLACK);
+                y = dims.y1 + 2;
+                Screen::fillRect(pen, x, y, dims.menu_x2, y + 17);
+
+                y += 2;
+                switch (box_select_mode)
                 {
-                    OutputHotkeyString(x, y, (show_box_selection) ? "Disable Box Marking" : "Enable Box Marking", "x", true, left_margin);
-                    OutputHotkeyString(x, y, (hollow_selection) ? "Make Solid" : "Make Hollow", "h", true, left_margin);
+                case SELECT_FIRST:
+                    OutputString(COLOR_BROWN, x, y, "Choose first corner", true, left_margin);
+                    break;
+
+                case SELECT_SECOND:
+                    OutputString(COLOR_GREEN, x, y, "Choose second corner", true, left_margin);
+                    int cx = box_first.x;
+                    int cy = box_first.y;
+                    OutputString(COLOR_BROWN, cx, cy, "X");
                 }
-                ++y;
-                if (box_select_enabled)
-                {
-                    Screen::Pen pen(' ',COLOR_BLACK);
-                    y = dims.y1 + 2;
-                    Screen::fillRect(pen, x, y, dims.menu_x2, y + 17);
 
-                    y += 2;
-                    switch (box_select_mode)
-                    {
-                    case SELECT_FIRST:
-                        OutputString(COLOR_BROWN, x, y, "Choose first corner", true, left_margin);
-                        break;
-
-                    case SELECT_SECOND:
-                        OutputString(COLOR_GREEN, x, y, "Choose second corner", true, left_margin);
-                        int cx = box_first.x;
-                        int cy = box_first.y;
-                        OutputString(COLOR_BROWN, cx, cy, "X");
-                    }
-
-                    OutputString(COLOR_BROWN, x, ++y, "Ignore Building Restrictions", true, left_margin);
-                }
+                OutputString(COLOR_BROWN, x, ++y, "Ignore Building Restrictions", true, left_margin);
             }
         }
     }

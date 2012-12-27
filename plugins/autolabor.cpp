@@ -17,9 +17,14 @@
 
 #include "modules/Units.h"
 #include "modules/World.h"
+#include "modules/Maps.h"
+#include "modules/MapCache.h"
+#include "modules/Items.h"
 
 // DF data structure definition headers
 #include "DataDefs.h"
+#include <MiscUtils.h>
+
 #include <df/ui.h>
 #include <df/world.h>
 #include <df/unit.h>
@@ -61,11 +66,6 @@
 #include <df/ui.h>
 #include <df/training_assignment.h>
 #include <df/general_ref_contains_itemst.h>
-
-#include <MiscUtils.h>
-
-#include "modules/MapCache.h"
-#include "modules/Items.h"
 
 using std::string;
 using std::endl;
@@ -367,6 +367,8 @@ struct labor_info
     PersistentDataItem config;
 
     int active_dwarfs;
+    int idle_dwarfs;
+    int busy_dwarfs;
 
     int priority() { return config.ival(1); }
     void set_priority(int priority) { config.ival(1) = priority; }
@@ -1566,7 +1568,12 @@ private:
                 for (int y = 0; y < 16; y++)
                 {
                     if (bl->designation[x][y].bits.hidden)
-                        continue;
+                    {
+                        df::coord p = bl->map_pos;
+                        df::coord c(p.x, p.y, p.z-1);
+                        if (Maps::getTileDesignation(c)->bits.hidden)
+                            continue;
+                    }
 
                     df::tile_dig_designation dig = bl->designation[x][y].bits.dig;
                     if (dig != df::enums::tile_dig_designation::No) 
@@ -1799,7 +1806,17 @@ private:
                             out.print ("Dwarf %s is disabled, will not be assigned labors\n", dwarf->dwarf->name.first_name.c_str());
                     }
                     else
+                    {
+                        FOR_ENUM_ITEMS(unit_labor, l)
+                        {
+                            if (l == df::unit_labor::NONE) 
+                                continue;
+                            if (dwarf->dwarf->status.labors[l])
+                                labor_infos[l].idle_dwarfs++;
+                        }
+
                         state = IDLE;
+                    }
                 }
                 else
                 {
@@ -1817,6 +1834,8 @@ private:
                         if (labor != df::unit_labor::NONE)
                         {
                             dwarf->using_labor = labor;
+                            labor_infos[labor].busy_dwarfs++;
+
                             if (!dwarf->dwarf->status.labors[labor] && print_debug)
                             {
                                 out.print("AUTOLABOR: dwarf %s (id %d) is doing job %s(%d) but is not enabled for labor %s(%d).\n",
@@ -1950,7 +1969,7 @@ public:
             if (l == df::unit_labor::NONE)
                 continue;
 
-            labor_infos[l].active_dwarfs = 0;
+            labor_infos[l].active_dwarfs = labor_infos[l].busy_dwarfs = labor_infos[l].idle_dwarfs = 0;
         }
 
         // scan for specific buildings of interest
@@ -2000,6 +2019,7 @@ public:
         labor_needed[df::unit_labor::HAUL_STONE]     += world->stockpile.num_jobs[1];
         labor_needed[df::unit_labor::HAUL_WOOD]      += world->stockpile.num_jobs[2];
         labor_needed[df::unit_labor::HAUL_ITEM]      += world->stockpile.num_jobs[3];
+        labor_needed[df::unit_labor::HAUL_ITEM]      += world->stockpile.num_jobs[4]; 
         labor_needed[df::unit_labor::HAUL_BODY]      += world->stockpile.num_jobs[5];
         labor_needed[df::unit_labor::HAUL_FOOD]      += world->stockpile.num_jobs[6];
         labor_needed[df::unit_labor::HAUL_REFUSE]    += world->stockpile.num_jobs[7];
@@ -2014,11 +2034,11 @@ public:
 
         // add fishing & hunting
 
-        if (isOptionEnabled(CF_ALLOW_FISHING) && has_fishery)
-            labor_needed[df::unit_labor::FISH] ++;
+        labor_needed[df::unit_labor::FISH] = 
+            (isOptionEnabled(CF_ALLOW_FISHING) && has_fishery) ? 1 : 0;
 
-        if (isOptionEnabled(CF_ALLOW_HUNTING) && has_butchers)
-            labor_needed[df::unit_labor::HUNT] ++;
+        labor_needed[df::unit_labor::HUNT] =
+            (isOptionEnabled(CF_ALLOW_HUNTING) && has_butchers) ? 1 : 0;
 
         /* add animal trainers */
         for (auto a = df::global::ui->equipment.training_assignments.begin();
@@ -2029,12 +2049,21 @@ public:
             // note: this doesn't test to see if the trainer is actually needed, and thus will overallocate trainers.  bleah.
         }
 
+        /* adjust for over/under */
+        FOR_ENUM_ITEMS(unit_labor, l)
+        {
+            if (l == df::unit_labor::NONE)
+                continue;
+            labor_needed[l] = std::min(labor_needed[l], 
+                    std::max(1, (std::max(labor_infos[l].busy_dwarfs, labor_needed[l] - labor_infos[l].idle_dwarfs))));
+        }
+
         if (print_debug)
         {
             for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
             {
-                out.print ("labor_needed [%s] = %d, outside = %d\n", ENUM_KEY_STR(unit_labor, i->first).c_str(), i->second,
-                    labor_outside[i->first]);
+                out.print ("labor_needed [%s] = %d, outside = %d, idle = %d\n", ENUM_KEY_STR(unit_labor, i->first).c_str(), i->second,
+                    labor_outside[i->first], labor_infos[i->first].idle_dwarfs);
             }	
         }
 
@@ -2052,6 +2081,14 @@ public:
                 priority += labor_infos[l].time_since_last_assigned()/12;
                 pq.push(make_pair(priority, l));
             }
+        }
+
+        FOR_ENUM_ITEMS(unit_labor, l)
+        {
+            if (l == df::unit_labor::NONE)
+                continue;
+            if (labor_infos[l].idle_dwarfs == 0 && labor_infos[l].busy_dwarfs > 0)
+                pq.push(make_pair(std::min(labor_infos[l].time_since_last_assigned()/12, 25), l));
         }
 
         if (print_debug)

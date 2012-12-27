@@ -849,7 +849,8 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 
     void move_cursor(coord32_t &pos)
     {
-        move_cursor(df::coord((int16_t) pos.x, (int16_t) pos.y, (int16_t) pos.z));
+        df::coord c((int16_t) pos.x, (int16_t) pos.y, (int16_t) pos.z);
+        move_cursor(c);
     }
 
     void apply_box_selection(bool new_start)

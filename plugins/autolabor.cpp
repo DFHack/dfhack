@@ -635,7 +635,7 @@ static df::unit_labor workshop_build_labor[] =
     /* Leatherworks */		df::unit_labor::LEATHER,
     /* Tanners */			df::unit_labor::TANNER,
     /* Clothiers */			df::unit_labor::CLOTHESMAKER,
-    /* Fishery */			df::unit_labor::FISH,
+    /* Fishery */			df::unit_labor::CLEAN_FISH,
     /* Still */				df::unit_labor::BREWER,
     /* Loom */				df::unit_labor::WEAVER,
     /* Quern */				df::unit_labor::MILLER,
@@ -778,6 +778,7 @@ private:
             case df::building_type::ArcheryTarget:
             case df::building_type::WaterWheel:
             case df::building_type::RoadPaved:
+            case df::building_type::Well:
                 {
                     df::building_actual* b = (df::building_actual*) bld;
                     if (b->design && !b->design->flags.bits.designed)

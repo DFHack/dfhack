@@ -875,6 +875,7 @@ private:
             case df::building_type::TractionBench:
             case df::building_type::Slab:
             case df::building_type::Chain:
+            case df::building_type::Hatch:
                 return df::unit_labor::HAUL_FURNITURE;
             }
 

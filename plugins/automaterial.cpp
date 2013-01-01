@@ -318,33 +318,51 @@ static bool is_orthogonal_to_pending_construction(building_site &site)
     return false;
 }
 
+static df::building_constructionst *get_construction_on_tile(const df::coord &pos)
+{
+    auto current = Buildings::findAtTile(pos);
+    if (current)
+        return strict_virtual_cast<df::building_constructionst>(current);
+
+    return NULL;
+}
+
+static df::tiletype *read_tile_shapes(const df::coord &pos, df::tiletype_shape &shape, df::tiletype_shape_basic &shape_basic)
+{
+    if (!Maps::isValidTilePos(pos))
+        return NULL;
+
+    auto ttype = Maps::getTileType(pos);
+
+    if (!ttype)
+        return NULL;
+
+    shape = tileShape(*ttype);
+    shape_basic = tileShapeBasic(shape);
+
+    return ttype;
+}
+
 static bool is_valid_building_site(building_site &site, bool orthogonal_check, bool check_placed_constructions, bool in_future_placement_mode)
 {
-    if (!Maps::isValidTilePos(site.pos))
-        return false;
+    df::tiletype_shape shape;
+    df::tiletype_shape_basic shape_basic;
 
-    auto ttype = Maps::getTileType(site.pos);
-
+    auto ttype = read_tile_shapes(site.pos, shape, shape_basic);
     if (!ttype)
         return false;
 
-    auto shape = tileShape(*ttype);
-    auto shapeBasic = tileShapeBasic(shape);
-
-    if (shapeBasic == tiletype_shape_basic::Open)
+    if (shape_basic == tiletype_shape_basic::Open)
     {
         if (orthogonal_check)
         {
+            // Check if this is a valid tile to have a construction placed orthogonally to it
             if (!in_future_placement_mode)
                 return false;
 
-            auto current = Buildings::findAtTile(site.pos);
-            if (current)
+            df::building_constructionst *cons = get_construction_on_tile(site.pos);
+            if (cons && cons == construction_type::Floor)
             {
-                auto cons = strict_virtual_cast<df::building_constructionst>(current);
-                if (!cons || cons->type != construction_type::Floor)
-                    return false;
-
                 site.in_open_air = true;
                 return true;
             }
@@ -352,6 +370,35 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check, b
             return false;
         }
 
+        // Stairs can be placed in open space, if they can connect to other stairs
+        df::tiletype_shape shape_s;
+        df::tiletype_shape_basic shape_basic_s;
+
+        if (ui_build_selector->building_subtype == construction_type::DownStair ||
+            ui_build_selector->building_subtype == construction_type::UpDownStair)
+        {
+            df::coord below(site.pos.x, site.pos.y, site.pos.z - 1);
+            auto ttype_s = read_tile_shapes(below, shape_s, shape_basic_s);
+            if (ttype_s)
+            {
+                if (shape_s == tiletype_shape::STAIR_UP || shape_s == tiletype_shape::STAIR_UPDOWN)
+                    return true;
+            }
+        }
+
+        if (ui_build_selector->building_subtype == construction_type::UpStair ||
+            ui_build_selector->building_subtype == construction_type::UpDownStair)
+        {
+            df::coord above(site.pos.x, site.pos.y, site.pos.z + 1);
+            auto ttype_s = read_tile_shapes(above, shape_s, shape_basic_s);
+            if (ttype_s)
+            {
+                if (shape_s == tiletype_shape::STAIR_DOWN || shape_s == tiletype_shape::STAIR_UPDOWN)
+                    return true;
+            }
+        }
+
+        // Check if there is a valid tile orthogonally adjacent
         bool valid_orthogonal_tile_found = false;
         df::coord orthagonal_pos;
         orthagonal_pos.z = site.pos.z;
@@ -382,7 +429,7 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check, b
     }
     else if (orthogonal_check)
     {
-        if (shape != tiletype_shape::RAMP && shapeBasic != tiletype_shape_basic::Floor)
+        if (shape != tiletype_shape::RAMP && shape_basic != tiletype_shape_basic::Floor)
             return false;
     }
     else
@@ -395,7 +442,7 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check, b
         }
         else
         {
-            if (shapeBasic != tiletype_shape_basic::Floor)
+            if (shape_basic != tiletype_shape_basic::Floor)
                 return false;
 
             if (material == tiletype_material::CONSTRUCTION)
@@ -544,6 +591,7 @@ static bool designate_new_construction(df::coord &pos, df::construction_type &ty
 
     vector<df::item*> items;
     items.push_back(item);
+    Maps::ensureTileBlock(pos);
 
     if (!Buildings::constructWithItems(newinst, items))
     {

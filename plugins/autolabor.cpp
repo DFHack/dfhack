@@ -1809,14 +1809,6 @@ private:
                     }
                     else
                     {
-                        FOR_ENUM_ITEMS(unit_labor, l)
-                        {
-                            if (l == df::unit_labor::NONE) 
-                                continue;
-                            if (dwarf->dwarf->status.labors[l])
-                                labor_infos[l].idle_dwarfs++;
-                        }
-
                         state = IDLE;
                     }
                 }
@@ -1836,7 +1828,6 @@ private:
                         if (labor != df::unit_labor::NONE)
                         {
                             dwarf->using_labor = labor;
-                            labor_infos[labor].busy_dwarfs++;
 
                             if (!dwarf->dwarf->status.labors[labor] && print_debug)
                             {
@@ -1849,6 +1840,18 @@ private:
                 }
 
                 dwarf->state = state;
+
+                FOR_ENUM_ITEMS(unit_labor, l)
+                {
+                    if (l == df::unit_labor::NONE) 
+                        continue;
+                    if (dwarf->dwarf->status.labors[l])
+                        if (state == IDLE)
+                            labor_infos[l].idle_dwarfs++;
+                        else if (state == BUSY)
+                            labor_infos[l].busy_dwarfs++;
+                }
+
 
                 if (print_debug)
                     out.print("Dwarf \"%s\": state %s %d\n", dwarf->dwarf->name.first_name.c_str(), state_names[dwarf->state], dwarf->clear_all);
@@ -2058,11 +2061,15 @@ public:
                 continue;
             if (labor_infos[l].idle_dwarfs > 0 && labor_needed[l] > labor_infos[l].busy_dwarfs)
             {
+                int clawback = labor_infos[l].busy_dwarfs;
+                if (clawback == 0 && labor_needed[l] > 0)
+                    clawback = 1;
+
                 if (print_debug)
                     out.print("reducing labor %s to %d (%d needed, %d busy, %d idle)\n", ENUM_KEY_STR(unit_labor, l).c_str(),
-                    labor_infos[l].busy_dwarfs,
+                    clawback,
                     labor_needed[l], labor_infos[l].busy_dwarfs, labor_infos[l].idle_dwarfs);
-                labor_needed[l] = labor_infos[l].busy_dwarfs;
+                labor_needed[l] = clawback;
             }
         }
 

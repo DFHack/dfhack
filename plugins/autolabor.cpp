@@ -2056,8 +2056,14 @@ public:
         {
             if (l == df::unit_labor::NONE)
                 continue;
-            labor_needed[l] = std::min(labor_needed[l], 
-                    std::max(1, (std::max(labor_infos[l].busy_dwarfs, labor_needed[l] - labor_infos[l].idle_dwarfs))));
+            if (labor_infos[l].idle_dwarfs > 0 && labor_needed[l] > labor_infos[l].busy_dwarfs)
+            {
+                if (print_debug)
+                    out.print("reducing labor %s to %d (%d needed, %d busy, %d idle)\n", ENUM_KEY_STR(unit_labor, l).c_str(),
+                    labor_infos[l].busy_dwarfs,
+                    labor_needed[l], labor_infos[l].busy_dwarfs, labor_infos[l].idle_dwarfs);
+                labor_needed[l] = labor_infos[l].busy_dwarfs;
+            }
         }
 
         if (print_debug)
@@ -2089,7 +2095,8 @@ public:
         {
             if (l == df::unit_labor::NONE)
                 continue;
-            if (labor_infos[l].idle_dwarfs == 0 && labor_infos[l].busy_dwarfs > 0)
+            if (labor_infos[l].idle_dwarfs == 0 && labor_infos[l].busy_dwarfs > 0 &&
+                (labor_infos[l].maximum_dwarfs() == 0 || labor_needed[l] < labor_infos[l].maximum_dwarfs()))
                 pq.push(make_pair(std::min(labor_infos[l].time_since_last_assigned()/12, 25), l));
         }
 
@@ -2160,9 +2167,9 @@ public:
                         score += 500;
                     if (default_labor_infos[labor].tool != TOOL_NONE &&
                         d->has_tool[default_labor_infos[labor].tool]) 
-                        score += 3000;
+                        score += 5000;
                     if (d->has_children && labor_outside[labor])
-                        score -= 10000;
+                        score -= 15000;
                     if (d->armed && labor_outside[labor])
                         score += 5000;
                     if (d->state == BUSY)
@@ -2295,7 +2302,10 @@ void print_labor (df::unit_labor labor, color_ostream &out)
         out << ' ';
     out << "priority " << labor_infos[labor].priority()
         << ", maximum " << labor_infos[labor].maximum_dwarfs()
-        << ", currently " << labor_infos[labor].active_dwarfs << " dwarfs" << endl;
+        << ", currently " << labor_infos[labor].active_dwarfs << " dwarfs ("
+        << labor_infos[labor].busy_dwarfs << " busy, " 
+        << labor_infos[labor].idle_dwarfs << " idle)"
+        << endl;
 }
 
 df::unit_labor lookup_labor_by_name (std::string& name)

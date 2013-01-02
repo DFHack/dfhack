@@ -11,6 +11,8 @@
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
 #include "df/global_objects.h"
+#include "df/item.h"
+#include "df/item_boulderst.h"
 #include "df/job.h"
 #include "df/job_type.h"
 #include "df/reaction.h"
@@ -334,6 +336,7 @@ void processJob(color_ostream& out, void* jobPtr) {
             bool allowMultipleSyndromes = false;
             bool allowMultipleTargets = false;
             bool foundCommand = false;
+            bool destroyRock = true;
             string commandStr;
             vector<string> args;
             for ( size_t c = 0; c < syndrome->syn_class.size(); c++ ) {
@@ -346,6 +349,8 @@ void processJob(color_ostream& out, void* jobPtr) {
                             allowMultipleSyndromes = true;
                         } else if ( *clazz == "\\ALLOW_MULTIPLE_TARGETS" ) {
                             allowMultipleTargets = true;
+                        } else if ( *clazz == "\\PRESERVE_ROCK" ) {
+                            destroyRock = false;
                         }
                         else {
                             commandStr = *clazz;
@@ -385,13 +390,35 @@ void processJob(color_ostream& out, void* jobPtr) {
                 Core::getInstance().runCommand(out, commandStr, args);
             }
 
+            if ( destroyRock ) {
+                //find the rock and kill it before it can boil and cause problems and ugliness
+                for ( size_t c = 0; c < df::global::world->items.all.size(); c++ ) {
+                    df::item* item = df::global::world->items.all[c];
+                    if ( item->pos.z != building->z )
+                        continue;
+                    if ( item->pos.x < building->x1 || item->pos.x > building->x2 )
+                        continue;
+                    if ( item->pos.y < building->y1 || item->pos.y > building->y2 )
+                        continue;
+                    if ( item->getType() != df::enums::item_type::BOULDER )
+                        continue;
+                    //make sure it's the right type of boulder
+                    df::item_boulderst* boulder = (df::item_boulderst*)item;
+                    if ( boulder->mat_index != bob->mat_index )
+                        continue;
+                    
+                    boulder->flags.bits.garbage_collect = true;
+                    boulder->flags.bits.forbid = true;
+                    boulder->flags.bits.hidden = true;
+                }
+            }
+
             //only one syndrome per reaction will be applied, unless multiples are allowed.
             if ( appliedSomething && !allowMultipleSyndromes )
                 continue;
 
             if ( maybeApply(out, syndrome, workerId, unit) ) {
                 appliedSomething = true;
-                continue;
             }
 
             if ( workerOnly )

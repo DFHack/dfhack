@@ -180,7 +180,7 @@ void processJob(color_ostream& out, void* jobPtr) {
     
     if ( job->job_type != df::job_type::CustomReaction )
         return;
-    
+
     df::reaction* reaction = NULL;
     for ( size_t a = 0; a < df::global::world->raws.reactions.size(); a++ ) {
         df::reaction* candidate = df::global::world->raws.reactions[a];
@@ -250,14 +250,38 @@ void processJob(color_ostream& out, void* jobPtr) {
                 if ( foundCommand ) {
                     if ( commandStr == "" )
                         commandStr = *clazz;
-                    else
-                        args.push_back(*clazz);
-                } else if ( *clazz == "command" ) {
+                    else {
+                        stringstream bob;
+                        if ( *clazz == "\\LOCATION" ) {
+                            bob << job->pos.x;
+                            args.push_back(bob.str());
+                            bob.str("");
+                            bob.clear();
+
+                            bob << job->pos.y;
+                            args.push_back(bob.str());
+                            bob.str("");
+                            bob.clear();
+
+                            bob << job->pos.z;
+                            args.push_back(bob.str());
+                            bob.str("");
+                            bob.clear();
+                        } else if ( *clazz == "\\WORKER_ID" ) {
+                            bob << workerId;
+                            args.push_back(bob.str());
+                        } else if ( *clazz == "\\REACTION_INDEX" ) {
+                            bob << reaction->index;
+                            args.push_back(bob.str());
+                        } else {
+                            args.push_back(*clazz);
+                        }
+                    }
+                } else if ( *clazz == "\\COMMAND" ) {
                     foundCommand = true;
                 }
             }
             if ( commandStr != "" ) {
-                out.print("Running command thingy.");
                 Core::getInstance().runCommand(out, commandStr, args);
             }
             //check that the syndrome applies to that guy

@@ -88,6 +88,7 @@ static bool is_lua_hook(const std::string &name)
  * Hooks
  */
 static void handle_fillsidebar(color_ostream &out,df::building_workshopst*,bool *call_native){};
+static void handle_postfillsidebar(color_ostream &out,df::building_workshopst*){};
 
 static void handle_reaction_done(color_ostream &out,df::reaction*, df::unit *unit, std::vector<df::item*> *in_items,std::vector<df::reaction_reagent*> *in_reag
     , std::vector<df::item*> *out_items,bool *call_native){};
@@ -98,6 +99,7 @@ static void handle_projunit_ci(color_ostream &out,df::proj_unitst*,bool){};
 static void handle_projunit_cm(color_ostream &out,df::proj_unitst*){};
 
 DEFINE_LUA_EVENT_2(onWorkshopFillSidebarMenu, handle_fillsidebar, df::building_workshopst*,bool* );
+DEFINE_LUA_EVENT_1(postWorkshopFillSidebarMenu, handle_postfillsidebar, df::building_workshopst*);
 
 DEFINE_LUA_EVENT_6(onReactionComplete, handle_reaction_done,df::reaction*, df::unit *, std::vector<df::item*> *,std::vector<df::reaction_reagent*> *,std::vector<df::item*> *,bool *);
 DEFINE_LUA_EVENT_5(onItemContaminateWound, handle_contaminate_wound, df::item_actual*,df::unit* , df::unit_wound* , uint8_t , int16_t );
@@ -109,6 +111,7 @@ DEFINE_LUA_EVENT_1(onProjUnitCheckMovement, handle_projunit_cm, df::proj_unitst*
 
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onWorkshopFillSidebarMenu),
+    DFHACK_LUA_EVENT(postWorkshopFillSidebarMenu),
     DFHACK_LUA_EVENT(onReactionComplete),
     DFHACK_LUA_EVENT(onItemContaminateWound),
     DFHACK_LUA_EVENT(onProjItemCheckImpact),
@@ -127,6 +130,7 @@ struct workshop_hook : df::building_workshopst{
         onWorkshopFillSidebarMenu(out,this,&call_native);
         if(call_native)
             INTERPOSE_NEXT(fillSidebarMenu)();
+        postWorkshopFillSidebarMenu(out,this);
     }
 };
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, fillSidebarMenu);

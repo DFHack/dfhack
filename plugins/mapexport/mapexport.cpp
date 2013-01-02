@@ -13,6 +13,7 @@ using namespace google::protobuf::io;
 
 #include "DataDefs.h"
 #include "df/world.h"
+#include "df/plant.h"
 #include "modules/Constructions.h"
 
 #include "proto/Map.pb.h"

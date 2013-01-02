@@ -8,20 +8,20 @@ local count = 0
 local types = {}
 
 local function update_temp(item,btemp)
-    if item.temperature ~= btemp then
+    if item.temperature.whole ~= btemp then
         count = count + 1
         local tid = item:getType()
         types[tid] = (types[tid] or 0) + 1
     end
 
     if apply then
-        item.temperature = btemp
-        item.temperature_fraction = 0
+        item.temperature.whole = btemp
+        item.temperature.fraction = 0
 
         if item.contaminants then
             for _,c in ipairs(item.contaminants) do
-                c.temperature = btemp
-                c.temperature_fraction = 0
+                c.temperature.whole = btemp
+                c.temperature.fraction = 0
             end
         end
     end

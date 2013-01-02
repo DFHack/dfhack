@@ -94,6 +94,9 @@ DFHACK_EXPORT bool Read (const uint32_t index, t_building & building);
  */
 DFHACK_EXPORT bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
 
+DFHACK_EXPORT df::general_ref *getGeneralRef(df::building *building, df::general_ref_type type);
+DFHACK_EXPORT df::specific_ref *getSpecificRef(df::building *building, df::specific_ref_type type);
+
 /**
  * Sets the owner unit for the building.
  */

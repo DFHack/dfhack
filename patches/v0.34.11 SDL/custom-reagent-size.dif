@@ -1,0 +1,91 @@
+http://www.bay12games.com/dwarves/mantisbt/view.php?id=808
+
+Original code:
+
+.text:00916BCE                 mov     edi, ebp
+.text:00916BD0                 call    eax
+.text:00916BD2                 test    eax, eax
+.text:00916BD4                 jnz     short loc_916C1C
+
+.text:00916C0A                 mov     edi, ebp
+
+.text:00916C14                 mov     edi, ebp
+
+Patch:
+
+0x2ac34:
+CC CC CC CC CC CC CC CC CC CC CC CC
+8B 7C 24 78 8B 3C B7 FF D0 EB 25 CC
+
+.text:0042B834 loc_42B834:
+.text:0042B834                 mov     edi, [esp+78h]
+.text:0042B838                 mov     edi, [edi+esi*4]
+.text:0042B83B                 call    eax
+.text:0042B83D                 jmp     short unk_42B864
+
+0x2ac64
+CC CC CC CC CC CC CC CC CC CC CC CC
+85 C0 E9 69 B3 4E 00 CC CC CC CC CC
+
+.text:0042B864 loc_42B864:
+.text:0042B864                 test    eax, eax
+.text:0042B866                 jmp     loc_916BD4
+
+0x515fce
+8B FD FF D0 85 C0
+E9 61 4C B1 FF 90
+
+.text:00916BCE                 jmp     loc_42B834
+.text:00916BD3                 nop
+.text:00916BD4 loc_916BD4:
+
+0x51600a
+8B FD
+90 90
+
+.text:00916C0A                 nop
+.text:00916C0B                 nop
+
+0x516014
+8B FD
+90 90
+
+.text:00916C14                 nop
+.text:00916C15                 nop
+
+
+You can use this script to apply the generated patch below:
+http://stalkr.net/files/ida/idadif.py
+
+----8<----
+This difference file is created by The Interactive Disassembler
+
+Dwarf Fortress.exe
+0002AC34: CC 8B
+0002AC35: CC 7C
+0002AC36: CC 24
+0002AC37: CC 78
+0002AC38: CC 8B
+0002AC39: CC 3C
+0002AC3A: CC B7
+0002AC3B: CC FF
+0002AC3C: CC D0
+0002AC3D: CC EB
+0002AC3E: CC 25
+0002AC64: CC 85
+0002AC65: CC C0
+0002AC66: CC E9
+0002AC67: CC 69
+0002AC68: CC B3
+0002AC69: CC 4E
+0002AC6A: CC 00
+00515FCE: 8B E9
+00515FCF: FD 61
+00515FD0: FF 4C
+00515FD1: D0 B1
+00515FD2: 85 FF
+00515FD3: C0 90
+0051600A: 8B 90
+0051600B: FD 90
+00516014: 8B 90
+00516015: FD 90

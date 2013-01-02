@@ -152,7 +152,9 @@ ListBox.ATTRS{
     with_filter = false,
     cursor_pen = DEFAULT_NIL,
     select_pen = DEFAULT_NIL,
-    on_select = DEFAULT_NIL
+    on_select = DEFAULT_NIL,
+    on_select2 = DEFAULT_NIL,
+    select2_hint = DEFAULT_NIL,
 }
 
 function ListBox:preinit(info)
@@ -166,6 +168,16 @@ function ListBox:init(info)
     local list_widget = widgets.List
     if self.with_filter then
         list_widget = widgets.FilteredList
+    end
+
+    local on_submit2
+    if self.select2_hint or self.on_select2 then
+        on_submit2 = function(sel, obj)
+            self:dismiss()
+            if self.on_select2 then self.on_select2(sel, obj) end
+            local cb = obj.on_select2
+            if cb then cb(obj, sel) end
+        end
     end
 
     self:addviews{
@@ -182,9 +194,17 @@ function ListBox:init(info)
                 local cb = obj.on_select or obj[2]
                 if cb then cb(obj, sel) end
             end,
+            on_submit2 = on_submit2,
             frame = { l = 0, r = 0 },
         }
     }
+end
+
+function ListBox:onRenderFrame(dc,rect)
+    ListBox.super.onRenderFrame(self,dc,rect)
+    if self.select2_hint then
+        dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_DARKGREY)
+    end
 end
 
 function ListBox:getWantedFrameSize()

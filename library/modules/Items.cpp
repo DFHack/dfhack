@@ -495,10 +495,10 @@ bool Items::copyItem(df::item * itembase, DFHack::dfh_item &item)
     item.id = itreal->id;
     item.age = itreal->age;
     item.flags = itreal->flags;
-    item.matdesc.itemType = itreal->getType();
-    item.matdesc.subType = itreal->getSubtype();
-    item.matdesc.material = itreal->getMaterial();
-    item.matdesc.index = itreal->getMaterialIndex();
+    item.matdesc.item_type = itreal->getType();
+    item.matdesc.item_subtype = itreal->getSubtype();
+    item.matdesc.mat_type = itreal->getMaterial();
+    item.matdesc.mat_index = itreal->getMaterialIndex();
     item.wear_level = itreal->getWear();
     item.quality = itreal->getQuality();
     item.quantity = itreal->getStackSize();
@@ -509,7 +509,7 @@ df::general_ref *Items::getGeneralRef(df::item *item, df::general_ref_type type)
 {
     CHECK_NULL_POINTER(item);
 
-    return findRef(item->itemrefs, type);
+    return findRef(item->general_refs, type);
 }
 
 df::specific_ref *Items::getSpecificRef(df::item *item, df::specific_ref_type type)
@@ -530,9 +530,9 @@ bool Items::setOwner(df::item *item, df::unit *unit)
 {
     CHECK_NULL_POINTER(item);
 
-    for (int i = item->itemrefs.size()-1; i >= 0; i--)
+    for (int i = item->general_refs.size()-1; i >= 0; i--)
     {
-        df::general_ref *ref = item->itemrefs[i];
+        df::general_ref *ref = item->general_refs[i];
 
         if (!strict_virtual_cast<df::general_ref_unit_itemownerst>(ref))
             continue;
@@ -546,7 +546,7 @@ bool Items::setOwner(df::item *item, df::unit *unit)
         }
 
         delete ref;
-        vector_erase_at(item->itemrefs, i);
+        vector_erase_at(item->general_refs, i);
     }
 
     item->flags.bits.owned = false;
@@ -561,7 +561,7 @@ bool Items::setOwner(df::item *item, df::unit *unit)
         ref->unit_id = unit->id;
 
         insert_into_vector(unit->owned_items, item->id);
-        item->itemrefs.push_back(ref);
+        item->general_refs.push_back(ref);
     }
 
     return true;
@@ -580,9 +580,9 @@ void Items::getContainedItems(df::item *item, std::vector<df::item*> *items)
 
     items->clear();
 
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->general_refs.size(); i++)
     {
-        df::general_ref *ref = item->itemrefs[i];
+        df::general_ref *ref = item->general_refs[i];
         if (ref->getType() != general_ref_type::CONTAINS_ITEM)
             continue;
 
@@ -617,9 +617,9 @@ df::coord Items::getPosition(df::item *item)
 
     if (item->flags.bits.in_inventory)
     {
-        for (size_t i = 0; i < item->itemrefs.size(); i++)
+        for (size_t i = 0; i < item->general_refs.size(); i++)
         {
-            df::general_ref *ref = item->itemrefs[i];
+            df::general_ref *ref = item->general_refs[i];
 
             switch (ref->getType())
             {
@@ -716,9 +716,9 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
     if (item->world_data_id != -1)
         return false;
 
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->general_refs.size(); i++)
     {
-        df::general_ref *ref = item->itemrefs[i];
+        df::general_ref *ref = item->general_refs[i];
 
         switch (ref->getType())
         {
@@ -748,9 +748,9 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
     {
         bool found = false;
 
-        for (int i = item->itemrefs.size()-1; i >= 0; i--)
+        for (int i = item->general_refs.size()-1; i >= 0; i--)
         {
-            df::general_ref *ref = item->itemrefs[i];
+            df::general_ref *ref = item->general_refs[i];
 
             switch (ref->getType())
             {
@@ -767,7 +767,7 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
 
                     item2->flags.bits.weight_computed = false;
 
-                    removeRef(item2->itemrefs, general_ref_type::CONTAINS_ITEM, item->id);
+                    removeRef(item2->general_refs, general_ref_type::CONTAINS_ITEM, item->id);
                 }
                 break;
 
@@ -799,7 +799,7 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
             }
 
             found = true;
-            vector_erase_at(item->itemrefs, i);
+            vector_erase_at(item->general_refs, i);
             delete ref;
         }
 
@@ -878,10 +878,10 @@ bool DFHack::Items::moveToContainer(MapExtras::MapCache &mc, df::item *item, df:
     container->flags.bits.weight_computed = false;
 
     ref1->item_id = item->id;
-    container->itemrefs.push_back(ref1);
+    container->general_refs.push_back(ref1);
 
     ref2->item_id = container->id;
-    item->itemrefs.push_back(ref2);
+    item->general_refs.push_back(ref2);
 
     return true;
 }
@@ -912,7 +912,7 @@ bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::
     item->flags.bits.in_building=true;
 
     ref->building_id=building->id;
-    item->itemrefs.push_back(ref);
+    item->general_refs.push_back(ref);
 
     auto con=new df::building_actual::T_contained_items;
     con->item=item;
@@ -955,7 +955,7 @@ bool DFHack::Items::moveToInventory(
     unit->inventory.push_back(newInventoryItem);
 
     holderReference->unit_id = unit->id;
-    item->itemrefs.push_back(holderReference);
+    item->general_refs.push_back(holderReference);
 
     resetUnitInvFlags(unit, newInventoryItem);
 
@@ -1016,7 +1016,7 @@ df::proj_itemst *Items::makeProjectile(MapExtras::MapCache &mc, df::item *item)
     proj->item = item;
 
     ref->projectile_id = proj->id;
-    item->itemrefs.push_back(ref);
+    item->general_refs.push_back(ref);
 
     linked_list_append(&world->proj_list, proj->link);
 

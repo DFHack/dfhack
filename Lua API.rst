@@ -741,6 +741,10 @@ can be omitted.
 
   Returns the dfhack directory path, i.e. ``".../df/hack/"``.
 
+* ``dfhack.getSavePath()``
+
+  Returns the path to the current save directory, or *nil* if no save loaded.
+
 * ``dfhack.getTickCount()``
 
   Returns the tick count in ms, exactly as DF ui uses.
@@ -833,6 +837,14 @@ Job module
 
   Prints info about the job item.
 
+* ``dfhack.job.getGeneralRef(job, type)``
+
+  Searches for a general_ref with the given type.
+
+* ``dfhack.job.getSpecificRef(job, type)``
+
+  Searches for a specific_ref with the given type.
+
 * ``dfhack.job.getHolder(job)``
 
   Returns the building holding the job.
@@ -878,6 +890,14 @@ Units module
 * ``dfhack.units.getPosition(unit)``
 
   Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
+
+* ``dfhack.units.getGeneralRef(unit, type)``
+
+  Searches for a general_ref with the given type.
+
+* ``dfhack.units.getSpecificRef(unit, type)``
+
+  Searches for a specific_ref with the given type.
 
 * ``dfhack.units.getContainer(unit)``
 
@@ -953,6 +973,10 @@ Units module
 * ``dfhack.units.getEffectiveSkill(unit, skill)``
 
   Computes the effective rating for the given skill, taking into account exhaustion, pain etc.
+
+* ``dfhack.units.getExperience(unit, skill[, total])``
+
+  Returns the experience value for the given skill. If ``total`` is true, adds experience implied by the current rating.
 
 * ``dfhack.units.computeMovementSpeed(unit)``
 
@@ -1197,6 +1221,14 @@ Burrows module
 
 Buildings module
 ----------------
+
+* ``dfhack.buildings.getGeneralRef(building, type)``
+
+  Searches for a general_ref with the given type.
+
+* ``dfhack.buildings.getSpecificRef(building, type)``
+
+  Searches for a specific_ref with the given type.
 
 * ``dfhack.buildings.setOwner(item,unit)``
 
@@ -1582,7 +1614,10 @@ Supported callbacks and fields are:
     Maps to an integer in range 0-255. Duplicates a separate "STRING_A???" code for convenience.
 
   ``_MOUSE_L, _MOUSE_R``
-    If the left or right mouse button is pressed.
+    If the left or right mouse button is being pressed.
+
+  ``_MOUSE_L_DOWN, _MOUSE_R_DOWN``
+    If the left or right mouse button was just pressed.
 
   If this method is omitted, the screen is dismissed on receival of the ``LEAVESCREEN`` key.
 
@@ -1618,9 +1653,19 @@ and are only documented here for completeness:
 
   Returns the pre-extracted vtable address ``name``, or *nil*.
 
+* ``dfhack.internal.getImageBase()``
+
+  Returns the mmap base of the executable.
+
 * ``dfhack.internal.getRebaseDelta()``
 
   Returns the ASLR rebase offset of the DF executable.
+
+* ``dfhack.internal.adjustOffset(offset[,to_file])``
+
+  Returns the re-aligned offset, or *nil* if invalid.
+  If ``to_file`` is true, the offset is adjusted from memory to file.
+  This function returns the original value everywhere except windows.
 
 * ``dfhack.internal.getMemRanges()``
 
@@ -2672,6 +2717,16 @@ containing newlines, or a table with the following possible fields:
 
   Specifies a pen to paint as one tile before the main part of the token.
 
+* ``token.width = ...``
+
+  If specified either as a value or a callback, the text field is padded
+  or truncated to the specified number.
+
+* ``token.pad_char = '?'``
+
+  If specified together with ``width``, the padding area is filled with
+  this character instead of just being skipped over.
+
 * ``token.key = '...'``
 
   Specifies the keycode associated with the token. The string description
@@ -2737,8 +2792,12 @@ It has the following attributes:
 :inactive_pen: If specified, used for the cursor when the widget is not active.
 :icon_pen: Default pen for icons.
 :on_select: Selection change callback; called as ``on_select(index,choice)``.
+            This is also called with *nil* arguments if ``setChoices`` is called
+            with an empty list.
 :on_submit: Enter key callback; if specified, the list reacts to the key
             and calls it as ``on_submit(index,choice)``.
+:on_submit2: Shift-Enter key callback; if specified, the list reacts to the key
+             and calls it as ``on_submit2(index,choice)``.
 :row_height: Height of every row in text lines.
 :icon_width: If not *nil*, the specified number of character columns
              are reserved to the left of the list item for the icons.
@@ -2788,6 +2847,10 @@ The list supports the following methods:
 
   Call the ``on_submit`` callback, as if the Enter key was handled.
 
+* ``list:submit2()``
+
+  Call the ``on_submit2`` callback, as if the Shift-Enter key was handled.
+
 FilteredList class
 ------------------
 
@@ -2798,6 +2861,7 @@ In addition to passing through all attributes supported by List, it
 supports:
 
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
+:edit_below: If true, the edit field is placed below the list instead of above.
 :not_found_label: Specifies the text of the label shown when no items match the filter.
 
 The list choices may include the following attributes:
@@ -2933,3 +2997,24 @@ from other scripts) in any context, via the same function the core uses:
   The ``name`` argument should be the name stem, as would be used on the command line.
 
 Note that this function lets errors propagate to the caller.
+
+Save init script
+================
+
+If a save directory contains a file called ``raw/init.lua``, it is
+automatically loaded and executed every time the save is loaded. It
+can also define the following functions to be called by dfhack:
+
+* ``function onStateChange(op) ... end``
+
+  Automatically called from the regular onStateChange event as long
+  as the save is still loaded. This avoids the need to install a hook
+  into the global ``dfhack.onStateChange`` table, with associated
+  cleanup concerns.
+
+* ``function onUnload() ... end``
+
+  Called when the save containing the script is unloaded. This function
+  should clean up any global hooks installed by the script.
+
+Within the init script, the path to the save directory is available as ``SAVE_PATH``.

@@ -103,13 +103,13 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
     {
         mem->setOS(OS_LINUX);
         // this is wrong... I'm not going to do base image relocation on linux though.
-        mem->setBase(0x0);
+        mem->setBase(0x8048000);
     }
     else if(os == "darwin")
     {
         mem->setOS(OS_APPLE);
         // this is wrong... I'm not going to do base image relocation on linux though.
-        mem->setBase(0x0);
+        mem->setBase(0x1000000);
     }
     else
     {

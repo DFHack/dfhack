@@ -17,7 +17,7 @@ end
 inventory = Hash.new(0)
 df.world.items.other[:SEEDS].each { |seed|
 	next if not seed.flags.in_building
-	next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
+	next if not seed.general_refs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
 	next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
 	inventory[seed.mat_index] += 1
 }
@@ -40,7 +40,7 @@ else
 	df.world.items.other[:SEEDS].each { |seed|
 		next if seed.mat_index != wantmat
 		next if not seed.flags.in_building
-		next if not seed.itemrefs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
+		next if not seed.general_refs.find { |ref| ref._rtti_classname == :general_ref_building_holderst }
 		next if seed.grow_counter >= @raws_plant_growdur[seed.mat_index]
 		seed.grow_counter = @raws_plant_growdur[seed.mat_index]
 		count += 1

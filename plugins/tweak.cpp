@@ -51,6 +51,12 @@
 #include "df/squad_position.h"
 #include "df/job.h"
 #include "df/general_ref_building_holderst.h"
+#include "df/unit_health_info.h"
+#include "df/activity_entry.h"
+#include "df/activity_event_combat_trainingst.h"
+#include "df/activity_event_individual_skill_drillst.h"
+#include "df/activity_event_skill_demonstrationst.h"
+#include "df/activity_event_sparringst.h"
 
 #include <stdlib.h>
 
@@ -128,6 +134,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak military-color-assigned [disable]\n"
         "    Color squad candidates already assigned to other squads in brown/green\n"
         "    to make them stand out more in the list.\n"
+        "  tweak military-training [disable]\n"
+        "    Speed up melee squad training, removing inverse dependency on unit count.\n"
     ));
     return CR_OK;
 }
@@ -204,15 +212,31 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
 
+    bool check_default()
+    {
+        switch (ui->main.mode) {
+            case ui_sidebar_mode::Default:
+                return true;
+
+            case ui_sidebar_mode::Build:
+                return ui_build_selector &&
+                       (ui_build_selector->building_type < 0 ||
+                        ui_build_selector->stage < 1);
+
+            default:
+                return false;
+        }
+    }
+
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
-        bool was_default = (ui->main.mode == df::ui_sidebar_mode::Default);
+        bool was_default = check_default();
         df::coord view = Gui::getViewportPos();
         df::coord cursor = Gui::getCursorPos();
 
         INTERPOSE_NEXT(feed)(input);
 
-        bool is_default = (ui->main.mode == df::ui_sidebar_mode::Default);
+        bool is_default = check_default();
         df::coord cur_cursor = Gui::getCursorPos();
 
         if (is_default && !was_default)
@@ -233,7 +257,7 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
             tmp.insert(interface_key::CURSOR_UP_Z);
             INTERPOSE_NEXT(feed)(&tmp);
         }
-        else if (cur_cursor.isValid())
+        else if (!is_default && cur_cursor.isValid())
         {
             last_cursor = df::coord();
         }
@@ -291,18 +315,18 @@ struct stable_temp_hook : df::item_actual {
 
     DEFINE_VMETHOD_INTERPOSE(bool, adjustTemperature, (uint16_t temp, int32_t rate_mult))
     {
-        if (temperature != temp)
+        if (temperature.whole != temp)
         {
             // Bug 6012 is caused by fixed-point precision mismatch jitter
             // when an item is being pushed by two sources at N and N+1.
             // This check suppresses it altogether.
-            if (temp == temperature+1 ||
-                (temp == temperature-1 && temperature_fraction == 0))
-                temp = temperature;
+            if (temp == temperature.whole+1 ||
+                (temp == temperature.whole-1 && temperature.fraction == 0))
+                temp = temperature.whole;
             // When SPEC_HEAT is NONE, the original function seems to not
             // change the temperature, yet return true, which is silly.
             else if (getSpecHeat() == 60001)
-                temp = temperature;
+                temp = temperature.whole;
         }
 
         return INTERPOSE_NEXT(adjustTemperature)(temp, rate_mult);
@@ -317,10 +341,10 @@ struct stable_temp_hook : df::item_actual {
             {
                 auto obj = (*contaminants)[i];
 
-                if (abs(obj->temperature - temperature) == 1)
+                if (abs(obj->temperature.whole - temperature.whole) == 1)
                 {
-                    obj->temperature = temperature;
-                    obj->temperature_fraction = temperature_fraction;
+                    obj->temperature.whole = temperature.whole;
+                    obj->temperature.fraction = temperature.fraction;
                 }
             }
         }
@@ -355,11 +379,11 @@ struct fast_heat_hook : df::item_actual {
         (uint16_t temp, bool local, bool contained, bool adjust, int32_t rate_mult)
     ) {
         // Some items take ages to cross the last degree, so speed them up
-        if (map_temp_mult > 0 && temp != temperature && max_heat_ticks > 0)
+        if (map_temp_mult > 0 && temp != temperature.whole && max_heat_ticks > 0)
         {
             int spec = getSpecHeat();
             if (spec != 60001)
-                rate_mult = std::max(map_temp_mult, spec/max_heat_ticks/abs(temp - temperature));
+                rate_mult = std::max(map_temp_mult, spec/max_heat_ticks/abs(temp - temperature.whole));
         }
 
         return INTERPOSE_NEXT(updateTemperature)(temp, local, contained, adjust, rate_mult);
@@ -662,6 +686,238 @@ struct military_assign_hook : df::viewscreen_layer_militaryst {
 IMPLEMENT_VMETHOD_INTERPOSE(military_assign_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(military_assign_hook, render);
 
+// Unit updates are executed based on an action divisor variable,
+// which is computed from the alive unit count and has range 10-100.
+static int adjust_unit_divisor(int value) {
+    return value*10/DF_GLOBAL_FIELD(ui, unit_action_divisor, 10);
+}
+
+static bool can_spar(df::unit *unit) {
+    return unit->counters2.exhaustion <= 2000 && // actually 4000, but leave a gap
+           (unit->status2.limbs_grasp_count > 0 || unit->status2.limbs_grasp_max == 0) &&
+           (!unit->health || (unit->health->flags.whole&0x7FF) == 0) &&
+           (!unit->job.current_job || unit->job.current_job != job_type::Rest);
+}
+
+static bool has_spar_inventory(df::unit *unit, df::job_skill skill)
+{
+    using namespace df::enums::job_skill;
+
+    auto type = ENUM_ATTR(job_skill, type, skill);
+
+    if (type == job_skill_class::MilitaryWeapon)
+    {
+        for (size_t i = 0; i < unit->inventory.size(); i++)
+        {
+            auto item = unit->inventory[i];
+            if (item->mode == df::unit_inventory_item::Weapon &&
+                item->item->getMeleeSkill() == skill)
+                return true;
+        }
+
+        return false;
+    }
+
+    switch (skill) {
+        case THROW:
+        case RANGED_COMBAT:
+            return false;
+
+        case SHIELD:
+            for (size_t i = 0; i < unit->inventory.size(); i++)
+            {
+                auto item = unit->inventory[i];
+                if (item->mode == df::unit_inventory_item::Weapon &&
+                    item->item->getType() == item_type::SHIELD)
+                    return true;
+            }
+            return false;
+
+        case ARMOR:
+            for (size_t i = 0; i < unit->inventory.size(); i++)
+            {
+                auto item = unit->inventory[i];
+                if (item->mode == df::unit_inventory_item::Worn &&
+                    item->item->isArmorNotClothing())
+                    return true;
+            }
+            return false;
+
+        default:
+            return true;
+    }
+}
+
+struct military_training_ct_hook : df::activity_event_combat_trainingst {
+    typedef df::activity_event_combat_trainingst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, process, (df::unit *unit))
+    {
+        auto act = df::activity_entry::find(activity_id);
+        int cur_neid = act ? act->next_event_id : 0;
+        int cur_oc = organize_counter;
+
+        INTERPOSE_NEXT(process)(unit);
+
+        // Shorten the time it takes to organize stuff, so that in
+        // reality it remains the same instead of growing proportionally
+        // to the unit count.
+        if (organize_counter > cur_oc && organize_counter > 0)
+            organize_counter = adjust_unit_divisor(organize_counter);
+
+        if (act && act->next_event_id > cur_neid)
+        {
+            // New events were added. Check them.
+            for (size_t i = 0; i < act->events.size(); i++)
+            {
+                auto event = act->events[i];
+                if (event->flags.bits.dismissed || event->event_id < cur_neid)
+                    continue;
+
+                if (auto sp = strict_virtual_cast<df::activity_event_sparringst>(event))
+                {
+                    // Sparring has a problem in that all of its participants decrement
+                    // the countdown variable. Fix this by multiplying it by the member count.
+                    sp->countdown = sp->countdown * sp->participants.units.size();
+                }
+                else if (auto sd = strict_virtual_cast<df::activity_event_skill_demonstrationst>(event))
+                {
+                    // Adjust initial counter values
+                    sd->train_countdown = adjust_unit_divisor(sd->train_countdown);
+                    sd->wait_countdown = adjust_unit_divisor(sd->wait_countdown);
+
+                    // Check if the game selected the most skilled unit as the teacher
+                    auto &units = sd->participants.units;
+                    int maxv = -1, cur_xp = -1, minv = 0;
+                    int best = -1;
+                    size_t spar = 0;
+
+                    for (size_t j = 0; j < units.size(); j++)
+                    {
+                        auto unit = df::unit::find(units[j]);
+                        if (!unit) continue;
+                        int xp = Units::getExperience(unit, sd->skill, true);
+                        if (units[j] == sd->unit_id)
+                            cur_xp = xp;
+                        if (j == 0 || xp < minv)
+                            minv = xp;
+                        if (xp > maxv) {
+                            maxv = xp;
+                            best = j;
+                        }
+                        if (can_spar(unit) && has_spar_inventory(unit, sd->skill))
+                            spar++;
+                    }
+
+                    color_ostream_proxy out(Core::getInstance().getConsole());
+
+                    // If the xp gap is low, sometimes replace with sparring
+                    if ((maxv - minv) < 64*15 && spar == units.size() &&
+                        random_int(45) >= 30 + (maxv-minv)/64)
+                    {
+                        out.print("Replacing %s demonstration (xp %d-%d, gap %d) with sparring.\n",
+                                  ENUM_KEY_STR(job_skill, sd->skill).c_str(), minv, maxv, maxv-minv);
+
+                        if (auto spar = df::allocate<df::activity_event_sparringst>())
+                        {
+                            spar->event_id = sd->event_id;
+                            spar->activity_id = sd->activity_id;
+                            spar->parent_event_id = sd->parent_event_id;
+                            spar->flags = sd->flags;
+                            spar->participants = sd->participants;
+                            spar->building_id = sd->building_id;
+                            spar->countdown = 300*units.size();
+
+                            delete sd;
+                            act->events[i] = spar;
+
+                            continue;
+                        }
+                    }
+
+                    // If the teacher has less xp than somebody else, switch
+                    if (best >= 0 && maxv > cur_xp)
+                    {
+                        out.print("Replacing %s teacher %d (%d xp) with %d (%d xp); xp gap %d.\n",
+                                  ENUM_KEY_STR(job_skill, sd->skill).c_str(),
+                                  sd->unit_id, cur_xp, units[best], maxv, maxv-minv);
+
+                        sd->hist_figure_id = sd->participants.histfigs[best];
+                        sd->unit_id = units[best];
+                    }
+                    else
+                    {
+                        out.print("Not changing %s demonstration (xp %d-%d, gap %d).\n",
+                                  ENUM_KEY_STR(job_skill, sd->skill).c_str(),
+                                  minv, maxv, maxv-minv);
+                    }
+                }
+            }
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(military_training_ct_hook, process);
+
+struct military_training_sd_hook : df::activity_event_skill_demonstrationst {
+    typedef df::activity_event_skill_demonstrationst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, process, (df::unit *unit))
+    {
+        int cur_oc = organize_counter;
+        int cur_tc = train_countdown;
+
+        INTERPOSE_NEXT(process)(unit);
+
+        // Shorten the counters if they changed
+        if (organize_counter > cur_oc && organize_counter > 0)
+            organize_counter = adjust_unit_divisor(organize_counter);
+        if (train_countdown > cur_tc)
+            train_countdown = adjust_unit_divisor(train_countdown);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(military_training_sd_hook, process);
+
+template<class T>
+bool is_done(T *event, df::unit *unit)
+{
+    return event->flags.bits.dismissed ||
+           binsearch_index(event->participants.units, unit->id) < 0;
+}
+
+struct military_training_sp_hook : df::activity_event_sparringst {
+    typedef df::activity_event_sparringst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, process, (df::unit *unit))
+    {
+        INTERPOSE_NEXT(process)(unit);
+
+        // Since there are no counters to fix, repeat the call
+        int cnt = (DF_GLOBAL_FIELD(ui, unit_action_divisor, 10)+5) / 10;
+        for (int i = 1; i < cnt && !is_done(this, unit); i++)
+            INTERPOSE_NEXT(process)(unit);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(military_training_sp_hook, process);
+
+struct military_training_id_hook : df::activity_event_individual_skill_drillst {
+    typedef df::activity_event_individual_skill_drillst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, process, (df::unit *unit))
+    {
+        INTERPOSE_NEXT(process)(unit);
+
+        // Since there are no counters to fix, repeat the call
+        int cnt = (DF_GLOBAL_FIELD(ui, unit_action_divisor, 10)+5) / 10;
+        for (int i = 1; i < cnt && !is_done(this, unit); i++)
+            INTERPOSE_NEXT(process)(unit);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(military_training_id_hook, process);
+
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
     if (vector_get(parameters, 1) == "disable")
@@ -834,6 +1090,13 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     else if (cmd == "military-color-assigned")
     {
         enable_hook(out, INTERPOSE_HOOK(military_assign_hook, render), parameters);
+    }
+    else if (cmd == "military-training")
+    {
+        enable_hook(out, INTERPOSE_HOOK(military_training_ct_hook, process), parameters);
+        enable_hook(out, INTERPOSE_HOOK(military_training_sd_hook, process), parameters);
+        enable_hook(out, INTERPOSE_HOOK(military_training_sp_hook, process), parameters);
+        enable_hook(out, INTERPOSE_HOOK(military_training_id_hook, process), parameters);
     }
     else 
         return CR_WRONG_USAGE;

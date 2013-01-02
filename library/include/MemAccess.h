@@ -275,11 +275,13 @@ namespace DFHack
             {
                 return my_descriptor;
             };
-            uint32_t getBase();
+            uintptr_t getBase();
             /// get the DF Process ID
             int getPID();
             /// get the DF Process FilePath
             std::string getPath();
+            /// Adjust between in-memory and in-file image offset
+            int adjustOffset(int offset, bool to_file = false);
 
             /// millisecond tick count, exactly as DF uses
             uint32_t getTickCount();
@@ -289,6 +291,27 @@ namespace DFHack
 
             /// write a possibly read-only memory area
             bool patchMemory(void *target, const void* src, size_t count);
+
+            /// allocate new memory pages for code or stuff
+            /// returns -1 on error (0 is a valid address)
+            void* memAlloc(const int length);
+
+            /// free memory pages from memAlloc
+            /// should have length = alloced length for portability
+            /// returns 0 on success
+            int memDealloc(void *ptr, const int length);
+
+            /// change memory page permissions
+            /// prot is a bitwise OR of the MemProt enum
+            /// returns 0 on success
+            int memProtect(void *ptr, const int length, const int prot);
+
+            enum MemProt {
+                READ = 1,
+                WRITE = 2,
+                EXEC = 4
+            };
+
     private:
         VersionInfo * my_descriptor;
         PlatformSpecific *d;

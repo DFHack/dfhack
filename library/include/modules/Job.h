@@ -28,6 +28,8 @@ distribution.
 
 #include "Export.h"
 #include "Module.h"
+#include "Types.h"
+
 #include <ostream>
 
 #include "DataDefs.h"
@@ -54,6 +56,9 @@ namespace DFHack
 
         DFHACK_EXPORT void printItemDetails(color_ostream &out, df::job_item *item, int idx);
         DFHACK_EXPORT void printJobDetails(color_ostream &out, df::job *job);
+
+        DFHACK_EXPORT df::general_ref *getGeneralRef(df::job *job, df::general_ref_type type);
+        DFHACK_EXPORT df::specific_ref *getSpecificRef(df::job *job, df::specific_ref_type type);
 
         DFHACK_EXPORT df::building *getHolder(df::job *job);
         DFHACK_EXPORT df::unit *getWorker(df::job *job);

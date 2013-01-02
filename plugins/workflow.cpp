@@ -2498,10 +2498,12 @@ namespace wf_ui
         else if  (input->count(interface_key::CURSOR_LEFT))
         {
             --selected_column;
+            validateColumn();
         }
         else if  (input->count(interface_key::CURSOR_RIGHT))
         {
             selected_column++;
+            validateColumn();
         }
         else if (enabler->tracking_on && enabler->mouse_lbut)
         {

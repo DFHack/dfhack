@@ -13,6 +13,7 @@
 #include "df/job.h"
 #include "df/job_list_link.h"
 #include "df/unit.h"
+#include "df/unit_syndrome.h"
 #include "df/world.h"
 
 #include <map>
@@ -135,6 +136,7 @@ static void manageUnitDeathEvent(color_ostream& out);
 static void manageItemCreationEvent(color_ostream& out);
 static void manageBuildingEvent(color_ostream& out);
 static void manageConstructionEvent(color_ostream& out);
+static void manageSyndromeEvent(color_ostream& out);
 
 //tick event
 static uint32_t lastTick = 0;
@@ -234,6 +236,10 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     if ( tick - eventLastTick[EventType::CONSTRUCTION] >= (*eventFrequency[EventType::CONSTRUCTION].begin()).first ) {
         manageConstructionEvent(out);
         eventLastTick[EventType::CONSTRUCTION] = tick;
+    }
+    if ( tick - eventLastTick[EventType::SYNDROME] >= (*eventFrequency[EventType::SYNDROME].begin()).first ) {
+        manageSyndromeEvent(out);
+        eventLastTick[EventType::SYNDROME] = tick;
     }
 
     return;
@@ -458,3 +464,29 @@ static void manageConstructionEvent(color_ostream& out) {
     constructions.clear();
     constructions.insert(constructionsNow.begin(), constructionsNow.end());
 }
+
+static void manageSyndromeEvent(color_ostream& out) {
+    if ( handlers[EventType::SYNDROME].empty() )
+        return;
+
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::SYNDROME].begin(), handlers[EventType::SYNDROME].end());
+    for ( auto a = df::global::world->units.active.begin(); a != df::global::world->units.active.end(); a++ ) {
+        df::unit* unit = *a;
+        if ( unit->flags1.bits.dead )
+            continue;
+        for ( size_t b = 0; b < unit->syndromes.active.size(); b++ ) {
+            df::unit_syndrome* syndrome = unit->syndromes.active[b];
+            uint32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
+            out.print("start time = %d, time = %d\n", startTime, eventLastTick[EventType::SYNDROME]);
+            if ( startTime < eventLastTick[EventType::SYNDROME] )
+                continue;
+
+            SyndromeData data(unit->id, b);
+            for ( auto c = copy.begin(); c != copy.end(); c++ ) {
+                EventHandler handle = (*c).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+    }
+}
+

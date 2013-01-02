@@ -23,9 +23,9 @@ void unitDeath(color_ostream& out, void* ptr);
 void itemCreate(color_ostream& out, void* ptr);
 void building(color_ostream& out, void* ptr);
 void construction(color_ostream& out, void* ptr);
+void syndrome(color_ostream& out, void* ptr);
 
 command_result eventExample(color_ostream& out, vector<string>& parameters);
-
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand("eventExample", "Sets up a few event triggers.",eventExample));
@@ -40,6 +40,7 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
     EventManager::EventHandler itemHandler(itemCreate);
     EventManager::EventHandler buildingHandler(building);
     EventManager::EventHandler constructionHandler(construction);
+    EventManager::EventHandler syndromeHandler(syndrome);
     Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("eventExample");
     EventManager::unregisterAll(me);
 
@@ -53,6 +54,7 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
     EventManager::registerListener(EventManager::EventType::ITEM_CREATED, itemHandler, 1000, me);
     EventManager::registerListener(EventManager::EventType::BUILDING, buildingHandler, 500, me);
     EventManager::registerListener(EventManager::EventType::CONSTRUCTION, constructionHandler, 100, me);
+    EventManager::registerListener(EventManager::EventType::SYNDROME, syndromeHandler, 1, me);
     out.print("Events registered.\n");
     return CR_OK;
 }
@@ -91,3 +93,9 @@ void building(color_ostream& out, void* ptr) {
 void construction(color_ostream& out, void* ptr) {
     out.print("Construction created/destroyed: 0x%X\n", ptr);
 }
+
+void syndrome(color_ostream& out, void* ptr) {
+    EventManager::SyndromeData* data = (EventManager::SyndromeData*)ptr;
+    out.print("Syndrome started: unit %d, syndrome %d.\n", data->unitId, data->syndromeIndex);
+}
+

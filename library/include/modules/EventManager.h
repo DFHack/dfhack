@@ -19,6 +19,7 @@ namespace DFHack {
                 ITEM_CREATED,
                 BUILDING,
                 CONSTRUCTION,
+                SYNDROME,
                 EVENT_MAX
             };
         }
@@ -34,6 +35,14 @@ namespace DFHack {
             }
             bool operator!=(EventHandler& handle) const {
                 return !( *this == handle);
+            }
+        };
+
+        struct SyndromeData {
+            int32_t unitId;
+            int32_t syndromeIndex;
+            SyndromeData(int32_t unitId_in, int32_t syndromeIndex_in): unitId(unitId_in), syndromeIndex(syndromeIndex_in) {
+
             }
         };
         

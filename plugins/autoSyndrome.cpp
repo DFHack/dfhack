@@ -7,6 +7,7 @@
 #include "modules/Job.h"
 #include "modules/Maps.h"
 
+#include "df/building.h"
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
 #include "df/global_objects.h"
@@ -21,6 +22,7 @@
 #include "df/ui.h"
 #include "df/unit.h"
 #include "df/general_ref.h"
+#include "df/general_ref_building_holderst.h"
 #include "df/general_ref_type.h"
 #include "df/general_ref_unit_workerst.h"
 
@@ -124,7 +126,7 @@ DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginComman
     
     Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("autoSyndrome");
     EventManager::EventHandler handle(processJob);
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, me);
+    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, 5, me);
     return CR_OK;
 }
 
@@ -162,11 +164,79 @@ command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
     Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("autoSyndrome");
     if ( enabled ) {
         EventManager::EventHandler handle(processJob);
-        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, me);
+        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, 5, me);
     } else {
         EventManager::unregisterAll(me);
     }
     return CR_OK;
+}
+
+bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df::unit* unit) {
+    df::creature_raw* creature = df::global::world->raws.creatures.all[unit->race];
+    df::caste_raw* caste = creature->caste[unit->caste];
+    std::string& creature_name = creature->creature_id;
+    std::string& creature_caste = caste->caste_id;
+    //check that the syndrome applies to that guy
+    /*
+     * If there is no affected class or affected creature, then anybody who isn't immune is fair game.
+     *
+     * Otherwise, it works like this:
+     *  add all the affected class creatures
+     *  remove all the immune class creatures
+     *  add all the affected creatures
+     *  remove all the immune creatures
+     *  you're affected if and only if you're in the remaining list after all of that
+     **/
+    bool applies = syndrome->syn_affected_class.size() == 0 && syndrome->syn_affected_creature.size() == 0;
+    for ( size_t c = 0; c < syndrome->syn_affected_class.size(); c++ ) {
+        if ( applies )
+            break;
+        for ( size_t d = 0; d < caste->creature_class.size(); d++ ) {
+            if ( *syndrome->syn_affected_class[c] == *caste->creature_class[d] ) {
+                applies = true;
+                break;
+            }
+        }
+    }
+    for ( size_t c = 0; c < syndrome->syn_immune_class.size(); c++ ) {
+        if ( !applies )
+            break;
+        for ( size_t d = 0; d < caste->creature_class.size(); d++ ) {
+            if ( *syndrome->syn_immune_class[c] == *caste->creature_class[d] ) {
+                applies = false;
+                break;
+            }
+        }
+    }
+
+    if ( syndrome->syn_affected_creature.size() != syndrome->syn_affected_caste.size() ) {
+        out.print("%s, line %d: different affected creature/caste sizes.\n", __FILE__, __LINE__);
+        return false;
+    }
+    for ( size_t c = 0; c < syndrome->syn_affected_creature.size(); c++ ) {
+        if ( creature_name != *syndrome->syn_affected_creature[c] )
+            continue;
+        if ( *syndrome->syn_affected_caste[c] == "ALL" ||
+             *syndrome->syn_affected_caste[c] == creature_caste ) {
+            applies = true;
+            break;
+        }
+    }
+    for ( size_t c = 0; c < syndrome->syn_immune_creature.size(); c++ ) {
+        if ( creature_name != *syndrome->syn_immune_creature[c] )
+            continue;
+        if ( *syndrome->syn_immune_caste[c] == "ALL" ||
+             *syndrome->syn_immune_caste[c] == creature_caste ) {
+            applies = false;
+            break;
+        }
+    }
+    if ( !applies ) {
+        return false;
+    }
+    if ( giveSyndrome(out, workerId, syndrome) < 0 )
+        return false;
+    return true;
 }
 
 void processJob(color_ostream& out, void* jobPtr) {
@@ -195,13 +265,13 @@ void processJob(color_ostream& out, void* jobPtr) {
     }
     
     int32_t workerId = -1;
-    for ( size_t a = 0; a < job->references.size(); a++ ) {
-        if ( job->references[a]->getType() != df::enums::general_ref_type::UNIT_WORKER )
+    for ( size_t a = 0; a < job->general_refs.size(); a++ ) {
+        if ( job->general_refs[a]->getType() != df::enums::general_ref_type::UNIT_WORKER )
             continue;
         if ( workerId != -1 ) {
             out.print("%s, line %d: Found two workers on the same job.\n", __FILE__, __LINE__);
         }
-        workerId = ((df::general_ref_unit_workerst*)job->references[a])->unit_id;
+        workerId = ((df::general_ref_unit_workerst*)job->general_refs[a])->unit_id;
         if (workerId == -1) {
             out.print("%s, line %d: invalid worker.\n", __FILE__, __LINE__);
             continue;
@@ -214,13 +284,32 @@ void processJob(color_ostream& out, void* jobPtr) {
         return;
     }
     df::unit* unit = df::global::world->units.all[workerIndex];
-    df::creature_raw* creature = df::global::world->raws.creatures.all[unit->race];
-    df::caste_raw* caste = creature->caste[unit->caste];
-    std::string& creature_name = creature->creature_id;
-    std::string& creature_caste = caste->caste_id;
+    //find the building that made it
+    int32_t buildingId = -1;
+    for ( size_t a = 0; a < job->general_refs.size(); a++ ) {
+        if ( job->general_refs[a]->getType() != df::enums::general_ref_type::BUILDING_HOLDER )
+            continue;
+        if ( buildingId != -1 ) {
+            out.print("%s, line %d: Found two buildings for the same job.\n", __FILE__, __LINE__);
+        }
+        buildingId = ((df::general_ref_building_holderst*)job->general_refs[a])->building_id;
+        if (buildingId == -1) {
+            out.print("%s, line %d: invalid building.\n", __FILE__, __LINE__);
+            continue;
+        }
+    }
+    df::building* building;
+    {
+        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, buildingId);
+        if ( index == -1 ) {
+            out.print("%s, line %d: error: couldn't find building %d.\n", __FILE__, __LINE__, buildingId);
+            return;
+        }
+        building = df::global::world->buildings.all[index];
+    }
 
     //find all of the products it makes. Look for a stone with a low boiling point.
-    bool foundIt = false;
+    bool appliedSomething = false;
     for ( size_t a = 0; a < reaction->products.size(); a++ ) {
         df::reaction_product_type type = reaction->products[a]->getType();
         //out.print("type = %d\n", (int32_t)type);
@@ -234,23 +323,34 @@ void processJob(color_ostream& out, void* jobPtr) {
 
         //must be a boiling rock syndrome
         df::inorganic_raw* inorganic = df::global::world->raws.inorganics[bob->mat_index];
-        if ( inorganic->material.heat.boiling_point > 10000 ) {
-            //continue;
+        if ( inorganic->material.heat.boiling_point > 9000 ) {
+            continue;
         }
 
         for ( size_t b = 0; b < inorganic->material.syndrome.size(); b++ ) {
             //add each syndrome to the guy who did the job
             df::syndrome* syndrome = inorganic->material.syndrome[b];
+            bool workerOnly = false;
+            bool allowMultipleSyndromes = false;
+            bool allowMultipleTargets = false;
             bool foundCommand = false;
             string commandStr;
             vector<string> args;
             for ( size_t c = 0; c < syndrome->syn_class.size(); c++ ) {
                 std::string* clazz = syndrome->syn_class[c];
-                out.print("Class = %s\n", clazz->c_str());
                 if ( foundCommand ) {
-                    if ( commandStr == "" )
-                        commandStr = *clazz;
-                    else {
+                    if ( commandStr == "" ) {
+                        if ( *clazz == "\\WORKER_ONLY" ) {
+                            workerOnly = true;
+                        } else if ( *clazz == "\\ALLOW_MULTIPLE_SYNDROMES" ) {
+                            allowMultipleSyndromes = true;
+                        } else if ( *clazz == "\\ALLOW_MULTIPLE_TARGETS" ) {
+                            allowMultipleTargets = true;
+                        }
+                        else {
+                            commandStr = *clazz;
+                        }
+                    } else {
                         stringstream bob;
                         if ( *clazz == "\\LOCATION" ) {
                             bob << job->pos.x;
@@ -284,70 +384,36 @@ void processJob(color_ostream& out, void* jobPtr) {
             if ( commandStr != "" ) {
                 Core::getInstance().runCommand(out, commandStr, args);
             }
-            //check that the syndrome applies to that guy
-            /*
-             * If there is no affected class or affected creature, then anybody who isn't immune is fair game.
-             *
-             * Otherwise, it works like this:
-             *  add all the affected class creatures
-             *  remove all the immune class creatures
-             *  add all the affected creatures
-             *  remove all the immune creatures
-             *  you're affected if and only if you're in the remaining list after all of that
-             **/
-            bool applies = syndrome->syn_affected_class.size() == 0 && syndrome->syn_affected_creature_1.size() == 0;
-            for ( size_t c = 0; c < syndrome->syn_affected_class.size(); c++ ) {
-                if ( applies )
-                    break;
-                for ( size_t d = 0; d < caste->creature_class.size(); d++ ) {
-                    if ( *syndrome->syn_affected_class[c] == *caste->creature_class[d] ) {
-                        applies = true;
-                        break;
-                    }
-                }
-            }
-            for ( size_t c = 0; c < syndrome->syn_immune_class.size(); c++ ) {
-                if ( !applies )
-                    break;
-                for ( size_t d = 0; d < caste->creature_class.size(); d++ ) {
-                    if ( *syndrome->syn_immune_class[c] == *caste->creature_class[d] ) {
-                        applies = false;
-                        break;
-                    }
-                }
-            }
 
-            if ( syndrome->syn_affected_creature_1.size() != syndrome->syn_affected_creature_2.size() ) {
-                out.print("%s, line %d: different affected creature/caste sizes.\n", __FILE__, __LINE__);
-                return;
-            }
-            for ( size_t c = 0; c < syndrome->syn_affected_creature_1.size(); c++ ) {
-                if ( creature_name != *syndrome->syn_affected_creature_1[c] )
-                    continue;
-                if ( *syndrome->syn_affected_creature_2[c] == "ALL" ||
-                     *syndrome->syn_affected_creature_2[c] == creature_caste ) {
-                    applies = true;
-                    break;
-                }
-            }
-            for ( size_t c = 0; c < syndrome->syn_immune_creature_1.size(); c++ ) {
-                if ( creature_name != *syndrome->syn_immune_creature_1[c] )
-                    continue;
-                if ( *syndrome->syn_immune_creature_2[c] == "ALL" ||
-                     *syndrome->syn_immune_creature_2[c] == creature_caste ) {
-                    applies = false;
-                    break;
-                }
-            }
-            if ( !applies ) {
+            //only one syndrome per reaction will be applied, unless multiples are allowed.
+            if ( appliedSomething && !allowMultipleSyndromes )
+                continue;
+
+            if ( maybeApply(out, syndrome, workerId, unit) ) {
+                appliedSomething = true;
                 continue;
             }
-            if ( giveSyndrome(out, workerId, syndrome) < 0 )
-                return;
+
+            if ( workerOnly )
+                continue;
+            
+            //now try applying it to everybody inside the building
+            for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
+                df::unit* unit = df::global::world->units.active[a];
+                if ( unit->pos.z != building->z )
+                    continue;
+                if ( unit->pos.x < building->x1 || unit->pos.x > building->x2 )
+                    continue;
+                if ( unit->pos.y < building->y1 || unit->pos.y > building->y2 )
+                    continue;
+                if ( maybeApply(out, syndrome, unit->id, unit) ) {
+                    appliedSomething = true;
+                    if ( !allowMultipleTargets )
+                        break;
+                }
+            }
         }
     }
-    if ( !foundIt )
-        return;
 
     return;
 }

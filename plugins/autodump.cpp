@@ -161,7 +161,7 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
             ||  itm->flags.bits.in_building
             ||  itm->flags.bits.in_chest
 //          ||  itm->flags.bits.in_inventory
-            ||  itm->flags.bits.artifact1
+            ||  itm->flags.bits.artifact
         )
             continue;
 
@@ -271,15 +271,15 @@ command_result df_autodump_destroy_item(color_ostream &out, vector <string> & pa
 
     if (item->flags.bits.construction ||
         item->flags.bits.in_building ||
-        item->flags.bits.artifact1)
+        item->flags.bits.artifact)
     {
         out.printerr("Choosing not to destroy buildings, constructions and artifacts.\n");
         return CR_FAILURE;
     }
 
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->general_refs.size(); i++)
     {
-        df::general_ref *ref = item->itemrefs[i];
+        df::general_ref *ref = item->general_refs[i];
         if (ref->getType() == general_ref_type::UNIT_HOLDER)
         {
             out.printerr("Choosing not to destroy items in unit inventory.\n");

@@ -1,19 +1,13 @@
--- Assign weapon racks to squads. Requires patch from bug 1445.
+-- Assign weapon racks to squads. Requires the weaponrack-unassign patch.
 
---[[
-
- Required patches:
-
-   v0.34.11 linux:   http://pastebin.com/mt5EUgFZ
-   v0.34.11 windows: http://pastebin.com/09nRCybe
-
-]]
+-- See bug 1445 for more info about the patches.
 
 local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'
 local widgets = require 'gui.widgets'
 local dlg = require 'gui.dialogs'
+local bp = require 'binpatch'
 
 AssignRack = defclass(AssignRack, guidm.MenuOverlay)
 
@@ -190,12 +184,18 @@ end
 
 AssignRack{ building = dfhack.gui.getSelectedBuilding() }:show()
 
-if not already_warned then
-    already_warned = true
+if not already_patched then
+    local patch = bp.load_dif_file('weaponrack-unassign')
+    if patch and patch:isApplied() then
+        already_patched = true
+    end
+end
+
+if not already_patched then
     dlg.showMessage(
         'BUG ALERT',
-        { 'This script requires a binary patch from', NEWLINE,
-          'bug 1445 on the tracker. Otherwise the game', NEWLINE,
+        { 'This script requires applying the binary patch', NEWLINE,
+          'named weaponrack-unassign. Otherwise the game', NEWLINE,
           'will lose your settings due to a bug.' },
         COLOR_YELLOW
     )

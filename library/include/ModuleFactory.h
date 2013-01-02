@@ -33,7 +33,6 @@ namespace DFHack
     Module* createGui();
     Module* createWorld();
     Module* createMaterials();
-    Module* createVegetation();
     Module* createNotes();
     Module* createGraphic();
 }

@@ -263,7 +263,7 @@ struct liquid_hook : df::item_liquid_miscst {
     DEFINE_VMETHOD_INTERPOSE(bool, checkTemperatureDamage, ())
     {
         if (mat_state.whole & BOILING_FLAG)
-            temperature = std::max(int(temperature), getBoilingPoint()-1);
+            temperature.whole = std::max(int(temperature.whole), getBoilingPoint()-1);
 
         return INTERPOSE_NEXT(checkTemperatureDamage)();
     }
@@ -320,7 +320,7 @@ struct workshop_hook : df::building_workshopst {
             for (int y = y1; y <= y2; y++)
             {
                 auto ptile = Maps::getTileType(x,y,z);
-                if (!ptile || !LowPassable(*ptile))
+                if (!ptile || !FlowPassableDown(*ptile))
                     continue;
 
                 auto pltile = Maps::getTileType(x,y,z-1);
@@ -371,8 +371,8 @@ struct workshop_hook : df::building_workshopst {
         // Update flags
         liquid->flags.bits.in_building = true;
         liquid->mat_state.whole |= liquid_hook::BOILING_FLAG;
-        liquid->temperature = liquid->getBoilingPoint()-1;
-        liquid->temperature_fraction = 0;
+        liquid->temperature.whole = liquid->getBoilingPoint()-1;
+        liquid->temperature.fraction = 0;
 
         // This affects where the steam appears to come from
         if (engine->hearth_tile.isValid())
@@ -387,7 +387,7 @@ struct workshop_hook : df::building_workshopst {
     {
         liquid->wear = 4;
         liquid->flags.bits.in_building = false;
-        liquid->temperature = liquid->getBoilingPoint() + 10;
+        liquid->temperature.whole = liquid->getBoilingPoint() + 10;
 
         return liquid->checkMeltBoil();
     }
@@ -891,7 +891,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(dwarfmode_hook, feed);
  * Scan raws for matching workshop buildings.
  */
 
-static bool find_engines()
+static bool find_engines(color_ostream &out)
 {
     engines.clear();
 
@@ -943,6 +943,8 @@ static bool find_engines()
 
         if (!ws.gear_tiles.empty())
             engines.push_back(ws);
+        else
+            out.printerr("%s has no gear tiles - ignoring.\n", wslist[i]->code.c_str());
     }
 
     return !engines.empty();
@@ -973,7 +975,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_WORLD_LOADED:
-        if (find_engines())
+        if (find_engines(out))
         {
             out.print("Detected steam engine workshops - enabling plugin.\n");
             enable_hooks(true);

@@ -275,7 +275,7 @@ module DFHack
             job = Job.cpp_new
             job.job_type = :ConstructBuilding
             job.pos = [bld.centerx, bld.centery, bld.z]
-            job.references << ref
+            job.general_refs << ref
             bld.jobs << job
             job_link job
             job
@@ -346,7 +346,7 @@ module DFHack
             refbuildingholder = GeneralRefBuildingHolderst.cpp_new
             job.job_type = :DestroyBuilding
             refbuildingholder.building_id = bld.id
-            job.references << refbuildingholder
+            job.general_refs << refbuildingholder
             bld.jobs << job
             job_link job
             job

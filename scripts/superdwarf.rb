@@ -8,7 +8,7 @@ when 'add'
 	if u = df.unit_find
 		$superdwarf_ids |= [u.id]
 
-		$superdwarf_onupdate ||= df.onupdate_register(1) {
+		$superdwarf_onupdate ||= df.onupdate_register('superdwarf', 1) {
 			if $superdwarf_ids.empty?
 				df.onupdate_unregister($superdwarf_onupdate)
 				$superdwarf_onupdate = nil

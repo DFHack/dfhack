@@ -100,6 +100,24 @@ bool DFHack::removeRef(std::vector<df::general_ref*> &vec, df::general_ref_type 
     return false;
 }
 
+df::item *DFHack::findItemRef(std::vector<df::general_ref*> &vec, df::general_ref_type type)
+{
+    auto ref = findRef(vec, type);
+    return ref ? ref->getItem() : NULL;
+}
+
+df::building *DFHack::findBuildingRef(std::vector<df::general_ref*> &vec, df::general_ref_type type)
+{
+    auto ref = findRef(vec, type);
+    return ref ? ref->getBuilding() : NULL;
+}
+
+df::unit *DFHack::findUnitRef(std::vector<df::general_ref*> &vec, df::general_ref_type type)
+{
+    auto ref = findRef(vec, type);
+    return ref ? ref->getUnit() : NULL;
+}
+
 df::specific_ref *DFHack::findRef(std::vector<df::specific_ref*> &vec, df::specific_ref_type type)
 {
     for (int i = vec.size()-1; i >= 0; i--)

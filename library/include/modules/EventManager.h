@@ -37,9 +37,9 @@ namespace DFHack {
             }
         };
         
-        DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);
+        DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, int32_t freq, Plugin* plugin);
         DFHACK_EXPORT void registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute=false);
-        DFHACK_EXPORT void unregister(EventType::EventType e, EventHandler handler, Plugin* plugin);
+        DFHACK_EXPORT void unregister(EventType::EventType e, EventHandler handler, int32_t freq, Plugin* plugin);
         DFHACK_EXPORT void unregisterAll(Plugin* plugin);
         void manageEvents(color_ostream& out);
         void onStateChange(color_ostream& out, state_change_event event);

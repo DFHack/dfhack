@@ -43,16 +43,16 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
     Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("eventExample");
     EventManager::unregisterAll(me);
 
-    EventManager::registerListener(EventManager::EventType::JOB_INITIATED, initiateHandler, me);
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, completeHandler, me);
+    EventManager::registerListener(EventManager::EventType::JOB_INITIATED, initiateHandler, 10, me);
+    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, completeHandler, 5, me);
     EventManager::registerTick(timeHandler, 1, me);
     EventManager::registerTick(timeHandler, 2, me);
     EventManager::registerTick(timeHandler, 4, me);
     EventManager::registerTick(timeHandler, 8, me);
-    EventManager::registerListener(EventManager::EventType::UNIT_DEATH, deathHandler, me);
-    EventManager::registerListener(EventManager::EventType::ITEM_CREATED, itemHandler, me);
-    EventManager::registerListener(EventManager::EventType::BUILDING, buildingHandler, me);
-    EventManager::registerListener(EventManager::EventType::CONSTRUCTION, constructionHandler, me);
+    EventManager::registerListener(EventManager::EventType::UNIT_DEATH, deathHandler, 500, me);
+    EventManager::registerListener(EventManager::EventType::ITEM_CREATED, itemHandler, 1000, me);
+    EventManager::registerListener(EventManager::EventType::BUILDING, buildingHandler, 500, me);
+    EventManager::registerListener(EventManager::EventType::CONSTRUCTION, constructionHandler, 100, me);
     out.print("Events registered.\n");
     return CR_OK;
 }

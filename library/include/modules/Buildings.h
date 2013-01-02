@@ -181,6 +181,7 @@ DFHACK_EXPORT bool constructWithFilters(df::building *bld, std::vector<df::job_i
 DFHACK_EXPORT bool deconstruct(df::building *bld);
 
 void updateBuildings(color_ostream& out, void* ptr);
+void clearBuildings(color_ostream& out);
 
 }
 }

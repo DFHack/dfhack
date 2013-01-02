@@ -259,6 +259,7 @@ df::building *Buildings::findAtTile(df::coord pos)
     return building;
 
     /*
+    //old method: brute-force
     auto &vec = df::building::get_vector();
     for (size_t i = 0; i < vec.size(); i++)
     {
@@ -1101,10 +1102,17 @@ bool Buildings::deconstruct(df::building *bld)
     return true;
 }
 
+static unordered_map<int32_t, df::coord> corner1;
+static unordered_map<int32_t, df::coord> corner2;
+
+void Buildings::clearBuildings(color_ostream& out) {
+    corner1.clear();
+    corner2.clear();
+    locationToBuilding.clear();
+}
+
 void Buildings::updateBuildings(color_ostream& out, void* ptr) {
-    static unordered_map<int32_t, df::coord> corner1;
-    static unordered_map<int32_t, df::coord> corner2;
-    out.print("Updating buildings, %s %d\n", __FILE__, __LINE__);
+    //out.print("Updating buildings, %s %d\n", __FILE__, __LINE__);
     int32_t id = (int32_t)ptr;
     
     if ( corner1.find(id) == corner1.end() ) {

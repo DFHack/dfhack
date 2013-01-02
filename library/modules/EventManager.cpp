@@ -134,10 +134,8 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         //TODO: put this somewhere else
         doOnce = true;
         EventHandler buildingHandler(Buildings::updateBuildings);
-        EventHandler constructionHandler(Constructions::updateConstructions);
         DFHack::EventManager::registerListener(EventType::BUILDING, buildingHandler, NULL);
-        DFHack::EventManager::registerListener(EventType::CONSTRUCTION, constructionHandler, NULL);
-        out.print("Registered listeners.\n %d", __LINE__);
+        //out.print("Registered listeners.\n %d", __LINE__);
     }
     if ( event == DFHack::SC_MAP_UNLOADED ) {
         lastTick = 0;
@@ -152,6 +150,8 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         nextBuilding = -1;
         buildings.clear();
         constructions.clear();
+
+        Buildings::clearBuildings(out);
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
             + DFHack::World::ReadCurrentTick();
@@ -344,7 +344,9 @@ static void manageBuildingEvent(color_ostream& out) {
     for ( int32_t a = nextBuilding; a < *df::global::building_next_id; a++ ) {
         int32_t index = df::building::binsearch_index(df::global::world->buildings.all, a);
         if ( index == -1 ) {
-            out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
+            //out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
+            //the tricky thing is that when the game first starts, it's ok to skip buildings, but otherwise, if you skip buildings, something is probably wrong. TODO: make this smarter
+            continue;
         }
         buildings.insert(a);
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
@@ -374,7 +376,7 @@ static void manageBuildingEvent(color_ostream& out) {
         buildings.erase(id);
     }
     
-    out.print("Sent building event.\n %d", __LINE__);
+    //out.print("Sent building event.\n %d", __LINE__);
 }
 
 static void manageConstructionEvent(color_ostream& out) {

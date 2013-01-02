@@ -110,7 +110,8 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
  *  1.  Combat ammo and ammo without any allowed use can be stored
  *      in BOXes marked for Squad Equipment, either directly or via
  *      containing room. No-allowed-use ammo is assumed to be reserved
- *      for emergency combat use, or something like that.
+ *      for emergency combat use, or something like that; however if
+ *      it is already stored in a training chest, it won't be moved.
  *  1a. If assigned to a squad position, that box can be used _only_
  *      for ammo assigned to that specific _squad_. Otherwise, if
  *      multiple squads can use this room, they will store their
@@ -132,6 +133,9 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
  * grace period during which the items can be instantly picked up again.
  */
 
+// Completely block the use of stockpiles
+#define NO_STOCKPILES
+
 // Check if the item is assigned to any use controlled by the military tab
 static bool is_assigned_item(df::item *item)
 {
@@ -142,19 +146,6 @@ static bool is_assigned_item(df::item *item)
     int idx = binsearch_index(ui->equipment.items_assigned[type], item->id);
     if (idx < 0)
         return false;
-
-    // Exclude weapons used by miners, wood cutters etc
-    switch (type) {
-    case item_type::WEAPON:
-        // the game code also checks this for ammo, funnily enough
-        // maybe it's not just for weapons?..
-        if (binsearch_index(ui->equipment.work_weapons, item->id) >= 0)
-            return false;
-        break;
-
-    default:
-        break;
-    }
 
     return true;
 }
@@ -168,8 +159,8 @@ static bool is_squad_ammo(df::item *item, df::squad *squad, bool combat, bool tr
         bool cs = spec->flags.bits.use_combat;
         bool ts = spec->flags.bits.use_training;
 
-        // no-use ammo assumed to be combat
-        if (((cs || !ts) && combat) || (ts && train))
+        // no-use ammo assumed to fit any category
+        if (((cs || !ts) && combat) || ((ts || !cs) && train))
         {
             if (binsearch_index(spec->assigned, item->id) >= 0)
                 return true;
@@ -328,6 +319,16 @@ template<class Item> struct armory_hook : Item {
      */
     DEFINE_VMETHOD_INTERPOSE(bool, isCollected, ())
     {
+#ifdef NO_STOCKPILES
+        /*
+         * Completely block any items assigned to a squad from being stored
+         * in stockpiles. The reason is that I still observe haulers running
+         * around with bins to pick them up for some reason. There could be
+         * some unaccounted race conditions involved.
+         */
+        if (is_assigned_item(this))
+            return false;
+#else
         // Block stockpiling of items in the armory.
         if (is_in_armory(this))
             return false;
@@ -354,6 +355,7 @@ template<class Item> struct armory_hook : Item {
                     return false;
             }
         }
+#endif
 
         // Call the original vmethod
         return INTERPOSE_NEXT(isCollected)();
@@ -527,7 +529,7 @@ static bool try_store_item(df::building *target, df::item *item)
     // job <-> building link
     href->building_id = target->id;
     target->jobs.push_back(job);
-    job->references.push_back(href);
+    job->general_refs.push_back(href);
 
     // Two of the jobs need this link to find the job in canStoreItem().
     // They also don't actually need BUILDING_HOLDER, but it doesn't hurt.
@@ -538,7 +540,7 @@ static bool try_store_item(df::building *target, df::item *item)
         if (rdest)
         {
             rdest->building_id = target->id;
-            job->references.push_back(rdest);
+            job->general_refs.push_back(rdest);
         }
     }
 

@@ -425,6 +425,8 @@ bool MaterialInfo::matches(const df::dfhack_material_category &cat)
     TEST(glass, IS_GLASS);
     if (cat.bits.clay && linear_index(material->reaction_product.id, std::string("FIRED_MAT")) >= 0)
         return true;
+    if (cat.bits.milk && linear_index(material->reaction_product.id, std::string("CHEESE_MAT")) >= 0)
+        return true;
     return false;
 }
 
@@ -838,7 +840,7 @@ bool Materials::ReadAllMaterials(void)
 
 std::string Materials::getDescription(const t_material & mat)
 {
-    MaterialInfo mi(mat.material, mat.index);
+    MaterialInfo mi(mat.mat_type, mat.mat_index);
     if (mi.creature)
         return mi.creature->creature_id + " " + mi.material->id;
     else if (mi.plant)
@@ -851,7 +853,7 @@ std::string Materials::getDescription(const t_material & mat)
 // This is completely worthless now
 std::string Materials::getType(const t_material & mat)
 {
-    MaterialInfo mi(mat.material, mat.index);
+    MaterialInfo mi(mat.mat_type, mat.mat_index);
     switch (mi.mode)
     {
     case MaterialInfo::Builtin:

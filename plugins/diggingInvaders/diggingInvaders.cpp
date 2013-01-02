@@ -391,10 +391,10 @@ out << __LINE__ << endl;
             job->flags.bits.special = 1;
             df::general_ref_building_holderst* buildingRef = new df::general_ref_building_holderst;
             buildingRef->building_id = building->id;
-            job->references.push_back(buildingRef);
+            job->general_refs.push_back(buildingRef);
             df::general_ref_unit_workerst* workerRef = new df::general_ref_unit_workerst;
             workerRef->unit_id = firstInvader->id;
-            job->references.push_back(workerRef);
+            job->general_refs.push_back(workerRef);
             firstInvader->job.current_job = job;
             firstInvader->path.path.x.clear();
             firstInvader->path.path.y.clear();
@@ -425,7 +425,7 @@ out << __LINE__ << endl;
                 job->job_type = df::enums::job_type::RemoveConstruction;
                 df::general_ref_unit_workerst* workerRef = new df::general_ref_unit_workerst;
                 workerRef->unit_id = firstInvader->id;
-                job->references.push_back(workerRef);
+                job->general_refs.push_back(workerRef);
                 job->pos = pt2;
                 firstInvader->job.current_job = job;
                 firstInvader->path.path.x.clear();
@@ -467,7 +467,7 @@ out << __LINE__ << endl;
             }
             df::general_ref_unit_workerst* ref = new df::general_ref_unit_workerst;
             ref->unit_id = firstInvader->id;
-            job->references.push_back(ref);
+            job->general_refs.push_back(ref);
             firstInvader->job.hunt_target = NULL;
             firstInvader->job.destroy_target = NULL;
             firstInvader->job.current_job = job;
@@ -492,8 +492,8 @@ out << __LINE__ << endl;
             pick->weight = 0;
             pick->weight_fraction = 0;
             pick->stack_size = 1;
-            pick->temperature = 10059;
-            pick->temperature_fraction = 0;
+            pick->temperature.whole = 10059;
+            pick->temperature.fraction = 0;
             pick->mat_type = 0;
             pick->mat_index = 5;
             pick->maker_race = 0; //hehe
@@ -519,7 +519,7 @@ out << __LINE__ << endl;
             pick->sharpness = 5000;
 
             int32_t part = -1;
-            part = firstInvader->body.unk_3c8; //weapon_bp
+            part = firstInvader->body.weapon_bp; //weapon_bp
 out << __LINE__ << endl;
             if ( part == -1 ) {
 out << __LINE__ << endl;

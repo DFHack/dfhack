@@ -160,7 +160,7 @@ Process::Process(VersionInfoFactory * factory)
         identified = true;
         // give the process a data model and memory layout fixed for the base of first module
         my_descriptor  = new VersionInfo(*vinfo);
-        my_descriptor->rebaseTo((uint32_t)d->base);
+        my_descriptor->rebaseTo(getBase());
         for(size_t i = 0; i < threads_ids.size();i++)
         {
             HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads_ids[i]);
@@ -394,12 +394,45 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
-uint32_t Process::getBase()
+uintptr_t Process::getBase()
 {
     if(d)
-        return (uint32_t) d->base;
+        return (uintptr_t) d->base;
     return 0x400000;
 }
+
+int Process::adjustOffset(int offset, bool to_file)
+{
+    if (!d)
+        return -1;
+
+    for(int i = 0; i < d->pe_header.FileHeader.NumberOfSections; i++)
+    {
+        auto &section = d->sections[i];
+
+        if (to_file)
+        {
+            unsigned delta = offset - section.VirtualAddress;
+            if (delta >= section.Misc.VirtualSize)
+                continue;
+            if (!section.PointerToRawData || delta >= section.SizeOfRawData)
+                return -1;
+            return (int)(section.PointerToRawData + delta);
+        }
+        else
+        {
+            unsigned delta = offset - section.PointerToRawData;
+            if (!section.PointerToRawData || delta >= section.SizeOfRawData)
+                continue;
+            if (delta >= section.Misc.VirtualSize)
+                return -1;
+            return (int)(section.VirtualAddress + delta);
+        }
+    }
+
+    return -1;
+}
+
 
 string Process::doReadClassName (void * vptr)
 {
@@ -439,4 +472,43 @@ bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
     result=VirtualProtect((LPVOID)range.start,(char *)range.end-(char *)range.start,newprotect,&oldprotect);
 
     return result;
+}
+
+void* Process::memAlloc(const int length)
+{
+    void *ret;
+    // returns 0 on error
+    ret = VirtualAlloc(0, length, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+    if (!ret)
+        ret = (void*)-1;
+    return ret;
+}
+
+int Process::memDealloc(void *ptr, const int length)
+{
+    // can only free the whole region at once
+    // vfree returns 0 on error
+    return !VirtualFree(ptr, 0, MEM_RELEASE);
+}
+
+int Process::memProtect(void *ptr, const int length, const int prot)
+{
+    int prot_native = 0;
+    DWORD old_prot = 0;
+
+    // only support a few constant combinations
+    if (prot == 0)
+        prot_native = PAGE_NOACCESS;
+    else if (prot == Process::MemProt::READ)
+        prot_native = PAGE_READONLY;
+    else if (prot == (Process::MemProt::READ | Process::MemProt::WRITE))
+        prot_native = PAGE_READWRITE;
+    else if (prot == (Process::MemProt::READ | Process::MemProt::WRITE | Process::MemProt::EXEC))
+        prot_native = PAGE_EXECUTE_READWRITE;
+    else if (prot == (Process::MemProt::READ | Process::MemProt::EXEC))
+        prot_native = PAGE_EXECUTE_READ;
+    else
+        return -1;
+
+    return !VirtualProtect(ptr, length, prot_native, &old_prot);
 }

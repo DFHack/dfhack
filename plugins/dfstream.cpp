@@ -323,7 +323,7 @@ public:
     auto_renderer_decorator & operator=(renderer_decorator *p) {
         reset();
         this->p = p;
-	return *this;
+        return *this;
     }
 
     renderer_decorator * get() {

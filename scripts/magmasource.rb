@@ -4,7 +4,7 @@ $magma_sources ||= []
 
 case $script_args[0]
 when 'here'
-    $magma_onupdate ||= df.onupdate_register(12) {
+    $magma_onupdate ||= df.onupdate_register('magmasource', 12) {
         # called every 12 game ticks (100x a dwarf day)
         if $magma_sources.empty?
             df.onupdate_unregister($magma_onupdate)

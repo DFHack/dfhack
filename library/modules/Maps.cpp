@@ -62,6 +62,7 @@ using namespace std;
 #include "df/region_map_entry.h"
 #include "df/flow_info.h"
 #include "df/building_type.h"
+#include "df/plant.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -776,15 +777,15 @@ void MapExtras::Block::TileInfo::init_coninfo()
     con_info = new ConInfo();
     con_info->constructed.clear();
     COPY(con_info->tiles, base_tiles);
-    memset(con_info->mattype, -1, sizeof(con_info->mattype));
-    memset(con_info->matindex, -1, sizeof(con_info->matindex));
+    memset(con_info->mat_type, -1, sizeof(con_info->mat_type));
+    memset(con_info->mat_index, -1, sizeof(con_info->mat_index));
 }
 
 MapExtras::Block::BasematInfo::BasematInfo()
 {
     dirty.clear();
-    memset(mattype,0,sizeof(mattype));
-    memset(matindex,-1,sizeof(matindex));
+    memset(mat_type,0,sizeof(mat_type));
+    memset(mat_index,-1,sizeof(mat_index));
     memset(layermat,-1,sizeof(layermat));
 }
 
@@ -845,8 +846,8 @@ void MapExtras::Block::ParseTiles(TileInfo *tiles)
                     is_con = true;
                     tiles->con_info->constructed.setassignment(x,y,true);
                     tiles->con_info->tiles[x][y] = tt;
-                    tiles->con_info->mattype[x][y] = con->mat_type;
-                    tiles->con_info->matindex[x][y] = con->mat_index;
+                    tiles->con_info->mat_type[x][y] = con->mat_type;
+                    tiles->con_info->mat_index[x][y] = con->mat_index;
 
                     tt = con->original_tile;
                 }
@@ -879,14 +880,14 @@ void MapExtras::Block::ParseBasemats(TileInfo *tiles, BasematInfo *bmats)
             auto tt = tiles->base_tiles[x][y];
             auto mat = info.getBaseMaterial(tt, df::coord2d(x,y));
 
-            bmats->mattype[x][y] = mat.mat_type;
-            bmats->matindex[x][y] = mat.mat_index;
+            bmats->mat_type[x][y] = mat.mat_type;
+            bmats->mat_index[x][y] = mat.mat_index;
 
             // Copy base info back to construction layer
             if (tiles->con_info && !tiles->con_info->constructed.getassignment(x,y))
             {
-                tiles->con_info->mattype[x][y] = mat.mat_type;
-                tiles->con_info->matindex[x][y] = mat.mat_index;
+                tiles->con_info->mat_type[x][y] = mat.mat_type;
+                tiles->con_info->mat_index[x][y] = mat.mat_index;
             }
         }
     }

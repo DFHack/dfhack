@@ -173,16 +173,18 @@ public:
 };
 
 //bool important(df::coord pos, map<df::coord, set<Edge> >& edges, df::coord prev, set<df::coord>& importantPoints, set<Edge>& importantEdges);
-void doDiggingInvaders(color_ostream& out, void* ptr);
+int32_t doDiggingInvaders(color_ostream& out);
 
 command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>& parameters) {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
-    doDiggingInvaders(out, NULL);
+    doDiggingInvaders(out);
     return CR_OK;
 }
 
-void doDiggingInvaders(color_ostream& out, void* ptr) {
+int32_t doDiggingInvaders(color_ostream& out) {
+    //returns the job id created
+    
     CoreSuspender suspend;
     
     unordered_set<df::coord, PointHash> invaderPts;
@@ -223,7 +225,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
     }
 
     if ( invaders.empty() ) {
-        return;
+        return -1;
     }
     df::unit* firstInvader = invaders[0];
     out << firstInvader->id << endl;
@@ -249,8 +251,10 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             localPtsFound++;
             if ( localPtsFound >= localPts.size() )
                 break;
-            if ( workNeeded.find(pt) != workNeeded.end() && workNeeded[pt] > 0 )
-                break;
+            if ( workNeeded.find(pt) == workNeeded.end() || workNeeded[pt] == 0 ) {
+                //there are still dwarves to kill that don't require digging to get to
+                return -1;
+            }
         }
 
         int64_t myCost = costMap[pt];
@@ -296,7 +300,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
         //if ( workNeeded[pt] == 0 ) 
         //    continue;
         while ( parentMap.find(pt) != parentMap.end() ) {
-            out.print("(%d,%d,%d)\n", pt.x, pt.y, pt.z);
+            //out.print("(%d,%d,%d)\n", pt.x, pt.y, pt.z);
             df::coord parent = parentMap[pt];
             if ( Maps::canStepBetween(parent, pt) ) {
 
@@ -353,6 +357,8 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
     }
     out.print("(%d,%d,%d) -> (%d,%d,%d)\n", pt1.x,pt1.y,pt1.z, pt2.x,pt2.y,pt2.z);
 
+    int32_t jobId = -1;
+
     df::map_block* block1 = Maps::getTileBlock(pt1);
     df::map_block* block2 = Maps::getTileBlock(pt2);
     bool passable1 = block1->walkable[pt1.x&0x0F][pt1.y&0x0F];
@@ -387,6 +393,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
         building->jobs.clear();
         building->jobs.push_back(job);
         Job::linkIntoWorld(job);
+        jobId = job->id;
     } else {
         df::tiletype* type1 = Maps::getTileType(pt1);
         df::tiletype* type2 = Maps::getTileType(pt2);
@@ -408,6 +415,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             firstInvader->job.hunt_target = NULL;
             firstInvader->job.destroy_target = NULL;
             Job::linkIntoWorld(job);
+            jobId = job->id;
         } else {
             //must be a dig job
             bool up = requiresZPos.find(pt2) != requiresZPos.end();
@@ -440,6 +448,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             firstInvader->path.path.y.clear();
             firstInvader->path.path.z.clear();
             Job::linkIntoWorld(job);
+            jobId = job->id;
 
             //TODO: test if he already has a pick
             
@@ -476,7 +485,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             }
             if ( itemdef == NULL ) {
                 out.print("%s, %d: null itemdef.\n", __FILE__, __LINE__);
-                return;
+                return -1;
             }
             pick->subtype = itemdef;
             pick->sharpness = 5000;
@@ -485,7 +494,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             part = firstInvader->body.weapon_bp; //weapon_bp
             if ( part == -1 ) {
                 out.print("%s, %d: no grasp part.\n", __FILE__, __LINE__);
-                return;
+                return -1;
             }
             //check for existing item there
             for ( size_t a = 0; a < firstInvader->inventory.size(); a++ ) {
@@ -498,6 +507,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             Items::moveToInventory(cache, pick, firstInvader, df::unit_inventory_item::T_mode::Weapon, part);
         }
     }
+    return jobId;
 }
 
 int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {

@@ -78,13 +78,11 @@ void syndromeHandler(color_ostream& out, void* ptr) {
             break;
         }
     }
-    out.print("foundIt = %d, raceId = %d, casteId = %d\n", (int32_t)foundIt, raceId, casteId);
     if ( !foundIt || raceId == -1 || casteId == -1 )
         return;
 
     unit->enemy.normal_race = raceId;
     unit->enemy.normal_caste = casteId;
-    out.print("Did the thing.\n");
     //that's it!
 }
 

@@ -337,56 +337,43 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
 
     bool didSomething = false;
     df::coord where;
-out << __LINE__ << endl;
     for ( auto i = importantEdges.begin(); i != importantEdges.end(); i++ ) {
-out << __LINE__ << endl;
         Edge e = *i;
         df::coord pt1 = e.p1;
         df::coord pt2 = e.p2;
         if ( costMap[e.p2] < costMap[e.p1] ) {
-out << __LINE__ << endl;
             pt1 = e.p2;
             pt2 = e.p1;
         }
-out << __LINE__ << endl;
         bool important = //requireZNeg.find(pt1) != requireZNeg.end() ||
             //requireZPos.find(pt1) != requireZPos.end() ||
             requiresZNeg.find(pt2) != requiresZNeg.end() ||
             requiresZPos.find(pt2) != requiresZPos.end() ||
             Buildings::findAtTile(pt2) != NULL;
         if ( !important ) {
-out << __LINE__ << endl;
             if ( workNeeded[pt2] <= workNeeded[pt1] ) {
-out << __LINE__ << endl;
                 //definitely not important
                 continue;
             }
         }
 
-out << __LINE__ << endl;
         if ( workNeeded[pt1] > 0 )
             continue;
 
         df::map_block* block1 = Maps::getTileBlock(pt1);
-out << __LINE__ << endl;
         df::map_block* block2 = Maps::getTileBlock(pt2);
         bool passable1 = block1->walkable[pt1.x&0x0F][pt1.y&0x0F];
         bool passable2 = block2->walkable[pt2.x&0x0F][pt2.y&0x0F];
 
         //TODO: if actions required > 1, continue
         df::building* building = Buildings::findAtTile(pt2);
-out << __LINE__ << endl;
         if ( building != NULL && building->getType() == df::enums::building_type::Stockpile ) {
-out << __LINE__ << endl;
             continue;
         }
-out << __LINE__ << endl;
         if ( building != NULL && passable2 ) {
             //building = NULL;
         }
-out << __LINE__ << endl;
         if ( building != NULL ) {
-out << __LINE__ << endl;
             out.print("%s, line %d: Destroying building %d at (%d,%d,%d)\n", __FILE__, __LINE__, building->id, pt2.x,pt2.y,pt2.z);
             //building->flags.bits.almost_deleted = true;
             
@@ -413,17 +400,14 @@ out << __LINE__ << endl;
             
             didSomething = true;
             where = pt2;
-out << __LINE__ << endl;
             break;
         } else {
-out << __LINE__ << endl;
             df::tiletype* type1 = Maps::getTileType(pt1);
             df::tiletype* type2 = Maps::getTileType(pt2);
             df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
             df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
             bool construction2 = ENUM_ATTR(tiletype, material, *type1) == df::enums::tiletype_material::CONSTRUCTION;
             if ( construction2 ) {
-out << __LINE__ << endl;
                 out.print("%s, line %d. Removing construction (%d,%d,%d)\n", __FILE__, __LINE__, pt2.x,pt2.y,pt2.z);
                 df::job* job = new df::job();
                 job->job_type = df::enums::job_type::RemoveConstruction;
@@ -441,7 +425,6 @@ out << __LINE__ << endl;
                 Job::linkIntoWorld(job);
                 didSomething = true;
                 where = pt2;
-out << __LINE__ << endl;
                 break;
             }
 
@@ -456,22 +439,18 @@ out << __LINE__ << endl;
             bool down = requiresZNeg.find(pt2) != requiresZNeg.end();
             df::job* job = new df::job;
             if ( up && down ) {
-out << __LINE__ << endl;
                 job->job_type = df::enums::job_type::CarveUpDownStaircase;
                 job->pos = pt2;
                 firstInvader->path.dest = pt2;
             } else if ( up && !down ) {
-out << __LINE__ << endl;
                 job->job_type = df::enums::job_type::CarveUpwardStaircase;
                 job->pos = pt2;
                 firstInvader->path.dest = pt2;
             } else if ( !up && down ) {
-out << __LINE__ << endl;
                 job->job_type = df::enums::job_type::CarveDownwardStaircase;
                 job->pos = pt2;
                 firstInvader->path.dest = pt2;
             } else {
-out << __LINE__ << endl;
                 job->job_type = df::enums::job_type::Dig;
                 job->pos = pt2;
                 firstInvader->path.dest = pt1;
@@ -512,7 +491,6 @@ out << __LINE__ << endl;
             pick->skill_used = (df::enums::job_skill::job_skill)0;
             pick->maker = -1;
             df::itemdef_weaponst* itemdef = NULL;
-out << __LINE__ << endl;
             for ( size_t a = 0; a < df::global::world->raws.itemdefs.weapons.size(); a++ ) {
                 df::itemdef_weaponst* candidate = df::global::world->raws.itemdefs.weapons[a];
                 if ( candidate->id == "ITEM_WEAPON_PICK" ) {
@@ -520,20 +498,16 @@ out << __LINE__ << endl;
                     break;
                 }
             }
-out << __LINE__ << endl;
             if ( itemdef == NULL ) {
                 out.print("%s, %d: null itemdef.\n", __FILE__, __LINE__);
                 return;
             }
-out << __LINE__ << endl;
             pick->subtype = itemdef;
             pick->sharpness = 5000;
 
             int32_t part = -1;
             part = firstInvader->body.weapon_bp; //weapon_bp
-out << __LINE__ << endl;
             if ( part == -1 ) {
-out << __LINE__ << endl;
                 out.print("%s, %d: no grasp part.\n", __FILE__, __LINE__);
                 return;
             }
@@ -548,11 +522,9 @@ out << __LINE__ << endl;
             Items::moveToInventory(cache, pick, firstInvader, df::unit_inventory_item::T_mode::Weapon, part);
             didSomething = true;
             where = pt2;
-out << __LINE__ << endl;
             break;
         }
     }
-out << __LINE__ << endl;
     out << "didSomething = " << didSomething << endl;
 
     if ( !didSomething )

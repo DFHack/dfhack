@@ -294,16 +294,20 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
         while ( parentMap.find(pt) != parentMap.end() ) {
             out.print("(%d,%d,%d)\n", pt.x, pt.y, pt.z);
             df::coord parent = parentMap[pt];
-            if ( pt.z < parent.z ) {
-                requiresZNeg.insert(parent);
-                requiresZPos.insert(pt);
-            } else if ( pt.z > parent.z ) {
-                requiresZNeg.insert(pt);
-                requiresZPos.insert(parent);
+            if ( Maps::canStepBetween(pt, parent) ) {
+
+            } else {
+                if ( pt.z < parent.z ) {
+                    requiresZNeg.insert(parent);
+                    requiresZPos.insert(pt);
+                } else if ( pt.z > parent.z ) {
+                    requiresZNeg.insert(pt);
+                    requiresZPos.insert(parent);
+                }
+                //if ( workNeeded[pt] > workNeeded[parent] ) {
+                    importantEdges.push_front(Edge(pt,parent,0));
+                //}
             }
-            //if ( workNeeded[pt] > workNeeded[parent] ) {
-                importantEdges.push_front(Edge(pt,parent,0));
-            //}
             pt = parent;
         }
         break;
@@ -448,22 +452,29 @@ out << __LINE__ << endl;
                 break;
             }*/
 
-out << __LINE__ << endl;
             bool up = requiresZPos.find(pt2) != requiresZPos.end();
             bool down = requiresZNeg.find(pt2) != requiresZNeg.end();
             df::job* job = new df::job;
             if ( up && down ) {
+out << __LINE__ << endl;
                 job->job_type = df::enums::job_type::CarveUpDownStaircase;
                 job->pos = pt2;
+                firstInvader->path.dest = pt2;
             } else if ( up && !down ) {
+out << __LINE__ << endl;
                 job->job_type = df::enums::job_type::CarveUpwardStaircase;
                 job->pos = pt2;
+                firstInvader->path.dest = pt2;
             } else if ( !up && down ) {
+out << __LINE__ << endl;
                 job->job_type = df::enums::job_type::CarveDownwardStaircase;
                 job->pos = pt2;
+                firstInvader->path.dest = pt2;
             } else {
+out << __LINE__ << endl;
                 job->job_type = df::enums::job_type::Dig;
-                job->pos = pt1;
+                job->pos = pt2;
+                firstInvader->path.dest = pt1;
             }
             df::general_ref_unit_workerst* ref = new df::general_ref_unit_workerst;
             ref->unit_id = firstInvader->id;
@@ -474,7 +485,7 @@ out << __LINE__ << endl;
             firstInvader->path.path.x.clear();
             firstInvader->path.path.y.clear();
             firstInvader->path.path.z.clear();
-            firstInvader->path.dest = pt2;
+            out.print("Digging at (%d,%d,%d)\n", job->pos.x, job->pos.y, job->pos.z);
             Job::linkIntoWorld(job);
             
             //create and give a pick

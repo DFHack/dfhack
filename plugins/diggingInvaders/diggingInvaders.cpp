@@ -47,7 +47,6 @@
 #include "df/unit_inventory_item.h"
 #include "df/world.h"
 
-
 #include <algorithm>
 #include <ctime>
 #include <cstdlib>
@@ -113,16 +112,48 @@ public:
 };
 
 //bool important(df::coord pos, map<df::coord, set<Edge> >& edges, df::coord prev, set<df::coord>& importantPoints, set<Edge>& importantEdges);
-int32_t doDiggingInvaders(color_ostream& out);
+int32_t findAndAssignInvasionJob(color_ostream& out);
+
+//TODO: when world unloads
+static int32_t lastInvasionJob=-1;
+
+void watchForComplete(color_ostream& out, void* ptr) {
+    df::job* job = (df::job*)ptr;
+
+    if ( job->id != lastInvasionJob )
+        return;
+    
+    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("diggingInvaders");
+    EventManager::unregisterAll(me);
+
+    lastInvasionJob = -1;
+    std::vector<string> parameters;
+    diggingInvadersFunc(out, parameters);
+}
 
 command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>& parameters) {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
-    doDiggingInvaders(out);
+    if ( lastInvasionJob != -1 ) {
+        out.print("Still working on the previous job.\n");
+        return CR_OK;
+    }
+    int32_t jobId = findAndAssignInvasionJob(out);
+    if ( jobId == -1 )
+        return CR_OK;
+    
+    lastInvasionJob = jobId;
+
+    EventManager::EventHandler completeHandler(watchForComplete);
+    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("diggingInvaders");
+    EventManager::unregisterAll(me);
+    
+    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, completeHandler, 5, me);
+    
     return CR_OK;
 }
 
-int32_t doDiggingInvaders(color_ostream& out) {
+int32_t findAndAssignInvasionJob(color_ostream& out) {
     //returns the job id created
     
     CoreSuspender suspend;

@@ -1679,98 +1679,99 @@ namespace wf_ui
 
     bool AdjustmentScreen::feed(set<df::interface_key> *input, ItemConstraint *cv, ProtectedJob *pj /* = NULL */)
     {
-        if ((edit_limit || edit_gap))
+        if (input->count(interface_key::CUSTOM_T) && !edit_limit && !edit_gap)
         {
-            df::interface_key last_token = *input->rbegin();
-            if (last_token == interface_key::STRING_A000)
-            {
-                // Backspace
-                if (edit_string.length() > 0)
-                {
-                    edit_string.erase(edit_string.length()-1);
-                }
-
-                return true;
-            }
-
-            if (edit_string.length() >= 6)
-                return true;
-
-            if (last_token >= interface_key::STRING_A048 && last_token <= interface_key::STRING_A057)
-            {
-                // Numeric character
-                edit_string += last_token - ascii_to_enum_offset;
-            }
-            else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
-            {
-                if (input->count(interface_key::SELECT) && edit_string.length() > 0)
-                {
-                    if (edit_limit)
-                        cv->setGoalCount(atoi(edit_string.c_str()));
-                    else
-                        cv->setGoalGap(atoi(edit_string.c_str()));
-
-                    onConstraintChanged();
-                }
-                edit_string.clear();
-                edit_limit = false;
-                edit_gap = false;
-            }
-            else if (last_token == interface_key::STRING_A000)
-            {
-                // Backspace
-                if (edit_string.length() > 0)
-                {
-                    edit_string.erase(edit_string.length()-1);
-                }
-            }
-
-            return true;
-        }
-        else if (input->count(interface_key::CUSTOM_L))
-        {
-            edit_string = int_to_string(cv->goalCount());
-            edit_limit = true;
-        }
-        else if (input->count(interface_key::CUSTOM_G))
-        {
-            edit_string = int_to_string(cv->goalGap());
-            edit_gap = true;
-        }
-        else if (input->count(interface_key::CUSTOM_N))
-        {
-            cv->setGoalByCount(!cv->goalByCount());
-            onModeChanged();
-        }
-        else if (input->count(interface_key::CUSTOM_T))
-        {
-            if (cv)
-            {
-                // Remove tracking
-                if (pj)
-                {
-                    for (vector<ItemConstraint*>::iterator it = pj->constraints.begin(); it < pj->constraints.end(); it++)
-                        delete_constraint(*it);
-
-                    forget_job(color_ostream_proxy(Core::getInstance().getConsole()), pj);
-                }
-                else
-                    delete_constraint(cv);
-            }
-            else
+            if (!cv)
             {
                 // Add tracking
                 return false;
             }
 
+            // Remove tracking
+            if (pj)
+            {
+                for (vector<ItemConstraint*>::iterator it = pj->constraints.begin(); it < pj->constraints.end(); it++)
+                    delete_constraint(*it);
+
+                forget_job(color_ostream_proxy(Core::getInstance().getConsole()), pj);
+            }
+            else
+            {
+                delete_constraint(cv);
+            }
+
             onConstraintChanged();
-        }
-        else
-        {
-            return false;
+            return true;
         }
 
-        return true;
+        if (cv)
+        {
+            if (edit_limit || edit_gap)
+            {
+                df::interface_key last_token = *input->rbegin();
+                if (last_token == interface_key::STRING_A000)
+                {
+                    // Backspace
+                    if (edit_string.length() > 0)
+                    {
+                        edit_string.erase(edit_string.length()-1);
+                    }
+
+                    return true;
+                }
+
+                if (edit_string.length() >= 6)
+                    return true;
+
+                if (last_token >= interface_key::STRING_A048 && last_token <= interface_key::STRING_A057)
+                {
+                    // Numeric character
+                    edit_string += last_token - ascii_to_enum_offset;
+                }
+                else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
+                {
+                    if (input->count(interface_key::SELECT) && edit_string.length() > 0)
+                    {
+                        if (edit_limit)
+                            cv->setGoalCount(atoi(edit_string.c_str()));
+                        else
+                            cv->setGoalGap(atoi(edit_string.c_str()));
+
+                        onConstraintChanged();
+                    }
+                    edit_string.clear();
+                    edit_limit = false;
+                    edit_gap = false;
+                }
+                else if (last_token == interface_key::STRING_A000)
+                {
+                    // Backspace
+                    if (edit_string.length() > 0)
+                    {
+                        edit_string.erase(edit_string.length()-1);
+                    }
+                }
+
+                return true;
+            }
+            else if (input->count(interface_key::CUSTOM_L))
+            {
+                edit_string = int_to_string(cv->goalCount());
+                edit_limit = true;
+            }
+            else if (input->count(interface_key::CUSTOM_G))
+            {
+                edit_string = int_to_string(cv->goalGap());
+                edit_gap = true;
+            }
+            else if (input->count(interface_key::CUSTOM_N))
+            {
+                cv->setGoalByCount(!cv->goalByCount());
+                onModeChanged();
+            }
+        }
+
+        return false;
     }
 
     void AdjustmentScreen::render(ItemConstraint *cv, bool in_monitor)
@@ -2933,7 +2934,6 @@ namespace wf_ui
                 dialog.reset();
                 last_job = job;
             }
-
 
             return job != NULL;
         }

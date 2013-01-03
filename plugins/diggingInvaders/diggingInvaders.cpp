@@ -97,7 +97,7 @@ const int64_t costWeight[] = {
 //Destroy Building
 2,
 //Dig
-100,
+10000,
 //DestroyConstruction
 100,
 };
@@ -406,7 +406,8 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             df::tiletype* type2 = Maps::getTileType(pt2);
             df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
             df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
-            bool construction2 = ENUM_ATTR(tiletype, material, *type1) == df::enums::tiletype_material::CONSTRUCTION;
+            bool construction2 = ENUM_ATTR(tiletype, material, *type2) == df::enums::tiletype_material::CONSTRUCTION;
+            //out.print("shape1 = %d, shape2 = %d, ");
             if ( construction2 ) {
                 out.print("%s, line %d. Removing construction (%d,%d,%d)\n", __FILE__, __LINE__, pt2.x,pt2.y,pt2.z);
                 df::job* job = new df::job();

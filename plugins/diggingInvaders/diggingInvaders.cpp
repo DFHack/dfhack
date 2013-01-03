@@ -286,15 +286,15 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
     unordered_set<df::coord, PointHash> requiresZPos;
 
     //find important edges
-    list<Edge> importantEdges;
+    Edge firstImportantEdge(df::coord(), df::coord(), -1);
     for ( auto i = localPts.begin(); i != localPts.end(); i++ ) {
         df::coord pt = *i;
         if ( costMap.find(pt) == costMap.end() )
             continue;
         if ( parentMap.find(pt) == parentMap.end() )
             continue;
-        if ( workNeeded[pt] == 0 ) 
-            continue;
+        //if ( workNeeded[pt] == 0 ) 
+        //    continue;
         while ( parentMap.find(pt) != parentMap.end() ) {
             out.print("(%d,%d,%d)\n", pt.x, pt.y, pt.z);
             df::coord parent = parentMap[pt];
@@ -311,8 +311,10 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
                     }
                 }
                 //if ( workNeeded[pt] > workNeeded[parent] ) {
-                    importantEdges.push_front(Edge(pt,parent,0));
+                    //importantEdges.push_front(Edge(pt,parent,0));
                 //}
+                firstImportantEdge = Edge(pt,parent,0);
+                out.print("(%d,%d,%d) -> (%d,%d,%d)\n", parent.x,parent.y,parent.z, pt.x,pt.y,pt.z);
             }
             pt = parent;
         }
@@ -341,100 +343,73 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
     requiresZPos.erase(toDelete.begin(), toDelete.end());
     toDelete.clear();
 
-    bool didSomething = false;
-    df::coord where;
-    for ( auto i = importantEdges.begin(); i != importantEdges.end(); i++ ) {
-        Edge e = *i;
-        df::coord pt1 = e.p1;
-        df::coord pt2 = e.p2;
-        if ( costMap[e.p2] < costMap[e.p1] ) {
-            pt1 = e.p2;
-            pt2 = e.p1;
-        }
+    //do whatever you need to do at the first important edge
+    df::coord pt1 = firstImportantEdge.p1;
+    df::coord pt2 = firstImportantEdge.p2;
+    if ( costMap[pt1] > costMap[pt2] ) {
+        df::coord temp = pt1;
+        pt1 = pt2;
+        pt2 = temp;
+    }
+    out.print("(%d,%d,%d) -> (%d,%d,%d)\n", pt1.x,pt1.y,pt1.z, pt2.x,pt2.y,pt2.z);
 
-        df::map_block* block1 = Maps::getTileBlock(pt1);
-        df::map_block* block2 = Maps::getTileBlock(pt2);
-        bool passable1 = block1->walkable[pt1.x&0x0F][pt1.y&0x0F];
-        bool passable2 = block2->walkable[pt2.x&0x0F][pt2.y&0x0F];
+    df::map_block* block1 = Maps::getTileBlock(pt1);
+    df::map_block* block2 = Maps::getTileBlock(pt2);
+    bool passable1 = block1->walkable[pt1.x&0x0F][pt1.y&0x0F];
+    bool passable2 = block2->walkable[pt2.x&0x0F][pt2.y&0x0F];
 
-        //TODO: if actions required > 1, continue
-        df::building* building = Buildings::findAtTile(pt2);
-        df::coord buildingPos = pt2;
-        if ( pt1.z > pt2.z ) {
-            building = Buildings::findAtTile(df::coord(pt2.x,pt2.y,pt2.z+1));
-            buildingPos = df::coord(pt2.x,pt2.y,pt2.z);
-        }
-        if ( building != NULL && building->getType() == df::enums::building_type::Stockpile ) {
-            continue;
-        }
-        if ( building != NULL && passable2 ) {
-            //building = NULL;
-        }
-        if ( building != NULL ) {
-            out.print("%s, line %d: Destroying building %d at (%d,%d,%d)\n", __FILE__, __LINE__, building->id, pt2.x,pt2.y,pt2.z);
-            //building->flags.bits.almost_deleted = true;
-            
+    df::building* building = Buildings::findAtTile(pt2);
+    df::coord buildingPos = pt2;
+    if ( pt1.z > pt2.z ) {
+        building = Buildings::findAtTile(df::coord(pt2.x,pt2.y,pt2.z+1));
+        buildingPos = df::coord(pt2.x,pt2.y,pt2.z+1);
+    }
+    if ( building != NULL ) {
+        out.print("%s, line %d: Destroying building %d at (%d,%d,%d)\n", __FILE__, __LINE__, building->id, pt2.x,pt2.y,pt2.z);
+
+        df::job* job = new df::job;
+        job->job_type = df::enums::job_type::DestroyBuilding;
+        job->flags.bits.special = 1;
+        df::general_ref_building_holderst* buildingRef = new df::general_ref_building_holderst;
+        buildingRef->building_id = building->id;
+        job->general_refs.push_back(buildingRef);
+        df::general_ref_unit_workerst* workerRef = new df::general_ref_unit_workerst;
+        workerRef->unit_id = firstInvader->id;
+        job->general_refs.push_back(workerRef);
+        firstInvader->job.current_job = job;
+        firstInvader->path.path.x.clear();
+        firstInvader->path.path.y.clear();
+        firstInvader->path.path.z.clear();
+        firstInvader->path.dest = parentMap[buildingPos];
+        firstInvader->job.hunt_target = NULL;
+        firstInvader->job.destroy_target = NULL;
+
+        building->jobs.clear();
+        building->jobs.push_back(job);
+        Job::linkIntoWorld(job);
+    } else {
+        df::tiletype* type1 = Maps::getTileType(pt1);
+        df::tiletype* type2 = Maps::getTileType(pt2);
+        df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
+        df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
+        bool construction2 = ENUM_ATTR(tiletype, material, *type2) == df::enums::tiletype_material::CONSTRUCTION;
+        if ( construction2 ) {
             df::job* job = new df::job;
-            job->job_type = df::enums::job_type::DestroyBuilding;
-            job->flags.bits.special = 1;
-            df::general_ref_building_holderst* buildingRef = new df::general_ref_building_holderst;
-            buildingRef->building_id = building->id;
-            job->general_refs.push_back(buildingRef);
+            job->job_type = df::enums::job_type::RemoveConstruction;
             df::general_ref_unit_workerst* workerRef = new df::general_ref_unit_workerst;
             workerRef->unit_id = firstInvader->id;
             job->general_refs.push_back(workerRef);
+            job->pos = pt2;
             firstInvader->job.current_job = job;
             firstInvader->path.path.x.clear();
             firstInvader->path.path.y.clear();
             firstInvader->path.path.z.clear();
-            firstInvader->path.dest = parentMap[buildingPos];
+            firstInvader->path.dest = pt1;
             firstInvader->job.hunt_target = NULL;
             firstInvader->job.destroy_target = NULL;
-
-            building->jobs.clear();
-            building->jobs.push_back(job);
             Job::linkIntoWorld(job);
-            
-            didSomething = true;
-            where = pt2;
-            break;
         } else {
-        out.print("%d\n", __LINE__);
-            df::tiletype* type1 = Maps::getTileType(pt1);
-            df::tiletype* type2 = Maps::getTileType(pt2);
-            df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
-            df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
-            bool construction2 = ENUM_ATTR(tiletype, material, *type2) == df::enums::tiletype_material::CONSTRUCTION;
-            if ( construction2 ) {
-        out.print("%d\n", __LINE__);
-                out.print("%s, line %d. Removing construction (%d,%d,%d)\n", __FILE__, __LINE__, pt2.x,pt2.y,pt2.z);
-                df::job* job = new df::job();
-                job->job_type = df::enums::job_type::RemoveConstruction;
-                df::general_ref_unit_workerst* workerRef = new df::general_ref_unit_workerst;
-                workerRef->unit_id = firstInvader->id;
-                job->general_refs.push_back(workerRef);
-                job->pos = pt2;
-                firstInvader->job.current_job = job;
-                firstInvader->path.path.x.clear();
-                firstInvader->path.path.y.clear();
-                firstInvader->path.path.z.clear();
-                firstInvader->path.dest = pt1;
-                firstInvader->job.hunt_target = NULL;
-                firstInvader->job.destroy_target = NULL;
-                Job::linkIntoWorld(job);
-                didSomething = true;
-                where = pt2;
-                break;
-            }
-
-            /*if ( pt1.z != pt2.z && shape1 != df::enums::tiletype_shape::STAIR_DOWN && shape1 != df::enums::tiletype_shape::STAIR_UPDOWN ) {
-                block1->tiletype[pt2.x&0x0F][pt2.y&0x0F] = df::enums::tiletype::ConstructedStairUD;
-                where = pt2;
-                didSomething = true;
-                break;
-            }*/
-
-        out.print("%d\n", __LINE__);
+            //must be a dig job
             bool up = requiresZPos.find(pt2) != requiresZPos.end();
             bool down = requiresZNeg.find(pt2) != requiresZNeg.end();
             df::job* job = new df::job;
@@ -464,8 +439,9 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             firstInvader->path.path.x.clear();
             firstInvader->path.path.y.clear();
             firstInvader->path.path.z.clear();
-            out.print("Digging at (%d,%d,%d)\n", job->pos.x, job->pos.y, job->pos.z);
             Job::linkIntoWorld(job);
+
+            //TODO: test if he already has a pick
             
             //create and give a pick
             df::item_weaponst* pick = new df::item_weaponst;
@@ -520,28 +496,8 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
                 }
             }
             Items::moveToInventory(cache, pick, firstInvader, df::unit_inventory_item::T_mode::Weapon, part);
-            didSomething = true;
-            where = pt2;
-            break;
         }
     }
-    out << "didSomething = " << didSomething << endl;
-
-    if ( !didSomething )
-        return;
-    
-/*
-    Cost cost = costMap[where];
-    float cost_tick = 0;
-    cost_tick += cost.cost[CostDimension::Distance];
-    cost_tick += cost.cost[CostDimension::DestroyBuilding] / (float)destroySpeed;
-    cost_tick += cost.cost[CostDimension::Dig] / (float)digSpeed;
-    
-    EventManager::EventHandler handle(doDiggingInvaders);
-    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("diggingInvaders");
-    //EventManager::registerTick(handle, (int32_t)cost_tick, me);
-    df::global::world->reindex_pathfinding = true;
-*/
 }
 
 int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {

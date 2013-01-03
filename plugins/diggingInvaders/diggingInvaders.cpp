@@ -298,7 +298,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
         while ( parentMap.find(pt) != parentMap.end() ) {
             out.print("(%d,%d,%d)\n", pt.x, pt.y, pt.z);
             df::coord parent = parentMap[pt];
-            if ( Maps::canStepBetween(pt, parent) ) {
+            if ( Maps::canStepBetween(parent, pt) ) {
 
             } else {
                 if ( pt.x == parent.x && pt.y == parent.y ) {
@@ -351,20 +351,6 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             pt1 = e.p2;
             pt2 = e.p1;
         }
-        bool important = //requireZNeg.find(pt1) != requireZNeg.end() ||
-            //requireZPos.find(pt1) != requireZPos.end() ||
-            requiresZNeg.find(pt2) != requiresZNeg.end() ||
-            requiresZPos.find(pt2) != requiresZPos.end() ||
-            Buildings::findAtTile(pt2) != NULL;
-        if ( !important ) {
-            if ( workNeeded[pt2] <= workNeeded[pt1] ) {
-                //definitely not important
-                continue;
-            }
-        }
-
-        if ( workNeeded[pt1] > 0 )
-            continue;
 
         df::map_block* block1 = Maps::getTileBlock(pt1);
         df::map_block* block2 = Maps::getTileBlock(pt2);
@@ -373,6 +359,11 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
 
         //TODO: if actions required > 1, continue
         df::building* building = Buildings::findAtTile(pt2);
+        df::coord buildingPos = pt2;
+        if ( pt1.z > pt2.z ) {
+            building = Buildings::findAtTile(df::coord(pt2.x,pt2.y,pt2.z+1));
+            buildingPos = df::coord(pt2.x,pt2.y,pt2.z);
+        }
         if ( building != NULL && building->getType() == df::enums::building_type::Stockpile ) {
             continue;
         }
@@ -396,7 +387,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             firstInvader->path.path.x.clear();
             firstInvader->path.path.y.clear();
             firstInvader->path.path.z.clear();
-            firstInvader->path.dest = pt1;
+            firstInvader->path.dest = parentMap[buildingPos];
             firstInvader->job.hunt_target = NULL;
             firstInvader->job.destroy_target = NULL;
 
@@ -408,12 +399,14 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             where = pt2;
             break;
         } else {
+        out.print("%d\n", __LINE__);
             df::tiletype* type1 = Maps::getTileType(pt1);
             df::tiletype* type2 = Maps::getTileType(pt2);
             df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
             df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
             bool construction2 = ENUM_ATTR(tiletype, material, *type2) == df::enums::tiletype_material::CONSTRUCTION;
             if ( construction2 ) {
+        out.print("%d\n", __LINE__);
                 out.print("%s, line %d. Removing construction (%d,%d,%d)\n", __FILE__, __LINE__, pt2.x,pt2.y,pt2.z);
                 df::job* job = new df::job();
                 job->job_type = df::enums::job_type::RemoveConstruction;
@@ -441,6 +434,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
                 break;
             }*/
 
+        out.print("%d\n", __LINE__);
             bool up = requiresZPos.find(pt2) != requiresZPos.end();
             bool down = requiresZNeg.find(pt2) != requiresZNeg.end();
             df::job* job = new df::job;

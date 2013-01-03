@@ -5,81 +5,86 @@
 #include "Export.h"
 #include "PluginManager.h"
 
+#include "modules/EventManager.h"
+
+#include "df/caste_raw.h"
+#include "df/creature_raw.h"
+#include "df/syndrome.h"
+#include "df/unit.h"
+#include "df/unit_syndrome.h"
+#include "df/world.h"
+
+#include <cstdlib>
+
 using namespace DFHack;
+using namespace std;
 
 DFHACK_PLUGIN("trueTransformation");
 
+void syndromeHandler(color_ostream& out, void* ptr);
+
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand(
-        "skeleton", "Do nothing, look pretty.",
-        skeleton, false, /* true means that the command can't be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  This command does nothing at all.\n"
-        "Example:\n"
-        "  skeleton\n"
-        "    Does nothing.\n"
-    ));
+    EventManager::EventHandler syndrome(syndromeHandler);
+    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("trueTransformation");
+    EventManager::registerListener(EventManager::EventType::SYNDROME, syndrome, 1, me);
+
     return CR_OK;
 }
 
-// This is called right before the plugin library is removed from memory.
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
-    // You *MUST* kill all threads you created before this returns.
-    // If everything fails, just return CR_FAILURE. Your plugin will be
-    // in a zombie state, but things won't crash.
-    return CR_OK;
-}
+void syndromeHandler(color_ostream& out, void* ptr) {
+    EventManager::SyndromeData* data = (EventManager::SyndromeData*)ptr;
+    //out.print("Syndrome started: unit %d, syndrome %d.\n", data->unitId, data->syndromeIndex);
 
-// Called to notify the plugin about important state changes.
-// Invoked with DF suspended, and always before the matching plugin_onupdate.
-// More event codes may be added in the future.
-/*
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
-{
-    switch (event) {
-    case SC_GAME_LOADED:
-        // initialize from the world just loaded
-        break;
-    case SC_GAME_UNLOADED:
-        // cleanup
-        break;
-    default:
-        break;
+    int32_t index = df::unit::binsearch_index(df::global::world->units.active, data->unitId);
+    if ( index < 0 ) {
+        out.print("%s, line %d: couldn't find unit.\n", __FILE__, __LINE__);
+        return;
     }
-    return CR_OK;
-}
-*/
+    df::unit* unit = df::global::world->units.active[index];
+    df::unit_syndrome* unit_syndrome = unit->syndromes.active[data->syndromeIndex];
+    df::syndrome* syndrome = df::global::world->raws.syndromes.all[unit_syndrome->type];
+    
+    bool foundIt = false;
+    int32_t raceId = -1;
+    df::creature_raw* creatureRaw = NULL;
+    int32_t casteId = -1;
+    for ( size_t a = 0; a < syndrome->syn_class.size(); a++ ) {
+        if ( *syndrome->syn_class[a] == "\\PERMANENT" ) {
+            foundIt = true;
+        }
+        if ( foundIt && raceId == -1 ) {
+            //find the race with the name
+            string& name = *syndrome->syn_class[a];
+            for ( size_t b = 0; b < df::global::world->raws.creatures.all.size(); b++ ) {
+                df::creature_raw* creature = df::global::world->raws.creatures.all[b];
+                if ( creature->creature_id != name )
+                    continue;
+                raceId = b;
+                creatureRaw = creature;
+                break;
+            }
+            continue;
+        }
+        if ( foundIt && raceId != -1 ) {
+            string& name = *syndrome->syn_class[a];
+            for ( size_t b = 0; b < creatureRaw->caste.size(); b++ ) {
+                df::caste_raw* caste = creatureRaw->caste[b];
+                if ( caste->caste_id != name )
+                    continue;
+                casteId = b;
+                break;
+            }
+            break;
+        }
+    }
+    out.print("foundIt = %d, raceId = %d, casteId = %d\n", (int32_t)foundIt, raceId, casteId);
+    if ( !foundIt || raceId == -1 || casteId == -1 )
+        return;
 
-// Whatever you put here will be done in each game step. Don't abuse it.
-// It's optional, so you can just comment it out like this if you don't need it.
-/*
-DFhackCExport command_result plugin_onupdate ( color_ostream &out )
-{
-    // whetever. You don't need to suspend DF execution here.
-    return CR_OK;
+    unit->enemy.normal_race = raceId;
+    unit->enemy.normal_caste = casteId;
+    out.print("Did the thing.\n");
+    //that's it!
 }
-*/
 
-// A command! It sits around and looks pretty. And it's nice and friendly.
-command_result skeleton (color_ostream &out, std::vector <std::string> & parameters)
-{
-    // It's nice to print a help message you get invalid options
-    // from the user instead of just acting strange.
-    // This can be achieved by adding the extended help string to the
-    // PluginCommand registration as show above, and then returning
-    // CR_WRONG_USAGE from the function. The same string will also
-    // be used by 'help your-command'.
-    if (!parameters.empty())
-        return CR_WRONG_USAGE;
-    // Commands are called from threads other than the DF one.
-    // Suspend this thread until DF has time for us. If you
-    // use CoreSuspender, it'll automatically resume DF when
-    // execution leaves the current scope.
-    CoreSuspender suspend;
-    // Actually do something here. Yay.
-    out.print("Hello! I do nothing, remember?\n");
-    // Give control back to DF.
-    return CR_OK;
-}

@@ -197,7 +197,7 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
     xMax *= 16;
     yMax *= 16;
     MapExtras::MapCache cache;
-    df::unit* firstInvader = NULL;
+    vector<df::unit*> invaders;
 
     //TODO: look for invaders with buildingdestroyer:3
 
@@ -216,12 +216,16 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             invaderPts.insert(unit->pos);
             costMap[unit->pos] = 0;
             fringe.insert(unit->pos);
-            if ( firstInvader == NULL )
-                firstInvader = unit;
+            invaders.push_back(unit);
         } else {
             continue;
         }
     }
+
+    if ( invaders.empty() ) {
+        return;
+    }
+    df::unit* firstInvader = invaders[0];
     out << firstInvader->id << endl;
     out << firstInvader->pos.x << ", " << firstInvader->pos.y << ", " << firstInvader->pos.z << endl;
 
@@ -297,12 +301,14 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             if ( Maps::canStepBetween(pt, parent) ) {
 
             } else {
-                if ( pt.z < parent.z ) {
-                    requiresZNeg.insert(parent);
-                    requiresZPos.insert(pt);
-                } else if ( pt.z > parent.z ) {
-                    requiresZNeg.insert(pt);
-                    requiresZPos.insert(parent);
+                if ( pt.x == parent.x && pt.y == parent.y ) {
+                    if ( pt.z < parent.z ) {
+                        requiresZNeg.insert(parent);
+                        requiresZPos.insert(pt);
+                    } else if ( pt.z > parent.z ) {
+                        requiresZNeg.insert(pt);
+                        requiresZPos.insert(parent);
+                    }
                 }
                 //if ( workNeeded[pt] > workNeeded[parent] ) {
                     importantEdges.push_front(Edge(pt,parent,0));
@@ -407,7 +413,6 @@ void doDiggingInvaders(color_ostream& out, void* ptr) {
             df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
             df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
             bool construction2 = ENUM_ATTR(tiletype, material, *type2) == df::enums::tiletype_material::CONSTRUCTION;
-            //out.print("shape1 = %d, shape2 = %d, ");
             if ( construction2 ) {
                 out.print("%s, line %d. Removing construction (%d,%d,%d)\n", __FILE__, __LINE__, pt2.x,pt2.y,pt2.z);
                 df::job* job = new df::job();

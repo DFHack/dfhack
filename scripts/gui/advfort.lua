@@ -929,21 +929,23 @@ function usetool:onWorkShopButtonClicked(building,index,choice)
         choice.button:click()
         self:openShopWindowButtoned(building,true)
     end
-    printall(choice)
 end
+
 function usetool:openShopWindowButtoned(building,no_reset)
+    self:setupFields()
     local wui=df.global.ui_sidebar_menus.workshop_job
     if not no_reset then
-        --[[ manual reset incase the df-one does not exist?
+        -- [[ manual reset incase the df-one does not exist?
         wui:assign{category_id=-1,mat_type=-1,mat_index=-1}
         for k,v in pairs(wui.material_category) do
             wui.material_category[k]=false
         end
-        ]]--
-        building:fillSidebarMenu()
+        --]]
+        --[[building:fillSidebarMenu()
         if #wui.choices_all>0 then
             wui.choices_all[#wui.choices_all-1]:click()
         end
+        --]]
     end
     building:fillSidebarMenu()
     
@@ -951,7 +953,8 @@ function usetool:openShopWindowButtoned(building,no_reset)
     for id,choice in pairs(wui.choices_visible) do
         table.insert(list,{text=utils.call_with_string(choice,"getLabel"),button=choice})
     end
-    if #list ==0 then
+    if #list ==0 and not no_reset then
+        print("Fallback")
         self:openShopWindow(building)
         return
         --qerror("No jobs for this workshop")
@@ -1025,6 +1028,43 @@ end
 function usetool:shopInput(keys)
     if keys[keybinds.workshop.key] then
         self:openShopWindowButtoned(self.in_shop)
+    end
+end
+function advGlobalPos()
+    local wd=df.global.world.world_data
+    return wd.adv_region_x*16+wd.adv_emb_x,wd.adv_region_y*16+wd.adv_emb_y
+end
+function inSite()
+    local tx,ty=advGlobalPos()
+    for k,v in pairs(df.global.world.world_data.sites) do
+        local tp={v.pos.x,v.pos.y}
+        if tx>=tp[1]*16+v.rgn_min_x and tx<=tp[1]*16+v.rgn_max_x and
+            ty>=tp[2]*16+v.rgn_min_y and ty<=tp[2]*16+v.rgn_max_y then
+            return v
+        end
+    end
+end
+function usetool:setupFields()
+    local adv=df.global.world.units.active[0]
+    local civ_id=df.global.world.units.active[0].civ_id
+    local ui=df.global.ui
+    ui.civ_id = civ_id
+    ui.main.fortress_entity=df.historical_entity.find(civ_id)
+    ui.race_id=adv.race
+    local nem=dfhack.units.getNemesis(adv)
+    if nem then
+        local links=nem.figure.entity_links
+        for _,link in ipairs(links) do
+            local hist_entity=df.historical_entity.find(link.entity_id)
+            if hist_entity and hist_entity.type==df.historical_entity_type.SiteGovernment then
+                ui.group_id=link.entity_id
+                break
+            end
+        end
+    end
+    local site= inSite()
+    if site then
+        ui.site_id=site.id
     end
 end
 function usetool:fieldInput(keys)

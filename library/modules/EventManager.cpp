@@ -159,6 +159,7 @@ static unordered_set<int32_t> buildings;
 
 //construction
 static unordered_set<df::construction*> constructions;
+static bool gameLoaded;
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;
@@ -184,6 +185,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         constructions.clear();
 
         Buildings::clearBuildings(out);
+        gameLoaded = false;
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
             + DFHack::World::ReadCurrentTick();
@@ -198,11 +200,12 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         nextItem = 0;
         nextBuilding = 0;
         lastTick = 0;
+        gameLoaded = true;
     }
 }
 
 void DFHack::EventManager::manageEvents(color_ostream& out) {
-    if ( !Core::getInstance().isWorldLoaded() ) {
+    if ( !gameLoaded ) {
         return;
     }
     uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
@@ -478,7 +481,7 @@ static void manageSyndromeEvent(color_ostream& out) {
             df::unit_syndrome* syndrome = unit->syndromes.active[b];
             uint32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
             out.print("start time = %d, time = %d\n", startTime, eventLastTick[EventType::SYNDROME]);
-            if ( startTime < eventLastTick[EventType::SYNDROME] )
+            if ( startTime <= eventLastTick[EventType::SYNDROME] )
                 continue;
 
             SyndromeData data(unit->id, b);

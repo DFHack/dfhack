@@ -665,7 +665,7 @@ static df::building* get_building_from_job(df::job* j)
 static df::unit_labor construction_build_labor (df::item* i) 
 {
     MaterialInfo matinfo;
-    if (matinfo.decode(i))
+    if (i && matinfo.decode(i))
     {
         if (matinfo.material->flags.is_set(df::material_flags::IS_METAL))
             return df::unit_labor::METAL_CRAFT;
@@ -754,6 +754,9 @@ private:
     public:
         df::unit_labor get_labor(df::job* j)
         {
+            if (j->flags.bits.item_lost)
+                return df::unit_labor::NONE;
+
             df::building* bld = get_building_from_job (j);
             switch (bld->getType()) 
             {

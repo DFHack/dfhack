@@ -2976,6 +2976,13 @@ List of events
 7. onWorkshopFillSidebarMenu(workshop,callnative) - is called when viewing a workshop in 'q' mode, to populate reactions, usefull for custom viewscreens for shops
 8. postWorkshopFillSidebarMenu(workshop) - is called after calling (or not) native fillSidebarMenu(). Usefull for job button tweaking (e.g. adding custom reactions)
 
+Functions
+---------
+
+1. registerReaction(reaction_name,callback) - simplified way of using onReactionComplete, the callback is function (same params as event)
+2. removeNative(shop_name) - removes native choice list from the building
+3. addReactionToShop(reaction_name,shop_name) - add a custom reaction to the building
+
 Examples
 --------
 Spawn dragon breath on each item attempt to contaminate wound:
@@ -3002,6 +3009,11 @@ Granade example:
     -- you can check if projectile.item e.g. has correct material
     dfhack.maps.spawnFlow(projectile.cur_pos,6,0,0,50000) 
   end
+
+Integrated tannery:
+::
+  b=require "plugins.eventful"
+  b.addReactionToShop("TAN_A_HIDE","LEATHERWORKS")
 
 =======
 Scripts

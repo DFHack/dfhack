@@ -12,6 +12,7 @@
 #include "df/item.h"
 #include "df/job.h"
 #include "df/job_list_link.h"
+#include "df/ui.h"
 #include "df/unit.h"
 #include "df/unit_syndrome.h"
 #include "df/world.h"
@@ -137,6 +138,7 @@ static void manageItemCreationEvent(color_ostream& out);
 static void manageBuildingEvent(color_ostream& out);
 static void manageConstructionEvent(color_ostream& out);
 static void manageSyndromeEvent(color_ostream& out);
+static void manageInvasionEvent(color_ostream& out);
 
 //tick event
 static uint32_t lastTick = 0;
@@ -160,6 +162,9 @@ static unordered_set<int32_t> buildings;
 //construction
 static unordered_set<df::construction*> constructions;
 static bool gameLoaded;
+
+//invasion
+static int32_t nextInvasion;
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;
@@ -186,6 +191,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
 
         Buildings::clearBuildings(out);
         gameLoaded = false;
+        nextInvasion = -1;
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
             + DFHack::World::ReadCurrentTick();
@@ -200,6 +206,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         nextItem = 0;
         nextBuilding = 0;
         lastTick = 0;
+        nextInvasion = df::global::ui->invasions.next_id;
         gameLoaded = true;
     }
 }
@@ -243,6 +250,10 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     if ( tick - eventLastTick[EventType::SYNDROME] >= (*eventFrequency[EventType::SYNDROME].begin()).first ) {
         manageSyndromeEvent(out);
         eventLastTick[EventType::SYNDROME] = tick;
+    }
+    if ( tick - eventLastTick[EventType::INVASION] >= (*eventFrequency[EventType::INVASION].begin()).first ) {
+        manageInvasionEvent(out);
+        eventLastTick[EventType::INVASION] = tick;
     }
 
     return;
@@ -489,6 +500,22 @@ static void manageSyndromeEvent(color_ostream& out) {
                 handle.eventHandler(out, (void*)&data);
             }
         }
+    }
+}
+
+static void manageInvasionEvent(color_ostream& out) {
+    if ( handlers[EventType::INVASION].empty() )
+        return;
+
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::INVASION].begin(), handlers[EventType::INVASION].end());
+
+    if ( df::global::ui->invasions.next_id <= nextInvasion )
+        return;
+    nextInvasion = df::global::ui->invasions.next_id;
+
+    for ( auto a = copy.begin(); a != copy.end(); a++ ) {
+        EventHandler handle = (*a).second;
+        handle.eventHandler(out, (void*)nextInvasion);
     }
 }
 

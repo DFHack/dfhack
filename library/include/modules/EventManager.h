@@ -20,6 +20,7 @@ namespace DFHack {
                 BUILDING,
                 CONSTRUCTION,
                 SYNDROME,
+                INVASION,
                 EVENT_MAX
             };
         }

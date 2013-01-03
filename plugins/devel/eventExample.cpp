@@ -24,6 +24,7 @@ void itemCreate(color_ostream& out, void* ptr);
 void building(color_ostream& out, void* ptr);
 void construction(color_ostream& out, void* ptr);
 void syndrome(color_ostream& out, void* ptr);
+void invasion(color_ostream& out, void* ptr);
 
 command_result eventExample(color_ostream& out, vector<string>& parameters);
 
@@ -41,6 +42,7 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
     EventManager::EventHandler buildingHandler(building);
     EventManager::EventHandler constructionHandler(construction);
     EventManager::EventHandler syndromeHandler(syndrome);
+    EventManager::EventHandler invasionHandler(invasion);
     Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("eventExample");
     EventManager::unregisterAll(me);
 
@@ -55,6 +57,7 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
     EventManager::registerListener(EventManager::EventType::BUILDING, buildingHandler, 500, me);
     EventManager::registerListener(EventManager::EventType::CONSTRUCTION, constructionHandler, 100, me);
     EventManager::registerListener(EventManager::EventType::SYNDROME, syndromeHandler, 1, me);
+    EventManager::registerListener(EventManager::EventType::INVASION, invasionHandler, 1, me);
     out.print("Events registered.\n");
     return CR_OK;
 }
@@ -97,5 +100,9 @@ void construction(color_ostream& out, void* ptr) {
 void syndrome(color_ostream& out, void* ptr) {
     EventManager::SyndromeData* data = (EventManager::SyndromeData*)ptr;
     out.print("Syndrome started: unit %d, syndrome %d.\n", data->unitId, data->syndromeIndex);
+}
+
+void invasion(color_ostream& out, void* ptr) {
+    out.print("New invasion! %d\n", (int32_t)ptr);
 }
 

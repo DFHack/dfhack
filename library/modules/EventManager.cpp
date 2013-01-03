@@ -480,7 +480,6 @@ static void manageSyndromeEvent(color_ostream& out) {
         for ( size_t b = 0; b < unit->syndromes.active.size(); b++ ) {
             df::unit_syndrome* syndrome = unit->syndromes.active[b];
             uint32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
-            out.print("start time = %d, time = %d\n", startTime, eventLastTick[EventType::SYNDROME]);
             if ( startTime <= eventLastTick[EventType::SYNDROME] )
                 continue;
 

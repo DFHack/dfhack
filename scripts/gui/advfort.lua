@@ -934,9 +934,15 @@ end
 function usetool:openShopWindowButtoned(building,no_reset)
     local wui=df.global.ui_sidebar_menus.workshop_job
     if not no_reset then
+        --[[ manual reset incase the df-one does not exist?
         wui:assign{category_id=-1,mat_type=-1,mat_index=-1}
         for k,v in pairs(wui.material_category) do
             wui.material_category[k]=false
+        end
+        ]]--
+        building:fillSidebarMenu()
+        if #wui.choices_all>0 then
+            wui.choices_all[#wui.choices_all-1]:click()
         end
     end
     building:fillSidebarMenu()

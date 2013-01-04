@@ -120,11 +120,21 @@ void DFHack::EventManager::unregisterAll(Plugin* plugin) {
             int32_t freq = (*b).second;
             eventFrequency[a][freq]--;
             if ( eventFrequency[a][freq] < 0 ) {
-                Core::getInstance().getConsole().print("%s, line %d: Error: incorrect frequency on deregister.\n", __FILE__, __LINE__);
+                Core::getInstance().getConsole().print("%s, line %d: Error: incorrect frequency on deregister: %d, %d.\n", __FILE__, __LINE__, a, freq);
                 eventFrequency[a].erase(eventFrequency[a].find(freq));
             } else if ( eventFrequency[a][freq] == 0 ) {
                 eventFrequency[a].erase(eventFrequency[a].find(freq));
             }
+        }
+    }
+    //now delete the frequencies from the thing
+    for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
+        for ( auto b = pluginFrequencies[a].begin(); b != pluginFrequencies[a].end(); b++ ) {
+            if ( (*b).first != plugin )
+                continue;
+            pluginFrequencies[a].erase(b);
+            a--;
+            break;
         }
     }
     return;

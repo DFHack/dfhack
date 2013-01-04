@@ -146,7 +146,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         DFHack::EventManager::registerListener(EventType::BUILDING, buildingHandler, NULL);
         //out.print("Registered listeners.\n %d", __LINE__);
     }
-    if ( event == DFHack::SC_MAP_UNLOADED ) {
+    if ( event == DFHack::SC_WORLD_UNLOADED ) {
         lastTick = 0;
         lastJobId = -1;
         for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
@@ -163,7 +163,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         Buildings::clearBuildings(out);
         gameLoaded = false;
         nextInvasion = -1;
-    } else if ( event == DFHack::SC_MAP_LOADED ) {
+    } else if ( event == DFHack::SC_WORLD_LOADED ) {
         uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
             + DFHack::World::ReadCurrentTick();
         multimap<uint32_t,EventHandler> newTickQueue;

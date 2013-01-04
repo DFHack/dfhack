@@ -75,6 +75,7 @@ DFHACK_PLUGIN("diggingInvaders");
 static int32_t lastInvasionJob=-1;
 static EventManager::EventHandler jobCompleteHandler(watchForJobComplete, 5);
 static Plugin* diggingInvadersPlugin;
+static bool enabled=true;
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -88,13 +89,33 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         // Extended help string. Used by CR_WRONG_USAGE and the help command:
         "EXTRA HELP STRINGGNGNGNGNGNNGG.\n"
     ));
-
-
+    
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
+{
+    EventManager::EventHandler invasionHandler(initiateDigging, 1000);
+    switch (event) {
+    case DFHack::SC_WORLD_LOADED:
+        out.print("Game loaded.\n");
+        //TODO: check game mode
+        lastInvasionJob = -1;
+        //in case there are invaders when the game is loaded, we should check 
+        EventManager::registerTick(invasionHandler, 10, diggingInvadersPlugin);
+        break;
+    case DFHack::SC_WORLD_UNLOADED:
+        out.print("Game unloaded.\n");
+        // cleanup
+        break;
+    default:
+        break;
+    }
     return CR_OK;
 }
 
@@ -149,8 +170,13 @@ void watchForJobComplete(color_ostream& out, void* ptr) {
 }
 
 int32_t manageInvasion(color_ostream& out) {
-    if ( df::global::ui->invasions.list[df::global::ui->invasions.next_id-1]->flags.bits.active == 0 ) {
+    if ( !enabled ) {
+        return -1;
+    }
+    int32_t lastInvasion = df::global::ui->invasions.next_id-1;
+    if ( lastInvasion < 0 || df::global::ui->invasions.list[lastInvasion]->flags.bits.active == 0 ) {
         //if the invasion is over, we're done
+        out.print("Invasion is over. Stopping diggingInvaders.\n");
         return -1;
     }
     if ( lastInvasionJob != -1 ) {
@@ -162,12 +188,14 @@ int32_t manageInvasion(color_ostream& out) {
         //might need to do more digging later, after we've killed off a few locals
         EventManager::EventHandler checkPeriodically(initiateDigging, 1000);
         EventManager::registerTick(checkPeriodically, checkPeriodically.freq, diggingInvadersPlugin);
+        out.print("DiggingInvaders is waiting.\n");
         return -1;
     }
     
     lastInvasionJob = jobId;
 
     EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, diggingInvadersPlugin);
+    out.print("DiggingInvaders: job assigned.\n");
     return 0; //did something
 }
 
@@ -197,6 +225,9 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
     MapExtras::MapCache cache;
     vector<df::unit*> invaders;
 
+
+    unordered_set<uint16_t> invaderConnectivity;
+    unordered_set<uint16_t> localConnectivity;
     //TODO: look for invaders with buildingdestroyer:3
 
     //find all locals and invaders
@@ -208,6 +239,8 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
             if ( localPts.find(unit->pos) != localPts.end() )
                 continue;
             localPts.insert(unit->pos);
+            df::map_block* block = Maps::getTileBlock(unit->pos);
+            localConnectivity.insert(block->walkable[unit->pos.x&0xF][unit->pos.y&0xF]);
         } else if ( unit->flags1.bits.active_invader ) {
             if ( invaderPts.find(unit->pos) != invaderPts.end() )
                 continue;
@@ -215,12 +248,27 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
             costMap[unit->pos] = 0;
             fringe.insert(unit->pos);
             invaders.push_back(unit);
+            df::map_block* block = Maps::getTileBlock(unit->pos);
+            invaderConnectivity.insert(block->walkable[unit->pos.x&0xF][unit->pos.y&0xF]);
         } else {
             continue;
         }
     }
 
     if ( invaders.empty() ) {
+        return -1;
+    }
+
+    //if local connectivity is not disjoint from invader connectivity, no digging required
+    bool overlap = false;
+    for ( auto a = localConnectivity.begin(); a != localConnectivity.end(); a++ ) {
+        uint16_t conn = *a;
+        if ( invaderConnectivity.find(conn) == invaderConnectivity.end() )
+            continue;
+        overlap = true;
+        break;
+    }
+    if ( overlap ) {
         return -1;
     }
     df::unit* firstInvader = invaders[0];

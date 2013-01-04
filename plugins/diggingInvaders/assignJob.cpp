@@ -20,6 +20,25 @@
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 
+void getRidOfOldJob(df::unit* unit) {
+    if ( unit->job.current_job == NULL ) {
+        return;
+    }
+
+    df::job* job = unit->job.current_job;
+    unit->job.current_job = NULL;
+    if ( job->list_link->prev != NULL ) {
+        job->list_link->prev->next = job->list_link->next;
+    }
+    if ( job->list_link->next != NULL ) {
+        job->list_link->next->prev = job->list_link->prev;
+    }
+    //TODO: consider building pointers?
+    //for now, just let the memory leak TODO: fix
+    //delete job->list_link;
+    //delete job;
+}
+
 int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df::coord,df::coord,PointHash> parentMap, unordered_map<df::coord,int64_t,PointHash>& costMap, vector<df::unit*>& invaders, unordered_set<df::coord,PointHash>& requiresZNeg, unordered_set<df::coord,PointHash>& requiresZPos, MapExtras::MapCache& cache) {
     df::unit* firstInvader = invaders[0];
     
@@ -59,6 +78,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
         df::general_ref_unit_workerst* workerRef = new df::general_ref_unit_workerst;
         workerRef->unit_id = firstInvader->id;
         job->general_refs.push_back(workerRef);
+        getRidOfOldJob(firstInvader);
         firstInvader->job.current_job = job;
         firstInvader->path.path.x.clear();
         firstInvader->path.path.y.clear();
@@ -84,6 +104,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             workerRef->unit_id = firstInvader->id;
             job->general_refs.push_back(workerRef);
             job->pos = pt2;
+            getRidOfOldJob(firstInvader);
             firstInvader->job.current_job = job;
             firstInvader->path.path.x.clear();
             firstInvader->path.path.y.clear();
@@ -120,6 +141,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             job->general_refs.push_back(ref);
             firstInvader->job.hunt_target = NULL;
             firstInvader->job.destroy_target = NULL;
+            getRidOfOldJob(firstInvader);
             firstInvader->job.current_job = job;
             firstInvader->path.path.x.clear();
             firstInvader->path.path.y.clear();

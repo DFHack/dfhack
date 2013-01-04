@@ -187,7 +187,7 @@ int32_t manageInvasion(color_ostream& out) {
     int32_t lastInvasion = df::global::ui->invasions.next_id-1;
     if ( lastInvasion < 0 || df::global::ui->invasions.list[lastInvasion]->flags.bits.active == 0 ) {
         //if the invasion is over, we're done
-        out.print("Invasion is over. Stopping diggingInvaders.\n");
+        //out.print("Invasion is over. Stopping diggingInvaders.\n");
         return -2;
     }
     if ( lastInvasionJob != -1 ) {
@@ -198,9 +198,9 @@ int32_t manageInvasion(color_ostream& out) {
             return -1;
         }
         df::job* job = df::global::world->units.all[index]->job.current_job;
-        out.print("job id: old = %d, new = %d\n", lastInvasionJob, job == NULL ? -1 : job->id);
+        //out.print("job id: old = %d, new = %d\n", lastInvasionJob, job == NULL ? -1 : job->id);
         if ( job != NULL && lastInvasionJob == job->id ) {
-            out.print("Still working on the previous job.\n");
+            //out.print("Still working on the previous job.\n");
             return -1;
         }
 
@@ -209,9 +209,7 @@ int32_t manageInvasion(color_ostream& out) {
     int32_t unitId = findAndAssignInvasionJob(out);
     if ( unitId == -1 ) {
         //might need to do more digging later, after we've killed off a few locals
-        //EventManager::EventHandler checkPeriodically(initiateDigging, 1000);
-        //EventManager::registerTick(checkPeriodically, checkPeriodically.freq, diggingInvadersPlugin);
-        out.print("DiggingInvaders is waiting.\n");
+        //out.print("DiggingInvaders is waiting.\n");
         return -1;
     }
     
@@ -226,7 +224,7 @@ int32_t manageInvasion(color_ostream& out) {
     }
 
     EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, diggingInvadersPlugin);
-    out.print("DiggingInvaders: job assigned.\n");
+    //out.print("DiggingInvaders: job assigned.\n");
     return 0; //did something
 }
 
@@ -244,7 +242,7 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
             for ( size_t b = 0; b < df::global::world->raws.creatures.all.size(); b++ ) {
                 df::creature_raw* raw = df::global::world->raws.creatures.all[b];
                 if ( race == raw->creature_id ) {
-                    out.print("%s = %s\n", race.c_str(), raw->creature_id.c_str());
+                    //out.print("%s = %s\n", race.c_str(), raw->creature_id.c_str());
                     if ( parameters[a] == "add" ) {
                         diggingRaces.insert(b);
                     } else {
@@ -335,8 +333,8 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
         return -1;
     }
     df::unit* firstInvader = invaders[0];
-    out << firstInvader->id << endl;
-    out << firstInvader->pos.x << ", " << firstInvader->pos.y << ", " << firstInvader->pos.z << endl;
+    //out << firstInvader->id << endl;
+    //out << firstInvader->pos.x << ", " << firstInvader->pos.y << ", " << firstInvader->pos.z << endl;
 
     int32_t localPtsFound = 0;
     unordered_set<df::coord,PointHash> closedSet;
@@ -350,7 +348,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
         fringe.erase(fringe.begin());
         //out.print("line %d: fringe size = %d, localPtsFound = %d / %d, closedSetSize = %d\n", __LINE__, fringe.size(), localPtsFound, localPts.size(), closedSet.size());
         if ( closedSet.find(pt) != closedSet.end() ) {
-            out.print("Double closure! Bad!\n");
+            out.print("%s, line %d: Double closure! Bad!\n", __FILE__, __LINE__);
             break;
         }
         closedSet.insert(pt);
@@ -394,7 +392,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
         delete myEdges;
     }
     clock_t time = clock() - t0;
-    out.print("time = %d, totalEdgeTime = %d\n", time, totalEdgeTime);
+    //out.print("time = %d, totalEdgeTime = %d\n", time, totalEdgeTime);
 
     if ( !foundTarget )
         return -1;
@@ -431,7 +429,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
                     //importantEdges.push_front(Edge(pt,parent,0));
                 //}
                 firstImportantEdge = Edge(pt,parent,0);
-                out.print("(%d,%d,%d) -> (%d,%d,%d)\n", parent.x,parent.y,parent.z, pt.x,pt.y,pt.z);
+                //out.print("(%d,%d,%d) -> (%d,%d,%d)\n", parent.x,parent.y,parent.z, pt.x,pt.y,pt.z);
             }
             pt = parent;
         }

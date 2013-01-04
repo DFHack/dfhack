@@ -50,7 +50,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
         pt1 = pt2;
         pt2 = temp;
     }
-    out.print("first important edge: (%d,%d,%d) -> (%d,%d,%d)\n", pt1.x,pt1.y,pt1.z, pt2.x,pt2.y,pt2.z);
+    //out.print("first important edge: (%d,%d,%d) -> (%d,%d,%d)\n", pt1.x,pt1.y,pt1.z, pt2.x,pt2.y,pt2.z);
 
     int32_t jobId = -1;
 
@@ -67,7 +67,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
     }
     if ( building != NULL ) {
         df::coord destroyFrom = parentMap[buildingPos];
-        out.print("%s, line %d: Destroying building %d at (%d,%d,%d) from (%d,%d,%d).\n", __FILE__, __LINE__, building->id, buildingPos.x,buildingPos.y,buildingPos.z, destroyFrom.x,destroyFrom.y,destroyFrom.z);
+        //out.print("%s, line %d: Destroying building %d at (%d,%d,%d) from (%d,%d,%d).\n", __FILE__, __LINE__, building->id, buildingPos.x,buildingPos.y,buildingPos.z, destroyFrom.x,destroyFrom.y,destroyFrom.z);
 
         df::job* job = new df::job;
         job->job_type = df::enums::job_type::DestroyBuilding;

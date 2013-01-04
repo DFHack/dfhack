@@ -26,6 +26,7 @@
 #include "df/general_ref_unit.h"
 #include "df/general_ref_unit_holderst.h"
 #include "df/general_ref_unit_workerst.h"
+#include "df/invasion_info.h"
 #include "df/item.h"
 #include "df/itemdef_weaponst.h"
 #include "df/item_quality.h"
@@ -64,11 +65,22 @@ using namespace DFHack;
 using namespace df::enums;
 
 command_result diggingInvadersFunc(color_ostream &out, std::vector <std::string> & parameters);
+void watchForJobComplete(color_ostream& out, void* ptr);
+void initiateDigging(color_ostream& out, void* ptr);
+int32_t manageInvasion(color_ostream& out);
 
 DFHACK_PLUGIN("diggingInvaders");
 
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
+//TODO: when world unloads
+static int32_t lastInvasionJob=-1;
+static EventManager::EventHandler jobCompleteHandler(watchForJobComplete, 5);
+static Plugin* diggingInvadersPlugin;
+
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
+    diggingInvadersPlugin = Core::getInstance().getPluginManager()->getPluginByName("diggingInvaders");
+    EventManager::EventHandler invasionHandler(initiateDigging, 1000);
+    EventManager::registerListener(EventManager::EventType::INVASION, invasionHandler, diggingInvadersPlugin);
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
         "diggingInvaders", "Makes invaders dig to your dwarves.",
@@ -76,6 +88,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         // Extended help string. Used by CR_WRONG_USAGE and the help command:
         "EXTRA HELP STRINGGNGNGNGNGNNGG.\n"
     ));
+
+
     return CR_OK;
 }
 
@@ -114,42 +128,53 @@ public:
 //bool important(df::coord pos, map<df::coord, set<Edge> >& edges, df::coord prev, set<df::coord>& importantPoints, set<Edge>& importantEdges);
 int32_t findAndAssignInvasionJob(color_ostream& out);
 
-//TODO: when world unloads
-static int32_t lastInvasionJob=-1;
+void initiateDigging(color_ostream& out, void* ptr) {
+    //called when there's a new invasion
+    //TODO: check if invaders can dig
+    lastInvasionJob = -1;
+    manageInvasion(out);
+}
 
-void watchForComplete(color_ostream& out, void* ptr) {
+void watchForJobComplete(color_ostream& out, void* ptr) {
     df::job* job = (df::job*)ptr;
 
     if ( job->id != lastInvasionJob )
         return;
     
-    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("diggingInvaders");
-    EventManager::unregisterAll(me);
+    EventManager::unregister(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, diggingInvadersPlugin);
 
     lastInvasionJob = -1;
     std::vector<string> parameters;
     diggingInvadersFunc(out, parameters);
 }
 
-command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>& parameters) {
-    if (!parameters.empty())
-        return CR_WRONG_USAGE;
+int32_t manageInvasion(color_ostream& out) {
+    if ( df::global::ui->invasions.list[df::global::ui->invasions.next_id-1]->flags.bits.active == 0 ) {
+        //if the invasion is over, we're done
+        return -1;
+    }
     if ( lastInvasionJob != -1 ) {
         out.print("Still working on the previous job.\n");
-        return CR_OK;
+        return 1; //still invading, but nothing new done
     }
     int32_t jobId = findAndAssignInvasionJob(out);
-    if ( jobId == -1 )
-        return CR_OK;
+    if ( jobId == -1 ) {
+        //might need to do more digging later, after we've killed off a few locals
+        EventManager::EventHandler checkPeriodically(initiateDigging, 1000);
+        EventManager::registerTick(checkPeriodically, checkPeriodically.freq, diggingInvadersPlugin);
+        return -1;
+    }
     
     lastInvasionJob = jobId;
 
-    EventManager::EventHandler completeHandler(watchForComplete);
-    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("diggingInvaders");
-    EventManager::unregisterAll(me);
-    
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, completeHandler, 5, me);
-    
+    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, diggingInvadersPlugin);
+    return 0; //did something
+}
+
+command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>& parameters) {
+    if (!parameters.empty())
+        return CR_WRONG_USAGE;
+    manageInvasion(out);
     return CR_OK;
 }
 

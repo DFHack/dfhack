@@ -157,8 +157,6 @@ int32_t findAndAssignInvasionJob(color_ostream& out);
 void initiateDigging(color_ostream& out, void* ptr) {
     //called when there's a new invasion
     //TODO: check if invaders can dig
-    lastInvasionJob = -1;
-    lastInvasionDigger = -1;
     if ( manageInvasion(out) == -2 )
         return;
     
@@ -179,10 +177,7 @@ void watchForJobComplete(color_ostream& out, void* ptr) {
     
     EventManager::unregister(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, diggingInvadersPlugin);
 
-    lastInvasionJob = -1;
-    lastInvasionDigger = -1;
-    std::vector<string> parameters;
-    diggingInvadersFunc(out, parameters);
+    manageInvasion(out);
 }
 
 int32_t manageInvasion(color_ostream& out) {
@@ -202,7 +197,9 @@ int32_t manageInvasion(color_ostream& out) {
             out.print("Error %s line %d.\n", __FILE__, __LINE__);
             return -1;
         }
-        if ( lastInvasionJob == df::global::world->units.all[index]->job.current_job->id ) {
+        df::job* job = df::global::world->units.all[index]->job.current_job;
+        out.print("job id: old = %d, new = %d\n", lastInvasionJob, job == NULL ? -1 : job->id);
+        if ( job != NULL && lastInvasionJob == job->id ) {
             out.print("Still working on the previous job.\n");
             return -1;
         }
@@ -212,8 +209,8 @@ int32_t manageInvasion(color_ostream& out) {
     int32_t unitId = findAndAssignInvasionJob(out);
     if ( unitId == -1 ) {
         //might need to do more digging later, after we've killed off a few locals
-        EventManager::EventHandler checkPeriodically(initiateDigging, 1000);
-        EventManager::registerTick(checkPeriodically, checkPeriodically.freq, diggingInvadersPlugin);
+        //EventManager::EventHandler checkPeriodically(initiateDigging, 1000);
+        //EventManager::registerTick(checkPeriodically, checkPeriodically.freq, diggingInvadersPlugin);
         out.print("DiggingInvaders is waiting.\n");
         return -1;
     }
@@ -344,6 +341,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
     int32_t localPtsFound = 0;
     unordered_set<df::coord,PointHash> closedSet;
     unordered_map<df::coord,int32_t,PointHash> workNeeded; //non-walking work needed to get there
+    bool foundTarget = false;
 
     clock_t t0 = clock();
     clock_t totalEdgeTime = 0;
@@ -359,8 +357,10 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
         
         if ( localPts.find(pt) != localPts.end() ) {
             localPtsFound++;
-            if ( localPtsFound >= localPts.size() )
+            if ( localPtsFound >= localPts.size() ) {
+                foundTarget = true;
                 break;
+            }
             if ( workNeeded.find(pt) == workNeeded.end() || workNeeded[pt] == 0 ) {
                 //there are still dwarves to kill that don't require digging to get to
                 return -1;
@@ -395,6 +395,9 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
     }
     clock_t time = clock() - t0;
     out.print("time = %d, totalEdgeTime = %d\n", time, totalEdgeTime);
+
+    if ( !foundTarget )
+        return -1;
 
     unordered_set<df::coord, PointHash> requiresZNeg;
     unordered_set<df::coord, PointHash> requiresZPos;

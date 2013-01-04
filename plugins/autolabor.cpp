@@ -2259,6 +2259,8 @@ public:
             }
         }
 
+        *df::global::process_jobs = true;
+
         print_debug = 0;
 
     }

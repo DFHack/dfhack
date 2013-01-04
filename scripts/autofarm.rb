@@ -102,9 +102,9 @@ class AutoFarm
 		farms_u = []
 		df.world.buildings.other[:FARM_PLOT].each { |f|
 			if (f.flags.exists)
-				outside = df.map_designation_at(f.centerx,f.centery,f.z).outside
-				farms_s.push(f) if outside
-				farms_u.push(f) unless outside
+				underground = df.map_designation_at(f.centerx,f.centery,f.z).subterranean
+				farms_s.push(f) unless underground
+				farms_u.push(f) if underground
 			end
 		}
 		

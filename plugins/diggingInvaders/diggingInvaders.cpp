@@ -74,6 +74,7 @@ DFHACK_PLUGIN("diggingInvaders");
 
 //TODO: when world unloads
 static int32_t lastInvasionJob=-1;
+static int32_t lastInvasionDigger = -1;
 static EventManager::EventHandler jobCompleteHandler(watchForJobComplete, 5);
 static Plugin* diggingInvadersPlugin;
 static bool enabled=false;
@@ -109,14 +110,12 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     EventManager::EventHandler invasionHandler(initiateDigging, 1000);
     switch (event) {
     case DFHack::SC_WORLD_LOADED:
-        out.print("Game loaded.\n");
         //TODO: check game mode
         lastInvasionJob = -1;
         //in case there are invaders when the game is loaded, we should check 
         EventManager::registerTick(invasionHandler, 10, diggingInvadersPlugin);
         break;
     case DFHack::SC_WORLD_UNLOADED:
-        out.print("Game unloaded.\n");
         // cleanup
         break;
     default:
@@ -159,7 +158,17 @@ void initiateDigging(color_ostream& out, void* ptr) {
     //called when there's a new invasion
     //TODO: check if invaders can dig
     lastInvasionJob = -1;
-    manageInvasion(out);
+    lastInvasionDigger = -1;
+    if ( manageInvasion(out) == -2 )
+        return;
+    
+    //schedule the next thing
+    uint32_t tick = World::ReadCurrentTick();
+    tick = tick % 1000;
+    tick = 1000 - tick;
+
+    EventManager::EventHandler handle(initiateDigging, 1000);
+    EventManager::registerTick(handle, tick, diggingInvadersPlugin);
 }
 
 void watchForJobComplete(color_ostream& out, void* ptr) {
@@ -171,6 +180,7 @@ void watchForJobComplete(color_ostream& out, void* ptr) {
     EventManager::unregister(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, diggingInvadersPlugin);
 
     lastInvasionJob = -1;
+    lastInvasionDigger = -1;
     std::vector<string> parameters;
     diggingInvadersFunc(out, parameters);
 }
@@ -183,14 +193,24 @@ int32_t manageInvasion(color_ostream& out) {
     if ( lastInvasion < 0 || df::global::ui->invasions.list[lastInvasion]->flags.bits.active == 0 ) {
         //if the invasion is over, we're done
         out.print("Invasion is over. Stopping diggingInvaders.\n");
-        return -1;
+        return -2;
     }
     if ( lastInvasionJob != -1 ) {
-        out.print("Still working on the previous job.\n");
-        return 1; //still invading, but nothing new done
+        //check if he's still doing it
+        int32_t index = df::unit::binsearch_index(df::global::world->units.all, lastInvasionDigger);
+        if ( index == -1 ) {
+            out.print("Error %s line %d.\n", __FILE__, __LINE__);
+            return -1;
+        }
+        if ( lastInvasionJob == df::global::world->units.all[index]->job.current_job->id ) {
+            out.print("Still working on the previous job.\n");
+            return -1;
+        }
+
+        //return 1; //still invading, but nothing new done
     }
-    int32_t jobId = findAndAssignInvasionJob(out);
-    if ( jobId == -1 ) {
+    int32_t unitId = findAndAssignInvasionJob(out);
+    if ( unitId == -1 ) {
         //might need to do more digging later, after we've killed off a few locals
         EventManager::EventHandler checkPeriodically(initiateDigging, 1000);
         EventManager::registerTick(checkPeriodically, checkPeriodically.freq, diggingInvadersPlugin);
@@ -198,7 +218,15 @@ int32_t manageInvasion(color_ostream& out) {
         return -1;
     }
     
-    lastInvasionJob = jobId;
+    lastInvasionDigger = unitId;
+    {
+        int32_t index = df::unit::binsearch_index(df::global::world->units.all, unitId);
+        if ( index == -1 ) {
+            out.print("Error %s line %d: unitId = %d, index = %d.\n", __FILE__, __LINE__, unitId, index);
+            return -1;
+        }
+        lastInvasionJob = df::global::world->units.all[index]->job.current_job->id;
+    }
 
     EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, diggingInvadersPlugin);
     out.print("DiggingInvaders: job assigned.\n");

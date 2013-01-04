@@ -71,7 +71,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
 
         df::job* job = new df::job;
         job->job_type = df::enums::job_type::DestroyBuilding;
-        job->flags.bits.special = 1;
+        //job->flags.bits.special = 1;
         df::general_ref_building_holderst* buildingRef = new df::general_ref_building_holderst;
         buildingRef->building_id = building->id;
         job->general_refs.push_back(buildingRef);
@@ -206,5 +206,5 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             Items::moveToInventory(cache, pick, firstInvader, df::unit_inventory_item::T_mode::Weapon, part);
         }
     }
-    return jobId;
+    return firstInvader->id;
 }

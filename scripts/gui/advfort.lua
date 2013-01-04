@@ -70,7 +70,7 @@ function showHelp()
     table.insert(helptext,NEWLINE)
     table.insert(helptext,NEWLINE)
     Disclaimer(helptext)
-    require("gui.dialogs").showMessage("Help!?!",helptext)
+    dialog.showMessage("Help!?!",helptext)
 end
 --[[    low level job management    ]]--
 function getLastJobLink()
@@ -302,17 +302,52 @@ function AssignBuildingRef(args)
     bld.jobs:insert("#",args.job)
     return true
 end
+function chooseBuildingWidthHeightDir(args) --TODO nicer selection dialog
+    local btype=df.building_type
+    local area=makeset{"w","h"}
+    local all=makeset{"w","h","d"}
+    local needs={[btype.FarmPlot]=area,[btype.Bridge]=all,
+        [btype.RoadDirt]=area,[btype.RoadPaved]=area,[btype.ScrewPump]=makeset{"d"},
+        [btype.AxleHorizontal]=makeset{"w","h"},[btype.WaterWheel]=makeset{"d"},[btype.Rollers]=makeset{"d"}}
+    local myneeds=needs[args.type]
+    if myneeds==nil then return end
+    if args.width==nil and myneeds.w then
+        --args.width=3
+        dialog.showInputPrompt("Building size:", "Input building width:", nil, "1", 
+            function(txt) args.width=tonumber(txt);BuildingChosen(args) end)
+        return true
+    end
+    if args.height==nil and myneeds.h then
+        --args.height=4
+        dialog.showInputPrompt("Building size:", "Input building height:", nil, "1", 
+            function(txt) args.height=tonumber(txt);BuildingChosen(args) end)
+        return true
+    end
+    if args.direction==nil and myneeds.d then
+        --args.direction=0--?
+        dialog.showInputPrompt("Building size:", "Input building direction:", nil, "0", 
+            function(txt) args.direction=tonumber(txt);BuildingChosen(args) end)
+        return true
+    end
+    return false
+    --width = ..., height = ..., direction = ...
+end
 
 function BuildingChosen(inp_args,type_id,subtype_id,custom_id)
-    local args={}
-    args.type=type_id
-    args.subtype=subtype_id
-    args.custom=custom_id
-    args.pos=inp_args.pos
+    local args=inp_args or {}
+    
+    args.type=type_id or args.type
+    args.subtype=subtype_id or args.subtype
+    args.custom=custom_id or args.custom_id
+    if inp_args then
+        args.pos=inp_args.pos or args.pos
+    end
+    if chooseBuildingWidthHeightDir(args) then
+        return
+    end
     --if settings.build_by_items then
     --    args.items=itemsAtPos(inp_args.from_pos)
     --end
-    --printall(args.items)
     buildings.constructBuilding(args)
 end
 
@@ -337,6 +372,7 @@ function isSuitableItem(job_item,item)
     --todo butcher test
     if job_item.item_type~=-1 then
         if item:getType()~= job_item.item_type then
+        
             return false, "type"
         elseif job_item.item_subtype~=-1 then
             if item:getSubtype()~=job_item.item_subtype then
@@ -638,7 +674,7 @@ function AssignJobItems(args)
                 --end
                 
                 if (item_counts[job_id]>0 and item_suitable) or settings.build_by_items then
-                    cur_item.flags.in_job=true
+                    --cur_item.flags.in_job=true
                     job.items:insert("#",{new=true,item=cur_item,role=df.job_item_ref.T_role.Reagent,job_item_idx=job_id})
                     item_counts[job_id]=item_counts[job_id]-cur_item:getTotalDimension()
                     --print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),item_counts[job_id]))
@@ -739,12 +775,13 @@ actions={
     --{"Diagnose Patient"     ,df.job_type.DiagnosePatient,{IsUnit},{SetPatientRef}},
     --{"Surgery"              ,df.job_type.Surgery,{IsUnit},{SetPatientRef}},
     {"TameAnimal"           ,df.job_type.TameAnimal,{IsUnit},{SetCreatureRef}}, 
-    {"GatherPlants"         ,df.job_type.GatherPlants,{IsPlant}},
+    {"GatherPlants"         ,df.job_type.GatherPlants,{IsPlant,SameSquare}},
     {"RemoveConstruction"   ,df.job_type.RemoveConstruction,{IsConstruct}},
     {"RemoveBuilding"       ,RemoveBuilding,{IsBuilding}},
     {"RemoveStairs"         ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},
     --{"HandleLargeCreature"   ,df.job_type.HandleLargeCreature,{isUnit},{SetCreatureRef}},
     {"Build"                ,AssignJobToBuild,{NoConstructedBuilding}},
+    {"Clean"                ,df.job_type.Clean,{}},
     
 }
 
@@ -909,10 +946,10 @@ function usetool:openPutWindow(building)
     for k,v in pairs(items) do
         table.insert(choices,{text=dfhack.items.getDescription(v,0),item=v})
     end
-    require("gui.dialogs").showListPrompt("Item choice", "Choose item to put into:", COLOR_WHITE,choices,function (idx,choice) putItemToBuilding(building,choice.item) end)
+    dialog.showListPrompt("Item choice", "Choose item to put into:", COLOR_WHITE,choices,function (idx,choice) putItemToBuilding(building,choice.item) end)
 end
 function usetool:openSiegeWindow(building)
-    require("gui.dialogs").showListPrompt("Engine job choice", "Choose what to do:",COLOR_WHITE,{"Turn","Load","Fire"},
+    dialog.showListPrompt("Engine job choice", "Choose what to do:",COLOR_WHITE,{"Turn","Load","Fire"},
         dfhack.curry(siegeWeaponActionChosen,building))
 end
 function usetool:onWorkShopButtonClicked(building,index,choice)
@@ -959,7 +996,7 @@ function usetool:openShopWindowButtoned(building,no_reset)
         return
         --qerror("No jobs for this workshop")
     end
-    require("gui.dialogs").showListPrompt("Workshop job choice", "Choose what to make",COLOR_WHITE,list,self:callback("onWorkShopButtonClicked",building)
+    dialog.showListPrompt("Workshop job choice", "Choose what to make",COLOR_WHITE,list,self:callback("onWorkShopButtonClicked",building)
             ,nil, nil,true)
 end
 function usetool:openShopWindow(building)
@@ -973,10 +1010,39 @@ function usetool:openShopWindow(building)
         for k,v in pairs(filter_pile) do
             table.insert(choices,{job_id=0,text=v.name:lower(),filter=v})
         end
-        require("gui.dialogs").showListPrompt("Workshop job choice", "Choose what to make",COLOR_WHITE,choices,dfhack.curry(onWorkShopJobChosen,state)
+        dialog.showListPrompt("Workshop job choice", "Choose what to make",COLOR_WHITE,choices,dfhack.curry(onWorkShopJobChosen,state)
             ,nil, nil,true)
     else
         qerror("No jobs for this workshop")
+    end
+end
+function usetool:farmPlot(building)
+    local adv=df.global.world.units.active[0]
+    local do_harvest=false
+    for id, con_item in pairs(building.contained_items) do
+        if con_item.use_mode==2 and con_item.item:getType()==df.item_type.PLANT then
+            if same_xyz(adv.pos,con_item.item.pos) then
+                do_harvest=true
+            end
+        end
+    end
+    --check if there tile is without plantseeds,add job
+    
+    local args={unit=adv,pos=adv.pos,from_pos=adv.pos,
+        }
+    if not do_harvest then
+        local seedjob={items={{quantity=1,item_type=df.item_type.SEEDS}}}
+        args.job_type=df.job_type.PlantSeeds
+        args.pre_actions={dfhack.curry(setFiltersUp,seedjob)}
+        args.post_actions={AssignBuildingRef}
+        
+    else
+        args.job_type=df.job_type.HarvestPlants
+        args.post_actions={AssignBuildingRef}
+    end
+    local job,msg=makeJob(args)
+    if job==nil then
+        print(msg)
     end
 end
 MODES={
@@ -1016,6 +1082,10 @@ MODES={
         name="Siege menu",
         input=usetool.openSiegeWindow,
     },
+    [df.building_type.FarmPlot]={
+        name="Plant/Harvest",
+        input=usetool.farmPlot,
+    }
 }
 function usetool:shopMode(enable,mode,building)    
     self.subviews.shopLabel.visible=enable

@@ -12,14 +12,93 @@
 #include "df/tiletype_material.h"
 #include "df/tiletype_shape.h"
 
+#include <iostream>
+
 using namespace std;
 
 int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
+    int32_t dx = pt2.x - pt1.x;
+    int32_t dy = pt2.y - pt1.y;
+    int32_t dz = pt2.z - pt1.z;
+    int64_t cost = costWeight[CostDimension::Distance];
+
+    if ( Maps::canStepBetween(pt1, pt2) ) {
+        return cost;
+    }
+
+    if ( Maps::getTileBlock(pt2) == NULL )
+        return -1;
+
+    df::tiletype* type2 = Maps::getTileType(pt2);
+    df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
+
+    if ( shape2 == df::enums::tiletype_shape::EMPTY ) {
+        return -1;
+    }
+
+    if ( shape2 == df::enums::tiletype_shape::TREE )
+        return -1;
+
+    df::building* building2 = Buildings::findAtTile(pt2);
+    if ( building2 )
+        cost += costWeight[CostDimension::DestroyBuilding];
+    
+    bool construction2 = ENUM_ATTR(tiletype, material, *type2) == df::enums::tiletype_material::CONSTRUCTION;
+    if ( construction2 )
+        cost += costWeight[CostDimension::DestroyConstruction];
+    
+    if ( dz == 0 ) {
+        if ( !building2 && !construction2 ) {
+            //it has to be a wall
+            if ( shape2 != df::enums::tiletype_shape::WALL ) {
+                //out << "shape = " << (int32_t)shape2 << endl;
+                //out << __FILE__ << ", line " << __LINE__ << ": WTF?" << endl;
+                return cost;
+            }
+            cost += costWeight[CostDimension::Dig];
+        }
+    } else {
+        if ( dx == 0 && dy == 0 ) {
+            if ( dz > 0 ) {
+                bool passable_low2 = ENUM_ATTR(tiletype_shape, passable_low, shape2);
+                if ( !passable_low2 ) {
+                    if ( building2 || construction2 )
+                        return -1;
+                    cost += costWeight[CostDimension::Dig];
+                }
+            } else {
+                bool passable_high2 = ENUM_ATTR(tiletype_shape, passable_high, shape2);
+                if ( !passable_high2 ) {
+                    if ( building2 || construction2 )
+                        return -1;
+
+                    if ( shape2 != df::enums::tiletype_shape::WALL )
+                        return -1;
+                    cost += costWeight[CostDimension::Dig];
+                }
+            }
+        } else {
+            //nonvertical
+            //out.print("%s, line %d: (%d,%d,%d)->(%d,%d,%d)\n", __FILE__, __LINE__, pt1.x,pt1.y,pt1.z, pt2.x,pt2.y,pt2.z);
+            return -1;
+        }
+    }
+    
+    return cost;
+}
+
+int64_t getEdgeCostOld(color_ostream& out, df::coord pt1, df::coord pt2) {
     //first, list all the facts
     int32_t dx = pt2.x - pt1.x;
     int32_t dy = pt2.y - pt1.y;
     int32_t dz = pt2.z - pt1.z;
     int64_t cost = costWeight[CostDimension::Distance];
+
+    if ( false ) {
+        if ( Maps::canStepBetween(pt1,pt2) )
+            return cost;
+        return 100 + cost;
+    }
     
     Maps::ensureTileBlock(pt1);
     Maps::ensureTileBlock(pt2);
@@ -142,9 +221,10 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
 }
 
 vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax) {
-    vector<Edge>* result = new vector<Edge>;
-    result->reserve(26);
+    vector<Edge>* result = new vector<Edge>(26);
+    //result->reserve(26);
     
+    size_t count = 0;
     for ( int32_t dx = -1; dx <= 1; dx++ ) {
         for ( int32_t dy = -1; dy <= 1; dy++ ) {
             for ( int32_t dz = -1; dz <= 1; dz++ ) {
@@ -159,7 +239,9 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCach
                 if ( cost == -1 )
                     continue;
                 Edge edge(point, neighbor, cost);
-                result->push_back(edge);
+                //result->push_back(edge);
+                (*result)[count] = edge;
+                count++;
             }
         }
     }

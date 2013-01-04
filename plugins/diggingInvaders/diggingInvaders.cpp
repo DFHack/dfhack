@@ -266,9 +266,9 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
 }
 
 int32_t findAndAssignInvasionJob(color_ostream& out) {
-    //returns the job id created
+    //returns the worker id of the job created
     
-    CoreSuspender suspend;
+    //CoreSuspender suspend;
     
     unordered_set<df::coord, PointHash> invaderPts;
     unordered_set<df::coord, PointHash> localPts;
@@ -284,10 +284,8 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
     MapExtras::MapCache cache;
     vector<df::unit*> invaders;
 
-
     unordered_set<uint16_t> invaderConnectivity;
     unordered_set<uint16_t> localConnectivity;
-    //TODO: look for invaders with buildingdestroyer:3
 
     //find all locals and invaders
     for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
@@ -340,6 +338,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
     unordered_set<df::coord,PointHash> closedSet;
     unordered_map<df::coord,int32_t,PointHash> workNeeded; //non-walking work needed to get there
     bool foundTarget = false;
+    int32_t edgeCount = 0;
 
     clock_t t0 = clock();
     clock_t totalEdgeTime = 0;
@@ -371,6 +370,9 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
         totalEdgeTime += (clock() - edgeTime);
         for ( auto a = myEdges->begin(); a != myEdges->end(); a++ ) {
             Edge &e = *a;
+            if ( e.p1 == df::coord() )
+                break;
+            edgeCount++;
             df::coord& other = e.p1;
             if ( other == pt )
                 other = e.p2;
@@ -392,7 +394,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
         delete myEdges;
     }
     clock_t time = clock() - t0;
-    //out.print("time = %d, totalEdgeTime = %d\n", time, totalEdgeTime);
+    out.print("time = %d, totalEdgeTime = %d, total points = %d, total edges = %d, time per point = %.3f, time per edge = %.3f\n", time, totalEdgeTime, closedSet.size(), edgeCount, (float)time / closedSet.size(), (float)time / edgeCount);
 
     if ( !foundTarget )
         return -1;

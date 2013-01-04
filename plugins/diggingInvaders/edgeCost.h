@@ -38,6 +38,12 @@ public:
     df::coord p1;
     df::coord p2;
     int64_t cost;
+    Edge() {
+        cost = -1;
+    }
+    Edge(const Edge& e): p1(e.p1), p2(e.p2), cost(e.cost) {
+        
+    }
     Edge(df::coord p1In, df::coord p2In, int64_t costIn): cost(costIn) {
         if ( p2In < p1In ) {
             p1 = p2In;

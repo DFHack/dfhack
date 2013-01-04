@@ -50,7 +50,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
         pt1 = pt2;
         pt2 = temp;
     }
-    //out.print("first important edge: (%d,%d,%d) -> (%d,%d,%d)\n", pt1.x,pt1.y,pt1.z, pt2.x,pt2.y,pt2.z);
+    out.print("first important edge: (%d,%d,%d) -> (%d,%d,%d)\n", pt1.x,pt1.y,pt1.z, pt2.x,pt2.y,pt2.z);
 
     int32_t jobId = -1;
 
@@ -59,6 +59,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
     bool passable1 = block1->walkable[pt1.x&0x0F][pt1.y&0x0F];
     bool passable2 = block2->walkable[pt2.x&0x0F][pt2.y&0x0F];
 
+    df::coord location;
     df::building* building = Buildings::findAtTile(pt2);
     df::coord buildingPos = pt2;
     if ( pt1.z > pt2.z ) {
@@ -84,6 +85,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
         firstInvader->path.path.y.clear();
         firstInvader->path.path.z.clear();
         firstInvader->path.dest = destroyFrom;
+        location = destroyFrom;
         firstInvader->job.hunt_target = NULL;
         firstInvader->job.destroy_target = NULL;
 
@@ -110,6 +112,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             firstInvader->path.path.y.clear();
             firstInvader->path.path.z.clear();
             firstInvader->path.dest = pt1;
+            location = pt1;
             firstInvader->job.hunt_target = NULL;
             firstInvader->job.destroy_target = NULL;
             Job::linkIntoWorld(job);
@@ -123,18 +126,22 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
                 job->job_type = df::enums::job_type::CarveUpDownStaircase;
                 job->pos = pt2;
                 firstInvader->path.dest = pt2;
+                location = pt2;
             } else if ( up && !down ) {
                 job->job_type = df::enums::job_type::CarveUpwardStaircase;
                 job->pos = pt2;
                 firstInvader->path.dest = pt2;
+                location = pt2;
             } else if ( !up && down ) {
                 job->job_type = df::enums::job_type::CarveDownwardStaircase;
                 job->pos = pt2;
                 firstInvader->path.dest = pt2;
+                location = pt2;
             } else {
                 job->job_type = df::enums::job_type::Dig;
                 job->pos = pt2;
                 firstInvader->path.dest = pt1;
+                location = pt1;
             }
             df::general_ref_unit_workerst* ref = new df::general_ref_unit_workerst;
             ref->unit_id = firstInvader->id;
@@ -206,5 +213,21 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             Items::moveToInventory(cache, pick, firstInvader, df::unit_inventory_item::T_mode::Weapon, part);
         }
     }
+
+#if 0
+    //tell EVERYONE to move there
+    for ( size_t a = 0; a < invaders.size(); a++ ) {
+        df::unit* invader = invaders[a];
+        invader->path.path.x.clear();
+        invader->path.path.y.clear();
+        invader->path.path.z.clear();
+        invader->path.dest = location;
+        //invader->flags1.bits.invades = true;
+        //invader->flags1.bits.marauder = true;
+        //invader->flags2.bits.visitor_uninvited = true;
+        invader->relations.group_leader_id = invader->id;
+    }
+#endif
+
     return firstInvader->id;
 }

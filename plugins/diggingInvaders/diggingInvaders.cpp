@@ -21,6 +21,7 @@
 #include "df/building_type.h"
 #include "df/caste_body_info.h"
 #include "df/coord.h"
+#include "df/creature_raw.h"
 #include "df/general_ref.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/general_ref_unit.h"
@@ -75,7 +76,8 @@ DFHACK_PLUGIN("diggingInvaders");
 static int32_t lastInvasionJob=-1;
 static EventManager::EventHandler jobCompleteHandler(watchForJobComplete, 5);
 static Plugin* diggingInvadersPlugin;
-static bool enabled=true;
+static bool enabled=false;
+static unordered_set<int32_t> diggingRaces;
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -87,7 +89,11 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "diggingInvaders", "Makes invaders dig to your dwarves.",
         diggingInvadersFunc, false, /* true means that the command can't be used from non-interactive user interface */
         // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "EXTRA HELP STRINGGNGNGNGNGNNGG.\n"
+        "  diggingInvaders enable\n    enables the plugin\n"
+        "  diggingInvaders disable\n    disables the plugin\n"
+        "  diggingInvaders add GOBLIN\n    registers the race GOBLIN as a digging invader\n"
+        "  diggingInvaders remove GOBLIN\n    unregisters the race GOBLIN as a digging invader\n"
+        "  diggingInvaders\n    Makes invaders try to dig now.\n"
     ));
     
     return CR_OK;
@@ -200,9 +206,39 @@ int32_t manageInvasion(color_ostream& out) {
 }
 
 command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>& parameters) {
-    if (!parameters.empty())
-        return CR_WRONG_USAGE;
-    manageInvasion(out);
+    for ( size_t a = 0; a < parameters.size(); a++ ) {
+        if ( parameters[a] == "enable" ) {
+            enabled = true;
+        } else if ( parameters[a] == "disable" ) {
+            enabled = false;
+        } else if ( parameters[a] == "add" || parameters[a] == "remove" ) {
+            if ( a+1 >= parameters.size() )
+                return CR_WRONG_USAGE;
+            string race = parameters[a+1];
+            bool foundIt = false;
+            for ( size_t b = 0; b < df::global::world->raws.creatures.all.size(); b++ ) {
+                df::creature_raw* raw = df::global::world->raws.creatures.all[b];
+                if ( race == raw->creature_id ) {
+                    out.print("%s = %s\n", race.c_str(), raw->creature_id.c_str());
+                    if ( parameters[a] == "add" ) {
+                        diggingRaces.insert(b);
+                    } else {
+                        diggingRaces.erase(b);
+                    }
+                    foundIt = true;
+                    break;
+                }
+            }
+            if ( !foundIt ) {
+                out.print("Couldn't find \"%s\"\n", race.c_str());
+                return CR_WRONG_USAGE;
+            }
+            a++;
+        }
+    }
+
+    if ( parameters.size() == 0 )
+        manageInvasion(out);
     return CR_OK;
 }
 
@@ -242,6 +278,8 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
             df::map_block* block = Maps::getTileBlock(unit->pos);
             localConnectivity.insert(block->walkable[unit->pos.x&0xF][unit->pos.y&0xF]);
         } else if ( unit->flags1.bits.active_invader ) {
+            if ( diggingRaces.find(unit->race) == diggingRaces.end() )
+                continue;
             if ( invaderPts.find(unit->pos) != invaderPts.end() )
                 continue;
             invaderPts.insert(unit->pos);
@@ -391,7 +429,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
     requiresZPos.erase(toDelete.begin(), toDelete.end());
     toDelete.clear();
     
-    return assignJob(out, firstImportantEdge, parentMap, costMap, invaders, requiresZNeg, requiresZPos, cache);
+    return assignJob(out, firstImportantEdge, parentMap, costMap, invaders, requiresZNeg, requiresZPos, cache, diggingRaces);
 }
 
 df::coord getRoot(df::coord point, map<df::coord, df::coord>& rootMap) {

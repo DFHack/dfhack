@@ -34,30 +34,30 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
 }
 
 command_result eventExample(color_ostream& out, vector<string>& parameters) {
-    EventManager::EventHandler initiateHandler(jobInitiated);
-    EventManager::EventHandler completeHandler(jobCompleted);
-    EventManager::EventHandler timeHandler(timePassed);
-    EventManager::EventHandler deathHandler(unitDeath);
-    EventManager::EventHandler itemHandler(itemCreate);
-    EventManager::EventHandler buildingHandler(building);
-    EventManager::EventHandler constructionHandler(construction);
-    EventManager::EventHandler syndromeHandler(syndrome);
-    EventManager::EventHandler invasionHandler(invasion);
+    EventManager::EventHandler initiateHandler(jobInitiated, 10);
+    EventManager::EventHandler completeHandler(jobCompleted, 5);
+    EventManager::EventHandler timeHandler(timePassed, 1);
+    EventManager::EventHandler deathHandler(unitDeath, 500);
+    EventManager::EventHandler itemHandler(itemCreate, 1000);
+    EventManager::EventHandler buildingHandler(building, 500);
+    EventManager::EventHandler constructionHandler(construction, 100);
+    EventManager::EventHandler syndromeHandler(syndrome, 1);
+    EventManager::EventHandler invasionHandler(invasion, 1000);
     Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("eventExample");
     EventManager::unregisterAll(me);
 
-    EventManager::registerListener(EventManager::EventType::JOB_INITIATED, initiateHandler, 10, me);
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, completeHandler, 5, me);
+    EventManager::registerListener(EventManager::EventType::JOB_INITIATED, initiateHandler, me);
+    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, completeHandler, me);
     EventManager::registerTick(timeHandler, 1, me);
     EventManager::registerTick(timeHandler, 2, me);
     EventManager::registerTick(timeHandler, 4, me);
     EventManager::registerTick(timeHandler, 8, me);
-    EventManager::registerListener(EventManager::EventType::UNIT_DEATH, deathHandler, 500, me);
-    EventManager::registerListener(EventManager::EventType::ITEM_CREATED, itemHandler, 1000, me);
-    EventManager::registerListener(EventManager::EventType::BUILDING, buildingHandler, 500, me);
-    EventManager::registerListener(EventManager::EventType::CONSTRUCTION, constructionHandler, 100, me);
-    EventManager::registerListener(EventManager::EventType::SYNDROME, syndromeHandler, 1, me);
-    EventManager::registerListener(EventManager::EventType::INVASION, invasionHandler, 1, me);
+    EventManager::registerListener(EventManager::EventType::UNIT_DEATH, deathHandler, me);
+    EventManager::registerListener(EventManager::EventType::ITEM_CREATED, itemHandler, me);
+    EventManager::registerListener(EventManager::EventType::BUILDING, buildingHandler, me);
+    EventManager::registerListener(EventManager::EventType::CONSTRUCTION, constructionHandler, me);
+    EventManager::registerListener(EventManager::EventType::SYNDROME, syndromeHandler, me);
+    EventManager::registerListener(EventManager::EventType::INVASION, invasionHandler, me);
     out.print("Events registered.\n");
     return CR_OK;
 }

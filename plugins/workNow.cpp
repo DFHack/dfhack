@@ -42,6 +42,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         return CR_OK;
     
     *df::global::process_jobs = true;
+    *df::global::process_dig = true;
     
     return CR_OK;
 }

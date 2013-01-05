@@ -119,7 +119,7 @@ DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginComman
         "Requirements:\n"
         "  1) The job must be a custom reaction.\n"
         "  2) The job must produce a stone of some inorganic material.\n"
-        "  3) The stone must have a boiling temperature less than or equal to 10000.\n"
+        "  3) The stone must have a boiling temperature less than or equal to 9000.\n"
         "\n"
         "When these conditions are met, the unit that completed the job will immediately become afflicted with all applicable syndromes associated with the inorganic material of the stone, or stones. It should correctly check for whether the creature or caste is affected or immune, and it should also correctly account for affected and immune creature classes.\n"
         "Multiple syndromes per stone, or multiple boiling rocks produced with the same reaction should work fine.\n"
@@ -285,7 +285,7 @@ void processJob(color_ostream& out, void* jobPtr) {
         out.print("%s line %d: Couldn't find unit %d.\n", __FILE__, __LINE__, workerId);
         return;
     }
-    df::unit* unit = df::global::world->units.all[workerIndex];
+    df::unit* worker = df::global::world->units.all[workerIndex];
     //find the building that made it
     int32_t buildingId = -1;
     for ( size_t a = 0; a < job->general_refs.size(); a++ ) {
@@ -333,7 +333,6 @@ void processJob(color_ostream& out, void* jobPtr) {
             //add each syndrome to the guy who did the job
             df::syndrome* syndrome = inorganic->material.syndrome[b];
             bool workerOnly = false;
-            bool allowMultipleSyndromes = false;
             bool allowMultipleTargets = false;
             bool foundCommand = false;
             bool destroyRock = true;
@@ -345,8 +344,6 @@ void processJob(color_ostream& out, void* jobPtr) {
                     if ( commandStr == "" ) {
                         if ( *clazz == "\\WORKER_ONLY" ) {
                             workerOnly = true;
-                        } else if ( *clazz == "\\ALLOW_MULTIPLE_SYNDROMES" ) {
-                            allowMultipleSyndromes = true;
                         } else if ( *clazz == "\\ALLOW_MULTIPLE_TARGETS" ) {
                             allowMultipleTargets = true;
                         } else if ( *clazz == "\\PRESERVE_ROCK" ) {
@@ -414,10 +411,10 @@ void processJob(color_ostream& out, void* jobPtr) {
             }
 
             //only one syndrome per reaction will be applied, unless multiples are allowed.
-            if ( appliedSomething && !allowMultipleSyndromes )
+            if ( appliedSomething && !allowMultipleTargets )
                 continue;
 
-            if ( maybeApply(out, syndrome, workerId, unit) ) {
+            if ( maybeApply(out, syndrome, workerId, worker) ) {
                 appliedSomething = true;
             }
 
@@ -427,6 +424,8 @@ void processJob(color_ostream& out, void* jobPtr) {
             //now try applying it to everybody inside the building
             for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
                 df::unit* unit = df::global::world->units.active[a];
+                if ( unit == worker )
+                    continue;
                 if ( unit->pos.z != building->z )
                     continue;
                 if ( unit->pos.x < building->x1 || unit->pos.x > building->x2 )

@@ -71,6 +71,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 static size_t constructionSize = 0;
 static bool enabled = false;
+void doInfiniteSky(color_ostream& out, int32_t howMany);
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
@@ -89,12 +90,11 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     if ( df::global::world->constructions.size() == constructionSize )
         return CR_OK;
     int32_t zNow = df::global::world->map.z_count_block;
-    vector<string> vec;
     for ( size_t a = constructionSize; a < df::global::world->constructions.size(); a++ ) {
         df::construction* construct = df::global::world->constructions[a];
         if ( construct->pos.z+2 < zNow )
             continue;
-        infiniteSky(out, vec);
+        doInfiniteSky(out, 1);
         zNow = df::global::world->map.z_count_block;
         ///break;
     }
@@ -103,26 +103,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     return CR_OK;
 }
 
-command_result infiniteSky (color_ostream &out, std::vector <std::string> & parameters)
-{
-    if ( parameters.size() > 1 )
-        return CR_WRONG_USAGE;
-    if ( parameters.size() == 0 ) {
-        vector<string> vec;
-        vec.push_back("1");
-        return infiniteSky(out, vec);
-    }
-    if (parameters[0] == "enable") {
-        enabled = true;
-        return CR_OK;
-    }
-    if (parameters[0] == "disable") {
-        enabled = false;
-        constructionSize = 0;
-        return CR_OK;
-    }
-    int32_t howMany = 0;
-    howMany = atoi(parameters[0].c_str());
+void doInfiniteSky(color_ostream& out, int32_t howMany) {
     df::world* world = df::global::world;
     CoreSuspender suspend;
     int32_t x_count_block = world->map.x_count_block;
@@ -138,6 +119,9 @@ command_result infiniteSky (color_ostream &out, std::vector <std::string> & para
                 column[z_count_block] = NULL;
                 delete[] block_index[a][b];
                 block_index[a][b] = column;
+
+                //deal with map_block_column stuff even though it'd probably be fine
+
             }
         }
         df::z_level_flags* flags = new df::z_level_flags[z_count_block+1];
@@ -148,5 +132,31 @@ command_result infiniteSky (color_ostream &out, std::vector <std::string> & para
         world->map.z_count++;
     }
     
+}
+
+command_result infiniteSky (color_ostream &out, std::vector <std::string> & parameters)
+{
+    if ( parameters.size() > 1 )
+        return CR_WRONG_USAGE;
+    if ( parameters.size() == 0 ) {
+        vector<string> vec;
+        vec.push_back("1");
+        return infiniteSky(out, vec);
+    }
+    if (parameters[0] == "enable") {
+        enabled = true;
+        out.print("Construction monitoring enabled.\n");
+        return CR_OK;
+    }
+    if (parameters[0] == "disable") {
+        enabled = false;
+        out.print("Construction monitoring disabled.\n");
+        constructionSize = 0;
+        return CR_OK;
+    }
+    int32_t howMany = 0;
+    howMany = atoi(parameters[0].c_str());
+    out.print("InfiniteSky: creating %d new z-levels of sky.\n", howMany);
+    doInfiniteSky(out, howMany);
     return CR_OK;
 }

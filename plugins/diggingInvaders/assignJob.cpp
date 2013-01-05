@@ -118,31 +118,55 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             Job::linkIntoWorld(job);
             jobId = job->id;
         } else {
+            bool walkable_low1 = shape1 == df::tiletype_shape::STAIR_DOWN || shape1 == df::tiletype_shape::STAIR_UPDOWN;
+            bool walkable_low2 = shape2 == df::tiletype_shape::STAIR_DOWN || shape2 == df::tiletype_shape::STAIR_UPDOWN;
+            bool walkable_high1 = shape1 == df::tiletype_shape::STAIR_UP || shape1 == df::tiletype_shape::STAIR_UPDOWN;
+            bool walkable_high2 = shape2 == df::tiletype_shape::STAIR_UP || shape2 == df::tiletype_shape::STAIR_UPDOWN;
             //must be a dig job
-            bool up = requiresZPos.find(pt2) != requiresZPos.end();
-            bool down = requiresZNeg.find(pt2) != requiresZNeg.end();
+            bool up1 = !walkable_high1 && requiresZPos.find(pt1) != requiresZPos.end();
+            bool up2 = !walkable_high2 && requiresZPos.find(pt2) != requiresZPos.end();
+            bool down1 = !walkable_low1 && requiresZNeg.find(pt1) != requiresZNeg.end();
+            bool down2 = !walkable_low2 && requiresZNeg.find(pt2) != requiresZNeg.end();
+            bool up;
+            bool down;
+            df::coord goHere;
+            df::coord workHere;
+            if ( pt1.z == pt2.z ) {
+                up = up2;
+                down = down2;
+                goHere = pt1;
+                workHere = pt2;
+            } else {
+                if ( up1 || down1 ) {
+                    up = up1;
+                    down = down1;
+                    goHere = pt1;
+                    workHere = pt1;
+                } else {
+                    up = up2;
+                    down = down2;
+                    goHere = pt1;
+                    workHere = pt2;
+                }
+            }
             df::job* job = new df::job;
             if ( up && down ) {
                 job->job_type = df::enums::job_type::CarveUpDownStaircase;
-                job->pos = pt2;
-                firstInvader->path.dest = pt2;
-                location = pt2;
+                out.print("%s, line %d: type = up/down\n", __FILE__, __LINE__);
             } else if ( up && !down ) {
                 job->job_type = df::enums::job_type::CarveUpwardStaircase;
-                job->pos = pt2;
-                firstInvader->path.dest = pt2;
-                location = pt2;
+                out.print("%s, line %d: type = up\n", __FILE__, __LINE__);
             } else if ( !up && down ) {
                 job->job_type = df::enums::job_type::CarveDownwardStaircase;
-                job->pos = pt2;
-                firstInvader->path.dest = pt2;
-                location = pt2;
+                out.print("%s, line %d: type = down\n", __FILE__, __LINE__);
             } else {
                 job->job_type = df::enums::job_type::Dig;
-                job->pos = pt2;
-                firstInvader->path.dest = pt1;
-                location = pt1;
+                out.print("%s, line %d: type = dig\n", __FILE__, __LINE__);
             }
+            out.print("%s, line %d: up=%d,up1=%d,up2=%d, down=%d,down1=%d,down2=%d\n", __FILE__, __LINE__, up,up1,up2, down,down1,down2);
+            job->pos = workHere;
+            firstInvader->path.dest = goHere;
+            location = goHere;
             df::general_ref_unit_workerst* ref = new df::general_ref_unit_workerst;
             ref->unit_id = firstInvader->id;
             job->general_refs.push_back(ref);

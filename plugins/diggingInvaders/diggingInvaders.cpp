@@ -10,6 +10,7 @@
 
 #include "modules/Buildings.h"
 #include "modules/EventManager.h"
+#include "modules/Gui.h"
 #include "modules/Job.h"
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
@@ -228,6 +229,7 @@ int32_t manageInvasion(color_ostream& out) {
     return 0; //did something
 }
 
+static df::coord lastDebugEdgeCostPoint;
 command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>& parameters) {
     for ( size_t a = 0; a < parameters.size(); a++ ) {
         if ( parameters[a] == "enable" ) {
@@ -257,6 +259,36 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
                 return CR_WRONG_USAGE;
             }
             a++;
+        } else if ( parameters[a] == "setCost" ) {
+            if ( a+2 >= parameters.size() )
+                return CR_WRONG_USAGE;
+            string costStr = parameters[a+1];
+            int32_t costDim = -1;
+            if ( costStr == "distance" ) {
+                costDim = CostDimension::Distance;
+            } else if ( costStr == "destroyBuilding" ) {
+                costDim = CostDimension::DestroyBuilding;
+            } else if ( costStr == "dig" ) {
+                costDim = CostDimension::Dig;
+            } else if ( costStr == "destroyConstruction" ) {
+                costDim = CostDimension::DestroyConstruction;
+            } else {
+                return CR_WRONG_USAGE;
+            }
+            int64_t value;
+            stringstream asdf(parameters[a+2]);
+            asdf >> value;
+            if ( value <= 0 )
+                return CR_WRONG_USAGE;
+            costWeight[costDim] = value;
+            a += 2;
+        } else if ( parameters[a] == "edgeCost" ) {
+            df::coord bob = Gui::getCursorPos();
+            out.print("(%d,%d,%d), (%d,%d,%d): cost = %lld\n", lastDebugEdgeCostPoint.x, lastDebugEdgeCostPoint.y, lastDebugEdgeCostPoint.z, bob.x, bob.y, bob.z, getEdgeCost(out, lastDebugEdgeCostPoint, bob));
+            lastDebugEdgeCostPoint = bob;
+        }
+        else {
+            return CR_WRONG_USAGE;
         }
     }
 
@@ -354,7 +386,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
         
         if ( localPts.find(pt) != localPts.end() ) {
             localPtsFound++;
-            if ( localPtsFound >= localPts.size() ) {
+            if ( true || localPtsFound >= localPts.size() ) {
                 foundTarget = true;
                 break;
             }
@@ -438,6 +470,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
         break;
     }
 
+#if 0
     unordered_set<df::coord,PointHash> toDelete;
     for ( auto a = requiresZNeg.begin(); a != requiresZNeg.end(); a++ ) {
         df::coord pos = *a;
@@ -459,6 +492,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
     }
     requiresZPos.erase(toDelete.begin(), toDelete.end());
     toDelete.clear();
+#endif
     
     return assignJob(out, firstImportantEdge, parentMap, costMap, invaders, requiresZNeg, requiresZPos, cache, diggingRaces);
 }

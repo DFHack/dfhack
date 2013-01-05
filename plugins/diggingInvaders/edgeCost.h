@@ -21,6 +21,8 @@ enum CostDimension {
     costDim
 };
 
+extern int64_t costWeight[costDim];
+/*
 const int64_t costWeight[] = {
 //Distance
 1,
@@ -31,6 +33,7 @@ const int64_t costWeight[] = {
 //DestroyConstruction
 100,
 };
+*/
 
 class Edge {
 public:
@@ -79,5 +82,6 @@ struct PointHash {
     }
 };
 
+int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2);
 std::vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax);
 

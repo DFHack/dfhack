@@ -14,6 +14,17 @@
 
 #include <iostream>
 
+int64_t costWeight[] = {
+//Distance
+1,
+//Destroy Building
+2,
+//Dig
+10000,
+//DestroyConstruction
+100,
+};
+
 using namespace std;
 
 int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
@@ -59,21 +70,35 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
         }
     } else {
         if ( dx == 0 && dy == 0 ) {
+            df::tiletype* type1 = Maps::getTileType(pt1);
+            df::tiletype_shape shape1 = ENUM_ATTR(tiletype, shape, *type1);
             if ( dz > 0 ) {
-                bool passable_low2 = ENUM_ATTR(tiletype_shape, passable_low, shape2);
-                if ( !passable_low2 ) {
+                bool walkable_low2 = shape2 == df::tiletype_shape::STAIR_DOWN || shape2 == df::tiletype_shape::STAIR_UPDOWN;
+                if ( !walkable_low2 ) {
                     if ( building2 || construction2 )
                         return -1;
                     cost += costWeight[CostDimension::Dig];
                 }
+                
+                bool walkable_high1 = shape1 == df::tiletype_shape::STAIR_UP || shape1 == df::tiletype_shape::STAIR_UPDOWN;
+                if ( !walkable_high1 ) {
+                    if ( shape1 != df::enums::tiletype_shape::WALL ) {
+                        return -1;
+                    }
+                    cost += costWeight[CostDimension::Dig];
+                }
             } else {
-                bool passable_high2 = ENUM_ATTR(tiletype_shape, passable_high, shape2);
-                if ( !passable_high2 ) {
+                bool walkable_high2 = shape2 == df::tiletype_shape::STAIR_UP || shape2 == df::tiletype_shape::STAIR_UPDOWN;
+                if ( !walkable_high2 ) {
                     if ( building2 || construction2 )
                         return -1;
 
                     if ( shape2 != df::enums::tiletype_shape::WALL )
                         return -1;
+                    cost += costWeight[CostDimension::Dig];
+                }
+                bool walkable_low1 = shape1 == df::tiletype_shape::STAIR_DOWN || shape1 == df::tiletype_shape::STAIR_UPDOWN;
+                if ( !walkable_low1 ) {
                     cost += costWeight[CostDimension::Dig];
                 }
             }

@@ -13,7 +13,7 @@
 
 //cost is [path cost, building destruction cost, dig cost, construct cost]. Minimize constructions, then minimize dig cost, then minimize path cost.
 enum CostDimension {
-    Distance,
+    Walk,
     DestroyBuilding,
     Dig,
     DestroyConstruction,

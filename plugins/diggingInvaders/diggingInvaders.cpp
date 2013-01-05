@@ -218,7 +218,7 @@ int32_t manageInvasion(color_ostream& out) {
     {
         int32_t index = df::unit::binsearch_index(df::global::world->units.all, unitId);
         if ( index == -1 ) {
-            out.print("Error %s line %d: unitId = %d, index = %d.\n", __FILE__, __LINE__, unitId, index);
+            //out.print("Error %s line %d: unitId = %d, index = %d.\n", __FILE__, __LINE__, unitId, index);
             return -1;
         }
         lastInvasionJob = df::global::world->units.all[index]->job.current_job->id;
@@ -264,8 +264,8 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
                 return CR_WRONG_USAGE;
             string costStr = parameters[a+1];
             int32_t costDim = -1;
-            if ( costStr == "distance" ) {
-                costDim = CostDimension::Distance;
+            if ( costStr == "walk" ) {
+                costDim = CostDimension::Walk;
             } else if ( costStr == "destroyBuilding" ) {
                 costDim = CostDimension::DestroyBuilding;
             } else if ( costStr == "dig" ) {

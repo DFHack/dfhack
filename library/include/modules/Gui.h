@@ -29,6 +29,8 @@ distribution.
 #include "ColorText.h"
 #include <string>
 
+#include "Types.h"
+
 #include "DataDefs.h"
 #include "df/init.h"
 #include "df/ui.h"
@@ -116,6 +118,9 @@ namespace DFHack
             int map_x1, map_x2, menu_x1, menu_x2, area_x1, area_x2;
             int y1, y2;
             bool menu_on, area_on, menu_forced;
+
+            rect2d map() { return mkrect_xy(map_x1, y1, map_x2, y2); }
+            rect2d menu() { return mkrect_xy(menu_x1, y1, menu_x2, y2); }
         };
 
         DFHACK_EXPORT DwarfmodeDims getDwarfmodeViewDims();

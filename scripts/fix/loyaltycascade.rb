@@ -38,9 +38,9 @@ def fixunit(unit)
 	end
 
 	# fix the 'is an enemy' cache matrix (mark to be recalculated by the game when needed)
-	if fixed and unit.unknown8.enemy_status_slot != -1
-		i = unit.unknown8.enemy_status_slot
-		unit.unknown8.enemy_status_slot = -1
+	if fixed and unit.enemy.enemy_status_slot != -1
+		i = unit.enemy.enemy_status_slot
+		unit.enemy.enemy_status_slot = -1
 		cache = df.world.enemy_status_cache
 		cache.slot_used[i] = false
 		cache.rel_map[i].map! { -1 }

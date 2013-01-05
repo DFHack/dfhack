@@ -39,7 +39,7 @@ static color_ostream *r_console;       // color_ostream given as argument, if NU
 static const char *r_command;
 static tthread::thread *r_thread;
 static int onupdate_active;
-static int onupdate_minyear, onupdate_minyeartick;
+static int onupdate_minyear, onupdate_minyeartick=-1, onupdate_minyeartickadv=-1;
 static color_ostream_proxy *console_proxy;
 
 
@@ -118,18 +118,8 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-// send a single ruby line to be evaluated by the ruby thread
-DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *command)
+static command_result do_plugin_eval_ruby(color_ostream &out, const char *command)
 {
-    // if dlopen failed
-    if (!r_thread)
-        return CR_FAILURE;
-
-    // wrap all ruby code inside a suspend block
-    // if we dont do that and rely on ruby code doing it, we'll deadlock in
-    // onupdate
-    CoreSuspender suspend;
-
     command_result ret;
 
     // ensure ruby thread is idle
@@ -159,6 +149,27 @@ DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *c
     return ret;
 }
 
+// send a single ruby line to be evaluated by the ruby thread
+DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *command)
+{
+    // if dlopen failed
+    if (!r_thread)
+        return CR_FAILURE;
+
+    if (!strncmp(command, "nolock ", 7)) {
+        // debug only!
+        // run ruby commands without locking the main thread
+        // useful when the game is frozen after a segfault
+        return do_plugin_eval_ruby(out, command+7);
+    } else {
+        // wrap all ruby code inside a suspend block
+        // if we dont do that and rely on ruby code doing it, we'll deadlock in
+        // onupdate
+        CoreSuspender suspend;
+        return do_plugin_eval_ruby(out, command);
+    }
+}
+
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     if (!r_thread)
@@ -169,10 +180,15 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     if (!onupdate_active)
         return CR_OK;
 
-    if (*df::global::cur_year < onupdate_minyear)
+    if (df::global::cur_year && (*df::global::cur_year < onupdate_minyear))
         return CR_OK;
-    if (*df::global::cur_year == onupdate_minyear &&
-            *df::global::cur_year_tick < onupdate_minyeartick)
+    if (df::global::cur_year_tick && onupdate_minyeartick >= 0 &&
+            (*df::global::cur_year == onupdate_minyear &&
+             *df::global::cur_year_tick < onupdate_minyeartick))
+        return CR_OK;
+    if (df::global::cur_year_tick_advmode && onupdate_minyeartickadv >= 0 &&
+            (*df::global::cur_year == onupdate_minyear &&
+             *df::global::cur_year_tick_advmode < onupdate_minyeartickadv))
         return CR_OK;
 
     return plugin_eval_ruby(out, "DFHack.onupdate");
@@ -427,6 +443,12 @@ static VALUE rb_cDFHack;
 
 // DFHack module ruby methods, binds specific dfhack methods
 
+// df-dfhack version (eg "0.34.11-r2")
+static VALUE rb_dfversion(VALUE self)
+{
+    return rb_str_new(DFHACK_VERSION, strlen(DFHACK_VERSION));
+}
+
 // enable/disable calls to DFHack.onupdate()
 static VALUE rb_dfonupdate_active(VALUE self)
 {
@@ -461,6 +483,17 @@ static VALUE rb_dfonupdate_minyeartick(VALUE self)
 static VALUE rb_dfonupdate_minyeartick_set(VALUE self, VALUE val)
 {
     onupdate_minyeartick = rb_num2ulong(val);
+    return Qtrue;
+}
+
+static VALUE rb_dfonupdate_minyeartickadv(VALUE self)
+{
+    return rb_uint2inum(onupdate_minyeartickadv);
+}
+
+static VALUE rb_dfonupdate_minyeartickadv_set(VALUE self, VALUE val)
+{
+    onupdate_minyeartickadv = rb_num2ulong(val);
     return Qtrue;
 }
 
@@ -514,6 +547,23 @@ static VALUE rb_dfget_vtable_ptr(VALUE self, VALUE objptr)
     return rb_uint2inum(*(uint32_t*)rb_num2ulong(objptr));
 }
 
+// run a dfhack command, as if typed from the dfhack console
+static VALUE rb_dfhack_run(VALUE self, VALUE cmd)
+{
+    if (!r_console) // XXX
+        return Qnil;
+
+    std::string s;
+    int strlen = FIX2INT(rb_funcall(cmd, rb_intern("length"), 0));
+    s.assign(rb_string_value_ptr(&cmd), strlen);
+
+    // allow the target command to suspend
+    // FIXME
+    //CoreSuspendClaimer suspend(true);
+    Core::getInstance().runCommand(*r_console, s);
+
+    return Qtrue;
+}
 
 
 
@@ -561,6 +611,11 @@ static VALUE rb_dfmemory_read_float(VALUE self, VALUE addr)
     return rb_float_new(*(float*)rb_num2ulong(addr));
 }
 
+static VALUE rb_dfmemory_read_double(VALUE self, VALUE addr)
+{
+    return rb_float_new(*(double*)rb_num2ulong(addr));
+}
+
 
 // memory writing (buffer)
 static VALUE rb_dfmemory_write(VALUE self, VALUE addr, VALUE raw)
@@ -593,6 +648,12 @@ static VALUE rb_dfmemory_write_int32(VALUE self, VALUE addr, VALUE val)
 static VALUE rb_dfmemory_write_float(VALUE self, VALUE addr, VALUE val)
 {
     *(float*)rb_num2ulong(addr) = rb_num2dbl(val);
+    return Qtrue;
+}
+
+static VALUE rb_dfmemory_write_double(VALUE self, VALUE addr, VALUE val)
+{
+    *(double*)rb_num2ulong(addr) = rb_num2dbl(val);
     return Qtrue;
 }
 
@@ -633,6 +694,49 @@ static VALUE rb_dfmemory_patch(VALUE self, VALUE addr, VALUE raw)
             rb_string_value_ptr(&raw), strlen);
 
     return ret ? Qtrue : Qfalse;
+}
+
+// allocate memory pages
+static VALUE rb_dfmemory_pagealloc(VALUE self, VALUE len)
+{
+    void *ret = Core::getInstance().p->memAlloc(rb_num2ulong(len));
+
+    return (ret == (void*)-1) ? Qnil : rb_uint2inum((uint32_t)ret);
+}
+
+// free memory from pagealloc
+static VALUE rb_dfmemory_pagedealloc(VALUE self, VALUE ptr, VALUE len)
+{
+    int ret = Core::getInstance().p->memDealloc((void*)rb_num2ulong(ptr), rb_num2ulong(len));
+
+    return ret ? Qfalse : Qtrue;
+}
+
+// change memory page permissions
+// ptr must be page-aligned
+// prot is a String, eg 'rwx', 'r', 'x'
+static VALUE rb_dfmemory_pageprotect(VALUE self, VALUE ptr, VALUE len, VALUE prot_str)
+{
+    int ret, prot=0;
+    char *prot_p = rb_string_value_ptr(&prot_str);
+
+    if (*prot_p == 'r') {
+        prot |= Process::MemProt::READ;
+        ++prot_p;
+    }
+    if (*prot_p == 'w') {
+        prot |= Process::MemProt::WRITE;
+        ++prot_p;
+    }
+    if (*prot_p == 'x') {
+        prot |= Process::MemProt::EXEC;
+        ++prot_p;
+    }
+
+    Core::printerr("pageprot %x %x %x\n", rb_num2ulong(ptr), rb_num2ulong(len), prot);
+    ret = Core::getInstance().p->memProtect((void*)rb_num2ulong(ptr), rb_num2ulong(len), prot);
+
+    return ret ? Qfalse : Qtrue;
 }
 
 
@@ -935,27 +1039,36 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "onupdate_minyear=", RUBY_METHOD_FUNC(rb_dfonupdate_minyear_set), 1);
     rb_define_singleton_method(rb_cDFHack, "onupdate_minyeartick", RUBY_METHOD_FUNC(rb_dfonupdate_minyeartick), 0);
     rb_define_singleton_method(rb_cDFHack, "onupdate_minyeartick=", RUBY_METHOD_FUNC(rb_dfonupdate_minyeartick_set), 1);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyeartickadv", RUBY_METHOD_FUNC(rb_dfonupdate_minyeartickadv), 0);
+    rb_define_singleton_method(rb_cDFHack, "onupdate_minyeartickadv=", RUBY_METHOD_FUNC(rb_dfonupdate_minyeartickadv_set), 1);
     rb_define_singleton_method(rb_cDFHack, "get_global_address", RUBY_METHOD_FUNC(rb_dfget_global_address), 1);
     rb_define_singleton_method(rb_cDFHack, "get_vtable", RUBY_METHOD_FUNC(rb_dfget_vtable), 1);
     rb_define_singleton_method(rb_cDFHack, "get_rtti_classname", RUBY_METHOD_FUNC(rb_dfget_rtti_classname), 1);
     rb_define_singleton_method(rb_cDFHack, "get_vtable_ptr", RUBY_METHOD_FUNC(rb_dfget_vtable_ptr), 1);
+    //rb_define_singleton_method(rb_cDFHack, "dfhack_run", RUBY_METHOD_FUNC(rb_dfhack_run), 1);
     rb_define_singleton_method(rb_cDFHack, "print_str", RUBY_METHOD_FUNC(rb_dfprint_str), 1);
     rb_define_singleton_method(rb_cDFHack, "print_err", RUBY_METHOD_FUNC(rb_dfprint_err), 1);
     rb_define_singleton_method(rb_cDFHack, "malloc", RUBY_METHOD_FUNC(rb_dfmalloc), 1);
     rb_define_singleton_method(rb_cDFHack, "free", RUBY_METHOD_FUNC(rb_dffree), 1);
+    rb_define_singleton_method(rb_cDFHack, "pagealloc", RUBY_METHOD_FUNC(rb_dfmemory_pagealloc), 1);
+    rb_define_singleton_method(rb_cDFHack, "pagedealloc", RUBY_METHOD_FUNC(rb_dfmemory_pagedealloc), 2);
+    rb_define_singleton_method(rb_cDFHack, "pageprotect", RUBY_METHOD_FUNC(rb_dfmemory_pageprotect), 3);
     rb_define_singleton_method(rb_cDFHack, "vmethod_do_call", RUBY_METHOD_FUNC(rb_dfvcall), 8);
+    rb_define_singleton_method(rb_cDFHack, "version", RUBY_METHOD_FUNC(rb_dfversion), 0);
 
     rb_define_singleton_method(rb_cDFHack, "memory_read", RUBY_METHOD_FUNC(rb_dfmemory_read), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_read_int8",  RUBY_METHOD_FUNC(rb_dfmemory_read_int8),  1);
     rb_define_singleton_method(rb_cDFHack, "memory_read_int16", RUBY_METHOD_FUNC(rb_dfmemory_read_int16), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_read_int32", RUBY_METHOD_FUNC(rb_dfmemory_read_int32), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_read_float", RUBY_METHOD_FUNC(rb_dfmemory_read_float), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_read_double", RUBY_METHOD_FUNC(rb_dfmemory_read_double), 1);
 
     rb_define_singleton_method(rb_cDFHack, "memory_write", RUBY_METHOD_FUNC(rb_dfmemory_write), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_int8",  RUBY_METHOD_FUNC(rb_dfmemory_write_int8),  2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_int16", RUBY_METHOD_FUNC(rb_dfmemory_write_int16), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_int32", RUBY_METHOD_FUNC(rb_dfmemory_write_int32), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_write_float", RUBY_METHOD_FUNC(rb_dfmemory_write_float), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_write_double", RUBY_METHOD_FUNC(rb_dfmemory_write_double), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_check", RUBY_METHOD_FUNC(rb_dfmemory_check), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_patch", RUBY_METHOD_FUNC(rb_dfmemory_patch), 2);
 

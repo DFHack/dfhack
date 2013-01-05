@@ -107,7 +107,8 @@ static void signal_typeid_error(color_ostream *out, lua_State *state,
                                 type_identity *type, const char *msg,
                                 int val_index, bool perr, bool signal)
 {
-    std::string error = stl_sprintf(msg, type->getFullName().c_str());
+    std::string typestr = type ? type->getFullName() : "any pointer";
+    std::string error = stl_sprintf(msg, typestr.c_str());
 
     if (signal)
     {
@@ -133,6 +134,8 @@ void *DFHack::Lua::CheckDFObject(lua_State *state, type_identity *type, int val_
     check_valid_ptr_index(state, val_index);
 
     if (lua_isnil(state, val_index))
+        return NULL;
+    if (lua_islightuserdata(state, val_index) && !lua_touserdata(state, val_index))
         return NULL;
 
     void *rv = get_object_internal(state, type, val_index, exact_type, false);
@@ -1548,6 +1551,10 @@ void DFHack::Lua::Notification::bind(lua_State *state, const char *name)
 
 void OpenDFHackApi(lua_State *state);
 
+namespace DFHack { namespace Lua { namespace Core {
+    static void InitCoreContext();
+}}}
+
 lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
 {
     if (!state)
@@ -1650,6 +1657,10 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     lua_setglobal(state, "_G");
     lua_dup(state);
     lua_rawseti(state, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);
+
+    // Init core-context specific stuff before loading dfhack.lua
+    if (IsCoreContext(state))
+        Lua::Core::InitCoreContext();
 
     // load dfhack.lua
     Require(out, state, "dfhack");
@@ -1826,8 +1837,12 @@ void DFHack::Lua::Core::Init(color_ostream &out)
 
     State = luaL_newstate();
 
+    // Calls InitCoreContext after checking IsCoreContext
     Lua::Open(out, State);
+}
 
+static void Lua::Core::InitCoreContext()
+{
     lua_newtable(State);
     lua_rawsetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
 

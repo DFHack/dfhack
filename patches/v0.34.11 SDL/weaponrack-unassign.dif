@@ -1,0 +1,61 @@
+http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445
+
+0x4c05c4
+8B 8C 24 80 00 00 00
+89 C1 90 90 90 90 90
+
+<<<<
+.text:008C11C4                 mov     ecx, [esp+98h+var_18]
+====
+.text:008C11C4                 mov     ecx, eax
+.text:008C11C6                 nop
+.text:008C11C7                 nop
+.text:008C11C8                 nop
+.text:008C11C9                 nop
+.text:008C11CA                 nop
+>>>>
+
+0x4c06a1
+8B 8C 24 80 00 00 00
+89 C1 90 90 90 90 90
+
+<<<<
+.text:008C12A1                 mov     ecx, [esp+98h+var_18]
+====
+.text:008C12A1                 mov     ecx, eax
+.text:008C12A3                 nop
+.text:008C12A4                 nop
+.text:008C12A5                 nop
+.text:008C12A6                 nop
+.text:008C12A7                 nop
+>>>>
+
+
+basically:
+
+  b_squad_id = building->getSpecificSquad();
+- if (b_squad_id != squad->id || !building->canUse(some_squad_id, 4))
++ if (b_squad_id != squad->id || !building->canUse(b_squad_id, 4))
+    unassign(building);
+
+the reason being, some_other_squad_id contains irrelevant garbage at this point
+
+
+---8<---
+This difference file is created by The Interactive Disassembler
+
+Dwarf Fortress.exe
+004C05C4: 8B 89
+004C05C5: 8C C1
+004C05C6: 24 90
+004C05C7: 80 90
+004C05C8: 00 90
+004C05C9: 00 90
+004C05CA: 00 90
+004C06A1: 8B 89
+004C06A2: 8C C1
+004C06A3: 24 90
+004C06A4: 80 90
+004C06A5: 00 90
+004C06A6: 00 90
+004C06A7: 00 90

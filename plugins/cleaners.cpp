@@ -12,6 +12,7 @@
 #include "df/global_objects.h"
 #include "df/builtin_mats.h"
 #include "df/contaminant.h"
+#include "df/plant.h"
 
 using std::vector;
 using std::string;

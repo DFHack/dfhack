@@ -37,6 +37,12 @@ distribution.
 
 #include "DataDefs.h"
 
+namespace df
+{
+    struct tile_bitmask;
+    struct map_block;
+}
+
 namespace DFHack
 {
     typedef df::game_mode GameMode;
@@ -55,8 +61,6 @@ namespace DFHack
     class DFContextShared;
 
     class DFHACK_EXPORT PersistentDataItem {
-        friend class World;
-
         int id;
         std::string key_value;
 
@@ -65,13 +69,66 @@ namespace DFHack
     public:
         static const int NumInts = 7;
 
-        bool isValid() { return id != 0; }
-        int entry_id() { return -id; }
+        bool isValid() const { return id != 0; }
+        int entry_id() const { return -id; }
 
-        const std::string &key() { return key_value; }
+        int raw_id() const { return id; }
+
+        const std::string &key() const { return key_value; }
 
         std::string &val() { return *str_value; }
+        const std::string &val() const { return *str_value; }
         int &ival(int i) { return int_values[i]; }
+        int ival(int i) const { return int_values[i]; }
+
+        // Pack binary data into string field.
+        // Since DF serialization chokes on NUL bytes,
+        // use bit magic to ensure none of the bytes is 0.
+        // Choose the lowest bit for padding so that
+        // sign-extend can be used normally.
+
+        size_t data_size() const { return str_value->size(); }
+
+        bool check_data(size_t off, size_t sz = 1) {
+            return (str_value->size() >= off+sz);
+        }
+        void ensure_data(size_t off, size_t sz = 0) {
+            if (str_value->size() < off+sz) str_value->resize(off+sz, '\x01');
+        }
+        uint8_t *pdata(size_t off) { return (uint8_t*)&(*str_value)[off]; }
+
+        static const size_t int7_size = 1;
+        uint8_t get_uint7(size_t off) {
+            uint8_t *p = pdata(off);
+            return p[0]>>1;
+        }
+        int8_t get_int7(size_t off) {
+            uint8_t *p = pdata(off);
+            return int8_t(p[0])>>1;
+        }
+        void set_uint7(size_t off, uint8_t val) {
+            uint8_t *p = pdata(off);
+            p[0] = uint8_t((val<<1) | 1);
+        }
+        void set_int7(size_t off, int8_t val) { set_uint7(off, val); }
+
+        static const size_t int28_size = 4;
+        uint32_t get_uint28(size_t off) {
+            uint8_t *p = pdata(off);
+            return (p[0]>>1) | ((p[1]&~1U)<<6) | ((p[2]&~1U)<<13) | ((p[3]&~1U)<<20);
+        }
+        int32_t get_int28(size_t off) {
+            uint8_t *p = pdata(off);
+            return (p[0]>>1) | ((p[1]&~1U)<<6) | ((p[2]&~1U)<<13) | ((int8_t(p[3])&~1)<<20);
+        }
+        void set_uint28(size_t off, uint32_t val) {
+            uint8_t *p = pdata(off);
+            p[0] = uint8_t((val<<1) | 1);
+            p[1] = uint8_t((val>>6) | 1);
+            p[2] = uint8_t((val>>13) | 1);
+            p[3] = uint8_t((val>>20) | 1);
+        }
+        void set_int28(size_t off, int32_t val) { set_uint28(off, val); }
 
         PersistentDataItem() : id(0), str_value(0), int_values(0) {}
         PersistentDataItem(int id, const std::string &key, std::string *sv, int *iv)
@@ -83,54 +140,45 @@ namespace DFHack
      * \ingroup grp_modules
      * \ingroup grp_world
      */
-    class DFHACK_EXPORT World : public Module
+    namespace World
     {
-        public:
-        World();
-        ~World();
-        bool Start();
-        bool Finish();
-
         ///true if paused, false if not
-        bool ReadPauseState();
+        DFHACK_EXPORT bool ReadPauseState();
         ///true if paused, false if not
-        void SetPauseState(bool paused);
+        DFHACK_EXPORT void SetPauseState(bool paused);
 
-        uint32_t ReadCurrentTick();
-        uint32_t ReadCurrentYear();
-        uint32_t ReadCurrentMonth();
-        uint32_t ReadCurrentDay();
-        uint8_t ReadCurrentWeather();
-        void SetCurrentWeather(uint8_t weather);
-        bool ReadGameMode(t_gamemodes& rd);
-        bool WriteGameMode(const t_gamemodes & wr); // this is very dangerous
-        std::string ReadWorldFolder();
+        DFHACK_EXPORT uint32_t ReadCurrentTick();
+        DFHACK_EXPORT uint32_t ReadCurrentYear();
+        DFHACK_EXPORT uint32_t ReadCurrentMonth();
+        DFHACK_EXPORT uint32_t ReadCurrentDay();
+        DFHACK_EXPORT uint8_t ReadCurrentWeather();
+        DFHACK_EXPORT void SetCurrentWeather(uint8_t weather);
+        DFHACK_EXPORT bool ReadGameMode(t_gamemodes& rd);
+        DFHACK_EXPORT bool WriteGameMode(const t_gamemodes & wr); // this is very dangerous
+        DFHACK_EXPORT std::string ReadWorldFolder();
 
         // Store data in fake historical figure names.
         // This ensures that the values are stored in save games.
-        PersistentDataItem AddPersistentData(const std::string &key);
-        PersistentDataItem GetPersistentData(const std::string &key);
-        PersistentDataItem GetPersistentData(int entry_id);
+        DFHACK_EXPORT PersistentDataItem AddPersistentData(const std::string &key);
+        DFHACK_EXPORT PersistentDataItem GetPersistentData(const std::string &key);
+        DFHACK_EXPORT PersistentDataItem GetPersistentData(int entry_id);
         // Calls GetPersistentData(key); if not found, adds and sets added to true.
         // The result can still be not isValid() e.g. if the world is not loaded.
-        PersistentDataItem GetPersistentData(const std::string &key, bool *added);
+        DFHACK_EXPORT PersistentDataItem GetPersistentData(const std::string &key, bool *added);
         // Lists all items with the given key.
         // If prefix is true, search for keys starting with key+"/".
         // GetPersistentData(&vec,"",true) returns all items.
         // Items have alphabetic order by key; same key ordering is undefined.
-        void GetPersistentData(std::vector<PersistentDataItem> *vec,
-                               const std::string &key, bool prefix = false);
+        DFHACK_EXPORT void GetPersistentData(std::vector<PersistentDataItem> *vec,
+                                             const std::string &key, bool prefix = false);
         // Deletes the item; returns true if success.
-        bool DeletePersistentData(const PersistentDataItem &item);
+        DFHACK_EXPORT bool DeletePersistentData(const PersistentDataItem &item);
 
-        void ClearPersistentCache();
+        DFHACK_EXPORT void ClearPersistentCache();
 
-    private:
-        struct Private;
-        Private *d;
-
-        bool BuildPersistentCache();
-    };
+        DFHACK_EXPORT df::tile_bitmask *getPersistentTilemask(const PersistentDataItem &item, df::map_block *block, bool create = false);
+        DFHACK_EXPORT bool deletePersistentTilemask(const PersistentDataItem &item, df::map_block *block);
+    }
 }
 #endif
 

@@ -1,2 +1,0 @@
-offsets.searchoffsets()
-offsets.save()

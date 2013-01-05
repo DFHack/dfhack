@@ -35,6 +35,7 @@ using namespace std;
 #include "Error.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
+#include "Types.h"
 
 #include "modules/Job.h"
 #include "modules/Materials.h"
@@ -71,14 +72,14 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job)
     pnew->specific_refs.clear();
 
     // Clone refs
-    for (int i = pnew->references.size()-1; i >= 0; i--)
+    for (int i = pnew->general_refs.size()-1; i >= 0; i--)
     {
-        df::general_ref *ref = pnew->references[i];
+        df::general_ref *ref = pnew->general_refs[i];
 
-        if (virtual_cast<df::general_ref_unit_workerst>(ref))
-            vector_erase_at(pnew->references, i);
+        if (virtual_cast<df::general_ref_unit>(ref))
+            vector_erase_at(pnew->general_refs, i);
         else
-            pnew->references[i] = ref->clone();
+            pnew->general_refs[i] = ref->clone();
     }
 
     // Clone items
@@ -96,8 +97,8 @@ void DFHack::Job::deleteJobStruct(df::job *job)
     // Only allow free-floating job structs
     assert(!job->list_link && job->items.empty() && job->specific_refs.empty());
 
-    for (int i = job->references.size()-1; i >= 0; i--)
-        delete job->references[i];
+    for (int i = job->general_refs.size()-1; i >= 0; i--)
+        delete job->general_refs[i];
 
     for (int i = job->job_items.size()-1; i >= 0; i--)
         delete job->job_items[i];
@@ -228,13 +229,27 @@ void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
         printItemDetails(out, job->job_items[i], i);
 }
 
+df::general_ref *Job::getGeneralRef(df::job *job, df::general_ref_type type)
+{
+    CHECK_NULL_POINTER(job);
+
+    return findRef(job->general_refs, type);
+}
+
+df::specific_ref *Job::getSpecificRef(df::job *job, df::specific_ref_type type)
+{
+    CHECK_NULL_POINTER(job);
+
+    return findRef(job->specific_refs, type);
+}
+
 df::building *DFHack::Job::getHolder(df::job *job)
 {
     CHECK_NULL_POINTER(job);
 
-    for (size_t i = 0; i < job->references.size(); i++)
+    for (size_t i = 0; i < job->general_refs.size(); i++)
     {
-        VIRTUAL_CAST_VAR(ref, df::general_ref_building_holderst, job->references[i]);
+        VIRTUAL_CAST_VAR(ref, df::general_ref_building_holderst, job->general_refs[i]);
         if (ref)
             return ref->getBuilding();
     }
@@ -246,9 +261,9 @@ df::unit *DFHack::Job::getWorker(df::job *job)
 {
     CHECK_NULL_POINTER(job);
 
-    for (size_t i = 0; i < job->references.size(); i++)
+    for (size_t i = 0; i < job->general_refs.size(); i++)
     {
-        VIRTUAL_CAST_VAR(ref, df::general_ref_unit_workerst, job->references[i]);
+        VIRTUAL_CAST_VAR(ref, df::general_ref_unit_workerst, job->general_refs[i]);
         if (ref)
             return ref->getUnit();
     }
@@ -360,4 +375,30 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
         job->items.push_back(job_link);
 
     return true;
+}
+
+bool Job::isSuitableItem(df::job_item *item, df::item_type itype, int isubtype)
+{
+    CHECK_NULL_POINTER(item);
+
+    if (itype == item_type::NONE)
+        return true;
+
+    ItemTypeInfo iinfo(itype, isubtype);
+    MaterialInfo minfo(item);
+
+    return iinfo.isValid() && iinfo.matches(*item, &minfo);
+}
+
+bool Job::isSuitableMaterial(df::job_item *item, int mat_type, int mat_index)
+{
+    CHECK_NULL_POINTER(item);
+
+    if (mat_type == -1 && mat_index == -1)
+        return true;
+
+    ItemTypeInfo iinfo(item);
+    MaterialInfo minfo(mat_type, mat_index);
+
+    return minfo.isValid() && iinfo.matches(*item, &minfo);
 }

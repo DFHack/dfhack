@@ -1,19 +1,21 @@
 #include "OutFile.h"
+#include <stdexcept>
 using namespace OutFile;
 File::File(std::string path)
 {
     //mystream.exceptions ( std::fstream::eofbit | std::fstream::failbit | std::fstream::badbit );
     mystream.open(path.c_str(),std::fstream::binary|std::ios::in|std::ios::out);
-    mystream.read((char*)&myhead,sizeof(myhead));
-    for(unsigned i=0;i<myhead.sectioncount;i++)
-    {
-        Section x;
-        mystream.read((char*)&x,sizeof(Section));
-        sections[x.name]=x;
-    }
+    
 
     if(mystream)
     {
+        mystream.read((char*)&myhead,sizeof(myhead));
+        for(unsigned i=0;i<myhead.sectioncount;i++)
+        {
+            Section x;
+            mystream.read((char*)&x,sizeof(Section));
+            sections[x.name]=x;
+        }
         //std::cout<<"Sizeof:"<<sizeof(Section)<<"\n";
       /*myhead.PrintData();
       for(auto it=sections.begin();it!=sections.end();it++)
@@ -24,7 +26,7 @@ File::File(std::string path)
     }
     else
     {
-        std::cout<<"Error opening file!"<<std::endl;
+        throw std::runtime_error("Error opening file!");
     }
 }
 Section &File::GetSection(std::string name)

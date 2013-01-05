@@ -547,9 +547,7 @@ static void reset_labor(df::unit_labor labor)
 
 static void init_state()
 {
-    auto pworld = Core::getInstance().getWorld();
-
-    config = pworld->GetPersistentData("autolabor/config");
+    config = World::GetPersistentData("autolabor/config");
     if (config.isValid() && config.ival(0) == -1)
         config.ival(0) = 0;
 
@@ -558,7 +556,7 @@ static void init_state()
     if (!enable_autolabor)
         return;
 
-    auto cfg_haulpct = pworld->GetPersistentData("autolabor/haulpct");
+    auto cfg_haulpct = World::GetPersistentData("autolabor/haulpct");
     if (cfg_haulpct.isValid())
     {
         hauler_pct = cfg_haulpct.ival(0);
@@ -572,7 +570,7 @@ static void init_state()
     labor_infos.resize(ARRAY_COUNT(default_labor_infos));
 
     std::vector<PersistentDataItem> items;
-    pworld->GetPersistentData(&items, "autolabor/labors/", true);
+    World::GetPersistentData(&items, "autolabor/labors/", true);
 
     for (auto p = items.begin(); p != items.end(); p++)
     {
@@ -594,7 +592,7 @@ static void init_state()
         std::stringstream name;
         name << "autolabor/labors/" << i;
 
-        labor_infos[i].config = pworld->AddPersistentData(name.str());
+        labor_infos[i].config = World::AddPersistentData(name.str());
 
         labor_infos[i].is_exclusive = default_labor_infos[i].is_exclusive;
         labor_infos[i].active_dwarfs = 0;
@@ -633,11 +631,9 @@ static void generate_labor_to_skill_map()
 
 static void enable_plugin(color_ostream &out)
 {
-    auto pworld = Core::getInstance().getWorld();
-
     if (!config.isValid())
     {
-        config = pworld->AddPersistentData("autolabor/config");
+        config = World::AddPersistentData("autolabor/config");
         config.ival(0) = 0;
     }
 
@@ -968,7 +964,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         else if (building_type::TradeDepot == type)
         {
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
-            trader_requested = depot->trade_flags.bits.trader_requested;
+            trader_requested = trader_requested || depot->trade_flags.bits.trader_requested;
             if (print_debug)
             {
                 if (trader_requested)
@@ -1551,7 +1547,7 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
 
     }
 
-    std::vector<df::item*> &items = world->items.other[items_other_id::ANY_FREE];
+    std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
 
     // Precompute a bitmask with the bad flags
     df::item_flags bad_flags;
@@ -1560,7 +1556,7 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
 #define F(x) bad_flags.bits.x = true;
     F(dump); F(forbid); F(garbage_collect);
     F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(construction); F(artifact1);
+    F(in_building); F(construction); F(artifact);
     F(spider_web); F(owned); F(in_job);
 #undef F
 
@@ -1586,9 +1582,9 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
         df::unit *holder = 0;
         df::building *building = 0;
 
-        for (size_t i = 0; i < item->itemrefs.size(); i++)
+        for (size_t i = 0; i < item->general_refs.size(); i++)
         {
-            df::general_ref *ref = item->itemrefs[i];
+            df::general_ref *ref = item->general_refs[i];
 
             switch (ref->getType())
             {
@@ -1615,9 +1611,9 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
         while(nextcontainer) {
             df::item *thiscontainer = nextcontainer;
             nextcontainer = 0;
-            for (size_t i = 0; i < thiscontainer->itemrefs.size(); i++)
+            for (size_t i = 0; i < thiscontainer->general_refs.size(); i++)
             {
-                df::general_ref *ref = thiscontainer->itemrefs[i];
+                df::general_ref *ref = thiscontainer->general_refs[i];
 
                 switch (ref->getType())
                 {

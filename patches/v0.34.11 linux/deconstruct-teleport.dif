@@ -1,0 +1,139 @@
+http://www.bay12games.com/dwarves/mantisbt/view.php?id=5994
+
+0x7643f8
+F6 46 0C 01 74 42
+E9 B6 50 8A FF 90
+
+.text:087AC3F8                 jmp     loc_80514B3 ; << CAVE
+.text:087AC3FD                 nop
+.text:087AC3FE loc_87AC3FE:
+
+0x94b3
+90 90 90 90 90  90 90 90 90 90 90 90 90
+F6 46 0C 01 75  0A E9 82 AF 75 00 90 90
+
+.text:080514B3 loc_80514B3:
+.text:080514B3                 test    byte ptr [esi+0Ch], 1
+.text:080514B7                 jnz     short loc_80514C3
+.text:080514B9 coord_test_jfail:
+.text:080514B9                 jmp     loc_87AC440
+
+0x94c3
+90 90 90 90 90  90 90 90 90 90 90 90 90
+8D 9C 24 60 03  00 00 0F BF 03 EB 07 90
+
+.text:080514C3 loc_80514C3:
+.text:080514C3                 lea     ebx, [esp+360h]
+.text:080514CA                 movsx   eax, word ptr [ebx]     ; job_z
+.text:080514CD                 jmp     short loc_80514D6
+
+0x94d6
+90 90  90 90 90 90 90 90 90 90
+66 3B  46 08 75 DD EB 05 90 90
+
+.text:080514D6 loc_80514D6:
+.text:080514D6                 cmp     ax, [esi+8]             ; item->pos.z
+.text:080514DA                 jnz     short coord_test_jfail
+.text:080514DC                 jmp     short loc_80514E3
+
+0x94e3
+90 90 90 90 90  90 90 90 90 90 90 90 90
+0F BF 43 10 66  3B 46 04 75 CC EB 04 90
+
+.text:080514E3 loc_80514E3:
+.text:080514E3                 movsx   eax, word ptr [ebx+10h] ; job_x
+.text:080514E7                 cmp     ax, [esi+4]             ; item->pos.x
+.text:080514EB                 jnz     short coord_test_jfail
+.text:080514ED                 jmp     short loc_80514F3
+
+0x94f3
+90 90 90 90 90  90 90 90 90 90 90 90 90
+0F BF 43 20 66  3B 46 06 75 BC EB 04 90
+
+.text:080514F3 loc_80514F3:
+.text:080514F3                 movsx   eax, word ptr [ebx+20h] ; job_y
+.text:080514F7                 cmp     ax, [esi+6]             ; item->pos.y
+.text:080514FB                 jnz     short coord_test_jfail
+.text:080514FD                 jmp     short loc_8051503
+
+0x9503
+90 90 90 90 90  90 90 90 90 90 90 90 90
+E9 F6 AE 75 00  90 90 90 90 90 90 90 90
+
+.text:08051503 loc_8051503:
+.text:08051503                 jmp     loc_87AC3FE
+
+
+You can use this script to apply the generated patch below:
+http://stalkr.net/files/ida/idadif.py
+
+----8<----
+This difference file is created by The Interactive Disassembler
+
+Dwarf_Fortress
+000094B3: 90 F6
+000094B4: 90 46
+000094B5: 90 0C
+000094B6: 90 01
+000094B7: 90 75
+000094B8: 90 0A
+000094B9: 90 E9
+000094BA: 90 82
+000094BB: 90 AF
+000094BC: 90 75
+000094BD: 90 00
+000094C3: 90 8D
+000094C4: 90 9C
+000094C5: 90 24
+000094C6: 90 60
+000094C7: 90 03
+000094C8: 90 00
+000094C9: 90 00
+000094CA: 90 0F
+000094CB: 90 BF
+000094CC: 90 03
+000094CD: 90 EB
+000094CE: 90 07
+000094D6: 90 66
+000094D7: 90 3B
+000094D8: 90 46
+000094D9: 90 08
+000094DA: 90 75
+000094DB: 90 DD
+000094DC: 90 EB
+000094DD: 90 05
+000094E3: 90 0F
+000094E4: 90 BF
+000094E5: 90 43
+000094E6: 90 10
+000094E7: 90 66
+000094E8: 90 3B
+000094E9: 90 46
+000094EA: 90 04
+000094EB: 90 75
+000094EC: 90 CC
+000094ED: 90 EB
+000094EE: 90 04
+000094F3: 90 0F
+000094F4: 90 BF
+000094F5: 90 43
+000094F6: 90 20
+000094F7: 90 66
+000094F8: 90 3B
+000094F9: 90 46
+000094FA: 90 06
+000094FB: 90 75
+000094FC: 90 BC
+000094FD: 90 EB
+000094FE: 90 04
+00009503: 90 E9
+00009504: 90 F6
+00009505: 90 AE
+00009506: 90 75
+00009507: 90 00
+007643F8: F6 E9
+007643F9: 46 B6
+007643FA: 0C 50
+007643FB: 01 8A
+007643FC: 74 FF
+007643FD: 42 90

@@ -127,8 +127,8 @@ DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginComman
     
     
     Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("autoSyndrome");
-    EventManager::EventHandler handle(processJob);
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, 5, me);
+    EventManager::EventHandler handle(processJob, 5);
+    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, me);
     return CR_OK;
 }
 
@@ -165,8 +165,8 @@ command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
 
     Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("autoSyndrome");
     if ( enabled ) {
-        EventManager::EventHandler handle(processJob);
-        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, 5, me);
+        EventManager::EventHandler handle(processJob, 5);
+        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, me);
     } else {
         EventManager::unregisterAll(me);
     }

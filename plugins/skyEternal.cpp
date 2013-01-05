@@ -80,7 +80,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         return CR_OK;
     {
         t_gamemodes mode;
-        if ( !Core::getInstance().getWorld()->ReadGameMode(mode) )
+        if ( !World::ReadGameMode(mode) )
             return CR_FAILURE;
         if ( mode.g_mode != df::enums::game_mode::DWARF )
             return CR_OK;

@@ -80,7 +80,7 @@ df::coord prev;
 command_result stepBetween (color_ostream &out, std::vector <std::string> & parameters)
 {
     df::coord bob = Gui::getCursorPos();
-    out.print("(%d,%d,%d), (%d,%d,%d): canWalkBetween = %d, canPathBetween = %d\n", prev.x, prev.y, prev.z, bob.x, bob.y, bob.z, Maps::canStepBetween(prev, bob), Maps::canPathBetween(prev,bob));
+    out.print("(%d,%d,%d), (%d,%d,%d): canStepBetween = %d, canWalkBetween = %d\n", prev.x, prev.y, prev.z, bob.x, bob.y, bob.z, Maps::canStepBetween(prev, bob), Maps::canWalkBetween(prev,bob));
 
     prev = bob;
     return CR_OK;

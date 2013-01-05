@@ -10,6 +10,7 @@
 #include "df/construction.h"
 #include "df/game_mode.h"
 #include "df/map_block.h"
+#include "df/map_block_column.h"
 #include "df/world.h"
 #include "df/z_level_flags.h"
 
@@ -114,14 +115,32 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
         df::map_block**** block_index = world->map.block_index;
         for ( int32_t a = 0; a < x_count_block; a++ ) {
             for ( int32_t b = 0; b < y_count_block; b++ ) {
-                df::map_block** column = new df::map_block*[z_count_block+1];
-                memcpy(column, block_index[a][b], z_count_block*sizeof(df::map_block*));
-                column[z_count_block] = NULL;
+                df::map_block** blockColumn = new df::map_block*[z_count_block+1];
+                memcpy(blockColumn, block_index[a][b], z_count_block*sizeof(df::map_block*));
+                blockColumn[z_count_block] = NULL;
                 delete[] block_index[a][b];
-                block_index[a][b] = column;
+                block_index[a][b] = blockColumn;
 
                 //deal with map_block_column stuff even though it'd probably be fine
-
+                df::map_block_column* column = world->map.column_index[a][b];
+                if ( !column ) {
+                    out.print("%s, line %d: column is null (%d, %d).\n", __FILE__, __LINE__, a, b);
+                    continue;
+                }
+                df::map_block_column::T_unmined_glyphs* glyphs = new df::map_block_column::T_unmined_glyphs;
+                glyphs->x[0] = 0;
+                glyphs->x[1] = 1;
+                glyphs->x[2] = 2;
+                glyphs->x[3] = 3;
+                glyphs->y[0] = 0;
+                glyphs->y[1] = 0;
+                glyphs->y[2] = 0;
+                glyphs->y[3] = 0;
+                glyphs->tile[0] = 'e';
+                glyphs->tile[1] = 'x';
+                glyphs->tile[2] = 'p';
+                glyphs->tile[3] = '^';
+                column->unmined_glyphs.push_back(glyphs);
             }
         }
         df::z_level_flags* flags = new df::z_level_flags[z_count_block+1];
@@ -139,9 +158,8 @@ command_result infiniteSky (color_ostream &out, std::vector <std::string> & para
     if ( parameters.size() > 1 )
         return CR_WRONG_USAGE;
     if ( parameters.size() == 0 ) {
-        vector<string> vec;
-        vec.push_back("1");
-        return infiniteSky(out, vec);
+        out.print("Construction monitoring is %s.\n", enabled ? "enabled" : "disabled");
+        return CR_OK;
     }
     if (parameters[0] == "enable") {
         enabled = true;
@@ -156,7 +174,7 @@ command_result infiniteSky (color_ostream &out, std::vector <std::string> & para
     }
     int32_t howMany = 0;
     howMany = atoi(parameters[0].c_str());
-    out.print("InfiniteSky: creating %d new z-levels of sky.\n", howMany);
+    out.print("InfiniteSky: creating %d new z-level%s of sky.\n", howMany, howMany == 1 ? "" : "s" );
     doInfiniteSky(out, howMany);
     return CR_OK;
 }

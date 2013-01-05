@@ -2062,6 +2062,8 @@ public:
         {
             if (l == df::unit_labor::NONE)
                 continue;
+            if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMAL)
+                continue;
             if (labor_infos[l].idle_dwarfs > 0 && labor_needed[l] > labor_infos[l].busy_dwarfs)
             {
                 int clawback = labor_infos[l].busy_dwarfs;

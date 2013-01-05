@@ -58,5 +58,5 @@ build/CPack*Config.cmake
 
 /cmakeall.bat
 
-# swap files for vim
+# vim swap files
 *.swp

@@ -132,6 +132,8 @@ if (BUILD_SUPPORTED)
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
     DFHACK_PLUGIN(misery misery.cpp)
     #DFHACK_PLUGIN(dfstream dfstream.cpp LINK_LIBRARIES clsocket dfhack-tinythread)
+    DFHACK_PLUGIN(autoSyndrome autoSyndrome.cpp)
+    DFHACK_PLUGIN(trueTransformation trueTransformation.cpp)
 endif()
 
 

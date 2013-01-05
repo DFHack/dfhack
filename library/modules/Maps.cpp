@@ -30,10 +30,12 @@ distribution.
 #include <map>
 #include <set>
 #include <cstdlib>
+#include <iostream>
 using namespace std;
 
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
+#include "ColorText.h"
 #include "Error.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
@@ -60,6 +62,7 @@ using namespace std;
 #include "df/region_map_entry.h"
 #include "df/flow_info.h"
 #include "df/plant.h"
+#include "df/building_type.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -522,7 +525,7 @@ bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<df::coord2d>
     return true;
 }
 
-bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
+bool Maps::canPathBetween(df::coord pos1, df::coord pos2)
 {
     auto block1 = getTileBlock(pos1);
     auto block2 = getTileBlock(pos2);
@@ -534,6 +537,129 @@ bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
     auto tile2 = index_tile<uint16_t>(block2->walkable, pos2);
 
     return tile1 && tile1 == tile2;
+}
+
+bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
+{
+    color_ostream& out = Core::getInstance().getConsole();
+    int32_t dx = pos2.x-pos1.x;
+    int32_t dy = pos2.y-pos1.y;
+    int32_t dz = pos2.z-pos1.z;
+
+    if ( dx*dx > 1 || dy*dy > 1 || dz*dz > 1 )
+        return false;
+
+    if ( pos2.z < pos1.z ) {
+        df::coord temp = pos1;
+        pos1 = pos2;
+        pos2 = temp;
+    }
+
+    df::map_block* block1 = getTileBlock(pos1);
+    df::map_block* block2 = getTileBlock(pos2);
+
+    if ( !block1 || !block2 )
+        return false;
+
+    if ( !index_tile<uint16_t>(block1->walkable,pos1) || !index_tile<uint16_t>(block2->walkable,pos2) ) {
+        return false;
+    }
+
+    if ( dz == 0 )
+        return true;
+
+    df::tiletype* type1 = Maps::getTileType(pos1);
+    df::tiletype* type2 = Maps::getTileType(pos2);
+
+    df::tiletype_shape shape1 = ENUM_ATTR(tiletype,shape,*type1);
+    df::tiletype_shape shape2 = ENUM_ATTR(tiletype,shape,*type2);
+
+    if ( dx == 0 && dy == 0 ) {
+        //check for forbidden hatches and floors and such
+        df::enums::tile_building_occ::tile_building_occ upOcc = index_tile<df::tile_occupancy>(block2->occupancy,pos2).bits.building;
+        if ( upOcc == df::enums::tile_building_occ::Impassable || upOcc == df::enums::tile_building_occ::Obstacle || upOcc == df::enums::tile_building_occ::Floored )
+            return false;
+
+        if ( shape1 == tiletype_shape::STAIR_UPDOWN && shape2 == shape1 )
+            return true;
+        if ( shape1 == tiletype_shape::STAIR_UPDOWN && shape2 == tiletype_shape::STAIR_DOWN )
+            return true;
+        if ( shape1 == tiletype_shape::STAIR_UP && shape2 == tiletype_shape::STAIR_UPDOWN )
+            return true;
+        if ( shape1 == tiletype_shape::STAIR_UP && shape2 == tiletype_shape::STAIR_DOWN )
+            return true;
+        if ( shape1 == tiletype_shape::RAMP && shape2 == tiletype_shape::RAMP_TOP ) {
+            //it depends
+            //there has to be a wall next to the ramp
+            bool foundWall = false;
+            for ( int32_t x = -1; x <= 1; x++ ) {
+                for ( int32_t y = -1; y <= 1; y++ ) {
+                    if ( x == 0 && y == 0 )
+                        continue;
+                    df::tiletype* type = Maps::getTileType(df::coord(pos1.x+x,pos1.y+y,pos1.z));
+                    df::tiletype_shape shape1 = ENUM_ATTR(tiletype,shape,*type);
+                    if ( shape1 == tiletype_shape::WALL ) {
+                        foundWall = true;
+                        x = 2;
+                        break;
+                    }
+                }
+            }
+            if ( !foundWall )
+                return false; //unusable ramp
+            
+            //there has to be an unforbidden hatch above the ramp
+            if ( index_tile<df::tile_occupancy>(block2->occupancy,pos2).bits.building != df::enums::tile_building_occ::Dynamic )
+                return false;
+            //note that forbidden hatches have Floored occupancy. unforbidden ones have dynamic occupancy
+            df::building* building = Buildings::findAtTile(pos2);
+            if ( building == NULL ) {
+                out << __FILE__ << ", line " << __LINE__ << ": couldn't find hatch.\n";
+                return false;
+            }
+            if ( building->getType() != df::enums::building_type::Hatch ) {
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+    
+    //diagonal up: has to be a ramp
+    if ( shape1 == tiletype_shape::RAMP /*&& shape2 == tiletype_shape::RAMP*/ ) {
+        df::coord up = df::coord(pos1.x,pos1.y,pos1.z+1);
+        bool foundWall = false;
+        for ( int32_t x = -1; x <= 1; x++ ) {
+            for ( int32_t y = -1; y <= 1; y++ ) {
+                if ( x == 0 && y == 0 )
+                    continue;
+                df::tiletype* type = Maps::getTileType(df::coord(pos1.x+x,pos1.y+y,pos1.z));
+                df::tiletype_shape shape1 = ENUM_ATTR(tiletype,shape,*type);
+                if ( shape1 == tiletype_shape::WALL ) {
+                    foundWall = true;
+                    x = 2;
+                    break;
+                }
+            }
+        }
+        if ( !foundWall )
+            return false; //unusable ramp
+        df::tiletype* typeUp = Maps::getTileType(up);
+        df::tiletype_shape shapeUp = ENUM_ATTR(tiletype,shape,*typeUp);
+        if ( shapeUp != tiletype_shape::RAMP_TOP )
+            return false;
+        
+        df::map_block* blockUp = getTileBlock(up);
+        if ( !blockUp )
+            return false;
+        
+        df::enums::tile_building_occ::tile_building_occ occupancy = index_tile<df::tile_occupancy>(blockUp->occupancy,up).bits.building;
+        if ( occupancy == df::enums::tile_building_occ::Obstacle || occupancy == df::enums::tile_building_occ::Floored || occupancy == df::enums::tile_building_occ::Impassable )
+            return false;
+        return true;
+    }
+
+    return false;
 }
 
 #define COPY(a,b) memcpy(&a,&b,sizeof(a))

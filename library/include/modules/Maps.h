@@ -307,7 +307,8 @@ extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
 /// remove a block event from the block by address
 extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which );
 
-DFHACK_EXPORT bool canWalkBetween(df::coord pos1, df::coord pos2);
+DFHACK_EXPORT bool canPathBetween(df::coord pos1, df::coord pos2);
+DFHACK_EXPORT bool canStepBetween(df::coord pos1, df::coord pos2);
 }
 }
 #endif

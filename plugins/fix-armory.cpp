@@ -477,7 +477,7 @@ static bool try_store_item(df::building *target, df::item *item)
     df::coord tpos(target->centerx, target->centery, target->z);
     df::coord ipos = Items::getPosition(item);
 
-    if (!Maps::canWalkBetween(tpos, ipos))
+    if (!Maps::canPathBetween(tpos, ipos))
         return false;
 
     // Check if the target has enough space left

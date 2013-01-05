@@ -1314,7 +1314,7 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPM(Maps, enableBlockUpdates),
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
-    WRAPM(Maps, canWalkBetween),
+    WRAPM(Maps, canPathBetween),
     WRAPM(Maps, spawnFlow),
     WRAPN(hasTileAssignment, hasTileAssignment),
     WRAPN(getTileAssignment, getTileAssignment),

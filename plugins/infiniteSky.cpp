@@ -22,24 +22,24 @@ using namespace std;
 using namespace DFHack;
 using namespace df::enums;
 
-command_result skyEternal (color_ostream &out, std::vector <std::string> & parameters);
+command_result infiniteSky (color_ostream &out, std::vector <std::string> & parameters);
 
-DFHACK_PLUGIN("skyEternal");
+DFHACK_PLUGIN("infiniteSky");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "skyEternal", 
+        "infiniteSky", 
         "Creates new sky levels on request, or as you construct up.",
-        skyEternal, false, 
+        infiniteSky, false, 
         "Usage:\n"
-        "  skyEternal\n"
+        "  infiniteSky\n"
         "    creates one more z-level\n"
-        "  skyEternal [n]\n"
+        "  infiniteSky [n]\n"
         "    creates n more z-level(s)\n"
-        "  skyEternal enable\n"
+        "  infiniteSky enable\n"
         "    enables monitoring of constructions\n"
-        "  skyEternal disable\n"
+        "  infiniteSky disable\n"
         "    disable monitoring of constructions\n"
         "\n"
         "If construction monitoring is enabled, then the plugin will automatically create new sky z-levels as you construct upward.\n"
@@ -94,7 +94,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         df::construction* construct = df::global::world->constructions[a];
         if ( construct->pos.z+2 < zNow )
             continue;
-        skyEternal(out, vec);
+        infiniteSky(out, vec);
         zNow = df::global::world->map.z_count_block;
         ///break;
     }
@@ -103,14 +103,14 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     return CR_OK;
 }
 
-command_result skyEternal (color_ostream &out, std::vector <std::string> & parameters)
+command_result infiniteSky (color_ostream &out, std::vector <std::string> & parameters)
 {
     if ( parameters.size() > 1 )
         return CR_WRONG_USAGE;
     if ( parameters.size() == 0 ) {
         vector<string> vec;
         vec.push_back("1");
-        return skyEternal(out, vec);
+        return infiniteSky(out, vec);
     }
     if (parameters[0] == "enable") {
         enabled = true;

@@ -135,7 +135,7 @@ if (BUILD_SUPPORTED)
     #DFHACK_PLUGIN(dfstream dfstream.cpp LINK_LIBRARIES clsocket dfhack-tinythread)
     DFHACK_PLUGIN(autoSyndrome autoSyndrome.cpp)
     DFHACK_PLUGIN(trueTransformation trueTransformation.cpp)
-    DFHACK_PLUGIN(skyEternal skyEternal.cpp)
+    DFHACK_PLUGIN(infiniteSky infiniteSky.cpp)
 endif()
 
 

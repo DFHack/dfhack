@@ -390,6 +390,12 @@ function isSuitableItem(job_item,item)
             end
         end
     end
+    if job_item.flags1.sand_bearing and not item:isSandBearing() then
+        return false,"not sand bearing"
+    end
+    if job_item.flags1.butcherable and not (item:getType()== df.item_type.CORPSE or item:getType()==CORPSEPIECE) then
+        return false,"not butcherable"
+    end
     local matinfo=dfhack.matinfo.decode(item)
     --print(matinfo:getCraftClass())
     --print("Matching ",item," vs ",job_item)
@@ -695,8 +701,9 @@ function AssignJobItems(args)
     if #uncollected == 0 then
         job.flags.working=true
     else
-        uncollected[1].is_fetching=1
         job.flags.fetching=true
+        uncollected[1].is_fetching=1
+        
     end
     --todo set working for workshops if items are present, else set fetching (and at least one item to is_fetching=1)
     --job.flags.working=true
@@ -1041,8 +1048,11 @@ function usetool:farmPlot(building)
         args.post_actions={AssignBuildingRef}
     end
     local job,msg=makeJob(args)
-    if job==nil then
+    if not job then
         print(msg)
+    else
+        --print(AssignJobItems(args)) --WHY U NO WORK?
+        
     end
 end
 MODES={

@@ -291,6 +291,11 @@ protected:
 
     }
 
+    virtual bool is_valid_for_search(size_t index)
+    {
+        return true;
+    }
+
     // The actual sort
     virtual void do_search()
     {
@@ -311,6 +316,9 @@ protected:
         string search_string_l = toLower(search_string);
         for (size_t i = 0; i < saved_list1.size(); i++ )
         {
+            if (!is_valid_for_search(i))
+                continue;
+
             T element = saved_list1[i];
             string desc = toLower(get_element_description(element));
             if (desc.find(search_string_l) != string::npos)
@@ -695,6 +703,11 @@ private:
     bool should_check_input()
     {
         return viewscreen->mode == T_mode::List;
+    }
+
+    bool is_valid_for_search(size_t i)
+    {
+        return is_vermin_s[i] == 0;
     }
 
     void save_secondary_values()

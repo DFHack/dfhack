@@ -376,10 +376,10 @@ protected:
         auto list = getLayerList(screen);
         if (!list->active)
         {
-            if (is_valid())
+            if (this->is_valid())
             {
-                clear_search();
-                reset_all();
+                this->clear_search();
+                this->reset_all();
             }
 
             return false;
@@ -388,24 +388,24 @@ protected:
         return true;
     }
 
-    virtual void do_search() 
+    virtual void do_search()
     {
-        search_generic::do_search();
-        auto list = getLayerList(viewscreen);
-        list->num_entries = get_primary_list()->size();
+        search_generic<S,T>::do_search();
+        auto list = getLayerList(this->viewscreen);
+        list->num_entries = this->get_primary_list()->size();
     }
-    
-    int32_t *get_viewscreen_cursor() 
+
+    int32_t *get_viewscreen_cursor()
     {
-        auto list = getLayerList(viewscreen);
+        auto list = getLayerList(this->viewscreen);
         return &list->cursor;
     }
 
     virtual void clear_search()
     {
-        search_generic::clear_search();
-        auto list = getLayerList(viewscreen);
-        list->num_entries = get_primary_list()->size();
+        search_generic<S,T>::clear_search();
+        auto list = getLayerList(this->viewscreen);
+        list->num_entries = this->get_primary_list()->size();
     }
 
 private:
@@ -458,7 +458,7 @@ protected:
 
     virtual void clear_search()
     {
-        if (saved_list1.size() > 0)
+        if (this->saved_list1.size() > 0)
         {
             do_pre_incremental_search();
             restore_secondary_values();
@@ -471,24 +471,24 @@ protected:
     virtual bool is_match(T &a, T &b) = 0;
 
     virtual bool is_match(vector<T> &a, vector<T> &b) = 0;
-    
+
     void do_pre_incremental_search()
     {
         PARENT::do_pre_incremental_search();
         if (read_only)
             return;
 
-        bool list_has_been_sorted = (primary_list->size() == reference_list.size()
-            && !is_match(*primary_list, reference_list));
+        bool list_has_been_sorted = (this->primary_list->size() == reference_list.size()
+            && !is_match(*this->primary_list, reference_list));
 
         for (size_t i = 0; i < saved_indexes.size(); i++)
         {
             int adjusted_item_index = i;
             if (list_has_been_sorted)
             {
-                for (size_t j = 0; j < primary_list->size(); j++)
+                for (size_t j = 0; j < this->primary_list->size(); j++)
                 {
-                    if (is_match((*primary_list)[j], reference_list[i]))
+                    if (is_match((*this->primary_list)[j], reference_list[i]))
                     {
                         adjusted_item_index = j;
                         break;
@@ -503,14 +503,14 @@ protected:
 
     void clear_viewscreen_vectors()
     {
-        search_generic::clear_viewscreen_vectors();
+        search_generic<S,T>::clear_viewscreen_vectors();
         saved_indexes.clear();
         clear_secondary_viewscreen_vectors();
     }
 
     void add_to_filtered_list(size_t i)
     {
-        search_generic::add_to_filtered_list(i);
+        search_generic<S,T>::add_to_filtered_list(i);
         add_to_filtered_secondary_lists(i);
         if (!read_only)
             saved_indexes.push_back(i); // Used to map filtered indexes back to original, if needed
@@ -519,12 +519,12 @@ protected:
     virtual void do_post_search()
     {
         if (!read_only)
-            reference_list = *primary_list;
+            reference_list = *this->primary_list;
     }
 
     void save_original_values()
     {
-        search_generic::save_original_values();
+        search_generic<S,T>::save_original_values();
         save_secondary_values();
     }
 };
@@ -556,7 +556,7 @@ protected:
 
     virtual void do_post_init()
     {
-        search_multicolumn_modifiable::do_post_init();
+        search_multicolumn_modifiable<S, T, PARENT>::do_post_init();
         secondary_list = get_secondary_list();
     }
 

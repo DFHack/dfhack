@@ -969,8 +969,9 @@ private:
     }
 };
 
-IMPLEMENT_HOOKS(df::viewscreen_unitlistst, unitlist_search);
-
+typedef generic_search_hook<df::viewscreen_unitlistst, unitlist_search> unitlist_search_hook;
+template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, feed, 100);
+template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, render, 100);
 //
 // END: Unit screen search
 //

@@ -851,6 +851,7 @@ private:
             case df::building_type::TradeDepot:
             case df::building_type::Construction:
             case df::building_type::Wagon:
+            case df::building_type::Bridge:
                 {
                     df::building_actual* b = (df::building_actual*) bld;
                     return construction_build_labor(b->contained_items[0]->item);

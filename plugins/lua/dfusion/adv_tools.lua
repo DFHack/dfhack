@@ -116,8 +116,8 @@ end
 menu:add("Log adventurers position",log_pos)
 function addSite(x,y,rgn_max_x,rgn_min_x,rgn_max_y,rgn_min_y,civ_id,name,sitetype)
     if x==nil or y==nil then
-        x=df.global.world.map.region_x/16
-        y=df.global.world.map.region_y/16
+        x=(df.global.world.map.region_x+1)/16
+        y=(df.global.world.map.region_y+1)/16
     end
     if name==nil then
         name=dfhack.lineedit("Site name:")or "Hacked site"
@@ -125,8 +125,8 @@ function addSite(x,y,rgn_max_x,rgn_min_x,rgn_max_y,rgn_min_y,civ_id,name,sitetyp
     if sitetype==nil then
         sitetype=tonumber(dfhack.lineedit("Site type (numeric):")) or 7
     end
-    rgn_max_x=rgn_max_x or df.global.world.map.region_x%16
-    rgn_max_y=rgn_max_y or df.global.world.map.region_y%16
+    rgn_max_x=rgn_max_x or (df.global.world.map.region_x+1)%16
+    rgn_max_y=rgn_max_y or (df.global.world.map.region_y+1)%16
     rgn_min_y=rgn_min_y or rgn_max_y
     rgn_min_x=rgn_min_x or rgn_max_x
     print("Region:",rgn_max_x,rgn_min_x,rgn_max_y,rgn_min_y)

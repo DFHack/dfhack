@@ -3,6 +3,8 @@ DFHack future
   Internals:
     - support for displaying active keybindings properly.
     - support for reusable widgets in lua screen library.
+    - Maps::canStepBetween: returns whether you can walk between two tiles in one step.
+    - EventManager: monitors various in game events centrally so that individual plugins don't have to monitor the same things redundantly.
   Notable bugfixes:
     - autobutcher can be re-enabled again after being stopped.
     - stopped Dwarf Manipulator from unmasking vampires.
@@ -59,6 +61,11 @@ DFHack future
     saving you from having to trawl through long lists of materials each time you place one.
   Dfusion plugin:
     Reworked to make use of lua modules, now all the scripts can be used from other scripts.
+  Auto syndrome plugin: a way of automatically applying boiling rock syndromes and calling dfhack commands controlled by raws.
+  Infinite sky plugin: create new z-levels automatically or on request.
+  True transformation plugin: a better way of doing permanent transformations that allows later transformations.
+  Work now plugin: makes the game assign jobs every time you pause.
+  
 
 DFHack v0.34.11-r2
 

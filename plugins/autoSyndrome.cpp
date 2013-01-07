@@ -184,8 +184,8 @@ bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df
      *
      * Otherwise, it works like this:
      *  add all the affected class creatures
-     *  remove all the immune class creatures
      *  add all the affected creatures
+     *  remove all the immune class creatures
      *  remove all the immune creatures
      *  you're affected if and only if you're in the remaining list after all of that
      **/
@@ -206,7 +206,7 @@ bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df
         for ( size_t d = 0; d < caste->creature_class.size(); d++ ) {
             if ( *syndrome->syn_immune_class[c] == *caste->creature_class[d] ) {
                 applies = false;
-                break;
+                return false;
             }
         }
     }
@@ -230,7 +230,7 @@ bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df
         if ( *syndrome->syn_immune_caste[c] == "ALL" ||
              *syndrome->syn_immune_caste[c] == creature_caste ) {
             applies = false;
-            break;
+            return false;
         }
     }
     if ( !applies ) {

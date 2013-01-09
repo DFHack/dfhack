@@ -136,6 +136,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(autoSyndrome autoSyndrome.cpp)
     DFHACK_PLUGIN(trueTransformation trueTransformation.cpp)
     DFHACK_PLUGIN(infiniteSky infiniteSky.cpp)
+    DFHACK_PLUGIN(digSmart digSmart.cpp)
 endif()
 
 

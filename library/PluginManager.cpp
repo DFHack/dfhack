@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include "modules/EventManager.h"
 #include "Internal.h"
 #include "Core.h"
 #include "MemAccess.h"
@@ -270,6 +271,7 @@ bool Plugin::unload(color_ostream &con)
     // if we are actually loaded
     if(state == PS_LOADED)
     {
+        EventManager::unregisterAll(this);
         // notify the plugin about an attempt to shutdown
         if (plugin_onstatechange &&
             plugin_onstatechange(con, SC_BEGIN_UNLOAD) == CR_NOT_FOUND)
@@ -599,6 +601,22 @@ void Plugin::push_function(lua_State *state, LuaFunction *fn)
 
 PluginManager::PluginManager(Core * core)
 {
+    cmdlist_mutex = new mutex();
+    eval_ruby = NULL;
+}
+
+PluginManager::~PluginManager()
+{
+    for(size_t i = 0; i < all_plugins.size();i++)
+    {
+        delete all_plugins[i];
+    }
+    all_plugins.clear();
+    delete cmdlist_mutex;
+}
+
+void PluginManager::init(Core * core)
+{
 #ifdef LINUX_BUILD
     string path = core->getHackPath() + "plugins/";
     const string searchstr = ".plug.so";
@@ -606,8 +624,6 @@ PluginManager::PluginManager(Core * core)
     string path = core->getHackPath() + "plugins\\";
     const string searchstr = ".plug.dll";
 #endif
-    cmdlist_mutex = new mutex();
-    eval_ruby = NULL;
     vector <string> filez;
     getdir(path, filez);
     for(size_t i = 0; i < filez.size();i++)
@@ -620,16 +636,6 @@ PluginManager::PluginManager(Core * core)
             p->load(core->getConsole());
         }
     }
-}
-
-PluginManager::~PluginManager()
-{
-    for(size_t i = 0; i < all_plugins.size();i++)
-    {
-        delete all_plugins[i];
-    }
-    all_plugins.clear();
-    delete cmdlist_mutex;
 }
 
 Plugin *PluginManager::getPluginByName (const std::string & name)

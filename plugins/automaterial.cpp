@@ -97,6 +97,16 @@ void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bo
     OutputString(color, x, y, display, newline, left_margin);
 }
 
+void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = true, int left_margin = 0, int8_t color = COLOR_WHITE)
+{
+    OutputHotkeyString(x, y, text, hotkey);
+    OutputString(COLOR_WHITE, x, y, ": ");
+    if (state)
+        OutputString(COLOR_GREEN, x, y, "Enabled", newline, left_margin);
+    else
+        OutputString(COLOR_GREY, x, y, "Disabled", newline, left_margin);
+}
+
 static string int_to_string(int i)
 {
     return static_cast<ostringstream*>( &(ostringstream() << i))->str();
@@ -1109,16 +1119,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             MaterialDescriptor material = get_material_in_list(ui_build_selector->sel_index);
             if (material.valid)
             {
-                string toggle_string = "Enable";
-                string title = "Disabled";
-                if (check_autoselect(material, false))
-                {
-                    toggle_string = "Disable";
-                    title = "Enabled";
-                }
-
-                OutputString(COLOR_BROWN, x, y, "DFHack Autoselect: " + title, true, left_margin);
-                OutputHotkeyString(x, y, toggle_string.c_str(), "a", true, left_margin);
+                OutputToggleString(x, y, "Autoselect", "a", check_autoselect(material, false), true, left_margin);
 
                 if (box_select_mode == SELECT_MATERIALS)
                 {
@@ -1130,20 +1131,17 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         }
         else if (in_placement_stage() && ui_build_selector->building_subtype < 7)
         {
-            string autoselect_toggle_string = (auto_choose_materials) ? "Disable Auto Mat-select" : "Enable Auto Mat-select";
-            string revert_toggle_string = (revert_to_last_used_type) ? "Disable Auto Type-select" : "Enable Auto Type-select";
-
             OutputString(COLOR_BROWN, x, y, "DFHack Options", true, left_margin);
-            OutputHotkeyString(x, y, autoselect_toggle_string.c_str(), "a", true, left_margin);
-            OutputHotkeyString(x, y, revert_toggle_string.c_str(), "t", true, left_margin);
+            OutputToggleString(x, y, "Auto Mat-select", "a", auto_choose_materials, true, left_margin);
+            OutputToggleString(x, y, "Reselect Type", "t", revert_to_last_used_type, true, left_margin);
 
             ++y;
-            OutputHotkeyString(x, y, (box_select_enabled) ? "Disable Box Select" : "Enable Box Select", "b", true, left_margin);
+            OutputToggleString(x, y, "Box Select", "b", box_select_enabled, true, left_margin);
             if (box_select_enabled)
             {
-                OutputHotkeyString(x, y, (show_box_selection) ? "Disable Box Marking" : "Enable Box Marking", "x", true, left_margin);
+                OutputToggleString(x, y, "Show Box Mask", "x", show_box_selection, true, left_margin);
                 OutputHotkeyString(x, y, (hollow_selection) ? "Make Solid" : "Make Hollow", "h", true, left_margin);
-                OutputHotkeyString(x, y, (allow_future_placement) ? "Disable Open Placement" : "Enable Open Placement", "o", true, left_margin);
+                OutputToggleString(x, y, "Open Placement", "o", allow_future_placement, true, left_margin);
             }
             ++y;
             if (box_select_enabled)

@@ -782,6 +782,7 @@ private:
             case df::building_type::WaterWheel:
             case df::building_type::RoadPaved:
             case df::building_type::Well:
+            case df::building_type::ScrewPump:
                 {
                     df::building_actual* b = (df::building_actual*) bld;
                     if (b->design && !b->design->flags.bits.designed)

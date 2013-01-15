@@ -165,7 +165,7 @@ function GmEditorUi:editSelected(index,choice)
         --print(type(trg.target[trg.keys[trg.selected]]),trg.target[trg.keys[trg.selected]]._kind or "")
         local trg_type=type(trg.target[trg_key])
         if trg_type=='number' or trg_type=='string' then --ugly TODO: add metatable get selected
-            dialog.showInputPrompt(trg_key,"Enter new value:",COLOR_WHITE,
+            dialog.showInputPrompt(tostring(trg_key),"Enter new value:",COLOR_WHITE,
                 tostring(trg.target[trg_key]),self:callback("commitEdit",trg_key))
             
         elseif trg_type=='boolean' then

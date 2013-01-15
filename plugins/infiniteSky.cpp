@@ -149,6 +149,8 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
         flags[z_count_block].bits.update = 1;
         world->map.z_count_block++;
         world->map.z_count++;
+        delete[] world->map.z_level_flags;
+        world->map.z_level_flags = flags;
     }
     
 }

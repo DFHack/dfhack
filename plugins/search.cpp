@@ -1303,19 +1303,19 @@ public:
 private:
     int32_t *get_viewscreen_cursor()
     {
-        return &viewscreen->anon_3;
+        return &viewscreen->sel_idx;
     }
 
-    virtual vector<void *> *get_primary_list()
+    virtual vector<df::report *> *get_primary_list()
     {
-        return &viewscreen->anon_4;
+        return &viewscreen->reports;
     }
 
 
 private:
-    string get_element_description(void *element) const
+    string get_element_description(df::report *element) const
     {
-        return ((df::report *) element)->text;
+        return element->text;
     }
 };
 

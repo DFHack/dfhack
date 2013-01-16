@@ -1292,7 +1292,7 @@ IMPLEMENT_HOOKS(df::viewscreen_buildinglistst, roomlist_search);
 //
 // START: Announcement list search
 //
-class annoucnement_search : public search_generic<df::viewscreen_announcelistst, void*>
+class annoucnement_search : public search_generic<df::viewscreen_announcelistst, df::report*>
 {
 public:
     void render() const

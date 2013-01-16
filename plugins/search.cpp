@@ -57,6 +57,27 @@ void OutputString(int8_t color, int &x, int y, const std::string &text)
     x += text.length();
 }
 
+void make_text_dim(int x1, int x2, int y)
+{
+    for (int x = x1; x <= x2; x++)
+    {
+        Screen::Pen pen = Screen::readTile(x,y);
+
+        if (pen.valid())
+        {
+            if (pen.fg != 0)
+            {
+                if (pen.fg == 7)
+                    pen.adjust(0,true);
+                else
+                    pen.bold = 0;
+            }
+
+            Screen::paintTile(pen,x,y);
+        }
+    }
+}
+
 static bool is_live_screen(const df::viewscreen *screen)
 {
     for (df::viewscreen *cur = &gview->view; cur; cur = cur->child)
@@ -1015,13 +1036,8 @@ private:
         {
             // Block the keys if were searching
             if (!search_string.empty())
-            {
                 input->clear();
-                // Send a force clear to other search class too
-                input->insert(interface_key::CUSTOM_ALT_C);
-            }
 
-            clear_search_for_trade();
             return false;
         }
         else if (input->count(interface_key::CUSTOM_ALT_C))
@@ -1048,6 +1064,12 @@ public:
     virtual void render() const
     {
         print_search_option(2, 26);
+
+        if (!search_string.empty())
+        {
+            make_text_dim(2, 37, 22);
+            make_text_dim(42, gps->dimx-2, 22);
+        }
     }
 
 private:
@@ -1081,6 +1103,12 @@ public:
     virtual void render() const
     {
         print_search_option(42, 26);
+
+        if (!search_string.empty())
+        {
+            make_text_dim(2, 37, 22);
+            make_text_dim(42, gps->dimx-2, 22);
+        }
     }
 
 private:

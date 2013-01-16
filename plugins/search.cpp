@@ -91,7 +91,15 @@ public:
             return false;
 
         if (!can_init(screen))
+        {
+            if (is_valid())
+            {
+                clear_search();
+                reset_all();
+            }
+
             return false;
+        }
 
         if (!is_valid())
         {
@@ -296,6 +304,11 @@ protected:
         return true;
     }
 
+    virtual bool force_in_search(size_t index)
+    {
+        return false;
+    }
+
     // The actual sort
     virtual void do_search()
     {
@@ -316,6 +329,12 @@ protected:
         string search_string_l = toLower(search_string);
         for (size_t i = 0; i < saved_list1.size(); i++ )
         {
+            if (force_in_search(i))
+            {
+                add_to_filtered_list(i);
+                continue;
+            }
+
             if (!is_valid_for_search(i))
                 continue;
 
@@ -383,15 +402,7 @@ protected:
     {
         auto list = getLayerList(screen);
         if (!list->active)
-        {
-            if (this->is_valid())
-            {
-                this->clear_search();
-                this->reset_all();
-            }
-
             return false;
-        }
 
         return true;
     }
@@ -655,6 +666,10 @@ template <class T, class V, int D> V generic_search_hook<T, V, D> ::module;
     template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, feed); \
     template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, render)
 
+#define IMPLEMENT_HOOKS_PRIO(screen, module, prio) \
+    typedef generic_search_hook<screen, module> module##_hook; \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, feed, 100); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, 100)
 
 //
 // END: Generic Search functionality
@@ -1197,7 +1212,7 @@ public:
     }
 };
 
-IMPLEMENT_HOOKS(df::viewscreen_layer_militaryst, military_search);
+IMPLEMENT_HOOKS_PRIO(df::viewscreen_layer_militaryst, military_search, 100);
 
 //
 // END: Military screen search
@@ -1349,6 +1364,11 @@ public:
         print_search_option(2, 23);
     }
 
+    bool force_in_search(size_t index)
+    {
+        return index == 0; // Leave Vacant
+    }
+
     bool can_init(df::viewscreen_layer_noblelistst *screen)
     {
         if (screen->mode != df::viewscreen_layer_noblelistst::Appoint)
@@ -1487,11 +1507,6 @@ public:
         if (ui->main.mode == df::ui_sidebar_mode::Burrows && ui->burrows.in_add_units_mode)
         {
             return search_twocolumn_modifiable::can_init(screen);
-        }
-        else if (is_valid())
-        {
-            clear_search();
-            reset_all();
         }
 
         return false;

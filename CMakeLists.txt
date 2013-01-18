@@ -113,7 +113,7 @@ IF(UNIX)
   SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic")
 ELSEIF(MSVC)
   # for msvc, tell it to always use 8-byte pointers to member functions to avoid confusion
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /vmm")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /vmm /MP")
 ENDIF()
 
 # use shared libraries for protobuf

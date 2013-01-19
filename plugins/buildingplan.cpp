@@ -43,6 +43,8 @@
 #include "df/building_design.h"
 #include "df/buildings_other_id.h"
 #include "modules/World.h"
+#include <functional>
+#include "df/building.h"
 
 using std::map;
 using std::string;
@@ -58,7 +60,7 @@ using df::global::world;
 using df::global::enabler;
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 0.2
+#define PLUGIN_VERSION 0.3
 
 struct MaterialDescriptor
 {
@@ -175,6 +177,18 @@ static string pad_string(string text, const int size, const bool front = true, c
     }
 }
 
+template <class T, typename Fn>
+static void for_each_(vector<T> &v, Fn func)
+{
+    for_each(v.begin(), v.end(), func);
+}
+
+template <class T, class V, typename Fn> 
+static void transform_(vector<T> &src, vector<V> &dst, Fn func)
+{
+    transform(src.begin(), src.end(), back_inserter(dst), func);
+}
+
 
 #define MAX_MASK 10
 #define MAX_MATERIAL 21
@@ -213,24 +227,24 @@ public:
     int highlighted_index;
     int display_start_offset;
     int32_t bottom_margin, search_margin, left_margin;
-    bool search_entry_mode;
     bool multiselect;
     bool allow_null;
     bool auto_select;
     bool force_sort;
+    bool allow_search;
 
     ListColumn()
     {
         clear();
         left_margin = 2;
         bottom_margin = 3;
-        search_margin = 38;
+        search_margin = 63;
         highlighted_index = 0;
         multiselect = false;
         allow_null = true;
         auto_select = false;
-        search_entry_mode = false;
         force_sort = false;
+        allow_search = true;
     }
 
     void clear()
@@ -279,22 +293,18 @@ public:
             display_extras(display_list[i]->elem, x, y);
         }
 
-        if (is_selected_column)
+        if (is_selected_column && allow_search)
         {
             y = gps->dimy - bottom_margin;
             int32_t x = search_margin;
             OutputHotkeyString(x, y, "Search" ,"S");
-            if (!search_string.empty() || search_entry_mode)
-            {
-                OutputString(COLOR_WHITE, x, y, ": ");
-                OutputString(COLOR_WHITE, x, y, search_string);
-                if (search_entry_mode)
-                    OutputString(COLOR_LIGHTGREEN, x, y, "_");
-            }
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString(COLOR_WHITE, x, y, search_string);
+            OutputString(COLOR_LIGHTGREEN, x, y, "_");
         }
     }
 
-    void filter_display()
+    void filterDisplay()
     {
         ListEntry<T> *prev_selected = (getDisplayListSize() > 0) ? display_list[highlighted_index] : NULL;
         display_list.clear();
@@ -400,17 +410,22 @@ public:
     vector<T*> getSelectedElems(bool only_one = false)
     {
         vector<T*> results;
-        for (typename vector< ListEntry<T> >::iterator it = list.begin(); it != list.end(); it++)
+        for (auto it = list.begin(); it != list.end(); it++)
         {
             if ((*it).selected)
             {
-                results.push_back(&(*it).elem);
+                results.push_back(&(it->elem));
                 if (only_one)
                     break;
             }
         }
 
         return results;
+    }
+
+    void clear_selection()
+    {
+        for_each_(list, [] (ListEntry<T> &e) { e.selected = false; });
     }
 
     T* getFirstSelectedElem()
@@ -436,34 +451,43 @@ public:
     {
         if  (input->count(interface_key::CURSOR_UP))
         {
-            search_entry_mode = false;
             changeHighlight(-1);
         }
         else if  (input->count(interface_key::CURSOR_DOWN))
         {
-            search_entry_mode = false;
             changeHighlight(1);
         }
         else if  (input->count(interface_key::STANDARDSCROLL_PAGEUP))
         {
-            search_entry_mode = false;
             changeHighlight(0, -1);
         }
         else if  (input->count(interface_key::STANDARDSCROLL_PAGEDOWN))
         {
-            search_entry_mode = false;
             changeHighlight(0, 1);
         }
-        else if (search_entry_mode)
+        else if  (input->count(interface_key::SELECT) && !auto_select)
         {
-            // Search query typing mode
+            toggleHighlighted();
+        }
+        else if  (input->count(interface_key::CUSTOM_SHIFT_S))
+        {
+            search_string.clear();
+            filterDisplay();
+        }
+        else if (enabler->tracking_on && gps->mouse_x != -1 && gps->mouse_y != -1 && enabler->mouse_lbut)
+        {
+            return setHighlightByMouse();
+        }
+        else
+        {
+            // Search query typing mode always on
 
             df::interface_key last_token = *input->rbegin();
-            if (last_token >= interface_key::STRING_A032 && last_token <= interface_key::STRING_A126)
+            if (last_token >= interface_key::STRING_A096 && last_token <= interface_key::STRING_A123)
             {
                 // Standard character
                 search_string += last_token - ascii_to_enum_offset;
-                filter_display();
+                filterDisplay();
             }
             else if (last_token == interface_key::STRING_A000)
             {
@@ -471,44 +495,16 @@ public:
                 if (search_string.length() > 0)
                 {
                     search_string.erase(search_string.length()-1);
-                    filter_display();
+                    filterDisplay();
                 }
             }
-            else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
+            else
             {
-                // ENTER or ESC: leave typing mode
-                search_entry_mode = false;
-            }
-            else if  (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT))
-            {
-                // Arrow key pressed. Leave entry mode and allow screen to process key
-                search_entry_mode = false;
                 return false;
             }
 
             return true;
         }
-
-        // Not in search query typing mode
-        else if  (input->count(interface_key::SELECT) && !auto_select)
-        {
-            toggleHighlighted();
-        }
-        else if  (input->count(interface_key::CUSTOM_S))
-        {
-            search_entry_mode = true;
-        }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_S))
-        {
-            search_string.clear();
-            filter_display();
-        }
-        else if (enabler->tracking_on && gps->mouse_x != -1 && gps->mouse_y != -1 && enabler->mouse_lbut)
-        {
-            return setHighlightByMouse();
-        }
-        else
-            return false;
 
         return true;
     }
@@ -530,28 +526,19 @@ public:
         return false;
     }
 
-    static bool compareText(ListEntry<T> const& a, ListEntry<T> const& b)
-    {
-        return a.text.compare(b.text) < 0;
-    }
-
-    void doSort(bool (*function)(ListEntry<T> const&, ListEntry<T> const&))
+    void sort()
     {
         if (force_sort || list.size() < 100)
-            std::sort(list.begin(), list.end(), function);
+            std::sort(list.begin(), list.end(), 
+                [] (ListEntry<T> const& a, ListEntry<T> const& b) { return a.text.compare(b.text) < 0; });
 
-        filter_display();
-    }
-
-    virtual void sort()
-    {
-        doSort(&compareText);
+        filterDisplay();
     }
 
 
     private:
-        vector< ListEntry<T> > list;
-        vector< ListEntry<T>* > display_list;
+        vector<ListEntry<T>> list;
+        vector<ListEntry<T>*> display_list;
         string search_string;
         int display_max_rows;
         int max_item_width;
@@ -561,246 +548,406 @@ public:
 /*
  * Material Choice Screen
  */
+
+struct ItemFilter
+{
+    df::dfhack_material_category mat_mask;
+    vector<MaterialInfo> materials;
+    df::item_quality min_quality;
+    bool decorated_only;
+
+    ItemFilter() : min_quality(item_quality::Ordinary), decorated_only(false), valid(true)
+    {    }
+
+    bool matchesMask(MaterialInfo &mat)
+    {
+        return (mat_mask.whole) ? mat.matches(mat_mask) : true;
+    }
+
+    bool matches(const df::dfhack_material_category mask) const
+    {
+        return mask.whole & mat_mask.whole;
+    }
+
+    bool matches(MaterialInfo &material) const
+    {
+        return any_of(materials.begin(), materials.end(), 
+            [&] (const MaterialInfo &m) { return material.matches(m); });
+    }
+
+    bool matches(df::item *item)
+    {
+        if (item->getQuality() < min_quality)
+            return false;
+
+        if (decorated_only && !item->hasImprovements())
+            return false;
+
+        auto imattype = item->getActualMaterial();
+        auto imatindex = item->getActualMaterialIndex();
+        auto item_mat = MaterialInfo(imattype, imatindex);
+
+        return (materials.size() == 0) ? matchesMask(item_mat) : matches(item_mat);
+    }
+
+    vector<string> getMaterialFilterAsVector()
+    {
+        vector<string> descriptions;
+
+        transform_(materials, descriptions,
+            [] (MaterialInfo m) { return m.toString(); });
+
+        if (descriptions.size() == 0)
+            bitfield_to_string(&descriptions, mat_mask);
+
+        if (descriptions.size() == 0)
+            descriptions.push_back("any");
+
+        return descriptions;
+    }
+
+    string getMaterialFilterAsSerial()
+    {
+        string str;
+
+        str.append(bitfield_to_string(mat_mask, ","));
+        str.append("/");
+        if (materials.size() > 0)
+        {
+            for_each_(materials,
+                [&] (MaterialInfo &m) { str.append(m.getToken() + ","); });
+
+            if (str[str.size()-1] == ',')
+                str.resize(str.size () - 1);
+        }
+
+        return str;
+    }
+
+    bool parseSerializedMaterialTokens(string str)
+    {
+        valid = false;
+        vector<string> tokens;
+        split_string(&tokens, str, "/");
+               
+        if (tokens.size() > 0 && !tokens[0].empty())
+        {
+            if (!parseJobMaterialCategory(&mat_mask, tokens[0]))
+                return false;
+        }
+
+        if (tokens.size() > 1 && !tokens[1].empty())
+        {
+            vector<string> mat_names;
+            split_string(&mat_names, tokens[1], ",");
+            for (auto m = mat_names.begin(); m != mat_names.end(); m++)
+            {
+                MaterialInfo material;
+                if (!material.find(*m) || !material.isValid())
+                    return false;
+
+                materials.push_back(material);
+            }
+        }
+
+        valid = true;
+        return true;
+    }
+
+    string getMinQuality()
+    {
+        return ENUM_KEY_STR(item_quality, min_quality);
+    }
+
+    bool isValid()
+    {
+        return valid;
+    }
+
+private:
+    bool valid;
+};
+
+
 class ViewscreenChooseMaterial : public dfhack_viewscreen
 {
 public:
-    static bool reset_list;
+    ViewscreenChooseMaterial(ItemFilter *filter)
+    {
+        selected_column = 0;
+        masks_column.title = "Type";
+        masks_column.multiselect = true;
+        masks_column.allow_search = false;
+        masks_column.left_margin = 2;
+        materials_column.left_margin = MAX_MASK + 3;
+        materials_column.title = "Material";
+        materials_column.multiselect = true;
+        this->filter = filter;
 
-    ViewscreenChooseMaterial();
-    void feed(set<df::interface_key> *input);
-    void render();
+        masks_column.changeHighlight(0);
+
+        populateMasks();
+        populateMaterials();
+
+        masks_column.selectDefaultEntry();
+        materials_column.selectDefaultEntry();
+        materials_column.changeHighlight(0);
+    }
+
+    void feed(set<df::interface_key> *input)
+    {
+        bool key_processed;
+        switch (selected_column)
+        {
+        case 0:
+            key_processed = masks_column.feed(input);
+            if (input->count(interface_key::SELECT))
+                populateMaterials(); // Redo materials lists based on category selection
+            break;
+        case 1:
+            key_processed = materials_column.feed(input);
+            break;
+        }
+
+        if (key_processed)
+            return;
+
+        if (input->count(interface_key::LEAVESCREEN))
+        {
+            input->clear();
+            Screen::dismiss(this);
+            return;
+        }
+        if (input->count(interface_key::CUSTOM_SHIFT_C))
+        {
+            masks_column.clear_selection();
+            materials_column.clear_selection();
+        }
+        else if  (input->count(interface_key::SEC_SELECT))
+        {
+            // Convert list selections to material filters
+
+
+            filter->mat_mask.whole = 0;
+            filter->materials.clear();
+
+            // Category masks
+            for_each_(masks_column.getSelectedElems(), 
+                [&] (df::dfhack_material_category *m) { filter->mat_mask.whole |= m->whole; });
+
+            // Specific materials
+            transform_(materials_column.getSelectedElems(), filter->materials,
+                [] (MaterialInfo *m) { return *m; });
+
+            Screen::dismiss(this);
+        }
+        else if  (input->count(interface_key::CURSOR_LEFT))
+        {
+            --selected_column;
+            validateColumn();
+        }
+        else if  (input->count(interface_key::CURSOR_RIGHT))
+        {
+            selected_column++;
+            validateColumn();
+        }
+        else if (enabler->tracking_on && enabler->mouse_lbut)
+        {
+            if (masks_column.setHighlightByMouse())
+                selected_column = 0;
+            else if (materials_column.setHighlightByMouse())
+                selected_column = 1;
+
+            enabler->mouse_lbut = enabler->mouse_rbut = 0;
+        }
+    }
+
+    void render()
+    {
+        if (Screen::isDismissed(this))
+            return;
+
+        dfhack_viewscreen::render();
+
+        Screen::clear();
+        Screen::drawBorder("  Building Material  ");
+
+        masks_column.display(selected_column == 0);
+        materials_column.display(selected_column == 1);
+
+        int32_t y = gps->dimy - 3;
+        int32_t x = 2;
+        OutputHotkeyString(x, y, "Toggle", "Enter");
+        x += 3;
+        OutputHotkeyString(x, y, "Save", "Shift-Enter");
+        x += 3;
+        OutputHotkeyString(x, y, "Clear", "C");
+        x += 3;
+        OutputHotkeyString(x, y, "Cancel", "Esc");
+    }
 
     std::string getFocusString() { return "buildingplan_choosemat"; }
 
 private:
     ListColumn<df::dfhack_material_category> masks_column;
     ListColumn<MaterialInfo> materials_column;
-    vector< ListEntry<df::dfhack_material_category> > all_masks;
     int selected_column;
+    ItemFilter *filter;
 
     df::building_type btype;
 
-    void populateMasks(const bool set_defaults = false);
-    void populateMaterials(const bool set_defaults = false);
-
-    bool addMaterialEntry(df::dfhack_material_category &selected_category, 
-                            MaterialInfo &material, string name, const bool set_defaults);
-
-    virtual void resize(int32_t x, int32_t y);
-
-    void validateColumn();
-};
-
-bool ViewscreenChooseMaterial::reset_list = false;
-
-
-ViewscreenChooseMaterial::ViewscreenChooseMaterial()
-{
-    selected_column = 0;
-    masks_column.title = "Type";
-    masks_column.multiselect = true;
-    masks_column.left_margin = 2;
-    materials_column.left_margin = MAX_MASK + 3;
-    materials_column.title = "Material";
-
-    masks_column.changeHighlight(0);
-
-    vector<string> raw_masks;
-    df::dfhack_material_category full_mat_mask, curr_mat_mask;
-    full_mat_mask.whole = -1;
-    curr_mat_mask.whole = 1;
-    bitfield_to_string(&raw_masks, full_mat_mask);
-    for (int i = 0; i < raw_masks.size(); i++)
+    void addMaskEntry(df::dfhack_material_category &mask, const string &text)
     {
-        if (raw_masks[i][0] == '?')
-            break;
+        auto entry = ListEntry<df::dfhack_material_category>(pad_string(text, MAX_MASK, false), mask);
+        if (filter->matches(mask))
+            entry.selected = true;
 
-        all_masks.push_back(ListEntry<df::dfhack_material_category>(pad_string(raw_masks[i], MAX_MASK, false), curr_mat_mask));
-        curr_mat_mask.whole <<= 1;
-    }
-    populateMasks();
-    populateMaterials();
-
-    masks_column.selectDefaultEntry();
-    materials_column.selectDefaultEntry();
-    materials_column.changeHighlight(0);
-}
-
-void ViewscreenChooseMaterial::populateMasks(const bool set_defaults /*= false */)
-{
-    masks_column.clear();
-    for (vector< ListEntry<df::dfhack_material_category> >::iterator it = all_masks.begin(); it != all_masks.end(); it++)
-    {
-        auto entry = *it;
-        if (set_defaults)
-        {
-            //TODO
-            //if (cv->mat_mask.whole & entry.elem.whole)
-                //entry.selected = true;
-        }
         masks_column.add(entry);
+        mask.whole = 0;
     }
-    masks_column.sort();
-}
+
+    void populateMasks()
+    {
+        masks_column.clear();
+        df::dfhack_material_category mask;
+
+        mask.bits.stone = true;
+        addMaskEntry(mask, "Stone");
+        mask.bits.wood = true;
+        addMaskEntry(mask, "Wood");
+        mask.bits.metal = true;
+        addMaskEntry(mask, "Metal");
+        mask.bits.soap = true;
+        addMaskEntry(mask, "Soap");
+
+        masks_column.filterDisplay();
+    }
     
-void ViewscreenChooseMaterial::populateMaterials(const bool set_defaults /*= false */)
-{
-    materials_column.clear();
-    df::dfhack_material_category selected_category;
-    vector<df::dfhack_material_category *> selected_materials = masks_column.getSelectedElems();
-    if (selected_materials.size() == 1)
-        selected_category = *selected_materials[0];
-    else if (selected_materials.size() > 1)
-        return;
-
-    df::world_raws &raws = world->raws;
-    for (int i = 1; i < DFHack::MaterialInfo::NUM_BUILTIN; i++)
+    void populateMaterials()
     {
-        auto obj = raws.mat_table.builtin[i];
-        if (obj)
-        {
-            MaterialInfo material;
-            material.decode(i, -1);
-            addMaterialEntry(selected_category, material, material.toString(), set_defaults);
-        }
-    }
-
-    for (size_t i = 0; i < raws.inorganics.size(); i++)
-    {
-        df::inorganic_raw *p = raws.inorganics[i];
-        MaterialInfo material;
-        material.decode(0, i);
-        addMaterialEntry(selected_category, material, material.toString(), set_defaults);
-    }
-
-    materials_column.sort();
-}
-
-bool ViewscreenChooseMaterial::addMaterialEntry(df::dfhack_material_category &selected_category, MaterialInfo &material, 
-                                                        string name, const bool set_defaults)
-{
-    bool selected = false;
-    if (!selected_category.whole || material.matches(selected_category))
-    {
-        ListEntry<MaterialInfo> entry(pad_string(name, MAX_MATERIAL, false), material);
-        if (set_defaults)
-        {
-            /*if (cv->material.matches(material))
-            {
-                entry.selected = true;
-                selected = true;
-            }*/
-            //TODO
-        }
-        materials_column.add(entry);
-    }
-
-    return selected;
-}
-
-void ViewscreenChooseMaterial::feed(set<df::interface_key> *input)
-{
-    bool key_processed;
-    switch (selected_column)
-    {
-    case 0:
-        key_processed = masks_column.feed(input);
-        if (input->count(interface_key::SELECT))
-            populateMaterials(false);
-        break;
-    case 1:
-        key_processed = materials_column.feed(input);
-        break;
-    }
-
-    if (key_processed)
-        return;
-
-    if (input->count(interface_key::LEAVESCREEN))
-    {
-        input->clear();
-        Screen::dismiss(this);
-        return;
-    }
-    else if  (input->count(interface_key::SEC_SELECT))
-    {
-        df::dfhack_material_category mat_mask;
+        materials_column.clear();
+        df::dfhack_material_category selected_category;
         vector<df::dfhack_material_category *> selected_masks = masks_column.getSelectedElems();
-        for (vector<df::dfhack_material_category *>::iterator it = selected_masks.begin(); it != selected_masks.end(); it++)
+        if (selected_masks.size() == 1)
+            selected_category = *selected_masks[0];
+        else if (selected_masks.size() > 1)
+            return;
+
+        df::world_raws &raws = world->raws;
+        for (int i = 1; i < DFHack::MaterialInfo::NUM_BUILTIN; i++)
         {
-            mat_mask.whole |= (*it)->whole;
+            auto obj = raws.mat_table.builtin[i];
+            if (obj)
+            {
+                MaterialInfo material;
+                material.decode(i, -1);
+                addMaterialEntry(selected_category, material, material.toString());
+            }
         }
 
-        MaterialInfo *selected_material = materials_column.getFirstSelectedElem();
-        MaterialInfo material = (selected_material) ? *selected_material : MaterialInfo();
+        for (size_t i = 0; i < raws.inorganics.size(); i++)
+        {
+            df::inorganic_raw *p = raws.inorganics[i];
+            MaterialInfo material;
+            material.decode(0, i);
+            addMaterialEntry(selected_category, material, material.toString());
+        }
 
-        //TODO
+        decltype(selected_category) wood_flag;
+        wood_flag.bits.wood = true;
+        if (!selected_category.whole || selected_category.bits.wood)
+        {
+            for (size_t i = 0; i < raws.plants.all.size(); i++)
+            {
+                df::plant_raw *p = raws.plants.all[i];
+                //string basename = p->name;
 
-        reset_list = true;
-        Screen::dismiss(this);
+                /*MaterialInfo material;
+                material.decode(p->material_defs.type_basic_mat, p->material_defs.idx_basic_mat);*/
+
+
+                //addMaterialEntry(selected_category, material, material.toString());
+
+                for (size_t j = 0; p->material.size() > 1 && j < p->material.size(); j++)
+                {
+                    auto t = p->material[j];
+                    if (p->material[j]->id != "WOOD")
+                        continue;
+
+                    MaterialInfo material;
+                    material.decode(DFHack::MaterialInfo::PLANT_BASE+j, i);
+                    //addMaterialEntry(selected_category, material, material.toString());
+                    auto name = material.toString();
+                    ListEntry<MaterialInfo> entry(pad_string(name, MAX_MATERIAL, false), material);
+                    if (filter->matches(material))
+                        entry.selected = true;
+
+                    materials_column.add(entry);
+
+                }
+            }
+        }
+
+        materials_column.sort();
     }
-    else if  (input->count(interface_key::CURSOR_LEFT))
+
+    void addMaterialEntry(df::dfhack_material_category &selected_category, 
+                          MaterialInfo &material, string name)
     {
-        --selected_column;
-        validateColumn();
+        if (!selected_category.whole || material.matches(selected_category))
+        {
+            ListEntry<MaterialInfo> entry(pad_string(name, MAX_MATERIAL, false), material);
+            if (filter->matches(material))
+                entry.selected = true;
+
+            materials_column.add(entry);
+        }
     }
-    else if  (input->count(interface_key::CURSOR_RIGHT))
+
+    void validateColumn()
     {
-        selected_column++;
-        validateColumn();
+        set_to_limit(selected_column, 1);
     }
-    else if (enabler->tracking_on && enabler->mouse_lbut)
+
+    void resize(int32_t x, int32_t y)
     {
-        if (masks_column.setHighlightByMouse())
-            selected_column = 0;
-        else if (materials_column.setHighlightByMouse())
-            selected_column = 1;
-
-        enabler->mouse_lbut = enabler->mouse_rbut = 0;
+        dfhack_viewscreen::resize(x, y);
+        masks_column.resize();
+        materials_column.resize();
     }
-}
-
-void ViewscreenChooseMaterial::render()
-{
-    if (Screen::isDismissed(this))
-        return;
-
-    dfhack_viewscreen::render();
-
-    Screen::clear();
-    Screen::drawBorder("  Building Material  ");
-
-    masks_column.display(selected_column == 0);
-    materials_column.display(selected_column == 1);
-
-    int32_t y = gps->dimy - 3;
-    int32_t x = 2;
-    OutputHotkeyString(x, y, "Save", "Shift-Enter");
-    x += 3;
-    OutputHotkeyString(x, y, "Cancel", "Esc");
-}
-
-void ViewscreenChooseMaterial::validateColumn()
-{
-    set_to_limit(selected_column, 1);
-}
-
-void ViewscreenChooseMaterial::resize(int32_t x, int32_t y)
-{
-    dfhack_viewscreen::resize(x, y);
-    masks_column.resize();
-    materials_column.resize();
-}
+};
 
 
 // START Planning 
 class PlannedBuilding
 {
 public:
-    PlannedBuilding(df::building *building) : min_quality(item_quality::Ordinary)
+    PlannedBuilding(df::building *building, ItemFilter *filter)
     {
         this->building = building;
+        this->filter = *filter;
         pos = df::coord(building->centerx, building->centery, building->z);
+        config = Core::getInstance().getWorld()->AddPersistentData("buildingplan/constraints");
+        config.val() = filter->getMaterialFilterAsSerial();
+        config.ival(1) = building->id;
+        config.ival(2) = filter->min_quality + 1;
+        config.ival(3) = static_cast<int>(filter->decorated_only) + 1;
+    }
+
+    PlannedBuilding(PersistentDataItem &config, color_ostream &out)
+    {
+        this->config = config;
+
+        if (!filter.parseSerializedMaterialTokens(config.val()))
+        {
+            out.printerr("Buildingplan: Cannot parse filter: %s\nDiscarding.", config.val().c_str());
+            return;
+        }
+
+        building = df::building::find(config.ival(1));
+        pos = df::coord(building->centerx, building->centery, building->z);
+        filter.min_quality = static_cast<df::item_quality>(config.ival(2) - 1);
+        filter.decorated_only = config.ival(3) - 1;
     }
 
     df::building_type getType()
@@ -814,7 +961,11 @@ public:
         int32_t closest_distance = -1;
         for (auto item_iter = items_vector->begin(); item_iter != items_vector->end(); item_iter++)
         {
-            auto pos = (*item_iter)->pos;
+            auto item = *item_iter;
+            if (!filter.matches(item))
+                continue;
+
+            auto pos = item->pos;
             auto distance = abs(pos.x - building->centerx) + 
                 abs(pos.y - building->centery) + 
                 abs(pos.z - building->z) * 50;
@@ -873,22 +1024,36 @@ public:
 
     bool isValid()
     {
-        return building && Buildings::findAtTile(pos) == building;
+        bool valid = filter.isValid() && 
+            building && Buildings::findAtTile(pos) == building &&
+            building->getBuildStage() == 0;
+
+        if (!valid)
+            remove();
+
+        return valid;
     }
 
     bool isCurrentlySelectedBuilding()
     {
-        return building == world->selected_building;
+        return isValid() && (building == world->selected_building);
+    }
+
+    ItemFilter *getFilter()
+    {
+        return &filter;
+    }
+
+    void remove()
+    {
+        Core::getInstance().getWorld()->DeletePersistentData(config);
     }
 
 private:
     df::building *building;
     PersistentDataItem config;
     df::coord pos;
-
-    vector<MaterialInfo> materials;
-    df::dfhack_material_category mat_mask;
-    item_quality::item_quality min_quality;
+    ItemFilter filter;
 };
 
 
@@ -900,29 +1065,18 @@ public:
         return item_for_building_type.find(type) != item_for_building_type.end();
     }
 
-    void reset()
+    void reset(color_ostream &out)
     {
         planned_buildings.clear();
-        for(auto iter = world->buildings.all.begin(); iter != world->buildings.all.end(); iter++)
+        auto pworld = Core::getInstance().getWorld();
+        std::vector<PersistentDataItem> items;
+        pworld->GetPersistentData(&items, "buildingplan/constraints");
+
+        for (auto i = items.begin(); i != items.end(); i++)
         {
-            auto bld = *iter;
-            if (isPlanableBuilding(bld->getType()))
-            {
-                if (bld->jobs.size() != 1)
-                    continue;
-
-                auto job = bld->jobs[0];
-                if (!job->flags.bits.suspend)
-                    continue;
-
-                if (job->job_items.size() != 1)
-                    continue;
-
-                if (job->job_items[0]->item_type != item_type::NONE)
-                    continue;
-
-                addPlannedBuilding(bld);
-            }
+            PlannedBuilding pb(*i, out);
+            if (pb.isValid())
+                planned_buildings.push_back(pb);
         }
     }
 
@@ -958,9 +1112,13 @@ public:
             {
                 if (building_name == item_names[j])
                 {
-                    item_for_building_type[(df::building_type) (i-1)] = (df::item_type) j;
-                    available_item_vectors[(df::item_type) j] = vector<df::item *>();
-                    is_relevant_item_type[(df::item_type) j] = true;
+                    auto btype = (df::building_type) (i-1);
+                    auto itype = (df::item_type) j;
+
+                    item_for_building_type[btype] = itype;
+                    default_item_filters[btype] =  ItemFilter();
+                    available_item_vectors[itype] = vector<df::item *>();
+                    is_relevant_item_type[itype] = true;
                 }
             }
         }
@@ -968,7 +1126,7 @@ public:
 
     void addPlannedBuilding(df::building *bld)
     {
-        PlannedBuilding pb(bld);
+        PlannedBuilding pb(bld, &default_item_filters[bld->getType()]);
         planned_buildings.push_back(pb);
     }
 
@@ -1028,23 +1186,43 @@ public:
         return true;
     }
 
-    bool canUnsuspendSelectedBuilding()
+    PlannedBuilding *getSelectedPlannedBuilding()
     {
         for (auto building_iter = planned_buildings.begin(); building_iter != planned_buildings.end(); building_iter++)
         {
-            if (building_iter->isValid() && building_iter->isCurrentlySelectedBuilding())
+            if (building_iter->isCurrentlySelectedBuilding())
             {
-                return false;
+                return &(*building_iter);
             }
         }
 
-        return true;
+        return nullptr;
     }
+
+    void removeSelectedPlannedBuilding()
+    {
+        getSelectedPlannedBuilding()->remove();
+    }
+
+    ItemFilter *getDefaultItemFilterForType(df::building_type type)
+    {
+        return &default_item_filters[type];
+    }
+
+    void cycleDefaultQuality(df::building_type type)
+    {
+        auto quality = &getDefaultItemFilterForType(type)->min_quality;
+        *quality = static_cast<df::item_quality>(*quality + 1);
+        if (*quality == item_quality::Artifact)
+            (*quality) = item_quality::Ordinary;
+    }
+
 
 private:
     map<df::building_type, df::item_type> item_for_building_type;
+    map<df::building_type, ItemFilter> default_item_filters;
     map<df::item_type, vector<df::item *>> available_item_vectors;
-    map<df::item_type, bool> is_relevant_item_type; //Needed for fast check when loopin over all items
+    map<df::item_type, bool> is_relevant_item_type; //Needed for fast check when looping over all items
 
     vector<PlannedBuilding> planned_buildings;
 
@@ -1080,6 +1258,9 @@ private:
 
             if (itype == item_type::BOX && item->isBag())
                 continue; //Skip bags
+
+            if (item->flags.bits.artifact1 || item->flags.bits.artifact2)
+                continue;
 
             if (item->flags.bits.in_job ||
                 item->isAssignedToStockpile() ||
@@ -1138,7 +1319,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
     {
         return (ui->main.mode == df::ui_sidebar_mode::QueryBuilding || 
             ui->main.mode == df::ui_sidebar_mode::BuildingItems) &&
-            !planner.canUnsuspendSelectedBuilding();
+            planner.getSelectedPlannedBuilding();
     }
 
     bool isInPlannedBuildingPlacementMode()
@@ -1149,7 +1330,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             planner.isPlanableBuilding(ui_build_selector->building_type);
     }
 
-    bool handle_input(set<df::interface_key> *input)
+    bool handleInput(set<df::interface_key> *input)
     {
         if (isInPlannedBuildingPlacementMode())
         {
@@ -1177,12 +1358,32 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
 
                     return true;
                 }
+                else if (input->count(interface_key::CUSTOM_M))
+                {
+                    Screen::show(new ViewscreenChooseMaterial(planner.getDefaultItemFilterForType(type)));
+                }
+                else if (input->count(interface_key::CUSTOM_Q))
+                {
+                    planner.cycleDefaultQuality(type);
+                }
+                else if (input->count(interface_key::CUSTOM_D))
+                {
+                    planner.getDefaultItemFilterForType(type)->decorated_only =
+                        !planner.getDefaultItemFilterForType(type)->decorated_only;
+                }
             }
         }
-        else if (isInPlannedBuildingQueryMode() &&
-            input->count(interface_key::SUSPENDBUILDING))
+        else if (isInPlannedBuildingQueryMode())
         {
-            return true; // Don't unsuspend planned buildings
+            if (input->count(interface_key::SUSPENDBUILDING))
+            {
+                return true; // Don't unsuspend planned buildings
+            }
+            else if (input->count(interface_key::DESTROYBUILDING))
+            {
+                planner.removeSelectedPlannedBuilding(); // Remove persistent data
+            }
+            
         }
 
         return false;
@@ -1190,7 +1391,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
-        if (!handle_input(input))
+        if (!handleInput(input))
             INTERPOSE_NEXT(feed)(input);
     }
 
@@ -1225,15 +1426,28 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
+        auto type = ui_build_selector->building_type;
         if (plannable)
         {
             int y = 23;
 
-            OutputToggleString(x, y, "Planning Mode", "p", is_planmode_enabled(ui_build_selector->building_type), true, left_margin);
+            OutputToggleString(x, y, "Planning Mode", "p", is_planmode_enabled(type), true, left_margin);
 
-            if (is_planmode_enabled(ui_build_selector->building_type))
+            if (is_planmode_enabled(type))
             {
-                //OutputHotkeyString(x, y, "Material Filter", "m", true, left_margin);
+                auto filter = planner.getDefaultItemFilterForType(type);
+
+                OutputHotkeyString(x, y, "Min Quality: ", "q");
+                OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
+
+                OutputHotkeyString(x, y, "Decorated Only: ", "d");
+                OutputString(COLOR_BROWN, x, y, 
+                    (filter->decorated_only) ? "Yes" : "No", true, left_margin);
+                
+                OutputHotkeyString(x, y, "Material Filter:", "m", true, left_margin);
+                auto filter_descriptions = filter->getMaterialFilterAsVector();
+                for_each_(filter_descriptions, 
+                    [&](string d) { OutputString(COLOR_BROWN, x, y, "   *" + d, true, left_margin); });
             }
         }
         else if (isInPlannedBuildingQueryMode())
@@ -1242,6 +1456,18 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             int y = 20;
             Screen::Pen pen(' ', COLOR_BLACK);
             Screen::fillRect(pen, x, y, dims.menu_x2, y);
+
+            auto filter = planner.getSelectedPlannedBuilding()->getFilter();
+            y = 24;
+            OutputString(COLOR_BROWN, x, y, "Planned Building Filter:", true, left_margin);
+            OutputString(COLOR_BLUE, x, y, filter->getMinQuality(), true, left_margin);
+
+            if (filter->decorated_only)
+                OutputString(COLOR_BLUE, x, y, "Decorated Only", true, left_margin);
+            
+            OutputString(COLOR_BROWN, x, y, "Materials:", true, left_margin);
+            for_each_(filter->getMaterialFilterAsVector(), 
+                [&](string d) { OutputString(COLOR_BLUE, x, y, "*" + d, true, left_margin); });
         }
     }
 };
@@ -1281,7 +1507,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_MAP_LOADED:
-        planner.reset();
+        planner.reset(out);
         break;
     default:
         break;

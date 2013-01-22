@@ -810,6 +810,7 @@ private:
             case df::building_type::TractionBench:
             case df::building_type::Slab:
             case df::building_type::Chain:
+            case df::building_type::GrateFloor:
                 return df::unit_labor::HAUL_FURNITURE;
             case df::building_type::Trap:
             case df::building_type::GearAssembly:
@@ -853,6 +854,7 @@ private:
             case df::building_type::Construction:
             case df::building_type::Wagon:
             case df::building_type::Bridge:
+            case df::building_type::ScrewPump:
                 {
                     df::building_actual* b = (df::building_actual*) bld;
                     return construction_build_labor(b->contained_items[0]->item);
@@ -2178,7 +2180,10 @@ public:
                     }
                     int score = skill_level * 1000 - (d->high_skill - skill_level) * 2000 + (xp / (skill_level + 5) * 10);
                     if (d->dwarf->status.labors[labor])
-                        score += 500;
+                        if (labor == df::unit_labor::OPERATE_PUMP)
+                            score += 50000;
+                        else
+                            score += 1000;
                     if (default_labor_infos[labor].tool != TOOL_NONE &&
                         d->has_tool[default_labor_infos[labor].tool]) 
                         score += 5000;
@@ -2219,7 +2224,7 @@ public:
                             (*bestdwarf)->dwarf->military.pickup_flags.bits.update = true;
                     }
                 }
-                else 
+                else if ((*bestdwarf)->state == IDLE)
                     (*bestdwarf)->clear_labor(l);
             }
 

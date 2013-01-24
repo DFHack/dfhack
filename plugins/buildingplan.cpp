@@ -478,7 +478,7 @@ public:
         {
             return setHighlightByMouse();
         }
-        else
+        else if (allow_search)
         {
             // Search query typing mode always on
 
@@ -504,6 +504,10 @@ public:
             }
 
             return true;
+        }
+        else
+        {
+            return false;
         }
 
         return true;
@@ -664,6 +668,12 @@ struct ItemFilter
         return valid;
     }
 
+    void clear()
+    {
+        mat_mask.whole = 0;
+        materials.clear();
+    }
+
 private:
     bool valid;
 };
@@ -720,8 +730,10 @@ public:
         }
         if (input->count(interface_key::CUSTOM_SHIFT_C))
         {
+            filter->clear();
             masks_column.clear_selection();
             materials_column.clear_selection();
+            populateMaterials();
         }
         else if  (input->count(interface_key::SEC_SELECT))
         {
@@ -980,6 +992,7 @@ public:
         if (closest_distance > -1 && assignItem(*closest_item))
         {
             items_vector->erase(closest_item);
+            remove();
             return true;
         }
 

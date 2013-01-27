@@ -1205,7 +1205,7 @@ static void map_job_items(color_ostream &out)
     df::item_flags bad_flags;
     bad_flags.whole = 0;
 
-#define F(left_margin) bad_flags.bits.left_margin = true;
+#define F(x) bad_flags.bits.x = true;
     F(dump); F(forbid); F(garbage_collect);
     F(hostile); F(on_fire); F(rotten); F(trader);
     F(in_building); F(construction); F(artifact1);

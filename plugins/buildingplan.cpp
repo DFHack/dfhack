@@ -1,5 +1,3 @@
-// Auto Material Select
-
 #include <map>
 #include <string>
 #include <vector>
@@ -79,11 +77,6 @@ struct MaterialDescriptor
             a.item_subtype == item_subtype;
     }
 };
-
-static command_result automaterial_cmd(color_ostream &out, vector <string> & parameters)
-{
-    return CR_OK;
-}
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {

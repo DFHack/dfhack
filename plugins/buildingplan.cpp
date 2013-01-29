@@ -744,11 +744,13 @@ public:
             filter->materials.clear();
 
             // Category masks
-            for_each_(masks_column.getSelectedElems(), 
+            auto masks = masks_column.getSelectedElems();
+            for_each_(masks,
                 [&] (df::dfhack_material_category *m) { filter->mat_mask.whole |= m->whole; });
 
             // Specific materials
-            transform_(materials_column.getSelectedElems(), filter->materials,
+            auto materials = materials_column.getSelectedElems();
+            transform_(materials, filter->materials,
                 [] (MaterialInfo *m) { return *m; });
 
             Screen::dismiss(this);
@@ -1477,9 +1479,10 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
 
             if (filter->decorated_only)
                 OutputString(COLOR_BLUE, x, y, "Decorated Only", true, left_margin);
-            
+
             OutputString(COLOR_BROWN, x, y, "Materials:", true, left_margin);
-            for_each_(filter->getMaterialFilterAsVector(), 
+            auto filters = filter->getMaterialFilterAsVector();
+            for_each_(filters,
                 [&](string d) { OutputString(COLOR_BLUE, x, y, "*" + d, true, left_margin); });
         }
     }

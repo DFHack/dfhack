@@ -58,7 +58,11 @@ using df::global::world;
 using df::global::enabler;
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 0.3
+#define PLUGIN_VERSION 0.4
+
+#ifndef HAVE_NULLPTR
+#define nullptr 0L
+#endif
 
 struct MaterialDescriptor
 {

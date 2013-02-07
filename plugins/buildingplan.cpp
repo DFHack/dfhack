@@ -1072,9 +1072,9 @@ private:
 class Planner
 {
 public:
-    bool lock_selection;
+    bool quickfort_mode, in_dummmy_screen;
 
-    Planner() : lock_selection(true)
+    Planner() : quickfort_mode(false), in_dummmy_screen(false)
     {
 
     }
@@ -1361,27 +1361,42 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 {
                     send_key(interface_key::CURSOR_DOWN_Z);
                     send_key(interface_key::CURSOR_UP_Z);
+                    planner.in_dummmy_screen = false;
                 }
                 return true;
             }
             
             if (is_planmode_enabled(type))
             {
+                if (planner.quickfort_mode && planner.in_dummmy_screen)
+                {
+                    if (input->count(interface_key::SELECT) || input->count(interface_key::SEC_SELECT)
+                         || input->count(interface_key::LEAVESCREEN))
+                    {
+                        planner.in_dummmy_screen = false;
+                        send_key(interface_key::LEAVESCREEN);
+                    }
+
+                    return true;
+                }
+
                 if (input->count(interface_key::SELECT))
                 {
                     if (ui_build_selector->errors.size() == 0 && planner.allocatePlannedBuilding(type))
                     {
                         send_key(interface_key::CURSOR_DOWN_Z);
                         send_key(interface_key::CURSOR_UP_Z);
-                        if (!planner.lock_selection)
-                            send_key(interface_key::LEAVESCREEN);
+                        if (planner.quickfort_mode)
+                        {
+                            planner.in_dummmy_screen = true;
+                        }
                     }
 
                     return true;
                 }
-                else if (input->count(interface_key::CUSTOM_L))
+                else if (input->count(interface_key::CUSTOM_F))
                 {
-                    planner.lock_selection = !planner.lock_selection;
+                    planner.quickfort_mode = !planner.quickfort_mode;
                 }
                 else if (input->count(interface_key::CUSTOM_M))
                 {
@@ -1454,31 +1469,51 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
         auto type = ui_build_selector->building_type;
         if (plannable)
         {
-            int y = 23;
-
-            OutputToggleString(x, y, "Planning Mode", "p", is_planmode_enabled(type), true, left_margin);
-
-            if (is_planmode_enabled(type))
+            if (planner.quickfort_mode && planner.in_dummmy_screen)
             {
-                OutputToggleString(x, y, "Lock Selection", "l", planner.lock_selection, true, left_margin);
+                Screen::Pen pen(' ',COLOR_BLACK);
+                int y = dims.y1 + 1;
+                Screen::fillRect(pen, x, y, dims.menu_x2, y + 20);
 
-                auto filter = planner.getDefaultItemFilterForType(type);
+                ++y;
 
-                OutputHotkeyString(x, y, "Min Quality: ", "q");
-                OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
+                OutputString(COLOR_BROWN, x, y, "Quickfort Placeholder", true, left_margin);
+                OutputString(COLOR_WHITE, x, y, "Enter, Shift-Enter or Esc", true, left_margin);
+            }
+            else
+            {
+                int y = 23;
 
-                OutputHotkeyString(x, y, "Decorated Only: ", "d");
-                OutputString(COLOR_BROWN, x, y, 
-                    (filter->decorated_only) ? "Yes" : "No", true, left_margin);
-                
-                OutputHotkeyString(x, y, "Material Filter:", "m", true, left_margin);
-                auto filter_descriptions = filter->getMaterialFilterAsVector();
-                for_each_(filter_descriptions, 
-                    [&](string d) { OutputString(COLOR_BROWN, x, y, "   *" + d, true, left_margin); });
+                OutputToggleString(x, y, "Planning Mode", "p", is_planmode_enabled(type), true, left_margin);
+
+                if (is_planmode_enabled(type))
+                {
+                    OutputToggleString(x, y, "Quickfort Mode", "f", planner.quickfort_mode, true, left_margin);
+
+                    auto filter = planner.getDefaultItemFilterForType(type);
+
+                    OutputHotkeyString(x, y, "Min Quality: ", "q");
+                    OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
+
+                    OutputHotkeyString(x, y, "Decorated Only: ", "d");
+                    OutputString(COLOR_BROWN, x, y, 
+                        (filter->decorated_only) ? "Yes" : "No", true, left_margin);
+
+                    OutputHotkeyString(x, y, "Material Filter:", "m", true, left_margin);
+                    auto filter_descriptions = filter->getMaterialFilterAsVector();
+                    for_each_(filter_descriptions, 
+                        [&](string d) { OutputString(COLOR_BROWN, x, y, "   *" + d, true, left_margin); });
+                }
+                else
+                {
+                    planner.in_dummmy_screen = false;
+                }
             }
         }
         else if (isInPlannedBuildingQueryMode())
         {
+            planner.in_dummmy_screen = false;
+
             // Hide suspend toggle option
             int y = 20;
             Screen::Pen pen(' ', COLOR_BLACK);
@@ -1496,6 +1531,10 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             auto filters = filter->getMaterialFilterAsVector();
             for_each_(filters,
                 [&](string d) { OutputString(COLOR_BLUE, x, y, "*" + d, true, left_margin); });
+        }
+        else
+        {
+            planner.in_dummmy_screen = false;
         }
     }
 };

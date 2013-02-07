@@ -58,7 +58,7 @@ using df::global::world;
 using df::global::enabler;
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 0.4
+#define PLUGIN_VERSION 0.5
 
 #ifndef HAVE_NULLPTR
 #define nullptr 0L
@@ -1072,6 +1072,13 @@ private:
 class Planner
 {
 public:
+    bool lock_selection;
+
+    Planner() : lock_selection(true)
+    {
+
+    }
+
     bool isPlanableBuilding(const df::building_type type) const
     {
         return item_for_building_type.find(type) != item_for_building_type.end();
@@ -1366,9 +1373,15 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                     {
                         send_key(interface_key::CURSOR_DOWN_Z);
                         send_key(interface_key::CURSOR_UP_Z);
+                        if (!planner.lock_selection)
+                            send_key(interface_key::LEAVESCREEN);
                     }
 
                     return true;
+                }
+                else if (input->count(interface_key::CUSTOM_L))
+                {
+                    planner.lock_selection = !planner.lock_selection;
                 }
                 else if (input->count(interface_key::CUSTOM_M))
                 {
@@ -1447,6 +1460,8 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
 
             if (is_planmode_enabled(type))
             {
+                OutputToggleString(x, y, "Lock Selection", "l", planner.lock_selection, true, left_margin);
+
                 auto filter = planner.getDefaultItemFilterForType(type);
 
                 OutputHotkeyString(x, y, "Min Quality: ", "q");

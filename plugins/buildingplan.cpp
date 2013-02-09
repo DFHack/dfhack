@@ -180,6 +180,12 @@ static void for_each_(vector<T> &v, Fn func)
     for_each(v.begin(), v.end(), func);
 }
 
+template <class T, class V, typename Fn>
+static void for_each_(map<T, V> &v, Fn func)
+{
+    for_each(v.begin(), v.end(), func);
+}
+
 template <class T, class V, typename Fn> 
 static void transform_(vector<T> &src, vector<V> &dst, Fn func)
 {
@@ -1069,10 +1075,12 @@ private:
 };
 
 
+static map<df::building_type, bool> planmode_enabled, saved_planmodes;
+
 class Planner
 {
 public:
-    bool quickfort_mode, in_dummmy_screen;
+    bool in_dummmy_screen;
 
     Planner() : quickfort_mode(false), in_dummmy_screen(false)
     {
@@ -1138,6 +1146,11 @@ public:
                     default_item_filters[btype] =  ItemFilter();
                     available_item_vectors[itype] = vector<df::item *>();
                     is_relevant_item_type[itype] = true;
+
+                    if (planmode_enabled.find(btype) == planmode_enabled.end())
+                    {
+                        planmode_enabled[btype] = false;
+                    }
                 }
             }
         }
@@ -1236,12 +1249,32 @@ public:
             (*quality) = item_quality::Ordinary;
     }
 
+    void enableQuickfortMode()
+    {
+        saved_planmodes = planmode_enabled;
+        for_each_(planmode_enabled, 
+            [] (pair<const df::building_type, bool>& pair) { pair.second = true; } );
+
+        quickfort_mode = true;
+    }
+
+    void disableQuickfortMode()
+    {
+        planmode_enabled = saved_planmodes;
+        quickfort_mode = false;
+    }
+
+    bool inQuickFortMode()
+    {
+        return quickfort_mode;
+    }
 
 private:
     map<df::building_type, df::item_type> item_for_building_type;
     map<df::building_type, ItemFilter> default_item_filters;
     map<df::item_type, vector<df::item *>> available_item_vectors;
     map<df::item_type, bool> is_relevant_item_type; //Needed for fast check when looping over all items
+    bool quickfort_mode;
 
     vector<PlannedBuilding> planned_buildings;
 
@@ -1297,12 +1330,11 @@ private:
 static Planner planner;
 
 
-static map<df::building_type, bool> planmode_enabled;
 static bool is_planmode_enabled(df::building_type type)
 {
     if (planmode_enabled.find(type) == planmode_enabled.end())
     {
-        planmode_enabled[type] = false;
+        return false;
     }
 
     return planmode_enabled[type];
@@ -1368,7 +1400,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             
             if (is_planmode_enabled(type))
             {
-                if (planner.quickfort_mode && planner.in_dummmy_screen)
+                if (planner.inQuickFortMode() && planner.in_dummmy_screen)
                 {
                     if (input->count(interface_key::SELECT) || input->count(interface_key::SEC_SELECT)
                          || input->count(interface_key::LEAVESCREEN))
@@ -1386,7 +1418,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                     {
                         send_key(interface_key::CURSOR_DOWN_Z);
                         send_key(interface_key::CURSOR_UP_Z);
-                        if (planner.quickfort_mode)
+                        if (planner.inQuickFortMode())
                         {
                             planner.in_dummmy_screen = true;
                         }
@@ -1396,7 +1428,14 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 }
                 else if (input->count(interface_key::CUSTOM_F))
                 {
-                    planner.quickfort_mode = !planner.quickfort_mode;
+                    if (!planner.inQuickFortMode())
+                    {
+                        planner.enableQuickfortMode();
+                    }
+                    else
+                    {
+                        planner.disableQuickfortMode();
+                    }
                 }
                 else if (input->count(interface_key::CUSTOM_M))
                 {
@@ -1469,7 +1508,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
         auto type = ui_build_selector->building_type;
         if (plannable)
         {
-            if (planner.quickfort_mode && planner.in_dummmy_screen)
+            if (planner.inQuickFortMode() && planner.in_dummmy_screen)
             {
                 Screen::Pen pen(' ',COLOR_BLACK);
                 int y = dims.y1 + 1;
@@ -1488,7 +1527,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
 
                 if (is_planmode_enabled(type))
                 {
-                    OutputToggleString(x, y, "Quickfort Mode", "f", planner.quickfort_mode, true, left_margin);
+                    OutputToggleString(x, y, "Quickfort Mode", "f", planner.inQuickFortMode(), true, left_margin);
 
                     auto filter = planner.getDefaultItemFilterForType(type);
 

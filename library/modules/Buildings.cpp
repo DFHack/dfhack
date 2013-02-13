@@ -249,31 +249,21 @@ df::building *Buildings::findAtTile(df::coord pos)
     if (!occ || !occ->bits.building)
         return NULL;
 
-    auto a = locationToBuilding.find(pos);
-    if ( a == locationToBuilding.end() ) {
-        cerr << __FILE__ << ", " << __LINE__ << ": can't find building at " << pos.x << ", " << pos.y << ", " <<pos.z << "." << endl;
-        exit(1);
-    }
-    int32_t id = (*a).second;
-    int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
-    if ( index == -1 ) {
-        cerr << __FILE__ << ", " << __LINE__ << ": can't find building at " << pos.x << ", " << pos.y << ", " <<pos.z << "." << endl;
-        exit(1);
-    }
-    df::building* building = df::global::world->buildings.all[index];
-    if (!building->isSettingOccupancy())
-        return NULL;
-
-    if (building->room.extents && building->isExtentShaped())
+    // Try cache lookup in case it works:
+    auto cached = locationToBuilding.find(pos);
+    if (cached != locationToBuilding.end())
     {
-        auto etile = getExtentTile(building->room, pos);
-        if (!etile || !*etile)
-            return NULL;
-    }
-    return building;
+        auto building = df::building::find(cached->second);
 
-    /*
-    //old method: brute-force
+        if (building && building->z == pos.z &&
+            building->isSettingOccupancy() &&
+            containsTile(building, pos, false))
+        {
+            return building;
+        }
+    }
+
+    // The authentic method, i.e. how the game generally does this:
     auto &vec = df::building::get_vector();
     for (size_t i = 0; i < vec.size(); i++)
     {
@@ -298,7 +288,6 @@ df::building *Buildings::findAtTile(df::coord pos)
     }
 
     return NULL;
-    */
 }
 
 bool Buildings::findCivzonesAt(std::vector<df::building_civzonest*> *pvec, df::coord pos)

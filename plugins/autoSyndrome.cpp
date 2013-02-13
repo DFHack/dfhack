@@ -126,9 +126,8 @@ DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginComman
         ));
     
     
-    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("autoSyndrome");
     EventManager::EventHandler handle(processJob, 5);
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, me);
+    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, plugin_self);
     return CR_OK;
 }
 

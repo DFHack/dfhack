@@ -26,8 +26,7 @@ void syndromeHandler(color_ostream& out, void* ptr);
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     EventManager::EventHandler syndrome(syndromeHandler, 1);
-    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("trueTransformation");
-    EventManager::registerListener(EventManager::EventType::SYNDROME, syndrome, me);
+    EventManager::registerListener(EventManager::EventType::SYNDROME, syndrome, plugin_self);
 
     return CR_OK;
 }

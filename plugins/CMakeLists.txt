@@ -125,13 +125,17 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(steam-engine steam-engine.cpp)
     DFHACK_PLUGIN(power-meter power-meter.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(siege-engine siege-engine.cpp LINK_LIBRARIES lua)
-    DFHACK_PLUGIN(reactionhooks reactionhooks.cpp LINK_LIBRARIES lua)
+    DFHACK_PLUGIN(eventful eventful.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(add-spatter add-spatter.cpp)
     DFHACK_PLUGIN(fix-armory fix-armory.cpp)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
     DFHACK_PLUGIN(misery misery.cpp)
+    DFHACK_PLUGIN(workNow workNow.cpp)
     #DFHACK_PLUGIN(dfstream dfstream.cpp LINK_LIBRARIES clsocket dfhack-tinythread)
+    DFHACK_PLUGIN(autoSyndrome autoSyndrome.cpp)
+    DFHACK_PLUGIN(trueTransformation trueTransformation.cpp)
+    DFHACK_PLUGIN(infiniteSky infiniteSky.cpp)
 endif()
 
 

@@ -766,7 +766,7 @@ bool Materials::ReadCreatureTypesEx (void)
             for(size_t k = 0; k < sizecolormod;k++)
             {
                 // color mod [0] -> color list
-                auto & indexes = colorings[k]->color_indexes;
+                auto & indexes = colorings[k]->pattern_index;
                 size_t sizecolorlist = indexes.size();
                 caste.ColorModifier[k].colorlist.resize(sizecolorlist);
                 for(size_t l = 0; l < sizecolorlist; l++)

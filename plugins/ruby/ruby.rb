@@ -64,6 +64,7 @@ module DFHack
 
         # register a callback to be called every gframe or more
         # ex: DFHack.onupdate_register('fastdwarf') { DFHack.world.units[0].counters.job_counter = 0 }
+        # if ticklimit is given, do not call unless this much game ticks have passed. Handles advmode time stretching.
         def onupdate_register(descr, ticklimit=nil, initialtickdelay=0, &b)
             raise ArgumentError, 'need a description as 1st arg' unless descr.kind_of?(::String)
             @onupdate_list ||= []
@@ -82,7 +83,7 @@ module DFHack
             @onupdate_list.delete b
             if @onupdate_list.empty?
                 DFHack.onupdate_active = false
-                DFHack.onupdate_minyear = DFHack.onupdate_minyeartick = 0
+                DFHack.onupdate_minyear = DFHack.onupdate_minyeartick = DFHack.onupdate_minyeartickadv = -1
             end
         end
 
@@ -94,20 +95,32 @@ module DFHack
         end
 
         TICKS_PER_YEAR = 1200*28*12
-        # this method is called by dfhack every 'onupdate' if onupdate_active is true
+        # this method is called by ruby.cpp if df.onupdate_active is true
         def onupdate
             @onupdate_list ||= []
 
-            ticks_per_year = TICKS_PER_YEAR
-            ticks_per_year *= 72 if gametype == :ADVENTURE_MAIN or gametype == :ADVENTURE_ARENA
+            y = cur_year
+            ytmax = TICKS_PER_YEAR
+            if df.gamemode == :ADVENTURE and df.respond_to?(:cur_year_tick_advmode)
+                yt = cur_year_tick_advmode
+                ytmax *= 144
+            else
+                yt = cur_year_tick
+            end
 
             @onupdate_list.each { |o|
-                o.check_run(cur_year, cur_year_tick, ticks_per_year)
+                o.check_run(y, yt, ytmax)
             }
 
             if onext = @onupdate_list.sort.first
                 DFHack.onupdate_minyear = onext.minyear
-                DFHack.onupdate_minyeartick = onext.minyeartick
+                if ytmax > TICKS_PER_YEAR
+                    DFHack.onupdate_minyeartick = -1
+                    DFHack.onupdate_minyeartickadv = onext.minyeartick
+                else
+                    DFHack.onupdate_minyeartick = onext.minyeartick
+                    DFHack.onupdate_minyeartickadv = -1
+                end
             end
         end
 

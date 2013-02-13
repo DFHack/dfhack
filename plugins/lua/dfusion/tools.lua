@@ -26,7 +26,7 @@ function setrace(name)
 	if name == nil then
 		print("Type new race's token name in full caps (q to quit):")
 		repeat
-			local entry=io.stdin:read()
+			local entry=dfhack.lineedit()
 			if entry=="q" then
 				return
 			end
@@ -48,7 +48,7 @@ function GiveSentience(names)
 		ids={}
 		print("Type race's  token name in full caps to give sentience to:")
 		repeat
-			id=io.stdin:read()
+			id=dfhack.lineedit()
 			id=RaceTable[entry]
             if id~=nil then
                 table.insert(ids,id)
@@ -189,10 +189,10 @@ function healunit(unit)
     unit.body.wounds:resize(0) -- memory leak here :/
 	unit.body.blood_count=unit.body.blood_max
 	--set flags for standing and grasping...
-	unit.status2.able_stand=4
-	unit.status2.able_stand_impair=4
-	unit.status2.able_grasp=4
-	unit.status2.able_grasp_impair=4
+	unit.status2.limbs_stand_max=4
+	unit.status2.limbs_stand_count=4
+	unit.status2.limbs_grasp_max=4
+	unit.status2.limbs_grasp_count=4
 	--should also set temperatures, and flags for breath etc...
 	unit.flags1.dead=false
 	unit.flags2.calculated_bodyparts=false

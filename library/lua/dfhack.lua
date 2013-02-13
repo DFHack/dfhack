@@ -328,9 +328,11 @@ end
 
 -- Command scripts
 
-dfhack.internal.scripts = dfhack.internal.scripts or {}
+local internal = dfhack.internal
 
-local scripts = dfhack.internal.scripts
+internal.scripts = internal.scripts or {}
+
+local scripts = internal.scripts
 local hack_path = dfhack.getHackPath()
 
 function dfhack.run_script(name,...)
@@ -347,6 +349,43 @@ function dfhack.run_script(name,...)
     end
     scripts[key] = env
     return f(...)
+end
+
+-- Per-save init file
+
+function dfhack.getSavePath()
+    if dfhack.isWorldLoaded() then
+        return dfhack.getDFPath() .. '/data/save/' .. df.global.world.cur_savegame.save_dir
+    end
+end
+
+if dfhack.is_core_context then
+    dfhack.onStateChange.DFHACK_PER_SAVE = function(op)
+        if op == SC_WORLD_LOADED or op == SC_WORLD_UNLOADED then
+            if internal.save_init then
+                if internal.save_init.onUnload then
+                    safecall(internal.save_init.onUnload)
+                end
+                internal.save_init = nil
+            end
+
+            local path = dfhack.getSavePath()
+
+            if path and op == SC_WORLD_LOADED then
+                local env = setmetatable({ SAVE_PATH = path }, { __index = base_env })
+                local f,perr = loadfile(path..'/raw/init.lua', 't', env)
+                if f == nil then
+                    if not string.match(perr, 'No such file or directory') then
+                        dfhack.printerr(perr)
+                    end
+                elseif safecall(f) then
+                    internal.save_init = env
+                end
+            end
+        elseif internal.save_init and internal.save_init.onStateChange then
+            safecall(internal.save_init.onStateChange, op)
+        end
+    end
 end
 
 -- Feed the table back to the require() mechanism.

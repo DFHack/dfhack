@@ -741,6 +741,10 @@ can be omitted.
 
   Returns the dfhack directory path, i.e. ``".../df/hack/"``.
 
+* ``dfhack.getSavePath()``
+
+  Returns the path to the current save directory, or *nil* if no save loaded.
+
 * ``dfhack.getTickCount()``
 
   Returns the tick count in ms, exactly as DF ui uses.
@@ -2954,6 +2958,62 @@ sort
 Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.
 
+Eventful
+========
+
+This plugin exports some events to lua thus allowing to run lua functions
+on DF world events.
+
+List of events
+--------------
+
+1. onReactionComplete(reaction,unit,input_items,input_reagents,output_items,call_native) - auto activates if detects reactions starting with ``LUA_HOOK_``. Is called when reaction finishes.
+2. onItemContaminateWound(item,unit,wound,number1,number2) - Is called when item tries to contaminate wound (e.g. stuck in)
+3. onProjItemCheckMovement(projectile) - is called when projectile moves
+4. onProjItemCheckImpact(projectile,somebool) - is called when projectile hits something
+5. onProjUnitCheckMovement(projectile) - is called when projectile moves
+6. onProjUnitCheckImpact(projectile,somebool) - is called when projectile hits something
+7. onWorkshopFillSidebarMenu(workshop,callnative) - is called when viewing a workshop in 'q' mode, to populate reactions, usefull for custom viewscreens for shops
+8. postWorkshopFillSidebarMenu(workshop) - is called after calling (or not) native fillSidebarMenu(). Usefull for job button tweaking (e.g. adding custom reactions)
+
+Functions
+---------
+
+1. registerReaction(reaction_name,callback) - simplified way of using onReactionComplete, the callback is function (same params as event)
+2. removeNative(shop_name) - removes native choice list from the building
+3. addReactionToShop(reaction_name,shop_name) - add a custom reaction to the building
+
+Examples
+--------
+Spawn dragon breath on each item attempt to contaminate wound:
+::
+
+  b=require "plugins.eventful"
+    b.onItemContaminateWound.one=function(item,unit,un_wound,x,y)
+        local flw=dfhack.maps.spawnFlow(unit.pos,6,0,0,50000)
+    end
+
+Reaction complete example:
+::
+  b=require "plugins.eventful"
+  b.onReactionComplete.one=function(reaction,unit,in_items,in_reag,out_items,call_native)
+    local pos=copyall(unit.pos)
+    dfhack.timeout(100,"ticks",function() dfhack.maps.spawnFlow(pos,6,0,0,50000) end) -- spawn dragonbreath after 100 ticks
+    call_native.value=false --do not call real item creation code
+  end
+
+Granade example:
+::
+  b=require "plugins.eventful"
+  b.onProjItemCheckImpact.one=function(projectile)
+    -- you can check if projectile.item e.g. has correct material
+    dfhack.maps.spawnFlow(projectile.cur_pos,6,0,0,50000) 
+  end
+
+Integrated tannery:
+::
+  b=require "plugins.eventful"
+  b.addReactionToShop("TAN_A_HIDE","LEATHERWORKS")
 
 =======
 Scripts
@@ -2993,3 +3053,24 @@ from other scripts) in any context, via the same function the core uses:
   The ``name`` argument should be the name stem, as would be used on the command line.
 
 Note that this function lets errors propagate to the caller.
+
+Save init script
+================
+
+If a save directory contains a file called ``raw/init.lua``, it is
+automatically loaded and executed every time the save is loaded. It
+can also define the following functions to be called by dfhack:
+
+* ``function onStateChange(op) ... end``
+
+  Automatically called from the regular onStateChange event as long
+  as the save is still loaded. This avoids the need to install a hook
+  into the global ``dfhack.onStateChange`` table, with associated
+  cleanup concerns.
+
+* ``function onUnload() ... end``
+
+  Called when the save containing the script is unloaded. This function
+  should clean up any global hooks installed by the script.
+
+Within the init script, the path to the save directory is available as ``SAVE_PATH``.

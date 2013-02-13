@@ -25,7 +25,9 @@ distribution.
 #pragma once
 #include "Export.h"
 #include "DataDefs.h"
+#include "Types.h"
 #include "df/building.h"
+#include "df/building_type.h"
 #include "df/civzone_type.h"
 #include "df/furnace_type.h"
 #include "df/workshop_type.h"
@@ -180,6 +182,9 @@ DFHACK_EXPORT bool constructWithFilters(df::building *bld, std::vector<df::job_i
  * Returns true if the building has been destroyed instantly.
  */
 DFHACK_EXPORT bool deconstruct(df::building *bld);
+
+void updateBuildings(color_ostream& out, void* ptr);
+void clearBuildings(color_ostream& out);
 
 }
 }

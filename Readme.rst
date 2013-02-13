@@ -1850,13 +1850,16 @@ slayrace
 ========
 Kills any unit of a given race.
 
-With no argument, lists the available races.
+With no argument, lists the available races and count eligible targets.
 
 With the special argument ``him``, targets only the selected creature.
 
+With the special argument ``undead``, targets all undeads on the map,
+regardless of their race.
+
 Any non-dead non-caged unit of the specified race gets its ``blood_count``
 set to 0, which means immediate death at the next game tick. For creatures
-such as vampires, also set animal.vanish_countdown to 2.
+such as vampires, it also sets animal.vanish_countdown to 2.
 
 An alternate mode is selected by adding a 2nd argument to the command,
 ``magma``. In this case, a column of 7/7 magma is generated on top of the
@@ -1939,6 +1942,7 @@ deathcause
 ==========
 Focus a body part ingame, and this script will display the cause of death of
 the creature.
+Also works when selecting units from the 'u'nitlist viewscreen.
 
 lua
 ===
@@ -2000,6 +2004,33 @@ the map. With the ``here`` argument, considers only the in-game selected cage
 alternatively pass cage IDs as arguments::
 
   stripcaged weapons 25321 34228
+
+create-items
+============
+Spawn arbitrary items under the cursor.
+
+The first argument gives the item category, the second gives the material,
+and the optionnal third gives the number of items to create (defaults to 20).
+
+Currently supported item categories: ``boulder``, ``bar``, ``plant``, ``log``,
+``web``.
+
+Instead of material, using ``list`` makes the script list eligible materials.
+
+The ``web`` item category will create an uncollected cobweb on the floor.
+
+Note that the script does not enforce anything, and will let you create
+boulders of toad blood and stuff like that.
+However the ``list`` mode will only show 'normal' materials.
+
+Exemples::
+
+    create-items boulders COAL_BITUMINOUS 12
+    create-items plant tail_pig
+    create-items log list
+    create-items web CREATURE:SPIDER_CAVE_GIANT:SILK
+    create-items bar CREATURE:CAT:SOAP
+    create-items bar adamantine
 
 =======================
 In-game interface tools
@@ -2074,7 +2105,9 @@ directly to the main dwarf mode screen.
 Search
 ======
 
-The search plugin adds search to the Stocks, Trading, Stockpile and Unit List screens.
+The search plugin adds search to the Stocks, Animals, Trading, Stockpile,
+Noble (assignment candidates), Military (position candidates), Burrows
+(unit list), Rooms, Announcements, Job List and Unit List screens.
 
 .. image:: images/search.png
 
@@ -2094,8 +2127,9 @@ Leaving any screen automatically clears the filter.
 
 In the Trade screen, the actual trade will always only act on items that
 are actually visible in the list; the same effect applies to the Trade
-Value numbers displayed by the screen. Because of this, pressing the 't'
-key while search is active clears the search instead of executing the trade.
+Value numbers displayed by the screen. Because of this, the 't' key is
+blocked while search is active, so you have to reset the filters first.
+Pressing Alt-C will clear both search strings.
 
 In the stockpile screen the option only appears if the cursor is in the
 rightmost list:
@@ -2380,6 +2414,40 @@ the intended user. In order to aid in the choice, it shows the number
 of currently assigned racks for every valid squad.
 
 
+gui/advfort
+=============
+
+This script allows to perform jobs in adventure mode. For more complete help
+press '?' while script is running. It's most confortable to use this as a 
+keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
+
+* -a or --nodfassign - uses different method to assign items.
+
+* -i or --inventory - checks inventory for possible items to use in the job.
+
+* -c or --cheat - relaxes item requirements for buildings (e.g. walls from bones).
+  implies -a
+  
+* job - selects that job (e.g. Dig or FellTree)
+
+
+gui/gm-editor
+=============
+
+There are three ways to open this editor:
+
+* using gui/gm-editor command/keybinding - opens editor on what is selected
+  or viewed (e.g. unit/item description screen)
+
+* using gui/gm-editor <lua command> - executes lua command and opens editor on
+  it's results (e.g. gui/gm-editor "df.global.world.items.all" shows all items)
+  
+* using gui/gm-edito dialog - shows an in game dialog to input lua command. Works
+  the same as version above.
+  
+This editor allows to change and modify almost anything in df. Press '?' for an 
+in-game help.
+
 =============
 Behavior Mods
 =============
@@ -2573,3 +2641,4 @@ be bought from caravans. :)
 
 To be really useful this needs patches from bug 808, ``tweak fix-dimensions``
 and ``tweak advmode-contained``.
+

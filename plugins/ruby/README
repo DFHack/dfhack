@@ -48,6 +48,7 @@ If you create such a script, e.g. 'test.rb', that will add a new dfhack console
 command 'test'.
 The script can access the console command arguments through the global variable
 '$script_args', which is an array of ruby Strings.
+To exit early from a script, use 'throw :script_finished'
 
 The help string displayed in dfhack 'ls' command is the first line of the
 script, if it is a comment (ie starts with '# ').

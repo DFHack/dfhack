@@ -785,10 +785,10 @@ bool DFHack::Units::isSane(df::unit *unit)
     if (unit->flags1.bits.dead ||
         unit->flags3.bits.ghostly ||
         isOpposedToLife(unit) ||
-        unit->unknown8.unk2)
+        unit->enemy.undead)
         return false;
 
-    if (unit->unknown8.normal_race == unit->unknown8.were_race && isCrazed(unit))
+    if (unit->enemy.normal_race == unit->enemy.were_race && isCrazed(unit))
         return false;
 
     switch (unit->mood)
@@ -839,7 +839,7 @@ bool DFHack::Units::isDwarf(df::unit *unit)
     CHECK_NULL_POINTER(unit);
 
     return unit->race == ui->race_id ||
-           unit->unknown8.normal_race == ui->race_id;
+           unit->enemy.normal_race == ui->race_id;
 }
 
 double DFHack::Units::getAge(df::unit *unit, bool true_age)
@@ -1225,12 +1225,12 @@ int Units::computeMovementSpeed(df::unit *unit)
 
     // Stance
 
-    if (!unit->flags1.bits.on_ground && unit->status2.able_stand > 2)
+    if (!unit->flags1.bits.on_ground && unit->status2.limbs_stand_max > 2)
     {
         // WTF
-        int as = unit->status2.able_stand;
+        int as = unit->status2.limbs_stand_max;
         int x = (as-1) - (as>>1);
-        int y = as - unit->status2.able_stand_impair;
+        int y = as - unit->status2.limbs_stand_count;
         if (unit->flags3.bits.on_crutch) y--;
         y = y * 500 / x;
         if (y > 0) speed += y;

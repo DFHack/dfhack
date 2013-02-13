@@ -404,7 +404,10 @@ ul.auto-toc {
 <li><a class="reference internal" href="#sort" id="id54">sort</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#scripts" id="id55">Scripts</a></li>
+<li><a class="reference internal" href="#scripts" id="id55">Scripts</a><ul>
+<li><a class="reference internal" href="#save-init-script" id="id56">Save init script</a></li>
+</ul>
+</li>
 </ul>
 </div>
 <p>The current version of DFHack has extensive support for
@@ -1033,6 +1036,9 @@ can be omitted.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.getHackPath()</tt></p>
 <p>Returns the dfhack directory path, i.e. <tt class="docutils literal"><span class="pre">&quot;.../df/hack/&quot;</span></tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.getSavePath()</tt></p>
+<p>Returns the path to the current save directory, or <em>nil</em> if no save loaded.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.getTickCount()</tt></p>
 <p>Returns the tick count in ms, exactly as DF ui uses.</p>
@@ -3064,6 +3070,25 @@ The <tt class="docutils literal">name</tt> argument should be the name stem, as 
 </li>
 </ul>
 <p>Note that this function lets errors propagate to the caller.</p>
+<div class="section" id="save-init-script">
+<h2><a class="toc-backref" href="#id56">Save init script</a></h2>
+<p>If a save directory contains a file called <tt class="docutils literal">raw/init.lua</tt>, it is
+automatically loaded and executed every time the save is loaded. It
+can also define the following functions to be called by dfhack:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">function onStateChange(op) ... end</tt></p>
+<p>Automatically called from the regular onStateChange event as long
+as the save is still loaded. This avoids the need to install a hook
+into the global <tt class="docutils literal">dfhack.onStateChange</tt> table, with associated
+cleanup concerns.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">function onUnload() ... end</tt></p>
+<p>Called when the save containing the script is unloaded. This function
+should clean up any global hooks installed by the script.</p>
+</li>
+</ul>
+<p>Within the init script, the path to the save directory is available as <tt class="docutils literal">SAVE_PATH</tt>.</p>
+</div>
 </div>
 </div>
 </body>

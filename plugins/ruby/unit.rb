@@ -76,7 +76,7 @@ module DFHack
                     u.mood == :Berserk or
                     unit_testflagcurse(u, :CRAZED) or
                     unit_testflagcurse(u, :OPPOSED_TO_LIFE) or
-                    u.unknown8.unk2 or
+                    u.enemy.undead or
                     u.flags3.ghostly or
                     u.flags1.marauder or u.flags1.active_invader or u.flags1.invader_origin or
                     u.flags1.forest or
@@ -103,15 +103,157 @@ module DFHack
             # some other stuff with ui.race_id ? (jobs only?)
         end
 
+        # merchant: df.ui.caravans.find { |cv| cv.entity == u.civ_id }
+        # diplomat: df.ui.dip_meeting_info.find { |m| m.diplomat_id == u.hist_figure_id or m.diplomat_id2 == u.hist_figure_id }
+
+
+        def unit_nemesis(u)
+            if ref = u.general_refs.find { |r| r.kind_of?(DFHack::GeneralRefIsNemesisst) }
+                ref.nemesis_tg
+            end
+        end
+
+        # return the subcategory for :Others (from vs_unitlist)
+        def unit_other_category(u)
+            # comment is actual code returned by the df function
+            return :Berserk if u.mood == :Berserk  # 5
+            return :Berserk if unit_testflagcurse(u, :CRAZED)    # 14
+            return :Undead if unit_testflagcurse(u, :OPPOSED_TO_LIFE)   # 1
+            return :Undead if u.flags3.ghostly  # 15
+
+            if df.gamemode == :ADVENTURE
+                return :Hostile if u.civ_id == -1   # 2
+                if u.animal.population.region_x == -1
+                    return :Wild if u.flags2.roaming_wilderness_population_source_not_a_map_feature # 0
+                else
+                    return :Hostile if u.flags2.important_historical_figure and n = unit_nemesis(u) and n.flags[:ACTIVE_ADVENTURER] # 2
+                end
+                return :Hostile if u.flags2.resident    # 3
+                return :Hostile # 4
+            end
+
+            return :Invader if u.flags1.active_invader or u.flags1.invader_origin   # 6
+            return :Friendly if u.flags1.forest or u.flags1.merchant or u.flags1.diplomat   # 8
+            return :Hostile if u.flags1.tame    # 7
+
+            if u.civ_id != -1
+                return :Unsure if u.civ_id != df.ui.civ_id or u.flags1.resident or u.flags1.visitor or u.flags1.visitor_uninvited   # 10
+                return :Hostile # 7
+
+            elsif u.animal.population.region_x == -1
+                return :Friendly if u.flags2.visitor    # 8
+                return :Uninvited if u.flags2.visitor_uninvited # 12
+                return :Underworld if r = u.race_tg and r.underground_layer_min == 5    # 9
+                return :Resident if u.flags2.resident   # 13
+                return :Friendly    # 8
+
+            else
+                return :Friendly if u.flags2.visitor    # 8
+                return :Underworld if r = u.race_tg and r.underground_layer_min == 5    # 9
+                return :Wild if u.animal.population.feature_idx == -1 and u.animal.population.cave_id == -1 # 0
+                return :Wild    # 11
+            end
+        end
+
         def unit_iscitizen(u)
             unit_category(u) == :Citizens
         end
 
-        def unit_ishostile(u)
-            unit_category(u) == :Others and
-            # TODO
-            true
+        def unit_hostiles
+            world.units.active.find_all { |u|
+                unit_ishostile(u)
+            }
         end
+
+        # returns if an unit is openly hostile
+        # does not include ghosts / wildlife
+        def unit_ishostile(u)
+            # return true if u.flags3.ghostly and not u.flags1.dead
+            return unless unit_category(u) == :Others
+
+            case unit_other_category(u)
+            when :Berserk, :Undead, :Hostile, :Invader, :Underworld
+                # XXX :Resident, :Uninvited?
+                true
+
+            when :Unsure
+                # from df code, with removed duplicate checks already in other_category
+                return true if u.enemy.undead or u.flags3.ghostly or u.flags1.marauder 
+                return false if u.flags1.forest or u.flags1.merchant or u.flags1.diplomat or u.flags2.visitor
+                return true if u.flags1.tame or u.flags2.underworld
+
+                if histfig = u.hist_figure_tg
+                    group = df.ui.group_tg
+                    case unit_checkdiplomacy_hf_ent(histfig, group)
+                    when 4, 5
+                        true
+                    end
+
+                elsif diplo = u.civ_tg.unknown1b.diplomacy.binsearch(df.ui.group_id, :group_id)
+                    diplo.relation != 1 and diplo.relation != 5
+
+                else
+                    u.animal.population.region_x != -1 or u.flags2.resident or u.flags2.visitor_uninvited
+                end
+            end
+        end
+
+        def unit_checkdiplomacy_hf_ent(histfig, group)
+            var_3d = var_3e = var_45 = var_46 = var_47 = var_48 = var_49 = nil
+
+            var_3d = 1 if group.type == :Outcast or group.type == :NomadicGroup or
+            (group.type == :Civilization and group.entity_raw.flags[:LOCAL_BANDITRY])
+
+            histfig.entity_links.each { |link|
+                if link.entity_id == group.id
+                    case link.getType
+                    when :MEMBER, :MERCENARY, :SLAVE, :PRISONER, :POSITION, :HERO
+                        var_47 = 1
+                    when :FORMER_MEMBER, :FORMER_MERCENARY, :FORMER_SLAVE, :FORMER_PRISONER
+                        var_48 = 1
+                    when :ENEMY
+                        var_49 = 1
+                    when :CRIMINAL
+                        var_45 = 1
+                    end
+                else
+                    case link.getType
+                    when :MEMBER, :MERCENARY, :SLAVE
+                        if link_entity = link.entity_tg
+                            diplo = group.unknown1b.diplomacy.binsearch(link.entity_id, :group_id)
+                            case diplo.relation
+                            when 0, 3, 4
+                                var_48 = 1
+                            when 1, 5
+                                var_46 = 1
+                            end
+
+                            var_3e = 1 if link_entity.type == :Outcast or link_entity.type == :NomadicGroup or
+                            (link_entity.type == :Civilization and link_entity.entity_raw.flags[:LOCAL_BANDITRY])
+                        end
+                    end
+                end
+            }
+
+            if var_49
+                4
+            elsif var_46
+                5
+            elsif !var_47 and group.resources.ethic[:KILL_NEUTRAL] == 16
+                4
+            elsif df.gamemode == :ADVENTURE and !var_47 and (var_3e or !var_3d)
+                4
+            elsif var_45
+                3
+            elsif var_47
+                2
+            elsif var_48
+                1
+            else
+                0
+            end
+        end
+
 
         # list workers (citizen, not crazy / child / inmood / noble)
         def unit_workers
@@ -122,6 +264,7 @@ module DFHack
 
         def unit_isworker(u)
             unit_iscitizen(u) and
+            u.race == df.ui.race_id and
             u.mood == :None and
             u.profession != :CHILD and
             u.profession != :BABY and
@@ -150,8 +293,8 @@ module DFHack
 
         def unit_entitypositions(unit)
             list = []
-            return list if not hf = unit.hist_figure_tg
-            hf.entity_links.each { |el|
+            return list if not histfig = unit.hist_figure_tg
+            histfig.entity_links.each { |el|
                 next if el._rtti_classname != :histfig_entity_link_positionst
                 next if not ent = el.entity_tg
                 next if not pa = ent.positions.assignments.binsearch(el.assignment_id)

@@ -1858,7 +1858,7 @@ private:
                         state = OTHER;
                     else if (dwarf->dwarf->burrows.size() > 0)
                         state = OTHER;        // dwarfs assigned to burrows are treated as if permanently busy
-                    else if (dwarf->dwarf->status2.able_grasp_impair == 0)
+                    else if (dwarf->dwarf->status2.limbs_grasp_count == 0)
                     {
                         state = OTHER;      // dwarfs unable to grasp are incapable of nearly all labors
                         dwarf->clear_all = true;

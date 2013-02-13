@@ -760,6 +760,8 @@ private:
             df::building* bld = get_building_from_job (j);
             switch (bld->getType()) 
             {
+            case df::building_type::Hive:
+                return df::unit_labor::BEEKEEPING;
             case df::building_type::Workshop:
                 {
                     df::building_workshopst* ws = (df::building_workshopst*) bld;
@@ -783,6 +785,10 @@ private:
             case df::building_type::RoadPaved:
             case df::building_type::Well:
             case df::building_type::ScrewPump:
+            case df::building_type::Wagon:
+            case df::building_type::Shop:
+            case df::building_type::Support:
+            case df::building_type::Windmill:
                 {
                     df::building_actual* b = (df::building_actual*) bld;
                     if (b->design && !b->design->flags.bits.designed)
@@ -811,12 +817,27 @@ private:
             case df::building_type::Slab:
             case df::building_type::Chain:
             case df::building_type::GrateFloor:
+            case df::building_type::Hatch:
+            case df::building_type::BarsFloor:
+            case df::building_type::BarsVertical:
+            case df::building_type::GrateWall:
                 return df::unit_labor::HAUL_FURNITURE;
             case df::building_type::Trap:
             case df::building_type::GearAssembly:
             case df::building_type::AxleHorizontal:
             case df::building_type::AxleVertical:
+            case df::building_type::Rollers:
                 return df::unit_labor::MECHANIC;
+            case df::building_type::AnimalTrap:
+                return df::unit_labor::TRAPPER;
+            case df::building_type::Civzone:
+            case df::building_type::Nest:
+            case df::building_type::RoadDirt:
+            case df::building_type::Stockpile:
+            case df::building_type::Weapon:
+                return df::unit_labor::NONE;
+            case df::building_type::SiegeEngine:
+                return df::unit_labor::SIEGECRAFT;
             }
 
             debug ("AUTOLABOR: Cannot deduce labor for construct building job of type %s\n",
@@ -837,6 +858,8 @@ private:
 
             switch (bld->getType()) 
             {
+            case df::building_type::Hive:
+                return df::unit_labor::BEEKEEPING;
             case df::building_type::Workshop:
                 {
                     df::building_workshopst* ws = (df::building_workshopst*) bld;
@@ -855,6 +878,13 @@ private:
             case df::building_type::Wagon:
             case df::building_type::Bridge:
             case df::building_type::ScrewPump:
+            case df::building_type::ArcheryTarget:
+            case df::building_type::RoadPaved:
+            case df::building_type::Shop:
+            case df::building_type::Support:
+            case df::building_type::WaterWheel:
+            case df::building_type::Well:
+            case df::building_type::Windmill:
                 {
                     df::building_actual* b = (df::building_actual*) bld;
                     return construction_build_labor(b->contained_items[0]->item);
@@ -863,6 +893,10 @@ private:
             case df::building_type::FarmPlot:
                 return df::unit_labor::PLANT;
             case df::building_type::Trap:
+            case df::building_type::AxleHorizontal:
+            case df::building_type::AxleVertical:
+            case df::building_type::GearAssembly:
+            case df::building_type::Rollers:
                 return df::unit_labor::MECHANIC;
             case df::building_type::Chair:
             case df::building_type::Bed:
@@ -883,7 +917,21 @@ private:
             case df::building_type::Slab:
             case df::building_type::Chain:
             case df::building_type::Hatch:
+            case df::building_type::BarsFloor:
+            case df::building_type::BarsVertical:
+            case df::building_type::GrateFloor:
+            case df::building_type::GrateWall:
                 return df::unit_labor::HAUL_FURNITURE;
+            case df::building_type::AnimalTrap:
+                return df::unit_labor::TRAPPER;
+            case df::building_type::Civzone:
+            case df::building_type::Nest:
+            case df::building_type::RoadDirt:
+            case df::building_type::Stockpile:
+            case df::building_type::Weapon:
+                return df::unit_labor::NONE;
+            case df::building_type::SiegeEngine:
+                return df::unit_labor::SIEGECRAFT;
             }
 
             debug ("AUTOLABOR: Cannot deduce labor for destroy building job of type %s\n",
@@ -924,6 +972,8 @@ private:
                                 debug ("AUTOLABOR: Cannot deduce labor for make crafts job (not bone)\n");
                                 return df::unit_labor::NONE; 
                             }
+                        case df::item_type::WOOD:
+                            return df::unit_labor::WOOD_CRAFT;
                         default:
                             debug ("AUTOLABOR: Cannot deduce labor for make crafts job, item type %s\n", 
                                 ENUM_KEY_STR(item_type, jobitem).c_str());

@@ -96,8 +96,8 @@ enum ConfigFlags {
 command_result autolabor (color_ostream &out, std::vector <std::string> & parameters);
 
 // A plugin must be able to return its name and version.
-// The name string provided must correspond to the filename - autolabor.plug.so or autolabor.plug.dll in this case
-DFHACK_PLUGIN("autolabor");
+// The name string provided must correspond to the filename - autolabor2.plug.so or autolabor2.plug.dll in this case
+DFHACK_PLUGIN("autolabor2");
 
 static void generate_labor_to_skill_map();
 
@@ -1478,31 +1478,32 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
-        "autolabor", "Automatically manage dwarf labors.",
+        "autolabor2", "Automatically manage dwarf labors.",
         autolabor, false, /* true means that the command can't be used from non-interactive user interface */
         // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  autolabor enable\n"
-        "  autolabor disable\n"
+        "  autolabor2 enable\n"
+        "  autolabor2 disable\n"
         "    Enables or disables the plugin.\n"
-        "  autolabor max <labor> <maximum>\n"
+        "  autolabor2 max <labor> <maximum>\n"
         "    Set max number of dwarves assigned to a labor.\n"
-        "  autolabor max <labor> none\n"
+        "  autolabor2 max <labor> none\n"
         "    Unrestrict the number of dwarves assigned to a labor.\n"
-        "  autolabor priority <labor> <priority>\n"
+        "  autolabor2 priority <labor> <priority>\n"
         "    Change the assignment priority of a labor (default is 100)\n"
-        "  autolabor reset <labor>\n"
+        "  autolabor2 reset <labor>\n"
         "    Return a labor to the default handling.\n"
-        "  autolabor reset-all\n"
+        "  autolabor2 reset-all\n"
         "    Return all labors to the default handling.\n"
-        "  autolabor list\n"
+        "  autolabor2 list\n"
         "    List current status of all labors.\n"
-        "  autolabor status\n"
+        "  autolabor2 status\n"
         "    Show basic status information.\n"
         "Function:\n"
         "  When enabled, autolabor periodically checks your dwarves and enables or\n"
         "  disables labors.  Generally, each dwarf will be assigned exactly one labor.\n"
         "  Warning: autolabor will override any manual changes you make to labors\n"
-        "  while it is enabled.\n"
+        "  while it is enabled.  Do not try to run both autolabor and autolabor2 at\n"
+		"  the same time."
         ));
 
     generate_labor_to_skill_map();

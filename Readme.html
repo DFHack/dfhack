@@ -3,13 +3,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Docutils 0.9.1: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.10: http://docutils.sourceforge.net/" />
 <title>DFHack Readme</title>
 <style type="text/css">
 
 /*
 :Author: David Goodger (goodger@python.org)
-:Id: $Id: html4css1.css 7434 2012-05-11 21:06:27Z milde $
+:Id: $Id: html4css1.css 7514 2012-09-14 14:27:12Z milde $
 :Copyright: This stylesheet has been placed in the public domain.
 
 Default cascading style sheet for the HTML output of Docutils.
@@ -77,7 +77,7 @@ div.tip p.admonition-title {
 
 div.attention p.admonition-title, div.caution p.admonition-title,
 div.danger p.admonition-title, div.error p.admonition-title,
-div.warning p.admonition-title {
+div.warning p.admonition-title, .code .error {
   color: red ;
   font-weight: bold ;
   font-family: sans-serif }
@@ -253,13 +253,14 @@ pre.literal-block, pre.doctest-block, pre.math, pre.code {
   margin-left: 2em ;
   margin-right: 2em }
 
-pre.code .ln { /* line numbers */
-  color: grey;
-}
-
-.code {
-  background-color: #eeeeee
-}
+pre.code .ln { color: grey; } /* line numbers */
+pre.code, code { background-color: #eeeeee }
+pre.code .comment, code .comment { color: #5C6576 }
+pre.code .keyword, code .keyword { color: #3B0D06; font-weight: bold }
+pre.code .literal.string, code .literal.string { color: #0C5404 }
+pre.code .name.builtin, code .name.builtin { color: #352B84 }
+pre.code .deleted, code .deleted { background-color: #DEB0A1}
+pre.code .inserted, code .inserted { background-color: #A3D289}
 
 span.classifier {
   font-family: sans-serif ;
@@ -508,39 +509,42 @@ access DF memory and allow for easier development of new tools.</p>
 <li><a class="reference internal" href="#embark" id="id131">embark</a></li>
 <li><a class="reference internal" href="#lever" id="id132">lever</a></li>
 <li><a class="reference internal" href="#stripcaged" id="id133">stripcaged</a></li>
+<li><a class="reference internal" href="#create-items" id="id134">create-items</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#in-game-interface-tools" id="id134">In-game interface tools</a><ul>
-<li><a class="reference internal" href="#dwarf-manipulator" id="id135">Dwarf Manipulator</a></li>
-<li><a class="reference internal" href="#search" id="id136">Search</a></li>
-<li><a class="reference internal" href="#automaterial" id="id137">AutoMaterial</a></li>
-<li><a class="reference internal" href="#gui-liquids" id="id138">gui/liquids</a></li>
-<li><a class="reference internal" href="#gui-mechanisms" id="id139">gui/mechanisms</a></li>
-<li><a class="reference internal" href="#gui-rename" id="id140">gui/rename</a></li>
-<li><a class="reference internal" href="#gui-room-list" id="id141">gui/room-list</a></li>
-<li><a class="reference internal" href="#gui-choose-weapons" id="id142">gui/choose-weapons</a></li>
-<li><a class="reference internal" href="#gui-guide-path" id="id143">gui/guide-path</a></li>
-<li><a class="reference internal" href="#gui-workshop-job" id="id144">gui/workshop-job</a></li>
-<li><a class="reference internal" href="#gui-workflow" id="id145">gui/workflow</a></li>
-<li><a class="reference internal" href="#gui-assign-rack" id="id146">gui/assign-rack</a></li>
+<li><a class="reference internal" href="#in-game-interface-tools" id="id135">In-game interface tools</a><ul>
+<li><a class="reference internal" href="#dwarf-manipulator" id="id136">Dwarf Manipulator</a></li>
+<li><a class="reference internal" href="#search" id="id137">Search</a></li>
+<li><a class="reference internal" href="#automaterial" id="id138">AutoMaterial</a></li>
+<li><a class="reference internal" href="#gui-liquids" id="id139">gui/liquids</a></li>
+<li><a class="reference internal" href="#gui-mechanisms" id="id140">gui/mechanisms</a></li>
+<li><a class="reference internal" href="#gui-rename" id="id141">gui/rename</a></li>
+<li><a class="reference internal" href="#gui-room-list" id="id142">gui/room-list</a></li>
+<li><a class="reference internal" href="#gui-choose-weapons" id="id143">gui/choose-weapons</a></li>
+<li><a class="reference internal" href="#gui-guide-path" id="id144">gui/guide-path</a></li>
+<li><a class="reference internal" href="#gui-workshop-job" id="id145">gui/workshop-job</a></li>
+<li><a class="reference internal" href="#gui-workflow" id="id146">gui/workflow</a></li>
+<li><a class="reference internal" href="#gui-assign-rack" id="id147">gui/assign-rack</a></li>
+<li><a class="reference internal" href="#gui-advfort" id="id148">gui/advfort</a></li>
+<li><a class="reference internal" href="#gui-gm-editor" id="id149">gui/gm-editor</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#behavior-mods" id="id147">Behavior Mods</a><ul>
-<li><a class="reference internal" href="#siege-engine" id="id148">Siege Engine</a><ul>
-<li><a class="reference internal" href="#rationale" id="id149">Rationale</a></li>
-<li><a class="reference internal" href="#configuration-ui" id="id150">Configuration UI</a></li>
+<li><a class="reference internal" href="#behavior-mods" id="id150">Behavior Mods</a><ul>
+<li><a class="reference internal" href="#siege-engine" id="id151">Siege Engine</a><ul>
+<li><a class="reference internal" href="#rationale" id="id152">Rationale</a></li>
+<li><a class="reference internal" href="#configuration-ui" id="id153">Configuration UI</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#power-meter" id="id151">Power Meter</a></li>
-<li><a class="reference internal" href="#steam-engine" id="id152">Steam Engine</a><ul>
-<li><a class="reference internal" href="#id1" id="id153">Rationale</a></li>
-<li><a class="reference internal" href="#construction" id="id154">Construction</a></li>
-<li><a class="reference internal" href="#operation" id="id155">Operation</a></li>
-<li><a class="reference internal" href="#explosions" id="id156">Explosions</a></li>
-<li><a class="reference internal" href="#save-files" id="id157">Save files</a></li>
+<li><a class="reference internal" href="#power-meter" id="id154">Power Meter</a></li>
+<li><a class="reference internal" href="#steam-engine" id="id155">Steam Engine</a><ul>
+<li><a class="reference internal" href="#id1" id="id156">Rationale</a></li>
+<li><a class="reference internal" href="#construction" id="id157">Construction</a></li>
+<li><a class="reference internal" href="#operation" id="id158">Operation</a></li>
+<li><a class="reference internal" href="#explosions" id="id159">Explosions</a></li>
+<li><a class="reference internal" href="#save-files" id="id160">Save files</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#add-spatter" id="id158">Add Spatter</a></li>
+<li><a class="reference internal" href="#add-spatter" id="id161">Add Spatter</a></li>
 </ul>
 </li>
 </ul>
@@ -2688,11 +2692,13 @@ quickly after you unpause.</p>
 <div class="section" id="slayrace">
 <h2><a class="toc-backref" href="#id124">slayrace</a></h2>
 <p>Kills any unit of a given race.</p>
-<p>With no argument, lists the available races.</p>
+<p>With no argument, lists the available races and count eligible targets.</p>
 <p>With the special argument <tt class="docutils literal">him</tt>, targets only the selected creature.</p>
+<p>With the special argument <tt class="docutils literal">undead</tt>, targets all undeads on the map,
+regardless of their race.</p>
 <p>Any non-dead non-caged unit of the specified race gets its <tt class="docutils literal">blood_count</tt>
 set to 0, which means immediate death at the next game tick. For creatures
-such as vampires, also set animal.vanish_countdown to 2.</p>
+such as vampires, it also sets animal.vanish_countdown to 2.</p>
 <p>An alternate mode is selected by adding a 2nd argument to the command,
 <tt class="docutils literal">magma</tt>. In this case, a column of 7/7 magma is generated on top of the
 targets until they die (Warning: do not call on magma-safe creatures. Also,
@@ -2761,7 +2767,8 @@ superdwarf add
 <div class="section" id="deathcause">
 <h2><a class="toc-backref" href="#id129">deathcause</a></h2>
 <p>Focus a body part ingame, and this script will display the cause of death of
-the creature.</p>
+the creature.
+Also works when selecting units from the 'u'nitlist viewscreen.</p>
 </div>
 <div class="section" id="lua">
 <h2><a class="toc-backref" href="#id130">lua</a></h2>
@@ -2818,9 +2825,31 @@ alternatively pass cage IDs as arguments:</p>
 stripcaged weapons 25321 34228
 </pre>
 </div>
+<div class="section" id="create-items">
+<h2><a class="toc-backref" href="#id134">create-items</a></h2>
+<p>Spawn arbitrary items under the cursor.</p>
+<p>The first argument gives the item category, the second gives the material,
+and the optionnal third gives the number of items to create (defaults to 20).</p>
+<p>Currently supported item categories: <tt class="docutils literal">boulder</tt>, <tt class="docutils literal">bar</tt>, <tt class="docutils literal">plant</tt>, <tt class="docutils literal">log</tt>,
+<tt class="docutils literal">web</tt>.</p>
+<p>Instead of material, using <tt class="docutils literal">list</tt> makes the script list eligible materials.</p>
+<p>The <tt class="docutils literal">web</tt> item category will create an uncollected cobweb on the floor.</p>
+<p>Note that the script does not enforce anything, and will let you create
+boulders of toad blood and stuff like that.
+However the <tt class="docutils literal">list</tt> mode will only show 'normal' materials.</p>
+<p>Exemples:</p>
+<pre class="literal-block">
+create-items boulders COAL_BITUMINOUS 12
+create-items plant tail_pig
+create-items log list
+create-items web CREATURE:SPIDER_CAVE_GIANT:SILK
+create-items bar CREATURE:CAT:SOAP
+create-items bar adamantine
+</pre>
+</div>
 </div>
 <div class="section" id="in-game-interface-tools">
-<h1><a class="toc-backref" href="#id134">In-game interface tools</a></h1>
+<h1><a class="toc-backref" href="#id135">In-game interface tools</a></h1>
 <p>These tools work by displaying dialogs or overlays in the game window, and
 are mostly implemented by lua scripts.</p>
 <div class="note">
@@ -2833,7 +2862,7 @@ existing DF screens, they deliberately use red instead of green for the key.</p>
 guideline because it arguably just fixes small usability bugs in the game UI.</p>
 </div>
 <div class="section" id="dwarf-manipulator">
-<h2><a class="toc-backref" href="#id135">Dwarf Manipulator</a></h2>
+<h2><a class="toc-backref" href="#id136">Dwarf Manipulator</a></h2>
 <p>Implemented by the manipulator plugin. To activate, open the unit screen and
 press 'l'.</p>
 <img alt="images/manipulator.png" src="images/manipulator.png" />
@@ -2872,8 +2901,10 @@ cursor onto that cell instead of toggling it.</li>
 directly to the main dwarf mode screen.</p>
 </div>
 <div class="section" id="search">
-<h2><a class="toc-backref" href="#id136">Search</a></h2>
-<p>The search plugin adds search to the Stocks, Trading, Stockpile and Unit List screens.</p>
+<h2><a class="toc-backref" href="#id137">Search</a></h2>
+<p>The search plugin adds search to the Stocks, Animals, Trading, Stockpile,
+Noble (assignment candidates), Military (position candidates), Burrows
+(unit list), Rooms, Announcements, Job List and Unit List screens.</p>
 <img alt="images/search.png" src="images/search.png" />
 <p>Searching works the same way as the search option in &quot;Move to Depot&quot; does.
 You will see the Search option displayed on screen with a hotkey (usually 's').
@@ -2888,8 +2919,9 @@ filter).</p>
 <p>Leaving any screen automatically clears the filter.</p>
 <p>In the Trade screen, the actual trade will always only act on items that
 are actually visible in the list; the same effect applies to the Trade
-Value numbers displayed by the screen. Because of this, pressing the 't'
-key while search is active clears the search instead of executing the trade.</p>
+Value numbers displayed by the screen. Because of this, the 't' key is
+blocked while search is active, so you have to reset the filters first.
+Pressing Alt-C will clear both search strings.</p>
 <p>In the stockpile screen the option only appears if the cursor is in the
 rightmost list:</p>
 <img alt="images/search-stockpile.png" src="images/search-stockpile.png" />
@@ -2899,7 +2931,7 @@ only fat or tallow by forbidding fats, then searching for fat/tallow, and
 using Permit Fats again while the list is filtered.</p>
 </div>
 <div class="section" id="automaterial">
-<h2><a class="toc-backref" href="#id137">AutoMaterial</a></h2>
+<h2><a class="toc-backref" href="#id138">AutoMaterial</a></h2>
 <p>The automaterial plugin makes building constructions (walls, floors, fortifications,
 etc) a little bit easier by saving you from having to trawl through long lists of
 materials each time you place one.</p>
@@ -2926,14 +2958,14 @@ materials, it returns you back to this screen. If you use this along with severa
 enabled materials, you should be able to place complex constructions more conveniently.</p>
 </div>
 <div class="section" id="gui-liquids">
-<h2><a class="toc-backref" href="#id138">gui/liquids</a></h2>
+<h2><a class="toc-backref" href="#id139">gui/liquids</a></h2>
 <p>To use, bind to a key (the example config uses Alt-L) and activate in the 'k' mode.</p>
 <img alt="images/liquids.png" src="images/liquids.png" />
 <p>While active, use the suggested keys to switch the usual liquids parameters, and Enter
 to select the target area and apply changes.</p>
 </div>
 <div class="section" id="gui-mechanisms">
-<h2><a class="toc-backref" href="#id139">gui/mechanisms</a></h2>
+<h2><a class="toc-backref" href="#id140">gui/mechanisms</a></h2>
 <p>To use, bind to a key (the example config uses Ctrl-M) and activate in the 'q' mode.</p>
 <img alt="images/mechanisms.png" src="images/mechanisms.png" />
 <p>Lists mechanisms connected to the building, and their links. Navigating the list centers
@@ -2943,7 +2975,7 @@ focus on the current one. Shift-Enter has an effect equivalent to pressing Enter
 re-entering the mechanisms ui.</p>
 </div>
 <div class="section" id="gui-rename">
-<h2><a class="toc-backref" href="#id140">gui/rename</a></h2>
+<h2><a class="toc-backref" href="#id141">gui/rename</a></h2>
 <p>Backed by the rename plugin, this script allows entering the desired name
 via a simple dialog in the game ui.</p>
 <ul>
@@ -2966,7 +2998,7 @@ their species string.</p>
 unit profession change to Ctrl-Shift-T.</p>
 </div>
 <div class="section" id="gui-room-list">
-<h2><a class="toc-backref" href="#id141">gui/room-list</a></h2>
+<h2><a class="toc-backref" href="#id142">gui/room-list</a></h2>
 <p>To use, bind to a key (the example config uses Alt-R) and activate in the 'q' mode,
 either immediately or after opening the assign owner page.</p>
 <img alt="images/room-list.png" src="images/room-list.png" />
@@ -2974,7 +3006,7 @@ either immediately or after opening the assign owner page.</p>
 list, and allows unassigning them.</p>
 </div>
 <div class="section" id="gui-choose-weapons">
-<h2><a class="toc-backref" href="#id142">gui/choose-weapons</a></h2>
+<h2><a class="toc-backref" href="#id143">gui/choose-weapons</a></h2>
 <p>Bind to a key (the example config uses Ctrl-W), and activate in the Equip-&gt;View/Customize
 page of the military screen.</p>
 <p>Depending on the cursor location, it rewrites all 'individual choice weapon' entries
@@ -2985,7 +3017,7 @@ only that entry, and does it even if it is not 'individual choice'.</p>
 and may lead to inappropriate weapons being selected.</p>
 </div>
 <div class="section" id="gui-guide-path">
-<h2><a class="toc-backref" href="#id143">gui/guide-path</a></h2>
+<h2><a class="toc-backref" href="#id144">gui/guide-path</a></h2>
 <p>Bind to a key (the example config uses Alt-P), and activate in the Hauling menu with
 the cursor over a Guide order.</p>
 <img alt="images/guide-path.png" src="images/guide-path.png" />
@@ -2993,7 +3025,7 @@ the cursor over a Guide order.</p>
 computes it when the order is executed for the first time.</p>
 </div>
 <div class="section" id="gui-workshop-job">
-<h2><a class="toc-backref" href="#id144">gui/workshop-job</a></h2>
+<h2><a class="toc-backref" href="#id145">gui/workshop-job</a></h2>
 <p>Bind to a key (the example config uses Alt-A), and activate with a job selected in
 a workshop in the 'q' mode.</p>
 <img alt="images/workshop-job.png" src="images/workshop-job.png" />
@@ -3029,7 +3061,7 @@ and then try to change the input item type, now it won't let you select <em>plan
 you have to unset the material first.</p>
 </div>
 <div class="section" id="gui-workflow">
-<h2><a class="toc-backref" href="#id145">gui/workflow</a></h2>
+<h2><a class="toc-backref" href="#id146">gui/workflow</a></h2>
 <p>Bind to a key (the example config uses Alt-W), and activate with a job selected
 in a workshop in the 'q' mode.</p>
 <img alt="images/workflow.png" src="images/workflow.png" />
@@ -3076,7 +3108,7 @@ the current stock value. The bright green dashed line is the target
 limit (maximum) and the dark green line is that minus the gap (minimum).</p>
 </div>
 <div class="section" id="gui-assign-rack">
-<h2><a class="toc-backref" href="#id146">gui/assign-rack</a></h2>
+<h2><a class="toc-backref" href="#id147">gui/assign-rack</a></h2>
 <p>Bind to a key (the example config uses P), and activate when viewing a weapon
 rack in the 'q' mode.</p>
 <img alt="images/assign-rack.png" src="images/assign-rack.png" />
@@ -3099,9 +3131,36 @@ are assigned to the barracks/armory containing the selected stand as
 the intended user. In order to aid in the choice, it shows the number
 of currently assigned racks for every valid squad.</p>
 </div>
+<div class="section" id="gui-advfort">
+<h2><a class="toc-backref" href="#id148">gui/advfort</a></h2>
+<p>This script allows to perform jobs in adventure mode. For more complete help
+press '?' while script is running. It's most confortable to use this as a
+keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:</p>
+<ul class="simple">
+<li>-a or --nodfassign - uses different method to assign items.</li>
+<li>-i or --inventory - checks inventory for possible items to use in the job.</li>
+<li>-c or --cheat - relaxes item requirements for buildings (e.g. walls from bones).
+implies -a</li>
+<li>job - selects that job (e.g. Dig or FellTree)</li>
+</ul>
+</div>
+<div class="section" id="gui-gm-editor">
+<h2><a class="toc-backref" href="#id149">gui/gm-editor</a></h2>
+<p>There are three ways to open this editor:</p>
+<ul class="simple">
+<li>using gui/gm-editor command/keybinding - opens editor on what is selected
+or viewed (e.g. unit/item description screen)</li>
+<li>using gui/gm-editor &lt;lua command&gt; - executes lua command and opens editor on
+it's results (e.g. gui/gm-editor &quot;df.global.world.items.all&quot; shows all items)</li>
+<li>using gui/gm-edito dialog - shows an in game dialog to input lua command. Works
+the same as version above.</li>
+</ul>
+<p>This editor allows to change and modify almost anything in df. Press '?' for an
+in-game help.</p>
+</div>
 </div>
 <div class="section" id="behavior-mods">
-<h1><a class="toc-backref" href="#id147">Behavior Mods</a></h1>
+<h1><a class="toc-backref" href="#id150">Behavior Mods</a></h1>
 <p>These plugins, when activated via configuration UI or by detecting certain
 structures in RAWs, modify the game engine behavior concerning the target
 objects to add features not otherwise present.</p>
@@ -3112,20 +3171,20 @@ technical challenge, and do not represent any long-term plans to produce more
 similar modifications of the game.</p>
 </div>
 <div class="section" id="siege-engine">
-<h2><a class="toc-backref" href="#id148">Siege Engine</a></h2>
+<h2><a class="toc-backref" href="#id151">Siege Engine</a></h2>
 <p>The siege-engine plugin enables siege engines to be linked to stockpiles, and
 aimed at an arbitrary rectangular area across Z levels, instead of the original
 four directions. Also, catapults can be ordered to load arbitrary objects, not
 just stones.</p>
 <div class="section" id="rationale">
-<h3><a class="toc-backref" href="#id149">Rationale</a></h3>
+<h3><a class="toc-backref" href="#id152">Rationale</a></h3>
 <p>Siege engines are a very interesting feature, but sadly almost useless in the current state
 because they haven't been updated since 2D and can only aim in four directions. This is an
 attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
 e.g. like making siegers bring their own, are something only Toady can do.</p>
 </div>
 <div class="section" id="configuration-ui">
-<h3><a class="toc-backref" href="#id150">Configuration UI</a></h3>
+<h3><a class="toc-backref" href="#id153">Configuration UI</a></h3>
 <p>The configuration front-end to the plugin is implemented by the gui/siege-engine
 script. Bind it to a key (the example config uses Alt-A) and activate after selecting
 a siege engine in 'q' mode.</p>
@@ -3148,7 +3207,7 @@ menu.</p>
 </div>
 </div>
 <div class="section" id="power-meter">
-<h2><a class="toc-backref" href="#id151">Power Meter</a></h2>
+<h2><a class="toc-backref" href="#id154">Power Meter</a></h2>
 <p>The power-meter plugin implements a modified pressure plate that detects power being
 supplied to gear boxes built in the four adjacent N/S/W/E tiles.</p>
 <p>The configuration front-end is implemented by the gui/power-meter script. Bind it to a
@@ -3159,11 +3218,11 @@ in the build menu.</p>
 configuration page, but configures parameters relevant to the modded power meter building.</p>
 </div>
 <div class="section" id="steam-engine">
-<h2><a class="toc-backref" href="#id152">Steam Engine</a></h2>
+<h2><a class="toc-backref" href="#id155">Steam Engine</a></h2>
 <p>The steam-engine plugin detects custom workshops with STEAM_ENGINE in
 their token, and turns them into real steam engines.</p>
 <div class="section" id="id1">
-<h3><a class="toc-backref" href="#id153">Rationale</a></h3>
+<h3><a class="toc-backref" href="#id156">Rationale</a></h3>
 <p>The vanilla game contains only water wheels and windmills as sources of
 power, but windmills give relatively little power, and water wheels require
 flowing water, which must either be a real river and thus immovable and
@@ -3174,7 +3233,7 @@ it can be done just by combining existing features of the game engine
 in a new way with some glue code and a bit of custom logic.</p>
 </div>
 <div class="section" id="construction">
-<h3><a class="toc-backref" href="#id154">Construction</a></h3>
+<h3><a class="toc-backref" href="#id157">Construction</a></h3>
 <p>The workshop needs water as its input, which it takes via a
 passable floor tile below it, like usual magma workshops do.
 The magma version also needs magma.</p>
@@ -3198,7 +3257,7 @@ short axles that can be built later than both of the engines.</p>
 </div>
 </div>
 <div class="section" id="operation">
-<h3><a class="toc-backref" href="#id155">Operation</a></h3>
+<h3><a class="toc-backref" href="#id158">Operation</a></h3>
 <p>In order to operate the engine, queue the Stoke Boiler job (optionally
 on repeat). A furnace operator will come, possibly bringing a bar of fuel,
 and perform it. As a result, a &quot;boiling water&quot; item will appear
@@ -3229,7 +3288,7 @@ decrease it by further 4%, and also decrease the whole steam
 use rate by 10%.</p>
 </div>
 <div class="section" id="explosions">
-<h3><a class="toc-backref" href="#id156">Explosions</a></h3>
+<h3><a class="toc-backref" href="#id159">Explosions</a></h3>
 <p>The engine must be constructed using barrel, pipe and piston
 from fire-safe, or in the magma version magma-safe metals.</p>
 <p>During operation weak parts get gradually worn out, and
@@ -3238,7 +3297,7 @@ toppled during operation by a building destroyer, or a
 tantruming dwarf.</p>
 </div>
 <div class="section" id="save-files">
-<h3><a class="toc-backref" href="#id157">Save files</a></h3>
+<h3><a class="toc-backref" href="#id160">Save files</a></h3>
 <p>It should be safe to load and view engine-using fortresses
 from a DF version without DFHack installed, except that in such
 case the engines won't work. However actually making modifications
@@ -3249,7 +3308,7 @@ being generated.</p>
 </div>
 </div>
 <div class="section" id="add-spatter">
-<h2><a class="toc-backref" href="#id158">Add Spatter</a></h2>
+<h2><a class="toc-backref" href="#id161">Add Spatter</a></h2>
 <p>This plugin makes reactions with names starting with <tt class="docutils literal">SPATTER_ADD_</tt>
 produce contaminants on the items instead of improvements. The produced
 contaminants are immune to being washed away by water or destroyed by

@@ -11,6 +11,7 @@ use_same={key="A_MOVE_SAME_SQUARE",desc="Use job at the tile you are standing"},
 workshop={key="CHANGETAB",desc="Show building menu"},
 }
 
+
 local gui = require 'gui'
 local wid=require 'gui.widgets'
 local dialog=require 'gui.dialogs'
@@ -393,7 +394,7 @@ function isSuitableItem(job_item,item)
     if job_item.flags1.sand_bearing and not item:isSandBearing() then
         return false,"not sand bearing"
     end
-    if job_item.flags1.butcherable and not (item:getType()== df.item_type.CORPSE or item:getType()==CORPSEPIECE) then
+    if job_item.flags1.butcherable and not (item:getType()== df.item_type.CORPSE or item:getType()==df.item_type.CORPSEPIECE) then
         return false,"not butcherable"
     end
     local matinfo=dfhack.matinfo.decode(item)
@@ -1023,6 +1024,61 @@ function usetool:openShopWindow(building)
         qerror("No jobs for this workshop")
     end
 end
+function usetool:armCleanTrap(building)
+    local adv=df.global.world.units.active[0]
+    --[[
+    Lever,
+        PressurePlate,
+        CageTrap,
+        StoneFallTrap,
+        WeaponTrap,
+        TrackStop
+    --]]
+    if building.state==0 then
+        --CleanTrap
+        --[[        LoadCageTrap,
+        LoadStoneTrap,
+        LoadWeaponTrap,
+        ]]
+       
+        local args={unit=adv,post_actions={AssignBuildingRef,AssignJobItems},pos=adv.pos,from_pos=adv.pos,job_type=df.job_type.CleanTrap}
+        if building.trap_type==df.trap_type.CageTrap then
+            args.job_type=df.job_type.LoadCageTrap
+            local job_filter={items={{quantity=1,item_type=df.item_type.CAGE}} }
+            args.pre_actions={dfhack.curry(setFiltersUp,job_filter)}
+
+        elseif building.trap_type==df.trap_type.StoneFallTrap then
+            args.job_type=df.job_type.LoadStoneTrap
+            local job_filter={items={{quantity=1,item_type=df.item_type.BOULDER}} }
+            args.pre_actions={dfhack.curry(setFiltersUp,job_filter)}
+        elseif building.trap_type==df.trap_type.WeaponTrap then
+            qerror("TODO")
+        else
+            return
+        end
+        local job,msg=makeJob(args)
+        if not job then
+            print(msg)
+        end
+    end
+end
+function usetool:hiveActions(building)
+    local adv=df.global.world.units.active[0]
+    local args={unit=adv,post_actions={AssignBuildingRef,AssignJobItems},pos=adv.pos,from_pos=adv.pos,job_type=df.job_type.InstallColonyInHive}
+    local job_filter={items={{quantity=1,item_type=df.item_type.VERMIN}} }
+            args.pre_actions={dfhack.curry(setFiltersUp,job_filter)}
+    local job,msg=makeJob(args)
+    if not job then
+        print(msg)
+    end
+    --InstallColonyInHive,
+    --CollectHiveProducts,
+end
+function usetool:operatePump(building)
+    
+    local adv=df.global.world.units.active[0]
+    makeJob{unit=adv,post_actions={AssignBuildingRef},pos=adv.pos,from_pos=adv.pos,job_type=df.job_type.OperatePump}
+end
 function usetool:farmPlot(building)
     local adv=df.global.world.units.active[0]
     local do_harvest=false
@@ -1095,6 +1151,18 @@ MODES={
     [df.building_type.FarmPlot]={
         name="Plant/Harvest",
         input=usetool.farmPlot,
+    },
+    [df.building_type.ScrewPump]={
+        name="Operate Pump",
+        input=usetool.operatePump,
+    },
+    [df.building_type.Trap]={
+        name="Arm/Clean Trap",
+        input=usetool.armCleanTrap,
+    },
+    [df.building_type.Hive]={
+        name="Hive actions",
+        input=usetool.hiveActions,
     }
 }
 function usetool:shopMode(enable,mode,building)    

@@ -1,8 +1,16 @@
 -- Fixes cloth/thread stockpiles by correcting material object data.
 
 local raws = df.global.world.raws
-local organic_types = raws.mat_table.organic_types
-local organic_indexes = raws.mat_table.organic_indexes
+
+-- Cache references to vectors in lua tables for a speed-up
+local organic_types = {}
+for i,v in ipairs(raws.mat_table.organic_types) do
+    organic_types[i] = v
+end
+local organic_indexes = {}
+for i,v in ipairs(raws.mat_table.organic_indexes) do
+    organic_indexes[i] = v
+end
 
 local function verify(category,idx,vtype,vidx)
     if idx == -1 then

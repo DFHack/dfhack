@@ -835,7 +835,8 @@ IMPLEMENT_HOOKS(df::viewscreen_petst, pets_search);
 //
 // START: Stocks screen search
 //
-class stocks_search : public search_generic<df::viewscreen_storesst, df::item*>
+typedef search_generic<df::viewscreen_storesst, df::item*> stocks_search_base;
+class stocks_search : public stocks_search_base
 {
 public:
 
@@ -869,7 +870,7 @@ public:
             return false;
         }
 
-        return search_generic::process_input(input);
+        return stocks_search_base::process_input(input);
     }
 
     virtual void do_post_input_feed()
@@ -919,7 +920,8 @@ IMPLEMENT_HOOKS(df::viewscreen_storesst, stocks_search);
 //
 // START: Unit screen search
 //
-class unitlist_search : public search_twocolumn_modifiable<df::viewscreen_unitlistst, df::unit*, df::job*>
+typedef search_twocolumn_modifiable<df::viewscreen_unitlistst, df::unit*, df::job*> unitlist_search_base;
+class unitlist_search : public unitlist_search_base
 {
 public:
     void render() const
@@ -930,7 +932,7 @@ public:
 private:
     void do_post_init()
     {
-        search_twocolumn_modifiable::do_post_init();
+        unitlist_search_base::do_post_init();
         read_only = true;
     }
 
@@ -1186,7 +1188,8 @@ IMPLEMENT_HOOKS(df::viewscreen_layer_stockpilest, stockpile_search);
 //
 // START: Military screen search
 //
-class military_search : public layered_search<df::viewscreen_layer_militaryst, df::unit *, 2>
+typedef layered_search<df::viewscreen_layer_militaryst, df::unit *, 2> military_search_base;
+class military_search : public military_search_base
 {
 public:
 
@@ -1210,7 +1213,7 @@ public:
         if (screen->page != df::viewscreen_layer_militaryst::Positions)
             return false;
 
-        return layered_search::can_init(screen);
+        return military_search_base::can_init(screen);
     }
 
     vector<df::unit *> *get_primary_list() 
@@ -1252,8 +1255,8 @@ IMPLEMENT_HOOKS_PRIO(df::viewscreen_layer_militaryst, military_search, 100);
 //
 static map< df::building_type, vector<string> > room_quality_names;
 static int32_t room_value_bounds[] = {1, 100, 250, 500, 1000, 1500, 2500, 10000};
-
-class roomlist_search : public search_twocolumn_modifiable<df::viewscreen_buildinglistst, df::building*, int32_t>
+typedef search_twocolumn_modifiable<df::viewscreen_buildinglistst, df::building*, int32_t> roomlist_search_base;
+class roomlist_search : public roomlist_search_base
 {
 public:
     void render() const
@@ -1264,7 +1267,7 @@ public:
 private:
     void do_post_init()
     {
-        search_twocolumn_modifiable::do_post_init();
+        roomlist_search_base::do_post_init();
         read_only = true;
     }
 
@@ -1374,8 +1377,8 @@ IMPLEMENT_HOOKS(df::viewscreen_announcelistst, annoucnement_search);
 // START: Nobles search list
 //
 typedef df::viewscreen_layer_noblelistst::T_candidates T_candidates;
-
-class nobles_search : public layered_search<df::viewscreen_layer_noblelistst, T_candidates *, 1>
+typedef layered_search<df::viewscreen_layer_noblelistst, T_candidates *, 1> nobles_search_base;
+class nobles_search : public nobles_search_base
 {
 public:
 
@@ -1402,7 +1405,7 @@ public:
         if (screen->mode != df::viewscreen_layer_noblelistst::Appoint)
             return false;
 
-        return layered_search::can_init(screen);
+        return nobles_search_base::can_init(screen);
     }
 
     vector<T_candidates *> *get_primary_list() 
@@ -1467,7 +1470,8 @@ void get_job_details(string &desc, df::job *job)
         desc += "suspended.";
 }
 
-class joblist_search : public search_twocolumn_modifiable<df::viewscreen_joblistst, df::job*, df::unit*>
+typedef search_twocolumn_modifiable<df::viewscreen_joblistst, df::job*, df::unit*> joblist_search_base;
+class joblist_search : public joblist_search_base
 {
 public:
     void render() const
@@ -1478,7 +1482,7 @@ public:
 private:
     void do_post_init()
     {
-        search_twocolumn_modifiable::do_post_init();
+        joblist_search_base::do_post_init();
         read_only = true;
     }
 
@@ -1527,14 +1531,15 @@ IMPLEMENT_HOOKS(df::viewscreen_joblistst, joblist_search);
 //
 using df::global::ui;
 
-class burrow_search : public search_twocolumn_modifiable<df::viewscreen_dwarfmodest, df::unit*, bool>
+typedef search_twocolumn_modifiable<df::viewscreen_dwarfmodest, df::unit*, bool> burrow_search_base;
+class burrow_search : public burrow_search_base
 {
 public:
     bool can_init(df::viewscreen_dwarfmodest *screen)
     {
         if (ui->main.mode == df::ui_sidebar_mode::Burrows && ui->burrows.in_add_units_mode)
         {
-            return search_twocolumn_modifiable::can_init(screen);
+            return burrow_search_base::can_init(screen);
         }
 
         return false;

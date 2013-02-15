@@ -28,6 +28,58 @@ distribution.
 
 namespace DFHack
 {
+    /* VMethod interpose API.
+
+       This API allows replacing an entry in the original vtable
+       with code defined by DFHack, while retaining ability to
+       call the original code. The API can be safely used from
+       plugins, and multiple hooks for the same vmethod are
+       automatically chained (subclass before superclass; at same
+       level highest priority called first; undefined order otherwise).
+
+       Usage:
+
+       struct my_hack : df::someclass {
+           typedef df::someclass interpose_base;
+
+           DEFINE_VMETHOD_INTERPOSE(void, foo, (int arg)) {
+               // If needed by the code, claim the suspend lock.
+               // DO NOT USE THE USUAL CoreSuspender, OR IT WILL DEADLOCK!
+               // CoreSuspendClaimer suspend;
+               ...
+               INTERPOSE_NEXT(foo)(arg) // call the original
+               ...
+           }
+       };
+
+       IMPLEMENT_VMETHOD_INTERPOSE(my_hack, foo);
+       or
+       IMPLEMENT_VMETHOD_INTERPOSE_PRIO(my_hack, foo, priority);
+
+       void init() {
+           if (!INTERPOSE_HOOK(my_hack, foo).apply())
+               error();
+       }
+
+       void shutdown() {
+           INTERPOSE_HOOK(my_hack, foo).remove();
+       }
+
+       Important caveat:
+
+       This will NOT intercept calls to the superclass vmethod
+       from overriding vmethod bodies in subclasses, i.e. whenever
+       DF code contains something like this, the call to "superclass::foo()"
+       doesn't actually use vtables, and thus will never trigger any hooks:
+
+       class superclass { virtual foo() { ... } };
+       class subclass : superclass { virtual foo() { ... superclass::foo(); ... } };
+
+       The only workaround is to implement and apply a second hook for subclass::foo,
+       and repeat that for any other subclasses and sub-subclasses that override this
+       vmethod.
+     */
+
     template<bool> struct StaticAssert;
     template<> struct StaticAssert<true> {};
 
@@ -81,43 +133,6 @@ namespace DFHack
         return addr_to_method_pointer<P>(identity.get_vmethod_ptr(idx));
     }
 
-    /* VMethod interpose API.
-
-       This API allows replacing an entry in the original vtable
-       with code defined by DFHack, while retaining ability to
-       call the original code. The API can be safely used from
-       plugins, and multiple hooks for the same vmethod are
-       automatically chained (subclass before superclass; at same
-       level highest priority called first; undefined order otherwise).
-
-       Usage:
-
-       struct my_hack : df::someclass {
-           typedef df::someclass interpose_base;
-
-           DEFINE_VMETHOD_INTERPOSE(void, foo, (int arg)) {
-               // If needed by the code, claim the suspend lock.
-               // DO NOT USE THE USUAL CoreSuspender, OR IT WILL DEADLOCK!
-               // CoreSuspendClaimer suspend;
-               ...
-               INTERPOSE_NEXT(foo)(arg) // call the original
-               ...
-           }
-       };
-
-       IMPLEMENT_VMETHOD_INTERPOSE(my_hack, foo);
-       or
-       IMPLEMENT_VMETHOD_INTERPOSE_PRIO(my_hack, foo, priority);
-
-       void init() {
-           if (!INTERPOSE_HOOK(my_hack, foo).apply())
-               error();
-       }
-
-       void shutdown() {
-           INTERPOSE_HOOK(my_hack, foo).remove();
-       }
-     */
 
 #define DEFINE_VMETHOD_INTERPOSE(rtype, name, args) \
     typedef rtype (interpose_base::*interpose_ptr_##name)args; \
@@ -142,18 +157,21 @@ namespace DFHack
         friend class virtual_identity;
 
         virtual_identity *host; // Class with the vtable
-        int vmethod_idx;
+        int vmethod_idx;        // Index of the interposed method in the vtable
         void *interpose_method; // Pointer to the code of the interposing method
-        void *chain_mptr;       // Pointer to the chain field below
-        int priority;
+        void *chain_mptr;       // Pointer to the chain field in the subclass below
+        int priority;           // Higher priority hooks are called earlier
 
-        bool applied;
-        void *saved_chain;      // Previous pointer to the code
-        VMethodInterposeLinkBase *next, *prev; // Other hooks for the same method
+        bool applied;           // True if this hook is currently applied
+        void *saved_chain;      // Pointer to the code of the original vmethod or next hook
 
-        // inherited vtable members
+        // Chain of hooks within the same host
+        VMethodInterposeLinkBase *next, *prev;
+        // Subclasses that inherit this topmost hook directly
         std::set<virtual_identity*> child_hosts;
+        // Hooks within subclasses that branch off this topmost hook
         std::set<VMethodInterposeLinkBase*> child_next;
+        // (See the cpp file for a more detailed description of these links)
 
         void set_chain(void *chain);
         void on_host_delete(virtual_identity *host);
@@ -172,6 +190,9 @@ namespace DFHack
     template<class Base, class Ptr>
     class VMethodInterposeLink : public VMethodInterposeLinkBase {
     public:
+        // Exactly the same as the saved_chain field of superclass,
+        // but converted to the appropriate pointer-to-method type.
+        // Kept up to date via the chain_mptr pointer.
         Ptr chain;
 
         operator Ptr () { return chain; }

@@ -58,14 +58,10 @@ if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhac
 endif()
 
 # set up versioning.
-set(DF_VERSION_MAJOR "0")
-set(DF_VERSION_MINOR "34")
-set(DF_VERSION_PATCH "11")
-set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
-
+set(DF_VERSION "0.34.11")
 SET(DFHACK_RELEASE "r2" CACHE STRING "Current release revision.")
 
-set(DFHACK_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}-${DFHACK_RELEASE}")
+set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")
 
 ## where to install things (after the build is done, classic 'make install' or package structure)

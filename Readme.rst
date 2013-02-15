@@ -2105,7 +2105,9 @@ directly to the main dwarf mode screen.
 Search
 ======
 
-The search plugin adds search to the Stocks, Trading, Stockpile and Unit List screens.
+The search plugin adds search to the Stocks, Animals, Trading, Stockpile,
+Noble (assignment candidates), Military (position candidates), Burrows
+(unit list), Rooms, Announcements, Job List and Unit List screens.
 
 .. image:: images/search.png
 
@@ -2125,8 +2127,9 @@ Leaving any screen automatically clears the filter.
 
 In the Trade screen, the actual trade will always only act on items that
 are actually visible in the list; the same effect applies to the Trade
-Value numbers displayed by the screen. Because of this, pressing the 't'
-key while search is active clears the search instead of executing the trade.
+Value numbers displayed by the screen. Because of this, the 't' key is
+blocked while search is active, so you have to reset the filters first.
+Pressing Alt-C will clear both search strings.
 
 In the stockpile screen the option only appears if the cursor is in the
 rightmost list:

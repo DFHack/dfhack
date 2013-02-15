@@ -144,6 +144,9 @@ tweak military-training
 # write the correct season to gamelog on world load
 soundsense-season
 
+# patch the material objects in memory to fix cloth stockpiles
+fix/cloth-stockpile enable
+
 #######################################################
 # Apply binary patches at runtime                     #
 #                                                     #

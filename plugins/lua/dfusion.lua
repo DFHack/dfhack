@@ -178,6 +178,7 @@ end
 function BinaryPlugin:move_to_df()
     local _,addr=df.sizeof(self.data)
     markAsExecutable(addr)
+    return addr
 end
 function BinaryPlugin:print_data()
     local out=""

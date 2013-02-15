@@ -77,9 +77,7 @@ end
 function FriendshipRainbow:patchCalls(target)
     local addrs=self:find_all()
     local swaps={}
-    print("target=",target)
     for k,adr in ipairs(addrs) do
-        print(k,adr[1])
         local newval=dfu.makeCall(adr[1],target)
         table.insert(newval,adr[2])
         for t,val in ipairs(newval) do

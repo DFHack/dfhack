@@ -131,6 +131,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(misery misery.cpp)
     DFHACK_PLUGIN(buildingplan buildingplan.cpp)
     DFHACK_PLUGIN(resume resume.cpp)
+    DFHACK_PLUGIN(dwarfmonitor dwarfmonitor.cpp)
 endif()
 
 

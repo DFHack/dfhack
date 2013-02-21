@@ -251,10 +251,16 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
 
             // Force update of ui state
             set<df::interface_key> tmp;
-            tmp.insert(interface_key::CURSOR_DOWN_Z);
+            if (last_cursor.z < 2)
+                tmp.insert(interface_key::CURSOR_UP_Z);
+            else
+                tmp.insert(interface_key::CURSOR_DOWN_Z);
             INTERPOSE_NEXT(feed)(&tmp);
             tmp.clear();
-            tmp.insert(interface_key::CURSOR_UP_Z);
+            if (last_cursor.z < 2)
+                tmp.insert(interface_key::CURSOR_DOWN_Z);
+            else
+                tmp.insert(interface_key::CURSOR_UP_Z);
             INTERPOSE_NEXT(feed)(&tmp);
         }
         else if (!is_default && cur_cursor.isValid())

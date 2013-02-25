@@ -57,3 +57,6 @@ dfhack/python/dist
 build/CPack*Config.cmake
 
 /cmakeall.bat
+
+# vim swap files
+*.swp

@@ -32,7 +32,6 @@ distribution.
 
 #include "Export.h"
 #include "Module.h"
-#include "modules/Vegetation.h"
 #include <vector>
 #include "BitArray.h"
 #include "modules/Materials.h"
@@ -309,6 +308,7 @@ extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
 extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which );
 
 DFHACK_EXPORT bool canWalkBetween(df::coord pos1, df::coord pos2);
+DFHACK_EXPORT bool canStepBetween(df::coord pos1, df::coord pos2);
 }
 }
 #endif

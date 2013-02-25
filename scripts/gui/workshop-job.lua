@@ -220,18 +220,40 @@ function JobDetails:setMaterial(obj, mat_type, mat_index)
     obj.iobj.mat_index = mat_index
 end
 
+function JobDetails:findUnambiguousItem(iobj)
+    local count = 0
+    local itype
+
+    for i = 0,df.item_type._last_item do
+        if dfhack.job.isSuitableItem(iobj, i, -1) then
+            count = count + 1
+            if count > 1 then return nil end
+            itype = i
+        end
+    end
+
+    return itype
+end
+
 function JobDetails:onChangeMat()
     local idx, obj = self.subviews.list:getSelected()
 
     if obj.iobj.item_type == -1 and obj.iobj.mat_type == -1 then
-        dlg.showMessage(
-            'Bug Alert',
-            { 'Please set a specific item type first.\n\n',
-              'Otherwise the material will be matched\n',
-              'incorrectly due to a limitation in DF code.' },
-            COLOR_YELLOW
-        )
-        return
+        -- If the job allows only one specific item type, use it
+        local vitype = self:findUnambiguousItem(obj.iobj)
+
+        if vitype then
+            obj.iobj.item_type = vitype
+        else
+            dlg.showMessage(
+                'Bug Alert',
+                { 'Please set a specific item type first.\n\n',
+                  'Otherwise the material will be matched\n',
+                  'incorrectly due to a limitation in DF code.' },
+                COLOR_YELLOW
+            )
+            return
+        end
     end
 
     guimat.MaterialDialog{

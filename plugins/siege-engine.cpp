@@ -132,11 +132,6 @@ static void orient_engine(df::building_siegeenginest *bld, df::coord target)
             df::building_siegeenginest::Up;
 }
 
-static int random_int(int val)
-{
-    return int(int64_t(rand())*val/RAND_MAX);
-}
-
 static int point_distance(df::coord speed)
 {
     return std::max(abs(speed.x), std::max(abs(speed.y), abs(speed.z)));

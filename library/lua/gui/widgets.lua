@@ -60,6 +60,7 @@ Panel = defclass(Panel, Widget)
 
 Panel.ATTRS {
     on_render = DEFAULT_NIL,
+    on_layout = DEFAULT_NIL,
 }
 
 function Panel:init(args)
@@ -68,6 +69,10 @@ end
 
 function Panel:onRenderBody(dc)
     if self.on_render then self.on_render(dc) end
+end
+
+function Panel:postComputeFrame(body)
+    if self.on_layout then self.on_layout(body) end
 end
 
 -----------
@@ -242,20 +247,37 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
             end
 
             if token.text or token.key then
-                local text = getval(token.text) or ''
+                local text = ''..(getval(token.text) or '')
                 local keypen
 
                 if dc then
+                    local tpen = getval(token.pen)
                     if disabled or is_disabled(token) then
-                        dc:pen(getval(token.dpen) or dpen)
+                        dc:pen(getval(token.dpen) or tpen or dpen)
                         keypen = COLOR_GREEN
                     else
-                        dc:pen(getval(token.pen) or pen)
+                        dc:pen(tpen or pen)
                         keypen = COLOR_LIGHTGREEN
                     end
                 end
 
-                x = x + #text
+                local width = getval(token.width)
+                local padstr
+                if width then
+                    x = x + width
+                    if #text > width then
+                        text = string.sub(text,1,width)
+                    else
+                        if token.pad_char then
+                            padstr = string.rep(token.pad_char,width-#text)
+                        end
+                        if dc and token.rjustify then
+                            if padstr then dc:string(padstr) else dc:advance(width-#text) end
+                        end
+                    end
+                else
+                    x = x + #text
+                end
 
                 if token.key then
                     local keystr = gui.getKeyDisplay(token.key)
@@ -279,6 +301,10 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
                     if dc then
                         dc:string(text)
                     end
+                end
+
+                if width and dc and not token.rjustify then
+                    if padstr then dc:string(padstr) else dc:advance(width-#text) end
                 end
             end
 
@@ -383,6 +409,7 @@ List.ATTRS{
     inactive_pen = DEFAULT_NIL,
     on_select = DEFAULT_NIL,
     on_submit = DEFAULT_NIL,
+    on_submit2 = DEFAULT_NIL,
     row_height = 1,
     scroll_keys = STANDARDSCROLL,
     icon_width = DEFAULT_NIL,
@@ -391,7 +418,13 @@ List.ATTRS{
 function List:init(info)
     self.page_top = 1
     self.page_size = 1
-    self:setChoices(info.choices, info.selected)
+
+    if info.choices then
+        self:setChoices(info.choices, info.selected)
+    else
+        self.choices = {}
+        self.selected = 1
+    end
 end
 
 function List:setChoices(choices, selected)
@@ -454,6 +487,9 @@ function List:moveCursor(delta, force_cb)
     if cnt < 1 then
         self.page_top = 1
         self.selected = 1
+        if force_cb and self.on_select then
+            self.on_select(nil,nil)
+        end
         return
     end
 
@@ -487,6 +523,18 @@ function List:onRenderBody(dc)
     local iend = math.min(#choices, top+self.page_size-1)
     local iw = self.icon_width
 
+    local function paint_icon(icon, obj)
+        if type(icon) ~= 'string' then
+            dc:char(nil,icon)
+        else
+            if current then
+                dc:string(icon, obj.icon_pen or self.icon_pen or cur_pen)
+            else
+                dc:string(icon, obj.icon_pen or self.icon_pen or cur_dpen)
+            end
+        end
+    end
+
     for i = top,iend do
         local obj = choices[i]
         local current = (i == self.selected)
@@ -498,26 +546,27 @@ function List:onRenderBody(dc)
         end
 
         local y = (i - top)*self.row_height
+        local icon = getval(obj.icon)
 
-        if iw and obj.icon then
+        if iw and icon then
             dc:seek(0, y)
-            if type(obj.icon) == 'table' then
-                dc:char(nil,obj.icon)
-            else
-                if current then
-                    dc:string(obj.icon, obj.icon_pen or cur_pen)
-                else
-                    dc:string(obj.icon, obj.icon_pen or cur_dpen)
-                end
-            end
+            paint_icon(icon, obj)
         end
 
         render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen, not current)
 
+        local ip = dc.width
+
         if obj.key then
             local keystr = gui.getKeyDisplay(obj.key)
-            dc:seek(dc.width-2-#keystr,y):pen(self.text_pen)
+            ip = ip-2-#keystr
+            dc:seek(ip,y):pen(self.text_pen)
             dc:string('('):string(keystr,COLOR_LIGHTGREEN):string(')')
+        end
+
+        if icon and not iw then
+            dc:seek(ip-1,y)
+            paint_icon(icon, obj)
         end
     end
 end
@@ -528,9 +577,18 @@ function List:submit()
     end
 end
 
+function List:submit2()
+    if self.on_submit2 and #self.choices > 0 then
+        self.on_submit2(self:getSelected())
+    end
+end
+
 function List:onInput(keys)
     if self.on_submit and keys.SELECT then
         self:submit()
+        return true
+    elseif self.on_submit2 and keys.SEC_SELECT then
+        self:submit2()
         return true
     else
         for k,v in pairs(self.scroll_keys) do
@@ -567,10 +625,14 @@ end
 
 FilteredList = defclass(FilteredList, Widget)
 
+FilteredList.ATTRS {
+    edit_below = false,
+}
+
 function FilteredList:init(info)
     self.edit = EditField{
-        text_pen = info.cursor_pen,
-        frame = { l = info.icon_width, t = 0 },
+        text_pen = info.edit_pen or info.cursor_pen,
+        frame = { l = info.icon_width, t = 0, h = 1 },
         on_change = self:callback('onFilterChange'),
         on_char = self:callback('onFilterChar'),
     }
@@ -579,10 +641,15 @@ function FilteredList:init(info)
         text_pen = info.text_pen,
         cursor_pen = info.cursor_pen,
         inactive_pen = info.inactive_pen,
+        icon_pen = info.icon_pen,
         row_height = info.row_height,
         scroll_keys = info.scroll_keys,
         icon_width = info.icon_width,
     }
+    if self.edit_below then
+        self.edit.frame = { l = info.icon_width, b = 0, h = 1 }
+        self.list.frame = { t = 0, b = 2 }
+    end
     if info.on_select then
         self.list.on_select = function()
             return info.on_select(self:getSelected())
@@ -593,14 +660,23 @@ function FilteredList:init(info)
             return info.on_submit(self:getSelected())
         end
     end
+    if info.on_submit2 then
+        self.list.on_submit2 = function()
+            return info.on_submit2(self:getSelected())
+        end
+    end
     self.not_found = Label{
-        visible = false,
+        visible = true,
         text = info.not_found_label or 'No matches',
         text_pen = COLOR_LIGHTRED,
-        frame = { l = info.icon_width, t = 2 },
+        frame = { l = info.icon_width, t = self.list.frame.t },
     }
     self:addviews{ self.edit, self.list, self.not_found }
-    self:setChoices(info.choices, info.selected)
+    if info.choices then
+        self:setChoices(info.choices, info.selected)
+    else
+        self.choices = {}
+    end
 end
 
 function FilteredList:getChoices()
@@ -617,6 +693,10 @@ end
 
 function FilteredList:submit()
     return self.list:submit()
+end
+
+function FilteredList:submit2()
+    return self.list:submit2()
 end
 
 function FilteredList:canSubmit()

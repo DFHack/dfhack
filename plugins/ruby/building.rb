@@ -227,7 +227,7 @@ module DFHack
 
         # link bld into other rooms if it is inside their extents or vice versa
         def building_linkrooms(bld)
-            world.buildings.other[:ANY_FREE].each { |ob|
+            world.buildings.other[:IN_PLAY].each { |ob|
                 next if ob.z != bld.z
                 if bld.is_room and bld.room.extents
                     next if ob.is_room or ob.x1 < bld.room.x or ob.x1 >= bld.room.x+bld.room.width or ob.y1 < bld.room.y or ob.y1 >= bld.room.y+bld.room.height
@@ -275,7 +275,7 @@ module DFHack
             job = Job.cpp_new
             job.job_type = :ConstructBuilding
             job.pos = [bld.centerx, bld.centery, bld.z]
-            job.references << ref
+            job.general_refs << ref
             bld.jobs << job
             job_link job
             job
@@ -346,7 +346,7 @@ module DFHack
             refbuildingholder = GeneralRefBuildingHolderst.cpp_new
             job.job_type = :DestroyBuilding
             refbuildingholder.building_id = bld.id
-            job.references << refbuildingholder
+            job.general_refs << refbuildingholder
             bld.jobs << job
             job_link job
             job

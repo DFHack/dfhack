@@ -35,6 +35,9 @@ module DFHack
                 def float
                     Float.new
                 end
+                def double
+                    Double.new
+                end
                 def bit(shift, enum=nil)
                     BitField.new(shift, 1, enum)
                 end
@@ -74,6 +77,9 @@ module DFHack
 
                 def df_flagarray(indexenum=nil)
                     DfFlagarray.new(indexenum)
+                end
+                def df_static_flagarray(len, indexenum=nil)
+                    DfStaticFlagarray.new(len, indexenum)
                 end
                 def df_array(tglen)
                     DfArray.new(tglen, yield)
@@ -138,7 +144,6 @@ module DFHack
             @@inspecting = {} # avoid infinite recursion on mutually-referenced objects
             def inspect
                 cn = self.class.name.sub(/^DFHack::/, '')
-                cn << ' @' << ('0x%X' % _memaddr) if cn != ''
                 out = "#<#{cn}"
                 return out << ' ...>' if @@inspecting[_memaddr]
                 @@inspecting[_memaddr] = true
@@ -181,7 +186,8 @@ module DFHack
                 @nume ||= const_get(:NUME)
             end
 
-            def self.int(i)
+            def self.int(i, allow_bad_sym=false)
+                raise ArgumentError, "invalid enum member #{i} of #{self}" if i.kind_of?(::Symbol) and not allow_bad_sym and not nume.has_key?(i)
                 nume[i] || i
             end
             def self.sym(i)
@@ -231,6 +237,19 @@ module DFHack
 
             def _set(v)
                 DFHack.memory_write_float(@_memaddr, v)
+            end
+
+            def _cpp_init
+                _set(0.0)
+            end
+        end
+        class Double < MemStruct
+            def _get
+                DFHack.memory_read_double(@_memaddr)
+            end
+
+            def _set(v)
+                DFHack.memory_write_double(@_memaddr, v)
             end
 
             def _cpp_init
@@ -308,7 +327,7 @@ module DFHack
                         DFHack.memory_write_int32(@_memaddr, v)
                     end
                 when nil;       DFHack.memory_write_int32(@_memaddr, 0)
-                else _get._set(v)
+                else @_tg._at(_getp)._set(v)
                 end
             end
 
@@ -654,6 +673,55 @@ module DFHack
                     DFHack.memory_bitarray_set(@_memaddr, idx, v)
                 end
             end
+            def inspect
+                out = "#<DfFlagarray"
+                each_with_index { |e, idx|
+                    out << " #{_indexenum.sym(idx)}" if e
+                }
+                out << '>'
+            end
+
+            include Enumerable
+        end
+        class DfStaticFlagarray < MemStruct
+            attr_accessor :_indexenum
+            def initialize(len, indexenum)
+                @len = len*8
+                @_indexenum = indexenum
+            end
+            def length
+                @len
+            end
+            def size ; length ; end
+            def [](idx)
+                idx = _indexenum.int(idx) if _indexenum
+                idx += length if idx < 0
+                return if idx < 0 or idx >= length
+                byte = DFHack.memory_read_int8(@_memaddr + idx/8)
+                (byte & (1 << (idx%8))) > 0
+            end
+            def []=(idx, v)
+                idx = _indexenum.int(idx) if _indexenum
+                idx += length if idx < 0
+                if idx >= length or idx < 0
+                    raise 'index out of bounds'
+                else
+                    byte = DFHack.memory_read_int8(@_memaddr + idx/8)
+                    if (v == nil or v == false or v == 0)
+                        byte &= 0xff ^ (1 << (idx%8))
+                    else
+                        byte |= (1 << (idx%8))
+                    end
+                    DFHack.memory_write_int8(@_memaddr + idx/8, byte)
+                end
+            end
+            def inspect
+                out = "#<DfStaticFlagarray"
+                each_with_index { |e, idx|
+                    out << " #{_indexenum.sym(idx)}" if e
+                }
+                out << '>'
+            end
 
             include Enumerable
         end
@@ -797,7 +865,6 @@ module DFHack
         def isset(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
-            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_isset(@_memaddr, key)
         end
         alias is_set? isset
@@ -805,14 +872,12 @@ module DFHack
         def set(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
-            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_set(@_memaddr, key)
         end
 
         def delete(key)
             raise unless @_memaddr
             key = @_enum.int(key) if _enum
-            raise "unknown key #{key.inspect}" if key.kind_of?(::Symbol)
             DFHack.memory_stlset_deletekey(@_memaddr, key)
         end
 

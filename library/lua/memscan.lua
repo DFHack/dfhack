@@ -24,7 +24,7 @@ function CheckedArray:__len()
     return self.count
 end
 function CheckedArray:__index(idx)
-    if type(idx) == number then
+    if type(idx) == "number" then
         if idx >= self.count then
             error('Index out of bounds: '..tostring(idx))
         end
@@ -193,6 +193,26 @@ function MemoryArea:delete()
     setmetatable(self, nil)
     df.delete(self.buffer)
     for k,v in pairs(self) do self[k] = nil end
+end
+
+-- Static code segment search
+
+function get_code_segment()
+    local cstart, cend
+
+    for i,mem in ipairs(dfhack.internal.getMemRanges()) do
+        if mem.read and mem.execute
+           and (string.match(mem.name,'/dwarfort%.exe$')
+             or string.match(mem.name,'/Dwarf_Fortress$')
+             or string.match(mem.name,'Dwarf Fortress%.exe'))
+        then
+            cstart = mem.start_addr
+            cend = mem.end_addr
+        end
+    end
+    if cstart and cend then
+        return MemoryArea.new(cstart, cend)
+    end
 end
 
 -- Static data segment search

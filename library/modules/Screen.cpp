@@ -55,6 +55,7 @@ using namespace DFHack;
 #include "df/item.h"
 #include "df/job.h"
 #include "df/building.h"
+#include "df/renderer.h"
 
 using namespace df::enums;
 using df::global::init;
@@ -109,10 +110,10 @@ bool Screen::paintTile(const Pen &pen, int x, int y)
 {
     if (!gps || !pen.valid()) return false;
 
-    int dimx = gps->dimx, dimy = gps->dimy;
-    if (x < 0 || x >= dimx || y < 0 || y >= dimy) return false;
+    auto dim = getWindowSize();
+    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y) return false;
 
-    doSetTile(pen, x*dimy + y);
+    doSetTile(pen, x*dim.y + y);
     return true;
 }
 
@@ -120,11 +121,11 @@ Pen Screen::readTile(int x, int y)
 {
     if (!gps) return Pen(0,0,0,-1);
 
-    int dimx = gps->dimx, dimy = gps->dimy;
-    if (x < 0 || x >= dimx || y < 0 || y >= dimy)
+    auto dim = getWindowSize();
+    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
         return Pen(0,0,0,-1);
 
-    int index = x*dimy + y;
+    int index = x*dim.y + y;
     auto screen = gps->screen + index*4;
     if (screen[3] & 0x80)
         return Pen(0,0,0,-1);
@@ -153,14 +154,15 @@ Pen Screen::readTile(int x, int y)
 
 bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text)
 {
-    if (!gps || y < 0 || y >= gps->dimy) return false;
+    auto dim = getWindowSize();
+    if (!gps || y < 0 || y >= dim.y) return false;
 
     Pen tmp(pen);
     bool ok = false;
 
     for (size_t i = -std::min(0,x); i < text.size(); i++)
     {
-        if (x + i >= size_t(gps->dimx))
+        if (x + i >= size_t(dim.x))
             break;
 
         tmp.ch = text[i];
@@ -174,17 +176,18 @@ bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text)
 
 bool Screen::fillRect(const Pen &pen, int x1, int y1, int x2, int y2)
 {
+    auto dim = getWindowSize();
     if (!gps || !pen.valid()) return false;
 
     if (x1 < 0) x1 = 0;
     if (y1 < 0) y1 = 0;
-    if (x2 >= gps->dimx) x2 = gps->dimx-1;
-    if (y2 >= gps->dimy) y2 = gps->dimy-1;
+    if (x2 >= dim.x) x2 = dim.x-1;
+    if (y2 >= dim.y) y2 = dim.y-1;
     if (x1 > x2 || y1 > y2) return false;
 
     for (int x = x1; x <= x2; x++)
     {
-        int index = x*gps->dimy;
+        int index = x*dim.y;
 
         for (int y = y1; y <= y2; y++)
             doSetTile(pen, index+y);
@@ -197,32 +200,33 @@ bool Screen::drawBorder(const std::string &title)
 {
     if (!gps) return false;
 
-    int dimx = gps->dimx, dimy = gps->dimy;
+    auto dim = getWindowSize();
     Pen border('\xDB', 8);
     Pen text(0, 0, 7);
     Pen signature(0, 0, 8);
 
-    for (int x = 0; x < dimx; x++)
+    for (int x = 0; x < dim.x; x++)
     {
-        doSetTile(border, x * dimy + 0);
-        doSetTile(border, x * dimy + dimy - 1);
+        doSetTile(border, x * dim.y + 0);
+        doSetTile(border, x * dim.y + dim.y - 1);
     }
-    for (int y = 0; y < dimy; y++)
+    for (int y = 0; y < dim.y; y++)
     {
-        doSetTile(border, 0 * dimy + y);
-        doSetTile(border, (dimx - 1) * dimy + y);
+        doSetTile(border, 0 * dim.y + y);
+        doSetTile(border, (dim.x - 1) * dim.y + y);
     }
 
-    paintString(signature, dimx-8, dimy-1, "DFHack");
+    paintString(signature, dim.x-8, dim.y-1, "DFHack");
 
-    return paintString(text, (dimx - title.length()) / 2, 0, title);
+    return paintString(text, (dim.x - title.length()) / 2, 0, title);
 }
 
 bool Screen::clear()
 {
     if (!gps) return false;
 
-    return fillRect(Pen(' ',0,0,false), 0, 0, gps->dimx-1, gps->dimy-1);
+    auto dim = getWindowSize();
+    return fillRect(Pen(' ',0,0,false), 0, 0, dim.x-1, dim.y-1);
 }
 
 bool Screen::invalidate()
@@ -231,6 +235,21 @@ bool Screen::invalidate()
 
     enabler->flag.bits.render = true;
     return true;
+}
+
+const Pen Screen::Painter::default_pen(0,COLOR_GREY,0);
+const Pen Screen::Painter::default_key_pen(0,COLOR_LIGHTGREEN,0);
+
+void Screen::Painter::do_paint_string(const std::string &str, const Pen &pen)
+{
+    if (gcursor.y < clip.first.y || gcursor.y > clip.second.y)
+        return;
+
+    int dx = std::max(0, int(clip.first.x - gcursor.x));
+    int len = std::min((int)str.size(), int(clip.second.x - gcursor.x + 1));
+
+    if (len > dx)
+        paintString(pen, gcursor.x + dx, gcursor.y, str.substr(dx, len-dx));
 }
 
 bool Screen::findGraphicsTile(const std::string &pagename, int x, int y, int *ptile, int *pgs)
@@ -312,6 +331,47 @@ class DFHACK_EXPORT enabler_inputst {
  public:
   std::string GetKeyDisplay(int binding);
 };
+
+class DFHACK_EXPORT renderer {
+    unsigned char *screen;
+    long *screentexpos;
+    char *screentexpos_addcolor;
+    unsigned char *screentexpos_grayscale;
+    unsigned char *screentexpos_cf;
+    unsigned char *screentexpos_cbr;
+    // For partial printing:
+    unsigned char *screen_old;
+    long *screentexpos_old;
+    char *screentexpos_addcolor_old;
+    unsigned char *screentexpos_grayscale_old;
+    unsigned char *screentexpos_cf_old;
+    unsigned char *screentexpos_cbr_old;
+public:
+    virtual void update_tile(int x, int y) {};
+    virtual void update_all() {};
+    virtual void render() {};
+    virtual void set_fullscreen();
+    virtual void zoom(df::zoom_commands cmd);
+    virtual void resize(int w, int h) {};
+    virtual void grid_resize(int w, int h) {};
+    renderer() {
+        screen = NULL;
+        screentexpos = NULL;
+        screentexpos_addcolor = NULL;
+        screentexpos_grayscale = NULL;
+        screentexpos_cf = NULL;
+        screentexpos_cbr = NULL;
+        screen_old = NULL;
+        screentexpos_old = NULL;
+        screentexpos_addcolor_old = NULL;
+        screentexpos_grayscale_old = NULL;
+        screentexpos_cf_old = NULL;
+        screentexpos_cbr_old = NULL;
+    }
+    virtual ~renderer();
+    virtual bool get_mouse_coords(int &x, int &y) { return false; }
+    virtual bool uses_opengl();
+};
 #else
 struct less_sz {
   bool operator() (const string &a, const string &b) const {
@@ -326,7 +386,9 @@ static std::map<df::interface_key,std::set<string,less_sz> > *keydisplay = NULL;
 void init_screen_module(Core *core)
 {
 #ifdef _LINUX
-    core = core;
+    renderer tmp;
+    if (!strict_virtual_cast<df::renderer>((virtual_ptr)&tmp))
+        cerr << "Could not fetch the renderer vtable." << std::endl;
 #else
     if (!core->vinfo->getAddress("keydisplay", keydisplay))
         keydisplay = NULL;
@@ -602,13 +664,23 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
 
     if (enabler && enabler->tracking_on)
     {
-        if (enabler->mouse_lbut) {
+        if (enabler->mouse_lbut_down) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_L");
         }
-        if (enabler->mouse_rbut) {
+        if (enabler->mouse_rbut_down) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_R");
+        }
+        if (enabler->mouse_lbut) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_L_DOWN");
+            enabler->mouse_lbut = 0;
+        }
+        if (enabler->mouse_rbut) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_R_DOWN");
+            enabler->mouse_rbut = 0;
         }
     }
 
@@ -639,7 +711,12 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
 
 void dfhack_lua_viewscreen::render()
 {
-    if (Screen::isDismissed(this)) return;
+    if (Screen::isDismissed(this))
+    {
+        if (parent)
+            parent->render();
+        return;
+    }
 
     dfhack_viewscreen::render();
 

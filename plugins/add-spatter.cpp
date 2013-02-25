@@ -246,7 +246,7 @@ struct product_hook : improvement_product {
         (df::unit *unit, std::vector<df::item*> *out_items,
          std::vector<df::reaction_reagent*> *in_reag,
          std::vector<df::item*> *in_items,
-         int32_t quantity, int16_t skill,
+         int32_t quantity, df::job_skill skill,
          df::historical_entity *entity, df::world_site *site)
     ) {
         if (auto product = products[this])
@@ -279,7 +279,7 @@ struct product_hook : improvement_product {
                     break;
                 }
 
-                int rating = unit ? Units::getEffectiveSkill(unit, df::job_skill(skill)) : 0;
+                int rating = unit ? Units::getEffectiveSkill(unit, skill) : 0;
                 int size = int(probability*(1.0f + 0.06f*rating)); // +90% at legendary
 
                 object->addContaminant(

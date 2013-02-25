@@ -33,6 +33,7 @@ using namespace std;
 #include "df/region_map_entry.h"
 #include "df/inclusion_type.h"
 #include "df/viewscreen_choose_start_sitest.h"
+#include "df/plant.h"
 
 using namespace DFHack;
 using namespace df::enums;

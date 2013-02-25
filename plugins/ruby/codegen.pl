@@ -698,6 +698,8 @@ sub sizeof {
             return 12;
         } elsif ($subtype eq 'df-flagarray') {
             return 8;
+        } elsif ($subtype eq 'df-static-flagarray') {
+            return $field->getAttribute('count');
         } elsif ($subtype eq 'df-array') {
             return 8;   # XXX 6 ?
         } else {
@@ -849,6 +851,9 @@ sub render_item_number {
     } elsif ($subtype eq 's-float') {
         push @lines_rb, 'float';
         return;
+    } elsif ($subtype eq 'd-float') {
+        push @lines_rb, 'double';
+        return;
     } else {
         print "no render number $subtype\n";
         return;
@@ -910,6 +915,7 @@ sub render_item_container {
     my $rbmethod = join('_', split('-', $subtype));
     my $tg = $item->findnodes('child::ld:item')->[0];
     my $indexenum = $item->getAttribute('index-enum');
+    my $count = $item->getAttribute('count');
     if ($tg)
     {
         if ($rbmethod eq 'df_linked_list') {
@@ -926,11 +932,19 @@ sub render_item_container {
     elsif ($indexenum)
     {
         $indexenum = rb_ucase($indexenum);
-        push @lines_rb, "$rbmethod($indexenum)";
+        if ($count) {
+            push @lines_rb, "$rbmethod($count, $indexenum)";
+        } else {
+            push @lines_rb, "$rbmethod($indexenum)";
+        }
     }
     else
     {
-        push @lines_rb, "$rbmethod";
+        if ($count) {
+            push @lines_rb, "$rbmethod($count)";
+        } else {
+            push @lines_rb, "$rbmethod";
+        }
     }
 }
 

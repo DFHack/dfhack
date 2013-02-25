@@ -1,0 +1,83 @@
+http://www.bay12games.com/dwarves/mantisbt/view.php?id=4530
+
+0x2ac85
+CC CC CC CC CC CC CC CC CC CC CC
+29 44 24 24 8B 9D 28 01 00 00 C3
+
+.text:0042B885 loc_42B885:
+.text:0042B885                 sub     [esp+24h], eax
+.text:0042B889                 mov     ebx, [ebp+128h]
+.text:0042B88F                 retn
+
+0x2ac94
+CC CC CC CC CC CC CC CC CC CC CC CC
+89 C1 8B 00 FF 90 34 02 00 00 EB E5
+
+.text:0042B894 loc_42B894:
+.text:0042B894                 mov     ecx, eax
+.text:0042B896                 mov     eax, [eax]
+.text:0042B898                 call    dword ptr [eax+234h]
+.text:0042B89E                 jmp     short loc_42B885
+
+0x6e28ff
+29 44 24 20
+90 90 90 90
+
+<<<<
+.text:00AE34FF                 sub     [esp+20h], eax
+====
+.text:00AE34FF                 nop
+.text:00AE3500                 nop
+.text:00AE3501                 nop
+.text:00AE3502                 nop
+>>>>
+
+0x6e2999
+8B 9D 28 01 00 00
+E8 F6 82 94 FF 90
+
+<<<<
+.text:00AE3599                 mov     ebx, [ebp+128h]
+====
+.text:00AE3599                 call    loc_42B894
+.text:00AE359E                 nop
+>>>>
+
+---8<---
+This difference file is created by The Interactive Disassembler
+
+Dwarf Fortress.exe
+0002AC85: CC 29
+0002AC86: CC 44
+0002AC87: CC 24
+0002AC88: CC 24
+0002AC89: CC 8B
+0002AC8A: CC 9D
+0002AC8B: CC 28
+0002AC8C: CC 01
+0002AC8D: CC 00
+0002AC8E: CC 00
+0002AC8F: CC C3
+0002AC94: CC 89
+0002AC95: CC C1
+0002AC96: CC 8B
+0002AC97: CC 00
+0002AC98: CC FF
+0002AC99: CC 90
+0002AC9A: CC 34
+0002AC9B: CC 02
+0002AC9C: CC 00
+0002AC9D: CC 00
+0002AC9E: CC EB
+0002AC9F: CC E5
+006E28FF: 29 90
+006E2900: 44 90
+006E2901: 24 90
+006E2902: 20 90
+006E2999: 8B E8
+006E299A: 9D F6
+006E299B: 28 82
+006E299C: 01 94
+006E299D: 00 FF
+006E299E: 00 90
+

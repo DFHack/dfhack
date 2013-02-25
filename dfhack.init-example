@@ -2,23 +2,34 @@
 # Generic dwarfmode bindings #
 ##############################
 
+# toggle the display of water level as 1-7 tiles
 keybinding add Ctrl-W twaterlvl
 
 # with cursor:
+
+# designate the whole vein for digging
 keybinding add Ctrl-V digv
 keybinding add Ctrl-Shift-V "digv x"
+
+# clean the selected tile of blood etc
 keybinding add Ctrl-C spotclean
+
+# destroy items designated for dump in the selected tile
 keybinding add Ctrl-Shift-K autodump-destroy-here
 
-# any item:
+# with an item selected:
+
+# destroy the selected item
 keybinding add Ctrl-K autodump-destroy-item
+
+# scripts:
 
 # quicksave, only in main dwarfmode screen and menu page
 keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 
-# gui/rename script
+# gui/rename script - rename units and buildings
 keybinding add Ctrl-Shift-N gui/rename
-keybinding add Alt-Shift-P "gui/rename unit-profession"
+keybinding add Ctrl-Shift-T "gui/rename unit-profession"
 
 ##############################
 # Generic adv mode bindings  #
@@ -31,10 +42,10 @@ keybinding add Ctrl-Shift-B "adv-bodyswap force"
 # Context-specific bindings #
 #############################
 
-# q->stockpile; p
+# q->stockpile; p - copy & paste stockpiles
 keybinding add Alt-P copystock
 
-# q->workshop
+# q->workshop - duplicate the selected job
 keybinding add Ctrl-D job-duplicate
 
 # materials: q->workshop; b->select items
@@ -48,7 +59,7 @@ keybinding add Shift-O "job-material OBSIDIAN"
 keybinding add Shift-T "job-material ORTHOCLASE"
 keybinding add Shift-G "job-material GLASS_GREEN"
 
-# sort units and items
+# sort units and items in the on-screen list
 keybinding add Alt-Shift-N "sort-units name" "sort-items description"
 keybinding add Alt-Shift-R "sort-units arrival"
 keybinding add Alt-Shift-T "sort-units profession" "sort-items type material"
@@ -60,7 +71,7 @@ keybinding add Ctrl-M@dwarfmode/QueryBuilding/Some gui/mechanisms
 # browse rooms of same owner
 keybinding add Alt-R@dwarfmode/QueryBuilding/Some gui/room-list
 
-# interface for the liquids plugin
+# interface for the liquids plugin - spawn water/magma/obsidian
 keybinding add Alt-L@dwarfmode/LookAround gui/liquids
 
 # machine power sensitive pressure plate construction
@@ -79,7 +90,11 @@ keybinding add Alt-P@dwarfmode/Hauling/DefineStop/Cond/Guide gui/guide-path
 keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
 
 # workflow front-end
-keybinding add Ctrl-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
+keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
+keybinding add Alt-W@overallstatus "gui/workflow status"
+
+# assign weapon racks to squads so that they can be used
+keybinding add P@dwarfmode/QueryBuilding/Some/Weaponrack gui/assign-rack
 
 ############################
 # UI and game logic tweaks #
@@ -118,3 +133,39 @@ tweak fast-trade
 tweak military-stable-assign
 # in same list, color units already assigned to squads in brown & green
 tweak military-color-assigned
+
+# remove inverse dependency of squad training speed on unit list size and use more sparring
+tweak military-training
+
+###########
+# Scripts #
+###########
+
+# write the correct season to gamelog on world load
+soundsense-season
+
+# patch the material objects in memory to fix cloth stockpiles
+fix/cloth-stockpile enable
+
+#######################################################
+# Apply binary patches at runtime                     #
+#                                                     #
+# Commented out by default; enable the ones you want. #
+#######################################################
+
+# Bug 5994 - items teleported when removing a construction
+#binpatch apply deconstruct-teleport
+#binpatch apply deconstruct-heapfall
+
+# Bug 4406 - hospital overstocking on all items
+#binpatch apply hospital-overstocking
+
+# Bug 808 - custom reactions completely using up all of their reagents
+#binpatch apply custom-reagent-size
+
+# Bug 4530 - marksdwarves not training when quiver full of combat-only ammo
+#binpatch apply training-ammo
+
+# Bug 1445 - weapon racks broken, armor stand capacity too low
+#binpatch apply weaponrack-unassign
+#binpatch apply armorstand-capacity

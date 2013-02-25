@@ -298,8 +298,12 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
 {
     if (sort_skill != job_skill::NONE)
     {
-        df::unit_skill *s1 = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(d1->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
-        df::unit_skill *s2 = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(d2->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
+        if (!d1->unit->status.current_soul)
+            return !descending;
+        if (!d2->unit->status.current_soul)
+            return descending;
+        df::unit_skill *s1 = binsearch_in_vector<df::unit_skill,df::job_skill>(d1->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
+        df::unit_skill *s2 = binsearch_in_vector<df::unit_skill,df::job_skill>(d2->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
         int l1 = s1 ? s1->rating : 0;
         int l2 = s2 ? s2->rating : 0;
         int e1 = s1 ? s1->experience : 0;
@@ -452,21 +456,23 @@ void viewscreen_unitlaborsst::refreshNames()
 
 void viewscreen_unitlaborsst::calcSize()
 {
-    num_rows = gps->dimy - 10;
+    auto dim = Screen::getWindowSize();
+
+    num_rows = dim.y - 10;
     if (num_rows > units.size())
         num_rows = units.size();
 
-    int num_columns = gps->dimx - DISP_COLUMN_MAX - 1;
+    int num_columns = dim.x - DISP_COLUMN_MAX - 1;
 
     // min/max width of columns
     int col_minwidth[DISP_COLUMN_MAX];
     int col_maxwidth[DISP_COLUMN_MAX];
     col_minwidth[DISP_COLUMN_HAPPINESS] = 4;
     col_maxwidth[DISP_COLUMN_HAPPINESS] = 4;
-    col_minwidth[DISP_COLUMN_NAME] = 0;
-    col_maxwidth[DISP_COLUMN_NAME] = 0;
-    col_minwidth[DISP_COLUMN_PROFESSION] = 0;
-    col_maxwidth[DISP_COLUMN_PROFESSION] = 0;
+    col_minwidth[DISP_COLUMN_NAME] = 16;
+    col_maxwidth[DISP_COLUMN_NAME] = 16;        // adjusted in the loop below
+    col_minwidth[DISP_COLUMN_PROFESSION] = 10;
+    col_maxwidth[DISP_COLUMN_PROFESSION] = 10;  // adjusted in the loop below
     col_minwidth[DISP_COLUMN_LABORS] = num_columns*3/5;     // 60%
     col_maxwidth[DISP_COLUMN_LABORS] = NUM_COLUMNS;
 
@@ -836,7 +842,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         df::unit *unit = cur->unit;
         const SkillColumn &col = columns[input_column];
-        bool newstatus = !unit->status.labors[col.labor];
+        bool newstatus = (col.labor == unit_labor::NONE) ? true : !unit->status.labors[col.labor];
         for (int i = 0; i < NUM_COLUMNS; i++)
         {
             if (columns[i].group != col.group)
@@ -936,9 +942,10 @@ void viewscreen_unitlaborsst::render()
 
     dfhack_viewscreen::render();
 
+    auto dim = Screen::getWindowSize();
+
     Screen::clear();
     Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
-
 
     Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_HAPPINESS], 2, "Hap.");
     Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_NAME], 2, "Name");
@@ -1030,7 +1037,9 @@ void viewscreen_unitlaborsst::render()
                 fg = 9;
             if (columns[col_offset].skill != job_skill::NONE)
             {
-                df::unit_skill *skill = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(unit->status.current_soul->skills, &df::unit_skill::id, columns[col_offset].skill);
+                df::unit_skill *skill = NULL;
+                if (unit->status.current_soul)
+                    skill = binsearch_in_vector<df::unit_skill,df::job_skill>(unit->status.current_soul->skills, &df::unit_skill::id, columns[col_offset].skill);
                 if ((skill != NULL) && (skill->rating || skill->experience))
                 {
                     int level = skill->rating;
@@ -1051,7 +1060,7 @@ void viewscreen_unitlaborsst::render()
                 }
             }
             else
-                bg = 4;
+                bg = 3;
             Screen::paintTile(Screen::Pen(c, fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 4 + row);
         }
     }
@@ -1061,18 +1070,22 @@ void viewscreen_unitlaborsst::render()
     if (cur != NULL)
     {
         df::unit *unit = cur->unit;
-        int x = 1;
-        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, cur->transname);
+        int x = 1, y = 3 + num_rows + 2;
+        Screen::Pen white_pen(' ', 15, 0);
+
+        Screen::paintString(white_pen, x, y, (cur->unit && cur->unit->sex) ? "\x0b" : "\x0c");
+        x += 2;
+        Screen::paintString(white_pen, x, y, cur->transname);
         x += cur->transname.length();
 
         if (cur->transname.length())
         {
-            Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, ", ");
+            Screen::paintString(white_pen, x, y, ", ");
             x += 2;
         }
-        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, cur->profession);
+        Screen::paintString(white_pen, x, y, cur->profession);
         x += cur->profession.length();
-        Screen::paintString(Screen::Pen(' ', 15, 0), x, 3 + num_rows + 2, ": ");
+        Screen::paintString(white_pen, x, y, ": ");
         x += 2;
 
         string str;
@@ -1086,7 +1099,9 @@ void viewscreen_unitlaborsst::render()
         }
         else
         {
-            df::unit_skill *skill = binsearch_in_vector<df::unit_skill,df::enum_field<df::job_skill,int16_t>>(unit->status.current_soul->skills, &df::unit_skill::id, columns[sel_column].skill);
+            df::unit_skill *skill = NULL;
+            if (unit->status.current_soul)
+                skill = binsearch_in_vector<df::unit_skill,df::job_skill>(unit->status.current_soul->skills, &df::unit_skill::id, columns[sel_column].skill);
             if (skill)
             {
                 int level = skill->rating;
@@ -1104,48 +1119,48 @@ void viewscreen_unitlaborsst::render()
         canToggle = (cur->allowEdit) && (columns[sel_column].labor != unit_labor::NONE);
     }
 
-    int x = 2;
-    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::SELECT));
-    OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle labor, ");
+    int x = 2, y = dim.y - 3;
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT));
+    OutputString(canToggle ? 15 : 8, x, y, ": Toggle labor, ");
 
-    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::SELECT_ALL));
-    OutputString(canToggle ? 15 : 8, x, gps->dimy - 3, ": Toggle Group, ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT_ALL));
+    OutputString(canToggle ? 15 : 8, x, y, ": Toggle Group, ");
 
-    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW));
-    OutputString(15, x, gps->dimy - 3, ": ViewCre, ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW));
+    OutputString(15, x, y, ": ViewCre, ");
 
-    OutputString(10, x, gps->dimy - 3, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));
-    OutputString(15, x, gps->dimy - 3, ": Zoom-Cre");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));
+    OutputString(15, x, y, ": Zoom-Cre");
 
-    x = 2;
-    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
-    OutputString(15, x, gps->dimy - 2, ": Done, ");
+    x = 2; y = dim.y - 2;
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
+    OutputString(15, x, y, ": Done, ");
 
-    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
-    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
-    OutputString(15, x, gps->dimy - 2, ": Sort by Skill, ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
+    OutputString(15, x, y, ": Sort by Skill, ");
 
-    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
-    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
-    OutputString(15, x, gps->dimy - 2, ": Sort by (");
-    OutputString(10, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::CHANGETAB));
-    OutputString(15, x, gps->dimy - 2, ") ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
+    OutputString(15, x, y, ": Sort by (");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CHANGETAB));
+    OutputString(15, x, y, ") ");
     switch (altsort)
     {
     case ALTSORT_NAME:
-        OutputString(15, x, gps->dimy - 2, "Name");
+        OutputString(15, x, y, "Name");
         break;
     case ALTSORT_PROFESSION:
-        OutputString(15, x, gps->dimy - 2, "Profession");
+        OutputString(15, x, y, "Profession");
         break;
     case ALTSORT_HAPPINESS:
-        OutputString(15, x, gps->dimy - 2, "Happiness");
+        OutputString(15, x, y, "Happiness");
         break;
     case ALTSORT_ARRIVAL:
-        OutputString(15, x, gps->dimy - 2, "Arrival");
+        OutputString(15, x, y, "Arrival");
         break;
     default:
-        OutputString(15, x, gps->dimy - 2, "Unknown");
+        OutputString(15, x, y, "Unknown");
         break;
     }
 }
@@ -1181,9 +1196,10 @@ struct unitlist_hook : df::viewscreen_unitlistst
 
         if (units[page].size())
         {
-            int x = 2;
-            OutputString(12, x, gps->dimy - 2, Screen::getKeyDisplay(interface_key::UNITVIEW_PRF_PROF));
-            OutputString(15, x, gps->dimy - 2, ": Manage labors (DFHack)");
+            auto dim = Screen::getWindowSize();
+            int x = 2, y = dim.y - 2;
+            OutputString(12, x, y, Screen::getKeyDisplay(interface_key::UNITVIEW_PRF_PROF));
+            OutputString(15, x, y, ": Manage labors (DFHack)");
         }
     }
 };

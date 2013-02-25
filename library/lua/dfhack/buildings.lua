@@ -334,7 +334,22 @@ local trap_inputs = {
     },
     [df.trap_type.TrackStop] = { { flags2={ building_material=true, non_economic=true } } }
 }
-
+local siegeengine_input = {
+    [df.siegeengine_type.Catapult] = {
+        {
+            item_type=df.item_type.CATAPULTPARTS,
+            vector_id=df.job_item_vector_id.CATAPULTPARTS,
+            quantity=3
+        }
+    },
+    [df.siegeengine_type.Ballista] = {
+        {
+            item_type=df.item_type.BALLISTAPARTS,
+            vector_id=df.job_item_vector_id.BALLISTAPARTS,
+            quantity=3
+        }
+    },
+}
 --[[ Functions for lookup in tables. ]]
 
 local function get_custom_inputs(custom)
@@ -359,6 +374,8 @@ local function get_inputs_by_type(type,subtype,custom)
         end
     elseif type == df.building_type.Trap then
         return trap_inputs[subtype]
+    elseif type == df.building_type.SiegeEngine then
+        return siegeengine_input[subtype]
     else
         return building_inputs[type]
     end

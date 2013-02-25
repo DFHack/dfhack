@@ -1,0 +1,85 @@
+http://www.bay12games.com/dwarves/mantisbt/view.php?id=4530
+
+0x9508
+
+90 90 90 90 90 90 90 90
+E9 13 76 9C 00 90 90 90
+
+.text:08051508 loc_8051508:
+.text:08051508                 jmp     sub_8A18B20
+
+0x9523
+
+90 90 90 90 90 90 90 90 90 90 90 90 90
+50 8B 03 53 FF 90 34 02 00 00 EB 09 90
+
+.text:08051523 sub_8051523:
+.text:08051523                 push    eax
+.text:08051524                 mov     eax, [ebx]
+.text:08051526                 push    ebx
+.text:08051527                 call    dword ptr [eax+234h]
+.text:0805152D                 jmp     short loc_8051538
+
+0x9538
+
+90 90 90 90 90 90 90 90
+29 44 24 64 5B 58 EB C8
+
+.text:08051538 loc_8051538:
+.text:08051538                 sub     [esp+64h], eax
+.text:0805153C                 pop     ebx
+.text:0805153D                 pop     eax
+.text:0805153E                 jmp     short loc_8051508
+
+0xa5cdd0
+
+29 44 24 58
+90 90 90 90
+
+.text:08AA4DD0                 nop
+.text:08AA4DD1                 nop
+.text:08AA4DD2                 nop
+.text:08AA4DD3                 nop
+
+0xa5e2c3
+
+E8 58 28 F7 FF
+E8 5B B2 5A FF
+
+.text:08AA62C3                 call    sub_8051523
+
+---8<---
+This difference file is created by The Interactive Disassembler
+
+Dwarf_Fortress
+00009508: 90 E9
+00009509: 90 13
+0000950A: 90 76
+0000950B: 90 9C
+0000950C: 90 00
+00009523: 90 50
+00009524: 90 8B
+00009525: 90 03
+00009526: 90 53
+00009527: 90 FF
+00009529: 90 34
+0000952A: 90 02
+0000952B: 90 00
+0000952C: 90 00
+0000952D: 90 EB
+0000952E: 90 09
+00009538: 90 29
+00009539: 90 44
+0000953A: 90 24
+0000953B: 90 64
+0000953C: 90 5B
+0000953D: 90 58
+0000953E: 90 EB
+0000953F: 90 C8
+00A5CDD0: 29 90
+00A5CDD1: 44 90
+00A5CDD2: 24 90
+00A5CDD3: 58 90
+00A5E2C4: 58 5B
+00A5E2C5: 28 B2
+00A5E2C6: F7 5A

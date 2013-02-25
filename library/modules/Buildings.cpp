@@ -25,11 +25,16 @@ distribution.
 
 #include "Internal.h"
 
-#include <string>
-#include <vector>
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
 #include <map>
+#include <string>
+#include <unordered_map>
+#include <vector>
 using namespace std;
 
+#include "ColorText.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
 #include "Types.h"
@@ -76,6 +81,14 @@ using df::global::d_init;
 using df::global::building_next_id;
 using df::global::process_jobs;
 using df::building_def;
+
+struct CoordHash {
+    size_t operator()(const df::coord pos) const {
+        return pos.x*65537 + pos.y*17 + pos.z;
+    }
+};
+
+static unordered_map<df::coord, int32_t, CoordHash> locationToBuilding;
 
 static uint8_t *getExtentTile(df::building_extents &extent, df::coord2d tile)
 {
@@ -178,6 +191,20 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
     return true;
 }
 
+df::general_ref *Buildings::getGeneralRef(df::building *building, df::general_ref_type type)
+{
+    CHECK_NULL_POINTER(building);
+
+    return findRef(building->general_refs, type);
+}
+
+df::specific_ref *Buildings::getSpecificRef(df::building *building, df::specific_ref_type type)
+{
+    CHECK_NULL_POINTER(building);
+
+    return findRef(building->specific_refs, type);
+}
+
 bool Buildings::setOwner(df::building *bld, df::unit *unit)
 {
     CHECK_NULL_POINTER(bld);
@@ -222,6 +249,21 @@ df::building *Buildings::findAtTile(df::coord pos)
     if (!occ || !occ->bits.building)
         return NULL;
 
+    // Try cache lookup in case it works:
+    auto cached = locationToBuilding.find(pos);
+    if (cached != locationToBuilding.end())
+    {
+        auto building = df::building::find(cached->second);
+
+        if (building && building->z == pos.z &&
+            building->isSettingOccupancy() &&
+            containsTile(building, pos, false))
+        {
+            return building;
+        }
+    }
+
+    // The authentic method, i.e. how the game generally does this:
     auto &vec = df::building::get_vector();
     for (size_t i = 0; i < vec.size(); i++)
     {
@@ -895,7 +937,7 @@ static bool linkForConstruct(df::job* &job, df::building *bld)
     job = new df::job();
     job->job_type = df::job_type::ConstructBuilding;
     job->pos = df::coord(bld->centerx, bld->centery, bld->z);
-    job->references.push_back(ref);
+    job->general_refs.push_back(ref);
 
     bld->jobs.push_back(job);
 
@@ -1063,3 +1105,61 @@ bool Buildings::deconstruct(df::building *bld)
     return true;
 }
 
+static unordered_map<int32_t, df::coord> corner1;
+static unordered_map<int32_t, df::coord> corner2;
+
+void Buildings::clearBuildings(color_ostream& out) {
+    corner1.clear();
+    corner2.clear();
+    locationToBuilding.clear();
+}
+
+void Buildings::updateBuildings(color_ostream& out, void* ptr)
+{
+    int32_t id = (int32_t)ptr;
+    auto building = df::building::find(id);
+
+    if (building)
+    {
+        // Already cached -> weird, so bail out
+        if (corner1.count(id))
+            return;
+        // Civzones cannot be cached because they can
+        // overlap each other and normal buildings.
+        if (!building->isSettingOccupancy())
+            return;
+
+        df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
+        df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
+
+        corner1[id] = p1;
+        corner2[id] = p2;
+
+        for ( int32_t x = p1.x; x <= p2.x; x++ ) {
+            for ( int32_t y = p1.y; y <= p2.y; y++ ) {
+                df::coord pt(x,y,building->z);
+                if (containsTile(building, pt, false))
+                    locationToBuilding[pt] = id;
+            }
+        }
+    }
+    else if (corner1.count(id))
+    {
+        //existing building: destroy it
+        df::coord p1 = corner1[id];
+        df::coord p2 = corner2[id];
+
+        for ( int32_t x = p1.x; x <= p2.x; x++ ) {
+            for ( int32_t y = p1.y; y <= p2.y; y++ ) {
+                df::coord pt(x,y,p1.z);
+
+                auto cur = locationToBuilding.find(pt);
+                if (cur != locationToBuilding.end() && cur->second == id)
+                    locationToBuilding.erase(cur);
+            }
+        }
+
+        corner1.erase(id);
+        corner2.erase(id);
+    }
+}

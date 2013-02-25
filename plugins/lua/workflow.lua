@@ -8,9 +8,11 @@ local utils = require 'utils'
 
  * isEnabled()
  * setEnabled(enable)
- * listConstraints([job]) -> {...}
- * setConstraint(token, by_count, goal[, gap]) -> {...}
+ * listConstraints([job[,with_history] ]) -> {{...},...}
+ * findConstraint(token) -> {...} or nil
+ * setConstraint(token[, by_count, goal, gap]) -> {...}
  * deleteConstraint(token) -> true/false
+ * getCountHistory(token) -> {{...},...} or nil
 
 --]]
 
@@ -40,6 +42,10 @@ local job_outputs = {}
 function job_outputs.CustomReaction(callback, job)
     local rid, r = get_reaction(job.reaction_name)
 
+    if not r then
+        return
+    end
+
     for i,prod in ipairs(r.products) do
         if df.reaction_product_itemst:is_instance(prod) then
             local mat_type, mat_index = prod.mat_type, prod.mat_index
@@ -60,12 +66,12 @@ function job_outputs.CustomReaction(callback, job)
                 end
 
                 if get_mat_prod then
+                    local p_code = prod.get_material.product_code
                     local mat = dfhack.matinfo.decode(mat_type, mat_index)
 
                     mat_type, mat_index = -1, -1
 
                     if mat then
-                        local p_code = prod.get_material.product_code
                         local rp = mat.material.reaction_product
                         local idx = utils.linear_index(rp.id, p_code)
                         if not idx then
@@ -73,7 +79,7 @@ function job_outputs.CustomReaction(callback, job)
                         end
                         mat_type, mat_index = rp.material.mat_type[idx], rp.material.mat_index[idx]
                     else
-                        if code == "SOAP_MAT" then
+                        if p_code == "SOAP_MAT" then
                             mat_mask = { soap = true }
                         end
                     end
@@ -102,7 +108,7 @@ local function guess_job_material(job)
     local jmat = df.job_type.attrs[job.job_type].material
     if jmat then
         mat_type, mat_index = df.builtin_mats[jmat] or -1, -1
-        if mat_type < 0 and df.job_material_category[jmat] then
+        if mat_type < 0 and df.dfhack_material_category[jmat] then
             mat_mask = { [jmat] = true }
         end
     end
@@ -216,6 +222,18 @@ local function enum_job_outputs(callback, job)
     end
 end
 
+function doEnumJobOutputs(native_cb, job)
+    local function cb(info)
+        native_cb(
+            info.item_type, info.item_subtype,
+            info.mat_mask, info.mat_type, info.mat_index,
+            info.is_craft
+        )
+    end
+
+    enum_job_outputs(cb, job)
+end
+
 function listJobOutputs(job)
     local res = {}
     enum_job_outputs(curry(table.insert, res), job)
@@ -239,11 +257,7 @@ function constraintToToken(cspec)
     end
     local mask_part
     if cspec.mat_mask then
-        local lst = {}
-        for n,v in pairs(cspec.mat_mask) do
-            if v then table.insert(lst,n) end
-        end
-        mask_part = table.concat(lst, ',')
+        mask_part = string.upper(table.concat(utils.list_bitfield_flags(cspec.mat_mask), ','))
     end
     local mat_part
     if cspec.mat_type and cspec.mat_type >= 0 then
@@ -254,9 +268,17 @@ function constraintToToken(cspec)
             error('invalid material: '..cspec.mat_type..':'..(cspec.mat_index or -1))
         end
     end
+    local qlist = {}
+    if cspec.is_local then
+        table.insert(qlist, "LOCAL")
+    end
+    if cspec.min_quality and cspec.min_quality > 0 then
+        local qn = df.item_quality[cspec.min_quality] or error('invalid quality: '..cspec.min_quality)
+        table.insert(qlist, qn)
+    end
     local qpart
-    if cspec.quality and cspec.quality > 0 then
-        qpart = df.item_quality[cspec.quality] or error('invalid quality: '..cspec.quality)
+    if #qlist > 0 then
+        qpart = table.concat(qlist, ',')
     end
 
     if mask_part or mat_part or qpart then
@@ -270,6 +292,56 @@ function constraintToToken(cspec)
     end
 
     return token
+end
+
+function listWeakenedConstraints(outputs)
+    local variants = {}
+    local known = {}
+    local function register(cons)
+        cons.token = constraintToToken(cons)
+        if not known[cons.token] then
+            known[cons.token] = true
+            table.insert(variants, cons)
+        end
+    end
+
+    local generic = {}
+    local anymat = {}
+    for i,cons in ipairs(outputs) do
+        local mask = cons.mat_mask
+        if (cons.mat_type or -1) >= 0 then
+            cons.mat_mask = nil
+            local info = dfhack.matinfo.decode(cons)
+            if info then
+                for i,flag in ipairs(df.dfhack_material_category) do
+                    if flag and flag ~= 'wood2' and info:matches{[flag]=true} then
+                        mask = mask or {}
+                        mask[flag] = true
+                    end
+                end
+            end
+        end
+        register(cons)
+        if mask then
+            for k,v in pairs(mask) do
+                table.insert(generic, {
+                    item_type = cons.item_type,
+                    item_subtype = cons.item_subtype,
+                    is_craft = cons.is_craft,
+                    mat_mask = { [k] = v }
+                })
+            end
+        end
+        table.insert(anymat, {
+            item_type = cons.item_type,
+            item_subtype = cons.item_subtype,
+            is_craft = cons.is_craft
+        })
+    end
+    for i,cons in ipairs(generic) do register(cons) end
+    for i,cons in ipairs(anymat) do register(cons) end
+
+    return variants
 end
 
 return _ENV

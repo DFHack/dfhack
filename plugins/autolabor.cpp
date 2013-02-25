@@ -964,7 +964,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         else if (building_type::TradeDepot == type)
         {
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
-            trader_requested = depot->trade_flags.bits.trader_requested;
+            trader_requested = trader_requested || depot->trade_flags.bits.trader_requested;
             if (print_debug)
             {
                 if (trader_requested)
@@ -1556,7 +1556,7 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
 #define F(x) bad_flags.bits.x = true;
     F(dump); F(forbid); F(garbage_collect);
     F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(construction); F(artifact1);
+    F(in_building); F(construction); F(artifact);
     F(spider_web); F(owned); F(in_job);
 #undef F
 
@@ -1582,9 +1582,9 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
         df::unit *holder = 0;
         df::building *building = 0;
 
-        for (size_t i = 0; i < item->itemrefs.size(); i++)
+        for (size_t i = 0; i < item->general_refs.size(); i++)
         {
-            df::general_ref *ref = item->itemrefs[i];
+            df::general_ref *ref = item->general_refs[i];
 
             switch (ref->getType())
             {
@@ -1611,9 +1611,9 @@ static int stockcheck(color_ostream &out, vector <string> & parameters)
         while(nextcontainer) {
             df::item *thiscontainer = nextcontainer;
             nextcontainer = 0;
-            for (size_t i = 0; i < thiscontainer->itemrefs.size(); i++)
+            for (size_t i = 0; i < thiscontainer->general_refs.size(); i++)
             {
-                df::general_ref *ref = thiscontainer->itemrefs[i];
+                df::general_ref *ref = thiscontainer->general_refs[i];
 
                 switch (ref->getType())
                 {

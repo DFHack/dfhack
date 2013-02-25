@@ -65,20 +65,20 @@ namespace  DFHack
         bool save (const char * filename)
         {
             std::ofstream outfile (filename);
-			//fprintf(stderr,"Save: Initialized stream\n");
+            //fprintf(stderr,"Save: Initialized stream\n");
             if(outfile.bad())
                 return false;
-			//fprintf(stderr,"Save: Iterating...\n");
+            //fprintf(stderr,"Save: Iterating...\n");
             for(auto iter = history.begin();iter < history.end(); iter++)
             {
-				//fprintf(stderr,"Save: Dumping %s\n",(*iter).c_str());
+                //fprintf(stderr,"Save: Dumping %s\n",(*iter).c_str());
                 outfile << *iter << std::endl;
-				//fprintf(stderr,"Save: Flushing\n");
-				outfile.flush();
+                //fprintf(stderr,"Save: Flushing\n");
+                outfile.flush();
             }
-			//fprintf(stderr,"Save: Closing\n");
+            //fprintf(stderr,"Save: Closing\n");
             outfile.close();
-			//fprintf(stderr,"Save: Done\n");
+            //fprintf(stderr,"Save: Done\n");
             return true;
         }
         /// add a command to the history

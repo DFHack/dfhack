@@ -171,8 +171,9 @@ BinaryPatch::State BinaryPatch::checkState(const patch_byte *ptr, size_t len)
             state |= Applied;
         else
         {
-            cerr << std::hex << bv.offset << ": " << bv.old_val << " " << bv.new_val
-                 << ", but currently " << cv << std::dec << endl;
+            cerr << std::hex << bv.offset << ": "
+                 << unsigned(bv.old_val) << " " << unsigned(bv.new_val)
+                 << ", but currently " << unsigned(cv) << std::dec << endl;
             return Conflict;
         }
     }

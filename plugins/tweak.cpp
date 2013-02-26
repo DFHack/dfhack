@@ -815,14 +815,18 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
                             spar++;
                     }
 
+#if 0
                     color_ostream_proxy out(Core::getInstance().getConsole());
+#endif
 
                     // If the xp gap is low, sometimes replace with sparring
                     if ((maxv - minv) < 64*15 && spar == units.size() &&
                         random_int(45) >= 30 + (maxv-minv)/64)
                     {
+#if 0
                         out.print("Replacing %s demonstration (xp %d-%d, gap %d) with sparring.\n",
                                   ENUM_KEY_STR(job_skill, sd->skill).c_str(), minv, maxv, maxv-minv);
+#endif
 
                         if (auto spar = df::allocate<df::activity_event_sparringst>())
                         {
@@ -844,18 +848,22 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
                     // If the teacher has less xp than somebody else, switch
                     if (best >= 0 && maxv > cur_xp)
                     {
+#if 0
                         out.print("Replacing %s teacher %d (%d xp) with %d (%d xp); xp gap %d.\n",
                                   ENUM_KEY_STR(job_skill, sd->skill).c_str(),
                                   sd->unit_id, cur_xp, units[best], maxv, maxv-minv);
+#endif
 
                         sd->hist_figure_id = sd->participants.histfigs[best];
                         sd->unit_id = units[best];
                     }
                     else
                     {
+#if 0
                         out.print("Not changing %s demonstration (xp %d-%d, gap %d).\n",
                                   ENUM_KEY_STR(job_skill, sd->skill).c_str(),
                                   minv, maxv, maxv-minv);
+#endif
                     }
                 }
             }

@@ -449,6 +449,26 @@ Options:
 
  :bees: turn colonies into honey bee colonies
 
+createitem
+----------
+Allows creating new items of arbitrary types and made of arbitrary materials.
+Any items created are spawned at the feet of the selected unit.
+
+Specify the item and material information as you would indicate them in custom reaction raws, with the following differences:
+* Separate the item and material with a space rather than a colon
+* If the item has no subtype, omit the :NONE
+* If the item is REMAINS, FISH, FISH_RAW, VERMIN, PET, or EGG, specify a CREATURE:CASTE pair instead of a material token.
+
+Corpses, body parts, and prepared meals cannot be created using this tool.
+
+Examples:
+ ``createitem GLOVES:ITEM_GLOVES_GAUNTLETS INORGANIC:STEEL``
+   Create a pair of steel gauntlets.
+ ``createitem WOOD PLANT_MAT:TOWER_CAP:WOOD``
+   Create tower-cap logs.
+ ``createitem FISH FISH_SHAD:MALE``
+   Create cleaned shad, ready to eat.
+
 deramp (by zilpin)
 ------------------
 Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.

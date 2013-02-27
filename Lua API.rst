@@ -2993,11 +2993,11 @@ List of events
 
 7. ``onWorkshopFillSidebarMenu(workshop,callnative)``
 
-   Is called when viewing a workshop in 'q' mode, to populate reactions, usefull for custom viewscreens for shops.
+   Is called when viewing a workshop in 'q' mode, to populate reactions, useful for custom viewscreens for shops.
 
 8. ``postWorkshopFillSidebarMenu(workshop)``
 
-   Is called after calling (or not) native fillSidebarMenu(). Usefull for job button
+   Is called after calling (or not) native fillSidebarMenu(). Useful for job button
    tweaking (e.g. adding custom reactions)
 
 Functions
@@ -3036,7 +3036,7 @@ Reaction complete example::
     call_native.value=false
   end
 
-Granade example::
+Grenade example::
 
   b=require "plugins.eventful"
   b.onProjItemCheckImpact.one=function(projectile)

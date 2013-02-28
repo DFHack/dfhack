@@ -44,11 +44,12 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, int hand = 0)
+bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool glove2 = false)
 {
     vector<df::item *> out_items;
     vector<df::reaction_reagent *> in_reag;
     vector<df::item *> in_items;
+    bool is_gloves = (prod->item_type == df::item_type::GLOVES);
 
     prod->produce(unit, &out_items, &in_reag, &in_items, 1, df::job_skill::NONE, ui->main.fortress_entity, df::world_site::find(ui->site_id));
     if (!out_items.size())
@@ -56,27 +57,55 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, int hand = 0)
     for (size_t i = 0; i < out_items.size(); i++)
     {
         out_items[i]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
-        if (hand)
-            out_items[i]->setGloveHandedness(hand);
+        if (is_gloves)
+        {
+            // if the reaction creates gloves without handedness, then create 2 sets (left and right)
+            if (out_items[i]->getGloveHandedness() > 0)
+                is_gloves = false;
+            else
+                out_items[i]->setGloveHandedness(glove2 ? 2 : 1);
+        }
     }
+    if (is_gloves && !glove2)
+        return makeItem(prod, unit, true);
+
     return true;
 }
 
 command_result df_createitem (color_ostream &out, vector <string> & parameters)
 {
     string item_str, material_str;
-    df::item_type item_type;
-    int16_t item_subtype;
-    int16_t mat_type;
-    int32_t mat_index;
+    df::item_type item_type = df::item_type::NONE;
+    int16_t item_subtype = -1;
+    int16_t mat_type = -1;
+    int32_t mat_index = -1;
+    int count = 1;
 
-    if (parameters.size() != 2)
+    if ((parameters.size() < 2) || (parameters.size() > 3))
     {
-        out.print("Syntax: createitem ITEM_TYPE:ITEM_SUBTYPE MATERIAL:ETC\n");
+        out.print("Syntax: createitem <item> <material> [count]\n"
+                  "    <item> - Item token for what you wish to create, as specified in custom\n"
+                  "             reactions. If the item has no subtype, omit the :NONE.\n"
+                  "    <material> - The material you want the item to be made of, as specified\n"
+                  "                 in custom reactions. For REMAINS, FISH, FISH_RAW, VERMIN,\n"
+                  "                 PET, and EGG, replace this with a creature ID and caste.\n"
+                  "    [count] - How many of the item you wish to create.\n"
+        );
         return CR_WRONG_USAGE;
     }
     item_str = parameters[0];
     material_str = parameters[1];
+
+    if (parameters.size() == 3)
+    {
+        stringstream ss(parameters[2]);
+        ss >> count;
+        if (count < 1)
+        {
+            out.printerr("You cannot produce less than one item!\n");
+            return CR_FAILURE;
+        }
+    }
 
     ItemTypeInfo item;
     MaterialInfo material;
@@ -106,7 +135,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     case df::item_type::TOOL:
         if (item_subtype == -1)
         {
-            out.printerr("You must specify a valid subtype!\n");
+            out.printerr("You must specify a subtype!\n");
             return CR_FAILURE;
         }
     default:
@@ -132,7 +161,6 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
             return CR_FAILURE;
         }
 
-        mat_type = mat_index = -1;
         for (size_t i = 0; i < world->raws.creatures.all.size(); i++)
         {
             df::creature_raw *creature = world->raws.creatures.all[i];
@@ -196,7 +224,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     prod->mat_type = mat_type;
     prod->mat_index = mat_index;
     prod->probability = 100;
-    prod->count = 1;
+    prod->count = count;
     switch (item_type)
     {
     case df::item_type::BAR:
@@ -216,16 +244,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         break;
     }
 
-    bool result;
-#if 1
-    // Workaround for DF issue #0006273
-    if (item_type == df::item_type::GLOVES)
-        result = makeItem(prod, unit, 1) && makeItem(prod, unit, 2);
-    else
-#endif
-    result = makeItem(prod, unit);
-
-    if (!result)
+    if (!makeItem(prod, unit))
     {
         out.printerr("Failed to create item!\n");
         return CR_FAILURE;

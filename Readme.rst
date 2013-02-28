@@ -462,12 +462,12 @@ Specify the item and material information as you would indicate them in custom r
 Corpses, body parts, and prepared meals cannot be created using this tool.
 
 Examples:
- ``createitem GLOVES:ITEM_GLOVES_GAUNTLETS INORGANIC:STEEL``
-   Create a pair of steel gauntlets.
+ ``createitem GLOVES:ITEM_GLOVES_GAUNTLETS INORGANIC:STEEL 2``
+   Create 2 pairs of steel gauntlets.
  ``createitem WOOD PLANT_MAT:TOWER_CAP:WOOD``
    Create tower-cap logs.
- ``createitem FISH FISH_SHAD:MALE``
-   Create cleaned shad, ready to eat.
+ ``createitem FISH FISH_SHAD:MALE 5``
+   Create a stack of 5 cleaned shad, ready to eat.
 
 deramp (by zilpin)
 ------------------

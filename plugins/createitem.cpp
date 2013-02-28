@@ -12,6 +12,7 @@
 #include "modules/Materials.h"
 
 #include "DataDefs.h"
+#include "df/game_type.h"
 #include "df/world.h"
 #include "df/ui.h"
 #include "df/unit.h"
@@ -28,6 +29,7 @@ using namespace DFHack;
 
 using df::global::world;
 using df::global::ui;
+using df::global::gametype;
 
 DFHACK_PLUGIN("createitem");
 
@@ -51,7 +53,9 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool glove2 = 
     vector<df::item *> in_items;
     bool is_gloves = (prod->item_type == df::item_type::GLOVES);
 
-    prod->produce(unit, &out_items, &in_reag, &in_items, 1, df::job_skill::NONE, ui->main.fortress_entity, df::world_site::find(ui->site_id));
+    prod->produce(unit, &out_items, &in_reag, &in_items, 1, df::job_skill::NONE,
+        df::historical_entity::find(unit->civ_id),
+        ((*gametype == df::game_type::DWARF_MAIN) || (*gametype == df::game_type::DWARF_RECLAIM)) ? df::world_site::find(ui->site_id) : NULL);
     if (!out_items.size())
         return false;
     for (size_t i = 0; i < out_items.size(); i++)

@@ -4,7 +4,6 @@
 
 // DF data structure definition headers
 #include "DataDefs.h"
-#include "MiscUtils.h"
 #include "Types.h"
 #include "df/build_req_choice_genst.h"
 #include "df/build_req_choice_specst.h"
@@ -33,7 +32,6 @@
 #include "modules/World.h"
 #include "df/building.h"
 
-using df::global::gps;
 using df::global::ui;
 using df::global::ui_build_selector;
 using df::global::world;

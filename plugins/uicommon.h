@@ -4,6 +4,7 @@
 #include <set>
 
 #include "Core.h"
+#include "MiscUtils.h"
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
@@ -24,6 +25,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 using df::global::enabler;
+using df::global::gps;
 
 
 #ifndef HAVE_NULLPTR
@@ -184,7 +186,7 @@ public:
         list.clear();
         display_list.clear();
         display_start_offset = 0;
-        max_item_width = 0;
+        max_item_width = title.length();
         resize();
     }
 

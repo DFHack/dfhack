@@ -1,7 +1,6 @@
 #include "uicommon.h"
 
 #include "DataDefs.h"
-#include "MiscUtils.h"
 
 #include "df/job.h"
 #include "df/ui.h"
@@ -19,17 +18,18 @@
 
 using std::deque;
 
-using df::global::gps;
 using df::global::world;
 using df::global::ui;
 
 typedef int16_t activity_type;
 
-#define PLUGIN_VERSION 0.2
+#define PLUGIN_VERSION 0.4
 #define DAY_TICKS 1200
 #define DELTA_TICKS 100
 
-int max_history_days = 7;
+const int min_window = 28;
+const int max_history_days = 3 * min_window;
+const int ticks_per_day = DAY_TICKS / DELTA_TICKS;
 
 template <typename T1, typename T2>
 struct less_second {
@@ -40,7 +40,7 @@ struct less_second {
 };
 
 static bool monitor_jobs = false;
-static bool monitor_misery = false;
+static bool monitor_misery = true;
 static map<df::unit *, deque<activity_type>> work_history;
 
 static int misery[] = { 0, 0, 0, 0, 0, 0, 0 };
@@ -48,7 +48,7 @@ static bool misery_upto_date = false;
 
 static int get_max_history()
 {
-    return (DAY_TICKS / DELTA_TICKS) * max_history_days;
+    return ticks_per_day * max_history_days;
 }
 
 static int getPercentage(const int n, const int d)
@@ -363,15 +363,32 @@ private:
 class ViewscreenFortStats : public dfhack_viewscreen
 {
 public:
-    ViewscreenFortStats() : selected_column(0), fort_activity_count(0)
+    ViewscreenFortStats()
     {
         fort_activity_column.multiselect = false;
         fort_activity_column.auto_select = true;
         fort_activity_column.setTitle("Fort Activities");
+        fort_activity_column.bottom_margin = 4;
 
         dwarf_activity_column.multiselect = false;
         dwarf_activity_column.auto_select = true;
         dwarf_activity_column.setTitle("Units on Activity");
+        dwarf_activity_column.bottom_margin = 4;
+
+        window_days = min_window;
+
+        populateFortColumn();
+    }
+
+    void populateFortColumn()
+    {
+        selected_column = 0;
+        fort_activity_count = 0;
+
+        auto last_selected_index = fort_activity_column.highlighted_index;
+        fort_activity_column.clear();
+        fort_activity_totals.clear();
+        dwarf_activity_values.clear();
 
         for (auto it = work_history.begin(); it != work_history.end();)
         {
@@ -385,7 +402,8 @@ public:
             deque<activity_type> *work_list = &it->second;
             ++it;
 
-            for (auto entry = work_list->begin(); entry != work_list->end(); entry++)
+            size_t count = window_days * ticks_per_day;
+            for (auto entry = work_list->rbegin(); entry != work_list->rend() && count > 0; entry++, count--)
             {
                 if (*entry == JOB_UNKNOWN)
                     continue;
@@ -495,7 +513,7 @@ public:
 
         vector<pair<activity_type, size_t>> rev_vec(fort_activity_totals.begin(), fort_activity_totals.end());
         sort(rev_vec.begin(), rev_vec.end(), less_second<activity_type, size_t>());
-        
+
         for (auto rev_it = rev_vec.begin(); rev_it != rev_vec.end(); rev_it++)
         {
             auto activity = rev_it->first;
@@ -510,7 +528,30 @@ public:
 
         dwarf_activity_column.left_margin = fort_activity_column.fixWidth() + 2;
         fort_activity_column.filterDisplay();
+        fort_activity_column.setHighlight(last_selected_index);
         populateDwarfColumn();
+    }
+
+    void populateDwarfColumn()
+    {
+        dwarf_activity_column.clear();
+        if (fort_activity_column.getDisplayListSize() == 0)
+            return;
+
+        auto dwarf_activities = fort_activity_column.getFirstSelectedElem();
+        if (dwarf_activities)
+        {
+            vector<pair<df::unit *, size_t>> rev_vec(dwarf_activities->begin(), dwarf_activities->end());
+            sort(rev_vec.begin(), rev_vec.end(), less_second<df::unit *, size_t>());
+
+            for_each_(rev_vec,
+                [&] (pair<df::unit *, size_t> x)
+            { dwarf_activity_column.add(getDwarfAverage(x.first, x.second), *x.first); });
+        }
+
+        dwarf_activity_column.fixWidth();
+        dwarf_activity_column.clearSearch();
+        dwarf_activity_column.setHighlight(0);
     }
 
     void addToFortAverageColumn(activity_type type)
@@ -552,28 +593,6 @@ public:
         fort_activity_totals[activity]++;
     }
 
-    void populateDwarfColumn()
-    {
-        dwarf_activity_column.clear();
-        if (fort_activity_column.getDisplayListSize() == 0)
-            return;
-
-        auto dwarf_activities = fort_activity_column.getFirstSelectedElem();
-        if (dwarf_activities)
-        {
-            vector<pair<df::unit *, size_t>> rev_vec(dwarf_activities->begin(), dwarf_activities->end());
-            sort(rev_vec.begin(), rev_vec.end(), less_second<df::unit *, size_t>());
-
-            for_each_(rev_vec,
-                [&] (pair<df::unit *, size_t> x)
-            { dwarf_activity_column.add(getDwarfAverage(x.first, x.second), *x.first); });
-        }
-
-        dwarf_activity_column.fixWidth();
-        dwarf_activity_column.clearSearch();
-        dwarf_activity_column.setHighlight(0);
-    }
-
     void feed(set<df::interface_key> *input)
     {
         bool key_processed = false;
@@ -600,6 +619,14 @@ public:
             input->clear();
             Screen::dismiss(this);
             return;
+        }
+        else if  (input->count(interface_key::SECONDSCROLL_PAGEDOWN))
+        {
+            window_days += min_window;
+            if (window_days > max_history_days)
+                window_days = min_window;
+
+            populateFortColumn();
         }
         else if  (input->count(interface_key::CUSTOM_SHIFT_D))
         {
@@ -656,11 +683,18 @@ public:
         fort_activity_column.display(selected_column == 0);
         dwarf_activity_column.display(selected_column == 1);
 
-        int32_t y = gps->dimy - 3;
+        int32_t y = gps->dimy - 4;
         int32_t x = 2;
         OutputHotkeyString(x, y, "Leave", "Esc");
-        x += 3;
+
+        x += 13;
+        string window_label = "Window Months: " + int_to_string(window_days / min_window);
+        OutputHotkeyString(x, y, window_label.c_str(), "*");
+
+        ++y;
+        x = 2;
         OutputHotkeyString(x, y, "Dwarf Stats", "Shift-D");
+
         x += 3;
         OutputHotkeyString(x, y, "Zoom Unit", "Shift-Z");
     }
@@ -675,6 +709,7 @@ private:
     map<activity_type, size_t> fort_activity_totals;
     map<activity_type, map<df::unit *, size_t>> dwarf_activity_values;
     size_t fort_activity_count;
+    size_t window_days;
 
     void validateColumn()
     {
@@ -916,12 +951,6 @@ static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & par
             if (set_monitoring_mode(mode, true))
             {
                 out << "Monitoring enabled: " << mode << endl;
-                if (parameters.size() > 2)
-                {
-                    int new_window = atoi(parameters[2].c_str());
-                    if (new_window > 0)
-                        max_history_days = new_window;
-                }
             }
             else
             {
@@ -962,9 +991,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "dwarfmonitor", "Records dwarf activity to measure fort efficiency",
         dwarfmonitor_cmd, false, 
         "dwarfmonitor enable <mode>\n"
-        "  Start monitoring <mode> [days]\n"
+        "  Start monitoring <mode>\n"
         "    <mode> can be \"work\", \"misery\", or \"all\"\n"
-        "    [days] number of days to track (default is 7)\n\n"
         "dwarfmonitor disable <mode>\n"
         "    <mode> as above\n\n"
         "dwarfmonitor stats\n"

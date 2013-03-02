@@ -278,12 +278,12 @@ public:
             // Category masks
             auto masks = masks_column.getSelectedElems();
             for_each_(masks,
-                [&] (df::dfhack_material_category *m) { filter->mat_mask.whole |= m->whole; });
+                [&] (df::dfhack_material_category &m) { filter->mat_mask.whole |= m.whole; });
 
             // Specific materials
             auto materials = materials_column.getSelectedElems();
             transform_(materials, filter->materials,
-                [] (MaterialInfo *m) { return *m; });
+                [] (MaterialInfo &m) { return m; });
 
             Screen::dismiss(this);
         }
@@ -349,7 +349,6 @@ private:
             entry.selected = true;
 
         masks_column.add(entry);
-        mask.whole = 0;
     }
 
     void populateMasks()
@@ -357,12 +356,19 @@ private:
         masks_column.clear();
         df::dfhack_material_category mask;
 
+        mask.whole = 0;
         mask.bits.stone = true;
         addMaskEntry(mask, "Stone");
+
+        mask.whole = 0;
         mask.bits.wood = true;
         addMaskEntry(mask, "Wood");
+
+        mask.whole = 0;
         mask.bits.metal = true;
         addMaskEntry(mask, "Metal");
+
+        mask.whole = 0;
         mask.bits.soap = true;
         addMaskEntry(mask, "Soap");
 
@@ -373,9 +379,9 @@ private:
     {
         materials_column.clear();
         df::dfhack_material_category selected_category;
-        vector<df::dfhack_material_category *> selected_masks = masks_column.getSelectedElems();
+        vector<df::dfhack_material_category> selected_masks = masks_column.getSelectedElems();
         if (selected_masks.size() == 1)
-            selected_category = *selected_masks[0];
+            selected_category = selected_masks[0];
         else if (selected_masks.size() > 1)
             return;
 
@@ -406,14 +412,6 @@ private:
             for (size_t i = 0; i < raws.plants.all.size(); i++)
             {
                 df::plant_raw *p = raws.plants.all[i];
-                //string basename = p->name;
-
-                /*MaterialInfo material;
-                material.decode(p->material_defs.type_basic_mat, p->material_defs.idx_basic_mat);*/
-
-
-                //addMaterialEntry(selected_category, material, material.toString());
-
                 for (size_t j = 0; p->material.size() > 1 && j < p->material.size(); j++)
                 {
                     auto t = p->material[j];
@@ -422,18 +420,15 @@ private:
 
                     MaterialInfo material;
                     material.decode(DFHack::MaterialInfo::PLANT_BASE+j, i);
-                    //addMaterialEntry(selected_category, material, material.toString());
                     auto name = material.toString();
                     ListEntry<MaterialInfo> entry(pad_string(name, MAX_MATERIAL, false), material);
                     if (filter->matches(material))
                         entry.selected = true;
 
                     materials_column.add(entry);
-
                 }
             }
         }
-
         materials_column.sort();
     }
 

@@ -15,6 +15,8 @@
 #include "modules/Translation.h"
 #include "modules/World.h"
 #include "modules/Maps.h"
+#include "df/activity_event.h"
+#include "df/activity_entry.h"
 
 using std::deque;
 
@@ -83,67 +85,37 @@ static void move_cursor(df::coord &pos)
 
 static void open_stats_srceen();
 
-#define JOB_UNKNOWN -2
 #define JOB_IDLE -1
+#define JOB_UNKNOWN -2
 #define JOB_MILITARY -3
 #define JOB_LEISURE -4
-#define JOB_OTHER -5
-#define JOB_DESIG_SLOPE -6
+#define JOB_UNPRODUCTIVE -5
+#define JOB_DESIGNATE -6
 #define JOB_STORE_ITEM -7
-#define JOB_CONSTRUCT_FURNITURE -8
+#define JOB_MANUFACTURE -8
 #define JOB_DETAILING -9
 #define JOB_HUNTING -10
-#define JOB_CLOTING -11
-#define JOB_ARMOUR -12
-#define JOB_WEAPONS -13
 #define JOB_MEDICAL -14
+#define JOB_COLLECT -15
+#define JOB_CONSTRUCTION -16
+#define JOB_AGRICULTURE -17
+#define JOB_FOOD_PROD -18
+#define JOB_MECHANICAL -19
+#define JOB_ANIMALS -20
+#define JOB_PRODUCTIVE -21
 
-static string getActivityLabel(const activity_type & activity)
+static map<activity_type, string> activity_labels;
+
+static string getActivityLabel(const activity_type activity)
 {
     string label;
-    switch (activity)
-    {
-    case JOB_IDLE:
-        label = "Idle";
-        break;
-    case JOB_MILITARY:
-        label = "Military Duty";
-        break;
-    case JOB_LEISURE:
-        label = "Leisure";
-        break;
-    case JOB_OTHER:
-        label = "Other";
-        break;
-    case JOB_DESIG_SLOPE:
-        label = "Designate Stair/Slope";
-        break;
-    case JOB_STORE_ITEM:
-        label = "Store Item";
-        break;
-    case JOB_CONSTRUCT_FURNITURE:
-        label = "Construct Furniture";
-        break;
-    case JOB_DETAILING:
-        label = "Detailing";
-        break;
-    case JOB_HUNTING:
-        label = "Hunting";
-        break;
-    case JOB_CLOTING:
-        label = "Make Clothing";
-        break;
-    case JOB_ARMOUR:
-        label = "Make Armor";
-        break;
-    case JOB_WEAPONS:
-        label = "Make Weapons";
-        break;
-    case JOB_MEDICAL:
-        label = "Medical";
-        break;
 
-    default:
+    if (activity_labels.find(activity) != activity_labels.end())
+    {
+        label = activity_labels[activity];
+    }
+    else
+    {
         string raw_label = enum_item_key_str(static_cast<df::job_type>(activity));
         for (auto c = raw_label.begin(); c != raw_label.end(); c++)
         {
@@ -152,8 +124,6 @@ static string getActivityLabel(const activity_type & activity)
 
             label += *c;
         }
-
-        break;
     }
 
     return label;
@@ -172,7 +142,20 @@ public:
         dwarf_activity_column.auto_select = true;
         dwarf_activity_column.setTitle("Dwarf Activity");
 
-        for (auto it = work_history.begin(); it != work_history.end();)
+        window_days = min_window;
+
+        populateDwarfColumn(starting_selection);
+    }
+
+    void populateDwarfColumn(df::unit *starting_selection = NULL)
+    {
+        selected_column = 0;
+
+        auto last_selected_index = dwarf_activity_column.highlighted_index;
+        dwarf_activity_column.clear();
+        dwarf_activity_values.clear();
+
+        for (auto it = work_history.begin(); it != work_history.end(); it++)
         {
             auto unit = it->first;
             if (Units::isDead(unit))
@@ -186,7 +169,8 @@ public:
 
             size_t dwarf_total = 0;
             dwarf_activity_values[unit] =  map<activity_type, size_t>();
-            for (auto entry = work_list->begin(); entry != work_list->end(); entry++)
+            size_t count = window_days * ticks_per_day;
+            for (auto entry = work_list->rbegin(); entry != work_list->rend() && count > 0; entry++, count--)
             {
                 if (*entry == JOB_UNKNOWN || *entry == job_type::DrinkBlood)
                     continue;
@@ -197,23 +181,19 @@ public:
 
             for_each_(dwarf_activity_values[unit],
                 [&] (const pair<activity_type, size_t> &x) 
-                { dwarf_activity_values[unit][x.first] = getPercentage(x.second,  dwarf_total); } );
+            { dwarf_activity_values[unit][x.first] = getPercentage(x.second,  dwarf_total); } );
 
-            dwarves_column.add(getUnitName(unit), *unit);
+            dwarves_column.add(getUnitName(unit), unit);
         }
 
         dwarf_activity_column.left_margin = dwarves_column.fixWidth() + 2;
         dwarves_column.filterDisplay();
-        dwarves_column.selectItem(starting_selection);
+        if (starting_selection)
+            dwarves_column.selectItem(starting_selection);
+        else
+            dwarves_column.setHighlight(last_selected_index);
+
         populateActivityColumn();
-    }
-
-    void addDwarfActivity(df::unit *unit, const activity_type &activity)
-    {
-        if (dwarf_activity_values[unit].find(activity) == dwarf_activity_values[unit].end())
-            dwarf_activity_values[unit][activity] = 0;
-
-        dwarf_activity_values[unit][activity]++;
     }
 
     void populateActivityColumn()
@@ -240,6 +220,14 @@ public:
         dwarf_activity_column.fixWidth();
         dwarf_activity_column.clearSearch();
         dwarf_activity_column.setHighlight(0);
+    }
+
+    void addDwarfActivity(df::unit *unit, const activity_type &activity)
+    {
+        if (dwarf_activity_values[unit].find(activity) == dwarf_activity_values[unit].end())
+            dwarf_activity_values[unit][activity] = 0;
+
+        dwarf_activity_values[unit][activity]++;
     }
 
     string getActivityItem(activity_type activity, size_t value)
@@ -291,6 +279,14 @@ public:
                 move_cursor(selected_unit->pos);
             }
         }
+        else if  (input->count(interface_key::SECONDSCROLL_PAGEDOWN))
+        {
+            window_days += min_window;
+            if (window_days > max_history_days)
+                window_days = min_window;
+
+            populateDwarfColumn();
+        }
         else if  (input->count(interface_key::CURSOR_LEFT))
         {
             --selected_column;
@@ -328,11 +324,18 @@ public:
         dwarves_column.display(selected_column == 0);
         dwarf_activity_column.display(selected_column == 1);
 
-        int32_t y = gps->dimy - 3;
+        int32_t y = gps->dimy - 4;
         int32_t x = 2;
         OutputHotkeyString(x, y, "Leave", "Esc");
-        x += 3;
+
+        x += 13;
+        string window_label = "Window Months: " + int_to_string(window_days / min_window);
+        OutputHotkeyString(x, y, window_label.c_str(), "*");
+
+        ++y;
+        x = 2;
         OutputHotkeyString(x, y, "Fort Stats", "Shift-D");
+
         x += 3;
         OutputHotkeyString(x, y, "Zoom Unit", "Shift-Z");
     }
@@ -340,9 +343,10 @@ public:
     std::string getFocusString() { return "dwarfmonitor_dwarfstats"; }
 
 private:
-    ListColumn<df::unit> dwarves_column;
+    ListColumn<df::unit *> dwarves_column;
     ListColumn<activity_type> dwarf_activity_column;
     int selected_column;
+    size_t window_days;
 
     map<df::unit *, map<activity_type, size_t>> dwarf_activity_values;
 
@@ -374,6 +378,10 @@ public:
         dwarf_activity_column.auto_select = true;
         dwarf_activity_column.setTitle("Units on Activity");
         dwarf_activity_column.bottom_margin = 4;
+        dwarf_activity_column.text_clip_at = 25;
+
+        category_breakdown_column.setTitle("Category Breakdown");
+        category_breakdown_column.bottom_margin = 4;
 
         window_days = min_window;
 
@@ -389,6 +397,7 @@ public:
         fort_activity_column.clear();
         fort_activity_totals.clear();
         dwarf_activity_values.clear();
+        category_breakdown.clear();
 
         for (auto it = work_history.begin(); it != work_history.end();)
         {
@@ -442,7 +451,8 @@ public:
                     case job_type::CauseTrouble:
                     case job_type::ReportCrime:
                     case job_type::BeatCriminal:
-                        real_activity = JOB_OTHER;
+                    case job_type::ExecuteCriminal:
+                        real_activity = JOB_UNPRODUCTIVE;
                         break;
 
                     case job_type::CarveUpwardStaircase:
@@ -450,7 +460,10 @@ public:
                     case job_type::CarveUpDownStaircase:
                     case job_type::CarveRamp:
                     case job_type::DigChannel:
-                        real_activity = JOB_DESIG_SLOPE;
+                    case job_type::Dig:
+                    case job_type::CarveTrack:
+                    case job_type::CarveFortification:
+                        real_activity = JOB_DESIGNATE;
                         break;
 
                     case job_type::StoreOwnedItem:
@@ -464,6 +477,17 @@ public:
                     case job_type::StoreArmor:
                     case job_type::StoreItemInBarrel:
                     case job_type::StoreItemInBin:
+                    case job_type::BringItemToDepot:
+                    case job_type::BringItemToShop:
+                    case job_type::GetProvisions:
+                    case job_type::FillWaterskin:
+                    case job_type::FillWaterskin2:
+                    case job_type::CheckChest:
+                    case job_type::PickupEquipment:
+                    case job_type::DumpItem:
+                    case job_type::PushTrackVehicle:
+                    case job_type::PlaceTrackVehicle:
+                    case job_type::StoreItemInVehicle:
                         real_activity = JOB_STORE_ITEM;
                         break;
 
@@ -479,7 +503,76 @@ public:
                     case job_type::ConstructWeaponRack:
                     case job_type::ConstructCabinet:
                     case job_type::ConstructStatue:
-                        real_activity = JOB_CONSTRUCT_FURNITURE;
+                    case job_type::ConstructBlocks:
+                    case job_type::MakeRawGlass:
+                    case job_type::MakeCrafts:
+                    case job_type::MintCoins:
+                    case job_type::CutGems:
+                    case job_type::CutGlass:
+                    case job_type::EncrustWithGems:
+                    case job_type::EncrustWithGlass:
+                    case job_type::SmeltOre:
+                    case job_type::MeltMetalObject:
+                    case job_type::ExtractMetalStrands:
+                    case job_type::MakeWeapon:
+                    case job_type::ForgeAnvil:
+                    case job_type::ConstructCatapultParts:
+                    case job_type::ConstructBallistaParts:
+                    case job_type::MakeArmor:
+                    case job_type::MakeHelm:
+                    case job_type::MakePants:
+                    case job_type::StudWith:
+                    case job_type::ProcessPlantsBag:
+                    case job_type::ProcessPlantsVial:
+                    case job_type::ProcessPlantsBarrel:
+                    case job_type::WeaveCloth:
+                    case job_type::MakeGloves:
+                    case job_type::MakeShoes:
+                    case job_type::MakeShield:
+                    case job_type::MakeCage:
+                    case job_type::MakeChain:
+                    case job_type::MakeFlask:
+                    case job_type::MakeGoblet:
+                    case job_type::MakeInstrument:
+                    case job_type::MakeToy:
+                    case job_type::MakeAnimalTrap:
+                    case job_type::MakeBarrel:
+                    case job_type::MakeBucket:
+                    case job_type::MakeWindow:
+                    case job_type::MakeTotem:
+                    case job_type::MakeAmmo:
+                    case job_type::DecorateWith:
+                    case job_type::MakeBackpack:
+                    case job_type::MakeQuiver:
+                    case job_type::MakeBallistaArrowHead:
+                    case job_type::AssembleSiegeAmmo:
+                    case job_type::ConstructMechanisms:
+                    case job_type::MakeTrapComponent:
+                    case job_type::ExtractFromPlants:
+                    case job_type::ExtractFromRawFish:
+                    case job_type::ExtractFromLandAnimal:
+                    case job_type::MakeCharcoal:
+                    case job_type::MakeAsh:
+                    case job_type::MakeLye:
+                    case job_type::MakePotashFromLye:
+                    case job_type::MakePotashFromAsh:
+                    case job_type::DyeThread:
+                    case job_type::DyeCloth:
+                    case job_type::SewImage:
+                    case job_type::MakePipeSection:
+                    case job_type::ConstructHatchCover:
+                    case job_type::ConstructGrate:
+                    case job_type::ConstructQuern:
+                    case job_type::ConstructMillstone:
+                    case job_type::ConstructSplint:
+                    case job_type::ConstructCrutch:
+                    case job_type::ConstructTractionBench:
+                    case job_type::CustomReaction:
+                    case job_type::ConstructSlab:
+                    case job_type::EngraveSlab:
+                    case job_type::SpinThread:
+                    case job_type::MakeTool:
+                        real_activity = JOB_MANUFACTURE;
                         break;
 
                     case job_type::DetailFloor:
@@ -490,7 +583,113 @@ public:
                     case job_type::Hunt:
                     case job_type::ReturnKill:
                     case job_type::HuntVermin:
+                    case job_type::GatherPlants:
+                    case job_type::Fish:
+                    case job_type::CatchLiveFish:
+                    case job_type::BaitTrap:
+                    case job_type::InstallColonyInHive:
                         real_activity = JOB_HUNTING;
+                        break;
+
+                    case job_type::RemoveConstruction:
+                    case job_type::DestroyBuilding:
+                    case job_type::RemoveStairs:
+                    case job_type::ConstructBuilding:
+                        real_activity = JOB_CONSTRUCTION;
+                        break;
+
+                    case job_type::FellTree:
+                    case job_type::CollectWebs:
+                    case job_type::CollectSand:
+                    case job_type::DrainAquarium:
+                    case job_type::FillAquarium:
+                    case job_type::FillPond:
+                    case job_type::CollectClay:
+                        real_activity = JOB_COLLECT;
+                        break;
+
+                    case job_type::TrainHuntingAnimal:
+                    case job_type::TrainWarAnimal:
+                    case job_type::CatchLiveLandAnimal:
+                    case job_type::TameVermin:
+                    case job_type::TameAnimal:
+                    case job_type::ChainAnimal:
+                    case job_type::UnchainAnimal:
+                    case job_type::UnchainPet:
+                    case job_type::ReleaseLargeCreature:
+                    case job_type::ReleasePet:
+                    case job_type::ReleaseSmallCreature:
+                    case job_type::HandleSmallCreature:
+                    case job_type::HandleLargeCreature:
+                    case job_type::CageLargeCreature:
+                    case job_type::CageSmallCreature:
+                    case job_type::PitLargeAnimal:
+                    case job_type::PitSmallAnimal:
+                    case job_type::SlaughterAnimal:
+                    case job_type::ShearCreature:
+                    case job_type::PenLargeAnimal:
+                    case job_type::PenSmallAnimal:
+                    case job_type::TrainAnimal:
+                        real_activity = JOB_ANIMALS;
+                        break;
+
+                    case job_type::PlantSeeds:
+                    case job_type::HarvestPlants:
+                    case job_type::FertilizeField:
+                        real_activity = JOB_AGRICULTURE;
+                        break;
+                        
+                    case job_type::ButcherAnimal:
+                    case job_type::PrepareRawFish:
+                    case job_type::MillPlants:
+                    case job_type::MilkCreature:
+                    case job_type::MakeCheese:
+                    case job_type::PrepareMeal:
+                    case job_type::ProcessPlants:
+                    case job_type::BrewDrink:
+                    case job_type::CollectHiveProducts:
+                        real_activity = JOB_FOOD_PROD;
+                        break;
+
+                    case job_type::LoadCatapult:
+                    case job_type::LoadBallista:
+                    case job_type::FireCatapult:
+                    case job_type::FireBallista:
+                        real_activity = JOB_MILITARY;
+                        break;
+
+                    case job_type::LoadCageTrap:
+                    case job_type::LoadStoneTrap:
+                    case job_type::LoadWeaponTrap:
+                    case job_type::CleanTrap:
+                    case job_type::LinkBuildingToTrigger:
+                    case job_type::PullLever:
+                        real_activity = JOB_MECHANICAL;
+                        break;
+
+                    case job_type::RecoverWounded:
+                    case job_type::DiagnosePatient:
+                    case job_type::ImmobilizeBreak:
+                    case job_type::DressWound:
+                    case job_type::CleanPatient:
+                    case job_type::Surgery:
+                    case job_type::Suture:
+                    case job_type::SetBone:
+                    case job_type::PlaceInTraction:
+                    case job_type::GiveWater:
+                    case job_type::GiveFood:
+                    case job_type::GiveWater2:
+                    case job_type::GiveFood2:
+                    case job_type::BringCrutch:
+                    case job_type::ApplyCast:
+                        real_activity = JOB_MEDICAL;
+                        break;
+
+                    case job_type::OperatePump:
+                    case job_type::ManageWorkOrders:
+                    case job_type::UpdateStockpileRecords:
+                    case job_type::TradeAtDepot:
+                        real_activity = JOB_PRODUCTIVE;
                         break;
 
                     default:
@@ -498,6 +697,7 @@ public:
                     }
 
                     addFortActivity(real_activity);
+                    addCategoryActivity(real_activity, *entry);
                 }
 
                 if (dwarf_activity_values.find(real_activity) == dwarf_activity_values.end())
@@ -526,38 +726,72 @@ public:
             }
         }
 
+        for (auto cat_it = category_breakdown.begin(); cat_it != category_breakdown.end(); cat_it++)
+        {
+            auto cat_total = fort_activity_totals[cat_it->first];
+            for (auto val_it = cat_it->second.begin(); val_it != cat_it->second.end(); val_it++)
+            {
+                category_breakdown[cat_it->first][val_it->first] = getPercentage(val_it->second, cat_total);
+            }
+        }
+
         dwarf_activity_column.left_margin = fort_activity_column.fixWidth() + 2;
         fort_activity_column.filterDisplay();
         fort_activity_column.setHighlight(last_selected_index);
         populateDwarfColumn();
+        populateCategoryBreakdownColumn();
     }
 
     void populateDwarfColumn()
     {
         dwarf_activity_column.clear();
-        if (fort_activity_column.getDisplayListSize() == 0)
-            return;
-
-        auto dwarf_activities = fort_activity_column.getFirstSelectedElem();
-        if (dwarf_activities)
+        if (fort_activity_column.getDisplayListSize() > 0)
         {
-            vector<pair<df::unit *, size_t>> rev_vec(dwarf_activities->begin(), dwarf_activities->end());
-            sort(rev_vec.begin(), rev_vec.end(), less_second<df::unit *, size_t>());
+            activity_type selected_activity = fort_activity_column.getFirstSelectedElem();
+            auto dwarf_activities = &dwarf_activity_values[selected_activity];
+            if (dwarf_activities)
+            {
+                vector<pair<df::unit *, size_t>> rev_vec(dwarf_activities->begin(), dwarf_activities->end());
+                sort(rev_vec.begin(), rev_vec.end(), less_second<df::unit *, size_t>());
 
-            for_each_(rev_vec,
-                [&] (pair<df::unit *, size_t> x)
-            { dwarf_activity_column.add(getDwarfAverage(x.first, x.second), *x.first); });
+                for_each_(rev_vec,
+                    [&] (pair<df::unit *, size_t> x)
+                { dwarf_activity_column.add(getDwarfAverage(x.first, x.second), x.first); });
+            }
         }
 
-        dwarf_activity_column.fixWidth();
+        category_breakdown_column.left_margin = dwarf_activity_column.fixWidth() + 2;
         dwarf_activity_column.clearSearch();
         dwarf_activity_column.setHighlight(0);
     }
 
-    void addToFortAverageColumn(activity_type type)
+    void populateCategoryBreakdownColumn()
+    {
+        category_breakdown_column.clear();
+        if (fort_activity_column.getDisplayListSize() == 0)
+            return;
+
+        auto selected_activity = fort_activity_column.getFirstSelectedElem();
+        auto category_activities = &category_breakdown[selected_activity];
+        if (category_activities)
+        {
+            vector<pair<activity_type, size_t>> rev_vec(category_activities->begin(), category_activities->end());
+            sort(rev_vec.begin(), rev_vec.end(), less_second<activity_type, size_t>());
+
+            for_each_(rev_vec,
+                [&] (pair<activity_type, size_t> x)
+            { category_breakdown_column.add(getBreakdownAverage(x.first, x.second), x.first); });
+        }
+
+        category_breakdown_column.fixWidth();
+        category_breakdown_column.clearSearch();
+        category_breakdown_column.setHighlight(0);
+    }
+
+    void addToFortAverageColumn(activity_type &type)
     {
         if (getFortActivityCount(type))
-            fort_activity_column.add(getFortAverage(type), dwarf_activity_values[type]);
+            fort_activity_column.add(getFortAverage(type), type);
     }
 
     string getFortAverage(const activity_type &activity)
@@ -577,7 +811,15 @@ public:
         return result;
     }
 
-    size_t getFortActivityCount(const activity_type &activity)
+    string getBreakdownAverage(activity_type activity, const size_t value)
+    {
+        auto label = getActivityLabel(activity);
+        auto result = pad_string(int_to_string(value), 3) + " " + label;
+
+        return result;
+    }
+
+    size_t getFortActivityCount(const activity_type activity)
     {
         if (fort_activity_totals.find(activity) == fort_activity_totals.end())
             return 0;
@@ -585,12 +827,23 @@ public:
         return fort_activity_totals[activity];
     }
 
-    void addFortActivity(const activity_type &activity)
+    void addFortActivity(const activity_type activity)
     {
         if (fort_activity_totals.find(activity) == fort_activity_totals.end())
             fort_activity_totals[activity] = 0;
 
         fort_activity_totals[activity]++;
+    }
+
+    void addCategoryActivity(const int category, const activity_type activity)
+    {
+        if (category_breakdown.find(category) == category_breakdown.end())
+            category_breakdown[category] = map<activity_type, size_t>();
+
+        if (category_breakdown[category].find(activity) == category_breakdown[category].end())
+            category_breakdown[category][activity] = 0;
+
+        category_breakdown[category][activity]++;
     }
 
     void feed(set<df::interface_key> *input)
@@ -609,7 +862,10 @@ public:
         if (key_processed)
         {
             if (selected_column == 0 && fort_activity_column.feed_changed_highlight)
+            {
                 populateDwarfColumn();
+                populateCategoryBreakdownColumn();
+            }
             
             return;
         }
@@ -682,6 +938,7 @@ public:
 
         fort_activity_column.display(selected_column == 0);
         dwarf_activity_column.display(selected_column == 1);
+        category_breakdown_column.display(false);
 
         int32_t y = gps->dimy - 4;
         int32_t x = 2;
@@ -702,14 +959,17 @@ public:
     std::string getFocusString() { return "dwarfmonitor_fortstats"; }
 
 private:
-    ListColumn<map<df::unit *, size_t>> fort_activity_column;
-    ListColumn<df::unit> dwarf_activity_column;
+    ListColumn<activity_type> fort_activity_column, category_breakdown_column;
+    ListColumn<df::unit *> dwarf_activity_column;
     int selected_column;
 
     map<activity_type, size_t> fort_activity_totals;
+    map<int, map<activity_type, size_t>> category_breakdown;
     map<activity_type, map<df::unit *, size_t>> dwarf_activity_values;
     size_t fort_activity_count;
     size_t window_days;
+    
+    vector<activity_type> listed_activities;
 
     void validateColumn()
     {
@@ -817,7 +1077,10 @@ static void update_dwarf_stats(bool is_paused)
             continue;
 
         if (ENUM_ATTR(profession, military, unit->profession))
+        {
             add_work_history(unit, JOB_MILITARY);
+            continue;
+        }
 
         if (!unit->job.current_job)
         {
@@ -986,6 +1249,24 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     if (!gps || !INTERPOSE_HOOK(dwarf_monitor_hook, feed).apply() || !INTERPOSE_HOOK(dwarf_monitor_hook, render).apply())
         out.printerr("Could not insert dwarfmonitor hooks!\n");
 
+    activity_labels[JOB_IDLE]               = "Idle";
+    activity_labels[JOB_MILITARY]           = "Military Duty";
+    activity_labels[JOB_LEISURE]            = "Leisure";
+    activity_labels[JOB_UNPRODUCTIVE]       = "Unproductive";
+    activity_labels[JOB_DESIGNATE]          = "Mining";
+    activity_labels[JOB_STORE_ITEM]         = "Store/Fetch Item";
+    activity_labels[JOB_MANUFACTURE]        = "Manufacturing";
+    activity_labels[JOB_DETAILING]          = "Detailing";
+    activity_labels[JOB_HUNTING]            = "Hunting/Gathering";
+    activity_labels[JOB_MEDICAL]            = "Medical";
+    activity_labels[JOB_COLLECT]            = "Collect Materials";
+    activity_labels[JOB_CONSTRUCTION]       = "Construction";
+    activity_labels[JOB_AGRICULTURE]        = "Agriculture";
+    activity_labels[JOB_FOOD_PROD]          = "Food/Drink Production";
+    activity_labels[JOB_MECHANICAL]         = "Mechanics";
+    activity_labels[JOB_ANIMALS]            = "Animal Handling";
+    activity_labels[JOB_PRODUCTIVE]         = "Other Productive";
+    
     commands.push_back(
         PluginCommand(
         "dwarfmonitor", "Records dwarf activity to measure fort efficiency",

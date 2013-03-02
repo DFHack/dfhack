@@ -143,11 +143,11 @@ template <typename T>
 class ListEntry
 {
 public:
-    T *elem;
+    T elem;
     string text;
     bool selected;
 
-    ListEntry(string text, T &elem) : elem(&elem), text(text), selected(false)
+    ListEntry(const string text, const T elem) : elem(elem), text(text), selected(false)
     {
     }
 };
@@ -158,6 +158,7 @@ class ListColumn
 public:
     int highlighted_index;
     int display_start_offset;
+    unsigned short text_clip_at;
     int32_t bottom_margin, search_margin, left_margin;
     bool multiselect;
     bool allow_null;
@@ -173,6 +174,7 @@ public:
         left_margin = 2;
         search_margin = 63;
         highlighted_index = 0;
+        text_clip_at = 0;
         multiselect = false;
         allow_null = true;
         auto_select = false;
@@ -202,7 +204,7 @@ public:
             max_item_width = entry.text.length();
     }
 
-    void add(const string &text, T &elem)
+    void add(const string &text, const T &elem)
     {
         list.push_back(ListEntry<T>(text, elem));
         if (text.length() > max_item_width)
@@ -211,6 +213,9 @@ public:
 
     int fixWidth()
     {
+        if (text_clip_at > 0 && max_item_width > text_clip_at)
+            max_item_width = text_clip_at;
+
         for (auto it = list.begin(); it != list.end(); it++)
         {
             it->text = pad_string(it->text, max_item_width, false);
@@ -232,9 +237,14 @@ public:
             ++y;
             UIColor fg_color = (display_list[i]->selected) ? COLOR_SELECTED : COLOR_UNSELECTED;
             UIColor bg_color = (is_selected_column && i == highlighted_index) ? COLOR_HIGHLIGHTED : COLOR_BLACK;
-            paint_text(fg_color, left_margin, y, display_list[i]->text, bg_color);
+            
+            string item_label = display_list[i]->text;
+            if (text_clip_at > 0 && item_label.length() > text_clip_at)
+                item_label.resize(text_clip_at);
+
+            paint_text(fg_color, left_margin, y, item_label, bg_color);
             int x = left_margin + display_list[i]->text.length() + 1;
-            display_extras(*display_list[i]->elem, x, y);
+            display_extras(display_list[i]->elem, x, y);
         }
 
         if (is_selected_column && allow_search)
@@ -355,9 +365,9 @@ public:
         entry->selected = !entry->selected;
     }
 
-    vector<T*> getSelectedElems(bool only_one = false)
+    vector<T> getSelectedElems(bool only_one = false)
     {
-        vector<T*> results;
+        vector<T> results;
         for (auto it = list.begin(); it != list.end(); it++)
         {
             if ((*it).selected)
@@ -371,17 +381,22 @@ public:
         return results;
     }
 
+    T getFirstSelectedElem()
+    {
+        vector<T> results = getSelectedElems(true);
+        if (results.size() == 0)
+            return nullptr;
+        else
+            return results[0];
+    }
+
     void clearSelection()
     {
         for_each_(list, [] (ListEntry<T> &e) { e.selected = false; });
     }
 
-    void selectItem(const T* elem)
+    void selectItem(const T elem)
     {
-        if (!elem)
-            return;
-
-        //clearSelection();
         int i = 0;
         for (; i < display_list.size(); i++)
         {
@@ -397,15 +412,6 @@ public:
     {
         search_string.clear();
         filterDisplay();
-    }
-
-    T* getFirstSelectedElem()
-    {
-        vector<T*> results = getSelectedElems(true);
-        if (results.size() == 0)
-            return nullptr;
-        else
-            return results[0];
     }
 
     size_t getDisplayListSize()

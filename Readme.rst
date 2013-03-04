@@ -2430,6 +2430,21 @@ keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
   
 * job - selects that job (e.g. Dig or FellTree)
 
+gui/companion-order.lua
+=======================
+
+A script to issue orders for companions. Select companions with lower case chars, issue orders with upper 
+case. Must be in look or talk mode to issue command on tile.
+
+* move - orders selected companions to move to location. If companions are following they will move no more than 3 tiles from you.
+* equip - try to equip items on the ground.
+* pick-up - try to take items into hand (also wield)
+* unequip - remove and drop equipment
+* unwield - drop held items
+* wait - temporarely remove from party
+* follow - rejoin the party after "wait"
+* leave - remove from party (can be rejoined by talking)
+
 
 gui/gm-editor
 =============
@@ -2442,7 +2457,7 @@ There are three ways to open this editor:
 * using gui/gm-editor <lua command> - executes lua command and opens editor on
   it's results (e.g. gui/gm-editor "df.global.world.items.all" shows all items)
   
-* using gui/gm-edito dialog - shows an in game dialog to input lua command. Works
+* using gui/gm-editor dialog - shows an in game dialog to input lua command. Works
   the same as version above.
   
 This editor allows to change and modify almost anything in df. Press '?' for an 

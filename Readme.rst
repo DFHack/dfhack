@@ -2430,7 +2430,7 @@ keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
   
 * job - selects that job (e.g. Dig or FellTree)
 
-gui/companion-order.lua
+gui/companion-order
 =======================
 
 A script to issue orders for companions. Select companions with lower case chars, issue orders with upper 

@@ -43,7 +43,7 @@ for k,v in ipairs({...}) do --setting parsing
 end
 
 mode=mode or 0
-
+last_building=last_building or {}
 
 function Disclaimer(tlb)
     local dsc={"The Gathering Against ",{text="Goblin ",pen=dfhack.pen.parse{fg=COLOR_GREEN,bg=0}}, "Oppresion ",
@@ -368,7 +368,12 @@ function BuildingChosen(inp_args,type_id,subtype_id,custom_id)
     if inp_args then
         args.pos=inp_args.pos or args.pos
     end
+    last_building.type=args.type
+    last_building.subtype=args.subtype
+    last_building.custom=args.custom
+    
     if chooseBuildingWidthHeightDir(args) then
+        
         return
     end
     --if settings.build_by_items then
@@ -736,32 +741,48 @@ function AssignJobItems(args)
     return true
     --]=]
 end
+function CheckAndFinishBuilding(args,bld)
+    for idx,job in pairs(bld.jobs) do
+        if job.job_type==df.job_type.ConstructBuilding then
+            args.job=job
+            break
+        end
+    end
+    
+    if args.job~=nil then
+        local ok,msg=AssignJobItems(args)
+        if not ok then
+            return false,msg
+        else
+            AssignUnitToJob(args.job,args.unit,args.from_pos) 
+        end
+    else
+        local t={items=buildings.getFiltersByType({},bld:getType(),bld:getSubtype(),bld:getCustomType())}
+        args.pre_actions={dfhack.curry(setFiltersUp,t),AssignJobItems,AssignBuildingRef}
+        local ok,msg=makeJob(args)
+        return ok,msg
+    end
+end
 function AssignJobToBuild(args)
     local bld=dfhack.buildings.findAtTile(args.pos)
     args.job_type=df.job_type.ConstructBuilding
     if bld~=nil then
-        for idx,job in pairs(bld.jobs) do
-            if job.job_type==df.job_type.ConstructBuilding then
-                args.job=job
-                break
-            end
-        end
-        
-        if args.job~=nil then
-            local ok,msg=AssignJobItems(args)
-            if not ok then
-                return false,msg
-            else
-                AssignUnitToJob(args.job,args.unit,args.from_pos) 
-            end
-        else
-            local t={items=buildings.getFiltersByType({},bld:getType(),bld:getSubtype(),bld:getCustomType())}
-            args.pre_actions={dfhack.curry(setFiltersUp,t),AssignJobItems,AssignBuildingRef}
-            local ok,msg=makeJob(args)
-            return ok,msg
-        end
+        CheckAndFinishBuilding(args,bld)
     else
         bdialog.BuildingDialog{on_select=dfhack.curry(BuildingChosen,args),hide_none=true}:show()
+    end
+    return true
+end
+function BuildLast(args)
+    local bld=dfhack.buildings.findAtTile(args.pos)
+    args.job_type=df.job_type.ConstructBuilding
+    if bld~=nil then
+        CheckAndFinishBuilding(args,bld)
+    else
+        --bdialog.BuildingDialog{on_select=dfhack.curry(BuildingChosen,args),hide_none=true}:show()
+        if last_building and last_building.type then
+            BuildingChosen(args,last_building.type,last_building.subtype,last_building.custom)
+        end
     end
     return true
 end
@@ -814,6 +835,7 @@ actions={
     {"RemoveStairs"         ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},
     --{"HandleLargeCreature"   ,df.job_type.HandleLargeCreature,{isUnit},{SetCreatureRef}},
     {"Build"                ,AssignJobToBuild,{NoConstructedBuilding}},
+    {"BuildLast"                ,BuildLast,{NoConstructedBuilding}},
     {"Clean"                ,df.job_type.Clean,{}},
     
 }

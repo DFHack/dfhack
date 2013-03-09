@@ -488,8 +488,10 @@ function getItemsUncollected(job)
     end
     return ret
 end
-function AddItem(tbl,item,recurse)
-    table.insert(tbl,item)
+function AddItem(tbl,item,recurse,skip_add)
+    if not skip_add then
+        table.insert(tbl,item)
+    end
     if recurse then
         local subitems=dfhack.items.getContainedItems(item)
         if subitems~=nil then
@@ -518,6 +520,8 @@ function EnumItems(args)
         for k,v in pairs(args.unit.inventory) do
             if args.inv[v.mode] then
                 AddItem(ret,v.item,args.deep)
+            elseif args.deep then
+                AddItem(ret,v.item,args.deep,true)
             end
         end
     end

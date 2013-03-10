@@ -37,7 +37,7 @@ using df::global::ui_build_selector;
 using df::global::world;
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 0.5
+#define PLUGIN_VERSION 0.6
 
 #ifndef HAVE_NULLPTR
 #define nullptr 0L
@@ -80,6 +80,16 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 #define MAX_MATERIAL 21
 #define SIDEBAR_WIDTH 30
 
+static bool show_debugging = false;
+
+static void debug(const string &msg)
+{
+    if (!show_debugging)
+        return;
+
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    out << "DEBUG (buildingplan): " << msg << endl;
+}
 
 /*
  * Material Choice Screen
@@ -520,6 +530,7 @@ public:
 
         if (closest_distance > -1 && assignItem(*closest_item))
         {
+            debug("Item assigned");
             items_vector->erase(closest_item);
             remove();
             return true;
@@ -688,23 +699,30 @@ public:
 
     void doCycle()
     {
+        debug("Running Cycle");
         if (planned_buildings.size() == 0)
             return;
+
+        debug("Planned count: " + int_to_string(planned_buildings.size()));
 
         gather_available_items();
         for (auto building_iter = planned_buildings.begin(); building_iter != planned_buildings.end();)
         {
             if (building_iter->isValid())
             {
+                if (show_debugging)
+                    debug(string("Trying to allocate ") + enum_item_key_str(building_iter->getType()));
+
                 auto required_item_type = item_for_building_type[building_iter->getType()];
                 auto items_vector = &available_item_vectors[required_item_type];
                 if (items_vector->size() == 0 || !building_iter->assignClosestItem(items_vector))
                 {
+                    debug("Unable to allocate an item");
                     ++building_iter;
                     continue;
                 }
             }
-
+            debug("Removing building plan");
             building_iter = planned_buildings.erase(building_iter);
         }
     }
@@ -804,6 +822,7 @@ private:
 
     void gather_available_items()
     {
+        debug("Gather available items");
         for (auto iter = available_item_vectors.begin(); iter != available_item_vectors.end(); iter++)
         {
             iter->second.clear();
@@ -1110,7 +1129,15 @@ static command_result buildingplan_cmd(color_ostream &out, vector <string> & par
 {
     if (!parameters.empty())
     {
-        out << "Building Plan" << endl << "Version: " << PLUGIN_VERSION << endl;
+        if (parameters.size() == 1 && toLower(parameters[0])[0] == 'v')
+        {
+            out << "Building Plan" << endl << "Version: " << PLUGIN_VERSION << endl;
+        }
+        else if (parameters.size() == 2 && toLower(parameters[0]) == "debug")
+        {
+            show_debugging = (toLower(parameters[1]) == "on");
+            out << "Debugging " << ((show_debugging) ? "enabled" : "disabled") << endl;
+        }        
     }
 
     return CR_OK;

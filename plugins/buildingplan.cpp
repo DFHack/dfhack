@@ -37,7 +37,7 @@ using df::global::ui_build_selector;
 using df::global::world;
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 0.6
+#define PLUGIN_VERSION 0.7
 
 #ifndef HAVE_NULLPTR
 #define nullptr 0L
@@ -550,8 +550,12 @@ public:
 
         ref->building_id = building->id;
 
+        if (building->jobs.size() != 1)
+            return false;
+        
         auto job = building->jobs[0];
-        delete job->job_items[0];
+
+        for_each_(job->job_items, [] (df::job_item *x) { delete x; });
         job->job_items.clear();
         job->flags.bits.suspend = false;
 

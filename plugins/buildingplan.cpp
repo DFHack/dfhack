@@ -37,7 +37,7 @@ using df::global::ui_build_selector;
 using df::global::world;
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 0.7
+#define PLUGIN_VERSION 0.8
 
 #ifndef HAVE_NULLPTR
 #define nullptr 0L
@@ -496,6 +496,9 @@ public:
         }
 
         building = df::building::find(config.ival(1));
+        if (!building)
+            return;
+
         pos = df::coord(building->centerx, building->centery, building->z);
         filter.min_quality = static_cast<df::item_quality>(config.ival(2) - 1);
         filter.decorated_only = config.ival(3) - 1;

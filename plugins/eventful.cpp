@@ -60,7 +60,7 @@ struct ProductInfo {
     MaterialSource material;
 
     bool isValid() {
-        return (material.mat_type >= 0 || material.reagent);
+        return true;//due to mat_type being -1 = any
     }
 };
 

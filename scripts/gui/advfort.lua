@@ -43,7 +43,7 @@ for k,v in ipairs({...}) do --setting parsing
 end
 
 mode=mode or 0
-
+last_building=last_building or {}
 
 function Disclaimer(tlb)
     local dsc={"The Gathering Against ",{text="Goblin ",pen=dfhack.pen.parse{fg=COLOR_GREEN,bg=0}}, "Oppresion ",
@@ -72,6 +72,31 @@ function showHelp()
     table.insert(helptext,NEWLINE)
     Disclaimer(helptext)
     dialog.showMessage("Help!?!",helptext)
+end
+--[[    Util functions ]]--
+function advGlobalPos()
+    local map=df.global.world.map
+    local wd=df.global.world.world_data
+    local adv=df.global.world.units.active[0]
+    --wd.adv_region_x*16+wd.adv_emb_x,wd.adv_region_y*16+wd.adv_emb_y
+    --return wd.adv_region_x*16+wd.adv_emb_x,wd.adv_region_y*16+wd.adv_emb_y
+    --return wd.adv_region_x*16+wd.adv_emb_x+adv.pos.x/16,wd.adv_region_y*16+wd.adv_emb_y+adv.pos.y/16
+    --print(map.region_x,map.region_y,adv.pos.x,adv.pos.y)
+    --print(map.region_x+adv.pos.x/48, map.region_y+adv.pos.y/48,wd.adv_region_x*16+wd.adv_emb_x,wd.adv_region_y*16+wd.adv_emb_y)
+    return math.floor(map.region_x+adv.pos.x/48), math.floor(map.region_y+adv.pos.y/48)
+end
+function inSite()
+    local tx,ty=advGlobalPos()
+    --print(tx,ty)
+    
+    for k,v in pairs(df.global.world.world_data.sites) do
+        local tp={v.pos.x,v.pos.y}
+        if tx>=tp[1]*16+v.rgn_min_x and tx<=tp[1]*16+v.rgn_max_x and
+            ty>=tp[2]*16+v.rgn_min_y and ty<=tp[2]*16+v.rgn_max_y then
+            --print(k)
+            return v
+        end
+    end
 end
 --[[    low level job management    ]]--
 function getLastJobLink()
@@ -343,7 +368,12 @@ function BuildingChosen(inp_args,type_id,subtype_id,custom_id)
     if inp_args then
         args.pos=inp_args.pos or args.pos
     end
+    last_building.type=args.type
+    last_building.subtype=args.subtype
+    last_building.custom=args.custom
+    
     if chooseBuildingWidthHeightDir(args) then
+        
         return
     end
     --if settings.build_by_items then
@@ -458,8 +488,10 @@ function getItemsUncollected(job)
     end
     return ret
 end
-function AddItem(tbl,item,recurse)
-    table.insert(tbl,item)
+function AddItem(tbl,item,recurse,skip_add)
+    if not skip_add then
+        table.insert(tbl,item)
+    end
     if recurse then
         local subitems=dfhack.items.getContainedItems(item)
         if subitems~=nil then
@@ -488,6 +520,8 @@ function EnumItems(args)
         for k,v in pairs(args.unit.inventory) do
             if args.inv[v.mode] then
                 AddItem(ret,v.item,args.deep)
+            elseif args.deep then
+                AddItem(ret,v.item,args.deep,true)
             end
         end
     end
@@ -711,32 +745,48 @@ function AssignJobItems(args)
     return true
     --]=]
 end
+function CheckAndFinishBuilding(args,bld)
+    for idx,job in pairs(bld.jobs) do
+        if job.job_type==df.job_type.ConstructBuilding then
+            args.job=job
+            break
+        end
+    end
+    
+    if args.job~=nil then
+        local ok,msg=AssignJobItems(args)
+        if not ok then
+            return false,msg
+        else
+            AssignUnitToJob(args.job,args.unit,args.from_pos) 
+        end
+    else
+        local t={items=buildings.getFiltersByType({},bld:getType(),bld:getSubtype(),bld:getCustomType())}
+        args.pre_actions={dfhack.curry(setFiltersUp,t),AssignJobItems,AssignBuildingRef}
+        local ok,msg=makeJob(args)
+        return ok,msg
+    end
+end
 function AssignJobToBuild(args)
     local bld=dfhack.buildings.findAtTile(args.pos)
     args.job_type=df.job_type.ConstructBuilding
     if bld~=nil then
-        for idx,job in pairs(bld.jobs) do
-            if job.job_type==df.job_type.ConstructBuilding then
-                args.job=job
-                break
-            end
-        end
-        
-        if args.job~=nil then
-            local ok,msg=AssignJobItems(args)
-            if not ok then
-                return false,msg
-            else
-                AssignUnitToJob(args.job,args.unit,args.from_pos) 
-            end
-        else
-            local t={items=buildings.getFiltersByType({},bld:getType(),bld:getSubtype(),bld:getCustomType())}
-            args.pre_actions={dfhack.curry(setFiltersUp,t),AssignJobItems,AssignBuildingRef}
-            local ok,msg=makeJob(args)
-            return ok,msg
-        end
+        CheckAndFinishBuilding(args,bld)
     else
         bdialog.BuildingDialog{on_select=dfhack.curry(BuildingChosen,args),hide_none=true}:show()
+    end
+    return true
+end
+function BuildLast(args)
+    local bld=dfhack.buildings.findAtTile(args.pos)
+    args.job_type=df.job_type.ConstructBuilding
+    if bld~=nil then
+        CheckAndFinishBuilding(args,bld)
+    else
+        --bdialog.BuildingDialog{on_select=dfhack.curry(BuildingChosen,args),hide_none=true}:show()
+        if last_building and last_building.type then
+            BuildingChosen(args,last_building.type,last_building.subtype,last_building.custom)
+        end
     end
     return true
 end
@@ -789,6 +839,7 @@ actions={
     {"RemoveStairs"         ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},
     --{"HandleLargeCreature"   ,df.job_type.HandleLargeCreature,{isUnit},{SetCreatureRef}},
     {"Build"                ,AssignJobToBuild,{NoConstructedBuilding}},
+    {"BuildLast"                ,BuildLast,{NoConstructedBuilding}},
     {"Clean"                ,df.job_type.Clean,{}},
     
 }
@@ -827,7 +878,16 @@ function usetool:init(args)
             visible=false,
             text={
                 {id="text1",gap=1,key=keybinds.workshop.key,key_sep="()", text="Workshop menu",pen=dfhack.pen.parse{fg=COLOR_YELLOW,bg=0}}}
+                  },
+            
+        wid.Label{
+            view_id="siteLabel",
+            frame = {t=1,xalign=-1,yalign=0},
+            visible=false,
+            text={
+                {id="text1", text="Site:"},{id="site", text="name"}
                   }
+            }
             }
 end
 
@@ -948,7 +1008,7 @@ function usetool:openPutWindow(building)
     
     local adv=df.global.world.units.active[0]
     local items=EnumItems{pos=adv.pos,unit=adv,
-        inv={[df.unit_inventory_item.T_mode.Hauled]=true,[df.unit_inventory_item.T_mode.Worn]=true,
+        inv={[df.unit_inventory_item.T_mode.Hauled]=true,--[df.unit_inventory_item.T_mode.Worn]=true,
              [df.unit_inventory_item.T_mode.Weapon]=true,},deep=true}
     local choices={}
     for k,v in pairs(items) do
@@ -1040,7 +1100,12 @@ function usetool:armCleanTrap(building)
         LoadStoneTrap,
         LoadWeaponTrap,
         ]]
-       
+        if building.trap_type==df.trap_type.Lever then 
+            --link
+            return
+        end
+        --building.trap_type==df.trap_type.PressurePlate then
+        --settings/link
         local args={unit=adv,post_actions={AssignBuildingRef,AssignJobItems},pos=adv.pos,from_pos=adv.pos,job_type=df.job_type.CleanTrap}
         if building.trap_type==df.trap_type.CageTrap then
             args.job_type=df.job_type.LoadCageTrap
@@ -1157,7 +1222,7 @@ MODES={
         input=usetool.operatePump,
     },
     [df.building_type.Trap]={
-        name="Arm/Clean Trap",
+        name="Interact",
         input=usetool.armCleanTrap,
     },
     [df.building_type.Hive]={
@@ -1168,8 +1233,8 @@ MODES={
 function usetool:shopMode(enable,mode,building)    
     self.subviews.shopLabel.visible=enable
     if mode then
-    self.subviews.shopLabel:itemById("text1").text=mode.name
-    self.building=building
+        self.subviews.shopLabel:itemById("text1").text=mode.name
+        self.building=building
     end
     self.mode=mode
 end
@@ -1178,20 +1243,7 @@ function usetool:shopInput(keys)
         self:openShopWindowButtoned(self.in_shop)
     end
 end
-function advGlobalPos()
-    local wd=df.global.world.world_data
-    return wd.adv_region_x*16+wd.adv_emb_x,wd.adv_region_y*16+wd.adv_emb_y
-end
-function inSite()
-    local tx,ty=advGlobalPos()
-    for k,v in pairs(df.global.world.world_data.sites) do
-        local tp={v.pos.x,v.pos.y}
-        if tx>=tp[1]*16+v.rgn_min_x and tx<=tp[1]*16+v.rgn_max_x and
-            ty>=tp[2]*16+v.rgn_min_y and ty<=tp[2]*16+v.rgn_max_y then
-            return v
-        end
-    end
-end
+
 function usetool:setupFields()
     local adv=df.global.world.units.active[0]
     local civ_id=df.global.world.units.active[0].civ_id
@@ -1271,6 +1323,7 @@ function usetool:fieldInput(keys)
 end
 function usetool:onInput(keys)
     local adv=df.global.world.units.active[0]
+    
     if keys.LEAVESCREEN  then
         if df.global.cursor.x~=-30000 then
             self:sendInputToParent("LEAVESCREEN")
@@ -1297,6 +1350,14 @@ function usetool:onInput(keys)
         else
             self:fieldInput(keys)
         end
+    end
+    local site=inSite()
+    
+    if site then
+        self.subviews.siteLabel.visible=true
+        self.subviews.siteLabel:itemById("site").text=dfhack.TranslateName(site.name)
+    else
+        self.subviews.siteLabel.visible=false
     end
 end
 function usetool:isOnBuilding()

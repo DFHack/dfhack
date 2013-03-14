@@ -449,6 +449,26 @@ Options:
 
  :bees: turn colonies into honey bee colonies
 
+createitem
+----------
+Allows creating new items of arbitrary types and made of arbitrary materials.
+Any items created are spawned at the feet of the selected unit.
+
+Specify the item and material information as you would indicate them in custom reaction raws, with the following differences:
+* Separate the item and material with a space rather than a colon
+* If the item has no subtype, omit the :NONE
+* If the item is REMAINS, FISH, FISH_RAW, VERMIN, PET, or EGG, specify a CREATURE:CASTE pair instead of a material token.
+
+Corpses, body parts, and prepared meals cannot be created using this tool.
+
+Examples:
+ ``createitem GLOVES:ITEM_GLOVES_GAUNTLETS INORGANIC:STEEL 2``
+   Create 2 pairs of steel gauntlets.
+ ``createitem WOOD PLANT_MAT:TOWER_CAP:WOOD``
+   Create tower-cap logs.
+ ``createitem FISH FISH_SHAD:MALE 5``
+   Create a stack of 5 cleaned shad, ready to eat.
+
 deramp (by zilpin)
 ------------------
 Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.
@@ -1773,6 +1793,12 @@ Scripts in this subdirectory fix various bugs and issues, some of them obscure.
   Diagnoses and fixes issues with nonexistant 'items occupying site', usually
   caused by autodump bugs or other hacking mishaps.
 
+* fix/cloth-stockpile
+
+  Fixes erratic behavior of cloth stockpiles by scanning material objects
+  in memory and patching up some invalid reference fields. Needs to be run
+  every time a save game is loaded; putting ``fix/cloth-stockpile enable``
+  in ``dfhack.init`` makes it run automatically.
 
 gui/*
 =====
@@ -2032,6 +2058,17 @@ Exemples::
     create-items bar CREATURE:CAT:SOAP
     create-items bar adamantine
 
+soundsense-season
+=================
+
+It is a well known issue that Soundsense cannot detect the correct
+current season when a savegame is loaded and has to play random
+season music until a season switch occurs.
+
+This script registers a hook that prints the appropriate string
+to gamelog.txt on every map load to fix this. For best results
+call the script from ``dfhack.init``.
+
 =======================
 In-game interface tools
 =======================
@@ -2185,8 +2222,25 @@ To use, bind to a key (the example config uses Alt-L) and activate in the 'k' mo
 
 .. image:: images/liquids.png
 
-While active, use the suggested keys to switch the usual liquids parameters, and Enter
-to select the target area and apply changes.
+This script is a gui front-end to the liquids plugin and works similar to it,
+allowing you to add or remove water & magma, and create obsidian walls & floors.
+Note that there is **no undo support**, and that bugs in this plugin have been
+known to create pathfinding problems and heat traps.
+
+The ``b`` key changes how the affected area is selected. The default *Rectangle*
+mode works by selecting two corners like any ordinary designation. The ``p``
+key chooses between adding water, magma, obsidian walls & floors, or just
+tweaking flags.
+
+When painting liquids, it is possible to select the desired level with ``+-``,
+and choose between setting it exactly, only increasing or only decreasing
+with ``s``.
+
+In addition, ``f`` allows disabling or enabling the flowing water computations
+for an area, and ``r`` operates on the "permanent flow" property that makes
+rivers power water wheels even when full and technically not flowing.
+
+After setting up the desired operations using the described keys, use ``Enter`` to apply them.
 
 
 gui/mechanisms
@@ -2430,6 +2484,21 @@ keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
   
 * job - selects that job (e.g. Dig or FellTree)
 
+gui/companion-order
+=======================
+
+A script to issue orders for companions. Select companions with lower case chars, issue orders with upper 
+case. Must be in look or talk mode to issue command on tile.
+
+* move - orders selected companions to move to location. If companions are following they will move no more than 3 tiles from you.
+* equip - try to equip items on the ground.
+* pick-up - try to take items into hand (also wield)
+* unequip - remove and drop equipment
+* unwield - drop held items
+* wait - temporarely remove from party
+* follow - rejoin the party after "wait"
+* leave - remove from party (can be rejoined by talking)
+
 
 gui/gm-editor
 =============
@@ -2442,7 +2511,7 @@ There are three ways to open this editor:
 * using gui/gm-editor <lua command> - executes lua command and opens editor on
   it's results (e.g. gui/gm-editor "df.global.world.items.all" shows all items)
   
-* using gui/gm-edito dialog - shows an in game dialog to input lua command. Works
+* using gui/gm-editor dialog - shows an in game dialog to input lua command. Works
   the same as version above.
   
 This editor allows to change and modify almost anything in df. Press '?' for an 

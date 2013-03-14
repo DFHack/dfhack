@@ -248,7 +248,9 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         break;
     }
 
-    if (!makeItem(prod, unit))
+    bool result = makeItem(prod, unit);
+    delete prod;
+    if (!result)
     {
         out.printerr("Failed to create item!\n");
         return CR_FAILURE;

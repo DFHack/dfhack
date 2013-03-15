@@ -67,6 +67,8 @@ program.
 Mac OS X
 ========
 
+If you are building on 10.6, please read the subsection below titled "Snow Leopard Changes" FIRST.
+
 1. Download and unpack a copy of the latest DF
 2. Install Xcode from Mac App Store
 3. Open Xcode, go to Preferences > Downloads, and install the Command Line Tools.
@@ -105,6 +107,18 @@ Mac OS X
     cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/path/to/DF/directory
     make
     make install
+
+
+Snow Leopard Changes
+====================
+
+1. Add a step 6.2a (before Install XML::LibXSLT)::
+	In a separate Terminal window or tab, run:
+	``sudo ln -s /usr/include/libxml2/libxml /usr/include/libxml``
+	
+2. Add a step 7a (before building)::
+	In <dfhack directory>/library/LuaTypes.cpp, change line 467 to 
+		``int len = strlen((char*)ptr);``
 
 =======
 Windows

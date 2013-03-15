@@ -312,12 +312,12 @@ void* Process::memAlloc(const int length)
     return mmap(0, length, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
 }
 
-int Process::memDealloc(const void *ptr, const int length)
+int Process::memDealloc(void *ptr, const int length)
 {
     return munmap(ptr, length);
 }
 
-int Process::memProtect(const void *ptr, const int length, const int prot)
+int Process::memProtect(void *ptr, const int length, const int prot)
 {
     int prot_native = 0;
 

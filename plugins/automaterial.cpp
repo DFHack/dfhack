@@ -439,7 +439,9 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check, b
     }
     else if (orthogonal_check)
     {
-        if (shape != tiletype_shape::RAMP && shape_basic != tiletype_shape_basic::Floor)
+        if (shape != tiletype_shape::RAMP && 
+            shape_basic != tiletype_shape_basic::Floor &&
+            shape_basic != tiletype_shape_basic::Stair)
             return false;
     }
     else

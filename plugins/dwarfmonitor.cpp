@@ -152,10 +152,10 @@ public:
         selected_column = 0;
 
         auto last_selected_index = dwarf_activity_column.highlighted_index;
-        dwarf_activity_column.clear();
+        dwarves_column.clear();
         dwarf_activity_values.clear();
 
-        for (auto it = work_history.begin(); it != work_history.end(); it++)
+        for (auto it = work_history.begin(); it != work_history.end();)
         {
             auto unit = it->first;
             if (Units::isDead(unit))
@@ -1037,15 +1037,7 @@ static void update_dwarf_stats(bool is_paused)
         if (!Units::isCitizen(unit))
             continue;
 
-        if (unit->profession == profession::BABY ||
-            unit->profession == profession::CHILD ||
-            unit->profession == profession::DRUNK)
-        {
-            continue;
-        }
-
-        using namespace DFHack::Units;
-        if (!isSane(unit) || isDead(unit))
+        if (DFHack::Units::isDead(unit))
         {
             auto it = work_history.find(unit);
             if (it != work_history.end())
@@ -1063,11 +1055,11 @@ static void update_dwarf_stats(bool is_paused)
                 misery[1]++;
             else if (happy <= 50)   // unhappy
                 misery[2]++;
-            else if (happy <= 75)    // fine
+            else if (happy <= 75)   // fine
                 misery[3]++;
-            else if (happy <= 125)   // quite content
+            else if (happy <= 125)  // quite content
                 misery[4]++;
-            else if (happy <= 150)   // happy
+            else if (happy <= 150)  // happy
                 misery[5]++;
             else                    // ecstatic
                 misery[6]++;
@@ -1075,6 +1067,13 @@ static void update_dwarf_stats(bool is_paused)
 
         if (!monitor_jobs || is_paused)
             continue;
+
+        if (unit->profession == profession::BABY ||
+            unit->profession == profession::CHILD ||
+            unit->profession == profession::DRUNK)
+        {
+            continue;
+        }
 
         if (ENUM_ATTR(profession, military, unit->profession))
         {

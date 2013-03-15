@@ -63,6 +63,63 @@ extra options.
 You can also use a cmake-friendly IDE like KDevelop 4 or the cmake-gui
 program.
 
+========
+Mac OS X
+========
+
+If you are building on 10.6, please read the subsection below titled "Snow Leopard Changes" FIRST.
+
+1. Download and unpack a copy of the latest DF
+2. Install Xcode from Mac App Store
+3. Open Xcode, go to Preferences > Downloads, and install the Command Line Tools.
+4. Install MacPorts.
+5. Install dependencies from MacPorts:
+
+   * ``sudo port install gcc45 +universal cmake +universal git-core +universal``
+
+     This will take some time—maybe hours, depending on your machine.
+
+   * At some point during this process, it may ask you to install a Java environment; let it do so.
+
+6. Install perl dependencies
+
+    1. ``sudo cpan``
+
+       If this is the first time you've run cpan, you will need to go through the setup
+       process. Just stick with the defaults for everything and you'll be fine.
+
+    2. ``install XML::LibXML``
+    3. ``install XML::LibXSLT``
+
+7. Get the dfhack source::
+
+    git clone https://github.com/danaris/dfhack.git
+    cd dfhack
+    git submodule init
+    git submodule update
+
+8. Build dfhack::
+
+    mkdir build-osx
+    cd build-osx
+    export CC=/opt/local/bin/gcc-mp-4.5
+    export CXX=/opt/local/bin/g++-mp-4.5
+    cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/path/to/DF/directory
+    make
+    make install
+
+
+Snow Leopard Changes
+====================
+
+1. Add a step 6.2a (before Install XML::LibXSLT)::
+	In a separate Terminal window or tab, run:
+	``sudo ln -s /usr/include/libxml2/libxml /usr/include/libxml``
+	
+2. Add a step 7a (before building)::
+	In <dfhack directory>/library/LuaTypes.cpp, change line 467 to 
+		``int len = strlen((char*)ptr);``
+
 =======
 Windows
 =======

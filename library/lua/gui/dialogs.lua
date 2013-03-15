@@ -3,6 +3,7 @@
 local _ENV = mkmodule('gui.dialogs')
 
 local gui = require('gui')
+local widgets = require('gui.widgets')
 local utils = require('utils')
 
 local dscreen = dfhack.screen
@@ -13,48 +14,35 @@ MessageBox.focus_path = 'MessageBox'
 
 MessageBox.ATTRS{
     frame_style = gui.GREY_LINE_FRAME,
+    frame_inset = 1,
     -- new attrs
-    text = {},
     on_accept = DEFAULT_NIL,
     on_cancel = DEFAULT_NIL,
     on_close = DEFAULT_NIL,
-    text_pen = DEFAULT_NIL,
 }
 
-function MessageBox:preinit(info)
-    if type(info.text) == 'string' then
-        info.text = utils.split_string(info.text, "\n")
-    end
+function MessageBox:init(info)
+    self:addviews{
+        widgets.Label{
+            view_id = 'label',
+            text = info.text,
+            text_pen = info.text_pen,
+            frame = { l = 0, t = 0 },
+            auto_height = true
+        }
+    }
 end
 
 function MessageBox:getWantedFrameSize()
-    local text = self.text
-    local w = #(self.frame_title or '') + 4
-    w = math.max(w, 20)
-    w = math.max(self.frame_width or w, w)
-    for _, l in ipairs(text) do
-        w = math.max(w, #l)
-    end
-    local h = #text+1
-    if h > 1 then
-        h = h+1
-    end
-    return w+2, #text+2
+    local label = self.subviews.label
+    local width = math.max(self.frame_width or 0, 20, #(self.frame_title or '') + 4)
+    return math.max(width, label:getTextWidth()), label:getTextHeight()
 end
 
-function MessageBox:onRenderBody(dc)
-    if #self.text > 0 then
-        dc:newline(1):pen(self.text_pen or COLOR_GREY)
-        for _, l in ipairs(self.text or {}) do
-            dc:string(l):newline(1)
-        end
-    end
-
+function MessageBox:onRenderFrame(dc,rect)
+    MessageBox.super.onRenderFrame(self,dc,rect)
     if self.on_accept then
-        local x,y = self.frame_rect.x1+1, self.frame_rect.y2+1
-        dscreen.paintString({fg=COLOR_LIGHTGREEN},x,y,'ESC')
-        dscreen.paintString({fg=COLOR_GREY},x+3,y,'/')
-        dscreen.paintString({fg=COLOR_LIGHTGREEN},x+4,y,'y')
+        dc:seek(rect.x1+2,rect.y2):key('LEAVESCREEN'):string('/'):key('MENU_CONFIRM')
     end
 end
 
@@ -75,6 +63,8 @@ function MessageBox:onInput(keys)
         if self.on_cancel then
             self.on_cancel()
         end
+    else
+        self:inputToSubviews(keys)
     end
 end
 
@@ -102,8 +92,6 @@ InputBox = defclass(InputBox, MessageBox)
 InputBox.focus_path = 'InputBox'
 
 InputBox.ATTRS{
-    input = '',
-    input_pen = DEFAULT_NIL,
     on_input = DEFAULT_NIL,
 }
 
@@ -111,46 +99,36 @@ function InputBox:preinit(info)
     info.on_accept = nil
 end
 
-function InputBox:getWantedFrameSize()
-    local mw, mh = InputBox.super.getWantedFrameSize(self)
-    return mw, mh+2
+function InputBox:init(info)
+    self:addviews{
+        widgets.EditField{
+            view_id = 'edit',
+            text = info.input,
+            text_pen = info.input_pen,
+            frame = { l = 0, r = 0, h = 1 },
+        }
+    }
 end
 
-function InputBox:onRenderBody(dc)
-    InputBox.super.onRenderBody(self, dc)
-
-    dc:newline(1)
-    dc:pen(self.input_pen or COLOR_LIGHTCYAN)
-    dc:fill(1,dc:localY(),dc.width-2,dc:localY())
-
-    local cursor = '_'
-    if math.floor(dfhack.getTickCount()/300) % 2 == 0 then
-        cursor = ' '
-    end
-    local txt = self.input .. cursor
-    if #txt > dc.width-2 then
-        txt = string.char(27)..string.sub(txt, #txt-dc.width+4)
-    end
-    dc:string(txt)
+function InputBox:getWantedFrameSize()
+    local mw, mh = InputBox.super.getWantedFrameSize(self)
+    self.subviews.edit.frame.t = mh+1
+    return mw, mh+2
 end
 
 function InputBox:onInput(keys)
     if keys.SELECT then
         self:dismiss()
         if self.on_input then
-            self.on_input(self.input)
+            self.on_input(self.subviews.edit.text)
         end
     elseif keys.LEAVESCREEN then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
-    elseif keys._STRING then
-        if keys._STRING == 0 then
-            self.input = string.sub(self.input, 1, #self.input-1)
-        else
-            self.input = self.input .. string.char(keys._STRING)
-        end
+    else
+        self:inputToSubviews(keys)
     end
 end
 
@@ -171,97 +149,92 @@ ListBox = defclass(ListBox, MessageBox)
 ListBox.focus_path = 'ListBox'
 
 ListBox.ATTRS{
-    selection = 0,
-    choices = {},
+    with_filter = false,
+    cursor_pen = DEFAULT_NIL,
     select_pen = DEFAULT_NIL,
-    on_input = DEFAULT_NIL
+    on_select = DEFAULT_NIL,
+    on_select2 = DEFAULT_NIL,
+    select2_hint = DEFAULT_NIL,
 }
 
-function InputBox:preinit(info)
+function ListBox:preinit(info)
     info.on_accept = nil
 end
 
 function ListBox:init(info)
-    self.page_top = 0
+    local spen = dfhack.pen.parse(COLOR_CYAN, self.select_pen, nil, false)
+    local cpen = dfhack.pen.parse(COLOR_LIGHTCYAN, self.cursor_pen or self.select_pen, nil, true)
+
+    local list_widget = widgets.List
+    if self.with_filter then
+        list_widget = widgets.FilteredList
+    end
+
+    local on_submit2
+    if self.select2_hint or self.on_select2 then
+        on_submit2 = function(sel, obj)
+            self:dismiss()
+            if self.on_select2 then self.on_select2(sel, obj) end
+            local cb = obj.on_select2
+            if cb then cb(obj, sel) end
+        end
+    end
+
+    self:addviews{
+        list_widget{
+            view_id = 'list',
+            selected = info.selected,
+            choices = info.choices,
+            icon_width = info.icon_width,
+            text_pen = spen,
+            cursor_pen = cpen,
+            on_submit = function(sel,obj)
+                self:dismiss()
+                if self.on_select then self.on_select(sel, obj) end
+                local cb = obj.on_select or obj[2]
+                if cb then cb(obj, sel) end
+            end,
+            on_submit2 = on_submit2,
+            frame = { l = 0, r = 0 },
+        }
+    }
+end
+
+function ListBox:onRenderFrame(dc,rect)
+    ListBox.super.onRenderFrame(self,dc,rect)
+    if self.select2_hint then
+        dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_DARKGREY)
+    end
 end
 
 function ListBox:getWantedFrameSize()
-    local mw, mh = ListBox.super.getWantedFrameSize(self)
-    return mw, mh+#self.choices
-end
-
-function ListBox:onRenderBody(dc)
-    ListBox.super.onRenderBody(self, dc)
-
-    dc:newline(1)
-
-    if self.selection>dc.height-3 then
-        self.page_top=self.selection-(dc.height-3)
-    elseif self.selection<self.page_top and self.selection >0  then
-        self.page_top=self.selection-1
-    end
-    for i,entry in ipairs(self.choices) do
-        if type(entry)=="table" then
-            entry=entry[1]
-        end
-        if i>self.page_top then
-            if i == self.selection then
-                dc:pen(self.select_pen or COLOR_LIGHTCYAN)
-            else
-                dc:pen(self.text_pen or COLOR_GREY)
-            end
-            dc:string(entry)
-            dc:newline(1)
-        end
-    end
-end
-
-function ListBox:moveCursor(delta)
-    local newsel=self.selection+delta
-    if #self.choices ~=0 then
-        if newsel<1 or newsel>#self.choices then 
-            newsel=newsel % #self.choices
-        end
-    end
-    self.selection=newsel
+    local mw, mh = InputBox.super.getWantedFrameSize(self)
+    local list = self.subviews.list
+    list.frame.t = mh+1
+    return math.max(mw, list:getContentWidth()), mh+1+math.min(20,list:getContentHeight())
 end
 
 function ListBox:onInput(keys)
-    if keys.SELECT then
-        self:dismiss()
-        local choice=self.choices[self.selection]
-        if self.on_input then
-            self.on_input(self.selection,choice)
-        end
-
-        if choice and choice[2] then
-            choice[2](choice,self.selection) -- maybe reverse the arguments?
-        end
-    elseif keys.LEAVESCREEN then
+    if keys.LEAVESCREEN then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
-    elseif keys.CURSOR_UP then
-        self:moveCursor(-1)
-    elseif keys.CURSOR_DOWN then
-        self:moveCursor(1)
-    elseif keys.CURSOR_UP_FAST then
-        self:moveCursor(-10)
-    elseif keys.CURSOR_DOWN_FAST then
-        self:moveCursor(10)
+    else
+        self:inputToSubviews(keys)
     end
 end
 
-function showListPrompt(title, text, tcolor, choices, on_input, on_cancel, min_width)
+function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_width, filter)
     ListBox{
         frame_title = title,
         text = text,
         text_pen = tcolor,
         choices = choices,
-        on_input = on_input,
+        on_select = on_select,
         on_cancel = on_cancel,
         frame_width = min_width,
+        with_filter = filter,
     }:show()
 end
 

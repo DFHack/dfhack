@@ -4,6 +4,9 @@
 #include "PluginManager.h"
 #include "MiscUtils.h"
 
+#include "LuaTools.h"
+#include "DataFuncs.h"
+
 #include "modules/Materials.h"
 #include "modules/Items.h"
 #include "modules/Gui.h"
@@ -37,35 +40,7 @@
 #include "df/plant_raw.h"
 #include "df/inorganic_raw.h"
 #include "df/builtin_mats.h"
-
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/itemdef_weaponst.h"
-#include "df/itemdef_trapcompst.h"
-#include "df/itemdef_toyst.h"
-#include "df/itemdef_toolst.h"
-#include "df/itemdef_instrumentst.h"
-#include "df/itemdef_armorst.h"
-#include "df/itemdef_ammost.h"
-#include "df/itemdef_siegeammost.h"
-#include "df/itemdef_glovesst.h"
-#include "df/itemdef_shoesst.h"
-#include "df/itemdef_shieldst.h"
-#include "df/itemdef_helmst.h"
-#include "df/itemdef_pantsst.h"
-#include "df/itemdef_foodst.h"
-#include "df/trapcomp_flags.h"
-
-#include <deque>
-#include <algorithm>
-#include <VTableInterpose.h>
-#include <modules/Screen.h>
-#include "df/creature_raw.h"
-#include "df/enabler.h"
-
-using std::deque;
-using df::global::gps;
-using df::global::enabler;
-
+#include "df/vehicle.h"
 
 using std::vector;
 using std::string;
@@ -76,7 +51,6 @@ using namespace df::enums;
 using df::global::world;
 using df::global::ui;
 using df::global::ui_workshop_job_cursor;
-using df::global::ui_workshop_in_add;
 using df::global::job_next_id;
 
 /* Plugin registration */
@@ -88,28 +62,115 @@ static void cleanup_state(color_ostream &out);
 
 DFHACK_PLUGIN("workflow");
 
-
-void OutputString(int8_t color, int &x, int &y, const std::string &text, bool newline = false, int left_margin = 0)
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
-    if (newline)
-    {
-        ++y;
-        x = left_margin;
+    if (!world || !ui)
+        return CR_FAILURE;
+
+    if (ui_workshop_job_cursor && job_next_id) {
+        commands.push_back(
+            PluginCommand(
+                "workflow", "Manage control of repeat jobs.",
+                workflow_cmd, false,
+                "  workflow enable [option...]\n"
+                "  workflow disable [option...]\n"
+                "    If no options are specified, enables or disables the plugin.\n"
+                "    Otherwise, enables or disables any of the following options:\n"
+                "     - drybuckets: Automatically empty abandoned water buckets.\n"
+                "     - auto-melt: Resume melt jobs when there are objects to melt.\n"
+                "  workflow jobs\n"
+                "    List workflow-controlled jobs (if in a workshop, filtered by it).\n"
+                "  workflow list\n"
+                "    List active constraints, and their job counts.\n"
+                "  workflow list-commands\n"
+                "    List workflow commands that re-create existing constraints.\n"
+                "  workflow count <constraint-spec> <cnt-limit> [cnt-gap]\n"
+                "  workflow amount <constraint-spec> <cnt-limit> [cnt-gap]\n"
+                "    Set a constraint. The first form counts each stack as only 1 item.\n"
+                "  workflow unlimit <constraint-spec>\n"
+                "    Delete a constraint.\n"
+                "  workflow unlimit-all\n"
+                "    Delete all constraints.\n"
+                "Function:\n"
+                "  - When the plugin is enabled, it protects all repeat jobs from removal.\n"
+                "    If they do disappear due to any cause, they are immediately re-added\n"
+                "    to their workshop and suspended.\n"
+                "  - In addition, when any constraints on item amounts are set, repeat jobs\n"
+                "    that produce that kind of item are automatically suspended and resumed\n"
+                "    as the item amount goes above or below the limit. The gap specifies how\n"
+                "    much below the limit the amount has to drop before jobs are resumed;\n"
+                "    this is intended to reduce the frequency of jobs being toggled.\n"
+                "Constraint format:\n"
+                "  The contstraint spec consists of 4 parts, separated with '/' characters:\n"
+                "    ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]\n"
+                "  The first part is mandatory and specifies the item type and subtype,\n"
+                "  using the raw tokens for items, in the same syntax you would e.g. use\n"
+                "  for a custom reaction input. The subsequent parts are optional:\n"
+                "  - A generic material spec constrains the item material to one of\n"
+                "    the hard-coded generic classes, like WOOD, METAL, YARN or MILK.\n"
+                "  - A specific material spec chooses the material exactly, using the\n"
+                "    raw syntax for reaction input materials, e.g. INORGANIC:IRON,\n"
+                "    although for convenience it also allows just IRON, or ACACIA:WOOD.\n"
+                "  - A comma-separated list of miscellaneous flags, which currently can\n"
+                "    be used to ignore imported items or items below a certain quality.\n"
+                "Constraint examples:\n"
+                "  workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100\n"
+                "  workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50\n"
+                "    Keep metal bolts within 900-1000, and wood/bone within 150-200.\n"
+                "  workflow count FOOD 120 30\n"
+                "  workflow count DRINK 120 30\n"
+                "    Keep the number of prepared food & drink stacks between 90 and 120\n"
+                "  workflow count BIN 30\n"
+                "  workflow count BARREL 30\n"
+                "  workflow count BOX/CLOTH,SILK,YARN 30\n"
+                "    Make sure there are always 25-30 empty bins/barrels/bags.\n"
+                "  workflow count BAR//COAL 20\n"
+                "  workflow count BAR//COPPER 30\n"
+                "    Make sure there are always 15-20 coal and 25-30 copper bars.\n"
+                "  workflow count CRAFTS//GOLD 20\n"
+                "    Produce 15-20 gold crafts.\n"
+                "  workflow count POWDER_MISC/SAND 20\n"
+                "  workflow count BOULDER/CLAY 20\n"
+                "    Collect 15-20 sand bags and clay boulders.\n"
+                "  workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20\n"
+                "    Make sure there are always 80-100 units of dimple dye.\n"
+                "    In order for this to work, you have to set the material of\n"
+                "    the PLANT input on the Mill Plants job to MUSHROOM_CUP_DIMPLE\n"
+                "    using the 'job item-material' command.\n"
+                "  workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90\n"
+                "    Maintain 10-100 locally-made crafts of exceptional quality.\n"
+            )
+        );
     }
-    else
-        x += text.length();
+
+    init_state(out);
+
+    return CR_OK;
 }
 
-void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bool newline = false, int left_margin = 0)
+DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
-    OutputString(10, x, y, hotkey);
-    string display(": ");
-    display.append(text);
-    OutputString(15, x, y, display, newline, left_margin);
+    cleanup_state(out);
+
+    return CR_OK;
 }
 
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
+{
+    switch (event) {
+    case SC_MAP_LOADED:
+        cleanup_state(out);
+        init_state(out);
+        break;
+    case SC_MAP_UNLOADED:
+        cleanup_state(out);
+        break;
+    default:
+        break;
+    }
 
+    return CR_OK;
+}
 
 /******************************
  * JOB STATE TRACKING STRUCTS *
@@ -230,43 +291,54 @@ int ProtectedJob::cur_tick_idx = 0;
 
 typedef std::map<std::pair<int,int>, bool> TMaterialCache;
 
-static int max_history_days = 14;
+static const size_t MAX_HISTORY_SIZE = 28;
+
+enum HistoryItem {
+    HIST_COUNT = 0,
+    HIST_AMOUNT,
+    HIST_INUSE_COUNT,
+    HIST_INUSE_AMOUNT
+};
 
 struct ItemConstraint {
     PersistentDataItem config;
+    PersistentDataItem history;
 
+    // Fixed key parsed into fields
     bool is_craft;
     ItemTypeInfo item;
 
     MaterialInfo material;
     df::dfhack_material_category mat_mask;
 
+    item_quality::item_quality min_quality;
+    bool is_local;
+
+    // Tracking data
     int weight;
     std::vector<ProtectedJob*> jobs;
 
-    item_quality::item_quality min_quality;
-
-    int item_amount, item_count, item_inuse;
+    int item_amount, item_count, item_inuse_amount, item_inuse_count;
     bool request_suspend, request_resume;
 
     bool is_active, cant_resume_reported;
+    int low_stock_reported;
 
     TMaterialCache material_cache;
 
-    deque<int> history;
-
 public:
     ItemConstraint()
-        : is_craft(false), weight(0), min_quality(item_quality::Ordinary),item_amount(0),
-          item_count(0), item_inuse(0), is_active(false), cant_resume_reported(false)
+        : is_craft(false), min_quality(item_quality::Ordinary), is_local(false),
+          weight(0), item_amount(0), item_count(0), item_inuse_amount(0), item_inuse_count(0),
+          is_active(false), cant_resume_reported(false), low_stock_reported(-1)
     {}
 
     int goalCount() { return config.ival(0); }
     void setGoalCount(int v) { config.ival(0) = v; }
 
     int goalGap() {
-        int gcnt = std::max(1, goalCount()/2);
-        return std::min(gcnt, config.ival(1) <= 0 ? 5 : config.ival(1));
+        int cval = (config.ival(1) <= 0) ? std::min(5,goalCount()/2) : config.ival(1);
+        return std::max(1, std::min(goalCount()-1, cval));
     }
     void setGoalGap(int v) { config.ival(1) = v; }
 
@@ -278,25 +350,51 @@ public:
             config.ival(2) &= ~1;
     }
 
+    int curItemStock() { return goalByCount() ? item_count : item_amount; }
+
     void init(const std::string &str)
     {
         config.val() = str;
+        config.ival(0) = 10;
         config.ival(2) = 0;
     }
 
     void computeRequest()
     {
-        int size = goalByCount() ? item_count : item_amount;
+        int size = curItemStock();
         request_resume = (size <= goalCount()-goalGap());
         request_suspend = (size >= goalCount());
+    }
 
-        if (max_history_days > 0)
-        {
-            history.push_back(size);
-            if (history.size() > max_history_days * 2)
-                history.pop_front();
-        }
+    static const size_t int28_size = PersistentDataItem::int28_size;
+    static const size_t hist_entry_size = PersistentDataItem::int28_size * 4;
 
+    size_t history_size() {
+        return history.data_size() / hist_entry_size;
+    }
+    int history_value(int idx, HistoryItem item) {
+        size_t hsize = history_size();
+        size_t base = ((history.ival(0)+1+idx) % hsize) * hist_entry_size;
+        return history.get_int28(base + item*int28_size);
+    }
+    int history_count(int idx) { return history_value(idx, HIST_COUNT); }
+    int history_amount(int idx) { return history_value(idx, HIST_AMOUNT); }
+    int history_inuse_count(int idx) { return history_value(idx, HIST_INUSE_COUNT); }
+    int history_inuse_amount(int idx) { return history_value(idx, HIST_INUSE_AMOUNT); }
+
+    void updateHistory()
+    {
+        size_t buffer_size = history_size();
+        if (buffer_size < MAX_HISTORY_SIZE && size_t(history.ival(0)+1) == buffer_size)
+            history.ensure_data(hist_entry_size*++buffer_size);
+        history.ival(0) = (history.ival(0)+1) % buffer_size;
+
+        size_t base = history.ival(0) * hist_entry_size;
+
+        history.set_int28(base + HIST_COUNT*int28_size, item_count);
+        history.set_int28(base + HIST_AMOUNT*int28_size, item_amount);
+        history.set_int28(base + HIST_INUSE_COUNT*int28_size, item_inuse_count);
+        history.set_int28(base + HIST_INUSE_AMOUNT*int28_size, item_inuse_amount);
     }
 };
 
@@ -341,14 +439,9 @@ static bool isSupportedJob(df::job *job)
            Job::getHolder(job) &&
            (!job->job_items.empty() ||
             job->job_type == job_type::CollectClay ||
-            job->job_type == job_type::CollectSand);
-}
-
-static void enumLiveJobs(std::map<int, df::job*> &rv)
-{
-    df::job_list_link *p = world->job_list.next;
-    for (; p; p = p->next)
-        rv[p->item->id] = p->item;
+            job->job_type == job_type::CollectSand ||
+            job->job_type == job_type::MilkCreature ||
+            job->job_type == job_type::ShearCreature);
 }
 
 static bool isOptionEnabled(unsigned flag)
@@ -396,7 +489,7 @@ static void cleanup_state(color_ostream &out)
 }
 
 static void check_lost_jobs(color_ostream &out, int ticks);
-static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg = NULL);
+static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg = NULL, bool create = true);
 
 static void start_protect(color_ostream &out)
 {
@@ -406,12 +499,9 @@ static void start_protect(color_ostream &out)
         out.print("Protecting %d jobs.\n", known_jobs.size());
 }
 
-static bool first_update_done = false;
 static void init_state(color_ostream &out)
 {
-    auto pworld = Core::getInstance().getWorld();
-
-    config = pworld->GetPersistentData("workflow/config");
+    config = World::GetPersistentData("workflow/config");
     if (config.isValid() && config.ival(0) == -1)
         config.ival(0) = 0;
 
@@ -419,19 +509,18 @@ static void init_state(color_ostream &out)
 
     // Parse constraints
     std::vector<PersistentDataItem> items;
-    pworld->GetPersistentData(&items, "workflow/constraints");
+    World::GetPersistentData(&items, "workflow/constraints");
 
     for (int i = items.size()-1; i >= 0; i--) {
         if (get_constraint(out, items[i].val(), &items[i]))
             continue;
 
         out.printerr("Lost constraint %s\n", items[i].val().c_str());
-        pworld->DeletePersistentData(items[i]);
+        World::DeletePersistentData(items[i]);
     }
 
     last_tick_frame_count = world->frame_counter;
     last_frame_count = world->frame_counter;
-    first_update_done = false;
 
     if (!enabled)
         return;
@@ -441,32 +530,24 @@ static void init_state(color_ostream &out)
 
 static void enable_plugin(color_ostream &out)
 {
-    auto pworld = Core::getInstance().getWorld();
-
     if (!config.isValid())
     {
-        config = pworld->AddPersistentData("workflow/config");
+        config = World::AddPersistentData("workflow/config");
         config.ival(0) = 0;
     }
 
     setOptionEnabled(CF_ENABLED, true);
     enabled = true;
-    out << "Enabling workflow plugin." << endl;
-
-    for (vector<ItemConstraint *>::iterator it = constraints.begin(); it != constraints.end(); it++)
-    {
-        (*it)->history.clear();
-    }
+    out << "Enabling the plugin." << endl;
 
     start_protect(out);
-    first_update_done = false;
 }
 
 /******************************
  *     JOB AUTO-RECOVERY      *
  ******************************/
 
-static void forget_job(const color_ostream &out, ProtectedJob *pj)
+static void forget_job(color_ostream &out, ProtectedJob *pj)
 {
     known_jobs.erase(pj->id);
     delete pj;
@@ -525,15 +606,6 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     return true;
 }
 
-static ProtectedJob *add_known_job(df::job *job)
-{
-    ProtectedJob *pj = new ProtectedJob(job);
-    assert(pj->holder);
-    known_jobs[pj->id] = pj;
-
-    return pj;
-}
-
 static void check_lost_jobs(color_ostream &out, int ticks)
 {
     ProtectedJob::cur_tick_idx++;
@@ -554,7 +626,9 @@ static void check_lost_jobs(color_ostream &out, int ticks)
         }
         else if (job->flags.bits.repeat && isSupportedJob(job))
         {
-            add_known_job(job);
+            pj = new ProtectedJob(job);
+            assert(pj->holder);
+            known_jobs[pj->id] = pj;
         }
     }
 
@@ -597,7 +671,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
 
     // Every 5 frames check the jobs for disappearance
     static unsigned cnt = 0;
-    if ((++cnt % 5) != 0 && first_update_done)
+    if ((++cnt % 5) != 0)
         return CR_OK;
 
     check_lost_jobs(out, world->frame_counter - last_tick_frame_count);
@@ -607,141 +681,44 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
     static unsigned last_rlen = 0;
     bool check_time = (world->frame_counter - last_frame_count) >= DAY_TICKS/2;
 
-    if (pending_recover.size() != last_rlen || check_time || !first_update_done)
+    if (pending_recover.size() != last_rlen || check_time)
     {
         recover_jobs(out);
         last_rlen = pending_recover.size();
 
         // If the half-day passed, proceed to update
-        if (check_time || !first_update_done)
+        if (check_time)
         {
             last_frame_count = world->frame_counter;
 
             update_job_data(out);
             process_constraints(out);
-            first_update_done = true;
+
+            for (size_t i = 0; i < constraints.size(); i++)
+                constraints[i]->updateHistory();
         }
     }
 
-
     return CR_OK;
 }
-
 
 /******************************
  *   ITEM COUNT CONSTRAINT    *
  ******************************/
 
-static string get_constraint_material(ItemConstraint *cv)
-{
-    string text;
-    if (!cv->material.isNone())
-    {
-        text.append(cv->material.toString());
-        text.append(" ");
-    }
-
-    text.append(bitfield_to_string(cv->mat_mask, ","));
-
-    return text;
+static std::string history_key(PersistentDataItem &config) {
+    return stl_sprintf("workflow/history/%d", config.entry_id());
 }
 
-#define ITEMDEF_VECTORS \
-    ITEM(WEAPON, weapons, itemdef_weaponst) \
-    ITEM(TRAPCOMP, trapcomps, itemdef_trapcompst) \
-    ITEM(TOY, toys, itemdef_toyst) \
-    ITEM(TOOL, tools, itemdef_toolst) \
-    ITEM(INSTRUMENT, instruments, itemdef_instrumentst) \
-    ITEM(ARMOR, armor, itemdef_armorst) \
-    ITEM(AMMO, ammo, itemdef_ammost) \
-    ITEM(SIEGEAMMO, siege_ammo, itemdef_siegeammost) \
-    ITEM(GLOVES, gloves, itemdef_glovesst) \
-    ITEM(SHOES, shoes, itemdef_shoesst) \
-    ITEM(SHIELD, shields, itemdef_shieldst) \
-    ITEM(HELM, helms, itemdef_helmst) \
-    ITEM(PANTS, pants, itemdef_pantsst) \
-    ITEM(FOOD, food, itemdef_foodst)
-
-
-static ItemConstraint * create_new_constraint(bool is_craft, ItemTypeInfo item, MaterialInfo material, 
-                                              df::dfhack_material_category mat_mask, item_quality::item_quality minqual, 
-                                              PersistentDataItem * cfg, std::string str) 
-{
-    for (size_t i = 0; i < constraints.size(); i++)
-    {
-        ItemConstraint *ct = constraints[i];
-        if (ct->is_craft == is_craft &&
-            ct->item == item && ct->material == material &&
-            ct->mat_mask.whole == mat_mask.whole &&
-            ct->min_quality == minqual)
-            return ct;
-    }
-
-    int weight = 0;
-    if (item.subtype >= 0)
-        weight += 10000;
-    if (mat_mask.whole != 0)
-        weight += 100;
-    if (material.type >= 0)
-        weight += (material.index >= 0 ? 5000 : 1000);
-
-    ItemConstraint *nct = new ItemConstraint;
-    nct->is_craft = is_craft;
-    nct->item = item;
-    nct->material = material;
-    nct->mat_mask = mat_mask;
-    nct->min_quality = minqual;
-    nct->weight = weight;
-
-    if (cfg)
-        nct->config = *cfg;
-    else
-    {
-        if (str.empty())
-        {
-            std::string item_token = ENUM_KEY_STR(item_type, item.type);
-            if (item.custom)
-                item_token += ":" + item.custom->id;
-            else if (item.subtype != -1)
-            {
-                df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
-                switch (item.type)
-                {
-#define ITEM(type_string,vec,tclass) \
-                case df::item_type::type_string: \
-                    item_token += ":" + defs.vec[item.subtype]->id; \
-                    break;
-
-                    ITEMDEF_VECTORS
-#undef ITEM
-                default:
-                    break;
-                }
-            }
-
-            str.append(item_token);
-            str.append("/");
-            str.append(bitfield_to_string(mat_mask, ","));
-            str.append("/");
-            if ((material.type != 0 || material.index > 0) && !material.isNone())
-                str.append(material.getToken());
-        }
-
-        nct->config = Core::getInstance().getWorld()->AddPersistentData("workflow/constraints");
-        nct->init(str);
-    }
-
-    constraints.push_back(nct);
-    return nct;
-}
-
-static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg)
+static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg, bool create)
 {
     std::vector<std::string> tokens;
     split_string(&tokens, str, "/");
 
     if (tokens.size() > 4)
         return NULL;
+
+    int weight = 0;
 
     bool is_craft = false;
     ItemTypeInfo item;
@@ -753,13 +730,19 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         return NULL;
     }
 
-    df::dfhack_material_category mat_mask;
+    if (item.subtype >= 0)
+        weight += 10000;
+
+    df::dfhack_material_category mat_mask(0);
     std::string maskstr = vector_get(tokens,1);
     if (!maskstr.empty() && !parseJobMaterialCategory(&mat_mask, maskstr)) {
         out.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
         return NULL;
     }
     
+    if (mat_mask.whole != 0)
+        weight += 100;
+
     MaterialInfo material;
     std::string matstr = vector_get(tokens,2);
     if (!matstr.empty() && (!material.find(matstr) || !material.isValid())) {
@@ -767,28 +750,86 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         return NULL;
     }
 
-    item_quality::item_quality minqual = item_quality::Ordinary;
-    std::string qualstr = vector_get(tokens, 3);
-    if(!qualstr.empty()) {
-	    if(qualstr == "ordinary") minqual = item_quality::Ordinary;
-	    else if(qualstr == "wellcrafted") minqual = item_quality::WellCrafted;
-	    else if(qualstr == "finelycrafted") minqual = item_quality::FinelyCrafted;
-	    else if(qualstr == "superior") minqual = item_quality::Superior;
-	    else if(qualstr == "exceptional") minqual = item_quality::Exceptional;
-	    else if(qualstr == "masterful") minqual = item_quality::Masterful;
-	    else {
-		    out.printerr("Cannot find quality: %s\nKnown qualities: ordinary, wellcrafted, finelycrafted, superior, exceptional, masterful\n", qualstr.c_str());
-		    return NULL;
-	    }
-    }
+    if (material.type >= 0)
+        weight += (material.index >= 0 ? 5000 : 1000);
 
     if (mat_mask.whole && material.isValid() && !material.matches(mat_mask)) {
         out.printerr("Material %s doesn't match mask %s\n", matstr.c_str(), maskstr.c_str());
         return NULL;
     }
 
-    ItemConstraint *nct = create_new_constraint(is_craft, item, material, mat_mask, minqual, cfg, str);
+    item_quality::item_quality minqual = item_quality::Ordinary;
+    bool is_local = false;
+    std::string qualstr = vector_get(tokens, 3);
 
+    if(!qualstr.empty())
+    {
+        std::vector<std::string> qtokens;
+        split_string(&qtokens, qualstr, ",");
+
+        for (size_t i = 0; i < qtokens.size(); i++)
+        {
+            auto token = toLower(qtokens[i]);
+
+            if (token == "local")
+                is_local = true;
+            else
+            {
+                bool found = false;
+                FOR_ENUM_ITEMS(item_quality, qv)
+                {
+                    if (toLower(ENUM_KEY_STR(item_quality, qv)) != token)
+                        continue;
+                    minqual = qv;
+                    found = true;
+                }
+
+                if (!found)
+                {
+                    out.printerr("Cannot parse token: %s\n", token.c_str());
+                    return NULL;
+                }
+            }
+        }
+    }
+
+    if (is_local || minqual > item_quality::Ordinary)
+        weight += 10;
+
+    for (size_t i = 0; i < constraints.size(); i++)
+    {
+        ItemConstraint *ct = constraints[i];
+        if (ct->is_craft == is_craft &&
+            ct->item == item && ct->material == material &&
+            ct->mat_mask.whole == mat_mask.whole &&
+            ct->min_quality == minqual &&
+            ct->is_local == is_local)
+            return ct;
+    }
+
+    if (!create)
+        return NULL;
+
+    ItemConstraint *nct = new ItemConstraint;
+    nct->is_craft = is_craft;
+    nct->item = item;
+    nct->material = material;
+    nct->mat_mask = mat_mask;
+    nct->min_quality = minqual;
+    nct->is_local = is_local;
+    nct->weight = weight;
+
+    if (cfg)
+        nct->config = *cfg;
+    else
+    {
+        nct->config = World::AddPersistentData("workflow/constraints");
+        nct->init(str);
+    }
+
+    nct->history = World::GetPersistentData(history_key(nct->config), NULL);
+
+    constraints.push_back(nct);
     return nct;
 }
 
@@ -796,18 +837,25 @@ static void delete_constraint(ItemConstraint *cv)
 {
     int idx = linear_index(constraints, cv);
     if (idx >= 0)
-    {
-        for (vector<ProtectedJob *>::iterator it = constraints[idx]->jobs.begin(); it != constraints[idx]->jobs.end(); it++)
-        {
-            int idpj = linear_index((*it)->constraints, cv);
-            if (idpj >= 0)
-                vector_erase_at((*it)->constraints, idpj);
-        }
         vector_erase_at(constraints, idx);
+
+    World::DeletePersistentData(cv->config);
+    World::DeletePersistentData(cv->history);
+    delete cv;
+}
+
+static bool deleteConstraint(std::string name)
+{
+    for (size_t i = 0; i < constraints.size(); i++)
+    {
+        if (constraints[i]->config.val() != name)
+            continue;
+
+        delete_constraint(constraints[i]);
+        return true;
     }
 
-    Core::getInstance().getWorld()->DeletePersistentData(cv->config);
-    delete cv;
+    return false;
 }
 
 /******************************
@@ -829,11 +877,10 @@ static bool isCraftItem(df::item_type type)
 static void link_job_constraint(ProtectedJob *pj, df::item_type itype, int16_t isubtype,
                                 df::dfhack_material_category mat_mask,
                                 int16_t mat_type, int32_t mat_index,
-                                bool is_craft = false, bool create_constraint = false)
+                                bool is_craft = false)
 {
     MaterialInfo mat(mat_type, mat_index);
 
-    bool constraint_found = false;
     for (size_t i = 0; i < constraints.size(); i++)
     {
         ItemConstraint *ct = constraints[i];
@@ -871,86 +918,9 @@ static void link_job_constraint(ProtectedJob *pj, df::item_type itype, int16_t i
 
         ct->jobs.push_back(pj);
         pj->constraints.push_back(ct);
-        constraint_found = true;
 
         if (!ct->is_active && pj->isResumed())
             ct->is_active = true;
-    }
-
-    if (create_constraint && !constraint_found)
-    {
-        ItemTypeInfo item;
-        item.type = itype;
-        item.subtype = isubtype;
-
-        ItemConstraint *nct = create_new_constraint(is_craft, item, mat, mat_mask, item_quality::Ordinary, NULL, "");
-        nct->jobs.push_back(pj);
-        pj->constraints.push_back(nct);
-    }
-}
-
-static void compute_custom_job(ProtectedJob *pj, df::job *job, bool create_constraint = false)
-{
-    if (pj->reaction_id < 0)
-        pj->reaction_id = linear_index(df::reaction::get_vector(),
-                                       &df::reaction::code, job->reaction_name);
-
-    df::reaction *r = df::reaction::find(pj->reaction_id);
-    if (!r)
-        return;
-
-    for (size_t i = 0; i < r->products.size(); i++)
-    {
-        using namespace df::enums::reaction_product_item_flags;
-
-        VIRTUAL_CAST_VAR(prod, df::reaction_product_itemst, r->products[i]);
-        if (!prod || (prod->item_type < (df::item_type)0 && !prod->flags.is_set(CRAFTS)))
-            continue;
-
-        MaterialInfo mat(prod);
-        df::dfhack_material_category mat_mask(0);
-
-        bool get_mat_prod = prod->flags.is_set(GET_MATERIAL_PRODUCT);
-        if (get_mat_prod || prod->flags.is_set(GET_MATERIAL_SAME))
-        {
-            int reagent_idx = linear_index(r->reagents, &df::reaction_reagent::code,
-                                           prod->get_material.reagent_code);
-            if (reagent_idx < 0)
-                continue;
-
-            int item_idx = linear_index(job->job_items, &df::job_item::reagent_index, reagent_idx);
-            if (item_idx >= 0)
-                mat.decode(job->job_items[item_idx]);
-            else
-            {
-                VIRTUAL_CAST_VAR(src, df::reaction_reagent_itemst, r->reagents[reagent_idx]);
-                if (!src)
-                    continue;
-                mat.decode(src);
-            }
-
-            if (get_mat_prod)
-            {
-                std::string code = prod->get_material.product_code;
-
-                if (mat.isValid())
-                {
-                    int idx = linear_index(mat.material->reaction_product.id, code);
-                    if (idx < 0)
-                        continue;
-
-                    mat.decode(mat.material->reaction_product.material, idx);
-                }
-                else
-                {
-                    if (code == "SOAP_MAT")
-                        mat_mask.bits.soap = true;
-                }
-            }
-        }
-
-        link_job_constraint(pj, prod->item_type, prod->item_subtype,
-                            mat_mask, mat.type, mat.index, prod->flags.is_set(CRAFTS), create_constraint); 
     }
 }
 
@@ -995,100 +965,24 @@ static void guess_job_material(df::job *job, MaterialInfo &mat, df::dfhack_mater
     }
 }
 
-static void compute_job_outputs(color_ostream &out, ProtectedJob *pj, bool create_constraint = false)
+static int cbEnumJobOutputs(lua_State *L)
 {
-    using namespace df::enums::job_type;
+    auto pj = (ProtectedJob*)lua_touserdata(L, lua_upvalueindex(1));
 
-    // Custom reactions handled in another function
-    df::job *job = pj->job_copy;
+    lua_settop(L, 6);
 
-    if (job->job_type == CustomReaction)
-    {
-        compute_custom_job(pj, job, create_constraint);
-        return;
-    }
+    df::dfhack_material_category mat_mask(0);
+    if (!lua_isnil(L, 3))
+        Lua::CheckDFAssign(L, &mat_mask, 3);
 
-    // Item type & subtype
-    df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
-    int16_t isubtype = job->item_subtype;
+    link_job_constraint(
+        pj,
+        (df::item_type)luaL_optint(L, 1, -1), luaL_optint(L, 2, -1),
+        mat_mask, luaL_optint(L, 4, -1), luaL_optint(L, 5, -1),
+        lua_toboolean(L, 6)
+    );
 
-    if (itype == item_type::NONE && job->job_type != MakeCrafts)
-        return;
-
-    // Item material & material category
-    MaterialInfo mat;
-    df::dfhack_material_category mat_mask;
-    guess_job_material(job, mat, mat_mask);
-
-    // Job-specific code
-    switch (job->job_type)
-    {
-    case SmeltOre:
-        if (mat.inorganic)
-        {
-            std::vector<int16_t> &ores = mat.inorganic->metal_ore.mat_index;
-            for (size_t i = 0; i < ores.size(); i++)
-                link_job_constraint(pj, item_type::BAR, -1, 0, 0, ores[i]);
-        }
-        return;
-
-    case ExtractMetalStrands:
-        if (mat.inorganic)
-        {
-            std::vector<int16_t> &threads = mat.inorganic->thread_metal.mat_index;
-            for (size_t i = 0; i < threads.size(); i++)
-                link_job_constraint(pj, item_type::THREAD, -1, 0, 0, threads[i]);
-        }
-        return;
-
-    case PrepareMeal:
-        if (job->mat_type != -1)
-        {
-            std::vector<df::itemdef_foodst*> &food = df::itemdef_foodst::get_vector();
-            for (size_t i = 0; i < food.size(); i++)
-                if (food[i]->level == job->mat_type)
-                    link_job_constraint(pj, item_type::FOOD, i, 0, -1, -1);
-            return;
-        }
-        break;
-
-    case MakeCrafts:
-        link_job_constraint(pj, item_type::NONE, -1, mat_mask, mat.type, mat.index, true);
-        return;
-
-#define PLANT_PROCESS_MAT(flag, tag) \
-        if (mat.plant && mat.plant->flags.is_set(plant_raw_flags::flag)) \
-            mat.decode(mat.plant->material_defs.type_##tag, \
-                       mat.plant->material_defs.idx_##tag); \
-        else mat.decode(-1);
-    case BrewDrink:
-        PLANT_PROCESS_MAT(DRINK, drink);
-        break;
-    case MillPlants:
-        PLANT_PROCESS_MAT(MILL, mill);
-        break;
-    case ProcessPlants:
-        PLANT_PROCESS_MAT(THREAD, thread);
-        break;
-    case ProcessPlantsBag:
-        PLANT_PROCESS_MAT(LEAVES, leaves);
-        break;
-    case ProcessPlantsBarrel:
-        PLANT_PROCESS_MAT(EXTRACT_BARREL, extract_barrel);
-        break;
-    case ProcessPlantsVial:
-        PLANT_PROCESS_MAT(EXTRACT_VIAL, extract_vial);
-        break;
-    case ExtractFromPlants:
-        PLANT_PROCESS_MAT(EXTRACT_STILL_VIAL, extract_still_vial);
-        break;
-#undef PLANT_PROCESS_MAT
-
-    default:
-        break;
-    }
-
-    link_job_constraint(pj, itype, isubtype, mat_mask, mat.type, mat.index, false, create_constraint);
+    return 0;
 }
 
 static void map_job_constraints(color_ostream &out)
@@ -1101,19 +995,32 @@ static void map_job_constraints(color_ostream &out)
         constraints[i]->is_active = false;
     }
 
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder frame(L);
+
+    bool ok = Lua::PushModulePublic(out, L, "plugins.workflow", "doEnumJobOutputs");
+    if (!ok)
+        out.printerr("The workflow lua module is not available.\n");
+
     for (TKnownJobs::const_iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
     {
         ProtectedJob *pj = it->second;
 
         pj->constraints.clear();
 
-        if (!pj->isLive())
+        if (!ok || !pj->isLive())
             continue;
 
         if (!melt_active && pj->actual_job->job_type == job_type::MeltMetalObject)
             melt_active = pj->isResumed();
 
-        compute_job_outputs(out, pj);
+        // Call the lua module
+        lua_pushvalue(L, -1);
+        lua_pushlightuserdata(L, pj);
+        lua_pushcclosure(L, cbEnumJobOutputs, 1);
+        Lua::PushDFObject(L, pj->job_copy);
+
+        Lua::SafeCall(out, L, 2, 0);
     }
 }
 
@@ -1123,9 +1030,9 @@ static void map_job_constraints(color_ostream &out)
 
 static void dryBucket(df::item *item)
 {
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->general_refs.size(); i++)
     {
-        df::general_ref *ref = item->itemrefs[i];
+        df::general_ref *ref = item->general_refs[i];
         if (ref->getType() == general_ref_type::CONTAINS_ITEM)
         {
             df::item *obj = ref->getItem();
@@ -1145,9 +1052,9 @@ static bool itemBusy(df::item *item)
 {
     using namespace df::enums::item_type;
 
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->general_refs.size(); i++)
     {
-        df::general_ref *ref = item->itemrefs[i];
+        df::general_ref *ref = item->general_refs[i];
         if (ref->getType() == general_ref_type::CONTAINS_ITEM)
         {
             df::item *obj = ref->getItem();
@@ -1190,13 +1097,29 @@ static bool itemInRealJob(df::item *item)
                != job_type_class::Hauling;
 }
 
+static bool isRouteVehicle(df::item *item)
+{
+    int id = item->getVehicleID();
+    if (id < 0) return false;
+
+    auto vehicle = df::vehicle::find(id);
+    return vehicle && vehicle->route_id >= 0;
+}
+
+static bool isAssignedSquad(df::item *item)
+{
+    auto &vec = ui->equipment.items_assigned[item->getType()];
+    return binsearch_index(vec, &df::item::id, item->id) >= 0;
+}
+
 static void map_job_items(color_ostream &out)
 {
     for (size_t i = 0; i < constraints.size(); i++)
     {
         constraints[i]->item_amount = 0;
         constraints[i]->item_count = 0;
-        constraints[i]->item_inuse = 0;
+        constraints[i]->item_inuse_amount = 0;
+        constraints[i]->item_inuse_count = 0;
     }
 
     meltable_count = 0;
@@ -1208,12 +1131,12 @@ static void map_job_items(color_ostream &out)
 #define F(x) bad_flags.bits.x = true;
     F(dump); F(forbid); F(garbage_collect);
     F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(construction); F(artifact1);
+    F(in_building); F(construction); F(artifact);
 #undef F
 
     bool dry_buckets = isOptionEnabled(CF_DRYBUCKETS);
 
-    std::vector<df::item*> &items = world->items.other[items_other_id::ANY_FREE];
+    std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
 
     for (size_t i = 0; i < items.size(); i++)
     {
@@ -1229,9 +1152,9 @@ static void map_job_items(color_ostream &out)
 
         bool is_invalid = false;
 
-		// don't count worn items
-		if (item->getWear() >= 1) 
-			is_invalid = true;
+        // don't count worn items
+        if (item->getWear() >= 1)
+            is_invalid = true;
 
         // Special handling
         switch (itype) {
@@ -1241,6 +1164,8 @@ static void map_job_items(color_ostream &out)
             break;
 
         case item_type::THREAD:
+            if (item->flags.bits.spider_web)
+                continue;
             if (item->getTotalDimension() < 15000)
                 is_invalid = true;
             break;
@@ -1275,9 +1200,11 @@ static void map_job_items(color_ostream &out)
                     (cv->item.subtype != -1 && cv->item.subtype != isubtype))
                     continue;
             }
-	    if(item->getQuality() < cv->min_quality) {
-		    continue;
-	    }
+
+            if (cv->is_local && item->flags.bits.foreign)
+                continue;
+            if (item->getQuality() < cv->min_quality)
+                continue;
 
             TMaterialCache::iterator it = cv->material_cache.find(matkey);
 
@@ -1299,10 +1226,14 @@ static void map_job_items(color_ostream &out)
                 item->flags.bits.owned ||
                 item->flags.bits.in_chest ||
                 item->isAssignedToStockpile() ||
+                isRouteVehicle(item) ||
                 itemInRealJob(item) ||
-                itemBusy(item))
+                itemBusy(item) ||
+                isAssignedSquad(item))
             {
-                cv->item_inuse++;
+                is_invalid = true;
+                cv->item_inuse_count++;
+                cv->item_inuse_amount += item->getStackSize();
             }
             else
             {
@@ -1313,9 +1244,7 @@ static void map_job_items(color_ostream &out)
     }
 
     for (size_t i = 0; i < constraints.size(); i++)
-    {
         constraints[i]->computeRequest();
-    }
 }
 
 /******************************
@@ -1397,6 +1326,20 @@ static void update_jobs_by_constraints(color_ostream &out)
         else if (ct->mat_mask.whole)
             info = bitfield_to_string(ct->mat_mask) + " " + info;
 
+        if (ct->low_stock_reported != DF_GLOBAL_VALUE(cur_season,-1))
+        {
+            int count = ct->goalCount(), gap = ct->goalGap();
+
+            if (count >= gap*3 && ct->curItemStock() < std::min(gap*2, (count-gap)/2))
+            {
+                ct->low_stock_reported = DF_GLOBAL_VALUE(cur_season,-1);
+
+                Gui::showAnnouncement("Stock level is low: " + info, COLOR_BROWN, true);
+            }
+            else
+                ct->low_stock_reported = -1;
+        }
+
         if (is_running != ct->is_active)
         {
             if (is_running && ct->request_resume)
@@ -1428,6 +1371,239 @@ static void process_constraints(color_ostream &out)
     map_job_items(out);
     update_jobs_by_constraints(out);
 }
+
+static void update_data_structures(color_ostream &out)
+{
+    if (enabled) {
+        check_lost_jobs(out, 0);
+        recover_jobs(out);
+        update_job_data(out);
+        map_job_constraints(out);
+        map_job_items(out);
+    }
+}
+
+/*************
+ *  LUA API  *
+ *************/
+
+static bool isEnabled() { return enabled; }
+
+static void setEnabled(color_ostream &out, bool enable)
+{
+    if (enable && !enabled)
+    {
+        enable_plugin(out);
+    }
+    else if (!enable && enabled)
+    {
+        enabled = false;
+        setOptionEnabled(CF_ENABLED, false);
+        stop_protect(out);
+    }
+}
+
+static void push_count_history(lua_State *L, ItemConstraint *icv)
+{
+    size_t hsize = icv->history_size();
+
+    lua_createtable(L, hsize, 0);
+
+    for (size_t i = 0; i < hsize; i++)
+    {
+        lua_createtable(L, 0, 4);
+
+        Lua::SetField(L, icv->history_amount(i), -1, "cur_amount");
+        Lua::SetField(L, icv->history_count(i), -1, "cur_count");
+        Lua::SetField(L, icv->history_inuse_amount(i), -1, "cur_in_use_amount");
+        Lua::SetField(L, icv->history_inuse_count(i), -1, "cur_in_use_count");
+
+        lua_rawseti(L, -2, i+1);
+    }
+}
+
+static void push_constraint(lua_State *L, ItemConstraint *cv)
+{
+    lua_newtable(L);
+    int ctable = lua_gettop(L);
+
+    Lua::SetField(L, cv->config.entry_id(), ctable, "id");
+    Lua::SetField(L, cv->config.val(), ctable, "token");
+
+    // Constraint key
+
+    Lua::SetField(L, cv->item.type, ctable, "item_type");
+    Lua::SetField(L, cv->item.subtype, ctable, "item_subtype");
+
+    Lua::SetField(L, cv->is_craft, ctable, "is_craft");
+
+    lua_getglobal(L, "copyall");
+    Lua::PushDFObject(L, &cv->mat_mask);
+    lua_call(L, 1, 1);
+    lua_setfield(L, -2, "mat_mask");
+
+    Lua::SetField(L, cv->material.type, ctable, "mat_type");
+    Lua::SetField(L, cv->material.index, ctable, "mat_index");
+
+    Lua::SetField(L, (int)cv->min_quality, ctable, "min_quality");
+    Lua::SetField(L, (bool)cv->is_local, ctable, "is_local");
+
+    // Constraint value
+
+    Lua::SetField(L, cv->goalByCount(), ctable, "goal_by_count");
+    Lua::SetField(L, cv->goalCount(), ctable, "goal_value");
+    Lua::SetField(L, cv->goalGap(), ctable, "goal_gap");
+
+    Lua::SetField(L, cv->item_amount, ctable, "cur_amount");
+    Lua::SetField(L, cv->item_count, ctable, "cur_count");
+    Lua::SetField(L, cv->item_inuse_amount, ctable, "cur_in_use_amount");
+    Lua::SetField(L, cv->item_inuse_count, ctable, "cur_in_use_count");
+
+    // Current state value
+
+    if (cv->request_resume)
+        Lua::SetField(L, "resume", ctable, "request");
+    else if (cv->request_suspend)
+        Lua::SetField(L, "suspend", ctable, "request");
+
+    lua_newtable(L);
+
+    bool resumed = false, want_resumed = false;
+
+    for (size_t i = 0, j = 0; i < cv->jobs.size(); i++)
+    {
+        if (!cv->jobs[i]->isLive()) continue;
+        Lua::PushDFObject(L, cv->jobs[i]->actual_job);
+        lua_rawseti(L, -2, ++j);
+
+        if (cv->jobs[i]->want_resumed) {
+            want_resumed = true;
+            resumed = resumed || cv->jobs[i]->isActuallyResumed();
+        }
+    }
+
+    lua_setfield(L, ctable, "jobs");
+
+    if (want_resumed && !resumed)
+        Lua::SetField(L, true, ctable, "is_delayed");
+}
+
+static int listConstraints(lua_State *L)
+{
+    lua_settop(L, 2);
+    auto job = Lua::CheckDFObject<df::job>(L, 1);
+    bool with_history = lua_toboolean(L, 2);
+
+    lua_pushnil(L);
+
+    if (!enabled || (job && !isSupportedJob(job)))
+        return 1;
+
+    color_ostream &out = *Lua::GetOutput(L);
+    update_data_structures(out);
+
+    ProtectedJob *pj = NULL;
+    if (job)
+    {
+        pj = get_known(job->id);
+        if (!pj)
+            return 1;
+    }
+
+    lua_newtable(L);
+
+    auto &vec = (pj ? pj->constraints : constraints);
+
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        push_constraint(L, vec[i]);
+
+        if (with_history)
+        {
+            push_count_history(L, vec[i]);
+            lua_setfield(L, -2, "history");
+        }
+
+        lua_rawseti(L, -2, i+1);
+    }
+
+    return 1;
+}
+
+static int findConstraint(lua_State *L)
+{
+    auto token = luaL_checkstring(L, 1);
+
+    color_ostream &out = *Lua::GetOutput(L);
+    update_data_structures(out);
+
+    ItemConstraint *icv = get_constraint(out, token, NULL, false);
+
+    if (icv)
+        push_constraint(L, icv);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static int setConstraint(lua_State *L)
+{
+    auto token = luaL_checkstring(L, 1);
+    bool by_count = lua_toboolean(L, 2);
+    int count = luaL_optint(L, 3, -1);
+    int gap = luaL_optint(L, 4, -1);
+
+    color_ostream &out = *Lua::GetOutput(L);
+    update_data_structures(out);
+
+    ItemConstraint *icv = get_constraint(out, token);
+    if (!icv)
+        luaL_error(L, "invalid constraint: %s", token);
+
+    if (!lua_isnil(L, 2))
+        icv->setGoalByCount(by_count);
+    if (!lua_isnil(L, 3))
+        icv->setGoalCount(count);
+    if (!lua_isnil(L, 4))
+        icv->setGoalGap(gap);
+
+    process_constraints(out);
+    push_constraint(L, icv);
+    return 1;
+}
+
+static int getCountHistory(lua_State *L)
+{
+    auto token = luaL_checkstring(L, 1);
+
+    color_ostream &out = *Lua::GetOutput(L);
+    update_data_structures(out);
+
+    ItemConstraint *icv = get_constraint(out, token, NULL, false);
+
+    if (icv)
+        push_count_history(L, icv);
+    else
+        lua_pushnil(L);
+
+    return 1;
+}
+
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(isEnabled),
+    DFHACK_LUA_FUNCTION(setEnabled),
+    DFHACK_LUA_FUNCTION(deleteConstraint),
+    DFHACK_LUA_END
+};
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(listConstraints),
+    DFHACK_LUA_COMMAND(findConstraint),
+    DFHACK_LUA_COMMAND(setConstraint),
+    DFHACK_LUA_COMMAND(getCountHistory),
+    DFHACK_LUA_END
+};
 
 /******************************
  *  PRINTING AND THE COMMAND  *
@@ -1473,10 +1649,10 @@ static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job
            << cv->goalCount() << " (gap " << cv->goalGap() << ")" << endl;
     out.reset_color();
 
-    if (cv->item_count || cv->item_inuse)
+    if (cv->item_count || cv->item_inuse_count)
         out << prefix << "  items: amount " << cv->item_amount << "; "
                          << cv->item_count << " stacks available, "
-                         << cv->item_inuse << " in use." << endl;
+                         << cv->item_inuse_count << " in use." << endl;
 
     if (no_job) return;
 
@@ -1563,1506 +1739,6 @@ static void print_job(color_ostream &out, ProtectedJob *pj)
         print_constraint(out, pj->constraints[i], true, "  ");
 }
 
-/******************************
- *  Inventory Monitor         *
- ******************************/
-#define MAX_ITEM_NAME 17
-#define MAX_MASK 10
-#define MAX_MATERIAL 21
-
-#define SIDEBAR_WIDTH 30
-#define COLOR_TITLE COLOR_BLUE
-#define COLOR_UNSELECTED COLOR_GREY
-#define COLOR_SELECTED COLOR_WHITE
-#define COLOR_HIGHLIGHTED COLOR_GREEN
-
-namespace wf_ui
-{
-    /*
-     * Utility Functions
-     */
-    typedef int8_t UIColor;
-
-    const int ascii_to_enum_offset = interface_key::STRING_A048 - '0';
-
-    inline string int_to_string(const int n)
-    {
-        return static_cast<ostringstream*>( &(ostringstream() << n) )->str();
-    }
-
-    static void set_to_limit(int &value, const int maximum, const int min = 0)
-    {
-        if (value < min)
-            value = min;
-        else if (value > maximum)
-            value = maximum;
-    }
-
-    inline void paint_text(const UIColor color, const int &x, const int &y, const std::string &text, const UIColor background = 0)
-    {
-        Screen::paintString(Screen::Pen(' ', color, background), x, y, text);
-    }
-
-    static string pad_string(string text, const int size, const bool front = true, const bool trim = false)
-    {
-        if (text.length() > size)
-        {
-            if (trim && size > 10)
-            {
-                text = text.substr(0, size-3);
-                text.append("...");
-            }
-            return text;
-        }
-
-        string aligned(size - text.length(), ' ');
-        if (front)
-        {
-            aligned.append(text);
-            return aligned;
-        }
-        else
-        {
-            text.append(aligned);
-            return text;
-        }
-    }
-
-    static int get_left_margin()
-    {
-        int left_margin = gps->dimx - 30;
-        int8_t a = *df::global::ui_menu_width;
-        int8_t b = *df::global::ui_area_map_width;
-        if ((a == 1 && b > 1) || (a == 2 && b == 2))
-            left_margin -= 24;
-
-        return left_margin;
-    }
-
-    /*
-     * Adjustment Dialog
-     */
-
-    class AdjustmentScreen
-    {
-    public:
-        int32_t x, y, left_margin;
-
-        AdjustmentScreen();
-        void reset();
-        bool feed(set<df::interface_key> *input, ItemConstraint *cv, ProtectedJob *pj = NULL);
-        void render(ItemConstraint *cv, bool in_monitor);
-
-    protected:
-        int32_t adjustment_ui_display_start;
-
-        virtual void onConstraintChanged() {}
-        virtual void onModeChanged() {}
-
-    private:
-        bool edit_limit, edit_gap;
-        string edit_string;
-
-    };
-
-    AdjustmentScreen::AdjustmentScreen()
-    {
-        reset();
-    }
-
-    void AdjustmentScreen::reset()
-    {
-        edit_gap = false;
-        edit_limit = false;
-        adjustment_ui_display_start = 24;
-    }
-
-    bool AdjustmentScreen::feed(set<df::interface_key> *input, ItemConstraint *cv, ProtectedJob *pj /* = NULL */)
-    {
-        if (input->count(interface_key::CUSTOM_T) && !edit_limit && !edit_gap)
-        {
-            if (!cv)
-            {
-                // Add tracking
-                return false;
-            }
-
-            // Remove tracking
-            if (pj)
-            {
-                for (vector<ItemConstraint*>::iterator it = pj->constraints.begin(); it < pj->constraints.end(); it++)
-                    delete_constraint(*it);
-
-                forget_job(color_ostream_proxy(Core::getInstance().getConsole()), pj);
-            }
-            else
-            {
-                delete_constraint(cv);
-            }
-
-            onConstraintChanged();
-            return true;
-        }
-
-        if (cv)
-        {
-            if (edit_limit || edit_gap)
-            {
-                df::interface_key last_token = *input->rbegin();
-                if (last_token == interface_key::STRING_A000)
-                {
-                    // Backspace
-                    if (edit_string.length() > 0)
-                    {
-                        edit_string.erase(edit_string.length()-1);
-                    }
-
-                    return true;
-                }
-
-                if (edit_string.length() >= 6)
-                    return true;
-
-                if (last_token >= interface_key::STRING_A048 && last_token <= interface_key::STRING_A057)
-                {
-                    // Numeric character
-                    edit_string += last_token - ascii_to_enum_offset;
-                }
-                else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
-                {
-                    if (input->count(interface_key::SELECT) && edit_string.length() > 0)
-                    {
-                        if (edit_limit)
-                            cv->setGoalCount(atoi(edit_string.c_str()));
-                        else
-                            cv->setGoalGap(atoi(edit_string.c_str()));
-
-                        onConstraintChanged();
-                    }
-                    edit_string.clear();
-                    edit_limit = false;
-                    edit_gap = false;
-                }
-                else if (last_token == interface_key::STRING_A000)
-                {
-                    // Backspace
-                    if (edit_string.length() > 0)
-                    {
-                        edit_string.erase(edit_string.length()-1);
-                    }
-                }
-
-                return true;
-            }
-            else if (input->count(interface_key::CUSTOM_L))
-            {
-                edit_string = int_to_string(cv->goalCount());
-                edit_limit = true;
-            }
-            else if (input->count(interface_key::CUSTOM_G))
-            {
-                edit_string = int_to_string(cv->goalGap());
-                edit_gap = true;
-            }
-            else if (input->count(interface_key::CUSTOM_N))
-            {
-                cv->setGoalByCount(!cv->goalByCount());
-                onModeChanged();
-            }
-        }
-
-        return false;
-    }
-
-    void AdjustmentScreen::render(ItemConstraint *cv, bool in_monitor)
-    {
-        left_margin = (in_monitor) ? gps->dimx - 30 : get_left_margin();
-        x = left_margin;
-        y = adjustment_ui_display_start;
-        OutputString(COLOR_BROWN, x, y, "Workflow Settings", true, left_margin);
-        if (cv != NULL)
-        {
-            string text;
-            text.reserve(20);
-
-            text.append("Available: ");
-            text.append(int_to_string((cv->goalByCount()) ? cv->item_count : cv->item_amount));
-            text.append(" ");
-            text.append((cv->goalByCount()) ? "Stacks" : "Items");
-
-            OutputString(15, x, y, text, true, left_margin);
-
-            text.clear();
-            text.append("In use   : ");
-            text.append(int_to_string(cv->item_inuse));
-            OutputString(15, x, y, text, true, left_margin);
-
-            ++y;
-            text.clear();
-            text.append("Limit : ");
-            text.append((edit_limit) ? edit_string : int_to_string(cv->goalCount()));
-            OutputHotkeyString(x, y, text.c_str(), "l");
-            if (edit_limit)
-                OutputString(10, x, y, "_");
-
-            ++y;
-            x = left_margin;
-            text.clear();
-            text.append("Gap   : ");
-            text.append((edit_gap) ? edit_string : int_to_string(cv->goalGap()));
-            OutputHotkeyString(x, y, text.c_str(), "g");
-            if (edit_gap)
-                OutputString(10, x, y, "_");
-
-            ++y;
-            x = left_margin;
-            OutputHotkeyString(x, y, "Disable Tracking", "t", true, left_margin);
-            OutputHotkeyString(x, y, (cv->goalByCount()) ? "Count Items" : "Count Stacks", "n");
-        }
-        else
-            OutputHotkeyString(x, y, "Enable Tracking", "t", true, left_margin);
-    }
-
-
-    /*
-     * List classes
-     */
-    template <typename T>
-    class ListEntry
-    {
-    public:
-        T elem;
-        string text;
-        bool selected;
-
-        ListEntry(string text, T elem)
-        {
-            this->text = text;
-            this->elem = elem;
-            selected = false;
-        }
-    };
-
-    template <typename T>
-    class ListColumn
-    {
-    public:
-        string title;
-        int highlighted_index;
-        int display_start_offset;
-        int32_t bottom_margin, search_margin, left_margin;
-        bool search_entry_mode;
-        bool multiselect;
-        bool allow_null;
-        bool auto_select;
-        bool force_sort;
-
-        ListColumn()
-        {
-            clear();
-            left_margin = 2;
-            bottom_margin = 3;
-            search_margin = 38;
-            highlighted_index = 0;
-            multiselect = false;
-            allow_null = true;
-            auto_select = false;
-            search_entry_mode = false;
-            force_sort = false;
-        }
-
-        void clear()
-        {
-            list.clear();
-            display_list.clear();
-            display_start_offset = 0;
-            max_item_width = 0;
-            resize();
-        }
-
-        void resize()
-        {
-            display_max_rows = gps->dimy - 4 - bottom_margin;
-        }
-
-        void add(ListEntry<T> &entry)
-        {
-            list.push_back(entry);
-            if (entry.text.length() > max_item_width)
-                max_item_width = entry.text.length();
-        }
-
-        void add(const string &text, T &elem)
-        {
-            list.push_back(ListEntry<T>(text, elem));
-            if (text.length() > max_item_width)
-                max_item_width = text.length();
-        }
-
-        virtual void display_extras(const T &elem, int32_t &x, int32_t &y) const {}
-
-        void display(const bool is_selected_column) const
-        {
-            int32_t y = 2;
-            paint_text(COLOR_TITLE, left_margin, y, title);
-
-            int last_index_able_to_display = display_start_offset + display_max_rows;
-            for (int i = display_start_offset; i < display_list.size() && i < last_index_able_to_display; i++)
-            {
-                ++y;
-                UIColor fg_color = (display_list[i]->selected) ? COLOR_SELECTED : COLOR_UNSELECTED;
-                UIColor bg_color = (is_selected_column && i == highlighted_index) ? COLOR_HIGHLIGHTED : COLOR_BLACK;
-                paint_text(fg_color, left_margin, y, display_list[i]->text, bg_color);
-                int x = left_margin + display_list[i]->text.length() + 1;
-                display_extras(display_list[i]->elem, x, y);
-            }
-
-            if (is_selected_column)
-            {
-                y = gps->dimy - bottom_margin;
-                int32_t x = search_margin;
-                OutputHotkeyString(x, y, "Search" ,"S");
-                if (!search_string.empty() || search_entry_mode)
-                {
-                    OutputString(COLOR_WHITE, x, y, ": ");
-                    OutputString(COLOR_WHITE, x, y, search_string);
-                    if (search_entry_mode)
-                        OutputString(COLOR_LIGHTGREEN, x, y, "_");
-                }
-            }
-        }
-
-        void filter_display()
-        {
-            ListEntry<T> *prev_selected = (getDisplayListSize() > 0) ? display_list[highlighted_index] : NULL;
-            display_list.clear();
-            for (size_t i = 0; i < list.size(); i++)
-            {
-                if (search_string.empty() || list[i].text.find(search_string) != string::npos)
-                {
-                    ListEntry<T> *entry = &list[i];
-                    display_list.push_back(entry);
-                    if (entry == prev_selected)
-                        highlighted_index = display_list.size() - 1;
-                }
-            }
-            changeHighlight(0);
-        }
-
-        void selectDefaultEntry()
-        {
-            for (size_t i = 0; i < display_list.size(); i++)
-            {
-                if (display_list[i]->selected)
-                {
-                    highlighted_index = i;
-                    break;
-                }
-            }
-        }
-
-        void validateHighlight()
-        {
-            set_to_limit(highlighted_index, display_list.size() - 1);
-
-            if (highlighted_index < display_start_offset)
-                display_start_offset = highlighted_index;
-            else if (highlighted_index >= display_start_offset + display_max_rows)
-                display_start_offset = highlighted_index - display_max_rows + 1;
-
-            if (auto_select || (!allow_null && list.size() == 1))
-                display_list[highlighted_index]->selected = true;
-        }
-
-        void changeHighlight(const int highlight_change, const int offset_shift = 0)
-        {
-            if (!initHighlightChange())
-                return;
-
-            highlighted_index += highlight_change + offset_shift * display_max_rows;
-
-            display_start_offset += offset_shift * display_max_rows;
-            set_to_limit(display_start_offset, max(0, (int)(display_list.size())-display_max_rows));
-            validateHighlight();
-        }
-
-        void setHighlight(const int index)
-        {
-            if (!initHighlightChange())
-                return;
-
-            highlighted_index = index;
-            validateHighlight();
-        }
-
-        bool initHighlightChange()
-        {
-            if (display_list.size() == 0)
-                return false;
-
-            if (auto_select && !multiselect)
-            {
-                for (typename vector< ListEntry<T> >::iterator it = list.begin(); it != list.end(); it++)
-                {
-                    it->selected = false;
-                }
-            }
-
-            return true;
-        }
-
-        void toggleHighlighted()
-        {
-            if (auto_select)
-                return;
-
-            ListEntry<T> *entry = display_list[highlighted_index];
-            if (!multiselect || !allow_null)
-            {
-                int selected_count = 0;
-                for (size_t i = 0; i < list.size(); i++)
-                {
-                    if (!multiselect && !entry->selected)
-                        list[i].selected = false;
-                    if (!allow_null && list[i].selected)
-                        selected_count++;
-                }
-
-                if (!allow_null && entry->selected && selected_count == 1)
-                    return;
-            }
-
-            entry->selected = !entry->selected;
-        }
-
-        vector<T*> getSelectedElems(bool only_one = false)
-        {
-            vector<T*> results;
-            for (typename vector< ListEntry<T> >::iterator it = list.begin(); it != list.end(); it++)
-            {
-                if ((*it).selected)
-                {
-                    results.push_back(&(*it).elem);
-                    if (only_one)
-                        break;
-                }
-            }
-
-            return results;
-        }
-
-        T* getFirstSelectedElem()
-        {
-            vector<T*> results = getSelectedElems(true);
-            if (results.size() == 0)
-                return NULL;
-            else
-                return results[0];
-        }
-
-        size_t getDisplayListSize()
-        {
-            return display_list.size();
-        }
-
-        size_t getBaseListSize()
-        {
-            return list.size();
-        }
-
-        bool feed(set<df::interface_key> *input)
-        {
-            if  (input->count(interface_key::CURSOR_UP))
-            {
-                search_entry_mode = false;
-                changeHighlight(-1);
-            }
-            else if  (input->count(interface_key::CURSOR_DOWN))
-            {
-                search_entry_mode = false;
-                changeHighlight(1);
-            }
-            else if  (input->count(interface_key::STANDARDSCROLL_PAGEUP))
-            {
-                search_entry_mode = false;
-                changeHighlight(0, -1);
-            }
-            else if  (input->count(interface_key::STANDARDSCROLL_PAGEDOWN))
-            {
-                search_entry_mode = false;
-                changeHighlight(0, 1);
-            }
-            else if (search_entry_mode)
-            {
-                // Search query typing mode
-
-                df::interface_key last_token = *input->rbegin();
-                if (last_token >= interface_key::STRING_A032 && last_token <= interface_key::STRING_A126)
-                {
-                    // Standard character
-                    search_string += last_token - ascii_to_enum_offset;
-                    filter_display();
-                }
-                else if (last_token == interface_key::STRING_A000)
-                {
-                    // Backspace
-                    if (search_string.length() > 0)
-                    {
-                        search_string.erase(search_string.length()-1);
-                        filter_display();
-                    }
-                }
-                else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
-                {
-                    // ENTER or ESC: leave typing mode
-                    search_entry_mode = false;
-                }
-                else if  (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT))
-                {
-                    // Arrow key pressed. Leave entry mode and allow screen to process key
-                    search_entry_mode = false;
-                    return false;
-                }
-
-                return true;
-            }
-
-            // Not in search query typing mode
-            else if  (input->count(interface_key::SELECT) && !auto_select)
-            {
-                toggleHighlighted();
-            }
-            else if  (input->count(interface_key::CUSTOM_S))
-            {
-                search_entry_mode = true;
-            }
-            else if  (input->count(interface_key::CUSTOM_SHIFT_S))
-            {
-                search_string.clear();
-                filter_display();
-            }
-            else if (enabler->tracking_on && gps->mouse_x != -1 && gps->mouse_y != -1 && enabler->mouse_lbut)
-            {
-                return setHighlightByMouse();
-            }
-            else
-                return false;
-
-            return true;
-        }
-
-        bool setHighlightByMouse()
-        {
-            if (gps->mouse_y >= 3 && gps->mouse_y < display_max_rows + 3 &&
-                gps->mouse_x >= left_margin && gps->mouse_x < left_margin + max_item_width)
-            {
-                int new_index = display_start_offset + gps->mouse_y - 3;
-                if (new_index < display_list.size())
-                    setHighlight(new_index);
-
-                enabler->mouse_lbut = enabler->mouse_rbut = 0;
-
-                return true;
-            }
-
-            return false;
-        }
-
-        static bool compareText(ListEntry<T> const& a, ListEntry<T> const& b)
-        {
-            return a.text.compare(b.text) < 0;
-        }
-
-        void doSort(bool (*function)(ListEntry<T> const&, ListEntry<T> const&))
-        {
-            if (force_sort || list.size() < 100)
-                std::sort(list.begin(), list.end(), function);
-
-            filter_display();
-        }
-
-        virtual void sort()
-        {
-            doSort(&compareText);
-        }
-
-
-        private:
-            vector< ListEntry<T> > list;
-            vector< ListEntry<T>* > display_list;
-            string search_string;
-            int display_max_rows;
-            int max_item_width;
-    };
-
-    class viewscreenChooseMaterial : public dfhack_viewscreen
-    {
-    public:
-        static bool reset_list;
-
-        viewscreenChooseMaterial(ItemConstraint *cv = NULL);
-        void feed(set<df::interface_key> *input);
-        void render();
-
-        std::string getFocusString() { return "wfchoosemat"; }
-
-    private:
-        ItemConstraint *cv;
-
-        ListColumn<ItemTypeInfo> items_column;
-        ListColumn<df::dfhack_material_category> masks_column;
-        ListColumn<MaterialInfo> materials_column;
-        vector< ListEntry<df::dfhack_material_category> > all_masks;
-
-        int selected_column;
-
-        void populateItems();
-        void populateMasks(const bool set_defaults = false);
-        void populateMaterials(const bool set_defaults = false);
-
-        bool addMaterialEntry(df::dfhack_material_category &selected_category, 
-                                MaterialInfo &material, string name, const bool set_defaults);
-
-        virtual void resize(int32_t x, int32_t y);
-
-        void validateColumn();
-    };
-
-    bool viewscreenChooseMaterial::reset_list = false;
-
-
-    viewscreenChooseMaterial::viewscreenChooseMaterial(ItemConstraint *cv /*= NULL*/)
-    {
-        this->cv = cv;
-        selected_column = 0;
-        items_column.title = "Item";
-        items_column.allow_null = false;
-        items_column.multiselect = false;
-        items_column.auto_select = true;
-        items_column.force_sort = true;
-        masks_column.title = "Type";
-        masks_column.multiselect = true;
-        masks_column.left_margin = MAX_ITEM_NAME + 3;
-        materials_column.left_margin = MAX_ITEM_NAME + MAX_MASK + 4;
-        materials_column.title = "Material";
-
-
-        populateItems();
-        items_column.changeHighlight(0);
-
-        vector<string> raw_masks;
-        df::dfhack_material_category full_mat_mask, curr_mat_mask;
-        full_mat_mask.whole = -1;
-        curr_mat_mask.whole = 1;
-        bitfield_to_string(&raw_masks, full_mat_mask);
-        for (int i = 0; i < raw_masks.size(); i++)
-        {
-            if (raw_masks[i][0] == '?')
-                break;
-
-            all_masks.push_back(ListEntry<df::dfhack_material_category>(pad_string(raw_masks[i], MAX_MASK, false), curr_mat_mask));
-            curr_mat_mask.whole <<= 1;
-        }
-        populateMasks(cv != NULL);
-        populateMaterials(cv != NULL);
-
-        masks_column.selectDefaultEntry();
-        materials_column.selectDefaultEntry();
-        materials_column.changeHighlight(0);
-    }
-
-    void viewscreenChooseMaterial::populateItems()
-    {
-        items_column.clear();
-        if (cv != NULL)
-        {
-            items_column.add(cv->item.toString(), cv->item);
-        }
-        else
-        {
-            typedef df::enum_traits<df::item_type> traits;
-            int size = traits::last_item_value-traits::first_item_value+1;
-            for (size_t i = 0; i < size; i++)
-            {
-                //string item_name = traits::key_table[i];
-                df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
-                df::item_type val = df::item_type(i);
-                switch (val)
-                {
-#define ITEM(type_string,vec,tclass) \
-                    case df::item_type::type_string: \
-                        for (size_t j = 0; j < defs.vec.size(); j++) \
-                        { \
-                            if (defs.vec[j]->name[0] == '?') \
-                                continue; \
-                            DFHack::ItemTypeInfo item; \
-                            item.type = (df::item_type) i; \
-                            item.subtype = j; \
-                            item.custom = defs.vec[j]; \
-                            items_column.add(defs.vec[j]->name, item); \
-                        } \
-                        break;
-
-                    ITEMDEF_VECTORS
-#undef ITEM
-                default:
-                    DFHack::ItemTypeInfo item;
-                    item.type = (df::item_type) i;
-                    string name = item.toString();
-                    if (name[0] != '?')
-                        items_column.add(name, item);
-                    break;
-                }
-            }
-        }
-        items_column.sort();
-        items_column.changeHighlight(0);
-    }
-
-    void viewscreenChooseMaterial::populateMasks(const bool set_defaults /*= false */)
-    {
-        masks_column.clear();
-        for (vector< ListEntry<df::dfhack_material_category> >::iterator it = all_masks.begin(); it != all_masks.end(); it++)
-        {
-            auto entry = *it;
-            if (set_defaults)
-            {
-                if (cv->mat_mask.whole & entry.elem.whole)
-                    entry.selected = true;
-            }
-            masks_column.add(entry);
-        }
-        masks_column.sort();
-    }
-    
-    void viewscreenChooseMaterial::populateMaterials(const bool set_defaults /*= false */)
-    {
-        materials_column.clear();
-        df::dfhack_material_category selected_category;
-        vector<df::dfhack_material_category *> selected_materials = masks_column.getSelectedElems();
-        if (selected_materials.size() == 1)
-            selected_category = *selected_materials[0];
-        else if (selected_materials.size() > 1)
-            return;
-
-        df::world_raws &raws = world->raws;
-        for (int i = 1; i < DFHack::MaterialInfo::NUM_BUILTIN; i++)
-        {
-            auto obj = raws.mat_table.builtin[i];
-            if (obj)
-            {
-                MaterialInfo material;
-                material.decode(i, -1);
-                addMaterialEntry(selected_category, material, material.toString(), set_defaults);
-            }
-        }
-
-        for (size_t i = 0; i < raws.inorganics.size(); i++)
-        {
-            df::inorganic_raw *p = raws.inorganics[i];
-            MaterialInfo material;
-            material.decode(0, i);
-            addMaterialEntry(selected_category, material, material.toString(), set_defaults);
-        }
-
-        for (size_t i = 0; i < raws.plants.all.size(); i++)
-        {
-            df::plant_raw *p = raws.plants.all[i];
-            string basename = p->name;
-
-            MaterialInfo material;
-            material.decode(p->material_defs.type_basic_mat, p->material_defs.idx_basic_mat);
-            if (!selected_category.whole || material.matches(selected_category))
-            {
-                if (p->material.size() > 1)
-                    basename.append(" (all)");
-
-                ListEntry<MaterialInfo> entry(pad_string(basename, MAX_MATERIAL, false), material);
-                if (set_defaults)
-                {
-                    if (cv->material.matches(material))
-                        entry.selected = true;
-                }
-                materials_column.add(entry);
-
-                for (size_t j = 0; p->material.size() > 1 && j < p->material.size(); j++)
-                {
-                    MaterialInfo material;
-                    material.decode(DFHack::MaterialInfo::PLANT_BASE+j, i);
-                    //if (addMaterialEntry(selected_category, material, basename+" (" + p->material[j]->id + "): " + material.toString(), set_defaults))
-                    if (addMaterialEntry(selected_category, material, material.toString(), set_defaults))
-                        entry.selected = false;
-                }
-            }
-        }
-
-        for (size_t i = 0; i < raws.creatures.all.size(); i++)
-        {
-            df::creature_raw *p = raws.creatures.all[i];
-            string basename = p->name[0];
-
-            for (size_t j = 0; j < p->material.size(); j++)
-            {
-                MaterialInfo material;
-                material.decode(DFHack::MaterialInfo::CREATURE_BASE+j, i);
-                //addMaterialEntry(selected_category, material, basename+" (" + p->material[j]->id + "): " + material.toString(), set_defaults);
-                addMaterialEntry(selected_category, material, material.toString(), set_defaults);
-            }
-        }
-
-        materials_column.sort();
-    }
-
-
-    bool viewscreenChooseMaterial::addMaterialEntry(df::dfhack_material_category &selected_category, MaterialInfo &material, 
-                                                           string name, const bool set_defaults)
-    {
-        bool selected = false;
-        if (!selected_category.whole || material.matches(selected_category))
-        {
-            ListEntry<MaterialInfo> entry(pad_string(name, MAX_MATERIAL, false), material);
-            if (set_defaults)
-            {
-                if (cv->material.matches(material))
-                {
-                    entry.selected = true;
-                    selected = true;
-                    /*if (materials_column.highlighted_index == 0)
-                        materials_column.highlighted_index = materials_column.getBaseListSize();*/
-                }
-            }
-            materials_column.add(entry);
-        }
-
-        return selected;
-    }
-
-    void viewscreenChooseMaterial::feed(set<df::interface_key> *input)
-    {
-        bool key_processed;
-        switch (selected_column)
-        {
-        case 0:
-            key_processed = items_column.feed(input);
-            break;
-        case 1:
-            key_processed = masks_column.feed(input);
-            if (input->count(interface_key::SELECT))
-                populateMaterials(false);
-            break;
-        case 2:
-            key_processed = materials_column.feed(input);
-            break;
-        }
-
-        if (key_processed)
-            return;
-
-        if (input->count(interface_key::LEAVESCREEN))
-        {
-            input->clear();
-            Screen::dismiss(this);
-            return;
-        }
-        else if  (input->count(interface_key::SEC_SELECT))
-        {
-            df::dfhack_material_category mat_mask;
-            vector<df::dfhack_material_category *> selected_masks = masks_column.getSelectedElems();
-            for (vector<df::dfhack_material_category *>::iterator it = selected_masks.begin(); it != selected_masks.end(); it++)
-            {
-                mat_mask.whole |= (*it)->whole;
-            
-            }
-
-            MaterialInfo *selected_material = materials_column.getFirstSelectedElem();
-            MaterialInfo material = (selected_material) ? *selected_material : MaterialInfo();
-
-            if (cv != NULL)
-            {
-                delete_constraint(cv);
-            }
-
-            ItemConstraint *nct = create_new_constraint(false, *items_column.getFirstSelectedElem(), material, mat_mask, item_quality::Ordinary, NULL, "");
-            nct->setGoalByCount(false);
-            nct->setGoalCount(10);
-            nct->setGoalGap(1);
-
-            /*else
-            {
-                cv->mat_mask = mat_mask;
-                cv->material = (selected_material) ? *selected_material : MaterialInfo();
-            }*/
-
-            reset_list = true;
-            Screen::dismiss(this);
-        }
-        else if  (input->count(interface_key::CURSOR_LEFT))
-        {
-            --selected_column;
-            validateColumn();
-        }
-        else if  (input->count(interface_key::CURSOR_RIGHT))
-        {
-            selected_column++;
-            validateColumn();
-        }
-        else if (enabler->tracking_on && enabler->mouse_lbut)
-        {
-            if (items_column.setHighlightByMouse())
-                selected_column = 0;
-            else if (masks_column.setHighlightByMouse())
-                selected_column = 1;
-            else if (materials_column.setHighlightByMouse())
-                selected_column = 2;
-
-            enabler->mouse_lbut = enabler->mouse_rbut = 0;
-        }
-    }
-
-    void viewscreenChooseMaterial::render()
-    {
-        if (Screen::isDismissed(this))
-            return;
-
-        dfhack_viewscreen::render();
-
-        Screen::clear();
-        Screen::drawBorder("  Workflow Material  ");
-
-        items_column.display(selected_column == 0);
-        masks_column.display(selected_column == 1);
-        materials_column.display(selected_column == 2);
-
-        int32_t y = gps->dimy - 3;
-        int32_t x = 2;
-        OutputHotkeyString(x, y, "Save", "Shift-Enter");
-        x += 3;
-        OutputHotkeyString(x, y, "Cancel", "Esc");
-    }
-
-    void viewscreenChooseMaterial::validateColumn()
-    {
-        set_to_limit(selected_column, 2);
-    }
-
-    void viewscreenChooseMaterial::resize(int32_t x, int32_t y)
-    {
-        dfhack_viewscreen::resize(x, y);
-        items_column.resize();
-        masks_column.resize();
-        materials_column.resize();
-    }
-
-    
-    /*
-     * Inventory Monitor
-     */
-    class viewscreenInventoryMonitor : public dfhack_viewscreen, public AdjustmentScreen
-    {
-    private:
-        struct TableRow
-        {
-            vector< pair<int32_t, int32_t> > history_plot;
-            int32_t limit_y, gap_y;
-            ItemConstraint *cv;
-            UIColor value_color;
-            UIColor limit_color;
-            int severity;
-        };
-
-        class MonitorListColumn : public ListColumn<TableRow>
-        {
-        public:
-            bool order_by_severity;
-
-            virtual void sort()
-            {
-                if (!order_by_severity)
-                    ListColumn::sort();
-                else
-                    doSort(&compareSeverity);
-            }
-
-        private:
-            void display_extras(const TableRow &row, int32_t &x, int32_t &y) const
-            {
-                string text;
-                text.append(int_to_string((row.cv->goalByCount()) ? row.cv->item_count : row.cv->item_amount));
-                text = pad_string(text, 6);
-                OutputString(row.value_color, x, y, text);
-
-                text = (row.cv->goalByCount()) ? " S " : " I ";
-                OutputString(COLOR_GREY, x, y, text);
-
-                text = int_to_string(row.cv->goalCount());
-                OutputString(row.limit_color, x, y, text);
-            }
-
-            static bool compareSeverity(ListEntry<TableRow> const& a, ListEntry<TableRow> const& b)
-            {
-                return a.elem.severity > b.elem.severity;
-            }
-        };
-
-    public:
-        viewscreenInventoryMonitor();
-
-        void feed(set<df::interface_key> *input);
-
-        void render();
-
-        std::string getFocusString() { return "invmonitor"; }
-
-        virtual void resize(int32_t x, int32_t y) 
-        {
-            dfhack_viewscreen::resize(x, y);
-            init();
-        }
-
-
-    private:
-        MonitorListColumn rows;
-        int32_t bottom_controls_row;
-        int32_t divider_x;
-        int chart_width, chart_height;
-        int32_t axis_y_end, axis_y_start, axis_x_start, axis_x_end;
-
-        void init();
-
-        virtual void onConstraintChanged();
-
-        virtual void onModeChanged();
-
-
-    };
-
-    viewscreenInventoryMonitor::viewscreenInventoryMonitor()
-    {
-        adjustment_ui_display_start = 2;
-        chart_width = SIDEBAR_WIDTH - 2;
-        rows.order_by_severity = false;
-
-        rows.multiselect = false;
-        rows.allow_null = false;
-        rows.auto_select = true;
-        rows.title = pad_string("Item", MAX_ITEM_NAME, false);
-        rows.title += " ";
-        rows.title += pad_string("Material", MAX_MATERIAL, false);
-        
-        init();
-    }
-    
-    void viewscreenInventoryMonitor::init()
-    {
-        bottom_controls_row = gps->dimy - 3;
-
-        divider_x = gps->dimx - SIDEBAR_WIDTH - 2;
-        chart_height = min(SIDEBAR_WIDTH, gps->dimy - 20);
-        axis_y_end = gps->dimy - 3;
-        axis_y_start = axis_y_end - chart_height;
-        axis_x_start = divider_x + 2;
-        axis_x_end = axis_x_start + chart_width - 1;
-
-        rows.clear();
-        for (vector<ItemConstraint *>::iterator it = constraints.begin(); it < constraints.end(); it++)
-        {
-            TableRow row;
-            row.cv = *it;
-
-            if (row.cv->jobs.size() > 0)
-            {
-                ProtectedJob *pj = row.cv->jobs[0];
-                if (!pj->isActuallyResumed() && pj->want_resumed)
-                    row.limit_color = COLOR_YELLOW;
-                else
-                    row.limit_color = COLOR_GREY;
-            }
-            else
-                row.limit_color = COLOR_RED;
-
-
-            int curr_value = (row.cv->goalByCount()) ? row.cv->item_count : row.cv->item_amount;
-            row.value_color = COLOR_GREY;
-            if (curr_value >= row.cv->goalCount() - row.cv->goalGap())
-                row.value_color = COLOR_LIGHTGREEN;
-            else if (curr_value >= (row.cv->goalCount() - row.cv->goalGap() * 2))
-                row.value_color = COLOR_GREEN;
-            else if (curr_value <= row.cv->goalGap())
-                row.value_color = COLOR_LIGHTRED;
-            else if (curr_value <= (row.cv->goalGap() * 2))
-                row.value_color = COLOR_RED;
-
-            int max_val = row.cv->goalCount();
-            float scale_y;
-            if (max_history_days > 0 && row.cv->history.size() > 0)
-            {
-                row.history_plot.clear();
-                max_val = max(max_val, *max_element(row.cv->history.begin(), row.cv->history.end()));
-                scale_y = (float) chart_height / (float) max_val;
-                float scale_x = (float) chart_width / (float) (max_history_days * 2);
-
-                int sumX, sumY, sumXY, sumXX;
-                sumX = sumY = sumXY = sumXX = 0;
-
-                for (size_t i = 0; i < row.cv->history.size(); i++)
-                {
-                    pair<int32_t, int32_t> point(axis_x_start + (int) (scale_x * (float) i), 
-                                                 axis_y_end - (int) (scale_y * (float) row.cv->history[i]));
-
-                    row.history_plot.push_back(point);
-
-                    if (row.value_color == COLOR_GREY)
-                    {
-                        sumX += i;
-                        sumY += row.cv->history[i];
-                        sumXY += i * row.cv->history[i];
-                        sumXX += i*i;
-                    }
-                }
-
-                if (row.value_color == COLOR_GREY)
-                {
-                    int count = row.cv->history.size();
-                    float slope = (float) (count * sumXY - sumX * sumY) / 
-                        (float) (count * sumXX - sumX * sumX);
-
-                    if (slope > 0.3f)
-                        row.value_color = COLOR_GREEN;
-                    else if (slope < -0.3f)
-                        row.value_color = COLOR_RED;
-                }
-
-            }
-            else
-            {
-                scale_y = (float) chart_height / (float) max_val;
-            }
-
-            row.limit_y = axis_y_end - (int) (scale_y * (float) row.cv->goalCount());
-            row.gap_y = axis_y_end - (int) (scale_y * (float) (row.cv->goalCount() - row.cv->goalGap()));
-
-            string text = pad_string(row.cv->item.toString(), MAX_ITEM_NAME, false);
-            text += " ";
-            text += pad_string(get_constraint_material(row.cv), MAX_MATERIAL, false, true);
-
-            switch (row.value_color)
-            {
-            case COLOR_LIGHTGREEN:
-                row.severity = 0;
-                break;
-            case COLOR_GREEN:
-                row.severity = 1;
-                break;
-            case COLOR_GREY:
-                row.severity = 2;
-                break;
-            case COLOR_RED:
-                row.severity = 3;
-                break;
-            case COLOR_LIGHTRED:
-                row.severity = 4;
-                break;
-            default:
-                break;
-            }
-
-            rows.add(text, row);
-        }
-        rows.sort();
-        rows.changeHighlight(0);
-    }
-    
-    void viewscreenInventoryMonitor::onConstraintChanged()
-    {
-        init();
-    }
-    
-    void viewscreenInventoryMonitor::onModeChanged()
-    {
-        TableRow *row = rows.getFirstSelectedElem();
-        if (!row)
-            return;
-        row->cv->history.clear();
-        init();
-    }
-        
-    void viewscreenInventoryMonitor::render()
-    {
-        if (Screen::isDismissed(this))
-            return;
-
-        if (viewscreenChooseMaterial::reset_list)
-        {
-            viewscreenChooseMaterial::reset_list = false;
-            init();
-            return;
-        }
-
-        dfhack_viewscreen::render();
-
-        Screen::clear();
-        Screen::drawBorder("  Inventory Monitor  ");
-
-        Screen::Pen border('\xDB', 8);
-        for (int32_t y = 1; y < gps->dimy - 1; y++)
-        {
-            paintTile(border, divider_x, y);
-        }
-
-        int32_t x = MAX_ITEM_NAME + MAX_MATERIAL + 3;
-        int32_t y = 2;
-        paint_text(COLOR_TITLE, x, y, "Stock / Limit");
-
-        rows.display(true);
-
-        y = bottom_controls_row;
-        x = 2;
-        OutputHotkeyString(x, y, "Add", "a");
-        x += 2;
-        OutputHotkeyString(x, y, "Edit", "e");
-        
-        x += 2;
-        OutputHotkeyString(x, y, (rows.order_by_severity) ? "Name Order" : "Severity Order", "o");
-
-        if (rows.getDisplayListSize() > 0)
-        {
-            TableRow *row = rows.getFirstSelectedElem();
-            AdjustmentScreen::render(row->cv, true);
-
-            if (max_history_days > 0)
-            {
-                paint_text(COLOR_BROWN, axis_x_start, axis_y_start-2, "      Stock History Chart");
-                Screen::Pen y_axis('\xB3', COLOR_BROWN);
-                x = axis_x_start;
-                for (y = axis_y_start; y <= axis_y_end; y++)
-                {
-                    paintTile(y_axis, x, y);
-                }
-
-                Screen::Pen up_arrow('\xCF', COLOR_BROWN);
-                paintTile(up_arrow, axis_x_start, axis_y_start-1);
-
-                Screen::Pen x_axis('\xC4', COLOR_BROWN);
-                y = axis_y_end;
-                for (x = axis_x_start; x <= axis_x_end; x++)
-                {
-                    paintTile(x_axis, x, y);
-                    paint_text(COLOR_LIGHTGREEN, x, row->limit_y, "-");
-                    paint_text(COLOR_GREEN, x, row->gap_y, "-");
-                }
-
-                Screen::Pen right_arrow('\xAF', COLOR_BROWN);
-                paintTile(right_arrow, axis_x_end+1, axis_y_end);
-
-                Screen::Pen zero_axis('\x9E', COLOR_BROWN);
-                paintTile(zero_axis, axis_x_start, axis_y_end);
-
-                for (size_t i = 0; i < row->history_plot.size(); i++)
-	            {
-                    int x = row->history_plot[i].first;
-                    int y = row->history_plot[i].second;
-                    paint_text(COLOR_CYAN, x, y, "*");
-	            }
-            }
-        }
-
-
-    }
-    
-    void viewscreenInventoryMonitor::feed(set<df::interface_key> *input)
-    {
-        if (!rows.search_entry_mode && rows.getDisplayListSize() > 0 && AdjustmentScreen::feed(input, rows.getFirstSelectedElem()->cv))
-            return;
-
-        if (rows.feed(input))
-            return;
-
-        if (input->count(interface_key::LEAVESCREEN))
-        {
-            input->clear();
-            Screen::dismiss(this);
-            return;
-        }
-        else if  (input->count(interface_key::CUSTOM_O))
-        {
-            rows.order_by_severity = !rows.order_by_severity;
-            rows.sort();
-        }
-        else if  ((input->count(interface_key::CUSTOM_E) || input->count(interface_key::SELECT)) && rows.getDisplayListSize() > 0)
-        {
-            TableRow *row = rows.getFirstSelectedElem();
-            if (row)
-            {
-                Screen::show(new viewscreenChooseMaterial(row->cv));
-            }
-        }
-        else if  (input->count(interface_key::CUSTOM_A))
-        {
-            Screen::show(new viewscreenChooseMaterial());
-        }
-        else if (enabler->tracking_on)
-        {
-            enabler->mouse_lbut = enabler->mouse_rbut = 0;
-        }
-    }
-
-    /******************************
-    *   Hook for workshop view   *
-    ******************************/
-    struct wf_workshop_hook : public df::viewscreen_dwarfmodest
-    {
-        typedef df::viewscreen_dwarfmodest interpose_base;
-
-        static color_ostream_proxy console_out;
-        static df::job *last_job;
-        static df::job *job;
-        static AdjustmentScreen dialog;
-        
-        bool checkJobSelection()
-        {
-            if (!enabled)
-                return false;
-
-            if (!first_update_done)
-            {
-                plugin_onupdate(console_out);
-            }
-
-            job = Gui::getSelectedWorkshopJob(console_out, true);
-            if (job != last_job)
-            {
-                dialog.reset();
-                last_job = job;
-            }
-
-            return job != NULL;
-        }
-
-        bool can_enable_plugin()
-        {
-            return (!enabled && 
-                Gui::dwarfmode_hotkey(Core::getTopViewscreen()) &&
-                ui->main.mode == ui_sidebar_mode::QueryBuilding &&
-                Gui::getSelectedWorkshopJob(console_out, true));
-        }
-
-        ProtectedJob *get_protected_job(int32_t id)
-        {
-            ProtectedJob *pj = get_known(id);
-            if (!pj && job->flags.bits.repeat)
-            {
-                pj = add_known_job(job);
-                compute_job_outputs(console_out, pj);
-            }
-
-            return pj;
-        }
-
-        bool handleInput(set<df::interface_key> *input)
-        {
-            bool key_processed = true;
-            if (checkJobSelection())
-            {
-                ProtectedJob *pj = get_protected_job(job->id);
-                ItemConstraint *cv = NULL;
-                if (pj && pj->constraints.size() > 0)
-                    cv = pj->constraints[0];
-
-                if (!dialog.feed(input, cv, pj))
-                {
-                    if (input->count(interface_key::CUSTOM_T))
-                    {
-                        if (!cv)
-                        {
-                            // Add tracking
-                            if (!pj)
-                                pj = add_known_job(job);
-
-                            compute_job_outputs(console_out, pj, true);
-                            if (pj->constraints.size() > 0)
-                            {
-                                cv = pj->constraints[0];
-                                if (cv->goalCount() == -1)
-                                {
-                                    cv->setGoalByCount(false);
-                                    cv->setGoalCount(10);
-                                    cv->setGoalGap(1);
-                                }
-                                job->flags.bits.repeat = true;
-                            }
-                            else
-                            {
-                                Gui::showAnnouncement("Job type not currently supported", 6, true);
-                            }
-                        }
-                    }
-                    else if (input->count(interface_key::CUSTOM_M))
-                    {
-                        Screen::show(new viewscreenInventoryMonitor());
-                    }
-                    else
-                        key_processed = false;
-                }
-            }
-            else if (can_enable_plugin() && input->count(interface_key::CUSTOM_W))
-            {
-                enable_plugin(console_out);
-                plugin_onupdate(console_out);
-            }
-            else
-                key_processed = false;
-
-            return key_processed;
-        }
-
-        DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
-        {
-            if (!handleInput(input))
-                INTERPOSE_NEXT(feed)(input);
-            else
-                input->clear();
-        }
-
-        DEFINE_VMETHOD_INTERPOSE(void, render, ())
-        {
-            INTERPOSE_NEXT(render)();
-            if (checkJobSelection())
-            {
-                ItemConstraint *cv = NULL;
-                ProtectedJob *pj = get_protected_job(job->id);
-                if (pj && pj->constraints.size() > 0)
-                {
-                    cv = pj->constraints[0];
-                }
-
-                dialog.render(cv, false);
-                if (cv)
-                    ++dialog.y;
-                OutputHotkeyString(dialog.left_margin, dialog.y, "Inventory Monitor", "m");
-            }
-            else if (can_enable_plugin())
-            {
-                int x = get_left_margin();
-                int y = 24;
-                OutputHotkeyString(x, y, "Enable Workflow", "w");
-            }
-        }
-    };
-
-    color_ostream_proxy wf_workshop_hook::console_out(Core::getInstance().getConsole());
-    df::job *wf_workshop_hook::job = NULL;
-    df::job *wf_workshop_hook::last_job = NULL;
-    AdjustmentScreen wf_workshop_hook::dialog;
-
-
-    IMPLEMENT_VMETHOD_INTERPOSE(wf_workshop_hook, feed);
-    IMPLEMENT_VMETHOD_INTERPOSE(wf_workshop_hook, render);
-}
-
-#undef INV_MONITOR_COL_COUNT
-#undef MAX_ITEM_NAME
-
-
 static command_result workflow_cmd(color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
@@ -3072,13 +1748,7 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
         return CR_FAILURE;
     }
 
-    if (enabled) {
-        check_lost_jobs(out, 0);
-        recover_jobs(out);
-        update_job_data(out);
-        map_job_constraints(out);
-        map_job_items(out);
-    }
+    update_data_structures(out);
 
     df::building *workshop = NULL;
     //FIXME: unused variable!
@@ -3096,18 +1766,11 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
     if (cmd == "enable" || cmd == "disable")
     {
         bool enable = (cmd == "enable");
-        if (enable && !enabled)
+        if (enable)
+            setEnabled(out, true);
+        else if (parameters.size() == 1)
         {
-            enable_plugin(out);
-        }
-        else if (!enable && parameters.size() == 1)
-        {
-            if (enabled)
-            {
-                enabled = false;
-                setOptionEnabled(CF_ENABLED, false);
-                stop_protect(out);
-            }
+            setEnabled(out, false);
 
             out << "The plugin is disabled." << endl;
             return CR_OK;
@@ -3225,14 +1888,8 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
         if (parameters.size() != 2)
             return CR_WRONG_USAGE;
 
-        for (size_t i = 0; i < constraints.size(); i++)
-        {
-            if (constraints[i]->config.val() != parameters[1])
-                continue;
-
-            delete_constraint(constraints[i]);
+        if (deleteConstraint(parameters[1]))
             return CR_OK;
-        }
 
         out.printerr("Constraint not found: %s\n", parameters[1].c_str());
         return CR_FAILURE;
@@ -3248,119 +1905,6 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
         out.print("Removed all constraints.\n");
         return CR_OK;
     }
-    else if (cmd == "monitor")
-    {
-        if (!enabled)
-        {
-            enable_plugin(out);
-            plugin_onupdate(out);
-        }
-
-        Screen::show(new wf_ui::viewscreenInventoryMonitor());
-        return CR_OK;
-    }
     else
         return CR_WRONG_USAGE;
 }
-
-DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
-{
-    if (!world || !ui)
-        return CR_FAILURE;
-
-    if (!gps || !INTERPOSE_HOOK(wf_ui::wf_workshop_hook, feed).apply() || !INTERPOSE_HOOK(wf_ui::wf_workshop_hook, render).apply())
-        out.printerr("Could not insert Workflow hooks!\n");
-
-    if (ui_workshop_job_cursor && job_next_id) {
-        commands.push_back(
-            PluginCommand(
-            "workflow", "Manage control of repeat jobs.",
-            workflow_cmd, false,
-            "  workflow enable [option...]\n"
-            "  workflow disable [option...]\n"
-            "    If no options are specified, enables or disables the plugin.\n"
-            "    Otherwise, enables or disables any of the following options:\n"
-            "     - drybuckets: Automatically empty abandoned water buckets.\n"
-            "     - auto-melt: Resume melt jobs when there are objects to melt.\n"
-            "  workflow jobs\n"
-            "    List workflow-controlled jobs (if in a workshop, filtered by it).\n"
-            "  workflow list\n"
-            "    List active constraints, and their job counts.\n"
-            "  workflow list-commands\n"
-            "    List workflow commands that re-create existing constraints.\n"
-            "  workflow count <constraint-spec> <cnt-limit> [cnt-gap]\n"
-            "  workflow amount <constraint-spec> <cnt-limit> [cnt-gap]\n"
-            "    Set a constraint. The first form counts each stack as only 1 item.\n"
-            "  workflow unlimit <constraint-spec>\n"
-            "    Delete a constraint.\n"
-            "  workflow unlimit-all\n"
-            "    Delete all constraints.\n"
-            "Function:\n"
-            "  - When the plugin is enabled, it protects all repeat jobs from removal.\n"
-            "    If they do disappear due to any cause, they are immediately re-added\n"
-            "    to their workshop and suspended.\n"
-            "  - In addition, when any constraints on item amounts are set, repeat jobs\n"
-            "    that produce that kind of item are automatically suspended and resumed\n"
-            "    as the item amount goes above or below the limit. The gap specifies how\n"
-            "    much below the limit the amount has to drop before jobs are resumed;\n"
-            "    this is intended to reduce the frequency of jobs being toggled.\n"
-            "Constraint examples:\n"
-            "  workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100\n"
-            "  workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50\n"
-            "    Keep metal bolts within 900-1000, and wood/bone within 150-200.\n"
-            "  workflow count FOOD 120 30\n"
-            "  workflow count DRINK 120 30\n"
-            "    Keep the number of prepared food & drink stacks between 90 and 120\n"
-            "  workflow count BIN 30\n"
-            "  workflow count BARREL 30\n"
-            "  workflow count BOX/CLOTH,SILK,YARN 30\n"
-            "    Make sure there are always 25-30 empty bins/barrels/bags.\n"
-            "  workflow count BAR//COAL 20\n"
-            "  workflow count BAR//COPPER 30\n"
-            "    Make sure there are always 15-20 coal and 25-30 copper bars.\n"
-            "  workflow count CRAFTS//GOLD 20\n"
-            "    Produce 15-20 gold crafts.\n"
-            "  workflow count POWDER_MISC/SAND 20\n"
-            "  workflow count BOULDER/CLAY 20\n"
-            "    Collect 15-20 sand bags and clay boulders.\n"
-            "  workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20\n"
-            "    Make sure there are always 80-100 units of dimple dye.\n"
-            "    In order for this to work, you have to set the material of\n"
-            "    the PLANT input on the Mill Plants job to MUSHROOM_CUP_DIMPLE\n"
-            "    using the 'job item-material' command.\n"
-            )
-            );
-    }
-
-    init_state(out);
-
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_shutdown (color_ostream &out)
-{
-    INTERPOSE_HOOK(wf_ui::wf_workshop_hook, feed).remove();
-    INTERPOSE_HOOK(wf_ui::wf_workshop_hook, render).remove();
-
-    cleanup_state(out);
-
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
-{
-    switch (event) {
-    case SC_MAP_LOADED:
-        cleanup_state(out);
-        init_state(out);
-        break;
-    case SC_MAP_UNLOADED:
-        cleanup_state(out);
-        break;
-    default:
-        break;
-    }
-
-    return CR_OK;
-}
-

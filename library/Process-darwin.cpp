@@ -50,13 +50,13 @@ using namespace DFHack;
 Process::Process(VersionInfoFactory * known_versions)
 {
     int target_result;
-    
+
     char path[1024];
     char *real_path;
-	uint32_t size = sizeof(path);
-	if (_NSGetExecutablePath(path, &size) == 0) {
-		real_path = realpath(path, NULL);
-	}
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size) == 0) {
+        real_path = realpath(path, NULL);
+    }
 
     identified = false;
     my_descriptor = 0;
@@ -166,29 +166,29 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
                        (vm_region_info_t)&info, &info_count, &object);
         if (kr == KERN_SUCCESS) {
             if (info.reserved==1) {
-				address += vmsize;
-            	continue;
+                address += vmsize;
+                continue;
             }
             Dl_info dlinfo;
             int dlcheck;
             dlcheck = dladdr((const void*)address, &dlinfo);
             if (dlcheck==0) {
-            	dlinfo.dli_fname = "";
+                dlinfo.dli_fname = "";
             }
-            
+
             t_memrange temp;
-			strncpy( temp.name, dlinfo.dli_fname, 1023 );
-			temp.name[1023] = 0;
-			temp.start = (void *) address;
-			temp.end = (void *) (address+vmsize);
-			temp.read = (info.protection & VM_PROT_READ);
-			temp.write = (info.protection & VM_PROT_WRITE);
-			temp.execute = (info.protection & VM_PROT_EXECUTE);
-			temp.shared = info.shared;
-			temp.valid = true;
-			ranges.push_back(temp);
-			
-			fprintf(stderr,
+            strncpy( temp.name, dlinfo.dli_fname, 1023 );
+            temp.name[1023] = 0;
+            temp.start = (void *) address;
+            temp.end = (void *) (address+vmsize);
+            temp.read = (info.protection & VM_PROT_READ);
+            temp.write = (info.protection & VM_PROT_WRITE);
+            temp.execute = (info.protection & VM_PROT_EXECUTE);
+            temp.shared = info.shared;
+            temp.valid = true;
+            ranges.push_back(temp);
+
+            fprintf(stderr,
             "%08x-%08x %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
                             address, (address + vmsize), (vmsize >> 10),
                             (info.protection & VM_PROT_READ)        ? 'r' : '-',
@@ -203,7 +203,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
                             info.user_wired_count,
                             info.reserved,
                             dlinfo.dli_fname);
-			
+
             address += vmsize;
         } else if (kr != KERN_INVALID_ADDRESS) {
 
@@ -220,9 +220,14 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     }*/
 }
 
-uint32_t Process::getBase()
+uintptr_t Process::getBase()
 {
-    return 0;
+    return 0x1000000;
+}
+
+int Process::adjustOffset(int offset, bool /*to_file*/)
+{
+    return offset;
 }
 
 static int getdir (string dir, vector<string> &files)
@@ -272,15 +277,15 @@ uint32_t Process::getTickCount()
 
 string Process::getPath()
 {
-	char path[1024];
+    char path[1024];
     char *real_path;
-	uint32_t size = sizeof(path);
-	if (_NSGetExecutablePath(path, &size) == 0) {
-		real_path = realpath(path, NULL);
-	}
-	std::string path_string(real_path);
-	int last_slash = path_string.find_last_of("/");
-	std::string directory = path_string.substr(0,last_slash);
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size) == 0) {
+        real_path = realpath(path, NULL);
+    }
+    std::string path_string(real_path);
+    int last_slash = path_string.find_last_of("/");
+    std::string directory = path_string.substr(0,last_slash);
     return directory;
 }
 
@@ -299,4 +304,29 @@ bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
     result=mprotect((void *)range.start, (size_t)range.end-(size_t)range.start,protect);
 
     return result==0;
+}
+
+// returns -1 on error
+void* Process::memAlloc(const int length)
+{
+    return mmap(0, length, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
+}
+
+int Process::memDealloc(void *ptr, const int length)
+{
+    return munmap(ptr, length);
+}
+
+int Process::memProtect(void *ptr, const int length, const int prot)
+{
+    int prot_native = 0;
+
+    if (prot & Process::MemProt::READ)
+        prot_native |= PROT_READ;
+    if (prot & Process::MemProt::WRITE)
+        prot_native |= PROT_WRITE;
+    if (prot & Process::MemProt::EXEC)
+        prot_native |= PROT_EXEC;
+
+    return mprotect(ptr, length, prot_native);
 }

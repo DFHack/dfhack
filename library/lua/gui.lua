@@ -6,7 +6,17 @@ local dscreen = dfhack.screen
 
 USE_GRAPHICS = dscreen.inGraphicsMode()
 
-CLEAR_PEN = {ch=32,fg=0,bg=0}
+local to_pen = dfhack.pen.parse
+
+CLEAR_PEN = to_pen{ch=32,fg=0,bg=0}
+
+local FAKE_INPUT_KEYS = {
+    _MOUSE_L = true,
+    _MOUSE_R = true,
+    _MOUSE_L_DOWN = true,
+    _MOUSE_R_DOWN = true,
+    _STRING = true,
+}
 
 function simulateInput(screen,...)
     local keys = {}
@@ -14,7 +24,7 @@ function simulateInput(screen,...)
         local kv = arg
         if type(arg) == 'string' then
             kv = df.interface_key[arg]
-            if kv == nil then
+            if kv == nil and not FAKE_INPUT_KEYS[arg] then
                 error('Invalid keycode: '..arg)
             end
         end
@@ -48,57 +58,140 @@ end
 function mkdims_wh(x1,y1,w,h)
     return { x1=x1, y1=y1, x2=x1+w-1, y2=y1+h-1, width=w, height=h }
 end
-function inset(rect,dx1,dy1,dx2,dy2)
-    return mkdims_xy(
-        rect.x1+dx1, rect.y1+dy1,
-        rect.x2-(dx2 or dx1), rect.y2-(dy2 or dy1)
-    )
-end
 function is_in_rect(rect,x,y)
     return x and y and x >= rect.x1 and x <= rect.x2 and y >= rect.y1 and y <= rect.y2
 end
 
-local function to_pen(default, pen, bg, bold)
-    if pen == nil then
-        return default or {}
-    elseif type(pen) ~= 'table' then
-        return {fg=pen,bg=bg,bold=bold}
+local function align_coord(gap,align,lv,rv)
+    if gap <= 0 then
+        return 0
+    end
+    if not align then
+        if rv and not lv then
+            align = 1.0
+        elseif lv and not rv then
+            align = 0.0
+        else
+            align = 0.5
+        end
+    end
+    return math.floor(gap*align)
+end
+
+function compute_frame_rect(wavail,havail,spec,xgap,ygap)
+    if not spec then
+        return mkdims_wh(0,0,wavail,havail)
+    end
+
+    local sw = wavail - (spec.l or 0) - (spec.r or 0)
+    local sh = havail - (spec.t or 0) - (spec.b or 0)
+    local rqw = math.min(sw, (spec.w or sw)+xgap)
+    local rqh = math.min(sh, (spec.h or sh)+ygap)
+    local ax = align_coord(sw - rqw, spec.xalign, spec.l, spec.r)
+    local ay = align_coord(sh - rqh, spec.yalign, spec.t, spec.b)
+
+    local rect = mkdims_wh((spec.l or 0) + ax, (spec.t or 0) + ay, rqw, rqh)
+    rect.wgap = sw - rqw
+    rect.hgap = sh - rqh
+    return rect
+end
+
+local function parse_inset(inset)
+    local l,r,t,b
+    if type(inset) == 'table' then
+        l,r = inset.l or inset.x, inset.r or inset.x
+        t,b = inset.t or inset.y, inset.b or inset.y
     else
-        return pen
+        l = inset or 0
+        t,r,b = l,l,l
+    end
+    return l,r,t,b
+end
+
+function inset_frame(rect, inset, gap)
+    gap = gap or 0
+    local l,t,r,b = parse_inset(inset)
+    return mkdims_xy(rect.x1+l+gap, rect.y1+t+gap, rect.x2-r-gap, rect.y2-b-gap)
+end
+
+function compute_frame_body(wavail, havail, spec, inset, gap, inner_frame)
+    gap = gap or 0
+    local l,t,r,b = parse_inset(inset)
+    local xgap,ygap = 0,0
+    if inner_frame then
+        xgap,ygap = gap*2+l+r, gap*2+t+b
+    end
+    local rect = compute_frame_rect(wavail, havail, spec, xgap, ygap)
+    local body = mkdims_xy(rect.x1+l+gap, rect.y1+t+gap, rect.x2-r-gap, rect.y2-b-gap)
+    return rect, body
+end
+
+function blink_visible(delay)
+    return math.floor(dfhack.getTickCount()/delay) % 2 == 0
+end
+
+function getKeyDisplay(code)
+    if type(code) == 'string' then
+        code = df.interface_key[code]
+    end
+    return dscreen.getKeyDisplay(code)
+end
+
+-----------------------------------
+-- Clipped view rectangle object --
+-----------------------------------
+
+ViewRect = defclass(ViewRect, nil)
+
+function ViewRect:init(args)
+    if args.view_rect then
+        self:assign(args.view_rect)
+    else
+        local rect = args.rect or mkdims_wh(0,0,dscreen.getWindowSize())
+        local crect = args.clip_rect or rect
+        self:assign{
+            x1 = rect.x1, clip_x1 = crect.x1,
+            y1 = rect.y1, clip_y1 = crect.y1,
+            x2 = rect.x2, clip_x2 = crect.x2,
+            y2 = rect.y2, clip_y2 = crect.y2,
+            width = rect.x2-rect.x1+1,
+            height = rect.y2-rect.y1+1,
+        }
+    end
+    if args.clip_view then
+        local cr = args.clip_view
+        self:assign{
+            clip_x1 = math.max(self.clip_x1, cr.clip_x1),
+            clip_y1 = math.max(self.clip_y1, cr.clip_y1),
+            clip_x2 = math.min(self.clip_x2, cr.clip_x2),
+            clip_y2 = math.min(self.clip_y2, cr.clip_y2),
+        }
     end
 end
 
-----------------------------
--- Clipped painter object --
-----------------------------
-
-Painter = defclass(Painter, nil)
-
-function Painter:init(args)
-    local rect = args.rect or mkdims_wh(0,0,dscreen.getWindowSize())
-    local crect = args.clip_rect or rect
-    self:assign{
-        x = rect.x1, y = rect.y1,
-        x1 = rect.x1, clip_x1 = crect.x1,
-        y1 = rect.y1, clip_y1 = crect.y1,
-        x2 = rect.x2, clip_x2 = crect.x2,
-        y2 = rect.y2, clip_y2 = crect.y2,
-        width = rect.x2-rect.x1+1,
-        height = rect.y2-rect.y1+1,
-        cur_pen = to_pen(nil, args.pen or COLOR_GREY)
-    }
+function ViewRect:isDefunct()
+    return (self.clip_x1 > self.clip_x2 or self.clip_y1 > self.clip_y2)
 end
 
-function Painter.new(rect, pen)
-    return Painter{ rect = rect, pen = pen }
+function ViewRect:inClipGlobalXY(x,y)
+    return x >= self.clip_x1 and x <= self.clip_x2
+       and y >= self.clip_y1 and y <= self.clip_y2
 end
 
-function Painter:isValidPos()
-    return self.x >= self.clip_x1 and self.x <= self.clip_x2
-       and self.y >= self.clip_y1 and self.y <= self.clip_y2
+function ViewRect:inClipLocalXY(x,y)
+    return (x+self.x1) >= self.clip_x1 and (x+self.x1) <= self.clip_x2
+       and (y+self.y1) >= self.clip_y1 and (y+self.y1) <= self.clip_y2
 end
 
-function Painter:viewport(x,y,w,h)
+function ViewRect:localXY(x,y)
+    return x-self.x1, y-self.y1
+end
+
+function ViewRect:globalXY(x,y)
+    return x+self.x1, y+self.y1
+end
+
+function ViewRect:viewport(x,y,w,h)
     if type(x) == 'table' then
         x,y,w,h = x.x1, x.y1, x.width, x.height
     end
@@ -113,17 +206,59 @@ function Painter:viewport(x,y,w,h)
         clip_y1 = math.max(self.clip_y1, y1),
         clip_x2 = math.min(self.clip_x2, x2),
         clip_y2 = math.min(self.clip_y2, y2),
-        -- Pen
-        cur_pen = self.cur_pen
     }
+    return mkinstance(ViewRect, vp)
+end
+
+----------------------------
+-- Clipped painter object --
+----------------------------
+
+Painter = defclass(Painter, ViewRect)
+
+function Painter:init(args)
+    self.x = self.x1
+    self.y = self.y1
+    self.cur_pen = to_pen(args.pen or COLOR_GREY)
+    self.cur_key_pen = to_pen(args.key_pen or COLOR_LIGHTGREEN)
+end
+
+function Painter.new(rect, pen)
+    return Painter{ rect = rect, pen = pen }
+end
+
+function Painter.new_view(view_rect, pen)
+    return Painter{ view_rect = view_rect, pen = pen }
+end
+
+function Painter.new_xy(x1,y1,x2,y2,pen)
+    return Painter{ rect = mkdims_xy(x1,y1,x2,y2), pen = pen }
+end
+
+function Painter.new_wh(x,y,w,h,pen)
+    return Painter{ rect = mkdims_wh(x,y,w,h), pen = pen }
+end
+
+function Painter:isValidPos()
+    return self:inClipGlobalXY(self.x, self.y)
+end
+
+function Painter:viewport(x,y,w,h)
+    local vp = ViewRect.viewport(x,y,w,h)
+    vp.cur_pen = self.cur_pen
+    vp.cur_key_pen = self.cur_key_pen
     return mkinstance(Painter, vp):seek(0,0)
 end
 
-function Painter:localX()
+function Painter:cursor()
+    return self.x - self.x1, self.y - self.y1
+end
+
+function Painter:cursorX()
     return self.x - self.x1
 end
 
-function Painter:localY()
+function Painter:cursorY()
     return self.y - self.y1
 end
 
@@ -151,10 +286,12 @@ function Painter:pen(pen,...)
 end
 
 function Painter:color(fg,bold,bg)
-    self.cur_pen = copyall(self.cur_pen)
-    self.cur_pen.fg = fg
-    self.cur_pen.bold = bold
-    if bg then self.cur_pen.bg = bg end
+    self.cur_pen = to_pen(self.cur_pen, fg, bg, bold)
+    return self
+end
+
+function Painter:key_pen(pen,...)
+    self.cur_key_pen = to_pen(self.cur_key_pen, pen, ...)
     return self
 end
 
@@ -210,16 +347,150 @@ function Painter:string(text,pen,...)
     return self:advance(#text, nil)
 end
 
+function Painter:key(code,pen,...)
+    return self:string(
+        getKeyDisplay(code),
+        to_pen(self.cur_key_pen, pen, ...)
+    )
+end
+
+--------------------------
+-- Abstract view object --
+--------------------------
+
+View = defclass(View)
+
+View.ATTRS {
+    active = true,
+    visible = true,
+    view_id = DEFAULT_NIL,
+}
+
+function View:init(args)
+    self.subviews = {}
+end
+
+function View:addviews(list)
+    if not list then return end
+
+    local sv = self.subviews
+
+    for _,obj in ipairs(list) do
+        table.insert(sv, obj)
+
+        local id = obj.view_id
+        if id and type(id) ~= 'number' and sv[id] == nil then
+            sv[id] = obj
+        end
+    end
+
+    for _,dir in ipairs(list) do
+        for id,obj in pairs(dir.subviews) do
+            if id and type(id) ~= 'number' and sv[id] == nil then
+                sv[id] = obj
+            end
+        end
+    end
+end
+
+function View:getWindowSize()
+    local rect = self.frame_body
+    return rect.width, rect.height
+end
+
+function View:getMousePos()
+    local rect = self.frame_body
+    local x,y = dscreen.getMousePos()
+    if rect and rect:inClipGlobalXY(x,y) then
+        return rect:localXY(x,y)
+    end
+end
+
+function View:computeFrame(parent_rect)
+    return mkdims_wh(0,0,parent_rect.width,parent_rect.height)
+end
+
+function View:updateSubviewLayout(frame_body)
+    for _,child in ipairs(self.subviews) do
+        child:updateLayout(frame_body)
+    end
+end
+
+function View:updateLayout(parent_rect)
+    if not parent_rect then
+        parent_rect = self.frame_parent_rect
+    else
+        self.frame_parent_rect = parent_rect
+    end
+
+    self:invoke_before('preUpdateLayout', parent_rect)
+
+    local frame_rect,body_rect = self:computeFrame(parent_rect)
+
+    self.frame_rect = frame_rect
+    self.frame_body = parent_rect:viewport(body_rect or frame_rect)
+
+    self:invoke_after('postComputeFrame', self.frame_body)
+
+    self:updateSubviewLayout(self.frame_body)
+
+    self:invoke_after('postUpdateLayout', self.frame_body)
+end
+
+function View:renderSubviews(dc)
+    for _,child in ipairs(self.subviews) do
+        if child.visible then
+            child:render(dc)
+        end
+    end
+end
+
+function View:render(dc)
+    self:onRenderFrame(dc, self.frame_rect)
+
+    local sub_dc = Painter{
+        view_rect = self.frame_body,
+        clip_view = dc
+    }
+
+    self:onRenderBody(sub_dc)
+
+    self:renderSubviews(sub_dc)
+end
+
+function View:onRenderFrame(dc,rect)
+end
+
+function View:onRenderBody(dc)
+end
+
+function View:inputToSubviews(keys)
+    local children = self.subviews
+
+    for i=#children,1,-1 do
+        local child = children[i]
+        if child.visible and child.active and child:onInput(keys) then
+            return true
+        end
+    end
+
+    return false
+end
+
+function View:onInput(keys)
+    return self:inputToSubviews(keys)
+end
+
 ------------------------
 -- Base screen object --
 ------------------------
 
-Screen = defclass(Screen)
+Screen = defclass(Screen, View)
 
 Screen.text_input_mode = false
 
 function Screen:postinit()
-    self:updateLayout()
+    self:onResize(dscreen.getWindowSize())
 end
 
 Screen.isDismissed = dscreen.isDismissed
@@ -236,14 +507,6 @@ function Screen:invalidate()
     dscreen.invalidate()
 end
 
-function Screen:getWindowSize()
-    return dscreen.getWindowSize()
-end
-
-function Screen:getMousePos()
-    return dscreen.getMousePos()
-end
-
 function Screen:renderParent()
     if self._native and self._native.parent then
         self._native.parent:render()
@@ -258,21 +521,22 @@ function Screen:sendInputToParent(...)
     end
 end
 
-function Screen:show(below)
+function Screen:show(parent)
     if self._native then
         error("This screen is already on display")
     end
-    self:onAboutToShow(below)
-    if not dscreen.show(self, below) then
+    parent = parent or dfhack.gui.getCurViewscreen(true)
+    self:onAboutToShow(parent)
+    if not dscreen.show(self, parent.child) then
         error('Could not show screen')
     end
 end
 
-function Screen:onAboutToShow()
+function Screen:onAboutToShow(parent)
 end
 
 function Screen:onShow()
-    self:updateLayout()
+    self:onResize(dscreen.getWindowSize())
 end
 
 function Screen:dismiss()
@@ -288,10 +552,11 @@ function Screen:onDestroy()
 end
 
 function Screen:onResize(w,h)
-    self:updateLayout()
+    self:updateLayout(ViewRect{ rect = mkdims_wh(0,0,w,h) })
 end
 
-function Screen:updateLayout()
+function Screen:onRender()
+    self:render(Painter.new())
 end
 
 ------------------------
@@ -300,28 +565,28 @@ end
 
 -- Plain grey-colored frame.
 GREY_FRAME = {
-    frame_pen = { ch = ' ', fg = COLOR_BLACK, bg = COLOR_GREY },
-    title_pen = { fg = COLOR_BLACK, bg = COLOR_WHITE },
-    signature_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
+    frame_pen = to_pen{ ch = ' ', fg = COLOR_BLACK, bg = COLOR_GREY },
+    title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_WHITE },
+    signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
 }
 
 -- The usual boundary used by the DF screens. Often has fancy pattern in tilesets.
 BOUNDARY_FRAME = {
-    frame_pen = { ch = 0xDB, fg = COLOR_DARKGREY, bg = COLOR_BLACK },
-    title_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
-    signature_pen = { fg = COLOR_BLACK, bg = COLOR_DARKGREY },
+    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_DARKGREY, bg = COLOR_BLACK },
+    title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
+    signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_DARKGREY },
 }
 
 GREY_LINE_FRAME = {
-    frame_pen = { ch = 206, fg = COLOR_GREY, bg = COLOR_BLACK },
-    h_frame_pen = { ch = 205, fg = COLOR_GREY, bg = COLOR_BLACK },
-    v_frame_pen = { ch = 186, fg = COLOR_GREY, bg = COLOR_BLACK },
-    lt_frame_pen = { ch = 201, fg = COLOR_GREY, bg = COLOR_BLACK },
-    lb_frame_pen = { ch = 200, fg = COLOR_GREY, bg = COLOR_BLACK },
-    rt_frame_pen = { ch = 187, fg = COLOR_GREY, bg = COLOR_BLACK },
-    rb_frame_pen = { ch = 188, fg = COLOR_GREY, bg = COLOR_BLACK },
-    title_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
-    signature_pen = { fg = COLOR_DARKGREY, bg = COLOR_BLACK },
+    frame_pen = to_pen{ ch = 206, fg = COLOR_GREY, bg = COLOR_BLACK },
+    h_frame_pen = to_pen{ ch = 205, fg = COLOR_GREY, bg = COLOR_BLACK },
+    v_frame_pen = to_pen{ ch = 186, fg = COLOR_GREY, bg = COLOR_BLACK },
+    lt_frame_pen = to_pen{ ch = 201, fg = COLOR_GREY, bg = COLOR_BLACK },
+    lb_frame_pen = to_pen{ ch = 200, fg = COLOR_GREY, bg = COLOR_BLACK },
+    rt_frame_pen = to_pen{ ch = 187, fg = COLOR_GREY, bg = COLOR_BLACK },
+    rb_frame_pen = to_pen{ ch = 188, fg = COLOR_GREY, bg = COLOR_BLACK },
+    title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
+    signature_pen = to_pen{ fg = COLOR_DARKGREY, bg = COLOR_BLACK },
 }
 
 function paint_frame(x1,y1,x2,y2,style,title)
@@ -353,68 +618,31 @@ FramedScreen.ATTRS{
     frame_title = DEFAULT_NIL,
     frame_width = DEFAULT_NIL,
     frame_height = DEFAULT_NIL,
+    frame_inset = 0,
+    frame_background = CLEAR_PEN,
 }
-
-local function hint_coord(gap,hint)
-    if hint and hint > 0 then
-        return math.min(hint,gap)
-    elseif hint and hint < 0 then
-        return math.max(0,gap-hint)
-    else
-        return math.floor(gap/2)
-    end
-end
 
 function FramedScreen:getWantedFrameSize()
     return self.frame_width, self.frame_height
 end
 
-function FramedScreen:updateFrameSize()
-    local sw, sh = dscreen.getWindowSize()
-    local iw, ih = sw-2, sh-2
-    local fw, fh = self:getWantedFrameSize()
-    local width = math.min(fw or iw, iw)
-    local height = math.min(fh or ih, ih)
-    local gw, gh = iw-width, ih-height
-    local x1, y1 = hint_coord(gw,self.frame_xhint), hint_coord(gh,self.frame_yhint)
-    self.frame_rect = mkdims_wh(x1+1,y1+1,width,height)
-    self.frame_opaque = (gw == 0 and gh == 0)
+function FramedScreen:computeFrame(parent_rect)
+    local sw, sh = parent_rect.width, parent_rect.height
+    local fw, fh = self:getWantedFrameSize(parent_rect)
+    return compute_frame_body(sw, sh, { w = fw, h = fh }, self.frame_inset, 1, true)
 end
 
-function FramedScreen:updateLayout()
-    self:updateFrameSize()
-end
+function FramedScreen:onRenderFrame(dc, rect)
+    local x1,y1,x2,y2 = rect.x1, rect.y1, rect.x2, rect.y2
 
-function FramedScreen:getWindowSize()
-    local rect = self.frame_rect
-    return rect.width, rect.height
-end
-
-function FramedScreen:getMousePos()
-    local rect = self.frame_rect
-    local x,y = dscreen.getMousePos()
-    if is_in_rect(rect,x,y) then
-        return x-rect.x1, y-rect.y1
-    end
-end
-
-function FramedScreen:onRender()
-    local rect = self.frame_rect
-    local x1,y1,x2,y2 = rect.x1-1, rect.y1-1, rect.x2+1, rect.y2+1
-
-    if self.frame_opaque then
-        dscreen.clear()
+    if rect.wgap <= 0 and rect.hgap <= 0 then
+        dc:clear()
     else
         self:renderParent()
-        dscreen.fillRect(CLEAR_PEN,x1,y1,x2,y2)
+        dc:fill(rect, self.frame_background)
     end
 
     paint_frame(x1,y1,x2,y2,self.frame_style,self.frame_title)
-
-    self:onRenderBody(Painter.new(rect))
-end
-
-function FramedScreen:onRenderBody(dc)
 end
 
 return _ENV

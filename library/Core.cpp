@@ -44,6 +44,7 @@ using namespace std;
 #include "VersionInfo.h"
 #include "PluginManager.h"
 #include "ModuleFactory.h"
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
 #include "modules/World.h"
 #include "modules/Graphic.h"
@@ -316,7 +317,7 @@ static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr,
         rbcmd += "'" + args[i] + "', ";
     rbcmd += "]\n";
 
-    rbcmd += "load './hack/scripts/" + name + ".rb'";
+    rbcmd += "catch(:script_finished) { load './hack/scripts/" + name + ".rb' }";
 
     return plug_mgr->eval_ruby(out, rbcmd.c_str());
 }
@@ -341,6 +342,52 @@ command_result Core::runCommand(color_ostream &out, const std::string &command)
     }
     else
         return CR_NOT_IMPLEMENTED;
+}
+
+static bool try_autocomplete(color_ostream &con, const std::string &first, std::string &completed)
+{
+    std::vector<std::string> possible;
+
+    auto plug_mgr = Core::getInstance().getPluginManager();
+    for(size_t i = 0; i < plug_mgr->size(); i++)
+    {
+        const Plugin * plug = (plug_mgr->operator[](i));
+        for (size_t j = 0; j < plug->size(); j++)
+        {
+            const PluginCommand &pcmd = plug->operator[](j);
+            if (pcmd.isHotkeyCommand())
+                continue;
+            if (pcmd.name.substr(0, first.size()) == first)
+                possible.push_back(pcmd.name);
+        }
+    }
+
+    bool all = (first.find('/') != std::string::npos);
+
+    std::map<string, string> scripts;
+    listScripts(plug_mgr, scripts, Core::getInstance().getHackPath() + "scripts/", all);
+    for (auto iter = scripts.begin(); iter != scripts.end(); ++iter)
+        if (iter->first.substr(0, first.size()) == first)
+            possible.push_back(iter->first);
+
+    if (possible.size() == 1)
+    {
+        completed = possible[0];
+        //fprintf(stderr, "Autocompleted %s to %s\n", , );
+        con.printerr("%s is not recognized. Did you mean %s?\n", first.c_str(), completed.c_str());
+        return true;
+    }
+
+    if (possible.size() > 1 && possible.size() < 8)
+    {
+        std::string out;
+        for (size_t i = 0; i < possible.size(); i++)
+            out += " " + possible[i];
+        con.printerr("%s is not recognized. Possible completions:%s\n", first.c_str(), out.c_str());
+        return true;
+    }
+
+    return false;
 }
 
 command_result Core::runCommand(color_ostream &con, const std::string &first, vector<string> &parts)
@@ -374,6 +421,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                           "  unload PLUGIN|all     - Unload a plugin or all loaded plugins.\n"
                           "  reload PLUGIN|all     - Reload a plugin or all loaded plugins.\n"
                          );
+
+                con.print("\nDFHack version " DFHACK_VERSION ".\n");
             }
             else if (parts.size() == 1)
             {
@@ -627,8 +676,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
         }
         else if(first == "fpause")
         {
-            World * w = getWorld();
-            w->SetPauseState(true);
+            World::SetPauseState(true);
             con.print("The game was forced to pause!\n");
         }
         else if(first == "cls")
@@ -664,10 +712,14 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
             if(res == CR_NOT_IMPLEMENTED)
             {
                 auto filename = getHackPath() + "scripts/" + first;
+                std::string completed;
+
                 if (fileExists(filename + ".lua"))
                     res = runLuaScript(con, first, parts);
                 else if (plug_mgr->eval_ruby && fileExists(filename + ".rb"))
                     res = runRubyScript(con, plug_mgr, first, parts);
+                else if (try_autocomplete(con, first, completed))
+                    return CR_NOT_IMPLEMENTED;// runCommand(con, completed, parts);
                 else
                     con.printerr("%s is not a recognized command.\n", first.c_str());
             }
@@ -732,7 +784,6 @@ void fIOthread(void * iodata)
     {
         string command = "";
         int ret = con.lineedit("[DFHack]# ",command, main_history);
-        fprintf(stderr,"Command: [%s]\n",command.c_str());
         if(ret == -2)
         {
             cerr << "Console is shutting down properly." << endl;
@@ -746,14 +797,10 @@ void fIOthread(void * iodata)
         else if(ret)
         {
             // a proper, non-empty command was entered
-			fprintf(stderr,"Adding command to history\n");
             main_history.add(command);
-			fprintf(stderr,"Saving history\n");
             main_history.save("dfhack.history");
         }
         
-		fprintf(stderr,"Running command\n");
-
         auto rv = core->runCommand(con, command);
 
         if (rv == CR_NOT_IMPLEMENTED)
@@ -820,6 +867,8 @@ std::string Core::getHackPath()
     return p->getPath() + "\\hack\\";
 #endif
 }
+
+void init_screen_module(Core *);
 
 bool Core::Init()
 {
@@ -891,6 +940,7 @@ bool Core::Init()
     */
     // initialize data defs
     virtual_identity::Init(this);
+    init_screen_module(this);
 
     // initialize common lua context
     Lua::Core::Init(con);
@@ -900,6 +950,7 @@ bool Core::Init()
     cerr << "Initializing Plugins.\n";
     // create plugin manager
     plug_mgr = new PluginManager(this);
+    plug_mgr->init(this);
     IODATA *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
@@ -1122,7 +1173,7 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         last_world_data_ptr = new_wdata;
         last_local_map_ptr = new_mapdata;
 
-        getWorld()->ClearPersistentCache();
+        World::ClearPersistentCache();
 
         // and if the world is going away, we report the map change first
         if(had_map)
@@ -1140,7 +1191,7 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
         if (isMapLoaded() != had_map)
         {
-            getWorld()->ClearPersistentCache();
+            World::ClearPersistentCache();
             onStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
         }
     }
@@ -1234,6 +1285,8 @@ static int buildings_timer = 0;
 
 void Core::onUpdate(color_ostream &out)
 {
+    EventManager::manageEvents(out);
+
     // convert building reagents
     if (buildings_do_onupdate && (++buildings_timer & 1))
         buildings_onUpdate(out);
@@ -1247,6 +1300,8 @@ void Core::onUpdate(color_ostream &out)
 
 void Core::onStateChange(color_ostream &out, state_change_event event)
 {
+    EventManager::onStateChange(out, event);
+
     buildings_onStateChange(out, event);
 
     plug_mgr->OnStateChange(out, event);
@@ -1611,15 +1666,27 @@ void ClassNameCheck::getKnownClassNames(std::vector<std::string> &names)
         names.push_back(*it);
 }
 
-bool Process::patchMemory(void *target, const void* src, size_t count)
+MemoryPatcher::MemoryPatcher(Process *p_) : p(p_)
+{
+    if (!p)
+        p = Core::getInstance().p;
+}
+
+MemoryPatcher::~MemoryPatcher()
+{
+    close();
+}
+
+bool MemoryPatcher::verifyAccess(void *target, size_t count, bool write)
 {
     uint8_t *sptr = (uint8_t*)target;
     uint8_t *eptr = sptr + count;
 
     // Find the valid memory ranges
-    std::vector<t_memrange> ranges;
-    getMemRanges(ranges);
+    if (ranges.empty())
+        p->getMemRanges(ranges);
 
+    // Find the ranges that this area spans
     unsigned start = 0;
     while (start < ranges.size() && ranges[start].end <= sptr)
         start++;
@@ -1642,23 +1709,45 @@ bool Process::patchMemory(void *target, const void* src, size_t count)
             return false;
 
     // Apply writable permissions & update
-    bool ok = true;
-
-    for (unsigned i = start; i < end && ok; i++)
+    for (unsigned i = start; i < end; i++)
     {
-        t_memrange perms = ranges[i];
+        auto &perms = ranges[i];
+        if ((perms.write || !write) && perms.read)
+            continue;
+
+        save.push_back(perms);
         perms.write = perms.read = true;
-        if (!setPermisions(perms, perms))
-            ok = false;
+        if (!p->setPermisions(perms, perms))
+            return false;
     }
 
-    if (ok)
-        memmove(target, src, count);
+    return true;
+}
 
-    for (unsigned i = start; i < end && ok; i++)
-        setPermisions(ranges[i], ranges[i]);
+bool MemoryPatcher::write(void *target, const void *src, size_t size)
+{
+    if (!makeWritable(target, size))
+        return false;
 
-    return ok;
+    memmove(target, src, size);
+    return true;
+}
+
+void MemoryPatcher::close()
+{
+    for (size_t i  = 0; i < save.size(); i++)
+        p->setPermisions(save[i], save[i]);
+
+    save.clear();
+    ranges.clear();
+};
+
+
+bool Process::patchMemory(void *target, const void* src, size_t count)
+{
+    MemoryPatcher patcher(this);
+
+    return patcher.write(target, src, count);
 }
 
 /*******************************************************************************
@@ -1678,7 +1767,6 @@ TYPE * Core::get##TYPE() \
     return s_mods.p##TYPE;\
 }
 
-MODULE_GETTER(World);
 MODULE_GETTER(Materials);
 MODULE_GETTER(Notes);
 MODULE_GETTER(Graphic);

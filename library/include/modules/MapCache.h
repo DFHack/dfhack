@@ -47,14 +47,6 @@ namespace MapExtras
 
 class DFHACK_EXPORT MapCache;
 
-template<class R, class T> inline R index_tile(T &v, df::coord2d p) {
-    return v[p.x&15][p.y&15];
-}
-
-inline bool is_valid_tile_coord(df::coord2d p) {
-    return (p.x & ~15) == 0 && (p.y & ~15) == 0;
-}
-
 class Block;
 
 class BlockInfo
@@ -119,8 +111,8 @@ public:
     {
         if (!basemats) init_tiles(true);
         return t_matpair(
-            index_tile<int16_t>(basemats->mattype,p),
-            index_tile<int16_t>(basemats->matindex,p)
+            index_tile<int16_t>(basemats->mat_type,p),
+            index_tile<int16_t>(basemats->mat_index,p)
         );
     }
     bool isVeinAt(df::coord2d p)
@@ -159,8 +151,8 @@ public:
         if (!basemats) init_tiles(true);
         if (tiles->con_info)
             return t_matpair(
-                index_tile<int16_t>(tiles->con_info->mattype,p),
-                index_tile<int16_t>(tiles->con_info->matindex,p)
+                index_tile<int16_t>(tiles->con_info->mat_type,p),
+                index_tile<int16_t>(tiles->con_info->mat_index,p)
             );
         return baseMaterialAt(p);
     }
@@ -292,8 +284,8 @@ private:
     struct ConInfo {
         df::tile_bitmask constructed;
         df::tiletype tiles[16][16];
-        t_blockmaterials mattype;
-        t_blockmaterials matindex;
+        t_blockmaterials mat_type;
+        t_blockmaterials mat_index;
     };
     struct TileInfo {
         df::tile_bitmask frozen;
@@ -312,8 +304,8 @@ private:
     };
     struct BasematInfo {
         df::tile_bitmask dirty;
-        t_blockmaterials mattype;
-        t_blockmaterials matindex;
+        t_blockmaterials mat_type;
+        t_blockmaterials mat_index;
         t_blockmaterials layermat;
 
         BasematInfo();

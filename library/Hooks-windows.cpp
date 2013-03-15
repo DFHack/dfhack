@@ -271,39 +271,39 @@ DFhackCExport vPtr SDL_SetVideoMode(int width, int height, int bpp, uint32_t fla
 static int (*_SDL_UpperBlit)(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Rect* srcrect, DFHack::DFSDL_Surface* dst, DFHack::DFSDL_Rect* dstrect) = 0;
 DFhackCExport int SDL_UpperBlit(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Rect* srcrect, DFHack::DFSDL_Surface* dst, DFHack::DFSDL_Rect* dstrect)
 {
-	if ( dstrect != NULL && dstrect->h != 0 && dstrect->w != 0 )
-	{
-		DFHack::Core & c = DFHack::Core::getInstance();
-		DFHack::Graphic* g = c.getGraphic();
-		DFHack::DFTileSurface* ov = g->Call(dstrect->x/dstrect->w, dstrect->y/dstrect->h);
+    if ( dstrect != NULL && dstrect->h != 0 && dstrect->w != 0 )
+    {
+        DFHack::Core & c = DFHack::Core::getInstance();
+        DFHack::Graphic* g = c.getGraphic();
+        DFHack::DFTileSurface* ov = g->Call(dstrect->x/dstrect->w, dstrect->y/dstrect->h);
 
-		if ( ov != NULL )
-		{
-			if ( ov->paintOver )
-			{
-				_SDL_UpperBlit(src, srcrect, dst, dstrect);
-			}
+        if ( ov != NULL )
+        {
+            if ( ov->paintOver )
+            {
+                _SDL_UpperBlit(src, srcrect, dst, dstrect);
+            }
 
-			DFHack::DFSDL_Rect* dstrect2 = new DFHack::DFSDL_Rect;
-			dstrect2->x = dstrect->x;
-			dstrect2->y = dstrect->y;
-			dstrect2->w = dstrect->w;
-			dstrect2->h = dstrect->h;
+            DFHack::DFSDL_Rect* dstrect2 = new DFHack::DFSDL_Rect;
+            dstrect2->x = dstrect->x;
+            dstrect2->y = dstrect->y;
+            dstrect2->w = dstrect->w;
+            dstrect2->h = dstrect->h;
 
-			if ( ov->dstResize != NULL )
-			{
-				DFHack::DFSDL_Rect* r = (DFHack::DFSDL_Rect*)ov->dstResize;
-				dstrect2->x += r->x;
-				dstrect2->y += r->y;
-				dstrect2->w += r->w;
-				dstrect2->h += r->h;
-			}
+            if ( ov->dstResize != NULL )
+            {
+                DFHack::DFSDL_Rect* r = (DFHack::DFSDL_Rect*)ov->dstResize;
+                dstrect2->x += r->x;
+                dstrect2->y += r->y;
+                dstrect2->w += r->w;
+                dstrect2->h += r->h;
+            }
 
-			int result = _SDL_UpperBlit(ov->surface, ov->rect, dst, dstrect2);
-			delete dstrect2;
-			return result;
-		}
-	}
+            int result = _SDL_UpperBlit(ov->surface, ov->rect, dst, dstrect2);
+            delete dstrect2;
+            return result;
+        }
+    }
 
     return _SDL_UpperBlit(src, srcrect, dst, dstrect);
 }

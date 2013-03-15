@@ -227,7 +227,7 @@ module DFHack
 
         # link bld into other rooms if it is inside their extents or vice versa
         def building_linkrooms(bld)
-            world.buildings.other[:ANY_FREE].each { |ob|
+            world.buildings.other[:IN_PLAY].each { |ob|
                 next if ob.z != bld.z
                 if bld.is_room and bld.room.extents
                     next if ob.is_room or ob.x1 < bld.room.x or ob.x1 >= bld.room.x+bld.room.width or ob.y1 < bld.room.y or ob.y1 >= bld.room.y+bld.room.height
@@ -275,7 +275,7 @@ module DFHack
             job = Job.cpp_new
             job.job_type = :ConstructBuilding
             job.pos = [bld.centerx, bld.centery, bld.z]
-            job.references << ref
+            job.general_refs << ref
             bld.jobs << job
             job_link job
             job
@@ -346,29 +346,19 @@ module DFHack
             refbuildingholder = GeneralRefBuildingHolderst.cpp_new
             job.job_type = :DestroyBuilding
             refbuildingholder.building_id = bld.id
-            job.references << refbuildingholder
+            job.general_refs << refbuildingholder
             bld.jobs << job
             job_link job
             job
         end
 
-        # check item flags to see if it is suitable for use as a building material
-        def building_isitemfree(i)
-            !i.flags.in_job and
-            !i.flags.in_inventory and
-            !i.flags.removed and
-            !i.flags.in_building and
-            !i.flags.owned and
-            !i.flags.forbid
-        end
-        
         # exemple usage
         def buildbed(pos=cursor)
             raise 'where to ?' if pos.x < 0
 
             item = world.items.all.find { |i|
                 i.kind_of?(ItemBedst) and
-                building_isitemfree(i)
+                item_isfree(i)
             }
             raise 'no free bed, build more !' if not item
 

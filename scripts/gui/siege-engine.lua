@@ -204,14 +204,14 @@ function SiegeEngine:onRenderBody_main(dc)
         dc:string("None (default)")
     end
 
-    dc:newline(3):string("r",COLOR_LIGHTGREEN):string(": Rectangle")
+    dc:newline(3):key('CUSTOM_R'):string(": Rectangle")
     if last_target_min then
-        dc:string(", "):string("p",COLOR_LIGHTGREEN):string(": Paste")
+        dc:string(", "):key('CUSTOM_P'):string(": Paste")
     end
     dc:newline(3)
     if target_min then
-        dc:string("x",COLOR_LIGHTGREEN):string(": Clear, ")
-        dc:string("z",COLOR_LIGHTGREEN):string(": Zoom")
+        dc:key('CUSTOM_X'):string(": Clear, ")
+        dc:key('CUSTOM_Z'):string(": Zoom")
     end
 
     dc:newline():newline(1)
@@ -219,7 +219,7 @@ function SiegeEngine:onRenderBody_main(dc)
         dc:string("Uses ballista arrows")
     else
         local item = plugin.getAmmoItem(self.building)
-        dc:string("u",COLOR_LIGHTGREEN):string(": Use ")
+        dc:key('CUSTOM_U'):string(": Use ")
         if item_choice_idx[item] then
             dc:string(item_choices[item_choice_idx[item]].caption)
         else
@@ -228,18 +228,20 @@ function SiegeEngine:onRenderBody_main(dc)
     end
 
     dc:newline():newline(1)
-    dc:string("t",COLOR_LIGHTGREEN):string(": Take from stockpile"):newline(3)
+    dc:key('CUSTOM_T'):string(": Take from stockpile"):newline(3)
     local links = plugin.getStockpileLinks(self.building)
     local bottom = dc.height - 5
     if links then
-        dc:string("d",COLOR_LIGHTGREEN):string(": Delete, ")
-        dc:string("o",COLOR_LIGHTGREEN):string(": Zoom"):newline()
-        self:renderStockpiles(dc, links, bottom-2-dc:localY())
+        dc:key('CUSTOM_D'):string(": Delete, ")
+        dc:key('CUSTOM_O'):string(": Zoom"):newline()
+        self:renderStockpiles(dc, links, bottom-2-dc:cursorY())
         dc:newline():newline()
     end
 
     local prof = self.building:getWorkshopProfile() or {}
-    dc:seek(1,math.max(dc:localY(),19)):string('ghjk',COLOR_LIGHTGREEN)dc:string(': ')
+    dc:seek(1,math.max(dc:cursorY(),19))
+    dc:key('CUSTOM_G'):key('CUSTOM_H'):key('CUSTOM_J'):key('CUSTOM_K')
+    dc:string(': ')
     dc:string(df.skill_rating.attrs[prof.min_level or 0].caption):string('-')
     dc:string(df.skill_rating.attrs[math.min(LEGENDARY,prof.max_level or 3000)].caption)
     dc:newline():newline()
@@ -357,7 +359,7 @@ function SiegeEngine:onRenderBody_aim(dc)
         dc:newline(2):string('ERROR', COLOR_RED)
     end
 
-    dc:newline():newline(1):string("Enter",COLOR_LIGHTGREEN)
+    dc:newline():newline(1):key('SELECT')
     if first then
         dc:string(": Finish rectangle")
     else
@@ -367,7 +369,7 @@ function SiegeEngine:onRenderBody_aim(dc)
 
     local target_min, target_max = plugin.getTargetArea(self.building)
     if target_min then
-        dc:newline(1):string("z",COLOR_LIGHTGREEN):string(": Zoom to current target")
+        dc:newline(1):key('CUSTOM_Z'):string(": Zoom to current target")
     end
 
     if first then
@@ -412,9 +414,9 @@ function SiegeEngine:onRenderBody_pile(dc)
 
         if plugin.isLinkedToPile(self.building, sel) then
             dc:string("Already taking from here"):newline():newline(2)
-            dc:string("d", COLOR_LIGHTGREEN):string(": Delete link")
+            dc:key('CUSTOM_D'):string(": Delete link")
         else
-            dc:string("Enter",COLOR_LIGHTGREEN):string(": Take from this pile")
+            dc:key('SELECT'):string(": Take from this pile")
         end
     elseif sel then
         dc:string(utils.getBuildingName(sel), COLOR_DARKGREY)
@@ -459,9 +461,9 @@ function SiegeEngine:onRenderBody(dc)
 
     self.mode.render(dc)
 
-    dc:seek(1, math.max(dc:localY(), 21)):pen(COLOR_WHITE)
-    dc:string("ESC", COLOR_LIGHTGREEN):string(": Back, ")
-    dc:string("c", COLOR_LIGHTGREEN):string(": Recenter")
+    dc:seek(1, math.max(dc:cursorY(), 21)):pen(COLOR_WHITE)
+    dc:key('LEAVESCREEN'):string(": Back, ")
+    dc:key('CUSTOM_C'):string(": Recenter")
 end
 
 function SiegeEngine:onInput(keys)

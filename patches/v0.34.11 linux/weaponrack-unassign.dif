@@ -1,0 +1,45 @@
+http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445
+
+Fix use of uninitialized variables to stop auto-unassigning racks:
+
+0x7ee948
+8B 7C 24 3C
+89 C7 90 90
+
+.text:08836948                 mov     edi, eax
+.text:0883694A                 nop
+.text:0883694B                 nop
+
+
+0x7eea2f
+8B 7C 24 3C
+89 C7 90 90
+
+.text:08836A2F                 mov     edi, eax
+.text:08836A31                 nop
+.text:08836A32                 nop
+
+
+basically:
+
+  b_squad_id = building->getSpecificSquad();
+- if (b_squad_id != squad->id || !building->canUse(some_squad_id, 4))
++ if (b_squad_id != squad->id || !building->canUse(b_squad_id, 4))
+    unassign(building);
+
+the reason being, some_other_squad_id contains irrelevant garbage at this point
+
+
+---8<---
+This difference file is created by The Interactive Disassembler
+
+Dwarf_Fortress
+007EE948: 8B 89
+007EE949: 7C C7
+007EE94A: 24 90
+007EE94B: 3C 90
+007EEA2F: 8B 89
+007EEA30: 7C C7
+007EEA31: 24 90
+007EEA32: 3C 90
+

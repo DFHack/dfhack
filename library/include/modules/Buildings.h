@@ -25,7 +25,9 @@ distribution.
 #pragma once
 #include "Export.h"
 #include "DataDefs.h"
+#include "Types.h"
 #include "df/building.h"
+#include "df/building_type.h"
 #include "df/civzone_type.h"
 #include "df/furnace_type.h"
 #include "df/workshop_type.h"
@@ -91,6 +93,9 @@ DFHACK_EXPORT bool Read (const uint32_t index, t_building & building);
  * custom_type of -1 implies ordinary building
  */
 DFHACK_EXPORT bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
+
+DFHACK_EXPORT df::general_ref *getGeneralRef(df::building *building, df::general_ref_type type);
+DFHACK_EXPORT df::specific_ref *getSpecificRef(df::building *building, df::specific_ref_type type);
 
 /**
  * Sets the owner unit for the building.
@@ -177,6 +182,9 @@ DFHACK_EXPORT bool constructWithFilters(df::building *bld, std::vector<df::job_i
  * Returns true if the building has been destroyed instantly.
  */
 DFHACK_EXPORT bool deconstruct(df::building *bld);
+
+void updateBuildings(color_ostream& out, void* ptr);
+void clearBuildings(color_ostream& out);
 
 }
 }

@@ -115,6 +115,9 @@ void Translation::setNickname(df::language_name *name, std::string nick)
 
     if (!name->has_name)
     {
+        if (nick.empty())
+            return;
+
         *name = df::language_name();
 
         name->language = 0;
@@ -122,6 +125,18 @@ void Translation::setNickname(df::language_name *name, std::string nick)
     }
 
     name->nickname = nick;
+
+    // If the nick is empty, check if this made the whole name empty
+    if (name->nickname.empty() && name->first_name.empty())
+    {
+        bool has_words = false;
+        for (int i = 0; i < 7; i++)
+            if (name->words[i] >= 0)
+                has_words = true;
+
+        if (!has_words)
+            name->has_name = false;
+    }
 }
 
 string Translation::TranslateName(const df::language_name * name, bool inEnglish, bool onlyLastPart)

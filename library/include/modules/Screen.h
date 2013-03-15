@@ -27,7 +27,10 @@ distribution.
 #include "Module.h"
 #include "BitArray.h"
 #include "ColorText.h"
+#include "Types.h"
+
 #include <string>
+#include <set>
 
 #include "DataDefs.h"
 #include "df/graphic.h"
@@ -49,6 +52,8 @@ namespace df
 namespace DFHack
 {
     class Core;
+
+    typedef std::set<df::interface_key> interface_key_set;
 
     /**
      * The Screen module
@@ -76,6 +81,8 @@ namespace DFHack
             bool valid() const { return tile >= 0; }
             bool empty() const { return ch == 0 && tile == 0; }
 
+            // NOTE: LuaApi.cpp assumes this struct is plain data and has empty destructor
+
             Pen(char ch = 0, int8_t fg = 7, int8_t bg = 0, int tile = 0, bool color_tile = false)
               : ch(ch), fg(fg&7), bg(bg), bold(!!(fg&8)),
                 tile(tile), tile_mode(color_tile ? CharColor : AsIs), tile_fg(0), tile_bg(0)
@@ -92,10 +99,66 @@ namespace DFHack
               : ch(ch), fg(fg), bg(bg), bold(bold),
                 tile(tile), tile_mode(TileColor), tile_fg(tile_fg), tile_bg(tile_bg)
             {}
+
+            void adjust(int8_t nfg) { fg = nfg&7; bold = !!(nfg&8); }
+            void adjust(int8_t nfg, bool nbold) { fg = nfg; bold = nbold; }
+            void adjust(int8_t nfg, int8_t nbg) { adjust(nfg); bg = nbg; }
+            void adjust(int8_t nfg, bool nbold, int8_t nbg) { adjust(nfg, nbold); bg = nbg; }
+
+            Pen color(int8_t nfg) const { Pen cp(*this); cp.adjust(nfg); return cp; }
+            Pen color(int8_t nfg, bool nbold) const { Pen cp(*this); cp.adjust(nfg, nbold); return cp; }
+            Pen color(int8_t nfg, int8_t nbg) const { Pen cp(*this); cp.adjust(nfg, nbg); return cp; }
+            Pen color(int8_t nfg, bool nbold, int8_t nbg) const { Pen cp(*this); cp.adjust(nfg, nbold, nbg); return cp; }
+
+            Pen chtile(char ch) { Pen cp(*this); cp.ch = ch; return cp; }
+            Pen chtile(char ch, int tile) { Pen cp(*this); cp.ch = ch; cp.tile = tile; return cp; }
+        };
+
+        struct DFHACK_EXPORT ViewRect {
+            rect2d view, clip;
+
+            ViewRect(rect2d area) : view(area), clip(area) {}
+            ViewRect(rect2d area, rect2d clip) : view(area), clip(clip) {}
+
+            bool isDefunct() const {
+                return clip.first.x > clip.second.x || clip.first.y > clip.second.y;
+            }
+            int width() const { return view.second.x-view.first.x+1; }
+            int height() const { return view.second.y-view.first.y+1; }
+            df::coord2d local(df::coord2d pos) const {
+                return df::coord2d(pos.x - view.first.x, pos.y - view.first.y);
+            }
+            df::coord2d global(df::coord2d pos) const {
+                return df::coord2d(pos.x + view.first.x, pos.y + view.first.y);
+            }
+            df::coord2d global(int x, int y) const {
+                return df::coord2d(x + view.first.x, y + view.first.y);
+            }
+            bool inClipGlobal(int x, int y) const {
+                return x >= clip.first.x && x <= clip.second.x &&
+                       y >= clip.first.y && y <= clip.second.y;
+            }
+            bool inClipGlobal(df::coord2d pos) const {
+                return inClipGlobal(pos.x, pos.y);
+            }
+            bool inClipLocal(int x, int y) const {
+                return inClipGlobal(x + view.first.x, y + view.first.y);
+            }
+            bool inClipLocal(df::coord2d pos) const {
+                return inClipLocal(pos.x, pos.y);
+            }
+            ViewRect viewport(rect2d area) const {
+                rect2d nview(global(area.first), global(area.second));
+                return ViewRect(nview, intersect(nview, clip));
+            }
         };
 
         DFHACK_EXPORT df::coord2d getMousePos();
         DFHACK_EXPORT df::coord2d getWindowSize();
+
+        inline rect2d getScreenRect() {
+            return rect2d(df::coord2d(0,0), getWindowSize()-df::coord2d(1,1));
+        }
 
         /// Returns the state of [GRAPHICS:YES/NO]
         DFHACK_EXPORT bool inGraphicsMode();
@@ -128,6 +191,80 @@ namespace DFHack
         DFHACK_EXPORT bool show(df::viewscreen *screen, df::viewscreen *before = NULL);
         DFHACK_EXPORT void dismiss(df::viewscreen *screen, bool to_first = false);
         DFHACK_EXPORT bool isDismissed(df::viewscreen *screen);
+
+        /// Retrieve the string representation of the bound key.
+        DFHACK_EXPORT std::string getKeyDisplay(df::interface_key key);
+
+        /// A painter class that implements a clipping area and cursor/pen state
+        struct DFHACK_EXPORT Painter : ViewRect {
+            df::coord2d gcursor;
+            Pen cur_pen, cur_key_pen;
+
+            static const Pen default_pen;
+            static const Pen default_key_pen;
+
+            Painter(const ViewRect &area, const Pen &pen = default_pen, const Pen &kpen = default_key_pen)
+                : ViewRect(area), gcursor(area.view.first), cur_pen(pen), cur_key_pen(kpen)
+            {}
+
+            df::coord2d cursor() const { return local(gcursor); }
+            int cursorX() const { return gcursor.x - view.first.x; }
+            int cursorY() const { return gcursor.y - view.first.y; }
+
+            bool isValidPos() const { return inClipGlobal(gcursor); }
+
+            Painter viewport(rect2d area) const {
+                return Painter(ViewRect::viewport(area), cur_pen, cur_key_pen);
+            }
+
+            Painter &seek(df::coord2d pos) { gcursor = global(pos); return *this; }
+            Painter &seek(int x, int y) { gcursor = global(x,y); return *this; }
+            Painter &advance(int dx) { gcursor.x += dx; return *this; }
+            Painter &advance(int dx, int dy) { gcursor.x += dx; gcursor.y += dy; return *this; }
+            Painter &newline(int dx = 0) { gcursor.y++; gcursor.x = view.first.x + dx; return *this; }
+
+            const Pen &pen() const { return cur_pen; }
+            Painter &pen(const Pen &np) { cur_pen = np; return *this; }
+            Painter &pen(int8_t fg) { cur_pen.adjust(fg); return *this; }
+
+            const Pen &key_pen() const { return cur_key_pen; }
+            Painter &key_pen(const Pen &np) { cur_key_pen = np; return *this; }
+            Painter &key_pen(int8_t fg) { cur_key_pen.adjust(fg); return *this; }
+
+            Painter &clear() {
+                fillRect(Pen(' ',0,0,false), clip.first.x, clip.first.y, clip.second.x, clip.second.y);
+                return *this;
+            }
+
+            Painter &fill(const rect2d &area, const Pen &pen) {
+                rect2d irect = intersect(area, clip);
+                fillRect(pen, irect.first.x, irect.first.y, irect.second.x, irect.second.y);
+                return *this;
+            }
+            Painter &fill(const rect2d &area) { return fill(area, cur_pen); }
+
+            Painter &tile(const Pen &pen) {
+                if (isValidPos()) paintTile(pen, gcursor.x, gcursor.y);
+                return advance(1);
+            }
+            Painter &tile() { return tile(cur_pen); }
+            Painter &tile(char ch) { return tile(cur_pen.chtile(ch)); }
+            Painter &tile(char ch, int tileid) { return tile(cur_pen.chtile(ch, tileid)); }
+
+            Painter &string(const std::string &str, const Pen &pen) {
+                do_paint_string(str, pen); return advance(str.size());
+            }
+            Painter &string(const std::string &str) { return string(str, cur_pen); }
+            Painter &string(const std::string &str, int8_t fg) { return string(str, cur_pen.color(fg)); }
+
+            Painter &key(df::interface_key kc, const Pen &pen) {
+                return string(getKeyDisplay(kc), pen);
+            }
+            Painter &key(df::interface_key kc) { return key(kc, cur_key_pen); }
+
+        private:
+            void do_paint_string(const std::string &str, const Pen &pen);
+        };
     }
 
     class DFHACK_EXPORT dfhack_viewscreen : public df::viewscreen {

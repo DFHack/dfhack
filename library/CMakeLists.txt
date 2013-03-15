@@ -111,6 +111,7 @@ include/modules/Burrows.h
 include/modules/Constructions.h
 include/modules/Units.h
 include/modules/Engravings.h
+include/modules/EventManager.h
 include/modules/Gui.h
 include/modules/Items.h
 include/modules/Job.h
@@ -121,7 +122,6 @@ include/modules/Materials.h
 include/modules/Notes.h
 include/modules/Screen.h
 include/modules/Translation.h
-include/modules/Vegetation.h
 include/modules/Vermin.h
 include/modules/World.h
 include/modules/Graphic.h
@@ -133,6 +133,7 @@ modules/Burrows.cpp
 modules/Constructions.cpp
 modules/Units.cpp
 modules/Engravings.cpp
+modules/EventManager.cpp
 modules/Gui.cpp
 modules/Items.cpp
 modules/Job.cpp
@@ -142,7 +143,6 @@ modules/Materials.cpp
 modules/Notes.cpp
 modules/Screen.cpp
 modules/Translation.cpp
-modules/Vegetation.cpp
 modules/Vermin.cpp
 modules/World.cpp
 modules/Graphic.cpp
@@ -167,7 +167,7 @@ IF(UNIX)
     IF(BUILD_EGGY)
         LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX_EGGY})
     ELSEIF(APPLE)
-    	LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_DARWIN})
+        LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_DARWIN})
     ELSE()
         LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX})
     ENDIF()
@@ -235,7 +235,7 @@ ENDIF()
 IF(UNIX)
   SET(PROJECT_LIBS rt dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
   IF(APPLE)
-  	SET(PROJECT_LIBS dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
+      SET(PROJECT_LIBS dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
  ENDIF()
 ELSE(WIN32)
   #FIXME: do we really need psapi?
@@ -249,6 +249,9 @@ ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp ${
 ADD_DEPENDENCIES(dfhack-client dfhack)
 
 ADD_EXECUTABLE(dfhack-run dfhack-run.cpp)
+
+ADD_EXECUTABLE(binpatch binpatch.cpp)
+TARGET_LINK_LIBRARIES(binpatch dfhack-md5)
 
 IF(BUILD_EGGY)
     SET_TARGET_PROPERTIES(dfhack PROPERTIES OUTPUT_NAME "egg" )
@@ -270,14 +273,14 @@ ENDIF()
 SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
 IF(APPLE)
-	SET(SDL_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/SDL.framework)
-	SET(CXX_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/libstdc++.6.dylib)
-	SET(ZIP_LIBRARY /usr/lib/libz.dylib)
-	TARGET_LINK_LIBRARIES(dfhack ${SDL_LIBRARY})
-	TARGET_LINK_LIBRARIES(dfhack ${CXX_LIBRARY})
-	TARGET_LINK_LIBRARIES(dfhack ${ZIP_LIBRARY})
-	SET_TARGET_PROPERTIES(dfhack PROPERTIES VERSION 1.0.0)
-	SET_TARGET_PROPERTIES(dfhack PROPERTIES SOVERSION 1.0.0)
+    SET(SDL_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/SDL.framework)
+    SET(CXX_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/libstdc++.6.dylib)
+    SET(ZIP_LIBRARY /usr/lib/libz.dylib)
+    TARGET_LINK_LIBRARIES(dfhack ${SDL_LIBRARY})
+    TARGET_LINK_LIBRARIES(dfhack ${CXX_LIBRARY})
+    TARGET_LINK_LIBRARIES(dfhack ${ZIP_LIBRARY})
+    SET_TARGET_PROPERTIES(dfhack PROPERTIES VERSION 1.0.0)
+    SET_TARGET_PROPERTIES(dfhack PROPERTIES SOVERSION 1.0.0)
 ENDIF()
 
 TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua ${PROJECT_LIBS})
@@ -287,20 +290,20 @@ TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket)
 TARGET_LINK_LIBRARIES(dfhack-run dfhack-client)
 
 if(APPLE)
-	add_custom_command(TARGET dfhack-run COMMAND ${dfhack_SOURCE_DIR}/package/darwin/fix-libs.sh WORKING_DIRECTORY ../ COMMENT "Fixing library dependencies...")
+    add_custom_command(TARGET dfhack-run COMMAND ${dfhack_SOURCE_DIR}/package/darwin/fix-libs.sh WORKING_DIRECTORY ../ COMMENT "Fixing library dependencies...")
 endif()
 
 IF(UNIX)
-	if (APPLE)
-		install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack
-				DESTINATION .)
-		install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack-run
-				DESTINATION .)
+    if (APPLE)
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack
+                DESTINATION .)
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack-run
+                DESTINATION .)
     else()
-	    # On linux, copy our version of the df launch script which sets LD_PRELOAD
-    	install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
+        # On linux, copy our version of the df launch script which sets LD_PRELOAD
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
             DESTINATION .)
-	    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
             DESTINATION .)
     endif()
 ELSE()
@@ -329,7 +332,7 @@ install(FILES xml/symbols.xml
 install(FILES ../dfhack.init-example
         DESTINATION ${DFHACK_BINARY_DESTINATION})
 
-install(TARGETS dfhack-run dfhack-client
+install(TARGETS dfhack-run dfhack-client binpatch
         LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
         RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 
@@ -342,6 +345,10 @@ install(DIRECTORY ${dfhack_SOURCE_DIR}/scripts
         FILES_MATCHING PATTERN "*.lua"
                        PATTERN "*.rb"
         )
+
+install(DIRECTORY ${dfhack_SOURCE_DIR}/patches
+        DESTINATION ${DFHACK_DATA_DESTINATION}
+        FILES_MATCHING PATTERN "*.dif")
 
 # Unused for so long that it's not even relevant now...
 if(BUILD_DEVEL)

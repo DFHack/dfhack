@@ -238,6 +238,19 @@ local function get_movement_delta(key, delta, big_step)
     end
 end
 
+HOTKEY_KEYS = {}
+
+for i,v in ipairs(df.global.ui.main.hotkeys) do
+    HOTKEY_KEYS['D_HOTKEY'..(i+1)] = v
+end
+
+local function get_hotkey_target(key)
+    local hk = HOTKEY_KEYS[key]
+    if hk and hk.cmd == df.ui_hotkey.T_cmd.Zoom then
+        return xyz2pos(hk.x, hk.y, hk.z)
+    end
+end
+
 function Viewport:scrollByKey(key)
     local dx, dy, dz = get_movement_delta(key, 10, 20)
     if dx then
@@ -247,14 +260,20 @@ function Viewport:scrollByKey(key)
             self.z + dz
         )
     else
-        return self
+        local hk_pos = get_hotkey_target(key)
+        if hk_pos then
+            return self:centerOn(hk_pos)
+        else
+            return self
+        end
     end
 end
 
 DwarfOverlay = defclass(DwarfOverlay, gui.Screen)
 
-function DwarfOverlay:updateLayout()
+function DwarfOverlay:updateLayout(parent_rect)
     self.df_layout = getPanelLayout()
+    DwarfOverlay.super.updateLayout(self, parent_rect)
 end
 
 function DwarfOverlay:getViewport(old_vp)
@@ -285,9 +304,11 @@ function DwarfOverlay:selectBuilding(building,cursor,viewport,gap)
 end
 
 function DwarfOverlay:propagateMoveKeys(keys)
-    for code,_ in pairs(MOVEMENT_KEYS) do
-        if keys[code] then
-            self:sendInputToParent(code)
+    for code,_ in pairs(keys) do
+        if MOVEMENT_KEYS[code] or HOTKEY_KEYS[code] then
+            if not HOTKEY_KEYS[code] or get_hotkey_target(code) then
+                self:sendInputToParent(code)
+            end
             return code
         end
     end
@@ -304,8 +325,8 @@ function DwarfOverlay:simulateViewScroll(keys, anchor, no_clip_cursor)
         return 'A_MOVE_SAME_SQUARE'
     end
 
-    for code,_ in pairs(MOVEMENT_KEYS) do
-        if keys[code] then
+    for code,_ in pairs(keys) do
+        if MOVEMENT_KEYS[code] or HOTKEY_KEYS[code] then
             local vp = self:getViewport():scrollByKey(code)
             if (cursor and not no_clip_cursor) or no_clip_cursor == false then
                 vp = vp:reveal(anchor,4,20,4,true)
@@ -328,37 +349,46 @@ function DwarfOverlay:simulateCursorMovement(keys, anchor)
         return 'A_MOVE_SAME_SQUARE'
     end
 
-    for code,_ in pairs(MOVEMENT_KEYS) do
-        if keys[code] then
+    for code,_ in pairs(keys) do
+        if MOVEMENT_KEYS[code] then
             local dx, dy, dz = get_movement_delta(code, 1, 10)
             local ncur = xyz2pos(cx+dx, cy+dy, cz+dz)
 
             if dfhack.maps.isValidTilePos(ncur) then
                 setCursorPos(ncur)
                 self:getViewport():reveal(ncur,4,10,6,true):set()
-                return code
             end
+
+            return code
+        elseif HOTKEY_KEYS[code] then
+            local pos = get_hotkey_target(code)
+
+            if pos and dfhack.maps.isValidTilePos(pos) then
+                setCursorPos(pos)
+                self:getViewport():centerOn(pos):set()
+            end
+
+            return code
         end
     end
 end
 
-function DwarfOverlay:onAboutToShow(below)
-    local screen = dfhack.gui.getCurViewscreen()
-    if below then screen = below.parent end
-    if not df.viewscreen_dwarfmodest:is_instance(screen) then
+function DwarfOverlay:onAboutToShow(parent)
+    if not df.viewscreen_dwarfmodest:is_instance(parent) then
         error("This screen requires the main dwarfmode view")
     end
 end
 
 MenuOverlay = defclass(MenuOverlay, DwarfOverlay)
 
-function MenuOverlay:updateLayout()
-    MenuOverlay.super.updateLayout(self)
-    self.frame_rect = self.df_layout.menu
-end
+MenuOverlay.ATTRS {
+    frame_inset = 0,
+    frame_background = CLEAR_PEN,
+}
 
-MenuOverlay.getWindowSize = gui.FramedScreen.getWindowSize
-MenuOverlay.getMousePos = gui.FramedScreen.getMousePos
+function MenuOverlay:computeFrame(parent_rect)
+    return self.df_layout.menu, gui.inset_frame(self.df_layout.menu, self.frame_inset)
+end
 
 function MenuOverlay:onAboutToShow(below)
     MenuOverlay.super.onAboutToShow(self,below)
@@ -369,7 +399,7 @@ function MenuOverlay:onAboutToShow(below)
     end
 end
 
-function MenuOverlay:onRender()
+function MenuOverlay:render(dc)
     self:renderParent()
 
     local menu = self.df_layout.menu
@@ -380,7 +410,11 @@ function MenuOverlay:onRender()
             menu.x1+1, menu.y2+1, "DFHack"
         )
 
-        self:onRenderBody(gui.Painter.new(menu))
+        if self.frame_background then
+            dc:fill(menu, self.frame_background)
+        end
+
+        MenuOverlay.super.render(self, dc)
     end
 end
 

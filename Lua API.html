@@ -377,12 +377,43 @@ ul.auto-toc {
 <li><a class="reference internal" href="#class" id="id35">class</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#plugins" id="id36">Plugins</a><ul>
-<li><a class="reference internal" href="#burrows" id="id37">burrows</a></li>
-<li><a class="reference internal" href="#sort" id="id38">sort</a></li>
+<li><a class="reference internal" href="#in-game-ui-library" id="id36">In-game UI Library</a><ul>
+<li><a class="reference internal" href="#gui" id="id37">gui</a><ul>
+<li><a class="reference internal" href="#misc" id="id38">Misc</a></li>
+<li><a class="reference internal" href="#viewrect-class" id="id39">ViewRect class</a></li>
+<li><a class="reference internal" href="#painter-class" id="id40">Painter class</a></li>
+<li><a class="reference internal" href="#view-class" id="id41">View class</a></li>
+<li><a class="reference internal" href="#screen-class" id="id42">Screen class</a></li>
+<li><a class="reference internal" href="#framedscreen-class" id="id43">FramedScreen class</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#scripts" id="id39">Scripts</a></li>
+<li><a class="reference internal" href="#gui-widgets" id="id44">gui.widgets</a><ul>
+<li><a class="reference internal" href="#widget-class" id="id45">Widget class</a></li>
+<li><a class="reference internal" href="#panel-class" id="id46">Panel class</a></li>
+<li><a class="reference internal" href="#pages-class" id="id47">Pages class</a></li>
+<li><a class="reference internal" href="#editfield-class" id="id48">EditField class</a></li>
+<li><a class="reference internal" href="#label-class" id="id49">Label class</a></li>
+<li><a class="reference internal" href="#list-class" id="id50">List class</a></li>
+<li><a class="reference internal" href="#filteredlist-class" id="id51">FilteredList class</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#plugins" id="id52">Plugins</a><ul>
+<li><a class="reference internal" href="#burrows" id="id53">burrows</a></li>
+<li><a class="reference internal" href="#sort" id="id54">sort</a></li>
+<li><a class="reference internal" href="#eventful" id="id55">Eventful</a><ul>
+<li><a class="reference internal" href="#list-of-events" id="id56">List of events</a></li>
+<li><a class="reference internal" href="#functions" id="id57">Functions</a></li>
+<li><a class="reference internal" href="#examples" id="id58">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#scripts" id="id59">Scripts</a><ul>
+<li><a class="reference internal" href="#save-init-script" id="id60">Save init script</a></li>
+</ul>
+</li>
 </ul>
 </div>
 <p>The current version of DFHack has extensive support for
@@ -932,6 +963,21 @@ Returns <em>entry, did_create_new</em></p>
 and automatically stored in the save game, these save and retrieval
 functions can just copy values in memory without doing any actual I/O.
 However, currently every entry has a 180+-byte dead-weight overhead.</p>
+<p>It is also possible to associate one bit per map tile with an entry,
+using these two methods:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">entry:getTilemask(block[, create])</tt></p>
+<p>Retrieves the tile bitmask associated with this entry in the given map
+block. If <tt class="docutils literal">create</tt> is <em>true</em>, an empty mask is created if none exists;
+otherwise the function returns <em>nil</em>, which must be assumed to be the same
+as an all-zero mask.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">entry:deleteTilemask(block)</tt></p>
+<p>Deletes the associated tile mask from the given map block.</p>
+</li>
+</ul>
+<p>Note that these masks are only saved in fortress mode, and also that deleting
+the persistent entry will <strong>NOT</strong> delete the associated masks.</p>
 </div>
 <div class="section" id="material-info-lookup">
 <h3><a class="toc-backref" href="#id17">Material info lookup</a></h3>
@@ -996,6 +1042,9 @@ can be omitted.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.getHackPath()</tt></p>
 <p>Returns the dfhack directory path, i.e. <tt class="docutils literal"><span class="pre">&quot;.../df/hack/&quot;</span></tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.getSavePath()</tt></p>
+<p>Returns the path to the current save directory, or <em>nil</em> if no save loaded.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.getTickCount()</tt></p>
 <p>Returns the tick count in ms, exactly as DF ui uses.</p>
@@ -1072,6 +1121,12 @@ above operations accordingly. If enabled, pauses and zooms to position.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.job.printItemDetails(jobitem,idx)</tt></p>
 <p>Prints info about the job item.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.getGeneralRef(job, type)</tt></p>
+<p>Searches for a general_ref with the given type.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.getSpecificRef(job, type)</tt></p>
+<p>Searches for a specific_ref with the given type.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.job.getHolder(job)</tt></p>
 <p>Returns the building holding the job.</p>
 </li>
@@ -1095,6 +1150,13 @@ above operations accordingly. If enabled, pauses and zooms to position.</p>
 if there are any jobs with <tt class="docutils literal">first_id &lt;= id &lt; job_next_id</tt>,
 a lua list containing them.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.isSuitableItem(job_item, item_type, item_subtype)</tt></p>
+<p>Does basic sanity checks to verify if the suggested item type matches
+the flags in the job item.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.isSuitableMaterial(job_item, mat_type, mat_index)</tt></p>
+<p>Likewise, if replacing material.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="units-module">
@@ -1102,6 +1164,12 @@ a lua list containing them.</p>
 <ul>
 <li><p class="first"><tt class="docutils literal">dfhack.units.getPosition(unit)</tt></p>
 <p>Returns true <em>x,y,z</em> of the unit, or <em>nil</em> if invalid; may be not equal to unit.pos if caged.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getGeneralRef(unit, type)</tt></p>
+<p>Searches for a general_ref with the given type.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getSpecificRef(unit, type)</tt></p>
+<p>Searches for a specific_ref with the given type.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.getContainer(unit)</tt></p>
 <p>Returns the container (cage) item or <em>nil</em>.</p>
@@ -1165,6 +1233,9 @@ is <em>true</em>, subtracts the rust penalty.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.units.getEffectiveSkill(unit, skill)</tt></p>
 <p>Computes the effective rating for the given skill, taking into account exhaustion, pain etc.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.getExperience(unit, skill[, total])</tt></p>
+<p>Returns the experience value for the given skill. If <tt class="docutils literal">total</tt> is true, adds experience implied by the current rating.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.computeMovementSpeed(unit)</tt></p>
 <p>Computes number of frames * 100 it takes the unit to move in its current state of mind and body.</p>
 </li>
@@ -1217,6 +1288,12 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.items.getContainedItems(item)</tt></p>
 <p>Returns a list of items contained in this one.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getHolderBuilding(item)</tt></p>
+<p>Returns the holder building or <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getHolderUnit(item)</tt></p>
+<p>Returns the holder unit or <em>nil</em>.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.items.moveToGround(item,pos)</tt></p>
 <p>Move the item to the ground at position. Returns <em>false</em> if impossible.</p>
 </li>
@@ -1235,6 +1312,15 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.items.makeProjectile(item)</tt></p>
 <p>Turns the item into a projectile, and returns the new object, or <em>nil</em> if impossible.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.isCasteMaterial(item_type)</tt></p>
+<p>Returns <em>true</em> if this item type uses a creature/caste pair as its material.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getSubtypeCount(item_type)</tt></p>
+<p>Returns the number of raw-defined subtypes of the given item type, or <em>-1</em> if not applicable.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getSubtypeDef(item_type, subtype)</tt></p>
+<p>Returns the raw definition for the given item type and subtype, or <em>nil</em> if invalid.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="maps-module">
@@ -1249,7 +1335,7 @@ Returns <em>false</em> in case of error.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getBlock(x,y,z)</tt></p>
 <p>Returns a map block object for given x,y,z in local block coordinates.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">dfhack.maps.isValidTilePos(coords)</tt>, or isValidTilePos(x,y,z)``</p>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.isValidTilePos(coords)</tt>, or <tt class="docutils literal">isValidTilePos(x,y,z)</tt></p>
 <p>Checks if the given df::coord or x,y,z in local tile coordinates are valid.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getTileBlock(coords)</tt>, or <tt class="docutils literal">getTileBlock(x,y,z)</tt></p>
@@ -1257,6 +1343,12 @@ Returns <em>false</em> in case of error.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.ensureTileBlock(coords)</tt>, or <tt class="docutils literal">ensureTileBlock(x,y,z)</tt></p>
 <p>Like <tt class="docutils literal">getTileBlock</tt>, but if the block is not allocated, try creating it.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileType(coords)</tt>, or <tt class="docutils literal">getTileType(x,y,z)</tt></p>
+<p>Returns the tile type at the given coordinates, or <em>nil</em> if invalid.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileFlags(coords)</tt>, or <tt class="docutils literal">getTileFlags(x,y,z)</tt></p>
+<p>Returns designation and occupancy references for the given coordinates, or <em>nil, nil</em> if invalid.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.maps.getRegionBiome(region_coord2d)</tt>, or <tt class="docutils literal">getRegionBiome(x,y)</tt></p>
 <p>Returns the biome info struct for the given global map region.</p>
@@ -1285,6 +1377,18 @@ can get out of date if doors are forbidden or unforbidden, or
 tools like liquids or tiletypes are used. It also cannot possibly
 take into account anything that depends on the actual units, like
 burrows, or the presence of invaders.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.hasTileAssignment(tilemask)</tt></p>
+<p>Checks if the tile_bitmask object is not <em>nil</em> and contains any set bits; returns <em>true</em> or <em>false</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.getTileAssignment(tilemask,x,y)</tt></p>
+<p>Checks if the tile_bitmask object is not <em>nil</em> and has the relevant bit set; returns <em>true</em> or <em>false</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.maps.setTileAssignment(tilemask,x,y,enable)</tt></p>
+<p>Sets the relevant bit in the tile_bitmask object to the <em>enable</em> argument.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.maps.resetTileAssignment(tilemask[,enable])</span></tt></p>
+<p>Sets all bits in the mask to the <em>enable</em> argument.</p>
 </li>
 </ul>
 </div>
@@ -1326,6 +1430,12 @@ burrows, or the presence of invaders.</p>
 <div class="section" id="buildings-module">
 <h3><a class="toc-backref" href="#id25">Buildings module</a></h3>
 <ul>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.getGeneralRef(building, type)</tt></p>
+<p>Searches for a general_ref with the given type.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.getSpecificRef(building, type)</tt></p>
+<p>Searches for a specific_ref with the given type.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.buildings.setOwner(item,unit)</tt></p>
 <p>Replaces the owner of the building. If unit is <em>nil</em>, removes ownership.
 Returns <em>false</em> in case of error.</p>
@@ -1500,37 +1610,12 @@ be feasibly used in the core context.</p>
 <p>Checks if [GRAPHICS:YES] was specified in init.</p>
 </li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.screen.paintTile(pen,x,y[,char,tile])</span></tt></p>
-<p>Paints a tile using given parameters. Pen is a table with following possible fields:</p>
-<dl class="docutils">
-<dt><tt class="docutils literal">ch</tt></dt>
-<dd><p class="first last">Provides the ordinary tile character, as either a 1-character string or a number.
-Can be overridden with the <tt class="docutils literal">char</tt> function parameter.</p>
-</dd>
-<dt><tt class="docutils literal">fg</tt></dt>
-<dd><p class="first last">Foreground color for the ordinary tile. Defaults to COLOR_GREY (7).</p>
-</dd>
-<dt><tt class="docutils literal">bg</tt></dt>
-<dd><p class="first last">Background color for the ordinary tile. Defaults to COLOR_BLACK (0).</p>
-</dd>
-<dt><tt class="docutils literal">bold</tt></dt>
-<dd><p class="first last">Bright/bold text flag. If <em>nil</em>, computed based on (fg &amp; 8); fg is masked to 3 bits.
-Otherwise should be <em>true/false</em>.</p>
-</dd>
-<dt><tt class="docutils literal">tile</tt></dt>
-<dd><p class="first last">Graphical tile id. Ignored unless [GRAPHICS:YES] was in init.txt.</p>
-</dd>
-<dt><tt class="docutils literal">tile_color = true</tt></dt>
-<dd><p class="first last">Specifies that the tile should be shaded with <em>fg/bg</em>.</p>
-</dd>
-<dt><tt class="docutils literal">tile_fg, tile_bg</tt></dt>
-<dd><p class="first last">If specified, overrides <em>tile_color</em> and supplies shading colors directly.</p>
-</dd>
-</dl>
+<p>Paints a tile using given parameters. See below for a description of pen.</p>
 <p>Returns <em>false</em> if coordinates out of bounds, or other error.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.screen.readTile(x,y)</tt></p>
 <p>Retrieves the contents of the specified tile from the screen buffers.
-Returns a pen, or <em>nil</em> if invalid or TrueType.</p>
+Returns a pen object, or <em>nil</em> if invalid or TrueType.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.screen.paintString(pen,x,y,text)</tt></p>
 <p>Paints the string starting at <em>x,y</em>. Uses the string characters
@@ -1553,6 +1638,63 @@ The values can then be used for the <em>tile</em> field of <em>pen</em> structur
 <li><p class="first"><tt class="docutils literal">dfhack.screen.invalidate()</tt></p>
 <p>Requests repaint of the screen by setting a flag. Unlike other
 functions in this section, this may be used at any time.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.getKeyDisplay(key)</tt></p>
+<p>Returns the string that should be used to represent the given
+logical keybinding on the screen in texts like &quot;press Key to ...&quot;.</p>
+</li>
+</ul>
+<p>The &quot;pen&quot; argument used by functions above may be represented by
+a table with the following possible fields:</p>
+<blockquote>
+<dl class="docutils">
+<dt><tt class="docutils literal">ch</tt></dt>
+<dd>Provides the ordinary tile character, as either a 1-character string or a number.
+Can be overridden with the <tt class="docutils literal">char</tt> function parameter.</dd>
+<dt><tt class="docutils literal">fg</tt></dt>
+<dd>Foreground color for the ordinary tile. Defaults to COLOR_GREY (7).</dd>
+<dt><tt class="docutils literal">bg</tt></dt>
+<dd>Background color for the ordinary tile. Defaults to COLOR_BLACK (0).</dd>
+<dt><tt class="docutils literal">bold</tt></dt>
+<dd>Bright/bold text flag. If <em>nil</em>, computed based on (fg &amp; 8); fg is masked to 3 bits.
+Otherwise should be <em>true/false</em>.</dd>
+<dt><tt class="docutils literal">tile</tt></dt>
+<dd>Graphical tile id. Ignored unless [GRAPHICS:YES] was in init.txt.</dd>
+<dt><tt class="docutils literal">tile_color = true</tt></dt>
+<dd>Specifies that the tile should be shaded with <em>fg/bg</em>.</dd>
+<dt><tt class="docutils literal">tile_fg, tile_bg</tt></dt>
+<dd>If specified, overrides <em>tile_color</em> and supplies shading colors directly.</dd>
+</dl>
+</blockquote>
+<p>Alternatively, it may be a pre-parsed native object with the following API:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.pen.make(base[,pen_or_fg,bg,bold])</span></tt></p>
+<p>Creates a new pre-parsed pen by combining its arguments according to the
+following rules:</p>
+<ol class="arabic simple">
+<li>The <tt class="docutils literal">base</tt> argument may be a pen object, a pen table as specified above,
+or a single color value. In the single value case, it is split into
+<tt class="docutils literal">fg</tt> and <tt class="docutils literal">bold</tt> properties, and others are initialized to 0.
+This argument will be converted to a pre-parsed object and returned
+if there are no other arguments.</li>
+<li>If the <tt class="docutils literal">pen_or_fg</tt> argument is specified as a table or object, it
+completely replaces the base, and is returned instead of it.</li>
+<li>Otherwise, the non-nil subset of the optional arguments is used
+to update the <tt class="docutils literal">fg</tt>, <tt class="docutils literal">bg</tt> and <tt class="docutils literal">bold</tt> properties of the base.
+If the <tt class="docutils literal">bold</tt> flag is <em>nil</em>, but <em>pen_or_fg</em> is a number, <tt class="docutils literal">bold</tt>
+is deduced from it like in the simple base case.</li>
+</ol>
+<p>This function always returns a new pre-parsed pen, or <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.pen.parse(base[,pen_or_fg,bg,bold])</span></tt></p>
+<p>Exactly like the above function, but returns <tt class="docutils literal">base</tt> or <tt class="docutils literal">pen_or_fg</tt>
+directly if they are already a pre-parsed native object.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">pen.property</tt>, <tt class="docutils literal">pen.property = value</tt>, <tt class="docutils literal">pairs(pen)</tt></p>
+<p>Pre-parsed pens support reading and setting their properties,
+but don't behave exactly like a simple table would; for instance,
+assigning to <tt class="docutils literal">pen.tile_color</tt> also resets <tt class="docutils literal">pen.tile_fg</tt> and
+<tt class="docutils literal">pen.tile_bg</tt> to <em>nil</em>.</p>
 </li>
 </ul>
 <p>In order to actually be able to paint to the screen, it is necessary
@@ -1619,7 +1761,10 @@ options; if multiple interpretations exist, the table will contain multiple keys
 <dd><p class="first last">Maps to an integer in range 0-255. Duplicates a separate &quot;STRING_A???&quot; code for convenience.</p>
 </dd>
 <dt><tt class="docutils literal">_MOUSE_L, _MOUSE_R</tt></dt>
-<dd><p class="first last">If the left or right mouse button is pressed.</p>
+<dd><p class="first last">If the left or right mouse button is being pressed.</p>
+</dd>
+<dt><tt class="docutils literal">_MOUSE_L_DOWN, _MOUSE_R_DOWN</tt></dt>
+<dd><p class="first last">If the left or right mouse button was just pressed.</p>
 </dd>
 </dl>
 <p>If this method is omitted, the screen is dismissed on receival of the <tt class="docutils literal">LEAVESCREEN</tt> key.</p>
@@ -1654,8 +1799,16 @@ global environment, persistent between calls to the script.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getVTable(name)</tt></p>
 <p>Returns the pre-extracted vtable address <tt class="docutils literal">name</tt>, or <em>nil</em>.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.getImageBase()</tt></p>
+<p>Returns the mmap base of the executable.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getRebaseDelta()</tt></p>
 <p>Returns the ASLR rebase offset of the DF executable.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.internal.adjustOffset(offset[,to_file])</span></tt></p>
+<p>Returns the re-aligned offset, or <em>nil</em> if invalid.
+If <tt class="docutils literal">to_file</tt> is true, the offset is adjusted from memory to file.
+This function returns the original value everywhere except windows.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.getMemRanges()</tt></p>
 <p>Returns a sequence of tables describing virtual memory ranges of the process.</p>
@@ -1664,6 +1817,15 @@ global environment, persistent between calls to the script.</p>
 <p>Like memmove below, but works even if dest is read-only memory, e.g. code.
 If destination overlaps a completely invalid memory region, or another error
 occurs, returns false.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.patchBytes(write_table[, verify_table])</tt></p>
+<p>The first argument must be a lua table, which is interpreted as a mapping from
+memory addresses to byte values that should be stored there. The second argument
+may be a similar table of values that need to be checked before writing anything.</p>
+<p>The function takes care to either apply all of <tt class="docutils literal">write_table</tt>, or none of it.
+An empty <tt class="docutils literal">write_table</tt> with a nonempty <tt class="docutils literal">verify_table</tt> can be used to reasonably
+safely check if the memory contains certain values.</p>
+<p>Returns <em>true</em> if successful, or <em>nil, error_msg, address</em> if not.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.internal.memmove(dest,src,count)</tt></p>
 <p>Wraps the standard memmove function. Accepts both numbers and refs as pointers.</p>
@@ -1797,6 +1959,19 @@ SC_MAP_UNLOADED, SC_VIEWSCREEN_CHANGED, SC_CORE_INITIALIZED</p>
 <li><p class="first">Functions already described above</p>
 <p>safecall, qerror, mkmodule, reload</p>
 </li>
+<li><p class="first">Miscellaneous constants</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name" colspan="2">NEWLINE, COMMA, PERIOD:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">evaluate to the relevant character strings.</td>
+</tr>
+<tr class="field"><th class="field-name">DEFAULT_NIL:</th><td class="field-body">is an unspecified unique token used by the class module below.</td>
+</tr>
+</tbody>
+</table>
+</li>
 <li><p class="first"><tt class="docutils literal">printall(obj)</tt></p>
 <p>If the argument is a lua table or DF object reference, prints all fields.</p>
 </li>
@@ -1810,6 +1985,15 @@ coordinates), returns <em>nil</em>.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">xyz2pos(x,y,z)</tt></p>
 <p>Returns a table with x, y and z as fields.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">same_xyz(a,b)</tt></p>
+<p>Checks if <tt class="docutils literal">a</tt> and <tt class="docutils literal">b</tt> have the same x, y and z fields.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">get_path_xyz(path,i)</tt></p>
+<p>Returns <tt class="docutils literal">path.x[i], path.y[i], path.z[i]</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">pos2xy(obj)</tt>, <tt class="docutils literal">xy2pos(x,y)</tt>, <tt class="docutils literal">same_xy(a,b)</tt>, <tt class="docutils literal">get_path_xy(a,b)</tt></p>
+<p>Same as above, but for 2D coordinates.</p>
 </li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">safe_index(obj,index...)</span></tt></p>
 <p>Walks a sequence of dereferences, which may be represented by numbers or strings.
@@ -1887,10 +2071,24 @@ are converted to 1-based lua sequences.</p>
 as a guide to which values should be skipped as uninteresting.
 The <tt class="docutils literal">force</tt> argument makes it always return a non-<em>nil</em> value.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">utils.parse_bitfield_int(value, type_ref)</tt></p>
+<p>Given an int <tt class="docutils literal">value</tt>, and a bitfield type in the <tt class="docutils literal">df</tt> tree,
+it returns a lua table mapping the enabled bit keys to <em>true</em>,
+unless value is 0, in which case it returns <em>nil</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.list_bitfield_flags(bitfield[, list])</tt></p>
+<p>Adds all enabled bitfield keys to <tt class="docutils literal">list</tt> or a newly-allocated
+empty sequence, and returns it. The <tt class="docutils literal">bitfield</tt> argument may
+be <em>nil</em>.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">utils.sort_vector(vector,field,cmpfun)</tt></p>
 <p>Sorts a native vector or lua sequence using the comparator function.
 If <tt class="docutils literal">field</tt> is not <em>nil</em>, applies the comparator to the field instead
 of the whole object.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">utils.linear_index(vector,key[,field])</span></tt></p>
+<p>Searches for <tt class="docutils literal">key</tt> in the vector, and returns <em>index, found_value</em>,
+or <em>nil</em> if none found.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">utils.binsearch(vector,key,field,cmpfun,min,max)</tt></p>
 <p>Does a binary search in a native vector or lua sequence for
@@ -1913,6 +2111,25 @@ the vector cell if insertion didn't happen.</p>
 utils.insert_or_update(soul.skills, {new=true, id=..., rating=...}, 'id')
 </pre>
 <p>(For an explanation of <tt class="docutils literal">new=true</tt>, see table assignment in the wrapper section)</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.erase_sorted_key(vector,key,field,cmpfun)</tt></p>
+<p>Removes the item with the given key from the list. Returns: <em>did_erase, vector[idx], idx</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.erase_sorted(vector,item,field,cmpfun)</tt></p>
+<p>Exactly like <tt class="docutils literal">erase_sorted_key</tt>, but if field is specified, takes the key from <tt class="docutils literal">item[field]</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">utils.call_with_string(obj,methodname,...)</span></tt></p>
+<p>Allocates a temporary string object, calls <tt class="docutils literal"><span class="pre">obj:method(tmp,...)</span></tt>, and
+returns the value written into the temporary after deleting it.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.getBuildingName(building)</tt></p>
+<p>Returns the string description of the given building.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.getBuildingCenter(building)</tt></p>
+<p>Returns an x/y/z table pointing at the building center.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">utils.split_string(string, delimiter)</tt></p>
+<p>Splits the string by the given delimiter, and returns a sequence of results.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">utils.prompt_yes_no(prompt, default)</tt></p>
 <p>Presents a yes/no prompt to the user. If <tt class="docutils literal">default</tt> is not <em>nil</em>,
@@ -1965,19 +2182,31 @@ calling superclass methods.</p>
 from fields in the table used as the constructor argument. If omitted,
 they are initialized with the default values specified in this declaration.</p>
 <p>If the default value should be <em>nil</em>, use <tt class="docutils literal">ATTRS { foo = DEFAULT_NIL }</tt>.</p>
+<p>Declaring an attribute is mostly the same as defining your <tt class="docutils literal">init</tt> method like this:</p>
+<pre class="literal-block">
+function Class.init(args)
+    self.attr1 = args.attr1 or default1
+    self.attr2 = args.attr2 or default2
+    ...
+end
+</pre>
+<p>The main difference is that attributes are processed as a separate
+initialization step, before any <tt class="docutils literal">init</tt> methods are called. They
+also make the directy relation between instance fields and constructor
+arguments more explicit.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">new_obj = Class{ foo = arg, bar = arg, ... }</tt></p>
 <p>Calling the class as a function creates and initializes a new instance.
 Initialization happens in this order:</p>
 <ol class="arabic simple">
 <li>An empty instance table is created, and its metatable set.</li>
-<li>The <tt class="docutils literal">preinit</tt> method is called via <tt class="docutils literal">invoke_before</tt> (see below)
-with the table used as argument to the class. This method is intended
+<li>The <tt class="docutils literal">preinit</tt> methods are called via <tt class="docutils literal">invoke_before</tt> (see below)
+with the table used as argument to the class. These methods are intended
 for validating and tweaking that argument table.</li>
 <li>Declared ATTRS are initialized from the argument table or their default values.</li>
-<li>The <tt class="docutils literal">init</tt> method is called via <tt class="docutils literal">invoke_after</tt> with the argument table.
+<li>The <tt class="docutils literal">init</tt> methods are called via <tt class="docutils literal">invoke_after</tt> with the argument table.
 This is the main constructor method.</li>
-<li>The <tt class="docutils literal">postinit</tt> method is called via <tt class="docutils literal">invoke_after</tt> with the argument table.
+<li>The <tt class="docutils literal">postinit</tt> methods are called via <tt class="docutils literal">invoke_after</tt> with the argument table.
 Place code that should be called after the object is fully constructed here.</li>
 </ol>
 </li>
@@ -1991,6 +2220,12 @@ Place code that should be called after the object is fully constructed here.</li
 <p>Returns a closure that invokes the specified method of the class,
 properly passing in self, and optionally a number of initial arguments too.
 The arguments given to the closure are appended to these.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">instance:cb_getfield(field_name)</tt></p>
+<p>Returns a closure that returns the specified field of the object when called.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">instance:cb_setfield(field_name)</tt></p>
+<p>Returns a closure that sets the specified field to its argument when called.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">instance:invoke_before(method_name, <span class="pre">args...)</span></tt></p>
 <p>Navigates the inheritance chain of the instance starting from the most specific
@@ -2016,15 +2251,758 @@ library itself uses them for constructors.</p>
 <p>To avoid confusion, these methods cannot be redefined.</p>
 </div>
 </div>
+<div class="section" id="in-game-ui-library">
+<h1><a class="toc-backref" href="#id36">In-game UI Library</a></h1>
+<p>A number of lua modules with names starting with <tt class="docutils literal">gui</tt> are dedicated
+to wrapping the natives of the <tt class="docutils literal">dfhack.screen</tt> module in a way that
+is easy to use. This allows relatively easily and naturally creating
+dialogs that integrate in the main game UI window.</p>
+<p>These modules make extensive use of the <tt class="docutils literal">class</tt> module, and define
+things ranging from the basic <tt class="docutils literal">Painter</tt>, <tt class="docutils literal">View</tt> and <tt class="docutils literal">Screen</tt>
+classes, to fully functional predefined dialogs.</p>
+<div class="section" id="gui">
+<h2><a class="toc-backref" href="#id37">gui</a></h2>
+<p>This module defines the most important classes and functions for
+implementing interfaces. This documents those of them that are
+considered stable.</p>
+<div class="section" id="misc">
+<h3><a class="toc-backref" href="#id38">Misc</a></h3>
+<ul>
+<li><p class="first"><tt class="docutils literal">USE_GRAPHICS</tt></p>
+<p>Contains the value of <tt class="docutils literal">dfhack.screen.inGraphicsMode()</tt>, which cannot be
+changed without restarting the game and thus is constant during the session.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">CLEAR_PEN</tt></p>
+<p>The black pen used to clear the screen.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">simulateInput(screen, <span class="pre">keys...)</span></tt></p>
+<p>This function wraps an undocumented native function that passes a set of
+keycodes to a screen, and is the official way to do that.</p>
+<p>Every argument after the initial screen may be <em>nil</em>, a numeric keycode,
+a string keycode, a sequence of numeric or string keycodes, or a mapping
+of keycodes to <em>true</em> or <em>false</em>. For instance, it is possible to use the
+table passed as argument to <tt class="docutils literal">onInput</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">mkdims_xy(x1,y1,x2,y2)</tt></p>
+<p>Returns a table containing the arguments as fields, and also <tt class="docutils literal">width</tt> and
+<tt class="docutils literal">height</tt> that contains the rectangle dimensions.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">mkdims_wh(x1,y1,width,height)</tt></p>
+<p>Returns the same kind of table as <tt class="docutils literal">mkdims_xy</tt>, only this time it computes
+<tt class="docutils literal">x2</tt> and <tt class="docutils literal">y2</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">is_in_rect(rect,x,y)</tt></p>
+<p>Checks if the given point is within a rectangle, represented by a table produced
+by one of the <tt class="docutils literal">mkdims</tt> functions.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">blink_visible(delay)</tt></p>
+<p>Returns <em>true</em> or <em>false</em>, with the value switching to the opposite every <tt class="docutils literal">delay</tt>
+msec. This is intended for rendering blinking interface objects.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">getKeyDisplay(keycode)</tt></p>
+<p>Wraps <tt class="docutils literal">dfhack.screen.getKeyDisplay</tt> in order to allow using strings for the keycode argument.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="viewrect-class">
+<h3><a class="toc-backref" href="#id39">ViewRect class</a></h3>
+<p>This class represents an on-screen rectangle with an associated independent
+clip area rectangle. It is the base of the <tt class="docutils literal">Painter</tt> class, and is used by
+<tt class="docutils literal">Views</tt> to track their client area.</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">ViewRect{ rect = <span class="pre">...,</span> clip_rect = <span class="pre">...,</span> view_rect = <span class="pre">...,</span> clip_view = ... }</tt></p>
+<p>The constructor has the following arguments:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">rect:</th><td class="field-body">The <tt class="docutils literal">mkdims</tt> rectangle in screen coordinates of the logical viewport.
+Defaults to the whole screen.</td>
+</tr>
+<tr class="field"><th class="field-name">clip_rect:</th><td class="field-body">The clip rectangle in screen coordinates. Defaults to <tt class="docutils literal">rect</tt>.</td>
+</tr>
+<tr class="field"><th class="field-name">view_rect:</th><td class="field-body">A ViewRect object to copy from; overrides both <tt class="docutils literal">rect</tt> and <tt class="docutils literal">clip_rect</tt>.</td>
+</tr>
+<tr class="field"><th class="field-name">clip_view:</th><td class="field-body">A ViewRect object to intersect the specified clip area with.</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li><p class="first"><tt class="docutils literal">rect:isDefunct()</tt></p>
+<p>Returns <em>true</em> if the clip area is empty, i.e. no painting is possible.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">rect:inClipGlobalXY(x,y)</tt></p>
+<p>Checks if these global coordinates are within the clip rectangle.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">rect:inClipLocalXY(x,y)</tt></p>
+<p>Checks if these coordinates (specified relative to <tt class="docutils literal">x1,y1</tt>) are within the clip rectangle.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">rect:localXY(x,y)</tt></p>
+<p>Converts a pair of global coordinates to local; returns <em>x_local,y_local</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">rect:globalXY(x,y)</tt></p>
+<p>Converts a pair of local coordinates to global; returns <em>x_global,y_global</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">rect:viewport(x,y,w,h)</tt> or <tt class="docutils literal">rect:viewport(subrect)</tt></p>
+<p>Returns a ViewRect representing a sub-rectangle of the current one.
+The arguments are specified in local coordinates; the <tt class="docutils literal">subrect</tt>
+argument must be a <tt class="docutils literal">mkdims</tt> table. The returned object consists of
+the exact specified rectangle, and a clip area produced by intersecting
+it with the clip area of the original object.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="painter-class">
+<h3><a class="toc-backref" href="#id40">Painter class</a></h3>
+<p>The painting natives in <tt class="docutils literal">dfhack.screen</tt> apply to the whole screen, are
+completely stateless and don't implement clipping.</p>
+<p>The Painter class inherits from ViewRect to provide clipping and local
+coordinates, and tracks current cursor position and current pen.</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">Painter{ <span class="pre">...,</span> pen = <span class="pre">...,</span> key_pen = ... }</tt></p>
+<p>In addition to ViewRect arguments, Painter accepts a suggestion of
+the initial value for the main pen, and the keybinding pen. They
+default to COLOR_GREY and COLOR_LIGHTGREEN otherwise.</p>
+<p>There are also some convenience functions that wrap this constructor:</p>
+<ul class="simple">
+<li><tt class="docutils literal">Painter.new(rect,pen)</tt></li>
+<li><tt class="docutils literal">Painter.new_view(view_rect,pen)</tt></li>
+<li><tt class="docutils literal">Painter.new_xy(x1,y1,x2,y2,pen)</tt></li>
+<li><tt class="docutils literal">Painter.new_wh(x1,y1,width,height,pen)</tt></li>
+</ul>
+</li>
+<li><p class="first"><tt class="docutils literal">painter:isValidPos()</tt></p>
+<p>Checks if the current cursor position is within the clip area.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">painter:viewport(x,y,w,h)</tt></p>
+<p>Like the superclass method, but returns a Painter object.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">painter:cursor()</tt></p>
+<p>Returns the current cursor <em>x,y</em> in local coordinates.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">painter:seek(x,y)</tt></p>
+<p>Sets the current cursor position, and returns <em>self</em>.
+Either of the arguments may be <em>nil</em> to keep the current value.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">painter:advance(dx,dy)</tt></p>
+<p>Adds the given offsets to the cursor position, and returns <em>self</em>.
+Either of the arguments may be <em>nil</em> to keep the current value.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">painter:newline([dx])</span></tt></p>
+<p>Advances the cursor to the start of the next line plus the given x offset, and returns <em>self</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">painter:pen(...)</span></tt></p>
+<p>Sets the current pen to <tt class="docutils literal"><span class="pre">dfhack.pen.parse(old_pen,...)</span></tt>, and returns <em>self</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">painter:key_pen(...)</span></tt></p>
+<p>Sets the current keybinding pen to <tt class="docutils literal"><span class="pre">dfhack.pen.parse(old_pen,...)</span></tt>, and returns <em>self</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">painter:clear()</tt></p>
+<p>Fills the whole clip rectangle with <tt class="docutils literal">CLEAR_PEN</tt>, and returns <em>self</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">painter:fill(x1,y1,x2,y2[,...])</span></tt> or <tt class="docutils literal"><span class="pre">painter:fill(rect[,...])</span></tt></p>
+<p>Fills the specified local coordinate rectangle with <tt class="docutils literal"><span class="pre">dfhack.pen.parse(cur_pen,...)</span></tt>,
+and returns <em>self</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">painter:char([char[,</span> <span class="pre">...]])</span></tt></p>
+<p>Paints one character using <tt class="docutils literal">char</tt> and <tt class="docutils literal"><span class="pre">dfhack.pen.parse(cur_pen,...)</span></tt>; returns <em>self</em>.
+The <tt class="docutils literal">char</tt> argument, if not nil, is used to override the <tt class="docutils literal">ch</tt> property of the pen.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">painter:tile([char,</span> tile[, <span class="pre">...]])</span></tt></p>
+<p>Like above, but also allows overriding the <tt class="docutils literal">tile</tt> property on ad-hoc basis.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">painter:string(text[, <span class="pre">...])</span></tt></p>
+<p>Paints the string with <tt class="docutils literal"><span class="pre">dfhack.pen.parse(cur_pen,...)</span></tt>; returns <em>self</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">painter:key(keycode[, <span class="pre">...])</span></tt></p>
+<p>Paints the description of the keycode using <tt class="docutils literal"><span class="pre">dfhack.pen.parse(cur_key_pen,...)</span></tt>; returns <em>self</em>.</p>
+</li>
+</ul>
+<p>As noted above, all painting methods return <em>self</em>, in order to allow chaining them like this:</p>
+<pre class="literal-block">
+painter:pen(foo):seek(x,y):char(1):advance(1):string('bar')...
+</pre>
+</div>
+<div class="section" id="view-class">
+<h3><a class="toc-backref" href="#id41">View class</a></h3>
+<p>This class is the common abstract base of both the stand-alone screens
+and common widgets to be used inside them. It defines the basic layout,
+rendering and event handling framework.</p>
+<p>The class defines the following attributes:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">visible:</th><td class="field-body">Specifies that the view should be painted.</td>
+</tr>
+<tr class="field"><th class="field-name">active:</th><td class="field-body">Specifies that the view should receive events, if also visible.</td>
+</tr>
+<tr class="field"><th class="field-name">view_id:</th><td class="field-body">Specifies an identifier to easily identify the view among subviews.
+This is reserved for implementation of top-level views, and should
+not be used by widgets for their internal subviews.</td>
+</tr>
+</tbody>
+</table>
+<p>It also always has the following fields:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">subviews:</th><td class="field-body">Contains a table of all subviews. The sequence part of the
+table is used for iteration. In addition, subviews are also
+indexed under their <em>view_id</em>, if any; see <tt class="docutils literal">addviews()</tt> below.</td>
+</tr>
+</tbody>
+</table>
+<p>These fields are computed by the layout process:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name" colspan="2">frame_parent_rect:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">The ViewRect represeting the client area of the parent view.</td>
+</tr>
+<tr class="field"><th class="field-name">frame_rect:</th><td class="field-body">The <tt class="docutils literal">mkdims</tt> rect of the outer frame in parent-local coordinates.</td>
+</tr>
+<tr class="field"><th class="field-name">frame_body:</th><td class="field-body">The ViewRect representing the body part of the View's own frame.</td>
+</tr>
+</tbody>
+</table>
+<p>The class has the following methods:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">view:addviews(list)</tt></p>
+<p>Adds the views in the list to the <tt class="docutils literal">subviews</tt> sequence. If any of the views
+in the list have <tt class="docutils literal">view_id</tt> attributes that don't conflict with existing keys
+in <tt class="docutils literal">subviews</tt>, also stores them under the string keys. Finally, copies any
+non-conflicting string keys from the <tt class="docutils literal">subviews</tt> tables of the listed views.</p>
+<p>Thus, doing something like this:</p>
+<pre class="literal-block">
+self:addviews{
+    Panel{
+        view_id = 'panel',
+        subviews = {
+            Label{ view_id = 'label' }
+        }
+    }
+}
+</pre>
+<p>Would make the label accessible as both <tt class="docutils literal">self.subviews.label</tt> and
+<tt class="docutils literal">self.subviews.panel.subviews.label</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">view:getWindowSize()</tt></p>
+<p>Returns the dimensions of the <tt class="docutils literal">frame_body</tt> rectangle.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">view:getMousePos()</tt></p>
+<p>Returns the mouse <em>x,y</em> in coordinates local to the <tt class="docutils literal">frame_body</tt>
+rectangle if it is within its clip area, or nothing otherwise.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">view:updateLayout([parent_rect])</span></tt></p>
+<p>Recomputes layout of the view and its subviews. If no argument is
+given, re-uses the previous parent rect. The process goes as follows:</p>
+<ol class="arabic simple">
+<li>Calls <tt class="docutils literal">preUpdateLayout(parent_rect)</tt> via <tt class="docutils literal">invoke_before</tt>.</li>
+<li>Uses <tt class="docutils literal">computeFrame(parent_rect)</tt> to compute the desired frame.</li>
+<li>Calls <tt class="docutils literal">postComputeFrame(frame_body)</tt> via <tt class="docutils literal">invoke_after</tt>.</li>
+<li>Calls <tt class="docutils literal">updateSubviewLayout(frame_body)</tt> to update children.</li>
+<li>Calls <tt class="docutils literal">postUpdateLayout(frame_body)</tt> via <tt class="docutils literal">invoke_after</tt>.</li>
+</ol>
+</li>
+<li><p class="first"><tt class="docutils literal">view:computeFrame(parent_rect)</tt> <em>(for overriding)</em></p>
+<p>Called by <tt class="docutils literal">updateLayout</tt> in order to compute the frame rectangle(s).
+Should return the <tt class="docutils literal">mkdims</tt> rectangle for the outer frame, and optionally
+also for the body frame. If only one rectangle is returned, it is used
+for both frames, and the margin becomes zero.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">view:updateSubviewLayout(frame_body)</tt></p>
+<p>Calls <tt class="docutils literal">updateLayout</tt> on all children.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">view:render(painter)</tt></p>
+<p>Given the parent's painter, renders the view via the following process:</p>
+<ol class="arabic simple">
+<li>Calls <tt class="docutils literal">onRenderFrame(painter, frame_rect)</tt> to paint the outer frame.</li>
+<li>Creates a new painter using the <tt class="docutils literal">frame_body</tt> rect.</li>
+<li>Calls <tt class="docutils literal">onRenderBody(new_painter)</tt> to paint the client area.</li>
+<li>Calls <tt class="docutils literal">renderSubviews(new_painter)</tt> to paint visible children.</li>
+</ol>
+</li>
+<li><p class="first"><tt class="docutils literal">view:renderSubviews(painter)</tt></p>
+<p>Calls <tt class="docutils literal">render</tt> on all <tt class="docutils literal">visible</tt> subviews in the order they
+appear in the <tt class="docutils literal">subviews</tt> sequence.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">view:onRenderFrame(painter, rect)</tt> <em>(for overriding)</em></p>
+<p>Called by <tt class="docutils literal">render</tt> to paint the outer frame; by default does nothing.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">view:onRenderBody(painter)</tt> <em>(for overriding)</em></p>
+<p>Called by <tt class="docutils literal">render</tt> to paint the client area; by default does nothing.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">view:onInput(keys)</tt> <em>(for overriding)</em></p>
+<p>Override this to handle events. By default directly calls <tt class="docutils literal">inputToSubviews</tt>.
+Return a true value from this method to signal that the event has been handled
+and should not be passed on to more views.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">view:inputToSubviews(keys)</tt></p>
+<p>Calls <tt class="docutils literal">onInput</tt> on all visible active subviews, iterating the <tt class="docutils literal">subviews</tt>
+sequence in <em>reverse order</em>, so that topmost subviews get events first.
+Returns <em>true</em> if any of the subviews handled the event.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="screen-class">
+<h3><a class="toc-backref" href="#id42">Screen class</a></h3>
+<p>This is a View subclass intended for use as a stand-alone dialog or screen.
+It adds the following methods:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">screen:isShown()</tt></p>
+<p>Returns <em>true</em> if the screen is currently in the game engine's display stack.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">screen:isDismissed()</tt></p>
+<p>Returns <em>true</em> if the screen is dismissed.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">screen:isActive()</tt></p>
+<p>Returns <em>true</em> if the screen is shown and not dismissed.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">screen:invalidate()</tt></p>
+<p>Requests a repaint. Note that currently using it is not necessary, because
+repaints are constantly requested automatically, due to issues with native
+screens happening otherwise.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">screen:renderParent()</tt></p>
+<p>Asks the parent native screen to render itself, or clears the screen if impossible.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">screen:sendInputToParent(...)</span></tt></p>
+<p>Uses <tt class="docutils literal">simulateInput</tt> to send keypresses to the native parent screen.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">screen:show([parent])</span></tt></p>
+<p>Adds the screen to the display stack with the given screen as the parent;
+if parent is not specified, places this one one topmost. Before calling
+<tt class="docutils literal">dfhack.screen.show</tt>, calls <tt class="docutils literal">self:onAboutToShow(parent)</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">screen:onAboutToShow(parent)</tt> <em>(for overriding)</em></p>
+<p>Called when <tt class="docutils literal">dfhack.screen.show</tt> is about to be called.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">screen:onShow()</tt></p>
+<p>Called by <tt class="docutils literal">dfhack.screen.show</tt> once the screen is successfully shown.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">screen:dismiss()</tt></p>
+<p>Dismisses the screen. A dismissed screen does not receive any more
+events or paint requests, but may remain in the display stack for
+a short time until the game removes it.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">screen:onDismiss()</tt> <em>(for overriding)</em></p>
+<p>Called by <tt class="docutils literal">dfhack.screen.dismiss()</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">screen:onDestroy()</tt> <em>(for overriding)</em></p>
+<p>Called by the native code when the screen is fully destroyed and removed
+from the display stack. Place code that absolutely must be called whenever
+the screen is removed by any means here.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">screen:onResize</tt>, <tt class="docutils literal">screen:onRender</tt></p>
+<p>Defined as callbacks for native code.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="framedscreen-class">
+<h3><a class="toc-backref" href="#id43">FramedScreen class</a></h3>
+<p>A Screen subclass that paints a visible frame around its body.
+Most dialogs should inherit from this class.</p>
+<p>A framed screen has the following attributes:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">frame_style:</th><td class="field-body">A table that defines a set of pens to draw various parts of the frame.</td>
+</tr>
+<tr class="field"><th class="field-name">frame_title:</th><td class="field-body">A string to display in the middle of the top of the frame.</td>
+</tr>
+<tr class="field"><th class="field-name">frame_width:</th><td class="field-body">Desired width of the client area. If <em>nil</em>, the screen will occupy the whole width.</td>
+</tr>
+<tr class="field"><th class="field-name">frame_height:</th><td class="field-body">Likewise, for height.</td>
+</tr>
+<tr class="field"><th class="field-name">frame_inset:</th><td class="field-body">The gap between the frame and the client area. Defaults to 0.</td>
+</tr>
+<tr class="field"><th class="field-name" colspan="2">frame_background:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">The pen to fill in the frame with. Defaults to CLEAR_PEN.</td>
+</tr>
+</tbody>
+</table>
+<p>There are the following predefined frame style tables:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">GREY_FRAME</tt></p>
+<p>A plain grey-colored frame.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">BOUNDARY_FRAME</tt></p>
+<p>The same frame as used by the usual full-screen DF views, like dwarfmode.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">GREY_LINE_FRAME</tt></p>
+<p>A frame consisting of grey lines, similar to the one used by titan announcements.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="gui-widgets">
+<h2><a class="toc-backref" href="#id44">gui.widgets</a></h2>
+<p>This module implements some basic widgets based on the View infrastructure.</p>
+<div class="section" id="widget-class">
+<h3><a class="toc-backref" href="#id45">Widget class</a></h3>
+<p>Base of all the widgets. Inherits from View and has the following attributes:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">frame = <span class="pre">{...}</span></tt></p>
+<p>Specifies the constraints on the outer frame of the widget.
+If omitted, the widget will occupy the whole parent rectangle.</p>
+<p>The frame is specified as a table with the following possible fields:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">l:</th><td class="field-body">gap between the left edges of the frame and the parent.</td>
+</tr>
+<tr class="field"><th class="field-name">t:</th><td class="field-body">gap between the top edges of the frame and the parent.</td>
+</tr>
+<tr class="field"><th class="field-name">r:</th><td class="field-body">gap between the right edges of the frame and the parent.</td>
+</tr>
+<tr class="field"><th class="field-name">b:</th><td class="field-body">gap between the bottom edges of the frame and the parent.</td>
+</tr>
+<tr class="field"><th class="field-name">w:</th><td class="field-body">maximum width of the frame.</td>
+</tr>
+<tr class="field"><th class="field-name">h:</th><td class="field-body">maximum heigth of the frame.</td>
+</tr>
+<tr class="field"><th class="field-name">xalign:</th><td class="field-body">X alignment of the frame.</td>
+</tr>
+<tr class="field"><th class="field-name">yalign:</th><td class="field-body">Y alignment of the frame.</td>
+</tr>
+</tbody>
+</table>
+<p>First the <tt class="docutils literal">l,t,r,b</tt> fields restrict the available area for
+placing the frame. If <tt class="docutils literal">w</tt> and <tt class="docutils literal">h</tt> are not specified or
+larger then the computed area, it becomes the frame. Otherwise
+the smaller frame is placed within the are based on the
+<tt class="docutils literal">xalign/yalign</tt> fields. If the align hints are omitted, they
+are assumed to be 0, 1, or 0.5 based on which of the <tt class="docutils literal">l/r/t/b</tt>
+fields are set.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">frame_inset = <span class="pre">{...}</span></tt></p>
+<p>Specifies the gap between the outer frame, and the client area.
+The attribute may be a simple integer value to specify a uniform
+inset, or a table with the following fields:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">l:</th><td class="field-body">left margin.</td>
+</tr>
+<tr class="field"><th class="field-name">t:</th><td class="field-body">top margin.</td>
+</tr>
+<tr class="field"><th class="field-name">r:</th><td class="field-body">right margin.</td>
+</tr>
+<tr class="field"><th class="field-name">b:</th><td class="field-body">bottom margin.</td>
+</tr>
+<tr class="field"><th class="field-name">x:</th><td class="field-body">left/right margin, if <tt class="docutils literal">l</tt> and/or <tt class="docutils literal">r</tt> are omitted.</td>
+</tr>
+<tr class="field"><th class="field-name">y:</th><td class="field-body">top/bottom margin, if <tt class="docutils literal">t</tt> and/or <tt class="docutils literal">b</tt> are omitted.</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li><p class="first"><tt class="docutils literal">frame_background = pen</tt></p>
+<p>The pen to fill the outer frame with. Defaults to no fill.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="panel-class">
+<h3><a class="toc-backref" href="#id46">Panel class</a></h3>
+<p>Inherits from Widget, and intended for grouping a number of subviews.</p>
+<p>Has attributes:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">subviews = {}</tt></p>
+<p>Used to initialize the subview list in the constructor.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">on_render = function(painter)</tt></p>
+<p>Called from <tt class="docutils literal">onRenderBody</tt>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="pages-class">
+<h3><a class="toc-backref" href="#id47">Pages class</a></h3>
+<p>Subclass of Panel; keeps exactly one child visible.</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">Pages{ <span class="pre">...,</span> selected = ... }</tt></p>
+<p>Specifies which child to select initially; defaults to the first one.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">pages:getSelected()</tt></p>
+<p>Returns the selected <em>index, child</em>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">pages:setSelected(index)</tt></p>
+<p>Selects the specified child, hiding the previous selected one.
+It is permitted to use the subview object, or its <tt class="docutils literal">view_id</tt> as index.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="editfield-class">
+<h3><a class="toc-backref" href="#id48">EditField class</a></h3>
+<p>Subclass of Widget; implements a simple edit field.</p>
+<p>Attributes:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">text:</th><td class="field-body">The current contents of the field.</td>
+</tr>
+<tr class="field"><th class="field-name">text_pen:</th><td class="field-body">The pen to draw the text with.</td>
+</tr>
+<tr class="field"><th class="field-name">on_char:</th><td class="field-body">Input validation callback; used as <tt class="docutils literal">on_char(new_char,text)</tt>.
+If it returns false, the character is ignored.</td>
+</tr>
+<tr class="field"><th class="field-name">on_change:</th><td class="field-body">Change notification callback; used as <tt class="docutils literal">on_change(new_text,old_text)</tt>.</td>
+</tr>
+<tr class="field"><th class="field-name">on_submit:</th><td class="field-body">Enter key callback; if set the field will handle the key and call <tt class="docutils literal">on_submit(text)</tt>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="label-class">
+<h3><a class="toc-backref" href="#id49">Label class</a></h3>
+<p>This Widget subclass implements flowing semi-static text.</p>
+<p>It has the following attributes:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">text_pen:</th><td class="field-body">Specifies the pen for active text.</td>
+</tr>
+<tr class="field"><th class="field-name">text_dpen:</th><td class="field-body">Specifies the pen for disabled text.</td>
+</tr>
+<tr class="field"><th class="field-name">disabled:</th><td class="field-body">Boolean or a callback; if true, the label is disabled.</td>
+</tr>
+<tr class="field"><th class="field-name">enabled:</th><td class="field-body">Boolean or a callback; if false, the label is disabled.</td>
+</tr>
+<tr class="field"><th class="field-name">auto_height:</th><td class="field-body">Sets self.frame.h from the text height.</td>
+</tr>
+<tr class="field"><th class="field-name">auto_width:</th><td class="field-body">Sets self.frame.w from the text width.</td>
+</tr>
+</tbody>
+</table>
+<p>The text itself is represented as a complex structure, and passed
+to the object via the <tt class="docutils literal">text</tt> argument of the constructor, or via
+the <tt class="docutils literal">setText</tt> method, as one of:</p>
+<ul class="simple">
+<li>A simple string, possibly containing newlines.</li>
+<li>A sequence of tokens.</li>
+</ul>
+<p>Every token in the sequence in turn may be either a string, possibly
+containing newlines, or a table with the following possible fields:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">token.text = ...</tt></p>
+<p>Specifies the main text content of a token, and may be a string, or
+a callback returning a string.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">token.gap = ...</tt></p>
+<p>Specifies the number of character positions to advance on the line
+before rendering the token.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">token.tile = pen</tt></p>
+<p>Specifies a pen to paint as one tile before the main part of the token.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">token.width = ...</tt></p>
+<p>If specified either as a value or a callback, the text field is padded
+or truncated to the specified number.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">token.pad_char = <span class="pre">'?'</span></tt></p>
+<p>If specified together with <tt class="docutils literal">width</tt>, the padding area is filled with
+this character instead of just being skipped over.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">token.key = <span class="pre">'...'</span></tt></p>
+<p>Specifies the keycode associated with the token. The string description
+of the key binding is added to the text content of the token.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">token.key_sep = <span class="pre">'...'</span></tt></p>
+<p>Specifies the separator to place between the keybinding label produced
+by <tt class="docutils literal">token.key</tt>, and the main text of the token. If the separator is
+'()', the token is formatted as <tt class="docutils literal"><span class="pre">text..'</span> <span class="pre">('..binding..')'</span></tt>. Otherwise
+it is simply <tt class="docutils literal"><span class="pre">binding..sep..text</span></tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">token.enabled</tt>, <tt class="docutils literal">token.disabled</tt></p>
+<p>Same as the attributes of the label itself, but applies only to the token.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">token.pen</tt>, <tt class="docutils literal">token.dpen</tt></p>
+<p>Specify the pen and disabled pen to be used for the token's text.
+The field may be either the pen itself, or a callback that returns it.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">token.on_activate</tt></p>
+<p>If this field is not nil, and <tt class="docutils literal">token.key</tt> is set, the token will actually
+respond to that key binding unless disabled, and call this callback. Eventually
+this may be extended with mouse click support.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">token.id</tt></p>
+<p>Specifies a unique identifier for the token.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">token.line</tt>, <tt class="docutils literal">token.x1</tt>, <tt class="docutils literal">token.x2</tt></p>
+<p>Reserved for internal use.</p>
+</li>
+</ul>
+<p>The Label widget implements the following methods:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">label:setText(new_text)</tt></p>
+<p>Replaces the text currently contained in the widget.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">label:itemById(id)</tt></p>
+<p>Finds a token by its <tt class="docutils literal">id</tt> field.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">label:getTextHeight()</tt></p>
+<p>Computes the height of the text.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">label:getTextWidth()</tt></p>
+<p>Computes the width of the text.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="list-class">
+<h3><a class="toc-backref" href="#id50">List class</a></h3>
+<p>The List widget implements a simple list with paging.</p>
+<p>It has the following attributes:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">text_pen:</th><td class="field-body">Specifies the pen for deselected list entries.</td>
+</tr>
+<tr class="field"><th class="field-name">cursor_pen:</th><td class="field-body">Specifies the pen for the selected entry.</td>
+</tr>
+<tr class="field"><th class="field-name">inactive_pen:</th><td class="field-body">If specified, used for the cursor when the widget is not active.</td>
+</tr>
+<tr class="field"><th class="field-name">icon_pen:</th><td class="field-body">Default pen for icons.</td>
+</tr>
+<tr class="field"><th class="field-name">on_select:</th><td class="field-body">Selection change callback; called as <tt class="docutils literal">on_select(index,choice)</tt>.
+This is also called with <em>nil</em> arguments if <tt class="docutils literal">setChoices</tt> is called
+with an empty list.</td>
+</tr>
+<tr class="field"><th class="field-name">on_submit:</th><td class="field-body">Enter key callback; if specified, the list reacts to the key
+and calls it as <tt class="docutils literal">on_submit(index,choice)</tt>.</td>
+</tr>
+<tr class="field"><th class="field-name">on_submit2:</th><td class="field-body">Shift-Enter key callback; if specified, the list reacts to the key
+and calls it as <tt class="docutils literal">on_submit2(index,choice)</tt>.</td>
+</tr>
+<tr class="field"><th class="field-name">row_height:</th><td class="field-body">Height of every row in text lines.</td>
+</tr>
+<tr class="field"><th class="field-name">icon_width:</th><td class="field-body">If not <em>nil</em>, the specified number of character columns
+are reserved to the left of the list item for the icons.</td>
+</tr>
+<tr class="field"><th class="field-name">scroll_keys:</th><td class="field-body">Specifies which keys the list should react to as a table.</td>
+</tr>
+</tbody>
+</table>
+<p>Every list item may be specified either as a string, or as a lua table
+with the following fields:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">text:</th><td class="field-body">Specifies the label text in the same format as the Label text.</td>
+</tr>
+<tr class="field"><th class="field-name">caption, [1]:</th><td class="field-body">Deprecated legacy aliases for <strong>text</strong>.</td>
+</tr>
+<tr class="field"><th class="field-name">text_*:</th><td class="field-body">Reserved for internal use.</td>
+</tr>
+<tr class="field"><th class="field-name">key:</th><td class="field-body">Specifies a keybinding that acts as a shortcut for the specified item.</td>
+</tr>
+<tr class="field"><th class="field-name">icon:</th><td class="field-body">Specifies an icon string, or a pen to paint a single character. May be a callback.</td>
+</tr>
+<tr class="field"><th class="field-name">icon_pen:</th><td class="field-body">When the icon is a string, used to paint it.</td>
+</tr>
+</tbody>
+</table>
+<p>The list supports the following methods:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">List{ <span class="pre">...,</span> choices = <span class="pre">...,</span> selected = ... }</tt></p>
+<p>Same as calling <tt class="docutils literal">setChoices</tt> after construction.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:setChoices(choices[, selected])</tt></p>
+<p>Replaces the list of choices, possibly also setting the currently selected index.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:setSelected(selected)</tt></p>
+<p>Sets the currently selected index. Returns the index after validation.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:getChoices()</tt></p>
+<p>Returns the list of choices.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:getSelected()</tt></p>
+<p>Returns the selected <em>index, choice</em>, or nothing if the list is empty.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:getContentWidth()</tt></p>
+<p>Returns the minimal width to draw all choices without clipping.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:getContentHeight()</tt></p>
+<p>Returns the minimal width to draw all choices without scrolling.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:submit()</tt></p>
+<p>Call the <tt class="docutils literal">on_submit</tt> callback, as if the Enter key was handled.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:submit2()</tt></p>
+<p>Call the <tt class="docutils literal">on_submit2</tt> callback, as if the Shift-Enter key was handled.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="filteredlist-class">
+<h3><a class="toc-backref" href="#id51">FilteredList class</a></h3>
+<p>This widget combines List, EditField and Label into a combo-box like
+construction that allows filtering the list by subwords of its items.</p>
+<p>In addition to passing through all attributes supported by List, it
+supports:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">edit_pen:</th><td class="field-body">If specified, used instead of <tt class="docutils literal">cursor_pen</tt> for the edit field.</td>
+</tr>
+<tr class="field"><th class="field-name">edit_below:</th><td class="field-body">If true, the edit field is placed below the list instead of above.</td>
+</tr>
+<tr class="field"><th class="field-name" colspan="2">not_found_label:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body">Specifies the text of the label shown when no items match the filter.</td>
+</tr>
+</tbody>
+</table>
+<p>The list choices may include the following attributes:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">search_key:</th><td class="field-body">If specified, used instead of <strong>text</strong> to match against the filter.</td>
+</tr>
+</tbody>
+</table>
+<p>The widget implements:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">list:setChoices(choices[, selected])</tt></p>
+<p>Resets the filter, and passes through to the inner list.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:getChoices()</tt></p>
+<p>Returns the list of <em>all</em> choices.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:getFilter()</tt></p>
+<p>Returns the current filter string, and the <em>filtered</em> list of choices.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">list:setFilter(filter[,pos])</span></tt></p>
+<p>Sets the new filter string, filters the list, and selects the item at
+index <tt class="docutils literal">pos</tt> in the <em>unfiltered</em> list if possible.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:canSubmit()</tt></p>
+<p>Checks if there are currently any choices in the filtered list.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">list:getSelected()</tt>, <tt class="docutils literal">list:getContentWidth()</tt>, <tt class="docutils literal">list:getContentHeight()</tt>, <tt class="docutils literal">list:submit()</tt></p>
+<p>Same as with an ordinary list.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
 <div class="section" id="plugins">
-<h1><a class="toc-backref" href="#id36">Plugins</a></h1>
+<h1><a class="toc-backref" href="#id52">Plugins</a></h1>
 <p>DFHack plugins may export native functions and events
 to lua contexts. They are automatically imported by
 <tt class="docutils literal"><span class="pre">mkmodule('plugins.&lt;name&gt;')</span></tt>; this means that a lua
 module file is still necessary for <tt class="docutils literal">require</tt> to read.</p>
 <p>The following plugins have lua support.</p>
 <div class="section" id="burrows">
-<h2><a class="toc-backref" href="#id37">burrows</a></h2>
+<h2><a class="toc-backref" href="#id53">burrows</a></h2>
 <p>Implements extended burrow manipulations.</p>
 <p>Events:</p>
 <ul>
@@ -2062,13 +3040,97 @@ set is the same as used by the command line.</p>
 <p>The lua module file also re-exports functions from <tt class="docutils literal">dfhack.burrows</tt>.</p>
 </div>
 <div class="section" id="sort">
-<h2><a class="toc-backref" href="#id38">sort</a></h2>
+<h2><a class="toc-backref" href="#id54">sort</a></h2>
 <p>Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.</p>
 </div>
+<div class="section" id="eventful">
+<h2><a class="toc-backref" href="#id55">Eventful</a></h2>
+<p>This plugin exports some events to lua thus allowing to run lua functions
+on DF world events.</p>
+<div class="section" id="list-of-events">
+<h3><a class="toc-backref" href="#id56">List of events</a></h3>
+<ol class="arabic">
+<li><p class="first"><tt class="docutils literal">onReactionComplete(reaction,unit,input_items,input_reagents,output_items,call_native)</tt></p>
+<p>Auto activates if detects reactions starting with <tt class="docutils literal">LUA_HOOK_</tt>. Is called when reaction finishes.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onItemContaminateWound(item,unit,wound,number1,number2)</tt></p>
+<p>Is called when item tries to contaminate wound (e.g. stuck in).</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onProjItemCheckMovement(projectile)</tt></p>
+<p>Is called when projectile moves.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onProjItemCheckImpact(projectile,somebool)</tt></p>
+<p>Is called when projectile hits something.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onProjUnitCheckMovement(projectile)</tt></p>
+<p>Is called when projectile moves.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onProjUnitCheckImpact(projectile,somebool)</tt></p>
+<p>Is called when projectile hits something.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onWorkshopFillSidebarMenu(workshop,callnative)</tt></p>
+<p>Is called when viewing a workshop in 'q' mode, to populate reactions, useful for custom viewscreens for shops.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">postWorkshopFillSidebarMenu(workshop)</tt></p>
+<p>Is called after calling (or not) native fillSidebarMenu(). Useful for job button
+tweaking (e.g. adding custom reactions)</p>
+</li>
+</ol>
+</div>
+<div class="section" id="functions">
+<h3><a class="toc-backref" href="#id57">Functions</a></h3>
+<ol class="arabic">
+<li><p class="first"><tt class="docutils literal">registerReaction(reaction_name,callback)</tt></p>
+<p>Simplified way of using onReactionComplete; the callback is function (same params as event).</p>
+</li>
+<li><p class="first"><tt class="docutils literal">removeNative(shop_name)</tt></p>
+<p>Removes native choice list from the building.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">addReactionToShop(reaction_name,shop_name)</tt></p>
+<p>Add a custom reaction to the building.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="examples">
+<h3><a class="toc-backref" href="#id58">Examples</a></h3>
+<p>Spawn dragon breath on each item attempt to contaminate wound:</p>
+<pre class="literal-block">
+b=require &quot;plugins.eventful&quot;
+b.onItemContaminateWound.one=function(item,unit,un_wound,x,y)
+    local flw=dfhack.maps.spawnFlow(unit.pos,6,0,0,50000)
+end
+</pre>
+<p>Reaction complete example:</p>
+<pre class="literal-block">
+b=require &quot;plugins.eventful&quot;
+
+b.onReactionComplete.one=function(reaction,unit,in_items,in_reag,out_items,call_native)
+  local pos=copyall(unit.pos)
+  -- spawn dragonbreath after 100 ticks
+  dfhack.timeout(100,&quot;ticks&quot;,function() dfhack.maps.spawnFlow(pos,6,0,0,50000) end)
+  --do not call real item creation code
+  call_native.value=false
+end
+</pre>
+<p>Grenade example:</p>
+<pre class="literal-block">
+b=require &quot;plugins.eventful&quot;
+b.onProjItemCheckImpact.one=function(projectile)
+  -- you can check if projectile.item e.g. has correct material
+  dfhack.maps.spawnFlow(projectile.cur_pos,6,0,0,50000)
+end
+</pre>
+<p>Integrated tannery:</p>
+<pre class="literal-block">
+b=require &quot;plugins.eventful&quot;
+b.addReactionToShop(&quot;TAN_A_HIDE&quot;,&quot;LEATHERWORKS&quot;)
+</pre>
+</div>
+</div>
 </div>
 <div class="section" id="scripts">
-<h1><a class="toc-backref" href="#id39">Scripts</a></h1>
+<h1><a class="toc-backref" href="#id59">Scripts</a></h1>
 <p>Any files with the .lua extension placed into hack/scripts/*
 are automatically used by the DFHack core as commands. The
 matching command name consists of the name of the file sans
@@ -2098,6 +3160,25 @@ The <tt class="docutils literal">name</tt> argument should be the name stem, as 
 </li>
 </ul>
 <p>Note that this function lets errors propagate to the caller.</p>
+<div class="section" id="save-init-script">
+<h2><a class="toc-backref" href="#id60">Save init script</a></h2>
+<p>If a save directory contains a file called <tt class="docutils literal">raw/init.lua</tt>, it is
+automatically loaded and executed every time the save is loaded. It
+can also define the following functions to be called by dfhack:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal">function onStateChange(op) ... end</tt></p>
+<p>Automatically called from the regular onStateChange event as long
+as the save is still loaded. This avoids the need to install a hook
+into the global <tt class="docutils literal">dfhack.onStateChange</tt> table, with associated
+cleanup concerns.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">function onUnload() ... end</tt></p>
+<p>Called when the save containing the script is unloaded. This function
+should clean up any global hooks installed by the script.</p>
+</li>
+</ul>
+<p>Within the init script, the path to the save directory is available as <tt class="docutils literal">SAVE_PATH</tt>.</p>
+</div>
 </div>
 </div>
 </body>

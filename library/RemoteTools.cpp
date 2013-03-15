@@ -292,9 +292,9 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
         if (!unit->custom_profession.empty())
             info->set_custom_profession(unit->custom_profession);
 
-        if (unit->military.squad_index >= 0)
+        if (unit->military.squad_id >= 0)
         {
-            info->set_squad_id(unit->military.squad_index);
+            info->set_squad_id(unit->military.squad_id);
             info->set_squad_position(unit->military.squad_position);
         }
     }

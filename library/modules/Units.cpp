@@ -405,7 +405,7 @@ bool Creatures::WriteJob(const t_creature * furball, std::vector<t_material> con
     for(i=0;i<cmats.size();i++)
     {
         p->writeWord(cmats[i] + off.job_material_itemtype_o, mat[i].itemType);
-        p->writeWord(cmats[i] + off.job_material_subtype_o, mat[i].subType);
+        p->writeWord(cmats[i] + off.job_material_subtype_o, mat[i].itemSubtype);
         p->writeWord(cmats[i] + off.job_material_subindex_o, mat[i].subIndex);
         p->writeDWord(cmats[i] + off.job_material_index_o, mat[i].index);
         p->writeDWord(cmats[i] + off.job_material_flags_o, mat[i].flags);
@@ -475,7 +475,7 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
     for(i=0;i<cmats.size();i++)
     {
         mat[i].itemType = p->readWord(cmats[i] + off.job_material_itemtype_o);
-        mat[i].subType = p->readWord(cmats[i] + off.job_material_subtype_o);
+        mat[i].itemSubtype = p->readWord(cmats[i] + off.job_material_subtype_o);
         mat[i].subIndex = p->readWord(cmats[i] + off.job_material_subindex_o);
         mat[i].index = p->readDWord(cmats[i] + off.job_material_index_o);
         mat[i].flags = p->readDWord(cmats[i] + off.job_material_flags_o);
@@ -519,18 +519,25 @@ df::coord Units::getPosition(df::unit *unit)
     return unit->pos;
 }
 
+df::general_ref *Units::getGeneralRef(df::unit *unit, df::general_ref_type type)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return findRef(unit->general_refs, type);
+}
+
+df::specific_ref *Units::getSpecificRef(df::unit *unit, df::specific_ref_type type)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return findRef(unit->specific_refs, type);
+}
+
 df::item *Units::getContainer(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    for (size_t i = 0; i < unit->refs.size(); i++)
-    {
-        df::general_ref *ref = unit->refs[i];
-        if (ref->getType() == general_ref_type::CONTAINED_IN_ITEM)
-            return ref->getItem();
-    }
-
-    return NULL;
+    return findItemRef(unit->general_refs, general_ref_type::CONTAINED_IN_ITEM);
 }
 
 static df::assumed_identity *getFigureIdentity(df::historical_figure *figure)
@@ -607,9 +614,9 @@ df::nemesis_record *Units::getNemesis(df::unit *unit)
     if (!unit)
         return NULL;
 
-    for (unsigned i = 0; i < unit->refs.size(); i++)
+    for (unsigned i = 0; i < unit->general_refs.size(); i++)
     {
-        df::nemesis_record *rv = unit->refs[i]->getNemesis();
+        df::nemesis_record *rv = unit->general_refs[i]->getNemesis();
         if (rv && rv->unit == unit)
             return rv;
     }
@@ -778,10 +785,10 @@ bool DFHack::Units::isSane(df::unit *unit)
     if (unit->flags1.bits.dead ||
         unit->flags3.bits.ghostly ||
         isOpposedToLife(unit) ||
-        unit->unknown8.unk2)
+        unit->enemy.undead)
         return false;
 
-    if (unit->unknown8.normal_race == unit->unknown8.were_race && isCrazed(unit))
+    if (unit->enemy.normal_race == unit->enemy.were_race && isCrazed(unit))
         return false;
 
     switch (unit->mood)
@@ -832,7 +839,7 @@ bool DFHack::Units::isDwarf(df::unit *unit)
     CHECK_NULL_POINTER(unit);
 
     return unit->race == ui->race_id ||
-           unit->unknown8.normal_race == ui->race_id;
+           unit->enemy.normal_race == ui->race_id;
 }
 
 double DFHack::Units::getAge(df::unit *unit, bool true_age)
@@ -889,8 +896,7 @@ int Units::getNominalSkill(df::unit *unit, df::job_skill skill_id, bool use_rust
 
     // Retrieve skill from unit soul:
 
-    df::enum_field<df::job_skill,int16_t> key(skill_id);
-    auto skill = binsearch_in_vector(unit->status.current_soul->skills, &df::unit_skill::id, key);
+    auto skill = binsearch_in_vector(unit->status.current_soul->skills, &df::unit_skill::id, skill_id);
 
     if (skill)
     {
@@ -901,6 +907,24 @@ int Units::getNominalSkill(df::unit *unit, df::job_skill skill_id, bool use_rust
     }
 
     return 0;
+}
+
+int Units::getExperience(df::unit *unit, df::job_skill skill_id, bool total)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if (!unit->status.current_soul)
+        return 0;
+
+    auto skill = binsearch_in_vector(unit->status.current_soul->skills, &df::unit_skill::id, skill_id);
+    if (!skill)
+        return 0;
+
+    int xp = skill->experience;
+    // exact formula used by the game:
+    if (total && skill->rating > 0)
+        xp += 500*skill->rating + 100*skill->rating*(skill->rating - 1)/2;
+    return xp;
 }
 
 int Units::getEffectiveSkill(df::unit *unit, df::job_skill skill_id)
@@ -1201,12 +1225,12 @@ int Units::computeMovementSpeed(df::unit *unit)
 
     // Stance
 
-    if (!unit->flags1.bits.on_ground && unit->status2.able_stand > 2)
+    if (!unit->flags1.bits.on_ground && unit->status2.limbs_stand_max > 2)
     {
         // WTF
-        int as = unit->status2.able_stand;
+        int as = unit->status2.limbs_stand_max;
         int x = (as-1) - (as>>1);
-        int y = as - unit->status2.able_stand_impair;
+        int y = as - unit->status2.limbs_stand_count;
         if (unit->flags3.bits.on_crutch) y--;
         y = y * 500 / x;
         if (y > 0) speed += y;

@@ -37,7 +37,6 @@ using std::set;
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include "modules/Vegetation.h"
 #include "modules/Maps.h"
 #include "modules/Gui.h"
 #include "TileTypes.h"

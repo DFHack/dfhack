@@ -58,14 +58,10 @@ if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhac
 endif()
 
 # set up versioning.
-set(DF_VERSION_MAJOR "0")
-set(DF_VERSION_MINOR "34")
-set(DF_VERSION_PATCH "11")
-set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
+set(DF_VERSION "0.34.11")
+SET(DFHACK_RELEASE "r3" CACHE STRING "Current release revision.")
 
-SET(DFHACK_RELEASE "r2" CACHE STRING "Current release revision.")
-
-set(DFHACK_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}-${DFHACK_RELEASE}")
+set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")
 
 ## where to install things (after the build is done, classic 'make install' or package structure)
@@ -122,7 +118,7 @@ ADD_DEFINITIONS(-DPROTOBUF_USE_DLLS)
 ADD_DEFINITIONS(-DLUA_BUILD_AS_DLL)
 
 if(APPLE)
-	add_definitions(-D_DARWIN)
+    add_definitions(-D_DARWIN)
 elseif(UNIX)
     add_definitions(-D_LINUX)
 elseif(WIN32)
@@ -146,7 +142,7 @@ include_directories(depends/clsocket/src)
 add_subdirectory(depends)
 
 
-find_package(Docutils)
+#find_package(Docutils)
 
 #set (RST_FILES
 #"Readme"
@@ -173,6 +169,7 @@ IF(BUILD_LIBRARY)
     add_subdirectory (library)
     ## install the default documentation files
     install(FILES LICENSE "Lua API.html" Readme.html Compile.html Contributors.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(DIRECTORY images DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
 #build the plugins
@@ -182,11 +179,11 @@ endif()
 
 # Packaging with CPack!
 IF(UNIX)
-	if(APPLE)
-		SET(CPACK_GENERATOR "ZIP")
-	else()
-	    SET(CPACK_GENERATOR "TGZ")
-	endif()
+    if(APPLE)
+        SET(CPACK_GENERATOR "ZIP")
+    else()
+        SET(CPACK_GENERATOR "TGZ")
+    endif()
 ELSEIF(WIN32)
     SET(CPACK_GENERATOR "ZIP")
 ENDIF()

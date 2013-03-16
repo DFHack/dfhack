@@ -140,6 +140,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(buildingplan buildingplan.cpp)
     DFHACK_PLUGIN(resume resume.cpp)
     DFHACK_PLUGIN(dwarfmonitor dwarfmonitor.cpp)
+    DFHACK_PLUGIN(mousequery mousequery.cpp)
 endif()
 
 

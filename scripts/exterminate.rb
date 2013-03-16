@@ -67,7 +67,7 @@ The targets will bleed out on the next game tick, or if they are immune to that,
 The special final argument 'magma' will make magma rain on the targets instead.
 
 Ex: exterminate gob
-    exterminate elf magma
+    exterminate elve magma
     exterminate him
 EOS
 

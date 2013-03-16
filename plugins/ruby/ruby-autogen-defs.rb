@@ -642,7 +642,7 @@ module DFHack
                 @_tg = tg
             end
             # XXX DF uses stl::deque<some_struct>, so to have a C binding we'd need to single-case every
-            # possible struct size, like for StlVector. Just ignore it for now, deque are rare enough.
+            # possible struct size, like for StlVector. Just ignore it for now, deques are rare enough.
             def inspect ; "#<StlDeque>" ; end
         end
 
@@ -676,7 +676,7 @@ module DFHack
             def inspect
                 out = "#<DfFlagarray"
                 each_with_index { |e, idx|
-                    out << " #{_indexenum.sym(idx)}" if e
+                    out << " #{_indexenum ? _indexenum.sym(idx) : idx}" if e
                 }
                 out << '>'
             end

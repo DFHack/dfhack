@@ -220,8 +220,7 @@ struct resume_hook : public df::viewscreen_dwarfmodest
     {
         INTERPOSE_NEXT(render)();
 
-        DFHack::World *world = Core::getInstance().getWorld();
-        if (enabled && world->ReadPauseState() && ui->main.mode == ui_sidebar_mode::Default)
+        if (enabled && DFHack::World::ReadPauseState() && ui->main.mode == ui_sidebar_mode::Default)
         {
             scan_for_suspended_buildings();
             show_suspended_buildings();

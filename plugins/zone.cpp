@@ -1005,9 +1005,9 @@ bool isAssigned(df::unit* unit)
 bool isAssignedToZone(df::unit* unit)
 {
     bool assigned = false;
-    for (size_t r=0; r < unit->refs.size(); r++)
+    for (size_t r=0; r < unit->general_refs.size(); r++)
     {
-        df::general_ref * ref = unit->refs[r];
+        df::general_ref * ref = unit->general_refs[r];
         auto rtype = ref->getType();
         if(rtype == df::general_ref_type::BUILDING_CIVZONE_ASSIGNED)
         {

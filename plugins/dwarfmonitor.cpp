@@ -1107,7 +1107,7 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
 
     static decltype(world->frame_counter) last_frame_count = 0;
     
-    bool is_paused = Core::getInstance().getWorld()->ReadPauseState();
+    bool is_paused = DFHack::World::ReadPauseState();
     if (is_paused)
     {
         if (monitor_misery && !misery_upto_date)

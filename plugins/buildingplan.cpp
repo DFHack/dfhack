@@ -478,7 +478,7 @@ public:
         this->building = building;
         this->filter = *filter;
         pos = df::coord(building->centerx, building->centery, building->z);
-        config = Core::getInstance().getWorld()->AddPersistentData("buildingplan/constraints");
+        config = DFHack::World::AddPersistentData("buildingplan/constraints");
         config.val() = filter->getMaterialFilterAsSerial();
         config.ival(1) = building->id;
         config.ival(2) = filter->min_quality + 1;
@@ -606,7 +606,7 @@ public:
 
     void remove()
     {
-        Core::getInstance().getWorld()->DeletePersistentData(config);
+        DFHack::World::DeletePersistentData(config);
     }
 
 private:
@@ -637,9 +637,8 @@ public:
     void reset(color_ostream &out)
     {
         planned_buildings.clear();
-        auto pworld = Core::getInstance().getWorld();
         std::vector<PersistentDataItem> items;
-        pworld->GetPersistentData(&items, "buildingplan/constraints");
+        DFHack::World::GetPersistentData(&items, "buildingplan/constraints");
 
         for (auto i = items.begin(); i != items.end(); i++)
         {
@@ -842,10 +841,10 @@ private:
 #define F(x) bad_flags.bits.x = true;
         F(dump); F(forbid); F(garbage_collect);
         F(hostile); F(on_fire); F(rotten); F(trader);
-        F(in_building); F(construction); F(artifact1);
+        F(in_building); F(construction); F(artifact);
 #undef F
 
-        std::vector<df::item*> &items = world->items.other[items_other_id::ANY_FREE];
+        std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
 
         for (size_t i = 0; i < items.size(); i++)
         {
@@ -861,7 +860,7 @@ private:
             if (itype == item_type::BOX && item->isBag())
                 continue; //Skip bags
 
-            if (item->flags.bits.artifact1 || item->flags.bits.artifact2)
+            if (item->flags.bits.artifact)
                 continue;
 
             if (item->flags.bits.in_job ||

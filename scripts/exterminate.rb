@@ -62,7 +62,7 @@ With no argument, lists possible targets with their head count.
 With the special argument 'him' or 'her', kill only the currently selected creature.
 With the special argument 'undead', kill all undead creatures/thralls.
 
-The targets will bleed out, or if they are immune to that, will vanish in a puff of smoke.
+The targets will bleed out on the next game tick, or if they are immune to that, will vanish in a puff of smoke.
 
 The special final argument 'magma' will make magma rain on the targets instead.
 
@@ -93,7 +93,10 @@ when /^undead/i
 
 else
 	raw_race = df.match_rawname(race, all_races.keys)
-	raise 'invalid race' if not raw_race
+	if not raw_race
+		puts "Invalid race, use one of #{all_races.keys.sort.join(' ')}"
+		throw :script_finished
+	end
 
 	race_nr = df.world.raws.creatures.all.index { |cr| cr.creature_id == raw_race }
 

@@ -25,7 +25,7 @@ using df::global::ui;
 
 typedef int16_t activity_type;
 
-#define PLUGIN_VERSION 0.4
+#define PLUGIN_VERSION 0.5
 #define DAY_TICKS 1200
 #define DELTA_TICKS 100
 

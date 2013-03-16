@@ -37,7 +37,7 @@ using df::global::ui_build_selector;
 using df::global::world;
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 0.8
+#define PLUGIN_VERSION 0.9
 
 #ifndef HAVE_NULLPTR
 #define nullptr 0L

@@ -39,7 +39,7 @@ using df::global::ui;
 using df::global::world;
 
 DFHACK_PLUGIN("resume");
-#define PLUGIN_VERSION 0.1
+#define PLUGIN_VERSION 0.2
 
 #ifndef HAVE_NULLPTR
 #define nullptr 0L

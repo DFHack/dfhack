@@ -281,6 +281,13 @@ void processJob(color_ostream& out, void* jobPtr) {
     }
     
     df::unit* worker = df::unit::find(workerId);
+    if ( worker == NULL ) {
+        //out.print("%s, line %d: invalid worker.\n", __FILE__, __LINE__);
+        //this probably means that it finished before EventManager could get a copy of the job while the job was running
+        //TODO: consider printing a warning once
+        return;
+    }
+    
     //find the building that made it
     int32_t buildingId = -1;
     for ( size_t a = 0; a < job->general_refs.size(); a++ ) {

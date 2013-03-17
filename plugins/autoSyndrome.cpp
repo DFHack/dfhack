@@ -1,7 +1,7 @@
-#include "PluginManager.h"
-#include "Export.h"
-#include "DataDefs.h"
 #include "Core.h"
+#include "DataDefs.h"
+#include "Export.h"
+#include "PluginManager.h"
 
 #include "modules/EventManager.h"
 #include "modules/Job.h"
@@ -10,6 +10,10 @@
 #include "df/building.h"
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
+#include "df/general_ref.h"
+#include "df/general_ref_building_holderst.h"
+#include "df/general_ref_type.h"
+#include "df/general_ref_unit_workerst.h"
 #include "df/global_objects.h"
 #include "df/item.h"
 #include "df/item_boulderst.h"
@@ -23,10 +27,6 @@
 #include "df/unit_syndrome.h"
 #include "df/ui.h"
 #include "df/unit.h"
-#include "df/general_ref.h"
-#include "df/general_ref_building_holderst.h"
-#include "df/general_ref_type.h"
-#include "df/general_ref_unit_workerst.h"
 
 #include <string>
 #include <vector>
@@ -241,6 +241,7 @@ bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df
 }
 
 void processJob(color_ostream& out, void* jobPtr) {
+    CoreSuspender suspender;
     df::job* job = (df::job*)jobPtr;
     if ( job == NULL ) {
         out.print("Error %s line %d: null job.\n", __FILE__, __LINE__);
@@ -278,13 +279,8 @@ void processJob(color_ostream& out, void* jobPtr) {
             continue;
         }
     }
-
-    int32_t workerIndex = df::unit::binsearch_index(df::global::world->units.all, workerId);
-    if ( workerIndex < 0 ) {
-        out.print("%s line %d: Couldn't find unit %d.\n", __FILE__, __LINE__, workerId);
-        return;
-    }
-    df::unit* worker = df::global::world->units.all[workerIndex];
+    
+    df::unit* worker = df::unit::find(workerId);
     //find the building that made it
     int32_t buildingId = -1;
     for ( size_t a = 0; a < job->general_refs.size(); a++ ) {
@@ -299,19 +295,16 @@ void processJob(color_ostream& out, void* jobPtr) {
             continue;
         }
     }
-    df::building* building;
-    {
-        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, buildingId);
-        if ( index == -1 ) {
-            out.print("%s, line %d: error: couldn't find building %d.\n", __FILE__, __LINE__, buildingId);
-            return;
-        }
-        building = df::global::world->buildings.all[index];
+    
+    df::building* building = df::building::find(buildingId);
+    if ( building == NULL ) {
+        out.print("%s, line %d: error: couldn't find building %d.\n", __FILE__, __LINE__, buildingId);
+        return;
     }
-
+    
     //find all of the products it makes. Look for a stone with a low boiling point.
-    bool appliedSomething = false;
     for ( size_t a = 0; a < reaction->products.size(); a++ ) {
+        bool appliedSomething = false;
         df::reaction_product_type type = reaction->products[a]->getType();
         //out.print("type = %d\n", (int32_t)type);
         if ( type != df::enums::reaction_product_type::item )
@@ -321,13 +314,9 @@ void processJob(color_ostream& out, void* jobPtr) {
         if ( bob->item_type != df::enums::item_type::BOULDER )
             continue;
         //for now don't worry about subtype
-
-        //must be a boiling rock syndrome
+        
         df::inorganic_raw* inorganic = df::global::world->raws.inorganics[bob->mat_index];
-        if ( inorganic->material.heat.boiling_point > 9000 ) {
-            continue;
-        }
-
+        
         for ( size_t b = 0; b < inorganic->material.syndrome.size(); b++ ) {
             //add each syndrome to the guy who did the job
             df::syndrome* syndrome = inorganic->material.syndrome[b];
@@ -335,25 +324,30 @@ void processJob(color_ostream& out, void* jobPtr) {
             bool allowMultipleTargets = false;
             bool foundCommand = false;
             bool destroyRock = true;
+            bool foundAutoSyndrome = false;
             string commandStr;
             vector<string> args;
             for ( size_t c = 0; c < syndrome->syn_class.size(); c++ ) {
-                std::string* clazz = syndrome->syn_class[c];
+                std::string& clazz = *syndrome->syn_class[c];
+                if ( clazz == "\\AUTO_SYNDROME" ) {
+                    foundAutoSyndrome = true;
+                    continue;
+                } else if ( clazz == "\\WORKER_ONLY" ) {
+                    workerOnly = true;
+                    continue;
+                } else if ( clazz == "\\ALLOW_MULTIPLE_TARGETS" ) {
+                    allowMultipleTargets = true;
+                    continue;
+                } else if ( clazz == "\\PRESERVE_ROCK" ) {
+                    destroyRock = false;
+                    continue;
+                }
                 if ( foundCommand ) {
                     if ( commandStr == "" ) {
-                        if ( *clazz == "\\WORKER_ONLY" ) {
-                            workerOnly = true;
-                        } else if ( *clazz == "\\ALLOW_MULTIPLE_TARGETS" ) {
-                            allowMultipleTargets = true;
-                        } else if ( *clazz == "\\PRESERVE_ROCK" ) {
-                            destroyRock = false;
-                        }
-                        else {
-                            commandStr = *clazz;
-                        }
+                        commandStr = clazz;
                     } else {
                         stringstream bob;
-                        if ( *clazz == "\\LOCATION" ) {
+                        if ( clazz == "\\LOCATION" ) {
                             bob << job->pos.x;
                             args.push_back(bob.str());
                             bob.str("");
@@ -368,24 +362,28 @@ void processJob(color_ostream& out, void* jobPtr) {
                             args.push_back(bob.str());
                             bob.str("");
                             bob.clear();
-                        } else if ( *clazz == "\\WORKER_ID" ) {
+                        } else if ( clazz == "\\WORKER_ID" ) {
                             bob << workerId;
                             args.push_back(bob.str());
-                        } else if ( *clazz == "\\REACTION_INDEX" ) {
+                        } else if ( clazz == "\\REACTION_INDEX" ) {
                             bob << reaction->index;
                             args.push_back(bob.str());
                         } else {
-                            args.push_back(*clazz);
+                            args.push_back(clazz);
                         }
                     }
-                } else if ( *clazz == "\\COMMAND" ) {
+                } else if ( clazz == "\\COMMAND" ) {
                     foundCommand = true;
                 }
             }
             if ( commandStr != "" ) {
                 Core::getInstance().runCommand(out, commandStr, args);
             }
-
+            
+            if ( !foundAutoSyndrome ) {
+                continue;
+            }
+            
             if ( destroyRock ) {
                 //find the rock and kill it before it can boil and cause problems and ugliness
                 for ( size_t c = 0; c < df::global::world->items.all.size(); c++ ) {
@@ -403,15 +401,11 @@ void processJob(color_ostream& out, void* jobPtr) {
                     if ( boulder->mat_index != bob->mat_index )
                         continue;
                     
-                    boulder->flags.bits.garbage_collect = true;
-                    boulder->flags.bits.forbid = true;
                     boulder->flags.bits.hidden = true;
+                    boulder->flags.bits.forbid = true;
+                    boulder->flags.bits.garbage_collect = true;
                 }
             }
-
-            //only one syndrome per reaction will be applied, unless multiples are allowed.
-            if ( appliedSomething && !allowMultipleTargets )
-                continue;
 
             if ( maybeApply(out, syndrome, workerId, worker) ) {
                 appliedSomething = true;
@@ -419,12 +413,15 @@ void processJob(color_ostream& out, void* jobPtr) {
 
             if ( workerOnly )
                 continue;
+
+            if ( appliedSomething && !allowMultipleTargets )
+                continue;
             
             //now try applying it to everybody inside the building
             for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
                 df::unit* unit = df::global::world->units.active[a];
                 if ( unit == worker )
-                    continue;
+                    continue; //we already tried giving it to him, so no doubling up
                 if ( unit->pos.z != building->z )
                     continue;
                 if ( unit->pos.x < building->x1 || unit->pos.x > building->x2 )

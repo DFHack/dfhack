@@ -19,7 +19,7 @@
 using namespace DFHack;
 using namespace std;
 
-DFHACK_PLUGIN("trueTransformation");
+DFHACK_PLUGIN("syndromeTrigger");
 
 void syndromeHandler(color_ostream& out, void* ptr);
 
@@ -42,17 +42,64 @@ void syndromeHandler(color_ostream& out, void* ptr) {
     }
 
     df::unit_syndrome* unit_syndrome = unit->syndromes.active[data->syndromeIndex];
+    //out.print("  syndrome type %d\n", unit_syndrome->type);
     df::syndrome* syndrome = df::global::world->raws.syndromes.all[unit_syndrome->type];
     
-    bool foundIt = false;
+    bool foundPermanent = false;
+    bool foundCommand = false;
+    string commandStr;
+    vector<string> args;
     int32_t raceId = -1;
     df::creature_raw* creatureRaw = NULL;
     int32_t casteId = -1;
     for ( size_t a = 0; a < syndrome->syn_class.size(); a++ ) {
-        if ( *syndrome->syn_class[a] == "\\PERMANENT" ) {
-            foundIt = true;
+        std::string& clazz = *syndrome->syn_class[a];
+        //out.print("  clazz %d = %s\n", a, clazz.c_str());
+        if ( foundCommand ) {
+            if ( commandStr == "" ) {
+                commandStr = clazz;
+                continue;
+            }
+            stringstream bob;
+            if ( clazz == "\\LOCATION" ) {
+                bob << unit->pos.x;
+                args.push_back(bob.str());
+                bob.str("");
+                bob.clear();
+                
+                bob << unit->pos.y;
+                args.push_back(bob.str());
+                bob.str("");
+                bob.clear();
+                
+                bob << unit->pos.z;
+                args.push_back(bob.str());
+                bob.str("");
+                bob.clear();
+            } else if ( clazz == "\\UNIT_ID" ) {
+                bob << unit->id;
+                args.push_back(bob.str());
+                bob.str("");
+                bob.clear();
+            } else if ( clazz == "\\SYNDROME_ID" ) {
+                bob << unit_syndrome->type;
+                args.push_back(bob.str());
+                bob.str("");
+                bob.clear();
+            } else {
+                args.push_back(clazz);
+            }
         }
-        if ( foundIt && raceId == -1 ) {
+        
+        if ( clazz == "\\COMMAND" ) {
+            foundCommand = true;
+            continue;
+        }
+        if ( clazz == "\\PERMANENT" ) {
+            foundPermanent = true;
+            continue;
+        }
+        if ( foundPermanent && raceId == -1 ) {
             //find the race with the name
             string& name = *syndrome->syn_class[a];
             for ( size_t b = 0; b < df::global::world->raws.creatures.all.size(); b++ ) {
@@ -65,7 +112,7 @@ void syndromeHandler(color_ostream& out, void* ptr) {
             }
             continue;
         }
-        if ( foundIt && raceId != -1 ) {
+        if ( foundPermanent && raceId != -1 && casteId == -1 ) {
             string& name = *syndrome->syn_class[a];
             for ( size_t b = 0; b < creatureRaw->caste.size(); b++ ) {
                 df::caste_raw* caste = creatureRaw->caste[b];
@@ -74,10 +121,15 @@ void syndromeHandler(color_ostream& out, void* ptr) {
                 casteId = b;
                 break;
             }
-            break;
+            continue;
         }
     }
-    if ( !foundIt || raceId == -1 || casteId == -1 )
+    
+    if ( commandStr != "" ) {
+        Core::getInstance().runCommand(out, commandStr, args);
+    }
+    
+    if ( !foundPermanent || raceId == -1 || casteId == -1 )
         return;
 
     unit->enemy.normal_race = raceId;

@@ -137,7 +137,7 @@ end
 $AutoFarm ||= AutoFarm.new
 
 case $script_args[0]
-when 'start'
+when 'start', 'enable'
 	$AutoFarm.start
 	puts $AutoFarm.status
 

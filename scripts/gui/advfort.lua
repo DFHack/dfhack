@@ -186,7 +186,21 @@ function SetPatientRef(args)
         end
     end
 end
-
+function SetCarveDir(args)
+    local job=args.job
+    local pos=args.pos
+    local from_pos=args.from_pos
+    local dirs={up=18,down=19,right=20,left=21}
+    if pos.x>from_pos.x then
+        job.item_category[dirs.right]=true
+    elseif pos.x<from_pos.x then
+        job.item_category[dirs.left]=true
+    elseif pos.y>from_pos.y then
+        job.item_category[dirs.up]=true
+    elseif pos.y<from_pos.y then
+        job.item_category[dirs.down]=true
+    end
+end
 function MakePredicateWieldsItem(item_skill)
     local pred=function(args)
         local inv=args.unit.inventory
@@ -819,9 +833,12 @@ end
 
 actions={
     {"CarveFortification"   ,df.job_type.CarveFortification,{IsWall,IsHardMaterial}},
-    {"DetailWall"           ,df.job_type.DetailWall,{IsWall,IsHardMaterial}},
-    {"DetailFloor"          ,df.job_type.DetailFloor,{IsFloor,IsHardMaterial,SameSquare}},
-    --{"CarveTrack"           ,df.job_type.CarveTrack}, -- does not work??
+    {"DetailWall"           ,df.job_type.DetailWall,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall,IsHardMaterial}},
+    {"DetailFloor"          ,df.job_type.DetailFloor,{MakePredicateWieldsItem(df.job_skill.MINING),IsFloor,IsHardMaterial,SameSquare}},
+    {"CarveTrack"           ,df.job_type.CarveTrack,{MakePredicateWieldsItem(df.job_skill.MINING),IsFloor,IsHardMaterial}
+                            ,{SetCarveDir}}, 
+    --job.item_category
+    --18 = up, 19 = down, 20 = right, 21 = left
     {"Dig"                  ,df.job_type.Dig,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall}},
     {"CarveUpwardStaircase" ,df.job_type.CarveUpwardStaircase,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall}},
     {"CarveDownwardStaircase",df.job_type.CarveDownwardStaircase,{MakePredicateWieldsItem(df.job_skill.MINING)}},

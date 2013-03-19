@@ -73,10 +73,10 @@ EOS
 
 when 'him', 'her', 'it', 'that'
 	if him = df.unit_find
-		case him.race_tg.caste[him.caste].caste_id
-		when 'FEMALE'; puts 'its a she !' if race != 'her'
-		when 'MALE';   puts 'its a he !'  if race != 'him'
-		else;          puts 'its an it !' if race != 'it' and race != 'that'
+		case him.race_tg.caste[him.caste].gender
+		when 0; puts 'its a she !' if race != 'her'
+		when 1; puts 'its a he !'  if race != 'him'
+		else;   puts 'its an it !' if race != 'it' and race != 'that'
 		end
 		slayit[him]
 	else

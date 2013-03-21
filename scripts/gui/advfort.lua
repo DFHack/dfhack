@@ -205,10 +205,8 @@ function MakePredicateWieldsItem(item_skill)
     local pred=function(args)
         local inv=args.unit.inventory
         for k,v in pairs(inv) do
-            if v.mode==1 and df.item_weaponst:is_instance(v.item) then
-                if v.item.subtype.skill_melee==item_skill and args.unit.body.weapon_bp==v.body_part_id then
-                    return true
-                end
+            if v.mode==1 and v.item:getMeleeSkill()==item_skill and args.unit.body.weapon_bp==v.body_part_id then
+                return true
             end
         end
         return false,"Correct tool not equiped"
@@ -837,8 +835,6 @@ actions={
     {"DetailFloor"          ,df.job_type.DetailFloor,{MakePredicateWieldsItem(df.job_skill.MINING),IsFloor,IsHardMaterial,SameSquare}},
     {"CarveTrack"           ,df.job_type.CarveTrack,{MakePredicateWieldsItem(df.job_skill.MINING),IsFloor,IsHardMaterial}
                             ,{SetCarveDir}}, 
-    --job.item_category
-    --18 = up, 19 = down, 20 = right, 21 = left
     {"Dig"                  ,df.job_type.Dig,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall}},
     {"CarveUpwardStaircase" ,df.job_type.CarveUpwardStaircase,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall}},
     {"CarveDownwardStaircase",df.job_type.CarveDownwardStaircase,{MakePredicateWieldsItem(df.job_skill.MINING)}},

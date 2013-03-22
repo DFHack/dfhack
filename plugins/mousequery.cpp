@@ -219,10 +219,9 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                 {
                     while (ui->main.mode != Default)
                     {
+                        enabler->mouse_rbut = 0;
                         send_key(df::interface_key::LEAVESCREEN);
                     }
-
-                    enabler->mouse_rbut = 0;
                 }
             }
         }

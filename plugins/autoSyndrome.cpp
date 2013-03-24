@@ -6,6 +6,7 @@
 #include "modules/EventManager.h"
 #include "modules/Job.h"
 #include "modules/Maps.h"
+#include "modules/Once.h"
 
 #include "df/building.h"
 #include "df/caste_raw.h"
@@ -211,7 +212,9 @@ bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df
     }
 
     if ( syndrome->syn_affected_creature.size() != syndrome->syn_affected_caste.size() ) {
-        out.print("%s, line %d: different affected creature/caste sizes.\n", __FILE__, __LINE__);
+        if ( DFHack::Once::doOnce("autoSyndrome: different affected creature/caste sizes.") ) {
+            out.print("%s, line %d: different affected creature/caste sizes.\n", __FILE__, __LINE__);
+        }
         return false;
     }
     for ( size_t c = 0; c < syndrome->syn_affected_creature.size(); c++ ) {
@@ -244,7 +247,8 @@ void processJob(color_ostream& out, void* jobPtr) {
     CoreSuspender suspender;
     df::job* job = (df::job*)jobPtr;
     if ( job == NULL ) {
-        out.print("Error %s line %d: null job.\n", __FILE__, __LINE__);
+        if ( DFHack::Once::doOnce("autoSyndrome_processJob_null job") )
+            out.print("Error %s line %d: null job.\n", __FILE__, __LINE__);
         return;
     }
     if ( job->completion_timer > 0 )
@@ -262,7 +266,8 @@ void processJob(color_ostream& out, void* jobPtr) {
         break;
     }
     if ( reaction == NULL ) {
-        out.print("%s, line %d: could not find reaction \"%s\".\n", __FILE__, __LINE__, job->reaction_name.c_str() );
+        if ( DFHack::Once::doOnce("autoSyndrome processJob couldNotFind") )
+            out.print("%s, line %d: could not find reaction \"%s\".\n", __FILE__, __LINE__, job->reaction_name.c_str() );
         return;
     }
     
@@ -271,11 +276,13 @@ void processJob(color_ostream& out, void* jobPtr) {
         if ( job->general_refs[a]->getType() != df::enums::general_ref_type::UNIT_WORKER )
             continue;
         if ( workerId != -1 ) {
-            out.print("%s, line %d: Found two workers on the same job.\n", __FILE__, __LINE__);
+            if ( DFHack::Once::doOnce("autoSyndrome processJob two workers same job") )
+                out.print("%s, line %d: Found two workers on the same job.\n", __FILE__, __LINE__);
         }
         workerId = ((df::general_ref_unit_workerst*)job->general_refs[a])->unit_id;
         if (workerId == -1) {
-            out.print("%s, line %d: invalid worker.\n", __FILE__, __LINE__);
+            if ( DFHack::Once::doOnce("autoSyndrome processJob invalid worker") )
+                out.print("%s, line %d: invalid worker.\n", __FILE__, __LINE__);
             continue;
         }
     }
@@ -294,18 +301,21 @@ void processJob(color_ostream& out, void* jobPtr) {
         if ( job->general_refs[a]->getType() != df::enums::general_ref_type::BUILDING_HOLDER )
             continue;
         if ( buildingId != -1 ) {
-            out.print("%s, line %d: Found two buildings for the same job.\n", __FILE__, __LINE__);
+            if ( DFHack::Once::doOnce("autoSyndrome processJob two buildings same job") )
+                out.print("%s, line %d: Found two buildings for the same job.\n", __FILE__, __LINE__);
         }
         buildingId = ((df::general_ref_building_holderst*)job->general_refs[a])->building_id;
         if (buildingId == -1) {
-            out.print("%s, line %d: invalid building.\n", __FILE__, __LINE__);
+            if ( DFHack::Once::doOnce("autoSyndrome processJob invalid building") )
+                out.print("%s, line %d: invalid building.\n", __FILE__, __LINE__);
             continue;
         }
     }
     
     df::building* building = df::building::find(buildingId);
     if ( building == NULL ) {
-        out.print("%s, line %d: error: couldn't find building %d.\n", __FILE__, __LINE__, buildingId);
+        if ( DFHack::Once::doOnce("autoSyndrome processJob couldn't find building") )
+            out.print("%s, line %d: error: couldn't find building %d.\n", __FILE__, __LINE__, buildingId);
         return;
     }
     
@@ -453,7 +463,8 @@ void processJob(color_ostream& out, void* jobPtr) {
 int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrome) {
     int32_t index = df::unit::binsearch_index(df::global::world->units.all, workerId);
     if ( index < 0 ) {
-        out.print("%s line %d: Couldn't find unit %d.\n", __FILE__, __LINE__, workerId);
+        if ( DFHack::Once::doOnce("autoSyndrome giveSyndrome couldn't find unit") )
+            out.print("%s line %d: Couldn't find unit %d.\n", __FILE__, __LINE__, workerId);
         return -1;
     }
     df::unit* unit = df::global::world->units.all[index];

@@ -137,6 +137,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(trueTransformation trueTransformation.cpp)
     DFHACK_PLUGIN(infiniteSky infiniteSky.cpp)
     DFHACK_PLUGIN(createitem createitem.cpp)
+    DFHACK_PLUGIN(outsideOnly outsideOnly.cpp)
 endif()
 
 

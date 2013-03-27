@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -33,7 +33,8 @@ distribution.
 #include <stdint.h>
 #include "Console.h"
 #include "modules/Graphic.h"
-#include "SDL_events.h"
+
+#include "RemoteClient.h"
 
 struct WINDOW;
 
@@ -53,7 +54,6 @@ namespace DFHack
 {
     class Process;
     class Module;
-    class World;
     class Materials;
     class Notes;
     struct VersionInfo;
@@ -66,15 +66,35 @@ namespace DFHack
         class df_window;
     }
 
+    enum state_change_event
+    {
+        SC_WORLD_LOADED = 0,
+        SC_WORLD_UNLOADED = 1,
+        SC_MAP_LOADED = 2,
+        SC_MAP_UNLOADED = 3,
+        SC_VIEWSCREEN_CHANGED = 4,
+        SC_CORE_INITIALIZED = 5,
+        SC_BEGIN_UNLOAD = 6,
+        SC_PAUSED = 7,
+        SC_UNPAUSED = 8
+    };
+
     // Core is a singleton. Why? Because it is closely tied to SDL calls. It tracks the global state of DF.
     // There should never be more than one instance
     // Better than tracking some weird variables all over the place.
     class DFHACK_EXPORT Core
     {
+#ifdef _DARWIN
+        friend int  ::DFH_SDL_NumJoysticks(void);
+        friend void ::DFH_SDL_Quit(void);
+        friend int  ::DFH_SDL_PollEvent(SDL::Event *);
+        friend int  ::DFH_SDL_Init(uint32_t flags);
+#else
         friend int  ::SDL_NumJoysticks(void);
         friend void ::SDL_Quit(void);
         friend int  ::SDL_PollEvent(SDL::Event *);
         friend int  ::SDL_Init(uint32_t flags);
+#endif
         friend int  ::wgetch(WINDOW * w);
         friend int  ::egg_init(void);
         friend int  ::egg_shutdown(void);
@@ -99,8 +119,6 @@ namespace DFHack
         /// Is everything OK?
         bool isValid(void) { return !errorstate; }
 
-        /// get the world module
-        World * getWorld();
         /// get the materials module
         Materials * getMaterials();
         /// get the notes module
@@ -117,9 +135,15 @@ namespace DFHack
         /// returns a named pointer.
         void *GetData(std::string key);
 
+        command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters);
+        command_result runCommand(color_ostream &out, const std::string &command);
+        bool loadScriptFile(color_ostream &out, std::string fname, bool silent = false);
+
         bool ClearKeyBindings(std::string keyspec);
         bool AddKeyBinding(std::string keyspec, std::string cmdline);
         std::vector<std::string> ListKeyBindings(std::string keyspec);
+
+        std::string getHackPath();
 
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
         bool isMapLoaded() { return (last_local_map_ptr != NULL && last_world_data_ptr != NULL); }
@@ -147,12 +171,20 @@ namespace DFHack
         struct Private;
         Private *d;
 
+        friend class CoreSuspendClaimer;
+        int ClaimSuspend(bool force_base);
+        void DisclaimSuspend(int level);
+
         bool Init();
         int Update (void);
         int TileUpdate (void);
         int Shutdown (void);
-        int SDL_Event(SDL::Event* event);
+        int DFH_SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);
+
+        void doUpdate(color_ostream &out, bool first_update);
+        void onUpdate(color_ostream &out);
+        void onStateChange(color_ostream &out, state_change_event event);
 
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement
@@ -170,19 +202,19 @@ namespace DFHack
         // Module storage
         struct
         {
-            World * pWorld;
             Materials * pMaterials;
             Notes * pNotes;
             Graphic * pGraphic;
         } s_mods;
         std::vector <Module *> allModules;
         DFHack::PluginManager * plug_mgr;
-        
+
         // hotkey-related stuff
         struct KeyBinding {
             int modifiers;
             std::vector<std::string> command;
             std::string cmdline;
+            std::string focus;
         };
 
         std::map<int, std::vector<KeyBinding> > key_bindings;
@@ -192,7 +224,6 @@ namespace DFHack
         tthread::mutex * HotkeyMutex;
         tthread::condition_variable * HotkeyCond;
 
-        int UnicodeAwareSym(const SDL::KeyboardEvent& ke);
         bool SelectHotkey(int key, int modifiers);
 
         // for state change tracking
@@ -200,6 +231,7 @@ namespace DFHack
         // for state change tracking
         void *last_local_map_ptr;
         df::viewscreen *top_viewscreen;
+        bool last_pause_state;
         // Very important!
         bool started;
 
@@ -217,5 +249,21 @@ namespace DFHack
         CoreSuspender() : core(&Core::getInstance()) { core->Suspend(); }
         CoreSuspender(Core *core) : core(core) { core->Suspend(); }
         ~CoreSuspender() { core->Resume(); }
+    };
+
+    /** Claims the current thread already has the suspend lock.
+     *  Strictly for use in callbacks from DF.
+     */
+    class CoreSuspendClaimer {
+        Core *core;
+        int level;
+    public:
+        CoreSuspendClaimer(bool base = false) : core(&Core::getInstance()) {
+            level = core->ClaimSuspend(base);
+        }
+        CoreSuspendClaimer(Core *core, bool base = false) : core(core) {
+            level = core->ClaimSuspend(base);
+        }
+        ~CoreSuspendClaimer() { core->DisclaimSuspend(level); }
     };
 }

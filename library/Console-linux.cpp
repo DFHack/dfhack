@@ -60,6 +60,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <errno.h>
 #include <deque>
 
+// George Vulov for MacOSX
+#ifndef __LINUX__
+#define TMP_FAILURE_RETRY(expr) \
+    ({ long int _res; \
+        do _res = (long int) (expr); \
+        while (_res == -1L && errno == EINTR); \
+        _res; })
+#endif
+
 #include "Console.h"
 #include "Hooks.h"
 using namespace DFHack;
@@ -146,7 +155,7 @@ namespace DFHack
             FD_ZERO(&descriptor_set);
             FD_SET(STDIN_FILENO, &descriptor_set);
             FD_SET(exit_pipe[0], &descriptor_set);
-            int ret = TEMP_FAILURE_RETRY(
+            int ret = TMP_FAILURE_RETRY(
                 select (FD_SETSIZE,&descriptor_set, NULL, NULL, NULL)
             );
             if(ret == -1)
@@ -156,13 +165,14 @@ namespace DFHack
             if (FD_ISSET(STDIN_FILENO, &descriptor_set))
             {
                 // read byte from stdin
-                ret = TEMP_FAILURE_RETRY(
+                ret = TMP_FAILURE_RETRY(
                     read(STDIN_FILENO, &out, 1)
                 );
                 if(ret == -1)
                     return false;
                 return true;
             }
+            return false;
         }
 
     public:
@@ -235,7 +245,8 @@ namespace DFHack
             if(rawmode)
             {
                 const char * clr = "\033c\033[3J\033[H";
-                ::write(STDIN_FILENO,clr,strlen(clr));
+                if (::write(STDIN_FILENO,clr,strlen(clr)) == -1)
+                    ;
             }
             else
             {
@@ -254,18 +265,19 @@ namespace DFHack
         void color(Console::color_value index)
         {
             if(!rawmode)
-                fprintf(dfout_C,getANSIColor(index));
+                fprintf(dfout_C, "%s", getANSIColor(index));
             else
             {
                 const char * colstr = getANSIColor(index);
                 int lstr = strlen(colstr);
-                ::write(STDIN_FILENO,colstr,lstr);
+                if (::write(STDIN_FILENO,colstr,lstr) == -1)
+                    ;
             }
         }
         /// Reset color to default
         void reset_color(void)
         {
-            color(Console::COLOR_RESET);
+            color(COLOR_RESET);
             if(!rawmode)
                 fflush(dfout_C);
         }
@@ -489,7 +501,7 @@ namespace DFHack
                         {
                             right_arrow:
                             /* right arrow */
-                            if (raw_cursor != raw_buffer.size())
+                            if (size_t(raw_cursor) != raw_buffer.size())
                             {
                                 raw_cursor++;
                                 prompt_refresh();
@@ -510,7 +522,7 @@ namespace DFHack
                                     history_index = 0;
                                     break;
                                 }
-                                else if (history_index >= history.size())
+                                else if (size_t(history_index) >= history.size())
                                 {
                                     history_index = history.size()-1;
                                     break;
@@ -545,7 +557,7 @@ namespace DFHack
                             if (seq[1] == '3' && seq2 == '~' )
                             {
                                 // delete
-                                if (raw_buffer.size() > 0 && raw_cursor < raw_buffer.size())
+                                if (raw_buffer.size() > 0 && size_t(raw_cursor) < raw_buffer.size())
                                 {
                                     raw_buffer.erase(raw_cursor,1);
                                     prompt_refresh();
@@ -555,11 +567,11 @@ namespace DFHack
                     }
                     break;
                 default:
-                    if (raw_buffer.size() == raw_cursor)
+                    if (raw_buffer.size() == size_t(raw_cursor))
                     {
                         raw_buffer.append(1,c);
                         raw_cursor++;
-                        if (plen+raw_buffer.size() < get_columns())
+                        if (plen+raw_buffer.size() < size_t(get_columns()))
                         {
                             /* Avoid a full update of the line in the
                              * trivial case. */
@@ -646,7 +658,8 @@ bool Console::init(bool sharing)
         inited = false;
         return false;
     }
-    freopen("stdout.log", "w", stdout);
+    if (!freopen("stdout.log", "w", stdout))
+        ;
     d = new Private();
     // make our own weird streams so our IO isn't redirected
     d->dfout_C = fopen("/dev/tty", "w");
@@ -654,7 +667,8 @@ bool Console::init(bool sharing)
     clear();
     d->supported_terminal = !isUnsupportedTerm() &&  isatty(STDIN_FILENO);
     // init the exit mechanism
-    pipe(d->exit_pipe);
+    if (pipe(d->exit_pipe) == -1)
+        ;
     FD_ZERO(&d->descriptor_set);
     FD_SET(STDIN_FILENO, &d->descriptor_set);
     FD_SET(d->exit_pipe[0], &d->descriptor_set);
@@ -706,6 +720,8 @@ void Console::add_text(color_value color, const std::string &text)
     lock_guard <recursive_mutex> g(*wlock);
     if (inited)
         d->print_text(color, text);
+    else
+        fwrite(text.data(), 1, text.size(), stderr);
 }
 
 int Console::get_columns(void)

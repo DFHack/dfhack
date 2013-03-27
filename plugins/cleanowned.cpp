@@ -116,8 +116,8 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
         }
         else if (item->flags.bits.on_ground)
         {
-            int32_t type = item->getType();
-	    if(type == item_type::MEAT ||
+            df::item_type type = item->getType();
+            if(type == item_type::MEAT ||
                type == item_type::FISH ||
                type == item_type::VERMIN ||
                type == item_type::PET ||

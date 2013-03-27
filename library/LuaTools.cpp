@@ -1,6 +1,6 @@
-﻿/*
+/*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -53,6 +53,7 @@ distribution.
 #include "df/building.h"
 #include "df/unit.h"
 #include "df/item.h"
+#include "df/world.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -64,6 +65,13 @@ using namespace DFHack;
 using namespace DFHack::LuaWrapper;
 
 lua_State *DFHack::Lua::Core::State = NULL;
+
+void dfhack_printerr(lua_State *S, const std::string &str);
+
+inline bool is_null_userdata(lua_State *L, int idx)
+{
+    return lua_islightuserdata(L, idx) && !lua_touserdata(L, idx);
+}
 
 inline void AssertCoreSuspend(lua_State *state)
 {
@@ -84,7 +92,7 @@ void *DFHack::Lua::GetDFObject(lua_State *state, type_identity *type, int val_in
     return get_object_internal(state, type, val_index, exact_type, false);
 }
 
-void *DFHack::Lua::CheckDFObject(lua_State *state, type_identity *type, int val_index, bool exact_type)
+static void check_valid_ptr_index(lua_State *state, int val_index)
 {
     if (lua_type(state, val_index) == LUA_TNONE)
     {
@@ -93,23 +101,48 @@ void *DFHack::Lua::CheckDFObject(lua_State *state, type_identity *type, int val_
         else
             luaL_error(state, "at index %d: pointer expected", val_index);
     }
+}
 
-    if (lua_isnil(state, val_index))
-        return NULL;
+static void signal_typeid_error(color_ostream *out, lua_State *state,
+                                type_identity *type, const char *msg,
+                                int val_index, bool perr, bool signal)
+{
+    std::string typestr = type ? type->getFullName() : "any pointer";
+    std::string error = stl_sprintf(msg, typestr.c_str());
 
-    void *rv = get_object_internal(state, type, val_index, exact_type, false);
-
-    if (!rv)
+    if (signal)
     {
-        std::string error = "invalid pointer type";
-        if (type)
-            error += "; expected: " + type->getFullName();
-
         if (val_index > 0)
             luaL_argerror(state, val_index, error.c_str());
         else
             luaL_error(state, "at index %d: %s", val_index, error.c_str());
     }
+    else if (perr)
+    {
+        if (out)
+            out->printerr("%s", error.c_str());
+        else
+            dfhack_printerr(state, error);
+    }
+    else
+        lua_pushstring(state, error.c_str());
+}
+
+
+void *DFHack::Lua::CheckDFObject(lua_State *state, type_identity *type, int val_index, bool exact_type)
+{
+    check_valid_ptr_index(state, val_index);
+
+    if (lua_isnil(state, val_index))
+        return NULL;
+    if (lua_islightuserdata(state, val_index) && !lua_touserdata(state, val_index))
+        return NULL;
+
+    void *rv = get_object_internal(state, type, val_index, exact_type, false);
+
+    if (!rv)
+        signal_typeid_error(NULL, state, type, "invalid pointer type; expected: %s",
+                            val_index, false, true);
 
     return rv;
 }
@@ -162,11 +195,13 @@ static Console *get_console(lua_State *state)
     return static_cast<Console*>(pstream);
 }
 
+static int DFHACK_TOSTRING_TOKEN = 0;
+
 static std::string lua_print_fmt(lua_State *L)
 {
     /* Copied from lua source to fully replicate builtin print */
     int n = lua_gettop(L);  /* number of arguments */
-    lua_getglobal(L, "tostring");
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_TOSTRING_TOKEN);
 
     std::stringstream ss;
 
@@ -206,7 +241,7 @@ static int lua_dfhack_println(lua_State *S)
     return 0;
 }
 
-static void dfhack_printerr(lua_State *S, const std::string &str)
+void dfhack_printerr(lua_State *S, const std::string &str)
 {
     if (color_ostream *out = Lua::GetOutput(S))
         out->printerr("%s\n", str.c_str());
@@ -225,12 +260,15 @@ static int lua_dfhack_color(lua_State *S)
 {
     int cv = luaL_optint(S, 1, -1);
 
-    if (cv < -1 || cv > color_ostream::COLOR_MAX)
+    if (cv < -1 || cv > COLOR_MAX)
         luaL_argerror(S, 1, "invalid color value");
 
     color_ostream *out = Lua::GetOutput(S);
-    if (out)
+    if (out) {
+        lua_pushinteger(S, (int)out->color());
         out->color(color_ostream::color_value(cv));
+        return 1;
+    }
     return 0;
 }
 
@@ -319,7 +357,7 @@ static int DFHACK_EXCEPTION_META_TOKEN = 0;
 
 static void error_tostring(lua_State *L, bool keep_old = false)
 {
-    lua_getglobal(L, "tostring");
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_TOSTRING_TOKEN);
     if (keep_old)
         lua_pushvalue(L, -2);
     else
@@ -341,7 +379,7 @@ static void error_tostring(lua_State *L, bool keep_old = false)
     }
 }
 
-static void report_error(lua_State *L, color_ostream *out = NULL)
+static void report_error(lua_State *L, color_ostream *out = NULL, bool pop = false)
 {
     error_tostring(L, true);
 
@@ -353,7 +391,7 @@ static void report_error(lua_State *L, color_ostream *out = NULL)
     else
         dfhack_printerr(L, msg);
 
-    lua_pop(L, 1);
+    lua_pop(L, pop?2:1);
 }
 
 static bool convert_to_exception(lua_State *L, int slevel, lua_State *thread = NULL)
@@ -396,10 +434,12 @@ static bool convert_to_exception(lua_State *L, int slevel, lua_State *thread = N
 
             // Create a new exception for this thread
             lua_newtable(L);
-            luaL_where(L, 1);
+            luaL_where(L, slevel);
+            lua_setfield(L, -2, "where");
             lua_pushstring(L, "coroutine resume failed");
-            lua_concat(L, 2);
             lua_setfield(L, -2, "message");
+            lua_getfield(L, -2, "verbose");
+            lua_setfield(L, -2, "verbose");
             lua_swap(L);
             lua_setfield(L, -2, "cause");
         }
@@ -453,11 +493,56 @@ static int dfhack_onerror(lua_State *L)
     return 1;
 }
 
+static int dfhack_error(lua_State *L)
+{
+    luaL_checkany(L, 1);
+    lua_settop(L, 3);
+    int level = std::max(1, luaL_optint(L, 2, 1));
+
+    lua_pushvalue(L, 1);
+
+    if (convert_to_exception(L, level))
+    {
+        luaL_where(L, level);
+        lua_setfield(L, -2, "where");
+
+        if (!lua_isnil(L, 3))
+        {
+            lua_pushvalue(L, 3);
+            lua_setfield(L, -2, "verbose");
+        }
+    }
+
+    return lua_error(L);
+}
+
 static int dfhack_exception_tostring(lua_State *L)
 {
     luaL_checktype(L, 1, LUA_TTABLE);
+    lua_settop(L, 2);
+
+    if (lua_isnil(L, 2))
+    {
+        lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_EXCEPTION_META_TOKEN);
+        lua_getfield(L, -1, "verbose");
+        lua_insert(L, 2);
+        lua_settop(L, 2);
+    }
+
+    lua_getfield(L, 1, "verbose");
+
+    bool verbose =
+        lua_toboolean(L, 2) || lua_toboolean(L, 3) ||
+        (lua_isnil(L, 2) && lua_isnil(L, 3));
 
     int base = lua_gettop(L);
+
+    if (verbose || lua_isnil(L, 3))
+    {
+        lua_getfield(L, 1, "where");
+        if (!lua_isstring(L, -1))
+            lua_pop(L, 1);
+    }
 
     lua_getfield(L, 1, "message");
     if (!lua_isstring(L, -1))
@@ -466,15 +551,26 @@ static int dfhack_exception_tostring(lua_State *L)
         lua_pushstring(L, "(error message is not a string)");
     }
 
-    lua_pushstring(L, "\n");
-    lua_getfield(L, 1, "stacktrace");
-    if (!lua_isstring(L, -1))
-        lua_pop(L, 2);
+    if (verbose)
+    {
+        lua_pushstring(L, "\n");
+        lua_getfield(L, 1, "stacktrace");
+        if (!lua_isstring(L, -1))
+            lua_pop(L, 2);
+    }
 
     lua_pushstring(L, "\ncaused by:\n");
     lua_getfield(L, 1, "cause");
     if (lua_isnil(L, -1))
         lua_pop(L, 2);
+    else if (lua_istable(L, -1))
+    {
+        lua_pushcfunction(L, dfhack_exception_tostring);
+        lua_swap(L);
+        lua_pushvalue(L, 2);
+        if (lua_pcall(L, 2, 1, 0) != LUA_OK)
+            error_tostring(L);
+    }
     else
         error_tostring(L);
 
@@ -542,10 +638,7 @@ bool DFHack::Lua::SafeCall(color_ostream &out, lua_State *L, int nargs, int nres
     bool ok = lua_pcall(L, nargs, nres, base) == LUA_OK;
 
     if (!ok && perr)
-    {
-        report_error(L, &out);
-        lua_pop(L, 1);
-    }
+        report_error(L, &out, true);
 
     lua_remove(L, base);
     set_dfhack_output(L, cur_out);
@@ -628,7 +721,12 @@ static int dfhack_coauxwrap (lua_State *L) {
     if (Lua::IsSuccess(r))
         return lua_gettop(L);
     else
+    {
+        if (lua_checkstack(L, LUA_MINSTACK))
+            convert_to_exception(L, 1);
+
         return lua_error(L);
+    }
 }
 
 static int dfhack_cowrap (lua_State *L) {
@@ -656,10 +754,7 @@ int DFHack::Lua::SafeResume(color_ostream &out, lua_State *from, lua_State *thre
     int rv = resume_helper(from, thread, nargs, nres);
 
     if (!Lua::IsSuccess(rv) && perr)
-    {
-        report_error(from, &out);
-        lua_pop(from, 1);
-    }
+        report_error(from, &out, true);
 
     set_dfhack_output(from, cur_out);
 
@@ -682,6 +777,19 @@ int DFHack::Lua::SafeResume(color_ostream &out, lua_State *from, int nargs, int 
  */
 
 static int DFHACK_LOADED_TOKEN = 0;
+static int DFHACK_DFHACK_TOKEN = 0;
+static int DFHACK_BASE_G_TOKEN = 0;
+static int DFHACK_REQUIRE_TOKEN = 0;
+
+void Lua::PushDFHack(lua_State *state)
+{
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_DFHACK_TOKEN);
+}
+
+void Lua::PushBaseGlobals(lua_State *state)
+{
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_BASE_G_TOKEN);
+}
 
 bool DFHack::Lua::PushModule(color_ostream &out, lua_State *state, const char *module)
 {
@@ -699,7 +807,7 @@ bool DFHack::Lua::PushModule(color_ostream &out, lua_State *state, const char *m
     }
 
     lua_pop(state, 2);
-    lua_getglobal(state, "require");
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_REQUIRE_TOKEN);
     lua_pushstring(state, module);
 
     return Lua::SafeCall(out, state, 1, 1);
@@ -730,21 +838,75 @@ bool DFHack::Lua::Require(color_ostream &out, lua_State *state,
         return false;
 
     if (setglobal)
-        lua_setglobal(state, module.c_str());
+    {
+        lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_BASE_G_TOKEN);
+        lua_swap(state);
+        lua_setfield(state, -2, module.c_str());
+    }
     else
         lua_pop(state, 1);
 
     return true;
 }
 
-bool DFHack::Lua::AssignDFObject(color_ostream &out, lua_State *state,
-                                 type_identity *type, void *target, int val_index, bool perr)
+static bool doAssignDFObject(color_ostream *out, lua_State *state,
+                             type_identity *type, void *target, int val_index,
+                             bool exact, bool perr, bool signal)
 {
-    val_index = lua_absindex(state, val_index);
-    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
-    PushDFObject(state, type, target);
-    lua_pushvalue(state, val_index);
-    return Lua::SafeCall(out, state, 2, 0, perr);
+    if (signal)
+        check_valid_ptr_index(state, val_index);
+
+    if (lua_istable(state, val_index))
+    {
+        val_index = lua_absindex(state, val_index);
+        lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_ASSIGN_NAME);
+        Lua::PushDFObject(state, type, target);
+        lua_pushvalue(state, val_index);
+
+        if (signal)
+        {
+            lua_call(state, 2, 0);
+            return true;
+        }
+        else
+            return Lua::SafeCall(*out, state, 2, 0, perr);
+    }
+    else if (!lua_isuserdata(state, val_index))
+    {
+        signal_typeid_error(out, state, type, "pointer to %s expected",
+                            val_index, perr, signal);
+        return false;
+    }
+    else
+    {
+        void *in_ptr = Lua::GetDFObject(state, type, val_index, exact);
+        if (!in_ptr)
+        {
+            signal_typeid_error(out, state, type, "incompatible pointer type: %s expected",
+                                val_index, perr, signal);
+            return false;
+        }
+        if (!type->copy(target, in_ptr))
+        {
+            signal_typeid_error(out, state, type, "no copy support for %s",
+                                val_index, perr, signal);
+            return false;
+        }
+        return true;
+    }
+}
+
+bool DFHack::Lua::AssignDFObject(color_ostream &out, lua_State *state,
+                                 type_identity *type, void *target, int val_index,
+                                 bool exact_type, bool perr)
+{
+    return doAssignDFObject(&out, state, type, target, val_index, exact_type, perr, false);
+}
+
+void DFHack::Lua::CheckDFAssign(lua_State *state, type_identity *type,
+                                void *target, int val_index, bool exact_type)
+{
+    doAssignDFObject(NULL, state, type, target, val_index, exact_type, false, true);
 }
 
 bool DFHack::Lua::SafeCallString(color_ostream &out, lua_State *state, const std::string &code,
@@ -764,10 +926,7 @@ bool DFHack::Lua::SafeCallString(color_ostream &out, lua_State *state, const std
     if (luaL_loadbuffer(state, code.data(), code.size(), debug_tag) != LUA_OK)
     {
         if (perr)
-        {
-            report_error(state, &out);
-            lua_pop(state, 1);
-        }
+            report_error(state, &out, true);
 
         return false;
     }
@@ -810,12 +969,8 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
                                    bool (*init)(color_ostream&, lua_State*, void*),
                                    void *arg)
 {
-    if (!out.is_console())
-        return false;
     if (!lua_checkstack(state, 20))
         return false;
-
-    Console &con = static_cast<Console&>(out);
 
     lua_State *thread;
     int rv;
@@ -836,6 +991,10 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
             return false;
         }
 
+        // If not interactive, run without coroutine and bail out
+        if (!out.is_console())
+            return SafeCall(out, state, lua_gettop(state)-base-1, 0);
+
         lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_QUERY_COROTABLE_TOKEN);
         lua_pushvalue(state, base+1);
         lua_remove(state, base+1);
@@ -845,6 +1004,8 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
 
         rv = resume_query_loop(out, thread, state, lua_gettop(state)-base, prompt, histfile);
     }
+
+    Console &con = static_cast<Console&>(out);
 
     while (rv == LUA_YIELD)
     {
@@ -900,7 +1061,7 @@ namespace {
 static bool init_interpreter(color_ostream &out, lua_State *state, void *info)
 {
     auto args = (InterpreterArgs*)info;
-    lua_getglobal(state, "dfhack");
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_DFHACK_TOKEN);
     lua_getfield(state, -1, "interpreter");
     lua_remove(state, -2);
     lua_pushstring(state, args->prompt);
@@ -1053,6 +1214,39 @@ static int dfhack_open_plugin(lua_State *L)
     return 0;
 }
 
+static int dfhack_curry_wrap(lua_State *L)
+{
+    int nargs = lua_gettop(L);
+    int ncurry = lua_tointeger(L, lua_upvalueindex(1));
+    int scount = nargs + ncurry;
+
+    luaL_checkstack(L, ncurry, "stack overflow in curry");
+
+    // Insert values in O(N+M) by first shifting the existing data
+    lua_settop(L, scount);
+    for (int i = 0; i < nargs; i++)
+        lua_copy(L, nargs-i, scount-i);
+    for (int i = 1; i <= ncurry; i++)
+        lua_copy(L, lua_upvalueindex(i+1), i);
+
+    lua_callk(L, scount-1, LUA_MULTRET, 0, lua_gettop);
+
+    return lua_gettop(L);
+}
+
+static int dfhack_curry(lua_State *L)
+{
+    luaL_checkany(L, 1);
+    if (lua_isnil(L, 1))
+        luaL_argerror(L, 1, "nil function in curry");
+    if (lua_gettop(L) == 1)
+        return 1;
+    lua_pushinteger(L, lua_gettop(L));
+    lua_insert(L, 1);
+    lua_pushcclosure(L, dfhack_curry_wrap, lua_gettop(L));
+    return 1;
+}
+
 bool Lua::IsCoreContext(lua_State *state)
 {
     // This uses a private field of the lua state to
@@ -1072,9 +1266,11 @@ static const luaL_Reg dfhack_funcs[] = {
     { "safecall", dfhack_safecall },
     { "saferesume", dfhack_saferesume },
     { "onerror", dfhack_onerror },
+    { "error", dfhack_error },
     { "call_with_finalizer", dfhack_call_with_finalizer },
     { "with_suspend", lua_dfhack_with_suspend },
     { "open_plugin", dfhack_open_plugin },
+    { "curry", dfhack_curry },
     { NULL, NULL }
 };
 
@@ -1090,12 +1286,121 @@ static const luaL_Reg dfhack_coro_funcs[] = {
 
 static int DFHACK_EVENT_META_TOKEN = 0;
 
-int DFHack::Lua::NewEvent(lua_State *state)
+namespace {
+    struct EventObject {
+        int item_count;
+        Lua::Event::Owner *owner;
+    };
+}
+
+void DFHack::Lua::Event::New(lua_State *state, Owner *owner)
 {
-    lua_newtable(state);
+    auto obj = (EventObject *)lua_newuserdata(state, sizeof(EventObject));
+    obj->item_count = 0;
+    obj->owner = owner;
+
     lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_EVENT_META_TOKEN);
     lua_setmetatable(state, -2);
+    lua_newtable(state);
+    lua_setuservalue(state, -2);
+}
+
+void DFHack::Lua::Event::SetPrivateCallback(lua_State *L, int event)
+{
+    lua_getuservalue(L, event);
+    lua_swap(L);
+    lua_rawsetp(L, -2, NULL);
+    lua_pop(L, 1);
+}
+
+static int dfhack_event_new(lua_State *L)
+{
+    Lua::Event::New(L);
     return 1;
+}
+
+static int dfhack_event_len(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TUSERDATA);
+    auto obj = (EventObject *)lua_touserdata(L, 1);
+    lua_pushinteger(L, obj->item_count);
+    return 1;
+}
+
+static int dfhack_event_tostring(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TUSERDATA);
+    auto obj = (EventObject *)lua_touserdata(L, 1);
+    lua_pushfstring(L, "<event: %d listeners>", obj->item_count);
+    return 1;
+}
+
+static int dfhack_event_index(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TUSERDATA);
+    lua_getuservalue(L, 1);
+    lua_pushvalue(L, 2);
+    lua_rawget(L, -2);
+    return 1;
+}
+
+static int dfhack_event_next(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TUSERDATA);
+    lua_getuservalue(L, 1);
+    lua_pushvalue(L, 2);
+    while (lua_next(L, -2))
+    {
+        if (is_null_userdata(L, -2))
+            lua_pop(L, 1);
+        else
+            return 2;
+    }
+    lua_pushnil(L);
+    return 1;
+}
+
+static int dfhack_event_pairs(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TUSERDATA);
+    lua_pushcfunction(L, dfhack_event_next);
+    lua_pushvalue(L, 1);
+    lua_pushnil(L);
+    return 3;
+}
+
+static int dfhack_event_newindex(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TUSERDATA);
+    if (is_null_userdata(L, 2))
+        luaL_argerror(L, 2, "Key NULL is reserved in events.");
+
+    lua_settop(L, 3);
+    lua_getuservalue(L, 1);
+    bool new_nil = lua_isnil(L, 3);
+
+    lua_pushvalue(L, 2);
+    lua_rawget(L, 4);
+    bool old_nil = lua_isnil(L, -1);
+    lua_settop(L, 4);
+
+    lua_pushvalue(L, 2);
+    lua_pushvalue(L, 3);
+    lua_rawset(L, 4);
+
+    int delta = 0;
+    if (old_nil && !new_nil) delta = 1;
+    else if (new_nil && !old_nil) delta = -1;
+
+    if (delta != 0)
+    {
+        auto obj = (EventObject *)lua_touserdata(L, 1);
+        obj->item_count += delta;
+        if (obj->owner)
+            obj->owner->on_count_changed(obj->item_count, delta);
+    }
+
+    return 0;
 }
 
 static void do_invoke_event(lua_State *L, int argbase, int num_args, int errorfun)
@@ -1104,10 +1409,7 @@ static void do_invoke_event(lua_State *L, int argbase, int num_args, int errorfu
         lua_pushvalue(L, argbase+i);
 
     if (lua_pcall(L, num_args, 0, errorfun) != LUA_OK)
-    {
-        report_error(L);
-        lua_pop(L, 1);
-    }
+        report_error(L, NULL, true);
 }
 
 static void dfhack_event_invoke(lua_State *L, int base, bool from_c)
@@ -1141,7 +1443,7 @@ static void dfhack_event_invoke(lua_State *L, int base, bool from_c)
     while (lua_next(L, event))
     {
         // Skip the NULL key in the main loop
-        if (lua_islightuserdata(L, -2) && !lua_touserdata(L, -2))
+        if (is_null_userdata(L, -2))
             lua_pop(L, 1);
         else
             do_invoke_event(L, argbase, num_args, errorfun);
@@ -1152,14 +1454,20 @@ static void dfhack_event_invoke(lua_State *L, int base, bool from_c)
 
 static int dfhack_event_call(lua_State *state)
 {
-    luaL_checktype(state, 1, LUA_TTABLE);
+    luaL_checktype(state, 1, LUA_TUSERDATA);
     luaL_checkstack(state, lua_gettop(state)+2, "stack overflow in event dispatch");
 
+    auto obj = (EventObject *)lua_touserdata(state, 1);
+    if (obj->owner)
+        obj->owner->on_invoked(state, lua_gettop(state)-1, false);
+
+    lua_getuservalue(state, 1);
+    lua_replace(state, 1);
     dfhack_event_invoke(state, 0, false);
     return 0;
 }
 
-void DFHack::Lua::InvokeEvent(color_ostream &out, lua_State *state, void *key, int num_args)
+void DFHack::Lua::Event::Invoke(color_ostream &out, lua_State *state, void *key, int num_args)
 {
     AssertCoreSuspend(state);
 
@@ -1174,7 +1482,7 @@ void DFHack::Lua::InvokeEvent(color_ostream &out, lua_State *state, void *key, i
 
     lua_rawgetp(state, LUA_REGISTRYINDEX, key);
 
-    if (!lua_istable(state, -1))
+    if (!lua_isuserdata(state, -1))
     {
         if (!lua_isnil(state, -1))
             out.printerr("Invalid event object in Lua::InvokeEvent");
@@ -1182,7 +1490,14 @@ void DFHack::Lua::InvokeEvent(color_ostream &out, lua_State *state, void *key, i
         return;
     }
 
+    auto obj = (EventObject *)lua_touserdata(state, -1);
     lua_insert(state, base+1);
+
+    if (obj->owner)
+        obj->owner->on_invoked(state, num_args, true);
+
+    lua_getuservalue(state, base+1);
+    lua_replace(state, base+1);
 
     color_ostream *cur_out = Lua::GetOutput(state);
     set_dfhack_output(state, &out);
@@ -1190,14 +1505,14 @@ void DFHack::Lua::InvokeEvent(color_ostream &out, lua_State *state, void *key, i
     set_dfhack_output(state, cur_out);
 }
 
-void DFHack::Lua::MakeEvent(lua_State *state, void *key)
+void DFHack::Lua::Event::Make(lua_State *state, void *key, Owner *owner)
 {
     lua_rawgetp(state, LUA_REGISTRYINDEX, key);
 
     if (lua_isnil(state, -1))
     {
         lua_pop(state, 1);
-        NewEvent(state);
+        New(state, owner);
     }
 
     lua_dup(state);
@@ -1207,7 +1522,7 @@ void DFHack::Lua::MakeEvent(lua_State *state, void *key)
 void DFHack::Lua::Notification::invoke(color_ostream &out, int nargs)
 {
     assert(state);
-    InvokeEvent(out, state, key, nargs);
+    Event::Invoke(out, state, key, nargs);
 }
 
 void DFHack::Lua::Notification::bind(lua_State *state, void *key)
@@ -1218,12 +1533,12 @@ void DFHack::Lua::Notification::bind(lua_State *state, void *key)
 
 void DFHack::Lua::Notification::bind(lua_State *state, const char *name)
 {
-    MakeEvent(state, this);
+    Event::Make(state, this);
 
     if (handler)
     {
         PushFunctionWrapper(state, 0, name, handler);
-        lua_rawsetp(state, -2, NULL);
+        Event::SetPrivateCallback(state, -2);
     }
 
     this->state = state;
@@ -1235,6 +1550,10 @@ void DFHack::Lua::Notification::bind(lua_State *state, const char *name)
  ************************/
 
 void OpenDFHackApi(lua_State *state);
+
+namespace DFHack { namespace Lua { namespace Core {
+    static void InitCoreContext();
+}}}
 
 lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
 {
@@ -1252,8 +1571,24 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     lua_pushcfunction(state, lua_dfhack_println);
     lua_setglobal(state, "print");
 
+    lua_getglobal(state, "require");
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_REQUIRE_TOKEN);
+    lua_getglobal(state, "tostring");
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_TOSTRING_TOKEN);
+
     // Create the dfhack global
     lua_newtable(state);
+
+    lua_dup(state);
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_DFHACK_TOKEN);
+
+    lua_rawgeti(state, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);
+    lua_dup(state);
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_BASE_G_TOKEN);
+    lua_setfield(state, -2, "BASE_G");
+
+    lua_pushstring(state, DFHACK_VERSION);
+    lua_setfield(state, -2, "VERSION");
 
     lua_pushboolean(state, IsCoreContext(state));
     lua_setfield(state, -2, "is_core_context");
@@ -1262,6 +1597,8 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     lua_newtable(state);
     lua_pushcfunction(state, dfhack_exception_tostring);
     lua_setfield(state, -2, "__tostring");
+    lua_pushcfunction(state, dfhack_exception_tostring);
+    lua_setfield(state, -2, "tostring");
     lua_dup(state);
     lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_EXCEPTION_META_TOKEN);
     lua_setfield(state, -2, "exception");
@@ -1269,11 +1606,26 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     lua_newtable(state);
     lua_pushcfunction(state, dfhack_event_call);
     lua_setfield(state, -2, "__call");
-    lua_pushcfunction(state, Lua::NewEvent);
-    lua_setfield(state, -2, "new");
+    lua_pushcfunction(state, dfhack_event_len);
+    lua_setfield(state, -2, "__len");
+    lua_pushcfunction(state, dfhack_event_tostring);
+    lua_setfield(state, -2, "__tostring");
+    lua_pushcfunction(state, dfhack_event_index);
+    lua_setfield(state, -2, "__index");
+    lua_pushcfunction(state, dfhack_event_newindex);
+    lua_setfield(state, -2, "__newindex");
+    lua_pushcfunction(state, dfhack_event_pairs);
+    lua_setfield(state, -2, "__pairs");
     lua_dup(state);
     lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_EVENT_META_TOKEN);
-    lua_setfield(state, -2, "event");
+
+    lua_newtable(state);
+    lua_pushcfunction(state, dfhack_event_new);
+    lua_setfield(state, -2, "new");
+    lua_dup(state);
+    lua_setfield(state, -3, "__metatable");
+    lua_setfield(state, -3, "event");
+    lua_pop(state, 1);
 
     // Initialize the dfhack global
     luaL_setfuncs(state, dfhack_funcs, 0);
@@ -1295,6 +1647,21 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     luaL_setfuncs(state, dfhack_coro_funcs, 0);
     lua_pop(state, 1);
 
+    // split the global environment
+    lua_newtable(state);
+    lua_newtable(state);
+    lua_rawgeti(state, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);
+    lua_setfield(state, -2, "__index");
+    lua_setmetatable(state, -2);
+    lua_dup(state);
+    lua_setglobal(state, "_G");
+    lua_dup(state);
+    lua_rawseti(state, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);
+
+    // Init core-context specific stuff before loading dfhack.lua
+    if (IsCoreContext(state))
+        Lua::Core::InitCoreContext();
+
     // load dfhack.lua
     Require(out, state, "dfhack");
 
@@ -1305,11 +1672,162 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     return state;
 }
 
+static int next_timeout_id = 0;
+static int frame_idx = 0;
+static std::multimap<int,int> frame_timers;
+static std::multimap<int,int> tick_timers;
+
+int DFHACK_TIMEOUTS_TOKEN = 0;
+
+static const char *const timeout_modes[] = {
+    "frames", "ticks", "days", "months", "years", NULL
+};
+
+int dfhack_timeout(lua_State *L)
+{
+    using df::global::world;
+    using df::global::enabler;
+
+    // Parse arguments
+    lua_Number time = luaL_checknumber(L, 1);
+    int mode = luaL_checkoption(L, 2, NULL, timeout_modes);
+    luaL_checktype(L, 3, LUA_TFUNCTION);
+    lua_settop(L, 3);
+
+    if (mode > 0 && !Core::getInstance().isWorldLoaded())
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    // Compute timeout value
+    switch (mode)
+    {
+    case 2:
+        time *= 1200;
+        break;
+    case 3:
+        time *= 33600;
+        break;
+    case 4:
+        time *= 403200;
+        break;
+    default:;
+    }
+
+    int delta = time;
+
+    if (delta <= 0)
+        luaL_error(L, "Invalid timeout: %d", delta);
+
+    // Queue the timeout
+    int id = next_timeout_id++;
+    if (mode)
+        tick_timers.insert(std::pair<int,int>(world->frame_counter+delta, id));
+    else
+        frame_timers.insert(std::pair<int,int>(frame_idx+delta, id));
+
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
+    lua_swap(L);
+    lua_rawseti(L, -2, id);
+
+    lua_pushinteger(L, id);
+    return 1;
+}
+
+int dfhack_timeout_active(lua_State *L)
+{
+    int id = luaL_optint(L, 1, -1);
+    bool set_cb = (lua_gettop(L) >= 2);
+    lua_settop(L, 2);
+    if (!lua_isnil(L, 2))
+        luaL_checktype(L, 2, LUA_TFUNCTION);
+
+    if (id < 0)
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
+    lua_rawgeti(L, 3, id);
+    if (set_cb && !lua_isnil(L, -1))
+    {
+        lua_pushvalue(L, 2);
+        lua_rawseti(L, 3, id);
+    }
+    return 1;
+}
+
+static void cancel_timers(std::multimap<int,int> &timers)
+{
+    using Lua::Core::State;
+
+    Lua::StackUnwinder frame(State);
+    lua_rawgetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
+
+    for (auto it = timers.begin(); it != timers.end(); ++it)
+    {
+        lua_pushnil(State);
+        lua_rawseti(State, frame[1], it->second);
+    }
+
+    timers.clear();
+}
+
 void DFHack::Lua::Core::onStateChange(color_ostream &out, int code) {
     if (!State) return;
 
+    switch (code)
+    {
+    case SC_MAP_UNLOADED:
+    case SC_WORLD_UNLOADED:
+        cancel_timers(tick_timers);
+        break;
+
+    default:;
+    }
+
     Lua::Push(State, code);
-    Lua::InvokeEvent(out, State, (void*)onStateChange, 1);
+    Lua::Event::Invoke(out, State, (void*)onStateChange, 1);
+}
+
+static void run_timers(color_ostream &out, lua_State *L,
+                       std::multimap<int,int> &timers, int table, int bound)
+{
+    while (!timers.empty() && timers.begin()->first <= bound)
+    {
+        int id = timers.begin()->second;
+        timers.erase(timers.begin());
+
+        lua_rawgeti(L, table, id);
+
+        if (lua_isnil(L, -1))
+            lua_pop(L, 1);
+        else
+        {
+            lua_pushnil(L);
+            lua_rawseti(L, table, id);
+
+            Lua::SafeCall(out, L, 0, 0);
+        }
+    }
+}
+
+void DFHack::Lua::Core::onUpdate(color_ostream &out)
+{
+    using df::global::world;
+
+    if (frame_timers.empty() && tick_timers.empty())
+        return;
+
+    Lua::StackUnwinder frame(State);
+    lua_rawgetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
+
+    run_timers(out, State, frame_timers, frame[1], ++frame_idx);
+
+    if (world)
+        run_timers(out, State, tick_timers, frame[1], world->frame_counter);
 }
 
 void DFHack::Lua::Core::Init(color_ostream &out)
@@ -1319,13 +1837,25 @@ void DFHack::Lua::Core::Init(color_ostream &out)
 
     State = luaL_newstate();
 
+    // Calls InitCoreContext after checking IsCoreContext
     Lua::Open(out, State);
+}
+
+static void Lua::Core::InitCoreContext()
+{
+    lua_newtable(State);
+    lua_rawsetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
 
     // Register events
-    lua_getglobal(State, "dfhack");
+    lua_rawgetp(State, LUA_REGISTRYINDEX, &DFHACK_DFHACK_TOKEN);
 
-    MakeEvent(State, (void*)onStateChange);
+    Event::Make(State, (void*)onStateChange);
     lua_setfield(State, -2, "onStateChange");
+
+    lua_pushcfunction(State, dfhack_timeout);
+    lua_setfield(State, -2, "timeout");
+    lua_pushcfunction(State, dfhack_timeout_active);
+    lua_setfield(State, -2, "timeout_active");
 
     lua_pop(State, 1);
 }

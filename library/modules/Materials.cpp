@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -80,7 +80,7 @@ bool MaterialInfo::decode(df::item *item)
 
 bool MaterialInfo::decode(const df::material_vec_ref &vr, int idx)
 {
-    if (idx < 0 || idx >= vr.mat_type.size() || idx >= vr.mat_index.size())
+    if (size_t(idx) >= vr.mat_type.size() || size_t(idx) >= vr.mat_index.size())
         return decode(-1);
     else
         return decode(vr.mat_type[idx], vr.mat_index[idx]);
@@ -103,7 +103,7 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
 
     df::world_raws &raws = world->raws;
 
-    if (type >= sizeof(raws.mat_table.builtin)/sizeof(void*))
+    if (size_t(type) >= sizeof(raws.mat_table.builtin)/sizeof(void*))
         return false;
 
     if (index < 0)
@@ -127,7 +127,7 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
         mode = Creature;
         subtype = type-CREATURE_BASE;
         creature = df::creature_raw::find(index);
-        if (!creature || subtype >= creature->material.size())
+        if (!creature || size_t(subtype) >= creature->material.size())
             return false;
         material = creature->material[subtype];
     }
@@ -139,7 +139,7 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
         if (!figure)
             return false;
         creature = df::creature_raw::find(figure->race);
-        if (!creature || subtype >= creature->material.size())
+        if (!creature || size_t(subtype) >= creature->material.size())
             return false;
         material = creature->material[subtype];
     }
@@ -148,7 +148,7 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
         mode = Plant;
         subtype = type-PLANT_BASE;
         plant = df::plant_raw::find(index);
-        if (!plant || subtype >= plant->material.size())
+        if (!plant || size_t(subtype) >= plant->material.size())
             return false;
         material = plant->material[subtype];
     }
@@ -190,6 +190,8 @@ bool MaterialInfo::find(const std::vector<std::string> &items)
     }
     else if (items.size() == 2)
     {
+        if (items[1] == "NONE" && findBuiltin(items[0]))
+            return true;
         if (findPlant(items[0], items[1]))
             return true;
         if (findCreature(items[0], items[1]))
@@ -210,7 +212,7 @@ bool MaterialInfo::findBuiltin(const std::string &token)
     }
 
     df::world_raws &raws = world->raws;
-    for (int i = 1; i < NUM_BUILTIN; i++)
+    for (int i = 0; i < NUM_BUILTIN; i++)
     {
         auto obj = raws.mat_table.builtin[i];
         if (obj && obj->id == token)
@@ -283,6 +285,19 @@ bool MaterialInfo::findCreature(const std::string &token, const std::string &sub
     return decode(-1);
 }
 
+bool MaterialInfo::findProduct(df::material *material, const std::string &name)
+{
+    if (!material || name.empty())
+        return decode(-1);
+
+    auto &pids = material->reaction_product.id;
+    for (size_t i = 0; i < pids.size(); i++)
+        if ((*pids[i]) == name)
+            return decode(material->reaction_product.material, i);
+
+    return decode(-1);
+}
+
 std::string MaterialInfo::getToken()
 {
     if (isNone())
@@ -293,6 +308,12 @@ std::string MaterialInfo::getToken()
 
     switch (mode) {
     case Builtin:
+        if (material->id == "COAL") {
+            if (index == 0)
+                return "COAL:COKE";
+            else if (index == 1)
+                return "COAL:CHARCOAL";
+        }
         return material->id;
     case Inorganic:
         return "INORGANIC:" + inorganic->id;
@@ -404,6 +425,8 @@ bool MaterialInfo::matches(const df::dfhack_material_category &cat)
     TEST(glass, IS_GLASS);
     if (cat.bits.clay && linear_index(material->reaction_product.id, std::string("FIRED_MAT")) >= 0)
         return true;
+    if (cat.bits.milk && linear_index(material->reaction_product.id, std::string("CHEESE_MAT")) >= 0)
+        return true;
     return false;
 }
 
@@ -478,7 +501,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(fire_safe, material->heat.melting_point > 11000);
     TEST(magma_safe, material->heat.melting_point > 12000);
     TEST(deep_material, FLAG(inorganic, inorganic_flags::SPECIAL));
-    TEST(non_economic, inorganic && !(ui && ui->economic_stone[index]));
+    TEST(non_economic, !inorganic || !(ui && vector_get(ui->economic_stone, index)));
 
     TEST(plant, plant);
     TEST(silk, MAT_FLAG(SILK));
@@ -743,7 +766,7 @@ bool Materials::ReadCreatureTypesEx (void)
             for(size_t k = 0; k < sizecolormod;k++)
             {
                 // color mod [0] -> color list
-                auto & indexes = colorings[k]->color_indexes;
+                auto & indexes = colorings[k]->pattern_index;
                 size_t sizecolorlist = indexes.size();
                 caste.ColorModifier[k].colorlist.resize(sizecolorlist);
                 for(size_t l = 0; l < sizecolorlist; l++)
@@ -761,8 +784,8 @@ bool Materials::ReadCreatureTypesEx (void)
             {
                 df::body_part_raw *bp = ca->body_info.body_parts[k];
                 t_bodypart part;
-                part.id = bp->part_code;
-                part.category = bp->part_name;
+                part.id = bp->token;
+                part.category = bp->category;
                 caste.bodypart.push_back(part);
             }
             using namespace df::enums::mental_attribute_type;
@@ -817,7 +840,7 @@ bool Materials::ReadAllMaterials(void)
 
 std::string Materials::getDescription(const t_material & mat)
 {
-    MaterialInfo mi(mat.material, mat.index);
+    MaterialInfo mi(mat.mat_type, mat.mat_index);
     if (mi.creature)
         return mi.creature->creature_id + " " + mi.material->id;
     else if (mi.plant)
@@ -830,7 +853,7 @@ std::string Materials::getDescription(const t_material & mat)
 // This is completely worthless now
 std::string Materials::getType(const t_material & mat)
 {
-    MaterialInfo mi(mat.material, mat.index);
+    MaterialInfo mi(mat.mat_type, mat.mat_index);
     switch (mi.mode)
     {
     case MaterialInfo::Builtin:

@@ -58,14 +58,10 @@ if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhac
 endif()
 
 # set up versioning.
-set(DF_VERSION_MAJOR "0")
-set(DF_VERSION_MINOR "34")
-set(DF_VERSION_PATCH "07")
-set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
+set(DF_VERSION "0.34.11")
+SET(DFHACK_RELEASE "r3" CACHE STRING "Current release revision.")
 
-SET(DFHACK_RELEASE "r2" CACHE STRING "Current release revision.")
-
-set(DFHACK_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}-${DFHACK_RELEASE}")
+set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")
 
 ## where to install things (after the build is done, classic 'make install' or package structure)
@@ -108,16 +104,21 @@ OPTION(BUILD_PLUGINS "Build the plugins." ON)
 # enable C++11 features
 IF(UNIX)
   add_definitions(-DLINUX_BUILD)
-  SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
+  SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -Wall -Wno-unused-variable")
   SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic -std=c++0x")
   SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic")
+ELSEIF(MSVC)
+  # for msvc, tell it to always use 8-byte pointers to member functions to avoid confusion
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /vmm")
 ENDIF()
 
 # use shared libraries for protobuf
 ADD_DEFINITIONS(-DPROTOBUF_USE_DLLS)
 ADD_DEFINITIONS(-DLUA_BUILD_AS_DLL)
 
-if(UNIX)
+if(APPLE)
+    add_definitions(-D_DARWIN)
+elseif(UNIX)
     add_definitions(-D_LINUX)
 elseif(WIN32)
     add_definitions(-DWIN32)
@@ -140,12 +141,34 @@ include_directories(depends/clsocket/src)
 add_subdirectory(depends)
 
 
+#find_package(Docutils)
+
+#set (RST_FILES
+#"Readme"
+#"Compile"
+#"LUA Api"
+#"Contributors"
+#)
+
+#set (RST_PROCESSED_FILES "")
+#IF(RST2HTML_EXECUTABLE)
+#    foreach(F ${RST_FILES})
+#        add_custom_command(
+#            OUTPUT "${dfhack_BINARY_DIR}/${F}.html"
+#            COMMAND ${RST2HTML_EXECUTABLE} "${dfhack_SOURCE_DIR}/${F}.rst" "${dfhack_BINARY_DIR}/${F}.html"
+#            COMMENT "Translating ${F} to html"
+#            DEPENDS "${dfhack_SOURCE_DIR}/${F}.rst")
+#        list (APPEND RST_PROCESSED_FILES "${dfhack_BINARY_DIR}/${F}.html")
+#    endforeach()
+#    add_custom_target(HTML_DOCS ALL DEPENDS ${RST_PROCESSED_FILES})
+#ENDIF()
 
 # build the lib itself
 IF(BUILD_LIBRARY)
     add_subdirectory (library)
     ## install the default documentation files
-    install(FILES LICENSE Readme.html Compile.html Lua\ API.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES LICENSE "Lua API.html" Readme.html Compile.html Contributors.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(DIRECTORY images DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
 #build the plugins
@@ -155,7 +178,11 @@ endif()
 
 # Packaging with CPack!
 IF(UNIX)
-    SET(CPACK_GENERATOR "TGZ")
+    if(APPLE)
+        SET(CPACK_GENERATOR "ZIP")
+    else()
+        SET(CPACK_GENERATOR "TGZ")
+    endif()
 ELSEIF(WIN32)
     SET(CPACK_GENERATOR "ZIP")
 ENDIF()

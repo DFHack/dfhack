@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -28,7 +28,13 @@ distribution.
 
 #include "Export.h"
 #include "Module.h"
+#include "Types.h"
+
 #include <ostream>
+
+#include "DataDefs.h"
+#include "df/job_item_ref.h"
+#include "df/item_type.h"
 
 namespace df
 {
@@ -43,7 +49,7 @@ namespace DFHack
 {
     namespace Job {
         // Duplicate the job structure. It is not linked into any DF lists.
-        DFHACK_EXPORT df::job *cloneJobStruct(df::job *job);
+        DFHACK_EXPORT df::job *cloneJobStruct(df::job *job, bool keepWorkerData=false);
 
         // Delete a cloned structure.
         DFHACK_EXPORT void deleteJobStruct(df::job *job);
@@ -51,13 +57,27 @@ namespace DFHack
         DFHACK_EXPORT void printItemDetails(color_ostream &out, df::job_item *item, int idx);
         DFHACK_EXPORT void printJobDetails(color_ostream &out, df::job *job);
 
+        DFHACK_EXPORT df::general_ref *getGeneralRef(df::job *job, df::general_ref_type type);
+        DFHACK_EXPORT df::specific_ref *getSpecificRef(df::job *job, df::specific_ref_type type);
+
         DFHACK_EXPORT df::building *getHolder(df::job *job);
         DFHACK_EXPORT df::unit *getWorker(df::job *job);
+
+        // Instruct the game to check and assign workers
+        DFHACK_EXPORT void checkBuildingsNow();
+        DFHACK_EXPORT void checkDesignationsNow();
 
         DFHACK_EXPORT bool linkIntoWorld(df::job *job, bool new_id = true);
 
         // lists jobs with ids >= *id_var, and sets *id_var = *job_next_id;
         DFHACK_EXPORT bool listNewlyCreated(std::vector<df::job*> *pvec, int *id_var);
+
+        DFHACK_EXPORT bool attachJobItem(df::job *job, df::item *item,
+                                         df::job_item_ref::T_role role,
+                                         int filter_idx = -1, int insert_idx = -1);
+
+        DFHACK_EXPORT bool isSuitableItem(df::job_item *item, df::item_type itype, int isubtype);
+        DFHACK_EXPORT bool isSuitableMaterial(df::job_item *item, int mat_type, int mat_index);
     }
 
     DFHACK_EXPORT bool operator== (const df::job_item &a, const df::job_item &b);

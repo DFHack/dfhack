@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -262,6 +262,51 @@ Link *linked_list_insert_after(Link *pos, Link *link)
     return link;
 }
 
+template<typename T>
+inline typename T::mapped_type map_find(
+    const T &map, const typename T::key_type &key,
+    const typename T::mapped_type &defval = typename T::mapped_type()
+) {
+    auto it = map.find(key);
+    return (it == map.end()) ? defval : it->second;
+}
+
+DFHACK_EXPORT bool prefix_matches(const std::string &prefix, const std::string &key, std::string *tail = NULL);
+
+template<typename T>
+typename T::mapped_type findPrefixInMap(
+    const T &table, const std::string &key,
+    const typename T::mapped_type& defval = typename T::mapped_type()
+) {
+    auto it = table.lower_bound(key);
+    if (it != table.end() && it->first == key)
+        return it->second;
+    if (it != table.begin()) {
+        --it;
+        if (prefix_matches(it->first, key))
+            return it->second;
+    }
+    return defval;
+}
+
+#ifdef __GNUC__
+#define VARIABLE_IS_NOT_USED __attribute__ ((unused))
+#else
+#define VARIABLE_IS_NOT_USED
+#endif
+
+template<class CT>
+inline bool static_add_to_map(CT *pmap, typename CT::key_type key, typename CT::mapped_type value) {
+    (*pmap)[key] = value;
+    return true;
+}
+
+#define CONCAT_TOKENS2(a,b) a##b
+#define CONCAT_TOKENS(a,b) CONCAT_TOKENS2(a,b)
+#define DFHACK_STATIC_ADD_TO_MAP(pmap,key,value) \
+    static bool VARIABLE_IS_NOT_USED CONCAT_TOKENS(static_add_to_map_,__LINE__)\
+        = static_add_to_map(pmap,key,value)
+
 /*
  * MISC
  */
@@ -285,6 +330,8 @@ inline T clip_range(T a, T1 minv, T2 maxv) {
     if (a > maxv) return maxv;
     return a;
 }
+
+DFHACK_EXPORT int random_int(int max);
 
 /**
  * Returns the amount of milliseconds elapsed since the UNIX epoch.

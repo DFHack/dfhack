@@ -106,12 +106,12 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
         materialsReverser[world->raws.plants.all[i]->id] = i;
     }
 
-    World *w = Core::getInstance().getWorld();
     t_gamemodes gm;
-    w->ReadGameMode(gm);// FIXME: check return value
+    World::ReadGameMode(gm);// FIXME: check return value
 
     // if game mode isn't fortress mode
-    if(gm.g_mode != GAMEMODE_DWARF || gm.g_type != GAMETYPE_DWARF_MAIN)
+    if(gm.g_mode != game_mode::DWARF || 
+        !(gm.g_type == game_type::DWARF_MAIN || gm.g_type == game_type::DWARF_RECLAIM))
     {
         // just print the help
         printHelp(out);
@@ -295,11 +295,11 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
             return CR_OK;
         counter = 0;
 
-        World *w = Core::getInstance().getWorld();
         t_gamemodes gm;
-        w->ReadGameMode(gm);// FIXME: check return value
+        World::ReadGameMode(gm);// FIXME: check return value
         // if game mode isn't fortress mode
-        if(gm.g_mode != GAMEMODE_DWARF || gm.g_type != GAMETYPE_DWARF_MAIN)
+        if(gm.g_mode != game_mode::DWARF || 
+            !(gm.g_type == game_type::DWARF_MAIN || gm.g_type == game_type::DWARF_RECLAIM))
         {
             // stop running.
             running = false;

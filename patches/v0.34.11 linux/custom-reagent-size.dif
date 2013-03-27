@@ -1,0 +1,40 @@
+http://www.bay12games.com/dwarves/mantisbt/view.php?id=808
+
+for (i = 0; i < num_items; i++)
+{
+    ridx = reagent_idx[i];
+    sz = reagent_quantity[ridx]; // used quantity
+    if (sz <= 0) continue;
+    reag = reagent[ridx];
+    if (reag->flags.PRESERVE_REAGENT) continue;
+    rsz = items[i]->getTotalDimension();
+<<<<<<<<
+    if (reag->flags3.ANY_RAW_MATERIAL)
+        rsz *= BASE_SIZE(items[i]->getType());
+    if (items[i]->subtractDimension(rsz))
+========
+    /* Not in patch, but necessary for full correctness:
+    if (reag->flags3.ANY_RAW_MATERIAL)
+        rsz /= BASE_SIZE(items[i]->getType());
+    */
+    if (reag->flags3.ANY_RAW_MATERIAL)
+        sz *= BASE_SIZE(items[i]->getType());
+    if (items[i]->subtractDimension(sz))
+>>>>>>>>
+        destroy_item(items[i]);
+    reagent_quantity[ridx] -= rsz
+    if (reagent_quantity[ridx] < 0)
+        reagent_quantity[ridx] = 0;
+}
+
+You can use this script to apply the generated patch below:
+http://stalkr.net/files/ida/idadif.py
+
+----8<----
+This difference file is created by The Interactive Disassembler
+
+Dwarf_Fortress
+0087F7EF: F8 D8
+0087F86F: F8 D8
+0087F9AD: C7 C3
+0087F9ED: C7 C3

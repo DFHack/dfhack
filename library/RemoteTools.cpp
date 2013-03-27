@@ -216,6 +216,9 @@ void DFHack::describeMaterial(BasicMaterialInfo *info, const MaterialInfo &mat,
     case MaterialInfo::Plant:
         info->set_plant_id(mat.index);
         break;
+
+    default:
+        break;
     }
 }
 
@@ -284,21 +287,21 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
 
     if (mask && mask->profession())
     {
-        if (unit->profession >= 0)
+        if (unit->profession >= (df::profession)0)
             info->set_profession(unit->profession);
         if (!unit->custom_profession.empty())
             info->set_custom_profession(unit->custom_profession);
 
-        if (unit->military.squad_index >= 0)
+        if (unit->military.squad_id >= 0)
         {
-            info->set_squad_id(unit->military.squad_index);
+            info->set_squad_id(unit->military.squad_id);
             info->set_squad_position(unit->military.squad_position);
         }
     }
 
     if (mask && mask->labors())
     {
-        for (int i = 0; i < sizeof(unit->status.labors)/sizeof(bool); i++)
+        for (size_t i = 0; i < sizeof(unit->status.labors)/sizeof(bool); i++)
             if (unit->status.labors[i])
                 info->add_labors(i);
     }
@@ -376,19 +379,19 @@ static command_result GetWorldInfo(color_ostream &stream,
     if (!ui || !world || !Core::getInstance().isWorldLoaded())
         return CR_NOT_FOUND;
 
-    t_gamemodes mode;
-    if (!Core::getInstance().getWorld()->ReadGameMode(mode))
-        mode.g_type = GAMETYPE_DWARF_MAIN;
+    df::game_type gt = game_type::DWARF_MAIN;
+    if (df::global::gametype)
+        gt = *df::global::gametype;
 
     out->set_save_dir(world->cur_savegame.save_dir);
 
     if (world->world_data->name.has_name)
         describeName(out->mutable_world_name(), &world->world_data->name);
 
-    switch (mode.g_type)
+    switch (gt)
     {
-    case GAMETYPE_DWARF_MAIN:
-    case GAMETYPE_DWARF_RECLAIM:
+    case game_type::DWARF_MAIN:
+    case game_type::DWARF_RECLAIM:
         out->set_mode(GetWorldInfoOut::MODE_DWARF);
         out->set_civ_id(ui->civ_id);
         out->set_site_id(ui->site_id);
@@ -396,10 +399,10 @@ static command_result GetWorldInfo(color_ostream &stream,
         out->set_race_id(ui->race_id);
         break;
 
-    case GAMETYPE_ADVENTURE_MAIN:
+    case game_type::ADVENTURE_MAIN:
         out->set_mode(GetWorldInfoOut::MODE_ADVENTURE);
 
-        if (auto unit = vector_get(world->units.other[0], 0))
+        if (auto unit = vector_get(world->units.active, 0))
             out->set_player_unit_id(unit->id);
 
         if (!ui_advmode)
@@ -420,7 +423,7 @@ static command_result GetWorldInfo(color_ostream &stream,
         }
         break;
 
-    case GAMETYPE_VIEW_LEGENDS:
+    case game_type::VIEW_LEGENDS:
         out->set_mode(GetWorldInfoOut::MODE_LEGENDS);
         break;
 
@@ -630,7 +633,7 @@ static command_result ListSquads(color_ostream &stream,
 
 static command_result SetUnitLabors(color_ostream &stream, const SetUnitLaborsIn *in)
 {
-    for (size_t i = 0; i < in->change_size(); i++)
+    for (int i = 0; i < in->change_size(); i++)
     {
         auto change = in->change(i);
         auto unit = df::unit::find(change.unit_id());
@@ -708,7 +711,7 @@ command_result CoreService::RunCommand(color_ostream &stream,
     for (int i = 0; i < in->arguments_size(); i++)
         args.push_back(in->arguments(i));
 
-    return Core::getInstance().plug_mgr->InvokeCommand(stream, cmd, args);
+    return Core::getInstance().runCommand(stream, cmd, args);
 }
 
 command_result CoreService::CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt)

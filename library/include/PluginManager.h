@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -31,6 +31,8 @@ distribution.
 #include <string>
 #include <vector>
 
+#include "Core.h"
+
 #include "RemoteClient.h"
 
 typedef struct lua_State lua_State;
@@ -59,22 +61,12 @@ namespace DFHack
     struct DFLibrary;
 
     // Open a plugin library
-    DFLibrary * OpenPlugin (const char * filename);
+    DFHACK_EXPORT DFLibrary * OpenPlugin (const char * filename);
     // find a symbol inside plugin
-    void * LookupPlugin (DFLibrary * plugin ,const char * function);
+    DFHACK_EXPORT void * LookupPlugin (DFLibrary * plugin ,const char * function);
     // Close a plugin library
-    void ClosePlugin (DFLibrary * plugin);
+    DFHACK_EXPORT void ClosePlugin (DFLibrary * plugin);
 
-    enum state_change_event
-    {
-        SC_WORLD_LOADED = 0,
-        SC_WORLD_UNLOADED = 1,
-        SC_MAP_LOADED = 2,
-        SC_MAP_UNLOADED = 3,
-        SC_VIEWSCREEN_CHANGED = 4,
-        SC_CORE_INITIALIZED = 5,
-        SC_BEGIN_UNLOAD = 6
-    };
     struct DFHACK_EXPORT CommandReg {
         const char *name;
         int (*command)(lua_State*);
@@ -136,7 +128,9 @@ namespace DFHack
         {
             PS_UNLOADED,
             PS_LOADED,
-            PS_BROKEN
+            PS_BROKEN,
+            PS_LOADING,
+            PS_UNLOADING
         };
         friend class PluginManager;
         friend class RPCService;
@@ -181,31 +175,16 @@ namespace DFHack
         PluginManager * parent;
         plugin_state state;
 
-        struct LuaCommand {
-            Plugin *owner;
-            std::string name;
-            int (*command)(lua_State *state);
-            LuaCommand(Plugin *owner, std::string name) : owner(owner), name(name) {}
-        };
+        struct LuaCommand;
         std::map<std::string, LuaCommand*> lua_commands;
         static int lua_cmd_wrapper(lua_State *state);
 
-        struct LuaFunction {
-            Plugin *owner;
-            std::string name;
-            function_identity_base *identity;
-            LuaFunction(Plugin *owner, std::string name) : owner(owner), name(name) {}
-        };
+        struct LuaFunction;
         std::map<std::string, LuaFunction*> lua_functions;
         static int lua_fun_wrapper(lua_State *state);
         void push_function(lua_State *state, LuaFunction *fn);
 
-        struct LuaEvent {
-            LuaFunction handler;
-            Lua::Notification *event;
-            bool active;
-            LuaEvent(Plugin *owner, std::string name) : handler(owner,name), active(false) {}
-        };
+        struct LuaEvent;
         std::map<std::string, LuaEvent*> lua_events;
 
         void index_lua(DFLibrary *lib);
@@ -217,6 +196,7 @@ namespace DFHack
         command_result (*plugin_onupdate)(color_ostream &);
         command_result (*plugin_onstatechange)(color_ostream &, state_change_event);
         RPCService* (*plugin_rpcconnect)(color_ostream &);
+        command_result (*plugin_eval_ruby)(color_ostream &, const char*);
     };
     class DFHACK_EXPORT PluginManager
     {
@@ -225,6 +205,7 @@ namespace DFHack
         friend class Plugin;
         PluginManager(Core * core);
         ~PluginManager();
+        void init(Core* core);
         void OnUpdate(color_ostream &out);
         void OnStateChange(color_ostream &out, state_change_event event);
         void registerCommands( Plugin * p );
@@ -245,6 +226,7 @@ namespace DFHack
         {
             return all_plugins.size();
         }
+        command_result (*eval_ruby)(color_ostream &, const char*);
     // DATA
     private:
         tthread::mutex * cmdlist_mutex;
@@ -265,7 +247,8 @@ namespace DFHack
 /// You have to have this in every plugin you write - just once. Ideally on top of the main file.
 #define DFHACK_PLUGIN(plugin_name) \
     DFhackDataExport const char * version = DFHACK_VERSION;\
-    DFhackDataExport const char * name = plugin_name;
+    DFhackDataExport const char * name = plugin_name;\
+    DFhackDataExport Plugin *plugin_self = NULL;
 
 #define DFHACK_PLUGIN_LUA_COMMANDS \
     DFhackCExport const DFHack::CommandReg plugin_lua_commands[] =

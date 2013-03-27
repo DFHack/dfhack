@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -25,7 +25,9 @@ distribution.
 #pragma once
 #include "Export.h"
 #include "DataDefs.h"
+#include "Types.h"
 #include "df/building.h"
+#include "df/building_type.h"
 #include "df/civzone_type.h"
 #include "df/furnace_type.h"
 #include "df/workshop_type.h"
@@ -33,6 +35,14 @@ distribution.
 #include "df/shop_type.h"
 #include "df/siegeengine_type.h"
 #include "df/trap_type.h"
+
+namespace df
+{
+    struct job_item;
+    struct item;
+    struct building_extents;
+    struct building_civzonest;
+}
 
 namespace DFHack
 {
@@ -83,6 +93,98 @@ DFHACK_EXPORT bool Read (const uint32_t index, t_building & building);
  * custom_type of -1 implies ordinary building
  */
 DFHACK_EXPORT bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
+
+DFHACK_EXPORT df::general_ref *getGeneralRef(df::building *building, df::general_ref_type type);
+DFHACK_EXPORT df::specific_ref *getSpecificRef(df::building *building, df::specific_ref_type type);
+
+/**
+ * Sets the owner unit for the building.
+ */
+DFHACK_EXPORT bool setOwner(df::building *building, df::unit *owner);
+
+/**
+ * Find the building located at the specified tile.
+ * Does not work on civzones.
+ */
+DFHACK_EXPORT df::building *findAtTile(df::coord pos);
+
+/**
+ * Find civzones located at the specified tile.
+ */
+DFHACK_EXPORT bool findCivzonesAt(std::vector<df::building_civzonest*> *pvec, df::coord pos);
+
+/**
+ * Allocates a building object using this type and position.
+ */
+DFHACK_EXPORT df::building *allocInstance(df::coord pos, df::building_type type, int subtype = -1, int custom = -1);
+
+/**
+ * Sets size and center to the correct dimensions of the building.
+ * If part of the original size value was used, returns true.
+ */
+DFHACK_EXPORT bool getCorrectSize(df::coord2d &size, df::coord2d &center,
+                                  df::building_type type, int subtype = -1, int custom = -1,
+                                  int direction = 0);
+
+/**
+ * Checks if the tiles are free to be built upon.
+ */
+DFHACK_EXPORT bool checkFreeTiles(df::coord pos, df::coord2d size,
+                                  df::building_extents *ext = NULL,
+                                  bool create_ext = false, bool allow_occupied = false);
+
+/**
+ * Returns the number of tiles included by the extent, or defval.
+ */
+DFHACK_EXPORT int countExtentTiles(df::building_extents *ext, int defval = -1);
+
+/**
+ * Checks if the building contains the specified tile.
+ */
+DFHACK_EXPORT bool containsTile(df::building *bld, df::coord2d tile, bool room = false);
+
+/**
+ * Checks if the area has support from the terrain.
+ */
+DFHACK_EXPORT bool hasSupport(df::coord pos, df::coord2d size);
+
+/**
+ * Sets the size of the building, using size and direction as guidance.
+ * Returns true if the building can be created at its position, using that size.
+ */
+DFHACK_EXPORT bool setSize(df::building *bld, df::coord2d size, int direction = 0);
+
+/**
+ * Decodes the size of the building into pos and size.
+ */
+DFHACK_EXPORT std::pair<df::coord,df::coord2d> getSize(df::building *bld);
+
+/**
+ * Constructs an abstract building, i.e. stockpile or civzone.
+ */
+DFHACK_EXPORT bool constructAbstract(df::building *bld);
+
+/**
+ * Initiates construction of the building, using specified items as inputs.
+ * Returns true if success.
+ */
+DFHACK_EXPORT bool constructWithItems(df::building *bld, std::vector<df::item*> items);
+
+/**
+ * Initiates construction of the building, using specified item filters.
+ * Assumes immediate ownership of the item objects, and deletes them in case of error.
+ * Returns true if success.
+ */
+DFHACK_EXPORT bool constructWithFilters(df::building *bld, std::vector<df::job_item*> items);
+
+/**
+ * Deconstructs or queues deconstruction of a building.
+ * Returns true if the building has been destroyed instantly.
+ */
+DFHACK_EXPORT bool deconstruct(df::building *bld);
+
+void updateBuildings(color_ostream& out, void* ptr);
+void clearBuildings(color_ostream& out);
 
 }
 }

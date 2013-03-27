@@ -13,6 +13,7 @@
 #include "modules/MapCache.h"
 #include "modules/World.h"
 #include "modules/Units.h"
+#include "modules/Burrows.h"
 #include "TileTypes.h"
 
 #include "DataDefs.h"
@@ -100,8 +101,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     switch (event) {
     case SC_MAP_LOADED:
         deinit_map(out);
-        if (df::global::game_mode &&
-            *df::global::game_mode == GAMEMODE_DWARF)
+        if (df::global::gamemode &&
+            *df::global::gamemode == game_mode::DWARF)
             init_map(out);
         break;
     case SC_MAP_UNLOADED:
@@ -152,10 +153,10 @@ static int next_job_id_save = 0;
 static std::map<int,DigJob> diggers;
 
 static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord pos,
-                                df::tiletype old_tile, df::tiletype new_tile);
+                                df::tiletype old_tile, df::tiletype new_tile, df::unit *worker);
 
-DEFINE_LUA_EVENT_4(onDigComplete, handle_dig_complete,
-                   df::job_type, df::coord, df::tiletype, df::tiletype);
+DEFINE_LUA_EVENT_5(onDigComplete, handle_dig_complete,
+                   df::job_type, df::coord, df::tiletype, df::tiletype, df::unit*);
 
 static void detect_digging(color_ostream &out)
 {
@@ -178,10 +179,7 @@ static void detect_digging(color_ostream &out)
 
                 if (new_tile != it->second.old_tile)
                 {
-                    onDigComplete(out, it->second.job, pos, it->second.old_tile, new_tile);
-
-                    //if (worker && !worker->job.current_job)
-                    //    worker->counters.think_counter = worker->counters.job_counter = 0;
+                    onDigComplete(out, it->second.job, pos, it->second.old_tile, new_tile, worker);
                 }
             }
 
@@ -283,7 +281,7 @@ static void reset_tracking()
 
 static void init_map(color_ostream &out)
 {
-    auto config = Core::getInstance().getWorld()->GetPersistentData("burrows/config");
+    auto config = World::GetPersistentData("burrows/config");
     if (config.isValid())
     {
         auto_grow = !!(config.ival(0) & 1);
@@ -309,7 +307,7 @@ static void deinit_map(color_ostream &out)
 static PersistentDataItem create_config(color_ostream &out)
 {
     bool created;
-    auto rv = Core::getInstance().getWorld()->GetPersistentData("burrows/config", &created);
+    auto rv = World::GetPersistentData("burrows/config", &created);
     if (created && rv.isValid())
         rv.ival(0) = 0;
     if (!rv.isValid())
@@ -345,7 +343,7 @@ static void handle_burrow_rename(color_ostream &out, df::burrow *burrow)
 static void add_to_burrows(std::vector<df::burrow*> &burrows, df::coord pos)
 {
     for (size_t i = 0; i < burrows.size(); i++)
-        Maps::setBurrowTile(burrows[i], pos, true);
+        Burrows::setAssignedTile(burrows[i], pos, true);
 }
 
 static void add_walls_to_burrows(color_ostream &out, std::vector<df::burrow*> &burrows,
@@ -369,7 +367,7 @@ static void add_walls_to_burrows(color_ostream &out, std::vector<df::burrow*> &b
 }
 
 static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord pos,
-                                df::tiletype old_tile, df::tiletype new_tile)
+                                df::tiletype old_tile, df::tiletype new_tile, df::unit *worker)
 {
     if (!isWalkable(new_tile))
         return;
@@ -379,7 +377,7 @@ static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord 
     for (size_t i = 0; i < grow_burrows.size(); i++)
     {
         auto b = df::burrow::find(grow_burrows[i]);
-        if (b && Maps::isBurrowTile(b, pos))
+        if (b && Burrows::isAssignedTile(b, pos))
             to_grow.push_back(b);
     }
 
@@ -389,9 +387,11 @@ static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord 
         return;
 
     MapExtras::MapCache mc;
+    bool changed = false;
 
     if (!isWalkable(old_tile))
     {
+        changed = true;
         add_walls_to_burrows(out, to_grow, mc, pos+df::coord(-1,-1,0), pos+df::coord(1,1,0));
 
         if (isWalkableUp(new_tile))
@@ -406,6 +406,7 @@ static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord 
 
     if (LowPassable(new_tile) && !LowPassable(old_tile))
     {
+        changed = true;
         add_to_burrows(to_grow, pos-df::coord(0,0,1));
 
         if (tileShape(new_tile) == tiletype_shape::RAMP_TOP)
@@ -414,6 +415,9 @@ static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord 
                                  pos+df::coord(-1,-1,-1), pos+df::coord(1,1,-1));
         }
     }
+
+    if (changed && worker && !worker->job.current_job)
+        Job::checkDesignationsNow();
 }
 
 static void renameBurrow(color_ostream &out, df::burrow *burrow, std::string name)
@@ -446,7 +450,7 @@ static void copyUnits(df::burrow *target, df::burrow *source, bool enable)
     if (source == target)
     {
         if (!enable)
-            Units::clearBurrowMembers(target);
+            Burrows::clearUnits(target);
 
         return;
     }
@@ -456,7 +460,7 @@ static void copyUnits(df::burrow *target, df::burrow *source, bool enable)
         auto unit = df::unit::find(source->units[i]);
 
         if (unit)
-            Units::setInBurrow(unit, target, enable);
+            Burrows::setAssignedUnit(target, unit, enable);
     }
 }
 
@@ -468,22 +472,22 @@ static void copyTiles(df::burrow *target, df::burrow *source, bool enable)
     if (source == target)
     {
         if (!enable)
-            Maps::clearBurrowTiles(target);
+            Burrows::clearTiles(target);
 
         return;
     }
 
     std::vector<df::map_block*> pvec;
-    Maps::listBurrowBlocks(&pvec, source);
+    Burrows::listBlocks(&pvec, source);
 
     for (size_t i = 0; i < pvec.size(); i++)
     {
         auto block = pvec[i];
-        auto smask = Maps::getBlockBurrowMask(source, block);
+        auto smask = Burrows::getBlockMask(source, block);
         if (!smask)
             continue;
 
-        auto tmask = Maps::getBlockBurrowMask(target, block, enable);
+        auto tmask = Burrows::getBlockMask(target, block, enable);
         if (!tmask)
             continue;
 
@@ -498,7 +502,7 @@ static void copyTiles(df::burrow *target, df::burrow *source, bool enable)
                 tmask->tile_bitmask[j] &= ~smask->tile_bitmask[j];
 
             if (!tmask->has_assignments())
-                Maps::deleteBlockBurrowMask(target, block, tmask);
+                Burrows::deleteBlockMask(target, block, tmask);
         }
     }
 }
@@ -523,7 +527,7 @@ static void setTilesByDesignation(df::burrow *target, df::tile_designation d_mas
                     continue;
 
                 if (!mask)
-                    mask = Maps::getBlockBurrowMask(target, block, enable);
+                    mask = Burrows::getBlockMask(target, block, enable);
                 if (!mask)
                     goto next_block;
 
@@ -532,7 +536,7 @@ static void setTilesByDesignation(df::burrow *target, df::tile_designation d_mas
         }
 
         if (mask && !enable && !mask->has_assignments())
-            Maps::deleteBlockBurrowMask(target, block, mask);
+            Burrows::deleteBlockMask(target, block, mask);
 
     next_block:;
     }
@@ -604,7 +608,7 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
 
         bool state = (cmd == "enable");
 
-        for (int i = 1; i < parameters.size(); i++)
+        for (size_t i = 1; i < parameters.size(); i++)
         {
             string &option = parameters[i];
 
@@ -619,13 +623,13 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
         if (parameters.size() < 2)
             return CR_WRONG_USAGE;
 
-        for (int i = 1; i < parameters.size(); i++)
+        for (size_t i = 1; i < parameters.size(); i++)
         {
             auto target = findByName(out, parameters[i]);
             if (!target)
                 return CR_WRONG_USAGE;
 
-            Units::clearBurrowMembers(target);
+            Burrows::clearUnits(target);
         }
     }
     else if (cmd == "set-units" || cmd == "add-units" || cmd == "remove-units")
@@ -638,11 +642,11 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
             return CR_WRONG_USAGE;
 
         if (cmd == "set-units")
-            Units::clearBurrowMembers(target);
+            Burrows::clearUnits(target);
 
         bool enable = (cmd != "remove-units");
 
-        for (int i = 2; i < parameters.size(); i++)
+        for (size_t i = 2; i < parameters.size(); i++)
         {
             auto source = findByName(out, parameters[i]);
             if (!source)
@@ -656,13 +660,13 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
         if (parameters.size() < 2)
             return CR_WRONG_USAGE;
 
-        for (int i = 1; i < parameters.size(); i++)
+        for (size_t i = 1; i < parameters.size(); i++)
         {
             auto target = findByName(out, parameters[i]);
             if (!target)
                 return CR_WRONG_USAGE;
 
-            Maps::clearBurrowTiles(target);
+            Burrows::clearTiles(target);
         }
     }
     else if (cmd == "set-tiles" || cmd == "add-tiles" || cmd == "remove-tiles")
@@ -675,11 +679,11 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
             return CR_WRONG_USAGE;
 
         if (cmd == "set-tiles")
-            Maps::clearBurrowTiles(target);
+            Burrows::clearTiles(target);
 
         bool enable = (cmd != "remove-tiles");
 
-        for (int i = 2; i < parameters.size(); i++)
+        for (size_t i = 2; i < parameters.size(); i++)
         {
             if (setTilesByKeyword(target, parameters[i], enable))
                 continue;

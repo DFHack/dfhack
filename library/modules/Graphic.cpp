@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mr�zek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mr�zek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -48,63 +48,63 @@ Module* DFHack::createGraphic()
 
 struct Graphic::Private
 {
-	bool Started;
-	vector<DFTileSurface* (*)(int,int)> funcs;
+    bool Started;
+    vector<DFTileSurface* (*)(int,int)> funcs;
 };
 
 Graphic::Graphic()
 {
-	d = new Private;
+    d = new Private;
 
-	d->Started = true;
+    d->Started = true;
 }
 
 Graphic::~Graphic()
 {
-	delete d;
+    delete d;
 }
 
 bool Graphic::Register(DFTileSurface* (*func)(int,int))
 {
-	d->funcs.push_back(func);
-	return true;
+    d->funcs.push_back(func);
+    return true;
 }
 
 bool Graphic::Unregister(DFTileSurface* (*func)(int,int))
 {
-	if ( d->funcs.empty() ) return false;
+    if ( d->funcs.empty() ) return false;
 
-	vector<DFTileSurface* (*)(int,int)>::iterator it = d->funcs.begin();
-	while ( it != d->funcs.end() )
-	{
-		if ( *it == func )
-		{
-			d->funcs.erase(it);
-			return true;
-		}
-		it++;
-	}
+    vector<DFTileSurface* (*)(int,int)>::iterator it = d->funcs.begin();
+    while ( it != d->funcs.end() )
+    {
+        if ( *it == func )
+        {
+            d->funcs.erase(it);
+            return true;
+        }
+        it++;
+    }
 
-	return false;
+    return false;
 }
 
 // This will return first DFTileSurface it can get (or NULL if theres none)
 DFTileSurface* Graphic::Call(int x, int y)
 {
-	if ( d->funcs.empty() ) return NULL;
+    if ( d->funcs.empty() ) return NULL;
 
-	DFTileSurface* temp = NULL;
+    DFTileSurface* temp = NULL;
 
-	vector<DFTileSurface* (*)(int,int)>::iterator it = d->funcs.begin();
-	while ( it != d->funcs.end() )
-	{
-		temp = (*it)(x,y);
-		if ( temp != NULL )
-		{
-			return temp;
-		}
-		it++;
-	}
+    vector<DFTileSurface* (*)(int,int)>::iterator it = d->funcs.begin();
+    while ( it != d->funcs.end() )
+    {
+        temp = (*it)(x,y);
+        if ( temp != NULL )
+        {
+            return temp;
+        }
+        it++;
+    }
 
-	return NULL;
+    return NULL;
 }

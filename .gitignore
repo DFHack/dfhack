@@ -35,6 +35,10 @@ build/library
 build/tools
 build/plugins
 build/depends
+build/install_manifest.txt
+build/README.html
+build/LUA_API.html
+build/COMPILE.html
 
 #ignore Kdevelop stuff
 .kdev4
@@ -53,3 +57,6 @@ dfhack/python/dist
 build/CPack*Config.cmake
 
 /cmakeall.bat
+
+# vim swap files
+*.swp

@@ -1,7 +1,7 @@
 // Wide-area traffic designation utility.
 // Flood-fill from cursor or fill entire map.
 
-#include <ctype.h>		//For toupper(). 
+#include <ctype.h>      //For toupper().
 #include <algorithm>    //for min().
 #include <map>
 #include <vector>

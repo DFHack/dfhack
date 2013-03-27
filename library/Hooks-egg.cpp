@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -65,13 +65,13 @@ DFhackCExport int egg_prerender(void)
 }
 
 // hook - called for each SDL event, returns 0 when the event has been consumed. 1 otherwise
-DFhackCExport int egg_sdl_event(SDL::Event* event)
+DFhackCExport int egg_sdl_event(SDL_Event* event)
 {
     // if the event is valid, intercept
     if( event != 0 )
     {
         DFHack::Core & c = DFHack::Core::getInstance();
-        return c.SDL_Event(event);
+        return c.DFH_SDL_Event(event);
     }
     return true;
 }

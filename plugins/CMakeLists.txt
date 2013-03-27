@@ -36,9 +36,20 @@ if (BUILD_DWARFEXPORT)
     add_subdirectory (dwarfexport)
 endif()
 
+OPTION(BUILD_RUBY "Build ruby binding." ON)
+if (BUILD_RUBY)
+    add_subdirectory (ruby)
+endif()
+
 install(DIRECTORY lua/
         DESTINATION ${DFHACK_LUA_DESTINATION}/plugins
         FILES_MATCHING PATTERN "*.lua")
+install(DIRECTORY raw/
+        DESTINATION ${DFHACK_DATA_DESTINATION}/raw
+        FILES_MATCHING PATTERN "*.txt")
+install(DIRECTORY raw/
+        DESTINATION ${DFHACK_DATA_DESTINATION}/raw
+        FILES_MATCHING PATTERN "*.diff")
 
 # Protobuf
 FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
@@ -76,7 +87,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(weather weather.cpp)
     DFHACK_PLUGIN(colonies colonies.cpp)
     DFHACK_PLUGIN(mode mode.cpp)
-    DFHACK_PLUGIN(liquids liquids.cpp Brushes.h)
+    DFHACK_PLUGIN(liquids liquids.cpp Brushes.h LINK_LIBRARIES lua)
     DFHACK_PLUGIN(tiletypes tiletypes.cpp Brushes.h)
     DFHACK_PLUGIN(tubefill tubefill.cpp)
     DFHACK_PLUGIN(autodump autodump.cpp)
@@ -87,9 +98,9 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(seedwatch seedwatch.cpp)
     DFHACK_PLUGIN(initflags initflags.cpp)
     DFHACK_PLUGIN(stockpiles stockpiles.cpp)
-    DFHACK_PLUGIN(rename rename.cpp PROTOBUFS rename)
+    DFHACK_PLUGIN(rename rename.cpp LINK_LIBRARIES lua PROTOBUFS rename)
     DFHACK_PLUGIN(jobutils jobutils.cpp)
-    DFHACK_PLUGIN(workflow workflow.cpp)
+    DFHACK_PLUGIN(workflow workflow.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(showmood showmood.cpp)
     DFHACK_PLUGIN(fixveins fixveins.cpp)
     DFHACK_PLUGIN(fixpositions fixpositions.cpp)
@@ -104,10 +115,28 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(zone zone.cpp)
     DFHACK_PLUGIN(catsplosion catsplosion.cpp)
     DFHACK_PLUGIN(regrass regrass.cpp)
+    DFHACK_PLUGIN(forceequip forceequip.cpp)
+    DFHACK_PLUGIN(manipulator manipulator.cpp)
+    DFHACK_PLUGIN(search search.cpp)
+    DFHACK_PLUGIN(automaterial automaterial.cpp)
     # this one exports functions to lua
     DFHACK_PLUGIN(burrows burrows.cpp LINK_LIBRARIES lua)
+    DFHACK_PLUGIN(sort sort.cpp LINK_LIBRARIES lua)
+    DFHACK_PLUGIN(steam-engine steam-engine.cpp)
+    DFHACK_PLUGIN(power-meter power-meter.cpp LINK_LIBRARIES lua)
+    DFHACK_PLUGIN(siege-engine siege-engine.cpp LINK_LIBRARIES lua)
+    DFHACK_PLUGIN(eventful eventful.cpp LINK_LIBRARIES lua)
+    DFHACK_PLUGIN(add-spatter add-spatter.cpp)
+    DFHACK_PLUGIN(fix-armory fix-armory.cpp)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
+    DFHACK_PLUGIN(misery misery.cpp)
+    DFHACK_PLUGIN(workNow workNow.cpp)
+    #DFHACK_PLUGIN(dfstream dfstream.cpp LINK_LIBRARIES clsocket dfhack-tinythread)
+    DFHACK_PLUGIN(autoSyndrome autoSyndrome.cpp)
+    DFHACK_PLUGIN(trueTransformation trueTransformation.cpp)
+    DFHACK_PLUGIN(infiniteSky infiniteSky.cpp)
+    DFHACK_PLUGIN(createitem createitem.cpp)
 endif()
 
 

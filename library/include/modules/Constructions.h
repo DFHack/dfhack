@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -31,6 +31,8 @@ distribution.
 #include "Export.h"
 #include "DataDefs.h"
 #include "df/construction.h"
+#include "df/construction_type.h"
+#include "df/item_type.h"
 
 /**
  * \defgroup grp_constructions Construction module parts
@@ -57,6 +59,12 @@ DFHACK_EXPORT bool isValid();
 DFHACK_EXPORT uint32_t getCount();
 DFHACK_EXPORT bool copyConstruction (const int32_t index, t_construction &out);
 DFHACK_EXPORT df::construction * getConstruction (const int32_t index);
+
+DFHACK_EXPORT bool designateNew(df::coord pos, df::construction_type type,
+                                df::item_type item = df::item_type::NONE, int mat_index = -1);
+
+DFHACK_EXPORT bool designateRemove(df::coord pos, bool *immediate = NULL);
+
 }
 }
 #endif

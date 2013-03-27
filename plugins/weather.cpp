@@ -5,10 +5,13 @@
 #include <vector>
 #include <string>
 #include "modules/World.h"
+#include "DataDefs.h"
+#include "df/weather_type.h"
 
 using std::vector;
 using std::string;
 using namespace DFHack;
+using namespace df::enums;
 
 bool locked = false;
 unsigned char locked_data[25];
@@ -81,8 +84,7 @@ command_result weather (color_ostream &con, vector <string> & parameters)
 
     CoreSuspender suspend;
 
-    DFHack::World * w = Core::getInstance().getWorld();
-    if(!w->wmap)
+    if(!df::global::current_weather)
     {
         con << "Weather support seems broken :(" << std::endl;
         return CR_FAILURE;
@@ -95,19 +97,19 @@ command_result weather (color_ostream &con, vector <string> & parameters)
         {
             for(int x = 0; x<5;x++)
             {
-                switch((*w->wmap)[x][y])
+                switch((*df::global::current_weather)[x][y])
                 {
-                case CLEAR:
+                case weather_type::None:
                     con << "C ";
                     break;
-                case RAINING:
+                case weather_type::Rain:
                     con << "R ";
                     break;
-                case SNOWING:
+                case weather_type::Snow:
                     con << "S ";
                     break;
                 default:
-                    con << (int) (*w->wmap)[x][y] << " ";
+                    con << (int) (*df::global::current_weather)[x][y] << " ";
                     break;
                 }
             }
@@ -120,22 +122,22 @@ command_result weather (color_ostream &con, vector <string> & parameters)
         if(rain)
         {
             con << "Here comes the rain." << std::endl;
-            w->SetCurrentWeather(RAINING);
+            World::SetCurrentWeather(weather_type::Rain);
         }
         if(snow)
         {
             con << "Snow everywhere!" << std::endl;
-            w->SetCurrentWeather(SNOWING);
+            World::SetCurrentWeather(weather_type::Snow);
         }
         if(clear)
         {
             con << "Suddenly, sunny weather!" << std::endl;
-            w->SetCurrentWeather(CLEAR);
+            World::SetCurrentWeather(weather_type::None);
         }
         if(val_override != -1)
         {
             con << "I have no damn idea what this is... " << val_override << std::endl;
-            w->SetCurrentWeather(val_override);
+            World::SetCurrentWeather(val_override);
         }
         // FIXME: weather lock needs map ID to work reliably... needs to be implemented.
     }

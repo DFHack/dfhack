@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -51,6 +51,8 @@ DFHACK_EXPORT bool readName(t_name & name, df::language_name * address);
 DFHACK_EXPORT bool copyName(df::language_name * address, df::language_name * target);
 
 DFHACK_EXPORT void setNickname(df::language_name *name, std::string nick);
+
+DFHACK_EXPORT std::string capitalize(const std::string &str, bool all_words = false);
 
 // translate a name using the loaded dictionaries
 DFHACK_EXPORT std::string TranslateName (const df::language_name * name, bool inEnglish = true,

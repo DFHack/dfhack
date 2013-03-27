@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -73,7 +73,7 @@ namespace DFHack
      */
     template<class T>
     void flagarray_to_ints(RepeatedField<google::protobuf::int32> *pf, const BitArray<T> &val) {
-        for (int i = 0; i < val.size*8; i++)
+        for (size_t i = 0; i < val.size*8; i++)
             if (val.is_set(T(i)))
                 pf->Add(i);
     }
@@ -88,7 +88,7 @@ namespace DFHack
     {
         typedef df::enum_traits<T> traits;
         int base = traits::first_item;
-        int size = traits::last_item - base + 1;
+        int size = (int)traits::last_item - base + 1;
         describeEnum(pf, base, size, traits::key_table);
     }
 

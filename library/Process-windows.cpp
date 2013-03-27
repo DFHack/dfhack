@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -160,7 +160,7 @@ Process::Process(VersionInfoFactory * factory)
         identified = true;
         // give the process a data model and memory layout fixed for the base of first module
         my_descriptor  = new VersionInfo(*vinfo);
-        my_descriptor->rebaseTo((uint32_t)d->base);
+        my_descriptor->rebaseTo(getBase());
         for(size_t i = 0; i < threads_ids.size();i++)
         {
             HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads_ids[i]);
@@ -233,19 +233,55 @@ struct HeapBlock
       ULONG reserved;
 };
 */
-// FIXME: NEEDS TESTING!
-// FIXME: <warmist> i noticed that if you enumerate it twice, second time it returns wrong .text region size
+
+static void GetDosNames(std::map<string, string> &table)
+{
+    // Partially based on example from msdn:
+    // Translate path with device name to drive letters.
+    TCHAR szTemp[512];
+    szTemp[0] = '\0';
+
+    if (GetLogicalDriveStrings(sizeof(szTemp)-1, szTemp))
+    {
+        TCHAR szName[MAX_PATH];
+        TCHAR szDrive[3] = " :";
+        BOOL bFound = FALSE;
+        TCHAR* p = szTemp;
+
+        do
+        {
+            // Copy the drive letter to the template string
+            *szDrive = *p;
+
+            // Look up each device name
+            if (QueryDosDevice(szDrive, szName, MAX_PATH))
+                table[szName] = szDrive;
+
+            // Go to the next NULL character.
+            while (*p++);
+        } while (*p); // end of string
+    }
+}
+
 void Process::getMemRanges( vector<t_memrange> & ranges )
 {
     MEMORY_BASIC_INFORMATION MBI;
     //map<char *, unsigned int> heaps;
     uint64_t movingStart = 0;
+    PVOID LastAllocationBase = 0;
     map <char *, string> nameMap;
+    map <string,string> dosDrives;
 
     // get page size
     SYSTEM_INFO si;
     GetSystemInfo(&si);
     uint64_t PageSize = si.dwPageSize;
+
+    // get dos drive names
+    GetDosNames(dosDrives);
+
+    ranges.clear();
+
     // enumerate heaps
     // HeapNodes(d->my_pid, heaps);
     // go through all the VM regions, convert them to our internal format
@@ -254,62 +290,149 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
         movingStart = ((uint64_t)MBI.BaseAddress + MBI.RegionSize);
         if(movingStart % PageSize != 0)
             movingStart = (movingStart / PageSize + 1) * PageSize;
-        // skip empty regions and regions we share with other processes (DLLs)
-        if( !(MBI.State & MEM_COMMIT) /*|| !(MBI.Type & MEM_PRIVATE)*/ )
+
+        // Skip unallocated address space
+        if (MBI.State & MEM_FREE)
             continue;
+
+        // Find range and permissions
         t_memrange temp;
+        memset(&temp, 0, sizeof(temp));
+
         temp.start   = (char *) MBI.BaseAddress;
         temp.end     =  ((char *)MBI.BaseAddress + (uint64_t)MBI.RegionSize);
-        temp.read    = MBI.Protect & PAGE_EXECUTE_READ || MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_READONLY || MBI.Protect & PAGE_READWRITE;
-        temp.write   = MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_READWRITE;
-        temp.execute = MBI.Protect & PAGE_EXECUTE_READ || MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_EXECUTE;
-        temp.valid = true;
-        if(!GetModuleBaseName(d->my_handle, (HMODULE) temp.start, temp.name, 1024))
+        temp.valid   = true;
+
+        if (!(MBI.State & MEM_COMMIT))
+            temp.valid = false; // reserved address space
+        else if (MBI.Protect & PAGE_EXECUTE)
+            temp.execute = true;
+        else if (MBI.Protect & PAGE_EXECUTE_READ)
+            temp.execute = temp.read = true;
+        else if (MBI.Protect & PAGE_EXECUTE_READWRITE)
+            temp.execute = temp.read = temp.write = true;
+        else if (MBI.Protect & PAGE_EXECUTE_WRITECOPY)
+            temp.execute = temp.read = temp.write = true;
+        else if (MBI.Protect & PAGE_READONLY)
+            temp.read = true;
+        else if (MBI.Protect & PAGE_READWRITE)
+            temp.read = temp.write = true;
+        else if (MBI.Protect & PAGE_WRITECOPY)
+            temp.read = temp.write = true;
+
+        // Merge areas with the same properties
+        if (!ranges.empty() && LastAllocationBase == MBI.AllocationBase)
         {
-            if(nameMap.count((char *)temp.start))
+            auto &last = ranges.back();
+
+            if (last.end == temp.start &&
+                last.valid == temp.valid && last.execute == temp.execute &&
+                last.read == temp.read && last.write == temp.write)
             {
-                // potential buffer overflow...
-                strcpy(temp.name, nameMap[(char *)temp.start].c_str());
+                last.end = temp.end;
+                continue;
             }
-            else
+        }
+
+#if 1
+        // Find the mapped file name
+        if (GetMappedFileName(d->my_handle, temp.start, temp.name, 1024))
+        {
+            int vsize = strlen(temp.name);
+
+            // Translate NT name to DOS name
+            for (auto it = dosDrives.begin(); it != dosDrives.end(); ++it)
             {
-                // filter away shared segments without a name.
-                if( !(MBI.Type & MEM_PRIVATE) )
+                int ksize = it->first.size();
+                if (strncmp(temp.name, it->first.data(), ksize) != 0)
                     continue;
-                else
-                    temp.name[0]=0;
+
+                memcpy(temp.name, it->second.data(), it->second.size());
+                memmove(temp.name + it->second.size(), temp.name + ksize, vsize + 1 - ksize);
+                break;
             }
         }
         else
+            temp.name[0] = 0;
+#else
+        // Find the executable name
+        char *base = (char*)MBI.AllocationBase;
+
+        if(nameMap.count(base))
         {
+            strncpy(temp.name, nameMap[base].c_str(), 1023);
+        }
+        else if(GetModuleBaseName(d->my_handle, (HMODULE)base, temp.name, 1024))
+        {
+            std::string nm(temp.name);
+
+            nameMap[base] = nm;
+
             // this is our executable! (could be generalized to pull segments from libs, but whatever)
-            if(d->base == temp.start)
+            if(d->base == base)
             {
                 for(int i = 0; i < d->pe_header.FileHeader.NumberOfSections; i++)
                 {
-                    char sectionName[9];
+                    /*char sectionName[9];
                     memcpy(sectionName,d->sections[i].Name,8);
                     sectionName[8] = 0;
                     string nm;
                     nm.append(temp.name);
                     nm.append(" : ");
-                    nm.append(sectionName);
-                    nameMap[(char *)temp.start + d->sections[i].VirtualAddress] = nm;
+                    nm.append(sectionName);*/
+                    nameMap[base + d->sections[i].VirtualAddress] = nm;
                 }
             }
-            else
-                continue;
         }
+        else
+            temp.name[0] = 0;
+#endif
+
+        // Push the entry
+        LastAllocationBase = MBI.AllocationBase;
         ranges.push_back(temp);
     }
 }
 
-uint32_t Process::getBase()
+uintptr_t Process::getBase()
 {
     if(d)
-        return (uint32_t) d->base;
+        return (uintptr_t) d->base;
     return 0x400000;
 }
+
+int Process::adjustOffset(int offset, bool to_file)
+{
+    if (!d)
+        return -1;
+
+    for(int i = 0; i < d->pe_header.FileHeader.NumberOfSections; i++)
+    {
+        auto &section = d->sections[i];
+
+        if (to_file)
+        {
+            unsigned delta = offset - section.VirtualAddress;
+            if (delta >= section.Misc.VirtualSize)
+                continue;
+            if (!section.PointerToRawData || delta >= section.SizeOfRawData)
+                return -1;
+            return (int)(section.PointerToRawData + delta);
+        }
+        else
+        {
+            unsigned delta = offset - section.PointerToRawData;
+            if (!section.PointerToRawData || delta >= section.SizeOfRawData)
+                continue;
+            if (delta >= section.Misc.VirtualSize)
+                return -1;
+            return (int)(section.VirtualAddress + delta);
+        }
+    }
+
+    return -1;
+}
+
 
 string Process::doReadClassName (void * vptr)
 {
@@ -318,6 +441,11 @@ string Process::doReadClassName (void * vptr)
     string raw = readCString(typeinfo + 0xC); // skips the .?AV
     raw.resize(raw.length() - 2);// trim @@ from end
     return raw;
+}
+
+uint32_t Process::getTickCount()
+{
+    return GetTickCount();
 }
 
 string Process::getPath()
@@ -344,4 +472,43 @@ bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
     result=VirtualProtect((LPVOID)range.start,(char *)range.end-(char *)range.start,newprotect,&oldprotect);
 
     return result;
+}
+
+void* Process::memAlloc(const int length)
+{
+    void *ret;
+    // returns 0 on error
+    ret = VirtualAlloc(0, length, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+    if (!ret)
+        ret = (void*)-1;
+    return ret;
+}
+
+int Process::memDealloc(void *ptr, const int length)
+{
+    // can only free the whole region at once
+    // vfree returns 0 on error
+    return !VirtualFree(ptr, 0, MEM_RELEASE);
+}
+
+int Process::memProtect(void *ptr, const int length, const int prot)
+{
+    int prot_native = 0;
+    DWORD old_prot = 0;
+
+    // only support a few constant combinations
+    if (prot == 0)
+        prot_native = PAGE_NOACCESS;
+    else if (prot == Process::MemProt::READ)
+        prot_native = PAGE_READONLY;
+    else if (prot == (Process::MemProt::READ | Process::MemProt::WRITE))
+        prot_native = PAGE_READWRITE;
+    else if (prot == (Process::MemProt::READ | Process::MemProt::WRITE | Process::MemProt::EXEC))
+        prot_native = PAGE_EXECUTE_READWRITE;
+    else if (prot == (Process::MemProt::READ | Process::MemProt::EXEC))
+        prot_native = PAGE_EXECUTE_READ;
+    else
+        return -1;
+
+    return !VirtualProtect(ptr, length, prot_native, &old_prot);
 }

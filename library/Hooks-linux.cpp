@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -79,7 +79,7 @@ DFhackCExport int SDL_PollEvent(SDL::Event* event)
     {
         DFHack::Core & c = DFHack::Core::getInstance();
         // if we consume the event, ask SDL for more.
-        if(!c.SDL_Event(event))
+        if(!c.DFH_SDL_Event(event))
             goto pollevent_again;
     }
     return orig_return;

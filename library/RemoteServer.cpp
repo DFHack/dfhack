@@ -220,7 +220,7 @@ void ServerConnection::threadFn()
         }
 
         if (memcmp(header.magic, RPCHandshakeHeader::REQUEST_MAGIC, sizeof(header.magic)) ||
-            header.version != 1)
+            header.version < 1 || header.version > 255)
         {
             out << "In RPC server: invalid handshake header." << endl;
             return;
@@ -250,7 +250,7 @@ void ServerConnection::threadFn()
             break;
         }
 
-        if (header.id == RPC_REQUEST_QUIT)
+        if ((DFHack::DFHackReplyCode)header.id == RPC_REQUEST_QUIT)
             break;
 
         if (header.size < 0 || header.size > RPCMessageHeader::MAX_MESSAGE_SIZE)

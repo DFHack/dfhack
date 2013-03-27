@@ -193,7 +193,7 @@ static bool build_choice_matches(df::ui_build_item_req *req, df::build_req_choic
     {
         if (gen->mat_type == new_mat.type &&
             gen->mat_index == new_mat.index &&
-            (ignore_select || gen->used_count < gen->candidates.size()))
+            (ignore_select || size_t(gen->used_count) < gen->candidates.size()))
         {
             return true;
         }
@@ -272,7 +272,7 @@ static command_result job_duplicate(color_ostream &out, vector <string> & parame
     if (!job)
         return CR_FAILURE;
 
-    if (!job->misc_links.empty() ||
+    if (!job->specific_refs.empty() ||
         (job->job_items.empty() &&
          job->job_type != job_type::CollectSand &&
          job->job_type != job_type::CollectClay))
@@ -305,7 +305,7 @@ static df::job_item *getJobItem(color_ostream &out, df::job *job, std::string id
         return NULL;
 
     int v = atoi(idx.c_str());
-    if (v < 1 || v > job->job_items.size()) {
+    if (v < 1 || size_t(v) > job->job_items.size()) {
         out.printerr("Invalid item index.\n");
         return NULL;
     }
@@ -372,7 +372,7 @@ static command_result job_cmd(color_ostream &out, vector <string> & parameters)
 
         out << "Job item updated." << endl;
 
-        if (item->item_type < 0 && minfo.isValid())
+        if (item->item_type < (df::item_type)0 && minfo.isValid())
             out.printerr("WARNING: Due to a probable bug, creature & plant material subtype\n"
                             "         is ignored unless the item type is also specified.\n");
 

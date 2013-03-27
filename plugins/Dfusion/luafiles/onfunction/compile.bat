@@ -1,1 +1,0 @@
-as  -anl --32 -o functions.o functions.asm

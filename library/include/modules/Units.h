@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -32,11 +32,20 @@ distribution.
 #include "modules/Items.h"
 #include "DataDefs.h"
 #include "df/unit.h"
+#include "df/misc_trait_type.h"
+#include "df/physical_attribute_type.h"
+#include "df/mental_attribute_type.h"
+#include "df/job_skill.h"
 
 namespace df
 {
     struct nemesis_record;
     struct burrow;
+    struct assumed_identity;
+    struct historical_entity;
+    struct entity_position_assignment;
+    struct entity_position;
+    struct unit_misc_trait;
 }
 
 /**
@@ -196,12 +205,28 @@ DFHACK_EXPORT void CopyNameTo(df::unit *creature, df::language_name * target);
 /// Returns the true position of the unit (non-trivial in case of caged).
 DFHACK_EXPORT df::coord getPosition(df::unit *unit);
 
+DFHACK_EXPORT df::general_ref *getGeneralRef(df::unit *unit, df::general_ref_type type);
+DFHACK_EXPORT df::specific_ref *getSpecificRef(df::unit *unit, df::specific_ref_type type);
+
 DFHACK_EXPORT df::item *getContainer(df::unit *unit);
 
 DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
 DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
 
+DFHACK_EXPORT df::assumed_identity *getIdentity(df::unit *unit);
 DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
+
+DFHACK_EXPORT bool isHidingCurse(df::unit *unit);
+DFHACK_EXPORT int getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr);
+DFHACK_EXPORT int getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr);
+
+DFHACK_EXPORT bool isCrazed(df::unit *unit);
+DFHACK_EXPORT bool isOpposedToLife(df::unit *unit);
+DFHACK_EXPORT bool hasExtravision(df::unit *unit);
+DFHACK_EXPORT bool isBloodsucker(df::unit *unit);
+DFHACK_EXPORT bool isMischievous(df::unit *unit);
+
+DFHACK_EXPORT df::unit_misc_trait *getMiscTrait(df::unit *unit, df::misc_trait_type type, bool create = false);
 
 DFHACK_EXPORT bool isDead(df::unit *unit);
 DFHACK_EXPORT bool isAlive(df::unit *unit);
@@ -209,11 +234,27 @@ DFHACK_EXPORT bool isSane(df::unit *unit);
 DFHACK_EXPORT bool isCitizen(df::unit *unit);
 DFHACK_EXPORT bool isDwarf(df::unit *unit);
 
-DFHACK_EXPORT void clearBurrowMembers(df::burrow *burrow);
+DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 
-DFHACK_EXPORT bool isInBurrow(df::unit *unit, df::burrow *burrow);
-DFHACK_EXPORT void setInBurrow(df::unit *unit, df::burrow *burrow, bool enable);
+DFHACK_EXPORT int getNominalSkill(df::unit *unit, df::job_skill skill_id, bool use_rust = false);
+DFHACK_EXPORT int getEffectiveSkill(df::unit *unit, df::job_skill skill_id);
+DFHACK_EXPORT int getExperience(df::unit *unit, df::job_skill skill_id, bool total = false);
 
+DFHACK_EXPORT int computeMovementSpeed(df::unit *unit);
+
+struct NoblePosition {
+    df::historical_entity *entity;
+    df::entity_position_assignment *assignment;
+    df::entity_position *position;
+};
+
+DFHACK_EXPORT bool getNoblePositions(std::vector<NoblePosition> *pvec, df::unit *unit);
+
+DFHACK_EXPORT std::string getProfessionName(df::unit *unit, bool ignore_noble = false, bool plural = false);
+DFHACK_EXPORT std::string getCasteProfessionName(int race, int caste, df::profession pid, bool plural = false);
+
+DFHACK_EXPORT int8_t getProfessionColor(df::unit *unit, bool ignore_noble = false);
+DFHACK_EXPORT int8_t getCasteProfessionColor(int race, int caste, df::profession pid);
 }
 }
 #endif

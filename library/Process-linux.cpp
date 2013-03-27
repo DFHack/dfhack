@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -27,6 +27,7 @@ distribution.
 #include <errno.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 
 #include <string>
 #include <vector>
@@ -126,6 +127,9 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     char permissions[5]; // r/-, w/-, x/-, p/s, 0
 
     FILE *mapFile = ::fopen("/proc/self/maps", "r");
+    if (!mapFile)
+        return;
+
     size_t start, end, offset, device1, device2, node;
 
     while (fgets(buffer, 1024, mapFile))
@@ -147,11 +151,18 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
         temp.valid = true;
         ranges.push_back(temp);
     }
+
+    fclose(mapFile);
 }
 
-uint32_t Process::getBase()
+uintptr_t Process::getBase()
 {
-    return 0;
+    return 0x8048000;
+}
+
+int Process::adjustOffset(int offset, bool /*to_file*/)
+{
+    return offset;
 }
 
 static int getdir (string dir, vector<string> &files)
@@ -192,6 +203,13 @@ bool Process::getThreadIDs(vector<uint32_t> & threads )
     return true;
 }
 
+uint32_t Process::getTickCount()
+{
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    return (tp.tv_sec * 1000) + (tp.tv_usec / 1000);
+}
+
 string Process::getPath()
 {
     const char * cwd_name = "/proc/self/cwd";
@@ -217,4 +235,29 @@ bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
     result=mprotect((void *)range.start, (size_t)range.end-(size_t)range.start,protect);
 
     return result==0;
+}
+
+// returns -1 on error
+void* Process::memAlloc(const int length)
+{
+    return mmap(0, length, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+}
+
+int Process::memDealloc(void *ptr, const int length)
+{
+    return munmap(ptr, length);
+}
+
+int Process::memProtect(void *ptr, const int length, const int prot)
+{
+    int prot_native = 0;
+
+    if (prot & Process::MemProt::READ)
+        prot_native |= PROT_READ;
+    if (prot & Process::MemProt::WRITE)
+        prot_native |= PROT_WRITE;
+    if (prot & Process::MemProt::EXEC)
+        prot_native |= PROT_EXEC;
+
+    return mprotect(ptr, length, prot_native);
 }

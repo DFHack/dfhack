@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -81,15 +81,32 @@ bool Translation::copyName(df::language_name * source, df::language_name * targe
     return true;
 }
 
+std::string Translation::capitalize(const std::string &str, bool all_words)
+{
+    string upper = str;
+
+    if (!upper.empty())
+    {
+        upper[0] = toupper(upper[0]);
+
+        if (all_words)
+        {
+            for (size_t i = 1; i < upper.size(); i++)
+                if (isspace(upper[i-1]))
+                    upper[i] = toupper(upper[i]);
+        }
+    }
+
+    return upper;
+}
+
 void addNameWord (string &out, const string &word)
 {
     if (word.empty())
         return;
-    string upper = word;
-    upper[0] = toupper(upper[0]);
     if (out.length() > 0)
         out.append(" ");
-    out.append(upper);
+    out.append(Translation::capitalize(word));
 }
 
 void Translation::setNickname(df::language_name *name, std::string nick)
@@ -98,6 +115,9 @@ void Translation::setNickname(df::language_name *name, std::string nick)
 
     if (!name->has_name)
     {
+        if (nick.empty())
+            return;
+
         *name = df::language_name();
 
         name->language = 0;
@@ -105,6 +125,18 @@ void Translation::setNickname(df::language_name *name, std::string nick)
     }
 
     name->nickname = nick;
+
+    // If the nick is empty, check if this made the whole name empty
+    if (name->nickname.empty() && name->first_name.empty())
+    {
+        bool has_words = false;
+        for (int i = 0; i < 7; i++)
+            if (name->words[i] >= 0)
+                has_words = true;
+
+        if (!has_words)
+            name->has_name = false;
+    }
 }
 
 string Translation::TranslateName(const df::language_name * name, bool inEnglish, bool onlyLastPart)

@@ -8,8 +8,8 @@ IF(UNIX)
     OPTION(CONSOLE_NO_CATCH "Make the console not catch 'CTRL+C' events for easier debugging." OFF)
 ENDIF()
 
-include_directories (include)
 include_directories (proto)
+include_directories (include)
 
 SET(PERL_EXECUTABLE "perl" CACHE FILEPATH "This is the perl executable to run in the codegen step. Tweak it if you need to run a specific one.")
 
@@ -27,6 +27,7 @@ include/Core.h
 include/ColorText.h
 include/DataDefs.h
 include/DataIdentity.h
+include/VTableInterpose.h
 include/LuaWrapper.h
 include/LuaTools.h
 include/Error.h
@@ -36,9 +37,6 @@ include/MiscUtils.h
 include/Module.h
 include/Pragma.h
 include/MemAccess.h
-include/SDL_events.h
-include/SDL_keyboard.h
-include/SDL_keysym.h
 include/TileTypes.h
 include/Types.h
 include/VersionInfo.h
@@ -56,6 +54,7 @@ SET(MAIN_SOURCES
 Core.cpp
 ColorText.cpp
 DataDefs.cpp
+VTableInterpose.cpp
 LuaWrapper.cpp
 LuaTypes.cpp
 LuaTools.cpp
@@ -64,6 +63,7 @@ DataStatics.cpp
 DataStaticsCtor.cpp
 DataStaticsFields.cpp
 MiscUtils.cpp
+Types.cpp
 PluginManager.cpp
 TileTypes.cpp
 VersionInfoFactory.cpp
@@ -91,6 +91,13 @@ PlugLoad-linux.cpp
 Process-linux.cpp
 )
 
+SET(MAIN_SOURCES_DARWIN
+Console-darwin.cpp
+PlugLoad-darwin.cpp
+Process-darwin.cpp
+Hooks-darwin.cpp
+)
+
 SET(MAIN_SOURCES_LINUX_EGGY
 Console-linux.cpp
 Hooks-egg.cpp
@@ -100,9 +107,11 @@ Process-linux.cpp
 
 SET(MODULE_HEADERS
 include/modules/Buildings.h
+include/modules/Burrows.h
 include/modules/Constructions.h
 include/modules/Units.h
 include/modules/Engravings.h
+include/modules/EventManager.h
 include/modules/Gui.h
 include/modules/Items.h
 include/modules/Job.h
@@ -111,8 +120,8 @@ include/modules/Maps.h
 include/modules/MapCache.h
 include/modules/Materials.h
 include/modules/Notes.h
+include/modules/Screen.h
 include/modules/Translation.h
-include/modules/Vegetation.h
 include/modules/Vermin.h
 include/modules/World.h
 include/modules/Graphic.h
@@ -120,9 +129,11 @@ include/modules/Graphic.h
 
 SET( MODULE_SOURCES
 modules/Buildings.cpp
+modules/Burrows.cpp
 modules/Constructions.cpp
 modules/Units.cpp
 modules/Engravings.cpp
+modules/EventManager.cpp
 modules/Gui.cpp
 modules/Items.cpp
 modules/Job.cpp
@@ -130,8 +141,8 @@ modules/kitchen.cpp
 modules/Maps.cpp
 modules/Materials.cpp
 modules/Notes.cpp
+modules/Screen.cpp
 modules/Translation.cpp
-modules/Vegetation.cpp
 modules/Vermin.cpp
 modules/World.cpp
 modules/Graphic.cpp
@@ -155,6 +166,8 @@ IF(UNIX)
     OPTION(BUILD_EGGY "Make DFHack strangely egg-shaped." OFF)
     IF(BUILD_EGGY)
         LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX_EGGY})
+    ELSEIF(APPLE)
+        LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_DARWIN})
     ELSE()
         LIST(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX})
     ENDIF()
@@ -205,8 +218,9 @@ IF(UNIX)
   SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp
                               PROPERTIES COMPILE_FLAGS "-g0 -O1")
 ELSE(WIN32)
+  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp
+                              PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
 ENDIF()
-
 
 # Compilation
 
@@ -220,6 +234,9 @@ ENDIF()
 
 IF(UNIX)
   SET(PROJECT_LIBS rt dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
+  IF(APPLE)
+      SET(PROJECT_LIBS dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
+ ENDIF()
 ELSE(WIN32)
   #FIXME: do we really need psapi?
   SET(PROJECT_LIBS psapi dfhack-tinyxml dfhack-tinythread)
@@ -232,6 +249,9 @@ ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp ${
 ADD_DEPENDENCIES(dfhack-client dfhack)
 
 ADD_EXECUTABLE(dfhack-run dfhack-run.cpp)
+
+ADD_EXECUTABLE(binpatch binpatch.cpp)
+TARGET_LINK_LIBRARIES(binpatch dfhack-md5)
 
 IF(BUILD_EGGY)
     SET_TARGET_PROPERTIES(dfhack PROPERTIES OUTPUT_NAME "egg" )
@@ -252,18 +272,40 @@ ENDIF()
 #effectively disables debug builds...
 SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
+IF(APPLE)
+    SET(SDL_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/SDL.framework)
+    SET(CXX_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/libstdc++.6.dylib)
+    SET(ZIP_LIBRARY /usr/lib/libz.dylib)
+    TARGET_LINK_LIBRARIES(dfhack ${SDL_LIBRARY})
+    TARGET_LINK_LIBRARIES(dfhack ${CXX_LIBRARY})
+    TARGET_LINK_LIBRARIES(dfhack ${ZIP_LIBRARY})
+    SET_TARGET_PROPERTIES(dfhack PROPERTIES VERSION 1.0.0)
+    SET_TARGET_PROPERTIES(dfhack PROPERTIES SOVERSION 1.0.0)
+ENDIF()
+
 TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua ${PROJECT_LIBS})
 SET_TARGET_PROPERTIES(dfhack PROPERTIES LINK_INTERFACE_LIBRARIES "")
 
 TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket)
 TARGET_LINK_LIBRARIES(dfhack-run dfhack-client)
 
+if(APPLE)
+    add_custom_command(TARGET dfhack-run COMMAND ${dfhack_SOURCE_DIR}/package/darwin/fix-libs.sh WORKING_DIRECTORY ../ COMMENT "Fixing library dependencies...")
+endif()
+
 IF(UNIX)
-    # On linux, copy our version of the df launch script which sets LD_PRELOAD
-    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
+    if (APPLE)
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack
+                DESTINATION .)
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack-run
+                DESTINATION .)
+    else()
+        # On linux, copy our version of the df launch script which sets LD_PRELOAD
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
             DESTINATION .)
-    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
             DESTINATION .)
+    endif()
 ELSE()
     if(NOT BUILD_EGGY)
         # On windows, copy the renamed SDL so DF can still run.
@@ -290,13 +332,23 @@ install(FILES xml/symbols.xml
 install(FILES ../dfhack.init-example
         DESTINATION ${DFHACK_BINARY_DESTINATION})
 
-install(TARGETS dfhack-run dfhack-client
+install(TARGETS dfhack-run dfhack-client binpatch
         LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
         RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 
 install(DIRECTORY lua/
         DESTINATION ${DFHACK_LUA_DESTINATION}
         FILES_MATCHING PATTERN "*.lua")
+
+install(DIRECTORY ${dfhack_SOURCE_DIR}/scripts
+        DESTINATION ${DFHACK_DATA_DESTINATION}
+        FILES_MATCHING PATTERN "*.lua"
+                       PATTERN "*.rb"
+        )
+
+install(DIRECTORY ${dfhack_SOURCE_DIR}/patches
+        DESTINATION ${DFHACK_DATA_DESTINATION}
+        FILES_MATCHING PATTERN "*.dif")
 
 # Unused for so long that it's not even relevant now...
 if(BUILD_DEVEL)

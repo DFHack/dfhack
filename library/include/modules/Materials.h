@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -60,6 +60,14 @@ namespace df
 
 namespace DFHack
 {
+    struct t_matpair {
+        int16_t mat_type;
+        int32_t mat_index;
+
+        t_matpair(int16_t type = -1, int32_t index = -1)
+            : mat_type(type), mat_index(index) {}
+    };
+
     struct DFHACK_EXPORT MaterialInfo {
         static const int NUM_BUILTIN = 19;
         static const int GROUP_SIZE = 200;
@@ -91,6 +99,7 @@ namespace DFHack
 
     public:
         MaterialInfo(int16_t type = -1, int32_t index = -1) { decode(type, index); }
+        MaterialInfo(const t_matpair &mp) { decode(mp.mat_type, mp.mat_index); }
         template<class T> MaterialInfo(T *ptr) { decode(ptr); }
 
         bool isValid() const { return material != NULL; }
@@ -107,6 +116,7 @@ namespace DFHack
         bool decode(int16_t type, int32_t index = -1);
         bool decode(df::item *item);
         bool decode(const df::material_vec_ref &vr, int idx);
+        bool decode(const t_matpair &mp) { return decode(mp.mat_type, mp.mat_index); }
 
         template<class T> bool decode(T *ptr) {
             // Assume and exploit a certain naming convention
@@ -120,6 +130,11 @@ namespace DFHack
         bool findInorganic(const std::string &token);
         bool findPlant(const std::string &token, const std::string &subtoken);
         bool findCreature(const std::string &token, const std::string &subtoken);
+
+        bool findProduct(df::material *material, const std::string &name);
+        bool findProduct(const MaterialInfo &info, const std::string &name) {
+            return findProduct(info.material, name);
+        }
 
         std::string getToken();
         std::string toString(uint16_t temp = 10015, bool named = true);
@@ -323,10 +338,10 @@ namespace DFHack
      */
     struct t_material
     {
-        t_itemType itemType;
-        t_itemSubtype subType;
-        t_materialType material;
-        t_materialIndex index;
+        t_itemType item_type;
+        t_itemSubtype item_subtype;
+        t_materialType mat_type;
+        t_materialIndex mat_index;
         uint32_t flags;
     };
     /**

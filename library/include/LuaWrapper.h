@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -77,6 +77,7 @@ namespace DFHack { namespace LuaWrapper {
 #define DFHACK_ASSIGN_NAME "DFHack::Assign"
 #define DFHACK_IS_INSTANCE_NAME "DFHack::IsInstance"
 #define DFHACK_DELETE_NAME "DFHack::Delete"
+#define DFHACK_CAST_NAME "DFHack::Cast"
 
     extern LuaToken DFHACK_EMPTY_TABLE_TOKEN;
 

@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -65,13 +65,20 @@ namespace  DFHack
         bool save (const char * filename)
         {
             std::ofstream outfile (filename);
+            //fprintf(stderr,"Save: Initialized stream\n");
             if(outfile.bad())
                 return false;
+            //fprintf(stderr,"Save: Iterating...\n");
             for(auto iter = history.begin();iter < history.end(); iter++)
             {
+                //fprintf(stderr,"Save: Dumping %s\n",(*iter).c_str());
                 outfile << *iter << std::endl;
+                //fprintf(stderr,"Save: Flushing\n");
+                outfile.flush();
             }
+            //fprintf(stderr,"Save: Closing\n");
             outfile.close();
+            //fprintf(stderr,"Save: Done\n");
             return true;
         }
         /// add a command to the history

@@ -80,9 +80,9 @@ command_result df_fixdiplomats (color_ostream &out, vector<string> &parameters)
                 pos->flags.set(entity_position_flags::IS_DIPLOMAT);
                 pos->flags.set(entity_position_flags::IS_LEADER);
                 // not sure what these flags do, but the game sets them for a valid diplomat
-                pos->flags.set(entity_position_flags::anon_1);
-                pos->flags.set(entity_position_flags::anon_3);
-                pos->flags.set(entity_position_flags::anon_4);
+                pos->flags.set(entity_position_flags::unk_12);
+                pos->flags.set(entity_position_flags::unk_1a);
+                pos->flags.set(entity_position_flags::unk_1b);
                 pos->name[0] = "Diplomat";
                 pos->name[1] = "Diplomats";
                 pos->precedence = 70;
@@ -183,9 +183,9 @@ command_result df_fixmerchants (color_ostream &out, vector<string> &parameters)
                 pos->flags.set(entity_position_flags::IS_DIPLOMAT);
                 pos->flags.set(entity_position_flags::IS_LEADER);
                 // not sure what these flags do, but the game sets them for a valid guild rep
-                pos->flags.set(entity_position_flags::anon_1);
-                pos->flags.set(entity_position_flags::anon_3);
-                pos->flags.set(entity_position_flags::anon_4);
+                pos->flags.set(entity_position_flags::unk_12);
+                pos->flags.set(entity_position_flags::unk_1a);
+                pos->flags.set(entity_position_flags::unk_1b);
                 pos->name[0] = "Guild Representative";
                 pos->name[1] = "Guild Representatives";
                 pos->precedence = 40;

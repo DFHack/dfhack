@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,12 +22,14 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include "modules/EventManager.h"
 #include "Internal.h"
 #include "Core.h"
 #include "MemAccess.h"
 #include "PluginManager.h"
 #include "RemoteServer.h"
 #include "Console.h"
+#include "Types.h"
 
 #include "DataDefs.h"
 #include "MiscUtils.h"
@@ -45,41 +47,8 @@ using namespace std;
 #include "tinythread.h"
 using namespace tthread;
 
-#ifdef LINUX_BUILD
-    #include <dirent.h>
-    #include <errno.h>
-#else
-    #include "wdirent.h"
-#endif
-
 #include <assert.h>
 
-static int getdir (string dir, vector<string> &files)
-{
-    DIR *dp;
-    struct dirent *dirp;
-    if((dp  = opendir(dir.c_str())) == NULL)
-    {
-        return errno;
-    }
-    while ((dirp = readdir(dp)) != NULL) {
-    files.push_back(string(dirp->d_name));
-    }
-    closedir(dp);
-    return 0;
-}
-
-bool hasEnding (std::string const &fullString, std::string const &ending)
-{
-    if (fullString.length() > ending.length())
-    {
-        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
-    }
-    else
-    {
-        return false;
-    }
-}
 struct Plugin::RefLock
 {
     RefLock()
@@ -140,6 +109,50 @@ struct Plugin::RefAutoinc
     ~RefAutoinc(){ lock->lock_sub(); };
 };
 
+struct Plugin::LuaCommand {
+    Plugin *owner;
+    std::string name;
+    int (*command)(lua_State *state);
+
+    LuaCommand(Plugin *owner, std::string name)
+      : owner(owner), name(name), command(NULL) {}
+};
+
+struct Plugin::LuaFunction {
+    Plugin *owner;
+    std::string name;
+    function_identity_base *identity;
+    bool silent;
+
+    LuaFunction(Plugin *owner, std::string name)
+      : owner(owner), name(name), identity(NULL), silent(false) {}
+};
+
+struct Plugin::LuaEvent : public Lua::Event::Owner {
+    LuaFunction handler;
+    Lua::Notification *event;
+    bool active;
+    int count;
+
+    LuaEvent(Plugin *owner, std::string name)
+      : handler(owner,name), event(NULL), active(false), count(0)
+    {
+        handler.silent = true;
+    }
+
+    void on_count_changed(int new_cnt, int delta) {
+        RefAutoinc lock(handler.owner->access);
+        count = new_cnt;
+        if (event)
+            event->on_count_changed(new_cnt, delta);
+    }
+    void on_invoked(lua_State *state, int nargs, bool from_c) {
+        RefAutoinc lock(handler.owner->access);
+        if (event)
+            event->on_invoked(state, nargs, from_c);
+    }
+};
+
 Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _filename, PluginManager * pm)
 {
     filename = filepath;
@@ -174,28 +187,37 @@ Plugin::~Plugin()
 
 bool Plugin::load(color_ostream &con)
 {
-    RefAutolock lock(access);
-    if(state == PS_BROKEN)
     {
-        return false;
+        RefAutolock lock(access);
+        if(state == PS_LOADED)
+        {
+            return true;
+        }
+        else if(state != PS_UNLOADED)
+        {
+            return false;
+        }
+        state = PS_LOADING;
     }
-    else if(state == PS_LOADED)
-    {
-        return true;
-    }
+    // enter suspend
+    CoreSuspender suspend;
+    // open the library, etc
     DFLibrary * plug = OpenPlugin(filename.c_str());
     if(!plug)
     {
         con.printerr("Can't load plugin %s\n", filename.c_str());
+        RefAutolock lock(access);
         state = PS_BROKEN;
         return false;
     }
     const char ** plug_name =(const char ** ) LookupPlugin(plug, "name");
     const char ** plug_version =(const char ** ) LookupPlugin(plug, "version");
-    if(!plug_name || !plug_version)
+    Plugin **plug_self = (Plugin**)LookupPlugin(plug, "plugin_self");
+    if(!plug_name || !plug_version || !plug_self)
     {
-        con.printerr("Plugin %s has no name or version.\n", filename.c_str());
+        con.printerr("Plugin %s has no name, version or self pointer.\n", filename.c_str());
         ClosePlugin(plug);
+        RefAutolock lock(access);
         state = PS_BROKEN;
         return false;
     }
@@ -204,9 +226,12 @@ bool Plugin::load(color_ostream &con)
         con.printerr("Plugin %s was not built for this version of DFHack.\n"
                      "Plugin: %s, DFHack: %s\n", *plug_name, *plug_version, DFHACK_VERSION);
         ClosePlugin(plug);
+        RefAutolock lock(access);
         state = PS_BROKEN;
         return false;
     }
+    *plug_self = this;
+    RefAutolock lock(access);
     plugin_init = (command_result (*)(color_ostream &, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
     if(!plugin_init)
     {
@@ -220,6 +245,7 @@ bool Plugin::load(color_ostream &con)
     plugin_shutdown = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_shutdown");
     plugin_onstatechange = (command_result (*)(color_ostream &, state_change_event)) LookupPlugin(plug, "plugin_onstatechange");
     plugin_rpcconnect = (RPCService* (*)(color_ostream &)) LookupPlugin(plug, "plugin_rpcconnect");
+    plugin_eval_ruby = (command_result (*)(color_ostream &, const char*)) LookupPlugin(plug, "plugin_eval_ruby");
     index_lua(plug);
     this->name = *plug_name;
     plugin_lib = plug;
@@ -247,6 +273,7 @@ bool Plugin::unload(color_ostream &con)
     // if we are actually loaded
     if(state == PS_LOADED)
     {
+        EventManager::unregisterAll(this);
         // notify the plugin about an attempt to shutdown
         if (plugin_onstatechange &&
             plugin_onstatechange(con, SC_BEGIN_UNLOAD) == CR_NOT_FOUND)
@@ -257,6 +284,11 @@ bool Plugin::unload(color_ostream &con)
         }
         // wait for all calls to finish
         access->wait();
+        state = PS_UNLOADING;
+        access->unlock();
+        // enter suspend
+        CoreSuspender suspend;
+        access->lock();
         // notify plugin about shutdown, if it has a shutdown function
         command_result cr = CR_OK;
         if(plugin_shutdown)
@@ -470,7 +502,11 @@ void Plugin::index_lua(DFLibrary *lib)
             cmd->handler.identity = evlist->event->get_handler();
             cmd->event = evlist->event;
             if (cmd->active)
+            {
                 cmd->event->bind(Lua::Core::State, cmd);
+                if (cmd->count > 0)
+                    cmd->event->on_count_changed(cmd->count, 0);
+            }
         }
     }
 }
@@ -498,7 +534,7 @@ int Plugin::lua_cmd_wrapper(lua_State *state)
         luaL_error(state, "plugin command %s() has been unloaded",
                    (cmd->owner->name+"."+cmd->name).c_str());
 
-    return cmd->command(state);
+    return Lua::CallWithCatch(state, cmd->command, cmd->name.c_str());
 }
 
 int Plugin::lua_fun_wrapper(lua_State *state)
@@ -508,8 +544,13 @@ int Plugin::lua_fun_wrapper(lua_State *state)
     RefAutoinc lock(cmd->owner->access);
 
     if (!cmd->identity)
+    {
+        if (cmd->silent)
+            return 0;
+
         luaL_error(state, "plugin function %s() has been unloaded",
                    (cmd->owner->name+"."+cmd->name).c_str());
+    }
 
     return LuaWrapper::method_wrapper_core(state, cmd->identity);
 }
@@ -537,14 +578,14 @@ void Plugin::open_lua(lua_State *state, int table)
     {
         for (auto it = lua_events.begin(); it != lua_events.end(); ++it)
         {
-            Lua::MakeEvent(state, it->second);
+            Lua::Event::Make(state, it->second, it->second);
 
             push_function(state, &it->second->handler);
-            lua_rawsetp(state, -2, NULL);
+            Lua::Event::SetPrivateCallback(state, -2);
 
             it->second->active = true;
             if (it->second->event)
-                it->second->event->bind(state, it->second);
+                it->second->event->bind(Lua::Core::State, it->second);
 
             lua_setfield(state, table, it->first.c_str());
         }
@@ -562,14 +603,29 @@ void Plugin::push_function(lua_State *state, LuaFunction *fn)
 
 PluginManager::PluginManager(Core * core)
 {
+    cmdlist_mutex = new mutex();
+    eval_ruby = NULL;
+}
+
+PluginManager::~PluginManager()
+{
+    for(size_t i = 0; i < all_plugins.size();i++)
+    {
+        delete all_plugins[i];
+    }
+    all_plugins.clear();
+    delete cmdlist_mutex;
+}
+
+void PluginManager::init(Core * core)
+{
 #ifdef LINUX_BUILD
-    string path = core->p->getPath() + "/hack/plugins/";
+    string path = core->getHackPath() + "plugins/";
     const string searchstr = ".plug.so";
 #else
-    string path = core->p->getPath() + "\\hack\\plugins\\";
+    string path = core->getHackPath() + "plugins\\";
     const string searchstr = ".plug.dll";
 #endif
-    cmdlist_mutex = new mutex();
     vector <string> filez;
     getdir(path, filez);
     for(size_t i = 0; i < filez.size();i++)
@@ -582,16 +638,6 @@ PluginManager::PluginManager(Core * core)
             p->load(core->getConsole());
         }
     }
-}
-
-PluginManager::~PluginManager()
-{
-    for(size_t i = 0; i < all_plugins.size();i++)
-    {
-        delete all_plugins[i];
-    }
-    all_plugins.clear();
-    delete cmdlist_mutex;
 }
 
 Plugin *PluginManager::getPluginByName (const std::string & name)
@@ -624,7 +670,7 @@ command_result PluginManager::InvokeCommand(color_ostream &out, const std::strin
 bool PluginManager::CanInvokeHotkey(const std::string &command, df::viewscreen *top)
 {
     Plugin *plugin = getPluginByCommand(command);
-    return plugin ? plugin->can_invoke_hotkey(command, top) : false;
+    return plugin ? plugin->can_invoke_hotkey(command, top) : true;
 }
 
 void PluginManager::OnUpdate(color_ostream &out)
@@ -641,8 +687,6 @@ void PluginManager::OnStateChange(color_ostream &out, state_change_event event)
     {
         all_plugins[i]->on_state_change(out, event);
     }
-
-    Lua::Core::onStateChange(out, event);
 }
 
 // FIXME: doesn't check name collisions!
@@ -654,6 +698,8 @@ void PluginManager::registerCommands( Plugin * p )
     {
         belongs[cmds[i].name] = p;
     }
+    if (p->plugin_eval_ruby)
+        eval_ruby = p->plugin_eval_ruby;
     cmdlist_mutex->unlock();
 }
 
@@ -666,5 +712,7 @@ void PluginManager::unregisterCommands( Plugin * p )
     {
         belongs.erase(cmds[i].name);
     }
+    if (p->plugin_eval_ruby)
+        eval_ruby = NULL;
     cmdlist_mutex->unlock();
 }

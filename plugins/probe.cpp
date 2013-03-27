@@ -27,6 +27,7 @@ using namespace std;
 #include "df/world.h"
 #include "df/world_raws.h"
 #include "df/building_def.h"
+#include "df/region_map_entry.h"
 
 using std::vector;
 using std::string;
@@ -101,6 +102,30 @@ command_result df_cprobe (color_ostream &out, vector <string> & parameters)
         }
     }
     return CR_OK;
+}
+
+void describeTile(color_ostream &out, df::tiletype tiletype)
+{
+    out.print("%d", tiletype);
+    if(tileName(tiletype))
+        out.print(" = %s",tileName(tiletype));
+    out.print("\n");
+
+    df::tiletype_shape shape = tileShape(tiletype);
+    df::tiletype_material material = tileMaterial(tiletype);
+    df::tiletype_special special = tileSpecial(tiletype);
+    df::tiletype_variant variant = tileVariant(tiletype);
+    out.print("%-10s: %4d %s\n","Class"    ,shape,
+              ENUM_KEY_STR(tiletype_shape, shape).c_str());
+    out.print("%-10s: %4d %s\n","Material" ,
+              material, ENUM_KEY_STR(tiletype_material, material).c_str());
+    out.print("%-10s: %4d %s\n","Special"  ,
+              special, ENUM_KEY_STR(tiletype_special, special).c_str());
+    out.print("%-10s: %4d %s\n"   ,"Variant"  ,
+              variant, ENUM_KEY_STR(tiletype_variant, variant).c_str());
+    out.print("%-10s: %s\n"    ,"Direction",
+              tileDirection(tiletype).getStr());
+    out.print("\n");
 }
 
 command_result df_probe (color_ostream &out, vector <string> & parameters)
@@ -186,35 +211,21 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
 */
 
     // tiletype
-    out.print("tiletype: %d", tiletype);
-    if(tileName(tiletype))
-        out.print(" = %s",tileName(tiletype));
-    out.print("\n");
-
-    df::tiletype_shape shape = tileShape(tiletype);
-    df::tiletype_material material = tileMaterial(tiletype);
-    df::tiletype_special special = tileSpecial(tiletype);
-    df::tiletype_variant variant = tileVariant(tiletype);
-    out.print("%-10s: %4d %s\n","Class"    ,shape,
-              ENUM_KEY_STR(tiletype_shape, shape).c_str());
-    out.print("%-10s: %4d %s\n","Material" ,
-              material, ENUM_KEY_STR(tiletype_material, material).c_str());
-    out.print("%-10s: %4d %s\n","Special"  ,
-              special, ENUM_KEY_STR(tiletype_special, special).c_str());
-    out.print("%-10s: %4d %s\n"   ,"Variant"  ,
-              variant, ENUM_KEY_STR(tiletype_variant, variant).c_str());
-    out.print("%-10s: %s\n"    ,"Direction",
-              tileDirection(tiletype).getStr());
-    out.print("\n");
+    out.print("tiletype: ");
+    describeTile(out, tiletype);
+    out.print("static: ");
+    describeTile(out, mc.staticTiletypeAt(cursor));
+    out.print("base: ");
+    describeTile(out, mc.baseTiletypeAt(cursor));
 
     out.print("temperature1: %d U\n",mc.temperature1At(cursor));
     out.print("temperature2: %d U\n",mc.temperature2At(cursor));
 
     int offset = block.region_offset[des.bits.biome];
-    df::coord2d region_pos = block.region_pos + df::coord2d ((offset % 3) - 1, (offset / 3) -1);
+    int bx = clip_range(block.region_pos.x + (offset % 3) - 1, 0, world->world_data->world_width-1);
+    int by = clip_range(block.region_pos.y + (offset / 3) - 1, 0, world->world_data->world_height-1);
 
-    df::world_data::T_region_map* biome = 
-        &world->world_data->region_map[region_pos.x][region_pos.y];
+    auto biome = &world->world_data->region_map[bx][by];
 
     int sav = biome->savagery;
     int evi = biome->evilness;
@@ -222,7 +233,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     int eindex = evi > 65 ? 2 : evi < 33 ? 0 : 1;
     int surr = sindex + eindex * 3;
 
-    char* surroundings[] = { "Serene", "Mirthful", "Joyous Wilds", "Calm", "Wilderness", "Untamed Wilds", "Sinister", "Haunted", "Terrifying" };
+    const char* surroundings[] = { "Serene", "Mirthful", "Joyous Wilds", "Calm", "Wilderness", "Untamed Wilds", "Sinister", "Haunted", "Terrifying" };
 
     // biome, geolayer
     out << "biome: " << des.bits.biome << " (" << 
@@ -232,7 +243,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         "evilness " << biome->evilness << ")" << std::endl;
     out << "geolayer: " << des.bits.geolayer_index
         << std::endl;
-    int16_t base_rock = mc.baseMaterialAt(cursor);
+    int16_t base_rock = mc.layerMaterialAt(cursor);
     if(base_rock != -1)
     {
         out << "Layer material: " << dec << base_rock;
@@ -256,6 +267,12 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         else
             out << endl;
     }
+    MaterialInfo minfo(mc.baseMaterialAt(cursor));
+    if (minfo.isValid())
+        out << "Base material: " << minfo.getToken() << " / " << minfo.toString() << endl;
+    minfo.decode(mc.staticMaterialAt(cursor));
+    if (minfo.isValid())
+        out << "Static material: " << minfo.getToken() << " / " << minfo.toString() << endl;
     // liquids
     if(des.bits.flow_size)
     {

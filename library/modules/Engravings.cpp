@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -53,14 +53,14 @@ uint32_t Engravings::getCount()
 
 df::engraving * Engravings::getEngraving(int index)
 {
-    if (index < 0 || index >= getCount())
+    if (uint32_t(index) >= getCount())
         return NULL;
     return world->engravings[index];
 }
 
 bool Engravings::copyEngraving(const int32_t index, t_engraving &out)
 {
-    if (index < 0 || index >= getCount())
+    if (uint32_t(index) >= getCount())
         return false;
 
     out.origin = world->engravings[index];

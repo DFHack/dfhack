@@ -1,6 +1,15 @@
 -- Common startup file for all dfhack plugins with lua support
 -- The global dfhack table is already created by C++ init code.
 
+-- Setup the global environment.
+-- BASE_G is the original lua global environment,
+-- preserved as a common denominator for all modules.
+-- This file uses it instead of the new default one.
+
+local dfhack = dfhack
+local base_env = dfhack.BASE_G
+local _ENV = base_env
+
 -- Console color constants
 
 COLOR_RESET = -1
@@ -30,14 +39,21 @@ if dfhack.is_core_context then
     SC_MAP_UNLOADED = 3
     SC_VIEWSCREEN_CHANGED = 4
     SC_CORE_INITIALIZED = 5
+    SC_PAUSED = 7
+    SC_UNPAUSED = 8
 end
 
 -- Error handling
 
 safecall = dfhack.safecall
+curry = dfhack.curry
 
 function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
+end
+
+function qerror(msg, level)
+    dfhack.error(msg, (level or 1) + 1, false)
 end
 
 function dfhack.with_finalize(...)
@@ -55,6 +71,8 @@ function dfhack.with_temp_object(obj,fn,...)
     return dfhack.call_with_finalizer(1,true,call_delete,obj,fn,obj,...)
 end
 
+dfhack.exception.__index = dfhack.exception
+
 -- Module loading
 
 function mkmodule(module,env)
@@ -66,11 +84,11 @@ function mkmodule(module,env)
             error("Not a table in package.loaded["..module.."]")
         end
     end
-    local plugname = string.match(module,'^plugins%.(%w+)$')
+    local plugname = string.match(module,'^plugins%.([%w%-]+)$')
     if plugname then
         dfhack.open_plugin(pkg,plugname)
     end
-    setmetatable(pkg, { __index = (env or _G) })
+    setmetatable(pkg, { __index = (env or base_env) })
     return pkg
 end
 
@@ -85,11 +103,36 @@ function reload(module)
     dofile(path)
 end
 
+-- Trivial classes
+
+function rawset_default(target,source)
+    for k,v in pairs(source) do
+        if rawget(target,k) == nil then
+            rawset(target,k,v)
+        end
+    end
+end
+
+DEFAULT_NIL = DEFAULT_NIL or {} -- Unique token
+
+function defclass(...)
+    return require('class').defclass(...)
+end
+
+function mkinstance(...)
+    return require('class').mkinstance(...)
+end
+
 -- Misc functions
 
+NEWLINE = "\n"
+COMMA = ","
+PERIOD = "."
+
 function printall(table)
-    if type(table) == 'table' or df.isvalid(table) == 'ref' then
-        for k,v in pairs(table) do
+    local ok,f,t,k = pcall(pairs,table)
+    if ok then
+        for k,v in f,t,k do
             print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
         end
     end
@@ -102,9 +145,11 @@ function copyall(table)
 end
 
 function pos2xyz(pos)
-    local x = pos.x
-    if x and x ~= -30000 then
-        return x, pos.y, pos.z
+    if pos then
+        local x = pos.x
+        if x and x ~= -30000 then
+            return x, pos.y, pos.z
+        end
     end
 end
 
@@ -116,9 +161,55 @@ function xyz2pos(x,y,z)
     end
 end
 
-function dfhack.event:__tostring()
-    return "<event>"
+function same_xyz(a,b)
+    return a and b and a.x == b.x and a.y == b.y and a.z == b.z
 end
+
+function get_path_xyz(path,i)
+    return path.x[i], path.y[i], path.z[i]
+end
+
+function pos2xy(pos)
+    if pos then
+        local x = pos.x
+        if x and x ~= -30000 then
+            return x, pos.y
+        end
+    end
+end
+
+function xy2pos(x,y)
+    if x then
+        return {x=x,y=y}
+    else
+        return {x=-30000,y=-30000}
+    end
+end
+
+function same_xy(a,b)
+    return a and b and a.x == b.x and a.y == b.y
+end
+
+function get_path_xy(path,i)
+    return path.x[i], path.y[i]
+end
+
+function safe_index(obj,idx,...)
+    if obj == nil or idx == nil then
+        return nil
+    end
+    if type(idx) == 'number' and (idx < 0 or idx >= #obj) then
+        return nil
+    end
+    obj = obj[idx]
+    if select('#',...) > 0 then
+        return safe_index(obj,...)
+    else
+        return obj
+    end
+end
+
+-- String conversions
 
 function dfhack.persistent:__tostring()
     return "<persistent "..self.entry_id..":"..self.key.."=\""
@@ -137,6 +228,11 @@ end
 function dfhack.maps.getTileSize()
     local map = df.global.world.map
     return map.x_count, map.y_count, map.z_count
+end
+
+function dfhack.buildings.getSize(bld)
+    local x, y = bld.x1, bld.y1
+    return bld.x2+1-x, bld.y2+1-y, bld.centerx-x, bld.centery-y
 end
 
 -- Interactive
@@ -159,12 +255,33 @@ function dfhack.interpreter(prompt,hfile,env)
     end
 
     local prompt_str = "["..(prompt or 'lua').."]# "
+    local prompt_cont = string.rep(' ',#prompt_str-4)..">>> "
     local prompt_env = {}
-	local t_prompt
+    local cmdlinelist = {}
+    local t_prompt = nil
     local vcnt = 1
 
+    local pfix_handlers = {
+        ['!'] = function(data)
+            print(table.unpack(data,2,data.n))
+        end,
+        ['~'] = function(data)
+            print(table.unpack(data,2,data.n))
+            printall(data[2])
+        end,
+        ['='] = function(data)
+            for i=2,data.n do
+                local varname = '_'..vcnt
+                prompt_env[varname] = data[i]
+                dfhack.print(varname..' = ')
+                safecall(print, data[i])
+                vcnt = vcnt + 1
+            end
+        end
+    }
+
     setmetatable(prompt_env, { __index = env or _G })
-	local cmdlinelist={}
+
     while true do
         local cmdline = dfhack.lineedit(t_prompt or prompt_str, hfile)
 
@@ -173,48 +290,102 @@ function dfhack.interpreter(prompt,hfile,env)
         elseif cmdline ~= '' then
             local pfix = string.sub(cmdline,1,1)
 
-            if pfix == '!' or pfix == '=' then
+            if not t_prompt and pfix_handlers[pfix] then
                 cmdline = 'return '..string.sub(cmdline,2)
+            else
+                pfix = nil
             end
-			table.insert(cmdlinelist,cmdline)
-            local code,err = load(table.concat(cmdlinelist,'\n'), '=(interactive)', 't', prompt_env)
+
+            table.insert(cmdlinelist,cmdline)
+            cmdline = table.concat(cmdlinelist,'\n')
+
+            local code,err = load(cmdline, '=(interactive)', 't', prompt_env)
 
             if code == nil then
-				if err:sub(-5)=="<eof>" then
-					t_prompt="[cont]"
-					
-				else
-					dfhack.printerr(err)
-					cmdlinelist={}
-					t_prompt=nil
-				end
+                if not pfix and err:sub(-5)=="<eof>" then
+                    t_prompt=prompt_cont
+                else
+                    dfhack.printerr(err)
+                    cmdlinelist={}
+                    t_prompt=nil
+                end
             else
-			
-				cmdlinelist={}
-				t_prompt=nil
-				
+                cmdlinelist={}
+                t_prompt=nil
+
                 local data = table.pack(safecall(code))
 
                 if data[1] and data.n > 1 then
                     prompt_env._ = data[2]
-
-                    if pfix == '!' then
-                        safecall(print, table.unpack(data,2,data.n))
-                    else
-                        for i=2,data.n do
-                            local varname = '_'..vcnt
-                            prompt_env[varname] = data[i]
-                            dfhack.print(varname..' = ')
-                            safecall(print, data[i])
-                            vcnt = vcnt + 1
-                        end
-                    end
+                    safecall(pfix_handlers[pfix], data)
                 end
             end
         end
     end
 
     return true
+end
+
+-- Command scripts
+
+local internal = dfhack.internal
+
+internal.scripts = internal.scripts or {}
+
+local scripts = internal.scripts
+local hack_path = dfhack.getHackPath()
+
+function dfhack.run_script(name,...)
+    local key = string.lower(name)
+    local file = hack_path..'scripts/'..name..'.lua'
+    local env = scripts[key]
+    if env == nil then
+        env = {}
+        setmetatable(env, { __index = base_env })
+    end
+    local f,perr = loadfile(file, 't', env)
+    if f == nil then
+        error(perr)
+    end
+    scripts[key] = env
+    return f(...)
+end
+
+-- Per-save init file
+
+function dfhack.getSavePath()
+    if dfhack.isWorldLoaded() then
+        return dfhack.getDFPath() .. '/data/save/' .. df.global.world.cur_savegame.save_dir
+    end
+end
+
+if dfhack.is_core_context then
+    dfhack.onStateChange.DFHACK_PER_SAVE = function(op)
+        if op == SC_WORLD_LOADED or op == SC_WORLD_UNLOADED then
+            if internal.save_init then
+                if internal.save_init.onUnload then
+                    safecall(internal.save_init.onUnload)
+                end
+                internal.save_init = nil
+            end
+
+            local path = dfhack.getSavePath()
+
+            if path and op == SC_WORLD_LOADED then
+                local env = setmetatable({ SAVE_PATH = path }, { __index = base_env })
+                local f,perr = loadfile(path..'/raw/init.lua', 't', env)
+                if f == nil then
+                    if not string.match(perr, 'No such file or directory') then
+                        dfhack.printerr(perr)
+                    end
+                elseif safecall(f) then
+                    internal.save_init = env
+                end
+            end
+        elseif internal.save_init and internal.save_init.onStateChange then
+            safecall(internal.save_init.onStateChange, op)
+        end
+    end
 end
 
 -- Feed the table back to the require() mechanism.

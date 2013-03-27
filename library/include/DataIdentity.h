@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -114,6 +114,8 @@ namespace DFHack
         virtual void lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
+
+        virtual bool is_readonly() { return false; }
 
         virtual bool resize(void *ptr, int size) { return false; }
         virtual bool erase(void *ptr, int index) { return false; }
@@ -289,8 +291,10 @@ namespace df
         {}
 
         buffer_container_identity(int size, type_identity *item, enum_identity *ienum = NULL)
-            : container_identity(item->byte_size()*size, NULL, item, ienum), size(size)
+            : container_identity(0, NULL, item, ienum), size(size)
         {}
+
+        size_t byte_size() { return getItemType()->byte_size()*size; }
 
         std::string getFullName(type_identity *item);
         int getSize() { return size; }
@@ -341,6 +345,33 @@ namespace df
         }
     };
 
+    template<class T>
+    class ro_stl_container_identity : public container_identity {
+        const char *name;
+
+    public:
+        ro_stl_container_identity(const char *name, type_identity *item, enum_identity *ienum = NULL)
+            : container_identity(sizeof(T), &allocator_fn<T>, item, ienum), name(name)
+        {}
+
+        std::string getFullName(type_identity *item) {
+            return name + container_identity::getFullName(item);
+        }
+
+        virtual bool is_readonly() { return true; }
+        virtual bool resize(void *ptr, int size) { return false; }
+        virtual bool erase(void *ptr, int size) { return false; }
+        virtual bool insert(void *ptr, int idx, void *item) { return false; }
+
+    protected:
+        virtual int item_count(void *ptr, CountMode) { return ((T*)ptr)->size(); }
+        virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
+            auto iter = (*(T*)ptr).begin();
+            for (; idx > 0; idx--) ++iter;
+            return (void*)&*iter;
+        }
+    };
+
     class bit_array_identity : public bit_container_identity {
     public:
         /*
@@ -359,7 +390,7 @@ namespace df
         }
 
         virtual bool resize(void *ptr, int size) {
-            ((container*)ptr)->resize(size);
+            ((container*)ptr)->resize(size*8);
             return true;
         }
 
@@ -445,6 +476,7 @@ namespace df
     NUMBER_IDENTITY_TRAITS(int64_t);
     NUMBER_IDENTITY_TRAITS(uint64_t);
     NUMBER_IDENTITY_TRAITS(float);
+    NUMBER_IDENTITY_TRAITS(double);
 
     template<> struct DFHACK_EXPORT identity_traits<bool> {
         static bool_identity identity;
@@ -514,6 +546,10 @@ namespace df
         static container_identity *get();
     };
 
+    template<class T> struct identity_traits<std::set<T> > {
+        static container_identity *get();
+    };
+
     template<> struct identity_traits<BitArray<int> > {
         static bit_array_identity identity;
         static bit_container_identity *get() { return &identity; }
@@ -573,6 +609,13 @@ namespace df
     inline container_identity *identity_traits<std::deque<T> >::get() {
         typedef std::deque<T> container;
         static stl_container_identity<container> identity("deque", identity_traits<T>::get());
+        return &identity;
+    }
+
+    template<class T>
+    inline container_identity *identity_traits<std::set<T> >::get() {
+        typedef std::set<T> container;
+        static ro_stl_container_identity<container> identity("set", identity_traits<T>::get());
         return &identity;
     }
 

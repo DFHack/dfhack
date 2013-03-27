@@ -34,7 +34,6 @@ using std::set;
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include "modules/Vegetation.h"
 #include "modules/Maps.h"
 #include "modules/Gui.h"
 #include "TileTypes.h"
@@ -86,6 +85,7 @@ void help( color_ostream & out, std::vector<std::string> &commands, int start, i
             << " run / (empty)         : paint!" << std::endl
             << std::endl
             << "Filter/paint options:" << std::endl
+            << " Any: reset to default (no filter/paint)" << std::endl
             << " Shape / sh / s: set tile shape information" << std::endl
             << " Material / mat / m: set tile material information" << std::endl
             << " Special / sp: set special tile information" << std::endl
@@ -96,6 +96,7 @@ void help( color_ostream & out, std::vector<std::string> &commands, int start, i
             << " Light / l: set light flag" << std::endl
             << " Subterranean / st: set subterranean flag" << std::endl
             << " Skyview / sv: set skyview flag" << std::endl
+            << " Aquifer / aqua: set aquifer flag" << std::endl
             << "See help [option] for more information" << std::endl;
     }
     else if (option == "shape" || option == "s" ||option == "sh")
@@ -159,6 +160,11 @@ void help( color_ostream & out, std::vector<std::string> &commands, int start, i
         out << "Available skyview flags:" << std::endl
             << " ANY, 0, 1" << std::endl;
     }
+    else if (option == "aquifer" || option == "aqua")
+    {
+        out << "Available aquifer flags:" << std::endl
+            << " ANY, 0, 1" << std::endl;
+    }
 }
 
 struct TileType
@@ -172,8 +178,14 @@ struct TileType
     int light;
     int subterranean;
     int skyview;
+    int aquifer;
 
     TileType()
+    {
+        clear();
+    }
+
+    void clear()
     {
         shape = tiletype_shape::NONE;
         material = tiletype_material::NONE;
@@ -184,13 +196,31 @@ struct TileType
         light = -1;
         subterranean = -1;
         skyview = -1;
+        aquifer = -1;
     }
 
     bool empty()
     {
         return shape == -1 && material == -1 && special == -1 && variant == -1
-            && hidden == -1 && light == -1 && subterranean == -1 && skyview == -1
-            && dig == -1;
+            && dig == -1 && hidden == -1 && light == -1 && subterranean == -1
+            && skyview == -1 && aquifer == -1;
+    }
+
+    inline bool matches(const df::tiletype source,
+                        const df::tile_designation des)
+    {
+        bool rv = true;
+        rv &= (shape == -1 || shape == tileShape(source));
+        rv &= (material == -1 || material == tileMaterial(source));
+        rv &= (special == -1 || special == tileSpecial(source));
+        rv &= (variant == -1 || variant == tileVariant(source));
+        rv &= (dig == -1 || (dig != 0) == (des.bits.dig != tile_dig_designation::No));
+        rv &= (hidden == -1 || (hidden != 0) == des.bits.hidden);
+        rv &= (light == -1 || (light != 0) == des.bits.light);
+        rv &= (subterranean == -1 || (subterranean != 0) == des.bits.subterranean);
+        rv &= (skyview == -1 || (skyview != 0) == des.bits.outside);
+        rv &= (aquifer == -1 || (aquifer != 0) == des.bits.water_table);
+        return rv;
     }
 };
 
@@ -310,6 +340,19 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
         needSpace = true;
     }
 
+    if (paint.aquifer >= 0)
+    {
+        if (needSpace)
+        {
+            stream << " ";
+            needSpace = false;
+        }
+
+        stream << (paint.aquifer ? "AQUIFER" : "NO AQUIFER");
+        used = true;
+        needSpace = true;
+    }
+
     if (!used)
     {
         stream << "any";
@@ -417,14 +460,10 @@ bool tryVariant(std::string value, TileType &paint)
 
 bool processTileType(color_ostream & out, TileType &paint, std::vector<std::string> &params, int start, int end)
 {
-    if (params.size() < start + 2)
-    {
-        return false;
-    }
-
     int loc = start;
     std::string option = params[loc++];
-    std::string value = params[loc++];
+    std::string value = end <= loc ? "" : params[loc++];
+    tolower(option);
     toupper(value);
     int valInt;
     if (value == "ANY")
@@ -437,7 +476,11 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
     }
     bool found = false;
 
-    if (option == "shape" || option == "sh" || option == "s")
+    if (option == "any")
+    {
+        paint.clear();
+    }
+    else if (option == "shape" || option == "sh" || option == "s")
     {
         if (is_valid_enum_item((df::tiletype_shape)valInt))
         {
@@ -557,6 +600,18 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
             out << "Unknown skyview flag: " << value << std::endl;
         }
     }
+    else if (option == "aquifer" || option == "aqua")
+    {
+        if (valInt >= -1 && valInt < 2)
+        {
+            paint.aquifer = valInt;
+            found = true;
+        }
+        else
+        {
+            out << "Unknown aquifer flag: " << value << std::endl;
+        }
+    }
     else if (option == "all" || option == "a")
     {
         loc--;
@@ -614,19 +669,17 @@ command_result executePaintJob(color_ostream &out)
     coord_vec all_tiles = brush->points(map, cursor);
     out.print("working...\n");
 
+    // Force the game to recompute its walkability cache
+    df::global::world->reindex_pathfinding = true;
+
     for (coord_vec::iterator iter = all_tiles.begin(); iter != all_tiles.end(); ++iter)
     {
         const df::tiletype source = map.tiletypeAt(*iter);
         df::tile_designation des = map.designationAt(*iter);
 
-        if ((filter.shape > -1 && filter.shape != tileShape(source))
-         || (filter.material > -1 && filter.material != tileMaterial(source))
-         || (filter.special > -1 && filter.special != tileSpecial(source))
-         || (filter.variant > -1 && filter.variant != tileVariant(source))
-         || (filter.dig > -1 && (filter.dig != 0) != (des.bits.dig != tile_dig_designation::No))
-        )
+        if (!filter.matches(source, des))
         {
-            return CR_OK;
+            continue;
         }
 
         df::tiletype_shape shape = paint.shape;
@@ -707,8 +760,13 @@ command_result executePaintJob(color_ostream &out)
             des.bits.outside = paint.skyview;
         }
 
+        if (paint.aquifer > -1)
+        {
+            des.bits.water_table = paint.aquifer;
+        }
+
         // Remove liquid from walls, etc
-        if (type != -1 && !DFHack::FlowPassable(type))
+        if (type != (df::tiletype)-1 && !DFHack::FlowPassable(type))
         {
             des.bits.flow_size = 0;
             //des.bits.liquid_type = DFHack::liquid_water;
@@ -725,6 +783,7 @@ command_result executePaintJob(color_ostream &out)
     if (map.WriteAll())
     {
         out.print("OK\n");
+        return CR_OK;
     }
     else
     {
@@ -740,7 +799,6 @@ command_result processCommand(color_ostream &out, std::vector<std::string> &comm
         return executePaintJob(out);
     }
 
-    std::ostringstream ss_o;
     int loc = start;
 
     std::string command = commands[loc++];
@@ -769,47 +827,17 @@ command_result processCommand(color_ostream &out, std::vector<std::string> &comm
     }
     else if (command == "range" || command == "r")
     {
-        int width = 0, height = 0, z_levels = 0;
+        int width = 1, height = 1, zLevels = 1;
 
-        if (commands.size() > loc + 1)
+        command_result res = parseRectangle(out, commands, loc, end,
+                                            width, height, zLevels, hasConsole);
+        if (res != CR_OK)
         {
-            width = toint(commands[loc++]);
-            height = toint(commands[loc++]);
-
-            if (commands.size() > loc) {
-                z_levels = toint(commands[loc++]);
-            }
+            return res;
         }
-
-        if (width < 1 || height < 1) {
-            if (hasConsole) {
-                Console &con = static_cast<Console&>(out);
-                CommandHistory hist;
-
-                ss_o << "Set range width <" << width << "> ";
-                con.lineedit(ss_o.str(),command,hist);
-                width = command == "" ? width : toint(command);
-
-                ss_o.str("");
-                ss_o << "Set range height <" << height << "> ";
-                con.lineedit(ss_o.str(),command,hist);
-                height = command == "" ? height : toint(command);
-
-                ss_o.str("");
-                ss_o << "Set range z-levels <" << z_levels << "> ";
-                con.lineedit(ss_o.str(),command,hist);
-                z_levels = command == "" ? z_levels : toint(command);
-            } else {
-                return CR_WRONG_USAGE;
-            }
-        }
-
-        if (width < 1) width = 1;
-        if (height < 1) height = 1;
-        if (z_levels < 1) z_levels = 1;
 
         delete brush;
-        brush = new RectangleBrush(width, height, z_levels, 0, 0, 0);
+        brush = new RectangleBrush(width, height, zLevels, 0, 0, 0);
     }
     else if (command == "block")
     {

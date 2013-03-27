@@ -7,10 +7,10 @@ IF(CMAKE_COMPILER_IS_GNUCC)
     STRING(REGEX MATCHALL "[0-9]+" GCC_VERSION_COMPONENTS ${GCC_VERSION})
     LIST(GET GCC_VERSION_COMPONENTS 0 GCC_MAJOR)
     LIST(GET GCC_VERSION_COMPONENTS 1 GCC_MINOR)
-    IF(GCC_MAJOR LESS 4 OR (GCC_MAJOR EQUAL 4 AND GCC_MINOR LESS 2))
+    #IF(GCC_MAJOR LESS 4 OR (GCC_MAJOR EQUAL 4 AND GCC_MINOR LESS 2))
         #GCC is too old
-        SET(STL_HASH_OLD_GCC 1)
-    ENDIF()
+    #    SET(STL_HASH_OLD_GCC 1)
+    #ENDIF()
 
     #SET(CMAKE_CXX_FLAGS "-std=c++0x")
     SET(HAVE_HASH_MAP 0)
@@ -57,7 +57,7 @@ IF(CMAKE_COMPILER_IS_GNUCC)
     ENDIF()
 
     IF (HAVE_HASH_MAP EQUAL 0)
-        MESSAGE(SEND_ERROR "Could not find a working hash map implementation. Please update GCC.")
+        MESSAGE(SEND_ERROR "Could not find a working hash map implementation. Please install GCC >= 4.4, and all necessary 32-bit C++ development libraries.")
     ENDIF()
 
     FIND_PACKAGE(Threads)
@@ -72,13 +72,13 @@ ELSE()
     SET(HASH_SET_CLASS hash_set)
 ENDIF()
 
-CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/config.h")
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h")
 
 SET(LIBPROTOBUF_LITE_HDRS
 google/protobuf/io/coded_stream.h
 google/protobuf/io/coded_stream_inl.h
 google/protobuf/stubs/common.h
-config.h
+${CMAKE_CURRENT_BINARY_DIR}/config.h
 google/protobuf/extension_set.h
 google/protobuf/generated_message_util.h
 google/protobuf/stubs/hash.h
@@ -200,9 +200,14 @@ google/protobuf/compiler/zip_writer.cc
 
 LIST(APPEND LIBPROTOBUF_FULL_SRCS ${LIBPROTOBUF_LITE_SRCS})
 
+IF(CMAKE_COMPILER_IS_GNUCC)
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wno-sign-compare")
+ENDIF()
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 SET(PROTOBUF_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Protobuf shared libraries
 

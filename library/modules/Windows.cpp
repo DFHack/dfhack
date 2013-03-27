@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -34,14 +34,16 @@ distribution.
 #include "modules/Windows.h"
 
 using namespace DFHack;
+using df::global::gps;
 
 Windows::df_screentile *Windows::getScreenBuffer()
 {
-    return (df_screentile *) df::global::gps->screen;
+    if (!gps) return NULL;
+    return (df_screentile *) gps->screen;
 }
 
 Windows::df_window::df_window(int x, int y, unsigned int width, unsigned int height)
-:buffer(0), parent(0), left(x), top(y), width(width), height(height), current_painter(NULL)
+:buffer(0), width(width), height(height), parent(0), left(x), top(y), current_painter(NULL)
 {
     buffer = 0;
 };
@@ -79,7 +81,7 @@ bool Windows::df_window::unlock (painter * painter)
     return false;
 }
 
-Windows::top_level_window::top_level_window(): df_window(0,0,df::global::gps->dimx,df::global::gps->dimy)
+Windows::top_level_window::top_level_window() : df_window(0,0,gps ? gps->dimx : 80,gps ? gps->dimy : 25)
 {
     buffer = 0;
 }

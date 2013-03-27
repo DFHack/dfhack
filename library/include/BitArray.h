@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -64,7 +64,7 @@ namespace DFHack
             if (newsize == size)
                 return;
             uint8_t* mem = (uint8_t *) realloc(bits, newsize);
-            if(!mem)
+            if(!mem && newsize != 0)
                 throw std::bad_alloc();
             bits = mem;
             if (newsize > size)
@@ -207,7 +207,7 @@ namespace DFHack
             else
             {
                 T* mem = (T*) realloc(m_data, sizeof(T)*new_size);
-                if(!mem)
+                if(!mem && new_size != 0)
                     throw std::bad_alloc();
                 m_data = mem;
             }

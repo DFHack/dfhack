@@ -12,6 +12,7 @@
 #include "df/world.h"
 #include "df/job.h"
 #include "df/job_item.h"
+#include "df/job_item_ref.h"
 #include "df/general_ref.h"
 #include "df/builtin_mats.h"
 #include "df/inorganic_raw.h"
@@ -48,9 +49,9 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
         found = true;
         df::unit *unit = NULL;
         df::building *building = NULL;
-        for (size_t i = 0; i < job->references.size(); i++)
+        for (size_t i = 0; i < job->general_refs.size(); i++)
         {
-            df::general_ref *ref = job->references[i];
+            df::general_ref *ref = job->general_refs[i];
             if (ref->getType() == general_ref_type::UNIT_WORKER)
                 unit = ref->getUnit();
             if (ref->getType() == general_ref_type::BUILDING_HOLDER)
@@ -100,37 +101,37 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             switch (job->job_type)
             {
             case job_type::StrangeMoodCrafter:
-                out.print("become a Craftsdwarf (or Engraver)");
+                out.print("claim a Craftsdwarf's Workshop");
                 break;
             case job_type::StrangeMoodJeweller:
-                out.print("become a Jeweler");
+                out.print("claim a Jeweler's Workshop");
                 break;
             case job_type::StrangeMoodForge:
-                out.print("become a Metalworker");
+                out.print("claim a Metalsmith's Forge");
                 break;
             case job_type::StrangeMoodMagmaForge:
-                out.print("become a Metalworker using a Magma Forge");
+                out.print("claim a Magma Forge");
                 break;
             case job_type::StrangeMoodCarpenter:
-                out.print("become a Carpenter");
+                out.print("claim a Carpenter's Workshop");
                 break;
             case job_type::StrangeMoodMason:
-                out.print("become a Mason (or Miner)");
+                out.print("claim a Mason's Workshop");
                 break;
             case job_type::StrangeMoodBowyer:
-                out.print("become a Bowyer");
+                out.print("claim a Boywer's Workshop");
                 break;
             case job_type::StrangeMoodTanner:
-                out.print("become a Leatherworker (or Tanner)");
+                out.print("claim a Leather Works");
                 break;
             case job_type::StrangeMoodWeaver:
-                out.print("become a Clothier (or Weaver)");
+                out.print("claim a Clothier's Shop");
                 break;
             case job_type::StrangeMoodGlassmaker:
-                out.print("become a Glassmaker");
+                out.print("claim a Glass Furnace");
                 break;
             case job_type::StrangeMoodMechanics:
-                out.print("become a Mechanic");
+                out.print("claim a Mechanic's Workshop");
                 break;
             case job_type::StrangeMoodBrooding:
                 out.print("enter a macabre mood?");
@@ -142,20 +143,33 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                 out.print("do something else...");
                 break;
             }
+            out.print(" and become a legendary %s", ENUM_ATTR_STR(job_skill, caption_noun, unit->job.mood_skill));
+            if (unit->mood == mood_type::Possessed)
+                out.print(" (but not really)");
             break;
-
         default:
             out.print("insane?");
             break;
         }
+        out.print(".\n");
+        if (unit->sex)
+            out.print("He has ");
+        else
+            out.print("She has ");
         if (building)
         {
             string name;
             building->getName(&name);
-            out.print(" and has claimed a %s\n", name.c_str());
+            out.print("claimed a %s and wants", name.c_str());
         }
         else
-            out.print(" and has not yet claimed a workshop\n");
+            out.print("not yet claimed a workshop but will want");
+        out.print(" the following items:\n");
+
+        // total amount of stuff fetched so far
+        int count_got = 0;
+        for (size_t i = 0; i < job->items.size(); i++)
+            count_got += job->items[i]->item->getTotalDimension();
 
         for (size_t i = 0; i < job->job_items.size(); i++)
         {
@@ -259,7 +273,13 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                 }
             }
 
-            out.print(", quantity %i\n", item->quantity);
+            // total amount of stuff fetched for this requirement
+            // XXX may fail with cloth/thread/bars if need 1 and fetch 2
+            int got = count_got;
+            if (got > item->quantity)
+                got = item->quantity;
+            out.print(", quantity %i (got %i)\n", item->quantity, got);
+            count_got -= got;
         }
     }
     if (!found)

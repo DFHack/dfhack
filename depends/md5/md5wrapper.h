@@ -31,7 +31,7 @@ class md5wrapper
 		 * internal hash function, calling
 		 * the basic methods from md5.h
 		 */
-		std::string hashit(std::string text);
+		std::string hashit(unsigned char *data, size_t length);
 
 		/*
 		 * converts the numeric giets to
@@ -51,6 +51,10 @@ class md5wrapper
 		 * string
 		 */
 		std::string getHashFromString(std::string text);
+
+		std::string getHashFromBytes(const unsigned char *data, size_t size) {
+			return hashit(const_cast<unsigned char*>(data),size);
+		}
 
 		/*
 		 * creates a MD5 hash from

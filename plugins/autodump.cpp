@@ -140,7 +140,7 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
                 return CR_FAILURE;
             }
             df::tiletype ttype = MC.tiletypeAt(pos_cursor);
-            if(!DFHack::isFloorTerrain(ttype))
+            if(!DFHack::isWalkable(ttype) || DFHack::isOpenTerrain(ttype))
             {
                 out.printerr("Cursor should be placed over a floor.\n");
                 return CR_FAILURE;
@@ -156,12 +156,12 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
 
         // only dump the stuff marked for dumping and laying on the ground
         if (   !itm->flags.bits.dump
-            || !itm->flags.bits.on_ground
+//          || !itm->flags.bits.on_ground
             ||  itm->flags.bits.construction
             ||  itm->flags.bits.in_building
             ||  itm->flags.bits.in_chest
-            ||  itm->flags.bits.in_inventory
-            ||  itm->flags.bits.artifact1
+//          ||  itm->flags.bits.in_inventory
+            ||  itm->flags.bits.artifact
         )
             continue;
 
@@ -182,7 +182,11 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
 
             // Don't move items if they're already at the cursor
             if (pos_cursor != pos_item)
-                Items::moveToGround(MC, itm, pos_cursor);
+            {
+                if (!Items::moveToGround(MC, itm, pos_cursor))
+                    out.print("Could not move item: %s\n",
+                              Items::getDescription(itm, 0, true).c_str());
+            }
         }
         else // destroy
         {
@@ -267,15 +271,15 @@ command_result df_autodump_destroy_item(color_ostream &out, vector <string> & pa
 
     if (item->flags.bits.construction ||
         item->flags.bits.in_building ||
-        item->flags.bits.artifact1)
+        item->flags.bits.artifact)
     {
         out.printerr("Choosing not to destroy buildings, constructions and artifacts.\n");
         return CR_FAILURE;
     }
 
-    for (size_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->general_refs.size(); i++)
     {
-        df::general_ref *ref = item->itemrefs[i];
+        df::general_ref *ref = item->general_refs[i];
         if (ref->getType() == general_ref_type::UNIT_HOLDER)
         {
             out.printerr("Choosing not to destroy items in unit inventory.\n");

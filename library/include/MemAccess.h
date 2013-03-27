@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -275,14 +275,43 @@ namespace DFHack
             {
                 return my_descriptor;
             };
-            uint32_t getBase();
+            uintptr_t getBase();
             /// get the DF Process ID
             int getPID();
             /// get the DF Process FilePath
             std::string getPath();
+            /// Adjust between in-memory and in-file image offset
+            int adjustOffset(int offset, bool to_file = false);
+
+            /// millisecond tick count, exactly as DF uses
+            uint32_t getTickCount();
 
             /// modify permisions of memory range
             bool setPermisions(const t_memrange & range,const t_memrange &trgrange);
+
+            /// write a possibly read-only memory area
+            bool patchMemory(void *target, const void* src, size_t count);
+
+            /// allocate new memory pages for code or stuff
+            /// returns -1 on error (0 is a valid address)
+            void* memAlloc(const int length);
+
+            /// free memory pages from memAlloc
+            /// should have length = alloced length for portability
+            /// returns 0 on success
+            int memDealloc(void *ptr, const int length);
+
+            /// change memory page permissions
+            /// prot is a bitwise OR of the MemProt enum
+            /// returns 0 on success
+            int memProtect(void *ptr, const int length, const int prot);
+
+            enum MemProt {
+                READ = 1,
+                WRITE = 2,
+                EXEC = 4
+            };
+
     private:
         VersionInfo * my_descriptor;
         PlatformSpecific *d;
@@ -308,6 +337,23 @@ namespace DFHack
 
         // Get list of names given to ClassNameCheck constructors.
         static void getKnownClassNames(std::vector<std::string> &names);
+    };
+
+    class DFHACK_EXPORT MemoryPatcher
+    {
+        Process *p;
+        std::vector<t_memrange> ranges, save;
+    public:
+        MemoryPatcher(Process *p = NULL);
+        ~MemoryPatcher();
+
+        bool verifyAccess(void *target, size_t size, bool write = false);
+        bool makeWritable(void *target, size_t size) {
+            return verifyAccess(target, size, true);
+        }
+        bool write(void *target, const void *src, size_t size);
+
+        void close();
     };
 }
 #endif

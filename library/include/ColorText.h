@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -41,30 +41,32 @@ namespace dfproto
 
 namespace  DFHack
 {
+    enum color_value
+    {
+        COLOR_RESET = -1,
+        COLOR_BLACK = 0,
+        COLOR_BLUE,
+        COLOR_GREEN,
+        COLOR_CYAN,
+        COLOR_RED,
+        COLOR_MAGENTA,
+        COLOR_BROWN,
+        COLOR_GREY,
+        COLOR_DARKGREY,
+        COLOR_LIGHTBLUE,
+        COLOR_LIGHTGREEN,
+        COLOR_LIGHTCYAN,
+        COLOR_LIGHTRED,
+        COLOR_LIGHTMAGENTA,
+        COLOR_YELLOW,
+        COLOR_WHITE,
+        COLOR_MAX = COLOR_WHITE
+    };
+
     class DFHACK_EXPORT color_ostream : public std::ostream
     {
     public:
-        enum color_value
-        {
-            COLOR_RESET = -1,
-            COLOR_BLACK = 0,
-            COLOR_BLUE,
-            COLOR_GREEN,
-            COLOR_CYAN,
-            COLOR_RED,
-            COLOR_MAGENTA,
-            COLOR_BROWN,
-            COLOR_GREY,
-            COLOR_DARKGREY,
-            COLOR_LIGHTBLUE,
-            COLOR_LIGHTGREEN,
-            COLOR_LIGHTCYAN,
-            COLOR_LIGHTRED,
-            COLOR_LIGHTMAGENTA,
-            COLOR_YELLOW,
-            COLOR_WHITE,
-            COLOR_MAX = COLOR_WHITE
-        };
+        typedef DFHack::color_value color_value;
 
     private:
         color_value cur_color;
@@ -111,6 +113,8 @@ namespace  DFHack
         void printerr(const char *format, ...);
         void vprinterr(const char *format, va_list args);
 
+        /// Get color
+        color_value color() { return cur_color; }
         /// Set color (ANSI color number)
         void color(color_value c);
         /// Reset color to default

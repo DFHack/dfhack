@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -50,6 +50,18 @@ namespace DFHack
 
 #define CHECK_NULL_POINTER(var) \
     { if (var == NULL) throw DFHack::Error::NullPointer(#var); }
+
+        class DFHACK_EXPORT InvalidArgument : public All {
+            const char *expr_;
+        public:
+            InvalidArgument(const char *expr_ = NULL) : expr_(expr_) {}
+            const char *expr() const { return expr_; }
+            virtual const char *what() const throw();
+        };
+
+#define CHECK_INVALID_ARGUMENT(expr) \
+    { if (!(expr)) throw DFHack::Error::InvalidArgument(#expr); }
+
 
         class DFHACK_EXPORT AllSymbols : public All{};
         // Syntax errors and whatnot, the xml can't be read

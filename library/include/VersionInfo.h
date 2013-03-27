@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -27,7 +27,7 @@ distribution.
 
 #include "Pragma.h"
 #include "Export.h"
-#include "Types.h"
+/* #include "Types.h" */
 #include <map>
 #include <sys/types.h>
 #include <vector>

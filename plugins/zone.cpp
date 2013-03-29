@@ -40,6 +40,11 @@ using namespace std;
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
+#include "MiscUtils.h"
+
+#include "LuaTools.h"
+#include "DataFuncs.h"
+
 #include "modules/Units.h"
 #include "modules/Maps.h"
 #include "modules/Gui.h"
@@ -51,7 +56,7 @@ using namespace std;
 #include "MiscUtils.h"
 #include <VTableInterpose.h>
 
-#include <df/ui.h>
+#include "df/ui.h"
 #include "df/world.h"
 #include "df/world_raws.h"
 #include "df/building_def.h"
@@ -2716,6 +2721,8 @@ bool compareUnitAgesOlder(df::unit* i, df::unit* j)
     return (age_i > age_j);
 }
 
+
+
 //enum WatchedRaceSubtypes
 //{
 //    femaleKid=0,
@@ -2891,6 +2898,17 @@ public:
 // the name is a bit misleading since entries can be set to 'unwatched'
 // to ignore them for a while but still keep the target count settings
 std::vector<WatchedRace*> watched_races;
+
+// helper for sorting the watchlist alphabetically
+bool compareRaceNames(WatchedRace* i, WatchedRace* j)
+{
+    string name_i = getRaceName(i->raceId);
+    string name_j = getRaceName(j->raceId);
+    
+    return (name_i < name_j);
+}
+
+static void autobutcher_sortWatchList(color_ostream &out);
 
 // default target values for autobutcher
 static int default_fk = 5;
@@ -3282,6 +3300,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
             WatchedRace * w = new WatchedRace(watch_race, target_raceids.back(), target_fk, target_mk, target_fa, target_ma);
             w->UpdateConfig(out);
             watched_races.push_back(w);
+            autobutcher_sortWatchList(out);
         }
         target_raceids.pop_back();
     }
@@ -3367,6 +3386,7 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
             announce = "New race added to autobutcher watchlist: " + getRaceName(w->raceId);
             Gui::showAnnouncement(announce, 2, false);
             //out << announce << endl;
+            autobutcher_sortWatchList(out);
         }
     }
 
@@ -3475,6 +3495,7 @@ command_result init_autobutcher(color_ostream &out)
         w->rconfig = *p;
         watched_races.push_back(w);
     }
+    autobutcher_sortWatchList(out);
     return CR_OK;
 }
 
@@ -3540,6 +3561,294 @@ command_result cleanup_autonestbox(color_ostream &out)
     // (future version of autonestbox could store info about cages for useless male kids)
     return CR_OK;
 }
+
+/////////////////////////////////////
+// API functions to control autobutcher with a lua script
+
+static bool autobutcher_isEnabled() { return enable_autobutcher; }
+static bool autowatch_isEnabled() { return enable_autobutcher_autowatch; }
+
+static size_t autobutcher_getSleep(color_ostream &out)
+{
+    return sleep_autobutcher;
+}
+
+static void autobutcher_setSleep(color_ostream &out, size_t ticks)
+{
+    sleep_autobutcher = ticks;
+    if(config_autobutcher.isValid())
+        config_autobutcher.ival(1) = sleep_autobutcher;
+}
+
+static void autobutcher_setEnabled(color_ostream &out, bool enable)
+{
+    if(enable)
+    {
+        enable_autobutcher = true;
+        start_autobutcher(out);
+        autoButcher(out, false);
+    }
+    else
+    {
+        enable_autobutcher = false;
+        if(config_autobutcher.isValid())
+            config_autobutcher.ival(0) = enable_autobutcher;
+        out << "Autobutcher stopped." << endl;
+    }
+}
+
+static void autowatch_setEnabled(color_ostream &out, bool enable)
+{
+    if(enable)
+    {
+        out << "Auto-adding to watchlist started." << endl;
+        enable_autobutcher_autowatch = true;
+        if(config_autobutcher.isValid())
+            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
+    }
+    else
+    {
+        out << "Auto-adding to watchlist stopped." << endl;
+        enable_autobutcher_autowatch = false;
+        if(config_autobutcher.isValid())
+            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
+    }
+}
+
+static size_t autobutcher_getWatchListSize()
+{
+    return watched_races.size();
+}
+
+// get race name for a watchlist index
+static std::string autobutcher_getWatchListRace(color_ostream &out, size_t idx)
+{
+    if(idx >= watched_races.size())
+        return "INVALID";
+
+    WatchedRace * w = watched_races[idx];
+    return getRaceName(w->raceId);
+}
+
+// get FK for a watchlist index
+static size_t autobutcher_getWatchListRaceFK(color_ostream &out, size_t idx)
+{
+    if(idx >= watched_races.size())
+        return -1;
+
+    WatchedRace * w = watched_races[idx];
+    return w->fk;
+}
+
+// get FA for a watchlist index
+static size_t autobutcher_getWatchListRaceFA(color_ostream &out, size_t idx)
+{
+    if(idx >= watched_races.size())
+        return -1;
+
+    WatchedRace * w = watched_races[idx];
+    return w->fa;
+}
+
+// get MK for a watchlist index
+static size_t autobutcher_getWatchListRaceMK(color_ostream &out, size_t idx)
+{
+    if(idx >= watched_races.size())
+        return -1;
+
+    WatchedRace * w = watched_races[idx];
+    return w->mk;
+}
+
+// get MA for a watchlist index
+static size_t autobutcher_getWatchListRaceMA(color_ostream &out, size_t idx)
+{
+    if(idx >= watched_races.size())
+        return -1;
+
+    WatchedRace * w = watched_races[idx];
+    return w->ma;
+}
+
+// set FK for a watchlist index
+static void autobutcher_setWatchListRaceFK(color_ostream &out, size_t idx, size_t value)
+{
+    if(idx >= watched_races.size())
+        return;
+
+    WatchedRace * w = watched_races[idx];
+    w->fk = value;
+    w->UpdateConfig(out);
+}
+
+// set FA for a watchlist index
+static void autobutcher_setWatchListRaceFA(color_ostream &out, size_t idx, size_t value)
+{
+    if(idx >= watched_races.size())
+        return;
+
+    WatchedRace * w = watched_races[idx];
+    w->fa = value;
+    w->UpdateConfig(out);
+}
+
+// set MK for a watchlist index
+static void autobutcher_setWatchListRaceMK(color_ostream &out, size_t idx, size_t value)
+{
+    if(idx >= watched_races.size())
+        return;
+
+    WatchedRace * w = watched_races[idx];
+    w->mk = value;
+    w->UpdateConfig(out);
+}
+
+// set MA for a watchlist index
+static void autobutcher_setWatchListRaceMA(color_ostream &out, size_t idx, size_t value)
+{
+    if(idx >= watched_races.size())
+        return;
+
+    WatchedRace * w = watched_races[idx];
+    w->ma = value;
+    w->UpdateConfig(out);
+}
+
+// check if "watch" is enabled for watchlist index
+static bool autobutcher_isWatchListRaceWatched(color_ostream &out, size_t idx)
+{
+    if(idx >= watched_races.size())
+        return false;
+
+    WatchedRace * w = watched_races[idx];
+    return w->isWatched;
+}
+
+// set "watched" status for a watchlist index
+static void autobutcher_setWatchListRaceWatched(color_ostream &out, size_t idx, bool watched)
+{
+    if(idx >= watched_races.size())
+        return;
+
+    WatchedRace * w = watched_races[idx];
+    w->isWatched = watched;
+    w->UpdateConfig(out);
+}
+
+// remove entry from watchlist
+static void autobutcher_removeFromWatchList(color_ostream &out, size_t idx)
+{
+    if(idx >= watched_races.size())
+        return;
+
+    WatchedRace * w = watched_races[idx];
+    w->RemoveConfig(out);
+    watched_races.erase(watched_races.begin()+idx);
+}
+
+// sort watchlist alphabetically
+static void autobutcher_sortWatchList(color_ostream &out)
+{
+    sort(watched_races.begin(), watched_races.end(), compareRaceNames);   
+}
+
+// get default target values for new races
+static size_t autobutcher_getDefaultMK(color_ostream &out)
+{
+    return default_mk;
+}
+static size_t autobutcher_getDefaultMA(color_ostream &out)
+{
+    return default_ma;
+}
+static size_t autobutcher_getDefaultFK(color_ostream &out)
+{
+    return default_fk;
+}
+static size_t autobutcher_getDefaultFA(color_ostream &out)
+{
+    return default_fa;
+}
+
+// set default target values for new races
+static void autobutcher_setDefaultTargetNew(color_ostream &out, size_t fk, size_t mk, size_t fa, size_t ma)
+{
+    default_fk = fk;
+    default_mk = mk;
+    default_fa = fa;
+    default_ma = ma;
+    if(config_autobutcher.isValid())
+    {
+        config_autobutcher.ival(3) = default_fk;
+        config_autobutcher.ival(4) = default_mk;
+        config_autobutcher.ival(5) = default_fa;
+        config_autobutcher.ival(6) = default_ma;
+    }
+}
+
+// set default target values for ALL races (update watchlist and set new default)
+static void autobutcher_setDefaultTargetAll(color_ostream &out, size_t fk, size_t mk, size_t fa, size_t ma)
+{
+    for(size_t i=0; i<watched_races.size(); i++)
+    {
+        WatchedRace * w = watched_races[i];
+        w->fk = fk;
+        w->mk = mk;
+        w->fa = fa;
+        w->ma = ma;
+        w->UpdateConfig(out);
+    }
+    autobutcher_setDefaultTargetNew(out, fk, mk, fa, ma);
+}
+
+static std::string testString(color_ostream &out, size_t i) 
+{
+    out << "where will this be written?" << std::endl;
+    return getRaceName(i); 
+}
+
+// DFHACK_LUA_FUNCTION(autobutcher_setEnabled),
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(autobutcher_isEnabled),
+    DFHACK_LUA_FUNCTION(autowatch_isEnabled),
+    DFHACK_LUA_FUNCTION(autobutcher_setEnabled),
+    DFHACK_LUA_FUNCTION(autowatch_setEnabled),
+    DFHACK_LUA_FUNCTION(autobutcher_getSleep),
+    DFHACK_LUA_FUNCTION(autobutcher_setSleep),
+    DFHACK_LUA_FUNCTION(autobutcher_getWatchListSize),
+    DFHACK_LUA_FUNCTION(autobutcher_getWatchListRace),
+    
+    DFHACK_LUA_FUNCTION(autobutcher_isWatchListRaceWatched),
+    DFHACK_LUA_FUNCTION(autobutcher_setWatchListRaceWatched),
+
+    DFHACK_LUA_FUNCTION(autobutcher_getWatchListRaceFK),
+    DFHACK_LUA_FUNCTION(autobutcher_getWatchListRaceFA),
+    DFHACK_LUA_FUNCTION(autobutcher_getWatchListRaceMK),
+    DFHACK_LUA_FUNCTION(autobutcher_getWatchListRaceMA),
+    
+    DFHACK_LUA_FUNCTION(autobutcher_setWatchListRaceFK),
+    DFHACK_LUA_FUNCTION(autobutcher_setWatchListRaceFA),
+    DFHACK_LUA_FUNCTION(autobutcher_setWatchListRaceMK),
+    DFHACK_LUA_FUNCTION(autobutcher_setWatchListRaceMA),
+
+    DFHACK_LUA_FUNCTION(autobutcher_getDefaultFK),
+    DFHACK_LUA_FUNCTION(autobutcher_getDefaultFA),
+    DFHACK_LUA_FUNCTION(autobutcher_getDefaultMK),
+    DFHACK_LUA_FUNCTION(autobutcher_getDefaultMA),
+
+    DFHACK_LUA_FUNCTION(autobutcher_setDefaultTargetNew),
+    DFHACK_LUA_FUNCTION(autobutcher_setDefaultTargetAll),
+
+    DFHACK_LUA_FUNCTION(autobutcher_removeFromWatchList),
+    DFHACK_LUA_FUNCTION(autobutcher_sortWatchList),
+
+    DFHACK_LUA_FUNCTION(testString),
+    DFHACK_LUA_END
+};
+
+// end lua API
+
 
 
 //START zone filters

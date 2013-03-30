@@ -1143,7 +1143,7 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
 
         if (monitor_misery && Maps::IsValid())
         {
-            int x = 1;
+            int x = gps->dimx - 22;
             int y = gps->dimy - 1;
             OutputString(COLOR_WHITE, x, y, "H:");
             OutputString(COLOR_LIGHTRED, x, y, int_to_string(misery[0]));

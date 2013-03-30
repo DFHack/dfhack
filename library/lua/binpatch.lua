@@ -1,5 +1,7 @@
 -- Simple binary patch with IDA dif file support.
 
+local _ENV = mkmodule('binpatch')
+
 local function load_patch(name)
     local filename = name
     if not string.match(filename, '[./\\]') then

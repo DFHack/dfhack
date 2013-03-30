@@ -1,5 +1,6 @@
 local _ENV = mkmodule('plugins.dfusion.adv_tools')
 local dfu=require("plugins.dfusion")
+local tools=require("plugins.dfusion.tools")
 menu=dfu.SimpleMenu()
 function Reincarnate(trg_unit,swap_soul) --only for adventurer i guess
 	if swap_soul==nil then
@@ -9,7 +10,7 @@ function Reincarnate(trg_unit,swap_soul) --only for adventurer i guess
 	if adv.flags1.dead==false then
 		qerror("You are not dead (yet)!")
 	end
-	local hist_fig=getNemesis(adv).figure
+	local hist_fig=dfhack.units.getNemesis(adv).figure
 	if hist_fig==nil then
 		qerror("No historical figure for adventurer...")
 	end
@@ -18,9 +19,9 @@ function Reincarnate(trg_unit,swap_soul) --only for adventurer i guess
 	for i=#events-1,0,-1 do -- reverse search because almost always it will be last entry
 		if df.history_event_hist_figure_diedst:is_instance(events[i]) then
 			--print("is instance:"..i)
-			if events[i].victim==hist_fig.id then
+			if events[i].victim_hf==hist_fig.id then
 				--print("Is same id:"..i)
-				trg_hist_fig=events[i].slayer
+				trg_hist_fig=events[i].slayer_hf
 				if trg_hist_fig then
 					trg_hist_fig=df.historical_figure.find(trg_hist_fig)
 				end
@@ -38,7 +39,7 @@ function Reincarnate(trg_unit,swap_soul) --only for adventurer i guess
 	end
 	local trg_unit_final=df.unit.find(trg_unit)
 	
-	tools.change_adv(trg_unit_final)
+	change_adv(trg_unit_final)
 	if swap_soul then --actually add a soul...
 		t_soul=adv.status.current_soul
 		adv.status.current_soul=df.NULL
@@ -53,7 +54,7 @@ function change_adv(unit,nemesis)
 		nemesis=true --default value is nemesis switch too.
 	end
 	if unit==nil then
-		unit=getCreatureAtPointer()
+		unit=dfhack.gui.getSelectedUnit()--getCreatureAtPointer()
 	end
 	if unit==nil then
 		error("Invalid unit!")
@@ -72,8 +73,8 @@ function change_adv(unit,nemesis)
 	other[unit_indx]=other[0]
 	other[0]=unit
 	if nemesis then --basicly copied from advtools plugin...
-		local nem=getNemesis(unit)
-		local other_nem=getNemesis(other[unit_indx])
+		local nem=dfhack.units.getNemesis(unit)
+		local other_nem=dfhack.units.getNemesis(other[unit_indx])
 		if other_nem then
 			other_nem.flags[0]=false
 			other_nem.flags[1]=true
@@ -113,4 +114,59 @@ function log_pos()
     f:close()
 end
 menu:add("Log adventurers position",log_pos)
+function addSite(x,y,rgn_max_x,rgn_min_x,rgn_max_y,rgn_min_y,civ_id,name,sitetype)
+    if x==nil or y==nil then
+        x=(df.global.world.map.region_x+1)/16
+        y=(df.global.world.map.region_y+1)/16
+    end
+    if name==nil then
+        name=dfhack.lineedit("Site name:")or "Hacked site"
+    end
+    if sitetype==nil then
+        sitetype=tonumber(dfhack.lineedit("Site type (numeric):")) or 7
+    end
+    rgn_max_x=rgn_max_x or (df.global.world.map.region_x+1)%16
+    rgn_max_y=rgn_max_y or (df.global.world.map.region_y+1)%16
+    rgn_min_y=rgn_min_y or rgn_max_y
+    rgn_min_x=rgn_min_x or rgn_max_x
+    print("Region:",rgn_max_x,rgn_min_x,rgn_max_y,rgn_min_y)
+--[=[
+<angavrilov> global = pos*16 + rgn
+<angavrilov> BUT
+<angavrilov> for cities global is usually 17x17, i.e. max size
+<angavrilov> while rgn designates a small bit in the middle
+<angavrilov> for stuff like forts that formula holds exactly
+]=]--
+    local wd=df.global.world.world_data
+    local nsite=df.world_site:new()
+    nsite.name.first_name=name
+    nsite.name.has_name=true
+    nsite.pos:assign{x=x,y=y}
+    nsite.rgn_max_x=rgn_max_x
+    nsite.rgn_min_x=rgn_min_x
+    nsite.rgn_min_y=rgn_min_y
+    nsite.rgn_max_y=rgn_max_y
+    nsite.global_max_x=nsite.pos.x*16+nsite.rgn_max_x
+    nsite.global_min_x=nsite.pos.x*16+nsite.rgn_min_x
+    nsite.global_max_y=nsite.pos.y*16+nsite.rgn_max_y
+    nsite.global_min_y=nsite.pos.y*16+nsite.rgn_min_y
+    nsite.id=wd.next_site_id
+    nsite.civ_id=civ_id or -1
+    nsite.cur_owner_id=civ_id or -1
+    nsite.type=sitetype --lair = 7
+    nsite.flags:resize(23)
+    --nsite.flags[4]=true
+    --nsite.flags[5]=true
+    --nsite.flags[6]=true
+    nsite.index=#wd.sites+1
+    wd.sites:insert("#",nsite)
+    wd.next_site_id=wd.next_site_id+1
+    --might not be needed...
+    --[[local unk130=df.world_site_unk130:new()
+    unk130.index=#wd.site_unk130+1
+    wd.site_unk130:insert("#",unk130)
+    --wd.next_site_unk136_id=wd.next_site_unk136_id+1--]]
+    return nsite
+end
+menu:add("Create site at current location",addSite)
 return _ENV

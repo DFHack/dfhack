@@ -26,8 +26,7 @@ void syndromeHandler(color_ostream& out, void* ptr);
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     EventManager::EventHandler syndrome(syndromeHandler, 1);
-    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("trueTransformation");
-    EventManager::registerListener(EventManager::EventType::SYNDROME, syndrome, me);
+    EventManager::registerListener(EventManager::EventType::SYNDROME, syndrome, plugin_self);
 
     return CR_OK;
 }
@@ -36,12 +35,12 @@ void syndromeHandler(color_ostream& out, void* ptr) {
     EventManager::SyndromeData* data = (EventManager::SyndromeData*)ptr;
     //out.print("Syndrome started: unit %d, syndrome %d.\n", data->unitId, data->syndromeIndex);
 
-    int32_t index = df::unit::binsearch_index(df::global::world->units.active, data->unitId);
-    if ( index < 0 ) {
+    df::unit* unit = df::unit::find(data->unitId);
+    if (!unit) {
         out.print("%s, line %d: couldn't find unit.\n", __FILE__, __LINE__);
         return;
     }
-    df::unit* unit = df::global::world->units.active[index];
+
     df::unit_syndrome* unit_syndrome = unit->syndromes.active[data->syndromeIndex];
     df::syndrome* syndrome = df::global::world->raws.syndromes.all[unit_syndrome->type];
     

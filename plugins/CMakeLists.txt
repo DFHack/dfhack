@@ -125,7 +125,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(steam-engine steam-engine.cpp)
     DFHACK_PLUGIN(power-meter power-meter.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(siege-engine siege-engine.cpp LINK_LIBRARIES lua)
-    DFHACK_PLUGIN(reactionhooks reactionhooks.cpp LINK_LIBRARIES lua)
+    DFHACK_PLUGIN(eventful eventful.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(add-spatter add-spatter.cpp)
     DFHACK_PLUGIN(fix-armory fix-armory.cpp)
     # not yet. busy with other crud again...
@@ -137,6 +137,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(trueTransformation trueTransformation.cpp)
     DFHACK_PLUGIN(infiniteSky infiniteSky.cpp)
     DFHACK_PLUGIN(digSmart digSmart.cpp)
+    DFHACK_PLUGIN(createitem createitem.cpp)
 endif()
 
 

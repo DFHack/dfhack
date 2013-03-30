@@ -9,9 +9,18 @@ FriendshipRainbow.name="FriendshipRainbow"
 -- os independant... I think...
 FriendshipRainbow.ATTRS{filename="hack/lua/plugins/dfusion/friendship.o",name="FriendshipRainbow",race_data=DEFAULT_NIL}
 FriendshipRainbow.class_status="valid, not installed"
+function FriendshipRainbow:findall_needles(codesg,needle) -- todo move to memscan.lua
+    local cidx,caddr=codesg.uint8_t:find(needle)
+    local ret={}
+    while cidx~=nil do
+       table.insert(ret,{cidx,caddr}) 
+       cidx,caddr=codesg.uint8_t:find(needle,cidx+1)
+    end
+    return ret
+end
 function FriendshipRainbow:find_one(codesg,needle,crace)
     dfu.concatTables(needle,dfu.dwordToTable(crace))
-    return codesg.uint8_t:findall(needle)
+    return self:findall_needles(codesg,needle)
 end
 function FriendshipRainbow:find_all()
     local code=ms.get_code_segment() 

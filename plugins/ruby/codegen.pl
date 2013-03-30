@@ -843,7 +843,7 @@ sub render_item_number {
     } elsif ($subtype eq 'uint8_t') {
         push @lines_rb, 'number 8, false';
     } elsif ($subtype eq 'int8_t') {
-        push @lines_rb, 'number 8, false';
+        push @lines_rb, 'number 8, true';
     } elsif ($subtype eq 'bool') {
         push @lines_rb, 'number 8, true';
         $initvalue ||= 'nil';

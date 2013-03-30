@@ -58,5 +58,9 @@ build/CPack*Config.cmake
 
 /cmakeall.bat
 
-# vim swap files
+# vim files
 *.swp
+.vimrc
+
+# ctags file
+tags

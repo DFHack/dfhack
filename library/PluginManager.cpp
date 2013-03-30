@@ -212,9 +212,10 @@ bool Plugin::load(color_ostream &con)
     }
     const char ** plug_name =(const char ** ) LookupPlugin(plug, "name");
     const char ** plug_version =(const char ** ) LookupPlugin(plug, "version");
-    if(!plug_name || !plug_version)
+    Plugin **plug_self = (Plugin**)LookupPlugin(plug, "plugin_self");
+    if(!plug_name || !plug_version || !plug_self)
     {
-        con.printerr("Plugin %s has no name or version.\n", filename.c_str());
+        con.printerr("Plugin %s has no name, version or self pointer.\n", filename.c_str());
         ClosePlugin(plug);
         RefAutolock lock(access);
         state = PS_BROKEN;
@@ -229,6 +230,7 @@ bool Plugin::load(color_ostream &con)
         state = PS_BROKEN;
         return false;
     }
+    *plug_self = this;
     RefAutolock lock(access);
     plugin_init = (command_result (*)(color_ostream &, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
     if(!plugin_init)

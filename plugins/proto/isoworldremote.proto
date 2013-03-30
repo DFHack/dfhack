@@ -18,8 +18,29 @@ message EmbarkTileLayer {
 }
 
 message EmbarkTile {
-	required int32 world_X = 1;
-	required int32 world_Y = 2;
-	required sint32 world_Z = 3;
+	required int32 world_x = 1;
+	required int32 world_y = 2;
+	required sint32 world_z = 3;
 	repeated EmbarkTileLayer tile_layer = 4;
+	optional int32 current_year = 5;
+	optional int32 current_season = 6;
+}
+
+message TileRequest {
+	optional int32 want_x = 1;
+	optional int32 want_y = 2;
+}
+
+message MapRequest {
+	optional string save_folder = 1;
+}
+
+message MapReply {
+	required bool available = 1;
+	optional int32 region_x = 2;
+	optional int32 region_y = 3;
+	optional int32 region_size_x = 4;
+	optional int32 region_size_y = 5;
+	optional int32 current_year = 6;
+	optional int32 current_season = 7;
 }

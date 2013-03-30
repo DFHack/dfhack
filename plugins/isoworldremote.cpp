@@ -25,6 +25,8 @@
 
 #include "isoworldremote.pb.h"
 
+#include "RemoteServer.h"
+
 using namespace DFHack;
 using namespace df::enums;
 using namespace isoworldremote;
@@ -34,13 +36,16 @@ using namespace isoworldremote;
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 command_result isoWorldRemote (color_ostream &out, std::vector <std::string> & parameters);
 
+static command_result GetEmbarkTile(color_ostream &stream, const TileRequest *in, EmbarkTile *out);
+static command_result GetEmbarkInfo(color_ostream &stream, const MapRequest *in, MapReply *out);
+
 void gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * tile, MapExtras::MapCache * MP);
 bool gather_embark_tile(int EmbX, int EmbY, EmbarkTile * tile, MapExtras::MapCache * MP);
 
 
 // A plugin must be able to return its name and version.
 // The name string provided must correspond to the filename - skeleton.plug.so or skeleton.plug.dll in this case
-DFHACK_PLUGIN("skeleton");
+DFHACK_PLUGIN("isoworldremote");
 
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
@@ -56,6 +61,14 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "    Does nothing.\n"
     ));
     return CR_OK;
+}
+
+DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
+{
+    RPCService *svc = new RPCService();
+    svc->addFunction("GetEmbarkTile", GetEmbarkTile);
+    svc->addFunction("GetEmbarkInfo", GetEmbarkInfo);
+    return svc;
 }
 
 // This is called right before the plugin library is removed from memory.
@@ -154,22 +167,44 @@ command_result isoWorldRemote (color_ostream &out, std::vector <std::string> & p
     return CR_OK;
 }
 
+static command_result GetEmbarkTile(color_ostream &stream, const TileRequest *in, EmbarkTile *out)
+{
+    MapExtras::MapCache MC;
+    gather_embark_tile(in->want_x(), in->want_y(), out, &MC);
+    MC.trash();
+    return CR_OK;
+}
+
+static command_result GetEmbarkInfo(color_ostream &stream, const MapRequest *in, MapReply *out)
+{
+    if(!in->has_save_folder()) { //probably should send the stuff anyway, but nah.
+        out->set_available(false);
+        return CR_OK;
+    }
+    if(!(in->save_folder() == df::global::world->cur_savegame.save_dir)) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
+        out->set_available(false);
+        return CR_OK;
+    }
+    out->set_available(true);
+    out->set_current_year(*df::global::cur_year);
+    out->set_current_season(*df::global::cur_season);
+    out->set_region_x(df::global::world->map.region_x);
+    out->set_region_y(df::global::world->map.region_y);
+    out->set_region_size_x(df::global::world->map.x_count_block);
+    out->set_region_size_y(df::global::world->map.y_count_block);
+    return CR_OK;
+}
+
 int coord_to_index_48(int x, int y) {
 	return y*48+x;
 }
 
 bool gather_embark_tile(int EmbX, int EmbY, EmbarkTile * tile, MapExtras::MapCache * MP) {
-	DFCoord base_coord;
-	base_coord.x = EmbX;
-	base_coord.y = EmbY;
-	base_coord.z = 0;
-	MapExtras::Block * b = MP->BlockAt(base_coord);
-	if(!b) return 0;
-	df::coord map_pos = b->getRaw()->map_pos;
-	df::coord2d region_pos = b->getRaw()->region_pos;
-	tile->set_world_x(region_pos.x*16+map_pos.x/3); //fixme: verify.
-	tile->set_world_y(region_pos.y*16+map_pos.y/3);
-	tile->set_world_z(map_pos.z);
+	tile->set_world_x(df::global::world->map.region_x + EmbX); //fixme: verify.
+	tile->set_world_y(df::global::world->map.region_y + EmbY); //fixme: verify.
+	tile->set_world_z(df::global::world->map.region_z); //fixme: verify.
+    tile->set_current_year(*df::global::cur_year);
+    tile->set_current_season(*df::global::cur_season);
 	for(int z = 0; z < MP->maxZ(); z++)
 	{
 		EmbarkTileLayer * tile_layer = tile->add_tile_layer();

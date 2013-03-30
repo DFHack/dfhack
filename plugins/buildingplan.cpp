@@ -39,10 +39,6 @@ using df::global::world;
 DFHACK_PLUGIN("buildingplan");
 #define PLUGIN_VERSION 0.9
 
-#ifndef HAVE_NULLPTR
-#define nullptr 0L
-#endif
-
 struct MaterialDescriptor
 {
     df::item_type item_type;
@@ -1159,7 +1155,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         PluginCommand(
         "buildingplan", "Place furniture before it's built",
         buildingplan_cmd, false, ""));
-
     planner.initialize();
 
     return CR_OK;

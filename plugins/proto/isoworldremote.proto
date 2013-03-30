@@ -1,0 +1,25 @@
+package isoworldremote;
+
+//Describes a very basic material structure for the map embark
+option optimize_for = LITE_RUNTIME;
+
+enum BasicMaterial {
+	AIR = 0;
+	OTHER = 1;
+	INORGANIC = 2;
+	LIQUID = 3;
+	PLANT = 4;
+	WOOD = 5;
+};
+
+message EmbarkTileLayer {
+	repeated BasicMaterial mat_type_table = 4 [packed=true];
+	repeated int32 mat_subtype_table = 5 [packed=true];
+}
+
+message EmbarkTile {
+	required int32 world_X = 1;
+	required int32 world_Y = 2;
+	required sint32 world_Z = 3;
+	repeated EmbarkTileLayer tile_layer = 4;
+}

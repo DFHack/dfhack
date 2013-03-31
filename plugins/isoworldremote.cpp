@@ -170,7 +170,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 static command_result GetEmbarkTile(color_ostream &stream, const TileRequest *in, EmbarkTile *out)
 {
     MapExtras::MapCache MC;
-    gather_embark_tile(in->want_x(), in->want_y(), out, &MC);
+    gather_embark_tile(in->want_x() * 3, in->want_y() * 3, out, &MC);
     MC.trash();
     return CR_OK;
 }
@@ -202,8 +202,8 @@ static command_result GetEmbarkInfo(color_ostream &stream, const MapRequest *in,
     out->set_current_season(*df::global::cur_season);
     out->set_region_x(df::global::world->map.region_x);
     out->set_region_y(df::global::world->map.region_y);
-    out->set_region_size_x(df::global::world->map.x_count_block);
-    out->set_region_size_y(df::global::world->map.y_count_block);
+    out->set_region_size_x(df::global::world->map.x_count_block / 3);
+    out->set_region_size_y(df::global::world->map.y_count_block / 3);
     return CR_OK;
 }
 

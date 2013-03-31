@@ -50,16 +50,16 @@ DFHACK_PLUGIN("isoworldremote");
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    // Fill the command list with your commands.
-    commands.push_back(PluginCommand(
-        "isoworldremote", "Do nothing, look pretty.",
-        isoWorldRemote, false, /* true means that the command can't be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  This command does nothing at all.\n"
-        "Example:\n"
-        "  isoworldremote\n"
-        "    Does nothing.\n"
-    ));
+    //// Fill the command list with your commands.
+    //commands.push_back(PluginCommand(
+    //    "isoworldremote", "Do nothing, look pretty.",
+    //    isoWorldRemote, false, /* true means that the command can't be used from non-interactive user interface */
+    //    // Extended help string. Used by CR_WRONG_USAGE and the help command:
+    //    "  This command does nothing at all.\n"
+    //    "Example:\n"
+    //    "  isoworldremote\n"
+    //    "    Does nothing.\n"
+    //));
     return CR_OK;
 }
 
@@ -110,62 +110,62 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 }
 */
 
-// A command! It sits around and looks pretty. And it's nice and friendly.
-command_result isoWorldRemote (color_ostream &out, std::vector <std::string> & parameters)
-{
-    // It's nice to print a help message you get invalid options
-    // from the user instead of just acting strange.
-    // This can be achieved by adding the extended help string to the
-    // PluginCommand registration as show above, and then returning
-    // CR_WRONG_USAGE from the function. The same string will also
-    // be used by 'help your-command'.
-    if (!parameters.empty())
-        return CR_WRONG_USAGE;
-    // Commands are called from threads other than the DF one.
-    // Suspend this thread until DF has time for us. If you
-    // use CoreSuspender, it'll automatically resume DF when
-    // execution leaves the current scope.
-    CoreSuspender suspend;
-    // Actually do something here. Yay.
-    out.print("Doing a test...\n");
-	MapExtras::MapCache MC;
-	EmbarkTile test_tile;
-	if(!gather_embark_tile(0,0, &test_tile, &MC))
-		return CR_FAILURE;
-	//test-write the file to check it.
-	std::ofstream output_file("tile.p", std::ios_base::binary);
-	output_file << test_tile.SerializeAsString();
-	output_file.close();
-
-	//load it again to verify.
-	std::ifstream input_file("tile.p", std::ios_base::binary);
-	std::string input_string( (std::istreambuf_iterator<char>(input_file) ),
-                       (std::istreambuf_iterator<char>()    ) );
-	EmbarkTile verify_tile;
-	verify_tile.ParseFromString(input_string);
-	//write contents to text file.
-	std::ofstream debug_text("tile.txt", std::ios_base::trunc);
-	debug_text << "world coords:" << verify_tile.world_x()<< "," << verify_tile.world_y()<< "," << verify_tile.world_z() << std::endl;
-	for(int i = 0; i < verify_tile.tile_layer_size(); i++) {
-		debug_text << "layer: " << i << std::endl;
-		for(int j = 0; j < 48; j++) {
-			debug_text << "	";
-			for(int k = 0; k < 48; k++) {
-				debug_text << verify_tile.tile_layer(i).mat_type_table(j*48+k) << ",";
-			}
-			debug_text << "	";
-			for(int k = 0; k < 48; k++) {
-				debug_text << std::setw(3) << verify_tile.tile_layer(i).mat_subtype_table(j*48+k) << ",";
-			}
-			debug_text << std::endl;
-		}
-		debug_text << std::endl;
-	}
-	//clean everything up.
-	google::protobuf::ShutdownProtobufLibrary();
-    // Give control back to DF.
-    return CR_OK;
-}
+//// A command! It sits around and looks pretty. And it's nice and friendly.
+//command_result isoWorldRemote (color_ostream &out, std::vector <std::string> & parameters)
+//{
+//    // It's nice to print a help message you get invalid options
+//    // from the user instead of just acting strange.
+//    // This can be achieved by adding the extended help string to the
+//    // PluginCommand registration as show above, and then returning
+//    // CR_WRONG_USAGE from the function. The same string will also
+//    // be used by 'help your-command'.
+//    if (!parameters.empty())
+//        return CR_WRONG_USAGE;
+//    // Commands are called from threads other than the DF one.
+//    // Suspend this thread until DF has time for us. If you
+//    // use CoreSuspender, it'll automatically resume DF when
+//    // execution leaves the current scope.
+//    CoreSuspender suspend;
+//    // Actually do something here. Yay.
+//    out.print("Doing a test...\n");
+//	MapExtras::MapCache MC;
+//	EmbarkTile test_tile;
+//	if(!gather_embark_tile(0,0, &test_tile, &MC))
+//		return CR_FAILURE;
+//	//test-write the file to check it.
+//	std::ofstream output_file("tile.p", std::ios_base::binary);
+//	output_file << test_tile.SerializeAsString();
+//	output_file.close();
+//
+//	//load it again to verify.
+//	std::ifstream input_file("tile.p", std::ios_base::binary);
+//	std::string input_string( (std::istreambuf_iterator<char>(input_file) ),
+//                       (std::istreambuf_iterator<char>()    ) );
+//	EmbarkTile verify_tile;
+//	verify_tile.ParseFromString(input_string);
+//	//write contents to text file.
+//	std::ofstream debug_text("tile.txt", std::ios_base::trunc);
+//	debug_text << "world coords:" << verify_tile.world_x()<< "," << verify_tile.world_y()<< "," << verify_tile.world_z() << std::endl;
+//	for(int i = 0; i < verify_tile.tile_layer_size(); i++) {
+//		debug_text << "layer: " << i << std::endl;
+//		for(int j = 0; j < 48; j++) {
+//			debug_text << "	";
+//			for(int k = 0; k < 48; k++) {
+//				debug_text << verify_tile.tile_layer(i).mat_type_table(j*48+k) << ",";
+//			}
+//			debug_text << "	";
+//			for(int k = 0; k < 48; k++) {
+//				debug_text << std::setw(3) << verify_tile.tile_layer(i).mat_subtype_table(j*48+k) << ",";
+//			}
+//			debug_text << std::endl;
+//		}
+//		debug_text << std::endl;
+//	}
+//	//clean everything up.
+//	google::protobuf::ShutdownProtobufLibrary();
+//    // Give control back to DF.
+//    return CR_OK;
+//}
 
 static command_result GetEmbarkTile(color_ostream &stream, const TileRequest *in, EmbarkTile *out)
 {
@@ -177,6 +177,18 @@ static command_result GetEmbarkTile(color_ostream &stream, const TileRequest *in
 
 static command_result GetEmbarkInfo(color_ostream &stream, const MapRequest *in, MapReply *out)
 {
+    if(!df::global::gamemode) {
+        out->set_available(false);
+        return CR_OK;
+    }
+    if((*df::global::gamemode != game_mode::ADVENTURE) && (*df::global::gamemode != game_mode::DWARF)) {
+        out->set_available(false);
+        return CR_OK;
+    }
+    if(!DFHack::Maps::IsValid()) {
+        out->set_available(false);
+        return CR_OK;
+    }
     if(!in->has_save_folder()) { //probably should send the stuff anyway, but nah.
         out->set_available(false);
         return CR_OK;

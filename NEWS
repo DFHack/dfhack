@@ -2,6 +2,7 @@ DFHack future
 
   New scripts:
     - masspit: designate caged creatures in a zone for pitting
+    - locate_ore: scan the map for unmined ore veins
   Misc improvements:
     - exterminate: renamed from slayrace, add help message
     - autoSyndrome: disable by default

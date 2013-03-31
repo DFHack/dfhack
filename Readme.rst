@@ -2065,6 +2065,20 @@ Exemples::
     create-items bar CREATURE:CAT:SOAP
     create-items bar adamantine
 
+locate-ore
+==========
+Scan the map for metal ores.
+
+Finds and designate for digging one tile of a specific metal ore.
+Only works for native metal ores, does not handle reaction stuff (eg STEEL).
+
+When invoked with the ``list`` argument, lists metal ores available on the map.
+
+Exemples::
+    locate-ore list
+    locate-ore hematite
+    locate-ore iron
+
 soundsense-season
 =================
 

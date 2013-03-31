@@ -15,6 +15,7 @@
 #include "modules/Job.h"
 #include "df/ui.h"
 #include "df/caravan_state.h"
+#include "df/mandate.h"
 #include "modules/Maps.h"
 #include "modules/World.h"
 
@@ -251,6 +252,31 @@ static TradeDepotInfo depot_info;
  * Item Manipulation
  */
 
+static bool check_mandates(df::item *item)
+{
+    for (auto it = world->mandates.begin(); it != world->mandates.end(); it++)
+    {
+        auto mandate = *it;
+
+        if (mandate->mode != 0)
+            continue;
+
+        if (item->getType() != mandate->item_type || 
+            (mandate->item_subtype != -1 && item->getSubtype() != mandate->item_subtype))
+            continue;
+
+        if (mandate->mat_type != -1 && item->getMaterial() != mandate->mat_type)
+            continue;
+
+        if (mandate->mat_index != -1 && item->getMaterialIndex() != mandate->mat_index)
+            continue;
+
+        return false;
+    }
+
+    return true;
+}
+
 static bool is_valid_item(df::item *item)
 {
     for (size_t i = 0; i < item->general_refs.size(); i++)
@@ -284,6 +310,8 @@ static bool is_valid_item(df::item *item)
         }
     }
 
+    if (!check_mandates(item))
+        return false;
 
     return true;
 }
@@ -300,7 +328,6 @@ static void mark_all_in_stockpiles(vector<StockpileInfo> &stockpiles, bool annou
 
     std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
 
-    //FIXME filter out mandates
 
     // Precompute a bitmask with the bad flags
     df::item_flags bad_flags;
@@ -327,6 +354,22 @@ static void mark_all_in_stockpiles(vector<StockpileInfo> &stockpiles, bool annou
         for (auto it = stockpiles.begin(); it != stockpiles.end(); it++)
         {
             if (!it->inStockpile(item))
+                continue;
+
+            // In case of container, check contained items for mandates
+            bool mandates_ok = true;
+            vector<df::item*> contained_items;
+            Items::getContainedItems(item, &contained_items);
+            for (auto cit = contained_items.begin(); cit != contained_items.end(); cit++)
+            {
+                if (!check_mandates(*cit))
+                {
+                    mandates_ok = false;
+                    break;
+                }
+            }
+
+            if (!mandates_ok)
                 continue;
 
             if (depot_info.assignItem(item))

@@ -177,6 +177,14 @@ static command_result GetEmbarkTile(color_ostream &stream, const TileRequest *in
 
 static command_result GetEmbarkInfo(color_ostream &stream, const MapRequest *in, MapReply *out)
 {
+    if(!Core::getInstance().isWorldLoaded()) {
+        out->set_available(false);
+        return CR_OK;
+    }
+    if(!Core::getInstance().isMapLoaded()) {
+        out->set_available(false);
+        return CR_OK;
+    }
     if(!df::global::gamemode) {
         out->set_available(false);
         return CR_OK;

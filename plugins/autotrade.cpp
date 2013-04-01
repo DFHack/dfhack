@@ -211,7 +211,7 @@ public:
         return true;
     }
 
-    bool reset()
+    void reset()
     {
         depot = 0;
     }

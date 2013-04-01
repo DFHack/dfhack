@@ -1128,6 +1128,17 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
     return CR_OK;
 }
 
+static color_value monitor_colors[] = 
+{
+    COLOR_LIGHTRED,
+    COLOR_RED,
+    COLOR_YELLOW,
+    COLOR_WHITE,
+    COLOR_CYAN,
+    COLOR_LIGHTBLUE,
+    COLOR_LIGHTGREEN
+};
+
 struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
@@ -1143,22 +1154,23 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
 
         if (monitor_misery && Maps::IsValid())
         {
-            int x = gps->dimx - 22;
+            string entries[7];
+            size_t length = 9;
+            for (int i = 0; i < 7; i++)
+            {
+                entries[i] = int_to_string(misery[i]);
+                length += entries[i].length();
+            }
+
+            int x = gps->dimx - length;
             int y = gps->dimy - 1;
             OutputString(COLOR_WHITE, x, y, "H:");
-            OutputString(COLOR_LIGHTRED, x, y, int_to_string(misery[0]));
-            OutputString(COLOR_WHITE, x, y, "/");
-            OutputString(COLOR_RED, x, y, int_to_string(misery[1]));
-            OutputString(COLOR_WHITE, x, y, "/");
-            OutputString(COLOR_YELLOW, x, y, int_to_string(misery[2]));
-            OutputString(COLOR_WHITE, x, y, "/");
-            OutputString(COLOR_WHITE, x, y, int_to_string(misery[3]));
-            OutputString(COLOR_WHITE, x, y, "/");
-            OutputString(COLOR_CYAN, x, y, int_to_string(misery[4]));
-            OutputString(COLOR_WHITE, x, y, "/");
-            OutputString(COLOR_LIGHTBLUE, x, y, int_to_string(misery[5]));
-            OutputString(COLOR_WHITE, x, y, "/");
-            OutputString(COLOR_LIGHTGREEN, x, y, int_to_string(misery[6]));
+            for (int i = 0; i < 7; i++)
+            {
+                OutputString(monitor_colors[i], x, y, entries[i]);
+                if (i < 6)
+                    OutputString(COLOR_WHITE, x, y, "/");
+            }
         }
     }
 };

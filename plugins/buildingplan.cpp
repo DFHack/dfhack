@@ -31,6 +31,7 @@
 #include "df/buildings_other_id.h"
 #include "modules/World.h"
 #include "df/building.h"
+#include "df/building_doorst.h"
 
 using df::global::ui;
 using df::global::ui_build_selector;
@@ -755,6 +756,13 @@ public:
         for (auto iter = newinst->jobs.begin(); iter != newinst->jobs.end(); iter++)
         {
             (*iter)->flags.bits.suspend = true;
+        }
+
+        if (type == building_type::Door)
+        {
+            auto door = virtual_cast<df::building_doorst>(newinst);
+            if (door)
+                door->door_flags.bits.pet_passable = true;
         }
 
         addPlannedBuilding(newinst);

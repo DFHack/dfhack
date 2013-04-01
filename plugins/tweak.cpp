@@ -702,7 +702,7 @@ static bool can_spar(df::unit *unit) {
     return unit->counters2.exhaustion <= 2000 && // actually 4000, but leave a gap
            (unit->status2.limbs_grasp_count > 0 || unit->status2.limbs_grasp_max == 0) &&
            (!unit->health || (unit->health->flags.whole&0x7FF) == 0) &&
-           (!unit->job.current_job || unit->job.current_job != job_type::Rest);
+           (!unit->job.current_job || unit->job.current_job->job_type != job_type::Rest);
 }
 
 static bool has_spar_inventory(df::unit *unit, df::job_skill skill)

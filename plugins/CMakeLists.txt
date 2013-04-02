@@ -13,7 +13,16 @@ endif()
 
 OPTION(BUILD_ISOWORLD "Build isoworld (needs a checkout first)." OFF)
 if(BUILD_ISOWORLD)
-    add_subdirectory (isoworld)
+	add_subdirectory (isoworld)
+	IF(UNIX)
+		if (APPLE)
+			#TODO: add an OSX runner script
+		else()
+		# On linux, copy our version of the df launch script which sets LD_PRELOAD
+		install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/runisoworld
+			DESTINATION .)
+		endif()
+	ENDIF()
 endif()
 
 OPTION(BUILD_DEV_PLUGINS "Build developer plugins." OFF)

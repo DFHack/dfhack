@@ -220,8 +220,8 @@ int coord_to_index_48(int x, int y) {
 }
 
 bool gather_embark_tile(int EmbX, int EmbY, EmbarkTile * tile, MapExtras::MapCache * MP) {
-	tile->set_world_x(df::global::world->map.region_x + EmbX); //fixme: verify.
-	tile->set_world_y(df::global::world->map.region_y + EmbY); //fixme: verify.
+	tile->set_world_x(df::global::world->map.region_x + (EmbX/3)); //fixme: verify.
+	tile->set_world_y(df::global::world->map.region_y + (EmbY/3)); //fixme: verify.
 	tile->set_world_z(df::global::world->map.region_z); //fixme: verify.
     tile->set_current_year(*df::global::cur_year);
     tile->set_current_season(*df::global::cur_season);

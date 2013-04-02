@@ -1,11 +1,7 @@
 INCLUDE(Plugins.cmake)
 
 # Dfusion plugin
-IF(UNIX)
-    OPTION(BUILD_DFUSION "Build DFusion." OFF)
-ELSE()
-    OPTION(BUILD_DFUSION "Build DFusion." ON)
-ENDIF()
+OPTION(BUILD_DFUSION "Build DFusion." ON)
 if(BUILD_DFUSION)
     add_subdirectory (Dfusion)
 endif()

@@ -24,6 +24,7 @@ message EmbarkTile {
 	repeated EmbarkTileLayer tile_layer = 4;
 	optional int32 current_year = 5;
 	optional int32 current_season = 6;
+	optional bool is_valid = 7;
 }
 
 message TileRequest {
@@ -43,4 +44,10 @@ message MapReply {
 	optional int32 region_size_y = 5;
 	optional int32 current_year = 6;
 	optional int32 current_season = 7;
+}
+
+message RawNames {
+	required bool available = 1;
+	repeated string inorganic = 2;
+	repeated string organic = 3;
 }

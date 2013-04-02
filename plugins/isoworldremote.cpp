@@ -38,8 +38,9 @@ command_result isoWorldRemote (color_ostream &out, std::vector <std::string> & p
 
 static command_result GetEmbarkTile(color_ostream &stream, const TileRequest *in, EmbarkTile *out);
 static command_result GetEmbarkInfo(color_ostream &stream, const MapRequest *in, MapReply *out);
+static command_result GetRawNames(color_ostream &stream, const MapRequest *in, RawNames *out);
 
-void gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * tile, MapExtras::MapCache * MP);
+bool gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * tile, MapExtras::MapCache * MP);
 bool gather_embark_tile(int EmbX, int EmbY, EmbarkTile * tile, MapExtras::MapCache * MP);
 
 
@@ -68,6 +69,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     RPCService *svc = new RPCService();
     svc->addFunction("GetEmbarkTile", GetEmbarkTile);
     svc->addFunction("GetEmbarkInfo", GetEmbarkInfo);
+    svc->addFunction("GetRawNames", GetRawNames);
     return svc;
 }
 
@@ -220,26 +222,31 @@ int coord_to_index_48(int x, int y) {
 }
 
 bool gather_embark_tile(int EmbX, int EmbY, EmbarkTile * tile, MapExtras::MapCache * MP) {
+    tile->set_is_valid(false);
 	tile->set_world_x(df::global::world->map.region_x + (EmbX/3)); //fixme: verify.
 	tile->set_world_y(df::global::world->map.region_y + (EmbY/3)); //fixme: verify.
 	tile->set_world_z(df::global::world->map.region_z); //fixme: verify.
     tile->set_current_year(*df::global::cur_year);
     tile->set_current_season(*df::global::cur_season);
+    int num_valid_layers = 0;
 	for(int z = 0; z < MP->maxZ(); z++)
 	{
 		EmbarkTileLayer * tile_layer = tile->add_tile_layer();
-		gather_embark_tile_layer(EmbX, EmbY, z, tile_layer, MP);
+		num_valid_layers += gather_embark_tile_layer(EmbX, EmbY, z, tile_layer, MP);
 	}
+    if(num_valid_layers > 0)
+        tile->set_is_valid(true);
 	return 1;
 }
 
 
-void gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * tile, MapExtras::MapCache * MP)
+bool gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * tile, MapExtras::MapCache * MP)
 {
 	for(int i = tile->mat_type_table_size(); i < 2304; i++) { //This is needed so we have a full array to work with, otherwise the size isn't updated correctly.
 		tile->add_mat_type_table(AIR);
 		tile->add_mat_subtype_table(0);
 	}
+    int num_valid_blocks = 0;
 	for(int yy = 0; yy < 3; yy++) {
 		for(int xx = 0; xx < 3; xx++) {
 			DFCoord current_coord; 
@@ -254,13 +261,14 @@ void gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * ti
 						block_coord.x = block_x;
 						block_coord.y = block_y;
 						DFHack::t_matpair actual_mat = b->staticMaterialAt(block_coord);
-						df::tiletype tile_type = b->staticTiletypeAt(block_coord);
+						df::tiletype tile_type = b->tiletypeAt(block_coord);
 						df::tile_designation designation = b->DesignationAt(block_coord);
 						unsigned int array_index = coord_to_index_48(xx*16+block_x, yy*16+block_y);
 						//make a new fake material at the given index
 						if(tileMaterial(tile_type) == tiletype_material::FROZEN_LIQUID) { //Ice.
 							tile->set_mat_type_table(array_index, BasicMaterial::LIQUID); //Ice is totally a liquid, shut up.
 							tile->set_mat_subtype_table(array_index, 0);
+                            num_valid_blocks++;
 						}
 						else if(designation.bits.flow_size) { //Contains either water or lava.
 							tile->set_mat_type_table(array_index, BasicMaterial::LIQUID); 
@@ -268,6 +276,7 @@ void gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * ti
 								tile->set_mat_subtype_table(array_index, 2);
 							else //water
 								tile->set_mat_subtype_table(array_index, 1);
+                            num_valid_blocks++;
 						}
 						else if(tileShapeBasic(tileShape(tile_type)) != tiletype_shape_basic::Open) {
 							if(actual_mat.mat_type == builtin_mats::INORGANIC) { //inorganic
@@ -282,6 +291,7 @@ void gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * ti
 								tile->set_mat_type_table(array_index, BasicMaterial::OTHER); 
 								tile->set_mat_subtype_table(array_index, actual_mat.mat_type);
 							}
+                            num_valid_blocks++;
 						}
 						else {
 							tile->set_mat_type_table(array_index, BasicMaterial::AIR); 
@@ -291,4 +301,45 @@ void gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * ti
 			}
 		}
 	}
+    return (num_valid_blocks >0);
+}
+
+static command_result GetRawNames(color_ostream &stream, const MapRequest *in, RawNames *out){
+    if(!Core::getInstance().isWorldLoaded()) {
+        out->set_available(false);
+        return CR_OK;
+    }
+    if(!Core::getInstance().isMapLoaded()) {
+        out->set_available(false);
+        return CR_OK;
+    }
+    if(!df::global::gamemode) {
+        out->set_available(false);
+        return CR_OK;
+    }
+    if((*df::global::gamemode != game_mode::ADVENTURE) && (*df::global::gamemode != game_mode::DWARF)) {
+        out->set_available(false);
+        return CR_OK;
+    }
+    if(!DFHack::Maps::IsValid()) {
+        out->set_available(false);
+        return CR_OK;
+    }
+    if(!in->has_save_folder()) { //probably should send the stuff anyway, but nah.
+        out->set_available(false);
+        return CR_OK;
+    }
+    if(!(in->save_folder() == df::global::world->cur_savegame.save_dir)) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
+        out->set_available(false);
+        return CR_OK;
+    }
+        out->set_available(true);
+        for(int i = 0; i < df::global::world->raws.inorganics.size(); i++){
+        out->add_inorganic(df::global::world->raws.inorganics[i]->id);
+    }
+
+    for(int i = 0; i < df::global::world->raws.plants.all.size(); i++){
+        out->add_organic(df::global::world->raws.plants.all[i]->id);
+    }
+    return CR_OK;
 }

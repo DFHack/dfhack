@@ -15,6 +15,11 @@ if(BUILD_STONESENSE)
     add_subdirectory (stonesense)
 endif()
 
+OPTION(BUILD_ISOWORLD "Build isoworld (needs a checkout first)." OFF)
+if(BUILD_ISOWORLD)
+    add_subdirectory (isoworld)
+endif()
+
 OPTION(BUILD_DEV_PLUGINS "Build developer plugins." OFF)
 if(BUILD_DEV_PLUGINS)
     add_subdirectory (devel)
@@ -137,6 +142,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(trueTransformation trueTransformation.cpp)
     DFHACK_PLUGIN(infiniteSky infiniteSky.cpp)
     DFHACK_PLUGIN(createitem createitem.cpp)
+	DFHACK_PLUGIN(isoworldremote isoworldremote.cpp PROTOBUFS isoworldremote)
 endif()
 
 

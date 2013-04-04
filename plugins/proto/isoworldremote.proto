@@ -12,6 +12,12 @@ enum BasicMaterial {
 	WOOD = 5;
 };
 
+enum LiquidType {
+	ICE = 0;
+	WATER = 1;
+	MAGMA = 2;
+}
+
 message EmbarkTileLayer {
 	repeated BasicMaterial mat_type_table = 4 [packed=true];
 	repeated int32 mat_subtype_table = 5 [packed=true];

@@ -267,15 +267,15 @@ bool gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * ti
 						//make a new fake material at the given index
 						if(tileMaterial(tile_type) == tiletype_material::FROZEN_LIQUID) { //Ice.
 							tile->set_mat_type_table(array_index, BasicMaterial::LIQUID); //Ice is totally a liquid, shut up.
-							tile->set_mat_subtype_table(array_index, 0);
+							tile->set_mat_subtype_table(array_index, LiquidType::ICE);
                             num_valid_blocks++;
 						}
 						else if(designation.bits.flow_size) { //Contains either water or lava.
 							tile->set_mat_type_table(array_index, BasicMaterial::LIQUID); 
 							if(designation.bits.liquid_type) //Magma
-								tile->set_mat_subtype_table(array_index, 2);
+								tile->set_mat_subtype_table(array_index, LiquidType::MAGMA);
 							else //water
-								tile->set_mat_subtype_table(array_index, 1);
+								tile->set_mat_subtype_table(array_index, LiquidType::WATER);
                             num_valid_blocks++;
 						}
 						else if(tileShapeBasic(tileShape(tile_type)) != tiletype_shape_basic::Open) {
@@ -283,7 +283,11 @@ bool gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * ti
 								tile->set_mat_type_table(array_index, BasicMaterial::INORGANIC); 
 								tile->set_mat_subtype_table(array_index, actual_mat.mat_index);
 							}
-							else if(actual_mat.mat_type >= 419) { //Wooden constructions. Different from growing plants.
+							else if(actual_mat.mat_type == 419) { //Growing plants
+								tile->set_mat_type_table(array_index, BasicMaterial::PLANT); 
+								tile->set_mat_subtype_table(array_index, actual_mat.mat_index);
+							}
+							else if(actual_mat.mat_type >= 420) { //Wooden constructions. Different from growing plants.
 								tile->set_mat_type_table(array_index, BasicMaterial::WOOD); 
 								tile->set_mat_subtype_table(array_index, actual_mat.mat_index);
 							}

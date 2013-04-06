@@ -142,6 +142,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(dwarfmonitor dwarfmonitor.cpp)
     DFHACK_PLUGIN(mousequery mousequery.cpp)
     DFHACK_PLUGIN(autotrade autotrade.cpp)
+    DFHACK_PLUGIN(stocks stocks.cpp)
 endif()
 
 

@@ -53,7 +53,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     //// Fill the command list with your commands.
     //commands.push_back(PluginCommand(
-    //    "isoworldremote", "Do nothing, look pretty.",
+    //    "isoworldremote", "Dump north-west embark tile to text file for debug purposes.",
     //    isoWorldRemote, false, /* true means that the command can't be used from non-interactive user interface */
     //    // Extended help string. Used by CR_WRONG_USAGE and the help command:
     //    "  This command does nothing at all.\n"
@@ -163,8 +163,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 //		}
 //		debug_text << std::endl;
 //	}
-//	//clean everything up.
-//	google::protobuf::ShutdownProtobufLibrary();
 //    // Give control back to DF.
 //    return CR_OK;
 //}
@@ -270,15 +268,18 @@ bool gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * ti
                         }
                         df::tile_designation designation = b->DesignationAt(block_coord);
                         DFHack::t_matpair actual_mat;
-                        if(tileShapeBasic(tileShape(upper_tile)) == tiletype_shape_basic::Floor) { //if the upper tile is a floor, use that material instead.
+                        if(tileShapeBasic(tileShape(upper_tile)) == tiletype_shape_basic::Floor && (tileMaterial(tile_type) != tiletype_material::FROZEN_LIQUID) && (tileMaterial(tile_type) != tiletype_material::BROOK)) { //if the upper tile is a floor, use that material instead. Unless it's ice.
                             actual_mat = b_upper->staticMaterialAt(block_coord);
                         }
                         else {
                             actual_mat = b->staticMaterialAt(block_coord);
                         }
+                        if(((tileMaterial(tile_type) == tiletype_material::FROZEN_LIQUID) || (tileMaterial(tile_type) == tiletype_material::BROOK)) && (tileShapeBasic(tileShape(tile_type)) == tiletype_shape_basic::Floor)) {
+                        tile_type = tiletype::OpenSpace;
+                        }
                         unsigned int array_index = coord_to_index_48(xx*16+block_x, yy*16+block_y);
                         //make a new fake material at the given index
-                        if(tileMaterial(tile_type) == tiletype_material::FROZEN_LIQUID && (tileShapeBasic(tileShape(upper_tile)) != tiletype_shape_basic::Floor)) { //Ice.
+                        if(tileMaterial(tile_type) == tiletype_material::FROZEN_LIQUID && !((tileShapeBasic(tileShape(upper_tile)) == tiletype_shape_basic::Floor) && (tileMaterial(upper_tile) != tiletype_material::FROZEN_LIQUID))) { //Ice.
                             tile->set_mat_type_table(array_index, BasicMaterial::LIQUID); //Ice is totally a liquid, shut up.
                             tile->set_mat_subtype_table(array_index, LiquidType::ICE);
                             num_valid_blocks++;

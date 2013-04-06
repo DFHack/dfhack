@@ -16,12 +16,12 @@ access DF memory and allow for easier development of new tools.
 ==============
 Getting DFHack
 ==============
-The project is currently hosted on github_, for both source and
-binaries at  http://github.com/peterix/dfhack
+The project is currently hosted on github_
+at http://github.com/peterix/dfhack
 
 .. _github: http://www.github.com/
 
-Releases can be downloaded from here: https://github.com/peterix/dfhack/downloads
+Releases can be downloaded from here: http://dethware.org/dfhack/download
 
 All new releases are announced in the bay12 thread: http://tinyurl.com/dfhack-ng
 

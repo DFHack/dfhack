@@ -91,6 +91,7 @@ void syndromeHandler(color_ostream& out, void* ptr) {
             } else {
                 args.push_back(clazz);
             }
+            continue;
         }
         
         if ( clazz == "\\COMMAND" ) {
@@ -101,7 +102,9 @@ void syndromeHandler(color_ostream& out, void* ptr) {
             foundPermanent = true;
             continue;
         }
-        if ( foundPermanent && raceId == -1 ) {
+        if ( !foundPermanent )
+            continue;
+        if ( raceId == -1 ) {
             //find the race with the name
             string& name = *syndrome->syn_class[a];
             for ( size_t b = 0; b < df::global::world->raws.creatures.all.size(); b++ ) {
@@ -114,7 +117,7 @@ void syndromeHandler(color_ostream& out, void* ptr) {
             }
             continue;
         }
-        if ( foundPermanent && raceId != -1 && casteId == -1 ) {
+        if ( raceId != -1 && casteId == -1 ) {
             string& name = *syndrome->syn_class[a];
             for ( size_t b = 0; b < creatureRaw->caste.size(); b++ ) {
                 df::caste_raw* caste = creatureRaw->caste[b];

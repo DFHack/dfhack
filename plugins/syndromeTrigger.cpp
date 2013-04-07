@@ -6,6 +6,7 @@
 #include "PluginManager.h"
 
 #include "modules/EventManager.h"
+#include "modules/Once.h"
 
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
@@ -37,7 +38,8 @@ void syndromeHandler(color_ostream& out, void* ptr) {
 
     df::unit* unit = df::unit::find(data->unitId);
     if (!unit) {
-        out.print("%s, line %d: couldn't find unit.\n", __FILE__, __LINE__);
+        if ( DFHack::Once::doOnce("syndromeTrigger_no find unit" ) )
+            out.print("%s, line %d: couldn't find unit.\n", __FILE__, __LINE__);
         return;
     }
 

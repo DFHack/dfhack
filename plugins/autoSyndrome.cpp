@@ -120,7 +120,6 @@ DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginComman
         "Requirements:\n"
         "  1) The job must be a custom reaction.\n"
         "  2) The job must produce a stone of some inorganic material.\n"
-        "  3) The stone must have a boiling temperature less than or equal to 9000.\n"
         "\n"
         "When these conditions are met, the unit that completed the job will immediately become afflicted with all applicable syndromes associated with the inorganic material of the stone, or stones. It should correctly check for whether the creature or caste is affected or immune, and it should also correctly account for affected and immune creature classes.\n"
         "Multiple syndromes per stone, or multiple boiling rocks produced with the same reaction should work fine.\n"
@@ -330,8 +329,11 @@ void processJob(color_ostream& out, void* jobPtr) {
         //out.print("item_type = %d\n", (int32_t)bob->item_type);
         if ( bob->item_type != df::enums::item_type::BOULDER )
             continue;
-        //for now don't worry about subtype
         
+        if ( bob->mat_index < 0 )
+            continue;
+        
+        //for now don't worry about subtype
         df::inorganic_raw* inorganic = df::global::world->raws.inorganics[bob->mat_index];
         
         for ( size_t b = 0; b < inorganic->material.syndrome.size(); b++ ) {

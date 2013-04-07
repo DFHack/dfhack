@@ -24,8 +24,6 @@ command_result digSmart (color_ostream &out, std::vector <std::string> & paramet
 // The name string provided must correspond to the filename - skeleton.plug.so or skeleton.plug.dll in this case
 DFHACK_PLUGIN("digSmart");
 
-static Plugin* digSmartPlugin;
-
 void onDig(color_ostream& out, void* ptr);
 
 EventManager::EventHandler digHandler(onDig, 5);
@@ -43,8 +41,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  digSmart\n"
         "    Does nothing.\n"
     ));
-    digSmartPlugin = Core::getInstance().getPluginManager()->getPluginByName("digSmart");
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, digHandler, digSmartPlugin);
+    //digSmartPlugin = Core::getInstance().getPluginManager()->getPluginByName("digSmart");
+    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, digHandler, plugin_self);
     return CR_OK;
 }
 
@@ -67,9 +65,7 @@ void onDig(color_ostream& out, void* ptr) {
     df::coord pos = job->pos;
     for ( int16_t a = -1; a <= 1; a++ ) {
         for ( int16_t b = -1; b <= 1; b++ ) {
-            for ( int16_t c = -1; c <= 1; c++ ) {
-                maybeExplore(out, cache, df::coord(pos.x+a,pos.y+b,pos.z+c));
-            }
+            maybeExplore(out, cache, df::coord(pos.x+a,pos.y+b,pos.z));
         }
     }
 }
@@ -86,7 +82,6 @@ void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt) 
     if ( block->designation[pt.x&0xF][pt.y&0xF].bits.hidden )
         return;
 
-
     df::tiletype type = block->tiletype[pt.x&0xF][pt.y&0xF];
     if ( ENUM_ATTR(tiletype, material, type) != df::enums::tiletype_material::MINERAL )
         return;
@@ -98,6 +93,13 @@ void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt) 
         return;
 
     if ( block->designation[pt.x&0xF][pt.y&0xF].bits.dig == df::enums::tile_dig_designation::Default )
+        return;
+    if ( block->designation[pt.x&0xF][pt.y&0xF].bits.dig != df::enums::tile_dig_designation::No )
+        return;
+    
+    uint32_t xMax,yMax,zMax;
+    Maps::getSize(xMax,yMax,zMax);
+    if ( pt.x == 0 || pt.y == 0 || pt.x+1 == xMax || pt.y+1 == yMax )
         return;
     
     block->designation[pt.x&0xF][pt.y&0xF].bits.dig = df::enums::tile_dig_designation::Default;

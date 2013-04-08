@@ -4250,31 +4250,31 @@ public:
             }
         }
         // Not in query typing mode
-        else if (input->count(interface_key::CUSTOM_G) && 
+        else if (input->count(interface_key::CUSTOM_SHIFT_G) && 
             (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::QueryBuilding))
         {
             show_non_grazers = !show_non_grazers;
             apply_filters();
         }
-        else if (input->count(interface_key::CUSTOM_C) && 
+        else if (input->count(interface_key::CUSTOM_SHIFT_C) && 
             (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
         {
             show_noncaged = !show_noncaged;
             apply_filters();
         }
-        else if (input->count(interface_key::CUSTOM_P) && 
+        else if (input->count(interface_key::CUSTOM_SHIFT_P) && 
             (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
         {
             show_pastured = !show_pastured;
             apply_filters();
         }
-        else if (input->count(interface_key::CUSTOM_M) && 
+        else if (input->count(interface_key::CUSTOM_SHIFT_M) && 
             (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
         {
             show_male = !show_male;
             apply_filters();
         }
-        else if (input->count(interface_key::CUSTOM_F) && 
+        else if (input->count(interface_key::CUSTOM_SHIFT_F) && 
             (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
         {
             show_female = !show_female;
@@ -4332,31 +4332,31 @@ public:
         {
             x = left_margin;
             y += 2;
-            OutputString(COLOR_LIGHTGREEN, x, y, "g");
+            OutputString(COLOR_LIGHTGREEN, x, y, "G");
             OutputString(COLOR_WHITE, x, y, ": ");
             OutputString((show_non_grazers) ? COLOR_WHITE : COLOR_GREY, x, y, "Non-Grazing");
 
             x = left_margin;
             ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "c");
+            OutputString(COLOR_LIGHTGREEN, x, y, "C");
             OutputString(COLOR_WHITE, x, y, ": ");
             OutputString((show_noncaged) ? COLOR_WHITE : COLOR_GREY, x, y, "Not Caged");
 
             x = left_margin;
             ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "p");
+            OutputString(COLOR_LIGHTGREEN, x, y, "P");
             OutputString(COLOR_WHITE, x, y, ": ");
             OutputString((show_pastured) ? COLOR_WHITE : COLOR_GREY, x, y, "Currently Pastured");
 
             x = left_margin;
             ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "f");
+            OutputString(COLOR_LIGHTGREEN, x, y, "F");
             OutputString(COLOR_WHITE, x, y, ": ");
             OutputString((show_female) ? COLOR_WHITE : COLOR_GREY, x, y, "Female");
 
             x = left_margin;
             ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "m");
+            OutputString(COLOR_LIGHTGREEN, x, y, "M");
             OutputString(COLOR_WHITE, x, y, ": ");
             OutputString((show_male) ? COLOR_WHITE : COLOR_GREY, x, y, "Male");
         }
@@ -4366,25 +4366,25 @@ public:
         {
             x = left_margin;
             y += 2;
-            OutputString(COLOR_LIGHTGREEN, x, y, "c");
+            OutputString(COLOR_LIGHTGREEN, x, y, "C");
             OutputString(COLOR_WHITE, x, y, ": ");
             OutputString((show_noncaged) ? COLOR_WHITE : COLOR_GREY, x, y, "Not Caged");
 
             x = left_margin;
             ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "p");
+            OutputString(COLOR_LIGHTGREEN, x, y, "P");
             OutputString(COLOR_WHITE, x, y, ": ");
             OutputString((show_pastured) ? COLOR_WHITE : COLOR_GREY, x, y, "Currently Pastured");
 
             x = left_margin;
             ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "f");
+            OutputString(COLOR_LIGHTGREEN, x, y, "F");
             OutputString(COLOR_WHITE, x, y, ": ");
             OutputString((show_female) ? COLOR_WHITE : COLOR_GREY, x, y, "Female");
 
             x = left_margin;
             ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "m");
+            OutputString(COLOR_LIGHTGREEN, x, y, "M");
             OutputString(COLOR_WHITE, x, y, ": ");
             OutputString((show_male) ? COLOR_WHITE : COLOR_GREY, x, y, "Male");
         }

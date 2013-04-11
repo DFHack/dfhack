@@ -26,6 +26,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
+#define MAX_NAME 30
 #define SIDEBAR_WIDTH 30
 
 static bool show_debugging = false;
@@ -38,6 +39,64 @@ static void debug(const string &msg)
     color_ostream_proxy out(Core::getInstance().getConsole());
     out << "DEBUG (stocks): " << msg << endl;
 }
+
+
+/*struct FlagDisplay
+{
+
+};*/
+
+
+class StockListColumn : public ListColumn<df::item *>
+{
+    virtual void display_extras(const df::item *&item, int32_t &x, int32_t &y) const
+    {
+        if (item->flags.bits.in_job)
+            OutputString(COLOR_LIGHTBLUE, x, y, "J");
+        else
+            OutputString(COLOR_LIGHTBLUE, x, y, " ");
+
+        if (item->flags.bits.rotten)
+            OutputString(COLOR_CYAN, x, y, "N");
+        else
+            OutputString(COLOR_LIGHTBLUE, x, y, " ");
+
+        if (item->flags.bits.construction)
+            OutputString(COLOR_MAGENTA, x, y, "C");
+        else
+            OutputString(COLOR_LIGHTBLUE, x, y, " ");
+
+        if (item->flags.bits.foreign)
+            OutputString(COLOR_BROWN, x, y, "G");
+        else
+            OutputString(COLOR_LIGHTBLUE, x, y, " ");
+
+        if (item->flags.bits.owned)
+            OutputString(COLOR_GREEN, x, y, "O");
+        else
+            OutputString(COLOR_LIGHTBLUE, x, y, " ");
+
+        if (item->flags.bits.forbid)
+            OutputString(COLOR_RED, x, y, "F");
+        else
+            OutputString(COLOR_LIGHTBLUE, x, y, " ");
+
+        if (item->flags.bits.dump)
+            OutputString(COLOR_LIGHTMAGENTA, x, y, "D");
+        else
+            OutputString(COLOR_LIGHTBLUE, x, y, " ");
+        
+        if (item->flags.bits.on_fire)
+            OutputString(COLOR_LIGHTRED, x, y, "R");
+        else
+            OutputString(COLOR_LIGHTBLUE, x, y, " ");
+        
+        if (item->flags.bits.melt)
+            OutputString(COLOR_BLUE, x, y, "M");
+        else
+            OutputString(COLOR_LIGHTBLUE, x, y, " ");
+    }
+};
 
 
 class ViewscreenStocks : public dfhack_viewscreen
@@ -116,7 +175,7 @@ public:
     std::string getFocusString() { return "stocks_view"; }
 
 private:
-    ListColumn<df::item *> items_column;
+    StockListColumn items_column;
     int selected_column;
 
     void populateItems()
@@ -128,6 +187,7 @@ private:
         bad_flags.bits.hostile = true;
         bad_flags.bits.trader = true;
         bad_flags.bits.in_building = true;
+        bad_flags.bits.garbage_collect = true;
 
         std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
 
@@ -139,8 +199,9 @@ private:
                 continue;
 
             df::item_type itype = item->getType();
+            auto label = pad_string(Items::getDescription(item, 0, true), MAX_NAME, false, true);
 
-            items_column.add(Items::getDescription(item, 0, true), item);
+            items_column.add(label, item);
         }
 
         items_column.filterDisplay();

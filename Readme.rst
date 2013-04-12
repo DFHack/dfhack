@@ -1847,7 +1847,7 @@ use in your farming plots.
 With a seed type, the script will grow 100 of these seeds, ready to be
 harvested. You can change the number with a 2nd argument.
 
-For exemple, to grow 40 plump helmet spawn:
+For example, to grow 40 plump helmet spawn:
 :: 
 
     growcrops plump 40
@@ -2056,7 +2056,7 @@ Note that the script does not enforce anything, and will let you create
 boulders of toad blood and stuff like that.
 However the ``list`` mode will only show 'normal' materials.
 
-Exemples::
+Examples::
 
     create-items boulders COAL_BITUMINOUS 12
     create-items plant tail_pig
@@ -2074,7 +2074,7 @@ Only works for native metal ores, does not handle reaction stuff (eg STEEL).
 
 When invoked with the ``list`` argument, lists metal ores available on the map.
 
-Exemples::
+Examples::
     locate-ore list
     locate-ore hematite
     locate-ore iron
@@ -2089,6 +2089,15 @@ season music until a season switch occurs.
 This script registers a hook that prints the appropriate string
 to gamelog.txt on every map load to fix this. For best results
 call the script from ``dfhack.init``.
+
+multicmd
+========
+Run multiple dfhack commands. The argument is split around the
+character ; and all parts are run sequencially as independent
+dfhack commands. Useful for hotkeys.
+
+Example::
+    multicmd locate-ore iron ; digv
 
 =======================
 In-game interface tools

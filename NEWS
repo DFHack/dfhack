@@ -3,9 +3,11 @@ DFHack future
   New scripts:
     - masspit: designate caged creatures in a zone for pitting
     - locate_ore: scan the map for unmined ore veins
+    - multicmd: run a sequence of dfhack commands, separated by ';'
   Misc improvements:
     - exterminate: renamed from slayrace, add help message, add butcher mode
     - autoSyndrome: disable by default
+    - ruby: add df.dfhack_run "somecommand"
 
 DFHack v0.34.11-r3
 

@@ -120,7 +120,7 @@ bool dig (MapExtras::MapCache & MCache,
     if(tileMaterial(tt) == tiletype_material::CONSTRUCTION && !des.bits.hidden)
         return false;
     df::tiletype_shape ts = tileShape(tt);
-    if (ts == tiletype_shape::EMPTY)
+    if (ts == tiletype_shape::EMPTY && !des.bits.hidden)
         return false;
     if(!des.bits.hidden)
     {

@@ -71,12 +71,21 @@ void OutputString(UIColor color, int &x, int &y, const std::string &text,
         x += text.length();
 }
 
-void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bool newline = false, int left_margin = 0, int8_t color = COLOR_WHITE)
+void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bool newline = false, 
+    int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
 {
-    OutputString(10, x, y, hotkey);
+    OutputString(hotkey_color, x, y, hotkey);
     string display(": ");
     display.append(text);
-    OutputString(color, x, y, display, newline, left_margin);
+    OutputString(text_color, x, y, display, newline, left_margin);
+}
+
+void OutputFilterString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = false, 
+    int left_margin = 0, int8_t hotkey_color = COLOR_LIGHTGREEN)
+{
+    OutputString(hotkey_color, x, y, hotkey);
+    OutputString(COLOR_WHITE, x, y, ": ");
+    OutputString((state) ? COLOR_WHITE : COLOR_GREY, x, y, text, newline, left_margin);
 }
 
 void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = true, int left_margin = 0, int8_t color = COLOR_WHITE)
@@ -249,7 +258,7 @@ public:
 
         if (is_selected_column && allow_search)
         {
-            y = gps->dimy - bottom_margin;
+            y = gps->dimy - 3;
             int32_t x = search_margin;
             OutputHotkeyString(x, y, "Search" ,"S");
             OutputString(COLOR_WHITE, x, y, ": ");
@@ -265,12 +274,16 @@ public:
         search_string = toLower(search_string);
         for (size_t i = 0; i < list.size(); i++)
         {
+            ListEntry<T> *entry = &list[i];
             if (search_string.empty() || toLower(list[i].text).find(search_string) != string::npos)
             {
-                ListEntry<T> *entry = &list[i];
                 display_list.push_back(entry);
                 if (entry == prev_selected)
                     highlighted_index = display_list.size() - 1;
+            }
+            else if (auto_select)
+            {
+                entry->selected = false;
             }
         }
         changeHighlight(0);
@@ -459,7 +472,8 @@ public:
         {
             // Search query typing mode always on
             df::interface_key last_token = *input->rbegin();
-            if (last_token >= interface_key::STRING_A096 && last_token <= interface_key::STRING_A123)
+            if ((last_token >= interface_key::STRING_A096 && last_token <= interface_key::STRING_A123) ||
+                last_token == interface_key::STRING_A032)
             {
                 // Standard character
                 search_string += last_token - ascii_to_enum_offset;

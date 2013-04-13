@@ -122,7 +122,8 @@ module DFHack
                 _fields_ancestors.each { |n, o, s| s._at(@_memaddr+o)._cpp_init }
             end
             def _cpp_delete
-                _fields_ancestors.each { |n, o, s| s._at(@_memaddr+o)._cpp_delete }
+                # cannot call delete on compound members (would call free on member address)
+                #_fields_ancestors.each { |n, o, s| s._at(@_memaddr+o)._cpp_delete }
                 DFHack.free(@_memaddr)
                 @_memaddr = nil     # turn future segfaults in harmless ruby exceptions
             end

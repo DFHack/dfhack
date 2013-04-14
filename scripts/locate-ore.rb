@@ -3,6 +3,7 @@
 target_ore = $script_args[0]
 
 def find_all_ore_veins
+    puts 'scanning map...'
     $ore_veins = {}
     seen_mat = {}
     df.each_map_block { |block|

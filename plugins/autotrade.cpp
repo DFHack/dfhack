@@ -25,7 +25,7 @@ using df::global::ui;
 using df::building_stockpilest;
 
 DFHACK_PLUGIN("autotrade");
-#define PLUGIN_VERSION 0.1
+#define PLUGIN_VERSION 0.2
 
 
 /*

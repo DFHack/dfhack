@@ -12,6 +12,7 @@
 #include "df/unit.h"
 #include "df/world.h"
 #include "df/item_quality.h"
+#include "df/caravan_state.h"
 
 #include "modules/Gui.h"
 #include "modules/Items.h"
@@ -53,6 +54,23 @@ static string getQualityName(const df::item_quality quality)
         return ENUM_KEY_STR(item_quality, quality);
 }
 
+static bool can_trade()
+{
+    if (df::global::ui->caravans.size() == 0)
+        return false;
+
+    for (auto it = df::global::ui->caravans.begin(); it != df::global::ui->caravans.end(); it++)
+    {
+        auto caravan = *it;
+        auto trade_state = caravan->trade_state;
+        auto time_remaining = caravan->time_remaining;
+        if ((trade_state != 1 && trade_state != 2) || time_remaining == 0)
+            return false;
+    }
+
+    return true;
+}
+
 template <class T>
 class StockListColumn : public ListColumn<T>
 {
@@ -64,7 +82,7 @@ class StockListColumn : public ListColumn<T>
             OutputString(COLOR_LIGHTBLUE, x, y, " ");
 
         if (item->flags.bits.rotten)
-            OutputString(COLOR_CYAN, x, y, "N");
+            OutputString(COLOR_CYAN, x, y, "X");
         else
             OutputString(COLOR_LIGHTBLUE, x, y, " ");
 
@@ -214,7 +232,7 @@ public:
             hide_flags.bits.in_job = !hide_flags.bits.in_job;
             populateItems();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_T))
+        else if (input->count(interface_key::CUSTOM_SHIFT_X))
         {
             hide_flags.bits.rotten = !hide_flags.bits.rotten;
             populateItems();
@@ -295,6 +313,14 @@ public:
                 max_quality = static_cast<df::item_quality>(static_cast<int16_t>(max_quality) + 1);
                 populateItems();
             }
+        }
+        else if (input->count(interface_key::CUSTOM_SHIFT_W))
+        {
+            ++min_wear;
+            if (min_wear > 3)
+                min_wear = 0;
+
+            populateItems();
         }
 
         else if (input->count(interface_key::CUSTOM_SHIFT_Z))
@@ -389,7 +415,7 @@ public:
         OutputString(COLOR_BROWN, x, y, "Filters", true, left_margin);
         OutputString(COLOR_LIGHTRED, x, y, "Press Shift-Hotkey to Toggle", true, left_margin);
         OutputFilterString(x, y, "In Job", "J", !hide_flags.bits.in_job, true, left_margin, COLOR_LIGHTBLUE);
-        OutputFilterString(x, y, "Rotten", "T", !hide_flags.bits.rotten, true, left_margin, COLOR_CYAN);
+        OutputFilterString(x, y, "Rotten", "X", !hide_flags.bits.rotten, true, left_margin, COLOR_CYAN);
         OutputFilterString(x, y, "Foreign Made", "G", !hide_flags.bits.foreign, true, left_margin, COLOR_BROWN);
         OutputFilterString(x, y, "Owned", "O", !hide_flags.bits.owned, true, left_margin, COLOR_GREEN);
         OutputFilterString(x, y, "Forbidden", "F", !hide_flags.bits.forbid, true, left_margin, COLOR_RED);
@@ -407,10 +433,10 @@ public:
         OutputHotkeyString(x, y, "Max Qual: ", "/*");
         OutputString(COLOR_BROWN, x, y, getQualityName(max_quality), true, left_margin);
 
+        ++y;
         OutputHotkeyString(x, y, "Min Wear: ", "Shift-W");
         OutputString(COLOR_BROWN, x, y, int_to_string(min_wear), true, left_margin);
-
-
+        
         ++y;
         OutputString(COLOR_BROWN, x, y, "Actions (");
         OutputString(COLOR_LIGHTGREEN, x, y, int_to_string(items_column.getDisplayedListSize()));
@@ -561,10 +587,25 @@ private:
             auto label = Items::getDescription(item, 0, false);
             if (wear > 0)
             {
-                string wearX = "";
-                for (int i = 0; i < wear; i++)
+                string wearX;
+                switch (wear)
                 {
-                    wearX += "X";
+                case 1:
+                    wearX = "x";
+                    break;
+
+                case 2:
+                    wearX = "X";
+                    break;
+
+                case 3:
+                    wearX = "xX";
+                    break;
+
+                default:
+                    wearX = "XX";
+                    break;
+
                 }
 
                 label = wearX + label + wearX;

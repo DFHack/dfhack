@@ -11,12 +11,14 @@
 #include "df/job.h"
 #include "df/unit.h"
 #include "df/world.h"
+#include "df/item_quality.h"
 
 #include "modules/Gui.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
 #include "modules/World.h"
 #include "modules/Screen.h"
+#include "modules/Maps.h"
 
 using df::global::world;
 
@@ -43,10 +45,13 @@ static void debug(const string &msg)
 }
 
 
-/*struct FlagDisplay
+static string getQualityName(const df::item_quality quality)
 {
-
-};*/
+    if (gps->dimx - SIDEBAR_WIDTH < 60)
+        return int_to_string(quality);
+    else
+        return ENUM_KEY_STR(item_quality, quality);
+}
 
 template <class T>
 class StockListColumn : public ListColumn<T>
@@ -97,6 +102,43 @@ class StockListColumn : public ListColumn<T>
             OutputString(COLOR_GREY, x, y, "I");
         else
             OutputString(COLOR_LIGHTBLUE, x, y, " ");
+
+        if (item->isImproved())
+            OutputString(COLOR_BLUE, x, y, "* ");
+        else
+            OutputString(COLOR_LIGHTBLUE, x, y, "  ");
+
+        auto quality = static_cast<df::item_quality>(item->getQuality());
+        if (quality > item_quality::Ordinary)
+        {
+            auto color = COLOR_BROWN;
+            switch(quality)
+            {
+            case item_quality::FinelyCrafted:
+                color = COLOR_CYAN;
+                break;
+
+            case item_quality::Superior:
+                color = COLOR_LIGHTBLUE;
+                break;
+
+            case item_quality::Exceptional:
+                color = COLOR_GREEN;
+                break;
+
+            case item_quality::Masterful:
+                color = COLOR_LIGHTGREEN;
+                break;
+
+            case item_quality::Artifact:
+                color = COLOR_BLUE;
+                break;
+
+            default:
+                break;
+            }
+            OutputString(color, x, y, getQualityName(quality));
+        }
     }
 };
 
@@ -104,6 +146,8 @@ class StockListColumn : public ListColumn<T>
 class ViewscreenStocks : public dfhack_viewscreen
 {
 public:
+    static df::item_flags hide_flags;
+
     ViewscreenStocks()
     {
         selected_column = 0;
@@ -117,7 +161,23 @@ public:
 
         items_column.changeHighlight(0);
 
-        hide_flags.whole = 0;
+        apply_to_all = false;
+        hide_unflagged = false;
+        
+        checked_flags.bits.in_job = true;
+        checked_flags.bits.rotten = true;
+        checked_flags.bits.foreign = true;
+        checked_flags.bits.owned = true;
+        checked_flags.bits.forbid = true;
+        checked_flags.bits.dump = true;
+        checked_flags.bits.on_fire = true;
+        checked_flags.bits.melt = true;
+        checked_flags.bits.on_fire = true;
+        checked_flags.bits.in_inventory = true;
+
+        min_quality = item_quality::Ordinary;
+        max_quality = item_quality::Artifact;
+        min_wear = 0;
 
         populateItems();
 
@@ -144,53 +204,100 @@ public:
             return;
         }
 
-        if  (input->count(interface_key::CUSTOM_SHIFT_G))
+        if (input->count(interface_key::CUSTOM_SHIFT_G))
         {
             hide_flags.bits.foreign = !hide_flags.bits.foreign;
             populateItems();
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_J))
+        else if (input->count(interface_key::CUSTOM_SHIFT_J))
         {
             hide_flags.bits.in_job = !hide_flags.bits.in_job;
             populateItems();
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_N))
+        else if (input->count(interface_key::CUSTOM_SHIFT_T))
         {
             hide_flags.bits.rotten = !hide_flags.bits.rotten;
             populateItems();
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_O))
+        else if (input->count(interface_key::CUSTOM_SHIFT_O))
         {
             hide_flags.bits.owned = !hide_flags.bits.owned;
             populateItems();
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_F))
+        else if (input->count(interface_key::CUSTOM_SHIFT_F))
         {
             hide_flags.bits.forbid = !hide_flags.bits.forbid;
             populateItems();
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_D))
+        else if (input->count(interface_key::CUSTOM_SHIFT_D))
         {
             hide_flags.bits.dump = !hide_flags.bits.dump;
             populateItems();
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_R))
+        else if (input->count(interface_key::CUSTOM_SHIFT_R))
         {
             hide_flags.bits.on_fire = !hide_flags.bits.on_fire;
             populateItems();
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_M))
+        else if (input->count(interface_key::CUSTOM_SHIFT_M))
         {
             hide_flags.bits.melt = !hide_flags.bits.melt;
             populateItems();
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_I))
+        else if (input->count(interface_key::CUSTOM_SHIFT_I))
         {
             hide_flags.bits.in_inventory = !hide_flags.bits.in_inventory;
             populateItems();
         }
+        else if (input->count(interface_key::CUSTOM_SHIFT_N))
+        {
+            hide_unflagged = !hide_unflagged;
+            populateItems();
+        }
+        else if (input->count(interface_key::CUSTOM_SHIFT_C))
+        {
+            setAllFlags(true);
+            populateItems();
+        }
+        else if (input->count(interface_key::CUSTOM_SHIFT_E))
+        {
+            setAllFlags(false);
+            populateItems();
+        }
+        else if (input->count(interface_key::SECONDSCROLL_UP))
+        {
+            if (min_quality > item_quality::Ordinary)
+            {
+                min_quality = static_cast<df::item_quality>(static_cast<int16_t>(min_quality) - 1);
+                populateItems();
+            }
+        }
+        else if (input->count(interface_key::SECONDSCROLL_DOWN))
+        {
+            if (min_quality < max_quality && min_quality < item_quality::Artifact)
+            {
+                min_quality = static_cast<df::item_quality>(static_cast<int16_t>(min_quality) + 1);
+                populateItems();
+            }
+        }
+        else if (input->count(interface_key::SECONDSCROLL_PAGEUP))
+        {
+            if (max_quality > min_quality && max_quality > item_quality::Ordinary)
+            {
+                max_quality = static_cast<df::item_quality>(static_cast<int16_t>(max_quality) - 1);
+                populateItems();
+            }
+        }
+        else if (input->count(interface_key::SECONDSCROLL_PAGEDOWN))
+        {
+            if (max_quality < item_quality::Artifact)
+            {
+                max_quality = static_cast<df::item_quality>(static_cast<int16_t>(max_quality) + 1);
+                populateItems();
+            }
+        }
 
-        else if  (input->count(interface_key::CUSTOM_SHIFT_Z))
+        else if (input->count(interface_key::CUSTOM_SHIFT_Z))
         {
             input->clear();
             auto item = items_column.getFirstSelectedElem();
@@ -201,16 +308,34 @@ public:
                 return;
 
             Screen::dismiss(this);
+            // Could be clever here, if item is in a container, to look inside the container.
+            // But that's different for built containers vs bags/pots in stockpiles.
             send_key(interface_key::D_LOOK);
             move_cursor(*pos);
         }
+        else if (input->count(interface_key::CUSTOM_SHIFT_A))
+        {
+            apply_to_all = !apply_to_all;
+        }
+        else if (input->count(interface_key::CUSTOM_SHIFT_P))
+        {
+            df::item_flags flags;
+            flags.bits.dump = true;
+            applyFlag(flags);
+        }
+        else if (input->count(interface_key::CUSTOM_SHIFT_B))
+        {
+            df::item_flags flags;
+            flags.bits.forbid = true;
+            applyFlag(flags);
+        }
 
-        else if  (input->count(interface_key::CURSOR_LEFT))
+        else if (input->count(interface_key::CURSOR_LEFT))
         {
             --selected_column;
             validateColumn();
         }
-        else if  (input->count(interface_key::CURSOR_RIGHT))
+        else if (input->count(interface_key::CURSOR_RIGHT))
         {
             selected_column++;
             validateColumn();
@@ -224,7 +349,7 @@ public:
         }
     }
 
-    void move_cursor(df::coord &pos)
+    void move_cursor(const df::coord &pos)
     {
         Gui::setCursorCoords(pos.x, pos.y, pos.z);
         send_key(interface_key::CURSOR_DOWN_Z);
@@ -264,7 +389,7 @@ public:
         OutputString(COLOR_BROWN, x, y, "Filters", true, left_margin);
         OutputString(COLOR_LIGHTRED, x, y, "Press Shift-Hotkey to Toggle", true, left_margin);
         OutputFilterString(x, y, "In Job", "J", !hide_flags.bits.in_job, true, left_margin, COLOR_LIGHTBLUE);
-        OutputFilterString(x, y, "Rotten", "N", !hide_flags.bits.rotten, true, left_margin, COLOR_CYAN);
+        OutputFilterString(x, y, "Rotten", "T", !hide_flags.bits.rotten, true, left_margin, COLOR_CYAN);
         OutputFilterString(x, y, "Foreign Made", "G", !hide_flags.bits.foreign, true, left_margin, COLOR_BROWN);
         OutputFilterString(x, y, "Owned", "O", !hide_flags.bits.owned, true, left_margin, COLOR_GREEN);
         OutputFilterString(x, y, "Forbidden", "F", !hide_flags.bits.forbid, true, left_margin, COLOR_RED);
@@ -272,12 +397,29 @@ public:
         OutputFilterString(x, y, "On Fire", "R", !hide_flags.bits.on_fire, true, left_margin, COLOR_LIGHTRED);
         OutputFilterString(x, y, "Melt", "M", !hide_flags.bits.melt, true, left_margin, COLOR_BLUE);
         OutputFilterString(x, y, "In Inventory", "I", !hide_flags.bits.in_inventory, true, left_margin, COLOR_GREY);
+        OutputFilterString(x, y, "No Flags", "N", !hide_unflagged, true, left_margin, COLOR_GREY);
+        ++y;
+        OutputHotkeyString(x, y, "Clear All", "Shift-C", true, left_margin);
+        OutputHotkeyString(x, y, "Enable All", "Shift-E", true, left_margin);
+        ++y;
+        OutputHotkeyString(x, y, "Min Qual: ", "-+");
+        OutputString(COLOR_BROWN, x, y, getQualityName(min_quality), true, left_margin);
+        OutputHotkeyString(x, y, "Max Qual: ", "/*");
+        OutputString(COLOR_BROWN, x, y, getQualityName(max_quality), true, left_margin);
+
+        OutputHotkeyString(x, y, "Min Wear: ", "Shift-W");
+        OutputString(COLOR_BROWN, x, y, int_to_string(min_wear), true, left_margin);
+
 
         ++y;
-        OutputString(COLOR_BROWN, x, y, "Actions (" + int_to_string(items_column.getDisplayedListSize()) + " Items)", 
-            true, left_margin);
+        OutputString(COLOR_BROWN, x, y, "Actions (");
+        OutputString(COLOR_LIGHTGREEN, x, y, int_to_string(items_column.getDisplayedListSize()));
+        OutputString(COLOR_BROWN, x, y, " Items)", true, left_margin);
         OutputHotkeyString(x, y, "Zoom", "Shift-Z", true, left_margin);
-
+        OutputHotkeyString(x, y, "Apply to: ", "Shift-A");
+        OutputString(COLOR_BROWN, x, y, (apply_to_all) ? "Listed" : "Selected", true, left_margin);
+        OutputHotkeyString(x, y, "Dump", "Shift-P", true, left_margin);
+        OutputHotkeyString(x, y, "Forbid", "Shift-B", true, left_margin);
     }
 
     std::string getFocusString() { return "stocks_view"; }
@@ -285,9 +427,12 @@ public:
 private:
     StockListColumn<df::item *> items_column;
     int selected_column;
-    df::item_flags hide_flags;
+    bool apply_to_all, hide_unflagged;
+    df::item_flags checked_flags;
+    df::item_quality min_quality, max_quality;
+    int16_t min_wear;
 
-    df::coord *getRealPos(df::item *item)
+    static df::coord *getRealPos(df::item *item)
     {
         if (item->flags.bits.in_inventory)
         {
@@ -316,6 +461,50 @@ private:
         }
 
         return &item->pos;
+    }
+
+    void applyFlag(const df::item_flags flags)
+    {
+        if (apply_to_all)
+        {
+            int state_to_apply = -1;
+            for (auto iter = items_column.getDisplayList().begin(); iter != items_column.getDisplayList().end(); iter++)
+            {
+                auto item = (*iter)->elem;
+                if (item)
+                {
+                    // Set all flags based on state of first item in list
+                    if (state_to_apply == -1)
+                        state_to_apply = (item->flags.whole & flags.whole) ? 0 : 1;
+
+                    if (state_to_apply)
+                        item->flags.whole |= flags.whole;
+                    else
+                        item->flags.whole &= ~flags.whole;
+                }
+            }
+        }
+        else
+        {
+            auto item = items_column.getFirstSelectedElem();
+            if (item)
+                item->flags.whole ^= flags.whole;
+        }
+    }
+
+    void setAllFlags(bool state)
+    {
+        hide_flags.bits.in_job = state;
+        hide_flags.bits.rotten = state;
+        hide_flags.bits.foreign = state;
+        hide_flags.bits.owned = state;
+        hide_flags.bits.forbid = state;
+        hide_flags.bits.dump = state;
+        hide_flags.bits.on_fire = state;
+        hide_flags.bits.melt = state;
+        hide_flags.bits.on_fire = state;
+        hide_flags.bits.in_inventory = state;
+        hide_unflagged = state;
     }
 
     void populateItems()
@@ -347,10 +536,41 @@ private:
             if (item->pos.x == -30000)
                 continue;
 
-            if (!getRealPos(item))
+            auto pos = getRealPos(item);
+            if (!pos)
                 continue;
 
-            auto label = pad_string(Items::getDescription(item, 0, true), MAX_NAME, false, true);
+            auto designation = Maps::getTileDesignation(*pos);
+            if (!designation)
+                continue;
+
+            if (designation->bits.hidden)
+                continue; // Items in parts of the map not yet revealed
+
+            if (hide_unflagged && !(item->flags.whole & checked_flags.whole))
+                continue;
+
+            auto quality = static_cast<df::item_quality>(item->getQuality());
+            if (quality < min_quality || quality > max_quality)
+                continue;
+
+            auto wear = item->getWear();
+            if (wear < min_wear)
+                continue;
+
+            auto label = Items::getDescription(item, 0, false);
+            if (wear > 0)
+            {
+                string wearX = "";
+                for (int i = 0; i < wear; i++)
+                {
+                    wearX += "X";
+                }
+
+                label = wearX + label + wearX;
+            }
+
+            label = pad_string(label, MAX_NAME, false, true);
 
             items_column.add(label, item);
         }
@@ -370,6 +590,8 @@ private:
         items_column.search_margin = gps->dimx - SIDEBAR_WIDTH;
     }
 };
+
+df::item_flags ViewscreenStocks::hide_flags;
 
 
 static command_result stocks_cmd(color_ostream &out, vector <string> & parameters)
@@ -402,6 +624,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "stocks", "An improved stocks display screen",
         stocks_cmd, false, ""));
 
+    ViewscreenStocks::hide_flags.whole = 0;
+
     return CR_OK;
 }
 
@@ -410,6 +634,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_MAP_LOADED:
+        ViewscreenStocks::hide_flags.whole = 0;
         break;
     default:
         break;

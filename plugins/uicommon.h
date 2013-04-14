@@ -432,6 +432,11 @@ public:
         return display_list.size();
     }
 
+    vector<ListEntry<T>*> &getDisplayList()
+    {
+        return display_list;
+    }
+
     size_t getBaseListSize()
     {
         return list.size();

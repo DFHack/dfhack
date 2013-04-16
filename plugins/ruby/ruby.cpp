@@ -88,6 +88,10 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
                 "Ruby interpreter. Eval() a ruby string.",
                 df_rubyeval));
 
+    commands.push_back(PluginCommand("rb",
+                "Ruby interpreter. Eval() a ruby string (alias for rb_eval).",
+                df_rubyeval));
+
     return CR_OK;
 }
 

@@ -1890,9 +1890,10 @@ such as vampires, it also sets animal.vanish_countdown to 2.
 An alternate mode is selected by adding a 2nd argument to the command,
 ``magma``. In this case, a column of 7/7 magma is generated on top of the
 targets until they die (Warning: do not call on magma-safe creatures. Also,
-using this mode for birds is not recommanded.)
+using this mode on birds is not recommanded.)
 
-Will target any unit on a revealed tile of the map, including ambushers.
+Will target any unit on a revealed tile of the map, including ambushers,
+but ignore caged/chained creatures.
 
 Ex::
 
@@ -1907,24 +1908,32 @@ To purify all elves on the map with fire (may have side-effects)::
     exterminate elve magma
 
 
-magmasource
-===========
-Create an infinite magma source on a tile.
+source
+======
+Create an infinite magma or water source or drain on a tile.
 
-This script registers a map tile as a magma source, and every 12 game ticks
-that tile receives 1 new unit of flowing magma.
+This script registers a map tile as a liquid source, and every 12 game ticks
+that tile receives or remove 1 new unit of flow based on the configuration.
 
 Place the game cursor where you want to create the source (must be a
 flow-passable tile, and not too high in the sky) and call::
 
-    magmasource here
+    source add [magma|water] [0-7]
 
-To add more than 1 unit everytime, call the command again.
+The number argument is the target liquid level (0 = drain, 7 = source).
 
-To delete one source, place the cursor over its tile and use ``delete-here``.
-To remove all placed sources, call ``magmasource stop``.
+To add more than 1 unit everytime, call the command again on the same spot.
 
-With no argument, this command shows an help message and list existing sources.
+To delete one source, place the cursor over its tile and use ``delete``.
+To remove all existing sources, call ``source clear``.
+
+The ``list`` argument shows all existing sources.
+
+Ex::
+
+    source add water     - water source
+    source add magma 7   - magma source
+    source add water 0   - water drain
 
 masspit
 =======

@@ -8,6 +8,7 @@ DFHack future
     - exterminate: renamed from slayrace, add help message, add butcher mode
     - autoSyndrome: disable by default
     - ruby: add df.dfhack_run "somecommand"
+    - magmasource: rename to source, allow water/magma sources/drains
 
 DFHack v0.34.11-r3
 

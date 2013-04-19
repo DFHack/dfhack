@@ -63,6 +63,23 @@ extra options.
 You can also use a cmake-friendly IDE like KDevelop 4 or the cmake-gui
 program.
 
+Fixing the libstdc++ version bug
+================================
+
+When compiling dfhack yourself, it builds against your system libc.
+When Dwarf Fortress runs, it uses a libstdc++ shipped with the binary, which
+is usually way older, and incompatible with your dfhack. This manifests with
+the error message::
+
+   ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
+       `GLIBCXX_3.4.15' not found (required by ./hack/libdfhack.so)
+
+To fix this, simply remove the libstdc++ shipped with DF, it will fall back
+to your system lib and everything will work fine::
+
+    cd /path/to/DF/
+    rm libs/libstdc++.so.6
+
 ========
 Mac OS X
 ========

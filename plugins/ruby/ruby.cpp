@@ -41,6 +41,7 @@ static tthread::thread *r_thread;
 static int onupdate_active;
 static int onupdate_minyear, onupdate_minyeartick=-1, onupdate_minyeartickadv=-1;
 static color_ostream_proxy *console_proxy;
+static std::vector<std::string> *dfhack_run_queue;
 
 
 DFHACK_PLUGIN("ruby")
@@ -63,6 +64,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     // lock this before anything, and release when everything is done
     m_mutex = new tthread::mutex();
 
+    // list of dfhack commands to run when the current ruby run is done (once locks are released)
+    dfhack_run_queue = new std::vector<std::string>;
+
     r_type = RB_INIT;
 
     // create the dedicated ruby thread
@@ -82,6 +86,10 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
     commands.push_back(PluginCommand("rb_eval",
                 "Ruby interpreter. Eval() a ruby string.",
+                df_rubyeval));
+
+    commands.push_back(PluginCommand("rb",
+                "Ruby interpreter. Eval() a ruby string (alias for rb_eval).",
                 df_rubyeval));
 
     return CR_OK;
@@ -111,6 +119,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     // we can release m_mutex, other users will check r_thread
     m_mutex->unlock();
     delete m_mutex;
+    delete dfhack_run_queue;
 
     // dlclose libruby
     df_unloadruby();
@@ -152,6 +161,8 @@ static command_result do_plugin_eval_ruby(color_ostream &out, const char *comman
 // send a single ruby line to be evaluated by the ruby thread
 DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *command)
 {
+    command_result ret;
+
     // if dlopen failed
     if (!r_thread)
         return CR_FAILURE;
@@ -160,14 +171,24 @@ DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *c
         // debug only!
         // run ruby commands without locking the main thread
         // useful when the game is frozen after a segfault
-        return do_plugin_eval_ruby(out, command+7);
+        ret = do_plugin_eval_ruby(out, command+7);
     } else {
         // wrap all ruby code inside a suspend block
         // if we dont do that and rely on ruby code doing it, we'll deadlock in
         // onupdate
         CoreSuspender suspend;
-        return do_plugin_eval_ruby(out, command);
+        ret = do_plugin_eval_ruby(out, command);
     }
+
+    // if any dfhack command is queued for run, do it now
+    while (!dfhack_run_queue->empty()) {
+        std::string cmd = dfhack_run_queue->at(0);
+        // delete before running the command, which may be ruby and cause infinite loops
+        dfhack_run_queue->erase(dfhack_run_queue->begin());
+        Core::getInstance().runCommand(out, cmd);
+    }
+
+    return ret;
 }
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
@@ -550,18 +571,10 @@ static VALUE rb_dfget_vtable_ptr(VALUE self, VALUE objptr)
 // run a dfhack command, as if typed from the dfhack console
 static VALUE rb_dfhack_run(VALUE self, VALUE cmd)
 {
-    if (!r_console) // XXX
-        return Qnil;
-
     std::string s;
     int strlen = FIX2INT(rb_funcall(cmd, rb_intern("length"), 0));
     s.assign(rb_string_value_ptr(&cmd), strlen);
-
-    // allow the target command to suspend
-    // FIXME
-    //CoreSuspendClaimer suspend(true);
-    Core::getInstance().runCommand(*r_console, s);
-
+    dfhack_run_queue->push_back(s);
     return Qtrue;
 }
 
@@ -1045,7 +1058,7 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "get_vtable", RUBY_METHOD_FUNC(rb_dfget_vtable), 1);
     rb_define_singleton_method(rb_cDFHack, "get_rtti_classname", RUBY_METHOD_FUNC(rb_dfget_rtti_classname), 1);
     rb_define_singleton_method(rb_cDFHack, "get_vtable_ptr", RUBY_METHOD_FUNC(rb_dfget_vtable_ptr), 1);
-    //rb_define_singleton_method(rb_cDFHack, "dfhack_run", RUBY_METHOD_FUNC(rb_dfhack_run), 1);
+    rb_define_singleton_method(rb_cDFHack, "dfhack_run", RUBY_METHOD_FUNC(rb_dfhack_run), 1);
     rb_define_singleton_method(rb_cDFHack, "print_str", RUBY_METHOD_FUNC(rb_dfprint_str), 1);
     rb_define_singleton_method(rb_cDFHack, "print_err", RUBY_METHOD_FUNC(rb_dfprint_err), 1);
     rb_define_singleton_method(rb_cDFHack, "malloc", RUBY_METHOD_FUNC(rb_dfmalloc), 1);

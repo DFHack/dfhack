@@ -6,10 +6,12 @@ class AutoFarm
 	end
 	
 	def setthreshold(id, v)
-		if df.world.raws.plants.all.find { |r| r.id == id }
-			@thresholds[id] = v.to_i
+		list = df.world.raws.plants.all.find_all { |plt| plt.flags[:SEED] }.map { |plt| plt.id }
+		if tok = df.match_rawname(id, list)
+			@thresholds[tok] = v.to_i
 		else
-			puts "No plant with id #{id}"
+			puts "No plant with id #{id}, try one of " +
+				list.map { |w| w =~ /[^\w]/ ? w.inspect : w }.sort.join(' ')
 		end
 	end
 	
@@ -17,11 +19,11 @@ class AutoFarm
 		@thresholds.default = v.to_i
 	end
 	
-	def is_plantable (plant)
+	def is_plantable(plant)
 		has_seed = plant.flags[:SEED]
 		season = df.cur_season
 		harvest = df.cur_season_tick + plant.growdur * 10
-		will_finish =  harvest < 10080
+		will_finish = harvest < 10080
 		can_plant = has_seed && plant.flags[season]
 		can_plant = can_plant && (will_finish || plant.flags[(season+1)%4])
 		can_plant
@@ -36,7 +38,7 @@ class AutoFarm
 				!i.flags.hostile && !i.flags.on_fire && !i.flags.rotten &&
 				!i.flags.trader && !i.flags.in_building && !i.flags.construction &&
 				!i.flags.artifact)
-				counts[i.mat_index] = counts[i.mat_index] + i.stack_size
+				counts[i.mat_index] += i.stack_size
 			end
 		}
 
@@ -53,7 +55,7 @@ class AutoFarm
 		return plantable
 	end
 	
-	def set_farms( plants, farms)
+	def set_farms(plants, farms)
 		return if farms.length == 0
 		if plants.length == 0
 			plants = [-1]
@@ -61,41 +63,36 @@ class AutoFarm
 		
 		season = df.cur_season
 		
-		idx = 0
-		
-		farms.each { |f|
-			f.plant_id[season] = plants[idx]
-			idx = (idx + 1) % plants.length
+		farms.each_with_index { |f, idx|
+			f.plant_id[season] = plants[idx % plants.length]
 		}
 	end
 
 	def process
-		return false unless @running
-		
 		plantable = find_plantable_plants
-		counts = Hash.new(0)
+		@lastcounts = Hash.new(0)
 		
 		df.world.items.other[:PLANT].each { |i|
 			if (!i.flags.dump && !i.flags.forbid && !i.flags.garbage_collect &&
 				!i.flags.hostile && !i.flags.on_fire && !i.flags.rotten &&
 				!i.flags.trader && !i.flags.in_building && !i.flags.construction &&
 				!i.flags.artifact && plantable.has_key?(i.mat_index))
-				counts[i.mat_index] = counts[i.mat_index] + i.stack_size
+				id = df.world.raws.plants.all[i.mat_index].id
+				@lastcounts[id] += i.stack_size
 			end
 		}
 				
+		return unless @running
+
 		plants_s = []
 		plants_u = []
 		
-		@lastcounts.clear
-		
 		plantable.each_key { |k|
 			plant = df.world.raws.plants.all[k]
-			if (counts[k] < @thresholds[plant.id])
+			if (@lastcounts[plant.id] < @thresholds[plant.id])
 				plants_s.push(k) if plantable[k] == :Surface
 				plants_u.push(k) if plantable[k] == :Underground
 			end
-			@lastcounts[plant.id] = counts[k]
 		}
 		
 		farms_s = []
@@ -110,11 +107,11 @@ class AutoFarm
 		
 		set_farms(plants_s, farms_s)
 		set_farms(plants_u, farms_u)
-		
 	end
 	
 	def start
-		@onupdate = df.onupdate_register('autofarm', 100) { process }
+		return if @running
+		@onupdate = df.onupdate_register('autofarm', 1200) { process }
 		@running = true
 	end
 	
@@ -125,23 +122,28 @@ class AutoFarm
 	
 	def status
 		stat = @running ? "Running." : "Stopped."
-		@thresholds.each { |k,v|
-			stat += "\n#{k} limit #{v} current #{@lastcounts[k]}"
+		@lastcounts.each { |k,v|
+			stat << "\n#{k} limit #{@thresholds.fetch(k, 'default')} current #{v}"
 		}
-		stat += "\nDefault: #{@thresholds.default}"
+		@thresholds.each { |k,v|
+			stat << "\n#{k} limit #{v} current 0" unless @lastcounts.has_key?(k)
+		}
+		stat << "\nDefault: #{@thresholds.default}"
 		stat
 	end
 		
 end	
 
-$AutoFarm = AutoFarm.new unless $AutoFarm
+$AutoFarm ||= AutoFarm.new
 
 case $script_args[0]
-when 'start'
-    $AutoFarm.start
+when 'start', 'enable'
+	$AutoFarm.start
+	puts $AutoFarm.status
 
-when 'end', 'stop'
-    $AutoFarm.stop
+when 'end', 'stop', 'disable'
+	$AutoFarm.stop
+	puts 'Stopped.'
 	
 when 'default'
 	$AutoFarm.setdefault($script_args[1])
@@ -156,10 +158,19 @@ when 'delete'
 	$AutoFarm.stop
 	$AutoFarm = nil
 		
+when 'help', '?'
+	puts <<EOS
+Automatically handle crop selection in farm plots based on current plant stocks.
+Selects a crop for planting if current stock is below a threshold.
+Selected crops are dispatched on all farmplots.
+
+Usage:
+ autofarm start
+ autofarm default 30
+ autofarm threshold 150 helmet_plump tail_pig
+EOS
+
 else
-    if $AutoFarm
-        puts $AutoFarm.status
-    else
-        puts "AI not started"
-    end
+	$AutoFarm.process
+	puts $AutoFarm.status
 end

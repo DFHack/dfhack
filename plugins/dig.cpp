@@ -55,7 +55,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  Also follows the stone between z-levels with stairs, like 'digl x' would.\n"
         ));
     commands.push_back(PluginCommand("digexp","Select or designate an exploratory pattern. Use 'digexp ?' for help.",digexp));
-    commands.push_back(PluginCommand("digcircle","Dig designate a circle (filled or hollow) with given radius.",digcircle));
+    commands.push_back(PluginCommand("digcircle","Dig designate a circle (filled or hollow) with given diameter.",digcircle));
     //commands.push_back(PluginCommand("digauto","Mark a tile for continuous digging.",autodig));
     commands.push_back(PluginCommand("digtype", "Dig all veins of a given type.", digtype,Gui::cursor_hotkey,
         "For every tile on the map of the same vein type as the selected tile, this command designates it to have the same designation as the selected tile. If the selected tile has no designation, they will be dig designated.\n"
@@ -120,7 +120,7 @@ bool dig (MapExtras::MapCache & MCache,
     if(tileMaterial(tt) == tiletype_material::CONSTRUCTION && !des.bits.hidden)
         return false;
     df::tiletype_shape ts = tileShape(tt);
-    if (ts == tiletype_shape::EMPTY)
+    if (ts == tiletype_shape::EMPTY && !des.bits.hidden)
         return false;
     if(!des.bits.hidden)
     {
@@ -293,7 +293,7 @@ command_result digcircle (color_ostream &out, vector <string> & parameters)
             "\n"
             "After you have set the options, the command called with no options\n"
             "repeats with the last selected parameters:\n"
-            "'digcircle filled 3' = Dig a filled circle with radius = 3.\n"
+            "'digcircle filled 3' = Dig a filled circle with diameter = 3.\n"
             "'digcircle' = Do it again.\n"
             );
         return CR_OK;

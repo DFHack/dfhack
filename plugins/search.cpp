@@ -422,9 +422,14 @@ protected:
     virtual bool can_init(S *screen)
     {
         auto list = getLayerList(screen);
-        if (!list->active)
+        if (!is_list_valid(screen) || !list->active)
             return false;
 
+        return true;
+    }
+
+    virtual bool is_list_valid(S*)
+    {
         return true;
     }
 
@@ -444,8 +449,12 @@ protected:
     virtual void clear_search()
     {
         search_generic<S,T>::clear_search();
-        auto list = getLayerList(this->viewscreen);
-        list->num_entries = this->get_primary_list()->size();
+
+        if (is_list_valid(this->viewscreen))
+        {
+            auto list = getLayerList(this->viewscreen);
+            list->num_entries = this->get_primary_list()->size();
+        }
     }
 
 private:
@@ -1208,12 +1217,14 @@ public:
         return 'q';
     }
 
-    bool can_init(df::viewscreen_layer_militaryst *screen)
+    // When not on the positions page, this list is used for something
+    // else entirely, so screwing with it seriously breaks stuff.
+    bool is_list_valid(df::viewscreen_layer_militaryst *screen)
     {
         if (screen->page != df::viewscreen_layer_militaryst::Positions)
             return false;
 
-        return military_search_base::can_init(screen);
+        return true;
     }
 
     vector<df::unit *> *get_primary_list() 

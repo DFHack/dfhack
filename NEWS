@@ -1,13 +1,20 @@
 DFHack future
 
+  Is not yet known.
+
+DFHack v0.34.11-r3
+
   Internals:
     - support for displaying active keybindings properly.
     - support for reusable widgets in lua screen library.
     - Maps::canStepBetween: returns whether you can walk between two tiles in one step.
-    - EventManager: monitors various in game events centrally so that individual plugins don't have to monitor the same things redundantly.
+    - EventManager: monitors various in game events centrally so that individual plugins
+      don't have to monitor the same things redundantly.
+    - Now works with OSX 10.6.8
   Notable bugfixes:
     - autobutcher can be re-enabled again after being stopped.
     - stopped Dwarf Manipulator from unmasking vampires.
+    - Stonesense is now fixed on OSX
   Misc improvements:
     - fastdwarf: new mode using debug flags, and some internal consistency fixes.
     - added a small stand-alone utility for applying and removing binary patches.
@@ -28,6 +35,7 @@ DFHack future
     - stripcaged: mark items inside cages for dumping, eg caged goblin weapons.
     - soundsense-season: writes the correct season to gamelog.txt on world load.
     - create-items: spawn items
+    - fix/cloth-stockpile: fixes bug 5739; needs to be run after savegame load every time.
   New GUI scripts:
     - gui/guide-path: displays the cached path for minecart Guide orders.
     - gui/workshop-job: displays inputs of a workshop job and allows tweaking them.

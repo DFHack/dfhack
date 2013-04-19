@@ -5,4 +5,4 @@ cd "${DF_DIR}"
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./hack/libs":"./hack"
 
-exec hack/dfhack-run "$@"
+./isoworld/isoworld "$@"

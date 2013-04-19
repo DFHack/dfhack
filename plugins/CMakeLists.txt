@@ -1,11 +1,7 @@
 INCLUDE(Plugins.cmake)
 
 # Dfusion plugin
-IF(UNIX)
-    OPTION(BUILD_DFUSION "Build DFusion." OFF)
-ELSE()
-    OPTION(BUILD_DFUSION "Build DFusion." ON)
-ENDIF()
+OPTION(BUILD_DFUSION "Build DFusion." ON)
 if(BUILD_DFUSION)
     add_subdirectory (Dfusion)
 endif()
@@ -13,6 +9,20 @@ endif()
 OPTION(BUILD_STONESENSE "Build stonesense (needs a checkout first)." OFF)
 if(BUILD_STONESENSE)
     add_subdirectory (stonesense)
+endif()
+
+OPTION(BUILD_ISOWORLD "Build isoworld (needs a checkout first)." OFF)
+if(BUILD_ISOWORLD)
+	add_subdirectory (isoworld)
+	IF(UNIX)
+		if (APPLE)
+			#TODO: add an OSX runner script
+		else()
+		# On linux, copy our version of the df launch script which sets LD_PRELOAD
+		install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/runisoworld
+			DESTINATION .)
+		endif()
+	ENDIF()
 endif()
 
 OPTION(BUILD_DEV_PLUGINS "Build developer plugins." OFF)
@@ -65,6 +75,7 @@ ADD_CUSTOM_COMMAND(
             ${PROJECT_PROTOS}
     DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
+add_custom_target(generate_proto DEPENDS ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS})
 
 SET_SOURCE_FILES_PROPERTIES( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 
@@ -136,6 +147,8 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(autoSyndrome autoSyndrome.cpp)
     DFHACK_PLUGIN(trueTransformation trueTransformation.cpp)
     DFHACK_PLUGIN(infiniteSky infiniteSky.cpp)
+    DFHACK_PLUGIN(createitem createitem.cpp)
+	DFHACK_PLUGIN(isoworldremote isoworldremote.cpp PROTOBUFS isoworldremote)
 endif()
 
 

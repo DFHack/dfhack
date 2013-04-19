@@ -251,10 +251,16 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
 
             // Force update of ui state
             set<df::interface_key> tmp;
-            tmp.insert(interface_key::CURSOR_DOWN_Z);
+            if (last_cursor.z < 2)
+                tmp.insert(interface_key::CURSOR_UP_Z);
+            else
+                tmp.insert(interface_key::CURSOR_DOWN_Z);
             INTERPOSE_NEXT(feed)(&tmp);
             tmp.clear();
-            tmp.insert(interface_key::CURSOR_UP_Z);
+            if (last_cursor.z < 2)
+                tmp.insert(interface_key::CURSOR_DOWN_Z);
+            else
+                tmp.insert(interface_key::CURSOR_UP_Z);
             INTERPOSE_NEXT(feed)(&tmp);
         }
         else if (!is_default && cur_cursor.isValid())
@@ -696,7 +702,7 @@ static bool can_spar(df::unit *unit) {
     return unit->counters2.exhaustion <= 2000 && // actually 4000, but leave a gap
            (unit->status2.limbs_grasp_count > 0 || unit->status2.limbs_grasp_max == 0) &&
            (!unit->health || (unit->health->flags.whole&0x7FF) == 0) &&
-           (!unit->job.current_job || unit->job.current_job != job_type::Rest);
+           (!unit->job.current_job || unit->job.current_job->job_type != job_type::Rest);
 }
 
 static bool has_spar_inventory(df::unit *unit, df::job_skill skill)
@@ -809,14 +815,18 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
                             spar++;
                     }
 
+#if 0
                     color_ostream_proxy out(Core::getInstance().getConsole());
+#endif
 
                     // If the xp gap is low, sometimes replace with sparring
                     if ((maxv - minv) < 64*15 && spar == units.size() &&
                         random_int(45) >= 30 + (maxv-minv)/64)
                     {
+#if 0
                         out.print("Replacing %s demonstration (xp %d-%d, gap %d) with sparring.\n",
                                   ENUM_KEY_STR(job_skill, sd->skill).c_str(), minv, maxv, maxv-minv);
+#endif
 
                         if (auto spar = df::allocate<df::activity_event_sparringst>())
                         {
@@ -838,18 +848,22 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
                     // If the teacher has less xp than somebody else, switch
                     if (best >= 0 && maxv > cur_xp)
                     {
+#if 0
                         out.print("Replacing %s teacher %d (%d xp) with %d (%d xp); xp gap %d.\n",
                                   ENUM_KEY_STR(job_skill, sd->skill).c_str(),
                                   sd->unit_id, cur_xp, units[best], maxv, maxv-minv);
+#endif
 
                         sd->hist_figure_id = sd->participants.histfigs[best];
                         sd->unit_id = units[best];
                     }
                     else
                     {
+#if 0
                         out.print("Not changing %s demonstration (xp %d-%d, gap %d).\n",
                                   ENUM_KEY_STR(job_skill, sd->skill).c_str(),
                                   minv, maxv, maxv-minv);
+#endif
                     }
                 }
             }

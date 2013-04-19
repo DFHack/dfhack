@@ -11,5 +11,4 @@ else
 	export DYLD_FALLBACK_LIBRARY_PATH=${PWD}/hack:${PWD}/libs
 	export DYLD_FALLBACK_FRAMEWORK_PATH=${PWD}/hack:${PWD}/libs
 fi
-export DYLD_FORCE_FLAT_NAMESPACE=1
 cd "${PWD}"; ./dwarfort.exe

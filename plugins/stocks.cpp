@@ -543,7 +543,6 @@ private:
         bad_flags.bits.trader = true;
         bad_flags.bits.in_building = true;
         bad_flags.bits.garbage_collect = true;
-        bad_flags.bits.spider_web = true;
         bad_flags.bits.hostile = true;
         bad_flags.bits.removed = true;
         bad_flags.bits.dead_dwarf = true;
@@ -559,11 +558,11 @@ private:
             if (item->flags.whole & bad_flags.whole || item->flags.whole & hide_flags.whole)
                 continue;
 
-            if (item->pos.x == -30000)
-                continue;
-
             auto pos = getRealPos(item);
             if (!pos)
+                continue;
+
+            if (pos->x == -30000)
                 continue;
 
             auto designation = Maps::getTileDesignation(*pos);

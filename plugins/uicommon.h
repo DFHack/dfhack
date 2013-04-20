@@ -153,10 +153,11 @@ class ListEntry
 {
 public:
     T elem;
-    string text;
+    string text, keywords;
     bool selected;
 
-    ListEntry(const string text, const T elem) : elem(elem), text(text), selected(false)
+    ListEntry(const string text, const T elem, const string keywords = "") : 
+        elem(elem), text(text), selected(false), keywords(keywords)
     {
     }
 };
@@ -271,11 +272,31 @@ public:
     {
         ListEntry<T> *prev_selected = (getDisplayListSize() > 0) ? display_list[highlighted_index] : NULL;
         display_list.clear();
+
         search_string = toLower(search_string);
+        vector<string> search_tokens;
+        if (!search_string.empty())
+            split_string(&search_tokens, search_string, " ");
+
         for (size_t i = 0; i < list.size(); i++)
         {
             ListEntry<T> *entry = &list[i];
-            if (search_string.empty() || toLower(list[i].text).find(search_string) != string::npos)
+
+            bool include_item = true;
+            if (!search_string.empty())
+            {
+                string item_string = toLower(list[i].text);
+                for (auto si = search_tokens.begin(); si != search_tokens.end(); si++)
+                {
+                    if (!si->empty() && item_string.find(*si) == string::npos)
+                    {
+                        include_item = false;
+                        break;
+                    }
+                }
+            }
+
+            if (include_item)
             {
                 display_list.push_back(entry);
                 if (entry == prev_selected)

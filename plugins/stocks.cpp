@@ -5,6 +5,7 @@
 // DF data structure definition headers
 #include "DataDefs.h"
 #include "Types.h"
+
 #include "df/item.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/items_other_id.h"
@@ -13,6 +14,8 @@
 #include "df/world.h"
 #include "df/item_quality.h"
 #include "df/caravan_state.h"
+#include "df/mandate.h"
+#include "df/general_ref_building_holderst.h"
 
 #include "modules/Gui.h"
 #include "modules/Items.h"
@@ -46,7 +49,11 @@ static void debug(const string &msg)
 }
 
 
-static string getQualityName(const df::item_quality quality)
+/*
+ * Utility
+ */
+
+static string get_quality_name(const df::item_quality quality)
 {
     if (gps->dimx - SIDEBAR_WIDTH < 60)
         return int_to_string(quality);
@@ -54,22 +61,235 @@ static string getQualityName(const df::item_quality quality)
         return ENUM_KEY_STR(item_quality, quality);
 }
 
-static bool can_trade()
+
+/*
+ * Trade
+ */
+
+static df::job *get_item_job(df::item *item)
 {
-    if (df::global::ui->caravans.size() == 0)
+    auto ref = Items::getSpecificRef(item, specific_ref_type::JOB);
+    if (ref && ref->job)
+        return ref->job;
+
+    return nullptr;
+}
+
+static df::item *get_container_of(df::item *item)
+{
+    auto container = Items::getContainer(item);
+    return (container) ? container : item;
+}
+
+static bool is_marked_for_trade(df::item *item, df::item *container = nullptr)
+{
+    item = (container) ? container : get_container_of(item);
+    auto job = get_item_job(item);
+    if (!job)
         return false;
 
-    for (auto it = df::global::ui->caravans.begin(); it != df::global::ui->caravans.end(); it++)
+    return job->job_type == job_type::BringItemToDepot;
+}
+
+static bool check_mandates(df::item *item)
+{
+    for (auto it = world->mandates.begin(); it != world->mandates.end(); it++)
     {
-        auto caravan = *it;
-        auto trade_state = caravan->trade_state;
-        auto time_remaining = caravan->time_remaining;
-        if ((trade_state != 1 && trade_state != 2) || time_remaining == 0)
+        auto mandate = *it;
+
+        if (mandate->mode != 0)
+            continue;
+
+        if (item->getType() != mandate->item_type || 
+            (mandate->item_subtype != -1 && item->getSubtype() != mandate->item_subtype))
+            continue;
+
+        if (mandate->mat_type != -1 && item->getMaterial() != mandate->mat_type)
+            continue;
+
+        if (mandate->mat_index != -1 && item->getMaterialIndex() != mandate->mat_index)
+            continue;
+
+        return false;
+    }
+
+    return true;
+}
+
+static bool can_trade_item(df::item *item)
+{
+    if (item->flags.bits.owned || item->flags.bits.artifact || item->flags.bits.spider_web || item->flags.bits.in_job)
+        return false;
+
+    for (size_t i = 0; i < item->general_refs.size(); i++)
+    {
+        df::general_ref *ref = item->general_refs[i];
+
+        switch (ref->getType())
+        {
+        case general_ref_type::UNIT_HOLDER:
+            return false;
+
+        case general_ref_type::BUILDING_HOLDER:
+            return false;
+
+        default:
+            break;
+        }
+    }
+
+    for (size_t i = 0; i < item->specific_refs.size(); i++)
+    {
+        df::specific_ref *ref = item->specific_refs[i];
+
+        if (ref->type == specific_ref_type::JOB)
+        {
+            // Ignore any items assigned to a job
+            return false;
+        }
+    }
+
+    return check_mandates(item);
+}
+
+static bool can_trade_item_and_container(df::item *item)
+{
+    item = get_container_of(item);
+
+    if (item->flags.bits.in_inventory)
+        return false;
+
+    if (!can_trade_item(item))
+        return false;
+
+    vector<df::item*> contained_items;
+    Items::getContainedItems(item, &contained_items);
+    for (auto cit = contained_items.begin(); cit != contained_items.end(); cit++)
+    {
+        if (!can_trade_item(*cit))
             return false;
     }
 
     return true;
 }
+
+static bool is_in_inventory(df::item *item)
+{
+    item = get_container_of(item);
+    return item->flags.bits.in_inventory;
+}
+
+
+class TradeDepotInfo
+{
+public:
+    TradeDepotInfo()
+    {
+        reset();
+    }
+
+    void prepareTradeVarables()
+    {
+        reset();
+        for(auto bld_it = world->buildings.all.begin(); bld_it != world->buildings.all.end(); bld_it++)
+        {
+            auto bld = *bld_it;
+            if (!isUsableDepot(bld))
+                continue;
+
+            depot = bld;
+            id = depot->id;
+            trade_possible = caravansAvailable();
+            break;
+        }
+    }
+
+    bool assignItem(df::item *item)
+    {
+        item = get_container_of(item);
+        if (!can_trade_item_and_container(item))
+            return false;
+
+        auto href = df::allocate<df::general_ref_building_holderst>();
+        if (!href)
+            return false;
+
+        auto job = new df::job();
+
+        df::coord tpos(depot->centerx, depot->centery, depot->z);
+        job->pos = tpos;
+
+        job->job_type = job_type::BringItemToDepot;
+
+        // job <-> item link
+        if (!Job::attachJobItem(job, item, df::job_item_ref::Hauled))
+        {
+            delete job;
+            delete href;
+            return false;
+        }
+
+        // job <-> building link
+        href->building_id = id;
+        depot->jobs.push_back(job);
+        job->general_refs.push_back(href);
+
+        // add to job list
+        Job::linkIntoWorld(job);
+
+        return true;
+    }
+
+    void reset()
+    {
+        depot = 0;
+        trade_possible = false;
+    }
+
+    bool canTrade()
+    {
+        return trade_possible;
+    }
+
+private:
+    int32_t id;
+    df::building *depot;
+    bool trade_possible;
+
+    bool isUsableDepot(df::building* bld)
+    {
+        if (bld->getType() != building_type::TradeDepot)
+            return false;
+
+        if (bld->getBuildStage() < bld->getMaxBuildStage())
+            return false;
+
+        if (bld->jobs.size() == 1 && bld->jobs[0]->job_type == job_type::DestroyBuilding)
+            return false;
+
+        return true;
+    }
+
+    bool caravansAvailable()
+    {
+        if (df::global::ui->caravans.size() == 0)
+            return false;
+
+        for (auto it = df::global::ui->caravans.begin(); it != df::global::ui->caravans.end(); it++)
+        {
+            auto caravan = *it;
+            auto trade_state = caravan->trade_state;
+            auto time_remaining = caravan->time_remaining;
+            if ((trade_state != 1 && trade_state != 2) || time_remaining == 0)
+                return false;
+        }
+
+        return true;
+    }
+};
+
+static TradeDepotInfo depot_info;
+
 
 template <class T>
 class StockListColumn : public ListColumn<T>
@@ -116,10 +336,18 @@ class StockListColumn : public ListColumn<T>
         else
             OutputString(COLOR_LIGHTBLUE, x, y, " ");
 
-        if (item->flags.bits.in_inventory)
-            OutputString(COLOR_GREY, x, y, "I");
+        if (is_in_inventory(item))
+            OutputString(COLOR_WHITE, x, y, "I");
         else
             OutputString(COLOR_LIGHTBLUE, x, y, " ");
+
+        if (depot_info.canTrade())
+        {
+            if (is_marked_for_trade(item))
+                OutputString(COLOR_LIGHTGREEN, x, y, "T");
+            else
+                OutputString(COLOR_LIGHTBLUE, x, y, " ");
+        }
 
         if (item->isImproved())
             OutputString(COLOR_BLUE, x, y, "* ");
@@ -155,16 +383,32 @@ class StockListColumn : public ListColumn<T>
             default:
                 break;
             }
-            OutputString(color, x, y, getQualityName(quality));
+            OutputString(color, x, y, get_quality_name(quality));
         }
     }
 };
 
+struct extra_filters
+{
+    bool hide_trade_marked, hide_in_inventory;
+
+    extra_filters()
+    {
+        reset();
+    }
+
+    void reset()
+    {
+        hide_in_inventory = false;
+        hide_trade_marked = false;
+    }
+};
 
 class ViewscreenStocks : public dfhack_viewscreen
 {
 public:
     static df::item_flags hide_flags;
+    static extra_filters extra_hide_flags;
 
     ViewscreenStocks()
     {
@@ -191,7 +435,6 @@ public:
         checked_flags.bits.on_fire = true;
         checked_flags.bits.melt = true;
         checked_flags.bits.on_fire = true;
-        checked_flags.bits.in_inventory = true;
 
         min_quality = item_quality::Ordinary;
         max_quality = item_quality::Artifact;
@@ -200,6 +443,13 @@ public:
         populateItems();
 
         items_column.selectDefaultEntry();
+    }
+
+    static void reset()
+    {
+        hide_flags.whole = 0;
+        extra_hide_flags.reset();
+        depot_info.reset();
     }
 
     void feed(set<df::interface_key> *input)
@@ -222,52 +472,57 @@ public:
             return;
         }
 
-        if (input->count(interface_key::CUSTOM_SHIFT_G))
+        if (input->count(interface_key::CUSTOM_CTRL_G))
         {
             hide_flags.bits.foreign = !hide_flags.bits.foreign;
             populateItems();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_J))
+        else if (input->count(interface_key::CUSTOM_CTRL_J))
         {
             hide_flags.bits.in_job = !hide_flags.bits.in_job;
             populateItems();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_X))
+        else if (input->count(interface_key::CUSTOM_CTRL_X))
         {
             hide_flags.bits.rotten = !hide_flags.bits.rotten;
             populateItems();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_O))
+        else if (input->count(interface_key::CUSTOM_CTRL_O))
         {
             hide_flags.bits.owned = !hide_flags.bits.owned;
             populateItems();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_F))
+        else if (input->count(interface_key::CUSTOM_CTRL_F))
         {
             hide_flags.bits.forbid = !hide_flags.bits.forbid;
             populateItems();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_D))
+        else if (input->count(interface_key::CUSTOM_CTRL_D))
         {
             hide_flags.bits.dump = !hide_flags.bits.dump;
             populateItems();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_R))
+        else if (input->count(interface_key::CUSTOM_CTRL_R))
         {
             hide_flags.bits.on_fire = !hide_flags.bits.on_fire;
             populateItems();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_M))
+        else if (input->count(interface_key::CUSTOM_CTRL_M))
         {
             hide_flags.bits.melt = !hide_flags.bits.melt;
             populateItems();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_I))
+        else if (input->count(interface_key::CUSTOM_CTRL_I))
         {
-            hide_flags.bits.in_inventory = !hide_flags.bits.in_inventory;
+            extra_hide_flags.hide_in_inventory = !extra_hide_flags.hide_in_inventory;
             populateItems();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_N))
+        else if (input->count(interface_key::CUSTOM_CTRL_T))
+        {
+            extra_hide_flags.hide_trade_marked = !extra_hide_flags.hide_trade_marked;
+            populateItems();
+        }
+        else if (input->count(interface_key::CUSTOM_CTRL_N))
         {
             hide_unflagged = !hide_unflagged;
             populateItems();
@@ -343,17 +598,36 @@ public:
         {
             apply_to_all = !apply_to_all;
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_P))
+        else if (input->count(interface_key::CUSTOM_SHIFT_D))
         {
             df::item_flags flags;
             flags.bits.dump = true;
             applyFlag(flags);
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_B))
+        else if (input->count(interface_key::CUSTOM_SHIFT_F))
         {
             df::item_flags flags;
             flags.bits.forbid = true;
             applyFlag(flags);
+        }
+        else if (input->count(interface_key::CUSTOM_SHIFT_T))
+        {
+            if (apply_to_all)
+            {
+                auto &list = items_column.getDisplayList();
+                for (auto iter = list.begin(); iter != list.end(); iter++)
+                {
+                    auto item = (*iter)->elem;
+                    if (item)
+                        depot_info.assignItem(item);
+                }
+            }
+            else
+            {
+                auto item = items_column.getFirstSelectedElem();
+                if (item)
+                    depot_info.assignItem(item);
+            }
         }
 
         else if (input->count(interface_key::CURSOR_LEFT))
@@ -413,7 +687,7 @@ public:
         y = 2;
         x = left_margin;
         OutputString(COLOR_BROWN, x, y, "Filters", true, left_margin);
-        OutputString(COLOR_LIGHTRED, x, y, "Press Shift-Hotkey to Toggle", true, left_margin);
+        OutputString(COLOR_LIGHTRED, x, y, "Press Ctrl-Hotkey to Toggle", true, left_margin);
         OutputFilterString(x, y, "In Job", "J", !hide_flags.bits.in_job, true, left_margin, COLOR_LIGHTBLUE);
         OutputFilterString(x, y, "Rotten", "X", !hide_flags.bits.rotten, true, left_margin, COLOR_CYAN);
         OutputFilterString(x, y, "Foreign Made", "G", !hide_flags.bits.foreign, true, left_margin, COLOR_BROWN);
@@ -422,16 +696,17 @@ public:
         OutputFilterString(x, y, "Dump", "D", !hide_flags.bits.dump, true, left_margin, COLOR_LIGHTMAGENTA);
         OutputFilterString(x, y, "On Fire", "R", !hide_flags.bits.on_fire, true, left_margin, COLOR_LIGHTRED);
         OutputFilterString(x, y, "Melt", "M", !hide_flags.bits.melt, true, left_margin, COLOR_BLUE);
-        OutputFilterString(x, y, "In Inventory", "I", !hide_flags.bits.in_inventory, true, left_margin, COLOR_GREY);
+        OutputFilterString(x, y, "In Inventory", "I", !extra_hide_flags.hide_in_inventory, true, left_margin, COLOR_WHITE);
+        OutputFilterString(x, y, "Trade", "T", !extra_hide_flags.hide_trade_marked, true, left_margin, COLOR_LIGHTGREEN);
         OutputFilterString(x, y, "No Flags", "N", !hide_unflagged, true, left_margin, COLOR_GREY);
         ++y;
         OutputHotkeyString(x, y, "Clear All", "Shift-C", true, left_margin);
         OutputHotkeyString(x, y, "Enable All", "Shift-E", true, left_margin);
         ++y;
         OutputHotkeyString(x, y, "Min Qual: ", "-+");
-        OutputString(COLOR_BROWN, x, y, getQualityName(min_quality), true, left_margin);
+        OutputString(COLOR_BROWN, x, y, get_quality_name(min_quality), true, left_margin);
         OutputHotkeyString(x, y, "Max Qual: ", "/*");
-        OutputString(COLOR_BROWN, x, y, getQualityName(max_quality), true, left_margin);
+        OutputString(COLOR_BROWN, x, y, get_quality_name(max_quality), true, left_margin);
 
         ++y;
         OutputHotkeyString(x, y, "Min Wear: ", "Shift-W");
@@ -444,8 +719,9 @@ public:
         OutputHotkeyString(x, y, "Zoom", "Shift-Z", true, left_margin);
         OutputHotkeyString(x, y, "Apply to: ", "Shift-A");
         OutputString(COLOR_BROWN, x, y, (apply_to_all) ? "Listed" : "Selected", true, left_margin);
-        OutputHotkeyString(x, y, "Dump", "Shift-P", true, left_margin);
-        OutputHotkeyString(x, y, "Forbid", "Shift-B", true, left_margin);
+        OutputHotkeyString(x, y, "Dump", "Shift-D", true, left_margin);
+        OutputHotkeyString(x, y, "Forbid", "Shift-F", true, left_margin);
+        OutputHotkeyString(x, y, "Mark for Trade", "Shift-T", true, left_margin);
     }
 
     std::string getFocusString() { return "stocks_view"; }
@@ -460,6 +736,7 @@ private:
 
     static df::coord *getRealPos(df::item *item)
     {
+        item = get_container_of(item);
         if (item->flags.bits.in_inventory)
         {
             if (item->flags.bits.in_job)
@@ -529,8 +806,9 @@ private:
         hide_flags.bits.on_fire = state;
         hide_flags.bits.melt = state;
         hide_flags.bits.on_fire = state;
-        hide_flags.bits.in_inventory = state;
         hide_unflagged = state;
+        extra_hide_flags.hide_trade_marked = state;
+        extra_hide_flags.hide_in_inventory = state;
     }
 
     void populateItems()
@@ -549,6 +827,8 @@ private:
         bad_flags.bits.murder = true;
         bad_flags.bits.construction = true;
 
+        depot_info.prepareTradeVarables();
+
         std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
 
         for (size_t i = 0; i < items.size(); i++)
@@ -556,6 +836,10 @@ private:
             df::item *item = items[i];
 
             if (item->flags.whole & bad_flags.whole || item->flags.whole & hide_flags.whole)
+                continue;
+
+            auto container = get_container_of(item);
+            if (container->flags.whole & bad_flags.whole)
                 continue;
 
             auto pos = getRealPos(item);
@@ -572,8 +856,18 @@ private:
             if (designation->bits.hidden)
                 continue; // Items in parts of the map not yet revealed
 
-            if (hide_unflagged && !(item->flags.whole & checked_flags.whole))
+            bool trade_marked = is_marked_for_trade(item, container);
+            if (extra_hide_flags.hide_trade_marked && trade_marked)
                 continue;
+
+            if (extra_hide_flags.hide_in_inventory && container->flags.bits.in_inventory)
+                continue;
+
+            if (hide_unflagged && (!(item->flags.whole & checked_flags.whole) && 
+                    !trade_marked && !container->flags.bits.in_inventory))
+            {
+                continue;
+            }
 
             auto quality = static_cast<df::item_quality>(item->getQuality());
             if (quality < min_quality || quality > max_quality)
@@ -632,6 +926,7 @@ private:
 };
 
 df::item_flags ViewscreenStocks::hide_flags;
+extra_filters ViewscreenStocks::extra_hide_flags;
 
 
 static command_result stocks_cmd(color_ostream &out, vector <string> & parameters)
@@ -664,7 +959,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "stocks", "An improved stocks display screen",
         stocks_cmd, false, ""));
 
-    ViewscreenStocks::hide_flags.whole = 0;
+    ViewscreenStocks::reset();
 
     return CR_OK;
 }
@@ -674,7 +969,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_MAP_LOADED:
-        ViewscreenStocks::hide_flags.whole = 0;
+        ViewscreenStocks::reset();
         break;
     default:
         break;

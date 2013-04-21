@@ -2,10 +2,12 @@
 
 count = 0
 df.each_map_block { |b|
-	if b.designation[0][0].water_table or b.designation[15][15].water_table
+	if b.designation[0][0].water_table or b.designation[8][8].water_table
 		count += 1
-		b.designation.each { |dx| dx.each { |dy| dy.water_table = false } }
+		df.each_map_block_z(b.map_pos.z) { |bz|
+			bz.designation.each { |dx| dx.each { |dy| dy.water_table = false } }
+		}
 	end
 }
 
-puts "cleared #{count} map blocks"
+puts "cleared #{count} aquifer#{'s' if count > 1}"

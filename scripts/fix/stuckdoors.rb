@@ -17,7 +17,7 @@ df.world.buildings.all.each { |bld|
 		count += 1
 		occ.unit = occ.unit_grounded = false
 	end
-	if occ.item and not df.world.items.all.find { |i| i.pos.x == bld.x1 and i.pos.y == bld.y1 and u.pos.z == bld.z }
+	if occ.item and not df.world.items.all.find { |i| i.pos.x == bld.x1 and i.pos.y == bld.y1 and i.pos.z == bld.z }
 		count += 1
 		occ.item = false
 	end

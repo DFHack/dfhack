@@ -371,7 +371,7 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check, b
                 return false;
 
             df::building_constructionst *cons = get_construction_on_tile(site.pos);
-            if (cons && cons == construction_type::Floor)
+            if (cons && cons->type == construction_type::Floor)
             {
                 site.in_open_air = true;
                 return true;

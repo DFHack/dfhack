@@ -1882,8 +1882,8 @@ Internals: the thoughts are set to be very old, so that the game remove them
 quickly after you unpause.
 
 
-slayrace
-========
+exterminate
+===========
 Kills any unit of a given race.
 
 With no argument, lists the available races and count eligible targets.
@@ -1906,15 +1906,15 @@ Will target any unit on a revealed tile of the map, including ambushers.
 
 Ex::
 
-    slayrace gob
+    exterminate gob
 
 To kill a single creature, select the unit with the 'v' cursor and::
 
-    slayrace him
+    exterminate him
 
 To purify all elves on the map with fire (may have side-effects)::
 
-    slayrace elve magma
+    exterminate elve magma
 
 
 magmasource
@@ -1936,6 +1936,13 @@ To remove all placed sources, call ``magmasource stop``.
 
 With no argument, this command shows an help message and list existing sources.
 
+masspit
+=======
+Designate all creatures in cages on top of a pit/pond activity zone for pitting.
+Works best with an animal stockpile on top of the zone.
+
+Works with a zone number as argument (eg ``Activity Zone #6`` -> ``masspit 6``)
+or with the game cursor on top of the area.
 
 digfort
 =======

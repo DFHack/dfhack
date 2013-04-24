@@ -1,31 +1,31 @@
-# create arbitrary items under cursor
+# create first necessity items under cursor
 
 category = $script_args[0] || 'help'
 mat_raw  = $script_args[1] || 'list'
 count    = $script_args[2]
 
 
-category = df.match_rawname(category, ['help', 'bars', 'boulders', 'plants', 'logs', 'webs']) || 'help'
+category = df.match_rawname(category, ['help', 'bars', 'boulders', 'plants', 'logs', 'webs', 'anvils']) || 'help'
 
 if category == 'help'
 	puts <<EOS
-Create items under the cursor.
+Create first necessity items under the cursor.
 Usage:
- create [category] [raws token] [number]
+ create-items [category] [raws token] [number]
 
 Item categories:
- bars, boulders, plants, logs, web
+ bars, boulders, plants, logs, webs, anvils
 
 Raw token:
- either a full token (PLANT_MAT:ADLER:WOOD) or the middle part only
+ Either a full token (PLANT_MAT:ADLER:WOOD) or the middle part only
  (the missing part is autocompleted depending on the item category)
- use 'list' to show all possibilities
+ Use 'list' to show all possibilities
 
 Exemples:
- create boulders hematite 30
- create bars CREATURE_MAT:CAT:SOAP 10
- create web cave_giant
- create plants list
+ create-items boulders hematite 30
+ create-items bars CREATURE_MAT:CAT:SOAP 10
+ create-items web cave_giant
+ create-items plants list
 
 EOS
 	throw :script_finished
@@ -129,6 +129,18 @@ when 'webs'
 		item.dimension = 15000	# XXX may depend on creature (this is for GCS)
 	}
 
+when 'anvils'
+	cls = DFHack::ItemAnvilst
+	if mat_raw !~ /:/ and !(df.decode_mat(mat_raw) rescue nil)
+		list = df.world.raws.inorganics.find_all { |ino|
+			ino.material.flags[:IS_METAL]
+		}.map { |ino| ino.id }
+		mat_raw = match_list(mat_raw, list)
+		mat_raw = "INORGANIC:#{mat_raw}"
+		puts mat_raw
+	end
+	count ||= 1
+
 end
 
 
@@ -156,6 +168,10 @@ count.to_i.times {
 
 
 # move game view, so that the ui menu updates
-df.curview.feed_keys(:CURSOR_UP_Z)
-df.curview.feed_keys(:CURSOR_DOWN_Z)
-
+if df.cursor.z > 5
+	df.curview.feed_keys(:CURSOR_DOWN_Z)
+	df.curview.feed_keys(:CURSOR_UP_Z)
+else
+	df.curview.feed_keys(:CURSOR_UP_Z)
+	df.curview.feed_keys(:CURSOR_DOWN_Z)
+end

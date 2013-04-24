@@ -1,4 +1,4 @@
-# slay all creatures of a given race
+# exterminate creatures
 
 # race = name of the race to eradicate, use 'him' to target only the selected creature
 # use 'undead' to target all undeads
@@ -24,7 +24,7 @@ slayit = lambda { |u|
 	else
 		# it's getting hot around here
 		# !!WARNING!! do not call on a magma-safe creature
-		ouh = df.onupdate_register("slayrace ensure #{u.id}", 1) {
+		ouh = df.onupdate_register("exterminate ensure #{u.id}", 1) {
 			if u.flags1.dead
 				df.onupdate_unregister(ouh)
 			else
@@ -55,7 +55,23 @@ case race
 when nil
 	all_races.sort_by { |race, cnt| [cnt, race] }.each{ |race, cnt| puts " #{race} #{cnt}" }
 
-when 'him'
+when 'help', '?'
+	puts <<EOS
+Kills all creatures of a given race.
+With no argument, lists possible targets with their head count.
+With the special argument 'him' or 'her', kill only the currently selected creature.
+With the special argument 'undead', kill all undead creatures/thralls.
+
+The targets will bleed out on the next game tick, or if they are immune to that, will vanish in a puff of smoke.
+
+The special final argument 'magma' will make magma rain on the targets instead.
+
+Ex: exterminate gob
+    exterminate elve magma
+    exterminate him
+EOS
+
+when 'him', 'her'
 	if him = df.unit_find
 		slayit[him]
 	else
@@ -77,7 +93,10 @@ when /^undead/i
 
 else
 	raw_race = df.match_rawname(race, all_races.keys)
-	raise 'invalid race' if not raw_race
+	if not raw_race
+		puts "Invalid race, use one of #{all_races.keys.sort.join(' ')}"
+		throw :script_finished
+	end
 
 	race_nr = df.world.raws.creatures.all.index { |cr| cr.creature_id == raw_race }
 

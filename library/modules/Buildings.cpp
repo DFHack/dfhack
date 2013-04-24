@@ -635,7 +635,7 @@ bool Buildings::containsTile(df::building *bld, df::coord2d tile, bool room)
     }
     else
     {
-        if (tile.x < bld->x1 || tile.x > bld->x2 || tile.y < bld->y1 || tile.y >= bld->y2)
+        if (tile.x < bld->x1 || tile.x > bld->x2 || tile.y < bld->y1 || tile.y > bld->y2)
             return false;
     }
 

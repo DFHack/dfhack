@@ -12,7 +12,14 @@ DFHack future
     - autoSyndrome: disable by default
     - ruby: add df.dfhack_run "somecommand"
     - magmasource: rename to source, allow water/magma sources/drains
-
+  New plugins:
+    - buildingplan: Place furniture before it's built
+    - resume: A plugin to help display and resume suspended constructions conveniently
+    - dwarfmonitor: Records dwarf activity to measure fort efficiency
+    - mousequery: Look and poke at the map elements with the mouse.
+    - autotrade: Automatically send items in marked stockpiles to trade depot, when trading is possible.
+    - stocks: An improved stocks display screen.
+    
 DFHack v0.34.11-r3
 
   Internals:

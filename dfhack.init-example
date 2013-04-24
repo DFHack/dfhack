@@ -42,6 +42,13 @@ keybinding add Ctrl-Shift-B "adv-bodyswap force"
 # Context-specific bindings #
 #############################
 
+# Stocks plugin
+keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
+
+# Workflow
+keybinding add Ctrl-W@dwarfmode/QueryBuilding/Some "gui/workflow"
+keybinding add Ctrl-I "gui/workflow status"
+
 # q->stockpile; p - copy & paste stockpiles
 keybinding add Alt-P copystock
 
@@ -92,6 +99,9 @@ keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
 # workflow front-end
 keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
 keybinding add Alt-W@overallstatus "gui/workflow status"
+
+# autobutcher front-end
+keybinding add Shift-B@pet/List/Unit "gui/autobutcher"
 
 # assign weapon racks to squads so that they can be used
 keybinding add P@dwarfmode/QueryBuilding/Some/Weaponrack gui/assign-rack

@@ -1713,6 +1713,8 @@ also tries to have dwarves specialize in specific skills.
 
     Warning: autolabor will override any manual changes you make to labors
     while it is enabled.
+    
+    To prevent particular dwarves from being managed by autolabor, put them in any burrow.
 
 For detailed usage information, see 'help autolabor'.
 

@@ -1857,7 +1857,7 @@ use in your farming plots.
 With a seed type, the script will grow 100 of these seeds, ready to be
 harvested. You can change the number with a 2nd argument.
 
-For exemple, to grow 40 plump helmet spawn:
+For example, to grow 40 plump helmet spawn:
 :: 
 
     growcrops plump 40
@@ -1900,9 +1900,10 @@ such as vampires, it also sets animal.vanish_countdown to 2.
 An alternate mode is selected by adding a 2nd argument to the command,
 ``magma``. In this case, a column of 7/7 magma is generated on top of the
 targets until they die (Warning: do not call on magma-safe creatures. Also,
-using this mode for birds is not recommanded.)
+using this mode on birds is not recommanded.)
 
-Will target any unit on a revealed tile of the map, including ambushers.
+Will target any unit on a revealed tile of the map, including ambushers,
+but ignore caged/chained creatures.
 
 Ex::
 
@@ -1917,24 +1918,32 @@ To purify all elves on the map with fire (may have side-effects)::
     exterminate elve magma
 
 
-magmasource
-===========
-Create an infinite magma source on a tile.
+source
+======
+Create an infinite magma or water source or drain on a tile.
 
-This script registers a map tile as a magma source, and every 12 game ticks
-that tile receives 1 new unit of flowing magma.
+This script registers a map tile as a liquid source, and every 12 game ticks
+that tile receives or remove 1 new unit of flow based on the configuration.
 
 Place the game cursor where you want to create the source (must be a
 flow-passable tile, and not too high in the sky) and call::
 
-    magmasource here
+    source add [magma|water] [0-7]
 
-To add more than 1 unit everytime, call the command again.
+The number argument is the target liquid level (0 = drain, 7 = source).
 
-To delete one source, place the cursor over its tile and use ``delete-here``.
-To remove all placed sources, call ``magmasource stop``.
+To add more than 1 unit everytime, call the command again on the same spot.
 
-With no argument, this command shows an help message and list existing sources.
+To delete one source, place the cursor over its tile and use ``delete``.
+To remove all existing sources, call ``source clear``.
+
+The ``list`` argument shows all existing sources.
+
+Ex::
+
+    source add water     - water source
+    source add magma 7   - magma source
+    source add water 0   - water drain
 
 masspit
 =======
@@ -2066,7 +2075,7 @@ Note that the script does not enforce anything, and will let you create
 boulders of toad blood and stuff like that.
 However the ``list`` mode will only show 'normal' materials.
 
-Exemples::
+Examples::
 
     create-items boulders COAL_BITUMINOUS 12
     create-items plant tail_pig
@@ -2074,6 +2083,20 @@ Exemples::
     create-items web CREATURE:SPIDER_CAVE_GIANT:SILK
     create-items bar CREATURE:CAT:SOAP
     create-items bar adamantine
+
+locate-ore
+==========
+Scan the map for metal ores.
+
+Finds and designate for digging one tile of a specific metal ore.
+Only works for native metal ores, does not handle reaction stuff (eg STEEL).
+
+When invoked with the ``list`` argument, lists metal ores available on the map.
+
+Examples::
+    locate-ore list
+    locate-ore hematite
+    locate-ore iron
 
 soundsense-season
 =================
@@ -2085,6 +2108,15 @@ season music until a season switch occurs.
 This script registers a hook that prints the appropriate string
 to gamelog.txt on every map load to fix this. For best results
 call the script from ``dfhack.init``.
+
+multicmd
+========
+Run multiple dfhack commands. The argument is split around the
+character ; and all parts are run sequencially as independent
+dfhack commands. Useful for hotkeys.
+
+Example::
+    multicmd locate-ore iron ; digv
 
 =======================
 In-game interface tools

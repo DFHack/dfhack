@@ -98,7 +98,7 @@ reaction_duck
 Next, start a new fort in a new world, build a duck workshop, then have someone become a duck.
 */
 
-bool enabled = true;
+bool enabled = false;
 
 DFHACK_PLUGIN("autoSyndrome");
 
@@ -278,6 +278,9 @@ void processJob(color_ostream& out, void* jobPtr) {
             continue;
         }
     }
+
+    if ( workerId == -1 )
+        return;
 
     int32_t workerIndex = df::unit::binsearch_index(df::global::world->units.all, workerId);
     if ( workerIndex < 0 ) {

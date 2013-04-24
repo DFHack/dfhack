@@ -54,6 +54,19 @@ The help string displayed in dfhack 'ls' command is the first line of the
 script, if it is a comment (ie starts with '# ').
 
 
+Calling dfhack commands
+-----------------------
+
+The ruby plugin allows the calling of arbitrary dfhack commands, as if typed
+directly on the dfhack prompt.
+However due to locks and stuff, the dfhack command is delayed until the current
+ruby command is finished, so it is restricted to interactive uses.
+It is possible to call the method many times, this will queue dfhack commands
+to be run in order.
+
+ df.dfhack_run "reveal"
+
+
 Ruby helper functions
 ---------------------
 
@@ -107,7 +120,7 @@ eg 'gob' for 'GOBLIN' or 'coal' for 'COAL_BITUMINOUS', hence the name.
  df.building_construct(bld, item_list)
 Allocates a new building in DF memory, define its position / dimensions, and
 create a dwarf job to construct it from the given list of items.
-See buildings.rb/buildbed for an exemple.
+See buildings.rb/buildbed for an example.
 
  df.each_tree(material) { |t|  }
 Iterates over every tree of the given material (eg 'maple').
@@ -137,13 +150,17 @@ To stop being called, use:
 The same mechanism is available for 'onstatechange', but the
 SC_BEGIN_UNLOAD event is not propagated to the ruby handler.
 
+Available states:
+ :WORLD_LOADED, :WORLD_UNLOADED, :MAP_LOADED, :MAP_UNLOADED,
+ :VIEWSCREEN_CHANGED, :CORE_INITIALIZED, :PAUSED, :UNPAUSED
+
 
 C++ object manipulation
 -----------------------
 
 The ruby classes defined in ruby-autogen.rb are accessors to the underlying
 df C++ objects in-memory. To allocate a new C++ object for use in DF, use the
-RubyClass.cpp_new method (see buildings.rb for exemples), works for Compounds
+RubyClass.cpp_new method (see buildings.rb for examples), works for Compounds
 only.
 A special Compound DFHack::StlString is available for allocating a single c++
 stl::string, so that you can call vmethods that take a string pointer argument
@@ -186,10 +203,10 @@ Pointer fields are automatically dereferenced ; so a vector of pointer to
 Units will yield Units directly. NULL pointers yield the 'nil' value.
 
 
-Exemples
+Examples
 --------
 
-For more complex exemples, check the dfhack/scripts/*.rb files.
+For more complex examples, check the dfhack/scripts/*.rb files.
 
 Show info on the currently selected unit ('v' or 'k' DF menu)
  p df.unit_find.flags1
@@ -240,7 +257,7 @@ which differ between Windows and Linux. Linux and Macosx are the same, as they
 both use gcc).
 It is stored inside the build directory (eg build/plugins/ruby/ruby-autogen.rb)
 
-For exemple,
+For example,
  <ld:global-type ld:meta="struct-type" type-name="unit">
    <ld:field type-name="language_name" name="name" ld:meta="global"/>
    <ld:field name="custom_profession" ld:meta="primitive" ld:subtype="stl-string"/>

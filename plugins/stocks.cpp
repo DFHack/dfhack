@@ -27,7 +27,7 @@
 using df::global::world;
 
 DFHACK_PLUGIN("stocks");
-#define PLUGIN_VERSION 0.1
+#define PLUGIN_VERSION 0.2
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
@@ -290,6 +290,46 @@ private:
 
 static TradeDepotInfo depot_info;
 
+
+static string get_keywords(df::item *item)
+{
+    string keywords;
+
+    if (item->flags.bits.in_job)
+        keywords += "job ";
+
+    if (item->flags.bits.rotten)
+        keywords += "rotten ";
+
+    if (item->flags.bits.foreign)
+        keywords += "foreign ";
+
+    if (item->flags.bits.owned)
+        keywords += "owned ";
+
+    if (item->flags.bits.forbid)
+        keywords += "forbid ";
+
+    if (item->flags.bits.dump)
+        keywords += "dump ";
+
+    if (item->flags.bits.on_fire)
+        keywords += "fire ";
+
+    if (item->flags.bits.melt)
+        keywords += "melt ";
+
+    if (is_in_inventory(item))
+        keywords += "inventory ";
+
+    if (depot_info.canTrade())
+    {
+        if (is_marked_for_trade(item))
+            keywords += "trade ";
+    }
+
+    return keywords;
+}
 
 template <class T>
 class StockListColumn : public ListColumn<T>
@@ -603,12 +643,14 @@ public:
             df::item_flags flags;
             flags.bits.dump = true;
             applyFlag(flags);
+            populateItems();
         }
         else if (input->count(interface_key::CUSTOM_SHIFT_F))
         {
             df::item_flags flags;
             flags.bits.forbid = true;
             applyFlag(flags);
+            populateItems();
         }
         else if (input->count(interface_key::CUSTOM_SHIFT_T))
         {
@@ -621,12 +663,14 @@ public:
                     if (item)
                         depot_info.assignItem(item);
                 }
+
+                populateItems();
             }
             else
             {
                 auto item = items_column.getFirstSelectedElem();
-                if (item)
-                    depot_info.assignItem(item);
+                if (item && depot_info.assignItem(item))
+                    populateItems();
             }
         }
 
@@ -906,7 +950,8 @@ private:
 
             label = pad_string(label, MAX_NAME, false, true);
 
-            items_column.add(label, item);
+            auto entry = ListEntry<df::item *>(label, item, get_keywords(item));
+            items_column.add(entry);
         }
 
         items_column.filterDisplay();

@@ -288,7 +288,8 @@ public:
                 string item_string = toLower(list[i].text);
                 for (auto si = search_tokens.begin(); si != search_tokens.end(); si++)
                 {
-                    if (!si->empty() && item_string.find(*si) == string::npos)
+                    if (!si->empty() && item_string.find(*si) == string::npos && 
+                        list[i].keywords.find(*si) == string::npos)
                     {
                         include_item = false;
                         break;

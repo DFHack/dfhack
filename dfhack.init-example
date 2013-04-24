@@ -42,6 +42,13 @@ keybinding add Ctrl-Shift-B "adv-bodyswap force"
 # Context-specific bindings #
 #############################
 
+# Stocks plugin
+keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
+
+# Workflow
+keybinding add Ctrl-W@dwarfmode/QueryBuilding/Some "gui/workflow"
+keybinding add Ctrl-I "gui/workflow status"
+
 # q->stockpile; p - copy & paste stockpiles
 keybinding add Alt-P copystock
 

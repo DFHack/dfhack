@@ -947,6 +947,14 @@ Example:
 
  'alltraffic N' - Set traffic to 'normal' for all tiles.
 
+restrictliquid
+--------------
+Restrict traffic on all visible tiles with liquid.
+
+restrictice
+-----------
+Restrict traffic on all tiles on top of visible ice.
+
 getplants
 ---------
 This tool allows plant gathering and tree cutting by RAW ID. Specify the types

@@ -1,6 +1,8 @@
 DFHack future
 
-  Is not yet known.
+  New commands:
+    - restrictliquid - Restrict traffic on every visible square with liquid.
+    - restrictice - Restrict traffic on squares above visible ice.
 
 DFHack v0.34.11-r3
 

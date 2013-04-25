@@ -1,40 +1,20 @@
-#include <sstream> 
-
-#include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
 #include <VTableInterpose.h>
 
-#include "DataDefs.h"
-
 #include "df/building.h"
-#include "df/enabler.h"
 #include "df/item.h"
-#include "df/ui.h"
 #include "df/unit.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
 
 #include "modules/Gui.h"
-#include "modules/Screen.h"
 
+#include "uicommon.h"
 
-using std::set;
-using std::string;
-using std::ostringstream;
-
-using namespace DFHack;
-using namespace df::enums;
-
-using df::global::enabler;
-using df::global::gps;
 using df::global::world;
 using df::global::ui;
 
-
 static int32_t last_x, last_y, last_z;
-static size_t max_list_size = 100000; // Avoid iterating over huge lists
+static size_t max_list_size = 300000; // Avoid iterating over huge lists
 
 struct mousequery_hook : public df::viewscreen_dwarfmodest
 {
@@ -129,99 +109,94 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
     bool handle_mouse(const set<df::interface_key> *input)
     {
         int32_t cx, cy, vz;
-        if (enabler->tracking_on)
+        if (!enabler->tracking_on)
+            return false;
+
+        if (enabler->mouse_lbut)
         {
-            if (enabler->mouse_lbut)
+            int32_t mx, my;
+            if (!Gui::getMousePos(mx, my))
+                return false;
+
+            int32_t vx, vy;
+            if (!Gui::getViewCoords(vx, vy, vz))
+                return false;
+
+            cx = vx + mx - 1;
+            cy = vy + my - 1;
+
+            using namespace df::enums::ui_sidebar_mode;
+            df::interface_key key = interface_key::NONE;
+            bool cursor_still_here = (last_x == cx && last_y == cy && last_z == vz);
+            switch(ui->main.mode)
             {
-                int32_t mx, my;
-                if (Gui::getMousePos(mx, my))
-                {
-                    int32_t vx, vy;
-                    if (Gui::getViewCoords(vx, vy, vz))
-                    {
-                        cx = vx + mx - 1;
-                        cy = vy + my - 1;
+            case QueryBuilding:
+                if (cursor_still_here)
+                    key = df::interface_key::D_BUILDITEM;
+                break;
 
-                        using namespace df::enums::ui_sidebar_mode;
-                        df::interface_key key = interface_key::NONE;
-                        bool cursor_still_here = (last_x == cx && last_y == cy && last_z == vz);
-                        switch(ui->main.mode)
-                        {
-                        case QueryBuilding:
-                            if (cursor_still_here)
-                                key = df::interface_key::D_BUILDITEM;
-                            break;
+            case BuildingItems:
+                if (cursor_still_here)
+                    key = df::interface_key::D_VIEWUNIT;
+                break;
 
-                        case BuildingItems:
-                            if (cursor_still_here)
-                                key = df::interface_key::D_VIEWUNIT;
-                            break;
+            case ViewUnits:
+                if (cursor_still_here)
+                    key = df::interface_key::D_LOOK;
+                break;
 
-                        case ViewUnits:
-                            if (cursor_still_here)
-                                key = df::interface_key::D_LOOK;
-                            break;
+            case LookAround:
+                if (cursor_still_here)
+                    key = df::interface_key::D_BUILDJOB;
+                break;
 
-                        case LookAround:
-                            if (cursor_still_here)
-                                key = df::interface_key::D_BUILDJOB;
-                            break;
+            case Default:
+                break;
 
-                        case Default:
-                            break;
-
-                        default:
-                            return false;
-                        }
-
-                        enabler->mouse_lbut = 0;
-
-                        // Can't check limits earlier as we must be sure we are in query or default mode we can clear the button flag
-                        // Otherwise the feed gets stuck in a loop
-                        uint8_t menu_width, area_map_width;
-                        Gui::getMenuWidth(menu_width, area_map_width);
-                        int32_t w = gps->dimx;
-                        if (menu_width == 1) w -= 57; //Menu is open doubly wide
-                        else if (menu_width == 2 && area_map_width == 3) w -= 33; //Just the menu is open
-                        else if (menu_width == 2 && area_map_width == 2) w -= 26; //Just the area map is open
-
-                        if (mx < 1 || mx > w || my < 1 || my > gps->dimy - 2)
-                            return false;
-
-                        while (ui->main.mode != Default)
-                        {
-                            send_key(df::interface_key::LEAVESCREEN);
-                        }
-
-                        if (key == interface_key::NONE)
-                            key = get_default_query_mode(cx, cy, vz);
-
-                        send_key(key);
-
-                        // Force UI refresh
-                        Gui::setCursorCoords(cx, cy, vz);
-                        send_key(interface_key::CURSOR_DOWN_Z);
-                        send_key(interface_key::CURSOR_UP_Z);
-                        last_x = cx;
-                        last_y = cy;
-                        last_z = vz;
-
-                        return true;
-                    }
-                }
+            default:
+                return false;
             }
-            else if (enabler->mouse_rbut)
+
+            enabler->mouse_lbut = 0;
+
+            // Can't check limits earlier as we must be sure we are in query or default mode 
+            // (so we can clear the button down flag)
+            auto dims = Gui::getDwarfmodeViewDims();
+            int left_margin = dims.menu_x1 + 1;
+            if (mx < 1 || mx > dims.menu_x1 - 2 || my < 1 || my > gps->dimy - 2)
+                return false;
+
+            while (ui->main.mode != Default)
             {
-                // Escape out of query mode
-                using namespace df::enums::ui_sidebar_mode;
-                if (ui->main.mode == QueryBuilding || ui->main.mode == BuildingItems ||
-                    ui->main.mode == ViewUnits || ui->main.mode == LookAround)
+                send_key(df::interface_key::LEAVESCREEN);
+            }
+
+            if (key == interface_key::NONE)
+                key = get_default_query_mode(cx, cy, vz);
+
+            send_key(key);
+
+            // Force UI refresh
+            Gui::setCursorCoords(cx, cy, vz);
+            send_key(interface_key::CURSOR_DOWN_Z);
+            send_key(interface_key::CURSOR_UP_Z);
+            last_x = cx;
+            last_y = cy;
+            last_z = vz;
+
+            return true;
+        }
+        else if (enabler->mouse_rbut)
+        {
+            // Escape out of query mode
+            using namespace df::enums::ui_sidebar_mode;
+            if (ui->main.mode == QueryBuilding || ui->main.mode == BuildingItems ||
+                ui->main.mode == ViewUnits || ui->main.mode == LookAround)
+            {
+                while (ui->main.mode != Default)
                 {
-                    while (ui->main.mode != Default)
-                    {
-                        enabler->mouse_rbut = 0;
-                        send_key(df::interface_key::LEAVESCREEN);
-                    }
+                    enabler->mouse_rbut = 0;
+                    send_key(df::interface_key::LEAVESCREEN);
                 }
             }
         }

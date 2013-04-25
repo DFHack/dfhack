@@ -13,6 +13,8 @@
 using df::global::world;
 using df::global::ui;
 
+using namespace df::enums::ui_sidebar_mode;
+
 static int32_t last_x, last_y, last_z;
 static size_t max_list_size = 300000; // Avoid iterating over huge lists
 
@@ -24,8 +26,8 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
     {
         set<df::interface_key> tmp;
         tmp.insert(key);
-        //INTERPOSE_NEXT(feed)(&tmp);
-        this->feed(&tmp);
+        INTERPOSE_NEXT(feed)(&tmp);
+        //this->feed(&tmp);
     }
 
     df::interface_key get_default_query_mode(const int32_t &x, const int32_t &y, const int32_t &z)
@@ -112,22 +114,26 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (!enabler->tracking_on)
             return false;
 
+        int32_t mx, my;
+        if (!Gui::getMousePos(mx, my))
+            return false;
+
+        int32_t vx, vy;
+        if (!Gui::getViewCoords(vx, vy, vz))
+            return false;
+
+        cx = vx + mx - 1;
+        cy = vy + my - 1;
+
         if (enabler->mouse_lbut)
         {
-            int32_t mx, my;
-            if (!Gui::getMousePos(mx, my))
-                return false;
-
-            int32_t vx, vy;
-            if (!Gui::getViewCoords(vx, vy, vz))
-                return false;
-
-            cx = vx + mx - 1;
-            cy = vy + my - 1;
-
-            using namespace df::enums::ui_sidebar_mode;
-            df::interface_key key = interface_key::NONE;
             bool cursor_still_here = (last_x == cx && last_y == cy && last_z == vz);
+            last_x = cx;
+            last_y = cy;
+            last_z = vz;
+
+            df::interface_key key = interface_key::NONE;
+            bool designationMode = false;
             switch(ui->main.mode)
             {
             case QueryBuilding:
@@ -150,6 +156,38 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                     key = df::interface_key::D_BUILDJOB;
                 break;
 
+            case DesignateMine:
+            case DesignateRemoveRamps:
+            case DesignateUpStair:
+            case DesignateDownStair:
+            case DesignateUpDownStair:
+            case DesignateUpRamp:
+            case DesignateChannel:
+            case DesignateGatherPlants:
+            case DesignateRemoveDesignation:
+            case DesignateSmooth:
+            case DesignateCarveTrack:
+            case DesignateEngrave:
+            case DesignateCarveFortification:
+            case DesignateItemsClaim:
+            case DesignateItemsForbid:
+            case DesignateItemsMelt:
+            case DesignateItemsUnmelt:
+            case DesignateItemsDump:
+            case DesignateItemsUndump:
+            case DesignateItemsHide:
+            case DesignateItemsUnhide:
+            case DesignateChopTrees:
+            case DesignateToggleEngravings:
+            case DesignateTrafficHigh:
+            case DesignateTrafficNormal:
+            case DesignateTrafficLow:
+            case DesignateTrafficRestricted:
+            case DesignateRemoveConstruction:
+                designationMode = true;
+                key = df::interface_key::SELECT;
+                break;
+
             case Default:
                 break;
 
@@ -162,27 +200,31 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             // Can't check limits earlier as we must be sure we are in query or default mode 
             // (so we can clear the button down flag)
             auto dims = Gui::getDwarfmodeViewDims();
-            int left_margin = dims.menu_x1 + 1;
-            if (mx < 1 || mx > dims.menu_x1 - 2 || my < 1 || my > gps->dimy - 2)
+            int right_bound = (dims.menu_x1 > 0) ? dims.menu_x1 - 2 : gps->dimx - 2;
+            if (mx < 1 || mx > right_bound || my < 1 || my > gps->dimy - 2)
                 return false;
 
-            while (ui->main.mode != Default)
+            if (!designationMode)
             {
-                send_key(df::interface_key::LEAVESCREEN);
+                while (ui->main.mode != Default)
+                {
+                    send_key(df::interface_key::LEAVESCREEN);
+                }
+
+                if (key == interface_key::NONE)
+                    key = get_default_query_mode(cx, cy, vz);
             }
 
-            if (key == interface_key::NONE)
-                key = get_default_query_mode(cx, cy, vz);
-
-            send_key(key);
+            if (!designationMode)
+                send_key(key);
 
             // Force UI refresh
             Gui::setCursorCoords(cx, cy, vz);
             send_key(interface_key::CURSOR_DOWN_Z);
             send_key(interface_key::CURSOR_UP_Z);
-            last_x = cx;
-            last_y = cy;
-            last_z = vz;
+
+            if (designationMode)
+                send_key(key);
 
             return true;
         }
@@ -193,9 +235,10 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             if (ui->main.mode == QueryBuilding || ui->main.mode == BuildingItems ||
                 ui->main.mode == ViewUnits || ui->main.mode == LookAround)
             {
+                enabler->mouse_rbut_down = 0;
+                enabler->mouse_rbut = 0;
                 while (ui->main.mode != Default)
                 {
-                    enabler->mouse_rbut = 0;
                     send_key(df::interface_key::LEAVESCREEN);
                 }
             }
@@ -209,15 +252,21 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (!handle_mouse(input))
             INTERPOSE_NEXT(feed)(input);
     }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+    }
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(mousequery_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(mousequery_hook, render);
 
 DFHACK_PLUGIN("mousequery");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!gps || !INTERPOSE_HOOK(mousequery_hook, feed).apply())
+    if (!gps || !INTERPOSE_HOOK(mousequery_hook, feed).apply() || !INTERPOSE_HOOK(mousequery_hook, render).apply())
         out.printerr("Could not insert mousequery hooks!\n");
 
     last_x = last_y = last_z = -1;

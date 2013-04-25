@@ -800,7 +800,7 @@ private:
             else
             {
                 auto unit = Items::getHolderUnit(item);
-                if (unit)
+                if (unit && unit->profession != profession::THIEF && unit->profession != profession::MASTER_THIEF)
                     return &unit->pos;
 
                 return nullptr;

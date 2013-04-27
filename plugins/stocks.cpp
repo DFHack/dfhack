@@ -967,7 +967,6 @@ private:
         bad_flags.bits.trader = true;
         bad_flags.bits.in_building = true;
         bad_flags.bits.garbage_collect = true;
-        bad_flags.bits.hostile = true;
         bad_flags.bits.removed = true;
         bad_flags.bits.dead_dwarf = true;
         bad_flags.bits.murder = true;

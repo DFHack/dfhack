@@ -173,7 +173,6 @@ public:
     bool multiselect;
     bool allow_null;
     bool auto_select;
-    bool force_sort;
     bool allow_search;
     bool feed_changed_highlight;
 
@@ -188,7 +187,6 @@ public:
         multiselect = false;
         allow_null = true;
         auto_select = false;
-        force_sort = false;
         allow_search = true;
         feed_changed_highlight = false;
     }
@@ -547,7 +545,7 @@ public:
         return false;
     }
 
-    void sort()
+    void sort(bool force_sort = false)
     {
         if (force_sort || list.size() < 100)
             std::sort(list.begin(), list.end(), 

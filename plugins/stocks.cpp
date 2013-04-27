@@ -29,7 +29,7 @@
 using df::global::world;
 
 DFHACK_PLUGIN("stocks");
-#define PLUGIN_VERSION 0.2
+#define PLUGIN_VERSION 0.3
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {

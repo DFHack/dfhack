@@ -396,8 +396,8 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
     }
 };
 
-IMPLEMENT_VMETHOD_INTERPOSE(mousequery_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(mousequery_hook, render);
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(mousequery_hook, feed, 100);
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(mousequery_hook, render, 100);
 
 DFHACK_PLUGIN("mousequery");
 

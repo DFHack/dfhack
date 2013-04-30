@@ -189,6 +189,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
             df::interface_key key = interface_key::NONE;
             bool designationMode = false;
+            bool skipRefresh = false;
             switch(ui->main.mode)
             {
             case QueryBuilding:
@@ -244,11 +245,19 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                 break;
 
             case Build:
-                if (df::global::ui_build_selector &&
-                    df::global::ui_build_selector->stage < 2)
+                if (df::global::ui_build_selector)
                 {
-                    designationMode = true;
-                    key = df::interface_key::SELECT;
+                    if (df::global::ui_build_selector->stage < 2)
+                    {
+                        designationMode = true;
+                        key = df::interface_key::SELECT;
+                    }
+                    else
+                    {
+                        designationMode = true;
+                        skipRefresh = true;
+                        key = df::interface_key::SELECT_ALL;
+                    }
                 }
                 break;
 
@@ -277,15 +286,17 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
                 if (key == interface_key::NONE)
                     key = get_default_query_mode(mpos);
+
+                sendKey(key);
             }
 
-            if (!designationMode)
-                sendKey(key);
-
-            // Force UI refresh
-            Gui::setCursorCoords(mpos.x, mpos.y, mpos.z);
-            sendKey(interface_key::CURSOR_DOWN_Z);
-            sendKey(interface_key::CURSOR_UP_Z);
+            if (!skipRefresh)
+            {
+                // Force UI refresh
+                Gui::setCursorCoords(mpos.x, mpos.y, mpos.z);
+                sendKey(interface_key::CURSOR_DOWN_Z);
+                sendKey(interface_key::CURSOR_UP_Z);
+            }
 
             if (designationMode)
                 sendKey(key);

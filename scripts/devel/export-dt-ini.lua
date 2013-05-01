@@ -109,6 +109,8 @@ vector('shapes_vector',globals,'world','raws','language','shapes')
 offset('base_materials',globals,'world','raws','mat_table','builtin')
 vector('inorganics_vector',globals,'world','raws','inorganics')
 vector('plants_vector',globals,'world','raws','plants','all')
+vector('active_sites_vector',df.world_data,'active_site')
+offset('world_site_type',df.world_data,'next_site_id')
 
 header('offsets')
 offset('word_table',df.language_translation,'words')
@@ -140,6 +142,7 @@ vector('pref_string_vector',df.creature_raw,'prefstring')
 vector('castes_vector',df.creature_raw,'caste')
 vector('pop_ratio_vector',df.creature_raw,'pop_ratio')
 vector('materials_vector',df.creature_raw,'material')
+offset('flags',df.creature_raw,'flags')
 
 header('caste_offsets')
 offset('caste_name',df.caste_raw,'caste_name')
@@ -147,6 +150,9 @@ offset('caste_descr',df.caste_raw,'description')
 offset('caste_phys_att_ranges',df.caste_raw,'attributes','phys_att_range')
 offset('caste_ment_att_ranges',df.caste_raw,'attributes','ment_att_range')
 offset('adult_size',df.caste_raw,'misc','adult_size')
+offset('flags',df.caste_raw,'flags')
+offset('extracts',df.caste_raw,'extracts')
+offset('skill_rates',df.caste_raw,'skill_rates')
 
 header('hist_entity_offsets')
 vector('squads',df.historical_entity,'squads')
@@ -174,6 +180,7 @@ header('weapon_offsets')
 offset('name_plural',df.itemdef_weaponst,'name_plural')
 offset('single_size',df.itemdef_weaponst,'two_handed')
 offset('multi_size',df.itemdef_weaponst,'minimum_size')
+offset('ammo',df.itemdef_weaponst,'ranged_ammo')
 
 header('material_offsets')
 offset('solid_name',df.material_common,'state_name','Solid')
@@ -183,6 +190,7 @@ offset('powder_name',df.material_common,'state_name','Powder')
 offset('paste_name',df.material_common,'state_name','Paste')
 offset('pressed_name',df.material_common,'state_name','Pressed')
 offset('inorganic_materials_vector',df.inorganic_raw,'material')
+offset('flags',df.material_common,'flags')
 
 header('plant_offsets')
 offset('name',df.plant_raw,'name')
@@ -190,6 +198,7 @@ offset('name_plural',df.plant_raw,'name_plural')
 offset('name_leaf_plural',df.plant_raw,'leaves_plural')
 offset('name_seed_plural',df.plant_raw,'seed_plural')
 vector('materials_vector',df.plant_raw,'material')
+offset('flags',df.plant_raw,'flags')
 
 header('item_offsets')
 offset('name_plural',df.itemdef_armorst,'name_plural')
@@ -233,12 +242,14 @@ offset('labors',df.unit,'status','labors')
 offset('happiness',df.unit,'status','happiness')
 offset('squad_ref_id',df.unit,'hist_figure_id')
 offset('hist_id',df.unit,'hist_figure_id')
+offset('artifact_name',df.unit,'status','artifact_name')
 
 header('soul_details')
 offset('name',df.unit_soul,'name')
 offset('mental_attrs',df.unit_soul,'mental_attrs')
 vector('skills',df.unit_soul,'skills')
 offset('traits',df.unit_soul,'traits')
+offset('preferences',df.unit_soul,'preferences')
 
 header('job_details')
 offset('id',df.job,'job_type')
@@ -246,6 +257,9 @@ value('on_break_flag',df.misc_trait_type.OnBreak)
 offset('sub_job_id',df.job,'reaction_name')
 offset('reaction',df.reaction,'name')
 offset('reaction_skill',df.reaction,'skill')
+offset('mat_type',df.job,'mat_type')
+offset('mat_index',df.job,'mat_index')
+offset('mat_category',df.job,'material_category')
 
 header('squad_offsets')
 offset('id',df.squad,'id')
@@ -298,6 +312,8 @@ size=9
 8\value=0x00000080
 9\name="Dead, Jim."
 9\value=0x00000002
+10\name=marauder
+10\value=0x00000010
 
 [invalid_flags_2]
 size=5

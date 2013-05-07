@@ -8,6 +8,7 @@ DFHack future
     - locate_ore: scan the map for unmined ore veins
     - multicmd: run a sequence of dfhack commands, separated by ';'
     - autobutcher: A GUI front-end for the autobutcher plugin.
+    - startdwarf: change the number of dwarves for a new embark
   Misc improvements:
     - exterminate: renamed from slayrace, add help message, add butcher mode
     - autoSyndrome: disable by default

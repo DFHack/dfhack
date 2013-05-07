@@ -73,11 +73,10 @@ function job_outputs.CustomReaction(callback, job)
 
                     if mat then
                         local rp = mat.material.reaction_product
-                        local idx = utils.linear_index(rp.id, p_code)
-                        if not idx then
-                            goto continue
+                        local idx = utils.linear_index(rp.id, p_code, 'value')
+                        if idx then
+                            mat_type, mat_index = rp.material.mat_type[idx], rp.material.mat_index[idx]
                         end
-                        mat_type, mat_index = rp.material.mat_type[idx], rp.material.mat_index[idx]
                     else
                         if p_code == "SOAP_MAT" then
                             mat_mask = { soap = true }

@@ -8,6 +8,7 @@ local ms = require 'memscan'
 local globals = df.global
 local global_addr = dfhack.internal.getAddress
 local os_type = dfhack.getOSType()
+local rdelta = dfhack.internal.getRebaseDelta()
 
 local vbias = 0
 if os_type == 'windows' then vbias = -4 end
@@ -39,6 +40,7 @@ local function address(name,bias,base,field,...)
 
     if base == globals then
         addr = global_addr(field)
+        bias = bias - rdelta
         if addr and select('#',...) > 0 then
             _,addr = df.sizeof(ms.field_ref(base,field,...))
         end

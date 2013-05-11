@@ -32,13 +32,13 @@ using namespace EventManager;
  **/
 
 //map<uint32_t, vector<DFHack::EventManager::EventHandler> > tickQueue;
-multimap<uint32_t, EventHandler> tickQueue;
+static multimap<uint32_t, EventHandler> tickQueue;
 
 //TODO: consider unordered_map of pairs, or unordered_map of unordered_set, or whatever
-multimap<Plugin*, EventHandler> handlers[EventType::EVENT_MAX];
-uint32_t eventLastTick[EventType::EVENT_MAX];
+static multimap<Plugin*, EventHandler> handlers[EventType::EVENT_MAX];
+static uint32_t eventLastTick[EventType::EVENT_MAX];
 
-const uint32_t ticksPerYear = 403200;
+static const uint32_t ticksPerYear = 403200;
 
 void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin) {
     handlers[e].insert(pair<Plugin*, EventHandler>(plugin, handler));

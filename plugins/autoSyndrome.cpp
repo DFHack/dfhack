@@ -7,6 +7,7 @@
 #include "modules/Job.h"
 #include "modules/Maps.h"
 #include "modules/Once.h"
+#include "modules/World.h"
 
 #include "df/building.h"
 #include "df/caste_raw.h"
@@ -162,12 +163,10 @@ command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
     if ( enabled == wasEnabled )
         return CR_OK;
 
-    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("autoSyndrome");
+    EventManager::unregisterAll(plugin_self);
     if ( enabled ) {
         EventManager::EventHandler handle(processJob, 5);
-        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, me);
-    } else {
-        EventManager::unregisterAll(me);
+        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, plugin_self);
     }
     return CR_OK;
 }
@@ -473,17 +472,19 @@ int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrom
 
     df::unit_syndrome* unitSyndrome = new df::unit_syndrome();
     unitSyndrome->type = syndrome->id;
-    unitSyndrome->year = 0;
-    unitSyndrome->year_time = 0;
-    unitSyndrome->ticks = 1;
-    unitSyndrome->unk1 = 1;
+    unitSyndrome->year = DFHack::World::ReadCurrentYear();
+    unitSyndrome->year_time = DFHack::World::ReadCurrentTick();
+//    unitSyndrome->year = 0;
+//    unitSyndrome->year_time = 0;
+    unitSyndrome->ticks = 0;
+    unitSyndrome->unk1 = 0;
     unitSyndrome->flags = 0; //typecast
     
     for ( size_t a = 0; a < syndrome->ce.size(); a++ ) {
         df::unit_syndrome::T_symptoms* symptom = new df::unit_syndrome::T_symptoms();
         symptom->unk1 = 0;
         symptom->unk2 = 0;
-        symptom->ticks = 1;
+        symptom->ticks = 0;
         symptom->flags = 2; //TODO: ???
         unitSyndrome->symptoms.push_back(symptom);
     }

@@ -34,6 +34,13 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 void syndromeHandler(color_ostream& out, void* ptr) {
     EventManager::SyndromeData* data = (EventManager::SyndromeData*)ptr;
+    
+    if ( !ptr ) {
+        if ( DFHack::Once::doOnce("syndromeTrigger_null data") ) {
+            out.print("%s, %d: null pointer from EventManager.\n", __FILE__, __LINE__);
+        }
+        return;
+    }
     //out.print("Syndrome started: unit %d, syndrome %d.\n", data->unitId, data->syndromeIndex);
 
     df::unit* unit = df::unit::find(data->unitId);

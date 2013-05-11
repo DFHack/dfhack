@@ -761,6 +761,103 @@ showmood
 --------
 Shows all items needed for the currently active strange mood.
 
+Mod Interaction
+===============
+
+This section describes plugins that interact with information in the raw files to add new features that cannot be achieved by only changing raw files.
+
+autoSyndrome
+------------
+
+This plugin replaces "boiling rock" syndromes. Without this plugin, it is possible to add a syndrome to a unit by making the unit perform a custom reaction. First, add the syndrome to a rock which boils at room temperature. Make sure that the syndrome is spread by inhaling. Then, add a custom reaction which creates that rock. When the reaction is performed, the rock will be created, then boil. Hopefully, the dwarf will inhale the gas and become afflicted with the syndrome. This has disadvantages.
+
+1. The creating unit might not inhale the gas. This makes it difficult to balance gameplay, as it is hard to measure this probability.
+
+2. A different unit might inhale the gas. Pets or children might inhale the gas, which may be undesired.
+
+To fix this problem, you can use autoSyndrome. The plugin monitors when custom reactions are completed within dwarf mode. If certain conditions are met, then the syndrome is immediately applied. The conditions are described below in priority order. If multiple products are created by the reaction, each one is considered independently in order. If a rock has multiple syndromes, each one is considered independently. If the conditions are all met, then the appropriate target will be instantly afficted with the appropriate syndrome, and the syndrome will behave just like any other.
+
+1. The recently completed reaction must be a custom reaction, not a built-in one.
+
+2. The product must be an inorganic boulder. Its boiling temperature is ignored.
+
+3. The syndrome must have ``[SYN_CLASS:\\AUTO_SYNDROME]``.
+
+4. If the syndrome has ``[SYN_CLASS:\\ALLOW_MULTIPLE_TARGETS]`` then an unbounded number of units can be targetted by the syndrome. If absent, at most one will be affected, and the worker will be considered first.
+
+5. If the syndrome has ``[SYN_CLASS:\\ALLOW_NONWORKER_TARGETS]`` then units that are in the building might be targetted. If absent, only the worker will be targetted. Even if present, the worker will be considered first.
+
+6. If the syndrome has ``[SYN_CLASS:\\PRESERVE_ROCK]`` then the stone or stones created will not be destroyed. If absent, they will be. Leaving this out ensures that gasses from boiling rocks will not sidestep the plugin, affecting nearby units using existing gameplay mechanics (because said gasses will never get a chance to be created).
+
+7. If there are no ``SYN_IMMUNE_CREATURE``, ``SYN_AFFECTED_CREATURE``, ``SYN_IMMUNE_CLASS``, or ``SYN_AFFECTED_CLASS`` then any creature can be targetted, if it meets the above restrictions.
+
+8. If the target creature is specified as ``SYN_IMMUNE_CREATURE`` in the syndrome tags, then it will not be affected.
+
+9. If it is specified as ``SYN_AFFECTED_CREATURE`` then it will be affected.
+
+10. If it has ``SYN_IMMUNE_CLASS`` it will not be affected.
+
+11. It it has ``SYN_AFFECTED_CLASS`` it will be affected.
+
+Note that tags like ``[SYN_INHALED]`` are ignored.
+
+It is also possible to directly trigger dfhack plugins and scripts using autoSyndrome. If a syndrome has ``[SYN_CLASS:\\COMMAND]`` then all following ``SYN_CLASS`` tags will be used to create a console command. The command will behave exactly as if the user had typed it in to the dfhack console. For example
+
+``[SYN_CLASS:\\COMMAND]``
+``[SYN_CLASS:prospect]``
+``[SYN_CLASS:all]``
+
+would run the command "prospect all" whenever the given rock is created. The ``\\AUTO_SYNDROME`` tag IS required for commands to execute. Note that since all ``SYN_CLASS`` tags after the ``\\COMMAND`` tag are interpreted as part of the command, tags like ``\\WORKER_ONLY`` must be placed before ``\\COMMAND``, or not at all in order to work.
+
+There are also certain "special" arguments that can be passed.
+
+1. ``\\LOCATION``: pass the x, y, and z coordinates of the work tile of the building which completed the job as separate arguments.
+
+2. ``\\WORKER_ID``: pass the unit id of the unit that finished the job as an argument.
+
+3. ``\\REACTION_INDEX``: pass the id of the completed reaction as an argument.
+
+A note on spaces: when a plugin command executes in dfhack, it always has a list of arguments. Arguments are strings which tell the plugin what the user wants it to do. When the user types in a command, arguments will be separated by whitespace. However, if autoSyndrome is given a tag like ``[SYN_CLASS:123 abcde]`` after a ``[SYN_CLASS:\\COMMAND]`` tag, this will still be treated as ONE argument. This may or may not cause problems, depending on the command in question. To be safe, never include spaces in as an argument to a command.
+
+For example, suppose a reaction creates a rock which has a syndrome with the ``SYN_CLASS`` tags ``\\AUTO_SYNDROME``, ``\\COMMAND'', ``printArgs``, ``id_comes_next``, ``\\WORKER_ID``, ``location_comes_next``, ``\\LOCATION`` in that order. Suppose the reaction is done at ``(35,96,112)`` by unit number 15. This would be equivalent to typing ``printArgs id_comes_next 15 location_comes_next 35 96 112`` into the DFHack console and pressing enter.
+
+Other syndrome classes that occur before ``\\COMMAND`` (or in absence of any ``\\COMMAND`` synclass) are ignored.
+
+It is not currently possible to execute more than one command per syndrome. Instead, use multiple syndromes to achieve the same effect.
+
+Again, note that plugins AND scripts can be executed this way, and arguments will be passed according to the same rules.
+
+If a command is executed, then the plugin will NOT apply the syndrome to any units. To call a dfhack command at the same time as applying a syndrome, use separate syndromes. This behavior is to prevent conflicts with the syndromeTrigger plugin.
+
+syndromeTrigger
+---------------
+
+This plugin allows DFHack commands to be executed whenever a unit becomes afflicted with a syndrome. This can happen due to a boiling rock, an interaction, autoSyndrome, etc. Regardless of the cause, if the appropriate ``SYN_CLASS`` tags are present, the command will execute.
+
+The syntax is very similar to autoSyndrome. If the syndrome has the ``\\COMMAND`` tag, every subsequent ``SYN_CLASS`` tag will be used to create a console command. The following tags are "special":
+
+1. ``\\LOCATION``: this will be replaced by three arguments, one for each coordinate of the location of the unit.
+
+2. ``\\UNIT_ID``: this will be replaced by the identifier of the unit afllicted with the syndrome.
+
+3. ``\\SYNDROME_ID``: this will be replaced by the identifier of the syndrome in question.
+
+True Transformation
++++++++++++++++++++
+
+It also allows true, permanent transformations. In vanilla DF, if syndrome A transforms dwarves into goblins permanently, and syndrome B transforms goblins into dragons permanently, then syndrome B would NOT properly transform goblins that had been transformed from dwarves. True transformations can be achieved with this plugin.
+
+True transformations work differently. First, the unit transforms into a temporary, distinct, intermediate form. While transformed, this plugin overwrites their "original" unit type with the desired type. When the transformation wears off, they will turn "back" into the new unit type. Once truly transformed, units will function as if they had always been the new unit type. Equipment may be dropped on transformation, but relationships and experience should be maintained.
+
+Suppose you want to transform dwarves into humans. First, make a syndrome that turns dwarves into ducks for 1 tick (start:0:end:1). It should work with ``END:1``, but if it doesn't, try ``END:5``. You MUST use ``START:0``. Setting the end time very high will make the intermediate form take longer, and should have no other influence on the behavior of this plugin. The intermediate form must NOT be the same as the original form, and it must NOT be the same as the final form, or the game will crash. Add the following tags:
+
+``[SYN_CLASS:\\PERMANENT]``
+``[SYN_CLASS:GOBLIN]``
+``[SYN_CLASS:MALE]``
+
+Note that you must use the (usually allcaps) name of the target creature/caste, not necessarily the name used in game. For example, you would use ``BIRD_DUCK``, ``MALE``, instead of ``drake``.
+
+It is perfectly fine to use syndromeTrigger along with autoSyndrome, as long as commands are not used for the same syndrome. This is to prevent the same command being executed twice. This means that you can, for example, trigger a true transformation using a reaction. It is also possible to trigger a true transformation using an interaction, or another plugin that adds syndromes, so long as that other plugin does not interfere with the tags required for this one to work properly.
 
 Designations
 ============

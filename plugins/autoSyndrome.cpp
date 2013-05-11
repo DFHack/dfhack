@@ -38,68 +38,6 @@
 using namespace std;
 using namespace DFHack;
 
-/*
-Example usage:
-
-//////////////////////////////////////////////
-//In file inorganic_duck.txt
-inorganic_stone_duck
-
-[OBJECT:INORGANIC]
-
-[INORGANIC:DUCK_ROCK]
-[USE_MATERIAL_TEMPLATE:STONE_TEMPLATE]
-[STATE_NAME_ADJ:ALL_SOLID:drakium][DISPLAY_COLOR:0:7:0][TILE:'.']
-[IS_STONE]
-[SOLID_DENSITY:1][MELTING_POINT:25000]
-[BOILING_POINT:9999] //This is the critical line: boiling point must be <= 10000
-[SYNDROME]
-    [SYN_NAME:Chronic Duck Syndrome]
-    [CE_BODY_TRANSFORMATION:PROB:100:START:0]
-        [CE:CREATURE:BIRD_DUCK:MALE] //even though we don't have SYN_INHALED, the plugin will add it
-///////////////////////////////////////////////
-//In file building_duck.txt
-building_duck
-
-[OBJECT:BUILDING]
-
-[BUILDING_WORKSHOP:DUCK_WORKSHOP]
-	[NAME:Duck Workshop]
-	[NAME_COLOR:7:0:1]
-	[DIM:1:1]
-	[WORK_LOCATION:1:1]
-	[BLOCK:1:0:0:0]
-	[TILE:0:1:236]
-	[COLOR:0:1:0:0:1]
-	[TILE:1:1:' ']
-	[COLOR:1:1:0:0:0]
-	[TILE:2:1:8]
-	[COLOR:2:1:0:0:1]
-	[TILE:3:1:8]
-	[COLOR:3:2:0:4:1]
-	[BUILD_ITEM:1:NONE:NONE:NONE:NONE]
-	[BUILDMAT]
-	[WORTHLESS_STONE_ONLY]
-	[CAN_USE_ARTIFACT]
-///////////////////////////////////////////////
-//In file reaction_duck.txt
-reaction_duck
-
-[OBJECT:REACTION]
-
-[REACTION:DUCKIFICATION]
-[NAME:become a duck]
-[BUILDING:DUCK_WORKSHOP:NONE]
-[PRODUCT:100:100:STONE:NO_SUBTYPE:STONE:DUCK_ROCK]
-//////////////////////////////////////////////
-//Add the following lines to your entity in entity_default.txt (or wherever it is)
-	[PERMITTED_BUILDING:DUCK_WORKSHOP]
-	[PERMITTED_REACTION:DUCKIFICATION]
-//////////////////////////////////////////////
-
-Next, start a new fort in a new world, build a duck workshop, then have someone become a duck.
-*/
-
 bool enabled = true;
 
 DFHACK_PLUGIN("autoSyndrome");
@@ -116,16 +54,8 @@ DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginComman
         "  autoSyndrome disable //disable\n"
         "  autoSyndrome enable //enable\n"
         "\n"
-        "autoSyndrome looks for recently completed jobs matching certain conditions, and if it finds one, then it will give the dwarf that finished that job the syndrome specified in the raw files.\n"
-        "\n"
-        "Requirements:\n"
-        "  1) The job must be a custom reaction.\n"
-        "  2) The job must produce a stone of some inorganic material.\n"
-        "\n"
-        "When these conditions are met, the unit that completed the job will immediately become afflicted with all applicable syndromes associated with the inorganic material of the stone, or stones. It should correctly check for whether the creature or caste is affected or immune, and it should also correctly account for affected and immune creature classes.\n"
-        "Multiple syndromes per stone, or multiple boiling rocks produced with the same reaction should work fine.\n"
+        "autoSyndrome looks for recently completed jobs matching certain conditions, and if it finds one, then it will give the unit that finished that job the syndrome specified in the raw files. See Readme.rst for full details.\n"
         ));
-    
     
     EventManager::EventHandler handle(processJob, 5);
     EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, plugin_self);
@@ -338,7 +268,7 @@ void processJob(color_ostream& out, void* jobPtr) {
         for ( size_t b = 0; b < inorganic->material.syndrome.size(); b++ ) {
             //add each syndrome to the guy who did the job
             df::syndrome* syndrome = inorganic->material.syndrome[b];
-            bool workerOnly = false;
+            bool workerOnly = true;
             bool allowMultipleTargets = false;
             bool foundCommand = false;
             bool destroyRock = true;
@@ -350,8 +280,8 @@ void processJob(color_ostream& out, void* jobPtr) {
                 if ( clazz == "\\AUTO_SYNDROME" ) {
                     foundAutoSyndrome = true;
                     continue;
-                } else if ( clazz == "\\WORKER_ONLY" ) {
-                    workerOnly = true;
+                } else if ( clazz == "\\ALLOW_NONWORKER_TARGETS" ) {
+                    workerOnly = false;
                     continue;
                 } else if ( clazz == "\\ALLOW_MULTIPLE_TARGETS" ) {
                     allowMultipleTargets = true;
@@ -394,11 +324,12 @@ void processJob(color_ostream& out, void* jobPtr) {
                     foundCommand = true;
                 }
             }
-            if ( commandStr != "" ) {
-                Core::getInstance().runCommand(out, commandStr, args);
+            if ( !foundAutoSyndrome ) {
+                continue;
             }
             
-            if ( !foundAutoSyndrome ) {
+            if ( commandStr != "" ) {
+                Core::getInstance().runCommand(out, commandStr, args);
                 continue;
             }
             

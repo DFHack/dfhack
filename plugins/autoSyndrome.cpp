@@ -330,7 +330,6 @@ void processJob(color_ostream& out, void* jobPtr) {
             
             if ( commandStr != "" ) {
                 Core::getInstance().runCommand(out, commandStr, args);
-                continue;
             }
             
             if ( destroyRock ) {

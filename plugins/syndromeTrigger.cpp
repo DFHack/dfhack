@@ -56,6 +56,7 @@ void syndromeHandler(color_ostream& out, void* ptr) {
     
     bool foundPermanent = false;
     bool foundCommand = false;
+    bool foundAutoSyndrome = false;
     string commandStr;
     vector<string> args;
     int32_t raceId = -1;
@@ -100,7 +101,10 @@ void syndromeHandler(color_ostream& out, void* ptr) {
             }
             continue;
         }
-        
+        if ( clazz == "\\AUTO_SYNDROME" ) {
+            foundAutoSyndrome = true;
+            continue;
+        }
         if ( clazz == "\\COMMAND" ) {
             foundCommand = true;
             continue;
@@ -137,7 +141,7 @@ void syndromeHandler(color_ostream& out, void* ptr) {
         }
     }
     
-    if ( commandStr != "" ) {
+    if ( !foundAutoSyndrome && commandStr != "" ) {
         Core::getInstance().runCommand(out, commandStr, args);
     }
     

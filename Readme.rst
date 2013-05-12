@@ -827,8 +827,6 @@ It is not currently possible to execute more than one command per syndrome. Inst
 
 Again, note that plugins AND scripts can be executed this way, and arguments will be passed according to the same rules.
 
-If a command is executed, then the plugin will NOT apply the syndrome to any units. To call a dfhack command at the same time as applying a syndrome, use separate syndromes. This behavior is to prevent conflicts with the syndromeTrigger plugin.
-
 syndromeTrigger
 ---------------
 
@@ -841,6 +839,8 @@ The syntax is very similar to autoSyndrome. If the syndrome has the ``\\COMMAND`
 2. ``\\UNIT_ID``: this will be replaced by the identifier of the unit afllicted with the syndrome.
 
 3. ``\\SYNDROME_ID``: this will be replaced by the identifier of the syndrome in question.
+
+If there is a ``[SYN_CLASS:\\AUTO_SYNDROME]`` tag, then the command, if any, will NOT be executed by syndromeTrigger, because it should already have been executed by autoSyndrome.
 
 True Transformation
 +++++++++++++++++++

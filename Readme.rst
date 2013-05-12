@@ -857,7 +857,7 @@ Suppose you want to transform dwarves into goblins. First, make a syndrome that 
 
 Note that you must use the "official" (usually allcaps) name of the target creature/caste, not necessarily the name used in game. For example, you would use ``BIRD_DUCK``, ``MALE``, instead of ``drake``.
 
-It is perfectly fine to use syndromeTrigger along with autoSyndrome, as long as commands are not used for the same syndrome. This is to prevent the same command being executed twice. This means that you can, for example, trigger a true transformation using a reaction. It is also possible to trigger a true transformation using an interaction, or another plugin that adds syndromes, so long as that other plugin does not interfere with the tags required for this one to work properly.
+It is perfectly fine to use syndromeTrigger along with autoSyndrome. This means that you can, for example, trigger a true transformation using a reaction. It is also possible to trigger a true transformation using an interaction, or another plugin that adds syndromes, so long as that other plugin does not interfere with the tags required for this one to work properly.
 
 Designations
 ============

@@ -418,6 +418,13 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (mpos.x == -30000 || mpos.y == -30000 || mpos.z == -30000)
             return;
 
+        auto dims = Gui::getDwarfmodeViewDims();
+        if (dims.menu_x1 <= 0)
+            return;
+
+        if (mx < 1 || mx > dims.menu_x1 - 2 || my < 1 || my > gps->dimy - 2)
+            return;
+
         if (ui->main.mode != Default && !should_track())
         {
             if (!tracking_enabled && in_tracking_state())
@@ -425,13 +432,6 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
             return;
         }
-
-        auto dims = Gui::getDwarfmodeViewDims();
-        if (dims.menu_x1 <= 0)
-            return;
-
-        if (mx < 1 || mx > dims.menu_x1 - 2 || my < 1 || my > gps->dimy - 2)
-            return;
 
         int scroll_buffer = 6;
         auto delta_t = enabler->clock - last_t;

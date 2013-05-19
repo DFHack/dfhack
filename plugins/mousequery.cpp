@@ -26,7 +26,7 @@ using namespace df::enums::ui_sidebar_mode;
 
 DFHACK_PLUGIN("mousequery");
 
-#define PLUGIN_VERSION 0.6
+#define PLUGIN_VERSION 0.7
 
 static int32_t last_x, last_y, last_z;
 static size_t max_list_size = 300000; // Avoid iterating over huge lists
@@ -34,6 +34,7 @@ static size_t max_list_size = 300000; // Avoid iterating over huge lists
 static bool plugin_enabled = true;
 static bool rbutton_enabled = true;
 static bool tracking_enabled = false;
+static bool extra_tracking_enabled = false;
 
 static int scroll_delay = 100;
 
@@ -183,7 +184,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         INTERPOSE_NEXT(feed)(&tmp);
     }
 
-    bool isInDesignationMode()
+    bool isInTrackableMode()
     {
         switch (ui->main.mode)
         {
@@ -217,6 +218,15 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         case DesignateRemoveConstruction:
             return true;
 
+        case Build:
+            return inBuildPlacement();
+
+        case QueryBuilding:
+        case BuildingItems:
+        case ViewUnits:
+        case LookAround:
+            return extra_tracking_enabled && !enabler->mouse_lbut;
+
         default:
             return false;
         };
@@ -241,7 +251,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             bool designationMode = false;
             bool skipRefresh = false;
 
-            if (isInDesignationMode())
+            if (isInTrackableMode())
             {
                 designationMode = true;
                 key = df::interface_key::SELECT;
@@ -319,7 +329,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             if (!skipRefresh)
             {
                 // Force UI refresh
-                move_cursor(mpos);
+                moveCursor(mpos);
             }
 
             if (designationMode)
@@ -363,7 +373,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         return false;
     }
 
-    void move_cursor(df::coord &mpos)
+    void moveCursor(df::coord &mpos)
     {
         int32_t x, y, z;
         Gui::getCursorCoords(x, y, z);
@@ -375,24 +385,19 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         sendKey(interface_key::CURSOR_UP_Z);
     }
 
-    bool in_build_placement()
+    bool inBuildPlacement()
     {
         return df::global::ui_build_selector &&
             df::global::ui_build_selector->building_type != -1 &&
             df::global::ui_build_selector->stage == 1;
     }
 
-    bool should_track()
+    bool shouldTrack()
     {
         if (!tracking_enabled)
             return false;
 
-        return in_tracking_state();
-    }
-
-    bool in_tracking_state()
-    {
-        return isInDesignationMode() || (ui->main.mode == Build && in_build_placement());
+        return isInTrackableMode();
     }
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
@@ -425,17 +430,15 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (mx < 1 || mx > dims.menu_x1 - 2 || my < 1 || my > gps->dimy - 2)
             return;
 
-        if (ui->main.mode != Default && !should_track())
+        if (!tracking_enabled && isInTrackableMode())
         {
-            if (!tracking_enabled && in_tracking_state())
-                OutputString(COLOR_YELLOW, mx, my, "X");
-
+            OutputString(COLOR_YELLOW, mx, my, "X");
             return;
         }
 
         int scroll_buffer = 6;
         auto delta_t = enabler->clock - last_t;
-        if (should_track())
+        if (shouldTrack())
         {
             if (delta_t <= scroll_delay && (mx < scroll_buffer || 
                 mx > dims.menu_x1 - scroll_buffer || 
@@ -446,7 +449,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             }
 
             last_t = enabler->clock;
-            move_cursor(mpos);
+            moveCursor(mpos);
         }
 
         if (!is_valid_pos(mpos))
@@ -513,14 +516,14 @@ IMPLEMENT_VMETHOD_INTERPOSE_PRIO(mousequery_hook, render, 100);
 static command_result mousequery_cmd(color_ostream &out, vector <string> & parameters)
 {
     bool show_help = false;
-    if (parameters.size() < 2)
+    if (parameters.size() < 1)
     {
         show_help = true;
     }
     else
     {
         auto cmd = toLower(parameters[0]);
-        auto state = toLower(parameters[1]);
+        auto state = (parameters.size() == 2) ? toLower(parameters[1]) : "-1";
         if (cmd[0] == 'v')
         {
             out << "MouseQuery" << endl << "Version: " << PLUGIN_VERSION << endl;
@@ -536,12 +539,22 @@ static command_result mousequery_cmd(color_ostream &out, vector <string> & param
         else if (cmd[0] == 't')
         {
             tracking_enabled = (state == "enable");
+            if (!tracking_enabled)
+                extra_tracking_enabled = false;
+        }
+        else if (cmd[0] == 'e')
+        {
+            extra_tracking_enabled = (state == "enable");
+            if (extra_tracking_enabled)
+                tracking_enabled = true;
         }
         else if (cmd[0] == 'd')
         {
             auto l = atoi(state.c_str());
-            if (l >= 0)
+            if (l > 0 || state == "0")
                 scroll_delay = l;
+            else
+                out << "Current delay: " << scroll_delay << endl;
         }
         else
         {
@@ -555,7 +568,7 @@ static command_result mousequery_cmd(color_ostream &out, vector <string> & param
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     if (!gps || !INTERPOSE_HOOK(mousequery_hook, feed).apply() || !INTERPOSE_HOOK(mousequery_hook, render).apply())
         out.printerr("Could not insert mousequery hooks!\n");
@@ -566,12 +579,13 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         PluginCommand(
         "mousequery", "Add mouse functionality to Dwarf Fortress",
         mousequery_cmd, false, 
-        "mousequery [plugin|rbutton|track] [enabled|disabled]\n"
+        "mousequery [plugin|rbutton|track|etrack] [enabled|disabled]\n"
         "  plugin: enable/disable the entire plugin\n"
         "  rbutton: enable/disable right mouse button\n"
         "  track: enable/disable moving cursor in build and designation mode\n\n"
-        "mousequery delay [amount]\n"
-        "  Set delay when edge scrolling in tracking mode\n"
+        "  etrack: enable/disable moving cursor in query/view/look mode\n\n"
+        "mousequery delay <amount>\n"
+        "  Set delay when edge scrolling in tracking mode. Omit amount to display current setting."
         ));
 
     return CR_OK;

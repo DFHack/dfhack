@@ -582,10 +582,10 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "mousequery [plugin|rbutton|track|etrack] [enabled|disabled]\n"
         "  plugin: enable/disable the entire plugin\n"
         "  rbutton: enable/disable right mouse button\n"
-        "  track: enable/disable moving cursor in build and designation mode\n\n"
+        "  track: enable/disable moving cursor in build and designation mode\n"
         "  etrack: enable/disable moving cursor in query/view/look mode\n\n"
         "mousequery delay <amount>\n"
-        "  Set delay when edge scrolling in tracking mode. Omit amount to display current setting."
+        "  Set delay when edge scrolling in tracking mode. Omit amount to display current setting.\n"
         ));
 
     return CR_OK;

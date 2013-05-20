@@ -26,7 +26,7 @@ using namespace df::enums::ui_sidebar_mode;
 
 DFHACK_PLUGIN("mousequery");
 
-#define PLUGIN_VERSION 0.7
+#define PLUGIN_VERSION 0.8
 
 static int32_t last_x, last_y, last_z;
 static size_t max_list_size = 300000; // Avoid iterating over huge lists
@@ -226,6 +226,14 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         case ViewUnits:
         case LookAround:
             return extra_tracking_enabled && !enabler->mouse_lbut;
+
+        case Zones:
+        case Stockpiles:
+        case Burrows:
+        case Squads:
+        case NotesPoints:
+        case NotesRoutes:
+            return extra_tracking_enabled;
 
         default:
             return false;

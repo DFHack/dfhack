@@ -215,13 +215,15 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         case DesignateTrafficLow:
         case DesignateTrafficRestricted:
         case DesignateRemoveConstruction:
-        case Zones:
         case Stockpiles:
-        case Burrows:
         case Squads:
         case NotesPoints:
         case NotesRoutes:
+        case Zones:
             return true;
+
+        case Burrows:
+            return ui->burrows.in_define_mode;
 
         case Build:
             return inBuildPlacement();

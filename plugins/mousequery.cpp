@@ -26,7 +26,7 @@ using namespace df::enums::ui_sidebar_mode;
 
 DFHACK_PLUGIN("mousequery");
 
-#define PLUGIN_VERSION 0.8
+#define PLUGIN_VERSION 0.10
 
 static int32_t last_x, last_y, last_z;
 static size_t max_list_size = 300000; // Avoid iterating over huge lists
@@ -34,7 +34,6 @@ static size_t max_list_size = 300000; // Avoid iterating over huge lists
 static bool plugin_enabled = true;
 static bool rbutton_enabled = true;
 static bool tracking_enabled = false;
-static bool extra_tracking_enabled = false;
 
 static int scroll_delay = 100;
 
@@ -216,6 +215,12 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         case DesignateTrafficLow:
         case DesignateTrafficRestricted:
         case DesignateRemoveConstruction:
+        case Zones:
+        case Stockpiles:
+        case Burrows:
+        case Squads:
+        case NotesPoints:
+        case NotesRoutes:
             return true;
 
         case Build:
@@ -225,15 +230,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         case BuildingItems:
         case ViewUnits:
         case LookAround:
-            return extra_tracking_enabled && !enabler->mouse_lbut;
-
-        case Zones:
-        case Stockpiles:
-        case Burrows:
-        case Squads:
-        case NotesPoints:
-        case NotesRoutes:
-            return extra_tracking_enabled;
+            return !enabler->mouse_lbut;
 
         default:
             return false;
@@ -547,14 +544,6 @@ static command_result mousequery_cmd(color_ostream &out, vector <string> & param
         else if (cmd[0] == 't')
         {
             tracking_enabled = (state == "enable");
-            if (!tracking_enabled)
-                extra_tracking_enabled = false;
-        }
-        else if (cmd[0] == 'e')
-        {
-            extra_tracking_enabled = (state == "enable");
-            if (extra_tracking_enabled)
-                tracking_enabled = true;
         }
         else if (cmd[0] == 'd')
         {
@@ -591,7 +580,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  plugin: enable/disable the entire plugin\n"
         "  rbutton: enable/disable right mouse button\n"
         "  track: enable/disable moving cursor in build and designation mode\n"
-        "  etrack: enable/disable moving cursor in query/view/look mode\n\n"
         "mousequery delay <amount>\n"
         "  Set delay when edge scrolling in tracking mode. Omit amount to display current setting.\n"
         ));

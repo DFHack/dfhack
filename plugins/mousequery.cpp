@@ -34,6 +34,8 @@ static size_t max_list_size = 300000; // Avoid iterating over huge lists
 static bool plugin_enabled = true;
 static bool rbutton_enabled = true;
 static bool tracking_enabled = false;
+static bool active_scrolling = false;
+static bool live_view = false;
 
 static int scroll_delay = 100;
 
@@ -351,13 +353,11 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             enabler->mouse_rbut = 0;
 
             using namespace df::enums::ui_sidebar_mode;
-            if (ui->main.mode == QueryBuilding || ui->main.mode == BuildingItems ||
-                ui->main.mode == ViewUnits || ui->main.mode == LookAround)
+            if ((ui->main.mode == QueryBuilding || ui->main.mode == BuildingItems ||
+                ui->main.mode == ViewUnits || ui->main.mode == LookAround) || 
+                (isInTrackableMode() && active_scrolling && tracking_enabled))
             {
-                while (ui->main.mode != Default)
-                {
-                    sendKey(df::interface_key::LEAVESCREEN);
-                }
+                sendKey(df::interface_key::LEAVESCREEN);
             }
             else
             {
@@ -422,19 +422,48 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
         static decltype(enabler->clock) last_t = 0;
 
-        if (!DFHack::World::ReadPauseState())
-            return;
-
         int32_t mx, my;
         auto mpos = get_mouse_pos(mx, my);
         if (mpos.x == -30000 || mpos.y == -30000 || mpos.z == -30000)
             return;
 
         auto dims = Gui::getDwarfmodeViewDims();
-        if (dims.menu_x1 <= 0)
+        auto right_margin = (dims.menu_x1 > 0) ? dims.menu_x1 : gps->dimx;
+
+        if (mx < 1 || mx > right_margin - 2 || my < 1 || my > gps->dimy - 2)
             return;
 
-        if (mx < 1 || mx > dims.menu_x1 - 2 || my < 1 || my > gps->dimy - 2)
+        int scroll_buffer = 6;
+        auto delta_t = enabler->clock - last_t;
+        if (active_scrolling && !isInTrackableMode() && delta_t > scroll_delay)
+        {
+            last_t = enabler->clock;
+            if (mx < scroll_buffer)
+            {
+                sendKey(interface_key::CURSOR_LEFT);
+                return;
+            }
+
+            if (mx > right_margin - scroll_buffer)
+            {
+                sendKey(interface_key::CURSOR_RIGHT);
+                return;
+            }
+
+            if (my < scroll_buffer)
+            {
+                sendKey(interface_key::CURSOR_UP);
+                return;
+            }
+
+            if (my > gps->dimy - scroll_buffer)
+            {
+                sendKey(interface_key::CURSOR_DOWN);
+                return;
+            }
+        }
+
+        if (!live_view && !DFHack::World::ReadPauseState())
             return;
 
         if (!tracking_enabled && isInTrackableMode())
@@ -443,8 +472,6 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             return;
         }
 
-        int scroll_buffer = 6;
-        auto delta_t = enabler->clock - last_t;
         if (shouldTrack())
         {
             if (delta_t <= scroll_delay && (mx < scroll_buffer || 
@@ -459,7 +486,10 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             moveCursor(mpos);
         }
 
-        if (!is_valid_pos(mpos))
+        if (dims.menu_x1 <= 0)
+            return; // No menu displayed
+
+        if (!is_valid_pos(mpos) || isInTrackableMode())
             return;
 
         // Display live query
@@ -547,6 +577,14 @@ static command_result mousequery_cmd(color_ostream &out, vector <string> & param
         {
             tracking_enabled = (state == "enable");
         }
+        else if (cmd[0] == 'e')
+        {
+            active_scrolling = (state == "enable");
+        }
+        else if (cmd[0] == 'l')
+        {
+            live_view = (state == "enable");
+        }
         else if (cmd[0] == 'd')
         {
             auto l = atoi(state.c_str());
@@ -578,10 +616,12 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         PluginCommand(
         "mousequery", "Add mouse functionality to Dwarf Fortress",
         mousequery_cmd, false, 
-        "mousequery [plugin|rbutton|track|etrack] [enabled|disabled]\n"
+        "mousequery [plugin|rbutton|track|edge|live] [enabled|disabled]\n"
         "  plugin: enable/disable the entire plugin\n"
         "  rbutton: enable/disable right mouse button\n"
         "  track: enable/disable moving cursor in build and designation mode\n"
+        "  edge: enable/disable active edge scrolling\n"
+        "  live: enable/disable query view when unpaused\n\n"
         "mousequery delay <amount>\n"
         "  Set delay when edge scrolling in tracking mode. Omit amount to display current setting.\n"
         ));

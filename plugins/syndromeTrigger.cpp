@@ -20,16 +20,59 @@
 using namespace DFHack;
 using namespace std;
 
+static bool enabled = false;
+
 DFHACK_PLUGIN("syndromeTrigger");
 
 void syndromeHandler(color_ostream& out, void* ptr);
 
+command_result syndromeTrigger(color_ostream& out, vector<string>& parameters);
+
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    EventManager::EventHandler syndrome(syndromeHandler, 1);
-    EventManager::registerListener(EventManager::EventType::SYNDROME, syndrome, plugin_self);
+    commands.push_back(PluginCommand("syndromeTrigger", "Run commands and enable true transformations, configured by the raw files.\n", &syndromeTrigger, false,
+        "syndromeTrigger:\n"
+        "  syndromeTrigger 0 //disable\n"
+        "  syndromeTrigger 1 //enable\n"
+        "  syndromeTrigger disable //disable\n"
+        "  syndromeTrigger enable //enable\n"
+        "\n"
+        "See Readme.rst for details.\n"
+        ));
 
     return CR_OK;
+}
+
+command_result syndromeTrigger(color_ostream& out, vector<string>& parameters) {
+    if ( parameters.size() > 1 )
+        return CR_WRONG_USAGE;
+
+    bool wasEnabled = enabled;
+    if ( parameters.size() == 1 ) {
+        if ( parameters[0] == "enable" ) {
+            enabled = true;
+        } else if ( parameters[0] == "disable" ) {
+            enabled = false;
+        } else {
+            int32_t a = atoi(parameters[0].c_str());
+            if ( a < 0 || a > 1 )
+                return CR_WRONG_USAGE;
+
+            enabled = (bool)a;
+        }
+    }
+
+    out.print("syndromeTrigger is %s\n", enabled ? "enabled" : "disabled");
+    if ( enabled == wasEnabled )
+        return CR_OK;
+
+    EventManager::unregisterAll(plugin_self);
+    if ( enabled ) {
+        EventManager::EventHandler handle(syndromeHandler, 1);
+        EventManager::registerListener(EventManager::EventType::SYNDROME, handle, plugin_self);
+    }
+    return CR_OK;
+    
 }
 
 void syndromeHandler(color_ostream& out, void* ptr) {

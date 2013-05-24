@@ -38,7 +38,7 @@
 using namespace std;
 using namespace DFHack;
 
-bool enabled = true;
+static bool enabled = false;
 
 DFHACK_PLUGIN("autoSyndrome");
 
@@ -57,8 +57,8 @@ DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginComman
         "autoSyndrome looks for recently completed jobs matching certain conditions, and if it finds one, then it will give the unit that finished that job the syndrome specified in the raw files. See Readme.rst for full details.\n"
         ));
     
-    EventManager::EventHandler handle(processJob, 5);
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, plugin_self);
+    //EventManager::EventHandler handle(processJob, 5);
+    //EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, plugin_self);
     return CR_OK;
 }
 

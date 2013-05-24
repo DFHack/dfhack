@@ -462,6 +462,7 @@ access DF memory and allow for easier development of new tools.</p>
 <li><a class="reference internal" href="#job" id="id96">job</a></li>
 <li><a class="reference internal" href="#job-material" id="id97">job-material</a></li>
 <li><a class="reference internal" href="#job-duplicate" id="id98">job-duplicate</a></li>
+<li><a class="reference internal" href="#stockflow" id="idstockflow">stockflow</a></li>
 <li><a class="reference internal" href="#workflow" id="id99">workflow</a><ul>
 <li><a class="reference internal" href="#function" id="id100">Function</a></li>
 <li><a class="reference internal" href="#constraint-format" id="id101">Constraint format</a></li>
@@ -2121,6 +2122,31 @@ instantly duplicates the job.</li>
 </ul>
 </dd>
 </dl>
+</div>
+<div class="section" id="stockflow">
+<h3><a class="toc-backref" href="#stockflow">stockflow</a></h3>
+<p>Allows the fortress bookkeeper to queue jobs through the manager.</p>
+<p>Usage:</p>
+<blockquote>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">stockflow</span> <span class="pre">enable</span></tt></dt>
+<dd>Enable the plugin.</dd>
+<dt><tt class="docutils literal"><span class="pre">stockflow</span> <span class="pre">disable</span></tt></dt>
+<dd>Disable the plugin.</dd>
+<dt><tt class="docutils literal"><span class="pre">stockflow</span> <span class="pre">list</span></tt></dt>
+<dd>List any work order settings for your stockpiles.</dd>
+<dt><tt class="docutils literal"><span class="pre">stockflow</span> <span class="pre">status</span></tt></dt>
+<dd>Display whether the plugin is enabled.</dd>
+</dl>
+</blockquote>
+<dl class="docutils">
+<dt>While enabled, the 'q' menu of each stockpile will have two new options:</dt>
+<dd>j: Select a job to order, from an interface like the manager's screen.
+J: Cycle between several options for how many such jobs to order.</dd>
+</dl>
+<p>Whenever the bookkeeper updates stockpile records, new work orders will
+be placed on the manager's queue for each such selection, reduced by the
+number of identical orders already in the queue.</p>
 </div>
 <div class="section" id="workflow">
 <h3><a class="toc-backref" href="#id99">workflow</a></h3>

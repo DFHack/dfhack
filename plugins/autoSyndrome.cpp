@@ -95,7 +95,7 @@ command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
 
     EventManager::unregisterAll(plugin_self);
     if ( enabled ) {
-        EventManager::EventHandler handle(processJob, 5);
+        EventManager::EventHandler handle(processJob, 0);
         EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, plugin_self);
     }
     return CR_OK;

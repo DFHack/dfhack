@@ -59,6 +59,7 @@ void DFHack::EventManager::registerTick(EventHandler handler, int32_t when, Plug
     if ( absolute ) {
         tick = 0;
     }
+    handler.freq = 1; //to make manageEvents work more nicely
     
     tickQueue.insert(pair<uint32_t, EventHandler>(tick+(uint32_t)when, handler));
     handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
@@ -113,6 +114,19 @@ static void manageBuildingEvent(color_ostream& out);
 static void manageConstructionEvent(color_ostream& out);
 static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
+
+static void (*eventManager[])(color_ostream&) = {
+    manageTickEvent,
+    manageJobInitiatedEvent,
+    manageJobCompletedEvent,
+    manageUnitDeathEvent,
+    manageItemCreationEvent,
+    manageBuildingEvent,
+    manageConstructionEvent,
+    manageSyndromeEvent,
+    manageInvasionEvent,
+};
+
 
 //tick event
 static uint32_t lastTick = 0;
@@ -196,52 +210,25 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     /*if ( tick - lastTick > 1 ) {
         out.print("EventManager missed tick: %d, %d, (%d)\n", lastTick, tick, tick - lastTick);
     }*/
-    lastTick = tick;
 
-    int32_t eventFrequency[EventType::EVENT_MAX];
     for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
-        int32_t min = 1000000000;
+        if ( handlers[a].empty() )
+            continue;
+        int32_t eventFrequency = 1000000000;
         for ( auto b = handlers[a].begin(); b != handlers[a].end(); b++ ) {
             EventHandler bob = (*b).second;
-            if ( bob.freq < min )
-                min = bob.freq;
+            if ( bob.freq < eventFrequency )
+                eventFrequency = bob.freq;
         }
-        eventFrequency[a] = min;
+        
+        if ( tick - eventLastTick[a] < eventFrequency )
+            continue;
+        
+        eventManager[a](out);
+        eventLastTick[a] = tick;
     }
     
-    manageTickEvent(out);
-    if ( tick - eventLastTick[EventType::JOB_INITIATED] >= eventFrequency[EventType::JOB_INITIATED] ) {
-        manageJobInitiatedEvent(out);
-        eventLastTick[EventType::JOB_INITIATED] = tick;
-    }
-    if ( tick - eventLastTick[EventType::JOB_COMPLETED] >= eventFrequency[EventType::JOB_COMPLETED] ) {
-        manageJobCompletedEvent(out);
-        eventLastTick[EventType::JOB_COMPLETED] = tick;
-    }
-    if ( tick - eventLastTick[EventType::UNIT_DEATH] >= eventFrequency[EventType::UNIT_DEATH] ) {
-        manageUnitDeathEvent(out);
-        eventLastTick[EventType::UNIT_DEATH] = tick;
-    }
-    if ( tick - eventLastTick[EventType::ITEM_CREATED] >= eventFrequency[EventType::ITEM_CREATED] ) {
-        manageItemCreationEvent(out);
-        eventLastTick[EventType::ITEM_CREATED] = tick;
-    }
-    if ( tick - eventLastTick[EventType::BUILDING] >= eventFrequency[EventType::BUILDING] ) {
-        manageBuildingEvent(out);
-        eventLastTick[EventType::BUILDING] = tick;
-    }
-    if ( tick - eventLastTick[EventType::CONSTRUCTION] >= eventFrequency[EventType::CONSTRUCTION] ) {
-        manageConstructionEvent(out);
-        eventLastTick[EventType::CONSTRUCTION] = tick;
-    }
-    if ( tick - eventLastTick[EventType::SYNDROME] >= eventFrequency[EventType::SYNDROME] ) {
-        manageSyndromeEvent(out);
-        eventLastTick[EventType::SYNDROME] = tick;
-    }
-    if ( tick - eventLastTick[EventType::INVASION] >= eventFrequency[EventType::INVASION] ) {
-        manageInvasionEvent(out);
-        eventLastTick[EventType::INVASION] = tick;
-    }
+    lastTick = tick;
 }
 
 static void manageTickEvent(color_ostream& out) {
@@ -258,9 +245,6 @@ static void manageTickEvent(color_ostream& out) {
 }
 
 static void manageJobInitiatedEvent(color_ostream& out) {
-    if ( handlers[EventType::JOB_INITIATED].empty() )
-        return;
-    
     if ( lastJobId == -1 ) {
         lastJobId = *df::global::job_next_id - 1;
         return;
@@ -294,11 +278,10 @@ static int32_t getWorkerID(df::job* job) {
     return -1;
 }
 
+/*
+TODO: consider checking item creation / experience gain just in case
+*/
 static void manageJobCompletedEvent(color_ostream& out) {
-    if ( handlers[EventType::JOB_COMPLETED].empty() ) {
-        return;
-    }
-    
     uint32_t tick0 = eventLastTick[EventType::JOB_COMPLETED];
     uint32_t tick1 = DFHack::World::ReadCurrentYear()*ticksPerYear
         + DFHack::World::ReadCurrentTick();
@@ -425,10 +408,6 @@ static void manageJobCompletedEvent(color_ostream& out) {
 }
 
 static void manageUnitDeathEvent(color_ostream& out) {
-    if ( handlers[EventType::UNIT_DEATH].empty() ) {
-        return;
-    }
-    
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
     for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
         df::unit* unit = df::global::world->units.active[a];
@@ -448,10 +427,6 @@ static void manageUnitDeathEvent(color_ostream& out) {
 }
 
 static void manageItemCreationEvent(color_ostream& out) {
-    if ( handlers[EventType::ITEM_CREATED].empty() ) {
-        return;
-    }
-
     if ( nextItem >= *df::global::item_next_id ) {
         return;
     }
@@ -484,9 +459,6 @@ static void manageBuildingEvent(color_ostream& out) {
      * TODO: could be faster
      * consider looking at jobs: building creation / destruction
      **/
-    if ( handlers[EventType::BUILDING].empty() )
-        return;
-    
     multimap<Plugin*,EventHandler> copy(handlers[EventType::BUILDING].begin(), handlers[EventType::BUILDING].end());
     //first alert people about new buildings
     for ( int32_t a = nextBuilding; a < *df::global::building_next_id; a++ ) {
@@ -528,9 +500,6 @@ static void manageBuildingEvent(color_ostream& out) {
 }
 
 static void manageConstructionEvent(color_ostream& out) {
-    if ( handlers[EventType::CONSTRUCTION].empty() )
-        return;
-
     unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
     
     multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
@@ -559,9 +528,6 @@ static void manageConstructionEvent(color_ostream& out) {
 }
 
 static void manageSyndromeEvent(color_ostream& out) {
-    if ( handlers[EventType::SYNDROME].empty() )
-        return;
-
     multimap<Plugin*,EventHandler> copy(handlers[EventType::SYNDROME].begin(), handlers[EventType::SYNDROME].end());
     for ( auto a = df::global::world->units.active.begin(); a != df::global::world->units.active.end(); a++ ) {
         df::unit* unit = *a;
@@ -583,9 +549,6 @@ static void manageSyndromeEvent(color_ostream& out) {
 }
 
 static void manageInvasionEvent(color_ostream& out) {
-    if ( handlers[EventType::INVASION].empty() )
-        return;
-
     multimap<Plugin*,EventHandler> copy(handlers[EventType::INVASION].begin(), handlers[EventType::INVASION].end());
 
     if ( df::global::ui->invasions.next_id <= nextInvasion )

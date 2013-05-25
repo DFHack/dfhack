@@ -7,6 +7,7 @@
 #include "DataDefs.h"
 
 #include "df/item.h"
+#include "df/job.h"
 #include "df/world.h"
 
 #include <vector>
@@ -34,11 +35,11 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
 }
 
 command_result eventExample(color_ostream& out, vector<string>& parameters) {
-    EventManager::EventHandler initiateHandler(jobInitiated, 10);
-    EventManager::EventHandler completeHandler(jobCompleted, 5);
+    EventManager::EventHandler initiateHandler(jobInitiated, 1);
+    EventManager::EventHandler completeHandler(jobCompleted, 0);
     EventManager::EventHandler timeHandler(timePassed, 1);
     EventManager::EventHandler deathHandler(unitDeath, 500);
-    EventManager::EventHandler itemHandler(itemCreate, 1000);
+    EventManager::EventHandler itemHandler(itemCreate, 1);
     EventManager::EventHandler buildingHandler(building, 500);
     EventManager::EventHandler constructionHandler(construction, 100);
     EventManager::EventHandler syndromeHandler(syndrome, 1);
@@ -62,8 +63,17 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
     return CR_OK;
 }
 
-void jobInitiated(color_ostream& out, void* job) {
-    out.print("Job initiated! 0x%X\n", job);
+//static int timerCount=0;
+//static int timerDenom=0;
+void jobInitiated(color_ostream& out, void* job_) {
+    out.print("Job initiated! 0x%X\n", job_);
+/*
+    df::job* job = (df::job*)job_;
+    out.print("  completion_timer = %d\n", job->completion_timer);
+    if ( job->completion_timer != -1 ) timerCount++;
+    timerDenom++;
+    out.print("  frac = %d / %d\n", timerCount, timerDenom);
+*/
 }
 
 void jobCompleted(color_ostream& out, void* job) {

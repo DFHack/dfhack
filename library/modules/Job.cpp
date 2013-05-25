@@ -55,53 +55,68 @@ using namespace std;
 using namespace DFHack;
 using namespace df::enums;
 
-df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepWorkerData)
+df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepEverything)
 {
     CHECK_NULL_POINTER(job);
 
     df::job *pnew = new df::job(*job);
-
-    // Clean out transient fields
-    pnew->flags.whole = 0;
-    pnew->flags.bits.repeat = job->flags.bits.repeat;
-    pnew->flags.bits.suspend = job->flags.bits.suspend;
-
-    pnew->list_link = NULL;
-    pnew->completion_timer = -1;
-    pnew->items.clear();
-    pnew->specific_refs.clear();
-
-    // Clone refs
-    for (int i = pnew->general_refs.size()-1; i >= 0; i--)
-    {
-        df::general_ref *ref = pnew->general_refs[i];
-
-        if (!keepWorkerData && virtual_cast<df::general_ref_unit_workerst>(ref))
-            vector_erase_at(pnew->general_refs, i);
-        else
-            pnew->general_refs[i] = ref->clone();
+    
+    if ( !keepEverything ) {
+        // Clean out transient fields
+        pnew->flags.whole = 0;
+        pnew->flags.bits.repeat = job->flags.bits.repeat;
+        pnew->flags.bits.suspend = job->flags.bits.suspend;
+        
+        pnew->completion_timer = -1;
     }
+    pnew->list_link = NULL;
 
-    // Clone items
-    for (int i = pnew->job_items.size()-1; i >= 0; i--)
-        pnew->job_items[i] = new df::job_item(*pnew->job_items[i]);
-
+    //pnew->items.clear();
+    //pnew->specific_refs.clear();
+    pnew->general_refs.clear();
+    //pnew->job_items.clear();
+    
+    if ( keepEverything ) {
+        for ( int a = 0; a < pnew->items.size(); a++ )
+            pnew->items[a] = new df::job_item_ref(*pnew->items[a]);
+        for ( int a = 0; a < pnew->specific_refs.size(); a++ )
+            pnew->specific_refs[a] = new df::specific_ref(*pnew->specific_refs[a]);
+    } else {
+        pnew->items.clear();
+        pnew->specific_refs.clear();
+    }
+    
+    for ( int a = 0; a < pnew->job_items.size(); a++ )
+        pnew->job_items[a] = new df::job_item(*pnew->job_items[a]);
+    
+    for ( int a = 0; a < job->general_refs.size(); a++ )
+        if ( keepEverything || job->general_refs[a]->getType() != df::enums::general_ref_type::UNIT_WORKER )
+            pnew->general_refs.push_back(job->general_refs[a]->clone());
+    
     return pnew;
 }
 
-void DFHack::Job::deleteJobStruct(df::job *job)
+void DFHack::Job::deleteJobStruct(df::job *job, bool keptEverything)
 {
     if (!job)
         return;
 
     // Only allow free-floating job structs
-    assert(!job->list_link && job->items.empty() && job->specific_refs.empty());
-
-    for (int i = job->general_refs.size()-1; i >= 0; i--)
-        delete job->general_refs[i];
-
-    for (int i = job->job_items.size()-1; i >= 0; i--)
-        delete job->job_items[i];
+    if ( !keptEverything )
+        assert(!job->list_link && job->items.empty() && job->specific_refs.empty());
+    else
+        assert(!job->list_link);
+    
+    if ( keptEverything ) {
+        for ( int a = 0; a < job->items.size(); a++ )
+            delete job->items[a];
+        for ( int a = 0; a < job->specific_refs.size(); a++ )
+            delete job->specific_refs[a];
+    }
+    for ( int a = 0; a < job->job_items.size(); a++ )
+        delete job->job_items[a];
+    for ( int a = 0; a < job->general_refs.size(); a++ )
+        delete job->general_refs[a];
 
     delete job;
 }

@@ -8,6 +8,9 @@
 
 #include "df/building.h"
 #include "df/construction.h"
+#include "df/general_ref.h"
+#include "df/general_ref_type.h"
+#include "df/general_ref_unit_workerst.h"
 #include "df/global_objects.h"
 #include "df/item.h"
 #include "df/job.h"
@@ -150,7 +153,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         lastTick = 0;
         lastJobId = -1;
         for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
-            Job::deleteJobStruct((*i).second);
+            Job::deleteJobStruct((*i).second, true);
         }
         prevJobs.clear();
         tickQueue.clear();
@@ -188,9 +191,9 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     }
     uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
         + DFHack::World::ReadCurrentTick();
-    
-    if ( tick <= lastTick )
-        return;
+    /*if ( tick - lastTick > 1 ) {
+        out.print("EventManager missed tick: %d, %d, (%d)\n", lastTick, tick, tick - lastTick);
+    }*/
     lastTick = tick;
 
     int32_t eventFrequency[EventType::EVENT_MAX];
@@ -237,8 +240,6 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
         manageInvasionEvent(out);
         eventLastTick[EventType::INVASION] = tick;
     }
-
-    return;
 }
 
 static void manageTickEvent(color_ostream& out) {
@@ -281,10 +282,24 @@ static void manageJobInitiatedEvent(color_ostream& out) {
     lastJobId = *df::global::job_next_id - 1;
 }
 
+//helper function for manageJobCompletedEvent
+static int32_t getWorkerID(df::job* job) {
+    for ( size_t a = 0; a < job->general_refs.size(); a++ ) {
+        if ( job->general_refs[a]->getType() != df::enums::general_ref_type::UNIT_WORKER )
+            continue;
+        return ((df::general_ref_unit_workerst*)job->general_refs[a])->unit_id;
+    }
+    return -1;
+}
+
 static void manageJobCompletedEvent(color_ostream& out) {
     if ( handlers[EventType::JOB_COMPLETED].empty() ) {
         return;
     }
+    
+    uint32_t tick0 = eventLastTick[EventType::JOB_COMPLETED];
+    uint32_t tick1 = DFHack::World::ReadCurrentYear()*ticksPerYear
+        + DFHack::World::ReadCurrentTick();
     
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     map<int32_t, df::job*> nowJobs;
@@ -293,12 +308,97 @@ static void manageJobCompletedEvent(color_ostream& out) {
             continue;
         nowJobs[link->item->id] = link->item;
     }
-
-    for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
-        if ( nowJobs.find((*i).first) != nowJobs.end() )
+    
+#if 0
+    //testing info on job initiation/completion
+    //newly allocated jobs
+    for ( auto j = nowJobs.begin(); j != nowJobs.end(); j++ ) {
+        if ( prevJobs.find((*j).first) != prevJobs.end() )
             continue;
-
-        //recently finished or cancelled job!
+        
+        df::job& job1 = *(*j).second;
+        out.print("new job\n"
+            "  location         : 0x%X\n"
+            "  id               : %d\n"
+            "  type             : %d %s\n"
+            "  working          : %d\n"
+            "  completion_timer : %d\n"
+            "  workerID         : %d\n"
+            "  time             : %d -> %d\n"
+            "\n", job1.list_link->item, job1.id, job1.job_type, ENUM_ATTR(job_type, caption, job1.job_type), job1.flags.bits.working, job1.completion_timer, getWorkerID(&job1), tick0, tick1);
+    }
+    for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
+        df::job& job0 = *(*i).second;
+        auto j = nowJobs.find((*i).first);
+        if ( j == nowJobs.end() ) {
+            out.print("job deallocated\n"
+                "  location         : 0x%X\n"
+                "  id               : %d\n"
+                "  type             : %d %s\n"
+                "  working          : %d\n"
+                "  completion_timer : %d\n"
+                "  workerID         : %d\n"
+                "  time             : %d -> %d\n"
+                ,job0.list_link == NULL ? 0 : job0.list_link->item, job0.id, job0.job_type, ENUM_ATTR(job_type, caption, job0.job_type), job0.flags.bits.working, job0.completion_timer, getWorkerID(&job0), tick0, tick1);
+            continue;
+        }
+        df::job& job1 = *(*j).second;
+        
+        if ( job0.flags.bits.working == job1.flags.bits.working &&
+               (job0.completion_timer == job1.completion_timer || (job1.completion_timer > 0 && job0.completion_timer-1 == job1.completion_timer)) &&
+               getWorkerID(&job0) == getWorkerID(&job1) )
+            continue;
+        
+        out.print("job change\n"
+            "  location         : 0x%X -> 0x%X\n"
+            "  id               : %d -> %d\n"
+            "  type             : %d -> %d\n"
+            "  type             : %s -> %s\n"
+            "  working          : %d -> %d\n"
+            "  completion timer : %d -> %d\n"
+            "  workerID         : %d -> %d\n"
+            "  time             : %d -> %d\n"
+            "\n",
+            job0.list_link->item, job1.list_link->item,
+            job0.id, job1.id,
+            job0.job_type, job1.job_type,
+            ENUM_ATTR(job_type, caption, job0.job_type), ENUM_ATTR(job_type, caption, job1.job_type),
+            job0.flags.bits.working, job1.flags.bits.working,
+            job0.completion_timer, job1.completion_timer,
+            getWorkerID(&job0), getWorkerID(&job1),
+            tick0, tick1
+        );
+    }
+#endif
+    
+    for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
+        //if it happened within a tick, must have been cancelled by the user or a plugin: not completed
+        if ( tick1 <= tick0 )
+            continue;
+        
+        if ( nowJobs.find((*i).first) != nowJobs.end() ) {
+            //could have just finished if it's a repeat job
+            df::job& job0 = *(*i).second;
+            if ( !job0.flags.bits.repeat )
+                continue;
+            df::job& job1 = *nowJobs[(*i).first];
+            if ( job0.completion_timer != 0 )
+                continue;
+            if ( job1.completion_timer != -1 )
+                continue;
+            
+            //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
+            for ( auto j = copy.begin(); j != copy.end(); j++ ) {
+                (*j).second.eventHandler(out, (void*)&job0);
+            }
+            continue;
+        }
+        
+        //recently finished or cancelled job
+        df::job& job0 = *(*i).second;
+        if ( job0.flags.bits.repeat || job0.completion_timer != 0 )
+            continue;
+        
         for ( auto j = copy.begin(); j != copy.end(); j++ ) {
             (*j).second.eventHandler(out, (void*)(*i).second);
         }
@@ -306,7 +406,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
 
     //erase old jobs, copy over possibly altered jobs
     for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
-        Job::deleteJobStruct((*i).second);
+        Job::deleteJobStruct((*i).second, true);
     }
     prevJobs.clear();
     
@@ -320,11 +420,6 @@ static void manageJobCompletedEvent(color_ostream& out) {
         df::job* newJob = Job::cloneJobStruct((*j).second, true);
         prevJobs[newJob->id] = newJob;
     }
-
-    /*//get rid of old pointers to deallocated jobs
-    for ( size_t a = 0; a < toDelete.size(); a++ ) {
-        prevJobs.erase(a);
-    }*/
 }
 
 static void manageUnitDeathEvent(color_ostream& out) {

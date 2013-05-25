@@ -801,6 +801,10 @@ To fix this problem, you can use autoSyndrome. The plugin monitors when custom r
 
 Note that tags like ``[SYN_INHALED]`` are ignored.
 
+The plugin will work for transformations, but doesn't seem to properly apply CE_BLEEDING, for example. Further testing is required.
+
+If the reaction is run twice, by default, a second instance of the syndrome is added. This behavior can be customized. With ``[SYN_CLASS:\RESET_POLICY DoNothing]``, units already afflicted with the syndrome will not be considered for syndrome application. With ``[SYN_CLASS:\RESET_POLICY ResetDuration]`` the existing syndrome timer is reset. With ``[SYN_CLASS:\RESET_POLICY AddDuration]`` the duration of the longest effect in the syndrome is added to the remaining duration of the existing syndrome. The tag ``[SYN_CLASS:\RESET_POLICY NewInstance]`` re-establishes the default behavior. If more than one such tag is present, the last one takes priority.
+
 It is also possible to directly trigger dfhack plugins and scripts using autoSyndrome. If a syndrome has ``[SYN_CLASS:\COMMAND]`` then all following ``SYN_CLASS`` tags will be used to create a console command. The command will behave exactly as if the user had typed it in to the dfhack console. For example
 
 ``[SYN_CLASS:\COMMAND]``

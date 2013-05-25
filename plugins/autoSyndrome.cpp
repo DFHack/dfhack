@@ -11,6 +11,7 @@
 
 #include "df/building.h"
 #include "df/caste_raw.h"
+#include "df/creature_interaction_effect.h"
 #include "df/creature_raw.h"
 #include "df/general_ref.h"
 #include "df/general_ref_building_holderst.h"
@@ -40,11 +41,15 @@ using namespace DFHack;
 
 static bool enabled = false;
 
+namespace ResetPolicy {
+    typedef enum {DoNothing, ResetDuration, AddDuration, NewInstance} ResetPolicy;
+}
+
 DFHACK_PLUGIN("autoSyndrome");
 
 command_result autoSyndrome(color_ostream& out, vector<string>& parameters);
 void processJob(color_ostream& out, void* jobPtr);
-int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrome);
+int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrome, ResetPolicy::ResetPolicy policy);
 
 DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand("autoSyndrome", "Automatically give units syndromes when they complete jobs, as configured in the raw files.\n", &autoSyndrome, false,
@@ -101,7 +106,7 @@ command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
     return CR_OK;
 }
 
-bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df::unit* unit) {
+bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df::unit* unit, ResetPolicy::ResetPolicy policy) {
     df::creature_raw* creature = df::global::world->raws.creatures.all[unit->race];
     df::caste_raw* caste = creature->caste[unit->caste];
     std::string& creature_name = creature->creature_id;
@@ -166,7 +171,7 @@ bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df
     if ( !applies ) {
         return false;
     }
-    if ( giveSyndrome(out, workerId, syndrome) < 0 )
+    if ( giveSyndrome(out, workerId, syndrome, policy) < 0 )
         return false;
     return true;
 }
@@ -273,6 +278,7 @@ void processJob(color_ostream& out, void* jobPtr) {
             bool foundCommand = false;
             bool destroyRock = true;
             bool foundAutoSyndrome = false;
+            ResetPolicy::ResetPolicy policy = ResetPolicy::NewInstance;
             string commandStr;
             vector<string> args;
             for ( size_t c = 0; c < syndrome->syn_class.size(); c++ ) {
@@ -288,6 +294,18 @@ void processJob(color_ostream& out, void* jobPtr) {
                     continue;
                 } else if ( clazz == "\\PRESERVE_ROCK" ) {
                     destroyRock = false;
+                    continue;
+                } else if ( clazz == "\\RESET_POLICY DoNothing" ) {
+                    policy = ResetPolicy::DoNothing;
+                    continue;
+                } else if ( clazz == "\\RESET_POLICY ResetDuration" ) {
+                    policy = ResetPolicy::ResetDuration;
+                    continue;
+                } else if ( clazz == "\\RESET_POLICY AddDuration" ) {
+                    policy = ResetPolicy::AddDuration;
+                    continue;
+                } else if ( clazz == "\\RESET_POLICY NewInstance" ) {
+                    policy = ResetPolicy::NewInstance;
                     continue;
                 }
                 if ( foundCommand ) {
@@ -355,7 +373,7 @@ void processJob(color_ostream& out, void* jobPtr) {
                 }
             }
 
-            if ( maybeApply(out, syndrome, workerId, worker) ) {
+            if ( maybeApply(out, syndrome, workerId, worker, policy) ) {
                 appliedSomething = true;
             }
 
@@ -376,7 +394,7 @@ void processJob(color_ostream& out, void* jobPtr) {
                     continue;
                 if ( unit->pos.y < building->y1 || unit->pos.y > building->y2 )
                     continue;
-                if ( maybeApply(out, syndrome, unit->id, unit) ) {
+                if ( maybeApply(out, syndrome, unit->id, unit, policy) ) {
                     appliedSomething = true;
                     if ( !allowMultipleTargets )
                         break;
@@ -391,24 +409,61 @@ void processJob(color_ostream& out, void* jobPtr) {
 /*
  * Heavily based on https://gist.github.com/4061959/
  **/
-int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrome) {
-    int32_t index = df::unit::binsearch_index(df::global::world->units.all, workerId);
-    if ( index < 0 ) {
+int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrome, ResetPolicy::ResetPolicy policy) {
+    df::unit* unit = df::unit::find(workerId);
+    if ( !unit ) {
         if ( DFHack::Once::doOnce("autoSyndrome giveSyndrome couldn't find unit") )
             out.print("%s line %d: Couldn't find unit %d.\n", __FILE__, __LINE__, workerId);
         return -1;
     }
-    df::unit* unit = df::global::world->units.all[index];
+    
+    if ( policy != ResetPolicy::NewInstance ) {
+        //figure out if already there
+        for ( size_t a = 0; a < unit->syndromes.active.size(); a++ ) {
+            df::unit_syndrome* unitSyndrome = unit->syndromes.active[a];
+            if ( unitSyndrome->type != syndrome->id )
+                continue;
+            int32_t most = 0;
+            switch(policy) {
+            case ResetPolicy::DoNothing:
+                return -1;
+            case ResetPolicy::ResetDuration:
+                for ( size_t b = 0; b < unitSyndrome->symptoms.size(); b++ ) {
+                    unitSyndrome->symptoms[b]->ticks = 0; //might cause crashes with transformations
+                }
+                unitSyndrome->ticks = 0;
+                break;
+            case ResetPolicy::AddDuration:
+                if ( unitSyndrome->symptoms.size() != syndrome->ce.size() ) {
+                    if ( DFHack::Once::doOnce("autoSyndrome giveSyndrome incorrect symptom count") )
+                        out.print("%s, line %d. Incorrect symptom count %d != %d\n", __FILE__, __LINE__, unitSyndrome->symptoms.size(), syndrome->ce.size());
+                    break;
+                }
+                for ( size_t b = 0; b < unitSyndrome->symptoms.size(); b++ ) {
+                    if ( syndrome->ce[b]->end == -1 )
+                        continue;
+                    unitSyndrome->symptoms[b]->ticks -= syndrome->ce[b]->end;
+                    if ( syndrome->ce[b]->end > most )
+                        most = syndrome->ce[b]->end;
+                }
+                unitSyndrome->ticks -= most;
+                break;
+            default:
+                if ( DFHack::Once::doOnce("autoSyndrome giveSyndrome invalid reset policy") )
+                    out.print("%s, line %d: invalid reset policy %d.\n", __FILE__, __LINE__, policy);
+                return -1;
+            }
+            return 0;
+        }
+    }
 
     df::unit_syndrome* unitSyndrome = new df::unit_syndrome();
     unitSyndrome->type = syndrome->id;
     unitSyndrome->year = DFHack::World::ReadCurrentYear();
     unitSyndrome->year_time = DFHack::World::ReadCurrentTick();
-//    unitSyndrome->year = 0;
-//    unitSyndrome->year_time = 0;
     unitSyndrome->ticks = 0;
     unitSyndrome->unk1 = 0;
-    unitSyndrome->flags = 0; //typecast
+    unitSyndrome->flags = 0; //TODO: typecast?
     
     for ( size_t a = 0; a < syndrome->ce.size(); a++ ) {
         df::unit_syndrome::T_symptoms* symptom = new df::unit_syndrome::T_symptoms();

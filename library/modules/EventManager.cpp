@@ -189,6 +189,8 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     if ( !gameLoaded ) {
         return;
     }
+    CoreSuspender suspender;
+    
     uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
         + DFHack::World::ReadCurrentTick();
     /*if ( tick - lastTick > 1 ) {

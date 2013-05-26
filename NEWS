@@ -1,7 +1,26 @@
 DFHack future
 
-  Is not yet known.
-
+  New commands:
+    - restrictliquid - Restrict traffic on every visible square with liquid.
+    - restrictice - Restrict traffic on squares above visible ice.
+  New scripts:
+    - masspit: designate caged creatures in a zone for pitting
+    - locate_ore: scan the map for unmined ore veins
+    - multicmd: run a sequence of dfhack commands, separated by ';'
+    - autobutcher: A GUI front-end for the autobutcher plugin.
+  Misc improvements:
+    - exterminate: renamed from slayrace, add help message, add butcher mode
+    - autoSyndrome: disable by default
+    - ruby: add df.dfhack_run "somecommand"
+    - magmasource: rename to source, allow water/magma sources/drains
+  New plugins:
+    - buildingplan: Place furniture before it's built
+    - resume: A plugin to help display and resume suspended constructions conveniently
+    - dwarfmonitor: Records dwarf activity to measure fort efficiency
+    - mousequery: Look and poke at the map elements with the mouse.
+    - autotrade: Automatically send items in marked stockpiles to trade depot, when trading is possible.
+    - stocks: An improved stocks display screen.
+    
 DFHack v0.34.11-r3
 
   Internals:
@@ -10,9 +29,11 @@ DFHack v0.34.11-r3
     - Maps::canStepBetween: returns whether you can walk between two tiles in one step.
     - EventManager: monitors various in game events centrally so that individual plugins
       don't have to monitor the same things redundantly.
+    - Now works with OSX 10.6.8
   Notable bugfixes:
     - autobutcher can be re-enabled again after being stopped.
     - stopped Dwarf Manipulator from unmasking vampires.
+    - Stonesense is now fixed on OSX
   Misc improvements:
     - fastdwarf: new mode using debug flags, and some internal consistency fixes.
     - added a small stand-alone utility for applying and removing binary patches.

@@ -40,6 +40,11 @@ using namespace std;
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
+#include "MiscUtils.h"
+
+#include "LuaTools.h"
+#include "DataFuncs.h"
+
 #include "modules/Units.h"
 #include "modules/Maps.h"
 #include "modules/Gui.h"
@@ -47,9 +52,11 @@ using namespace std;
 #include "modules/MapCache.h"
 #include "modules/Buildings.h"
 #include "modules/World.h"
+#include "modules/Screen.h"
 #include "MiscUtils.h"
+#include <VTableInterpose.h>
 
-#include <df/ui.h>
+#include "df/ui.h"
 #include "df/world.h"
 #include "df/world_raws.h"
 #include "df/building_def.h"
@@ -60,6 +67,8 @@ using namespace std;
 #include "df/general_ref_building_civzone_assignedst.h"
 #include <df/creature_raw.h>
 #include <df/caste_raw.h>
+#include "df/viewscreen_dwarfmodest.h"
+#include "modules/Translation.h"
 
 using std::vector;
 using std::string;
@@ -68,6 +77,8 @@ using namespace df::enums;
 using df::global::world;
 using df::global::cursor;
 using df::global::ui;
+using df::global::ui_build_selector;
+using df::global::gps;
 
 using namespace DFHack::Gui;
 
@@ -238,34 +249,6 @@ command_result init_autonestbox(color_ostream &out);
 command_result cleanup_autonestbox(color_ostream &out);
 command_result start_autonestbox(color_ostream &out);
 
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
-{
-    commands.push_back(PluginCommand(
-        "zone", "manage activity zones.",
-        df_zone, false,
-        zone_help.c_str()
-        ));
-    commands.push_back(PluginCommand(
-        "autonestbox", "auto-assign nestbox zones.",
-        df_autonestbox, false,
-        autonestbox_help.c_str()
-        ));
-    commands.push_back(PluginCommand(
-        "autobutcher", "auto-assign lifestock for butchering.",
-        df_autobutcher, false,
-        autobutcher_help.c_str()
-        ));
-    init_autobutcher(out);
-    init_autonestbox(out);
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
-    cleanup_autobutcher(out);
-    cleanup_autonestbox(out);
-    return CR_OK;
-}
 
 ///////////////
 // stuff for autonestbox and autobutcher
@@ -506,6 +489,24 @@ bool isHunter(df::unit* unit)
         return false;
 }
 
+// check if unit is marked as available for adoption
+bool isAvailableForAdoption(df::unit* unit)
+{
+    auto refs = unit->specific_refs;
+    for(int i=0; i<refs.size(); i++)
+    {
+        auto ref = refs[i];
+        auto reftype = ref->type;
+        if( reftype == df::specific_ref_type::PETINFO_PET )
+        {
+            //df::pet_info* pet = ref->pet;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 // check if creature belongs to the player's civilization
 // (don't try to pasture/slaughter random untame animals)
 bool isOwnCiv(df::unit* unit)
@@ -520,6 +521,8 @@ bool isOwnRace(df::unit* unit)
     return unit->race == ui->race_id;
 }
 
+// get race name by id or unit pointer
+// todo: rename these two functions to "getRaceToken" since the output is more of a token
 string getRaceName(int32_t id)
 {
     df::creature_raw *raw = df::global::world->raws.creatures.all[id];
@@ -530,6 +533,15 @@ string getRaceName(df::unit* unit)
     df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
     return raw->creature_id;
 }
+
+// get plural of race name (used for display in autobutcher UI and for sorting the watchlist)
+string getRaceNamePlural(int32_t id)
+{
+    //WatchedRace * w = watched_races[idx];
+    df::creature_raw *raw = df::global::world->raws.creatures.all[id];
+    return raw->name[1]; // second field is plural of race name
+}
+
 string getRaceBabyName(df::unit* unit)
 {
     df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
@@ -1016,6 +1028,22 @@ bool isAssigned(df::unit* unit)
             || rtype == df::general_ref_type::BUILDING_CHAIN
             || (rtype == df::general_ref_type::CONTAINED_IN_ITEM && isInBuiltCage(unit))
             )
+        {
+            assigned = true;
+            break;
+        }
+    }
+    return assigned;
+}
+
+bool isAssignedToZone(df::unit* unit)
+{
+    bool assigned = false;
+    for (size_t r=0; r < unit->general_refs.size(); r++)
+    {
+        df::general_ref * ref = unit->general_refs[r];
+        auto rtype = ref->getType();
+        if(rtype == df::general_ref_type::BUILDING_CIVZONE_ASSIGNED)
         {
             assigned = true;
             break;
@@ -2722,6 +2750,8 @@ bool compareUnitAgesOlder(df::unit* i, df::unit* j)
     return (age_i > age_j);
 }
 
+
+
 //enum WatchedRaceSubtypes
 //{
 //    femaleKid=0,
@@ -2737,10 +2767,18 @@ public:
 
     bool isWatched; // if true, autobutcher will process this race
     int raceId;
+
+    // target amounts
     int fk; // max female kids
     int mk; // max male kids
     int fa; // max female adults
     int ma; // max male adults
+
+    // amounts of protected (not butcherable) units
+    int fk_prot;
+    int fa_prot;
+    int mk_prot;
+    int ma_prot;
 
     // bah, this should better be an array of 4 vectors
     // that way there's no need for the 4 ugly process methods
@@ -2757,6 +2795,7 @@ public:
         mk = _mk;
         fa = _fa;
         ma = _ma;
+        fk_prot = fa_prot = mk_prot = ma_prot = 0;
     }
 
     ~WatchedRace()
@@ -2821,8 +2860,27 @@ public:
         }
     }
 
+    void PushProtectedUnit(df::unit * unit)
+    {
+        if(isFemale(unit))
+        {
+            if(isBaby(unit) || isChild(unit))
+                fk_prot++;
+            else
+                fa_prot++;
+        }
+        else //treat sex n/a like it was male
+        {
+            if(isBaby(unit) || isChild(unit))
+                mk_prot++;
+            else
+                ma_prot++;
+        }
+    }
+
     void ClearUnits()
     {
+        fk_prot = fa_prot = mk_prot = ma_prot = 0;
         fk_ptr.clear();
         mk_ptr.clear();
         fa_ptr.clear();
@@ -2832,7 +2890,7 @@ public:
     int ProcessUnits_fk()
     {
         int subcount = 0;
-        while(fk_ptr.size() > fk)
+        while(fk_ptr.size() && (fk_ptr.size() + fk_prot > fk) )
         {
             df::unit* unit = fk_ptr.back();
             doMarkForSlaughter(unit);
@@ -2845,7 +2903,7 @@ public:
     int ProcessUnits_mk()
     {
         int subcount = 0;
-        while(mk_ptr.size() > mk)
+        while(mk_ptr.size() && (mk_ptr.size() + mk_prot > mk) )
         {
             df::unit* unit = mk_ptr.back();
             doMarkForSlaughter(unit);
@@ -2858,7 +2916,7 @@ public:
     int ProcessUnits_fa()
     {
         int subcount = 0;
-        while(fa_ptr.size() > fa)
+        while(fa_ptr.size() && (fa_ptr.size() + fa_prot > fa) )
         {
             df::unit* unit = fa_ptr.back();
             doMarkForSlaughter(unit);
@@ -2871,7 +2929,7 @@ public:
     int ProcessUnits_ma()
     {
         int subcount = 0;
-        while(ma_ptr.size() > ma)
+        while(ma_ptr.size() && (ma_ptr.size() + ma_prot > ma) )
         {
             df::unit* unit = ma_ptr.back();
             doMarkForSlaughter(unit);
@@ -2897,6 +2955,17 @@ public:
 // the name is a bit misleading since entries can be set to 'unwatched'
 // to ignore them for a while but still keep the target count settings
 std::vector<WatchedRace*> watched_races;
+
+// helper for sorting the watchlist alphabetically
+bool compareRaceNames(WatchedRace* i, WatchedRace* j)
+{
+    string name_i = getRaceNamePlural(i->raceId);
+    string name_j = getRaceNamePlural(j->raceId);
+    
+    return (name_i < name_j);
+}
+
+static void autobutcher_sortWatchList(color_ostream &out);
 
 // default target values for autobutcher
 static int default_fk = 5;
@@ -3288,6 +3357,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
             WatchedRace * w = new WatchedRace(watch_race, target_raceids.back(), target_fk, target_mk, target_fa, target_ma);
             w->UpdateConfig(out);
             watched_races.push_back(w);
+            autobutcher_sortWatchList(out);
         }
         target_raceids.pop_back();
     }
@@ -3334,6 +3404,12 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
     for(size_t i=0; i<world->units.all.size(); i++)
     {
         df::unit * unit = world->units.all[i];
+
+        // this check is now divided into two steps, squeezed autowatch into the middle
+        // first one ignores completely inappropriate units (dead, undead, not belonging to the fort, ...)
+        // then let autowatch add units to the watchlist which will probably start breeding (owned pets, war animals, ...)
+        // then process units counting those which can't be butchered (war animals, named pets, ...)
+        // so that they are treated as "own stock" as well and count towards the target quota
         if(    isDead(unit)
             || isUndead(unit)
             || isMarkedForSlaughter(unit)
@@ -3341,12 +3417,6 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
             || isForest(unit) // ignore merchants' caged animals
             || !isOwnCiv(unit)
             || !isTame(unit)
-            || isWar(unit) // ignore war dogs etc
-            || isHunter(unit) // ignore hunting dogs etc
-            // ignore creatures in built cages which are defined as rooms to leave zoos alone
-            // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
-            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
-            || unit->name.has_name
             )
             continue;
 
@@ -3355,24 +3425,39 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
         if(!isContainedInItem(unit) && !hasValidMapPos(unit))
             continue;
 
+        WatchedRace * w = NULL;
         int watched_index = getWatchedIndex(unit->race);
         if(watched_index != -1)
         {
-            WatchedRace * w = watched_races[watched_index];
-            if(w->isWatched)
-                w->PushUnit(unit);
+            w = watched_races[watched_index];
         }
         else if(enable_autobutcher_autowatch)
         {
-            WatchedRace * w = new WatchedRace(true, unit->race, default_fk, default_mk, default_fa, default_ma);
+            w = new WatchedRace(true, unit->race, default_fk, default_mk, default_fa, default_ma);
             w->UpdateConfig(out);
             watched_races.push_back(w);
-            w->PushUnit(unit);
 
             string announce;
-            announce = "New race added to autobutcher watchlist: " + getRaceName(w->raceId);
+            announce = "New race added to autobutcher watchlist: " + getRaceNamePlural(w->raceId);
             Gui::showAnnouncement(announce, 2, false);
-            //out << announce << endl;
+            autobutcher_sortWatchList(out);
+        }
+
+        if(w && w->isWatched)
+        {
+            // don't butcher protected units, but count them as stock as well
+            // this way they count towards target quota, so if you order that you want 1 female adult cat
+            // and have 2 cats, one of them being a pet, the other gets butchered
+            if(    isWar(unit)    // ignore war dogs etc
+                || isHunter(unit) // ignore hunting dogs etc
+                // ignore creatures in built cages which are defined as rooms to leave zoos alone
+                // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
+                || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
+                || isAvailableForAdoption(unit)
+                || unit->name.has_name )
+                w->PushProtectedUnit(unit);
+            else
+                w->PushUnit(unit);
         }
     }
 
@@ -3387,12 +3472,10 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
             stringstream ss;
             ss << slaughter_subcount;
             string announce;
-            announce = getRaceName(w->raceId) + " marked for slaughter: " + ss.str();
+            announce = getRaceNamePlural(w->raceId) + " marked for slaughter: " + ss.str();
             Gui::showAnnouncement(announce, 2, false);
-            //out << announce << endl;
         }
     }
-    //out << slaughter_count << " units total marked for slaughter." << endl;
 
     return CR_OK;
 }
@@ -3476,11 +3559,11 @@ command_result init_autobutcher(color_ostream &out)
         //out << "  mk: "       << p->ival(3) << endl;
         //out << "  fa: "       << p->ival(4) << endl;
         //out << "  ma: "       << p->ival(5) << endl;
-
         WatchedRace * w = new WatchedRace(p->ival(1), p->ival(0), p->ival(2), p->ival(3),p->ival(4),p->ival(5));
         w->rconfig = *p;
         watched_races.push_back(w);
     }
+    autobutcher_sortWatchList(out);
     return CR_OK;
 }
 
@@ -3544,5 +3627,863 @@ command_result cleanup_autonestbox(color_ostream &out)
 {
     // nothing to cleanup currently
     // (future version of autonestbox could store info about cages for useless male kids)
+    return CR_OK;
+}
+
+// abuse WatchedRace struct for counting stocks (since it sorts by gender and age)
+// calling method must delete pointer!
+WatchedRace * checkRaceStocksTotal(int race)
+{
+    WatchedRace * w = new WatchedRace(true, race, default_fk, default_mk, default_fa, default_ma);
+
+    for(size_t i=0; i<world->units.all.size(); i++)
+    {
+        df::unit * unit = world->units.all[i];
+
+        if(unit->race != race)
+            continue;
+
+        if(    isDead(unit)
+            || isUndead(unit)
+            || isMerchant(unit) // ignore merchants' draught animals
+            || isForest(unit) // ignore merchants' caged animals
+            || !isOwnCiv(unit)
+            )
+            continue;
+
+        // found a bugged unit which had invalid coordinates but was not in a cage.
+        // marking it for slaughter didn't seem to have negative effects, but you never know...
+        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
+            continue;
+
+        w->PushUnit(unit);
+    }
+    return w;
+}
+
+WatchedRace * checkRaceStocksProtected(int race)
+{
+    WatchedRace * w = new WatchedRace(true, race, default_fk, default_mk, default_fa, default_ma);
+
+    for(size_t i=0; i<world->units.all.size(); i++)
+    {
+        df::unit * unit = world->units.all[i];
+
+        if(unit->race != race)
+            continue;
+
+        if(    isDead(unit)
+            || isUndead(unit)
+            || isMerchant(unit) // ignore merchants' draught animals
+            || isForest(unit) // ignore merchants' caged animals
+            || !isOwnCiv(unit)
+            )
+            continue;
+
+        // found a bugged unit which had invalid coordinates but was not in a cage.
+        // marking it for slaughter didn't seem to have negative effects, but you never know...
+        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
+            continue;
+
+        if(   !isTame(unit)
+           || isWar(unit) // ignore war dogs etc
+           || isHunter(unit) // ignore hunting dogs etc
+            // ignore creatures in built cages which are defined as rooms to leave zoos alone
+            // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
+            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
+            || isAvailableForAdoption(unit)
+            || unit->name.has_name )
+            w->PushUnit(unit);
+    }
+    return w;
+}
+
+WatchedRace * checkRaceStocksButcherable(int race)
+{
+    WatchedRace * w = new WatchedRace(true, race, default_fk, default_mk, default_fa, default_ma);
+
+    for(size_t i=0; i<world->units.all.size(); i++)
+    {
+        df::unit * unit = world->units.all[i];
+
+        if(unit->race != race)
+            continue;
+
+        if(    isDead(unit)
+            || isUndead(unit)
+            || isMerchant(unit) // ignore merchants' draught animals
+            || isForest(unit) // ignore merchants' caged animals
+            || !isOwnCiv(unit)
+            || !isTame(unit)
+            || isWar(unit) // ignore war dogs etc
+            || isHunter(unit) // ignore hunting dogs etc
+            // ignore creatures in built cages which are defined as rooms to leave zoos alone
+            // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
+            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
+            || isAvailableForAdoption(unit)
+            || unit->name.has_name
+            )
+            continue;
+
+        // found a bugged unit which had invalid coordinates but was not in a cage.
+        // marking it for slaughter didn't seem to have negative effects, but you never know...
+        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
+            continue;
+
+        w->PushUnit(unit);
+    }
+    return w;
+}
+
+WatchedRace * checkRaceStocksButcherFlag(int race)
+{
+    WatchedRace * w = new WatchedRace(true, race, default_fk, default_mk, default_fa, default_ma);
+
+    for(size_t i=0; i<world->units.all.size(); i++)
+    {
+        df::unit * unit = world->units.all[i];
+
+        if(unit->race != race)
+            continue;
+
+        if(    isDead(unit)
+            || isUndead(unit)
+            || isMerchant(unit) // ignore merchants' draught animals
+            || isForest(unit) // ignore merchants' caged animals
+            || !isOwnCiv(unit)
+            )
+            continue;
+
+        // found a bugged unit which had invalid coordinates but was not in a cage.
+        // marking it for slaughter didn't seem to have negative effects, but you never know...
+        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
+            continue;
+
+        if(isMarkedForSlaughter(unit))
+            w->PushUnit(unit);
+    }
+    return w;
+}
+
+void butcherRace(int race)
+{
+    for(size_t i=0; i<world->units.all.size(); i++)
+    {
+        df::unit * unit = world->units.all[i];
+
+        if(unit->race != race)
+            continue;
+
+        if(    isDead(unit)
+            || isUndead(unit)
+            || isMerchant(unit) // ignore merchants' draught animals
+            || isForest(unit) // ignore merchants' caged animals
+            || !isOwnCiv(unit)
+            || !isTame(unit)
+            || isWar(unit) // ignore war dogs etc
+            || isHunter(unit) // ignore hunting dogs etc
+            // ignore creatures in built cages which are defined as rooms to leave zoos alone
+            // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
+            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
+            || isAvailableForAdoption(unit)
+            || unit->name.has_name
+            )
+            continue;
+
+        // found a bugged unit which had invalid coordinates but was not in a cage.
+        // marking it for slaughter didn't seem to have negative effects, but you never know...
+        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
+            continue;
+
+        unit->flags2.bits.slaughter = true;
+    }
+}
+
+// remove butcher flag for all units of a given race
+void unbutcherRace(int race)
+{
+    for(size_t i=0; i<world->units.all.size(); i++)
+    {
+        df::unit * unit = world->units.all[i];
+
+        if(unit->race != race)
+            continue;
+
+        if(    isDead(unit)
+            || isUndead(unit)
+            || !isMarkedForSlaughter(unit)
+            )
+            continue;
+
+        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
+            continue;
+
+        unit->flags2.bits.slaughter = false;
+    }
+}
+
+
+/////////////////////////////////////
+// API functions to control autobutcher with a lua script
+
+static bool autobutcher_isEnabled() { return enable_autobutcher; }
+static bool autowatch_isEnabled() { return enable_autobutcher_autowatch; }
+
+static size_t autobutcher_getSleep(color_ostream &out)
+{
+    return sleep_autobutcher;
+}
+
+static void autobutcher_setSleep(color_ostream &out, size_t ticks)
+{
+    sleep_autobutcher = ticks;
+    if(config_autobutcher.isValid())
+        config_autobutcher.ival(1) = sleep_autobutcher;
+}
+
+static void autobutcher_setEnabled(color_ostream &out, bool enable)
+{
+    if(enable)
+    {
+        enable_autobutcher = true;
+        start_autobutcher(out);
+        autoButcher(out, false);
+    }
+    else
+    {
+        enable_autobutcher = false;
+        if(config_autobutcher.isValid())
+            config_autobutcher.ival(0) = enable_autobutcher;
+        out << "Autobutcher stopped." << endl;
+    }
+}
+
+static void autowatch_setEnabled(color_ostream &out, bool enable)
+{
+    if(enable)
+    {
+        out << "Auto-adding to watchlist started." << endl;
+        enable_autobutcher_autowatch = true;
+        if(config_autobutcher.isValid())
+            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
+    }
+    else
+    {
+        out << "Auto-adding to watchlist stopped." << endl;
+        enable_autobutcher_autowatch = false;
+        if(config_autobutcher.isValid())
+            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
+    }
+}
+
+// set all data for a watchlist race in one go
+// if race is not already on watchlist it will be added
+// params: (id, fk, mk, fa, ma, watched)
+static void autobutcher_setWatchListRace(color_ostream &out, size_t id, size_t fk, size_t mk, size_t fa, size_t ma, bool watched)
+{
+    int watched_index = getWatchedIndex(id);
+    if(watched_index != -1)
+    {
+        out << "updating watchlist entry" << endl;
+        WatchedRace * w = watched_races[watched_index];
+        w->fk = fk;
+        w->mk = mk;
+        w->fa = fa;
+        w->ma = ma;
+        w->isWatched = watched;
+        w->UpdateConfig(out);
+    }
+    else
+    {
+        out << "creating new watchlist entry" << endl;
+        WatchedRace * w = new WatchedRace(watched, id, fk, mk, fa, ma); //default_fk, default_mk, default_fa, default_ma);
+        w->UpdateConfig(out);
+        watched_races.push_back(w);
+
+        string announce;
+        announce = "New race added to autobutcher watchlist: " + getRaceNamePlural(w->raceId);
+        Gui::showAnnouncement(announce, 2, false);
+        autobutcher_sortWatchList(out);
+    }
+}
+
+// remove entry from watchlist
+static void autobutcher_removeFromWatchList(color_ostream &out, size_t id)
+{
+    int watched_index = getWatchedIndex(id);
+    if(watched_index != -1)
+    {
+        out << "updating watchlist entry" << endl;
+        WatchedRace * w = watched_races[watched_index];
+        w->RemoveConfig(out);
+        watched_races.erase(watched_races.begin() + watched_index);
+    }
+}
+
+// sort watchlist alphabetically
+static void autobutcher_sortWatchList(color_ostream &out)
+{
+    sort(watched_races.begin(), watched_races.end(), compareRaceNames);   
+}
+
+// set default target values for new races
+static void autobutcher_setDefaultTargetNew(color_ostream &out, size_t fk, size_t mk, size_t fa, size_t ma)
+{
+    default_fk = fk;
+    default_mk = mk;
+    default_fa = fa;
+    default_ma = ma;
+    if(config_autobutcher.isValid())
+    {
+        config_autobutcher.ival(3) = default_fk;
+        config_autobutcher.ival(4) = default_mk;
+        config_autobutcher.ival(5) = default_fa;
+        config_autobutcher.ival(6) = default_ma;
+    }
+}
+
+// set default target values for ALL races (update watchlist and set new default)
+static void autobutcher_setDefaultTargetAll(color_ostream &out, size_t fk, size_t mk, size_t fa, size_t ma)
+{
+    for(size_t i=0; i<watched_races.size(); i++)
+    {
+        WatchedRace * w = watched_races[i];
+        w->fk = fk;
+        w->mk = mk;
+        w->fa = fa;
+        w->ma = ma;
+        w->UpdateConfig(out);
+    }
+    autobutcher_setDefaultTargetNew(out, fk, mk, fa, ma);
+}
+
+static void autobutcher_butcherRace(color_ostream &out, size_t id)
+{
+    butcherRace(id);
+}
+
+static void autobutcher_unbutcherRace(color_ostream &out, size_t id)
+{
+    unbutcherRace(id);
+}
+
+// push autobutcher settings on lua stack
+static int autobutcher_getSettings(lua_State *L)
+{
+    color_ostream &out = *Lua::GetOutput(L);
+    lua_newtable(L);
+    int ctable = lua_gettop(L);
+    Lua::SetField(L, enable_autobutcher, ctable, "enable_autobutcher");
+    Lua::SetField(L, enable_autobutcher_autowatch, ctable, "enable_autowatch");
+    Lua::SetField(L, default_fk, ctable, "fk");
+    Lua::SetField(L, default_mk, ctable, "mk");
+    Lua::SetField(L, default_fa, ctable, "fa");
+    Lua::SetField(L, default_ma, ctable, "ma");
+    Lua::SetField(L, sleep_autobutcher, ctable, "sleep");
+    return 1;
+}
+
+// push the watchlist vector as nested table on the lua stack
+static int autobutcher_getWatchList(lua_State *L)
+{
+    color_ostream &out = *Lua::GetOutput(L);
+    lua_newtable(L);
+
+    for(size_t i=0; i<watched_races.size(); i++)
+    {
+        lua_newtable(L);
+        int ctable = lua_gettop(L);
+        WatchedRace * w = watched_races[i];
+        Lua::SetField(L, w->raceId, ctable, "id");
+        Lua::SetField(L, w->isWatched, ctable, "watched");
+        Lua::SetField(L, getRaceNamePlural(w->raceId), ctable, "name");
+        Lua::SetField(L, w->fk, ctable, "fk");
+        Lua::SetField(L, w->mk, ctable, "mk");
+        Lua::SetField(L, w->fa, ctable, "fa");
+        Lua::SetField(L, w->ma, ctable, "ma");
+
+        int id = w->raceId;
+        
+        w = checkRaceStocksTotal(id);
+        Lua::SetField(L, w->fk_ptr.size(), ctable, "fk_total");
+        Lua::SetField(L, w->mk_ptr.size(), ctable, "mk_total");
+        Lua::SetField(L, w->fa_ptr.size(), ctable, "fa_total");
+        Lua::SetField(L, w->ma_ptr.size(), ctable, "ma_total");
+        delete w;
+
+        w = checkRaceStocksProtected(id);
+        Lua::SetField(L, w->fk_ptr.size(), ctable, "fk_protected");
+        Lua::SetField(L, w->mk_ptr.size(), ctable, "mk_protected");
+        Lua::SetField(L, w->fa_ptr.size(), ctable, "fa_protected");
+        Lua::SetField(L, w->ma_ptr.size(), ctable, "ma_protected");
+        delete w;
+
+        w = checkRaceStocksButcherable(id);
+        Lua::SetField(L, w->fk_ptr.size(), ctable, "fk_butcherable");
+        Lua::SetField(L, w->mk_ptr.size(), ctable, "mk_butcherable");
+        Lua::SetField(L, w->fa_ptr.size(), ctable, "fa_butcherable");
+        Lua::SetField(L, w->ma_ptr.size(), ctable, "ma_butcherable");
+        delete w;
+
+        w = checkRaceStocksButcherFlag(id);
+        Lua::SetField(L, w->fk_ptr.size(), ctable, "fk_butcherflag");
+        Lua::SetField(L, w->mk_ptr.size(), ctable, "mk_butcherflag");
+        Lua::SetField(L, w->fa_ptr.size(), ctable, "fa_butcherflag");
+        Lua::SetField(L, w->ma_ptr.size(), ctable, "ma_butcherflag");
+        delete w;
+
+        lua_rawseti(L, -2, i+1);
+    }
+
+    return 1;
+}
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(autobutcher_isEnabled),
+    DFHACK_LUA_FUNCTION(autowatch_isEnabled),
+    DFHACK_LUA_FUNCTION(autobutcher_setEnabled),
+    DFHACK_LUA_FUNCTION(autowatch_setEnabled),
+    DFHACK_LUA_FUNCTION(autobutcher_getSleep),
+    DFHACK_LUA_FUNCTION(autobutcher_setSleep),
+    DFHACK_LUA_FUNCTION(autobutcher_setWatchListRace),
+    DFHACK_LUA_FUNCTION(autobutcher_setDefaultTargetNew),
+    DFHACK_LUA_FUNCTION(autobutcher_setDefaultTargetAll),
+    DFHACK_LUA_FUNCTION(autobutcher_butcherRace),
+    DFHACK_LUA_FUNCTION(autobutcher_unbutcherRace),
+    DFHACK_LUA_FUNCTION(autobutcher_removeFromWatchList),
+    DFHACK_LUA_FUNCTION(autobutcher_sortWatchList),
+    DFHACK_LUA_END
+};
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(autobutcher_getSettings),
+    DFHACK_LUA_COMMAND(autobutcher_getWatchList),
+    DFHACK_LUA_END
+};
+
+// end lua API
+
+
+
+//START zone filters
+using df::global::ui_building_item_cursor;
+using df::global::ui_building_assign_type;
+using df::global::ui_building_assign_is_marked;
+using df::global::ui_building_assign_units;
+using df::global::ui_building_assign_items;
+
+using df::global::ui_building_in_assign;
+
+static const int ascii_to_enum_offset = interface_key::STRING_A048 - '0';
+
+void OutputString(int8_t color, int &x, int y, const std::string &text)
+{
+    Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
+    x += text.length();
+}
+
+class zone_filter
+{
+public:
+    zone_filter()
+    {
+        initialized = false;
+    }
+
+    void initialize(const df::ui_sidebar_mode &mode)
+    {
+        if (!initialized)
+        {
+            this->mode = mode;
+            saved_ui_building_assign_type.clear();
+            saved_ui_building_assign_units.clear();
+            saved_ui_building_assign_items.clear();
+            saved_ui_building_assign_is_marked.clear();
+            saved_indexes.clear();
+
+            for (size_t i = 0; i < ui_building_assign_units->size(); i++)
+            {
+                saved_ui_building_assign_type.push_back(ui_building_assign_type->at(i));
+                saved_ui_building_assign_units.push_back(ui_building_assign_units->at(i));
+                saved_ui_building_assign_items.push_back(ui_building_assign_items->at(i));
+                saved_ui_building_assign_is_marked.push_back(ui_building_assign_is_marked->at(i));
+            }
+
+            search_string.clear();
+            show_non_grazers = show_pastured = show_noncaged = show_male = show_female = show_other_zones = true;
+            entry_mode = false;
+
+            initialized = true;
+        }
+    }
+
+    void deinitialize()
+    {
+        initialized = false;
+    }
+
+    void apply_filters()
+    {
+        if (saved_indexes.size() > 0)
+        {
+            bool list_has_been_sorted = (ui_building_assign_units->size() == reference_list.size()
+                && *ui_building_assign_units != reference_list);
+
+            for (size_t i = 0; i < saved_indexes.size(); i++)
+            {
+                int adjusted_item_index = i;
+                if (list_has_been_sorted)
+                {
+                    for (int j = 0; j < ui_building_assign_units->size(); j++)
+                    {
+                        if (ui_building_assign_units->at(j) == reference_list[i])
+                        {
+                            adjusted_item_index = j;
+                            break;
+                        }
+                    }
+                }
+
+                saved_ui_building_assign_is_marked[saved_indexes[i]] = ui_building_assign_is_marked->at(adjusted_item_index);
+            }
+        }
+        
+        string search_string_l = toLower(search_string);
+        saved_indexes.clear();
+        ui_building_assign_type->clear();
+        ui_building_assign_is_marked->clear();
+        ui_building_assign_units->clear();
+        ui_building_assign_items->clear();
+
+        for (size_t i = 0; i < saved_ui_building_assign_units.size(); i++)
+        {
+            df::unit *curr_unit = saved_ui_building_assign_units[i];
+
+            if (!curr_unit)
+                continue;
+
+            if (!show_non_grazers && !isGrazer(curr_unit))
+                continue;
+
+            if (!show_pastured && isAssignedToZone(curr_unit))
+                continue;
+
+            if (!show_noncaged)
+            {   
+                // must be in a container
+                if(!isContainedInItem(curr_unit))
+                    continue;
+                // but exclude built cages (zoos, traps, ...) to avoid "accidental" pitting of creatures you'd prefer to keep
+                if (isInBuiltCage(curr_unit))
+                    continue;
+            }
+
+            if (!show_male && isMale(curr_unit))
+                continue;
+
+            if (!show_female && isFemale(curr_unit))
+                continue;
+
+            if (!search_string_l.empty())
+            {
+                string desc = Translation::TranslateName(
+                    Units::getVisibleName(curr_unit), false);
+
+                desc += Units::getProfessionName(curr_unit);
+                desc = toLower(desc);
+
+                if (desc.find(search_string_l) == string::npos)
+                    continue;
+            }
+
+            ui_building_assign_type->push_back(saved_ui_building_assign_type[i]);
+            ui_building_assign_units->push_back(curr_unit);
+            ui_building_assign_items->push_back(saved_ui_building_assign_items[i]);
+            ui_building_assign_is_marked->push_back(saved_ui_building_assign_is_marked[i]);
+
+            saved_indexes.push_back(i); // Used to map filtered indexes back to original, if needed
+        }
+
+        reference_list = *ui_building_assign_units;
+        *ui_building_item_cursor = 0;
+    }
+
+    bool handle_input(const set<df::interface_key> *input)
+    {
+        if (!initialized)
+            return false;
+
+        bool key_processed = true;
+
+        if (entry_mode)
+        {
+            // Query typing mode
+
+            if  (input->count(interface_key::SECONDSCROLL_UP) || input->count(interface_key::SECONDSCROLL_DOWN) ||
+                input->count(interface_key::SECONDSCROLL_PAGEUP) || input->count(interface_key::SECONDSCROLL_PAGEDOWN))
+            {
+                // Arrow key pressed. Leave entry mode and allow screen to process key
+                entry_mode = false;
+                return false;
+            }
+
+            df::interface_key last_token = *input->rbegin();
+            if (last_token >= interface_key::STRING_A032 && last_token <= interface_key::STRING_A126)
+            {
+                // Standard character
+                search_string += last_token - ascii_to_enum_offset;
+                apply_filters();
+            }
+            else if (last_token == interface_key::STRING_A000)
+            {
+                // Backspace
+                if (search_string.length() > 0)
+                {
+                    search_string.erase(search_string.length()-1);
+                    apply_filters();
+                }
+            }
+            else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
+            {
+                // ENTER or ESC: leave typing mode
+                entry_mode = false;
+            }
+        }
+        // Not in query typing mode
+        else if (input->count(interface_key::CUSTOM_SHIFT_G) && 
+            (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::QueryBuilding))
+        {
+            show_non_grazers = !show_non_grazers;
+            apply_filters();
+        }
+        else if (input->count(interface_key::CUSTOM_SHIFT_C) && 
+            (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
+        {
+            show_noncaged = !show_noncaged;
+            apply_filters();
+        }
+        else if (input->count(interface_key::CUSTOM_SHIFT_P) && 
+            (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
+        {
+            show_pastured = !show_pastured;
+            apply_filters();
+        }
+        else if (input->count(interface_key::CUSTOM_SHIFT_M) && 
+            (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
+        {
+            show_male = !show_male;
+            apply_filters();
+        }
+        else if (input->count(interface_key::CUSTOM_SHIFT_F) && 
+            (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
+        {
+            show_female = !show_female;
+            apply_filters();
+        }
+        else if (input->count(interface_key::CUSTOM_S))
+        {
+            // Hotkey pressed, enter typing mode
+            entry_mode = true;
+        }
+        else if (input->count(interface_key::CUSTOM_SHIFT_S))
+        {
+            // Shift + Hotkey pressed, clear query
+            search_string.clear();
+            apply_filters();
+        }
+        else
+        {
+            // Not a key for us, pass it on to the screen
+            key_processed = false;
+        }
+
+        return key_processed || entry_mode; // Only pass unrecognized keys down if not in typing mode
+    }
+
+    void do_render()
+    {
+        if (!initialized)
+            return;
+
+        int left_margin = gps->dimx - 30;
+        int8_t a = *df::global::ui_menu_width;
+        int8_t b = *df::global::ui_area_map_width;
+        if ((a == 1 && b > 1) || (a == 2 && b == 2))
+            left_margin -= 24;
+
+        int x = left_margin;
+        int y = 24;
+
+        OutputString(COLOR_BROWN, x, y, "DFHack Filtering");
+        x = left_margin;
+        ++y;
+        OutputString(COLOR_LIGHTGREEN, x, y, "s");
+        OutputString(COLOR_WHITE, x, y, ": Search");
+        if (!search_string.empty() || entry_mode)
+        {
+            OutputString(COLOR_WHITE, x, y, ": ");
+            if (!search_string.empty())
+                OutputString(COLOR_WHITE, x, y, search_string);
+            if (entry_mode)
+                OutputString(COLOR_LIGHTGREEN, x, y, "_");
+        }
+
+        if (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::QueryBuilding)
+        {
+            x = left_margin;
+            y += 2;
+            OutputString(COLOR_LIGHTGREEN, x, y, "G");
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString((show_non_grazers) ? COLOR_WHITE : COLOR_GREY, x, y, "Non-Grazing");
+
+            x = left_margin;
+            ++y;
+            OutputString(COLOR_LIGHTGREEN, x, y, "C");
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString((show_noncaged) ? COLOR_WHITE : COLOR_GREY, x, y, "Not Caged");
+
+            x = left_margin;
+            ++y;
+            OutputString(COLOR_LIGHTGREEN, x, y, "P");
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString((show_pastured) ? COLOR_WHITE : COLOR_GREY, x, y, "Currently Pastured");
+
+            x = left_margin;
+            ++y;
+            OutputString(COLOR_LIGHTGREEN, x, y, "F");
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString((show_female) ? COLOR_WHITE : COLOR_GREY, x, y, "Female");
+
+            x = left_margin;
+            ++y;
+            OutputString(COLOR_LIGHTGREEN, x, y, "M");
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString((show_male) ? COLOR_WHITE : COLOR_GREY, x, y, "Male");
+        }
+        
+        // pits don't have grazer filter because it seems pointless
+        if (mode == ui_sidebar_mode::ZonesPitInfo)
+        {
+            x = left_margin;
+            y += 2;
+            OutputString(COLOR_LIGHTGREEN, x, y, "C");
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString((show_noncaged) ? COLOR_WHITE : COLOR_GREY, x, y, "Not Caged");
+
+            x = left_margin;
+            ++y;
+            OutputString(COLOR_LIGHTGREEN, x, y, "P");
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString((show_pastured) ? COLOR_WHITE : COLOR_GREY, x, y, "Currently Pastured");
+
+            x = left_margin;
+            ++y;
+            OutputString(COLOR_LIGHTGREEN, x, y, "F");
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString((show_female) ? COLOR_WHITE : COLOR_GREY, x, y, "Female");
+
+            x = left_margin;
+            ++y;
+            OutputString(COLOR_LIGHTGREEN, x, y, "M");
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString((show_male) ? COLOR_WHITE : COLOR_GREY, x, y, "Male");
+        }
+    }
+
+private:
+    df::ui_sidebar_mode mode;
+    string search_string;
+    bool initialized;
+    bool entry_mode;
+    bool show_non_grazers, show_pastured, show_noncaged, show_male, show_female, show_other_zones;
+
+    std::vector<int8_t> saved_ui_building_assign_type;
+    std::vector<df::unit*> saved_ui_building_assign_units, reference_list;
+    std::vector<df::item*> saved_ui_building_assign_items;
+    std::vector<char> saved_ui_building_assign_is_marked;
+
+    vector <int> saved_indexes;
+
+};
+
+struct zone_hook : public df::viewscreen_dwarfmodest
+{
+    typedef df::viewscreen_dwarfmodest interpose_base;
+    static zone_filter filter;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        if (!filter.handle_input(input))
+            INTERPOSE_NEXT(feed)(input);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        if ( ( (ui->main.mode == ui_sidebar_mode::ZonesPenInfo || ui->main.mode == ui_sidebar_mode::ZonesPitInfo) &&
+            ui_building_assign_type && ui_building_assign_units &&
+            ui_building_assign_is_marked && ui_building_assign_items &&
+            ui_building_assign_type->size() == ui_building_assign_units->size() &&
+            ui_building_item_cursor)
+            // allow mode QueryBuilding, but only for cages (bedrooms will crash DF with this code, chains don't work either etc)
+            ||
+            (   ui->main.mode == ui_sidebar_mode::QueryBuilding &&
+                ui_building_in_assign && *ui_building_in_assign &&
+                ui_building_assign_type && ui_building_assign_units &&
+                ui_building_assign_type->size() == ui_building_assign_units->size() &&
+                ui_building_item_cursor && 
+                world->selected_building && isCage(world->selected_building) ) 
+            )
+        {
+            if (vector_get(*ui_building_assign_units, *ui_building_item_cursor))
+                filter.initialize(ui->main.mode);
+        }
+        else
+        {
+            filter.deinitialize();
+        }
+
+        INTERPOSE_NEXT(render)();
+
+        filter.do_render();
+
+    }
+};
+
+zone_filter zone_hook::filter;
+
+IMPLEMENT_VMETHOD_INTERPOSE(zone_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(zone_hook, render);
+//END zone filters
+
+
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
+{
+    if (!gps || !INTERPOSE_HOOK(zone_hook, feed).apply() || !INTERPOSE_HOOK(zone_hook, render).apply())
+        out.printerr("Could not insert jobutils hooks!\n");
+
+    commands.push_back(PluginCommand(
+        "zone", "manage activity zones.",
+        df_zone, false,
+        zone_help.c_str()
+        ));
+    commands.push_back(PluginCommand(
+        "autonestbox", "auto-assign nestbox zones.",
+        df_autonestbox, false,
+        autonestbox_help.c_str()
+        ));
+    commands.push_back(PluginCommand(
+        "autobutcher", "auto-assign lifestock for butchering.",
+        df_autobutcher, false,
+        autobutcher_help.c_str()
+        ));
+    init_autobutcher(out);
+    init_autonestbox(out);
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
+{
+    cleanup_autobutcher(out);
+    cleanup_autonestbox(out);
     return CR_OK;
 }

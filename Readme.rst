@@ -16,12 +16,12 @@ access DF memory and allow for easier development of new tools.
 ==============
 Getting DFHack
 ==============
-The project is currently hosted on github_, for both source and
-binaries at  http://github.com/peterix/dfhack
+The project is currently hosted on github_
+at http://github.com/peterix/dfhack
 
 .. _github: http://www.github.com/
 
-Releases can be downloaded from here: https://github.com/peterix/dfhack/downloads
+Releases can be downloaded from here: http://dethware.org/dfhack/download
 
 All new releases are announced in the bay12 thread: http://tinyurl.com/dfhack-ng
 
@@ -1048,6 +1048,14 @@ Example:
 
  'alltraffic N' - Set traffic to 'normal' for all tiles.
 
+restrictliquid
+--------------
+Restrict traffic on all visible tiles with liquid.
+
+restrictice
+-----------
+Restrict traffic on all tiles on top of visible ice.
+
 getplants
 ---------
 This tool allows plant gathering and tree cutting by RAW ID. Specify the types
@@ -1814,6 +1822,8 @@ also tries to have dwarves specialize in specific skills.
 
     Warning: autolabor will override any manual changes you make to labors
     while it is enabled.
+    
+    To prevent particular dwarves from being managed by autolabor, put them in any burrow.
 
 For detailed usage information, see 'help autolabor'.
 
@@ -1948,7 +1958,7 @@ use in your farming plots.
 With a seed type, the script will grow 100 of these seeds, ready to be
 harvested. You can change the number with a 2nd argument.
 
-For exemple, to grow 40 plump helmet spawn:
+For example, to grow 40 plump helmet spawn:
 :: 
 
     growcrops plump 40
@@ -1973,8 +1983,8 @@ Internals: the thoughts are set to be very old, so that the game remove them
 quickly after you unpause.
 
 
-slayrace
-========
+exterminate
+===========
 Kills any unit of a given race.
 
 With no argument, lists the available races and count eligible targets.
@@ -1991,42 +2001,58 @@ such as vampires, it also sets animal.vanish_countdown to 2.
 An alternate mode is selected by adding a 2nd argument to the command,
 ``magma``. In this case, a column of 7/7 magma is generated on top of the
 targets until they die (Warning: do not call on magma-safe creatures. Also,
-using this mode for birds is not recommanded.)
+using this mode on birds is not recommanded.)
 
-Will target any unit on a revealed tile of the map, including ambushers.
+Will target any unit on a revealed tile of the map, including ambushers,
+but ignore caged/chained creatures.
 
 Ex::
 
-    slayrace gob
+    exterminate gob
 
 To kill a single creature, select the unit with the 'v' cursor and::
 
-    slayrace him
+    exterminate him
 
 To purify all elves on the map with fire (may have side-effects)::
 
-    slayrace elve magma
+    exterminate elve magma
 
 
-magmasource
-===========
-Create an infinite magma source on a tile.
+source
+======
+Create an infinite magma or water source or drain on a tile.
 
-This script registers a map tile as a magma source, and every 12 game ticks
-that tile receives 1 new unit of flowing magma.
+This script registers a map tile as a liquid source, and every 12 game ticks
+that tile receives or remove 1 new unit of flow based on the configuration.
 
 Place the game cursor where you want to create the source (must be a
 flow-passable tile, and not too high in the sky) and call::
 
-    magmasource here
+    source add [magma|water] [0-7]
 
-To add more than 1 unit everytime, call the command again.
+The number argument is the target liquid level (0 = drain, 7 = source).
 
-To delete one source, place the cursor over its tile and use ``delete-here``.
-To remove all placed sources, call ``magmasource stop``.
+To add more than 1 unit everytime, call the command again on the same spot.
 
-With no argument, this command shows an help message and list existing sources.
+To delete one source, place the cursor over its tile and use ``delete``.
+To remove all existing sources, call ``source clear``.
 
+The ``list`` argument shows all existing sources.
+
+Ex::
+
+    source add water     - water source
+    source add magma 7   - magma source
+    source add water 0   - water drain
+
+masspit
+=======
+Designate all creatures in cages on top of a pit/pond activity zone for pitting.
+Works best with an animal stockpile on top of the zone.
+
+Works with a zone number as argument (eg ``Activity Zone #6`` -> ``masspit 6``)
+or with the game cursor on top of the area.
 
 digfort
 =======
@@ -2150,7 +2176,7 @@ Note that the script does not enforce anything, and will let you create
 boulders of toad blood and stuff like that.
 However the ``list`` mode will only show 'normal' materials.
 
-Exemples::
+Examples::
 
     create-items boulders COAL_BITUMINOUS 12
     create-items plant tail_pig
@@ -2158,6 +2184,20 @@ Exemples::
     create-items web CREATURE:SPIDER_CAVE_GIANT:SILK
     create-items bar CREATURE:CAT:SOAP
     create-items bar adamantine
+
+locate-ore
+==========
+Scan the map for metal ores.
+
+Finds and designate for digging one tile of a specific metal ore.
+Only works for native metal ores, does not handle reaction stuff (eg STEEL).
+
+When invoked with the ``list`` argument, lists metal ores available on the map.
+
+Examples::
+    locate-ore list
+    locate-ore hematite
+    locate-ore iron
 
 soundsense-season
 =================
@@ -2169,6 +2209,15 @@ season music until a season switch occurs.
 This script registers a hook that prints the appropriate string
 to gamelog.txt on every map load to fix this. For best results
 call the script from ``dfhack.init``.
+
+multicmd
+========
+Run multiple dfhack commands. The argument is split around the
+character ; and all parts are run sequencially as independent
+dfhack commands. Useful for hotkeys.
+
+Example::
+    multicmd locate-ore iron ; digv
 
 =======================
 In-game interface tools

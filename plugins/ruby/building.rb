@@ -48,6 +48,8 @@ module DFHack
             raise "invalid building type #{type.inspect}" if not cls
             bld = cls.cpp_new
             bld.race = ui.race_id
+            subtype = ConstructionType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Construction
+            subtype = SiegeengineType.int(subtype) if subtype.kind_of?(::Symbol) and type == :SiegeEngine
             subtype = WorkshopType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Workshop
             subtype = FurnaceType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Furnace
             subtype = CivzoneType.int(subtype) if subtype.kind_of?(::Symbol) and type == :Civzone

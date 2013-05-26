@@ -489,6 +489,16 @@ Options:
  :show X:       Marks the selected map feature as discovered.
  :hide X:       Marks the selected map feature as undiscovered.
 
+infiniteSky
+-----------
+Automatically allocates new z-levels of sky at the top of the map as you build up, or on request allocates many levels all at once.
+
+Examples:
+  ``infiniteSky n``
+  Raise the sky by n z-levels.
+  ``infiniteSky enable/disable``
+  Enables/disables monitoring of constructions. If you build anything in the second to highest z-level, it will allocate one more sky level. This is so you can continue to build stairs upward.
+
 liquids
 -------
 Allows adding magma, water and obsidian to the game. It replaces the normal
@@ -830,6 +840,11 @@ Other syndrome classes that occur before ``\COMMAND`` (or in absence of any ``\C
 It is not currently possible to execute more than one command per syndrome. Instead, use multiple syndromes to achieve the same effect. Note that it is possible to have multiple syndromes on the same stone.
 
 Again, note that plugins AND scripts can be executed this way, and arguments will be passed according to the same rules.
+
+outsideOnly
+-----------
+
+This plugin makes it so that buildings whose names begin with ``OUTSIDE_ONLY`` cannot be built inside. If the player attempts to do so, the building will automatically be deconstructed.
 
 syndromeTrigger
 ---------------
@@ -1546,7 +1561,6 @@ Maintain 10-100 locally-made crafts of exceptional quality.
 ::
 
     workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90
-
 
 Fortress activity management
 ============================

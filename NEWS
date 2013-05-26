@@ -10,16 +10,27 @@ DFHack future
     - autobutcher: A GUI front-end for the autobutcher plugin.
   Misc improvements:
     - exterminate: renamed from slayrace, add help message, add butcher mode
-    - autoSyndrome: disable by default
     - ruby: add df.dfhack_run "somecommand"
     - magmasource: rename to source, allow water/magma sources/drains
+    - autoSyndrome:
+        disable by default
+        reorganized special tags
+        minimized error spam
+        reset policies: if the target already has an instance of the syndrome you can skip, add another instance, reset the timer, or add the full duration to the time remaining
+    - syndromeTrigger: replaces and extends trueTransformation. Can trigger things when syndromes are added for any reason.
+    - fastdwarf: fixed bug involving fastdwarf and teledwarf being on at the same time
+    - workNow: can optionally look for jobs when jobs are completed
   New plugins:
     - buildingplan: Place furniture before it's built
+    - outsideOnly: make raw-specified buildings impossible to build inside
     - resume: A plugin to help display and resume suspended constructions conveniently
     - dwarfmonitor: Records dwarf activity to measure fort efficiency
     - mousequery: Look and poke at the map elements with the mouse.
     - autotrade: Automatically send items in marked stockpiles to trade depot, when trading is possible.
     - stocks: An improved stocks display screen.
+  Internals:
+    - EventManager: fixed job completion detection
+    - Once: easy way to make sure something happens once per run of DF, such as an error message
     
 DFHack v0.34.11-r3
 

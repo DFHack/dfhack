@@ -252,7 +252,7 @@ void processJob(color_ostream& out, void* jobPtr) {
         return;
     }
     
-    //find all of the products it makes. Look for a stone with a low boiling point.
+    //find all of the products it makes. Look for a stone.
     for ( size_t a = 0; a < reaction->products.size(); a++ ) {
         bool appliedSomething = false;
         df::reaction_product_type type = reaction->products[a]->getType();
@@ -270,8 +270,8 @@ void processJob(color_ostream& out, void* jobPtr) {
         //for now don't worry about subtype
         df::inorganic_raw* inorganic = df::global::world->raws.inorganics[bob->mat_index];
         
+        //maybe add each syndrome to the guy who did the job, or someone in the building, and maybe execute a command
         for ( size_t b = 0; b < inorganic->material.syndrome.size(); b++ ) {
-            //add each syndrome to the guy who did the job
             df::syndrome* syndrome = inorganic->material.syndrome[b];
             bool workerOnly = true;
             bool allowMultipleTargets = false;
@@ -283,6 +283,7 @@ void processJob(color_ostream& out, void* jobPtr) {
             vector<string> args;
             for ( size_t c = 0; c < syndrome->syn_class.size(); c++ ) {
                 std::string& clazz = *syndrome->syn_class[c];
+                //special syn_classes
                 if ( clazz == "\\AUTO_SYNDROME" ) {
                     foundAutoSyndrome = true;
                     continue;
@@ -308,6 +309,7 @@ void processJob(color_ostream& out, void* jobPtr) {
                     policy = ResetPolicy::NewInstance;
                     continue;
                 }
+                //special arguments for a DFHack console command
                 if ( foundCommand ) {
                     if ( commandStr == "" ) {
                         commandStr = clazz;

@@ -1,6 +1,7 @@
 /*
  * Stockflow plugin.
- * For best effect, place "stockflow enable" in your dfhack.init configuration.
+ * For best effect, place "stockflow enable" in your dfhack.init configuration,
+ * or set `enabled` to true by default.
  */
 
 #include "uicommon.h"
@@ -293,6 +294,25 @@ IMPLEMENT_VMETHOD_INTERPOSE(stockflow_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(stockflow_hook, render);
 
 
+static bool apply_hooks(color_ostream &out, bool enabling) {
+    if (enabling && !gps) {
+        out.printerr("Stockflow needs graphics.\n");
+        return false;
+    }
+    
+    if (!INTERPOSE_HOOK(stockflow_hook, feed).apply(enabling) || !INTERPOSE_HOOK(stockflow_hook, render).apply(enabling)) {
+        out.printerr("Could not %s stockflow hooks!\n", enabling? "insert": "remove");
+        return false;
+    }
+    
+    if (!helper.reset(out, enabling && Maps::IsValid())) {
+        out.printerr("Could not reset stockflow world data!\n");
+        return false;
+    }
+    
+    return true;
+}
+
 static command_result stockflow_cmd(color_ostream &out, vector <string> & parameters) {
     bool desired = enabled;
     if (parameters.size() == 1) {
@@ -324,18 +344,7 @@ static command_result stockflow_cmd(color_ostream &out, vector <string> & parame
     }
     
     if (desired != enabled) {
-        if (desired && !gps) {
-            out.printerr("Stockflow needs graphics.\n");
-            return CR_FAILURE;
-        }
-        
-        if (!INTERPOSE_HOOK(stockflow_hook, feed).apply(desired) || !INTERPOSE_HOOK(stockflow_hook, render).apply(desired)) {
-            out.printerr("Could not %s stockflow hooks!\n", desired? "insert": "remove");
-            return CR_FAILURE;
-        }
-        
-        if (!helper.reset(out, desired && Maps::IsValid())) {
-            out.printerr("Could not reset stockflow world data!\n");
+        if (!apply_hooks(out, desired)) {
             return CR_FAILURE;
         }
     }
@@ -364,8 +373,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
     helper.init();
+    if (enabled) apply_hooks(out, true);
     commands.push_back(PluginCommand(name, tagline, stockflow_cmd, false, usage));
-    
     return CR_OK;
 }
 

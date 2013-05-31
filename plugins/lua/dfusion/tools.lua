@@ -26,7 +26,7 @@ function setrace(name)
 	if name == nil then
 		print("Type new race's token name in full caps (q to quit):")
 		repeat
-			local entry=io.stdin:read()
+			local entry=dfhack.lineedit()
 			if entry=="q" then
 				return
 			end
@@ -48,7 +48,7 @@ function GiveSentience(names)
 		ids={}
 		print("Type race's  token name in full caps to give sentience to:")
 		repeat
-			id=io.stdin:read()
+			id=dfhack.lineedit()
 			id=RaceTable[entry]
             if id~=nil then
                 table.insert(ids,id)

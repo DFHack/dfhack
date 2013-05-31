@@ -154,7 +154,9 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                 //if you're moving down, and you're on a bridge, and that bridge is lowered, then you can't do it
                 if ( building1 && building1->getType() == df::building_type::Bridge ) {
                     df::building_bridgest* bridge = (df::building_bridgest*)building2;
-                    if ( bridge->gate_flags.bits.closed
+                    if ( bridge->gate_flags.bits.closed ) {
+                        return -1;
+                    }
                 }
 
                 bool forbidden = false;

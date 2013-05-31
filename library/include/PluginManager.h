@@ -247,7 +247,8 @@ namespace DFHack
 /// You have to have this in every plugin you write - just once. Ideally on top of the main file.
 #define DFHACK_PLUGIN(plugin_name) \
     DFhackDataExport const char * version = DFHACK_VERSION;\
-    DFhackDataExport const char * name = plugin_name;
+    DFhackDataExport const char * name = plugin_name;\
+    DFhackDataExport Plugin *plugin_self = NULL;
 
 #define DFHACK_PLUGIN_LUA_COMMANDS \
     DFhackCExport const DFHack::CommandReg plugin_lua_commands[] =

@@ -373,7 +373,8 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
     if (possible.size() == 1)
     {
         completed = possible[0];
-        fprintf(stderr, "Autocompleted %s to %s\n", first.c_str(), completed.c_str());
+        //fprintf(stderr, "Autocompleted %s to %s\n", , );
+        con.printerr("%s is not recognized. Did you mean %s?\n", first.c_str(), completed.c_str());
         return true;
     }
 
@@ -382,7 +383,8 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
         std::string out;
         for (size_t i = 0; i < possible.size(); i++)
             out += " " + possible[i];
-        con.print("Possible completions:%s\n", out.c_str());
+        con.printerr("%s is not recognized. Possible completions:%s\n", first.c_str(), out.c_str());
+        return true;
     }
 
     return false;
@@ -717,7 +719,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 else if (plug_mgr->eval_ruby && fileExists(filename + ".rb"))
                     res = runRubyScript(con, plug_mgr, first, parts);
                 else if (try_autocomplete(con, first, completed))
-                    return runCommand(con, completed, parts);
+                    return CR_NOT_IMPLEMENTED;// runCommand(con, completed, parts);
                 else
                     con.printerr("%s is not a recognized command.\n", first.c_str());
             }

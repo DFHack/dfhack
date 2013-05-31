@@ -178,6 +178,7 @@ end
 function BinaryPlugin:move_to_df()
     local _,addr=df.sizeof(self.data)
     markAsExecutable(addr)
+    return addr
 end
 function BinaryPlugin:print_data()
     local out=""
@@ -220,7 +221,7 @@ function SimpleMenu:display()
 	local ans
 	repeat
 		local r
-		r=io.stdin:read()
+		r=dfhack.lineedit()
 		if r==nil then return end
 		if r=='q' then return end
 		ans=tonumber(r)

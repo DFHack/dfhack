@@ -49,7 +49,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         if (!Units::isCitizen(unit))
             continue;
 
-        if (enable_fastdwarf)
+        if (enable_fastdwarf && !enable_teledwarf )
         {
             if (unit->counters.job_counter > 0)
                 unit->counters.job_counter = 0;
@@ -59,8 +59,11 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         if (enable_teledwarf) do
         {
             // don't do anything if the dwarf isn't going anywhere
-            if (!unit->path.dest.isValid())
+            if (!unit->pos.isValid() || !unit->path.dest.isValid() || unit->pos == unit->path.dest) {
+                if ( enable_fastdwarf && unit->counters.job_counter > 0 )
+                    unit->counters.job_counter = 0;
                 break;
+            }
 
             // skip dwarves that are dragging creatures or being dragged
             if ((unit->relations.draggee_id != -1) || (unit->relations.dragger_id != -1))

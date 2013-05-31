@@ -5,14 +5,28 @@
 
 #include <VTableInterpose.h>
 
-//#include "df/viewscreen_petst.h"
+#include "df/viewscreen_announcelistst.h"
+#include "df/viewscreen_petst.h"
 #include "df/viewscreen_storesst.h"
 #include "df/viewscreen_layer_stockpilest.h"
+#include "df/viewscreen_layer_militaryst.h"
+#include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_unitlistst.h"
+#include "df/viewscreen_buildinglistst.h"
+#include "df/viewscreen_joblistst.h"
 #include "df/interface_key.h"
 #include "df/interfacest.h"
 #include "df/layer_object_listst.h"
+#include "df/job.h"
+#include "df/report.h"
+#include "modules/Job.h"
+#include "df/global_objects.h"
+#include "df/viewscreen_dwarfmodest.h"
+#include "modules/Gui.h"
+#include "df/unit.h"
+#include "df/misc_trait_type.h"
+#include "df/unit_misc_trait.h"
 
 using std::set;
 using std::vector;
@@ -43,6 +57,27 @@ void OutputString(int8_t color, int &x, int y, const std::string &text)
     x += text.length();
 }
 
+void make_text_dim(int x1, int x2, int y)
+{
+    for (int x = x1; x <= x2; x++)
+    {
+        Screen::Pen pen = Screen::readTile(x,y);
+
+        if (pen.valid())
+        {
+            if (pen.fg != 0)
+            {
+                if (pen.fg == 7)
+                    pen.adjust(0,true);
+                else
+                    pen.bold = 0;
+            }
+
+            Screen::paintTile(pen,x,y);
+        }
+    }
+}
+
 static bool is_live_screen(const df::viewscreen *screen)
 {
     for (df::viewscreen *cur = &gview->view; cur; cur = cur->child)
@@ -51,25 +86,64 @@ static bool is_live_screen(const df::viewscreen *screen)
     return false;
 }
 
+static string get_unit_description(df::unit *unit)
+{
+    string desc;
+    auto name = Units::getVisibleName(unit);
+    if (name->has_name)
+        desc = Translation::TranslateName(name, false);
+    desc += ", " + Units::getProfessionName(unit); // Check animal type too
+
+    return desc;
+}
+
+
 //
-// START: Base Search functionality
+// START: Generic Search functionality
 //
 
-// Parent class that does most of the work
-template <class S, class T, class V = void*>
-class search_parent
+template <class S, class T>
+class search_generic
 {
 public:
+    bool init(S *screen)
+    {
+        if (screen != viewscreen && !reset_on_change())
+            return false;
+
+        if (!can_init(screen))
+        {
+            if (is_valid())
+            {
+                clear_search();
+                reset_all();
+            }
+
+            return false;
+        }
+
+        if (!is_valid())
+        {
+            this->viewscreen = screen;
+            this->cursor_pos = get_viewscreen_cursor();
+            this->primary_list = get_primary_list();
+            this->select_key = get_search_select_key();
+            select_token = (df::interface_key) (ascii_to_enum_offset + select_key);
+            valid = true;
+            do_post_init();
+        }
+
+        return true;
+    }
+
     // Called each time you enter or leave a searchable screen. Resets everything.
-    void reset_all()
+    virtual void reset_all()
     {
         reset_search();
         valid = false;
-        sort_list1 = NULL;
-        sort_list2 = NULL;
+        primary_list = NULL;
         viewscreen = NULL;
         select_key = 's';
-        track_secondary_values = false;
     }
 
     bool reset_on_change()
@@ -153,48 +227,35 @@ public:
         return key_processed || entry_mode; // Only pass unrecognized keys down if not in typing mode
     }
 
-    // Called if the search should be redone after the screen processes the keystroke.
-    // Used by the stocks screen where changing categories should redo the search on
-    // the new category.
-    virtual void do_post_update_check()
+    // Called after a keystroke has been processed
+    virtual void do_post_input_feed()
     {
-        if (redo_search)
-        {
-            do_search();
-            redo_search = false;
-        }
     }
 
-    static search_parent<S,T,V> *lock;
+    static search_generic<S, T> *lock;
 
 protected:
-    const S *viewscreen;
-    vector <T> saved_list1, reference_list;
-    vector <V> saved_list2;
-    vector <V> *sort_list2;
-    vector <int> saved_indexes;
+    virtual string get_element_description(T element) const = 0;
+    virtual void render() const = 0;
+    virtual int32_t *get_viewscreen_cursor() = 0;
+    virtual vector<T> *get_primary_list() = 0;
 
-    bool redo_search;
-    bool track_secondary_values;
-    string search_string;
-
-    search_parent() : ascii_to_enum_offset(interface_key::STRING_A048 - '0'), shift_offset('A' - 'a')
+    search_generic() : ascii_to_enum_offset(interface_key::STRING_A048 - '0'), shift_offset('A' - 'a')
     {
         reset_all();
     }
 
-    virtual void init(int *cursor_pos, vector <T> *sort_list1, vector <V> *sort_list2 = NULL, char select_key = 's')
+    virtual bool can_init(S *screen)
     {
-        this->cursor_pos = cursor_pos;
-        this->sort_list1 = sort_list1;
-        this->sort_list2 = sort_list2;
-        this->select_key = select_key;
-        select_token = (df::interface_key) (ascii_to_enum_offset + select_key);
-        track_secondary_values = false;
-        valid = true;
+        return true;
     }
 
-    bool is_entry_mode()
+    virtual void do_post_init()
+    {
+
+    }
+
+    bool in_entry_mode()
     {
         return entry_mode;
     }
@@ -204,65 +265,23 @@ protected:
         entry_mode = true;
         lock = this;
     }
-    
+
     void end_entry_mode()
     {
         entry_mode = false;
         lock = NULL;
     }
 
-    void reset_search()
+    virtual char get_search_select_key()
+    {
+        return 's';
+    }
+
+    virtual void reset_search()
     {
         end_entry_mode();
         search_string = "";
         saved_list1.clear();
-        saved_list2.clear();
-        reference_list.clear();
-        saved_indexes.clear();
-    }
-
-    // If the second vector is editable (i.e. Trade screen vector used for marking). then it may
-    // have been edited while the list was filtered. We have to update the original unfiltered
-    // list with these values. Uses a stored reference vector to determine if the list has been 
-    // reordered after filtering, in which case indexes must be remapped.
-    void update_secondary_values()
-    {
-        if (sort_list2 != NULL && track_secondary_values)
-        {
-            bool list_has_been_sorted = (sort_list1->size() == reference_list.size()
-                && *sort_list1 != reference_list);
-
-            for (size_t i = 0; i < saved_indexes.size(); i++)
-            {
-                int adjusted_item_index = i;
-                if (list_has_been_sorted)
-                {
-                    for (size_t j = 0; j < sort_list1->size(); j++)
-                    {
-                        if ((*sort_list1)[j] == reference_list[i])
-                        {
-                            adjusted_item_index = j;
-                            break;
-                        }
-                    }
-                }
-
-                update_saved_secondary_list_item(saved_indexes[i], adjusted_item_index);
-            }
-            saved_indexes.clear();
-        }
-    }
-
-    virtual void update_saved_secondary_list_item(size_t i, size_t j)
-    {
-        saved_list2[i] = (*sort_list2)[j];
-    }
-
-    // Store a copy of filtered list, used later to work out if filtered list has been sorted after filtering
-    void store_reference_values()
-    {
-        if (track_secondary_values)
-            reference_list = *sort_list1;
     }
 
     // Shortcut to clear the search immediately
@@ -270,18 +289,45 @@ protected:
     {
         if (saved_list1.size() > 0)
         {
-            *sort_list1 = saved_list1;
-            if (sort_list2 != NULL) 
-            {
-                update_secondary_values();
-                *sort_list2 = saved_list2;
-            }
-
+            *primary_list = saved_list1;
             saved_list1.clear();
-            saved_list2.clear();
         }
-        store_reference_values();
         search_string = "";
+    }
+
+    virtual void save_original_values()
+    {
+        saved_list1 = *primary_list;
+    }
+
+    virtual void do_pre_incremental_search()
+    {
+
+    }
+
+    virtual void clear_viewscreen_vectors()
+    {
+        primary_list->clear();
+    }
+
+    virtual void add_to_filtered_list(size_t i)
+    {
+        primary_list->push_back(saved_list1[i]);
+    }
+
+    virtual void do_post_search()
+    {
+
+    }
+
+    virtual bool is_valid_for_search(size_t index)
+    {
+        return true;
+    }
+
+    virtual bool force_in_search(size_t index)
+    {
+        return false;
     }
 
     // The actual sort
@@ -294,41 +340,34 @@ protected:
         }
 
         if (saved_list1.size() == 0)
-        {
             // On first run, save the original list
-            saved_list1 = *sort_list1;
-            if (sort_list2 != NULL)
-                saved_list2 = *sort_list2;
-        }
+            save_original_values();
         else
-            update_secondary_values(); // Update original list with any modified values
+            do_pre_incremental_search();
 
-        // Clear viewscreen vectors
-        sort_list1->clear();
-        if (sort_list2 != NULL)
-        {
-            sort_list2->clear();
-            saved_indexes.clear();
-        }
+        clear_viewscreen_vectors();
 
         string search_string_l = toLower(search_string);
         for (size_t i = 0; i < saved_list1.size(); i++ )
         {
+            if (force_in_search(i))
+            {
+                add_to_filtered_list(i);
+                continue;
+            }
+
+            if (!is_valid_for_search(i))
+                continue;
+
             T element = saved_list1[i];
             string desc = toLower(get_element_description(element));
             if (desc.find(search_string_l) != string::npos)
             {
-                sort_list1->push_back(element);
-                if (sort_list2 != NULL)
-                {
-                    sort_list2->push_back(saved_list2[i]);
-                    if (track_secondary_values)
-                        saved_indexes.push_back(i); // Used to map filtered indexes back to original, if needed
-                }
+                add_to_filtered_list(i);
             }
         }
 
-        store_reference_values(); //Keep a copy, in case user sorts new list
+        do_post_search();
 
         if (cursor_pos)
             *cursor_pos = 0;
@@ -354,11 +393,13 @@ protected:
             OutputString(10, x, y, "_");
     }
 
-    virtual string get_element_description(T element) const = 0;
-    virtual void render () const = 0;
+    S *viewscreen;
+    vector <T> saved_list1, reference_list, *primary_list;
+
+    //bool redo_search;
+    string search_string;
 
 private:
-    vector <T> *sort_list1;
     int *cursor_pos;
     char select_key;
     bool valid;
@@ -369,12 +410,248 @@ private:
     const int shift_offset;
 
 };
-template <class S, class T, class V> search_parent<S,T,V> *search_parent<S,T,V> ::lock = NULL;
 
-// Parent struct for the hooks, use optional param D to generate multiple classes with same T & V
-// but different static modules
-template <class T, class V, typename D = void>
-struct search_hook : T
+template <class S, class T> search_generic<S, T> *search_generic<S, T> ::lock = NULL;
+
+
+// Search class helper for layered screens
+template <class S, class T, int LIST_ID>
+class layered_search : public search_generic<S, T>
+{
+protected:
+    virtual bool can_init(S *screen)
+    {
+        auto list = getLayerList(screen);
+        if (!is_list_valid(screen) || !list->active)
+            return false;
+
+        return true;
+    }
+
+    virtual bool is_list_valid(S*)
+    {
+        return true;
+    }
+
+    virtual void do_search()
+    {
+        search_generic<S,T>::do_search();
+        auto list = getLayerList(this->viewscreen);
+        list->num_entries = this->get_primary_list()->size();
+    }
+
+    int32_t *get_viewscreen_cursor()
+    {
+        auto list = getLayerList(this->viewscreen);
+        return &list->cursor;
+    }
+
+    virtual void clear_search()
+    {
+        search_generic<S,T>::clear_search();
+
+        if (is_list_valid(this->viewscreen))
+        {
+            auto list = getLayerList(this->viewscreen);
+            list->num_entries = this->get_primary_list()->size();
+        }
+    }
+
+private:
+    static df::layer_object_listst *getLayerList(const df::viewscreen_layer *layer)
+    {
+        return virtual_cast<df::layer_object_listst>(vector_get(layer->layer_objects, LIST_ID));
+    }
+};
+
+
+
+// Parent class for screens that have more than one primary list to synchronise
+template < class S, class T, class PARENT = search_generic<S,T> >
+class search_multicolumn_modifiable_generic : public PARENT
+{
+protected:
+    vector <T> reference_list;
+    vector <int> saved_indexes;
+    bool read_only;
+
+    virtual void update_saved_secondary_list_item(size_t i, size_t j) = 0;
+    virtual void save_secondary_values() = 0;
+    virtual void clear_secondary_viewscreen_vectors() = 0;
+    virtual void add_to_filtered_secondary_lists(size_t i) = 0;
+    virtual void clear_secondary_saved_lists() = 0;
+    virtual void reset_secondary_viewscreen_vectors() = 0;
+    virtual void restore_secondary_values() = 0;
+
+    virtual void do_post_init()
+    {
+        // If true, secondary list isn't modifiable so don't bother synchronising values
+        read_only = false;
+    }
+
+    void reset_all()
+    {
+        PARENT::reset_all();
+        reference_list.clear();
+        saved_indexes.clear();
+        reset_secondary_viewscreen_vectors();
+    }
+
+    void reset_search()
+    {
+        PARENT::reset_search();
+        reference_list.clear();
+        saved_indexes.clear();
+        clear_secondary_saved_lists();
+    }
+
+    virtual void clear_search()
+    {
+        if (this->saved_list1.size() > 0)
+        {
+            do_pre_incremental_search();
+            restore_secondary_values();
+        }
+        clear_secondary_saved_lists();
+        PARENT::clear_search();
+        do_post_search();
+    }
+
+    virtual bool is_match(T &a, T &b) = 0;
+
+    virtual bool is_match(vector<T> &a, vector<T> &b) = 0;
+
+    void do_pre_incremental_search()
+    {
+        PARENT::do_pre_incremental_search();
+        if (read_only)
+            return;
+
+        bool list_has_been_sorted = (this->primary_list->size() == reference_list.size()
+            && !is_match(*this->primary_list, reference_list));
+
+        for (size_t i = 0; i < saved_indexes.size(); i++)
+        {
+            int adjusted_item_index = i;
+            if (list_has_been_sorted)
+            {
+                for (size_t j = 0; j < this->primary_list->size(); j++)
+                {
+                    if (is_match((*this->primary_list)[j], reference_list[i]))
+                    {
+                        adjusted_item_index = j;
+                        break;
+                    }
+                }
+            }
+
+            update_saved_secondary_list_item(saved_indexes[i], adjusted_item_index);
+        }
+        saved_indexes.clear();
+    }
+
+    void clear_viewscreen_vectors()
+    {
+        search_generic<S,T>::clear_viewscreen_vectors();
+        saved_indexes.clear();
+        clear_secondary_viewscreen_vectors();
+    }
+
+    void add_to_filtered_list(size_t i)
+    {
+        search_generic<S,T>::add_to_filtered_list(i);
+        add_to_filtered_secondary_lists(i);
+        if (!read_only)
+            saved_indexes.push_back(i); // Used to map filtered indexes back to original, if needed
+    }
+
+    virtual void do_post_search()
+    {
+        if (!read_only)
+            reference_list = *this->primary_list;
+    }
+
+    void save_original_values()
+    {
+        search_generic<S,T>::save_original_values();
+        save_secondary_values();
+    }
+};
+
+// This basic match function is separated out from the generic multi column class, because the
+// pets screen, which uses a union in its primary list, will cause a compile failure is this
+// match function exists in the generic class
+template < class S, class T, class PARENT = search_generic<S,T> >
+class search_multicolumn_modifiable : public search_multicolumn_modifiable_generic<S, T, PARENT>
+{
+    bool is_match(T &a, T &b)
+    {
+        return a == b;
+    }
+
+    bool is_match(vector<T> &a, vector<T> &b)
+    {
+        return a == b;
+    }
+};
+
+// General class for screens that have only one secondary list to keep in sync
+template < class S, class T, class V, class PARENT = search_generic<S,T> >
+class search_twocolumn_modifiable : public search_multicolumn_modifiable<S, T, PARENT>
+{
+public:
+protected:
+    virtual vector<V> * get_secondary_list() = 0;
+
+    virtual void do_post_init()
+    {
+        search_multicolumn_modifiable<S, T, PARENT>::do_post_init();
+        secondary_list = get_secondary_list();
+    }
+
+    void save_secondary_values()
+    {
+        saved_secondary_list = *secondary_list;
+    }
+
+    void reset_secondary_viewscreen_vectors()
+    {
+        secondary_list = NULL;
+    }
+
+    virtual void update_saved_secondary_list_item(size_t i, size_t j)
+    {
+        saved_secondary_list[i] = (*secondary_list)[j];
+    }
+
+    void clear_secondary_viewscreen_vectors()
+    {
+        secondary_list->clear();
+    }
+
+    void add_to_filtered_secondary_lists(size_t i)
+    {
+        secondary_list->push_back(saved_secondary_list[i]);
+    }
+
+    void clear_secondary_saved_lists()
+    {
+        saved_secondary_list.clear();
+    }
+
+    void restore_secondary_values()
+    {
+        *secondary_list = saved_secondary_list;
+    }
+
+    vector<V> *secondary_list, saved_secondary_list;
+};
+
+
+// Parent struct for the hooks, use optional param D to generate multiple search classes in the same
+// viewscreen but different static modules
+template <class T, class V, int D = 0>
+struct generic_search_hook : T
 {
     typedef T interpose_base;
 
@@ -391,7 +668,7 @@ struct search_hook : T
         if (!module.process_input(input))
         {
             INTERPOSE_NEXT(feed)(input);
-            module.do_post_update_check();
+            module.do_post_input_feed();
         }
 
     }
@@ -405,11 +682,161 @@ struct search_hook : T
     }
 };
 
-template <class T, class V, typename D> V search_hook<T, V, D> ::module;
+template <class T, class V, int D> V generic_search_hook<T, V, D> ::module;
+
+
+// Hook definition helpers
+#define IMPLEMENT_HOOKS_WITH_ID(screen, module, id) \
+    typedef generic_search_hook<screen, module, id> module##_hook; \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, feed); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, render)
+
+#define IMPLEMENT_HOOKS(screen, module) \
+    typedef generic_search_hook<screen, module> module##_hook; \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, feed); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, render)
+
+#define IMPLEMENT_HOOKS_PRIO(screen, module, prio) \
+    typedef generic_search_hook<screen, module> module##_hook; \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, feed, 100); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, 100)
+
+//
+// END: Generic Search functionality
+//
 
 
 //
-// END: Base Search functionality
+// START: Animal screen search
+//
+typedef df::viewscreen_petst::T_animal T_animal;
+typedef df::viewscreen_petst::T_mode T_mode;
+
+class pets_search : public search_multicolumn_modifiable_generic<df::viewscreen_petst, T_animal>
+{
+public:
+    void render() const
+    {
+        if (viewscreen->mode == T_mode::List)
+            print_search_option(25, 4);
+    }
+
+private:
+    int32_t *get_viewscreen_cursor()
+    {
+        return &viewscreen->cursor;
+    }
+
+    vector<T_animal> *get_primary_list()
+    {
+        return &viewscreen->animal;
+    }
+
+    virtual void do_post_init()
+    {
+        is_vermin = &viewscreen->is_vermin;
+        pet_info = &viewscreen->pet_info;
+        is_tame = &viewscreen->is_tame;
+        is_adopting = &viewscreen->is_adopting;
+    }
+
+    string get_element_description(df::viewscreen_petst::T_animal element) const
+    {
+        return get_unit_description(element.unit);
+    }
+
+    bool should_check_input()
+    {
+        return viewscreen->mode == T_mode::List;
+    }
+
+    bool is_valid_for_search(size_t i)
+    {
+        return is_vermin_s[i] == 0;
+    }
+
+    void save_secondary_values()
+    {
+        is_vermin_s = *is_vermin;
+        pet_info_s = *pet_info;
+        is_tame_s = *is_tame;
+        is_adopting_s = *is_adopting;
+    }
+
+    void reset_secondary_viewscreen_vectors()
+    {
+        is_vermin = NULL;
+        pet_info = NULL;
+        is_tame = NULL;
+        is_adopting = NULL;
+    }
+
+    void update_saved_secondary_list_item(size_t i, size_t j)
+    {
+        is_vermin_s[i] = (*is_vermin)[j];
+        pet_info_s[i] = (*pet_info)[j];
+        is_tame_s[i] = (*is_tame)[j];
+        is_adopting_s[i] = (*is_adopting)[j];
+    }
+
+    void clear_secondary_viewscreen_vectors()
+    {
+        is_vermin->clear();
+        pet_info->clear();
+        is_tame->clear();
+        is_adopting->clear();
+    }
+
+    void add_to_filtered_secondary_lists(size_t i)
+    {
+        is_vermin->push_back(is_vermin_s[i]);
+        pet_info->push_back(pet_info_s[i]);
+        is_tame->push_back(is_tame_s[i]);
+        is_adopting->push_back(is_adopting_s[i]);
+    }
+
+    void clear_secondary_saved_lists()
+    {
+        is_vermin_s.clear();
+        pet_info_s.clear();
+        is_tame_s.clear();
+        is_adopting_s.clear();
+    }
+
+    void restore_secondary_values()
+    {
+        *is_vermin = is_vermin_s;
+        *pet_info = pet_info_s;
+        *is_tame = is_tame_s;
+        *is_adopting = is_adopting_s;
+    }
+
+    bool is_match(T_animal &a, T_animal &b)
+    {
+        return a.unit == b.unit;
+    }
+
+    bool is_match(vector<T_animal> &a, vector<T_animal> &b)
+    {
+        for (size_t i = 0; i < a.size(); i++)
+        {
+            if (!is_match(a[i], b[i]))
+                return false;
+        }
+
+        return true;
+    }
+
+    std::vector<char > *is_vermin, is_vermin_s;
+    std::vector<df::pet_info* > *pet_info, pet_info_s;
+    std::vector<char > *is_tame, is_tame_s;
+    std::vector<char > *is_adopting, is_adopting_s;
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_petst, pets_search);
+
+//
+// END: Animal screen search
 //
 
 
@@ -417,11 +844,12 @@ template <class T, class V, typename D> V search_hook<T, V, D> ::module;
 //
 // START: Stocks screen search
 //
-class stocks_search : public search_parent<df::viewscreen_storesst, df::item*>
+typedef search_generic<df::viewscreen_storesst, df::item*> stocks_search_base;
+class stocks_search : public stocks_search_base
 {
 public:
 
-    virtual void render() const
+    void render() const
     {
         if (!viewscreen->in_group_mode)
             print_search_option(2);
@@ -433,43 +861,12 @@ public:
         }
     }
 
-    virtual void do_post_update_check()
-    {
-        if (viewscreen->in_group_mode)
-        {
-            // Disable search if item lists are grouped
-            clear_search();
-            reset_search();
-        }
-        else
-            search_parent::do_post_update_check();
-    }
-
-    bool init(df::viewscreen_storesst *screen)
-    {
-        if (screen != viewscreen && !reset_on_change())
-            return false;
-
-        if (!is_valid())
-        {
-            viewscreen = screen;
-            search_parent::init(&screen->item_cursor, &screen->items);
-        }
-
-        return true;
-    }
-
-
-private:
-    virtual string get_element_description(df::item *element) const
-    {
-        return Items::getDescription(element, 0, true);
-    }
-
-    virtual bool should_check_input(set<df::interface_key> *input) 
+    bool process_input(set<df::interface_key> *input)
     {
         if (viewscreen->in_group_mode)
             return false;
+
+        redo_search = false;
 
         if ((input->count(interface_key::CURSOR_UP) || input->count(interface_key::CURSOR_DOWN)) && !viewscreen->in_right_list)
         {
@@ -482,62 +879,113 @@ private:
             return false;
         }
 
-        return true;
+        return stocks_search_base::process_input(input);
     }
+
+    virtual void do_post_input_feed()
+    {
+        if (viewscreen->in_group_mode)
+        {
+            // Disable search if item lists are grouped
+            clear_search();
+            reset_search();
+        }
+        else if (redo_search)
+        {
+            do_search();
+            redo_search = false;
+        }
+    }
+
+private:
+    int32_t *get_viewscreen_cursor()
+    {
+        return &viewscreen->item_cursor;
+    }
+
+    virtual vector<df::item*> *get_primary_list()
+    {
+        return &viewscreen->items;
+    }
+
+
+private:
+    string get_element_description(df::item *element) const
+    {
+        return Items::getDescription(element, 0, true);
+    }
+
+    bool redo_search;
 };
 
 
-typedef search_hook<df::viewscreen_storesst, stocks_search> stocks_search_hook;
-template<> IMPLEMENT_VMETHOD_INTERPOSE(stocks_search_hook, feed);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(stocks_search_hook, render);
+IMPLEMENT_HOOKS(df::viewscreen_storesst, stocks_search);
 
 //
 // END: Stocks screen search
 //
 
 
-
 //
 // START: Unit screen search
 //
-class unitlist_search : public search_parent<df::viewscreen_unitlistst, df::unit*, df::job*>
+typedef search_twocolumn_modifiable<df::viewscreen_unitlistst, df::unit*, df::job*> unitlist_search_base;
+class unitlist_search : public unitlist_search_base
 {
 public:
-
-    virtual void render() const
+    void render() const
     {
         print_search_option(28);
     }
 
-    bool init(df::viewscreen_unitlistst *screen)
+private:
+    void do_post_init()
     {
-        if (screen != viewscreen && !reset_on_change())
-            return false;
-
-        if (!is_valid())
-        {
-            viewscreen = screen;
-            search_parent::init(&screen->cursor_pos[viewscreen->page], &screen->units[viewscreen->page], &screen->jobs[viewscreen->page]);
-        }
-
-        return true;
+        unitlist_search_base::do_post_init();
+        read_only = true;
     }
 
-private:
-    virtual string get_element_description(df::unit *element) const
+    static string get_non_work_description(df::unit *unit)
     {
-        string desc = Translation::TranslateName(Units::getVisibleName(element), false);
-        desc += ", " + Units::getProfessionName(element); // Check animal type too
+        for (auto p = unit->status.misc_traits.begin(); p < unit->status.misc_traits.end(); p++)
+        {
+            if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
+            {
+                int i = (*p)->value;
+                return ".on break";
+            }
+        }
+
+        if (unit->profession == profession::BABY ||
+            unit->profession == profession::CHILD ||
+            unit->profession == profession::DRUNK)
+        {
+            return "";
+        }
+
+        if (ENUM_ATTR(profession, military, unit->profession))
+            return ".military";
+
+        return ".idle.no job";
+    }
+
+    string get_element_description(df::unit *unit) const
+    {
+        string desc = get_unit_description(unit);
+        if (!unit->job.current_job)
+        {
+            desc += get_non_work_description(unit);
+        }
 
         return desc;
     }
 
-    virtual bool should_check_input(set<df::interface_key> *input) 
+    bool should_check_input(set<df::interface_key> *input) 
     {
         if (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT) || 
-            (!is_entry_mode() && input->count(interface_key::UNITVIEW_PRF_PROF)))
+            (!in_entry_mode() && input->count(interface_key::UNITVIEW_PRF_PROF)))
         {
-            if (!is_entry_mode())
+            if (!in_entry_mode())
             {
                 // Changing screens, reset search
                 clear_search();
@@ -552,40 +1000,45 @@ private:
         return true;
     }
 
+    vector<df::job*> *get_secondary_list() 
+    {
+        return &viewscreen->jobs[viewscreen->page];
+    }
+
+    int32_t *get_viewscreen_cursor() 
+    {
+        return &viewscreen->cursor_pos[viewscreen->page];
+    }
+
+    vector<df::unit*> *get_primary_list() 
+    {
+        return &viewscreen->units[viewscreen->page];
+    }
 };
 
-typedef search_hook<df::viewscreen_unitlistst, unitlist_search> unitlist_search_hook;
+typedef generic_search_hook<df::viewscreen_unitlistst, unitlist_search> unitlist_search_hook;
 template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, feed, 100);
 template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, render, 100);
-
 //
 // END: Unit screen search
 //
 
 
 //
-// TODO: Animals screen search
-//
-
-//
-// END: Animals screen search
-//
-
-//
 // START: Trade screen search
 //
-class trade_search_base : public search_parent<df::viewscreen_tradegoodsst, df::item*, char>
+class trade_search_base : public search_twocolumn_modifiable<df::viewscreen_tradegoodsst, df::item*, char>
 {
 
 private:
-    virtual string get_element_description(df::item *element) const
+    string get_element_description(df::item *element) const
     {
         return Items::getDescription(element, 0, true);
     }
 
-    virtual bool should_check_input(set<df::interface_key> *input)
+    bool should_check_input(set<df::interface_key> *input)
     {
-        if (is_entry_mode())
+        if (in_entry_mode())
             return true;
 
         if (input->count(interface_key::TRADE_TRADE) ||
@@ -596,14 +1049,22 @@ private:
             if (!search_string.empty())
                 input->clear();
 
-            // Trying to trade, reset search
-            clear_search();
-            reset_all();
-
             return false;
+        }
+        else if (input->count(interface_key::CUSTOM_ALT_C))
+        {
+            clear_search_for_trade();
+            return true;
         }
 
         return true;
+    }
+
+    void clear_search_for_trade()
+    {
+        // Trying to trade, reset search
+        clear_search();
+        reset_all();
     }
 };
 
@@ -614,27 +1075,37 @@ public:
     virtual void render() const
     {
         print_search_option(2, 26);
+
+        if (!search_string.empty())
+        {
+            make_text_dim(2, 37, 22);
+            make_text_dim(42, gps->dimx-2, 22);
+        }
     }
 
-    bool init(df::viewscreen_tradegoodsst *screen)
+private:
+    vector<char> *get_secondary_list()
     {
-        if (screen != viewscreen && !reset_on_change())
-            return false;
+        return &viewscreen->trader_selected;
+    }
 
-        if (!is_valid())
-        {
-            viewscreen = screen;
-            search_parent::init(&screen->trader_cursor, &screen->trader_items, &screen->trader_selected, 'q');
-            track_secondary_values = true;
-        }
+    int32_t *get_viewscreen_cursor()
+    {
+        return &viewscreen->trader_cursor;
+    }
 
-        return true;
+    vector<df::item*> *get_primary_list()
+    {
+        return &viewscreen->trader_items;
+    }
+
+    char get_search_select_key() 
+    {
+        return 'q';
     }
 };
 
-typedef search_hook<df::viewscreen_tradegoodsst, trade_search_merc, int> trade_search_merc_hook;
-template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_merc_hook, feed);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_merc_hook, render);
+IMPLEMENT_HOOKS_WITH_ID(df::viewscreen_tradegoodsst, trade_search_merc, 1);
 
 
 class trade_search_fort : public trade_search_base
@@ -643,27 +1114,37 @@ public:
     virtual void render() const
     {
         print_search_option(42, 26);
+
+        if (!search_string.empty())
+        {
+            make_text_dim(2, 37, 22);
+            make_text_dim(42, gps->dimx-2, 22);
+        }
     }
 
-    bool init(df::viewscreen_tradegoodsst *screen)
+private:
+    vector<char> *get_secondary_list()
     {
-        if (screen != viewscreen && !reset_on_change())
-            return false;
+        return &viewscreen->broker_selected;
+    }
 
-        if (!is_valid())
-        {
-            viewscreen = screen;
-            search_parent::init(&screen->broker_cursor, &screen->broker_items, &screen->broker_selected, 'w');
-            track_secondary_values = true;
-        }
+    int32_t *get_viewscreen_cursor()
+    {
+        return &viewscreen->broker_cursor;
+    }
 
-        return true;
+    vector<df::item*> *get_primary_list()
+    {
+        return &viewscreen->broker_items;
+    }
+
+    char get_search_select_key() 
+    {
+        return 'w';
     }
 };
 
-typedef search_hook<df::viewscreen_tradegoodsst, trade_search_fort, char> trade_search_fort_hook;
-template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, feed);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, render);
+IMPLEMENT_HOOKS_WITH_ID(df::viewscreen_tradegoodsst, trade_search_fort, 2);
 
 //
 // END: Trade screen search
@@ -673,13 +1154,13 @@ template<> IMPLEMENT_VMETHOD_INTERPOSE(trade_search_fort_hook, render);
 //
 // START: Stockpile screen search
 //
-
-class stockpile_search : public search_parent<df::viewscreen_layer_stockpilest, string *, bool *>
+typedef layered_search<df::viewscreen_layer_stockpilest, string *, 2> stocks_layer;
+class stockpile_search : public search_twocolumn_modifiable<df::viewscreen_layer_stockpilest, string *, bool *, stocks_layer>
 {
 public:
     void update_saved_secondary_list_item(size_t i, size_t j)
     {
-        *saved_list2[i] = *(*sort_list2)[j];
+        *saved_secondary_list[i] = *(*secondary_list)[j];
     }
 
     string get_element_description(string *element) const
@@ -692,107 +1173,503 @@ public:
         print_search_option(51, 23);
     }
 
-    static df::layer_object_listst *getLayerList(const df::viewscreen_layer *layer, int idx)
+    vector<string *> *get_primary_list() 
     {
-        return virtual_cast<df::layer_object_listst>(vector_get(layer->layer_objects,idx));
+        return &viewscreen->item_names;
     }
 
-    bool init(df::viewscreen_layer_stockpilest *screen)
+    vector<bool *> *get_secondary_list() 
     {
-        if (screen != viewscreen && !reset_on_change())
-            return false;
-
-        auto list3 = getLayerList(screen, 2);
-        if (!list3->active)
-        {
-            if (is_valid())
-            {
-                clear_search();
-                reset_all();
-            }
-
-            return false;
-        }
-
-        if (!is_valid())
-        {
-            viewscreen = screen;
-            search_parent::init(&list3->cursor, &screen->item_names, &screen->item_status);
-            track_secondary_values = true;
-        }
-
-        return true;
+        return &viewscreen->item_status;
     }
 
-    void do_search() 
-    {
-        search_parent::do_search();
-        auto list3 = getLayerList(viewscreen, 2);
-        list3->num_entries = viewscreen->item_names.size();
-    }
 
-    void clear_search()
-    {
-        search_parent::clear_search();
-        auto list3 = getLayerList(viewscreen, 2);
-        list3->num_entries = viewscreen->item_names.size();
-    }
+
 };
 
-typedef search_hook<df::viewscreen_layer_stockpilest, stockpile_search> stockpile_search_hook;
-template<> IMPLEMENT_VMETHOD_INTERPOSE(stockpile_search_hook, feed);
-template<> IMPLEMENT_VMETHOD_INTERPOSE(stockpile_search_hook, render);
+IMPLEMENT_HOOKS(df::viewscreen_layer_stockpilest, stockpile_search);
 
 //
 // END: Stockpile screen search
 //
 
 
+//
+// START: Military screen search
+//
+typedef layered_search<df::viewscreen_layer_militaryst, df::unit *, 2> military_search_base;
+class military_search : public military_search_base
+{
+public:
+
+    string get_element_description(df::unit *element) const
+    {
+        return get_unit_description(element);
+    }
+
+    void render() const
+    {
+        print_search_option(52, 22);
+    }
+
+    char get_search_select_key()
+    {
+        return 'q';
+    }
+
+    // When not on the positions page, this list is used for something
+    // else entirely, so screwing with it seriously breaks stuff.
+    bool is_list_valid(df::viewscreen_layer_militaryst *screen)
+    {
+        if (screen->page != df::viewscreen_layer_militaryst::Positions)
+            return false;
+
+        return true;
+    }
+
+    vector<df::unit *> *get_primary_list() 
+    {
+        return &viewscreen->positions.candidates;
+    }
+
+    bool should_check_input(set<df::interface_key> *input)
+    {
+        if (input->count(interface_key::SELECT) && !in_entry_mode() && !search_string.empty())
+        {
+            // About to make an assignment, so restore original list (it will be changed by the game)
+            int32_t *cursor = get_viewscreen_cursor();
+            df::unit *selected_unit = get_primary_list()->at(*cursor);
+            clear_search();
+            
+            for (*cursor = 0; *cursor < get_primary_list()->size(); (*cursor)++)
+            {
+                if (get_primary_list()->at(*cursor) == selected_unit)
+                    break;
+            }
+
+            reset_all();
+        }
+
+        return true;
+    }
+};
+
+IMPLEMENT_HOOKS_PRIO(df::viewscreen_layer_militaryst, military_search, 100);
+
+//
+// END: Military screen search
+//
+
+
+//
+// START: Room list search
+//
+static map< df::building_type, vector<string> > room_quality_names;
+static int32_t room_value_bounds[] = {1, 100, 250, 500, 1000, 1500, 2500, 10000};
+typedef search_twocolumn_modifiable<df::viewscreen_buildinglistst, df::building*, int32_t> roomlist_search_base;
+class roomlist_search : public roomlist_search_base
+{
+public:
+    void render() const
+    {
+        print_search_option(2, 23);
+    }
+
+private:
+    void do_post_init()
+    {
+        roomlist_search_base::do_post_init();
+        read_only = true;
+    }
+
+    string get_element_description(df::building *bld) const
+    {
+        bool is_ownable_room = (bld->is_room && room_quality_names.find(bld->getType()) != room_quality_names.end());
+
+        string desc;
+        desc.reserve(100);
+        if (bld->owner)
+            desc += get_unit_description(bld->owner);
+        else if (is_ownable_room)
+            desc += "no owner";
+
+        desc += ".";
+
+        if (is_ownable_room)
+        {
+            int32_t value = bld->getRoomValue(NULL);
+            vector<string> *names = &room_quality_names[bld->getType()];
+            string *room_name = &names->at(0);
+            for (int i = 1; i < 8; i++)
+            {
+                if (room_value_bounds[i] > value)
+                    break;
+                room_name = &names->at(i);
+            }
+
+            desc += *room_name;
+        }
+        else
+        {
+            string name;
+            bld->getName(&name);
+            if (!name.empty())
+            {
+                desc += name;
+            }
+        }
+        
+        return desc;
+    }
+
+    vector<int32_t> *get_secondary_list() 
+    {
+        return &viewscreen->room_value;
+    }
+
+    int32_t *get_viewscreen_cursor() 
+    {
+        return &viewscreen->cursor;
+    }
+
+    vector<df::building*> *get_primary_list() 
+    {
+        return &viewscreen->buildings;
+    }
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_buildinglistst, roomlist_search);
+
+//
+// END: Room list search
+//
+
+
+
+//
+// START: Announcement list search
+//
+class annoucnement_search : public search_generic<df::viewscreen_announcelistst, df::report*>
+{
+public:
+    void render() const
+    {
+        print_search_option(2, gps->dimy - 3);
+    }
+
+private:
+    int32_t *get_viewscreen_cursor()
+    {
+        return &viewscreen->sel_idx;
+    }
+
+    virtual vector<df::report *> *get_primary_list()
+    {
+        return &viewscreen->reports;
+    }
+
+
+private:
+    string get_element_description(df::report *element) const
+    {
+        return element->text;
+    }
+};
+
+
+IMPLEMENT_HOOKS(df::viewscreen_announcelistst, annoucnement_search);
+
+//
+// END: Announcement list search
+//
+
+
+//
+// START: Nobles search list
+//
+typedef df::viewscreen_layer_noblelistst::T_candidates T_candidates;
+typedef layered_search<df::viewscreen_layer_noblelistst, T_candidates *, 1> nobles_search_base;
+class nobles_search : public nobles_search_base
+{
+public:
+
+    string get_element_description(T_candidates *element) const
+    {
+        if (!element->unit)
+            return "";
+
+        return get_unit_description(element->unit);
+    }
+
+    void render() const
+    {
+        print_search_option(2, 23);
+    }
+
+    bool force_in_search(size_t index)
+    {
+        return index == 0; // Leave Vacant
+    }
+
+    bool can_init(df::viewscreen_layer_noblelistst *screen)
+    {
+        if (screen->mode != df::viewscreen_layer_noblelistst::Appoint)
+            return false;
+
+        return nobles_search_base::can_init(screen);
+    }
+
+    vector<T_candidates *> *get_primary_list() 
+    {
+        return &viewscreen->candidates;
+    }
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_layer_noblelistst, nobles_search);
+
+//
+// END: Nobles search list
+//
+
+
+//
+// START: Job list search
+//
+void get_job_details(string &desc, df::job *job)
+{
+    string job_name = ENUM_KEY_STR(job_type,job->job_type);
+    for (size_t i = 0; i < job_name.length(); i++)
+    {
+        char c = job_name[i];
+        if (c >= 'A' && c <= 'Z')
+            desc += " ";
+        desc += c;
+    }
+    desc += ".";
+    
+    df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
+
+    MaterialInfo mat(job);
+    if (itype == item_type::FOOD)
+        mat.decode(-1);
+
+    if (mat.isValid() || job->material_category.whole)
+    {
+        desc += mat.toString();
+        desc += ".";
+        if (job->material_category.whole)
+        {
+            desc += bitfield_to_string(job->material_category);
+            desc += ".";
+        }
+    }
+
+    if (!job->reaction_name.empty())
+    {
+        for (size_t i = 0; i < job->reaction_name.length(); i++)
+        {
+            if (job->reaction_name[i] == '_')
+                desc += " ";
+            else
+                desc += job->reaction_name[i];
+        }
+
+        desc += ".";
+    }
+
+    if (job->flags.bits.suspend)
+        desc += "suspended.";
+}
+
+typedef search_twocolumn_modifiable<df::viewscreen_joblistst, df::job*, df::unit*> joblist_search_base;
+class joblist_search : public joblist_search_base
+{
+public:
+    void render() const
+    {
+        print_search_option(2);
+    }
+
+private:
+    void do_post_init()
+    {
+        joblist_search_base::do_post_init();
+        read_only = true;
+    }
+
+    string get_element_description(df::job *element) const
+    {
+        if (!element)
+            return "no job.idle";
+
+        string desc;
+        desc.reserve(100);
+        get_job_details(desc, element);
+        df::unit *worker = DFHack::Job::getWorker(element);
+        if (worker)
+            desc += get_unit_description(worker);
+        else
+            desc += "Inactive";
+
+        return desc;
+    }
+
+    vector<df::unit*> *get_secondary_list() 
+    {
+        return &viewscreen->units;
+    }
+
+    int32_t *get_viewscreen_cursor() 
+    {
+        return &viewscreen->cursor_pos;
+    }
+
+    vector<df::job*> *get_primary_list() 
+    {
+        return &viewscreen->jobs;
+    }
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_joblistst, joblist_search);
+
+//
+// END: Job list search
+//
+
+
+//
+// START: Burrow assignment search
+//
+using df::global::ui;
+
+typedef search_twocolumn_modifiable<df::viewscreen_dwarfmodest, df::unit*, bool> burrow_search_base;
+class burrow_search : public burrow_search_base
+{
+public:
+    bool can_init(df::viewscreen_dwarfmodest *screen)
+    {
+        if (ui->main.mode == df::ui_sidebar_mode::Burrows && ui->burrows.in_add_units_mode)
+        {
+            return burrow_search_base::can_init(screen);
+        }
+
+        return false;
+    }
+
+    string get_element_description(df::unit *element) const
+    {
+        return get_unit_description(element);
+    }
+
+    void render() const
+    {
+        auto dims = Gui::getDwarfmodeViewDims();
+        int left_margin = dims.menu_x1 + 1;
+        int x = left_margin;
+        int y = 23;
+
+        print_search_option(x, y);
+    }
+
+    vector<df::unit *> *get_primary_list() 
+    {
+        return &ui->burrows.list_units;
+    }
+
+    vector<bool> *get_secondary_list() 
+    {
+        return &ui->burrows.sel_units;
+    }
+
+    virtual int32_t * get_viewscreen_cursor() 
+    {
+        return &ui->burrows.unit_cursor_pos;
+    }
+
+
+    bool should_check_input(set<df::interface_key> *input)
+    {
+        if  (input->count(interface_key::SECONDSCROLL_UP) || input->count(interface_key::SECONDSCROLL_DOWN)
+            || input->count(interface_key::SECONDSCROLL_PAGEUP) || input->count(interface_key::SECONDSCROLL_PAGEDOWN))
+        {
+            end_entry_mode();
+            return false;
+        }
+
+        return true;
+    }
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_dwarfmodest, burrow_search);
+
+//
+// END: Burrow assignment search
+//
+
+
+
 DFHACK_PLUGIN("search");
 
+#define SEARCH_HOOKS \
+    HOOK_ACTION(unitlist_search_hook) \
+    HOOK_ACTION(roomlist_search_hook) \
+    HOOK_ACTION(trade_search_merc_hook) \
+    HOOK_ACTION(trade_search_fort_hook) \
+    HOOK_ACTION(stocks_search_hook) \
+    HOOK_ACTION(pets_search_hook) \
+    HOOK_ACTION(military_search_hook) \
+    HOOK_ACTION(nobles_search_hook) \
+    HOOK_ACTION(annoucnement_search_hook) \
+    HOOK_ACTION(joblist_search_hook) \
+    HOOK_ACTION(burrow_search_hook) \
+    HOOK_ACTION(stockpile_search_hook)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (!gps || !gview ||
-        !INTERPOSE_HOOK(unitlist_search_hook, feed).apply() ||
-        !INTERPOSE_HOOK(unitlist_search_hook, render).apply() ||
-        !INTERPOSE_HOOK(trade_search_merc_hook, feed).apply() ||
-        !INTERPOSE_HOOK(trade_search_merc_hook, render).apply() ||
-        !INTERPOSE_HOOK(trade_search_fort_hook, feed).apply() ||
-        !INTERPOSE_HOOK(trade_search_fort_hook, render).apply() ||
-        !INTERPOSE_HOOK(stocks_search_hook, feed).apply() ||
-        !INTERPOSE_HOOK(stocks_search_hook, render).apply() ||
-        !INTERPOSE_HOOK(stockpile_search_hook, feed).apply() ||
-        !INTERPOSE_HOOK(stockpile_search_hook, render).apply())
+#define HOOK_ACTION(hook) \
+    !INTERPOSE_HOOK(hook, feed).apply() || \
+    !INTERPOSE_HOOK(hook, render).apply() ||
+
+    if (!gps || !gview || SEARCH_HOOKS 0)
         out.printerr("Could not insert Search hooks!\n");
+
+#undef HOOK_ACTION
+
+    const string a[] = {"Meager Quarters", "Modest Quarters", "Quarters", "Decent Quarters", "Fine Quarters", "Great Bedroom", "Grand Bedroom", "Royal Bedroom"};
+    room_quality_names[df::building_type::Bed] = vector<string>(a, a + 8);
+
+    const string b[] = {"Meager Dining Room", "Modest Dining Room", "Dining Room", "Decent Dining Room", "Fine Dining Room", "Great Dining Room", "Grand Dining Room", "Royal Dining Room"};
+    room_quality_names[df::building_type::Table] = vector<string>(b, b + 8);
+
+    const string c[] = {"Meager Office", "Modest Office", "Office", "Decent Office", "Splendid Office", "Throne Room", "Opulent Throne Room", "Royal Throne Room"};
+    room_quality_names[df::building_type::Chair] = vector<string>(c, c + 8);
+
+    const string d[] = {"Grave", "Servants Burial Chamber", "Burial Chamber", "Tomb", "Fine Tomb", "Mausoleum", "Grand Mausoleum", "Royal Mausoleum"};
+    room_quality_names[df::building_type::Coffin] = vector<string>(d, d + 8);
 
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    INTERPOSE_HOOK(unitlist_search_hook, feed).remove();
-    INTERPOSE_HOOK(unitlist_search_hook, render).remove();
-    INTERPOSE_HOOK(trade_search_merc_hook, feed).remove();
-    INTERPOSE_HOOK(trade_search_merc_hook, render).remove();
-    INTERPOSE_HOOK(trade_search_fort_hook, feed).remove();
-    INTERPOSE_HOOK(trade_search_fort_hook, render).remove();
-    INTERPOSE_HOOK(stocks_search_hook, feed).remove();
-    INTERPOSE_HOOK(stocks_search_hook, render).remove();
-    INTERPOSE_HOOK(stockpile_search_hook, feed).remove();
-    INTERPOSE_HOOK(stockpile_search_hook, render).remove();
+#define HOOK_ACTION(hook) \
+    INTERPOSE_HOOK(hook, feed).remove(); \
+    INTERPOSE_HOOK(hook, render).remove();
+
+    SEARCH_HOOKS
+
+#undef HOOK_ACTION
+
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_change_event event )
 {
+#define HOOK_ACTION(hook) hook::module.reset_on_change();
+
     switch (event) {
     case SC_VIEWSCREEN_CHANGED:
-        unitlist_search_hook::module.reset_on_change();
-        trade_search_merc_hook::module.reset_on_change();
-        trade_search_fort_hook::module.reset_on_change();
-        stocks_search_hook::module.reset_on_change();
-        stockpile_search_hook::module.reset_on_change();
+        SEARCH_HOOKS
         break;
 
     default:
@@ -800,4 +1677,9 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
     }
 
     return CR_OK;
+
+#undef HOOK_ACTION
 }
+
+#undef IMPLEMENT_HOOKS
+#undef SEARCH_HOOKS

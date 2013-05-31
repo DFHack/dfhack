@@ -249,31 +249,21 @@ df::building *Buildings::findAtTile(df::coord pos)
     if (!occ || !occ->bits.building)
         return NULL;
 
-    auto a = locationToBuilding.find(pos);
-    if ( a == locationToBuilding.end() ) {
-        cerr << __FILE__ << ", " << __LINE__ << ": can't find building at " << pos.x << ", " << pos.y << ", " <<pos.z << "." << endl;
-        exit(1);
-    }
-    int32_t id = (*a).second;
-    int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
-    if ( index == -1 ) {
-        cerr << __FILE__ << ", " << __LINE__ << ": can't find building at " << pos.x << ", " << pos.y << ", " <<pos.z << "." << endl;
-        exit(1);
-    }
-    df::building* building = df::global::world->buildings.all[index];
-    if (!building->isSettingOccupancy())
-        return NULL;
-
-    if (building->room.extents && building->isExtentShaped())
+    // Try cache lookup in case it works:
+    auto cached = locationToBuilding.find(pos);
+    if (cached != locationToBuilding.end())
     {
-        auto etile = getExtentTile(building->room, pos);
-        if (!etile || !*etile)
-            return NULL;
-    }
-    return building;
+        auto building = df::building::find(cached->second);
 
-    /*
-    //old method: brute-force
+        if (building && building->z == pos.z &&
+            building->isSettingOccupancy() &&
+            containsTile(building, pos, false))
+        {
+            return building;
+        }
+    }
+
+    // The authentic method, i.e. how the game generally does this:
     auto &vec = df::building::get_vector();
     for (size_t i = 0; i < vec.size(); i++)
     {
@@ -298,7 +288,6 @@ df::building *Buildings::findAtTile(df::coord pos)
     }
 
     return NULL;
-    */
 }
 
 bool Buildings::findCivzonesAt(std::vector<df::building_civzonest*> *pvec, df::coord pos)
@@ -646,7 +635,7 @@ bool Buildings::containsTile(df::building *bld, df::coord2d tile, bool room)
     }
     else
     {
-        if (tile.x < bld->x1 || tile.x > bld->x2 || tile.y < bld->y1 || tile.y >= bld->y2)
+        if (tile.x < bld->x1 || tile.x > bld->x2 || tile.y < bld->y1 || tile.y > bld->y2)
             return false;
     }
 
@@ -1125,18 +1114,21 @@ void Buildings::clearBuildings(color_ostream& out) {
     locationToBuilding.clear();
 }
 
-void Buildings::updateBuildings(color_ostream& out, void* ptr) {
-    //out.print("Updating buildings, %s %d\n", __FILE__, __LINE__);
+void Buildings::updateBuildings(color_ostream& out, void* ptr)
+{
     int32_t id = (int32_t)ptr;
-    
-    if ( corner1.find(id) == corner1.end() ) {
-        //new building: mark stuff
-        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
-        if ( index == -1 ) {
-            out.print("%s, line %d: Couldn't find new building id=%d.\n", __FILE__, __LINE__, id);
-            exit(1);
-        }
-        df::building* building = df::global::world->buildings.all[index];
+    auto building = df::building::find(id);
+
+    if (building)
+    {
+        // Already cached -> weird, so bail out
+        if (corner1.count(id))
+            return;
+        // Civzones cannot be cached because they can
+        // overlap each other and normal buildings.
+        if (!building->isSettingOccupancy())
+            return;
+
         df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
         df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
 
@@ -1146,18 +1138,24 @@ void Buildings::updateBuildings(color_ostream& out, void* ptr) {
         for ( int32_t x = p1.x; x <= p2.x; x++ ) {
             for ( int32_t y = p1.y; y <= p2.y; y++ ) {
                 df::coord pt(x,y,building->z);
-                locationToBuilding[pt] = id;
+                if (containsTile(building, pt, false))
+                    locationToBuilding[pt] = id;
             }
         }
-    } else {
+    }
+    else if (corner1.count(id))
+    {
         //existing building: destroy it
         df::coord p1 = corner1[id];
         df::coord p2 = corner2[id];
-        
+
         for ( int32_t x = p1.x; x <= p2.x; x++ ) {
             for ( int32_t y = p1.y; y <= p2.y; y++ ) {
                 df::coord pt(x,y,p1.z);
-                locationToBuilding.erase(pt);
+
+                auto cur = locationToBuilding.find(pt);
+                if (cur != locationToBuilding.end() && cur->second == id)
+                    locationToBuilding.erase(cur);
             }
         }
 

@@ -1,11 +1,7 @@
 INCLUDE(Plugins.cmake)
 
 # Dfusion plugin
-IF(UNIX)
-    OPTION(BUILD_DFUSION "Build DFusion." OFF)
-ELSE()
-    OPTION(BUILD_DFUSION "Build DFusion." ON)
-ENDIF()
+OPTION(BUILD_DFUSION "Build DFusion." ON)
 if(BUILD_DFUSION)
     add_subdirectory (Dfusion)
 endif()
@@ -13,6 +9,20 @@ endif()
 OPTION(BUILD_STONESENSE "Build stonesense (needs a checkout first)." OFF)
 if(BUILD_STONESENSE)
     add_subdirectory (stonesense)
+endif()
+
+OPTION(BUILD_ISOWORLD "Build isoworld (needs a checkout first)." OFF)
+if(BUILD_ISOWORLD)
+	add_subdirectory (isoworld)
+	IF(UNIX)
+		if (APPLE)
+			#TODO: add an OSX runner script
+		else()
+		# On linux, copy our version of the df launch script which sets LD_PRELOAD
+		install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/runisoworld
+			DESTINATION .)
+		endif()
+	ENDIF()
 endif()
 
 OPTION(BUILD_DEV_PLUGINS "Build developer plugins." OFF)
@@ -65,6 +75,7 @@ ADD_CUSTOM_COMMAND(
             ${PROJECT_PROTOS}
     DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
+add_custom_target(generate_proto DEPENDS ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS})
 
 SET_SOURCE_FILES_PROPERTIES( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 
@@ -114,7 +125,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(tweak tweak.cpp)
     DFHACK_PLUGIN(feature feature.cpp)
     DFHACK_PLUGIN(lair lair.cpp)
-    DFHACK_PLUGIN(zone zone.cpp)
+    DFHACK_PLUGIN(zone zone.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(catsplosion catsplosion.cpp)
     DFHACK_PLUGIN(regrass regrass.cpp)
     DFHACK_PLUGIN(forceequip forceequip.cpp)
@@ -127,13 +138,28 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(steam-engine steam-engine.cpp)
     DFHACK_PLUGIN(power-meter power-meter.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(siege-engine siege-engine.cpp LINK_LIBRARIES lua)
-    DFHACK_PLUGIN(reactionhooks reactionhooks.cpp LINK_LIBRARIES lua)
+    DFHACK_PLUGIN(eventful eventful.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(add-spatter add-spatter.cpp)
     DFHACK_PLUGIN(fix-armory fix-armory.cpp)
     # not yet. busy with other crud again...
     #DFHACK_PLUGIN(versionosd versionosd.cpp)
     DFHACK_PLUGIN(misery misery.cpp)
+    DFHACK_PLUGIN(workNow workNow.cpp)
     #DFHACK_PLUGIN(dfstream dfstream.cpp LINK_LIBRARIES clsocket dfhack-tinythread)
+    DFHACK_PLUGIN(autoSyndrome autoSyndrome.cpp)
+    DFHACK_PLUGIN(syndromeTrigger syndromeTrigger.cpp)
+    DFHACK_PLUGIN(infiniteSky infiniteSky.cpp)
+    DFHACK_PLUGIN(digSmart digSmart.cpp)
+    DFHACK_PLUGIN(createitem createitem.cpp)
+    DFHACK_PLUGIN(outsideOnly outsideOnly.cpp)
+    DFHACK_PLUGIN(isoworldremote isoworldremote.cpp PROTOBUFS isoworldremote)
+    DFHACK_PLUGIN(buildingplan buildingplan.cpp)
+    DFHACK_PLUGIN(resume resume.cpp)
+    DFHACK_PLUGIN(dwarfmonitor dwarfmonitor.cpp)
+    DFHACK_PLUGIN(mousequery mousequery.cpp)
+    DFHACK_PLUGIN(autotrade autotrade.cpp)
+    DFHACK_PLUGIN(stocks stocks.cpp)
+    DFHACK_PLUGIN(treefarm treefarm.cpp)
 endif()
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it

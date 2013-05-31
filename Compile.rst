@@ -63,9 +63,28 @@ extra options.
 You can also use a cmake-friendly IDE like KDevelop 4 or the cmake-gui
 program.
 
+Fixing the libstdc++ version bug
+================================
+
+When compiling dfhack yourself, it builds against your system libc.
+When Dwarf Fortress runs, it uses a libstdc++ shipped with the binary, which
+is usually way older, and incompatible with your dfhack. This manifests with
+the error message::
+
+   ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
+       `GLIBCXX_3.4.15' not found (required by ./hack/libdfhack.so)
+
+To fix this, simply remove the libstdc++ shipped with DF, it will fall back
+to your system lib and everything will work fine::
+
+    cd /path/to/DF/
+    rm libs/libstdc++.so.6
+
 ========
 Mac OS X
 ========
+
+If you are building on 10.6, please read the subsection below titled "Snow Leopard Changes" FIRST.
 
 1. Download and unpack a copy of the latest DF
 2. Install Xcode from Mac App Store
@@ -105,6 +124,18 @@ Mac OS X
     cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/path/to/DF/directory
     make
     make install
+
+
+Snow Leopard Changes
+====================
+
+1. Add a step 6.2a (before Install XML::LibXSLT)::
+	In a separate Terminal window or tab, run:
+	``sudo ln -s /usr/include/libxml2/libxml /usr/include/libxml``
+	
+2. Add a step 7a (before building)::
+	In <dfhack directory>/library/LuaTypes.cpp, change line 467 to 
+		``int len = strlen((char*)ptr);``
 
 =======
 Windows

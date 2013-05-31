@@ -1,6 +1,7 @@
 -- On map load writes the current season to gamelog.txt
 
 local seasons = {
+    [-1] = 'Nothing', -- worldgen
     [0] = 'Spring',
     [1] = 'Summer',
     [2] = 'Autumn',

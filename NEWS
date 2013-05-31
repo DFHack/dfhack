@@ -1,11 +1,53 @@
 DFHack future
 
+  New commands:
+    - digSmart - automatically dig out specified veins as they are revealed
+    - restrictliquid - Restrict traffic on every visible square with liquid.
+    - restrictice - Restrict traffic on squares above visible ice.
+    - treefarm - automatically chop trees and dig obsidian
+  New scripts:
+    - masspit: designate caged creatures in a zone for pitting
+    - locate_ore: scan the map for unmined ore veins
+    - multicmd: run a sequence of dfhack commands, separated by ';'
+    - autobutcher: A GUI front-end for the autobutcher plugin.
+    - invasionNow: trigger an invasion, or many
+  Misc improvements:
+    - exterminate: renamed from slayrace, add help message, add butcher mode
+    - ruby: add df.dfhack_run "somecommand"
+    - magmasource: rename to source, allow water/magma sources/drains
+    - autoSyndrome:
+        disable by default
+        reorganized special tags
+        minimized error spam
+        reset policies: if the target already has an instance of the syndrome you can skip, add another instance, reset the timer, or add the full duration to the time remaining
+    - syndromeTrigger: replaces and extends trueTransformation. Can trigger things when syndromes are added for any reason.
+    - fastdwarf: fixed bug involving fastdwarf and teledwarf being on at the same time
+    - workNow: can optionally look for jobs when jobs are completed
+  New plugins:
+    - buildingplan: Place furniture before it's built
+    - outsideOnly: make raw-specified buildings impossible to build inside
+    - resume: A plugin to help display and resume suspended constructions conveniently
+    - dwarfmonitor: Records dwarf activity to measure fort efficiency
+    - mousequery: Look and poke at the map elements with the mouse.
+    - autotrade: Automatically send items in marked stockpiles to trade depot, when trading is possible.
+    - stocks: An improved stocks display screen.
+  Internals:
+    - EventManager: fixed job completion detection
+    - Once: easy way to make sure something happens once per run of DF, such as an error message
+    
+DFHack v0.34.11-r3
+
   Internals:
     - support for displaying active keybindings properly.
     - support for reusable widgets in lua screen library.
+    - Maps::canStepBetween: returns whether you can walk between two tiles in one step.
+    - EventManager: monitors various in game events centrally so that individual plugins
+      don't have to monitor the same things redundantly.
+    - Now works with OSX 10.6.8
   Notable bugfixes:
     - autobutcher can be re-enabled again after being stopped.
     - stopped Dwarf Manipulator from unmasking vampires.
+    - Stonesense is now fixed on OSX
   Misc improvements:
     - fastdwarf: new mode using debug flags, and some internal consistency fixes.
     - added a small stand-alone utility for applying and removing binary patches.
@@ -26,6 +68,7 @@ DFHack future
     - stripcaged: mark items inside cages for dumping, eg caged goblin weapons.
     - soundsense-season: writes the correct season to gamelog.txt on world load.
     - create-items: spawn items
+    - fix/cloth-stockpile: fixes bug 5739; needs to be run after savegame load every time.
   New GUI scripts:
     - gui/guide-path: displays the cached path for minecart Guide orders.
     - gui/workshop-job: displays inputs of a workshop job and allows tweaking them.
@@ -33,6 +76,7 @@ DFHack future
     - gui/assign-rack: works together with a binary patch to fix weapon racks.
     - gui/gm-editor: an universal editor for lots of dfhack things.
     - gui/companion-order: a adventure mode command interface for your companions.
+    - gui/advfort: a way to do jobs with your adventurer (e.g. build fort).
   New binary patches (for use with binpatch):
     - armorstand-capacity: doubles the capacity of armor stands.
     - custom-reagent-size: lets custom reactions use small amounts of inputs.
@@ -59,6 +103,16 @@ DFHack future
     saving you from having to trawl through long lists of materials each time you place one.
   Dfusion plugin:
     Reworked to make use of lua modules, now all the scripts can be used from other scripts.
+  New Eventful plugin:
+    A collection of lua events, that will allow new ways to interact with df world.
+  Auto syndrome plugin:
+    A way of automatically applying boiling rock syndromes and calling dfhack commands controlled by raws.
+  Infinite sky plugin:
+    Create new z-levels automatically or on request.
+  True transformation plugin:
+    A better way of doing permanent transformations that allows later transformations.
+  Work now plugin:
+    Makes the game assign jobs every time you pause.
 
 DFHack v0.34.11-r2
 

@@ -36,7 +36,7 @@ old_tty_settings=$(stty -g)
 
 # Now run
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./stonesense/deplibs":"./hack"
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./hack/libs":"./hack"
 
 case "$1" in
   -g | --gdb)

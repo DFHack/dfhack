@@ -525,7 +525,7 @@ bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<df::coord2d>
     return true;
 }
 
-bool Maps::canPathBetween(df::coord pos1, df::coord pos2)
+bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
 {
     auto block1 = getTileBlock(pos1);
     auto block2 = getTileBlock(pos2);

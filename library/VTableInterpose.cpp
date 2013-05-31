@@ -39,15 +39,54 @@ using namespace DFHack;
 
 /*
  *  Code for accessing method pointers directly. Very compiler-specific.
+ *
+ *  Pointers to methods in C++ are conceptually similar to pointers to
+ *  functions, but with some complications. Specifically, the target of
+ *  such pointer can be either:
+ *
+ *  - An ordinary non-virtual method, in which case the pointer behaves
+ *    not much differently from a simple function pointer.
+ *  - A virtual method, in which case calling the pointer must emulate
+ *    an ordinary call to that method, i.e. fetch the real code address
+ *    from the vtable at the appropriate index.
+ *
+ *  This means that pointers to virtual methods actually have to encode
+ *  the relevant vtable index value in some way. Also, since these two
+ *  types of pointers cannot be distinguished by data type and differ
+ *  only in value, any sane compiler would ensure that any non-virtual
+ *  method that can potentially be called via a pointer uses the same
+ *  parameter passing rules as an equivalent virtual method, so that
+ *  the same parameter passing code would work with both types of pointer.
+ *
+ *  This means that with a few small low-level compiler-specific wrappers
+ *  to access the data inside such pointers it is possible to:
+ *
+ *  - Convert a non-virtual method pointer into a code address that
+ *    can be directly put into a vtable.
+ *  - Convert a pointer taken out of a vtable into a fake non-virtual
+ *    method pointer that can be used to easily call the original
+ *    vmethod body.
+ *  - Extract a vtable index out of a virtual method pointer.
+ *
+ *  Taken together, these features allow delegating all the difficult
+ *  and fragile tasks like passing parameters and calculating the
+ *  vtable index to the C++ compiler.
  */
 
 #if defined(_MSC_VER)
 
+// MSVC may use up to 3 different representations
+// based on context, but adding the /vmg /vmm options
+// forces it to stick to this one. It can accomodate
+// multiple, but not virtual inheritance.
 struct MSVC_MPTR {
     void *method;
     intptr_t this_shift;
 };
 
+// Debug builds sometimes use additional thunks that
+// just jump to the real one, presumably to attach some
+// additional debug info.
 static uint32_t *follow_jmp(void *ptr)
 {
     uint8_t *p = (uint8_t*)ptr;
@@ -56,10 +95,10 @@ static uint32_t *follow_jmp(void *ptr)
     {
         switch (*p)
         {
-        case 0xE9:
+        case 0xE9: // jmp near rel32
             p += 5 + *(int32_t*)(p+1);
             break;
-        case 0xEB:
+        case 0xEB: // jmp short rel8
             p += 2 + *(int8_t*)(p+1);
             break;
         default:
@@ -120,8 +159,10 @@ void DFHack::addr_to_method_pointer_(void *pptr, void *addr)
 
 #elif defined(__GXX_ABI_VERSION)
 
+// GCC seems to always use this structure - possibly unless
+// virtual inheritance is involved, but that's irrelevant.
 struct GCC_MPTR {
-    intptr_t method;
+    intptr_t method; // Code pointer or tagged vtable offset
     intptr_t this_shift;
 };
 
@@ -254,6 +295,14 @@ VMethodInterposeLinkBase::VMethodInterposeLinkBase(virtual_identity *host, int v
 {
     if (vmethod_idx < 0 || interpose_method == NULL)
     {
+        /*
+         * A failure here almost certainly means a problem in one
+         * of the pointer-to-method access wrappers above:
+         *
+         * - vmethod_idx      comes from vmethod_pointer_to_idx_
+         * - interpose_method comes from method_pointer_to_addr_
+         */
+
         fprintf(stderr, "Bad VMethodInterposeLinkBase arguments: %d %08x\n",
                 vmethod_idx, unsigned(interpose_method));
         fflush(stderr);

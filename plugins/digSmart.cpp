@@ -30,6 +30,7 @@ command_result digSmart (color_ostream &out, std::vector <std::string> & paramet
 DFHACK_PLUGIN("digSmart");
 
 void onDig(color_ostream& out, void* ptr);
+void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt, set<df::coord>& jobLocations);
 EventManager::EventHandler digHandler(onDig, 0);
 vector<df::coord> queue;
 map<df::coord, int32_t> visitCount;
@@ -52,9 +53,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     return CR_OK;
 }
 
-void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt);
 
 void onTick(color_ostream& out, void* ptr) {
+/*
     MapExtras::MapCache cache;
     for ( size_t a = 0; a < queue.size(); a++ ) {
         df::coord pos = queue[a];
@@ -66,6 +67,24 @@ void onTick(color_ostream& out, void* ptr) {
     }
     cache.trash();
     queue.clear();
+*/
+    
+    map<df::coord,int> toRemove;
+    for ( auto a = visitCount.begin(); a != visitCount.end(); a++ ) {
+        if ( (*a).second <= 0 )
+            continue;
+        df::coord pt = (*a).first;
+        df::map_block* block = Maps::getTileBlock(pt);
+        if ( block->designation[pt.x&0xF][pt.y&0xF].bits.dig != df::enums::tile_dig_designation::Default ) {
+            out.print("%d: %d,%d,%d: Default -> %d\n", __LINE__, pt.x,pt.y,pt.z, (int32_t)block->designation[pt.x&0xF][pt.y&0xF].bits.dig);
+            toRemove[pt]++;
+        }
+    }
+    for ( auto a = toRemove.begin(); a != toRemove.end(); a++ )
+        visitCount.erase((*a).first);
+    
+    EventManager::EventHandler handler(onTick, 1);
+    EventManager::registerTick(handler, 1, plugin_self);
 }
 
 void onDig(color_ostream& out, void* ptr) {
@@ -73,7 +92,7 @@ void onDig(color_ostream& out, void* ptr) {
     df::job* job = (df::job*)ptr;
     if ( job->completion_timer > 0 )
         return;
-
+    
     if ( job->job_type != df::enums::job_type::Dig &&
          job->job_type != df::enums::job_type::CarveUpwardStaircase && 
          job->job_type != df::enums::job_type::CarveDownwardStaircase && 
@@ -82,7 +101,23 @@ void onDig(color_ostream& out, void* ptr) {
          job->job_type != df::enums::job_type::DigChannel )
         return;
 out.print("%d\n", __LINE__);
-
+    
+    set<df::coord> jobLocations;
+    for ( df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next ) {
+        if ( link->item == NULL )
+            continue;
+        
+        if ( link->item->job_type != df::enums::job_type::Dig &&
+             link->item->job_type != df::enums::job_type::CarveUpwardStaircase && 
+             link->item->job_type != df::enums::job_type::CarveDownwardStaircase && 
+             link->item->job_type != df::enums::job_type::CarveUpDownStaircase && 
+             link->item->job_type != df::enums::job_type::CarveRamp && 
+             link->item->job_type != df::enums::job_type::DigChannel )
+            continue;
+        
+        jobLocations.insert(link->item->pos);
+    }
+    
     //queue.push_back(job->pos);
     //EventManager::EventHandler handler(onTick, 1);
     //EventManager::registerTick(handler, 5, plugin_self);
@@ -90,18 +125,13 @@ out.print("%d\n", __LINE__);
     df::coord pos = job->pos;
     for ( int16_t a = -1; a <= 1; a++ ) {
         for ( int16_t b = -1; b <= 1; b++ ) {
-            maybeExplore(out, cache, df::coord(pos.x+a,pos.y+b,pos.z));
-        }
-    }
-    for ( int16_t a = -1; a <= 1; a++ ) {
-        for ( int16_t b = -1; b <= 1; b++ ) {
-            maybeExplore(out, cache, df::coord(pos.x+a,pos.y+b,pos.z));
+            maybeExplore(out, cache, df::coord(pos.x+a,pos.y+b,pos.z), jobLocations);
         }
     }
     cache.trash();
 }
 
-void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt) {
+void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt, set<df::coord>& jobLocations) {
     if ( !Maps::isValidTilePos(pt) ) {
         return;
     }
@@ -132,8 +162,8 @@ void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt) 
     Maps::getSize(xMax,yMax,zMax);
     if ( pt.x == 0 || pt.y == 0 || pt.x+1 == xMax*16 || pt.y+1 == yMax*16 )
         return;
-    if ( visitCount[pt] > 0 ) {
-//        return;
+    if ( jobLocations.find(pt) != jobLocations.end() ) {
+        return;
     }
     
     df::enums::tile_dig_designation::tile_dig_designation dig1,dig2;
@@ -152,5 +182,7 @@ command_result digSmart (color_ostream &out, std::vector <std::string> & paramet
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
+    EventManager::EventHandler handler(onTick, 1);
+    EventManager::registerTick(handler, 1, plugin_self);
     return CR_OK;
 }

@@ -2158,15 +2158,6 @@ public:
             }
         }
 
-        FOR_ENUM_ITEMS(unit_labor, l)
-        {
-            if (l == df::unit_labor::NONE)
-                continue;
-            if (labor_infos[l].idle_dwarfs == 0 && labor_infos[l].busy_dwarfs > 0 &&
-                (labor_infos[l].maximum_dwarfs() == 0 || labor_needed[l] < labor_infos[l].maximum_dwarfs()))
-                pq.push(make_pair(std::min(labor_infos[l].time_since_last_assigned()/12, 25), l));
-        }
-
         if (print_debug)
             out.print("available count = %d, distinct labors needed = %d\n", available_dwarfs.size(), pq.size());
 

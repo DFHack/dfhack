@@ -149,7 +149,21 @@ module DFHack
         def vein
             # last vein wins
             all_veins.reverse.find { |v|
-                (v.tile_bitmask.bits[@dy] & (1 << @dx)) > 0
+                v.tile_bitmask.bits[@dy][@dx] > 0
+            }
+        end
+
+        # return the first BlockBurrow this tile is in (nil if none)
+        def burrow
+            mapblock.block_burrows.find { |b|
+                b.tile_bitmask.bits[@dy][@dx] > 0
+            }
+        end
+
+        # return the array of BlockBurrow this tile is in
+        def all_burrows
+            mapblock.block_burrows.find_all { |b|
+                b.tile_bitmask.bits[@dy][@dx] > 0
             }
         end
 

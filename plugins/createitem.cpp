@@ -46,18 +46,23 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool glove2 = false)
+bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_item = false)
 {
     vector<df::item *> out_items;
     vector<df::reaction_reagent *> in_reag;
     vector<df::item *> in_items;
     bool is_gloves = (prod->item_type == df::item_type::GLOVES);
+    bool is_shoes = (prod->item_type == df::item_type::SHOES);
 
     prod->produce(unit, &out_items, &in_reag, &in_items, 1, df::job_skill::NONE,
         df::historical_entity::find(unit->civ_id),
         ((*gametype == df::game_type::DWARF_MAIN) || (*gametype == df::game_type::DWARF_RECLAIM)) ? df::world_site::find(ui->site_id) : NULL);
     if (!out_items.size())
         return false;
+    // if we asked to make shoes and we got twice as many as we asked, then we're okay
+    // otherwise, make a second set because shoes are normally made in pairs
+    if (is_shoes && out_items.size() == prod->count * 2)
+        is_shoes = false;
     for (size_t i = 0; i < out_items.size(); i++)
     {
         out_items[i]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
@@ -67,10 +72,10 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool glove2 = 
             if (out_items[i]->getGloveHandedness() > 0)
                 is_gloves = false;
             else
-                out_items[i]->setGloveHandedness(glove2 ? 2 : 1);
+                out_items[i]->setGloveHandedness(second_item ? 2 : 1);
         }
     }
-    if (is_gloves && !glove2)
+    if ((is_gloves || is_shoes) && !second_item)
         return makeItem(prod, unit, true);
 
     return true;
@@ -248,7 +253,9 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         break;
     }
 
-    if (!makeItem(prod, unit))
+    bool result = makeItem(prod, unit);
+    delete prod;
+    if (!result)
     {
         out.printerr("Failed to create item!\n");
         return CR_FAILURE;

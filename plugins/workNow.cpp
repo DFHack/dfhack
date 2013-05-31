@@ -24,7 +24,7 @@ void jobCompletedHandler(color_ostream& out, void* ptr);
 EventManager::EventHandler handler(jobCompletedHandler,1);
 
 DFhackCExport command_result plugin_init(color_ostream& out, std::vector<PluginCommand> &commands) {
-    commands.push_back(PluginCommand("workNow", "makes dwarves look for jobs whever they finish one, or every time you pause", workNow, false, "When workNow is active, every time the game pauses, DF will make dwarves perform any appropriate available jobs. This includes when you one step through the game using the pause menu. When workNow is in mode 2, it will make dwarves look for jobs every time a job completes (or is cancelled).\n"
+    commands.push_back(PluginCommand("workNow", "makes dwarves look for jobs whever they finish one, or every time you pause", workNow, false, "When workNow is active, every time the game pauses, DF will make dwarves perform any appropriate available jobs. This includes when you one step through the game using the pause menu. When workNow is in mode 2, it will make dwarves look for jobs every time a job completes.\n"
                 "workNow\n"
                 "  print workNow status\n"
                 "workNow 0\n"
@@ -54,7 +54,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         return CR_OK;
     
     *df::global::process_jobs = true;
-    *df::global::process_dig = true;
+    *df::global::process_dig  = true;
     
     return CR_OK;
 }

@@ -11,12 +11,17 @@
 #include "modules/Maps.h"
 
 #include "df/coord.h"
+#include "df/global_objects.h"
 #include "df/job.h"
 #include "df/map_block.h"
 #include "df/tile_dig_designation.h"
 #include "df/world.h"
 
+#include <map>
+#include <vector>
+
 using namespace DFHack;
+using namespace std;
 
 command_result digSmart (color_ostream &out, std::vector <std::string> & parameters);
 
@@ -25,8 +30,9 @@ command_result digSmart (color_ostream &out, std::vector <std::string> & paramet
 DFHACK_PLUGIN("digSmart");
 
 void onDig(color_ostream& out, void* ptr);
-
-EventManager::EventHandler digHandler(onDig, 5);
+EventManager::EventHandler digHandler(onDig, 0);
+vector<df::coord> queue;
+map<df::coord, int32_t> visitCount;
 
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
@@ -48,7 +54,22 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt);
 
+void onTick(color_ostream& out, void* ptr) {
+    MapExtras::MapCache cache;
+    for ( size_t a = 0; a < queue.size(); a++ ) {
+        df::coord pos = queue[a];
+        for ( int16_t a = -1; a <= 1; a++ ) {
+            for ( int16_t b = -1; b <= 1; b++ ) {
+                maybeExplore(out, cache, df::coord(pos.x+a,pos.y+b,pos.z));
+            }
+        }
+    }
+    cache.trash();
+    queue.clear();
+}
+
 void onDig(color_ostream& out, void* ptr) {
+    CoreSuspender bob;
     df::job* job = (df::job*)ptr;
     if ( job->completion_timer > 0 )
         return;
@@ -60,7 +81,11 @@ void onDig(color_ostream& out, void* ptr) {
          job->job_type != df::enums::job_type::CarveRamp && 
          job->job_type != df::enums::job_type::DigChannel )
         return;
+out.print("%d\n", __LINE__);
 
+    //queue.push_back(job->pos);
+    //EventManager::EventHandler handler(onTick, 1);
+    //EventManager::registerTick(handler, 5, plugin_self);
     MapExtras::MapCache cache;
     df::coord pos = job->pos;
     for ( int16_t a = -1; a <= 1; a++ ) {
@@ -68,6 +93,12 @@ void onDig(color_ostream& out, void* ptr) {
             maybeExplore(out, cache, df::coord(pos.x+a,pos.y+b,pos.z));
         }
     }
+    for ( int16_t a = -1; a <= 1; a++ ) {
+        for ( int16_t b = -1; b <= 1; b++ ) {
+            maybeExplore(out, cache, df::coord(pos.x+a,pos.y+b,pos.z));
+        }
+    }
+    cache.trash();
 }
 
 void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt) {
@@ -92,18 +123,29 @@ void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt) 
     if ( mat == -1 )
         return;
 
-    if ( block->designation[pt.x&0xF][pt.y&0xF].bits.dig == df::enums::tile_dig_designation::Default )
-        return;
+//    if ( block->designation[pt.x&0xF][pt.y&0xF].bits.dig == df::enums::tile_dig_designation::Default )
+//        return;
     if ( block->designation[pt.x&0xF][pt.y&0xF].bits.dig != df::enums::tile_dig_designation::No )
         return;
     
     uint32_t xMax,yMax,zMax;
     Maps::getSize(xMax,yMax,zMax);
-    if ( pt.x == 0 || pt.y == 0 || pt.x+1 == xMax || pt.y+1 == yMax )
+    if ( pt.x == 0 || pt.y == 0 || pt.x+1 == xMax*16 || pt.y+1 == yMax*16 )
         return;
+    if ( visitCount[pt] > 0 ) {
+//        return;
+    }
     
+    df::enums::tile_dig_designation::tile_dig_designation dig1,dig2;
+    dig1 = block->designation[pt.x&0xF][pt.y&0xF].bits.dig;
     block->designation[pt.x&0xF][pt.y&0xF].bits.dig = df::enums::tile_dig_designation::Default;
+    dig2 = block->designation[pt.x&0xF][pt.y&0xF].bits.dig;
     block->flags.bits.designated = true;
+//    *df::global::process_dig  = true;
+//    *df::global::process_jobs = true;
+    
+out.print("%d: %d,%d,%d, %d. %d -> %d\n", __LINE__, pt.x,pt.y,pt.z, visitCount[pt]++, dig1, dig2);
+//out.print("%d: unk9 %d, unk13 %d\n", __LINE__, (int32_t)block->unk9[pt.x&0xF][pt.y&0xF], (int32_t)block->unk13[pt.x&0xF][pt.y&0xF]);
 }
 
 command_result digSmart (color_ostream &out, std::vector <std::string> & parameters)

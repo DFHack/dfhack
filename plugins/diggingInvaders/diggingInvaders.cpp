@@ -28,6 +28,7 @@
 #include "df/general_ref_unit.h"
 #include "df/general_ref_unit_holderst.h"
 #include "df/general_ref_unit_workerst.h"
+#include "df/global_objects.h"
 #include "df/invasion_info.h"
 #include "df/item.h"
 #include "df/itemdef_weaponst.h"
@@ -171,17 +172,20 @@ void initiateDigging(color_ostream& out, void* ptr) {
 }
 
 void watchForJobComplete(color_ostream& out, void* ptr) {
+/*
     df::job* job = (df::job*)ptr;
 
     if ( job->id != lastInvasionJob )
         return;
     
     EventManager::unregister(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, diggingInvadersPlugin);
+*/
 
     manageInvasion(out);
 }
 
 int32_t manageInvasion(color_ostream& out) {
+    EventManager::unregisterAll(plugin_self);
     if ( !enabled ) {
         return -1;
     }
@@ -191,14 +195,16 @@ int32_t manageInvasion(color_ostream& out) {
         //out.print("Invasion is over. Stopping diggingInvaders.\n");
         return -2;
     }
+    EventManager::registerTick(jobCompleteHandler, 1, plugin_self);
     if ( lastInvasionJob != -1 ) {
         //check if he's still doing it
-        int32_t index = df::unit::binsearch_index(df::global::world->units.all, lastInvasionDigger);
-        if ( index == -1 ) {
+        df::unit* worker = df::unit::find(lastInvasionDigger);
+        //int32_t index = df::unit::binsearch_index(df::global::world->units.all, lastInvasionDigger);
+        if ( !worker ) {
             out.print("Error %s line %d.\n", __FILE__, __LINE__);
             return -1;
         }
-        df::job* job = df::global::world->units.all[index]->job.current_job;
+        df::job* job = worker->job.current_job;
         //out.print("job id: old = %d, new = %d\n", lastInvasionJob, job == NULL ? -1 : job->id);
         if ( job != NULL && lastInvasionJob == job->id ) {
             //out.print("Still working on the previous job.\n");
@@ -207,6 +213,8 @@ int32_t manageInvasion(color_ostream& out) {
 
         //return 1; //still invading, but nothing new done
     }
+    
+    *df::global::pause_state = true;
     int32_t unitId = findAndAssignInvasionJob(out);
     if ( unitId == -1 ) {
         //might need to do more digging later, after we've killed off a few locals
@@ -224,7 +232,7 @@ int32_t manageInvasion(color_ostream& out) {
         lastInvasionJob = df::global::world->units.all[index]->job.current_job->id;
     }
 
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, diggingInvadersPlugin);
+    //EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, diggingInvadersPlugin);
     //out.print("DiggingInvaders: job assigned.\n");
     return 0; //did something
 }
@@ -320,8 +328,8 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
     unordered_set<uint16_t> localConnectivity;
 
     //find all locals and invaders
-    for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
-        df::unit* unit = df::global::world->units.active[a];
+    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+        df::unit* unit = df::global::world->units.all[a];
         if ( unit->flags1.bits.dead )
             continue;
         if ( Units::isCitizen(unit) ) {
@@ -363,8 +371,9 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
         return -1;
     }
     df::unit* firstInvader = invaders[0];
-    //out << firstInvader->id << endl;
-    //out << firstInvader->pos.x << ", " << firstInvader->pos.y << ", " << firstInvader->pos.z << endl;
+    out << firstInvader->id << endl;
+    out << firstInvader->pos.x << ", " << firstInvader->pos.y << ", " << firstInvader->pos.z << endl;
+    out << __LINE__ << endl;
 
     int32_t localPtsFound = 0;
     unordered_set<df::coord,PointHash> closedSet;
@@ -377,7 +386,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
     while(!fringe.empty()) {
         df::coord pt = *(fringe.begin());
         fringe.erase(fringe.begin());
-        //out.print("line %d: fringe size = %d, localPtsFound = %d / %d, closedSetSize = %d\n", __LINE__, fringe.size(), localPtsFound, localPts.size(), closedSet.size());
+        //out.print("line %d: fringe size = %d, localPtsFound = %d / %d, closedSetSize = %d, pt = %d,%d,%d\n", __LINE__, fringe.size(), localPtsFound, localPts.size(), closedSet.size(), pt.x,pt.y,pt.z);
         if ( closedSet.find(pt) != closedSet.end() ) {
             out.print("%s, line %d: Double closure! Bad!\n", __FILE__, __LINE__);
             break;

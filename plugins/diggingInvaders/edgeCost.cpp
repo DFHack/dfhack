@@ -30,6 +30,11 @@ int64_t costWeight[] = {
 
 using namespace std;
 
+/*
+limitations
+    ramps
+    cave-ins
+*/
 int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
     int32_t dx = pt2.x - pt1.x;
     int32_t dy = pt2.y - pt1.y;
@@ -45,7 +50,12 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
 
     df::tiletype* type2 = Maps::getTileType(pt2);
     df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
-
+    
+    if ( Maps::getTileBlock(pt1)->designation[pt1.x&0xF][pt1.y&0xF].bits.flow_size >= 4 )
+        return -1;
+    if ( Maps::getTileBlock(pt2)->designation[pt2.x&0xF][pt2.y&0xF].bits.flow_size >= 4 )
+        return -1;
+    
     if ( shape2 == df::enums::tiletype_shape::EMPTY ) {
         return -1;
     }
@@ -93,12 +103,13 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                     }
                     cost += costWeight[CostDimension::Dig];
                 }
-
+                
                 if ( building2 ) {
+                    //moving up through an open bridge or a usable hatch is fine. other buildings are not
                     bool unforbiddenHatch = false;
                     if ( building2->getType() == df::building_type::Hatch ) {
                         df::building_hatchst* hatch = (df::building_hatchst*)building2;
-                        if ( hatch->door_flags.bits.forbidden )
+                        if ( !hatch->door_flags.bits.forbidden && !(hatch->door_flags.bits.operated_by_mechanisms&&hatch->door_flags.bits.closed) )
                             unforbiddenHatch = true;
                     }
                     bool inactiveBridge = false;
@@ -126,27 +137,32 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                     if ( !unforbiddenHatch && !inactiveBridge )
                         return -1;
                 }
-
-                bool forbidden = false;
+                
+                /*bool forbidden = false;
                 if ( building2 && building2->getType() == df::building_type::Hatch ) {
                     df::building_hatchst* hatch = (df::building_hatchst*)building2;
                     if ( hatch->door_flags.bits.forbidden )
                         forbidden = true;
                 }
                 if ( forbidden )
-                    return -1;
+                    return -1;*/
             } else {
                 bool walkable_high2 = shape2 == df::tiletype_shape::STAIR_UP || shape2 == df::tiletype_shape::STAIR_UPDOWN;
                 if ( !walkable_high2 ) {
                     if ( building2 || construction2 )
                         return -1;
-
+                    
                     if ( shape2 != df::enums::tiletype_shape::WALL )
                         return -1;
                     cost += costWeight[CostDimension::Dig];
                 }
                 bool walkable_low1 = shape1 == df::tiletype_shape::STAIR_DOWN || shape1 == df::tiletype_shape::STAIR_UPDOWN;
                 if ( !walkable_low1 ) {
+                    //if ( building1 || construction1 )
+                        //return -1;
+                    //TODO: consider ramps
+                    if ( shape1 == df::tiletype_shape::RAMP )
+                        return -1;
                     cost += costWeight[CostDimension::Dig];
                 }
 
@@ -157,32 +173,42 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                     if ( bridge->gate_flags.bits.closed ) {
                         return -1;
                     }
+                    //open bridges moving down, standing on bad spot
+                    if ( bridge->direction == df::building_bridgest::T_direction::Left  && pt1.x == bridge->x1 )
+                        return -1;
+                    if ( bridge->direction == df::building_bridgest::T_direction::Right && pt1.x == bridge->x2 )
+                        return -1;
+                    if ( bridge->direction == df::building_bridgest::T_direction::Up    && pt1.y == bridge->y1 )
+                        return -1;
+                    if ( bridge->direction == df::building_bridgest::T_direction::Down  && pt1.y == bridge->y2 )
+                        return -1;
                 }
-
+                
                 bool forbidden = false;
-                if ( building1->getType() == df::building_type::Hatch ) {
+                if ( building1 && building1->getType() == df::building_type::Hatch ) {
                     df::building_hatchst* hatch = (df::building_hatchst*)building1;
-                    if ( hatch->door_flags.bits.forbidden )
+                    if ( hatch->door_flags.bits.forbidden || hatch->door_flags.bits.closed && hatch->door_flags.bits.operated_by_mechanisms )
                         forbidden = true;
                 }
-
-                if ( building1 && forbidden && building1->getType() == df::building_type::Hatch ) {
+                
+                if ( building1 && forbidden /*&& building1->getType() == df::building_type::Hatch*/ ) {
                     df::coord support[] = {df::coord(pt1.x-1, pt1.y, pt1.z), df::coord(pt1.x+1,pt1.y,pt1.z), df::coord(pt1.x,pt1.y-1,pt1.z), df::coord(pt1.x,pt1.y+1,pt1.z)};
                     int64_t minCost = -1;
                     for ( size_t a = 0; a < 4; a++ ) {
                         df::tiletype* supportType = Maps::getTileType(support[a]);
                         df::tiletype_shape shape = ENUM_ATTR(tiletype, shape, *supportType);
                         df::tiletype_shape_basic basic = ENUM_ATTR(tiletype_shape, basic_shape, shape);
-                        int64_t cost = 2*costWeight[CostDimension::Walk] + costWeight[CostDimension::DestroyBuilding];
+                        int64_t cost2 = 2*costWeight[CostDimension::Walk] + costWeight[CostDimension::DestroyBuilding];
                         if ( !Maps::canStepBetween(pt1, support[a]) ) {
                             switch(basic) {
                                 case tiletype_shape_basic::Open:
+                                    //TODO: check for a hatch or a bridge: that makes it ok
                                     continue;
                                 case tiletype_shape_basic::Wall:
                                     if ( ENUM_ATTR(tiletype, material, *supportType) == df::enums::tiletype_material::CONSTRUCTION ) {
-                                        cost += costWeight[CostDimension::DestroyConstruction];
+                                        cost2 += costWeight[CostDimension::DestroyConstruction];
                                     } else {
-                                        cost += costWeight[CostDimension::Dig];
+                                        cost2 += costWeight[CostDimension::Dig];
                                     }
                                 case tiletype_shape_basic::Ramp:
                                     //TODO: check for a hatch or a bridge: that makes it ok
@@ -194,11 +220,11 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                                     break;
                             }
                             if ( Buildings::findAtTile(support[a]) ) {
-                                cost += costWeight[CostDimension::DestroyBuilding];
+                                cost2 += costWeight[CostDimension::DestroyBuilding];
                             }
                         }
-                        if ( minCost == -1 || cost < minCost )
-                            minCost = cost;
+                        if ( minCost == -1 || cost2 < minCost )
+                            minCost = cost2;
                     }
                     if ( minCost == -1 )
                         return -1;

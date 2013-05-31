@@ -135,7 +135,6 @@ void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt, 
     if ( !digAll ) {
         df::inorganic_raw* inorganic = df::global::world->raws.inorganics[mat];
         if ( autodigMaterials.find(inorganic->id) == autodigMaterials.end() ) {
-            out << __LINE__ << " " << inorganic->id << " not present." << endl;
             return;
         }
     }

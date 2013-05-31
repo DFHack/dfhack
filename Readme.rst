@@ -1333,8 +1333,8 @@ Usage:
     Display whether the plugin is enabled.
 
 While enabled, the 'q' menu of each stockpile will have two new options:
-  j: Select a job to order, from an interface like the manager's screen.
-  J: Cycle between several options for how many such jobs to order.
+  * j: Select a job to order, from an interface like the manager's screen.
+  * J: Cycle between several options for how many such jobs to order.
 
 Whenever the bookkeeper updates stockpile records, new work orders will
 be placed on the manager's queue for each such selection, reduced by the

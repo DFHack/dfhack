@@ -1,6 +1,7 @@
 DFHack future
 
   New commands:
+    - digSmart - automatically dig out specified veins as they are revealed
     - restrictliquid - Restrict traffic on every visible square with liquid.
     - restrictice - Restrict traffic on squares above visible ice.
     - treefarm - automatically chop trees and dig obsidian

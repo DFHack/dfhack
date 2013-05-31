@@ -1,9 +1,6 @@
-
-
-// some headers required for a plugin. Nothing special, just the basics.
 #include "Core.h"
-#include "Export.h"
 #include "DataDefs.h"
+#include "Export.h"
 #include "PluginManager.h"
 
 #include "modules/EventManager.h"
@@ -17,7 +14,8 @@
 #include "df/tile_dig_designation.h"
 #include "df/world.h"
 
-#include <map>
+#include <set>
+#include <string>
 #include <vector>
 
 using namespace DFHack;
@@ -25,66 +23,41 @@ using namespace std;
 
 command_result digSmart (color_ostream &out, std::vector <std::string> & parameters);
 
-// A plugin must be able to return its name and version.
-// The name string provided must correspond to the filename - skeleton.plug.so or skeleton.plug.dll in this case
 DFHACK_PLUGIN("digSmart");
 
 void onDig(color_ostream& out, void* ptr);
 void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt, set<df::coord>& jobLocations);
 EventManager::EventHandler digHandler(onDig, 0);
-vector<df::coord> queue;
-map<df::coord, int32_t> visitCount;
 
-// Mandatory init function. If you have some global state, create it here.
+bool enabled = false;
+bool digAll = false;
+set<string> autodigMaterials;
+
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    // Fill the command list with your commands.
     commands.push_back(PluginCommand(
         "digSmart", "Automatically dig out veins as you discover them.",
-        digSmart, false, /* true means that the command can't be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  This command does nothing at all.\n"
+        digSmart, false,
         "Example:\n"
-        "  digSmart\n"
-        "    Does nothing.\n"
+        "  digSmart 0\n"
+        "    disable plugin\n"
+        "  digSmart 1\n"
+        "    enable plugin\n"
+        "  digSmart 0 MICROCLINE COAL_BITUMINOUS 1\n"
+        "    disable plugin and remove microcline and bituminous coal from being monitored, then re-enable plugin"
+        "  digSmart 1 MICROCLINE 0 COAL_BITUMINOUS 1\n"
+        "    don't monitor microcline, do monitor COAL_BITUMINOUS, then enable plugin\n"
+        "  digSmart CLEAR\n"
+        "    remove all inorganics from monitoring\n"
+        "  digSmart digAll1\n"
+        "    enable digAll mode: dig any vein, regardless of the monitor list\n"
+        "  digSmart digAll0\n"
+        "    disable digAll mode\n"
+        "\n"
+        "Note that while order matters, multiple commands can be sequenced in one line. It is recommended to alter your dfhack.init file so that you won't have to type in every mineral type you want to dig every time you start the game. Material names are case sensitive.\n"
     ));
-    //digSmartPlugin = Core::getInstance().getPluginManager()->getPluginByName("digSmart");
     EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, digHandler, plugin_self);
     return CR_OK;
-}
-
-
-void onTick(color_ostream& out, void* ptr) {
-/*
-    MapExtras::MapCache cache;
-    for ( size_t a = 0; a < queue.size(); a++ ) {
-        df::coord pos = queue[a];
-        for ( int16_t a = -1; a <= 1; a++ ) {
-            for ( int16_t b = -1; b <= 1; b++ ) {
-                maybeExplore(out, cache, df::coord(pos.x+a,pos.y+b,pos.z));
-            }
-        }
-    }
-    cache.trash();
-    queue.clear();
-*/
-    
-    map<df::coord,int> toRemove;
-    for ( auto a = visitCount.begin(); a != visitCount.end(); a++ ) {
-        if ( (*a).second <= 0 )
-            continue;
-        df::coord pt = (*a).first;
-        df::map_block* block = Maps::getTileBlock(pt);
-        if ( block->designation[pt.x&0xF][pt.y&0xF].bits.dig != df::enums::tile_dig_designation::Default ) {
-            out.print("%d: %d,%d,%d: Default -> %d\n", __LINE__, pt.x,pt.y,pt.z, (int32_t)block->designation[pt.x&0xF][pt.y&0xF].bits.dig);
-            toRemove[pt]++;
-        }
-    }
-    for ( auto a = toRemove.begin(); a != toRemove.end(); a++ )
-        visitCount.erase((*a).first);
-    
-    EventManager::EventHandler handler(onTick, 1);
-    EventManager::registerTick(handler, 1, plugin_self);
 }
 
 void onDig(color_ostream& out, void* ptr) {
@@ -100,7 +73,6 @@ void onDig(color_ostream& out, void* ptr) {
          job->job_type != df::enums::job_type::CarveRamp && 
          job->job_type != df::enums::job_type::DigChannel )
         return;
-out.print("%d\n", __LINE__);
     
     set<df::coord> jobLocations;
     for ( df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next ) {
@@ -118,9 +90,6 @@ out.print("%d\n", __LINE__);
         jobLocations.insert(link->item->pos);
     }
     
-    //queue.push_back(job->pos);
-    //EventManager::EventHandler handler(onTick, 1);
-    //EventManager::registerTick(handler, 5, plugin_self);
     MapExtras::MapCache cache;
     df::coord pos = job->pos;
     for ( int16_t a = -1; a <= 1; a++ ) {
@@ -139,22 +108,16 @@ void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt, 
     df::map_block* block = Maps::getTileBlock(pt);
     if (!block)
         return;
-
+    
     if ( block->designation[pt.x&0xF][pt.y&0xF].bits.hidden )
         return;
-
+    
     df::tiletype type = block->tiletype[pt.x&0xF][pt.y&0xF];
     if ( ENUM_ATTR(tiletype, material, type) != df::enums::tiletype_material::MINERAL )
         return;
     if ( ENUM_ATTR(tiletype, shape, type) != df::enums::tiletype_shape::WALL )
         return;
     
-    int16_t mat = cache.veinMaterialAt(pt);
-    if ( mat == -1 )
-        return;
-
-//    if ( block->designation[pt.x&0xF][pt.y&0xF].bits.dig == df::enums::tile_dig_designation::Default )
-//        return;
     if ( block->designation[pt.x&0xF][pt.y&0xF].bits.dig != df::enums::tile_dig_designation::No )
         return;
     
@@ -166,23 +129,72 @@ void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt, 
         return;
     }
     
-    df::enums::tile_dig_designation::tile_dig_designation dig1,dig2;
-    dig1 = block->designation[pt.x&0xF][pt.y&0xF].bits.dig;
+    int16_t mat = cache.veinMaterialAt(pt);
+    if ( mat == -1 )
+        return;
+    if ( !digAll ) {
+        df::inorganic_raw* inorganic = df::global::world->raws.inorganics[mat];
+        if ( autodigMaterials.find(inorganic->id) == autodigMaterials.end() ) {
+            out << __LINE__ << " " << inorganic->id << " not present." << endl;
+            return;
+        }
+    }
+    
     block->designation[pt.x&0xF][pt.y&0xF].bits.dig = df::enums::tile_dig_designation::Default;
-    dig2 = block->designation[pt.x&0xF][pt.y&0xF].bits.dig;
     block->flags.bits.designated = true;
 //    *df::global::process_dig  = true;
 //    *df::global::process_jobs = true;
-    
-out.print("%d: %d,%d,%d, %d. %d -> %d\n", __LINE__, pt.x,pt.y,pt.z, visitCount[pt]++, dig1, dig2);
-//out.print("%d: unk9 %d, unk13 %d\n", __LINE__, (int32_t)block->unk9[pt.x&0xF][pt.y&0xF], (int32_t)block->unk13[pt.x&0xF][pt.y&0xF]);
 }
 
 command_result digSmart (color_ostream &out, std::vector <std::string> & parameters)
 {
-    if (!parameters.empty())
+    bool adding = true;
+    set<string> toAdd, toRemove;
+    for ( size_t a = 0; a < parameters.size(); a++ ) {
+        int32_t i = (int32_t)strtol(parameters[a].c_str(), NULL, 0);
+        if ( i == 0 && parameters[a] == "0" ) {
+            EventManager::unregisterAll(plugin_self);
+            adding = false;
+            continue;
+        } else if ( i == 1 ) {
+            EventManager::unregisterAll(plugin_self);
+            EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, digHandler, plugin_self);
+            adding = true;
+            continue;
+        }
+        
+        if ( parameters[a] == "CLEAR" )
+            autodigMaterials.clear();
+        
+        if ( parameters[a] == "digAll0" ) {
+            digAll = false;
+            continue;
+        }
+        if ( parameters[a] == "digAll1" ) {
+            digAll = true;
+            continue;
+        }
+        
+        for ( size_t b = 0; b < df::global::world->raws.inorganics.size(); b++ ) {
+            df::inorganic_raw* inorganic = df::global::world->raws.inorganics[b];
+            if ( parameters[a] == inorganic->id ) {
+                if ( adding )
+                    toAdd.insert(parameters[a]);
+                else
+                    toRemove.insert(parameters[a]);
+                goto loop;
+            }
+        }
+        
+        out.print("Could not find material \"%s\".\n", parameters[a].c_str());
         return CR_WRONG_USAGE;
-    EventManager::EventHandler handler(onTick, 1);
-    EventManager::registerTick(handler, 1, plugin_self);
+        
+        loop: continue;
+    }
+    
+    autodigMaterials.insert(toAdd.begin(), toAdd.end());
+    for ( auto a = toRemove.begin(); a != toRemove.end(); a++ )
+        autodigMaterials.erase(*a);
+    
     return CR_OK;
 }

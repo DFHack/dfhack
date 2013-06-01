@@ -185,7 +185,7 @@ void watchForJobComplete(color_ostream& out, void* ptr) {
 }
 
 int32_t manageInvasion(color_ostream& out) {
-    EventManager::unregisterAll(plugin_self);
+    //EventManager::unregisterAll(plugin_self);
     if ( !enabled ) {
         return -1;
     }
@@ -214,13 +214,13 @@ int32_t manageInvasion(color_ostream& out) {
         //return 1; //still invading, but nothing new done
     }
     
-    *df::global::pause_state = true;
     int32_t unitId = findAndAssignInvasionJob(out);
     if ( unitId == -1 ) {
         //might need to do more digging later, after we've killed off a few locals
         //out.print("DiggingInvaders is waiting.\n");
         return -1;
     }
+    *df::global::pause_state = true;
     
     lastInvasionDigger = unitId;
     {
@@ -299,7 +299,7 @@ command_result diggingInvadersFunc(color_ostream& out, std::vector<std::string>&
             return CR_WRONG_USAGE;
         }
     }
-
+    
     if ( parameters.size() == 0 )
         manageInvasion(out);
     return CR_OK;
@@ -371,9 +371,9 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
         return -1;
     }
     df::unit* firstInvader = invaders[0];
-    out << firstInvader->id << endl;
-    out << firstInvader->pos.x << ", " << firstInvader->pos.y << ", " << firstInvader->pos.z << endl;
-    out << __LINE__ << endl;
+    //out << firstInvader->id << endl;
+    //out << firstInvader->pos.x << ", " << firstInvader->pos.y << ", " << firstInvader->pos.z << endl;
+    //out << __LINE__ << endl;
 
     int32_t localPtsFound = 0;
     unordered_set<df::coord,PointHash> closedSet;
@@ -435,7 +435,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
         delete myEdges;
     }
     clock_t time = clock() - t0;
-    out.print("time = %d, totalEdgeTime = %d, total points = %d, total edges = %d, time per point = %.3f, time per edge = %.3f\n", time, totalEdgeTime, closedSet.size(), edgeCount, (float)time / closedSet.size(), (float)time / edgeCount);
+    //out.print("time = %d, totalEdgeTime = %d, total points = %d, total edges = %d, time per point = %.3f, time per edge = %.3f, clocks/sec = %d\n", time, totalEdgeTime, closedSet.size(), edgeCount, (float)time / closedSet.size(), (float)time / edgeCount, CLOCKS_PER_SEC);
 
     if ( !foundTarget )
         return -1;

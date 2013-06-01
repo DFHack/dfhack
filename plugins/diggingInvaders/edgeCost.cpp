@@ -40,12 +40,8 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
     int32_t dy = pt2.y - pt1.y;
     int32_t dz = pt2.z - pt1.z;
     int64_t cost = costWeight[CostDimension::Walk];
-
-    if ( Maps::canStepBetween(pt1, pt2) ) {
-        return cost;
-    }
-
-    if ( Maps::getTileBlock(pt2) == NULL )
+    
+    if ( Maps::getTileBlock(pt1) == NULL || Maps::getTileBlock(pt2) == NULL )
         return -1;
 
     df::tiletype* type2 = Maps::getTileType(pt2);
@@ -62,6 +58,17 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
 
     if ( shape2 == df::enums::tiletype_shape::TREE )
         return -1;
+    
+/*
+    if () {
+        df::map_block* temp = Maps::getTileBlock(df::coord(pt1.x,pt1.y,pt1.z-1));
+        if ( temp && temp->designation[pt1.x&0xF][pt1.y&0xF]
+    }
+*/
+    
+    if ( Maps::canStepBetween(pt1, pt2) ) {
+        return cost;
+    }
 
     df::building* building2 = Buildings::findAtTile(pt2);
     if ( building2 ) {
@@ -77,7 +84,9 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
     if ( dz == 0 ) {
         if ( !building2 && !construction2 ) {
             //it has to be a wall
-            if ( shape2 != df::enums::tiletype_shape::WALL ) {
+            if ( shape2 == df::enums::tiletype_shape::RAMP_TOP ) {
+                return -1;
+            } else if ( shape2 != df::enums::tiletype_shape::WALL ) {
                 //out << "shape = " << (int32_t)shape2 << endl;
                 //out << __FILE__ << ", line " << __LINE__ << ": WTF?" << endl;
                 return cost;
@@ -191,6 +200,7 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                         forbidden = true;
                 }
                 
+                //you can deconstruct a hatch from the side
                 if ( building1 && forbidden /*&& building1->getType() == df::building_type::Hatch*/ ) {
                     df::coord support[] = {df::coord(pt1.x-1, pt1.y, pt1.z), df::coord(pt1.x+1,pt1.y,pt1.z), df::coord(pt1.x,pt1.y-1,pt1.z), df::coord(pt1.x,pt1.y+1,pt1.z)};
                     int64_t minCost = -1;
@@ -229,6 +239,9 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                     if ( minCost == -1 )
                         return -1;
                     cost += minCost;
+                    
+                    //note: assignJob is not ready for this level of sophistication, so don't allow it
+                    return -1;
                 }
             }
         } else {

@@ -26,7 +26,7 @@ using namespace df::enums::ui_sidebar_mode;
 
 DFHACK_PLUGIN("mousequery");
 
-#define PLUGIN_VERSION 0.11
+#define PLUGIN_VERSION 0.12
 
 static int32_t last_x, last_y, last_z;
 static size_t max_list_size = 300000; // Avoid iterating over huge lists
@@ -355,7 +355,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             using namespace df::enums::ui_sidebar_mode;
             if ((ui->main.mode == QueryBuilding || ui->main.mode == BuildingItems ||
                 ui->main.mode == ViewUnits || ui->main.mode == LookAround) || 
-                (isInTrackableMode() && active_scrolling && tracking_enabled))
+                (isInTrackableMode() && tracking_enabled))
             {
                 sendKey(df::interface_key::LEAVESCREEN);
             }
@@ -576,10 +576,14 @@ static command_result mousequery_cmd(color_ostream &out, vector <string> & param
         else if (cmd[0] == 't')
         {
             tracking_enabled = (state == "enable");
+            if (!tracking_enabled)
+                active_scrolling = false;
         }
         else if (cmd[0] == 'e')
         {
             active_scrolling = (state == "enable");
+            if (active_scrolling)
+                tracking_enabled = true;
         }
         else if (cmd[0] == 'l')
         {

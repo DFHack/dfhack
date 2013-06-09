@@ -14,8 +14,10 @@
 #include "df/item.h"
 #include "df/itemdef_weaponst.h"
 #include "df/item_quality.h"
+#include "df/item_type.h"
 #include "df/item_weaponst.h"
 #include "df/job.h"
+#include "df/job_skill.h"
 #include "df/job_type.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
@@ -182,62 +184,84 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             firstInvader->path.path.z.clear();
             Job::linkIntoWorld(job);
             jobId = job->id;
-
-            //TODO: test if he already has a pick
             
-            //create and give a pick
-            df::item_weaponst* pick = new df::item_weaponst;
-            pick->pos = firstInvader->pos;
-            pick->flags.bits.forbid = 1;
-            pick->flags.bits.on_ground = 1;
-            pick->id = (*df::global::item_next_id)++;
-            pick->ignite_point = -1;
-            pick->heatdam_point = -1;
-            pick->colddam_point = -1;
-            pick->boiling_point = 11000;
-            pick->melting_point = 10500;
-            pick->fixed_temp = -1;
-            pick->weight = 0;
-            pick->weight_fraction = 0;
-            pick->stack_size = 1;
-            pick->temperature.whole = 10059;
-            pick->temperature.fraction = 0;
-            pick->mat_type = 0;
-            pick->mat_index = 5;
-            pick->maker_race = 0; //hehe
-            pick->quality = (df::enums::item_quality::item_quality)0;
-            pick->skill_used = (df::enums::job_skill::job_skill)0;
-            pick->maker = -1;
-            df::itemdef_weaponst* itemdef = NULL;
-            for ( size_t a = 0; a < df::global::world->raws.itemdefs.weapons.size(); a++ ) {
-                df::itemdef_weaponst* candidate = df::global::world->raws.itemdefs.weapons[a];
-                if ( candidate->id == "ITEM_WEAPON_PICK" ) {
-                    itemdef = candidate;
-                    break;
-                }
-            }
-            if ( itemdef == NULL ) {
-                out.print("%s, %d: null itemdef.\n", __FILE__, __LINE__);
-                return -1;
-            }
-            pick->subtype = itemdef;
-            pick->sharpness = 5000;
-
-            int32_t part = -1;
-            part = firstInvader->body.weapon_bp; //weapon_bp
-            if ( part == -1 ) {
-                out.print("%s, %d: no grasp part.\n", __FILE__, __LINE__);
-                return -1;
-            }
-            //check for existing item there
+            //TODO: test if he already has a pick
+            bool hasPick = false;
             for ( size_t a = 0; a < firstInvader->inventory.size(); a++ ) {
                 df::unit_inventory_item* inv_item = firstInvader->inventory[a];
-                if ( false || inv_item->body_part_id == part ) {
-                    //throw it on the GROUND
-                    Items::moveToGround(cache, inv_item->item, firstInvader->pos);
-                }
+                if ( inv_item->mode != df::unit_inventory_item::Weapon || inv_item->body_part_id != firstInvader->body.weapon_bp )
+                    continue;
+                df::item* oldItem = inv_item->item;
+                if ( oldItem->getType() != df::enums::item_type::WEAPON )
+                    continue;
+                df::item_weaponst* oldWeapon = (df::item_weaponst*)oldItem;
+                df::itemdef_weaponst* oldType = oldWeapon->subtype;
+                if ( oldType->skill_melee != df::enums::job_skill::MINING )
+                    continue;
+                hasPick = true;
+                break;
             }
-            Items::moveToInventory(cache, pick, firstInvader, df::unit_inventory_item::T_mode::Weapon, part);
+            
+            if ( !hasPick ) {
+                //based on createitem
+                //df::reaction_product_itemst *prod
+#if 1
+                //create and give a pick
+                df::item_weaponst* pick = new df::item_weaponst;
+                pick->pos = firstInvader->pos;
+                pick->flags.bits.forbid = 1;
+                pick->flags.bits.on_ground = 1;
+                pick->id = (*df::global::item_next_id)++;
+                pick->ignite_point = -1;
+                pick->heatdam_point = -1;
+                pick->colddam_point = -1;
+                pick->boiling_point = 11000;
+                pick->melting_point = 10500;
+                pick->fixed_temp = -1;
+                pick->weight = 0;
+                pick->weight_fraction = 0;
+                pick->stack_size = 1;
+                pick->temperature.whole = 10059;
+                pick->temperature.fraction = 0;
+                pick->mat_type = 0;
+                pick->mat_index = 5;
+                pick->maker_race = 0; //hehe
+                pick->quality = (df::enums::item_quality::item_quality)0;
+                pick->skill_used = (df::enums::job_skill::job_skill)0;
+                pick->maker = -1;
+                df::itemdef_weaponst* itemdef = NULL;
+                for ( size_t a = 0; a < df::global::world->raws.itemdefs.weapons.size(); a++ ) {
+                    df::itemdef_weaponst* candidate = df::global::world->raws.itemdefs.weapons[a];
+                    if ( candidate->skill_melee != df::enums::job_skill::MINING )
+                        continue;
+                    
+                    itemdef = candidate;
+                }
+                if ( itemdef == NULL ) {
+                    out.print("%s, %d: null itemdef.\n", __FILE__, __LINE__);
+                    return -1;
+                }
+                pick->subtype = itemdef;
+                pick->sharpness = 5000;
+                pick->categorize(true);
+                
+                int32_t part = -1;
+                part = firstInvader->body.weapon_bp; //weapon_bp
+                if ( part == -1 ) {
+                    out.print("%s, %d: no grasp part.\n", __FILE__, __LINE__);
+                    return -1;
+                }
+                //check for existing item there
+                for ( size_t a = 0; a < firstInvader->inventory.size(); a++ ) {
+                    df::unit_inventory_item* inv_item = firstInvader->inventory[a];
+                    if ( false || inv_item->body_part_id == part ) {
+                        //throw it on the GROUND
+                        Items::moveToGround(cache, inv_item->item, firstInvader->pos);
+                    }
+                }
+#endif
+                Items::moveToInventory(cache, pick, firstInvader, df::unit_inventory_item::T_mode::Weapon, part);
+            }
         }
     }
 

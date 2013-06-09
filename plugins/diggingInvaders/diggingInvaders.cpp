@@ -59,8 +59,8 @@
 #include <map>
 #include <set>
 #include <vector>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 
 using namespace std;
 
@@ -78,20 +78,17 @@ DFHACK_PLUGIN("diggingInvaders");
 static int32_t lastInvasionJob=-1;
 static int32_t lastInvasionDigger = -1;
 static EventManager::EventHandler jobCompleteHandler(watchForJobComplete, 5);
-static Plugin* diggingInvadersPlugin;
 static bool enabled=false;
 static unordered_set<int32_t> diggingRaces;
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    diggingInvadersPlugin = Core::getInstance().getPluginManager()->getPluginByName("diggingInvaders");
     EventManager::EventHandler invasionHandler(initiateDigging, 1000);
-    EventManager::registerListener(EventManager::EventType::INVASION, invasionHandler, diggingInvadersPlugin);
-    // Fill the command list with your commands.
+    EventManager::registerListener(EventManager::EventType::INVASION, invasionHandler, plugin_self);
+    
     commands.push_back(PluginCommand(
         "diggingInvaders", "Makes invaders dig to your dwarves.",
         diggingInvadersFunc, false, /* true means that the command can't be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
         "  diggingInvaders enable\n    enables the plugin\n"
         "  diggingInvaders disable\n    disables the plugin\n"
         "  diggingInvaders add GOBLIN\n    registers the race GOBLIN as a digging invader\n"
@@ -115,7 +112,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         //TODO: check game mode
         lastInvasionJob = -1;
         //in case there are invaders when the game is loaded, we should check 
-        EventManager::registerTick(invasionHandler, 10, diggingInvadersPlugin);
+        EventManager::registerTick(invasionHandler, 10, plugin_self);
         break;
     case DFHack::SC_WORLD_UNLOADED:
         // cleanup
@@ -168,7 +165,7 @@ void initiateDigging(color_ostream& out, void* ptr) {
     tick = 1000 - tick;
 
     EventManager::EventHandler handle(initiateDigging, 1000);
-    EventManager::registerTick(handle, tick, diggingInvadersPlugin);
+    EventManager::registerTick(handle, tick, plugin_self);
 }
 
 void watchForJobComplete(color_ostream& out, void* ptr) {
@@ -178,7 +175,7 @@ void watchForJobComplete(color_ostream& out, void* ptr) {
     if ( job->id != lastInvasionJob )
         return;
     
-    EventManager::unregister(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, diggingInvadersPlugin);
+    EventManager::unregister(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, plugin_self);
 */
 
     manageInvasion(out);
@@ -232,7 +229,7 @@ int32_t manageInvasion(color_ostream& out) {
         lastInvasionJob = df::global::world->units.all[index]->job.current_job->id;
     }
 
-    //EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, diggingInvadersPlugin);
+    //EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, plugin_self);
     //out.print("DiggingInvaders: job assigned.\n");
     return 0; //did something
 }

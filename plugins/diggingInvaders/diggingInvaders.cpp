@@ -217,20 +217,20 @@ int32_t manageInvasion(color_ostream& out) {
         //out.print("DiggingInvaders is waiting.\n");
         return -1;
     }
-    *df::global::pause_state = true;
     
     lastInvasionDigger = unitId;
     {
-        int32_t index = df::unit::binsearch_index(df::global::world->units.all, unitId);
-        if ( index == -1 ) {
+        df::unit* unit = df::unit::find(unitId);
+        if ( !unit ) {
             //out.print("Error %s line %d: unitId = %d, index = %d.\n", __FILE__, __LINE__, unitId, index);
             return -1;
         }
-        lastInvasionJob = df::global::world->units.all[index]->job.current_job->id;
+        lastInvasionJob = unit->job.current_job->id;
     }
 
     //EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, plugin_self);
     //out.print("DiggingInvaders: job assigned.\n");
+    *df::global::pause_state = true;
     return 0; //did something
 }
 
@@ -311,7 +311,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
     unordered_set<df::coord, PointHash> localPts;
     unordered_map<df::coord,df::coord,PointHash> parentMap;
     unordered_map<df::coord,int64_t,PointHash> costMap;
-
+    
     PointComp comp(&costMap);
     set<df::coord, PointComp> fringe(comp);
     uint32_t xMax, yMax, zMax;
@@ -340,18 +340,20 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
                 continue;
             if ( invaderPts.find(unit->pos) != invaderPts.end() )
                 continue;
+            df::map_block* block = Maps::getTileBlock(unit->pos);
+            invaderConnectivity.insert(block->walkable[unit->pos.x&0xF][unit->pos.y&0xF]);
+            if ( invaderPts.size() > 0 )
+                continue;
             invaderPts.insert(unit->pos);
             costMap[unit->pos] = 0;
             fringe.insert(unit->pos);
             invaders.push_back(unit);
-            df::map_block* block = Maps::getTileBlock(unit->pos);
-            invaderConnectivity.insert(block->walkable[unit->pos.x&0xF][unit->pos.y&0xF]);
         } else {
             continue;
         }
     }
 
-    if ( invaders.empty() ) {
+    if ( invaders.empty() || localPts.empty() ) {
         return -1;
     }
 
@@ -432,7 +434,7 @@ int32_t findAndAssignInvasionJob(color_ostream& out) {
         delete myEdges;
     }
     clock_t time = clock() - t0;
-    //out.print("time = %d, totalEdgeTime = %d, total points = %d, total edges = %d, time per point = %.3f, time per edge = %.3f, clocks/sec = %d\n", time, totalEdgeTime, closedSet.size(), edgeCount, (float)time / closedSet.size(), (float)time / edgeCount, CLOCKS_PER_SEC);
+    out.print("time = %d, totalEdgeTime = %d, total points = %d, total edges = %d, time per point = %.3f, time per edge = %.3f, clocks/sec = %d\n", time, totalEdgeTime, closedSet.size(), edgeCount, (float)time / closedSet.size(), (float)time / edgeCount, CLOCKS_PER_SEC);
 
     if ( !foundTarget )
         return -1;

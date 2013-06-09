@@ -3,6 +3,7 @@
 #include "modules/Buildings.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
+#include "modules/Materials.h"
 
 #include "df/building.h"
 #include "df/coord.h"
@@ -11,6 +12,7 @@
 #include "df/general_ref_unit.h"
 //#include "df/general_ref_unit_holderst.h"
 #include "df/general_ref_unit_workerst.h"
+#include "df/historical_entity.h"
 #include "df/item.h"
 #include "df/itemdef_weaponst.h"
 #include "df/item_quality.h"
@@ -19,8 +21,12 @@
 #include "df/job.h"
 #include "df/job_skill.h"
 #include "df/job_type.h"
+#include "df/reaction_product_itemst.h"
+#include "df/reaction_reagent.h"
+#include "df/ui.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/world_site.h"
 
 void getRidOfOldJob(df::unit* unit) {
     if ( unit->job.current_job == NULL ) {
@@ -202,66 +208,64 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
                 break;
             }
             
-            if ( !hasPick ) {
-                //based on createitem
-                //df::reaction_product_itemst *prod
-#if 1
-                //create and give a pick
-                df::item_weaponst* pick = new df::item_weaponst;
-                pick->pos = firstInvader->pos;
-                pick->flags.bits.forbid = 1;
-                pick->flags.bits.on_ground = 1;
-                pick->id = (*df::global::item_next_id)++;
-                pick->ignite_point = -1;
-                pick->heatdam_point = -1;
-                pick->colddam_point = -1;
-                pick->boiling_point = 11000;
-                pick->melting_point = 10500;
-                pick->fixed_temp = -1;
-                pick->weight = 0;
-                pick->weight_fraction = 0;
-                pick->stack_size = 1;
-                pick->temperature.whole = 10059;
-                pick->temperature.fraction = 0;
-                pick->mat_type = 0;
-                pick->mat_index = 5;
-                pick->maker_race = 0; //hehe
-                pick->quality = (df::enums::item_quality::item_quality)0;
-                pick->skill_used = (df::enums::job_skill::job_skill)0;
-                pick->maker = -1;
-                df::itemdef_weaponst* itemdef = NULL;
-                for ( size_t a = 0; a < df::global::world->raws.itemdefs.weapons.size(); a++ ) {
-                    df::itemdef_weaponst* candidate = df::global::world->raws.itemdefs.weapons[a];
-                    if ( candidate->skill_melee != df::enums::job_skill::MINING )
-                        continue;
-                    
-                    itemdef = candidate;
-                }
-                if ( itemdef == NULL ) {
-                    out.print("%s, %d: null itemdef.\n", __FILE__, __LINE__);
-                    return -1;
-                }
-                pick->subtype = itemdef;
-                pick->sharpness = 5000;
-                pick->categorize(true);
-                
-                int32_t part = -1;
-                part = firstInvader->body.weapon_bp; //weapon_bp
-                if ( part == -1 ) {
-                    out.print("%s, %d: no grasp part.\n", __FILE__, __LINE__);
-                    return -1;
-                }
-                //check for existing item there
-                for ( size_t a = 0; a < firstInvader->inventory.size(); a++ ) {
-                    df::unit_inventory_item* inv_item = firstInvader->inventory[a];
-                    if ( false || inv_item->body_part_id == part ) {
-                        //throw it on the GROUND
-                        Items::moveToGround(cache, inv_item->item, firstInvader->pos);
-                    }
-                }
-#endif
-                Items::moveToInventory(cache, pick, firstInvader, df::unit_inventory_item::T_mode::Weapon, part);
+            if ( hasPick )
+                return firstInvader->id;
+            
+            //create and give a pick
+            //based on createitem.cpp
+            df::reaction_product_itemst *prod = NULL;
+            //TODO: consider filtering based on entity/civ stuff
+            for ( size_t a = 0; a < df::global::world->raws.itemdefs.weapons.size(); a++ ) {
+                df::itemdef_weaponst* oldType = df::global::world->raws.itemdefs.weapons[a];
+                if ( oldType->skill_melee != df::enums::job_skill::MINING )
+                    continue;
+                prod = df::allocate<df::reaction_product_itemst>();
+                prod->item_type = df::item_type::WEAPON;
+                prod->item_subtype = a;
+                break;
             }
+            if ( prod == NULL ) {
+                out.print("%s, %d: no valid item.\n", __FILE__, __LINE__);
+                return -1;
+            }
+            
+            DFHack::MaterialInfo material;
+            if ( !material.find("WATER") ) {
+                out.print("%s, %d: no water.\n", __FILE__, __LINE__);
+                return -1;
+            }
+            prod->mat_type = material.type;
+            prod->mat_index = material.index;
+            prod->probability = 100;
+            prod->count = 1;
+            prod->product_dimension = 1;
+            
+            vector<df::item*> out_items;
+            vector<df::reaction_reagent*> in_reag;
+            vector<df::item*> in_items;
+            prod->produce(firstInvader, &out_items, &in_reag, &in_items, 1, df::job_skill::NONE,
+                df::historical_entity::find(firstInvader->civ_id),
+                df::world_site::find(df::global::ui->site_id));
+            
+            if ( out_items.size() != 1 ) {
+                out.print("%s, %d: wrong size: %d.\n", __FILE__, __LINE__, out_items.size());
+                return -1;
+            }
+            out_items[0]->moveToGround(firstInvader->pos.x, firstInvader->pos.y, firstInvader->pos.z);
+            
+#if 0
+            //check for existing item there
+            for ( size_t a = 0; a < firstInvader->inventory.size(); a++ ) {
+                df::unit_inventory_item* inv_item = firstInvader->inventory[a];
+                if ( false || inv_item->body_part_id == part ) {
+                    //throw it on the ground
+                    Items::moveToGround(cache, inv_item->item, firstInvader->pos);
+                }
+            }
+#endif
+            Items::moveToInventory(cache, out_items[0], firstInvader, df::unit_inventory_item::T_mode::Weapon, firstInvader->body.weapon_bp);
+            
+            delete prod;
         }
     }
 

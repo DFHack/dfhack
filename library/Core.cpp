@@ -1300,7 +1300,12 @@ void Core::onUpdate(color_ostream &out)
 
 static void handleLoadAndUnloadScripts(Core* core, color_ostream& out, state_change_event event) {
     //TODO: use different separators for windows
-    std::string rawFolder = "data/save/" + (df::global::world->cur_savegame.save_dir) + "/raw/";
+#ifdef _WIN32
+    static const std::string separator = "\\";
+#else
+    static const std::string separator = "/";
+#endif
+    std::string rawFolder = "data" + separator + "save" + separator + (df::global::world->cur_savegame.save_dir) + separator + "raw" + separator;
     switch(event) {
     case SC_WORLD_LOADED:
         core->loadScriptFile(out, rawFolder + "onLoad.init", true);

@@ -17,7 +17,7 @@
 
 #include <iostream>
 
-int64_t costWeight[] = {
+cost_t costWeight[] = {
 //Distance
 1,
 //Destroy Building
@@ -35,11 +35,11 @@ limitations
     ramps
     cave-ins
 */
-int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
+cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
     int32_t dx = pt2.x - pt1.x;
     int32_t dy = pt2.y - pt1.y;
     int32_t dz = pt2.z - pt1.z;
-    int64_t cost = costWeight[CostDimension::Walk];
+    cost_t cost = costWeight[CostDimension::Walk];
     
     if ( Maps::getTileBlock(pt1) == NULL || Maps::getTileBlock(pt2) == NULL )
         return -1;
@@ -203,12 +203,12 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                 //you can deconstruct a hatch from the side
                 if ( building1 && forbidden /*&& building1->getType() == df::building_type::Hatch*/ ) {
                     df::coord support[] = {df::coord(pt1.x-1, pt1.y, pt1.z), df::coord(pt1.x+1,pt1.y,pt1.z), df::coord(pt1.x,pt1.y-1,pt1.z), df::coord(pt1.x,pt1.y+1,pt1.z)};
-                    int64_t minCost = -1;
+                    cost_t minCost = -1;
                     for ( size_t a = 0; a < 4; a++ ) {
                         df::tiletype* supportType = Maps::getTileType(support[a]);
                         df::tiletype_shape shape = ENUM_ATTR(tiletype, shape, *supportType);
                         df::tiletype_shape_basic basic = ENUM_ATTR(tiletype_shape, basic_shape, shape);
-                        int64_t cost2 = 2*costWeight[CostDimension::Walk] + costWeight[CostDimension::DestroyBuilding];
+                        cost_t cost2 = 2*costWeight[CostDimension::Walk] + costWeight[CostDimension::DestroyBuilding];
                         if ( !Maps::canStepBetween(pt1, support[a]) ) {
                             switch(basic) {
                                 case tiletype_shape_basic::Open:
@@ -254,12 +254,12 @@ int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
     return cost;
 }
 
-int64_t getEdgeCostOld(color_ostream& out, df::coord pt1, df::coord pt2) {
+cost_t getEdgeCostOld(color_ostream& out, df::coord pt1, df::coord pt2) {
     //first, list all the facts
     int32_t dx = pt2.x - pt1.x;
     int32_t dy = pt2.y - pt1.y;
     int32_t dz = pt2.z - pt1.z;
-    int64_t cost = costWeight[CostDimension::Walk];
+    cost_t cost = costWeight[CostDimension::Walk];
 
     if ( false ) {
         if ( Maps::canStepBetween(pt1,pt2) )
@@ -402,7 +402,7 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCach
                     continue;
                 if ( dx == 0 && dy == 0 && dz == 0 )
                     continue;
-                int64_t cost = getEdgeCost(out, point, neighbor);
+                cost_t cost = getEdgeCost(out, point, neighbor);
                 if ( cost == -1 )
                     continue;
                 Edge edge(point, neighbor, cost);

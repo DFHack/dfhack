@@ -21,9 +21,11 @@ enum CostDimension {
     costDim
 };
 
-extern int64_t costWeight[costDim];
+typedef int64_t cost_t;
+
+extern cost_t costWeight[costDim];
 /*
-const int64_t costWeight[] = {
+const cost_t costWeight[] = {
 //Distance
 1,
 //Destroy Building
@@ -40,14 +42,14 @@ public:
     //static map<df::coord, int32_t> pointCost;
     df::coord p1;
     df::coord p2;
-    int64_t cost;
+    cost_t cost;
     Edge() {
         cost = -1;
     }
     Edge(const Edge& e): p1(e.p1), p2(e.p2), cost(e.cost) {
         
     }
-    Edge(df::coord p1In, df::coord p2In, int64_t costIn): cost(costIn) {
+    Edge(df::coord p1In, df::coord p2In, cost_t costIn): cost(costIn) {
         if ( p2In < p1In ) {
             p1 = p2In;
             p2 = p1In;
@@ -82,6 +84,6 @@ struct PointHash {
     }
 };
 
-int64_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2);
+cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2);
 std::vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax);
 

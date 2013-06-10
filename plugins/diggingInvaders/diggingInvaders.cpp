@@ -132,8 +132,8 @@ df::coord getRoot(df::coord point, unordered_map<df::coord, df::coord>& rootMap)
 
 class PointComp {
 public:
-    unordered_map<df::coord, int64_t, PointHash> *pointCost;
-    PointComp(unordered_map<df::coord, int64_t, PointHash> *p): pointCost(p) {
+    unordered_map<df::coord, cost_t, PointHash> *pointCost;
+    PointComp(unordered_map<df::coord, cost_t, PointHash> *p): pointCost(p) {
         
     }
     
@@ -147,8 +147,8 @@ public:
             return true;
         if ( i2 == pointCost->end() )
             return false;
-        int64_t c1 = (*i1).second;
-        int64_t c2 = (*i2).second;
+        cost_t c1 = (*i1).second;
+        cost_t c2 = (*i2).second;
         if ( c1 != c2 )
             return c1 < c2;
         return p1 < p2;
@@ -300,7 +300,7 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
             } else {
                 return CR_WRONG_USAGE;
             }
-            int64_t value;
+            cost_t value;
             stringstream asdf(parameters[a+2]);
             asdf >> value;
             if ( value <= 0 )
@@ -330,12 +330,12 @@ vector<int32_t> invaders;
 unordered_set<df::coord, PointHash> invaderPts;
 unordered_set<df::coord, PointHash> localPts;
 unordered_map<df::coord,df::coord,PointHash> parentMap;
-unordered_map<df::coord,int64_t,PointHash> costMap;
+unordered_map<df::coord,cost_t,PointHash> costMap;
 
 PointComp comp(&costMap);
 set<df::coord, PointComp> fringe(comp);
 EventManager::EventHandler findJobTickHandler(findAndAssignInvasionJob, 1);
-const int32_t edgesPerFrame = 1000;
+const int32_t edgesPerFrame = 10000000;
 
 int32_t localPtsFound = 0;
 unordered_set<df::coord,PointHash> closedSet;
@@ -483,7 +483,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
             }
         }
 
-        int64_t myCost = costMap[pt];
+        cost_t myCost = costMap[pt];
         clock_t edgeTime = clock();
         vector<Edge>* myEdges = getEdgeSet(out, pt, cache, xMax, yMax, zMax);
         totalEdgeTime += (clock() - edgeTime);
@@ -499,7 +499,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
             //    continue;
             auto i = costMap.find(other);
             if ( i != costMap.end() ) {
-                int64_t cost = (*i).second;
+                cost_t cost = (*i).second;
                 if ( cost <= myCost + e.cost ) {
                     continue;
                 }
@@ -513,7 +513,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         delete myEdges;
     }
     clock_t time = clock() - t0;
-    //out.print("tickTime = %d, time = %d, totalEdgeTime = %d, total points = %d, total edges = %d, time per point = %.3f, time per edge = %.3f, clocks/sec = %d\n", (int32_t)tickTime, time, totalEdgeTime, closedSet.size(), edgeCount, (float)time / closedSet.size(), (float)time / edgeCount, CLOCKS_PER_SEC);
+    out.print("tickTime = %d, time = %d, totalEdgeTime = %d, total points = %d, total edges = %d, time per point = %.3f, time per edge = %.3f, clocks/sec = %d\n", (int32_t)tickTime, time, totalEdgeTime, closedSet.size(), edgeCount, (float)time / closedSet.size(), (float)time / edgeCount, CLOCKS_PER_SEC);
     fringe.clear();
 
     if ( !foundTarget )
@@ -525,8 +525,8 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     //find important edges
     Edge firstImportantEdge(df::coord(), df::coord(), -1);
     df::coord closest;
-    int64_t closestCostEstimate=0;
-    int64_t closestCostActual=0;
+    cost_t closestCostEstimate=0;
+    cost_t closestCostActual=0;
     for ( auto i = localPts.begin(); i != localPts.end(); i++ ) {
         df::coord pt = *i;
         if ( costMap.find(pt) == costMap.end() )

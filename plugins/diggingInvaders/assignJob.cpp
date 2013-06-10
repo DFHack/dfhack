@@ -47,7 +47,7 @@ void getRidOfOldJob(df::unit* unit) {
     //delete job;
 }
 
-int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df::coord,df::coord,PointHash> parentMap, unordered_map<df::coord,int64_t,PointHash>& costMap, vector<int32_t>& invaders, unordered_set<df::coord,PointHash>& requiresZNeg, unordered_set<df::coord,PointHash>& requiresZPos, MapExtras::MapCache& cache) {
+int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df::coord,df::coord,PointHash> parentMap, unordered_map<df::coord,cost_t,PointHash>& costMap, vector<int32_t>& invaders, unordered_set<df::coord,PointHash>& requiresZNeg, unordered_set<df::coord,PointHash>& requiresZPos, MapExtras::MapCache& cache) {
     df::unit* firstInvader = df::unit::find(invaders[0]);
     if ( !firstInvader ) {
         return -1;
@@ -61,10 +61,10 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
         pt1 = pt2;
         pt2 = temp;
     }
-    out.print("first important edge: (%d,%d,%d) -> (%d,%d,%d)\n", pt1.x,pt1.y,pt1.z, pt2.x,pt2.y,pt2.z);
-
+    //out.print("first important edge: (%d,%d,%d) -> (%d,%d,%d)\n", pt1.x,pt1.y,pt1.z, pt2.x,pt2.y,pt2.z);
+    
     int32_t jobId = -1;
-
+    
     df::map_block* block1 = Maps::getTileBlock(pt1);
     df::map_block* block2 = Maps::getTileBlock(pt2);
     bool passable1 = block1->walkable[pt1.x&0xF][pt1.y&0xF];
@@ -166,18 +166,18 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             df::job* job = new df::job;
             if ( up && down ) {
                 job->job_type = df::enums::job_type::CarveUpDownStaircase;
-                out.print("%s, line %d: type = up/down\n", __FILE__, __LINE__);
+                //out.print("%s, line %d: type = up/down\n", __FILE__, __LINE__);
             } else if ( up && !down ) {
                 job->job_type = df::enums::job_type::CarveUpwardStaircase;
-                out.print("%s, line %d: type = up\n", __FILE__, __LINE__);
+                //out.print("%s, line %d: type = up\n", __FILE__, __LINE__);
             } else if ( !up && down ) {
                 job->job_type = df::enums::job_type::CarveDownwardStaircase;
-                out.print("%s, line %d: type = down\n", __FILE__, __LINE__);
+                //out.print("%s, line %d: type = down\n", __FILE__, __LINE__);
             } else {
                 job->job_type = df::enums::job_type::Dig;
-                out.print("%s, line %d: type = dig\n", __FILE__, __LINE__);
+                //out.print("%s, line %d: type = dig\n", __FILE__, __LINE__);
             }
-            out.print("%s, line %d: up=%d,up1=%d,up2=%d, down=%d,down1=%d,down2=%d\n", __FILE__, __LINE__, up,up1,up2, down,down1,down2);
+            //out.print("%s, line %d: up=%d,up1=%d,up2=%d, down=%d,down1=%d,down2=%d\n", __FILE__, __LINE__, up,up1,up2, down,down1,down2);
             job->pos = workHere;
             firstInvader->path.dest = goHere;
             location = goHere;

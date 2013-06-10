@@ -71,6 +71,8 @@ using namespace df::enums;
 command_result diggingInvadersCommand(color_ostream &out, std::vector <std::string> & parameters);
 void watchForJobComplete(color_ostream& out, void* ptr);
 void newInvasionHandler(color_ostream& out, void* ptr);
+void clearDijkstra();
+void findAndAssignInvasionJob(color_ostream& out, void*);
 //int32_t manageInvasion(color_ostream& out);
 
 DFHACK_PLUGIN("diggingInvaders");
@@ -78,6 +80,7 @@ DFHACK_PLUGIN("diggingInvaders");
 //TODO: when world unloads
 static int32_t lastInvasionJob=-1;
 static int32_t lastInvasionDigger = -1;
+static int32_t edgesPerTick = 100;
 //static EventManager::EventHandler jobCompleteHandler(watchForJobComplete, 5);
 static bool enabled=false;
 static bool activeDigging=false;
@@ -87,17 +90,24 @@ static df::coord lastDebugEdgeCostPoint;
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    EventManager::EventHandler handler(newInvasionHandler, 1000);
-    EventManager::registerListener(EventManager::EventType::INVASION, handler, plugin_self);
-    
     commands.push_back(PluginCommand(
         "diggingInvaders", "Makes invaders dig to your dwarves.",
         diggingInvadersCommand, false, /* true means that the command can't be used from non-interactive user interface */
+        "example usage:\n"
+        "  diggingInvaders 0\n    disables the plugin\n"
+        "  diggingInvaders 1\n    enables the plugin\n"
         "  diggingInvaders enable\n    enables the plugin\n"
         "  diggingInvaders disable\n    disables the plugin\n"
-        "  diggingInvaders add GOBLIN\n    registers the race GOBLIN as a digging invader\n"
-        "  diggingInvaders remove GOBLIN\n    unregisters the race GOBLIN as a digging invader\n"
-        "  diggingInvaders\n    Makes invaders try to dig now.\n"
+        "  diggingInvaders add GOBLIN\n    registers the race GOBLIN as a digging invader. Case-sensitive.\n"
+        "  diggingInvaders remove GOBLIN\n    unregisters the race GOBLIN as a digging invader. Case-sensitive.\n"
+        "  diggingInvaders setCost walk n\n    sets the walk cost in the path algorithm\n"
+        "  diggingInvaders setCost destroyBuilding n\n"
+        "  diggingInvaders setCost dig n\n"
+        "  diggingInvaders setCost destroyConstruction n\n"
+        "  diggingInvaders now\n    makes invaders try to dig now, if plugin is enabled\n"
+        "  diggingInvaders clear\n    clears all digging invader races\n"
+        "  diggingInvaders edgesPerTick n\n    makes the pathfinding algorithm work on at most n edges per tick. Set to 0 or lower to make it unlimited."
+//        "  diggingInvaders\n    Makes invaders try to dig now.\n"
     ));
     
     *df::global::debug_showambush = true;
@@ -111,16 +121,20 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
-    EventManager::EventHandler invasionHandler(newInvasionHandler, 1000);
     switch (event) {
     case DFHack::SC_WORLD_LOADED:
         //TODO: check game mode
-        lastInvasionJob = -1;
-        //in case there are invaders when the game is loaded, we should check 
-        EventManager::registerTick(invasionHandler, 10, plugin_self);
+        //in case there are invaders when the game is loaded, we check if there's work to be done
+        activeDigging = enabled;
+        clearDijkstra();
+        findAndAssignInvasionJob(out, (void*)0);
         break;
     case DFHack::SC_WORLD_UNLOADED:
         // cleanup
+        lastInvasionJob = lastInvasionDigger = -1;
+        activeDigging = false;
+        clearDijkstra();
+        invaderJobs.clear();
         break;
     default:
         break;
@@ -156,105 +170,19 @@ public:
 };
 
 //bool important(df::coord pos, map<df::coord, set<Edge> >& edges, df::coord prev, set<df::coord>& importantPoints, set<Edge>& importantEdges);
-void findAndAssignInvasionJob(color_ostream& out, void*);
 
 void newInvasionHandler(color_ostream& out, void* ptr) {
     if ( activeDigging )
         return;
     activeDigging = true;
-    EventManager::EventHandler handler(findAndAssignInvasionJob, 1);
-    EventManager::registerTick(handler, 1, plugin_self);
-#if 0
-    //called when there's a new invasion
-    //TODO: check if invaders can dig
-    if ( manageInvasion(out) == -2 )
-        return;
-    
-    //schedule the next thing
-    uint32_t tick = World::ReadCurrentTick();
-    tick = tick % 1000;
-    tick = 1000 - tick;
-
-    EventManager::EventHandler handle(newInvasionHandler, 1000);
-    EventManager::registerTick(handle, tick, plugin_self);
-#endif
+    findAndAssignInvasionJob(out, (void*)0);
 }
-
-#if 0
-void watchForJobComplete(color_ostream& out, void* ptr) {
-/*
-    df::job* job = (df::job*)ptr;
-
-    if ( job->id != lastInvasionJob )
-        return;
-    
-    EventManager::unregister(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, plugin_self);
-*/
-
-    manageInvasion(out);
-}
-#endif
-
-#if 0
-int32_t manageInvasion(color_ostream& out) {
-    //EventManager::unregisterAll(plugin_self);
-    if ( !enabled ) {
-        return -1;
-    }
-    int32_t lastInvasion = df::global::ui->invasions.next_id-1;
-    if ( lastInvasion < 0 || df::global::ui->invasions.list[lastInvasion]->flags.bits.active == 0 ) {
-        //if the invasion is over, we're done
-        //out.print("Invasion is over. Stopping diggingInvaders.\n");
-        return -2;
-    }
-    EventManager::registerTick(jobCompleteHandler, 1, plugin_self);
-    if ( lastInvasionJob != -1 ) {
-        //check if he's still doing it
-        df::unit* worker = df::unit::find(lastInvasionDigger);
-        //int32_t index = df::unit::binsearch_index(df::global::world->units.all, lastInvasionDigger);
-        if ( !worker ) {
-            out.print("Error %s line %d.\n", __FILE__, __LINE__);
-            return -1;
-        }
-        df::job* job = worker->job.current_job;
-        //out.print("job id: old = %d, new = %d\n", lastInvasionJob, job == NULL ? -1 : job->id);
-        if ( job != NULL && lastInvasionJob == job->id ) {
-            //out.print("Still working on the previous job.\n");
-            return -1;
-        }
-
-        //return 1; //still invading, but nothing new done
-    }
-    
-    int32_t unitId = findAndAssignInvasionJob(out);
-    if ( unitId == -1 ) {
-        //might need to do more digging later, after we've killed off a few locals
-        //out.print("DiggingInvaders is waiting.\n");
-        return -1;
-    }
-    
-    lastInvasionDigger = unitId;
-    {
-        df::unit* unit = df::unit::find(unitId);
-        if ( !unit ) {
-            //out.print("Error %s line %d: unitId = %d, index = %d.\n", __FILE__, __LINE__, unitId, index);
-            return -1;
-        }
-        lastInvasionJob = unit->job.current_job->id;
-    }
-
-    //EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, jobCompleteHandler, plugin_self);
-    //out.print("DiggingInvaders: job assigned.\n");
-    *df::global::pause_state = true;
-    return 0; //did something
-}
-#endif
 
 command_result diggingInvadersCommand(color_ostream& out, std::vector<std::string>& parameters) {
     for ( size_t a = 0; a < parameters.size(); a++ ) {
-        if ( parameters[a] == "enable" ) {
+        if ( parameters[a] == "1" || parameters[a] == "enable" ) {
             enabled = true;
-        } else if ( parameters[a] == "disable" ) {
+        } else if ( parameters[a] == "0" || parameters[a] == "disable" ) {
             enabled = false;
         } else if ( parameters[a] == "add" || parameters[a] == "remove" ) {
             if ( a+1 >= parameters.size() )
@@ -265,24 +193,6 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
             } else {
                 diggingRaces.erase(race);
             }
-            /*bool foundIt = false;
-            for ( size_t b = 0; b < df::global::world->raws.creatures.all.size(); b++ ) {
-                df::creature_raw* raw = df::global::world->raws.creatures.all[b];
-                if ( race == raw->creature_id ) {
-                    //out.print("%s = %s\n", race.c_str(), raw->creature_id.c_str());
-                    if ( parameters[a] == "add" ) {
-                        diggingRaces.insert(b);
-                    } else {
-                        diggingRaces.erase(b);
-                    }
-                    foundIt = true;
-                    break;
-                }
-            }
-            if ( !foundIt ) {
-                out.print("Couldn't find \"%s\"\n", race.c_str());
-                return CR_WRONG_USAGE;
-            }*/
             a++;
         } else if ( parameters[a] == "setCost" ) {
             if ( a+2 >= parameters.size() )
@@ -311,16 +221,35 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
             df::coord bob = Gui::getCursorPos();
             out.print("(%d,%d,%d), (%d,%d,%d): cost = %lld\n", lastDebugEdgeCostPoint.x, lastDebugEdgeCostPoint.y, lastDebugEdgeCostPoint.z, bob.x, bob.y, bob.z, getEdgeCost(out, lastDebugEdgeCostPoint, bob));
             lastDebugEdgeCostPoint = bob;
+        } else if ( parameters[a] == "now" ) {
+            activeDigging = true;
+            findAndAssignInvasionJob(out, (void*)0);
+        } else if ( parameters[a] == "clear" ) {
+            diggingRaces.clear();
+        } else if ( parameters[a] == "edgesPerTick" ) {
+            if ( a+1 >= parameters.size() )
+                return CR_WRONG_USAGE;
+            stringstream asdf(parameters[a+1]);
+            int32_t edgeCount = 100;
+            asdf >> edgeCount;
+            edgesPerTick = edgeCount;
+            a++;
         }
         else {
             return CR_WRONG_USAGE;
         }
     }
+    activeDigging = enabled;
+    out.print("diggingInvaders: enabled = %d, activeDigging = %d, edgesPerTick = %d\n", enabled, activeDigging, edgesPerTick);
     
-    if ( parameters.size() == 0 ) {
-        //manageInvasion(out);
-        newInvasionHandler(out, (void*)0);
+    EventManager::unregisterAll(plugin_self);
+    if ( enabled ) {
+        EventManager::EventHandler handler(newInvasionHandler, 1000);
+        EventManager::registerListener(EventManager::EventType::INVASION, handler, plugin_self);
+        clearDijkstra();
+        findAndAssignInvasionJob(out, (void*)0);
     }
+    
     return CR_OK;
 }
 
@@ -335,7 +264,6 @@ unordered_map<df::coord,cost_t,PointHash> costMap;
 PointComp comp(&costMap);
 set<df::coord, PointComp> fringe(comp);
 EventManager::EventHandler findJobTickHandler(findAndAssignInvasionJob, 1);
-const int32_t edgesPerFrame = 10000000;
 
 int32_t localPtsFound = 0;
 unordered_set<df::coord,PointHash> closedSet;
@@ -363,7 +291,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     //returns the worker id of the job created //used to
     //out.print("%s, %d: %d\n", __FILE__, __LINE__, (int32_t)tickTime);
     
-    if ( !activeDigging ) {
+    if ( !enabled || !activeDigging ) {
         clearDijkstra();
         return;
     }
@@ -454,12 +382,12 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     xMax *= 16;
     yMax *= 16;
     MapExtras::MapCache cache;
-
+    
     clock_t t0 = clock();
     clock_t totalEdgeTime = 0;
     int32_t edgesExpanded = 0;
     while(!fringe.empty()) {
-        if ( edgesExpanded++ >= edgesPerFrame ) {
+        if ( edgesPerTick > 0 && edgesExpanded++ >= edgesPerTick ) {
             return;
         }
         df::coord pt = *(fringe.begin());
@@ -513,7 +441,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         delete myEdges;
     }
     clock_t time = clock() - t0;
-    out.print("tickTime = %d, time = %d, totalEdgeTime = %d, total points = %d, total edges = %d, time per point = %.3f, time per edge = %.3f, clocks/sec = %d\n", (int32_t)tickTime, time, totalEdgeTime, closedSet.size(), edgeCount, (float)time / closedSet.size(), (float)time / edgeCount, CLOCKS_PER_SEC);
+    //out.print("tickTime = %d, time = %d, totalEdgeTime = %d, total points = %d, total edges = %d, time per point = %.3f, time per edge = %.3f, clocks/sec = %d\n", (int32_t)tickTime, time, totalEdgeTime, closedSet.size(), edgeCount, (float)time / closedSet.size(), (float)time / edgeCount, CLOCKS_PER_SEC);
     fringe.clear();
 
     if ( !foundTarget )
@@ -570,29 +498,6 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         out.print("%s,%d: closest = (%d,%d,%d), estimate = %lld != actual = %lld\n", __FILE__, __LINE__, closest.x,closest.y,closest.z, closestCostEstimate, closestCostActual);
         return;
     }
-#if 0
-    unordered_set<df::coord,PointHash> toDelete;
-    for ( auto a = requiresZNeg.begin(); a != requiresZNeg.end(); a++ ) {
-        df::coord pos = *a;
-        df::tiletype* type = Maps::getTileType(pos);
-        df::tiletype_shape shape = ENUM_ATTR(tiletype, shape, *type);
-        if ( ENUM_ATTR(tiletype_shape, passable_low, shape) ) {
-            toDelete.insert(pos);
-        }
-    }
-    requiresZNeg.erase(toDelete.begin(), toDelete.end());
-    toDelete.clear();
-    for ( auto a = requiresZPos.begin(); a != requiresZPos.end(); a++ ) {
-        df::coord pos = *a;
-        df::tiletype* type = Maps::getTileType(pos);
-        df::tiletype_shape shape = ENUM_ATTR(tiletype, shape, *type);
-        if ( ENUM_ATTR(tiletype_shape, passable_high, shape) ) {
-            toDelete.insert(pos);
-        }
-    }
-    requiresZPos.erase(toDelete.begin(), toDelete.end());
-    toDelete.clear();
-#endif
     
     assignJob(out, firstImportantEdge, parentMap, costMap, invaders, requiresZNeg, requiresZPos, cache);
     lastInvasionDigger = firstInvader->id;

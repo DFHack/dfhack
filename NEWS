@@ -32,6 +32,7 @@ DFHack future
     - autotrade: Automatically send items in marked stockpiles to trade depot, when trading is possible.
     - stocks: An improved stocks display screen.
   Internals:
+    - Core: there is now a per-save dfhack.init file for when the save is loaded, and another for when it is unloaded
     - EventManager: fixed job completion detection
     - Once: easy way to make sure something happens once per run of DF, such as an error message
     

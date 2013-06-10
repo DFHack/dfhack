@@ -188,9 +188,13 @@ df::map_block *Maps::ensureTileBlock (int32_t x, int32_t y, int32_t z)
     dsgn.bits.outside = true;
 
     for (int tx = 0; tx < 16; tx++)
-        for (int ty = 0; ty < 16; ty++)
+        for (int ty = 0; ty < 16; ty++) {
             slot->designation[tx][ty] = dsgn;
-
+            slot->temperature_1[tx][ty] = column[z2]->temperature_1[tx][ty];
+            slot->temperature_2[tx][ty] = column[z2]->temperature_2[tx][ty];
+        }
+    
+    df::global::world->map.map_blocks.push_back(slot);
     return slot;
 }
 

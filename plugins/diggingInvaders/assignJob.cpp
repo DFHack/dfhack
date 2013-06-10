@@ -47,8 +47,11 @@ void getRidOfOldJob(df::unit* unit) {
     //delete job;
 }
 
-int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df::coord,df::coord,PointHash> parentMap, unordered_map<df::coord,int64_t,PointHash>& costMap, vector<df::unit*>& invaders, unordered_set<df::coord,PointHash>& requiresZNeg, unordered_set<df::coord,PointHash>& requiresZPos, MapExtras::MapCache& cache, unordered_set<int32_t>& diggingRaces) {
-    df::unit* firstInvader = invaders[0];
+int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df::coord,df::coord,PointHash> parentMap, unordered_map<df::coord,int64_t,PointHash>& costMap, vector<int32_t>& invaders, unordered_set<df::coord,PointHash>& requiresZNeg, unordered_set<df::coord,PointHash>& requiresZPos, MapExtras::MapCache& cache) {
+    df::unit* firstInvader = df::unit::find(invaders[0]);
+    if ( !firstInvader ) {
+        return -1;
+    }
     
     //do whatever you need to do at the first important edge
     df::coord pt1 = firstImportantEdge.p1;
@@ -58,7 +61,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
         pt1 = pt2;
         pt2 = temp;
     }
-    //out.print("first important edge: (%d,%d,%d) -> (%d,%d,%d)\n", pt1.x,pt1.y,pt1.z, pt2.x,pt2.y,pt2.z);
+    out.print("first important edge: (%d,%d,%d) -> (%d,%d,%d)\n", pt1.x,pt1.y,pt1.z, pt2.x,pt2.y,pt2.z);
 
     int32_t jobId = -1;
 
@@ -163,18 +166,18 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             df::job* job = new df::job;
             if ( up && down ) {
                 job->job_type = df::enums::job_type::CarveUpDownStaircase;
-                //out.print("%s, line %d: type = up/down\n", __FILE__, __LINE__);
+                out.print("%s, line %d: type = up/down\n", __FILE__, __LINE__);
             } else if ( up && !down ) {
                 job->job_type = df::enums::job_type::CarveUpwardStaircase;
-                //out.print("%s, line %d: type = up\n", __FILE__, __LINE__);
+                out.print("%s, line %d: type = up\n", __FILE__, __LINE__);
             } else if ( !up && down ) {
                 job->job_type = df::enums::job_type::CarveDownwardStaircase;
-                //out.print("%s, line %d: type = down\n", __FILE__, __LINE__);
+                out.print("%s, line %d: type = down\n", __FILE__, __LINE__);
             } else {
                 job->job_type = df::enums::job_type::Dig;
-                //out.print("%s, line %d: type = dig\n", __FILE__, __LINE__);
+                out.print("%s, line %d: type = dig\n", __FILE__, __LINE__);
             }
-            //out.print("%s, line %d: up=%d,up1=%d,up2=%d, down=%d,down1=%d,down2=%d\n", __FILE__, __LINE__, up,up1,up2, down,down1,down2);
+            out.print("%s, line %d: up=%d,up1=%d,up2=%d, down=%d,down1=%d,down2=%d\n", __FILE__, __LINE__, up,up1,up2, down,down1,down2);
             job->pos = workHere;
             firstInvader->path.dest = goHere;
             location = goHere;
@@ -230,7 +233,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             }
             
             DFHack::MaterialInfo material;
-            if ( !material.find("WATER") ) {
+            if ( !material.find("OBSIDIAN") ) {
                 out.print("%s, %d: no water.\n", __FILE__, __LINE__);
                 return -1;
             }

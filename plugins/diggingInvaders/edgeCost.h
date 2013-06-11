@@ -24,6 +24,7 @@ enum CostDimension {
 typedef int64_t cost_t;
 
 extern cost_t costWeight[costDim];
+extern int32_t jobDelay[costDim];
 /*
 const cost_t costWeight[] = {
 //Distance

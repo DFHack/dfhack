@@ -28,6 +28,17 @@ cost_t costWeight[] = {
 100,
 };
 
+int32_t jobDelay[] = {
+//Distance
+-1,
+//Destroy Building
+1000,
+//Dig
+1000,
+//DestroyConstruction
+1000
+};
+
 using namespace std;
 
 /*
@@ -388,15 +399,16 @@ cost_t getEdgeCostOld(color_ostream& out, df::coord pt1, df::coord pt2) {
 }
 
 vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax) {
-    vector<Edge>* result = new vector<Edge>(26);
-    //result->reserve(26);
+    //vector<Edge>* result = new vector<Edge>(26);
+    vector<Edge>* result = new vector<Edge>();
+    result->reserve(26);
     
-    size_t count = 0;
+    //size_t count = 0;
     for ( int32_t dx = -1; dx <= 1; dx++ ) {
         for ( int32_t dy = -1; dy <= 1; dy++ ) {
             for ( int32_t dz = -1; dz <= 1; dz++ ) {
                 df::coord neighbor(point.x+dx, point.y+dy, point.z+dz);
-                if ( neighbor.x < 0 || neighbor.x >= xMax || neighbor.y < 0 || neighbor.y >= yMax || neighbor.z < 0 || neighbor.z >= zMax )
+                if ( !Maps::isValidTilePos(neighbor) )
                     continue;
                 if ( dz != 0 && /*(point.x == 0 || point.y == 0 || point.z == 0 || point.x == xMax-1 || point.y == yMax-1 || point.z == zMax-1) ||*/ (neighbor.x == 0 || neighbor.y == 0 || neighbor.z == 0 || neighbor.x == xMax-1 || neighbor.y == yMax-1 || neighbor.z == zMax-1) )
                     continue;
@@ -406,9 +418,9 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCach
                 if ( cost == -1 )
                     continue;
                 Edge edge(point, neighbor, cost);
-                //result->push_back(edge);
-                (*result)[count] = edge;
-                count++;
+                //(*result)[count] = edge;
+                result->push_back(edge);
+                //count++;
             }
         }
     }

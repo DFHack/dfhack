@@ -107,6 +107,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
         building->jobs.push_back(job);
         Job::linkIntoWorld(job);
         jobId = job->id;
+        job->completion_timer = jobDelay[DestroyBuilding];
     } else {
         df::tiletype* type1 = Maps::getTileType(pt1);
         df::tiletype* type2 = Maps::getTileType(pt2);
@@ -131,6 +132,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             firstInvader->job.destroy_target = NULL;
             Job::linkIntoWorld(job);
             jobId = job->id;
+            job->completion_timer = jobDelay[DestroyConstruction];
         } else {
             bool walkable_low1 = shape1 == df::tiletype_shape::STAIR_DOWN || shape1 == df::tiletype_shape::STAIR_UPDOWN;
             bool walkable_low2 = shape2 == df::tiletype_shape::STAIR_DOWN || shape2 == df::tiletype_shape::STAIR_UPDOWN;
@@ -193,6 +195,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             firstInvader->path.path.z.clear();
             Job::linkIntoWorld(job);
             jobId = job->id;
+            job->completion_timer = jobDelay[Dig];
             
             //TODO: test if he already has a pick
             bool hasPick = false;

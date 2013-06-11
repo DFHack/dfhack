@@ -104,6 +104,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  diggingInvaders setCost destroyBuilding n\n"
         "  diggingInvaders setCost dig n\n"
         "  diggingInvaders setCost destroyConstruction n\n"
+        "  diggingInvaders setDelay destroyBuilding n\n    adds to the job_completion_timer of destroy building jobs that are assigned to invaders\n"
+        "  diggingInvaders setDelay dig n\n"
+        "  diggingInvaders setDelay destroyConstruction n\n"
         "  diggingInvaders now\n    makes invaders try to dig now, if plugin is enabled\n"
         "  diggingInvaders clear\n    clears all digging invader races\n"
         "  diggingInvaders edgesPerTick n\n    makes the pathfinding algorithm work on at most n edges per tick. Set to 0 or lower to make it unlimited."
@@ -194,13 +197,15 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
                 diggingRaces.erase(race);
             }
             a++;
-        } else if ( parameters[a] == "setCost" ) {
+        } else if ( parameters[a] == "setCost" || parameters[a] == "setDelay" ) {
             if ( a+2 >= parameters.size() )
                 return CR_WRONG_USAGE;
             string costStr = parameters[a+1];
             int32_t costDim = -1;
             if ( costStr == "walk" ) {
                 costDim = CostDimension::Walk;
+                if ( parameters[a] == "setDelay" )
+                    return CR_WRONG_USAGE;
             } else if ( costStr == "destroyBuilding" ) {
                 costDim = CostDimension::DestroyBuilding;
             } else if ( costStr == "dig" ) {
@@ -213,9 +218,12 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
             cost_t value;
             stringstream asdf(parameters[a+2]);
             asdf >> value;
-            if ( value <= 0 )
+            if ( parameters[a] == "setCost" && value <= 0 )
                 return CR_WRONG_USAGE;
-            costWeight[costDim] = value;
+            if ( parameters[a] == "setCost" )
+                costWeight[costDim] = value;
+            else
+                jobDelay[costDim] = value;
             a += 2;
         } else if ( parameters[a] == "edgeCost" ) {
             df::coord bob = Gui::getCursorPos();

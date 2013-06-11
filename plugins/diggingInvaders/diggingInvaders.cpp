@@ -340,7 +340,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
                 if ( invaderPts.find(unit->pos) != invaderPts.end() )
                     continue;
                 //must be able to wield a pick: this is overly pessimistic
-                if ( unit->status2.limbs_grasp_count < unit->status2.limbs_grasp_max )
+                if ( unit->status2.limbs_grasp_max <= 0 || unit->status2.limbs_grasp_count < unit->status2.limbs_grasp_max )
                     continue;
                 df::map_block* block = Maps::getTileBlock(unit->pos);
                 invaderConnectivity.insert(block->walkable[unit->pos.x&0xF][unit->pos.y&0xF]);
@@ -460,25 +460,30 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     
     //find important edges
     Edge firstImportantEdge(df::coord(), df::coord(), -1);
-    df::coord closest;
-    cost_t closestCostEstimate=0;
-    cost_t closestCostActual=0;
+    //df::coord closest;
+    //cost_t closestCostEstimate=0;
+    //cost_t closestCostActual=0;
     for ( auto i = localPts.begin(); i != localPts.end(); i++ ) {
         df::coord pt = *i;
         if ( costMap.find(pt) == costMap.end() )
             continue;
         if ( parentMap.find(pt) == parentMap.end() )
             continue;
-        closest = pt;
-        closestCostEstimate = costMap[closest];
+        //closest = pt;
+        //closestCostEstimate = costMap[closest];
         //if ( workNeeded[pt] == 0 ) 
         //    continue;
         while ( parentMap.find(pt) != parentMap.end() ) {
             //out.print("(%d,%d,%d)\n", pt.x, pt.y, pt.z);
             df::coord parent = parentMap[pt];
-            closestCostActual += getEdgeCost(out, parent, pt);
+            cost_t cost = getEdgeCost(out, parent, pt);
+            if ( cost < 0 ) {
+                //path invalidated
+                return;
+            }
+            //closestCostActual += cost;
             if ( Maps::canStepBetween(parent, pt) ) {
-
+                
             } else {
                 if ( pt.x == parent.x && pt.y == parent.y ) {
                     if ( pt.z < parent.z ) {
@@ -502,10 +507,12 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     if ( firstImportantEdge.p1 == df::coord() )
         return;
     
+/*
     if ( closestCostActual != closestCostEstimate ) {
         out.print("%s,%d: closest = (%d,%d,%d), estimate = %lld != actual = %lld\n", __FILE__, __LINE__, closest.x,closest.y,closest.z, closestCostEstimate, closestCostActual);
         return;
     }
+*/
     
     assignJob(out, firstImportantEdge, parentMap, costMap, invaders, requiresZNeg, requiresZPos, cache);
     lastInvasionDigger = firstInvader->id;

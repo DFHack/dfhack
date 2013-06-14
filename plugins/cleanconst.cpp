@@ -1,6 +1,5 @@
 // Destroys items being used as part of constructions
 // and flags the constructions to recreate their components upon disassembly
-using namespace std;
 
 #include "Core.h"
 #include "Console.h"
@@ -14,31 +13,12 @@ using namespace std;
 #include "df/construction.h"
 #include "df/map_block.h"
 
+using namespace std;
 using namespace DFHack;
-using namespace df::enums;
 
 using df::global::world;
 
 DFHACK_PLUGIN("cleanconst");
-
-command_result df_cleanconst(color_ostream &out, vector <string> & parameters);
-
-DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
-{
-    commands.push_back(PluginCommand(
-        "cleanconst", "Cleans up construction materials.",
-        df_cleanconst, false,
-        "  This utility alters all constructions on the map so that they spawn their.\n"
-        "  building component when they are disassembled, allowing their actual\n"
-        "  build items to be safely deleted.\n"
-    ));
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
-    return CR_OK;
-}
 
 command_result df_cleanconst(color_ostream &out, vector <string> & parameters)
 {
@@ -85,6 +65,23 @@ command_result df_cleanconst(color_ostream &out, vector <string> & parameters)
         cleaned_total++;
     }
 
-    out.print("Done. %d constructed items cleaned up.\n", cleaned_total);
+    out.print("Done. %d construction items cleaned up.\n", cleaned_total);
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
+{
+    commands.push_back(PluginCommand(
+        "cleanconst", "Cleans up construction materials.",
+        df_cleanconst, false,
+        "  This utility alters all constructions on the map so that they spawn their\n"
+        "  building component when they are disassembled, allowing their actual\n"
+        "  build items to be safely deleted.\n"
+    ));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
+{
     return CR_OK;
 }

@@ -21,6 +21,7 @@ namespace DFHack {
                 CONSTRUCTION,
                 SYNDROME,
                 INVASION,
+//                EQUIPMENT_CHANGE,
                 EVENT_MAX
             };
         }
@@ -47,6 +48,11 @@ namespace DFHack {
 
             }
         };
+        
+        /*struct InventoryData {
+            int32_t unitId;
+            vector<df::unit_inventory_item>* oldItems;
+        };*/
         
         DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);
         DFHACK_EXPORT void registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute=false);

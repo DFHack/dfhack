@@ -17,6 +17,7 @@
 #include "df/job_list_link.h"
 #include "df/ui.h"
 #include "df/unit.h"
+#include "df/unit_inventory_item.h"
 #include "df/unit_syndrome.h"
 #include "df/world.h"
 
@@ -114,6 +115,7 @@ static void manageBuildingEvent(color_ostream& out);
 static void manageConstructionEvent(color_ostream& out);
 static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
+//static void manageEquipmentEvent(color_ostream& out);
 
 static void (*eventManager[])(color_ostream&) = {
     manageTickEvent,
@@ -125,6 +127,7 @@ static void (*eventManager[])(color_ostream&) = {
     manageConstructionEvent,
     manageSyndromeEvent,
     manageInvasionEvent,
+//    manageEquipmentEvent,
 };
 
 
@@ -154,6 +157,9 @@ static bool gameLoaded;
 //invasion
 static int32_t nextInvasion;
 
+//equipment change
+//static unordered_map<int32_t, vector<df::unit_inventory_item> > equipmentLog;
+
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;
     if ( !doOnce ) {
@@ -180,6 +186,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         Buildings::clearBuildings(out);
         gameLoaded = false;
         nextInvasion = -1;
+//        equipmentLog.clear();
     } else if ( event == DFHack::SC_WORLD_LOADED ) {
         uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
             + DFHack::World::ReadCurrentTick();
@@ -409,8 +416,8 @@ static void manageJobCompletedEvent(color_ostream& out) {
 
 static void manageUnitDeathEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
-    for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
-        df::unit* unit = df::global::world->units.active[a];
+    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+        df::unit* unit = df::global::world->units.all[a];
         if ( unit->counters.death_id == -1 ) {
             livingUnits.insert(unit->id);
             continue;
@@ -529,7 +536,7 @@ static void manageConstructionEvent(color_ostream& out) {
 
 static void manageSyndromeEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::SYNDROME].begin(), handlers[EventType::SYNDROME].end());
-    for ( auto a = df::global::world->units.active.begin(); a != df::global::world->units.active.end(); a++ ) {
+    for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
         df::unit* unit = *a;
         if ( unit->flags1.bits.dead )
             continue;
@@ -560,4 +567,44 @@ static void manageInvasionEvent(color_ostream& out) {
         handle.eventHandler(out, (void*)nextInvasion);
     }
 }
+
+/*
+static void manageEquipmentEvent(color_ostream& out) {
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::EQUIPMENT_CHANGE].begin(), handlers[EventType::EQUIPMENT_CHANGE].end());
+    
+    for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
+        df::unit* unit = *a;
+        if ( unit->flags1.bits.dead )
+            continue;
+        
+        bool isNew = equipmentLog.find(unit->id) == equipmentLog.end();
+        bool needsUpdate = isNew || equipmentLog[unit->id].size() != unit->inventory.size();
+        if ( !needsUpdate ) {
+            for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
+                df::unit_inventory_item* item = unit->inventory[b];
+                df::unit_inventory_item& old = equipmentLog[unit->id][b];
+                if ( item->item == old.item && item->mode == old.mode && item->body_part_id == old.body_part_id && item->anon_1 == old.anon_1 && item->wound_id == old->wound_id )
+                    continue;
+                
+                needsUpdate = true;
+                break;
+            }
+        }
+        
+        if ( needsUpdate && !isNew ) {
+            for ( auto c = copy.begin(); c != copy.end(); c++ ) {
+                EventHandler handle = (*c).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+        
+        if ( needsUpdate ) {
+            equipmentLog[unit->id].clear();
+            for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
+                equipmentLog[unit->id].push_back(* unit->inventory[b]);
+            }
+        }
+    }
+}
+*/
 

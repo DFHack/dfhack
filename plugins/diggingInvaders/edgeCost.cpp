@@ -8,7 +8,9 @@
 #include "df/building_bridgest.h"
 #include "df/building_hatchst.h"
 #include "df/building_type.h"
+#include "df/construction.h"
 #include "df/coord.h"
+#include "df/item_type.h"
 #include "df/map_block.h"
 #include "df/tile_building_occ.h"
 #include "df/tiletype.h"
@@ -17,6 +19,7 @@
 
 #include <iostream>
 
+/*
 cost_t costWeight[] = {
 //Distance
 1,
@@ -38,6 +41,7 @@ int32_t jobDelay[] = {
 //DestroyConstruction
 1000
 };
+*/
 
 using namespace std;
 
@@ -46,15 +50,17 @@ limitations
     ramps
     cave-ins
 */
-cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
+cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2, DigAbilities& abilities) {
     int32_t dx = pt2.x - pt1.x;
     int32_t dy = pt2.y - pt1.y;
     int32_t dz = pt2.z - pt1.z;
-    cost_t cost = costWeight[CostDimension::Walk];
+    cost_t cost = abilities.costWeight[CostDimension::Walk];
+    if ( cost < 0 )
+        return -1;
     
     if ( Maps::getTileBlock(pt1) == NULL || Maps::getTileBlock(pt2) == NULL )
         return -1;
-
+    
     df::tiletype* type2 = Maps::getTileType(pt2);
     df::tiletype_shape shape2 = ENUM_ATTR(tiletype, shape, *type2);
     
@@ -66,7 +72,7 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
     if ( shape2 == df::enums::tiletype_shape::EMPTY ) {
         return -1;
     }
-
+    
     if ( shape2 == df::enums::tiletype_shape::TREE )
         return -1;
     
@@ -83,14 +89,28 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
 
     df::building* building2 = Buildings::findAtTile(pt2);
     if ( building2 ) {
-        cost += costWeight[CostDimension::DestroyBuilding];
+        if ( abilities.costWeight[CostDimension::DestroyBuilding] < 0 )
+            return -1;
+        cost += abilities.costWeight[CostDimension::DestroyBuilding]; 
         if ( dx*dx + dy*dy > 1 )
             return -1;
     }
     
     bool construction2 = ENUM_ATTR(tiletype, material, *type2) == df::enums::tiletype_material::CONSTRUCTION;
-    if ( construction2 )
-        cost += costWeight[CostDimension::DestroyConstruction];
+    if ( construction2 ) {
+        //smooth or not?
+        df::construction* constr = df::construction::find(pt2);
+        bool smooth = constr != NULL && constr->item_type != df::enums::item_type::BOULDER;
+        if ( smooth ) {
+            if ( abilities.costWeight[CostDimension::DestroySmoothConstruction] < 0 )
+                return -1;
+            cost += abilities.costWeight[CostDimension::DestroySmoothConstruction];
+        } else {
+            if ( abilities.costWeight[CostDimension::DestroyRoughConstruction] < 0 )
+                return -1;
+            cost += abilities.costWeight[CostDimension::DestroyRoughConstruction];
+        }
+    }
     
     if ( dz == 0 ) {
         if ( !building2 && !construction2 ) {
@@ -102,7 +122,10 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                 //out << __FILE__ << ", line " << __LINE__ << ": WTF?" << endl;
                 return cost;
             }
-            cost += costWeight[CostDimension::Dig];
+            if ( abilities.costWeight[CostDimension::Dig] < 0 ) {
+                return -1;
+            }
+            cost += abilities.costWeight[CostDimension::Dig];
         }
     } else {
         if ( dx == 0 && dy == 0 ) {
@@ -113,7 +136,10 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                 if ( !walkable_low2 ) {
                     if ( building2 || construction2 )
                         return -1;
-                    cost += costWeight[CostDimension::Dig];
+                    if ( abilities.costWeight[CostDimension::Dig] < 0 ) {
+                        return -1;
+                    }
+                    cost += abilities.costWeight[CostDimension::Dig];
                 }
                 
                 bool walkable_high1 = shape1 == df::tiletype_shape::STAIR_UP || shape1 == df::tiletype_shape::STAIR_UPDOWN;
@@ -121,7 +147,10 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                     if ( shape1 != df::enums::tiletype_shape::WALL ) {
                         return -1;
                     }
-                    cost += costWeight[CostDimension::Dig];
+                    if ( abilities.costWeight[CostDimension::Dig] < 0 ) {
+                        return -1;
+                    }
+                    cost += abilities.costWeight[CostDimension::Dig];
                 }
                 
                 if ( building2 ) {
@@ -174,7 +203,10 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                     
                     if ( shape2 != df::enums::tiletype_shape::WALL )
                         return -1;
-                    cost += costWeight[CostDimension::Dig];
+                    if ( abilities.costWeight[CostDimension::Dig] < 0 ) {
+                        return -1;
+                    }
+                    cost += abilities.costWeight[CostDimension::Dig];
                 }
                 bool walkable_low1 = shape1 == df::tiletype_shape::STAIR_DOWN || shape1 == df::tiletype_shape::STAIR_UPDOWN;
                 if ( !walkable_low1 ) {
@@ -183,7 +215,10 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                     //TODO: consider ramps
                     if ( shape1 == df::tiletype_shape::RAMP )
                         return -1;
-                    cost += costWeight[CostDimension::Dig];
+                    if ( abilities.costWeight[CostDimension::Dig] < 0 ) {
+                        return -1;
+                    }
+                    cost += abilities.costWeight[CostDimension::Dig];
                 }
 
                 df::building* building1 = Buildings::findAtTile(pt1);
@@ -213,13 +248,17 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                 
                 //you can deconstruct a hatch from the side
                 if ( building1 && forbidden /*&& building1->getType() == df::building_type::Hatch*/ ) {
+/*
                     df::coord support[] = {df::coord(pt1.x-1, pt1.y, pt1.z), df::coord(pt1.x+1,pt1.y,pt1.z), df::coord(pt1.x,pt1.y-1,pt1.z), df::coord(pt1.x,pt1.y+1,pt1.z)};
+                    if ( abilities.costWeight[CostDimension::DestroyBuilding] < 0 ) {
+                        return -1;
+                    }
                     cost_t minCost = -1;
                     for ( size_t a = 0; a < 4; a++ ) {
                         df::tiletype* supportType = Maps::getTileType(support[a]);
                         df::tiletype_shape shape = ENUM_ATTR(tiletype, shape, *supportType);
                         df::tiletype_shape_basic basic = ENUM_ATTR(tiletype_shape, basic_shape, shape);
-                        cost_t cost2 = 2*costWeight[CostDimension::Walk] + costWeight[CostDimension::DestroyBuilding];
+                        cost_t cost2 = 2*abilities.costWeight[CostDimension::Walk] + abilities.costWeight[CostDimension::DestroyBuilding];
                         if ( !Maps::canStepBetween(pt1, support[a]) ) {
                             switch(basic) {
                                 case tiletype_shape_basic::Open:
@@ -227,9 +266,15 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                                     continue;
                                 case tiletype_shape_basic::Wall:
                                     if ( ENUM_ATTR(tiletype, material, *supportType) == df::enums::tiletype_material::CONSTRUCTION ) {
-                                        cost2 += costWeight[CostDimension::DestroyConstruction];
+                                        if ( abilities.costWeight[CostDimension::DestroyConstruction] < 0 ) {
+                                            continue;
+                                        }
+                                        cost2 += abilities.costWeight[CostDimension::DestroyConstruction];
                                     } else {
-                                        cost2 += costWeight[CostDimension::Dig];
+                                        if ( abilities.costWeight[CostDimension::Dig] < 0 ) {
+                                            continue;
+                                        }
+                                        cost2 += abilities.costWeight[CostDimension::Dig];
                                     }
                                 case tiletype_shape_basic::Ramp:
                                     //TODO: check for a hatch or a bridge: that makes it ok
@@ -241,7 +286,10 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                                     break;
                             }
                             if ( Buildings::findAtTile(support[a]) ) {
-                                cost2 += costWeight[CostDimension::DestroyBuilding];
+                                if ( abilities.costWeight[CostDimension::DestroyBuilding] < 0 ) {
+                                    continue;
+                                }
+                                cost2 += abilities.costWeight[CostDimension::DestroyBuilding];
                             }
                         }
                         if ( minCost == -1 || cost2 < minCost )
@@ -251,6 +299,7 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
                         return -1;
                     cost += minCost;
                     
+*/
                     //note: assignJob is not ready for this level of sophistication, so don't allow it
                     return -1;
                 }
@@ -265,6 +314,7 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2) {
     return cost;
 }
 
+/*
 cost_t getEdgeCostOld(color_ostream& out, df::coord pt1, df::coord pt2) {
     //first, list all the facts
     int32_t dx = pt2.x - pt1.x;
@@ -397,8 +447,9 @@ cost_t getEdgeCostOld(color_ostream& out, df::coord pt1, df::coord pt2) {
     //moving diagonally
     return -1;
 }
+*/
 
-vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax) {
+vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax, DigAbilities& abilities) {
     //vector<Edge>* result = new vector<Edge>(26);
     vector<Edge>* result = new vector<Edge>();
     result->reserve(26);
@@ -414,7 +465,7 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCach
                     continue;
                 if ( dx == 0 && dy == 0 && dz == 0 )
                     continue;
-                cost_t cost = getEdgeCost(out, point, neighbor);
+                cost_t cost = getEdgeCost(out, point, neighbor, abilities);
                 if ( cost == -1 )
                     continue;
                 Edge edge(point, neighbor, cost);

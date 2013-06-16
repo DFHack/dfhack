@@ -9,6 +9,7 @@
 
 #include "df/coord.h"
 
+#include <unordered_map>
 #include <vector>
 
 //cost is [path cost, building destruction cost, dig cost, construct cost]. Minimize constructions, then minimize dig cost, then minimize path cost.
@@ -16,15 +17,22 @@ enum CostDimension {
     Walk,
     DestroyBuilding,
     Dig,
-    DestroyConstruction,
+    DestroyRoughConstruction,
+    DestroySmoothConstruction,
     //Construct,
     costDim
 };
 
 typedef int64_t cost_t;
 
-extern cost_t costWeight[costDim];
-extern int32_t jobDelay[costDim];
+struct DigAbilities {
+    cost_t costWeight[costDim];
+    int32_t jobDelay[costDim];
+};
+
+//extern cost_t costWeight[costDim];
+//extern int32_t jobDelay[costDim];
+extern std::unordered_map<std::string, DigAbilities> digAbilities;
 /*
 const cost_t costWeight[] = {
 //Distance
@@ -85,6 +93,6 @@ struct PointHash {
     }
 };
 
-cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2);
-std::vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax);
+cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2, DigAbilities& abilities);
+std::vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCache& cache, int32_t xMax, int32_t yMax, int32_t zMax, DigAbilities& abilities);
 

@@ -87,33 +87,61 @@ static bool activeDigging=false;
 static unordered_set<string> diggingRaces;
 static unordered_set<int32_t> invaderJobs;
 static df::coord lastDebugEdgeCostPoint;
+unordered_map<string, DigAbilities> digAbilities;
+
+static cost_t costWeightDefault[] = {
+//Distance
+1,
+//Destroy Building
+2,
+//Dig
+10000,
+//DestroyRoughConstruction
+1000,
+//DestroySmoothConstruction
+100,
+};
+
+static int32_t jobDelayDefault[] = {
+//Distance
+-1,
+//Destroy Building
+1000,
+//Dig
+1000,
+//DestroyRoughConstruction
+1000,
+//DestroySmoothConstruction
+100,
+};
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "diggingInvaders", "Makes invaders dig to your dwarves.",
         diggingInvadersCommand, false, /* true means that the command can't be used from non-interactive user interface */
-        "example usage:\n"
         "  diggingInvaders 0\n    disables the plugin\n"
         "  diggingInvaders 1\n    enables the plugin\n"
         "  diggingInvaders enable\n    enables the plugin\n"
         "  diggingInvaders disable\n    disables the plugin\n"
         "  diggingInvaders add GOBLIN\n    registers the race GOBLIN as a digging invader. Case-sensitive.\n"
         "  diggingInvaders remove GOBLIN\n    unregisters the race GOBLIN as a digging invader. Case-sensitive.\n"
-        "  diggingInvaders setCost walk n\n    sets the walk cost in the path algorithm\n"
-        "  diggingInvaders setCost destroyBuilding n\n"
-        "  diggingInvaders setCost dig n\n"
-        "  diggingInvaders setCost destroyConstruction n\n"
-        "  diggingInvaders setDelay destroyBuilding n\n    adds to the job_completion_timer of destroy building jobs that are assigned to invaders\n"
-        "  diggingInvaders setDelay dig n\n"
-        "  diggingInvaders setDelay destroyConstruction n\n"
+        "  diggingInvaders setCost GOBLIN walk n\n    sets the walk cost in the path algorithm for the race GOBLIN\n"
+        "  diggingInvaders setCost GOBLIN destroyBuilding n\n"
+        "  diggingInvaders setCost GOBLIN dig n\n"
+        "  diggingInvaders setCost GOBLIN destroyRoughConstruction n\n  rough constructions are made from boulders\n"
+        "  diggingInvaders setCost GOBLIN destroySmoothConstruction n\n  smooth constructions are made from blocks or bars instead of boulders\n"
+        "  diggingInvaders setDelay GOBLIN destroyBuilding n\n    adds to the job_completion_timer of destroy building jobs that are assigned to invaders\n"
+        "  diggingInvaders setDelay GOBLIN dig n\n"
+        "  diggingInvaders setDelay GOBLIN destroyRoughConstruction n\n"
+        "  diggingInvaders setDelay GOBLIN destroySmoothConstruction n\n"
         "  diggingInvaders now\n    makes invaders try to dig now, if plugin is enabled\n"
         "  diggingInvaders clear\n    clears all digging invader races\n"
         "  diggingInvaders edgesPerTick n\n    makes the pathfinding algorithm work on at most n edges per tick. Set to 0 or lower to make it unlimited."
 //        "  diggingInvaders\n    Makes invaders try to dig now.\n"
     ));
     
-    *df::global::debug_showambush = true;
+    //*df::global::debug_showambush = true;
     return CR_OK;
 }
 
@@ -135,6 +163,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     case DFHack::SC_WORLD_UNLOADED:
         // cleanup
         lastInvasionJob = lastInvasionDigger = -1;
+        enabled = false;
         activeDigging = false;
         clearDijkstra();
         invaderJobs.clear();
@@ -193,14 +222,28 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
             string race = parameters[a+1];
             if ( parameters[a] == "add" ) {
                 diggingRaces.insert(race);
+                DigAbilities& abilities = digAbilities[race];
+                memcpy(abilities.costWeight, costWeightDefault, costDim*sizeof(cost_t));
+                memcpy(abilities.jobDelay, jobDelayDefault, costDim*sizeof(int32_t));
             } else {
                 diggingRaces.erase(race);
+                digAbilities.erase(race);
             }
             a++;
+            
         } else if ( parameters[a] == "setCost" || parameters[a] == "setDelay" ) {
-            if ( a+2 >= parameters.size() )
+            if ( a+3 >= parameters.size() )
                 return CR_WRONG_USAGE;
-            string costStr = parameters[a+1];
+            
+            string raceString = parameters[a+1];
+            if ( digAbilities.find(raceString) == digAbilities.end() ) {
+                DigAbilities bob;
+                memset(&bob, 0xFF, sizeof(bob));
+                digAbilities[raceString] = bob;
+            }
+            DigAbilities& abilities = digAbilities[raceString];
+            
+            string costStr = parameters[a+2];
             int32_t costDim = -1;
             if ( costStr == "walk" ) {
                 costDim = CostDimension::Walk;
@@ -210,30 +253,47 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
                 costDim = CostDimension::DestroyBuilding;
             } else if ( costStr == "dig" ) {
                 costDim = CostDimension::Dig;
-            } else if ( costStr == "destroyConstruction" ) {
-                costDim = CostDimension::DestroyConstruction;
+            } else if ( costStr == "destroyRoughConstruction" ) {
+                costDim = CostDimension::DestroyRoughConstruction;
+            } else if ( costStr == "destroySmoothConstruction" ) {
+                costDim = CostDimension::DestroySmoothConstruction;
             } else {
                 return CR_WRONG_USAGE;
             }
+            
             cost_t value;
-            stringstream asdf(parameters[a+2]);
+            stringstream asdf(parameters[a+3]);
             asdf >> value;
-            if ( parameters[a] == "setCost" && value <= 0 )
-                return CR_WRONG_USAGE;
-            if ( parameters[a] == "setCost" )
-                costWeight[costDim] = value;
-            else
-                jobDelay[costDim] = value;
-            a += 2;
+            //if ( parameters[a] == "setCost" && value <= 0 )
+            //    return CR_WRONG_USAGE;
+            if ( parameters[a] == "setCost" ) {
+                abilities.costWeight[costDim] = value;
+            } else {
+                abilities.jobDelay[costDim] = value;
+            }
+            a += 3;
         } else if ( parameters[a] == "edgeCost" ) {
+            if ( a+1 >= parameters.size() )
+                return CR_WRONG_USAGE;
+            
+            string raceString = parameters[a+1];
+            
+            if ( digAbilities.find(raceString) == digAbilities.end() ) {
+                out.print("Race %s does not have dig abilities assigned.\n", raceString.c_str());
+                return CR_WRONG_USAGE;
+            }
+            DigAbilities& abilities = digAbilities[raceString];
+            
             df::coord bob = Gui::getCursorPos();
-            out.print("(%d,%d,%d), (%d,%d,%d): cost = %lld\n", lastDebugEdgeCostPoint.x, lastDebugEdgeCostPoint.y, lastDebugEdgeCostPoint.z, bob.x, bob.y, bob.z, getEdgeCost(out, lastDebugEdgeCostPoint, bob));
+            out.print("(%d,%d,%d), (%d,%d,%d): cost = %lld\n", lastDebugEdgeCostPoint.x, lastDebugEdgeCostPoint.y, lastDebugEdgeCostPoint.z, bob.x, bob.y, bob.z, getEdgeCost(out, lastDebugEdgeCostPoint, bob, abilities));
             lastDebugEdgeCostPoint = bob;
+            a++;
         } else if ( parameters[a] == "now" ) {
             activeDigging = true;
             findAndAssignInvasionJob(out, (void*)0);
         } else if ( parameters[a] == "clear" ) {
             diggingRaces.clear();
+            digAbilities.clear();
         } else if ( parameters[a] == "edgesPerTick" ) {
             if ( a+1 >= parameters.size() )
                 return CR_WRONG_USAGE;
@@ -335,7 +395,11 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
                     out.print("%s,%d: WTF? Couldn't find creature raw.\n", __FILE__, __LINE__);
                     continue;
                 }
+                /*
                 if ( diggingRaces.find(raw->creature_id) == diggingRaces.end() )
+                    continue;
+                */
+                if ( digAbilities.find(raw->creature_id) == digAbilities.end() )
                     continue;
                 if ( invaderPts.find(unit->pos) != invaderPts.end() )
                     continue;
@@ -380,6 +444,14 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         fringe.clear();
         return;
     }
+    
+    df::creature_raw* creature_raw = df::creature_raw::find(firstInvader->race);
+    if ( creature_raw == NULL || digAbilities.find(creature_raw->creature_id) == digAbilities.end() ) {
+        //inappropriate digger: no dig abilities
+        fringe.clear();
+        return;
+    }
+    DigAbilities& abilities = digAbilities[creature_raw->creature_id];
     //TODO: check that firstInvader is an appropriate digger
     //out << firstInvader->id << endl;
     //out << firstInvader->pos.x << ", " << firstInvader->pos.y << ", " << firstInvader->pos.z << endl;
@@ -421,7 +493,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
 
         cost_t myCost = costMap[pt];
         clock_t edgeTime = clock();
-        vector<Edge>* myEdges = getEdgeSet(out, pt, cache, xMax, yMax, zMax);
+        vector<Edge>* myEdges = getEdgeSet(out, pt, cache, xMax, yMax, zMax, abilities);
         totalEdgeTime += (clock() - edgeTime);
         for ( auto a = myEdges->begin(); a != myEdges->end(); a++ ) {
             Edge &e = *a;
@@ -476,7 +548,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         while ( parentMap.find(pt) != parentMap.end() ) {
             //out.print("(%d,%d,%d)\n", pt.x, pt.y, pt.z);
             df::coord parent = parentMap[pt];
-            cost_t cost = getEdgeCost(out, parent, pt);
+            cost_t cost = getEdgeCost(out, parent, pt, abilities);
             if ( cost < 0 ) {
                 //path invalidated
                 return;
@@ -514,7 +586,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     }
 */
     
-    assignJob(out, firstImportantEdge, parentMap, costMap, invaders, requiresZNeg, requiresZPos, cache);
+    assignJob(out, firstImportantEdge, parentMap, costMap, invaders, requiresZNeg, requiresZPos, cache, abilities);
     lastInvasionDigger = firstInvader->id;
     lastInvasionJob = firstInvader->job.current_job ? firstInvader->job.current_job->id : -1;
     invaderJobs.erase(lastInvasionJob);

@@ -6,6 +6,7 @@
 #include "modules/Materials.h"
 
 #include "df/building.h"
+#include "df/construction.h"
 #include "df/coord.h"
 #include "df/general_ref.h"
 #include "df/general_ref_building_holderst.h"
@@ -47,7 +48,7 @@ void getRidOfOldJob(df::unit* unit) {
     //delete job;
 }
 
-int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df::coord,df::coord,PointHash> parentMap, unordered_map<df::coord,cost_t,PointHash>& costMap, vector<int32_t>& invaders, unordered_set<df::coord,PointHash>& requiresZNeg, unordered_set<df::coord,PointHash>& requiresZPos, MapExtras::MapCache& cache) {
+int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df::coord,df::coord,PointHash> parentMap, unordered_map<df::coord,cost_t,PointHash>& costMap, vector<int32_t>& invaders, unordered_set<df::coord,PointHash>& requiresZNeg, unordered_set<df::coord,PointHash>& requiresZPos, MapExtras::MapCache& cache, DigAbilities& abilities ) {
     df::unit* firstInvader = df::unit::find(invaders[0]);
     if ( !firstInvader ) {
         return -1;
@@ -69,7 +70,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
     df::map_block* block2 = Maps::getTileBlock(pt2);
     bool passable1 = block1->walkable[pt1.x&0xF][pt1.y&0xF];
     bool passable2 = block2->walkable[pt2.x&0xF][pt2.y&0xF];
-
+    
     df::coord location;
     df::building* building = Buildings::findAtTile(pt2);
     df::coord buildingPos = pt2;
@@ -107,7 +108,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
         building->jobs.push_back(job);
         Job::linkIntoWorld(job);
         jobId = job->id;
-        job->completion_timer = jobDelay[DestroyBuilding];
+        job->completion_timer = abilities.jobDelay[CostDimension::DestroyBuilding];
     } else {
         df::tiletype* type1 = Maps::getTileType(pt1);
         df::tiletype* type2 = Maps::getTileType(pt2);
@@ -132,7 +133,12 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             firstInvader->job.destroy_target = NULL;
             Job::linkIntoWorld(job);
             jobId = job->id;
-            job->completion_timer = jobDelay[DestroyConstruction];
+            df::construction* constr = df::construction::find(pt2);
+            bool smooth = constr != NULL && constr->item_type != df::enums::item_type::BOULDER;
+            if ( smooth )
+                job->completion_timer = abilities.jobDelay[CostDimension::DestroySmoothConstruction];
+            else
+                job->completion_timer = abilities.jobDelay[CostDimension::DestroyRoughConstruction];
         } else {
             bool walkable_low1 = shape1 == df::tiletype_shape::STAIR_DOWN || shape1 == df::tiletype_shape::STAIR_UPDOWN;
             bool walkable_low2 = shape2 == df::tiletype_shape::STAIR_DOWN || shape2 == df::tiletype_shape::STAIR_UPDOWN;
@@ -195,7 +201,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             firstInvader->path.path.z.clear();
             Job::linkIntoWorld(job);
             jobId = job->id;
-            job->completion_timer = jobDelay[Dig];
+            job->completion_timer = abilities.jobDelay[CostDimension::Dig];
             
             //TODO: test if he already has a pick
             bool hasPick = false;

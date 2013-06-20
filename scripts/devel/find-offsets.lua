@@ -1350,7 +1350,7 @@ menu, then do as instructed below:]],
                     return false
                 end
             end
-            return true, math.floor(((df.global.cur_year_tick+10)%100800)/10)
+            return true, math.floor((df.global.cur_year_tick%100800)/10)
         end
     )
     ms.found_offset('cur_season_tick', addr)
@@ -1382,7 +1382,7 @@ menu, then do as instructed below:]],
                     return false
                 end
             end
-            return true, math.floor((df.global.cur_year_tick+10)/100800)%4
+            return true, math.floor(df.global.cur_year_tick/100800)%4
         end
     )
     ms.found_offset('cur_season', addr)

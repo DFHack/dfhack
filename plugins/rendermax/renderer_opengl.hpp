@@ -1,4 +1,7 @@
 //original file from https://github.com/Baughn/Dwarf-Fortress--libgraphics-
+#include "tinythread.h"
+#include "fast_mutex.h"
+
 #include "Core.h"
 #include <VTableInterpose.h>
 #include "df/renderer.h"
@@ -165,20 +168,65 @@ public:
 };
 struct renderer_test : public renderer_wrap {
 private:
-    
+    void colorizeTile(int x,int y)
+    {
+        const int tile = x*(df::global::gps->dimy) + y;
+        old_opengl* p=reinterpret_cast<old_opengl*>(parent);
+        float *fg = p->fg + tile * 4 * 6;
+        float *bg = p->bg + tile * 4 * 6;
+        float *tex = p->tex + tile * 2 * 6;
+        float v=opacity[tile];
+        for (int i = 0; i < 6; i++) {
+            *(fg++) *= v;
+            *(fg++) *= v;
+            *(fg++) *= v;
+            *(fg++) = 1;
+
+            *(bg++) *= v;
+            *(bg++) *= v;
+            *(bg++) *= v;
+            *(bg++) = 1;
+        }
+    }
+    void reinitOpacity(int w,int h)
+    {
+        tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
+        opacity.resize(w*h);
+    }
+    void reinitOpacity()
+    {
+        reinitOpacity(df::global::gps->dimy,df::global::gps->dimx);
+    }
 public:
+    tthread::fast_mutex dataMutex;
+    std::vector<float> opacity;
     renderer_test(renderer* parent):renderer_wrap(parent)
     {
+        reinitOpacity();
     }
     virtual void update_tile(int32_t x, int32_t y) { 
         renderer_wrap::update_tile(x,y);
+        tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
+        colorizeTile(x,y);
         //some sort of mutex or sth?
         //and then map read
     };
     virtual void update_all() { 
         renderer_wrap::update_all();
+        tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
+        for (int x = 0; x < df::global::gps->dimx; x++)
+            for (int y = 0; y < df::global::gps->dimy; y++)
+                colorizeTile(x,y);
         //some sort of mutex or sth?
         //and then map read
         //same stuff for all of them i guess...
     };
+    virtual void grid_resize(int32_t w, int32_t h) { 
+        renderer_wrap::grid_resize(w,h);
+        reinitOpacity(w,h);
+    };
+    virtual void resize(int32_t w, int32_t h) {
+        renderer_wrap::resize(w,h);
+        reinitOpacity(w,h);
+    }
 };

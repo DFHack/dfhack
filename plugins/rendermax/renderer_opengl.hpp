@@ -251,3 +251,86 @@ public:
         reinitLightGrid(w,h);
     }
 };
+
+struct rgba
+{
+    float r,g,b,a;
+};
+struct renderer_lua : public renderer_wrap {
+private:
+    void overwriteTile(int x,int y)
+    {
+        const int tile = xyToTile(x,y);
+        old_opengl* p=reinterpret_cast<old_opengl*>(parent);
+        float *fg = p->fg + tile * 4 * 6;
+        float *bg = p->bg + tile * 4 * 6;
+        float *tex = p->tex + tile * 2 * 6;
+        lightCell fm=foreMult[tile];
+        lightCell fo=foreOffset[tile];
+
+        lightCell bm=backMult[tile];
+        lightCell bo=backOffset[tile];
+        for (int i = 0; i < 6; i++) {
+            rgba* fore=reinterpret_cast<rgba*>(fg);
+            fore->r=fore->r*fm.r+fo.r;
+            fore->g=fore->g*fm.g+fo.g;
+            fore->b=fore->b*fm.b+fo.b;
+
+            fg+=4;
+            rgba* back=reinterpret_cast<rgba*>(bg);
+            back->r=back->r*bm.r+bo.r;
+            back->g=back->g*bm.g+bo.g;
+            back->b=back->b*bm.b+bo.b;
+            bg+=4;
+        }
+    }
+    void reinitGrids(int w,int h)
+    {
+        tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
+        foreOffset.resize(w*h);
+        foreMult.resize(w*h);
+        backOffset.resize(w*h);
+        backMult.resize(w*h);
+    }
+    void reinitGrids()
+    {
+        reinitGrids(df::global::gps->dimy,df::global::gps->dimx);
+    }
+public:
+    tthread::fast_mutex dataMutex;
+    std::vector<lightCell> foreOffset,foreMult;
+    std::vector<lightCell> backOffset,backMult;
+    inline int xyToTile(int x, int y)
+    {
+       return x*(df::global::gps->dimy) + y;
+    }
+    renderer_lua(renderer* parent):renderer_wrap(parent)
+    {
+        reinitGrids();
+    }
+    virtual void update_tile(int32_t x, int32_t y) { 
+        renderer_wrap::update_tile(x,y);
+        tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
+        overwriteTile(x,y);
+        //some sort of mutex or sth?
+        //and then map read
+    };
+    virtual void update_all() { 
+        renderer_wrap::update_all();
+        tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
+        for (int x = 0; x < df::global::gps->dimx; x++)
+            for (int y = 0; y < df::global::gps->dimy; y++)
+                overwriteTile(x,y);
+        //some sort of mutex or sth?
+        //and then map read
+        //same stuff for all of them i guess...
+    };
+    virtual void grid_resize(int32_t w, int32_t h) { 
+        renderer_wrap::grid_resize(w,h);
+        reinitGrids(w,h);
+    };
+    virtual void resize(int32_t w, int32_t h) {
+        renderer_wrap::resize(w,h);
+        reinitGrids(w,h);
+    }
+};

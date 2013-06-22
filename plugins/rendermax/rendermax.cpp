@@ -30,6 +30,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     commands.push_back(PluginCommand(
         "rendermax", "switch rendering engine.", rendermax, false,
         "  rendermax trippy\n"
+        "  rendermax truecolor red|green|blue|white\n"
         "  rendermax disable\n"
         ));
     return CR_OK;
@@ -56,10 +57,26 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
         installNew(new renderer_trippy(df::global::enabler->renderer),MODE_TRIPPY);
         return CR_OK;
     }
-    else if(cmd=="test")
+    else if(cmd=="truecolor")
     {
+        if(current_mode!=MODE_TRUECOLOR)
+        {
+            removeOld();
+            installNew(new renderer_test(df::global::enabler->renderer),MODE_TRUECOLOR);
+        }
         if(current_mode==MODE_TRUECOLOR && parameters.size()==2)
         {
+            lightCell red(1,0,0),green(0,1,0),blue(0,0,1),white(1,1,1);
+            lightCell cur=white;
+            lightCell dim(0.2,0.2,0.2);
+            string col=parameters[1];
+            if(col=="red")
+                cur=red;
+            else if(col=="green")
+                cur=green;
+            else if(col=="blue")
+                cur=blue;
+
             renderer_test* r=reinterpret_cast<renderer_test*>(df::global::enabler->renderer);
             tthread::lock_guard<tthread::fast_mutex> guard(r->dataMutex);
             int h=df::global::gps->dimy;
@@ -70,20 +87,22 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
             if(rad>cy)rad=cy;
             rad/=2;
             int radsq=rad*rad;
+            for(size_t i=0;i<r->lightGrid.size();i++)
+            {
+                r->lightGrid[i]=dim;
+            }
             for(int i=-rad;i<rad;i++)
             for(int j=-rad;j<rad;j++)
             {
                 if((i*i+j*j)<radsq)
-                    r->opacity[(cx+i)*h+(cy+j)]=(radsq-i*i-j*j)/(float)radsq;
+                {
+                    float val=(radsq-i*i-j*j)/(float)radsq;
+                    r->lightGrid[(cx+i)*h+(cy+j)]=dim+cur*val;
+                }
             }
             return CR_OK;
         }
-        else
-        {
-            removeOld();
-            installNew(new renderer_test(df::global::enabler->renderer),MODE_TRUECOLOR);
-            return CR_OK;
-        }
+       
         
     }
     else if(cmd=="disable")

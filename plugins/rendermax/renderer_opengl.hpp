@@ -166,6 +166,27 @@ public:
                 colorizeTile(x,y);
     };
 };
+
+struct lightCell
+{
+    float r,g,b;
+    lightCell():r(0),g(0),b(0)
+    {
+        
+    }
+    lightCell(float r,float g,float b):r(r),g(g),b(b)
+    {
+
+    }
+    lightCell operator*(float val)
+    {
+        return lightCell(r*val,g*val,b*val);
+    }
+    lightCell operator+(const lightCell& other)
+    {
+        return lightCell(r+other.r,g+other.g,b+other.b);
+    }
+};
 struct renderer_test : public renderer_wrap {
 private:
     void colorizeTile(int x,int y)
@@ -175,34 +196,34 @@ private:
         float *fg = p->fg + tile * 4 * 6;
         float *bg = p->bg + tile * 4 * 6;
         float *tex = p->tex + tile * 2 * 6;
-        float v=opacity[tile];
+        lightCell light=lightGrid[tile];
         for (int i = 0; i < 6; i++) {
-            *(fg++) *= v;
-            *(fg++) *= v;
-            *(fg++) *= v;
+            *(fg++) *= light.r;
+            *(fg++) *= light.g;
+            *(fg++) *= light.b;
             *(fg++) = 1;
 
-            *(bg++) *= v;
-            *(bg++) *= v;
-            *(bg++) *= v;
+            *(bg++) *= light.r;
+            *(bg++) *= light.g;
+            *(bg++) *= light.b;
             *(bg++) = 1;
         }
     }
-    void reinitOpacity(int w,int h)
+    void reinitLightGrid(int w,int h)
     {
         tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
-        opacity.resize(w*h);
+        lightGrid.resize(w*h);
     }
-    void reinitOpacity()
+    void reinitLightGrid()
     {
-        reinitOpacity(df::global::gps->dimy,df::global::gps->dimx);
+        reinitLightGrid(df::global::gps->dimy,df::global::gps->dimx);
     }
 public:
     tthread::fast_mutex dataMutex;
-    std::vector<float> opacity;
+    std::vector<lightCell> lightGrid;
     renderer_test(renderer* parent):renderer_wrap(parent)
     {
-        reinitOpacity();
+        reinitLightGrid();
     }
     virtual void update_tile(int32_t x, int32_t y) { 
         renderer_wrap::update_tile(x,y);
@@ -223,10 +244,10 @@ public:
     };
     virtual void grid_resize(int32_t w, int32_t h) { 
         renderer_wrap::grid_resize(w,h);
-        reinitOpacity(w,h);
+        reinitLightGrid(w,h);
     };
     virtual void resize(int32_t w, int32_t h) {
         renderer_wrap::resize(w,h);
-        reinitOpacity(w,h);
+        reinitLightGrid(w,h);
     }
 };

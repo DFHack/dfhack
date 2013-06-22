@@ -19,12 +19,14 @@ IF(UNIX)
     add_definitions(-DLINUX_BUILD)
     SET(PROJECT_LIBS
         # add any extra linux libs here
+		lua
         ${PROJECT_LIBS}
     )
 # windows
 ELSE(UNIX)
     SET(PROJECT_LIBS
         # add any extra windows libs here
+		lua
         ${PROJECT_LIBS}
         $(NOINHERIT)
     )

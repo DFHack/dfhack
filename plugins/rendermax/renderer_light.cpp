@@ -168,8 +168,23 @@ void lightingEngineViewscreen::doFovs()
                     radius*=flicker;
                     power=power*flicker;
                 }
-                plotCircle(i,j,radius,
-                std::bind(&lightingEngineViewscreen::doRay,this,power,i,j,_1,_2));
+                int surrounds = 0;
+                lightCell curPower;
+
+                if(lightUpCell(curPower = power, 0, 0,i+0, j+0))
+                {
+                    surrounds += lightUpCell(curPower = power, 0, 1,i+0, j+1);
+                    surrounds += lightUpCell(curPower = power, 1, 1,i+1, j+1);
+                    surrounds += lightUpCell(curPower = power, 1, 0,i+1, j+0);
+                    surrounds += lightUpCell(curPower = power, 1,-1,i+1, j-1);
+                    surrounds += lightUpCell(curPower = power, 0,-1,i+0, j-1);
+                    surrounds += lightUpCell(curPower = power,-1,-1,i-1, j-1);
+                    surrounds += lightUpCell(curPower = power,-1, 0,i-1, j+0);
+                    surrounds += lightUpCell(curPower = power,-1, 1,i-1, j+1);
+                }
+                if(surrounds)
+                    plotCircle(i,j,radius,
+                    std::bind(&lightingEngineViewscreen::doRay,this,power,i,j,_1,_2));
             }
         }
 }

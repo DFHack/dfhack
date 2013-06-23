@@ -2,12 +2,14 @@
 
 #include <functional>
 #include <string>
+#include <math.h>
 
 #include "Types.h"
 
 #include "modules/Gui.h"
 #include "modules/Screen.h"
 #include "modules/Maps.h"
+#include "modules/Units.h"
 
 #include "df/graphic.h"
 #include "df/viewscreen_dwarfmodest.h"
@@ -502,5 +504,16 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         int wy=df::global::cursor->y-window_y+vp.first.y;
         int tile=getIndex(wx,wy);
         addLight(tile,cursor);
+    }
+    lightSource citizen(lightCell(0.80f,0.80f,0.90f),6);
+    for (int i=0;i<df::global::world->units.active.size();++i)
+    {
+        df::unit *u = df::global::world->units.active[i];
+        if (u->pos.z != window_z ||
+                (u->pos.x < window_x || u->pos.x >= window_x+vpW) ||
+                (u->pos.y < window_y || u->pos.y >= window_y+vpH))
+            continue;
+        if (DFHack::Units::isCitizen(u))
+            addLight(getIndex(u->pos.x-window_x+1, u->pos.y-window_y+1),citizen);
     }
 }

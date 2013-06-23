@@ -247,9 +247,9 @@ void addPlant(const std::string& id,std::map<int,lightSource>& map,const lightSo
 void lightingEngineViewscreen::initRawSpecific()
 {
     addPlant("TOWER_CAP",glowPlants,lightSource(lightCell(0.65,0.65,0.65),6));
-    addPlant("MUSHROOM_CUP_DIMPLE",glowPlants,lightSource(lightCell(0.03,0.03,0.9),3));
-    addPlant("CAVE MOSS",glowPlants,lightSource(lightCell(0.3,0.3,0.9),2));
-    addPlant("MUSHROOM_HELMET_PLUMP",glowPlants,lightSource(lightCell(0.5,0.2,0.9),2));
+    addPlant("MUSHROOM_CUP_DIMPLE",glowPlants,lightSource(lightCell(0.03,0.03,0.5),3));
+    addPlant("CAVE MOSS",glowPlants,lightSource(lightCell(0.1,0.1,0.4),2));
+    addPlant("MUSHROOM_HELMET_PLUMP",glowPlants,lightSource(lightCell(0.2,0.1,0.6),2));
 }
 static size_t max_list_size = 100000; // Avoid iterating over huge lists
 void lightingEngineViewscreen::doOcupancyAndLights()
@@ -407,7 +407,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                             DFHack::MaterialInfo mat(bld->mat_index,bld->mat_type);
                             if(mat.isInorganic())
                             {
-                                int color=mat.inorganic->material.build_color[0]+8*mat.inorganic->material.build_color[2];
+                                int color=mat.inorganic->material.basic_color[0]+8*mat.inorganic->material.basic_color[2];
                                 curCell*=getStandartColor(color);
                             }
                         }

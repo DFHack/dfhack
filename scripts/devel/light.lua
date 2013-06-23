@@ -50,7 +50,93 @@ function lightPassable(shape)
 		return true
 	end
 end
-function LightOverlay:placeLightFov(pos,radius,color,f,rays)
+function circle(xm, ym,r,plot)
+   local x = -r
+   local y = 0
+   local err = 2-2*r -- /* II. Quadrant */ 
+   repeat 
+      plot(xm-x, ym+y);--/*   I. Quadrant */
+      plot(xm-y, ym-x);--/*  II. Quadrant */
+      plot(xm+x, ym-y);--/* III. Quadrant */
+      plot(xm+y, ym+x);--/*  IV. Quadrant */
+      r = err;
+      if (r <= y) then
+	    y=y+1
+		err =err+y*2+1;           --/* e_xy+e_y < 0 */
+	  end
+      if (r > x or err > y) then
+	    x=x+1
+		err =err+x*2+1;  --/* e_xy+e_x > 0 or no 2nd y-step */
+	  end
+   until (x >= 0);
+end
+function line(x0, y0, x1, y1,plot)
+	local dx = math.abs(x1-x0)
+	local dy = math.abs(y1-y0) 
+	local sx,sy
+	if x0 < x1 then sx = 1 else sx = -1 end
+	if y0 < y1 then sy = 1 else sy = -1 end
+	local err = dx-dy
+
+	while true do
+		if not plot(x0,y0) then
+			return
+		end
+		if x0 == x1 and y0 == y1 then
+			break
+		end
+		local e2 = 2*err
+		if e2 > -dy then 
+			err = err - dy
+			x0 = x0 + sx
+		end
+		if x0 == x1 and y0 == y1 then 
+			if not plot(x0,y0) then
+				return
+			end
+			break
+		end 
+		if e2 <  dx then 
+			err = err + dx
+			y0 = y0 + sy 
+		end
+	end
+end
+function LightOverlay:placeLightFov(pos,radius,color,f)
+	f=f or falloff
+	local vp=self:getViewport()
+	local map = self.df_layout.map
+	local ray=function(tx,ty)
+		local power=copyall(color)
+		local lx=pos.x
+		local ly=pos.y
+		local setTile=function(x,y)
+			if x>0 and y>0 and x<=map.width and y<=map.height then
+				local dtsq=(lx-x)*(lx-x)+(ly-y)*(ly-y)
+				local dt=math.sqrt(dtsq)
+				local tile=x+y*map.width
+				
+				local ocol=self.lightMap[tile] or {r=0,g=0,b=0}
+				local ncol=blend(power,ocol)
+				self.lightMap[tile]=ncol
+				local v=self.ocupancy[tile]
+				if dtsq>0 then
+					power.r=power.r*(v.r^dt)
+					power.g=power.g*(v.g^dt)
+					power.b=power.b*(v.b^dt)
+				end
+				lx=x
+				ly=y
+				local pwsq=power.r*power.r+power.g*power.g+power.b*power.b
+				return pwsq>levelDim*levelDim
+			end
+			return false
+		end
+		line(pos.x,pos.y,tx,ty,setTile)
+	end
+	circle(pos.x,pos.y,radius,ray)
+end
+function LightOverlay:placeLightFov2(pos,radius,color,f,rays)
 	f=f or falloff
 	local raycount=rays or 25
 	local vp=self:getViewport()
@@ -115,12 +201,15 @@ function LightOverlay:calculateLightLava()
 		local pos={x=i+vp.x1-1,y=j+vp.y1-1,z=vp.z}
 		local pos2={x=i+vp.x1-1,y=j+vp.y1-1,z=vp.z-1}
 		local t1=dfhack.maps.getTileFlags(pos)
-		local shape=tile_attrs[dfhack.maps.getTileType(pos)].shape
-		local t2=dfhack.maps.getTileFlags(pos2)
-		if  (t1 and t1.liquid_type and t1.flow_size>0) or 
-			(shape==df.tiletype_shape.EMPTY and t2 and t2.liquid_type and t2.flow_size>0) then
-			--self:placeLight({x=i,y=j},5,{r=0.8,g=0.2,b=0.2})
-			self:placeLightFov({x=i,y=j},5,{r=0.8,g=0.2,b=0.2},nil,5)
+		local tt=dfhack.maps.getTileType(pos)
+		if tt then
+			local shape=tile_attrs[tt].shape
+			local t2=dfhack.maps.getTileFlags(pos2)
+			if  (t1 and t1.liquid_type and t1.flow_size>0) or 
+				(shape==df.tiletype_shape.EMPTY and t2 and t2.liquid_type and t2.flow_size>0) then
+				--self:placeLight({x=i,y=j},5,{r=0.8,g=0.2,b=0.2})
+				self:placeLightFov({x=i,y=j},5,{r=0.8,g=0.2,b=0.2},nil,5)
+			end
 		end
 	end
 	end
@@ -162,14 +251,21 @@ function LightOverlay:buildOcupancy()
 		local pos={x=i+vp.x1-1,y=j+vp.y1-1,z=vp.z}
 		local tile=i+j*map.width
 		local tt=dfhack.maps.getTileType(pos)
-		
+		local t1=dfhack.maps.getTileFlags(pos)
 		if tt then
 			local shape=tile_attrs[tt].shape
-			self.ocupancy[tile]=lightPassable(shape)
+			if not lightPassable(shape) then
+				self.ocupancy[tile]={r=0,g=0,b=0}
+			else
+				if t1 and not t1.liquid_type and t1.flow_size>2 then
+					self.ocupancy[tile]={r=0.5,g=0.5,b=0.7}
+				else
+					self.ocupancy[tile]={r=0.8,g=0.8,b=0.8}
+				end
+			end
 		end
 	end
 	end
-	
 end
 function LightOverlay:makeLightMap()
 	self.lightMap={}
@@ -193,7 +289,7 @@ function LightOverlay:render(dc)
 	
 	self.lightMap=self.lightMap or {}
 	render.lockGrids()
-	df.global.gps.force_full_display_count=df.global.gps.force_full_display_count+1
+	render.invalidate({x=map.x1,y=map.y1,w=map.width,h=map.height})
 	render.resetGrids()
 	for i=map.x1,map.x2 do
 	for j=map.y1,map.y2 do
@@ -212,8 +308,9 @@ end
 function LightOverlay:onDismiss()
 	render.lockGrids()
 	render.resetGrids()
+	render.invalidate()
 	render.unlockGrids()
-	df.global.gps.force_full_display_count=df.global.gps.force_full_display_count+1
+	
 end
 function LightOverlay:onInput(keys)
 	if keys.LEAVESCREEN then

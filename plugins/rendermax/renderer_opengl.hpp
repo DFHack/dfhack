@@ -114,6 +114,19 @@ public:
     virtual bool uses_opengl() { 
         return parent->uses_opengl();
     };
+    void invalidateRect(int32_t x,int32_t y,int32_t w,int32_t h)
+    {
+        for(int i=x;i<x+w;i++)
+        for(int j=y;j<y+h;j++)
+        {
+            int index=i*df::global::gps->dimy + j;
+            screen_old[index*4]=screen[index*4]+1;
+        }
+    };
+    void invalidate()
+    {
+        invalidateRect(0,0,df::global::gps->dimx,df::global::gps->dimy);
+    };
 protected:
     renderer* parent;
 };

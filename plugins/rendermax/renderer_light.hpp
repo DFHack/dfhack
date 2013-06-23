@@ -79,7 +79,21 @@ struct lightSource
 {
     lightCell power;
     int radius;
-    df::coord2d pos;
+    bool flicker;
+    lightSource():power(0,0,0),radius(0),flicker(false)
+    {
+
+    }
+    lightSource(lightCell power,int radius):power(power),radius(radius),flicker(false)
+    {
+
+    }
+    float powerSquared()const
+    {
+        return power.r*power.r+power.g*power.g+power.b*power.b;
+    }
+    void combine(const lightSource& other);
+
 };
 class lightingEngineViewscreen:public lightingEngine
 {
@@ -96,6 +110,7 @@ private:
     void doRay(lightCell power,int cx,int cy,int tx,int ty);
     void doFovs();
     bool lightUpCell(lightCell& power,int dx,int dy,int tx,int ty);
+    bool addLight(int tileId,const lightSource& light);
     size_t inline getIndex(int x,int y)
     {
         return x*h+y;

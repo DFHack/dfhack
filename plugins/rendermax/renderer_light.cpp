@@ -62,6 +62,7 @@ void lightingEngineViewscreen::reinit()
     size_t size=w*h;
     lightMap.resize(size,lightCell(1,1,1));
     ocupancy.resize(size);
+    lights.resize(size);
 }
 void plotCircle(int xm, int ym, int r,std::function<void(int,int)> setPixel)
 {
@@ -105,17 +106,21 @@ bool lightingEngineViewscreen::lightUpCell(lightCell& power,int dx,int dy,int tx
         size_t tile=getIndex(tx,ty);
         float dsq=dx*dx+dy*dy;
         lightCell& v=ocupancy[tile];
+        lightSource& ls=lights[tile];
         bool wallhack=false;
-        bool outsidehack=false;
         if(v.r+v.g+v.b==0)
             wallhack=true;
-        if(v.r<0)
-            outsidehack=true;
-        if (dsq>0 && !wallhack && !outsidehack)
+        
+        if (dsq>0 && !wallhack)
         {
             power.r=power.r*(pow(v.r,dsq));
             power.g=power.g*(pow(v.g,dsq));
             power.b=power.b*(pow(v.b,dsq));
+        }
+        if(ls.radius>0 && dsq>0)
+        {
+            if(power<ls.power)
+                return false;
         }
         //float dt=sqrt(dsq);
         lightCell oldCol=lightMap[tile];
@@ -123,8 +128,6 @@ bool lightingEngineViewscreen::lightUpCell(lightCell& power,int dx,int dy,int tx
         lightMap[tile]=ncol;
         
         if(wallhack)
-            return false;
-        if(dsq>0 && outsidehack)
             return false;
         float pwsq=power.r*power.r+power.g*power.g+power.b*power.b;
         return pwsq>levelDim*levelDim;
@@ -142,17 +145,32 @@ void lightingEngineViewscreen::doFovs()
 {
     mapPort=getMapViewport();
     using namespace std::placeholders;
-    for(size_t i=0;i<lights.size();i++)
-    {
-        lightSource& csource=lights[i];
-        plotCircle(csource.pos.x,csource.pos.y,csource.radius,std::bind(&lightingEngineViewscreen::doRay,this,csource.power,csource.pos.x,csource.pos.y,_1,_2));
-    }
+
+    for(int i=mapPort.first.x;i<mapPort.second.x;i++)
+        for(int j=mapPort.first.y;j<mapPort.second.y;j++)
+        {
+            lightSource& csource=lights[getIndex(i,j)];
+            if(csource.radius>0)
+            {
+                lightCell power=csource.power;
+                int radius =csource.radius;
+                if(csource.flicker)
+                {
+                    float flicker=(rand()/(float)RAND_MAX)/2.0f+0.5f;
+                    radius*=flicker;
+                    power=power*flicker;
+                }
+                plotCircle(i,j,radius,
+                std::bind(&lightingEngineViewscreen::doRay,this,power,i,j,_1,_2));
+            }
+        }
 }
 void lightingEngineViewscreen::calculate()
 {
     rect2d vp=getMapViewport();
     const lightCell dim(levelDim,levelDim,levelDim);
     lightMap.assign(lightMap.size(),lightCell(1,1,1));
+    lights.assign(lights.size(),lightSource());
     for(int i=vp.first.x;i<vp.second.x;i++)
     for(int j=vp.first.y;j<vp.second.y;j++)
     {
@@ -177,9 +195,22 @@ void lightingEngineViewscreen::updateWindow()
     myRenderer->invalidate();
     //std::copy(lightMap.begin(),lightMap.end(),myRenderer->lightGrid.begin());
 }
+void lightSource::combine(const lightSource& other)
+{
+    power=blend(power,other.power);
+    radius=std::max(other.radius,radius);//hack... but who cares
+}
+bool lightingEngineViewscreen::addLight(int tileId,const lightSource& light)
+{
+    bool wasLight=lights[tileId].radius>0;
+    lights[tileId].combine(light);
+    if(light.flicker)
+        lights[tileId].flicker=true;
+    return wasLight;
+}
 void lightingEngineViewscreen::doOcupancyAndLights()
 {
-    lights.clear();
+    
     rect2d vp=getMapViewport();
     
     int window_x=*df::global::window_x;
@@ -192,8 +223,9 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     {
         int wx=x-window_x+vp.first.x;
         int wy=y-window_y+vp.first.y;
-        lightCell& curCell=ocupancy[getIndex(wx,wy)];
-        curCell=lightCell(0.8f,0.8f,0.8f);
+        int tile=getIndex(wx,wy);
+        lightCell& curCell=ocupancy[tile];
+        curCell=lightCell(0.85f,0.85f,0.85f);
         df::tiletype* type = Maps::getTileType(x,y,window_z);
         if(!type)
             continue;
@@ -204,7 +236,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         if(!o || !d )
             continue;
         
-        if(shape==df::tiletype_shape::BROOK_BED || shape==df::tiletype_shape::WALL || shape==df::tiletype_shape::TREE || o->bits.building)
+        if(shape==df::tiletype_shape::BROOK_BED || shape==df::tiletype_shape::WALL || shape==df::tiletype_shape::TREE )
         {
             curCell=lightCell(0,0,0);
         }
@@ -215,16 +247,19 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         //todo constructions
 
         //lights
-        if((d->bits.liquid_type && d->bits.flow_size>0)|| (d2 && d2->bits.liquid_type && d2->bits.flow_size>0))
+        if((d->bits.liquid_type && d->bits.flow_size>0)|| 
+            (
+            (shape==df::tiletype_shape::EMPTY || shape==df::tiletype_shape::RAMP_TOP || shape==df::tiletype_shape::STAIR_DOWN || shape==df::tiletype_shape::STAIR_UPDOWN )
+            && d2 && d2->bits.liquid_type && d2->bits.flow_size>0)
+            )
         {
-            lightSource lava={lightCell(0.8f,0.2f,0.2f),5,coord2d(wx,wy)};
-            lights.push_back(lava);
+            lightSource lava(lightCell(0.8f,0.2f,0.2f),5);
+            addLight(tile,lava);
         }
         if(d->bits.outside)
         {
-            lightSource sun={lightCell(1,1,1),25,coord2d(wx,wy)};
-            lights.push_back(sun);
-            curCell=lightCell(-1,-1,-1);//Marking as outside so no calculation is done on it
+            lightSource sun(lightCell(1,1,1),15);
+            addLight(tile,sun);
         }
         
     }
@@ -243,6 +278,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 df::coord2d pos=f->pos;
                 int wx=pos.x-window_x+vp.first.x;
                 int wy=pos.y-window_y+vp.first.y;
+                int tile=getIndex(wx,wy);
                 if(wx>=vp.first.x && wy>=vp.first.y && wx<=vp.second.x && wy<=vp.second.y)
                 {
                     lightCell fireColor;
@@ -258,10 +294,19 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                     {
                         fireColor=lightCell(0.64f,0.0f,0.0f);
                     }
-                    lightSource fire={fireColor,f->density/5,coord2d(wx,wy)};
-                    lights.push_back(fire);
+                    lightSource fire(fireColor,f->density/5);
+                    addLight(tile,fire);
                 }
             }
         }
+    }
+    if(df::global::cursor->x>-30000)
+    {
+        lightSource cursor(lightCell(0.96f,0.84f,0.03f),11);
+        cursor.flicker=true;
+        int wx=df::global::cursor->x-window_x+vp.first.x;
+        int wy=df::global::cursor->y-window_y+vp.first.y;
+        int tile=getIndex(wx,wy);
+        addLight(tile,cursor);
     }
 }

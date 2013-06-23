@@ -1,4 +1,4 @@
--- an experimental lighting engine for df
+-- an experimental lighting engine for df. param: "static" to not recalc when in game. press "~" to recalculate. "`" to exit
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'
 local render = require 'plugins.rendermax'
@@ -36,9 +36,12 @@ end
 LightOverlay=defclass(LightOverlay,guidm.DwarfOverlay)
 LightOverlay.ATTRS {
     lightMap={},
-	dynamic=true
+	dynamic=true,
+	dirty=false,
 }
-function LightOverlay.init(args)
+function LightOverlay:init(args)
+	
+	self.tick=df.global.cur_year_tick_advmode
 end
 
 function lightPassable(shape)
@@ -102,8 +105,14 @@ function line(x0, y0, x1, y1,plot)
 		end
 	end
 end
-function LightOverlay:placeLightFov(pos,radius,color,f)
-	f=f or falloff
+function LightOverlay:calculateFovs()
+	self.fovs=self.fovs or {}
+	self.precalc=self.precalc or {}
+	for k,v in ipairs(self.fovs) do
+		self:calculateFov(v.pos,v.radius,v.color)
+	end
+end
+function LightOverlay:calculateFov(pos,radius,color)
 	local vp=self:getViewport()
 	local map = self.df_layout.map
 	local ray=function(tx,ty)
@@ -115,9 +124,16 @@ function LightOverlay:placeLightFov(pos,radius,color,f)
 				local dtsq=(lx-x)*(lx-x)+(ly-y)*(ly-y)
 				local dt=math.sqrt(dtsq)
 				local tile=x+y*map.width
-				
+				if self.precalc[tile] then
+					local tcol=blend(self.precalc[tile],power)
+					if tcol.r==self.precalc[tile].r and tcol.g==self.precalc[tile].g and self.precalc[tile].b==self.precalc[tile].b 
+						and dtsq>0 then
+						return false
+					end
+				end
 				local ocol=self.lightMap[tile] or {r=0,g=0,b=0}
 				local ncol=blend(power,ocol)
+				
 				self.lightMap[tile]=ncol
 				local v=self.ocupancy[tile]
 				if dtsq>0 then
@@ -135,6 +151,17 @@ function LightOverlay:placeLightFov(pos,radius,color,f)
 		line(pos.x,pos.y,tx,ty,setTile)
 	end
 	circle(pos.x,pos.y,radius,ray)
+end
+function LightOverlay:placeLightFov(pos,radius,color)
+	local map = self.df_layout.map
+	local tile=pos.x+pos.y*map.width
+	local ocol=self.precalc[tile] or {r=0,g=0,b=0}
+	local ncol=blend(color,ocol)
+	self.precalc[tile]=ncol
+	local ocol=self.lightMap[tile] or {r=0,g=0,b=0}
+	local ncol=blend(color,ocol)
+	self.lightMap[tile]=ncol
+	table.insert(self.fovs,{pos=pos,radius=radius,color=color})
 end
 function LightOverlay:placeLightFov2(pos,radius,color,f,rays)
 	f=f or falloff
@@ -208,7 +235,7 @@ function LightOverlay:calculateLightLava()
 			if  (t1 and t1.liquid_type and t1.flow_size>0) or 
 				(shape==df.tiletype_shape.EMPTY and t2 and t2.liquid_type and t2.flow_size>0) then
 				--self:placeLight({x=i,y=j},5,{r=0.8,g=0.2,b=0.2})
-				self:placeLightFov({x=i,y=j},5,{r=0.8,g=0.2,b=0.2},nil,5)
+				self:placeLightFov({x=i,y=j},5,{r=0.8,g=0.2,b=0.2},nil)
 			end
 		end
 	end
@@ -225,7 +252,7 @@ function LightOverlay:calculateLightSun()
 		
 		if  (t1 and t1.outside ) then
 			
-			self:placeLightFov({x=i,y=j},7,{r=1,g=1,b=1},nil,3)
+			self:placeLightFov({x=i,y=j},15,{r=1,g=1,b=1},nil)
 		end
 	end
 	end
@@ -267,22 +294,36 @@ function LightOverlay:buildOcupancy()
 	end
 	end
 end
+function LightOverlay:changed()
+	if self.dirty or self.tick~=df.global.cur_year_tick_advmode then
+		self.dirty=false
+		self.tick=df.global.cur_year_tick_advmode
+		return true
+	end
+	return false
+end
 function LightOverlay:makeLightMap()
+	if not self:changed() then
+		return
+	end
+	self.fovs={}
+	self.precalc={}
 	self.lightMap={}
+	
 	self:buildOcupancy()
 	self:calculateLightCursor()
 	self:calculateLightLava()
 	self:calculateLightSun()
+	
+	self:calculateFovs()
 end
 function LightOverlay:onIdle()
 	self._native.parent:logic()
+end
+function LightOverlay:render(dc)
 	if self.dynamic then
 		self:makeLightMap()
 	end
-end
-function LightOverlay:render(dc)
-
-	
 	self:renderParent()
 	local vp=self:getViewport()
 	local map = self.df_layout.map
@@ -313,7 +354,7 @@ function LightOverlay:onDismiss()
 	
 end
 function LightOverlay:onInput(keys)
-	if keys.LEAVESCREEN then
+	if keys.STRING_A096 then
 		self:dismiss()
 	else
 		self:sendInputToParent(keys)
@@ -324,6 +365,7 @@ function LightOverlay:onInput(keys)
 		if keys.STRING_A126 and not self.dynamic then
 			self:makeLightMap()
 		end
+		self.dirty=true
 	end
 end
 if not render.isEnabled() then

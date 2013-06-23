@@ -193,6 +193,78 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     int window_z=*df::global::window_z;
     int vpW=vp.second.x-vp.first.x;
     int vpH=vp.second.y-vp.first.y;
+    int endBlockx = (window_x+vpW);
+    int endBlocky = (window_y+vpH);
+    if(endBlockx >= df::global::world->map.x_count_block) endBlockx = df::global::world->map.x_count_block-1;
+    if(endBlocky >= df::global::world->map.y_count_block) endBlocky = df::global::world->map.y_count_block-1;
+    for(int blockx=window_x/16;blockx<=endBlockx;blockx++)
+    for(int blocky=window_y/16;blocky<=endBlocky;blocky++)
+    {
+
+        lightCell cellArray[16][16];
+        for(int block_x = 0; block_x < 16; block_x++)
+        for(int block_y = 0; block_y < 16; block_y++)
+        {
+            cellArray[block_x][block_y] = lightCell(1,1,1);
+        }
+        int totalBlank = 0;
+        int topLevel = df::global::world->map.z_count-1;
+        for(int ZZ = topLevel; (ZZ >= window_z) && totalBlank < 257; ZZ--)
+        {
+            df::map_block* block=Maps::getBlock(blockx,blocky,ZZ);
+            totalBlank = 0;
+            for(int block_x = 0; block_x < 16; block_x++)
+            for(int block_y = 0; block_y < 16; block_y++)
+            {
+                if(block)
+                {
+                    df::tiletype type = block->tiletype[block_x][block_y];
+                    df::tile_designation d = block->designation[block_x][block_y];
+                    df::tile_occupancy o = block->occupancy[block_x][block_y];
+                    df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,type);
+                    df::tiletype_shape_basic basic_shape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
+
+                    if(basic_shape==df::tiletype_shape_basic::Wall)
+                    {
+                        cellArray[block_x][block_y]=lightCell(0,0,0);
+                    }
+                    else if(basic_shape==df::tiletype_shape_basic::Floor || basic_shape==df::tiletype_shape_basic::Ramp || basic_shape==df::tiletype_shape_basic::Stair)
+                    {
+                        if(ZZ!=window_z)
+                        {
+                            cellArray[block_x][block_y]=lightCell(0,0,0);
+                        }
+                    }
+                    if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size)
+                    {
+                        cellArray[block_x][block_y] *= (lightCell(1,1,1) - (lightCell(1,1,1) - lightCell(0.63f,0.63f,0.75f))*(d.bits.flow_size/7));
+                    }
+                    else if(d.bits.liquid_type == df::enums::tile_liquid::Magma && d.bits.flow_size > 3)
+                    {
+                        cellArray[block_x][block_y]=lightCell(0,0,0);
+                    }
+                }
+                if(cellArray[block_x][block_y].r < 0.003f && cellArray[block_x][block_y].g < 0.003f && cellArray[block_x][block_y].b < 0.003f)
+                    totalBlank++;
+            }
+        }
+        for(int block_x = 0; block_x < 16; block_x++)
+        for(int block_y = 0; block_y < 16; block_y++)
+        {
+            df::coord2d pos;
+            pos.x = blockx*16+block_x;
+            pos.y = blocky*16+block_y;
+            int wx=pos.x-window_x+vp.first.x;
+            int wy=pos.y-window_y+vp.first.y;
+
+            if(cellArray[block_x][block_y].r >= 0.003f && cellArray[block_x][block_y].g >= 0.003f && cellArray[block_x][block_y].b >= 0.003f)
+            {
+                lightSource sun={cellArray[block_x][block_y],25,coord2d(wx,wy)};
+                lights.push_back(sun);
+            }
+        }
+
+    }
     for(int x=window_x;x<window_x+vpW;x++)
     for(int y=window_y;y<window_y+vpH;y++)
     {
@@ -261,17 +333,15 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             lightSource lava={lightCell(0.8f,0.2f,0.2f),5,coord2d(wx,wy)};
             lights.push_back(lava);
         }
-        if(d->bits.outside)
+        if(d->bits.outside && d->bits.flow_size==0)
         {
-            lightSource sun={lightCell(1,1,1),25,coord2d(wx,wy)};
-            lights.push_back(sun);
             curCell=lightCell(-1,-1,-1);//Marking as outside so no calculation is done on it
         }
         
     }
 
-    for(int blockx=window_x/16;blockx<(window_x+vpW)/16;blockx++)
-    for(int blocky=window_y/16;blocky<(window_x+vpW)/16;blocky++)
+    for(int blockx=window_x/16;blockx<=endBlockx;blockx++)
+    for(int blocky=window_y/16;blocky<=endBlocky;blocky++)
     {
         df::map_block* block=Maps::getBlock(blockx,blocky,window_z);
         if(!block)

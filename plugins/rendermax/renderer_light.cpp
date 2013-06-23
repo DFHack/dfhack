@@ -105,6 +105,7 @@ bool lightingEngineViewscreen::lightUpCell(lightCell& power,int dx,int dy,int tx
     {
         size_t tile=getIndex(tx,ty);
         float dsq=dx*dx+dy*dy;
+        float dt=sqrt(dsq);
         lightCell& v=ocupancy[tile];
         lightSource& ls=lights[tile];
         bool wallhack=false;
@@ -113,9 +114,9 @@ bool lightingEngineViewscreen::lightUpCell(lightCell& power,int dx,int dy,int tx
         
         if (dsq>0 && !wallhack)
         {
-            power.r=power.r*(pow(v.r,dsq));
-            power.g=power.g*(pow(v.g,dsq));
-            power.b=power.b*(pow(v.b,dsq));
+            power.r=power.r*(pow(v.r,dt));
+            power.g=power.g*(pow(v.g,dt));
+            power.b=power.b*(pow(v.b,dt));
         }
         if(ls.radius>0 && dsq>0)
         {
@@ -186,6 +187,7 @@ void lightingEngineViewscreen::updateWindow()
     if(lightMap.size()!=myRenderer->lightGrid.size())
     {
         reinit();
+        myRenderer->invalidate();
         return;
     }
     std::swap(lightMap,myRenderer->lightGrid);
@@ -210,7 +212,9 @@ bool lightingEngineViewscreen::addLight(int tileId,const lightSource& light)
 }
 void lightingEngineViewscreen::doOcupancyAndLights()
 {
-    
+    lightSource sun(lightCell(1,1,1),15);
+    lightSource lava(lightCell(0.8f,0.2f,0.2f),5);
+
     rect2d vp=getMapViewport();
     
     int window_x=*df::global::window_x;
@@ -228,15 +232,18 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         curCell=lightCell(0.85f,0.85f,0.85f);
         df::tiletype* type = Maps::getTileType(x,y,window_z);
         if(!type)
+        {
+            //unallocated, do sky
+                addLight(tile,sun);
             continue;
+        }
         df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,*type);
         df::tile_designation* d=Maps::getTileDesignation(x,y,window_z);
         df::tile_designation* d2=Maps::getTileDesignation(x,y,window_z-1);
         df::tile_occupancy* o=Maps::getTileOccupancy(x,y,window_z);
         if(!o || !d )
             continue;
-        
-        if(shape==df::tiletype_shape::BROOK_BED || shape==df::tiletype_shape::WALL || shape==df::tiletype_shape::TREE )
+        if(shape==df::tiletype_shape::BROOK_BED || shape==df::tiletype_shape::WALL || shape==df::tiletype_shape::TREE || d->bits.hidden )
         {
             curCell=lightCell(0,0,0);
         }
@@ -253,12 +260,12 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             && d2 && d2->bits.liquid_type && d2->bits.flow_size>0)
             )
         {
-            lightSource lava(lightCell(0.8f,0.2f,0.2f),5);
+            
             addLight(tile,lava);
         }
         if(d->bits.outside)
         {
-            lightSource sun(lightCell(1,1,1),15);
+            
             addLight(tile,sun);
         }
         

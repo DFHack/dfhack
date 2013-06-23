@@ -1,4 +1,7 @@
 //original file from https://github.com/Baughn/Dwarf-Fortress--libgraphics-
+#ifndef RENDERER_OPENGL_INCLUDED
+#define RENDERER_OPENGL_INCLUDED
+
 #include "tinythread.h"
 #include "fast_mutex.h"
 
@@ -120,12 +123,13 @@ public:
         for(int j=y;j<y+h;j++)
         {
             int index=i*df::global::gps->dimy + j;
-            screen_old[index*4]=screen[index*4]+1;
+            screen_old[index*4]=0;
         }
     };
     void invalidate()
     {
-        invalidateRect(0,0,df::global::gps->dimx,df::global::gps->dimy);
+        //invalidateRect(0,0,df::global::gps->dimx,df::global::gps->dimy);
+        df::global::gps->force_full_display_count++;
     };
 protected:
     renderer* parent;
@@ -347,3 +351,4 @@ public:
         reinitGrids(w,h);
     }
 };
+#endif

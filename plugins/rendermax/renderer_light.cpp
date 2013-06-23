@@ -324,7 +324,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             pos.y = blocky*16+block_y;
             int wx=pos.x-window_x+vp.first.x;
             int wy=pos.y-window_y+vp.first.y;
-
+            if(wx>=vp.first.x && wy>=vp.first.y && wx<=vp.second.x && wy<=vp.second.y)
             if(cellArray[block_x][block_y].r >= 0.003f && cellArray[block_x][block_y].g >= 0.003f && cellArray[block_x][block_y].b >= 0.003f)
             {
                 lightSource sun=lightSource(cellArray[block_x][block_y],15);

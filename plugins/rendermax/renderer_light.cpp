@@ -242,7 +242,7 @@ void addPlant(const std::string& id,std::map<int,lightSource>& map,const lightSo
     }
 }
 void lightingEngineViewscreen::initRawSpecific()
-{
+{   
     addPlant("TOWER_CAP",glowPlants,lightSource(lightCell(0.65,0.65,0.65),6));
     addPlant("MUSHROOM_CUP_DIMPLE",glowPlants,lightSource(lightCell(0.03,0.03,0.5),3));
     addPlant("CAVE MOSS",glowPlants,lightSource(lightCell(0.1,0.1,0.4),2));
@@ -263,8 +263,8 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     int window_z=*df::global::window_z;
     int vpW=vp.second.x-vp.first.x;
     int vpH=vp.second.y-vp.first.y;
-    int endBlockx = (window_x+vpW);
-    int endBlocky = (window_y+vpH);
+    int endBlockx = (window_x+vpW)/16;
+    int endBlocky = (window_y+vpH)/16;
     if(endBlockx >= df::global::world->map.x_count_block) endBlockx = df::global::world->map.x_count_block-1;
     if(endBlocky >= df::global::world->map.y_count_block) endBlocky = df::global::world->map.y_count_block-1;
     for(int blockx=window_x/16;blockx<=endBlockx;blockx++)
@@ -279,40 +279,38 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         }
         int totalBlank = 0;
         int topLevel = df::global::world->map.z_count-1;
-        for(int ZZ = topLevel; (ZZ >= window_z) && totalBlank < 257; ZZ--)
+        for(int ZZ = topLevel; (ZZ >= window_z) && totalBlank < 256; ZZ--)
         {
             df::map_block* block=Maps::getBlock(blockx,blocky,ZZ);
             totalBlank = 0;
+            if(block)
             for(int block_x = 0; block_x < 16; block_x++)
             for(int block_y = 0; block_y < 16; block_y++)
             {
-                if(block)
-                {
-                    df::tiletype type = block->tiletype[block_x][block_y];
-                    df::tile_designation d = block->designation[block_x][block_y];
-                    df::tile_occupancy o = block->occupancy[block_x][block_y];
-                    df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,type);
-                    df::tiletype_shape_basic basic_shape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
+                df::tiletype type = block->tiletype[block_x][block_y];
+                df::tile_designation d = block->designation[block_x][block_y];
+                df::tile_occupancy o = block->occupancy[block_x][block_y];
+                df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,type);
+                df::tiletype_shape_basic basic_shape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
 
-                    if(basic_shape==df::tiletype_shape_basic::Wall)
+                if(basic_shape==df::tiletype_shape_basic::Wall)
+                {
+                    cellArray[block_x][block_y]=lightCell(0,0,0);
+                }
+                else if(basic_shape==df::tiletype_shape_basic::Floor || basic_shape==df::tiletype_shape_basic::Ramp || basic_shape==df::tiletype_shape_basic::Stair)
+                {
+                    if(ZZ!=window_z)
                     {
                         cellArray[block_x][block_y]=lightCell(0,0,0);
                     }
-                    else if(basic_shape==df::tiletype_shape_basic::Floor || basic_shape==df::tiletype_shape_basic::Ramp || basic_shape==df::tiletype_shape_basic::Stair)
-                    {
-                        if(ZZ!=window_z)
-                        {
-                            cellArray[block_x][block_y]=lightCell(0,0,0);
-                        }
-                    }
-                    if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size)
-                    {
-                        cellArray[block_x][block_y] *= (lightCell(1,1,1) - (lightCell(1,1,1) - lightCell(0.63f,0.63f,0.75f))*(d.bits.flow_size/7));
-                    }
-                    else if(d.bits.liquid_type == df::enums::tile_liquid::Magma && d.bits.flow_size > 3)
-                    {
-                        cellArray[block_x][block_y]=lightCell(0,0,0);
-                    }
+                }
+                if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size)
+                {
+                    cellArray[block_x][block_y] *= (lightCell(1,1,1) - (lightCell(1,1,1) - lightCell(0.63f,0.63f,0.75f))*(d.bits.flow_size/7));
+                }
+                else if(d.bits.liquid_type == df::enums::tile_liquid::Magma && d.bits.flow_size > 3)
+                {
+                    cellArray[block_x][block_y]=lightCell(0,0,0);
                 }
                 if(cellArray[block_x][block_y].r < 0.003f && cellArray[block_x][block_y].g < 0.003f && cellArray[block_x][block_y].b < 0.003f)
                     totalBlank++;
@@ -329,9 +327,8 @@ void lightingEngineViewscreen::doOcupancyAndLights()
 
             if(cellArray[block_x][block_y].r >= 0.003f && cellArray[block_x][block_y].g >= 0.003f && cellArray[block_x][block_y].b >= 0.003f)
             {
-                int tile=getIndex(wx,wy);
-                lightSource sun(cellArray[block_x][block_y],25);
-                addLight(tile,sun);
+                lightSource sun=lightSource(cellArray[block_x][block_y],15);
+                addLight(getIndex(wx,wy),sun);
             }
         }
 
@@ -345,21 +342,25 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         lightCell& curCell=ocupancy[tile];
         curCell=lightCell(0.85f,0.85f,0.85f);
         df::tiletype* type = Maps::getTileType(x,y,window_z);
-        //if(!type)
-        //{
-        //    //unallocated, do sky
-        //        addLight(tile,sun);
-        //    continue;
-        //}
+        if(!type)
+        {
+            //unallocated, do sky
+            addLight(tile,sun);
+            continue;
+        }
         df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,*type);
         df::tile_designation* d=Maps::getTileDesignation(x,y,window_z);
         df::tile_designation* d2=Maps::getTileDesignation(x,y,window_z-1);
         df::tile_occupancy* o=Maps::getTileOccupancy(x,y,window_z);
+        df::tiletype_material m=ENUM_ATTR(tiletype,material,*type);
         if(!o || !d )
             continue;
         if(shape==df::tiletype_shape::BROOK_BED || shape==df::tiletype_shape::WALL || shape==df::tiletype_shape::TREE || d->bits.hidden )
         {
-            curCell=lightCell(0,0,0);
+            if(shape==df::tiletype_shape::WALL && m==df::tiletype_material::FROZEN_LIQUID)
+                curCell*=lightCell(0.7,0.7,0.9);
+            else
+                curCell=lightCell(0,0,0);
         }
         else if(o->bits.building)
         {
@@ -423,7 +424,6 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         {
             curCell*=lightCell(0.7f,0.7f,0.8f);
         }
-
         //lights
         if((d->bits.liquid_type && d->bits.flow_size>0)|| 
             (
@@ -434,8 +434,12 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             
             addLight(tile,lava);
         }
+        if(d->bits.outside && d->bits.flow_size==0)
+        {
+            addLight(tile,sun);
+        }
+        
     }
-
     for(int blockx=window_x/16;blockx<=endBlockx;blockx++)
     for(int blocky=window_y/16;blocky<=endBlocky;blocky++)
     {

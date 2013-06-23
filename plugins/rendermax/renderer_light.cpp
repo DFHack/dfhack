@@ -11,6 +11,9 @@
 #include "df/graphic.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/flow_info.h"
+#include "df/world.h"
+#include "df/building.h"
+
 
 using df::global::gps;
 using namespace DFHack;
@@ -177,6 +180,9 @@ void lightingEngineViewscreen::updateWindow()
     myRenderer->invalidate();
     //std::copy(lightMap.begin(),lightMap.end(),myRenderer->lightGrid.begin());
 }
+
+static size_t max_list_size = 100000; // Avoid iterating over huge lists
+
 void lightingEngineViewscreen::doOcupancyAndLights()
 {
     lights.clear();
@@ -204,9 +210,44 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         if(!o || !d )
             continue;
         
-        if(shape==df::tiletype_shape::BROOK_BED || shape==df::tiletype_shape::WALL || shape==df::tiletype_shape::TREE || o->bits.building)
+        if(shape==df::tiletype_shape::BROOK_BED || shape==df::tiletype_shape::WALL || shape==df::tiletype_shape::TREE /*|| o->bits.building*/)
         {
             curCell=lightCell(0,0,0);
+        }
+        else if(o->bits.building)
+        {
+            // Fixme: don't iterate the list every frame
+            size_t count = df::global::world->buildings.all.size();
+            if (count <= max_list_size)
+            {
+                for(size_t i = 0; i < count; i++)
+                {
+                    df::building *bld = df::global::world->buildings.all[i];
+
+                    if (window_z == bld->z && 
+                        x >= bld->x1 && x <= bld->x2 &&
+                        y >= bld->y1 && y <= bld->y2)
+                    {
+                        df::building_type type = bld->getType();
+
+                        if (type == df::enums::building_type::WindowGlass)
+                        {
+                            if(bld->mat_type == 3)//green glass
+                            {
+                                curCell=lightCell(0.1f,0.9f,0.5f);
+                            }
+                            else if(bld->mat_type == 4)//clear glass
+                            {
+                                curCell=lightCell(0.5f,0.95f,0.9f);
+                            }
+                            else if(bld->mat_type == 5)//crystal glass
+                            {
+                                curCell=lightCell(0.75f,0.95f,0.95f);
+                            }
+                        }
+                    }
+                }
+            }
         }
         else if(!d->bits.liquid_type && d->bits.flow_size>3 )
         {

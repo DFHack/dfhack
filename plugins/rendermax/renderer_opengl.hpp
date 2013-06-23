@@ -222,6 +222,10 @@ struct lightCell
     {
         return lightCell(r+other.r,g+other.g,b+other.b);
     }
+    bool operator<(const lightCell& other)
+    {
+        return r<other.r && g<other.g && b<other.b;
+    }
 };
 struct renderer_test : public renderer_wrap {
 private:

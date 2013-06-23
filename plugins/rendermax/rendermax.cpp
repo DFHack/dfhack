@@ -185,6 +185,30 @@ static int setCell(lua_State* L)
     r->backOffset[id]=bo;
     return 0;
 }
+static int invalidate(lua_State* L)
+{
+    if(current_mode!=MODE_LUA)
+        return 0;
+    renderer_lua* r=reinterpret_cast<renderer_lua*>(df::global::enabler->renderer);
+    if(lua_gettop(L)==0)
+    {
+        r->invalidate();
+    }
+    else
+    {
+        int x,y,w,h;
+        lua_getfield(L,1,"x");
+        x=lua_tonumber(L,-1);lua_pop(L,1);
+        lua_getfield(L,1,"y");
+        y=lua_tonumber(L,-1);lua_pop(L,1);
+        lua_getfield(L,1,"w");
+        w=lua_tonumber(L,-1);lua_pop(L,1);
+        lua_getfield(L,1,"h");
+        h=lua_tonumber(L,-1);lua_pop(L,1);
+        r->invalidateRect(x,y,w,h);
+    }
+    return 0;
+}
 bool isEnabled()
 {
     return current_mode==MODE_LUA;
@@ -200,6 +224,7 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(getCell),
     DFHACK_LUA_COMMAND(setCell),
     DFHACK_LUA_COMMAND(getGridsSize),
+    DFHACK_LUA_COMMAND(invalidate),
     DFHACK_LUA_END
 };
 static command_result rendermax(color_ostream &out, vector <string> & parameters)

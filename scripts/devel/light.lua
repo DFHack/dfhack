@@ -107,17 +107,28 @@ function LightOverlay:placeLightFov(pos,radius,color,f)
 	local vp=self:getViewport()
 	local map = self.df_layout.map
 	local ray=function(tx,ty)
-		
+		local power=copyall(color)
+		local lx=pos.x
+		local ly=pos.y
 		local setTile=function(x,y)
 			if x>0 and y>0 and x<=map.width and y<=map.height then
-				local dtsq=(pos.x-x)*(pos.x-x)+(pos.y-y)*(pos.y-y)
+				local dtsq=(lx-x)*(lx-x)+(ly-y)*(ly-y)
+				local dt=math.sqrt(dtsq)
 				local tile=x+y*map.width
-				local ncol=f(color,dtsq,radius)
+				
 				local ocol=self.lightMap[tile] or {r=0,g=0,b=0}
-				ncol=blend(ncol,ocol)
+				local ncol=blend(power,ocol)
 				self.lightMap[tile]=ncol
-
-				return self.ocupancy[tile]
+				local v=self.ocupancy[tile]
+				if dtsq>0 then
+					power.r=power.r*(v.r^dt)
+					power.g=power.g*(v.g^dt)
+					power.b=power.b*(v.b^dt)
+				end
+				lx=x
+				ly=y
+				local pwsq=power.r*power.r+power.g*power.g+power.b*power.b
+				return pwsq>levelDim*levelDim
 			end
 			return false
 		end
@@ -240,14 +251,21 @@ function LightOverlay:buildOcupancy()
 		local pos={x=i+vp.x1-1,y=j+vp.y1-1,z=vp.z}
 		local tile=i+j*map.width
 		local tt=dfhack.maps.getTileType(pos)
-		
+		local t1=dfhack.maps.getTileFlags(pos)
 		if tt then
 			local shape=tile_attrs[tt].shape
-			self.ocupancy[tile]=lightPassable(shape)
+			if not lightPassable(shape) then
+				self.ocupancy[tile]={r=0,g=0,b=0}
+			else
+				if t1 and not t1.liquid_type and t1.flow_size>2 then
+					self.ocupancy[tile]={r=0.5,g=0.5,b=0.7}
+				else
+					self.ocupancy[tile]={r=0.8,g=0.8,b=0.8}
+				end
+			end
 		end
 	end
 	end
-	
 end
 function LightOverlay:makeLightMap()
 	self.lightMap={}

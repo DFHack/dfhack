@@ -271,15 +271,15 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                         {
                             if(bld->mat_type == 3)//green glass
                             {
-                                curCell=lightCell(0.1f,0.9f,0.5f);
+                                curCell*=lightCell(0.1f,0.9f,0.5f);
                             }
                             else if(bld->mat_type == 4)//clear glass
                             {
-                                curCell=lightCell(0.5f,0.95f,0.9f);
+                                curCell*=lightCell(0.5f,0.95f,0.9f);
                             }
                             else if(bld->mat_type == 5)//crystal glass
                             {
-                                curCell=lightCell(0.75f,0.95f,0.95f);
+                                curCell*=lightCell(0.75f,0.95f,0.95f);
                             }
                         }
                     }

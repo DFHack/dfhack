@@ -199,6 +199,17 @@ struct lightCell
     {
         return lightCell(r*val,g*val,b*val);
     }
+    lightCell operator*(lightCell cell)
+    {
+        return lightCell(r*cell.r,g*cell.g,b*cell.b);
+    }
+    lightCell operator*=(lightCell cell)
+    {
+        r*=cell.r;
+        g*=cell.g;
+        b*=cell.b;
+        return lightCell(r,g,b);
+    }
     lightCell operator+(const lightCell& other)
     {
         return lightCell(r+other.r,g+other.g,b+other.b);

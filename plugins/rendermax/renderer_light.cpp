@@ -245,7 +245,7 @@ void addPlant(const std::string& id,std::map<int,lightSource>& map,const lightSo
     }
 }
 void lightingEngineViewscreen::initRawSpecific()
-{
+{   
     addPlant("TOWER_CAP",glowPlants,lightSource(lightCell(0.65,0.65,0.65),6));
     addPlant("MUSHROOM_CUP_DIMPLE",glowPlants,lightSource(lightCell(0.03,0.03,0.5),3));
     addPlant("CAVE MOSS",glowPlants,lightSource(lightCell(0.1,0.1,0.4),2));
@@ -357,11 +357,15 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         df::tile_designation* d=Maps::getTileDesignation(x,y,window_z);
         df::tile_designation* d2=Maps::getTileDesignation(x,y,window_z-1);
         df::tile_occupancy* o=Maps::getTileOccupancy(x,y,window_z);
+        df::tiletype_material m=ENUM_ATTR(tiletype,material,*type);
         if(!o || !d )
             continue;
         if(shape==df::tiletype_shape::BROOK_BED || shape==df::tiletype_shape::WALL || shape==df::tiletype_shape::TREE || d->bits.hidden )
         {
-            curCell=lightCell(0,0,0);
+            if(shape==df::tiletype_shape::WALL && m==df::tiletype_material::FROZEN_LIQUID)
+                curCell*=lightCell(0.7,0.7,0.9);
+            else
+                curCell=lightCell(0,0,0);
         }
         else if(o->bits.building)
         {
@@ -425,7 +429,6 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         {
             curCell*=lightCell(0.7f,0.7f,0.8f);
         }
-
         //lights
         if((d->bits.liquid_type && d->bits.flow_size>0)|| 
             (

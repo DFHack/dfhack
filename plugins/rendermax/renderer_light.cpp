@@ -218,7 +218,9 @@ void lightingEngineViewscreen::doOcupancyAndLights()
 {
     lightSource sun(lightCell(1,1,1),15);
     lightSource lava(lightCell(0.8f,0.2f,0.2f),5);
-
+    lightSource candle(lightCell(0.96f,0.84f,0.03f),5);
+    candle.flicker=true;
+    lightSource torch(lightCell(0.96f,0.5f,0.1f),8);
     rect2d vp=getMapViewport();
     
     int window_x=*df::global::window_x;
@@ -282,6 +284,25 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                                 curCell*=lightCell(0.75f,0.95f,0.95f);
                             }
                         }
+                        if (type == df::enums::building_type::Table)
+                        {
+                            addLight(tile,candle);
+                        }
+                        if (type==df::enums::building_type::Statue)
+                        {
+                            addLight(tile,torch);
+                        }
+                        if (type==df::enums::building_type::WindowGem)
+                        {
+                            DFHack::MaterialInfo mat(bld->mat_index,bld->mat_type);
+                            if(mat.isInorganic())
+                            {
+                                int color=mat.inorganic->material.basic_color[0];
+                                curCell*=lightCell(df::global::enabler->ccolor[color][0]/255.0f,
+                                    df::global::enabler->ccolor[color][1]/255.0f,
+                                    df::global::enabler->ccolor[color][2]/255.0f);
+                            }
+                        }
                     }
                 }
             }
@@ -290,7 +311,6 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         {
             curCell*=lightCell(0.7f,0.7f,0.8f);
         }
-        //todo constructions
 
         //lights
         if((d->bits.liquid_type && d->bits.flow_size>0)|| 
@@ -314,6 +334,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     for(int blocky=window_y/16;blocky<(window_x+vpW)/16;blocky++)
     {
         df::map_block* block=Maps::getBlock(blockx,blocky,window_z);
+        
         if(!block)
             continue;
         for(int i=0;i<block->flows.size();i++)

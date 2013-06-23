@@ -20,7 +20,7 @@ using std::vector;
 using std::string;
 enum RENDERER_MODE
 {
-    MODE_DEFAULT,MODE_TRIPPY,MODE_TRUECOLOR,MODE_LUA,MODE_LIGHT
+    MODE_DEFAULT,MODE_TRIPPY,MODE_TRUECOLOR,MODE_LUA,MODE_LIGHT,MODE_LIGHT_OFF
 };
 RENDERER_MODE current_mode=MODE_DEFAULT;
 lightingEngine *engine=NULL;
@@ -47,12 +47,6 @@ void removeOld()
     if(current_mode!=MODE_DEFAULT)
         delete df::global::enabler->renderer;
     current_mode=MODE_DEFAULT;
-    if(current_mode==MODE_LIGHT)
-    {
-        if(engine)
-            delete engine;
-        engine=0;
-    }
 }
 void installNew(df::renderer* r,RENDERER_MODE newMode)
 {
@@ -241,6 +235,11 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
 {
     if(parameters.size()==0)
         return CR_WRONG_USAGE;
+    if(!df::global::enabler->renderer->uses_opengl())
+    {
+        out.printerr("Sorry, this plugin needs open gl enabled printmode. Try STANDARD or other non-2d");
+        return CR_FAILURE;
+    }
     string cmd=parameters[0];
     if(cmd=="trippy")
     {
@@ -305,26 +304,20 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
     }
     else if(cmd=="light")
     {
-        if(current_mode==MODE_LIGHT)
-        {
-            engine->calculate();
-            engine->updateWindow();
-        }
-        else
-        {
-            removeOld();
-            renderer_light *myRender=new renderer_light(df::global::enabler->renderer);
-            installNew(myRender,MODE_LIGHT);
-            engine=new lightingEngineViewscreen(myRender);
-            engine->calculate();
-            engine->updateWindow();
-        }
+        removeOld();
+        renderer_light *myRender=new renderer_light(df::global::enabler->renderer);
+        installNew(myRender,MODE_LIGHT);
+        engine=new lightingEngineViewscreen(myRender);
+        engine->calculate();
+        engine->updateWindow();
         return CR_OK;
     }
     else if(cmd=="disable")
     {
         if(current_mode==MODE_DEFAULT)
             out.print("%s\n","Not installed, doing nothing.");
+        else if(current_mode==MODE_LIGHT)
+            current_mode=MODE_LIGHT_OFF;
         else
             removeOld();
         
@@ -336,9 +329,19 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
 {
     if(engine)
     {
-        engine->calculate();
-        engine->updateWindow();
+        if(current_mode==MODE_LIGHT_OFF)
+        {
+            delete engine;
+            engine=0;
+            removeOld();
+        }
+        else
+        {
+            engine->calculate();
+            engine->updateWindow();
+        }
     }
+    
     return CR_OK;
 }
 DFhackCExport command_result plugin_shutdown(color_ostream &)

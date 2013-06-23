@@ -1,6 +1,7 @@
 #include "renderer_light.hpp"
 
 #include <functional>
+#include <string>
 
 #include "Types.h"
 
@@ -13,7 +14,9 @@
 #include "df/flow_info.h"
 #include "df/world.h"
 #include "df/building.h"
-
+#include "df/building_doorst.h"
+#include "df/plant.h"
+#include "df/plant_raw.h"
 
 using df::global::gps;
 using namespace DFHack;
@@ -54,6 +57,7 @@ rect2d getMapViewport()
 lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):lightingEngine(target)
 {
     reinit();
+    initRawSpecific();
 }
 
 void lightingEngineViewscreen::reinit()
@@ -213,15 +217,46 @@ bool lightingEngineViewscreen::addLight(int tileId,const lightSource& light)
         lights[tileId].flicker=true;
     return wasLight;
 }
+lightCell getStandartColor(int colorId)
+{
+    return lightCell(df::global::enabler->ccolor[colorId][0]/255.0f,
+        df::global::enabler->ccolor[colorId][1]/255.0f,
+        df::global::enabler->ccolor[colorId][2]/255.0f);
+}
+int getPlantNumber(const std::string& id)
+{
+    std::vector<df::plant_raw*>& vec=df::plant_raw::get_vector();
+    for(int i=0;i<vec.size();i++)
+    {
+        if(vec[i]->id==id)
+            return i;
+    }
+    return -1;
+}
+void addPlant(const std::string& id,std::map<int,lightSource>& map,const lightSource& v)
+{
+    int nId=getPlantNumber(id);
+    if(nId>0)
+    {
+        map[nId]=v;
+    }
+}
+void lightingEngineViewscreen::initRawSpecific()
+{
+    addPlant("TOWER_CAP",glowPlants,lightSource(lightCell(0.65,0.65,0.65),6));
+    addPlant("MUSHROOM_CUP_DIMPLE",glowPlants,lightSource(lightCell(0.03,0.03,0.9),3));
+    addPlant("CAVE MOSS",glowPlants,lightSource(lightCell(0.3,0.3,0.9),2));
+    addPlant("MUSHROOM_HELMET_PLUMP",glowPlants,lightSource(lightCell(0.5,0.2,0.9),2));
+}
 static size_t max_list_size = 100000; // Avoid iterating over huge lists
 void lightingEngineViewscreen::doOcupancyAndLights()
 {
     lightSource sun(lightCell(1,1,1),15);
     lightSource lava(lightCell(0.8f,0.2f,0.2f),5);
     lightSource candle(lightCell(0.96f,0.84f,0.03f),5);
-    candle.flicker=true;
-    lightSource torch(lightCell(0.96f,0.5f,0.1f),8);
+    lightSource torch(lightCell(0.9f,0.75f,0.3f),8);
     rect2d vp=getMapViewport();
+    
     
     int window_x=*df::global::window_x;
     int window_y=*df::global::window_y;
@@ -297,11 +332,15 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                             DFHack::MaterialInfo mat(bld->mat_index,bld->mat_type);
                             if(mat.isInorganic())
                             {
-                                int color=mat.inorganic->material.basic_color[0];
-                                curCell*=lightCell(df::global::enabler->ccolor[color][0]/255.0f,
-                                    df::global::enabler->ccolor[color][1]/255.0f,
-                                    df::global::enabler->ccolor[color][2]/255.0f);
+                                int color=mat.inorganic->material.build_color[0]+8*mat.inorganic->material.build_color[2];
+                                curCell*=getStandartColor(color);
                             }
+                        }
+                        if(type==df::enums::building_type::Door)
+                        {
+                            df::building_doorst* door=static_cast<df::building_doorst*>(bld);
+                            if(door->door_flags.bits.closed)
+                                curCell*=lightCell(0,0,0);
                         }
                     }
                 }
@@ -363,6 +402,23 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                     }
                     lightSource fire(fireColor,f->density/5);
                     addLight(tile,fire);
+                }
+            }
+        }
+        for(int i=0;i<block->plants.size();i++)
+        {
+            df::plant* cPlant=block->plants[i];
+            
+            df::coord2d pos=cPlant->pos;
+            int wx=pos.x-window_x+vp.first.x;
+            int wy=pos.y-window_y+vp.first.y;
+            int tile=getIndex(wx,wy);
+            if(wx>=vp.first.x && wy>=vp.first.y && wx<=vp.second.x && wy<=vp.second.y)
+            {
+                auto it=glowPlants.find(cPlant->material);
+                if(it!=glowPlants.end())
+                {
+                    addLight(tile,it->second);
                 }
             }
         }

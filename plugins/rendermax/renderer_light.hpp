@@ -2,7 +2,7 @@
 #define RENDERER_LIGHT_INCLUDED
 #include "renderer_opengl.hpp"
 #include "Types.h"
-
+#include <map>
 struct renderer_light : public renderer_wrap {
 private:
     void colorizeTile(int x,int y)
@@ -111,6 +111,7 @@ private:
     void doFovs();
     bool lightUpCell(lightCell& power,int dx,int dy,int tx,int ty);
     bool addLight(int tileId,const lightSource& light);
+    void initRawSpecific();
     size_t inline getIndex(int x,int y)
     {
         return x*h+y;
@@ -118,6 +119,11 @@ private:
     std::vector<lightCell> lightMap;
     std::vector<lightCell> ocupancy;
     std::vector<lightSource> lights;
+
+    
+    std::map<int,lightSource> glowPlants;
+    std::map<int,lightSource> glowVeins;
+
     int w,h;
     DFHack::rect2d mapPort;
 };

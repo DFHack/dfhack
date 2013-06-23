@@ -2,7 +2,7 @@
 #define RENDERER_LIGHT_INCLUDED
 #include "renderer_opengl.hpp"
 #include "Types.h"
-
+#include <map>
 struct renderer_light : public renderer_wrap {
 private:
     void colorizeTile(int x,int y)
@@ -59,7 +59,7 @@ public:
     };
     virtual void resize(int32_t w, int32_t h) {
         renderer_wrap::resize(w,h);
-        reinitLightGrid(w,h);
+        reinitLightGrid();
     }
 };
 class lightingEngine
@@ -79,7 +79,21 @@ struct lightSource
 {
     lightCell power;
     int radius;
-    df::coord2d pos;
+    bool flicker;
+    lightSource():power(0,0,0),radius(0),flicker(false)
+    {
+
+    }
+    lightSource(lightCell power,int radius):power(power),radius(radius),flicker(false)
+    {
+
+    }
+    float powerSquared()const
+    {
+        return power.r*power.r+power.g*power.g+power.b*power.b;
+    }
+    void combine(const lightSource& other);
+
 };
 class lightingEngineViewscreen:public lightingEngine
 {
@@ -96,6 +110,8 @@ private:
     void doRay(lightCell power,int cx,int cy,int tx,int ty);
     void doFovs();
     bool lightUpCell(lightCell& power,int dx,int dy,int tx,int ty);
+    bool addLight(int tileId,const lightSource& light);
+    void initRawSpecific();
     size_t inline getIndex(int x,int y)
     {
         return x*h+y;
@@ -103,6 +119,11 @@ private:
     std::vector<lightCell> lightMap;
     std::vector<lightCell> ocupancy;
     std::vector<lightSource> lights;
+
+    
+    std::map<int,lightSource> glowPlants;
+    std::map<int,lightSource> glowVeins;
+
     int w,h;
     DFHack::rect2d mapPort;
 };

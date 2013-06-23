@@ -362,7 +362,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         }
         else if(!d->bits.liquid_type && d->bits.flow_size>3 )
         {
-            curCell=lightCell(0.5f,0.5f,0.6f);
+            curCell*=lightCell(0.7f,0.7f,0.8f);
         }
         //todo constructions
 

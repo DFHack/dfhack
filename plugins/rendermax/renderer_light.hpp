@@ -59,7 +59,7 @@ public:
     };
     virtual void resize(int32_t w, int32_t h) {
         renderer_wrap::resize(w,h);
-        reinitLightGrid(w,h);
+        reinitLightGrid();
     }
 };
 class lightingEngine

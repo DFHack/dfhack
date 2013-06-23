@@ -282,7 +282,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         }
         int totalBlank = 0;
         int topLevel = df::global::world->map.z_count-1;
-        for(int ZZ = topLevel; (ZZ >= window_z) && totalBlank < 257; ZZ--)
+        for(int ZZ = topLevel; (ZZ >= window_z) && totalBlank < 256; ZZ--)
         {
             df::map_block* block=Maps::getBlock(blockx,blocky,ZZ);
             totalBlank = 0;
@@ -327,7 +327,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             pos.y = blocky*16+block_y;
             int wx=pos.x-window_x+vp.first.x;
             int wy=pos.y-window_y+vp.first.y;
-
+            if(wx>=vp.first.x && wy>=vp.first.y && wx<=vp.second.x && wy<=vp.second.y)
             if(cellArray[block_x][block_y].r >= 0.003f && cellArray[block_x][block_y].g >= 0.003f && cellArray[block_x][block_y].b >= 0.003f)
             {
                 lightSource sun={cellArray[block_x][block_y],25,coord2d(wx,wy)};

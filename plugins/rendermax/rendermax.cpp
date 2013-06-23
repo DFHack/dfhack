@@ -33,6 +33,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "rendermax", "switch rendering engine.", rendermax, false,
         "  rendermax trippy\n"
         "  rendermax truecolor red|green|blue|white\n"
+        "  rendermax lua\n"
         "  rendermax disable\n"
         ));
     return CR_OK;
@@ -75,7 +76,7 @@ static void resetGrids()
         r->backOffset[i]=lightCell(0,0,0);
     }
 }
-static int getGridsSize()
+static int getGridsSize(lua_State* L)
 {
     if(current_mode!=MODE_LUA)
         return -1;
@@ -192,13 +193,13 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(isEnabled),
     DFHACK_LUA_FUNCTION(lockGrids),
     DFHACK_LUA_FUNCTION(unlockGrids),
-    DFHACK_LUA_FUNCTION(getGridsSize),
     DFHACK_LUA_FUNCTION(resetGrids),
     DFHACK_LUA_END
 };
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(getCell),
     DFHACK_LUA_COMMAND(setCell),
+    DFHACK_LUA_COMMAND(getGridsSize),
     DFHACK_LUA_END
 };
 static command_result rendermax(color_ostream &out, vector <string> & parameters)

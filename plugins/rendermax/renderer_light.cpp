@@ -283,36 +283,34 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         {
             df::map_block* block=Maps::getBlock(blockx,blocky,ZZ);
             totalBlank = 0;
+            if(block)
             for(int block_x = 0; block_x < 16; block_x++)
             for(int block_y = 0; block_y < 16; block_y++)
             {
-                if(block)
-                {
-                    df::tiletype type = block->tiletype[block_x][block_y];
-                    df::tile_designation d = block->designation[block_x][block_y];
-                    df::tile_occupancy o = block->occupancy[block_x][block_y];
-                    df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,type);
-                    df::tiletype_shape_basic basic_shape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
+                df::tiletype type = block->tiletype[block_x][block_y];
+                df::tile_designation d = block->designation[block_x][block_y];
+                df::tile_occupancy o = block->occupancy[block_x][block_y];
+                df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,type);
+                df::tiletype_shape_basic basic_shape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
 
-                    if(basic_shape==df::tiletype_shape_basic::Wall)
+                if(basic_shape==df::tiletype_shape_basic::Wall)
+                {
+                    cellArray[block_x][block_y]=lightCell(0,0,0);
+                }
+                else if(basic_shape==df::tiletype_shape_basic::Floor || basic_shape==df::tiletype_shape_basic::Ramp || basic_shape==df::tiletype_shape_basic::Stair)
+                {
+                    if(ZZ!=window_z)
                     {
                         cellArray[block_x][block_y]=lightCell(0,0,0);
                     }
-                    else if(basic_shape==df::tiletype_shape_basic::Floor || basic_shape==df::tiletype_shape_basic::Ramp || basic_shape==df::tiletype_shape_basic::Stair)
-                    {
-                        if(ZZ!=window_z)
-                        {
-                            cellArray[block_x][block_y]=lightCell(0,0,0);
-                        }
-                    }
-                    if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size)
-                    {
-                        cellArray[block_x][block_y] *= (lightCell(1,1,1) - (lightCell(1,1,1) - lightCell(0.63f,0.63f,0.75f))*(d.bits.flow_size/7));
-                    }
-                    else if(d.bits.liquid_type == df::enums::tile_liquid::Magma && d.bits.flow_size > 3)
-                    {
-                        cellArray[block_x][block_y]=lightCell(0,0,0);
-                    }
+                }
+                if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size)
+                {
+                    cellArray[block_x][block_y] *= (lightCell(1,1,1) - (lightCell(1,1,1) - lightCell(0.63f,0.63f,0.75f))*(d.bits.flow_size/7));
+                }
+                else if(d.bits.liquid_type == df::enums::tile_liquid::Magma && d.bits.flow_size > 3)
+                {
+                    cellArray[block_x][block_y]=lightCell(0,0,0);
                 }
                 if(cellArray[block_x][block_y].r < 0.003f && cellArray[block_x][block_y].g < 0.003f && cellArray[block_x][block_y].b < 0.003f)
                     totalBlank++;

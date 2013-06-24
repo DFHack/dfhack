@@ -65,7 +65,7 @@ rect2d getMapViewport()
         if(menu_pos < 2) menu_x = menu_x1;
         view_rb = menu_x;
     }
-    return mkrect_wh(1,1,view_rb,view_height);
+    return mkrect_wh(1,1,view_rb,view_height+1);
 }
 lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):lightingEngine(target)
 {
@@ -121,8 +121,7 @@ lightCell blend(lightCell a,lightCell b)
 }
 bool lightingEngineViewscreen::lightUpCell(lightCell& power,int dx,int dy,int tx,int ty)
 {
-    
-    if(tx>=mapPort.first.x && ty>=mapPort.first.y && tx<=mapPort.second.x && ty<=mapPort.second.y)
+    if(isInViewport(coord2d(tx,ty),mapPort))
     {
         size_t tile=getIndex(tx,ty);
         float dsq=dx*dx+dy*dy;
@@ -511,8 +510,11 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 }
             }
         }
-        //flows
+        
         df::map_block* block=b->getRaw();
+        if(!block)
+            continue;
+        //flows
         for(int i=0;i<block->flows.size();i++)
         {
             df::flow_info* f=block->flows[i];
@@ -541,6 +543,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 }
             }
         }
+        //plants
         for(int i=0;i<block->plants.size();i++)
         {
             df::plant* cPlant=block->plants[i];
@@ -550,7 +553,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             int tile=getIndex(pos.x,pos.y);
             if(isInViewport(pos,vp))
             {
-                applyMaterial(tile,cPlant->material,-1);
+                applyMaterial(tile,419,cPlant->material);
             }
         }
     }

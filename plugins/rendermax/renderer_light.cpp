@@ -2,12 +2,14 @@
 
 #include <functional>
 #include <string>
+#include <math.h>
 
 #include "Types.h"
 
 #include "modules/Gui.h"
 #include "modules/Screen.h"
 #include "modules/Maps.h"
+#include "modules/Units.h"
 
 #include "df/graphic.h"
 #include "df/viewscreen_dwarfmodest.h"
@@ -266,13 +268,16 @@ void lightingEngineViewscreen::initRawSpecific()
 static size_t max_list_size = 100000; // Avoid iterating over huge lists
 void lightingEngineViewscreen::doOcupancyAndLights()
 {
-    lightSource sun(lightCell(1,1,1),15);
+    // TODO better curve (+red dawn ?)
+    float daycol = abs((*df::global::cur_year_tick % 1200) - 600.0) / 600.0;
+    lightCell sky_col(daycol, daycol, daycol);
+    lightSource sky(sky_col, 15);
+
     lightSource lava(lightCell(0.8f,0.2f,0.2f),5);
     lightSource candle(lightCell(0.96f,0.84f,0.03f),5);
     lightSource torch(lightCell(0.9f,0.75f,0.3f),8);
     rect2d vp=getMapViewport();
-    
-    
+
     int window_x=*df::global::window_x;
     int window_y=*df::global::window_y;
     int window_z=*df::global::window_z;
@@ -290,7 +295,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         for(int block_x = 0; block_x < 16; block_x++)
         for(int block_y = 0; block_y < 16; block_y++)
         {
-            cellArray[block_x][block_y] = lightCell(1,1,1);
+            cellArray[block_x][block_y] = sky_col;
         }
         int totalBlank = 0;
         int topLevel = df::global::world->map.z_count-1;
@@ -360,7 +365,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         if(!type)
         {
             //unallocated, do sky
-            addLight(tile,sun);
+            addLight(tile,sky);
             continue;
         }
         df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,*type);
@@ -451,7 +456,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         }
         if(d->bits.outside && d->bits.flow_size==0)
         {
-            addLight(tile,sun);
+            addLight(tile,sky);
         }
         
     }
@@ -517,5 +522,16 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         int wy=df::global::cursor->y-window_y+vp.first.y;
         int tile=getIndex(wx,wy);
         addLight(tile,cursor);
+    }
+    lightSource citizen(lightCell(0.80f,0.80f,0.90f),6);
+    for (int i=0;i<df::global::world->units.active.size();++i)
+    {
+        df::unit *u = df::global::world->units.active[i];
+        if (u->pos.z != window_z ||
+                (u->pos.x < window_x || u->pos.x >= window_x+vpW) ||
+                (u->pos.y < window_y || u->pos.y >= window_y+vpH))
+            continue;
+        if (DFHack::Units::isCitizen(u))
+            addLight(getIndex(u->pos.x-window_x+1, u->pos.y-window_y+1),citizen);
     }
 }

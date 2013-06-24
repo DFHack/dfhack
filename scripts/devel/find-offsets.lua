@@ -1306,6 +1306,27 @@ local function find_cur_year_tick()
     ms.found_offset('cur_year_tick', addr)
 end
 
+local function find_cur_year_tick_advmode()
+    stop_autosave()
+
+    local feed = dwarfmode_to_top()
+    local addr = searcher:find_interactive(
+        'Searching for cur_year_tick_advmode.',
+        'int32_t',
+        function(idx)
+            if idx > 0 then
+                if not step_n_frames(1, feed) then
+                    return false
+                end
+            end
+            return true, nil, 144
+        end,
+        20
+    )
+
+    ms.found_offset('cur_year_tick_advmode', addr)
+end
+
 --
 -- cur_season_tick
 --
@@ -1329,7 +1350,7 @@ menu, then do as instructed below:]],
                     return false
                 end
             end
-            return true, math.floor(((df.global.cur_year_tick+10)%100800)/10)
+            return true, math.floor((df.global.cur_year_tick%100800)/10)
         end
     )
     ms.found_offset('cur_season_tick', addr)
@@ -1361,7 +1382,7 @@ menu, then do as instructed below:]],
                     return false
                 end
             end
-            return true, math.floor((df.global.cur_year_tick+10)/100800)%4
+            return true, math.floor(df.global.cur_year_tick/100800)%4
         end
     )
     ms.found_offset('cur_season', addr)
@@ -1499,6 +1520,7 @@ print('\nUnpausing globals:\n')
 
 exec_finder(find_cur_year, 'cur_year')
 exec_finder(find_cur_year_tick, 'cur_year_tick')
+exec_finder(find_cur_year_tick_advmode, 'cur_year_tick_advmode')
 exec_finder(find_cur_season_tick, 'cur_season_tick')
 exec_finder(find_cur_season, 'cur_season')
 exec_finder(find_process_jobs, 'process_jobs')

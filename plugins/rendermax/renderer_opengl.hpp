@@ -195,19 +195,19 @@ struct lightCell
     {
 
     }
-    lightCell operator-(lightCell cell)
+    lightCell operator-(lightCell cell) const
     {
         return lightCell(r-cell.r,g-cell.g,b-cell.b);
     }
-    lightCell operator*(float val)
+    lightCell operator*(float val)const
     {
         return lightCell(r*val,g*val,b*val);
     }
-    lightCell operator/(float val)
+    lightCell operator/(float val) const
     {
         return lightCell(r/val,g/val,b/val);
     }
-    lightCell operator*(lightCell cell)
+    lightCell operator*(lightCell cell) const
     {
         return lightCell(r*cell.r,g*cell.g,b*cell.b);
     }
@@ -216,15 +216,19 @@ struct lightCell
         r*=cell.r;
         g*=cell.g;
         b*=cell.b;
-        return lightCell(r,g,b);
+        return *this;
     }
-    lightCell operator+(const lightCell& other)
+    lightCell operator+(const lightCell& other) const
     {
         return lightCell(r+other.r,g+other.g,b+other.b);
     }
-    bool operator<(const lightCell& other)
+    bool operator<(const lightCell& other) const
     {
         return r<other.r && g<other.g && b<other.b;
+    }
+    float dot(const lightCell& other) const
+    {
+        return r*other.r+g*other.g+b*other.b;
     }
 };
 struct renderer_test : public renderer_wrap {

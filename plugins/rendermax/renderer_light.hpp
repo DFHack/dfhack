@@ -3,6 +3,8 @@
 #include "renderer_opengl.hpp"
 #include "Types.h"
 #include <map>
+#include "modules/MapCache.h"
+
 struct renderer_light : public renderer_wrap {
 private:
     void colorizeTile(int x,int y)
@@ -72,6 +74,8 @@ public:
 
     virtual void updateWindow()=0;
 
+    virtual void loadSettings()=0;
+    
 protected:
     renderer_light* myRenderer;
 };
@@ -95,6 +99,29 @@ struct lightSource
     void combine(const lightSource& other);
 
 };
+struct matLightDef
+{
+    int mat_index;
+    int mat_type;
+    bool isTransparent;
+    lightCell transparency;
+    bool isEmiting;
+    bool sizeModifiesPower;
+    bool sizeModifiesRange;
+    bool flicker;
+    lightCell emitColor;
+    int radius;
+    matLightDef(){}
+    matLightDef(lightCell transparency,lightCell emit,int rad):isTransparent(true),isEmiting(true),
+        transparency(transparency),emitColor(emit),radius(rad){}
+    matLightDef(lightCell emit,int rad):isTransparent(false),isEmiting(true),emitColor(emit),radius(rad),transparency(0,0,0){}
+    matLightDef(lightCell transparency):isTransparent(true),isEmiting(false),transparency(transparency){}
+    lightSource makeSource(float size=1) const
+    {
+        //TODO implement sizeModifiesPower/range
+        return lightSource(emitColor,radius);
+    }
+};
 class lightingEngineViewscreen:public lightingEngine
 {
 public:
@@ -105,24 +132,49 @@ public:
 
     void updateWindow();
 
+    void loadSettings();
 private:
+
+    df::coord2d worldToViewportCoord(const df::coord2d& in,const DFHack::rect2d& r,const df::coord2d& window2d) ;
+    bool isInViewport(const df::coord2d& in,const DFHack::rect2d& r);
+
+    void doSun(const lightSource& sky,MapExtras::MapCache& map);
     void doOcupancyAndLights();
+    lightCell propogateSun(MapExtras::Block* b, int x,int y,const lightCell& in,bool lastLevel);
     void doRay(lightCell power,int cx,int cy,int tx,int ty);
     void doFovs();
     bool lightUpCell(lightCell& power,int dx,int dy,int tx,int ty);
     bool addLight(int tileId,const lightSource& light);
-    void initRawSpecific();
+
+    matLightDef* getMaterial(int matType,int matIndex);
+    //apply material to cell
+    void applyMaterial(int tileId,const matLightDef& mat,float size=1);
+    //try to find and apply material, if failed return false, and if def!=null then apply def.
+    bool applyMaterial(int tileId,int matType,int matIndex,float size=1,const matLightDef* def=NULL);
     size_t inline getIndex(int x,int y)
     {
         return x*h+y;
     }
+    //maps
     std::vector<lightCell> lightMap;
     std::vector<lightCell> ocupancy;
     std::vector<lightSource> lights;
+    //settings
 
-    
-    std::map<int,lightSource> glowPlants;
-    std::map<int,lightSource> glowVeins;
+    ///set up sane settings if setting file does not exist.
+    void defaultSettings(); 
+
+    static int parseMaterials(lua_State* L);
+    static int parseSpecial(lua_State* L);
+    //special stuff
+    matLightDef matLava;
+    matLightDef matIce;
+    matLightDef matAmbience;
+    matLightDef matCursor;
+    matLightDef matWall;
+    matLightDef matWater;
+    //materials
+    std::map<std::pair<int,int>,matLightDef> matDefs;
 
     int w,h;
     DFHack::rect2d mapPort;

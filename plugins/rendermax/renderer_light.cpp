@@ -324,7 +324,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 }
                 if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size)
                 {
-                    cellArray[block_x][block_y] *= (lightCell(1,1,1) - (lightCell(1,1,1) - lightCell(0.63f,0.63f,0.75f))*(d.bits.flow_size/7));
+                    cellArray[block_x][block_y] *= (lightCell(1,1,1) - (lightCell(1,1,1) - lightCell(0.63f,0.63f,0.75f))*((float)d.bits.flow_size/7.0f));
                 }
                 else if(d.bits.liquid_type == df::enums::tile_liquid::Magma && d.bits.flow_size > 3)
                 {
@@ -499,7 +499,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         for(int i=0;i<block->plants.size();i++)
         {
             df::plant* cPlant=block->plants[i];
-            
+
             df::coord2d pos=cPlant->pos;
             int wx=pos.x-window_x+vp.first.x;
             int wy=pos.y-window_y+vp.first.y;

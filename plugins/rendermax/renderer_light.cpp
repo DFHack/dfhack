@@ -317,12 +317,16 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 {
                     cellArray[block_x][block_y]=lightCell(0,0,0);
                 }
-                else if(basic_shape==df::tiletype_shape_basic::Floor || basic_shape==df::tiletype_shape_basic::Ramp || basic_shape==df::tiletype_shape_basic::Stair)
+                else if(basic_shape==df::tiletype_shape_basic::Floor || basic_shape==df::tiletype_shape_basic::Ramp || shape==df::tiletype_shape::STAIR_UP)
                 {
                     if(ZZ!=window_z)
                     {
                         cellArray[block_x][block_y]=lightCell(0,0,0);
                     }
+                }
+                else if(shape==df::tiletype_shape::STAIR_DOWN || shape==df::tiletype_shape::STAIR_UPDOWN)
+                {
+                    cellArray[block_x][block_y]*=lightCell(0.9,0.9,0.9);
                 }
                 if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size)
                 {

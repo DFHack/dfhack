@@ -177,8 +177,23 @@ void lightingEngineViewscreen::doFovs()
                     radius*=flicker;
                     power=power*flicker;
                 }
-                plotCircle(i,j,radius,
-                std::bind(&lightingEngineViewscreen::doRay,this,power,i,j,_1,_2));
+                int surrounds = 0;
+                lightCell curPower;
+
+                if(lightUpCell(curPower = power, 0, 0,i+0, j+0))
+                {
+                    surrounds += lightUpCell(curPower = power, 0, 1,i+0, j+1);
+                    surrounds += lightUpCell(curPower = power, 1, 1,i+1, j+1);
+                    surrounds += lightUpCell(curPower = power, 1, 0,i+1, j+0);
+                    surrounds += lightUpCell(curPower = power, 1,-1,i+1, j-1);
+                    surrounds += lightUpCell(curPower = power, 0,-1,i+0, j-1);
+                    surrounds += lightUpCell(curPower = power,-1,-1,i-1, j-1);
+                    surrounds += lightUpCell(curPower = power,-1, 0,i-1, j+0);
+                    surrounds += lightUpCell(curPower = power,-1, 1,i-1, j+1);
+                }
+                if(surrounds)
+                    plotCircle(i,j,radius,
+                    std::bind(&lightingEngineViewscreen::doRay,this,power,i,j,_1,_2));
             }
         }
 }
@@ -315,7 +330,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 }
                 if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size)
                 {
-                    cellArray[block_x][block_y] *= (lightCell(1,1,1) - (lightCell(1,1,1) - lightCell(0.63f,0.63f,0.75f))*(d.bits.flow_size/7));
+                    cellArray[block_x][block_y] *= (lightCell(1,1,1) - (lightCell(1,1,1) - lightCell(0.63f,0.63f,0.75f))*((float)d.bits.flow_size/7.0f));
                 }
                 else if(d.bits.liquid_type == df::enums::tile_liquid::Magma && d.bits.flow_size > 3)
                 {
@@ -488,7 +503,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         for(int i=0;i<block->plants.size();i++)
         {
             df::plant* cPlant=block->plants[i];
-            
+
             df::coord2d pos=cPlant->pos;
             int wx=pos.x-window_x+vp.first.x;
             int wy=pos.y-window_y+vp.first.y;

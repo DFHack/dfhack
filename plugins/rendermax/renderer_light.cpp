@@ -13,6 +13,7 @@
 
 #include "df/graphic.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_dungeonmodest.h"
 #include "df/flow_info.h"
 #include "df/world.h"
 #include "df/building.h"
@@ -32,7 +33,15 @@ rect2d getMapViewport()
     const int AREA_MAP_WIDTH = 23;
     const int MENU_WIDTH = 30;
     if(!gps || !df::viewscreen_dwarfmodest::_identity.is_instance(DFHack::Gui::getCurViewscreen()))
-        return mkrect_wh(0,0,0,0);
+    {
+        if(gps && df::viewscreen_dungeonmodest::_identity.is_instance(DFHack::Gui::getCurViewscreen()))
+        {
+            return mkrect_wh(0,0,gps->dimx,gps->dimy);
+        }
+        else
+            return mkrect_wh(0,0,0,0);
+        
+    }
     int w=gps->dimx;
     int h=gps->dimy;
     int view_height=h-2;

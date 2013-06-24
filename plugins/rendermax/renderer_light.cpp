@@ -535,7 +535,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 (u->pos.x < window_x || u->pos.x >= window_x+vpW) ||
                 (u->pos.y < window_y || u->pos.y >= window_y+vpH))
             continue;
-        if (DFHack::Units::isCitizen(u))
+        if (DFHack::Units::isCitizen(u) && !u->counters.unconscious)
             addLight(getIndex(u->pos.x-window_x+1, u->pos.y-window_y+1),citizen);
     }
 }

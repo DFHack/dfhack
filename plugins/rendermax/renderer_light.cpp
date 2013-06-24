@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "Types.h"
+#include "LuaTools.h"
 
 #include "modules/Gui.h"
 #include "modules/Screen.h"
@@ -68,7 +69,8 @@ rect2d getMapViewport()
 lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):lightingEngine(target)
 {
     reinit();
-    initRawSpecific();
+    defaultSettings();
+    loadSettings();
 }
 
 void lightingEngineViewscreen::reinit()
@@ -267,24 +269,43 @@ void addPlant(const std::string& id,std::map<int,lightSource>& map,const lightSo
         map[nId]=v;
     }
 }
-void lightingEngineViewscreen::initRawSpecific()
-{   
-    addPlant("TOWER_CAP",glowPlants,lightSource(lightCell(0.65,0.65,0.65),6));
-    addPlant("MUSHROOM_CUP_DIMPLE",glowPlants,lightSource(lightCell(0.03,0.03,0.5),3));
-    addPlant("CAVE MOSS",glowPlants,lightSource(lightCell(0.1,0.1,0.4),2));
-    addPlant("MUSHROOM_HELMET_PLUMP",glowPlants,lightSource(lightCell(0.2,0.1,0.6),2));
+void lightingEngineViewscreen::applyMaterial(int tileId,const matLightDef& mat,float size)
+{
+    if(mat.isTransparent)
+        ocupancy[tileId]*=mat.transparency;
+    else
+        ocupancy[tileId]=lightCell(0,0,0);
+    if(mat.isEmiting)
+        addLight(tileId,mat.makeSource(size));
+}
+bool lightingEngineViewscreen::applyMaterial(int tileId,int matType,int matIndex,float size,const matLightDef* def)
+{
+    auto it=matDefs.find(std::make_pair(matType,matIndex));
+    if(it!=matDefs.end())
+    {
+        applyMaterial(tileId,it->second,size);
+        return true;
+    }
+    else if(def)
+    {
+        applyMaterial(tileId,*def,size);
+    }
+    return false;
 }
 static size_t max_list_size = 100000; // Avoid iterating over huge lists
 void lightingEngineViewscreen::doOcupancyAndLights()
 {
     // TODO better curve (+red dawn ?)
-    float daycol = abs((*df::global::cur_year_tick % 1200) - 600.0) / 600.0;
+    float daycol = abs((*df::global::cur_year_tick % 1200) - 600.0) / 400.0;
     lightCell sky_col(daycol, daycol, daycol);
     lightSource sky(sky_col, 15);
 
-    lightSource lava(lightCell(0.8f,0.2f,0.2f),5);
     lightSource candle(lightCell(0.96f,0.84f,0.03f),5);
     lightSource torch(lightCell(0.9f,0.75f,0.3f),8);
+
+    //perfectly blocking material
+    matLightDef matWall(lightCell(0,0,0));
+
     rect2d vp=getMapViewport();
 
     int window_x=*df::global::window_x;
@@ -373,7 +394,8 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         int wy=y-window_y+vp.first.y;
         int tile=getIndex(wx,wy);
         lightCell& curCell=ocupancy[tile];
-        curCell=lightCell(0.85f,0.85f,0.85f);
+        if(matAmbience.isTransparent)
+            curCell=matAmbience.transparency;
         df::tiletype* type = Maps::getTileType(x,y,window_z);
         if(!type)
         {
@@ -390,8 +412,9 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             continue;
         if(shape==df::tiletype_shape::BROOK_BED || shape==df::tiletype_shape::WALL || shape==df::tiletype_shape::TREE || d->bits.hidden )
         {
+            //TODO split into wall ,etc...
             if(shape==df::tiletype_shape::WALL && m==df::tiletype_material::FROZEN_LIQUID)
-                curCell*=lightCell(0.7,0.7,0.9);
+                applyMaterial(tile,matIce);
             else
                 curCell=lightCell(0,0,0);
         }
@@ -411,20 +434,9 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                     {
                         df::building_type type = bld->getType();
 
-                        if (type == df::enums::building_type::WindowGlass)
+                        if (type == df::enums::building_type::WindowGlass || type==df::enums::building_type::WindowGem)
                         {
-                            if(bld->mat_type == 3)//green glass
-                            {
-                                curCell*=lightCell(0.1f,0.9f,0.5f);
-                            }
-                            else if(bld->mat_type == 4)//clear glass
-                            {
-                                curCell*=lightCell(0.5f,0.95f,0.9f);
-                            }
-                            else if(bld->mat_type == 5)//crystal glass
-                            {
-                                curCell*=lightCell(0.75f,0.95f,0.95f);
-                            }
+                            applyMaterial(tile,bld->mat_type,bld->mat_index);
                         }
                         if (type == df::enums::building_type::Table)
                         {
@@ -434,20 +446,11 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                         {
                             addLight(tile,torch);
                         }
-                        if (type==df::enums::building_type::WindowGem)
-                        {
-                            DFHack::MaterialInfo mat(bld->mat_index,bld->mat_type);
-                            if(mat.isInorganic())
-                            {
-                                int color=mat.inorganic->material.basic_color[0]+8*mat.inorganic->material.basic_color[2];
-                                curCell*=getStandartColor(color);
-                            }
-                        }
                         if(type==df::enums::building_type::Door)
                         {
                             df::building_doorst* door=static_cast<df::building_doorst*>(bld);
                             if(door->door_flags.bits.closed)
-                                curCell*=lightCell(0,0,0);
+                                applyMaterial(tile,bld->mat_type,bld->mat_index,1,&matWall);
                         }
                     }
                 }
@@ -465,7 +468,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             )
         {
             
-            addLight(tile,lava);
+            addLight(tile,matLava.makeSource());
         }
         if(d->bits.outside && d->bits.flow_size==0)
         {
@@ -519,11 +522,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             int tile=getIndex(wx,wy);
             if(wx>=vp.first.x && wy>=vp.first.y && wx<=vp.second.x && wy<=vp.second.y)
             {
-                auto it=glowPlants.find(cPlant->material);
-                if(it!=glowPlants.end())
-                {
-                    addLight(tile,it->second);
-                }
+                applyMaterial(tile,cPlant->material,-1);
             }
         }
     }
@@ -534,7 +533,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         int wx=df::global::cursor->x-window_x+vp.first.x;
         int wy=df::global::cursor->y-window_y+vp.first.y;
         int tile=getIndex(wx,wy);
-        addLight(tile,cursor);
+        applyMaterial(tile,matCursor);
     }
     lightSource citizen(lightCell(0.80f,0.80f,0.90f),6);
     for (int i=0;i<df::global::world->units.active.size();++i)
@@ -547,4 +546,160 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         if (DFHack::Units::isCitizen(u) && !u->counters.unconscious)
             addLight(getIndex(u->pos.x-window_x+1, u->pos.y-window_y+1),citizen);
     }
+}
+lightCell lua_parseLightCell(lua_State* L)
+{
+    lightCell ret;
+
+    lua_pushnumber(L,1);
+    lua_gettable(L,-2);
+    ret.r=lua_tonumber(L,-1);
+    lua_pop(L,1);
+
+    lua_pushnumber(L,2);
+    lua_gettable(L,-2);
+    ret.g=lua_tonumber(L,-1);
+    lua_pop(L,1);
+
+    lua_pushnumber(L,3);
+    lua_gettable(L,-2);
+    ret.b=lua_tonumber(L,-1);
+    lua_pop(L,1);
+
+    Lua::GetOutput(L)->print("got cell(%f,%f,%f)\n",ret.r,ret.g,ret.b);
+    return ret;
+}
+matLightDef lua_parseMatDef(lua_State* L)
+{
+    
+    matLightDef ret;
+    lua_getfield(L,-1,"tr");
+    if(ret.isTransparent=!lua_isnil(L,-1))
+    {
+        ret.transparency=lua_parseLightCell(L);
+    }
+    lua_pop(L,1);
+
+    lua_getfield(L,-1,"em");
+    if(ret.isEmiting=!lua_isnil(L,-1))
+    {
+        ret.emitColor=lua_parseLightCell(L);
+        lua_pop(L,1);
+        lua_getfield(L,-1,"rad");
+        if(lua_isnil(L,-1))
+        {
+            lua_pop(L,1);
+            luaL_error(L,"Material has emittance but no radius");
+        }
+        else
+            ret.radius=lua_tonumber(L,-1);
+        lua_pop(L,1);
+    }
+    else
+        lua_pop(L,1);
+    //todo flags
+    return ret;
+}
+int lightingEngineViewscreen::parseMaterials(lua_State* L)
+{
+    auto engine= (lightingEngineViewscreen*)lua_touserdata(L, 1);
+    engine->matDefs.clear();
+    //color_ostream* os=Lua::GetOutput(L);
+    Lua::StackUnwinder unwinder(L);
+    lua_getfield(L,2,"materials");
+    if(!lua_istable(L,-1))
+    {
+        luaL_error(L,"Materials table not found.");
+        return 0;
+    }
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+        int type=lua_tonumber(L,-2);
+        //os->print("Processing type:%d\n",type);
+        lua_pushnil(L);
+        while (lua_next(L, -2) != 0) {
+            int index=lua_tonumber(L,-2);
+            //os->print("\tProcessing index:%d\n",index);
+            engine->matDefs[std::make_pair(type,index)]=lua_parseMatDef(L);
+            
+            lua_pop(L, 1);
+        }
+        lua_pop(L, 1);
+    }
+    return 0;
+}
+#define LOAD_SPECIAL(lua_name,class_name) \
+    lua_getfield(L,-1,#lua_name);\
+    if(!lua_isnil(L,-1))engine->class_name=lua_parseMatDef(L);\
+    lua_pop(L,1)
+int lightingEngineViewscreen::parseSpecial(lua_State* L)
+{
+    auto engine= (lightingEngineViewscreen*)lua_touserdata(L, 1);
+    Lua::StackUnwinder unwinder(L);
+    lua_getfield(L,2,"special");
+    if(!lua_istable(L,-1))
+    {
+        luaL_error(L,"Special table not found.");
+        return 0;
+    }
+    LOAD_SPECIAL(LAVA,matLava);
+    LOAD_SPECIAL(FROZEN_LIQUID,matIce);
+    LOAD_SPECIAL(AMBIENT,matAmbience);
+    LOAD_SPECIAL(CURSOR,matCursor);
+    return 0;
+}
+#undef LOAD_SPECIAL
+void lightingEngineViewscreen::defaultSettings()
+{
+    matAmbience=matLightDef(lightCell(0.85f,0.85f,0.85f));
+    matLava=matLightDef(lightCell(0.8f,0.2f,0.2f),lightCell(0.8f,0.2f,0.2f),5);
+    matIce=matLightDef(lightCell(0.7f,0.7f,0.9f));
+    matCursor=matLightDef(lightCell(0.96f,0.84f,0.03f),11);
+    matCursor.flicker=true;
+}
+void lightingEngineViewscreen::loadSettings()
+{
+    
+    const std::string settingsfile="rendermax.lua";
+    CoreSuspender lock;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    
+    lua_State* s=DFHack::Lua::Core::State;
+    lua_newtable(s);
+    int env=lua_gettop(s);
+    try{
+        int ret=luaL_loadfile(s,settingsfile.c_str());
+        if(ret==LUA_ERRFILE)
+        {
+            out.printerr("File not found:%s\n",settingsfile.c_str());
+        }
+        else if(ret==LUA_ERRSYNTAX)
+        {
+            out.printerr("Syntax error:\n\t%s\n",lua_tostring(s,-1));
+        }
+        else
+        {
+            lua_pushvalue(s,env);
+            
+            if(Lua::SafeCall(out,s,1,0))
+            {
+                lua_pushcfunction(s, parseMaterials);
+                lua_pushlightuserdata(s, this);
+                lua_pushvalue(s,env);
+                Lua::SafeCall(out,s,2,0);
+                out.print("%d materials loaded\n",matDefs.size());
+
+                lua_pushcfunction(s, parseSpecial);
+                lua_pushlightuserdata(s, this);
+                lua_pushvalue(s,env);
+                Lua::SafeCall(out,s,2,0);
+                
+            }
+        }
+    }
+    catch(std::exception& e)
+    {
+        out.printerr("%s",e.what());
+    }
+    lua_pop(s,1);
 }

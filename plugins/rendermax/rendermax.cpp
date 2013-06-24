@@ -304,12 +304,23 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
     }
     else if(cmd=="light")
     {
-        removeOld();
-        renderer_light *myRender=new renderer_light(df::global::enabler->renderer);
-        installNew(myRender,MODE_LIGHT);
-        engine=new lightingEngineViewscreen(myRender);
-        engine->calculate();
-        engine->updateWindow();
+        if(current_mode!=MODE_LIGHT || current_mode!=MODE_LIGHT_OFF)
+        {
+            removeOld();
+            renderer_light *myRender=new renderer_light(df::global::enabler->renderer);
+            installNew(myRender,MODE_LIGHT);
+            engine=new lightingEngineViewscreen(myRender);
+            engine->calculate();
+            engine->updateWindow();
+        }
+        else if(current_mode==MODE_LIGHT && parameters.size()>1)
+        {
+            if(parameters[1]=="reload")
+                engine->loadSettings();
+        }
+        else
+            out.printerr("Light mode already enabled");
+        
         return CR_OK;
     }
     else if(cmd=="disable")

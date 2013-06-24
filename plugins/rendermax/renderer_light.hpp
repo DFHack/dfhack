@@ -3,6 +3,8 @@
 #include "renderer_opengl.hpp"
 #include "Types.h"
 #include <map>
+#include "modules/MapCache.h"
+
 struct renderer_light : public renderer_wrap {
 private:
     void colorizeTile(int x,int y)
@@ -112,7 +114,7 @@ struct matLightDef
     matLightDef(){}
     matLightDef(lightCell transparency,lightCell emit,int rad):isTransparent(true),isEmiting(true),
         transparency(transparency),emitColor(emit),radius(rad){}
-    matLightDef(lightCell emit,int rad):isTransparent(false),isEmiting(true),emitColor(emit),radius(rad){}
+    matLightDef(lightCell emit,int rad):isTransparent(false),isEmiting(true),emitColor(emit),radius(rad),transparency(0,0,0){}
     matLightDef(lightCell transparency):isTransparent(true),isEmiting(false),transparency(transparency){}
     lightSource makeSource(float size=1) const
     {
@@ -133,12 +135,18 @@ public:
     void loadSettings();
 private:
 
-    void doOcupancyAndLights();
+    df::coord2d worldToViewportCoord(const df::coord2d& in,const DFHack::rect2d& r,const df::coord2d& window2d) ;
+    bool isInViewport(const df::coord2d& in,const DFHack::rect2d& r);
 
+    void doSun(const lightSource& sky,MapExtras::MapCache& map);
+    void doOcupancyAndLights();
+    lightCell propogateSun(MapExtras::Block* b, int x,int y,const lightCell& in,bool lastLevel);
     void doRay(lightCell power,int cx,int cy,int tx,int ty);
     void doFovs();
     bool lightUpCell(lightCell& power,int dx,int dy,int tx,int ty);
     bool addLight(int tileId,const lightSource& light);
+
+    matLightDef* getMaterial(int matType,int matIndex);
     //apply material to cell
     void applyMaterial(int tileId,const matLightDef& mat,float size=1);
     //try to find and apply material, if failed return false, and if def!=null then apply def.
@@ -163,6 +171,8 @@ private:
     matLightDef matIce;
     matLightDef matAmbience;
     matLightDef matCursor;
+    matLightDef matWall;
+    matLightDef matWater;
     //materials
     std::map<std::pair<int,int>,matLightDef> matDefs;
 

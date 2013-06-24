@@ -13,6 +13,7 @@
 
 #include "df/graphic.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_dungeonmodest.h"
 #include "df/flow_info.h"
 #include "df/world.h"
 #include "df/building.h"
@@ -32,7 +33,15 @@ rect2d getMapViewport()
     const int AREA_MAP_WIDTH = 23;
     const int MENU_WIDTH = 30;
     if(!gps || !df::viewscreen_dwarfmodest::_identity.is_instance(DFHack::Gui::getCurViewscreen()))
-        return mkrect_wh(0,0,0,0);
+    {
+        if(gps && df::viewscreen_dungeonmodest::_identity.is_instance(DFHack::Gui::getCurViewscreen()))
+        {
+            return mkrect_wh(0,0,gps->dimx,gps->dimy);
+        }
+        else
+            return mkrect_wh(0,0,0,0);
+        
+    }
     int w=gps->dimx;
     int h=gps->dimy;
     int view_height=h-2;
@@ -327,12 +336,16 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 {
                     cellArray[block_x][block_y]=lightCell(0,0,0);
                 }
-                else if(basic_shape==df::tiletype_shape_basic::Floor || basic_shape==df::tiletype_shape_basic::Ramp || basic_shape==df::tiletype_shape_basic::Stair)
+                else if(basic_shape==df::tiletype_shape_basic::Floor || basic_shape==df::tiletype_shape_basic::Ramp || shape==df::tiletype_shape::STAIR_UP)
                 {
                     if(ZZ!=window_z)
                     {
                         cellArray[block_x][block_y]=lightCell(0,0,0);
                     }
+                }
+                else if(shape==df::tiletype_shape::STAIR_DOWN || shape==df::tiletype_shape::STAIR_UPDOWN)
+                {
+                    cellArray[block_x][block_y]*=lightCell(0.9,0.9,0.9);
                 }
                 if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size)
                 {
@@ -541,7 +554,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 (u->pos.x < window_x || u->pos.x >= window_x+vpW) ||
                 (u->pos.y < window_y || u->pos.y >= window_y+vpH))
             continue;
-        if (DFHack::Units::isCitizen(u))
+        if (DFHack::Units::isCitizen(u) && !u->counters.unconscious)
             addLight(getIndex(u->pos.x-window_x+1, u->pos.y-window_y+1),citizen);
     }
 }

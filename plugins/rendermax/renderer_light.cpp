@@ -28,6 +28,7 @@ using namespace DFHack;
 using df::coord2d;
 
 const float levelDim=0.2f;
+const float RootTwo = 1.4142135623730950488016887242097f;
 
 rect2d getMapViewport()
 {
@@ -106,8 +107,9 @@ void plotLine(int x0, int y0, int x1, int y1,std::function<bool(int,int,int,int)
     int rdx=0;
     int rdy=0;
     for(;;){  /* loop */
-        if(!setPixel(rdx,rdy,x0,y0))
-            return;
+        if(rdx!=0 || rdy!=0) //dirty hack to skip occlusion on the first tile.
+            if(!setPixel(rdx,rdy,x0,y0))
+                return;
         if (x0==x1 && y0==y1) break;
         e2 = 2*err;
         rdx=rdy=0;
@@ -124,8 +126,16 @@ bool lightingEngineViewscreen::lightUpCell(lightCell& power,int dx,int dy,int tx
     if(isInViewport(coord2d(tx,ty),mapPort))
     {
         size_t tile=getIndex(tx,ty);
-        float dsq=dx*dx+dy*dy;
-        float dt=sqrt(dsq);
+        int dsq=dx*dx+dy*dy;
+        float dt=1;
+        if(dsq == 1)
+            dt=1;
+        else if(dsq == 2)
+            dt = RootTwo;
+        else if(dsq == 0)
+            dt = 0;
+        else
+            dt=sqrt((float)dsq);
         lightCell& v=ocupancy[tile];
         lightSource& ls=lights[tile];
         bool wallhack=false;
@@ -184,7 +194,7 @@ void lightingEngineViewscreen::doFovs()
                 int surrounds = 0;
                 lightCell curPower;
 
-                if(lightUpCell(curPower = power, 0, 0,i+0, j+0))
+                lightUpCell(curPower = power, 0, 0,i+0, j+0);
                 {
                     surrounds += lightUpCell(curPower = power, 0, 1,i+0, j+1);
                     surrounds += lightUpCell(curPower = power, 1, 1,i+1, j+1);
@@ -560,7 +570,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     if(df::global::cursor->x>-30000)
     {
         lightSource cursor(lightCell(0.96f,0.84f,0.03f),11);
-        cursor.flicker=true;
+        cursor.flicker=false;
         int wx=df::global::cursor->x-window_x+vp.first.x;
         int wy=df::global::cursor->y-window_y+vp.first.y;
         int tile=getIndex(wx,wy);

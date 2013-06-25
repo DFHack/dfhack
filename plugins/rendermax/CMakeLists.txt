@@ -35,3 +35,5 @@ ELSE(UNIX)
 ENDIF(UNIX)
 # this makes sure all the stuff is put in proper places and linked to dfhack
 DFHACK_PLUGIN(rendermax ${PROJECT_SRCS} LINK_LIBRARIES ${PROJECT_LIBS})
+install(FILES rendermax.lua
+        DESTINATION ${DFHACK_DATA_DESTINATION})

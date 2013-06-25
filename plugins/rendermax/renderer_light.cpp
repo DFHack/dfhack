@@ -144,9 +144,7 @@ bool lightingEngineViewscreen::lightUpCell(lightCell& power,int dx,int dy,int tx
         
         if (dsq>0 && !wallhack)
         {
-            power.r=power.r*(pow(v.r,dt));
-            power.g=power.g*(pow(v.g,dt));
-            power.b=power.b*(pow(v.b,dt));
+            power*=v.power(dt);
         }
         if(ls.radius>0 && dsq>0)
         {
@@ -294,10 +292,15 @@ matLightDef* lightingEngineViewscreen::getMaterial(int matType,int matIndex)
     else 
         return NULL;
 }
-void lightingEngineViewscreen::applyMaterial(int tileId,const matLightDef& mat,float size)
+void lightingEngineViewscreen::applyMaterial(int tileId,const matLightDef& mat,float size, float thickness)
 {
     if(mat.isTransparent)
-        ocupancy[tileId]*=mat.transparency;
+    {
+        if(thickness > 0.999 && thickness < 1.001)
+            ocupancy[tileId]*=mat.transparency;
+        else
+            ocupancy[tileId]*=(mat.transparency.power(thickness));
+    }
     else
         ocupancy[tileId]=lightCell(0,0,0);
     if(mat.isEmiting)
@@ -345,19 +348,19 @@ lightCell lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int 
     else if(basic_shape==df::tiletype_shape_basic::Floor || basic_shape==df::tiletype_shape_basic::Ramp || shape==df::tiletype_shape::STAIR_UP)
     {
         if(!lastLevel)
-            ret*=lightDef->transparency; //TODO modify because floors have less material
+            ret*=lightDef->transparency.power(1.0f/7.0f); 
     }
     else if(shape==df::tiletype_shape::STAIR_DOWN || shape==df::tiletype_shape::STAIR_UPDOWN)
     {
         ret*=matStairCase;
     }
-    if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size)
+    if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size > 0)
     {
-        ret *=matWater.transparency;// (lightCell(1,1,1) - (lightCell(1,1,1) - matWater)*((float)d.bits.flow_size/7.0f));
+        ret *=matWater.transparency.power((float)d.bits.flow_size/7.0f);
     }
-    else if(d.bits.liquid_type == df::enums::tile_liquid::Magma && d.bits.flow_size > 3)
+    else if(d.bits.liquid_type == df::enums::tile_liquid::Magma && d.bits.flow_size > 0)
     {
-        ret *=matLava.transparency;
+        ret *=matLava.transparency.power((float)d.bits.flow_size/7.0f);
     }
     return ret;
 }
@@ -432,7 +435,7 @@ void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache&
 void lightingEngineViewscreen::doOcupancyAndLights()
 {
     // TODO better curve (+red dawn ?)
-    float daycol = abs((*df::global::cur_year_tick % 1200) - 600.0) / 400.0;
+    float daycol = 1;//abs((*df::global::cur_year_tick % 1200) - 600.0) / 400.0;
     lightCell sky_col(daycol, daycol, daycol);
     lightSource sky(sky_col, 15);
 
@@ -502,9 +505,9 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 else
                     applyMaterial(tile,*lightDef);
             }
-            else if(!d.bits.liquid_type && d.bits.flow_size>3 )
+            else if(!d.bits.liquid_type && d.bits.flow_size>0 )
             {
-                applyMaterial(tile,matWater);
+                applyMaterial(tile,matWater, 1, (float)d.bits.flow_size/7.0f);
             }
             if(d.bits.liquid_type && d.bits.flow_size>0) 
             {

@@ -8,8 +8,9 @@ for k,v in pairs(ret) do
   _ENV[k]=v
 end
 -- add material by id (index,mat pair or token string or a type number), flags is a table of strings
--- supported flags:
+-- supported flags (but not implemented):
 --		flicker
+--		useThickness -- use thickness of stuff in transparency calculation
 -- 		sizeModifiesPower
 --		sizeModifiesRange
 function addMaterial(id,transparency,emitance,radius,flags)
@@ -27,8 +28,58 @@ function addMaterial(id,transparency,emitance,radius,flags)
 	materials[matinfo.type]=materials[matinfo.type] or {}
 	materials[matinfo.type][matinfo.index]=makeMaterialDef(transparency,emitance,radius,flags)
 end
+function buildingLookUp(id)
+	local tokens={}
+	local lookup={ Workshop=df.workshop_type,Furnace=df.furnace_type,Trap=df.trap_type,
+		SiegeEngine=siegeengine_type}
+	for i in string.gmatch(id, "[^:]+") do
+		table.insert(tokens,i)
+	end
+	local ret={}
+	ret.type=df.building_type[tokens[1]]
+	if tokens[2] then
+		local type_array=lookup[tokens[1]]
+		if type_array then
+			ret.subtype=type_array[tokens[2]]
+		end
+		if tokens[2]=="Custom"  and tokens[3] then --TODO cache for faster lookup
+			if ret.type==df.building_type.Workshop then
+				for k,v in pairs(df.global.world.raws.buildings.workshops) do
+					if v.code==tokens[3] then
+						ret.custom=v.id
+						break
+					end
+				end
+			elseif ret.type==df.building_type.Furnace then
+				for k,v in pairs(df.global.world.raws.buildings.furnaces) do
+					if v.code==tokens[3] then
+						ret.custom=v.id
+						break
+					end
+				end
+			end
+		end
+	end
+	return ret
+end
+-- add building by id (string e.g. "Statue" or "Workshop:Masons", flags is a table of strings
+-- supported flags:
+--		useMaterial --uses material, but the defined things overwrite
+--		poweredOnly --glow only when powered
 function addBuilding(id,transparency,emitance,radius,flags)
-	--stuff
+	local bld=buildingLookUp(id)
+	local mat=makeMaterialDef(transparency,emitance,radius,flags)
+	buildings[bld.type]=buildings[bld.type] or {}
+	if bld.subtype then
+		if bld.custom then
+			buildings[bld.type][bld.subtype]=buildings[bld.type][bld.subtype] or {}
+			buildings[bld.type][bld.subtype][bld.custom]=mat
+		else
+			buildings[bld.type][bld.subtype]={[-1]=mat}
+		end
+	else
+		buildings[bld.type][-1]={[-1]=mat}
+	end
 end
 function makeMaterialDef(transparency,emitance,radius,flags)
 	local flg
@@ -43,6 +94,7 @@ end
 ------------------------------------------------------------------------
 ----------------   Configuration Starts Here   -------------------------
 ------------------------------------------------------------------------
+is_computer_quantum=false -- will enable more costly parts in the future
 --special things
 special.LAVA=makeMaterialDef({0.8,0.2,0.2},{0.8,0.2,0.2},5)
 special.WATER=makeMaterialDef({0.5,0.5,0.8})
@@ -71,3 +123,8 @@ addMaterial("INORGANIC:ADAMANTINE",{0.1,0.3,0.3},{0.1,0.3,0.3},4)
 addMaterial("CREATURE:DRAGON:BLOOD",nil,{0.6,0.1,0.1},4)
 -- TODO gems
 --buildings
+addBuilding("Statue",{1,1,1},{0.9,0.75,0.3},8)
+addBuilding("Bed",{1,1,1},{0.3,0.2,0.0},2)
+addBuilding("WindowGlass",nil,nil,0,{"useMaterial"})
+addBuilding("WindowGem",nil,nil,0,{"useMaterial"})
+addBuilding("Door",nil,nil,0,{"useMaterial"}) -- special case, only closed door obstruct/emit light

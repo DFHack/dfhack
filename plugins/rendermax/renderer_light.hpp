@@ -3,6 +3,7 @@
 #include "renderer_opengl.hpp"
 #include "Types.h"
 #include <map>
+#include <tuple>
 #include "modules/MapCache.h"
 
 struct renderer_light : public renderer_wrap {
@@ -102,11 +103,10 @@ struct lightSource
 };
 struct matLightDef
 {
-    int mat_index;
-    int mat_type;
     bool isTransparent;
     lightCell transparency;
     bool isEmiting;
+    bool useThickness;
     bool sizeModifiesPower;
     bool sizeModifiesRange;
     bool flicker;
@@ -122,6 +122,12 @@ struct matLightDef
         //TODO implement sizeModifiesPower/range
         return lightSource(emitColor,radius);
     }
+};
+struct buildingLightDef
+{
+    matLightDef light;
+    bool poweredOnly;
+    bool useMaterial;
 };
 class lightingEngineViewscreen:public lightingEngine
 {
@@ -149,10 +155,13 @@ private:
     bool addLight(int tileId,const lightSource& light);
 
     matLightDef* getMaterial(int matType,int matIndex);
+    buildingLightDef* getBuilding(df::building* bld);
+    
     //apply material to cell
     void applyMaterial(int tileId,const matLightDef& mat,float size=1, float thickness = 1);
     //try to find and apply material, if failed return false, and if def!=null then apply def.
     bool applyMaterial(int tileId,int matType,int matIndex,float size=1,const matLightDef* def=NULL);
+    
     size_t inline getIndex(int x,int y)
     {
         return x*h+y;
@@ -168,6 +177,7 @@ private:
 
     static int parseMaterials(lua_State* L);
     static int parseSpecial(lua_State* L);
+    static int parseBuildings(lua_State* L);
     //special stuff
     matLightDef matLava;
     matLightDef matIce;
@@ -179,7 +189,8 @@ private:
     float levelDim;
     //materials
     std::map<std::pair<int,int>,matLightDef> matDefs;
-
+    //buildings
+    std::map<std::tuple<int,int,int>,buildingLightDef> buildingDefs;
     int w,h;
     DFHack::rect2d mapPort;
 };

@@ -30,6 +30,22 @@ using df::coord2d;
 const float levelDim=0.2f;
 const float RootTwo = 1.4142135623730950488016887242097f;
 
+lightSource::lightSource(lightCell power,int radius):power(power),flicker(false)
+{
+    if(radius >= 0)
+        this->radius = radius;
+    else
+    {
+        float totalPower = power.r;
+        if(totalPower < power.g)totalPower = power.g;
+        if(totalPower < power.b)totalPower = power.b;
+        if(totalPower > 0 && levelDim > 0)
+            this->radius = (int)((log(levelDim/totalPower)/log(0.85f))) + 1;
+        else
+            this->radius = 0;
+    }
+}
+
 rect2d getMapViewport()
 {
     const int AREA_MAP_WIDTH = 23;
@@ -98,6 +114,20 @@ void plotCircle(int xm, int ym, int r,std::function<void(int,int)> setPixel)
         if (r <= y) err += ++y*2+1;           /* e_xy+e_y < 0 */
         if (r > x || err > y) err += ++x*2+1; /* e_xy+e_x > 0 or no 2nd y-step */
     } while (x < 0);
+}
+void plotSquare(int xm, int ym, int r,std::function<void(int,int)> setPixel)
+{
+    for(int x = 0; x <= r; x++)
+    {
+        setPixel(xm+r, ym+x); /*   I.1 Quadrant */
+        setPixel(xm+x, ym+r); /*   I.2 Quadrant */
+        setPixel(xm+r, ym-x); /*   II.1 Quadrant */
+        setPixel(xm+x, ym-r); /*   II.2 Quadrant */
+        setPixel(xm-r, ym-x); /*   III.1 Quadrant */
+        setPixel(xm-x, ym-r); /*   III.2 Quadrant */
+        setPixel(xm-r, ym+x); /*   IV.1 Quadrant */
+        setPixel(xm-x, ym+r); /*   IV.2 Quadrant */
+    }
 }
 void plotLine(int x0, int y0, int x1, int y1,std::function<bool(int,int,int,int)> setPixel)
 {
@@ -204,7 +234,7 @@ void lightingEngineViewscreen::doFovs()
                     surrounds += lightUpCell(curPower = power,-1, 1,i-1, j+1);
                 }
                 if(surrounds)
-                    plotCircle(i,j,radius,
+                    plotSquare(i,j,radius,
                     std::bind(&lightingEngineViewscreen::doRay,this,power,i,j,_1,_2));
             }
         }
@@ -432,7 +462,7 @@ void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache&
 void lightingEngineViewscreen::doOcupancyAndLights()
 {
     // TODO better curve (+red dawn ?)
-    float daycol = 1;//abs((*df::global::cur_year_tick % 1200) - 600.0) / 400.0;
+    float daycol = 0;//abs((*df::global::cur_year_tick % 1200) - 600.0) / 400.0;
     lightCell sky_col(daycol, daycol, daycol);
     lightSource sky(sky_col, 15);
 
@@ -572,8 +602,8 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     }
     if(df::global::cursor->x>-30000)
     {
-        lightSource cursor(lightCell(0.96f,0.84f,0.03f),11);
-        cursor.flicker=false;
+        //lightSource cursor(lightCell(9.6f,8.4f,0.3f),-1);
+        //cursor.flicker=false;
         int wx=df::global::cursor->x-window_x+vp.first.x;
         int wy=df::global::cursor->y-window_y+vp.first.y;
         int tile=getIndex(wx,wy);

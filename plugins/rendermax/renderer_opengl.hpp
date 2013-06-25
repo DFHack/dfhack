@@ -13,6 +13,7 @@
 #include "df/zoom_commands.h"
 #include "df/texture_handler.h"
 #include "df/graphic.h"
+#include <math.h>
 
 using df::renderer;
 using df::init;
@@ -229,6 +230,14 @@ struct lightCell
     float dot(const lightCell& other) const
     {
         return r*other.r+g*other.g+b*other.b;
+    }
+    lightCell power(const float exp) const
+    {
+        return lightCell(pow(r, exp), pow(g, exp), pow(b, exp));
+    }
+    lightCell power(const int exp) const
+    {
+        return lightCell(pow(r, exp), pow(g, exp), pow(b, exp));
     }
 };
 struct renderer_test : public renderer_wrap {

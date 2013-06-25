@@ -148,7 +148,7 @@ private:
 
     matLightDef* getMaterial(int matType,int matIndex);
     //apply material to cell
-    void applyMaterial(int tileId,const matLightDef& mat,float size=1);
+    void applyMaterial(int tileId,const matLightDef& mat,float size=1, float thickness = 1);
     //try to find and apply material, if failed return false, and if def!=null then apply def.
     bool applyMaterial(int tileId,int matType,int matIndex,float size=1,const matLightDef* def=NULL);
     size_t inline getIndex(int x,int y)

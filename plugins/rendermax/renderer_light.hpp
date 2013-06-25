@@ -75,6 +75,7 @@ public:
     virtual void updateWindow()=0;
 
     virtual void loadSettings()=0;
+    virtual void clear()=0;
     
 protected:
     renderer_light* myRenderer;
@@ -130,6 +131,7 @@ public:
     void updateWindow();
 
     void loadSettings();
+    void clear();
 private:
 
     df::coord2d worldToViewportCoord(const df::coord2d& in,const DFHack::rect2d& r,const df::coord2d& window2d) ;

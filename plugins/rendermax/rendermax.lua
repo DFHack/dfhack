@@ -67,5 +67,7 @@ addMaterial("PLANT:CAVE MOSS",nil,{0.1,0.1,0.4},2)
 addMaterial("PLANT:MUSHROOM_HELMET_PLUMP",nil,{0.2,0.1,0.6},2)
 --		inorganics
 addMaterial("INORGANIC:ADAMANTINE",{0.1,0.3,0.3},{0.1,0.3,0.3},4)
+--		creature stuff
+addMaterial("CREATURE:DRAGON:BLOOD",nil,{0.6,0.1,0.1},4)
 -- TODO gems
 --buildings

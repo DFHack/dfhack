@@ -21,9 +21,9 @@
 using namespace DFHack;
 using namespace std;
 
-command_result digSmart (color_ostream &out, std::vector <std::string> & parameters);
+command_result digFlood (color_ostream &out, std::vector <std::string> & parameters);
 
-DFHACK_PLUGIN("digSmart");
+DFHACK_PLUGIN("digFlood");
 
 void onDig(color_ostream& out, void* ptr);
 void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt, set<df::coord>& jobLocations);
@@ -36,22 +36,22 @@ set<string> autodigMaterials;
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "digSmart", "Automatically dig out veins as you discover them.",
-        digSmart, false,
+        "digFlood", "Automatically dig out veins as you discover them.",
+        digFlood, false,
         "Example:\n"
-        "  digSmart 0\n"
+        "  digFlood 0\n"
         "    disable plugin\n"
-        "  digSmart 1\n"
+        "  digFlood 1\n"
         "    enable plugin\n"
-        "  digSmart 0 MICROCLINE COAL_BITUMINOUS 1\n"
+        "  digFlood 0 MICROCLINE COAL_BITUMINOUS 1\n"
         "    disable plugin and remove microcline and bituminous coal from being monitored, then re-enable plugin"
-        "  digSmart 1 MICROCLINE 0 COAL_BITUMINOUS 1\n"
+        "  digFlood 1 MICROCLINE 0 COAL_BITUMINOUS 1\n"
         "    don't monitor microcline, do monitor COAL_BITUMINOUS, then enable plugin\n"
-        "  digSmart CLEAR\n"
+        "  digFlood CLEAR\n"
         "    remove all inorganics from monitoring\n"
-        "  digSmart digAll1\n"
+        "  digFlood digAll1\n"
         "    enable digAll mode: dig any vein, regardless of the monitor list\n"
-        "  digSmart digAll0\n"
+        "  digFlood digAll0\n"
         "    disable digAll mode\n"
         "\n"
         "Note that while order matters, multiple commands can be sequenced in one line. It is recommended to alter your dfhack.init file so that you won't have to type in every mineral type you want to dig every time you start the game. Material names are case sensitive.\n"
@@ -145,7 +145,7 @@ void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt, 
 //    *df::global::process_jobs = true;
 }
 
-command_result digSmart (color_ostream &out, std::vector <std::string> & parameters)
+command_result digFlood (color_ostream &out, std::vector <std::string> & parameters)
 {
     bool adding = true;
     set<string> toAdd, toRemove;

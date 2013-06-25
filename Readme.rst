@@ -1026,23 +1026,23 @@ Options:
  :down:   down stairs
  :clear:  clear designation
 
-digSmart
+digFlood
 --------
-Automatically digs out specified veins as they are discovered. It runs once every time a dwarf finishes a dig job. It will only dig out appropriate tiles that are adjacent to the finished dig job. To add a vein type, use `digSmart 1 [type]`. This will also enable the plugin. To remove a vein type, use `digSmart 0 [type] 1` to disable, then remove, then re-enable.
+Automatically digs out specified veins as they are discovered. It runs once every time a dwarf finishes a dig job. It will only dig out appropriate tiles that are adjacent to the finished dig job. To add a vein type, use `digFlood 1 [type]`. This will also enable the plugin. To remove a vein type, use `digFlood 0 [type] 1` to disable, then remove, then re-enable.
 
-`digSmart 0` disable
+`digFlood 0` disable
 
-`digSmart 1` enable
+`digFlood 1` enable
 
-`digSmart 0 MICROCLINE COAL_BITUMINOUS 1` disable plugin, remove microcline and bituminous coal from monitoring, then re-enable the plugin
+`digFlood 0 MICROCLINE COAL_BITUMINOUS 1` disable plugin, remove microcline and bituminous coal from monitoring, then re-enable the plugin
 
-`digSmart CLEAR` remove all inorganics from monitoring
+`digFlood CLEAR` remove all inorganics from monitoring
 
-`digSmart digAll1` ignore the monitor list and dig any vein
+`digFlood digAll1` ignore the monitor list and dig any vein
 
-`digSmart digAll0` disable digAll mode
+`digFlood digAll0` disable digAll mode
 
-See `help digSmart` for details.
+See `help digFlood` for details.
 
 filltraffic
 -----------

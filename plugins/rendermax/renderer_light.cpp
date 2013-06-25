@@ -27,7 +27,7 @@ using df::global::gps;
 using namespace DFHack;
 using df::coord2d;
 
-const float levelDim=0.2f;
+
 const float RootTwo = 1.4142135623730950488016887242097f;
 
 lightSource::lightSource(lightCell power,int radius):power(power),flicker(false)
@@ -36,6 +36,7 @@ lightSource::lightSource(lightCell power,int radius):power(power),flicker(false)
         this->radius = radius;
     else
     {
+        float levelDim = 0.2f;
         float totalPower = power.r;
         if(totalPower < power.g)totalPower = power.g;
         if(totalPower < power.b)totalPower = power.b;
@@ -239,6 +240,16 @@ void lightingEngineViewscreen::doFovs()
             }
         }
 }
+void lightingEngineViewscreen::clear()
+{
+    lightMap.assign(lightMap.size(),lightCell(1,1,1));
+    tthread::lock_guard<tthread::fast_mutex> guard(myRenderer->dataMutex);
+    if(lightMap.size()==myRenderer->lightGrid.size())
+    {
+        std::swap(myRenderer->lightGrid,lightMap);
+        myRenderer->invalidate();
+    }
+}
 void lightingEngineViewscreen::calculate()
 {
     rect2d vp=getMapViewport();
@@ -270,8 +281,8 @@ void lightingEngineViewscreen::updateWindow()
     std::swap(lightMap,myRenderer->lightGrid);
     rect2d vp=getMapViewport();
     
-    //myRenderer->invalidateRect(vp.first.x,vp.first.y,vp.second.x-vp.first.x,vp.second.y-vp.first.y);
-    myRenderer->invalidate();
+    myRenderer->invalidateRect(vp.first.x,vp.first.y,vp.second.x-vp.first.x,vp.second.y-vp.first.y);
+    //myRenderer->invalidate();
     //std::copy(lightMap.begin(),lightMap.end(),myRenderer->lightGrid.begin());
 }
 void lightSource::combine(const lightSource& other)
@@ -462,7 +473,7 @@ void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache&
 void lightingEngineViewscreen::doOcupancyAndLights()
 {
     // TODO better curve (+red dawn ?)
-    float daycol = 0;//abs((*df::global::cur_year_tick % 1200) - 600.0) / 400.0;
+    float daycol = 1;//abs((*df::global::cur_year_tick % 1200) - 600.0) / 400.0;
     lightCell sky_col(daycol, daycol, daycol);
     lightSource sky(sky_col, 15);
 
@@ -602,21 +613,20 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     }
     if(df::global::cursor->x>-30000)
     {
-        //lightSource cursor(lightCell(9.6f,8.4f,0.3f),-1);
-        //cursor.flicker=false;
         int wx=df::global::cursor->x-window_x+vp.first.x;
         int wy=df::global::cursor->y-window_y+vp.first.y;
         int tile=getIndex(wx,wy);
         applyMaterial(tile,matCursor);
     }
-    lightSource citizen(lightCell(0.80f,0.80f,0.90f),6);
+    //citizen only emit light, if defined
+    if(matCitizen.isEmiting)
     for (int i=0;i<df::global::world->units.active.size();++i)
     {
         df::unit *u = df::global::world->units.active[i];
         coord2d pos=worldToViewportCoord(coord2d(u->pos.x,u->pos.y),vp,window2d);
         if(u->pos.z==window_z && isInViewport(pos,vp))
         if (DFHack::Units::isCitizen(u) && !u->counters.unconscious)
-            addLight(getIndex(pos.x,pos.y),citizen);
+            addLight(getIndex(pos.x,pos.y),matCitizen.makeSource());
     }
     //buildings
     for(size_t i = 0; i < df::global::world->buildings.all.size(); i++)
@@ -754,6 +764,10 @@ int lightingEngineViewscreen::parseSpecial(lua_State* L)
     LOAD_SPECIAL(FROZEN_LIQUID,matIce);
     LOAD_SPECIAL(AMBIENT,matAmbience);
     LOAD_SPECIAL(CURSOR,matCursor);
+    LOAD_SPECIAL(CITIZEN,matCitizen);
+    lua_getfield(L,-1,"LevelDim");
+    if(!lua_isnil(L,-1) && lua_isnumber(L,-1))engine->levelDim=lua_tonumber(L,-1);
+    lua_pop(L,1);
     return 0;
 }
 #undef LOAD_SPECIAL
@@ -766,6 +780,8 @@ void lightingEngineViewscreen::defaultSettings()
     matCursor=matLightDef(lightCell(0.96f,0.84f,0.03f),11);
     matCursor.flicker=true;
     matWall=matLightDef(lightCell(0,0,0));
+    matCitizen=matLightDef(lightCell(0.8f,0.8f,0.9f),6);
+    levelDim=0.2f;
 }
 void lightingEngineViewscreen::loadSettings()
 {
@@ -782,6 +798,7 @@ void lightingEngineViewscreen::loadSettings()
         if(ret==LUA_ERRFILE)
         {
             out.printerr("File not found:%s\n",settingsfile.c_str());
+            lua_pop(s,1);
         }
         else if(ret==LUA_ERRSYNTAX)
         {
@@ -805,6 +822,7 @@ void lightingEngineViewscreen::loadSettings()
                 Lua::SafeCall(out,s,2,0);
                 
             }
+            
         }
     }
     catch(std::exception& e)

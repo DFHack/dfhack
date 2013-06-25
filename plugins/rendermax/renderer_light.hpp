@@ -75,6 +75,7 @@ public:
     virtual void updateWindow()=0;
 
     virtual void loadSettings()=0;
+    virtual void clear()=0;
     
 protected:
     renderer_light* myRenderer;
@@ -108,7 +109,7 @@ struct matLightDef
     bool flicker;
     lightCell emitColor;
     int radius;
-    matLightDef(){}
+    matLightDef():isTransparent(false),isEmiting(false),transparency(0,0,0),emitColor(0,0,0),radius(0){}
     matLightDef(lightCell transparency,lightCell emit,int rad):isTransparent(true),isEmiting(true),
         transparency(transparency),emitColor(emit),radius(rad){}
     matLightDef(lightCell emit,int rad):isTransparent(false),isEmiting(true),emitColor(emit),radius(rad),transparency(0,0,0){}
@@ -130,6 +131,7 @@ public:
     void updateWindow();
 
     void loadSettings();
+    void clear();
 private:
 
     df::coord2d worldToViewportCoord(const df::coord2d& in,const DFHack::rect2d& r,const df::coord2d& window2d) ;
@@ -170,6 +172,8 @@ private:
     matLightDef matCursor;
     matLightDef matWall;
     matLightDef matWater;
+    matLightDef matCitizen;
+    float levelDim;
     //materials
     std::map<std::pair<int,int>,matLightDef> matDefs;
 

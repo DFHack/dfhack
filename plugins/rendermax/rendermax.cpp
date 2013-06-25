@@ -3,6 +3,8 @@
 
 #include <LuaTools.h>
 
+#include <VTableInterpose.h>
+
 #include "Core.h"
 #include "Console.h"
 #include "Export.h"
@@ -15,12 +17,18 @@
 #include "renderer_opengl.hpp"
 #include "renderer_light.hpp"
 
+#include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_dungeonmodest.h"
+
+using df::viewscreen_dungeonmodest;
+using df::viewscreen_dwarfmodest;
+
 using namespace DFHack;
 using std::vector;
 using std::string;
 enum RENDERER_MODE
 {
-    MODE_DEFAULT,MODE_TRIPPY,MODE_TRUECOLOR,MODE_LUA,MODE_LIGHT,MODE_LIGHT_OFF
+    MODE_DEFAULT,MODE_TRIPPY,MODE_TRUECOLOR,MODE_LUA,MODE_LIGHT
 };
 RENDERER_MODE current_mode=MODE_DEFAULT;
 lightingEngine *engine=NULL;
@@ -42,10 +50,44 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         ));
     return CR_OK;
 }
+
+struct dwarmode_render_hook : viewscreen_dwarfmodest{
+    typedef df::viewscreen_dwarfmodest interpose_base;
+    DEFINE_VMETHOD_INTERPOSE(void,render,())
+    {
+        CoreSuspendClaimer suspend;
+        INTERPOSE_NEXT(render)();
+        engine->calculate();
+        engine->updateWindow();
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(dwarmode_render_hook, render);
+
+struct dungeon_render_hook : viewscreen_dungeonmodest{
+    typedef df::viewscreen_dungeonmodest interpose_base;
+    DEFINE_VMETHOD_INTERPOSE(void,render,())
+    {
+        CoreSuspendClaimer suspend;
+        INTERPOSE_NEXT(render)();
+        engine->calculate();
+        engine->updateWindow();
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(dungeon_render_hook, render);
+
 void removeOld()
 {
+    if(engine)
+    {
+        CoreSuspender lock;
+        INTERPOSE_HOOK(dwarmode_render_hook,render).apply(false);
+        INTERPOSE_HOOK(dungeon_render_hook,render).apply(false);
+        delete engine;
+
+    }
     if(current_mode!=MODE_DEFAULT)
         delete df::global::enabler->renderer;
+    
     current_mode=MODE_DEFAULT;
 }
 void installNew(df::renderer* r,RENDERER_MODE newMode)
@@ -231,6 +273,10 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(invalidate),
     DFHACK_LUA_END
 };
+
+
+
+
 static command_result rendermax(color_ostream &out, vector <string> & parameters)
 {
     if(parameters.size()==0)
@@ -304,19 +350,22 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
     }
     else if(cmd=="light")
     {
-        if(current_mode!=MODE_LIGHT || current_mode!=MODE_LIGHT_OFF)
+        if(current_mode!=MODE_LIGHT)
         {
             removeOld();
             renderer_light *myRender=new renderer_light(df::global::enabler->renderer);
             installNew(myRender,MODE_LIGHT);
             engine=new lightingEngineViewscreen(myRender);
-            engine->calculate();
-            engine->updateWindow();
+            INTERPOSE_HOOK(dwarmode_render_hook,render).apply(true);
+            INTERPOSE_HOOK(dungeon_render_hook,render).apply(true);
         }
         else if(current_mode==MODE_LIGHT && parameters.size()>1)
         {
             if(parameters[1]=="reload")
+            {
+                CoreSuspender suspend;
                 engine->loadSettings();
+            }
         }
         else
             out.printerr("Light mode already enabled");
@@ -327,8 +376,6 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
     {
         if(current_mode==MODE_DEFAULT)
             out.print("%s\n","Not installed, doing nothing.");
-        else if(current_mode==MODE_LIGHT)
-            current_mode=MODE_LIGHT_OFF;
         else
             removeOld();
         
@@ -336,27 +383,21 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
     }
     return CR_WRONG_USAGE;
 }
-DFhackCExport command_result plugin_onupdate (color_ostream &out)
-{
-    if(engine)
-    {
-        if(current_mode==MODE_LIGHT_OFF)
-        {
-            delete engine;
-            engine=0;
-            removeOld();
-        }
-        else
-        {
-            engine->calculate();
-            engine->updateWindow();
-        }
-    }
-    
-    return CR_OK;
-}
+
 DFhackCExport command_result plugin_shutdown(color_ostream &)
 {
     removeOld();
+    return CR_OK;
+}
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
+{
+    if(event==SC_VIEWSCREEN_CHANGED)
+    {
+        CoreSuspendClaimer suspender;
+        if(current_mode==MODE_LIGHT)
+        {
+            engine->clear();
+        }
+    }
     return CR_OK;
 }

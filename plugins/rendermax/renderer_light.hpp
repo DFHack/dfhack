@@ -88,10 +88,7 @@ struct lightSource
     {
 
     }
-    lightSource(lightCell power,int radius):power(power),radius(radius),flicker(false)
-    {
-
-    }
+    lightSource(lightCell power,int radius);
     float powerSquared()const
     {
         return power.r*power.r+power.g*power.g+power.b*power.b;

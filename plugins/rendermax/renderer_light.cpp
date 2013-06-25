@@ -332,7 +332,7 @@ lightCell lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int 
     const lightCell matStairCase(0.9f,0.9f,0.9f);
     lightCell ret=in;
     coord2d innerCoord(x,y);
-    df::tiletype type = b->tiletypeAt(innerCoord);
+    df::tiletype type = b->staticTiletypeAt(innerCoord);
     df::tile_designation d = b->DesignationAt(innerCoord);
     //df::tile_occupancy o = b->OccupancyAt(innerCoord);
     df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,type);
@@ -342,9 +342,18 @@ lightCell lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int 
 
     matLightDef* lightDef;
     if(tileMat==df::tiletype_material::FROZEN_LIQUID)
-        lightDef=&matIce;
-    else
-        lightDef=getMaterial(mat.mat_type,mat.mat_index);
+    {
+        df::tiletype typeIce = b->tiletypeAt(innerCoord);
+        df::tiletype_shape shapeIce = ENUM_ATTR(tiletype,shape,typeIce);
+        df::tiletype_shape_basic basicShapeIce = ENUM_ATTR(tiletype_shape,basic_shape,shapeIce);
+        if(basicShapeIce==df::tiletype_shape_basic::Wall)
+            ret*=matIce.transparency;
+        else if(basicShapeIce==df::tiletype_shape_basic::Floor || basicShapeIce==df::tiletype_shape_basic::Ramp || shapeIce==df::tiletype_shape::STAIR_UP)
+            if(!lastLevel)
+                ret*=matIce.transparency.power(1.0f/7.0f);
+    }   
+    
+    lightDef=getMaterial(mat.mat_type,mat.mat_index);
     
     if(!lightDef || !lightDef->isTransparent)
         lightDef=&matWall;
@@ -354,6 +363,7 @@ lightCell lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int 
     }
     else if(basic_shape==df::tiletype_shape_basic::Floor || basic_shape==df::tiletype_shape_basic::Ramp || shape==df::tiletype_shape::STAIR_UP)
     {
+        
         if(!lastLevel)
             ret*=lightDef->transparency.power(1.0f/7.0f); 
     }
@@ -495,9 +505,9 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,type);
             df::tiletype_shape_basic basic_shape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
             df::tiletype_material tileMat= ENUM_ATTR(tiletype,material,type);
-
+            
             DFHack::t_matpair mat=b->staticMaterialAt(gpos);
-
+            
             matLightDef* lightDef=getMaterial(mat.mat_type,mat.mat_index);
             if(!lightDef || !lightDef->isTransparent)
                 lightDef=&matWall;
@@ -532,6 +542,8 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                    }
                 }
             }
+            
+
         }
         
         df::map_block* block=b->getRaw();
@@ -577,6 +589,36 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             if(isInViewport(pos,vp))
             {
                 applyMaterial(tile,419,cPlant->material);
+            }
+        }
+        //blood and other goo
+        for(int i=0;i<block->block_events.size();i++)
+        {
+            df::block_square_event* ev=block->block_events[i];
+            df::block_square_event_type ev_type=ev->getType();
+            if(ev_type==df::block_square_event_type::material_spatter)
+            {
+                df::block_square_event_material_spatterst* spatter=static_cast<df::block_square_event_material_spatterst*>(ev);
+                matLightDef* m=getMaterial(spatter->mat_type,spatter->mat_index);
+                if(!m)
+                    continue;
+                if(!m->isEmiting)
+                    continue;
+                for(int x=0;x<16;x++)
+                for(int y=0;y<16;y++)
+                {
+                    df::coord2d pos;
+                    pos.x = blockX*16+x;
+                    pos.y = blockY*16+y;
+                    int16_t amount=spatter->amount[x][y];
+                    if(amount<=0)
+                        continue;
+                    pos=worldToViewportCoord(pos,vp,window2d);
+                    if(isInViewport(pos,vp))
+                    {
+                        addLight(getIndex(pos.x,pos.y),m->makeSource((float)amount/100));
+                    }
+                }
             }
         }
     }
@@ -632,6 +674,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             }
         }
     }
+    
 }
 lightCell lua_parseLightCell(lua_State* L)
 {

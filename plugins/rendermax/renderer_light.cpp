@@ -209,6 +209,16 @@ void lightingEngineViewscreen::doFovs()
             }
         }
 }
+void lightingEngineViewscreen::clear()
+{
+    lightMap.assign(lightMap.size(),lightCell(1,1,1));
+    tthread::lock_guard<tthread::fast_mutex> guard(myRenderer->dataMutex);
+    if(lightMap.size()==myRenderer->lightGrid.size())
+    {
+        std::swap(myRenderer->lightGrid,lightMap);
+        myRenderer->invalidate();
+    }
+}
 void lightingEngineViewscreen::calculate()
 {
     rect2d vp=getMapViewport();
@@ -240,8 +250,8 @@ void lightingEngineViewscreen::updateWindow()
     std::swap(lightMap,myRenderer->lightGrid);
     rect2d vp=getMapViewport();
     
-    //myRenderer->invalidateRect(vp.first.x,vp.first.y,vp.second.x-vp.first.x,vp.second.y-vp.first.y);
-    myRenderer->invalidate();
+    myRenderer->invalidateRect(vp.first.x,vp.first.y,vp.second.x-vp.first.x,vp.second.y-vp.first.y);
+    //myRenderer->invalidate();
     //std::copy(lightMap.begin(),lightMap.end(),myRenderer->lightGrid.begin());
 }
 void lightSource::combine(const lightSource& other)

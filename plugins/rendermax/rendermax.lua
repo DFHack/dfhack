@@ -49,8 +49,8 @@ special.WATER=makeMaterialDef({0.5,0.5,0.8})
 special.FROZEN_LIQUID=makeMaterialDef({0.2,0.7,0.9}) -- ice
 special.AMBIENT=makeMaterialDef({0.85,0.85,0.85}) --ambient fog
 special.CURSOR=makeMaterialDef({1,1,1},{0.96,0.84,0.03},11, {"flicker"})
-special.CITIZEN=makeMaterialDef(nil,{0.80f,0.80f,0.90f},6)
-special.LevelDim=0.2 -- darkness. do not set to 0
+special.CITIZEN=makeMaterialDef(nil,{0.80,0.80,0.90},6)
+special.LevelDim=0.2 -- darkness. Do not set to 0
 --TODO dragonfire
 --TODO daylight
 --materials

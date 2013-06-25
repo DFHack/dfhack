@@ -1026,6 +1026,23 @@ Options:
  :down:   down stairs
  :clear:  clear designation
 
+digSmart
+--------
+Automatically digs out specified veins as they are discovered. It runs once every time a dwarf finishes a dig job. It will only dig out appropriate tiles that are adjacent to the finished dig job. To add a vein type, use `digSmart 1 [type]`. This will also enable the plugin. To remove a vein type, use `digSmart 0 [type] 1` to disable, then remove, then re-enable.
+
+`digSmart 0` disable
+
+`digSmart 1` enable
+
+`digSmart 0 MICROCLINE COAL_BITUMINOUS 1` disable plugin, remove microcline and bituminous coal from monitoring, then re-enable the plugin
+
+`digSmart CLEAR` remove all inorganics from monitoring
+
+`digSmart digAll1` ignore the monitor list and dig any vein
+
+`digSmart digAll0` disable digAll mode
+
+See `help digSmart` for details.
 
 filltraffic
 -----------
@@ -2088,6 +2105,19 @@ Empty lines and data after a ``#`` are ignored as comments.
 To skip a row in your design, use a single ``;``.
 
 The script takes the plan filename, starting from the root df folder.
+
+invasion-now
+============
+
+Triggers an invasion, or several in the near future.
+
+`invasion-now civName` trigger an invasion from the civilization with the id civName, starting in about ten ticks
+
+`invasion-now civName start` trigger an invasion from civName in a number of ticks between 10*start and 11*start-1 (inclusive)
+
+`invasion-now civName start end` trigger an invasion from civName in about 10*start ticks, and continue triggering invasions every ten ticks afterward until about 10*end ticks have passed
+
+Probably fails if the start time of a triggered invasion is later than the start of the next year.
 
 superdwarf
 ==========

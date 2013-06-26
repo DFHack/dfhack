@@ -400,6 +400,13 @@ bool lightingEngineViewscreen::addLight(int tileId,const lightSource& light)
         lights[tileId].flicker=true;
     return wasLight;
 }
+void lightingEngineViewscreen::addOclusion(int tileId,const lightCell& c,float thickness)
+{
+    if(thickness > 0.999 && thickness < 1.001)
+        ocupancy[tileId]*=c;
+    else
+        ocupancy[tileId]*=(c.power(thickness));
+}
 lightCell getStandartColor(int colorId)
 {
     return lightCell(df::global::enabler->ccolor[colorId][0]/255.0f,
@@ -444,32 +451,30 @@ void lightingEngineViewscreen::applyMaterial(int tileId,const matLightDef& mat,f
 {
     if(mat.isTransparent)
     {
-        if(thickness > 0.999 && thickness < 1.001)
-            ocupancy[tileId]*=mat.transparency;
-        else
-            ocupancy[tileId]*=(mat.transparency.power(thickness));
+       addOclusion(tileId,mat.transparency,thickness);
     }
     else
         ocupancy[tileId]=lightCell(0,0,0);
     if(mat.isEmiting)
         addLight(tileId,mat.makeSource(size));
 }
-bool lightingEngineViewscreen::applyMaterial(int tileId,int matType,int matIndex,float size,const matLightDef* def)
+bool lightingEngineViewscreen::applyMaterial(int tileId,int matType,int matIndex,float size,float thickness,const matLightDef* def)
 {
     matLightDef* m=getMaterial(matType,matIndex);
     if(m)
     {
-        applyMaterial(tileId,*m,size);
+        applyMaterial(tileId,*m,size,thickness);
         return true;
     }
     else if(def)
     {
-        applyMaterial(tileId,*def,size);
+        applyMaterial(tileId,*def,size,thickness);
     }
     return false;
 }
 lightCell lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int y,const lightCell& in,bool lastLevel)
 {
+    //TODO unify under addLight/addOclusion
     const lightCell matStairCase(0.9f,0.9f,0.9f);
     lightCell ret=in;
     coord2d innerCoord(x,y);
@@ -645,7 +650,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             if(d.bits.hidden)
             {
                 curCell=lightCell(0,0,0);
-                continue; // do not process hidden stuff
+                continue; // do not process hidden stuff, TODO other hidden stuff
             }
             //df::tile_occupancy o = b->OccupancyAt(gpos);
             df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,type);
@@ -670,11 +675,11 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             }
             else if(!d.bits.liquid_type && d.bits.flow_size>0 )
             {
-                applyMaterial(tile,matWater, 1, (float)d.bits.flow_size/7.0f);
+                applyMaterial(tile,matWater, (float)d.bits.flow_size/7.0f, (float)d.bits.flow_size/7.0f);
             }
             if(d.bits.liquid_type && d.bits.flow_size>0) 
             {
-                applyMaterial(tile,matLava);
+                applyMaterial(tile,matLava,(float)d.bits.flow_size/7.0f,(float)d.bits.flow_size/7.0f);
             }
             else if(shape==df::tiletype_shape::EMPTY || shape==df::tiletype_shape::RAMP_TOP 
                 || shape==df::tiletype_shape::STAIR_DOWN || shape==df::tiletype_shape::STAIR_UPDOWN)
@@ -728,7 +733,8 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         for(int i=0;i<block->plants.size();i++)
         {
             df::plant* cPlant=block->plants[i];
-
+            if (cPlant->grow_counter <180000) //todo maybe smaller light/oclusion?
+                continue;
             df::coord2d pos=cPlant->pos;
             pos=worldToViewportCoord(pos,vp,window2d);
             int tile=getIndex(pos.x,pos.y);
@@ -823,24 +829,24 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 if(!mat)mat=&matWall;
                 if(def->light.isEmiting)
                 {
-                    addLight(tile,def->light.makeSource());
+                    addLight(tile,def->light.makeSource(def->size));
                 }
                 else if(mat->isEmiting)
                 {
-                    addLight(tile,mat->makeSource());
+                    addLight(tile,mat->makeSource(def->size));
                 }
                 if(def->light.isTransparent)
                 {
-                    ocupancy[tile]*=def->light.transparency;
+                    addOclusion(tile,def->light.transparency,def->size);
                 }
                 else
                 {
-                    ocupancy[tile]*=mat->transparency;
+                    addOclusion(tile,mat->transparency,def->size);
                 }
             }
             else
             {
-                applyMaterial(tile,def->light);
+                applyMaterial(tile,def->light,def->size,def->thickness);
             }
         }
     }
@@ -901,9 +907,6 @@ matLightDef lua_parseMatDef(lua_State* L)
     else
         lua_pop(L,1);
     GETLUAFLAG(ret.flicker,"flicker");
-    GETLUAFLAG(ret.useThickness,"useThickness");
-    GETLUAFLAG(ret.sizeModifiesPower,"sizeModifiesPower");
-    GETLUAFLAG(ret.sizeModifiesRange,"sizeModifiesRange");
     return ret;
 }
 int lightingEngineViewscreen::parseMaterials(lua_State* L)
@@ -992,6 +995,15 @@ int lightingEngineViewscreen::parseBuildings(lua_State* L)
             engine->buildingDefs[std::make_tuple(type,subtype,custom)]=current;
             GETLUAFLAG(current.poweredOnly,"poweredOnly");
             GETLUAFLAG(current.useMaterial,"useMaterial");
+
+            lua_getfield(L,-1,"size");
+            current.size=luaL_optnumber(L,-1,1);
+            lua_pop(L,1);
+
+            lua_getfield(L,-1,"thickness");
+            current.thickness=luaL_optnumber(L,-1,1);
+            lua_pop(L,1);
+
             lua_pop(L, 1);
         }
 

@@ -103,9 +103,6 @@ struct matLightDef
     bool isTransparent;
     lightCell transparency;
     bool isEmiting;
-    bool useThickness;
-    bool sizeModifiesPower;
-    bool sizeModifiesRange;
     bool flicker;
     lightCell emitColor;
     int radius;
@@ -117,7 +114,10 @@ struct matLightDef
     lightSource makeSource(float size=1) const
     {
         //TODO implement sizeModifiesPower/range
-        return lightSource(emitColor,radius);
+        if(size>0.999 && size<1.001)
+            return lightSource(emitColor,radius);
+        else
+            return lightSource(emitColor*size,radius*size);//todo check if this is sane
     }
 };
 struct buildingLightDef
@@ -125,6 +125,8 @@ struct buildingLightDef
     matLightDef light;
     bool poweredOnly;
     bool useMaterial;
+    float thickness;
+    float size;
 };
 class lightingEngineViewscreen:public lightingEngine
 {
@@ -151,6 +153,7 @@ private:
 	void doLight(std::vector<lightCell> & target, int index);
     bool lightUpCell(std::vector<lightCell> & target, lightCell& power,int dx,int dy,int tx,int ty);
     bool addLight(int tileId,const lightSource& light);
+    void addOclusion(int tileId,const lightCell& c,float thickness);
 
     matLightDef* getMaterial(int matType,int matIndex);
     buildingLightDef* getBuilding(df::building* bld);
@@ -158,7 +161,7 @@ private:
     //apply material to cell
     void applyMaterial(int tileId,const matLightDef& mat,float size=1, float thickness = 1);
     //try to find and apply material, if failed return false, and if def!=null then apply def.
-    bool applyMaterial(int tileId,int matType,int matIndex,float size=1,const matLightDef* def=NULL);
+    bool applyMaterial(int tileId,int matType,int matIndex,float size=1,float thickness = 1,const matLightDef* def=NULL);
     
     size_t inline getIndex(int x,int y)
     {

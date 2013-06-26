@@ -22,6 +22,7 @@ IF(UNIX)
     SET(PROJECT_LIBS
         # add any extra linux libs here
 		lua
+		dfhack-tinythread
         ${PROJECT_LIBS}
     )
 # windows
@@ -29,6 +30,7 @@ ELSE(UNIX)
     SET(PROJECT_LIBS
         # add any extra windows libs here
 		lua
+		dfhack-tinythread
         ${PROJECT_LIBS}
         $(NOINHERIT)
     )

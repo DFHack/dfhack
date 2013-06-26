@@ -432,6 +432,14 @@ matLightDef* lightingEngineViewscreen::getMaterial(int matType,int matIndex)
     else 
         return NULL;
 }
+buildingLightDef* lightingEngineViewscreen::getBuilding(df::building* bld)
+{
+    auto it=buildingDefs.find(std::make_tuple((int)bld->getType(),(int)bld->getSubtype(),(int)bld->getCustomType()));
+    if(it!=buildingDefs.end())
+        return &it->second;
+    else 
+        return NULL;
+}
 void lightingEngineViewscreen::applyMaterial(int tileId,const matLightDef& mat,float size, float thickness)
 {
     if(mat.isTransparent)
@@ -465,7 +473,7 @@ lightCell lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int 
     const lightCell matStairCase(0.9f,0.9f,0.9f);
     lightCell ret=in;
     coord2d innerCoord(x,y);
-    df::tiletype type = b->tiletypeAt(innerCoord);
+    df::tiletype type = b->staticTiletypeAt(innerCoord);
     df::tile_designation d = b->DesignationAt(innerCoord);
     //df::tile_occupancy o = b->OccupancyAt(innerCoord);
     df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,type);
@@ -475,9 +483,18 @@ lightCell lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int 
 
     matLightDef* lightDef;
     if(tileMat==df::tiletype_material::FROZEN_LIQUID)
-        lightDef=&matIce;
-    else
-        lightDef=getMaterial(mat.mat_type,mat.mat_index);
+    {
+        df::tiletype typeIce = b->tiletypeAt(innerCoord);
+        df::tiletype_shape shapeIce = ENUM_ATTR(tiletype,shape,typeIce);
+        df::tiletype_shape_basic basicShapeIce = ENUM_ATTR(tiletype_shape,basic_shape,shapeIce);
+        if(basicShapeIce==df::tiletype_shape_basic::Wall)
+            ret*=matIce.transparency;
+        else if(basicShapeIce==df::tiletype_shape_basic::Floor || basicShapeIce==df::tiletype_shape_basic::Ramp || shapeIce==df::tiletype_shape::STAIR_UP)
+            if(!lastLevel)
+                ret*=matIce.transparency.power(1.0f/7.0f);
+    }   
+    
+    lightDef=getMaterial(mat.mat_type,mat.mat_index);
     
     if(!lightDef || !lightDef->isTransparent)
         lightDef=&matWall;
@@ -487,6 +504,7 @@ lightCell lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int 
     }
     else if(basic_shape==df::tiletype_shape_basic::Floor || basic_shape==df::tiletype_shape_basic::Ramp || shape==df::tiletype_shape::STAIR_UP)
     {
+        
         if(!lastLevel)
             ret*=lightDef->transparency.power(1.0f/7.0f); 
     }
@@ -624,17 +642,22 @@ void lightingEngineViewscreen::doOcupancyAndLights()
 
             df::tiletype type = b->tiletypeAt(gpos);
             df::tile_designation d = b->DesignationAt(gpos);
+            if(d.bits.hidden)
+            {
+                curCell=lightCell(0,0,0);
+                continue; // do not process hidden stuff
+            }
             //df::tile_occupancy o = b->OccupancyAt(gpos);
             df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,type);
             df::tiletype_shape_basic basic_shape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
             df::tiletype_material tileMat= ENUM_ATTR(tiletype,material,type);
-
+            
             DFHack::t_matpair mat=b->staticMaterialAt(gpos);
-
+            
             matLightDef* lightDef=getMaterial(mat.mat_type,mat.mat_index);
             if(!lightDef || !lightDef->isTransparent)
                 lightDef=&matWall;
-            if(shape==df::tiletype_shape::BROOK_BED ||  d.bits.hidden )
+            if(shape==df::tiletype_shape::BROOK_BED )
             {
                 curCell=lightCell(0,0,0);
             }
@@ -665,6 +688,8 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                    }
                 }
             }
+            
+
         }
         
         df::map_block* block=b->getRaw();
@@ -712,6 +737,36 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 applyMaterial(tile,419,cPlant->material);
             }
         }
+        //blood and other goo
+        for(int i=0;i<block->block_events.size();i++)
+        {
+            df::block_square_event* ev=block->block_events[i];
+            df::block_square_event_type ev_type=ev->getType();
+            if(ev_type==df::block_square_event_type::material_spatter)
+            {
+                df::block_square_event_material_spatterst* spatter=static_cast<df::block_square_event_material_spatterst*>(ev);
+                matLightDef* m=getMaterial(spatter->mat_type,spatter->mat_index);
+                if(!m)
+                    continue;
+                if(!m->isEmiting)
+                    continue;
+                for(int x=0;x<16;x++)
+                for(int y=0;y<16;y++)
+                {
+                    df::coord2d pos;
+                    pos.x = blockX*16+x;
+                    pos.y = blockY*16+y;
+                    int16_t amount=spatter->amount[x][y];
+                    if(amount<=0)
+                        continue;
+                    pos=worldToViewportCoord(pos,vp,window2d);
+                    if(isInViewport(pos,vp))
+                    {
+                        addLight(getIndex(pos.x,pos.y),m->makeSource((float)amount/100));
+                    }
+                }
+            }
+        }
     }
     if(df::global::cursor->x>-30000)
     {
@@ -734,37 +789,62 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     for(size_t i = 0; i < df::global::world->buildings.all.size(); i++)
     {
         df::building *bld = df::global::world->buildings.all[i];
+        
         if(window_z!=bld->z)
             continue;
+        if(bld->getBuildStage()<bld->getMaxBuildStage()) //only work if fully built
+            continue;
+
         df::coord2d p1(bld->x1,bld->y1);
         df::coord2d p2(bld->x2,bld->y2);
         p1=worldToViewportCoord(p1,vp,window2d);
         p2=worldToViewportCoord(p1,vp,window2d);
         if(isInViewport(p1,vp)||isInViewport(p2,vp))
         {
+            
             int tile=getIndex(p1.x,p1.y); //TODO multitile buildings. How they would work?
             df::building_type type = bld->getType();
-
-            if (type == df::enums::building_type::WindowGlass || type==df::enums::building_type::WindowGem)
-            {
-                applyMaterial(tile,bld->mat_type,bld->mat_index);
-            }
-            if (type == df::enums::building_type::Table)
-            {
-                addLight(tile,candle);
-            }
-            if (type==df::enums::building_type::Statue)
-            {
-                addLight(tile,torch);
-            }
+            buildingLightDef* def=getBuilding(bld);
+            if(!def)
+                continue;
+            if(def->poweredOnly && bld->isUnpowered())
+                continue;
             if(type==df::enums::building_type::Door)
             {
                 df::building_doorst* door=static_cast<df::building_doorst*>(bld);
-                if(door->door_flags.bits.closed)
-                    applyMaterial(tile,bld->mat_type,bld->mat_index,1,&matWall);
+                if(!door->door_flags.bits.closed)
+                    continue;
+            }
+            
+            
+            if(def->useMaterial)
+            {
+                matLightDef* mat=getMaterial(bld->mat_type,bld->mat_index);
+                if(!mat)mat=&matWall;
+                if(def->light.isEmiting)
+                {
+                    addLight(tile,def->light.makeSource());
+                }
+                else if(mat->isEmiting)
+                {
+                    addLight(tile,mat->makeSource());
+                }
+                if(def->light.isTransparent)
+                {
+                    ocupancy[tile]*=def->light.transparency;
+                }
+                else
+                {
+                    ocupancy[tile]*=mat->transparency;
+                }
+            }
+            else
+            {
+                applyMaterial(tile,def->light);
             }
         }
     }
+    
 }
 lightCell lua_parseLightCell(lua_State* L)
 {
@@ -788,6 +868,10 @@ lightCell lua_parseLightCell(lua_State* L)
     //Lua::GetOutput(L)->print("got cell(%f,%f,%f)\n",ret.r,ret.g,ret.b);
     return ret;
 }
+#define GETLUAFLAG(field,name) lua_getfield(L,-1,"flags");\
+    if(lua_isnil(L,-1)){field=false;}\
+    else{lua_getfield(L,-1,#name);field=lua_isnil(L,-1);lua_pop(L,1);}\
+    lua_pop(L,1)
 matLightDef lua_parseMatDef(lua_State* L)
 {
     
@@ -816,7 +900,10 @@ matLightDef lua_parseMatDef(lua_State* L)
     }
     else
         lua_pop(L,1);
-    //todo flags
+    GETLUAFLAG(ret.flicker,"flicker");
+    GETLUAFLAG(ret.useThickness,"useThickness");
+    GETLUAFLAG(ret.sizeModifiesPower,"sizeModifiesPower");
+    GETLUAFLAG(ret.sizeModifiesRange,"sizeModifiesRange");
     return ret;
 }
 int lightingEngineViewscreen::parseMaterials(lua_State* L)
@@ -873,6 +960,48 @@ int lightingEngineViewscreen::parseSpecial(lua_State* L)
     return 0;
 }
 #undef LOAD_SPECIAL
+int lightingEngineViewscreen::parseBuildings(lua_State* L)
+{
+    auto engine= (lightingEngineViewscreen*)lua_touserdata(L, 1);
+    engine->buildingDefs.clear();
+    Lua::StackUnwinder unwinder(L);
+    lua_getfield(L,2,"buildings");
+    if(!lua_istable(L,-1))
+    {
+        luaL_error(L,"Buildings table not found.");
+        return 0;
+    }
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+        int type=lua_tonumber(L,-2);
+        if(!lua_istable(L,-1))
+        {
+            luaL_error(L,"Broken building definitions.");
+        }
+        //os->print("Processing type:%d\n",type);
+        lua_pushnil(L);
+        while (lua_next(L, -2) != 0) {
+            int subtype=lua_tonumber(L,-2);
+            //os->print("\tProcessing subtype:%d\n",index);
+            lua_pushnil(L);
+        while (lua_next(L, -2) != 0) {
+            int custom=lua_tonumber(L,-2);
+            //os->print("\tProcessing custom:%d\n",index);
+            buildingLightDef current;
+            current.light=lua_parseMatDef(L);
+            engine->buildingDefs[std::make_tuple(type,subtype,custom)]=current;
+            GETLUAFLAG(current.poweredOnly,"poweredOnly");
+            GETLUAFLAG(current.useMaterial,"useMaterial");
+            lua_pop(L, 1);
+        }
+
+            lua_pop(L, 1);
+        }
+        lua_pop(L, 1);
+    }
+    lua_pop(L,1);
+    return 0;
+}
 void lightingEngineViewscreen::defaultSettings()
 {
     matAmbience=matLightDef(lightCell(0.85f,0.85f,0.85f));
@@ -922,7 +1051,12 @@ void lightingEngineViewscreen::loadSettings()
                 lua_pushlightuserdata(s, this);
                 lua_pushvalue(s,env);
                 Lua::SafeCall(out,s,2,0);
-                
+
+                lua_pushcfunction(s, parseBuildings);
+                lua_pushlightuserdata(s, this);
+                lua_pushvalue(s,env);
+                Lua::SafeCall(out,s,2,0);
+                out.print("%d buildings loaded\n",buildingDefs.size());
             }
             
         }
@@ -933,3 +1067,4 @@ void lightingEngineViewscreen::loadSettings()
     }
     lua_pop(s,1);
 }
+#undef GETLUAFLAG

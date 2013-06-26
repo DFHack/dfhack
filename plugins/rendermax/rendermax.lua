@@ -104,8 +104,14 @@ special.AMBIENT=makeMaterialDef({0.85,0.85,0.85}) --ambient fog
 special.CURSOR=makeMaterialDef({1,1,1},{0.96,0.84,0.03},11, {"flicker"})
 special.CITIZEN=makeMaterialDef(nil,{0.80,0.80,0.90},6)
 special.LevelDim=0.2 -- darkness. Do not set to 0
+special.dayHour=-1 -- <0 cycle, else hour of the day
+special.dayColors={ {0,0,0}, --dark at 0 hours 
+					{0.6,0.5,0.5}, --reddish twilight
+				    {1,1,1}, --fullbright at 12 hours 
+					{0.5,0.5,0.5}, 
+					{0,0,0}} --dark at 24 hours 
+special.daySpeed=1 -- 1->1200 cur_year_ticks per day. 2->600 ticks
 --TODO dragonfire
---TODO daylight
 --materials
 
 

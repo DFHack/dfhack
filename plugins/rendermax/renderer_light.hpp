@@ -78,6 +78,7 @@ public:
     virtual void loadSettings()=0;
     virtual void clear()=0;
     
+    virtual void setHour(float h)=0;
 protected:
     renderer_light* myRenderer;
 };
@@ -182,11 +183,16 @@ private:
     int nextIndex;
     std::vector<tthread::thread *> threadList;
     void doLightThreads();
+    //misc
+    void setHour(float h){dayHour=h;};
 public:
 	void lightWorkerThread(void * arg);
 private:
+    lightCell getSkyColor(float v);
     //settings
-
+    float daySpeed;
+    float dayHour; //<0 to cycle
+    std::vector<lightCell> dayColors; // a gradient of colors, first to 0, last to 24
     ///set up sane settings if setting file does not exist.
     void defaultSettings(); 
 

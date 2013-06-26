@@ -20,6 +20,8 @@
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_dungeonmodest.h"
 
+#include <sstream>
+
 using df::viewscreen_dungeonmodest;
 using df::viewscreen_dwarfmodest;
 
@@ -45,7 +47,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  rendermax trippy\n"
         "  rendermax truecolor red|green|blue|white\n"
         "  rendermax lua\n"
-        "  rendermax light\n"
+        "  rendermax light - lighting engine\n"
+        "  rendermax light reload - reload the settings file\n"
+        "  rendermax light sun <x>|cycle - set time to x or cycle (same effect if x<0)\n"
         "  rendermax disable\n"
         ));
     return CR_OK;
@@ -365,6 +369,21 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
             {
                 CoreSuspender suspend;
                 engine->loadSettings();
+            }
+            else if(parameters[1]=="sun" && parameters.size()==3)
+            {
+                if(parameters[2]=="cycle")
+                {
+                    engine->setHour(-1);
+                }
+                else
+                {
+                    std::stringstream ss;
+                    ss<<parameters[2];
+                    float h;
+                    ss>>h;
+                    engine->setHour(h);
+                }
             }
         }
         else

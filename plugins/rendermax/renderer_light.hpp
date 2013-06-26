@@ -78,6 +78,7 @@ public:
     virtual void loadSettings()=0;
     virtual void clear()=0;
     
+    virtual void setHour(float h)=0;
 protected:
     renderer_light* myRenderer;
 };
@@ -182,11 +183,13 @@ private:
     int nextIndex;
     std::vector<tthread::thread *> threadList;
     void doLightThreads();
+    //misc
+    void setHour(float h){dayHour=h;};
 public:
 	void lightWorkerThread(void * arg);
 private:
     //settings
-
+    float dayHour; //<0 to cycle
     ///set up sane settings if setting file does not exist.
     void defaultSettings(); 
 

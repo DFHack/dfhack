@@ -598,7 +598,12 @@ void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache&
 void lightingEngineViewscreen::doOcupancyAndLights()
 {
     // TODO better curve (+red dawn ?)
-    float daycol = 1;//abs((*df::global::cur_year_tick % 1200) - 600.0) / 400.0;
+    float daycol;
+    if(dayHour<0)
+        daycol= abs((*df::global::cur_year_tick % 1200) - 600.0) / 600.0;
+    else
+        daycol= abs(fmod(dayHour+12.0f,24.0f)-12.0f)/12.0f; //1->12h 0->24h
+    
     lightCell sky_col(daycol, daycol, daycol);
     lightSource sky(sky_col, 15);
 
@@ -878,6 +883,10 @@ lightCell lua_parseLightCell(lua_State* L)
     if(lua_isnil(L,-1)){field=false;}\
     else{lua_getfield(L,-1,#name);field=lua_isnil(L,-1);lua_pop(L,1);}\
     lua_pop(L,1)
+
+#define GETLUANUMBER(field,name) lua_getfield(L,-1,#name);\
+    if(!lua_isnil(L,-1) && lua_isnumber(L,-1))field=lua_tonumber(L,-1);\
+    lua_pop(L,1)
 matLightDef lua_parseMatDef(lua_State* L)
 {
     
@@ -957,9 +966,9 @@ int lightingEngineViewscreen::parseSpecial(lua_State* L)
     LOAD_SPECIAL(AMBIENT,matAmbience);
     LOAD_SPECIAL(CURSOR,matCursor);
     LOAD_SPECIAL(CITIZEN,matCitizen);
-    lua_getfield(L,-1,"LevelDim");
-    if(!lua_isnil(L,-1) && lua_isnumber(L,-1))engine->levelDim=lua_tonumber(L,-1);
-    lua_pop(L,1);
+    GETLUANUMBER(engine->levelDim,levelDim);
+    GETLUANUMBER(engine->dayHour,dayHour);
+    
     return 0;
 }
 #undef LOAD_SPECIAL
@@ -1025,6 +1034,7 @@ void lightingEngineViewscreen::defaultSettings()
     matWall=matLightDef(lightCell(0,0,0));
     matCitizen=matLightDef(lightCell(0.8f,0.8f,0.9f),6);
     levelDim=0.2f;
+    dayHour=-1;
 }
 void lightingEngineViewscreen::loadSettings()
 {
@@ -1080,3 +1090,4 @@ void lightingEngineViewscreen::loadSettings()
     lua_pop(s,1);
 }
 #undef GETLUAFLAG
+#undef GETLUANUMBER

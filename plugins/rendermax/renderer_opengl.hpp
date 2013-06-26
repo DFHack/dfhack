@@ -223,9 +223,9 @@ struct lightCell
     {
         return lightCell(r+other.r,g+other.g,b+other.b);
     }
-    bool operator<(const lightCell& other) const
+    bool operator<=(const lightCell& other) const
     {
-        return r<other.r && g<other.g && b<other.b;
+        return r<=other.r && g<=other.g && b<=other.b;
     }
     float dot(const lightCell& other) const
     {

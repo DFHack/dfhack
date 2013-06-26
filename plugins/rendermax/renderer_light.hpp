@@ -188,8 +188,11 @@ private:
 public:
 	void lightWorkerThread(void * arg);
 private:
+    lightCell getSkyColor(float v);
     //settings
+    float daySpeed;
     float dayHour; //<0 to cycle
+    std::vector<lightCell> dayColors; // a gradient of colors, first to 0, last to 24
     ///set up sane settings if setting file does not exist.
     void defaultSettings(); 
 

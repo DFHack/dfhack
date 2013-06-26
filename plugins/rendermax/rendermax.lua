@@ -10,9 +10,6 @@ end
 -- add material by id (index,mat pair or token string or a type number), flags is a table of strings
 -- supported flags (but not implemented):
 --		flicker
---		useThickness -- use thickness of stuff in transparency calculation
--- 		sizeModifiesPower
---		sizeModifiesRange
 function addMaterial(id,transparency,emitance,radius,flags)
 	local matinfo
 	if type(id)=="string" then
@@ -66,9 +63,13 @@ end
 -- supported flags:
 --		useMaterial --uses material, but the defined things overwrite
 --		poweredOnly --glow only when powered
-function addBuilding(id,transparency,emitance,radius,flags)
+function addBuilding(id,transparency,emitance,radius,flags,size,thickness)
+	size=size or 1
+	thickness=thickness or 1
 	local bld=buildingLookUp(id)
 	local mat=makeMaterialDef(transparency,emitance,radius,flags)
+	mat.size=size
+	mat.thickness=thickness
 	buildings[bld.type]=buildings[bld.type] or {}
 	if bld.subtype then
 		if bld.custom then

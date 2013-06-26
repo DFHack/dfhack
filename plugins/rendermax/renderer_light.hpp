@@ -170,7 +170,6 @@ private:
     }
     //maps
     std::vector<lightCell> lightMap;
-    std::vector<lightCell> lightMap2;
     std::vector<lightCell> ocupancy;
     std::vector<lightSource> lights;
 

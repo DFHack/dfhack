@@ -4,6 +4,7 @@
 #include <string>
 #include <math.h>
 
+#include "tinythread.h"
 
 #include "LuaTools.h"
 
@@ -23,12 +24,102 @@
 #include "df/plant.h"
 #include "df/plant_raw.h"
 
+#include <vector>
+
 using df::global::gps;
 using namespace DFHack;
 using df::coord2d;
-
+using namespace tthread;
 
 const float RootTwo = 1.4142135623730950488016887242097f;
+
+
+void lightingEngineViewscreen::lightWorkerThread(void * arg)
+{
+    int thisIndex;
+    std::vector<lightCell> canvas;
+    while(1)
+    {
+        writeMutex.lock();
+        writeMutex.unlock(); //Don't start till write access is given.
+        indexMutex.lock();
+        if(nextIndex == -1) //The worker threads should keep going until, and including, index 0.
+        {
+            indexMutex.unlock();
+            break;
+        }
+        else if(nextIndex == -2)
+        {
+            indexMutex.unlock();
+            return;
+        }
+        else
+        {
+            thisIndex = nextIndex;
+            nextIndex--;
+            indexMutex.unlock();
+            if(canvas.size() != lightMap.size())
+            {
+                canvas.resize(lightMap.size(), lightCell(0,0,0));
+            }
+            doLight(canvas, thisIndex);
+
+        }
+    }
+    writeMutex.lock();
+    for(int i = 0; i < canvas.size(); i++)
+    {
+        lightMap[i] = blend(lightMap[i], canvas[i]);
+
+    }
+    writeMutex.unlock();
+    canvas.assign(canvas.size(),lightCell(0,0,0));
+}
+
+lightingEngineViewscreen::~lightingEngineViewscreen()
+{
+    indexMutex.lock();
+    nextIndex = -2;
+    indexMutex.unlock();
+    writeMutex.unlock();
+    for(int i = 0; i < threadList.size(); i++)
+    {
+        if(threadList[i])
+            threadList[i]->join();
+    }
+}
+
+void threadStub(void * arg)
+{
+    if(arg)
+        ((lightingEngineViewscreen*)arg)->lightWorkerThread(0);
+}
+
+void lightingEngineViewscreen::doLightThreads()
+{
+    nextIndex = 0;
+    int num_threads = thread::hardware_concurrency();
+    if(num_threads < 1) num_threads = 1;
+    if(threadList.empty())
+    {
+        threadList.resize(num_threads, NULL);
+    }
+    for(int i = 0; i < num_threads; i++)
+    {
+        threadList[i] = new thread(threadStub, this);
+    }
+    nextIndex = lightMap.size() - 1; //start at the largest valid index
+    writeMutex.unlock();
+    for(int i = 0; i < num_threads; i++)
+    {
+        threadList[i]->join();
+        delete threadList[i];
+        threadList[i]=0;
+    }
+    writeMutex.lock();
+}
+
+
 
 lightSource::lightSource(lightCell power,int radius):power(power),flicker(false)
 {
@@ -90,6 +181,7 @@ lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):light
     reinit();
     defaultSettings();
     loadSettings();
+    writeMutex.lock(); //This is needed for later when the threads will all want to write to the buffer.
 }
 
 void lightingEngineViewscreen::reinit()
@@ -148,11 +240,15 @@ void plotLine(int x0, int y0, int x1, int y1,std::function<bool(int,int,int,int)
         if (e2 <= dx) { err += dx; y0 += sy; rdy=sy;} /* e_xy+e_y < 0 */
     }
 }
-lightCell blend(lightCell a,lightCell b)
+lightCell blendMax(lightCell a,lightCell b)
 {
     return lightCell(std::max(a.r,b.r),std::max(a.g,b.g),std::max(a.b,b.b));
 }
-bool lightingEngineViewscreen::lightUpCell(lightCell& power,int dx,int dy,int tx,int ty)
+lightCell blend(lightCell a,lightCell b)
+{
+    return blendMax(a,b);
+}
+bool lightingEngineViewscreen::lightUpCell(std::vector<lightCell> & target, lightCell& power,int dx,int dy,int tx,int ty)
 {
     if(isInViewport(coord2d(tx,ty),mapPort))
     {
@@ -183,9 +279,9 @@ bool lightingEngineViewscreen::lightUpCell(lightCell& power,int dx,int dy,int tx
                 return false;
         }
         //float dt=sqrt(dsq);
-        lightCell oldCol=lightMap[tile];
-        lightCell ncol=blend(power,oldCol);
-        lightMap[tile]=ncol;
+        lightCell oldCol=target[tile];
+        lightCell ncol=blendMax(power,oldCol);
+        target[tile]=ncol;
         
         if(wallhack)
             return false;
@@ -195,50 +291,56 @@ bool lightingEngineViewscreen::lightUpCell(lightCell& power,int dx,int dy,int tx
     else
         return false;
 }
-void lightingEngineViewscreen::doRay(lightCell power,int cx,int cy,int tx,int ty)
+void lightingEngineViewscreen::doRay(std::vector<lightCell> & target, lightCell power,int cx,int cy,int tx,int ty)
 {
     using namespace std::placeholders;
     lightCell curPower=power;
-    plotLine(cx,cy,tx,ty,std::bind(&lightingEngineViewscreen::lightUpCell,this,std::ref(curPower),_1,_2,_3,_4));
+    plotLine(cx,cy,tx,ty,std::bind(&lightingEngineViewscreen::lightUpCell,this,std::ref(target),std::ref(curPower),_1,_2,_3,_4));
 }
+
+void lightingEngineViewscreen::doLight(std::vector<lightCell> & target, int index)
+{
+    using namespace std::placeholders;
+    lightSource& csource=lights[index];
+    if(csource.radius>0)
+    {
+        coord2d coord = getCoords(index);
+        int i = coord.x;
+        int j = coord.y;
+        lightCell power=csource.power;
+        int radius =csource.radius;
+        if(csource.flicker)
+        {
+            float flicker=(rand()/(float)RAND_MAX)/2.0f+0.5f;
+            radius*=flicker;
+            power=power*flicker;
+        }
+        int surrounds = 0;
+        lightCell curPower;
+
+        lightUpCell(target, curPower = power, 0, 0,i+0, j+0);
+        {
+            surrounds += lightUpCell(target, curPower = power, 0, 1,i+0, j+1);
+            surrounds += lightUpCell(target, curPower = power, 1, 1,i+1, j+1);
+            surrounds += lightUpCell(target, curPower = power, 1, 0,i+1, j+0);
+            surrounds += lightUpCell(target, curPower = power, 1,-1,i+1, j-1);
+            surrounds += lightUpCell(target, curPower = power, 0,-1,i+0, j-1);
+            surrounds += lightUpCell(target, curPower = power,-1,-1,i-1, j-1);
+            surrounds += lightUpCell(target, curPower = power,-1, 0,i-1, j+0);
+            surrounds += lightUpCell(target, curPower = power,-1, 1,i-1, j+1);
+        }
+        if(surrounds)
+        {
+            plotSquare(i,j,radius,
+                std::bind(&lightingEngineViewscreen::doRay,this,std::ref(target),power,i,j,_1,_2));
+        }
+    }
+}
+
 void lightingEngineViewscreen::doFovs()
 {
     mapPort=getMapViewport();
-    using namespace std::placeholders;
-
-    for(int i=mapPort.first.x;i<mapPort.second.x;i++)
-        for(int j=mapPort.first.y;j<mapPort.second.y;j++)
-        {
-            lightSource& csource=lights[getIndex(i,j)];
-            if(csource.radius>0)
-            {
-                lightCell power=csource.power;
-                int radius =csource.radius;
-                if(csource.flicker)
-                {
-                    float flicker=(rand()/(float)RAND_MAX)/2.0f+0.5f;
-                    radius*=flicker;
-                    power=power*flicker;
-                }
-                int surrounds = 0;
-                lightCell curPower;
-
-                lightUpCell(curPower = power, 0, 0,i+0, j+0);
-                {
-                    surrounds += lightUpCell(curPower = power, 0, 1,i+0, j+1);
-                    surrounds += lightUpCell(curPower = power, 1, 1,i+1, j+1);
-                    surrounds += lightUpCell(curPower = power, 1, 0,i+1, j+0);
-                    surrounds += lightUpCell(curPower = power, 1,-1,i+1, j-1);
-                    surrounds += lightUpCell(curPower = power, 0,-1,i+0, j-1);
-                    surrounds += lightUpCell(curPower = power,-1,-1,i-1, j-1);
-                    surrounds += lightUpCell(curPower = power,-1, 0,i-1, j+0);
-                    surrounds += lightUpCell(curPower = power,-1, 1,i-1, j+1);
-                }
-                if(surrounds)
-                    plotSquare(i,j,radius,
-                    std::bind(&lightingEngineViewscreen::doRay,this,power,i,j,_1,_2));
-            }
-        }
+    doLightThreads();
 }
 void lightingEngineViewscreen::clear()
 {

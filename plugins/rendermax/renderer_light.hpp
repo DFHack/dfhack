@@ -124,7 +124,7 @@ class lightingEngineViewscreen:public lightingEngine
 {
 public:
     lightingEngineViewscreen(renderer_light* target);
-
+	~lightingEngineViewscreen();
     void reinit();
     void calculate();
 
@@ -140,9 +140,10 @@ private:
     void doSun(const lightSource& sky,MapExtras::MapCache& map);
     void doOcupancyAndLights();
     lightCell propogateSun(MapExtras::Block* b, int x,int y,const lightCell& in,bool lastLevel);
-    void doRay(lightCell power,int cx,int cy,int tx,int ty);
+    void doRay(std::vector<lightCell> & target, lightCell power,int cx,int cy,int tx,int ty);
     void doFovs();
-    bool lightUpCell(lightCell& power,int dx,int dy,int tx,int ty);
+	void doLight(std::vector<lightCell> & target, int index);
+    bool lightUpCell(std::vector<lightCell> & target, lightCell& power,int dx,int dy,int tx,int ty);
     bool addLight(int tileId,const lightSource& light);
 
     matLightDef* getMaterial(int matType,int matIndex);
@@ -154,10 +155,25 @@ private:
     {
         return x*h+y;
     }
+    df::coord2d inline getCoords(int index)
+    {
+        return df::coord2d(index/h, index%h);
+    }
     //maps
     std::vector<lightCell> lightMap;
+    std::vector<lightCell> lightMap2;
     std::vector<lightCell> ocupancy;
     std::vector<lightSource> lights;
+
+    //Threading stuff
+    tthread::mutex indexMutex;
+    tthread::mutex writeMutex;
+    int nextIndex;
+    std::vector<tthread::thread *> threadList;
+    void doLightThreads();
+public:
+	void lightWorkerThread(void * arg);
+private:
     //settings
 
     ///set up sane settings if setting file does not exist.
@@ -180,4 +196,6 @@ private:
     int w,h;
     DFHack::rect2d mapPort;
 };
+lightCell blend(lightCell a,lightCell b);
+lightCell blendMax(lightCell a,lightCell b);
 #endif

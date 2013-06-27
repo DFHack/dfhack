@@ -614,7 +614,7 @@ void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache&
             cellArray[block_x][block_y] = sky.power;
 
         int emptyCell=0;
-        for(int z=df::global::world->map.z_count-1;z>=window_z && emptyCell<256;z--)
+        for(int z=window_z;z< df::global::world->map.z_count && emptyCell<256;z++)
         {
             MapExtras::Block* b=map.BlockAt(DFCoord(blockX,blockY,z));
             if(!b)

@@ -196,7 +196,7 @@ struct lightCell
     {
 
     }
-    lightCell operator-(lightCell cell) const
+    lightCell operator-(const lightCell& cell) const
     {
         return lightCell(r-cell.r,g-cell.g,b-cell.b);
     }
@@ -208,15 +208,29 @@ struct lightCell
     {
         return lightCell(r/val,g/val,b/val);
     }
-    lightCell operator*(lightCell cell) const
+    lightCell operator*(const lightCell& cell) const
     {
         return lightCell(r*cell.r,g*cell.g,b*cell.b);
     }
-    lightCell operator*=(lightCell cell)
+    lightCell operator*=(float val)
+    {
+        r*=val;
+        g*=val;
+        b*=val;
+        return *this;
+    }
+    lightCell operator*=(const lightCell& cell)
     {
         r*=cell.r;
         g*=cell.g;
         b*=cell.b;
+        return *this;
+    }
+    lightCell operator+=(const lightCell& cell)
+    {
+        r+=cell.r;
+        g+=cell.g;
+        b+=cell.b;
         return *this;
     }
     lightCell operator+(const lightCell& other) const
@@ -231,13 +245,13 @@ struct lightCell
     {
         return r*other.r+g*other.g+b*other.b;
     }
-    lightCell power(const float exp) const
+    lightCell pow(const float exp) const
     {
-        return lightCell(pow(r, exp), pow(g, exp), pow(b, exp));
+        return lightCell(std::pow(r, exp), std::pow(g, exp), std::pow(b, exp));
     }
-    lightCell power(const int exp) const
+    lightCell pow(const int exp) const
     {
-        return lightCell(pow(r, exp), pow(g, exp), pow(b, exp));
+        return lightCell(std::pow(r, exp), std::pow(g, exp), std::pow(b, exp));
     }
 };
 struct renderer_test : public renderer_wrap {

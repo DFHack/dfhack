@@ -152,7 +152,7 @@ private:
     void doRay(std::vector<lightCell> & target, lightCell power,int cx,int cy,int tx,int ty);
     void doFovs();
 	void doLight(std::vector<lightCell> & target, int index);
-    bool lightUpCell(std::vector<lightCell> & target, lightCell& power,int dx,int dy,int tx,int ty);
+    lightCell lightUpCell(std::vector<lightCell> & target, lightCell power,int dx,int dy,int tx,int ty);
     bool addLight(int tileId,const lightSource& light);
     void addOclusion(int tileId,const lightCell& c,float thickness);
 

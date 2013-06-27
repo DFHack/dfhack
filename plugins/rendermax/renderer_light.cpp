@@ -882,11 +882,15 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         df::coord2d p1(bld->x1,bld->y1);
         df::coord2d p2(bld->x2,bld->y2);
         p1=worldToViewportCoord(p1,vp,window2d);
-        p2=worldToViewportCoord(p1,vp,window2d);
+        p2=worldToViewportCoord(p2,vp,window2d);
         if(isInViewport(p1,vp)||isInViewport(p2,vp))
         {
             
-            int tile=getIndex(p1.x,p1.y); //TODO multitile buildings. How they would work?
+            int tile;
+            if(isInViewport(p1,vp))
+                tile=getIndex(p1.x,p1.y); //TODO multitile buildings. How they would work?
+            else
+                tile=getIndex(p2.x,p2.y);
             df::building_type type = bld->getType();
             buildingLightDef* def=getBuilding(bld);
             if(!def)

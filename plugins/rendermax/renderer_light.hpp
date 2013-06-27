@@ -114,7 +114,6 @@ struct matLightDef
     matLightDef(lightCell transparency):isTransparent(true),isEmiting(false),transparency(transparency){}
     lightSource makeSource(float size=1) const
     {
-        //TODO implement sizeModifiesPower/range
         if(size>0.999 && size<1.001)
             return lightSource(emitColor,radius);
         else

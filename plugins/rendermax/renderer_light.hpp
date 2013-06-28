@@ -79,6 +79,7 @@ public:
     virtual void clear()=0;
     
     virtual void setHour(float h)=0;
+    virtual void debug(bool enable)=0;
 protected:
     renderer_light* myRenderer;
 };
@@ -140,6 +141,8 @@ public:
 
     void loadSettings();
     void clear();
+
+    void debug(bool enable){doDebug=enable;};
 private:
 
     df::coord2d worldToViewportCoord(const df::coord2d& in,const DFHack::rect2d& r,const df::coord2d& window2d) ;
@@ -188,6 +191,8 @@ public:
 	void lightWorkerThread(void * arg);
 private:
     lightCell getSkyColor(float v);
+    bool doDebug;
+
     //settings
     float daySpeed;
     float dayHour; //<0 to cycle

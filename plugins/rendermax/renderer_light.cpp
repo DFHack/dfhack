@@ -222,7 +222,7 @@ void plotSquare(int xm, int ym, int r,std::function<void(int,int)> setPixel)
         setPixel(xm-x, ym+r); /*   IV.2 Quadrant */
     }
 }
-void plotLine(int x0, int y0, int x1, int y1,std::function<bool(int,int,int,int)> setPixel)
+void plotLine(int x0, int y0, int x1, int y1,lightCell power,std::function<lightCell(lightCell,int,int,int,int)> setPixel)
 {
     int dx =  abs(x1-x0), sx = x0<x1 ? 1 : -1;
     int dy = -abs(y1-y0), sy = y0<y1 ? 1 : -1; 
@@ -231,13 +231,66 @@ void plotLine(int x0, int y0, int x1, int y1,std::function<bool(int,int,int,int)
     int rdy=0;
     for(;;){  /* loop */
         if(rdx!=0 || rdy!=0) //dirty hack to skip occlusion on the first tile.
-            if(!setPixel(rdx,rdy,x0,y0))
+        {
+            power=setPixel(power,rdx,rdy,x0,y0);
+            if(power.dot(power)<0.00001f)
                 return;
+        }
         if (x0==x1 && y0==y1) break;
         e2 = 2*err;
         rdx=rdy=0;
         if (e2 >= dy) { err += dy; x0 += sx; rdx=sx;} /* e_xy+e_x > 0 */
         if (e2 <= dx) { err += dx; y0 += sy; rdy=sy;} /* e_xy+e_y < 0 */
+    }
+}
+
+void plotLineAA(int x0, int y0, int x1, int y1,lightCell power,std::function<lightCell(lightCell,int,int,int,int)> setPixelAA)
+{
+    int dx = abs(x1-x0), sx = x0<x1 ? 1 : -1;
+    int dy = abs(y1-y0), sy = y0<y1 ? 1 : -1; 
+    int err = dx-dy, e2, x2;                       /* error value e_xy */
+    int ed = dx+dy == 0 ? 1 : sqrt((float)dx*dx+(float)dy*dy);
+    int rdx=0;
+    int rdy=0;
+    int lrdx,lrdy;
+    lightCell sumPower;
+    for ( ; ; ){                                         /* pixel loop */
+        float strsum=0;
+        float str=1-abs(err-dx+dy)/(float)ed;
+        strsum=str;
+        sumPower=setPixelAA(power*str,rdx,rdy,x0,y0);
+        e2 = err; x2 = x0;
+        lrdx=rdx;
+        lrdy=rdy;
+        rdx=rdy=0;
+        if (2*e2 >= -dx) {                                    /* x step */
+            if (x0 == x1) break;
+            
+            if (e2+dy < ed)
+                {
+                    str=1-(e2+dy)/(float)ed;
+                    sumPower+=setPixelAA(power*str,lrdx,lrdy,x0,y0+sy);
+                    strsum+=str;
+                }
+            err -= dy; x0 += sx; rdx=sx;
+        } 
+        if (2*e2 <= dy) {                                     /* y step */
+            if (y0 == y1) break;
+            
+            if (dx-e2 < ed) 
+                {
+                    str=1-(dx-e2)/(float)ed;
+                    sumPower+=setPixelAA(power*str,lrdx,lrdy,x2+sx,y0);
+                    strsum+=str;
+                }
+            err += dx; y0 += sy; rdy=sy;
+        }
+        if(strsum<0.001f)
+            return;
+        sumPower=sumPower/strsum;
+        if(sumPower.dot(sumPower)<0.00001f)
+            return;
+        power=sumPower;
     }
 }
 lightCell blendMax(lightCell a,lightCell b)
@@ -248,7 +301,7 @@ lightCell blend(lightCell a,lightCell b)
 {
     return blendMax(a,b);
 }
-bool lightingEngineViewscreen::lightUpCell(std::vector<lightCell> & target, lightCell& power,int dx,int dy,int tx,int ty)
+lightCell lightingEngineViewscreen::lightUpCell(std::vector<lightCell> & target,lightCell power,int dx,int dy,int tx,int ty)
 {
     if(isInViewport(coord2d(tx,ty),mapPort))
     {
@@ -271,12 +324,12 @@ bool lightingEngineViewscreen::lightUpCell(std::vector<lightCell> & target, ligh
         
         if (dsq>0 && !wallhack)
         {
-            power*=v.power(dt);
+            power*=v.pow(dt);
         }
         if(ls.radius>0 && dsq>0)
         {
             if(power<=ls.power)
-                return false;
+                return lightCell();
         }
         //float dt=sqrt(dsq);
         lightCell oldCol=target[tile];
@@ -284,20 +337,20 @@ bool lightingEngineViewscreen::lightUpCell(std::vector<lightCell> & target, ligh
         target[tile]=ncol;
         
         if(wallhack)
-            return false;
-        float pwsq=power.r*power.r+power.g*power.g+power.b*power.b;
-        return pwsq>levelDim*levelDim;
+            return lightCell();
+        
+        
+        return power;
     }
     else
-        return false;
+        return lightCell();
 }
 void lightingEngineViewscreen::doRay(std::vector<lightCell> & target, lightCell power,int cx,int cy,int tx,int ty)
 {
     using namespace std::placeholders;
-    lightCell curPower=power;
-    plotLine(cx,cy,tx,ty,std::bind(&lightingEngineViewscreen::lightUpCell,this,std::ref(target),std::ref(curPower),_1,_2,_3,_4));
+    
+    plotLine(cx,cy,tx,ty,power,std::bind(&lightingEngineViewscreen::lightUpCell,this,std::ref(target),_1,_2,_3,_4,_5));
 }
-
 void lightingEngineViewscreen::doLight(std::vector<lightCell> & target, int index)
 {
     using namespace std::placeholders;
@@ -315,21 +368,21 @@ void lightingEngineViewscreen::doLight(std::vector<lightCell> & target, int inde
             radius*=flicker;
             power=power*flicker;
         }
-        int surrounds = 0;
-        lightCell curPower;
+        lightCell surrounds;
 
-        lightUpCell(target, curPower = power, 0, 0,i+0, j+0);
+
+        lightUpCell(target,power, 0, 0,i+0, j+0);
         {
-            surrounds += lightUpCell(target, curPower = power, 0, 1,i+0, j+1);
-            surrounds += lightUpCell(target, curPower = power, 1, 1,i+1, j+1);
-            surrounds += lightUpCell(target, curPower = power, 1, 0,i+1, j+0);
-            surrounds += lightUpCell(target, curPower = power, 1,-1,i+1, j-1);
-            surrounds += lightUpCell(target, curPower = power, 0,-1,i+0, j-1);
-            surrounds += lightUpCell(target, curPower = power,-1,-1,i-1, j-1);
-            surrounds += lightUpCell(target, curPower = power,-1, 0,i-1, j+0);
-            surrounds += lightUpCell(target, curPower = power,-1, 1,i-1, j+1);
+            surrounds += lightUpCell(target, power, 0, 1,i+0, j+1);
+            surrounds += lightUpCell(target, power, 1, 1,i+1, j+1);
+            surrounds += lightUpCell(target, power, 1, 0,i+1, j+0);
+            surrounds += lightUpCell(target, power, 1,-1,i+1, j-1);
+            surrounds += lightUpCell(target, power, 0,-1,i+0, j-1);
+            surrounds += lightUpCell(target, power,-1,-1,i-1, j-1);
+            surrounds += lightUpCell(target, power,-1, 0,i-1, j+0);
+            surrounds += lightUpCell(target, power,-1, 1,i-1, j+1);
         }
-        if(surrounds)
+        if(surrounds.dot(surrounds)>0.00001f)
         {
             plotSquare(i,j,radius,
                 std::bind(&lightingEngineViewscreen::doRay,this,std::ref(target),power,i,j,_1,_2));
@@ -365,7 +418,6 @@ void lightingEngineViewscreen::calculate()
     }
     doOcupancyAndLights();
     doFovs();
-    //for each lightsource in viewscreen+x do light
 }
 void lightingEngineViewscreen::updateWindow()
 {
@@ -405,7 +457,7 @@ void lightingEngineViewscreen::addOclusion(int tileId,const lightCell& c,float t
     if(thickness > 0.999 && thickness < 1.001)
         ocupancy[tileId]*=c;
     else
-        ocupancy[tileId]*=(c.power(thickness));
+        ocupancy[tileId]*=(c.pow(thickness));
 }
 lightCell getStandartColor(int colorId)
 {
@@ -496,7 +548,7 @@ lightCell lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int 
             ret*=matIce.transparency;
         else if(basicShapeIce==df::tiletype_shape_basic::Floor || basicShapeIce==df::tiletype_shape_basic::Ramp || shapeIce==df::tiletype_shape::STAIR_UP)
             if(!lastLevel)
-                ret*=matIce.transparency.power(1.0f/7.0f);
+                ret*=matIce.transparency.pow(1.0f/7.0f);
     }   
     
     lightDef=getMaterial(mat.mat_type,mat.mat_index);
@@ -511,7 +563,7 @@ lightCell lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int 
     {
         
         if(!lastLevel)
-            ret*=lightDef->transparency.power(1.0f/7.0f); 
+            ret*=lightDef->transparency.pow(1.0f/7.0f); 
     }
     else if(shape==df::tiletype_shape::STAIR_DOWN || shape==df::tiletype_shape::STAIR_UPDOWN)
     {
@@ -519,11 +571,11 @@ lightCell lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int 
     }
     if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size > 0)
     {
-        ret *=matWater.transparency.power((float)d.bits.flow_size/7.0f);
+        ret *=matWater.transparency.pow((float)d.bits.flow_size/7.0f);
     }
     else if(d.bits.liquid_type == df::enums::tile_liquid::Magma && d.bits.flow_size > 0)
     {
-        ret *=matLava.transparency.power((float)d.bits.flow_size/7.0f);
+        ret *=matLava.transparency.pow((float)d.bits.flow_size/7.0f);
     }
     return ret;
 }
@@ -626,7 +678,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         daycol= fmod(dayHour,24.0f)/24.0f; //1->12h 0->24h
     
     lightCell sky_col=getSkyColor(daycol);
-    lightSource sky(sky_col, 15);//auto calculate best size
+    lightSource sky(sky_col, -1);//auto calculate best size
 
     lightSource candle(lightCell(0.96f,0.84f,0.03f),5);
     lightSource torch(lightCell(0.9f,0.75f,0.3f),8);
@@ -830,11 +882,15 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         df::coord2d p1(bld->x1,bld->y1);
         df::coord2d p2(bld->x2,bld->y2);
         p1=worldToViewportCoord(p1,vp,window2d);
-        p2=worldToViewportCoord(p1,vp,window2d);
+        p2=worldToViewportCoord(p2,vp,window2d);
         if(isInViewport(p1,vp)||isInViewport(p2,vp))
         {
             
-            int tile=getIndex(p1.x,p1.y); //TODO multitile buildings. How they would work?
+            int tile;
+            if(isInViewport(p1,vp))
+                tile=getIndex(p1.x,p1.y); //TODO multitile buildings. How they would work?
+            else
+                tile=getIndex(p2.x,p2.y);
             df::building_type type = bld->getType();
             buildingLightDef* def=getBuilding(bld);
             if(!def)

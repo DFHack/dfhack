@@ -92,6 +92,16 @@ function makeMaterialDef(transparency,emitance,radius,flags)
 	end
 	return {tr=transparency,em=emitance,rad=radius,flags=flg}
 end
+function colorFrom16(col16)
+	return copyall(df.global.enabler.ccolor[col16])
+end
+function addGems()
+	for k,v in pairs(df.global.world.raws.inorganics) do
+		if v.material.flags.IS_GEM then
+			addMaterial("INORGANIC:"..v.id,colorFrom16(v.material.build_color[0]))
+		end
+	end
+end
 ------------------------------------------------------------------------
 ----------------   Configuration Starts Here   -------------------------
 ------------------------------------------------------------------------
@@ -128,7 +138,7 @@ addMaterial("PLANT:MUSHROOM_HELMET_PLUMP",nil,{0.2,0.1,0.6},2)
 addMaterial("INORGANIC:ADAMANTINE",{0.1,0.3,0.3},{0.1,0.3,0.3},4)
 --		creature stuff
 addMaterial("CREATURE:DRAGON:BLOOD",nil,{0.6,0.1,0.1},4)
--- TODO gems
+addGems()
 --buildings
 addBuilding("Statue",{1,1,1},{0.9,0.75,0.3},8)
 addBuilding("Bed",{1,1,1},{0.3,0.2,0.0},2)

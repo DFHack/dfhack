@@ -897,8 +897,6 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             buildingLightDef* def=getBuilding(bld);
             if(!def)
                 continue;
-            if(def->poweredOnly && bld->isUnpowered())
-                continue;
             if(type==df::enums::building_type::Door)
             {
                 df::building_doorst* door=static_cast<df::building_doorst*>(bld);
@@ -911,13 +909,16 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             {
                 matLightDef* mat=getMaterial(bld->mat_type,bld->mat_index);
                 if(!mat)mat=&matWall;
-                if(def->light.isEmiting)
+                if(!def->poweredOnly || !bld->isUnpowered()) //not powered. Add occlusion only.
                 {
-                    addLight(tile,def->light.makeSource(def->size));
-                }
-                else if(mat->isEmiting)
-                {
-                    addLight(tile,mat->makeSource(def->size));
+                    if(def->light.isEmiting)
+                    {
+                        addLight(tile,def->light.makeSource(def->size));
+                    }
+                    else if(mat->isEmiting)
+                    {
+                        addLight(tile,mat->makeSource(def->size));
+                    }
                 }
                 if(def->light.isTransparent)
                 {
@@ -930,7 +931,10 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             }
             else
             {
-                applyMaterial(tile,def->light,def->size,def->thickness);
+                if(!def->poweredOnly || !bld->isUnpowered())//not powered. Add occlusion only.
+                    addOclusion(tile,def->light.transparency,def->size);
+                else
+                    applyMaterial(tile,def->light,def->size,def->thickness);
             }
         }
     }

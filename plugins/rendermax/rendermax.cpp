@@ -49,7 +49,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  rendermax lua\n"
         "  rendermax light - lighting engine\n"
         "  rendermax light reload - reload the settings file\n"
-        "  rendermax light sun <x>|cycle - set time to x or cycle (same effect if x<0)\n"
+        "  rendermax light sun <x>|cycle - set time to x (in hours) or cycle (same effect if x<0)\n"
+        "  rendermax light occlusionON|occlusionOFF - debug the occlusion map\n"
         "  rendermax disable\n"
         ));
     return CR_OK;
@@ -384,6 +385,13 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
                     ss>>h;
                     engine->setHour(h);
                 }
+            }
+            else if(parameters[1]=="occlusionON")
+            {
+                engine->debug(true);
+            }else if(parameters[1]=="occlusionOFF")
+            {
+                engine->debug(false);
             }
         }
         else

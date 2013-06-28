@@ -176,7 +176,7 @@ rect2d getMapViewport()
     }
     return mkrect_wh(1,1,view_rb,view_height+1);
 }
-lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):lightingEngine(target)
+lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):lightingEngine(target),doDebug(false)
 {
     reinit();
     defaultSettings();
@@ -429,10 +429,10 @@ void lightingEngineViewscreen::updateWindow()
         return;
     }
     
-    //if(showOcupancy)
-    //std::swap(ocupancy,myRenderer->lightGrid);
-    //else
-    std::swap(lightMap,myRenderer->lightGrid);
+    if(doDebug)
+        std::swap(ocupancy,myRenderer->lightGrid);
+    else
+        std::swap(lightMap,myRenderer->lightGrid);
     rect2d vp=getMapViewport();
     
     myRenderer->invalidateRect(vp.first.x,vp.first.y,vp.second.x-vp.first.x,vp.second.y-vp.first.y);

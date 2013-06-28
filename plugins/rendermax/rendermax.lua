@@ -146,3 +146,4 @@ addBuilding("Bed",{1,1,1},{0.3,0.2,0.0},2)
 addBuilding("WindowGlass",nil,nil,0,{"useMaterial"})
 addBuilding("WindowGem",nil,nil,0,{"useMaterial"})
 addBuilding("Door",nil,nil,0,{"useMaterial"}) -- special case, only closed door obstruct/emit light
+addBuilding("Floodgate",nil,nil,0,{"useMaterial"}) -- special case, only closed door obstruct/emit light

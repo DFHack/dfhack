@@ -128,6 +128,7 @@ struct buildingLightDef
     bool useMaterial;
     float thickness;
     float size;
+    buildingLightDef():poweredOnly(false),useMaterial(true),thickness(1.0f),size(1.0f){}
 };
 class lightingEngineViewscreen:public lightingEngine
 {

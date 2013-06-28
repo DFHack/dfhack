@@ -21,6 +21,7 @@
 #include "df/world.h"
 #include "df/building.h"
 #include "df/building_doorst.h"
+#include "df/building_floodgatest.h"
 #include "df/plant.h"
 #include "df/plant_raw.h"
 
@@ -901,6 +902,12 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             {
                 df::building_doorst* door=static_cast<df::building_doorst*>(bld);
                 if(!door->door_flags.bits.closed)
+                    continue;
+            }
+            else if(type==df::enums::building_type::Floodgate)
+            {
+                df::building_floodgatest* gate=static_cast<df::building_floodgatest*>(bld);
+                if(!gate->gate_flags.bits.closed)
                     continue;
             }
             

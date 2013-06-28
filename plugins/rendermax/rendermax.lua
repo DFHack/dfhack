@@ -93,12 +93,13 @@ function makeMaterialDef(transparency,emitance,radius,flags)
 	return {tr=transparency,em=emitance,rad=radius,flags=flg}
 end
 function colorFrom16(col16)
-	return copyall(df.global.enabler.ccolor[col16])
+	local col=df.global.enabler.ccolor[col16]
+	return {col[0],col[1],col[2]}
 end
 function addGems()
 	for k,v in pairs(df.global.world.raws.inorganics) do
 		if v.material.flags.IS_GEM then
-			addMaterial("INORGANIC:"..v.id,colorFrom16(v.material.build_color[0]))
+			addMaterial("INORGANIC:"..v.id,colorFrom16(v.material.tile_color[0]+v.material.tile_color[2]*8))
 		end
 	end
 end

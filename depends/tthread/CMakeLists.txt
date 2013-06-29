@@ -1,5 +1,5 @@
 PROJECT(dfhack-tinythread)
-ADD_LIBRARY(dfhack-tinythread STATIC EXCLUDE_FROM_ALL tinythread.cpp)
+ADD_LIBRARY(dfhack-tinythread STATIC EXCLUDE_FROM_ALL tinythread.cpp tinythread.h fast_mutex.h)
 if(UNIX)
     target_link_libraries(dfhack-tinythread pthread)
 endif()

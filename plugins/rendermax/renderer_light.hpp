@@ -4,8 +4,10 @@
 #include "Types.h"
 #include <map>
 #include <tuple>
+#include <stack>
+#include <memory>
 #include "modules/MapCache.h"
-
+bool isInRect(const df::coord2d& pos,const DFHack::rect2d& rect);
 struct renderer_light : public renderer_wrap {
 private:
     void colorizeTile(int x,int y)
@@ -130,6 +132,56 @@ struct buildingLightDef
     float size;
     buildingLightDef():poweredOnly(false),useMaterial(true),thickness(1.0f),size(1.0f){}
 };
+class lightThread;
+class lightingEngineViewscreen;
+class lightThreadDispatch
+{
+    lightingEngineViewscreen *parent;
+public:
+    DFHack::rect2d viewPort;
+
+    std::vector<std::unique_ptr<lightThread> > threadPool;
+    std::vector<lightSource>& lights;
+
+    tthread::mutex occlusionMutex;
+    tthread::condition_variable occlusionDone; //all threads wait for occlusion to finish
+    tthread::mutex unprocessedMutex;
+    std::stack<DFHack::rect2d> unprocessed; //stack of parts of map where lighting is not finished
+    std::vector<lightCell>& occlusion;
+    
+    tthread::mutex writeLock; //mutex for lightMap
+    std::vector<lightCell>& lightMap;
+
+    tthread::condition_variable writesDone;
+    int writeCount;
+
+    lightThreadDispatch(lightingEngineViewscreen* p);
+    void signalDoneOcclusion();
+    void shutdown();
+    void waitForWrites();
+
+    int getW();
+    int getH();
+    void start(int count);
+};
+class lightThread
+{
+    std::vector<lightCell> canvas;
+    lightThreadDispatch& dispatch;
+    DFHack::rect2d myRect;
+    void work(); //main light calculation function
+    void combine(); //combine existing canvas into global lightmap
+public:
+    tthread::thread *myThread;
+    bool isDone; //no mutex, because bool is atomic
+    lightThread(lightThreadDispatch& dispatch);
+    ~lightThread();
+    void run();
+private:
+    void doLight(int x,int y);
+    void doRay(lightCell power,int cx,int cy,int tx,int ty);
+    lightCell lightUpCell(lightCell power,int dx,int dy,int tx,int ty);
+};
 class lightingEngineViewscreen:public lightingEngine
 {
 public:
@@ -147,7 +199,7 @@ public:
 private:
 
     df::coord2d worldToViewportCoord(const df::coord2d& in,const DFHack::rect2d& r,const df::coord2d& window2d) ;
-    bool isInViewport(const df::coord2d& in,const DFHack::rect2d& r);
+    
 
     void doSun(const lightSource& sky,MapExtras::MapCache& map);
     void doOcupancyAndLights();
@@ -181,13 +233,12 @@ private:
     std::vector<lightSource> lights;
 
     //Threading stuff
-    tthread::mutex indexMutex;
-    tthread::mutex writeMutex;
-    int nextIndex;
-    std::vector<tthread::thread *> threadList;
-    void doLightThreads();
+    lightThreadDispatch threading;
     //misc
     void setHour(float h){dayHour=h;};
+
+    int getW()const {return w;}
+    int getH()const {return h;}
 public:
 	void lightWorkerThread(void * arg);
 private:
@@ -219,6 +270,7 @@ private:
     std::map<std::tuple<int,int,int>,buildingLightDef> buildingDefs;
     int w,h;
     DFHack::rect2d mapPort;
+    friend lightThreadDispatch;
 };
 lightCell blend(lightCell a,lightCell b);
 lightCell blendMax(lightCell a,lightCell b);

@@ -35,92 +35,17 @@ using namespace tthread;
 const float RootTwo = 1.4142135623730950488016887242097f;
 
 
-void lightingEngineViewscreen::lightWorkerThread(void * arg)
+bool isInRect(const coord2d& pos,const rect2d& rect)
 {
-    int thisIndex;
-    std::vector<lightCell> canvas;
-    while(1)
-    {
-        writeMutex.lock();
-        writeMutex.unlock(); //Don't start till write access is given.
-        indexMutex.lock();
-        if(nextIndex == -1) //The worker threads should keep going until, and including, index 0.
-        {
-            indexMutex.unlock();
-            break;
-        }
-        else if(nextIndex == -2)
-        {
-            indexMutex.unlock();
-            return;
-        }
-        else
-        {
-            thisIndex = nextIndex;
-            nextIndex--;
-            indexMutex.unlock();
-            if(canvas.size() != lightMap.size())
-            {
-                canvas.resize(lightMap.size(), lightCell(0,0,0));
-            }
-            doLight(canvas, thisIndex);
-
-        }
-    }
-    writeMutex.lock();
-    for(int i = 0; i < canvas.size(); i++)
-    {
-        lightMap[i] = blend(lightMap[i], canvas[i]);
-
-    }
-    writeMutex.unlock();
-    canvas.assign(canvas.size(),lightCell(0,0,0));
+    if(pos.x>=rect.first.x && pos.y>=rect.first.y && pos.x<rect.second.x && pos.y<rect.second.y)
+        return true;
+    return false;
 }
 
 lightingEngineViewscreen::~lightingEngineViewscreen()
 {
-    indexMutex.lock();
-    nextIndex = -2;
-    indexMutex.unlock();
-    writeMutex.unlock();
-    for(int i = 0; i < threadList.size(); i++)
-    {
-        if(threadList[i])
-            threadList[i]->join();
-    }
+    threading.shutdown();
 }
-
-void threadStub(void * arg)
-{
-    if(arg)
-        ((lightingEngineViewscreen*)arg)->lightWorkerThread(0);
-}
-
-void lightingEngineViewscreen::doLightThreads()
-{
-    nextIndex = 0;
-    int num_threads = thread::hardware_concurrency();
-    if(num_threads < 1) num_threads = 1;
-    if(threadList.empty())
-    {
-        threadList.resize(num_threads, NULL);
-    }
-    for(int i = 0; i < num_threads; i++)
-    {
-        threadList[i] = new thread(threadStub, this);
-    }
-    nextIndex = lightMap.size() - 1; //start at the largest valid index
-    writeMutex.unlock();
-    for(int i = 0; i < num_threads; i++)
-    {
-        threadList[i]->join();
-        delete threadList[i];
-        threadList[i]=0;
-    }
-    writeMutex.lock();
-}
-
-
 
 lightSource::lightSource(lightCell power,int radius):power(power),flicker(false)
 {
@@ -176,12 +101,14 @@ rect2d getMapViewport()
     }
     return mkrect_wh(1,1,view_rb,view_height+1);
 }
-lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):lightingEngine(target),doDebug(false)
+lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):lightingEngine(target),doDebug(false),threading(this)
 {
     reinit();
     defaultSettings();
     loadSettings();
-    writeMutex.lock(); //This is needed for later when the threads will all want to write to the buffer.
+    int numTreads=tthread::thread::hardware_concurrency();
+    if(numTreads==0)numTreads=1;
+    threading.start(numTreads);
 }
 
 void lightingEngineViewscreen::reinit()
@@ -301,100 +228,6 @@ lightCell blend(lightCell a,lightCell b)
 {
     return blendMax(a,b);
 }
-lightCell lightingEngineViewscreen::lightUpCell(std::vector<lightCell> & target,lightCell power,int dx,int dy,int tx,int ty)
-{
-    if(isInViewport(coord2d(tx,ty),mapPort))
-    {
-        size_t tile=getIndex(tx,ty);
-        int dsq=dx*dx+dy*dy;
-        float dt=1;
-        if(dsq == 1)
-            dt=1;
-        else if(dsq == 2)
-            dt = RootTwo;
-        else if(dsq == 0)
-            dt = 0;
-        else
-            dt=sqrt((float)dsq);
-        lightCell& v=ocupancy[tile];
-        lightSource& ls=lights[tile];
-        bool wallhack=false;
-        if(v.r+v.g+v.b==0)
-            wallhack=true;
-        
-        if (dsq>0 && !wallhack)
-        {
-            power*=v.pow(dt);
-        }
-        if(ls.radius>0 && dsq>0)
-        {
-            if(power<=ls.power)
-                return lightCell();
-        }
-        //float dt=sqrt(dsq);
-        lightCell oldCol=target[tile];
-        lightCell ncol=blendMax(power,oldCol);
-        target[tile]=ncol;
-        
-        if(wallhack)
-            return lightCell();
-        
-        
-        return power;
-    }
-    else
-        return lightCell();
-}
-void lightingEngineViewscreen::doRay(std::vector<lightCell> & target, lightCell power,int cx,int cy,int tx,int ty)
-{
-    using namespace std::placeholders;
-    
-    plotLine(cx,cy,tx,ty,power,std::bind(&lightingEngineViewscreen::lightUpCell,this,std::ref(target),_1,_2,_3,_4,_5));
-}
-void lightingEngineViewscreen::doLight(std::vector<lightCell> & target, int index)
-{
-    using namespace std::placeholders;
-    lightSource& csource=lights[index];
-    if(csource.radius>0)
-    {
-        coord2d coord = getCoords(index);
-        int i = coord.x;
-        int j = coord.y;
-        lightCell power=csource.power;
-        int radius =csource.radius;
-        if(csource.flicker)
-        {
-            float flicker=(rand()/(float)RAND_MAX)/2.0f+0.5f;
-            radius*=flicker;
-            power=power*flicker;
-        }
-        lightCell surrounds;
-
-
-        lightUpCell(target,power, 0, 0,i+0, j+0);
-        {
-            surrounds += lightUpCell(target, power, 0, 1,i+0, j+1);
-            surrounds += lightUpCell(target, power, 1, 1,i+1, j+1);
-            surrounds += lightUpCell(target, power, 1, 0,i+1, j+0);
-            surrounds += lightUpCell(target, power, 1,-1,i+1, j-1);
-            surrounds += lightUpCell(target, power, 0,-1,i+0, j-1);
-            surrounds += lightUpCell(target, power,-1,-1,i-1, j-1);
-            surrounds += lightUpCell(target, power,-1, 0,i-1, j+0);
-            surrounds += lightUpCell(target, power,-1, 1,i-1, j+1);
-        }
-        if(surrounds.dot(surrounds)>0.00001f)
-        {
-            plotSquare(i,j,radius,
-                std::bind(&lightingEngineViewscreen::doRay,this,std::ref(target),power,i,j,_1,_2));
-        }
-    }
-}
-
-void lightingEngineViewscreen::doFovs()
-{
-    mapPort=getMapViewport();
-    doLightThreads();
-}
 void lightingEngineViewscreen::clear()
 {
     lightMap.assign(lightMap.size(),lightCell(1,1,1));
@@ -417,7 +250,8 @@ void lightingEngineViewscreen::calculate()
         lightMap[getIndex(i,j)]=dim;
     }
     doOcupancyAndLights();
-    doFovs();
+    threading.signalDoneOcclusion();
+    threading.waitForWrites();
 }
 void lightingEngineViewscreen::updateWindow()
 {
@@ -586,12 +420,7 @@ coord2d lightingEngineViewscreen::worldToViewportCoord(const coord2d& in,const r
 {
     return in-window2d+r.first;
 }
-bool lightingEngineViewscreen::isInViewport(const coord2d& in,const rect2d& r)
-{
-    if(in.x>=r.first.x && in.y>=r.first.y && in.x<r.second.x && in.y<r.second.y)
-        return true;
-    return false;
-}
+
 static size_t max_list_size = 100000; // Avoid iterating over huge lists
 void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache& map)
 {
@@ -642,7 +471,7 @@ void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache&
             pos.x = blockX*16+block_x;
             pos.y = blockY*16+block_y;
             pos=worldToViewportCoord(pos,vp,window2d);
-            if(isInViewport(pos,vp) && curCell.dot(curCell)>0.003f)
+            if(isInRect(pos,vp) && curCell.dot(curCell)>0.003f)
             {
                 lightSource sun=lightSource(curCell,15);
                 addLight(getIndex(pos.x,pos.y),sun);
@@ -719,7 +548,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             pos.y = blockY*16+block_y;
             df::coord2d gpos=pos;
             pos=worldToViewportCoord(pos,vp,window2d);
-            if(!isInViewport(pos,vp))
+            if(!isInRect(pos,vp))
                 continue;
             int tile=getIndex(pos.x,pos.y);
             lightCell& curCell=ocupancy[tile];
@@ -790,7 +619,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 df::coord2d pos=f->pos;
                 pos=worldToViewportCoord(pos,vp,window2d);
                 int tile=getIndex(pos.x,pos.y);
-                if(isInViewport(pos,vp))
+                if(isInRect(pos,vp))
                 {
                     lightCell fireColor;
                     if(f->density>60)
@@ -819,7 +648,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             df::coord2d pos=cPlant->pos;
             pos=worldToViewportCoord(pos,vp,window2d);
             int tile=getIndex(pos.x,pos.y);
-            if(isInViewport(pos,vp))
+            if(isInRect(pos,vp))
             {
                 applyMaterial(tile,419,cPlant->material);
             }
@@ -847,7 +676,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                     if(amount<=0)
                         continue;
                     pos=worldToViewportCoord(pos,vp,window2d);
-                    if(isInViewport(pos,vp))
+                    if(isInRect(pos,vp))
                     {
                         addLight(getIndex(pos.x,pos.y),m->makeSource((float)amount/100));
                     }
@@ -868,7 +697,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     {
         df::unit *u = df::global::world->units.active[i];
         coord2d pos=worldToViewportCoord(coord2d(u->pos.x,u->pos.y),vp,window2d);
-        if(u->pos.z==window_z && isInViewport(pos,vp))
+        if(u->pos.z==window_z && isInRect(pos,vp))
         if (DFHack::Units::isCitizen(u) && !u->counters.unconscious)
             addLight(getIndex(pos.x,pos.y),matCitizen.makeSource());
     }
@@ -886,11 +715,11 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         df::coord2d p2(bld->x2,bld->y2);
         p1=worldToViewportCoord(p1,vp,window2d);
         p2=worldToViewportCoord(p2,vp,window2d);
-        if(isInViewport(p1,vp)||isInViewport(p2,vp))
+        if(isInRect(p1,vp)||isInRect(p2,vp))
         {
             
             int tile;
-            if(isInViewport(p1,vp))
+            if(isInRect(p1,vp))
                 tile=getIndex(p1.x,p1.y); //TODO multitile buildings. How they would work?
             else
                 tile=getIndex(p2.x,p2.y);
@@ -1197,3 +1026,216 @@ void lightingEngineViewscreen::loadSettings()
 }
 #undef GETLUAFLAG
 #undef GETLUANUMBER
+/*
+ *      Threading stuff
+ */
+lightThread::lightThread( lightThreadDispatch& dispatch ):dispatch(dispatch),isDone(false),myThread(0)
+{
+
+}
+lightThread::~lightThread()
+{
+    if(myThread)
+        delete myThread;
+}
+
+void lightThread::run()
+{
+    while(!isDone)
+    {
+        {
+            tthread::lock_guard<tthread::mutex> guard(dispatch.occlusionMutex); 
+            dispatch.occlusionDone.wait(dispatch.occlusionMutex);//wait for work
+            if(dispatch.unprocessed.size()==0) //spurious wake-up
+                continue;
+            if(dispatch.occlusion.size()!=canvas.size()) //oh no somebody resized stuff
+                canvas.resize(dispatch.occlusion.size());
+        }
+        
+        
+        { //get my rectangle (any will do)
+            tthread::lock_guard<tthread::mutex> guard(dispatch.unprocessedMutex);
+            myRect=dispatch.unprocessed.top();
+            dispatch.unprocessed.pop();
+        }
+        work();
+        {
+            tthread::lock_guard<tthread::mutex> guard(dispatch.writeLock);
+            combine();//write it back
+            dispatch.writeCount++; 
+        }
+        dispatch.writesDone.notify_one();//tell about it to the dispatch.
+    }
+}
+
+void lightThread::work()
+{
+    canvas.assign(canvas.size(),lightCell(0,0,0));
+    for(int i=myRect.first.x;i<myRect.second.x;i++)
+    for(int j=myRect.first.y;j<myRect.second.y;j++)
+    {
+        doLight(i,j);
+    }
+}
+
+void lightThread::combine()
+{
+    for(int i=0;i<canvas.size();i++)   
+    {
+        lightCell& c=dispatch.lightMap[i];
+        c=blend(c,canvas[i]);
+    }
+}
+
+
+lightCell lightThread::lightUpCell(lightCell power,int dx,int dy,int tx,int ty)
+{
+    int h=dispatch.getH();
+    if(isInRect(coord2d(tx,ty),dispatch.viewPort))
+    {
+        size_t tile=tx*h+ty;
+        int dsq=dx*dx+dy*dy;
+        float dt=1;
+        if(dsq == 1)
+            dt=1;
+        else if(dsq == 2)
+            dt = RootTwo;
+        else if(dsq == 0)
+            dt = 0;
+        else
+            dt=sqrt((float)dsq);
+        lightCell& v=dispatch.occlusion[tile];
+        lightSource& ls=dispatch.lights[tile];
+        bool wallhack=false;
+        if(v.r+v.g+v.b==0)
+            wallhack=true;
+
+        if (dsq>0 && !wallhack)
+        {
+            power*=v.pow(dt);
+        }
+        if(ls.radius>0 && dsq>0)
+        {
+            if(power<=ls.power)
+                return lightCell();
+        }
+        //float dt=sqrt(dsq);
+        lightCell oldCol=canvas[tile];
+        lightCell ncol=blendMax(power,oldCol);
+        canvas[tile]=ncol;
+
+        if(wallhack)
+            return lightCell();
+
+
+        return power;
+    }
+    else
+        return lightCell();
+}
+void lightThread::doRay(lightCell power,int cx,int cy,int tx,int ty)
+{
+    using namespace std::placeholders;
+
+    plotLine(cx,cy,tx,ty,power,std::bind(&lightThread::lightUpCell,this,_1,_2,_3,_4,_5));
+}
+
+void lightThread::doLight( int x,int y )
+{
+    using namespace std::placeholders;
+    lightSource& csource=dispatch.lights[x*dispatch.getH()+y];
+    if(csource.radius>0)
+    {
+        lightCell power=csource.power;
+        int radius =csource.radius;
+        if(csource.flicker)
+        {
+            float flicker=(rand()/(float)RAND_MAX)/2.0f+0.5f;
+            radius*=flicker;
+            power=power*flicker;
+        }
+        lightCell surrounds;
+        lightUpCell( power, 0, 0,x, y);
+        for(int i=-1;i<2;i++)
+            for(int j=-1;j<2;j++)
+                if(i!=0||j!=0)
+                    surrounds += lightUpCell( power, i, j,x+i, y+j);
+        if(surrounds.dot(surrounds)>0.00001f)
+        {
+            plotSquare(x,y,radius,
+                std::bind(&lightThread::doRay,this,power,x,y,_1,_2));
+        }
+    }
+}
+void lightThreadDispatch::signalDoneOcclusion()
+{
+    {
+        tthread::lock_guard<tthread::mutex> guardWrite(writeLock);
+        writeCount=0;
+    }
+    tthread::lock_guard<tthread::mutex> guard(occlusionMutex);
+    
+    viewPort=getMapViewport();
+    int threadCount=threadPool.size();
+    int w=viewPort.second.x-viewPort.first.x;
+    int slicew=w/threadCount;
+    for(int i=0;i<threadCount;i++)
+    {
+        rect2d area=viewPort;
+        area.first.x=viewPort.first.x+i*slicew;
+        if(i==threadCount-1)
+            area.second.x=viewPort.second.x; //fix, when area is even number or sth.
+        else
+            area.second.x=viewPort.first.x+(i+1)*slicew;
+        unprocessed.push(area);
+    }
+    occlusionDone.notify_all();
+}
+
+lightThreadDispatch::lightThreadDispatch( lightingEngineViewscreen* p ):parent(p),lights(parent->lights),occlusion(parent->ocupancy),lightMap(parent->lightMap),writeCount(0)
+{
+
+}
+
+void lightThreadDispatch::shutdown()
+{
+    for(int i=0;i<threadPool.size();i++)
+    {
+        threadPool[i]->isDone=true;
+        threadPool[i]->myThread->join();
+    }
+    threadPool.clear();
+}
+
+int lightThreadDispatch::getW()
+{
+    return parent->getW();
+}
+
+int lightThreadDispatch::getH()
+{
+    return parent->getH();
+}
+void threadStub(void * arg)
+{
+    if(arg)
+        ((lightThread*)arg)->run();
+}
+void lightThreadDispatch::start(int count)
+{
+    for(int i=0;i<count;i++)
+    {        
+        std::unique_ptr<lightThread> nthread(new lightThread(*this));
+        nthread->myThread=new tthread::thread(&threadStub,nthread.get());
+        threadPool.push_back(std::move(nthread));
+    }
+}
+
+void lightThreadDispatch::waitForWrites()
+{
+    tthread::lock_guard<tthread::mutex> guard(writeLock);
+    while(threadPool.size()>writeCount)//missed it somehow already.
+    {
+        writesDone.wait(writeLock); //if not, wait a bit
+    }
+}

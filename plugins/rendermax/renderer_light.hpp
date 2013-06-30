@@ -71,7 +71,7 @@ class lightingEngine
 {
 public:
     lightingEngine(renderer_light* target):myRenderer(target){}
-
+    virtual ~lightingEngine(){}
     virtual void reinit()=0;
     virtual void calculate()=0;
 
@@ -145,6 +145,7 @@ public:
 
     tthread::mutex occlusionMutex;
     tthread::condition_variable occlusionDone; //all threads wait for occlusion to finish
+    bool occlusionReady;
     tthread::mutex unprocessedMutex;
     std::stack<DFHack::rect2d> unprocessed; //stack of parts of map where lighting is not finished
     std::vector<rgbf>& occlusion;
@@ -156,6 +157,7 @@ public:
     int writeCount;
 
     lightThreadDispatch(lightingEngineViewscreen* p);
+    ~lightThreadDispatch();
     void signalDoneOcclusion();
     void shutdown();
     void waitForWrites();

@@ -121,10 +121,10 @@ static void resetGrids()
     renderer_lua* r=reinterpret_cast<renderer_lua*>(df::global::enabler->renderer);
     for(size_t i=0;i<r->foreMult.size();i++)
     {
-        r->foreMult[i]=lightCell(1,1,1);
-        r->foreOffset[i]=lightCell(0,0,0);
-        r->backMult[i]=lightCell(1,1,1);
-        r->backOffset[i]=lightCell(0,0,0);
+        r->foreMult[i]=rgbf(1,1,1);
+        r->foreOffset[i]=rgbf(0,0,0);
+        r->backMult[i]=rgbf(1,1,1);
+        r->backOffset[i]=rgbf(0,0,0);
     }
 }
 static int getGridsSize(lua_State* L)
@@ -144,10 +144,10 @@ static int getCell(lua_State* L)
     int x=luaL_checknumber(L,1);
     int y=luaL_checknumber(L,2);
     int id=r->xyToTile(x,y);
-    lightCell fo=r->foreOffset[id];
-    lightCell fm=r->foreMult[id];
-    lightCell bo=r->backOffset[id];
-    lightCell bm=r->backMult[id];
+    rgbf fo=r->foreOffset[id];
+    rgbf fm=r->foreMult[id];
+    rgbf bo=r->backOffset[id];
+    rgbf bm=r->backMult[id];
     lua_newtable(L);
 
     lua_newtable(L);
@@ -195,7 +195,7 @@ static int setCell(lua_State* L)
     int x=luaL_checknumber(L,1);
     int y=luaL_checknumber(L,2);
 
-    lightCell fo;
+    rgbf fo;
     lua_getfield(L,3,"fo");
     lua_getfield(L,-1,"r");
     fo.r=lua_tonumber(L,-1);lua_pop(L,1);
@@ -203,7 +203,7 @@ static int setCell(lua_State* L)
     fo.g=lua_tonumber(L,-1);lua_pop(L,1);
     lua_getfield(L,-1,"b");
     fo.b=lua_tonumber(L,-1);lua_pop(L,1);
-    lightCell fm;
+    rgbf fm;
     lua_getfield(L,3,"fm");
     lua_getfield(L,-1,"r");
     fm.r=lua_tonumber(L,-1);lua_pop(L,1);
@@ -212,7 +212,7 @@ static int setCell(lua_State* L)
     lua_getfield(L,-1,"b");
     fm.b=lua_tonumber(L,-1);lua_pop(L,1);
 
-    lightCell bo;
+    rgbf bo;
     lua_getfield(L,3,"bo");
     lua_getfield(L,-1,"r");
     bo.r=lua_tonumber(L,-1);lua_pop(L,1);
@@ -221,7 +221,7 @@ static int setCell(lua_State* L)
     lua_getfield(L,-1,"b");
     bo.b=lua_tonumber(L,-1);lua_pop(L,1);
 
-    lightCell bm;
+    rgbf bm;
     lua_getfield(L,3,"bm");
     lua_getfield(L,-1,"r");
     bm.r=lua_tonumber(L,-1);lua_pop(L,1);
@@ -307,9 +307,9 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
         }
         if(current_mode==MODE_TRUECOLOR && parameters.size()==2)
         {
-            lightCell red(1,0,0),green(0,1,0),blue(0,0,1),white(1,1,1);
-            lightCell cur=white;
-            lightCell dim(0.2f,0.2f,0.2f);
+            rgbf red(1,0,0),green(0,1,0),blue(0,0,1),white(1,1,1);
+            rgbf cur=white;
+            rgbf dim(0.2f,0.2f,0.2f);
             string col=parameters[1];
             if(col=="red")
                 cur=red;

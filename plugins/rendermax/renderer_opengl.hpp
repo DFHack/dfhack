@@ -185,73 +185,73 @@ public:
     };
 };
 
-struct lightCell
+struct rgbf
 {
     float r,g,b;
-    lightCell():r(0),g(0),b(0)
+    rgbf():r(0),g(0),b(0)
     {
         
     }
-    lightCell(float r,float g,float b):r(r),g(g),b(b)
+    rgbf(float r,float g,float b):r(r),g(g),b(b)
     {
 
     }
-    lightCell operator-(const lightCell& cell) const
+    rgbf operator-(const rgbf& cell) const
     {
-        return lightCell(r-cell.r,g-cell.g,b-cell.b);
+        return rgbf(r-cell.r,g-cell.g,b-cell.b);
     }
-    lightCell operator*(float val)const
+    rgbf operator*(float val)const
     {
-        return lightCell(r*val,g*val,b*val);
+        return rgbf(r*val,g*val,b*val);
     }
-    lightCell operator/(float val) const
+    rgbf operator/(float val) const
     {
-        return lightCell(r/val,g/val,b/val);
+        return rgbf(r/val,g/val,b/val);
     }
-    lightCell operator*(const lightCell& cell) const
+    rgbf operator*(const rgbf& cell) const
     {
-        return lightCell(r*cell.r,g*cell.g,b*cell.b);
+        return rgbf(r*cell.r,g*cell.g,b*cell.b);
     }
-    lightCell operator*=(float val)
+    rgbf operator*=(float val)
     {
         r*=val;
         g*=val;
         b*=val;
         return *this;
     }
-    lightCell operator*=(const lightCell& cell)
+    rgbf operator*=(const rgbf& cell)
     {
         r*=cell.r;
         g*=cell.g;
         b*=cell.b;
         return *this;
     }
-    lightCell operator+=(const lightCell& cell)
+    rgbf operator+=(const rgbf& cell)
     {
         r+=cell.r;
         g+=cell.g;
         b+=cell.b;
         return *this;
     }
-    lightCell operator+(const lightCell& other) const
+    rgbf operator+(const rgbf& other) const
     {
-        return lightCell(r+other.r,g+other.g,b+other.b);
+        return rgbf(r+other.r,g+other.g,b+other.b);
     }
-    bool operator<=(const lightCell& other) const
+    bool operator<=(const rgbf& other) const
     {
         return r<=other.r && g<=other.g && b<=other.b;
     }
-    float dot(const lightCell& other) const
+    float dot(const rgbf& other) const
     {
         return r*other.r+g*other.g+b*other.b;
     }
-    lightCell pow(const float exp) const
+    rgbf pow(const float exp) const
     {
-        return lightCell(std::pow(r, exp), std::pow(g, exp), std::pow(b, exp));
+        return rgbf(std::pow(r, exp), std::pow(g, exp), std::pow(b, exp));
     }
-    lightCell pow(const int exp) const
+    rgbf pow(const int exp) const
     {
-        return lightCell(std::pow(r, exp), std::pow(g, exp), std::pow(b, exp));
+        return rgbf(std::pow(r, exp), std::pow(g, exp), std::pow(b, exp));
     }
 };
 struct renderer_test : public renderer_wrap {
@@ -263,7 +263,7 @@ private:
         float *fg = p->fg + tile * 4 * 6;
         float *bg = p->bg + tile * 4 * 6;
         float *tex = p->tex + tile * 2 * 6;
-        lightCell light=lightGrid[tile];
+        rgbf light=lightGrid[tile];
         for (int i = 0; i < 6; i++) {
             *(fg++) *= light.r;
             *(fg++) *= light.g;
@@ -287,7 +287,7 @@ private:
     }
 public:
     tthread::fast_mutex dataMutex;
-    std::vector<lightCell> lightGrid;
+    std::vector<rgbf> lightGrid;
     renderer_test(renderer* parent):renderer_wrap(parent)
     {
         reinitLightGrid();
@@ -332,11 +332,11 @@ private:
         float *fg = p->fg + tile * 4 * 6;
         float *bg = p->bg + tile * 4 * 6;
         float *tex = p->tex + tile * 2 * 6;
-        lightCell fm=foreMult[tile];
-        lightCell fo=foreOffset[tile];
+        rgbf fm=foreMult[tile];
+        rgbf fo=foreOffset[tile];
 
-        lightCell bm=backMult[tile];
-        lightCell bo=backOffset[tile];
+        rgbf bm=backMult[tile];
+        rgbf bo=backOffset[tile];
         for (int i = 0; i < 6; i++) {
             rgba* fore=reinterpret_cast<rgba*>(fg);
             fore->r=fore->r*fm.r+fo.r;
@@ -365,8 +365,8 @@ private:
     }
 public:
     tthread::fast_mutex dataMutex;
-    std::vector<lightCell> foreOffset,foreMult;
-    std::vector<lightCell> backOffset,backMult;
+    std::vector<rgbf> foreOffset,foreMult;
+    std::vector<rgbf> backOffset,backMult;
     inline int xyToTile(int x, int y)
     {
        return x*(df::global::gps->dimy) + y;

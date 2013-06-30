@@ -47,7 +47,7 @@ lightingEngineViewscreen::~lightingEngineViewscreen()
     threading.shutdown();
 }
 
-lightSource::lightSource(lightCell power,int radius):power(power),flicker(false)
+lightSource::lightSource(rgbf power,int radius):power(power),flicker(false)
 {
     if(radius >= 0)
         this->radius = radius;
@@ -118,7 +118,7 @@ void lightingEngineViewscreen::reinit()
     w=gps->dimx;
     h=gps->dimy;
     size_t size=w*h;
-    lightMap.resize(size,lightCell(1,1,1));
+    lightMap.resize(size,rgbf(1,1,1));
     ocupancy.resize(size);
     lights.resize(size);
 }
@@ -149,7 +149,7 @@ void plotSquare(int xm, int ym, int r,std::function<void(int,int)> setPixel)
         setPixel(xm-x, ym+r); /*   IV.2 Quadrant */
     }
 }
-void plotLine(int x0, int y0, int x1, int y1,lightCell power,std::function<lightCell(lightCell,int,int,int,int)> setPixel)
+void plotLine(int x0, int y0, int x1, int y1,rgbf power,std::function<rgbf(rgbf,int,int,int,int)> setPixel)
 {
     int dx =  abs(x1-x0), sx = x0<x1 ? 1 : -1;
     int dy = -abs(y1-y0), sy = y0<y1 ? 1 : -1; 
@@ -171,7 +171,7 @@ void plotLine(int x0, int y0, int x1, int y1,lightCell power,std::function<light
     }
 }
 
-void plotLineAA(int x0, int y0, int x1, int y1,lightCell power,std::function<lightCell(lightCell,int,int,int,int)> setPixelAA)
+void plotLineAA(int x0, int y0, int x1, int y1,rgbf power,std::function<rgbf(rgbf,int,int,int,int)> setPixelAA)
 {
     int dx = abs(x1-x0), sx = x0<x1 ? 1 : -1;
     int dy = abs(y1-y0), sy = y0<y1 ? 1 : -1; 
@@ -180,7 +180,7 @@ void plotLineAA(int x0, int y0, int x1, int y1,lightCell power,std::function<lig
     int rdx=0;
     int rdy=0;
     int lrdx,lrdy;
-    lightCell sumPower;
+    rgbf sumPower;
     for ( ; ; ){                                         /* pixel loop */
         float strsum=0;
         float str=1-abs(err-dx+dy)/(float)ed;
@@ -220,17 +220,17 @@ void plotLineAA(int x0, int y0, int x1, int y1,lightCell power,std::function<lig
         power=sumPower;
     }
 }
-lightCell blendMax(lightCell a,lightCell b)
+rgbf blendMax(rgbf a,rgbf b)
 {
-    return lightCell(std::max(a.r,b.r),std::max(a.g,b.g),std::max(a.b,b.b));
+    return rgbf(std::max(a.r,b.r),std::max(a.g,b.g),std::max(a.b,b.b));
 }
-lightCell blend(lightCell a,lightCell b)
+rgbf blend(rgbf a,rgbf b)
 {
     return blendMax(a,b);
 }
 void lightingEngineViewscreen::clear()
 {
-    lightMap.assign(lightMap.size(),lightCell(1,1,1));
+    lightMap.assign(lightMap.size(),rgbf(1,1,1));
     tthread::lock_guard<tthread::fast_mutex> guard(myRenderer->dataMutex);
     if(lightMap.size()==myRenderer->lightGrid.size())
     {
@@ -241,8 +241,8 @@ void lightingEngineViewscreen::clear()
 void lightingEngineViewscreen::calculate()
 {
     rect2d vp=getMapViewport();
-    const lightCell dim(levelDim,levelDim,levelDim);
-    lightMap.assign(lightMap.size(),lightCell(1,1,1));
+    const rgbf dim(levelDim,levelDim,levelDim);
+    lightMap.assign(lightMap.size(),rgbf(1,1,1));
     lights.assign(lights.size(),lightSource());
     for(int i=vp.first.x;i<vp.second.x;i++)
     for(int j=vp.first.y;j<vp.second.y;j++)
@@ -289,16 +289,16 @@ bool lightingEngineViewscreen::addLight(int tileId,const lightSource& light)
         lights[tileId].flicker=true;
     return wasLight;
 }
-void lightingEngineViewscreen::addOclusion(int tileId,const lightCell& c,float thickness)
+void lightingEngineViewscreen::addOclusion(int tileId,const rgbf& c,float thickness)
 {
     if(thickness > 0.999 && thickness < 1.001)
         ocupancy[tileId]*=c;
     else
         ocupancy[tileId]*=(c.pow(thickness));
 }
-lightCell getStandartColor(int colorId)
+rgbf getStandartColor(int colorId)
 {
-    return lightCell(df::global::enabler->ccolor[colorId][0]/255.0f,
+    return rgbf(df::global::enabler->ccolor[colorId][0]/255.0f,
         df::global::enabler->ccolor[colorId][1]/255.0f,
         df::global::enabler->ccolor[colorId][2]/255.0f);
 }
@@ -343,7 +343,7 @@ void lightingEngineViewscreen::applyMaterial(int tileId,const matLightDef& mat,f
        addOclusion(tileId,mat.transparency,thickness);
     }
     else
-        ocupancy[tileId]=lightCell(0,0,0);
+        ocupancy[tileId]=rgbf(0,0,0);
     if(mat.isEmiting)
         addLight(tileId,mat.makeSource(size));
 }
@@ -361,11 +361,11 @@ bool lightingEngineViewscreen::applyMaterial(int tileId,int matType,int matIndex
     }
     return false;
 }
-lightCell lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int y,const lightCell& in,bool lastLevel)
+rgbf lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int y,const rgbf& in,bool lastLevel)
 {
     //TODO unify under addLight/addOclusion
-    const lightCell matStairCase(0.9f,0.9f,0.9f);
-    lightCell ret=in;
+    const rgbf matStairCase(0.9f,0.9f,0.9f);
+    rgbf ret=in;
     coord2d innerCoord(x,y);
     df::tiletype type = b->staticTiletypeAt(innerCoord);
     df::tile_designation d = b->DesignationAt(innerCoord);
@@ -440,7 +440,7 @@ void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache&
     for(int blockX=blockVp.first.x;blockX<=blockVp.second.x;blockX++)
     for(int blockY=blockVp.first.y;blockY<=blockVp.second.y;blockY++)
     {
-        lightCell cellArray[16][16];
+        rgbf cellArray[16][16];
         for(int block_x = 0; block_x < 16; block_x++)
         for(int block_y = 0; block_y < 16; block_y++)
             cellArray[block_x][block_y] = sky.power;
@@ -455,7 +455,7 @@ void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache&
             for(int block_x = 0; block_x < 16; block_x++)
             for(int block_y = 0; block_y < 16; block_y++)
             {
-                lightCell& curCell=cellArray[block_x][block_y];
+                rgbf& curCell=cellArray[block_x][block_y];
                 curCell=propogateSun(b,block_x,block_y,curCell,z==window_z);
                 if(curCell.dot(curCell)<0.003f)
                     emptyCell++;                
@@ -466,7 +466,7 @@ void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache&
         for(int block_x = 0; block_x < 16; block_x++)
         for(int block_y = 0; block_y < 16; block_y++)
         {
-            lightCell& curCell=cellArray[block_x][block_y];
+            rgbf& curCell=cellArray[block_x][block_y];
             df::coord2d pos;
             pos.x = blockX*16+block_x;
             pos.y = blockY*16+block_y;
@@ -479,12 +479,12 @@ void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache&
         }
     }
 }
-lightCell lightingEngineViewscreen::getSkyColor(float v)
+rgbf lightingEngineViewscreen::getSkyColor(float v)
 {
     if(dayColors.size()<2)
     {
         v=abs(fmod(v+0.5,1)-0.5)*2;
-        return lightCell(v,v,v);
+        return rgbf(v,v,v);
     }
     else
     {
@@ -509,11 +509,11 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     else
         daycol= fmod(dayHour,24.0f)/24.0f; //1->12h 0->24h
     
-    lightCell sky_col=getSkyColor(daycol);
+    rgbf sky_col=getSkyColor(daycol);
     lightSource sky(sky_col, -1);//auto calculate best size
 
-    lightSource candle(lightCell(0.96f,0.84f,0.03f),5);
-    lightSource torch(lightCell(0.9f,0.75f,0.3f),8);
+    lightSource candle(rgbf(0.96f,0.84f,0.03f),5);
+    lightSource torch(rgbf(0.9f,0.75f,0.3f),8);
 
     //perfectly blocking material
     
@@ -551,7 +551,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             if(!isInRect(pos,vp))
                 continue;
             int tile=getIndex(pos.x,pos.y);
-            lightCell& curCell=ocupancy[tile];
+            rgbf& curCell=ocupancy[tile];
             curCell=matAmbience.transparency;
             
 
@@ -559,7 +559,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             df::tile_designation d = b->DesignationAt(gpos);
             if(d.bits.hidden)
             {
-                curCell=lightCell(0,0,0);
+                curCell=rgbf(0,0,0);
                 continue; // do not process hidden stuff, TODO other hidden stuff
             }
             //df::tile_occupancy o = b->OccupancyAt(gpos);
@@ -574,7 +574,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 lightDef=&matWall;
             if(shape==df::tiletype_shape::BROOK_BED )
             {
-                curCell=lightCell(0,0,0);
+                curCell=rgbf(0,0,0);
             }
             else if(shape==df::tiletype_shape::WALL)
             {
@@ -621,18 +621,18 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 int tile=getIndex(pos.x,pos.y);
                 if(isInRect(pos,vp))
                 {
-                    lightCell fireColor;
+                    rgbf fireColor;
                     if(f->density>60)
                     {
-                        fireColor=lightCell(0.98f,0.91f,0.30f);
+                        fireColor=rgbf(0.98f,0.91f,0.30f);
                     }
                     else if(f->density>30)
                     {
-                        fireColor=lightCell(0.93f,0.16f,0.16f);
+                        fireColor=rgbf(0.93f,0.16f,0.16f);
                     }
                     else
                     {
-                        fireColor=lightCell(0.64f,0.0f,0.0f);
+                        fireColor=rgbf(0.64f,0.0f,0.0f);
                     }
                     lightSource fire(fireColor,f->density/5);
                     addLight(tile,fire);
@@ -776,9 +776,9 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     }
     
 }
-lightCell lua_parseLightCell(lua_State* L)
+rgbf lua_parseLightCell(lua_State* L)
 {
-    lightCell ret;
+    rgbf ret;
 
     lua_pushnumber(L,1);
     lua_gettable(L,-2);
@@ -955,20 +955,20 @@ int lightingEngineViewscreen::parseBuildings(lua_State* L)
 }
 void lightingEngineViewscreen::defaultSettings()
 {
-    matAmbience=matLightDef(lightCell(0.85f,0.85f,0.85f));
-    matLava=matLightDef(lightCell(0.8f,0.2f,0.2f),lightCell(0.8f,0.2f,0.2f),5);
-    matWater=matLightDef(lightCell(0.6f,0.6f,0.8f));
-    matIce=matLightDef(lightCell(0.7f,0.7f,0.9f));
-    matCursor=matLightDef(lightCell(0.96f,0.84f,0.03f),11);
+    matAmbience=matLightDef(rgbf(0.85f,0.85f,0.85f));
+    matLava=matLightDef(rgbf(0.8f,0.2f,0.2f),rgbf(0.8f,0.2f,0.2f),5);
+    matWater=matLightDef(rgbf(0.6f,0.6f,0.8f));
+    matIce=matLightDef(rgbf(0.7f,0.7f,0.9f));
+    matCursor=matLightDef(rgbf(0.96f,0.84f,0.03f),11);
     matCursor.flicker=true;
-    matWall=matLightDef(lightCell(0,0,0));
-    matCitizen=matLightDef(lightCell(0.8f,0.8f,0.9f),6);
+    matWall=matLightDef(rgbf(0,0,0));
+    matCitizen=matLightDef(rgbf(0.8f,0.8f,0.9f),6);
     levelDim=0.2f;
     dayHour=-1;
     daySpeed=1;
-    dayColors.push_back(lightCell(0,0,0));
-    dayColors.push_back(lightCell(1,1,1));
-    dayColors.push_back(lightCell(0,0,0));
+    dayColors.push_back(rgbf(0,0,0));
+    dayColors.push_back(rgbf(1,1,1));
+    dayColors.push_back(rgbf(0,0,0));
 }
 void lightingEngineViewscreen::loadSettings()
 {
@@ -1070,7 +1070,7 @@ void lightThread::run()
 
 void lightThread::work()
 {
-    canvas.assign(canvas.size(),lightCell(0,0,0));
+    canvas.assign(canvas.size(),rgbf(0,0,0));
     for(int i=myRect.first.x;i<myRect.second.x;i++)
     for(int j=myRect.first.y;j<myRect.second.y;j++)
     {
@@ -1082,13 +1082,13 @@ void lightThread::combine()
 {
     for(int i=0;i<canvas.size();i++)   
     {
-        lightCell& c=dispatch.lightMap[i];
+        rgbf& c=dispatch.lightMap[i];
         c=blend(c,canvas[i]);
     }
 }
 
 
-lightCell lightThread::lightUpCell(lightCell power,int dx,int dy,int tx,int ty)
+rgbf lightThread::lightUpCell(rgbf power,int dx,int dy,int tx,int ty)
 {
     int h=dispatch.getH();
     if(isInRect(coord2d(tx,ty),dispatch.viewPort))
@@ -1104,7 +1104,7 @@ lightCell lightThread::lightUpCell(lightCell power,int dx,int dy,int tx,int ty)
             dt = 0;
         else
             dt=sqrt((float)dsq);
-        lightCell& v=dispatch.occlusion[tile];
+        rgbf& v=dispatch.occlusion[tile];
         lightSource& ls=dispatch.lights[tile];
         bool wallhack=false;
         if(v.r+v.g+v.b==0)
@@ -1117,23 +1117,23 @@ lightCell lightThread::lightUpCell(lightCell power,int dx,int dy,int tx,int ty)
         if(ls.radius>0 && dsq>0)
         {
             if(power<=ls.power)
-                return lightCell();
+                return rgbf();
         }
         //float dt=sqrt(dsq);
-        lightCell oldCol=canvas[tile];
-        lightCell ncol=blendMax(power,oldCol);
+        rgbf oldCol=canvas[tile];
+        rgbf ncol=blendMax(power,oldCol);
         canvas[tile]=ncol;
 
         if(wallhack)
-            return lightCell();
+            return rgbf();
 
 
         return power;
     }
     else
-        return lightCell();
+        return rgbf();
 }
-void lightThread::doRay(lightCell power,int cx,int cy,int tx,int ty)
+void lightThread::doRay(rgbf power,int cx,int cy,int tx,int ty)
 {
     using namespace std::placeholders;
 
@@ -1146,7 +1146,7 @@ void lightThread::doLight( int x,int y )
     lightSource& csource=dispatch.lights[x*dispatch.getH()+y];
     if(csource.radius>0)
     {
-        lightCell power=csource.power;
+        rgbf power=csource.power;
         int radius =csource.radius;
         if(csource.flicker)
         {
@@ -1154,7 +1154,7 @@ void lightThread::doLight( int x,int y )
             radius*=flicker;
             power=power*flicker;
         }
-        lightCell surrounds;
+        rgbf surrounds;
         lightUpCell( power, 0, 0,x, y);
         for(int i=-1;i<2;i++)
             for(int j=-1;j<2;j++)

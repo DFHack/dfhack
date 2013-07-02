@@ -2,10 +2,44 @@
 #define RENDERER_LIGHT_INCLUDED
 #include "renderer_opengl.hpp"
 #include "Types.h"
-#include <map>
 #include <tuple>
 #include <stack>
 #include <memory>
+#include <unordered_map>
+// we are not using boost so let's cheat:
+template <class T>
+inline void hash_combine(std::size_t & seed, const T & v)
+{
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
+namespace std
+{
+    template<typename S, typename T> struct hash<pair<S, T>>
+    {
+        inline size_t operator()(const pair<S, T> & v) const
+        {
+            size_t seed = 0;
+            ::hash_combine(seed, v.first);
+            ::hash_combine(seed, v.second);
+            return seed;
+        }
+    };
+    template<typename S, typename T,typename V> struct hash<tuple<S, T, V>>
+    {
+        inline size_t operator()(const tuple<S, T, V> & v) const
+        {
+            size_t seed = 0;
+            ::hash_combine(seed,get<0>(v));
+            ::hash_combine(seed,get<1>(v));
+            ::hash_combine(seed,get<2>(v));
+            return seed;
+        }
+    };
+}
+// now we can hash pairs and tuples
+
 #include "modules/MapCache.h"
 bool isInRect(const df::coord2d& pos,const DFHack::rect2d& rect);
 struct renderer_light : public renderer_wrap {
@@ -267,9 +301,9 @@ private:
     matLightDef matCitizen;
     float levelDim;
     //materials
-    std::map<std::pair<int,int>,matLightDef> matDefs;
+    std::unordered_map<std::pair<int,int>,matLightDef> matDefs;
     //buildings
-    std::map<std::tuple<int,int,int>,buildingLightDef> buildingDefs;
+    std::unordered_map<std::tuple<int,int,int>,buildingLightDef> buildingDefs;
     int w,h;
     DFHack::rect2d mapPort;
     friend lightThreadDispatch;

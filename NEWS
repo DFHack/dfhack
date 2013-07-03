@@ -53,6 +53,8 @@ DFHack v0.34.11-r4
     - outsideOnly: make raw-specified buildings impossible to build inside
     - resume: A plugin to help display and resume suspended constructions conveniently
     - stocks: An improved stocks display screen.
+	- rendermax: a heap of rendering experiments. Including one that does lighting.
+    
   Internals:
     - Core: there is now a per-save dfhack.init file for when the save is loaded, and another for when it is unloaded
     - EventManager: fixed job completion detection, fixed removal of TICK events, added EQUIPMENT_CHANGE event

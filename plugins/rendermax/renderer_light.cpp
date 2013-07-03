@@ -105,7 +105,6 @@ lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):light
 {
     reinit();
     defaultSettings();
-    loadSettings();
     int numTreads=tthread::thread::hardware_concurrency();
     if(numTreads==0)numTreads=1;
     threading.start(numTreads);
@@ -240,6 +239,11 @@ void lightingEngineViewscreen::clear()
 }
 void lightingEngineViewscreen::calculate()
 {
+    if(lightMap.size()!=myRenderer->lightGrid.size())
+    {
+        reinit();
+        myRenderer->invalidate();
+    }
     rect2d vp=getMapViewport();
     const rgbf dim(levelDim,levelDim,levelDim);
     lightMap.assign(lightMap.size(),rgbf(1,1,1));
@@ -1035,8 +1039,7 @@ lightThread::lightThread( lightThreadDispatch& dispatch ):dispatch(dispatch),isD
 }
 lightThread::~lightThread()
 {
-    if(myThread)
-        delete myThread;
+    delete myThread;
 }
 
 void lightThread::run()

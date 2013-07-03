@@ -279,7 +279,41 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_END
 };
 
+static void enable_hooks(bool enable)
+{
+    INTERPOSE_HOOK(dwarmode_render_hook,render).apply(enable);
+    INTERPOSE_HOOK(dungeon_render_hook,render).apply(enable);
+    if(enable && engine)
+    {
+        engine->loadSettings();
+    }
+}
 
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
+{
+    switch(event)
+    {
+    case SC_VIEWSCREEN_CHANGED:
+        {
+            CoreSuspendClaimer suspender;
+            if(current_mode==MODE_LIGHT)
+            {
+                engine->clear();
+            }
+        }
+        break;
+    case SC_WORLD_LOADED:
+        enable_hooks(true);
+        break;
+    case SC_WORLD_UNLOADED:
+        enable_hooks(false);
+        break;
+    default:
+        break;
+    }
+    return CR_OK;
+}
 
 
 static command_result rendermax(color_ostream &out, vector <string> & parameters)
@@ -361,8 +395,9 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
             renderer_light *myRender=new renderer_light(df::global::enabler->renderer);
             installNew(myRender,MODE_LIGHT);
             engine=new lightingEngineViewscreen(myRender);
-            INTERPOSE_HOOK(dwarmode_render_hook,render).apply(true);
-            INTERPOSE_HOOK(dungeon_render_hook,render).apply(true);
+            
+            if (Core::getInstance().isWorldLoaded())
+                plugin_onstatechange(out, SC_WORLD_LOADED);
         }
         else if(current_mode==MODE_LIGHT && parameters.size()>1)
         {
@@ -415,17 +450,5 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
 DFhackCExport command_result plugin_shutdown(color_ostream &)
 {
     removeOld();
-    return CR_OK;
-}
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
-{
-    if(event==SC_VIEWSCREEN_CHANGED)
-    {
-        CoreSuspendClaimer suspender;
-        if(current_mode==MODE_LIGHT)
-        {
-            engine->clear();
-        }
-    }
     return CR_OK;
 }

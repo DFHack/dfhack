@@ -67,7 +67,7 @@ private:
     void reinitLightGrid(int w,int h)
     {
         tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
-        lightGrid.resize(w*h);
+        lightGrid.resize(w*h,rgbf(1,1,1));
     }
     void reinitLightGrid()
     {

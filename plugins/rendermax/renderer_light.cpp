@@ -121,7 +121,7 @@ void lightingEngineViewscreen::reinit()
     ocupancy.resize(size);
     lights.resize(size);
 }
-void plotCircle(int xm, int ym, int r,std::function<void(int,int)> setPixel)
+void plotCircle(int xm, int ym, int r,const std::function<void(int,int)>& setPixel)
 {
     int x = -r, y = 0, err = 2-2*r; /* II. Quadrant */ 
     do {
@@ -134,7 +134,7 @@ void plotCircle(int xm, int ym, int r,std::function<void(int,int)> setPixel)
         if (r > x || err > y) err += ++x*2+1; /* e_xy+e_x > 0 or no 2nd y-step */
     } while (x < 0);
 }
-void plotSquare(int xm, int ym, int r,std::function<void(int,int)> setPixel)
+void plotSquare(int xm, int ym, int r,const std::function<void(int,int)>& setPixel)
 {
     for(int x = 0; x <= r; x++)
     {
@@ -148,7 +148,7 @@ void plotSquare(int xm, int ym, int r,std::function<void(int,int)> setPixel)
         setPixel(xm-x, ym+r); /*   IV.2 Quadrant */
     }
 }
-void plotLine(int x0, int y0, int x1, int y1,rgbf power,std::function<rgbf(rgbf,int,int,int,int)> setPixel)
+void plotLine(int x0, int y0, int x1, int y1,rgbf power,const std::function<rgbf(rgbf,int,int,int,int)>& setPixel)
 {
     int dx =  abs(x1-x0), sx = x0<x1 ? 1 : -1;
     int dy = -abs(y1-y0), sy = y0<y1 ? 1 : -1; 
@@ -170,7 +170,7 @@ void plotLine(int x0, int y0, int x1, int y1,rgbf power,std::function<rgbf(rgbf,
     }
 }
 
-void plotLineAA(int x0, int y0, int x1, int y1,rgbf power,std::function<rgbf(rgbf,int,int,int,int)> setPixelAA)
+void plotLineAA(int x0, int y0, int x1, int y1,rgbf power,const std::function<rgbf(rgbf,int,int,int,int)>& setPixelAA)
 {
     int dx = abs(x1-x0), sx = x0<x1 ? 1 : -1;
     int dy = abs(y1-y0), sy = y0<y1 ? 1 : -1; 
@@ -242,7 +242,7 @@ void lightingEngineViewscreen::calculate()
     if(lightMap.size()!=myRenderer->lightGrid.size())
     {
         reinit();
-        myRenderer->invalidate();
+        myRenderer->invalidate();//needs a lock?
     }
     rect2d vp=getMapViewport();
     const rgbf dim(levelDim,levelDim,levelDim);

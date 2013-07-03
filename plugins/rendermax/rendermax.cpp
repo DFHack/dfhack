@@ -292,6 +292,8 @@ static void enable_hooks(bool enable)
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
+    if(current_mode!=MODE_LIGHT)
+        return CR_OK;
     switch(event)
     {
     case SC_VIEWSCREEN_CHANGED:
@@ -403,8 +405,7 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
         {
             if(parameters[1]=="reload")
             {
-                CoreSuspender suspend;
-                engine->loadSettings();
+                enable_hooks(true);
             }
             else if(parameters[1]=="sun" && parameters.size()==3)
             {

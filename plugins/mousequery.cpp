@@ -26,7 +26,7 @@ using namespace df::enums::ui_sidebar_mode;
 
 DFHACK_PLUGIN("mousequery");
 
-#define PLUGIN_VERSION 0.12
+#define PLUGIN_VERSION 0.13
 
 static int32_t last_x, last_y, last_z;
 static size_t max_list_size = 300000; // Avoid iterating over huge lists
@@ -35,6 +35,7 @@ static bool plugin_enabled = true;
 static bool rbutton_enabled = true;
 static bool tracking_enabled = false;
 static bool active_scrolling = false;
+static bool box_designation_enabled = false;
 static bool live_view = false;
 
 static int scroll_delay = 100;
@@ -185,7 +186,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         INTERPOSE_NEXT(feed)(&tmp);
     }
 
-    bool isInTrackableMode()
+    bool isInDesignationMenu()
     {
         switch (ui->main.mode)
         {
@@ -202,6 +203,22 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         case DesignateCarveTrack:
         case DesignateEngrave:
         case DesignateCarveFortification:
+        case DesignateChopTrees:
+        case DesignateToggleEngravings:
+        case DesignateRemoveConstruction:
+            return true;
+        };
+
+        return false;
+    }
+
+    bool isInTrackableMode()
+    {
+        if (isInDesignationMenu())
+            return box_designation_enabled;
+
+        switch (ui->main.mode)
+        {
         case DesignateItemsClaim:
         case DesignateItemsForbid:
         case DesignateItemsMelt:
@@ -210,13 +227,10 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         case DesignateItemsUndump:
         case DesignateItemsHide:
         case DesignateItemsUnhide:
-        case DesignateChopTrees:
-        case DesignateToggleEngravings:
         case DesignateTrafficHigh:
         case DesignateTrafficNormal:
         case DesignateTrafficLow:
         case DesignateTrafficRestricted:
-        case DesignateRemoveConstruction:
         case Stockpiles:
         case Squads:
         case NotesPoints:
@@ -376,6 +390,10 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                     sendKey(interface_key::CURSOR_DOWN_FAST);
             }
         }
+        else if (input->count(interface_key::CUSTOM_M) && isInDesignationMenu())
+        {
+            box_designation_enabled = !box_designation_enabled;
+        }
 
         return false;
     }
@@ -429,6 +447,15 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
         auto dims = Gui::getDwarfmodeViewDims();
         auto right_margin = (dims.menu_x1 > 0) ? dims.menu_x1 : gps->dimx;
+
+        if (isInDesignationMenu())
+        {
+            int left_margin = dims.menu_x1 + 1;
+            int x = left_margin;
+            int y = 23;
+            OutputString(COLOR_BROWN, x, y, "DFHack MouseQuery", true, left_margin);
+            OutputToggleString(x, y, "Box Select", "m", box_designation_enabled, true, left_margin);
+        }
 
         if (mx < 1 || mx > right_margin - 2 || my < 1 || my > gps->dimy - 2)
             return;

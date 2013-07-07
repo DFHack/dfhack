@@ -13,7 +13,8 @@ DFHack future
     - exterminate: renamed from slayrace, add help message, add butcher mode
     - autoSyndrome: disable by default
     - ruby: add df.dfhack_run "somecommand"
-    - magmasource: rename to source, allow water/magma sources/drains
+    - magmasource: rename to 'source', allow water/magma sources/drains
+    - core: fix SC_WORLD_(UN)LOADED event for arena mode
   New plugins:
     - buildingplan: Place furniture before it's built
     - resume: A plugin to help display and resume suspended constructions conveniently

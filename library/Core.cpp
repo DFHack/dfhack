@@ -1160,7 +1160,8 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     {
         df::world_data *wdata = df::global::world->world_data;
         // when the game is unloaded, world_data isn't deleted, but its contents are
-        if (wdata && !wdata->sites.empty())
+        // regions work to detect arena too
+        if (wdata && !wdata->regions.empty())
             new_wdata = wdata;
         new_mapdata = df::global::world->map.block_index;
     }

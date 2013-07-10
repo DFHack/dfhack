@@ -679,6 +679,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  also tries to have dwarves specialize in specific skills.\n"
         "  Warning: autolabor will override any manual changes you make to labors\n"
         "  while it is enabled.\n"
+        "  To prevent particular dwarves from being managed by autolabor, put them\n"
+        "  in any burrow.\n"
         "Examples:\n"
         "  autolabor MINE 2\n"
         "    Keep at least 2 dwarves with mining enabled.\n"

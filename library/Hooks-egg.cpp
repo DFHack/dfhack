@@ -65,7 +65,7 @@ DFhackCExport int egg_prerender(void)
 }
 
 // hook - called for each SDL event, returns 0 when the event has been consumed. 1 otherwise
-DFhackCExport int egg_sdl_event(SDL_Event* event)
+DFhackCExport int egg_sdl_event(SDL::Event* event)
 {
     // if the event is valid, intercept
     if( event != 0 )

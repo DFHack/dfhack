@@ -145,7 +145,7 @@ struct trap_hook : df::building_trapst {
         INTERPOSE_NEXT(updateAction)();
     }
 
-    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (df::building_drawbuffer *db, void *unk))
+    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (df::building_drawbuffer *db, int16_t unk))
     {
         INTERPOSE_NEXT(drawBuilding)(db, unk);
 

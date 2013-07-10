@@ -16,12 +16,12 @@ access DF memory and allow for easier development of new tools.
 ==============
 Getting DFHack
 ==============
-The project is currently hosted on github_, for both source and
-binaries at  http://github.com/peterix/dfhack
+The project is currently hosted on github_
+at http://github.com/peterix/dfhack
 
 .. _github: http://www.github.com/
 
-Releases can be downloaded from here: https://github.com/peterix/dfhack/downloads
+Releases can be downloaded from here: http://dethware.org/dfhack/download
 
 All new releases are announced in the bay12 thread: http://tinyurl.com/dfhack-ng
 
@@ -947,6 +947,14 @@ Example:
 
  'alltraffic N' - Set traffic to 'normal' for all tiles.
 
+restrictliquid
+--------------
+Restrict traffic on all visible tiles with liquid.
+
+restrictice
+-----------
+Restrict traffic on all tiles on top of visible ice.
+
 getplants
 ---------
 This tool allows plant gathering and tree cutting by RAW ID. Specify the types
@@ -1713,6 +1721,8 @@ also tries to have dwarves specialize in specific skills.
 
     Warning: autolabor will override any manual changes you make to labors
     while it is enabled.
+    
+    To prevent particular dwarves from being managed by autolabor, put them in any burrow.
 
 For detailed usage information, see 'help autolabor'.
 

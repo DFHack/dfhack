@@ -155,9 +155,10 @@ public:
     T elem;
     string text, keywords;
     bool selected;
+    UIColor color;
 
-    ListEntry(const string text, const T elem, const string keywords = "") : 
-        elem(elem), text(text), selected(false), keywords(keywords)
+    ListEntry(const string text, const T elem, const string keywords = "", const UIColor color = COLOR_UNSELECTED) : 
+        elem(elem), text(text), selected(false), keywords(keywords), color(color)
     {
     }
 };
@@ -243,7 +244,7 @@ public:
         for (int i = display_start_offset; i < display_list.size() && i < last_index_able_to_display; i++)
         {
             ++y;
-            UIColor fg_color = (display_list[i]->selected) ? COLOR_SELECTED : COLOR_UNSELECTED;
+            UIColor fg_color = (display_list[i]->selected) ? COLOR_SELECTED : display_list[i]->color;
             UIColor bg_color = (is_selected_column && i == highlighted_index) ? COLOR_HIGHLIGHTED : COLOR_BLACK;
             
             string item_label = display_list[i]->text;

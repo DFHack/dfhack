@@ -58,8 +58,8 @@ namespace DFHack
 
     class RPCHandshakeHeader
     {
-        public string magic;
-        public int version;
+        //public string magic;
+        //public int version;
 
         public static string REQUEST_MAGIC = "DFHack?\n";
         public static string RESPONSE_MAGIC = "DFHack!\n";
@@ -93,6 +93,136 @@ namespace DFHack
         }
     }
 
+    // simple function to store 
+    struct DFCoord
+    {
+        public int x, y, z;
+        //convert 
+        UnityEngine.Vector3 ToVector3()
+        {
+            return new UnityEngine.Vector3(x + 0.5f, z + 0.5f, -y - 0.5f);
+        }
+        static DFCoord FromVector3(UnityEngine.Vector3 input)
+        {
+            DFCoord output = new DFCoord((int)input.x, (int)(-input.z), (int)input.y);
+            return output;
+        }
+
+        DFCoord(int inx, int iny, int inz)
+        {
+            x = inx;
+            y = iny;
+            z = inz;
+        }
+
+        public bool isValid()
+        {
+            return x != -30000;
+        }
+        public void clear() 
+        { 
+            x = y = z = -30000; 
+        }
+
+        public static bool operator <(DFCoord a, DFCoord b)
+        {
+            if (a.x != b.x) return (a.x < b.x);
+            if (a.y != b.y) return (a.y < b.y);
+            return a.z < b.z;
+        }
+        public static bool operator >(DFCoord a, DFCoord b)
+        {
+            if (a.x != b.x) return (a.x > b.x);
+            if (a.y != b.y) return (a.y > b.y);
+            return a.z > b.z;
+        }
+        public static DFCoord operator +(DFCoord a, DFCoord b)
+        {
+            return new DFCoord(a.x + b.x, a.y + b.y, a.z + b.z);
+        }
+        public static DFCoord operator -(DFCoord a, DFCoord b)
+        {
+            return new DFCoord(a.x - b.x, a.y - b.y, a.z - b.z);
+        }
+        public static DFCoord operator /(DFCoord a, int number)
+        {
+            return new DFCoord((a.x < 0 ? a.x - number : a.x) / number, (a.y < 0 ? a.y - number : a.y) / number, a.z);
+        }
+        public static DFCoord operator *(DFCoord a, int number)
+        {
+            return new DFCoord(a.x * number, a.y * number, a.z);
+        }
+        public static DFCoord operator %(DFCoord a, int number)
+        {
+            return new DFCoord((a.x + number) % number, (a.y + number) % number, a.z);
+        }
+        public static DFCoord operator -(DFCoord a, int number)
+        {
+            return new DFCoord(a.x, a.y, a.z - number);
+        }
+        public static DFCoord operator +(DFCoord a, int number)
+        {
+            return new DFCoord(a.x, a.y, a.z + number);
+        }
+    }
+    public struct DFCoord2d
+    {
+        public int x;
+        public int y;
+
+        public DFCoord2d(int _x, int _y)
+        {
+            x = _x;
+            y = _y;
+        }
+
+        public bool isValid()
+        { 
+            return x != -30000; 
+        }
+        public void clear()
+        {
+            x = y = -30000;
+        }
+
+        public static bool operator <(DFCoord2d a, DFCoord2d b)
+        {
+            if (a.x != b.x) return (a.x < b.x);
+            return a.y < b.y;
+        }
+        public static bool operator >(DFCoord2d a, DFCoord2d b)
+        {
+            if (a.x != b.x) return (a.x > b.x);
+            return a.y > b.y;
+        }
+
+        public static DFCoord2d operator +(DFCoord2d a, DFCoord2d b)
+        {
+            return new DFCoord2d(a.x + b.x, a.y + b.y);
+        }
+        public static DFCoord2d operator -(DFCoord2d a, DFCoord2d b)
+        {
+            return new DFCoord2d(a.x - b.x, a.y - b.y);
+        }
+
+
+        public static DFCoord2d operator /(DFCoord2d a, int number)
+        {
+            return new DFCoord2d((a.x < 0 ? a.x - number : a.x) / number, (a.y < 0 ? a.y - number : a.y) / number);
+        }
+        public static DFCoord2d operator *(DFCoord2d a, int number)
+        {
+            return new DFCoord2d(a.x * number, a.y * number);
+        }
+        public static DFCoord2d operator %(DFCoord2d a, int number)
+        {
+            return new DFCoord2d((a.x + number) % number, (a.y + number) % number);
+        }
+        public static DFCoord2d operator &(DFCoord2d a, int number)
+        {
+            return new DFCoord2d(a.x & number, a.y & number);
+        }
+    }
     /* Protocol description:
      *
      * 1. Handshake
@@ -323,7 +453,7 @@ namespace DFHack
                                     this.proto, this.name, header.size);
                     return command_result.CR_LINK_FAILURE;
                 }
-                
+
                 byte[] buf = new byte[header.size];
 
                 if (!RemoteClient.readFullBuffer(p_client.socket, buf, header.size))
@@ -361,7 +491,6 @@ namespace DFHack
                         break;
                 }
             }
-            return command_result.CR_OK;
         }
 
 
@@ -671,7 +800,6 @@ namespace DFHack
             if (!suspend_ready)
             {
                 suspend_ready = true;
-
                 suspend_call.bind(this, "CoreSuspend");
                 resume_call.bind(this, "CoreResume");
             }
@@ -701,7 +829,8 @@ namespace DFHack
         RemoteFunction<dfproto.CoreRunCommandRequest> runcmd_call;
 
         bool suspend_ready;
-        RemoteFunction<EmptyMessage, IntMessage> suspend_call, resume_call;
+        RemoteFunction<EmptyMessage, IntMessage> suspend_call = new RemoteFunction<EmptyMessage,IntMessage>();
+        RemoteFunction<EmptyMessage, IntMessage> resume_call = new RemoteFunction<EmptyMessage,IntMessage>();
     }
 
     class RemoteSuspender

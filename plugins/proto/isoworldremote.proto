@@ -18,9 +18,26 @@ enum LiquidType {
 	MAGMA = 2;
 }
 
+enum BasicShape {
+	NONE = 0;
+	OPEN = 1;
+	WALL = 3;
+	FLOOR = 4;
+	RAMP_UP = 5;
+	RAMP_DOWN = 6;
+}
+
+message ColorDefinition {
+	required int32 red = 1;
+	required int32 green = 2;
+	required int32 blue = 3;
+}
+
 message EmbarkTileLayer {
 	repeated BasicMaterial mat_type_table = 4 [packed=true];
 	repeated int32 mat_subtype_table = 5 [packed=true];
+	repeated BasicShape tile_shape_table = 6 [packed=true];
+	repeated ColorDefinition tile_color_table = 7 [packed=true];
 }
 
 message EmbarkTile {

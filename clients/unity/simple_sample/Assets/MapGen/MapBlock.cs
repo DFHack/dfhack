@@ -6,6 +6,7 @@ using isoworldremote;
 public class MapBlock : MonoBehaviour
 {
     public static float floorHeight = 0.1f;
+    public static float rampDistance = 2.0f;
     DFCoord coordinates;
     GameMap parent;
 
@@ -148,17 +149,68 @@ public class MapBlock : MonoBehaviour
         return GetSingleTile(relativePosition);
     }
 
+    enum Layer
+    {
+        Base,
+        Floor,
+        Top
+    }
+
+    float convertDistanceToOffset(float input)
+    {
+        if (input == float.MaxValue)
+            return 0;
+        input = Mathf.Pow(input, 0.5f);
+        input = (rampDistance - input) / rampDistance;
+        if (input < 0)
+            return 0;
+        return Mathf.Sin(input * Mathf.PI / 4.0f);
+    }
+
+    Vector3 AdjustForRamps(Vector3 input, Layer layer = Layer.Floor)
+    {
+        float nearestUpRamp = float.MaxValue;
+        float nearestDownRamp = float.MaxValue;
+        for (int x = (int)(input.x - rampDistance); x < (int)(input.x + rampDistance + 1.0f); x++)
+            for (int y = (int)(-input.z - rampDistance); y < (int)(-input.z + rampDistance + 1.0f); y++)
+            {
+                BasicShape tile = GetSingleTile(new DFCoord2d(x, y));
+                if(tile == BasicShape.RAMP_UP || tile == BasicShape.RAMP_DOWN)
+                {
+                    float tempDistance = Mathf.Pow(input.x - x, 2) + Mathf.Pow(-input.z - y, 2);
+                    if (tile == BasicShape.RAMP_DOWN && tempDistance < nearestDownRamp)
+                        nearestDownRamp = tempDistance;
+                    if (tile == BasicShape.RAMP_UP && tempDistance < nearestUpRamp)
+                        nearestUpRamp = tempDistance;
+                }
+            }
+
+        nearestUpRamp = convertDistanceToOffset(nearestUpRamp);
+        nearestDownRamp = convertDistanceToOffset(nearestDownRamp);
+
+        if (layer == Layer.Floor)
+            input.y = input.y + nearestUpRamp - nearestDownRamp;
+        if (layer == Layer.Top)
+            input.y = input.y - nearestUpRamp;
+
+        return input;
+    }
+
     void AddSideFace(DFCoord2d position, FaceDirection direction)
     {
+        Layer topLayer = Layer.Top;
+        Layer bottomLayer = Layer.Base;
         float currentFloorHeight = -0.5f;
         float adjacentFloorHeight = -0.5f;
         switch (GetSingleTile(position))
         {
             case BasicShape.WALL:
                 currentFloorHeight = 0.5f;
+                topLayer = Layer.Top;
                 break;
             case BasicShape.FLOOR:
                 currentFloorHeight = floorHeight - 0.5f;
+                topLayer = Layer.Floor;
                 break;
             default:
                 break;
@@ -167,9 +219,11 @@ public class MapBlock : MonoBehaviour
         {
             case BasicShape.WALL:
                 adjacentFloorHeight = 0.5f;
+                bottomLayer = Layer.Top;
                 break;
             case BasicShape.FLOOR:
                 adjacentFloorHeight = floorHeight - 0.5f;
+                bottomLayer = Layer.Floor;
                 break;
             default:
                 break;
@@ -181,31 +235,31 @@ public class MapBlock : MonoBehaviour
         switch (direction)
         {
             case FaceDirection.North:
-                finalVertices.Add(new Vector3(position.x + 0.5f, currentFloorHeight, -(position.y - 0.5f)));
-                finalVertices.Add(new Vector3(position.x - 0.5f, currentFloorHeight, -(position.y - 0.5f)));
-                finalVertices.Add(new Vector3(position.x + 0.5f, adjacentFloorHeight, -(position.y - 0.5f)));
-                finalVertices.Add(new Vector3(position.x - 0.5f, adjacentFloorHeight, -(position.y - 0.5f)));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x + 0.5f, currentFloorHeight, -(position.y - 0.5f)), topLayer));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x - 0.5f, currentFloorHeight, -(position.y - 0.5f)), topLayer));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x + 0.5f, adjacentFloorHeight, -(position.y - 0.5f)), bottomLayer));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x - 0.5f, adjacentFloorHeight, -(position.y - 0.5f)), bottomLayer));
                 uvPos = position.x;
                 break;
             case FaceDirection.South:
-                finalVertices.Add(new Vector3(position.x - 0.5f, currentFloorHeight, -(position.y + 0.5f)));
-                finalVertices.Add(new Vector3(position.x + 0.5f, currentFloorHeight, -(position.y + 0.5f)));
-                finalVertices.Add(new Vector3(position.x - 0.5f, adjacentFloorHeight, -(position.y + 0.5f)));
-                finalVertices.Add(new Vector3(position.x + 0.5f, adjacentFloorHeight, -(position.y + 0.5f)));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x - 0.5f, currentFloorHeight, -(position.y + 0.5f)), topLayer));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x + 0.5f, currentFloorHeight, -(position.y + 0.5f)), topLayer));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x - 0.5f, adjacentFloorHeight, -(position.y + 0.5f)), bottomLayer));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x + 0.5f, adjacentFloorHeight, -(position.y + 0.5f)), bottomLayer));
                 uvPos = 16 - position.x;
                 break;
             case FaceDirection.East:
-                finalVertices.Add(new Vector3(position.x + 0.5f, currentFloorHeight, -(position.y + 0.5f)));
-                finalVertices.Add(new Vector3(position.x + 0.5f, currentFloorHeight, -(position.y - 0.5f)));
-                finalVertices.Add(new Vector3(position.x + 0.5f, adjacentFloorHeight, -(position.y + 0.5f)));
-                finalVertices.Add(new Vector3(position.x + 0.5f, adjacentFloorHeight, -(position.y - 0.5f)));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x + 0.5f, currentFloorHeight, -(position.y + 0.5f)), topLayer));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x + 0.5f, currentFloorHeight, -(position.y - 0.5f)), topLayer));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x + 0.5f, adjacentFloorHeight, -(position.y + 0.5f)), bottomLayer));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x + 0.5f, adjacentFloorHeight, -(position.y - 0.5f)), bottomLayer));
                 uvPos = position.y;
                 break;
             case FaceDirection.West:
-                finalVertices.Add(new Vector3(position.x - 0.5f, currentFloorHeight, -(position.y - 0.5f)));
-                finalVertices.Add(new Vector3(position.x - 0.5f, currentFloorHeight, -(position.y + 0.5f)));
-                finalVertices.Add(new Vector3(position.x - 0.5f, adjacentFloorHeight, -(position.y - 0.5f)));
-                finalVertices.Add(new Vector3(position.x - 0.5f, adjacentFloorHeight, -(position.y + 0.5f)));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x - 0.5f, currentFloorHeight, -(position.y - 0.5f)), topLayer));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x - 0.5f, currentFloorHeight, -(position.y + 0.5f)), topLayer));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x - 0.5f, adjacentFloorHeight, -(position.y - 0.5f)), bottomLayer));
+                finalVertices.Add(AdjustForRamps(new Vector3(position.x - 0.5f, adjacentFloorHeight, -(position.y + 0.5f)), bottomLayer));
                 uvPos = 16 - position.y;
                 break;
             default:
@@ -232,14 +286,19 @@ public class MapBlock : MonoBehaviour
 
     void AddTopFace(DFCoord2d position, float height)
     {
+        Layer layer = Layer.Base;
+        if (GetSingleTile(position) == BasicShape.FLOOR)
+            layer = Layer.Floor;
+        else if (GetSingleTile(position) == BasicShape.WALL)
+            layer = Layer.Top;
         height -= 0.5f;
         //Todo: Weld vertices that should be welded
         //On second though, not with vertex colors there.
         int startindex = finalVertices.Count;
-        finalVertices.Add(new Vector3(position.x - 0.5f, height, -(position.y - 0.5f)));
-        finalVertices.Add(new Vector3(position.x + 0.5f, height, -(position.y - 0.5f)));
-        finalVertices.Add(new Vector3(position.x - 0.5f, height, -(position.y + 0.5f)));
-        finalVertices.Add(new Vector3(position.x + 0.5f, height, -(position.y + 0.5f)));
+        finalVertices.Add(AdjustForRamps(new Vector3(position.x - 0.5f, height, -(position.y - 0.5f)), layer));
+        finalVertices.Add(AdjustForRamps(new Vector3(position.x + 0.5f, height, -(position.y - 0.5f)), layer));
+        finalVertices.Add(AdjustForRamps(new Vector3(position.x - 0.5f, height, -(position.y + 0.5f)), layer));
+        finalVertices.Add(AdjustForRamps(new Vector3(position.x + 0.5f, height, -(position.y + 0.5f)), layer));
 
         finalUVs.Add(new Vector2((float)(position.x) / 16.0f, -(float)(position.y) / 16.0f));
         finalUVs.Add(new Vector2((float)(position.x + 1) / 16.0f, -(float)(position.y) / 16.0f));

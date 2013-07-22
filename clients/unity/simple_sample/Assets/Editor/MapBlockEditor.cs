@@ -65,6 +65,12 @@ public class MapBlockEditor : Editor
                     case BasicShape.OPEN:
                         buttonIcon = "\u00A0";
                         break;
+                    case BasicShape.RAMP_UP:
+                        buttonIcon = "▲";
+                        break;
+                    case BasicShape.RAMP_DOWN:
+                        buttonIcon = "▼";
+                        break;
                     default:
                         buttonIcon = "?";
                         break;

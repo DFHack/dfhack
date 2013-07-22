@@ -10,6 +10,37 @@
 // Generated from: isoworldremote.proto
 namespace isoworldremote
 {
+  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"ColorDefinition")]
+  public partial class ColorDefinition : global::ProtoBuf.IExtensible
+  {
+    public ColorDefinition() {}
+    
+    private int _red;
+    [global::ProtoBuf.ProtoMember(1, IsRequired = true, Name=@"red", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+    public int red
+    {
+      get { return _red; }
+      set { _red = value; }
+    }
+    private int _green;
+    [global::ProtoBuf.ProtoMember(2, IsRequired = true, Name=@"green", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+    public int green
+    {
+      get { return _green; }
+      set { _green = value; }
+    }
+    private int _blue;
+    [global::ProtoBuf.ProtoMember(3, IsRequired = true, Name=@"blue", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+    public int blue
+    {
+      get { return _blue; }
+      set { _blue = value; }
+    }
+    private global::ProtoBuf.IExtension extensionObject;
+    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+  }
+  
   [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"EmbarkTileLayer")]
   public partial class EmbarkTileLayer : global::ProtoBuf.IExtensible
   {
@@ -34,6 +65,13 @@ namespace isoworldremote
     public global::System.Collections.Generic.List<isoworldremote.BasicShape> tile_shape_table
     {
       get { return _tile_shape_table; }
+    }
+  
+    private readonly global::System.Collections.Generic.List<isoworldremote.ColorDefinition> _tile_color_table = new global::System.Collections.Generic.List<isoworldremote.ColorDefinition>();
+    [global::ProtoBuf.ProtoMember(7, Name=@"tile_color_table", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    public global::System.Collections.Generic.List<isoworldremote.ColorDefinition> tile_color_table
+    {
+      get { return _tile_color_table; }
     }
   
     private global::ProtoBuf.IExtension extensionObject;
@@ -306,7 +344,13 @@ namespace isoworldremote
       WALL = 3,
             
       [global::ProtoBuf.ProtoEnum(Name=@"FLOOR", Value=4)]
-      FLOOR = 4
+      FLOOR = 4,
+            
+      [global::ProtoBuf.ProtoEnum(Name=@"RAMP_UP", Value=5)]
+      RAMP_UP = 5,
+            
+      [global::ProtoBuf.ProtoEnum(Name=@"RAMP_DOWN", Value=6)]
+      RAMP_DOWN = 6
     }
   
 }

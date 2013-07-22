@@ -37,7 +37,7 @@ message EmbarkTileLayer {
 	repeated BasicMaterial mat_type_table = 4 [packed=true];
 	repeated int32 mat_subtype_table = 5 [packed=true];
 	repeated BasicShape tile_shape_table = 6 [packed=true];
-	repeated ColorDefinition tile_color_table = 7 [packed=true];
+	repeated ColorDefinition tile_color_table = 7;
 }
 
 message EmbarkTile {

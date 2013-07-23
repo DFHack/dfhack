@@ -26,7 +26,7 @@ using namespace df::enums::ui_sidebar_mode;
 
 DFHACK_PLUGIN("mousequery");
 
-#define PLUGIN_VERSION 0.13
+#define PLUGIN_VERSION 0.14
 
 static int32_t last_x, last_y, last_z;
 static size_t max_list_size = 300000; // Avoid iterating over huge lists

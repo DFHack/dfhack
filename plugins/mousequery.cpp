@@ -490,7 +490,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             }
         }
 
-        if (!live_view && !DFHack::World::ReadPauseState())
+        if (!live_view && !isInTrackableMode() && !DFHack::World::ReadPauseState())
             return;
 
         if (!tracking_enabled && isInTrackableMode())

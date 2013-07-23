@@ -23,7 +23,7 @@ public class GameWindow : MonoBehaviour
 
         float fraction = screenAspect / viewportAspect;
 
-        float height = (viewPortHeight / 2.0f) / Mathf.Sin((camera.fov / 2) * Mathf.Deg2Rad);
+        float height = (viewPortHeight / 2.0f) / Mathf.Sin((camera.fieldOfView / 2) * Mathf.Deg2Rad);
         transform.localPosition = new Vector3(0, height, -verticalShift);
 
         camera.nearClipPlane = height - 1.0001f;

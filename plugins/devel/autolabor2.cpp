@@ -2019,14 +2019,13 @@ private:
 
                         dwarf->clear_labor(labor);
                     }
+                } else {
+                    if (state == IDLE)
+                        available_dwarfs.push_back(dwarf);
+
+                    if (state == BUSY)
+                        busy_dwarfs.push_back(dwarf);
                 }
-
-                if (state == IDLE)
-                    available_dwarfs.push_back(dwarf);
-
-                if (state == BUSY)
-                    busy_dwarfs.push_back(dwarf);
-
             }
 
         }

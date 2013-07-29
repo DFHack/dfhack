@@ -8,6 +8,7 @@
 
 #include "df/item.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_storesst.h"
 #include "df/items_other_id.h"
 #include "df/job.h"
 #include "df/unit.h"
@@ -29,7 +30,7 @@
 using df::global::world;
 
 DFHACK_PLUGIN("stocks");
-#define PLUGIN_VERSION 0.3
+#define PLUGIN_VERSION 0.4
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
@@ -835,7 +836,7 @@ public:
         OutputHotkeyString(x, y, "Mark for Trade", "Shift-T", true, left_margin);
 
         y = gps->dimy - 6;
-        OutputString(COLOR_LIGHTRED, x, y, "Flag names may also", true, left_margin);
+        OutputString(COLOR_LIGHTRED, x, y, "Flag names can also", true, left_margin);
         OutputString(COLOR_LIGHTRED, x, y, "be searched for", true, left_margin);
     }
 
@@ -1075,6 +1076,34 @@ private:
 df::item_flags ViewscreenStocks::hide_flags;
 extra_filters ViewscreenStocks::extra_hide_flags;
 
+struct stocks_hook : public df::viewscreen_storesst
+{
+    typedef df::viewscreen_storesst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        if (input->count(interface_key::CUSTOM_E))
+        {
+            Screen::show(new ViewscreenStocks());
+            Screen::dismiss(this);
+            return;
+        }
+        INTERPOSE_NEXT(feed)(input);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+        auto dim = Screen::getWindowSize();
+        int x = 40;
+        int y = dim.y - 2;
+        OutputHotkeyString(x, y, "Enhanced View", "e");
+    }
+
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(stocks_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(stocks_hook, render);
 
 static command_result stocks_cmd(color_ostream &out, vector <string> & parameters)
 {
@@ -1098,7 +1127,7 @@ static command_result stocks_cmd(color_ostream &out, vector <string> & parameter
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!gps)
+    if (!gps || !INTERPOSE_HOOK(stocks_hook, feed).apply() || !INTERPOSE_HOOK(stocks_hook, render).apply())
         out.printerr("Could not insert stocks plugin hooks!\n");
 
     commands.push_back(

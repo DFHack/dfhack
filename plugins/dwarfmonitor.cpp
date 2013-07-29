@@ -1794,7 +1794,9 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "dwarfmonitor disable <mode>\n"
         "    <mode> as above\n\n"
         "dwarfmonitor stats\n"
-        "  Show statistics summary\n\n"
+        "  Show statistics summary\n"
+        "dwarfmonitor prefs\n"
+        "  Show dwarf preferences summary\n\n"
         ));
 
     return CR_OK;

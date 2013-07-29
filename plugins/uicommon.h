@@ -32,7 +32,7 @@ using df::global::gps;
 #define nullptr 0L
 #endif
 
-#define COLOR_TITLE COLOR_BLUE
+#define COLOR_TITLE COLOR_BROWN
 #define COLOR_UNSELECTED COLOR_GREY
 #define COLOR_SELECTED COLOR_WHITE
 #define COLOR_HIGHLIGHTED COLOR_GREEN

@@ -1172,12 +1172,14 @@ public:
         preferences_column.auto_select = true;
         preferences_column.setTitle("Preference");
         preferences_column.bottom_margin = 3;
+        preferences_column.search_margin = 25;
 
         dwarf_column.multiselect = false;
         dwarf_column.auto_select = true;
         dwarf_column.setTitle("Units with Preference");
         dwarf_column.bottom_margin = 3;
         dwarf_column.text_clip_at = 25;
+        dwarf_column.search_margin = 25;
 
         populatePreferencesColumn();
     }

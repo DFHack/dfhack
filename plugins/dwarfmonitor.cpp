@@ -48,7 +48,7 @@ using df::global::ui;
 
 typedef int16_t activity_type;
 
-#define PLUGIN_VERSION 0.7
+#define PLUGIN_VERSION 0.8
 #define DAY_TICKS 1200
 #define DELTA_TICKS 100
 
@@ -70,6 +70,36 @@ static map<df::unit *, deque<activity_type>> work_history;
 
 static int misery[] = { 0, 0, 0, 0, 0, 0, 0 };
 static bool misery_upto_date = false;
+
+static color_value monitor_colors[] = 
+{
+    COLOR_LIGHTRED,
+    COLOR_RED,
+    COLOR_YELLOW,
+    COLOR_WHITE,
+    COLOR_CYAN,
+    COLOR_LIGHTBLUE,
+    COLOR_LIGHTGREEN
+};
+
+static int get_happiness_cat(df::unit *unit)
+{
+    int happy = unit->status.happiness;
+    if (happy == 0)         // miserable
+        return 0;
+    else if (happy <= 25)   // very unhappy
+        return 1;
+    else if (happy <= 50)   // unhappy
+        return 2;
+    else if (happy <= 75)   // fine
+        return 3;
+    else if (happy <= 125)  // quite content
+        return 4;
+    else if (happy <= 150)  // happy
+        return 5;
+    else                    // ecstatic
+        return 6;
+}
 
 static int get_max_history()
 {
@@ -1172,14 +1202,14 @@ public:
         preferences_column.auto_select = true;
         preferences_column.setTitle("Preference");
         preferences_column.bottom_margin = 3;
-        preferences_column.search_margin = 25;
+        preferences_column.search_margin = 35;
 
         dwarf_column.multiselect = false;
         dwarf_column.auto_select = true;
+        dwarf_column.allow_null = true;
         dwarf_column.setTitle("Units with Preference");
         dwarf_column.bottom_margin = 3;
-        dwarf_column.text_clip_at = 25;
-        dwarf_column.search_margin = 25;
+        dwarf_column.search_margin = 35;
 
         populatePreferencesColumn();
     }
@@ -1368,7 +1398,42 @@ public:
                  dfit != preferences_store[selected_preference].dwarves.end();
                  dfit++)
             {
-                dwarf_column.add(getUnitName(*dfit), *dfit);
+                string label = getUnitName(*dfit);
+                auto happy = get_happiness_cat(*dfit);
+                UIColor color = monitor_colors[happy];
+                switch (happy)
+                {
+                case 0:
+                    label += " (miserable)";
+                    break;
+
+                case 1:
+                    label += " (very unhappy)";
+                    break;
+
+                case 2:
+                    label += " (unhappy)";
+                    break;
+
+                case 3:
+                    label += " (fine)";
+                    break;
+
+                case 4:
+                    label += " (quite content)";
+                    break;
+
+                case 5:
+                    label += " (happy)";
+                    break;
+
+                case 6:
+                    label += " (ecstatic)";
+                    break;
+                }
+
+                ListEntry<df::unit *> elem(label, *dfit, "", color);
+                dwarf_column.add(elem);
             }
         }
 
@@ -1458,7 +1523,7 @@ public:
         int32_t x = 2;
         OutputHotkeyString(x, y, "Leave", "Esc");
 
-        x = 2;
+        x += 2;
         OutputHotkeyString(x, y, "Zoom Unit", "Shift-Z");
     }
 
@@ -1551,21 +1616,7 @@ static void update_dwarf_stats(bool is_paused)
 
         if (monitor_misery)
         {
-            int happy = unit->status.happiness;
-            if (happy == 0)         // miserable
-                misery[0]++;
-            else if (happy <= 25)   // very unhappy
-                misery[1]++;
-            else if (happy <= 50)   // unhappy
-                misery[2]++;
-            else if (happy <= 75)   // fine
-                misery[3]++;
-            else if (happy <= 125)  // quite content
-                misery[4]++;
-            else if (happy <= 150)  // happy
-                misery[5]++;
-            else                    // ecstatic
-                misery[6]++;
+            misery[get_happiness_cat(unit)]++;
         }
 
         if (!monitor_jobs || is_paused)
@@ -1630,17 +1681,6 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
 
     return CR_OK;
 }
-
-static color_value monitor_colors[] = 
-{
-    COLOR_LIGHTRED,
-    COLOR_RED,
-    COLOR_YELLOW,
-    COLOR_WHITE,
-    COLOR_CYAN,
-    COLOR_LIGHTBLUE,
-    COLOR_LIGHTGREEN
-};
 
 struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
 {

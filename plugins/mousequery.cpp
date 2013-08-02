@@ -26,7 +26,7 @@ using namespace df::enums::ui_sidebar_mode;
 
 DFHACK_PLUGIN("mousequery");
 
-#define PLUGIN_VERSION 0.14
+#define PLUGIN_VERSION 0.15
 
 static int32_t last_x, last_y, last_z;
 static size_t max_list_size = 300000; // Avoid iterating over huge lists
@@ -362,6 +362,9 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         }
         else if (rbutton_enabled && enabler->mouse_rbut)
         {
+            if (isInDesignationMenu() && !box_designation_enabled)
+                return false;
+
             // Escape out of query mode
             enabler->mouse_rbut_down = 0;
             enabler->mouse_rbut = 0;

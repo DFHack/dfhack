@@ -159,22 +159,22 @@ function empregnate(unit)
 		unit.curse.add_tags2.STERILE=false
 	end
 	local genes = unit.appearance.genes
-	if unit.relations.pregnancy_ptr == nil then
+	if unit.relations.pregnancy_genes == nil then
 		print("creating preg ptr.")
 		if false then
-			print(string.format("%x %x",df.sizeof(unit.relations:_field("pregnancy_ptr"))))
+			print(string.format("%x %x",df.sizeof(unit.relations:_field("pregnancy_genes"))))
 			return
 		end
-		unit.relations.pregnancy_ptr = { new = true, assign = genes }
+		unit.relations.pregnancy_genes = { new = true, assign = genes }
 	end
-	local ngenes = unit.relations.pregnancy_ptr
+	local ngenes = unit.relations.pregnancy_genes
 	if #ngenes.appearance ~= #genes.appearance or #ngenes.colors ~= #genes.colors then
 		print("Array sizes incorrect, fixing.")
 		ngenes:assign(genes);
 	end
 	print("Setting preg timer.")
 	unit.relations.pregnancy_timer=10
-	unit.relations.pregnancy_mystery=1
+	unit.relations.pregnancy_caste=1
 end
 menu:add("Empregnate",empregnate)
 function healunit(unit)

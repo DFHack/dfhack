@@ -80,6 +80,17 @@ void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bo
     OutputString(text_color, x, y, display, newline, left_margin);
 }
 
+void OutputLabelString(int &x, int &y, const char *text, const char *hotkey, const string &label, bool newline = false, 
+    int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
+{
+    OutputString(hotkey_color, x, y, hotkey);
+    string display(": ");
+    display.append(text);
+    display.append(": ");
+    OutputString(text_color, x, y, display);
+    OutputString(hotkey_color, x, y, label, newline, left_margin);
+}
+
 void OutputFilterString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = false, 
     int left_margin = 0, int8_t hotkey_color = COLOR_LIGHTGREEN)
 {
@@ -230,6 +241,11 @@ public:
             it->text = pad_string(it->text, max_item_width, false);
         }
 
+        return getMaxItemWidth();
+    }
+
+    int getMaxItemWidth()
+    {
         return left_margin + max_item_width;
     }
 

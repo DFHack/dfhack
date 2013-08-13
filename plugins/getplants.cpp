@@ -6,9 +6,9 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
-
 #include "DataDefs.h"
 #include "TileTypes.h"
+
 #include "df/world.h"
 #include "df/map_block.h"
 #include "df/tile_dig_designation.h"
@@ -16,14 +16,19 @@
 #include "df/plant.h"
 #include "df/ui.h"
 #include "df/burrow.h"
+#include "df/item_flags.h"
+#include "df/item.h"
+#include "df/items_other_id.h"
+#include "df/viewscreen_dwarfmodest.h"
 
 #include "modules/Screen.h"
 #include "modules/Maps.h"
 #include "modules/Burrows.h"
+#include "modules/World.h"
+#include "modules/MapCache.h"
+#include "modules/Gui.h"
 
 #include <set>
-#include "df/item_flags.h"
-#include "df/item.h"
 
 using std::string;
 using std::vector;
@@ -34,36 +39,160 @@ using namespace df::enums;
 using df::global::world;
 using df::global::ui;
 
+#define PLUGIN_VERSION 0.2
+DFHACK_PLUGIN("getplants");
+
+
 static bool autochop_enabled = false;
-static vector<df::burrow *> burrows;
 static int min_logs, max_logs;
 static bool wait_for_threshold;
 
+static PersistentDataItem config_autochop;
+
+struct WatchedBurrow
+{
+    int32_t id;
+    df::burrow *burrow;
+
+    WatchedBurrow(df::burrow *burrow) : burrow(burrow)
+    {
+        id = burrow->id;
+    }
+};
+
+class WatchedBurrows
+{
+public:
+    string getSerialisedIds()
+    {
+        validate();
+        stringstream burrow_ids;
+        bool append_started = false;
+        for (auto it = burrows.begin(); it != burrows.end(); it++)
+        {
+            if (append_started)
+                burrow_ids << " ";
+            burrow_ids << it->id;
+            append_started = true;
+        }
+
+        return burrow_ids.str();
+    }
+
+    void clear()
+    {
+        burrows.clear();
+    }
+
+    void add(const int32_t id)
+    {
+        if (!isValidBurrow(id))
+            return;
+
+        WatchedBurrow wb(getBurrow(id));
+        burrows.push_back(wb);
+    }
+
+    void add(const string burrow_ids)
+    {
+        istringstream iss(burrow_ids);
+        int id;
+        while (iss >> id)
+        {
+            add(id);
+        }
+    }
+
+    bool isValidPos(const df::coord &plant_pos)
+    {
+        validate();
+        if (!burrows.size())
+            return true;
+
+        for (auto it = burrows.begin(); it != burrows.end(); it++)
+        {
+            df::burrow *burrow = it->burrow;
+            if (Burrows::isAssignedTile(burrow, plant_pos))
+                return true;
+        }
+
+        return false;
+    }
+
+    bool isBurrowWatched(const df::burrow *burrow)
+    {
+        validate();
+        for (auto it = burrows.begin(); it != burrows.end(); it++)
+        {
+            if (it->burrow == burrow)
+                return true;
+        }
+
+        return false;
+    }
+
+private:
+    static bool isValidBurrow(const int32_t id)
+    {
+        return getBurrow(id);
+    }
+
+    static df::burrow *getBurrow(const int32_t id)
+    {
+        return df::burrow::find(id);
+    }
+
+    void validate()
+    {
+        for (auto it = burrows.begin(); it != burrows.end();)
+        {
+            if (!isValidBurrow(it->id))
+                it = burrows.erase(it);
+            else
+                ++it;
+        }
+    }
+
+    vector<WatchedBurrow> burrows;
+};
+
+static WatchedBurrows watchedBurrows;
+
+static void save_config()
+{
+    config_autochop.val() = watchedBurrows.getSerialisedIds();
+    config_autochop.ival(0) = autochop_enabled;
+    config_autochop.ival(1) = min_logs;
+    config_autochop.ival(2) = max_logs;
+    config_autochop.ival(3) = wait_for_threshold;
+}
+
 static void initialize()
 {
-    burrows.clear();
+    watchedBurrows.clear();
     autochop_enabled = false;
     min_logs = 80;
     max_logs = 100;
     wait_for_threshold = false;
-}
 
-static bool is_in_burrow(const df::coord &plant_pos)
-{
-    if (!burrows.size())
-        return true;
-
-    for (auto it = burrows.begin(); it != burrows.end(); it++)
+    config_autochop = World::GetPersistentData("autochop/config");
+    if (config_autochop.isValid())
     {
-        df::burrow *burrow = *it;
-        if (Burrows::isAssignedTile(burrow, plant_pos))
-            return true;
+        watchedBurrows.add(config_autochop.val());
+        autochop_enabled = config_autochop.ival(0);
+        min_logs = config_autochop.ival(1);
+        max_logs = config_autochop.ival(2);
+        wait_for_threshold = config_autochop.ival(3);
     }
-
-    return false;
+    else
+    {
+        config_autochop = World::AddPersistentData("autochop/config");
+        if (config_autochop.isValid())
+            save_config();
+    }
 }
 
-static int do_chop_designation()
+static int do_chop_designation(bool chop, bool count_only)
 {
     int count = 0;
     for (size_t i = 0; i < world->map.map_blocks.size(); i++)
@@ -84,12 +213,38 @@ static int do_chop_designation()
             if (shape != tiletype_shape::TREE)
                 continue;
 
-            if (!is_in_burrow(plant->pos))
+            if (!count_only && !watchedBurrows.isValidPos(plant->pos))
                 continue;
 
-            if (cur->designation[x][y].bits.dig == tile_dig_designation::No)
+            bool dirty = false;
+            if (chop && cur->designation[x][y].bits.dig == tile_dig_designation::No)
             {
-                cur->designation[x][y].bits.dig = tile_dig_designation::Default;
+                if (count_only)
+                {
+                    ++count;
+                }
+                else
+                {
+                    cur->designation[x][y].bits.dig = tile_dig_designation::Default;
+                    dirty = true;
+                }
+            }
+
+            if (!chop && cur->designation[x][y].bits.dig == tile_dig_designation::Default)
+            {
+                if (count_only)
+                {
+                    ++count;
+                }
+                else
+                {
+                    cur->designation[x][y].bits.dig = tile_dig_designation::No;
+                    dirty = true;
+                }
+            }
+
+            if (dirty)
+            {
                 cur->flags.bits.designated = true;
                 ++count;
             }
@@ -135,11 +290,11 @@ static bool is_valid_item(df::item *item)
     return true;
 }
 
-static bool should_chop_more()
+static int get_log_count()
 {
     std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
 
-    // Precompute a bitmask with the bad flags
+    // Pre-compute a bitmask with the bad flags
     df::item_flags bad_flags;
     bad_flags.whole = 0;
 
@@ -165,19 +320,40 @@ static bool should_chop_more()
             continue;
 
         ++valid_count;
-        if (wait_for_threshold)
+    }
+
+    return valid_count;
+}
+
+static void set_threshold_check(bool state)
+{
+    wait_for_threshold = state;
+    save_config();
+}
+
+static void do_autochop()
+{
+    int log_count = get_log_count();
+    if (wait_for_threshold)
+    {
+        if (log_count < min_logs)
         {
-            if (valid_count >= min_logs)
-                return false;
+            set_threshold_check(false);
+            do_chop_designation(true, false);
+        }
+    }
+    else
+    {
+        if (log_count >= max_logs)
+        {
+            set_threshold_check(true);
+            do_chop_designation(false, false);
         }
         else
         {
-            if (valid_count >= max_logs)
-                return false;
+            do_chop_designation(true, false);
         }
     }
-
-    return true;
 }
 
 class ViewscreenAutochop : public dfhack_viewscreen
@@ -192,6 +368,7 @@ public:
         burrows_column.text_clip_at = 30;
 
         populateBurrowsColumn();
+        message.clear();
     }
 
     void populateBurrowsColumn()
@@ -205,17 +382,43 @@ public:
         {
             df::burrow* burrow = *iter;
             auto elem = ListEntry<df::burrow *>(burrow->name, burrow);
-            elem.selected = (find(burrows.begin(), burrows.end(), burrow) != burrows.end());
+            elem.selected = watchedBurrows.isBurrowWatched(burrow);
             burrows_column.add(elem);
         }
 
         burrows_column.fixWidth();
         burrows_column.filterDisplay();
+
+        current_log_count = get_log_count();
+        marked_tree_count = do_chop_designation(false, true);
+    }
+
+    void change_min_logs(int delta)
+    {
+        if (!autochop_enabled)
+            return;
+
+        min_logs += delta;
+        if (min_logs < 0)
+            min_logs = 0;
+        if (min_logs > max_logs)
+            max_logs = min_logs;
+    }
+
+    void change_max_logs(int delta)
+    {
+        if (!autochop_enabled)
+            return;
+
+        max_logs += delta;
+        if (max_logs < min_logs)
+            min_logs = max_logs;
     }
 
     void feed(set<df::interface_key> *input)
     {
         bool key_processed = false;
+        message.clear();
         switch (selected_column)
         {
         case 0:
@@ -232,6 +435,7 @@ public:
 
         if (input->count(interface_key::LEAVESCREEN))
         {
+            save_config();
             input->clear();
             Screen::dismiss(this);
             return;
@@ -242,53 +446,47 @@ public:
         }
         else if  (input->count(interface_key::CUSTOM_D))
         {
-            int count = do_chop_designation();
-            color_ostream_proxy out(Core::getInstance().getConsole());
-            out << "Trees marked for chop: " << count << endl;
+            int count = do_chop_designation(true, false);
+            message = "Trees marked for chop: " + int_to_string(count);
+            marked_tree_count = do_chop_designation(false, true);
+        }
+        else if  (input->count(interface_key::CUSTOM_U))
+        {
+            int count = do_chop_designation(false, false);
+            message = "Trees unmarked: " + int_to_string(count);
+            marked_tree_count = do_chop_designation(false, true);
         }
         else if  (input->count(interface_key::CUSTOM_H))
         {
-            --min_logs;
-            if (min_logs < 0)
-                min_logs = 0;
+            change_min_logs(-1);
         }
         else if  (input->count(interface_key::CUSTOM_SHIFT_H))
         {
-            min_logs -= 10;
-            if (min_logs < 0)
-                min_logs = 0;
+            change_min_logs(-10);
         }
         else if  (input->count(interface_key::CUSTOM_J))
         {
-            ++min_logs;
-            if (min_logs > max_logs)
-                max_logs = min_logs;
+            change_min_logs(1);
         }
         else if  (input->count(interface_key::CUSTOM_SHIFT_J))
         {
-            min_logs += 10;
-            if (min_logs > max_logs)
-                max_logs = min_logs;
+            change_min_logs(10);
         }
         else if  (input->count(interface_key::CUSTOM_K))
         {
-            --max_logs;
-            if (max_logs < min_logs)
-                min_logs = max_logs;
+            change_max_logs(-1);
         }
         else if  (input->count(interface_key::CUSTOM_SHIFT_K))
         {
-            max_logs -= 10;
-            if (max_logs < min_logs)
-                min_logs = max_logs;
+            change_max_logs(-10);
         }
         else if  (input->count(interface_key::CUSTOM_L))
         {
-            ++max_logs;
+            change_max_logs(1);
         }
         else if  (input->count(interface_key::CUSTOM_SHIFT_L))
         {
-            max_logs += 10;
+            change_max_logs(10);
         }
         else if (enabler->tracking_on && enabler->mouse_lbut)
         {
@@ -316,6 +514,8 @@ public:
         int32_t y = gps->dimy - 3;
         int32_t x = 2;
         OutputHotkeyString(x, y, "Leave", "Esc");
+        x += 3;
+        OutputString(COLOR_YELLOW, x, y, message);
 
         y = 3;
         int32_t left_margin = burrows_column.getMaxItemWidth() + 3;
@@ -330,28 +530,40 @@ public:
             OutputString(COLOR_YELLOW, x, y, "Select from left to chop in specific burrows", true, left_margin);
         }
 
-        y++;
+        ++y;
         OutputToggleString(x, y, "Autochop", "a", autochop_enabled, true, left_margin);
         OutputHotkeyString(x, y, "Designate Now", "d", true, left_margin);
-        if (!autochop_enabled)
-            return;
-        OutputLabelString(x, y, "Min Logs", "hjHJ", int_to_string(min_logs), true, left_margin);
-        OutputLabelString(x, y, "Max Logs", "klKL", int_to_string(max_logs), true, left_margin);
+        OutputHotkeyString(x, y, "Undesignate Now", "u", true, left_margin);
+        if (autochop_enabled)
+        {
+            OutputLabelString(x, y, "Min Logs", "hjHJ", int_to_string(min_logs), true, left_margin);
+            OutputLabelString(x, y, "Max Logs", "klKL", int_to_string(max_logs), true, left_margin);
+        }
+
+        ++y;
+        OutputString(COLOR_BROWN, x, y, "Current Counts", true, left_margin);
+        OutputString(COLOR_WHITE, x, y, "Current Logs: ");
+        OutputString(COLOR_GREEN, x, y, int_to_string(current_log_count), true, left_margin);
+        OutputString(COLOR_WHITE, x, y, "Marked Trees: ");
+        OutputString(COLOR_GREEN, x, y, int_to_string(marked_tree_count), true, left_margin);
     }
 
     std::string getFocusString() { return "autochop"; }
-
-
+    
     void updateAutochopBurrows()
     {
-        burrows.clear();
+        watchedBurrows.clear();
         for_each_(burrows_column.getSelectedElems(), 
-            [] (df::burrow *b) { burrows.push_back(b); });
+            [] (df::burrow *b) { watchedBurrows.add(b->id); });
     }
 
 private:
     ListColumn<df::burrow *> burrows_column;
     int selected_column;
+    int current_log_count;
+    int marked_tree_count;
+    MapExtras::MapCache mcache;
+    string message;
 
     void validateColumn()
     {
@@ -364,6 +576,58 @@ private:
         burrows_column.resize();
     }
 };
+
+struct autochop_hook : public df::viewscreen_dwarfmodest
+{
+    typedef df::viewscreen_dwarfmodest interpose_base;
+
+    bool isInDesignationMenu()
+    {
+        using namespace df::enums::ui_sidebar_mode;
+        return (ui->main.mode == DesignateChopTrees);
+    }
+    
+    void sendKey(const df::interface_key &key)
+    {
+        set<df::interface_key> tmp;
+        tmp.insert(key);
+        INTERPOSE_NEXT(feed)(&tmp);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        if (isInDesignationMenu() && input->count(interface_key::CUSTOM_C))
+        {
+            sendKey(interface_key::LEAVESCREEN);
+            Screen::show(new ViewscreenAutochop());
+        }
+        else
+        {
+            INTERPOSE_NEXT(feed)(input);
+        }
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+
+        auto dims = Gui::getDwarfmodeViewDims();
+        if (dims.menu_x1 <= 0)
+            return;
+
+        df::ui_sidebar_mode d = ui->main.mode;
+        if (!isInDesignationMenu())
+            return;
+
+        int left_margin = dims.menu_x1 + 1;
+        int x = left_margin;
+        int y = 25;
+        OutputHotkeyString(x, y, "Autochop Dashboard", "c");
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(autochop_hook, feed, 100);
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(autochop_hook, render, 100);
 
 
 command_result df_getplants (color_ostream &out, vector <string> & parameters)
@@ -388,6 +652,10 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
             exclude = true;
         else if(parameters[i] == "-a")
             all = true;
+        else if(parameters[i] == "debug")
+        {
+            save_config();
+        }
         else if(parameters[i] == "autochop")
         {
             if(Maps::IsValid())
@@ -498,8 +766,6 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
-DFHACK_PLUGIN("getplants");
-
 DFhackCExport command_result plugin_onupdate (color_ostream &out)
 {
     if (!autochop_enabled)
@@ -513,19 +779,21 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
     if (DFHack::World::ReadPauseState())
         return CR_OK;
 
-    if (world->frame_counter - last_frame_count < 6000) // Check ever 5 days
+    if (world->frame_counter - last_frame_count < 1200) // Check every day
         return CR_OK;
 
     last_frame_count = world->frame_counter;
 
-    do_chop_designation();
+    do_autochop();
 
     return CR_OK;
 }
 
-
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
+    if (!gps || !INTERPOSE_HOOK(autochop_hook, feed).apply() || !INTERPOSE_HOOK(autochop_hook, render).apply())
+        out.printerr("Could not insert getplants hooks!\n");
+
     commands.push_back(PluginCommand(
         "getplants", "Cut down all of the specified trees or gather specified shrubs",
         df_getplants, false,
@@ -539,7 +807,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "  -a - Select every type of plant (obeys -t/-s)\n"
         "Specifying both -t and -s will have no effect.\n"
         "If no plant IDs are specified, all valid plant IDs will be listed.\n\n"
-        "  autochop - Opens the automated tree cutting control screen\n"
+        "  autochop - Opens the automated chopping control screen\n"
     ));
 
     initialize();

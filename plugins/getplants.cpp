@@ -438,6 +438,8 @@ public:
             save_config();
             input->clear();
             Screen::dismiss(this);
+            if (autochop_enabled)
+                do_autochop();
             return;
         }
         else if  (input->count(interface_key::CUSTOM_A))

@@ -301,8 +301,8 @@ Struct and class types with instance-vector attribute in the
 xml have a ``type.find(key)`` function that wraps the find
 method provided in C++.
 
-Global functions
-================
+Global functions and values
+===========================
 
 The ``df`` table itself contains the following functions and values:
 
@@ -356,7 +356,10 @@ The ``df`` table itself contains the following functions and values:
   a lightuserdata, or a number.
 
   Returns *nil* if NULL, or a ref.
+  
+* ``df.global.cursor``
 
+  Contains the current absolute cursor coordinates.
 
 Recursive table assignment
 ==========================

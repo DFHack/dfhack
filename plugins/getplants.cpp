@@ -554,8 +554,8 @@ public:
     void updateAutochopBurrows()
     {
         watchedBurrows.clear();
-        for_each_(burrows_column.getSelectedElems(), 
-            [] (df::burrow *b) { watchedBurrows.add(b->id); });
+        vector<df::burrow *> v = burrows_column.getSelectedElems();
+        for_each_<df::burrow *>(v, [] (df::burrow *b) { watchedBurrows.add(b->id); });
     }
 
 private:

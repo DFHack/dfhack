@@ -393,6 +393,8 @@ SDL_GetKeyState
     Uint8 * SDLCALL SDL_GetKeyState(int *numkeys);
 SDL_PollEvent
     int SDLCALL SDL_PollEvent(SDL_Event *event);
+SDL_PushEvent
+    int SDLCALL SDL_PushEvent(SDL_Event *event);
 */
 
 static int (*_SDL_EnableKeyRepeat)(int delay, int interval) = 0;
@@ -435,6 +437,12 @@ DFhackCExport int SDL_PollEvent(SDL::Event* event)
             goto pollevent_again;
     }
     return orig_return;
+}
+
+static int (*_SDL_PushEvent)(SDL::Event* event) = 0;
+DFhackCExport int SDL_PushEvent(SDL::Event* event)
+{
+    return _SDL_PushEvent(event);
 }
 
 /***** error handling
@@ -762,6 +770,7 @@ bool FirstCall()
     _SDL_LockSurface = (int (*)(void*))GetProcAddress(realSDLlib,"SDL_LockSurface");
     _SDL_MapRGB = (uint32_t (*)(void*, uint8_t, uint8_t, uint8_t))GetProcAddress(realSDLlib,"SDL_MapRGB");
     _SDL_PollEvent = (int (*)(SDL::Event*))GetProcAddress(realSDLlib,"SDL_PollEvent");
+    _SDL_PushEvent = (int (*)(SDL::Event*))GetProcAddress(realSDLlib,"SDL_PushEvent");
     _SDL_Quit = (void (*)())GetProcAddress(realSDLlib,"SDL_Quit");
     _SDL_RWFromFile = (void*(*)(const char*, const char*))GetProcAddress(realSDLlib,"SDL_RWFromFile");
     _SDL_RemoveTimer = (bool (*)(void*))GetProcAddress(realSDLlib,"SDL_RemoveTimer");

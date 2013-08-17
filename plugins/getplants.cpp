@@ -534,6 +534,7 @@ public:
         OutputToggleString(x, y, "Autochop", "a", autochop_enabled, true, left_margin);
         OutputHotkeyString(x, y, "Designate Now", "d", true, left_margin);
         OutputHotkeyString(x, y, "Undesignate Now", "u", true, left_margin);
+        OutputHotkeyString(x, y, "Toggle Burrow", "Enter", true, left_margin);
         if (autochop_enabled)
         {
             OutputLabelString(x, y, "Min Logs", "hjHJ", int_to_string(min_logs), true, left_margin);

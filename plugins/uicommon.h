@@ -393,6 +393,9 @@ public:
 
     void toggleHighlighted()
     {
+        if (display_list.size() == 0)
+            return;
+
         if (auto_select)
             return;
 

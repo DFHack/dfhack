@@ -39,7 +39,7 @@ using namespace df::enums;
 using df::global::world;
 using df::global::ui;
 
-#define PLUGIN_VERSION 0.2
+#define PLUGIN_VERSION 0.3
 DFHACK_PLUGIN("getplants");
 
 

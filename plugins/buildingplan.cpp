@@ -38,7 +38,7 @@ using df::global::ui_build_selector;
 using df::global::world;
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 0.9
+#define PLUGIN_VERSION 0.10
 
 struct MaterialDescriptor
 {

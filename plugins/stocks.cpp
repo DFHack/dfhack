@@ -30,7 +30,7 @@
 using df::global::world;
 
 DFHACK_PLUGIN("stocks");
-#define PLUGIN_VERSION 0.4
+#define PLUGIN_VERSION 0.5
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
@@ -1084,8 +1084,9 @@ struct stocks_hook : public df::viewscreen_storesst
     {
         if (input->count(interface_key::CUSTOM_E))
         {
-            Screen::show(new ViewscreenStocks());
             Screen::dismiss(this);
+            Screen::dismiss(Gui::getCurViewscreen(true));
+            Screen::show(new ViewscreenStocks());
             return;
         }
         INTERPOSE_NEXT(feed)(input);
@@ -1099,11 +1100,11 @@ struct stocks_hook : public df::viewscreen_storesst
         int y = dim.y - 2;
         OutputHotkeyString(x, y, "Enhanced View", "e");
     }
-
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(stocks_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(stocks_hook, render);
+
 
 static command_result stocks_cmd(color_ostream &out, vector <string> & parameters)
 {
@@ -1124,7 +1125,6 @@ static command_result stocks_cmd(color_ostream &out, vector <string> & parameter
     return CR_WRONG_USAGE;
 }
 
-
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     if (!gps || !INTERPOSE_HOOK(stocks_hook, feed).apply() || !INTERPOSE_HOOK(stocks_hook, render).apply())
@@ -1139,7 +1139,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
     return CR_OK;
 }
-
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {

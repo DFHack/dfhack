@@ -1047,7 +1047,9 @@ private:
         {
             // Block the keys if were searching
             if (!search_string.empty())
+            {
                 input->clear();
+            }
 
             return false;
         }
@@ -1080,6 +1082,9 @@ public:
         {
             make_text_dim(2, 37, 22);
             make_text_dim(42, gps->dimx-2, 22);
+            int32_t x = 2;
+            int32_t y = gps->dimy - 3;
+            OutputString(COLOR_YELLOW, x, y, "Note: Clear search to trade");
         }
     }
 
@@ -1119,6 +1124,9 @@ public:
         {
             make_text_dim(2, 37, 22);
             make_text_dim(42, gps->dimx-2, 22);
+            int32_t x = 42;
+            int32_t y = gps->dimy - 3;
+            OutputString(COLOR_YELLOW, x, y, "Note: Clear search to trade");
         }
     }
 

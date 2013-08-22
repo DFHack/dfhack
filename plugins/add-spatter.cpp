@@ -378,7 +378,7 @@ static bool find_reactions(color_ostream &out)
             parse_product(out, out_prod.back(), it->second.react, itprod);
         }
 
-        for (size_t i = 0; i < prod.size(); i++)
+        for (size_t i = 0; i < out_prod.size(); i++)
         {
             if (out_prod[i].isValid())
                 products[out_prod[i].product] = &out_prod[i];

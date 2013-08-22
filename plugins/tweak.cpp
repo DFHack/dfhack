@@ -937,14 +937,14 @@ static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vect
     if (vector_get(parameters, 1) == "disable")
     {
         hook.remove();
-        out.print("Disabled tweak %s\n", parameters[0].c_str());
+        out.print("Disabled tweak %s (%s)\n", parameters[0].c_str(), hook.name());
     }
     else
     {
         if (hook.apply())
-            out.print("Enabled tweak %s\n", parameters[0].c_str());
+            out.print("Enabled tweak %s (%s)\n", parameters[0].c_str(), hook.name());
         else
-            out.printerr("Could not activate tweak %s\n", parameters[0].c_str());
+            out.printerr("Could not activate tweak %s (%s)\n", parameters[0].c_str(), hook.name());
     }
 }
 

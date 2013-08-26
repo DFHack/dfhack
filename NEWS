@@ -15,6 +15,8 @@ DFHack future
     - ruby: add df.dfhack_run "somecommand"
     - magmasource: rename to 'source', allow water/magma sources/drains
     - core: fix SC_WORLD_(UN)LOADED event for arena mode
+  New tweaks:
+    - hive-crash: Prevent crash if bees die in a hive with ungathered products (bug 6368).
   New plugins:
     - buildingplan: Place furniture before it's built
     - resume: A plugin to help display and resume suspended constructions conveniently

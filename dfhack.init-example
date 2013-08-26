@@ -147,6 +147,9 @@ tweak military-color-assigned
 # remove inverse dependency of squad training speed on unit list size and use more sparring
 tweak military-training
 
+# prevent crash if bees die in a hive with ungathered products by insta-gathering them
+tweak hive-crash
+
 # enable autoSyndrome
 autoSyndrome enable
 

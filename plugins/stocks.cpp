@@ -30,7 +30,7 @@
 using df::global::world;
 
 DFHACK_PLUGIN("stocks");
-#define PLUGIN_VERSION 0.5
+#define PLUGIN_VERSION 0.6
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
@@ -1082,7 +1082,7 @@ struct stocks_hook : public df::viewscreen_storesst
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
-        if (input->count(interface_key::CUSTOM_E))
+        if (input->count(interface_key::CUSTOM_CTRL_E))
         {
             Screen::dismiss(this);
             Screen::dismiss(Gui::getCurViewscreen(true));
@@ -1098,7 +1098,7 @@ struct stocks_hook : public df::viewscreen_storesst
         auto dim = Screen::getWindowSize();
         int x = 40;
         int y = dim.y - 2;
-        OutputHotkeyString(x, y, "Enhanced View", "e");
+        OutputHotkeyString(x, y, "Enhanced View", "Ctrl-e");
     }
 };
 

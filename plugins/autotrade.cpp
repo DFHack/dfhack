@@ -609,6 +609,8 @@ struct tradeview_hook : public df::viewscreen_tradegoodsst
         {
             return false;
         }
+
+        return true;
     }
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))

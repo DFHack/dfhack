@@ -30,7 +30,7 @@
 using df::global::world;
 
 DFHACK_PLUGIN("stocks");
-#define PLUGIN_VERSION 0.6
+#define PLUGIN_VERSION 0.7
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
@@ -721,23 +721,26 @@ public:
         }
         else if (input->count(interface_key::CUSTOM_SHIFT_T))
         {
-            if (apply_to_all)
+            if (depot_info.canTrade())
             {
-                auto &list = items_column.getDisplayList();
-                for (auto iter = list.begin(); iter != list.end(); iter++)
+                if (apply_to_all)
                 {
-                    auto item = (*iter)->elem;
-                    if (item)
-                        depot_info.assignItem(item);
-                }
+                    auto &list = items_column.getDisplayList();
+                    for (auto iter = list.begin(); iter != list.end(); iter++)
+                    {
+                        auto item = (*iter)->elem;
+                        if (item)
+                            depot_info.assignItem(item);
+                    }
 
-                populateItems();
-            }
-            else
-            {
-                auto item = items_column.getFirstSelectedElem();
-                if (item && depot_info.assignItem(item))
                     populateItems();
+                }
+                else
+                {
+                    auto item = items_column.getFirstSelectedElem();
+                    if (item && depot_info.assignItem(item))
+                        populateItems();
+                }
             }
         }
 
@@ -833,7 +836,8 @@ public:
         OutputString(COLOR_BROWN, x, y, (apply_to_all) ? "Listed" : "Selected", true, left_margin);
         OutputHotkeyString(x, y, "Dump", "Shift-D", true, left_margin);
         OutputHotkeyString(x, y, "Forbid", "Shift-F", true, left_margin);
-        OutputHotkeyString(x, y, "Mark for Trade", "Shift-T", true, left_margin);
+        if (depot_info.canTrade())
+            OutputHotkeyString(x, y, "Mark for Trade", "Shift-T", true, left_margin);
 
         y = gps->dimy - 6;
         OutputString(COLOR_LIGHTRED, x, y, "Flag names can also", true, left_margin);

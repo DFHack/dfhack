@@ -939,7 +939,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
         if (isInPlannedBuildingPlacementMode())
         {
             auto type = ui_build_selector->building_type;
-            if (input->count(interface_key::CUSTOM_P))
+            if (input->count(interface_key::CUSTOM_SHIFT_P))
             {
                 planmode_enabled[type] = !planmode_enabled[type];
                 if (!planmode_enabled[type])
@@ -979,7 +979,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
 
                     return true;
                 }
-                else if (input->count(interface_key::CUSTOM_F))
+                else if (input->count(interface_key::CUSTOM_SHIFT_F))
                 {
                     if (!planner.inQuickFortMode())
                     {
@@ -990,15 +990,15 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                         planner.disableQuickfortMode();
                     }
                 }
-                else if (input->count(interface_key::CUSTOM_M))
+                else if (input->count(interface_key::CUSTOM_SHIFT_M))
                 {
                     Screen::show(new ViewscreenChooseMaterial(planner.getDefaultItemFilterForType(type)));
                 }
-                else if (input->count(interface_key::CUSTOM_Q))
+                else if (input->count(interface_key::CUSTOM_SHIFT_Q))
                 {
                     planner.cycleDefaultQuality(type);
                 }
-                else if (input->count(interface_key::CUSTOM_D))
+                else if (input->count(interface_key::CUSTOM_SHIFT_D))
                 {
                     planner.getDefaultItemFilterForType(type)->decorated_only =
                         !planner.getDefaultItemFilterForType(type)->decorated_only;
@@ -1076,22 +1076,22 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             {
                 int y = 23;
 
-                OutputToggleString(x, y, "Planning Mode", "p", is_planmode_enabled(type), true, left_margin);
+                OutputToggleString(x, y, "Planning Mode", "P", is_planmode_enabled(type), true, left_margin);
 
                 if (is_planmode_enabled(type))
                 {
-                    OutputToggleString(x, y, "Quickfort Mode", "f", planner.inQuickFortMode(), true, left_margin);
+                    OutputToggleString(x, y, "Quickfort Mode", "F", planner.inQuickFortMode(), true, left_margin);
 
                     auto filter = planner.getDefaultItemFilterForType(type);
 
-                    OutputHotkeyString(x, y, "Min Quality: ", "q");
+                    OutputHotkeyString(x, y, "Min Quality: ", "Q");
                     OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
 
-                    OutputHotkeyString(x, y, "Decorated Only: ", "d");
+                    OutputHotkeyString(x, y, "Decorated Only: ", "D");
                     OutputString(COLOR_BROWN, x, y, 
                         (filter->decorated_only) ? "Yes" : "No", true, left_margin);
 
-                    OutputHotkeyString(x, y, "Material Filter:", "m", true, left_margin);
+                    OutputHotkeyString(x, y, "Material Filter:", "M", true, left_margin);
                     auto filter_descriptions = filter->getMaterialFilterAsVector();
                     for_each_(filter_descriptions, 
                         [&](string d) { OutputString(COLOR_BROWN, x, y, "   *" + d, true, left_margin); });

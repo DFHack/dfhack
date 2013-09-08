@@ -7,6 +7,7 @@
 #include "df/world.h"
 #include "df/items_other_id.h"
 #include "df/ui_build_selector.h"
+#include "df/ui_sidebar_menus.h"
 
 #include "modules/Gui.h"
 #include "modules/World.h"
@@ -18,6 +19,7 @@
 
 #include "uicommon.h"
 #include "TileTypes.h"
+#include "DataFuncs.h"
 
 using df::global::world;
 using df::global::ui;
@@ -336,6 +338,22 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             if (mx < 1 || mx > right_bound || my < 1 || my > gps->dimy - 2)
                 return false;
 
+            if (ui->main.mode == df::ui_sidebar_mode::Zones || 
+                ui->main.mode == df::ui_sidebar_mode::Stockpiles)
+            {
+                int32_t x, y, z;
+                if (Gui::getDesignationCoords(x, y, z))
+                {
+                    auto dX = abs(x - mpos.x);
+                    if (dX > 30)
+                        return false;
+
+                    auto dY = abs(y - mpos.y);
+                    if (dY > 30)
+                        return false;
+                }
+            }
+
             if (!designationMode)
             {
                 while (ui->main.mode != Default)
@@ -498,7 +516,25 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
         if (!tracking_enabled && isInTrackableMode())
         {
-            OutputString(COLOR_LIGHTGREEN, mx, my, "X");
+            UIColor color = COLOR_GREEN;
+            int32_t x, y, z;
+            if (Gui::getDesignationCoords(x, y, z))
+            {
+                color = COLOR_WHITE;
+                if (ui->main.mode == df::ui_sidebar_mode::Zones || 
+                    ui->main.mode == df::ui_sidebar_mode::Stockpiles)
+                {
+                    auto dX = abs(x - mpos.x);
+                    if (dX > 30)
+                        color = COLOR_RED;
+
+                    auto dY = abs(y - mpos.y);
+                    if (dY > 30)
+                        color = COLOR_RED;
+                }
+            }
+
+            OutputString(color, mx, my, "X");
             return;
         }
 

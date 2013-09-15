@@ -16,6 +16,7 @@
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/ui.h"
+#include "df/building_actual.h"
 #include "df/building_workshopst.h"
 #include "df/building_furnacest.h"
 #include "df/job.h"
@@ -411,7 +412,8 @@ static int last_frame_count = 0;
 enum ConfigFlags {
     CF_ENABLED = 1,
     CF_DRYBUCKETS = 2,
-    CF_AUTOMELT = 4
+    CF_AUTOMELT = 4,
+    CF_ROTPROTECT = 8,
 };
 
 typedef std::map<int, ProtectedJob*> TKnownJobs;
@@ -1268,6 +1270,21 @@ static void setJobResumed(color_ostream &out, ProtectedJob *pj, bool goal)
     }
 }
 
+static int count_rottables(ProtectedJob* pj)
+{
+    int count = 0;
+    df::building_actual* b = (df::building_actual*)(pj->holder);
+    for (auto i = b->contained_items.begin(); i != b->contained_items.end(); i++)
+    {
+        df::building_actual::T_contained_items* ci = *i;
+        if (ci->use_mode == 0 && !ci->item->flags.bits.in_job && ci->item->materialRots())
+        {
+            count++;
+        }
+    }
+    return count;
+}
+ 
 static void update_jobs_by_constraints(color_ostream &out)
 {
     for (TKnownJobs::const_iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
@@ -1282,6 +1299,22 @@ static void update_jobs_by_constraints(color_ostream &out)
             setJobResumed(out, pj, meltable_count > 0);
             continue;
         }
+
+        if (pj->actual_job->job_type == job_type::ButcherAnimal || 
+            pj->actual_job->job_type == job_type::SlaughterAnimal ||
+            pj->actual_job->job_type == job_type::PrepareMeal ||
+            pj->actual_job->job_type == job_type::MakeCheese ||
+            pj->actual_job->job_type == job_type::PrepareRawFish)
+        {
+            int count = count_rottables (pj);
+
+            if (count > 1) 
+            {
+                setJobResumed(out, pj, false);
+                continue;
+            }
+        }
+
 
         if (pj->constraints.empty())
             continue;
@@ -1903,6 +1936,11 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
             delete_constraint(constraints[0]);
 
         out.print("Removed all constraints.\n");
+        return CR_OK;
+    }
+    else if (cmd == "check")
+    {
+        process_constraints(out);
         return CR_OK;
     }
     else

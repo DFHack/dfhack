@@ -66,7 +66,7 @@ static void enable_display()
                             split_string(&tokens, *mode, ":");
                             if (tokens[0] == focus_string)
                             {
-                                current_bindings[sym] = trim tokens[1];
+                                current_bindings[sym] = tokens[1];
                                 sorted_keys.push_back(sym);
                             }
                         }

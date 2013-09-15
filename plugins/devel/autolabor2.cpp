@@ -1357,6 +1357,8 @@ public:
 
 static JobLaborMapper* labor_mapper = 0;
 
+static bool initialized = false;
+
 static bool isOptionEnabled(unsigned flag)
 {
     return config.isValid() && (config.ival(0) & flag) != 0;
@@ -1376,6 +1378,7 @@ static void setOptionEnabled(ConfigFlags flag, bool on)
 static void cleanup_state()
 {
     labor_infos.clear();
+    initialized = false;
 }
 
 static void reset_labor(df::unit_labor labor)
@@ -1425,6 +1428,8 @@ static void init_state()
         labor_infos[i].active_dwarfs = 0;
         reset_labor((df::unit_labor) i);
     }
+
+    initialized = true;
 
 }
 
@@ -1860,17 +1865,20 @@ private:
                 {
                     state = CHILD;
                 }
+
                 else if (ENUM_ATTR(profession, military, dwarf->dwarf->profession))
                     state = MILITARY;
+
+                else if (dwarf->dwarf->burrows.size() > 0)
+                    state = OTHER;        // dwarfs assigned to burrows are treated as if permanently busy
+
                 else if (dwarf->dwarf->job.current_job == NULL)
                 {
-                    if (is_on_break)
+                    if (is_on_break || dwarf->dwarf->flags1.bits.chained || dwarf->dwarf->flags1.bits.caged)
                     {
                         state = OTHER;
                         dwarf->clear_all = true;
                     }
-                    else if (dwarf->dwarf->burrows.size() > 0)
-                        state = OTHER;        // dwarfs assigned to burrows are treated as if permanently busy
                     else if (dwarf->dwarf->status2.limbs_grasp_count == 0)
                     {
                         state = OTHER;      // dwarfs unable to grasp are incapable of nearly all labors
@@ -2188,6 +2196,9 @@ public:
 
         /* assign food haulers for rotting food items */
 
+        if (priority_food > 0 && labor_infos[df::unit_labor::HAUL_FOOD].idle_dwarfs > 0)
+            priority_food = 1;
+
         if (print_debug)
             out.print ("priority food count = %d\n", priority_food);
 
@@ -2196,49 +2207,42 @@ public:
             std::list<dwarf_info_t*>::iterator bestdwarf = available_dwarfs.begin();
 
             int best_score = INT_MIN;
-            df::unit_labor best_labor = df::unit_labor::CLEAN;
 
+            for (std::list<dwarf_info_t*>::iterator k = available_dwarfs.begin(); k != available_dwarfs.end(); k++)
             {
-                df::unit_labor labor = df::unit_labor::HAUL_FOOD;
+                dwarf_info_t* d = (*k);
 
-                for (std::list<dwarf_info_t*>::iterator k = available_dwarfs.begin(); k != available_dwarfs.end(); k++)
+                int score = score_labor(d, df::unit_labor::HAUL_FOOD);
+
+                if (score > best_score)
                 {
-                    dwarf_info_t* d = (*k);
-
-                    int score = score_labor(d, labor);
-
-                    if (score > best_score)
-                    {
-                        bestdwarf = k;
-                        best_score = score;
-                        best_labor = labor;
-                    }
+                    bestdwarf = k;
+                    best_score = score;
                 }
             }
 
             if (print_debug)
-                out.print("assign \"%s\" labor %s score=%d (priority food)\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, best_labor).c_str(), best_score);
+                out.print("assign \"%s\" labor %s score=%d (priority food)\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, df::unit_labor::HAUL_FOOD).c_str(), best_score);
 
-            FOR_ENUM_ITEMS(unit_labor, l)
+            if (best_score > INT_MIN) 
             {
-                if (l == df::unit_labor::NONE)
-                    continue;
-
-                if (l == best_labor)
+                FOR_ENUM_ITEMS(unit_labor, l)
                 {
-                    (*bestdwarf)->set_labor(l);
-                    tools_enum t = default_labor_infos[l].tool;
-                    if (t != TOOL_NONE)
-                    {
-                        tool_count[t]--;
-                        if (!(*bestdwarf)->has_tool[t])
-                            (*bestdwarf)->dwarf->military.pickup_flags.bits.update = true;
-                    }
-                }
-            }
+                    if (l == df::unit_labor::NONE)
+                        continue;
 
-            available_dwarfs.erase(bestdwarf);
-            priority_food--;
+                    if (l == df::unit_labor::HAUL_FOOD)
+                        (*bestdwarf)->set_labor(l);
+                    else
+                        (*bestdwarf)->clear_labor(l);
+                }
+
+                available_dwarfs.erase(bestdwarf);
+                priority_food--;
+            }
+            else
+                break;
+
         }
 
         if (print_debug)
@@ -2411,15 +2415,32 @@ public:
 
         if (canary != 0)
         {
-            dwarf_info_t* d = dwarf_info.front();
-            FOR_ENUM_ITEMS (unit_labor, l)
+            dwarf_info_t* d = 0;
+
+            for (auto di = busy_dwarfs.begin(); di != busy_dwarfs.end(); di++)
+                if (!(*di)->clear_all) 
+                {
+                    d = *di;
+                    break;
+                }
+
+            if (d)
             {
-                if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMAL &&
-                    canary & (1 << l))
-                    d->set_labor(l);
+                
+                FOR_ENUM_ITEMS (unit_labor, l)
+                {
+                    if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMAL &&
+                        canary & (1 << l))
+                        d->set_labor(l);
+                }
+                if (print_debug)
+                    out.print ("Setting %s as the hauling canary\n", d->dwarf->name.first_name.c_str());
             }
-            if (print_debug)
-                out.print ("Setting %s as the hauling canary\n", d->dwarf->name.first_name.c_str());
+            else
+            {
+                if (print_debug)
+                    out.print ("No dwarf available to set as the hauling canary!\n");
+            }
         }
 
         /* set reequip on any dwarfs who are carrying tools needed by others */
@@ -2470,7 +2491,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     static int step_count = 0;
     // check run conditions
-    if(!world || !world->map.block_index || !enable_autolabor)
+    if(!initialized || !world || !world->map.block_index || !enable_autolabor)
     {
         // give up if we shouldn't be running'
         return CR_OK;

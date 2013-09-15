@@ -734,7 +734,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             MaterialDescriptor material = get_material_in_list(ui_build_selector->sel_index);
             if (material.valid)
             {
-                if (input->count(interface_key::SELECT) || input->count(interface_key::SEC_SELECT))
+                if (input->count(interface_key::SELECT) || input->count(interface_key::SELECT_ALL))
                 {
                     if (get_last_moved_material().matches(material))
                         last_used_moved = false; //Keep selected material on top
@@ -748,7 +748,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                         gen_material.push_back(get_material_in_list(curr_index));
                         box_select_materials.clear();
                         // Populate material list with selected material
-                        populate_box_materials(gen_material, ((input->count(interface_key::SEC_SELECT) && ui_build_selector->is_grouped) ? -1 : 1));
+                        populate_box_materials(gen_material, ((input->count(interface_key::SELECT_ALL) && ui_build_selector->is_grouped) ? -1 : 1));
 
                         input->clear(); // Let the apply_box_selection routine allocate the construction
                         input->insert(interface_key::LEAVESCREEN);

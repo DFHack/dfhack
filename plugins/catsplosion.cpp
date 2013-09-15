@@ -120,14 +120,14 @@ command_result catsplosion (color_ostream &out, std::vector <std::string> & para
                 female->relations.pregnancy_timer = rand() % 100 + 1;
                 totalchanged++;
             }
-            else if(!female->relations.pregnancy_ptr)
+            else if(!female->relations.pregnancy_genes)
             {
                 df::unit_genes *preg = new df::unit_genes;
                 preg->appearance = female->appearance.genes.appearance;
                 preg->colors = female->appearance.genes.colors;
-                female->relations.pregnancy_ptr = preg;
+                female->relations.pregnancy_genes = preg;
                 female->relations.pregnancy_timer = rand() % 100 + 1;
-                female->relations.pregnancy_mystery = 1; // WTF is this?
+                female->relations.pregnancy_caste = 1;
                 totalcreated ++;
             }
         }

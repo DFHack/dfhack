@@ -1146,6 +1146,9 @@ Subcommands that persist until disabled or DF quit:
                     (i.e. the more units you have, the slower it becomes), and making
                     the units spar more.
 
+:hive-crash: The hive code crashes if there are ungathered products in a hive without bees (bug 6368).
+             This tweak prevents it by auto-gathering the products if this happens.
+
 fix-armory
 ----------
 

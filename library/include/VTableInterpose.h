@@ -141,7 +141,7 @@ namespace DFHack
 
 #define IMPLEMENT_VMETHOD_INTERPOSE_PRIO(class,name,priority) \
     DFHack::VMethodInterposeLink<class::interpose_base,class::interpose_ptr_##name> \
-        class::interpose_##name(&class::interpose_base::name, &class::interpose_fn_##name, priority);
+        class::interpose_##name(&class::interpose_base::name, &class::interpose_fn_##name, priority, #class"::"#name);
 
 #define IMPLEMENT_VMETHOD_INTERPOSE(class,name) IMPLEMENT_VMETHOD_INTERPOSE_PRIO(class,name,0)
 
@@ -161,6 +161,7 @@ namespace DFHack
         void *interpose_method; // Pointer to the code of the interposing method
         void *chain_mptr;       // Pointer to the chain field in the subclass below
         int priority;           // Higher priority hooks are called earlier
+        const char *name_str;   // Name of the hook
 
         bool applied;           // True if this hook is currently applied
         void *saved_chain;      // Pointer to the code of the original vmethod or next hook
@@ -179,12 +180,14 @@ namespace DFHack
         VMethodInterposeLinkBase *get_first_interpose(virtual_identity *id);
         bool find_child_hosts(virtual_identity *cur, void *vmptr);
     public:
-        VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr, int priority);
+        VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr, int priority, const char *name);
         ~VMethodInterposeLinkBase();
 
         bool is_applied() { return applied; }
         bool apply(bool enable = true);
         void remove();
+
+        const char *name() { return name_str; }
     };
 
     template<class Base, class Ptr>
@@ -198,13 +201,13 @@ namespace DFHack
         operator Ptr () { return chain; }
 
         template<class Ptr2>
-        VMethodInterposeLink(Ptr target, Ptr2 src, int priority)
+        VMethodInterposeLink(Ptr target, Ptr2 src, int priority, const char *name)
             : VMethodInterposeLinkBase(
                 &Base::_identity,
                 vmethod_pointer_to_idx(target),
                 method_pointer_to_addr(src),
                 &chain,
-                priority
+                priority, name
               )
         { src = target; /* check compatibility */ }
     };

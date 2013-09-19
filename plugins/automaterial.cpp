@@ -506,7 +506,6 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check, b
     return Buildings::checkFreeTiles(site.pos, size, NULL, false, false);
 }
 
-
 static bool find_anchor_in_spiral(const df::coord &start)
 {
     bool found = false;
@@ -1174,7 +1173,6 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 //END Viewscreen Hook
 
 color_ostream_proxy console_out(Core::getInstance().getConsole());
-
 
 IMPLEMENT_VMETHOD_INTERPOSE(jobutils_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(jobutils_hook, render);

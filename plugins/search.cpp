@@ -919,7 +919,7 @@ private:
 };
 
 
-IMPLEMENT_HOOKS(df::viewscreen_storesst, stocks_search);
+IMPLEMENT_HOOKS_PRIO(df::viewscreen_storesst, stocks_search);
 
 //
 // END: Stocks screen search

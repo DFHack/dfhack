@@ -38,7 +38,7 @@ using df::global::ui_build_selector;
 using df::global::world;
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 0.10
+#define PLUGIN_VERSION 0.11
 
 struct MaterialDescriptor
 {
@@ -78,6 +78,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 #define SIDEBAR_WIDTH 30
 
 static bool show_debugging = false;
+static bool show_help = false;
 
 static void debug(const string &msg)
 {
@@ -950,6 +951,10 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 }
                 return true;
             }
+            else if (input->count(interface_key::CUSTOM_P))
+            {
+                show_help = true;
+            }
             
             if (is_planmode_enabled(type))
             {
@@ -1076,6 +1081,11 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             {
                 int y = 23;
 
+                if (show_help)
+                {
+                    OutputString(COLOR_BROWN, x, y, "Note: ");
+                    OutputString(COLOR_WHITE, x, y, "Use Shift-Keys here", true, left_margin);
+                }
                 OutputToggleString(x, y, "Planning Mode", "P", is_planmode_enabled(type), true, left_margin);
 
                 if (is_planmode_enabled(type))

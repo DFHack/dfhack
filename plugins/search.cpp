@@ -698,8 +698,8 @@ template <class T, class V, int D> V generic_search_hook<T, V, D> ::module;
 
 #define IMPLEMENT_HOOKS_PRIO(screen, module, prio) \
     typedef generic_search_hook<screen, module> module##_hook; \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, feed, 100); \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, 100)
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, feed, prio); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, prio)
 
 //
 // END: Generic Search functionality
@@ -919,7 +919,7 @@ private:
 };
 
 
-IMPLEMENT_HOOKS_PRIO(df::viewscreen_storesst, stocks_search);
+IMPLEMENT_HOOKS_PRIO(df::viewscreen_storesst, stocks_search, 100);
 
 //
 // END: Stocks screen search

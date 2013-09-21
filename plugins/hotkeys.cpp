@@ -208,6 +208,9 @@ public:
         x = 2;
         OutputHotkeyString(x, y, focus.c_str(), "Context", false, help_start, COLOR_WHITE, COLOR_BROWN);
 
+        if (sorted_keys.size() == 0)
+            return;
+
         y = 2;
         x = help_start;
 

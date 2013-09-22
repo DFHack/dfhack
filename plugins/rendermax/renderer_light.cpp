@@ -24,6 +24,9 @@
 #include "df/building_floodgatest.h"
 #include "df/plant.h"
 #include "df/plant_raw.h"
+#include "df/item.h"
+#include "df/items_other_id.h"
+#include "df/unit.h"
 
 #include <vector>
 
@@ -219,11 +222,11 @@ void plotLineAA(int x0, int y0, int x1, int y1,rgbf power,const std::function<rg
         power=sumPower;
     }
 }
-rgbf blendMax(rgbf a,rgbf b)
+rgbf blendMax(const rgbf& a,const rgbf& b)
 {
     return rgbf(std::max(a.r,b.r),std::max(a.g,b.g),std::max(a.b,b.b));
 }
-rgbf blend(rgbf a,rgbf b)
+rgbf blend(const rgbf& a,const rgbf& b)
 {
     return blendMax(a,b);
 }
@@ -274,8 +277,6 @@ void lightingEngineViewscreen::updateWindow()
     rect2d vp=getMapViewport();
     
     myRenderer->invalidateRect(vp.first.x,vp.first.y,vp.second.x-vp.first.x,vp.second.y-vp.first.y);
-    //myRenderer->invalidate();
-    //std::copy(lightMap.begin(),lightMap.end(),myRenderer->lightGrid.begin());
 }
 
 static size_t max_list_size = 100000; // Avoid iterating over huge lists
@@ -324,7 +325,7 @@ void addPlant(const std::string& id,std::map<int,lightSource>& map,const lightSo
         map[nId]=v;
     }
 }
-matLightDef* lightingEngineViewscreen::getMaterial(int matType,int matIndex)
+matLightDef* lightingEngineViewscreen::getMaterialDef( int matType,int matIndex )
 {
     auto it=matDefs.find(std::make_pair(matType,matIndex));
     if(it!=matDefs.end())
@@ -332,13 +333,41 @@ matLightDef* lightingEngineViewscreen::getMaterial(int matType,int matIndex)
     else 
         return NULL;
 }
-buildingLightDef* lightingEngineViewscreen::getBuilding(df::building* bld)
+buildingLightDef* lightingEngineViewscreen::getBuildingDef( df::building* bld )
 {
     auto it=buildingDefs.find(std::make_tuple((int)bld->getType(),(int)bld->getSubtype(),(int)bld->getCustomType()));
     if(it!=buildingDefs.end())
         return &it->second;
     else 
         return NULL;
+}
+creatureLightDef* lightingEngineViewscreen::getCreatureDef(df::unit* u)
+{
+    auto it=creatureDefs.find(std::make_pair(int(u->race),int(u->caste)));
+    if(it!=creatureDefs.end())
+        return &it->second;
+    else
+    {
+        auto it2=creatureDefs.find(std::make_pair(int(u->race),int(-1)));
+        if(it2!=creatureDefs.end())
+            return &it2->second;
+        else
+            return NULL;
+    }
+}
+itemLightDef* lightingEngineViewscreen::getItemDef(df::item* it)
+{
+    auto iter=itemDefs.find(std::make_pair(int(it->getType()),int(it->getSubtype())));
+    if(iter!=itemDefs.end())
+        return &iter->second;
+    else
+    {
+        auto iter2=itemDefs.find(std::make_pair(int(it->getType()),int(-1)));
+        if(iter2!=itemDefs.end())
+            return &iter2->second;
+        else
+            return NULL;
+    }
 }
 void lightingEngineViewscreen::applyMaterial(int tileId,const matLightDef& mat,float size, float thickness)
 {
@@ -353,7 +382,7 @@ void lightingEngineViewscreen::applyMaterial(int tileId,const matLightDef& mat,f
 }
 bool lightingEngineViewscreen::applyMaterial(int tileId,int matType,int matIndex,float size,float thickness,const matLightDef* def)
 {
-    matLightDef* m=getMaterial(matType,matIndex);
+    matLightDef* m=getMaterialDef(matType,matIndex);
     if(m)
     {
         applyMaterial(tileId,*m,size,thickness);
@@ -392,7 +421,7 @@ rgbf lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int y,con
                 ret*=matIce.transparency.pow(1.0f/7.0f);
     }   
     
-    lightDef=getMaterial(mat.mat_type,mat.mat_index);
+    lightDef=getMaterialDef(mat.mat_type,mat.mat_index);
     
     if(!lightDef || !lightDef->isTransparent)
         lightDef=&matWall;
@@ -502,8 +531,6 @@ rgbf lightingEngineViewscreen::getSkyColor(float v)
 }
 void lightingEngineViewscreen::doOcupancyAndLights()
 {
-    // TODO better curve (+red dawn ?)
-    
     float daycol;
     if(dayHour<0)
     {
@@ -515,11 +542,6 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     
     rgbf sky_col=getSkyColor(daycol);
     lightSource sky(sky_col, -1);//auto calculate best size
-
-    lightSource candle(rgbf(0.96f,0.84f,0.03f),5);
-    lightSource torch(rgbf(0.9f,0.75f,0.3f),8);
-
-    //perfectly blocking material
     
     MapExtras::MapCache cache;
     doSun(sky,cache);
@@ -543,7 +565,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         MapExtras::Block* bDown=cache.BlockAt(DFCoord(blockX,blockY,window_z-1));
         if(!b)
             continue; //empty blocks fixed by sun propagation
-
+        
         for(int block_x = 0; block_x < 16; block_x++)
         for(int block_y = 0; block_y < 16; block_y++)
         {
@@ -573,7 +595,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             
             DFHack::t_matpair mat=b->staticMaterialAt(gpos);
             
-            matLightDef* lightDef=getMaterial(mat.mat_type,mat.mat_index);
+            matLightDef* lightDef=getMaterialDef(mat.mat_type,mat.mat_index);
             if(!lightDef || !lightDef->isTransparent)
                 lightDef=&matWall;
             if(shape==df::tiletype_shape::BROOK_BED )
@@ -643,6 +665,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 }
             }
         }
+        
         //plants
         for(int i=0;i<block->plants.size();i++)
         {
@@ -665,7 +688,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             if(ev_type==df::block_square_event_type::material_spatter)
             {
                 df::block_square_event_material_spatterst* spatter=static_cast<df::block_square_event_material_spatterst*>(ev);
-                matLightDef* m=getMaterial(spatter->mat_type,spatter->mat_index);
+                matLightDef* m=getMaterialDef(spatter->mat_type,spatter->mat_index);
                 if(!m)
                     continue;
                 if(!m->isEmiting)
@@ -696,15 +719,47 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         applyMaterial(tile,matCursor);
     }
     //citizen only emit light, if defined
-    if(matCitizen.isEmiting)
+    //or other creatures
+    if(matCitizen.isEmiting || creatureDefs.size()>0)
     for (int i=0;i<df::global::world->units.active.size();++i)
     {
         df::unit *u = df::global::world->units.active[i];
         coord2d pos=worldToViewportCoord(coord2d(u->pos.x,u->pos.y),vp,window2d);
         if(u->pos.z==window_z && isInRect(pos,vp))
-        if (DFHack::Units::isCitizen(u) && !u->counters.unconscious)
-            addLight(getIndex(pos.x,pos.y),matCitizen.makeSource());
+        {
+            if (DFHack::Units::isCitizen(u) && !u->counters.unconscious)
+                addLight(getIndex(pos.x,pos.y),matCitizen.makeSource());
+            creatureLightDef *def=getCreatureDef(u);
+            if(def && !u->flags1.bits.dead)
+            {
+                addLight(getIndex(pos.x,pos.y),def->light.makeSource());
+            }
+        }
     }
+    //items
+    if(itemDefs.size()>0)
+    {
+        std::vector<df::item*>& vec=df::global::world->items.other[items_other_id::IN_PLAY];
+        for(size_t i=0;i<vec.size();i++)
+        {
+            df::item* curItem=vec[i];
+            df::coord itemPos=DFHack::Items::getPosition(curItem);
+            coord2d pos=worldToViewportCoord(itemPos,vp,window2d);
+            itemLightDef* mat=0;
+            if( itemPos.z==window_z && isInRect(pos,vp) && (mat=getItemDef(curItem)) )
+            {
+                if( ((mat->equiped || mat->haul ||mat->inBuilding ||mat->inContainer) && curItem->flags.bits.in_inventory)|| //TODO split this up
+                    (mat->onGround && curItem->flags.bits.on_ground) )
+                {
+                    if(mat->light.isEmiting)
+                        addLight(getIndex(pos.x,pos.y),mat->light.makeSource());
+                    if(!mat->light.isTransparent)
+                        addOclusion(getIndex(pos.x,pos.y),mat->light.transparency,1);
+                }
+            }
+        }
+    }
+    
     //buildings
     for(size_t i = 0; i < df::global::world->buildings.all.size(); i++)
     {
@@ -728,7 +783,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             else
                 tile=getIndex(p2.x,p2.y);
             df::building_type type = bld->getType();
-            buildingLightDef* def=getBuilding(bld);
+            buildingLightDef* def=getBuildingDef(bld);
             if(!def)
                 continue;
             if(type==df::enums::building_type::Door)
@@ -747,7 +802,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             
             if(def->useMaterial)
             {
-                matLightDef* mat=getMaterial(bld->mat_type,bld->mat_index);
+                matLightDef* mat=getMaterialDef(bld->mat_type,bld->mat_index);
                 if(!mat)mat=&matWall;
                 if(!def->poweredOnly || !bld->isUnpowered()) //not powered. Add occlusion only.
                 {
@@ -906,6 +961,72 @@ int lightingEngineViewscreen::parseSpecial(lua_State* L)
     return 0;
 }
 #undef LOAD_SPECIAL
+int lightingEngineViewscreen::parseItems(lua_State* L)
+{
+    auto engine= (lightingEngineViewscreen*)lua_touserdata(L, 1);
+    engine->itemDefs.clear();
+    Lua::StackUnwinder unwinder(L);
+    lua_getfield(L,2,"items");
+    if(!lua_istable(L,-1))
+    {
+        luaL_error(L,"Items table not found.");
+        return 0;
+    }
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+        if(!lua_istable(L,-1))
+            luaL_error(L,"Broken item definitions.");
+        lua_getfield(L,-1,"type");
+        int type=lua_tonumber(L,-1);
+        lua_pop(L,1);
+        lua_getfield(L,-1,"subtype");
+        int subtype=luaL_optinteger(L,-1,-1);
+        lua_pop(L,1);
+        itemLightDef item;
+        lua_getfield(L,-1,"light");
+        item.light=lua_parseMatDef(L);
+        GETLUAFLAG(item.haul,"hauling");
+        GETLUAFLAG(item.equiped,"equiped");
+        GETLUAFLAG(item.inBuilding,"inBuilding");
+        GETLUAFLAG(item.inContainer,"contained");
+        GETLUAFLAG(item.onGround,"onGround");
+        GETLUAFLAG(item.useMaterial,"useMaterial");
+        engine->itemDefs[std::make_pair(type,subtype)]=item;
+        lua_pop(L,2);
+    }
+    lua_pop(L,1);
+    return 0;
+}
+int lightingEngineViewscreen::parseCreatures(lua_State* L)
+{
+    auto engine= (lightingEngineViewscreen*)lua_touserdata(L, 1);
+    engine->creatureDefs.clear();
+    Lua::StackUnwinder unwinder(L);
+    lua_getfield(L,2,"creatures");
+    if(!lua_istable(L,-1))
+    {
+        luaL_error(L,"Creatures table not found.");
+        return 0;
+    }
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+        if(!lua_istable(L,-1))
+            luaL_error(L,"Broken creature definitions.");
+        lua_getfield(L,-1,"race");
+        int race=lua_tonumber(L,-1);
+        lua_pop(L,1);
+        lua_getfield(L,-1,"caste");
+        int caste=lua_tonumber(L,-1);
+        lua_pop(L,1);
+        creatureLightDef cr;
+        lua_getfield(L,-1,"light");
+        cr.light=lua_parseMatDef(L);
+        engine->creatureDefs[std::make_pair(race,caste)]=cr;
+        lua_pop(L,2);
+    }
+    lua_pop(L,1);
+    return 0;
+}
 int lightingEngineViewscreen::parseBuildings(lua_State* L)
 {
     auto engine= (lightingEngineViewscreen*)lua_touserdata(L, 1);
@@ -1018,6 +1139,18 @@ void lightingEngineViewscreen::loadSettings()
                 lua_pushvalue(s,env);
                 Lua::SafeCall(out,s,2,0);
                 out.print("%d buildings loaded\n",buildingDefs.size());
+
+                lua_pushcfunction(s, parseCreatures);
+                lua_pushlightuserdata(s, this);
+                lua_pushvalue(s,env);
+                Lua::SafeCall(out,s,2,0);
+                out.print("%d creatures loaded\n",creatureDefs.size());
+
+                lua_pushcfunction(s, parseItems);
+                lua_pushlightuserdata(s, this);
+                lua_pushvalue(s,env);
+                Lua::SafeCall(out,s,2,0);
+                out.print("%d items loaded\n",itemDefs.size());
             }
             
         }
@@ -1147,7 +1280,7 @@ rgbf lightThread::lightUpCell(rgbf power,int dx,int dy,int tx,int ty)
     else
         return rgbf();
 }
-void lightThread::doRay(rgbf power,int cx,int cy,int tx,int ty)
+void lightThread::doRay(const rgbf& power,int cx,int cy,int tx,int ty)
 {
     using namespace std::placeholders;
 

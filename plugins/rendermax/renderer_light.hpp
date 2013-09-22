@@ -166,6 +166,22 @@ struct buildingLightDef
     float size;
     buildingLightDef():poweredOnly(false),useMaterial(true),thickness(1.0f),size(1.0f){}
 };
+struct itemLightDef
+{
+    matLightDef light;   
+    bool haul;
+    bool equiped;
+    bool onGround;
+    bool inBuilding;
+    bool inContainer;
+    bool useMaterial;
+    itemLightDef():haul(true),equiped(true),onGround(true),inBuilding(false),inContainer(false),useMaterial(true){}
+};
+struct creatureLightDef
+{
+    matLightDef light;
+
+};
 class lightThread;
 class lightingEngineViewscreen;
 class lightThreadDispatch
@@ -215,7 +231,7 @@ public:
     void run();
 private:
     void doLight(int x,int y);
-    void doRay(rgbf power,int cx,int cy,int tx,int ty);
+    void doRay(const rgbf& power,int cx,int cy,int tx,int ty);
     rgbf lightUpCell(rgbf power,int dx,int dy,int tx,int ty);
 };
 class lightingEngineViewscreen:public lightingEngine
@@ -247,9 +263,11 @@ private:
     bool addLight(int tileId,const lightSource& light);
     void addOclusion(int tileId,const rgbf& c,float thickness);
 
-    matLightDef* getMaterial(int matType,int matIndex);
-    buildingLightDef* getBuilding(df::building* bld);
-    
+    matLightDef* getMaterialDef(int matType,int matIndex);
+    buildingLightDef* getBuildingDef(df::building* bld);
+    creatureLightDef* getCreatureDef(df::unit* u);
+    itemLightDef* getItemDef(df::item* it);
+
     //apply material to cell
     void applyMaterial(int tileId,const matLightDef& mat,float size=1, float thickness = 1);
     //try to find and apply material, if failed return false, and if def!=null then apply def.
@@ -291,6 +309,8 @@ private:
     static int parseMaterials(lua_State* L);
     static int parseSpecial(lua_State* L);
     static int parseBuildings(lua_State* L);
+    static int parseItems(lua_State* L);
+    static int parseCreatures(lua_State* L);
     //special stuff
     matLightDef matLava;
     matLightDef matIce;
@@ -304,10 +324,14 @@ private:
     std::unordered_map<std::pair<int,int>,matLightDef> matDefs;
     //buildings
     std::unordered_map<std::tuple<int,int,int>,buildingLightDef> buildingDefs;
+    //creatures
+    std::unordered_map<std::pair<int,int>,creatureLightDef> creatureDefs;
+    //items
+    std::unordered_map<std::pair<int,int>,itemLightDef> itemDefs;
     int w,h;
     DFHack::rect2d mapPort;
     friend lightThreadDispatch;
 };
-rgbf blend(rgbf a,rgbf b);
-rgbf blendMax(rgbf a,rgbf b);
+rgbf blend(const rgbf& a,const rgbf& b);
+rgbf blendMax(const rgbf& a,const rgbf& b);
 #endif

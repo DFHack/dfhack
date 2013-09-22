@@ -4,6 +4,8 @@ ret=ret[1]
 ret.materials={}
 ret.buildings={}
 ret.special={}
+ret.items={}
+ret.creatures={}
 for k,v in pairs(ret) do
   _ENV[k]=v
 end
@@ -28,7 +30,7 @@ end
 function buildingLookUp(id)
 	local tokens={}
 	local lookup={ Workshop=df.workshop_type,Furnace=df.furnace_type,Trap=df.trap_type,
-		SiegeEngine=siegeengine_type}
+		SiegeEngine=df.siegeengine_type}
 	for i in string.gmatch(id, "[^:]+") do
 		table.insert(tokens,i)
 	end
@@ -44,20 +46,85 @@ function buildingLookUp(id)
 				for k,v in pairs(df.global.world.raws.buildings.workshops) do
 					if v.code==tokens[3] then
 						ret.custom=v.id
-						break
+						return ret
 					end
 				end
 			elseif ret.type==df.building_type.Furnace then
 				for k,v in pairs(df.global.world.raws.buildings.furnaces) do
 					if v.code==tokens[3] then
 						ret.custom=v.id
-						break
+						return ret
 					end
 				end
 			end
 		end
+		qerror("Invalid custom building:"..tokens[3])
 	end
 	return ret
+end
+function itemLookup(id)
+	local ret={}
+	local tokens={}
+	for i in string.gmatch(id, "[^:]+") do
+		table.insert(tokens,i)
+	end
+	ret.type=df.item_type[tokens[1]]
+	ret.subtype=-1
+	if tokens[2] then
+		for k,v in ipairs(df.global.world.raws.itemdefs.all) do --todo lookup correct itemdef
+			if v.id==tokens[2] then
+				ret.subtype=v.subtype
+				return ret
+			end
+		end
+		qerror("Failed item subtype lookup:"..tokens[2])
+	end
+	return ret
+end
+function creatureLookup(id)
+	local ret={}
+	local tokens={}
+	for i in string.gmatch(id, "[^:]+") do
+		table.insert(tokens,i)
+	end
+	for k,v in ipairs(df.global.world.raws.creatures.all) do
+		if v.creature_id==tokens[1] then
+			ret.type=k
+			if tokens[2] then
+				for k,v in ipairs(v.caste) do
+					if v.caste_id==tokens[2] then
+						ret.subtype=k
+						break
+					end
+				end
+				if ret.subtype==nil then
+					qerror("caste "..tokens[2].." for "..tokens[1].." not found")
+				end
+			end
+			return ret
+		end
+	end
+	qerror("Failed to find race:"..tokens[1])
+end
+-- add creature by id ("DWARF" or "DWARF:MALE")
+-- supported flags:
+function addCreature(id,transparency,emitance,radius,flags)
+	local crId=creatureLookup(id)
+	local mat=makeMaterialDef(transparency,emitance,radius,flags)
+	table.insert(creatures,{race=crId.type,caste=crId.subtype or -1, light=mat})
+end
+-- add item by id ( "TOTEM" or "WEAPON:PICK" or "WEAPON" for all the weapon types)
+-- supported flags:
+--		hauling 	--active when hauled	TODO::currently all mean same thing...
+--		equiped		--active while equiped	TODO::currently all mean same thing...
+--		inBuilding	--active in building	TODO::currently all mean same thing...
+--		contained	--active in container	TODO::currently all mean same thing...
+--		onGround	--active on ground
+--		useMaterial --uses material, but the defined things overwrite
+function addItem(id,transparency,emitance,radius,flags)
+	local itemId=itemLookup(id)
+	local mat=makeMaterialDef(transparency,emitance,radius,flags)
+	table.insert(items,{["type"]=itemId.type,subtype=itemId.subtype,light=mat})
 end
 -- add building by id (string e.g. "Statue" or "Workshop:Masons", flags is a table of strings
 -- supported flags:
@@ -147,3 +214,9 @@ addBuilding("WindowGlass",nil,nil,0,{"useMaterial"})
 addBuilding("WindowGem",nil,nil,0,{"useMaterial"})
 addBuilding("Door",nil,nil,0,{"useMaterial"}) -- special case, only closed door obstruct/emit light
 addBuilding("Floodgate",nil,nil,0,{"useMaterial"}) -- special case, only closed door obstruct/emit light
+--creatures
+addCreature("ELEMENTMAN_MAGMA",{0.8,0.2,0.2},{0.8,0.2,0.2},5)
+--items
+addItem("GEM",nil,nil,{"useMaterial","onGround"})
+addItem("ROUGH",nil,nil,{"useMaterial","onGround"})
+addItem("SMALLGEM",nil,nil,{"useMaterial","onGround"})

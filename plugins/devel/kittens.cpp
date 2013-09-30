@@ -16,6 +16,8 @@ using std::vector;
 using std::string;
 using namespace DFHack;
 
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
 //FIXME: possible race conditions with calling kittens from the IO thread and shutdown from Core.
 bool shutdown_flag = false;
 bool final_flag = true;
@@ -141,6 +143,7 @@ command_result trackmenu (color_ostream &out, vector <string> & parameters)
         if(df::global::ui)
         {
             trackmenu_flg = true;
+            is_enabled = true;
             last_menu = df::global::ui->main.mode;
             out.print("Menu: %d\n",last_menu);
             return CR_OK;
@@ -155,6 +158,7 @@ command_result trackmenu (color_ostream &out, vector <string> & parameters)
 command_result trackpos (color_ostream &out, vector <string> & parameters)
 {
     trackpos_flg = !trackpos_flg;
+    is_enabled = true;
     return CR_OK;
 }
 
@@ -214,6 +218,7 @@ command_result ktimer (color_ostream &out, vector <string> & parameters)
     // harmless potential data race here...
     timeLast = timeend;
     timering = true;
+    is_enabled = true;
     return CR_OK;
 }
 

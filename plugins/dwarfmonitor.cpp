@@ -1179,10 +1179,14 @@ IMPLEMENT_VMETHOD_INTERPOSE(dwarf_monitor_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(dwarf_monitor_hook, render);
 
 DFHACK_PLUGIN("dwarfmonitor");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 static bool set_monitoring_mode(const string &mode, const bool &state)
 {
     bool mode_recognized = false;
+
+    if (!is_enabled)
+        return false;
 
     if (mode == "work" || mode == "all")
     {
@@ -1199,6 +1203,24 @@ static bool set_monitoring_mode(const string &mode, const bool &state)
     }
 
     return mode_recognized;
+}
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    if (!gps)
+        return CR_FAILURE;
+
+    if (is_enabled != enable)
+    {
+        if (!INTERPOSE_HOOK(dwarf_monitor_hook, feed).apply(enable) ||
+            !INTERPOSE_HOOK(dwarf_monitor_hook, render).apply(enable))
+            return CR_FAILURE;
+
+        reset();
+        is_enabled = enable;
+    }
+
+    return CR_OK;
 }
 
 static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & parameters)
@@ -1222,6 +1244,9 @@ static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & par
         }
         else if ((cmd == 'e' || cmd == 'E') && !mode.empty())
         {
+            if (!is_enabled)
+                plugin_enable(out, true);
+
             if (set_monitoring_mode(mode, true))
             {
                 out << "Monitoring enabled: " << mode << endl;
@@ -1257,9 +1282,6 @@ static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & par
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!gps || !INTERPOSE_HOOK(dwarf_monitor_hook, feed).apply() || !INTERPOSE_HOOK(dwarf_monitor_hook, render).apply())
-        out.printerr("Could not insert dwarfmonitor hooks!\n");
-
     activity_labels[JOB_IDLE]               = "Idle";
     activity_labels[JOB_MILITARY]           = "Military Duty";
     activity_labels[JOB_LEISURE]            = "Leisure";

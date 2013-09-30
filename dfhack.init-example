@@ -150,8 +150,24 @@ tweak military-training
 # prevent crash if bees die in a hive with ungathered products by insta-gathering them
 tweak hive-crash
 
-# enable autoSyndrome
-autoSyndrome enable
+###########################
+# Globally acting plugins #
+###########################
+
+# Dwarf Manipulator (simple in-game Dwarf Therapist replacement)
+enable manipulator
+
+# Search tool in various screens (by falconne)
+enable search
+
+# Improved build material selection interface (by falconne)
+enable automaterial
+
+# Other interface improvement tools
+#enable dwarfmonitor mousequery autotrade buildingplan resume zone
+
+# Auto Syndrome
+#autoSyndrome enable
 
 ###########
 # Scripts #

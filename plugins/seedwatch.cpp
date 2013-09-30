@@ -22,7 +22,7 @@ using namespace df::enums;
 using df::global::world;
 
 const int buffer = 20; // seed number buffer - 20 is reasonable
-bool running = false; // whether seedwatch is counting the seeds or not
+DFHACK_PLUGIN_IS_ENABLED(running); // whether seedwatch is counting the seeds or not
 
 // abbreviations for the standard plants
 map<string, string> abbreviations;
@@ -95,6 +95,12 @@ string searchAbbreviations(string in)
         return in;
     }
 };
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    running = enable;
+    return CR_OK;
+}
 
 command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
 {

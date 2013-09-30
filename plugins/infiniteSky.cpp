@@ -71,7 +71,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 */
 
 static size_t constructionSize = 0;
-static bool enabled = false;
+DFHACK_PLUGIN_IS_ENABLED(enabled);
 void doInfiniteSky(color_ostream& out, int32_t howMany);
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
@@ -153,6 +153,12 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
         world->map.z_level_flags = flags;
     }
     
+}
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    enabled = enable;
+    return CR_OK;
 }
 
 command_result infiniteSky (color_ostream &out, std::vector <std::string> & parameters)

@@ -99,7 +99,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 df::nemesis_record *getPlayerNemesis(color_ostream &out, bool restore_swap);
 
-static bool in_transient_swap = false;
+DFHACK_PLUGIN_IS_ENABLED(in_transient_swap);
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {

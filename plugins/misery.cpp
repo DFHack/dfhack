@@ -15,6 +15,8 @@ using namespace std;
 
 using namespace DFHack;
 
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
 static int factor = 1;
 static map<int, int> processedThoughtCountTable;
 
@@ -38,6 +40,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out) {
         if ( wasLoaded ) {
             //we just unloaded the game: clear all data
             factor = 1;
+            is_enabled = false;
             processedThoughtCountTable.clear();
             fakeThoughts.clear();
             wasLoaded = false;
@@ -138,6 +141,17 @@ DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginComman
     return CR_OK;
 }
 
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    if (enable != is_enabled)
+    {
+        is_enabled = enable;
+        factor = enable ? 2 : 1;
+    }
+
+    return CR_OK;
+}
+
 command_result misery(color_ostream &out, vector<string>& parameters) {
     if ( !df::global::world || !df::global::world->map.block_index ) {
         out.printerr("misery can only be enabled in fortress mode with a fully-loaded game.\n");
@@ -153,15 +167,18 @@ command_result misery(color_ostream &out, vector<string>& parameters) {
             return CR_WRONG_USAGE;
         }
         factor = 1;
+        is_enabled = false;
         return CR_OK;
     } else if ( parameters[0] == "enable" ) {
+        is_enabled = true;
         factor = 2;
         if ( parameters.size() == 2 ) {
-            factor = atoi(parameters[1].c_str());
-            if ( factor < 1 ) {
+            int a = atoi(parameters[1].c_str());
+            if ( a <= 1 ) {
                 out.printerr("Second argument must be a positive integer.\n");
                 return CR_WRONG_USAGE;
             }
+            factor = a;
         }
     } else if ( parameters[0] == "clear" ) {
         for ( size_t a = 0; a < fakeThoughts.size(); a++ ) {
@@ -176,6 +193,7 @@ command_result misery(color_ostream &out, vector<string>& parameters) {
             return CR_WRONG_USAGE;
         }
         factor = a;
+        is_enabled = factor > 1;
     }
     
     return CR_OK;

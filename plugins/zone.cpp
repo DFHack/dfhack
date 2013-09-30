@@ -88,6 +88,10 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("zone");
 
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable);
+
 const string zone_help =
     "Allows easier management of pens/pastures, pits and cages.\n"
     "Options:\n"
@@ -3015,6 +3019,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     }
     else if (p == "start")
     {
+        plugin_enable(out, true);
         enable_autobutcher = true;
         start_autobutcher(out);
         return autoButcher(out, verbose);
@@ -3485,6 +3490,7 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
 
 command_result start_autobutcher(color_ostream &out)
 {
+    plugin_enable(out, true);
     enable_autobutcher = true;
 
     if (!config_autobutcher.isValid())
@@ -3545,6 +3551,7 @@ command_result init_autobutcher(color_ostream &out)
     if(!enable_autobutcher)
         return CR_OK;
 
+    plugin_enable(out, true);
     // read watchlist from save
 
     std::vector<PersistentDataItem> items;
@@ -3579,6 +3586,7 @@ command_result cleanup_autobutcher(color_ostream &out)
 
 command_result start_autonestbox(color_ostream &out)
 {
+    plugin_enable(out, true);
     enable_autonestbox = true;
 
     if (!config_autonestbox.isValid())
@@ -3620,6 +3628,8 @@ command_result init_autonestbox(color_ostream &out)
             sleep_autonestbox = config_autonestbox.ival(1);
         }
     }
+    if (enable_autonestbox)
+        plugin_enable(out, true);
     return CR_OK;
 }
 
@@ -3856,6 +3866,9 @@ static void autobutcher_setEnabled(color_ostream &out, bool enable)
             config_autobutcher.ival(0) = enable_autobutcher;
         out << "Autobutcher stopped." << endl;
     }
+
+    if (enable)
+        plugin_enable(out, true);
 }
 
 static void autowatch_setEnabled(color_ostream &out, bool enable)
@@ -4455,12 +4468,25 @@ IMPLEMENT_VMETHOD_INTERPOSE(zone_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(zone_hook, render);
 //END zone filters
 
+DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
+{
+    if (!gps)
+        return CR_FAILURE;
+
+    if (enable != is_enabled)
+    {
+        if (!INTERPOSE_HOOK(zone_hook, feed).apply(enable) ||
+            !INTERPOSE_HOOK(zone_hook, render).apply(enable))
+            return CR_FAILURE;
+
+        is_enabled = enable;
+    }
+
+    return CR_OK;
+}
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!gps || !INTERPOSE_HOOK(zone_hook, feed).apply() || !INTERPOSE_HOOK(zone_hook, render).apply())
-        out.printerr("Could not insert jobutils hooks!\n");
-
     commands.push_back(PluginCommand(
         "zone", "manage activity zones.",
         df_zone, false,

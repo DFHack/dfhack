@@ -583,7 +583,6 @@ static command_result autotrade_cmd(color_ostream &out, vector <string> & parame
     return CR_OK;
 }
 
-
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event)
@@ -600,11 +599,30 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    if (!gps)
+        return CR_FAILURE;
+
+    if (enable != is_enabled)
+    {
+        depot_info.reset();
+        monitor.reset();
+
+        if (!INTERPOSE_HOOK(trade_hook, feed).apply(enable) ||
+            !INTERPOSE_HOOK(trade_hook, render).apply(enable))
+            return CR_FAILURE;
+
+        is_enabled = enable;
+    }
+
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!gps || !INTERPOSE_HOOK(trade_hook, feed).apply() || !INTERPOSE_HOOK(trade_hook, render).apply())
-        out.printerr("Could not insert autotrade hooks!\n");
-
     commands.push_back(
         PluginCommand(
         "autotrade", "Automatically send items in marked stockpiles to trade depot, when trading is possible.",

@@ -98,7 +98,7 @@ reaction_duck
 Next, start a new fort in a new world, build a duck workshop, then have someone become a duck.
 */
 
-bool enabled = false;
+DFHACK_PLUGIN_IS_ENABLED(enabled);
 
 DFHACK_PLUGIN("autoSyndrome");
 
@@ -139,28 +139,12 @@ DFhackCExport command_result plugin_shutdown(color_ostream& out) {
     return CR_OK;
 }*/
 
-command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
-    if ( parameters.size() > 1 )
-        return CR_WRONG_USAGE;
-
-    bool wasEnabled = enabled;
-    if ( parameters.size() == 1 ) {
-        if ( parameters[0] == "enable" ) {
-            enabled = true;
-        } else if ( parameters[0] == "disable" ) {
-            enabled = false;
-        } else {
-            int32_t a = atoi(parameters[0].c_str());
-            if ( a < 0 || a > 1 )
-                return CR_WRONG_USAGE;
-
-            enabled = (bool)a;
-        }
-    }
-
-    out.print("autoSyndrome is %s\n", enabled ? "enabled" : "disabled");
-    if ( enabled == wasEnabled )
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    if (enabled == enable)
         return CR_OK;
+
+    enabled = enable;
 
     Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("autoSyndrome");
     if ( enabled ) {
@@ -169,7 +153,31 @@ command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
     } else {
         EventManager::unregisterAll(me);
     }
+
     return CR_OK;
+}
+
+command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
+    if ( parameters.size() > 1 )
+        return CR_WRONG_USAGE;
+
+    bool enable = false;
+    if ( parameters.size() == 1 ) {
+        if ( parameters[0] == "enable" ) {
+            enable = true;
+        } else if ( parameters[0] == "disable" ) {
+            enable = false;
+        } else {
+            int32_t a = atoi(parameters[0].c_str());
+            if ( a < 0 || a > 1 )
+                return CR_WRONG_USAGE;
+
+            enable = (bool)a;
+        }
+    }
+
+    out.print("autoSyndrome is %s\n", enable ? "enabled" : "disabled");
+    return plugin_enable(out, enable);
 }
 
 bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df::unit* unit) {

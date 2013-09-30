@@ -1766,7 +1766,7 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_END
 };
 
-static bool is_enabled = false;
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 static void enable_hooks(bool enable)
 {
@@ -1807,6 +1807,25 @@ static void clear_caches(color_ostream &out)
 
         UnitPath::cache.clear();
     }
+}
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    if (gamemode && *gamemode != game_mode::DWARF)
+        return CR_FAILURE;
+
+    if (enable != is_enabled)
+    {
+        if (enable)
+            enable_plugin();
+        else
+        {
+            World::DeletePersistentData(World::GetPersistentData("siege-engine/enabled"));
+            enable_hooks(false);
+        }
+    }
+
+    return CR_OK;
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)

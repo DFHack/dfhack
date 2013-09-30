@@ -717,6 +717,51 @@ Functions:
   Checks if the material matches job_material_category or job_item.
   Accept dfhack_material_category auto-assign table.
 
+Random number generation
+------------------------
+
+* ``dfhack.random.new([seed[,perturb_count]])``
+
+  Creates a new random number generator object. Without any
+  arguments, the object is initialized using current time.
+  Otherwise, the seed must be either a non-negative integer,
+  or a list of such integers. The second argument may specify
+  the number of additional randomization steps performed to
+  improve the initial state.
+
+* ``rng:init([seed[,perturb_count]])``
+
+  Re-initializes an already existing random number generator object.
+
+* ``rng:random([limit])``
+
+  Returns a random integer. If ``limit`` is specified, the value
+  is in the range [0, limit); otherwise it uses the whole 32-bit
+  unsigned integer range.
+
+* ``rng:drandom()``
+
+  Returns a random floating-point number in the range [0,1).
+
+* ``rng:drandom0()``
+
+  Returns a random floating-point number in the range (0,1).
+
+* ``rng:drandom1()``
+
+  Returns a random floating-point number in the range [0,1].
+
+* ``rng:unitrandom()``
+
+  Returns a random floating-point number in the range [-1,1].
+
+* ``rng:unitvector([size])``
+
+  Returns multiple values that form a random vector of length 1,
+  uniformly distributed over the corresponding sphere surface.
+  The default size is 3.
+
+
 C++ function wrappers
 =====================
 

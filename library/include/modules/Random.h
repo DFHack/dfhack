@@ -99,8 +99,10 @@ namespace Random
         }
     };
 
+#ifndef DFHACK_RANDOM_CPP
     extern template void MersenneRNG::unitvector<float>(float *p, int size);
     extern template void MersenneRNG::unitvector<double>(double *p, int size);
+#endif
 
 }
 }

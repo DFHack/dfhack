@@ -56,6 +56,8 @@ distribution.
     #pragma warning( disable: 4018)
     // nonstandard extension used: enum 'df::whatever::etc' used in qualified name
     #pragma warning( disable: 4482)
+    // nonstandard extension used: 'extern' before template explicit instantiation
+    #pragma warning( disable: 4231)
 #endif
 
 #endif

@@ -29,6 +29,8 @@ distribution.
 #include <map>
 using namespace std;
 
+#define DFHACK_RANDOM_CPP
+
 #include "modules/Random.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"

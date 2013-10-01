@@ -362,7 +362,7 @@ if(BUILD_DEVEL)
     # without the '/', the directory itself is installed
     install(DIRECTORY include/
             DESTINATION ${DFHACK_INCLUDES_DESTINATION}
-            FILES_MATCHING PATTERN "*.h" ) #linux: include
+            FILES_MATCHING PATTERN "*.h" PATTERN "*.inc" ) #linux: include
     # Building the docs
     IF(BUILD_DOXYGEN)
         add_subdirectory (doc)

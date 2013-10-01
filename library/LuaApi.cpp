@@ -94,6 +94,9 @@ using namespace DFHack::LuaWrapper;
 
 using Screen::Pen;
 using Random::MersenneRNG;
+using Random::PerlinNoise1D;
+using Random::PerlinNoise2D;
+using Random::PerlinNoise3D;
 
 void dfhack_printerr(lua_State *S, const std::string &str);
 
@@ -741,12 +744,10 @@ void Lua::Push(lua_State *L, const Screen::Pen &info)
         return;
     }
 
-    void *pdata = lua_newuserdata(L, sizeof(Pen));
+    new (L) Pen(info);
 
     lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_PEN_TOKEN);
     lua_setmetatable(L, -2);
-
-    new (pdata) Pen(info);
 }
 
 static Pen *check_pen_native(lua_State *L, int index)
@@ -1098,12 +1099,10 @@ static int dfhack_random_init(lua_State *L)
 
 static int dfhack_random_new(lua_State *L)
 {
-    void *pdata = lua_newuserdata(L, sizeof(MersenneRNG));
+    new (L) MersenneRNG();
 
     lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_RANDOM_TOKEN);
     lua_setmetatable(L, -2);
-
-    new (pdata) MersenneRNG();
 
     lua_insert(L, 1);
     return dfhack_random_init(L);
@@ -1157,6 +1156,57 @@ static int dfhack_random_unitvector(lua_State *L)
     return size;
 }
 
+static int eval_perlin_1(lua_State *L)
+{
+    auto &gen = *(PerlinNoise1D<float>*)lua_touserdata(L, lua_upvalueindex(1));
+    lua_pushnumber(L, gen(luaL_checknumber(L, 1)));
+    return 1;
+}
+static int eval_perlin_2(lua_State *L)
+{
+    auto &gen = *(PerlinNoise2D<float>*)lua_touserdata(L, lua_upvalueindex(1));
+    lua_pushnumber(L, gen(luaL_checknumber(L, 1), luaL_checknumber(L, 2)));
+    return 1;
+}
+static int eval_perlin_3(lua_State *L)
+{
+    auto &gen = *(PerlinNoise3D<float>*)lua_touserdata(L, lua_upvalueindex(1));
+    lua_pushnumber(L, gen(luaL_checknumber(L, 1), luaL_checknumber(L, 2), luaL_checknumber(L, 3)));
+    return 1;
+}
+
+static int dfhack_random_perlin(lua_State *L)
+{
+    MersenneRNG *prng = check_random_native(L, 1);
+    int size = luaL_optint(L, 2, 3);
+
+    switch (size)
+    {
+        case 1: {
+            auto pdata = new (L) PerlinNoise1D<float>();
+            pdata->init(*prng);
+            lua_pushcclosure(L, eval_perlin_1, 1);
+            break;
+        }
+        case 2: {
+            auto pdata = new (L) PerlinNoise2D<float>();
+            pdata->init(*prng);
+            lua_pushcclosure(L, eval_perlin_2, 1);
+            break;
+        }
+        case 3: {
+            auto pdata = new (L) PerlinNoise3D<float>();
+            pdata->init(*prng);
+            lua_pushcclosure(L, eval_perlin_3, 1);
+            break;
+        }
+        default:
+            luaL_argerror(L, 2, "perlin noise dimension must be 1, 2 or 3");
+    }
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_random_funcs[] = {
     { "new", dfhack_random_new },
     { "init", dfhack_random_init },
@@ -1166,6 +1216,7 @@ static const luaL_Reg dfhack_random_funcs[] = {
     { "drandom1", dfhack_random_drandom1 },
     { "unitrandom", dfhack_random_unitrandom },
     { "unitvector", dfhack_random_unitvector },
+    { "perlin", dfhack_random_perlin },
     { NULL, NULL }
 };
 

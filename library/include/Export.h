@@ -29,14 +29,23 @@ distribution.
     #ifndef DFHACK_EXPORT
         #define DFHACK_EXPORT __attribute__ ((visibility("default")))
     #endif
+    #ifndef DFHACK_IMPORT
+        #define DFHACK_IMPORT DFHACK_EXPORT
+    #endif
 #else
     #ifdef BUILD_DFHACK_LIB
         #ifndef DFHACK_EXPORT
             #define DFHACK_EXPORT __declspec(dllexport)
         #endif
+        #ifndef DFHACK_IMPORT
+            #define DFHACK_IMPORT
+        #endif
     #else
         #ifndef DFHACK_EXPORT
             #define DFHACK_EXPORT __declspec(dllimport)
+        #endif
+        #ifndef DFHACK_IMPORT
+            #define DFHACK_IMPORT DFHACK_EXPORT
         #endif
     #endif
 #endif

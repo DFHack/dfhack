@@ -38,6 +38,7 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 #include "Error.h"
+#include "VTableInterpose.h"
 
 #include <cmath>
 
@@ -147,3 +148,9 @@ void MersenneRNG::unitvector(T *p, int size)
 
 template void MersenneRNG::unitvector<float>(float *p, int size);
 template void MersenneRNG::unitvector<double>(double *p, int size);
+
+#include "modules/PerlinNoise.inc"
+
+template class DFHACK_EXPORT PerlinNoise<float, 1>;
+template class DFHACK_EXPORT PerlinNoise<float, 2>;
+template class DFHACK_EXPORT PerlinNoise<float, 3>;

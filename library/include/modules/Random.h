@@ -26,7 +26,7 @@ distribution.
 #ifndef CL_MOD_RANDOM
 #define CL_MOD_RANDOM
 /**
- * \defgroup grp_translation Translation: DF word tables and name translation/reading
+ * \defgroup grp_random Random: Random number and noise generation
  * @ingroup grp_modules
  */
 
@@ -51,6 +51,8 @@ namespace Random
         void prefill(unsigned step, int twist_cnt);
 
     public:
+        /* No constructor or destructor - safe to treat as data */
+
         void init(const uint32_t *pseed, unsigned cnt, int twist_cnt = 1);
 
         void init(); // uses time
@@ -104,6 +106,74 @@ namespace Random
     extern template void MersenneRNG::unitvector<double>(double *p, int size);
 #endif
 
+    /*
+     * Classical Perlin noise function in template form.
+     * http://mrl.nyu.edu/~perlin/doc/oscar.html#noise
+     */
+
+    template<class T, unsigned VSIZE, unsigned BITS = 8, class IDXT = uint8_t>
+    class PerlinNoise
+    {
+        // Size of randomness tables
+        static const unsigned TSIZE = 1<<BITS;
+        // Extended size with repeated data to avoid bitwise masking
+        static const unsigned TSIZE_EXT = 2*(TSIZE+1);
+
+        T gradients[TSIZE_EXT][VSIZE];
+        IDXT idxmap[TSIZE_EXT];
+
+        // Templates used to unwind and inline recursion and loops
+        struct Temp {
+            T r0, s;
+            unsigned b0;
+        };
+        template<unsigned mask, unsigned i>
+        struct Impl {
+            static inline T dot(T *pa, T *pb);
+            static inline void setup(const T *pv, Temp *pt);
+            static inline T eval(PerlinNoise<T,VSIZE,BITS,IDXT> *self, Temp *pt, unsigned idx, T *pq);
+        };
+
+    public:
+        /* No constructor or destructor - safe to treat as data */
+
+        void init(MersenneRNG &rng);
+
+        T eval(const T coords[VSIZE]);
+    };
+
+#ifndef DFHACK_RANDOM_CPP
+    extern template class DFHACK_IMPORT PerlinNoise<float, 1>;
+    extern template class DFHACK_IMPORT PerlinNoise<float, 2>;
+    extern template class DFHACK_IMPORT PerlinNoise<float, 3>;
+#endif
+
+    template<class T, unsigned BITS = 8, class IDXT = uint8_t>
+    class PerlinNoise1D : public PerlinNoise<T, 1, BITS, IDXT>
+    {
+    public:
+        T operator() (T x) { return this->eval(&x); }
+    };
+
+    template<class T, unsigned BITS = 8, class IDXT = uint8_t>
+    class PerlinNoise2D : public PerlinNoise<T, 2, BITS, IDXT>
+    {
+    public:
+        T operator() (T x, T y) {
+            T tmp[2] = { x, y };
+            return this->eval(tmp);
+        }
+    };
+
+    template<class T, unsigned BITS = 8, class IDXT = uint8_t>
+    class PerlinNoise3D : public PerlinNoise<T, 3, BITS, IDXT>
+    {
+    public:
+        T operator() (T x, T y, T z) {
+            T tmp[3] = { x, y, z };
+            return this->eval(tmp);
+        }
+    };
 }
 }
 #endif

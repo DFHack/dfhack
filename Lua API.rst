@@ -761,6 +761,12 @@ Random number generation
   uniformly distributed over the corresponding sphere surface.
   The default size is 3.
 
+* ``fn = rng:perlin([dim]); fn(x[,y[,z]])``
+
+  Returns a closure that computes a classical Perlin noise function
+  of dimension *dim*, initialized from this random generator.
+  Dimension may be 1, 2 or 3 (default).
+
 
 C++ function wrappers
 =====================

@@ -109,6 +109,9 @@ namespace Random
     /*
      * Classical Perlin noise function in template form.
      * http://mrl.nyu.edu/~perlin/doc/oscar.html#noise
+     *
+     * Using an improved hash function from:
+     * http://www.cs.utah.edu/~aek/research/noise.pdf
      */
 
     template<class T, unsigned VSIZE, unsigned BITS = 8, class IDXT = uint8_t>
@@ -116,21 +119,18 @@ namespace Random
     {
         // Size of randomness tables
         static const unsigned TSIZE = 1<<BITS;
-        // Extended size with repeated data to avoid bitwise masking
-        static const unsigned TSIZE_EXT = 2*(TSIZE+1);
 
-        T gradients[TSIZE_EXT][VSIZE];
-        IDXT idxmap[TSIZE_EXT];
+        T gradients[TSIZE][VSIZE];
+        IDXT idxmap[VSIZE][TSIZE];
 
         // Templates used to unwind and inline recursion and loops
         struct Temp {
             T r0, s;
-            unsigned b0;
+            unsigned b0, b1;
         };
-        template<unsigned mask, unsigned i>
+        template<unsigned mask, int i>
         struct Impl {
-            static inline T dot(T *pa, T *pb);
-            static inline void setup(const T *pv, Temp *pt);
+            static inline void setup(PerlinNoise<T,VSIZE,BITS,IDXT> *self, const T *pv, Temp *pt);
             static inline T eval(PerlinNoise<T,VSIZE,BITS,IDXT> *self, Temp *pt, unsigned idx, T *pq);
         };
 

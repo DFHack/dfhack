@@ -235,6 +235,7 @@ public:
     }
 
     bool Write();
+    bool isDirty();
 
     df::coord2d biomeRegionAt(df::coord2d p);
     int16_t GeoIndexAt(df::coord2d p);
@@ -348,6 +349,9 @@ class DFHACK_EXPORT MapCache
         Block *b = BlockAtTile(coord);
         return b ? b->Allocate() : false;
     }
+
+    /// delete the block from memory
+    void discardBlock(Block *block);
 
     df::tiletype baseTiletypeAt (DFCoord tilecoord)
     {

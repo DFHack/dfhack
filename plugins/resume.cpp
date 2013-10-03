@@ -125,8 +125,10 @@ void scan_for_suspended_buildings()
             SuspendedBuilding sb(bld);
             sb.is_planned = job->job_items.size() == 1 && job->job_items[0]->item_type == item_type::NONE;
 
-            auto it = find_if(resumed_buildings.begin(), resumed_buildings.end(), 
-                [&] (SuspendedBuilding &rsb) { return rsb.bld == bld; });
+            auto it = resumed_buildings.begin();
+
+            for (; it != resumed_buildings.end(); ++it)
+                if (it->bld == bld) break;
 
             sb.was_resumed = it != resumed_buildings.end();
 

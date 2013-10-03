@@ -179,9 +179,9 @@ public:
                 addDwarfActivity(unit, *entry);
             }
 
-            for_each_(dwarf_activity_values[unit],
-                [&] (const pair<activity_type, size_t> &x) 
-            { dwarf_activity_values[unit][x.first] = getPercentage(x.second,  dwarf_total); } );
+            auto &values = dwarf_activity_values[unit];
+            for (auto it = values.begin(); it != values.end(); ++it)
+                it->second = getPercentage(it->second, dwarf_total);
 
             dwarves_column.add(getUnitName(unit), unit);
         }
@@ -212,9 +212,8 @@ public:
             vector<pair<activity_type, size_t>> rev_vec(dwarf_activities->begin(), dwarf_activities->end());
             sort(rev_vec.begin(), rev_vec.end(), less_second<activity_type, size_t>());
 
-            for_each_(rev_vec,
-                [&] (pair<activity_type, size_t> x)
-            { dwarf_activity_column.add(getActivityItem(x.first, x.second), x.first); });
+            for (auto it = rev_vec.begin(); it != rev_vec.end(); ++it)
+                dwarf_activity_column.add(getActivityItem(it->first, it->second), it->first);
         }
 
         dwarf_activity_column.fixWidth();
@@ -754,9 +753,8 @@ public:
                 vector<pair<df::unit *, size_t>> rev_vec(dwarf_activities->begin(), dwarf_activities->end());
                 sort(rev_vec.begin(), rev_vec.end(), less_second<df::unit *, size_t>());
 
-                for_each_(rev_vec,
-                    [&] (pair<df::unit *, size_t> x)
-                { dwarf_activity_column.add(getDwarfAverage(x.first, x.second), x.first); });
+                for (auto it = rev_vec.begin(); it != rev_vec.end(); ++it)
+                    dwarf_activity_column.add(getDwarfAverage(it->first, it->second), it->first);
             }
         }
 
@@ -778,9 +776,8 @@ public:
             vector<pair<activity_type, size_t>> rev_vec(category_activities->begin(), category_activities->end());
             sort(rev_vec.begin(), rev_vec.end(), less_second<activity_type, size_t>());
 
-            for_each_(rev_vec,
-                [&] (pair<activity_type, size_t> x)
-            { category_breakdown_column.add(getBreakdownAverage(x.first, x.second), x.first); });
+            for (auto it = rev_vec.begin(); it != rev_vec.end(); ++it)
+                category_breakdown_column.add(getBreakdownAverage(it->first, it->second), it->first);
         }
 
         category_breakdown_column.fixWidth();

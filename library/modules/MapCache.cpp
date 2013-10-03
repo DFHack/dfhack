@@ -65,10 +65,19 @@ using namespace std;
 #include "df/building_type.h"
 
 using namespace DFHack;
+using namespace MapExtras;
 using namespace df::enums;
 using df::global::world;
 
 extern bool GetLocalFeature(t_feature &feature, df::coord2d rgn_pos, int32_t index);
+
+const BiomeInfo MapCache::biome_stub = {
+    df::coord2d(),
+    -1, -1, -1, -1,
+    NULL, NULL, NULL,
+    { -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1 }
+};
 
 #define COPY(a,b) memcpy(&a,&b,sizeof(a))
 
@@ -356,11 +365,6 @@ void MapExtras::BlockInfo::prepare(Block *mblock)
     SquashVeins(block,veinmats);
     SquashGrass(block, grass);
 
-    if (parent->validgeo)
-        SquashRocks(block,basemats,&parent->layer_mats);
-    else
-        memset(basemats,-1,sizeof(basemats));
-
     for (size_t i = 0; i < block->plants.size(); i++)
     {
         auto pp = block->plants[i];
@@ -369,6 +373,18 @@ void MapExtras::BlockInfo::prepare(Block *mblock)
 
     global_feature = Maps::getGlobalInitFeature(block->global_feature);
     local_feature = Maps::getLocalInitFeature(block->region_pos, block->local_feature);
+}
+
+BlockInfo::GroundType MapExtras::BlockInfo::getGroundType(int material)
+{
+    auto raw = df::inorganic_raw::find(material);
+    if (!raw)
+        return G_UNKNOWN;
+
+    if (raw->flags.is_set(inorganic_flags::SOIL_ANY))
+        return G_SOIL;
+
+    return G_STONE;
 }
 
 t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos)
@@ -387,15 +403,12 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     case DRIFTWOOD:
     case SOIL:
     {
-        rv.mat_index = basemats[x][y];
+        auto &biome = mblock->biomeInfoAt(pos);
+        rv.mat_index = biome.layer_stone[mblock->layerIndexAt(pos)];
 
-        if (auto raw = df::inorganic_raw::find(rv.mat_index))
+        if (getGroundType(rv.mat_index) == G_STONE)
         {
-            if (raw->flags.is_set(inorganic_flags::SOIL_ANY))
-                break;
-
-            int biome = mblock->biomeIndexAt(pos);
-            int idx = vector_get(parent->default_soil, biome, -1);
+            int idx = biome.default_soil;
             if (idx >= 0)
                 rv.mat_index = idx;
         }
@@ -405,15 +418,12 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
 
     case STONE:
     {
-        rv.mat_index = basemats[x][y];
+        auto &biome = mblock->biomeInfoAt(pos);
+        rv.mat_index = biome.layer_stone[mblock->layerIndexAt(pos)];
 
-        if (auto raw = df::inorganic_raw::find(rv.mat_index))
+        if (getGroundType(rv.mat_index) == G_SOIL)
         {
-            if (!raw->flags.is_set(inorganic_flags::SOIL_ANY))
-                break;
-
-            int biome = mblock->biomeIndexAt(pos);
-            int idx = vector_get(parent->default_stone, biome, -1);
+            int idx = biome.default_stone;
             if (idx >= 0)
                 rv.mat_index = idx;
         }
@@ -426,8 +436,7 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
         break;
 
     case LAVA_STONE:
-        if (auto details = parent->region_details[mblock->biomeRegionAt(pos)])
-            rv.mat_index = details->lava_stone;
+        rv.mat_index = mblock->biomeInfoAt(pos).lava_stone;
         break;
 
     case PLANT:
@@ -479,7 +488,7 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     case POOL:
     case BROOK:
     case RIVER:
-        rv.mat_index = basemats[x][y];
+        rv.mat_index = mblock->layerMaterialAt(pos);
         break;
 
     case ASHES:
@@ -571,9 +580,14 @@ int MapExtras::Block::biomeIndexAt(df::coord2d p)
     if (idx >= 9)
         return -1;
     idx = block->region_offset[idx];
-    if (idx >= parent->geoidx.size())
+    if (idx >= parent->biomes.size())
         return -1;
     return idx;
+}
+
+const BiomeInfo &Block::biomeInfoAt(df::coord2d p)
+{
+    return parent->getBiomeByIndex(biomeIndexAt(p));
 }
 
 df::coord2d MapExtras::Block::biomeRegionAt(df::coord2d p)
@@ -585,20 +599,7 @@ df::coord2d MapExtras::Block::biomeRegionAt(df::coord2d p)
     if (idx < 0)
         return block->region_pos;
 
-    return parent->geoidx[idx];
-}
-
-int16_t MapExtras::Block::GeoIndexAt(df::coord2d p)
-{
-    df::coord2d biome = biomeRegionAt(p);
-    if (!biome.isValid())
-        return -1;
-
-    auto pinfo = Maps::getRegionBiome(biome);
-    if (!pinfo)
-        return -1;
-
-    return pinfo->geo_index;
+    return parent->biomes[idx].pos;
 }
 
 bool MapExtras::Block::GetGlobalFeature(t_feature *out)
@@ -707,6 +708,8 @@ MapExtras::MapCache::MapCache()
     valid = 0;
     Maps::getSize(x_bmax, y_bmax, z_max);
     x_tmax = x_bmax*16; y_tmax = y_bmax*16;
+    std::vector<df::coord2d> geoidx;
+    std::vector<std::vector<int16_t> > layer_mats;
     validgeo = Maps::ReadGeology(&layer_mats, &geoidx);
     valid = true;
 
@@ -719,25 +722,39 @@ MapExtras::MapCache::MapCache()
         }
     }
 
-    default_soil.resize(layer_mats.size());
-    default_stone.resize(layer_mats.size());
+    biomes.resize(layer_mats.size());
 
     for (size_t i = 0; i < layer_mats.size(); i++)
     {
-        default_soil[i] = -1;
-        default_stone[i] = -1;
+        biomes[i].pos = geoidx[i];
+        biomes[i].biome = Maps::getRegionBiome(geoidx[i]);
+        biomes[i].details = region_details[geoidx[i]];
 
-        for (size_t j = 0; j < layer_mats[i].size(); j++)
+        biomes[i].geo_index = biomes[i].biome ? biomes[i].biome->geo_index : -1;
+        biomes[i].geobiome = df::world_geo_biome::find(biomes[i].geo_index);
+
+        biomes[i].lava_stone = -1;
+        biomes[i].default_soil = -1;
+        biomes[i].default_stone = -1;
+
+        if (biomes[i].details)
+            biomes[i].lava_stone = biomes[i].details->lava_stone;
+
+        memset(biomes[i].layer_stone, -1, sizeof(biomes[i].layer_stone));
+
+        for (size_t j = 0; j < std::min(BiomeInfo::MAX_LAYERS,layer_mats[i].size()); j++)
         {
+            biomes[i].layer_stone[j] = layer_mats[i][j];
+
             auto raw = df::inorganic_raw::find(layer_mats[i][j]);
             if (!raw)
                 continue;
 
             bool is_soil = raw->flags.is_set(inorganic_flags::SOIL_ANY);
             if (is_soil)
-                default_soil[i] = layer_mats[i][j];
-            else if (default_stone[i] == -1)
-                default_stone[i] = layer_mats[i][j];
+                biomes[i].default_soil = layer_mats[i][j];
+            else if (biomes[i].default_stone == -1)
+                biomes[i].default_stone = layer_mats[i][j];
         }
     }
 }

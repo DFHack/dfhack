@@ -49,6 +49,19 @@ class DFHACK_EXPORT MapCache;
 
 class Block;
 
+struct BiomeInfo {
+    // Determined by the 4-bit index in the designation bitfield
+    static const unsigned MAX_LAYERS = 16;
+
+    df::coord2d pos;
+    int default_soil, default_stone, lava_stone;
+    int geo_index;
+    df::region_map_entry *biome;
+    df::world_geo_biome *geobiome;
+    df::world_region_details *details;
+    int16_t layer_stone[MAX_LAYERS];
+};
+
 class BlockInfo
 {
     Block *mblock;
@@ -56,8 +69,12 @@ class BlockInfo
     df::map_block *block;
 
 public:
+    enum GroundType {
+        G_UNKNOWN = 0, G_STONE, G_SOIL
+    };
+    static GroundType getGroundType(int material);
+
     t_blockmaterials veinmats;
-    t_blockmaterials basemats;
     t_blockmaterials grass;
     std::map<df::coord,df::plant*> plants;
 
@@ -132,11 +149,14 @@ public:
     {
         return isVeinAt(p) ? baseMaterialAt(p).mat_index : -1;
     }
-    int16_t layerMaterialAt(df::coord2d p)
-    {
-        if (!basemats) init_tiles(true);
-        return index_tile<int16_t>(basemats->layermat,p);
+
+    /// Geological layer soil or stone material at pos
+    int16_t layerMaterialAt(df::coord2d p) {
+        return biomeInfoAt(p).layer_stone[layerIndexAt(p)];
     }
+
+    /// Biome-specific lava stone at pos
+    int16_t lavaStoneAt(df::coord2d p) { return biomeInfoAt(p).lava_stone; }
 
     // Static layer (base + constructions)
     df::tiletype staticTiletypeAt(df::coord2d p)
@@ -237,8 +257,14 @@ public:
     bool Write();
     bool isDirty();
 
+    int biomeIndexAt(df::coord2d p);
+    int layerIndexAt(df::coord2d p) {
+        return index_tile<df::tile_designation&>(designation,p).bits.geolayer_index;
+    }
+
     df::coord2d biomeRegionAt(df::coord2d p);
-    int16_t GeoIndexAt(df::coord2d p);
+    const BiomeInfo &biomeInfoAt(df::coord2d p);
+    int16_t GeoIndexAt(df::coord2d p) { return biomeInfoAt(p).geo_index; }
 
     bool GetGlobalFeature(t_feature *out);
     bool GetLocalFeature(t_feature *out);
@@ -258,8 +284,6 @@ private:
     df::map_block *block;
 
     void init();
-
-    int biomeIndexAt(df::coord2d p);
 
     bool valid;
     bool dirty_designations:1;
@@ -511,9 +535,16 @@ class DFHACK_EXPORT MapCache
     uint32_t maxTileY() { return y_tmax; }
     uint32_t maxZ() { return z_max; }
 
+    size_t getBiomeCount() { return biomes.size(); }
+    const BiomeInfo &getBiomeByIndex(unsigned idx) {
+        return (idx < biomes.size()) ? biomes[idx] : biome_stub;
+    }
+
 private:
     friend class Block;
     friend class BlockInfo;
+
+    static const BiomeInfo biome_stub;
 
     bool valid;
     bool validgeo;
@@ -522,10 +553,7 @@ private:
     uint32_t x_tmax;
     uint32_t y_tmax;
     uint32_t z_max;
-    std::vector<df::coord2d> geoidx;
-    std::vector<int> default_soil;
-    std::vector<int> default_stone;
-    std::vector< std::vector <int16_t> > layer_mats;
+    std::vector<BiomeInfo> biomes;
     std::map<df::coord2d, df::world_region_details*> region_details;
     std::map<DFCoord, Block *> blocks;
 };

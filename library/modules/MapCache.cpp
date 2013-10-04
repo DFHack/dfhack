@@ -85,6 +85,7 @@ MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
 {
     dirty_designations = false;
     dirty_tiles = false;
+    dirty_veins = false;
     dirty_temperatures = false;
     dirty_occupancies = false;
     valid = false;
@@ -158,6 +159,8 @@ void MapExtras::Block::init_tiles(bool basemat)
     {
         tiles = new TileInfo();
 
+        dirty_tiles = false;
+
         if (block)
             ParseTiles(tiles);
     }
@@ -165,6 +168,8 @@ void MapExtras::Block::init_tiles(bool basemat)
     if (basemat && !basemats)
     {
         basemats = new BasematInfo();
+
+        dirty_veins = false;
 
         if (block)
             ParseBasemats(tiles, basemats);
@@ -200,10 +205,10 @@ void MapExtras::Block::TileInfo::init_coninfo()
 
 MapExtras::Block::BasematInfo::BasematInfo()
 {
-    dirty.clear();
+    vein_dirty.clear();
     memset(mat_type,0,sizeof(mat_type));
     memset(mat_index,-1,sizeof(mat_index));
-    memset(layermat,-1,sizeof(layermat));
+    memset(veinmat,-1,sizeof(veinmat));
 }
 
 bool MapExtras::Block::setTiletypeAt(df::coord2d pos, df::tiletype tt, bool force)
@@ -219,6 +224,49 @@ bool MapExtras::Block::setTiletypeAt(df::coord2d pos, df::tiletype tt, bool forc
     dirty_tiles = true;
     tiles->raw_tiles[pos.x][pos.y] = tt;
     tiles->dirty_raw.setassignment(pos, true);
+
+    return true;
+}
+
+bool MapExtras::Block::setVeinMaterialAt(df::coord2d pos, int16_t mat, df::inclusion_type type)
+{
+    using namespace df::enums::tiletype_material;
+
+    if (!block)
+        return false;
+
+    if (!basemats)
+        init_tiles(true);
+
+    pos = pos & 15;
+    auto &cur_mat = basemats->veinmat[pos.x][pos.y];
+    auto &cur_type = basemats->veintype[pos.x][pos.y];
+
+    if (cur_mat == mat && cur_type == type)
+        return true;
+
+    if (mat >= 0)
+    {
+        // Cannot allocate veins?
+        if (!df::block_square_event_mineralst::_identity.can_instantiate())
+            return false;
+
+        // Bad material?
+        auto raw = df::inorganic_raw::find(mat);
+        if (!raw ||
+            raw->flags.is_set(inorganic_flags::SOIL_ANY) ||
+            raw->material.flags.is_set(material_flags::IS_METAL) ||
+            raw->material.flags.is_set(material_flags::NO_STONE_STOCKPILE))
+            return false;
+    }
+
+    dirty_veins = true;
+    cur_mat = mat;
+    cur_type = (uint8_t)type;
+    basemats->vein_dirty.setassignment(pos, true);
+
+    if (tileMaterial(tiles->base_tiles[pos.x][pos.y]) == MINERAL)
+        basemats->mat_index[pos.x][pos.y] = mat;
 
     return true;
 }
@@ -280,13 +328,26 @@ void MapExtras::Block::ParseTiles(TileInfo *tiles)
     }
 }
 
+void MapExtras::Block::WriteTiles(TileInfo *tiles)
+{
+    for (int x = 0; x < 16; x++)
+    {
+        for (int y = 0; y < 16; y++)
+        {
+            if (tiles->dirty_raw.getassignment(x,y))
+                block->tiletype[x][y] = tiles->raw_tiles[x][y];
+        }
+    }
+}
+
 void MapExtras::Block::ParseBasemats(TileInfo *tiles, BasematInfo *bmats)
 {
     BlockInfo info;
 
     info.prepare(this);
 
-    COPY(bmats->layermat, info.basemats);
+    COPY(bmats->veinmat, info.veinmats);
+    COPY(bmats->veintype, info.veintype);
 
     for (int x = 0; x < 16; x++)
     {
@@ -310,9 +371,96 @@ void MapExtras::Block::ParseBasemats(TileInfo *tiles, BasematInfo *bmats)
     }
 }
 
+void MapExtras::Block::WriteVeins(TileInfo *tiles, BasematInfo *bmats)
+{
+    // Classify modified tiles into distinct buckets
+    typedef std::pair<int, df::inclusion_type> t_vein_key;
+    std::map<t_vein_key, df::tile_bitmask> added;
+    std::set<t_vein_key> discovered;
+
+    for (int y = 0; y < 16; y++)
+    {
+        if (!bmats->vein_dirty[y])
+            continue;
+
+        for (int x = 0; x < 16; x++)
+        {
+            using namespace df::enums::tiletype_material;
+
+            if (!bmats->vein_dirty.getassignment(x,y))
+                continue;
+
+            int matidx = bmats->veinmat[x][y];
+            if (matidx >= 0)
+            {
+                t_vein_key key(matidx, (df::inclusion_type)bmats->veintype[x][y]);
+
+                added[key].setassignment(x,y,true);
+                if (!designation[x][y].bits.hidden)
+                    discovered.insert(key);
+            }
+        }
+    }
+
+    // Adjust existing veins
+    for (int i = block->block_events.size()-1; i >= 0; i--)
+    {
+        auto event = block->block_events[i];
+        auto vein = strict_virtual_cast<df::block_square_event_mineralst>(event);
+        if (!vein)
+            continue;
+
+        // First clear all dirty tiles
+        vein->tile_bitmask -= bmats->vein_dirty;
+
+        // Then add new if there are any matching ones
+        t_vein_key key(vein->inorganic_mat, BlockInfo::getVeinType(vein->flags));
+
+        if (added.count(key))
+        {
+            vein->tile_bitmask |= added[key];
+            if (discovered.count(key))
+                vein->flags.bits.discovered = true;
+
+            added.erase(key);
+            discovered.erase(key);
+        }
+
+        // Delete if became empty
+        if (!vein->tile_bitmask.has_assignments())
+        {
+            vector_erase_at(block->block_events, i);
+            delete vein;
+        }
+    }
+
+    // Finally add new vein objects if there are new unmatched
+    for (auto it = added.begin(); it != added.end(); ++it)
+    {
+        auto vein = df::allocate<df::block_square_event_mineralst>();
+        if (!vein)
+            break;
+
+        block->block_events.push_back(vein);
+
+        vein->inorganic_mat = it->first.first;
+        vein->tile_bitmask = it->second;
+        vein->flags.bits.discovered = discovered.count(it->first)>0;
+        BlockInfo::setVeinType(vein->flags, it->first.second);
+    }
+
+    bmats->vein_dirty.clear();
+}
+
 bool MapExtras::Block::isDirty()
 {
-    return valid && (dirty_designations || dirty_tiles || dirty_temperatures || dirty_occupancies);
+    return valid && (
+        dirty_designations ||
+        dirty_tiles ||
+        dirty_veins ||
+        dirty_temperatures ||
+        dirty_occupancies
+    );
 }
 
 bool MapExtras::Block::Write ()
@@ -325,18 +473,14 @@ bool MapExtras::Block::Write ()
         block->flags.bits.designated = true;
         dirty_designations = false;
     }
-    if(dirty_tiles && tiles)
+    if(dirty_tiles || dirty_veins)
     {
-        dirty_tiles = false;
+        if (tiles && dirty_tiles)
+            WriteTiles(tiles);
+        if (basemats && dirty_veins)
+            WriteVeins(tiles, basemats);
 
-        for (int x = 0; x < 16; x++)
-        {
-            for (int y = 0; y < 16; y++)
-            {
-                if (tiles->dirty_raw.getassignment(x,y))
-                    block->tiletype[x][y] = tiles->raw_tiles[x][y];
-            }
-        }
+        dirty_tiles = dirty_veins = false;
 
         delete tiles; tiles = NULL;
         delete basemats; basemats = NULL;
@@ -362,7 +506,7 @@ void MapExtras::BlockInfo::prepare(Block *mblock)
     block = mblock->getRaw();
     parent = mblock->getParent();
 
-    SquashVeins(block,veinmats);
+    SquashVeins(block,veinmats,veintype);
     SquashGrass(block, grass);
 
     for (size_t i = 0; i < block->plants.size(); i++)
@@ -501,17 +645,53 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     return rv;
 }
 
-void MapExtras::BlockInfo::SquashVeins(df::map_block *mb, t_blockmaterials & materials)
+df::inclusion_type MapExtras::BlockInfo::getVeinType(DFVeinFlags &flags)
+{
+    using namespace df::enums::inclusion_type;
+
+    if (flags.bits.cluster_small)
+        return CLUSTER_SMALL;
+    if (flags.bits.cluster_one)
+        return CLUSTER_ONE;
+    if (flags.bits.vein)
+        return VEIN;
+    if (flags.bits.cluster)
+        return CLUSTER;
+
+    return df::inclusion_type(0);
+}
+
+void MapExtras::BlockInfo::setVeinType(DFVeinFlags &info, df::inclusion_type type)
+{
+    using namespace df::enums::inclusion_type;
+
+    info.bits.cluster = info.bits.vein = info.bits.cluster_small = info.bits.cluster_one = false;
+
+    switch (type) {
+        case VEIN:          info.bits.vein = true; break;
+        case CLUSTER:       info.bits.cluster = true; break;
+        case CLUSTER_SMALL: info.bits.cluster_small = true; break;
+        case CLUSTER_ONE:   info.bits.cluster_one = true; break;
+        default: break;
+    }
+}
+
+void MapExtras::BlockInfo::SquashVeins(df::map_block *mb, t_blockmaterials & materials, t_veintype &veintype)
 {
     std::vector <df::block_square_event_mineralst *> veins;
     Maps::SortBlockEvents(mb,&veins);
     memset(materials,-1,sizeof(materials));
+    memset(veintype, 0, sizeof(t_veintype));
+
     for (uint32_t x = 0;x<16;x++) for (uint32_t y = 0; y< 16;y++)
     {
         for (size_t i = 0; i < veins.size(); i++)
         {
             if (veins[i]->getassignment(x,y))
+            {
                 materials[x][y] = veins[i]->inorganic_mat;
+                veintype[x][y] = (uint8_t)getVeinType(veins[i]->flags);
+            }
         }
     }
 }
@@ -756,6 +936,9 @@ MapExtras::MapCache::MapCache()
             else if (biomes[i].default_stone == -1)
                 biomes[i].default_stone = layer_mats[i][j];
         }
+
+        while (layer_mats[i].size() < 16)
+            layer_mats[i].push_back(-1);
     }
 }
 

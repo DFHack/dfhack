@@ -576,6 +576,33 @@ Or this:
 
 This will hide previously revealed tiles (or show hidden with the 0 option).
 
+More recently, the tool supports changing the base material of the tile to
+an arbitrary stone from the raws, by creating new veins as required. Note
+that this mode paints under ice and constructions, instead of overwriting
+them. To enable, use:
+
+::
+
+        paint stone MICROCLINE
+
+This mode is incompatible with the regular ``material`` setting, so changing
+it cancels the specific stone selection:
+
+::
+
+        paint material ANY
+
+Since different vein types have different drop rates, it is possible to choose
+which one to use in painting:
+
+::
+
+        paint veintype CLUSTER_SMALL
+
+When the chosen type is ``CLUSTER`` (the default), the tool may automatically
+choose to use layer stone or lava stone instead of veins if its material matches
+the desired one.
+
 Any paint or filter option (or the entire paint or filter) can be disabled entirely by using the ANY keyword:
 
 ::  

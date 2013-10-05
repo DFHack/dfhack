@@ -64,6 +64,7 @@ struct BiomeInfo {
 };
 
 typedef uint8_t t_veintype[16][16];
+typedef df::tiletype t_tilearr[16][16];
 
 class BlockInfo
 {
@@ -174,7 +175,7 @@ public:
      *  Use -1 to clear the tile from all veins. Does not update tile types.
      *  Returns false in case of some error, e.g. non-stone mat.
      */
-    bool setVeinMaterialAt(df::coord2d p, int16_t mat, df::inclusion_type type = df::enums::inclusion_type::VEIN);
+    bool setVeinMaterialAt(df::coord2d p, int16_t mat, df::inclusion_type type = df::enums::inclusion_type::CLUSTER);
 
     /// Geological layer soil or stone material at pos
     int16_t layerMaterialAt(df::coord2d p) {
@@ -183,6 +184,21 @@ public:
 
     /// Biome-specific lava stone at pos
     int16_t lavaStoneAt(df::coord2d p) { return biomeInfoAt(p).lava_stone; }
+
+    /**
+     * Sets the stone tile and material at specified position, automatically
+     * choosing between layer, lava or vein stone.
+     * The force_type flags ensures the correct inclusion type, even forcing
+     * a vein format if necessary. If kill_veins is true and the chosen mode
+     * isn't vein, it will clear any old veins from the tile.
+     */
+    bool setStoneAt(df::coord2d p, df::tiletype tile, int16_t mat, df::inclusion_type type = df::enums::inclusion_type::CLUSTER, bool force_type = false, bool kill_veins = false);
+
+    /**
+     * Sets the tile at the position to SOIL material. The actual material
+     * is completely determined by geological layers and cannot be set.
+     */
+    bool setSoilAt(df::coord2d p, df::tiletype tile, bool kill_veins = false);
 
     /// Static layer tile (i.e. base + constructions)
     df::tiletype staticTiletypeAt(df::coord2d p)
@@ -334,26 +350,33 @@ private:
     bool addItemOnGround(df::item *item);
     bool removeItemOnGround(df::item *item);
 
+    struct IceInfo {
+        df::tile_bitmask frozen;
+        df::tile_bitmask dirty;
+    };
     struct ConInfo {
         df::tile_bitmask constructed;
-        df::tiletype tiles[16][16];
+        df::tile_bitmask dirty;
+        t_tilearr tiles;
         t_blockmaterials mat_type;
         t_blockmaterials mat_index;
     };
     struct TileInfo {
-        df::tile_bitmask frozen;
         df::tile_bitmask dirty_raw;
-        df::tiletype raw_tiles[16][16];
+        t_tilearr raw_tiles;
 
+        IceInfo *ice_info;
         ConInfo *con_info;
 
-        df::tile_bitmask dirty_base;
-        df::tiletype base_tiles[16][16];
+        t_tilearr base_tiles;
 
         TileInfo();
         ~TileInfo();
 
+        void init_iceinfo();
         void init_coninfo();
+
+        void set_base_tile(df::coord2d pos, df::tiletype tile);
     };
     struct BasematInfo {
         t_blockmaterials mat_type;
@@ -364,6 +387,8 @@ private:
         t_blockmaterials veinmat;
 
         BasematInfo();
+
+        void set_base_mat(TileInfo *tiles, df::coord2d pos, int16_t type, int16_t idx);
     };
     TileInfo *tiles;
     BasematInfo *basemats;

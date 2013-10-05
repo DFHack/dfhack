@@ -44,6 +44,7 @@ using namespace std;
 #include "MiscUtils.h"
 
 #include "modules/Buildings.h"
+#include "modules/Materials.h"
 
 #include "DataDefs.h"
 #include "df/world_data.h"
@@ -178,17 +179,25 @@ void MapExtras::Block::init_tiles(bool basemat)
 
 MapExtras::Block::TileInfo::TileInfo()
 {
-    frozen.clear();
     dirty_raw.clear();
     memset(raw_tiles,0,sizeof(raw_tiles));
+    ice_info = NULL;
     con_info = NULL;
-    dirty_base.clear();
     memset(base_tiles,0,sizeof(base_tiles));
 }
 
 MapExtras::Block::TileInfo::~TileInfo()
 {
+    delete ice_info;
     delete con_info;
+}
+
+void MapExtras::Block::TileInfo::init_iceinfo()
+{
+    if (ice_info)
+        return;
+
+    ice_info = new IceInfo();
 }
 
 void MapExtras::Block::TileInfo::init_coninfo()
@@ -242,7 +251,7 @@ bool MapExtras::Block::setVeinMaterialAt(df::coord2d pos, int16_t mat, df::inclu
     auto &cur_mat = basemats->veinmat[pos.x][pos.y];
     auto &cur_type = basemats->veintype[pos.x][pos.y];
 
-    if (cur_mat == mat && cur_type == type)
+    if (cur_mat == mat && (mat < 0 || cur_type == type))
         return true;
 
     if (mat >= 0)
@@ -252,11 +261,7 @@ bool MapExtras::Block::setVeinMaterialAt(df::coord2d pos, int16_t mat, df::inclu
             return false;
 
         // Bad material?
-        auto raw = df::inorganic_raw::find(mat);
-        if (!raw ||
-            raw->flags.is_set(inorganic_flags::SOIL_ANY) ||
-            raw->material.flags.is_set(material_flags::IS_METAL) ||
-            raw->material.flags.is_set(material_flags::NO_STONE_STOCKPILE))
+        if (!isStoneInorganic(mat))
             return false;
     }
 
@@ -266,7 +271,97 @@ bool MapExtras::Block::setVeinMaterialAt(df::coord2d pos, int16_t mat, df::inclu
     basemats->vein_dirty.setassignment(pos, true);
 
     if (tileMaterial(tiles->base_tiles[pos.x][pos.y]) == MINERAL)
-        basemats->mat_index[pos.x][pos.y] = mat;
+        basemats->set_base_mat(tiles, pos, 0, mat);
+
+    return true;
+}
+
+bool MapExtras::Block::setStoneAt(df::coord2d pos, df::tiletype tile, int16_t mat, df::inclusion_type type, bool force_vein, bool kill_veins)
+{
+    using namespace df::enums::tiletype_material;
+
+    if (!block)
+        return false;
+
+    if (!isStoneInorganic(mat) || !isCoreMaterial(tile))
+        return false;
+
+    if (!basemats)
+        init_tiles(true);
+
+    // Check if anything needs to be done
+    pos = pos & 15;
+    auto &cur_tile = tiles->base_tiles[pos.x][pos.y];
+    auto &cur_mattype = basemats->mat_type[pos.x][pos.y];
+    auto &cur_matidx = basemats->mat_index[pos.x][pos.y];
+
+    if (!force_vein && cur_tile == tile && cur_mattype == 0 && cur_matidx == mat)
+        return true;
+
+    bool vein = false;
+
+    if (force_vein && type != inclusion_type::CLUSTER)
+        vein = true;
+    else if (mat == lavaStoneAt(pos))
+        tile = matchTileMaterial(tile, LAVA_STONE);
+    else if (mat == layerMaterialAt(pos))
+        tile = matchTileMaterial(tile, STONE);
+    else
+        vein = true;
+
+    if (vein)
+        tile = matchTileMaterial(tile, MINERAL);
+
+    if (tile == tiletype::Void)
+        return false;
+    if ((vein || kill_veins) && !setVeinMaterialAt(pos, vein ? mat : -1, type))
+        return false;
+
+    if (cur_tile != tile)
+    {
+        dirty_tiles = true;
+        tiles->set_base_tile(pos, tile);
+    }
+
+    basemats->set_base_mat(tiles, pos, 0, mat);
+
+    return true;
+}
+
+bool MapExtras::Block::setSoilAt(df::coord2d pos, df::tiletype tile, bool kill_veins)
+{
+    using namespace df::enums::tiletype_material;
+
+    if (!block)
+        return false;
+
+    if (!isCoreMaterial(tile))
+        return false;
+
+    if (!basemats)
+        init_tiles(true);
+
+    pos = pos & 15;
+    auto &cur_tile = tiles->base_tiles[pos.x][pos.y];
+
+    tile = matchTileMaterial(tile, SOIL);
+    if (tile == tiletype::Void)
+        return false;
+
+    if (kill_veins && !setVeinMaterialAt(pos, -1))
+        return false;
+
+    if (cur_tile != tile)
+    {
+        dirty_tiles = true;
+        tiles->set_base_tile(pos, tile);
+    }
+
+    int mat = layerMaterialAt(pos);
+    if (BlockInfo::getGroundType(mat) == BlockInfo::G_STONE)
+        mat = biomeInfoAt(pos).default_soil;
+
+    basemats->set_base_mat(tiles, pos, 0, mat);
 
     return true;
 }
@@ -290,7 +385,9 @@ void MapExtras::Block::ParseTiles(TileInfo *tiles)
             // Frozen liquid comes topmost
             if (tileMaterial(tt) == FROZEN_LIQUID)
             {
-                tiles->frozen.setassignment(x,y,true);
+                tiles->init_iceinfo();
+
+                tiles->ice_info->frozen.setassignment(x,y,true);
                 if (icetiles[x][y] != tiletype::Void)
                 {
                     tt = icetiles[x][y];
@@ -328,11 +425,92 @@ void MapExtras::Block::ParseTiles(TileInfo *tiles)
     }
 }
 
+void MapExtras::Block::TileInfo::set_base_tile(df::coord2d pos, df::tiletype tile)
+{
+    base_tiles[pos.x][pos.y] = tile;
+
+    if (con_info)
+    {
+        if (con_info->constructed.getassignment(pos))
+        {
+            con_info->dirty.setassignment(pos, true);
+            return;
+        }
+
+        con_info->tiles[pos.x][pos.y] = tile;
+    }
+
+    if (ice_info && ice_info->frozen.getassignment(pos))
+    {
+        ice_info->dirty.setassignment(pos, true);
+        return;
+    }
+
+    dirty_raw.setassignment(pos, true);
+    raw_tiles[pos.x][pos.y] = tile;
+}
+
 void MapExtras::Block::WriteTiles(TileInfo *tiles)
 {
-    for (int x = 0; x < 16; x++)
+    if (tiles->con_info)
     {
         for (int y = 0; y < 16; y++)
+        {
+            if (!tiles->con_info->dirty[y])
+                continue;
+
+            for (int x = 0; x < 16; x++)
+            {
+                if (!tiles->con_info->dirty.getassignment(x,y))
+                    continue;
+
+                df::coord coord = block->map_pos + df::coord(x,y,0);
+                df::construction *con = df::construction::find(coord);
+                if (con)
+                    con->original_tile = tiles->base_tiles[x][y];
+            }
+        }
+
+        tiles->con_info->dirty.clear();
+    }
+
+    if (tiles->ice_info && tiles->ice_info->dirty.has_assignments())
+    {
+        df::tiletype (*newtiles)[16] = (tiles->con_info ? tiles->con_info->tiles : tiles->base_tiles);
+
+        for (int i = block->block_events.size()-1; i >= 0; i--)
+        {
+            auto event = block->block_events[i];
+            auto ice = strict_virtual_cast<df::block_square_event_frozen_liquidst>(event);
+            if (!ice)
+                continue;
+
+            for (int y = 0; y < 16; y++)
+            {
+                if (!tiles->ice_info->dirty[y])
+                    continue;
+
+                for (int x = 0; x < 16; x++)
+                {
+                    if (!tiles->ice_info->dirty.getassignment(x,y))
+                        continue;
+                    if (ice->tiles[x][y] == tiletype::Void)
+                        continue;
+
+                    ice->tiles[x][y] = newtiles[x][y];
+                }
+            }
+        }
+
+        tiles->ice_info->dirty.clear();
+    }
+
+    for (int y = 0; y < 16; y++)
+    {
+        if (!tiles->dirty_raw[y])
+            continue;
+
+        for (int x = 0; x < 16; x++)
         {
             if (tiles->dirty_raw.getassignment(x,y))
                 block->tiletype[x][y] = tiles->raw_tiles[x][y];
@@ -358,16 +536,21 @@ void MapExtras::Block::ParseBasemats(TileInfo *tiles, BasematInfo *bmats)
             auto tt = tiles->base_tiles[x][y];
             auto mat = info.getBaseMaterial(tt, df::coord2d(x,y));
 
-            bmats->mat_type[x][y] = mat.mat_type;
-            bmats->mat_index[x][y] = mat.mat_index;
-
-            // Copy base info back to construction layer
-            if (tiles->con_info && !tiles->con_info->constructed.getassignment(x,y))
-            {
-                tiles->con_info->mat_type[x][y] = mat.mat_type;
-                tiles->con_info->mat_index[x][y] = mat.mat_index;
-            }
+            bmats->set_base_mat(tiles, df::coord2d(x,y), mat.mat_type, mat.mat_index);
         }
+    }
+}
+
+void MapExtras::Block::BasematInfo::set_base_mat(TileInfo *tiles, df::coord2d pos, int16_t type, int16_t idx)
+{
+    mat_type[pos.x][pos.y] = type;
+    mat_index[pos.x][pos.y] = idx;
+
+    // Copy base info back to construction layer
+    if (tiles->con_info && !tiles->con_info->constructed.getassignment(pos))
+    {
+        tiles->con_info->mat_type[pos.x][pos.y] = type;
+        tiles->con_info->mat_index[pos.x][pos.y] = idx;
     }
 }
 

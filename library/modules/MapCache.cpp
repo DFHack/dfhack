@@ -381,10 +381,12 @@ void MapExtras::Block::ParseTiles(TileInfo *tiles)
 
             df::tiletype tt = tiles->raw_tiles[x][y];
             df::coord coord = block->map_pos + df::coord(x,y,0);
+            bool had_ice = false;
 
             // Frozen liquid comes topmost
             if (tileMaterial(tt) == FROZEN_LIQUID)
             {
+                had_ice = true;
                 tiles->init_iceinfo();
 
                 tiles->ice_info->frozen.setassignment(x,y,true);
@@ -412,6 +414,16 @@ void MapExtras::Block::ParseTiles(TileInfo *tiles)
                     tiles->con_info->mat_index[x][y] = con->mat_index;
 
                     tt = con->original_tile;
+
+                    // Ice under construction is buggy:
+                    // http://www.bay12games.com/dwarves/mantisbt/view.php?id=6330
+                    // Therefore we just pretend it wasn't there (if it isn't too late),
+                    // and overwrite it if/when we write the base layer.
+                    if (!had_ice && tileMaterial(tt) == FROZEN_LIQUID)
+                    {
+                        if (icetiles[x][y] != tiletype::Void)
+                            tt = icetiles[x][y];
+                    }
                 }
             }
 

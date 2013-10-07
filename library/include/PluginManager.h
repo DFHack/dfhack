@@ -170,6 +170,12 @@ namespace DFHack
 
         void open_lua(lua_State *state, int table);
 
+        command_result eval_ruby(color_ostream &out, const char* cmd) {
+            if (!plugin_eval_ruby || !is_enabled())
+                return CR_FAILURE;
+            return plugin_eval_ruby(out, cmd);
+        }
+
     private:
         RefLock * access;
         std::vector <PluginCommand> commands;
@@ -236,7 +242,7 @@ namespace DFHack
         {
             return all_plugins.size();
         }
-        command_result (*eval_ruby)(color_ostream &, const char*);
+        Plugin *ruby;
     // DATA
     private:
         tthread::mutex * cmdlist_mutex;

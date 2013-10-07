@@ -259,7 +259,7 @@ static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, 
 
             pset[prefix + files[i].substr(0, files[i].size()-4)] = help;
         }
-        else if (plug_mgr->eval_ruby && hasEnding(files[i], ".rb"))
+        else if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() && hasEnding(files[i], ".rb"))
         {
             std::string help = getScriptHelp(path + files[i], "# ");
 
@@ -312,6 +312,9 @@ static command_result runLuaScript(color_ostream &out, std::string name, vector<
 
 static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr, std::string name, vector<string> &args)
 {
+    if (!plug_mgr->ruby || !plug_mgr->ruby->is_enabled())
+        return CR_FAILURE;
+
     std::string rbcmd = "$script_args = [";
     for (size_t i = 0; i < args.size(); i++)
         rbcmd += "'" + args[i] + "', ";
@@ -319,7 +322,7 @@ static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr,
 
     rbcmd += "catch(:script_finished) { load './hack/scripts/" + name + ".rb' }";
 
-    return plug_mgr->eval_ruby(out, rbcmd.c_str());
+    return plug_mgr->ruby->eval_ruby(out, rbcmd.c_str());
 }
 
 command_result Core::runCommand(color_ostream &out, const std::string &command)
@@ -450,7 +453,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                     con.print("%s: %s\n", parts[0].c_str(), help.c_str());
                     return CR_OK;
                 }
-                if (plug_mgr->eval_ruby && fileExists(filename + ".rb"))
+                if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() && fileExists(filename + ".rb"))
                 {
                     string help = getScriptHelp(filename + ".rb", "# ");
                     con.print("%s: %s\n", parts[0].c_str(), help.c_str());
@@ -767,7 +770,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
 
                 if (fileExists(filename + ".lua"))
                     res = runLuaScript(con, first, parts);
-                else if (plug_mgr->eval_ruby && fileExists(filename + ".rb"))
+                else if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() && fileExists(filename + ".rb"))
                     res = runRubyScript(con, plug_mgr, first, parts);
                 else if (try_autocomplete(con, first, completed))
                     return CR_NOT_IMPLEMENTED;// runCommand(con, completed, parts);

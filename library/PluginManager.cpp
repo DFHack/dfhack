@@ -679,7 +679,7 @@ void Plugin::push_function(lua_State *state, LuaFunction *fn)
 PluginManager::PluginManager(Core * core)
 {
     cmdlist_mutex = new mutex();
-    eval_ruby = NULL;
+    ruby = NULL;
 }
 
 PluginManager::~PluginManager()
@@ -774,7 +774,7 @@ void PluginManager::registerCommands( Plugin * p )
         belongs[cmds[i].name] = p;
     }
     if (p->plugin_eval_ruby)
-        eval_ruby = p->plugin_eval_ruby;
+        ruby = p;
     cmdlist_mutex->unlock();
 }
 
@@ -788,6 +788,6 @@ void PluginManager::unregisterCommands( Plugin * p )
         belongs.erase(cmds[i].name);
     }
     if (p->plugin_eval_ruby)
-        eval_ruby = NULL;
+        ruby = NULL;
     cmdlist_mutex->unlock();
 }

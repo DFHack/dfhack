@@ -45,6 +45,7 @@
 using std::vector;
 using std::string;
 using std::endl;
+using std::flush;
 using namespace DFHack;
 using namespace df::enums;
 

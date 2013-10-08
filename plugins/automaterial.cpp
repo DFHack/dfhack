@@ -36,6 +36,7 @@
 #include "TileTypes.h"
 #include "df/job_item.h"
 
+using namespace std;
 using std::map;
 using std::string;
 using std::vector;

@@ -61,6 +61,7 @@
 
 #include <stdlib.h>
 
+using std::set;
 using std::vector;
 using std::string;
 using std::endl;

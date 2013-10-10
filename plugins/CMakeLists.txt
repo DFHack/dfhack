@@ -156,6 +156,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(autotrade autotrade.cpp)
     DFHACK_PLUGIN(stocks stocks.cpp)
     DFHACK_PLUGIN(cleanconst cleanconst.cpp)
+    DFHACK_PLUGIN(3dveins 3dveins.cpp)
 endif()
 
 

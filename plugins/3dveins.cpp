@@ -4,12 +4,12 @@
 #include <algorithm>
 #include <vector>
 
-using namespace std;
 #include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
 #include "modules/MapCache.h"
+#include "modules/Random.h"
 
 #include "MiscUtils.h"
 
@@ -27,14 +27,23 @@ using namespace std;
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/plant.h"
 
+#ifdef LINUX_BUILD
+#include <tr1/memory>
+using std::tr1::shared_ptr;
+#else
+#include <memory>
+using std::shared_ptr;
+#endif
+
 using namespace df::enums;
 
 using namespace DFHack;
 using namespace MapExtras;
+using namespace DFHack::Random;
 
 using df::global::world;
 
-command_result cmd_3dveins(color_ostream &out, vector <string> & parameters);
+command_result cmd_3dveins(color_ostream &out, std::vector <std::string> & parameters);
 
 DFHACK_PLUGIN("3dveins");
 
@@ -53,6 +62,145 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
+}
+
+/*
+ * Vein density fields
+ */
+
+typedef std::pair<int,df::inclusion_type> t_veinkey;
+
+struct NoiseFunction
+{
+    typedef shared_ptr<NoiseFunction> Ptr;
+    typedef std::pair<float,float> t_range;
+
+    virtual ~NoiseFunction() {};
+
+    /*
+     * Veins are placed by clipping the computed value
+     * against a floating threshold, with values above
+     * the threshold causing placement of a vein tile.
+     */
+    virtual float eval(float x, float y, float z) = 0;
+    virtual t_range range() = 0;
+    virtual void displace(float &x, float &y, float &z) = 0;
+};
+
+inline float apow(float a, float b) { return powf(fabsf(a), b); }
+
+struct Distribution : NoiseFunction
+{
+    float bx, by, bz;
+
+    Distribution(MersenneRNG &rng, float scale)
+    {
+        bx = rng.drandom() * scale;
+        by = rng.drandom() * scale;
+        bz = rng.drandom() * scale;
+    }
+
+    void displace(float &x, float &y, float &z) {
+        x += bx; y += by; z += bz;
+    }
+};
+
+struct DistributionVein : Distribution
+{
+    PerlinNoise3D<float> density1, density2;
+    PerlinNoise3D<float> strand1a, strand1b;
+
+    DistributionVein(MersenneRNG &rng) : Distribution(rng, 96) {
+        density1.init(rng);
+        density2.init(rng);
+        strand1a.init(rng);
+        strand1b.init(rng);
+    }
+
+    float eval(float x, float y, float z) {
+        return 0.1f * density1(x/96, y/96, z/48)
+             + 0.2f * density2(x/48, y/48, z/24)
+             - apow(      strand1a(x/24,y/24,z/12)
+                    +0.6f*strand1b(x/16,y/16,z/8), 0.6f);
+    }
+
+    t_range range() { return t_range(-0.3f-1.33f,0.3f); }
+};
+
+struct DistributionCluster : Distribution
+{
+    PerlinNoise3D<float> density1, density2, shape;
+
+    DistributionCluster(MersenneRNG &rng) : Distribution(rng, 96) {
+        density1.init(rng);
+        density2.init(rng);
+        shape.init(rng);
+    }
+
+    float eval(float x, float y, float z) {
+        return 0.2f * density1(x/96, y/96, z/32)
+             + 0.6f * density2(x/48, y/48, z/16)
+             + shape(x/24, y/24, z/8);
+    }
+
+    t_range range() { return t_range(-1.8f,1.8f); }
+};
+
+struct DistributionClusterSmall : Distribution
+{
+    PerlinNoise3D<float> density1, density2, shape;
+
+    DistributionClusterSmall(MersenneRNG &rng) : Distribution(rng, 96) {
+        density1.init(rng);
+        density2.init(rng);
+        shape.init(rng);
+    }
+
+    float eval(float x, float y, float z) {
+        const float scale = 1.0f/4.3f;
+        return 0.06f * density1(x/96, y/96, z/48)
+             + 0.12f * density2(x/24, y/24, z/12)
+             + apow(shape(x*scale, y*scale, z*scale), 0.1f);
+    }
+
+    t_range range() { return t_range(-0.18f,1.18f); }
+};
+
+struct DistributionClusterOne : Distribution
+{
+    PerlinNoise3D<float> density1, density2, shape;
+
+    DistributionClusterOne(MersenneRNG &rng) : Distribution(rng, 96) {
+        density1.init(rng);
+        density2.init(rng);
+        shape.init(rng);
+    }
+
+    float eval(float x, float y, float z) {
+        return 0.05f * density1(x/96, y/96, z/48)
+             + 0.1f * density2(x/48, y/48, z/24)
+             + shape(x-bx, y-by, z-bz);
+    }
+
+    t_range range() { return t_range(-1.15f,1.15f); }
+};
+
+static NoiseFunction *makeVeinDistribution(t_veinkey vein, MersenneRNG &rng)
+{
+    using namespace df::enums::inclusion_type;
+
+    switch (vein.second)
+    {
+        case VEIN:
+            return new DistributionVein(rng);
+        case CLUSTER_SMALL:
+            return new DistributionClusterSmall(rng);
+        case CLUSTER_ONE:
+            return new DistributionClusterOne(rng);
+        case CLUSTER:
+        default:
+            return new DistributionCluster(rng);
+    }
 }
 
 /*
@@ -107,8 +255,6 @@ struct GeoLayer;
 struct GeoColumn;
 struct GeoBiome;
 
-typedef std::pair<int,df::inclusion_type> t_veinkey;
-
 /* Representation of a block in geolayer coordinate space.
  * That is, it represents a block that would have happened
  * if geological layers weren't shifted in Z direction to
@@ -121,6 +267,9 @@ struct GeoBlock
     GeoColumn *column;
     df::coord pos;
 
+    uint16_t arena_mask, arena_unmined;
+    int16_t arena_material;
+
     df::tile_bitmask unmined;
     int16_t material[16][16];
     uint8_t veintype[16][16];
@@ -129,6 +278,73 @@ struct GeoBlock
     GeoBlock(GeoLayer *parent, df::coord pos) : layer(parent), pos(pos) {
         memset(material, -1, sizeof(material));
     }
+
+    bool prepare_arena(int16_t env_material, NoiseFunction::Ptr fn);
+    int measure_placement(float threshold);
+    void place_tiles(float threshold, int16_t new_material, df::inclusion_type itype);
+};
+
+/*
+ * A set of layers that have the same vein type, distribution
+ * and approximate location, and thus should be placed using
+ * one binsearch pass for more uniform appearance.
+ */
+struct VeinExtent
+{
+    typedef shared_ptr<VeinExtent> Ptr;
+    typedef std::vector<Ptr> PVec;
+
+    t_veinkey vein;
+    int probability, num_tiles;
+    Ptr parent;
+    int parent_depth;
+
+    bool placed;
+    int placed_tiles;
+    NoiseFunction::Ptr distribution;
+
+    int num_unmined, num_layer, min_z, max_z;
+    std::vector<GeoLayer*> layers;
+
+    VeinExtent(t_veinkey vein) : vein(vein) {
+        probability = num_tiles = placed_tiles = 0;
+        num_unmined = num_layer = 0;
+        min_z = max_z = 0;
+        parent_depth = 0;
+        placed = false;
+    }
+
+    float density() { return float(num_tiles) / num_unmined; }
+
+    void set_parent(Ptr pp) {
+        if (parent)
+            parent->add_tiles(-num_tiles);
+        parent = pp;
+        if (parent)
+            parent->add_tiles(num_tiles);
+
+        parent_depth = (pp ? pp->parent_depth+1 : 0);
+    }
+
+    int parent_mat() {
+        return parent ? parent->vein.first : SMC_LAYER;
+    }
+
+    void add_tiles(int tiles) {
+        num_tiles += tiles;
+        if (parent)
+            parent->add_tiles(tiles);
+    }
+
+    bool is_similar(Ptr ext2) {
+        return probability == ext2->probability &&
+               parent_mat() == ext2->parent_mat();
+    }
+
+    void link(GeoLayer *layer);
+    void merge_into(VeinExtent::Ptr ext2);
+
+    void place_tiles();
 };
 
 struct GeoColumn
@@ -164,12 +380,16 @@ struct GeoLayer
     // World-global origin coordinates in blocks
     df::coord world_pos;
 
+    int min_z() { return world_pos.z - z_bias; }
+    int max_z() { return world_pos.z + thickness - 1; }
+
     df::coord2d size;
     BlockGrid<GeoBlock*> blocks;
     std::vector<GeoBlock*> block_list;
 
     int tiles, unmined_tiles, mineral_tiles;
     std::map<t_veinkey,int> mineral_count;
+    std::map<t_veinkey, VeinExtent::Ptr> veins;
 
     GeoLayer(GeoBiome *parent, int index, df::world_geo_layer *info);
 
@@ -216,6 +436,8 @@ struct GeoLayer
 
         out.print("    Total tiles: %d (%d unmined)\n", tiles, unmined_tiles);
     }
+
+    bool form_veins(color_ostream &out);
 };
 
 struct GeoBiome
@@ -267,6 +489,8 @@ GeoLayer::GeoLayer(GeoBiome *parent, int index, df::world_geo_layer *info)
     is_soil = isSoilInorganic(material);
 }
 
+const int NUM_INCLUSIONS = 1+(int)ENUM_LAST_ITEM(inclusion_type);
+
 struct VeinGenerator
 {
     color_ostream &out;
@@ -277,6 +501,14 @@ struct VeinGenerator
 
     std::map<int, GeoBiome*> biomes;
     std::vector<GeoBiome*> biome_by_idx;
+
+    struct VSeeds {
+        uint32_t seeds[NUM_INCLUSIONS];
+        NoiseFunction::Ptr funcs[NUM_INCLUSIONS];
+    };
+    std::vector<VSeeds> seeds;
+
+    std::map<t_veinkey, VeinExtent::PVec> veins;
 
     VeinGenerator(color_ostream &out) : out(out) {}
 
@@ -296,6 +528,14 @@ struct VeinGenerator
 
     void write_tiles();
     void write_block_tiles(Block *b, df::coord2d column, int z);
+
+    bool form_veins();
+    bool place_orphan(t_veinkey vein, int size, GeoLayer *from);
+
+    void init_seeds();
+    NoiseFunction::Ptr get_noise(t_veinkey vein);
+
+    bool place_veins(bool verbose);
 
     void print_mineral_stats()
     {
@@ -687,10 +927,518 @@ void VeinGenerator::write_block_tiles(Block *b, df::coord2d column, int z)
     }
 }
 
-command_result cmd_3dveins(color_ostream &con, vector <string> & parameters)
+/*
+ * Vein placement code
+ */
+
+bool GeoBlock::prepare_arena(int16_t basemat, NoiseFunction::Ptr fn)
 {
-    if (!parameters.empty())
-        return CR_WRONG_USAGE;
+    arena_mask = arena_unmined = 0;
+    arena_material = basemat;
+
+    df::coord origin = pos + layer->world_pos;
+    float x0 = float(origin.x)*16 + 0.5f, y0 = float(origin.y)*16 + 0.5f;
+    float z = origin.z - layer->z_bias + 0.5f;
+
+    fn->displace(x0, y0, z);
+
+    for (int x = 0; x < 16; x++)
+    {
+        for (int y = 0; y < 16; y++)
+        {
+            if (material[x][y] != arena_material)
+                continue;
+
+            weight[x][y] = fn->eval(x0+x, y0+y, z);
+
+            arena_mask |= (1<<x);
+            if (unmined.getassignment(x,y))
+                arena_unmined |= (1<<x);
+        }
+    }
+
+    return arena_mask != 0;
+}
+
+int GeoBlock::measure_placement(float threshold)
+{
+    if (!arena_unmined)
+        return 0;
+
+    int count = 0;
+
+    for (int x = 0; x < 16; x++)
+    {
+        if ((arena_unmined & (1<<x)) == 0)
+            continue;
+
+        for (int y = 0; y < 16; y++)
+        {
+            if (material[x][y] != arena_material || weight[x][y] < threshold)
+                continue;
+
+            if (unmined.getassignment(x,y))
+                count++;
+        }
+    }
+
+    return count;
+}
+
+void GeoBlock::place_tiles(float threshold, int16_t new_material, df::inclusion_type itype)
+{
+    for (int x = 0; x < 16; x++)
+    {
+        if ((arena_mask & (1<<x)) == 0)
+            continue;
+
+        for (int y = 0; y < 16; y++)
+        {
+            if (material[x][y] != arena_material || weight[x][y] < threshold)
+                continue;
+
+            material[x][y] = new_material;
+            veintype[x][y] = itype;
+        }
+    }
+}
+
+static int measure(const std::vector<GeoBlock*> &arena, float threshold)
+{
+    int count = 0;
+    for (size_t i = 0; i < arena.size(); i++)
+        count += arena[i]->measure_placement(threshold);
+    return count;
+}
+
+void VeinExtent::link(GeoLayer *layer)
+{
+    layers.push_back(layer);
+
+    num_unmined += layer->unmined_tiles;
+    num_layer += layer->tiles;
+
+    if (layers.size() == 1)
+    {
+        min_z = layer->min_z();
+        max_z = layer->max_z();
+    }
+    else
+    {
+        min_z = std::min(min_z, layer->min_z());
+        max_z = std::max(max_z, layer->max_z());
+    }
+}
+
+void VeinExtent::merge_into(Ptr target)
+{
+    assert(target->vein == vein);
+
+    target->num_tiles += num_tiles;
+
+    for (size_t i = 0; i < layers.size(); i++)
+    {
+        target->link(layers[i]);
+
+        layers[i]->veins[vein] = target;
+    }
+
+    num_tiles = 0;
+    layers.clear();
+}
+
+void VeinExtent::place_tiles()
+{
+    std::vector<GeoBlock*> arena;
+
+    int env_material = parent_mat();
+
+    for (size_t i = 0; i < layers.size(); i++)
+    {
+        auto layer = layers[i];
+
+        for (auto bit = layer->block_list.begin(); bit != layer->block_list.end(); ++bit)
+        {
+            if ((*bit)->prepare_arena(env_material, distribution))
+                arena.push_back(*bit);
+        }
+    }
+
+    // Binary search to meet the required number
+    auto range = distribution->range();
+    float mid;
+
+    for (int i = 0; i < 32; i++) // iteration limit
+    {
+        mid = (range.first + range.second) / 2;
+        int count = placed_tiles = measure(arena, mid);
+
+        if (count == num_tiles)
+            break;
+        else if (count > num_tiles)
+            range.first = mid;
+        else
+            range.second = mid;
+    }
+
+    // Write the tiles out
+    for (size_t i = 0; i < arena.size(); i++)
+        arena[i]->place_tiles(mid, vein.first, vein.second);
+
+    placed = true;
+}
+
+bool GeoLayer::form_veins(color_ostream &out)
+{
+    std::vector<VeinExtent::Ptr> refs;
+
+    // Defunct layers cannot have veins
+    if (tiles <= 0)
+        return true;
+
+    for (size_t i = 0; i < info->vein_mat.size(); i++)
+    {
+        int parent_id = info->vein_nested_in[i];
+
+        if (parent_id >= (int)refs.size())
+        {
+            out.printerr("Forward vein reference in biome %d.\n", biome->info.geo_index);
+            return false;
+        }
+
+        t_veinkey key(info->vein_mat[i], info->vein_type[i]);
+        VeinExtent::Ptr &vptr = veins[key];
+
+        if (vptr)
+        {
+            int tgt_pmat = parent_id < 0 ? SMC_LAYER : info->vein_mat[parent_id];
+            int cur_pmat = vptr->parent_mat();
+            if (parent_id < 0)
+                vptr->set_parent(VeinExtent::Ptr());
+
+            if (cur_pmat != tgt_pmat)
+            {
+                std::string ctx = "be anywhere";
+                if (vptr->parent)
+                    ctx = "only be in "+MaterialInfo(0,vptr->parent_mat()).getToken();
+
+                out.printerr(
+                    "Duplicate vein %s %s in biome %d layer %d - will %s.\n",
+                    MaterialInfo(0,key.first).getToken().c_str(),
+                    ENUM_KEY_STR(inclusion_type, key.second).c_str(),
+                    biome->info.geo_index, index, ctx.c_str()
+                );
+            }
+
+            vptr->probability = std::max<int>(vptr->probability, info->vein_unk_38[i]);
+        }
+        else
+        {
+            vptr = VeinExtent::Ptr(new VeinExtent(key));
+            vptr->probability = info->vein_unk_38[i];
+            if (parent_id >= 0)
+                vptr->set_parent(refs[parent_id]);
+
+            vptr->add_tiles(mineral_count[key]);
+            mineral_count.erase(key);
+
+            vptr->link(this);
+            refs.push_back(vptr);
+        }
+    }
+
+    return true;
+}
+
+bool VeinGenerator::place_orphan(t_veinkey key, int size, GeoLayer *from)
+{
+    std::map<int, VeinExtent::PVec> best;
+
+    for (auto it = biomes.begin(); it != biomes.end(); ++it)
+    {
+        auto &layers = it->second->layers;
+
+        for (size_t i = 0; i < layers.size(); i++)
+        {
+            if (layers[i]->mineral_tiles >= layers[i]->unmined_tiles)
+                continue;
+
+            VeinExtent::Ptr vein = map_find(layers[i]->veins, key);
+            if (!vein)
+                continue;
+
+            int dist = std::min(
+                layers[i]->min_z() - from->max_z(),
+                from->min_z() - layers[i]->max_z()
+            );
+
+            best[std::max(0, dist)].push_back(vein);
+        }
+    }
+
+    if (best.empty())
+    {
+        out.printerr(
+            "Could not place orphaned vein %s %s anywhere.\n",
+            MaterialInfo(0,key.first).getToken().c_str(),
+            ENUM_KEY_STR(inclusion_type, key.second).c_str()
+        );
+
+        return false;
+    }
+
+    for (auto it = best.begin(); size > 0 && it != best.end(); ++it)
+    {
+        auto &vec = it->second;
+
+        int free = 0;
+        for (size_t i = 0; i < vec.size(); i++)
+        {
+            auto layer = vec[i]->layers[0];
+            free += layer->unmined_tiles - layer->mineral_tiles;
+        }
+        float coeff = float(size)/free;
+
+        for (size_t i = 0; i < vec.size(); i++)
+        {
+            auto layer = vec[i]->layers[0];
+            int cfree = std::max(0, layer->unmined_tiles - layer->mineral_tiles);
+            int cnt = std::min(size, std::min(cfree, int(ceilf(cfree*coeff))));
+            vec[i]->add_tiles(cnt);
+            layer->mineral_tiles += cnt;
+            size -= cnt;
+        }
+    }
+
+    if (size > 0)
+    {
+         out.printerr(
+            "Could not place all of orphaned vein %s %s: %d left.\n",
+            MaterialInfo(0,key.first).getToken().c_str(),
+            ENUM_KEY_STR(inclusion_type, key.second).c_str(),
+            size
+        );
+    }
+
+    return true;
+}
+
+bool VeinGenerator::form_veins()
+{
+    // Form veins in layers
+    for (auto it = biomes.begin(); it != biomes.end(); ++it)
+    {
+        auto &layers = it->second->layers;
+
+        for (size_t i = 0; i < layers.size(); i++)
+            if (layers[i] && !layers[i]->form_veins(out))
+                return false;
+    }
+
+    // Place orphaned minerals
+    for (auto it = biomes.begin(); it != biomes.end(); ++it)
+    {
+        auto &layers = it->second->layers;
+
+        for (size_t i = 0; i < layers.size(); i++)
+        {
+            auto &mins = layers[i]->mineral_count;
+
+            for (auto mit = mins.begin(); mit != mins.end(); ++mit)
+            {
+                if (mit->second <= 0) continue;
+
+                if (!place_orphan(mit->first, mit->second, layers[i]))
+                    return false;
+            }
+        }
+    }
+
+    // Join adjacent extents with the same density
+    for (auto it = biomes.begin(); it != biomes.end(); ++it)
+    {
+        auto &layers = it->second->layers;
+
+        for (size_t i = 0; i < layers.size(); i++)
+        {
+            auto &mins = layers[i]->veins;
+
+            for (auto mit = mins.begin(); mit != mins.end(); ++mit)
+            {
+                auto cur = mit->second;
+                if (!cur) continue;
+
+                // Merge in this biome
+                if (i > 0)
+                {
+                    if (auto prev = map_find(layers[i-1]->veins, mit->first))
+                    {
+                        if (cur->is_similar(prev))
+                        {
+                            cur->merge_into(prev);
+                            continue;
+                        }
+                    }
+                }
+
+                // Merge across biomes
+                auto &vec = veins[cur->vein];
+
+                for (size_t j = 0; j < vec.size(); j++)
+                {
+                    if (vec[j]->min_z <= cur->max_z &&
+                        vec[j]->max_z >= cur->min_z &&
+                        cur->is_similar(vec[j]))
+                    {
+                        cur->merge_into(vec[j]);
+                        cur.reset();
+                        break;
+                    }
+                }
+
+                if (cur)
+                    vec.push_back(cur);
+            }
+        }
+    }
+
+    return true;
+}
+
+void VeinGenerator::init_seeds()
+{
+    MersenneRNG rng;
+
+    std::string seed = world->worldgen.worldgen_parms.seed;
+    seed.resize((seed.size()+3)&~3);
+    rng.init((uint32_t*)seed.data(), seed.size()/4, 10);
+
+    seeds.resize(world->raws.inorganics.size());
+
+    for (size_t i = 0; i < seeds.size(); i++)
+    {
+        for (int j = 0; j < NUM_INCLUSIONS; j++)
+            seeds[i].seeds[j] = rng.random();
+    }
+}
+
+NoiseFunction::Ptr VeinGenerator::get_noise(t_veinkey vein)
+{
+    auto &seed = seeds[vein.first];
+    auto &func = seed.funcs[vein.second];
+
+    if (!func)
+    {
+        MersenneRNG rng;
+        rng.init(seed.seeds[vein.second], 10);
+
+        func = NoiseFunction::Ptr(makeVeinDistribution(vein, rng));
+    }
+
+    return func;
+}
+
+static bool vein_cmp(const VeinExtent::Ptr &a, const VeinExtent::Ptr &b)
+{
+    return (a->parent_depth < b->parent_depth)
+        || (a->parent_depth == b->parent_depth && a->density() < b->density());
+}
+
+bool VeinGenerator::place_veins(bool verbose)
+{
+    VeinExtent::PVec queue;
+
+    init_seeds();
+
+    // Compute the placement queue
+    for (auto it = veins.begin(); it != veins.end(); ++it)
+    {
+        auto &vec = it->second;
+
+        for (size_t i = 0; i < vec.size(); i++)
+        {
+            auto key = vec[i]->vein;
+
+            if (vec[i]->num_tiles <= 0)
+                continue;
+
+            if (!isStoneInorganic(key.first))
+            {
+                out.printerr(
+                    "Invalid vein material: %s\n",
+                    MaterialInfo(0, key.first).getToken().c_str()
+                );
+
+                return false;
+            }
+
+            if (!is_valid_enum_item(key.second))
+            {
+                out.printerr("Invalid vein type: %d\n", key.second);
+                return false;
+            }
+
+            vec[i]->distribution = get_noise(key);
+
+            queue.push_back(vec[i]);
+        }
+    }
+
+    sort(queue.begin(), queue.end(), vein_cmp);
+
+    // Place tiles
+    out.print("Processing... ", queue.size());
+
+    for (size_t j = 0; j < queue.size(); j++)
+    {
+        if (queue[j]->parent && !queue[j]->parent->placed)
+        {
+            out.printerr(
+                "\nParent vein not placed for %s %s.\n",
+                MaterialInfo(0,queue[j]->vein.first).getToken().c_str(),
+                ENUM_KEY_STR(inclusion_type, queue[j]->vein.second).c_str()
+            );
+
+            return false;
+        }
+
+        if (verbose)
+        {
+            if (j > 0)
+                out.print("done.");
+
+            out.print(
+                "\nVein layer %d of %d: %s %s (%.2f%%)... ",
+                j+1, queue.size(),
+                MaterialInfo(0,queue[j]->vein.first).getToken().c_str(),
+                ENUM_KEY_STR(inclusion_type, queue[j]->vein.second).c_str(),
+                queue[j]->density() * 100
+            );
+        }
+        else
+        {
+            out.print("\rVein layer %d of %d... ", j+1, queue.size());
+            out.flush();
+        }
+
+        queue[j]->place_tiles();
+    }
+
+    out.print("done.\n");
+    return true;
+}
+
+command_result cmd_3dveins(color_ostream &con, std::vector<std::string> & parameters)
+{
+    bool verbose = false;
+
+    for (size_t i = 0; i < parameters.size(); i++)
+    {
+        if (parameters[i] == "verbose")
+            verbose = true;
+        else
+            return CR_WRONG_USAGE;
+    }
 
     CoreSuspender suspend;
 
@@ -709,7 +1457,12 @@ command_result cmd_3dveins(color_ostream &con, vector <string> & parameters)
     if (!generator.scan_tiles())
         return CR_FAILURE;
 
-    generator.print_mineral_stats();
+    con.print("Generating veins...\n");
+
+    if (!generator.form_veins())
+        return CR_FAILURE;
+    if (!generator.place_veins(verbose))
+        return CR_FAILURE;
 
     con.print("Writing tiles...\n");
 

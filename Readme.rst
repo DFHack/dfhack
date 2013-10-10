@@ -361,6 +361,24 @@ Usage:
 Map modification
 ================
 
+3dveins
+-------
+
+Removes all existing veins from the map and generates new ones using
+3D Perlin noise, in order to produce a layout that smoothly flows between
+Z levels. The vein distribution is based on the world seed, so running
+the command for the second time should produce no change. It is best to
+run it just once immediately after embark.
+
+This command is intended as only a cosmetic change, so it takes
+care to exactly preserve the mineral counts reported by ``prospect all``.
+The amounts of different layer stone may slightly change in some cases
+if vein mass shifts between Z layers.
+
+This command is very unlikely to work on maps generated before version 0.34.08.
+
+Note that there is no undo option other than restoring from backup.
+
 changelayer
 -----------
 Changes material of the geology layer under cursor to the specified inorganic

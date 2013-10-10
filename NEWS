@@ -28,7 +28,8 @@ DFHack future
     - mousequery: Look and poke at the map elements with the mouse.
     - autotrade: Automatically send items in marked stockpiles to trade depot, when trading is possible.
     - stocks: An improved stocks display screen.
-    
+    - 3dveins: Reshapes all veins on the map in a way that flows between Z levels.
+
 DFHack v0.34.11-r3
 
   Internals:

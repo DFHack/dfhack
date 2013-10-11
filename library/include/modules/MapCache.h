@@ -286,6 +286,15 @@ public:
         return true;
     }
 
+    bool getFlagAt(df::coord2d p, df::tile_designation::Mask mask) {
+        return (index_tile<df::tile_designation&>(designation,p).whole & mask) != 0;
+    }
+    bool getFlagAt(df::coord2d p, df::tile_occupancy::Mask mask) {
+        return (index_tile<df::tile_occupancy&>(occupancy,p).whole & mask) != 0;
+    }
+    bool setFlagAt(df::coord2d p, df::tile_designation::Mask mask, bool set);
+    bool setFlagAt(df::coord2d p, df::tile_occupancy::Mask mask, bool set);
+
     int itemCountAt(df::coord2d p)
     {
         if (!item_counts) init_item_counts();

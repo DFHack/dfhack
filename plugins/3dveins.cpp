@@ -373,6 +373,7 @@ struct GeoLayer
 
     df::world_geo_layer *info;
     int thickness, z_bias;
+    int aquifer_depth;
 
     int16_t material;
     bool is_soil;
@@ -484,6 +485,7 @@ GeoLayer::GeoLayer(GeoBiome *parent, int index, df::world_geo_layer *info)
 {
     thickness = info->top_height - info->bottom_height + 1;
     z_bias = 0;
+    aquifer_depth = 0;
     tiles = unmined_tiles = mineral_tiles = 0;
     material = info->mat_index;
     is_soil = isSoilInorganic(material);
@@ -501,6 +503,8 @@ struct VeinGenerator
 
     std::map<int, GeoBiome*> biomes;
     std::vector<GeoBiome*> biome_by_idx;
+
+    std::vector<bool> can_support_aquifer;
 
     struct VSeeds {
         uint32_t seeds[NUM_INCLUSIONS];
@@ -550,6 +554,12 @@ struct VeinGenerator
 
 bool VeinGenerator::init_biomes()
 {
+    auto &mats = df::inorganic_raw::get_vector();
+    can_support_aquifer.resize(mats.size());
+
+    for (size_t i = 0; i < mats.size(); i++)
+        can_support_aquifer[i] = mats[i]->flags.is_set(df::inorganic_flags::AQUIFER);
+
     biome_by_idx.resize(map.getBiomeCount());
 
     size = df::coord2d(map.maxBlockX()+1, map.maxBlockY()+1);
@@ -786,6 +796,8 @@ bool VeinGenerator::adjust_layer_depth(df::coord2d column)
 
 bool VeinGenerator::scan_block_tiles(Block *b, df::coord2d column, int z)
 {
+    bool aquifer = b->getRaw()->flags.bits.has_aquifer;
+
     for (int x = 0; x < 16; x++)
     {
         for (int y = 0; y < 16; y++)
@@ -837,6 +849,12 @@ bool VeinGenerator::scan_block_tiles(Block *b, df::coord2d column, int z)
                     layer->unmined_tiles++;
                     block->unmined.setassignment(x,y,true);
                 }
+
+                if (aquifer && b->getFlagAt(tile, df::tile_designation::mask_water_table))
+                {
+                    int depth = z - col_info.min_level[x][y][layer->index] + 1;
+                    layer->aquifer_depth = std::max(layer->aquifer_depth, depth);
+                }
             }
         }
     }
@@ -875,6 +893,8 @@ void VeinGenerator::write_tiles()
 
 void VeinGenerator::write_block_tiles(Block *b, df::coord2d column, int z)
 {
+    bool aquifer = b->getRaw()->flags.bits.has_aquifer;
+
     for (int x = 0; x < 16; x++)
     {
         for (int y = 0; y < 16; y++)
@@ -896,6 +916,9 @@ void VeinGenerator::write_block_tiles(Block *b, df::coord2d column, int z)
                 int mat = block->material[x][y];
                 df::inclusion_type vein = inclusion_type::CLUSTER;
 
+                bool aquifer_tile = aquifer
+                                 && (z-col_info.min_level[x][y][layer->index]) < layer->aquifer_depth;
+
                 if (mat < 0)
                 {
                     if (layer->is_soil)
@@ -905,9 +928,14 @@ void VeinGenerator::write_block_tiles(Block *b, df::coord2d column, int z)
                 }
                 else
                 {
+                    aquifer_tile = aquifer_tile && can_support_aquifer[mat];
+
                     vein = (df::inclusion_type)block->veintype[x][y];
                     ok = b->setStoneAt(tile, tt, mat, vein, true, true);
                 }
+
+                if (aquifer)
+                    b->setFlagAt(tile, df::tile_designation::mask_water_table, aquifer_tile);
 
                 if (!ok)
                 {

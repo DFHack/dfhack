@@ -220,6 +220,32 @@ MapExtras::Block::BasematInfo::BasematInfo()
     memset(veinmat,-1,sizeof(veinmat));
 }
 
+bool MapExtras::Block::setFlagAt(df::coord2d p, df::tile_designation::Mask mask, bool set)
+{
+    if(!valid) return false;
+    auto &val = index_tile<df::tile_designation&>(designation,p);
+    bool cur = (val.whole & mask) != 0;
+    if (cur != set)
+    {
+        dirty_designations = true;
+        val.whole = (set ? val.whole | mask : val.whole & ~mask);
+    }
+    return true;
+}
+
+bool MapExtras::Block::setFlagAt(df::coord2d p, df::tile_occupancy::Mask mask, bool set)
+{
+    if(!valid) return false;
+    auto &val = index_tile<df::tile_occupancy&>(occupancy,p);
+    bool cur = (val.whole & mask) != 0;
+    if (cur != set)
+    {
+        dirty_occupancies = true;
+        val.whole = (set ? val.whole | mask : val.whole & ~mask);
+    }
+    return true;
+}
+
 bool MapExtras::Block::setTiletypeAt(df::coord2d pos, df::tiletype tt, bool force)
 {
     if (!block)

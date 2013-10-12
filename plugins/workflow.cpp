@@ -12,6 +12,7 @@
 #include "modules/Gui.h"
 #include "modules/Job.h"
 #include "modules/World.h"
+#include "modules/Units.h"
 
 #include "DataDefs.h"
 #include "df/world.h"
@@ -173,7 +174,19 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
-/******************************
+static int count_dwarfs()
+{
+    int count = 0;
+    for (auto i = world->units.active.begin(); i != world->units.active.end(); i++)
+    {
+        if (Units::isCitizen(*i))
+            count++;
+    }
+
+    return count;
+}
+
+ /******************************
  * JOB STATE TRACKING STRUCTS *
  ******************************/
 
@@ -337,6 +350,13 @@ public:
     int goalCount() { return config.ival(0); }
     void setGoalCount(int v) { config.ival(0) = v; }
 
+    int goalCountComputed() { 
+        if (goalPerDwarf()) 
+            return goalCount() * count_dwarfs();
+        else
+            return goalCount();
+    }
+
     int goalGap() {
         int cval = (config.ival(1) <= 0) ? std::min(5,goalCount()/2) : config.ival(1);
         return std::max(1, std::min(goalCount()-1, cval));
@@ -351,6 +371,14 @@ public:
             config.ival(2) &= ~1;
     }
 
+    bool goalPerDwarf() { return config.ival(2) & 2; }
+    void setGoalPerDwarf(bool v) {
+        if (v)
+            config.ival(2) |= 2;
+        else
+            config.ival(2) &= ~2;
+    }
+
     int curItemStock() { return goalByCount() ? item_count : item_amount; }
 
     void init(const std::string &str)
@@ -363,8 +391,9 @@ public:
     void computeRequest()
     {
         int size = curItemStock();
-        request_resume = (size <= goalCount()-goalGap());
-        request_suspend = (size >= goalCount());
+        int goal = goalCountComputed();
+        request_resume = (size <= goal-goalGap());
+        request_suspend = (size >= goal);
     }
 
     static const size_t int28_size = PersistentDataItem::int28_size;
@@ -1284,7 +1313,8 @@ static int count_rottables(ProtectedJob* pj)
     }
     return count;
 }
- 
+
+
 static void update_jobs_by_constraints(color_ostream &out)
 {
     for (TKnownJobs::const_iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
@@ -1361,7 +1391,7 @@ static void update_jobs_by_constraints(color_ostream &out)
 
         if (ct->low_stock_reported != DF_GLOBAL_VALUE(cur_season,-1))
         {
-            int count = ct->goalCount(), gap = ct->goalGap();
+            int count = ct->goalCountComputed(), gap = ct->goalGap();
 
             if (count >= gap*3 && ct->curItemStock() < std::min(gap*2, (count-gap)/2))
             {
@@ -1484,6 +1514,7 @@ static void push_constraint(lua_State *L, ItemConstraint *cv)
     // Constraint value
 
     Lua::SetField(L, cv->goalByCount(), ctable, "goal_by_count");
+    Lua::SetField(L, cv->goalPerDwarf(), ctable, "goal_per_dwarf");
     Lua::SetField(L, cv->goalCount(), ctable, "goal_value");
     Lua::SetField(L, cv->goalGap(), ctable, "goal_gap");
 
@@ -1585,6 +1616,7 @@ static int setConstraint(lua_State *L)
     bool by_count = lua_toboolean(L, 2);
     int count = luaL_optint(L, 3, -1);
     int gap = luaL_optint(L, 4, -1);
+    bool per_dwarf = lua_toboolean(L, 5);
 
     color_ostream &out = *Lua::GetOutput(L);
     update_data_structures(out);
@@ -1595,6 +1627,8 @@ static int setConstraint(lua_State *L)
 
     if (!lua_isnil(L, 2))
         icv->setGoalByCount(by_count);
+    if (!lua_isnil(L, 5))
+        icv->setGoalPerDwarf(per_dwarf);
     if (!lua_isnil(L, 3))
         icv->setGoalCount(count);
     if (!lua_isnil(L, 4))
@@ -1679,7 +1713,8 @@ static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job
     out << cv->config.val() << " " << flush;
     out.color(color);
     out << (cv->goalByCount() ? "count " : "amount ")
-           << cv->goalCount() << " (gap " << cv->goalGap() << ")" << endl;
+        << cv->goalCount() << (cv->goalPerDwarf() ? " per dwarf" : "") 
+        << " (gap " << cv->goalGap() << ")" << endl;
     out.reset_color();
 
     if (cv->item_count || cv->item_inuse_count)
@@ -1885,7 +1920,8 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
         {
             auto cv = constraints[i];
             out << "workflow " << (cv->goalByCount() ? "count " : "amount ")
-                << cv->config.val() << " " << cv->goalCount() << " " << cv->goalGap() << endl;
+                << cv->config.val() << " " << cv->goalCount() << (cv->goalPerDwarf() ? "D" : "") 
+                << " " << cv->goalGap() << endl;
         }
 
         return CR_OK;
@@ -1895,7 +1931,17 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
         if (parameters.size() < 3)
             return CR_WRONG_USAGE;
 
-        int limit = atoi(parameters[2].c_str());
+        bool byDwarf = false;
+
+        std::string l = parameters[2];
+        if (l[l.size()-1] == 'D') 
+        {
+            l = l.substr(0, l.size()-1);
+            byDwarf = true;
+        }
+
+        int limit = atoi(l.c_str());
+
         if (limit <= 0) {
             out.printerr("Invalid limit value.\n");
             return CR_FAILURE;
@@ -1906,6 +1952,7 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
             return CR_FAILURE;
 
         icv->setGoalByCount(cmd == "count");
+        icv->setGoalPerDwarf(byDwarf);
         icv->setGoalCount(limit);
         if (parameters.size() >= 4)
             icv->setGoalGap(atoi(parameters[3].c_str()));

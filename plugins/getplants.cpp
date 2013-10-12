@@ -217,7 +217,8 @@ static int do_chop_designation(bool chop, bool count_only)
                 continue;
 
             bool dirty = false;
-            if (chop && cur->designation[x][y].bits.dig == tile_dig_designation::No)
+            if (chop && cur->designation[x][y].bits.dig == tile_dig_designation::No &&
+                            cur->designation[x][y].bits.flow_size != 7)
             {
                 if (count_only)
                 {
@@ -754,6 +755,8 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
                 dirty = true;
                 ++count;
             }
+            if (cur->designation[x][y].bits.flow_size == 7)
+                continue;
             if (!deselect && cur->designation[x][y].bits.dig == tile_dig_designation::No)
             {
                 cur->designation[x][y].bits.dig = tile_dig_designation::Default;

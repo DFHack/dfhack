@@ -231,11 +231,23 @@ module DFHack
                 mat_index = df.world.world_data.region_details[idx].lava_stone
                 MaterialInfo.new(0, mat_index)
 
+            when :FEATURE
+                if designation.feature_local
+                    mx = mapblock.region_pos.x
+                    my = mapblock.region_pos.y
+                    df.decode_mat(df.world.world_data.feature_map[mx/16][my/16].features.feature_init[mx%16][my%16][mapblock.local_feature])
+                elsif designation.feature_global
+                    df.decode_mat(df.world.world_data.underground_regions[mapblock.global_feature].feature_init)
+                else
+                    MaterialInfo.new(-1, -1)
+                end
+
+            when :FROZEN_LIQUID
+                MaterialInfo.new('WATER')
+
             # TODO
             #when :PLANT
             #when :GRASS_DARK, :GRASS_DEAD, :GRASS_DRY, :GRASS_LIGHT
-            #when :FEATURE
-            #when :FROZEN_LIQUID
             #when :CONSTRUCTION
             else    # AIR ASHES BROOK CAMPFIRE DRIFTWOOD FIRE HFS MAGMA POOL RIVER
                 MaterialInfo.new(-1, -1)

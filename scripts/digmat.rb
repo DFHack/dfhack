@@ -35,14 +35,22 @@ def digmat_around(tile, digmode=tile.designation.dig, tilelist=[])
 	digmode = :Default if digmode == :No
 	[-1, 0, 1].each { |dz|
 		next if digmode == :Default and dz != 0
+		next if tile.z+dz < 1 or tile.z+dz > df.world.map.z_count-2
 		[-1, 0, 1].each { |dy|
+			next if tile.y+dy < 1 or tile.y+dy > df.world.map.y_count-2
 			[-1, 0, 1].each { |dx|
+				next if tile.x+dx < 1 or tile.x+dx > df.world.map.x_count-2
 				ntile = tile.offset(dx, dy, dz)
 				next if not ntile
 				next if ntile.designation.hidden
 				next if ntile.designation.dig != :No
 				next if ntile.shape_basic != :Wall
 				next if not ntile.mat_info === tile.mat_info
+
+				# ignore damp/warm stone walls
+				next if [-1, 0, 1].find { |ddy| [-1, 0, 1].find { |ddx|
+					t = ntile.offset(ddx, ddy) and t.designation.flow_size > 1
+				} }
 
 				ntile.dig(digmode)
 				digmat_watch(ntile, digmode, tilelist)

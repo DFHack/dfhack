@@ -175,7 +175,7 @@ module DFHack
 
         # return the RegionMapEntry (from designation.biome)
         def region_map_entry
-            b = designation.biome
+            b = mapblock.region_offset[designation.biome]
             wd = df.world.world_data
 
             # region coords + [[-1, -1], [0, -1], ..., [1, 1]][b]

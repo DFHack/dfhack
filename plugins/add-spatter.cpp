@@ -48,6 +48,7 @@ using df::global::ui;
 typedef df::reaction_product_item_improvementst improvement_product;
 
 DFHACK_PLUGIN("add-spatter");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 struct ReagentSource {
     int idx;
@@ -390,6 +391,7 @@ static bool find_reactions(color_ostream &out)
 
 static void enable_hooks(bool enable)
 {
+    is_enabled = enable;
     INTERPOSE_HOOK(item_hook, isImprovable).apply(enable);
     INTERPOSE_HOOK(product_hook, produce).apply(enable);
 }

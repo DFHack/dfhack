@@ -1617,6 +1617,7 @@ IMPLEMENT_HOOKS(df::viewscreen_dwarfmodest, burrow_search);
 
 
 DFHACK_PLUGIN("search");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 #define SEARCH_HOOKS \
     HOOK_ACTION(unitlist_search_hook) \
@@ -1632,15 +1633,28 @@ DFHACK_PLUGIN("search");
     HOOK_ACTION(burrow_search_hook) \
     HOOK_ACTION(stockpile_search_hook)
 
+DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
+{
+    if (!gps || !gview)
+        return CR_FAILURE;
+
+    if (is_enabled != enable)
+    {
+#define HOOK_ACTION(hook) \
+    !INTERPOSE_HOOK(hook, feed).apply(enable) || \
+    !INTERPOSE_HOOK(hook, render).apply(enable) ||
+
+        if (SEARCH_HOOKS 0)
+            return CR_FAILURE;
+
+        is_enabled = enable;
+    }
+
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-#define HOOK_ACTION(hook) \
-    !INTERPOSE_HOOK(hook, feed).apply() || \
-    !INTERPOSE_HOOK(hook, render).apply() ||
-
-    if (!gps || !gview || SEARCH_HOOKS 0)
-        out.printerr("Could not insert Search hooks!\n");
-
 #undef HOOK_ACTION
 
     const string a[] = {"Meager Quarters", "Modest Quarters", "Quarters", "Decent Quarters", "Fine Quarters", "Great Bedroom", "Grand Bedroom", "Royal Bedroom"};

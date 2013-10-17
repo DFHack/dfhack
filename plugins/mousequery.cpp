@@ -675,11 +675,30 @@ static command_result mousequery_cmd(color_ostream &out, vector <string> & param
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
-{
-    if (!gps || !INTERPOSE_HOOK(mousequery_hook, feed).apply() || !INTERPOSE_HOOK(mousequery_hook, render).apply())
-        out.printerr("Could not insert mousequery hooks!\n");
+DFHACK_PLUGIN("mousequery");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
+DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
+{
+    if (!gps)
+        return CR_FAILURE;
+
+    if (is_enabled != enable)
+    {
+        last_x = last_y = last_z = -1;
+
+        if (!INTERPOSE_HOOK(mousequery_hook, feed).apply(enable) ||
+			!INTERPOSE_HOOK(mousequery_hook, render).apply(enable))
+            return CR_FAILURE;
+
+        is_enabled = enable;
+    }
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
+{
     last_x = last_y = last_z = -1;
 
     commands.push_back(

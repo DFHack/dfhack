@@ -85,6 +85,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
     return CR_OK;
 }
 
+DFHACK_PLUGIN_IS_ENABLED(is_active);
+
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     t_gamemodes gm;
@@ -117,6 +119,7 @@ command_result nopause (color_ostream &out, vector <string> & parameters)
             nopause_state = 0;
         else
             nopause_state = 1;
+        is_active = nopause_state || (revealed == REVEALED);
         out.print("nopause %sactivated.\n", (nopause_state ? "" : "de"));
     }
     else
@@ -237,6 +240,7 @@ command_result reveal(color_ostream &out, vector<string> & params)
         else
             revealed = DEMON_REVEALED;
     }
+    is_active = nopause_state || (revealed == REVEALED);
     con.print("Map revealed.\n");
     if(!no_hell)
         con.print("Unpausing can unleash the forces of hell, so it has been temporarily disabled.\n");
@@ -296,6 +300,7 @@ command_result unreveal(color_ostream &out, vector<string> & params)
     // give back memory.
     hidesaved.clear();
     revealed = NOT_REVEALED;
+    is_active = nopause_state || (revealed == REVEALED);
     con.print("Map hidden!\n");
     return CR_OK;
 }
@@ -490,6 +495,7 @@ command_result revforget(color_ostream &out, vector<string> & params)
     // give back memory.
     hidesaved.clear();
     revealed = NOT_REVEALED;
+    is_active = nopause_state || (revealed == REVEALED);
     con.print("Reveal data forgotten!\n");
     return CR_OK;
 }

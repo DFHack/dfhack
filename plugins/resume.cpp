@@ -107,7 +107,7 @@ struct SuspendedBuilding
     }
 };
 
-static bool enabled = false;
+DFHACK_PLUGIN_IS_ENABLED(enabled);
 static bool buildings_scanned = false;
 static vector<SuspendedBuilding> suspended_buildings, resumed_buildings;
 
@@ -125,8 +125,10 @@ void scan_for_suspended_buildings()
             SuspendedBuilding sb(bld);
             sb.is_planned = job->job_items.size() == 1 && job->job_items[0]->item_type == item_type::NONE;
 
-            auto it = find_if(resumed_buildings.begin(), resumed_buildings.end(), 
-                [&] (SuspendedBuilding &rsb) { return rsb.bld == bld; });
+            auto it = resumed_buildings.begin();
+
+            for (; it != resumed_buildings.end(); ++it)
+                if (it->bld == bld) break;
 
             sb.was_resumed = it != resumed_buildings.end();
 
@@ -234,6 +236,23 @@ struct resume_hook : public df::viewscreen_dwarfmodest
 
 IMPLEMENT_VMETHOD_INTERPOSE(resume_hook, render);
 
+DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
+{
+    if (!gps)
+        return CR_FAILURE;
+
+    if (enabled != enable)
+    {
+        clear_scanned();
+
+        if (!INTERPOSE_HOOK(resume_hook, render).apply(enable))
+            return CR_FAILURE;
+
+        enabled = enable;
+    }
+
+    return CR_OK;
+}
 
 static command_result resume_cmd(color_ostream &out, vector <string> & parameters)
 {
@@ -251,12 +270,12 @@ static command_result resume_cmd(color_ostream &out, vector <string> & parameter
         }
         else if (cmd == 's')
         {
-            enabled = true;
+            plugin_enable(out, true);
             out << "Overlay enabled" << endl;
         }
         else if (cmd == 'h')
         {
-            enabled = false;
+            plugin_enable(out, false);
             out << "Overlay disabled" << endl;
         }
         else if (cmd == 'a')
@@ -275,12 +294,8 @@ static command_result resume_cmd(color_ostream &out, vector <string> & parameter
     return CR_OK;
 }
 
-
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!gps || !INTERPOSE_HOOK(resume_hook, render).apply())
-        out.printerr("Could not insert resume hooks!\n");
-
     commands.push_back(
         PluginCommand(
         "resume", "A plugin to help display and resume suspended constructions conveniently",

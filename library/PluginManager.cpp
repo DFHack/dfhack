@@ -172,6 +172,8 @@ Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _f
     plugin_onupdate = 0;
     plugin_onstatechange = 0;
     plugin_rpcconnect = 0;
+    plugin_enable = 0;
+    plugin_is_enabled = 0;
     state = PS_UNLOADED;
     access = new RefLock();
 }
@@ -245,6 +247,8 @@ bool Plugin::load(color_ostream &con)
     plugin_shutdown = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_shutdown");
     plugin_onstatechange = (command_result (*)(color_ostream &, state_change_event)) LookupPlugin(plug, "plugin_onstatechange");
     plugin_rpcconnect = (RPCService* (*)(color_ostream &)) LookupPlugin(plug, "plugin_rpcconnect");
+    plugin_enable = (command_result (*)(color_ostream &,bool)) LookupPlugin(plug, "plugin_enable");
+    plugin_is_enabled = (bool*) LookupPlugin(plug, "plugin_is_enabled");
     plugin_eval_ruby = (command_result (*)(color_ostream &, const char*)) LookupPlugin(plug, "plugin_eval_ruby");
     index_lua(plug);
     this->name = *plug_name;
@@ -254,11 +258,15 @@ bool Plugin::load(color_ostream &con)
     {
         state = PS_LOADED;
         parent->registerCommands(this);
+        if ((plugin_onupdate || plugin_enable) && !plugin_is_enabled)
+            con.printerr("Plugin %s has no enabled var!\n", name.c_str());
         return true;
     }
     else
     {
         con.printerr("Plugin %s has failed to initialize properly.\n", filename.c_str());
+        plugin_is_enabled = 0;
+        plugin_onupdate = 0;
         reset_lua();
         ClosePlugin(plugin_lib);
         state = PS_BROKEN;
@@ -294,6 +302,8 @@ bool Plugin::unload(color_ostream &con)
         if(plugin_shutdown)
             cr = plugin_shutdown(con);
         // cleanup...
+        plugin_is_enabled = 0;
+        plugin_onupdate = 0;
         reset_lua();
         parent->unregisterCommands(this);
         commands.clear();
@@ -408,12 +418,33 @@ bool Plugin::can_invoke_hotkey(const std::string & command, df::viewscreen *top 
 
 command_result Plugin::on_update(color_ostream &out)
 {
+    // Check things that are implicitly protected by the suspend lock
+    if (!plugin_onupdate)
+        return CR_NOT_IMPLEMENTED;
+    if (plugin_is_enabled && !*plugin_is_enabled)
+        return CR_OK;
+    // Grab mutex and call the thing
     command_result cr = CR_NOT_IMPLEMENTED;
     access->lock_add();
     if(state == PS_LOADED && plugin_onupdate)
     {
         cr = plugin_onupdate(out);
         Lua::Core::Reset(out, "plugin_onupdate");
+    }
+    access->lock_sub();
+    return cr;
+}
+
+command_result Plugin::set_enabled(color_ostream &out, bool enable)
+{
+    command_result cr = CR_NOT_IMPLEMENTED;
+    access->lock_add();
+    if(state == PS_LOADED && plugin_is_enabled && plugin_enable)
+    {
+        cr = plugin_enable(out, enable);
+
+        if (cr == CR_OK && enable != is_enabled())
+            cr = CR_FAILURE;
     }
     access->lock_sub();
     return cr;
@@ -524,6 +555,37 @@ void Plugin::reset_lua()
     }
 }
 
+int Plugin::lua_is_enabled(lua_State *state)
+{
+    auto obj = (Plugin*)lua_touserdata(state, lua_upvalueindex(1));
+
+    RefAutoinc lock(obj->access);
+    if (obj->state == PS_LOADED && obj->plugin_is_enabled)
+        lua_pushboolean(state, obj->is_enabled());
+    else
+        lua_pushnil(state);
+
+    return 1;
+}
+
+int Plugin::lua_set_enabled(lua_State *state)
+{
+    lua_settop(state, 1);
+    bool val = lua_toboolean(state, 1);
+
+    auto obj = (Plugin*)lua_touserdata(state, lua_upvalueindex(1));
+    RefAutoinc lock(obj->access);
+
+    color_ostream *out = Lua::GetOutput(state);
+
+    if (obj->state == PS_LOADED && obj->plugin_enable)
+        lua_pushboolean(state, obj->set_enabled(*out, val) == CR_OK);
+    else
+        luaL_error(state, "plugin %s unloaded, cannot enable or disable", obj->name.c_str());
+
+    return 1;
+}
+
 int Plugin::lua_cmd_wrapper(lua_State *state)
 {
     auto cmd = (LuaCommand*)lua_touserdata(state, lua_upvalueindex(1));
@@ -560,6 +622,19 @@ void Plugin::open_lua(lua_State *state, int table)
     table = lua_absindex(state, table);
 
     RefAutolock lock(access);
+
+    if (plugin_is_enabled)
+    {
+        lua_pushlightuserdata(state, this);
+        lua_pushcclosure(state, lua_is_enabled, 1);
+        lua_setfield(state, table, "isEnabled");
+    }
+    if (plugin_enable)
+    {
+        lua_pushlightuserdata(state, this);
+        lua_pushcclosure(state, lua_set_enabled, 1);
+        lua_setfield(state, table, "setEnabled");
+    }
 
     for (auto it = lua_commands.begin(); it != lua_commands.end(); ++it)
     {
@@ -604,7 +679,7 @@ void Plugin::push_function(lua_State *state, LuaFunction *fn)
 PluginManager::PluginManager(Core * core)
 {
     cmdlist_mutex = new mutex();
-    eval_ruby = NULL;
+    ruby = NULL;
 }
 
 PluginManager::~PluginManager()
@@ -699,7 +774,7 @@ void PluginManager::registerCommands( Plugin * p )
         belongs[cmds[i].name] = p;
     }
     if (p->plugin_eval_ruby)
-        eval_ruby = p->plugin_eval_ruby;
+        ruby = p;
     cmdlist_mutex->unlock();
 }
 
@@ -713,6 +788,6 @@ void PluginManager::unregisterCommands( Plugin * p )
         belongs.erase(cmds[i].name);
     }
     if (p->plugin_eval_ruby)
-        eval_ruby = NULL;
+        ruby = NULL;
     cmdlist_mutex->unlock();
 }

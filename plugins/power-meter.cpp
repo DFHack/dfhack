@@ -160,7 +160,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(trap_hook, getName);
 IMPLEMENT_VMETHOD_INTERPOSE(trap_hook, updateAction);
 IMPLEMENT_VMETHOD_INTERPOSE(trap_hook, drawBuilding);
 
-static bool enabled = false;
+DFHACK_PLUGIN_IS_ENABLED(enabled);
 
 static void enable_hooks(bool enable)
 {

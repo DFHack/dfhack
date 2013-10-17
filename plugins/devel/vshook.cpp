@@ -23,6 +23,8 @@ using df::global::gps;
 
 DFHACK_PLUGIN("vshook");
 
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
 struct title_hook : df::viewscreen_titlest {
     typedef df::viewscreen_titlest interpose_base;
 
@@ -37,13 +39,26 @@ struct title_hook : df::viewscreen_titlest {
 
 IMPLEMENT_VMETHOD_INTERPOSE(title_hook, render);
 
+DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
+{
+    if (!gps)
+        return CR_FAILURE;
+
+    if (enable != is_enabled)
+    {
+        if (!INTERPOSE_HOOK(title_hook, render).apply(enable))
+            return CR_FAILURE;
+
+        is_enabled = enable;
+    }
+
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (gps)
-    {
-        if (!INTERPOSE_HOOK(title_hook, render).apply())
-            out.printerr("Could not interpose viewscreen_titlest::render\n");
-    }
+    // DON'T DO THIS IN NON-EXAMPLE PLUGINS
+    plugin_enable(out, true);
 
     return CR_OK;
 }

@@ -15,6 +15,8 @@ using namespace DFHack;
 uint64_t timeLast=0;
 static tthread::mutex* mymutex=0;
 
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
 struct memory_data
 {
     void * addr;
@@ -96,6 +98,7 @@ void Deinit()
 {
     if(memdata.state==STATE_ON)
     {
+        is_enabled = false;
         memdata.state=STATE_OFF;
         delete [] memdata.buf;
         delete [] memdata.lbuf;
@@ -140,6 +143,7 @@ command_result memview (color_ostream &out, vector <string> & parameters)
     {
         Deinit();
         memdata.state=STATE_OFF;
+        is_enabled = false;
         mymutex->unlock();
         return CR_OK;
     }
@@ -156,6 +160,7 @@ command_result memview (color_ostream &out, vector <string> & parameters)
             mymutex->unlock();
             return CR_OK;
         }
+        is_enabled = true;
         memdata.state=STATE_ON;
     }
     if(parameters.size()>1)

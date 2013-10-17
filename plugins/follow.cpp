@@ -24,6 +24,7 @@ int32_t prevX, prevY, prevZ;
 uint8_t prevMenuWidth;
 
 DFHACK_PLUGIN("follow");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -53,6 +54,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         followedUnit = 0;
         prevX=prevY=prevZ = -1;
         prevMenuWidth = 0;
+        is_enabled = false;
         break;
     default:
         break;
@@ -97,6 +99,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     }
     else if((prevX != x || prevY != y || prevZ != z) && prevMenuWidth == menu_width) //User has manually moved the window, stop following the unit
     {
+        is_enabled = false;
         followedUnit = 0;
         prevX=prevY=prevZ = -1;
         prevMenuWidth = 0;
@@ -146,6 +149,7 @@ command_result follow (color_ostream &out, std::vector <std::string> & parameter
     followedUnit = Gui::getSelectedUnit(out);
     if (followedUnit)
     {
+        is_enabled = true;
         std::ostringstream ss;
         ss << "Unpause to begin following " << df::global::world->raws.creatures.all[followedUnit->race]->name[0];
         if (followedUnit->name.has_name) ss << " " << followedUnit->name.first_name;
@@ -153,5 +157,6 @@ command_result follow (color_ostream &out, std::vector <std::string> & parameter
         out.print(ss.str().c_str());
     }
     else followedUnit = 0;
+    is_enabled = (followedUnit != NULL);
     return CR_OK;
 }

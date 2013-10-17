@@ -1996,6 +1996,16 @@ To skip a row in your design, use a single ``;``.
 
 The script takes the plan filename, starting from the root df folder.
 
+digmat
+======
+Designates a tile for digging. Monitors the tile, and when it is dug out, add
+surrounding discovered tiles of the same material for digging. Similar to 'digv',
+but less cheaty. Works for stone layers, soil layers, veins, etc.
+
+If the tile you call the script on already has a digging designation, reuse the
+same designation for future digging (eg dig up/downstairs). When digging stairs,
+also designate tiles on z-1 and z+1 when they are discovered.
+
 superdwarf
 ==========
 Similar to fastdwarf, per-creature.

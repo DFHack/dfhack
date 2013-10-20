@@ -120,7 +120,7 @@ static void handle_job_init(color_ostream &out,df::job*){};
 static void handle_job_complete(color_ostream &out,df::job*){};
 static void handle_constructions(color_ostream &out,df::construction*){};
 static void handle_syndrome(color_ostream &out,int32_t,int32_t){};
-DEFINE_LUA_EVENT_1(onBuildingCreatedDestroyed, handle_int32t, int32_t );
+DEFINE_LUA_EVENT_1(onBuildingCreatedDestroyed, handle_int32t, int32_t);
 DEFINE_LUA_EVENT_1(onJobInitiated,handle_job_init,df::job*);
 DEFINE_LUA_EVENT_1(onJobCompleted,handle_job_complete,df::job*);
 DEFINE_LUA_EVENT_1(onUnitDeath,handle_int32t,int32_t);
@@ -190,45 +190,35 @@ static void ev_mng_building(color_ostream& out, void* ptr)
     onBuildingCreatedDestroyed(out,myId);
 }
 std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX,-1);
+typedef void (*handler_t) (color_ostream&,void*);
+static const handler_t eventHandlers[] = {
+ NULL,
+ ev_mng_jobInitiated,
+ ev_mng_jobCompleted,
+ ev_mng_unitDeath,
+ ev_mng_itemCreate,
+ ev_mng_building,
+ ev_mng_construction,
+ ev_mng_syndrome,
+ ev_mng_invasion,
+};
 static void enableEvent(int evType,int freq)
 {
+    if (freq < 0)
+        return;
+    if (evType < 0 || evType >= EventManager::EventType::EVENT_MAX || evType == EventManager::EventType::TICK)
+        throw std::runtime_error("invalid event type to enable");
+    EventManager::EventHandler::callback_t fun_ptr = eventHandlers[evType];
     EventManager::EventType::EventType typeToEnable=static_cast<EventManager::EventType::EventType>(evType);
-    EventManager::EventHandler::callback_t fun_ptr;
-    switch(typeToEnable)
-    {
-    case EventManager::EventType::BUILDING:
-        fun_ptr=ev_mng_building;
-        break;
-    case EventManager::EventType::JOB_INITIATED:
-        fun_ptr=ev_mng_jobInitiated;
-        break;
-    case EventManager::EventType::JOB_COMPLETED:
-        fun_ptr=ev_mng_jobCompleted;
-        break;
-    case EventManager::EventType::UNIT_DEATH:
-        fun_ptr=ev_mng_unitDeath;
-        break;
-    case EventManager::EventType::ITEM_CREATED:
-        fun_ptr=ev_mng_itemCreate;
-        break;
-    case EventManager::EventType::CONSTRUCTION:
-        fun_ptr=ev_mng_construction;
-        break;
-    case EventManager::EventType::SYNDROME:
-        fun_ptr=ev_mng_syndrome;
-        break;
-    case EventManager::EventType::INVASION:
-        fun_ptr=ev_mng_invasion;
-        break;
-    default:
-        throw std::runtime_error("Invalid event type to enable");
-    }
 
-    if(enabledEventManagerEvents[typeToEnable]!=-1)
-        EventManager::unregister(typeToEnable,EventManager::EventHandler(fun_ptr,enabledEventManagerEvents[typeToEnable]),plugin_self);
-    if(freq!=-1)
-        EventManager::registerListener(typeToEnable,EventManager::EventHandler(fun_ptr,freq),plugin_self);
-    enabledEventManagerEvents[typeToEnable]=freq;
+    int oldFreq = enabledEventManagerEvents[typeToEnable];
+    if (oldFreq != -1) {
+        if (freq >= oldFreq)
+            return;
+        EventManager::unregister(typeToEnable,EventManager::EventHandler(fun_ptr,oldFreq),plugin_self);
+    }
+    EventManager::registerListener(typeToEnable,EventManager::EventHandler(fun_ptr,freq),plugin_self);
+    enabledEventManagerEvents[typeToEnable] = freq;
 }
 DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(enableEvent),

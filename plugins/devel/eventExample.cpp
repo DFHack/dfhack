@@ -6,6 +6,8 @@
 #include "modules/EventManager.h"
 #include "DataDefs.h"
 
+#include "df/construction.h"
+#include "df/coord.h"
 #include "df/item.h"
 #include "df/job.h"
 #include "df/world.h"
@@ -105,6 +107,14 @@ void building(color_ostream& out, void* ptr) {
 
 void construction(color_ostream& out, void* ptr) {
     out.print("Construction created/destroyed: 0x%X\n", ptr);
+    df::construction* constr = (df::construction*)ptr;
+    df::coord pos = constr->pos;
+    out.print("  (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+    if ( df::construction::find(pos) == NULL )
+        out.print("  construction destroyed\n");
+    else
+        out.print("  construction created\n");
+    
 }
 
 void syndrome(color_ostream& out, void* ptr) {

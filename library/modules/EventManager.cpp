@@ -151,7 +151,7 @@ static int32_t nextBuilding;
 static unordered_set<int32_t> buildings;
 
 //construction
-static unordered_set<df::construction*> constructions;
+static unordered_map<df::coord, df::construction> constructions;
 static bool gameLoaded;
 
 //invasion
@@ -510,28 +510,35 @@ static void manageConstructionEvent(color_ostream& out) {
     unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
     
     multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
+    unordered_set<df::coord> toDelete;
     for ( auto a = constructions.begin(); a != constructions.end(); a++ ) {
-        df::construction* construction = *a;
-        if ( constructionsNow.find(construction) != constructionsNow.end() )
+        df::construction& construction = (*a).second;
+        if ( df::construction::find(construction.pos) != NULL )
             continue;
+        //construction removed
+        toDelete.insert((*a).first);
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler handle = (*b).second;
-            handle.eventHandler(out, (void*)construction);
-        }
-    }
-
-    for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); a++ ) {
-        df::construction* construction = *a;
-        if ( constructions.find(construction) != constructions.end() )
-            continue;
-        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
-            EventHandler handle = (*b).second;
-            handle.eventHandler(out, (void*)construction);
+            handle.eventHandler(out, (void*)&construction);
         }
     }
     
-    constructions.clear();
-    constructions.insert(constructionsNow.begin(), constructionsNow.end());
+    for ( auto a = toDelete.begin(); a != toDelete.end(); a++ ) {
+        constructions.erase(*a);
+    }
+    
+    for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); a++ ) {
+        df::construction* construction = *a;
+        bool b = constructions.find(construction->pos) != constructions.end();
+        constructions[construction->pos] = *construction;
+        if ( b )
+            continue;
+        //construction created
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler handle = (*b).second;
+            handle.eventHandler(out, (void*)construction);
+        }
+    }
 }
 
 static void manageSyndromeEvent(color_ostream& out) {

@@ -7,6 +7,9 @@
 #include "ColorText.h"
 #include "PluginManager.h"
 #include "Console.h"
+#include "DataDefs.h"
+
+#include <df/coord.h>
 
 namespace DFHack {
     namespace EventManager {
@@ -61,6 +64,20 @@ namespace DFHack {
         void manageEvents(color_ostream& out);
         void onStateChange(color_ostream& out, state_change_event event);
     }
+}
+
+namespace std {
+    template <>
+    struct hash<df::coord> {
+        std::size_t operator()(const df::coord& c) const {
+            size_t r = 17;
+            const size_t m = 65537;
+            r = m*(r+c.x);
+            r = m*(r+c.y);
+            r = m*(r+c.z);
+            return r;
+        }
+    };
 }
 
 #endif

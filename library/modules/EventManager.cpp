@@ -199,16 +199,17 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
 
         tickQueue.insert(newTickQueue.begin(), newTickQueue.end());
 
-        nextItem = 0;
-        nextBuilding = 0;
+        nextItem = *df::global::item_next_id;
+        nextBuilding = -1;//*df::global::building_next_id;
         lastTick = 0;
         nextInvasion = df::global::ui->invasions.next_id;
-        gameLoaded = true;
         
         for ( auto i = df::global::world->constructions.begin(); i != df::global::world->constructions.end(); i++ ) {
             df::construction* constr = *i;
             constructions[constr->pos] = *constr;
         }
+        
+        gameLoaded = true;
     }
 }
 

@@ -158,6 +158,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(autotrade autotrade.cpp)
     DFHACK_PLUGIN(stocks stocks.cpp)
     DFHACK_PLUGIN(treefarm treefarm.cpp)
+    DFHACK_PLUGIN(cleanconst cleanconst.cpp)
 endif()
 
 

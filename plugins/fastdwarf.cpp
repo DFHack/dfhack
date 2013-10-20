@@ -19,6 +19,8 @@ using df::global::world;
 // dfhack interface
 DFHACK_PLUGIN("fastdwarf");
 
+DFHACK_PLUGIN_IS_ENABLED(active);
+
 static bool enable_fastdwarf = false;
 static bool enable_teledwarf = false;
 
@@ -155,9 +157,22 @@ static command_result fastdwarf (color_ostream &out, vector <string> & parameter
             return CR_WRONG_USAGE;
     }
 
+    active = enable_fastdwarf || enable_teledwarf;
+
     out.print("Current state: fast = %d, teleport = %d.\n",
         (df::global::debug_turbospeed && *df::global::debug_turbospeed) ? 2 : (enable_fastdwarf ? 1 : 0),
         enable_teledwarf ? 1 : 0);
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
+{
+    if (active != enable)
+    {
+        active = enable_fastdwarf = enable;
+        enable_teledwarf = false;
+    }
 
     return CR_OK;
 }

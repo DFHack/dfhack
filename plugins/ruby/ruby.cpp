@@ -46,6 +46,16 @@ static std::vector<std::string> *dfhack_run_queue;
 
 DFHACK_PLUGIN("ruby")
 
+
+DFhackDataExport bool plugin_is_enabled = true;
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    plugin_is_enabled = enable;
+    return CR_OK;
+}
+
+
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     onupdate_active = 0;

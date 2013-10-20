@@ -475,7 +475,7 @@ module DFHack
         class StlVector32 < MemStruct
             attr_accessor :_tg
             def initialize(tg)
-                @_tg = tg
+                @_tg = tg || Number.new(32, false, 0, nil)
             end
 
             def length

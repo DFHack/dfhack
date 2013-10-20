@@ -288,9 +288,9 @@ void VMethodInterposeLinkBase::set_chain(void *chain)
     addr_to_method_pointer_(chain_mptr, chain);
 }
 
-VMethodInterposeLinkBase::VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr, int priority)
+VMethodInterposeLinkBase::VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr, int priority, const char *name)
     : host(host), vmethod_idx(vmethod_idx), interpose_method(interpose_method),
-      chain_mptr(chain_mptr), priority(priority),
+      chain_mptr(chain_mptr), priority(priority), name_str(name),
       applied(false), saved_chain(NULL), next(NULL), prev(NULL)
 {
     if (vmethod_idx < 0 || interpose_method == NULL)
@@ -303,8 +303,8 @@ VMethodInterposeLinkBase::VMethodInterposeLinkBase(virtual_identity *host, int v
          * - interpose_method comes from method_pointer_to_addr_
          */
 
-        fprintf(stderr, "Bad VMethodInterposeLinkBase arguments: %d %08x\n",
-                vmethod_idx, unsigned(interpose_method));
+        fprintf(stderr, "Bad VMethodInterposeLinkBase arguments: %d %08x (%s)\n",
+                vmethod_idx, unsigned(interpose_method), name_str);
         fflush(stderr);
         abort();
     }

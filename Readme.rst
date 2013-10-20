@@ -209,6 +209,25 @@ or is a prefix ending at a '/' boundary would be considered for execution, i.e.
 for context ``foo/bar/baz``, possible matches are any of ``@foo/bar/baz``, ``@foo/bar``,
 ``@foo`` or none.
 
+Enabling plugins
+================
+
+Many plugins can be in a distinct enabled or disabled state. Some of
+them activate and deactivate automatically depending on the contents
+of the world raws. Others store their state in world data. However a
+number of them have to be enabled globally, and the init file is the
+right place to do it.
+
+Most of such plugins support the built-in ``enable`` and ``disable``
+commands. Calling them at any time without arguments prints a list
+of enabled and disabled plugins, and shows whether that can be changed
+through the same commands.
+
+To enable or disable plugins that support this, use their names as
+arguments for the command::
+
+  enable manipulator search
+
 
 ========
 Commands
@@ -1278,6 +1297,9 @@ Subcommands that persist until disabled or DF quit:
                     unintended inverse dependency of training speed on unit count
                     (i.e. the more units you have, the slower it becomes), and making
                     the units spar more.
+
+:hive-crash: The hive code crashes if there are ungathered products in a hive without bees (bug 6368).
+             This tweak prevents it by auto-gathering the products if this happens.
 
 fix-armory
 ----------

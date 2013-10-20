@@ -125,7 +125,7 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
     {
         if (!Gui::getCursorCoords(cx,cy,cz))
         {
-            out.printerr("Cursor position not found. Please enabled the cursor.\n");
+            out.printerr("Cursor position not found. Please enable the cursor.\n");
             return CR_FAILURE;
         }
         pos_cursor = DFCoord(cx,cy,cz);

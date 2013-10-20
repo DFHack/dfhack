@@ -698,7 +698,7 @@ static void try_store_ammo(df::squad *squad)
     }
 }
 
-static bool is_enabled = false;
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out, state_change_event event)
 {
@@ -810,6 +810,21 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("World is not loaded: please load a game first.\n");
+        return CR_FAILURE;
+    }
+
+    if (enable)
+        enable_plugin(out);
+    else
+        disable_plugin(out);
+
+    return CR_OK;
+}
+
 static command_result fix_armory(color_ostream &out, vector <string> &parameters)
 {
     CoreSuspender suspend;
@@ -820,13 +835,9 @@ static command_result fix_armory(color_ostream &out, vector <string> &parameters
     string cmd = parameters[0];
 
     if (cmd == "enable")
-    {
-        enable_plugin(out);
-    }
+        return plugin_enable(out, true);
     else if (cmd == "disable")
-    {
-        disable_plugin(out);
-    }
+        return plugin_enable(out, false);
     else
         return CR_WRONG_USAGE;
 

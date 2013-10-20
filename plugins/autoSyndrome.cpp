@@ -39,12 +39,11 @@
 using namespace std;
 using namespace DFHack;
 
-static bool enabled = false;
-
 namespace ResetPolicy {
     typedef enum {DoNothing, ResetDuration, AddDuration, NewInstance} ResetPolicy;
 }
 
+DFHACK_PLUGIN_IS_ENABLED(enabled);
 DFHACK_PLUGIN("autoSyndrome");
 
 command_result autoSyndrome(color_ostream& out, vector<string>& parameters);
@@ -75,35 +74,44 @@ DFhackCExport command_result plugin_shutdown(color_ostream& out) {
     return CR_OK;
 }*/
 
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    if (enabled == enable)
+        return CR_OK;
+
+    enabled = enable;
+
+    if ( enabled ) {
+        EventManager::EventHandler handle(processJob, 0);
+        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, plugin_self);
+    } else {
+        EventManager::unregisterAll(plugin_self);
+    }
+
+    return CR_OK;
+}
+
 command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
     if ( parameters.size() > 1 )
         return CR_WRONG_USAGE;
 
-    bool wasEnabled = enabled;
+    bool enable = false;
     if ( parameters.size() == 1 ) {
         if ( parameters[0] == "enable" ) {
-            enabled = true;
+            enable = true;
         } else if ( parameters[0] == "disable" ) {
-            enabled = false;
+            enable = false;
         } else {
             int32_t a = atoi(parameters[0].c_str());
             if ( a < 0 || a > 1 )
                 return CR_WRONG_USAGE;
 
-            enabled = (bool)a;
+            enable = (bool)a;
         }
     }
 
     out.print("autoSyndrome is %s\n", enabled ? "enabled" : "disabled");
-    if ( enabled == wasEnabled )
-        return CR_OK;
-
-    EventManager::unregisterAll(plugin_self);
-    if ( enabled ) {
-        EventManager::EventHandler handle(processJob, 0);
-        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, plugin_self);
-    }
-    return CR_OK;
+    return plugin_enable(out, enable);
 }
 
 bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df::unit* unit, ResetPolicy::ResetPolicy policy) {

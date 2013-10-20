@@ -76,7 +76,7 @@ using df::global::world;
  * (mining, hunting, and woodcutting) need to be handled carefully to minimize churn.
  */
 
-static int enable_autolabor = 0;
+DFHACK_PLUGIN_IS_ENABLED(enable_autolabor);
 
 static bool print_debug = 0;
 
@@ -535,6 +535,7 @@ static void setOptionEnabled(ConfigFlags flag, bool on)
 
 static void cleanup_state()
 {
+    enable_autolabor = false;
     labor_infos.clear();
 }
 
@@ -1297,6 +1298,27 @@ void print_labor (df::unit_labor labor, color_ostream &out)
     }
 }
 
+DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
+{
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("World is not loaded: please load a game first.\n");
+        return CR_FAILURE;
+    }
+
+    if (enable && !enable_autolabor)
+    {
+        enable_plugin(out);
+    }
+    else if(!enable && enable_autolabor)
+    {
+        enable_autolabor = false;
+        setOptionEnabled(CF_ENABLED, false);
+
+        out << "Autolabor is disabled." << endl;
+    }
+
+    return CR_OK;
+}
 
 command_result autolabor (color_ostream &out, std::vector <std::string> & parameters)
 {
@@ -1312,19 +1334,8 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
          parameters[0] == "1" || parameters[0] == "disable"))
     {
         bool enable = (parameters[0] == "1" || parameters[0] == "enable");
-        if (enable && !enable_autolabor)
-        {
-            enable_plugin(out);
-        }
-        else if(!enable && enable_autolabor)
-        {
-            enable_autolabor = false;
-            setOptionEnabled(CF_ENABLED, false);
 
-            out << "The plugin is disabled." << endl;
-        }
-
-        return CR_OK;
+        return plugin_enable(out, enable);
     }
     else if (parameters.size() == 2 && parameters[0] == "haulpct")
     {

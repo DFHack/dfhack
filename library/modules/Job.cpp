@@ -151,7 +151,7 @@ bool DFHack::operator== (const df::job &a, const df::job &b)
     CHECK_NULL_POINTER(&a);
     CHECK_NULL_POINTER(&b);
 
-    if (!(CMP(job_type) && CMP(unk2) &&
+    if (!(CMP(job_type) && CMP(job_subtype) &&
           CMP(mat_type) && CMP(mat_index) &&
           CMP(item_subtype) && CMP(item_category.whole) &&
           CMP(hist_figure_id) && CMP(material_category.whole) &&

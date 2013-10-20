@@ -8,7 +8,7 @@ if cmd=="--file" or cmd=="-f" then
     if f==nil then
         qerror(err)
     end
-    dfhack.pcall(f,table.unpack(args,3))
+    dfhack.safecall(f,table.unpack(args,3))
 elseif cmd=="--save" or cmd=="-s" then
     if df.global.world.cur_savegame.save_dir=="" then
         qerror("Savefile not loaded")
@@ -19,7 +19,7 @@ elseif cmd=="--save" or cmd=="-s" then
     if f==nil then
         qerror(err)
     end
-    dfhack.pcall(f,table.unpack(args,3))
+    dfhack.safecall(f,table.unpack(args,3))
 elseif cmd~=nil then
     -- Support some of the prefixes allowed by dfhack.interpreter
     local prefix

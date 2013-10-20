@@ -66,6 +66,7 @@ using namespace std;
 #include "df/game_mode.h"
 #include "df/unit_misc_trait.h"
 #include "df/unit_skill.h"
+#include "df/curse_attr_change.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -1208,12 +1209,10 @@ int Units::computeMovementSpeed(df::unit *unit)
     if (unsigned(unit->counters.webbed-1) <= 8)
         speed += unit->counters.webbed*100;
 
-    // Muscle weight vs vascular tissue (?)
+    // Muscle and fat weight vs expected size
 
-    auto &attr_tissue = unit->body.physical_attr_tissues;
-    int muscle = attr_tissue[STRENGTH];
-    int blood = attr_tissue[AGILITY];
-    speed = std::max(speed*3/4, std::min(speed*3/2, int(int64_t(speed)*muscle/blood)));
+    auto &s_info = unit->body.size_info;
+    speed = std::max(speed*3/4, std::min(speed*3/2, int(int64_t(speed)*s_info.size_cur/s_info.size_base)));
 
     // Attributes
 
@@ -1243,7 +1242,7 @@ int Units::computeMovementSpeed(df::unit *unit)
     // Inventory encumberance
 
     int total_weight = calcInventoryWeight(unit);
-    int free_weight = std::max(1, muscle/10 + strength_attr*3);
+    int free_weight = std::max(1, s_info.size_cur/10 + strength_attr*3);
 
     if (free_weight < total_weight)
     {

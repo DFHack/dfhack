@@ -104,9 +104,9 @@ OPTION(BUILD_PLUGINS "Build the plugins." ON)
 # enable C++11 features
 IF(UNIX)
   add_definitions(-DLINUX_BUILD)
-  SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -Wall -Wno-unused-variable")
-  SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic -std=c++0x")
-  SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic")
+  SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g -Wall -Wno-unused-variable")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -m32 -march=i686 -mtune=generic -std=c++0x")
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -m32 -march=i686 -mtune=generic")
 ELSEIF(MSVC)
   # for msvc, tell it to always use 8-byte pointers to member functions to avoid confusion
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /vmm /MP")

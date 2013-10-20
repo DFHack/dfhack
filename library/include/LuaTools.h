@@ -34,6 +34,11 @@ distribution.
 #include <lua.h>
 #include <lauxlib.h>
 
+/// Allocate a new user data object and push it on the stack
+inline void *operator new (std::size_t size, lua_State *L) {
+    return lua_newuserdata(L, size);
+}
+
 namespace DFHack {
     class function_identity_base;
     struct MaterialInfo;

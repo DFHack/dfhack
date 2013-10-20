@@ -145,7 +145,7 @@ struct trap_hook : df::building_trapst {
         INTERPOSE_NEXT(updateAction)();
     }
 
-    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (df::building_drawbuffer *db, void *unk))
+    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (df::building_drawbuffer *db, int16_t unk))
     {
         INTERPOSE_NEXT(drawBuilding)(db, unk);
 
@@ -160,7 +160,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(trap_hook, getName);
 IMPLEMENT_VMETHOD_INTERPOSE(trap_hook, updateAction);
 IMPLEMENT_VMETHOD_INTERPOSE(trap_hook, drawBuilding);
 
-static bool enabled = false;
+DFHACK_PLUGIN_IS_ENABLED(enabled);
 
 static void enable_hooks(bool enable)
 {

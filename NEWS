@@ -11,10 +11,12 @@ DFHack future
     - multicmd: run a sequence of dfhack commands, separated by ';'
     - autobutcher: A GUI front-end for the autobutcher plugin.
     - invasionNow: trigger an invasion, or many
+    - startdwarf: change the number of dwarves for a new embark
   Misc improvements:
     - exterminate: renamed from slayrace, add help message, add butcher mode
     - ruby: add df.dfhack_run "somecommand"
-    - magmasource: rename to source, allow water/magma sources/drains
+    - magmasource: rename to 'source', allow water/magma sources/drains
+    - core: fix SC_WORLD_(UN)LOADED event for arena mode
     - autoSyndrome:
         disable by default
         reorganized special tags
@@ -23,6 +25,8 @@ DFHack future
     - syndromeTrigger: replaces and extends trueTransformation. Can trigger things when syndromes are added for any reason.
     - fastdwarf: fixed bug involving fastdwarf and teledwarf being on at the same time
     - workNow: can optionally look for jobs when jobs are completed
+  New tweaks:
+    - hive-crash: Prevent crash if bees die in a hive with ungathered products (bug 6368).
   New plugins:
     - buildingplan: Place furniture before it's built
     - outsideOnly: make raw-specified buildings impossible to build inside

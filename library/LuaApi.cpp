@@ -51,6 +51,7 @@ distribution.
 #include "modules/Burrows.h"
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"
+#include "modules/Random.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -92,6 +93,10 @@ using namespace DFHack;
 using namespace DFHack::LuaWrapper;
 
 using Screen::Pen;
+using Random::MersenneRNG;
+using Random::PerlinNoise1D;
+using Random::PerlinNoise2D;
+using Random::PerlinNoise3D;
 
 void dfhack_printerr(lua_State *S, const std::string &str);
 
@@ -739,12 +744,10 @@ void Lua::Push(lua_State *L, const Screen::Pen &info)
         return;
     }
 
-    void *pdata = lua_newuserdata(L, sizeof(Pen));
+    new (L) Pen(info);
 
     lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_PEN_TOKEN);
     lua_setmetatable(L, -2);
-
-    new (pdata) Pen(info);
 }
 
 static Pen *check_pen_native(lua_State *L, int index)
@@ -1031,6 +1034,200 @@ static void OpenPen(lua_State *state)
     lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_PEN_TOKEN);
 
     luaL_setfuncs(state, dfhack_pen_funcs, 0);
+
+    lua_pop(state, 1);
+}
+
+/********************
+ * Random generator *
+ ********************/
+
+static int DFHACK_RANDOM_TOKEN = 0;
+
+static MersenneRNG *check_random_native(lua_State *L, int index)
+{
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_RANDOM_TOKEN);
+
+    if (!lua_getmetatable(L, index) || !lua_rawequal(L, -1, -2))
+        luaL_argerror(L, index, "not a random generator object");
+
+    lua_pop(L, 2);
+
+    return (MersenneRNG*)lua_touserdata(L, index);
+}
+
+static int dfhack_random_init(lua_State *L)
+{
+    lua_settop(L, 3);
+
+    MersenneRNG *prng = check_random_native(L, 1);
+
+    if (lua_isnil(L, 2))
+        prng->init();
+    else
+    {
+        std::vector<uint32_t> data;
+        int tcnt = luaL_optint(L, 3, 1);
+
+        if (lua_isnumber(L, 2))
+            data.push_back(lua_tounsigned(L, 2));
+        else if (lua_istable(L, 2))
+        {
+            int cnt = lua_rawlen(L, 2);
+            if (cnt <= 0)
+                luaL_argerror(L, 2, "empty list in dfhack.random.init");
+
+            for (int i = 1; i <= cnt; i++)
+            {
+                lua_rawgeti(L, 2, i);
+                if (!lua_isnumber(L, -1))
+                    luaL_argerror(L, 2, "not a number in dfhack.random.init argument");
+
+                data.push_back(lua_tounsigned(L, -1));
+                lua_pop(L, 1);
+            }
+        }
+        else
+            luaL_argerror(L, 2, "dfhack.random.init argument not number or table");
+
+        prng->init(data.data(), data.size(), tcnt);
+    }
+
+    lua_settop(L, 1);
+    return 1;
+}
+
+static int dfhack_random_new(lua_State *L)
+{
+    new (L) MersenneRNG();
+
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_RANDOM_TOKEN);
+    lua_setmetatable(L, -2);
+
+    lua_insert(L, 1);
+    return dfhack_random_init(L);
+}
+
+static int dfhack_random_random(lua_State *L)
+{
+    MersenneRNG *prng = check_random_native(L, 1);
+
+    lua_settop(L, 2);
+    if (lua_gettop(L) < 2 || lua_isnil(L, 2))
+        lua_pushunsigned(L, prng->random());
+    else
+        lua_pushunsigned(L, prng->random(luaL_optunsigned(L, 2, 0)));
+    return 1;
+}
+
+static int dfhack_random_drandom(lua_State *L)
+{
+    lua_pushnumber(L, check_random_native(L, 1)->drandom());
+    return 1;
+}
+static int dfhack_random_drandom0(lua_State *L)
+{
+    lua_pushnumber(L, check_random_native(L, 1)->drandom0());
+    return 1;
+}
+static int dfhack_random_drandom1(lua_State *L)
+{
+    lua_pushnumber(L, check_random_native(L, 1)->drandom1());
+    return 1;
+}
+static int dfhack_random_unitrandom(lua_State *L)
+{
+    lua_pushnumber(L, check_random_native(L, 1)->unitrandom());
+    return 1;
+}
+static int dfhack_random_unitvector(lua_State *L)
+{
+    MersenneRNG *prng = check_random_native(L, 1);
+    int size = luaL_optint(L, 2, 3);
+    if (size <= 0 || size > 32)
+        luaL_argerror(L, 2, "vector size must be positive");
+    luaL_checkstack(L, size, "not enough stack in dfhack.random.unitvector");
+
+    std::vector<double> buf(size);
+    prng->unitvector(buf.data(), size);
+
+    for (int i = 0; i < size; i++)
+        lua_pushnumber(L, buf[i]);
+    return size;
+}
+
+static int eval_perlin_1(lua_State *L)
+{
+    auto &gen = *(PerlinNoise1D<float>*)lua_touserdata(L, lua_upvalueindex(1));
+    lua_pushnumber(L, gen(luaL_checknumber(L, 1)));
+    return 1;
+}
+static int eval_perlin_2(lua_State *L)
+{
+    auto &gen = *(PerlinNoise2D<float>*)lua_touserdata(L, lua_upvalueindex(1));
+    lua_pushnumber(L, gen(luaL_checknumber(L, 1), luaL_checknumber(L, 2)));
+    return 1;
+}
+static int eval_perlin_3(lua_State *L)
+{
+    auto &gen = *(PerlinNoise3D<float>*)lua_touserdata(L, lua_upvalueindex(1));
+    lua_pushnumber(L, gen(luaL_checknumber(L, 1), luaL_checknumber(L, 2), luaL_checknumber(L, 3)));
+    return 1;
+}
+
+static int dfhack_random_perlin(lua_State *L)
+{
+    MersenneRNG *prng = check_random_native(L, 1);
+    int size = luaL_optint(L, 2, 3);
+
+    switch (size)
+    {
+        case 1: {
+            auto pdata = new (L) PerlinNoise1D<float>();
+            pdata->init(*prng);
+            lua_pushcclosure(L, eval_perlin_1, 1);
+            break;
+        }
+        case 2: {
+            auto pdata = new (L) PerlinNoise2D<float>();
+            pdata->init(*prng);
+            lua_pushcclosure(L, eval_perlin_2, 1);
+            break;
+        }
+        case 3: {
+            auto pdata = new (L) PerlinNoise3D<float>();
+            pdata->init(*prng);
+            lua_pushcclosure(L, eval_perlin_3, 1);
+            break;
+        }
+        default:
+            luaL_argerror(L, 2, "perlin noise dimension must be 1, 2 or 3");
+    }
+
+    return 1;
+}
+
+static const luaL_Reg dfhack_random_funcs[] = {
+    { "new", dfhack_random_new },
+    { "init", dfhack_random_init },
+    { "random", dfhack_random_random },
+    { "drandom", dfhack_random_drandom },
+    { "drandom0", dfhack_random_drandom0 },
+    { "drandom1", dfhack_random_drandom1 },
+    { "unitrandom", dfhack_random_unitrandom },
+    { "unitvector", dfhack_random_unitvector },
+    { "perlin", dfhack_random_perlin },
+    { NULL, NULL }
+};
+
+static void OpenRandom(lua_State *state)
+{
+    luaL_getsubtable(state, lua_gettop(state), "random");
+
+    lua_dup(state);
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_RANDOM_TOKEN);
+
+    luaL_setfuncs(state, dfhack_random_funcs, 0);
 
     lua_pop(state, 1);
 }
@@ -2023,6 +2220,7 @@ void OpenDFHackApi(lua_State *state)
     OpenPersistent(state);
     OpenMatinfo(state);
     OpenPen(state);
+    OpenRandom(state);
 
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
     OpenModule(state, "gui", dfhack_gui_module);

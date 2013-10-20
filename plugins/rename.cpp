@@ -55,6 +55,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 static command_result rename(color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("rename");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -174,6 +175,9 @@ KNOWN_BUILDINGS
 
 static bool enable_building_rename(char code, bool enable)
 {
+    if (enable)
+        is_enabled = true;
+
     if (code == 'Z')
         INTERPOSE_HOOK(dwarf_render_zone_hook, render).apply(enable);
 
@@ -189,6 +193,7 @@ KNOWN_BUILDINGS
 
 static void disable_building_rename()
 {
+    is_enabled = false;
     INTERPOSE_HOOK(dwarf_render_zone_hook, render).remove();
 
 #define BUILDING(code, cname, tag) \

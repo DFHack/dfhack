@@ -35,6 +35,7 @@ distribution.
 #include "df/block_square_event_mineralst.h"
 #include "df/construction.h"
 #include "df/item.h"
+#include "df/inclusion_type.h"
 
 using namespace DFHack;
 
@@ -49,6 +50,22 @@ class DFHACK_EXPORT MapCache;
 
 class Block;
 
+struct BiomeInfo {
+    // Determined by the 4-bit index in the designation bitfield
+    static const unsigned MAX_LAYERS = 16;
+
+    df::coord2d pos;
+    int default_soil, default_stone, lava_stone;
+    int geo_index;
+    df::region_map_entry *biome;
+    df::world_geo_biome *geobiome;
+    df::world_region_details *details;
+    int16_t layer_stone[MAX_LAYERS];
+};
+
+typedef uint8_t t_veintype[16][16];
+typedef df::tiletype t_tilearr[16][16];
+
 class BlockInfo
 {
     Block *mblock;
@@ -56,8 +73,15 @@ class BlockInfo
     df::map_block *block;
 
 public:
+    enum GroundType {
+        G_UNKNOWN = 0, G_STONE, G_SOIL
+    };
+    static GroundType getGroundType(int material);
+
+    typedef df::block_square_event_mineralst::T_flags DFVeinFlags;
+
+    t_veintype veintype;
     t_blockmaterials veinmats;
-    t_blockmaterials basemats;
     t_blockmaterials grass;
     std::map<df::coord,df::plant*> plants;
 
@@ -72,7 +96,10 @@ public:
 
     t_matpair getBaseMaterial(df::tiletype tt, df::coord2d pos);
 
-    static void SquashVeins(df::map_block *mb, t_blockmaterials & materials);
+    static df::inclusion_type getVeinType(DFVeinFlags &flags);
+    static void setVeinType(DFVeinFlags &flags, df::inclusion_type type);
+
+    static void SquashVeins(df::map_block *mb, t_blockmaterials & materials, t_veintype &veintype);
     static void SquashFrozenLiquids (df::map_block *mb, tiletypes40d & frozen);
     static void SquashRocks (df::map_block *mb, t_blockmaterials & materials,
                              std::vector< std::vector <int16_t> > * layerassign);
@@ -95,18 +122,19 @@ public:
      * All coordinates are taken mod 16.
      */
 
-    //Arbitrary tag field for flood fills etc.
+    /// Arbitrary tag field for flood fills etc.
     int16_t &tag(df::coord2d p) {
         if (!tags) init_tags();
         return index_tile<int16_t&>(tags, p);
     }
 
-    // Base layer
+    /// Base layer tile type (i.e. layer stone, veins, feature stone)
     df::tiletype baseTiletypeAt(df::coord2d p)
     {
         if (!tiles) init_tiles();
         return index_tile<df::tiletype>(tiles->base_tiles,p);
     }
+    /// Base layer material (i.e. layer stone, veins, feature stone)
     t_matpair baseMaterialAt(df::coord2d p)
     {
         if (!basemats) init_tiles(true);
@@ -115,12 +143,14 @@ public:
             index_tile<int16_t>(basemats->mat_index,p)
         );
     }
+    /// Check if the base layer tile is a vein
     bool isVeinAt(df::coord2d p)
     {
         using namespace df::enums::tiletype_material;
         auto tm = tileMaterial(baseTiletypeAt(p));
         return tm == MINERAL;
     }
+    /// Check if the base layer tile is layer stone or soil
     bool isLayerAt(df::coord2d p)
     {
         using namespace df::enums::tiletype_material;
@@ -128,17 +158,49 @@ public:
         return tm == STONE || tm == SOIL;
     }
 
+    /// Vein material at pos (even if there is no vein tile), or -1 if none
     int16_t veinMaterialAt(df::coord2d p)
     {
-        return isVeinAt(p) ? baseMaterialAt(p).mat_index : -1;
+        if (!basemats) init_tiles(true);
+        return index_tile<int16_t>(basemats->veinmat,p);
     }
-    int16_t layerMaterialAt(df::coord2d p)
+    /// Vein type at pos (even if there is no vein tile)
+    df::inclusion_type veinTypeAt(df::coord2d p)
     {
         if (!basemats) init_tiles(true);
-        return index_tile<int16_t>(basemats->layermat,p);
+        return (df::inclusion_type)index_tile<uint8_t>(basemats->veintype,p);
     }
 
-    // Static layer (base + constructions)
+    /** Sets the vein material at the specified tile position.
+     *  Use -1 to clear the tile from all veins. Does not update tile types.
+     *  Returns false in case of some error, e.g. non-stone mat.
+     */
+    bool setVeinMaterialAt(df::coord2d p, int16_t mat, df::inclusion_type type = df::enums::inclusion_type::CLUSTER);
+
+    /// Geological layer soil or stone material at pos
+    int16_t layerMaterialAt(df::coord2d p) {
+        return biomeInfoAt(p).layer_stone[layerIndexAt(p)];
+    }
+
+    /// Biome-specific lava stone at pos
+    int16_t lavaStoneAt(df::coord2d p) { return biomeInfoAt(p).lava_stone; }
+
+    /**
+     * Sets the stone tile and material at specified position, automatically
+     * choosing between layer, lava or vein stone.
+     * The force_type flags ensures the correct inclusion type, even forcing
+     * a vein format if necessary. If kill_veins is true and the chosen mode
+     * isn't vein, it will clear any old veins from the tile.
+     */
+    bool setStoneAt(df::coord2d p, df::tiletype tile, int16_t mat, df::inclusion_type type = df::enums::inclusion_type::CLUSTER, bool force_type = false, bool kill_veins = false);
+
+    /**
+     * Sets the tile at the position to SOIL material. The actual material
+     * is completely determined by geological layers and cannot be set.
+     */
+    bool setSoilAt(df::coord2d p, df::tiletype tile, bool kill_veins = false);
+
+    /// Static layer tile (i.e. base + constructions)
     df::tiletype staticTiletypeAt(df::coord2d p)
     {
         if (!tiles) init_tiles();
@@ -146,6 +208,7 @@ public:
             return index_tile<df::tiletype>(tiles->con_info->tiles,p);
         return baseTiletypeAt(p);
     }
+    /// Static layer material (i.e. base + constructions)
     t_matpair staticMaterialAt(df::coord2d p)
     {
         if (!basemats) init_tiles(true);
@@ -223,6 +286,15 @@ public:
         return true;
     }
 
+    bool getFlagAt(df::coord2d p, df::tile_designation::Mask mask) {
+        return (index_tile<df::tile_designation&>(designation,p).whole & mask) != 0;
+    }
+    bool getFlagAt(df::coord2d p, df::tile_occupancy::Mask mask) {
+        return (index_tile<df::tile_occupancy&>(occupancy,p).whole & mask) != 0;
+    }
+    bool setFlagAt(df::coord2d p, df::tile_designation::Mask mask, bool set);
+    bool setFlagAt(df::coord2d p, df::tile_occupancy::Mask mask, bool set);
+
     int itemCountAt(df::coord2d p)
     {
         if (!item_counts) init_item_counts();
@@ -235,9 +307,16 @@ public:
     }
 
     bool Write();
+    bool isDirty();
+
+    int biomeIndexAt(df::coord2d p);
+    int layerIndexAt(df::coord2d p) {
+        return index_tile<df::tile_designation&>(designation,p).bits.geolayer_index;
+    }
 
     df::coord2d biomeRegionAt(df::coord2d p);
-    int16_t GeoIndexAt(df::coord2d p);
+    const BiomeInfo &biomeInfoAt(df::coord2d p);
+    int16_t GeoIndexAt(df::coord2d p) { return biomeInfoAt(p).geo_index; }
 
     bool GetGlobalFeature(t_feature *out);
     bool GetLocalFeature(t_feature *out);
@@ -258,11 +337,10 @@ private:
 
     void init();
 
-    int biomeIndexAt(df::coord2d p);
-
     bool valid;
     bool dirty_designations:1;
     bool dirty_tiles:1;
+    bool dirty_veins:1;
     bool dirty_temperatures:1;
     bool dirty_occupancies:1;
 
@@ -281,40 +359,53 @@ private:
     bool addItemOnGround(df::item *item);
     bool removeItemOnGround(df::item *item);
 
+    struct IceInfo {
+        df::tile_bitmask frozen;
+        df::tile_bitmask dirty;
+    };
     struct ConInfo {
         df::tile_bitmask constructed;
-        df::tiletype tiles[16][16];
+        df::tile_bitmask dirty;
+        t_tilearr tiles;
         t_blockmaterials mat_type;
         t_blockmaterials mat_index;
     };
     struct TileInfo {
-        df::tile_bitmask frozen;
         df::tile_bitmask dirty_raw;
-        df::tiletype raw_tiles[16][16];
+        t_tilearr raw_tiles;
 
+        IceInfo *ice_info;
         ConInfo *con_info;
 
-        df::tile_bitmask dirty_base;
-        df::tiletype base_tiles[16][16];
+        t_tilearr base_tiles;
 
         TileInfo();
         ~TileInfo();
 
+        void init_iceinfo();
         void init_coninfo();
+
+        void set_base_tile(df::coord2d pos, df::tiletype tile);
     };
     struct BasematInfo {
-        df::tile_bitmask dirty;
         t_blockmaterials mat_type;
         t_blockmaterials mat_index;
-        t_blockmaterials layermat;
+
+        df::tile_bitmask vein_dirty;
+        t_veintype       veintype;
+        t_blockmaterials veinmat;
 
         BasematInfo();
+
+        void set_base_mat(TileInfo *tiles, df::coord2d pos, int16_t type, int16_t idx);
     };
     TileInfo *tiles;
     BasematInfo *basemats;
     void init_tiles(bool basemat = false);
     void ParseTiles(TileInfo *tiles);
+    void WriteTiles(TileInfo*);
     void ParseBasemats(TileInfo *tiles, BasematInfo *bmats);
+    void WriteVeins(TileInfo *tiles, BasematInfo *bmats);
 
     designations40d designation;
     occupancies40d occupancy;
@@ -348,6 +439,9 @@ class DFHACK_EXPORT MapCache
         Block *b = BlockAtTile(coord);
         return b ? b->Allocate() : false;
     }
+
+    /// delete the block from memory
+    void discardBlock(Block *block);
 
     df::tiletype baseTiletypeAt (DFCoord tilecoord)
     {
@@ -507,9 +601,16 @@ class DFHACK_EXPORT MapCache
     uint32_t maxTileY() { return y_tmax; }
     uint32_t maxZ() { return z_max; }
 
+    size_t getBiomeCount() { return biomes.size(); }
+    const BiomeInfo &getBiomeByIndex(unsigned idx) {
+        return (idx < biomes.size()) ? biomes[idx] : biome_stub;
+    }
+
 private:
     friend class Block;
     friend class BlockInfo;
+
+    static const BiomeInfo biome_stub;
 
     bool valid;
     bool validgeo;
@@ -518,10 +619,7 @@ private:
     uint32_t x_tmax;
     uint32_t y_tmax;
     uint32_t z_max;
-    std::vector<df::coord2d> geoidx;
-    std::vector<int> default_soil;
-    std::vector<int> default_stone;
-    std::vector< std::vector <int16_t> > layer_mats;
+    std::vector<BiomeInfo> biomes;
     std::map<df::coord2d, df::world_region_details*> region_details;
     std::map<DFCoord, Block *> blocks;
 };

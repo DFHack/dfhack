@@ -161,6 +161,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(stocks stocks.cpp)
     DFHACK_PLUGIN(treefarm treefarm.cpp)
     DFHACK_PLUGIN(cleanconst cleanconst.cpp)
+    DFHACK_PLUGIN(3dveins 3dveins.cpp)
 endif()
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it

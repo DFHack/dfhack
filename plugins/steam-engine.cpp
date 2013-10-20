@@ -113,6 +113,7 @@
 using std::vector;
 using std::string;
 using std::stack;
+using std::set;
 using namespace DFHack;
 using namespace df::enums;
 

@@ -140,6 +140,7 @@ modules/Gui.cpp
 modules/Items.cpp
 modules/Job.cpp
 modules/kitchen.cpp
+modules/MapCache.cpp
 modules/Maps.cpp
 modules/Materials.cpp
 modules/Notes.cpp

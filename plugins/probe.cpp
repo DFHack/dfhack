@@ -263,6 +263,9 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
             out << " / " << inorganic[vein_rock].id
                 << " / "
                 << inorganic[vein_rock].name
+                << " ("
+                << ENUM_KEY_STR(inclusion_type,b->veinTypeAt(cursor))
+                << ")"
                 << endl;
         else
             out << endl;

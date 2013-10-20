@@ -60,7 +60,8 @@ inline void PerlinNoise<T,VSIZE,BITS,IDXT>::Impl<mask,i>::setup(
 ) {
     Impl<mask,i-1>::setup(self, pv, pt);
 
-    T t = std::floor(pv[i]);
+    int32_t t = int32_t(pv[i]);
+    t -= (pv[i]<t);
     pt[i].s = s_curve(pt[i].r0 = pv[i] - t);
 
     unsigned b = unsigned(int32_t(t));

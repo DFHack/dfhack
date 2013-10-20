@@ -10,6 +10,7 @@ DFHack v0.34.11-r3
     - restrictice - Restrict traffic on squares above visible ice.
     - treefarm - automatically chop trees and dig obsidian
     - diggingInvaders - allows invaders to dig and/or deconstruct walls and buildings in order to get at your dwarves.
+    - enable, disable - Built-in commands that can be used to enable/disable many plugins.
   New scripts:
     - masspit: designate caged creatures in a zone for pitting
     - locate_ore: scan the map for unmined ore veins
@@ -30,9 +31,11 @@ DFHack v0.34.11-r3
     - syndromeTrigger: replaces and extends trueTransformation. Can trigger things when syndromes are added for any reason.
     - fastdwarf: fixed bug involving fastdwarf and teledwarf being on at the same time
     - workNow: can optionally look for jobs when jobs are completed
+    - tiletypes: support changing tile material to arbitrary stone.
   New tweaks:
     - hive-crash: Prevent crash if bees die in a hive with ungathered products (bug 6368).
   New plugins:
+    - 3dveins: Reshapes all veins on the map in a way that flows between Z levels.
     - buildingplan: Place furniture before it's built
     - outsideOnly: make raw-specified buildings impossible to build inside
     - resume: A plugin to help display and resume suspended constructions conveniently
@@ -44,7 +47,8 @@ DFHack v0.34.11-r3
     - Core: there is now a per-save dfhack.init file for when the save is loaded, and another for when it is unloaded
     - EventManager: fixed job completion detection
     - Once: easy way to make sure something happens once per run of DF, such as an error message
-    
+    - Lua API for a better random number generator and perlin noise functions.
+
 DFHack v0.34.11-r3
 
   Internals:

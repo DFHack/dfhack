@@ -491,7 +491,7 @@ GeoLayer::GeoLayer(GeoBiome *parent, int index, df::world_geo_layer *info)
     is_soil = isSoilInorganic(material);
 }
 
-const int NUM_INCLUSIONS = 1+(int)ENUM_LAST_ITEM(inclusion_type);
+const unsigned NUM_INCLUSIONS = 1+(int)ENUM_LAST_ITEM(inclusion_type);
 
 struct VeinGenerator
 {
@@ -504,13 +504,21 @@ struct VeinGenerator
     std::map<int, GeoBiome*> biomes;
     std::vector<GeoBiome*> biome_by_idx;
 
-    std::vector<bool> can_support_aquifer;
+    struct VMats {
+        bool can_support_aquifer;
+        int8_t default_type;
 
-    struct VSeeds {
+        int8_t valid_type[NUM_INCLUSIONS];
         uint32_t seeds[NUM_INCLUSIONS];
         NoiseFunction::Ptr funcs[NUM_INCLUSIONS];
+
+        VMats()
+        {
+            default_type = -2;
+            memset(valid_type, -1, sizeof(valid_type));
+        }
     };
-    std::vector<VSeeds> seeds;
+    std::vector<VMats> materials;
 
     std::map<t_veinkey, VeinExtent::PVec> veins;
 
@@ -555,10 +563,16 @@ struct VeinGenerator
 bool VeinGenerator::init_biomes()
 {
     auto &mats = df::inorganic_raw::get_vector();
-    can_support_aquifer.resize(mats.size());
+    materials.resize(world->raws.inorganics.size());
 
     for (size_t i = 0; i < mats.size(); i++)
-        can_support_aquifer[i] = mats[i]->flags.is_set(df::inorganic_flags::AQUIFER);
+    {
+        materials[i].can_support_aquifer = mats[i]->flags.is_set(inorganic_flags::AQUIFER);
+
+        // Be silent about slade veins, which can happen below hell
+        if (mats[i]->flags.is_set(inorganic_flags::DEEP_SURFACE))
+            materials[i].valid_type[0] = -2;
+    }
 
     biome_by_idx.resize(map.getBiomeCount());
 
@@ -582,6 +596,27 @@ bool VeinGenerator::init_biomes()
 
             if (!biome->init_layers())
                 return false;
+
+            // Mark valid vein types
+            auto &layers = info.geobiome->layers;
+
+            for (size_t i = 0; i < layers.size(); i++)
+            {
+                auto layer = layers[i];
+
+                for (size_t j = 0; j < layer->vein_mat.size(); j++)
+                {
+                    if (unsigned(layer->vein_mat[j]) >= materials.size() ||
+                        unsigned(layer->vein_type[j]) >= NUM_INCLUSIONS)
+                        continue;
+
+                    auto &minfo = materials[layer->vein_mat[j]];
+                    int type = layer->vein_type[j];
+                    minfo.valid_type[type] = type;
+                    if (minfo.default_type < 0 || type == inclusion_type::CLUSTER)
+                        minfo.default_type = type;
+                }
+            }
         }
 
         biome_by_idx[i] = biome;
@@ -814,14 +849,52 @@ bool VeinGenerator::scan_block_tiles(Block *b, df::coord2d column, int z)
             switch (tileMaterial(tt))
             {
                 case tiletype_material::MINERAL:
-                    matches = true;
-                    // Count minerals
-                    if (wall)
+                {
+                    t_veinkey key(b->veinMaterialAt(tile),b->veinTypeAt(tile));
+
+                    // Check if the vein material and type is reasonable
+                    if (unsigned(key.first) >= materials.size() ||
+                        unsigned(key.second) >= NUM_INCLUSIONS)
                     {
-                        layer->mineral_tiles++;
-                        layer->mineral_count[t_veinkey(b->veinMaterialAt(tile),b->veinTypeAt(tile))]++;
+                        out.printerr("Invalid vein code: %d %d - aborting.\n",key.first,key.second);
+                        return false;
+                    }
+
+                    int8_t &status = materials[key.first].valid_type[key.second];
+
+                    if (status == -1)
+                    {
+                        // Report first occurence of unreasonable vein spec
+                        out.printerr(
+                            "Unexpected vein %s %s - ",
+                            MaterialInfo(0,key.first).getToken().c_str(),
+                            ENUM_KEY_STR(inclusion_type, key.second).c_str()
+                        );
+
+                        status = materials[key.first].default_type;
+                        if (status < 0)
+                            out.printerr("will be left in place.\n");
+                        else
+                            out.printerr(
+                                "correcting to %s.\n",
+                                ENUM_KEY_STR(inclusion_type, df::inclusion_type(status)).c_str()
+                            );
+                    }
+
+                    if (status >= 0)
+                    {
+                        key.second = df::inclusion_type(status);
+                        matches = true;
+
+                        // Count minerals
+                        if (wall)
+                        {
+                            layer->mineral_tiles++;
+                            layer->mineral_count[key]++;
+                        }
                     }
                     break;
+                }
 
                 case tiletype_material::SOIL:
                     matches = layer->is_soil;
@@ -928,7 +1001,7 @@ void VeinGenerator::write_block_tiles(Block *b, df::coord2d column, int z)
                 }
                 else
                 {
-                    aquifer_tile = aquifer_tile && can_support_aquifer[mat];
+                    aquifer_tile = aquifer_tile && materials[mat].can_support_aquifer;
 
                     vein = (df::inclusion_type)block->veintype[x][y];
                     ok = b->setStoneAt(tile, tt, mat, vein, true, true);
@@ -1341,18 +1414,16 @@ void VeinGenerator::init_seeds()
     seed.resize((seed.size()+3)&~3);
     rng.init((uint32_t*)seed.data(), seed.size()/4, 10);
 
-    seeds.resize(world->raws.inorganics.size());
-
-    for (size_t i = 0; i < seeds.size(); i++)
+    for (size_t i = 0; i < materials.size(); i++)
     {
-        for (int j = 0; j < NUM_INCLUSIONS; j++)
-            seeds[i].seeds[j] = rng.random();
+        for (unsigned j = 0; j < NUM_INCLUSIONS; j++)
+            materials[i].seeds[j] = rng.random();
     }
 }
 
 NoiseFunction::Ptr VeinGenerator::get_noise(t_veinkey vein)
 {
-    auto &seed = seeds[vein.first];
+    auto &seed = materials[vein.first];
     auto &func = seed.funcs[vein.second];
 
     if (!func)

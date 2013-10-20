@@ -27,6 +27,7 @@ command_result treefarm (color_ostream &out, std::vector <std::string> & paramet
 EventManager::EventHandler handler(&checkFarms, -1);
 int32_t frequency = 1200*30;
 
+DFHACK_PLUGIN_IS_ENABLED(enabled);
 DFHACK_PLUGIN("treefarm");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
@@ -48,6 +49,11 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     return CR_OK;
 }
 
+DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
+    enabled = enable;
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
@@ -55,6 +61,8 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 void checkFarms(color_ostream& out, void* ptr) {
     EventManager::unregisterAll(plugin_self);
+    if ( !enabled )
+        return;
     EventManager::registerTick(handler, frequency, plugin_self);
     CoreSuspender suspend;
     
@@ -131,15 +139,18 @@ command_result treefarm (color_ostream &out, std::vector <std::string> & paramet
     if ( parameters.size() == 1 ) {
         int32_t i = atoi(parameters[0].c_str());
         if ( i < 1 ) {
+            plugin_enable(out, false);
             out.print("treefarm disabled\n");
             return CR_OK;
         }
+        plugin_enable(out, true);
         frequency = i;
     }
     
-    EventManager::registerTick(handler, 1, plugin_self);
-    
-    out.print("treefarm enabled with update frequency %d ticks\n", frequency);
+    if ( enabled ) {
+        EventManager::registerTick(handler, 1, plugin_self);
+        out.print("treefarm enabled with update frequency %d ticks\n", frequency);
+    }
     return CR_OK;
 }
 

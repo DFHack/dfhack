@@ -29,9 +29,23 @@ void onDig(color_ostream& out, void* ptr);
 void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt, set<df::coord>& jobLocations);
 EventManager::EventHandler digHandler(onDig, 0);
 
-bool enabled = false;
+//bool enabled = false;
+DFHACK_PLUGIN_IS_ENABLED(enabled);
 bool digAll = false;
 set<string> autodigMaterials;
+
+DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
+    if (enabled == enable)
+        return CR_OK;
+    
+    enabled = enable;
+    if ( enabled ) {
+        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, digHandler, plugin_self);
+    } else {
+        EventManager::unregisterAll(plugin_self);
+    }
+    return CR_OK;
+}
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -46,7 +60,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  digFlood 0 MICROCLINE COAL_BITUMINOUS 1\n"
         "    disable plugin and remove microcline and bituminous coal from being monitored, then re-enable plugin"
         "  digFlood 1 MICROCLINE 0 COAL_BITUMINOUS 1\n"
-        "    don't monitor microcline, do monitor COAL_BITUMINOUS, then enable plugin\n"
+        "    do monitor microcline, don't monitor COAL_BITUMINOUS, then enable plugin\n"
         "  digFlood CLEAR\n"
         "    remove all inorganics from monitoring\n"
         "  digFlood digAll1\n"
@@ -56,7 +70,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "\n"
         "Note that while order matters, multiple commands can be sequenced in one line. It is recommended to alter your dfhack.init file so that you won't have to type in every mineral type you want to dig every time you start the game. Material names are case sensitive.\n"
     ));
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, digHandler, plugin_self);
     return CR_OK;
 }
 
@@ -152,12 +165,11 @@ command_result digFlood (color_ostream &out, std::vector <std::string> & paramet
     for ( size_t a = 0; a < parameters.size(); a++ ) {
         int32_t i = (int32_t)strtol(parameters[a].c_str(), NULL, 0);
         if ( i == 0 && parameters[a] == "0" ) {
-            EventManager::unregisterAll(plugin_self);
+            plugin_enable(out, false);
             adding = false;
             continue;
         } else if ( i == 1 ) {
-            EventManager::unregisterAll(plugin_self);
-            EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, digHandler, plugin_self);
+            plugin_enable(out, true);
             adding = true;
             continue;
         }

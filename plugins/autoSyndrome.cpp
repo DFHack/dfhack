@@ -74,7 +74,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream& out) {
     return CR_OK;
 }*/
 
-DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+DFhackCExport command_result plugin_enable(color_ostream& out, bool enable)
 {
     if (enabled == enable)
         return CR_OK;

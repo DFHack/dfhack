@@ -437,6 +437,5 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     disable_all_hooks(out);
-    EventManager::unregisterAll(plugin_self);
     return CR_OK;
 }

@@ -75,6 +75,7 @@ void clearDijkstra();
 void findAndAssignInvasionJob(color_ostream& out, void*);
 //int32_t manageInvasion(color_ostream& out);
 
+DFHACK_PLUGIN_IS_ENABLED(enabled);
 DFHACK_PLUGIN("diggingInvaders");
 
 //TODO: when world unloads
@@ -82,7 +83,6 @@ static int32_t lastInvasionJob=-1;
 static int32_t lastInvasionDigger = -1;
 static int32_t edgesPerTick = 100;
 //static EventManager::EventHandler jobCompleteHandler(watchForJobComplete, 5);
-static bool enabled=false;
 static bool activeDigging=false;
 static unordered_set<string> diggingRaces;
 static unordered_set<int32_t> invaderJobs;
@@ -150,6 +150,25 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
+DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
+    if ( enabled == enable )
+        return CR_OK;
+    
+    enabled = enable;
+    EventManager::unregisterAll(plugin_self);
+    clearDijkstra();
+    lastInvasionJob = lastInvasionDigger = -1;
+    activeDigging = false;
+    invaderJobs.clear();
+    if ( enabled ) {
+        EventManager::EventHandler handler(newInvasionHandler, 1000);
+        EventManager::registerListener(EventManager::EventType::INVASION, handler, plugin_self);
+        findAndAssignInvasionJob(out, (void*)0);
+    }
+    
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
@@ -162,11 +181,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         break;
     case DFHack::SC_WORLD_UNLOADED:
         // cleanup
-        lastInvasionJob = lastInvasionDigger = -1;
-        enabled = false;
-        activeDigging = false;
-        clearDijkstra();
-        invaderJobs.clear();
+        plugin_enable(out, false);
         break;
     default:
         break;
@@ -213,9 +228,9 @@ void newInvasionHandler(color_ostream& out, void* ptr) {
 command_result diggingInvadersCommand(color_ostream& out, std::vector<std::string>& parameters) {
     for ( size_t a = 0; a < parameters.size(); a++ ) {
         if ( parameters[a] == "1" || parameters[a] == "enable" ) {
-            enabled = true;
+            plugin_enable(out,true);
         } else if ( parameters[a] == "0" || parameters[a] == "disable" ) {
-            enabled = false;
+            plugin_enable(out,false);
         } else if ( parameters[a] == "add" || parameters[a] == "remove" ) {
             if ( a+1 >= parameters.size() )
                 return CR_WRONG_USAGE;
@@ -309,14 +324,6 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
     }
     activeDigging = enabled;
     out.print("diggingInvaders: enabled = %d, activeDigging = %d, edgesPerTick = %d\n", enabled, activeDigging, edgesPerTick);
-    
-    EventManager::unregisterAll(plugin_self);
-    if ( enabled ) {
-        EventManager::EventHandler handler(newInvasionHandler, 1000);
-        EventManager::registerListener(EventManager::EventType::INVASION, handler, plugin_self);
-        clearDijkstra();
-        findAndAssignInvasionJob(out, (void*)0);
-    }
     
     return CR_OK;
 }

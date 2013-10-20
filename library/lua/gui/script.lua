@@ -153,7 +153,7 @@ function showMaterialPrompt(title, prompt)
     require('gui.materials').MaterialDialog{
         frame_title = title,
         prompt = prompt,
-        on_select = mkresume(true,
+        on_select = mkresume(true),
         on_cancel = mkresume(false),
         on_close = qresume(nil)
     }:show()

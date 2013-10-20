@@ -17,6 +17,7 @@
 #include "df/job_list_link.h"
 #include "df/ui.h"
 #include "df/unit.h"
+#include "df/unit_flags1.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_syndrome.h"
 #include "df/world.h"
@@ -203,6 +204,11 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         lastTick = 0;
         nextInvasion = df::global::ui->invasions.next_id;
         gameLoaded = true;
+        
+        for ( auto i = df::global::world->constructions.begin(); i != df::global::world->constructions.end(); i++ ) {
+            df::construction* constr = *i;
+            constructions[constr->pos] = *constr;
+        }
     }
 }
 
@@ -212,11 +218,14 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     }
     CoreSuspender suspender;
     
+    /*
     uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
         + DFHack::World::ReadCurrentTick();
+    */
     /*if ( tick - lastTick > 1 ) {
         out.print("EventManager missed tick: %d, %d, (%d)\n", lastTick, tick, tick - lastTick);
     }*/
+    int32_t tick = df::global::world->frame_counter;
 
     for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
         if ( handlers[a].empty() )
@@ -418,7 +427,8 @@ static void manageUnitDeathEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
     for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
         df::unit* unit = df::global::world->units.all[a];
-        if ( unit->counters.death_id == -1 ) {
+        //if ( unit->counters.death_id == -1 ) {
+        if ( ! unit->flags1.bits.dead ) {
             livingUnits.insert(unit->id);
             continue;
         }
@@ -507,7 +517,7 @@ static void manageBuildingEvent(color_ostream& out) {
 }
 
 static void manageConstructionEvent(color_ostream& out) {
-    unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
+    //unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
     
     multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
     unordered_set<df::coord> toDelete;
@@ -527,7 +537,8 @@ static void manageConstructionEvent(color_ostream& out) {
         constructions.erase(*a);
     }
     
-    for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); a++ ) {
+    //for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); a++ ) {
+    for ( auto a = df::global::world->constructions.begin(); a != df::global::world->constructions.end(); a++ ) {
         df::construction* construction = *a;
         bool b = constructions.find(construction->pos) != constructions.end();
         constructions[construction->pos] = *construction;

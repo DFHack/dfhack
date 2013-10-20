@@ -35,7 +35,7 @@ DFHack v0.34.11-r3
   New tweaks:
     - hive-crash: Prevent crash if bees die in a hive with ungathered products (bug 6368).
   New plugins:
-    - 3dveins: Reshapes all veins on the map in a way that flows between Z levels.
+    - 3dveins: Reshapes all veins on the map in a way that flows between Z levels. May be unstable. Backup before using.
     - autotrade: Automatically send items in marked stockpiles to trade depot, when trading is possible.
     - buildingplan: Place furniture before it's built
     - dwarfmonitor: Records dwarf activity to measure fort efficiency

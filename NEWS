@@ -1,5 +1,9 @@
 DFHack future
 
+ - Is not yet known.
+
+DFHack v0.34.11-r3
+
   New commands:
     - digFlood - automatically dig out specified veins as they are revealed
     - restrictliquid - Restrict traffic on every visible square with liquid.

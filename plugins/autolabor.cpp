@@ -1011,6 +1011,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         int noble_penalty = 0;
 
         df::historical_figure* hf = df::historical_figure::find(dwarfs[dwarf]->hist_figure_id);
+        if(hf!=NULL) //can be NULL. E.g. script created citizens
         for (int i = 0; i < hf->entity_links.size(); i++)
         {
             df::histfig_entity_link* hfelink = hf->entity_links.at(i);

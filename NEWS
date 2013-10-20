@@ -9,6 +9,7 @@ DFHack v0.34.11-r3
     - restrictliquid - Restrict traffic on every visible square with liquid.
     - restrictice - Restrict traffic on squares above visible ice.
     - treefarm - automatically chop trees and dig obsidian
+    - diggingInvaders - allows invaders to dig and/or deconstruct walls and buildings in order to get at your dwarves.
   New scripts:
     - masspit: designate caged creatures in a zone for pitting
     - locate_ore: scan the map for unmined ore veins

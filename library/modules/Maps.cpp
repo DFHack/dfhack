@@ -61,8 +61,8 @@ using namespace std;
 #include "df/z_level_flags.h"
 #include "df/region_map_entry.h"
 #include "df/flow_info.h"
-#include "df/plant.h"
 #include "df/building_type.h"
+#include "df/plant.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -568,6 +568,10 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
     if ( !index_tile<uint16_t>(block1->walkable,pos1) || !index_tile<uint16_t>(block2->walkable,pos2) ) {
         return false;
     }
+    
+    if ( block1->designation[pos1.x&0xF][pos1.y&0xF].bits.flow_size >= 4 ||
+         block2->designation[pos2.x&0xF][pos2.y&0xF].bits.flow_size >= 4 )
+        return false;
 
     if ( dz == 0 )
         return true;

@@ -79,6 +79,8 @@ add_custom_target(generate_proto DEPENDS ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_H
 
 SET_SOURCE_FILES_PROPERTIES( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 
+add_subdirectory(diggingInvaders)
+
 # Plugins
 OPTION(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if (BUILD_SUPPORTED)
@@ -160,7 +162,6 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(treefarm treefarm.cpp)
     DFHACK_PLUGIN(cleanconst cleanconst.cpp)
 endif()
-
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it
 OPTION(BUILD_SKELETON "Build the skeleton plugin." OFF)

@@ -3000,6 +3000,42 @@ List of events
    Is called after calling (or not) native fillSidebarMenu(). Useful for job button
    tweaking (e.g. adding custom reactions)
 
+Events from EventManager
+------------------------
+These events are straight from EventManager module. Each of them first needs to be enabled. See functions for more info.
+
+1. ``onBuildingCreatedDestroyed(building_id)``
+
+   Gets called when building is created or destroyed.
+
+2. ``onConstructionCreatedDestroyed(building_id)``
+
+   Gets called when construction is created or destroyed.
+
+3. ``onJobInitiated(job)``
+
+   Gets called when job is issued.
+
+4. ``onJobCompleted(job)``
+
+   Gets called when job is finished. The job that is passed to this function is a copy.
+
+5. ``onUnitDeath(unit_id)``
+
+   Gets called on unit death.
+
+6. ``onItemCreated(item_id)``
+
+   Gets called when item is created (except due to traders, migrants, invaders and spider webs).
+
+7. ``onSyndrome(unit_id,syndrome_index)``
+
+   Gets called when new syndrome appears on a unit.
+
+8. ``onInvasion(invasion_id)``
+
+   Gets called when new invasion happens.
+
 Functions
 ---------
 
@@ -3014,6 +3050,10 @@ Functions
 3. ``addReactionToShop(reaction_name,shop_name)``
 
    Add a custom reaction to the building.
+
+4. ``enableEvent(evType,frequency)``
+
+   Enable event checking for EventManager events. For event types use ``eventType`` table.
 
 Examples
 --------

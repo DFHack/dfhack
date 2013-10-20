@@ -26,10 +26,11 @@ namespace DFHack {
         }
 
         struct EventHandler {
-            void (*eventHandler)(color_ostream&, void*); //called when the event happens
+            typedef void (*callback_t)(color_ostream&, void*); //called when the event happens
+            callback_t eventHandler;
             int32_t freq;
 
-            EventHandler(void (*eventHandlerIn)(color_ostream&, void*), int32_t freqIn): eventHandler(eventHandlerIn), freq(freqIn) {
+            EventHandler(callback_t eventHandlerIn, int32_t freqIn): eventHandler(eventHandlerIn), freq(freqIn) {
             }
 
             bool operator==(EventHandler& handle) const {

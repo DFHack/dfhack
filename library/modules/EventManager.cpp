@@ -3,6 +3,7 @@
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"
 #include "modules/EventManager.h"
+#include "modules/Once.h"
 #include "modules/Job.h"
 #include "modules/World.h"
 
@@ -118,7 +119,9 @@ static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
 //static void manageEquipmentEvent(color_ostream& out);
 
-static void (*eventManager[])(color_ostream&) = {
+typedef void (*eventManager_t)(color_ostream&);
+
+static const eventManager_t eventManager[] = {
     manageTickEvent,
     manageJobInitiatedEvent,
     manageJobCompletedEvent,
@@ -130,10 +133,6 @@ static void (*eventManager[])(color_ostream&) = {
     manageInvasionEvent,
 //    manageEquipmentEvent,
 };
-
-
-//tick event
-static uint32_t lastTick = 0;
 
 //job initiated
 static int32_t lastJobId = -1;
@@ -155,6 +154,9 @@ static unordered_set<int32_t> buildings;
 static unordered_map<df::coord, df::construction> constructions;
 static bool gameLoaded;
 
+//syndrome
+static int32_t lastSyndromeTime;
+
 //invasion
 static int32_t nextInvasion;
 
@@ -171,7 +173,6 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         //out.print("Registered listeners.\n %d", __LINE__);
     }
     if ( event == DFHack::SC_WORLD_UNLOADED ) {
-        lastTick = 0;
         lastJobId = -1;
         for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
             Job::deleteJobStruct((*i).second, true);
@@ -179,14 +180,11 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         prevJobs.clear();
         tickQueue.clear();
         livingUnits.clear();
-        nextItem = -1;
-        nextBuilding = -1;
         buildings.clear();
         constructions.clear();
 
         Buildings::clearBuildings(out);
         gameLoaded = false;
-        nextInvasion = -1;
 //        equipmentLog.clear();
     } else if ( event == DFHack::SC_WORLD_LOADED ) {
         uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
@@ -200,13 +198,43 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         tickQueue.insert(newTickQueue.begin(), newTickQueue.end());
 
         nextItem = *df::global::item_next_id;
-        nextBuilding = -1;//*df::global::building_next_id;
-        lastTick = 0;
+        nextBuilding = *df::global::building_next_id;
         nextInvasion = df::global::ui->invasions.next_id;
+        lastJobId = -1 + *df::global::job_next_id;
         
+        constructions.clear();
         for ( auto i = df::global::world->constructions.begin(); i != df::global::world->constructions.end(); i++ ) {
             df::construction* constr = *i;
+            if ( !constr ) {
+                if ( Once::doOnce("EventManager.onLoad null constr") ) {
+                    out.print("EventManager.onLoad: null construction.\n");
+                }
+                continue;
+            }
+            if ( constr->pos == df::coord() ) {
+                if ( Once::doOnce("EventManager.onLoad null position of construction.\n") )
+                    out.print("EventManager.onLoad null position of construction.\n");
+                continue;
+            }
             constructions[constr->pos] = *constr;
+        }
+        for ( size_t a = 0; a < df::global::world->buildings.all.size(); a++ ) {
+            df::building* b = df::global::world->buildings.all[a];
+            Buildings::updateBuildings(out, (void*)b);
+            buildings.insert(b->id);
+        }
+        lastSyndromeTime = -1;
+        for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+            df::unit* unit = df::global::world->units.all[a];
+            for ( size_t b = 0; b < unit->syndromes.active.size(); b++ ) {
+                df::unit_syndrome* syndrome = unit->syndromes.active[b];
+                int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
+                if ( startTime > lastSyndromeTime )
+                    lastSyndromeTime = startTime;
+            }
+        }
+        for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
+            eventLastTick[a] = -1;//-1000000;
         }
         
         gameLoaded = true;
@@ -219,13 +247,6 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     }
     CoreSuspender suspender;
     
-    /*
-    uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
-        + DFHack::World::ReadCurrentTick();
-    */
-    /*if ( tick - lastTick > 1 ) {
-        out.print("EventManager missed tick: %d, %d, (%d)\n", lastTick, tick, tick - lastTick);
-    }*/
     int32_t tick = df::global::world->frame_counter;
 
     for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
@@ -244,8 +265,6 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
         eventManager[a](out);
         eventLastTick[a] = tick;
     }
-    
-    lastTick = tick;
 }
 
 static void manageTickEvent(color_ostream& out) {
@@ -300,8 +319,7 @@ TODO: consider checking item creation / experience gain just in case
 */
 static void manageJobCompletedEvent(color_ostream& out) {
     uint32_t tick0 = eventLastTick[EventType::JOB_COMPLETED];
-    uint32_t tick1 = DFHack::World::ReadCurrentYear()*ticksPerYear
-        + DFHack::World::ReadCurrentTick();
+    uint32_t tick1 = df::global::world->frame_counter;
     
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     map<int32_t, df::job*> nowJobs;
@@ -402,7 +420,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
             continue;
         
         for ( auto j = copy.begin(); j != copy.end(); j++ ) {
-            (*j).second.eventHandler(out, (void*)(*i).second);
+            (*j).second.eventHandler(out, (void*)&job0);
         }
     }
 
@@ -436,7 +454,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
         //dead: if dead since last check, trigger events
         if ( livingUnits.find(unit->id) == livingUnits.end() )
             continue;
-
+        
         for ( auto i = copy.begin(); i != copy.end(); i++ ) {
             (*i).second.eventHandler(out, (void*)unit->id);
         }
@@ -448,11 +466,15 @@ static void manageItemCreationEvent(color_ostream& out) {
     if ( nextItem >= *df::global::item_next_id ) {
         return;
     }
-
+    
     multimap<Plugin*,EventHandler> copy(handlers[EventType::ITEM_CREATED].begin(), handlers[EventType::ITEM_CREATED].end());
     size_t index = df::item::binsearch_index(df::global::world->items.all, nextItem, false);
+    if ( index != 0 ) index--;
     for ( size_t a = index; a < df::global::world->items.all.size(); a++ ) {
         df::item* item = df::global::world->items.all[a];
+        //already processed
+        if ( item->id < nextItem )
+            continue;
         //invaders
         if ( item->flags.bits.foreign )
             continue;
@@ -508,7 +530,7 @@ static void manageBuildingEvent(color_ostream& out) {
             bob.eventHandler(out, (void*)id);
         }
     }
-
+    
     for ( auto a = toDelete.begin(); a != toDelete.end(); a++ ) {
         int32_t id = *a;
         buildings.erase(id);
@@ -528,6 +550,7 @@ static void manageConstructionEvent(color_ostream& out) {
             continue;
         //construction removed
         toDelete.insert((*a).first);
+        //out.print("Removed construction (%d,%d,%d)\n", construction.pos.x,construction.pos.y,construction.pos.z);
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler handle = (*b).second;
             handle.eventHandler(out, (void*)&construction);
@@ -546,6 +569,7 @@ static void manageConstructionEvent(color_ostream& out) {
         if ( b )
             continue;
         //construction created
+        //out.print("Created construction (%d,%d,%d)\n", construction->pos.x,construction->pos.y,construction->pos.z);
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler handle = (*b).second;
             handle.eventHandler(out, (void*)construction);
@@ -555,16 +579,21 @@ static void manageConstructionEvent(color_ostream& out) {
 
 static void manageSyndromeEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::SYNDROME].begin(), handlers[EventType::SYNDROME].end());
+    int32_t highestTime = -1;
     for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
         df::unit* unit = *a;
+/*
         if ( unit->flags1.bits.dead )
             continue;
+*/
         for ( size_t b = 0; b < unit->syndromes.active.size(); b++ ) {
             df::unit_syndrome* syndrome = unit->syndromes.active[b];
-            uint32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
-            if ( startTime <= eventLastTick[EventType::SYNDROME] )
+            int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
+            if ( startTime > highestTime )
+                highestTime = startTime;
+            if ( startTime <= lastSyndromeTime )
                 continue;
-
+            
             SyndromeData data(unit->id, b);
             for ( auto c = copy.begin(); c != copy.end(); c++ ) {
                 EventHandler handle = (*c).second;
@@ -572,6 +601,7 @@ static void manageSyndromeEvent(color_ostream& out) {
             }
         }
     }
+    lastSyndromeTime = highestTime;
 }
 
 static void manageInvasionEvent(color_ostream& out) {

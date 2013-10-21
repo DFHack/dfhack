@@ -119,10 +119,10 @@ namespace DFHack
         inline char * getStr() const
         {
             static char str[16];
-            //type punning trick
-            *( (uint64_t *)str ) = *( (uint64_t *)"--------" );
+
             str[8]=0;
     #define DIRECTION(x,i,c) \
+            str[i] = str[i+1] = '-'; \
             if(x){ \
                 str[i]=c; \
                 if(1==x) ; \
@@ -182,6 +182,56 @@ namespace DFHack
     {
         return TileDirection(ENUM_ATTR(tiletype, direction, tiletype));
     }
+
+    // Air
+    inline bool isAirMaterial(df::tiletype_material mat) { return mat == tiletype_material::AIR; }
+    inline bool isAirMaterial(df::tiletype tt) { return isAirMaterial(tileMaterial(tt)); }
+
+    // Soil
+    inline bool isSoilMaterial(df::tiletype_material mat) { return mat == tiletype_material::SOIL; }
+    inline bool isSoilMaterial(df::tiletype tt) { return isSoilMaterial(tileMaterial(tt)); }
+
+    // Stone materials - their tiles are completely interchangable
+    inline bool isStoneMaterial(df::tiletype_material mat)
+    {
+        using namespace df::enums::tiletype_material;
+        switch (mat) {
+            case STONE: case LAVA_STONE: case MINERAL: case FEATURE:
+                return true;
+            default:
+                return false;
+        }
+    }
+    inline bool isStoneMaterial(df::tiletype tt) { return isStoneMaterial(tileMaterial(tt)); }
+
+    // Regular ground materials = stone + soil
+    inline bool isGroundMaterial(df::tiletype_material mat)
+    {
+        using namespace df::enums::tiletype_material;
+        switch (mat) {
+            case SOIL:
+            case STONE: case LAVA_STONE: case MINERAL: case FEATURE:
+                return true;
+            default:
+                return false;
+        }
+    }
+    inline bool isGroundMaterial(df::tiletype tt) { return isGroundMaterial(tileMaterial(tt)); }
+
+    // Core materials - their tile sets are sufficiently close to stone
+    inline bool isCoreMaterial(df::tiletype_material mat)
+    {
+        using namespace df::enums::tiletype_material;
+        switch (mat) {
+            case SOIL:
+            case STONE: case LAVA_STONE: case MINERAL: case FEATURE:
+            case FROZEN_LIQUID: case CONSTRUCTION:
+                return true;
+            default:
+                return false;
+        }
+    }
+    inline bool isCoreMaterial(df::tiletype tt) { return isCoreMaterial(tileMaterial(tt)); }
 
     // tile is missing a floor
     inline
@@ -295,5 +345,11 @@ namespace DFHack
      * If there are no variants, returns the same tile
      */
     DFHACK_EXPORT df::tiletype findRandomVariant(const df::tiletype tile);
+
+    /**
+     * Map a tile type to a different core material (see above for the list).
+     * Returns Void (0) in case of failure.
+     */
+    DFHACK_EXPORT df::tiletype matchTileMaterial(df::tiletype source, df::tiletype_material tmat);
 }
 

@@ -28,6 +28,7 @@
 #include "df/misc_trait_type.h"
 #include "df/unit_misc_trait.h"
 
+using namespace std;
 using std::set;
 using std::vector;
 using std::string;

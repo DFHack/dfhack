@@ -97,6 +97,8 @@ void help( color_ostream & out, std::vector<std::string> &commands, int start, i
             << " Subterranean / st: set subterranean flag" << std::endl
             << " Skyview / sv: set skyview flag" << std::endl
             << " Aquifer / aqua: set aquifer flag" << std::endl
+            << " Stone: paint specific stone material" << std::endl
+            << " Veintype: use specific vein type for stone" << std::endl
             << "See help [option] for more information" << std::endl;
     }
     else if (option == "shape" || option == "s" ||option == "sh")
@@ -165,6 +167,22 @@ void help( color_ostream & out, std::vector<std::string> &commands, int start, i
         out << "Available aquifer flags:" << std::endl
             << " ANY, 0, 1" << std::endl;
     }
+    else if (option == "stone")
+    {
+        out << "The stone option allows painting any specific stone material." << std::endl
+            << "The normal 'material' option is forced to STONE, and cannot" << std::endl
+            << "be changed without cancelling the specific stone selection." << std::endl
+            << "Note: this feature paints under ice and constructions," << std::endl
+            << "instead of replacing them with brute force." << std::endl;
+    }
+    else if (option == "veintype")
+    {
+        out << "Specifies which vein type to use when painting specific stone." << std::endl
+            << "The vein type determines stone drop rate. Available types:" << std::endl;
+        FOR_ENUM_ITEMS(inclusion_type,i)
+            out << " " << ENUM_KEY_STR(inclusion_type,i) << std::endl;
+        out << "Vein type other than CLUSTER forces creation of a vein." << std::endl;
+    }
 }
 
 struct TileType
@@ -179,6 +197,8 @@ struct TileType
     int subterranean;
     int skyview;
     int aquifer;
+    int stone_material;
+    df::inclusion_type vein_type;
 
     TileType()
     {
@@ -197,21 +217,27 @@ struct TileType
         subterranean = -1;
         skyview = -1;
         aquifer = -1;
+        stone_material = -1;
+        vein_type = inclusion_type::CLUSTER;
     }
 
     bool empty()
     {
         return shape == -1 && material == -1 && special == -1 && variant == -1
             && dig == -1 && hidden == -1 && light == -1 && subterranean == -1
-            && skyview == -1 && aquifer == -1;
+            && skyview == -1 && aquifer == -1 && stone_material == -1;
     }
 
     inline bool matches(const df::tiletype source,
-                        const df::tile_designation des)
+                        const df::tile_designation des,
+                        const t_matpair mat)
     {
         bool rv = true;
         rv &= (shape == -1 || shape == tileShape(source));
-        rv &= (material == -1 || material == tileMaterial(source));
+        if (stone_material >= 0)
+            rv &= isStoneMaterial(source) && mat.mat_type == 0 && mat.mat_index == stone_material;
+        else
+            rv &= (material == -1 || material == tileMaterial(source));
         rv &= (special == -1 || special == tileSpecial(source));
         rv &= (variant == -1 || variant == tileVariant(source));
         rv &= (dig == -1 || (dig != 0) == (des.bits.dig != tile_dig_designation::No));
@@ -349,6 +375,20 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
         }
 
         stream << (paint.aquifer ? "AQUIFER" : "NO AQUIFER");
+        used = true;
+        needSpace = true;
+    }
+
+    if (paint.stone_material >= 0)
+    {
+        if (needSpace)
+        {
+            stream << " ";
+            needSpace = false;
+        }
+
+        stream << MaterialInfo(0,paint.stone_material).getToken()
+               << " " << ENUM_KEY_STR(inclusion_type, paint.vein_type);
         used = true;
         needSpace = true;
     }
@@ -497,6 +537,9 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
     }
     else if (option == "material" || option == "mat" || option == "m")
     {
+        // Setting the material conflicts with stone_material
+        paint.stone_material = -1;
+
         if (is_valid_enum_item((df::tiletype_material)valInt))
         {
             paint.material = (df::tiletype_material)valInt;
@@ -630,6 +673,25 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
 
         found = true;
     }
+    else if (option == "stone")
+    {
+        MaterialInfo mat;
+
+        if (!mat.findInorganic(value))
+            out << "Unknown inorganic material: " << value << std::endl;
+        else if (!isStoneInorganic(mat.index))
+            out << "Not a stone material: " << value << std::endl;
+        else
+        {
+            paint.material = tiletype_material::STONE;
+            paint.stone_material = mat.index;
+        }
+    }
+    else if (option == "veintype")
+    {
+        if (!find_enum_item(&paint.vein_type, value))
+            out << "Unknown vein type: " << value << std::endl;
+    }
     else
     {
         out << "Unknown option: '" << option << "'" << std::endl;
@@ -672,12 +734,24 @@ command_result executePaintJob(color_ostream &out)
     // Force the game to recompute its walkability cache
     df::global::world->reindex_pathfinding = true;
 
+    int failures = 0;
+
     for (coord_vec::iterator iter = all_tiles.begin(); iter != all_tiles.end(); ++iter)
     {
-        const df::tiletype source = map.tiletypeAt(*iter);
+        MapExtras::Block *blk = map.BlockAtTile(*iter);
+        if (!blk)
+            continue;
+
+        df::tiletype source = map.tiletypeAt(*iter);
         df::tile_designation des = map.designationAt(*iter);
 
-        if (!filter.matches(source, des))
+        // Stone painting operates on the base layer
+        if (paint.stone_material >= 0)
+            source = blk->baseTiletypeAt(*iter);
+
+        t_matpair basemat = blk->baseMaterialAt(*iter);
+
+        if (!filter.matches(source, des, basemat))
         {
             continue;
         }
@@ -725,7 +799,7 @@ command_result executePaintJob(color_ostream &out)
         */
         // Remove direction from directionless tiles
         DFHack::TileDirection direction = tileDirection(source);
-        if (!(material == tiletype_material::RIVER || shape == tiletype_shape::BROOK_BED || shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH)))
+        if (!(material == tiletype_material::RIVER || shape == tiletype_shape::BROOK_BED || special == tiletype_special::TRACK || shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH)))
         {
             direction.whole = 0;
         }
@@ -738,7 +812,15 @@ command_result executePaintJob(color_ostream &out)
         }
         // make sure it's not invalid
         if(type != tiletype::Void)
-            map.setTiletypeAt(*iter, type);
+        {
+            if (paint.stone_material >= 0)
+            {
+                if (!blk->setStoneAt(*iter, type, paint.stone_material, paint.vein_type, true, true))
+                    failures++;
+            }
+            else
+                map.setTiletypeAt(*iter, type);
+        }
 
         if (paint.hidden > -1)
         {
@@ -779,6 +861,11 @@ command_result executePaintJob(color_ostream &out)
 
         map.setDesignationAt(*iter, des);
     }
+
+    if (failures > 0)
+        out.printerr("Could not update %d tiles of %d.\n", failures, all_tiles.size());
+    else
+        out.print("Processed %d tiles.\n", all_tiles.size());
 
     if (map.WriteAll())
     {

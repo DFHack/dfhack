@@ -361,6 +361,24 @@ Usage:
 Map modification
 ================
 
+3dveins
+-------
+
+Removes all existing veins from the map and generates new ones using
+3D Perlin noise, in order to produce a layout that smoothly flows between
+Z levels. The vein distribution is based on the world seed, so running
+the command for the second time should produce no change. It is best to
+run it just once immediately after embark.
+
+This command is intended as only a cosmetic change, so it takes
+care to exactly preserve the mineral counts reported by ``prospect all``.
+The amounts of different layer stone may slightly change in some cases
+if vein mass shifts between Z layers.
+
+This command is very unlikely to work on maps generated before version 0.34.08.
+
+Note that there is no undo option other than restoring from backup.
+
 changelayer
 -----------
 Changes material of the geology layer under cursor to the specified inorganic
@@ -575,6 +593,33 @@ Or this:
         paint hidden 0
 
 This will hide previously revealed tiles (or show hidden with the 0 option).
+
+More recently, the tool supports changing the base material of the tile to
+an arbitrary stone from the raws, by creating new veins as required. Note
+that this mode paints under ice and constructions, instead of overwriting
+them. To enable, use:
+
+::
+
+        paint stone MICROCLINE
+
+This mode is incompatible with the regular ``material`` setting, so changing
+it cancels the specific stone selection:
+
+::
+
+        paint material ANY
+
+Since different vein types have different drop rates, it is possible to choose
+which one to use in painting:
+
+::
+
+        paint veintype CLUSTER_SMALL
+
+When the chosen type is ``CLUSTER`` (the default), the tool may automatically
+choose to use layer stone or lava stone instead of veins if its material matches
+the desired one.
 
 Any paint or filter option (or the entire paint or filter) can be disabled entirely by using the ANY keyword:
 

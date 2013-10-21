@@ -67,6 +67,7 @@
 #include <df/training_assignment.h>
 #include <df/general_ref_contains_itemst.h>
 
+using namespace std;
 using std::string;
 using std::endl;
 using namespace DFHack;

@@ -1,8 +1,11 @@
 DFHack future
 
+  Internals:
+    - Lua API for a better random number generator and perlin noise functions.
   New commands:
     - restrictliquid - Restrict traffic on every visible square with liquid.
     - restrictice - Restrict traffic on squares above visible ice.
+    - enable, disable - Built-in commands that can be used to enable/disable many plugins.
   New scripts:
     - masspit: designate caged creatures in a zone for pitting
     - locate_ore: scan the map for unmined ore veins
@@ -16,6 +19,7 @@ DFHack future
     - ruby: add df.dfhack_run "somecommand"
     - magmasource: rename to 'source', allow water/magma sources/drains
     - core: fix SC_WORLD_(UN)LOADED event for arena mode
+    - tiletypes: support changing tile material to arbitrary stone.
   New tweaks:
     - hive-crash: Prevent crash if bees die in a hive with ungathered products (bug 6368).
   New plugins:
@@ -25,7 +29,8 @@ DFHack future
     - mousequery: Look and poke at the map elements with the mouse.
     - autotrade: Automatically send items in marked stockpiles to trade depot, when trading is possible.
     - stocks: An improved stocks display screen.
-    
+    - 3dveins: Reshapes all veins on the map in a way that flows between Z levels.
+
 DFHack v0.34.11-r3
 
   Internals:

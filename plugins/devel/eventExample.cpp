@@ -46,21 +46,30 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
     EventManager::EventHandler constructionHandler(construction, 100);
     EventManager::EventHandler syndromeHandler(syndrome, 1);
     EventManager::EventHandler invasionHandler(invasion, 1000);
-    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("eventExample");
-    EventManager::unregisterAll(me);
+    EventManager::unregisterAll(plugin_self);
 
-    EventManager::registerListener(EventManager::EventType::JOB_INITIATED, initiateHandler, me);
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, completeHandler, me);
-    EventManager::registerTick(timeHandler, 1, me);
-    EventManager::registerTick(timeHandler, 2, me);
-    EventManager::registerTick(timeHandler, 4, me);
-    EventManager::registerTick(timeHandler, 8, me);
-    EventManager::registerListener(EventManager::EventType::UNIT_DEATH, deathHandler, me);
-    EventManager::registerListener(EventManager::EventType::ITEM_CREATED, itemHandler, me);
-    EventManager::registerListener(EventManager::EventType::BUILDING, buildingHandler, me);
-    EventManager::registerListener(EventManager::EventType::CONSTRUCTION, constructionHandler, me);
-    EventManager::registerListener(EventManager::EventType::SYNDROME, syndromeHandler, me);
-    EventManager::registerListener(EventManager::EventType::INVASION, invasionHandler, me);
+    EventManager::registerListener(EventManager::EventType::JOB_INITIATED, initiateHandler, plugin_self);
+    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, completeHandler, plugin_self);
+    EventManager::registerListener(EventManager::EventType::UNIT_DEATH, deathHandler, plugin_self);
+    EventManager::registerListener(EventManager::EventType::ITEM_CREATED, itemHandler, plugin_self);
+    EventManager::registerListener(EventManager::EventType::BUILDING, buildingHandler, plugin_self);
+    EventManager::registerListener(EventManager::EventType::CONSTRUCTION, constructionHandler, plugin_self);
+    EventManager::registerListener(EventManager::EventType::SYNDROME, syndromeHandler, plugin_self);
+    EventManager::registerListener(EventManager::EventType::INVASION, invasionHandler, plugin_self);
+    EventManager::registerTick(timeHandler, 1, plugin_self);
+    EventManager::registerTick(timeHandler, 2, plugin_self);
+    EventManager::registerTick(timeHandler, 4, plugin_self);
+    EventManager::registerTick(timeHandler, 8, plugin_self);
+    int32_t t = EventManager::registerTick(timeHandler, 16, plugin_self);
+    timeHandler.freq = t;
+    EventManager::unregister(EventManager::EventType::TICK, timeHandler, plugin_self);
+    t = EventManager::registerTick(timeHandler, 32, plugin_self);
+    t = EventManager::registerTick(timeHandler, 32, plugin_self);
+    t = EventManager::registerTick(timeHandler, 32, plugin_self);
+    timeHandler.freq = t;
+    EventManager::unregister(EventManager::EventType::TICK, timeHandler, plugin_self);
+    EventManager::unregister(EventManager::EventType::TICK, timeHandler, plugin_self);
+    
     out.print("Events registered.\n");
     return CR_OK;
 }

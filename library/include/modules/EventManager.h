@@ -37,10 +37,10 @@ namespace DFHack {
             EventHandler(callback_t eventHandlerIn, int32_t freqIn): eventHandler(eventHandlerIn), freq(freqIn) {
             }
 
-            bool operator==(EventHandler& handle) const {
+            bool operator==(const EventHandler& handle) const {
                 return eventHandler == handle.eventHandler && freq == handle.freq;
             }
-            bool operator!=(EventHandler& handle) const {
+            bool operator!=(const EventHandler& handle) const {
                 return !( *this == handle);
             }
         };
@@ -59,7 +59,7 @@ namespace DFHack {
         };*/
         
         DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);
-        DFHACK_EXPORT void registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute=false);
+        DFHACK_EXPORT int32_t registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute=false);
         DFHACK_EXPORT void unregister(EventType::EventType e, EventHandler handler, Plugin* plugin);
         DFHACK_EXPORT void unregisterAll(Plugin* plugin);
         void manageEvents(color_ostream& out);
@@ -76,6 +76,16 @@ namespace std {
             r = m*(r+c.x);
             r = m*(r+c.y);
             r = m*(r+c.z);
+            return r;
+        }
+    };
+    template <>
+    struct hash<DFHack::EventManager::EventHandler> {
+        std::size_t operator()(const DFHack::EventManager::EventHandler& h) const {
+            size_t r = 17;
+            const size_t m = 65537;
+            r = m*(r+(int32_t)h.eventHandler);
+            r = m*(r+h.freq);
             return r;
         }
     };

@@ -49,7 +49,7 @@ void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler
     handlers[e].insert(pair<Plugin*, EventHandler>(plugin, handler));
 }
 
-void DFHack::EventManager::registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute) {
+int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute) {
     if ( !absolute ) {
         df::world* world = df::global::world;
         if ( world ) {
@@ -62,19 +62,40 @@ void DFHack::EventManager::registerTick(EventHandler handler, int32_t when, Plug
     handler.freq = when;
     tickQueue.insert(pair<int32_t, EventHandler>(handler.freq, handler));
     handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
+    return when;
+}
+
+static void removeFromTickQueue(EventHandler getRidOf) {
+    //shenanigans to avoid concurrent modification
+    bool didSomething;
+    do {
+        didSomething = false;
+        for ( auto j = tickQueue.find(getRidOf.freq); j != tickQueue.end(); j++ ) {
+            if ( (*j).first > getRidOf.freq )
+                break;
+            if ( (*j).second != getRidOf )
+                continue;
+            tickQueue.erase(j);
+            didSomething = true;
+            break;
+        }
+    } while (didSomething);
 }
 
 void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handler, Plugin* plugin) {
-    for ( multimap<Plugin*, EventHandler>::iterator i = handlers[e].find(plugin); i != handlers[e].end(); i++ ) {
+    for ( auto i = handlers[e].find(plugin); i != handlers[e].end(); ) {
         if ( (*i).first != plugin )
             break;
         EventHandler handle = (*i).second;
-        if ( handle == handler ) {
-            handlers[e].erase(i);
-            break;
+        if ( handle != handler ) {
+            i++;
+            continue;
         }
+        handlers[e].erase(i);
+        if ( e == EventType::TICK )
+            removeFromTickQueue(handler);
+        i = handlers[e].find(plugin); //loop in case the same handler is in there multiple times
     }
-    return;
 }
 
 void DFHack::EventManager::unregisterAll(Plugin* plugin) {
@@ -82,21 +103,7 @@ void DFHack::EventManager::unregisterAll(Plugin* plugin) {
         if ( (*i).first != plugin )
             break;
         
-        //shenanigans to avoid concurrent modification
-        EventHandler getRidOf = (*i).second;
-        bool didSomething;
-        do {
-            didSomething = false;
-            for ( auto j = tickQueue.find(getRidOf.freq); j != tickQueue.end(); j++ ) {
-                if ( (*j).first > getRidOf.freq )
-                    break;
-                if ( (*j).second != getRidOf )
-                    continue;
-                tickQueue.erase(j);
-                didSomething = true;
-                break;
-            }
-        } while (didSomething); //this loop is here in case the same EventHandler was added more than once
+        removeFromTickQueue((*i).second);
     }
     for ( size_t a = 0; a < (size_t)EventType::EVENT_MAX; a++ ) {
         handlers[a].erase(plugin);
@@ -185,6 +192,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         gameLoaded = false;
 //        equipmentLog.clear();
     } else if ( event == DFHack::SC_MAP_LOADED ) {
+        /*
         int32_t tick = df::global::world->frame_counter;
         multimap<int32_t,EventHandler> newTickQueue;
         for ( auto i = tickQueue.begin(); i != tickQueue.end(); i++ )
@@ -192,7 +200,9 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         tickQueue.clear();
         tickQueue.insert(newTickQueue.begin(), newTickQueue.end());
         //out.print("%s,%d: on load, frame_counter = %d\n", __FILE__, __LINE__, tick);
-
+        */
+        //tickQueue.clear();
+        
         nextItem = *df::global::item_next_id;
         nextBuilding = *df::global::building_next_id;
         nextInvasion = df::global::ui->invasions.next_id;
@@ -248,12 +258,14 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
         if ( handlers[a].empty() )
             continue;
-        int32_t eventFrequency = 1000000000;
-        for ( auto b = handlers[a].begin(); b != handlers[a].end(); b++ ) {
-            EventHandler bob = (*b).second;
-            if ( bob.freq < eventFrequency )
-                eventFrequency = bob.freq;
-        }
+        int32_t eventFrequency = -100;
+        if ( a != EventType::TICK )
+            for ( auto b = handlers[a].begin(); b != handlers[a].end(); b++ ) {
+                EventHandler bob = (*b).second;
+                if ( bob.freq < eventFrequency || eventFrequency == -100 )
+                    eventFrequency = bob.freq;
+            }
+        else eventFrequency = 1;
         
         if ( tick - eventLastTick[a] < eventFrequency )
             continue;
@@ -264,6 +276,7 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
 }
 
 static void manageTickEvent(color_ostream& out) {
+    unordered_set<EventHandler> toRemove;
     int32_t tick = df::global::world->frame_counter;
     while ( !tickQueue.empty() ) {
         if ( tick < (*tickQueue.begin()).first )
@@ -271,8 +284,20 @@ static void manageTickEvent(color_ostream& out) {
         EventHandler handle = (*tickQueue.begin()).second;
         tickQueue.erase(tickQueue.begin());
         handle.eventHandler(out, (void*)tick);
+        toRemove.insert(handle);
     }
-    
+    if ( toRemove.empty() )
+        return;
+    for ( auto a = handlers[EventType::TICK].begin(); a != handlers[EventType::TICK].end(); ) {
+        //handlerToPlugin[(*a).second] = (*a).first;
+        if ( toRemove.find((*a).second) == toRemove.end() ) {
+            a++;
+            continue;
+        }
+        Plugin* plug = (*a).first;
+        handlers[EventType::TICK].erase(a);
+        a = handlers[EventType::TICK].find(plug);
+    }
 }
 
 static void manageJobInitiatedEvent(color_ostream& out) {

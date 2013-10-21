@@ -26,8 +26,6 @@ using df::global::ui;
 
 using namespace df::enums::ui_sidebar_mode;
 
-DFHACK_PLUGIN("mousequery");
-
 #define PLUGIN_VERSION 0.16
 
 static int32_t last_x, last_y, last_z;

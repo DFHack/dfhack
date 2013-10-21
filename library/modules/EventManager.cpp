@@ -66,20 +66,15 @@ int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, P
 }
 
 static void removeFromTickQueue(EventHandler getRidOf) {
-    //shenanigans to avoid concurrent modification
-    bool didSomething;
-    do {
-        didSomething = false;
-        for ( auto j = tickQueue.find(getRidOf.freq); j != tickQueue.end(); j++ ) {
-            if ( (*j).first > getRidOf.freq )
-                break;
-            if ( (*j).second != getRidOf )
-                continue;
-            tickQueue.erase(j);
-            didSomething = true;
+    for ( auto j = tickQueue.find(getRidOf.freq); j != tickQueue.end(); ) {
+        if ( (*j).first > getRidOf.freq )
             break;
+        if ( (*j).second != getRidOf ) {
+            j++;
+            continue;
         }
-    } while (didSomething);
+        j = tickQueue.erase(j);
+    }
 }
 
 void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handler, Plugin* plugin) {
@@ -91,10 +86,9 @@ void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handl
             i++;
             continue;
         }
-        handlers[e].erase(i);
+        i = handlers[e].erase(i);
         if ( e == EventType::TICK )
             removeFromTickQueue(handler);
-        i = handlers[e].find(plugin); //loop in case the same handler is in there multiple times
     }
 }
 
@@ -289,14 +283,15 @@ static void manageTickEvent(color_ostream& out) {
     if ( toRemove.empty() )
         return;
     for ( auto a = handlers[EventType::TICK].begin(); a != handlers[EventType::TICK].end(); ) {
-        //handlerToPlugin[(*a).second] = (*a).first;
-        if ( toRemove.find((*a).second) == toRemove.end() ) {
+        EventHandler handle = (*a).second;
+        if ( toRemove.find(handle) == toRemove.end() ) {
             a++;
             continue;
         }
-        Plugin* plug = (*a).first;
-        handlers[EventType::TICK].erase(a);
-        a = handlers[EventType::TICK].find(plug);
+        a = handlers[EventType::TICK].erase(a);
+        toRemove.erase(handle);
+        if ( toRemove.empty() )
+            break;
     }
 }
 
@@ -305,7 +300,7 @@ static void manageJobInitiatedEvent(color_ostream& out) {
         lastJobId = *df::global::job_next_id - 1;
         return;
     }
-
+    
     if ( lastJobId+1 == *df::global::job_next_id ) {
         return; //no new jobs
     }
@@ -320,7 +315,7 @@ static void manageJobInitiatedEvent(color_ostream& out) {
             (*i).second.eventHandler(out, (void*)link->item);
         }
     }
-
+    
     lastJobId = *df::global::job_next_id - 1;
 }
 
@@ -537,48 +532,39 @@ static void manageBuildingEvent(color_ostream& out) {
     nextBuilding = *df::global::building_next_id;
     
     //now alert people about destroyed buildings
-    unordered_set<int32_t> toDelete;
-    for ( auto a = buildings.begin(); a != buildings.end(); a++ ) {
+    for ( auto a = buildings.begin(); a != buildings.end(); ) {
         int32_t id = *a;
         int32_t index = df::building::binsearch_index(df::global::world->buildings.all,id);
-        if ( index != -1 )
+        if ( index != -1 ) {
+            a++;
             continue;
-        toDelete.insert(id);
-
+        }
+        
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler bob = (*b).second;
             bob.eventHandler(out, (void*)id);
         }
+        a = buildings.erase(a);
     }
-    
-    for ( auto a = toDelete.begin(); a != toDelete.end(); a++ ) {
-        int32_t id = *a;
-        buildings.erase(id);
-    }
-    
-    //out.print("Sent building event.\n %d", __LINE__);
 }
 
 static void manageConstructionEvent(color_ostream& out) {
     //unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
     
     multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
-    unordered_set<df::coord> toDelete;
-    for ( auto a = constructions.begin(); a != constructions.end(); a++ ) {
+    for ( auto a = constructions.begin(); a != constructions.end(); ) {
         df::construction& construction = (*a).second;
-        if ( df::construction::find(construction.pos) != NULL )
+        if ( df::construction::find(construction.pos) != NULL ) {
+            a++;
             continue;
+        }
         //construction removed
-        toDelete.insert((*a).first);
         //out.print("Removed construction (%d,%d,%d)\n", construction.pos.x,construction.pos.y,construction.pos.z);
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler handle = (*b).second;
             handle.eventHandler(out, (void*)&construction);
         }
-    }
-    
-    for ( auto a = toDelete.begin(); a != toDelete.end(); a++ ) {
-        constructions.erase(*a);
+        a = constructions.erase(a);
     }
     
     //for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); a++ ) {

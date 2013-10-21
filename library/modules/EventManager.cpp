@@ -37,36 +37,31 @@ using namespace EventManager;
  *  consider a typedef instead of a struct for EventHandler
  **/
 
-//map<uint32_t, vector<DFHack::EventManager::EventHandler> > tickQueue;
-static multimap<uint32_t, EventHandler> tickQueue;
+static multimap<int32_t, EventHandler> tickQueue;
 
 //TODO: consider unordered_map of pairs, or unordered_map of unordered_set, or whatever
 static multimap<Plugin*, EventHandler> handlers[EventType::EVENT_MAX];
-static uint32_t eventLastTick[EventType::EVENT_MAX];
+static int32_t eventLastTick[EventType::EVENT_MAX];
 
-static const uint32_t ticksPerYear = 403200;
+static const int32_t ticksPerYear = 403200;
 
 void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin) {
     handlers[e].insert(pair<Plugin*, EventHandler>(plugin, handler));
 }
 
 void DFHack::EventManager::registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute) {
-    uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
-        + DFHack::World::ReadCurrentTick();
-    if ( !Core::getInstance().isWorldLoaded() ) {
-        tick = 0;
-        if ( absolute ) {
-            Core::getInstance().getConsole().print("Warning: absolute flag will not be honored.\n");
+    if ( !absolute ) {
+        df::world* world = df::global::world;
+        if ( world ) {
+            when += world->frame_counter;
+        } else {
+            if ( Once::doOnce("EventManager registerTick unhonored absolute=false") )
+                Core::getInstance().getConsole().print("EventManager::registerTick: warning! absolute flag=false not honored.\n");
         }
     }
-    if ( absolute ) {
-        tick = 0;
-    }
-    handler.freq = 1; //to make manageEvents work more nicely
-    
-    tickQueue.insert(pair<uint32_t, EventHandler>(tick+(uint32_t)when, handler));
+    handler.freq = when;
+    tickQueue.insert(pair<int32_t, EventHandler>(handler.freq, handler));
     handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
-    return;
 }
 
 void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handler, Plugin* plugin) {
@@ -92,15 +87,16 @@ void DFHack::EventManager::unregisterAll(Plugin* plugin) {
         bool didSomething;
         do {
             didSomething = false;
-            for ( auto j = tickQueue.begin(); j != tickQueue.end(); j++ ) {
-                EventHandler candidate = (*j).second;
-                if ( getRidOf != candidate )
+            for ( auto j = tickQueue.find(getRidOf.freq); j != tickQueue.end(); j++ ) {
+                if ( (*j).first > getRidOf.freq )
+                    break;
+                if ( (*j).second != getRidOf )
                     continue;
                 tickQueue.erase(j);
                 didSomething = true;
                 break;
             }
-        } while(didSomething);
+        } while (didSomething); //this loop is here in case the same EventHandler was added more than once
     }
     for ( size_t a = 0; a < (size_t)EventType::EVENT_MAX; a++ ) {
         handlers[a].erase(plugin);
@@ -165,6 +161,8 @@ static int32_t nextInvasion;
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;
+//    const string eventNames[] = {"world loaded", "world unloaded", "map loaded", "map unloaded", "viewscreen changed", "core initialized", "begin unload", "paused", "unpaused"};
+//    out.print("%s,%d: onStateChange %d: \"%s\"\n", __FILE__, __LINE__, (int32_t)event, eventNames[event].c_str());
     if ( !doOnce ) {
         //TODO: put this somewhere else
         doOnce = true;
@@ -172,7 +170,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         DFHack::EventManager::registerListener(EventType::BUILDING, buildingHandler, NULL);
         //out.print("Registered listeners.\n %d", __LINE__);
     }
-    if ( event == DFHack::SC_WORLD_UNLOADED ) {
+    if ( event == DFHack::SC_MAP_UNLOADED ) {
         lastJobId = -1;
         for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
             Job::deleteJobStruct((*i).second, true);
@@ -186,16 +184,14 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         Buildings::clearBuildings(out);
         gameLoaded = false;
 //        equipmentLog.clear();
-    } else if ( event == DFHack::SC_WORLD_LOADED ) {
-        uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
-            + DFHack::World::ReadCurrentTick();
-        multimap<uint32_t,EventHandler> newTickQueue;
-        for ( auto i = tickQueue.begin(); i != tickQueue.end(); i++ ) {
-            newTickQueue.insert(pair<uint32_t,EventHandler>(tick + (*i).first, (*i).second));
-        }
+    } else if ( event == DFHack::SC_MAP_LOADED ) {
+        int32_t tick = df::global::world->frame_counter;
+        multimap<int32_t,EventHandler> newTickQueue;
+        for ( auto i = tickQueue.begin(); i != tickQueue.end(); i++ )
+            newTickQueue.insert(pair<int32_t,EventHandler>(tick+(*i).first, (*i).second));
         tickQueue.clear();
-
         tickQueue.insert(newTickQueue.begin(), newTickQueue.end());
+        //out.print("%s,%d: on load, frame_counter = %d\n", __FILE__, __LINE__, tick);
 
         nextItem = *df::global::item_next_id;
         nextBuilding = *df::global::building_next_id;
@@ -268,8 +264,7 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
 }
 
 static void manageTickEvent(color_ostream& out) {
-    uint32_t tick = DFHack::World::ReadCurrentYear()*ticksPerYear
-        + DFHack::World::ReadCurrentTick();
+    int32_t tick = df::global::world->frame_counter;
     while ( !tickQueue.empty() ) {
         if ( tick < (*tickQueue.begin()).first )
             break;
@@ -318,8 +313,8 @@ static int32_t getWorkerID(df::job* job) {
 TODO: consider checking item creation / experience gain just in case
 */
 static void manageJobCompletedEvent(color_ostream& out) {
-    uint32_t tick0 = eventLastTick[EventType::JOB_COMPLETED];
-    uint32_t tick1 = df::global::world->frame_counter;
+    int32_t tick0 = eventLastTick[EventType::JOB_COMPLETED];
+    int32_t tick1 = df::global::world->frame_counter;
     
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     map<int32_t, df::job*> nowJobs;

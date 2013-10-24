@@ -3053,7 +3053,7 @@ List of events
 
 Events from EventManager
 ------------------------
-These events are straight from EventManager module. Each of them first needs to be enabled. See functions for more info.
+These events are straight from EventManager module. Each of them first needs to be enabled. See functions for more info. If you register a listener before the game is loaded, be aware that no events will be triggered immediately after loading, so you might need to add another event listener for when the game first loads in some cases.
 
 1. ``onBuildingCreatedDestroyed(building_id)``
 
@@ -3069,7 +3069,7 @@ These events are straight from EventManager module. Each of them first needs to 
 
 4. ``onJobCompleted(job)``
 
-   Gets called when job is finished. The job that is passed to this function is a copy.
+   Gets called when job is finished. The job that is passed to this function is a copy. Requires a frequency of 0 in order to distinguish between workshop jobs that were cancelled by the user and workshop jobs that completed successfully.
 
 5. ``onUnitDeath(unit_id)``
 
@@ -3089,7 +3089,7 @@ These events are straight from EventManager module. Each of them first needs to 
 
 9. ``onInventoryChange(unit_id,item_id,old_equip,new_equip)``
 
-   Gets called when someone picks up an item, puts one down, or changes the way they are holding it.
+   Gets called when someone picks up an item, puts one down, or changes the way they are holding it. If an item is picked up, old_equip will be null. If an item is dropped, new_equip will be null. If an item is re-equipped in a new way, then neither will be null. You absolutely must NOT alter either old_equip or new_equip or you might break other plugins. 
 
 Functions
 ---------
@@ -3108,7 +3108,7 @@ Functions
 
 4. ``enableEvent(evType,frequency)``
 
-   Enable event checking for EventManager events. For event types use ``eventType`` table.
+   Enable event checking for EventManager events. For event types use ``eventType`` table. Note that different types of events require different frequencies to be effective. The frequency is how many ticks EventManager will wait before checking if that type of event has happened. If multiple scripts or plugins use the same event type, the smallest frequency is the one that is used, so you might get events triggered more often than the frequency you use here.
 
 Examples
 --------

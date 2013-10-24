@@ -421,14 +421,15 @@ ul.auto-toc {
 <li><a class="reference internal" href="#sort" id="id55">sort</a></li>
 <li><a class="reference internal" href="#eventful" id="id56">Eventful</a><ul>
 <li><a class="reference internal" href="#list-of-events" id="id57">List of events</a></li>
-<li><a class="reference internal" href="#functions" id="id58">Functions</a></li>
-<li><a class="reference internal" href="#examples" id="id59">Examples</a></li>
+<li><a class="reference internal" href="#events-from-eventmanager" id="id58">Events from EventManager</a></li>
+<li><a class="reference internal" href="#functions" id="id59">Functions</a></li>
+<li><a class="reference internal" href="#examples" id="id60">Examples</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#scripts" id="id60">Scripts</a><ul>
-<li><a class="reference internal" href="#save-init-script" id="id61">Save init script</a></li>
+<li><a class="reference internal" href="#scripts" id="id61">Scripts</a><ul>
+<li><a class="reference internal" href="#save-init-script" id="id62">Save init script</a></li>
 </ul>
 </li>
 </ul>
@@ -3138,8 +3139,41 @@ tweaking (e.g. adding custom reactions)</p>
 </li>
 </ol>
 </div>
+<div class="section" id="events-from-eventmanager">
+<h3><a class="toc-backref" href="#id58">Events from EventManager</a></h3>
+<p>These events are straight from EventManager module. Each of them first needs to be enabled. See functions for more info. If you register a listener before the game is loaded, be aware that no events will be triggered immediately after loading, so you might need to add another event listener for when the game first loads in some cases.</p>
+<ol class="arabic">
+<li><p class="first"><tt class="docutils literal">onBuildingCreatedDestroyed(building_id)</tt></p>
+<p>Gets called when building is created or destroyed.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onConstructionCreatedDestroyed(building_id)</tt></p>
+<p>Gets called when construction is created or destroyed.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onJobInitiated(job)</tt></p>
+<p>Gets called when job is issued.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onJobCompleted(job)</tt></p>
+<p>Gets called when job is finished. The job that is passed to this function is a copy. Requires a frequency of 0 in order to distinguish between workshop jobs that were cancelled by the user and workshop jobs that completed successfully.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onUnitDeath(unit_id)</tt></p>
+<p>Gets called on unit death.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onItemCreated(item_id)</tt></p>
+<p>Gets called when item is created (except due to traders, migrants, invaders and spider webs).</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onSyndrome(unit_id,syndrome_index)</tt></p>
+<p>Gets called when new syndrome appears on a unit.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onInvasion(invasion_id)</tt></p>
+<p>Gets called when new invasion happens.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onInventoryChange(unit_id,item_id,old_equip,new_equip)</tt></p>
+<p>Gets called when someone picks up an item, puts one down, or changes the way they are holding it. If an item is picked up, old_equip will be null. If an item is dropped, new_equip will be null. If an item is re-equipped in a new way, then neither will be null. You absolutely must NOT alter either old_equip or new_equip or you might break other plugins.</p>
+</li>
+</ol>
+</div>
 <div class="section" id="functions">
-<h3><a class="toc-backref" href="#id58">Functions</a></h3>
+<h3><a class="toc-backref" href="#id59">Functions</a></h3>
 <ol class="arabic">
 <li><p class="first"><tt class="docutils literal">registerReaction(reaction_name,callback)</tt></p>
 <p>Simplified way of using onReactionComplete; the callback is function (same params as event).</p>
@@ -3150,10 +3184,13 @@ tweaking (e.g. adding custom reactions)</p>
 <li><p class="first"><tt class="docutils literal">addReactionToShop(reaction_name,shop_name)</tt></p>
 <p>Add a custom reaction to the building.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">enableEvent(evType,frequency)</tt></p>
+<p>Enable event checking for EventManager events. For event types use <tt class="docutils literal">eventType</tt> table. Note that different types of events require different frequencies to be effective. The frequency is how many ticks EventManager will wait before checking if that type of event has happened. If multiple scripts or plugins use the same event type, the smallest frequency is the one that is used, so you might get events triggered more often than the frequency you use here.</p>
+</li>
 </ol>
 </div>
 <div class="section" id="examples">
-<h3><a class="toc-backref" href="#id59">Examples</a></h3>
+<h3><a class="toc-backref" href="#id60">Examples</a></h3>
 <p>Spawn dragon breath on each item attempt to contaminate wound:</p>
 <pre class="literal-block">
 b=require &quot;plugins.eventful&quot;
@@ -3190,7 +3227,7 @@ b.addReactionToShop(&quot;TAN_A_HIDE&quot;,&quot;LEATHERWORKS&quot;)
 </div>
 </div>
 <div class="section" id="scripts">
-<h1><a class="toc-backref" href="#id60">Scripts</a></h1>
+<h1><a class="toc-backref" href="#id61">Scripts</a></h1>
 <p>Any files with the .lua extension placed into hack/scripts/*
 are automatically used by the DFHack core as commands. The
 matching command name consists of the name of the file sans
@@ -3221,7 +3258,7 @@ The <tt class="docutils literal">name</tt> argument should be the name stem, as 
 </ul>
 <p>Note that this function lets errors propagate to the caller.</p>
 <div class="section" id="save-init-script">
-<h2><a class="toc-backref" href="#id61">Save init script</a></h2>
+<h2><a class="toc-backref" href="#id62">Save init script</a></h2>
 <p>If a save directory contains a file called <tt class="docutils literal">raw/init.lua</tt>, it is
 automatically loaded and executed every time the save is loaded. It
 can also define the following functions to be called by dfhack:</p>

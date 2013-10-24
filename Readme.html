@@ -2993,7 +2993,15 @@ To skip a row in your design, use a single <tt class="docutils literal">;</tt>.<
 <p><cite>invasion-now civName</cite> trigger an invasion from the civilization with the id civName, starting in about ten ticks</p>
 <p><cite>invasion-now civName start</cite> trigger an invasion from civName in a number of ticks between 10*start and 11*start-1 (inclusive)</p>
 <p><cite>invasion-now civName start end</cite> trigger an invasion from civName in about 10*start ticks, and continue triggering invasions every ten ticks afterward until about 10*end ticks have passed</p>
-<p>Probably fails if the start time of a triggered invasion is later than the start of the next year.</p>
+<p>Probably fails if the start time of a triggered invasion is later than the start of the next year.
+digmat
+======
+Designates a tile for digging. Monitors the tile, and when it is dug out, add
+surrounding discovered tiles of the same material for digging. Similar to 'digv',
+but less cheaty. Works for stone layers, soil layers, veins, etc.</p>
+<p>If the tile you call the script on already has a digging designation, reuse the
+same designation for future digging (eg dig up/downstairs). When digging stairs,
+also designate tiles on z-1 and z+1 when they are discovered.</p>
 </div>
 <div class="section" id="superdwarf">
 <h2><a class="toc-backref" href="#id141">superdwarf</a></h2>

@@ -2185,6 +2185,15 @@ Triggers an invasion, or several in the near future.
 `invasion-now civName start end` trigger an invasion from civName in about 10*start ticks, and continue triggering invasions every ten ticks afterward until about 10*end ticks have passed
 
 Probably fails if the start time of a triggered invasion is later than the start of the next year.
+digmat
+======
+Designates a tile for digging. Monitors the tile, and when it is dug out, add
+surrounding discovered tiles of the same material for digging. Similar to 'digv',
+but less cheaty. Works for stone layers, soil layers, veins, etc.
+
+If the tile you call the script on already has a digging designation, reuse the
+same designation for future digging (eg dig up/downstairs). When digging stairs,
+also designate tiles on z-1 and z+1 when they are discovered.
 
 superdwarf
 ==========

@@ -18,6 +18,7 @@ DFHack v0.34.11-r4
     - masspit: designate caged creatures in a zone for pitting
     - multicmd: run a sequence of dfhack commands, separated by ';'
     - startdwarf: change the number of dwarves for a new embark
+    - digmat: dig veins/layers tile by tile, as discovered
   Misc improvements:
     - autoSyndrome:
         disable by default

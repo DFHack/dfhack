@@ -9,6 +9,7 @@
 #include "df/building_workshopst.h"
 
 #include "df/unit.h"
+#include "df/unit_inventory_item.h"
 #include "df/item.h"
 #include "df/item_actual.h"
 #include "df/unit_wound.h"
@@ -120,6 +121,7 @@ static void handle_job_init(color_ostream &out,df::job*){};
 static void handle_job_complete(color_ostream &out,df::job*){};
 static void handle_constructions(color_ostream &out,df::construction*){};
 static void handle_syndrome(color_ostream &out,int32_t,int32_t){};
+static void handle_inventory_change(color_ostream& out,int32_t,int32_t,df::unit_inventory_item*,df::unit_inventory_item*){};
 DEFINE_LUA_EVENT_1(onBuildingCreatedDestroyed, handle_int32t, int32_t);
 DEFINE_LUA_EVENT_1(onJobInitiated,handle_job_init,df::job*);
 DEFINE_LUA_EVENT_1(onJobCompleted,handle_job_complete,df::job*);
@@ -128,6 +130,7 @@ DEFINE_LUA_EVENT_1(onItemCreated,handle_int32t,int32_t);
 DEFINE_LUA_EVENT_1(onConstructionCreatedDestroyed, handle_constructions, df::construction*);
 DEFINE_LUA_EVENT_2(onSyndrome, handle_syndrome, int32_t,int32_t);
 DEFINE_LUA_EVENT_1(onInvasion,handle_int32t,int32_t);
+DEFINE_LUA_EVENT_4(onInventoryChange,handle_inventory_change,int32_t,int32_t,df::unit_inventory_item*,df::unit_inventory_item*);
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onWorkshopFillSidebarMenu),
     DFHACK_LUA_EVENT(postWorkshopFillSidebarMenu),
@@ -146,6 +149,7 @@ DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onItemCreated),
     DFHACK_LUA_EVENT(onSyndrome),
     DFHACK_LUA_EVENT(onInvasion),
+    DFHACK_LUA_EVENT(onInventoryChange),
     DFHACK_LUA_END
 };
 
@@ -189,6 +193,23 @@ static void ev_mng_building(color_ostream& out, void* ptr)
     int32_t myId=int32_t(ptr);
     onBuildingCreatedDestroyed(out,myId);
 }
+static void ev_mng_inventory(color_ostream& out, void* ptr)
+{
+    EventManager::InventoryChangeData* data = reinterpret_cast<EventManager::InventoryChangeData*>(ptr);
+    int32_t unitId = data->unitId;
+    int32_t itemId = -1;
+    df::unit_inventory_item* item_old = NULL;
+    df::unit_inventory_item* item_new = NULL;
+    if ( data->item_old ) {
+        itemId = data->item_old->itemId;
+        item_old = &data->item_old->item;
+    }
+    if ( data->item_new ) {
+        itemId = data->item_new->itemId;
+        item_new = &data->item_new->item;
+    }
+    onInventoryChange(out,unitId,itemId,item_old,item_new);
+}
 std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX,-1);
 typedef void (*handler_t) (color_ostream&,void*);
 static const handler_t eventHandlers[] = {
@@ -201,6 +222,7 @@ static const handler_t eventHandlers[] = {
  ev_mng_construction,
  ev_mng_syndrome,
  ev_mng_invasion,
+ ev_mng_inventory,
 };
 static void enableEvent(int evType,int freq)
 {

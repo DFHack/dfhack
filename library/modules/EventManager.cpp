@@ -114,7 +114,7 @@ static void manageBuildingEvent(color_ostream& out);
 static void manageConstructionEvent(color_ostream& out);
 static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
-//static void manageEquipmentEvent(color_ostream& out);
+static void manageEquipmentEvent(color_ostream& out);
 
 typedef void (*eventManager_t)(color_ostream&);
 
@@ -128,7 +128,7 @@ static const eventManager_t eventManager[] = {
     manageConstructionEvent,
     manageSyndromeEvent,
     manageInvasionEvent,
-//    manageEquipmentEvent,
+    manageEquipmentEvent,
 };
 
 //job initiated
@@ -159,6 +159,7 @@ static int32_t nextInvasion;
 
 //equipment change
 //static unordered_map<int32_t, vector<df::unit_inventory_item> > equipmentLog;
+static unordered_map<int32_t, vector<InventoryItem> > equipmentLog;
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;
@@ -181,10 +182,10 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         livingUnits.clear();
         buildings.clear();
         constructions.clear();
+        equipmentLog.clear();
 
         Buildings::clearBuildings(out);
         gameLoaded = false;
-//        equipmentLog.clear();
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         /*
         int32_t tick = df::global::world->frame_counter;
@@ -623,43 +624,76 @@ static void manageInvasionEvent(color_ostream& out) {
     }
 }
 
-/*
 static void manageEquipmentEvent(color_ostream& out) {
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::EQUIPMENT_CHANGE].begin(), handlers[EventType::EQUIPMENT_CHANGE].end());
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::INVENTORY_CHANGE].begin(), handlers[EventType::INVENTORY_CHANGE].end());
     
+    unordered_map<int32_t, InventoryItem> itemIdToInventoryItem;
+    unordered_set<int32_t> currentlyEquipped;
     for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
+        itemIdToInventoryItem.clear();
+        currentlyEquipped.clear();
         df::unit* unit = *a;
-        if ( unit->flags1.bits.dead )
+        /*if ( unit->flags1.bits.dead )
             continue;
+        */
         
-        bool isNew = equipmentLog.find(unit->id) == equipmentLog.end();
-        bool needsUpdate = isNew || equipmentLog[unit->id].size() != unit->inventory.size();
-        if ( !needsUpdate ) {
+        auto oldEquipment = equipmentLog.find(unit->id);
+        if ( oldEquipment != equipmentLog.end() ) {
+            vector<InventoryItem>& v = (*oldEquipment).second;
+            for ( auto b = v.begin(); b != v.end(); b++ ) {
+                InventoryItem& i = *b;
+                itemIdToInventoryItem[i.itemId] = i;
+            }
             for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
-                df::unit_inventory_item* item = unit->inventory[b];
-                df::unit_inventory_item& old = equipmentLog[unit->id][b];
-                if ( item->item == old.item && item->mode == old.mode && item->body_part_id == old.body_part_id && item->anon_1 == old.anon_1 && item->wound_id == old->wound_id )
+                df::unit_inventory_item* dfitem_new = unit->inventory[b];
+                currentlyEquipped.insert(dfitem_new->item->id);
+                InventoryItem item_new(dfitem_new->item->id, *dfitem_new);
+                auto c = itemIdToInventoryItem.find(dfitem_new->item->id);
+                if ( c == itemIdToInventoryItem.end() ) {
+                    //new item equipped (probably just picked up)
+                    InventoryChangeData data(unit->id, NULL, &item_new);
+                    for ( auto h = copy.begin(); h != copy.end(); h++ ) {
+                        EventHandler handle = (*h).second;
+                        handle.eventHandler(out, (void*)&data);
+                    }
                     continue;
+                }
+                InventoryItem item_old = (*c).second;
                 
-                needsUpdate = true;
-                break;
+                df::unit_inventory_item& item0 = item_old.item;
+                df::unit_inventory_item& item1 = item_new.item;
+                if ( item0.mode == item1.mode && item0.body_part_id == item1.body_part_id && item0.wound_id == item1.wound_id )
+                    continue;
+                //some sort of change in how it's equipped
+                
+                InventoryChangeData data(unit->id, &item_old, &item_new);
+                for ( auto h = copy.begin(); h != copy.end(); h++ ) {
+                    EventHandler handle = (*h).second;
+                    handle.eventHandler(out, (void*)&data);
+                }
+            }
+            //check for dropped items
+            for ( auto b = v.begin(); b != v.end(); b++ ) {
+                InventoryItem i = *b;
+                if ( currentlyEquipped.find(i.itemId) != currentlyEquipped.end() )
+                    continue;
+                //TODO: delete ptr if invalid
+                InventoryChangeData data(unit->id, &i, NULL);
+                for ( auto h = copy.begin(); h != copy.end(); h++ ) {
+                    EventHandler handle = (*h).second;
+                    handle.eventHandler(out, (void*)&data);
+                }
             }
         }
         
-        if ( needsUpdate && !isNew ) {
-            for ( auto c = copy.begin(); c != copy.end(); c++ ) {
-                EventHandler handle = (*c).second;
-                handle.eventHandler(out, (void*)&data);
-            }
-        }
-        
-        if ( needsUpdate ) {
-            equipmentLog[unit->id].clear();
-            for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
-                equipmentLog[unit->id].push_back(* unit->inventory[b]);
-            }
+        //update equipment
+        vector<InventoryItem>& equipment = equipmentLog[unit->id];
+        equipment.clear();
+        for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
+            df::unit_inventory_item* dfitem = unit->inventory[b];
+            InventoryItem item(dfitem->item->id, *dfitem);
+            equipment.push_back(item);
         }
     }
 }
-*/
 

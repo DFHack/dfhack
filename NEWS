@@ -45,7 +45,7 @@ DFHack v0.34.11-r3
     - stocks: An improved stocks display screen.
   Internals:
     - Core: there is now a per-save dfhack.init file for when the save is loaded, and another for when it is unloaded
-    - EventManager: fixed job completion detection
+    - EventManager: fixed job completion detection, fixed removal of TICK events, added EQUIPMENT_CHANGE event
     - Lua API for a better random number generator and perlin noise functions.
     - Once: easy way to make sure something happens once per run of DF, such as an error message
 

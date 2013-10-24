@@ -3087,6 +3087,10 @@ These events are straight from EventManager module. Each of them first needs to 
 
    Gets called when new invasion happens.
 
+9. ``onInventoryChange(unit_id,item_id,old_equip,new_equip)``
+
+   Gets called when someone picks up an item, puts one down, or changes the way they are holding it.
+
 Functions
 ---------
 

@@ -10,6 +10,7 @@
 #include "DataDefs.h"
 
 #include <df/coord.h>
+#include <df/unit_inventory_item.h>
 
 namespace DFHack {
     namespace EventManager {
@@ -24,7 +25,7 @@ namespace DFHack {
                 CONSTRUCTION,
                 SYNDROME,
                 INVASION,
-//                EQUIPMENT_CHANGE,
+                INVENTORY_CHANGE,
                 EVENT_MAX
             };
         }
@@ -53,10 +54,20 @@ namespace DFHack {
             }
         };
         
-        /*struct InventoryData {
+        struct InventoryItem {
+            //it has to keep the id of an item because the item itself may have been deallocated
+            int32_t itemId;
+            df::unit_inventory_item item;
+            InventoryItem() {}
+            InventoryItem(int32_t id_in, df::unit_inventory_item item_in): itemId(id_in), item(item_in) {}
+        };
+        struct InventoryChangeData {
             int32_t unitId;
-            vector<df::unit_inventory_item>* oldItems;
-        };*/
+            InventoryItem* item_old;
+            InventoryItem* item_new;
+            InventoryChangeData() {}
+            InventoryChangeData(int32_t id_in, InventoryItem* old_in, InventoryItem* new_in): unitId(id_in), item_old(old_in), item_new(new_in) {}
+        };
         
         DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);
         DFHACK_EXPORT int32_t registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute=false);

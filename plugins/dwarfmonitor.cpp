@@ -1648,6 +1648,7 @@ static void update_dwarf_stats(bool is_paused)
     }
 }
 
+
 DFhackCExport command_result plugin_onupdate (color_ostream &out)
 {
     if (!monitor_jobs && !monitor_misery)

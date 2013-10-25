@@ -234,10 +234,17 @@ static coord2d biome_delta[] = {
 struct EmbarkTileLayout {
     coord2d biome_off, biome_pos;
     df::region_map_entry *biome;
+    df::world_geo_biome *geo_biome;
     int elevation, max_soil_depth;
     int min_z, base_z;
     std::map<int, float> penalty;
 };
+
+static df::world_region_details *get_details(df::world_data *data, df::coord2d pos)
+{
+    int d_idx = linear_index(data->region_details, &df::world_region_details::pos, pos);
+    return vector_get(data->region_details, d_idx);
+}
 
 bool estimate_underground(color_ostream &out, EmbarkTileLayout &tile, df::world_region_details *details, int x, int y)
 {
@@ -251,14 +258,36 @@ bool estimate_underground(color_ostream &out, EmbarkTileLayout &tile, df::world_
     tile.biome_pos = coord2d(bx, by);
     tile.biome = &data->region_map[bx][by];
 
+    tile.geo_biome = df::world_geo_biome::find(tile.biome->geo_index);
+
     // Compute surface elevation
-    tile.elevation = (
-            details->elevation[x][y] + details->elevation[x][y+1] +
-            details->elevation[x+1][y] + details->elevation[x+1][y+1]
-        ) / 4;
-    tile.max_soil_depth = std::max((154-tile.biome->elevation)/5,0);
-    tile.base_z = tile.elevation;
+    tile.elevation = details->elevation[x][y];
+    tile.max_soil_depth = std::max((154-tile.elevation)/5,1);
     tile.penalty.clear();
+
+    // Special biome adjustments
+    if (!tile.biome->flags.is_set(region_map_entry_flags::is_lake))
+    {
+        // Mountain biome
+        if (tile.biome->elevation >= 150)
+            tile.max_soil_depth = 0;
+        // Ocean biome
+        else if (tile.biome->elevation < 100)
+        {
+            if (tile.elevation == 99)
+                tile.elevation = 98;
+
+            if (tile.geo_biome && (tile.geo_biome->unk1 == 4 || tile.geo_biome->unk1 == 5))
+            {
+                auto b_details = get_details(data, tile.biome_pos);
+
+                if (b_details && b_details->unk12e8 < 500)
+                    tile.max_soil_depth = 0;
+            }
+        }
+    }
+
+    tile.base_z = tile.elevation-1;
 
     auto &features = details->features[x][y];
 
@@ -301,8 +330,8 @@ bool estimate_underground(color_ostream &out, EmbarkTileLayout &tile, df::world_
 
     if (!sea_found)
     {
-        out.printerr("Could not find magma sea.\n");
-        return false;
+        out.printerr("Could not find magma sea; depth may be incorrect.\n");
+        tile.min_z = tile.base_z;
     }
 
     // Scan for big local features and apply their penalties
@@ -340,7 +369,7 @@ bool estimate_materials(color_ostream &out, EmbarkTileLayout &tile, MatMap &laye
 {
     using namespace geo_layer_type;
 
-    df::world_geo_biome *geo_biome = df::world_geo_biome::find(tile.biome->geo_index);
+    df::world_geo_biome *geo_biome = tile.geo_biome;
 
     if (!geo_biome)
     {
@@ -350,34 +379,57 @@ bool estimate_materials(color_ostream &out, EmbarkTileLayout &tile, MatMap &laye
     }
 
     // soil depth increases by 1 every 5 levels below 150
-    int top_z_level = tile.elevation - tile.max_soil_depth;
+    unsigned nlayers = std::min<unsigned>(16, geo_biome->layers.size());
+    int soil_size = 0;
 
-    for (unsigned i = 0; i < geo_biome->layers.size(); i++)
+    for (unsigned i = 0; i < nlayers; i++)
     {
         auto layer = geo_biome->layers[i];
-        switch (layer->type)
+        if (layer->type == SOIL || layer->type == SOIL_SAND)
+            soil_size += layer->top_height - layer->bottom_height + 1;
+    }
+
+    // Compute shifts for layers in the stack
+    int soil_erosion = soil_size - std::min(soil_size,tile.max_soil_depth);
+    int layer_shift[16];
+    int cur_shift = tile.elevation+soil_erosion-1;
+
+    for (unsigned i = 0; i < nlayers; i++)
+    {
+        auto layer = geo_biome->layers[i];
+        layer_shift[i] = cur_shift;
+
+        if (layer->type == SOIL || layer->type == SOIL_SAND)
         {
-            case SOIL:
-            case SOIL_OCEAN:
-            case SOIL_SAND:
-                top_z_level += layer->top_height - layer->bottom_height + 1;
-                break;
-            default:;
+            int size = layer->top_height - layer->bottom_height + 1;
+
+            // This is to replicate the behavior of a probable bug in the
+            // map generation code: if a layer is partially eroded, the
+            // removed levels are in fact transferred to the layer below,
+            // because unlike the case of removing the whole layer, the code
+            // does not execute a loop to shift the lower part of the stack up.
+            if (size > soil_erosion)
+                cur_shift -= soil_erosion;
+
+            soil_erosion -= std::min(soil_erosion, size);
         }
     }
 
-    top_z_level = std::max(top_z_level, tile.elevation)-1;
+    // Estimate amounts
+    int last_bottom = tile.elevation;
 
-    for (unsigned i = 0; i < geo_biome->layers.size(); i++)
+    for (unsigned i = 0; i < nlayers; i++)
     {
         auto layer = geo_biome->layers[i];
 
-        int top_z = std::min(layer->top_height + top_z_level, tile.elevation-1);
-        int bottom_z = std::max(layer->bottom_height + top_z_level, tile.min_z);
-        if (i+1 == geo_biome->layers.size()) // stretch layer if needed
+        int top_z = last_bottom-1;
+        int bottom_z = std::max(layer->bottom_height + layer_shift[i], tile.min_z);
+        if (i+1 == nlayers) // stretch layer if needed
             bottom_z = tile.min_z;
         if (top_z < bottom_z)
             continue;
+
+        last_bottom = bottom_z;
 
         float layer_size = 48*48;
 
@@ -438,8 +490,7 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
 
     df::world_data *data = world->world_data;
     coord2d cur_region = screen->region_pos;
-    int d_idx = linear_index(data->region_details, &df::world_region_details::pos, cur_region);
-    auto cur_details = vector_get(data->region_details, d_idx);
+    auto cur_details = get_details(data, cur_region);
 
     if (!cur_details)
     {

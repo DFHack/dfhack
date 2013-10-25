@@ -79,6 +79,8 @@ add_custom_target(generate_proto DEPENDS ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_H
 
 SET_SOURCE_FILES_PROPERTIES( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 
+add_subdirectory(diggingInvaders)
+
 # Plugins
 OPTION(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if (BUILD_SUPPORTED)
@@ -145,9 +147,11 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(workNow workNow.cpp)
     #DFHACK_PLUGIN(dfstream dfstream.cpp LINK_LIBRARIES clsocket dfhack-tinythread)
     DFHACK_PLUGIN(autoSyndrome autoSyndrome.cpp)
-    DFHACK_PLUGIN(trueTransformation trueTransformation.cpp)
+    DFHACK_PLUGIN(syndromeTrigger syndromeTrigger.cpp)
     DFHACK_PLUGIN(infiniteSky infiniteSky.cpp)
+    DFHACK_PLUGIN(digFlood digFlood.cpp)
     DFHACK_PLUGIN(createitem createitem.cpp)
+    DFHACK_PLUGIN(outsideOnly outsideOnly.cpp)
     DFHACK_PLUGIN(isoworldremote isoworldremote.cpp PROTOBUFS isoworldremote)
     DFHACK_PLUGIN(buildingplan buildingplan.cpp)
     DFHACK_PLUGIN(resume resume.cpp)
@@ -155,11 +159,11 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(mousequery mousequery.cpp)
     DFHACK_PLUGIN(autotrade autotrade.cpp)
     DFHACK_PLUGIN(stocks stocks.cpp)
+    DFHACK_PLUGIN(treefarm treefarm.cpp)
     DFHACK_PLUGIN(cleanconst cleanconst.cpp)
     DFHACK_PLUGIN(hotkeys hotkeys.cpp)
     DFHACK_PLUGIN(3dveins 3dveins.cpp)
 endif()
-
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it
 OPTION(BUILD_SKELETON "Build the skeleton plugin." OFF)

@@ -59,7 +59,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.34.11")
-SET(DFHACK_RELEASE "r3" CACHE STRING "Current release revision.")
+SET(DFHACK_RELEASE "r4" CACHE STRING "Current release revision.")
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")

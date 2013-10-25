@@ -1353,6 +1353,26 @@ void Core::onUpdate(color_ostream &out)
     Lua::Core::onUpdate(out);
 }
 
+static void handleLoadAndUnloadScripts(Core* core, color_ostream& out, state_change_event event) {
+    //TODO: use different separators for windows
+#ifdef _WIN32
+    static const std::string separator = "\\";
+#else
+    static const std::string separator = "/";
+#endif
+    std::string rawFolder = "data" + separator + "save" + separator + (df::global::world->cur_savegame.save_dir) + separator + "raw" + separator;
+    switch(event) {
+    case SC_WORLD_LOADED:
+        core->loadScriptFile(out, rawFolder + "onLoad.init", true);
+        break;
+    case SC_WORLD_UNLOADED:
+        core->loadScriptFile(out, rawFolder + "onUnload.init", true);
+        break;
+    default:
+        break;
+    }
+}
+
 void Core::onStateChange(color_ostream &out, state_change_event event)
 {
     EventManager::onStateChange(out, event);
@@ -1362,6 +1382,8 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     plug_mgr->OnStateChange(out, event);
 
     Lua::Core::onStateChange(out, event);
+
+    handleLoadAndUnloadScripts(this, out, event);
 }
 
 // FIXME: needs to terminate the IO threads and properly dismantle all the machinery involved.

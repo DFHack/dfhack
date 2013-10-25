@@ -1,35 +1,54 @@
 DFHack future
 
-  Internals:
-    - Lua API for a better random number generator and perlin noise functions.
+ - Is not yet known.
+
+DFHack v0.34.11-r4
+
   New commands:
-    - restrictliquid - Restrict traffic on every visible square with liquid.
-    - restrictice - Restrict traffic on squares above visible ice.
+    - diggingInvaders - allows invaders to dig and/or deconstruct walls and buildings in order to get at your dwarves.
+    - digFlood - automatically dig out specified veins as they are revealed
     - enable, disable - Built-in commands that can be used to enable/disable many plugins.
+    - restrictice - Restrict traffic on squares above visible ice.
+    - restrictliquid - Restrict traffic on every visible square with liquid.
+    - treefarm - automatically chop trees and dig obsidian
   New scripts:
-    - masspit: designate caged creatures in a zone for pitting
-    - locate_ore: scan the map for unmined ore veins
-    - multicmd: run a sequence of dfhack commands, separated by ';'
     - autobutcher: A GUI front-end for the autobutcher plugin.
+    - invasionNow: trigger an invasion, or many
+    - locate_ore: scan the map for unmined ore veins
+    - masspit: designate caged creatures in a zone for pitting
+    - multicmd: run a sequence of dfhack commands, separated by ';'
     - startdwarf: change the number of dwarves for a new embark
     - digmat: dig veins/layers tile by tile, as discovered
   Misc improvements:
-    - exterminate: renamed from slayrace, add help message, add butcher mode
-    - autoSyndrome: disable by default
-    - ruby: add df.dfhack_run "somecommand"
-    - magmasource: rename to 'source', allow water/magma sources/drains
+    - autoSyndrome:
+        disable by default
+        reorganized special tags
+        minimized error spam
+        reset policies: if the target already has an instance of the syndrome you can skip, add another instance, reset the timer, or add the full duration to the time remaining
     - core: fix SC_WORLD_(UN)LOADED event for arena mode
+    - exterminate: renamed from slayrace, add help message, add butcher mode
+    - fastdwarf: fixed bug involving fastdwarf and teledwarf being on at the same time
+    - magmasource: rename to 'source', allow water/magma sources/drains
+    - ruby: add df.dfhack_run "somecommand"
+    - syndromeTrigger: replaces and extends trueTransformation. Can trigger things when syndromes are added for any reason.
     - tiletypes: support changing tile material to arbitrary stone.
+    - workNow: can optionally look for jobs when jobs are completed
   New tweaks:
     - hive-crash: Prevent crash if bees die in a hive with ungathered products (bug 6368).
   New plugins:
+    - 3dveins: Reshapes all veins on the map in a way that flows between Z levels. May be unstable. Backup before using.
+    - autotrade: Automatically send items in marked stockpiles to trade depot, when trading is possible.
     - buildingplan: Place furniture before it's built
-    - resume: A plugin to help display and resume suspended constructions conveniently
     - dwarfmonitor: Records dwarf activity to measure fort efficiency
     - mousequery: Look and poke at the map elements with the mouse.
-    - autotrade: Automatically send items in marked stockpiles to trade depot, when trading is possible.
+    - outsideOnly: make raw-specified buildings impossible to build inside
+    - resume: A plugin to help display and resume suspended constructions conveniently
     - stocks: An improved stocks display screen.
-    - 3dveins: Reshapes all veins on the map in a way that flows between Z levels.
+  Internals:
+    - Core: there is now a per-save dfhack.init file for when the save is loaded, and another for when it is unloaded
+    - EventManager: fixed job completion detection, fixed removal of TICK events, added EQUIPMENT_CHANGE event
+    - Lua API for a better random number generator and perlin noise functions.
+    - Once: easy way to make sure something happens once per run of DF, such as an error message
 
 DFHack v0.34.11-r3
 

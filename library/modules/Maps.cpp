@@ -61,8 +61,8 @@ using namespace std;
 #include "df/z_level_flags.h"
 #include "df/region_map_entry.h"
 #include "df/flow_info.h"
-#include "df/plant.h"
 #include "df/building_type.h"
+#include "df/plant.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -188,9 +188,13 @@ df::map_block *Maps::ensureTileBlock (int32_t x, int32_t y, int32_t z)
     dsgn.bits.outside = true;
 
     for (int tx = 0; tx < 16; tx++)
-        for (int ty = 0; ty < 16; ty++)
+        for (int ty = 0; ty < 16; ty++) {
             slot->designation[tx][ty] = dsgn;
-
+            slot->temperature_1[tx][ty] = column[z2]->temperature_1[tx][ty];
+            slot->temperature_2[tx][ty] = column[z2]->temperature_2[tx][ty];
+        }
+    
+    df::global::world->map.map_blocks.push_back(slot);
     return slot;
 }
 
@@ -564,6 +568,10 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
     if ( !index_tile<uint16_t>(block1->walkable,pos1) || !index_tile<uint16_t>(block2->walkable,pos2) ) {
         return false;
     }
+    
+    if ( block1->designation[pos1.x&0xF][pos1.y&0xF].bits.flow_size >= 4 ||
+         block2->designation[pos2.x&0xF][pos2.y&0xF].bits.flow_size >= 4 )
+        return false;
 
     if ( dz == 0 )
         return true;

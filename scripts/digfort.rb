@@ -8,7 +8,7 @@ if df.cursor.x == -30000
 end
 
 tiles = planfile.lines.map { |l|
-	l.sub(/#.*/, '').split(';').map { |t| t.strip }
+	l.sub(/#.*/, '').split(/[;,]/).map { |t| t = t.strip ; ((t[0] == ?") ? t[1..-2] : t) }
 }
 
 x = x0 = df.cursor.x

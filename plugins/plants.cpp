@@ -310,21 +310,21 @@ command_result df_createplant (color_ostream &out, vector <string> & parameters)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("grow", "Grows saplings into trees (with active cursor, only the targetted one).", df_grow,
+    commands.push_back(PluginCommand("grow", "Grows saplings into trees (with active cursor, only the targetted one).", df_grow, false,
         "This command turns all living saplings on the map into full-grown trees.\n"));
-    commands.push_back(PluginCommand("immolate", "Set plants on fire (under cursor, 'shrubs', 'trees' or 'all').", df_immolate,
+    commands.push_back(PluginCommand("immolate", "Set plants on fire (under cursor, 'shrubs', 'trees' or 'all').", df_immolate, false,
         "Without any options, this command burns a plant under the cursor.\n"
         "Options:\n"
         "shrubs   - affect all shrubs\n"
         "trees    - affect all trees\n"
         "all      - affect all plants\n"));
-    commands.push_back(PluginCommand("extirpate", "Kill plants (same mechanics as immolate).", df_extirpate,
+    commands.push_back(PluginCommand("extirpate", "Kill plants (same mechanics as immolate).", df_extirpate, false,
         "Without any options, this command destroys a plant under the cursor.\n"
         "Options:\n"
         "shrubs   - affect all shrubs\n"
         "trees    - affect all trees\n"
         "all      - affect all plants\n"));
-    commands.push_back(PluginCommand("createplant", "Create a new plant at the cursor.", df_createplant,
+    commands.push_back(PluginCommand("createplant", "Create a new plant at the cursor.", df_createplant, false,
         "Specify the type of plant to create by its raw ID (e.g. TOWER_CAP or MUSHROOM_HELMET_PLUMP).\n"
         "Only shrubs and saplings can be placed, and they must be located on a dirt or grass floor.\n"));
     return CR_OK;

@@ -2171,7 +2171,12 @@ Unrecognized characters are ignored (eg the 'skip this tile' in the sample).
 Empty lines and data after a ``#`` are ignored as comments.
 To skip a row in your design, use a single ``;``.
 
-The script takes the plan filename, starting from the root df folder.
+One comment in the file may contain the phrase ``start(3,5)``. It is interpreted
+as an offset for the pattern: instead of starting at the cursor, it will start
+3 tiles left and 5 tiles up from the cursor.
+
+The script takes the plan filename, starting from the root df folder (where
+Dwarf Fortress.exe is found).
 
 invasion-now
 ============

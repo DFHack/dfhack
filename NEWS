@@ -1,6 +1,8 @@
 DFHack future
 
- - Is not yet known.
+  New commands:
+    - move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands
+    - 'plant create' - spawn a new shrub under the cursor
 
 DFHack v0.34.11-r4
 

@@ -22,24 +22,7 @@ using df::global::world;
 
 const uint32_t sapling_to_tree_threshold = 120 * 28 * 12 * 3; // 3 years
 
-command_result df_grow (color_ostream &out, vector <string> & parameters);
-command_result df_immolate (color_ostream &out, vector <string> & parameters);
-command_result df_extirpate (color_ostream &out, vector <string> & parameters);
-
 DFHACK_PLUGIN("plants");
-
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
-{
-    commands.push_back(PluginCommand("grow", "Grows saplings into trees (with active cursor, only the targetted one).", df_grow));
-    commands.push_back(PluginCommand("immolate", "Set plants on fire (under cursor, 'shrubs', 'trees' or 'all').", df_immolate));
-    commands.push_back(PluginCommand("extirpate", "Kill plants (same mechanics as immolate).", df_extirpate));
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
-    return CR_OK;
-}
 
 enum do_what
 {
@@ -84,19 +67,8 @@ static bool getoptions( vector <string> & parameters, bool & shrubs, bool & tree
  */
 static command_result immolations (color_ostream &out, do_what what, bool shrubs, bool trees, bool help)
 {
-    static const char * what1 = "destroys";
-    static const char * what2 = "burns";
     if(help)
-    {
-        out.print("Without any options, this command %s a plant under the cursor.\n"
-        "Options:\n"
-        "shrubs   - affect all shrubs\n"
-        "trees    - affect all trees\n"
-        "all      - affect all plants\n",
-        what == do_immolate? what2 : what1
-        );
-        return CR_OK;
-    }
+        return CR_WRONG_USAGE;
     CoreSuspender suspend;
     if (!Maps::IsValid())
     {
@@ -165,26 +137,26 @@ command_result df_immolate (color_ostream &out, vector <string> & parameters)
     bool shrubs = false, trees = false, help = false;
     if(getoptions(parameters,shrubs,trees,help))
     {
-        return immolations(out,do_immolate,shrubs,trees, help);
+        return immolations(out,do_immolate,shrubs,trees,help);
     }
     else
     {
         out.printerr("Invalid parameter!\n");
-        return CR_FAILURE;
+        return CR_WRONG_USAGE;
     }
 }
 
 command_result df_extirpate (color_ostream &out, vector <string> & parameters)
 {
     bool shrubs = false, trees = false, help = false;
-    if(getoptions(parameters,shrubs,trees, help))
+    if(getoptions(parameters,shrubs,trees,help))
     {
-        return immolations(out,do_extirpate,shrubs,trees, help);
+        return immolations(out,do_extirpate,shrubs,trees,help);
     }
     else
     {
         out.printerr("Invalid parameter!\n");
-        return CR_FAILURE;
+        return CR_WRONG_USAGE;
     }
 }
 
@@ -193,10 +165,7 @@ command_result df_grow (color_ostream &out, vector <string> & parameters)
     for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
-        {
-            out.print("This command turns all living saplings into full-grown trees.\n");
-            return CR_OK;
-        }
+            return CR_WRONG_USAGE;
     }
     CoreSuspender suspend;
 
@@ -245,3 +214,123 @@ command_result df_grow (color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
+command_result df_createplant (color_ostream &out, vector <string> & parameters)
+{
+    if ((parameters.size() != 1) || (parameters[0] == "help" || parameters[0] == "?"))
+        return CR_WRONG_USAGE;
+
+    CoreSuspender suspend;
+
+    if (!Maps::IsValid())
+    {
+        out.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+
+    int32_t x,y,z;
+    if(!Gui::getCursorCoords(x,y,z))
+    {
+        out.printerr("No cursor detected - please place the cursor over the location in which you wish to create a new plant.\n");
+        return CR_FAILURE;
+    }
+    df::map_block *map = Maps::getTileBlock(x, y, z);
+    if (!map)
+    {
+        out.printerr("Invalid location selected!\n");
+        return CR_FAILURE;
+    }
+    int tx = x & 15, ty = y & 15;
+    int mat = tileMaterial(map->tiletype[tx][ty]);
+    if ((tileShape(map->tiletype[tx][ty]) != tiletype_shape::FLOOR) || ((mat != tiletype_material::SOIL) && (mat != tiletype_material::GRASS_DARK) && (mat != tiletype_material::GRASS_LIGHT)))
+    {
+        out.printerr("Plants can only be placed on dirt or grass floors!\n");
+        return CR_FAILURE;
+    }
+
+    int plant_id = -1;
+    df::plant_raw *plant_raw = NULL;
+    for (size_t i = 0; i < world->raws.plants.all.size(); i++)
+    {
+        plant_raw = world->raws.plants.all[i];
+        if (plant_raw->id == parameters[0])
+        {
+            plant_id = i;
+            break;
+        }
+    }
+    if (plant_id == -1)
+    {
+        out.printerr("Invalid plant ID specified!\n");
+        return CR_FAILURE;
+    }
+    if (plant_raw->flags.is_set(plant_raw_flags::GRASS))
+    {
+        out.printerr("You cannot plant grass using this command.\n");
+        return CR_FAILURE;
+    }
+
+    df::plant *plant = new df::plant;
+    if (plant_raw->flags.is_set(plant_raw_flags::TREE))
+        plant->hitpoints = 400000;
+    else
+    {
+        plant->hitpoints = 100000;
+        plant->flags.bits.is_shrub = 1;
+    }
+    // for now, always set "watery" for WET-permitted plants, even if they're spawned away from water
+    // the proper method would be to actually look for nearby water features, but it's not clear exactly how that works
+    if (plant_raw->flags.is_set(plant_raw_flags::WET))
+        plant->flags.bits.watery = 1;
+    plant->material = plant_id;
+    plant->pos.x = x;
+    plant->pos.y = y;
+    plant->pos.z = z;
+    plant->update_order = rand() % 10;
+    plant->temperature_tile_tick = -1;
+    plant->temperature_tile = 60001;
+    plant->min_safe_temp = 9900;
+    plant->max_safe_temp = 60001;
+
+    world->plants.all.push_back(plant);
+    switch (plant->flags.whole & 3)
+    {
+    case 0: world->plants.tree_dry.push_back(plant); break;
+    case 1: world->plants.tree_wet.push_back(plant); break;
+    case 2: world->plants.shrub_dry.push_back(plant); break;
+    case 3: world->plants.shrub_wet.push_back(plant); break;
+    }
+    map->plants.push_back(plant);
+    if (plant->flags.bits.is_shrub)
+        map->tiletype[tx][ty] = tiletype::Shrub;
+    else
+        map->tiletype[tx][ty] = tiletype::Sapling;
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
+{
+    commands.push_back(PluginCommand("grow", "Grows saplings into trees (with active cursor, only the targetted one).", df_grow, false,
+        "This command turns all living saplings on the map into full-grown trees.\n"));
+    commands.push_back(PluginCommand("immolate", "Set plants on fire (under cursor, 'shrubs', 'trees' or 'all').", df_immolate, false,
+        "Without any options, this command burns a plant under the cursor.\n"
+        "Options:\n"
+        "shrubs   - affect all shrubs\n"
+        "trees    - affect all trees\n"
+        "all      - affect all plants\n"));
+    commands.push_back(PluginCommand("extirpate", "Kill plants (same mechanics as immolate).", df_extirpate, false,
+        "Without any options, this command destroys a plant under the cursor.\n"
+        "Options:\n"
+        "shrubs   - affect all shrubs\n"
+        "trees    - affect all trees\n"
+        "all      - affect all plants\n"));
+    commands.push_back(PluginCommand("createplant", "Create a new plant at the cursor.", df_createplant, false,
+        "Specify the type of plant to create by its raw ID (e.g. TOWER_CAP or MUSHROOM_HELMET_PLUMP).\n"
+        "Only shrubs and saplings can be placed, and they must be located on a dirt or grass floor.\n"));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( color_ostream &out )
+{
+    return CR_OK;
+}

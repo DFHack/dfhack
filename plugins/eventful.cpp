@@ -1,4 +1,5 @@
 #include "Core.h"
+#include "Error.h"
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
@@ -228,8 +229,8 @@ static void enableEvent(int evType,int freq)
 {
     if (freq < 0)
         return;
-    if (evType < 0 || evType >= EventManager::EventType::EVENT_MAX || evType == EventManager::EventType::TICK)
-        throw std::runtime_error("invalid event type to enable");
+    CHECK_INVALID_ARGUMENT(evType >= 0 && evType < EventManager::EventType::EVENT_MAX &&
+                           evType != EventManager::EventType::TICK);
     EventManager::EventHandler::callback_t fun_ptr = eventHandlers[evType];
     EventManager::EventType::EventType typeToEnable=static_cast<EventManager::EventType::EventType>(evType);
 

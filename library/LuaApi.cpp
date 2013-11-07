@@ -565,7 +565,7 @@ static int dfhack_matinfo_find(lua_State *state)
     {
         std::vector<std::string> tokens;
 
-        for (int i = 1; i < argc; i++)
+        for (int i = 1; i <= argc; i++)
             tokens.push_back(luaL_checkstring(state, i));
 
         info.find(tokens);

@@ -179,9 +179,9 @@ public:
                 addDwarfActivity(unit, *entry);
             }
 
-            for_each_(dwarf_activity_values[unit],
-                [&] (const pair<activity_type, size_t> &x) 
-            { dwarf_activity_values[unit][x.first] = getPercentage(x.second,  dwarf_total); } );
+            auto &values = dwarf_activity_values[unit];
+            for (auto it = values.begin(); it != values.end(); ++it)
+                it->second = getPercentage(it->second, dwarf_total);
 
             dwarves_column.add(getUnitName(unit), unit);
         }
@@ -212,9 +212,8 @@ public:
             vector<pair<activity_type, size_t>> rev_vec(dwarf_activities->begin(), dwarf_activities->end());
             sort(rev_vec.begin(), rev_vec.end(), less_second<activity_type, size_t>());
 
-            for_each_(rev_vec,
-                [&] (pair<activity_type, size_t> x)
-            { dwarf_activity_column.add(getActivityItem(x.first, x.second), x.first); });
+            for (auto it = rev_vec.begin(); it != rev_vec.end(); ++it)
+                dwarf_activity_column.add(getActivityItem(it->first, it->second), it->first);
         }
 
         dwarf_activity_column.fixWidth();
@@ -754,9 +753,8 @@ public:
                 vector<pair<df::unit *, size_t>> rev_vec(dwarf_activities->begin(), dwarf_activities->end());
                 sort(rev_vec.begin(), rev_vec.end(), less_second<df::unit *, size_t>());
 
-                for_each_(rev_vec,
-                    [&] (pair<df::unit *, size_t> x)
-                { dwarf_activity_column.add(getDwarfAverage(x.first, x.second), x.first); });
+                for (auto it = rev_vec.begin(); it != rev_vec.end(); ++it)
+                    dwarf_activity_column.add(getDwarfAverage(it->first, it->second), it->first);
             }
         }
 
@@ -778,9 +776,8 @@ public:
             vector<pair<activity_type, size_t>> rev_vec(category_activities->begin(), category_activities->end());
             sort(rev_vec.begin(), rev_vec.end(), less_second<activity_type, size_t>());
 
-            for_each_(rev_vec,
-                [&] (pair<activity_type, size_t> x)
-            { category_breakdown_column.add(getBreakdownAverage(x.first, x.second), x.first); });
+            for (auto it = rev_vec.begin(); it != rev_vec.end(); ++it)
+                category_breakdown_column.add(getBreakdownAverage(it->first, it->second), it->first);
         }
 
         category_breakdown_column.fixWidth();
@@ -1179,10 +1176,14 @@ IMPLEMENT_VMETHOD_INTERPOSE(dwarf_monitor_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(dwarf_monitor_hook, render);
 
 DFHACK_PLUGIN("dwarfmonitor");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 static bool set_monitoring_mode(const string &mode, const bool &state)
 {
     bool mode_recognized = false;
+
+    if (!is_enabled)
+        return false;
 
     if (mode == "work" || mode == "all")
     {
@@ -1199,6 +1200,24 @@ static bool set_monitoring_mode(const string &mode, const bool &state)
     }
 
     return mode_recognized;
+}
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    if (!gps)
+        return CR_FAILURE;
+
+    if (is_enabled != enable)
+    {
+        if (!INTERPOSE_HOOK(dwarf_monitor_hook, feed).apply(enable) ||
+            !INTERPOSE_HOOK(dwarf_monitor_hook, render).apply(enable))
+            return CR_FAILURE;
+
+        reset();
+        is_enabled = enable;
+    }
+
+    return CR_OK;
 }
 
 static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & parameters)
@@ -1222,6 +1241,9 @@ static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & par
         }
         else if ((cmd == 'e' || cmd == 'E') && !mode.empty())
         {
+            if (!is_enabled)
+                plugin_enable(out, true);
+
             if (set_monitoring_mode(mode, true))
             {
                 out << "Monitoring enabled: " << mode << endl;
@@ -1257,9 +1279,6 @@ static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & par
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!gps || !INTERPOSE_HOOK(dwarf_monitor_hook, feed).apply() || !INTERPOSE_HOOK(dwarf_monitor_hook, render).apply())
-        out.printerr("Could not insert dwarfmonitor hooks!\n");
-
     activity_labels[JOB_IDLE]               = "Idle";
     activity_labels[JOB_MILITARY]           = "Military Duty";
     activity_labels[JOB_LEISURE]            = "Leisure";

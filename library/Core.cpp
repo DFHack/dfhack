@@ -259,7 +259,7 @@ static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, 
 
             pset[prefix + files[i].substr(0, files[i].size()-4)] = help;
         }
-        else if (plug_mgr->eval_ruby && hasEnding(files[i], ".rb"))
+        else if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() && hasEnding(files[i], ".rb"))
         {
             std::string help = getScriptHelp(path + files[i], "# ");
 
@@ -312,6 +312,9 @@ static command_result runLuaScript(color_ostream &out, std::string name, vector<
 
 static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr, std::string name, vector<string> &args)
 {
+    if (!plug_mgr->ruby || !plug_mgr->ruby->is_enabled())
+        return CR_FAILURE;
+
     std::string rbcmd = "$script_args = [";
     for (size_t i = 0; i < args.size(); i++)
         rbcmd += "'" + args[i] + "', ";
@@ -319,7 +322,7 @@ static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr,
 
     rbcmd += "catch(:script_finished) { load './hack/scripts/" + name + ".rb' }";
 
-    return plug_mgr->eval_ruby(out, rbcmd.c_str());
+    return plug_mgr->ruby->eval_ruby(out, rbcmd.c_str());
 }
 
 command_result Core::runCommand(color_ostream &out, const std::string &command)
@@ -450,7 +453,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                     con.print("%s: %s\n", parts[0].c_str(), help.c_str());
                     return CR_OK;
                 }
-                if (plug_mgr->eval_ruby && fileExists(filename + ".rb"))
+                if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() && fileExists(filename + ".rb"))
                 {
                     string help = getScriptHelp(filename + ".rb", "# ");
                     con.print("%s: %s\n", parts[0].c_str(), help.c_str());
@@ -544,6 +547,56 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 }
             }
         }
+        else if( first == "enable" || first == "disable" )
+        {
+            CoreSuspender suspend;
+            bool enable = (first == "enable");
+
+            if(parts.size())
+            {
+                command_result res = CR_OK;
+
+                for (size_t i = 0; i < parts.size(); i++)
+                {
+                    Plugin * plug = plug_mgr->getPluginByName(parts[i]);
+
+                    if(!plug)
+                    {
+                        res = CR_NOT_FOUND;
+                        con.printerr("No such plugin: %s\n", parts[i].c_str());
+                    }
+                    else if (!plug->can_set_enabled())
+                    {
+                        res = CR_NOT_IMPLEMENTED;
+                        con.printerr("Cannot %s plugin: %s\n", first.c_str(), parts[i].c_str());
+                    }
+                    else
+                    {
+                        res = plug->set_enabled(con, enable);
+
+                        if (res != CR_OK || plug->is_enabled() != enable)
+                            con.printerr("Could not %s plugin: %s\n", first.c_str(), parts[i].c_str());
+                    }
+                }
+
+                return res;
+            }
+            else
+            {
+                for(size_t i = 0; i < plug_mgr->size();i++)
+                {
+                    Plugin * plug = (plug_mgr->operator[](i));
+                    if (!plug->can_be_enabled()) continue;
+
+                    con.print(
+                        "%20s\t%-3s%s\n",
+                        (plug->getName()+":").c_str(),
+                        plug->is_enabled() ? "on" : "off",
+                        plug->can_set_enabled() ? "" : " (controlled elsewhere)"
+                    );
+                }
+            }
+        }
         else if(first == "ls" || first == "dir")
         {
             bool all = false;
@@ -584,6 +637,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 "  load PLUGIN|all       - Load a plugin by name or load all possible plugins.\n"
                 "  unload PLUGIN|all     - Unload a plugin or all loaded plugins.\n"
                 "  reload PLUGIN|all     - Reload a plugin or all loaded plugins.\n"
+                "  enable/disable PLUGIN - Enable or disable a plugin if supported.\n"
                 "\n"
                 "plugins:\n"
                 );
@@ -716,7 +770,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
 
                 if (fileExists(filename + ".lua"))
                     res = runLuaScript(con, first, parts);
-                else if (plug_mgr->eval_ruby && fileExists(filename + ".rb"))
+                else if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() && fileExists(filename + ".rb"))
                     res = runRubyScript(con, plug_mgr, first, parts);
                 else if (try_autocomplete(con, first, completed))
                     return CR_NOT_IMPLEMENTED;// runCommand(con, completed, parts);
@@ -1160,7 +1214,8 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     {
         df::world_data *wdata = df::global::world->world_data;
         // when the game is unloaded, world_data isn't deleted, but its contents are
-        if (wdata && !wdata->sites.empty())
+        // regions work to detect arena too
+        if (wdata && !wdata->regions.empty())
             new_wdata = wdata;
         new_mapdata = df::global::world->map.block_index;
     }
@@ -1298,6 +1353,26 @@ void Core::onUpdate(color_ostream &out)
     Lua::Core::onUpdate(out);
 }
 
+static void handleLoadAndUnloadScripts(Core* core, color_ostream& out, state_change_event event) {
+    //TODO: use different separators for windows
+#ifdef _WIN32
+    static const std::string separator = "\\";
+#else
+    static const std::string separator = "/";
+#endif
+    std::string rawFolder = "data" + separator + "save" + separator + (df::global::world->cur_savegame.save_dir) + separator + "raw" + separator;
+    switch(event) {
+    case SC_WORLD_LOADED:
+        core->loadScriptFile(out, rawFolder + "onLoad.init", true);
+        break;
+    case SC_WORLD_UNLOADED:
+        core->loadScriptFile(out, rawFolder + "onUnload.init", true);
+        break;
+    default:
+        break;
+    }
+}
+
 void Core::onStateChange(color_ostream &out, state_change_event event)
 {
     EventManager::onStateChange(out, event);
@@ -1307,6 +1382,8 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     plug_mgr->OnStateChange(out, event);
 
     Lua::Core::onStateChange(out, event);
+
+    handleLoadAndUnloadScripts(this, out, event);
 }
 
 // FIXME: needs to terminate the IO threads and properly dismantle all the machinery involved.

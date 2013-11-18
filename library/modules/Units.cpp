@@ -66,6 +66,7 @@ using namespace std;
 #include "df/game_mode.h"
 #include "df/unit_misc_trait.h"
 #include "df/unit_skill.h"
+#include "df/curse_attr_change.h"
 
 using namespace DFHack;
 using namespace df::enums;

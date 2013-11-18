@@ -108,5 +108,13 @@ function addReactionToShop(reaction_name,shop_name)
     postWorkshopFillSidebarMenu._library=onPostSidebar
     dfhack.onStateChange.eventful=unregall
 end
-
+local function invertTable(tbl)
+	local ret={}
+	for k,v in pairs(tbl) do
+		ret[v]=k
+	end
+	return ret
+end
+eventType=invertTable{[0]="TICK","JOB_INITIATED","JOB_COMPLETED","UNIT_DEATH","ITEM_CREATED",
+	"BUILDING","CONSTRUCTION","SYNDROME","INVASION","INVENTORY_CHANGE","EVENT_MAX"}
 return _ENV

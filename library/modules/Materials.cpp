@@ -561,6 +561,25 @@ bool DFHack::parseJobMaterialCategory(df::dfhack_material_category *cat, const s
     return true;
 }
 
+bool DFHack::isSoilInorganic(int material)
+{
+    auto raw = df::inorganic_raw::find(material);
+
+    return raw && raw->flags.is_set(inorganic_flags::SOIL_ANY);
+}
+
+bool DFHack::isStoneInorganic(int material)
+{
+    auto raw = df::inorganic_raw::find(material);
+
+    if (!raw ||
+        raw->flags.is_set(inorganic_flags::SOIL_ANY) ||
+        raw->material.flags.is_set(material_flags::IS_METAL))
+        return false;
+
+    return true;
+}
+
 Module* DFHack::createMaterials()
 {
     return new Materials();

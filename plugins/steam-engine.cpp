@@ -113,6 +113,7 @@
 using std::vector;
 using std::string;
 using std::stack;
+using std::set;
 using namespace DFHack;
 using namespace df::enums;
 
@@ -721,7 +722,7 @@ struct workshop_hook : df::building_workshopst {
         INTERPOSE_NEXT(updateAction)();
     }
 
-    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (df::building_drawbuffer *db, void *unk))
+    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (df::building_drawbuffer *db, int16_t unk))
     {
         INTERPOSE_NEXT(drawBuilding)(db, unk);
 
@@ -950,8 +951,12 @@ static bool find_engines(color_ostream &out)
     return !engines.empty();
 }
 
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
 static void enable_hooks(bool enable)
 {
+    is_enabled = enable;
+
     INTERPOSE_HOOK(liquid_hook, getItemDescription).apply(enable);
     INTERPOSE_HOOK(liquid_hook, adjustTemperature).apply(enable);
     INTERPOSE_HOOK(liquid_hook, checkTemperatureDamage).apply(enable);

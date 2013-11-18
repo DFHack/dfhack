@@ -45,6 +45,7 @@
 using std::vector;
 using std::string;
 using std::endl;
+using std::flush;
 using namespace DFHack;
 using namespace df::enums;
 
@@ -402,7 +403,8 @@ public:
  *      GLOBAL VARIABLES      *
  ******************************/
 
-static bool enabled = false;
+DFHACK_PLUGIN_IS_ENABLED(enabled);
+
 static PersistentDataItem config;
 
 static int last_tick_frame_count = 0;
@@ -1387,10 +1389,13 @@ static void update_data_structures(color_ostream &out)
  *  LUA API  *
  *************/
 
-static bool isEnabled() { return enabled; }
-
-static void setEnabled(color_ostream &out, bool enable)
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("World is not loaded: please load a game first.\n");
+        return CR_FAILURE;
+    }
+
     if (enable && !enabled)
     {
         enable_plugin(out);
@@ -1401,6 +1406,8 @@ static void setEnabled(color_ostream &out, bool enable)
         setOptionEnabled(CF_ENABLED, false);
         stop_protect(out);
     }
+
+    return CR_OK;
 }
 
 static void push_count_history(lua_State *L, ItemConstraint *icv)
@@ -1591,8 +1598,6 @@ static int getCountHistory(lua_State *L)
 
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
-    DFHACK_LUA_FUNCTION(isEnabled),
-    DFHACK_LUA_FUNCTION(setEnabled),
     DFHACK_LUA_FUNCTION(deleteConstraint),
     DFHACK_LUA_END
 };
@@ -1767,10 +1772,10 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
     {
         bool enable = (cmd == "enable");
         if (enable)
-            setEnabled(out, true);
+            plugin_enable(out, true);
         else if (parameters.size() == 1)
         {
-            setEnabled(out, false);
+            plugin_enable(out, false);
 
             out << "The plugin is disabled." << endl;
             return CR_OK;
@@ -1805,7 +1810,10 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
     }
 
     if (!enabled)
-        out << "Note: the plugin is not enabled." << endl;
+    {
+        out.printerr("Error: the plugin is not enabled.\n");
+        return CR_WRONG_USAGE;
+    }
 
     if (cmd == "jobs")
     {

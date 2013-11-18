@@ -221,7 +221,8 @@ static void detect_digging(color_ostream &out)
     }
 }
 
-static bool active = false;
+DFHACK_PLUGIN_IS_ENABLED(active);
+
 static bool auto_grow = false;
 static std::vector<int> grow_burrows;
 

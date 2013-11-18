@@ -36,6 +36,7 @@
 #include "TileTypes.h"
 #include "df/job_item.h"
 
+using namespace std;
 using std::map;
 using std::string;
 using std::vector;
@@ -1179,11 +1180,27 @@ color_ostream_proxy console_out(Core::getInstance().getConsole());
 IMPLEMENT_VMETHOD_INTERPOSE(jobutils_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(jobutils_hook, render);
 
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
+{
+    if (!gps)
+        return CR_FAILURE;
+
+    if (enable != is_enabled)
+    {
+        if (!INTERPOSE_HOOK(jobutils_hook, feed).apply(enable) ||
+            !INTERPOSE_HOOK(jobutils_hook, render).apply(enable))
+            return CR_FAILURE;
+
+        is_enabled = enable;
+    }
+
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!gps || !INTERPOSE_HOOK(jobutils_hook, feed).apply() || !INTERPOSE_HOOK(jobutils_hook, render).apply())
-        out.printerr("Could not insert jobutils hooks!\n");
-
     hotkeys[construction_type::Wall] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_WALL;
     hotkeys[construction_type::Floor] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_FLOOR;
     hotkeys[construction_type::Ramp] = df::interface_key::HOTKEY_BUILDING_CONSTRUCTION_RAMP;

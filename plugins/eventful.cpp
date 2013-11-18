@@ -9,6 +9,7 @@
 #include "df/building_workshopst.h"
 
 #include "df/unit.h"
+#include "df/unit_inventory_item.h"
 #include "df/item.h"
 #include "df/item_actual.h"
 #include "df/unit_wound.h"
@@ -22,6 +23,12 @@
 
 #include "MiscUtils.h"
 #include "LuaTools.h"
+
+#include "modules/EventManager.h"
+
+#include "df/job.h"
+#include "df/building.h"
+#include "df/construction.h"
 
 using std::vector;
 using std::string;
@@ -108,7 +115,22 @@ DEFINE_LUA_EVENT_2(onProjItemCheckImpact, handle_projitem_ci, df::proj_itemst*,b
 DEFINE_LUA_EVENT_1(onProjItemCheckMovement, handle_projitem_cm, df::proj_itemst*);
 DEFINE_LUA_EVENT_2(onProjUnitCheckImpact, handle_projunit_ci, df::proj_unitst*,bool );
 DEFINE_LUA_EVENT_1(onProjUnitCheckMovement, handle_projunit_cm, df::proj_unitst* );
-
+//event manager
+static void handle_int32t(color_ostream &out,int32_t){}; //we don't use this so why not use it everywhere
+static void handle_job_init(color_ostream &out,df::job*){};
+static void handle_job_complete(color_ostream &out,df::job*){};
+static void handle_constructions(color_ostream &out,df::construction*){};
+static void handle_syndrome(color_ostream &out,int32_t,int32_t){};
+static void handle_inventory_change(color_ostream& out,int32_t,int32_t,df::unit_inventory_item*,df::unit_inventory_item*){};
+DEFINE_LUA_EVENT_1(onBuildingCreatedDestroyed, handle_int32t, int32_t);
+DEFINE_LUA_EVENT_1(onJobInitiated,handle_job_init,df::job*);
+DEFINE_LUA_EVENT_1(onJobCompleted,handle_job_complete,df::job*);
+DEFINE_LUA_EVENT_1(onUnitDeath,handle_int32t,int32_t);
+DEFINE_LUA_EVENT_1(onItemCreated,handle_int32t,int32_t);
+DEFINE_LUA_EVENT_1(onConstructionCreatedDestroyed, handle_constructions, df::construction*);
+DEFINE_LUA_EVENT_2(onSyndrome, handle_syndrome, int32_t,int32_t);
+DEFINE_LUA_EVENT_1(onInvasion,handle_int32t,int32_t);
+DEFINE_LUA_EVENT_4(onInventoryChange,handle_inventory_change,int32_t,int32_t,df::unit_inventory_item*,df::unit_inventory_item*);
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onWorkshopFillSidebarMenu),
     DFHACK_LUA_EVENT(postWorkshopFillSidebarMenu),
@@ -118,6 +140,110 @@ DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onProjItemCheckMovement),
     DFHACK_LUA_EVENT(onProjUnitCheckImpact),
     DFHACK_LUA_EVENT(onProjUnitCheckMovement),
+    /*  event manager events */
+    DFHACK_LUA_EVENT(onBuildingCreatedDestroyed),
+    DFHACK_LUA_EVENT(onConstructionCreatedDestroyed),
+    DFHACK_LUA_EVENT(onJobInitiated),
+    DFHACK_LUA_EVENT(onJobCompleted),
+    DFHACK_LUA_EVENT(onUnitDeath),
+    DFHACK_LUA_EVENT(onItemCreated),
+    DFHACK_LUA_EVENT(onSyndrome),
+    DFHACK_LUA_EVENT(onInvasion),
+    DFHACK_LUA_EVENT(onInventoryChange),
+    DFHACK_LUA_END
+};
+
+static void ev_mng_jobInitiated(color_ostream& out, void* job)
+{
+    df::job* ptr=reinterpret_cast<df::job*>(job);
+    onJobInitiated(out,ptr);
+}
+void ev_mng_jobCompleted(color_ostream& out, void* job)
+{
+    df::job* ptr=reinterpret_cast<df::job*>(job);
+    onJobCompleted(out,ptr);
+}
+void ev_mng_unitDeath(color_ostream& out, void* ptr)
+{
+    int32_t myId=int32_t(ptr);
+    onUnitDeath(out,myId);
+}
+void ev_mng_itemCreate(color_ostream& out, void* ptr)
+{
+    int32_t myId=int32_t(ptr);
+    onItemCreated(out,myId);
+}
+void ev_mng_construction(color_ostream& out, void* ptr)
+{
+    df::construction* cons=reinterpret_cast<df::construction*>(ptr);
+    onConstructionCreatedDestroyed(out,cons);
+}
+void ev_mng_syndrome(color_ostream& out, void* ptr)
+{
+    EventManager::SyndromeData* data=reinterpret_cast<EventManager::SyndromeData*>(ptr);
+    onSyndrome(out,data->unitId,data->syndromeIndex);
+}
+void ev_mng_invasion(color_ostream& out, void* ptr)
+{
+    int32_t myId=int32_t(ptr);
+    onInvasion(out,myId);
+}
+static void ev_mng_building(color_ostream& out, void* ptr)
+{
+    int32_t myId=int32_t(ptr);
+    onBuildingCreatedDestroyed(out,myId);
+}
+static void ev_mng_inventory(color_ostream& out, void* ptr)
+{
+    EventManager::InventoryChangeData* data = reinterpret_cast<EventManager::InventoryChangeData*>(ptr);
+    int32_t unitId = data->unitId;
+    int32_t itemId = -1;
+    df::unit_inventory_item* item_old = NULL;
+    df::unit_inventory_item* item_new = NULL;
+    if ( data->item_old ) {
+        itemId = data->item_old->itemId;
+        item_old = &data->item_old->item;
+    }
+    if ( data->item_new ) {
+        itemId = data->item_new->itemId;
+        item_new = &data->item_new->item;
+    }
+    onInventoryChange(out,unitId,itemId,item_old,item_new);
+}
+std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX,-1);
+typedef void (*handler_t) (color_ostream&,void*);
+static const handler_t eventHandlers[] = {
+ NULL,
+ ev_mng_jobInitiated,
+ ev_mng_jobCompleted,
+ ev_mng_unitDeath,
+ ev_mng_itemCreate,
+ ev_mng_building,
+ ev_mng_construction,
+ ev_mng_syndrome,
+ ev_mng_invasion,
+ ev_mng_inventory,
+};
+static void enableEvent(int evType,int freq)
+{
+    if (freq < 0)
+        return;
+    if (evType < 0 || evType >= EventManager::EventType::EVENT_MAX || evType == EventManager::EventType::TICK)
+        throw std::runtime_error("invalid event type to enable");
+    EventManager::EventHandler::callback_t fun_ptr = eventHandlers[evType];
+    EventManager::EventType::EventType typeToEnable=static_cast<EventManager::EventType::EventType>(evType);
+
+    int oldFreq = enabledEventManagerEvents[typeToEnable];
+    if (oldFreq != -1) {
+        if (freq >= oldFreq)
+            return;
+        EventManager::unregister(typeToEnable,EventManager::EventHandler(fun_ptr,oldFreq),plugin_self);
+    }
+    EventManager::registerListener(typeToEnable,EventManager::EventHandler(fun_ptr,freq),plugin_self);
+    enabledEventManagerEvents[typeToEnable] = freq;
+}
+DFHACK_PLUGIN_LUA_FUNCTIONS{
+    DFHACK_LUA_FUNCTION(enableEvent),
     DFHACK_LUA_END
 };
 struct workshop_hook : df::building_workshopst{

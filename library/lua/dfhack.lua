@@ -220,6 +220,12 @@ function dfhack.matinfo:__tostring()
     return "<material "..self.type..":"..self.index.." "..self:getToken()..">"
 end
 
+dfhack.random.__index = dfhack.random
+
+function dfhack.random:__tostring()
+    return "<random generator>"
+end
+
 function dfhack.maps.getSize()
     local map = df.global.world.map
     return map.x_count_block, map.y_count_block, map.z_count_block

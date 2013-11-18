@@ -49,10 +49,10 @@ namespace DFHack
 {
     namespace Job {
         // Duplicate the job structure. It is not linked into any DF lists.
-        DFHACK_EXPORT df::job *cloneJobStruct(df::job *job, bool keepWorkerData=false);
+        DFHACK_EXPORT df::job *cloneJobStruct(df::job *job, bool keepEverything=false);
 
         // Delete a cloned structure.
-        DFHACK_EXPORT void deleteJobStruct(df::job *job);
+        DFHACK_EXPORT void deleteJobStruct(df::job *job, bool keptEverything=false);
 
         DFHACK_EXPORT void printItemDetails(color_ostream &out, df::job_item *item, int idx);
         DFHACK_EXPORT void printJobDetails(color_ostream &out, df::job *job);

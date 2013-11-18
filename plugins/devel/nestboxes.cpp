@@ -31,7 +31,7 @@ static command_result nestboxes(color_ostream &out, vector <string> & parameters
 
 DFHACK_PLUGIN("nestboxes");
 
-static bool enabled = false;
+DFHACK_PLUGIN_IS_ENABLED(enabled);
 
 static void eggscan(color_ostream &out)
 {
@@ -94,6 +94,12 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
 
     eggscan(out);
 
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    enabled = enable;
     return CR_OK;
 }
 

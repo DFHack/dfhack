@@ -1,3 +1,5 @@
+static const int SIZE = 16;
+
 inline uint16_t &operator[] (int y)
 {
     return bits[y];
@@ -35,4 +37,19 @@ bool has_assignments()
         if (bits[i])
             return true;
     return false;
+}
+df::tile_bitmask &operator |= (const df::tile_bitmask &b) {
+    for (int i = 0; i < 16; i++)
+        bits[i] |= b.bits[i];
+    return *this;
+}
+df::tile_bitmask &operator &= (const df::tile_bitmask &b) {
+    for (int i = 0; i < 16; i++)
+        bits[i] &= b.bits[i];
+    return *this;
+}
+df::tile_bitmask &operator -= (const df::tile_bitmask &b) {
+    for (int i = 0; i < 16; i++)
+        bits[i] &= ~b.bits[i];
+    return *this;
 }

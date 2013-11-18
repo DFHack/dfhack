@@ -33,12 +33,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onupdate ( color_ostream &out )
-{
-    // add tracking here
-    return CR_OK;
-}
-
 void printCurrentModes(t_gamemodes gm, Console & con)
 {
     con << "Current game type:\t" << gm.g_type << " (";

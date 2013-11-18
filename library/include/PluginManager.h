@@ -144,6 +144,11 @@ namespace DFHack
         bool unload(color_ostream &out);
         bool reload(color_ostream &out);
 
+        bool can_be_enabled() { return plugin_is_enabled != 0; }
+        bool is_enabled() { return plugin_is_enabled && *plugin_is_enabled; }
+        bool can_set_enabled() { return plugin_is_enabled != 0 && plugin_enable; }
+        command_result set_enabled(color_ostream &out, bool enable);
+
         command_result invoke(color_ostream &out, const std::string & command, std::vector <std::string> & parameters);
         bool can_invoke_hotkey(const std::string & command, df::viewscreen *top );
         plugin_state getState () const;
@@ -165,6 +170,12 @@ namespace DFHack
 
         void open_lua(lua_State *state, int table);
 
+        command_result eval_ruby(color_ostream &out, const char* cmd) {
+            if (!plugin_eval_ruby || !is_enabled())
+                return CR_FAILURE;
+            return plugin_eval_ruby(out, cmd);
+        }
+
     private:
         RefLock * access;
         std::vector <PluginCommand> commands;
@@ -184,17 +195,22 @@ namespace DFHack
         static int lua_fun_wrapper(lua_State *state);
         void push_function(lua_State *state, LuaFunction *fn);
 
+        static int lua_is_enabled(lua_State *state);
+        static int lua_set_enabled(lua_State *state);
+
         struct LuaEvent;
         std::map<std::string, LuaEvent*> lua_events;
 
         void index_lua(DFLibrary *lib);
         void reset_lua();
 
+        bool *plugin_is_enabled;
         command_result (*plugin_init)(color_ostream &, std::vector <PluginCommand> &);
         command_result (*plugin_status)(color_ostream &, std::string &);
         command_result (*plugin_shutdown)(color_ostream &);
         command_result (*plugin_onupdate)(color_ostream &);
         command_result (*plugin_onstatechange)(color_ostream &, state_change_event);
+        command_result (*plugin_enable)(color_ostream &, bool);
         RPCService* (*plugin_rpcconnect)(color_ostream &);
         command_result (*plugin_eval_ruby)(color_ostream &, const char*);
     };
@@ -226,7 +242,7 @@ namespace DFHack
         {
             return all_plugins.size();
         }
-        command_result (*eval_ruby)(color_ostream &, const char*);
+        Plugin *ruby;
     // DATA
     private:
         tthread::mutex * cmdlist_mutex;
@@ -249,6 +265,10 @@ namespace DFHack
     DFhackDataExport const char * version = DFHACK_VERSION;\
     DFhackDataExport const char * name = plugin_name;\
     DFhackDataExport Plugin *plugin_self = NULL;
+
+#define DFHACK_PLUGIN_IS_ENABLED(varname) \
+    DFhackDataExport bool plugin_is_enabled = false; \
+    bool &varname = plugin_is_enabled;
 
 #define DFHACK_PLUGIN_LUA_COMMANDS \
     DFhackCExport const DFHack::CommandReg plugin_lua_commands[] =

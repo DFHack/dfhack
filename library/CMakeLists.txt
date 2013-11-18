@@ -120,11 +120,13 @@ include/modules/Maps.h
 include/modules/MapCache.h
 include/modules/Materials.h
 include/modules/Notes.h
+include/modules/Random.h
 include/modules/Screen.h
 include/modules/Translation.h
 include/modules/Vermin.h
 include/modules/World.h
 include/modules/Graphic.h
+include/modules/Once.h
 )
 
 SET( MODULE_SOURCES
@@ -138,15 +140,18 @@ modules/Gui.cpp
 modules/Items.cpp
 modules/Job.cpp
 modules/kitchen.cpp
+modules/MapCache.cpp
 modules/Maps.cpp
 modules/Materials.cpp
 modules/Notes.cpp
+modules/Random.cpp
 modules/Screen.cpp
 modules/Translation.cpp
 modules/Vermin.cpp
 modules/World.cpp
 modules/Graphic.cpp
 modules/Windows.cpp
+modules/Once.cpp
 )
 
 IF(WIN32)
@@ -360,7 +365,7 @@ if(BUILD_DEVEL)
     # without the '/', the directory itself is installed
     install(DIRECTORY include/
             DESTINATION ${DFHACK_INCLUDES_DESTINATION}
-            FILES_MATCHING PATTERN "*.h" ) #linux: include
+            FILES_MATCHING PATTERN "*.h" PATTERN "*.inc" ) #linux: include
     # Building the docs
     IF(BUILD_DOXYGEN)
         add_subdirectory (doc)

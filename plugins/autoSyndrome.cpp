@@ -1,15 +1,22 @@
-#include "PluginManager.h"
-#include "Export.h"
-#include "DataDefs.h"
 #include "Core.h"
+#include "DataDefs.h"
+#include "Export.h"
+#include "PluginManager.h"
 
 #include "modules/EventManager.h"
 #include "modules/Job.h"
 #include "modules/Maps.h"
+#include "modules/Once.h"
+#include "modules/World.h"
 
 #include "df/building.h"
 #include "df/caste_raw.h"
+#include "df/creature_interaction_effect.h"
 #include "df/creature_raw.h"
+#include "df/general_ref.h"
+#include "df/general_ref_building_holderst.h"
+#include "df/general_ref_type.h"
+#include "df/general_ref_unit_workerst.h"
 #include "df/global_objects.h"
 #include "df/item.h"
 #include "df/item_boulderst.h"
@@ -23,10 +30,6 @@
 #include "df/unit_syndrome.h"
 #include "df/ui.h"
 #include "df/unit.h"
-#include "df/general_ref.h"
-#include "df/general_ref_building_holderst.h"
-#include "df/general_ref_type.h"
-#include "df/general_ref_unit_workerst.h"
 
 #include <string>
 #include <vector>
@@ -36,75 +39,16 @@
 using namespace std;
 using namespace DFHack;
 
-/*
-Example usage:
+namespace ResetPolicy {
+    typedef enum {DoNothing, ResetDuration, AddDuration, NewInstance} ResetPolicy;
+}
 
-//////////////////////////////////////////////
-//In file inorganic_duck.txt
-inorganic_stone_duck
-
-[OBJECT:INORGANIC]
-
-[INORGANIC:DUCK_ROCK]
-[USE_MATERIAL_TEMPLATE:STONE_TEMPLATE]
-[STATE_NAME_ADJ:ALL_SOLID:drakium][DISPLAY_COLOR:0:7:0][TILE:'.']
-[IS_STONE]
-[SOLID_DENSITY:1][MELTING_POINT:25000]
-[BOILING_POINT:9999] //This is the critical line: boiling point must be <= 10000
-[SYNDROME]
-    [SYN_NAME:Chronic Duck Syndrome]
-    [CE_BODY_TRANSFORMATION:PROB:100:START:0]
-        [CE:CREATURE:BIRD_DUCK:MALE] //even though we don't have SYN_INHALED, the plugin will add it
-///////////////////////////////////////////////
-//In file building_duck.txt
-building_duck
-
-[OBJECT:BUILDING]
-
-[BUILDING_WORKSHOP:DUCK_WORKSHOP]
-	[NAME:Duck Workshop]
-	[NAME_COLOR:7:0:1]
-	[DIM:1:1]
-	[WORK_LOCATION:1:1]
-	[BLOCK:1:0:0:0]
-	[TILE:0:1:236]
-	[COLOR:0:1:0:0:1]
-	[TILE:1:1:' ']
-	[COLOR:1:1:0:0:0]
-	[TILE:2:1:8]
-	[COLOR:2:1:0:0:1]
-	[TILE:3:1:8]
-	[COLOR:3:2:0:4:1]
-	[BUILD_ITEM:1:NONE:NONE:NONE:NONE]
-	[BUILDMAT]
-	[WORTHLESS_STONE_ONLY]
-	[CAN_USE_ARTIFACT]
-///////////////////////////////////////////////
-//In file reaction_duck.txt
-reaction_duck
-
-[OBJECT:REACTION]
-
-[REACTION:DUCKIFICATION]
-[NAME:become a duck]
-[BUILDING:DUCK_WORKSHOP:NONE]
-[PRODUCT:100:100:STONE:NO_SUBTYPE:STONE:DUCK_ROCK]
-//////////////////////////////////////////////
-//Add the following lines to your entity in entity_default.txt (or wherever it is)
-	[PERMITTED_BUILDING:DUCK_WORKSHOP]
-	[PERMITTED_REACTION:DUCKIFICATION]
-//////////////////////////////////////////////
-
-Next, start a new fort in a new world, build a duck workshop, then have someone become a duck.
-*/
-
-bool enabled = false;
-
+DFHACK_PLUGIN_IS_ENABLED(enabled);
 DFHACK_PLUGIN("autoSyndrome");
 
 command_result autoSyndrome(color_ostream& out, vector<string>& parameters);
 void processJob(color_ostream& out, void* jobPtr);
-int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrome);
+int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrome, ResetPolicy::ResetPolicy policy);
 
 DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand("autoSyndrome", "Automatically give units syndromes when they complete jobs, as configured in the raw files.\n", &autoSyndrome, false,
@@ -114,20 +58,11 @@ DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginComman
         "  autoSyndrome disable //disable\n"
         "  autoSyndrome enable //enable\n"
         "\n"
-        "autoSyndrome looks for recently completed jobs matching certain conditions, and if it finds one, then it will give the dwarf that finished that job the syndrome specified in the raw files.\n"
-        "\n"
-        "Requirements:\n"
-        "  1) The job must be a custom reaction.\n"
-        "  2) The job must produce a stone of some inorganic material.\n"
-        "  3) The stone must have a boiling temperature less than or equal to 9000.\n"
-        "\n"
-        "When these conditions are met, the unit that completed the job will immediately become afflicted with all applicable syndromes associated with the inorganic material of the stone, or stones. It should correctly check for whether the creature or caste is affected or immune, and it should also correctly account for affected and immune creature classes.\n"
-        "Multiple syndromes per stone, or multiple boiling rocks produced with the same reaction should work fine.\n"
+        "autoSyndrome looks for recently completed jobs matching certain conditions, and if it finds one, then it will give the unit that finished that job the syndrome specified in the raw files. See Readme.rst for full details.\n"
         ));
     
-    
-    EventManager::EventHandler handle(processJob, 5);
-    EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, plugin_self);
+    //EventManager::EventHandler handle(processJob, 5);
+    //EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, plugin_self);
     return CR_OK;
 }
 
@@ -139,40 +74,47 @@ DFhackCExport command_result plugin_shutdown(color_ostream& out) {
     return CR_OK;
 }*/
 
+DFhackCExport command_result plugin_enable(color_ostream& out, bool enable)
+{
+    if (enabled == enable)
+        return CR_OK;
+
+    enabled = enable;
+
+    if ( enabled ) {
+        EventManager::EventHandler handle(processJob, 0);
+        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, plugin_self);
+    } else {
+        EventManager::unregisterAll(plugin_self);
+    }
+
+    return CR_OK;
+}
+
 command_result autoSyndrome(color_ostream& out, vector<string>& parameters) {
     if ( parameters.size() > 1 )
         return CR_WRONG_USAGE;
 
-    bool wasEnabled = enabled;
+    bool enable = false;
     if ( parameters.size() == 1 ) {
         if ( parameters[0] == "enable" ) {
-            enabled = true;
+            enable = true;
         } else if ( parameters[0] == "disable" ) {
-            enabled = false;
+            enable = false;
         } else {
             int32_t a = atoi(parameters[0].c_str());
             if ( a < 0 || a > 1 )
                 return CR_WRONG_USAGE;
 
-            enabled = (bool)a;
+            enable = (bool)a;
         }
     }
 
     out.print("autoSyndrome is %s\n", enabled ? "enabled" : "disabled");
-    if ( enabled == wasEnabled )
-        return CR_OK;
-
-    Plugin* me = Core::getInstance().getPluginManager()->getPluginByName("autoSyndrome");
-    if ( enabled ) {
-        EventManager::EventHandler handle(processJob, 5);
-        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handle, me);
-    } else {
-        EventManager::unregisterAll(me);
-    }
-    return CR_OK;
+    return plugin_enable(out, enable);
 }
 
-bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df::unit* unit) {
+bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df::unit* unit, ResetPolicy::ResetPolicy policy) {
     df::creature_raw* creature = df::global::world->raws.creatures.all[unit->race];
     df::caste_raw* caste = creature->caste[unit->caste];
     std::string& creature_name = creature->creature_id;
@@ -211,7 +153,9 @@ bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df
     }
 
     if ( syndrome->syn_affected_creature.size() != syndrome->syn_affected_caste.size() ) {
-        out.print("%s, line %d: different affected creature/caste sizes.\n", __FILE__, __LINE__);
+        if ( DFHack::Once::doOnce("autoSyndrome: different affected creature/caste sizes.") ) {
+            out.print("%s, line %d: different affected creature/caste sizes.\n", __FILE__, __LINE__);
+        }
         return false;
     }
     for ( size_t c = 0; c < syndrome->syn_affected_creature.size(); c++ ) {
@@ -235,15 +179,17 @@ bool maybeApply(color_ostream& out, df::syndrome* syndrome, int32_t workerId, df
     if ( !applies ) {
         return false;
     }
-    if ( giveSyndrome(out, workerId, syndrome) < 0 )
+    if ( giveSyndrome(out, workerId, syndrome, policy) < 0 )
         return false;
     return true;
 }
 
 void processJob(color_ostream& out, void* jobPtr) {
+    CoreSuspender suspender;
     df::job* job = (df::job*)jobPtr;
     if ( job == NULL ) {
-        out.print("Error %s line %d: null job.\n", __FILE__, __LINE__);
+        if ( DFHack::Once::doOnce("autoSyndrome_processJob_null job") )
+            out.print("Error %s line %d: null job.\n", __FILE__, __LINE__);
         return;
     }
     if ( job->completion_timer > 0 )
@@ -261,7 +207,8 @@ void processJob(color_ostream& out, void* jobPtr) {
         break;
     }
     if ( reaction == NULL ) {
-        out.print("%s, line %d: could not find reaction \"%s\".\n", __FILE__, __LINE__, job->reaction_name.c_str() );
+        if ( DFHack::Once::doOnce("autoSyndrome processJob couldNotFind") )
+            out.print("%s, line %d: could not find reaction \"%s\".\n", __FILE__, __LINE__, job->reaction_name.c_str() );
         return;
     }
     
@@ -270,51 +217,52 @@ void processJob(color_ostream& out, void* jobPtr) {
         if ( job->general_refs[a]->getType() != df::enums::general_ref_type::UNIT_WORKER )
             continue;
         if ( workerId != -1 ) {
-            out.print("%s, line %d: Found two workers on the same job.\n", __FILE__, __LINE__);
+            if ( DFHack::Once::doOnce("autoSyndrome processJob two workers same job") )
+                out.print("%s, line %d: Found two workers on the same job.\n", __FILE__, __LINE__);
         }
         workerId = ((df::general_ref_unit_workerst*)job->general_refs[a])->unit_id;
         if (workerId == -1) {
-            out.print("%s, line %d: invalid worker.\n", __FILE__, __LINE__);
+            if ( DFHack::Once::doOnce("autoSyndrome processJob invalid worker") )
+                out.print("%s, line %d: invalid worker.\n", __FILE__, __LINE__);
             continue;
         }
     }
-
-    if ( workerId == -1 )
-        return;
-
-    int32_t workerIndex = df::unit::binsearch_index(df::global::world->units.all, workerId);
-    if ( workerIndex < 0 ) {
-        out.print("%s line %d: Couldn't find unit %d.\n", __FILE__, __LINE__, workerId);
+    
+    df::unit* worker = df::unit::find(workerId);
+    if ( worker == NULL ) {
+        //out.print("%s, line %d: invalid worker.\n", __FILE__, __LINE__);
+        //this probably means that it finished before EventManager could get a copy of the job while the job was running
+        //TODO: consider printing a warning once
         return;
     }
-    df::unit* worker = df::global::world->units.all[workerIndex];
+    
     //find the building that made it
     int32_t buildingId = -1;
     for ( size_t a = 0; a < job->general_refs.size(); a++ ) {
         if ( job->general_refs[a]->getType() != df::enums::general_ref_type::BUILDING_HOLDER )
             continue;
         if ( buildingId != -1 ) {
-            out.print("%s, line %d: Found two buildings for the same job.\n", __FILE__, __LINE__);
+            if ( DFHack::Once::doOnce("autoSyndrome processJob two buildings same job") )
+                out.print("%s, line %d: Found two buildings for the same job.\n", __FILE__, __LINE__);
         }
         buildingId = ((df::general_ref_building_holderst*)job->general_refs[a])->building_id;
         if (buildingId == -1) {
-            out.print("%s, line %d: invalid building.\n", __FILE__, __LINE__);
+            if ( DFHack::Once::doOnce("autoSyndrome processJob invalid building") )
+                out.print("%s, line %d: invalid building.\n", __FILE__, __LINE__);
             continue;
         }
     }
-    df::building* building;
-    {
-        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, buildingId);
-        if ( index == -1 ) {
+    
+    df::building* building = df::building::find(buildingId);
+    if ( building == NULL ) {
+        if ( DFHack::Once::doOnce("autoSyndrome processJob couldn't find building") )
             out.print("%s, line %d: error: couldn't find building %d.\n", __FILE__, __LINE__, buildingId);
-            return;
-        }
-        building = df::global::world->buildings.all[index];
+        return;
     }
-
-    //find all of the products it makes. Look for a stone with a low boiling point.
-    bool appliedSomething = false;
+    
+    //find all of the products it makes. Look for a stone.
     for ( size_t a = 0; a < reaction->products.size(); a++ ) {
+        bool appliedSomething = false;
         df::reaction_product_type type = reaction->products[a]->getType();
         //out.print("type = %d\n", (int32_t)type);
         if ( type != df::enums::reaction_product_type::item )
@@ -323,40 +271,59 @@ void processJob(color_ostream& out, void* jobPtr) {
         //out.print("item_type = %d\n", (int32_t)bob->item_type);
         if ( bob->item_type != df::enums::item_type::BOULDER )
             continue;
-        //for now don't worry about subtype
-
-        //must be a boiling rock syndrome
-        df::inorganic_raw* inorganic = df::global::world->raws.inorganics[bob->mat_index];
-        if ( inorganic->material.heat.boiling_point > 9000 ) {
+        
+        if ( bob->mat_index < 0 )
             continue;
-        }
-
+        
+        //for now don't worry about subtype
+        df::inorganic_raw* inorganic = df::global::world->raws.inorganics[bob->mat_index];
+        
+        //maybe add each syndrome to the guy who did the job, or someone in the building, and maybe execute a command
         for ( size_t b = 0; b < inorganic->material.syndrome.size(); b++ ) {
-            //add each syndrome to the guy who did the job
             df::syndrome* syndrome = inorganic->material.syndrome[b];
-            bool workerOnly = false;
+            bool workerOnly = true;
             bool allowMultipleTargets = false;
             bool foundCommand = false;
             bool destroyRock = true;
+            bool foundAutoSyndrome = false;
+            ResetPolicy::ResetPolicy policy = ResetPolicy::NewInstance;
             string commandStr;
             vector<string> args;
             for ( size_t c = 0; c < syndrome->syn_class.size(); c++ ) {
-                std::string* clazz = syndrome->syn_class[c];
+                std::string& clazz = *syndrome->syn_class[c];
+                //special syn_classes
+                if ( clazz == "\\AUTO_SYNDROME" ) {
+                    foundAutoSyndrome = true;
+                    continue;
+                } else if ( clazz == "\\ALLOW_NONWORKER_TARGETS" ) {
+                    workerOnly = false;
+                    continue;
+                } else if ( clazz == "\\ALLOW_MULTIPLE_TARGETS" ) {
+                    allowMultipleTargets = true;
+                    continue;
+                } else if ( clazz == "\\PRESERVE_ROCK" ) {
+                    destroyRock = false;
+                    continue;
+                } else if ( clazz == "\\RESET_POLICY DoNothing" ) {
+                    policy = ResetPolicy::DoNothing;
+                    continue;
+                } else if ( clazz == "\\RESET_POLICY ResetDuration" ) {
+                    policy = ResetPolicy::ResetDuration;
+                    continue;
+                } else if ( clazz == "\\RESET_POLICY AddDuration" ) {
+                    policy = ResetPolicy::AddDuration;
+                    continue;
+                } else if ( clazz == "\\RESET_POLICY NewInstance" ) {
+                    policy = ResetPolicy::NewInstance;
+                    continue;
+                }
+                //special arguments for a DFHack console command
                 if ( foundCommand ) {
                     if ( commandStr == "" ) {
-                        if ( *clazz == "\\WORKER_ONLY" ) {
-                            workerOnly = true;
-                        } else if ( *clazz == "\\ALLOW_MULTIPLE_TARGETS" ) {
-                            allowMultipleTargets = true;
-                        } else if ( *clazz == "\\PRESERVE_ROCK" ) {
-                            destroyRock = false;
-                        }
-                        else {
-                            commandStr = *clazz;
-                        }
+                        commandStr = clazz;
                     } else {
                         stringstream bob;
-                        if ( *clazz == "\\LOCATION" ) {
+                        if ( clazz == "\\LOCATION" ) {
                             bob << job->pos.x;
                             args.push_back(bob.str());
                             bob.str("");
@@ -371,24 +338,28 @@ void processJob(color_ostream& out, void* jobPtr) {
                             args.push_back(bob.str());
                             bob.str("");
                             bob.clear();
-                        } else if ( *clazz == "\\WORKER_ID" ) {
+                        } else if ( clazz == "\\WORKER_ID" ) {
                             bob << workerId;
                             args.push_back(bob.str());
-                        } else if ( *clazz == "\\REACTION_INDEX" ) {
+                        } else if ( clazz == "\\REACTION_INDEX" ) {
                             bob << reaction->index;
                             args.push_back(bob.str());
                         } else {
-                            args.push_back(*clazz);
+                            args.push_back(clazz);
                         }
                     }
-                } else if ( *clazz == "\\COMMAND" ) {
+                } else if ( clazz == "\\COMMAND" ) {
                     foundCommand = true;
                 }
             }
+            if ( !foundAutoSyndrome ) {
+                continue;
+            }
+            
             if ( commandStr != "" ) {
                 Core::getInstance().runCommand(out, commandStr, args);
             }
-
+            
             if ( destroyRock ) {
                 //find the rock and kill it before it can boil and cause problems and ugliness
                 for ( size_t c = 0; c < df::global::world->items.all.size(); c++ ) {
@@ -406,35 +377,34 @@ void processJob(color_ostream& out, void* jobPtr) {
                     if ( boulder->mat_index != bob->mat_index )
                         continue;
                     
-                    boulder->flags.bits.garbage_collect = true;
-                    boulder->flags.bits.forbid = true;
                     boulder->flags.bits.hidden = true;
+                    boulder->flags.bits.forbid = true;
+                    boulder->flags.bits.garbage_collect = true;
                 }
             }
 
-            //only one syndrome per reaction will be applied, unless multiples are allowed.
-            if ( appliedSomething && !allowMultipleTargets )
-                continue;
-
-            if ( maybeApply(out, syndrome, workerId, worker) ) {
+            if ( maybeApply(out, syndrome, workerId, worker, policy) ) {
                 appliedSomething = true;
             }
 
             if ( workerOnly )
+                continue;
+
+            if ( appliedSomething && !allowMultipleTargets )
                 continue;
             
             //now try applying it to everybody inside the building
             for ( size_t a = 0; a < df::global::world->units.active.size(); a++ ) {
                 df::unit* unit = df::global::world->units.active[a];
                 if ( unit == worker )
-                    continue;
+                    continue; //we already tried giving it to him, so no doubling up
                 if ( unit->pos.z != building->z )
                     continue;
                 if ( unit->pos.x < building->x1 || unit->pos.x > building->x2 )
                     continue;
                 if ( unit->pos.y < building->y1 || unit->pos.y > building->y2 )
                     continue;
-                if ( maybeApply(out, syndrome, unit->id, unit) ) {
+                if ( maybeApply(out, syndrome, unit->id, unit, policy) ) {
                     appliedSomething = true;
                     if ( !allowMultipleTargets )
                         break;
@@ -449,27 +419,67 @@ void processJob(color_ostream& out, void* jobPtr) {
 /*
  * Heavily based on https://gist.github.com/4061959/
  **/
-int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrome) {
-    int32_t index = df::unit::binsearch_index(df::global::world->units.all, workerId);
-    if ( index < 0 ) {
-        out.print("%s line %d: Couldn't find unit %d.\n", __FILE__, __LINE__, workerId);
+int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrome, ResetPolicy::ResetPolicy policy) {
+    df::unit* unit = df::unit::find(workerId);
+    if ( !unit ) {
+        if ( DFHack::Once::doOnce("autoSyndrome giveSyndrome couldn't find unit") )
+            out.print("%s line %d: Couldn't find unit %d.\n", __FILE__, __LINE__, workerId);
         return -1;
     }
-    df::unit* unit = df::global::world->units.all[index];
+    
+    if ( policy != ResetPolicy::NewInstance ) {
+        //figure out if already there
+        for ( size_t a = 0; a < unit->syndromes.active.size(); a++ ) {
+            df::unit_syndrome* unitSyndrome = unit->syndromes.active[a];
+            if ( unitSyndrome->type != syndrome->id )
+                continue;
+            int32_t most = 0;
+            switch(policy) {
+            case ResetPolicy::DoNothing:
+                return -1;
+            case ResetPolicy::ResetDuration:
+                for ( size_t b = 0; b < unitSyndrome->symptoms.size(); b++ ) {
+                    unitSyndrome->symptoms[b]->ticks = 0; //might cause crashes with transformations
+                }
+                unitSyndrome->ticks = 0;
+                break;
+            case ResetPolicy::AddDuration:
+                if ( unitSyndrome->symptoms.size() != syndrome->ce.size() ) {
+                    if ( DFHack::Once::doOnce("autoSyndrome giveSyndrome incorrect symptom count") )
+                        out.print("%s, line %d. Incorrect symptom count %d != %d\n", __FILE__, __LINE__, unitSyndrome->symptoms.size(), syndrome->ce.size());
+                    break;
+                }
+                for ( size_t b = 0; b < unitSyndrome->symptoms.size(); b++ ) {
+                    if ( syndrome->ce[b]->end == -1 )
+                        continue;
+                    unitSyndrome->symptoms[b]->ticks -= syndrome->ce[b]->end;
+                    if ( syndrome->ce[b]->end > most )
+                        most = syndrome->ce[b]->end;
+                }
+                unitSyndrome->ticks -= most;
+                break;
+            default:
+                if ( DFHack::Once::doOnce("autoSyndrome giveSyndrome invalid reset policy") )
+                    out.print("%s, line %d: invalid reset policy %d.\n", __FILE__, __LINE__, policy);
+                return -1;
+            }
+            return 0;
+        }
+    }
 
     df::unit_syndrome* unitSyndrome = new df::unit_syndrome();
     unitSyndrome->type = syndrome->id;
-    unitSyndrome->year = 0;
-    unitSyndrome->year_time = 0;
-    unitSyndrome->ticks = 1;
-    unitSyndrome->unk1 = 1;
-    unitSyndrome->flags = 0; //typecast
+    unitSyndrome->year = DFHack::World::ReadCurrentYear();
+    unitSyndrome->year_time = DFHack::World::ReadCurrentTick();
+    unitSyndrome->ticks = 0;
+    unitSyndrome->unk1 = 0;
+    unitSyndrome->flags = 0; //TODO: typecast?
     
     for ( size_t a = 0; a < syndrome->ce.size(); a++ ) {
         df::unit_syndrome::T_symptoms* symptom = new df::unit_syndrome::T_symptoms();
         symptom->unk1 = 0;
         symptom->unk2 = 0;
-        symptom->ticks = 1;
+        symptom->ticks = 0;
         symptom->flags = 2; //TODO: ???
         unitSyndrome->symptoms.push_back(symptom);
     }

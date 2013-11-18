@@ -14,7 +14,7 @@
 
 #include "df/enabler.h"
 
-
+using namespace std;
 using std::string;
 using std::vector;
 using std::map;
@@ -427,7 +427,7 @@ public:
 
     void clearSelection()
     {
-        for_each_(list, [] (ListEntry<T> &e) { e.selected = false; });
+        for_each_(list, clear_fn);
     }
 
     void selectItem(const T elem)
@@ -550,8 +550,7 @@ public:
     void sort()
     {
         if (force_sort || list.size() < 100)
-            std::sort(list.begin(), list.end(), 
-                [] (ListEntry<T> const& a, ListEntry<T> const& b) { return a.text.compare(b.text) < 0; });
+            std::sort(list.begin(), list.end(), sort_fn);
 
         filterDisplay();
     }
@@ -569,6 +568,9 @@ public:
     }
 
 private:
+    static void clear_fn(ListEntry<T> &e) { e.selected = false; }
+    static bool sort_fn(ListEntry<T> const& a, ListEntry<T> const& b) { return a.text.compare(b.text) < 0; }
+
     vector<ListEntry<T>> list;
     vector<ListEntry<T>*> display_list;
     string search_string;

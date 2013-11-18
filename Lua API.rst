@@ -717,6 +717,57 @@ Functions:
   Checks if the material matches job_material_category or job_item.
   Accept dfhack_material_category auto-assign table.
 
+Random number generation
+------------------------
+
+* ``dfhack.random.new([seed[,perturb_count]])``
+
+  Creates a new random number generator object. Without any
+  arguments, the object is initialized using current time.
+  Otherwise, the seed must be either a non-negative integer,
+  or a list of such integers. The second argument may specify
+  the number of additional randomization steps performed to
+  improve the initial state.
+
+* ``rng:init([seed[,perturb_count]])``
+
+  Re-initializes an already existing random number generator object.
+
+* ``rng:random([limit])``
+
+  Returns a random integer. If ``limit`` is specified, the value
+  is in the range [0, limit); otherwise it uses the whole 32-bit
+  unsigned integer range.
+
+* ``rng:drandom()``
+
+  Returns a random floating-point number in the range [0,1).
+
+* ``rng:drandom0()``
+
+  Returns a random floating-point number in the range (0,1).
+
+* ``rng:drandom1()``
+
+  Returns a random floating-point number in the range [0,1].
+
+* ``rng:unitrandom()``
+
+  Returns a random floating-point number in the range [-1,1].
+
+* ``rng:unitvector([size])``
+
+  Returns multiple values that form a random vector of length 1,
+  uniformly distributed over the corresponding sphere surface.
+  The default size is 3.
+
+* ``fn = rng:perlin([dim]); fn(x[,y[,z]])``
+
+  Returns a closure that computes a classical Perlin noise function
+  of dimension *dim*, initialized from this random generator.
+  Dimension may be 1, 2 or 3 (default).
+
+
 C++ function wrappers
 =====================
 
@@ -3000,6 +3051,46 @@ List of events
    Is called after calling (or not) native fillSidebarMenu(). Useful for job button
    tweaking (e.g. adding custom reactions)
 
+Events from EventManager
+------------------------
+These events are straight from EventManager module. Each of them first needs to be enabled. See functions for more info. If you register a listener before the game is loaded, be aware that no events will be triggered immediately after loading, so you might need to add another event listener for when the game first loads in some cases.
+
+1. ``onBuildingCreatedDestroyed(building_id)``
+
+   Gets called when building is created or destroyed.
+
+2. ``onConstructionCreatedDestroyed(building_id)``
+
+   Gets called when construction is created or destroyed.
+
+3. ``onJobInitiated(job)``
+
+   Gets called when job is issued.
+
+4. ``onJobCompleted(job)``
+
+   Gets called when job is finished. The job that is passed to this function is a copy. Requires a frequency of 0 in order to distinguish between workshop jobs that were cancelled by the user and workshop jobs that completed successfully.
+
+5. ``onUnitDeath(unit_id)``
+
+   Gets called on unit death.
+
+6. ``onItemCreated(item_id)``
+
+   Gets called when item is created (except due to traders, migrants, invaders and spider webs).
+
+7. ``onSyndrome(unit_id,syndrome_index)``
+
+   Gets called when new syndrome appears on a unit.
+
+8. ``onInvasion(invasion_id)``
+
+   Gets called when new invasion happens.
+
+9. ``onInventoryChange(unit_id,item_id,old_equip,new_equip)``
+
+   Gets called when someone picks up an item, puts one down, or changes the way they are holding it. If an item is picked up, old_equip will be null. If an item is dropped, new_equip will be null. If an item is re-equipped in a new way, then neither will be null. You absolutely must NOT alter either old_equip or new_equip or you might break other plugins. 
+
 Functions
 ---------
 
@@ -3014,6 +3105,10 @@ Functions
 3. ``addReactionToShop(reaction_name,shop_name)``
 
    Add a custom reaction to the building.
+
+4. ``enableEvent(evType,frequency)``
+
+   Enable event checking for EventManager events. For event types use ``eventType`` table. Note that different types of events require different frequencies to be effective. The frequency is how many ticks EventManager will wait before checking if that type of event has happened. If multiple scripts or plugins use the same event type, the smallest frequency is the one that is used, so you might get events triggered more often than the frequency you use here.
 
 Examples
 --------

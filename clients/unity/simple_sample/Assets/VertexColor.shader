@@ -1,33 +1,31 @@
-// Upgrade NOTE: replaced 'SeperateSpecular' with 'SeparateSpecular'
-
-Shader " Vertex Colored" {
-Properties {
-    _Color ("Main Color", Color) = (1,1,1,1)
-    _SpecColor ("Spec Color", Color) = (1,1,1,1)
-    _Emission ("Emmisive Color", Color) = (0,0,0,0)
-    _Shininess ("Shininess", Range (0.01, 1)) = 0.7
-    _MainTex ("Base (RGB)", 2D) = "white" {}
-}
-
-SubShader {
-    Pass {
-        Material {
-            Shininess [_Shininess]
-            Specular [_SpecColor]
-            Emission [_Emission]    
-        }
-        ColorMaterial AmbientAndDiffuse
-        Lighting On
-        SeparateSpecular On
-        SetTexture [_MainTex] {
-            Combine texture * primary, texture * primary
-        }
-        SetTexture [_MainTex] {
-            constantColor [_Color]
-            Combine previous * constant DOUBLE, previous * constant
-        } 
-    }
-}
-
-Fallback " VertexLit", 1
+Shader " Vertex Colored" 
+{
+	Properties 
+	{
+		_Color ("Diffuse Color", Color) = (1,1,1,1)
+		_MainTex ("Texture", 2D) = "white" {}
+	}
+	
+	SubShader 
+	{
+		Tags { "RenderType" = "Opaque" }
+		CGPROGRAM
+		#pragma surface surf Lambert
+		struct Input 
+		{
+			float2 uv_MainTex;
+			float4 color: Color; // Vertex color
+		};
+		sampler2D _MainTex;
+		fixed4 _Color;
+		void surf (Input IN, inout SurfaceOutput o) 
+		{
+			o.Albedo = tex2D (_MainTex, IN.uv_MainTex).rgb;
+			o.Albedo *= _Color;
+			o.Albedo *= IN.color.rgb;
+		}
+		ENDCG
+	}
+	
+	Fallback "Diffuse", 1
 }

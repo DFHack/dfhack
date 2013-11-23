@@ -685,7 +685,8 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
     {
         last_x = last_y = last_z = -1;
 
-        if (!INTERPOSE_HOOK(mousequery_hook, feed).apply(enable))
+        if (!INTERPOSE_HOOK(mousequery_hook, feed).apply(enable) ||
+            !INTERPOSE_HOOK(mousequery_hook, render).apply(enable))
             return CR_FAILURE;
 
         is_enabled = enable;

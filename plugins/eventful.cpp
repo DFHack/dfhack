@@ -3,6 +3,7 @@
 #include <Export.h>
 #include <PluginManager.h>
 #include <string.h>
+#include <stdexcept>
 
 #include <VTableInterpose.h>
 

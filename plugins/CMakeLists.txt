@@ -159,6 +159,8 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(mousequery mousequery.cpp)
     DFHACK_PLUGIN(autotrade autotrade.cpp)
     DFHACK_PLUGIN(stocks stocks.cpp)
+    DFHACK_PLUGIN(hotkeys hotkeys.cpp)
+
     DFHACK_PLUGIN(treefarm treefarm.cpp)
     DFHACK_PLUGIN(cleanconst cleanconst.cpp)
     DFHACK_PLUGIN(3dveins 3dveins.cpp)

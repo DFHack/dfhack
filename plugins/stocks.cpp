@@ -8,6 +8,7 @@
 
 #include "df/item.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_storesst.h"
 #include "df/items_other_id.h"
 #include "df/job.h"
 #include "df/unit.h"
@@ -23,11 +24,13 @@
 #include "modules/World.h"
 #include "modules/Screen.h"
 #include "modules/Maps.h"
+#include "modules/Units.h"
+#include "df/building_cagest.h"
 
 using df::global::world;
 
 DFHACK_PLUGIN("stocks");
-#define PLUGIN_VERSION 0.2
+#define PLUGIN_VERSION 0.8
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
@@ -63,7 +66,7 @@ static string get_quality_name(const df::item_quality quality)
 
 
 /*
- * Trade
+ * Item manipulation
  */
 
 static df::job *get_item_job(df::item *item)
@@ -79,6 +82,12 @@ static df::item *get_container_of(df::item *item)
 {
     auto container = Items::getContainer(item);
     return (container) ? container : item;
+}
+
+static df::item *get_container_of(df::unit *unit)
+{
+    auto ref = Units::getGeneralRef(unit, general_ref_type::CONTAINED_IN_ITEM);
+    return (ref) ? ref->getItem() : nullptr;
 }
 
 static bool is_marked_for_trade(df::item *item, df::item *container = nullptr)
@@ -291,6 +300,64 @@ private:
 static TradeDepotInfo depot_info;
 
 
+struct extra_filters
+{
+    bool hide_trade_marked, hide_in_inventory, hide_in_cages;
+
+    extra_filters()
+    {
+        reset();
+    }
+
+    void reset()
+    {
+        hide_in_inventory = false;
+        hide_trade_marked = false;
+    }
+};
+
+static bool cages_populated = false;
+static vector<df::building_cagest *> cages;
+static map<df::item *, bool> items_in_cages;
+
+static void find_cages()
+{
+    if (cages_populated)
+        return;
+
+    for (size_t b=0; b < world->buildings.all.size(); b++)
+    {
+        df::building* building = world->buildings.all[b];
+        if (building->getType() == building_type::Cage)
+        {
+            cages.push_back(static_cast<df::building_cagest *>(building));
+        }
+    }
+
+    cages_populated = true;
+}
+
+static df::building_cagest *is_in_cage(df::unit *unit)
+{
+    find_cages();
+    for (auto it = cages.begin(); it != cages.end(); it++)
+    {
+        auto cage = *it;
+        for (size_t c = 0; c < cage->assigned_creature.size(); c++)
+        {
+            if(cage->assigned_creature[c] == unit->id)
+                return cage;
+        }
+    }
+
+    return nullptr;
+}
+
+static bool is_item_in_cage_cache(df::item *item)
+{
+    return items_in_cages.find(item) != items_in_cages.end();
+}
+
 static string get_keywords(df::item *item)
 {
     string keywords;
@@ -318,6 +385,9 @@ static string get_keywords(df::item *item)
 
     if (item->flags.bits.melt)
         keywords += "melt ";
+
+    if (is_item_in_cage_cache(item))
+        keywords += "caged ";
 
     if (is_in_inventory(item))
         keywords += "inventory ";
@@ -365,12 +435,12 @@ class StockListColumn : public ListColumn<T>
             OutputString(COLOR_LIGHTMAGENTA, x, y, "D");
         else
             OutputString(COLOR_LIGHTBLUE, x, y, " ");
-        
+
         if (item->flags.bits.on_fire)
             OutputString(COLOR_LIGHTRED, x, y, "R");
         else
             OutputString(COLOR_LIGHTBLUE, x, y, " ");
-        
+
         if (item->flags.bits.melt)
             OutputString(COLOR_BLUE, x, y, "M");
         else
@@ -378,6 +448,11 @@ class StockListColumn : public ListColumn<T>
 
         if (is_in_inventory(item))
             OutputString(COLOR_WHITE, x, y, "I");
+        else
+            OutputString(COLOR_LIGHTBLUE, x, y, " ");
+
+        if (is_item_in_cage_cache(item))
+            OutputString(COLOR_LIGHTRED, x, y, "C");
         else
             OutputString(COLOR_LIGHTBLUE, x, y, " ");
 
@@ -428,22 +503,6 @@ class StockListColumn : public ListColumn<T>
     }
 };
 
-struct extra_filters
-{
-    bool hide_trade_marked, hide_in_inventory;
-
-    extra_filters()
-    {
-        reset();
-    }
-
-    void reset()
-    {
-        hide_in_inventory = false;
-        hide_trade_marked = false;
-    }
-};
-
 class ViewscreenStocks : public dfhack_viewscreen
 {
 public:
@@ -479,6 +538,9 @@ public:
         min_quality = item_quality::Ordinary;
         max_quality = item_quality::Artifact;
         min_wear = 0;
+        cages.clear();
+        items_in_cages.clear();
+        cages_populated = false;
 
         populateItems();
 
@@ -557,6 +619,11 @@ public:
             extra_hide_flags.hide_in_inventory = !extra_hide_flags.hide_in_inventory;
             populateItems();
         }
+        else if (input->count(interface_key::CUSTOM_CTRL_C))
+        {
+            extra_hide_flags.hide_in_cages = !extra_hide_flags.hide_in_cages;
+            populateItems();
+        }
         else if (input->count(interface_key::CUSTOM_CTRL_T))
         {
             extra_hide_flags.hide_trade_marked = !extra_hide_flags.hide_trade_marked;
@@ -625,14 +692,14 @@ public:
             if (!item)
                 return;
             auto pos = getRealPos(item);
-            if (!pos)
+            if (!isRealPos(pos))
                 return;
 
             Screen::dismiss(this);
             // Could be clever here, if item is in a container, to look inside the container.
             // But that's different for built containers vs bags/pots in stockpiles.
             send_key(interface_key::D_LOOK);
-            move_cursor(*pos);
+            move_cursor(pos);
         }
         else if (input->count(interface_key::CUSTOM_SHIFT_A))
         {
@@ -654,23 +721,26 @@ public:
         }
         else if (input->count(interface_key::CUSTOM_SHIFT_T))
         {
-            if (apply_to_all)
+            if (depot_info.canTrade())
             {
-                auto &list = items_column.getDisplayList();
-                for (auto iter = list.begin(); iter != list.end(); iter++)
+                if (apply_to_all)
                 {
-                    auto item = (*iter)->elem;
-                    if (item)
-                        depot_info.assignItem(item);
-                }
+                    auto &list = items_column.getDisplayList();
+                    for (auto iter = list.begin(); iter != list.end(); iter++)
+                    {
+                        auto item = (*iter)->elem;
+                        if (item)
+                            depot_info.assignItem(item);
+                    }
 
-                populateItems();
-            }
-            else
-            {
-                auto item = items_column.getFirstSelectedElem();
-                if (item && depot_info.assignItem(item))
                     populateItems();
+                }
+                else
+                {
+                    auto item = items_column.getFirstSelectedElem();
+                    if (item && depot_info.assignItem(item))
+                        populateItems();
+                }
             }
         }
 
@@ -731,7 +801,7 @@ public:
         y = 2;
         x = left_margin;
         OutputString(COLOR_BROWN, x, y, "Filters", true, left_margin);
-        OutputString(COLOR_LIGHTRED, x, y, "Press Ctrl-Hotkey to Toggle", true, left_margin);
+        OutputString(COLOR_LIGHTRED, x, y, "Press Ctrl-Hotkey to toggle", true, left_margin);
         OutputFilterString(x, y, "In Job", "J", !hide_flags.bits.in_job, true, left_margin, COLOR_LIGHTBLUE);
         OutputFilterString(x, y, "Rotten", "X", !hide_flags.bits.rotten, true, left_margin, COLOR_CYAN);
         OutputFilterString(x, y, "Foreign Made", "G", !hide_flags.bits.foreign, true, left_margin, COLOR_BROWN);
@@ -741,6 +811,7 @@ public:
         OutputFilterString(x, y, "On Fire", "R", !hide_flags.bits.on_fire, true, left_margin, COLOR_LIGHTRED);
         OutputFilterString(x, y, "Melt", "M", !hide_flags.bits.melt, true, left_margin, COLOR_BLUE);
         OutputFilterString(x, y, "In Inventory", "I", !extra_hide_flags.hide_in_inventory, true, left_margin, COLOR_WHITE);
+        OutputFilterString(x, y, "Caged", "C", !extra_hide_flags.hide_in_cages, true, left_margin, COLOR_LIGHTRED);
         OutputFilterString(x, y, "Trade", "T", !extra_hide_flags.hide_trade_marked, true, left_margin, COLOR_LIGHTGREEN);
         OutputFilterString(x, y, "No Flags", "N", !hide_unflagged, true, left_margin, COLOR_GREY);
         ++y;
@@ -765,7 +836,12 @@ public:
         OutputString(COLOR_BROWN, x, y, (apply_to_all) ? "Listed" : "Selected", true, left_margin);
         OutputHotkeyString(x, y, "Dump", "Shift-D", true, left_margin);
         OutputHotkeyString(x, y, "Forbid", "Shift-F", true, left_margin);
-        OutputHotkeyString(x, y, "Mark for Trade", "Shift-T", true, left_margin);
+        if (depot_info.canTrade())
+            OutputHotkeyString(x, y, "Mark for Trade", "Shift-T", true, left_margin);
+
+        y = gps->dimy - 6;
+        OutputString(COLOR_LIGHTRED, x, y, "Flag names can also", true, left_margin);
+        OutputString(COLOR_LIGHTRED, x, y, "be searched for", true, left_margin);
     }
 
     std::string getFocusString() { return "stocks_view"; }
@@ -778,8 +854,15 @@ private:
     df::item_quality min_quality, max_quality;
     int16_t min_wear;
 
-    static df::coord *getRealPos(df::item *item)
+    static bool isRealPos(const df::coord pos)
     {
+        return pos.x != -30000;
+    }
+
+    static df::coord getRealPos(df::item *item)
+    {
+        df::coord pos;
+        pos.x = -30000;
         item = get_container_of(item);
         if (item->flags.bits.in_inventory)
         {
@@ -789,25 +872,48 @@ private:
                 if (ref && ref->job)
                 {
                     if (ref->job->job_type == job_type::Eat || ref->job->job_type == job_type::Drink)
-                        return nullptr;
+                        return pos;
 
                     auto unit = Job::getWorker(ref->job);
                     if (unit)
-                        return &unit->pos;
+                        return unit->pos;
                 }
-                return nullptr;
+                return pos;
             }
             else
             {
                 auto unit = Items::getHolderUnit(item);
                 if (unit)
-                    return &unit->pos;
+                {
+                    if (!Units::isCitizen(unit))
+                    {
+                        auto cage_item = get_container_of(unit);
+                        if (cage_item)
+                        {
+                            items_in_cages[item] = true;
+                            return cage_item->pos;
+                        }
 
-                return nullptr;
+                        auto cage_building = is_in_cage(unit);
+                        if (cage_building)
+                        {
+                            items_in_cages[item] = true;
+                            pos.x = cage_building->centerx;
+                            pos.y = cage_building->centery;
+                            pos.z = cage_building->z;
+                        }
+                        
+                        return pos;
+                    }
+
+                    return unit->pos;
+                }
+
+                return pos;
             }
         }
 
-        return &item->pos;
+        return item->pos;
     }
 
     void applyFlag(const df::item_flags flags)
@@ -853,6 +959,7 @@ private:
         hide_unflagged = state;
         extra_hide_flags.hide_trade_marked = state;
         extra_hide_flags.hide_in_inventory = state;
+        extra_hide_flags.hide_in_cages = state;
     }
 
     void populateItems()
@@ -865,7 +972,6 @@ private:
         bad_flags.bits.trader = true;
         bad_flags.bits.in_building = true;
         bad_flags.bits.garbage_collect = true;
-        bad_flags.bits.hostile = true;
         bad_flags.bits.removed = true;
         bad_flags.bits.dead_dwarf = true;
         bad_flags.bits.murder = true;
@@ -887,13 +993,10 @@ private:
                 continue;
 
             auto pos = getRealPos(item);
-            if (!pos)
+            if (!isRealPos(pos))
                 continue;
 
-            if (pos->x == -30000)
-                continue;
-
-            auto designation = Maps::getTileDesignation(*pos);
+            auto designation = Maps::getTileDesignation(pos);
             if (!designation)
                 continue;
 
@@ -904,11 +1007,15 @@ private:
             if (extra_hide_flags.hide_trade_marked && trade_marked)
                 continue;
 
+            bool caged = is_item_in_cage_cache(item);
+            if (extra_hide_flags.hide_in_cages && caged)
+                continue;
+            
             if (extra_hide_flags.hide_in_inventory && container->flags.bits.in_inventory)
                 continue;
 
             if (hide_unflagged && (!(item->flags.whole & checked_flags.whole) && 
-                    !trade_marked && !container->flags.bits.in_inventory))
+                    !trade_marked && !caged && !container->flags.bits.in_inventory))
             {
                 continue;
             }
@@ -973,6 +1080,35 @@ private:
 df::item_flags ViewscreenStocks::hide_flags;
 extra_filters ViewscreenStocks::extra_hide_flags;
 
+struct stocks_hook : public df::viewscreen_storesst
+{
+    typedef df::viewscreen_storesst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        if (input->count(interface_key::CUSTOM_E))
+        {
+            Screen::dismiss(this);
+            Screen::dismiss(Gui::getCurViewscreen(true));
+            Screen::show(new ViewscreenStocks());
+            return;
+        }
+        INTERPOSE_NEXT(feed)(input);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+        auto dim = Screen::getWindowSize();
+        int x = 40;
+        int y = dim.y - 2;
+        OutputHotkeyString(x, y, "Enhanced View", "e");
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(stocks_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(stocks_hook, render);
+
 
 static command_result stocks_cmd(color_ostream &out, vector <string> & parameters)
 {
@@ -993,22 +1129,20 @@ static command_result stocks_cmd(color_ostream &out, vector <string> & parameter
     return CR_WRONG_USAGE;
 }
 
-
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!gps)
+    if (!gps || !INTERPOSE_HOOK(stocks_hook, feed).apply() || !INTERPOSE_HOOK(stocks_hook, render).apply())
         out.printerr("Could not insert stocks plugin hooks!\n");
 
     commands.push_back(
         PluginCommand(
         "stocks", "An improved stocks display screen",
-        stocks_cmd, false, ""));
+        stocks_cmd, Gui::dwarfmode_hotkey, ""));
 
     ViewscreenStocks::reset();
 
     return CR_OK;
 }
-
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {

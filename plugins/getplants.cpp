@@ -792,11 +792,28 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
     return CR_OK;
 }
 
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+    if (!gps)
+        return CR_FAILURE;
+
+    if (enable != is_enabled)
+    {
+        if (!INTERPOSE_HOOK(autochop_hook, feed).apply(enable) ||
+            !INTERPOSE_HOOK(autochop_hook, render).apply(enable))
+            return CR_FAILURE;
+
+        is_enabled = enable;
+        initialize();
+    }
+
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (!gps || !INTERPOSE_HOOK(autochop_hook, feed).apply() || !INTERPOSE_HOOK(autochop_hook, render).apply())
-        out.printerr("Could not insert getplants hooks!\n");
-
     commands.push_back(PluginCommand(
         "getplants", "Cut down all of the specified trees or gather specified shrubs",
         df_getplants, false,

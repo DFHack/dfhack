@@ -11,6 +11,7 @@
 #include "df/viewscreen_layer_stockpilest.h"
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_layer_noblelistst.h"
+#include "df/viewscreen_layer_workshop_profilest.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_buildinglistst.h"
@@ -423,7 +424,7 @@ protected:
     virtual bool can_init(S *screen)
     {
         auto list = getLayerList(screen);
-        if (!is_list_valid(screen) || !list->active)
+        if (!is_list_valid(screen) || !list || !list->active)
             return false;
 
         return true;
@@ -1440,6 +1441,36 @@ IMPLEMENT_HOOKS(df::viewscreen_layer_noblelistst, nobles_search);
 // END: Nobles search list
 //
 
+//
+// START: Workshop profiles search list
+//
+typedef layered_search<df::viewscreen_layer_workshop_profilest, df::unit*, 0> profiles_search_base;
+class profiles_search : public profiles_search_base
+{
+public:
+
+    string get_element_description(df::unit *element) const
+    {
+        return get_unit_description(element);
+    }
+
+    void render() const
+    {
+        print_search_option(2, 23);
+    }
+
+    vector<df::unit *> *get_primary_list() 
+    {
+        return &viewscreen->workers;
+    }
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_layer_workshop_profilest, profiles_search);
+
+//
+// END: Workshop profiles search list
+//
+
 
 //
 // START: Job list search
@@ -1629,6 +1660,7 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
     HOOK_ACTION(pets_search_hook) \
     HOOK_ACTION(military_search_hook) \
     HOOK_ACTION(nobles_search_hook) \
+    HOOK_ACTION(profiles_search_hook) \
     HOOK_ACTION(annoucnement_search_hook) \
     HOOK_ACTION(joblist_search_hook) \
     HOOK_ACTION(burrow_search_hook) \

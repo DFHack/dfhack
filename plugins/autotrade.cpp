@@ -693,6 +693,11 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
+    if (!gps 
+        || !INTERPOSE_HOOK(trade_hook, feed).apply() || !INTERPOSE_HOOK(trade_hook, render).apply()
+        || !INTERPOSE_HOOK(tradeview_hook, feed).apply() || !INTERPOSE_HOOK(tradeview_hook, render).apply())
+        out.printerr("Could not insert autotrade hooks!\n");
+
     commands.push_back(
         PluginCommand(
         "autotrade", "Automatically send items in marked stockpiles to trade depot, when trading is possible.",

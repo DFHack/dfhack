@@ -28,9 +28,10 @@ using namespace df::enums::ui_sidebar_mode;
 
 DFHACK_PLUGIN("mousequery");
 
-#define PLUGIN_VERSION 0.16
+#define PLUGIN_VERSION 0.17
 
-static int32_t last_x, last_y, last_z;
+static int32_t last_clicked_x, last_clicked_y, last_clicked_z;
+static int32_t last_pos_x, last_pos_y, last_pos_z;
 static size_t max_list_size = 300000; // Avoid iterating over huge lists
 
 static bool plugin_enabled = true;
@@ -38,7 +39,8 @@ static bool rbutton_enabled = true;
 static bool tracking_enabled = false;
 static bool active_scrolling = false;
 static bool box_designation_enabled = false;
-static bool live_view = false;
+static bool live_view = true;
+static bool skip_tracking_once = false;
 
 static int scroll_delay = 100;
 
@@ -208,6 +210,10 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         case DesignateChopTrees:
         case DesignateToggleEngravings:
         case DesignateRemoveConstruction:
+        case DesignateTrafficHigh:
+        case DesignateTrafficNormal:
+        case DesignateTrafficLow:
+        case DesignateTrafficRestricted:
             return true;
 
         case Burrows:
@@ -267,10 +273,10 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         auto dims = Gui::getDwarfmodeViewDims();
         if (enabler->mouse_lbut)
         {
-            bool cursor_still_here = (last_x == mpos.x && last_y == mpos.y && last_z == mpos.z);
-            last_x = mpos.x;
-            last_y = mpos.y;
-            last_z = mpos.z;
+            bool cursor_still_here = (last_clicked_x == mpos.x && last_clicked_y == mpos.y && last_clicked_z == mpos.z);
+            last_clicked_x = mpos.x;
+            last_clicked_y = mpos.y;
+            last_clicked_z = mpos.z;
 
             df::interface_key key = interface_key::NONE;
             bool designationMode = false;
@@ -370,7 +376,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             if (!skipRefresh)
             {
                 // Force UI refresh
-                moveCursor(mpos);
+                moveCursor(mpos, true);
             }
 
             if (designationMode)
@@ -415,12 +421,55 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         {
             box_designation_enabled = !box_designation_enabled;
         }
+        else if (shouldTrack())
+        {
+            if (input->count(interface_key::CURSOR_UP) ||
+                input->count(interface_key::CURSOR_DOWN) ||
+                input->count(interface_key::CURSOR_LEFT) ||
+                input->count(interface_key::CURSOR_RIGHT) ||
+                input->count(interface_key::CURSOR_UPLEFT) ||
+                input->count(interface_key::CURSOR_UPRIGHT) ||
+                input->count(interface_key::CURSOR_DOWNLEFT) ||
+                input->count(interface_key::CURSOR_DOWNRIGHT) ||
+                input->count(interface_key::CURSOR_UP_FAST) ||
+                input->count(interface_key::CURSOR_DOWN_FAST) ||
+                input->count(interface_key::CURSOR_LEFT_FAST) ||
+                input->count(interface_key::CURSOR_RIGHT_FAST) ||
+                input->count(interface_key::CURSOR_UPLEFT_FAST) ||
+                input->count(interface_key::CURSOR_UPRIGHT_FAST) ||
+                input->count(interface_key::CURSOR_DOWNLEFT_FAST) ||
+                input->count(interface_key::CURSOR_DOWNRIGHT_FAST) ||
+                input->count(interface_key::CURSOR_UP_Z) ||
+                input->count(interface_key::CURSOR_DOWN_Z) ||
+                input->count(interface_key::CURSOR_UP_Z_AUX) ||
+                input->count(interface_key::CURSOR_DOWN_Z_AUX))
+            {
+                skip_tracking_once = true;
+            }
+        }
 
         return false;
     }
 
-    void moveCursor(df::coord &mpos)
+    void moveCursor(df::coord &mpos, bool forced)
     {
+        bool should_skip_tracking = skip_tracking_once;
+        skip_tracking_once = false;
+        if (!forced)
+        {
+            if (mpos.x == last_pos_x && mpos.y == last_pos_y && mpos.z == last_pos_z)
+                return;
+        }
+
+        last_pos_x = mpos.x;
+        last_pos_y = mpos.y;
+        last_pos_z = mpos.z;
+
+        if (!forced && should_skip_tracking)
+        {
+            return;
+        }
+
         int32_t x, y, z;
         Gui::getCursorCoords(x, y, z);
         if (mpos.x == x && mpos.y == y && mpos.z == z)
@@ -473,7 +522,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         {
             int left_margin = dims.menu_x1 + 1;
             int x = left_margin;
-            int y = 23;
+            int y = 24;
             OutputString(COLOR_BROWN, x, y, "DFHack MouseQuery", true, left_margin);
             OutputToggleString(x, y, "Box Select", "m", box_designation_enabled, true, left_margin);
         }
@@ -549,7 +598,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             }
 
             last_t = enabler->clock;
-            moveCursor(mpos);
+            moveCursor(mpos, false);
         }
 
         if (dims.menu_x1 <= 0)
@@ -680,7 +729,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     if (!gps || !INTERPOSE_HOOK(mousequery_hook, feed).apply() || !INTERPOSE_HOOK(mousequery_hook, render).apply())
         out.printerr("Could not insert mousequery hooks!\n");
 
-    last_x = last_y = last_z = -1;
+    last_clicked_x = last_clicked_y = last_clicked_z = -1;
+    last_pos_x = last_pos_y = last_pos_z = -1;
 
     commands.push_back(
         PluginCommand(
@@ -703,7 +753,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_MAP_LOADED:
-        last_x = last_y = last_z = -1;
+        last_clicked_x = last_clicked_y = last_clicked_z = -1;
+        last_pos_x = last_pos_y = last_pos_z = -1;
         break;
     default:
         break;

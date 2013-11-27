@@ -28,15 +28,15 @@ All new releases are announced in the bay12 thread: http://tinyurl.com/dfhack-ng
 =============
 Compatibility
 =============
-DFHack works on Windows XP, Vista, 7 or any modern Linux distribution.
-OSX is not supported due to lack of developers with a Mac.
+DFHack works on Windows XP, Vista, 7, any modern Linux distribution, or OS X
+10.6.8-10.9.
 
 Currently, version 0.34.11 is supported (and tested). If you need DFHack
 for older versions, look for older releases.
 
 On Windows, you have to use the SDL version of DF.
 
-It is possible to use the Windows DFHack under wine/OSX.
+It is also possible to use the Windows DFHack with Wine under Linux and OS X.
 
 ====================
 Installation/Removal

@@ -567,25 +567,24 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             showing_dimensions = true;
             int32_t x, y, z;
             Gui::getDesignationCoords(x, y, z);
-            int32_t curr_x, curr_y;
+            coord32_t curr_pos;
 
             if (!tracking_enabled && mouse_moved && mpos_valid &&
                 (!isInDesignationMenu() || box_designation_enabled))
             {
-                curr_x = mpos.x;
-                curr_y = mpos.y;
+                curr_pos = mpos;
             }
             else
             {
-                int32_t  z;
-                Gui::getCursorCoords(curr_x, curr_y, z);
+                Gui::getCursorCoords(curr_pos.x, curr_pos.y, curr_pos.z);
             }
-            auto dX = abs(x - curr_x) + 1;
-            auto dY = abs(y - curr_y) + 1;
+            auto dX = abs(x - curr_pos.x) + 1;
+            auto dY = abs(y - curr_pos.y) + 1;
+            auto dZ = abs(z - curr_pos.z) + 1;
 
             int disp_y = gps->dimy - 3;
             stringstream label;
-            label << "Selection: " << dX << "x" << dY;
+            label << "Selection: " << dX << "x" << dY << "x" << dZ;
             OutputString(COLOR_WHITE, disp_x, disp_y, label.str());
         }
         else

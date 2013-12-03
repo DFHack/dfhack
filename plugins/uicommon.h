@@ -17,7 +17,6 @@
 
 #include "df/enabler.h"
 
-
 using std::string;
 using std::vector;
 using std::map;
@@ -40,6 +39,29 @@ using df::global::gps;
 #define COLOR_SELECTED COLOR_WHITE
 #define COLOR_HIGHLIGHTED COLOR_GREEN
 
+struct coord32_t
+{
+    int32_t x, y, z;
+
+    coord32_t()
+    {
+        x = -30000;
+        y = -30000;
+        z = -30000;
+    }
+
+    coord32_t(df::coord& other)
+    {
+        x = other.x;
+        y = other.y;
+        z = other.z;
+    }
+    
+    df::coord get_coord16() const
+    {
+        return df::coord(x, y, z);
+    }
+};
 
 template <class T, typename Fn>
 static void for_each_(vector<T> &v, Fn func)

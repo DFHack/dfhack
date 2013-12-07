@@ -26,11 +26,13 @@
 #include "modules/Maps.h"
 #include "modules/Units.h"
 #include "df/building_cagest.h"
+#include "df/dfhack_material_category.h"
+#include "df/ui_advmode.h"
 
 using df::global::world;
 
 DFHACK_PLUGIN("stocks");
-#define PLUGIN_VERSION 0.8
+#define PLUGIN_VERSION 0.9
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
@@ -503,6 +505,19 @@ class StockListColumn : public ListColumn<T>
     }
 };
 
+
+static bool is_metal_item(df::item *item)
+{
+    auto imattype = item->getActualMaterial();
+    auto imatindex = item->getActualMaterialIndex();
+    auto item_mat = MaterialInfo(imattype, imatindex);
+    df::dfhack_material_category mat_mask;
+    mat_mask.bits.metal = true;
+
+    return item_mat.matches(mat_mask);
+}
+
+
 class ViewscreenStocks : public dfhack_viewscreen
 {
 public:
@@ -719,6 +734,11 @@ public:
             applyFlag(flags);
             populateItems();
         }
+        else if (input->count(interface_key::CUSTOM_SHIFT_M))
+        {
+            melt_item();
+            populateItems();
+        }
         else if (input->count(interface_key::CUSTOM_SHIFT_T))
         {
             if (depot_info.canTrade())
@@ -836,6 +856,7 @@ public:
         OutputString(COLOR_BROWN, x, y, (apply_to_all) ? "Listed" : "Selected", true, left_margin);
         OutputHotkeyString(x, y, "Dump", "Shift-D", true, left_margin);
         OutputHotkeyString(x, y, "Forbid", "Shift-F", true, left_margin);
+        OutputHotkeyString(x, y, "Melt", "Shift-M", true, left_margin);
         if (depot_info.canTrade())
             OutputHotkeyString(x, y, "Mark for Trade", "Shift-T", true, left_margin);
 
@@ -914,6 +935,34 @@ private:
         }
 
         return item->pos;
+    }
+
+    void melt_item()
+    {
+        auto item = items_column.getFirstSelectedElem();
+        if (!item)
+            return;
+
+        if (!is_metal_item(item))
+            return;
+
+        if (!item->flags.bits.melt)
+        {
+            world->items.other[items_other_id::ANY_MELT_DESIGNATED].push_back(item);
+            item->flags.bits.melt = true;
+        }
+        else
+        {
+            auto &melting_items = world->items.other[items_other_id::ANY_MELT_DESIGNATED];
+            for (auto it = melting_items.begin(); it != melting_items.end(); it++)
+            {
+                if (*it != item)
+                    continue;
+                melting_items.erase(it);
+                item->flags.bits.melt = false;
+                break;
+            }
+        }
     }
 
     void applyFlag(const df::item_flags flags)

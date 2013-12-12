@@ -199,7 +199,7 @@ public:
         reset();
     }
 
-    void prepareTradeVarables()
+    void prepareTradeVariables()
     {
         reset();
         for(auto bld_it = world->buildings.all.begin(); bld_it != world->buildings.all.end(); bld_it++)
@@ -517,6 +517,10 @@ static bool is_metal_item(df::item *item)
     return item_mat.matches(mat_mask);
 }
 
+struct item_grouped_entry
+{
+    std::vector<df::item *> entries;
+};
 
 class ViewscreenStocks : public dfhack_viewscreen
 {
@@ -868,7 +872,7 @@ public:
     std::string getFocusString() { return "stocks_view"; }
 
 private:
-    StockListColumn<df::item *> items_column;
+    StockListColumn<item_grouped_entry> items_column;
     int selected_column;
     bool apply_to_all, hide_unflagged;
     df::item_flags checked_flags;
@@ -1026,9 +1030,10 @@ private:
         bad_flags.bits.murder = true;
         bad_flags.bits.construction = true;
 
-        depot_info.prepareTradeVarables();
+        depot_info.prepareTradeVariables();
 
-        std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
+        std::vector<df::item *> &items = world->items.other[items_other_id::IN_PLAY];
+        //std::map<
 
         for (size_t i = 0; i < items.size(); i++)
         {
@@ -1064,7 +1069,7 @@ private:
                 continue;
 
             if (hide_unflagged && (!(item->flags.whole & checked_flags.whole) && 
-                    !trade_marked && !caged && !container->flags.bits.in_inventory))
+                !trade_marked && !caged && !container->flags.bits.in_inventory))
             {
                 continue;
             }
@@ -1077,40 +1082,49 @@ private:
             if (wear < min_wear)
                 continue;
 
-            auto label = Items::getDescription(item, 0, false);
-            if (wear > 0)
-            {
-                string wearX;
-                switch (wear)
-                {
-                case 1:
-                    wearX = "x";
-                    break;
-
-                case 2:
-                    wearX = "X";
-                    break;
-
-                case 3:
-                    wearX = "xX";
-                    break;
-
-                default:
-                    wearX = "XX";
-                    break;
-
-                }
-
-                label = wearX + label + wearX;
-            }
-
-            label = pad_string(label, MAX_NAME, false, true);
-
-            auto entry = ListEntry<df::item *>(label, item, get_keywords(item));
-            items_column.add(entry);
+            auto label = getItemLabel(item);
+            auto quality_enum = static_cast<df::item_quality>(quality);
+            auto quality_string = ENUM_KEY_STR(item_quality, quality_enum);
+            auto hash = label + quality_string;
+            //auto entry = ListEntry<df::item *>(label, item, get_keywords(item));
+            //items_column.add(entry);
         }
 
         items_column.filterDisplay();
+    }
+
+    string getItemLabel(df::item *item)
+    {
+        auto label = Items::getDescription(item, 0, false);
+        if (item->getWear() > 0)
+        {
+            string wearX;
+            switch (wear)
+            {
+            case 1:
+                wearX = "x";
+                break;
+
+            case 2:
+                wearX = "X";
+                break;
+
+            case 3:
+                wearX = "xX";
+                break;
+
+            default:
+                wearX = "XX";
+                break;
+
+            }
+
+            label = wearX + label + wearX;
+        }
+
+        label = pad_string(label, MAX_NAME, false, true);
+
+        return label;
     }
 
     void validateColumn()

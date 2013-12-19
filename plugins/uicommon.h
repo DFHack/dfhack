@@ -249,6 +249,8 @@ public:
         list.clear();
         display_list.clear();
         display_start_offset = 0;
+        if (highlighted_index != -1)
+            highlighted_index = 0;
         max_item_width = title.length();
         resize();
     }
@@ -380,6 +382,13 @@ public:
         }
     }
 
+    void centerSelection()
+    {
+        display_start_offset = highlighted_index - (display_max_rows / 2);
+        validateDisplayOffset();
+        validateHighlight();
+    }
+
     void validateHighlight()
     {
         set_to_limit(highlighted_index, display_list.size() - 1);
@@ -403,8 +412,13 @@ public:
         highlighted_index += highlight_change + offset_shift * display_max_rows;
 
         display_start_offset += offset_shift * display_max_rows;
-        set_to_limit(display_start_offset, max(0, (int)(display_list.size())-display_max_rows));
+        validateDisplayOffset();
         validateHighlight();
+    }
+
+    void validateDisplayOffset()
+    {
+        set_to_limit(display_start_offset, max(0, (int)(display_list.size())-display_max_rows));
     }
 
     void setHighlight(const int index)
@@ -564,6 +578,7 @@ public:
                 // Standard character
                 search_string += last_token - ascii_to_enum_offset;
                 filterDisplay();
+                centerSelection();
             }
             else if (last_token == interface_key::STRING_A000)
             {
@@ -572,6 +587,7 @@ public:
                 {
                     search_string.erase(search_string.length()-1);
                     filterDisplay();
+                    centerSelection();
                 }
             }
             else

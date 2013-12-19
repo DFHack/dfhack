@@ -66,20 +66,6 @@ static string get_quality_name(const df::item_quality quality)
         return ENUM_KEY_STR(item_quality, quality);
 }
 
-
-/*
- * Item manipulation
- */
-
-static df::job *get_item_job(df::item *item)
-{
-    auto ref = Items::getSpecificRef(item, specific_ref_type::JOB);
-    if (ref && ref->job)
-        return ref->job;
-
-    return nullptr;
-}
-
 static df::item *get_container_of(df::item *item)
 {
     auto container = Items::getContainer(item);
@@ -92,15 +78,10 @@ static df::item *get_container_of(df::unit *unit)
     return (ref) ? ref->getItem() : nullptr;
 }
 
-static bool is_marked_for_trade(df::item *item, df::item *container = nullptr)
-{
-    item = (container) ? container : get_container_of(item);
-    auto job = get_item_job(item);
-    if (!job)
-        return false;
 
-    return job->job_type == job_type::BringItemToDepot;
-}
+/*
+ * Trade Info
+ */
 
 static bool check_mandates(df::item *item)
 {
@@ -184,12 +165,6 @@ static bool can_trade_item_and_container(df::item *item)
     return true;
 }
 
-static bool is_in_inventory(df::item *item)
-{
-    item = get_container_of(item);
-    return item->flags.bits.in_inventory;
-}
-
 
 class TradeDepotInfo
 {
@@ -215,38 +190,42 @@ public:
         }
     }
 
-    bool assignItem(df::item *item)
+    bool assignItem(vector<df::item *> &entries)
     {
-        item = get_container_of(item);
-        if (!can_trade_item_and_container(item))
-            return false;
-
-        auto href = df::allocate<df::general_ref_building_holderst>();
-        if (!href)
-            return false;
-
-        auto job = new df::job();
-
-        df::coord tpos(depot->centerx, depot->centery, depot->z);
-        job->pos = tpos;
-
-        job->job_type = job_type::BringItemToDepot;
-
-        // job <-> item link
-        if (!Job::attachJobItem(job, item, df::job_item_ref::Hauled))
+        for (auto it = entries.begin(); it != entries.end(); it++)
         {
-            delete job;
-            delete href;
-            return false;
+            auto item = *it;
+            item = get_container_of(item);
+            if (!can_trade_item_and_container(item))
+                return false;
+
+            auto href = df::allocate<df::general_ref_building_holderst>();
+            if (!href)
+                return false;
+
+            auto job = new df::job();
+
+            df::coord tpos(depot->centerx, depot->centery, depot->z);
+            job->pos = tpos;
+
+            job->job_type = job_type::BringItemToDepot;
+
+            // job <-> item link
+            if (!Job::attachJobItem(job, item, df::job_item_ref::Hauled))
+            {
+                delete job;
+                delete href;
+                return false;
+            }
+
+            // job <-> building link
+            href->building_id = id;
+            depot->jobs.push_back(job);
+            job->general_refs.push_back(href);
+
+            // add to job list
+            Job::linkIntoWorld(job);
         }
-
-        // job <-> building link
-        href->building_id = id;
-        depot->jobs.push_back(job);
-        job->general_refs.push_back(href);
-
-        // add to job list
-        Job::linkIntoWorld(job);
 
         return true;
     }
@@ -302,6 +281,204 @@ private:
 static TradeDepotInfo depot_info;
 
 
+/*
+ * Item manipulation
+ */
+
+static map<df::item *, bool> items_in_cages;
+
+static df::job *get_item_job(df::item *item)
+{
+    auto ref = Items::getSpecificRef(item, specific_ref_type::JOB);
+    if (ref && ref->job)
+        return ref->job;
+
+    return nullptr;
+}
+
+static bool is_marked_for_trade(df::item *item, df::item *container = nullptr)
+{
+    item = (container) ? container : get_container_of(item);
+    auto job = get_item_job(item);
+    if (!job)
+        return false;
+
+    return job->job_type == job_type::BringItemToDepot;
+}
+
+static bool is_in_inventory(df::item *item)
+{
+    item = get_container_of(item);
+    return item->flags.bits.in_inventory;
+}
+
+static bool is_item_in_cage_cache(df::item *item)
+{
+    return items_in_cages.find(item) != items_in_cages.end();
+}
+
+static string get_keywords(df::item *item)
+{
+    string keywords;
+
+    if (item->flags.bits.in_job)
+        keywords += "job ";
+
+    if (item->flags.bits.rotten)
+        keywords += "rotten ";
+
+    if (item->flags.bits.owned)
+        keywords += "owned ";
+
+    if (item->flags.bits.forbid)
+        keywords += "forbid ";
+
+    if (item->flags.bits.dump)
+        keywords += "dump ";
+
+    if (item->flags.bits.on_fire)
+        keywords += "fire ";
+
+    if (item->flags.bits.melt)
+        keywords += "melt ";
+
+    if (is_item_in_cage_cache(item))
+        keywords += "caged ";
+
+    if (is_in_inventory(item))
+        keywords += "inventory ";
+
+    if (depot_info.canTrade())
+    {
+        if (is_marked_for_trade(item))
+            keywords += "trade ";
+    }
+
+    return keywords;
+}
+
+static string get_item_label(df::item *item, bool trim = false)
+{
+    auto label = Items::getDescription(item, 0, false);
+    if (trim && item->getType() == item_type::BIN)
+    {
+        auto pos = label.find("<#");
+        if (pos != string::npos)
+        {
+            label = label.substr(0, pos-1);
+        }
+    }
+
+    auto wear = item->getWear();
+    if (wear > 0)
+    {
+        string wearX;
+        switch (wear)
+        {
+        case 1:
+            wearX = "x";
+            break;
+
+        case 2:
+            wearX = "X";
+            break;
+
+        case 3:
+            wearX = "xX";
+            break;
+
+        default:
+            wearX = "XX";
+            break;
+
+        }
+
+        label = wearX + label + wearX;
+    }
+
+    label = pad_string(label, MAX_NAME, false, true);
+
+    return label;
+}
+
+static bool is_metal_item(df::item *item)
+{
+    auto imattype = item->getActualMaterial();
+    auto imatindex = item->getActualMaterialIndex();
+    auto item_mat = MaterialInfo(imattype, imatindex);
+    df::dfhack_material_category mat_mask;
+    mat_mask.bits.metal = true;
+
+    return item_mat.matches(mat_mask);
+}
+
+
+struct item_grouped_entry
+{
+    std::vector<df::item *> entries;
+
+    string getLabel(bool grouped) const
+    {
+        if (entries.size() == 0)
+            return "";
+
+        return get_item_label(entries[0], grouped);
+    }
+
+    string getKeywords() const
+    {
+        return get_keywords(entries[0]);
+    }
+
+    df::item *getFirstItem() const
+    {
+        if (entries.size() == 0)
+            return nullptr;
+
+        return entries[0];
+    }
+
+    bool isMetal() const
+    {
+        df::item *item = getFirstItem();
+        if (!item)
+            return false;
+
+        return is_metal_item(item);
+    }
+
+    bool isSetToMelt() const
+    {
+        df::item *item = getFirstItem();
+        if (!item)
+            return false;
+
+        return item->flags.bits.melt;
+    }
+
+    bool contains(df::item *item) const
+    {
+        return std::find(entries.begin(), entries.end(), item) != entries.end();
+    }
+
+    void setFlags(const df::item_flags flags, const bool state)
+    {
+        for (auto it = entries.begin(); it != entries.end(); it++)
+        {
+            if (state)
+                (*it)->flags.whole |= flags.whole;
+            else
+                (*it)->flags.whole &= ~flags.whole;
+        }
+    }
+
+    bool isSingleItem()
+    {
+        return entries.size() == 1;
+    }
+};
+
+
 struct extra_filters
 {
     bool hide_trade_marked, hide_in_inventory, hide_in_cages;
@@ -320,7 +497,6 @@ struct extra_filters
 
 static bool cages_populated = false;
 static vector<df::building_cagest *> cages;
-static map<df::item *, bool> items_in_cages;
 
 static void find_cages()
 {
@@ -355,59 +531,13 @@ static df::building_cagest *is_in_cage(df::unit *unit)
     return nullptr;
 }
 
-static bool is_item_in_cage_cache(df::item *item)
-{
-    return items_in_cages.find(item) != items_in_cages.end();
-}
-
-static string get_keywords(df::item *item)
-{
-    string keywords;
-
-    if (item->flags.bits.in_job)
-        keywords += "job ";
-
-    if (item->flags.bits.rotten)
-        keywords += "rotten ";
-
-    if (item->flags.bits.foreign)
-        keywords += "foreign ";
-
-    if (item->flags.bits.owned)
-        keywords += "owned ";
-
-    if (item->flags.bits.forbid)
-        keywords += "forbid ";
-
-    if (item->flags.bits.dump)
-        keywords += "dump ";
-
-    if (item->flags.bits.on_fire)
-        keywords += "fire ";
-
-    if (item->flags.bits.melt)
-        keywords += "melt ";
-
-    if (is_item_in_cage_cache(item))
-        keywords += "caged ";
-
-    if (is_in_inventory(item))
-        keywords += "inventory ";
-
-    if (depot_info.canTrade())
-    {
-        if (is_marked_for_trade(item))
-            keywords += "trade ";
-    }
-
-    return keywords;
-}
 
 template <class T>
 class StockListColumn : public ListColumn<T>
 {
-    virtual void display_extras(const T &item, int32_t &x, int32_t &y) const
+    virtual void display_extras(const T &item_group, int32_t &x, int32_t &y) const
     {
+        auto item = item_group->getFirstItem();
         if (item->flags.bits.in_job)
             OutputString(COLOR_LIGHTBLUE, x, y, "J");
         else
@@ -415,11 +545,6 @@ class StockListColumn : public ListColumn<T>
 
         if (item->flags.bits.rotten)
             OutputString(COLOR_CYAN, x, y, "X");
-        else
-            OutputString(COLOR_LIGHTBLUE, x, y, " ");
-
-        if (item->flags.bits.foreign)
-            OutputString(COLOR_BROWN, x, y, "G");
         else
             OutputString(COLOR_LIGHTBLUE, x, y, " ");
 
@@ -506,22 +631,6 @@ class StockListColumn : public ListColumn<T>
 };
 
 
-static bool is_metal_item(df::item *item)
-{
-    auto imattype = item->getActualMaterial();
-    auto imatindex = item->getActualMaterialIndex();
-    auto item_mat = MaterialInfo(imattype, imatindex);
-    df::dfhack_material_category mat_mask;
-    mat_mask.bits.metal = true;
-
-    return item_mat.matches(mat_mask);
-}
-
-struct item_grouped_entry
-{
-    std::vector<df::item *> entries;
-};
-
 class ViewscreenStocks : public dfhack_viewscreen
 {
 public:
@@ -530,8 +639,8 @@ public:
 
     ViewscreenStocks()
     {
+        is_grouped = true;
         selected_column = 0;
-        items_column.setTitle("Item");
         items_column.multiselect = false;
         items_column.auto_select = true;
         items_column.allow_search = true;
@@ -546,7 +655,6 @@ public:
         
         checked_flags.bits.in_job = true;
         checked_flags.bits.rotten = true;
-        checked_flags.bits.foreign = true;
         checked_flags.bits.owned = true;
         checked_flags.bits.forbid = true;
         checked_flags.bits.dump = true;
@@ -560,6 +668,8 @@ public:
         cages.clear();
         items_in_cages.clear();
         cages_populated = false;
+
+        last_selected_item = nullptr;
 
         populateItems();
 
@@ -593,12 +703,7 @@ public:
             return;
         }
 
-        if (input->count(interface_key::CUSTOM_CTRL_G))
-        {
-            hide_flags.bits.foreign = !hide_flags.bits.foreign;
-            populateItems();
-        }
-        else if (input->count(interface_key::CUSTOM_CTRL_J))
+        if (input->count(interface_key::CUSTOM_CTRL_J))
         {
             hide_flags.bits.in_job = !hide_flags.bits.in_job;
             populateItems();
@@ -663,6 +768,12 @@ public:
             setAllFlags(false);
             populateItems();
         }
+        else if (input->count(interface_key::CHANGETAB))
+        {
+            is_grouped = !is_grouped;
+            populateItems();
+            items_column.centerSelection();
+        }
         else if (input->count(interface_key::SECONDSCROLL_UP))
         {
             if (min_quality > item_quality::Ordinary)
@@ -707,9 +818,14 @@ public:
         else if (input->count(interface_key::CUSTOM_SHIFT_Z))
         {
             input->clear();
-            auto item = items_column.getFirstSelectedElem();
-            if (!item)
+            auto item_group = items_column.getFirstSelectedElem();
+            if (!item_group)
                 return;
+
+            if (is_grouped && !item_group->isSingleItem())
+                return;
+
+            auto item = item_group->getFirstItem();
             auto pos = getRealPos(item);
             if (!isRealPos(pos))
                 return;
@@ -728,42 +844,29 @@ public:
         {
             df::item_flags flags;
             flags.bits.dump = true;
-            applyFlag(flags);
+            toggleFlag(flags);
             populateItems();
         }
         else if (input->count(interface_key::CUSTOM_SHIFT_F))
         {
             df::item_flags flags;
             flags.bits.forbid = true;
-            applyFlag(flags);
+            toggleFlag(flags);
             populateItems();
         }
         else if (input->count(interface_key::CUSTOM_SHIFT_M))
         {
-            melt_item();
+            toggleMelt();
             populateItems();
         }
         else if (input->count(interface_key::CUSTOM_SHIFT_T))
         {
             if (depot_info.canTrade())
             {
-                if (apply_to_all)
+                auto selected = getSelectedItems();
+                for (auto it = selected.begin(); it != selected.end(); it++)
                 {
-                    auto &list = items_column.getDisplayList();
-                    for (auto iter = list.begin(); iter != list.end(); iter++)
-                    {
-                        auto item = (*iter)->elem;
-                        if (item)
-                            depot_info.assignItem(item);
-                    }
-
-                    populateItems();
-                }
-                else
-                {
-                    auto item = items_column.getFirstSelectedElem();
-                    if (item && depot_info.assignItem(item))
-                        populateItems();
+                    depot_info.assignItem((*it)->entries);
                 }
             }
         }
@@ -828,7 +931,6 @@ public:
         OutputString(COLOR_LIGHTRED, x, y, "Press Ctrl-Hotkey to toggle", true, left_margin);
         OutputFilterString(x, y, "In Job", "J", !hide_flags.bits.in_job, true, left_margin, COLOR_LIGHTBLUE);
         OutputFilterString(x, y, "Rotten", "X", !hide_flags.bits.rotten, true, left_margin, COLOR_CYAN);
-        OutputFilterString(x, y, "Foreign Made", "G", !hide_flags.bits.foreign, true, left_margin, COLOR_BROWN);
         OutputFilterString(x, y, "Owned", "O", !hide_flags.bits.owned, true, left_margin, COLOR_GREEN);
         OutputFilterString(x, y, "Forbidden", "F", !hide_flags.bits.forbid, true, left_margin, COLOR_RED);
         OutputFilterString(x, y, "Dump", "D", !hide_flags.bits.dump, true, left_margin, COLOR_LIGHTMAGENTA);
@@ -841,6 +943,7 @@ public:
         ++y;
         OutputHotkeyString(x, y, "Clear All", "Shift-C", true, left_margin);
         OutputHotkeyString(x, y, "Enable All", "Shift-E", true, left_margin);
+        OutputHotkeyString(x, y, "Toggle Grouping", "TAB", true, left_margin);
         ++y;
         OutputHotkeyString(x, y, "Min Qual: ", "-+");
         OutputString(COLOR_BROWN, x, y, get_quality_name(min_quality), true, left_margin);
@@ -872,12 +975,17 @@ public:
     std::string getFocusString() { return "stocks_view"; }
 
 private:
-    StockListColumn<item_grouped_entry> items_column;
+    StockListColumn<item_grouped_entry *> items_column;
     int selected_column;
     bool apply_to_all, hide_unflagged;
     df::item_flags checked_flags;
     df::item_quality min_quality, max_quality;
     int16_t min_wear;
+    bool is_grouped;
+    std::list<item_grouped_entry> grouped_items_store;
+    df::item *last_selected_item;
+    string last_selected_hash;
+    int last_display_offset;
 
     static bool isRealPos(const df::coord pos)
     {
@@ -941,68 +1049,94 @@ private:
         return item->pos;
     }
 
-    void melt_item()
+    void toggleMelt()
     {
-        auto item = items_column.getFirstSelectedElem();
-        if (!item)
-            return;
-
-        if (!is_metal_item(item))
-            return;
-
-        if (!item->flags.bits.melt)
+        int set_to_melt = -1;
+        auto selected = getSelectedItems();
+        vector<df::item *> items;
+        for (auto it = selected.begin(); it != selected.end(); it++)
         {
-            world->items.other[items_other_id::ANY_MELT_DESIGNATED].push_back(item);
-            item->flags.bits.melt = true;
+            auto item_group = *it;
+            if (!item_group->isMetal())
+                continue;
+
+            if (set_to_melt == -1)
+                set_to_melt = (item_group->isSetToMelt()) ? 0 : 1;
+
+            if (set_to_melt && item_group->isSetToMelt())
+                continue;
+            else if (!set_to_melt && !item_group->isSetToMelt())
+                continue;
+
+            items.insert(items.end(), item_group->entries.begin(), item_group->entries.end());
         }
-        else
+
+        auto &melting_items = world->items.other[items_other_id::ANY_MELT_DESIGNATED];
+        for (auto it = items.begin(); it != items.end(); it++)
         {
-            auto &melting_items = world->items.other[items_other_id::ANY_MELT_DESIGNATED];
-            for (auto it = melting_items.begin(); it != melting_items.end(); it++)
+            auto item = *it;
+            if (set_to_melt)
             {
-                if (*it != item)
-                    continue;
-                melting_items.erase(it);
-                item->flags.bits.melt = false;
-                break;
+                melting_items.push_back(item);
+                item->flags.bits.melt = true;
+            }
+            else
+            {
+                for (auto mit = melting_items.begin(); mit != melting_items.end(); mit++)
+                {
+                    if (item != *mit)
+                        continue;
+
+                    melting_items.erase(mit);
+                    item->flags.bits.melt = false;
+                    break;
+                }
             }
         }
     }
 
-    void applyFlag(const df::item_flags flags)
+    void toggleFlag(const df::item_flags flags)
     {
+        int state_to_apply = -1;
+        auto selected = getSelectedItems();
+        for (auto it = selected.begin(); it != selected.end(); it++)
+        {
+            auto grouped_entry = (*it);
+            auto item = grouped_entry->getFirstItem();
+            if (state_to_apply == -1)
+                state_to_apply = (item->flags.whole & flags.whole) ? 0 : 1;
+
+            grouped_entry->setFlags(flags.whole, state_to_apply);
+        }
+    }
+
+    vector<item_grouped_entry *> getSelectedItems()
+    {
+        vector<item_grouped_entry *> result;
         if (apply_to_all)
         {
-            int state_to_apply = -1;
-            for (auto iter = items_column.getDisplayList().begin(); iter != items_column.getDisplayList().end(); iter++)
+            for (auto it = items_column.getDisplayList().begin(); it != items_column.getDisplayList().end(); it++)
             {
-                auto item = (*iter)->elem;
-                if (item)
-                {
-                    // Set all flags based on state of first item in list
-                    if (state_to_apply == -1)
-                        state_to_apply = (item->flags.whole & flags.whole) ? 0 : 1;
-
-                    if (state_to_apply)
-                        item->flags.whole |= flags.whole;
-                    else
-                        item->flags.whole &= ~flags.whole;
-                }
+                auto item_group = (*it)->elem;
+                if (!item_group)
+                    continue;
+                result.push_back(item_group);
             }
         }
         else
         {
-            auto item = items_column.getFirstSelectedElem();
-            if (item)
-                item->flags.whole ^= flags.whole;
+            auto item_group = items_column.getFirstSelectedElem();
+            if (item_group)
+                result.push_back(item_group);
         }
+
+        return result;
     }
 
     void setAllFlags(bool state)
     {
         hide_flags.bits.in_job = state;
         hide_flags.bits.rotten = state;
-        hide_flags.bits.foreign = state;
         hide_flags.bits.owned = state;
         hide_flags.bits.forbid = state;
         hide_flags.bits.dump = state;
@@ -1017,6 +1151,8 @@ private:
 
     void populateItems()
     {
+        items_column.setTitle((is_grouped) ? "Item (count)" : "Item");
+        preserveLastSelected();
         items_column.clear();
 
         df::item_flags bad_flags;
@@ -1033,7 +1169,9 @@ private:
         depot_info.prepareTradeVariables();
 
         std::vector<df::item *> &items = world->items.other[items_other_id::IN_PLAY];
-        //std::map<
+        std::map<string, item_grouped_entry *> grouped_items;
+        grouped_items_store.clear();
+        item_grouped_entry *next_selected_group = nullptr;
 
         for (size_t i = 0; i < items.size(); i++)
         {
@@ -1082,49 +1220,86 @@ private:
             if (wear < min_wear)
                 continue;
 
-            auto label = getItemLabel(item);
-            auto quality_enum = static_cast<df::item_quality>(quality);
-            auto quality_string = ENUM_KEY_STR(item_quality, quality_enum);
-            auto hash = label + quality_string;
-            //auto entry = ListEntry<df::item *>(label, item, get_keywords(item));
-            //items_column.add(entry);
+            if (is_grouped)
+            {
+                auto hash = getItemHash(item);
+                if (grouped_items.find(hash) == grouped_items.end())
+                {
+                    grouped_items_store.push_back(item_grouped_entry());
+                    grouped_items[hash] = &grouped_items_store.back();
+                }
+                grouped_items[hash]->entries.push_back(item);
+                if (last_selected_item &&
+                    !next_selected_group &&
+                    hash == last_selected_hash)
+                {
+                    next_selected_group = grouped_items[hash];
+                }
+            }
+            else
+            {
+                grouped_items_store.push_back(item_grouped_entry());
+                auto item_group = &grouped_items_store.back();
+                item_group->entries.push_back(item);
+
+                auto label = get_item_label(item);
+                auto entry = ListEntry<item_grouped_entry *>(label, item_group, item_group->getKeywords());
+                items_column.add(entry);
+
+                if (last_selected_item &&
+                    !next_selected_group &&
+                    item == last_selected_item)
+                {
+                    next_selected_group = item_group;
+                }
+            }
         }
 
+        if (is_grouped)
+        {
+            for (auto groups_iter = grouped_items.begin(); groups_iter != grouped_items.end(); groups_iter++)
+            {
+                auto item_group = groups_iter->second;
+                stringstream label;
+                label << item_group->getLabel(is_grouped);
+                if (!item_group->isSingleItem())
+                    label << " (" << item_group->entries.size() << ")";
+                auto entry = ListEntry<item_grouped_entry *>(label.str(), item_group, item_group->getKeywords());
+                items_column.add(entry);
+            }
+        }
+
+        items_column.fixWidth();
         items_column.filterDisplay();
+
+        if (next_selected_group)
+        {
+            items_column.selectItem(next_selected_group);
+            items_column.display_start_offset = last_display_offset;
+        }
+    }
+    
+    string getItemHash(df::item *item)
+    {
+        auto label = get_item_label(item, true);
+        auto quality = static_cast<df::item_quality>(item->getQuality());
+        auto quality_enum = static_cast<df::item_quality>(quality);
+        auto quality_string = ENUM_KEY_STR(item_quality, quality_enum);
+        auto hash = label + quality_string + int_to_string(item->flags.whole & checked_flags.whole) + " " + 
+            int_to_string(item->hasImprovements());
+
+        return hash;
     }
 
-    string getItemLabel(df::item *item)
+    void preserveLastSelected()
     {
-        auto label = Items::getDescription(item, 0, false);
-        if (item->getWear() > 0)
-        {
-            string wearX;
-            switch (wear)
-            {
-            case 1:
-                wearX = "x";
-                break;
-
-            case 2:
-                wearX = "X";
-                break;
-
-            case 3:
-                wearX = "xX";
-                break;
-
-            default:
-                wearX = "XX";
-                break;
-
-            }
-
-            label = wearX + label + wearX;
-        }
-
-        label = pad_string(label, MAX_NAME, false, true);
-
-        return label;
+        last_selected_item = nullptr;
+        auto selected_entry = items_column.getFirstSelectedElem();
+        if (!selected_entry)
+            return;
+        last_selected_item = selected_entry->getFirstItem();
+        last_selected_hash = (is_grouped && last_selected_item) ? getItemHash(last_selected_item) : "";
+        last_display_offset = items_column.display_start_offset;
     }
 
     void validateColumn()

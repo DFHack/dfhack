@@ -23,7 +23,9 @@ DFHACK_PLUGIN("tubefill");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("tubefill","Fill in all the adamantine tubes again.",tubefill));
+    commands.push_back(PluginCommand("tubefill","Fill in all the adamantine tubes again.",tubefill, false,
+        "Replenishes mined out adamantine and hollow adamantine tubes.\n"
+        "May cause !!FUN!!\n"));
     return CR_OK;
 }
 
@@ -39,12 +41,7 @@ command_result tubefill(color_ostream &out, std::vector<std::string> & params)
     for(size_t i = 0; i < params.size();i++)
     {
         if(params[i] == "help" || params[i] == "?")
-        {
-            out.print("Replenishes mined out adamantine and hollow adamantine tubes.\n"
-                "May cause !!FUN!!\n"
-                );
-            return CR_OK;
-        }
+            return CR_WRONG_USAGE;
     }
 
     CoreSuspender suspend;

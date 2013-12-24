@@ -292,7 +292,8 @@ DFHACK_PLUGIN("showmood");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("showmood", "Shows items needed for current strange mood.", df_showmood));
+    commands.push_back(PluginCommand("showmood", "Shows items needed for current strange mood.", df_showmood, false,
+        "Run this command without any parameters to display information on the currently active Strange Mood."));
     return CR_OK;
 }
 

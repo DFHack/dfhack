@@ -626,7 +626,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(
         PluginCommand(
         "autotrade", "Automatically send items in marked stockpiles to trade depot, when trading is possible.",
-        autotrade_cmd, false, ""));
+        autotrade_cmd, false, "Run 'autotrade version' to query the plugin version."));
 
     return CR_OK;
 }

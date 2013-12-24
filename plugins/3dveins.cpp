@@ -377,6 +377,7 @@ struct GeoLayer
 
     int16_t material;
     bool is_soil;
+    bool is_soil_layer;
 
     // World-global origin coordinates in blocks
     df::coord world_pos;
@@ -489,6 +490,7 @@ GeoLayer::GeoLayer(GeoBiome *parent, int index, df::world_geo_layer *info)
     tiles = unmined_tiles = mineral_tiles = 0;
     material = info->mat_index;
     is_soil = isSoilInorganic(material);
+    is_soil_layer = (info->type == geo_layer_type::SOIL || info->type == geo_layer_type::SOIL_SAND);
 }
 
 const unsigned NUM_INCLUSIONS = 1+(int)ENUM_LAST_ITEM(inclusion_type);
@@ -721,14 +723,17 @@ bool VeinGenerator::scan_layer_depth(Block *b, df::coord2d column, int z)
             auto &top_solid = col_info.top_solid_z[x][y];
             auto &bottom = col_info.bottom_layer[x][y];
 
-            if (top_solid < 0 && isWallTerrain(b->baseTiletypeAt(tile)))
+            auto ttype = b->baseTiletypeAt(tile);
+            bool obsidian = (tileMaterial(ttype) == tiletype_material::LAVA_STONE);
+
+            if (top_solid < 0 && !obsidian && isWallTerrain(ttype))
                 top_solid = z;
 
             if (max_level[idx] < 0)
             {
                 // Do not start the layer stack in open air.
                 // Those tiles can be very weird.
-                if (bottom < 0 && isOpenTerrain(b->baseTiletypeAt(tile)))
+                if (bottom < 0 && (isOpenTerrain(ttype) || obsidian))
                     continue;
 
                 max_level[idx] = min_level[idx] = z;
@@ -777,9 +782,14 @@ bool VeinGenerator::adjust_layer_depth(df::coord2d column)
                 if (max_defined < 0)
                     continue;
 
+                int last_top = min_defined;
+
                 // Verify assumptions
                 for (int i = min_defined; i < max_defined; i++)
                 {
+                    if (max_level[i] >= top_solid)
+                        last_top = i;
+
                     if (max_level[i+1] < 0 && min_level[i] > top_solid)
                         max_level[i+1] = min_level[i+1] = min_level[i];
 
@@ -813,6 +823,22 @@ bool VeinGenerator::adjust_layer_depth(df::coord2d column)
                             layer->setZBias(size - layer->thickness);
 
                         continue;
+                    }
+
+                    // If below a thick soil layer, allow thickness to pass from prev to current.
+                    // This accounts for a probable bug in worldgen soil placement code.
+                    if (i > min_defined && i-1 <= last_top)
+                    {
+                        auto prev = biome->layers[i-1];
+
+                        if (size > layer->thickness &&
+                            prev->is_soil_layer && prev->thickness > 1 &&
+                            size <= layer->thickness+prev->thickness-1)
+                        {
+                            max_level[i] += layer->thickness - size;
+                            layer->setZBias(size - layer->thickness);
+                            continue;
+                        }
                     }
 
                     out.printerr(

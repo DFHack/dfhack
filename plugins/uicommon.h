@@ -13,9 +13,14 @@
 #include <PluginManager.h>
 #include <VTableInterpose.h>
 
+#include "modules/Items.h"
 #include "modules/Screen.h"
 
+#include "df/building_stockpilest.h"
+#include "df/caravan_state.h"
 #include "df/enabler.h"
+#include "df/ui.h"
+#include "df/world.h"
 
 using std::string;
 using std::vector;
@@ -195,6 +200,100 @@ static string pad_string(string text, const int size, const bool front = true, c
         return text;
     }
 }
+
+
+/*
+ * Utility Functions
+ */
+
+static df::building_stockpilest *get_selected_stockpile()
+{
+    if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) ||
+        df::global::ui->main.mode != ui_sidebar_mode::QueryBuilding)
+    {
+        return nullptr;
+    }
+
+    return virtual_cast<df::building_stockpilest>(df::global::world->selected_building);
+}
+
+static bool can_trade()
+{
+    if (df::global::ui->caravans.size() == 0)
+        return false;
+
+    for (auto it = df::global::ui->caravans.begin(); it != df::global::ui->caravans.end(); it++)
+    {
+        auto caravan = *it;
+        auto trade_state = caravan->trade_state;
+        auto time_remaining = caravan->time_remaining;
+        if ((trade_state != 1 && trade_state != 2) || time_remaining == 0)
+            return false;
+    }
+
+    return true;
+}
+
+class StockpileInfo {
+public:
+    StockpileInfo() : id(0)
+    {
+    }
+
+    StockpileInfo(df::building_stockpilest *sp_) : sp(sp_)
+    {
+        readBuilding();
+    }
+
+    bool inStockpile(df::item *i)
+    {
+        df::item *container = Items::getContainer(i);
+        if (container)
+            return inStockpile(container);
+
+        if (i->pos.z != z) return false;
+        if (i->pos.x < x1 || i->pos.x >= x2 ||
+            i->pos.y < y1 || i->pos.y >= y2) return false;
+        int e = (i->pos.x - x1) + (i->pos.y - y1) * sp->room.width;
+        return sp->room.extents[e] == 1;
+    }
+
+    bool isValid()
+    {
+        if (!id)
+            return false;
+
+        auto found = df::building::find(id);
+        return found && found == sp && found->getType() == building_type::Stockpile;
+    }
+
+    int32_t getId()
+    {
+        return id;
+    }
+
+    bool matches(df::building_stockpilest* sp)
+    {
+        return this->sp == sp;
+    }
+
+protected:
+    int32_t id;
+    df::building_stockpilest* sp;
+
+    void readBuilding()
+    {
+        id = sp->id;
+        z = sp->z;
+        x1 = sp->room.x;
+        x2 = sp->room.x + sp->room.width;
+        y1 = sp->room.y;
+        y2 = sp->room.y + sp->room.height;
+    }
+
+private:
+    int x1, x2, y1, y2, z;
+};
 
 
 /*

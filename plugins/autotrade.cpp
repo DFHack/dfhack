@@ -15,7 +15,6 @@
 #include "df/job_item_ref.h"
 #include "modules/Job.h"
 #include "df/ui.h"
-#include "df/caravan_state.h"
 #include "df/mandate.h"
 #include "modules/Maps.h"
 #include "modules/World.h"
@@ -26,72 +25,23 @@ using df::global::ui;
 using df::building_stockpilest;
 
 DFHACK_PLUGIN("autotrade");
-#define PLUGIN_VERSION 0.2
+#define PLUGIN_VERSION 0.3
 
 
 /*
  * Stockpile Access
  */
 
-static building_stockpilest *get_selected_stockpile()
-{
-    if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) ||
-        ui->main.mode != ui_sidebar_mode::QueryBuilding)
-    {
-        return nullptr;
-    }
-
-    return virtual_cast<building_stockpilest>(world->selected_building);
-}
-
-static bool can_trade()
-{
-    if (df::global::ui->caravans.size() == 0)
-        return false;
-
-    for (auto it = df::global::ui->caravans.begin(); it != df::global::ui->caravans.end(); it++)
-    {
-        auto caravan = *it;
-        auto trade_state = caravan->trade_state;
-        auto time_remaining = caravan->time_remaining;
-        if ((trade_state != 1 && trade_state != 2) || time_remaining == 0)
-            return false;
-    }
-
-    return true;
-}
-
-class StockpileInfo {
+class PersistentStockpileInfo : public StockpileInfo {
 public:
-
-    StockpileInfo(df::building_stockpilest *sp_) : sp(sp_)
+    PersistentStockpileInfo(df::building_stockpilest *sp) : StockpileInfo(sp)
     {
-        readBuilding();
     }
 
-    StockpileInfo(PersistentDataItem &config)
+    PersistentStockpileInfo(PersistentDataItem &config)
     {
         this->config = config;
         id = config.ival(1);
-    }
-
-    bool inStockpile(df::item *i)
-    {
-        df::item *container = Items::getContainer(i);
-        if (container)
-            return inStockpile(container);
-
-        if (i->pos.z != z) return false;
-        if (i->pos.x < x1 || i->pos.x >= x2 ||
-            i->pos.y < y1 || i->pos.y >= y2) return false;
-        int e = (i->pos.x - x1) + (i->pos.y - y1) * sp->room.width;
-        return sp->room.extents[e] == 1;
-    }
-
-    bool isValid()
-    {
-        auto found = df::building::find(id);
-        return found && found == sp && found->getType() == building_type::Stockpile;
     }
 
     bool load()
@@ -109,16 +59,6 @@ public:
         return true;
     }
 
-    int32_t getId()
-    {
-        return id;
-    }
-
-    bool matches(df::building_stockpilest* sp)
-    {
-        return this->sp == sp;
-    }
-
     void save()
     {
         config = DFHack::World::AddPersistentData("autotrade/stockpiles");
@@ -132,19 +72,6 @@ public:
 
 private:
     PersistentDataItem config;
-    df::building_stockpilest* sp;
-    int x1, x2, y1, y2, z;
-    int32_t id;
-
-    void readBuilding()
-    {
-        id = sp->id;
-        z = sp->z;
-        x1 = sp->room.x;
-        x2 = sp->room.x + sp->room.width;
-        y1 = sp->room.y;
-        y2 = sp->room.y + sp->room.height;
-    }
 };
 
 
@@ -317,7 +244,7 @@ static bool is_valid_item(df::item *item)
     return true;
 }
 
-static void mark_all_in_stockpiles(vector<StockpileInfo> &stockpiles, bool announce)
+static void mark_all_in_stockpiles(vector<PersistentStockpileInfo> &stockpiles, bool announce)
 {
     if (!depot_info.findDepot())
     {
@@ -420,10 +347,10 @@ public:
 
     void add(df::building_stockpilest *sp)
     {
-        auto pile = StockpileInfo(sp);
+        auto pile = PersistentStockpileInfo(sp);
         if (pile.isValid())
         {
-            monitored_stockpiles.push_back(StockpileInfo(sp));
+            monitored_stockpiles.push_back(PersistentStockpileInfo(sp));
             monitored_stockpiles.back().save();
         }
     }
@@ -468,9 +395,9 @@ public:
 
         for (auto i = items.begin(); i != items.end(); i++)
         {
-            auto pile = StockpileInfo(*i);
+            auto pile = PersistentStockpileInfo(*i);
             if (pile.load())
-                monitored_stockpiles.push_back(StockpileInfo(pile));
+                monitored_stockpiles.push_back(PersistentStockpileInfo(pile));
             else
                 pile.remove();
         }
@@ -478,7 +405,7 @@ public:
 
 
 private:
-    vector<StockpileInfo> monitored_stockpiles;
+    vector<PersistentStockpileInfo> monitored_stockpiles;
 };
 
 static StockpileMonitor monitor;
@@ -525,8 +452,8 @@ struct trade_hook : public df::viewscreen_dwarfmodest
             if (!can_trade())
                 return false;
 
-            vector<StockpileInfo> wrapper;
-            wrapper.push_back(StockpileInfo(sp));
+            vector<PersistentStockpileInfo> wrapper;
+            wrapper.push_back(PersistentStockpileInfo(sp));
             mark_all_in_stockpiles(wrapper, true);
 
             return true;
@@ -650,7 +577,6 @@ static command_result autotrade_cmd(color_ostream &out, vector <string> & parame
 
     return CR_OK;
 }
-
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {

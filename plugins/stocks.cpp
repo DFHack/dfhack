@@ -185,7 +185,7 @@ public:
 
             depot = bld;
             id = depot->id;
-            trade_possible = caravansAvailable();
+            trade_possible = canTrade();
             break;
         }
     }
@@ -256,23 +256,6 @@ private:
 
         if (bld->jobs.size() == 1 && bld->jobs[0]->job_type == job_type::DestroyBuilding)
             return false;
-
-        return true;
-    }
-
-    bool caravansAvailable()
-    {
-        if (df::global::ui->caravans.size() == 0)
-            return false;
-
-        for (auto it = df::global::ui->caravans.begin(); it != df::global::ui->caravans.end(); it++)
-        {
-            auto caravan = *it;
-            auto trade_state = caravan->trade_state;
-            auto time_remaining = caravan->time_remaining;
-            if ((trade_state != 1 && trade_state != 2) || time_remaining == 0)
-                return false;
-        }
 
         return true;
     }
@@ -637,7 +620,7 @@ public:
     static df::item_flags hide_flags;
     static extra_filters extra_hide_flags;
 
-    ViewscreenStocks()
+    ViewscreenStocks(df::building_stockpilest *sp = NULL) : sp(sp)
     {
         is_grouped = true;
         selected_column = 0;
@@ -986,6 +969,7 @@ private:
     df::item *last_selected_item;
     string last_selected_hash;
     int last_display_offset;
+    df::building_stockpilest *sp;
 
     static bool isRealPos(const df::coord pos)
     {
@@ -1172,6 +1156,9 @@ private:
         std::map<string, item_grouped_entry *> grouped_items;
         grouped_items_store.clear();
         item_grouped_entry *next_selected_group = nullptr;
+        StockpileInfo spInfo;
+        if (sp)
+            spInfo = StockpileInfo(sp);
 
         for (size_t i = 0; i < items.size(); i++)
         {
@@ -1218,6 +1205,9 @@ private:
 
             auto wear = item->getWear();
             if (wear < min_wear)
+                continue;
+
+            if (spInfo.isValid() && !spInfo.inStockpile(item))
                 continue;
 
             if (is_grouped)
@@ -1348,6 +1338,52 @@ IMPLEMENT_VMETHOD_INTERPOSE(stocks_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(stocks_hook, render);
 
 
+struct stocks_stockpile_hook : public df::viewscreen_dwarfmodest
+{
+    typedef df::viewscreen_dwarfmodest interpose_base;
+
+    bool handleInput(set<df::interface_key> *input)
+    {
+        df::building_stockpilest *sp = get_selected_stockpile();
+        if (!sp)
+            return false;
+
+        if (input->count(interface_key::CUSTOM_I))
+        {
+            Screen::show(new ViewscreenStocks(sp));
+            return true;
+        }
+
+        return false;
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        if (!handleInput(input))
+            INTERPOSE_NEXT(feed)(input);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+
+        df::building_stockpilest *sp = get_selected_stockpile();
+        if (!sp)
+            return;
+
+        auto dims = Gui::getDwarfmodeViewDims();
+        int left_margin = dims.menu_x1 + 1;
+        int x = left_margin;
+        int y = 25;
+
+        OutputHotkeyString(x, y, "Show Inventory", "i", true, left_margin);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(stocks_stockpile_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(stocks_stockpile_hook, render);
+
+
 static command_result stocks_cmd(color_ostream &out, vector <string> & parameters)
 {
     if (!parameters.empty())
@@ -1367,9 +1403,10 @@ static command_result stocks_cmd(color_ostream &out, vector <string> & parameter
     return CR_WRONG_USAGE;
 }
 
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!gps || !INTERPOSE_HOOK(stocks_hook, feed).apply() || !INTERPOSE_HOOK(stocks_hook, render).apply())
+    if (!gps || !INTERPOSE_HOOK(stocks_hook, feed).apply() || !INTERPOSE_HOOK(stocks_hook, render).apply() ||
+        !INTERPOSE_HOOK(stocks_stockpile_hook, feed).apply() || !INTERPOSE_HOOK(stocks_stockpile_hook, render).apply())
         out.printerr("Could not insert stocks plugin hooks!\n");
 
     commands.push_back(

@@ -185,7 +185,7 @@ public:
 
             depot = bld;
             id = depot->id;
-            trade_possible = canTrade();
+            trade_possible = can_trade();
             break;
         }
     }

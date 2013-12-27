@@ -23,7 +23,6 @@
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
 #include "df/reaction_reagent.h"
-#include "df/reaction_reagent_itemst.h"
 #include "df/reaction_product_itemst.h"
 
 using namespace std;
@@ -50,11 +49,13 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector<Plugin
         "                 PET, and EGG, replace this with a creature ID and caste.\n"
         "    [count] - How many of the item you wish to create.\n"
         "\n"
-        "By default, items are created at the feet of the selected unit.\n"
-        "\n"
-        "Syntax: createitem <destination>\n"
-        "    <destination> - Where to put subsequently created items.\n"
-        "                    Valid values are 'floor', 'item', and 'building'.\n"
+        "To use this command, you must select which unit will create the items.\n"
+        "By default, items created will be placed at that unit's feet.\n"
+        "To change this, type 'createitem <destination>'.\n"
+        "Valid destinations:\n"
+        "* floor - Place items on floor beneath maker's feet.\n"
+        "* item - Place items inside selected container.\n"
+        "* building - Place items inside selected building.\n"
     ));
     return CR_OK;
 }
@@ -74,7 +75,6 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
 
     df::item *container = NULL;
     df::building *building = NULL;
-    df::reaction_reagent_itemst *reagent = NULL;
     if (dest_container != -1)
         container = df::item::find(dest_container);
     if (dest_building != -1)

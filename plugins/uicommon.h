@@ -483,6 +483,8 @@ public:
 
     void centerSelection()
     {
+        if (display_list.size() == 0)
+            return;
         display_start_offset = highlighted_index - (display_max_rows / 2);
         validateDisplayOffset();
         validateHighlight();

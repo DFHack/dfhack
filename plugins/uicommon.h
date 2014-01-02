@@ -13,9 +13,14 @@
 #include <PluginManager.h>
 #include <VTableInterpose.h>
 
+#include "modules/Items.h"
 #include "modules/Screen.h"
 
+#include "df/building_stockpilest.h"
+#include "df/caravan_state.h"
 #include "df/enabler.h"
+#include "df/ui.h"
+#include "df/world.h"
 
 using namespace std;
 using std::string;
@@ -40,6 +45,29 @@ using df::global::gps;
 #define COLOR_SELECTED COLOR_WHITE
 #define COLOR_HIGHLIGHTED COLOR_GREEN
 
+struct coord32_t
+{
+    int32_t x, y, z;
+
+    coord32_t()
+    {
+        x = -30000;
+        y = -30000;
+        z = -30000;
+    }
+
+    coord32_t(df::coord& other)
+    {
+        x = other.x;
+        y = other.y;
+        z = other.z;
+    }
+    
+    df::coord get_coord16() const
+    {
+        return df::coord(x, y, z);
+    }
+};
 
 template <class T, typename Fn>
 static void for_each_(vector<T> &v, Fn func)
@@ -176,6 +204,100 @@ static string pad_string(string text, const int size, const bool front = true, c
 
 
 /*
+ * Utility Functions
+ */
+
+static df::building_stockpilest *get_selected_stockpile()
+{
+    if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) ||
+        df::global::ui->main.mode != ui_sidebar_mode::QueryBuilding)
+    {
+        return nullptr;
+    }
+
+    return virtual_cast<df::building_stockpilest>(df::global::world->selected_building);
+}
+
+static bool can_trade()
+{
+    if (df::global::ui->caravans.size() == 0)
+        return false;
+
+    for (auto it = df::global::ui->caravans.begin(); it != df::global::ui->caravans.end(); it++)
+    {
+        auto caravan = *it;
+        auto trade_state = caravan->trade_state;
+        auto time_remaining = caravan->time_remaining;
+        if ((trade_state != 1 && trade_state != 2) || time_remaining == 0)
+            return false;
+    }
+
+    return true;
+}
+
+class StockpileInfo {
+public:
+    StockpileInfo() : id(0)
+    {
+    }
+
+    StockpileInfo(df::building_stockpilest *sp_) : sp(sp_)
+    {
+        readBuilding();
+    }
+
+    bool inStockpile(df::item *i)
+    {
+        df::item *container = Items::getContainer(i);
+        if (container)
+            return inStockpile(container);
+
+        if (i->pos.z != z) return false;
+        if (i->pos.x < x1 || i->pos.x >= x2 ||
+            i->pos.y < y1 || i->pos.y >= y2) return false;
+        int e = (i->pos.x - x1) + (i->pos.y - y1) * sp->room.width;
+        return sp->room.extents[e] == 1;
+    }
+
+    bool isValid()
+    {
+        if (!id)
+            return false;
+
+        auto found = df::building::find(id);
+        return found && found == sp && found->getType() == building_type::Stockpile;
+    }
+
+    int32_t getId()
+    {
+        return id;
+    }
+
+    bool matches(df::building_stockpilest* sp)
+    {
+        return this->sp == sp;
+    }
+
+protected:
+    int32_t id;
+    df::building_stockpilest* sp;
+
+    void readBuilding()
+    {
+        id = sp->id;
+        z = sp->z;
+        x1 = sp->room.x;
+        x2 = sp->room.x + sp->room.width;
+        y1 = sp->room.y;
+        y2 = sp->room.y + sp->room.height;
+    }
+
+private:
+    int x1, x2, y1, y2, z;
+};
+
+
+/*
  * List classes
  */
 template <typename T>
@@ -227,6 +349,8 @@ public:
         list.clear();
         display_list.clear();
         display_start_offset = 0;
+        if (highlighted_index != -1)
+            highlighted_index = 0;
         max_item_width = title.length();
         resize();
     }
@@ -358,6 +482,15 @@ public:
         }
     }
 
+    void centerSelection()
+    {
+        if (display_list.size() == 0)
+            return;
+        display_start_offset = highlighted_index - (display_max_rows / 2);
+        validateDisplayOffset();
+        validateHighlight();
+    }
+
     void validateHighlight()
     {
         set_to_limit(highlighted_index, display_list.size() - 1);
@@ -381,8 +514,13 @@ public:
         highlighted_index += highlight_change + offset_shift * display_max_rows;
 
         display_start_offset += offset_shift * display_max_rows;
-        set_to_limit(display_start_offset, max(0, (int)(display_list.size())-display_max_rows));
+        validateDisplayOffset();
         validateHighlight();
+    }
+
+    void validateDisplayOffset()
+    {
+        set_to_limit(display_start_offset, max(0, (int)(display_list.size())-display_max_rows));
     }
 
     void setHighlight(const int index)
@@ -542,6 +680,7 @@ public:
                 // Standard character
                 search_string += last_token - ascii_to_enum_offset;
                 filterDisplay();
+                centerSelection();
             }
             else if (last_token == interface_key::STRING_A000)
             {
@@ -550,6 +689,7 @@ public:
                 {
                     search_string.erase(search_string.length()-1);
                     filterDisplay();
+                    centerSelection();
                 }
             }
             else

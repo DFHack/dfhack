@@ -58,16 +58,6 @@ struct MaterialDescriptor
     }
 };
 
-struct coord32_t
-{
-    int32_t x, y, z;
-
-    df::coord get_coord16() const
-    {
-        return df::coord(x, y, z);
-    }
-};
-
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;

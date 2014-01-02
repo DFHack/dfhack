@@ -174,6 +174,8 @@ to your binary search PATH so the tool can be later run from anywhere.
 You'll need a copy of Microsoft Visual C++ 2010. The Express version is sufficient.
 Grab it from Microsoft's site.
 
+You'll also need the Visual Studio 2010 SP1 update.
+
 For the code generation parts, you'll need perl and XML::LibXML. You can install them like this:
 
 * download and install strawberry perl from http://strawberryperl.com/

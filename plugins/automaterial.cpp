@@ -1161,6 +1161,15 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 
                 case SELECT_SECOND:
                     OutputString(COLOR_GREEN, x, y, "Choose second corner", true, left_margin);
+
+                    int32_t curr_x, curr_y, curr_z;
+                    Gui::getCursorCoords(curr_x, curr_y, curr_z);
+                    int dX = abs(box_first.x - curr_x) + 1;
+                    int dY = abs(box_first.y - curr_y) + 1;
+                    stringstream label;
+                    label << "Selection: " << dX << "x" << dY;
+                    OutputString(COLOR_WHITE, x, ++y, label.str(), true, left_margin);
+
                     int cx = box_first.x;
                     int cy = box_first.y;
                     OutputString(COLOR_BROWN, cx, cy, "X");

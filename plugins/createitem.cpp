@@ -24,6 +24,7 @@
 #include "df/caste_raw.h"
 #include "df/reaction_reagent.h"
 #include "df/reaction_product_itemst.h"
+#include "df/tool_uses.h"
 
 using namespace std;
 using namespace DFHack;

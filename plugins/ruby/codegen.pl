@@ -296,20 +296,38 @@ sub render_struct_field_refs {
 sub render_field_reftarget {
     my ($parent, $field, $name, $reftg) = @_;
 
-    my $aux = $field->getAttribute('aux-value');
-    return if ($aux); # TODO
-
     my $tg = $global_types{$reftg};
     return if (!$tg);
+
+    my $tgname = "${name}_tg";
+    $tgname =~ s/_id(.?.?)_tg/_tg$1/;
+
+    my $aux = $field->getAttribute('aux-value');
+    if ($aux) {
+        # minimal support (aims is unit.caste_tg)
+        return if $aux !~ /^\$\$\.[^_][\w\.]+$/;
+        $aux =~ s/\$\$\.//;
+
+        for my $codehelper ($tg->findnodes('child::code-helper')) {
+            if ($codehelper->getAttribute('name') eq 'find-instance') {
+                my $helper = $codehelper->textContent;
+                $helper =~ s/\$global/df/;
+                $helper =~ s/\$\$/$aux/;
+                $helper =~ s/\$/$name/;
+                if ($helper =~ /^[\w\.\[\]]+$/) {
+                    push @lines_rb, "def $tgname ; $helper ; end";
+                }
+            }
+        }
+        return;
+    }
+
     my $tgvec = $tg->getAttribute('instance-vector');
     return if (!$tgvec);
     my $idx = $tg->getAttribute('key-field');
 
     $tgvec =~ s/^\$global/df/;
     return if $tgvec !~ /^[\w\.]+$/;
-
-    my $tgname = "${name}_tg";
-    $tgname =~ s/_id(.?.?)_tg/_tg$1/;
 
     for my $othername (map { $_->getAttribute('name') } $parent->findnodes('child::ld:field')) {
         $tgname .= '_' if ($othername and $tgname eq $othername);

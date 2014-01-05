@@ -2043,29 +2043,36 @@ private:
 
     int score_labor (dwarf_info_t* d, df::unit_labor labor)
     {
-        df::job_skill skill = labor_to_skill[labor];
         int skill_level = 0;
         int xp = 0;
-        if (skill != df::job_skill::NONE) 
+
+        if (labor != df::unit_labor::NONE) 
         {
-            skill_level = Units::getEffectiveSkill(d->dwarf, skill);
-            xp = Units::getExperience(d->dwarf, skill, false);
+            df::job_skill skill = labor_to_skill[labor];
+            if (skill != df::job_skill::NONE) 
+            {
+                skill_level = Units::getEffectiveSkill(d->dwarf, skill);
+                xp = Units::getExperience(d->dwarf, skill, false);
+            }
         }
 
         int score = skill_level * 1000 - (d->high_skill - skill_level) * 2000 + (xp / (skill_level + 5) * 10);
 
-        if (d->dwarf->status.labors[labor])
-            if (labor == df::unit_labor::OPERATE_PUMP)
-                score += 50000;
-            else
-                score += 1000;
-        if (default_labor_infos[labor].tool != TOOL_NONE &&
-            d->has_tool[default_labor_infos[labor].tool]) 
-            score += 5000;
-        if (d->has_children && labor_outside[labor])
-            score -= 15000;
-        if (d->armed && labor_outside[labor])
-            score += 5000;
+        if (labor != df::unit_labor::NONE) 
+        {
+            if (d->dwarf->status.labors[labor])
+                if (labor == df::unit_labor::OPERATE_PUMP)
+                    score += 50000;
+                else
+                    score += 1000;
+            if (default_labor_infos[labor].tool != TOOL_NONE &&
+                d->has_tool[default_labor_infos[labor].tool]) 
+                score += 5000;
+            if (d->has_children && labor_outside[labor])
+                score -= 15000;
+            if (d->armed && labor_outside[labor])
+                score += 5000;
+        }
 
         return score;
     }

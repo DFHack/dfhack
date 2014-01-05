@@ -169,7 +169,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
         // total amount of stuff fetched so far
         int count_got = 0;
         for (size_t i = 0; i < job->items.size(); i++)
-            count_got += job->items[i]->item->getTotalDimension();
+            count_got += 1;	// XXX thread may need job->items[i]->item->getTotalDimension()
 
         for (size_t i = 0; i < job->job_items.size(); i++)
         {

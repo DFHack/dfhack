@@ -37,6 +37,7 @@ struct graphic_tile //could do just 31x31 and be done, but it's nicer to have fl
 struct workshop_hack_data
 {
     int32_t myType;
+    bool impassible_fix;
     //machine stuff
     df::machine_tile_set connections;
     df::power_info powerInfo;
@@ -76,8 +77,11 @@ struct work_hook : df::building_workshopst{
     }
     DEFINE_VMETHOD_INTERPOSE(uint32_t,getImpassableOccupancy,())
     {
-        if(find_def())
-            return tile_building_occ::Impassable;
+        if(auto def = find_def())
+        {
+            if(def->impassible_fix)
+                return tile_building_occ::Impassable;
+        }
         return INTERPOSE_NEXT(getImpassableOccupancy)();
     }
 
@@ -213,7 +217,7 @@ struct work_hook : df::building_workshopst{
                     }
                 }
             }
-            int w=db->x2-db->x1;
+            int w=db->x2-db->x1+1;
             std::vector<graphic_tile> &cur_frame=def->frames[frame];
             for(int i=0;i<cur_frame.size();i++)
             {
@@ -258,24 +262,32 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
             graphic_tile t;
             lua_pushnumber(L,1);
             lua_gettable(L,-2);
-            t.tile=lua_tonumber(L,-1);
-            lua_pop(L,1);
+            if(lua_isnil(L,-1))
+            {
+                t.tile=-1;
+                lua_pop(L,1);
+            }
+            else
+            {
+                t.tile=lua_tonumber(L,-1);
+                lua_pop(L,1);
 
-            lua_pushnumber(L,2);
-            lua_gettable(L,-2);
-            t.fore=lua_tonumber(L,-1);
-            lua_pop(L,1);
+                lua_pushnumber(L,2);
+                lua_gettable(L,-2);
+                t.fore=lua_tonumber(L,-1);
+                lua_pop(L,1);
 
-            lua_pushnumber(L,3);
-            lua_gettable(L,-2);
-            t.back=lua_tonumber(L,-1);
-            lua_pop(L,1);
+                lua_pushnumber(L,3);
+                lua_gettable(L,-2);
+                t.back=lua_tonumber(L,-1);
+                lua_pop(L,1);
 
-            lua_pushnumber(L,4);
-            lua_gettable(L,-2);
-            t.bright=lua_tonumber(L,-1);
-            lua_pop(L,1);
+                lua_pushnumber(L,4);
+                lua_gettable(L,-2);
+                t.bright=lua_tonumber(L,-1);
+                lua_pop(L,1);
 
+            }
             frame.push_back(t);
             lua_pop(L,1);
         }
@@ -285,17 +297,18 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
     lua_pop(L,1);
     return ;
 }
-//arguments: custom type, consumed power, produced power, list of connection points, update skip(0/nil to disable)
+//arguments: custom type,impassible fix (bool), consumed power, produced power, list of connection points, update skip(0/nil to disable)
 //          table of frames,frame to tick ratio (-1 for machine control)
 static int addBuilding(lua_State* L)
 {
     workshop_hack_data newDefinition;
     newDefinition.myType=luaL_checkint(L,1);
-    newDefinition.powerInfo.consumed=luaL_checkint(L,2);
-    newDefinition.powerInfo.produced=luaL_checkint(L,3);
+    newDefinition.impassible_fix=luaL_checkint(L,2);
+    newDefinition.powerInfo.consumed=luaL_checkint(L,3);
+    newDefinition.powerInfo.produced=luaL_checkint(L,4);
     //table of machine connection points
-    luaL_checktype(L,4,LUA_TTABLE);
-    lua_pushvalue(L,4);
+    luaL_checktype(L,5,LUA_TTABLE);
+    lua_pushvalue(L,5);
     lua_pushnil(L);
     while (lua_next(L, -2) != 0) {
         lua_getfield(L,-1,"x");
@@ -312,12 +325,12 @@ static int addBuilding(lua_State* L)
     }
     lua_pop(L,1);
     //updates
-    newDefinition.skip_updates=luaL_optinteger(L,5,0);
+    newDefinition.skip_updates=luaL_optinteger(L,6,0);
     //animation
-    if(!lua_isnil(L,6) && lua_gettop(L)>5)
+    if(!lua_isnil(L,7))
     {
-        loadFrames(L,newDefinition,6);
-        newDefinition.frame_skip=luaL_optinteger(L,7,-1);
+        loadFrames(L,newDefinition,7);
+        newDefinition.frame_skip=luaL_optinteger(L,8,-1);
         if(newDefinition.frame_skip==0)
             newDefinition.frame_skip=1;
         if(newDefinition.frame_skip<0)

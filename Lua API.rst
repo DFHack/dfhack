@@ -3098,7 +3098,7 @@ These events are straight from EventManager module. Each of them first needs to 
 9. ``onInventoryChange(unit_id,item_id,old_equip,new_equip)``
 
    Gets called when someone picks up an item, puts one down, or changes the way they are holding it. If an item is picked up, old_equip will be null. If an item is dropped, new_equip will be null. If an item is re-equipped in a new way, then neither will be null. You absolutely must NOT alter either old_equip or new_equip or you might break other plugins. 
-
+   
 Functions
 ---------
 
@@ -3118,6 +3118,10 @@ Functions
 
    Enable event checking for EventManager events. For event types use ``eventType`` table. Note that different types of events require different frequencies to be effective. The frequency is how many ticks EventManager will wait before checking if that type of event has happened. If multiple scripts or plugins use the same event type, the smallest frequency is the one that is used, so you might get events triggered more often than the frequency you use here.
 
+5. ``registerSidebar(shop_name,callback)``
+
+   Enable callback when sidebar for ``shop_name`` is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib.
+   
 Examples
 --------
 Spawn dragon breath on each item attempt to contaminate wound::
@@ -3131,13 +3135,13 @@ Reaction complete example::
 
   b=require "plugins.eventful"
 
-  b.onReactionComplete.one=function(reaction,unit,in_items,in_reag,out_items,call_native)
+  b.registerReaction("LUA_HOOK_LAY_BOMB",function(reaction,unit,in_items,in_reag,out_items,call_native)
     local pos=copyall(unit.pos)
     -- spawn dragonbreath after 100 ticks
     dfhack.timeout(100,"ticks",function() dfhack.maps.spawnFlow(pos,6,0,0,50000) end)
     --do not call real item creation code
     call_native.value=false
-  end
+  end)
 
 Grenade example::
 
@@ -3151,6 +3155,48 @@ Integrated tannery::
 
   b=require "plugins.eventful"
   b.addReactionToShop("TAN_A_HIDE","LEATHERWORKS")
+  
+Building-hacks
+==============
+
+This plugin overwrites some methods in workshop df class so that mechanical workshops are possible. Although
+plugin export a function it's recommended to use lua decorated function.
+
+Functions
+---------
+
+``registerBuilding(table)`` where table must contain name, as a workshop raw name, the rest are optional:
+ 1. name -- custom workshop id e.g. ``SOAPMAKER``
+ 2. fix_impassible -- if true make impassible tiles impassible to liquids too
+ 3. consume -- how much machine power is needed to work. Disables reactions if not supplied enough
+ 4. produce -- how much machine power is produced. Use discouraged as there is no way to change this at runtime 
+ 5. gears -- a table or ``{x=?,y=?}`` of connection points for machines
+ 6. action -- a table of number (how much ticks to skip) and a function which gets called on shop update
+ 7. animate -- a table of frames which can be a table of:
+
+    a. tables of 4 numbers ``{tile,fore,back,bright}`` OR
+    b. empty table (tile not modified) OR
+    c. ``{x=<number> y=<number> + 4 numbers like in first case}``, this generates full frame useful for animations that change little (1-2 tiles)
+
+Animate table also might contain:
+ 1. frameLenght -- how many ticks does one frame take OR
+ 2. isMechanical -- a bool that says to try to match to mechanical system (i.e. how gears are turning)
+
+Examples
+--------
+
+Simple mechanical workshop::
+  
+  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
+    consume=15,
+    gears={x=0,y=0}, --connection point
+    animate={
+      isMechanical=true, --animate the same connection point as vanilla gear
+      frames={ 
+      {{x=0,y=0,42,7,0,0}}, --first frame, 1 changed tile
+      {{x=0,y=0,15,7,0,0}} -- second frame, same
+      }
+    }
 
 =======
 Scripts

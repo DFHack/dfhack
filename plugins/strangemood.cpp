@@ -429,12 +429,6 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         df::unit *cur = world->units.active[i];
         if (!isUnitMoodable(cur))
             continue;
-        if (cur->flags1.bits.has_mood)
-        {
-            ui->mood_cooldown = 1000;
-            out.printerr("A strange mood is already in progress!\n");
-            return CR_FAILURE;
-        }
         if (!cur->flags1.bits.had_mood)
             mood_available = true;
         moodable_units.push_back(cur);

@@ -9,6 +9,7 @@
 #include "modules/Items.h"
 #include "modules/Job.h"
 #include "modules/Translation.h"
+#include "modules/Random.h"
 
 #include "DataDefs.h"
 #include "df/d_init.h"
@@ -39,6 +40,8 @@ using df::global::created_item_type;
 using df::global::created_item_subtype;
 using df::global::created_item_mattype;
 using df::global::created_item_matindex;
+
+Random::MersenneRNG rng;
 
 bool isUnitMoodable (df::unit *unit)
 {
@@ -107,7 +110,7 @@ df::job_skill getMoodSkill (df::unit *unit)
     }
     if (!skills.size())
         skills.push_back(job_skill::STONECRAFT);
-    return skills[rand() % skills.size()];
+    return skills[rng.df_trandom(skills.size())];
 }
 
 int getCreatedMetalBars (int32_t idx)
@@ -127,14 +130,14 @@ void selectWord (const df::world_raws::T_language::T_word_table &table, int32_t 
 {
     if (table.parts[mode].size())
     {
-        int offset = rand() % table.parts[mode].size();
+        int offset = rng.df_trandom(table.parts[mode].size());
         word = table.words[mode][offset];
         part = table.parts[mode][offset];
     }
     else
     {
-        word = rand() % world->raws.language.words.size();
-        part = (df::part_of_speech)(rand() % 9);
+        word = rng.df_trandom(world->raws.language.words.size());
+        part = (df::part_of_speech)(rng.df_trandom(9));
         Core::getInstance().getConsole().printerr("Impoverished Word Selector");
     }
 }
@@ -147,13 +150,13 @@ void generateName(df::language_name &output, int language, int mode, const df::w
         {
             output = df::language_name();
             if (language == -1)
-                language = rand() % world->raws.language.translations.size();
+                language = rng.df_trandom(world->raws.language.translations.size());
             output.unknown = mode;
             output.language = language;
         }
         output.has_name = 1;
         if (output.language == -1)
-            output.language = rand() % world->raws.language.translations.size();
+            output.language = rng.df_trandom(world->raws.language.translations.size());
         int r, r2, r3;
         switch (mode)
         {
@@ -169,7 +172,7 @@ void generateName(df::language_name &output, int language, int mode, const df::w
             if (mode != 10)
             {
         case 4: case 37: // this is not a typo
-                if (rand() % 2)
+                if (rng.df_trandom(2))
                 {
                     selectWord(table2, output.words[0], output.parts_of_speech[0], 0);
                     selectWord(table1, output.words[1], output.parts_of_speech[1], 1);
@@ -183,10 +186,10 @@ void generateName(df::language_name &output, int language, int mode, const df::w
             break;
 
         case 1: case 13: case 20:
-            r = rand() % 3;
+            r = rng.df_trandom(3);
             if (r == 0 || r == 1)
             {
-                if (rand() % 2)
+                if (rng.df_trandom(2))
                 {
                     selectWord(table2, output.words[0], output.parts_of_speech[0], 0);
                     selectWord(table1, output.words[1], output.parts_of_speech[1], 1);
@@ -200,20 +203,20 @@ void generateName(df::language_name &output, int language, int mode, const df::w
             if (r == 1 || r == 2)
             {
         case 3: case 8: case 11: // this is not a typo either
-                r2 = rand() % 2;
+                r2 = rng.df_trandom(2);
                 if (r2)
                     selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
                 else
                     selectWord(table2, output.words[5], output.parts_of_speech[5], 2);
-                r3 = rand() % 3;
-                if (rand() % 50)
-                    r3 = rand() % 2;
+                r3 = rng.df_trandom(3);
+                if (rng.df_trandom(50))
+                    r3 = rng.df_trandom(2);
                 switch (r3)
                 {
                 case 0:
                 case 2:
                     if (r3 == 2)
-                        r2 = rand() % 2;
+                        r2 = rng.df_trandom(2);
                     if (r2)
                         selectWord(table2, output.words[6], output.parts_of_speech[6], 5);
                     else
@@ -226,14 +229,14 @@ void generateName(df::language_name &output, int language, int mode, const df::w
                         selectWord(table1, output.words[2], output.parts_of_speech[2], 3);
                     else
                         selectWord(table2, output.words[2], output.parts_of_speech[2], 3);
-                    if (!(rand() % 100))
+                    if (!(rng.df_trandom(100)))
                         selectWord(table1, output.words[3], output.parts_of_speech[3], 3);
                     break;
                 }
             }
-            if (rand() % 100)
+            if (rng.df_trandom(100))
             {
-                if (rand() % 2)
+                if (rng.df_trandom(2))
                     selectWord(table1, output.words[4], output.parts_of_speech[4], 4);
                 else
                     selectWord(table2, output.words[4], output.parts_of_speech[4], 4);
@@ -246,9 +249,9 @@ void generateName(df::language_name &output, int language, int mode, const df::w
         case 21: case 22: case 23: case 24: case 25: case 26: case 27: case 28: case 29: case 30:
         case 31: case 32: case 33: case 34: case 35: case 36: case 38: case 39:
             selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
-            r3 = rand() % 3;
-            if (rand() % 50)
-                r3 = rand() % 2;
+            r3 = rng.df_trandom(3);
+            if (rng.df_trandom(50))
+                r3 = rng.df_trandom(2);
             switch (r3)
             {
             case 0:
@@ -258,16 +261,16 @@ void generateName(df::language_name &output, int language, int mode, const df::w
                     break;
             case 1:
                 selectWord(table2, output.words[2], output.parts_of_speech[2], 3);
-                if (!(rand() % 100))
+                if (!(rng.df_trandom(100)))
                     selectWord(table2, output.words[3], output.parts_of_speech[3], 3);
                 break;
             }
-            if (rand() % 100)
+            if (rng.df_trandom(100))
                 selectWord(table2, output.words[4], output.parts_of_speech[4], 4);
             break;
 
         case 7:
-            r = rand() % 3;
+            r = rng.df_trandom(3);
             if (r == 0 || r == 1)
             {
                 selectWord(table2, output.words[0], output.parts_of_speech[0], 0);
@@ -275,14 +278,14 @@ void generateName(df::language_name &output, int language, int mode, const df::w
             }
             if (r == 1 || r == 2)
             {
-                r2 = rand() % 2;
+                r2 = rng.df_trandom(2);
                 if (r == 2 || r2 == 1)
                     selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
                 else
                     selectWord(table2, output.words[5], output.parts_of_speech[5], 2);
-                r3 = rand() % 3;
-                if (rand() % 50)
-                    r3 = rand() % 2;
+                r3 = rng.df_trandom(3);
+                if (rng.df_trandom(50))
+                    r3 = rng.df_trandom(2);
                 switch (r3)
                 {
                 case 0:
@@ -292,12 +295,12 @@ void generateName(df::language_name &output, int language, int mode, const df::w
                         break;
                 case 1:
                     selectWord(table2, output.words[2], output.parts_of_speech[2], 3);
-                    if (!(rand() % 100))
+                    if (!(rng.df_trandom(100)))
                         selectWord(table2, output.words[3], output.parts_of_speech[3], 3);
                     break;
                 }
             }
-            if (rand() % 100)
+            if (rng.df_trandom(100))
                 selectWord(table2, output.words[4], output.parts_of_speech[4], 4);
             break;
         }
@@ -610,7 +613,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             out.printerr("No units are eligible to enter a mood!\n");
             return CR_FAILURE;
         }
-        unit = moodable_units[tickets[rand() % tickets.size()]];
+        unit = moodable_units[tickets[rng.df_trandom(tickets.size())]];
     }
     df::unit_soul *soul = unit->status.current_soul;
 
@@ -626,9 +629,9 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     // If no mood type was specified, pick one randomly
     if (type == mood_type::None)
     {
-        if (rand() % 100 > unit->status.happiness)
+        if (rng.df_trandom(100) > unit->status.happiness)
         {
-            switch (rand() % 2)
+            switch (rng.df_trandom(2))
             {
             case 0: type = mood_type::Fell;    break;
             case 1: type = mood_type::Macabre; break;
@@ -636,7 +639,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         }
         else
         {
-            switch (rand() % 3)
+            switch (rng.df_trandom(3))
             {
             case 0: type = mood_type::Fey;         break;
             case 1: type = mood_type::Secretive;   break;
@@ -771,9 +774,9 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     }
 
     // The dwarf will want 1-3 of the base material
-    int base_item_count = 1 + (rand() % 3);
+    int base_item_count = 1 + rng.df_trandom(3);
     // Gem Cutters and Gem Setters have a 50% chance of using only one base item
-    if (((skill == job_skill::CUTGEM) || (skill == job_skill::ENCRUSTGEM)) && (rand() % 2))
+    if (((skill == job_skill::CUTGEM) || (skill == job_skill::ENCRUSTGEM)) && (rng.df_trandom(2)))
         base_item_count = 1;
 
     // Choose the base material
@@ -789,7 +792,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     }
     else if (job->job_type == job_type::StrangeMoodBrooding)
     {
-        switch (rand() % 3)
+        switch (rng.df_trandom(3))
         {
         case 0:
             job->job_items.push_back(item = new df::job_item());
@@ -930,7 +933,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 }
                 if (!found_pref)
                 {
-                    switch (rand() % 3)
+                    switch (rng.df_trandom(3))
                     {
                     case 0:
                         item->flags2.bits.silk = true;
@@ -1000,7 +1003,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     }
                 }
                 if (mats.size())
-                    item->mat_index = mats[rand() & mats.size()];
+                    item->mat_index = mats[rng.df_trandom(mats.size())];
                 item->quantity = base_item_count;
             }
             break;
@@ -1042,7 +1045,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     mats.push_back(builtin_mats::GLASS_CLEAR);
                 if (have_glass[2])
                     mats.push_back(builtin_mats::GLASS_CRYSTAL);
-                item->mat_type = mats[rand() % mats.size()];
+                item->mat_type = mats[rng.df_trandom(mats.size())];
             }
             item->quantity = base_item_count;
             break;
@@ -1096,9 +1099,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
          (job->job_type == job_type::StrangeMoodFell)
        ))
     {
-        int extra_items = (ui->tasks.num_artifacts * 20 + moodable_units.size()) / 20;
-        if (extra_items > 0)
-            extra_items = std::min(rand() % (extra_items + 1), 7);
+        int extra_items = std::min(rng.df_trandom((ui->tasks.num_artifacts * 20 + moodable_units.size()) / 20 + 1), 7);
         df::item_type avoid_type = item_type::NONE;
         int avoid_glass = 0;
         switch (skill)
@@ -1137,9 +1138,9 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         }
         for (size_t i = 0; i < extra_items; i++)
         {
-            if ((job->job_type == job_type::StrangeMoodBrooding) && (rand() % 2))
+            if ((job->job_type == job_type::StrangeMoodBrooding) && (rng.df_trandom(2)))
             {
-                switch (rand() % 3)
+                switch (rng.df_trandom(3))
                 {
                 case 0:
                     job->job_items.push_back(item = new df::job_item());
@@ -1170,7 +1171,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     item_type = item_type::NONE;
                     mat_type = -1;
                     flags2.whole = 0;
-                    switch (rand() % 10)
+                    switch (rng.df_trandom(10))
                     {
                     case 0:
                         item_type = item_type::WOOD;
@@ -1207,7 +1208,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     case 8:
                         item_type = item_type::CLOTH;
                         mat_type = -1;
-                        switch (rand() % 3)
+                        switch (rng.df_trandom(3))
                         {
                         case 0:
                             flags2.bits.plant = true;
@@ -1222,7 +1223,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                         break;
                     case 9:
                         item_type = item_type::ROUGH;
-                        switch (rand() % 3)
+                        switch (rng.df_trandom(3))
                         {
                         case 0:
                             mat_type = builtin_mats::GLASS_GREEN;
@@ -1281,7 +1282,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     else
     {
         generateName(unit->status.artifact_name, unit->name.language, 1, world->raws.language.word_table[0][1], world->raws.language.word_table[1][1]);
-        if (!(rand() % 100))
+        if (!rng.df_trandom(100))
             unit->status.artifact_name = unit->name;
     }
     unit->unk_18e = 0;
@@ -1302,6 +1303,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector<Plugin
          "                   Skill name must be lowercase and without spaces.\n"
          "                   Example: miner, gemcutter, metalcrafter, bonecarver, mason\n"
     ));
+    rng.init();
 
     return CR_OK;
 }

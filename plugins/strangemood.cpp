@@ -363,6 +363,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     bool force = false;
     df::unit *unit = NULL;
     df::mood_type type = mood_type::None;
+    df::job_skill skill = job_skill::NONE;
 
     for (size_t i = 0; i < parameters.size(); i++)
     {
@@ -376,18 +377,89 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             if (!unit)
                 return CR_FAILURE;
         }
-        else if (parameters[i] == "-fey")
-            type = mood_type::Fey;
-        else if (parameters[i] == "-secretive")
-            type = mood_type::Secretive;
-        else if (parameters[i] == "-possessed")
-            type = mood_type::Possessed;
-        else if (parameters[i] == "-fell")
-            type = mood_type::Fell;
-        else if (parameters[i] == "-macabre")
-            type = mood_type::Macabre;
+        else if (parameters[i] == "-type")
+        {
+            i++;
+            if (i == parameters.size())
+            {
+                out.printerr("No mood type specified!\n");
+                return CR_WRONG_USAGE;
+            }
+            if (parameters[i] == "fey")
+                type = mood_type::Fey;
+            else if (parameters[i] == "secretive")
+                type = mood_type::Secretive;
+            else if (parameters[i] == "possessed")
+                type = mood_type::Possessed;
+            else if (parameters[i] == "fell")
+                type = mood_type::Fell;
+            else if (parameters[i] == "macabre")
+                type = mood_type::Macabre;
+            else
+            {
+                out.printerr("Mood type '%s' not recognized!\n", parameters[i].c_str());
+                return CR_WRONG_USAGE;
+            }
+        }
+        else if (parameters[i] == "-skill")
+        {
+            i++;
+            if (i == parameters.size())
+            {
+                out.printerr("No mood skill specified!\n");
+                return CR_WRONG_USAGE;
+            }
+            else if (parameters[i] == "miner")
+                skill = job_skill::MINING;
+            else if (parameters[i] == "carpenter")
+                skill = job_skill::CARPENTRY;
+            else if (parameters[i] == "engraver")
+                skill = job_skill::DETAILSTONE;
+            else if (parameters[i] == "mason")
+                skill = job_skill::MASONRY;
+            else if (parameters[i] == "tanner")
+                skill = job_skill::TANNER;
+            else if (parameters[i] == "weaver")
+                skill = job_skill::WEAVING;
+            else if (parameters[i] == "clothier")
+                skill = job_skill::CLOTHESMAKING;
+            else if (parameters[i] == "weaponsmith")
+                skill = job_skill::FORGE_WEAPON;
+            else if (parameters[i] == "armorsmith")
+                skill = job_skill::FORGE_ARMOR;
+            else if (parameters[i] == "metalsmith")
+                skill = job_skill::FORGE_FURNITURE;
+            else if (parameters[i] == "gemcutter")
+                skill = job_skill::CUTGEM;
+            else if (parameters[i] == "gemsetter")
+                skill = job_skill::ENCRUSTGEM;
+            else if (parameters[i] == "woodcrafter")
+                skill = job_skill::WOODCRAFT;
+            else if (parameters[i] == "stonecrafter")
+                skill = job_skill::STONECRAFT;
+            else if (parameters[i] == "metalcrafter")
+                skill = job_skill::METALCRAFT;
+            else if (parameters[i] == "glassmaker")
+                skill = job_skill::GLASSMAKER;
+            else if (parameters[i] == "leatherworker")
+                skill = job_skill::LEATHERWORK;
+            else if (parameters[i] == "bonecarver")
+                skill = job_skill::BONECARVE;
+            else if (parameters[i] == "bowyer")
+                skill = job_skill::BOWYER;
+            else if (parameters[i] == "mechanic")
+                skill = job_skill::MECHANICS;
+            else
+            {
+                out.printerr("Mood skill '%s' not recognized!\n", parameters[i].c_str());
+                return CR_WRONG_USAGE;
+            }
+        }
         else
+        {
+            out.printerr("Unrecognized parameter: %s\n", parameters[i].c_str());
             return CR_WRONG_USAGE;
+        }
     }
 
     CoreSuspender suspend;
@@ -619,7 +691,10 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     unit->job.mood_timeout = 50000;
     unit->flags1.bits.has_mood = true;
     unit->flags1.bits.had_mood = true;
-    unit->job.mood_skill = getMoodSkill(unit);
+    if (skill == job_skill::NONE)
+        skill = getMoodSkill(unit);
+
+    unit->job.mood_skill = skill;
     df::job *job = new df::job();
     Job::linkIntoWorld(job);
 
@@ -630,7 +705,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         job->job_type = job_type::StrangeMoodBrooding;
     else
     {
-        switch (unit->job.mood_skill)
+        switch (skill)
         {
         case job_skill::MINING:
         case job_skill::MASONRY:
@@ -697,7 +772,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
 
     // The dwarf will want 1-3 of the base material
     int base_item_count = 1 + (rand() % 3);
-    if ((unit->job.mood_skill == job_skill::CUTGEM || unit->job.mood_skill == job_skill::ENCRUSTGEM) && (rand() % 2))
+    // Gem Cutters and Gem Setters have a 50% chance of using only one base item
+    if (((skill == job_skill::CUTGEM) || (skill == job_skill::ENCRUSTGEM)) && (rand() % 2))
         base_item_count = 1;
 
     // Choose the base material
@@ -741,7 +817,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     {
         df::item *filter;
         bool found_pref;
-        switch (unit->job.mood_skill)
+        switch (skill)
         {
         case job_skill::MINING:
         case job_skill::DETAILSTONE:
@@ -1014,14 +1090,18 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     }
 
     // Choose additional mood materials
-    if (!(((unit->job.mood_skill == job_skill::CUTGEM || unit->job.mood_skill == job_skill::ENCRUSTGEM) && base_item_count == 1) || job->job_type == job_type::StrangeMoodFell))
+    // Gem cutters/setters using a single gem require nothing else, and fell moods need only their corpse
+    if (!(
+         (((skill == job_skill::CUTGEM) || (skill == job_skill::ENCRUSTGEM)) && base_item_count == 1) ||
+         (job->job_type == job_type::StrangeMoodFell)
+       ))
     {
         int extra_items = (ui->tasks.num_artifacts * 20 + moodable_units.size()) / 20;
         if (extra_items > 0)
             extra_items = std::min(rand() % (extra_items + 1), 7);
         df::item_type avoid_type = item_type::NONE;
         int avoid_glass = 0;
-        switch (unit->job.mood_skill)
+        switch (skill)
         {
         case job_skill::MINING:
         case job_skill::DETAILSTONE:
@@ -1214,13 +1294,13 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector<Plugin
 {
     commands.push_back(PluginCommand("strangemood", "Force a strange mood to happen.\n", df_strangemood, false,
         "Options:\n"
-         "  -force     - Ignore standard mood preconditions.\n"
-         "  -unit      - Use the selected unit instead of picking one randomly.\n"
-         "  -fey       - Force the mood to be a fey mood.\n"
-         "  -secretive - Force the mood to be a secretive mood.\n"
-         "  -possessed - Force the mood to be a possession.\n"
-         "  -fell      - Force the mood to be a fell mood.\n"
-         "  -macabre   - Force the mood to be a macabre mood.\n"
+         "  -force         - Ignore standard mood preconditions.\n"
+         "  -unit          - Use the selected unit instead of picking one randomly.\n"
+         "  -type <type>   - Force the mood to be of a specific type.\n"
+         "                   Valid types: fey, secretive, possessed, fell, macabre\n"
+         "  -skill <skill> - Force the mood to use a specific skill.\n"
+         "                   Skill name must be lowercase and without spaces.\n"
+         "                   Example: miner, gemcutter, metalcrafter, bonecarver, mason\n"
     ));
 
     return CR_OK;

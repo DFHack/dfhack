@@ -82,9 +82,9 @@ IMPLEMENT_VMETHOD_INTERPOSE(dungeon_render_hook, render);
 
 void removeOld()
 {
+    CoreSuspender lock;
     if(engine)
     {
-        CoreSuspender lock;
         INTERPOSE_HOOK(dwarmode_render_hook,render).apply(false);
         INTERPOSE_HOOK(dungeon_render_hook,render).apply(false);
         delete engine;

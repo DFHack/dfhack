@@ -575,6 +575,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 continue;
             if (cur->relations.draggee_id != -1)
                 continue;
+            tickets.push_back(i);
             for (int j = 0; j < 5; j++)
                 tickets.push_back(i);
             switch (cur->profession)

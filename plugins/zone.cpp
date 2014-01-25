@@ -3839,12 +3839,12 @@ void unbutcherRace(int race)
 static bool autobutcher_isEnabled() { return enable_autobutcher; }
 static bool autowatch_isEnabled() { return enable_autobutcher_autowatch; }
 
-static size_t autobutcher_getSleep(color_ostream &out)
+static unsigned autobutcher_getSleep(color_ostream &out)
 {
     return sleep_autobutcher;
 }
 
-static void autobutcher_setSleep(color_ostream &out, size_t ticks)
+static void autobutcher_setSleep(color_ostream &out, unsigned ticks)
 {
     sleep_autobutcher = ticks;
     if(config_autobutcher.isValid())
@@ -3892,7 +3892,7 @@ static void autowatch_setEnabled(color_ostream &out, bool enable)
 // set all data for a watchlist race in one go
 // if race is not already on watchlist it will be added
 // params: (id, fk, mk, fa, ma, watched)
-static void autobutcher_setWatchListRace(color_ostream &out, size_t id, size_t fk, size_t mk, size_t fa, size_t ma, bool watched)
+static void autobutcher_setWatchListRace(color_ostream &out, unsigned id, unsigned fk, unsigned mk, unsigned fa, unsigned ma, bool watched)
 {
     int watched_index = getWatchedIndex(id);
     if(watched_index != -1)
@@ -3921,7 +3921,7 @@ static void autobutcher_setWatchListRace(color_ostream &out, size_t id, size_t f
 }
 
 // remove entry from watchlist
-static void autobutcher_removeFromWatchList(color_ostream &out, size_t id)
+static void autobutcher_removeFromWatchList(color_ostream &out, unsigned id)
 {
     int watched_index = getWatchedIndex(id);
     if(watched_index != -1)
@@ -3940,7 +3940,7 @@ static void autobutcher_sortWatchList(color_ostream &out)
 }
 
 // set default target values for new races
-static void autobutcher_setDefaultTargetNew(color_ostream &out, size_t fk, size_t mk, size_t fa, size_t ma)
+static void autobutcher_setDefaultTargetNew(color_ostream &out, unsigned fk, unsigned mk, unsigned fa, unsigned ma)
 {
     default_fk = fk;
     default_mk = mk;
@@ -3956,9 +3956,9 @@ static void autobutcher_setDefaultTargetNew(color_ostream &out, size_t fk, size_
 }
 
 // set default target values for ALL races (update watchlist and set new default)
-static void autobutcher_setDefaultTargetAll(color_ostream &out, size_t fk, size_t mk, size_t fa, size_t ma)
+static void autobutcher_setDefaultTargetAll(color_ostream &out, unsigned fk, unsigned mk, unsigned fa, unsigned ma)
 {
-    for(size_t i=0; i<watched_races.size(); i++)
+    for(unsigned i=0; i<watched_races.size(); i++)
     {
         WatchedRace * w = watched_races[i];
         w->fk = fk;
@@ -3970,12 +3970,12 @@ static void autobutcher_setDefaultTargetAll(color_ostream &out, size_t fk, size_
     autobutcher_setDefaultTargetNew(out, fk, mk, fa, ma);
 }
 
-static void autobutcher_butcherRace(color_ostream &out, size_t id)
+static void autobutcher_butcherRace(color_ostream &out, unsigned id)
 {
     butcherRace(id);
 }
 
-static void autobutcher_unbutcherRace(color_ostream &out, size_t id)
+static void autobutcher_unbutcherRace(color_ostream &out, unsigned id)
 {
     unbutcherRace(id);
 }

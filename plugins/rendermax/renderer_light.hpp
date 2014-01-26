@@ -44,6 +44,30 @@ namespace std
 bool isInRect(const df::coord2d& pos,const DFHack::rect2d& rect);
 struct renderer_light : public renderer_wrap {
 private:
+    float light_adaptation;
+    rgbf adapt_to_light(const rgbf& light)
+    {
+        const float influence=0.0001;
+        const float max_adapt=1;
+        const float min_adapt=0;
+        float intensity=(light.r+light.g+light.b)/3.0;
+        light_adaptation=intensity*influence+light_adaptation*(1-influence);
+        float delta=light_adaptation-intensity;
+        
+        rgbf ret;
+        ret.r=light.r-delta;
+        ret.g=light.g-delta;
+        ret.b=light.b-delta;
+        return ret;
+        //if light_adaptation/intensity~1 then draw 1,1,1 (i.e. totally adapted)
+        /*
+            1. adapted -> 1,1,1 (full bright everything okay) delta=0 multiplier=?
+            2. light adapted, real=dark -> darker delta>0   multiplier<1
+            3. dark adapted, real=light -> lighter delta<0  multiplier>1
+        */
+        //if light_adaptation/intensity!=0 then draw 
+
+    }
     void colorizeTile(int x,int y)
     {
         const int tile = x*(df::global::gps->dimy) + y;
@@ -51,8 +75,9 @@ private:
         float *fg = p->fg + tile * 4 * 6;
         float *bg = p->bg + tile * 4 * 6;
         float *tex = p->tex + tile * 2 * 6;
-        rgbf light=lightGrid[tile];
-        for (int i = 0; i < 6; i++) {
+        rgbf light=lightGrid[tile];//for light adaptation: rgbf light=adapt_to_light(lightGrid[tile]);
+
+        for (int i = 0; i < 6; i++) { //oh how sse would do wonders here, or shaders...
             *(fg++) *= light.r;
             *(fg++) *= light.g;
             *(fg++) *= light.b;
@@ -73,10 +98,11 @@ private:
     {
         reinitLightGrid(df::global::gps->dimy,df::global::gps->dimx);
     }
+    
 public:
     tthread::fast_mutex dataMutex;
     std::vector<rgbf> lightGrid;
-    renderer_light(renderer* parent):renderer_wrap(parent)
+    renderer_light(renderer* parent):renderer_wrap(parent),light_adaptation(1)
     {
         reinitLightGrid();
     }

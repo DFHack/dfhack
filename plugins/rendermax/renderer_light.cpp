@@ -1179,6 +1179,7 @@ void lightThread::run()
 {
     while(!isDone)
     {
+        //TODO: get area to process, and then process (by rounds): 1. occlusions, 2.sun, 3.lights(could be difficult, units/items etc...)
         {//wait for occlusion (and lights) to be ready
             tthread::lock_guard<tthread::mutex> guard(dispatch.occlusionMutex);
             if(!dispatch.occlusionReady)
@@ -1243,7 +1244,7 @@ rgbf lightThread::lightUpCell(rgbf power,int dx,int dy,int tx,int ty)
         size_t tile=tx*h+ty;
         int dsq=dx*dx+dy*dy;
         float dt=1;
-        if(dsq == 1)
+        if(dsq == 1)//array lookup might be faster still
             dt=1;
         else if(dsq == 2)
             dt = RootTwo;
@@ -1263,10 +1264,10 @@ rgbf lightThread::lightUpCell(rgbf power,int dx,int dy,int tx,int ty)
         }
         if(ls.radius>0 && dsq>0)
         {
-            if(power<=ls.power)
+            if(power<=ls.power) //quit early if hitting another (stronger) lightsource
                 return rgbf();
         }
-        //float dt=sqrt(dsq);
+
         rgbf oldCol=canvas[tile];
         rgbf ncol=blendMax(power,oldCol);
         canvas[tile]=ncol;
@@ -1302,12 +1303,12 @@ void lightThread::doLight( int x,int y )
             power=power*flicker;
         }
         rgbf surrounds;
-        lightUpCell( power, 0, 0,x, y);
+        lightUpCell( power, 0, 0,x, y); //light up the source itself
         for(int i=-1;i<2;i++)
             for(int j=-1;j<2;j++)
                 if(i!=0||j!=0)
-                    surrounds += lightUpCell( power, i, j,x+i, y+j);
-        if(surrounds.dot(surrounds)>0.00001f)
+                    surrounds += lightUpCell( power, i, j,x+i, y+j); //and this is wall hack (so that walls look nice)
+        if(surrounds.dot(surrounds)>0.00001f) //if we needed to light up the suroundings, then raycast
         {
             plotSquare(x,y,radius,
                 std::bind(&lightThread::doRay,this,power,x,y,_1,_2));

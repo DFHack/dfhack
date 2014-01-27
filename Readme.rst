@@ -679,25 +679,29 @@ tubefill
 Fills all the adamantine veins again. Veins that were empty will be filled in
 too, but might still trigger a demon invasion (this is a known bug).
 
-extirpate
----------
-A tool for getting rid of trees and shrubs. By default, it only kills
-a tree/shrub under the cursor. The plants are turned into ashes instantly.
+plant
+-----
+A tool for creating shrubs, growing, or getting rid of them.
 
-Options:
+Subcommands:
+ :create: Create a new shrub/sapling.
+ :grow: Make saplings grow into trees.
+ :extirpate: Kills trees and shrubs, turning them into ashes instantly.
+ :immolate: Similar to extirpate, but sets the plants on fire instead. The
+fires can and *will* spread ;)
 
+``create`` creates a new sapling under the cursor. Takes a raw ID as
+argument (e.g. TOWER_CAP). The cursor must be located on a dirt or grass
+floor tile.
+
+``grow`` works on the sapling under the cursor, and turns it into a tree.
+Works on all shrubs of the map if the cursor is hidden.
+
+``extirpate`` and ``immolate`` work only on the plant under the cursor.
+For mass effects, use one of the additional options:
  :shrubs:            affect all shrubs on the map
  :trees:             affect all trees on the map
  :all:               affect every plant!
-
-grow
-----
-Makes all saplings present on the map grow into trees (almost) instantly.
-
-immolate
---------
-Very similar to extirpate, but additionally sets the plants on fire. The fires
-can and *will* spread ;)
 
 regrass
 -------

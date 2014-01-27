@@ -984,7 +984,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 item->item_type = item_type::BAR;
                 item->mat_type = filter->getMaterial();
                 item->mat_index = filter->getMaterialIndex();
-                item->quantity = base_item_count;
+                item->quantity = base_item_count * 150;
+                item->min_dimension = 150;
             }
             else
             {
@@ -1005,7 +1006,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 }
                 if (mats.size())
                     item->mat_index = mats[rng.df_trandom(mats.size())];
-                item->quantity = base_item_count;
+                item->quantity = base_item_count * 150;
+                item->min_dimension = 150;
             }
             break;
 
@@ -1258,6 +1260,16 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 item->mat_type = mat_type;
                 item->flags2.whole = flags2.whole;
                 item->quantity = 1;
+                if (item_type == item_type::BAR)
+                {
+                    item->quantity *= 150;
+                    item->min_dimension = 150;
+                }
+                if (item_type == item_type::CLOTH)
+                {
+                    item->quantity *= 10000;
+                    item->min_dimension = 10000;
+                }
             }
         }
     }

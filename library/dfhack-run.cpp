@@ -79,13 +79,10 @@ int main (int argc, char *argv[])
 
     command_result rv = client.run_command(argv[1], args);
 
-    if (rv != CR_OK) {
-        if (rv == CR_NOT_IMPLEMENTED)
-            out.printerr("%s is not a recognized command.\n", argv[1]);
-
-        return 1;
-    }
-
     out.flush();
+
+    if (rv != CR_OK)
+        return 1;
+
     return 0;
 }

@@ -816,8 +816,8 @@ void fInitthread(void * iodata)
 {
     IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
-    Console & con = core->getConsole();
-    core->loadScriptFile(con, "dfhack.init", true);
+    color_ostream_proxy out(core->getConsole());
+    core->loadScriptFile(out, "dfhack.init", true);
 }
 
 // A thread function... for the interactive console.

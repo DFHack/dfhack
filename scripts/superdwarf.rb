@@ -53,9 +53,9 @@ when 'list'
 	puts "current superdwarves:", $superdwarf_ids.map { |id| df.unit_find(id).name }
 
 else
-	puts "Usage:",
-		" - superdwarf add: give superspeed to currently selected creature",
-		" - superdwarf del: remove superspeed to current creature",
-		" - superdwarf clear: remove all superpowers",
-		" - superdwarf list: list super-dwarves"
+	puts "Usage:"
+	puts " - superdwarf add: give superspeed to currently selected creature"
+	puts " - superdwarf del: remove superspeed to current creature"
+	puts " - superdwarf clear: remove all superpowers"
+	puts " - superdwarf list: list super-dwarves"
 end

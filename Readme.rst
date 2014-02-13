@@ -329,6 +329,11 @@ Options:
                           The building must be one of stockpile, workshop, furnace, trap,
                           siege engine or an activity zone.
 
+command-prompt
+--------------
+A one line command prompt in df. Same as entering command into dfhack console. Best 
+used as a keybinding.
+
 
 Adventure mode
 ==============

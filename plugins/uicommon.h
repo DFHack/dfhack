@@ -1,4 +1,7 @@
 #include <algorithm>
+#include <cctype>
+#include <functional> 
+#include <locale>
 #include <map>
 #include <string>
 #include <set>
@@ -32,7 +35,7 @@ using df::global::gps;
 #define nullptr 0L
 #endif
 
-#define COLOR_TITLE COLOR_BLUE
+#define COLOR_TITLE COLOR_BROWN
 #define COLOR_UNSELECTED COLOR_GREY
 #define COLOR_SELECTED COLOR_WHITE
 #define COLOR_HIGHLIGHTED COLOR_GREEN
@@ -80,6 +83,17 @@ void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bo
     OutputString(text_color, x, y, display, newline, left_margin);
 }
 
+void OutputLabelString(int &x, int &y, const char *text, const char *hotkey, const string &label, bool newline = false, 
+    int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
+{
+    OutputString(hotkey_color, x, y, hotkey);
+    string display(": ");
+    display.append(text);
+    display.append(": ");
+    OutputString(text_color, x, y, display);
+    OutputString(hotkey_color, x, y, label, newline, left_margin);
+}
+
 void OutputFilterString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = false, 
     int left_margin = 0, int8_t hotkey_color = COLOR_LIGHTGREEN)
 {
@@ -113,6 +127,22 @@ static void set_to_limit(int &value, const int maximum, const int min = 0)
         value = maximum;
 }
 
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+    return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+    return ltrim(rtrim(s));
+}
 
 inline void paint_text(const UIColor color, const int &x, const int &y, const std::string &text, const UIColor background = 0)
 {
@@ -155,9 +185,10 @@ public:
     T elem;
     string text, keywords;
     bool selected;
+    UIColor color;
 
-    ListEntry(const string text, const T elem, const string keywords = "") : 
-        elem(elem), text(text), selected(false), keywords(keywords)
+    ListEntry(const string text, const T elem, const string keywords = "", const UIColor color = COLOR_UNSELECTED) : 
+        elem(elem), text(text), selected(false), keywords(keywords), color(color)
     {
     }
 };
@@ -173,7 +204,6 @@ public:
     bool multiselect;
     bool allow_null;
     bool auto_select;
-    bool force_sort;
     bool allow_search;
     bool feed_changed_highlight;
 
@@ -188,7 +218,6 @@ public:
         multiselect = false;
         allow_null = true;
         auto_select = false;
-        force_sort = false;
         allow_search = true;
         feed_changed_highlight = false;
     }
@@ -231,6 +260,11 @@ public:
             it->text = pad_string(it->text, max_item_width, false);
         }
 
+        return getMaxItemWidth();
+    }
+
+    int getMaxItemWidth()
+    {
         return left_margin + max_item_width;
     }
 
@@ -245,7 +279,7 @@ public:
         for (int i = display_start_offset; i < display_list.size() && i < last_index_able_to_display; i++)
         {
             ++y;
-            UIColor fg_color = (display_list[i]->selected) ? COLOR_SELECTED : COLOR_UNSELECTED;
+            UIColor fg_color = (display_list[i]->selected) ? COLOR_SELECTED : display_list[i]->color;
             UIColor bg_color = (is_selected_column && i == highlighted_index) ? COLOR_HIGHLIGHTED : COLOR_BLACK;
             
             string item_label = display_list[i]->text;
@@ -378,6 +412,9 @@ public:
 
     void toggleHighlighted()
     {
+        if (display_list.size() == 0)
+            return;
+
         if (auto_select)
             return;
 
@@ -547,7 +584,7 @@ public:
         return false;
     }
 
-    void sort()
+    void sort(bool force_sort = false)
     {
         if (force_sort || list.size() < 100)
             std::sort(list.begin(), list.end(), sort_fn);

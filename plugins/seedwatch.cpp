@@ -130,11 +130,15 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
     {
     case 0:
         printHelp(out);
-        break;
+        return CR_WRONG_USAGE;
+
     case 1:
         par = parameters[0];
-        if(par == "help") printHelp(out);
-        else if(par == "?") printHelp(out);
+        if ((par == "help") || (par == "?"))
+        {
+            printHelp(out);
+            return CR_WRONG_USAGE;
+        }
         else if(par == "start")
         {
             running = true;
@@ -239,6 +243,7 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
         break;
     default:
         printHelp(out);
+        return CR_WRONG_USAGE;
         break;
     }
 

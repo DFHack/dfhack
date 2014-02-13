@@ -164,7 +164,7 @@ enable search
 enable automaterial
 
 # Other interface improvement tools
-#enable dwarfmonitor mousequery autotrade buildingplan resume zone
+#enable dwarfmonitor mousequery autotrade buildingplan resume zone getplants
 
 # Auto Syndrome
 #autoSyndrome enable

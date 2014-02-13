@@ -2,6 +2,9 @@ DFHack future
 
  - Is not yet known.
 
+  Misc improvements:
+    - digfort: improved csv parsing, add start() comment handling
+
 DFHack v0.34.11-r4
 
   New commands:

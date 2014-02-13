@@ -30,7 +30,8 @@ command_result df_regrass (color_ostream &out, vector <string> & parameters);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("regrass", "Regrows surface grass.", df_regrass));
+    commands.push_back(PluginCommand("regrass", "Regrows surface grass.", df_regrass, false,
+        "Specify parameter 'max' to set all grass types to full density, otherwise only one type of grass will be restored per tile.\n"));
     return CR_OK;
 }
 
@@ -42,15 +43,68 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 command_result df_regrass (color_ostream &out, vector <string> & parameters)
 {
     bool max = false;
+    bool del = false;
+    bool cnt = false;
     if (!parameters.empty())
     {
         if(parameters[0] == "max")
             max = true;
+        else if(parameters[0] == "del")
+            del = true;
+        else if(parameters[0] == "count")
+            cnt = true;
         else
             return CR_WRONG_USAGE;
     }
 
     CoreSuspender suspend;
+
+    if(del || cnt)
+    {
+        size_t count = 0;
+        for (size_t i = 0; i < world->map.map_blocks.size(); i++)
+        {
+            df::map_block *cur = world->map.map_blocks[i];
+            df::block_square_event_grassst * grev = NULL;
+            size_t grevcount = 0;
+            for(size_t e=0; e<cur->block_events.size(); e++)
+            {
+                df::block_square_event * blev = cur->block_events[e];
+                df::block_square_event_type blevtype = blev->getType();
+                if(blevtype == df::block_square_event_type::grass)
+                {
+                    grevcount++;
+
+                    //if(del)
+                    //{
+                    //    cur->block_events.erase(cur->block_events.begin() + e);
+                    //    delete blev;
+                    //}
+                    count ++;
+                }
+            }
+
+            if(del)
+                while(grevcount)
+                {
+                    for(size_t e=0; e<cur->block_events.size(); e++)
+                    {
+                        df::block_square_event * blev = cur->block_events[e];
+                        df::block_square_event_type blevtype = blev->getType();
+                        if(blevtype == df::block_square_event_type::grass)
+                        {
+                            grevcount--;
+                            cur->block_events.erase(cur->block_events.begin() + e);
+                            delete blev;
+                            break;                       
+                        }
+                    }
+                }
+        }
+        out << "number of grass events on map: " << count << endl;
+        return CR_OK;
+    }
+
 
     int count = 0;
     for (size_t i = 0; i < world->map.map_blocks.size(); i++)
@@ -98,6 +152,7 @@ command_result df_regrass (color_ostream &out, vector <string> & parameters)
                     )
                     continue;
 
+                bool regrew = false;
 
                 // max = set amounts of all grass events on that tile to 100
                 if(max)
@@ -116,7 +171,7 @@ command_result df_regrass (color_ostream &out, vector <string> & parameters)
                 else
                 {
                     // try to find the 'original' event
-                    bool regrew = false;
+                    bool found = false;
                     for(size_t e=0; e<cur->block_events.size(); e++)
                     {            
                         df::block_square_event * blev = cur->block_events[e];
@@ -126,15 +181,19 @@ command_result df_regrass (color_ostream &out, vector <string> & parameters)
                             df::block_square_event_grassst * gr_ev = (df::block_square_event_grassst *)blev;
                             if(gr_ev->amount[x][y] > 0)
                             {
-                                gr_ev->amount[x][y] = 100;
-                                regrew = true;
+                                found = true;
+                                if(gr_ev->amount[x][y] > 100)
+                                {
+                                    gr_ev->amount[x][y] = 100;
+                                    regrew = true;
+                                }
                                 break;
                             }
                         }
                     }
                     // if original could not be found (meaning it was already depleted):
                     // refresh random grass event in the map block
-                    if(!regrew)
+                    if(!found)
                     {
                         vector <df::block_square_event_grassst *> gr_evs;
                         for(size_t e=0; e<cur->block_events.size(); e++)
@@ -149,13 +208,19 @@ command_result df_regrass (color_ostream &out, vector <string> & parameters)
                         }
                         int r = rand() % gr_evs.size();
                         gr_evs[r]->amount[x][y]=100;
+                        regrew=true;
                     }
                 }
-                cur->tiletype[x][y] = findRandomVariant((rand() & 1) ? tiletype::GrassLightFloor1 : tiletype::GrassDarkFloor1);
-                count++;
+                if(regrew || mat == tiletype_material::SOIL)
+                {
+                    cur->tiletype[x][y] = findRandomVariant((rand() & 1) ? tiletype::GrassLightFloor1 : tiletype::GrassDarkFloor1);
+                    count++;
+                }
             }
         }
     }
+
+    out << "size of a grass event: " << sizeof(df::block_square_event_grassst);
 
     if (count)
         out.print("Regrew %d tiles of grass.\n", count);

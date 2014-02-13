@@ -9,7 +9,7 @@
 	url = git://github.com/peterix/DF2MC.git
 [submodule "library/xml"]
 	path = library/xml
-	url = git://github.com/peterix/df-structures.git
+	url = git://github.com/ab9rf/df-structures.git
 [submodule "depends/clsocket"]
 	path = depends/clsocket
 	url = git://github.com/peterix/clsocket.git

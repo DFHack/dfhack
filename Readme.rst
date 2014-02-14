@@ -676,8 +676,13 @@ tile. Can be used from a hotkey.
 
 tubefill
 --------
-Fills all the adamantine veins again. Veins that were empty will be filled in
-too, but might still trigger a demon invasion (this is a known bug).
+Fills all the adamantine veins again. Veins that were hollow will be left
+alone.
+
+Options:
+ :hollow:            fill in naturally hollow veins too
+
+Beware that filling in hollow veins may trigger a demon invasion
 
 extirpate
 ---------

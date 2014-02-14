@@ -1274,8 +1274,21 @@ tile. Can be used from a hotkey.</p>
 </div>
 <div class="section" id="tubefill">
 <h3><a class="toc-backref" href="#id45">tubefill</a></h3>
-<p>Fills all the adamantine veins again. Veins that were empty will be filled in
-too, but might still trigger a demon invasion (this is a known bug).</p>
+<p>Fills all the adamantine veins again. Veins that were hollow will be left
+alone.</p>
+<dl class="docutils">
+<dt>Options:</dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">hollow:</th><td class="field-body">fill in naturally hollow veins too</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<p>Beware that filling in hollow veins may trigger a demon invasion</p>
 </div>
 <div class="section" id="extirpate">
 <h3><a class="toc-backref" href="#id46">extirpate</a></h3>
@@ -2985,7 +2998,11 @@ d;d;d;i
 Unrecognized characters are ignored (eg the 'skip this tile' in the sample).</p>
 <p>Empty lines and data after a <tt class="docutils literal">#</tt> are ignored as comments.
 To skip a row in your design, use a single <tt class="docutils literal">;</tt>.</p>
-<p>The script takes the plan filename, starting from the root df folder.</p>
+<p>One comment in the file may contain the phrase <tt class="docutils literal">start(3,5)</tt>. It is interpreted
+as an offset for the pattern: instead of starting at the cursor, it will start
+3 tiles left and 5 tiles up from the cursor.</p>
+<p>The script takes the plan filename, starting from the root df folder (where
+Dwarf Fortress.exe is found).</p>
 </div>
 <div class="section" id="invasion-now">
 <h2><a class="toc-backref" href="#id140">invasion-now</a></h2>

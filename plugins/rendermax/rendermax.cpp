@@ -61,6 +61,7 @@ struct dwarmode_render_hook : viewscreen_dwarfmodest{
     DEFINE_VMETHOD_INTERPOSE(void,render,())
     {
         CoreSuspendClaimer suspend;
+        engine->preRender();
         INTERPOSE_NEXT(render)();
         engine->calculate();
         engine->updateWindow();
@@ -73,6 +74,7 @@ struct dungeon_render_hook : viewscreen_dungeonmodest{
     DEFINE_VMETHOD_INTERPOSE(void,render,())
     {
         CoreSuspendClaimer suspend;
+        engine->preRender();
         INTERPOSE_NEXT(render)();
         engine->calculate();
         engine->updateWindow();

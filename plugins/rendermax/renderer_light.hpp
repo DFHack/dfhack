@@ -47,7 +47,7 @@ private:
     float light_adaptation;
     rgbf adapt_to_light(const rgbf& light)
     {
-        const float influence=0.0001;
+        const float influence=0.0001f;
         const float max_adapt=1;
         const float min_adapt=0;
         float intensity=(light.r+light.g+light.b)/3.0;
@@ -136,6 +136,7 @@ public:
     virtual void calculate()=0;
 
     virtual void updateWindow()=0;
+    virtual void preRender()=0;
 
     virtual void loadSettings()=0;
     virtual void clear()=0;
@@ -225,7 +226,8 @@ public:
     tthread::mutex unprocessedMutex;
     std::stack<DFHack::rect2d> unprocessed; //stack of parts of map where lighting is not finished
     std::vector<rgbf>& occlusion;
-    
+    int& num_diffusion;
+
     tthread::mutex writeLock; //mutex for lightMap
     std::vector<rgbf>& lightMap;
 
@@ -257,7 +259,7 @@ public:
     void run();
 private:
     void doLight(int x,int y);
-    void doRay(const rgbf& power,int cx,int cy,int tx,int ty);
+    void doRay(const rgbf& power,int cx,int cy,int tx,int ty,int num_diffuse);
     rgbf lightUpCell(rgbf power,int dx,int dy,int tx,int ty);
 };
 class lightingEngineViewscreen:public lightingEngine
@@ -269,13 +271,13 @@ public:
     void calculate();
 
     void updateWindow();
-
+    void preRender();
     void loadSettings();
     void clear();
 
     void debug(bool enable){doDebug=enable;};
 private:
-
+    void fixAdvMode(int mode);
     df::coord2d worldToViewportCoord(const df::coord2d& in,const DFHack::rect2d& r,const df::coord2d& window2d) ;
     
 
@@ -313,6 +315,7 @@ private:
     std::vector<lightSource> lights;
 
     //Threading stuff
+    int num_diffuse; //under same lock as ocupancy
     lightThreadDispatch threading;
     //misc
     void setHour(float h){dayHour=h;};
@@ -346,6 +349,7 @@ private:
     matLightDef matWater;
     matLightDef matCitizen;
     float levelDim;
+    int adv_mode;
     //materials
     std::unordered_map<std::pair<int,int>,matLightDef> matDefs;
     //buildings

@@ -124,6 +124,7 @@ void lightingEngineViewscreen::reinit()
     ocupancy.resize(size);
     lights.resize(size);
 }
+
 void plotCircle(int xm, int ym, int r,const std::function<void(int,int)>& setPixel)
 {
     int x = -r, y = 0, err = 2-2*r; /* II. Quadrant */ 
@@ -163,7 +164,7 @@ void plotLine(int x0, int y0, int x1, int y1,rgbf power,const std::function<rgbf
         {
             power=setPixel(power,rdx,rdy,x0,y0);
             if(power.dot(power)<0.00001f)
-                return;
+                return ;
         }
         if (x0==x1 && y0==y1) break;
         e2 = 2*err;
@@ -171,8 +172,44 @@ void plotLine(int x0, int y0, int x1, int y1,rgbf power,const std::function<rgbf
         if (e2 >= dy) { err += dy; x0 += sx; rdx=sx;} /* e_xy+e_x > 0 */
         if (e2 <= dx) { err += dx; y0 += sy; rdy=sy;} /* e_xy+e_y < 0 */
     }
+    return ;
 }
+void plotLineDiffuse(int x0, int y0, int x1, int y1,rgbf power,int num_diffuse,const std::function<rgbf(rgbf,int,int,int,int)>& setPixel,bool skip_hack=false)
+{
+    
+    int dx =  abs(x1-x0), sx = x0<x1 ? 1 : -1;
+    int dy = -abs(y1-y0), sy = y0<y1 ? 1 : -1; 
+    int dsq=dx*dx+dy*dy;
+    int err = dx+dy, e2; /* error value e_xy */
+    int rdx=0;
+    int rdy=0;
+    for(;;){  /* loop */
+        if(rdx!=0 || rdy!=0 || skip_hack) //dirty hack to skip occlusion on the first tile.
+        {
+            power=setPixel(power,rdx,rdy,x0,y0);
+            if(power.dot(power)<0.00001f)
+                return ;
+        }
+        if (x0==x1 && y0==y1) break;
+        e2 = 2*err;
+        rdx=rdy=0;
+        if (e2 >= dy) { err += dy; x0 += sx; rdx=sx;} /* e_xy+e_x > 0 */
+        if (e2 <= dx) { err += dx; y0 += sy; rdy=sy;} /* e_xy+e_y < 0 */
 
+        if(num_diffuse>0 && dsq/4<(x1-x0)*(x1-x0)+(y1-y0)*(y1-y0))//reached center?
+        {
+            const float betta=0.25;
+            int nx=y1-y0; //right angle
+            int ny=x1-x0;
+            if((nx*nx+ny*ny)*betta*betta>2)
+            {
+                plotLineDiffuse(x0,y0,x0+nx*betta,y0+ny*betta,power,num_diffuse-1,setPixel,true);
+                plotLineDiffuse(x0,y0,x0-nx*betta,y0-ny*betta,power,num_diffuse-1,setPixel,true);
+            }
+        }
+    }
+    return ;
+}
 void plotLineAA(int x0, int y0, int x1, int y1,rgbf power,const std::function<rgbf(rgbf,int,int,int,int)>& setPixelAA)
 {
     int dx = abs(x1-x0), sx = x0<x1 ? 1 : -1;
@@ -269,7 +306,14 @@ void lightingEngineViewscreen::updateWindow()
         myRenderer->invalidate();
         return;
     }
-    
+
+    bool isAdventure=(*df::global::gametype==df::game_type::ADVENTURE_ARENA)||
+        (*df::global::gametype==df::game_type::ADVENTURE_MAIN);
+    if(isAdventure)
+    {
+        fixAdvMode(adv_mode);
+    }
+
     if(doDebug)
         std::swap(ocupancy,myRenderer->lightGrid);
     else
@@ -278,9 +322,47 @@ void lightingEngineViewscreen::updateWindow()
     
     myRenderer->invalidateRect(vp.first.x,vp.first.y,vp.second.x-vp.first.x,vp.second.y-vp.first.y);
 }
-
-static size_t max_list_size = 100000; // Avoid iterating over huge lists
-
+void lightingEngineViewscreen::preRender()
+{
+  
+}
+void lightingEngineViewscreen::fixAdvMode(int mode)
+{
+    
+    MapExtras::MapCache mc;
+    const rgbf dim(levelDim,levelDim,levelDim);
+    rect2d vp=getMapViewport();
+    int window_x=*df::global::window_x;
+    int window_y=*df::global::window_y;
+    int window_z=*df::global::window_z;
+    coord2d vpSize=rect_size(vp);
+    //mode 0-> make dark non-visible parts
+    if(mode==0)
+    {
+        for(int x=vp.first.x;x<vp.second.x;x++)
+            for(int y=vp.first.y;y<vp.second.y;y++)
+            {
+                df::tile_designation d=mc.designationAt(DFCoord(window_x+x,window_y+y,window_z));
+                if(d.bits.pile!=1)
+                {
+                    lightMap[getIndex(x,y)]=dim;
+                }
+            }
+    }
+    //mode 1-> make everything visible, let the lighting hide stuff
+    else if(mode==1)
+    {
+        for(int x=vp.first.x;x<vp.second.x;x++)
+            for(int y=vp.first.y;y<vp.second.y;y++)
+            {
+                df::tile_designation d=mc.designationAt(DFCoord(window_x+x,window_y+y,window_z));
+                d.bits.dig=df::tile_dig_designation::Default;//TODO add union and flag there
+                d.bits.hidden=0;
+                d.bits.pile = 1;
+                mc.setDesignationAt(DFCoord(window_x+x,window_y+y,window_z),d);
+            }
+    }
+}
 void lightSource::combine(const lightSource& other)
 {
     power=blend(power,other.power);
@@ -583,7 +665,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
 
             df::tiletype type = b->tiletypeAt(gpos);
             df::tile_designation d = b->DesignationAt(gpos);
-            if(d.bits.hidden)
+            if(d.bits.hidden )
             {
                 curCell=rgbf(0,0,0);
                 continue; // do not process hidden stuff, TODO other hidden stuff
@@ -947,6 +1029,8 @@ int lightingEngineViewscreen::parseSpecial(lua_State* L)
     GETLUANUMBER(engine->levelDim,levelDim);
     GETLUANUMBER(engine->dayHour,dayHour);
     GETLUANUMBER(engine->daySpeed,daySpeed);
+    GETLUANUMBER(engine->num_diffuse,diffusionCount);
+    GETLUANUMBER(engine->adv_mode,advMode);
     lua_getfield(L,-1,"dayColors");
     if(lua_istable(L,-1))
     {
@@ -1091,6 +1175,8 @@ void lightingEngineViewscreen::defaultSettings()
     levelDim=0.2f;
     dayHour=-1;
     daySpeed=1;
+    adv_mode=0;
+    num_diffuse=0;
     dayColors.push_back(rgbf(0,0,0));
     dayColors.push_back(rgbf(1,1,1));
     dayColors.push_back(rgbf(0,0,0));
@@ -1281,17 +1367,17 @@ rgbf lightThread::lightUpCell(rgbf power,int dx,int dy,int tx,int ty)
     else
         return rgbf();
 }
-void lightThread::doRay(const rgbf& power,int cx,int cy,int tx,int ty)
+void lightThread::doRay(const rgbf& power,int cx,int cy,int tx,int ty,int num_diffuse)
 {
     using namespace std::placeholders;
-
-    plotLine(cx,cy,tx,ty,power,std::bind(&lightThread::lightUpCell,this,_1,_2,_3,_4,_5));
+    plotLineDiffuse(cx,cy,tx,ty,power,num_diffuse,std::bind(&lightThread::lightUpCell,this,_1,_2,_3,_4,_5));
 }
 
 void lightThread::doLight( int x,int y )
 {
     using namespace std::placeholders;
     lightSource& csource=dispatch.lights[x*dispatch.getH()+y];
+    int num_diffuse=dispatch.num_diffusion;
     if(csource.radius>0)
     {
         rgbf power=csource.power;
@@ -1310,8 +1396,9 @@ void lightThread::doLight( int x,int y )
                     surrounds += lightUpCell( power, i, j,x+i, y+j); //and this is wall hack (so that walls look nice)
         if(surrounds.dot(surrounds)>0.00001f) //if we needed to light up the suroundings, then raycast
         {
+            
             plotSquare(x,y,radius,
-                std::bind(&lightThread::doRay,this,power,x,y,_1,_2));
+                std::bind(&lightThread::doRay,this,power,x,y,_1,_2,num_diffuse));
         }
     }
 }
@@ -1343,7 +1430,7 @@ void lightThreadDispatch::signalDoneOcclusion()
     occlusionDone.notify_all();
 }
 
-lightThreadDispatch::lightThreadDispatch( lightingEngineViewscreen* p ):parent(p),lights(parent->lights),occlusion(parent->ocupancy),
+lightThreadDispatch::lightThreadDispatch( lightingEngineViewscreen* p ):parent(p),lights(parent->lights),occlusion(parent->ocupancy),num_diffusion(parent->num_diffuse),
     lightMap(parent->lightMap),writeCount(0),occlusionReady(false)
 {
 

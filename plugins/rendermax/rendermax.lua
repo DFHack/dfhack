@@ -189,6 +189,9 @@ special.dayColors={ {0,0,0}, --dark at 0 hours
 					{0.5,0.5,0.5}, 
 					{0,0,0}} --dark at 24 hours 
 special.daySpeed=1 -- 1->1200 cur_year_ticks per day. 2->600 ticks
+special.diffusionCount=1 -- split beam max 1 times to mimic diffuse lights
+special.advMode=0 -- 1 or 0 different modes for adv mode. 0-> use df vision system, 
+				  -- 1(does not work)->everything visible, let rendermax light do the work
 --TODO dragonfire
 --materials
 

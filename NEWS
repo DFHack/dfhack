@@ -1,6 +1,11 @@
 DFHack future
 
- - Is not yet known.
+  Internals:
+    - support for calling a lua function via a protobuf request (demonstrated by dfhack-run --lua).
+
+  New commands:
+    - move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands
+    - 'plant create' - spawn a new shrub under the cursor
 
   Misc improvements:
     - digfort: improved csv parsing, add start() comment handling

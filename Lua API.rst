@@ -812,6 +812,14 @@ can be omitted.
 
   Convert a language_name or only the last name part to string.
 
+* ``dfhack.df2utf(string)``
+
+  Convert a string from DF's CP437 encoding to UTF-8.
+
+* ``dfhack.utf2df(string)``
+
+  Convert a string from UTF-8 to DF's CP437 encoding.
+
 Gui module
 ----------
 

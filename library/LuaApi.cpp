@@ -1279,6 +1279,9 @@ static std::string getHackPath() { return Core::getInstance().getHackPath(); }
 static bool isWorldLoaded() { return Core::getInstance().isWorldLoaded(); }
 static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
 
+static std::string df2utf(std::string s) { return DF2UTF(s); }
+static std::string utf2df(std::string s) { return UTF2DF(s); }
+
 static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getOSType),
     WRAP(getDFVersion),
@@ -1288,6 +1291,8 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),
     WRAPM(Translation, TranslateName),
+    WRAP(df2utf),
+    WRAP(utf2df),
     { NULL, NULL }
 };
 

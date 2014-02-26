@@ -2125,6 +2125,9 @@ With the special argument ``him``, targets only the selected creature.
 With the special argument ``undead``, targets all undeads on the map,
 regardless of their race.
 
+When specifying a race, a caste can be specified to further restrict the
+targeting. To do that, append and colon and the caste name after the race.
+
 Any non-dead non-caged unit of the specified race gets its ``blood_count``
 set to 0, which means immediate death at the next game tick. For creatures
 such as vampires, it also sets animal.vanish_countdown to 2.
@@ -2140,6 +2143,7 @@ but ignore caged/chained creatures.
 Ex::
 
     exterminate gob
+    exterminate gob:male
 
 To kill a single creature, select the unit with the 'v' cursor and::
 

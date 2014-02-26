@@ -9,6 +9,7 @@ DFHack future
 
   Misc improvements:
     - digfort: improved csv parsing, add start() comment handling
+    - exterminate: allow specifying a caste (exterminate gob:male)
 
 DFHack v0.34.11-r4
 

@@ -24,8 +24,12 @@ distribution.
 
 #include "Internal.h"
 
+#define _WIN32_WINNT 0x0501
+#define WINVER 0x0501
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <psapi.h>
 
 #include <cstring>
 #include <cstdio>

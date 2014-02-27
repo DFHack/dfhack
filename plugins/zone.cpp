@@ -1100,9 +1100,9 @@ bool isInBuiltCage(df::unit* unit)
         if( building->getType() == building_type::Cage)
         {
             df::building_cagest* cage = (df::building_cagest*) building;
-            for(size_t c=0; c<cage->assigned_creature.size(); c++)
+            for(size_t c=0; c<cage->assigned_units.size(); c++)
             {
-                if(cage->assigned_creature[c] == unit->id)
+                if(cage->assigned_units[c] == unit->id)
                 {
                     caged = true;
                     break;
@@ -1132,9 +1132,9 @@ bool isInBuiltCageRoom(df::unit* unit)
         if(building->getType() == building_type::Cage)
         {
             df::building_cagest* cage = (df::building_cagest*) building;
-            for(size_t c=0; c<cage->assigned_creature.size(); c++)
+            for(size_t c=0; c<cage->assigned_units.size(); c++)
             {
-                if(cage->assigned_creature[c] == unit->id)
+                if(cage->assigned_units[c] == unit->id)
                 {
                     caged_room = true;
                     break;
@@ -1236,7 +1236,7 @@ bool isEmptyPasture(df::building* building)
     if(!isPenPasture(building))
         return false;
     df::building_civzonest * civ = (df::building_civzonest *) building;
-    if(civ->assigned_creature.size() == 0)
+    if(civ->assigned_units.size() == 0)
         return true;
     else
         return false;
@@ -1321,11 +1321,11 @@ bool unassignUnitFromBuilding(df::unit* unit)
             {
                 unit->general_refs.erase(unit->general_refs.begin() + idx);
                 df::building_civzonest * oldciv = (df::building_civzonest *) oldref->getBuilding();
-                for(size_t oc=0; oc<oldciv->assigned_creature.size(); oc++)
+                for(size_t oc=0; oc<oldciv->assigned_units.size(); oc++)
                 {
-                    if(oldciv->assigned_creature[oc] == unit->id)
+                    if(oldciv->assigned_units[oc] == unit->id)
                     {
-                        oldciv->assigned_creature.erase(oldciv->assigned_creature.begin() + oc);
+                        oldciv->assigned_units.erase(oldciv->assigned_units.begin() + oc);
                         break;
                     }
                 }
@@ -1347,11 +1347,11 @@ bool unassignUnitFromBuilding(df::unit* unit)
                     if(isCage(building))
                     {
                         df::building_cagest* oldcage = (df::building_cagest*) building;
-                        for(size_t oc=0; oc<oldcage->assigned_creature.size(); oc++)
+                        for(size_t oc=0; oc<oldcage->assigned_units.size(); oc++)
                         {
-                            if(oldcage->assigned_creature[oc] == unit->id)
+                            if(oldcage->assigned_units[oc] == unit->id)
                             {
-                                oldcage->assigned_creature.erase(oldcage->assigned_creature.begin() + oc);
+                                oldcage->assigned_units.erase(oldcage->assigned_units.begin() + oc);
                                 found = true;
                                 break;
                             }
@@ -1431,7 +1431,7 @@ command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building
     unit->general_refs.push_back(ref);
 
     df::building_civzonest * civz = (df::building_civzonest *) building;
-    civz->assigned_creature.push_back(unit->id);
+    civz->assigned_units.push_back(unit->id);
 
     out << "Unit " << unit->id
         << "(" << getRaceName(unit) << ")"
@@ -1472,7 +1472,7 @@ command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::building
     //unit->general_refs.push_back(ref);
 
     df::building_cagest* civz = (df::building_cagest*) building;
-    civz->assigned_creature.push_back(unit->id);
+    civz->assigned_units.push_back(unit->id);
 
     out << "Unit " << unit->id
         << "(" << getRaceName(unit) << ")"
@@ -1546,12 +1546,12 @@ command_result assignUnitsToCagezone(color_ostream& out, vector<df::unit*> units
     {
         // hrm, better use sort() instead?
         df::building_cagest * bestcage = cages[0];
-        size_t lowest = cages[0]->assigned_creature.size();
+        size_t lowest = cages[0]->assigned_units.size();
         for(size_t i=1; i<cages.size(); i++)
         {
-            if(cages[i]->assigned_creature.size()<lowest)
+            if(cages[i]->assigned_units.size()<lowest)
             {
-                lowest = cages[i]->assigned_creature.size();
+                lowest = cages[i]->assigned_units.size();
                 bestcage = cages[i];
             }
         }
@@ -1575,9 +1575,9 @@ command_result nickUnitsInZone(color_ostream& out, df::building* building, strin
     }
 
     df::building_civzonest * civz = (df::building_civzonest *) building;
-    for(size_t i = 0; i < civz->assigned_creature.size(); i++)
+    for(size_t i = 0; i < civz->assigned_units.size(); i++)
     {
-        df::unit* unit = findUnitById(civz->assigned_creature[i]);
+        df::unit* unit = findUnitById(civz->assigned_units[i]);
         if(unit)
             Units::setNickname(unit, nick);
     }
@@ -1595,9 +1595,9 @@ command_result nickUnitsInCage(color_ostream& out, df::building* building, strin
     }
 
     df::building_cagest* cage = (df::building_cagest*) building;
-    for(size_t i=0; i<cage->assigned_creature.size(); i++)
+    for(size_t i=0; i<cage->assigned_units.size(); i++)
     {
-        df::unit* unit = findUnitById(cage->assigned_creature[i]);
+        df::unit* unit = findUnitById(cage->assigned_units[i]);
         if(unit)
             Units::setNickname(unit, nick);
     }
@@ -1674,11 +1674,11 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
         << " z:" <<building->z
         << endl;
 
-    int32_t creaturecount = civ->assigned_creature.size();
+    int32_t creaturecount = civ->assigned_units.size();
     out << "Creatures in this zone: " << creaturecount << endl;
     for(size_t c = 0; c < creaturecount; c++)
     {
-        int32_t cindex = civ->assigned_creature.at(c);
+        int32_t cindex = civ->assigned_units.at(c);
 
         // print list of all units assigned to that zone
         for(size_t i = 0; i < world->units.all.size(); i++)
@@ -1714,11 +1714,11 @@ void cageInfo(color_ostream & out, df::building* building, bool verbose)
 
     df::building_cagest * cage = (df::building_cagest*) building;
 
-    int32_t creaturecount = cage->assigned_creature.size();
+    int32_t creaturecount = cage->assigned_units.size();
     out << "Creatures in this cage: " << creaturecount << endl;
     for(size_t c = 0; c < creaturecount; c++)
     {
-        int32_t cindex = cage->assigned_creature.at(c);
+        int32_t cindex = cage->assigned_units.at(c);
 
         // print list of all units assigned to that cage
         for(size_t i = 0; i < world->units.all.size(); i++)

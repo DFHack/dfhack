@@ -868,6 +868,7 @@ struct PathMetrics {
 
     void compute(const ProjectilePath &path)
     {
+        hit_type = Impassable;
         collision_step = goal_step = goal_z_step = 1000000;
         collision_z_step = 0;
 
@@ -1023,7 +1024,7 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
             if (!cur_tile.valid())
                 continue;
 
-            int color;
+            int color = COLOR_YELLOW;
 
             switch (calcTileStatus(engine, tile_pos))
             {

@@ -125,12 +125,12 @@ static bool is_in_range(const coord_range &target, df::coord pos)
            target.first.z <= pos.z && pos.z <= target.second.z;
 }
 
-static std::pair<int, int> get_engine_range(df::building_siegeenginest *bld)
+static std::pair<int, int> get_engine_range(df::building_siegeenginest *bld, float quality)
 {
     if (bld->type == siegeengine_type::Ballista)
-        return std::make_pair(1, 200);
+        return std::make_pair(1, 200 + int(10 * quality));
     else
-        return std::make_pair(30, 100);
+        return std::make_pair(30 - int(quality), 100 + int(5 * quality));
 }
 
 static void orient_engine(df::building_siegeenginest *bld, df::coord target)
@@ -146,6 +146,27 @@ static void orient_engine(df::building_siegeenginest *bld, df::coord target)
         bld->facing = (dy > 0) ?
             df::building_siegeenginest::Down :
             df::building_siegeenginest::Up;
+}
+
+static bool is_build_complete(df::building *bld)
+{
+    return bld->getBuildStage() >= bld->getMaxBuildStage();
+}
+
+static float average_quality(df::building_actual *bld)
+{
+    float quality = 0;
+    int count = 0;
+
+    for (size_t i = 0; i < bld->contained_items.size(); i++)
+    {
+        if (bld->contained_items[i]->use_mode != 2)
+            continue;
+        count++;
+        quality += bld->contained_items[i]->item->getQuality();
+    }
+
+    return count > 0 ? quality/count : 0;
 }
 
 static int point_distance(df::coord speed)
@@ -239,6 +260,7 @@ struct EngineInfo {
     df::coord center;
     coord_range building_rect;
 
+    float quality;
     bool is_catapult;
     int proj_speed, hit_delay;
     std::pair<int, int> fire_range;
@@ -280,7 +302,7 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
         return obj;
     }
 
-    if (!create)
+    if (!create || !is_build_complete(bld))
         return NULL;
 
     obj = new EngineInfo();
@@ -292,10 +314,11 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
         df::coord(bld->x1, bld->y1, bld->z),
         df::coord(bld->x2, bld->y2, bld->z)
     );
+    obj->quality = average_quality(ebld);
     obj->is_catapult = (ebld->type == siegeengine_type::Catapult);
     obj->proj_speed = 2;
     obj->hit_delay = obj->is_catapult ? 2 : -1;
-    obj->fire_range = get_engine_range(ebld);
+    obj->fire_range = get_engine_range(ebld, obj->quality);
 
     obj->ammo_vector_id = job_item_vector_id::BOULDER;
     obj->ammo_item_type = item_type::BOULDER;
@@ -444,6 +467,7 @@ static bool setTargetArea(df::building_siegeenginest *bld, df::coord target_min,
 {
     CHECK_NULL_POINTER(bld);
     CHECK_INVALID_ARGUMENT(target_min.isValid() && target_max.isValid());
+    CHECK_INVALID_ARGUMENT(is_build_complete(bld));
 
     if (!enable_plugin())
         return false;
@@ -577,6 +601,7 @@ static bool addStockpileLink(df::building_siegeenginest *bld, df::building_stock
 {
     CHECK_NULL_POINTER(bld);
     CHECK_NULL_POINTER(pile);
+    CHECK_INVALID_ARGUMENT(is_build_complete(bld));
 
     if (!enable_plugin())
         return false;
@@ -612,6 +637,7 @@ static bool removeStockpileLink(df::building_siegeenginest *bld, df::building_st
 static df::workshop_profile *saveWorkshopProfile(df::building_siegeenginest *bld)
 {
     CHECK_NULL_POINTER(bld);
+    CHECK_INVALID_ARGUMENT(is_build_complete(bld));
 
     if (!enable_plugin())
         return NULL;

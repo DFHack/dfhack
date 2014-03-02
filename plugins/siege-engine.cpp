@@ -77,6 +77,21 @@ DFHACK_PLUGIN("siege-engine");
  * Misc. utils
  */
 
+static bool debug_mode = false;
+
+static void setDebug(bool on)
+{
+    debug_mode = on;
+}
+
+static void set_arrow_color(df::coord pos, int color)
+{
+    auto tile = Maps::getTileOccupancy(pos);
+
+    if (tile)
+        tile->bits.arrow_color = color;
+}
+
 typedef std::pair<df::coord, df::coord> coord_range;
 
 static void set_range(coord_range *target, df::coord p1, df::coord p2)
@@ -1359,7 +1374,8 @@ struct projectile_hook : df::proj_itemst {
         target_pos = path.target;
 
         // Debug
-        Maps::getTileOccupancy(path.goal)->bits.arrow_color = COLOR_LIGHTMAGENTA;
+        if (debug_mode)
+            set_arrow_color(path.goal, COLOR_LIGHTMAGENTA);
 
         PathMetrics raytrace(path);
 
@@ -1395,7 +1411,8 @@ struct projectile_hook : df::proj_itemst {
         orient_engine(engine->bld, path.goal);
 
         // Debug
-        Maps::getTileOccupancy(path.goal)->bits.arrow_color = COLOR_LIGHTRED;
+        if (debug_mode)
+            set_arrow_color(path.goal, COLOR_LIGHTRED);
 
         // Dabbling always hit in 7x7 area
         if (skill < skill_rating::Novice)
@@ -1736,6 +1753,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(building_hook, updateAction);
  */
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(setDebug),
     DFHACK_LUA_FUNCTION(clearTargetArea),
     DFHACK_LUA_FUNCTION(setTargetArea),
     DFHACK_LUA_FUNCTION(isLinkedToPile),

@@ -75,6 +75,62 @@ using Screen::Pen;
 DFHACK_PLUGIN("siege-engine");
 
 /*
+    Aiming is simulated by using a normal distribution to perturb X and Y.
+
+    The chance a normal distribution is within n*sigma of median is
+    erf(n/sqrt(2)). For direct hit, it must be within 0.5 tiles of
+    center, so it is erf(0.5/sigma/sqrt(2)) = erf(1/sigma/sqrt(8)).
+    Since it must hit in both X and Y, it must be squared, so final
+    is erf(1/sigma/sqrt(8))^2 = erf(skill*coeff/(distance*sqrt(8)))^2.
+
+    The chance to hit a RxR area is erf(skill*coeff*R/(distance*sqrt(8)))^2.
+
+    Catapults can fire between 30 and 100, and the projectile is supposed
+    to travel in an arc, and is thus harder to aim; yet they require a direct
+    hit unless using the feature for firing bins.
+
+    The coefficient of 30 gives the following probabilities:
+
+    |              |  Direct Hit    |  3x3 Area Hit  |
+    |              |  30   50  100  |  30   50  100  |
+    |       Novice |  15%   5%  <5% |  75%  40%  10% |
+    |     Adequate |  45%  20%   5% | 100%  85%  40% |
+    |    Competent |  75%  40%  10% | 100% 100%  70% |
+    |   Proficient | 100%  75%  30% | 100% 100%  95% |
+    | Professional | 100% 100%  80% | 100% 100% 100% |
+    |    Legendary | 100% 100%  95% | 100% 100% 100% |
+
+    Original data:
+
+    * http://www.wolframalpha.com/input/?i=erf%2830*x%2Fsqrt%288%29%2F30%29^2%2C+erf%2830*x%2Fsqrt%288%29%2F50%29^2%2C+erf%2830*x%2Fsqrt%288%29%2F100%29^2%2C+x+from+0+to+15
+    * http://www.wolframalpha.com/input/?i=erf%2830*x*3%2Fsqrt%288%29%2F30%29^2%2C+erf%2830*x*3%2Fsqrt%288%29%2F50%29^2%2C+erf%2830*x*3%2Fsqrt%288%29%2F100%29^2%2C+x+from+0+to+6
+
+    Ballista can fire up to 200 tiles away, and can't use the bin method
+    to compensate for inaccuracy. On the other hand, it shoots straight
+    and should be easier to aim. It also damages everything in its path,
+    so the hit probability may be estimated using an 1D projection.
+
+    The coefficient of 48 gives the following probabilities:
+
+    |              |  Direct Hit         |  1D Hit             |
+    |              |  30   50  100  200  |  30   50  100  200  |
+    |       Novice |  25%  10%   5%  <5% |  55%  35%  20%  10% |
+    |     Adequate |  80%  45%  15%   5% |  90%  65%  40%  20% |
+    |    Competent |  95%  70%  30%   8% | 100%  85%  50%  30% |
+    |   Proficient | 100%  95%  65%  20% | 100% 100%  75%  45% |
+    | Accomplished | 100% 100%  95%  60% | 100% 100% 100%  75% |
+    |    Legendary | 100% 100%  100% 85% | 100% 100% 100%  90% |
+
+    Original data:
+
+    * http://www.wolframalpha.com/input/?i=erf%2848*x%2Fsqrt%288%29%2F30%29^2%2C+erf%2848*x%2Fsqrt%288%29%2F50%29^2%2C+erf%2848*x%2Fsqrt%288%29%2F100%29^2%2C+erf%2848*x%2Fsqrt%288%29%2F200%29^2%2C+x+from+0+to+15
+    * http://www.wolframalpha.com/input/?i=erf%2848*x%2Fsqrt%288%29%2F30%29%2C+erf%2848*x%2Fsqrt%288%29%2F50%29%2C+erf%2848*x%2Fsqrt%288%29%2F100%29%2C+erf%2848*x%2Fsqrt%288%29%2F200%29%2C+x+from+0+to+15
+
+    Quality can increase range of both engines by 25% max, so it
+    also boosts aiming by 1.06x every step, up to 33.8% gain.
+*/
+
+/*
  * Misc. utils
  */
 
@@ -190,6 +246,12 @@ static void random_direction(float &x, float &y, float &z)
     x = vec[0]; y = vec[1]; z = vec[2];
 }
 
+static double random_error()
+{
+    // Irwin-Hall approximation to normal distribution with n = 3; varies in (-3,3)
+    return (rng.drandom0() + rng.drandom0() + rng.drandom0()) * 2.0 - 3.0;
+}
+
 static const int WEAR_TICKS = 806400;
 
 static bool apply_impact_damage(df::item *item, int minv, int maxv)
@@ -265,6 +327,8 @@ struct EngineInfo {
     int proj_speed, hit_delay;
     std::pair<int, int> fire_range;
 
+    double sigma_coeff;
+
     coord_range target;
 
     df::job_item_vector_id ammo_vector_id;
@@ -319,6 +383,9 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
     obj->proj_speed = 2;
     obj->hit_delay = obj->is_catapult ? 2 : -1;
     obj->fire_range = get_engine_range(ebld, obj->quality);
+
+    // Base coefficients per engine type, plus 6% exponential bonus per quality level
+    obj->sigma_coeff = (obj->is_catapult ? 30.0 : 48.0) * pow(1.06, obj->quality);
 
     obj->ammo_vector_id = job_item_vector_id::BOULDER;
     obj->ammo_item_type = item_type::BOULDER;
@@ -1434,38 +1501,29 @@ struct projectile_hook : df::proj_itemst {
         if (debug_mode)
             set_arrow_color(path.goal, COLOR_LIGHTRED);
 
-        // Dabbling always hit in 7x7 area
+        // Dabbling always hit in 11x11 area
         if (skill < skill_rating::Novice)
         {
-            fail_target.x += rng.random(7)-3;
-            fail_target.y += rng.random(7)-3;
+            fail_target.x += rng.random(11)-5;
+            fail_target.y += rng.random(11)-5;
             aimAtPoint(engine, ProjectilePath(path.origin, fail_target));
             return;
         }
 
-        // Exact hit chance
-        float hit_chance = 1.04f - powf(0.8f, skill);
+        // Otherwise use a normal distribution to simulate errors
+        double sigma = point_distance(path.origin - path.goal) / (engine->sigma_coeff * skill);
 
-        if (rng.drandom() < hit_chance)
+        int dx = (int)round(random_error() * sigma);
+        int dy = (int)round(random_error() * sigma);
+
+        if (dx == 0 && dy == 0)
         {
             aimAtPoint(engine, path);
             return;
         }
 
-        // Otherwise perturb
-        if (skill <= skill_rating::Proficient)
-        {
-            // 5x5
-            fail_target.x += rng.random(5)-2;
-            fail_target.y += rng.random(5)-2;
-        }
-        else
-        {
-            // 3x3
-            int idx = rng.random(8);
-            fail_target.x += offsets[idx][0];
-            fail_target.y += offsets[idx][1];
-        }
+        fail_target.x += dx;
+        fail_target.y += dy;
 
         ProjectilePath fail(path.origin, fail_target, path.fudge_delta, path.fudge_factor);
         aimAtPoint(engine, fail);

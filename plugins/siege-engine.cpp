@@ -11,6 +11,7 @@
 #include <modules/Units.h>
 #include <modules/Job.h>
 #include <modules/Materials.h>
+#include <modules/Random.h>
 #include <LuaTools.h>
 #include <TileTypes.h>
 #include <vector>
@@ -159,21 +160,13 @@ inline void normalize(float &x, float &y, float &z)
     x /= dist; y /= dist; z /= dist;
 }
 
+static Random::MersenneRNG rng;
+
 static void random_direction(float &x, float &y, float &z)
 {
-    float a, b, d;
-    for (;;) {
-        a = (rand() + 0.5f)*2.0f/RAND_MAX - 1.0f;
-        b = (rand() + 0.5f)*2.0f/RAND_MAX - 1.0f;
-        d = a*a + b*b;
-        if (d < 1.0f)
-            break;
-    }
-
-    float sq = sqrtf(1-d);
-    x = 2.0f*a*sq;
-    y = 2.0f*b*sq;
-    z = 1.0f - 2.0f*d;
+    float vec[3];
+    rng.unitvector(vec, 3);
+    x = vec[0]; y = vec[1]; z = vec[2];
 }
 
 static const int WEAR_TICKS = 806400;
@@ -190,8 +183,8 @@ static bool apply_impact_damage(df::item *item, int minv, int maxv)
     auto &strength = info.material->strength;
 
     // Use random strain type excluding COMPRESSIVE (conveniently last)
-    int type = random_int(strain_type::COMPRESSIVE);
-    int power = minv + random_int(maxv-minv+1);
+    int type = rng.random(strain_type::COMPRESSIVE);
+    int power = minv + rng.random(maxv-minv+1);
 
     // High elasticity materials just bend
     if (strength.strain_at_yield[type] >= 5000)
@@ -1418,8 +1411,8 @@ struct projectile_hook : df::proj_itemst {
         // Dabbling always hit in 7x7 area
         if (skill < skill_rating::Novice)
         {
-            fail_target.x += random_int(7)-3;
-            fail_target.y += random_int(7)-3;
+            fail_target.x += rng.random(7)-3;
+            fail_target.y += rng.random(7)-3;
             aimAtPoint(engine, ProjectilePath(path.origin, fail_target));
             return;
         }
@@ -1427,7 +1420,7 @@ struct projectile_hook : df::proj_itemst {
         // Exact hit chance
         float hit_chance = 1.04f - powf(0.8f, skill);
 
-        if (float(rand())/RAND_MAX < hit_chance)
+        if (rng.drandom() < hit_chance)
         {
             aimAtPoint(engine, path);
             return;
@@ -1437,13 +1430,13 @@ struct projectile_hook : df::proj_itemst {
         if (skill <= skill_rating::Proficient)
         {
             // 5x5
-            fail_target.x += random_int(5)-2;
-            fail_target.y += random_int(5)-2;
+            fail_target.x += rng.random(5)-2;
+            fail_target.y += rng.random(5)-2;
         }
         else
         {
             // 3x3
-            int idx = random_int(8);
+            int idx = rng.random(8);
             fail_target.x += offsets[idx][0];
             fail_target.y += offsets[idx][1];
         }
@@ -1462,7 +1455,7 @@ struct projectile_hook : df::proj_itemst {
         for (int i = 0; i < 50; i++)
         {
             target = tbase + df::coord(
-                random_int(tsize.x), random_int(tsize.y), random_int(tsize.z)
+                rng.random(tsize.x), rng.random(tsize.y), rng.random(tsize.z)
             );
 
             if (adjustToTarget(engine, &target))
@@ -1876,6 +1869,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
+    rng.init();
+
     if (Core::getInstance().isMapLoaded())
         plugin_onstatechange(out, SC_MAP_LOADED);
 

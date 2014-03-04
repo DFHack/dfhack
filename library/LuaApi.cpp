@@ -565,7 +565,7 @@ static int dfhack_matinfo_find(lua_State *state)
     {
         std::vector<std::string> tokens;
 
-        for (int i = 1; i < argc; i++)
+        for (int i = 1; i <= argc; i++)
             tokens.push_back(luaL_checkstring(state, i));
 
         info.find(tokens);
@@ -1279,6 +1279,9 @@ static std::string getHackPath() { return Core::getInstance().getHackPath(); }
 static bool isWorldLoaded() { return Core::getInstance().isWorldLoaded(); }
 static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
 
+static std::string df2utf(std::string s) { return DF2UTF(s); }
+static std::string utf2df(std::string s) { return UTF2DF(s); }
+
 static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getOSType),
     WRAP(getDFVersion),
@@ -1288,6 +1291,8 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),
     WRAPM(Translation, TranslateName),
+    WRAP(df2utf),
+    WRAP(utf2df),
     { NULL, NULL }
 };
 
@@ -1363,6 +1368,9 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getVisibleName),
     WRAPM(Units, getIdentity),
     WRAPM(Units, getNemesis),
+    WRAPM(Units, isHidingCurse),
+    WRAPM(Units, getPhysicalAttrValue),
+    WRAPM(Units, getMentalAttrValue),
     WRAPM(Units, isCrazed),
     WRAPM(Units, isOpposedToLife),
     WRAPM(Units, hasExtravision),

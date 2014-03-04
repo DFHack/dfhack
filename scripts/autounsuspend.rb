@@ -1,58 +1,39 @@
 class AutoUnsuspend
+    attr_accessor :running
 
-	def initialize
-	end
+    def process
+        count = 0
+        df.world.job_list.each { |job|
+            if job.job_type == :ConstructBuilding and job.flags.suspend and df.map_tile_at(job).designation.flow_size <= 1
+                job.flags.suspend = false
+                count += 1
+            end
+        }
+        if count > 0
+            puts "Unsuspended #{count} job(s)."
+            df.process_jobs = true
+        end
+    end
 
-	def process
-		return false unless @running
-		joblist = df.world.job_list.next
-		count = 0
+    def start
+        @running = true
+        @onupdate = df.onupdate_register('autounsuspend', 5) { process if @running }
+    end
 
-		while joblist
-			job = joblist.item
-			joblist = joblist.next
-			
-			if job.job_type == :ConstructBuilding
-				if (job.flags.suspend)
-					item = job.items[0].item
-					job.flags.suspend = false
-					count += 1
-				end
-			end
-		end
-
-		puts "Unsuspended #{count} job(s)." unless count == 0
-		
-	end
-	
-	def start
-		@onupdate = df.onupdate_register('autounsuspend', 5) { process }
-		@running = true
-	end
-	
-	def stop
-		df.onupdate_unregister(@onupdate)
-		@running = false
-	end
-	
-	def status
-		@running ? 'Running.' : 'Stopped.'
-	end
-		
-end	
+    def stop
+        @running = false
+        df.onupdate_unregister(@onupdate)
+    end
+end
 
 case $script_args[0]
 when 'start'
-    $AutoUnsuspend = AutoUnsuspend.new unless $AutoUnsuspend
+    $AutoUnsuspend ||= AutoUnsuspend.new
     $AutoUnsuspend.start
 
 when 'end', 'stop'
     $AutoUnsuspend.stop
-	
+
 else
-    if $AutoUnsuspend
-        puts $AutoUnsuspend.status
-    else
-        puts 'Not loaded.'
-    end
+    puts $AutoUnsuspend && $AutoUnsuspend.running ? 'Running.' : 'Stopped.'
 end

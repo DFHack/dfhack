@@ -35,6 +35,6 @@ df.world.items.other[:CAGE].each { |cg|
 	u = uref.unit_tg
 	puts "Pitting #{u.race_tg.name[0]} #{u.id} #{u.name}"
 	u.general_refs << DFHack::GeneralRefBuildingCivzoneAssignedst.cpp_new(:building_id => bld.id)
-	bld.assigned_creature << u.id
+	bld.assigned_units << u.id
 }
 puts "No creature available for pitting" if found == 0

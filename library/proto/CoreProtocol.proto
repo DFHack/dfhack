@@ -81,3 +81,10 @@ message CoreRunCommandRequest {
 
 // RPC CoreSuspend : EmptyMessage -> IntMessage
 // RPC CoreResume : EmptyMessage -> IntMessage
+
+// RPC RunLua : CoreRunLuaRequest -> StringListMessage
+message CoreRunLuaRequest {
+    required string module = 1;
+    required string function = 2;
+    repeated string arguments = 3;
+}

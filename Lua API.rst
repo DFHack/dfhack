@@ -812,6 +812,14 @@ can be omitted.
 
   Convert a language_name or only the last name part to string.
 
+* ``dfhack.df2utf(string)``
+
+  Convert a string from DF's CP437 encoding to UTF-8.
+
+* ``dfhack.utf2df(string)``
+
+  Convert a string from UTF-8 to DF's CP437 encoding.
+
 Gui module
 ----------
 
@@ -1760,6 +1768,10 @@ and are only documented here for completeness:
   The oldval, newval or delta arguments may be used to specify additional constraints.
   Returns: *found_index*, or *nil* if end reached.
 
+* ``dfhack.internal.getDir(path)``
+
+  List files in a directory.
+  Returns: *file_names* or empty table if not found.
 
 Core interpreter context
 ========================

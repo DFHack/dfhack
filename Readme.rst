@@ -332,7 +332,8 @@ Options:
 command-prompt
 --------------
 A one line command prompt in df. Same as entering command into dfhack console. Best 
-used as a keybinding.
+used as a keybinding. Can be called with optional "entry" that will start prompt with 
+that pre-filled.
 
 
 Adventure mode

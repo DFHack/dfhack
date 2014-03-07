@@ -4,10 +4,13 @@
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
+#include <ColorText.h>
 
 #include <modules/Screen.h>
 
 #include <set>
+#include <list>
+#include <utility>
 
 #include "df/interface_key.h"
 #include "df/ui.h"
@@ -20,6 +23,16 @@ using df::global::ui;
 using df::global::gps;
 using df::global::enabler;
 
+class viewscreen_commandpromptst;
+class prompt_ostream:public buffered_color_ostream
+{
+    viewscreen_commandpromptst *parent_;
+    protected:
+        void flush_proxy();
+    public:
+        prompt_ostream(viewscreen_commandpromptst* parent):parent_(parent){}
+        bool empty(){return buffer.empty();}
+};
 class viewscreen_commandpromptst : public dfhack_viewscreen {
 public:
     void feed(std::set<df::interface_key> *events);
@@ -32,7 +45,7 @@ public:
     void help() { }
 
     std::string getFocusString() { return "commandprompt"; }
-    viewscreen_commandpromptst()
+    viewscreen_commandpromptst(std::string entry):is_response(false),entry(entry)
     {
         show_fps=df::global::gps->display_frames;
         df::global::gps->display_frames=0;
@@ -41,11 +54,26 @@ public:
     {
         df::global::gps->display_frames=show_fps;
     }
+
+    void add_response(color_value v,std::string s)
+    {
+        responses.push_back(std::make_pair(v,s));
+    }
 protected:
+    std::list<std::pair<color_value,std::string> > responses;
+    bool is_response;
     bool show_fps;
     void submit();
     std::string entry;
 };
+void prompt_ostream::flush_proxy()
+{
+    if (buffer.empty())
+        return;
+    for(auto it=buffer.begin();it!=buffer.end();it++)
+        parent_->add_response(it->first,it->second);
+    buffer.clear();
+}
 void viewscreen_commandpromptst::render()
 {
     if (Screen::isDismissed(this))
@@ -55,23 +83,46 @@ void viewscreen_commandpromptst::render()
 
     auto dim = Screen::getWindowSize();
     parent->render();
-    Screen::fillRect(Screen::Pen(' ', 7, 0),0,0,dim.x,0);
-    Screen::paintString(Screen::Pen(' ', 7, 0), 0, 0,"[DFHack]#");
-    if(entry.size()<dim.x)
-        Screen::paintString(Screen::Pen(' ', 7, 0), 10,0 , entry);
+    if(is_response)
+    {
+        auto it=responses.begin();
+        for(int i=0;i<dim.y && it!=responses.end();i++,it++)
+        {
+            Screen::fillRect(Screen::Pen(' ', 7, 0),0,i,dim.x,i);
+            std::string cur_line=it->second;
+            Screen::paintString(Screen::Pen(' ',it->first,0),0,i,cur_line.substr(0,cur_line.size()-1));
+        }
+    }
     else
     {
-        Screen::paintTile(Screen::Pen('>', 7, 0), 9, 0);
-        Screen::paintString(Screen::Pen(' ', 7, 0), 10, 0, entry.substr(entry.size()-dim.x));
+        Screen::fillRect(Screen::Pen(' ', 7, 0),0,0,dim.x,0);
+        Screen::paintString(Screen::Pen(' ', 7, 0), 0, 0,"[DFHack]#");
+        if(entry.size()<dim.x)
+            Screen::paintString(Screen::Pen(' ', 7, 0), 10,0 , entry);
+        else
+        {
+            Screen::paintTile(Screen::Pen('>', 7, 0), 9, 0);
+            Screen::paintString(Screen::Pen(' ', 7, 0), 10, 0, entry.substr(entry.size()-dim.x));
+        }
     }
-    
 }
 void viewscreen_commandpromptst::submit()
 {
     CoreSuspendClaimer suspend;
-    color_ostream_proxy out(Core::getInstance().getConsole());
+    if(is_response)
+    {
+        Screen::dismiss(this);
+        return;
+    }
+    //color_ostream_proxy out(Core::getInstance().getConsole());
+    prompt_ostream out(this);
     Core::getInstance().runCommand(out, entry);
-    Screen::dismiss(this);
+    if(out.empty() && responses.empty())
+        Screen::dismiss(this);
+    else
+    {
+        is_response=true;
+    }
 }
 void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
 {
@@ -94,6 +145,8 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
         submit();
         return;
     }
+    if(is_response)
+        return;
     for (auto it = events->begin(); it != events->end(); ++it)
     {
         auto key = *it;
@@ -113,13 +166,17 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
 DFHACK_PLUGIN("command-prompt");
 command_result show_prompt(color_ostream &out, std::vector <std::string> & parameters)
 {
-    Screen::show(new viewscreen_commandpromptst);
+    std::string params;
+    for(size_t i=0;i<parameters.size();i++)
+        params+=parameters[i]+" ";
+    Screen::show(new viewscreen_commandpromptst(params));
     return CR_OK;
 }
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "command-prompt","Shows a command prompt on window.",show_prompt
+        "command-prompt","Shows a command prompt on window.",show_prompt,false,
+        "command-prompt [entry] - shows a cmd prompt in df window. Entry is used for default prefix (e.g. ':lua')"
         ));
     return CR_OK;
 }

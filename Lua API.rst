@@ -1768,6 +1768,10 @@ and are only documented here for completeness:
   The oldval, newval or delta arguments may be used to specify additional constraints.
   Returns: *found_index*, or *nil* if end reached.
 
+* ``dfhack.internal.getDir(path)``
+
+  List files in a directory.
+  Returns: *file_names* or empty table if not found.
 
 Core interpreter context
 ========================

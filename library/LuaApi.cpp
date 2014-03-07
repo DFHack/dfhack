@@ -2202,7 +2202,21 @@ static int internal_diffscan(lua_State *L)
     lua_pushnil(L);
     return 1;
 }
-
+static int internal_getDir(lua_State *L)
+{
+    luaL_checktype(L,1,LUA_TSTRING);
+    std::string dir=lua_tostring(L,1);
+    std::vector<std::string> files;
+    DFHack::getdir(dir,files);
+    lua_newtable(L);
+    for(int i=0;i<files.size();i++)
+    {
+        lua_pushinteger(L,i+1);
+        lua_pushstring(L,files[i].c_str());
+        lua_settable(L,-3);
+    }
+    return 1;
+}
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
@@ -2215,6 +2229,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "memcmp", internal_memcmp },
     { "memscan", internal_memscan },
     { "diffscan", internal_diffscan },
+    { "getDir", internal_getDir },
     { NULL, NULL }
 };
 

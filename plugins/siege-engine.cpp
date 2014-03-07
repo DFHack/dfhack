@@ -275,7 +275,7 @@ static bool apply_impact_damage(df::item *item, int minv, int maxv)
 
     // Instant fracture?
     int fracture = strength.fracture[type];
-    if (fracture <= power)
+    if (fracture <= power || info.material->flags.is_set(material_flags::IS_GLASS))
     {
         item->setWear(3);
         return false;

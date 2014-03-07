@@ -56,6 +56,7 @@ lightSource::lightSource(rgbf power,int radius):power(power),flicker(false)
         this->radius = radius;
     else
     {
+        float levelDim = 0.2f;//TODO this is not correct if you change config
         float totalPower = power.r;
         if(totalPower < power.g)totalPower = power.g;
         if(totalPower < power.b)totalPower = power.b;

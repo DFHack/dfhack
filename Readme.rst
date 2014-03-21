@@ -2339,6 +2339,14 @@ dfhack commands. Useful for hotkeys.
 Example::
     multicmd locate-ore iron ; digv
 
+log-region
+==========
+When a fort is loaded, write identifying information to the gamelog to assist in reading fort history.  For best results, add ``log-region`` to ``dfhack.init`` so it works every time.  
+
+exportmaps
+==========
+Exporting detailed maps from legends mode can take a long time, particularly for large worlds.  This script helps reduce the pain by exporting all detailed maps with only one interaction.  ``exportmaps`` can be run as a command, or bound in ``dfhack.init``.  
+
 =======================
 In-game interface tools
 =======================

@@ -1,15 +1,15 @@
 [submodule "plugins/stonesense"]
 	path = plugins/stonesense
-	url = git://github.com/peterix/stonesense.git
+	url = git://github.com/DFHack/stonesense.git
 [submodule "plugins/isoworld"]
 	path = plugins/isoworld
-	url = git://github.com/peterix/isoworld.git
+	url = git://github.com/DFHack/isoworld.git
 [submodule "plugins/df2mc"]
 	path = plugins/df2mc
-	url = git://github.com/peterix/DF2MC.git
+	url = git://github.com/DFHack/DF2MC.git
 [submodule "library/xml"]
 	path = library/xml
-	url = git://github.com/peterix/df-structures.git
+	url = git://github.com/DFHack/df-structures.git
 [submodule "depends/clsocket"]
 	path = depends/clsocket
-	url = git://github.com/peterix/clsocket.git
+	url = git://github.com/DFHack/clsocket.git

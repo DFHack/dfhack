@@ -11,6 +11,7 @@
 #include <modules/Units.h>
 #include <modules/Job.h>
 #include <modules/Materials.h>
+#include <modules/Random.h>
 #include <LuaTools.h>
 #include <TileTypes.h>
 #include <vector>
@@ -74,8 +75,79 @@ using Screen::Pen;
 DFHACK_PLUGIN("siege-engine");
 
 /*
+    Aiming is simulated by using a normal distribution to perturb X and Y.
+
+    The chance a normal distribution is within n*sigma of median is
+    erf(n/sqrt(2)). For direct hit, it must be within 0.5 tiles of
+    center, so it is erf(0.5/sigma/sqrt(2)) = erf(1/sigma/sqrt(8)).
+    Since it must hit in both X and Y, it must be squared, so final
+    is erf(1/sigma/sqrt(8))^2 = erf(skill*coeff/(distance*sqrt(8)))^2.
+
+    The chance to hit a RxR area is erf(skill*coeff*R/(distance*sqrt(8)))^2.
+
+    Catapults can fire between 30 and 100, and the projectile is supposed
+    to travel in an arc, and is thus harder to aim; yet they require a direct
+    hit unless using the feature for firing bins.
+
+    The coefficient of 30 gives the following probabilities:
+
+    |              |  Direct Hit    |  3x3 Area Hit  |
+    |              |  30   50  100  |  30   50  100  |
+    |       Novice |  15%   5%  <5% |  75%  40%  10% |
+    |     Adequate |  45%  20%   5% | 100%  85%  40% |
+    |    Competent |  75%  40%  10% | 100% 100%  70% |
+    |   Proficient | 100%  75%  30% | 100% 100%  95% |
+    | Professional | 100% 100%  80% | 100% 100% 100% |
+    |    Legendary | 100% 100%  95% | 100% 100% 100% |
+
+    Original data:
+
+    * http://www.wolframalpha.com/input/?i=erf%2830*x%2Fsqrt%288%29%2F30%29^2%2C+erf%2830*x%2Fsqrt%288%29%2F50%29^2%2C+erf%2830*x%2Fsqrt%288%29%2F100%29^2%2C+x+from+0+to+15
+    * http://www.wolframalpha.com/input/?i=erf%2830*x*3%2Fsqrt%288%29%2F30%29^2%2C+erf%2830*x*3%2Fsqrt%288%29%2F50%29^2%2C+erf%2830*x*3%2Fsqrt%288%29%2F100%29^2%2C+x+from+0+to+6
+
+    Ballista can fire up to 200 tiles away, and can't use the bin method
+    to compensate for inaccuracy. On the other hand, it shoots straight
+    and should be easier to aim. It also damages everything in its path,
+    so the hit probability may be estimated using an 1D projection.
+
+    The coefficient of 48 gives the following probabilities:
+
+    |              |  Direct Hit         |  1D Hit             |
+    |              |  30   50  100  200  |  30   50  100  200  |
+    |       Novice |  25%  10%   5%  <5% |  55%  35%  20%  10% |
+    |     Adequate |  80%  45%  15%   5% |  90%  65%  40%  20% |
+    |    Competent |  95%  70%  30%   8% | 100%  85%  50%  30% |
+    |   Proficient | 100%  95%  65%  20% | 100% 100%  75%  45% |
+    | Accomplished | 100% 100%  95%  60% | 100% 100% 100%  75% |
+    |    Legendary | 100% 100%  100% 85% | 100% 100% 100%  90% |
+
+    Original data:
+
+    * http://www.wolframalpha.com/input/?i=erf%2848*x%2Fsqrt%288%29%2F30%29^2%2C+erf%2848*x%2Fsqrt%288%29%2F50%29^2%2C+erf%2848*x%2Fsqrt%288%29%2F100%29^2%2C+erf%2848*x%2Fsqrt%288%29%2F200%29^2%2C+x+from+0+to+15
+    * http://www.wolframalpha.com/input/?i=erf%2848*x%2Fsqrt%288%29%2F30%29%2C+erf%2848*x%2Fsqrt%288%29%2F50%29%2C+erf%2848*x%2Fsqrt%288%29%2F100%29%2C+erf%2848*x%2Fsqrt%288%29%2F200%29%2C+x+from+0+to+15
+
+    Quality can increase range of both engines by 25% max, so it
+    also boosts aiming by 1.06x every step, up to 33.8% gain.
+*/
+
+/*
  * Misc. utils
  */
+
+static bool debug_mode = false;
+
+static void setDebug(bool on)
+{
+    debug_mode = on;
+}
+
+static void set_arrow_color(df::coord pos, int color)
+{
+    auto tile = Maps::getTileOccupancy(pos);
+
+    if (tile)
+        tile->bits.arrow_color = color;
+}
 
 typedef std::pair<df::coord, df::coord> coord_range;
 
@@ -109,12 +181,12 @@ static bool is_in_range(const coord_range &target, df::coord pos)
            target.first.z <= pos.z && pos.z <= target.second.z;
 }
 
-static std::pair<int, int> get_engine_range(df::building_siegeenginest *bld)
+static std::pair<int, int> get_engine_range(df::building_siegeenginest *bld, float quality)
 {
     if (bld->type == siegeengine_type::Ballista)
-        return std::make_pair(1, 200);
+        return std::make_pair(1, 200 + int(10 * quality));
     else
-        return std::make_pair(30, 100);
+        return std::make_pair(30 - int(quality), 100 + int(5 * quality));
 }
 
 static void orient_engine(df::building_siegeenginest *bld, df::coord target)
@@ -132,6 +204,27 @@ static void orient_engine(df::building_siegeenginest *bld, df::coord target)
             df::building_siegeenginest::Up;
 }
 
+static bool is_build_complete(df::building *bld)
+{
+    return bld->getBuildStage() >= bld->getMaxBuildStage();
+}
+
+static float average_quality(df::building_actual *bld)
+{
+    float quality = 0;
+    int count = 0;
+
+    for (size_t i = 0; i < bld->contained_items.size(); i++)
+    {
+        if (bld->contained_items[i]->use_mode != 2)
+            continue;
+        count++;
+        quality += bld->contained_items[i]->item->getQuality();
+    }
+
+    return count > 0 ? quality/count : 0;
+}
+
 static int point_distance(df::coord speed)
 {
     return std::max(abs(speed.x), std::max(abs(speed.y), abs(speed.z)));
@@ -144,21 +237,19 @@ inline void normalize(float &x, float &y, float &z)
     x /= dist; y /= dist; z /= dist;
 }
 
+static Random::MersenneRNG rng;
+
 static void random_direction(float &x, float &y, float &z)
 {
-    float a, b, d;
-    for (;;) {
-        a = (rand() + 0.5f)*2.0f/RAND_MAX - 1.0f;
-        b = (rand() + 0.5f)*2.0f/RAND_MAX - 1.0f;
-        d = a*a + b*b;
-        if (d < 1.0f)
-            break;
-    }
+    float vec[3];
+    rng.unitvector(vec, 3);
+    x = vec[0]; y = vec[1]; z = vec[2];
+}
 
-    float sq = sqrtf(1-d);
-    x = 2.0f*a*sq;
-    y = 2.0f*b*sq;
-    z = 1.0f - 2.0f*d;
+static double random_error()
+{
+    // Irwin-Hall approximation to normal distribution with n = 3; varies in (-3,3)
+    return (rng.drandom0() + rng.drandom0() + rng.drandom0()) * 2.0 - 3.0;
 }
 
 static const int WEAR_TICKS = 806400;
@@ -175,8 +266,8 @@ static bool apply_impact_damage(df::item *item, int minv, int maxv)
     auto &strength = info.material->strength;
 
     // Use random strain type excluding COMPRESSIVE (conveniently last)
-    int type = random_int(strain_type::COMPRESSIVE);
-    int power = minv + random_int(maxv-minv+1);
+    int type = rng.random(strain_type::COMPRESSIVE);
+    int power = minv + rng.random(maxv-minv+1);
 
     // High elasticity materials just bend
     if (strength.strain_at_yield[type] >= 5000)
@@ -184,7 +275,7 @@ static bool apply_impact_damage(df::item *item, int minv, int maxv)
 
     // Instant fracture?
     int fracture = strength.fracture[type];
-    if (fracture <= power)
+    if (fracture <= power || info.material->flags.is_set(material_flags::IS_GLASS))
     {
         item->setWear(3);
         return false;
@@ -231,9 +322,12 @@ struct EngineInfo {
     df::coord center;
     coord_range building_rect;
 
+    float quality;
     bool is_catapult;
     int proj_speed, hit_delay;
     std::pair<int, int> fire_range;
+
+    double sigma_coeff;
 
     coord_range target;
 
@@ -272,7 +366,7 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
         return obj;
     }
 
-    if (!create)
+    if (!create || !is_build_complete(bld))
         return NULL;
 
     obj = new EngineInfo();
@@ -284,10 +378,14 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
         df::coord(bld->x1, bld->y1, bld->z),
         df::coord(bld->x2, bld->y2, bld->z)
     );
+    obj->quality = average_quality(ebld);
     obj->is_catapult = (ebld->type == siegeengine_type::Catapult);
     obj->proj_speed = 2;
     obj->hit_delay = obj->is_catapult ? 2 : -1;
-    obj->fire_range = get_engine_range(ebld);
+    obj->fire_range = get_engine_range(ebld, obj->quality);
+
+    // Base coefficients per engine type, plus 6% exponential bonus per quality level
+    obj->sigma_coeff = (obj->is_catapult ? 30.0 : 48.0) * pow(1.06, obj->quality);
 
     obj->ammo_vector_id = job_item_vector_id::BOULDER;
     obj->ammo_item_type = item_type::BOULDER;
@@ -436,6 +534,7 @@ static bool setTargetArea(df::building_siegeenginest *bld, df::coord target_min,
 {
     CHECK_NULL_POINTER(bld);
     CHECK_INVALID_ARGUMENT(target_min.isValid() && target_max.isValid());
+    CHECK_INVALID_ARGUMENT(is_build_complete(bld));
 
     if (!enable_plugin())
         return false;
@@ -569,6 +668,7 @@ static bool addStockpileLink(df::building_siegeenginest *bld, df::building_stock
 {
     CHECK_NULL_POINTER(bld);
     CHECK_NULL_POINTER(pile);
+    CHECK_INVALID_ARGUMENT(is_build_complete(bld));
 
     if (!enable_plugin())
         return false;
@@ -604,6 +704,7 @@ static bool removeStockpileLink(df::building_siegeenginest *bld, df::building_st
 static df::workshop_profile *saveWorkshopProfile(df::building_siegeenginest *bld)
 {
     CHECK_NULL_POINTER(bld);
+    CHECK_INVALID_ARGUMENT(is_build_complete(bld));
 
     if (!enable_plugin())
         return NULL;
@@ -853,6 +954,7 @@ struct PathMetrics {
 
     void compute(const ProjectilePath &path)
     {
+        hit_type = Impassable;
         collision_step = goal_step = goal_z_step = 1000000;
         collision_z_step = 0;
 
@@ -1008,7 +1110,7 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
             if (!cur_tile.valid())
                 continue;
 
-            int color;
+            int color = COLOR_YELLOW;
 
             switch (calcTileStatus(engine, tile_pos))
             {
@@ -1359,7 +1461,8 @@ struct projectile_hook : df::proj_itemst {
         target_pos = path.target;
 
         // Debug
-        Maps::getTileOccupancy(path.goal)->bits.arrow_color = COLOR_LIGHTMAGENTA;
+        if (debug_mode)
+            set_arrow_color(path.goal, COLOR_LIGHTMAGENTA);
 
         PathMetrics raytrace(path);
 
@@ -1395,40 +1498,32 @@ struct projectile_hook : df::proj_itemst {
         orient_engine(engine->bld, path.goal);
 
         // Debug
-        Maps::getTileOccupancy(path.goal)->bits.arrow_color = COLOR_LIGHTRED;
+        if (debug_mode)
+            set_arrow_color(path.goal, COLOR_LIGHTRED);
 
-        // Dabbling always hit in 7x7 area
+        // Dabbling always hit in 11x11 area
         if (skill < skill_rating::Novice)
         {
-            fail_target.x += random_int(7)-3;
-            fail_target.y += random_int(7)-3;
+            fail_target.x += rng.random(11)-5;
+            fail_target.y += rng.random(11)-5;
             aimAtPoint(engine, ProjectilePath(path.origin, fail_target));
             return;
         }
 
-        // Exact hit chance
-        float hit_chance = 1.04f - powf(0.8f, skill);
+        // Otherwise use a normal distribution to simulate errors
+        double sigma = point_distance(path.origin - path.goal) / (engine->sigma_coeff * skill);
 
-        if (float(rand())/RAND_MAX < hit_chance)
+        int dx = (int)round(random_error() * sigma);
+        int dy = (int)round(random_error() * sigma);
+
+        if (dx == 0 && dy == 0)
         {
             aimAtPoint(engine, path);
             return;
         }
 
-        // Otherwise perturb
-        if (skill <= skill_rating::Proficient)
-        {
-            // 5x5
-            fail_target.x += random_int(5)-2;
-            fail_target.y += random_int(5)-2;
-        }
-        else
-        {
-            // 3x3
-            int idx = random_int(8);
-            fail_target.x += offsets[idx][0];
-            fail_target.y += offsets[idx][1];
-        }
+        fail_target.x += dx;
+        fail_target.y += dy;
 
         ProjectilePath fail(path.origin, fail_target, path.fudge_delta, path.fudge_factor);
         aimAtPoint(engine, fail);
@@ -1444,7 +1539,7 @@ struct projectile_hook : df::proj_itemst {
         for (int i = 0; i < 50; i++)
         {
             target = tbase + df::coord(
-                random_int(tsize.x), random_int(tsize.y), random_int(tsize.z)
+                rng.random(tsize.x), rng.random(tsize.y), rng.random(tsize.z)
             );
 
             if (adjustToTarget(engine, &target))
@@ -1523,6 +1618,10 @@ struct projectile_hook : df::proj_itemst {
             if (!Lua::Core::SafeCall(out, 3, 0))
                 aimAtArea(engine, skill);
         }
+
+        bool forbid_ammo = DF_GLOBAL_VALUE(standing_orders_forbid_used_ammo, false);
+        if (forbid_ammo)
+            item->flags.bits.forbid = true;
 
         switch (item->getType())
         {
@@ -1736,6 +1835,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(building_hook, updateAction);
  */
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(setDebug),
     DFHACK_LUA_FUNCTION(clearTargetArea),
     DFHACK_LUA_FUNCTION(setTargetArea),
     DFHACK_LUA_FUNCTION(isLinkedToPile),
@@ -1857,6 +1957,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
+    rng.init();
+
     if (Core::getInstance().isMapLoaded())
         plugin_onstatechange(out, SC_MAP_LOADED);
 

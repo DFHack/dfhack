@@ -491,6 +491,9 @@ local building = df.global.world.selected_building
 if not df.building_siegeenginest:is_instance(building) then
     qerror("A siege engine must be selected")
 end
+if building:getBuildStage() < building:getMaxBuildStage() then
+    qerror("This engine is not completely built yet")
+end
 
 local list = SiegeEngine{ building = building }
 list:show()

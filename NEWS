@@ -9,6 +9,7 @@ DFHack future
   New commands:
     - move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands
     - 'plant create' - spawn a new shrub under the cursor
+    - command-prompt: a dfhack command prompt in df.
 
   Misc improvements:
     - digfort: improved csv parsing, add start() comment handling

@@ -2636,6 +2636,16 @@ Rationale: individual choice seems to be unreliable when there is a weapon short
 and may lead to inappropriate weapons being selected.
 
 
+gui/clone-uniform
+=================
+
+Bind to a key (the example config uses Ctrl-C), and activate in the Uniforms
+page of the military screen with the cursor in the leftmost list.
+
+When invoked, the script duplicates the currently selected uniform template,
+and selects the newly created copy.
+
+
 gui/guide-path
 ==============
 

@@ -2382,6 +2382,11 @@ dfhack commands. Useful for hotkeys.
 Example::
     multicmd locate-ore iron ; digv
 
+mod-manager
+===========
+This mod script allows installing/removing mod that change/add multiple
+files in df with one click of a button.
+
 =======================
 In-game interface tools
 =======================

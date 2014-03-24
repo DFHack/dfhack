@@ -2,6 +2,9 @@ DFHack future
 
   Internals:
     - support for calling a lua function via a protobuf request (demonstrated by dfhack-run --lua).
+    - Lua API for listing files in directory. Needed for mod-manager.
+  New scripts:
+    - gui/mod-manager: allows installing/uninstalling mods into df from df/mods directory.
 
   New commands:
     - move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands

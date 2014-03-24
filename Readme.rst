@@ -335,6 +335,7 @@ A one line command prompt in df. Same as entering command into dfhack console. B
 used as a keybinding. Can be called with optional "entry" that will start prompt with 
 that pre-filled.
 
+.. image:: images/command-prompt.png
 
 Adventure mode
 ==============
@@ -2388,11 +2389,6 @@ dfhack commands. Useful for hotkeys.
 Example::
     multicmd locate-ore iron ; digv
 
-mod-manager
-===========
-This mod script allows installing/removing mod that change/add multiple
-files in df with one click of a button.
-
 =======================
 In-game interface tools
 =======================
@@ -2826,11 +2822,21 @@ keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
   
 * job - selects that job (e.g. Dig or FellTree)
 
+An example of player digging in adventure mode:
+
+.. image:: images/advfort.png
+
+.. admonition:: DISCLAIMER
+
+    advfort changes only persist in non procedural sites. Namely: player forts, caves, camps.
+
 gui/companion-order
 ===================
 
 A script to issue orders for companions. Select companions with lower case chars, issue orders with upper 
 case. Must be in look or talk mode to issue command on tile.
+
+.. image:: images/companion-order.png
 
 * move - orders selected companions to move to location. If companions are following they will move no more than 3 tiles from you.
 * equip - try to equip items on the ground.
@@ -2840,7 +2846,6 @@ case. Must be in look or talk mode to issue command on tile.
 * wait - temporarily remove from party
 * follow - rejoin the party after "wait"
 * leave - remove from party (can be rejoined by talking)
-
 
 gui/gm-editor
 =============
@@ -2856,8 +2861,20 @@ There are three ways to open this editor:
 * using gui/gm-editor dialog - shows an in game dialog to input lua command. Works
   the same as version above.
   
+.. image:: images/gm-editor.png
+
 This editor allows to change and modify almost anything in df. Press '?' for an 
 in-game help.
+
+gui/mod-manager
+===============
+
+A way to simply install and remove small mods. It looks for specially formated mods in
+df subfolder 'mods'. Mods are not included, for example mods see: `github mini mod repository <https://github.com/warmist/df-mini-mods>`_
+
+.. image:: images/mod-manager.png
+
+
 
 =============
 Behavior Mods

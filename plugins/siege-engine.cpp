@@ -1619,6 +1619,10 @@ struct projectile_hook : df::proj_itemst {
                 aimAtArea(engine, skill);
         }
 
+        bool forbid_ammo = DF_GLOBAL_VALUE(standing_orders_forbid_used_ammo, false);
+        if (forbid_ammo)
+            item->flags.bits.forbid = true;
+
         switch (item->getType())
         {
             case item_type::CAGE:

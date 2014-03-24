@@ -344,8 +344,16 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     df::unit *unit = Gui::getSelectedUnit(out, true);
     if (!unit)
     {
-        out.printerr("No unit selected!\n");
-        return CR_FAILURE;
+        if (*gametype == game_type::ADVENTURE_ARENA || *gametype == game_type::ADVENTURE_MAIN)
+        {
+            // Use the adventurer unit
+            unit = world->units.active[0];
+        }
+        else
+        {
+            out.printerr("No unit selected!\n");
+            return CR_FAILURE;
+        }
     }
     if (!Maps::IsValid())
     {

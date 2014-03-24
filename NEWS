@@ -11,6 +11,7 @@ DFHack future
     - digfort: improved csv parsing, add start() comment handling
     - exterminate: allow specifying a caste (exterminate gob:male)
     - siege-engine: engine quality and distance to target now affect accuracy.
+    - createitem: in adventure mode it now defaults to the controlled unit as maker.
 
 DFHack v0.34.11-r4
 

@@ -252,6 +252,16 @@ static double random_error()
     return (rng.drandom0() + rng.drandom0() + rng.drandom0()) * 2.0 - 3.0;
 }
 
+// round() is only available in C++11
+static int int_round (double val)
+{
+    double frac = val - floor(val);
+    if (frac < 0.5)
+        return (int)floor(val);
+    else
+        return (int)ceil(val);
+}
+
 static const int WEAR_TICKS = 806400;
 
 static bool apply_impact_damage(df::item *item, int minv, int maxv)
@@ -385,7 +395,7 @@ static EngineInfo *find_engine(df::building *bld, bool create = false)
     obj->fire_range = get_engine_range(ebld, obj->quality);
 
     // Base coefficients per engine type, plus 6% exponential bonus per quality level
-    obj->sigma_coeff = (obj->is_catapult ? 30.0 : 48.0) * pow(1.06, obj->quality);
+    obj->sigma_coeff = (obj->is_catapult ? 30.0 : 48.0) * pow(1.06f, obj->quality);
 
     obj->ammo_vector_id = job_item_vector_id::BOULDER;
     obj->ammo_item_type = item_type::BOULDER;
@@ -1513,8 +1523,8 @@ struct projectile_hook : df::proj_itemst {
         // Otherwise use a normal distribution to simulate errors
         double sigma = point_distance(path.origin - path.goal) / (engine->sigma_coeff * skill);
 
-        int dx = (int)round(random_error() * sigma);
-        int dy = (int)round(random_error() * sigma);
+        int dx = int_round(random_error() * sigma);
+        int dy = int_round(random_error() * sigma);
 
         if (dx == 0 && dy == 0)
         {

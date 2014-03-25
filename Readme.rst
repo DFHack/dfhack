@@ -708,8 +708,7 @@ Subcommands:
  :create: Create a new shrub/sapling.
  :grow: Make saplings grow into trees.
  :extirpate: Kills trees and shrubs, turning them into ashes instantly.
- :immolate: Similar to extirpate, but sets the plants on fire instead. The
-fires can and *will* spread ;)
+ :immolate: Similar to extirpate, but sets the plants on fire instead. The fires can and *will* spread ;)
 
 ``create`` creates a new sapling under the cursor. Takes a raw ID as
 argument (e.g. TOWER_CAP). The cursor must be located on a dirt or grass
@@ -719,6 +718,7 @@ floor tile.
 Works on all shrubs of the map if the cursor is hidden.
 
 ``extirpate`` and ``immolate`` work only on the plant under the cursor.
+
 For mass effects, use one of the additional options:
  :shrubs:            affect all shrubs on the map
  :trees:             affect all trees on the map

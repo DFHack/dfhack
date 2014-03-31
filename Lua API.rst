@@ -3199,8 +3199,9 @@ Save init script
 ================
 
 If a save directory contains a file called ``raw/init.lua``, it is
-automatically loaded and executed every time the save is loaded. It
-can also define the following functions to be called by dfhack:
+automatically loaded and executed every time the save is loaded.
+The same applies to any files called ``raw/init.d/*.lua``. Every
+such script can define the following functions to be called by dfhack:
 
 * ``function onStateChange(op) ... end``
 
@@ -3212,6 +3213,7 @@ can also define the following functions to be called by dfhack:
 * ``function onUnload() ... end``
 
   Called when the save containing the script is unloaded. This function
-  should clean up any global hooks installed by the script.
+  should clean up any global hooks installed by the script. Note that
+  when this is called, the world is already completely unloaded.
 
 Within the init script, the path to the save directory is available as ``SAVE_PATH``.

@@ -3,8 +3,11 @@ DFHack future
   Internals:
     - support for calling a lua function via a protobuf request (demonstrated by dfhack-run --lua).
     - Lua API for listing files in directory. Needed for mod-manager.
+    - support for multiple raw/init.d/*.lua init scripts in one save.
+
   New scripts:
     - gui/mod-manager: allows installing/uninstalling mods into df from df/mods directory.
+    - gui/clone-uniform: duplicates the currently selected uniform in the military screen.
 
   New commands:
     - move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands

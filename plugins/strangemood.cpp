@@ -1278,7 +1278,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     unit->path.dest.x = -30000;
     unit->path.dest.y = -30000;
     unit->path.dest.z = -30000;
-    unit->path.unk_ae = -1;
+    unit->path.goal = unit_path_goal::None;
     unit->path.path.x.clear();
     unit->path.path.y.clear();
     unit->path.path.z.clear();

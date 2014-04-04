@@ -1808,8 +1808,8 @@ private:
                 {
                     df::activity_info *act = ui->activities[i];
                     if (!act) continue;
-                    bool p1 = act->person1 == dwarf->dwarf;
-                    bool p2 = act->person2 == dwarf->dwarf;
+                    bool p1 = act->unit_actor == dwarf->dwarf;
+                    bool p2 = act->unit_noble == dwarf->dwarf;
 
                     if (p1 || p2)
                     {

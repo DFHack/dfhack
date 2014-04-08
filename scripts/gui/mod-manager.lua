@@ -1,4 +1,3 @@
-
 local gui=require 'gui'
 local widgets=require 'gui.widgets'
 
@@ -10,6 +9,7 @@ function fileExists(filename)
 		return
 	else
 		file:close()
+		return true
 	end
 end
 function copyFile(from,to) --oh so primitive

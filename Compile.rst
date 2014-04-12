@@ -89,16 +89,24 @@ If you are building on 10.6, please read the subsection below titled "Snow Leopa
 1. Download and unpack a copy of the latest DF
 2. Install Xcode from Mac App Store
 3. Open Xcode, go to Preferences > Downloads, and install the Command Line Tools.
-4. Install MacPorts.
-5. Install dependencies from MacPorts:
+4. Install dependencies
 
-   * ``sudo port install gcc45 +universal cmake +universal git-core +universal``
+    Option 1: Using MacPorts:
+    
+        * `Install MacPorts <http://www.macports.org/>`_
+        * Run ``sudo port install gcc45 +universal cmake +universal git-core +universal``
+        This will take some time—maybe hours, depending on your machine.
+        
+        At some point during this process, it may ask you to install a Java environment; let it do so.
 
-     This will take some time—maybe hours, depending on your machine.
+    Option 2: Using Homebrew:
+    
+        * `Install Homebrew <http://brew.sh/>`_ and run:
+        * ``brew install git``
+        * ``brew install cmake``
+        * ``brew install gcc45 --enable-multilib``
 
-   * At some point during this process, it may ask you to install a Java environment; let it do so.
-
-6. Install perl dependencies
+5. Install perl dependencies
 
     1. ``sudo cpan``
 
@@ -108,19 +116,29 @@ If you are building on 10.6, please read the subsection below titled "Snow Leopa
     2. ``install XML::LibXML``
     3. ``install XML::LibXSLT``
 
-7. Get the dfhack source::
+6. Get the dfhack source::
 
     git clone https://github.com/danaris/dfhack.git
     cd dfhack
     git submodule init
     git submodule update
 
+7. Set environment variables:
+
+  Macports::
+
+    export CC=/opt/local/bin/gcc-mp-4.5
+    export CXX=/opt/local/bin/g++-mp-4.5
+
+  Homebrew::
+
+    export CC=/usr/local/bin/gcc-4.5
+    export CXX=/usr/local/bin/g++-4.5
+
 8. Build dfhack::
 
     mkdir build-osx
     cd build-osx
-    export CC=/opt/local/bin/gcc-mp-4.5
-    export CXX=/opt/local/bin/g++-mp-4.5
     cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/path/to/DF/directory
     make
     make install

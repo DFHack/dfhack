@@ -95,7 +95,7 @@ If you are building on 10.6, please read the subsection below titled "Snow Leopa
     
         * `Install MacPorts <http://www.macports.org/>`_
         * Run ``sudo port install gcc45 +universal cmake +universal git-core +universal``
-        This will take some time—maybe hours, depending on your machine.
+          This will take some time—maybe hours, depending on your machine.
         
         At some point during this process, it may ask you to install a Java environment; let it do so.
 

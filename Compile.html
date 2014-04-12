@@ -451,16 +451,27 @@ rm libs/libstdc++.so.6
 </li>
 <li><p class="first">Open Xcode, go to Preferences &gt; Downloads, and install the Command Line Tools.</p>
 </li>
-<li><p class="first">Install MacPorts.</p>
-</li>
-<li><p class="first">Install dependencies from MacPorts:</p>
-<ul>
-<li><p class="first"><tt class="docutils literal">sudo port install gcc45 +universal cmake +universal <span class="pre">git-core</span> +universal</tt></p>
-<p>This will take some time—maybe hours, depending on your machine.</p>
-</li>
-<li><p class="first">At some point during this process, it may ask you to install a Java environment; let it do so.</p>
-</li>
+<li><p class="first">Install dependencies</p>
+<blockquote>
+<p>Option 1: Using MacPorts:</p>
+<blockquote>
+<ul class="simple">
+<li><a class="reference external" href="http://www.macports.org/">Install MacPorts</a></li>
+<li>Run <tt class="docutils literal">sudo port install gcc45 +universal cmake +universal <span class="pre">git-core</span> +universal</tt>
+This will take some time—maybe hours, depending on your machine.</li>
 </ul>
+<p>At some point during this process, it may ask you to install a Java environment; let it do so.</p>
+</blockquote>
+<p>Option 2: Using Homebrew:</p>
+<blockquote>
+<ul class="simple">
+<li><a class="reference external" href="http://brew.sh/">Install Homebrew</a> and run:</li>
+<li><tt class="docutils literal">brew install git</tt></li>
+<li><tt class="docutils literal">brew install cmake</tt></li>
+<li><tt class="docutils literal">brew install gcc45 <span class="pre">--enable-multilib</span></tt></li>
+</ul>
+</blockquote>
+</blockquote>
 </li>
 <li><p class="first">Install perl dependencies</p>
 <blockquote>
@@ -484,12 +495,26 @@ git submodule init
 git submodule update
 </pre>
 </li>
+<li><p class="first">Set environment variables:</p>
+</li>
+</ol>
+<blockquote>
+<p>Macports:</p>
+<pre class="literal-block">
+export CC=/opt/local/bin/gcc-mp-4.5
+export CXX=/opt/local/bin/g++-mp-4.5
+</pre>
+<p>Homebrew:</p>
+<pre class="literal-block">
+export CC=/usr/local/bin/gcc-4.5
+export CXX=/usr/local/bin/g++-4.5
+</pre>
+</blockquote>
+<ol class="arabic" start="8">
 <li><p class="first">Build dfhack:</p>
 <pre class="literal-block">
 mkdir build-osx
 cd build-osx
-export CC=/opt/local/bin/gcc-mp-4.5
-export CXX=/opt/local/bin/g++-mp-4.5
 cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/path/to/DF/directory
 make
 make install

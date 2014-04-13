@@ -153,7 +153,7 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
         if (key==interface_key::STRING_A000) //delete?
         {
             if(entry.size())
-                entry.pop_back();
+                entry.resize(entry.size()-1);
             continue;
         }
         if (key >= interface_key::STRING_A000 &&

@@ -757,20 +757,20 @@ static df::workshop_profile *saveWorkshopProfile(df::building_siegeenginest *bld
     return &engine->profile;
 }
 
-static int getOperatorSkill(df::building_siegeenginest *bld, bool force = false)
+static df::unit *getOperatorUnit(df::building_siegeenginest *bld, bool force = false)
 {
     CHECK_NULL_POINTER(bld);
 
     auto engine = find_engine(bld);
     if (!engine)
-        return 0;
+        return NULL;
 
     if (engine->operator_id != -1 &&
         (world->frame_counter - engine->operator_frame) <= 5)
     {
         auto op_unit = df::unit::find(engine->operator_id);
         if (op_unit)
-            return Units::getEffectiveSkill(op_unit, job_skill::SIEGEOPERATE);
+            return op_unit;
     }
 
     if (force)
@@ -781,10 +781,10 @@ static int getOperatorSkill(df::building_siegeenginest *bld, bool force = false)
         auto &active = world->units.active;
         for (size_t i = 0; i < active.size(); i++)
             if (active[i]->pos == engine->center && Units::isCitizen(active[i]))
-                return Units::getEffectiveSkill(active[i], job_skill::SIEGEOPERATE);
+                return active[i];
     }
 
-    return 0;
+    return NULL;
 }
 
 /*
@@ -1578,7 +1578,8 @@ struct projectile_hook : df::proj_itemst {
         color_ostream &out = *Lua::GetOutput(L);
         auto proj = (projectile_hook*)lua_touserdata(L, 1);
         auto engine = (EngineInfo*)lua_touserdata(L, 2);
-        int skill = lua_tointeger(L, 3);
+        auto unit = (df::unit*)lua_touserdata(L, 3);
+        int skill = lua_tointeger(L, 4);
 
         if (!Lua::PushModulePublic(out, L, "plugins.siege-engine", "doAimProjectile"))
             luaL_error(L, "Projectile aiming AI not available");
@@ -1587,9 +1588,10 @@ struct projectile_hook : df::proj_itemst {
         Lua::Push(L, proj->item);
         Lua::Push(L, engine->target.first);
         Lua::Push(L, engine->target.second);
+        Lua::PushDFObject(L, unit);
         Lua::Push(L, skill);
 
-        lua_call(L, 5, 1);
+        lua_call(L, 6, 1);
 
         if (lua_isnil(L, -1))
             proj->aimAtArea(engine, skill);
@@ -1613,7 +1615,8 @@ struct projectile_hook : df::proj_itemst {
         CoreSuspendClaimer suspend;
         color_ostream_proxy out(Core::getInstance().getConsole());
 
-        int skill = getOperatorSkill(engine->bld, true);
+        df::unit *op_unit = getOperatorUnit(engine->bld, true);
+        int skill = op_unit ? Units::getEffectiveSkill(op_unit, job_skill::SIEGEOPERATE) : 0;
 
         // Dabbling can't aim
         if (skill < skill_rating::Novice)
@@ -1623,9 +1626,10 @@ struct projectile_hook : df::proj_itemst {
             lua_pushcfunction(L, safeAimProjectile);
             lua_pushlightuserdata(L, this);
             lua_pushlightuserdata(L, engine);
+            lua_pushlightuserdata(L, op_unit);
             lua_pushinteger(L, skill);
 
-            if (!Lua::Core::SafeCall(out, 3, 0))
+            if (!Lua::Core::SafeCall(out, 4, 0))
                 aimAtArea(engine, skill);
         }
 

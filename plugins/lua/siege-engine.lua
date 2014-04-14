@@ -54,8 +54,14 @@ local _ENV = mkmodule('plugins.siege-engine')
 
 ]]
 
+local utils = require 'utils'
+
 Z_STEP_COUNT = 15
 Z_STEP = 1/31
+
+ANNOUNCEMENT_FLAGS = {
+    UNIT_COMBAT_REPORT = true
+}
 
 function getMetrics(engine, path)
     path.metrics = path.metrics or projPathMetrics(engine, path)
@@ -208,8 +214,61 @@ function pickUniqueTargets(reachable)
     return unique
 end
 
-function doAimProjectile(engine, item, target_min, target_max, skill)
-    print(item, df.skill_rating[skill])
+function describeUnit(unit)
+    local desc = dfhack.units.getProfessionName(unit)
+    local name = dfhack.units.getVisibleName(unit)
+    if name.has_name then
+        return desc .. ' ' .. dfhack.TranslateName(name)
+    end
+    return desc
+end
+
+function produceCombatReport(operator, item, target)
+    local msg = describeUnit(operator) .. ' launches ' ..
+                utils.getItemDescriptionPrefix(item) ..
+                utils.getItemDescription(item) ..
+                ' at '
+
+    local pos = operator.pos
+
+    if target then
+        local units = target.units
+
+        for i,v in ipairs(units) do
+            if i > 1 then
+                if i < #units then
+                    msg = msg .. ', '
+                elseif i > 2 then
+                    msg = msg .. ', and '
+                else
+                    msg = msg .. ' and '
+                end
+            end
+            msg = msg .. describeUnit(v)
+        end
+
+        msg = msg .. '!'
+        pos = target.pos
+    else
+        msg = msg .. 'the target area.'
+    end
+
+    local id = dfhack.gui.makeAnnouncement(
+        df.announcement_type.COMBAT_STRIKE_DETAILS,
+        ANNOUNCEMENT_FLAGS, pos, msg, COLOR_CYAN, true
+    )
+
+    dfhack.gui.addCombatReport(operator, df.unit_report_type.Hunting, id)
+
+    if target then
+        for i,v in ipairs(target.units) do
+            dfhack.gui.addCombatReportAuto(v, ANNOUNCEMENT_FLAGS, id)
+        end
+    end
+end
+
+function doAimProjectile(engine, item, target_min, target_max, operator, skill)
+    --print(item, df.skill_rating[skill])
 
     local targets = proposeUnitHits(engine)
     local reachable = findReachableTargets(engine, targets)
@@ -219,11 +278,15 @@ function doAimProjectile(engine, item, target_min, target_max, skill)
     if #unique > 0 then
         local cnt = math.max(math.min(#unique,5), math.min(10, math.floor(#unique/2)))
         local rnd = math.random(cnt)
-        for _,u in ipairs(unique[rnd].units) do
+        local target = unique[rnd]
+        for _,u in ipairs(target.units) do
             saveRecent(u)
         end
-        return unique[rnd].path
+        produceCombatReport(operator, item, target)
+        return target.path
     end
+
+    produceCombatReport(operator, item, nil)
 end
 
 return _ENV

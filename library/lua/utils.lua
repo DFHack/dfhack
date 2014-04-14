@@ -457,6 +457,14 @@ function getBuildingCenter(building)
     return xyz2pos(building.centerx, building.centery, building.z)
 end
 
+function getItemDescription(item,mode)
+    return call_with_string(item, 'getItemDescription', mode or 0)
+end
+
+function getItemDescriptionPrefix(item,mode)
+    return call_with_string(item, 'getItemDescriptionPrefix', mode or 0)
+end
+
 -- Split the string by the given delimiter
 function split_string(self, delimiter)
     local result = { }

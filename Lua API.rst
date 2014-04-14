@@ -862,6 +862,32 @@ Gui module
 
   Returns the building selected via *'q'*, *'t'*, *'k'* or *'i'*.
 
+* ``dfhack.gui.writeToGamelog(text)``
+
+  Writes a string to gamelog.txt without doing an announcement.
+
+* ``dfhack.gui.makeAnnouncement(type,flags,pos,text,color[,is_bright])``
+
+  Adds an announcement with given announcement_type, text, color, and brightness.
+  The is_bright boolean actually seems to invert the brightness.
+
+  The announcement is written to gamelog.txt. The announcement_flags
+  argument provides a custom set of announcements.txt options,
+  which specify if the message should actually be displayed in the
+  announcement list, and whether to recenter or show a popup.
+
+  Returns the index of the new announcement in ``df.global.world.status.reports``, or -1.
+
+* ``dfhack.gui.addCombatReport(unit,slot,report_index)``
+
+  Adds the report with the given index (returned by makeAnnouncement)
+  to the specified group of the given unit. Returns *true* on success.
+
+* ``dfhack.gui.addCombatReportAuto(unit,flags,report_index)``
+
+  Adds the report with the given index to the appropriate group(s)
+  of the given unit, as requested by the flags.
+
 * ``dfhack.gui.showAnnouncement(text,color[,is_bright])``
 
   Adds a regular announcement with given text, color, and brightness.
@@ -875,10 +901,10 @@ Gui module
 
   Pops up a titan-style modal announcement window.
 
-* ``dfhack.gui.showAutoAnnouncement(type,pos,text,color[,is_bright])``
+* ``dfhack.gui.showAutoAnnouncement(type,pos,text,color[,is_bright,unit1,unit2])``
 
-  Uses the type to look up options from announcements.txt, and calls the
-  above operations accordingly. If enabled, pauses and zooms to position.
+  Uses the type to look up options from announcements.txt, and calls the above
+  operations accordingly. The units are used to call ``addCombatReportAuto``.
 
 
 Job module

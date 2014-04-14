@@ -1160,6 +1160,26 @@ the container itself.</p>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.getSelectedBuilding([silent])</span></tt></p>
 <p>Returns the building selected via <em>'q'</em>, <em>'t'</em>, <em>'k'</em> or <em>'i'</em>.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.gui.writeToGamelog(text)</tt></p>
+<p>Writes a string to gamelog.txt without doing an announcement.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.makeAnnouncement(type,flags,pos,text,color[,is_bright])</span></tt></p>
+<p>Adds an announcement with given announcement_type, text, color, and brightness.
+The is_bright boolean actually seems to invert the brightness.</p>
+<p>The announcement is written to gamelog.txt. The announcement_flags
+argument provides a custom set of announcements.txt options,
+which specify if the message should actually be displayed in the
+announcement list, and whether to recenter or show a popup.</p>
+<p>Returns the index of the new announcement in <tt class="docutils literal">df.global.world.status.reports</tt>, or -1.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.gui.addCombatReport(unit,slot,report_index)</tt></p>
+<p>Adds the report with the given index (returned by makeAnnouncement)
+to the specified group of the given unit. Returns <em>true</em> on success.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.gui.addCombatReportAuto(unit,flags,report_index)</tt></p>
+<p>Adds the report with the given index to the appropriate group(s)
+of the given unit, as requested by the flags.</p>
+</li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.showAnnouncement(text,color[,is_bright])</span></tt></p>
 <p>Adds a regular announcement with given text, color, and brightness.
 The is_bright boolean actually seems to invert the brightness.</p>
@@ -1170,9 +1190,9 @@ The is_bright boolean actually seems to invert the brightness.</p>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.showPopupAnnouncement(text,color[,is_bright])</span></tt></p>
 <p>Pops up a titan-style modal announcement window.</p>
 </li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.showAutoAnnouncement(type,pos,text,color[,is_bright])</span></tt></p>
-<p>Uses the type to look up options from announcements.txt, and calls the
-above operations accordingly. If enabled, pauses and zooms to position.</p>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.showAutoAnnouncement(type,pos,text,color[,is_bright,unit1,unit2])</span></tt></p>
+<p>Uses the type to look up options from announcements.txt, and calls the above
+operations accordingly. The units are used to call <tt class="docutils literal">addCombatReportAuto</tt>.</p>
 </li>
 </ul>
 </div>

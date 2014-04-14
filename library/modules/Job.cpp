@@ -60,13 +60,13 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepEverything)
     CHECK_NULL_POINTER(job);
 
     df::job *pnew = new df::job(*job);
-    
+
     if ( !keepEverything ) {
         // Clean out transient fields
         pnew->flags.whole = 0;
         pnew->flags.bits.repeat = job->flags.bits.repeat;
         pnew->flags.bits.suspend = job->flags.bits.suspend;
-        
+
         pnew->completion_timer = -1;
     }
     pnew->list_link = NULL;
@@ -75,24 +75,24 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepEverything)
     //pnew->specific_refs.clear();
     pnew->general_refs.clear();
     //pnew->job_items.clear();
-    
+
     if ( keepEverything ) {
-        for ( int a = 0; a < pnew->items.size(); a++ )
+        for ( size_t a = 0; a < pnew->items.size(); a++ )
             pnew->items[a] = new df::job_item_ref(*pnew->items[a]);
-        for ( int a = 0; a < pnew->specific_refs.size(); a++ )
+        for ( size_t a = 0; a < pnew->specific_refs.size(); a++ )
             pnew->specific_refs[a] = new df::specific_ref(*pnew->specific_refs[a]);
     } else {
         pnew->items.clear();
         pnew->specific_refs.clear();
     }
-    
-    for ( int a = 0; a < pnew->job_items.size(); a++ )
+
+    for ( size_t a = 0; a < pnew->job_items.size(); a++ )
         pnew->job_items[a] = new df::job_item(*pnew->job_items[a]);
-    
-    for ( int a = 0; a < job->general_refs.size(); a++ )
+
+    for ( size_t a = 0; a < job->general_refs.size(); a++ )
         if ( keepEverything || job->general_refs[a]->getType() != df::enums::general_ref_type::UNIT_WORKER )
             pnew->general_refs.push_back(job->general_refs[a]->clone());
-    
+
     return pnew;
 }
 
@@ -106,16 +106,16 @@ void DFHack::Job::deleteJobStruct(df::job *job, bool keptEverything)
         assert(!job->list_link && job->items.empty() && job->specific_refs.empty());
     else
         assert(!job->list_link);
-    
+
     if ( keptEverything ) {
-        for ( int a = 0; a < job->items.size(); a++ )
+        for ( size_t a = 0; a < job->items.size(); a++ )
             delete job->items[a];
-        for ( int a = 0; a < job->specific_refs.size(); a++ )
+        for ( size_t a = 0; a < job->specific_refs.size(); a++ )
             delete job->specific_refs[a];
     }
-    for ( int a = 0; a < job->job_items.size(); a++ )
+    for ( size_t a = 0; a < job->job_items.size(); a++ )
         delete job->job_items[a];
-    for ( int a = 0; a < job->general_refs.size(); a++ )
+    for ( size_t a = 0; a < job->general_refs.size(); a++ )
         delete job->general_refs[a];
 
     delete job;

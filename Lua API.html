@@ -1220,6 +1220,14 @@ operations accordingly. The units are used to call <tt class="docutils literal">
 <li><p class="first"><tt class="docutils literal">dfhack.job.getWorker(job)</tt></p>
 <p>Returns the unit performing the job.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.setJobCooldown(building,worker,timeout)</tt></p>
+<p>Prevent the worker from taking jobs at the specified workshop for the specified time.
+This doesn't decrease the timeout in any circumstances.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.removeWorker(job,timeout)</tt></p>
+<p>Removes the worker from the specified workshop job, and sets the cooldown.
+Returns <em>true</em> on success.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.job.checkBuildingsNow()</tt></p>
 <p>Instructs the game to check buildings for jobs next frame and assign workers.</p>
 </li>

@@ -55,6 +55,7 @@
 #include "df/strain_type.h"
 #include "df/material.h"
 #include "df/flow_type.h"
+#include "df/invasion_info.h"
 
 #include "MiscUtils.h"
 
@@ -1459,6 +1460,55 @@ static int computeNearbyWeight(lua_State *L)
     return 0;
 }
 
+static bool isTired(df::unit *worker)
+{
+    return worker->counters2.exhaustion >= 1000 ||
+           worker->counters2.thirst_timer >= 25000 ||
+           worker->counters2.hunger_timer >= 50000 ||
+           worker->counters2.sleepiness_timer >= 57600;
+}
+
+static void releaseTiredWorker(EngineInfo *engine, df::job *job, df::unit *worker)
+{
+    // If not in siege
+    auto &sieges = ui->invasions.list;
+
+    for (size_t i = 0; i < sieges.size(); i++)
+        if (sieges[i]->flags.bits.active)
+            return;
+
+    // And there is a free replacement
+    auto &others = world->units.active;
+
+    for (size_t i = 0; i < others.size(); i++)
+    {
+        auto unit = others[i];
+
+        if (unit == worker ||
+            unit->job.current_job || !unit->status.labors[unit_labor::SIEGEOPERATE] ||
+            !Units::isCitizen(unit) || Units::getMiscTrait(unit, misc_trait_type::OnBreak) ||
+            isTired(unit) || !Maps::canWalkBetween(job->pos, unit->pos))
+            continue;
+
+        int skill2 = Units::getEffectiveSkill(unit, job_skill::SIEGEOPERATE);
+
+        if (skill2 >= engine->profile.min_level && skill2 <= engine->profile.max_level)
+        {
+            // Remove the worker and request a recheck
+            if (Job::removeWorker(job))
+            {
+                color_ostream_proxy out(Core::getInstance().getConsole());
+                out.print("Released tired operator %d from siege engine.\n", worker->id);
+
+                if (df::global::process_jobs)
+                    *df::global::process_jobs = true;
+            }
+
+            return;
+        }
+    }
+}
+
 /*
  * Projectile hook
  */
@@ -1796,6 +1846,7 @@ struct building_hook : df::building_siegeenginest {
         {
             auto job = jobs[0];
             bool save_op = false;
+            bool load_op = false;
 
             switch (job->job_type)
             {
@@ -1830,12 +1881,18 @@ struct building_hook : df::building_siegeenginest {
                     // fallthrough
 
                 case job_type::LoadBallista:
+                    load_op = true;
+
                 case job_type::FireCatapult:
                 case job_type::FireBallista:
                     if (auto worker = Job::getWorker(job))
                     {
                         engine->operator_id = worker->id;
                         engine->operator_frame = world->frame_counter;
+
+                        if (action == PrepareToFire && !load_op &&
+                            (world->frame_counter%100) == 0 && isTired(worker))
+                            releaseTiredWorker(engine, job, worker);
                     }
                     break;
 

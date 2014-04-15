@@ -1331,6 +1331,8 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,getSpecificRef),
     WRAPM(Job,getHolder),
     WRAPM(Job,getWorker),
+    WRAPM(Job,setJobCooldown),
+    WRAPM(Job,removeWorker),
     WRAPM(Job,checkBuildingsNow),
     WRAPM(Job,checkDesignationsNow),
     WRAPM(Job,isSuitableItem),

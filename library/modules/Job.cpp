@@ -44,6 +44,8 @@ using namespace std;
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/ui.h"
+#include "df/unit.h"
+#include "df/building.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/job_list_link.h"
@@ -284,6 +286,63 @@ df::unit *DFHack::Job::getWorker(df::job *job)
     }
 
     return NULL;
+}
+
+void DFHack::Job::setJobCooldown(df::building *workshop, df::unit *worker, int cooldown)
+{
+    CHECK_NULL_POINTER(workshop);
+    CHECK_NULL_POINTER(worker);
+
+    if (cooldown <= 0)
+        return;
+
+    int idx = linear_index(workshop->job_claim_suppress, &df::building::T_job_claim_suppress::unit, worker);
+
+    if (idx < 0)
+    {
+        auto obj = new df::building::T_job_claim_suppress;
+        obj->unit = worker;
+        obj->timer = cooldown;
+        workshop->job_claim_suppress.push_back(obj);
+    }
+    else
+    {
+        auto obj = workshop->job_claim_suppress[idx];
+        obj->timer = std::max(obj->timer, cooldown);
+    }
+}
+
+bool DFHack::Job::removeWorker(df::job *job, int cooldown)
+{
+    CHECK_NULL_POINTER(job);
+
+    if (job->flags.bits.special)
+        return false;
+
+    auto holder = getHolder(job);
+    if (!holder || linear_index(holder->jobs,job) < 0)
+        return false;
+
+    for (size_t i = 0; i < job->general_refs.size(); i++)
+    {
+        VIRTUAL_CAST_VAR(ref, df::general_ref_unit_workerst, job->general_refs[i]);
+        if (!ref)
+            continue;
+
+        auto worker = ref->getUnit();
+        if (!worker || worker->job.current_job != job)
+            return false;
+
+        setJobCooldown(holder, worker, cooldown);
+
+        vector_erase_at(job->general_refs, i);
+        worker->job.current_job = NULL;
+        delete ref;
+
+        return true;
+    }
+
+    return false;
 }
 
 void DFHack::Job::checkBuildingsNow()

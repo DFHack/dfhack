@@ -18,9 +18,14 @@ DFHack future
   Misc improvements:
     - digfort: improved csv parsing, add start() comment handling
     - exterminate: allow specifying a caste (exterminate gob:male)
-    - siege-engine: engine quality and distance to target now affect accuracy;
-      firing the siege engine produces a combat report.
     - createitem: in adventure mode it now defaults to the controlled unit as maker.
+
+  Siege engine plugin:
+    - engine quality and distance to target now affect accuracy
+    - firing the siege engine at a target produces a combat report
+    - improved movement speed computation for meandering units
+    - operators in Prepare To Fire mode are released from duty once
+      hungry/thirsty if there is a free replacement
 
 DFHack v0.34.11-r4
 

@@ -1206,6 +1206,7 @@ struct UnitPath {
         {
             float time = unit->counters.job_counter+0.5f;
             float speed = Units::computeMovementSpeed(unit)/100.0f;
+            float slowdown = Units::computeSlowdownFactor(unit);
 
             if (unit->counters.unconscious > 0)
                 time += unit->counters.unconscious;
@@ -1217,8 +1218,13 @@ struct UnitPath {
                     continue;
 
                 float delay = speed;
+
+                // Diagonal movement
                 if (new_pos.x != pos.x && new_pos.y != pos.y)
                     delay *= 362.0/256.0;
+
+                // Meandering slowdown
+                delay += (slowdown - 1) * speed;
 
                 path[time] = pos;
                 pos = new_pos;

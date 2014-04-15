@@ -1326,6 +1326,10 @@ is <em>true</em>, subtracts the rust penalty.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.units.computeMovementSpeed(unit)</tt></p>
 <p>Computes number of frames * 100 it takes the unit to move in its current state of mind and body.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.computeSlowdownFactor(unit)</tt></p>
+<p>Meandering and floundering in liquid introduces additional slowdown. It is
+random, but the function computes and returns the expected mean factor as a float.</p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.getNoblePositions(unit)</tt></p>
 <p>Returns a list of tables describing noble position assignments, or <em>nil</em>.
 Every table has fields <tt class="docutils literal">entity</tt>, <tt class="docutils literal">assignment</tt> and <tt class="docutils literal">position</tt>.</p>

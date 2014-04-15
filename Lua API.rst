@@ -1067,6 +1067,11 @@ Units module
 
   Computes number of frames * 100 it takes the unit to move in its current state of mind and body.
 
+* ``dfhack.units.computeSlowdownFactor(unit)``
+
+  Meandering and floundering in liquid introduces additional slowdown. It is
+  random, but the function computes and returns the expected mean factor as a float.
+
 * ``dfhack.units.getNoblePositions(unit)``
 
   Returns a list of tables describing noble position assignments, or *nil*.

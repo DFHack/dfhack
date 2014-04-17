@@ -133,21 +133,41 @@ function saveRecent(unit)
 end
 
 function getBaseUnitWeight(unit)
-    if dfhack.units.isCitizen(unit) then
-        return -10
-    elseif unit.flags1.diplomat or unit.flags1.merchant then
-        return -2
-    elseif unit.flags1.tame and unit.civ_id == df.global.ui.civ_id then
-        return -1
+    local flags1 = unit.flags1
+    local rv = 1
+
+    if unit.mood == df.mood_type.Berserk
+    or dfhack.units.isOpposedToLife(unit)
+    or dfhack.units.isCrazed(unit)
+    then
+        rv = rv + 1
     else
-        local rv = 1
-        if unit.flags1.marauder then rv = rv + 0.5 end
-        if unit.flags1.active_invader then rv = rv + 1 end
-        if unit.flags1.invader_origin then rv = rv + 1 end
-        if unit.flags1.invades then rv = rv + 1 end
-        if unit.flags1.hidden_ambusher then rv = rv + 1 end
-        return rv
+        if dfhack.units.isCitizen(unit) then
+            return -30
+        elseif flags1.diplomat or flags1.merchant or flags1.forest then
+            return -5
+        elseif flags1.tame and unit.civ_id == df.global.ui.civ_id then
+            return -1
+        end
     end
+
+    if flags1.marauder then rv = rv + 0.5 end
+    if flags1.active_invader then rv = rv + 1 end
+    if flags1.invader_origin then rv = rv + 1 end
+    if flags1.invades then rv = rv + 1 end
+    if flags1.hidden_ambusher then rv = rv + 1 end
+
+    if unit.counters.unconscious > 0 then
+        rv = rv * 0.3
+    elseif unit.job.hunt_target then
+        rv = rv * 3
+    elseif unit.job.destroy_target then
+        rv = rv * 2
+    elseif unit.relations.group_leader_id < 0 and not flags1.rider then
+        rv = rv * 1.5
+    end
+
+    return rv
 end
 
 function getUnitWeight(unit)

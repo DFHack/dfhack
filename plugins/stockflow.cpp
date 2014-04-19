@@ -1,7 +1,7 @@
 /*
  * Stockflow plugin.
  * For best effect, place "stockflow enable" in your dfhack.init configuration,
- * or set `enabled` to true by default.
+ * or set AUTOENABLE to true.
  */
 
 #include "uicommon.h"
@@ -24,7 +24,13 @@ using df::building_stockpilest;
 
 DFHACK_PLUGIN("stockflow");
 
+#define AUTOENABLE false
+#ifdef DFHACK_PLUGIN_IS_ENABLED
+DFHACK_PLUGIN_IS_ENABLED(enabled);
+#else
 bool enabled = false;
+#endif
+
 const char *tagline = "Allows the fortress bookkeeper to queue jobs through the manager.";
 const char *usage = (
     "  stockflow enable\n"
@@ -371,13 +377,34 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
+DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
+    /* Accept the "enable stockflow"/"disable stockflow" syntax, where available. */
+    /* Same as "stockflow enable"/"stockflow disable" except without the status line. */
+    if (enable != enabled) {
+        if (!apply_hooks(out, enable)) {
+            return CR_FAILURE;
+        }
+        
+        enabled = enable;
+    }
+    
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
     helper.init();
-    if (enabled) apply_hooks(out, true);
+    if (AUTOENABLE) {
+        if (!apply_hooks(out, true)) {
+            return CR_FAILURE;
+        }
+        
+        enabled = true;
+    }
+    
     commands.push_back(PluginCommand(name, tagline, stockflow_cmd, false, usage));
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out) {
-    return CR_OK;
+    return plugin_enable(out, false);
 }

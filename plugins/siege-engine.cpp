@@ -55,6 +55,7 @@
 #include "df/strain_type.h"
 #include "df/material.h"
 #include "df/flow_type.h"
+#include "df/invasion_info.h"
 
 #include "MiscUtils.h"
 
@@ -757,20 +758,20 @@ static df::workshop_profile *saveWorkshopProfile(df::building_siegeenginest *bld
     return &engine->profile;
 }
 
-static int getOperatorSkill(df::building_siegeenginest *bld, bool force = false)
+static df::unit *getOperatorUnit(df::building_siegeenginest *bld, bool force = false)
 {
     CHECK_NULL_POINTER(bld);
 
     auto engine = find_engine(bld);
     if (!engine)
-        return 0;
+        return NULL;
 
     if (engine->operator_id != -1 &&
         (world->frame_counter - engine->operator_frame) <= 5)
     {
         auto op_unit = df::unit::find(engine->operator_id);
         if (op_unit)
-            return Units::getEffectiveSkill(op_unit, job_skill::SIEGEOPERATE);
+            return op_unit;
     }
 
     if (force)
@@ -781,10 +782,10 @@ static int getOperatorSkill(df::building_siegeenginest *bld, bool force = false)
         auto &active = world->units.active;
         for (size_t i = 0; i < active.size(); i++)
             if (active[i]->pos == engine->center && Units::isCitizen(active[i]))
-                return Units::getEffectiveSkill(active[i], job_skill::SIEGEOPERATE);
+                return active[i];
     }
 
-    return 0;
+    return NULL;
 }
 
 /*
@@ -1206,6 +1207,7 @@ struct UnitPath {
         {
             float time = unit->counters.job_counter+0.5f;
             float speed = Units::computeMovementSpeed(unit)/100.0f;
+            float slowdown = Units::computeSlowdownFactor(unit);
 
             if (unit->counters.unconscious > 0)
                 time += unit->counters.unconscious;
@@ -1217,8 +1219,13 @@ struct UnitPath {
                     continue;
 
                 float delay = speed;
+
+                // Diagonal movement
                 if (new_pos.x != pos.x && new_pos.y != pos.y)
                     delay *= 362.0/256.0;
+
+                // Meandering slowdown
+                delay += (slowdown - 1) * speed;
 
                 path[time] = pos;
                 pos = new_pos;
@@ -1333,9 +1340,11 @@ static bool canTargetUnit(df::unit *unit)
     CHECK_NULL_POINTER(unit);
 
     if (unit->flags1.bits.dead ||
-        unit->flags3.bits.ghostly ||
         unit->flags1.bits.caged ||
-        unit->flags1.bits.hidden_in_ambush)
+        unit->flags1.bits.left ||
+        unit->flags1.bits.incoming ||
+        unit->flags1.bits.hidden_in_ambush ||
+        unit->flags3.bits.ghostly)
         return false;
 
     return true;
@@ -1451,6 +1460,55 @@ static int computeNearbyWeight(lua_State *L)
     }
 
     return 0;
+}
+
+static bool isTired(df::unit *worker)
+{
+    return worker->counters2.exhaustion >= 1000 ||
+           worker->counters2.thirst_timer >= 25000 ||
+           worker->counters2.hunger_timer >= 50000 ||
+           worker->counters2.sleepiness_timer >= 57600;
+}
+
+static void releaseTiredWorker(EngineInfo *engine, df::job *job, df::unit *worker)
+{
+    // If not in siege
+    auto &sieges = ui->invasions.list;
+
+    for (size_t i = 0; i < sieges.size(); i++)
+        if (sieges[i]->flags.bits.active)
+            return;
+
+    // And there is a free replacement
+    auto &others = world->units.active;
+
+    for (size_t i = 0; i < others.size(); i++)
+    {
+        auto unit = others[i];
+
+        if (unit == worker ||
+            unit->job.current_job || !unit->status.labors[unit_labor::SIEGEOPERATE] ||
+            !Units::isCitizen(unit) || Units::getMiscTrait(unit, misc_trait_type::OnBreak) ||
+            isTired(unit) || !Maps::canWalkBetween(job->pos, unit->pos))
+            continue;
+
+        int skill2 = Units::getEffectiveSkill(unit, job_skill::SIEGEOPERATE);
+
+        if (skill2 >= engine->profile.min_level && skill2 <= engine->profile.max_level)
+        {
+            // Remove the worker and request a recheck
+            if (Job::removeWorker(job))
+            {
+                color_ostream_proxy out(Core::getInstance().getConsole());
+                out.print("Released tired operator %d from siege engine.\n", worker->id);
+
+                if (df::global::process_jobs)
+                    *df::global::process_jobs = true;
+            }
+
+            return;
+        }
+    }
 }
 
 /*
@@ -1578,7 +1636,8 @@ struct projectile_hook : df::proj_itemst {
         color_ostream &out = *Lua::GetOutput(L);
         auto proj = (projectile_hook*)lua_touserdata(L, 1);
         auto engine = (EngineInfo*)lua_touserdata(L, 2);
-        int skill = lua_tointeger(L, 3);
+        auto unit = (df::unit*)lua_touserdata(L, 3);
+        int skill = lua_tointeger(L, 4);
 
         if (!Lua::PushModulePublic(out, L, "plugins.siege-engine", "doAimProjectile"))
             luaL_error(L, "Projectile aiming AI not available");
@@ -1587,9 +1646,10 @@ struct projectile_hook : df::proj_itemst {
         Lua::Push(L, proj->item);
         Lua::Push(L, engine->target.first);
         Lua::Push(L, engine->target.second);
+        Lua::PushDFObject(L, unit);
         Lua::Push(L, skill);
 
-        lua_call(L, 5, 1);
+        lua_call(L, 6, 1);
 
         if (lua_isnil(L, -1))
             proj->aimAtArea(engine, skill);
@@ -1613,7 +1673,8 @@ struct projectile_hook : df::proj_itemst {
         CoreSuspendClaimer suspend;
         color_ostream_proxy out(Core::getInstance().getConsole());
 
-        int skill = getOperatorSkill(engine->bld, true);
+        df::unit *op_unit = getOperatorUnit(engine->bld, true);
+        int skill = op_unit ? Units::getEffectiveSkill(op_unit, job_skill::SIEGEOPERATE) : 0;
 
         // Dabbling can't aim
         if (skill < skill_rating::Novice)
@@ -1623,9 +1684,10 @@ struct projectile_hook : df::proj_itemst {
             lua_pushcfunction(L, safeAimProjectile);
             lua_pushlightuserdata(L, this);
             lua_pushlightuserdata(L, engine);
+            lua_pushlightuserdata(L, op_unit);
             lua_pushinteger(L, skill);
 
-            if (!Lua::Core::SafeCall(out, 3, 0))
+            if (!Lua::Core::SafeCall(out, 4, 0))
                 aimAtArea(engine, skill);
         }
 
@@ -1786,6 +1848,7 @@ struct building_hook : df::building_siegeenginest {
         {
             auto job = jobs[0];
             bool save_op = false;
+            bool load_op = false;
 
             switch (job->job_type)
             {
@@ -1820,12 +1883,18 @@ struct building_hook : df::building_siegeenginest {
                     // fallthrough
 
                 case job_type::LoadBallista:
+                    load_op = true;
+
                 case job_type::FireCatapult:
                 case job_type::FireBallista:
                     if (auto worker = Job::getWorker(job))
                     {
                         engine->operator_id = worker->id;
                         engine->operator_frame = world->frame_counter;
+
+                        if (action == PrepareToFire && !load_op &&
+                            (world->frame_counter%100) == 0 && isTired(worker))
+                            releaseTiredWorker(engine, job, worker);
                     }
                     break;
 

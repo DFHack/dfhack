@@ -44,6 +44,8 @@ using namespace std;
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/ui.h"
+#include "df/unit.h"
+#include "df/building.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/job_list_link.h"
@@ -60,13 +62,13 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepEverything)
     CHECK_NULL_POINTER(job);
 
     df::job *pnew = new df::job(*job);
-    
+
     if ( !keepEverything ) {
         // Clean out transient fields
         pnew->flags.whole = 0;
         pnew->flags.bits.repeat = job->flags.bits.repeat;
         pnew->flags.bits.suspend = job->flags.bits.suspend;
-        
+
         pnew->completion_timer = -1;
     }
     pnew->list_link = NULL;
@@ -75,24 +77,24 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepEverything)
     //pnew->specific_refs.clear();
     pnew->general_refs.clear();
     //pnew->job_items.clear();
-    
+
     if ( keepEverything ) {
-        for ( int a = 0; a < pnew->items.size(); a++ )
+        for ( size_t a = 0; a < pnew->items.size(); a++ )
             pnew->items[a] = new df::job_item_ref(*pnew->items[a]);
-        for ( int a = 0; a < pnew->specific_refs.size(); a++ )
+        for ( size_t a = 0; a < pnew->specific_refs.size(); a++ )
             pnew->specific_refs[a] = new df::specific_ref(*pnew->specific_refs[a]);
     } else {
         pnew->items.clear();
         pnew->specific_refs.clear();
     }
-    
-    for ( int a = 0; a < pnew->job_items.size(); a++ )
+
+    for ( size_t a = 0; a < pnew->job_items.size(); a++ )
         pnew->job_items[a] = new df::job_item(*pnew->job_items[a]);
-    
-    for ( int a = 0; a < job->general_refs.size(); a++ )
+
+    for ( size_t a = 0; a < job->general_refs.size(); a++ )
         if ( keepEverything || job->general_refs[a]->getType() != df::enums::general_ref_type::UNIT_WORKER )
             pnew->general_refs.push_back(job->general_refs[a]->clone());
-    
+
     return pnew;
 }
 
@@ -106,16 +108,16 @@ void DFHack::Job::deleteJobStruct(df::job *job, bool keptEverything)
         assert(!job->list_link && job->items.empty() && job->specific_refs.empty());
     else
         assert(!job->list_link);
-    
+
     if ( keptEverything ) {
-        for ( int a = 0; a < job->items.size(); a++ )
+        for ( size_t a = 0; a < job->items.size(); a++ )
             delete job->items[a];
-        for ( int a = 0; a < job->specific_refs.size(); a++ )
+        for ( size_t a = 0; a < job->specific_refs.size(); a++ )
             delete job->specific_refs[a];
     }
-    for ( int a = 0; a < job->job_items.size(); a++ )
+    for ( size_t a = 0; a < job->job_items.size(); a++ )
         delete job->job_items[a];
-    for ( int a = 0; a < job->general_refs.size(); a++ )
+    for ( size_t a = 0; a < job->general_refs.size(); a++ )
         delete job->general_refs[a];
 
     delete job;
@@ -284,6 +286,63 @@ df::unit *DFHack::Job::getWorker(df::job *job)
     }
 
     return NULL;
+}
+
+void DFHack::Job::setJobCooldown(df::building *workshop, df::unit *worker, int cooldown)
+{
+    CHECK_NULL_POINTER(workshop);
+    CHECK_NULL_POINTER(worker);
+
+    if (cooldown <= 0)
+        return;
+
+    int idx = linear_index(workshop->job_claim_suppress, &df::building::T_job_claim_suppress::unit, worker);
+
+    if (idx < 0)
+    {
+        auto obj = new df::building::T_job_claim_suppress;
+        obj->unit = worker;
+        obj->timer = cooldown;
+        workshop->job_claim_suppress.push_back(obj);
+    }
+    else
+    {
+        auto obj = workshop->job_claim_suppress[idx];
+        obj->timer = std::max(obj->timer, cooldown);
+    }
+}
+
+bool DFHack::Job::removeWorker(df::job *job, int cooldown)
+{
+    CHECK_NULL_POINTER(job);
+
+    if (job->flags.bits.special)
+        return false;
+
+    auto holder = getHolder(job);
+    if (!holder || linear_index(holder->jobs,job) < 0)
+        return false;
+
+    for (size_t i = 0; i < job->general_refs.size(); i++)
+    {
+        VIRTUAL_CAST_VAR(ref, df::general_ref_unit_workerst, job->general_refs[i]);
+        if (!ref)
+            continue;
+
+        auto worker = ref->getUnit();
+        if (!worker || worker->job.current_job != job)
+            return false;
+
+        setJobCooldown(holder, worker, cooldown);
+
+        vector_erase_at(job->general_refs, i);
+        worker->job.current_job = NULL;
+        delete ref;
+
+        return true;
+    }
+
+    return false;
 }
 
 void DFHack::Job::checkBuildingsNow()

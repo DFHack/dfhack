@@ -2049,6 +2049,13 @@ Scripts in this subdirectory fix various bugs and issues, some of them obscure.
   every time a save game is loaded; putting ``fix/cloth-stockpile enable``
   in ``dfhack.init`` makes it run automatically.
 
+* fix/build-location
+
+  Fixes construction jobs that are stuck trying to build a wall while standing
+  on the same exact tile (bug 5991), designates the tile restricted traffic to
+  hopefully avoid jamming it again, and unsuspends them.
+
+
 gui/*
 =====
 

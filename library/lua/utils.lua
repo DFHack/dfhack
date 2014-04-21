@@ -148,6 +148,21 @@ function make_sort_order(data,ordering)
 end
 
 --[[
+    Iterate a 'list' structure, e.g. df.global.world.job_list
+--]]
+local function next_df_list(s,link)
+    link = link.next
+    if link then
+        return link, link.item
+    end
+end
+
+function listpairs(list)
+    return next_df_list, nil, list
+end
+
+
+--[[
     Recursively assign data into a table.
 --]]
 function assign(tgt,src)

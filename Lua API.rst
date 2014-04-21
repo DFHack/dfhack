@@ -2045,6 +2045,10 @@ utils
   way enables applying the same permutation to multiple arrays.
   This function is used by the sort plugin.
 
+* ``for link,item in utils.listpairs(list)``
+
+  Iterates a df-list structure, for example ``df.global.world.job_list``.
+
 * ``utils.assign(tgt, src)``
 
   Does a recursive assignment of src into tgt.

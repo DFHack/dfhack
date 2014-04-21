@@ -9,6 +9,7 @@ DFHack future
   New scripts:
     - gui/mod-manager: allows installing/uninstalling mods into df from df/mods directory.
     - gui/clone-uniform: duplicates the currently selected uniform in the military screen.
+    - fix/build-location: partial work-around for bug 5991 (trying to build wall while standing on it)
 
   New commands:
     - move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands

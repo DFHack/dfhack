@@ -2930,6 +2930,11 @@ in memory and patching up some invalid reference fields. Needs to be run
 every time a save game is loaded; putting <tt class="docutils literal"><span class="pre">fix/cloth-stockpile</span> enable</tt>
 in <tt class="docutils literal">dfhack.init</tt> makes it run automatically.</p>
 </li>
+<li><p class="first">fix/build-location</p>
+<p>Fixes construction jobs that are stuck trying to build a wall while standing
+on the same exact tile (bug 5991), designates the tile restricted traffic to
+hopefully avoid jamming it again, and unsuspends them.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="gui">

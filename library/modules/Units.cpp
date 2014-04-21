@@ -1368,6 +1368,8 @@ bool DFHack::Units::getNoblePositions(std::vector<NoblePosition> *pvec, df::unit
 
 std::string DFHack::Units::getProfessionName(df::unit *unit, bool ignore_noble, bool plural)
 {
+    CHECK_NULL_POINTER(unit);
+
     std::string prof = unit->custom_profession;
     if (!prof.empty())
         return prof;
@@ -1514,6 +1516,8 @@ std::string DFHack::Units::getCasteProfessionName(int race, int casteid, df::pro
 
 int8_t DFHack::Units::getProfessionColor(df::unit *unit, bool ignore_noble)
 {
+    CHECK_NULL_POINTER(unit);
+
     std::vector<NoblePosition> np;
 
     if (!ignore_noble && getNoblePositions(&np, unit))

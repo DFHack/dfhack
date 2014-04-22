@@ -1,0 +1,90 @@
+Notes by PeridexisErrant, on the needs_porting scripts and plugins:
+
+I've deleted "reveal", "lair", and "dfstatus" - they've been replaced by other more recent versions. (I added the dfstatus script).
+Also deleted "digger", less useful than "digger2" and generally replaced by autochop.  "digger2" is replaced by digfort.
+And now "veinswap"; replaced by "changevein".
+
+
+Need confirmation that they're obsolete before deleting (notes below):  
+attachtest.py, dfbauxtite.cpp, digpattern.cpp, drawtile.cpp, fix-3708.cpp, treedump.py, and veinlook.cpp
+
+To port:  
+copypaste.cpp, hellhole.cpp, hotkeynotedump.py, itemdesignator.cpp (partial), position.py
+
+
+
+All undeleted plugins: 
+
+attachtest.py
+- checks if dfhack is working with DF (i think)
+- definitely replaced on windows, pretty sure also on other platforms
+
+copypaste.cpp
+- a proof-of-concept plugin to allow copy-pasting in DF
+- if I read it right, it does both terrain and buildings/constructions
+- would be awesome if someone ported it!
+
+creaturemanager.cpp
+- Display creatures; modify skills and labors of creatures; kill creatures; etc
+- looks pretty impressive if incomplete (at 1500 lines I only looked over the comments)
+- could maybe do with porting, but it's unfinished and I suspect that most functions are available elsewhere
+
+dfbauxtite.cpp 
+- as far as I can tell, this plugin changes the material of all mechanisms (printed string 'mechanisms', class 'item_trapparts') to Bauxtite; presumably from when this was the only magma-safe stone.  
+- I don't know of a newer alternative, but it's not really neccessary anymore
+
+digpattern.cpp
+- I think all this one does is allow multi-z designations - no longer required.
+
+drawtile.cpp
+- draws changes to tiles
+- I think this is replaced by tiletypes, but not sure
+
+fix-3708.cpp
+- fixes an issue with ghosts you can't engrave a slab for; some bad side-effects
+- replaced by "tweak clear-missing" or "tweak clear-ghostly"? (I'm pretty sure it is, but not certain)
+
+hellhole.cpp
+- digs a hole to HFS instantly
+- no known equivilant, needs porting
+
+hotkeynotedump.py
+- outputs a list of hotkeys with names
+- less useful with propper dfhack keybindings available, but still useful
+- trivial to redo in lua (it's 20 lines, could be 10)
+
+incrementalsearch.cpp
+- linux-only memory voodoo; leaving this alone
+
+itemdesignator.cpp
+- applies flags to categories of items (eg item_microcline; forbid/dump/melt/on fire)
+- appart from fire, replaced by Falconne's enhanced stocks screen
+- port the fire part?
+
+position.py
+- prints information about time (year/month/day/tick) and place (embark location/cursor pos) and window size
+- the wider context can be written to gamelog on world load by "log-region.lua"; this doesn't seem to be included yet
+
+SegementedFinder.h
+- no idea what's happening here
+
+treedump.py
+- looks like it outputs a list of trees in a given volume
+- overlaps with 'prospect' and 'autochop'; probably does not need porting
+
+veinlook.cpp
+- I'm not sure what this does that "digv" and "reveal" don't but there must be something since it was around at the same time as reveal.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+

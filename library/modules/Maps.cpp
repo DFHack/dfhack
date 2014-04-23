@@ -584,8 +584,8 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
 
     if ( dx == 0 && dy == 0 ) {
         //check for forbidden hatches and floors and such
-        df::enums::tile_building_occ::tile_building_occ upOcc = index_tile<df::tile_occupancy>(block2->occupancy,pos2).bits.building;
-        if ( upOcc == df::enums::tile_building_occ::Impassable || upOcc == df::enums::tile_building_occ::Obstacle || upOcc == df::enums::tile_building_occ::Floored )
+        df::tile_building_occ upOcc = index_tile<df::tile_occupancy>(block2->occupancy,pos2).bits.building;
+        if ( upOcc == tile_building_occ::Impassable || upOcc == tile_building_occ::Obstacle || upOcc == tile_building_occ::Floored )
             return false;
 
         if ( shape1 == tiletype_shape::STAIR_UPDOWN && shape2 == shape1 )
@@ -617,7 +617,7 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
                 return false; //unusable ramp
             
             //there has to be an unforbidden hatch above the ramp
-            if ( index_tile<df::tile_occupancy>(block2->occupancy,pos2).bits.building != df::enums::tile_building_occ::Dynamic )
+            if ( index_tile<df::tile_occupancy>(block2->occupancy,pos2).bits.building != tile_building_occ::Dynamic )
                 return false;
             //note that forbidden hatches have Floored occupancy. unforbidden ones have dynamic occupancy
             df::building* building = Buildings::findAtTile(pos2);
@@ -625,7 +625,7 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
                 out << __FILE__ << ", line " << __LINE__ << ": couldn't find hatch.\n";
                 return false;
             }
-            if ( building->getType() != df::enums::building_type::Hatch ) {
+            if ( building->getType() != building_type::Hatch ) {
                 return false;
             }
             return true;
@@ -661,8 +661,8 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
         if ( !blockUp )
             return false;
         
-        df::enums::tile_building_occ::tile_building_occ occupancy = index_tile<df::tile_occupancy>(blockUp->occupancy,up).bits.building;
-        if ( occupancy == df::enums::tile_building_occ::Obstacle || occupancy == df::enums::tile_building_occ::Floored || occupancy == df::enums::tile_building_occ::Impassable )
+        df::tile_building_occ occupancy = index_tile<df::tile_occupancy>(blockUp->occupancy,up).bits.building;
+        if ( occupancy == tile_building_occ::Obstacle || occupancy == tile_building_occ::Floored || occupancy == tile_building_occ::Impassable )
             return false;
         return true;
     }

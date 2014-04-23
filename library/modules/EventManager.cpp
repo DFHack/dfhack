@@ -30,6 +30,7 @@
 using namespace std;
 using namespace DFHack;
 using namespace EventManager;
+using namespace df::enums;
 
 /*
  * TODO:
@@ -322,12 +323,8 @@ static void manageJobInitiatedEvent(color_ostream& out) {
 
 //helper function for manageJobCompletedEvent
 static int32_t getWorkerID(df::job* job) {
-    for ( size_t a = 0; a < job->general_refs.size(); a++ ) {
-        if ( job->general_refs[a]->getType() != df::enums::general_ref_type::UNIT_WORKER )
-            continue;
-        return ((df::general_ref_unit_workerst*)job->general_refs[a])->unit_id;
-    }
-    return -1;
+    auto ref = findRef(job->general_refs, general_ref_type::UNIT_WORKER);
+    return ref ? ref->getID() : -1;
 }
 
 /*

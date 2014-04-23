@@ -534,7 +534,7 @@ bool Items::setOwner(df::item *item, df::unit *unit)
     {
         df::general_ref *ref = item->general_refs[i];
 
-        if (!strict_virtual_cast<df::general_ref_unit_itemownerst>(ref))
+        if (ref->getType() != general_ref_type::UNIT_ITEMOWNER)
             continue;
 
         if (auto cur = ref->getUnit())

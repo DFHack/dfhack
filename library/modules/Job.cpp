@@ -93,7 +93,7 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepEverything)
         pnew->job_items[a] = new df::job_item(*pnew->job_items[a]);
 
     for ( size_t a = 0; a < job->general_refs.size(); a++ )
-        if ( keepEverything || job->general_refs[a]->getType() != df::enums::general_ref_type::UNIT_WORKER )
+        if ( keepEverything || job->general_refs[a]->getType() != general_ref_type::UNIT_WORKER )
             pnew->general_refs.push_back(job->general_refs[a]->clone());
 
     return pnew;
@@ -265,28 +265,18 @@ df::building *DFHack::Job::getHolder(df::job *job)
 {
     CHECK_NULL_POINTER(job);
 
-    for (size_t i = 0; i < job->general_refs.size(); i++)
-    {
-        VIRTUAL_CAST_VAR(ref, df::general_ref_building_holderst, job->general_refs[i]);
-        if (ref)
-            return ref->getBuilding();
-    }
+    auto ref = getGeneralRef(job, general_ref_type::BUILDING_HOLDER);
 
-    return NULL;
+    return ref ? ref->getBuilding() : NULL;
 }
 
 df::unit *DFHack::Job::getWorker(df::job *job)
 {
     CHECK_NULL_POINTER(job);
 
-    for (size_t i = 0; i < job->general_refs.size(); i++)
-    {
-        VIRTUAL_CAST_VAR(ref, df::general_ref_unit_workerst, job->general_refs[i]);
-        if (ref)
-            return ref->getUnit();
-    }
+    auto ref = getGeneralRef(job, general_ref_type::UNIT_WORKER);
 
-    return NULL;
+    return ref ? ref->getUnit() : NULL;
 }
 
 void DFHack::Job::setJobCooldown(df::building *workshop, df::unit *worker, int cooldown)
@@ -326,8 +316,8 @@ bool DFHack::Job::removeWorker(df::job *job, int cooldown)
 
     for (size_t i = 0; i < job->general_refs.size(); i++)
     {
-        VIRTUAL_CAST_VAR(ref, df::general_ref_unit_workerst, job->general_refs[i]);
-        if (!ref)
+        df::general_ref *ref = job->general_refs[i];
+        if (ref->getType() != general_ref_type::UNIT_WORKER)
             continue;
 
         auto worker = ref->getUnit();

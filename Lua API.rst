@@ -979,6 +979,10 @@ Job module
 
   Likewise, if replacing material.
 
+* ``dfhack.job.getName(job)``
+
+  Returns the job's description, as seen in the Units and Jobs screens.
+
 Units module
 ------------
 
@@ -1186,6 +1190,14 @@ Items module
 * ``dfhack.items.getSubtypeDef(item_type, subtype)``
 
   Returns the raw definition for the given item type and subtype, or *nil* if invalid.
+
+* ``dfhack.items.getItemBaseValue(item_type, subtype, material, mat_index)``
+
+  Calculates the base value for an item of the specified type and material.
+
+* ``dfhack.items.getValue(item)``
+
+  Calculates the Basic Value of an item, as seen in the View Item screen.
 
 
 Maps module

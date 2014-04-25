@@ -1252,6 +1252,9 @@ the flags in the job item.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.job.isSuitableMaterial(job_item, mat_type, mat_index)</tt></p>
 <p>Likewise, if replacing material.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.getName(job)</tt></p>
+<p>Returns the job's description, as seen in the Units and Jobs screens.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="units-module">
@@ -1419,6 +1422,12 @@ Returns <em>false</em> in case of error.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.items.getSubtypeDef(item_type, subtype)</tt></p>
 <p>Returns the raw definition for the given item type and subtype, or <em>nil</em> if invalid.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getItemBaseValue(item_type, subtype, material, mat_index)</tt></p>
+<p>Calculates the base value for an item of the specified type and material.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.items.getValue(item)</tt></p>
+<p>Calculates the Basic Value of an item, as seen in the View Item screen.</p>
 </li>
 </ul>
 </div>

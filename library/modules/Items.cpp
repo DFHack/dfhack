@@ -705,7 +705,7 @@ static void resetUnitInvFlags(df::unit *unit, df::unit_inventory_item *inv_item)
     }
     else if (inv_item->mode == df::unit_inventory_item::StuckIn)
     {
-        unit->flags3.bits.unk2 = false;
+        unit->flags3.bits.stuck_weapon_computed = false;
     }
 }
 

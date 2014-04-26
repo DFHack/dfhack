@@ -31,6 +31,9 @@ keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 keybinding add Ctrl-Shift-N gui/rename
 keybinding add Ctrl-Shift-T "gui/rename unit-profession"
 
+# a dfhack prompt in df. Sublime text like.
+keybinding add Ctrl-Shift-P command-prompt
+
 ##############################
 # Generic adv mode bindings  #
 ##############################
@@ -89,6 +92,9 @@ keybinding add Alt-A@dwarfmode/QueryBuilding/Some/SiegeEngine gui/siege-engine
 
 # military weapon auto-select
 keybinding add Ctrl-W@layer_military/Equip/Customize/View gui/choose-weapons
+
+# military copy uniform
+keybinding add Ctrl-C@layer_military/Uniforms gui/clone-uniform
 
 # minecart Guide path
 keybinding add Alt-P@dwarfmode/Hauling/DefineStop/Cond/Guide gui/guide-path

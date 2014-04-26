@@ -1119,6 +1119,12 @@ can be omitted.</p>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.TranslateName(name[,in_english,only_last_name])</span></tt></p>
 <p>Convert a language_name or only the last name part to string.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.df2utf(string)</tt></p>
+<p>Convert a string from DF's CP437 encoding to UTF-8.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.utf2df(string)</tt></p>
+<p>Convert a string from UTF-8 to DF's CP437 encoding.</p>
+</li>
 </ul>
 <div class="section" id="gui-module">
 <h3><a class="toc-backref" href="#id20">Gui module</a></h3>
@@ -1154,6 +1160,26 @@ the container itself.</p>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.getSelectedBuilding([silent])</span></tt></p>
 <p>Returns the building selected via <em>'q'</em>, <em>'t'</em>, <em>'k'</em> or <em>'i'</em>.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.gui.writeToGamelog(text)</tt></p>
+<p>Writes a string to gamelog.txt without doing an announcement.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.makeAnnouncement(type,flags,pos,text,color[,is_bright])</span></tt></p>
+<p>Adds an announcement with given announcement_type, text, color, and brightness.
+The is_bright boolean actually seems to invert the brightness.</p>
+<p>The announcement is written to gamelog.txt. The announcement_flags
+argument provides a custom set of announcements.txt options,
+which specify if the message should actually be displayed in the
+announcement list, and whether to recenter or show a popup.</p>
+<p>Returns the index of the new announcement in <tt class="docutils literal">df.global.world.status.reports</tt>, or -1.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.gui.addCombatReport(unit,slot,report_index)</tt></p>
+<p>Adds the report with the given index (returned by makeAnnouncement)
+to the specified group of the given unit. Returns <em>true</em> on success.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.gui.addCombatReportAuto(unit,flags,report_index)</tt></p>
+<p>Adds the report with the given index to the appropriate group(s)
+of the given unit, as requested by the flags.</p>
+</li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.showAnnouncement(text,color[,is_bright])</span></tt></p>
 <p>Adds a regular announcement with given text, color, and brightness.
 The is_bright boolean actually seems to invert the brightness.</p>
@@ -1164,9 +1190,9 @@ The is_bright boolean actually seems to invert the brightness.</p>
 <li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.showPopupAnnouncement(text,color[,is_bright])</span></tt></p>
 <p>Pops up a titan-style modal announcement window.</p>
 </li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.showAutoAnnouncement(type,pos,text,color[,is_bright])</span></tt></p>
-<p>Uses the type to look up options from announcements.txt, and calls the
-above operations accordingly. If enabled, pauses and zooms to position.</p>
+<li><p class="first"><tt class="docutils literal"><span class="pre">dfhack.gui.showAutoAnnouncement(type,pos,text,color[,is_bright,unit1,unit2])</span></tt></p>
+<p>Uses the type to look up options from announcements.txt, and calls the above
+operations accordingly. The units are used to call <tt class="docutils literal">addCombatReportAuto</tt>.</p>
 </li>
 </ul>
 </div>
@@ -1193,6 +1219,14 @@ above operations accordingly. If enabled, pauses and zooms to position.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.job.getWorker(job)</tt></p>
 <p>Returns the unit performing the job.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.setJobCooldown(building,worker,timeout)</tt></p>
+<p>Prevent the worker from taking jobs at the specified workshop for the specified time.
+This doesn't decrease the timeout in any circumstances.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.removeWorker(job,timeout)</tt></p>
+<p>Removes the worker from the specified workshop job, and sets the cooldown.
+Returns <em>true</em> on success.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.job.checkBuildingsNow()</tt></p>
 <p>Instructs the game to check buildings for jobs next frame and assign workers.</p>
@@ -1299,6 +1333,10 @@ is <em>true</em>, subtracts the rust penalty.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.computeMovementSpeed(unit)</tt></p>
 <p>Computes number of frames * 100 it takes the unit to move in its current state of mind and body.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.units.computeSlowdownFactor(unit)</tt></p>
+<p>Meandering and floundering in liquid introduces additional slowdown. It is
+random, but the function computes and returns the expected mean factor as a float.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.units.getNoblePositions(unit)</tt></p>
 <p>Returns a list of tables describing noble position assignments, or <em>nil</em>.
@@ -1904,6 +1942,10 @@ Returns: <em>step_idx, sum_idx, found_ptr</em>, or <em>nil</em> if not found.</p
 The oldval, newval or delta arguments may be used to specify additional constraints.
 Returns: <em>found_index</em>, or <em>nil</em> if end reached.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.getDir(path)</tt></p>
+<p>List files in a directory.
+Returns: <em>file_names</em> or empty table if not found.</p>
+</li>
 </ul>
 </div>
 </div>
@@ -2114,6 +2156,9 @@ for i = 1,#order do output[i] = data[order[i]] end
 <p>Separating the actual reordering of the sequence in this
 way enables applying the same permutation to multiple arrays.
 This function is used by the sort plugin.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">for link,item in utils.listpairs(list)</tt></p>
+<p>Iterates a df-list structure, for example <tt class="docutils literal">df.global.world.job_list</tt>.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">utils.assign(tgt, src)</tt></p>
 <p>Does a recursive assignment of src into tgt.
@@ -3260,8 +3305,9 @@ The <tt class="docutils literal">name</tt> argument should be the name stem, as 
 <div class="section" id="save-init-script">
 <h2><a class="toc-backref" href="#id62">Save init script</a></h2>
 <p>If a save directory contains a file called <tt class="docutils literal">raw/init.lua</tt>, it is
-automatically loaded and executed every time the save is loaded. It
-can also define the following functions to be called by dfhack:</p>
+automatically loaded and executed every time the save is loaded.
+The same applies to any files called <tt class="docutils literal"><span class="pre">raw/init.d/*.lua</span></tt>. Every
+such script can define the following functions to be called by dfhack:</p>
 <ul>
 <li><p class="first"><tt class="docutils literal">function onStateChange(op) ... end</tt></p>
 <p>Automatically called from the regular onStateChange event as long
@@ -3271,7 +3317,8 @@ cleanup concerns.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">function onUnload() ... end</tt></p>
 <p>Called when the save containing the script is unloaded. This function
-should clean up any global hooks installed by the script.</p>
+should clean up any global hooks installed by the script. Note that
+when this is called, the world is already completely unloaded.</p>
 </li>
 </ul>
 <p>Within the init script, the path to the save directory is available as <tt class="docutils literal">SAVE_PATH</tt>.</p>

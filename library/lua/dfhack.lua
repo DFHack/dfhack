@@ -366,11 +366,28 @@ function dfhack.getSavePath()
 end
 
 if dfhack.is_core_context then
+    local function loadInitFile(path, name)
+        local env = setmetatable({ SAVE_PATH = path }, { __index = base_env })
+        local f,perr = loadfile(name, 't', env)
+        if f == nil then
+            if not string.match(perr, 'No such file or directory') then
+                dfhack.printerr(perr)
+            end
+        elseif safecall(f) then
+            if not internal.save_init then
+                internal.save_init = {}
+            end
+            table.insert(internal.save_init, env)
+        end
+    end
+
     dfhack.onStateChange.DFHACK_PER_SAVE = function(op)
         if op == SC_WORLD_LOADED or op == SC_WORLD_UNLOADED then
             if internal.save_init then
-                if internal.save_init.onUnload then
-                    safecall(internal.save_init.onUnload)
+                for k,v in ipairs(internal.save_init) do
+                    if v.onUnload then
+                        safecall(v.onUnload)
+                    end
                 end
                 internal.save_init = nil
             end
@@ -378,18 +395,24 @@ if dfhack.is_core_context then
             local path = dfhack.getSavePath()
 
             if path and op == SC_WORLD_LOADED then
-                local env = setmetatable({ SAVE_PATH = path }, { __index = base_env })
-                local f,perr = loadfile(path..'/raw/init.lua', 't', env)
-                if f == nil then
-                    if not string.match(perr, 'No such file or directory') then
-                        dfhack.printerr(perr)
+                loadInitFile(path, path..'/raw/init.lua')
+
+                local dirlist = dfhack.internal.getDir(path..'/raw/init.d/')
+                if dirlist then
+                    table.sort(dirlist)
+                    for i,name in ipairs(dirlist) do
+                        if string.match(name,'%.lua$') then
+                            loadInitFile(path, path..'/raw/init.d/'..name)
+                        end
                     end
-                elseif safecall(f) then
-                    internal.save_init = env
                 end
             end
-        elseif internal.save_init and internal.save_init.onStateChange then
-            safecall(internal.save_init.onStateChange, op)
+        elseif internal.save_init then
+            for k,v in ipairs(internal.save_init) do
+                if v.onStateChange then
+                    safecall(v.onStateChange, op)
+                end
+            end
         end
     end
 end

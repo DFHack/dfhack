@@ -472,15 +472,15 @@ int32_t giveSyndrome(color_ostream& out, int32_t workerId, df::syndrome* syndrom
     unitSyndrome->year = DFHack::World::ReadCurrentYear();
     unitSyndrome->year_time = DFHack::World::ReadCurrentTick();
     unitSyndrome->ticks = 0;
-    unitSyndrome->unk1 = 0;
+    unitSyndrome->wound_id = -1;
     unitSyndrome->flags = 0; //TODO: typecast?
     
     for ( size_t a = 0; a < syndrome->ce.size(); a++ ) {
         df::unit_syndrome::T_symptoms* symptom = new df::unit_syndrome::T_symptoms();
-        symptom->unk1 = 0;
-        symptom->unk2 = 0;
+        symptom->quantity = 0;
+        symptom->delay = 0;
         symptom->ticks = 0;
-        symptom->flags = 2; //TODO: ???
+        symptom->flags.bits.active = true; //TODO: ???
         unitSyndrome->symptoms.push_back(symptom);
     }
     unit->syndromes.active.push_back(unitSyndrome);

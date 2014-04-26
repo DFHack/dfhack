@@ -48,6 +48,8 @@ namespace DFHack
     DFHACK_EXPORT void strVectorToRepeatedField(RepeatedPtrField<std::string> *pf,
                                                 const std::vector<std::string> &vec);
 
+    using dfproto::StringListMessage;
+
     /**
      * Represent bitfield bits as a repeated string field.
      */
@@ -131,6 +133,8 @@ namespace DFHack
 
     class CoreService : public RPCService {
         int suspend_depth;
+
+        static int doRunLuaFunction(lua_State *L);
     public:
         CoreService();
         ~CoreService();
@@ -144,5 +148,9 @@ namespace DFHack
         // For batching
         command_result CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt);
         command_result CoreResume(color_ostream &stream, const EmptyMessage*, IntMessage *cnt);
+
+        command_result RunLua(color_ostream &stream,
+                              const dfproto::CoreRunLuaRequest *in,
+                              StringListMessage *out);
     };
 }

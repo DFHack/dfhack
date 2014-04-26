@@ -28,15 +28,15 @@ All new releases are announced in the bay12 thread: http://tinyurl.com/dfhack-ng
 =============
 Compatibility
 =============
-DFHack works on Windows XP, Vista, 7 or any modern Linux distribution.
-OSX is not supported due to lack of developers with a Mac.
+DFHack works on Windows XP, Vista, 7, any modern Linux distribution, or OS X
+10.6.8-10.9.
 
 Currently, version 0.34.11 is supported (and tested). If you need DFHack
 for older versions, look for older releases.
 
 On Windows, you have to use the SDL version of DF.
 
-It is possible to use the Windows DFHack under wine/OSX.
+It is also possible to use the Windows DFHack with Wine under Linux and OS X.
 
 ====================
 Installation/Removal
@@ -329,6 +329,13 @@ Options:
                           The building must be one of stockpile, workshop, furnace, trap,
                           siege engine or an activity zone.
 
+command-prompt
+--------------
+A one line command prompt in df. Same as entering command into dfhack console. Best 
+used as a keybinding. Can be called with optional "entry" that will start prompt with 
+that pre-filled.
+
+.. image:: images/command-prompt.png
 
 Adventure mode
 ==============
@@ -489,7 +496,7 @@ Options:
 createitem
 ----------
 Allows creating new items of arbitrary types and made of arbitrary materials.
-Any items created are spawned at the feet of the selected unit.
+By default, items created are spawned at the feet of the selected unit.
 
 Specify the item and material information as you would indicate them in custom reaction raws, with the following differences:
 * Separate the item and material with a space rather than a colon
@@ -505,6 +512,14 @@ Examples:
    Create tower-cap logs.
  ``createitem FISH FISH_SHAD:MALE 5``
    Create a stack of 5 cleaned shad, ready to eat.
+
+To change where new items are placed, first run the command with a destination type while an appropriate destination is selected.
+
+Options:
+ :floor:     Subsequent items will be placed on the floor beneath the selected unit's feet.
+ :item:      Subsequent items will be stored inside the currently selected item.
+ :building:  Subsequent items will become part of the currently selected building. Best used for loading traps; do not use with workshops, or you will need to deconstruct the building to use the item.
+
 
 deramp (by zilpin)
 ------------------
@@ -676,28 +691,38 @@ tile. Can be used from a hotkey.
 
 tubefill
 --------
-Fills all the adamantine veins again. Veins that were empty will be filled in
-too, but might still trigger a demon invasion (this is a known bug).
-
-extirpate
----------
-A tool for getting rid of trees and shrubs. By default, it only kills
-a tree/shrub under the cursor. The plants are turned into ashes instantly.
+Fills all the adamantine veins again. Veins that were hollow will be left
+alone.
 
 Options:
+ :hollow:            fill in naturally hollow veins too
 
+Beware that filling in hollow veins will trigger a demon invasion on top of
+your miner when you dig into the region that used to be hollow.
+
+plant
+-----
+A tool for creating shrubs, growing, or getting rid of them.
+
+Subcommands:
+ :create: Create a new shrub/sapling.
+ :grow: Make saplings grow into trees.
+ :extirpate: Kills trees and shrubs, turning them into ashes instantly.
+ :immolate: Similar to extirpate, but sets the plants on fire instead. The fires can and *will* spread ;)
+
+``create`` creates a new sapling under the cursor. Takes a raw ID as
+argument (e.g. TOWER_CAP). The cursor must be located on a dirt or grass
+floor tile.
+
+``grow`` works on the sapling under the cursor, and turns it into a tree.
+Works on all shrubs of the map if the cursor is hidden.
+
+``extirpate`` and ``immolate`` work only on the plant under the cursor.
+
+For mass effects, use one of the additional options:
  :shrubs:            affect all shrubs on the map
  :trees:             affect all trees on the map
  :all:               affect every plant!
-
-grow
-----
-Makes all saplings present on the map grow into trees (almost) instantly.
-
-immolate
---------
-Very similar to extirpate, but additionally sets the plants on fire. The fires
-can and *will* spread ;)
 
 regrass
 -------
@@ -1959,6 +1984,21 @@ Usage:
 :misery disable:   stop adding new negative thoughts. This will not remove existing duplicated thoughts. Equivalent to "misery 1"
 :misery clear:     remove fake thoughts added in this session of DF. Saving makes them permanent! Does not change factor.
 
+strangemood
+-----------
+Creates a strange mood job the same way the game itself normally does it.
+
+Options:
+
+ :-force:       Ignore normal strange mood preconditions (no recent mood, minimum moodable population, artifact limit not reached).
+ :-unit:        Make the strange mood strike the selected unit instead of picking one randomly. Unit eligibility is still enforced.
+ :-type T:      Force the mood to be of a particular type instead of choosing randomly based on happiness.
+                Valid values are "fey", "secretive", "possessed", "fell", and "macabre".
+ :-skill S:     Force the mood to use a specific skill instead of choosing the highest moodable skill.
+                Valid values are "miner", "carpenter", "engraver", "mason", "tanner", "weaver", "clothier", "weaponsmith", "armorsmith", "metalsmith", "gemcutter", "gemsetter", "woodcrafter", "stonecrafter", "metalcrafter", "glassmaker", "leatherworker", "bonecarver", "bowyer", and "mechanic".
+
+Known limitations: if the selected unit is currently performing a job, the mood will not be started.
+
 =======
 Scripts
 =======
@@ -2008,6 +2048,13 @@ Scripts in this subdirectory fix various bugs and issues, some of them obscure.
   in memory and patching up some invalid reference fields. Needs to be run
   every time a save game is loaded; putting ``fix/cloth-stockpile enable``
   in ``dfhack.init`` makes it run automatically.
+
+* fix/build-location
+
+  Fixes construction jobs that are stuck trying to build a wall while standing
+  on the same exact tile (bug 5991), designates the tile restricted traffic to
+  hopefully avoid jamming it again, and unsuspends them.
+
 
 gui/*
 =====
@@ -2092,6 +2139,9 @@ With the special argument ``him``, targets only the selected creature.
 With the special argument ``undead``, targets all undeads on the map,
 regardless of their race.
 
+When specifying a race, a caste can be specified to further restrict the
+targeting. To do that, append and colon and the caste name after the race.
+
 Any non-dead non-caged unit of the specified race gets its ``blood_count``
 set to 0, which means immediate death at the next game tick. For creatures
 such as vampires, it also sets animal.vanish_countdown to 2.
@@ -2107,6 +2157,7 @@ but ignore caged/chained creatures.
 Ex::
 
     exterminate gob
+    exterminate gob:male
 
 To kill a single creature, select the unit with the 'v' cursor and::
 
@@ -2171,7 +2222,12 @@ Unrecognized characters are ignored (eg the 'skip this tile' in the sample).
 Empty lines and data after a ``#`` are ignored as comments.
 To skip a row in your design, use a single ``;``.
 
-The script takes the plan filename, starting from the root df folder.
+One comment in the file may contain the phrase ``start(3,5)``. It is interpreted
+as an offset for the pattern: instead of starting at the cursor, it will start
+3 tiles left and 5 tiles up from the cursor.
+
+The script takes the plan filename, starting from the root df folder (where
+Dwarf Fortress.exe is found).
 
 invasion-now
 ============
@@ -2185,6 +2241,7 @@ Triggers an invasion, or several in the near future.
 `invasion-now civName start end` trigger an invasion from civName in about 10*start ticks, and continue triggering invasions every ten ticks afterward until about 10*end ticks have passed
 
 Probably fails if the start time of a triggered invasion is later than the start of the next year.
+
 digmat
 ======
 Designates a tile for digging. Monitors the tile, and when it is dug out, add
@@ -2357,12 +2414,16 @@ are mostly implemented by lua scripts.
     As an exception, the tweak plugin described above does not follow this
     guideline because it arguably just fixes small usability bugs in the game UI.
 
+    All of these tools are disabled by default - in order to make them available,
+    you must enable the plugins which provide them.
+
 
 Dwarf Manipulator
 =================
 
-Implemented by the manipulator plugin. To activate, open the unit screen and
-press 'l'.
+Implemented by the 'manipulator' plugin.
+
+To activate, open the unit screen and press 'l'.
 
 .. image:: images/manipulator.png
 
@@ -2412,6 +2473,8 @@ directly to the main dwarf mode screen.
 Search
 ======
 
+Implemented by the 'search' plugin.
+
 The search plugin adds search to the Stocks, Animals, Trading, Stockpile,
 Noble (assignment candidates), Military (position candidates), Burrows
 (unit list), Rooms, Announcements, Job List and Unit List screens.
@@ -2452,9 +2515,11 @@ using Permit Fats again while the list is filtered.
 AutoMaterial
 ============
 
-The automaterial plugin makes building constructions (walls, floors, fortifications,
-etc) a little bit easier by saving you from having to trawl through long lists of
-materials each time you place one.
+Implemented by the 'automaterial' plugin.
+
+This makes building constructions (walls, floors, fortifications, etc) a little bit
+easier by saving you from having to trawl through long lists of materials each time
+you place one.
 
 Firstly, it moves the last used material for a given construction type to the top of
 the list, if there are any left. So if you build a wall with chalk blocks, the next
@@ -2583,6 +2648,16 @@ only that entry, and does it even if it is not 'individual choice'.
 
 Rationale: individual choice seems to be unreliable when there is a weapon shortage,
 and may lead to inappropriate weapons being selected.
+
+
+gui/clone-uniform
+=================
+
+Bind to a key (the example config uses Ctrl-C), and activate in the Uniforms
+page of the military screen with the cursor in the leftmost list.
+
+When invoked, the script duplicates the currently selected uniform template,
+and selects the newly created copy.
 
 
 gui/guide-path
@@ -2739,7 +2814,7 @@ of currently assigned racks for every valid squad.
 
 
 gui/advfort
-=============
+===========
 
 This script allows to perform jobs in adventure mode. For more complete help
 press '?' while script is running. It's most confortable to use this as a 
@@ -2754,21 +2829,30 @@ keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
   
 * job - selects that job (e.g. Dig or FellTree)
 
+An example of player digging in adventure mode:
+
+.. image:: images/advfort.png
+
+.. admonition:: DISCLAIMER
+
+    advfort changes only persist in non procedural sites. Namely: player forts, caves, camps.
+
 gui/companion-order
-=======================
+===================
 
 A script to issue orders for companions. Select companions with lower case chars, issue orders with upper 
 case. Must be in look or talk mode to issue command on tile.
+
+.. image:: images/companion-order.png
 
 * move - orders selected companions to move to location. If companions are following they will move no more than 3 tiles from you.
 * equip - try to equip items on the ground.
 * pick-up - try to take items into hand (also wield)
 * unequip - remove and drop equipment
 * unwield - drop held items
-* wait - temporarely remove from party
+* wait - temporarily remove from party
 * follow - rejoin the party after "wait"
 * leave - remove from party (can be rejoined by talking)
-
 
 gui/gm-editor
 =============
@@ -2779,13 +2863,25 @@ There are three ways to open this editor:
   or viewed (e.g. unit/item description screen)
 
 * using gui/gm-editor <lua command> - executes lua command and opens editor on
-  it's results (e.g. gui/gm-editor "df.global.world.items.all" shows all items)
+  its results (e.g. gui/gm-editor "df.global.world.items.all" shows all items)
   
 * using gui/gm-editor dialog - shows an in game dialog to input lua command. Works
   the same as version above.
   
+.. image:: images/gm-editor.png
+
 This editor allows to change and modify almost anything in df. Press '?' for an 
 in-game help.
+
+gui/mod-manager
+===============
+
+A way to simply install and remove small mods. It looks for specially formated mods in
+df subfolder 'mods'. Mods are not included, for example mods see: `github mini mod repository <https://github.com/warmist/df-mini-mods>`_
+
+.. image:: images/mod-manager.png
+
+
 
 =============
 Behavior Mods

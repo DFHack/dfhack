@@ -190,6 +190,13 @@ bool MaterialInfo::find(const std::vector<std::string> &items)
     }
     else if (items.size() == 2)
     {
+        if (items[0] == "COAL" && findBuiltin(items[0])) {
+            if (items[1] == "COKE")
+                this->index = 0;
+            else if (items[1] == "CHARCOAL")
+                this->index = 1;
+            return true;
+        }
         if (items[1] == "NONE" && findBuiltin(items[0]))
             return true;
         if (findPlant(items[0], items[1]))

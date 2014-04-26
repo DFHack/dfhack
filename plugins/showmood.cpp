@@ -169,7 +169,13 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
         // total amount of stuff fetched so far
         int count_got = 0;
         for (size_t i = 0; i < job->items.size(); i++)
-            count_got += job->items[i]->item->getTotalDimension();
+        {
+            df::item_type type = job->job_items[i]->item_type;
+            if (type == item_type::BAR || type == item_type::CLOTH)
+                count_got += job->items[i]->item->getTotalDimension();
+            else
+                count_got += 1;
+        }
 
         for (size_t i = 0; i < job->job_items.size(); i++)
         {
@@ -292,7 +298,8 @@ DFHACK_PLUGIN("showmood");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("showmood", "Shows items needed for current strange mood.", df_showmood));
+    commands.push_back(PluginCommand("showmood", "Shows items needed for current strange mood.", df_showmood, false,
+        "Run this command without any parameters to display information on the currently active Strange Mood."));
     return CR_OK;
 }
 

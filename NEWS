@@ -1,6 +1,32 @@
 DFHack future
 
- - Is not yet known.
+  Internals:
+    - support for calling a lua function via a protobuf request (demonstrated by dfhack-run --lua).
+    - Lua API for listing files in directory. Needed for mod-manager.
+    - Lua API for creating unit combat reports and writing to gamelog.
+    - support for multiple raw/init.d/*.lua init scripts in one save.
+
+  New scripts:
+    - gui/mod-manager: allows installing/uninstalling mods into df from df/mods directory.
+    - gui/clone-uniform: duplicates the currently selected uniform in the military screen.
+    - fix/build-location: partial work-around for bug 5991 (trying to build wall while standing on it)
+
+  New commands:
+    - move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands
+    - 'plant create' - spawn a new shrub under the cursor
+    - command-prompt: a dfhack command prompt in df.
+
+  Misc improvements:
+    - digfort: improved csv parsing, add start() comment handling
+    - exterminate: allow specifying a caste (exterminate gob:male)
+    - createitem: in adventure mode it now defaults to the controlled unit as maker.
+
+  Siege engine plugin:
+    - engine quality and distance to target now affect accuracy
+    - firing the siege engine at a target produces a combat report
+    - improved movement speed computation for meandering units
+    - operators in Prepare To Fire mode are released from duty once
+      hungry/thirsty if there is a free replacement
 
 DFHack v0.34.11-r4
 

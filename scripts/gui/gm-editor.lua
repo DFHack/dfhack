@@ -2,6 +2,7 @@
 local gui = require 'gui'
 local dialog = require 'gui.dialogs'
 local widgets =require 'gui.widgets'
+local guiScript = require 'gui.script'
 local args={...}
 
 local keybindings={
@@ -10,6 +11,7 @@ local keybindings={
     lua_set={key="CUSTOM_ALT_S",desc="Set by using a lua function"},
     insert={key="CUSTOM_ALT_I",desc="Insert a new value to the vector"},
     delete={key="CUSTOM_ALT_D",desc="Delete selected entry"},
+    reinterpret={key="CUSTOM_ALT_R",desc="Open selected entry as something else"},
     help={key="HELP",desc="Show this help"},
     NOT_USED={key="SEC_SELECT",desc="Choose an enum value from a list"}, --not a binding...
 }
@@ -180,6 +182,14 @@ function GmEditorUi:editSelectedEnum(index,choice)
         qerror("not an enum")
     end
 end
+function GmEditorUi:openReinterpret(key)
+    local trg=self:currentTarget()
+    dialog.showInputPrompt(tostring(trg_key),"Enter new type:",COLOR_WHITE,
+                "",function(choice)
+                    local ntype=df[tp]
+                    self:pushTarget(df.reinterpret_cast(ntype,trg.target[key]))
+                end)
+end
 function GmEditorUi:editSelected(index,choice)
     local trg=self:currentTarget()
     local trg_key=trg.keys[index]
@@ -242,17 +252,17 @@ function GmEditorUi:onInput(keys)
         local _,stoff=df.sizeof(trg.target)
         local size,off=df.sizeof(trg.target:_field(self:getSelectedKey()))
         dialog.showMessage("Offset",string.format("Size hex=%x,%x dec=%d,%d\nRelative hex=%x dec=%d",size,off,size,off,off-stoff,off-stoff),COLOR_WHITE)
-    --elseif keys.CUSTOM_ALT_F then --filter?
+
     elseif keys[keybindings.find.key] then
         self:find()
     elseif keys[keybindings.lua_set.key] then
         self:set(self:getSelectedKey())
-    --elseif keys.CUSTOM_I then
-    --    self:insertSimple()
     elseif keys[keybindings.insert.key] then --insert
         self:insertNew()
     elseif keys[keybindings.delete.key] then --delete
         self:deleteSelected(self:getSelectedKey())
+    elseif keys[keybindings.reinterpret.key] then 
+        self:openReinterpret(self:getSelectedKey())
     end
 
     self.super.onInput(self,keys)
@@ -270,13 +280,6 @@ function getStringValue(trg,field)
     end
     end)
     return text
-    
-    --[[local ok,ret=pcall(function() return trg.target[field]._enum end)
-    if ok then
-        print(trg.target[field]._kind,ok,ret)
-        text=text.."("..tostring(ret[field])..")"
-    end
-    return text]]
 end
 function GmEditorUi:updateTarget(preserve_pos,reindex)
     local trg=self:currentTarget()
@@ -337,6 +340,8 @@ if #args~=0 then
             show_editor(t)
         end
         dialog.showInputPrompt("Gm Editor", "Object to edit:", COLOR_GRAY, "",thunk)
+    elseif args[1]=="free" then
+        show_editor(df.reinterpret_cast(df[args[2]],args[3]))
     else
         local t=load("return "..args[1])()
         show_editor(t)

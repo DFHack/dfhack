@@ -997,16 +997,22 @@ df::proj_itemst *Items::makeProjectile(MapExtras::MapCache &mc, df::item *item)
     if (!ref)
         return NULL;
 
+    auto proj = df::allocate<df::proj_itemst>();
+    if (!proj) {
+        delete ref;
+        return NULL;
+    }
+
     if (!detachItem(mc, item))
     {
         delete ref;
+        delete proj;
         return NULL;
     }
 
     item->pos = pos;
     item->flags.bits.in_job = true;
 
-    auto proj = new df::proj_itemst();
     proj->link = new df::proj_list_link();
     proj->link->item = proj;
     proj->id = (*proj_next_id)++;

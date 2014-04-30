@@ -1097,49 +1097,49 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
         return 0;
 
     case item_type::WEAPON:
-        if (item_subtype >= 0 && item_subtype < world->raws.itemdefs.weapons.size())
+        if (size_t(item_subtype) < world->raws.itemdefs.weapons.size())
             value = world->raws.itemdefs.weapons[item_subtype]->value;
         else
             value = 10;
         break;
 
     case item_type::ARMOR:
-        if (item_subtype >= 0 && item_subtype < world->raws.itemdefs.armor.size())
+        if (size_t(item_subtype) < world->raws.itemdefs.armor.size())
             value = world->raws.itemdefs.armor[item_subtype]->value;
         else
             value = 10;
         break;
 
     case item_type::SHOES:
-        if (item_subtype >= 0 && item_subtype < world->raws.itemdefs.shoes.size())
+        if (size_t(item_subtype) < world->raws.itemdefs.shoes.size())
             value = world->raws.itemdefs.shoes[item_subtype]->value;
         else
             value = 5;
         break;
 
     case item_type::SHIELD:
-        if (item_subtype >= 0 && item_subtype < world->raws.itemdefs.shields.size())
+        if (size_t(item_subtype) < world->raws.itemdefs.shields.size())
             value = world->raws.itemdefs.shields[item_subtype]->value;
         else
             value = 10;
         break;
 
     case item_type::HELM:
-        if (item_subtype >= 0 && item_subtype < world->raws.itemdefs.helms.size())
+        if (size_t(item_subtype) < world->raws.itemdefs.helms.size())
             value = world->raws.itemdefs.helms[item_subtype]->value;
         else
             value = 10;
         break;
 
     case item_type::GLOVES:
-        if (item_subtype >= 0 && item_subtype < world->raws.itemdefs.gloves.size())
+        if (size_t(item_subtype) < world->raws.itemdefs.gloves.size())
             value = world->raws.itemdefs.gloves[item_subtype]->value;
         else
             value = 5;
         break;
 
     case item_type::AMMO:
-        if (item_subtype >= 0 && item_subtype < world->raws.itemdefs.ammo.size())
+        if (size_t(item_subtype) < world->raws.itemdefs.ammo.size())
             value = world->raws.itemdefs.ammo[item_subtype]->value;
         else
             value = 1;
@@ -1156,10 +1156,10 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
     case item_type::FISH_RAW:
     case item_type::EGG:
         value = 2;
-        if (mat_type >= 0 && mat_type < world->raws.creatures.all.size())
+        if (size_t(mat_type) < world->raws.creatures.all.size())
         {
             auto creature = world->raws.creatures.all[mat_type];
-            if (mat_subtype >= 0 && mat_type < creature->caste.size())
+            if (size_t(mat_subtype) < creature->caste.size())
             {
                 auto caste = creature->caste[mat_subtype];
                 mat_type = caste->misc.bone_mat;
@@ -1170,10 +1170,10 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
 
     case item_type::VERMIN:
         value = 0;
-        if (mat_type >= 0 && mat_type < world->raws.creatures.all.size())
+        if (size_t(mat_type) < world->raws.creatures.all.size())
         {
             auto creature = world->raws.creatures.all[mat_type];
-            if (mat_subtype >= 0 && mat_type < creature->caste.size())
+            if (size_t(mat_subtype) < creature->caste.size())
                 value = creature->caste[mat_subtype]->misc.petvalue;
         }
         value /= 2;
@@ -1182,10 +1182,10 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
         return value;
 
     case item_type::PET:
-        if (mat_type >= 0 && mat_type < world->raws.creatures.all.size())
+        if (size_t(mat_type) < world->raws.creatures.all.size())
         {
             auto creature = world->raws.creatures.all[mat_type];
-            if (mat_subtype >= 0 && mat_type < creature->caste.size())
+            if (size_t(mat_subtype) < creature->caste.size())
                 return creature->caste[mat_subtype]->misc.petvalue;
         }
         return 0;
@@ -1209,7 +1209,7 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
         break;
 
     case item_type::PANTS:
-        if (item_subtype >= 0 && item_subtype < world->raws.itemdefs.pants.size())
+        if (size_t(item_subtype) < world->raws.itemdefs.pants.size())
             value = world->raws.itemdefs.pants[item_subtype]->value;
         else
             value = 10;
@@ -1227,7 +1227,7 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
         break;
 
     case item_type::TRAPCOMP:
-        if (item_subtype >= 0 && item_subtype < world->raws.itemdefs.trapcomps.size())
+        if (size_t(item_subtype) < world->raws.itemdefs.trapcomps.size())
             value = world->raws.itemdefs.trapcomps[item_subtype]->value;
         else
             value = 10;
@@ -1241,7 +1241,7 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
         return 0;
 
     case item_type::TOOL:
-        if (item_subtype >= 0 && item_subtype < world->raws.itemdefs.tools.size())
+        if (size_t(item_subtype) < world->raws.itemdefs.tools.size())
             value = world->raws.itemdefs.tools[item_subtype]->value;
         else
             value = 10;
@@ -1313,9 +1313,12 @@ int Items::getValue(df::item *item)
     // Handle vermin swarms
     if (item_type == item_type::VERMIN || item_type == item_type::PET)
     {
-         int divisor = world->raws.creatures.all[mat_type]->caste[mat_subtype]->misc.petvalue_divisor;
-         if (divisor > 1)
-             value /= divisor;
+        int divisor = 1;
+        auto creature = vector_get(world->raws.creatures.all, mat_type);
+        if (creature && size_t(mat_subtype) < creature->caste.size())
+            divisor = creature->caste[mat_subtype]->misc.petvalue_divisor;
+        if (divisor > 1)
+            value /= divisor;
     }
     return value;
 }

@@ -838,9 +838,10 @@ private:
         bad_flags.whole = 0;
 
 #define F(x) bad_flags.bits.x = true;
-        F(dump); F(forbid); F(garbage_collect);
-        F(hostile); F(on_fire); F(rotten); F(trader);
+        F(dump); F(forbid); F(garbage_collect); F(melt);
+        F(hostile); F(on_fire); F(rotten); F(trader); 
         F(in_building); F(construction); F(artifact);
+        F(owned); F(in_chest); F(in_job);
 #undef F
 
         std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
@@ -859,16 +860,8 @@ private:
             if (itype == item_type::BOX && item->isBag())
                 continue; //Skip bags
 
-            if (item->flags.bits.artifact)
+            if (item->isAssignedToStockpile())
                 continue;
-
-            if (item->flags.bits.in_job ||
-                item->isAssignedToStockpile() ||
-                item->flags.bits.owned ||
-                item->flags.bits.in_chest)
-            {
-                continue;
-            }
 
             available_item_vectors[itype].push_back(item);
         }

@@ -24,63 +24,12 @@ distribution.
 
 #include "Internal.h"
 
-#define _WIN32_WINNT 0x0501 // needed for INPUT struct
-#define WINVER 0x0501       // OpenThread(), PSAPI, Toolhelp32
+#define _WIN32_WINNT 0x0501
+#define WINVER 0x0501
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <psapi.h>
-#include <tlhelp32.h>
-
-typedef LONG NTSTATUS;
-#define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
-
-// FIXME: it is uncertain how these map to 64bit
-typedef struct _DEBUG_BUFFER
-{
-    HANDLE SectionHandle;
-    PVOID  SectionBase;
-    PVOID  RemoteSectionBase;
-    ULONG  SectionBaseDelta;
-    HANDLE  EventPairHandle;
-    ULONG  Unknown[2];
-    HANDLE  RemoteThreadHandle;
-    ULONG  InfoClassMask;
-    ULONG  SizeOfInfo;
-    ULONG  AllocatedSize;
-    ULONG  SectionSize;
-    PVOID  ModuleInformation;
-    PVOID  BackTraceInformation;
-    PVOID  HeapInformation;
-    PVOID  LockInformation;
-    PVOID  Reserved[8];
-} DEBUG_BUFFER, *PDEBUG_BUFFER;
-
-typedef struct _DEBUG_HEAP_INFORMATION
-{
-    ULONG Base; // 0×00
-    ULONG Flags; // 0×04
-    USHORT Granularity; // 0×08
-    USHORT Unknown; // 0x0A
-    ULONG Allocated; // 0x0C
-    ULONG Committed; // 0×10
-    ULONG TagCount; // 0×14
-    ULONG BlockCount; // 0×18
-    ULONG Reserved[7]; // 0x1C
-    PVOID Tags; // 0×38
-    PVOID Blocks; // 0x3C
-} DEBUG_HEAP_INFORMATION, *PDEBUG_HEAP_INFORMATION;
-
-// RtlQueryProcessDebugInformation.DebugInfoClassMask constants
-#define PDI_MODULES                       0x01
-#define PDI_BACKTRACE                     0x02
-#define PDI_HEAPS                         0x04
-#define PDI_HEAP_TAGS                     0x08
-#define PDI_HEAP_BLOCKS                   0x10
-#define PDI_LOCKS                         0x20
-
-extern "C" __declspec(dllimport) NTSTATUS __stdcall RtlQueryProcessDebugInformation( IN ULONG  ProcessId, IN ULONG  DebugInfoClassMask, IN OUT PDEBUG_BUFFER  DebugBuffer);
-extern "C" __declspec(dllimport) PDEBUG_BUFFER __stdcall RtlCreateQueryDebugBuffer( IN ULONG  Size, IN BOOLEAN  EventPair);
-extern "C" __declspec(dllimport) NTSTATUS __stdcall RtlDestroyQueryDebugBuffer( IN PDEBUG_BUFFER  DebugBuffer);
 
 #include <cstring>
 #include <cstdio>
@@ -106,8 +55,6 @@ namespace DFHack
             sections = 0;
         };
         HANDLE my_handle;
-        vector <HANDLE> threads;
-        vector <HANDLE> stoppedthreads;
         uint32_t my_pid;
         IMAGE_NT_HEADERS pe_header;
         IMAGE_SECTION_HEADER * sections;
@@ -138,7 +85,7 @@ Process::Process(VersionInfoFactory * factory)
     // read from this process
     try
     {
-        uint32_t pe_offset = Process::readDWord(d->base+0x3C);
+        uint32_t pe_offset = readDWord(d->base+0x3C);
         read(d->base + pe_offset, sizeof(d->pe_header), (uint8_t *)&(d->pe_header));
         const size_t sectionsSize = sizeof(IMAGE_SECTION_HEADER) * d->pe_header.FileHeader.NumberOfSections;
         d->sections = (IMAGE_SECTION_HEADER *) malloc(sectionsSize);
@@ -151,24 +98,10 @@ Process::Process(VersionInfoFactory * factory)
     VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(d->pe_header.FileHeader.TimeDateStamp);
     if(vinfo)
     {
-        vector<uint32_t> threads_ids;
-        if(!getThreadIDs( threads_ids ))
-        {
-            // thread enumeration failed.
-            return;
-        }
         identified = true;
         // give the process a data model and memory layout fixed for the base of first module
         my_descriptor  = new VersionInfo(*vinfo);
         my_descriptor->rebaseTo(getBase());
-        for(size_t i = 0; i < threads_ids.size();i++)
-        {
-            HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads_ids[i]);
-            if(hThread)
-                d->threads.push_back(hThread);
-            else
-                cerr << "Unable to open thread :" << hex << (DWORD) threads_ids[i] << endl;
-        }
     }
 }
 
@@ -176,41 +109,10 @@ Process::~Process()
 {
     // destroy our rebased copy of the memory descriptor
     delete my_descriptor;
-    for(size_t i = 0; i < d->threads.size(); i++)
-        CloseHandle(d->threads[i]);
     if(d->sections != NULL)
         free(d->sections);
 }
 
-bool Process::getThreadIDs(vector<uint32_t> & threads )
-{
-    HANDLE AllThreads = INVALID_HANDLE_VALUE;
-    THREADENTRY32 te32;
-
-    AllThreads = CreateToolhelp32Snapshot( TH32CS_SNAPTHREAD, 0 );
-    if( AllThreads == INVALID_HANDLE_VALUE )
-    {
-        return false;
-    }
-    te32.dwSize = sizeof(THREADENTRY32 );
-
-    if( !Thread32First( AllThreads, &te32 ) )
-    {
-        CloseHandle( AllThreads );
-        return false;
-    }
-
-    do
-    {
-        if( te32.th32OwnerProcessID == d->my_pid )
-        {
-            threads.push_back(te32.th32ThreadID);
-        }
-    } while( Thread32Next(AllThreads, &te32 ) );
-
-    CloseHandle( AllThreads );
-    return true;
-}
 /*
 typedef struct _MEMORY_BASIC_INFORMATION
 {

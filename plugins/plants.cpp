@@ -65,10 +65,8 @@ static bool getoptions( vector <string> & parameters, bool & shrubs, bool & tree
  * And he cursed the plants and trees for their bloodless wood, turning them into ash and smoldering ruin.
  * Armok was pleased and great temples were built by the dwarves, for they shared his hatred for trees and plants.
  */
-static command_result immolations (color_ostream &out, do_what what, bool shrubs, bool trees, bool help)
+static command_result immolations (color_ostream &out, do_what what, bool shrubs, bool trees)
 {
-    if(help)
-        return CR_WRONG_USAGE;
     CoreSuspender suspend;
     if (!Maps::IsValid())
     {
@@ -132,32 +130,32 @@ static command_result immolations (color_ostream &out, do_what what, bool shrubs
     return CR_OK;
 }
 
-command_result df_immolate (color_ostream &out, vector <string> & parameters)
+command_result df_immolate (color_ostream &out, vector <string> & parameters, do_what what)
 {
     bool shrubs = false, trees = false, help = false;
-    if(getoptions(parameters,shrubs,trees,help))
+    if (getoptions(parameters, shrubs, trees, help) && !help)
     {
-        return immolations(out,do_immolate,shrubs,trees,help);
+        return immolations(out, what, shrubs, trees);
     }
-    else
-    {
-        out.printerr("Invalid parameter!\n");
-        return CR_WRONG_USAGE;
-    }
-}
 
-command_result df_extirpate (color_ostream &out, vector <string> & parameters)
-{
-    bool shrubs = false, trees = false, help = false;
-    if(getoptions(parameters,shrubs,trees,help))
-    {
-        return immolations(out,do_extirpate,shrubs,trees,help);
-    }
+    string mode;
+    if (what == do_immolate)
+        mode = "Set plants on fire";
     else
-    {
+        mode = "Kill plants";
+
+    if (!help)
         out.printerr("Invalid parameter!\n");
-        return CR_WRONG_USAGE;
-    }
+
+    out << "Usage:\n" <<
+        mode << " (under cursor, 'shrubs', 'trees' or 'all').\n"
+        "Without any options, this command acts on the plant under the cursor.\n"
+        "Options:\n"
+        "shrubs   - affect all shrubs\n"
+        "trees    - affect all trees\n"
+        "all      - affect all plants\n";
+
+    return CR_OK;
 }
 
 command_result df_grow (color_ostream &out, vector <string> & parameters)
@@ -165,8 +163,14 @@ command_result df_grow (color_ostream &out, vector <string> & parameters)
     for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
-            return CR_WRONG_USAGE;
+        {
+            out << "Usage:\n"
+                "This command turns all living saplings on the map into full-grown trees.\n"
+                "With active cursor, work on the targetted one only.\n";
+            return CR_OK;
+        }
     }
+
     CoreSuspender suspend;
 
     if (!Maps::IsValid())
@@ -217,7 +221,13 @@ command_result df_grow (color_ostream &out, vector <string> & parameters)
 command_result df_createplant (color_ostream &out, vector <string> & parameters)
 {
     if ((parameters.size() != 1) || (parameters[0] == "help" || parameters[0] == "?"))
-        return CR_WRONG_USAGE;
+    {
+        out << "Usage:\n"
+            "Create a new plant at the cursor.\n"
+            "Specify the type of plant to create by its raw ID (e.g. TOWER_CAP or MUSHROOM_HELMET_PLUMP).\n"
+            "Only shrubs and saplings can be placed, and they must be located on a dirt or grass floor.\n";
+        return CR_OK;
+    }
 
     CoreSuspender suspend;
 
@@ -308,25 +318,39 @@ command_result df_createplant (color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
+command_result df_plant (color_ostream &out, vector <string> & parameters)
+{
+    if (parameters.size() >= 1)
+    {
+        if (parameters[0] == "grow") {
+            parameters.erase(parameters.begin());
+            return df_grow(out, parameters);
+        } else
+        if (parameters[0] == "immolate") {
+            parameters.erase(parameters.begin());
+            return df_immolate(out, parameters, do_immolate);
+        } else
+        if (parameters[0] == "extirpate") {
+            parameters.erase(parameters.begin());
+            return df_immolate(out, parameters, do_extirpate);
+        } else
+        if (parameters[0] == "create") {
+            parameters.erase(parameters.begin());
+            return df_createplant(out, parameters);
+        }
+    }
+    return CR_WRONG_USAGE;
+}
+
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("grow", "Grows saplings into trees (with active cursor, only the targetted one).", df_grow, false,
-        "This command turns all living saplings on the map into full-grown trees.\n"));
-    commands.push_back(PluginCommand("immolate", "Set plants on fire (under cursor, 'shrubs', 'trees' or 'all').", df_immolate, false,
-        "Without any options, this command burns a plant under the cursor.\n"
-        "Options:\n"
-        "shrubs   - affect all shrubs\n"
-        "trees    - affect all trees\n"
-        "all      - affect all plants\n"));
-    commands.push_back(PluginCommand("extirpate", "Kill plants (same mechanics as immolate).", df_extirpate, false,
-        "Without any options, this command destroys a plant under the cursor.\n"
-        "Options:\n"
-        "shrubs   - affect all shrubs\n"
-        "trees    - affect all trees\n"
-        "all      - affect all plants\n"));
-    commands.push_back(PluginCommand("createplant", "Create a new plant at the cursor.", df_createplant, false,
-        "Specify the type of plant to create by its raw ID (e.g. TOWER_CAP or MUSHROOM_HELMET_PLUMP).\n"
-        "Only shrubs and saplings can be placed, and they must be located on a dirt or grass floor.\n"));
+    commands.push_back(PluginCommand("plant", "Plant creation and removal.", df_plant, false,
+        "Command to create, grow or remove plants on the map. For more details, check the subcommand help :\n"
+        "plant grow help      - Grows saplings into trees.\n"
+        "plant immolate help  - Set plants on fire.\n"
+        "plant extirpate help - Kill plants.\n"
+        "plant create help    - Create a new plant.\n"));
+
     return CR_OK;
 }
 

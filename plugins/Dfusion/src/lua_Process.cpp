@@ -144,21 +144,6 @@ static int lua_Process_isIdentified(lua_State *S)
 	st.push(c->isIdentified());
 	return 1;
 }
-static int lua_Process_getThreadIDs(lua_State *S)
-{
-	lua::state st(S);
-	DFHack::Process* c=GetProcessPtr(st);
-	std::vector<uint32_t> threads;
-	c->getThreadIDs(threads);
-	st.newtable();
-	for(size_t i=0;i<threads.size();i++)
-	{
-		st.push(i);
-		st.push(threads[i]);
-		st.settable();
-	}
-	return 1;
-}
 static int lua_Process_getMemRanges(lua_State *S)
 {
 	lua::state st(S);
@@ -261,7 +246,6 @@ const luaL_Reg lua_process_func[]=
 	PROC_FUNC(readCString ),
 	PROC_FUNC(isSuspended),
 	PROC_FUNC(isIdentified),
-	PROC_FUNC(getThreadIDs),
 	PROC_FUNC(getMemRanges),
 	PROC_FUNC(getBase),
 	//PROC_FUNC(getPID), //not implemented

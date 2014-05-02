@@ -1,4 +1,4 @@
-// Adamantine tube filler. It fills the hollow ones.
+// Adamantine tube filler. Replaces mined out tiles but leaves hollow tubes alone (to prevent problems)
 
 #include <stdint.h>
 #include <iostream>
@@ -17,6 +17,18 @@ using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
 
+bool isDesignatedHollow(df::coord pos)
+{
+    for (size_t i = 0; i < world->deep_vein_hollows.size(); i++)
+    {
+        auto *vein = world->deep_vein_hollows[i];
+        for (size_t j = 0; j < vein->tiles.x.size(); j++)
+            if (pos == df::coord(vein->tiles.x[j], vein->tiles.y[j], vein->tiles.z[j]))
+                return true;
+    }
+    return false;
+}
+
 command_result tubefill(color_ostream &out, std::vector<std::string> & params);
 
 DFHACK_PLUGIN("tubefill");
@@ -24,8 +36,8 @@ DFHACK_PLUGIN("tubefill");
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("tubefill","Fill in all the adamantine tubes again.",tubefill, false,
-        "Replenishes mined out adamantine and hollow adamantine tubes.\n"
-        "May cause !!FUN!!\n"));
+        "Replenishes mined out adamantine but does not fill hollow adamantine tubes.\n"
+        "Specify 'hollow' to fill hollow tubes, but beware glitchy HFS spawns.\n"));
     return CR_OK;
 }
 
@@ -37,11 +49,14 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 command_result tubefill(color_ostream &out, std::vector<std::string> & params)
 {
     uint64_t count = 0;
+    bool hollow = false;
 
     for(size_t i = 0; i < params.size();i++)
     {
         if(params[i] == "help" || params[i] == "?")
             return CR_WRONG_USAGE;
+        if (params[i] == "hollow")
+            hollow = true;
     }
 
     CoreSuspender suspend;
@@ -69,6 +84,9 @@ command_result tubefill(color_ostream &out, std::vector<std::string> & params)
                 if (!block->designation[x][y].bits.feature_local)
                     continue;
 
+                if (!hollow && isDesignatedHollow(block->map_pos + df::coord(x,y,0)))
+                    continue;
+
                 // Is the tile already a wall?
                 if (tileShape(block->tiletype[x][y]) == tiletype_shape::WALL)
                     continue;
@@ -76,9 +94,6 @@ command_result tubefill(color_ostream &out, std::vector<std::string> & params)
                 // Does the tile contain liquid?
                 if (block->designation[x][y].bits.flow_size)
                     continue;
-
-                // Set current tile, as accurately as can be expected
-                // block->tiletype[x][y] = findSimilarTileType(block->tiletype[x][y], WALL);
 
                 // Check the tile above this one, in case we need to add a floor
                 if (above)
@@ -93,6 +108,7 @@ command_result tubefill(color_ostream &out, std::vector<std::string> & params)
                     }
                 }
                 block->tiletype[x][y] = tiletype::FeatureWall;
+                world->reindex_pathfinding = true;
                 ++count;
             }
         }

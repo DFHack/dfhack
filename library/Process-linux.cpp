@@ -181,28 +181,6 @@ static int getdir (string dir, vector<string> &files)
     return 0;
 }
 
-bool Process::getThreadIDs(vector<uint32_t> & threads )
-{
-    stringstream ss;
-    vector<string> subdirs;
-    if(getdir("/proc/self/task/",subdirs) != 0)
-    {
-        //FIXME: needs exceptions. this is a fatal error
-        cerr << "unable to enumerate threads. This is BAD!" << endl;
-        return false;
-    }
-    threads.clear();
-    for(size_t i = 0; i < subdirs.size();i++)
-    {
-        uint32_t tid;
-        if(sscanf(subdirs[i].c_str(),"%d", &tid))
-        {
-            threads.push_back(tid);
-        }
-    }
-    return true;
-}
-
 uint32_t Process::getTickCount()
 {
     struct timeval tp;

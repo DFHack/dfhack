@@ -31,6 +31,9 @@ keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 keybinding add Ctrl-Shift-N gui/rename
 keybinding add Ctrl-Shift-T "gui/rename unit-profession"
 
+# dfstatus
+keybinding add Ctrl-Shift-I@dwarfmode/Default dfstatus
+
 ##############################
 # Generic adv mode bindings  #
 ##############################

@@ -1999,6 +1999,10 @@ Options:
 
 Known limitations: if the selected unit is currently performing a job, the mood will not be started.
 
+dfstatus
+--------
+Calls up a window showing a summary of some important stocks, for quick checks that (eg) you have enought food, drink, and steel.  
+
 =======
 Scripts
 =======

@@ -1476,6 +1476,14 @@ dwarfexport
 -----------
 Export dwarves to RuneSmith-compatible XML.
 
+exportmaps
+-----------
+In the main screen of legends mode, export all detailed maps.  Particularly useful with large worlds, to just set-and-forget.
+
+exportlegends
+-----------
+Identical to exportmaps, but first exports the world/gen info and the legends XML.  Equivalent to pressing 'p, x, d'
+
 
 Job management
 ==============
@@ -1959,6 +1967,11 @@ Usage:
 :misery disable:   stop adding new negative thoughts. This will not remove existing duplicated thoughts. Equivalent to "misery 1"
 :misery clear:     remove fake thoughts added in this session of DF. Saving makes them permanent! Does not change factor.
 
+log-region
+----------
+Enable in dfhack.init to write identifying informatin to the gamelog on each load.  Helps in later parsing of the file.  
+
+
 =======
 Scripts
 =======
@@ -2338,6 +2351,7 @@ dfhack commands. Useful for hotkeys.
 
 Example::
     multicmd locate-ore iron ; digv
+
 
 =======================
 In-game interface tools

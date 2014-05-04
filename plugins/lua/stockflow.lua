@@ -19,6 +19,12 @@ triggers = {
     {name = "Never"},
 }
 
+-- There must be a better way get the value of an enum.
+job_types = {}
+for key, value in ipairs(df.job_type) do
+    job_types[value] = key
+end
+
 entry_ints = {
     stockpile_id = 1,
     order_number = 2,
@@ -197,11 +203,11 @@ end
 function clothing_reactions(reactions, mat_info, filter)
     local resources = df.global.world.entities.all[df.global.ui.civ_id].resources
     local itemdefs = df.global.world.raws.itemdefs
-    resource_reactions(reactions, 101, mat_info, resources.armor_type,  itemdefs.armor,  {permissible = filter})
-    resource_reactions(reactions, 103, mat_info, resources.pants_type,  itemdefs.pants,  {permissible = filter})
-    resource_reactions(reactions, 117, mat_info, resources.gloves_type, itemdefs.gloves, {permissible = filter})
-    resource_reactions(reactions, 102, mat_info, resources.helm_type,   itemdefs.helms,  {permissible = filter})
-    resource_reactions(reactions, 118, mat_info, resources.shoes_type,  itemdefs.shoes,  {permissible = filter})
+    resource_reactions(reactions, job_types.MakeArmor,  mat_info, resources.armor_type,  itemdefs.armor,  {permissible = filter})
+    resource_reactions(reactions, job_types.MakePants,  mat_info, resources.pants_type,  itemdefs.pants,  {permissible = filter})
+    resource_reactions(reactions, job_types.MakeGloves, mat_info, resources.gloves_type, itemdefs.gloves, {permissible = filter})
+    resource_reactions(reactions, job_types.MakeHelm,   mat_info, resources.helm_type,   itemdefs.helms,  {permissible = filter})
+    resource_reactions(reactions, job_types.MakeShoes,  mat_info, resources.shoes_type,  itemdefs.shoes,  {permissible = filter})
 end
 
 -- Find the reaction types that should be listed in the management interface.
@@ -230,10 +236,12 @@ function collect_reactions()
     materials.tooth.adjective = "ivory/tooth"
     materials.leather.clothing_flag = "LEATHER"
     
-    local jobs = {12, 22, 219, 31, 32}
-    for _, job_id in ipairs(jobs) do
-        table.insert(result, reaction_entry(job_id))
-    end
+    -- Collection and Entrapment
+    table.insert(result, reaction_entry(job_types.CollectWebs))
+    table.insert(result, reaction_entry(job_types.CollectSand))
+    table.insert(result, reaction_entry(job_types.CollectClay))
+    table.insert(result, reaction_entry(job_types.CatchLiveLandAnimal))
+    table.insert(result, reaction_entry(job_types.CatchLiveFish))
     
     -- Cutting, encrusting, and metal extraction.
     local rock_types = df.global.world.raws.inorganics
@@ -241,21 +249,24 @@ function collect_reactions()
         local material = rock_types[rock_id].material
         local rock_name = material.state_adj.Solid
         if material.flags.IS_STONE or material.flags.IS_GEM then
-            table.insert(result, reaction_entry(85, {mat_type = 0, mat_index = rock_id}, "Cut "..rock_name))
+            table.insert(result, reaction_entry(job_types.CutGems, {
+                mat_type = 0,
+                mat_index = rock_id,
+            }, "Cut "..rock_name))
             
-            table.insert(result, reaction_entry(87, {
+            table.insert(result, reaction_entry(job_types.EncrustWithGems, {
                 mat_type = 0,
                 mat_index = rock_id,
                 item_category = {finished_goods = true},
             }, "Encrust Finished Goods With "..rock_name))
             
-            table.insert(result, reaction_entry(87, {
+            table.insert(result, reaction_entry(job_types.EncrustWithGems, {
                 mat_type = 0,
                 mat_index = rock_id,
                 item_category = {furniture = true},
             }, "Encrust Furniture With "..rock_name))
             
-            table.insert(result, reaction_entry(87, {
+            table.insert(result, reaction_entry(job_types.EncrustWithGems, {
                 mat_type = 0,
                 mat_index = rock_id,
                 item_category = {ammo = true},
@@ -263,11 +274,11 @@ function collect_reactions()
         end
         
         if #rock_types[rock_id].metal_ore.mat_index > 0 then
-            table.insert(result, reaction_entry(90, {mat_type = 0, mat_index = rock_id}, "Smelt "..rock_name.." Ore"))
+            table.insert(result, reaction_entry(job_types.SmeltOre, {mat_type = 0, mat_index = rock_id}, "Smelt "..rock_name.." Ore"))
         end
         
         if #rock_types[rock_id].thread_metal.mat_index > 0 then
-            table.insert(result, reaction_entry(92, {mat_type = 0, mat_index = rock_id}))
+            table.insert(result, reaction_entry(job_types.ExtractMetalStrands, {mat_type = 0, mat_index = rock_id}))
         end
     end
     
@@ -285,19 +296,19 @@ function collect_reactions()
                 management = {mat_type = glass_id},
             })
                 
-            table.insert(result, reaction_entry(86, {mat_type = glass_id}, "Cut "..glass_name))
+            table.insert(result, reaction_entry(job_types.CutGlass, {mat_type = glass_id}, "Cut "..glass_name))
             
-            table.insert(result, reaction_entry(88, {
+            table.insert(result, reaction_entry(job_types.EncrustWithGlass, {
                 mat_type = glass_id,
                 item_category = {finished_goods = true},
             }, "Encrust Finished Goods With "..glass_name))
             
-            table.insert(result, reaction_entry(88, {
+            table.insert(result, reaction_entry(job_types.EncrustWithGlass, {
                 mat_type = glass_id,
                 item_category = {furniture = true},
             }, "Encrust Furniture With "..glass_name))
             
-            table.insert(result, reaction_entry(88, {
+            table.insert(result, reaction_entry(job_types.EncrustWithGlass, {
                 mat_type = glass_id,
                 item_category = {ammo = true},
             }, "Encrust Ammo With "..glass_name))
@@ -305,48 +316,54 @@ function collect_reactions()
     end
     
     -- Dyeing
-    table.insert(result, reaction_entry(192))
-    table.insert(result, reaction_entry(193))
+    table.insert(result, reaction_entry(job_types.DyeThread))
+    table.insert(result, reaction_entry(job_types.DyeCloth))
     
     -- Sew Image
     cloth_mats = {materials.cloth, materials.silk, materials.yarn, materials.leather}
     for _, material in ipairs(cloth_mats) do
-        material_reactions(result, {{194, "Sew", "Image"}}, material)
+        material_reactions(result, {{job_types.SewImage, "Sew", "Image"}}, material)
     end
     
     for _, spec in ipairs{materials.bone, materials.shell, materials.tooth, materials.horn, materials.pearl} do
-        material_reactions(result, {{132, "Decorate With"}}, spec)
+        material_reactions(result, {{job_types.DecorateWith, "Decorate With"}}, spec)
     end
     
-    -- Make Totem
-    table.insert(result, reaction_entry(130))
-    -- Butcher an Animal
-    table.insert(result, reaction_entry(105))
-    -- Mill Plants
-    table.insert(result, reaction_entry(107))
-    -- Make Potash From Lye
-    table.insert(result, reaction_entry(189))
-    -- Make Potash From Ash
-    table.insert(result, reaction_entry(191))
+    table.insert(result, reaction_entry(job_types.MakeTotem))
+    table.insert(result, reaction_entry(job_types.ButcherAnimal))
+    table.insert(result, reaction_entry(job_types.MillPlants))
+    table.insert(result, reaction_entry(job_types.MakePotashFromLye))
+    table.insert(result, reaction_entry(job_types.MakePotashFromAsh))
     
     -- Kitchen
-    table.insert(result, reaction_entry(115, {mat_type = 2}, "Prepare Easy Meal"))
-    table.insert(result, reaction_entry(115, {mat_type = 3}, "Prepare Fine Meal"))
-    table.insert(result, reaction_entry(115, {mat_type = 4}, "Prepare Lavish Meal"))
+    table.insert(result, reaction_entry(job_types.PrepareMeal, {mat_type = 2}, "Prepare Easy Meal"))
+    table.insert(result, reaction_entry(job_types.PrepareMeal, {mat_type = 3}, "Prepare Fine Meal"))
+    table.insert(result, reaction_entry(job_types.PrepareMeal, {mat_type = 4}, "Prepare Lavish Meal"))
     
     -- Brew Drink
-    table.insert(result, reaction_entry(150))
+    table.insert(result, reaction_entry(job_types.BrewDrink))
     
     -- Weaving
-    table.insert(result, reaction_entry(116, {material_category = {plant = true}}, "Weave Thread into Cloth"))
-    table.insert(result, reaction_entry(116, {material_category = {silk = true}}, "Weave Thread into Silk"))
-    table.insert(result, reaction_entry(116, {material_category = {yarn = true}}, "Weave Yarn into Cloth"))
+    table.insert(result, reaction_entry(job_types.WeaveCloth, {material_category = {plant = true}}, "Weave Thread into Cloth"))
+    table.insert(result, reaction_entry(job_types.WeaveCloth, {material_category = {silk = true}}, "Weave Thread into Silk"))
+    table.insert(result, reaction_entry(job_types.WeaveCloth, {material_category = {yarn = true}}, "Weave Yarn into Cloth"))
     
     -- Extracts, farmer's workshop, and wood burning
-    local jobs = {151, 152, 153, 106, 110, 109, 214, 215, 188, 111, 112, 113, 114, 186, 187}
-    for _, job_id in ipairs(jobs) do
-        table.insert(result, reaction_entry(job_id))
-    end
+    table.insert(result, reaction_entry(job_types.ExtractFromPlants))
+    table.insert(result, reaction_entry(job_types.ExtractFromRawFish))
+    table.insert(result, reaction_entry(job_types.ExtractFromLandAnimal))
+    table.insert(result, reaction_entry(job_types.PrepareRawFish))
+    table.insert(result, reaction_entry(job_types.MakeCheese))
+    table.insert(result, reaction_entry(job_types.MilkCreature))
+    table.insert(result, reaction_entry(job_types.ShearCreature))
+    table.insert(result, reaction_entry(job_types.SpinThread))
+    table.insert(result, reaction_entry(job_types.MakeLye))
+    table.insert(result, reaction_entry(job_types.ProcessPlants))
+    table.insert(result, reaction_entry(job_types.ProcessPlantsBag))
+    table.insert(result, reaction_entry(job_types.ProcessPlantsVial))
+    table.insert(result, reaction_entry(job_types.ProcessPlantsBarrel))
+    table.insert(result, reaction_entry(job_types.MakeCharcoal))
+    table.insert(result, reaction_entry(job_types.MakeAsh))
     
     -- Reactions defined in the raws.
     -- Not all reactions are allowed to the civilization.
@@ -355,7 +372,7 @@ function collect_reactions()
     for _, reaction_id in ipairs(entity.entity_raw.workshops.permitted_reaction_id) do
         local reaction = df.global.world.raws.reactions[reaction_id]
         local name = string.gsub(reaction.name, "^.", string.upper)
-        table.insert(result, reaction_entry(211, {reaction_name = reaction.code}, name))
+        table.insert(result, reaction_entry(job_types.CustomReaction, {reaction_name = reaction.code}, name))
     end
     
     -- Metal forging
@@ -370,52 +387,52 @@ function collect_reactions()
         }
         
         if material.flags.IS_METAL then
-            table.insert(result, reaction_entry(104, mat_flags.management, "Stud With "..rock_name))
+            table.insert(result, reaction_entry(job_types.StudWith, mat_flags.management, "Stud With "..rock_name))
             
             if material.flags.ITEMS_WEAPON then
                 -- Todo: Are these really the right flags to check?
-                resource_reactions(result, 97, mat_flags, entity.resources.weapon_type, itemdefs.weapons, {
+                resource_reactions(result, job_types.MakeWeapon, mat_flags, entity.resources.weapon_type, itemdefs.weapons, {
                     permissible = (function(itemdef) return itemdef.skill_ranged == -1 end),
                 })
                 
                 -- Is this entirely disconnected from the entity?
-                material_reactions(result, {{135, "Forge", "Ballista Arrow Head"}}, mat_flags)
+                material_reactions(result, {{MakeBallistaArrowHead, "Forge", "Ballista Arrow Head"}}, mat_flags)
                 
-                resource_reactions(result, 142, mat_flags, entity.resources.trapcomp_type, itemdefs.trapcomps, {
+                resource_reactions(result, job_types.MakeTrapComponent, mat_flags, entity.resources.trapcomp_type, itemdefs.trapcomps, {
                     adjective = true,
                 })
                 
-                resource_reactions(result, 136, mat_flags, entity.resources.siegeammo_type, itemdefs.siege_ammo, {
+                resource_reactions(result, job_types.AssembleSiegeAmmo, mat_flags, entity.resources.siegeammo_type, itemdefs.siege_ammo, {
                     verb = "Assemble",
                 })
             end
             
             if material.flags.ITEMS_WEAPON_RANGED then
-                resource_reactions(result, 97, mat_flags, entity.resources.weapon_type, itemdefs.weapons, {
+                resource_reactions(result, job_types.MakeWeapon, mat_flags, entity.resources.weapon_type, itemdefs.weapons, {
                     permissible = (function(itemdef) return itemdef.skill_ranged >= 0 end),
                 })
             end
             
             if material.flags.ITEMS_DIGGER then
                 -- Todo: Ranged or training digging weapons?
-                resource_reactions(result, 97, mat_flags, entity.resources.digger_type, itemdefs.weapons, {
+                resource_reactions(result, job_types.MakeWeapon, mat_flags, entity.resources.digger_type, itemdefs.weapons, {
                 })
             end
             
             if material.flags.ITEMS_AMMO then
-                resource_reactions(result, 131, mat_flags, entity.resources.ammo_type, itemdefs.ammo, {
+                resource_reactions(result, job_types.MakeAmmo, mat_flags, entity.resources.ammo_type, itemdefs.ammo, {
                     name_field = "name_plural",
                 })
             end
             
             if material.flags.ITEMS_ANVIL then
-                material_reactions(result, {{98, "Forge", "Anvil"}}, mat_flags)
+                material_reactions(result, {{job_types.ForgeAnvil, "Forge", "Anvil"}}, mat_flags)
             end
             
             if material.flags.ITEMS_ARMOR then
                 local metalclothing = (function(itemdef) return itemdef.props.flags.METAL end)
                 clothing_reactions(result, mat_flags, metalclothing)
-                resource_reactions(result, 119, mat_flags, entity.resources.shield_type, itemdefs.shields, {
+                resource_reactions(result, job_types.MakeShield, mat_flags, entity.resources.shield_type, itemdefs.shields, {
                 })
             end
             
@@ -425,14 +442,14 @@ function collect_reactions()
             end
             
             if material.flags.ITEMS_HARD then
-                resource_reactions(result, 218, mat_flags, entity.resources.tool_type, itemdefs.tools, {
+                resource_reactions(result, job_types.MakeTool, mat_flags, entity.resources.tool_type, itemdefs.tools, {
                     permissible = (function(itemdef) return itemdef.flags.HARD_MAT end),
                     capitalize = true,
                 })
             end
             
             if material.flags.ITEMS_METAL then
-                resource_reactions(result, 218, mat_flags, entity.resources.tool_type, itemdefs.tools, {
+                resource_reactions(result, job_types.MakeTool, mat_flags, entity.resources.tool_type, itemdefs.tools, {
                     permissible = (function(itemdef) return itemdef.flags.METAL_MAT end),
                     capitalize = true,
                 })
@@ -440,198 +457,198 @@ function collect_reactions()
             
             if material.flags.ITEMS_HARD then
                 material_reactions(result, {
-                    {69, "Construct", "Door"},
-                    {70, "Construct", "Floodgate"},
-                    {200, "Construct", "Hatch Cover"},
-                    {201, "Construct", "Grate"},
-                    {72, "Construct", "Throne"},
-                    {73, "Construct", "Sarcophagus"},
-                    {74, "Construct", "Table"},
-                    {205, "Construct", "Splint"},
-                    {206, "Construct", "Crutch"},
-                    {77, "Construct", "Armor Stand"},
-                    {78, "Construct", "Weapon Rack"},
-                    {79, "Construct", "Cabinet"},
-                    {123, "Forge", "Goblet"},
-                    {124, "Forge", "Instrument"},
-                    {125, "Forge", "Toy"},
-                    {80, "Construct", "Statue"},
-                    {81, "Construct", "Blocks"},
-                    {126, "Forge", "Animal Trap"},
-                    {127, "Forge", "Barrel"},
-                    {128, "Forge", "Bucket"},
-                    {76, "Construct", "Bin"},
-                    {195, "Forge", "Pipe Section"},
-                    {120, "Forge", "Cage"},
-                    {84, "Mint", "Coins"},
-                    {75, "Construct", "Chest"},
-                    {122, "Forge", "Flask"},
-                    {121, "Forge", "Chain"},
-                    {83, "Make", "Crafts"},
+                    {job_types.ConstructDoor, "Construct", "Door"},
+                    {job_types.ConstructFloodgate, "Construct", "Floodgate"},
+                    {job_types.ConstructHatchCover, "Construct", "Hatch Cover"},
+                    {job_types.ConstructGrate, "Construct", "Grate"},
+                    {job_types.ConstructThrone, "Construct", "Throne"},
+                    {job_types.ConstructCoffin, "Construct", "Sarcophagus"},
+                    {job_types.ConstructTable, "Construct", "Table"},
+                    {job_types.ConstructSplint, "Construct", "Splint"},
+                    {job_types.ConstructCrutch, "Construct", "Crutch"},
+                    {job_types.ConstructArmorStand, "Construct", "Armor Stand"},
+                    {job_types.ConstructWeaponRack, "Construct", "Weapon Rack"},
+                    {job_types.ConstructCabinet, "Construct", "Cabinet"},
+                    {job_types.MakeGoblet, "Forge", "Goblet"},
+                    {job_types.MakeInstrument, "Forge", "Instrument"},
+                    {job_types.MakeToy, "Forge", "Toy"},
+                    {job_types.ConstructStatue, "Construct", "Statue"},
+                    {job_types.ConstructBlocks, "Construct", "Blocks"},
+                    {job_types.MakeAnimalTrap, "Forge", "Animal Trap"},
+                    {job_types.MakeBarrel, "Forge", "Barrel"},
+                    {job_types.MakeBucket, "Forge", "Bucket"},
+                    {job_types.ConstructBin, "Construct", "Bin"},
+                    {job_types.MakePipeSection, "Forge", "Pipe Section"},
+                    {job_types.MakeCage, "Forge", "Cage"},
+                    {job_types.MintCoins, "Mint", "Coins"},
+                    {job_types.ConstructChest, "Construct", "Chest"},
+                    {job_types.MakeFlask, "Forge", "Flask"},
+                    {job_types.MakeChain, "Forge", "Chain"},
+                    {job_types.MakeCrafts, "Make", "Crafts"},
                 }, mat_flags)
             end
             
             if material.flags.ITEMS_SOFT then
                 material_reactions(result, {
-                    {133, "Make", "Backpack"},
-                    {134, "Make", "Quiver"},
-                    {99, "Construct", "Catapult Parts"},
-                    {100, "Construct", "Ballista Parts"},
+                    {job_types.MakeBackpack, "Make", "Backpack"},
+                    {job_types.MakeQuiver, "Make", "Quiver"},
+                    {job_types.ConstructCatapultParts, "Construct", "Catapult Parts"},
+                    {job_types.ConstructBallistaParts, "Construct", "Ballista Parts"},
                 }, mat_flags)
             end
         end
     end
     
     -- Traction Bench
-    table.insert(result, reaction_entry(207))
+    table.insert(result, reaction_entry(job_types.ConstructTractionBench))
     
     -- Non-metal weapons
-    resource_reactions(result, 97, materials.wood, entity.resources.weapon_type, itemdefs.weapons, {
+    resource_reactions(result, job_types.MakeWeapon, materials.wood, entity.resources.weapon_type, itemdefs.weapons, {
         permissible = (function(itemdef) return itemdef.skill_ranged >= 0 end),
     })
     
-    resource_reactions(result, 97, materials.wood, entity.resources.training_weapon_type, itemdefs.weapons, {
+    resource_reactions(result, job_types.MakeWeapon, materials.wood, entity.resources.training_weapon_type, itemdefs.weapons, {
     })
     
-    resource_reactions(result, 97, materials.bone, entity.resources.weapon_type, itemdefs.weapons, {
+    resource_reactions(result, job_types.MakeWeapon, materials.bone, entity.resources.weapon_type, itemdefs.weapons, {
         permissible = (function(itemdef) return itemdef.skill_ranged >= 0 end),
     })
     
-    resource_reactions(result, 97, materials.rock, entity.resources.weapon_type, itemdefs.weapons, {
+    resource_reactions(result, job_types.MakeWeapon, materials.rock, entity.resources.weapon_type, itemdefs.weapons, {
         permissible = (function(itemdef) return itemdef.flags.CAN_STONE end),
     })
     
     -- Wooden items
     -- Closely related to the ITEMS_HARD list.
     material_reactions(result, {
-        {69, "Construct", "Door"},
-        {70, "Construct", "Floodgate"},
-        {200, "Construct", "Hatch Cover"},
-        {201, "Construct", "Grate"},
-        {72, "Construct", "Chair"},
-        {73, "Construct", "Casket"},
-        {74, "Construct", "Table"},
-        {77, "Construct", "Armor Stand"},
-        {78, "Construct", "Weapon Rack"},
-        {79, "Construct", "Cabinet"},
-        {123, "Make", "Cup"},
-        {124, "Make", "Instrument"},
+        {job_types.ConstructDoor, "Construct", "Door"},
+        {job_types.ConstructFloodgate, "Construct", "Floodgate"},
+        {job_types.ConstructHatchCover, "Construct", "Hatch Cover"},
+        {job_types.ConstructGrate, "Construct", "Grate"},
+        {job_types.ConstructThrone, "Construct", "Chair"},
+        {job_types.ConstructCoffin, "Construct", "Casket"},
+        {job_types.ConstructTable, "Construct", "Table"},
+        {job_types.ConstructArmorStand, "Construct", "Armor Stand"},
+        {job_types.ConstructWeaponRack, "Construct", "Weapon Rack"},
+        {job_types.ConstructCabinet, "Construct", "Cabinet"},
+        {job_types.MakeGoblet, "Make", "Cup"},
+        {job_types.MakeInstrument, "Make", "Instrument"},
     }, materials.wood)
     
-    resource_reactions(result, 218, materials.wood, entity.resources.tool_type, itemdefs.tools, {
+    resource_reactions(result, job_types.MakeTool, materials.wood, entity.resources.tool_type, itemdefs.tools, {
         -- permissible = (function(itemdef) return itemdef.flags.WOOD_MAT end),
         capitalize = true,
     })
     
     material_reactions(result, {
-        {125, "Make", "Toy"},
-        {81, "Construct", "Blocks"},
-        {205, "Construct", "Splint"},
-        {206, "Construct", "Crutch"},
-        {126, "Make", "Animal Trap"},
-        {127, "Make", "Barrel"},
-        {128, "Make", "Bucket"},
-        {76, "Construct", "Bin"},
-        {120, "Make", "Cage"},
-        {195, "Make", "Pipe Section"},
+        {job_types.MakeToy, "Make", "Toy"},
+        {job_types.ConstructBlocks, "Construct", "Blocks"},
+        {job_types.ConstructSplint, "Construct", "Splint"},
+        {job_types.ConstructCrutch, "Construct", "Crutch"},
+        {job_types.MakeAnimalTrap, "Make", "Animal Trap"},
+        {job_types.MakeBarrel, "Make", "Barrel"},
+        {job_types.MakeBucket, "Make", "Bucket"},
+        {job_types.ConstructBin, "Construct", "Bin"},
+        {job_types.MakeCage, "Make", "Cage"},
+        {job_types.MakePipeSection, "Make", "Pipe Section"},
     }, materials.wood)
     
-    resource_reactions(result, 142, materials.wood, entity.resources.trapcomp_type, itemdefs.trapcomps, {
+    resource_reactions(result, job_types.MakeTrapComponent, materials.wood, entity.resources.trapcomp_type, itemdefs.trapcomps, {
         permissible = (function(itemdef) return itemdef.flags.WOOD end),
         adjective = true,
     })
     
     -- Rock items
     material_reactions(result, {
-        {69, "Construct", "Door"},
-        {70, "Construct", "Floodgate"},
-        {200, "Construct", "Hatch Cover"},
-        {201, "Construct", "Grate"},
-        {72, "Construct", "Throne"},
-        {73, "Construct", "Coffin"},
-        {74, "Construct", "Table"},
-        {77, "Construct", "Armor Stand"},
-        {78, "Construct", "Weapon Rack"},
-        {79, "Construct", "Cabinet"},
-        {123, "Make", "Mug"},
-        {124, "Make", "Instrument"},
+        {job_types.ConstructDoor, "Construct", "Door"},
+        {job_types.ConstructFloodgate, "Construct", "Floodgate"},
+        {job_types.ConstructHatchCover, "Construct", "Hatch Cover"},
+        {job_types.ConstructGrate, "Construct", "Grate"},
+        {job_types.ConstructThrone, "Construct", "Throne"},
+        {job_types.ConstructCoffin, "Construct", "Coffin"},
+        {job_types.ConstructTable, "Construct", "Table"},
+        {job_types.ConstructArmorStand, "Construct", "Armor Stand"},
+        {job_types.ConstructWeaponRack, "Construct", "Weapon Rack"},
+        {job_types.ConstructCabinet, "Construct", "Cabinet"},
+        {job_types.MakeGoblet, "Make", "Mug"},
+        {job_types.MakeInstrument, "Make", "Instrument"},
     }, materials.rock)
     
-    resource_reactions(result, 218, materials.rock, entity.resources.tool_type, itemdefs.tools, {
+    resource_reactions(result, job_types.MakeTool, materials.rock, entity.resources.tool_type, itemdefs.tools, {
         permissible = (function(itemdef) return itemdef.flags.HARD_MAT end),
         capitalize = true,
     })
     
     material_reactions(result, {
-        {125, "Make", "Toy"},
-        {203, "Construct", "Quern"},
-        {204, "Construct", "Millstone"},
-        {212, "Construct", "Slab"},
-        {80, "Construct", "Statue"},
-        {81, "Construct", "Blocks"},
+        {job_types.MakeToy, "Make", "Toy"},
+        {job_types.ConstructQuern, "Construct", "Quern"},
+        {job_types.ConstructMillstone, "Construct", "Millstone"},
+        {job_types.ConstructSlab, "Construct", "Slab"},
+        {job_types.ConstructStatue, "Construct", "Statue"},
+        {job_types.ConstructBlocks, "Construct", "Blocks"},
     }, materials.rock)
     
     -- Glass items
     for _, mat_info in ipairs(glasses) do
         material_reactions(result, {
-            {69, "Construct", "Portal"},
-            {70, "Construct", "Floodgate"},
-            {200, "Construct", "Hatch Cover"},
-            {201, "Construct", "Grate"},
-            {72, "Construct", "Throne"},
-            {73, "Construct", "Coffin"},
-            {74, "Construct", "Table"},
-            {77, "Construct", "Armor Stand"},
-            {78, "Construct", "Weapon Rack"},
-            {79, "Construct", "Cabinet"},
-            {123, "Make", "Goblet"},
-            {124, "Make", "Instrument"},
+            {job_types.ConstructDoor, "Construct", "Portal"},
+            {job_types.ConstructFloodgate, "Construct", "Floodgate"},
+            {job_types.ConstructHatchCover, "Construct", "Hatch Cover"},
+            {job_types.ConstructGrate, "Construct", "Grate"},
+            {job_types.ConstructThrone, "Construct", "Throne"},
+            {job_types.ConstructCoffin, "Construct", "Coffin"},
+            {job_types.ConstructTable, "Construct", "Table"},
+            {job_types.ConstructArmorStand, "Construct", "Armor Stand"},
+            {job_types.ConstructWeaponRack, "Construct", "Weapon Rack"},
+            {job_types.ConstructCabinet, "Construct", "Cabinet"},
+            {job_types.MakeGoblet, "Make", "Goblet"},
+            {job_types.MakeInstrument, "Make", "Instrument"},
         }, mat_info)
         
-        resource_reactions(result, 218, mat_info, entity.resources.tool_type, itemdefs.tools, {
+        resource_reactions(result, job_types.MakeTool, mat_info, entity.resources.tool_type, itemdefs.tools, {
             permissible = (function(itemdef) return itemdef.flags.HARD_MAT end),
             capitalize = true,
         })
         
         material_reactions(result, {
-            {125, "Make", "Toy"},
-            {80, "Construct", "Statue"},
-            {81, "Construct", "Blocks"},
-            {120, "Make", "Terrarium"},
-            {195, "Make", "Tube"},
+            {job_types.MakeToy, "Make", "Toy"},
+            {job_types.ConstructStatue, "Construct", "Statue"},
+            {job_types.ConstructBlocks, "Construct", "Blocks"},
+            {job_types.MakeCage, "Make", "Terrarium"},
+            {job_types.MakePipeSection, "Make", "Tube"},
         }, mat_info)
         
-        resource_reactions(result, 142, mat_info, entity.resources.trapcomp_type, itemdefs.trapcomps, {
+        resource_reactions(result, job_types.MakeTrapComponent, mat_info, entity.resources.trapcomp_type, itemdefs.trapcomps, {
             adjective = true,
         })
     end
     
     -- Bed, specified as wooden.
-    table.insert(result, reaction_entry(71, materials.wood.management))
+    table.insert(result, reaction_entry(job_types.ConstructBed, materials.wood.management))
     
     -- Windows
     for _, mat_info in ipairs(glasses) do
         material_reactions(result, {
-            {129, "Make", "Window"},
+            {job_types.MakeWindow, "Make", "Window"},
         }, mat_info)
     end
     
     -- Rock Mechanisms
-    table.insert(result, reaction_entry(141, materials.rock.management))
+    table.insert(result, reaction_entry(job_types.ConstructMechanisms, materials.rock.management))
     
-    resource_reactions(result, 136, materials.wood, entity.resources.siegeammo_type, itemdefs.siege_ammo, {
+    resource_reactions(result, job_types.AssembleSiegeAmmo, materials.wood, entity.resources.siegeammo_type, itemdefs.siege_ammo, {
         verb = "Assemble",
     })
     
     for _, mat_info in ipairs(glasses) do
         material_reactions(result, {
-            {82, "Make Raw", nil},
+            {job_types.MakeRawGlass, "Make Raw", nil},
         }, mat_info)
     end
     
     material_reactions(result, {
-        {133, "Make", "Backpack"},
-        {134, "Make", "Quiver"},
+        {job_types.MakeBackpack, "Make", "Backpack"},
+        {job_types.MakeQuiver, "Make", "Quiver"},
     }, materials.leather)
     
     for _, material in ipairs(cloth_mats) do
@@ -649,12 +666,12 @@ function collect_reactions()
     }
     for _, boxmat in ipairs(boxmats) do
         for _, mat in ipairs(boxmat.mats) do
-            material_reactions(result, {{75, "Construct", boxmat.box}}, mat)
+            material_reactions(result, {{job_types.ConstructChest, "Construct", boxmat.box}}, mat)
             if boxmat.chain then
-                material_reactions(result, {{121, "Make", boxmat.chain}}, mat)
+                material_reactions(result, {{job_types.MakeChain, "Make", boxmat.chain}}, mat)
             end
             if boxmat.flask then
-                material_reactions(result, {{122, "Make", boxmat.flask}}, mat)
+                material_reactions(result, {{job_types.MakeFlask, "Make", boxmat.flask}}, mat)
             end
         end
     end
@@ -672,15 +689,15 @@ function collect_reactions()
         materials.pearl,
         materials.yarn,
     } do
-        material_reactions(result, {{83, "Make", "Crafts"}}, mat)
+        material_reactions(result, {{job_types.MakeCrafts, "Make", "Crafts"}}, mat)
     end
     
     -- Siege engine parts
-    table.insert(result, reaction_entry(99, materials.wood.management))
-    table.insert(result, reaction_entry(100, materials.wood.management))
+    table.insert(result, reaction_entry(job_types.ConstructCatapultParts, materials.wood.management))
+    table.insert(result, reaction_entry(job_types.ConstructBallistaParts, materials.wood.management))
     
     for _, mat in ipairs{materials.wood, materials.bone} do
-        resource_reactions(result, 131, mat, entity.resources.ammo_type, itemdefs.ammo, {
+        resource_reactions(result, job_types.MakeAmmo, mat, entity.resources.ammo_type, itemdefs.ammo, {
             name_field = "name_plural",
         })
     end
@@ -690,11 +707,11 @@ function collect_reactions()
     clothing_reactions(result, materials.shell, (function(itemdef) return itemdef.props.flags[4] end))
     
     for _, mat in ipairs{materials.wood, materials.leather} do
-        resource_reactions(result, 119, mat, entity.resources.shield_type, itemdefs.shields, {})
+        resource_reactions(result, job_types.MakeShield, mat, entity.resources.shield_type, itemdefs.shields, {})
     end
     
     -- Melt a Metal Object
-    table.insert(result, reaction_entry(91))
+    table.insert(result, reaction_entry(job_types.MeltMetalObject))
     
     return result
 end

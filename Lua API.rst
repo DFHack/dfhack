@@ -25,9 +25,10 @@ implemented by Lua files located in hack/lua/...
 DF data structure wrapper
 =========================
 
-DF structures described by the xml files in library/xml are exported
-to lua code as a tree of objects and functions under the ``df`` global,
-which broadly maps to the ``df`` namespace in C++.
+Data structures of the game are defined in XML files located in library/xml
+(and online at http://github.com/DFHack/df-structures), and automatically exported
+to lua code as a tree of objects and functions under the ``df`` global, which
+also broadly maps to the ``df`` namespace in the headers generated for C++.
 
 **WARNING**: The wrapper provides almost raw access to the memory
 of the game, so mistakes in manipulating objects are as likely to

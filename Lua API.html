@@ -455,9 +455,10 @@ It does not describe all of the utility functions
 implemented by Lua files located in hack/lua/...</p>
 <div class="section" id="df-data-structure-wrapper">
 <h1><a class="toc-backref" href="#id3">DF data structure wrapper</a></h1>
-<p>DF structures described by the xml files in library/xml are exported
-to lua code as a tree of objects and functions under the <tt class="docutils literal">df</tt> global,
-which broadly maps to the <tt class="docutils literal">df</tt> namespace in C++.</p>
+<p>Data structures of the game are defined in XML files located in library/xml
+(and online at <a class="reference external" href="http://github.com/DFHack/df-structures">http://github.com/DFHack/df-structures</a>), and automatically exported
+to lua code as a tree of objects and functions under the <tt class="docutils literal">df</tt> global, which
+also broadly maps to the <tt class="docutils literal">df</tt> namespace in the headers generated for C++.</p>
 <p><strong>WARNING</strong>: The wrapper provides almost raw access to the memory
 of the game, so mistakes in manipulating objects are as likely to
 crash the game as equivalent plain C++ code would be. E.g. NULL

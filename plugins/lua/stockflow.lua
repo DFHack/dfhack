@@ -30,6 +30,10 @@ end
 -- Clear all caches.
 -- Called when a world is loaded, or when the plugin is disabled.
 function clear_caches()
+    -- Free the C++ objects in the reaction list.
+    for _, value in ipairs(reaction_list) do
+        value.order:delete()
+    end
     reaction_list = {}
     saved_orders = {}
     jobs_to_create = {}

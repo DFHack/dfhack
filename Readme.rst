@@ -329,6 +329,26 @@ Options:
                           The building must be one of stockpile, workshop, furnace, trap,
                           siege engine or an activity zone.
 
+rendermax
+---------
+A collection of renderer replacing/enhancing filters. For better effect try changing the
+black color in palette to non totally black. For more info see thread in forums:
+http://www.bay12forums.com/smf/index.php?topic=128487.0
+
+Options:
+
+ :rendermax trippy: Randomizes each tiles color. Used for fun mainly.
+ :rendermax light:  Enable lighting engine.
+ :rendermax light reload: Reload the settings file.
+ :rendermax light sun <x>|cycle: Set time to <x> (in hours) or set it to df time cycle.
+ :rendermax occlusionON|occlusionOFF: Show debug occlusion info.
+ :rendermax disable: Disable any filter that is enabled.
+
+An image showing lava and dragon breath. Not pictured here: sunlight, shining items/plants,
+materials that color the light etc...
+
+.. image:: images/rendermax.png
+
 
 Adventure mode
 ==============

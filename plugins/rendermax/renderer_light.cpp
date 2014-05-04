@@ -1184,8 +1184,17 @@ void lightingEngineViewscreen::defaultSettings()
 }
 void lightingEngineViewscreen::loadSettings()
 {
-    
-    const std::string settingsfile="rendermax.lua";
+    std::string rawFolder;
+    if(df::global::world->cur_savegame.save_dir!="")
+    {
+        rawFolder= "data/save/" + (df::global::world->cur_savegame.save_dir) + "/raw/";    
+    }
+    else
+    {
+        rawFolder= "raw/";    
+    }
+    const std::string settingsfile=rawFolder+"rendermax.lua";
+
     CoreSuspender lock;
     color_ostream_proxy out(Core::getInstance().getConsole());
     

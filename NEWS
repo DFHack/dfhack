@@ -10,6 +10,8 @@ DFHack future
   Misc improvements:
     - digfort: improved csv parsing, add start() comment handling
     - exterminate: allow specifying a caste (exterminate gob:male)
+  New plugins:
+    - rendermax: replace the renderer with something else. Most interesting is "rendermax light"- a lighting engine for df.
 
 DFHack v0.34.11-r4
 

@@ -31,6 +31,10 @@ entry_ints = {
     trigger_number = 3,
 }
 
+PageSize = 16
+FirstRow = 4
+CenterCol = 39
+
 -- Populate the reaction and stockpile order lists.
 -- To be called whenever a world is loaded.
 function initialize_world()
@@ -720,7 +724,6 @@ screen = gui.FramedScreen {
     frame_title = "Select Stockpile Order",
 }
 
-PageSize = 16
 function screen:onRenderBody(dc)
     -- Emulates the built-in manager screen.
     dc:seek(1, 1):string("Type in parts of the name to narrow your search.  ", COLOR_WHITE)
@@ -840,9 +843,9 @@ function screen:refilter()
         end
         
         local x = 1
-        local y = 4 + n
+        local y = FirstRow + n
         if n >= PageSize then
-            x = 39
+            x = CenterCol
             y = y - PageSize
         end
         

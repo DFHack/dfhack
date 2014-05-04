@@ -21,6 +21,8 @@ DFHack future
     - exterminate: allow specifying a caste (exterminate gob:male)
     - createitem: in adventure mode it now defaults to the controlled unit as maker.
     - autotrade: adds "(Un)mark All" options to both panes of trade screen.
+    - mousequery: several usability improvements.
+    - mousequery: show live overlay (in menu area) of what's on the tile under the mouse cursor.
 
   Siege engine plugin:
     - engine quality and distance to target now affect accuracy

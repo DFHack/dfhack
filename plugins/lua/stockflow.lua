@@ -33,7 +33,7 @@ entry_ints = {
 
 PageSize = 16
 FirstRow = 4
-CenterCol = 39
+CenterCol = 38
 
 -- Populate the reaction and stockpile order lists.
 -- To be called whenever a world is loaded.
@@ -838,6 +838,7 @@ function screen:refilter()
     local displayed = {}
     for n = 0, PageSize*2 - 1 do
         local item = filtered[start + n]
+        local name = item.name
         if not item then
             break
         end
@@ -847,6 +848,7 @@ function screen:refilter()
         if n >= PageSize then
             x = CenterCol
             y = y - PageSize
+            name = " "..name
         end
         
         local color = COLOR_CYAN
@@ -857,7 +859,7 @@ function screen:refilter()
         displayed[n + 1] = {
             x = x,
             y = y,
-            name = item.name,
+            name = name,
             color = color,
         }
     end

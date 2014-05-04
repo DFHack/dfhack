@@ -38,7 +38,7 @@ using df::global::ui_build_selector;
 using df::global::world;
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 0.9
+#define PLUGIN_VERSION 0.12
 
 struct MaterialDescriptor
 {
@@ -58,16 +58,6 @@ struct MaterialDescriptor
     }
 };
 
-struct coord32_t
-{
-    int32_t x, y, z;
-
-    df::coord get_coord16() const
-    {
-        return df::coord(x, y, z);
-    }
-};
-
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
@@ -78,6 +68,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 #define SIDEBAR_WIDTH 30
 
 static bool show_debugging = false;
+static bool show_help = false;
 
 static void debug(const string &msg)
 {
@@ -943,7 +934,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
         if (isInPlannedBuildingPlacementMode())
         {
             auto type = ui_build_selector->building_type;
-            if (input->count(interface_key::CUSTOM_P))
+            if (input->count(interface_key::CUSTOM_SHIFT_P))
             {
                 planmode_enabled[type] = !planmode_enabled[type];
                 if (!planmode_enabled[type])
@@ -953,6 +944,14 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                     planner.in_dummmy_screen = false;
                 }
                 return true;
+            }
+            else if (input->count(interface_key::CUSTOM_P) ||
+                     input->count(interface_key::CUSTOM_F) ||
+                     input->count(interface_key::CUSTOM_Q) ||
+                     input->count(interface_key::CUSTOM_D) ||
+                     input->count(interface_key::CUSTOM_N))
+            {
+                show_help = true;
             }
             
             if (is_planmode_enabled(type))
@@ -983,7 +982,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
 
                     return true;
                 }
-                else if (input->count(interface_key::CUSTOM_F))
+                else if (input->count(interface_key::CUSTOM_SHIFT_F))
                 {
                     if (!planner.inQuickFortMode())
                     {
@@ -994,15 +993,15 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                         planner.disableQuickfortMode();
                     }
                 }
-                else if (input->count(interface_key::CUSTOM_M))
+                else if (input->count(interface_key::CUSTOM_SHIFT_M))
                 {
                     Screen::show(new ViewscreenChooseMaterial(planner.getDefaultItemFilterForType(type)));
                 }
-                else if (input->count(interface_key::CUSTOM_Q))
+                else if (input->count(interface_key::CUSTOM_SHIFT_Q))
                 {
                     planner.cycleDefaultQuality(type);
                 }
-                else if (input->count(interface_key::CUSTOM_D))
+                else if (input->count(interface_key::CUSTOM_SHIFT_D))
                 {
                     planner.getDefaultItemFilterForType(type)->decorated_only =
                         !planner.getDefaultItemFilterForType(type)->decorated_only;
@@ -1080,22 +1079,25 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             {
                 int y = 23;
 
-                OutputToggleString(x, y, "Planning Mode", "p", is_planmode_enabled(type), true, left_margin);
+                if (show_help)
+                {
+                    OutputString(COLOR_BROWN, x, y, "Note: ");
+                    OutputString(COLOR_WHITE, x, y, "Use Shift-Keys here", true, left_margin);
+                }
+                OutputToggleString(x, y, "Planning Mode", "P", is_planmode_enabled(type), true, left_margin);
 
                 if (is_planmode_enabled(type))
                 {
-                    OutputToggleString(x, y, "Quickfort Mode", "f", planner.inQuickFortMode(), true, left_margin);
+                    OutputToggleString(x, y, "Quickfort Mode", "F", planner.inQuickFortMode(), true, left_margin);
 
                     auto filter = planner.getDefaultItemFilterForType(type);
 
-                    OutputHotkeyString(x, y, "Min Quality: ", "q");
+                    OutputHotkeyString(x, y, "Min Quality: ", "Q");
                     OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
 
-                    OutputHotkeyString(x, y, "Decorated Only: ", "d");
-                    OutputString(COLOR_BROWN, x, y, 
-                        (filter->decorated_only) ? "Yes" : "No", true, left_margin);
+                    OutputToggleString(x, y, "Decorated Only: ", "D", filter->decorated_only, true, left_margin);
 
-                    OutputHotkeyString(x, y, "Material Filter:", "m", true, left_margin);
+                    OutputHotkeyString(x, y, "Material Filter:", "M", true, left_margin);
                     auto filter_descriptions = filter->getMaterialFilterAsVector();
                     for (auto it = filter_descriptions.begin(); it != filter_descriptions.end(); ++it)
                         OutputString(COLOR_BROWN, x, y, "   *" + *it, true, left_margin);
@@ -1131,6 +1133,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
         else
         {
             planner.in_dummmy_screen = false;
+            show_help = false;
         }
     }
 };

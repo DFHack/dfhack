@@ -2335,6 +2335,10 @@ alternatively pass cage IDs as arguments::
 
   stripcaged weapons 25321 34228
 
+undump-buildings
+================
+Undesignates building base materials for dumping.
+
 create-items
 ============
 Spawn arbitrary items under the cursor.

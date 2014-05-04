@@ -703,8 +703,8 @@ function collect_reactions()
     end
     
     -- BARRED and SCALED as flag names don't quite seem to fit, here.
-    clothing_reactions(result, materials.bone, (function(itemdef) return itemdef.props.flags[3] end))
-    clothing_reactions(result, materials.shell, (function(itemdef) return itemdef.props.flags[4] end))
+    clothing_reactions(result, materials.bone, (function(itemdef) return itemdef.props.flags.BARRED end))
+    clothing_reactions(result, materials.shell, (function(itemdef) return itemdef.props.flags.SCALED end))
     
     for _, mat in ipairs{materials.wood, materials.leather} do
         resource_reactions(result, job_types.MakeShield, mat, entity.resources.shield_type, itemdefs.shields, {})

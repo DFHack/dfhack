@@ -2,6 +2,8 @@ DFHack future
 
   Internals:
     - support for calling a lua function via a protobuf request (demonstrated by dfhack-run --lua).
+    - eventful now has a more friendly way of making custom sidebars
+    - new plugin: building-hacks. Allows to add custom functionality and/or animations to buildings. 
 
   New commands:
     - move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands

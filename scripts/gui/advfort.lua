@@ -880,7 +880,7 @@ function usetool:init(args)
         wid.Label{
             view_id="mainLabel",
             frame = {xalign=0,yalign=0},
-            text={{key=keybinds.prevJob.key},{gap=1,text=dfhack.curry(usetool.getModeName,self)},{gap=1,key=keybinds.nextJob.key},
+            text={{key=keybinds.prevJob.key},{gap=1,text=self:callback("getModeName")},{gap=1,key=keybinds.nextJob.key},
                   }
                   },
             

@@ -5,6 +5,8 @@ DFHack future
     - Lua API for listing files in directory. Needed for mod-manager.
     - Lua API for creating unit combat reports and writing to gamelog.
     - support for multiple raw/init.d/*.lua init scripts in one save.
+    - eventful now has a more friendly way of making custom sidebars
+    - new plugin: building-hacks. Allows to add custom functionality and/or animations to buildings. 
 
   New scripts:
     - gui/mod-manager: allows installing/uninstalling mods into df from df/mods directory.

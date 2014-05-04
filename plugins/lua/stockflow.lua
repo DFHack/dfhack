@@ -19,6 +19,12 @@ triggers = {
     {name = "Never"},
 }
 
+entry_ints = {
+    stockpile_id = 1,
+    order_number = 2,
+    trigger_number = 3,
+}
+
 -- Populate the reaction and stockpile order lists.
 -- To be called whenever a world is loaded.
 function initialize_world()
@@ -40,7 +46,7 @@ function clear_caches()
 end
 
 function trigger_name(cache)
-    local trigger = triggers[cache.entry.ints[3]]
+    local trigger = triggers[cache.entry.ints[entry_ints.trigger_number]]
     return trigger and trigger.name or "Never"
 end
 
@@ -97,7 +103,7 @@ end
 function toggle_trigger(sp)
     local saved = saved_orders[sp.id]
     if saved then
-        saved.entry.ints[3] = (saved.entry.ints[3] % #triggers) + 1
+        saved.entry.ints[entry_ints.trigger_number] = (saved.entry.ints[entry_ints.trigger_number] % #triggers) + 1
         saved.entry:save()
     end
 end
@@ -108,7 +114,7 @@ function collect_orders()
     if entries then
         local stockpiles = df.global.world.buildings.other.STOCKPILE
         for _, entry in ipairs(entries) do
-            local spid = entry.ints[1]
+            local spid = entry.ints[entry_ints.stockpile_id]
             local stockpile = utils.binsearch(stockpiles, spid, "id")
             if stockpile then
                 -- Todo: What if entry.value ~= reaction_list[order_number].name?
@@ -846,7 +852,7 @@ function store_order(stockpile, order_number)
     local saved = saved_orders[stockpile.id]
     if saved then
         saved.entry.value = name
-        saved.entry.ints[2] = order_number
+        saved.entry.ints[entry_ints.order_number] = order_number
         saved.entry:save()
     else
         saved_orders[stockpile.id] = {
@@ -977,9 +983,9 @@ end
 function check_stockpiles(verbose)
     local result = {}
     for _, spec in pairs(saved_orders) do
-        local trigger = triggers[spec.entry.ints[3]]
+        local trigger = triggers[spec.entry.ints[entry_ints.trigger_number]]
         if trigger and trigger.divisor then
-            local reaction = spec.entry.ints[2]
+            local reaction = spec.entry.ints[entry_ints.order_number]
             local filled, empty = check_pile(spec.stockpile, verbose)
             local amount = trigger.filled and filled or empty
             amount = (amount - (amount % trigger.divisor)) / trigger.divisor

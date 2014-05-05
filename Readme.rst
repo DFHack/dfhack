@@ -1501,6 +1501,15 @@ dwarfexport
 -----------
 Export dwarves to RuneSmith-compatible XML.
 
+exportlegends
+-------------
+Exports data from legends mode; allowing a set-and-forget export of large worlds.  
+
+Options:
+
+ :maps: Exports all fifteen detailed maps
+ :all: first exports the world/gen info, then the XML, then all detailed maps
+
 
 Job management
 ==============
@@ -1998,6 +2007,11 @@ Options:
                 Valid values are "miner", "carpenter", "engraver", "mason", "tanner", "weaver", "clothier", "weaponsmith", "armorsmith", "metalsmith", "gemcutter", "gemsetter", "woodcrafter", "stonecrafter", "metalcrafter", "glassmaker", "leatherworker", "bonecarver", "bowyer", and "mechanic".
 
 Known limitations: if the selected unit is currently performing a job, the mood will not be started.
+
+log-region
+----------
+When enabled in dfhack.init, each time a fort is loaded identifying information will be written to the gamelog.  Assists in parsing the file if you switch between forts, and adds information for story-building. 
+
 
 =======
 Scripts

@@ -360,7 +360,7 @@ private:
     std::unordered_map<std::pair<int,int>,itemLightDef> itemDefs;
     int w,h;
     DFHack::rect2d mapPort;
-    friend lightThreadDispatch;
+    friend class lightThreadDispatch;
 };
 rgbf blend(const rgbf& a,const rgbf& b);
 rgbf blendMax(const rgbf& a,const rgbf& b);

@@ -14,6 +14,7 @@
 #include "df/texture_handler.h"
 #include "df/graphic.h"
 #include <math.h>
+#include <cmath>
 
 using df::renderer;
 using df::init;

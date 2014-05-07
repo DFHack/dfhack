@@ -4,7 +4,7 @@ I deleted:
 	attachtest.py 		obsolete
 	digger.cpp			less useful than digger2, replaced by autochop
 	digger2.cpp			replaced by digfort
-	dfstatus.cpp		replaced by dfstatus.lua (which needs a little work too)
+	dfstatus.cpp		replaced by dfstatus.lua
 	drawtile.cpp		replaced by tiletypes
 	fix-3708.cpp		obsolete, bug fixed in vanilla
 	lair.cpp			replaced by lair

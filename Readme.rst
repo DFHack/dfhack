@@ -1371,6 +1371,11 @@ Subcommands that persist until disabled or DF quit:
 :hive-crash: The hive code crashes if there are ungathered products in a hive without bees (bug 6368).
              This tweak prevents it by auto-gathering the products if this happens.
 
+:craft-age-wear: Fixes the behavior of crafted items wearing out over time (bug 6003).
+                 With this tweak, items made from cloth and leather will gain a level of wear every 20 years.
+
+:adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (bug 6481).
+
 fix-armory
 ----------
 

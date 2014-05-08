@@ -2180,8 +2180,16 @@ unintended inverse dependency of training speed on unit count
 the units spar more.</p>
 </td>
 </tr>
-<tr class="field"><th class="field-name">hive-crash:</th><td class="field-body"><p class="first last">The hive code crashes if there are ungathered products in a hive without bees (bug 6368).
+<tr class="field"><th class="field-name">hive-crash:</th><td class="field-body"><p class="first">The hive code crashes if there are ungathered products in a hive without bees (bug 6368).
 This tweak prevents it by auto-gathering the products if this happens.</p>
+</td>
+</tr>
+<tr class="field"><th class="field-name">craft-age-wear:</th><td class="field-body"><p class="first">Fixes the behavior of crafted items wearing out over time (bug 6003).
+With this tweak, items made from cloth and leather will gain a level of wear every 20 years.</p>
+</td>
+</tr>
+<tr class="field"><th class="field-name" colspan="2">adamantine-cloth-wear:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body"><p class="first last">Prevents adamantine clothing from wearing out while being worn (bug 6481).</p>
 </td>
 </tr>
 </tbody>

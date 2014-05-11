@@ -27,6 +27,13 @@ DFHack future
     - digfort: improved csv parsing, add start() comment handling
     - exterminate: allow specifying a caste (exterminate gob:male)
     - createitem: in adventure mode it now defaults to the controlled unit as maker.
+    - autotrade: adds "(Un)mark All" options to both panes of trade screen.
+    - mousequery: several usability improvements.
+    - mousequery: show live overlay (in menu area) of what's on the tile under the mouse cursor.
+    - search: workshop profile search added.
+    - dwarfmonitor: add screen to summarise preferences of fortress dwarfs.
+    - getplants: add autochop function to automate woodcutting.
+    - stocks: added more filtering and display options.
 
   Siege engine plugin:
     - engine quality and distance to target now affect accuracy

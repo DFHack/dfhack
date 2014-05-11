@@ -126,6 +126,16 @@ public:
         renderer_wrap::resize(w,h);
         reinitLightGrid();
     }
+    virtual void set_fullscreen()
+    {
+        renderer_wrap::set_fullscreen();
+        reinitLightGrid();
+    }
+    virtual void zoom(df::zoom_commands z)
+    {
+        renderer_wrap::zoom(z);
+        reinitLightGrid();
+    }
 };
 class lightingEngine
 {

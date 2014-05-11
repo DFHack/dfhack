@@ -95,10 +95,12 @@ public:
     virtual void set_fullscreen() { 
         copy_to_inner();
         parent->set_fullscreen();
+        copy_from_inner();
     };
     virtual void zoom(df::zoom_commands z) { 
         copy_to_inner();
         parent->zoom(z);
+        copy_from_inner();
     };
     virtual void resize(int32_t w, int32_t h) { 
         copy_to_inner();
@@ -310,6 +312,16 @@ public:
         //and then map read
         //same stuff for all of them i guess...
     };
+    virtual void set_fullscreen()
+    {
+        renderer_wrap::set_fullscreen();
+        reinitLightGrid();
+    }
+    virtual void zoom(df::zoom_commands z)
+    {
+        renderer_wrap::zoom(z);
+        reinitLightGrid();
+    }
     virtual void grid_resize(int32_t w, int32_t h) { 
         renderer_wrap::grid_resize(w,h);
         reinitLightGrid(w,h);

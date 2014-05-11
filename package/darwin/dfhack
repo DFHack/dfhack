@@ -3,12 +3,15 @@ PWD=`dirname "${0}"`
 #thanks to Iriel for figuring this out
 OSREV=`uname -r | cut -d. -f1`
 if [ "$OSREV" -ge 11 ] ; then
-	export DYLD_INSERT_LIBRARIES=./hack/libdfhack.dylib
 	export DYLD_LIBRARY_PATH=${PWD}/hack:${PWD}/libs
 	export DYLD_FRAMEWORK_PATH=${PWD}/hack:${PWD}/libs
 else
-	export DYLD_INSERT_LIBRARIES=./hack/libdfhack.dylib
 	export DYLD_FALLBACK_LIBRARY_PATH=${PWD}/hack:${PWD}/libs
 	export DYLD_FALLBACK_FRAMEWORK_PATH=${PWD}/hack:${PWD}/libs
 fi
-cd "${PWD}"; ./dwarfort.exe
+
+old_tty_settings=$(stty -g)
+cd "${PWD}"
+DYLD_INSERT_LIBRARIES=./hack/libdfhack.dylib ./dwarfort.exe
+stty "$old_tty_settings"
+echo ""

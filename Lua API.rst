@@ -25,9 +25,10 @@ implemented by Lua files located in hack/lua/...
 DF data structure wrapper
 =========================
 
-DF structures described by the xml files in library/xml are exported
-to lua code as a tree of objects and functions under the ``df`` global,
-which broadly maps to the ``df`` namespace in C++.
+Data structures of the game are defined in XML files located in library/xml
+(and online at http://github.com/DFHack/df-structures), and automatically exported
+to lua code as a tree of objects and functions under the ``df`` global, which
+also broadly maps to the ``df`` namespace in the headers generated for C++.
 
 **WARNING**: The wrapper provides almost raw access to the memory
 of the game, so mistakes in manipulating objects are as likely to
@@ -979,6 +980,10 @@ Job module
 
   Likewise, if replacing material.
 
+* ``dfhack.job.getName(job)``
+
+  Returns the job's description, as seen in the Units and Jobs screens.
+
 Units module
 ------------
 
@@ -1186,6 +1191,14 @@ Items module
 * ``dfhack.items.getSubtypeDef(item_type, subtype)``
 
   Returns the raw definition for the given item type and subtype, or *nil* if invalid.
+
+* ``dfhack.items.getItemBaseValue(item_type, subtype, material, mat_index)``
+
+  Calculates the base value for an item of the specified type and material.
+
+* ``dfhack.items.getValue(item)``
+
+  Calculates the Basic Value of an item, as seen in the View Item screen.
 
 
 Maps module
@@ -3167,6 +3180,10 @@ Functions
 
    Enable event checking for EventManager events. For event types use ``eventType`` table. Note that different types of events require different frequencies to be effective. The frequency is how many ticks EventManager will wait before checking if that type of event has happened. If multiple scripts or plugins use the same event type, the smallest frequency is the one that is used, so you might get events triggered more often than the frequency you use here.
 
+5. ``registerSidebar(shop_name,callback)``
+
+   Enable callback when sidebar for ``shop_name`` is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib.
+   
 Examples
 --------
 Spawn dragon breath on each item attempt to contaminate wound::
@@ -3180,13 +3197,13 @@ Reaction complete example::
 
   b=require "plugins.eventful"
 
-  b.onReactionComplete.one=function(reaction,unit,in_items,in_reag,out_items,call_native)
+  b.registerReaction("LUA_HOOK_LAY_BOMB",function(reaction,unit,in_items,in_reag,out_items,call_native)
     local pos=copyall(unit.pos)
     -- spawn dragonbreath after 100 ticks
     dfhack.timeout(100,"ticks",function() dfhack.maps.spawnFlow(pos,6,0,0,50000) end)
     --do not call real item creation code
     call_native.value=false
-  end
+  end)
 
 Grenade example::
 
@@ -3200,6 +3217,48 @@ Integrated tannery::
 
   b=require "plugins.eventful"
   b.addReactionToShop("TAN_A_HIDE","LEATHERWORKS")
+  
+Building-hacks
+==============
+
+This plugin overwrites some methods in workshop df class so that mechanical workshops are possible. Although
+plugin export a function it's recommended to use lua decorated function.
+
+Functions
+---------
+
+``registerBuilding(table)`` where table must contain name, as a workshop raw name, the rest are optional:
+ 1. name -- custom workshop id e.g. ``SOAPMAKER``
+ 2. fix_impassible -- if true make impassible tiles impassible to liquids too
+ 3. consume -- how much machine power is needed to work. Disables reactions if not supplied enough
+ 4. produce -- how much machine power is produced. Use discouraged as there is no way to change this at runtime 
+ 5. gears -- a table or ``{x=?,y=?}`` of connection points for machines
+ 6. action -- a table of number (how much ticks to skip) and a function which gets called on shop update
+ 7. animate -- a table of frames which can be a table of:
+
+    a. tables of 4 numbers ``{tile,fore,back,bright}`` OR
+    b. empty table (tile not modified) OR
+    c. ``{x=<number> y=<number> + 4 numbers like in first case}``, this generates full frame useful for animations that change little (1-2 tiles)
+
+Animate table also might contain:
+ 1. frameLenght -- how many ticks does one frame take OR
+ 2. isMechanical -- a bool that says to try to match to mechanical system (i.e. how gears are turning)
+
+Examples
+--------
+
+Simple mechanical workshop::
+  
+  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
+    consume=15,
+    gears={x=0,y=0}, --connection point
+    animate={
+      isMechanical=true, --animate the same connection point as vanilla gear
+      frames={ 
+      {{x=0,y=0,42,7,0,0}}, --first frame, 1 changed tile
+      {{x=0,y=0,15,7,0,0}} -- second frame, same
+      }
+    }
 
 =======
 Scripts

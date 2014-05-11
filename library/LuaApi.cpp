@@ -1337,6 +1337,7 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,checkDesignationsNow),
     WRAPM(Job,isSuitableItem),
     WRAPM(Job,isSuitableMaterial),
+    WRAPM(Job,getName),
     WRAPN(is_equal, jobEqual),
     WRAPN(is_item_equal, jobItemEqual),
     { NULL, NULL }
@@ -1475,6 +1476,8 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, isCasteMaterial),
     WRAPM(Items, getSubtypeCount),
     WRAPM(Items, getSubtypeDef),
+    WRAPM(Items, getItemBaseValue),
+    WRAPM(Items, getValue),
     WRAPN(moveToGround, items_moveToGround),
     WRAPN(moveToContainer, items_moveToContainer),
     WRAPN(moveToBuilding, items_moveToBuilding),

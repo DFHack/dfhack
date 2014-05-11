@@ -5,11 +5,14 @@ DFHack future
     - Lua API for listing files in directory. Needed for mod-manager.
     - Lua API for creating unit combat reports and writing to gamelog.
     - support for multiple raw/init.d/*.lua init scripts in one save.
+    - eventful now has a more friendly way of making custom sidebars
+    - new plugin: building-hacks. Allows to add custom functionality and/or animations to buildings. 
 
   New scripts:
     - gui/mod-manager: allows installing/uninstalling mods into df from df/mods directory.
     - gui/clone-uniform: duplicates the currently selected uniform in the military screen.
     - fix/build-location: partial work-around for bug 5991 (trying to build wall while standing on it)
+    - undump-buildings: removes dump designation from materials used in buildings.
 
   New commands:
     - move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands

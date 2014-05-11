@@ -326,7 +326,7 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
         return CR_WRONG_USAGE;
     if(!df::global::enabler->renderer->uses_opengl())
     {
-        out.printerr("Sorry, this plugin needs open gl enabled printmode. Try STANDARD or other non-2d");
+        out.printerr("Sorry, this plugin needs open gl enabled printmode. Try STANDARD or other non-2D\n");
         return CR_FAILURE;
     }
     string cmd=parameters[0];

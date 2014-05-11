@@ -11,6 +11,7 @@
 #include "modules/Units.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
+#include "modules/Materials.h"
 
 #include "MiscUtils.h"
 
@@ -35,6 +36,12 @@
 #include "df/ui_build_selector.h"
 #include "df/building_trapst.h"
 #include "df/item_actual.h"
+#include "df/item_crafted.h"
+#include "df/item_armorst.h"
+#include "df/item_helmst.h"
+#include "df/item_glovesst.h"
+#include "df/item_shoesst.h"
+#include "df/item_pantsst.h"
 #include "df/item_liquid_miscst.h"
 #include "df/item_powder_miscst.h"
 #include "df/item_barst.h"
@@ -140,6 +147,10 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Speed up melee squad training, removing inverse dependency on unit count.\n"
         "  tweak hive-crash [disable]\n"
         "    Prevents crash if bees die in a hive with uncollected products (bug 6368).\n"
+        "  tweak craft-age-wear [disable]\n"
+        "    Makes cloth and leather items wear out at the correct rate (bug 6003).\n"
+        "  tweak adamantine-cloth-wear [disable]\n"
+        "    Stops adamantine clothing from wearing out while being worn (bug 6481).\n"
     ));
     return CR_OK;
 }
@@ -977,6 +988,102 @@ struct hive_crash_hook : df::building_hivest {
 
 IMPLEMENT_VMETHOD_INTERPOSE(hive_crash_hook, updateAction);
 
+struct craft_age_wear_hook : df::item_crafted {
+    typedef df::item_crafted interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, ageItem, (int amount))
+    {
+        int orig_age = age;
+        age += amount;
+        if (age > 200000000)
+            age = 200000000;
+        if (age == orig_age)
+            return;
+
+        MaterialInfo mat(mat_type, mat_index);
+        if (!mat.isValid())
+            return;
+        int wear = 0;
+
+        if (mat.material->flags.is_set(material_flags::WOOD))
+            wear = 5;
+        else if (mat.material->flags.is_set(material_flags::LEATHER) ||
+            mat.material->flags.is_set(material_flags::THREAD_PLANT) ||
+            mat.material->flags.is_set(material_flags::SILK) ||
+            mat.material->flags.is_set(material_flags::YARN))
+            wear = 1;
+        else
+            return;
+        wear = ((orig_age % wear) + (age - orig_age)) / wear;
+        if (wear > 0)
+            addWear(wear, false, false);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(craft_age_wear_hook, ageItem);
+
+static bool inc_wear_timer (df::item_constructed *item, int amount)
+{
+    if (item->flags.bits.artifact)
+        return false;
+
+    MaterialInfo mat(item->mat_type, item->mat_index);
+    if (mat.isInorganic() && mat.inorganic->flags.is_set(inorganic_flags::DEEP_SPECIAL))
+        return false;
+
+    item->wear_timer += amount;
+    return (item->wear_timer > 806400);
+}
+
+struct adamantine_cloth_wear_armor_hook : df::item_armorst {
+    typedef df::item_armorst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, incWearTimer, (int amount))
+    {
+        return inc_wear_timer(this, amount);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(adamantine_cloth_wear_armor_hook, incWearTimer);
+
+struct adamantine_cloth_wear_helm_hook : df::item_helmst {
+    typedef df::item_helmst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, incWearTimer, (int amount))
+    {
+        return inc_wear_timer(this, amount);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(adamantine_cloth_wear_helm_hook, incWearTimer);
+
+struct adamantine_cloth_wear_gloves_hook : df::item_glovesst {
+    typedef df::item_glovesst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, incWearTimer, (int amount))
+    {
+        return inc_wear_timer(this, amount);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(adamantine_cloth_wear_gloves_hook, incWearTimer);
+
+struct adamantine_cloth_wear_shoes_hook : df::item_shoesst {
+    typedef df::item_shoesst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, incWearTimer, (int amount))
+    {
+        return inc_wear_timer(this, amount);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(adamantine_cloth_wear_shoes_hook, incWearTimer);
+
+struct adamantine_cloth_wear_pants_hook : df::item_pantsst {
+    typedef df::item_pantsst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, incWearTimer, (int amount))
+    {
+        return inc_wear_timer(this, amount);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(adamantine_cloth_wear_pants_hook, incWearTimer);
+
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
     if (vector_get(parameters, 1) == "disable")
@@ -1160,6 +1267,18 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     else if (cmd == "hive-crash")
     {
         enable_hook(out, INTERPOSE_HOOK(hive_crash_hook, updateAction), parameters);
+    }
+    else if (cmd == "craft-age-wear")
+    {
+        enable_hook(out, INTERPOSE_HOOK(craft_age_wear_hook, ageItem), parameters);
+    }
+    else if (cmd == "adamantine-cloth-wear")
+    {
+        enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_armor_hook, incWearTimer), parameters);
+        enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_helm_hook, incWearTimer), parameters);
+        enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_gloves_hook, incWearTimer), parameters);
+        enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_shoes_hook, incWearTimer), parameters);
+        enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_pants_hook, incWearTimer), parameters);
     }
     else 
         return CR_WRONG_USAGE;

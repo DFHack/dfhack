@@ -19,6 +19,10 @@ DFHack future
     - 'plant create' - spawn a new shrub under the cursor
     - command-prompt: a dfhack command prompt in df.
 
+  New tweaks:
+    - craft-age-wear: make crafted items wear out with time like in old versions (bug 6003)
+    - adamantine-cloth-wear: stop adamantine clothing from wearing out (bug 6481)
+
   Misc improvements:
     - digfort: improved csv parsing, add start() comment handling
     - exterminate: allow specifying a caste (exterminate gob:male)

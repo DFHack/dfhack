@@ -156,6 +156,12 @@ tweak military-training
 # prevent crash if bees die in a hive with ungathered products by insta-gathering them
 tweak hive-crash
 
+# make crafted cloth items wear out with time like in old versions (bug 6003)
+tweak craft-age-wear
+
+# stop adamantine clothing from wearing out (bug 6481)
+#tweak adamantine-cloth-wear
+
 ###########################
 # Globally acting plugins #
 ###########################

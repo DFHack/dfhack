@@ -500,6 +500,12 @@ bool tryVariant(std::string value, TileType &paint)
 
 bool processTileType(color_ostream & out, TileType &paint, std::vector<std::string> &params, int start, int end)
 {
+    if (start == end)
+    {
+        out << "Missing argument." << std::endl;
+        return false;
+    }
+
     int loc = start;
     std::string option = params[loc++];
     std::string value = end <= loc ? "" : params[loc++];

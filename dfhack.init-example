@@ -48,6 +48,9 @@ keybinding add Ctrl-Shift-B "adv-bodyswap force"
 # Stocks plugin
 keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
 
+# open an overview window summarising some stocks (dfstatus)
+keybinding add Ctrl-Shift-I@dwarfmode/Default dfstatus
+
 # Workflow
 keybinding add Ctrl-W@dwarfmode/QueryBuilding/Some "gui/workflow"
 keybinding add Ctrl-I "gui/workflow status"

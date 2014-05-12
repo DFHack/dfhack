@@ -2449,6 +2449,10 @@ dfhack commands. Useful for hotkeys.
 Example::
     multicmd locate-ore iron ; digv
 
+dfstatus
+========
+Show a quick overview of critical stock quantities, including food, dirnks, wood, and various bars.  
+
 =======================
 In-game interface tools
 =======================

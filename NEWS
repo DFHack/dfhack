@@ -13,6 +13,8 @@ DFHack future
     - gui/clone-uniform: duplicates the currently selected uniform in the military screen.
     - fix/build-location: partial work-around for bug 5991 (trying to build wall while standing on it)
     - undump-buildings: removes dump designation from materials used in buildings.
+    - exportlegends: exports data from legends mode, allowing a set-and-forget export of large worlds.
+    - log-region: each time a fort is loaded identifying information will be written to the gamelog.
 
   New commands:
     - move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands

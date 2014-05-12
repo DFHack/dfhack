@@ -13,6 +13,7 @@ DFHack future
     - gui/clone-uniform: duplicates the currently selected uniform in the military screen.
     - fix/build-location: partial work-around for bug 5991 (trying to build wall while standing on it)
     - undump-buildings: removes dump designation from materials used in buildings.
+    - dfstatus: show an overview of critical stock quantities, including food, drinks, wood, and bars.
 
   New commands:
     - move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands

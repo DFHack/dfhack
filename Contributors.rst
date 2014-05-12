@@ -61,6 +61,7 @@ The following is a list of people who have contributed to **DFHack**.
 - Caldfir <caldfir@hotmail.com>
 - Antalia <tamarakorr@gmail.com>
 - Angus Mezick <amezick@gmail.com>
+- PeridexisErrant <PeridexisErrant@gmail.com>
 
 And those are the cool people who made **stonesense**.
 

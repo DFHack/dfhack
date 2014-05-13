@@ -42,6 +42,7 @@ using namespace MapExtras;
 using namespace DFHack::Random;
 
 using df::global::world;
+using df::global::gametype;
 
 command_result cmd_3dveins(color_ostream &out, std::vector <std::string> & parameters);
 
@@ -1570,6 +1571,12 @@ command_result cmd_3dveins(color_ostream &con, std::vector<std::string> & parame
     if (!Maps::IsValid())
     {
         con.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+
+    if (*gametype != game_type::DWARF_MAIN && *gametype != game_type::DWARF_RECLAIM)
+    {
+        con.printerr("Must be used in fortress mode!\n");
         return CR_FAILURE;
     }
 

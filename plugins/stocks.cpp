@@ -410,9 +410,6 @@ struct item_grouped_entry
 
     bool canMelt() const
     {
-        // TODO: Fix melting
-        return false;
-
         df::item *item = getFirstItem();
         if (!item)
             return false;
@@ -829,9 +826,6 @@ public:
         }
         else if (input->count(interface_key::CUSTOM_SHIFT_M))
         {
-            //TODO: Fix melting
-            return;
-
             toggleMelt();
             populateItems();
         }
@@ -939,10 +933,7 @@ public:
         OutputString(COLOR_BROWN, x, y, (apply_to_all) ? "Listed" : "Selected", true, left_margin);
         OutputHotkeyString(x, y, "Dump", "Shift-D", true, left_margin);
         OutputHotkeyString(x, y, "Forbid", "Shift-F", true, left_margin);
-        
-        //TODO: Fix melting
-        //OutputHotkeyString(x, y, "Melt", "Shift-M", true, left_margin);
-        
+        OutputHotkeyString(x, y, "Melt", "Shift-M", true, left_margin);
         if (depot_info.canTrade())
             OutputHotkeyString(x, y, "Mark for Trade", "Shift-T", true, left_margin);
 
@@ -1031,9 +1022,6 @@ private:
 
     void toggleMelt()
     {
-        //TODO: Fix melting
-        return;
-
         int set_to_melt = -1;
         auto selected = getSelectedItems();
         vector<df::item *> items;

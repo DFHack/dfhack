@@ -7,6 +7,7 @@
 #include <ColorText.h>
 
 #include <modules/Screen.h>
+#include <modules/Gui.h>
 
 #include <set>
 #include <list>
@@ -166,6 +167,10 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
 DFHACK_PLUGIN("command-prompt");
 command_result show_prompt(color_ostream &out, std::vector <std::string> & parameters)
 {
+    if (Gui::getCurFocus() == "dfhack/commandprompt")
+    {
+        Screen::dismiss(Gui::getCurViewscreen(true));
+    }
     std::string params;
     for(size_t i=0;i<parameters.size();i++)
         params+=parameters[i]+" ";

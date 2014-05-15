@@ -56,9 +56,14 @@ public:
         df::global::gps->display_frames=show_fps;
     }
 
-    void add_response(color_value v,std::string s)
+    void add_response(color_value v, std::string s)
     {
-        responses.push_back(std::make_pair(v,s));
+        std::stringstream ss(s);
+        std::string part;
+        while (std::getline(ss, part))
+        {
+            responses.push_back(std::make_pair(v, part));
+        }
     }
 protected:
     std::list<std::pair<color_value,std::string> > responses;

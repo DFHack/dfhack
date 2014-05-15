@@ -62,7 +62,7 @@ public:
         std::string part;
         while (std::getline(ss, part))
         {
-            responses.push_back(std::make_pair(v, part));
+            responses.push_back(std::make_pair(v, part + '\n'));
         }
     }
 protected:

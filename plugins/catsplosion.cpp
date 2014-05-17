@@ -50,9 +50,26 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 command_result catsplosion (color_ostream &out, std::vector <std::string> & parameters)
 {
+    bool list_only = false;
     list<string> s_creatures;
-    // only cats for now.
-    s_creatures.push_back("CAT");
+    if (parameters.size())
+    {
+        for (size_t i = 0; i < parameters.size(); i++)
+        {
+            if (parameters[i] == "list")
+            {
+                list_only = true;
+            }
+            else
+            {
+                s_creatures.push_back(parameters[i]);
+            }
+        }
+    }
+    else
+    {
+        s_creatures.push_back("CAT");
+    }
     // make the creature list unique ... with cats. they are always unique
     s_creatures.unique();
     // SUSPEND THE CORE! ::Evil laugh::
@@ -103,7 +120,10 @@ command_result catsplosion (color_ostream &out, std::vector <std::string> & para
         }
     }
 
-
+    if (list_only)
+    {
+        return CR_OK;
+    }
     // process
     for (list<string>::iterator it = s_creatures.begin(); it != s_creatures.end(); ++it)
     {

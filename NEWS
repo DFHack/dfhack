@@ -2,6 +2,8 @@ DFHack future
 
  - Is not yet known.
 
+New command: petcapRemover - raise the pet population cap from 50 to whatever you want
+
 DFHack v0.34.11-r4
 
   New commands:

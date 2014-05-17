@@ -1947,6 +1947,11 @@ See the bay12 thread for details: http://www.bay12forums.com/smf/index.php?topic
     * Some of the DFusion plugins aren't completely ported yet. This can lead to crashes.
     * The game will be suspended while you're using dfusion. Don't panic when it doesn't respond.
 
+petcapRemover
+-------------
+
+This plugin allows you to remove or raise the pet population cap. In vanilla DF, pets will not reproduce unless the population is below 50 and the number of children of that species is below a certain percentage. This plugin allows removing the second restriction and removing or raising the first. Pets still require PET or PET_EXOTIC tags in order to reproduce. Type help petcapRemover for exact usage. In order to make population more stable and avoid sudden population booms as you go below the raised population cap, this plugin counts pregnancies toward the new population cap. It can still go over, but only in the case of multiple births.
+
 misery
 ------
 When enabled, every new negative dwarven thought will be multiplied by a factor (2 by default).

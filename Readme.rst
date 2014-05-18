@@ -2032,7 +2032,7 @@ See the bay12 thread for details: http://www.bay12forums.com/smf/index.php?topic
 
 embark-tools
 ------------
-A collection of tools for embarking.
+A collection of embark-related tools.
 
 Usage::
 

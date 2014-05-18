@@ -216,7 +216,7 @@ module DFHack
                     out << wl.words[name.words[3]].forms[name.parts_of_speech[3]] if name.words[3] >= 0
                     if name.words[4] >= 0
                         out << wl.words[name.words[4]].forms[name.parts_of_speech[4]]
-                        out << '-'
+                        out.last << '-'
                     else
                         out << ''
                     end

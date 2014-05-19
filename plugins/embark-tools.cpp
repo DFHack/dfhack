@@ -27,6 +27,7 @@ struct EmbarkTool
 EmbarkTool embark_tools[] = {
     {"anywhere", "Embark anywhere", "Allows embarking anywhere on the world map", false},
     {"nano", "Nano embark", "Allows the embark size to be decreased below 2x2", false},
+    {"sand", "Sand indicator", "Displays an indicator when sand is present on the given embark site", false},
 };
 #define NUM_TOOLS sizeof(embark_tools) / sizeof(EmbarkTool)
 
@@ -35,6 +36,7 @@ command_result embark_tools_cmd (color_ostream &out, std::vector <std::string> &
 bool tool_exists (std::string tool_name);
 bool tool_enabled (std::string tool_name);
 bool tool_enable (std::string tool_name, bool enable_state);
+void tool_update (std::string tool_name);
 
 /*
  * Logic
@@ -76,6 +78,30 @@ void resize_embark (df::viewscreen_choose_start_sitest * screen, int dx, int dy)
     screen->embark_pos_max.x = x2;
     screen->embark_pos_min.y = y1;
     screen->embark_pos_max.y = y2;
+}
+
+std::string sand_indicator = "";
+bool sand_dirty = true;  // Flag set when update is needed
+void sand_update ()
+{
+    CoreSuspendClaimer suspend;
+    df::viewscreen * top = Gui::getCurViewscreen();
+    VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, top);
+    buffered_color_ostream out;
+    Core::getInstance().runCommand(out, "prospect");
+    auto fragments = out.fragments();
+    sand_indicator = "";
+    for (auto iter = fragments.begin(); iter != fragments.end(); iter++)
+    {
+        std::string fragment = iter->second;
+        if (fragment.find("SAND_") != std::string::npos ||
+            fragment.find("SAND :") != std::string::npos)
+        {
+            sand_indicator = "Sand";
+            break;
+        }
+    }
+    sand_dirty = false;
 }
 
 /*
@@ -139,6 +165,10 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
                 }
             }
         }
+        if (tool_enabled("sand"))
+        {
+            sand_dirty = true;
+        }
         if (!prevent_default)
             INTERPOSE_NEXT(feed)(input);
     }
@@ -185,6 +215,18 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
                 OutputString(COLOR_WHITE, x, y, ": Embark!");
             }
         }
+        if (tool_enabled("sand"))
+        {
+            if (sand_dirty)
+            {
+                sand_update();
+            }
+            x = dim.x - 28; y = 13;
+            if (screen->page == 0)
+            {
+                OutputString(COLOR_YELLOW, x, y, sand_indicator);
+            }
+        }
     }
 };
 
@@ -217,15 +259,26 @@ bool tool_enabled (std::string tool_name)
 
 bool tool_enable (std::string tool_name, bool enable_state)
 {
+    int n = 0;
     for (int i = 0; i < NUM_TOOLS; i++)
     {
-        if (embark_tools[i].id == tool_name)
+        if (embark_tools[i].id == tool_name || tool_name == "all")
         {
             embark_tools[i].enabled = enable_state;
-            return true;
+            tool_update(tool_name);
+            n++;
         }
     }
-    return false;
+    return (bool)n;
+}
+
+void tool_update (std::string tool_name)
+{
+    // Called whenever a tool is enabled/disabled
+    if (tool_name == "sand")
+    {
+        sand_dirty = true;
+    }
 }
 
 /*
@@ -289,7 +342,7 @@ command_result embark_tools_cmd (color_ostream &out, std::vector <std::string> &
             }
             else if (parameters[i] == "disable")
                 enable_state = false;
-            else if (tool_exists(parameters[i]))
+            else if (tool_exists(parameters[i]) || parameters[i] == "all")
             {
                 tool_enable(parameters[i], enable_state);
             }

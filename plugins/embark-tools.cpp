@@ -278,9 +278,9 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
         if (tool_enabled("anywhere"))
         {
             x = 20; y = dim.y - 2;
-            if (screen->page == 0)
+            if (screen->page >= 0 && screen->page <= 4)
             {
-                // Only display on main page (not site finder, notes, etc.)
+                // Only display on five map pages, not on site finder or notes
                 OutputString(COLOR_WHITE, x, y, ": Embark!");
             }
         }

@@ -218,7 +218,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
                     default:
                         is_motion = false;
                 }
-                if (is_motion)
+                if (is_motion && !sticky_moved)
                 {
                     sticky_save(screen);
                     sticky_moved = true;

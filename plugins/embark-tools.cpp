@@ -94,8 +94,7 @@ void sand_update ()
     for (auto iter = fragments.begin(); iter != fragments.end(); iter++)
     {
         std::string fragment = iter->second;
-        if (fragment.find("SAND_") != std::string::npos ||
-            fragment.find("SAND :") != std::string::npos)
+        if (fragment.find("SAND_") != std::string::npos)
         {
             sand_indicator = "Sand";
             break;

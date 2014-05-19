@@ -178,6 +178,8 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
 
         df::viewscreen * top = Gui::getCurViewscreen();
         VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, top);
+        if (!screen)
+            return;
 
         auto dim = Screen::getWindowSize();
         int x = 1,

@@ -28,6 +28,7 @@ EmbarkTool embark_tools[] = {
     {"anywhere", "Embark anywhere", "Allows embarking anywhere on the world map", false},
     {"nano", "Nano embark", "Allows the embark size to be decreased below 2x2", false},
     {"sand", "Sand indicator", "Displays an indicator when sand is present on the given embark site", false},
+    {"sticky", "Stable position", "Maintains the selected local area while navigating the world map", false},
 };
 #define NUM_TOOLS sizeof(embark_tools) / sizeof(EmbarkTool)
 
@@ -103,6 +104,26 @@ void sand_update ()
     sand_dirty = false;
 }
 
+int sticky_pos[] = {0, 0, 3, 3};
+bool sticky_moved = false;
+void sticky_save (df::viewscreen_choose_start_sitest * screen)
+{
+    sticky_pos = {
+        screen->embark_pos_min.x,
+        screen->embark_pos_max.x,
+        screen->embark_pos_min.y,
+        screen->embark_pos_max.y,
+    };
+}
+
+void sticky_apply (df::viewscreen_choose_start_sitest * screen)
+{
+    screen->embark_pos_min.x = sticky_pos[0];
+    screen->embark_pos_max.x = sticky_pos[1];
+    screen->embark_pos_min.y = sticky_pos[2];
+    screen->embark_pos_max.y = sticky_pos[3];
+}
+
 /*
  * Viewscreen hooks
  */
@@ -134,6 +155,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
                 }
             }
         }
+
         if (tool_enabled("nano"))
         {
             for (auto iter = input->begin(); iter != input->end(); iter++)
@@ -158,12 +180,52 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
                     default:
                         is_resize = false;
                 }
-                if (is_resize) {
+                if (is_resize)
+                {
                     prevent_default = true;
                     resize_embark(screen, dx, dy);
                 }
             }
         }
+
+        if (tool_enabled("sticky"))
+        {
+            for (auto iter = input->begin(); iter != input->end(); iter++)
+            {
+                df::interface_key key = *iter;
+                bool is_motion = false;
+                int dx = 0, dy = 0;
+                switch (key)
+                {
+                    case df::interface_key::CURSOR_UP:
+                    case df::interface_key::CURSOR_DOWN:
+                    case df::interface_key::CURSOR_LEFT:
+                    case df::interface_key::CURSOR_RIGHT:
+                    case df::interface_key::CURSOR_UPLEFT:
+                    case df::interface_key::CURSOR_UPRIGHT:
+                    case df::interface_key::CURSOR_DOWNLEFT:
+                    case df::interface_key::CURSOR_DOWNRIGHT:
+                    case df::interface_key::CURSOR_UP_FAST:
+                    case df::interface_key::CURSOR_DOWN_FAST:
+                    case df::interface_key::CURSOR_LEFT_FAST:
+                    case df::interface_key::CURSOR_RIGHT_FAST:
+                    case df::interface_key::CURSOR_UPLEFT_FAST:
+                    case df::interface_key::CURSOR_UPRIGHT_FAST:
+                    case df::interface_key::CURSOR_DOWNLEFT_FAST:
+                    case df::interface_key::CURSOR_DOWNRIGHT_FAST:
+                        is_motion = true;
+                        break;
+                    default:
+                        is_motion = false;
+                }
+                if (is_motion)
+                {
+                    sticky_save(screen);
+                    sticky_moved = true;
+                }
+            }
+        }
+
         if (tool_enabled("sand"))
         {
             sand_dirty = true;
@@ -174,12 +236,18 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
 
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
-        INTERPOSE_NEXT(render)();
-
         df::viewscreen * top = Gui::getCurViewscreen();
         VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, top);
         if (!screen)
             return;
+
+        if (tool_enabled("sticky") && sticky_moved)
+        {
+            sticky_apply(screen);
+            sticky_moved = false;
+        }
+
+        INTERPOSE_NEXT(render)();
 
         auto dim = Screen::getWindowSize();
         int x = 1,
@@ -321,7 +389,7 @@ DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
     {
         if (!INTERPOSE_HOOK(choose_start_site_hook, feed).apply(enable) ||
             !INTERPOSE_HOOK(choose_start_site_hook, render).apply(enable))
-             return CR_FAILURE;
+            return CR_FAILURE;
         is_enabled = enable;
     }
     return CR_OK;

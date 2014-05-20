@@ -43,6 +43,21 @@ void tool_update (std::string tool_name);
  * Logic
  */
 
+void update_embark_sidebar (df::viewscreen_choose_start_sitest * screen)
+{
+    bool is_top = false;
+    if (screen->embark_pos_min.y == 0)
+        is_top = true;
+    std::set<df::interface_key> keys;
+    keys.insert(df::interface_key::SETUP_LOCAL_Y_MUP);
+    screen->feed(&keys);
+    if (!is_top)
+    {
+        keys.insert(df::interface_key::SETUP_LOCAL_Y_MDOWN);
+        screen->feed(&keys);
+    }
+}
+
 void resize_embark (df::viewscreen_choose_start_sitest * screen, int dx, int dy)
 {
     /* Reproduces DF's embark resizing functionality
@@ -79,6 +94,8 @@ void resize_embark (df::viewscreen_choose_start_sitest * screen, int dx, int dy)
     screen->embark_pos_max.x = x2;
     screen->embark_pos_min.y = y1;
     screen->embark_pos_max.y = y2;
+
+    update_embark_sidebar(screen);
 }
 
 std::string sand_indicator = "";
@@ -122,6 +139,7 @@ void sticky_apply (df::viewscreen_choose_start_sitest * screen)
     screen->embark_pos_max.x = sticky_pos[1];
     screen->embark_pos_min.y = sticky_pos[2];
     screen->embark_pos_max.y = sticky_pos[3];
+    update_embark_sidebar(screen);
 }
 
 /*

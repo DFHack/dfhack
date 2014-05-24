@@ -12,6 +12,10 @@ function fileExists(filename)
 		return true
 	end
 end
+if not fileExists(init_file) then
+        local f = io.open(init_file, "wb")
+        io.close(f)
+end
 function copyFile(from,to) --oh so primitive
     local filefrom=io.open(from,"rb")
     local fileto=io.open(to,"w+b")

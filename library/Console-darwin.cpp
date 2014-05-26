@@ -305,6 +305,33 @@ namespace DFHack
         }
         /// beep. maybe?
         //void beep (void);
+        void back_word()
+        {
+            if (raw_cursor == 0)
+                return;
+            raw_cursor--;
+            while (raw_cursor > 0 && !isalnum(raw_buffer[raw_cursor]))
+                raw_cursor--;
+            while (raw_cursor > 0 && isalnum(raw_buffer[raw_cursor]))
+                raw_cursor--;
+            if (!isalnum(raw_buffer[raw_cursor]) && raw_cursor != 0)
+                raw_cursor++;
+            prompt_refresh();
+        }
+        void forward_word()
+        {
+            int len = raw_buffer.size();
+            if (raw_cursor == len)
+                return;
+            raw_cursor++;
+            while (raw_cursor <= len && !isalnum(raw_buffer[raw_cursor]))
+                raw_cursor++;
+            while (raw_cursor <= len && isalnum(raw_buffer[raw_cursor]))
+                raw_cursor++;
+            if (raw_cursor > len)
+                raw_cursor = len;
+            prompt_refresh();
+        }
         /// A simple line edit (raw mode)
         int lineedit(const std::string& prompt, std::string& output, recursive_mutex * lock, CommandHistory & ch)
         {
@@ -486,30 +513,11 @@ namespace DFHack
                     lock->lock();
                     if (seq[0] == 'b')
                     {
-                        // Back one word
-                        if (raw_cursor == 0)
-                            break;
-                        raw_cursor--;
-                        while (raw_cursor > 0 && !isalnum(raw_buffer[raw_cursor]))
-                            raw_cursor--;
-                        while (raw_cursor > 0 && isalnum(raw_buffer[raw_cursor]))
-                            raw_cursor--;
-                        if (!isalnum(raw_buffer[raw_cursor]))
-                            raw_cursor++;
-                        prompt_refresh();
+                        back_word();
                     }
                     else if (seq[0] == 'f')
                     {
-                        // Forward one word
-                        int len = raw_buffer.size();
-                        if (raw_cursor == len)
-                            break;
-                        raw_cursor++;
-                        while (raw_cursor <= len && !isalnum(raw_buffer[raw_cursor]))
-                            raw_cursor++;
-                        while (raw_cursor <= len && isalnum(raw_buffer[raw_cursor]))
-                            raw_cursor++;
-                        prompt_refresh();
+                        forward_word();
                     }
                     else if(seq[0] == '[')
                     {
@@ -577,6 +585,7 @@ namespace DFHack
                         else if (seq[1] > '0' && seq[1] < '7')
                         {
                             // extended escape
+                            unsigned char seq3[3];
                             lock->unlock();
                             if(!read_char(seq2))
                             {
@@ -591,6 +600,24 @@ namespace DFHack
                                 {
                                     raw_buffer.erase(raw_cursor,1);
                                     prompt_refresh();
+                                }
+                            }
+                            if (!read_char(seq3[0]) || !read_char(seq3[1]))
+                            {
+                                lock->lock();
+                                return -2;
+                            }
+                            if (seq2 == ';')
+                            {
+                                // Format: esc [ n ; n DIRECTION
+                                // Ignore first character (second "n")
+                                if (seq3[1] == 'C')
+                                {
+                                    forward_word();
+                                }
+                                else if (seq3[1] == 'D')
+                                {
+                                    back_word();
                                 }
                             }
                         }

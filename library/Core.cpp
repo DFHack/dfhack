@@ -760,6 +760,14 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 return CR_WRONG_USAGE;
             }
         }
+        else if(first=="hide")
+        {
+            getConsole().hide();
+        }
+        else if(first=="show")
+        {
+            getConsole().show();
+        }
         else
         {
             command_result res = plug_mgr->InvokeCommand(con, first, parts);

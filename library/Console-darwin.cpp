@@ -771,3 +771,13 @@ void Console::msleep (unsigned int msec)
     if (msec > 1000) sleep(msec/1000000);
     usleep((msec % 1000000) * 1000);
 }
+
+void Console::hide()
+{
+    //Warmist: don't know if it's possible...
+}
+
+void Console::show()
+{
+    //Warmist: don't know if it's possible...
+}

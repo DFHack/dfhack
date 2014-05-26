@@ -589,3 +589,13 @@ void Console::msleep (unsigned int msec)
 {
     Sleep(msec);
 }
+
+void Console::hide()
+{
+    ShowWindow( GetConsoleWindow(), SW_HIDE );    
+}
+
+void Console::show()
+{
+    ShowWindow( GetConsoleWindow(), SW_RESTORE );
+}

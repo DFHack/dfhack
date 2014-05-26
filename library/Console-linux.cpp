@@ -480,14 +480,46 @@ namespace DFHack
                     break;
                 case 27:    // escape sequence
                     lock->unlock();
-                    if(!read_char(seq[0]) || !read_char(seq[1]))
+                    if (!read_char(seq[0]))
                     {
                         lock->lock();
                         return -2;
                     }
                     lock->lock();
-                    if(seq[0] == '[')
+                    if (seq[0] == 'b')
                     {
+                        // Back one word
+                        if (raw_cursor == 0)
+                            break;
+                        raw_cursor--;
+                        while (raw_cursor > 0 && !isalnum(raw_buffer[raw_cursor]))
+                            raw_cursor--;
+                        while (raw_cursor > 0 && isalnum(raw_buffer[raw_cursor]))
+                            raw_cursor--;
+                        if (!isalnum(raw_buffer[raw_cursor]))
+                            raw_cursor++;
+                        prompt_refresh();
+                    }
+                    else if (seq[0] == 'f')
+                    {
+                        // Forward one word
+                        int len = raw_buffer.size();
+                        if (raw_cursor == len)
+                            break;
+                        raw_cursor++;
+                        while (raw_cursor <= len && !isalnum(raw_buffer[raw_cursor]))
+                            raw_cursor++;
+                        while (raw_cursor <= len && isalnum(raw_buffer[raw_cursor]))
+                            raw_cursor++;
+                        prompt_refresh();
+                    }
+                    else if(seq[0] == '[')
+                    {
+                        if (!read_char(seq[1]))
+                        {
+                            lock->lock();
+                            return -2;
+                        }
                         if (seq[1] == 'D')
                         {
                             left_arrow:
